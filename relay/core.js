@@ -8,6 +8,7 @@
 //           POST /v1  { op: "web", reqs:[...] }  (Reader, see web.js)
 //           POST /v1  { op: "canva", act, ... }  (Atelier, see canva.js)
 //           POST /v1  { op: "send", acct, smtp, from, rcpt[], raw, sent? }  (SMTP, see smtp.js)
+//           POST /v1  { op: "sieve", acct, act, host?, script?, prev? }  (ManageSieve, see sieve.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
@@ -15,6 +16,7 @@ import { withSession, ImapError } from "./imap.js";
 import { validWeb, runWeb } from "./web.js";
 import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
 import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
+import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -26,7 +28,8 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1 };
+const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -98,6 +101,13 @@ export function validRequest(b, env) {
     if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
     if (b.replace !== undefined && !(Number.isInteger(b.replace) && b.replace > 0)) return "replace";
     if (b.mid !== undefined && !(typeof b.mid === "string" && /^<[^<>\s"\\]{3,250}>$/.test(b.mid))) return "mid";
+  }
+  if (b.op === "sieve") {
+    if (["check", "put", "off"].indexOf(b.act) < 0) return "act";
+    if (b.host !== undefined && !validHost(b.host)) return "sieve-host";
+    if (b.act === "put" && !(typeof b.script === "string" && b.script.length > 0 &&
+        new TextEncoder().encode(b.script).length <= SIEVE_LIMITS.scriptBytes)) return "script";
+    if (b.prev !== undefined && !(typeof b.prev === "string" && b.prev.length <= 200 && !/[\r\n\0]/.test(b.prev))) return "prev";
   }
   if (b.op === "flag" || b.op === "move" || b.op === "expunge") {
     if (!folderArg(b.folder)) return "folder";
@@ -209,6 +219,18 @@ export async function handle(request, env, connectFn, now, fetchFn) {
 
   const acct = { host: b.acct.host.trim().toLowerCase(), port: +b.acct.port, sec: b.acct.sec,
                  user: b.acct.user, pass: b.acct.pass };
+
+  if (b.op === "sieve") {
+    // Same login as IMAP; the host defaults to the IMAP host, port 4190.
+    const srv = { host: (b.host || acct.host).trim().toLowerCase(), port: SIEVE_PORT, user: acct.user, pass: acct.pass };
+    try {
+      const data = await runSieve(connectFn, srv, b);
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      const code = e instanceof ImapError ? e.code : "proto";
+      return fail(200, code, String(e && e.message || code).slice(0, 300), okOrigin);
+    }
+  }
 
   if (b.op === "smtpcheck" || b.op === "send") {
     const smtp = { host: b.smtp.host.trim().toLowerCase(), port: +b.smtp.port, sec: b.smtp.sec,
