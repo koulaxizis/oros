@@ -56,8 +56,11 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 - A copy of what you send goes to the account's `Sent` folder.
 - `Discard` (or [[Esc]]) asks first when you have written something.
 
+### Formatting
+The bar above `Message` adds **bold** ([[Ctrl+B]]), italic ([[Ctrl+I]]), underline ([[Ctrl+U]]), lists, links ([[Ctrl+K]]) and colour; `Clear formatting` removes them. A formatted message also carries a plain-text copy for people whose mail app shows only text. A message with no formatting goes as plain text. Pasted text keeps only its words, not its look.
+
 ### Signature and outgoing server
-In an account, `Signature` adds a few lines under each new message and reply. Sending uses the `Outgoing (SMTP) server` in `Server settings`, with the same username and password as incoming mail; it is filled in with the incoming one and checked when you save.
+In an account, `Signature` adds a few lines under each new message and reply. It can be formatted like a message and hold a small picture, such as a logo (`Picture or logo`; it is made smaller to fit). With several accounts, changing `From` swaps the signature. Sending uses the `Outgoing (SMTP) server` in `Server settings`, with the same username and password as incoming mail; it is filled in with the incoming one and checked when you save.
 
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
@@ -82,7 +85,7 @@ Your accounts (without passwords), your rules, the relay address and the senders
 - The relay you set here also lets [Reader](app:feeds) and [Podcasts](app:podcasts) read sites that block browsers.
 
 ## Limits
-- Messages are plain text, without attachments; forwarding sends the text only.
+- No attachments yet; forwarding sends the text only.
 - Drafts are not saved on the server; the Outbox stays on the device where it was written.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

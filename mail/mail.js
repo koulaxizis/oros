@@ -74,6 +74,8 @@
   var M = window.orosMailMime;
   var TR = window.orosMailTrust;
   var R = window.orosMailRules;
+  var RT = window.orosMailRich;
+  var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -166,12 +168,16 @@
       "cmp.ccbcc": "Cc / Bcc", "cmp.subject": "Subject", "cmp.body": "Message", "cmp.date": "Date",
       "cmp.send": "Send", "cmp.sending": "Sending…", "cmp.discard": "Discard",
       "cmp.discardQ": "Discard this message?", "cmp.keep": "Keep writing",
-      "cmp.hint": "Plain text, no attachments yet.",
+      "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it. No attachments yet.",
+      "rte.bar": "Formatting", "rte.b": "Bold (Ctrl+B)", "rte.i": "Italic (Ctrl+I)", "rte.u": "Underline (Ctrl+U)",
+      "rte.ul": "Bulleted list", "rte.ol": "Numbered list", "rte.link": "Link (Ctrl+K)", "rte.linkAsk": "Link address (web or e-mail):",
+      "rte.color": "Text colour", "rte.clear": "Clear formatting", "rte.img": "Picture or logo",
+      "rte.imgBig": "This picture is too big or not PNG, JPEG or GIF.",
       "cmp.wrote": "On {date}, {who} wrote:", "cmp.fwd": "---------- Forwarded message ----------",
       "cmp.noRcpt": "Add at least one recipient.", "cmp.bad": "Not an e-mail address: {list}",
       "cmp.many": "Up to {n} recipients.", "cmp.noacct": "Add an account to send mail.",
       "cmp.timeout": "The server did not answer in time. The message may have gone out: check Sent before sending it again.",
-      "dlg.sig": "Signature", "dlg.sigHint": "Added under each new message and reply. Synced with the account.",
+      "dlg.sig": "Signature", "dlg.sigHint": "Added under each new message and reply, with its formatting, links and a small picture (a logo). Synced with the account.",
       "err.nosmtp": "This account has no outgoing (SMTP) server. Add it in the account's server settings.",
       "err.smtpfail": "Incoming mail works, but the outgoing server failed: {msg}",
       "err.rcpt": "The server did not accept a recipient: {msg}", "err.big": "The message is too long to send.",
@@ -270,12 +276,16 @@
       "cmp.ccbcc": "Κοιν. / Κρυφή κοιν.", "cmp.subject": "Θέμα", "cmp.body": "Μήνυμα", "cmp.date": "Ημερομηνία",
       "cmp.send": "Αποστολή", "cmp.sending": "Αποστολή…", "cmp.discard": "Απόρριψη",
       "cmp.discardQ": "Να απορριφθεί το μήνυμα;", "cmp.keep": "Συνέχεια γραψίματος",
-      "cmp.hint": "Απλό κείμενο, χωρίς συνημμένα προς το παρόν.",
+      "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν. Χωρίς συνημμένα προς το παρόν.",
+      "rte.bar": "Μορφοποίηση", "rte.b": "Έντονα (Ctrl+B)", "rte.i": "Πλάγια (Ctrl+I)", "rte.u": "Υπογράμμιση (Ctrl+U)",
+      "rte.ul": "Λίστα με κουκκίδες", "rte.ol": "Αριθμημένη λίστα", "rte.link": "Σύνδεσμος (Ctrl+K)", "rte.linkAsk": "Διεύθυνση συνδέσμου (web ή email):",
+      "rte.color": "Χρώμα κειμένου", "rte.clear": "Καθαρισμός μορφοποίησης", "rte.img": "Εικόνα ή λογότυπο",
+      "rte.imgBig": "Η εικόνα είναι πολύ μεγάλη ή δεν είναι PNG, JPEG ή GIF.",
       "cmp.wrote": "Στις {date}, {who} έγραψε:", "cmp.fwd": "---------- Προωθημένο μήνυμα ----------",
       "cmp.noRcpt": "Πρόσθεσε τουλάχιστον έναν παραλήπτη.", "cmp.bad": "Δεν είναι διεύθυνση email: {list}",
       "cmp.many": "Έως {n} παραλήπτες.", "cmp.noacct": "Πρόσθεσε έναν λογαριασμό για να στέλνεις μηνύματα.",
       "cmp.timeout": "Ο διακομιστής δεν απάντησε εγκαίρως. Το μήνυμα ίσως έφυγε: δες τα Απεσταλμένα πριν το ξαναστείλεις.",
-      "dlg.sig": "Υπογραφή", "dlg.sigHint": "Μπαίνει κάτω από κάθε νέο μήνυμα και απάντηση. Συγχρονίζεται με τον λογαριασμό.",
+      "dlg.sig": "Υπογραφή", "dlg.sigHint": "Μπαίνει κάτω από κάθε νέο μήνυμα και απάντηση, με τη μορφοποίηση, τους συνδέσμους και μια μικρή εικόνα (λογότυπο). Συγχρονίζεται με τον λογαριασμό.",
       "err.nosmtp": "Ο λογαριασμός δεν έχει διακομιστή εξερχομένων (SMTP). Πρόσθεσέ τον στις ρυθμίσεις διακομιστή του λογαριασμού.",
       "err.smtpfail": "Τα εισερχόμενα δουλεύουν, αλλά ο διακομιστής εξερχομένων απέτυχε: {msg}",
       "err.rcpt": "Ο διακομιστής δεν δέχτηκε παραλήπτη: {msg}", "err.big": "Το μήνυμα είναι πολύ μεγάλο για αποστολή.",
@@ -449,6 +459,9 @@
     if (smtp) { if (!smtp.user) smtp.user = imap.user; out.smtp = smtp; }
     var sig = normSig(a.sig);
     if (sig) out.sig = sig;
+    // The formatted signature: kept as written by rich.js clean() and
+    // only ever shown after passing through clean() again (never as is).
+    if (typeof a.sigHtml === "string" && a.sigHtml && a.sigHtml.length <= MAX_SIG_HTML) out.sigHtml = a.sigHtml;
     return out;
   }
   function normSig(v) {
@@ -1594,15 +1607,12 @@
     if (existing) fPass.placeholder = t("dlg.passKeep");
     var hint = el("p", "dlg-hint");
     form.appendChild(hint);
-    var sigLab = el("label", "dlg-lbl", t("dlg.sig"));
-    sigLab.setAttribute("for", "ml-sig");
-    var fSig = el("textarea", "sig");
-    fSig.id = "ml-sig";
-    fSig.rows = 3;
-    fSig.maxLength = MAX_SIG;
-    fSig.value = existing && existing.sig ? existing.sig : "";
+    var sigLab = el("div", "dlg-lbl", t("dlg.sig"));
+    sigLab.id = "ml-sig-lbl";
+    var sigEd = richEditor(existing ? sigHtmlOf(existing) : "", "ml-sig", t("dlg.sig"), true);
+    sigEd.area.classList.add("sig");
     form.appendChild(sigLab);
-    form.appendChild(fSig);
+    form.appendChild(sigEd.box);
     form.appendChild(el("p", "dlg-hint", t("dlg.sigHint")));
 
     var det = el("details", "srv");
@@ -1676,8 +1686,11 @@
         m: existing ? Math.max(Date.now(), existing.m + 1) : Date.now(),
         name: fName.value, email: email,
         imap: { host: host, port: +fPort.value, user: fUser.value.trim() || email },
-        sig: fSig.value
+        sig: "", sigHtml: ""
       };
+      var sg = sigEd.get(false);
+      acct.sig = sg.text.slice(0, MAX_SIG);
+      if (sg.rich && sg.html.length <= MAX_SIG_HTML) acct.sigHtml = sg.html;
       var smtpHost = normHost(fSmtp.value);
       if (smtpHost) acct.smtp = { host: smtpHost, port: +fSport.value, user: fUser.value.trim() || email };
       var n = normAccount(acct);
@@ -1927,8 +1940,10 @@
     var acct = acctById(d.acct);
     if (!acct) return Promise.reject(new MailError("noacct"));
     if (!acct.smtp) return Promise.reject(new MailError("nosmtp"));
+    var rich = d.html ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
-                        subject: d.subject, text: d.text, inReplyTo: d.inReplyTo, references: d.references });
+                        subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
+                        inReplyTo: d.inReplyTo, references: d.references });
     if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
     var sent = sentFolder(acct);
     var args = { smtp: true, from: acct.email, rcpt: msg.rcpt, raw: C.b64(msg.bin) };
@@ -2001,7 +2016,7 @@
       acts.appendChild(button(t("out.edit"), "small", function () {
         dlg.close();
         openCompose({ acct: r.draft.acct, to: r.draft.to, cc: r.draft.cc, bcc: r.draft.bcc,
-                      subject: r.draft.subject, text: r.draft.text, inReplyTo: r.draft.inReplyTo,
+                      subject: r.draft.subject, text: r.draft.text, html: r.draft.html || "", inReplyTo: r.draft.inReplyTo,
                       references: r.draft.references, outId: r.id, noSig: true });
       }));
       acts.appendChild(button(t("out.del"), "small danger", function () { dropOut(r.id); outboxDialog(); }));
@@ -2018,6 +2033,20 @@
   }
 
   function sigBlock(acct) { return acct && acct.sig ? "\n\n-- \n" + acct.sig : ""; }
+  function sigHtmlOf(acct) { return acct ? (acct.sigHtml || RT.fromText(acct.sig || "")) : ""; }
+  function richEditor(html, id, label, pictures) {
+    var L = {};
+    ["bar", "b", "i", "u", "ul", "ol", "link", "linkAsk", "color", "clear", "img", "imgBig"].forEach(function (k) { L[k] = t("rte." + k); });
+    return RT.editor({ html: html, id: id, label: label, pictures: pictures, labels: L, onError: function (m) { showToast(m); } });
+  }
+  // The signature inside a message being written: its own block, so a
+  // change of "From" can swap it. Contents always via clean().
+  function sigNode(acct) {
+    var d = document.createElement("div");
+    d.setAttribute("data-sig", "1");
+    d.innerHTML = RT.clean("-- <br>" + sigHtmlOf(acct), { cid: false }).html;
+    return d;
+  }
   function listText(list) { return (list || []).map(C.fmtInput).join(", "); }
 
   // HTML-only mail → text for quoting. DOMParser documents run no
@@ -2083,16 +2112,23 @@
     form.appendChild(ccBox);
     ccBtn.addEventListener("click", function () { ccBox.hidden = false; ccBtn.hidden = true; fCc.focus(); });
     var fSubj = field(form, "mc-subj", t("cmp.subject"), "text", init.subject || "", { maxlength: "300" });
-    var bLab = el("label", "dlg-lbl", t("cmp.body"));
-    bLab.setAttribute("for", "mc-body");
-    var fBody = el("textarea", "cmp-body");
-    fBody.id = "mc-body";
-    fBody.rows = 12;
-    fBody.maxLength = 200000;
-    var sig = init.noSig ? "" : sigBlock(acct);
-    fBody.value = (init.text || "") + sig + (init.quote || "");
+    var bLab = el("div", "dlg-lbl", t("cmp.body"));
+    var ed = richEditor(init.html || "", "mc-body", t("cmp.body"), false);
+    var fBody = ed.area;
+    fBody.classList.add("cmp-body");
+    if (!init.html) {
+      // what to write, then the signature, then the quoted message
+      fBody.innerHTML = RT.clean(RT.fromText(String(init.text || "").replace(/\n+$/, "")) || "<br>", { cid: false }).html;
+      if (!init.noSig && (acct.sig || acct.sigHtml)) { fBody.appendChild(el("br")); fBody.appendChild(sigNode(acct)); }
+      if (init.quote) {
+        var qd = el("div");
+        qd.innerHTML = "<br>" + RT.clean(RT.quoteHtml(init.quote), { cid: false }).html;
+        fBody.appendChild(qd);
+      }
+    }
+    bLab.addEventListener("click", function () { fBody.focus(); });
     form.appendChild(bLab);
-    form.appendChild(fBody);
+    form.appendChild(ed.box);
     form.appendChild(el("p", "dlg-hint dim", t("cmp.hint")));
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
@@ -2100,12 +2136,13 @@
 
     form.addEventListener("input", function () { dirty = true; });
     if (fFrom) fFrom.addEventListener("change", function () {
-      // swap the signature when it is still there unchanged
-      var next = sigBlock(acctById(fFrom.value));
-      var at = sig ? fBody.value.indexOf(sig) : -1;
-      if (at >= 0) fBody.value = fBody.value.slice(0, at) + next + fBody.value.slice(at + sig.length);
-      else if (!sig && next && !init.quote && !fBody.value.trim()) fBody.value = next;
-      sig = next;
+      // swap the signature block for the new account's
+      var a2 = acctById(fFrom.value);
+      var old = fBody.querySelector("[data-sig]");
+      var has = a2 && (a2.sig || a2.sigHtml);
+      if (old && has) old.replaceWith(sigNode(a2));
+      else if (old) old.remove();
+      else if (has && !init.quote && !RT.toText(fBody).trim()) { fBody.appendChild(el("br")); fBody.appendChild(sigNode(a2)); }
     });
 
     var acts = el("div", "dlg-actions");
@@ -2145,8 +2182,10 @@
       var count = to.list.length + cc.list.length + bcc.list.length;
       if (!count) { errP.textContent = t("cmp.noRcpt"); fTo.focus(); return; }
       if (count > MAX_RCPT) { errP.textContent = t("cmp.many", { n: MAX_RCPT }); return; }
+      var body = ed.get(false);
       var d = { acct: a.id, to: to.list, cc: cc.list, bcc: bcc.list,
-                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: fBody.value,
+                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: body.text.slice(0, 200000),
+                html: body.rich ? body.html : "",
                 inReplyTo: init.inReplyTo || "", references: init.references || "" };
       ok.disabled = true;
       ok.textContent = t("cmp.sending");
@@ -2169,7 +2208,13 @@
     dlg.showModal();
     var first = !fTo.value ? fTo : (!fSubj.value ? fSubj : fBody);
     first.focus();
-    if (first === fBody) fBody.setSelectionRange(0, 0);
+    if (first === fBody) {
+      var rg = document.createRange();
+      rg.setStart(fBody, 0);
+      rg.collapse(true);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(rg);
+    }
   }
 
   function confirmDiscard(yes) {
