@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -553,6 +553,11 @@
     shelf:    function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('shelf', { item: id }); },
     // Mail — "mail:msg:<acctId>.<uid>": a new message in an Inbox
     // (mail/notify.js) opens it. Generic shell deep link, no own bridge.
+    // Today — "today:<YYYY-MM-DD>": the daily summary notice opens
+    // the Today tab (it is built afresh when it opens).
+    today:    function (ymd) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(ymd)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('today', { day: String(ymd) });
+    },
     mail:     function (p) {
       var m = /^([a-z0-9]{6,40})\.(\d{1,10})$/.exec(String(p));
       if (m && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('mail', { acct: m[1], folder: 'INBOX', uid: +m[2] });
