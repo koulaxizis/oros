@@ -4559,3 +4559,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New app Ringtone Composer (ringtones/, Sound, soffitta port 14/17): write a melody note by note with an old-phone keypad (1-7 notes, 0 rest, 8/9 length, * octave, # sharp) or a piano, letters C-B on the keyboard; staff + RTTTL-style token view, tap to select and edit, undo/redo; tempo, three sounds (phone beep, soft, bell), loop.
 - Synced melodies (slice "ringtones", LWW + tombstones, max 200, 255 notes each) with duplicate and Undo; 7 ready public-domain tunes; WAV download, RTTTL download/copy/import.
 - Tests: tests/ringtones.test.js. No credits entry (tunes written out by hand from public-domain melodies). No deep link, no bridges.
+
+### 2026-10-11 — Mail: conversations and All inboxes (#167) — 0.73.00
+- Replies are grouped with the message they answer into one conversation row with a count (click to read the newest and unfold the rest). Setting "Group messages by conversation" (device-only, on by default).
+- With two or more accounts, "All inboxes" at the top of the side panel lists every account's Inbox together, newest first, with a colour stripe per account; opening a message points the current account at its Inbox so the reader and actions work unchanged.
+- New pure `mail/threads.js` (In-Reply-To links, else a Re:/Fwd:/Απ: subject joins the nearest older message with the same subject; plain same-subject newsletters are not merged). Precached.
+- Tests: tests/mail-threads.test.js; Playwright E2E at 360px and 1200px with a mocked relay. Not tested: a real Papaki server.
