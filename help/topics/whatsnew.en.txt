@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.93.00
+- Sound Mixer: keeps playing after you close it, with a taskbar button for pause, volume and the sleep timer; new train, keyboard and clock sounds.
+
 ## Version 0.92.00
 - Wallpaper Generator: a new picture every day, and a live wallpaper with slowly drifting light.
 
