@@ -2344,7 +2344,11 @@
   function importFile() {
     var dlg = dialogHost();
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(IMPORT_ACCEPT) : localPickFile(IMPORT_ACCEPT);
-    pick.then(function (file) {
+    importFromFile(pick);
+  }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function importFromFile(file) {
+    Promise.resolve(file).then(function (file) {
       if (!file) return;                        // cancel — silent exit
       if (file.size > ZIP_MAX) { showToast(t("imp.err.size")); return; }
       return file.arrayBuffer().then(function (buf) {
@@ -2858,7 +2862,20 @@
   // Opens the map, unfolds the way to the node, selects it and brings
   // it into view (as Find does). Unknown map → no-op; unknown node →
   // the map only. Nothing happens while a dialog or the menu is open.
+  // { openFile: { token } }: a file from the system's "Open with"
+  // (shell fileopen.js), taken once, then the Import path.
   function openSearchTarget(t) {
+    if (t && t.openFile) {
+      if (document.querySelector("dialog[open]") || $("mm-menu")) return;
+      var f = null;
+      try {
+        var p = window.parent;
+        if (typeof t.openFile.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
+          f = p.__orosTakeFile(t.openFile.token);
+      } catch (e) { f = null; }
+      if (f) importFromFile(f);
+      return;
+    }
     if (!t || typeof t.map !== "string" || !MAPS[t.map]) return;
     if (document.querySelector("dialog[open]") || $("mm-menu")) return;
     if (t.map !== prefs.map) openMap(t.map);
