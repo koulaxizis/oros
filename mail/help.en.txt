@@ -10,6 +10,8 @@ Gmail, iCloud and Yahoo need an app password: create one in your account's secur
 - The side panel lists your accounts and their folders (`Inbox`, `Sent`, `Drafts`, `Spam`, `Trash` and the rest) with unread counts. On a phone, open it with the menu button at the top left.
 - Messages are listed newest first; unread ones have a dot. `Load older messages` at the bottom fetches more.
 - Tap or click a message to read it. Opening it marks it as read on the server too.
+- Replies are grouped with the message they answer into one conversation row, with the number of messages next to the sender. Click it to read the newest and see the rest under it; click again to fold it. While it is folded, selecting it selects the whole conversation. Turn grouping off with `Group messages by conversation` in the settings.
+- With two or more accounts, `All inboxes` at the top of the side panel lists the Inbox of every account together, newest first; the coloured stripe on the left of each message shows its account. Selecting, swiping, search and older messages work in each account's own Inbox.
 - Mail checks for new messages every couple of minutes while it's open; the refresh button (`Check for new mail`) checks now.
 - While orOS is open, a new message in an Inbox also shows a notification, even with Mail closed (checked every 3 minutes). Click it to open the message. Turn it off under Settings › Notifications › Mail.
 
@@ -66,7 +68,7 @@ In an account, `Signature` adds a few lines under each new message and reply. It
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
 
 ## Accounts and settings
-The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
+The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
 ## Sync and backup
 Your accounts (without passwords), your rules, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.

@@ -75,6 +75,7 @@
   var TR = window.orosMailTrust;
   var R = window.orosMailRules;
   var RT = window.orosMailRich;
+  var TH = window.orosMailThreads;
   var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -144,7 +145,7 @@
       "dlg.passDevice": "The password stays sealed on this device and is never synced. Enter it once on each device.",
       "dlg.remove": "Remove account", "dlg.removeQ": "Remove {name} from orOS on all your devices? Your mail stays on the server.",
       "dlg.removeOk": "Remove",
-      "set.title": "Mail settings", "set.accounts": "Accounts", "set.plain": "Always show plain text",
+      "set.title": "Mail settings", "set.accounts": "Accounts", "set.plain": "Always show plain text", "set.threads": "Group messages by conversation", "uni.title": "All inboxes", "uni.older": "Older messages are in each account's Inbox.", "thr.count": "{n} messages in this conversation",
       "set.relay": "Relay address", "set.edit": "Edit", "set.close": "Close",
       "pass.title": "Password for {email}", "pass.text": "This account came from another device. Enter its password once on this device.",
       "pass.need": "Password needed on this device", "pass.set": "Enter password",
@@ -252,7 +253,7 @@
       "dlg.passDevice": "Ο κωδικός μένει σφραγισμένος σε αυτή τη συσκευή και δεν συγχρονίζεται. Τον δίνεις μία φορά σε κάθε συσκευή.",
       "dlg.remove": "Αφαίρεση λογαριασμού", "dlg.removeQ": "Να αφαιρεθεί το {name} από το orOS σε όλες τις συσκευές σου; Τα μηνύματα μένουν στον διακομιστή.",
       "dlg.removeOk": "Αφαίρεση",
-      "set.title": "Ρυθμίσεις αλληλογραφίας", "set.accounts": "Λογαριασμοί", "set.plain": "Πάντα ως απλό κείμενο",
+      "set.title": "Ρυθμίσεις αλληλογραφίας", "set.accounts": "Λογαριασμοί", "set.plain": "Πάντα ως απλό κείμενο", "set.threads": "Ομαδοποίηση μηνυμάτων ανά συζήτηση", "uni.title": "Όλα τα Εισερχόμενα", "uni.older": "Τα παλαιότερα μηνύματα είναι στα Εισερχόμενα κάθε λογαριασμού.", "thr.count": "{n} μηνύματα σε αυτή τη συζήτηση",
       "set.relay": "Διεύθυνση relay", "set.edit": "Επεξεργασία", "set.close": "Κλείσιμο",
       "pass.title": "Κωδικός για {email}", "pass.text": "Ο λογαριασμός ήρθε από άλλη συσκευή. Δώσε τον κωδικό του μία φορά σε αυτή τη συσκευή.",
       "pass.need": "Χρειάζεται κωδικός σε αυτή τη συσκευή", "pass.set": "Βάλε κωδικό",
@@ -753,10 +754,12 @@
 
   // ---------- 6. Folders + message cache ----------
   var data = emptyData();
-  var prefs = { acct: null, folder: "INBOX", plain: 0 };
+  var prefs = { acct: null, folder: "INBOX", plain: 0, threads: 1, uni: 0 };
+  var openThreads = {};    // conversation key → 1 while its older messages show
   var folders = {};        // acctId → [folder] (sorted)
   var needPass = {};       // acctId → 1 when no password on this device
   var cur = null;          // heads record of the open folder
+  var uni = null;          // "All inboxes": { recs: { acctId: Inbox heads }, err, at }
   var openMsg = null;      // { uid, sum, parsed, blocked, remote }
   var busy = {};           // key → promise (de-dup)
   var lastErr = null;
@@ -808,7 +811,7 @@
     var s = M.summary(M.b64ToBin(x.hdr || ""));
     return { uid: x.uid, flags: Array.isArray(x.flags) ? x.flags : [], size: x.size || 0,
              date: s.date || M.parseDate(x.date), from: s.from, to: s.to, cc: s.cc,
-             subj: s.subject, att: s.att, mid: s.messageId };
+             subj: s.subject, att: s.att, mid: s.messageId, irt: (/<[^<>\s]+>/.exec(s.inReplyTo || "") || [""])[0] };
   }
   function hasFlag(m, f) { return m.flags.indexOf(f) >= 0; }
 
@@ -960,7 +963,7 @@
     nav.hidden = !narrow() && !back;
     var acct = curAcct();
     var f = acct && currentFolder();
-    $("bar-title").textContent = f ? folderLabel(f) : t("app");
+    $("bar-title").textContent = uni ? t("uni.title") : (f ? folderLabel(f) : t("app"));
     var spin = Object.keys(busy).length > 0;
     $("refresh-btn").classList.toggle("spin", spin);
     $("refresh-btn").disabled = !acct;
@@ -981,6 +984,16 @@
   function renderSide() {
     var box = $("accts");
     box.innerHTML = "";
+    if (uniOk()) {
+      var ub = el("button", "folder uni-btn" + (uni ? " on" : ""));
+      ub.type = "button";
+      if (uni) ub.setAttribute("aria-current", "true");
+      ub.appendChild(el("span", "folder-name", t("uni.title")));
+      var un = uniUnseen();
+      if (un > 0) ub.appendChild(el("span", "badge", un > 999 ? "999+" : String(un)));
+      ub.addEventListener("click", openUnified);
+      box.appendChild(ub);
+    }
     data.accounts.forEach(function (acct) {
       var sec = el("section", "acct");
       var head = el("div", "acct-head");
@@ -1006,7 +1019,7 @@
         var li = el("li");
         var b = el("button", "folder");
         b.type = "button";
-        var active = acct.id === (curAcct() && curAcct().id) && f.name === prefs.folder;
+        var active = !uni && acct.id === (curAcct() && curAcct().id) && f.name === prefs.folder;
         if (active) { b.classList.add("on"); b.setAttribute("aria-current", "true"); }
         b.style.paddingLeft = (12 + folderDepth(f) * 14) + "px";
         b.appendChild(el("span", "folder-name", folderLabel(f)));
@@ -1041,6 +1054,17 @@
     var f = currentFolder();
     $("list-title").textContent = f ? folderLabel(f) : "";
     $("list-count").textContent = f && f.unseen > 0 ? t("list.count", { n: f.unseen }) : "";
+    if (uni && !uniOk()) { uni = null; prefs.uni = 0; savePrefs(); }
+    $("srch-btn").hidden = !!uni || !$("srch-bar").hidden;
+    if (uni) {
+      $("list-title").textContent = t("uni.title");
+      var un = uniUnseen();
+      $("list-count").textContent = un > 0 ? t("list.count", { n: un }) : "";
+      sel = null;
+      renderSelBar();
+      renderUniList(ul, foot);
+      return;
+    }
     if (sel && cur) Object.keys(sel).forEach(function (u) { if (!findMsg(+u)) delete sel[u]; });
     renderSelBar();
     if (!acct || !cur) return;
@@ -1052,7 +1076,7 @@
       if (!loading && lastErr) foot.appendChild(retryBtn(function () { refreshCurrent(true); }));
       return;
     }
-    cur.msgs.forEach(function (m) { ul.appendChild(listRow(m)); });
+    renderRows(ul, cur.msgs);
     if (lastErr && !loading) {
       var p = el("p", "hint err", errText(lastErr));
       foot.appendChild(p);
@@ -1067,21 +1091,47 @@
     }
   }
 
-  function listRow(m) {
+  // Rows of a list; with "Group by conversation" one row per
+  // conversation (its newest message, how many, unread when any is),
+  // its older messages under it while it is open.
+  function renderRows(ul, list) {
+    var role = folderRole(currentFolder() || {});
+    if (!prefs.threads || !TH || role === "drafts") { list.forEach(function (m) { ul.appendChild(listRow(m)); }); return; }
+    TH.group(list).forEach(function (g) {
+      if (g.msgs.length === 1) { ul.appendChild(listRow(g.msgs[0])); return; }
+      var inIt = openMsg && g.msgs.some(function (m) { return m.uid === openMsg.uid; });
+      var open = !!openThreads[g.key];
+      ul.appendChild(listRow(g.msgs[0], { thread: g, open: open, active: inIt }));
+      if (open) g.msgs.slice(1).forEach(function (m) { ul.appendChild(listRow(m, { child: true })); });
+    });
+  }
+  function toggleThread(g, force) {
+    var on = force !== undefined ? force : !openThreads[g.key];
+    if (on) openThreads[g.key] = 1; else delete openThreads[g.key];
+  }
+
+  function listRow(m, o) {
+    o = o || {};
+    var g = o.thread || null;
     var li = el("li");
-    var b = el("button", "row");
+    var b = el("button", "row" + (o.child ? " child" : "") + (g ? " thread" : ""));
     b.type = "button";
     b.setAttribute("data-uid", String(m.uid));
-    var unseen = !hasFlag(m, "\\Seen");
+    if (o.acct) b.setAttribute("data-acct", o.acct);
+    var unseen = g ? g.msgs.some(function (x) { return !hasFlag(x, "\\Seen"); }) : !hasFlag(m, "\\Seen");
+    if (g) b.setAttribute("aria-expanded", o.open ? "true" : "false");
     if (unseen) b.classList.add("unseen");
-    if (openMsg && openMsg.uid === m.uid) { b.classList.add("on"); b.setAttribute("aria-current", "true"); }
+    var isOpen = openMsg && openMsg.uid === m.uid && (!o.acct || openMsg.acct === o.acct);
+    if (isOpen) { b.classList.add("on"); b.setAttribute("aria-current", "true"); }
     var role = folderRole(currentFolder() || {});
     var person = (role === "sent" || role === "drafts") ? (m.to[0] || m.from) : m.from;
+    var gUids = g && !o.open ? g.msgs.map(function (x) { return x.uid; }) : [m.uid];
+    var picked = sel && gUids.every(function (u) { return sel[u]; });
     if (sel) {
-      var ck = el("span", "row-check" + (sel[m.uid] ? " on" : ""));
+      var ck = el("span", "row-check" + (picked ? " on" : ""));
       ck.setAttribute("aria-hidden", "true");
       b.appendChild(ck);
-      b.setAttribute("aria-pressed", sel[m.uid] ? "true" : "false");
+      b.setAttribute("aria-pressed", picked ? "true" : "false");
     } else {
       var av = el("span", "av", initial(person));
       av.style.background = "hsl(" + hue(person && person.addr) + " 45% 42%)";
@@ -1089,8 +1139,22 @@
       b.appendChild(av);
     }
     var mid = el("span", "row-mid");
+    var ua = o.acct && acctById(o.acct);
+    if (ua) {
+      var stripe = el("span", "row-acct");
+      stripe.style.background = "hsl(" + hue(ua.email) + " 60% 50%)";
+      stripe.setAttribute("aria-hidden", "true");
+      b.appendChild(stripe);
+      b.title = ua.email;
+      mid.appendChild(el("span", "sr-only", ua.email + ": "));
+    }
     var top = el("span", "row-top");
     top.appendChild(el("span", "row-from", who(person) || t("read.nosender")));
+    if (g) {
+      var cnt = el("span", "row-count", String(g.msgs.length));
+      cnt.title = t("thr.count", { n: g.msgs.length });
+      top.appendChild(cnt);
+    }
     top.appendChild(el("time", "row-date", fmtListDate(m.date)));
     mid.appendChild(top);
     var bot = el("span", "row-bot");
@@ -1102,9 +1166,22 @@
     if (unseen) b.appendChild(el("span", "dot", ""));
     b.addEventListener("click", function () {
       if (b.dataset.swiped) { delete b.dataset.swiped; return; }
-      if (sel) toggleSel(m.uid); else openMessage(m.uid);
+      if (sel) {
+        if (gUids.length > 1) {
+          if (!sel) sel = {};
+          gUids.forEach(function (u) { if (picked) delete sel[u]; else sel[u] = 1; });
+          renderList();
+        } else toggleSel(m.uid);
+        return;
+      }
+      if (g) {
+        // first click opens the newest and shows the rest; again: folds it
+        if (o.open && isOpen) { toggleThread(g, false); renderList(); return; }
+        toggleThread(g, true);
+      }
+      if (o.acct) uniOpen(o.acct, m.uid); else openMessage(m.uid);
     });
-    wireSwipe(b, m);
+    if (!o.acct) wireSwipe(b, m);
     li.appendChild(b);
     return li;
   }
@@ -1135,7 +1212,125 @@
     renderBar();
   }
 
+  // ---------- All inboxes (2+ accounts) ----------
+  // One list of every account's Inbox, from the heads each keeps on the
+  // device, newest first, a stripe in the account's colour on each row.
+  // Opening a message points cur at its account's Inbox, so the reader
+  // and its buttons work as in that Inbox. Selection, swipe, search and
+  // older pages stay in each account's own Inbox.
+  var UNI_MAX = 300;
+  function uniOk() { return data.accounts.length >= 2; }
+  function uniUnseen() {
+    var n = 0;
+    data.accounts.forEach(function (a) {
+      (folders[a.id] || []).forEach(function (f) { if (f.name === "INBOX" && f.unseen > 0) n += f.unseen; });
+    });
+    return n;
+  }
+  function uniGroups() {
+    if (!uni) return [];
+    if (cur && cur.folder === "INBOX" && uni.recs[cur.acct]) uni.recs[cur.acct] = cur;
+    var out = [];
+    data.accounts.forEach(function (a) {
+      var rec = uni.recs[a.id];
+      if (!rec) return;
+      var gs = prefs.threads && TH ? TH.group(rec.msgs) :
+        rec.msgs.map(function (m) { return { key: "t" + m.uid, msgs: [m] }; });
+      gs.forEach(function (g) { out.push({ key: a.id + ":" + g.key, msgs: g.msgs, acct: a.id }); });
+    });
+    out.sort(function (x, y) { return (y.msgs[0].date || 0) - (x.msgs[0].date || 0); });
+    return out.slice(0, UNI_MAX);
+  }
+  function renderUniList(ul, foot) {
+    var gs = uniGroups();
+    var loading = data.accounts.some(function (a) { return busy["l|" + a.id + "|INBOX"]; });
+    gs.forEach(function (g) {
+      if (g.msgs.length === 1) { ul.appendChild(listRow(g.msgs[0], { acct: g.acct })); return; }
+      var open = !!openThreads[g.key];
+      ul.appendChild(listRow(g.msgs[0], { thread: g, open: open, acct: g.acct }));
+      if (open) g.msgs.slice(1).forEach(function (m) { ul.appendChild(listRow(m, { child: true, acct: g.acct })); });
+    });
+    if (!gs.length) foot.appendChild(el("p", "hint", loading ? t("list.loading") : (uni.err ? errText(uni.err) : t("list.empty"))));
+    else if (uni.err && !loading) foot.appendChild(el("p", "hint err", errText(uni.err)));
+    if (gs.length && data.accounts.some(function (a) { return uni.recs[a.id] && uni.recs[a.id].more; })) {
+      foot.appendChild(el("p", "hint", t("uni.older")));
+    }
+  }
+  function openUnified() {
+    if (!uniOk()) return Promise.resolve();
+    prefs.uni = 1;
+    prefs.folder = "INBOX";
+    savePrefs();
+    openMsg = null;
+    lastErr = null;
+    cur = null;
+    sel = null;
+    flushMoves();
+    if (srch || !$("srch-bar").hidden) closeSearch();
+    var mine = uni = { recs: {}, err: null, at: 0 };
+    if (narrow()) setView("list");
+    renderAll();
+    return Promise.all(data.accounts.map(function (a) {
+      return loadHeads(a.id, "INBOX").then(function (rec) { mine.recs[a.id] = rec; });
+    })).then(function () {
+      if (uni !== mine) return;
+      var a = curAcct();
+      cur = a ? mine.recs[a.id] || null : null;
+      renderList();
+      renderBar();
+      return refreshUni(false);
+    });
+  }
+  // the message's account becomes the current one (its Inbox)
+  function uniOpen(acctId, uid) {
+    if (!uni || !uni.recs[acctId]) return;
+    prefs.acct = acctId;
+    prefs.folder = "INBOX";
+    savePrefs();
+    cur = uni.recs[acctId];
+    openMessage(uid);
+  }
+  function refreshUni(manual) {
+    var mine = uni;
+    if (!navigator.onLine || !relayUrl()) {
+      if (manual) showToast(errText(new MailError(navigator.onLine ? "norelay" : "offline")));
+      renderBar();
+      return Promise.resolve();
+    }
+    mine.at = Date.now();
+    var accts = data.accounts.filter(function (a) { return !needPass[a.id]; });
+    var jobs = accts.map(function (a) {
+      var before = (mine.recs[a.id] ? mine.recs[a.id].msgs : []).reduce(function (x, m) { return Math.max(x, m.uid); }, 0);
+      return refreshFolder(a, "INBOX", false).then(function (rec) {
+        if (uni !== mine) return null;
+        mine.recs[a.id] = rec;
+        if (cur && cur.acct === a.id && cur.folder === "INBOX") cur = rec;
+        if (before && rec.msgs.some(function (m) { return m.uid > before; })) rulesSoon(a);
+        renderList();
+        return null;
+      }, function (e) {
+        if (e.code === "nopass") needPass[a.id] = 1;
+        return e;
+      });
+    });
+    renderList();
+    renderBar();
+    return Promise.all(jobs).then(function (errs) {
+      errs = errs.filter(Boolean);
+      if (uni !== mine) return;
+      mine.err = errs[0] || null;
+      backoff = jobs.length && errs.length === jobs.length ? Math.min(BACKOFF_MAX, backoff * 2) : REFRESH_MS;
+      keepOpenValid();
+      renderSide();
+      renderList();
+      renderBar();
+      if (manual) showToast(errs.length ? errText(errs[0]) : t("toast.updated"));
+    });
+  }
+
   function openFolder(acctId, folder) {
+    uni = null;
+    prefs.uni = 0;
     prefs.acct = acctId;
     prefs.folder = folder;
     savePrefs();
@@ -1157,6 +1352,7 @@
   }
 
   function refreshCurrent(manual) {
+    if (uni) return refreshUni(manual);
     var acct = curAcct();
     if (!acct || !cur) return Promise.resolve();
     var folder = cur.folder;
@@ -1248,7 +1444,7 @@
     var acct = curAcct(), m = findMsg(uid);
     if (!acct || !m || !cur) return;
     var rec = cur;
-    openMsg = { uid: uid, sum: m, parsed: null, err: null, loading: true };
+    openMsg = { uid: uid, acct: acct.id, sum: m, parsed: null, err: null, loading: true };
     if (phone()) setView("read");
     renderList();
     renderReader();
@@ -1867,6 +2063,13 @@
     lab.appendChild(cb);
     lab.appendChild(el("span", "", t("set.plain")));
     form.appendChild(lab);
+    var labT = el("label", "check");
+    var cbT = el("input");
+    cbT.type = "checkbox";
+    cbT.checked = !!prefs.threads;
+    labT.appendChild(cbT);
+    labT.appendChild(el("span", "", t("set.threads")));
+    form.appendChild(labT);
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
     form.appendChild(errP);
@@ -1886,6 +2089,7 @@
         saveData();
       }
       prefs.plain = cb.checked ? 1 : 0;
+      prefs.threads = cbT.checked ? 1 : 0;
       savePrefs();
       dlg.close();
       showToast(t("toast.saved"));
@@ -2770,7 +2974,7 @@
     var bar = $("sel-bar");
     bar.innerHTML = "";
     bar.hidden = !sel;
-    $("sel-btn").hidden = !!sel || !cur || !shown().length;
+    $("sel-btn").hidden = !!sel || !!uni || !cur || !shown().length;
     $("sel-btn").textContent = t("org.select");
     if (!sel) return;
     var uids = selUids();
@@ -2931,7 +3135,20 @@
         if (k === "v") { e.preventDefault(); moveDialog(tgt); return; }
       }
       var dir = (e.key === "j" || e.key === "ArrowDown") ? 1 : ((e.key === "k" || e.key === "ArrowUp") ? -1 : 0);
-      if (e.key === "/" && cur) { e.preventDefault(); openSearch(); return; }
+      if (e.key === "/" && cur && !uni) { e.preventDefault(); openSearch(); return; }
+      if (uni && dir) {
+        e.preventDefault();
+        var rows = [].slice.call(document.querySelectorAll("#list .row"));
+        var at = -1;
+        rows.forEach(function (r, i) { if (r.classList.contains("on")) at = i; });
+        var nx = rows[Math.max(0, Math.min(rows.length - 1, at + dir))];
+        if (nx && at !== rows.indexOf(nx)) {
+          uniOpen(nx.getAttribute("data-acct"), +nx.getAttribute("data-uid"));
+          var nr = document.querySelector('.row[data-acct="' + nx.getAttribute("data-acct") + '"][data-uid="' + nx.getAttribute("data-uid") + '"]');
+          if (nr) { nr.focus(); nr.scrollIntoView({ block: "nearest" }); }
+        }
+        return;
+      }
       var list = shown();
       if (!dir || !cur || !list.length) return;
       e.preventDefault();
@@ -3039,6 +3256,8 @@
         if (typeof p.acct === "string") prefs.acct = p.acct;
         if (typeof p.folder === "string" && p.folder.length <= 1000) prefs.folder = p.folder;
         prefs.plain = p.plain ? 1 : 0;
+        prefs.threads = p.threads === 0 ? 0 : 1;
+        prefs.uni = p.uni ? 1 : 0;
       }
     } catch (e) {}
   }
@@ -3092,7 +3311,7 @@
       renderBar();
     });
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible" && cur && Date.now() - (cur.at || 0) > REFRESH_MS) refreshCurrent(false);
+      if (document.visibilityState === "visible" && (uni ? Date.now() - uni.at > REFRESH_MS : cur && Date.now() - (cur.at || 0) > REFRESH_MS)) refreshCurrent(false);
     });
     wireKeyboard();
     wireSearch();
@@ -3155,7 +3374,8 @@
       flushOutbox();
       data.accounts.forEach(function (a) { if (!needPass[a.id]) refreshFolders(a).catch(function () {}); });
       if (!(pendingTarget && openSearchTarget(pendingTarget))) {
-        openFolder(acct.id, prefs.acct === acct.id ? prefs.folder : "INBOX");
+        if (prefs.uni && uniOk()) openUnified();
+        else openFolder(acct.id, prefs.acct === acct.id ? prefs.folder : "INBOX");
       }
       scheduleRefresh();
     });
