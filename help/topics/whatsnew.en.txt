@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.88.00
+- Netizen ID: a QR code on the back of your card, Add me to Contacts, and a face straight from Pixel Avatar.
+
 ## Version 0.87.00
 - Micro-Zen: make your own breathing patterns, and see your sessions as a row in Habits.
 
