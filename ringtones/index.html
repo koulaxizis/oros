@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ringtone Composer · orOS</title>
+
+  <link rel="stylesheet" href="ringtones.css?v=0.71.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="list-btn" class="icon-btn" aria-controls="panel" aria-expanded="false"></button>
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="undo-btn" class="icon-btn"></button>
+    <button type="button" id="redo-btn" class="icon-btn"></button>
+    <button type="button" id="mode-btn" class="icon-btn toggle"></button>
+    <button type="button" id="play-btn" class="play-btn"></button>
+  </header>
+
+  <main id="main">
+    <section id="studio">
+      <div class="studio-inner">
+        <!-- The phone screen -->
+        <div id="screen" class="screen">
+          <label for="name-in" class="sr-only" data-i18n="f.name">Name</label>
+          <input type="text" id="name-in" maxlength="40" autocomplete="off" data-i18n-ph="f.name.ph">
+          <div id="staff-wrap" class="staff-wrap">
+            <svg id="staff" aria-hidden="true"></svg>
+          </div>
+          <div id="tokens" class="tokens" role="list" data-i18n-aria="notes.label"></div>
+          <p id="empty-hint" class="hint small" data-i18n="empty.hint"></p>
+        </div>
+
+        <!-- What the next note is -->
+        <div class="next">
+          <div class="opt">
+            <h2 id="len-lbl" data-i18n="sec.length">Length</h2>
+            <div id="lengths" class="chips" role="radiogroup" aria-labelledby="len-lbl"></div>
+          </div>
+          <div class="opt">
+            <h2 id="oct-lbl" data-i18n="sec.octave">Octave</h2>
+            <div id="octaves" class="chips" role="radiogroup" aria-labelledby="oct-lbl"></div>
+          </div>
+        </div>
+
+        <!-- Keypad -->
+        <div id="keypad" class="keypad" role="group" data-i18n-aria="keypad.label"></div>
+
+        <!-- Piano -->
+        <div id="piano-box" class="piano-box" hidden>
+          <div id="piano" class="piano" role="group" data-i18n-aria="piano.label"></div>
+          <div class="chips center">
+            <button type="button" id="p-rest" class="chip" data-i18n="key.rest">Rest</button>
+            <button type="button" id="p-dot" class="chip" data-i18n="key.dot">Dot</button>
+          </div>
+        </div>
+
+        <!-- Moving and removing -->
+        <div class="chips center nav-row">
+          <button type="button" id="left-btn" class="icon-btn"></button>
+          <button type="button" id="del-btn" class="chip" data-i18n="btn.del">Delete note</button>
+          <button type="button" id="right-btn" class="icon-btn"></button>
+        </div>
+
+        <!-- Tempo and sound -->
+        <div class="next">
+          <div class="opt">
+            <h2><label for="bpm-in" id="bpm-lbl"></label></h2>
+            <input type="range" id="bpm-in" min="40" max="300" step="5">
+          </div>
+          <div class="opt">
+            <h2 id="voice-lbl" data-i18n="sec.voice">Sound</h2>
+            <div id="voices" class="chips" role="radiogroup" aria-labelledby="voice-lbl"></div>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="loop-in"> <span data-i18n="f.loop">Play again and again</span></label>
+
+        <!-- Keep it -->
+        <div class="actions">
+          <button type="button" id="save-btn" class="gen-btn"></button>
+          <button type="button" id="new-btn" class="gen-btn ghost" data-i18n="btn.new">New melody</button>
+          <button type="button" id="wav-btn" class="chip" data-i18n="btn.wav">Download WAV</button>
+          <button type="button" id="rtttl-btn" class="chip" data-i18n="btn.rtttl">Download RTTTL</button>
+          <button type="button" id="copy-btn" class="chip" data-i18n="btn.copy">Copy RTTTL</button>
+          <button type="button" id="import-btn" class="chip" data-i18n="btn.import">Import RTTTL</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="scrim" hidden></div>
+
+    <aside id="panel">
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.mine">My melodies</h2>
+          <span id="mine-count" class="count"></span>
+          <span class="spacer"></span>
+          <button type="button" id="close-panel" class="icon-btn phone-only"></button>
+        </div>
+        <p id="mine-empty" class="hint" data-i18n="mine.empty"></p>
+        <ul id="mine" class="rows"></ul>
+      </div>
+      <div class="sec">
+        <h2 data-i18n="sec.ready">Ready tunes</h2>
+        <ul id="ready" class="rows"></ul>
+      </div>
+      <div class="sec">
+        <h2 id="names-lbl" data-i18n="sec.names">Note names</h2>
+        <div id="names" class="chips" role="radiogroup" aria-labelledby="names-lbl"></div>
+        <label class="lbl" for="vol-in" data-i18n="f.volume">Volume</label>
+        <input type="range" id="vol-in" min="0" max="100" step="5">
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="import-dlg">
+    <form method="dialog" id="import-form">
+      <h2 data-i18n="import.title">Import RTTTL</h2>
+      <p class="hint small" data-i18n="import.hint"></p>
+      <label for="import-text" class="sr-only" data-i18n="import.title">Import RTTTL</label>
+      <textarea id="import-text" rows="5" spellcheck="false" placeholder="Nokia:d=4,o=5,b=180:8e6,8d6,f#,g#"></textarea>
+      <p id="import-err" class="err" role="alert"></p>
+      <div class="dlg-btns">
+        <button type="button" id="import-file" class="chip" data-i18n="import.file">Open a file</button>
+        <span class="spacer"></span>
+        <button type="button" id="import-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" id="import-ok" class="gen-btn small" data-i18n="import.ok">Import</button>
+      </div>
+      <input type="file" id="import-input" accept=".txt,.rtttl,.rtx,text/plain" hidden>
+    </form>
+  </dialog>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.71.00"></script>
+  <script src="ringtones.js?v=0.71.00"></script>
+
+</body>
+</html>
