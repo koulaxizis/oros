@@ -7,7 +7,8 @@
       "category": "Accessories",
       "icon": "weather",
       "url": "weather/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "time",
@@ -15,7 +16,8 @@
       "category": "Accessories",
       "icon": "clock",
       "url": "time/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "sky",
@@ -85,7 +87,8 @@
       "icon": "calendar",
       "url": "calendar/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "quote",
@@ -103,7 +106,8 @@
       "icon": "timesheet",
       "url": "timesheet/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "minimalism",
@@ -130,7 +134,8 @@
       "icon": "travel",
       "url": "travel/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "chores",
@@ -139,7 +144,8 @@
       "icon": "chores",
       "url": "chores/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "meals",
@@ -356,7 +362,8 @@
       "category": "Personal",
       "icon": "water",
       "url": "water/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "fitness",
@@ -384,7 +391,8 @@
       "icon": "petcare",
       "url": "petcare/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "baby",
@@ -394,7 +402,8 @@
       "url": "baby/",
       "search": "search.js",
       "searchOff": true,
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "familytree",
@@ -412,7 +421,8 @@
       "icon": "garage",
       "url": "garage/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "plants",
@@ -421,7 +431,8 @@
       "icon": "plants",
       "url": "plants/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "shelf",
@@ -430,7 +441,8 @@
       "icon": "shelf",
       "url": "shelf/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "bookmarks",
@@ -895,6 +907,14 @@
       "icon": "help",
       "url": "help/",
       "search": "search.js",
+      "type": "internal"
+    },
+    {
+      "id": "today",
+      "name": "Today",
+      "category": "System",
+      "icon": "today",
+      "url": "today/",
       "type": "internal"
     },
     {
