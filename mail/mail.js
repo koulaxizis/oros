@@ -1029,7 +1029,7 @@
       if (prefs.acct !== acctId || prefs.folder !== folder) return;
       cur = rec;
       renderList();
-      refreshCurrent(false);
+      return refreshCurrent(false);   // resolves once the list is fresh (deep links wait for it)
     });
   }
 

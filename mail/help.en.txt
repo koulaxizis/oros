@@ -11,6 +11,7 @@ Gmail, iCloud and Yahoo need an app password: create one in your account's secur
 - Messages are listed newest first; unread ones have a dot. `Load older messages` at the bottom fetches more.
 - Tap or click a message to read it. Opening it marks it as read on the server too.
 - Mail checks for new messages every couple of minutes while it's open; the refresh button (`Check for new mail`) checks now.
+- While orOS is open, a new message in an Inbox also shows a notification, even with Mail closed (checked every 3 minutes). Click it to open the message. Turn it off under Settings › Notifications › Mail.
 
 ### Pictures and formatting
 Pictures from the internet are hidden at first, so the sender can't tell you opened the message. Press `Show pictures` to load them once, or `Always for` a sender to trust them from now on. In settings, `Always show plain text` shows every message as text; `Show the formatted version` switches one message back.
