@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, v1.1.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, v1.2.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -16,7 +16,7 @@
 //     context-menu key opens a small menu (Open · Move earlier ·
 //     Move later · Remove).
 //   • The Dock: a mac-style bar at the bottom, OFF until the user
-//     turns it on in Settings (size, style, magnify, auto-hide,
+//     turns it on in Settings (size, style, hover effect, auto-hide,
 //     over open apps: off until chosen). Same small menu; mouse users can also drag.
 //     While it is shown, --tb-h lifts the pet and the desktop grid.
 //
@@ -40,7 +40,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var DATA_KEY = "oros-launcher-data";
   var MAX_ITEMS = 500;
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
@@ -238,9 +238,15 @@
   // over: null = never chosen = off (Chris 2026-10-10; it used to follow
   // the pointer). A stored true / false is the user's own choice and wins.
   // style: the look of the bar (STYLES); unknown = "classic".
+  // hover: what an icon does under the mouse (HOVERS, launcher 1.2.0).
+  // Never chosen = "magnify", or "none" when the old `magnify` switch was
+  // turned off. `magnify` is still written (= hover is "magnify") for an
+  // older bundle reading the same key.
   var PREFS_KEY = "oros-launcher-prefs";
   var SIZES = { s: 40, m: 52, l: 64 };
+  var MAG = 0.45;                // magnify: how much the icon under the mouse grows
   var STYLES = ["classic", "glass", "frosted", "smoke", "transparent", "solid", "3d", "neon"];
+  var HOVERS = ["magnify", "bounce", "pulse", "frame", "glow", "lift", "wiggle", "none"];
 
   function finePointer() {
     try { return root.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch (e) { return false; }
@@ -249,16 +255,19 @@
     var p = null;
     try { p = JSON.parse(root.localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = (p && typeof p === "object") ? p : {};
+    var hover = HOVERS.indexOf(p.hover) >= 0 ? p.hover : (p.magnify === false ? "none" : "magnify");
     return {
       on: p.on === true,
       size: SIZES[p.size] ? p.size : "m",
-      magnify: p.magnify !== false,
+      hover: hover,
+      magnify: hover === "magnify",
       autohide: p.autohide === true,
       over: (p.over === true || p.over === false) ? p.over : null,
       style: STYLES.indexOf(p.style) >= 0 ? p.style : "classic"
     };
   }
   function savePrefs(p) {
+    p.magnify = p.hover === "magnify";
     try { root.localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
     paintDock();
   }
@@ -339,7 +348,7 @@
     "#ld-dock{position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);",
     "z-index:950;max-width:calc(100vw - 16px);transition:transform .22s ease,opacity .22s ease}",
     "#ld-dock.ld-hidden{transform:translate(-50%,calc(100% + 12px));opacity:0;pointer-events:none}",
-    ".ld-bar{display:flex;align-items:flex-end;gap:6px;padding:6px 8px;border-radius:18px;",
+    ".ld-bar{display:flex;align-items:flex-end;gap:6px;padding:6px calc(8px + var(--ld-mag,0px));border-radius:18px;transition:padding .12s ease;",
     "background:color-mix(in srgb,var(--panel-bg) 86%,transparent);border:1px solid var(--border);",
     "box-shadow:0 8px 28px var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}",
     ".ld-dk{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:0;",
@@ -355,6 +364,22 @@
     "padding:4px 9px;border-radius:7px;font-size:12px;background:var(--panel-bg);color:var(--text);",
     "border:1px solid var(--border);box-shadow:0 4px 14px var(--shadow);pointer-events:none;opacity:0;transition:opacity .12s}",
     "@media (hover:hover) and (pointer:fine){.ld-dk:hover .ld-tip,.ld-dk:focus-visible .ld-tip{opacity:1}}",
+    // hover effects (Settings › Dock › Hover effect): one class on #ld-dock,
+    // on the tile only (the button's own transform belongs to magnify)
+    ".ld-dk .ld-tile{transition:transform .18s ease,box-shadow .18s ease,outline-color .18s ease,filter .18s ease}",
+    "@keyframes ld-bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-14px)}55%{transform:translateY(0)}72%{transform:translateY(-6px)}88%{transform:translateY(0)}}",
+    "@keyframes ld-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}",
+    "@keyframes ld-wiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-5deg)}80%{transform:rotate(3deg)}}",
+    "@media (hover:hover) and (pointer:fine){",
+    "#ld-dock.ld-h-bounce .ld-dk:hover .ld-tile{animation:ld-bounce .7s ease}",
+    "#ld-dock.ld-h-pulse .ld-dk:hover .ld-tile{animation:ld-pulse 1s ease-in-out infinite}",
+    "#ld-dock.ld-h-frame .ld-dk:hover .ld-tile{outline:2px solid var(--accent);outline-offset:3px}",
+    "#ld-dock.ld-h-glow .ld-dk:hover .ld-tile{box-shadow:0 0 0 1px var(--accent),0 0 18px color-mix(in srgb,var(--accent) 70%,transparent)}",
+    "#ld-dock.ld-h-lift .ld-dk:hover .ld-tile{transform:translateY(-10px);box-shadow:0 10px 16px var(--shadow)}",
+    "#ld-dock.ld-h-wiggle .ld-dk:hover .ld-tile{animation:ld-wiggle .5s ease}",
+    "}",
+    "@media (prefers-reduced-motion:reduce){#ld-dock .ld-dk .ld-tile{animation:none!important}",
+    "#ld-dock.ld-h-bounce .ld-dk:hover .ld-tile,#ld-dock.ld-h-pulse .ld-dk:hover .ld-tile,#ld-dock.ld-h-wiggle .ld-dk:hover .ld-tile{outline:2px solid var(--accent);outline-offset:3px}}",
     // looks (Settings › Dock › Style): one class on #ld-dock, the bar only
     "#ld-dock.ld-s-glass .ld-bar{background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.08));",
     "border:1px solid rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.12),0 10px 30px rgba(0,0,0,.28);",
@@ -593,7 +618,7 @@
       seg.appendChild(b);
     });
     sec.appendChild(seg);
-    if (finePointer()) sec.appendChild(switchRow(tr("magnify"), p.magnify, function (v) { set("magnify", v); }, "magnify"));
+    if (finePointer()) sec.appendChild(switchRow(tr("magnify"), p.magnify, function (v) { set("hover", v ? "magnify" : "none"); }, "magnify"));
     sec.appendChild(switchRow(tr("autohide"), p.autohide, function (v) { set("autohide", v); }, "autohide"));
     sec.appendChild(switchRow(tr("over"), overApps(p), function (v) { set("over", v); }, "over"));
     if (!shown("dock").length) {
@@ -832,6 +857,7 @@
     if (!p.autohide) { clearTimeout(hideTimer); dock.classList.remove("ld-hidden"); }
     dock.style.setProperty("--ld-t", SIZES[p.size] + "px");
     STYLES.forEach(function (k) { dock.classList.toggle("ld-s-" + k, p.style === k); });
+    HOVERS.forEach(function (k) { dock.classList.toggle("ld-h-" + k, p.hover === k); });
     var bar2 = dock.firstChild;
     bar2.textContent = "";
     var run = runningId();
@@ -881,23 +907,41 @@
       if (bs[j]) bs[j].focus();
     });
 
-    // Magnify (mouse only, when the setting is on).
+    // Magnify (mouse only, hover effect "magnify"). Each icon grows from
+    // its bottom centre and its neighbours slide apart by the extra width,
+    // so grown icons never overlap; the bar widens by the same amount on
+    // both sides, which keeps every icon's resting centre where it was.
+    // Distances use layout positions (offsetLeft), never the transformed
+    // boxes, so the effect does not feed back into itself.
     bar.addEventListener("mousemove", function (e) {
       var p = prefs();
-      if (!p.magnify || !finePointer() || dragging) return;
+      if (p.hover !== "magnify" || !finePointer() || dragging) return;
       var t = SIZES[p.size];
       var bs = bar.querySelectorAll(".ld-dk");
+      var br = bar.getBoundingClientRect();
+      var x = e.clientX - br.left - bar.clientLeft + bar.scrollLeft;
+      var sc = [], extra = [], total = 0;
       for (var i = 0; i < bs.length; i++) {
-        var r = bs[i].getBoundingClientRect();
-        var d = Math.abs(e.clientX - (r.left + r.width / 2));
-        var s = 1 + 0.45 * Math.max(0, 1 - d / (t * 2.2));
-        bs[i].style.transform = s > 1.001 ? "scale(" + s.toFixed(3) + ")" : "";
+        var c = bs[i].offsetLeft + bs[i].offsetWidth / 2;
+        var d = Math.abs(x - c);
+        sc[i] = 1 + MAG * Math.max(0, 1 - d / (t * 2.2));
+        extra[i] = (sc[i] - 1) * bs[i].offsetWidth;
+        total += extra[i];
       }
+      var before = 0;
+      for (var k = 0; k < bs.length; k++) {
+        var shift = before + extra[k] / 2 - total / 2;
+        before += extra[k];
+        bs[k].style.transform = sc[k] > 1.001 || Math.abs(shift) > 0.1
+          ? "translateX(" + shift.toFixed(2) + "px) scale(" + sc[k].toFixed(3) + ")" : "";
+      }
+      bar.style.setProperty("--ld-mag", (total / 2).toFixed(2) + "px");
     });
     bar.addEventListener("mouseleave", unmagnify);
     function unmagnify() {
       var bs = bar.querySelectorAll(".ld-dk");
       for (var i = 0; i < bs.length; i++) bs[i].style.transform = "";
+      bar.style.removeProperty("--ld-mag");
     }
 
     // Drag to reorder (mouse; touch uses the long-press menu, because
@@ -972,6 +1016,7 @@
     var p = prefs();
     return { on: p.on, size: p.size, magnify: p.magnify, autohide: p.autohide,
              over: overApps(p), style: p.style, styles: STYLES.slice(),
+             hover: p.hover, hovers: HOVERS.slice(),
              fine: finePointer(), pinned: shown("dock").length };
   }
   var PREF_OK = {
@@ -980,11 +1025,14 @@
     magnify: function (v) { return typeof v === "boolean"; },
     autohide: function (v) { return typeof v === "boolean"; },
     over: function (v) { return typeof v === "boolean" || v === null; },
-    style: function (v) { return STYLES.indexOf(v) >= 0; }
+    style: function (v) { return STYLES.indexOf(v) >= 0; },
+    hover: function (v) { return HOVERS.indexOf(v) >= 0; }
   };
   function setPref(k, v) {
     if (!Object.prototype.hasOwnProperty.call(PREF_OK, k) || !PREF_OK[k](v)) return false;
-    var q = prefs(); q[k] = v; savePrefs(q); repaintSettings();
+    var q = prefs();
+    if (k === "magnify") { k = "hover"; v = v ? "magnify" : "none"; }
+    q[k] = v; savePrefs(q); repaintSettings();
     return true;
   }
 

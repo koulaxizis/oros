@@ -299,7 +299,13 @@
           c5.appendChild(stRow);
         }
         if (d.fine) {
-          c5.appendChild(row(t("k.magnify"), switchBtn(d.magnify, "dock:magnify", function (v) { set("dock:magnify", v); }, t("k.magnify"))));
+          if (d.hover && d.hovers && d.hovers.length) {
+            c5.appendChild(row(t("k.hover"), select(d.hovers.map(function (k) {
+              return { value: k, label: t("k.hover." + k) };
+            }), d.hover, "dock:hover", function (v) { set("dock:hover", v); }), { forId: "f-dock:hover" }));
+          } else {
+            c5.appendChild(row(t("k.magnify"), switchBtn(d.magnify, "dock:magnify", function (v) { set("dock:magnify", v); }, t("k.magnify"))));
+          }
         }
         c5.appendChild(row(t("k.autohide"), switchBtn(d.autohide, "dock:autohide", function (v) { set("dock:autohide", v); }, t("k.autohide"))));
         c5.appendChild(row(t("k.over"), switchBtn(d.over, "dock:over", function (v) { set("dock:over", v); }, t("k.over"))));
