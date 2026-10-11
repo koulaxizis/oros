@@ -202,7 +202,7 @@ test("favourites: junk is dropped, text is tidied", () => {
   const m = N.mergeNames({
     favs: [good, null, 5, { id: good.id, m: -1, k: "title", s: good.s },
       { id: "nzzzzzzzzzzzzzz", m: 3, k: "title", s: "forged id" },
-      { id: N.favId("pet", "Rex"), m: 3, k: "pet", s: "Rex" },
+      { id: N.favId("bogus", "Rex"), m: 3, k: "bogus", s: "Rex" },
       { id: N.favId("handle", ""), m: 3, k: "handle", s: "" }],
     tombs: { bad: 3, nzzzzzzzzzzzzzz: "x", nyyyyyyyyyyyyyy: 4 }
   }, null);
@@ -219,7 +219,83 @@ test("favGroups: by mode, newest first", () => {
   d = N.addFav(d, "handle", "first", 2);
   d = N.addFav(d, "handle", "second", 3);
   const g = N.favGroups(d);
-  assert.deepEqual(g.map((x) => x.k), ["handle", "title", "regal"]);
+  assert.deepEqual(g.map((x) => x.k), ["handle", "title", "regal", "pet", "team", "project"]);
   assert.deepEqual(g[0].list.map((f) => f.s), ["second", "first"]);
   assert.deepEqual(g[2].list, []);
+});
+
+// ---------- pets, teams, projects; links to Netizen ID and Characters ----------
+const ACC1 = (s) => (s.match(ACCENTED) || []).length;
+
+test("pets: a name from the list, sometimes with a title", () => {
+  ["en", "el"].forEach((lang) => {
+    const w = W.pet[lang], rng = N.seeded(7);
+    let titled = 0;
+    for (let i = 0; i < 400; i++) {
+      const s = N.generate("pet", lang, {}, rng);
+      const m = /^(?:(.+?)[ -])?([^ ]+)$/.exec(s);
+      if (w.name.indexOf(s) >= 0) continue;
+      titled++;
+      const hon = w.hon.find((h) => s.startsWith(h + (h === "Μπαρμπα" ? "-" : " ")));
+      assert.ok(hon, lang + ": " + s);
+      assert.ok(w.name.indexOf(s.slice(hon.length + 1)) >= 0, s);
+      assert.ok(m, s);
+    }
+    assert.ok(titled > 60 && titled < 200, lang + " titled " + titled);
+  });
+});
+
+test("teams: Greek adjective and noun are both masculine plural", () => {
+  const rng = N.seeded(11);
+  for (let i = 0; i < 300; i++) {
+    const s = N.generate("team", "el", {}, rng).replace(/^Οι /, "");
+    const [a, n] = s.split(" ");
+    assert.ok(W.team.el.adj.indexOf(a) >= 0 && W.team.el.noun.indexOf(n) >= 0, s);
+  }
+  W.team.el.adj.forEach((a) => assert.match(a, /(οί|οι|ις|είς)$/, a));
+  W.team.el.noun.forEach((n) => assert.match(n, /(οι|οί|ες|ές|ις)$/, n));
+  const en = N.batch("team", "en", {}, N.seeded(3), 8);
+  en.forEach((s) => assert.match(s, /^(The )?[A-Z][a-z]+ [A-Z][a-z]+$/, s));
+});
+
+test("projects: capitalised, Greek words agree (neuter), one accent each", () => {
+  const rng = N.seeded(5);
+  for (let i = 0; i < 300; i++) {
+    const s = N.generate("project", "el", {}, rng);
+    const words = s.split(" ");
+    const tail = words.slice(-2);
+    assert.ok(words.length === 2 || W.project.el.pre.indexOf(words[0]) >= 0, s);
+    tail.forEach((w) => {
+      assert.equal(w.charAt(0), w.charAt(0).toUpperCase(), s);
+      assert.ok(ACC1(w.toLowerCase()) <= 1, s);
+    });
+    assert.ok(W.handle.el.adj.indexOf(tail[0].toLowerCase()) >= 0 || W.handle.el.adj.some((a) => a.charAt(0).toUpperCase() + a.slice(1) === tail[0]), s);
+    assert.notEqual(tail[0].toLowerCase(), tail[1].toLowerCase());
+  }
+  N.batch("project", "en", {}, N.seeded(9), 8).forEach((s) =>
+    assert.match(s, /^((Project|Operation|Codename) )?[A-Z][a-z]+ [A-Z][a-z]+$/, s));
+});
+
+test("new modes: batches of eight, starred like the others", () => {
+  ["pet", "team", "project"].forEach((m) => {
+    ["en", "el"].forEach((lang) => {
+      const b = N.batch(m, lang, {}, N.seeded(1), 8);
+      assert.equal(b.length, 8);
+      assert.equal(new Set(b).size, 8);
+      b.forEach((s) => assert.ok(s.length <= N.MAX_TEXT && s === s.trim(), s));
+    });
+    const d = N.addFav(empty(), m, "Rex", 5);
+    assert.equal(N.mergeNames(d, null).favs.length, 1, m + " survives the merge");
+  });
+});
+
+test("links: handle and title to Netizen ID, regal pair to Characters", () => {
+  assert.match(src, /mode === "handle"\) return \{ app: "netizen", target: \{ set: \{ user: s \} \}/);
+  assert.match(src, /mode === "title"\) return \{ app: "netizen", target: \{ set: \{ motto: s \} \}/);
+  assert.match(src, /mode === "regal"\) return \{ app: "characters", target: \{ newChar: \{ name: s \} \}/);
+  const NZ = fs.readFileSync(path.join(__dirname, "..", "netizen/netizen.js"), "utf8");
+  assert.match(NZ, /target\.set && typeof target\.set === "object"/);
+  const CH = fs.readFileSync(path.join(__dirname, "..", "characters/characters.js"), "utf8");
+  assert.match(CH, /tg\.newChar && typeof tg\.newChar === "object"/);
+  assert.match(CH, /openEditor\(null, \{ name: nm \}\)/);
 });

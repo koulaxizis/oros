@@ -1,9 +1,11 @@
 // ============================================================
 // orOS Name Generator — App logic (v1.0.0)
 // Names for your corners of the web, your bios and your stories.
-//   - three modes: handles (adjective + noun, Latin letters),
-//     titles ([adjective] role [of something]) and regal pairs
-//     (a fantasy name + an epithet)
+//   - six modes: handles (adjective + noun, Latin letters),
+//     titles ([adjective] role [of something]), regal pairs
+//     (a fantasy name + an epithet), pets, teams and projects
+//   - a handle or a title goes to a new Netizen ID card, a regal
+//     pair to a new character in Characters (shell deep links)
 //   - names in English or Greek; Greek handles are transliterated,
 //     Greek titles and epithets agree with the gender
 //   - handle styles: leet, separators, numbers
@@ -37,7 +39,7 @@
   var BATCH       = 8;
   var MAX_FAVS    = 1000;
   var MAX_TEXT    = 80;
-  var MODES       = ["handle", "title", "regal"];
+  var MODES       = ["handle", "title", "regal", "pet", "team", "project"];
   var W           = window.NAME_WORDS;
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -55,6 +57,9 @@
       "app.name": "Name Generator",
       "mode.handle": "Handles", "mode.title": "Titles", "mode.regal": "Regal pairs",
       "mode.handle.sub": "usernames for the web", "mode.title.sub": "epithets for your bio", "mode.regal.sub": "fantasy name + epithet",
+      "mode.pet": "Pets", "mode.team": "Teams", "mode.project": "Projects",
+      "mode.pet.sub": "for a new friend", "mode.team.sub": "for a club or a quiz night", "mode.project.sub": "codenames for your plans",
+      "btn.netizen": "Put on a Netizen ID card", "btn.char": "New character in Characters",
       "sec.words": "Words", "words.en": "English", "words.el": "Greek",
       "sec.style": "Style", "st.leet": "Leet (a→4)", "st.sep": "Separators (_ -)", "st.num": "Numbers",
       "btn.gen": "New names", "btn.gen.key": "Enter",
@@ -70,6 +75,9 @@
       "app.name": "Γεννήτρια ονομάτων",
       "mode.handle": "Handles", "mode.title": "Τίτλοι", "mode.regal": "Βασιλικά ζεύγη",
       "mode.handle.sub": "ονόματα χρήστη για το διαδίκτυο", "mode.title.sub": "επίθετα για το bio σου", "mode.regal.sub": "όνομα φαντασίας + επίθετο",
+      "mode.pet": "Κατοικίδια", "mode.team": "Ομάδες", "mode.project": "Σχέδια",
+      "mode.pet.sub": "για έναν νέο φίλο", "mode.team.sub": "για σύλλογο ή βραδιά κουίζ", "mode.project.sub": "κωδικά ονόματα για τα σχέδιά σου",
+      "btn.netizen": "Σε κάρτα Netizen ID", "btn.char": "Νέος χαρακτήρας στους Χαρακτήρες",
       "sec.words": "Λέξεις", "words.en": "Αγγλικά", "words.el": "Ελληνικά",
       "sec.style": "Ύφος", "st.leet": "Leet (a→4)", "st.sep": "Διαχωριστικά (_ -)", "st.num": "Αριθμοί",
       "btn.gen": "Νέα ονόματα", "btn.gen.key": "Enter",
@@ -244,9 +252,35 @@
     return name + " " + pick(rng, W.regal.en.epi);
   }
 
+  function genPet(rng, lang) {
+    var w = W.pet[lang], name = pick(rng, w.name);
+    if (!chance(rng, 0.3)) return name;
+    var hon = pick(rng, w.hon);
+    return hon + (hon === "Μπαρμπα" ? "-" : " ") + name;
+  }
+
+  function genTeam(rng, lang) {
+    if (lang === "el") {
+      var g = W.team.el;
+      return (chance(rng, 0.4) ? "Οι " : "") + pick(rng, g.adj) + " " + pick(rng, g.noun);
+    }
+    return (chance(rng, 0.5) ? "The " : "") + cap(pick(rng, W.handle.en.adj)) + " " + pick(rng, W.team.en.noun);
+  }
+
+  // The original handle words (el: Greek neuter, so adjective and noun agree).
+  function genProject(rng, lang) {
+    var w = W.handle[lang], a, n;
+    do { a = pick(rng, w.adj); n = pick(rng, w.noun); } while (a === n);
+    var s = cap(a) + " " + cap(n);
+    return chance(rng, 0.7) ? pick(rng, W.project[lang].pre) + " " + s : s;
+  }
+
   function generate(mode, lang, opts, rng) {
     if (mode === "title") return genTitle(rng, lang);
     if (mode === "regal") return genRegal(rng, lang);
+    if (mode === "pet") return genPet(rng, lang);
+    if (mode === "team") return genTeam(rng, lang);
+    if (mode === "project") return genProject(rng, lang);
     return genHandle(rng, lang, opts || {});
   }
 
@@ -411,6 +445,8 @@
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
     del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    card: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6.5 16c.6-1.4 1.5-2 2.5-2s1.9.6 2.5 2M14 10h4M14 13h3"/></svg>',
+    person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 21c.8-3.5 3.6-6 7-6s6.2 2.5 7 6M19 8v6M16 11h6"/></svg>',
     gen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>'
   };
 
@@ -429,6 +465,31 @@
     return b;
   }
   function shown(mode, s) { return mode === "handle" ? "@" + s : s; }
+
+  // Where a name can go: { app, target, label, icon } or null.
+  // handle → a new Netizen ID card's username, title → its motto,
+  // regal pair → a new character (both apps ask nothing until Save /
+  // offer Undo).
+  function sendTarget(mode, s) {
+    if (mode === "handle") return { app: "netizen", target: { set: { user: s } }, label: "btn.netizen", icon: "card" };
+    if (mode === "title") return { app: "netizen", target: { set: { motto: s } }, label: "btn.netizen", icon: "card" };
+    if (mode === "regal") return { app: "characters", target: { newChar: { name: s } }, label: "btn.char", icon: "person" };
+    return null;
+  }
+  function shellWin() {
+    try {
+      return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null;
+    } catch (e) { return null; }
+  }
+  function sendBtn(mode, s) {
+    var to = sendTarget(mode, s), sh = shellWin();
+    if (!to || !sh) return null;
+    var b = iconBtn("send-btn", ICON[to.icon], t(to.label) + ": " + shown(mode, s));
+    b.addEventListener("click", function () {
+      try { sh.__orosOpenAt(to.app, to.target); } catch (e) {}
+    });
+    return b;
+  }
 
   var batches = {};          // mode → [text…], this session only
 
@@ -540,6 +601,8 @@
       st.setAttribute("aria-pressed", on ? "true" : "false");
       st.addEventListener("click", function () { toggleStar(mode, s); });
       li.appendChild(st);
+      var sb = sendBtn(mode, s);
+      if (sb) li.appendChild(sb);
       host.appendChild(li);
     });
   }
@@ -577,6 +640,8 @@
         var c = iconBtn("copy-btn", ICON.copy, t("btn.copy") + ": " + shown(f.k, f.s));
         c.addEventListener("click", function () { copyOne(f.s); });
         li.appendChild(c);
+        var sb = sendBtn(f.k, f.s);
+        if (sb) li.appendChild(sb);
         var d = iconBtn("del-btn", ICON.del, t("btn.del") + ": " + shown(f.k, f.s));
         d.addEventListener("click", function () { deleteFav(f, li); });
         li.appendChild(d);

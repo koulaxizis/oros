@@ -986,11 +986,11 @@
   // ---------- Character editor ----------
   // Draft lives in ui.editing; inputs write straight into the draft so
   // Save is a single saneChar() pass — no duplicated read-back logic.
-  function openEditor(charId) {
+  function openEditor(charId, preset) {
     var src = charId ? db.characters[charId] : null;
     ui.editing = {
       id: src ? src.id : null,
-      name: src ? src.name : "",
+      name: src ? src.name : (preset && preset.name) || "",
       role: src ? src.role : "",
       bio:  src ? src.bio : "",
       traits: src ? src.traits.map(function (x) { return { name: x.name, str: x.str }; }) : [],
@@ -2380,6 +2380,8 @@
   }
 
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget): target { char } or { rel }.
+  // Name Generator "New character": { newChar: { name } } opens a NEW
+  // character's editor with the name filled in (saved only on Save).
   // A character opens its editor on the Characters tab (search box
   // cleared); a relationship opens its editor on the Relationships
   // tab. Unknown ids → no-op; nothing happens while a dialog is open.
@@ -2391,6 +2393,13 @@
       ui.q = "";
       paint();
       openEditor(tg.char);
+    } else if (tg.newChar && typeof tg.newChar === "object" && typeof tg.newChar.name === "string") {
+      var nm = tg.newChar.name.replace(/\s+/g, " ").trim().slice(0, 80);
+      if (!nm) return;
+      ui.tab = "chars";
+      ui.q = "";
+      paint();
+      openEditor(null, { name: nm });
     } else if (typeof tg.rel === "string" && db.rels[tg.rel]) {
       var r = db.rels[tg.rel];
       if (!db.characters[r.a] || !db.characters[r.b]) return;
