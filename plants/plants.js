@@ -93,6 +93,7 @@
       "set.south": "Southern (winter May–Aug)", "set.data": "Your plants", "set.export": "Export",
       "set.import": "Import", "set.close": "Close",
       "toast.done": "{kind}: {name}", "toast.doneAll": "Watered {n} plants", "toast.undo": "Undo",
+      "toast.notDue": "Nothing to log for {name} right now",
       "toast.skip": "Skipped: {name}", "toast.skipAll": "Skipped {n} outdoor plants",
       "toast.post": "{name}: moved to {when}", "toast.added": "{name} added", "toast.saved": "Saved",
       "toast.deleted": "{name} deleted", "toast.entry": "Entry removed",
@@ -145,6 +146,7 @@
       "set.south": "Νότιο (χειμώνας Μάι–Αύγ)", "set.data": "Τα φυτά σου", "set.export": "Εξαγωγή",
       "set.import": "Εισαγωγή", "set.close": "Κλείσιμο",
       "toast.done": "{kind}: {name}", "toast.doneAll": "Ποτίστηκαν {n} φυτά", "toast.undo": "Αναίρεση",
+      "toast.notDue": "Τίποτα να σημειωθεί τώρα για: {name}",
       "toast.skip": "Παράλειψη: {name}", "toast.skipAll": "Παράλειψη για {n} εξωτερικά φυτά",
       "toast.post": "{name}: μετακινήθηκε {when}", "toast.added": "Προστέθηκε: {name}", "toast.saved": "Αποθηκεύτηκε",
       "toast.deleted": "Διαγράφηκε: {name}", "toast.entry": "Η εγγραφή αφαιρέθηκε",
@@ -1147,7 +1149,38 @@
       if (v) sessionStorage.removeItem(OPEN_KEY);
     } catch (e) {}
     if (v) window.__orosPlantsOpen(v);
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var tg = window.parent.__orosTakeTarget("plants");
+        if (tg) openAt(tg);
+      }
+    } catch (e) {}
   }
+
+  // Generic deep link (shell __orosOpenAt / __orosTakeTarget):
+  //   { plant }                → that plant's details
+  //   { done: { plant, kind } } → "Done" from the Today summary: logs
+  //     that task with the same logTask the Today tab's own button
+  //     uses (Undo in the toast). A task that is not open any more
+  //     (logged on another device, plant gone) only shows a toast.
+  function openAt(tg) {
+    if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (tg.done && typeof tg.done === "object") {
+      var id = tg.done.plant, kind = tg.done.kind;
+      var p = typeof id === "string" ? plantById(id) : null;
+      setTab("today");
+      if (!p) return;
+      var tk = C.tasks(data, todayYmd(), HORIZON, prefs.hemi).filter(function (x) {
+        return x.plant.id === id && x.kind === kind;
+      })[0];
+      if (tk) logTask([tk], false);
+      else localToast(t("toast.notDue", { name: p.name }));
+      return;
+    }
+    if (typeof tg.plant === "string") window.__orosPlantsOpen(tg.plant);
+  }
+  window.__orosOpenAt = openAt;
 
   // ---------- 10. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",

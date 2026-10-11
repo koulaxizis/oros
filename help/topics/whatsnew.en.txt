@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.89.00
+- Today now shows your calendar events, to-dos, Kanban cards, quotes to follow up and birthdays, and you can tick To-Do and Plant Care tasks as done from it.
+
 ## Version 0.88.00
 - Netizen ID: a QR code on the back of your card, Add me to Contacts, and a face straight from Pixel Avatar.
 

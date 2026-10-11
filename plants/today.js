@@ -7,7 +7,9 @@
 // reminder use. Rows: every watering / feeding / misting / repotting
 // that is late, due today or due in the next days; outdoor watering
 // today gets the rain hint from the Weather app's cache (no network).
-// Opens through the shell bridge __orosOpenPlants(plantId).
+// Opens through the shell bridge __orosOpenPlants(plantId). "Done"
+// opens Plant Care, which logs the task with its own button's code
+// (__orosOpenAt: { done: { plant, kind } }, Undo there).
 // ============================================================
 (function (root) {
   "use strict";
@@ -40,7 +42,8 @@
           title: tk.plant.name + ": " + (w[tk.kind] || tk.kind),
           text: text,
           kind: "task",
-          target: { plant: tk.plant.id }
+          target: { plant: tk.plant.id },
+          done: { plant: tk.plant.id, kind: tk.kind }
         };
       });
     },
