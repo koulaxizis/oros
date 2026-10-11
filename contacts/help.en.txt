@@ -4,7 +4,7 @@ Contacts is your address book: names, phones, emails, addresses, birthdays and t
 ## Getting started
 Press `Add` to create a contact. You need at least a name or a `Company`; everything else is optional. Press `Save` when you're done.
 
-Tap or click a contact in the list to open its card. From the card you can call, email or visit a website by tapping it, tap an address to open it in [Maps](app:maps), and use `Edit contact` to change it. Favourites come first in the list, then everyone else in alphabetical order.
+Tap or click a contact in the list to open its card. From the card you can call, email or visit a website by tapping it (an email opens a new message in [Mail](app:mail) when Mail has an account on this device), tap an address to open it in [Maps](app:maps), and use `Edit contact` to change it. Favourites come first in the list, then everyone else in alphabetical order.
 
 ## Add and edit contacts
 The contact window has:

@@ -79,6 +79,7 @@
   var RT = window.orosMailRich;
   var TH = window.orosMailThreads;
   var OB = window.orosMailOutbox;
+  var PP = window.orosMailPeople;
   var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -207,6 +208,14 @@
       "toast.sent": "Sent", "toast.sentNoCopy": "Sent. A copy could not be filed in Sent.",
       "toast.queued": "In the Outbox: it goes out when you are online.", "toast.outSent": "Sent from the Outbox: {n}",
       "out.bar": "Outbox: {n}", "out.title": "Outbox",
+      "to.btn": "Other apps", "to.title": "Use this message in…", "to.app": "Mail", "to.from": "From:", "to.date": "Date:", "to.subj": "Subject:",
+      "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
+      "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
+      "to.link": "A bookmark", "to.linkHint": "Pick one of its {n} links.", "to.nolinks": "This message has no links.", "to.pick": "Pick a link",
+      "to.contact": "Sender to Contacts", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
+      "to.aiHint": "Opens the Assistant with the question ready (long messages are cut); you send it.",
+      "ai.sum": "Summarise this e-mail in a few sentences, in the language it is written in.",
+      "ai.reply": "Write a short, polite reply to this e-mail, in its language. I will edit it before sending.",
       "snd.sending": "Sending…", "snd.late": "Too late: it is already being sent.", "snd.later": "Send later",
       "snd.inHour": "In an hour", "snd.tomorrow": "Tomorrow morning ({when})", "snd.monday": "Monday morning ({when})",
       "snd.at": "Date and time", "snd.schedule": "Schedule", "snd.past": "Pick a time in the future.", "snd.far": "Up to a year ahead.",
@@ -339,6 +348,14 @@
       "toast.sent": "Στάλθηκε", "toast.sentNoCopy": "Στάλθηκε. Δεν μπήκε αντίγραφο στα Απεσταλμένα.",
       "toast.queued": "Μπήκε στα Εξερχόμενα: θα σταλεί μόλις συνδεθείς.", "toast.outSent": "Στάλθηκαν από τα Εξερχόμενα: {n}",
       "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
+      "to.btn": "Άλλες εφαρμογές", "to.title": "Χρήση του μηνύματος σε…", "to.app": "Αλληλογραφία", "to.from": "Από:", "to.date": "Ημερομηνία:", "to.subj": "Θέμα:",
+      "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
+      "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
+      "to.link": "Σελιδοδείκτης", "to.linkHint": "Διάλεξε έναν από τους {n} συνδέσμους του.", "to.nolinks": "Το μήνυμα δεν έχει συνδέσμους.", "to.pick": "Διάλεξε σύνδεσμο",
+      "to.contact": "Αποστολέας στις Επαφές", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
+      "to.aiHint": "Ανοίγει τον Βοηθό με την ερώτηση έτοιμη (τα μεγάλα μηνύματα κόβονται)· τη στέλνεις εσύ.",
+      "ai.sum": "Κάνε περίληψη αυτού του email σε λίγες προτάσεις, στη γλώσσα που είναι γραμμένο.",
+      "ai.reply": "Γράψε μια σύντομη, ευγενική απάντηση σε αυτό το email, στη γλώσσα του. Θα τη διορθώσω πριν τη στείλω.",
       "snd.sending": "Αποστολή…", "snd.late": "Πολύ αργά: στέλνεται ήδη.", "snd.later": "Αποστολή αργότερα",
       "snd.inHour": "Σε μία ώρα", "snd.tomorrow": "Αύριο το πρωί ({when})", "snd.monday": "Δευτέρα πρωί ({when})",
       "snd.at": "Ημερομηνία και ώρα", "snd.schedule": "Προγραμματισμός", "snd.past": "Διάλεξε μια μελλοντική ώρα.", "snd.far": "Έως έναν χρόνο μπροστά.",
@@ -1639,6 +1656,7 @@
         acts.appendChild(button(t(a[1]), "small", function () { replyTo(a[0]); }));
       });
     }
+    if (shellApps()) acts.appendChild(button(t("to.btn"), "small", function () { appsDialog(m, p); }));
     var org = el("span", "org-acts");
     orgButtons(org, [openMsg.uid], true);
     acts.appendChild(org);
@@ -2821,6 +2839,87 @@
   }
   function listText(list) { return (list || []).map(C.fmtInput).join(", "); }
 
+  // ---------- recipients from Contacts ----------
+  var CONTACTS_KEY = "oros-contacts-data";      // the Contacts app's data (read-only here)
+  function contactPeople() {
+    try { return PP.fromContacts(JSON.parse(localStorage.getItem(CONTACTS_KEY) || "null")); } catch (e) { return []; }
+  }
+  // A list of matching contacts under an address field while typing:
+  // arrows move, Enter / Tab / click picks, Esc closes.
+  var acSeq = 0;
+  function addrSuggest(inp, people, changed) {
+    var box = el("div", "ac-list");
+    box.id = "ac-" + (++acSeq);
+    box.setAttribute("role", "listbox");
+    box.hidden = true;
+    inp.insertAdjacentElement("afterend", box);
+    inp.setAttribute("role", "combobox");
+    inp.setAttribute("aria-autocomplete", "list");
+    inp.setAttribute("aria-controls", box.id);
+    inp.setAttribute("aria-expanded", "false");
+    var hits = [], at = -1, tok = null;
+    function close() {
+      box.hidden = true;
+      box.textContent = "";
+      hits = [];
+      at = -1;
+      inp.setAttribute("aria-expanded", "false");
+      inp.removeAttribute("aria-activedescendant");
+    }
+    function mark(i) {
+      at = i;
+      [].forEach.call(box.children, function (o, j) { o.setAttribute("aria-selected", j === i ? "true" : "false"); });
+      if (i >= 0) { inp.setAttribute("aria-activedescendant", box.children[i].id); box.children[i].scrollIntoView({ block: "nearest" }); }
+      else inp.removeAttribute("aria-activedescendant");
+    }
+    function pick(i) {
+      var p = hits[i];
+      if (!p) return;
+      inp.value = PP.put(inp.value, tok, C.fmtInput(p));
+      var end = inp.value.length;
+      inp.setSelectionRange(end, end);
+      close();
+      changed();
+    }
+    function update() {
+      tok = PP.token(inp.value, inp.selectionStart);
+      var taken = C.parseList(inp.value).list.map(function (x) { return x.addr; });
+      hits = tok.text ? PP.suggest(people, tok.text, taken, 6) : [];
+      if (!hits.length) { close(); return; }
+      box.textContent = "";
+      hits.forEach(function (p, i) {
+        var o = el("div", "ac-opt");
+        o.id = box.id + "-" + i;
+        o.setAttribute("role", "option");
+        if (p.name) o.appendChild(el("span", "ac-name", p.name));
+        o.appendChild(el("span", "ac-addr", p.addr));
+        // mousedown: before the field loses focus
+        o.addEventListener("mousedown", function (e) { e.preventDefault(); pick(i); });
+        box.appendChild(o);
+      });
+      box.hidden = false;
+      inp.setAttribute("aria-expanded", "true");
+      mark(-1);
+    }
+    inp.addEventListener("input", update);
+    inp.addEventListener("blur", function () { setTimeout(close, 150); });
+    inp.addEventListener("keydown", function (e) {
+      if (box.hidden) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        var n = hits.length;
+        mark(e.key === "ArrowDown" ? (at + 1) % n : (at <= 0 ? n - 1 : at - 1));
+      } else if ((e.key === "Enter" || e.key === "Tab") && (at >= 0 || e.key === "Enter" || hits.length === 1)) {
+        e.preventDefault();
+        pick(at >= 0 ? at : 0);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        close();
+      }
+    });
+  }
+
   // HTML-only mail → text for quoting. DOMParser documents run no
   // scripts and load nothing.
   function htmlText(html) {
@@ -2886,6 +2985,8 @@
     var fBcc = field(ccBox, "mc-bcc", t("cmp.bcc"), "text", listText(init.bcc), addrAttrs);
     form.appendChild(ccBox);
     ccBtn.addEventListener("click", function () { ccBox.hidden = false; ccBtn.hidden = true; fCc.focus(); });
+    var people = contactPeople();
+    if (people.length) [fTo, fCc, fBcc].forEach(function (f) { addrSuggest(f, people, function () { dirty = true; }); });
     var fSubj = field(form, "mc-subj", t("cmp.subject"), "text", init.subject || "", { maxlength: "300" });
     var bLab = el("div", "dlg-lbl", t("cmp.body"));
     var ed = richEditor(init.html || "", "mc-body", t("cmp.body"), false);
@@ -3535,6 +3636,116 @@
       ib("filter", t("rule.make"), function () { ruleDialog(null, { field: "from", has: lowerAddr(ms[0].from.addr) }); });
       if (lowerAddr(ms[0].from.addr) !== lowerAddr(acct.email)) ib("block", t("blk.btn"), function () { blockDialog(ms[0]); });
     }
+  }
+
+  // ---------- this message in other orOS apps ----------
+  // Shell deep links (__orosOpenAt); every one is a prefill the person
+  // confirms there, except Notes, whose contract makes the page at once.
+  //   todo      { addItems: { from, items: [{ text, note }] } }
+  //   notes     { add: { title, text } }
+  //   bookmarks { add: { url, title } }
+  //   contacts  { add: { email, name } }
+  //   assistant { ask } (≤ 2000 characters; never sent by itself)
+  function shellApps() {
+    try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
+    catch (e) { return null; }
+  }
+  function msgText(p) {
+    var s = p.text !== null ? p.text : (p.html !== null ? htmlText(p.html) : "");
+    return String(s || "").replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  // http(s) links of the message, text first seen as their title
+  function msgLinks(p) {
+    var out = [], seen = {};
+    function add(url, title) {
+      url = String(url || "").trim();
+      if (!/^https?:\/\/[^\s]+$/i.test(url) || seen[url] || out.length >= 30 || url.length > 2000) return;
+      seen[url] = 1;
+      out.push({ url: url, title: String(title || "").replace(/\s+/g, " ").trim().slice(0, 200) });
+    }
+    if (p.html !== null) {
+      // DOMParser documents run no scripts and load nothing
+      var doc = new DOMParser().parseFromString(String(p.html), "text/html");
+      [].forEach.call(doc.querySelectorAll("a[href]"), function (a) { add(a.getAttribute("href"), a.textContent); });
+    }
+    if (p.text !== null) M.splitLinks(p.text).forEach(function (seg) { if (seg.href) add(seg.href, ""); });
+    return out;
+  }
+  function msgHead(m) {
+    return t("to.from") + " " + C.fmtInput(m.from || { addr: "" }) + "\n" + t("to.date") + " " + fmtFullDate(m.date);
+  }
+  function appsDialog(m, p) {
+    var sh = shellApps();
+    if (!sh) return;
+    var dlg = makeDialog("ml-apps");
+    dlg.appendChild(el("div", "dlg-title", t("to.title")));
+    var subj = m.subj || t("read.nosubj");
+    var body = msgText(p);
+    var ul = el("ul", "set-accts apps-list");
+    function item(label, hint, fn) {
+      var li = el("li");
+      var b = el("button", "tpl-use");
+      b.type = "button";
+      b.appendChild(el("span", "set-acct-name", label));
+      if (hint) b.appendChild(el("span", "set-acct-mail", hint));
+      b.addEventListener("click", fn);
+      li.appendChild(b);
+      ul.appendChild(li);
+    }
+    function go(app, target) { dlg.close(); sh.__orosOpenAt(app, target); }
+    item(t("to.todo"), t("to.todoHint"), function () {
+      go("todo", { addItems: { from: t("to.app"), items: [{ text: subj.slice(0, 300), note: (msgHead(m) + "\n\n" + body).slice(0, 1000) }] } });
+    });
+    item(t("to.note"), t("to.noteHint"), function () {
+      go("notes", { add: { title: subj.slice(0, 200), text: (msgHead(m) + "\n" + t("to.subj") + " " + subj + "\n\n" + body).slice(0, 20000) } });
+    });
+    var links = msgLinks(p);
+    item(t("to.link"), links.length ? t("to.linkHint", { n: links.length }) : t("to.nolinks"), function () {
+      if (!links.length) return;
+      if (links.length === 1) { go("bookmarks", { add: { url: links[0].url, title: links[0].title || subj.slice(0, 200) } }); return; }
+      linksDialog(links, function (x) { sh.__orosOpenAt("bookmarks", { add: { url: x.url, title: x.title || subj.slice(0, 200) } }); });
+    });
+    var from = m.from || {};
+    var acct = curAcct();
+    if (from.addr && !(acct && lowerAddr(acct.email) === lowerAddr(from.addr))) {
+      item(t("to.contact"), from.name ? from.name + " <" + from.addr + ">" : from.addr, function () {
+        go("contacts", { add: { email: from.addr, name: from.name || "" } });
+      });
+    }
+    function ask(lead) {
+      var head = lead + "\n\n" + msgHead(m) + "\n" + t("to.subj") + " " + subj + "\n\n";
+      var room = 2000 - head.length;
+      return head + (body.length > room ? body.slice(0, Math.max(0, room - 1)) + "\u2026" : body);
+    }
+    item(t("to.sum"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.sum")) }); });
+    item(t("to.reply"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.reply")) }); });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function linksDialog(links, done) {
+    var dlg = makeDialog("ml-links");
+    dlg.appendChild(el("div", "dlg-title", t("to.pick")));
+    var ul = el("ul", "set-accts apps-list");
+    links.forEach(function (x) {
+      var li = el("li");
+      var b = el("button", "tpl-use");
+      b.type = "button";
+      if (x.title) b.appendChild(el("span", "set-acct-name", x.title));
+      b.appendChild(el("span", "set-acct-mail", x.url));
+      b.addEventListener("click", function () { dlg.close(); done(x); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   // ---------- templates (synced) ----------

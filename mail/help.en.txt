@@ -56,7 +56,7 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 >! Rules work while orOS is open on any of your devices, even with Mail closed. Mail that arrives while orOS is closed everywhere is sorted only if it is still among the newest when orOS opens. A message a rule moves or marks as read shows no notification.
 
 ## Write and reply
-- The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
+- The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`. While you type a name or address, people from [Contacts](app:contacts) with a matching email show under the field: pick one with a tap, or with the arrow keys and [[Enter]].
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
 - `Templates` keeps messages you write often (synced): save the message you are writing under a name, and later pick it to put its text where the cursor is (and its subject, when the subject is empty). The bin deletes one.
 - `Attach files` adds files from this device (or drop them on the message), `From Files` from [Files](app:files); the × removes one. Files can be up to 7 MB together. `Forward` brings the message's files along.
@@ -79,6 +79,15 @@ After `Send`, the message waits a few seconds with an `Undo` button at the botto
 
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
+
+## Use a message in other apps
+`Other apps` under an open message sends it on inside orOS:
+- `A To-Do task`: the subject becomes a task in [To-Do](app:todo), with the sender, date and text as its note; you choose the list and press `Add`.
+- `A note`: saves the message's text as a new page in [Notes](app:notes).
+- `A bookmark`: one of the message's links goes to [Bookmarks](app:bookmarks), ready for you to save.
+- `Sender to Contacts`: opens a new contact in [Contacts](app:contacts) with the sender's name and email filled in, or their card when you already have them.
+- `Summary by the Assistant` and `Reply drafted by the Assistant` open the [AI Assistant](app:assistant) with the question ready, using the key you set there. Very long messages are cut to fit; you press send there, and you copy the reply into Mail yourself.
+From the other side, an email address on a contact's card in Contacts and `Email` on a saved event in [Calendar](app:calendar) open a new message here (when Mail has an account on this device).
 
 ## Accounts and settings
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
