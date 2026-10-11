@@ -19,6 +19,14 @@ Pictures from the internet are hidden at first, so the sender can't tell you ope
 ### Attachments and invitations
 Attachments are listed under the message; tap one to save it. An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
 
+## Organise your mail
+- Under an open message, the buttons `Archive`, `Delete`, `Spam` (`Not spam` inside Spam), `Star`, `Mark as unread` and `Move to…` act on it. `Archive` uses the account's Archive folder and creates one if there is none.
+- `Delete` moves a message to Trash. Inside Trash or Spam, or on an account without a Trash folder, it becomes `Delete for good` and asks first.
+- After a move, `Undo` appears for a few seconds; the change reaches the server only after that.
+- `Select` above the list adds checkboxes: tick several messages (or `Select all`) and use the same buttons on all of them. `Done` leaves selection.
+- On a phone, swipe a message right to archive it or left to delete it.
+- Marking a message as spam also teaches your provider's spam filter.
+
 ## Write and reply
 - The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
@@ -44,13 +52,14 @@ Your accounts (without passwords), the relay address and the senders whose pictu
 - [[J]] or [[↓]] opens the next message, [[K]] or [[↑]] the previous one.
 - [[Esc]] goes back to the list on a narrow screen.
 - [[C]] writes a new message; with a message open, [[R]] replies, [[A]] replies to all and [[F]] forwards.
+- On the open message, or on the selected ones: [[E]] archives, [[Delete]] or [[#]] deletes, [[!]] marks as spam (or not spam), [[S]] stars, [[U]] marks as read or unread and [[V]] moves to a folder.
 
 ## Tips
 - Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing.
 - The relay you set here also lets [Reader](app:feeds) and [Podcasts](app:podcasts) read sites that block browsers.
 
 ## Limits
-- Messages are plain text, without attachments; forwarding sends the text only. Deleting and moving messages aren't there yet.
+- Messages are plain text, without attachments; forwarding sends the text only.
 - Drafts are not saved on the server; the Outbox stays on the device where it was written.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

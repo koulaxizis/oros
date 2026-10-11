@@ -17,6 +17,9 @@
 //     builds the message, the relay hands it to the SMTP server and
 //     files a copy in Sent); per-account signature; written offline →
 //     device-local Outbox, sent when back online
+//   - organise: star, read / unread, archive, spam / not spam, move,
+//     delete (to Trash with Undo; erase in Trash / Spam), selection
+//     of many messages, swipe on touch (right archive, left delete)
 //   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body } })
 //     opens a prefilled draft (never sends by itself)
 // Data:
@@ -38,6 +41,7 @@
 //   8. UI: reader
 //   9. Account dialog + settings
 //  9b. Compose, send, outbox
+//  9c. Organise: flags, move, archive, spam, delete
 //  10. Dialogs + toasts
 //  11. Keyboard
 //  12. Sync slice + palette
@@ -152,7 +156,14 @@
       "out.bar": "Outbox: {n}", "out.title": "Outbox",
       "out.text": "Messages written offline. They go out by themselves when you are online.",
       "out.send": "Send now", "out.edit": "Edit", "out.del": "Delete", "out.failed": "Not sent: {msg}",
-      "out.empty": "The Outbox is empty.", "out.nosubj": "(no subject)"
+      "out.empty": "The Outbox is empty.", "out.nosubj": "(no subject)",
+      "org.archive": "Archive", "org.trash": "Delete", "org.erase": "Delete for good", "org.spamBtn": "Spam",
+      "org.notspamBtn": "Not spam", "org.star": "Star", "org.unstar": "Remove star", "org.read": "Mark as read",
+      "org.unread": "Mark as unread", "org.move": "Move to…", "org.moveTitle": "Move to folder",
+      "org.select": "Select", "org.all": "Select all", "org.selected": "{n} selected", "org.done": "Done",
+      "org.archived": "Archived: {n}", "org.spammed": "Moved to Spam: {n}", "org.notspam": "Back in Inbox: {n}",
+      "org.trashed": "Moved to Trash: {n}", "org.moved": "Moved: {n}", "org.undo": "Undo",
+      "org.eraseQ": "Delete {n} message(s) for good? This cannot be undone.", "org.erased": "Deleted: {n}"
     },
     el: {
       "app": "Αλληλογραφία", "nav.folders": "Φάκελοι", "nav.back": "Πίσω", "btn.refresh": "Έλεγχος για νέα μηνύματα",
@@ -226,7 +237,14 @@
       "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
       "out.text": "Μηνύματα που γράφτηκαν χωρίς σύνδεση. Στέλνονται μόνα τους μόλις συνδεθείς.",
       "out.send": "Αποστολή τώρα", "out.edit": "Επεξεργασία", "out.del": "Διαγραφή", "out.failed": "Δεν στάλθηκε: {msg}",
-      "out.empty": "Τα Εξερχόμενα είναι άδεια.", "out.nosubj": "(χωρίς θέμα)"
+      "out.empty": "Τα Εξερχόμενα είναι άδεια.", "out.nosubj": "(χωρίς θέμα)",
+      "org.archive": "Αρχειοθέτηση", "org.trash": "Διαγραφή", "org.erase": "Οριστική διαγραφή", "org.spamBtn": "Ανεπιθύμητο",
+      "org.notspamBtn": "Δεν είναι ανεπιθύμητο", "org.star": "Αστέρι", "org.unstar": "Χωρίς αστέρι", "org.read": "Σήμανση ως διαβασμένο",
+      "org.unread": "Σήμανση ως αδιάβαστο", "org.move": "Μετακίνηση σε…", "org.moveTitle": "Μετακίνηση σε φάκελο",
+      "org.select": "Επιλογή", "org.all": "Επιλογή όλων", "org.selected": "Επιλεγμένα: {n}", "org.done": "Τέλος",
+      "org.archived": "Αρχειοθετήθηκαν: {n}", "org.spammed": "Στα Ανεπιθύμητα: {n}", "org.notspam": "Πίσω στα Εισερχόμενα: {n}",
+      "org.trashed": "Στον Κάδο: {n}", "org.moved": "Μετακινήθηκαν: {n}", "org.undo": "Αναίρεση",
+      "org.eraseQ": "Οριστική διαγραφή {n} μηνυμάτων; Δεν αναιρείται.", "org.erased": "Διαγράφηκαν: {n}"
     }
   };
 
@@ -326,6 +344,15 @@
     down: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
     pen: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
     out: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+    archive: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>',
+    trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+    spam: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    inbox: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+    starOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    open: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="3 9 12 15 21 9"/></svg>',
+    unread: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>',
+    folder: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+    close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
     key: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>'
   };
 
@@ -626,6 +653,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         signal: ctl.signal,
+        keepalive: op === "move" || op === "flag" || op === "expunge",   // survives leaving the page
         credentials: "omit",
         cache: "no-store",
         referrerPolicy: "no-referrer"
@@ -935,6 +963,8 @@
     var f = currentFolder();
     $("list-title").textContent = f ? folderLabel(f) : "";
     $("list-count").textContent = f && f.unseen > 0 ? t("list.count", { n: f.unseen }) : "";
+    if (sel && cur) Object.keys(sel).forEach(function (u) { if (!findMsg(+u)) delete sel[u]; });
+    renderSelBar();
     if (!acct || !cur) return;
     var loading = !!busy["l|" + acct.id + "|" + cur.folder];
     if (!cur.msgs.length) {
@@ -968,10 +998,17 @@
     if (openMsg && openMsg.uid === m.uid) { b.classList.add("on"); b.setAttribute("aria-current", "true"); }
     var role = folderRole(currentFolder() || {});
     var person = (role === "sent" || role === "drafts") ? (m.to[0] || m.from) : m.from;
-    var av = el("span", "av", initial(person));
-    av.style.background = "hsl(" + hue(person && person.addr) + " 45% 42%)";
-    av.setAttribute("aria-hidden", "true");
-    b.appendChild(av);
+    if (sel) {
+      var ck = el("span", "row-check" + (sel[m.uid] ? " on" : ""));
+      ck.setAttribute("aria-hidden", "true");
+      b.appendChild(ck);
+      b.setAttribute("aria-pressed", sel[m.uid] ? "true" : "false");
+    } else {
+      var av = el("span", "av", initial(person));
+      av.style.background = "hsl(" + hue(person && person.addr) + " 45% 42%)";
+      av.setAttribute("aria-hidden", "true");
+      b.appendChild(av);
+    }
     var mid = el("span", "row-mid");
     var top = el("span", "row-top");
     top.appendChild(el("span", "row-from", who(person) || t("read.nosender")));
@@ -984,7 +1021,11 @@
     mid.appendChild(bot);
     b.appendChild(mid);
     if (unseen) b.appendChild(el("span", "dot", ""));
-    b.addEventListener("click", function () { openMessage(m.uid); });
+    b.addEventListener("click", function () {
+      if (b.dataset.swiped) { delete b.dataset.swiped; return; }
+      if (sel) toggleSel(m.uid); else openMessage(m.uid);
+    });
+    wireSwipe(b, m);
     li.appendChild(b);
     return li;
   }
@@ -1022,6 +1063,8 @@
     openMsg = null;
     lastErr = null;
     cur = null;
+    sel = null;
+    flushMoves();
     if (narrow()) setView("list");
     renderAll();
     var acct = acctById(acctId);
@@ -1172,6 +1215,9 @@
     [["reply", "act.reply"], ["all", "act.all"], ["forward", "act.fwd"]].forEach(function (a) {
       acts.appendChild(button(t(a[1]), "small", function () { replyTo(a[0]); }));
     });
+    var org = el("span", "org-acts");
+    orgButtons(org, [openMsg.uid], true);
+    acts.appendChild(org);
     renderIcs(p, bars);
     var useHtml = p.html !== null && !(prefs.plain && p.text !== null && !openMsg.forceHtml);
     if (useHtml) renderHtml(p, m, bars, body);
@@ -1982,6 +2028,290 @@
     dlg.showModal();
   }
 
+  // ---------- 9c. Organise: flags, move, archive, spam, delete ----------
+  // Flags (star, read / unread) change the list at once and go to the
+  // server; a failure puts them back. Moves (archive, spam, trash,
+  // "Move to…") leave the list at once and reach the server after
+  // UNDO_MS, so "Undo" just puts them back; leaving the page sends
+  // them right away. Deleting in Trash / Spam (or with no Trash)
+  // erases for good, after a question, without Undo. Moves need the
+  // network: offline they are refused with a notice, never queued.
+  var UNDO_MS = 6000;
+  var pendingMoves = [];    // { commit } waiting for their Undo time
+  var sel = null;           // selection mode: { uid: 1 }
+
+  function roleFolder(acct, role) {
+    var list = folders[acct.id] || [];
+    for (var i = 0; i < list.length; i++) if (folderRole(list[i]) === role) return list[i].name;
+    return "";
+  }
+  // Where a new top-level folder goes: under INBOX when the server
+  // keeps its folders there (INBOX.Sent), else at the root.
+  function newFolderName(acct, leaf) {
+    var list = folders[acct.id] || [];
+    for (var i = 0; i < list.length; i++) {
+      var f = list[i];
+      if (f.delim && f.name.toUpperCase().indexOf("INBOX" + f.delim) === 0) return "INBOX" + f.delim + leaf;
+    }
+    return leaf;
+  }
+  function online() {
+    if (!navigator.onLine) { showToast(t("err.offline")); return false; }
+    return true;
+  }
+  function msgsByUid(uids) {
+    return (cur ? cur.msgs : []).filter(function (m) { return uids.indexOf(m.uid) >= 0; });
+  }
+
+  // kind: "star" | "unstar" | "read" | "unread"
+  function setFlags(uids, kind) {
+    var acct = curAcct(), rec = cur;
+    if (!acct || !rec || !uids.length || !online()) return;
+    var flag = kind === "star" || kind === "unstar" ? "\\Flagged" : "\\Seen";
+    var on = kind === "star" || kind === "read";
+    var before = {};
+    var seenDelta = 0;
+    msgsByUid(uids).forEach(function (m) {
+      before[m.uid] = m.flags.slice();
+      var has = hasFlag(m, flag);
+      if (on && !has) { m.flags = m.flags.concat(flag); if (flag === "\\Seen") seenDelta--; }
+      if (!on && has) { m.flags = m.flags.filter(function (f) { return f !== flag; }); if (flag === "\\Seen") seenDelta++; }
+      if (flag === "\\Seen" && rec.pend) delete rec.pend[m.uid];   // no stale "read" mark going up later
+    });
+    if (seenDelta) adjustUnseen(acct.id, rec.folder, seenDelta);
+    saveHeads(rec);
+    renderList();
+    if (openMsg) renderReader();
+    call("flag", acct, { folder: rec.folder, uids: uids.slice(0, 500), add: on ? [flag] : [], remove: on ? [] : [flag] })
+      .catch(function (e) {
+        msgsByUid(uids).forEach(function (m) { if (before[m.uid]) m.flags = before[m.uid]; });
+        if (seenDelta) adjustUnseen(acct.id, rec.folder, -seenDelta);
+        saveHeads(rec);
+        renderList();
+        if (openMsg) renderReader();
+        showToast(errText(e));
+      });
+  }
+
+  // kind: "archive" | "spam" | "notspam" | "trash" | "move" (to)
+  function moveMsgs(uids, kind, to) {
+    var acct = curAcct(), rec = cur;
+    if (!acct || !rec || !uids.length || !online()) return;
+    var folder = rec.folder;
+    var role = folderRole(currentFolder() || {});
+    var dest = to;
+    if (kind === "spam") dest = roleFolder(acct, "junk");
+    if (kind === "notspam") dest = "INBOX";
+    if (kind === "trash") dest = roleFolder(acct, "trash");
+    var create = "";
+    if (kind === "archive") {
+      dest = roleFolder(acct, "archive");
+      if (!dest) { dest = newFolderName(acct, "Archive"); create = dest; }
+    }
+    if (kind === "trash" && (!dest || role === "trash" || role === "junk")) { eraseDialog(uids); return; }
+    if (!dest || dest === folder) return;
+    var moved = msgsByUid(uids);
+    if (!moved.length) return;
+    var unseen = moved.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
+    rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+    if (unseen) { adjustUnseen(acct.id, folder, -unseen); adjustUnseen(acct.id, dest, unseen); }
+    if (openMsg && uids.indexOf(openMsg.uid) >= 0) {
+      openMsg = null;
+      if (phone()) setView("list");
+    }
+    sel = null;
+    saveHeads(rec);
+    renderList();
+    renderReader();
+    var done = false;
+    function restore() {
+      var back = rec.msgs.concat(moved.filter(function (m) {
+        return !rec.msgs.some(function (x) { return x.uid === m.uid; });
+      }));
+      rec.msgs = back.sort(function (a, b) { return b.uid - a.uid; });
+      if (unseen) { adjustUnseen(acct.id, folder, unseen); adjustUnseen(acct.id, dest, -unseen); }
+      saveHeads(rec);
+      renderList();
+    }
+    var job = {
+      commit: function () {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        pendingMoves = pendingMoves.filter(function (j) { return j !== job; });
+        (create ? call("create", acct, { folder: create }) : Promise.resolve()).then(function () {
+          return call("move", acct, { folder: folder, uids: uids.slice(0, 500), to: dest });
+        }).then(function () {
+          if (create) refreshFolders(acct).catch(function () {});
+        }, function (e) {
+          restore();
+          showToast(errText(e));
+        });
+      }
+    };
+    var timer = setTimeout(job.commit, UNDO_MS);
+    pendingMoves.push(job);
+    var label = { archive: "org.archived", spam: "org.spammed", notspam: "org.notspam", trash: "org.trashed", move: "org.moved" }[kind];
+    undoToast(t(label, { n: moved.length }), function () {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      pendingMoves = pendingMoves.filter(function (j) { return j !== job; });
+      restore();
+    });
+  }
+  function flushMoves() { pendingMoves.slice().forEach(function (j) { j.commit(); }); }
+
+  function eraseDialog(uids) {
+    var acct = curAcct(), rec = cur;
+    if (!acct || !rec) return;
+    var dlg = makeDialog("ml-erase");
+    dlg.appendChild(el("p", "dlg-text", t("org.eraseQ", { n: uids.length })));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("org.erase"), "danger", function () {
+      dlg.close();
+      if (!online()) return;
+      var folder = rec.folder;
+      call("expunge", acct, { folder: folder, uids: uids.slice(0, 500) }).then(function () {
+        var gone = msgsByUid(uids);
+        var unseen = gone.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
+        rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+        if (unseen) adjustUnseen(acct.id, folder, -unseen);
+        if (openMsg && uids.indexOf(openMsg.uid) >= 0) { openMsg = null; if (phone()) setView("list"); }
+        sel = null;
+        saveHeads(rec);
+        renderList();
+        renderReader();
+        showToast(t("org.erased", { n: gone.length }));
+      }, function (e) { showToast(errText(e)); });
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  function moveDialog(uids) {
+    var acct = curAcct();
+    if (!acct || !cur) return;
+    var dlg = makeDialog("ml-move");
+    dlg.appendChild(el("div", "dlg-title", t("org.moveTitle")));
+    var ul = el("ul", "move-list");
+    (folders[acct.id] || []).forEach(function (f) {
+      if (f.name === cur.folder) return;
+      var li = el("li");
+      var b = el("button", "folder", folderLabel(f));
+      b.type = "button";
+      b.style.paddingLeft = (12 + folderDepth(f) * 14) + "px";
+      b.addEventListener("click", function () { dlg.close(); moveMsgs(uids, "move", f.name); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // The organise buttons for `uids` (reader bar and selection bar).
+  function orgButtons(box, uids, compact) {
+    var acct = curAcct();
+    if (!acct || !cur) return;
+    var role = folderRole(currentFolder() || {});
+    var ms = msgsByUid(uids);
+    var anyUnread = ms.some(function (m) { return !hasFlag(m, "\\Seen"); });
+    var allStar = ms.length && ms.every(function (m) { return hasFlag(m, "\\Flagged"); });
+    function ib(icon, label, fn, cls) {
+      var b = el("button", "org-btn" + (cls ? " " + cls : ""));
+      b.type = "button";
+      b.innerHTML = UI[icon];
+      b.title = label;
+      b.setAttribute("aria-label", label);
+      if (!compact) b.appendChild(el("span", "org-lbl", label));
+      b.addEventListener("click", fn);
+      box.appendChild(b);
+      return b;
+    }
+    if (role !== "archive") ib("archive", t("org.archive") + " (e)", function () { moveMsgs(uids, "archive"); });
+    var erase = role === "trash" || role === "junk" || !roleFolder(acct, "trash");
+    ib("trash", t(erase ? "org.erase" : "org.trash") + " (Del)", function () { moveMsgs(uids, "trash"); }, erase ? "danger" : "");
+    if (role === "junk") ib("inbox", t("org.notspamBtn"), function () { moveMsgs(uids, "notspam"); });
+    else if (roleFolder(acct, "junk")) ib("spam", t("org.spamBtn") + " (!)", function () { moveMsgs(uids, "spam"); });
+    ib(allStar ? "star" : "starOff", t(allStar ? "org.unstar" : "org.star") + " (s)", function () { setFlags(uids, allStar ? "unstar" : "star"); }, allStar ? "on" : "");
+    ib(anyUnread ? "open" : "unread", t(anyUnread ? "org.read" : "org.unread") + " (u)", function () { setFlags(uids, anyUnread ? "read" : "unread"); });
+    ib("folder", t("org.move") + " (v)", function () { moveDialog(uids); });
+  }
+
+  // ---------- selection mode ----------
+  function selUids() { return sel ? Object.keys(sel).map(Number) : []; }
+  function toggleSel(uid) {
+    if (!sel) sel = {};
+    if (sel[uid]) delete sel[uid]; else sel[uid] = 1;
+    renderList();
+  }
+  function renderSelBar() {
+    var bar = $("sel-bar");
+    bar.innerHTML = "";
+    bar.hidden = !sel;
+    $("sel-btn").hidden = !!sel || !cur || !cur.msgs.length;
+    $("sel-btn").textContent = t("org.select");
+    if (!sel) return;
+    var uids = selUids();
+    var all = el("input");
+    all.type = "checkbox";
+    all.className = "sel-all";
+    all.checked = !!(cur && cur.msgs.length && uids.length === cur.msgs.length);
+    all.setAttribute("aria-label", t("org.all"));
+    all.addEventListener("change", function () {
+      sel = {};
+      if (all.checked && cur) cur.msgs.forEach(function (m) { sel[m.uid] = 1; });
+      renderList();
+    });
+    bar.appendChild(all);
+    bar.appendChild(el("span", "sel-count", t("org.selected", { n: uids.length })));
+    var acts = el("span", "sel-acts");
+    if (uids.length) orgButtons(acts, uids, true);
+    bar.appendChild(acts);
+    var x = el("button", "org-btn");
+    x.type = "button";
+    x.innerHTML = UI.close;
+    x.title = t("org.done");
+    x.setAttribute("aria-label", t("org.done"));
+    x.addEventListener("click", function () { sel = null; renderList(); });
+    bar.appendChild(x);
+  }
+
+  // ---------- swipe (touch): right = archive, left = delete ----------
+  function wireSwipe(btn, m) {
+    var x0 = null, y0 = 0, dx = 0, id = null;
+    btn.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "touch" || sel) return;
+      x0 = e.clientX; y0 = e.clientY; dx = 0; id = e.pointerId;
+    });
+    btn.addEventListener("pointermove", function (e) {
+      if (x0 === null || e.pointerId !== id) return;
+      dx = e.clientX - x0;
+      if (Math.abs(e.clientY - y0) > 30 && Math.abs(dx) < 30) { x0 = null; btn.style.transform = ""; return; }
+      if (Math.abs(dx) > 12) btn.style.transform = "translateX(" + dx + "px)";
+      btn.classList.toggle("swipe-r", dx > 80);
+      btn.classList.toggle("swipe-l", dx < -80);
+    });
+    function end() {
+      if (x0 === null) return;
+      x0 = null;
+      btn.style.transform = "";
+      btn.classList.remove("swipe-r", "swipe-l");
+      if (Math.abs(dx) > 80) {
+        btn.dataset.swiped = "1";
+        moveMsgs([m.uid], dx > 0 ? "archive" : "trash");
+      }
+    }
+    btn.addEventListener("pointerup", end);
+    btn.addEventListener("pointercancel", function () { x0 = null; btn.style.transform = ""; btn.classList.remove("swipe-r", "swipe-l"); });
+  }
+
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -2013,12 +2343,29 @@
     localToast(text);
   }
 
+  // A notice with an Undo button (shell toast action, else our own).
+  function undoToast(text, undo) {
+    try {
+      var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
+      if (n && typeof n.transient === "function" &&
+          n.transient({ ns: "mail", title: String(text), action: { label: t("org.undo"), fn: undo } })) return;
+    } catch (e) {}
+    localToast(text, { label: t("org.undo"), fn: undo });
+  }
+
   var toastTimer = null;
-  function localToast(text) {
+  function localToast(text, action) {
     var box = $("toast");
     if (!box) return;
     hostToast();
     box.textContent = text;
+    box.classList.toggle("act", !!action);
+    if (action) {
+      var ub = el("button", "link-btn", action.label);
+      ub.type = "button";
+      ub.addEventListener("click", function () { box.classList.remove("show"); action.fn(); });
+      box.appendChild(ub);
+    }
     box.classList.remove("show");
     void box.offsetWidth;
     box.classList.add("show");
@@ -2056,6 +2403,18 @@
       if (e.key === "c" && data.accounts.length) { e.preventDefault(); openCompose({}); return; }
       var act = { r: "reply", a: "all", f: "forward" }[e.key];
       if (act && openMsg && openMsg.parsed) { e.preventDefault(); replyTo(act); return; }
+      // e archive, Del / # delete, ! spam, s star, u read / unread, v move
+      var tgt = sel && selUids().length ? selUids() : (openMsg ? [openMsg.uid] : null);
+      if (tgt) {
+        var one = msgsByUid(tgt);
+        var k = e.key;
+        if (k === "e") { e.preventDefault(); moveMsgs(tgt, "archive"); return; }
+        if (k === "Delete" || k === "#") { e.preventDefault(); moveMsgs(tgt, "trash"); return; }
+        if (k === "!" && curAcct() && roleFolder(curAcct(), "junk")) { e.preventDefault(); moveMsgs(tgt, folderRole(currentFolder() || {}) === "junk" ? "notspam" : "spam"); return; }
+        if (k === "s") { e.preventDefault(); setFlags(tgt, one.length && one.every(function (m) { return hasFlag(m, "\\Flagged"); }) ? "unstar" : "star"); return; }
+        if (k === "u") { e.preventDefault(); setFlags(tgt, one.some(function (m) { return !hasFlag(m, "\\Seen"); }) ? "read" : "unread"); return; }
+        if (k === "v") { e.preventDefault(); moveDialog(tgt); return; }
+      }
       var dir = (e.key === "j" || e.key === "ArrowDown") ? 1 : ((e.key === "k" || e.key === "ArrowUp") ? -1 : 0);
       if (!dir || !cur || !cur.msgs.length) return;
       e.preventDefault();
@@ -2208,6 +2567,8 @@
     $("add-acct").addEventListener("click", function () { acctDialog(null); });
     $("wel-add").addEventListener("click", function () { acctDialog(null); });
     window.addEventListener("online", function () { renderBar(); flushOutbox(); refreshCurrent(false); });
+    window.addEventListener("pagehide", flushMoves);
+    $("sel-btn").addEventListener("click", function () { sel = {}; renderList(); });
     window.addEventListener("offline", renderBar);
     window.addEventListener("resize", function () {
       if (!narrow() && view === "side") setView("list");

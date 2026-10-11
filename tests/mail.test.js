@@ -299,7 +299,44 @@ function imapServer(mailbox) {
         if (pass === mailbox.pass && (user === null || user === mailbox.user)) return ok("logged in");
         return reply(tag + " NO [AUTHENTICATIONFAILED] Authentication failed.\r\n");
       }
-      if (/^CAPABILITY/i.test(cmd)) { reply("* CAPABILITY IMAP4rev1\r\n"); return ok(); }
+      if (mailbox.log) mailbox.log.push(cmd.split("\u0001")[0]);
+      if (/^CAPABILITY/i.test(cmd)) { reply("* CAPABILITY " + (mailbox.caps || "IMAP4rev1") + "\r\n"); return ok(); }
+      const uidSet = (s) => { const w = {}; s.split(",").forEach((p) => { const r = p.split(":").map(Number); for (let u = r[0]; u <= (r[1] || r[0]); u++) w[u] = 1; }); return w; };
+      const put = (to, msg) => { to.next = Math.max(to.next || 0, to.msgs.reduce((a, x) => Math.max(a, x.uid), 0)) + 1; to.msgs.push({ uid: to.next, flags: msg.flags.filter((f) => f !== "\\Deleted"), raw: msg.raw }); };
+      let c;
+      if ((c = /^CREATE "([^"]*)"$/i.exec(cmd))) {
+        if (mailbox.folders[c[1]]) return reply(tag + " NO [ALREADYEXISTS] Mailbox exists\r\n");
+        mailbox.folders[c[1]] = { flags: "\\HasNoChildren", uidv: 77, msgs: [] };
+        return ok();
+      }
+      if ((c = /^UID (MOVE|COPY) (\S+) "([^"]*)"$/i.exec(cmd))) {
+        const to = mailbox.folders[c[3]], w = uidSet(c[2]);
+        if (!to) return reply(tag + " NO [TRYCREATE] no such mailbox\r\n");
+        selected.msgs.filter((x) => w[x.uid]).forEach((x) => put(to, x));
+        if (/MOVE/i.test(c[1])) selected.msgs = selected.msgs.filter((x) => !w[x.uid]);
+        return ok();
+      }
+      if ((c = /^(UID EXPUNGE (\S+)|EXPUNGE)$/i.exec(cmd))) {
+        const w = c[2] ? uidSet(c[2]) : null;
+        selected.msgs = selected.msgs.filter((x) => !(x.flags.indexOf("\\Deleted") >= 0 && (!w || w[x.uid])));
+        return ok();
+      }
+      if ((c = /^UID SEARCH (CHARSET UTF-8 )?((?:TEXT|FROM|SUBJECT) .*)$/is.exec(cmd))) {
+        // literals arrive as "{n}" + \u0001 + the rest; put the words back
+        let i = 0;
+        const crit = c[2].replace(/\{\d+\}\u0001/g, () => JSON.stringify(Buffer.from(lits[i++], "latin1").toString("utf8")) );
+        const terms = [];
+        crit.replace(/(TEXT|FROM|SUBJECT) "((?:[^"\\]|\\.)*)"/gi, (_, k, v) => { terms.push([k.toUpperCase(), v.replace(/\\(.)/g, "$1").toLowerCase()]); });
+        const hits = selected.msgs.filter((x) => {
+          const all = Buffer.from(x.raw, "latin1").toString("utf8");
+          return terms.every(([k, v]) => {
+            const hay = k === "TEXT" ? all : ((new RegExp("^" + k + ": (.*)$", "im").exec(all) || [])[1] || "");
+            return hay.toLowerCase().indexOf(v) >= 0;
+          });
+        });
+        reply("* SEARCH" + hits.map((x) => " " + x.uid).join("") + "\r\n");
+        return ok();
+      }
       if (/^LIST /i.test(cmd)) {
         Object.keys(mailbox.folders).forEach((n) => reply("* LIST (" + mailbox.folders[n].flags + ") \".\" \"" + n + "\"\r\n"));
         return ok();
@@ -334,7 +371,8 @@ function imapServer(mailbox) {
       }
       if ((m = /^UID STORE (\S+) \+FLAGS\.SILENT \((.*)\)$/i.exec(cmd))) {
         const uids = m[1].split(",").map(Number);
-        selected.msgs.forEach((msg) => { if (uids.indexOf(msg.uid) >= 0 && msg.flags.indexOf(m[2]) < 0) msg.flags.push(m[2]); });
+        const w = {}; m[1].split(",").forEach((p) => { const r = p.split(":").map(Number); for (let u = r[0]; u <= (r[1] || r[0]); u++) w[u] = 1; });
+        selected.msgs.forEach((msg) => { if ((w[msg.uid] || uids.indexOf(msg.uid) >= 0) && msg.flags.indexOf(m[2]) < 0) msg.flags.push(m[2]); });
         return ok();
       }
       if (/^LOGOUT/i.test(cmd)) { reply("* BYE bye\r\n"); ok(); sock.end(); return; }
@@ -442,4 +480,80 @@ test("data: the signature is kept, cleaned and capped; merge stays symmetric", (
   const b = { accounts: [Object.assign({}, base, { m: 6, sig: "new" })] };
   assert.equal(JSON.stringify(A.mergeMail(a, b)), JSON.stringify(A.mergeMail(b, a)));
   assert.equal(A.mergeMail(a, b).accounts[0].sig, "new");
+});
+
+test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, search", async () => {
+  const core = await import("../relay/core.js");
+  const raw = (uid, from, subj, body) => bin("From: " + from + "\r\nSubject: " + subj + "\r\n\r\n" + body + "\r\n");
+  const mk = (caps) => ({ user: "u@pmail.gr", pass: "pw", caps, log: [], folders: {
+    INBOX: { flags: "\\HasNoChildren", uidv: 5, msgs: [
+      { uid: 1, flags: [], raw: raw(1, "Μαρία <m@example.gr>", "Λογαριασμός ρεύματος", "Πληρωμή έως Παρασκευή") },
+      { uid: 2, flags: ["\\Seen"], raw: raw(2, "Bob <bob@example.com>", "Lunch", "See you at noon") },
+      { uid: 3, flags: [], raw: raw(3, "Bob <bob@example.com>", "Invoice", "Payment due Friday") },
+      { uid: 4, flags: ["\\Deleted"], raw: raw(4, "x@example.com", "old", "already deleted") }
+    ] },
+    "INBOX.Trash": { flags: "\\Trash", uidv: 6, msgs: [] }
+  } });
+  for (const caps of ["IMAP4rev1 MOVE UIDPLUS", "IMAP4rev1"]) {
+    const box = mk(caps);
+    const srv = await imapServer(box);
+    const connectFn = connectTo(srv.address().port);
+    const acct = { host: "mail.pmail.gr", port: 993, sec: "tls", user: box.user, pass: box.pass };
+    const post = (body) => core.handle(new Request("https://relay.test/v1", { method: "POST",
+      headers: { Origin: "https://useoros.online", "CF-Connecting-IP": "1.2.3.4" }, body: JSON.stringify(Object.assign({ acct }, body)) }), {}, connectFn)
+      .then((r) => r.json());
+    try {
+      // validation
+      for (const bad of [{ op: "move", folder: "INBOX", uids: [1], to: "INBOX" }, { op: "move", folder: "INBOX", uids: [], to: "X" },
+                         { op: "move", folder: "INBOX", uids: [1], to: "a\r\nb" }, { op: "expunge", folder: "INBOX", uids: [0] },
+                         { op: "search", folder: "INBOX", q: "  " }, { op: "search", folder: "INBOX", q: "a\r\nA9 LOGOUT" },
+                         { op: "search", folder: "INBOX", q: "a", where: "body" }, { op: "search", folder: "INBOX", q: "a", limit: 500 },
+                         { op: "create" }]) {
+        assert.equal((await post(bad)).error.code, "bad-request", caps + " " + JSON.stringify(bad));
+      }
+      // create: new, then again (ALREADYEXISTS is fine)
+      let r = await post({ op: "create", folder: "INBOX.Archive" });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.ok(box.folders["INBOX.Archive"]);
+      assert.equal((await post({ op: "create", folder: "INBOX.Archive" })).ok, true);
+      // move 2 + 3 to Archive
+      r = await post({ op: "move", folder: "INBOX", uids: [2, 3], to: "INBOX.Archive" });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.equal(r.data.uidvalidity, 5);
+      assert.deepEqual(box.folders.INBOX.msgs.map((x) => x.uid), caps.indexOf("MOVE") >= 0 ? [1, 4] : [1]);
+      assert.deepEqual(box.folders["INBOX.Archive"].msgs.map((x) => x.flags), [["\\Seen"], []]);
+      if (caps.indexOf("MOVE") >= 0) {
+        assert.ok(box.log.some((l) => /^UID MOVE 2:3 /.test(l)));
+        assert.ok(!box.log.some((l) => /^UID COPY/.test(l)));
+      } else {
+        assert.ok(box.log.some((l) => /^UID COPY 2:3 /.test(l)));
+        assert.ok(box.log.some((l) => /^EXPUNGE$/.test(l)));    // no UIDPLUS: plain EXPUNGE (also took uid 4)
+      }
+      // move to a folder that does not exist → "no"
+      assert.equal((await post({ op: "move", folder: "INBOX", uids: [1], to: "Nope" })).error.code, "no");
+      // search: non-ASCII words go as literals with CHARSET UTF-8; ASCII without
+      r = await post({ op: "search", folder: "INBOX.Archive", q: "invoice", where: "subject" });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.equal(r.data.total, 1);
+      assert.equal(M.summary(M.b64ToBin(r.data.msgs[0].hdr)).subject, "Invoice");
+      r = await post({ op: "search", folder: "INBOX.Archive", q: "bob", where: "from", limit: 1 });
+      assert.equal(r.data.total, 2);
+      assert.equal(r.data.uids.split(/[,:]/).length, 2);
+      assert.equal(r.data.msgs.length, 1);
+      r = await post({ op: "search", folder: "INBOX", q: "πληρωμή παρασκευή" });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.deepEqual(r.data.msgs.map((x) => x.uid), [1]);
+      assert.ok(box.log.some((l) => /^UID SEARCH CHARSET UTF-8 TEXT \{\d+\}$/.test(l)));
+      assert.ok(box.log.some((l) => /^UID SEARCH SUBJECT "invoice"$/.test(l)));
+      r = await post({ op: "search", folder: "INBOX", q: "nothing-here" });
+      assert.deepEqual([r.data.total, r.data.msgs.length, r.data.uids], [0, 0, ""]);
+      // expunge: only the given UIDs with UIDPLUS
+      box.folders["INBOX.Archive"].msgs[0].flags.push("\\Deleted");
+      r = await post({ op: "expunge", folder: "INBOX.Archive", uids: [2] });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.deepEqual(box.folders["INBOX.Archive"].msgs.map((x) => x.uid), caps.indexOf("UIDPLUS") >= 0 ? [1] : []);
+    } finally {
+      srv.close();
+    }
+  }
 });
