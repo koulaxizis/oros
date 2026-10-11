@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.85.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.86.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -137,6 +137,7 @@
     notes: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>',
     weather: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><path d="M7 1v1M7 12v1M1 7h1M12 7h1M3.5 3.5l.7.7M10.8 10.8l.7.7M3.5 10.5l.7-.7M10.8 4.2l.7-.7"/><path d="M12.5 21a4.5 4.5 0 0 1 0-9 5.5 5.5 0 0 1 10.6 1.6 3.5 3.5 0 0 1-.6 6.9z"/></svg>',
     mood: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.4"/></svg>',
+    diary: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8.5h6"/></svg>',
     clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>',
     sky: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/><path d="M17 3v3M15.5 4.5h3M20.5 8.5v2M19.5 9.5h2"/></svg>',
     calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
@@ -1013,6 +1014,7 @@
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
+      tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
@@ -1845,6 +1847,41 @@
       title: txt.title,
       body: txt.body,
       deepLink: "shelf:item:" + due.item
+    });
+  }
+
+  // One-Sentence Diary — evening reminder (off by default; Diary
+  // settings turn it on, per device: oros-diary-prefs is device-local).
+  // The RULE lives in diary/core.js (window.DiaryCore), loaded by
+  // index.html before this file and shared with the tests; the shell
+  // owns timing + emission over oros-diary-data, so it works with the
+  // app closed. Only on days with no line yet. Dedupe key: one per day
+  // ("write-<ymd>"). A stale index.html without the core → silent.
+  var diaryLastTick = 0;
+  function diaryCheckTickThrottled() {
+    var now = Date.now();
+    if (now - diaryLastTick < 60000) return;
+    diaryLastTick = now;
+    diaryCheckTick();
+  }
+  function diaryCheckTick() {
+    var D = window.DiaryCore, N = window.orosNotifs;
+    if (!D || typeof D.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var prefs = null, data = null;
+    try { prefs = D.readPrefs(JSON.parse(localStorage.getItem(D.PREFS_KEY) || "null")); } catch (e) { return; }
+    if (!prefs.rem.on) return;
+    try { data = D.mergeDiary(JSON.parse(localStorage.getItem("oros-diary-data") || "null"), null); } catch (e) { return; }
+    var now = new Date(), due = D.reminderDue(data, prefs, now);
+    if (!due) return;
+    var txt = D.reminderText(state.lang === "el" ? "el" : "en", D.streak(data, due.day));
+    N.emit({
+      ns: "diary",
+      key: due.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "diary:day:" + due.day
     });
   }
 

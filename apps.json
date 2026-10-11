@@ -320,6 +320,16 @@
       "type": "internal"
     },
     {
+      "id": "diary",
+      "name": "One-Sentence Diary",
+      "category": "Personal",
+      "icon": "diary",
+      "url": "diary/",
+      "search": "search.js",
+      "searchOff": true,
+      "type": "internal"
+    },
+    {
       "id": "habits",
       "name": "Habits",
       "category": "Personal",
