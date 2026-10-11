@@ -8,7 +8,8 @@
 //     place always looks the same)
 //   - key, bell and carriage-return sounds made with Web Audio (off at first)
 //   - pages (synced), word count, optional word goal, full screen
-//   - copy, .txt download and print; paper: orOS, white, cream, night
+//   - copy, .txt download, print and "Send to Writer" (a new Writer
+//     document, shell deep link); paper: orOS, white, cream, night
 // The text is a real <textarea> (accessible, works with every keyboard
 // and IME); the inked letters are drawn in a layer under it.
 // Data:
@@ -63,6 +64,7 @@
       "sec.page": "This page", "f.title": "Title", "f.title.ph": "Untitled", "f.goal": "Word goal", "f.goal.ph": "None",
       "sec.paper": "Paper", "paper.auto": "orOS", "paper.white": "White", "paper.cream": "Cream", "paper.night": "Night",
       "sec.export": "Take it with you", "btn.copy": "Copy text", "btn.txt": "Download .txt", "btn.print": "Print",
+      "btn.writer": "Send to Writer",
       "export.hint": "Copy and download leave out the struck letters; print shows the page as it is.",
       "pages.empty": "Your pages appear here. They follow you to all your devices.",
       "item.delete": "Delete page", "item.open": "Open",
@@ -85,6 +87,7 @@
       "sec.page": "Αυτή η σελίδα", "f.title": "Τίτλος", "f.title.ph": "Χωρίς τίτλο", "f.goal": "Στόχος λέξεων", "f.goal.ph": "Κανένας",
       "sec.paper": "Χαρτί", "paper.auto": "orOS", "paper.white": "Λευκό", "paper.cream": "Κρεμ", "paper.night": "Νύχτα",
       "sec.export": "Πάρ' το μαζί σου", "btn.copy": "Αντιγραφή κειμένου", "btn.txt": "Λήψη .txt", "btn.print": "Εκτύπωση",
+      "btn.writer": "Στείλ' το στον Κειμενογράφο",
       "export.hint": "Η αντιγραφή και η λήψη αφήνουν έξω τα σβησμένα γράμματα· η εκτύπωση δείχνει τη σελίδα όπως είναι.",
       "pages.empty": "Οι σελίδες σου εμφανίζονται εδώ. Σε ακολουθούν σε όλες τις συσκευές σου.",
       "item.delete": "Διαγραφή σελίδας", "item.open": "Άνοιγμα",
@@ -594,6 +597,21 @@
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
     showToast(t("toast.saved"));
   }
+  // "Send to Writer": the kept text becomes a NEW Writer document with
+  // the page title (Writer opens it; the page here stays as it is).
+  function shellWin() {
+    try {
+      return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null;
+    } catch (e) { return null; }
+  }
+  function sendToWriter() {
+    var s = exportText(), sh = shellWin();
+    if (!sh) return;
+    if (!s.trim()) { showToast(t("toast.empty")); return; }
+    flush();
+    var title = cur ? C.displayTitle(cur, "") : "";
+    try { sh.__orosOpenAt("writer", { newDoc: { title: title, text: s } }); } catch (e) {}
+  }
   function printPage() {
     if (!ta.value.trim()) { showToast(t("toast.empty")); return; }
     try { window.print(); } catch (e) {}
@@ -806,6 +824,8 @@
     $("goal-in").addEventListener("input", onGoal);
     $("copy-btn").addEventListener("click", copyText);
     $("txt-btn").addEventListener("click", downloadTxt);
+    $("writer-btn").hidden = !shellWin();
+    $("writer-btn").addEventListener("click", sendToWriter);
     $("print-btn").addEventListener("click", printPage);
     var d = fsDoc();
     d.addEventListener("fullscreenchange", renderFs);

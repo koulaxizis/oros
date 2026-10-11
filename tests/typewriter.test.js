@@ -140,3 +140,27 @@ test("app: strings match in both languages, every id and key exists", () => {
   assert.match(js, /inheritPalette/);
   assert.match(js, /watchPalette/);
 });
+
+test("Send to Writer: Typewriter sends the kept text, Writer makes a new document", () => {
+  const js = fs.readFileSync(path.join(__dirname, "..", "typewriter/typewriter.js"), "utf8");
+  assert.match(js, /__orosOpenAt\("writer", \{ newDoc: \{ title: title, text: s \} \}\)/);
+  assert.match(js, /var s = exportText\(\), sh = shellWin\(\);/, "struck letters stay out");
+  const W = fs.readFileSync(path.join(__dirname, "..", "writer/writer.js"), "utf8");
+  function cut(name) {
+    const i = W.indexOf("function " + name + "(");
+    let d = 0, j = W.indexOf("{", i);
+    for (; j < W.length; j++) { if (W[j] === "{") d++; else if (W[j] === "}" && --d === 0) break; }
+    return W.slice(i, j + 1);
+  }
+  const made = [];
+  const open = new Function("createDoc",
+    "const NEWDOC_MAX = 500000;\n" + cut("esc") + "\n" + cut("ioParseTxt") + "\n" + cut("openSearchTarget") +
+    "\nreturn openSearchTarget;")((o) => made.push(o));
+  open({ newDoc: { title: "  My   page ", text: "Line one\nline two\n\nA <b>new</b> paragraph" } });
+  assert.deepEqual(made[0], { title: "My page", html: "<p>Line one<br>line two</p><p>A &lt;b&gt;new&lt;/b&gt; paragraph</p>" });
+  open({ newDoc: { text: "Short first\n\nmore" } });
+  assert.equal(made[1].title, "Short first", "no title: the first short paragraph");
+  open({ newDoc: { text: "   " } });
+  open({ newDoc: { title: "x" } });
+  assert.equal(made.length, 2, "empty or missing text makes nothing");
+});

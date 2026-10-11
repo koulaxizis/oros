@@ -31,6 +31,7 @@ Just start typing; everything saves by itself.
 ## Import and export
 - `Export` saves the document as plain text, Markdown, HTML, RTF, Word (.docx), PDF or an orOS Writer file (.orosdoc, which keeps footnotes, comments and metadata). `Database (JSON)` saves all your documents, templates and settings.
 - `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT and MD files. You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer.
+- From [Typewriter](app:typewriter), `Send to Writer` opens a page here as a new document.
 - Importing a `Database (JSON)` file merges it. Documents that exist only here are kept, and if a document differs, the older text goes into `Version history`.
 
 ## Sync and backup

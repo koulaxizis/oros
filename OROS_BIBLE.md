@@ -654,7 +654,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Media Shelf** | oros-shelf-data | items LWW by mtime (equal mtime: larger canonical JSON) + sessions LWW by id + goals LWW per key + shared tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.47.00; Personal (new app) |
 | **Reader** | oros-feeds-data (+ IndexedDB `oros-feeds`: heads, bodies) | feeds / folders / kept items LWW per record by m + tombs (R17); read state: cut max/max, explicit marks LWW, marks under the cut dropped, runs ≥ 20 folded; canonical (R26) | v1.0.0 at 0.47.00; Internet |
 | **One-Minute Museum** | oros-museum-data (+ IndexedDB `oros-museum`: thumbnails) | MUSEUM v1: kept exhibits LWW per item by m + tombs (delete wins ties; Undo re-saves with a newer m, restoring past the tombstone); pull never marks dirty (R6); canonical (R26) | v1.0.0 at 0.60.00; Internet |
-| **Typewriter** | oros-typewriter-data | TYPEWRITER v1: pages LWW per page by m (tie → larger canonical JSON) + tombstones, delete wins ties, a newer edit resurrects (R17, R26) | v1.0.0 at 0.64.00; Creativity |
+| **Typewriter** | oros-typewriter-data | TYPEWRITER v1: pages LWW per page by m (tie → larger canonical JSON) + tombstones, delete wins ties, a newer edit resurrects (R17, R26) | v1.0.0 at 0.64.00; Send to Writer (new document) at 0.91.00; Creativity |
 | **Moon & Sky** | — (no sync slice; device-local `oros-sky-prefs`) | — | v1.0.0 at 0.68.00; Accessories (soffitta.site port 12/17) |
 | **Label Maker** | oros-labels-data (+ device-local `oros-labels-prefs`: tape settings, Recent ≤ 10) | LABELS v1: saved labels LWW by m + tombstones (delete wins ties), max 300, canonical (R26) | v1.0.0 at 0.70.00; Creativity (soffitta.site port 13/17) |
 | **Ringtone Composer** | oros-ringtones-data (+ device-local `oros-ringtones-prefs`) | RINGTONES v1: melodies LWW by m + tombstones (delete wins ties), max 200, 255 notes each, canonical (R26) | v1.0.0 at 0.72.00; Sound (soffitta.site port 14/17) |
@@ -4748,3 +4748,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Name Generator: pets, teams, projects; send to Netizen ID and Characters (#191) — 0.90.00
 - Name Generator: names for pets, teams and projects, and send a name straight to Netizen ID or Characters.
+
+### 2026-10-11 — Typewriter: send to Writer (#192) — 0.91.00
+- Typewriter: send your page to Writer as a new document.
