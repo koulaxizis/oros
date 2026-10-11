@@ -23,6 +23,7 @@ test("notify: the first check only takes the mark", () => {
 test("notify: new = above the mark and unread, newest first", () => {
   const r = N.freshMessages({ uidvalidity: 7, msgs: [msg(14), msg(12), msg(13, true), msg(15)] }, { v: 7, m: 12 });
   assert.deepEqual(r.fresh.map((x) => x.uid), [15, 14]);
+  assert.deepEqual(r.newer.map((x) => x.uid), [15, 14, 13]);   // rules see read ones too
   assert.deepEqual(r.mark, { v: 7, m: 15 });
   // nothing new: mark stays, never goes back
   const again = N.freshMessages({ uidvalidity: 7, msgs: [msg(15), msg(14)] }, r.mark);
@@ -34,9 +35,9 @@ test("notify: new = above the mark and unread, newest first", () => {
 
 test("notify: a new UIDVALIDITY resets the mark silently; an empty Inbox is fine", () => {
   const r = N.freshMessages({ uidvalidity: 8, msgs: [msg(3)] }, { v: 7, m: 99 });
-  assert.deepEqual(r, { mark: { v: 8, m: 3 }, fresh: [] });
-  assert.deepEqual(N.freshMessages({ uidvalidity: 8, msgs: [] }, { v: 8, m: 3 }), { mark: { v: 8, m: 3 }, fresh: [] });
-  assert.deepEqual(N.freshMessages({ uidvalidity: 8 }, null), { mark: { v: 8, m: 0 }, fresh: [] });
+  assert.deepEqual(r, { mark: { v: 8, m: 3 }, fresh: [], newer: [] });
+  assert.deepEqual(N.freshMessages({ uidvalidity: 8, msgs: [] }, { v: 8, m: 3 }), { mark: { v: 8, m: 3 }, fresh: [], newer: [] });
+  assert.deepEqual(N.freshMessages({ uidvalidity: 8 }, null), { mark: { v: 8, m: 0 }, fresh: [], newer: [] });
 });
 
 test("notify: shell wiring (script tag, toggle, deep link bridge)", () => {

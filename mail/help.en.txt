@@ -16,8 +16,32 @@ Gmail, iCloud and Yahoo need an app password: create one in your account's secur
 ### Pictures and formatting
 Pictures from the internet are hidden at first, so the sender can't tell you opened the message. Press `Show pictures` to load them once, or `Always for` a sender to trust them from now on. In settings, `Always show plain text` shows every message as text; `Show the formatted version` switches one message back.
 
+### Sender and link checks
+- `Verified sender` next to the sender means the receiving server checked that the message really comes from that address's domain (SPF, DKIM, DMARC).
+- A red `Careful` box means a check failed, or the sender's name shows a different address than the real one. Treat such a message as a possible fake.
+- `Links that may mislead` lists links whose text names one site but open another, imitate a known name (like paypa1), or hide the real address. Inside the message each one is marked with ⚠ and the site it really opens.
+- The checks run on this device and send nothing anywhere. No badge doesn't mean a message is fake; many servers don't record the checks.
+
 ### Attachments and invitations
 Attachments are listed under the message; tap one to save it. An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
+
+## Organise your mail
+- Under an open message, the buttons `Archive`, `Delete`, `Spam` (`Not spam` inside Spam), `Star`, `Mark as unread` and `Move to…` act on it. `Archive` uses the account's Archive folder and creates one if there is none.
+- `Delete` moves a message to Trash. Inside Trash or Spam, or on an account without a Trash folder, it becomes `Delete for good` and asks first.
+- After a move, `Undo` appears for a few seconds; the change reaches the server only after that.
+- `Select` above the list adds checkboxes: tick several messages (or `Select all`) and use the same buttons on all of them. `Done` leaves selection.
+- On a phone, swipe a message right to archive it or left to delete it.
+- Marking a message as spam also teaches your provider's spam filter.
+
+## Rules
+Rules sort new mail in the Inbox by themselves: for example, move newsletters to a folder, send a sender to Spam, or star mail from your boss.
+- Open the gear button and press `Add rule`, or press `Create a rule…` under a message to start with its sender.
+- Choose what to look at (`the sender`, `a recipient`, `the subject`, or all three) and the words it `contains`. Several words separated by commas mean any of them.
+- Choose what happens: move to Spam, Trash, Archive or another folder, `mark as read` or `star it`.
+- `Also run it on the Inbox now` applies a new rule to the messages already there, with `Undo`.
+- Tick or untick a rule in settings to switch it on or off; `Edit` changes or deletes it.
+
+>! Rules work while orOS is open on any of your devices, even with Mail closed. Mail that arrives while orOS is closed everywhere is sorted only if it is still among the newest when orOS opens. A message a rule moves or marks as read shows no notification.
 
 ## Write and reply
 - The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
@@ -36,7 +60,7 @@ Messages you send while offline wait in `Outbox` in the side panel and go out by
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
 ## Sync and backup
-Your accounts (without passwords), the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
+Your accounts (without passwords), your rules, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
 
 >! Removing an account removes it from orOS on all your devices.
 
@@ -44,13 +68,14 @@ Your accounts (without passwords), the relay address and the senders whose pictu
 - [[J]] or [[↓]] opens the next message, [[K]] or [[↑]] the previous one.
 - [[Esc]] goes back to the list on a narrow screen.
 - [[C]] writes a new message; with a message open, [[R]] replies, [[A]] replies to all and [[F]] forwards.
+- On the open message, or on the selected ones: [[E]] archives, [[Delete]] or [[#]] deletes, [[!]] marks as spam (or not spam), [[S]] stars, [[U]] marks as read or unread and [[V]] moves to a folder.
 
 ## Tips
 - Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing.
 - The relay you set here also lets [Reader](app:feeds) and [Podcasts](app:podcasts) read sites that block browsers.
 
 ## Limits
-- Messages are plain text, without attachments; forwarding sends the text only. Deleting and moving messages aren't there yet.
+- Messages are plain text, without attachments; forwarding sends the text only.
 - Drafts are not saved on the server; the Outbox stays on the device where it was written.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

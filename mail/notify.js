@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mail — new-mail notices (v1.0.0)
+// orOS Mail — new-mail notices and device rules (v1.1.0)
 // Runs in the SHELL window (index.html loads it after
 // notifications.js), so a new message in an Inbox shows a notice
 // while orOS is open, also with the Mail window closed.
@@ -17,6 +17,13 @@
 //     once → one "N new messages" notice
 //   - deep link "mail:msg:<acct>.<uid>" opens that message
 //   - per-app toggle "mail" and quiet hours: notifications.js
+//   - device rules (rules.js, data.rules): applied here to every new
+//     Inbox message (above the mark, read or not) before the notices;
+//     with rules the peek is 20 headers. Flags first (one relay "flag"
+//     per flag), then one "move" per target folder. A message a rule
+//     moved or marked read gets no notice. A failed rule call is
+//     retried at the next check only if the message is still new
+//     (the mark moves on: no endless retries)
 // Reads: oros-mail-data (accounts, relay), IndexedDB "oros-mail"
 // stores "keys" + "creds" (the sealed password, decrypted with the
 // device key exactly as mail.js does; the key never leaves
@@ -37,20 +44,21 @@
   var BACKOFF_MAX = 30 * 60 * 1000;
   var CALL_TIMEOUT = 45000;
   var PEEK = 5;              // newest Inbox headers per check
+  var PEEK_RULES = 20;       // … when the account has rules
   var MAX_EACH = 3;          // more new messages than this → one summary
 
   // ---------- pure core (tests) ----------
   // res: relay "list" answer; mark: { v, m } | null.
-  // → { mark, fresh: [msg] } (newest first; msg as in res.msgs)
+  // → { mark, fresh: [msg], newer: [msg] } (newest first; msg as in
+  //   res.msgs; fresh = unread ones, newer = all above the mark)
   function freshMessages(res, mark) {
     var msgs = (res && Array.isArray(res.msgs) ? res.msgs : []).filter(function (x) { return x && x.uid > 0; });
     var top = msgs.reduce(function (a, x) { return Math.max(a, x.uid); }, 0);
     var v = res ? res.uidvalidity : 0;
-    if (!mark || mark.v !== v) return { mark: { v: v, m: top }, fresh: [] };
-    var fresh = msgs.filter(function (x) {
-      return x.uid > mark.m && !(Array.isArray(x.flags) && x.flags.indexOf("\\Seen") >= 0);
-    }).sort(function (a, b) { return b.uid - a.uid; });
-    return { mark: { v: v, m: Math.max(mark.m, top) }, fresh: fresh };
+    if (!mark || mark.v !== v) return { mark: { v: v, m: top }, fresh: [], newer: [] };
+    var newer = msgs.filter(function (x) { return x.uid > mark.m; }).sort(function (a, b) { return b.uid - a.uid; });
+    var fresh = newer.filter(function (x) { return !(Array.isArray(x.flags) && x.flags.indexOf("\\Seen") >= 0); });
+    return { mark: { v: v, m: Math.max(mark.m, top) }, fresh: fresh, newer: newer };
   }
 
   // ---------- strings ----------
@@ -120,43 +128,48 @@
     }).catch(function () { return null; });
   }
 
-  // ---------- mime.js (header decoding), loaded once ----------
-  var MIME_SRC = "mail/mime.js";
-  try {
-    var cs = root.document && root.document.currentScript;
-    if (cs && /notify\.js(?=[?#]|$)/.test(cs.src || "")) MIME_SRC = cs.src.replace(/notify\.js(?=[?#]|$)/, "mime.js");
-  } catch (e) {}
-  var mimeLoading = null;
-  function mime() {
-    var M = root.orosMailMime;
-    if (M && typeof M.summary === "function") return Promise.resolve(M);
+  // ---------- mime.js (header decoding) + rules.js, loaded once ----------
+  function srcOf(file) {
+    try {
+      var cs = root.document && root.document.currentScript;
+      if (cs && /notify\.js(?=[?#]|$)/.test(cs.src || "")) return cs.src.replace(/notify\.js(?=[?#]|$)/, file);
+    } catch (e) {}
+    return "mail/" + file;
+  }
+  var MIME_SRC = srcOf("mime.js"), RULES_SRC = srcOf("rules.js");
+  var loading = {};
+  function load(src, name, fn) {
+    var X = root[name];
+    if (X && typeof X[fn] === "function") return Promise.resolve(X);
     var doc = root.document;
     if (!doc || !doc.head) return Promise.resolve(null);
-    if (!mimeLoading) {
-      mimeLoading = new Promise(function (resolve) {
+    if (!loading[name]) {
+      loading[name] = new Promise(function (resolve) {
         var s = doc.createElement("script");
-        s.src = MIME_SRC;
+        s.src = src;
         s.async = true;
         s.onload = s.onerror = function () { resolve(); };
         doc.head.appendChild(s);
       });
     }
-    return mimeLoading.then(function () {
-      var M2 = root.orosMailMime;
-      return M2 && typeof M2.summary === "function" ? M2 : null;
+    return loading[name].then(function () {
+      var X2 = root[name];
+      return X2 && typeof X2[fn] === "function" ? X2 : null;
     });
   }
+  function mime() { return load(MIME_SRC, "orosMailMime", "summary"); }
+  function rulesLib() { return load(RULES_SRC, "orosMailRules", "plan"); }
 
   // ---------- relay ----------
-  function list(url, acct, pass) {
+  function relay(url, acct, pass, body) {
     var ctl = new AbortController();
     var timer = setTimeout(function () { ctl.abort(); }, CALL_TIMEOUT);
+    body.acct = { host: acct.imap.host, port: acct.imap.port, sec: acct.imap.sec,
+                  user: acct.imap.user || acct.email, pass: pass };
     return fetch(url + "/v1", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ op: "list", folder: "INBOX", limit: PEEK,
-        acct: { host: acct.imap.host, port: acct.imap.port, sec: acct.imap.sec,
-                user: acct.imap.user || acct.email, pass: pass } }),
+      body: JSON.stringify(body),
       signal: ctl.signal, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
     }).then(function (r) { return r.json(); }).then(function (j) {
       clearTimeout(timer);
@@ -193,6 +206,35 @@
     });
   }
 
+  // Runs the rules on `newer`; → the same list without the messages a
+  // rule moved or marked read. A failed call leaves those messages in.
+  function applyRules(url, acct, pw, rules, newer, M, Rl) {
+    if (!Rl || !M || !rules.length || !newer.length) return Promise.resolve({});
+    var msgs = newer.map(function (x) {
+      var s = null;
+      try { s = M.summary(M.b64ToBin(x.hdr || "")); } catch (e) {}
+      return { uid: x.uid, flags: x.flags, sum: s || {} };
+    });
+    var p = Rl.plan(rules, msgs, acct.id);
+    var done = {};
+    var steps = [];
+    ["\\Seen", "\\Flagged"].forEach(function (f) {
+      if (p.flags[f].length) steps.push(function () {
+        return relay(url, acct, pw, { op: "flag", folder: "INBOX", uids: p.flags[f], add: [f], remove: [] })
+          .then(function () { if (f === "\\Seen") p.flags[f].forEach(function (u) { done[u] = 1; }); });
+      });
+    });
+    Object.keys(p.moves).forEach(function (to) {
+      steps.push(function () {
+        return relay(url, acct, pw, { op: "move", folder: "INBOX", uids: p.moves[to], to: to })
+          .then(function () { p.moves[to].forEach(function (u) { done[u] = 1; }); });
+      });
+    });
+    return steps.reduce(function (q, step) {
+      return q.then(step).catch(function () {});
+    }, Promise.resolve()).then(function () { return done; });
+  }
+
   function check() {
     if (busy) return Promise.resolve();
     function later() { wait = EVERY_MS; schedule(); return Promise.resolve(); }
@@ -209,19 +251,23 @@
     busy = true;
     lastAt = Date.now();
     var failed = false;
-    return Promise.all([openDb(), mime()]).then(function (r) {
-      var d = r[0], M = r[1];
+    var rules = Array.isArray(data.rules) ? data.rules : [];
+    return Promise.all([openDb(), mime(), rules.length ? rulesLib() : null]).then(function (r) {
+      var d = r[0], M = r[1], Rl = r[2];
       if (!d) return;
       var marks = loadMarks();
       return accts.reduce(function (p, acct) {
         return p.then(function () {
           return password(d, acct.id).then(function (pw) {
             if (!pw || silenced[acct.id] === pw) return;
-            return list(url, acct, pw).then(function (res) {
+            var mine = rules.filter(function (x) { return x && x.acct === acct.id && x.on !== false; });
+            return relay(url, acct, pw, { op: "list", folder: "INBOX", limit: mine.length ? PEEK_RULES : PEEK }).then(function (res) {
               var out = freshMessages(res, marks[acct.id]);
               marks[acct.id] = out.mark;
               saveMarks(marks);
-              emitFor(acct, out.fresh, res.uidvalidity, M);
+              return applyRules(url, acct, pw, mine, out.newer, M, Rl).then(function (done) {
+                emitFor(acct, out.fresh.filter(function (x) { return !done[x.uid]; }), res.uidvalidity, M);
+              });
             }, function (e) {
               if (e.code === "auth") silenced[acct.id] = pw;
               else failed = true;
