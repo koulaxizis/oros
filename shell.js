@@ -2500,8 +2500,19 @@
       // and the groups in the alphabetical order of the label the
       // user actually READS — in Greek the menu followed the English
       // names.
+      // Menu apps (launcher.js 1.3.0): hidden apps leave the list but
+      // a search still finds them (and search hits, deep links, the
+      // desktop and the Dock still open them).
+      var q = menuFold(menuQuery.trim());
+      var L = window.orosLauncher;
+      var hideOk = !!(L && typeof L.menuHidden === "function");
+      var hiddenCount = 0;
       var cats = {}, catRaw = {}, catAll = {};
       state.apps.forEach(function (app) {
+        if (hideOk && L.menuHidden(app.id)) {
+          hiddenCount++;
+          if (!q) return;
+        }
         var raw = String(app.category || "other");
         var c = raw.toLowerCase();
         if (!catRaw[c]) catRaw[c] = raw;
@@ -2527,7 +2538,12 @@
       // A74: while searching, keep only the matching apps (by the shown
       // name, the apps.json name, the id or the category label) and
       // show their categories open; the count becomes the match count.
-      var q = menuFold(menuQuery.trim());
+      if (!q && hiddenCount === state.apps.length) {
+        var allHid = document.createElement("div");
+        allHid.className = "menu-empty menu-search-none";
+        allHid.textContent = window.t("menu.hidden.all");
+        appsHost.appendChild(allHid);
+      }
       if (q) {
         Object.keys(cats).forEach(function (c) {
           var cl = catTextOf(c);
@@ -2605,6 +2621,21 @@
         wrap.appendChild(catList);
         appsHost.appendChild(wrap);
       });
+
+      // Hidden apps: one quiet row under the list, into Settings › Menu.
+      if (!q && hiddenCount) {
+        var hidBtn = document.createElement("button");
+        hidBtn.type = "button";
+        hidBtn.className = "menu-hidden-row";
+        hidBtn.textContent = (hiddenCount === 1 ? window.t("menu.hidden.one")
+          : window.t("menu.hidden.some").replace("{n}", hiddenCount)) +
+          " · " + window.t("menu.hidden.choose");
+        hidBtn.addEventListener("click", function () {
+          closeMenu();
+          if (window.orosSettings) window.orosSettings.open("menu");
+        });
+        appsHost.appendChild(hidBtn);
+      }
     }
     }   // renderAppList
 
@@ -6619,6 +6650,29 @@
     } catch (e) { return null; }
   }
 
+  // Menu apps (launcher.js 1.3.0): which apps the menu lists. Only
+  // when the launcher offers it; an older bundle shows no section.
+  function settingsMenuL() {
+    var L = window.orosLauncher;
+    return (L && typeof L.menuHidden === "function" && typeof L.setMenuHidden === "function") ? L : null;
+  }
+  function settingsMenuIds() {
+    return state.apps.filter(function (a) { return a && a.type === "internal"; })
+      .map(function (a) { return a.id; });
+  }
+  function settingsMenuApps() {
+    var L = settingsMenuL();
+    if (!L) return null;
+    return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+      var k = "app." + a.id, v = window.t(k);
+      var raw = String(a.category || "other"), ck = "category." + raw.toLowerCase(), cv = window.t(ck);
+      return { id: a.id, name: (v === k) ? a.name : v,
+               cat: raw.toLowerCase(),
+               catName: (cv === ck) ? raw.charAt(0).toUpperCase() + raw.slice(1) : cv,
+               shown: !L.menuHidden(a.id) };
+    });
+  }
+
   function settingsSnapshot() {
     var S = window.orosSync || null;
     var connected = !!(S && S.isConnected());
@@ -6681,6 +6735,7 @@
       }),
       install: !!state.deferredPrompt,
       dock: settingsDock(),
+      menu: settingsMenuApps(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -6714,6 +6769,11 @@
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
+      return;
+    }
+    if (/^menu:/.test(name)) {
+      var mid = name.slice(5), ML = settingsMenuL();
+      if (ML && settingsMenuIds().indexOf(mid) !== -1) ML.setMenuHidden([mid], !value);
       return;
     }
     if (/^search:/.test(name)) {
@@ -6759,6 +6819,9 @@
       case "updates":         scCheckUpdates(); return;
       case "info":            showInfoModal(); return;
       case "openApp":         if (typeof arg === "string") openAppById(arg); return;
+      // Menu apps: show or hide every app at once (one change, one push).
+      case "menu.showAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), false); return;
+      case "menu.hideAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), true); return;
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
@@ -7941,7 +8004,8 @@
         var k = "app." + app.id, v = window.t(k);
         return (v === k) ? app.name : v;
       },
-      desktop: document.getElementById("oros-desktop")
+      desktop: document.getElementById("oros-desktop"),
+      menuChanged: function () { renderMenu(); }
     });
   }
   applySkin();

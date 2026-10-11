@@ -526,6 +526,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Storage:** none. The app never writes storage; it reads a snapshot and calls `parent.orosSettings` (`set`, `act`), notifications through `parent.orosNotifs`. No sync slice, nothing to migrate. Each card shows its scope ("All devices" / "This device") from `core.js` `SCOPE`.
 - **Shell:** `window.orosSettings` (bridge table above); `settingsNotify()` batched, called at the end of `renderMenu` and on auto-sync events. `open(section)` uses `__orosOpenAt("settings", { section })`.
 - **Ways in:** menu row "Settings" (above Device info and Info) · System category · sync dot when sync is off or locked → Sync · Info window button `sc.reset.moved` → System · Device info sync card → Sync · universal search (`settings/search.js`, section topics).
+- **Menu section** (since launcher 1.3.0): `menu` sits between Appearance and Notifications. Snapshot `menu: [{ id, name, cat, catName, shown }]` (null when the launcher lacks `menuHidden`/`setMenuHidden`); `set("menu:<id>", shown)` (ids checked against the internal apps), `act("menu.showAll")`, `act("menu.hideAll")` → `orosLauncher.setMenuHidden`. The list is grouped by category, with a find field (memory only) and an "n of total shown" line. Scope "All devices".
 - **Rule:** new shell settings go into Settings, never back into the menu.
 
 ### Rules for every app
@@ -545,6 +546,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Dock:** `#ld-dock` (z-index 950: over a running app at 900, under the menu at 999), centred at the bottom, OFF by default. Menu section "Dock" (`#ld-set`, rebuilt in place, focus kept): Show the Dock · Size (small 40 / medium 52 / large 64 px) · Magnify on hover (mouse only, shown only for a fine pointer) · Hide automatically · Show over open apps (off until the user turns it on, on every device; since launcher 1.1.0, before that it followed the pointer). Style (launcher 1.1.0, Settings only): Classic (the original translucent bar, default) · Glass · Frosted · Smoke · Transparent · Solid · 3D shelf · Neon; one `ld-s-<style>` class on `#ld-dock`, skin variables where it can. Hover effect (launcher 1.2.0, mouse only, Settings select replacing the Magnify switch): Magnify (default) · Bounce · Pulse · Frame · Glow · Lift · Wiggle · None; one `ld-h-<effect>` class on `#ld-dock`, effects on `.ld-tile` only; reduced motion turns Bounce / Pulse / Wiggle into the frame. Magnify grows icons from layout positions (`offsetLeft`, never the transformed boxes), slides neighbours apart by the extra width and widens the bar equally on both sides (`--ld-mag`), so icons never overlap and resting centres never move. A dot marks the open app (`aria-current`); tapping the open app never reloads it. Mouse users drag to reorder; touch uses the long-press menu (a finger drag scrolls the Dock: one row, sideways scroll at ≤ 480 px). Auto-hide: a 10 px edge strip (mouse) or a small handle (touch, `#ld-edge`) shows it; leaving or tapping elsewhere hides it; keyboard focus shows it.
 - While the Dock is shown and not auto-hidden it sets `--tb-h` on `<html>`: the pet layer (`pet.css`, the old hook) and the desktop grid rise above it; with "over open apps", `html.ld-push` ends `#oros-running` above the Dock. Without "over open apps" a CSS sibling rule hides the Dock while an app runs.
 - Styles are injected once (`#ld-css`) and use only skin variables.
+- **Menu apps (1.3.0):** `menuHidden(id)`, `menuHiddenIds()`, `setMenuHidden(ids, hidden)`; host option `menuChanged()` (shell passes `renderMenu`) runs after a user change or a pull that changed the list. Schema MENU APPS v1 (Part IV). In `renderAppList` a hidden app is skipped unless a query is typed; category counts count shown apps; with apps hidden a row "n hidden apps · Choose apps" (`.menu-hidden-row`) opens Settings › Menu; with every app hidden the list says so.
 
 ### Assistant app (`assistant/`, 0.63.00)
 - **What:** "Assistant" / «Βοηθός», System. Chat with the AI the user picks, called straight from the browser with the user's own key (no orOS server): Claude (Anthropic Messages API, `anthropic-dangerous-direct-browser-access`), OpenAI, Gemini (`streamGenerateContent?alt=sse`), Mistral, OpenRouter, or "Local / OpenAI-compatible" (Ollama, LM Studio; base URL, key optional). Streaming SSE, Stop, conversation list.
@@ -1099,6 +1101,17 @@ oros-launcher-data = { ver:1, items[{ id, desk: number|null, dock: number|null, 
 - **Merge:** union by id, higher `mtime` wins, tie → greater canonical JSON. Fuzz (20,000 triples): symmetric, idempotent, associative, fixed point, canonical, every output item from an input, inputs not mutated.
 - A fresh device writes nothing until the first real change (`get()` returns null). Unreadable data is copied to `oros-launcher-data-broken`.
 - Device-local (never synced): `oros-launcher-prefs` = `{ on, size: s|m|l, hover, magnify, autohide, over: true|false|null, style }` (over null = never chosen = off; a stored true / false is the user's choice and is kept; style unknown = classic; hover never chosen = magnify, or none when the old `magnify` was false; `magnify` is still written as hover === "magnify" for older bundles). A phone and a PC want different docks; only the pins travel. The factory reset sweeps both (`oros-*`).
+
+**MENU APPS v1** (`launcher.js` 1.3.0 section 1b, slice `menu`, key `oros-menu-apps`; Chris 2026-10-11 "Απόκρυψη όλων, εμφάνιση όλων, επιλογή"):
+
+```
+oros-menu-apps = { ver:1, apps[{ id, hidden: boolean, mtime }] }
+```
+
+- Which apps the menu lists. An app with no item is shown, so a new app always appears. Showing an app again keeps its item (`hidden:false`, new mtime): it is its own tombstone. Same id rule, 500 cap, sorting and `mtime` discipline as LAUNCHER v1; `menuSetHidden(data, ids, hidden, now)` stamps only the apps whose state really changes (Hide all / Show all = one change, one push).
+- **Merge:** union by id, higher `mtime` wins, tie → greater canonical JSON (hidden wins). Its own slice, not a field of `launcher`: an older bundle's `normalize()` would drop an unknown field, while an unknown slice is carried untouched.
+- A fresh device writes nothing until the first real change. Unreadable data is copied to `oros-menu-apps-broken`. Factory reset sweeps it (`oros-*`).
+- Hidden means "not in the menu list" only: the menu search still lists it (while a query is typed), universal search hits, deep links (`__orosOpenAt`, `openAppById`), desktop shortcuts and the Dock still open it.
 
 ## Part V — Sync + data-safety essentials
 

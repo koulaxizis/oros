@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, v1.2.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.3.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -19,6 +19,9 @@
 //     turns it on in Settings (size, style, hover effect, auto-hide,
 //     over open apps: off until chosen). Same small menu; mouse users can also drag.
 //     While it is shown, --tb-h lifts the pet and the desktop grid.
+//   • Menu apps (1.3.0): which apps the menu lists (Settings › Menu).
+//     A hidden app still opens from search, deep links, the desktop
+//     and the Dock. Synced as its own slice "menu" (section 1b).
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
@@ -40,8 +43,9 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.2.0";
+  var VER = "1.3.0";
   var DATA_KEY = "oros-launcher-data";
+  var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
   var PLACES = ["desk", "dock"];
@@ -174,7 +178,67 @@
     return d;
   }
 
-  var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY };
+  // ---------- 1b. Apps shown in the menu (pure) ----------
+  // Data (synced, slice "menu", key oros-menu-apps):
+  //   { ver:1, apps:[{ id, hidden, mtime }] }
+  //   An app without an item is shown, so a new app always appears.
+  //   Showing an app again keeps its item (hidden:false, new mtime):
+  //   it is its own tombstone, at most one item per app id.
+  // Merge: union by id, per id the higher mtime wins, a tie goes to the
+  //   greater canonical JSON (hidden:true). Items sorted by id (R26).
+  function cleanMenuItem(it) {
+    if (!it || typeof it !== "object" || typeof it.id !== "string" || !ID_RE.test(it.id)) return null;
+    var m = (typeof it.mtime === "number" && isFinite(it.mtime) && it.mtime >= 0) ? Math.floor(it.mtime) : 0;
+    return { id: it.id, hidden: it.hidden === true, mtime: m };
+  }
+
+  function menuNormalize(data) {
+    var byId = {};
+    var list = (data && typeof data === "object" && Array.isArray(data.apps)) ? data.apps : [];
+    for (var i = 0; i < list.length; i++) {
+      var it = cleanMenuItem(list[i]);
+      if (!it) continue;
+      byId[it.id] = byId[it.id] ? newer(byId[it.id], it) : it;
+    }
+    var ids = Object.keys(byId).sort();
+    if (ids.length > MAX_ITEMS) ids = ids.slice(0, MAX_ITEMS);
+    return { ver: 1, apps: ids.map(function (id) { return byId[id]; }) };
+  }
+
+  function menuMerge(a, b) {
+    var na = menuNormalize(a), nb = menuNormalize(b);
+    return menuNormalize({ apps: na.apps.concat(nb.apps) });
+  }
+
+  // Ids hidden from the menu, sorted.
+  function menuHiddenIds(data) {
+    return menuNormalize(data).apps.filter(function (it) { return it.hidden; })
+      .map(function (it) { return it.id; });
+  }
+
+  // Hide (or show) every id in `ids`. Only the apps whose state really
+  // changes get a new item and mtime (R27); a new NORMALIZED object is
+  // returned and the input is never mutated.
+  function menuSetHidden(data, ids, hidden, now) {
+    var d = menuNormalize(data);
+    var byId = {};
+    d.apps.forEach(function (it) { byId[it.id] = it; });
+    var want = hidden === true;
+    var changed = false;
+    (Array.isArray(ids) ? ids : [ids]).forEach(function (id) {
+      if (typeof id !== "string" || !ID_RE.test(id)) return;
+      var cur = byId[id];
+      if ((cur ? cur.hidden : false) === want) return;
+      byId[id] = { id: id, hidden: want, mtime: Math.max(now, cur ? cur.mtime + 1 : 0) };
+      changed = true;
+    });
+    if (!changed) return d;
+    return menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) });
+  }
+
+  var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY,
+                menuNormalize: menuNormalize, menuMerge: menuMerge, menuHiddenIds: menuHiddenIds,
+                menuSetHidden: menuSetHidden, MENU_KEY: MENU_KEY };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -230,6 +294,72 @@
     var api = root.orosSync;
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("launcher", sliceGet, sliceSet, DATA_KEY, merge);
+    api.registerSlice("menu", menuSliceGet, menuSliceSet, MENU_KEY, menuMerge);
+  }
+
+  // ---------- 2b. Apps shown in the menu: storage + sync ----------
+  // Its own slice: an older bundle carries it untouched (unknown slice)
+  // instead of dropping a field it does not know from "launcher".
+  var menuCache = null;
+
+  function menuLoad() {
+    if (menuCache) return menuCache;
+    var raw = null;
+    try { raw = root.localStorage.getItem(MENU_KEY); } catch (e) {}
+    var parsed = null;
+    if (raw) {
+      try { parsed = JSON.parse(raw); }
+      catch (e) {
+        try { root.localStorage.setItem(MENU_KEY + "-broken", raw); } catch (e2) {}
+      }
+    }
+    menuCache = menuNormalize(parsed);
+    return menuCache;
+  }
+
+  function menuStore(d) {
+    menuCache = menuNormalize(d);
+    try { root.localStorage.setItem(MENU_KEY, JSON.stringify(menuCache)); } catch (e) {}
+  }
+
+  function menuChanged() {
+    if (host && typeof host.menuChanged === "function") {
+      try { host.menuChanged(); } catch (e) {}
+    }
+  }
+
+  function menuSliceGet() {
+    var raw = null;
+    try { raw = root.localStorage.getItem(MENU_KEY); } catch (e) {}
+    if (!raw) return null;     // nothing yet: a fresh device sends nothing
+    return menuLoad();
+  }
+
+  function menuSliceSet(data) {
+    if (!data) return;
+    var before = JSON.stringify(menuLoad());
+    menuStore(data);           // no markDirty: pulled data must not re-push
+    if (JSON.stringify(menuCache) !== before) menuChanged();
+  }
+
+  // Public: is this app hidden from the menu?
+  function isMenuHidden(id) {
+    var d = menuLoad();
+    for (var i = 0; i < d.apps.length; i++) if (d.apps[i].id === id) return d.apps[i].hidden;
+    return false;
+  }
+
+  // Public: hide or show one id or a list of ids. True when anything
+  // changed (stored, marked dirty, menu repainted).
+  function setMenuHidden(ids, hidden) {
+    var cur = menuLoad();
+    var next = menuSetHidden(cur, ids, hidden === true, Date.now());
+    if (JSON.stringify(next) === JSON.stringify(cur)) return false;
+    menuStore(next);
+    var api = root.orosSync;
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    menuChanged();
+    return true;
   }
 
   // ---------- 3. Dock preferences (DEVICE-LOCAL, never synced) ----------
@@ -995,7 +1125,8 @@
   }
 
   // ---------- 12. Public API ----------
-  // host = { apps(), open(app), running(), label(app), icons, lang(), desktop }
+  // host = { apps(), open(app), running(), label(app), icons, lang(), desktop,
+  //          menuChanged() }
   function attach(h) {
     if (host) return;
     host = h || {};
@@ -1044,6 +1175,9 @@
     menuRow: menuRow,
     renderSettings: renderSettings,
     prefs: publicPrefs,
-    setPref: setPref
+    setPref: setPref,
+    menuHidden: isMenuHidden,
+    menuHiddenIds: function () { return menuHiddenIds(menuLoad()); },
+    setMenuHidden: setMenuHidden
   };
 })(typeof window !== "undefined" ? window : globalThis);
