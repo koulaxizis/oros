@@ -39,6 +39,7 @@ Attachments are listed under the message. Tap one to open it: pictures and PDFs 
 - After a move, `Undo` appears for a few seconds; the change reaches the server only after that.
 - `Select` above the list adds checkboxes: tick several messages (or `Select all`) and use the same buttons on all of them. `Done` leaves selection.
 - On a phone, swipe a message right to archive it or left to delete it.
+- `Block sender` under a message sends it to Spam and adds a rule that sends the sender's next messages there too (the Spam folder is created when missing). To unblock, delete that rule.
 - Marking a message as spam also teaches your provider's spam filter.
 
 ### Folders
@@ -57,6 +58,7 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 ## Write and reply
 - The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
+- `Templates` keeps messages you write often (synced): save the message you are writing under a name, and later pick it to put its text where the cursor is (and its subject, when the subject is empty). The bin deletes one.
 - `Attach files` adds files from this device (or drop them on the message), `From Files` from [Files](app:files); the × removes one. Files can be up to 7 MB together. `Forward` brings the message's files along.
 - With several accounts, `From` chooses which one sends.
 - A copy of what you send goes to the account's `Sent` folder.
@@ -71,6 +73,10 @@ The bar above `Message` adds **bold** ([[Ctrl+B]]), italic ([[Ctrl+I]]), underli
 ### Signature and outgoing server
 In an account, `Signature` adds a few lines under each new message and reply. It can be formatted like a message and hold a small picture, such as a logo (`Picture or logo`; it is made smaller to fit). With several accounts, changing `From` swaps the signature. Sending uses the `Outgoing (SMTP) server` in `Server settings`, with the same username and password as incoming mail; it is filled in with the incoming one and checked when you save.
 
+### Undo send and Send later
+After `Send`, the message waits a few seconds with an `Undo` button at the bottom: `Undo` brings it back to the composer. Choose how long, or turn it off, under `Undo send` in `Mail settings` (this device).
+`Send later` (next to `Attach files`) picks a time: `In an hour`, `Tomorrow morning`, `Monday morning` or any `Date and time` up to a year ahead. The message waits in `Outbox` and goes out at that time while orOS is open on this device, also with Mail closed (orOS shows a notice when it is sent); if orOS is closed then, it goes out as soon as orOS opens. In `Outbox` you can `Send now`, `Edit` or `Delete` it until it starts sending.
+
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
 
@@ -78,7 +84,7 @@ Messages you send while offline wait in `Outbox` in the side panel and go out by
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
 ## Sync and backup
-Your accounts (without passwords), your rules, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
+Your accounts (without passwords), your rules, your templates, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
 
 >! Removing an account removes it from orOS on all your devices.
 
@@ -95,6 +101,6 @@ Your accounts (without passwords), your rules, the relay address and the senders
 
 ## Limits
 - Attached files can be up to 7 MB together; previews show pictures and up to 20 pages of a PDF.
-- The Outbox stays on the device where it was written; use `Save draft` to continue on another device.
+- The Outbox stays on the device where it was written, and so do scheduled messages: they go out only from that device. Use `Save draft` to continue on another device.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

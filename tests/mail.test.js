@@ -691,3 +691,15 @@ test("relay: draft saves with \\Draft, replaces the previous one, finds its UID 
     }
   }
 });
+
+test("data: templates merge LWW by m, sorted by name, tombstones delete them, bad ones dropped", () => {
+  const tp = (id, m, name, html, extra) => Object.assign({ id, m, name, html }, extra || {});
+  const a = { templates: [tp("tpl0001", 5, "Ευχαριστώ", "<b>Ευχαριστώ!</b>"), tp("tpl0002", 3, "Address", "Odos 1"), tp("tpl0003", 1, "Gone", "x")] };
+  const b = { templates: [tp("tpl0001", 6, "Ευχαριστώ πολύ", "Ευχαριστώ πολύ!", { subject: "  Re:\n ok ", junk: 1 }), tp("BAD", 1, "x", "y"),
+    tp("tpl0004", 1, "", "no name"), tp("tpl0005", 1, "Big", "x".repeat(8001)), tp("tpl0006", 1, "Empty", "")], tombs: { tpl0003: 2 } };
+  const ab = A.mergeMail(a, b), ba = A.mergeMail(b, a);
+  assert.equal(JSON.stringify(ab), JSON.stringify(ba));
+  assert.deepEqual(ab.templates.map((x) => x.name), ["Address", "Ευχαριστώ πολύ"]);
+  assert.deepEqual(ab.templates[1], { id: "tpl0001", m: 6, name: "Ευχαριστώ πολύ", subject: "Re: ok", html: "Ευχαριστώ πολύ!" });
+  assert.deepEqual(A.emptyData().templates, []);
+});

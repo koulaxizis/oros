@@ -78,6 +78,7 @@
   var R = window.orosMailRules;
   var RT = window.orosMailRich;
   var TH = window.orosMailThreads;
+  var OB = window.orosMailOutbox;
   var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -118,6 +119,12 @@
       "fold.errEmpty": "Type a name.", "fold.errLong": "The name is too long (up to 100 characters).",
       "fold.errChars": "The name cannot be Inbox or contain {d} * % \" \\ or line breaks.", "fold.exists": "There is already a folder with this name.",
       "fold.created": "Folder created: {name}", "fold.renamed": "Folder renamed: {name}", "fold.deleted": "Folder deleted: {name}",
+      "tpl.btn": "Templates", "tpl.title": "Templates", "tpl.none": "No templates yet. Write a message, then save it here as a template.",
+      "tpl.saveAs": "Save this message as a template", "tpl.namePh": "Name, e.g. Thank you", "tpl.save": "Save template", "tpl.del": "Delete template",
+      "tpl.noName": "Give the template a name.", "tpl.empty": "Write something first.", "tpl.long": "Too long for a template (pictures cannot go in one).",
+      "tpl.many": "Up to {n} templates.", "tpl.saved": "Template saved: {name}",
+      "blk.btn": "Block sender", "blk.q": "Block {addr}? Their next messages go straight to Spam, and this one goes there now. A rule does it; remove it under Settings › Rules to unblock.",
+      "blk.do": "Block", "blk.done": "Blocked: {addr}",
       "rule.add": "Add rule", "rule.new": "New rule", "rule.edit": "Edit rule", "rule.none": "No rules yet.",
       "rule.acct": "Account", "rule.if": "If", "rule.has": "contains", "rule.hasHint": "Several words separated by commas: any of them.",
       "rule.then": "Then", "rule.folder": "Folder", "rule.run": "Also run it on the Inbox now", "rule.on": "On",
@@ -200,6 +207,12 @@
       "toast.sent": "Sent", "toast.sentNoCopy": "Sent. A copy could not be filed in Sent.",
       "toast.queued": "In the Outbox: it goes out when you are online.", "toast.outSent": "Sent from the Outbox: {n}",
       "out.bar": "Outbox: {n}", "out.title": "Outbox",
+      "snd.sending": "Sending…", "snd.late": "Too late: it is already being sent.", "snd.later": "Send later",
+      "snd.inHour": "In an hour", "snd.tomorrow": "Tomorrow morning ({when})", "snd.monday": "Monday morning ({when})",
+      "snd.at": "Date and time", "snd.schedule": "Schedule", "snd.past": "Pick a time in the future.", "snd.far": "Up to a year ahead.",
+      "snd.hint": "It goes out at that time while orOS is open on this device (with Mail closed too); otherwise as soon as orOS opens.",
+      "snd.scheduled": "Scheduled for {when}", "snd.at2": "Sends {when}", "snd.now": "Being sent…",
+      "set.undo": "Undo send", "set.undoOff": "Off (send at once)", "set.undoSec": "{n} seconds to undo",
       "out.text": "Messages written offline. They go out by themselves when you are online.",
       "out.send": "Send now", "out.edit": "Edit", "out.del": "Delete", "out.failed": "Not sent: {msg}",
       "out.empty": "The Outbox is empty.", "out.nosubj": "(no subject)",
@@ -238,6 +251,12 @@
       "fold.errEmpty": "Γράψε ένα όνομα.", "fold.errLong": "Το όνομα είναι πολύ μεγάλο (έως 100 χαρακτήρες).",
       "fold.errChars": "Το όνομα δεν μπορεί να είναι Inbox ούτε να έχει {d} * % \" \\ ή αλλαγή γραμμής.", "fold.exists": "Υπάρχει ήδη φάκελος με αυτό το όνομα.",
       "fold.created": "Ο φάκελος δημιουργήθηκε: {name}", "fold.renamed": "Ο φάκελος μετονομάστηκε: {name}", "fold.deleted": "Ο φάκελος διαγράφηκε: {name}",
+      "tpl.btn": "Πρότυπα", "tpl.title": "Πρότυπα", "tpl.none": "Δεν υπάρχουν πρότυπα ακόμα. Γράψε ένα μήνυμα και αποθήκευσέ το εδώ ως πρότυπο.",
+      "tpl.saveAs": "Αποθήκευση αυτού του μηνύματος ως πρότυπο", "tpl.namePh": "Όνομα, π.χ. Ευχαριστώ", "tpl.save": "Αποθήκευση προτύπου", "tpl.del": "Διαγραφή προτύπου",
+      "tpl.noName": "Δώσε ένα όνομα στο πρότυπο.", "tpl.empty": "Γράψε κάτι πρώτα.", "tpl.long": "Πολύ μεγάλο για πρότυπο (οι εικόνες δεν χωρούν σε πρότυπο).",
+      "tpl.many": "Έως {n} πρότυπα.", "tpl.saved": "Το πρότυπο αποθηκεύτηκε: {name}",
+      "blk.btn": "Φραγή αποστολέα", "blk.q": "Φραγή του {addr}; Τα επόμενα μηνύματά του θα πηγαίνουν κατευθείαν στα Ανεπιθύμητα, και αυτό πηγαίνει εκεί τώρα. Το κάνει ένας κανόνας· για να αρθεί η φραγή, διάγραψέ τον από Ρυθμίσεις › Κανόνες.",
+      "blk.do": "Φραγή", "blk.done": "Φραγή: {addr}",
       "rule.add": "Νέος κανόνας", "rule.new": "Νέος κανόνας", "rule.edit": "Επεξεργασία κανόνα", "rule.none": "Δεν υπάρχουν κανόνες ακόμα.",
       "rule.acct": "Λογαριασμός", "rule.if": "Αν", "rule.has": "περιέχει", "rule.hasHint": "Πολλές λέξεις χωρισμένες με κόμμα: οποιαδήποτε από αυτές.",
       "rule.then": "Τότε", "rule.folder": "Φάκελος", "rule.run": "Εφάρμοσέ τον και τώρα στα Εισερχόμενα", "rule.on": "Ενεργός",
@@ -320,6 +339,12 @@
       "toast.sent": "Στάλθηκε", "toast.sentNoCopy": "Στάλθηκε. Δεν μπήκε αντίγραφο στα Απεσταλμένα.",
       "toast.queued": "Μπήκε στα Εξερχόμενα: θα σταλεί μόλις συνδεθείς.", "toast.outSent": "Στάλθηκαν από τα Εξερχόμενα: {n}",
       "out.bar": "Εξερχόμενα: {n}", "out.title": "Εξερχόμενα",
+      "snd.sending": "Αποστολή…", "snd.late": "Πολύ αργά: στέλνεται ήδη.", "snd.later": "Αποστολή αργότερα",
+      "snd.inHour": "Σε μία ώρα", "snd.tomorrow": "Αύριο το πρωί ({when})", "snd.monday": "Δευτέρα πρωί ({when})",
+      "snd.at": "Ημερομηνία και ώρα", "snd.schedule": "Προγραμματισμός", "snd.past": "Διάλεξε μια μελλοντική ώρα.", "snd.far": "Έως έναν χρόνο μπροστά.",
+      "snd.hint": "Φεύγει εκείνη την ώρα όσο το orOS είναι ανοιχτό σε αυτή τη συσκευή (και με κλειστή την Αλληλογραφία)· αλλιώς μόλις ανοίξει το orOS.",
+      "snd.scheduled": "Προγραμματίστηκε για {when}", "snd.at2": "Στέλνεται {when}", "snd.now": "Στέλνεται…",
+      "set.undo": "Αναίρεση αποστολής", "set.undoOff": "Όχι (αποστολή αμέσως)", "set.undoSec": "{n} δευτερόλεπτα για αναίρεση",
       "out.text": "Μηνύματα που γράφτηκαν χωρίς σύνδεση. Στέλνονται μόνα τους μόλις συνδεθείς.",
       "out.send": "Αποστολή τώρα", "out.edit": "Επεξεργασία", "out.del": "Διαγραφή", "out.failed": "Δεν στάλθηκε: {msg}",
       "out.empty": "Τα Εξερχόμενα είναι άδεια.", "out.nosubj": "(χωρίς θέμα)",
@@ -433,6 +458,7 @@
     shield: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
     archive: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>',
     trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+    block: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
     spam: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
     inbox: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
     starOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
@@ -504,7 +530,20 @@
     return null;
   }
 
-  function emptyData() { return { ver: DATA_VER, accounts: [], relay: { url: "", m: 0 }, imgOk: {}, tombs: {}, rules: [] }; }
+  function emptyData() { return { ver: DATA_VER, accounts: [], relay: { url: "", m: 0 }, imgOk: {}, tombs: {}, rules: [], templates: [] }; }
+  // A message template (synced): { id, m, name ≤ 60, subject ≤ 300,
+  // html ≤ MAX_TPL_HTML }. The HTML is cleaned (rich.js) when it is
+  // put into a message, never shown raw.
+  var MAX_TPLS = 30, MAX_TPL_HTML = 8000;
+  function normTpl(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !/^[a-z0-9]{6,40}$/.test(x.id)) return null;
+    if (!isInt(x.m) || x.m < 0) return null;
+    var name = typeof x.name === "string" ? x.name.replace(/\s+/g, " ").trim().slice(0, 60) : "";
+    var html = typeof x.html === "string" ? x.html : "";
+    if (!name || !html || html.length > MAX_TPL_HTML) return null;
+    var subject = typeof x.subject === "string" ? x.subject.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+    return { id: x.id, m: x.m, name: name, subject: subject, html: html };
+  }
 
   function sortedObj(src, maxN) {
     var keys = Object.keys(src);
@@ -525,7 +564,7 @@
   // output (R26).
   function mergeMail(a, b) {
     var res = emptyData();
-    var tombs = {}, byId = {}, img = {}, rules = {};
+    var tombs = {}, byId = {}, img = {}, rules = {}, tpls = {};
     [a, b].forEach(function (d) {
       if (!d || typeof d !== "object") return;
       if (d.tombs && typeof d.tombs === "object") {
@@ -545,6 +584,12 @@
         if (!n) return;
         var cur = rules[n.id];
         if (!cur || n.m > cur.m || (n.m === cur.m && cmpStr(JSON.stringify(n), JSON.stringify(cur)) > 0)) rules[n.id] = n;
+      });
+      (Array.isArray(d.templates) ? d.templates : []).forEach(function (x) {
+        var n = normTpl(x);
+        if (!n) return;
+        var cur = tpls[n.id];
+        if (!cur || n.m > cur.m || (n.m === cur.m && cmpStr(JSON.stringify(n), JSON.stringify(cur)) > 0)) tpls[n.id] = n;
       });
       var r = d.relay;
       if (r && typeof r === "object" && isInt(r.m) && r.m >= 0) {
@@ -571,6 +616,9 @@
       var x = rules[id];
       return !(tombs[id] >= x.m) && !(tombs[x.acct] && !live[x.acct]);
     }).slice(0, R.MAX_RULES).map(function (id) { return rules[id]; });
+    res.templates = Object.keys(tpls).filter(function (id) { return !(tombs[id] >= tpls[id].m); })
+      .sort(function (x, y) { return cmpStr(tpls[x].name.toLowerCase(), tpls[y].name.toLowerCase()) || cmpStr(x, y); })
+      .slice(0, MAX_TPLS).map(function (id) { return tpls[id]; });
     res.tombs = sortedObj(tombs, MAX_TOMBS);
     res.imgOk = sortedObj(img, MAX_IMGOK);
     return res;
@@ -821,7 +869,8 @@
 
   // ---------- 6. Folders + message cache ----------
   var data = emptyData();
-  var prefs = { acct: null, folder: "INBOX", plain: 0, threads: 1, uni: 0 };
+  var prefs = { acct: null, folder: "INBOX", plain: 0, threads: 1, uni: 0, undo: 10 };
+  var UNDO_SECS = [0, 5, 10, 20];
   var openThreads = {};    // conversation key → 1 while its older messages show
   var folders = {};        // acctId → [folder] (sorted)
   var needPass = {};       // acctId → 1 when no password on this device
@@ -2372,6 +2421,9 @@
     labT.appendChild(cbT);
     labT.appendChild(el("span", "", t("set.threads")));
     form.appendChild(labT);
+    var fUndo = portSelect(form, "ml-undo", t("set.undo"), UNDO_SECS.map(function (n) {
+      return [n, n ? t("set.undoSec", { n: n }) : t("set.undoOff")];
+    }), prefs.undo);
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
     form.appendChild(errP);
@@ -2392,6 +2444,7 @@
       }
       prefs.plain = cb.checked ? 1 : 0;
       prefs.threads = cbT.checked ? 1 : 0;
+      prefs.undo = +fUndo.value || 0;
       savePrefs();
       dlg.close();
       showToast(t("toast.saved"));
@@ -2418,7 +2471,7 @@
     return idb("outbox", "readonly", function (s) { return s.getAll(); }).then(function (rows) {
       outbox = (rows || []).filter(function (r) { return r && typeof r.id === "string" && r.draft; })
         .sort(function (a, b) { return a.at - b.at; });
-    }).catch(function () { outbox = []; });
+    }).catch(function () { outbox = []; }).then(armTimed);
   }
   function dropOut(id) {
     outbox = outbox.filter(function (r) { return r.id !== id; });
@@ -2442,15 +2495,22 @@
 
   // draft: { acct, to[], cc[], bcc[], subject, text, inReplyTo, references }
   // → { copyFailed }
-  function sendDraft(d) {
+  // → { acct, msg } or throws MailError
+  function buildMsg(d) {
     var acct = acctById(d.acct);
-    if (!acct) return Promise.reject(new MailError("noacct"));
-    if (!acct.smtp) return Promise.reject(new MailError("nosmtp"));
+    if (!acct) throw new MailError("noacct");
+    if (!acct.smtp) throw new MailError("nosmtp");
     var rich = d.html ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
                         subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
                         attachments: d.atts || [], inReplyTo: d.inReplyTo, references: d.references });
-    if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
+    if (msg.bin.length > MSG_MAX) throw new MailError("big");
+    return { acct: acct, msg: msg };
+  }
+  function sendDraft(d) {
+    var b;
+    try { b = buildMsg(d); } catch (e) { return Promise.reject(e); }
+    var acct = b.acct, msg = b.msg;
     var sent = sentFolder(acct);
     var args = { smtp: true, from: acct.email, rcpt: msg.rcpt, raw: C.b64(msg.bin) };
     if (sent) args.sent = sent;
@@ -2534,7 +2594,7 @@
 
   function flushOutbox() {
     if (flushing || !navigator.onLine) return Promise.resolve();
-    var list = outbox.filter(function (r) { return !r.err && r.id !== editingOut; });
+    var list = outbox.filter(function (r) { return !r.err && r.id !== editingOut && !OB.timed(r); });
     if (!list.length) return Promise.resolve();
     flushing = true;
     var n = 0;
@@ -2554,6 +2614,128 @@
     });
   }
 
+  // ---------- timed sends: Undo send, Send later (outbox.js) ----------
+  var TAB = newId();          // this window, in outbox claims
+  var timedTimer = null;
+  function queueTimed(d, due) {
+    var b = buildMsg(d);      // throws "big" / "nosmtp" before anything is queued
+    if (outbox.length >= OUT_MAX) throw new MailError("outfull");
+    var job = { acct: b.acct.id, from: b.acct.email, rcpt: b.msg.rcpt, raw: C.b64(b.msg.bin), subj: d.subject || "" };
+    var sent = sentFolder(b.acct);
+    if (sent) job.sent = sent;
+    if (d.serverDraft) job.serverDraft = d.serverDraft;
+    var rec = { id: newId(), at: Date.now(), draft: d, err: "", due: due, job: job };
+    return idbPut("outbox", rec.id, rec).then(function () {
+      outbox.push(rec);
+      renderSide();
+      armTimed();
+      return rec;
+    });
+  }
+  function armTimed() {
+    clearTimeout(timedTimer);
+    var now = Date.now(), n = OB.nextDue(outbox, now);
+    if (!n) return;
+    try { parent.__orosMailNotify.due(n); } catch (e) {}     // the shell sends it should Mail close
+    // at most a minute: the shell's checker may send (or a tab claim) meanwhile
+    timedTimer = setTimeout(runTimed, Math.min(60000, Math.max(200, n - now + 100)));
+  }
+  function runTimed() {
+    if (!navigator.onLine) { armTimed(); return Promise.resolve(); }
+    return loadOutbox().then(function () {
+      var now = Date.now();
+      var due = outbox.filter(function (r) { return OB.isDue(r, now); });
+      return due.reduce(function (p, r) {
+        return p.then(function () { return sendTimed(r.id); });
+      }, Promise.resolve());
+    }).then(function () { return loadOutbox(); }).then(function () {
+      renderSide();
+      if ($("ml-out")) outboxDialog();
+    }, function () { armTimed(); });
+  }
+  function sendTimed(id) {
+    return db().then(function (d) { return OB.claim(d, id, TAB, Date.now()); }).then(function (rec) {
+      if (!rec) return;
+      var acct = acctById(rec.job.acct);
+      if (!acct) return db().then(function (d) { return OB.release(d, id, errText(new MailError("noacct"))); });
+      var args = { smtp: true, from: rec.job.from, rcpt: rec.job.rcpt, raw: rec.job.raw };
+      if (rec.job.sent) args.sent = rec.job.sent;
+      return call("send", acct, args).then(function (res) {
+        return db().then(function (d) { return OB.finish(d, id); }).then(function () {
+          if (rec.job.serverDraft) dropServerDraft(rec.job.serverDraft);
+          if (rec.job.sent && cur && cur.acct === acct.id && cur.folder === rec.job.sent) refreshCurrent(false);
+          showToast(rec.job.sent && !(res && res.appended) ? t("toast.sentNoCopy") : t("toast.sent") + (rec.job.subj ? ": " + rec.job.subj : ""));
+        });
+      }, function (e) {
+        return db().then(function (d) { return OB.release(d, id, waitsForNet(e) ? "" : sendErrText(e)); });
+      });
+    }).catch(function () {});
+  }
+  // Undo / Edit / Delete: only while nobody is sending it
+  function takeBack(id) {
+    return db().then(function (d) { return OB.takeBack(d, id, Date.now()); }).then(function (rec) {
+      outbox = outbox.filter(function (r) { return r.id !== id; });
+      renderSide();
+      armTimed();
+      if (!rec) showToast(t("snd.late"));
+      return rec;
+    }, function () { showToast(t("snd.late")); return null; });
+  }
+  function composeFrom(rec) {
+    var d = rec.draft;
+    openCompose({ acct: d.acct, to: d.to, cc: d.cc, bcc: d.bcc, subject: d.subject, text: d.text, html: d.html || "",
+                  inReplyTo: d.inReplyTo, references: d.references, attachments: d.atts || [],
+                  draft: d.serverDraft || null, noSig: true });
+  }
+  function undoSendToast(rec, secs) {
+    localToast(t("snd.sending"), { label: t("org.undo"), fn: function () {
+      takeBack(rec.id).then(function (r) { if (r) composeFrom(r); });
+    } }, secs * 1000);
+  }
+  function fmtWhen(ms) {
+    var d = new Date(ms);
+    return d.toLocaleString(locale(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  // the date-time picker for "Send later"; done(ms)
+  function laterDialog(done) {
+    var dlg = makeDialog("ml-later");
+    dlg.appendChild(el("div", "dlg-title", t("snd.later")));
+    var now = new Date();
+    function at(days, h, m) { var d = new Date(now); d.setDate(d.getDate() + days); d.setHours(h, m || 0, 0, 0); return d.getTime(); }
+    var tom = at(1, 8), mon = at(((8 - now.getDay()) % 7) || 7, 8);
+    var quick = el("div", "later-quick");
+    [[t("snd.inHour"), now.getTime() + 3600000], [t("snd.tomorrow", { when: fmtWhen(tom) }), tom], [t("snd.monday", { when: fmtWhen(mon) }), mon]].forEach(function (q) {
+      quick.appendChild(button(q[0], "small", function () { dlg.close(); done(q[1]); }));
+    });
+    dlg.appendChild(quick);
+    var form = el("form");
+    form.noValidate = true;
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var loc = function (ms) { var d = new Date(ms); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "T" + p2(d.getHours()) + ":" + p2(d.getMinutes()); };
+    var fAt = field(form, "ml-later-at", t("snd.at"), "datetime-local", loc(now.getTime() + 3600000), { min: loc(now.getTime()) });
+    form.appendChild(el("p", "dlg-hint", t("snd.hint")));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("snd.schedule"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var ms = new Date(fAt.value).getTime();
+      if (!(ms > Date.now() + 30000)) { errP.textContent = t("snd.past"); return; }
+      if (ms > Date.now() + 366 * 86400000) { errP.textContent = t("snd.far"); return; }
+      dlg.close();
+      done(ms);
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
   function outboxDialog() {
     var dlg = makeDialog("ml-out");
     dlg.classList.add("wide");
@@ -2567,8 +2749,28 @@
       var to = [].concat(r.draft.to, r.draft.cc, r.draft.bcc).map(who).join(", ");
       tx.appendChild(el("div", "set-acct-mail", to));
       if (r.err) tx.appendChild(el("div", "dlg-err", t("out.failed", { msg: r.err })));
+      else if (OB.timed(r)) tx.appendChild(el("div", "set-acct-mail out-when", OB.claimed(r, Date.now()) ? t("snd.now") : t("snd.at2", { when: fmtWhen(r.due) })));
       li.appendChild(tx);
       var acts = el("div", "out-acts");
+      if (OB.timed(r)) {
+        acts.appendChild(button(t("out.send"), "small", function () {
+          takeBack(r.id).then(function (rec) {
+            if (!rec) return;
+            rec.due = Date.now();
+            rec.err = "";
+            return idbPut("outbox", rec.id, rec).then(function () { outbox.push(rec); return runTimed(); });
+          });
+        }));
+        acts.appendChild(button(t("out.edit"), "small", function () {
+          takeBack(r.id).then(function (rec) { if (rec) { dlg.close(); composeFrom(rec); } });
+        }));
+        acts.appendChild(button(t("out.del"), "small danger", function () {
+          takeBack(r.id).then(function () { outboxDialog(); });
+        }));
+        li.appendChild(acts);
+        ul.appendChild(li);
+        return;
+      }
       acts.appendChild(button(t("out.send"), "small", function (ev) {
         var b = ev.currentTarget;
         b.disabled = true;
@@ -2695,6 +2897,7 @@
       if (!init.noSig && (acct.sig || acct.sigHtml)) { fBody.appendChild(el("br")); fBody.appendChild(sigNode(acct)); }
       if (init.quote) {
         var qd = el("div");
+        qd.setAttribute("data-quote", "1");
         qd.innerHTML = "<br>" + RT.clean(RT.quoteHtml(init.quote), { cid: false }).html;
         fBody.appendChild(qd);
       }
@@ -2719,6 +2922,43 @@
       attF.addEventListener("click", function () { filesPicker(function (f) { addFiles([f]); }); });
       attRow.appendChild(attF);
     }
+    var tplB = el("button", "link-btn cmp-attach", t("tpl.btn"));
+    tplB.type = "button";
+    tplB.addEventListener("click", function () {
+      templatesDialog({
+        // the message without its signature and quoted part
+        current: function () {
+          var c = fBody.cloneNode(true);
+          [].forEach.call(c.querySelectorAll("[data-sig], [data-quote]"), function (n) { n.remove(); });
+          return { subject: fSubj.value, html: RT.clean(c, { cid: false }).html };
+        },
+        use: function (tp) {
+          ed.insert(tp.html);
+          if (tp.subject && !fSubj.value.trim()) fSubj.value = tp.subject;
+          dirty = true;
+        }
+      });
+    });
+    attRow.appendChild(tplB);
+    var laterB = el("button", "link-btn cmp-attach", t("snd.later"));
+    laterB.type = "button";
+    laterB.addEventListener("click", function () {
+      var d = collect(true);
+      if (!d) return;
+      if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
+      laterDialog(function (ms) {
+        var d2 = collect(true);
+        if (!d2) return;
+        if (draftRef) d2.serverDraft = draftRef;
+        var q;
+        try { q = queueTimed(d2, ms); } catch (er) { errP.textContent = sendErrText(er); return; }
+        q.then(function () {
+          if (init.outId) dropOut(init.outId);
+          finish(t("snd.scheduled", { when: fmtWhen(ms) }));
+        }, function (er) { errP.textContent = sendErrText(er); });
+      });
+    });
+    attRow.appendChild(laterB);
     form.appendChild(attRow);
     var chips = el("ul", "cmp-atts");
     form.appendChild(chips);
@@ -2863,6 +3103,20 @@
       if (!d) return;
       if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
       if (draftRef) d.serverDraft = draftRef;
+      // Undo send: built now, waits in the Outbox for a few seconds
+      if (navigator.onLine && prefs.undo > 0) {
+        var secs = prefs.undo, rec;
+        try {
+          rec = queueTimed(d, Date.now() + secs * 1000);
+        } catch (er) { errP.textContent = sendErrText(er); return; }
+        rec.then(function (r) {
+          if (init.outId) dropOut(init.outId);
+          dirty = false;
+          dlg.close();
+          undoSendToast(r, secs);
+        }, function (er) { errP.textContent = sendErrText(er); });
+        return;
+      }
       ok.disabled = true;
       ok.textContent = t("cmp.sending");
       function failed(err) {
@@ -3279,7 +3533,120 @@
     ib("folder", t("org.move") + " (v)", function () { moveDialog(uids); });
     if (uids.length === 1 && ms[0] && ms[0].from && ms[0].from.addr) {
       ib("filter", t("rule.make"), function () { ruleDialog(null, { field: "from", has: lowerAddr(ms[0].from.addr) }); });
+      if (lowerAddr(ms[0].from.addr) !== lowerAddr(acct.email)) ib("block", t("blk.btn"), function () { blockDialog(ms[0]); });
     }
+  }
+
+  // ---------- templates (synced) ----------
+  // o: { current() → { subject, html }, use(template) }
+  function putTpl(x) {
+    data.templates = (data.templates || []).filter(function (y) { return y.id !== x.id; }).concat([x]);
+    data = mergeMail(data, data);
+    saveData();
+  }
+  function dropTpl(x) {
+    data.tombs[x.id] = Math.max(Date.now(), x.m + 1);
+    data = mergeMail(data, data);
+    saveData();
+  }
+  function templatesDialog(o) {
+    var dlg = makeDialog("ml-tpl");
+    dlg.appendChild(el("div", "dlg-title", t("tpl.title")));
+    var list = data.templates || [];
+    if (!list.length) dlg.appendChild(el("p", "dlg-hint", t("tpl.none")));
+    var ul = el("ul", "set-accts tpl-list");
+    list.forEach(function (x) {
+      var li = el("li");
+      var b = el("button", "tpl-use");
+      b.type = "button";
+      b.appendChild(el("span", "set-acct-name", x.name));
+      var prev = RT.clean(x.html, { cid: false }).text.replace(/\s+/g, " ").trim().slice(0, 90);
+      if (prev) b.appendChild(el("span", "set-acct-mail", prev));
+      b.addEventListener("click", function () { dlg.close(); o.use(x); });
+      li.appendChild(b);
+      var del = el("button", "icon-btn small");
+      del.type = "button";
+      del.innerHTML = UI.trash;
+      del.title = t("tpl.del");
+      del.setAttribute("aria-label", t("tpl.del") + ": " + x.name);
+      del.addEventListener("click", function () { dropTpl(x); dlg.close(); templatesDialog(o); });
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+    if (list.length) dlg.appendChild(ul);
+    var form = el("form");
+    form.noValidate = true;
+    var fName = field(form, "ml-tpl-name", t("tpl.saveAs"), "text", "", { maxlength: "60", placeholder: t("tpl.namePh") });
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+    var ok = button(t("tpl.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = fName.value.replace(/\s+/g, " ").trim();
+      if (!name) { errP.textContent = t("tpl.noName"); fName.focus(); return; }
+      var cur = o.current();
+      if (!RT.clean(cur.html, { cid: false }).text.trim()) { errP.textContent = t("tpl.empty"); return; }
+      if (cur.html.length > MAX_TPL_HTML) { errP.textContent = t("tpl.long"); return; }
+      if ((data.templates || []).length >= MAX_TPLS) { errP.textContent = t("tpl.many", { n: MAX_TPLS }); return; }
+      var same = (data.templates || []).filter(function (x) { return x.name.toLowerCase() === name.toLowerCase(); })[0];
+      putTpl({ id: same ? same.id : newId(), m: Math.max(Date.now(), same ? same.m + 1 : 0), name: name,
+               subject: cur.subject.replace(/\s+/g, " ").trim().slice(0, 300), html: cur.html });
+      dlg.close();
+      showToast(t("tpl.saved", { name: name }));
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // ---------- block sender ----------
+  // A rule (from contains <address> → move to Spam) plus this message
+  // to Spam now. Unblocking = removing the rule in Settings › Rules.
+  function junkFolder(acct) {
+    var name = roleFolder(acct, "junk");
+    if (name) return Promise.resolve(name);
+    name = newFolderName(acct, "Junk");
+    return call("create", acct, { folder: name }).then(function () {
+      return refreshFolders(acct).catch(function () {});
+    }).then(function () { return name; });
+  }
+  function blockDialog(m) {
+    var acct = curAcct();
+    var addr = m && m.from && lowerAddr(m.from.addr);
+    if (!acct || !addr || !cur) return;
+    var dlg = makeDialog("ml-block");
+    dlg.appendChild(el("p", "dlg-text", t("blk.q", { addr: addr })));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    dlg.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("blk.do"), "danger", function () {
+      if (!online()) return;
+      go.disabled = true;
+      var rec = cur;
+      junkFolder(acct).then(function (folder) {
+        var has = "<" + addr + ">";
+        var exists = (data.rules || []).some(function (r) { return r.acct === acct.id && r.field === "from" && r.act === "move" && r.has === has; });
+        if (!exists) {
+          var r = R.norm({ id: newId(), m: Date.now(), on: true, acct: acct.id, field: "from", has: has, act: "move", to: folder });
+          if (r) putRule(r);
+        }
+        dlg.close();
+        if (cur === rec && rec.folder !== folder) moveMsgs([m.uid], "move", folder);
+        else showToast(t("blk.done", { addr: addr }));
+      }, function (e) { go.disabled = false; errP.textContent = errText(e); });
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   // ---------- 9d. Rules (device filters) ----------
@@ -3694,7 +4061,7 @@
   }
 
   var toastTimer = null;
-  function localToast(text, action) {
+  function localToast(text, action, ms) {
     var box = $("toast");
     if (!box) return;
     hostToast();
@@ -3710,7 +4077,7 @@
     void box.offsetWidth;
     box.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { box.classList.remove("show"); }, 4000);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, ms || 4000);
   }
   function hostToast() {
     var box = $("toast"), d = document.querySelector("dialog[open]");
@@ -3879,6 +4246,7 @@
         prefs.plain = p.plain ? 1 : 0;
         prefs.threads = p.threads === 0 ? 0 : 1;
         prefs.uni = p.uni ? 1 : 0;
+        if (UNDO_SECS.indexOf(p.undo) >= 0) prefs.undo = p.undo;
       }
     } catch (e) {}
   }
