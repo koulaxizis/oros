@@ -16,6 +16,7 @@
     11. Organise: actions, selection, swipe
     12. Sender check and suspicious links
     13. Rules
+    14. Search
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -608,7 +609,10 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .org-btn.on { color: var(--accent); }
 .org-btn.danger { color: var(--danger); }
 .org-btn svg { flex-shrink: 0; }
-.list-head #sel-btn { margin-left: auto; flex-shrink: 0; }
+.list-head #sel-btn { flex-shrink: 0; }
+.list-head .count { margin-right: auto; }
+.list-head #srch-btn { align-self: center; }
+.icon-btn.small { width: 32px; height: 32px; }
 .sel-bar {
   display: flex;
   flex-wrap: wrap;
@@ -673,3 +677,32 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .rule-on { display: inline-flex; align-items: center; padding: 4px; }
 .rule-on input { width: 18px; height: 18px; accent-color: var(--accent); }
 .rule-list .set-acct-name { white-space: normal; font-weight: 600; overflow-wrap: anywhere; }
+
+/* ---------- 14. Search ---------- */
+.srch-bar { display: flex; align-items: center; gap: 6px; padding: 0 12px 8px; }
+.srch-bar input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.srch-bar input::-webkit-search-cancel-button { display: none; }
+.srch-bar input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.srch-bar select {
+  flex: 0 0 auto;
+  max-width: 34%;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+.srch-info { padding: 4px 0 8px; text-align: center; }

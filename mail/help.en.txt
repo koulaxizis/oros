@@ -13,6 +13,12 @@ Gmail, iCloud and Yahoo need an app password: create one in your account's secur
 - Mail checks for new messages every couple of minutes while it's open; the refresh button (`Check for new mail`) checks now.
 - While orOS is open, a new message in an Inbox also shows a notification, even with Mail closed (checked every 3 minutes). Click it to open the message. Turn it off under Settings › Notifications › Mail.
 
+### Search
+- The magnifier above the list (or [[/]]) searches the open folder. As you type, the messages already on this device are filtered, by sender, recipients and subject.
+- Press [[Enter]] or `Search the whole folder on the server` to search every message in the folder, older ones and the text of the messages too (with `Everywhere`). The newest 100 hits are shown.
+- `Sender` or `Subject` narrows the search. Accents don't matter on the device; on the server it depends on your provider.
+- The buttons under a message work on search results too. [[Esc]] or the × closes the search.
+
 ### Pictures and formatting
 Pictures from the internet are hidden at first, so the sender can't tell you opened the message. Press `Show pictures` to load them once, or `Always for` a sender to trust them from now on. In settings, `Always show plain text` shows every message as text; `Show the formatted version` switches one message back.
 
@@ -67,6 +73,7 @@ Your accounts (without passwords), your rules, the relay address and the senders
 ## Keyboard shortcuts
 - [[J]] or [[↓]] opens the next message, [[K]] or [[↑]] the previous one.
 - [[Esc]] goes back to the list on a narrow screen.
+- [[/]] searches the open folder.
 - [[C]] writes a new message; with a message open, [[R]] replies, [[A]] replies to all and [[F]] forwards.
 - On the open message, or on the selected ones: [[E]] archives, [[Delete]] or [[#]] deletes, [[!]] marks as spam (or not spam), [[S]] stars, [[U]] marks as read or unread and [[V]] moves to a folder.
 
