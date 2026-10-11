@@ -4520,3 +4520,13 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-10 — Help: Calendar guide lists every chip (#159) — 0.68.01
 - The Calendar help (EN/EL) now lists the Moon & Sky, Holidays, Name days and World days chips, and explains which hidden chips are remembered (sticky and opt-in feeds).
 - Help text only. Tests: tests/help.test.js green.
+
+### 2026-10-11 — Dock: magnify without overlap + hover effects (#160) — 0.68.02
+- Dock magnification now makes room for the enlarged icon instead of covering its neighbours.
+- New hover effects for Dock icons (bounce, pulse, frame, glow, lift, wiggle), chosen in Settings > Dock > Hover.
+- Merged without a stamp; version and changelog added in the release PR. Tests: tests/settings.test.js green.
+
+### 2026-10-11 — Mail: new-mail notifications while orOS is open (#161) — 0.68.03
+- Mail checks the inbox while orOS is open and shows a notice for new messages (Settings > Notifications > Mail).
+- mail/notify.js added to the sw.js precache. Tests: tests/mail-notify.test.js green.
+- Not tested: a real pmail.gr inbox receiving new mail.
