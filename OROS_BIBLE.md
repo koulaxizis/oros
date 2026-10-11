@@ -4759,3 +4759,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Sound Mixer: keeps playing + taskbar button + new sounds (#194) — 0.93.00
 - Sound Mixer: keeps playing after you close it, with a taskbar button for pause, volume and the sleep timer; new train, keyboard and clock sounds. Shell: `mixerTrayTick` chip (style.css); `mixer/engine.js` precached.
+
+### 2026-10-11 — Notes opens .txt/.md + Android "Share → orOS" takes files (#195) — 0.94.00
+- Notes: opens .txt and .md files as a new page named after the file (third choice in the "Open with" chooser, next to Writer and Mind Map).
+- Android: "Share → orOS" from Files, Gmail or any app now takes files too and opens them in the matching app (POST `share_target`; `sw.js` `shareTargetPost` keeps them in the `oros-share-inbox` cache and opens `/?share-files=<id>`); shared links still go to Bookmarks.
