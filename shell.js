@@ -1104,6 +1104,7 @@
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
+    tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
     tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
   }
@@ -6763,6 +6764,235 @@
 
     // Dropdown open → the Play/Pause icon follows live state
     if (rxTrayPop()) rxTrayPaintLive();
+  }
+
+  // ---------- Sound Mixer tray chip ----------
+  // mixer/engine.js runs on THIS window (window.__orosMixerHost), so
+  // the sounds keep playing after the Mixer app closes. While the
+  // engine has a mix (playing or paused), the bar shows a chip; its
+  // dropdown has Play/Pause, Stop, Open, volume and the sleep timer.
+  // Stop ends the session and the chip goes away. Volume and timer go
+  // through the host, and the app adopts them the next time it opens.
+  var MX_POP_ID = "mx-tray-pop";
+  var MX_TIMERS = [0, 15, 30, 60, 90];
+  var mxPopWired = false;
+
+  function mxHost() {
+    var h = window.__orosMixerHost;
+    return (h && typeof h.state === "function" && typeof h.subscribe === "function") ? h : null;
+  }
+  function mxPop() { return document.getElementById(MX_POP_ID); }
+  function mxClosePop() { var p = mxPop(); if (p) p.remove(); }
+
+  function mxLeft(st) {
+    if (!st || !st.playing || !st.endAt) return "";
+    var s = Math.max(0, Math.ceil((st.endAt - Date.now()) / 1000));
+    var m = Math.floor(s / 60);
+    return m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+  }
+
+  function mxWireDoc() {
+    if (mxPopWired) return;
+    mxPopWired = true;
+    document.addEventListener("click", function (e) {
+      var pop = mxPop();
+      if (!pop || pop.contains(e.target)) return;
+      var chip = document.getElementById("mx-tray-chip");
+      if (chip && chip.contains(e.target)) return;
+      mxClosePop();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") mxClosePop();
+    });
+  }
+
+  // Repaint the dropdown's live parts (Play/Pause, timer chips, time left).
+  function mxPaintPop() {
+    var pop = mxPop(), h = mxHost();
+    if (!pop || !h) return;
+    var st = h.state();
+    var pp = document.getElementById("mx-pop-pp");
+    if (pp) {
+      var paused = !st.playing;
+      var tip = rxTrayT(paused ? "Play" : "Pause", paused ? "Αναπαραγωγή" : "Παύση");
+      if (pp.title !== tip) {
+        pp.innerHTML = paused ? RX_PLAY : RX_PAUSE;
+        pp.title = tip;
+        pp.setAttribute("aria-label", tip);
+      }
+    }
+    var btns = pop.querySelectorAll("[data-mx-timer]");
+    for (var i = 0; i < btns.length; i++) {
+      var on = parseInt(btns[i].getAttribute("data-mx-timer"), 10) === st.timer;
+      btns[i].setAttribute("aria-pressed", on ? "true" : "false");
+      btns[i].style.background = on ? "var(--accent)" : "transparent";
+      btns[i].style.color = on ? "var(--accent-text, #fff)" : "var(--text)";
+    }
+    var left = document.getElementById("mx-pop-left");
+    if (left) {
+      var l = mxLeft(st);
+      var txt = l ? rxTrayT("Stops in ", "Σταματά σε ") + l : "";
+      if (left.textContent !== txt) left.textContent = txt;
+    }
+    var vol = document.getElementById("mx-pop-vol");
+    if (vol && document.activeElement !== vol && parseInt(vol.value, 10) !== st.vol) {
+      vol.value = String(st.vol);
+      var pct = document.getElementById("mx-pop-pct");
+      if (pct) pct.textContent = st.vol + "%";
+    }
+  }
+
+  function mxTogglePop() {
+    if (mxPop()) { mxClosePop(); return; }
+    var h = mxHost();
+    if (!h) return;
+    mxWireDoc();
+    var st = h.state();
+
+    var pop = document.createElement("div");
+    pop.id = MX_POP_ID;
+    pop.setAttribute("role", "menu");
+    // Clicks inside stay inside: Play/Pause repaints its own icon, so
+    // the outside-click check would no longer find the clicked node.
+    pop.addEventListener("click", function (e) { e.stopPropagation(); });
+    pop.style.cssText =
+      "position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:12px;" +
+      "z-index:1460;background:var(--panel-bg);color:var(--text);" +
+      "border:1px solid var(--border);border-radius:12px;" +
+      "box-shadow:0 8px 24px var(--shadow);padding:10px;" +
+      "display:flex;flex-direction:column;gap:10px;" +
+      "max-width:calc(100vw - 24px);";
+
+    var lbl = document.createElement("div");
+    lbl.style.cssText =
+      "font-size:12px;font-weight:600;color:var(--text-dim);" +
+      "max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+    lbl.textContent = st.label || rxTrayT("Sound Mixer", "Μίκτης ήχων");
+    pop.appendChild(lbl);
+
+    function mkBtn(html, tip, fn, idAttr) {
+      var b = document.createElement("button");
+      b.type = "button";
+      if (idAttr) b.id = idAttr;
+      b.innerHTML = html;
+      b.title = tip;
+      b.setAttribute("aria-label", tip);
+      b.style.cssText =
+        "min-width:40px;height:40px;display:inline-flex;align-items:center;" +
+        "justify-content:center;border:1px solid var(--border);" +
+        "border-radius:9px;background:transparent;color:var(--text);" +
+        "cursor:pointer;font:inherit;font-size:12px;padding:0 8px;";
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:6px;";
+    row.appendChild(mkBtn(RX_PLAY, rxTrayT("Play", "Αναπαραγωγή"), function () {
+      var x = mxHost();
+      if (x) x.toggle();
+      mixerTrayTick();
+    }, "mx-pop-pp"));
+    row.appendChild(mkBtn(RX_STOP, rxTrayT("Stop", "Διακοπή"), function () {
+      var x = mxHost();
+      mxClosePop();
+      if (x) x.stop();
+      mixerTrayTick();
+    }));
+    row.appendChild(mkBtn(ICONS.mixer, rxTrayT("Open Sound Mixer", "Άνοιγμα Μίκτη ήχων"), function () {
+      mxClosePop();
+      if (!(state.running && state.running.id === "mixer")) openAppById("mixer");
+    }));
+    pop.appendChild(row);
+
+    var volRow = document.createElement("div");
+    volRow.style.cssText = "display:flex;align-items:center;gap:8px;";
+    var vol = document.createElement("input");
+    vol.type = "range";
+    vol.id = "mx-pop-vol";
+    vol.min = "0"; vol.max = "100"; vol.step = "1";
+    vol.value = String(st.vol);
+    vol.setAttribute("aria-label", rxTrayT("Volume", "Ένταση"));
+    vol.style.cssText = "width:150px;accent-color:var(--accent);cursor:pointer;margin:0;";
+    var pct = document.createElement("span");
+    pct.id = "mx-pop-pct";
+    pct.style.cssText =
+      "font-size:11px;color:var(--text-dim);min-width:34px;text-align:right;" +
+      "font-variant-numeric:tabular-nums;";
+    pct.textContent = st.vol + "%";
+    vol.addEventListener("input", function () {
+      var v = parseInt(vol.value, 10) || 0;
+      var x = mxHost();
+      if (x) x.update({ vol: v, mute: 0 });
+      pct.textContent = v + "%";
+    });
+    volRow.appendChild(vol);
+    volRow.appendChild(pct);
+    pop.appendChild(volRow);
+
+    var tLbl = document.createElement("div");
+    tLbl.style.cssText = "font-size:11px;color:var(--text-dim);";
+    tLbl.textContent = rxTrayT("Sleep timer", "Χρονόμετρο ύπνου");
+    pop.appendChild(tLbl);
+    var tRow = document.createElement("div");
+    tRow.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
+    MX_TIMERS.forEach(function (m) {
+      var b = mkBtn(m ? String(m) + "′" : rxTrayT("Off", "Όχι"),
+        m ? rxTrayT(m + " min", m + " λεπτά") : rxTrayT("Timer off", "Χωρίς χρονόμετρο"),
+        function () {
+          var x = mxHost();
+          if (x) x.setTimer(m);
+          mxPaintPop();
+        });
+      b.setAttribute("data-mx-timer", String(m));
+      tRow.appendChild(b);
+    });
+    pop.appendChild(tRow);
+    var left = document.createElement("div");
+    left.id = "mx-pop-left";
+    left.setAttribute("aria-live", "polite");
+    left.style.cssText = "font-size:11px;color:var(--text-dim);min-height:14px;font-variant-numeric:tabular-nums;";
+    pop.appendChild(left);
+
+    document.body.appendChild(pop);
+    mxPaintPop();
+  }
+
+  function mixerTrayTick() {
+    var bar = document.querySelector(".bar-right");
+    if (!bar) return;
+    var h = mxHost();
+    var chip = document.getElementById("mx-tray-chip");
+    var st = null;
+    if (h) { try { st = h.state(); } catch (e) { st = null; } }
+    // No engine, or nothing started yet / stopped → no chip.
+    if (!st || !st.active) {
+      if (chip) chip.remove();
+      mxClosePop();
+      return;
+    }
+    if (!chip) {
+      chip = document.createElement("button");
+      chip.id = "mx-tray-chip";
+      chip.type = "button";
+      chip.style.minHeight = "44px";
+      chip.addEventListener("click", function (e) {
+        e.stopPropagation();
+        mxTogglePop();
+      });
+      bar.insertBefore(chip, document.getElementById("btn-lang"));
+    }
+    var dstate = st.playing ? "on" : "off";
+    var name = st.label || rxTrayT("Sound Mixer", "Μίκτης ήχων");
+    var l = mxLeft(st);
+    var title = (st.playing ? "▶ " : "⏸ ") + name + (l ? " · " + l : "");
+    if (chip.getAttribute("data-state") !== dstate || chip.title !== title) {
+      chip.setAttribute("data-state", dstate);
+      chip.innerHTML = ICONS.mixer;
+      chip.title = title;
+      chip.setAttribute("aria-label", title);
+    }
+    if (mxPop()) mxPaintPop();
   }
 
   // Radio deep-link bridge (pattern: Quote/Minimalism). Payload =
