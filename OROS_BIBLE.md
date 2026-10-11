@@ -4748,3 +4748,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Name Generator: pets, teams, projects; send to Netizen ID and Characters (#191) — 0.90.00
 - Name Generator: names for pets, teams and projects, and send a name straight to Netizen ID or Characters.
+
+### 2026-10-11 — Typewriter: send to Writer (#192) — 0.91.00
+- Typewriter: send your page to Writer as a new document.
