@@ -401,6 +401,15 @@
     CL.idsIn(JSON.stringify(AT.data()), used);
     return used;
   }
+  // a promise that gives up after ms (a stuck disk call must not
+  // leave the window waiting for ever)
+  function within(p, ms) {
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () { var e = new Error("timeout"); e.code = "timeout"; reject(e); }, ms);
+      Promise.resolve(p).then(function (v) { clearTimeout(timer); resolve(v); }, function (e) { clearTimeout(timer); reject(e); });
+    });
+  }
+  function whyOf(e) { return String(e && (e.code || e.message) || e || "?").slice(0, 120); }
   function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + " MB"; }
   function manageFiles() {
     var F = fsApi(), CL = window.AtelierClips;
@@ -410,7 +419,13 @@
         body.innerHTML = "";
         body.appendChild(el("p", "hint", t("fm.hint")));
         if (ui.err) body.appendChild(el("p", "hint", ui.err));
-        if (!ui.files) { body.appendChild(el("p", "hint", t("cv.checking"))); return; }
+        if (!ui.files) {
+          body.appendChild(el("p", "hint fm-progress", ui.total ? t("fm.reading", { i: ui.done, n: ui.total }) : t("fm.listing")));
+          var a0 = el("div", "dlg-actions");
+          a0.appendChild(btn("btn", t("btn.close"), close));
+          body.appendChild(a0);
+          return;
+        }
         var free = ui.files.filter(function (f) { return !ui.used[f.id]; });
         var n = Object.keys(ui.pick).length, size = 0, total = 0;
         ui.files.forEach(function (f) { total += f.size; if (ui.pick[f.id]) size += f.size; });
@@ -455,11 +470,27 @@
       function load() {
         if (!F) { ui.err = t("fm.nofs"); ui.files = []; render(); return; }
         var used = usedFiles();
-        F.ls(A.FOLDER).then(null, function () { return []; }).then(function (list) {
-          var ids = list.filter(function (e) { return !e.dir && CL.isFileId(e.name); }).map(function (e) { return e.name; });
-          return Promise.all(ids.map(function (id) {
-            return F.stat(A.FOLDER + "/" + id).then(function (st) { return { id: id, size: st.size || 0 }; }, function () { return { id: id, size: 0 }; });
-          }));
+        ui.done = 0; ui.total = 0;
+        within(F.ls(A.FOLDER), 20000).then(null, function (e) {
+          if (e && e.code === "ENOENT") return [];
+          throw e;
+        }).then(function (list) {
+          var ids = (Array.isArray(list) ? list : []).filter(function (e) { return e && !e.dir && CL.isFileId(e.name); }).map(function (e) { return e.name; });
+          ui.total = ids.length;
+          render();
+          // a few at a time, each with its own time limit, so one stuck
+          // file cannot hold the whole list
+          var out = [], i = 0;
+          function next() {
+            if (i >= ids.length) return out;
+            var chunk = ids.slice(i, i + 40);
+            i += chunk.length;
+            return Promise.all(chunk.map(function (id) {
+              return within(F.stat(A.FOLDER + "/" + id), 10000).then(function (st) { return st && st.size || 0; }, function () { return 0; })
+                .then(function (size) { out.push({ id: id, size: size }); });
+            })).then(function () { ui.done = out.length; progress(); return next(); });
+          }
+          return next();
         }).then(function (files) {
           // biggest first: that is what frees space
           files.sort(function (a, b) { return b.size - a.size || (a.id < b.id ? -1 : 1); });
@@ -467,7 +498,14 @@
           ui.used = used || {};
           if (!used) { ui.err = t("fm.cantTell"); files.forEach(function (f) { ui.used[f.id] = 1; }); }
           render();
+        }).then(null, function (e) {
+          ui.files = []; ui.err = t("fm.fail", { why: whyOf(e) });
+          render();
         });
+      }
+      function progress() {
+        var p = body.querySelector(".fm-progress");
+        if (p) p.textContent = t("fm.reading", { i: ui.done, n: ui.total });
       }
       // deleted one by one; the list is read again afterwards (the
       // in-use check too, in case a design changed meanwhile)

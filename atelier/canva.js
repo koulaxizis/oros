@@ -21,7 +21,7 @@
   var CHANNEL = "oros-atelier-canva";
   var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // same as Mail
   var SCOPES = "design:meta:read design:content:read";
-  var POLL = 2500, POLL_MAX = 180000, CALL_TIMEOUT = 30000;
+  var POLL = 2500, POLL_MAX = 180000, CALL_TIMEOUT = 30000, CONFIG_TIMEOUT = 15000;
 
   // ---------- device-local state ----------
   function load() {
@@ -51,9 +51,9 @@
 
   function CanvaErr(code, msg) { var e = new Error(msg || code); e.code = code; return e; }
 
-  function relay(body, binary) {
-    var ctl = new AbortController();
-    var timer = setTimeout(function () { ctl.abort(); }, binary ? CALL_TIMEOUT * 4 : CALL_TIMEOUT);
+  function relay(body, binary, ms) {
+    var ctl = new AbortController(), late = false;
+    var timer = setTimeout(function () { late = true; ctl.abort(); }, ms || (binary ? CALL_TIMEOUT * 4 : CALL_TIMEOUT));
     body.op = "canva";
     return fetch(relayUrl() + "/v1", {
       method: "POST", mode: "cors", credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer",
@@ -67,7 +67,7 @@
         throw CanvaErr(e.code || "proto", e.msg);
       });
     }, function () {
-      throw CanvaErr(navigator.onLine === false ? "offline" : "network");
+      throw CanvaErr(navigator.onLine === false ? "offline" : late ? "timeout" : "network");
     }).then(function (v) { clearTimeout(timer); return v; }, function (e) { clearTimeout(timer); throw e; });
   }
 
@@ -208,19 +208,42 @@
   }
 
   function open() {
-    ui = { cfg: null, items: [], cont: "", q: "", busy: false, err: "", sel: {}, run: null, msg: "", again: [], replace: true };
+    var mine = ui = { cfg: null, items: [], cont: "", q: "", busy: false, err: "", sel: {}, run: null, msg: "", again: [], replace: true };
     AT.openDialog(t("cv.title"), function (body, close) {
       ui.body = body; ui.close = close;
       render();
-      relay({ act: "config" }).then(function (c) {
-        ui.cfg = c;
-        if (!c.configured) { ui.err = t("cv.off"); render(); return; }
-        if (connected()) list(false);
-        else prepareSignIn().then(render);
-      }, function (e) { ui.err = errText(e); render(); });
+      checkConfig(mine);
     }, true);
     var d = document.getElementById("dlg");
-    d.addEventListener("close", function stop() { d.removeEventListener("close", stop); if (ui && ui.run) ui.run.stop = true; ui = null; });
+    // the "close" event of a window closed just before is delivered
+    // later: only the close of THIS window may end this import
+    d.addEventListener("close", function stop() {
+      if (ui !== mine) { d.removeEventListener("close", stop); return; }
+      if (d.open) return;
+      d.removeEventListener("close", stop);
+      if (ui.run) ui.run.stop = true;
+      ui = null;
+    });
+  }
+  // asks the relay whether it has a Canva connection; any failure is
+  // shown with "Try again" instead of a window that waits for ever
+  function checkConfig(mine) {
+    mine.cfg = null; mine.err = "";
+    if (ui === mine) render();
+    relay({ act: "config" }, false, CONFIG_TIMEOUT).then(function (c) {
+      if (ui !== mine) return;
+      if (!c || typeof c !== "object") throw CanvaErr("proto");
+      ui.cfg = c;
+      if (!c.configured) { ui.err = t("cv.off"); render(); return; }
+      if (connected()) list(false);
+      else return prepareSignIn().then(function () { if (ui === mine) render(); });
+    }).then(null, function (e) {
+      if (ui !== mine) return;
+      var c = e && e.code || "";
+      ui.cfg = null; ui.recheck = true;
+      ui.err = c === "offline" || c === "canva-off" ? errText(e) : t("cv.relay", { why: c || String(e && e.message || "?").slice(0, 80) });
+      render();
+    });
   }
 
   function list(more) {
@@ -319,6 +342,10 @@
 
     if (!ui.cfg || !ui.cfg.configured) {
       if (!ui.cfg && !ui.err) body.appendChild(el("p", "hint", t("cv.checking")));
+      if (!ui.cfg && ui.err && ui.recheck) {
+        var mine = ui;
+        act.appendChild(btn("btn primary", t("cv.again"), function () { mine.recheck = false; checkConfig(mine); }));
+      }
       act.appendChild(btn("btn", t("btn.close"), ui.close));
       body.appendChild(act);
       return;
