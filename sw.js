@@ -182,6 +182,7 @@ var PRECACHE_URLS = [
   "mail/threads.js",
   "mail/outbox.js",
   "mail/people.js",
+  "mail/sieve.js",
   "shelf/",
   "shelf/index.html",
   "shelf/search.js",
