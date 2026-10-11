@@ -82,6 +82,8 @@
       "a._shell": "orOS (desktop, settings, sync)", "a._pet": "Screen pet", "a._other": "Other (not orOS)",
       "b.level": "Level", "b.charging": "Charging", "b.full": "Full in", "b.empty": "Empty in",
       "b.na": "This browser gives no battery information (Safari and Firefox never do).",
+      "b.hidden": "This browser hides the real battery level and always reports 100% and charging (Brave does this for privacy). orOS cannot read your battery here.",
+      "b.suspect": "The browser reports a full battery on the charger. If your device is not plugged in, this is a placeholder: the browser is hiding the real level, and orOS cannot read it.",
       "n.state": "Connection", "n.online": "Online", "n.offline": "Offline",
       "n.type": "Type", "n.speed": "Estimated speed", "n.rtt": "Latency",
       "n.save": "Data saver", "n.na": "The browser does not share connection details. orOS runs no speed test.",
@@ -141,6 +143,8 @@
       "a._shell": "orOS (επιφάνεια, ρυθμίσεις, sync)", "a._pet": "Κατοικίδιο οθόνης", "a._other": "Άλλα (όχι orOS)",
       "b.level": "Φόρτιση", "b.charging": "Φορτίζει", "b.full": "Γεμίζει σε", "b.empty": "Αδειάζει σε",
       "b.na": "Ο browser δεν δίνει πληροφορίες μπαταρίας (Safari και Firefox ποτέ).",
+      "b.hidden": "Αυτός ο browser κρύβει την πραγματική μπαταρία και δείχνει πάντα 100% και φόρτιση (το κάνει το Brave για ιδιωτικότητα). Το orOS δεν μπορεί να τη διαβάσει εδώ.",
+      "b.suspect": "Ο browser λέει ότι η μπαταρία είναι γεμάτη και στον φορτιστή. Αν η συσκευή δεν φορτίζει, αυτή είναι ψεύτικη τιμή: ο browser κρύβει την πραγματική στάθμη και το orOS δεν μπορεί να τη διαβάσει.",
       "n.state": "Σύνδεση", "n.online": "Online", "n.offline": "Offline",
       "n.type": "Τύπος", "n.speed": "Εκτιμώμενη ταχύτητα", "n.rtt": "Καθυστέρηση",
       "n.save": "Εξοικονόμηση δεδομένων", "n.na": "Ο browser δεν δίνει στοιχεία σύνδεσης. Το orOS δεν κάνει τεστ ταχύτητας.",
@@ -437,18 +441,31 @@
   }
 
   // ---------- 5. Battery ----------
-  var battery = null, batteryReady = false;
+  // Never show a number the browser may have made up: Brave always
+  // reports 100% + charging, and Chromium returns the same "full and
+  // charging" default when it has no real data (C.batteryState).
+  var battery = null, batteryReady = false, batteryChanged = false;
   function fmtDuration(sec) {
     if (!isFinite(sec) || !(sec > 0)) return "";
     var h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
     if (m === 60) { h++; m = 0; }
     return (h ? h + " h " : "") + m + " min";
   }
+  function isBrave() {
+    try { return !!(navigator.brave && typeof navigator.brave.isBrave === "function"); }
+    catch (e) { return false; }
+  }
   function renderBattery() {
     if (!batteryReady) return;
-    if (!battery) {
-      fill("b-battery", [el("p", "hint", t("b.na"))]);
+    var state = C.batteryState(battery, { brave: isBrave(), changed: batteryChanged });
+    if (state === "none" || state === "hidden") {
+      fill("b-battery", [el("p", "hint", t(state === "none" ? "b.na" : "b.hidden"))]);
       report.battery = [[t("c.battery"), t("na")]];
+      return;
+    }
+    if (state === "suspect") {
+      fill("b-battery", [el("p", "hint", t("b.suspect"))]);
+      report.battery = [[t("c.battery"), t("unknown")]];
       return;
     }
     var pct = Math.round(battery.level * 100);
@@ -459,13 +476,14 @@
     fill("b-battery", [big, barEl(pct, pct <= 10 ? "bad" : pct <= 20 ? "warn" : ""), kvTable(rows.slice(1))]);
     report.battery = rows;
   }
+  function onBatteryEvent() { batteryChanged = true; renderBattery(); }
   function initBattery() {
     if (typeof navigator.getBattery !== "function") { batteryReady = true; renderBattery(); return Promise.resolve(); }
     return navigator.getBattery().then(function (b) {
       battery = b;
       batteryReady = true;
       ["levelchange", "chargingchange", "chargingtimechange", "dischargingtimechange"].forEach(function (ev) {
-        b.addEventListener(ev, renderBattery);
+        b.addEventListener(ev, onBatteryEvent);
       });
       renderBattery();
     }).catch(function () { batteryReady = true; renderBattery(); });

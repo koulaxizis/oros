@@ -8,6 +8,7 @@
 //   - parseUA: approximate browser + OS from the user agent
 //   - featureImpact: which apps lose what when a feature is missing
 //   - buildReport: the plain-text report for "Copy report"
+//   - batteryState: whether a BatteryManager reading can be trusted
 // Nothing here ever looks at a stored VALUE beyond its length.
 // ============================================================
 (function (root) {
@@ -199,6 +200,26 @@
     return out.join("\n").replace(/\n+$/, "\n");
   }
 
+  // How far to trust a BatteryManager reading.
+  //   "hidden"  - the browser is known to fake the values (Brave always
+  //               reports a full, charging battery to block fingerprinting).
+  //   "suspect" - the reading is exactly the spec's default "full and
+  //               charging" (level 1, charging, chargingTime 0,
+  //               dischargingTime Infinity). Chromium hands this out when
+  //               it has no real data, so it may be fake; it is also what
+  //               a phone on the charger at 100% reports.
+  //   "ok"      - anything else, or any reading after the browser fired a
+  //               battery event (`changed`), which only real data does.
+  function batteryState(b, opts) {
+    opts = opts || {};
+    if (!b) return "none";
+    if (opts.brave) return "hidden";
+    if (opts.changed) return "ok";
+    if (b.level === 1 && b.charging === true && b.chargingTime === 0 &&
+        b.dischargingTime === Infinity) return "suspect";
+    return "ok";
+  }
+
   var api = {
     keyOwner: keyOwner,
     entryBytes: entryBytes,
@@ -210,7 +231,8 @@
     parseUA: parseUA,
     featureImpact: featureImpact,
     FEATURES: Object.keys(FEATURE_APPS),
-    buildReport: buildReport
+    buildReport: buildReport,
+    batteryState: batteryState
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.DeviceCore = api;
