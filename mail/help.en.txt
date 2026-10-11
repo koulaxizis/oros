@@ -55,6 +55,16 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 
 >! Rules work while orOS is open on any of your devices, even with Mail closed. Mail that arrives while orOS is closed everywhere is sorted only if it is still among the newest when orOS opens. A message a rule moves or marks as read shows no notification.
 
+## Rules and out of office on the server
+Many mail servers can run your rules and an automatic reply themselves, so they work even with orOS closed on every device.
+- Open the gear button, find `On the mail server` and press `Set up` next to the account. Mail asks the server what it can do.
+- If it can, tick `Run my rules and the out-of-office reply on the server` and press `Save`. From then on, every change to that account's rules goes to the server by itself.
+- Under `Out-of-office reply`, tick `Send an automatic reply`, write the message and, if you like, the dates. The same sender gets the reply at most once a day, or as often as you choose.
+- If the server already had its own filters (made in its webmail), Mail says so: turning this on replaces them, and turning it off brings them back.
+- Untick it and press `Save` to bring the rules back to your devices.
+
+>! This works with servers that offer Sieve (ManageSieve), such as many Dovecot based hosts. Gmail, Outlook and Yahoo do not: there Mail says so, your rules keep running on your devices while orOS is open, and the automatic reply is set on the provider's own web page. If your provider gives a separate address for Sieve, enter it under `Rules server`.
+
 ## Write and reply
 - The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`. While you type a name or address, people from [Contacts](app:contacts) with a matching email show under the field: pick one with a tap, or with the arrow keys and [[Enter]].
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.

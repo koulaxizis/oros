@@ -80,6 +80,7 @@
   var TH = window.orosMailThreads;
   var OB = window.orosMailOutbox;
   var PP = window.orosMailPeople;
+  var SV = window.orosMailSieve;
   var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -222,6 +223,27 @@
       "snd.hint": "It goes out at that time while orOS is open on this device (with Mail closed too); otherwise as soon as orOS opens.",
       "snd.scheduled": "Scheduled for {when}", "snd.at2": "Sends {when}", "snd.now": "Being sent…",
       "set.undo": "Undo send", "set.undoOff": "Off (send at once)", "set.undoSec": "{n} seconds to undo",
+      "srv.lbl": "On the mail server", "srv.btn": "Set up", "srv.title": "Server rules and out of office",
+      "srv.hint": "Some mail servers run your rules and an out-of-office reply themselves, even with orOS closed on every device.",
+      "srv.on": "Rules on the server", "srv.off": "Rules on your devices", "srv.away": "out-of-office reply on",
+      "srv.checking": "Asking the mail server what it can do…",
+      "srv.yes": "This server can run your rules and reply for you.",
+      "srv.use": "Run my rules and the out-of-office reply on the server",
+      "srv.other": "Another set of filters, “{name}”, is active on the server (made in webmail, for example). Turning this on replaces it; turning it off brings it back.",
+      "srv.skip": "{n} of your rules cannot run on this server; they keep running on your devices.",
+      "srv.no": "This server does not offer server rules (ManageSieve). Gmail, Outlook and Yahoo don't. Your rules keep running on your devices while orOS is open; an out-of-office reply is set on the provider's own web page.",
+      "srv.noAuth": "The server refused the login for server rules.",
+      "srv.host": "Rules server (optional)", "srv.hostHint": "Only if your provider gives another address for Sieve / ManageSieve, for example sieve.example.com (port 4190).",
+      "srv.retry": "Check again", "srv.local": "Run the rules on my devices again",
+      "srv.saved": "Saved on the mail server.", "srv.offDone": "Your rules run on your devices again.",
+      "srv.fail": "The rules on the mail server were not updated: {msg}", "srv.hintRules": "Rules of {email} run on the mail server.",
+      "away.title": "Out-of-office reply", "away.on": "Send an automatic reply", "away.subj": "Subject (optional)",
+      "away.text": "Message", "away.from": "From", "away.to": "Until", "away.days": "To the same sender",
+      "away.days1": "at most once a day", "away.daysN": "at most once every {n} days",
+      "away.noVac": "This server cannot send automatic replies.",
+      "away.noDates": "This server ignores the dates: turn the reply off when you are back.",
+      "away.needOn": "The reply works only when the rules run on the server.", "away.needText": "Write the reply's message.",
+      "err.script": "The server did not accept the rules: {msg}",
       "out.text": "Messages written offline. They go out by themselves when you are online.",
       "out.send": "Send now", "out.edit": "Edit", "out.del": "Delete", "out.failed": "Not sent: {msg}",
       "out.empty": "The Outbox is empty.", "out.nosubj": "(no subject)",
@@ -362,6 +384,27 @@
       "snd.hint": "Φεύγει εκείνη την ώρα όσο το orOS είναι ανοιχτό σε αυτή τη συσκευή (και με κλειστή την Αλληλογραφία)· αλλιώς μόλις ανοίξει το orOS.",
       "snd.scheduled": "Προγραμματίστηκε για {when}", "snd.at2": "Στέλνεται {when}", "snd.now": "Στέλνεται…",
       "set.undo": "Αναίρεση αποστολής", "set.undoOff": "Όχι (αποστολή αμέσως)", "set.undoSec": "{n} δευτερόλεπτα για αναίρεση",
+      "srv.lbl": "Στον διακομιστή αλληλογραφίας", "srv.btn": "Ρύθμιση", "srv.title": "Κανόνες στον διακομιστή και μήνυμα απουσίας",
+      "srv.hint": "Κάποιοι διακομιστές αλληλογραφίας τρέχουν οι ίδιοι τους κανόνες σου και ένα αυτόματο μήνυμα απουσίας, ακόμα κι όταν το orOS είναι κλειστό σε όλες τις συσκευές.",
+      "srv.on": "Κανόνες στον διακομιστή", "srv.off": "Κανόνες στις συσκευές σου", "srv.away": "μήνυμα απουσίας ενεργό",
+      "srv.checking": "Ρωτάω τον διακομιστή τι υποστηρίζει…",
+      "srv.yes": "Αυτός ο διακομιστής μπορεί να τρέχει τους κανόνες σου και να απαντά για σένα.",
+      "srv.use": "Οι κανόνες και το μήνυμα απουσίας να τρέχουν στον διακομιστή",
+      "srv.other": "Στον διακομιστή είναι ενεργό άλλο σύνολο φίλτρων, «{name}» (π.χ. από το webmail). Αν το ενεργοποιήσεις, θα το αντικαταστήσει· αν το απενεργοποιήσεις, θα επανέλθει.",
+      "srv.skip": "{n} από τους κανόνες σου δεν μπορούν να τρέξουν σε αυτόν τον διακομιστή· συνεχίζουν στις συσκευές σου.",
+      "srv.no": "Αυτός ο διακομιστής δεν προσφέρει κανόνες διακομιστή (ManageSieve). Το Gmail, το Outlook και το Yahoo δεν το προσφέρουν. Οι κανόνες σου συνεχίζουν να τρέχουν στις συσκευές σου όσο το orOS είναι ανοιχτό· το μήνυμα απουσίας ρυθμίζεται στη σελίδα του παρόχου.",
+      "srv.noAuth": "Ο διακομιστής δεν δέχτηκε τη σύνδεση για τους κανόνες.",
+      "srv.host": "Διακομιστής κανόνων (προαιρετικό)", "srv.hostHint": "Μόνο αν ο πάροχος δίνει άλλη διεύθυνση για Sieve / ManageSieve, π.χ. sieve.example.com (θύρα 4190).",
+      "srv.retry": "Έλεγχος ξανά", "srv.local": "Οι κανόνες να τρέχουν ξανά στις συσκευές μου",
+      "srv.saved": "Αποθηκεύτηκε στον διακομιστή.", "srv.offDone": "Οι κανόνες σου τρέχουν ξανά στις συσκευές σου.",
+      "srv.fail": "Οι κανόνες στον διακομιστή δεν ενημερώθηκαν: {msg}", "srv.hintRules": "Οι κανόνες του {email} τρέχουν στον διακομιστή.",
+      "away.title": "Μήνυμα απουσίας", "away.on": "Αυτόματη απάντηση", "away.subj": "Θέμα (προαιρετικό)",
+      "away.text": "Μήνυμα", "away.from": "Από", "away.to": "Έως", "away.days": "Στον ίδιο αποστολέα",
+      "away.days1": "το πολύ μία φορά την ημέρα", "away.daysN": "το πολύ μία φορά κάθε {n} ημέρες",
+      "away.noVac": "Αυτός ο διακομιστής δεν μπορεί να στέλνει αυτόματες απαντήσεις.",
+      "away.noDates": "Αυτός ο διακομιστής αγνοεί τις ημερομηνίες: σταμάτησε την απάντηση όταν γυρίσεις.",
+      "away.needOn": "Η απάντηση λειτουργεί μόνο όταν οι κανόνες τρέχουν στον διακομιστή.", "away.needText": "Γράψε το κείμενο της απάντησης.",
+      "err.script": "Ο διακομιστής δεν δέχτηκε τους κανόνες: {msg}",
       "out.text": "Μηνύματα που γράφτηκαν χωρίς σύνδεση. Στέλνονται μόνα τους μόλις συνδεθείς.",
       "out.send": "Αποστολή τώρα", "out.edit": "Επεξεργασία", "out.del": "Διαγραφή", "out.failed": "Δεν στάλθηκε: {msg}",
       "out.empty": "Τα Εξερχόμενα είναι άδεια.", "out.nosubj": "(χωρίς θέμα)",
@@ -533,7 +576,20 @@
     // The formatted signature: kept as written by rich.js clean() and
     // only ever shown after passing through clean() again (never as is).
     if (typeof a.sigHtml === "string" && a.sigHtml && a.sigHtml.length <= MAX_SIG_HTML) out.sigHtml = a.sigHtml;
+    // rules + out-of-office reply on the mail server (sieve.js)
+    var sv = normSieve(a.sieve);
+    if (sv) out.sieve = sv;
+    var aw = SV.normAway(a.away);
+    if (aw && (aw.on || aw.text)) out.away = aw;
     return out;
+  }
+  // { on, host: "" = the incoming server, prev: the script that was
+  //   active before ours, ext: what the server offers (sieve.js normExt) }
+  function normSieve(v) {
+    if (!v || typeof v !== "object") return null;
+    var o = { on: v.on === true, host: normHost(v.host), ext: SV.normExt(v.ext),
+              prev: typeof v.prev === "string" && v.prev.length <= 200 && !/[\x00-\x1f\x7f]/.test(v.prev) ? v.prev : "" };
+    return o.on || o.host || o.prev ? o : null;
   }
   function normSig(v) {
     if (typeof v !== "string") return "";
@@ -2253,6 +2309,8 @@
         imap: { host: host, port: +fPort.value, user: fUser.value.trim() || email },
         sig: "", sigHtml: ""
       };
+      if (existing && existing.sieve) acct.sieve = existing.sieve;
+      if (existing && existing.away) acct.away = existing.away;
       var sg = sigEd.get(false);
       acct.sig = sg.text.slice(0, MAX_SIG);
       if (sg.rich && sg.html.length <= MAX_SIG_HTML) acct.sigHtml = sg.html;
@@ -2419,6 +2477,20 @@
       if ((data.rules || []).length < R.MAX_RULES) {
         dlg.appendChild(button(t("rule.add"), "small", function () { dlg.close(); ruleDialog(null); }));
       }
+      dlg.appendChild(el("div", "dlg-lbl", t("srv.lbl")));
+      dlg.appendChild(el("p", "dlg-hint", t("srv.hint")));
+      var sul = el("ul", "set-accts");
+      data.accounts.forEach(function (a) {
+        var li = el("li");
+        var tx = el("div", "set-acct");
+        tx.appendChild(el("div", "set-acct-name", a.name || a.email));
+        var on = a.sieve && a.sieve.on;
+        tx.appendChild(el("div", "set-acct-mail", t(on ? "srv.on" : "srv.off") + (on && a.away && a.away.on ? " · " + t("srv.away") : "")));
+        li.appendChild(tx);
+        li.appendChild(button(t("srv.btn"), "small", function () { dlg.close(); serverDialog(a); }));
+        sul.appendChild(li);
+      });
+      dlg.appendChild(sul);
     }
     var form = el("form");
     form.method = "dialog";
@@ -3597,6 +3669,7 @@
   function afterFolderChange(acct, from, to, delim) {
     var rr = retargetRules(data.rules, acct.id, from, to, delim, Date.now());
     if (rr.n) {
+      sieveSoon(acct.id);
       data.rules = rr.rules;
       data = mergeMail(data, data);
       saveData();
@@ -3878,11 +3951,14 @@
     return null;
   }
   function putRule(r) {
+    (data.rules || []).forEach(function (x) { if (x.id === r.id && x.acct !== r.acct) sieveSoon(x.acct); });
+    sieveSoon(r.acct);
     data.rules = (data.rules || []).filter(function (x) { return x.id !== r.id; }).concat([r]);
     data = mergeMail(data, data);
     saveData();
   }
   function dropRule(r) {
+    sieveSoon(r.acct);
     data.tombs[r.id] = Math.max(Date.now(), r.m + 1);
     data = mergeMail(data, data);
     saveData();
@@ -3890,6 +3966,9 @@
   function rulesList(box) {
     box.innerHTML = "";
     var list = data.rules || [];
+    data.accounts.forEach(function (a) {
+      if (a.sieve && a.sieve.on) box.appendChild(el("p", "dlg-hint", t("srv.hintRules", { email: a.email })));
+    });
     if (!list.length) { box.appendChild(el("p", "dlg-hint", t("rule.none"))); return; }
     var ul = el("ul", "set-accts rule-list");
     list.forEach(function (r) {
@@ -4038,6 +4117,217 @@
     };
     if (cur && cur.acct === acct.id && cur.folder.toUpperCase() === "INBOX") go();
     else openFolder(acct.id, "INBOX").then(go);
+  }
+
+  // ---------- 9d2. Rules and out-of-office reply on the server ----------
+  // Servers with ManageSieve (Dovecot / Cyrus based hosts) keep the
+  // account's rules and the reply as one Sieve script (sieve.js) that
+  // the relay uploads (op "sieve"). Then the server runs them with orOS
+  // closed, and the device leaves those rules to it (notify.js). Gmail,
+  // Outlook, Yahoo: no ManageSieve, the rules stay on the devices.
+  var sieveDue = {}, sieveTimer = null, sieveSent = {};
+  function sieveArgs(sv, args) {
+    if (sv && sv.host) args.host = sv.host;
+    return args;
+  }
+  function sieveScript(acct, ext, away) {
+    return SV.build({ ext: ext, away: away, folder: function (f) { return M.utf7Decode(f); },
+                      rules: (data.rules || []).filter(function (r) { return r.acct === acct.id; }) });
+  }
+  // A rule changed: re-upload the scripts of the accounts it touches.
+  function sieveSoon(acctId) {
+    var a = acctById(acctId);
+    if (!a || !a.sieve || !a.sieve.on) return;
+    sieveDue[acctId] = 1;
+    clearTimeout(sieveTimer);
+    sieveTimer = setTimeout(sieveFlush, 1500);
+  }
+  function sieveFlush() {
+    var ids = Object.keys(sieveDue);
+    sieveDue = {};
+    ids.forEach(function (id) {
+      var a = acctById(id);
+      if (!a || !a.sieve || !a.sieve.on) return;
+      var script = sieveScript(a, a.sieve.ext, a.away).script;
+      if (sieveSent[id] === script) return;
+      call("sieve", a, sieveArgs(a.sieve, { act: "put", script: script })).then(function () {
+        sieveSent[id] = script;
+      }, function (e) {
+        showToast(t("srv.fail", { msg: errText(e) }));
+      });
+    });
+  }
+  function patchAcct(id, part) {
+    var a = acctById(id);
+    if (!a) return null;
+    var n = normAccount(Object.assign({}, a, part, { m: Math.max(Date.now(), a.m + 1) }));
+    if (!n) return null;
+    data.accounts = data.accounts.filter(function (x) { return x.id !== id; }).concat([n]);
+    data = mergeMail(data, data);
+    saveData();
+    return n;
+  }
+  function checkBox(box, label, on) {
+    var lab = el("label", "check");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.checked = !!on;
+    lab.appendChild(cb);
+    lab.appendChild(el("span", "", label));
+    box.appendChild(lab);
+    return cb;
+  }
+
+  function serverDialog(acct0) {
+    var acct = acctById(acct0.id) || acct0;
+    var sv = acct.sieve || { on: false, host: "", prev: "", ext: [] };
+    var aw = acct.away || SV.normAway({});
+    var dlg = makeDialog("ml-srv", true);
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("srv.title")));
+    dlg.appendChild(el("p", "dlg-hint", acct.email));
+    var state = el("p", "dlg-text", t("srv.checking"));
+    state.setAttribute("role", "status");
+    dlg.appendChild(state);
+    var local = button(t("srv.local"), "small", function () {
+      patchAcct(acct.id, { sieve: Object.assign({}, sv, { on: false, prev: "" }) });
+      dlg.close();
+      showToast(t("srv.offDone"));
+    });
+    local.hidden = true;
+    dlg.appendChild(local);
+
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    form.hidden = true;
+    var cbUse = checkBox(form, t("srv.use"), sv.on);
+    var otherP = el("p", "dlg-hint");
+    form.appendChild(otherP);
+    var skipP = el("p", "dlg-hint");
+    form.appendChild(skipP);
+    form.appendChild(el("div", "dlg-lbl srv-sec", t("away.title")));
+    var cbAway = checkBox(form, t("away.on"), aw.on);
+    var fSubj = field(form, "ml-aw-subj", t("away.subj"), "text", aw.subject, { maxlength: "200" });
+    var txLab = el("label", "dlg-lbl", t("away.text"));
+    txLab.setAttribute("for", "ml-aw-text");
+    form.appendChild(txLab);
+    var fText = el("textarea");
+    fText.id = "ml-aw-text";
+    fText.rows = 5;
+    fText.maxLength = 4000;
+    fText.value = aw.text;
+    form.appendChild(fText);
+    var dates = el("div", "aw-dates");
+    var dFrom = el("div"), dTo = el("div");
+    var fFrom = field(dFrom, "ml-aw-from", t("away.from"), "date", aw.start, {});
+    var fTo = field(dTo, "ml-aw-to", t("away.to"), "date", aw.end, {});
+    dates.appendChild(dFrom);
+    dates.appendChild(dTo);
+    form.appendChild(dates);
+    var fDays = portSelect(form, "ml-aw-days", t("away.days"), [1, 3, 7, 14, 30].map(function (n) {
+      return [n, n === 1 ? t("away.days1") : t("away.daysN", { n: n })];
+    }), aw.days);
+    var noteP = el("p", "dlg-hint");
+    form.appendChild(noteP);
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    dlg.appendChild(form);
+
+    // another address for ManageSieve (rare)
+    var adv = el("details", "srv");
+    adv.appendChild(el("summary", "", t("srv.host")));
+    var advForm = el("div");
+    var fHost = field(advForm, "ml-srv-host", t("srv.host"), "text", sv.host, { maxlength: "253", autocapitalize: "off", spellcheck: "false", placeholder: acct.imap.host });
+    advForm.appendChild(el("p", "dlg-hint", t("srv.hostHint")));
+    advForm.appendChild(button(t("srv.retry"), "small", function () { probe(); }));
+    adv.appendChild(advForm);
+    if (sv.host) adv.open = true;
+    dlg.appendChild(adv);
+    var close = el("div", "dlg-actions");
+    close.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(close);
+
+    var ext = sv.ext, host = sv.host, other = "";
+    function notes() {
+      var can = ext.indexOf("vacation") >= 0;
+      cbAway.disabled = !can;
+      var n = [];
+      if (!can) n.push(t("away.noVac"));
+      else if (!cbUse.checked && cbAway.checked) n.push(t("away.needOn"));
+      else if ((fFrom.value || fTo.value) && !(ext.indexOf("date") >= 0 && ext.indexOf("relational") >= 0)) n.push(t("away.noDates"));
+      noteP.textContent = n.join(" ");
+      [fSubj, fText, fFrom, fTo, fDays].forEach(function (x) { x.disabled = !can || !cbAway.checked; });
+      otherP.textContent = other && cbUse.checked && !sv.on ? t("srv.other", { name: other }) : "";
+      var skip = (data.rules || []).filter(function (r) { return r.acct === acct.id && r.on !== false && !SV.runs(r, ext); }).length;
+      skipP.textContent = skip && cbUse.checked ? t("srv.skip", { n: skip }) : "";
+    }
+    [cbUse, cbAway, fFrom, fTo].forEach(function (x) { x.addEventListener("change", notes); });
+
+    function probe() {
+      var h = fHost.value.trim();
+      var nh = h ? normHost(h) : "";
+      if (h && !nh) { state.textContent = t("err.host"); return; }
+      state.textContent = t("srv.checking");
+      form.hidden = true;
+      close.hidden = false;
+      local.hidden = true;
+      call("sieve", acct, sieveArgs({ host: nh }, { act: "check" })).then(function (d) {
+        host = nh;
+        ext = SV.normExt(d && d.ext);
+        other = d && d.active && d.active !== "orOS" ? String(d.active) : "";
+        state.textContent = t("srv.yes");
+        form.hidden = false;
+        close.hidden = true;
+        notes();
+      }, function (e) {
+        var code = e && e.code;
+        state.textContent = code === "auth" ? t("srv.noAuth") :
+          ["connect", "timeout", "closed", "tls", "proto"].indexOf(code) >= 0 ? t("srv.no") : errText(e);
+        local.hidden = !sv.on;
+      });
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      errP.textContent = "";
+      var away = SV.normAway({ on: cbAway.checked, subject: fSubj.value, text: fText.value, days: +fDays.value,
+                               start: fFrom.value, end: fTo.value, m: Date.now() });
+      if (cbAway.checked && !away.text) { errP.textContent = t("away.needText"); return; }
+      if (cbAway.checked && !cbUse.checked) { errP.textContent = t("away.needOn"); return; }
+      ok.disabled = true;
+      var step;
+      if (cbUse.checked) {
+        var script = sieveScript(acct, ext, away).script;
+        step = call("sieve", acct, sieveArgs({ host: host }, { act: "put", script: script })).then(function (r) {
+          sieveSent[acct.id] = script;
+          return { on: true, host: host, ext: ext, prev: (r && r.prev) || (sv.on && sv.prev) || "" };
+        });
+      } else if (sv.on) {
+        step = call("sieve", acct, sieveArgs({ host: host }, { act: "off", prev: sv.prev || "" })).then(function () {
+          delete sieveSent[acct.id];
+          return { on: false, host: host, ext: ext, prev: "" };
+        });
+      } else step = Promise.resolve({ on: false, host: host, ext: ext, prev: "" });
+      step.then(function (nsv) {
+        patchAcct(acct.id, { sieve: nsv, away: away });
+        dlg.close();
+        showToast(t(nsv.on ? "srv.saved" : sv.on ? "srv.offDone" : "toast.saved"));
+      }, function (err) {
+        ok.disabled = false;
+        errP.textContent = errText(err);
+      });
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    probe();
   }
 
   // ---------- 9e. Search ----------

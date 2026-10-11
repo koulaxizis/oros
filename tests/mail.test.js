@@ -25,7 +25,7 @@ function block(from, to) {
   if (i < 0 || j < 0) throw new Error("missing block " + from);
   return src.slice(i, j);
 }
-const A = new Function("M", "R",
+const A = new Function("M", "R", "SV",
   "var DATA_VER = 1, MAX_TOMBS = 200, MAX_IMGOK = 500, KEEP_HEADS = 500, MAX_SIG = 1000, MAX_SIG_HTML = 60000;\n" +
   "function t(k) { return k; }\n" +
   block("  function cmpStr(", "  function el(") +
@@ -34,7 +34,7 @@ const A = new Function("M", "R",
   block("  // ---------- 2. Data model", "  // ---------- 3. Device store") +
   block("  function summarize(", "  function refreshFolder(") +
   "\nreturn { mergeMail, normAccount, normRelayUrl, emptyData, presetFor, folderRole, sortFolders," +
-  " folderDepth, compressUids, uidSetHas, applyList, leafError, childName, siblingName, renamedPath, retargetRules };")(M, require("../mail/rules.js"));
+  " folderDepth, compressUids, uidSetHas, applyList, leafError, childName, siblingName, renamedPath, retargetRules };")(M, require("../mail/rules.js"), require("../mail/sieve.js"));
 
 const bin = (s) => Buffer.from(s, "utf8").toString("latin1");
 const b64 = (s) => Buffer.from(s, "latin1").toString("base64");
@@ -511,6 +511,19 @@ test("data: the signature is kept, cleaned and capped; merge stays symmetric", (
   const b = { accounts: [Object.assign({}, base, { m: 6, sig: "new" })] };
   assert.equal(JSON.stringify(A.mergeMail(a, b)), JSON.stringify(A.mergeMail(b, a)));
   assert.equal(A.mergeMail(a, b).accounts[0].sig, "new");
+});
+
+test("data: server rules (sieve) and the out-of-office reply ride on the account", () => {
+  const base = { id: "sieveac1", m: 5, email: "c@pmail.gr", imap: { host: "mail.pmail.gr", port: 993 } };
+  const n = A.normAccount(Object.assign({
+    sieve: { on: true, host: "Sieve.PMAIL.gr", prev: "roundcube", ext: ["fileinto", "notify", "VACATION"] },
+    away: { on: true, text: " Λείπω ", days: 7, start: "2026-10-20", m: 3 } }, base));
+  assert.deepEqual(n.sieve, { on: true, host: "sieve.pmail.gr", ext: ["fileinto", "vacation"], prev: "roundcube" });
+  assert.equal(n.away.text, "Λείπω");
+  assert.equal(n.away.days, 7);
+  const bad = A.normAccount(Object.assign({ sieve: { on: "yes", host: "localhost", prev: "a\nb" }, away: { on: true, text: "" } }, base));
+  assert.ok(!("sieve" in bad) && !("away" in bad), "nothing worth keeping is dropped");
+  assert.equal(A.normAccount(Object.assign({ sieve: { on: false, host: "x", prev: "p" } }, base)).sieve.prev, "p");
 });
 
 test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, rename, delete, search", async () => {

@@ -20,6 +20,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `canva.js` | The Atelier's `canva` operation: Canva Connect sign-in and PowerPoint export (see below) |
 | `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE/MOVE/COPY/EXPUNGE, CREATE, APPEND) |
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
+| `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
 Tests: `tests/mail.test.js` (Node, runs in CI) drives `core.js` +
@@ -46,14 +47,22 @@ Answer: `{ ok: true, data }` or `{ ok: false, error: { code, msg } }`.
 | `draft` | `folder`, `raw` (base64, ≤10 MB), `replace?` (UID), `mid?` (its Message-ID) | `{ uid, uidvalidity, replaced }` (APPEND with \\Draft \\Seen, then erases `replace`; `uid` 0 when the server tells neither APPENDUID nor finds `mid`) |
 | `smtpcheck` | `smtp:{ host, port (465\|587), sec, user, pass }` | `{ ok }` (SMTP login test) |
 | `send` | `smtp`, `from`, `rcpt[]` (1–50), `raw` (base64 RFC 5322 message, ≤10 MB), `sent?` (folder) | `{ sent, appended, appendErr }` |
+| `sieve` | `act` (`check`\|`put`\|`off`), `host?` (ManageSieve host, default the IMAP host; port 4190), `script` (put, ≤32 KB), `prev?` (off) | check: `{ impl, ext[], scripts[{ name, active }], active, ours }`; put: `{ prev }`; off: `{ active }` |
 
 `send` hands the message, built by the browser (`mail/compose.js`), to
 the SMTP server, then files a copy in `sent` with IMAP APPEND. Filing
 is best effort: a failure there is reported in `appendErr`, never as
 "not sent". Its request (and a `draft`'s) may be up to 14 MB, attachments included; every other op stays at 64 KB.
 
+`sieve` keeps the account's rules and out-of-office reply on the mail
+server (built by `mail/sieve.js`). Mail owns one script, `orOS`: `put`
+uploads and activates it and returns the script that was active before;
+`off` re-activates that one (`prev`) only while ours or nothing is
+active. The password is sent only after STARTTLS. Gmail, Outlook and
+Yahoo have no ManageSieve: `check` then fails with `connect`/`timeout`.
+
 Error codes: `origin`, `rate`, `bad-request`, `connect`, `tls`,
-`auth`, `timeout`, `closed`, `proto`, `no`, `gone`, `too-big`, `rcpt` (a recipient refused).
+`auth`, `timeout`, `closed`, `proto`, `no`, `gone`, `too-big`, `rcpt` (a recipient refused), `script` (the server refused a Sieve script).
 
 ## The `web` operation (Reader app)
 
