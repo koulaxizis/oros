@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.87.00
+- Micro-Zen: make your own breathing patterns, and see your sessions as a row in Habits.
+
 ## Version 0.86.00
 - New app: One-Sentence Diary. One sentence a day, and under it what you wrote on the same date in earlier years. Optional evening reminder, calendar, search and a printable year.
 - Wheel of Fate: give an option double or triple chance.

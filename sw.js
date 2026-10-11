@@ -344,6 +344,7 @@ var PRECACHE_URLS = [
   "plants/plants.css",
   "plants/plants.js",
   "zen/index.html",
+  "zen/core.js",
   "zen/zen.css",
   "zen/zen.js",
   "health/",

@@ -23,6 +23,7 @@ The flame next to a habit shows your current streak. Today doesn't break a strea
 Some apps can add an automatic row, marked `Auto`, that ticks itself:
 - [Water](app:water): days you reached your water goal. You can turn it off with `Show in Habits` in Water's settings.
 - [Workouts](app:fitness): days with a finished workout. You can turn it off in Workouts' settings.
+- [Micro-Zen](app:zen): days with a finished breathing session. You can turn it off with `Show in Habits` in Micro-Zen.
 
 These rows are read-only and aren't counted in `Stats`. Tap one to open its app.
 

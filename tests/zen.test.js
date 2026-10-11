@@ -152,3 +152,72 @@ test("mergeZen: junk drops out, a row keeps its newest 400 days", () => {
   assert.equal(keys.length, Z.MAX_DAYS);
   assert.equal(keys[keys.length - 1], Z.dayKey(Z.addDays(new Date(2025, 0, 1), 449)));
 });
+
+// ---------- My patterns + Habits feed (zen/core.js) ----------
+const ZC = require(path.join(__dirname, "..", "zen/core.js"));
+const PID = "pat0001x", PID2 = "pat0002x";
+const pat = (id, m, n, p) => ({ id, m, n: n || "Mine", p: p || [4000, 2000, 6000, 0] });
+
+test("my patterns: phases clamped to half seconds, in and out at least 1 s", () => {
+  assert.deepEqual(ZC.normPhases([4200, -5, 0, 99999]), [4000, 0, 1000, 20000]);
+  assert.deepEqual(ZC.normPhases([5500, 0, 5500, 0]), [5500, 0, 5500, 0]);
+  assert.equal(ZC.normPhases([4000, 0, 4000]), null);
+  assert.equal(ZC.normPhases([4000, NaN, 4000, 0]), null);
+  assert.deepEqual(ZC.normPat({ id: PID, m: 1, n: "  Calm   down  ", p: [4000, 2000, 6000, 0], x: 1 }), pat(PID, 1, "Calm down"));
+  assert.equal(ZC.normPat({ id: PID, m: 1, n: "   ", p: [4000, 0, 4000, 0] }), null);
+  assert.equal(ZC.normPat({ id: "BAD", m: 1, n: "x", p: [4000, 0, 4000, 0] }), null);
+  assert.equal(ZC.normName("x".repeat(40)).length, 30);
+});
+
+test("my patterns: phases, label, cycle", () => {
+  const p = pat(PID, 1);
+  assert.deepEqual(ZC.phasesOf(p), [{ k: "in", ms: 4000 }, { k: "hold", ms: 2000 }, { k: "out", ms: 6000 }]);
+  assert.equal(ZC.patLabel(p), "4-2-6");
+  assert.equal(ZC.patLabel({ p: [5500, 0, 5500, 0] }), "5.5-5.5");
+  assert.equal(ZC.cycleSec(p), 12);
+  // the app turns it into the same timing as a ready pattern
+  const ph = ZC.phasesOf(pat(PID, 1, "B", [4000, 4000, 4000, 4000]));
+  assert.deepEqual(ph, Z.PATTERNS.box);
+});
+
+test("my patterns: merge laws, tombstones, Show in Habits, at most 12", () => {
+  const A = { pats: [pat(PID, 5, "A")], tombs: {}, hb: { on: 1, m: 0 } };
+  const B = { pats: [pat(PID, 7, "B"), pat(PID2, 3)], tombs: {}, hb: { on: 0, m: 9 } };
+  const AB = ZC.mergePats(A, B);
+  assert.deepEqual(AB, ZC.mergePats(B, A));
+  assert.deepEqual(ZC.mergePats(AB, AB), AB);
+  assert.equal(AB.pats.find((x) => x.id === PID).n, "B");
+  assert.deepEqual(AB.hb, { on: 0, m: 9 });
+  const del = ZC.mergePats(AB, { tombs: { [PID]: 8 } });
+  assert.deepEqual(del.pats.map((x) => x.id), [PID2]);
+  const back = ZC.mergePats(del, { pats: [pat(PID, 9, "back")] });
+  assert.equal(back.pats.length, 2);
+  assert.deepEqual(ZC.mergePats(null, undefined), { ver: 1, pats: [], tombs: {}, hb: { on: 1, m: 0 } });
+  const many = [];
+  for (let i = 0; i < 15; i++) many.push(pat("pat" + String(i).padStart(4, "0") + "z", 100 + i));
+  const cut = ZC.mergePats({ pats: many }, null);
+  assert.equal(cut.pats.length, ZC.MAX_PATS);
+  assert.ok(!cut.pats.some((x) => x.m >= 112), "the oldest stay");
+});
+
+test("Habits feed: days with a finished session, all devices, hidden when off", () => {
+  let zen = Z.addSession({ ver: 1, br: 0, rows: {} }, DEV, "2026-10-10", 60, 5);
+  zen = Z.addSession(zen, DEV2, "2026-10-11", 180, 12);
+  assert.deepEqual(ZC.zenDays(zen, null), { days: { "2026-10-10": true, "2026-10-11": true } });
+  assert.equal(ZC.zenDays(zen, { hb: { on: 0, m: 1 } }), null);
+  assert.equal(ZC.zenDays({ ver: 1, br: 0, rows: {} }, null), null);
+  const reset = Object.assign({}, zen, { br: 99 });
+  assert.equal(ZC.zenDays(reset, null), null, "a reset clears the row");
+  assert.equal(ZC.FEED.id, "zen");
+  assert.deepEqual(ZC.FEED.keys, ["oros-zen-data", "oros-zen-patterns"]);
+});
+
+test("wiring: core loaded by Zen and Habits, second slice, editor", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "zen/index.html"), "utf8");
+  const hab = fs.readFileSync(path.join(__dirname, "..", "habits/index.html"), "utf8");
+  assert.ok(html.indexOf("core.js") < html.indexOf("zen.js"));
+  assert.ok(hab.indexOf("../zen/core.js") > 0 && hab.indexOf("../zen/core.js") < hab.indexOf("habits.js"));
+  assert.ok(src.includes('api.registerSlice("zenpat", patsGet, patsSet, Z.PATS_KEY, Z.mergePats);'));
+  assert.ok(src.includes('function patDialog(existing)') && src.includes('id="new-pat"') === false && html.includes('id="new-pat"'));
+  assert.ok(html.includes('id="hb-on"'));
+});

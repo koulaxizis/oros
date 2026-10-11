@@ -257,6 +257,14 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
 .pat-name { font-size: 14px; font-weight: 800; }
 .pat.on .pat-name { color: var(--accent); }
 .pat-sub { font-size: 12px; color: var(--text-dim); }
+.pat-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.pat-acts .chip { font-size: 13px; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 40px; margin-top: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+.pat-dlg form > input { width: 100%; }
+.pat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; margin-top: 12px; }
+.pat-cell input { width: 100%; font-variant-numeric: tabular-nums; }
+.pat-preview { font-size: 13px; font-weight: 700; color: var(--accent); min-height: 18px; }
 body.session .pat:not(.on), body.session #lengths .chip:not(.on) { opacity: 0.45; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips:empty { display: none; }
@@ -434,6 +442,8 @@ dialog.done-dlg { text-align: center; }
   .icon-btn, .dlg-btn, .chip { min-height: 44px; }
   .icon-btn { width: 44px; }
   .link-btn { min-height: 44px; }
+  .check { min-height: 44px; }
+  .check input { width: 24px; height: 24px; }
   .pat { min-height: 52px; }
 }
 

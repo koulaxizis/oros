@@ -10,6 +10,7 @@ When the session ends you see `Well done` with your breaths and time. `Again` st
 - `Box`: 4-4-4-4, in, hold, out, hold. Good for balance.
 - `Relax`: 4-7-8, in for 4, hold for 7, out for 8. Made for winding down before sleep.
 - `Coherent`: 5.5 seconds in and 5.5 out, a steady rhythm with no holds.
+- Your own: `+ My pattern` opens a small editor. Give it a name and the seconds for `Breathe in`, `Hold (full)`, `Breathe out` and `Hold (empty)`, in half seconds (a hold of 0 is skipped). It joins the list with its rhythm, like 4-2-6. Select it and tap `Edit this pattern` to change or delete it (`Undo` brings it back). You can have up to 12, and they sync to all your devices.
 
 `Length` can be 1, 3, 5 or 10 minutes. A session always ends on a whole breath, so the time is close to, not exactly, what you picked. You can't change the pattern or length mid-session; pause first.
 
@@ -25,8 +26,10 @@ When the session ends you see `Well done` with your breaths and time. `Again` st
 
 `Reset stats` sets minutes, sessions and the streak back to zero, after you confirm.
 
+With `Show in Habits` ticked (at first it is), [Habits](app:habits) shows a `Micro-Zen` row that ticks itself on each day with a finished session. Untick it to hide the row on all your devices.
+
 ## Sync and backup
-Your stats sync through [orOS sync](help:t/sync) and add up across all your devices, and a reset clears them everywhere. The pattern, length, tones and vibration settings stay on each device. Micro-Zen has no import or export; your stats are part of the orOS [backup](help:t/backup).
+Your stats sync through [orOS sync](help:t/sync) and add up across all your devices, and a reset clears them everywhere. Your own patterns and `Show in Habits` sync too. The chosen pattern, length, tones and vibration stay on each device. Micro-Zen has no import or export; your stats are part of the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[Space]] starts, pauses or resumes.
