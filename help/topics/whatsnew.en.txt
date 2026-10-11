@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.84.00
+- Open with orOS: once orOS is installed from Chrome or Edge, documents, spreadsheets, .ics, .vcf and more open straight from your computer in the right orOS app. See Settings › Opening files.
+
 ## Version 0.83.00
 - Calendar: import .ics files from Google, Outlook or your phone, with a preview first. Contacts: on Android, add contacts straight from your phone.
 - Help: the Calendar and Contacts guides now explain .ics import and "From phone".
