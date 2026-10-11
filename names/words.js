@@ -8,6 +8,8 @@
 //     el roles and adjectives carry [masculine, feminine]
 //   regal: syllable-built fantasy name + epithet
 //     el endings carry the accent, so every name has exactly one
+//   pet: name [with a title]; team: adj + plural noun; project: prefix
+//     + handle adjective + noun
 // ============================================================
 (function (root) {
   "use strict";
@@ -206,6 +208,62 @@
           "των Βόρειων Νησιών", "της Κοιλάδας των Ανέμων", "του Χρυσού Δάσους", "του Μεγάλου Χειμώνα"
         ]
       }
+    },
+
+    // pet: a name, sometimes with a title (the title never changes form)
+    pet: {
+      en: {
+        name: [
+          "Biscuit", "Pickle", "Mango", "Pepper", "Noodle", "Waffle", "Pudding", "Muffin", "Peanut", "Bean",
+          "Nugget", "Toffee", "Maple", "Hazel", "Olive", "Clover", "Juniper", "Willow", "Pebble", "Button",
+          "Ziggy", "Pixel", "Socks", "Mittens", "Whiskers", "Paws", "Fuzzy", "Bubbles", "Sprout", "Twig",
+          "Comet", "Luna", "Stella", "Nova", "Orbit", "Rocket", "Bandit", "Ranger", "Scout", "Shadow",
+          "Ginger", "Cinnamon", "Nutmeg", "Basil", "Pumpkin", "Cookie", "Brownie", "Truffle", "Marshmallow", "Dumpling",
+          "Otis", "Milo", "Ruby", "Rosie", "Daisy", "Poppy", "Archie", "Teddy", "Winston", "Gizmo"
+        ],
+        hon: ["Sir", "Lady", "Captain", "Professor", "Little", "Big", "Mister", "Miss", "Doctor", "Baron"]
+      },
+      el: {
+        name: [
+          "Φουντούκι", "Λουκούμι", "Μπισκότο", "Κανέλα", "Πιπέρι", "Μέλι", "Ζάχαρη", "Σοκολάτα", "Καρύδι", "Φιστίκι",
+          "Κουλούρι", "Πορτοκάλι", "Ρόδι", "Κεράσι", "Βανίλια", "Μέντα", "Σουσάμι", "Τζίντζερ", "Λεμονάκι", "Μανταρίνι",
+          "Μπόμπος", "Ρεξ", "Αζόρ", "Λούκυ", "Ζουζού", "Μπέμπα", "Φλοκάτης", "Ψιψίνα", "Μουστάκιας", "Πατούσης",
+          "Σπίθα", "Αστέρω", "Φεγγαρούλα", "Κομήτης", "Αστραπή", "Σφαίρα", "Ρούμπι", "Τσάρλι", "Μίλο", "Λόλα",
+          "Μπουμπού", "Φρουφρού", "Τοτός", "Κική", "Μιμή", "Πίπης", "Σούλα", "Ντούντου", "Γκόφρι", "Τζίτζι"
+        ],
+        hon: ["Καπετάν", "Κυρ", "Σιορ", "Μπαρμπα", "Μαέστρος"]
+      }
+    },
+
+    // team: [adj] + plural noun (el: masculine plural, so they agree)
+    team: {
+      en: {
+        noun: [
+          "Owls", "Comets", "Otters", "Falcons", "Badgers", "Foxes", "Ravens", "Wolves", "Herons", "Lynxes",
+          "Rockets", "Pirates", "Knights", "Rangers", "Nomads", "Sailors", "Wizards", "Pilots", "Explorers", "Giants",
+          "Meteors", "Thunderbolts", "Tornadoes", "Lanterns", "Anchors", "Beacons", "Mavericks", "Titans", "Dragons", "Hedgehogs",
+          "Penguins", "Squids", "Bees", "Beetles", "Pandas", "Geckos", "Turtles", "Sparrows", "Lightning", "Riders"
+        ]
+      },
+      el: {
+        adj: [
+          "Χρυσοί", "Ασημένιοι", "Κόκκινοι", "Μαύροι", "Γαλάζιοι", "Άγριοι", "Γρήγοροι", "Ατρόμητοι", "Μεσονύχτιοι", "Θαλασσινοί",
+          "Πέτρινοι", "Σιδερένιοι", "Ήσυχοι", "Τρελοί", "Τυχεροί", "Αήττητοι", "Βόρειοι", "Νότιοι", "Ηλεκτρικοί", "Κοσμικοί",
+          "Φλογεροί", "Παγωμένοι", "Ακούραστοι", "Γενναίοι", "Μικροί", "Μεγάλοι", "Νυχτερινοί", "Αστραφτεροί", "Θυελλώδεις", "Πρωινοί"
+        ],
+        noun: [
+          "Αετοί", "Λύκοι", "Κεραυνοί", "Κομήτες", "Γλάροι", "Πειρατές", "Ιππότες", "Ταύροι", "Κένταυροι", "Τιτάνες",
+          "Δράκοι", "Ναύτες", "Σκαντζόχοιροι", "Πελαργοί", "Κόρακες", "Πλανήτες", "Μετεωρίτες", "Ανεμόμυλοι", "Βοριάδες", "Κυκλώνες",
+          "Ταξιδιώτες", "Αργοναύτες", "Φάροι", "Γίγαντες", "Αστροναύτες", "Ποδηλάτες", "Γερανοί", "Σπουργίτες", "Κάστορες", "Ελέφαντες"
+        ]
+      }
+    },
+
+    // project: [prefix] + adjective + noun (the handle words, capitalised;
+    // el: the neuter handle words, so they agree)
+    project: {
+      en: { pre: ["Project", "Operation", "Codename"] },
+      el: { pre: ["Σχέδιο", "Επιχείρηση", "Κωδικός"] }
     }
   };
 

@@ -41,6 +41,7 @@ Keep up to 20 cards, for example one for work and one for gaming. Choose a card 
 Your cards sync between your devices through [orOS sync](help:t/sync). The card that's open, the phone tab and the side shown stay on each device. The exports above are your copies outside orOS; there's no import, but the orOS [backup](help:t/backup) includes your cards.
 
 ## Tips
+- Stuck on a username? In the [Name Generator](app:names), `Put on a Netizen ID card` next to a handle or a title starts a new card with it.
 - Hide your phone and email before sharing a card publicly, and keep them shown on a card you hand to friends as a vCard.
 - Try `New face` a few times until you like one, then fine-tune it pixel by pixel.
 

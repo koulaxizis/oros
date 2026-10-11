@@ -38,7 +38,7 @@ The `Help` button at the top shows these shortcuts too.
 
 ## Tips
 - Use the Markdown export to drop your cast into [Writer](app:writer) or [Notes](app:notes).
-- Need a name? Try the [Name Generator](app:names).
+- Need a name? Try the [Name Generator](app:names): its `New character in Characters` button on a regal pair opens a new character here with that name.
 
 ## Limits
 - There's no import; the JSON export can't be loaded back into the app. To restore, use an orOS [backup](help:t/backup).

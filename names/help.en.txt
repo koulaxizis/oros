@@ -1,23 +1,28 @@
 # Name Generator
-Name Generator comes up with names for your corners of the web, your bio and your stories: usernames, playful titles and fantasy names with an epithet. Keep the ones you like as favourites.
+Name Generator comes up with names for your corners of the web, your bio and your stories: usernames, playful titles, fantasy names with an epithet, and names for pets, teams and projects. Keep the ones you like as favourites.
 
 ## Getting started
 When you open the app you already get 8 new names. Tap or click `New names` (or press [[Enter]] or [[Space]]) for another batch of 8, all different.
 
 Next to each name:
 - the copy button puts it on the clipboard;
-- the star (`Keep`) adds it to your `Favourites`. Tap the star again to remove it.
+- the star (`Keep`) adds it to your `Favourites`. Tap the star again to remove it;
+- on handles and titles, `Put on a Netizen ID card` starts a new card in [Netizen ID](app:netizen): a handle becomes its username, a title its motto. `Undo` there takes the card back;
+- on regal pairs, `New character in Characters` opens a new character in [Characters](app:characters) with that name. Nothing is saved until you press Save there.
 
 ## Modes
 Pick a mode from the tabs at the top:
 - `Handles`: usernames for the web, an adjective plus a noun in Latin letters, up to 24 characters. They show with an "@" but copy without it.
 - `Titles`: epithets for your bio, such as a role with an adjective or "of something".
 - `Regal pairs`: a made-up fantasy name plus an epithet.
+- `Pets`: a name for a new friend, sometimes with a title such as "Captain".
+- `Teams`: an adjective and a plural noun, for a club or a quiz night.
+- `Projects`: a codename, sometimes after "Project", "Operation" or "Codename".
 
 Each mode keeps its own batch while the app is open, so switching tabs doesn't throw away what you had.
 
 ## Words and style
-Under `Words` choose `English` or `Greek`. It starts in the orOS language. With `Greek`, handles are written in plain greeklish (for example fengari), and Greek titles and epithets match the gender of the name.
+Under `Words` choose `English` or `Greek`. It starts in the orOS language. With `Greek`, handles are written in plain greeklish (for example fengari), and Greek titles and epithets match the gender of the name. Greek team and project names agree too.
 
 For `Handles` only, `Style` adds optional touches; turn on any mix:
 - `Leet (a→4)` swaps some letters for numbers (a→4, e→3, i→1, o→0, s→5, t→7).
