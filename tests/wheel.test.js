@@ -27,7 +27,7 @@ function build(lang) {
     block("  function cmpStr(", "  function newId(") +
     block("  // ---------- 2. Wheel model", "  // ---------- 5. Storage") +
     "\nreturn { MIN_OPTS, MAX_OPTS, OPT_LEN, TAU, COLORS, SET_IDS, SETS, normOpt, normOpts, setOpts, segColor, inkFor," +
-    " normSaved, mergeWheel, randInt, pointerIndex, spinTarget, easeOut };")(webcrypto);
+    " normSaved, mergeWheel, randInt, pointerIndex, spinTarget, easeOut, normW, weightsOf, pickWeighted, segEdges, MAX_W };")(webcrypto);
 }
 const W = build("en");
 const WEL = build("el");
@@ -138,4 +138,48 @@ test("mergeWheel: tombstones win ties, a newer edit resurrects, equal mtime agre
   assert.deepEqual(W.mergeWheel(A, B), W.mergeWheel(B, A));
   assert.deepEqual(W.mergeWheel({ wheels: [null, 3, { id: ID }], tombs: { "BAD ID": 1, [ID]: -2 } }, undefined),
     { ver: 1, wheels: [], tombs: {} });
+});
+
+test("weights: canonical map, saved wheels keep them, old wheels stay as they were", () => {
+  assert.equal(W.MAX_W, 3);
+  assert.deepEqual(W.normW({ B: 2, A: 3, C: 2, D: 1, E: 4, F: 2.5, Z: 2 }, ["B", "A", "D", "E", "F", "B"]), { A: 3, B: 2 });
+  assert.deepEqual(Object.keys(W.normW({ b: 2, a: 2 }, ["b", "a"])), ["a", "b"], "sorted keys");
+  assert.deepEqual(W.normW(null, ["A"]), {});
+  assert.deepEqual(W.normW({ constructor: 2 }, ["A"]), {});
+  assert.deepEqual(W.weightsOf(["A", "B", "A"], { A: 2 }), [2, 1, 2]);
+  const x = W.normSaved({ id: ID, m: 5, name: "N", opts: ["A", "B"], w: { A: 2, Q: 3 } });
+  assert.deepEqual(x, { id: ID, m: 5, name: "N", opts: ["A", "B"], w: { A: 2 } });
+  assert.deepEqual(W.normSaved({ id: ID, m: 5, name: "N", opts: ["A", "B"], w: { A: 1 } }), { id: ID, m: 5, name: "N", opts: ["A", "B"] });
+  const AB = W.mergeWheel(data([saved(ID, 5, "N")]), data([Object.assign(saved(ID, 6, "N"), { w: { B: 3 } })]));
+  assert.deepEqual(AB.wheels[0].w, { B: 3 });
+  assert.deepEqual(AB, W.mergeWheel(AB, AB));
+});
+
+test("weighted wheel: slices in proportion, pointer and spin agree, draw follows the weights", () => {
+  const ws = [1, 2, 1];
+  const e = W.segEdges(3, ws);
+  assert.ok(Math.abs(e[1] - W.TAU / 4) < 1e-9 && Math.abs(e[2] - W.TAU * 3 / 4) < 1e-9 && e[3] === W.TAU);
+  assert.deepEqual(W.segEdges(4).map((x) => +(x / W.TAU).toFixed(3)), [0, 0.25, 0.5, 0.75, 1]);
+  for (let win = 0; win < 3; win++) {
+    for (const frac of [0.01, 0.5, 0.99]) {
+      const r = W.spinTarget(1.3, win, 3, frac, 5, ws);
+      assert.equal(W.pointerIndex(r, 3, ws), win, `win ${win} frac ${frac}`);
+      assert.ok(r >= 1.3 + 5 * W.TAU);
+    }
+  }
+  // without weights it is the old geometry
+  for (let win = 0; win < 6; win++) assert.equal(W.pointerIndex(W.spinTarget(0, win, 6, 0.5, 4), 6), win);
+  const count = [0, 0, 0];
+  for (let i = 0; i < 8000; i++) count[W.pickWeighted([1, 2, 1])]++;
+  assert.ok(count[1] > 3600 && count[1] < 4400, "about half: " + count[1]);
+  assert.ok(count[0] > 1600 && count[0] < 2400 && count[2] > 1600 && count[2] < 2400, String(count));
+  assert.equal(W.pickWeighted([3]), 0);
+});
+
+test("weights wiring: editor button, draft and saved wheels, sync", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "wheel/wheel.css"), "utf8");
+  assert.ok(src.includes('el("button", "mini wt")') && css.includes(".mini.wt.on"));
+  assert.ok(src.includes("spinWin = pickWeighted(spinWts);"));
+  assert.ok(src.includes("prefs.dw = curW();") && src.includes("wts = copyMap(openNow.w);"));
+  assert.ok(src.includes("opts: curOpts(), w: curW() });"));
 });

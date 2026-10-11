@@ -21,6 +21,7 @@ The pointer clicks as it passes each segment and plays a short tune at the end. 
 - Drag an option by its grip to move it, or press [[Alt+Up]] or [[Alt+Down]] in its row.
 - The ✕ next to a row removes it. Empty rows disappear when you leave them.
 - `Shuffle options` mixes up the order.
+- The `×1` button next to a row sets the option's chance: tap it for `×2` (double) or `×3` (triple), and once more to go back to `×1`. A weighted option gets a wider slice of the wheel, so you can see its bigger chance. Weights are kept with saved wheels and sync with them.
 
 ## Ready sets and your wheels
 `Ready sets` has wheels to start from: `Yes / No`, `What to eat`, `Days of the week`, `Numbers 1–10`, `Heads or tails`, `Chores`, `Movie night`, `What to do` and `Who goes first`. A set opens as a new, unsaved wheel, so your saved ones are never changed.
