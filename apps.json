@@ -536,6 +536,14 @@
       "type": "internal"
     },
     {
+      "id": "ringtones",
+      "name": "Ringtone Composer",
+      "category": "Sound",
+      "icon": "ringtones",
+      "url": "ringtones/",
+      "type": "internal"
+    },
+    {
       "id": "television",
       "name": "Television",
       "category": "Video",
