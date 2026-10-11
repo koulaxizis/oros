@@ -4565,3 +4565,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - With two or more accounts, "All inboxes" at the top of the side panel lists every account's Inbox together, newest first, with a colour stripe per account; opening a message points the current account at its Inbox so the reader and actions work unchanged.
 - New pure `mail/threads.js` (In-Reply-To links, else a Re:/Fwd:/Απ: subject joins the nearest older message with the same subject; plain same-subject newsletters are not merged). Precached.
 - Tests: tests/mail-threads.test.js; Playwright E2E at 360px and 1200px with a mocked relay. Not tested: a real Papaki server.
+
+### 2026-10-11 — Mail: folders (new, rename, delete) and drafts on the server (#168) — 0.74.00
+- Folders dialog per account: new folder (top level or inside another), rename, delete after a question naming the messages lost; special folders stay. Rules moving into a renamed folder follow it; rules into a deleted folder are switched off (synced).
+- "Save draft" files the message in the account's Drafts folder on the server; a draft shows "Continue writing" and reopens in the composer; re-save replaces, send erases it (also from the Outbox). The leave question offers "Save draft".
+- Relay ops `rename`, `delete` (INBOX refused) and `draft` (APPEND with \Draft \Seen). `mime.js` `utf7Encode` for Greek folder names; `compose.js` `build({ keepBcc })` keeps Bcc in filed drafts only.
+- Tests 1364 (utf7Encode, rule retargeting, relay ops with/without UIDPLUS, Bcc in drafts); Playwright E2E at 360px EN/EL. Not tested: a real Papaki server.
