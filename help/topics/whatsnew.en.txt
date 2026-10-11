@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 0.80.00
 - Atelier: put your designs in folders, and the Canva and Files windows now tell you what went wrong instead of waiting for ever.
+- Calendar: on phones the labels and feeds now fold behind one button, so the month shows right away.
 
 ## Version 0.79.00
 - Mail: your rules can now run on the mail server, and you can set an automatic out-of-office reply, so both keep working even when orOS is closed (servers with ManageSieve; Gmail, Outlook and Yahoo don't support it).
