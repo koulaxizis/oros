@@ -1859,6 +1859,8 @@
         openFromLaunchParam();
         searchFromLaunchParam();
         deliverShare();
+        // Files from the system's "Open with" (fileopen.js) wait for the app list.
+        if (window.orosFileOpen) window.orosFileOpen.ready();
       })
       .catch(function () {
         state.apps = [];

@@ -849,16 +849,32 @@
   function importFile() {
     var inp = $("import-input");
     inp.value = "";
-    inp.onchange = function () {
-      var f = inp.files && inp.files[0];
-      if (!f) return;
-      if (f.size > 64 * 1024) { $("import-err").textContent = t("import.bad"); return; }
-      var rd = new FileReader();
-      rd.onload = function () { $("import-text").value = String(rd.result || ""); doImport(null); };
-      rd.readAsText(f);
-    };
+    inp.onchange = function () { readImport(inp.files && inp.files[0]); };
     inp.click();
   }
+  function readImport(f) {
+    if (!f) return;
+    if (f.size > 64 * 1024) { $("import-err").textContent = t("import.bad"); return; }
+    var rd = new FileReader();
+    rd.onload = function () { $("import-text").value = String(rd.result || ""); doImport(null); };
+    rd.readAsText(f);
+  }
+
+  // Deep link (shell __orosOpenAt / __orosTakeTarget): { openFile:
+  // { token } }, a file from the system's "Open with" (shell
+  // fileopen.js), taken once and read as the Import dialog reads one.
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object" || !tg.openFile || typeof tg.openFile.token !== "string") return;
+    var f = null;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(tg.openFile.token);
+    } catch (e) { f = null; }
+    if (!f) return;
+    if (!$("import-dlg").open) openImport();
+    readImport(f);
+  }
+  window.__orosOpenAt = openTarget;
 
   // ---------- 9. Toasts ----------
   function showToast(text) {
@@ -1144,6 +1160,13 @@
     renderReady();
     var start = (prefs.cur && C.findMelody(data, prefs.cur)) || null;
     openMelody(start, true);
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("ringtones");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
   }
 
   boot();

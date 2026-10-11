@@ -1492,6 +1492,19 @@
   // waits for a refresh of the shows. Nothing while a dialog is open.
   var waitEp = "";
   function openTarget(x) {
+    // { openFile: { token } }: a file from the system's "Open with"
+    // (shell fileopen.js), taken once, then the OPML import.
+    if (x && typeof x === "object" && x.openFile) {
+      if (!H || document.querySelector("dialog[open]")) return;
+      var f = null;
+      try {
+        var p = window.parent;
+        if (typeof x.openFile.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
+          f = p.__orosTakeFile(x.openFile.token);
+      } catch (e) { f = null; }
+      if (f) opmlFromFile(f);
+      return;
+    }
     // { show } / { show, ep }: universal search hit.
     if (x && typeof x === "object" && typeof x.show === "string") { openSearchTarget(x); return; }
     var tg = C.parseTarget(x);
@@ -1755,7 +1768,11 @@
   }
   function importOpml() {
     var dlg = dialogHost(), acc = ".opml,.xml,text/xml,text/x-opml,application/xml";
-    Promise.resolve(dlg && typeof dlg.openFile === "function" ? dlg.openFile(acc) : localPickFile(acc)).then(function (file) {
+    Promise.resolve(dlg && typeof dlg.openFile === "function" ? dlg.openFile(acc) : localPickFile(acc)).then(opmlFromFile);
+  }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function opmlFromFile(file) {
+    Promise.resolve(file).then(function (file) {
       if (!file) return;
       if (file.size > 4 * 1024 * 1024) { showToast(t("toast.big")); return; }
       file.text().then(function (txt) {

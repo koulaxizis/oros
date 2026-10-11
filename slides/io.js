@@ -253,7 +253,11 @@
   SL.readPackage = readPackage;
 
   function importPackage() {
-    pickFile(".orosslides,application/json,.json").then(function (f) {
+    pickFile(".orosslides,application/json,.json").then(openFile, function () { SL.toast(t("imp.bad")); });
+  }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function openFile(f) {
+    return Promise.resolve(f).then(function (f) {
       if (!f) return;
       if (f.size > PKG_MAX) { SL.toast(t("imp.bad")); return; }
       return f.text().then(function (txt) {
@@ -327,6 +331,6 @@
 
   SL.io = {
     present: present, exportPdf: exportPdf, exportPng: exportPng,
-    exportPackage: exportPackage, importPackage: importPackage, placeImage: placeImage
+    exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage
   };
 })();

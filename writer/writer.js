@@ -1970,9 +1970,23 @@ function bindShortcuts() {
 /* ===== SECTION 13: BOOT SEQUENCE ===== */
 // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
 // target { doc }. Opens the document in a tab (activateTab skips
-// missing and deleted ones).
+// missing and deleted ones). { openFile: { token } }: a file from the
+// system's "Open with" (shell fileopen.js), taken once from the shell.
 function openSearchTarget(t) {
+  if (t && t.openFile) {
+    const f = takeOpenFile(t.openFile);
+    if (f) ioOpenFile(f);
+    return;
+  }
   if (t && typeof t.doc === 'string') activateTab(t.doc);
+}
+function takeOpenFile(o) {
+  try {
+    const p = window.parent;
+    if (!o || typeof o.token !== 'string' || !p || p === window ||
+        typeof p.__orosTakeFile !== 'function') return null;
+    return p.__orosTakeFile(o.token);
+  } catch (e) { return null; }
 }
 window.__orosOpenAt = openSearchTarget;
 
@@ -6848,14 +6862,20 @@ function ioWireDragDrop() {
     ioShowDd(false);
     const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if (!f) return;
-    const ext = (f.name.split('.').pop() || '').toLowerCase();
-    if (['orosdoc','json','docx','odt','rtf','html','htm','txt','md','markdown']
-        .indexOf(ext) === -1) {
-      showToast(t('io.importfailed'));
-      return;
-    }
-    openImportDialog(f);   // reuses the full mode-selection flow
+    ioOpenFile(f);
   });
+}
+
+// A dropped file, or one from the system's "Open with" (shell
+// fileopen.js): known types go through the full import dialog.
+function ioOpenFile(f) {
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  if (['orosdoc','json','docx','odt','rtf','html','htm','txt','md','markdown']
+      .indexOf(ext) === -1) {
+    showToast(t('io.importfailed'));
+    return;
+  }
+  openImportDialog(f);   // reuses the full mode-selection flow
 }
 
 // Boot LAST: every let/const above is initialized by now (no TDZ even

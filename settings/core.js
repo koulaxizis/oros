@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "notifications", "sync", "backup", "language", "system"];
+  var SECTIONS = ["appearance", "notifications", "sync", "backup", "language", "files", "system"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -18,7 +18,7 @@
   var SCOPE = {
     theme: "all", skin: "all", wallpaper: "all", pet: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all",
-    folder: "device", search: "device", passphrase: "device", dock: "device"
+    folder: "device", search: "device", passphrase: "device", dock: "device", files: "device"
   };
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -104,6 +104,23 @@
       "l.lang": "Language", "l.search": "Menu search looks in",
       "l.search.hint": "The search field at the top of the menu also finds text inside these apps.",
       "l.search.none": "No app offers search yet.",
+
+      "s.files": "Opening files", "d.files": "Which orOS app opens which file type",
+      "f.status": "Open with orOS",
+      "f.ready": "orOS is in your system's “Open with” for the file types below. Pick orOS there for a file, or make it the default (how, below).",
+      "f.install": "Install orOS as an app first (System › Install orOS as an app). Then it appears in your system's “Open with” for these file types.",
+      "f.unsupported": "This browser cannot hand files from your device to orOS. Use Chrome or Edge on Windows, Linux or Mac, with orOS installed. On Android, open the file inside the orOS app with its Import button.",
+      "f.none": "Opening files is not available in this orOS version.",
+      "f.apps": "Which app opens what",
+      "f.choose": "Types more than one app opens",
+      "f.choose.hint": "orOS asks each time, unless you pick an app here (or tick “Always” when it asks).",
+      "f.ask": "Ask each time",
+      "f.how": "Make orOS the default",
+      "f.how.hint": "Only you can make an app the default, in your system's settings. orOS cannot do it by itself.",
+      "f.how.win": "Windows: right-click a file › Open with › Choose another app › orOS, tick “Always use this app”.",
+      "f.how.linux": "Linux: right-click a file › Properties › Open With › orOS › Set as default.",
+      "f.how.mac": "Mac: select a file › Get Info › Open with › orOS › Change All.",
+      "f.how.android": "Android: the orOS app from the browser cannot be the default for files yet. Use the Import button inside each app.",
 
       "x.version": "orOS version", "x.updates": "Check for updates",
       "x.install": "Install orOS as an app", "x.install.hint": "Opens in its own window, works offline, starts from your home screen.",
@@ -191,6 +208,23 @@
       "l.lang": "Γλώσσα", "l.search": "Η αναζήτηση του μενού ψάχνει σε",
       "l.search.hint": "Το πεδίο αναζήτησης στην κορυφή του μενού βρίσκει και κείμενο μέσα σε αυτές τις εφαρμογές.",
       "l.search.none": "Καμία εφαρμογή δεν προσφέρει ακόμα αναζήτηση.",
+
+      "s.files": "Άνοιγμα αρχείων", "d.files": "Ποια εφαρμογή του orOS ανοίγει κάθε τύπο αρχείου",
+      "f.status": "Άνοιγμα με το orOS",
+      "f.ready": "Το orOS υπάρχει στο «Άνοιγμα με» του συστήματός σου για τους τύπους αρχείων παρακάτω. Διάλεξε εκεί το orOS για ένα αρχείο ή κάν' το προεπιλογή (πώς, παρακάτω).",
+      "f.install": "Εγκατάστησε πρώτα το orOS ως εφαρμογή (Σύστημα › Εγκατάσταση του orOS ως εφαρμογή). Μετά εμφανίζεται στο «Άνοιγμα με» του συστήματός σου για αυτούς τους τύπους αρχείων.",
+      "f.unsupported": "Αυτός ο browser δεν μπορεί να δίνει αρχεία της συσκευής στο orOS. Χρησιμοποίησε Chrome ή Edge σε Windows, Linux ή Mac, με εγκατεστημένο το orOS. Στο Android, άνοιξε το αρχείο μέσα στην εφαρμογή του orOS με το κουμπί Εισαγωγή.",
+      "f.none": "Το άνοιγμα αρχείων δεν υπάρχει σε αυτή την έκδοση του orOS.",
+      "f.apps": "Ποια εφαρμογή ανοίγει τι",
+      "f.choose": "Τύποι που ανοίγουν σε πάνω από μία εφαρμογή",
+      "f.choose.hint": "Το orOS ρωτά κάθε φορά, εκτός αν διαλέξεις εδώ εφαρμογή (ή τσεκάρεις το «Πάντα» όταν ρωτά).",
+      "f.ask": "Ερώτηση κάθε φορά",
+      "f.how": "Το orOS ως προεπιλογή",
+      "f.how.hint": "Μόνο εσύ μπορείς να ορίσεις μια εφαρμογή ως προεπιλογή, από τις ρυθμίσεις του συστήματός σου. Το orOS δεν μπορεί να το κάνει μόνο του.",
+      "f.how.win": "Windows: δεξί κλικ σε αρχείο › Άνοιγμα με › Επιλογή άλλης εφαρμογής › orOS, τσέκαρε το «Να χρησιμοποιείται πάντα αυτή η εφαρμογή».",
+      "f.how.linux": "Linux: δεξί κλικ σε αρχείο › Ιδιότητες › Άνοιγμα με › orOS › Ορισμός ως προεπιλογή.",
+      "f.how.mac": "Mac: επίλεξε αρχείο › Λήψη πληροφοριών › Άνοιγμα με › orOS › Αλλαγή όλων.",
+      "f.how.android": "Android: το orOS από τον browser δεν μπορεί ακόμα να είναι προεπιλογή για αρχεία. Χρησιμοποίησε το κουμπί Εισαγωγή μέσα σε κάθε εφαρμογή.",
 
       "x.version": "Έκδοση orOS", "x.updates": "Έλεγχος για ενημέρωση",
       "x.install": "Εγκατάσταση του orOS ως εφαρμογή", "x.install.hint": "Ανοίγει σε δικό του παράθυρο, δουλεύει offline, ξεκινά από την αρχική οθόνη.",

@@ -25,6 +25,7 @@
 //   6. Section: Sync
 //   7. Section: Backups
 //   8. Section: Language & search
+//  8b. Section: Opening files
 //   9. Section: System
 //  10. Navigation + render
 //  11. Keyboard (Contract Β) + palette
@@ -72,6 +73,7 @@
     backup: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>',
     language: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
     eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
@@ -594,6 +596,58 @@
     host.appendChild(c2);
   }
 
+  // ---------- 8b. Section: Opening files ----------
+  // Reads and writes the shell's fileopen.js (window.orosFileOpen);
+  // the choices stay on this device.
+  function fileOpen() {
+    var p = parentWin();
+    try { return (p && p.orosFileOpen && p.orosFileOpen.v >= 1) ? p.orosFileOpen : null; }
+    catch (e) { return null; }
+  }
+
+  function secFiles(host) {
+    var F = fileOpen();
+    var c1 = card(t("f.status"), "files");
+    if (!F) {
+      c1.appendChild(el("p", "hint", t("f.none")));
+      host.appendChild(c1);
+      return;
+    }
+    c1.appendChild(el("p", "hint", !F.supported() ? t("f.unsupported") : F.installed() ? t("f.ready") : t("f.install")));
+    host.appendChild(c1);
+
+    var c2 = card(t("f.apps"));
+    F.handlers().forEach(function (h) {
+      c2.appendChild(row(appName(h.app), null, { hint: h.exts.join("  ") }));
+    });
+    host.appendChild(c2);
+
+    var sh = F.shared();
+    if (sh.length) {
+      var c3 = card(t("f.choose"), "files");
+      c3.appendChild(el("p", "hint", t("f.choose.hint")));
+      sh.forEach(function (ext) {
+        var opts = [{ value: "", label: t("f.ask") }].concat(F.appsFor(ext).map(function (id) {
+          return { value: id, label: appName(id) };
+        }));
+        var cur = F.choice(ext);
+        var key = "file:" + ext.slice(1);
+        c3.appendChild(row(ext, select(opts, cur === "ask" ? "" : cur, key, function (v) {
+          F.setChoice(ext, v);
+          render();
+        }), { forId: "f-" + key }));
+      });
+      host.appendChild(c3);
+    }
+
+    var c4 = card(t("f.how"));
+    c4.appendChild(el("p", "hint", t("f.how.hint")));
+    ["win", "linux", "mac", "android"].forEach(function (k) {
+      c4.appendChild(el("p", "hint", t("f.how." + k)));
+    });
+    host.appendChild(c4);
+  }
+
   // ---------- 9. Section: System ----------
   function linkRow(label, key, onClick) {
     var b = el("button", "link-row");
@@ -683,7 +737,7 @@
 
   var SECTION_FN = {
     appearance: secAppearance, notifications: secNotifications, sync: secSync,
-    backup: secBackup, language: secLanguage, system: secSystem
+    backup: secBackup, language: secLanguage, files: secFiles, system: secSystem
   };
 
   function renderNav(s) {
