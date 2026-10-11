@@ -45,6 +45,7 @@
       "qty.label":        "Quantity",
       "note.label":       "Note (optional)",
       "rename":           "Rename",
+      "label.make":       "Make a label",
       "del":              "Delete",
       "cancel":           "Cancel",
       "save":             "Save",
@@ -76,6 +77,7 @@
       "qty.label":        "Ποσότητα",
       "note.label":       "Σημείωση (προαιρετικό)",
       "rename":           "Μετονομασία",
+      "label.make":       "Φτιάξε ετικέτα",
       "del":              "Διαγραφή",
       "cancel":           "Άκυρο",
       "save":             "Αποθήκευση",
@@ -470,6 +472,7 @@
     plus:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     pencil:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4L8 20l-5 1 1-5z"/></svg>',
     trash:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>',
+    tag:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><path d="M7.5 7.5h.01"/></svg>',
     chev:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>'
   };
 
@@ -582,6 +585,9 @@
     var acts = document.createElement("div");
     acts.className = "card-actions";
 
+    var lbl = mkLabelBtn(ent);
+    if (lbl) acts.appendChild(lbl);
+
     var ren = mkIconBtn(ICO.pencil, t("rename"), function (ev) {
       ev.stopPropagation();
       openEntityDialog("rename", ent);
@@ -659,6 +665,18 @@
     }));
     row.appendChild(acts);
     return row;
+  }
+
+  // "Make a label": opens the Label Maker with this name on the tape
+  // (__orosOpenAt("labels", { text })). Hidden outside the shell.
+  function mkLabelBtn(ent) {
+    var shell = null;
+    try { shell = window.parent && window.parent !== window ? window.parent : null; } catch (e) {}
+    if (!shell || typeof shell.__orosOpenAt !== "function") return null;
+    return mkIconBtn(ICO.tag, t("label.make") + ": " + nameOf(ent), function (ev) {
+      ev.stopPropagation();
+      try { shell.__orosOpenAt("labels", { text: nameOf(ent) }); } catch (e) {}
+    });
   }
 
   function mkIconBtn(svg, label, fn) {

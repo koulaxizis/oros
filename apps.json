@@ -238,6 +238,14 @@
       "type": "internal"
     },
     {
+      "id": "labels",
+      "name": "Label Maker",
+      "category": "Creativity",
+      "icon": "labels",
+      "url": "labels/",
+      "type": "internal"
+    },
+    {
       "id": "characters",
       "name": "Characters",
       "category": "Creativity",

@@ -1,0 +1,50 @@
+# Label Maker
+Type a word and it is pressed letter by letter into plastic tape, with raised white letters like the old embossed labels.
+
+## Getting started
+Type in the box under the tape. Every letter is pressed into the tape as you type, and the tape grows with it.
+- The tape takes capital letters only, Latin and Greek, without accents. Small letters become capitals.
+- Digits and these symbols work too: & - . , / : ! ? # + = ' ( ) * @ € and ♥ ★ ☺. Anything else is left out.
+- A label takes up to 40 letters. The counter in the box shows how many you have used.
+- In Greek text, ; becomes a question mark.
+
+## The letter wheel
+The wheel button at the top shows the letter wheel, as on the real machine. The keyboard still works next to it.
+- Turn the wheel with a finger or the mouse, with the mouse wheel, or with the arrow keys. The letter under the pointer is the one that gets pressed.
+- Tap the handle in the middle, or `Press`, to press that letter. With the wheel selected, Enter or Space presses too.
+- `ABC`, `ΑΒΓ` and `123 &?` choose which letters are on the wheel.
+- `Space` adds a gap between words and `Remove last` takes back the last letter.
+
+## Tape and ends
+- `Tape` sets the colour: red, black, blue, green, yellow, white or clear. Yellow and white tape have black letters.
+- `Width` is 9 or 12 mm. The letters are half as tall as the tape.
+- `Ends` cuts the tape straight or round, and `Margin` sets how much blank tape is left on each side.
+- The letters are pressed a little unevenly, as on the real tape. The same label always looks the same.
+- The speaker button turns on the click of every letter. Sound is off at first.
+
+## My labels
+- `Save label` (or Enter in the box) keeps the label under `My labels`. Changes to an open saved label are saved as you go.
+- `New label` starts an empty tape with the same colour and size.
+- In the list, tap a label to open it. The copy button makes a duplicate, and the × deletes it; `Undo` brings it back.
+- `Recent` shows the last 10 labels you made on this device, saved or not. Tap one to start a new label from it.
+
+## Download, copy and print
+- `Download PNG` saves the label as an image with a transparent background, sharp enough to print.
+- `Copy image` puts the image on the clipboard, where your browser allows it.
+- `Print` makes an A4 sheet at real size, with a dashed line round each label to cut along. Tick labels in `My labels` to print them together; with none ticked, the label on the tape is printed. `Copies of each` sets how many of each.
+- A label longer than the sheet is wide is printed upright.
+
+## From Storage
+In Storage, the tag button on a space, a room, a piece of furniture or a shelf opens the Label Maker with its name already on the tape.
+
+## Sync and backup
+- `My labels` follow you to all your devices through orOS sync.
+- Recent labels, sound, the wheel and your last colour and size stay on this device only.
+
+## Tips
+> Print a sheet of labels on sticker paper and cut along the dashed lines.
+- Choose the clear tape for a label that shows what is under it.
+
+## Limits
+- Up to 300 saved labels, each up to 40 letters.
+- When the same label is changed on two devices before they sync, the most recent change wins.

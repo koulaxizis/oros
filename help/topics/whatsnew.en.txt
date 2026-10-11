@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.70.00
+- New app: Label Maker. Type a word and see it pressed into old-style embossed tape, then save it, download it or print a sheet of labels. In Storage, the tag button makes a label from any room, cupboard or shelf.
+
 ## Version 0.69.00
 - Mail: archive, delete (with Undo), move, star, mark as spam or unread, one message or many at once (swipe on a phone). A green badge shows a verified sender, and Mail warns you about forged senders and links that lead somewhere else. Rules can file, mark or star new mail by themselves.
 
