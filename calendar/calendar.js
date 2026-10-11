@@ -171,6 +171,8 @@
       "lbl.feeds": "App feeds",
       "lbl.feed.ro": "Read-only — managed by its app",
       "lbl.manage": "Manage labels",
+      "lbl.toggle": "Labels & feeds",
+      "lbl.toggle.n": "{on} of {all} on",
       "lbl.new": "New label",
       "lbl.ph.name": "Name…",
       "lbl.color": "Color",
@@ -320,6 +322,8 @@
       "lbl.feeds": "Ροές εφαρμογών",
       "lbl.feed.ro": "Μόνο ανάγνωση — διαχειρίζεται η εφαρμογή της",
       "lbl.manage": "Διαχείριση ετικετών",
+      "lbl.toggle": "Ετικέτες & ροές",
+      "lbl.toggle.n": "{on} από {all} ενεργές",
       "lbl.new": "Νέα ετικέτα",
       "lbl.ph.name": "Όνομα…",
       "lbl.color": "Χρώμα",
@@ -2709,10 +2713,52 @@ function transientNote(title, body) {
     });
   }
 
-  /* ---------- 4d. Label filter chips ---------- */
+  /* ---------- 4d. Label filter chips ----------
+     On phones the chip row is folded behind #lbl-toggle (CSS shows
+     the toggle below 700px only). Open/closed is a per-device
+     convenience, never synced. */
+  var CHIPS_OPEN_KEY = "oros-calendar-chips-open";
+  var chipsOpen = false;
+  try { chipsOpen = localStorage.getItem(CHIPS_OPEN_KEY) === "1"; } catch (eCo) {}
+
+  function setChipsOpen(open) {
+    chipsOpen = !!open;
+    try {
+      if (chipsOpen) localStorage.setItem(CHIPS_OPEN_KEY, "1");
+      else localStorage.removeItem(CHIPS_OPEN_KEY);
+    } catch (eCs) {}
+    renderChipsToggle();
+  }
+
+  function renderChipsToggle() {
+    var btn = $("lbl-toggle");
+    if (!btn) return;
+    var all = state.labels.length + FEED_LABELS.length;
+    var on = 0;
+    state.labels.forEach(function (l) { if (labelVisible(l.id)) on++; });
+    FEED_LABELS.forEach(function (fl) { if (labelVisible(fl.id)) on++; });
+    btn.textContent = "";
+    var name = document.createElement("span");
+    name.className = "lbl-tg-name";
+    name.textContent = t("lbl.toggle");
+    var cnt = document.createElement("span");
+    cnt.className = "lbl-tg-count";
+    cnt.textContent = t("lbl.toggle.n").replace("{on}", on).replace("{all}", all);
+    var chev = document.createElement("span");
+    chev.className = "lbl-tg-chev";
+    chev.setAttribute("aria-hidden", "true");
+    chev.textContent = "▾";
+    btn.appendChild(name);
+    btn.appendChild(cnt);
+    btn.appendChild(chev);
+    btn.setAttribute("aria-expanded", chipsOpen ? "true" : "false");
+    $("lbl-bar").classList.toggle("open", chipsOpen);
+  }
+
   function renderChips() {
     var row = $("lbl-chips");
     row.textContent = "";
+    renderChipsToggle();
     state.labels.forEach(function (l) {
       var c = document.createElement("button");
       c.type = "button";
@@ -2755,6 +2801,10 @@ function transientNote(title, body) {
     mg.addEventListener("click", openLblDlg);
     row.appendChild(mg);
   }
+
+  $("lbl-toggle").addEventListener("click", function () {
+    setChipsOpen(!chipsOpen);
+  });
 
   /* ---------- 5. Day section ---------- */
   function selectDay(dateStr) {
