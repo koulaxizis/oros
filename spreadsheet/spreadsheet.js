@@ -3025,8 +3025,24 @@ function sheetFromTable(p) {
    { sheet, r?, c? } = universal search.                            */
 function openTarget(tg) {
   if (!tg || typeof tg !== "object") return;
-  if (tg.newSheet) sheetFromTable(tg.newSheet);
+  if (tg.openFile) openSharedFile(tg.openFile);
+  else if (tg.newSheet) sheetFromTable(tg.newSheet);
   else openSearchTarget(tg);
+}
+/* { openFile: { token } }: a file from the system's "Open with"
+   (shell fileopen.js), taken once from the shell, then the same
+   import as the XL / CSV buttons.                                  */
+function openSharedFile(o) {
+  var f = null;
+  try {
+    var p = window.parent;
+    if (o && typeof o.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
+      f = p.__orosTakeFile(o.token);
+  } catch (e) { f = null; }
+  if (!f) return;
+  var nm = String(f.name || "").toLowerCase();
+  if (/\.(xlsx|xls|ods)$/.test(nm)) xlImport(f);
+  else if (/\.csv$/.test(nm)) csvImport(f);
 }
 window.__orosOpenAt = openTarget;
 function takeTarget() {

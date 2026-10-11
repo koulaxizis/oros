@@ -1354,12 +1354,29 @@
   var searchReady = false, searchLater = null;
   function openSearchTarget(tg) {
     if (!searchReady) { searchLater = tg; return; }
+    // { openFile: { token } }: a file from the system's "Open with"
+    // (shell fileopen.js), taken once, then Home › Import.
+    if (tg && tg.openFile) {
+      if (document.querySelector("dialog[open]")) return;
+      var f = takeOpenFile(tg.openFile);
+      if (!f) return;
+      if (AT.doc) goHome();
+      AT.io.openFile(f);
+      return;
+    }
     var id = tg && typeof tg.doc === "string" ? tg.doc : null;
     if (!id || !findDoc(id)) return;
     if (document.querySelector("dialog[open]")) return;
     if (AT.doc && AT.doc.id === id) return;
     if (AT.doc) goHome();
     openDoc(id);
+  }
+  function takeOpenFile(o) {
+    try {
+      var p = window.parent;
+      if (!o || typeof o.token !== "string" || !p || p === window || typeof p.__orosTakeFile !== "function") return null;
+      return p.__orosTakeFile(o.token);
+    } catch (e) { return null; }
   }
   window.__orosOpenAt = openSearchTarget;
   function takeSearchTarget() {

@@ -2445,8 +2445,13 @@
   function importOpml() {
     var host = dialogHost();
     var pick = host ? host.openFile(".opml,.xml,text/xml,text/x-opml,application/xml") : localOpen(".opml,.xml");
-    pick.then(function (file) {
+    pick.then(opmlFromFile).catch(function () {});
+  }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function opmlFromFile(file) {
+    return Promise.resolve(file).then(function (file) {
       if (!file) return;
+      if (file.size > 4 * 1024 * 1024) { showToast(t("opml.bad")); return; }
       return file.text().then(function (text) {
         var list = C.parseOpml(text);
         if (list === null) { showToast(t("opml.bad")); return; }
@@ -2575,8 +2580,20 @@
   //   { add: { url } }  Bookmarks' "Follow in Reader": find its feeds
   //   { item: id }      a notification: open that article
   //   { feed } / { item, feed }  universal search (openSearchTarget)
+  //   { openFile: { token } }  a file from the system's "Open with"
+  //                    (shell fileopen.js): the OPML import
   function openTarget(x) {
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return;
+    if (x.openFile) {
+      var f = null;
+      try {
+        var p = window.parent;
+        if (typeof x.openFile.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function")
+          f = p.__orosTakeFile(x.openFile.token);
+      } catch (e) { f = null; }
+      if (f) opmlFromFile(f).catch(function () {});
+      return;
+    }
     if (x.add && typeof x.add === "object" && typeof x.add.url === "string") {
       if (C.normUrl(x.add.url)) addDialog(x.add.url.slice(0, 2000));
       return;

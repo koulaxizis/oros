@@ -123,6 +123,11 @@
       "ct.import.json.bad": "Not a valid orOS contacts JSON file",
       "ct.import.bad": "Could not read that file",
       "ct.import.done": "{n} contact(s) imported",
+      "ct.phone": "From phone",
+      "ct.phone.bad": "Could not read the phone's contacts",
+      "ct.vcf.title": "Import contacts",
+      "ct.vcf.sum": "{n} contact(s) in this file. A contact with the same phone or email is completed, never overwritten; nothing is deleted.",
+      "ct.vcf.go": "Import",
       "ct.import.csv.bad": "Could not read that CSV file",
       "ct.import.csv.noheader": "No recognizable columns — expected a Google Contacts CSV",
       "ct.import.csv.norows": "No importable contacts found in the CSV",
@@ -246,6 +251,11 @@
       "ct.import.json.bad": "Μη έγκυρο αρχείο JSON επαφών orOS",
       "ct.import.bad": "Το αρχείο δεν μπόρεσε να διαβαστεί",
       "ct.import.done": "{n} επαφή/ές εισήχθησαν",
+      "ct.phone": "Από το κινητό",
+      "ct.phone.bad": "Οι επαφές του κινητού δεν μπόρεσαν να διαβαστούν",
+      "ct.vcf.title": "Εισαγωγή επαφών",
+      "ct.vcf.sum": "{n} επαφή/ές σε αυτό το αρχείο. Μια επαφή με το ίδιο τηλέφωνο ή email συμπληρώνεται, δεν αντικαθίσταται· τίποτα δεν διαγράφεται.",
+      "ct.vcf.go": "Εισαγωγή",
       "ct.import.csv.bad": "Το αρχείο CSV δεν μπόρεσε να διαβαστεί",
       "ct.import.csv.noheader": "Δεν αναγνωρίστηκαν στήλες — αναμενόταν CSV από Google Contacts",
       "ct.import.csv.norows": "Δεν βρέθηκαν εισαγώμενες επαφές στο CSV",
@@ -2256,6 +2266,11 @@ document.addEventListener("keydown", function (e) {
   // email, name? } }). Someone already has that address → their card;
   // otherwise a NEW contact dialog prefilled (saved only on Save).
   window.__orosOpenAt = function (target) {
+    var fi = target && typeof target === "object" ? target.importVcf : null;
+    if (fi && typeof fi === "object" && typeof fi.text === "string") {
+      askImportVcf(fi.text, typeof fi.name === "string" ? fi.name : "");
+      return;
+    }
     var a = target && typeof target === "object" ? target.add : null;
     if (!a || typeof a !== "object" || typeof a.email !== "string") return;
     var email = a.email.trim().slice(0, 120);
@@ -3356,6 +3371,133 @@ document.addEventListener("keydown", function (e) {
     notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
   }
 
+  // vCard text → parsed blocks (only blocks with a name or company).
+  function parseVcfText(text) {
+    var lines = vcfUnfold(text);
+    var blocks = [], cur = null;
+    lines.forEach(function (ln) {
+      var u = ln.trim().toUpperCase();
+      if (u === "BEGIN:VCARD") { cur = []; return; }
+      if (u === "END:VCARD") { if (cur) blocks.push(cur); cur = null; return; }
+      if (cur) cur.push(ln);
+    });
+    return blocks.map(parseVcardBlock).filter(function (b) {
+      return b.given || b.family || b.org || b.nickname;
+    });
+  }
+  function importVcfParsed(parsed) {
+    var res = importParsed(parsed);
+    showImportReport(res);
+    notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
+  }
+  function importVcfText(text) {
+    try {
+      var parsed = parseVcfText(text);
+      if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
+      importVcfParsed(parsed);
+    } catch (e) {
+      console.error("contacts: vCard import failed:", e);
+      notifyTransient(t("ct.import.bad"));
+    }
+  }
+
+  // BR-FILE-IMPORT: a .vcf handed over by the shell
+  // (__orosOpenAt("contacts", { importVcf: { name, text } })). Never
+  // silent: a themed dialog names the file and the count first.
+  var VCF_MAX_CHARS = 5 * 1024 * 1024;
+  var vcfPending = null;
+  function askImportVcf(text, name) {
+    if (text.length > VCF_MAX_CHARS) { notifyTransient(t("ct.import.bad")); return; }
+    var parsed;
+    try { parsed = parseVcfText(text); } catch (e) { parsed = []; }
+    if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
+    vcfPending = parsed;
+    $("vcf-name").textContent = String(name || "").slice(0, 120);
+    $("vcf-sum").textContent = t("ct.vcf.sum").replace("{n}", String(parsed.length));
+    try { if ($("vcf-dlg").open) $("vcf-dlg").close(); } catch (e) {}
+    $("vcf-dlg").showModal();
+  }
+  if ($("vcf-dlg")) {
+    $("vcf-go").addEventListener("click", function () {
+      var p = vcfPending;
+      vcfPending = null;
+      $("vcf-dlg").close();
+      if (p) importVcfParsed(p);
+    });
+    $("vcf-no").addEventListener("click", function () { vcfPending = null; $("vcf-dlg").close(); });
+    $("vcf-dlg").addEventListener("close", function () { vcfPending = null; });
+  }
+
+  // "From phone": the Contact Picker API (Chrome on Android). The
+  // person picks contacts in the system sheet; only what they pick
+  // reaches the page. Same import path as a vCard (match by phone or
+  // email → fill empty fields, else create).
+  function pickerToParsed(r) {
+    var full = (Array.isArray(r.name) && r.name[0] ? String(r.name[0]) : "").replace(/\s+/g, " ").trim();
+    var words = full ? full.split(" ") : [];
+    var pc = {
+      given: "", middle: "", family: "", nickname: "", org: "", jobTitle: "",
+      phones: [], emails: [], addresses: [], websites: [], im: [],
+      events: [], cats: [], note: "", photo: null, starred: false
+    };
+    pc.family = (words.length > 1 ? words.pop() : "").slice(0, 60);
+    pc.given = words.join(" ").slice(0, 60);
+    (Array.isArray(r.tel) ? r.tel : []).forEach(function (v) {
+      v = String(v || "").trim();
+      if (v && !pc.phones.some(function (x) { return phoneDigits(x.v) === phoneDigits(v); })) {
+        pc.phones.push({ v: v.slice(0, 40), type: "mobile" });
+      }
+    });
+    (Array.isArray(r.email) ? r.email : []).forEach(function (v) {
+      v = String(v || "").trim();
+      if (v && !pc.emails.some(function (x) { return x.v.toLowerCase() === v.toLowerCase(); })) {
+        pc.emails.push({ v: v.slice(0, 120), type: "other" });
+      }
+    });
+    (Array.isArray(r.address) ? r.address : []).forEach(function (a) {
+      if (!a) return;
+      var ad = {
+        street: (Array.isArray(a.addressLine) ? a.addressLine.join(", ") : "").trim().slice(0, 120),
+        city: String(a.city || "").trim().slice(0, 60),
+        region: String(a.region || "").trim().slice(0, 60),
+        zip: String(a.postalCode || "").trim().slice(0, 20),
+        country: String(a.country || "").trim().slice(0, 60),
+        type: "other"
+      };
+      if (ad.street || ad.city || ad.region || ad.zip || ad.country) pc.addresses.push(ad);
+    });
+    if (!pc.given && !pc.family) {
+      // A number with no name: keep it, named by the number itself.
+      pc.given = (pc.phones[0] && pc.phones[0].v) || (pc.emails[0] && pc.emails[0].v) || "";
+    }
+    return pc;
+  }
+  var phonePicker = null;
+  try {
+    if (navigator.contacts && typeof navigator.contacts.select === "function" &&
+        window.ContactsManager) phonePicker = navigator.contacts;
+  } catch (e) {}
+  if (phonePicker && $("ct-phone")) {
+    $("ct-phone").hidden = false;
+    $("ct-phone").addEventListener("click", function () {
+      var want = ["name", "tel", "email"];
+      Promise.resolve(typeof phonePicker.getProperties === "function" ? phonePicker.getProperties() : want)
+        .then(function (have) {
+          if (Array.isArray(have) && have.indexOf("address") !== -1) want.push("address");
+          return phonePicker.select(want, { multiple: true });
+        })
+        .then(function (rows) {
+          if (!Array.isArray(rows) || !rows.length) return;   // cancelled
+          var parsed = rows.map(pickerToParsed).filter(function (b) { return b.given || b.family; });
+          if (parsed.length) importVcfParsed(parsed);
+        })
+        .catch(function (e) {
+          console.warn("contacts: phone picker failed:", e);
+          notifyTransient(t("ct.phone.bad"));
+        });
+    });
+  }
+
   // ---- Import wiring ----
   // orosDialog first (native picker on Chromium); standalone falls
   // back to the legacy hidden #vcard-file input. Single reader:
@@ -3375,26 +3517,7 @@ document.addEventListener("keydown", function (e) {
         }
         return;
       }
-      try {
-        var lines = vcfUnfold(fr.result);
-        var blocks = [], cur = null;
-        lines.forEach(function (ln) {
-          var u = ln.trim().toUpperCase();
-          if (u === "BEGIN:VCARD") { cur = []; return; }
-          if (u === "END:VCARD") { if (cur) blocks.push(cur); cur = null; return; }
-          if (cur) cur.push(ln);
-        });
-        var parsed = blocks.map(parseVcardBlock).filter(function (b) {
-          return b.given || b.family || b.org || b.nickname;
-        });
-        if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
-        var res = importParsed(parsed);
-        showImportReport(res);
-        notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
-      } catch (e) {
-        console.error("contacts: vCard import failed:", e);
-        notifyTransient(t("ct.import.bad"));
-      }
+      importVcfText(String(fr.result));
     };
     fr.onerror = function () { notifyTransient(t("ct.import.bad")); };
     fr.readAsText(f, "utf-8");

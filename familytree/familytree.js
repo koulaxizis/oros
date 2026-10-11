@@ -1723,7 +1723,11 @@
   function importGedcom() {
     var dlg = dialogHost(), accept = ".ged,.gedcom";
     var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept) : localPickFile(accept);
-    pick.then(function (file) {
+    gedcomFromFile(pick);
+  }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function gedcomFromFile(file) {
+    Promise.resolve(file).then(function (file) {
       if (!file) return;
       if (file.size > FT.GED_MAX) { showToast(t("ged.err.size")); return; }
       return file.arrayBuffer().then(function (buf) {
@@ -2083,8 +2087,20 @@
   //     that contact (this tree first), or — nobody linked yet — the
   //     "Build from Contacts" preview starting from that contact.
   // Unknown ids → no-op; an open dialog → no-op (unsaved edits win).
+  //   { openFile: { token } } (the system's "Open with", shell
+  //     fileopen.js): the file, taken once, through the GEDCOM import.
   function openSearchTarget(tg) {
     if (!tg || document.querySelector("dialog[open]")) return;
+    if (tg.openFile) {
+      var f = null;
+      try {
+        var w = window.parent;
+        if (typeof tg.openFile.token === "string" && w && w !== window && typeof w.__orosTakeFile === "function")
+          f = w.__orosTakeFile(tg.openFile.token);
+      } catch (e) { f = null; }
+      if (f) { closeMenu(); gedcomFromFile(f); }
+      return;
+    }
     var p = null;
     if (typeof tg.contact === "string") {
       var linked = data.people.filter(function (x) { return x.contact === tg.contact && findIn(data.trees, x.tree); });

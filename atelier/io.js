@@ -398,17 +398,22 @@
 
   // Home › Import: .orosdesign, .pptx or a picture
   function importAny() {
-    pickFile(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg").then(function (f) {
-      if (!f) return;
-      if (f.size > PKG_MAX) { AT.toast(t("imp.bad")); return; }
-      var nm = String(f.name || "").toLowerCase();
-      var run = /\.pptx$/.test(nm) ? importPptxFile
-        : /^image\//.test(f.type || "") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm) ? importImageFile
-        : importPackageFile;
-      AT.toast(t("imp.working"));
-      return run(f);
-    }).then(null, function (e) { AT.toast(e && e.message === "nofs" ? t("img.nofs") : t("imp.bad")); });
+    pickFile(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg")
+      .then(importAnyFile).then(null, importFail);
   }
+  // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  function importAnyFile(f) {
+    if (!f) return;
+    if (f.size > PKG_MAX) { AT.toast(t("imp.bad")); return; }
+    var nm = String(f.name || "").toLowerCase();
+    var run = /\.pptx$/.test(nm) ? importPptxFile
+      : /^image\//.test(f.type || "") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm) ? importImageFile
+      : importPackageFile;
+    AT.toast(t("imp.working"));
+    return run(f);
+  }
+  function importFail(e) { AT.toast(e && e.message === "nofs" ? t("img.nofs") : t("imp.bad")); }
+  function openFile(f) { return Promise.resolve(importAnyFile(f)).then(null, importFail); }
 
   // ---------- Images ----------
   function placePhoto(res) {
@@ -545,7 +550,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importAny: importAny, importPptx: importPptxFile, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();

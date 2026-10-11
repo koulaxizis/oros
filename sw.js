@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.82.00";
+var CACHE_VERSION = "oros-v0.84.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -93,6 +93,7 @@ var PRECACHE_URLS = [
   "./pet.css",
   "./pet.js",
   "./launcher.js",
+  "./fileopen.js",
   "./vault.js",
   "./translations.js",
   "./apps.json",
@@ -151,6 +152,7 @@ var PRECACHE_URLS = [
   "calendar/calendar.css",
   "calendar/calendar.js",
   "calendar/namedays.js",
+  "calendar/ics.js",
   "calendar/days.json",
   "calendar/search.js",
   "quote/",
@@ -1112,14 +1114,16 @@ self.addEventListener("fetch", function (event) {
           // offline "truth" for that URL. OAuth redirects (?code=...)
           // are one-shot URLs — never worth a cache entry; so are
           // "Send to orOS" launches (?share-url=…, one per link) and
-          // address-bar searches (?search=…).
+          // address-bar searches (?search=…), and "Open with" file
+          // launches (?file-open=…).
           // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
           // replayed to a navigation from the cache — the browser
           // rejects it and the page fails offline. Never store one.
           if (response.ok && !response.redirected &&
               url.search.indexOf("code=") === -1 &&
               url.search.indexOf("share-") === -1 &&
-              url.search.indexOf("search=") === -1) {
+              url.search.indexOf("search=") === -1 &&
+              url.search.indexOf("file-open=") === -1) {
             var copy = response.clone();
             // waitUntil: the SW stays alive until the cache write
             // LANDS. A fire-and-forget put can be killed mid-flight
