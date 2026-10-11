@@ -1140,7 +1140,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, "oros-television-api"];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, "oros-television-api", SHARE_INBOX];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -1178,9 +1178,51 @@ self.addEventListener("activate", function (event) {
 });
 
 // ---------- Fetch strategy ----------
+// Android "Share → orOS" (manifest share_target, POST multipart to
+// /?share-target). Links go on as before: a GET to /?share-url=…
+// (Bookmarks). A file is kept in the "oros-share-inbox" cache under a
+// random id and orOS opens at /?share-files=<id>; fileopen.js takes
+// it once and empties the inbox. Only the first file; > 50 MB is
+// refused (?share-files=big). Nothing is parsed or run here.
+var SHARE_INBOX = "oros-share-inbox";
+var SHARE_MAX = 50 * 1024 * 1024;
+function shareTargetPost(request) {
+  var home = new URL("./", self.registration.scope).href;
+  function go(qs) { return Response.redirect(home + (qs ? "?" + qs : ""), 303); }
+  return request.formData().then(function (fd) {
+    var files = fd.getAll("files").filter(function (f) {
+      return f && typeof f === "object" && typeof f.size === "number" && f.size > 0;
+    });
+    if (!files.length) {
+      var q = new URLSearchParams();
+      ["url", "title", "text"].forEach(function (k) {
+        var v = fd.get(k);
+        if (typeof v === "string" && v) q.set("share-" + k, v.slice(0, 4000));
+      });
+      return go(q.toString());
+    }
+    var f = files[0];
+    if (f.size > SHARE_MAX) return go("share-files=big");
+    var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    var headers = { "Content-Type": f.type || "application/octet-stream",
+                    "X-Name": encodeURIComponent(String(f.name || "file").slice(0, 255)) };
+    if (files.length > 1) headers["X-More"] = "1";
+    return caches.open(SHARE_INBOX).then(function (c) {
+      return c.put("/__share/" + id, new Response(f, { headers: headers }));
+    }).then(function () { return go("share-files=" + id); });
+  }).catch(function () { return go(""); });
+}
+
 self.addEventListener("fetch", function (event) {
   var request = event.request;
 
+  if (request.method === "POST") {
+    var purl = new URL(request.url);
+    if (purl.origin === self.location.origin && purl.searchParams.has("share-target")) {
+      event.respondWith(shareTargetPost(request));
+    }
+    return;
+  }
   if (request.method !== "GET") return;
 
   var url = new URL(request.url);
