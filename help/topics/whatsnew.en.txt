@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 0.83.00
 - Calendar: import .ics files from Google, Outlook or your phone, with a preview first. Contacts: on Android, add contacts straight from your phone.
+- Help: the Calendar and Contacts guides now explain .ics import and "From phone".
 
 ## Version 0.82.00
 - New app: Aura Painter. Paint with glowing light, in kaleidoscope symmetry if you like, keep your works, replay them stroke by stroke or make one your wallpaper.
