@@ -1972,7 +1972,18 @@ function bindShortcuts() {
 // target { doc }. Opens the document in a tab (activateTab skips
 // missing and deleted ones). { openFile: { token } }: a file from the
 // system's "Open with" (shell fileopen.js), taken once from the shell.
+// { newDoc: { title?, text } }: Typewriter's "Send to Writer", a NEW
+// document from plain text (paragraphs split on blank lines).
+const NEWDOC_MAX = 500000;
 function openSearchTarget(t) {
+  if (t && t.newDoc && typeof t.newDoc === 'object' && typeof t.newDoc.text === 'string') {
+    const text = t.newDoc.text.slice(0, NEWDOC_MAX);
+    if (!text.trim()) return;
+    const p = ioParseTxt(text);
+    const title = typeof t.newDoc.title === 'string' ? t.newDoc.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+    createDoc({ title: title || p.title, html: p.html });
+    return;
+  }
   if (t && t.openFile) {
     const f = takeOpenFile(t.openFile);
     if (f) ioOpenFile(f);

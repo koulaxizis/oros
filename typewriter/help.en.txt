@@ -22,7 +22,7 @@ The typewriter button at the top turns the mode off. Then the page works like a 
 ## Paper, sound and printing
 - `Paper` sets the colour of the sheet: `orOS` follows your orOS colours, or choose `White`, `Cream` or `Night`.
 - The speaker button turns on the sounds of the keys, the bell near the end of a line and the carriage return. Sound is off at first.
-- Under `Take it with you`: `Copy text` and `Download .txt` give you the text without the struck letters; `Print` prints the page as it looks, with its X marks.
+- Under `Take it with you`: `Copy text` and `Download .txt` give you the text without the struck letters; `Print` prints the page as it looks, with its X marks. `Send to Writer` opens the same text as a new document in [Writer](app:writer), with the page title, ready for editing and formatting; the page here stays as it is.
 
 ## Sync and backup
 - Your pages follow you to all your devices through orOS sync.
