@@ -4710,3 +4710,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Help: "Open files from your computer" (#182) — 0.85.01
 - Install guide: new section "Open files from your computer": where it works, which app opens which file types (from the HANDLERS table), the original file is never written back, the chooser with "Always use this app", Settings › Opening files and how to set the default, the fallback for Firefox, Safari, iPhone and Android. Calendar (.ics) and Contacts (.vcf) guides link to it. Help text only.
+
+### 2026-10-11 — One-Sentence Diary / Ημερολόγιο μιας πρότασης (#183) — 0.86.00
+- New app One-Sentence Diary (diary/, Personal, soffitta port 17/17, the last one): one sentence a day (up to 280 characters, saved as you type) with an optional emoji (😊 😐 😔 😴 🎉 ❤️); "on this day" shows the same date in earlier years (29 Feb lines on 28 Feb in other years); streak, longest streak and days written; any past day can be written or fixed; before 03:00 the line is offered for yesterday.
+- My days: month calendar with the written days and search in every line (case and accent blind); Year: every line of a year on one page, printable; a random memory; delete with Undo; export TXT/CSV/JSON and import (fills empty days only, also DD/MM/YYYY dates).
+- Evening reminder, off by default, device-local (`oros-diary-prefs`), only on days with no line, fired by the shell with the app closed (`diaryCheckTick`, ns `diary`, deep link `diary:day:<ymd>`, `__orosOpenAt("diary", { day })`).
+- Synced slice `diary` (`oros-diary-data`, LWW per day + tombstones); universal search provider `diary/search.js`, opt-in (searchOff). Tests: tests/diary.test.js.
