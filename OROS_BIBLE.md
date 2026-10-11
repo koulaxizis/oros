@@ -4754,3 +4754,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Wallpaper Generator: daily picture + live wallpaper (#193) — 0.92.00
 - Wallpaper Generator: a new picture every day, and a live wallpaper with slowly drifting light. Shell: `orosWallpaper.setOptions`, `wpDailyTick`, `#wp-live` layer (style.css).
+
+### 2026-10-11 — Sound Mixer: keeps playing + taskbar button + new sounds (#194) — 0.93.00
+- Sound Mixer: keeps playing after you close it, with a taskbar button for pause, volume and the sleep timer; new train, keyboard and clock sounds. Shell: `mixerTrayTick` chip (style.css); `mixer/engine.js` precached.
