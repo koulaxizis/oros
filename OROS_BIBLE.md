@@ -4638,3 +4638,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - On screens up to 700px the label and feed chips sit behind one "Labels & feeds / Ετικέτες & ροές" button showing "n of m on"; tapping it opens or closes the list. Desktop keeps the chips inline.
 - `#lbl-toggle` in `calendar/index.html`, rendered from `renderChips()` (count follows every toggle and language change). Open/closed state is device-local (`oros-calendar-chips-open`), never synced. Help pages EN/EL updated. No new files.
 - Not tested: real phone, Safari.
+
+### 2026-10-11 — Menu apps: choose which apps the menu shows (#176) — 0.81.00
+- Settings › Menu: a tick box per app, Hide all, Show all, a find field and "n of total shown". Hidden apps leave the menu list; a dashed row ("3 hidden apps · Choose apps") opens Settings › Menu; if every app is hidden the menu says so. Synced to all devices.
+- Hidden apps stay reachable: menu search lists them while typing; universal search, deep links (`__orosOpenAt` / `openAppById`), desktop shortcuts and the Dock still open them. New apps show until hidden.
+- `launcher.js` 1.3.0: pure model (section 1b) + own sync slice `menu` (key `oros-menu-apps`, MENU APPS v1 `{ver:1, apps:[{id, hidden, mtime}]}`, per-app LWW, tie → hidden, canonical, R26/R27); separate slice so older bundles carry it untouched. `shell.js` `renderAppList` skips hidden apps without a query; bridge gains `menu` snapshot, `set("menu:<id>")`, `act("menu.showAll"|"menu.hideAll")`. Settings section `menu`, `core.menuGroups`, search topic. Help + Bible (Part II, Part IV MENU APPS v1) updated.
+- Tests: menu model (normalize, stamps, symmetric/idempotent merge + fuzz), menuGroups, bridge contract, renderAppList rule. Not tested: real phone, Safari, real Dropbox.
