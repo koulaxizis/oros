@@ -18,7 +18,7 @@
 //   "text <url>", quotes as "> ").
 // fromText(text) → html     escape + line breaks
 // quoteHtml(text) → html    a "> " quoted reply as a blockquote
-// editor({ html, label, pictures }) → { box, area, get(cid), set(html) }
+// editor({ html, label, pictures }) → { box, area, get(cid), set(html), insert(html) }
 // Exposed as window.orosMailRich.
 // ============================================================
 (function (root) {
@@ -334,7 +334,14 @@
     box.appendChild(area);
     function set(html) { area.innerHTML = clean(html || "", { cid: false }).html; }
     set(o.html || "");
-    return { box: box, area: area, set: set, get: function (cid) { return clean(area, { cid: !!cid }); } };
+    // at the caret (the last one in the editor), cleaned like everything else
+    function insert(html) {
+      back();
+      doc.execCommand("insertHTML", false, clean(html || "", { cid: false }).html);
+      keep();
+      area.dispatchEvent(new root.Event("input", { bubbles: true }));
+    }
+    return { box: box, area: area, set: set, insert: insert, get: function (cid) { return clean(area, { cid: !!cid }); } };
   }
 
   // A picture for a signature: at most 300×150, PNG (or JPEG for

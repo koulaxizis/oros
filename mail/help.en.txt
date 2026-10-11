@@ -39,6 +39,7 @@ Attachments are listed under the message. Tap one to open it: pictures and PDFs 
 - After a move, `Undo` appears for a few seconds; the change reaches the server only after that.
 - `Select` above the list adds checkboxes: tick several messages (or `Select all`) and use the same buttons on all of them. `Done` leaves selection.
 - On a phone, swipe a message right to archive it or left to delete it.
+- `Block sender` under a message sends it to Spam and adds a rule that sends the sender's next messages there too (the Spam folder is created when missing). To unblock, delete that rule.
 - Marking a message as spam also teaches your provider's spam filter.
 
 ### Folders
@@ -57,6 +58,7 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 ## Write and reply
 - The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
+- `Templates` keeps messages you write often (synced): save the message you are writing under a name, and later pick it to put its text where the cursor is (and its subject, when the subject is empty). The bin deletes one.
 - `Attach files` adds files from this device (or drop them on the message), `From Files` from [Files](app:files); the × removes one. Files can be up to 7 MB together. `Forward` brings the message's files along.
 - With several accounts, `From` chooses which one sends.
 - A copy of what you send goes to the account's `Sent` folder.
@@ -78,7 +80,7 @@ Messages you send while offline wait in `Outbox` in the side panel and go out by
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
 ## Sync and backup
-Your accounts (without passwords), your rules, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
+Your accounts (without passwords), your rules, your templates, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
 
 >! Removing an account removes it from orOS on all your devices.
 
