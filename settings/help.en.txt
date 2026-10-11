@@ -3,7 +3,7 @@ Settings gathers the options of orOS itself in one place: how it looks, notifica
 
 ## Getting started
 1. Open the menu and choose `Settings`, at the bottom under the apps. You'll also find it in the `System` category.
-2. Pick a section on the left: `Appearance`, `Notifications`, `Sync`, `Backups`, `Language & search` or `System`.
+2. Pick a section on the left: `Appearance`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search` or `System`.
 3. Change what you like. Every change applies at once; there is no save button.
 
 On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
@@ -12,6 +12,7 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 
 ## The sections
 - `Appearance`: `Theme` (`Dark` or `Light`), `System colour`, `Wallpaper`, the `Dock` when your orOS has one, and the `Screen pet`. See [Appearance](help:t/appearance).
+- `Menu`: which apps the menu lists. Untick an app to hide it, or use `Hide all` and `Show all`; `Find an app` narrows the list. Hidden apps still open from the menu search, links, the desktop and the Dock. See [The menu](help:t/menu).
 - `Notifications`: the `Notifications` switch, `Send a test`, position, style, sound, `Quiet hours` and `Which apps may notify`. See [Notifications](help:t/notifications).
 - `Sync`: `Connect to Dropbox`, your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically` and `Disconnect`. See [Sync across devices](help:t/sync).
 - `Backups`: `Automatic backup`, `Backup folder`, `Back up now`, `Export backup file` and `Import backup file`. See [Backup and restore](help:t/backup).
@@ -23,7 +24,7 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 - The `About orOS + shortcuts` window has a button that opens `System`, where the factory reset is.
 
 ## Sync and backup
-Settings stores nothing of its own. Every option is saved by orOS in the same place as before, so your choices sync and back up exactly as they always did. Theme, colour, wallpaper, screen pet, notifications, sync interval, automatic backup and language go to all your devices. The backup folder, your remembered passphrase, the menu search choices and the Dock stay on this device.
+Settings stores nothing of its own. Every option is saved by orOS in the same place as before, so your choices sync and back up exactly as they always did. Theme, colour, wallpaper, the apps the menu shows, screen pet, notifications, sync interval, automatic backup and language go to all your devices. The backup folder, your remembered passphrase, the menu search choices and the Dock stay on this device.
 
 ## Keyboard shortcuts
 - [[Esc]] on a phone-sized screen goes back from a section to the list.

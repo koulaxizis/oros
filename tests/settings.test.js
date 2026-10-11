@@ -57,7 +57,7 @@ test("core: t() falls back and fills variables", () => {
 });
 
 test("core: sections and deep-link targets", () => {
-  assert.deepEqual(C.SECTIONS, ["appearance", "notifications", "sync", "backup", "language", "system"]);
+  assert.deepEqual(C.SECTIONS, ["appearance", "menu", "notifications", "sync", "backup", "language", "system"]);
   assert.equal(C.sectionOf({ section: "sync" }), "sync");
   assert.equal(C.sectionOf("backup"), "backup");
   [null, undefined, {}, { section: "nope" }, { section: 3 }, "__proto__", "constructor"]
@@ -180,4 +180,33 @@ test("release: the menu hosts no settings sections; ways in lead to Settings", (
   const reset = SHELL.slice(SHELL.indexOf("  function wireResetButton(ov) {"), SHELL.indexOf("  function wireResetButton(ov) {") + 900);
   assert.match(reset, /orosSettings\.open\("system"\)/);
   assert.doesNotMatch(reset, /scFactoryReset/);
+});
+
+test("menu section: groups, filter and the shell bridge", () => {
+  const apps = [
+    { id: "notes", name: "Notes", cat: "office", catName: "Office", shown: true },
+    { id: "chess", name: "Chess", cat: "games", catName: "Games", shown: false },
+    { id: "calc", name: "Calculator", cat: "office", catName: "Office", shown: true },
+  ];
+  const g = C.menuGroups(apps, "", "en");
+  assert.deepEqual(g.map((x) => x.name), ["Games", "Office"]);
+  assert.deepEqual(g[1].apps.map((a) => a.id), ["calc", "notes"]);
+  assert.deepEqual(C.menuGroups(apps, "CHESS", "en").map((x) => x.cat), ["games"]);
+  assert.deepEqual(C.menuGroups(apps, "office", "en")[0].apps.length, 2, "category name matches");
+  assert.deepEqual(C.menuGroups([{ id: "x", name: "Σημειώσεις", cat: "o", catName: "Γραφείο" }], "σημειωσεισ", "el").length, 1);
+  assert.deepEqual(C.menuGroups(null, "", "en"), []);
+  assert.equal(C.scopeOf("menu"), "all");
+  // The app sends menu:<id>; the shell matches the prefix and hides
+  // through the launcher, only for apps it knows.
+  assert.match(APP, /set\("menu:" \+ a\.id/);
+  assert.match(BRIDGE, /\/\^menu:\//);
+  assert.match(BRIDGE, /settingsMenuIds\(\)\.indexOf\(mid\) !== -1/);
+  assert.match(BRIDGE, /setMenuHidden\(\[mid\], !value\)/);
+});
+
+test("menu: hidden apps leave the list but a search still finds them", () => {
+  const list = SHELL.slice(SHELL.indexOf("function renderAppList() {"), SHELL.indexOf("}   // renderAppList"));
+  assert.match(list, /L\.menuHidden\(app\.id\)/);
+  assert.match(list, /if \(!q\) return;/);
+  assert.match(list, /orosSettings\.open\("menu"\)/);
 });
