@@ -34,7 +34,7 @@ const A = new Function("M", "R",
   block("  // ---------- 2. Data model", "  // ---------- 3. Device store") +
   block("  function summarize(", "  function refreshFolder(") +
   "\nreturn { mergeMail, normAccount, normRelayUrl, emptyData, presetFor, folderRole, sortFolders," +
-  " folderDepth, compressUids, uidSetHas, applyList };")(M, require("../mail/rules.js"));
+  " folderDepth, compressUids, uidSetHas, applyList, leafError, childName, siblingName, renamedPath, retargetRules };")(M, require("../mail/rules.js"));
 
 const bin = (s) => Buffer.from(s, "utf8").toString("latin1");
 const b64 = (s) => Buffer.from(s, "latin1").toString("base64");
@@ -309,6 +309,26 @@ function imapServer(mailbox) {
         mailbox.folders[c[1]] = { flags: "\\HasNoChildren", uidv: 77, msgs: [] };
         return ok();
       }
+      if ((c = /^RENAME "([^"]*)" "([^"]*)"$/i.exec(cmd))) {
+        if (!mailbox.folders[c[1]]) return reply(tag + " NO [NONEXISTENT] no such mailbox\r\n");
+        if (mailbox.folders[c[2]]) return reply(tag + " NO [ALREADYEXISTS] Mailbox exists\r\n");
+        Object.keys(mailbox.folders).forEach((n) => {
+          if (n === c[1] || n.indexOf(c[1] + ".") === 0) { mailbox.folders[c[2] + n.slice(c[1].length)] = mailbox.folders[n]; delete mailbox.folders[n]; }
+        });
+        return ok();
+      }
+      if ((c = /^DELETE "([^"]*)"$/i.exec(cmd))) {
+        if (!mailbox.folders[c[1]]) return reply(tag + " NO [NONEXISTENT] no such mailbox\r\n");
+        if (Object.keys(mailbox.folders).some((n) => n.indexOf(c[1] + ".") === 0)) return reply(tag + " NO [INUSE] Mailbox has children, delete them first\r\n");
+        delete mailbox.folders[c[1]];
+        return ok();
+      }
+      if ((c = /^(UN)?SUBSCRIBE "([^"]*)"$/i.exec(cmd))) {
+        if (mailbox.noSubscribe) return reply(tag + " BAD unknown\r\n");
+        mailbox.subs = mailbox.subs || {};
+        if (c[1]) delete mailbox.subs[c[2]]; else mailbox.subs[c[2]] = 1;
+        return ok();
+      }
       if ((c = /^UID (MOVE|COPY) (\S+) "([^"]*)"$/i.exec(cmd))) {
         const to = mailbox.folders[c[3]], w = uidSet(c[2]);
         if (!to) return reply(tag + " NO [TRYCREATE] no such mailbox\r\n");
@@ -482,7 +502,7 @@ test("data: the signature is kept, cleaned and capped; merge stays symmetric", (
   assert.equal(A.mergeMail(a, b).accounts[0].sig, "new");
 });
 
-test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, search", async () => {
+test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, rename, delete, search", async () => {
   const core = await import("../relay/core.js");
   const raw = (uid, from, subj, body) => bin("From: " + from + "\r\nSubject: " + subj + "\r\n\r\n" + body + "\r\n");
   const mk = (caps) => ({ user: "u@pmail.gr", pass: "pw", caps, log: [], folders: {
@@ -500,7 +520,7 @@ test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, search", async () =>
     const connectFn = connectTo(srv.address().port);
     const acct = { host: "mail.pmail.gr", port: 993, sec: "tls", user: box.user, pass: box.pass };
     const post = (body) => core.handle(new Request("https://relay.test/v1", { method: "POST",
-      headers: { Origin: "https://useoros.online", "CF-Connecting-IP": "1.2.3.4" }, body: JSON.stringify(Object.assign({ acct }, body)) }), {}, connectFn)
+      headers: { Origin: "https://useoros.online", "CF-Connecting-IP": caps === "IMAP4rev1" ? "1.2.3.5" : "1.2.3.4" }, body: JSON.stringify(Object.assign({ acct }, body)) }), {}, connectFn)
       .then((r) => r.json());
     try {
       // validation
@@ -537,6 +557,7 @@ test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, search", async () =>
       assert.equal(r.data.total, 1);
       assert.equal(M.summary(M.b64ToBin(r.data.msgs[0].hdr)).subject, "Invoice");
       r = await post({ op: "search", folder: "INBOX.Archive", q: "bob", where: "from", limit: 1 });
+      assert.equal(r.ok, true, JSON.stringify(r));
       assert.equal(r.data.total, 2);
       assert.equal(r.data.uids.split(/[,:]/).length, 2);
       assert.equal(r.data.msgs.length, 1);
@@ -547,6 +568,25 @@ test("relay: move (MOVE and COPY+EXPUNGE), expunge, create, search", async () =>
       assert.ok(box.log.some((l) => /^UID SEARCH SUBJECT "invoice"$/.test(l)));
       r = await post({ op: "search", folder: "INBOX", q: "nothing-here" });
       assert.deepEqual([r.data.total, r.data.msgs.length, r.data.uids], [0, 0, ""]);
+      // folders: rename (subfolders follow, subscription moves), delete
+      for (const bad of [{ op: "rename", folder: "INBOX", to: "X" }, { op: "rename", folder: "A", to: "A" },
+                         { op: "rename", folder: "A", to: "inbox" }, { op: "rename", folder: "A", to: "a\r\nb" },
+                         { op: "delete", folder: "Inbox" }, { op: "delete" }]) {
+        assert.equal((await post(bad)).error.code, "bad-request", caps + " " + JSON.stringify(bad));
+      }
+      box.noSubscribe = caps === "IMAP4rev1";
+      assert.equal((await post({ op: "create", folder: "INBOX.Work" })).ok, true);
+      assert.equal((await post({ op: "create", folder: "INBOX.Work.2026" })).ok, true);
+      r = await post({ op: "rename", folder: "INBOX.Work", to: "INBOX.&A5EDuwO4A7oDuQPDA7cDwg-" });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.ok(box.folders["INBOX.&A5EDuwO4A7oDuQPDA7cDwg-.2026"] && !box.folders["INBOX.Work"]);
+      if (!box.noSubscribe) assert.deepEqual(Object.keys(box.subs).sort(), ["INBOX.&A5EDuwO4A7oDuQPDA7cDwg-", "INBOX.Archive", "INBOX.Work.2026"]);
+      assert.equal((await post({ op: "rename", folder: "Nope", to: "X" })).error.code, "no");
+      r = await post({ op: "delete", folder: "INBOX.&A5EDuwO4A7oDuQPDA7cDwg-" });
+      assert.equal(r.error.code, "no");   // has a subfolder
+      assert.equal((await post({ op: "delete", folder: "INBOX.&A5EDuwO4A7oDuQPDA7cDwg-.2026" })).ok, true);
+      assert.equal((await post({ op: "delete", folder: "INBOX.&A5EDuwO4A7oDuQPDA7cDwg-" })).ok, true);
+      assert.ok(!Object.keys(box.folders).some((n) => /&A5E/.test(n)));
       // expunge: only the given UIDs with UIDPLUS
       box.folders["INBOX.Archive"].msgs[0].flags.push("\\Deleted");
       r = await post({ op: "expunge", folder: "INBOX.Archive", uids: [2] });
@@ -571,4 +611,35 @@ test("data: rules merge LWW by m, tombstones delete them, and they leave with th
   assert.deepEqual(c.accounts.map((x) => x.id), ["acct0001"]);
   assert.deepEqual(c.rules.map((x) => x.id), ["rule001"]);
   assert.deepEqual(A.emptyData().rules, []);
+});
+
+test("folders: names in modified UTF-7, rename paths, rules follow a renamed folder", () => {
+  assert.equal(M.utf7Encode("Εργασία"), "&A5UDwQOzA7EDwwOvA7E-");
+  assert.equal(M.utf7Encode("~peter/mail/台北/日本語"), "~peter/mail/&U,BTFw-/&ZeVnLIqe-");   // RFC 3501 example
+  assert.equal(M.utf7Encode("Work & play"), "Work &- play");
+  ["Εργασία", "Τιμολόγια 2026", "a&b", "日本語"].forEach((x) => assert.equal(M.utf7Decode(M.utf7Encode(x)), x));
+  assert.equal(A.leafError("  ", "."), "fold.errEmpty");
+  assert.equal(A.leafError("a.b", "."), "fold.errChars");
+  assert.equal(A.leafError("a/b", "."), "");
+  assert.equal(A.leafError("Inbox", "/"), "fold.errChars");
+  assert.equal(A.leafError("x".repeat(101), "."), "fold.errLong");
+  assert.equal(A.leafError("Τιμολόγια", "."), "");
+  assert.equal(A.childName("INBOX", ".", " Εργασία "), "INBOX.&A5UDwQOzA7EDwwOvA7E-");
+  assert.equal(A.childName("", "/", "Work"), "Work");
+  assert.equal(A.siblingName({ name: "INBOX.Work.Old", delim: "." }, "Νέο"), "INBOX.Work.&A50DrQO,-");
+  assert.equal(A.siblingName({ name: "Work", delim: "" }, "Jobs"), "Jobs");
+  assert.equal(A.renamedPath("INBOX.Work.2026", "INBOX.Work", "INBOX.Jobs", "."), "INBOX.Jobs.2026");
+  assert.equal(A.renamedPath("INBOX.Workshop", "INBOX.Work", "INBOX.Jobs", "."), null);
+  const rules = [
+    { id: "r1", m: 5, acct: "a1", act: "move", to: "INBOX.Work.2026", on: true },
+    { id: "r2", m: 5, acct: "a1", act: "move", to: "INBOX.Workshop", on: true },
+    { id: "r3", m: 5, acct: "a2", act: "move", to: "INBOX.Work", on: true },
+    { id: "r4", m: 5, acct: "a1", act: "read", on: true }
+  ];
+  let r = A.retargetRules(rules, "a1", "INBOX.Work", "INBOX.Jobs", ".", 3);
+  assert.equal(r.n, 1);
+  assert.deepEqual([r.rules[0].to, r.rules[0].m, r.rules[1].to, r.rules[2].to], ["INBOX.Jobs.2026", 6, "INBOX.Workshop", "INBOX.Work"]);
+  assert.equal(rules[0].to, "INBOX.Work.2026");   // not changed in place
+  r = A.retargetRules(rules, "a1", "INBOX.Work.2026", null, ".", 100);
+  assert.deepEqual([r.n, r.rules[0].on, r.rules[0].m, r.rules[0].to], [1, false, 100, "INBOX.Work.2026"]);
 });

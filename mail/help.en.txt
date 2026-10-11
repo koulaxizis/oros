@@ -41,6 +41,9 @@ Attachments are listed under the message; tap one to save it. An invitation show
 - On a phone, swipe a message right to archive it or left to delete it.
 - Marking a message as spam also teaches your provider's spam filter.
 
+### Folders
+The folder button next to an account in the side panel opens `Folders`. `New folder` creates one at the top level or `Inside` another folder. The pencil renames a folder (its subfolders move with it) and the bin deletes it together with the messages in it, after a question; a folder with subfolders is deleted after them. Inbox, Sent, Drafts, Trash, Spam and Archive stay as they are. Rules that move mail into a renamed folder follow it; those for a deleted folder are switched off.
+
 ## Rules
 Rules sort new mail in the Inbox by themselves: for example, move newsletters to a folder, send a sender to Spam, or star mail from your boss.
 - Open the gear button and press `Add rule`, or press `Create a rule…` under a message to start with its sender.

@@ -26,7 +26,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, search: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1 };
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -100,6 +100,11 @@ export function validRequest(b, env) {
   }
   if (b.op === "move" && (!folderArg(b.to) || b.to === b.folder)) return "to";
   if (b.op === "create" && !folderArg(b.folder)) return "folder";
+  if (b.op === "rename" || b.op === "delete") {
+    // INBOX can be neither renamed nor deleted (RFC 3501 6.3.4, 6.3.5)
+    if (!folderArg(b.folder) || /^inbox$/i.test(b.folder)) return "folder";
+  }
+  if (b.op === "rename" && (!folderArg(b.to) || b.to === b.folder || /^inbox$/i.test(b.to))) return "to";
   if (b.op === "search") {
     if (!folderArg(b.folder)) return "folder";
     if (!str(b.q, 200) || !b.q.trim() || /[\r\n\0]/.test(b.q)) return "q";
@@ -236,6 +241,8 @@ export async function handle(request, env, connectFn, now, fetchFn) {
         case "move": return api.move(b.folder, b.uids, b.to);
         case "expunge": return api.expunge(b.folder, b.uids);
         case "create": return api.create(b.folder);
+        case "rename": return api.rename(b.folder, b.to);
+        case "delete": return api.remove(b.folder);
         case "search": return api.search(b.folder, b.q, b.where, b.limit);
       }
       return null;

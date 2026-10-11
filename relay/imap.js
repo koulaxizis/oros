@@ -361,6 +361,14 @@ function makeApi(conn) {
     else await conn.run(["EXPUNGE"]);
   }
 
+  // Best effort: a server without subscriptions (or that refuses one)
+  // still created / renamed / deleted the folder.
+  async function subscribe(folder, on) {
+    try { await conn.run([(on ? "SUBSCRIBE " : "UNSUBSCRIBE "), arg(folder, true)], { allowNo: true }); } catch (e) {
+      if (e.code !== "bad") throw e;
+    }
+  }
+
   function fetchItems(untagged) {
     const out = [];
     untagged.forEach((u) => {
@@ -486,6 +494,24 @@ function makeApi(conn) {
       const r = await conn.run(["CREATE ", arg(folder, true)], { allowNo: true });
       // NO [ALREADYEXISTS] is fine: the folder is there.
       if (r.status !== "OK" && !/ALREADYEXISTS|exist/i.test(r.text)) throw new ImapError("no", r.text);
+      await subscribe(folder, true);
+      return { ok: true };
+    },
+
+    // Renames a folder (its subfolders follow, RFC 3501 6.3.5) and moves
+    // the subscription, so webmail keeps showing it.
+    async rename(folder, to) {
+      await conn.run(["RENAME ", arg(folder, true), " ", arg(to, true)]);
+      await subscribe(folder, false);
+      await subscribe(to, true);
+      return { ok: true };
+    },
+
+    // Deletes a folder and the messages in it. Servers refuse a folder
+    // that still has subfolders; that answer comes back as "no".
+    async remove(folder) {
+      await conn.run(["DELETE ", arg(folder, true)]);
+      await subscribe(folder, false);
       return { ok: true };
     },
 

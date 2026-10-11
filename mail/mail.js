@@ -109,6 +109,13 @@
       "srch.busy": "Searching on the server…", "srch.found": "Found on the server: {n}", "srch.more": "Showing the newest {shown} of {n}.",
       "srch.none": "Nothing found.", "srch.offline": "Offline: only the messages on this device were searched.",
       "rule.title": "Rules", "rule.hint": "Rules sort new Inbox mail while orOS is open on any of your devices, also with Mail closed.",
+      "fold.title": "Folders", "fold.new": "New folder", "fold.create": "Create", "fold.rename": "Rename", "fold.delete": "Delete folder",
+      "fold.name": "Name", "fold.in": "Inside", "fold.top": "Top level", "fold.count": "{n} messages",
+      "fold.deleteQ": "Delete the folder \u201c{name}\u201d?", "fold.deleteQn": "Delete the folder \u201c{name}\u201d and the {n} messages in it for good?",
+      "fold.kids": "\u201c{name}\u201d has subfolders. Delete or move them first.",
+      "fold.errEmpty": "Type a name.", "fold.errLong": "The name is too long (up to 100 characters).",
+      "fold.errChars": "The name cannot be Inbox or contain {d} * % \" \\ or line breaks.", "fold.exists": "There is already a folder with this name.",
+      "fold.created": "Folder created: {name}", "fold.renamed": "Folder renamed: {name}", "fold.deleted": "Folder deleted: {name}",
       "rule.add": "Add rule", "rule.new": "New rule", "rule.edit": "Edit rule", "rule.none": "No rules yet.",
       "rule.acct": "Account", "rule.if": "If", "rule.has": "contains", "rule.hasHint": "Several words separated by commas: any of them.",
       "rule.then": "Then", "rule.folder": "Folder", "rule.run": "Also run it on the Inbox now", "rule.on": "On",
@@ -217,6 +224,13 @@
       "srch.busy": "Αναζήτηση στον διακομιστή…", "srch.found": "Βρέθηκαν στον διακομιστή: {n}", "srch.more": "Εμφανίζονται τα {shown} νεότερα από {n}.",
       "srch.none": "Δεν βρέθηκε τίποτα.", "srch.offline": "Χωρίς σύνδεση: έγινε αναζήτηση μόνο στα μηνύματα της συσκευής.",
       "rule.title": "Κανόνες", "rule.hint": "Οι κανόνες ταξινομούν τα νέα μηνύματα των Εισερχομένων όσο το orOS είναι ανοιχτό σε κάποια συσκευή σου, και με την Αλληλογραφία κλειστή.",
+      "fold.title": "Φάκελοι", "fold.new": "Νέος φάκελος", "fold.create": "Δημιουργία", "fold.rename": "Μετονομασία", "fold.delete": "Διαγραφή φακέλου",
+      "fold.name": "Όνομα", "fold.in": "Μέσα σε", "fold.top": "Στο πρώτο επίπεδο", "fold.count": "{n} μηνύματα",
+      "fold.deleteQ": "Διαγραφή του φακέλου «{name}»;", "fold.deleteQn": "Διαγραφή του φακέλου «{name}» και των {n} μηνυμάτων του οριστικά;",
+      "fold.kids": "Ο φάκελος «{name}» έχει υποφακέλους. Διάγραψέ τους ή μετακίνησέ τους πρώτα.",
+      "fold.errEmpty": "Γράψε ένα όνομα.", "fold.errLong": "Το όνομα είναι πολύ μεγάλο (έως 100 χαρακτήρες).",
+      "fold.errChars": "Το όνομα δεν μπορεί να είναι Inbox ούτε να έχει {d} * % \" \\ ή αλλαγή γραμμής.", "fold.exists": "Υπάρχει ήδη φάκελος με αυτό το όνομα.",
+      "fold.created": "Ο φάκελος δημιουργήθηκε: {name}", "fold.renamed": "Ο φάκελος μετονομάστηκε: {name}", "fold.deleted": "Ο φάκελος διαγράφηκε: {name}",
       "rule.add": "Νέος κανόνας", "rule.new": "Νέος κανόνας", "rule.edit": "Επεξεργασία κανόνα", "rule.none": "Δεν υπάρχουν κανόνες ακόμα.",
       "rule.acct": "Λογαριασμός", "rule.if": "Αν", "rule.has": "περιέχει", "rule.hasHint": "Πολλές λέξεις χωρισμένες με κόμμα: οποιαδήποτε από αυτές.",
       "rule.then": "Τότε", "rule.folder": "Φάκελος", "rule.run": "Εφάρμοσέ τον και τώρα στα Εισερχόμενα", "rule.on": "Ενεργός",
@@ -614,6 +628,45 @@
     }).map(function (x) { return x.f; });
   }
 
+  // Folder management (pure). A leaf is one folder name as typed; on
+  // the server it is modified UTF-7 under its parent.
+  function leafError(leaf, delim) {
+    leaf = String(leaf || "").trim();
+    if (!leaf) return "fold.errEmpty";
+    if (leaf.length > 100) return "fold.errLong";
+    if (/[\x00-\x1f\x7f*%"\\]/.test(leaf) || (delim && leaf.indexOf(delim) >= 0) || /^inbox$/i.test(leaf)) return "fold.errChars";
+    return "";
+  }
+  function childName(parent, delim, leaf) {
+    var enc = M.utf7Encode(String(leaf || "").trim());
+    return parent ? parent + (delim || "") + enc : enc;
+  }
+  // the server name of `f` with its last part replaced by `leaf`
+  function siblingName(f, leaf) {
+    var cut = f.delim ? f.name.lastIndexOf(f.delim) : -1;
+    return childName(cut >= 0 ? f.name.slice(0, cut) : "", f.delim, leaf);
+  }
+  // the name `name` has after `from` became `to` (subfolders follow), or null
+  function renamedPath(name, from, to, delim) {
+    if (name === from) return to;
+    if (delim && name.indexOf(from + delim) === 0) return to + name.slice(from.length);
+    return null;
+  }
+  // Rules of the account that move mail into a renamed folder follow it;
+  // into a deleted one (to = null) they are turned off. → { rules, n }
+  function retargetRules(rules, acctId, from, to, delim, now) {
+    var n = 0;
+    var out = (rules || []).map(function (r) {
+      if (!r || r.acct !== acctId || r.act !== "move" || typeof r.to !== "string") return r;
+      var np = renamedPath(r.to, from, to === null ? from : to, delim);
+      if (np === null) return r;
+      n++;
+      var m = Math.max(now, r.m + 1);
+      return to === null ? Object.assign({}, r, { on: false, m: m }) : Object.assign({}, r, { to: np, m: m });
+    });
+    return { rules: out, n: n };
+  }
+
   // ---------- 3. Device store (IndexedDB) ----------
   var dbPromise = null;
   function db() {
@@ -1004,6 +1057,13 @@
       nm.appendChild(el("div", "acct-title", acct.name || acct.email));
       if (acct.name) nm.appendChild(el("div", "acct-mail", acct.email));
       head.appendChild(nm);
+      var fb = el("button", "icon-btn small acct-fold");
+      fb.type = "button";
+      fb.innerHTML = UI.folder;
+      fb.title = t("fold.title");
+      fb.setAttribute("aria-label", t("fold.title") + ": " + acct.email);
+      fb.addEventListener("click", function () { foldersDialog(acct); });
+      head.appendChild(fb);
       sec.appendChild(head);
       if (needPass[acct.id]) {
         var pb = el("button", "pass-need");
@@ -2629,6 +2689,154 @@
     dlg.showModal();
   }
 
+  // ---------- folders: new, rename, delete ----------
+  // Special folders (Inbox, Sent, Drafts, Trash, Spam, Archive…) stay
+  // as they are. Renaming takes the subfolders along; deleting erases
+  // the messages inside, after a question, and is refused while the
+  // folder has subfolders. Rules that moved mail there follow a rename
+  // and are turned off by a delete.
+  function folderManaged(f) { return !folderRole(f); }
+  function hasKids(acct, f) {
+    return !!f.delim && (folders[acct.id] || []).some(function (x) { return x.name.indexOf(f.name + f.delim) === 0; });
+  }
+  function acctDelim(acct) {
+    var list = folders[acct.id] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].delim) return list[i].delim;
+    return "";
+  }
+  function foldersDialog(acct, mode, target) {
+    var dlg = makeDialog("ml-folders");
+    dlg.appendChild(el("div", "dlg-title", t("fold.title")));
+    if (data.accounts.length > 1) dlg.appendChild(el("p", "dlg-hint", acct.email));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    var acts = el("div", "dlg-actions");
+    function back() { foldersDialog(acct); }
+    function run(op, args, after) {
+      if (!online()) return;
+      errP.textContent = "";
+      [].forEach.call(dlg.querySelectorAll("button, input, select"), function (n) { n.disabled = true; });
+      call(op, acct, args).then(function () {
+        return refreshFolders(acct).catch(function () {});
+      }).then(function () {
+        after();
+        renderSide();
+        back();
+      }, function (e) {
+        [].forEach.call(dlg.querySelectorAll("button, input, select"), function (n) { n.disabled = false; });
+        errP.textContent = errText(e);
+      });
+    }
+    var list = folders[acct.id] || [];
+    if (!mode) {
+      var ul = el("ul", "set-accts fold-list");
+      list.forEach(function (f) {
+        var li = el("li");
+        var tx = el("div", "set-acct");
+        tx.style.paddingLeft = (folderDepth(f) * 14) + "px";
+        tx.appendChild(el("div", "set-acct-name", folderLabel(f)));
+        if (isInt(f.total)) tx.appendChild(el("div", "set-acct-mail", t("fold.count", { n: f.total })));
+        li.appendChild(tx);
+        if (folderManaged(f)) {
+          [["pen", "fold.rename", "rename"], ["trash", "fold.delete", "delete"]].forEach(function (o) {
+            var b = el("button", "icon-btn small");
+            b.type = "button";
+            b.innerHTML = UI[o[0]];
+            b.title = t(o[1]);
+            b.setAttribute("aria-label", t(o[1]) + ": " + folderLabel(f));
+            b.addEventListener("click", function () { foldersDialog(acct, o[2], f); });
+            li.appendChild(b);
+          });
+        }
+        ul.appendChild(li);
+      });
+      dlg.appendChild(ul);
+      acts.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+      acts.appendChild(button(t("fold.new"), "primary", function () { foldersDialog(acct, "new"); }));
+    } else if (mode === "delete") {
+      var f0 = target;
+      var kids = hasKids(acct, f0);
+      dlg.appendChild(el("p", "dlg-text", kids ? t("fold.kids", { name: folderLabel(f0) }) :
+        t(isInt(f0.total) && f0.total > 0 ? "fold.deleteQn" : "fold.deleteQ", { name: folderLabel(f0), n: f0.total })));
+      acts.appendChild(button(t("dlg.cancel"), "", back));
+      if (!kids) {
+        acts.appendChild(button(t("fold.delete"), "danger", function () {
+          run("delete", { folder: f0.name }, function () {
+            afterFolderChange(acct, f0.name, null, f0.delim);
+            showToast(t("fold.deleted", { name: folderLabel(f0) }));
+          });
+        }));
+      }
+    } else {
+      var form = el("form");
+      form.noValidate = true;
+      var isNew = mode === "new";
+      var inp = field(form, "ml-fold-name", t("fold.name"), "text", isNew ? "" : folderLeaf(target),
+        { maxlength: "100", autocomplete: "off" });
+      var where = null;
+      if (isNew) {
+        where = portSelect(form, "ml-fold-in", t("fold.in"), [["", t("fold.top")]].concat(list.filter(function (f) {
+          return !(f.flags || []).some(function (x) { return /^\\noinferiors$/i.test(x); });
+        }).map(function (f) { return [f.name, folderLabel(f)]; })), "");
+      }
+      form.appendChild(errP);
+      var fa = el("div", "dlg-actions");
+      fa.appendChild(button(t("dlg.cancel"), "", back));
+      var ok = button(t(isNew ? "fold.create" : "fold.rename"), "primary", null);
+      ok.type = "submit";
+      fa.appendChild(ok);
+      form.appendChild(fa);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var leaf = inp.value.trim();
+        var name, delim;
+        if (isNew) {
+          var parent = where.value ? findFolder(acct, where.value) : null;
+          delim = parent ? parent.delim : acctDelim(acct);
+          var bad = leafError(leaf, delim);
+          if (bad) { errP.textContent = t(bad, { d: delim }); return; }
+          name = parent ? childName(parent.name, parent.delim, leaf) : newFolderName(acct, M.utf7Encode(leaf));
+        } else {
+          delim = target.delim;
+          var bad2 = leafError(leaf, delim);
+          if (bad2) { errP.textContent = t(bad2, { d: delim }); return; }
+          name = siblingName(target, leaf);
+          if (name === target.name) { back(); return; }
+        }
+        if (findFolder(acct, name)) { errP.textContent = t("fold.exists"); return; }
+        if (isNew) {
+          run("create", { folder: name }, function () { showToast(t("fold.created", { name: leaf })); });
+        } else {
+          run("rename", { folder: target.name, to: name }, function () {
+            afterFolderChange(acct, target.name, name, target.delim);
+            showToast(t("fold.renamed", { name: leaf }));
+          });
+        }
+      });
+      dlg.appendChild(el("div", "dlg-title sub", isNew ? t("fold.new") : t("fold.rename") + ": " + folderLabel(target)));
+      dlg.appendChild(form);
+      document.body.appendChild(dlg);
+      dlg.showModal();
+      inp.focus();
+      return;
+    }
+    dlg.appendChild(errP);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // after a rename (to) or a delete (to = null) of `from`
+  function afterFolderChange(acct, from, to, delim) {
+    var rr = retargetRules(data.rules, acct.id, from, to, delim, Date.now());
+    if (rr.n) {
+      data.rules = rr.rules;
+      data = mergeMail(data, data);
+      saveData();
+    }
+    var open = curAcct() && curAcct().id === acct.id && !uni ? renamedPath(prefs.folder, from, to === null ? from : to, delim) : null;
+    if (open !== null) openFolder(acct.id, to === null ? "INBOX" : open);
+  }
+
   // The organise buttons for `uids` (reader bar and selection bar).
   function orgButtons(box, uids, compact) {
     var acct = curAcct();
@@ -3041,7 +3249,7 @@
   // keep: a click outside does not close it (compose: unsent text).
   function makeDialog(id, keep) {
     var stale = document.getElementById(id);
-    if (stale) stale.remove();
+    if (stale) { parkToast(); stale.remove(); }
     var dlg = document.createElement("dialog");
     dlg.id = id;
     dlg.className = "mm-dlg";
