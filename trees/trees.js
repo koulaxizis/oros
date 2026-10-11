@@ -650,7 +650,7 @@
     try { curW = api.get(); } catch (e) {}
     var mine = null;
     try { mine = window.parent.OrosWallArt.normRecipe(C.toWallRecipe(rec)); } catch (e) {}
-    var isSet = !!(curW && curW.active && curW.recipe && mine && JSON.stringify(curW.recipe) === JSON.stringify(mine));
+    var isSet = !!(curW && curW.active && !curW.picture && curW.recipe && mine && JSON.stringify(curW.recipe) === JSON.stringify(mine));
     b.classList.toggle("on", isSet);
     b.setAttribute("aria-pressed", isSet ? "true" : "false");
     b.textContent = t(isSet ? "btn.isWall" : "btn.wall");

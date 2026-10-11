@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Aura Painter · orOS</title>
+
+  <link rel="stylesheet" href="aura.css?v=0.79.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="list-btn" class="icon-btn" aria-controls="panel" aria-expanded="false"></button>
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="undo-btn" class="icon-btn"></button>
+    <button type="button" id="redo-btn" class="icon-btn"></button>
+    <button type="button" id="clear-btn" class="icon-btn"></button>
+    <button type="button" id="surprise-btn" class="icon-btn"></button>
+  </header>
+
+  <main id="main">
+    <section id="bench">
+      <!-- The canvas -->
+      <div id="stage">
+        <canvas id="cv" role="img"></canvas>
+        <button type="button" id="stop-btn" class="gen-btn" hidden></button>
+      </div>
+
+      <div class="bench-inner">
+        <!-- Keep it -->
+        <div class="actions keep">
+          <label for="name-in" class="sr-only" data-i18n="f.name">Name of this work</label>
+          <input type="text" id="name-in" maxlength="60" autocomplete="off">
+          <button type="button" id="save-btn" class="gen-btn"></button>
+          <button type="button" id="new-btn" class="gen-btn ghost" data-i18n="btn.new">New</button>
+          <button type="button" id="tune-btn" class="chip tune-toggle" aria-controls="tune" aria-expanded="true"></button>
+        </div>
+        <p id="meter" class="hint small"></p>
+
+        <!-- Brush, colour, symmetry -->
+        <div id="tune">
+          <div class="opt wide">
+            <h2 id="brush-lbl" data-i18n="sec.brush">Brush</h2>
+            <div id="brushes" class="chips" role="radiogroup" aria-labelledby="brush-lbl"></div>
+          </div>
+
+          <div class="opt wide">
+            <div class="colour-head">
+              <h2 id="colour-lbl" data-i18n="sec.colour">Colour</h2>
+              <label for="pal-sel" class="sr-only" data-i18n="f.pal">Palette</label>
+              <select id="pal-sel"></select>
+            </div>
+            <div class="swatch-row">
+              <div id="swatches" class="swatches" role="radiogroup" aria-labelledby="colour-lbl"></div>
+              <label class="pick" for="pick-in">
+                <span class="sr-only" data-i18n="f.pick">Any colour</span>
+                <input type="color" id="pick-in">
+              </label>
+            </div>
+          </div>
+
+          <div class="opt sliders">
+            <div class="slider">
+              <label for="size-in" data-i18n="f.size">Size</label><output id="size-out" for="size-in"></output>
+              <input type="range" id="size-in" min="1" max="100" step="1">
+            </div>
+            <div class="slider">
+              <label for="glow-in" data-i18n="f.glow">Brightness</label><output id="glow-out" for="glow-in"></output>
+              <input type="range" id="glow-in" min="10" max="100" step="1">
+            </div>
+          </div>
+
+          <div class="opt wide">
+            <h2 id="sym-lbl" data-i18n="sec.sym">Symmetry</h2>
+            <div id="syms" class="chips" role="radiogroup" aria-labelledby="sym-lbl"></div>
+          </div>
+
+          <div class="opt">
+            <h2 id="bg-lbl" data-i18n="sec.bg">Background</h2>
+            <div id="bgs" class="chips" role="radiogroup" aria-labelledby="bg-lbl"></div>
+          </div>
+
+          <div class="opt">
+            <h2 data-i18n="sec.play">Play</h2>
+            <label class="check" for="fade-in">
+              <input type="checkbox" id="fade-in">
+              <span data-i18n="f.fade">Strokes fade away</span>
+            </label>
+            <p class="hint small" data-i18n="f.fade.hint"></p>
+          </div>
+        </div>
+
+        <!-- Out -->
+        <div class="opt out">
+          <h2 data-i18n="sec.out">Download and more</h2>
+          <div class="actions">
+            <label for="scale-sel" class="sr-only" data-i18n="f.scale">Picture size</label>
+            <select id="scale-sel"></select>
+            <button type="button" id="png-btn" class="chip" data-i18n="btn.png">PNG</button>
+            <button type="button" id="replay-btn" class="chip" data-i18n="btn.replay">Replay</button>
+            <button type="button" id="wall-btn" class="chip" data-i18n="btn.wall" hidden>As wallpaper</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="scrim" hidden></div>
+
+    <!-- My works -->
+    <aside id="panel">
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.mine">My works</h2>
+          <span id="mine-count" class="count"></span>
+          <span class="spacer"></span>
+          <button type="button" id="close-panel" class="icon-btn"></button>
+        </div>
+        <p id="mine-empty" class="hint" data-i18n="mine.empty"></p>
+        <ul id="mine" class="rows"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.79.00"></script>
+  <script src="aura.js?v=0.79.00"></script>
+
+</body>
+</html>

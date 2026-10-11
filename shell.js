@@ -375,7 +375,7 @@
     // Inline style: wins over any #oros-desktop background rule
     // (specificity-proof — the v0.4.0 class-based approach lost to
     // the existing ID rule).
-    if (w.id === "custom") wpCustomApply(desktop);
+    if (w.id === "custom" || wpPic()) wpCustomApply(desktop);
     else { wpCustomStop(); desktop.style.background = w.css; }
 
     // Keep the class for potential future hooks, cleaned of stale ids
@@ -398,6 +398,27 @@
   var WP_MAX_SIDE = 3840;
   var wpShown = null;        // { key, w, h, url } of the picture on the desktop
   var wpGen = 0;             // newer request = older drawing is dropped
+
+  // A finished picture (Aura Painter, setImage): THIS device only,
+  // never synced, and it never changes state.wallpaper (the synced
+  // choice), so other devices keep theirs. The picture sits in the
+  // same IndexedDB under "picture"; WP_PIC_KEY ({ at, bg }) says it
+  // is on, and then it is the desktop here, shown as "Mine" in
+  // Settings. Picking another wallpaper here, or making a recipe in
+  // the Generator (setCustom), takes it away.
+  var WP_PIC_KEY = "oros-wallpaper-pic";
+  var WP_PIC_MAX = 20 * 1024 * 1024;
+
+  function wpPic() {
+    try {
+      var p = JSON.parse(localStorage.getItem(WP_PIC_KEY));
+      return (p && typeof p.at === "number" && /^#[0-9a-f]{6}$/i.test(p.bg)) ? p : null;
+    } catch (e) { return null; }
+  }
+  function wpPicClear() {
+    try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}
+    wpCacheDel("picture");
+  }
 
   function wpArt() { return window.OrosWallArt || null; }
 
@@ -440,19 +461,29 @@
       req.onerror   = function () { reject(req.error); };
     });
   }
-  function wpCacheGet() {
+  function wpCacheGet(slot) {
     return wpDb().then(function (db) {
       return new Promise(function (resolve) {
-        var req = db.transaction("img").objectStore("img").get("desktop");
+        var req = db.transaction("img").objectStore("img").get(slot || "desktop");
         req.onsuccess = function () { db.close(); resolve(req.result || null); };
         req.onerror   = function () { db.close(); resolve(null); };
       });
     }).catch(function () { return null; });
   }
-  function wpCachePut(rec) {
+  function wpCachePut(rec, slot) {
+    return wpDb().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction("img", "readwrite");
+        tx.objectStore("img").put(rec, slot || "desktop");
+        tx.oncomplete = function () { db.close(); resolve(true); };
+        tx.onerror = tx.onabort = function () { db.close(); resolve(false); };
+      });
+    }).catch(function () { return false; });
+  }
+  function wpCacheDel(slot) {
     return wpDb().then(function (db) {
       var tx = db.transaction("img", "readwrite");
-      tx.objectStore("img").put(rec, "desktop");
+      tx.objectStore("img").delete(slot);
       tx.oncomplete = tx.onerror = function () { db.close(); };
     }).catch(function () {});
   }
@@ -482,7 +513,26 @@
     wpShown = null;
   }
 
+  // The device picture: shown as it is (cover scaling), never redrawn.
+  function wpPicApply(desktop, pic) {
+    var key = "pic:" + pic.at;
+    if (wpShown && wpShown.key === key) {
+      desktop.style.background = wpBg(pic.bg, wpShown.url);
+      return;
+    }
+    var gen = ++wpGen;
+    desktop.style.background = pic.bg;
+    wpCacheGet("picture").then(function (rec) {
+      if (gen !== wpGen) return;
+      if (rec && rec.key === key && rec.blob) { wpShow(desktop, rec, pic.bg); return; }
+      try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}   // picture gone: back to the choice
+      applyWallpaper();
+    });
+  }
+
   function wpCustomApply(desktop) {
+    var pic = wpPic();
+    if (pic) { wpPicApply(desktop, pic); return; }
     var A = wpArt(), r = state.wpart;
     if (!A || !r) {                       // nothing drawn yet: the default look
       wpCustomStop();
@@ -534,6 +584,7 @@
       var A = wpArt();
       var r = A ? A.normRecipe(recipe) : null;
       if (!r) return false;
+      if (wpPic()) wpPicClear();  // a recipe made here replaces the device picture
       state.wpart = r;
       wpArtWrite(r);
       state.wallpaper = "custom";
@@ -542,8 +593,29 @@
       noteLocalChange();          // user action → sync engine
       return true;
     },
+    // A finished picture (Blob, image/*) → the wallpaper of THIS
+    // device ("Mine" in Settings). opts.bg = colour around the
+    // picture. Resolves true once it is stored and shown. Nothing
+    // syncs: not the picture, not the choice.
+    setImage: function (blob, opts) {
+      var bg = opts && typeof opts.bg === "string" ? opts.bg.toLowerCase() : "#000000";
+      // duck-typed: a Blob made in the app's frame is another realm's Blob
+      if (!blob || typeof blob.size !== "number" || typeof blob.slice !== "function" ||
+          typeof blob.type !== "string" || !/^image\//.test(blob.type) ||
+          !blob.size || blob.size > WP_PIC_MAX || !/^#[0-9a-f]{6}$/.test(bg)) return Promise.resolve(false);
+      var at = Date.now();
+      return wpCachePut({ key: "pic:" + at, w: 0, h: 0, blob: blob }, "picture").then(function (ok) {
+        if (!ok) return false;
+        try { localStorage.setItem(WP_PIC_KEY, JSON.stringify({ at: at, bg: bg })); }
+        catch (e) { return false; }
+        applyWallpaper();
+        return true;
+      });
+    },
     get: function () {
-      return { active: state.wallpaper === "custom", recipe: state.wpart };
+      var pic = wpPic();
+      return { active: !!pic || state.wallpaper === "custom", recipe: state.wpart,
+               picture: pic ? pic.at : null };
     }
   };
 
@@ -2685,7 +2757,13 @@
   }
 
   function setWallpaperUser(id) {
-    if (!findWallpaper(id) || state.wallpaper === id) return;
+    if (!findWallpaper(id)) return;
+    if (wpPic()) {                     // the device picture gives way to the pick
+      if (id === "custom") return;     // "Mine" = the picture: already on
+      wpPicClear();
+      if (state.wallpaper === id) { applyWallpaper(); renderMenu(); return; }
+    }
+    if (state.wallpaper === id) return;
     state.wallpaper = id;
     localStorage.setItem("oros-wallpaper", state.wallpaper);
     applyWallpaper();
@@ -6624,7 +6702,8 @@
     var connected = !!(S && S.isConnected());
     var unlocked = !!(connected && S.hasPassphrase());
     var art = wpArt();
-    var hasArt = !!(state.wpart && art);
+    var pic = wpPic();
+    var hasArt = !!(pic || (state.wpart && art));
     var folder = null, lapsed = false;
     try {
       folder = localStorage.getItem(FS_FOLDER_NAME_KEY);
@@ -6639,13 +6718,13 @@
       skins: SKINS.map(function (k) {
         return { id: k.id, color: k.color, name: skinTitle(k.id) };
       }),
-      wallpaper: state.wallpaper,
+      wallpaper: pic ? "custom" : state.wallpaper,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "custom") {
           if (!hasArt) css = null;   // nothing made yet → "make one"
           else {
-            var bgc = art.colors(state.wpart, wpAccent()).bg;
+            var bgc = pic ? pic.bg : art.colors(state.wpart, wpAccent()).bg;
             css = (wpShown && wpShown.url) ? wpBg(bgc, wpShown.url) : bgc;
           }
         }
@@ -6698,7 +6777,7 @@
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
       case "wallpaper":
-        if (value === "custom" && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
+        if (value === "custom" && !wpPic() && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
         setWallpaperUser(value);
         return;
       case "pet":
