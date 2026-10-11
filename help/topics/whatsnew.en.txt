@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.91.00
+- Typewriter: send your page to Writer as a new document.
+
 ## Version 0.90.00
 - Name Generator: names for pets, teams and projects, and send a name straight to Netizen ID or Characters.
 
