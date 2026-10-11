@@ -173,3 +173,14 @@ test("every string exists in both languages", () => {
   assert.deepEqual([...en].filter((k) => !el.has(k)), []);
   assert.deepEqual([...el].filter((k) => !en.has(k)), []);
 });
+
+test("batteryState: never trust a made-up full battery", () => {
+  const full = { level: 1, charging: true, chargingTime: 0, dischargingTime: Infinity };
+  const real = { level: 0.87, charging: false, chargingTime: Infinity, dischargingTime: 20000 };
+  assert.equal(C.batteryState(null), "none");
+  assert.equal(C.batteryState(full), "suspect");
+  assert.equal(C.batteryState(full, { changed: true }), "ok");
+  assert.equal(C.batteryState(real), "ok");
+  assert.equal(C.batteryState(real, { brave: true }), "hidden");
+  assert.equal(C.batteryState({ level: 1, charging: false, chargingTime: Infinity, dischargingTime: 36000 }), "ok");
+});
