@@ -4729,3 +4729,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-11 — Faster start on a bad connection (#184) + Wheel of Fate option weights (#185) — 0.86.01
 - sw.js (#184): SW-T1 navigations and apps.json wait at most 3 s for the network, then the cached copy answers (a late answer refreshes the cache; after one timeout, network-first answers from the cache at once for 30 s); SW-T3 the apps.json test no longer matches every 9-character path (`/shell.js`, `/vault.js`, `/icon.svg`); SW-T2 an update whose precache hits network errors fails the install and keeps the current release, and the retry downloads only what is missing. Tests: tests/sw-network.test.js.
 - Wheel of Fate: each option can have double or triple chance (×1/×2/×3 button per row); a weighted option gets a wider slice; weights sync with saved wheels.
+
+### 2026-10-11 — Device Info: never show a faked 100% battery (#187) — 0.86.02
+- Device Info: when the browser hides the real battery, the app says so instead of showing a number. Brave: "this browser hides the real battery level"; any other browser reporting exactly the default "100% and charging": "if you are not plugged in, this is a placeholder" until a real battery event arrives. New pure helper `DeviceCore.batteryState(b, {brave, changed})` (none / hidden / suspect / ok). Tests: tests/device.test.js.
