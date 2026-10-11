@@ -4530,3 +4530,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Mail checks the inbox while orOS is open and shows a notice for new messages (Settings > Notifications > Mail).
 - mail/notify.js added to the sw.js precache. Tests: tests/mail-notify.test.js green.
 - Not tested: a real pmail.gr inbox receiving new mail.
+
+### 2026-10-11 — Mail: organise messages + sender check and suspicious-link warnings (#163) — 0.69.00
+- Archive, Delete (Delete for good in Trash/Spam), Spam / Not spam, Star, Read/Unread and Move to… on an open message; Select mode for many messages; swipe right to archive, left to delete; keys e, Del/#, !, s, u, v. Moves show Undo for 6 s and flush on page close.
+- Relay ops move (UID MOVE or COPY+\Deleted+EXPUNGE), expunge, create, search (TEXT/FROM/SUBJECT, UTF-8 literals). Archive creates INBOX.Archive when missing.
+- New mail/trust.js (device-only): "Verified sender" badge from the receiving server's Authentication-Results (forged passes ignored), "Careful" box on failures or display-name tricks, "Links that may mislead" list (text/host mismatch, look-alikes, punycode, bare IPs, user@host). Precached.
+- Tests: tests/mail-trust.test.js and relay tests (with and without MOVE/UIDPLUS); Playwright E2E at 360px with mocked relay. Not tested: a real Papaki server.
