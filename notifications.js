@@ -551,6 +551,11 @@
     // Media Shelf — "shelf:item:<itemId>": the daily reading reminder
     // opens the title it names. Generic shell deep link, no own bridge.
     shelf:    function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('shelf', { item: id }); },
+    // One-Sentence Diary — "diary:day:<YYYY-MM-DD>": the evening
+    // reminder opens that day to write. Generic shell deep link.
+    diary:    function (ymd) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(ymd)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('diary', { day: String(ymd) });
+    },
     // Mail — "mail:msg:<acctId>.<uid>": a new message in an Inbox
     // (mail/notify.js) opens it. Generic shell deep link, no own bridge.
     mail:     function (p) {

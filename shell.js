@@ -1011,6 +1011,7 @@
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
+      tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
@@ -1821,6 +1822,41 @@
       title: txt.title,
       body: txt.body,
       deepLink: "shelf:item:" + due.item
+    });
+  }
+
+  // One-Sentence Diary — evening reminder (off by default; Diary
+  // settings turn it on, per device: oros-diary-prefs is device-local).
+  // The RULE lives in diary/core.js (window.DiaryCore), loaded by
+  // index.html before this file and shared with the tests; the shell
+  // owns timing + emission over oros-diary-data, so it works with the
+  // app closed. Only on days with no line yet. Dedupe key: one per day
+  // ("write-<ymd>"). A stale index.html without the core → silent.
+  var diaryLastTick = 0;
+  function diaryCheckTickThrottled() {
+    var now = Date.now();
+    if (now - diaryLastTick < 60000) return;
+    diaryLastTick = now;
+    diaryCheckTick();
+  }
+  function diaryCheckTick() {
+    var D = window.DiaryCore, N = window.orosNotifs;
+    if (!D || typeof D.reminderDue !== "function") return;
+    if (!(N && typeof N.emit === "function")) return;
+    var prefs = null, data = null;
+    try { prefs = D.readPrefs(JSON.parse(localStorage.getItem(D.PREFS_KEY) || "null")); } catch (e) { return; }
+    if (!prefs.rem.on) return;
+    try { data = D.mergeDiary(JSON.parse(localStorage.getItem("oros-diary-data") || "null"), null); } catch (e) { return; }
+    var now = new Date(), due = D.reminderDue(data, prefs, now);
+    if (!due) return;
+    var txt = D.reminderText(state.lang === "el" ? "el" : "en", D.streak(data, due.day));
+    N.emit({
+      ns: "diary",
+      key: due.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "diary:day:" + due.day
     });
   }
 

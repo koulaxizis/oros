@@ -1,0 +1,47 @@
+# One-Sentence Diary
+One sentence a day, written in ten seconds. Under each day's line you see the same date in the years before, so in a year's time today comes back to you.
+
+## Writing today
+Open the app and type. The line saves itself as you type (`Saved` appears under it); [[Enter]] saves at once.
+- A line can be up to 280 characters, on one line. The counter appears when you are close to the end.
+- Pick an emoji for the day if you like: 😊 😐 😔 😴 🎉 ❤️. Tap the same emoji again to take it away.
+- Writing after midnight? Until 03:00 the app asks whether the line is for `Yesterday` or `Today`.
+- Clearing the text, or `Delete this day`, removes the day; `Undo` in the message brings it back.
+
+## Other days
+- The arrows next to the date go to the day before or after; `Back to today` returns. You can write or fix any past day, but not a day that has not come yet.
+- The star button at the top opens `A random memory` from your diary.
+
+## On this day
+Under the line, `On this day` shows what you wrote on the same date in earlier years, newest first. A line from 29 February also shows on 28 February in the years without one. Tap a line to open that day.
+
+## My days
+- A month calendar: the days with a line are coloured and show their emoji. Tap a day to open it.
+- Under the calendar are the month's lines.
+- The search box finds days in every year. Every word you type must be in the line; capitals and accents do not matter.
+
+## Year
+`Year` shows every line of one year on one page, month by month. `Print` prints it, or saves it as a PDF from the print window.
+
+## Streak
+The header and the line under `On this day` show your streak: the days in a row you have written, up to today (or yesterday, while today is still empty), and your longest one.
+
+## Evening reminder
+In `Diary settings` (the button at the top right) tick `Remind me when I have not written today` and choose the time (21:30 at first). The reminder comes only on days with no line yet, also with the app closed, while orOS is open. Tap it to write. It is off at first and stays on this device.
+
+## Export and import
+- `Text`, `CSV` and `JSON` in `Diary settings` download every line.
+- `Choose a file` reads a CSV, JSON or text file with a date and a line per day, like the exports. Dates can be 2026-10-11 or 11/10/2026. Days that already have a line keep it.
+
+## Sync and privacy
+- Your lines follow you to all your devices through orOS sync, encrypted like the rest of your data.
+- The diary is personal, so it is not in the menu's search at first. To find your lines from the menu, tick it in [Settings](app:settings) › `Language & search`. The search choices stay on each device.
+- When the same day is changed on two devices before they sync, the most recent change wins.
+
+## Keyboard shortcuts
+- [[←]] and [[→]]: the day before or after. While typing in the line, [[Alt+←]] and [[Alt+→]].
+- [[Enter]] in the line: save; on a past day it also moves to the next day.
+- [[Esc]]: close `Diary settings`.
+
+## Tips
+> Write the first thing that comes to mind. One honest sentence is worth more than a long page you never write.

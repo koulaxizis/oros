@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>One-Sentence Diary · orOS</title>
+
+  <link rel="stylesheet" href="diary.css?v=0.83.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="rand-btn" class="icon-btn"></button>
+    <button type="button" id="more-btn" class="icon-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-today" aria-controls="v-today" data-view="today" data-i18n="tab.today">Today</button>
+    <button type="button" role="tab" id="tab-days" aria-controls="v-days" data-view="days" data-i18n="tab.days">My days</button>
+    <button type="button" role="tab" id="tab-year" aria-controls="v-year" data-view="year" data-i18n="tab.year">Year</button>
+  </nav>
+
+  <main id="main">
+    <!-- Today (or any day being written) -->
+    <section id="v-today" class="view" role="tabpanel" aria-labelledby="tab-today">
+      <div class="day-nav">
+        <button type="button" id="prev-btn" class="icon-btn"></button>
+        <h1 id="day-title"></h1>
+        <button type="button" id="next-btn" class="icon-btn"></button>
+      </div>
+      <div class="day-sub">
+        <span id="day-rel" class="hint"></span>
+        <button type="button" id="today-btn" class="link-btn" data-i18n="btn.today" hidden>Back to today</button>
+      </div>
+
+      <div id="late" class="late" hidden>
+        <span id="late-lbl" data-i18n="late.q">After midnight. This line is for:</span>
+        <div id="late-chips" class="chips" role="radiogroup" aria-labelledby="late-lbl"></div>
+      </div>
+
+      <label for="line" class="sr-only" data-i18n="f.line">One sentence about this day</label>
+      <textarea id="line" rows="3" autocomplete="off" spellcheck="true"></textarea>
+      <div class="line-foot">
+        <span id="status" class="hint small" aria-live="polite"></span>
+        <span class="spacer"></span>
+        <span id="count" class="count" hidden></span>
+        <button type="button" id="del-btn" class="link-btn danger" data-i18n="btn.delete" hidden>Delete this day</button>
+      </div>
+
+      <div class="emoji-row">
+        <span id="emoji-lbl" class="lbl" data-i18n="f.emoji">Emoji of the day</span>
+        <div id="emojis" class="emojis" role="radiogroup" aria-labelledby="emoji-lbl"></div>
+      </div>
+
+      <section id="otd" class="card">
+        <h2 id="otd-title" data-i18n="sec.otd">On this day</h2>
+        <ul id="otd-list" class="lines"></ul>
+        <p id="otd-empty" class="hint"></p>
+      </section>
+
+      <p id="stats" class="stats"></p>
+    </section>
+
+    <!-- My days -->
+    <section id="v-days" class="view" role="tabpanel" aria-labelledby="tab-days" hidden>
+      <label for="q" class="sr-only" data-i18n="f.search">Search your days</label>
+      <input type="search" id="q" autocomplete="off">
+      <div id="cal-wrap">
+        <div class="month-nav">
+          <button type="button" id="mprev-btn" class="icon-btn"></button>
+          <h2 id="month-title"></h2>
+          <button type="button" id="mnext-btn" class="icon-btn"></button>
+        </div>
+        <div id="grid" class="grid" role="grid"></div>
+        <ul id="month-list" class="lines"></ul>
+        <p id="month-empty" class="hint" data-i18n="month.empty"></p>
+      </div>
+      <div id="results-wrap" hidden>
+        <p id="results-count" class="hint" aria-live="polite"></p>
+        <ul id="results" class="lines"></ul>
+      </div>
+    </section>
+
+    <!-- Year -->
+    <section id="v-year" class="view" role="tabpanel" aria-labelledby="tab-year" hidden>
+      <div class="year-head">
+        <label for="year-sel" class="sr-only" data-i18n="f.year">Year</label>
+        <select id="year-sel"></select>
+        <span id="year-count" class="hint"></span>
+        <span class="spacer"></span>
+        <button type="button" id="print-btn" class="chip" data-i18n="btn.print">Print</button>
+      </div>
+      <div id="year-list"></div>
+      <p id="year-empty" class="hint" data-i18n="year.empty"></p>
+    </section>
+  </main>
+
+  <!-- More: reminder, export, import -->
+  <div id="scrim" hidden></div>
+  <div id="more" class="dialog" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="dlg-head">
+      <h2 id="more-title" data-i18n="more.title">Diary settings</h2>
+      <span class="spacer"></span>
+      <button type="button" id="more-close" class="icon-btn"></button>
+    </div>
+    <h3 data-i18n="sec.rem">Evening reminder</h3>
+    <label class="check" for="rem-on">
+      <input type="checkbox" id="rem-on">
+      <span data-i18n="rem.on">Remind me when I have not written today</span>
+    </label>
+    <div class="rem-time">
+      <label for="rem-time" data-i18n="rem.time">At</label>
+      <input type="time" id="rem-time" step="300">
+    </div>
+    <p class="hint small" data-i18n="rem.hint"></p>
+
+    <h3 data-i18n="sec.export">Export</h3>
+    <div class="actions">
+      <button type="button" id="exp-txt" class="chip" data-i18n="btn.txt">Text</button>
+      <button type="button" id="exp-csv" class="chip" data-i18n="btn.csv">CSV</button>
+      <button type="button" id="exp-json" class="chip" data-i18n="btn.json">JSON</button>
+    </div>
+    <h3 data-i18n="sec.import">Import</h3>
+    <p class="hint small" data-i18n="imp.hint"></p>
+    <div class="actions">
+      <button type="button" id="imp-btn" class="chip" data-i18n="btn.import">Choose a file</button>
+      <input type="file" id="imp-file" accept=".csv,.json,.txt,text/csv,application/json,text/plain" hidden>
+    </div>
+  </div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.83.00"></script>
+  <script src="diary.js?v=0.83.00"></script>
+
+</body>
+</html>
