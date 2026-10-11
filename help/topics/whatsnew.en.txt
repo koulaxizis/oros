@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.74.00
+- Mail: create, rename and delete folders, and save drafts on the server to finish them on any device.
+
 ## Version 0.73.00
 - Mail groups replies into conversations, and with two or more accounts, All inboxes shows every Inbox together.
 

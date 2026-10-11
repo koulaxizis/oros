@@ -361,6 +361,14 @@ function makeApi(conn) {
     else await conn.run(["EXPUNGE"]);
   }
 
+  // Best effort: a server without subscriptions (or that refuses one)
+  // still created / renamed / deleted the folder.
+  async function subscribe(folder, on) {
+    try { await conn.run([(on ? "SUBSCRIBE " : "UNSUBSCRIBE "), arg(folder, true)], { allowNo: true }); } catch (e) {
+      if (e.code !== "bad") throw e;
+    }
+  }
+
   function fetchItems(untagged) {
     const out = [];
     untagged.forEach((u) => {
@@ -486,6 +494,24 @@ function makeApi(conn) {
       const r = await conn.run(["CREATE ", arg(folder, true)], { allowNo: true });
       // NO [ALREADYEXISTS] is fine: the folder is there.
       if (r.status !== "OK" && !/ALREADYEXISTS|exist/i.test(r.text)) throw new ImapError("no", r.text);
+      await subscribe(folder, true);
+      return { ok: true };
+    },
+
+    // Renames a folder (its subfolders follow, RFC 3501 6.3.5) and moves
+    // the subscription, so webmail keeps showing it.
+    async rename(folder, to) {
+      await conn.run(["RENAME ", arg(folder, true), " ", arg(to, true)]);
+      await subscribe(folder, false);
+      await subscribe(to, true);
+      return { ok: true };
+    },
+
+    // Deletes a folder and the messages in it. Servers refuse a folder
+    // that still has subfolders; that answer comes back as "no".
+    async remove(folder) {
+      await conn.run(["DELETE ", arg(folder, true)]);
+      await subscribe(folder, false);
       return { ok: true };
     },
 
@@ -510,6 +536,29 @@ function makeApi(conn) {
       const want = all.slice(-Math.max(1, Math.min(100, limit || 50)));
       return { uidvalidity: info.uidvalidity, uids: compressUids(all.slice(-2000)), total: all.length,
                msgs: await heads(want) };
+    },
+
+    // Saves a draft in `folder` (\Draft \Seen) and erases the one it
+    // replaces. Its UID comes from APPENDUID (UIDPLUS), else from a
+    // search for its Message-ID, else 0 (the next save then adds a new
+    // copy instead of replacing this one).
+    async saveDraft(folder, bin, replace, mid) {
+      const r = await conn.run(["APPEND ", arg(folder, true), " (\\Draft \\Seen) ", { text: "{" + bin.length + "}", lit: bin }]);
+      const au = /\[APPENDUID (\d+) (\d+)\]/i.exec(r.text || "");
+      let uid = au ? +au[2] : 0, replaced = false;
+      if (replace || (!uid && mid)) {
+        const info = await select(folder, true);
+        if (!uid && mid) {
+          const s = await conn.run(["UID SEARCH HEADER Message-ID ", arg(mid)]);
+          const hits = searchUids(s.untagged);
+          uid = hits.length ? hits[hits.length - 1] : 0;
+        }
+        if (replace && replace !== uid) {
+          try { await expungeSet(String(replace), await capability(conn)); replaced = true; } catch (e) {}
+        }
+        if (!au) return { uid, uidvalidity: info.uidvalidity, replaced };
+      }
+      return { uid, uidvalidity: au ? +au[1] : 0, replaced };
     },
 
     // Stores a message (binary string) in `folder`, e.g. a copy of a

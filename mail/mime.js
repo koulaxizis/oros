@@ -360,6 +360,21 @@
     });
   }
 
+  // printable ASCII stays, "&" becomes "&-", runs of anything else go
+  // as UTF-16 in base64 with "," for "/" (a new folder's name).
+  function utf7Encode(s) {
+    s = String(s || "");
+    var out = "", i = 0;
+    while (i < s.length) {
+      var c = s.charCodeAt(i);
+      if (c >= 0x20 && c <= 0x7e) { out += c === 0x26 ? "&-" : s.charAt(i); i++; continue; }
+      var bin = "";
+      while (i < s.length && !((c = s.charCodeAt(i)) >= 0x20 && c <= 0x7e)) { bin += String.fromCharCode(c >> 8, c & 255); i++; }
+      out += "&" + binToB64(bin).replace(/=+$/, "").replace(/\//g, ",") + "-";
+    }
+    return out;
+  }
+
   // ---------- plain-text links ----------
   // Splits text into [{t}] and [{t, href}] runs: http(s), www., mailto,
   // bare e-mail addresses. Trailing punctuation stays outside.
@@ -415,7 +430,7 @@
     b64ToBin: b64ToBin, binToB64: binToB64, decodeCharset: decodeCharset, decodeWords: decodeWords,
     qpDecode: qpDecode, parseHeaders: parseHeaders, parseParams: parseParams,
     parseAddresses: parseAddresses, parseDate: parseDate, summary: summary,
-    parseMessage: parseMessage, utf7Decode: utf7Decode, splitLinks: splitLinks, parseIcs: parseIcs
+    parseMessage: parseMessage, utf7Decode: utf7Decode, utf7Encode: utf7Encode, splitLinks: splitLinks, parseIcs: parseIcs
   };
   root.orosMailMime = api;
   if (typeof module === "object" && module.exports) module.exports = api;

@@ -39,8 +39,11 @@ Answer: `{ ok: true, data }` or `{ ok: false, error: { code, msg } }`.
 | `flag` | `folder`, `uids[]`, `add[]`, `remove[]` | `{ uidvalidity }` |
 | `move` | `folder`, `uids[]` (1–500), `to` (≠ `folder`) | `{ uidvalidity }` (UID MOVE; else UID COPY + \\Deleted + UID EXPUNGE, or EXPUNGE without UIDPLUS) |
 | `expunge` | `folder`, `uids[]` (1–500) | `{ uidvalidity }` (deletes for good) |
-| `create` | `folder` | `{ ok }` (an existing folder is fine) |
+| `create` | `folder` | `{ ok }` (an existing folder is fine; also subscribes it) |
+| `rename` | `folder` (not INBOX), `to` | `{ ok }` (subfolders follow; subscription moves) |
+| `delete` | `folder` (not INBOX) | `{ ok }` (with its messages; servers refuse one with subfolders → `no`) |
 | `search` | `folder`, `q` (≤200 chars, ≤6 words), `where?` (`text`\|`from`\|`subject`), `limit?` (≤100) | `{ uidvalidity, uids, total, msgs[...] }` (as `list`; `uids` = last 2000 hits) |
+| `draft` | `folder`, `raw` (base64, ≤380 KB), `replace?` (UID), `mid?` (its Message-ID) | `{ uid, uidvalidity, replaced }` (APPEND with \\Draft \\Seen, then erases `replace`; `uid` 0 when the server tells neither APPENDUID nor finds `mid`) |
 | `smtpcheck` | `smtp:{ host, port (465\|587), sec, user, pass }` | `{ ok }` (SMTP login test) |
 | `send` | `smtp`, `from`, `rcpt[]` (1–50), `raw` (base64 RFC 5322 message, ≤380 KB), `sent?` (folder) | `{ sent, appended, appendErr }` |
 

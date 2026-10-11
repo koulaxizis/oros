@@ -26,7 +26,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, search: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1 };
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -93,6 +93,12 @@ export function validRequest(b, env) {
     if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
     if (b.sent !== undefined && !folderArg(b.sent)) return "sent";
   }
+  if (b.op === "draft") {
+    if (!folderArg(b.folder)) return "folder";
+    if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
+    if (b.replace !== undefined && !(Number.isInteger(b.replace) && b.replace > 0)) return "replace";
+    if (b.mid !== undefined && !(typeof b.mid === "string" && /^<[^<>\s"\\]{3,250}>$/.test(b.mid))) return "mid";
+  }
   if (b.op === "flag" || b.op === "move" || b.op === "expunge") {
     if (!folderArg(b.folder)) return "folder";
     if (!Array.isArray(b.uids) || !b.uids.length || b.uids.length > 500 ||
@@ -100,6 +106,11 @@ export function validRequest(b, env) {
   }
   if (b.op === "move" && (!folderArg(b.to) || b.to === b.folder)) return "to";
   if (b.op === "create" && !folderArg(b.folder)) return "folder";
+  if (b.op === "rename" || b.op === "delete") {
+    // INBOX can be neither renamed nor deleted (RFC 3501 6.3.4, 6.3.5)
+    if (!folderArg(b.folder) || /^inbox$/i.test(b.folder)) return "folder";
+  }
+  if (b.op === "rename" && (!folderArg(b.to) || b.to === b.folder || /^inbox$/i.test(b.to))) return "to";
   if (b.op === "search") {
     if (!folderArg(b.folder)) return "folder";
     if (!str(b.q, 200) || !b.q.trim() || /[\r\n\0]/.test(b.q)) return "q";
@@ -172,7 +183,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (text.length > LIMITS.sendBytes) return fail(413, "bad-request", "request too large", okOrigin);
   let b;
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
-  if (text.length > LIMITS.bodyBytes && !(b && b.op === "send")) return fail(413, "bad-request", "request too large", okOrigin);
+  if (text.length > LIMITS.bodyBytes && !(b && (b.op === "send" || b.op === "draft"))) return fail(413, "bad-request", "request too large", okOrigin);
   const bad = validRequest(b, env);
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
@@ -236,7 +247,10 @@ export async function handle(request, env, connectFn, now, fetchFn) {
         case "move": return api.move(b.folder, b.uids, b.to);
         case "expunge": return api.expunge(b.folder, b.uids);
         case "create": return api.create(b.folder);
+        case "rename": return api.rename(b.folder, b.to);
+        case "delete": return api.remove(b.folder);
         case "search": return api.search(b.folder, b.q, b.where, b.limit);
+        case "draft": return api.saveDraft(b.folder, atob(b.raw), b.replace, b.mid);
       }
       return null;
     });

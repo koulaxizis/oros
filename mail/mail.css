@@ -760,3 +760,11 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 /* ---------- 17. All inboxes ---------- */
 .uni-btn { margin: 8px 0; font-weight: 700; }
 .row-acct { position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px; border-radius: 0 3px 3px 0; }
+
+/* ---------- 18. Folders: new, rename, delete ---------- */
+.acct-head .acct-name { flex: 1 1 auto; }
+.acct-fold { flex-shrink: 0; color: var(--text-dim); }
+.dlg-title.sub { font-size: 15px; margin-top: 4px; }
+.fold-list { max-height: 55vh; overflow-y: auto; }
+.fold-list li { gap: 6px; padding: 6px 8px; }
+.fold-list .set-acct-name { white-space: normal; overflow-wrap: anywhere; font-weight: 600; }

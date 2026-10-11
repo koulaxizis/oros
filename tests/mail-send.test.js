@@ -66,6 +66,12 @@ test("compose: build() makes a valid plain-text message; Bcc only in the envelop
   assert.equal(parsed.headers["in-reply-to"][0], "<orig@x.com>");
   assert.equal(parsed.headers.references[0], "<r1@x.com> <orig@x.com>");
   gr.bin.split("\r\n").forEach((l) => assert.ok(l.length <= 998));
+  // a draft keeps its Bcc (it is filed, not sent)
+  const dr = C.build({ from: { name: "", addr: "chris@pmail.gr" }, to: [], bcc: [{ name: "Κρυφός", addr: "hidden@x.com" }],
+    keepBcc: true, subject: "", text: "draft" });
+  const dp = M.parseMessage(dr.bin);
+  assert.equal(M.parseAddresses(M.decodeWords(dp.headers.bcc[0]))[0].addr, "hidden@x.com");
+  assert.ok(!/\r\nTo:/.test(dr.bin));
 });
 
 test("compose: reply, reply all and forward drafts", () => {
