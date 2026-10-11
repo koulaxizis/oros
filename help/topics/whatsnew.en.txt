@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.92.00
+- Wallpaper Generator: a new picture every day, and a live wallpaper with slowly drifting light.
+
 ## Version 0.91.00
 - Typewriter: send your page to Writer as a new document.
 
