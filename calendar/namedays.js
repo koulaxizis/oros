@@ -20,6 +20,7 @@
 //   keysOn(ymd)                 → { skeleton: true } (for matching)
 //   skeleton(name)              → match key (Greek or Latin input)
 //   celebrates(givenName, ymd)  → bool
+//   contactsCelebrating(contacts, ymd) → [{ id, name }]
 //   cleanDays(json)             → sanitized observances data | null
 //   observancesOn(ymd, data)    → [{ id, en, el }]
 // ============================================================
@@ -261,6 +262,25 @@
     var k = skeleton(given);
     return !!(k && keysOn(ymd)[k]);
   }
+  // Contacts (oros-contacts-data "contacts") whose first name, else
+  // nickname, celebrates on ymd → [{ id, name }] (full name, ≤ 60
+  // characters). One rule for the Calendar chip, the shell's morning
+  // notice and the Today summary.
+  function contactsCelebrating(contacts, ymd) {
+    var out = [];
+    if (!Array.isArray(contacts) || !isYmd(ymd)) return out;
+    contacts.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
+      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
+                : (typeof c.nickname === "string" ? c.nickname : "");
+      if (!first || !celebrates(first, ymd)) return;
+      var full = [c.given, c.middle, c.family].filter(function (x) {
+        return typeof x === "string" && x.trim();
+      }).join(" ");
+      out.push({ id: c.id, name: (full || first).slice(0, 60) });
+    });
+    return out;
+  }
 
   /* ---------- 6. Observances (calendar/days.json) ----------
      Data, not code: each entry is one rule.
@@ -338,7 +358,7 @@
   var api = {
     isYmd: isYmd, addDays: addDays, weekday: weekday, easter: easter,
     holidaysOn: holidaysOn, namesOn: namesOn, keysOn: keysOn,
-    skeleton: skeleton, celebrates: celebrates,
+    skeleton: skeleton, celebrates: celebrates, contactsCelebrating: contactsCelebrating,
     cleanDays: cleanDays, observancesOn: observancesOn, nthWeekday: nthWeekday,
     _NAMES_FIXED: NAMES_FIXED, _NAMES_EASTER: NAMES_EASTER
   };

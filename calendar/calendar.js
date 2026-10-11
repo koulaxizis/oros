@@ -2191,12 +2191,10 @@ function transientNote(title, body) {
     if (!ND || !labelVisible("lbl-feed-nameday")) return [];
     var cs = contactsRaw().contacts;
     if (!Array.isArray(cs)) return [];
-    var out = [];
-    cs.forEach(function (c) {
-      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
-      var first = (typeof c.given === "string" && c.given.trim()) ? c.given
-                : (typeof c.nickname === "string" ? c.nickname : "");
-      if (!first || !ND.celebrates(first, dateStr)) return;
+    var out = [], byId = {};
+    cs.forEach(function (c) { if (c && typeof c.id === "string") byId[c.id] = c; });
+    ND.contactsCelebrating(cs, dateStr).forEach(function (x) {
+      var c = byId[x.id];
       out.push({ id: "nd-" + c.id + "-" + dateStr,          // per-render key, never stored
                  title: t("nd.contact").replace("{name}", ctName(c)),
                  labelId: "lbl-feed-nameday", start: null, _feed: true, _contactId: c.id });
