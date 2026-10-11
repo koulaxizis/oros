@@ -72,6 +72,7 @@
   var OUT_MAX       = 50;               // outbox entries
   var MAX_SIG       = 1000;
   var M = window.orosMailMime;
+  var TR = window.orosMailTrust;
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -98,6 +99,14 @@
       "read.to": "To: {list}", "read.cc": "Cc: {list}", "read.me": "me", "read.nosubj": "(no subject)",
       "read.nosender": "(unknown sender)",
       "img.blocked": "Pictures from the internet are hidden, so the sender cannot tell you opened this.",
+      "trust.ok": "Verified sender", "trust.okTip": "The receiving server checked that this message really comes from {dom} (SPF, DKIM, DMARC).",
+      "trust.warn": "Careful: this message may not come from {dom}.",
+      "trust.dmarc": "{dom} says messages like this one are fake (DMARC failed).", "trust.dkim": "Its signature does not match (DKIM failed).",
+      "trust.spf": "It was sent from a server {dom} does not use (SPF failed).", "trust.name": "The name shows another address than the real sender, {addr}.",
+      "trust.after": "Don't open links or attachments, and never enter a password, unless you are sure.",
+      "link.title": "Links that may mislead: {n}", "link.mismatch": "shows {shown}, opens {host}",
+      "link.lookalike": "{host} imitates a known name", "link.puny": "{host} uses look-alike letters",
+      "link.ip": "opens a bare address, {host}", "link.userinfo": "really opens {host}", "link.more": "Show all",
       "img.show": "Show pictures", "img.always": "Always for {who}",
       "read.plainOnly": "Shown as plain text (Settings).", "read.html": "Show the formatted version",
       "att.title": "Attachments", "att.save": "Save {name}",
@@ -179,6 +188,14 @@
       "read.to": "Προς: {list}", "read.cc": "Κοιν.: {list}", "read.me": "εμένα", "read.nosubj": "(χωρίς θέμα)",
       "read.nosender": "(άγνωστος αποστολέας)",
       "img.blocked": "Οι εικόνες από το internet είναι κρυμμένες, για να μη μαθαίνει ο αποστολέας ότι το άνοιξες.",
+      "trust.ok": "Επαληθευμένος αποστολέας", "trust.okTip": "Ο διακομιστής παραλαβής έλεγξε ότι το μήνυμα έρχεται πράγματι από το {dom} (SPF, DKIM, DMARC).",
+      "trust.warn": "Προσοχή: το μήνυμα ίσως δεν έρχεται από το {dom}.",
+      "trust.dmarc": "Το {dom} δηλώνει ότι τέτοια μηνύματα είναι πλαστά (ο έλεγχος DMARC απέτυχε).", "trust.dkim": "Η υπογραφή του δεν ταιριάζει (ο έλεγχος DKIM απέτυχε).",
+      "trust.spf": "Στάλθηκε από διακομιστή που δεν χρησιμοποιεί το {dom} (ο έλεγχος SPF απέτυχε).", "trust.name": "Το όνομα δείχνει άλλη διεύθυνση από τον πραγματικό αποστολέα, {addr}.",
+      "trust.after": "Μην ανοίγεις συνδέσμους ή συνημμένα και μη δίνεις ποτέ κωδικό, αν δεν είσαι σίγουρος.",
+      "link.title": "Σύνδεσμοι που ίσως παραπλανούν: {n}", "link.mismatch": "γράφει {shown}, ανοίγει {host}",
+      "link.lookalike": "το {host} μιμείται γνωστό όνομα", "link.puny": "το {host} έχει γράμματα που μοιάζουν με άλλα",
+      "link.ip": "ανοίγει σκέτη διεύθυνση, {host}", "link.userinfo": "στην πραγματικότητα ανοίγει το {host}", "link.more": "Όλοι",
       "img.show": "Εμφάνιση εικόνων", "img.always": "Πάντα για {who}",
       "read.plainOnly": "Εμφανίζεται ως απλό κείμενο (Ρυθμίσεις).", "read.html": "Εμφάνιση με μορφοποίηση",
       "att.title": "Συνημμένα", "att.save": "Αποθήκευση: {name}",
@@ -344,6 +361,7 @@
     down: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
     pen: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
     out: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+    shield: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
     archive: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>',
     trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
     spam: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
@@ -1211,6 +1229,7 @@
       return;
     }
     var p = openMsg.parsed;
+    renderTrust(p, m, sender, bars);
     acts.hidden = false;
     [["reply", "act.reply"], ["all", "act.all"], ["forward", "act.fwd"]].forEach(function (a) {
       acts.appendChild(button(t(a[1]), "small", function () { replyTo(a[0]); }));
@@ -1220,7 +1239,8 @@
     acts.appendChild(org);
     renderIcs(p, bars);
     var useHtml = p.html !== null && !(prefs.plain && p.text !== null && !openMsg.forceHtml);
-    if (useHtml) renderHtml(p, m, bars, body);
+    var flagged = [];
+    if (useHtml) flagged = renderHtml(p, m, bars, body);
     else {
       if (p.html !== null && prefs.plain) {
         var pb = el("div", "bar");
@@ -1231,13 +1251,61 @@
         pb.appendChild(hb);
         bars.appendChild(pb);
       }
-      renderText(p.text !== null ? p.text : "", body);
+      flagged = renderText(p.text !== null ? p.text : "", body);
     }
+    renderLinkWarn(flagged || [], bars);
     renderAtts(p, atts);
   }
 
+  // Sender check (trust.js): a badge when the receiving server verified
+  // the sender, a warning bar when a check failed. Reads only headers.
+  function renderTrust(p, m, sender, bars) {
+    if (!TR || !p) return;
+    var acct = curAcct();
+    var v = TR.sender(p.headers, m.from, { hosts: acct ? [acct.imap && acct.imap.host, acct.smtp && acct.smtp.host] : [] });
+    if (v.level === "ok") {
+      var b = el("span", "trust-ok", "");
+      b.innerHTML = UI.shield;
+      b.appendChild(el("span", "", t("trust.ok")));
+      b.title = t("trust.okTip", { dom: v.domain });
+      sender.appendChild(b);
+      return;
+    }
+    if (v.level !== "warn") return;
+    var bar = el("div", "bar warn");
+    bar.setAttribute("role", "alert");
+    bar.appendChild(el("strong", "", t("trust.warn", { dom: v.claimed || v.domain || m.from.addr })));
+    v.why.forEach(function (w) { bar.appendChild(el("span", "", t("trust." + w, { dom: v.domain, addr: m.from.addr }))); });
+    bar.appendChild(el("span", "", t("trust.after")));
+    bars.appendChild(bar);
+  }
+
+  function linkWhy(l) { return t("link." + l.code, { shown: l.shown, host: l.host }); }
+  function renderLinkWarn(list, bars) {
+    if (!list.length) return;
+    var bar = el("div", "bar warn");
+    bar.appendChild(el("strong", "", t("link.title", { n: list.length })));
+    var ul = el("ul", "sus-list");
+    list.forEach(function (l, i) {
+      var li = el("li", "", linkWhy(l));
+      if (i >= 3) li.hidden = true;
+      ul.appendChild(li);
+    });
+    bar.appendChild(ul);
+    if (list.length > 3) {
+      var mb = el("button", "link-btn", t("link.more"));
+      mb.type = "button";
+      mb.addEventListener("click", function () {
+        [].forEach.call(ul.children, function (li) { li.hidden = false; });
+        mb.remove();
+      });
+      bar.appendChild(mb);
+    }
+    bars.appendChild(bar);
+  }
+
   function renderText(text, box) {
-    var pre = el("div", "plain");
+    var pre = el("div", "plain"), flagged = [];
     M.splitLinks(text).forEach(function (seg) {
       if (!seg.href) { pre.appendChild(document.createTextNode(seg.t)); return; }
       var a = el("a", "", seg.t);
@@ -1245,8 +1313,15 @@
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       pre.appendChild(a);
+      var bad = TR ? TR.link(seg.t, seg.href) : null;
+      if (bad) {
+        a.className = "sus";
+        a.title = linkWhy(bad);
+        if (flagged.length < 50) flagged.push(bad);
+      }
     });
     box.appendChild(pre);
+    return flagged;
   }
 
   function dataUrl(att) {
@@ -1263,7 +1338,7 @@
     Object.keys(p.cids).forEach(function (c) { var u = dataUrl(p.cids[c]); if (u) cids[c] = u; });
     var sender = lowerAddr(m.from.addr);
     var remote = !!showImgFor[m.uid] || !!(sender && data.imgOk[sender]);
-    var clean = window.orosMailSanitize(p.html, { remote: remote, cids: cids });
+    var clean = window.orosMailSanitize(p.html, { remote: remote, cids: cids, linkCheck: TR ? TR.link : null });
     if (clean.blocked > 0 && !remote) {
       var bar = el("div", "bar");
       bar.appendChild(el("span", "", t("img.blocked")));
@@ -1302,6 +1377,7 @@
     fr.setAttribute("title", m.subj || t("read.nosubj"));
     fr.srcdoc = doc;
     body.appendChild(fr);
+    return clean.links || [];
   }
 
   function renderAtts(p, box) {

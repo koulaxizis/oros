@@ -16,6 +16,12 @@ Gmail, iCloud and Yahoo need an app password: create one in your account's secur
 ### Pictures and formatting
 Pictures from the internet are hidden at first, so the sender can't tell you opened the message. Press `Show pictures` to load them once, or `Always for` a sender to trust them from now on. In settings, `Always show plain text` shows every message as text; `Show the formatted version` switches one message back.
 
+### Sender and link checks
+- `Verified sender` next to the sender means the receiving server checked that the message really comes from that address's domain (SPF, DKIM, DMARC).
+- A red `Careful` box means a check failed, or the sender's name shows a different address than the real one. Treat such a message as a possible fake.
+- `Links that may mislead` lists links whose text names one site but open another, imitate a known name (like paypa1), or hide the real address. Inside the message each one is marked with ⚠ and the site it really opens.
+- The checks run on this device and send nothing anywhere. No badge doesn't mean a message is fake; many servers don't record the checks.
+
 ### Attachments and invitations
 Attachments are listed under the message; tap one to save it. An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
 

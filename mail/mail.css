@@ -13,6 +13,8 @@
      8. Dialogs — centered (R32)
      9. Toast + screen-reader helper
     10. Reduced motion
+    11. Organise: actions, selection, swipe
+    12. Sender check and suspicious links
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -637,3 +639,30 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .move-list { list-style: none; max-height: 50vh; overflow-y: auto; }
 .move-list .folder { width: 100%; }
 #toast.act { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+
+/* ---------- 12. Sender check and suspicious links (trust.js) ---------- */
+.trust-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 1px 7px 1px 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3fae64;
+  background: rgba(63, 174, 100, .15);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.bar.warn {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  color: var(--text);
+  background: rgba(200, 40, 40, .09);
+  border-color: rgba(200, 40, 40, .45);
+}
+.bar.warn strong { color: var(--danger); }
+.sus-list { margin: 0; padding-left: 18px; overflow-wrap: anywhere; }
+.plain a.sus { color: var(--danger); text-decoration: underline wavy; }
