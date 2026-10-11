@@ -57,6 +57,9 @@
       "k.style": "Style", "k.style.classic": "Classic", "k.style.glass": "Glass",
       "k.style.frosted": "Frosted", "k.style.smoke": "Smoke", "k.style.transparent": "Transparent",
       "k.style.solid": "Solid", "k.style.3d": "3D shelf", "k.style.neon": "Neon",
+      "k.hover": "Hover effect", "k.hover.magnify": "Magnify", "k.hover.bounce": "Bounce",
+      "k.hover.pulse": "Pulse", "k.hover.frame": "Frame", "k.hover.glow": "Glow",
+      "k.hover.lift": "Lift", "k.hover.wiggle": "Wiggle", "k.hover.none": "None",
       "k.empty": "Add apps with the ☆ next to each app in the menu.",
 
       "n.enabled": "Notifications", "n.test": "Send a test",
@@ -141,6 +144,9 @@
       "k.style": "Στυλ", "k.style.classic": "Κλασικό", "k.style.glass": "Γυαλί",
       "k.style.frosted": "Θαμπό γυαλί", "k.style.smoke": "Καπνός", "k.style.transparent": "Διάφανο",
       "k.style.solid": "Συμπαγές", "k.style.3d": "Τρισδιάστατο ράφι", "k.style.neon": "Νέον",
+      "k.hover": "Εφέ στο πέρασμα του ποντικιού", "k.hover.magnify": "Μεγέθυνση", "k.hover.bounce": "Αναπήδηση",
+      "k.hover.pulse": "Παλμός", "k.hover.frame": "Πλαίσιο", "k.hover.glow": "Λάμψη",
+      "k.hover.lift": "Ανύψωση", "k.hover.wiggle": "Κούνημα", "k.hover.none": "Κανένα",
       "k.empty": "Πρόσθεσε εφαρμογές με το ☆ δίπλα σε κάθε εφαρμογή στο μενού.",
 
       "n.enabled": "Ειδοποιήσεις", "n.test": "Δοκιμαστική",
