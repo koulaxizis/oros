@@ -43,14 +43,14 @@ Answer: `{ ok: true, data }` or `{ ok: false, error: { code, msg } }`.
 | `rename` | `folder` (not INBOX), `to` | `{ ok }` (subfolders follow; subscription moves) |
 | `delete` | `folder` (not INBOX) | `{ ok }` (with its messages; servers refuse one with subfolders → `no`) |
 | `search` | `folder`, `q` (≤200 chars, ≤6 words), `where?` (`text`\|`from`\|`subject`), `limit?` (≤100) | `{ uidvalidity, uids, total, msgs[...] }` (as `list`; `uids` = last 2000 hits) |
-| `draft` | `folder`, `raw` (base64, ≤380 KB), `replace?` (UID), `mid?` (its Message-ID) | `{ uid, uidvalidity, replaced }` (APPEND with \\Draft \\Seen, then erases `replace`; `uid` 0 when the server tells neither APPENDUID nor finds `mid`) |
+| `draft` | `folder`, `raw` (base64, ≤10 MB), `replace?` (UID), `mid?` (its Message-ID) | `{ uid, uidvalidity, replaced }` (APPEND with \\Draft \\Seen, then erases `replace`; `uid` 0 when the server tells neither APPENDUID nor finds `mid`) |
 | `smtpcheck` | `smtp:{ host, port (465\|587), sec, user, pass }` | `{ ok }` (SMTP login test) |
-| `send` | `smtp`, `from`, `rcpt[]` (1–50), `raw` (base64 RFC 5322 message, ≤380 KB), `sent?` (folder) | `{ sent, appended, appendErr }` |
+| `send` | `smtp`, `from`, `rcpt[]` (1–50), `raw` (base64 RFC 5322 message, ≤10 MB), `sent?` (folder) | `{ sent, appended, appendErr }` |
 
 `send` hands the message, built by the browser (`mail/compose.js`), to
 the SMTP server, then files a copy in `sent` with IMAP APPEND. Filing
 is best effort: a failure there is reported in `appendErr`, never as
-"not sent". Its request may be up to 512 KB; every other op stays at 64 KB.
+"not sent". Its request (and a `draft`'s) may be up to 14 MB, attachments included; every other op stays at 64 KB.
 
 Error codes: `origin`, `rate`, `bad-request`, `connect`, `tls`,
 `auth`, `timeout`, `closed`, `proto`, `no`, `gone`, `too-big`, `rcpt` (a recipient refused).

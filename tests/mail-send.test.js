@@ -319,3 +319,20 @@ test("compose: text + HTML as multipart/alternative, pictures inline (multipart/
   const plain = Cm.build({ from: { name: "", addr: "c@pmail.gr" }, to: [{ name: "", addr: "a@b.gr" }], subject: "x", text: "hi" });
   assert.match(plain.bin, /^Content-Type: text\/plain; charset=utf-8\r\nContent-Transfer-Encoding: 7bit\r\n/m);
 });
+
+test("compose: files as multipart/mixed; names in RFC 2231 and RFC 2047; read back by mime.js", () => {
+  const bin = Buffer.from([0, 1, 2, 255, 254, 10, 13]).toString("latin1");
+  const long = "Προσφορά για το έργο στην Αθήνα με πολύ μεγάλο όνομα αρχείου που ξεπερνά τα όρια (τελικό).pdf";
+  const m = C.build({ from: { name: "", addr: "a@pmail.gr" }, to: [{ name: "", addr: "x@y.gr" }], subject: "s",
+    text: "hi", html: "<b>hi</b>",
+    attachments: [{ name: long, type: "application/pdf", bin }, { name: "a\"b/c.txt", type: "bad type", bin: "hello" }, { name: "x" }] });
+  assert.match(m.bin, /Content-Type: multipart\/mixed; boundary="/);
+  assert.match(m.bin, / filename\*0\*=utf-8''%CE%A0/);
+  assert.match(m.bin, / filename\*1\*=/);
+  m.bin.split("\r\n").forEach((l) => assert.ok(l.length <= 998));
+  const p = M.parseMessage(m.bin);
+  assert.equal(p.text.trim(), "hi");
+  assert.ok(p.html.indexOf("<b>hi</b>") >= 0);
+  assert.deepEqual(p.attachments.map((a) => [a.name, a.type, a.data]),
+    [[long, "application/pdf", bin], ["a_b_c.txt", "application/octet-stream", "hello"]]);
+});

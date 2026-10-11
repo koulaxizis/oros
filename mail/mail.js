@@ -64,11 +64,13 @@
   var REFRESH_MS    = 2 * 60 * 1000;
   var BACKOFF_MAX   = 30 * 60 * 1000;
   var CALL_TIMEOUT  = 45000;
+  var SEND_TIMEOUT  = 120000;
   var MAX_ACCTS     = 10;
   var MAX_TOMBS     = 200;
   var MAX_IMGOK     = 500;
   var MAX_RCPT      = 50;               // relay limit (SMTP_LIMITS.rcpts)
-  var MSG_MAX       = 360 * 1024;       // built message bytes (relay takes 380 KB)
+  var MSG_MAX       = 10 * 1024 * 1024 - 64 * 1024;   // built message bytes (relay takes 10 MB)
+  var ATT_MAX       = 7 * 1024 * 1024;  // attached files together (base64 makes them ~1.37×)
   var OUT_MAX       = 50;               // outbox entries
   var MAX_SIG       = 1000;
   var M = window.orosMailMime;
@@ -135,7 +137,8 @@
       "link.ip": "opens a bare address, {host}", "link.userinfo": "really opens {host}", "link.more": "Show all",
       "img.show": "Show pictures", "img.always": "Always for {who}",
       "read.plainOnly": "Shown as plain text (Settings).", "read.html": "Show the formatted version",
-      "att.title": "Attachments", "att.save": "Save {name}",
+      "att.title": "Attachments", "att.save": "Save {name}", "att.open": "Open {name}", "att.download": "Save to device", "att.toFiles": "Save to Files",
+      "att.savedFiles": "Saved in Files › Mail: {name}", "att.noPreview": "No preview for this file.", "att.page": "Page {n} of {of}", "att.more": "{n} more pages: save the file to see them.",
       "ics.title": "Invitation", "ics.cal": "Add to Calendar", "ics.map": "Show on the map",
       "ics.allday": "all day",
       "net.offline": "Offline: showing mail saved on this device.",
@@ -177,7 +180,10 @@
       "cmp.send": "Send", "cmp.sending": "Sending…", "cmp.discard": "Discard",
       "drf.save": "Save draft", "drf.saving": "Saving…", "drf.saved": "Draft saved in Drafts", "drf.failed": "The draft was not saved.", "drf.edit": "Continue writing",
       "cmp.discardQ": "Discard this message?", "cmp.keep": "Keep writing",
-      "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it. No attachments yet.",
+      "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it.",
+      "cmp.attach": "Attach files", "cmp.fromFiles": "From Files", "cmp.unattach": "Remove {name}", "cmp.attTotal": "Together {size} (up to {max})",
+      "cmp.attBig": "Attached files can be up to {max} together.", "cmp.attFail": "The file could not be read.",
+      "files.title": "orOS Files", "files.up": "Up", "files.empty": "This folder is empty.", "files.err": "Files could not be read.",
       "rte.bar": "Formatting", "rte.b": "Bold (Ctrl+B)", "rte.i": "Italic (Ctrl+I)", "rte.u": "Underline (Ctrl+U)",
       "rte.ul": "Bulleted list", "rte.ol": "Numbered list", "rte.link": "Link (Ctrl+K)", "rte.linkAsk": "Link address (web or e-mail):",
       "rte.color": "Text colour", "rte.clear": "Clear formatting", "rte.img": "Picture or logo",
@@ -251,7 +257,8 @@
       "link.ip": "ανοίγει σκέτη διεύθυνση, {host}", "link.userinfo": "στην πραγματικότητα ανοίγει το {host}", "link.more": "Όλοι",
       "img.show": "Εμφάνιση εικόνων", "img.always": "Πάντα για {who}",
       "read.plainOnly": "Εμφανίζεται ως απλό κείμενο (Ρυθμίσεις).", "read.html": "Εμφάνιση με μορφοποίηση",
-      "att.title": "Συνημμένα", "att.save": "Αποθήκευση: {name}",
+      "att.title": "Συνημμένα", "att.save": "Αποθήκευση: {name}", "att.open": "Άνοιγμα: {name}", "att.download": "Αποθήκευση στη συσκευή", "att.toFiles": "Αποθήκευση στα Αρχεία",
+      "att.savedFiles": "Αποθηκεύτηκε στα Αρχεία › Mail: {name}", "att.noPreview": "Δεν υπάρχει προεπισκόπηση για αυτό το αρχείο.", "att.page": "Σελίδα {n} από {of}", "att.more": "Ακόμα {n} σελίδες: αποθήκευσε το αρχείο για να τις δεις.",
       "ics.title": "Πρόσκληση", "ics.cal": "Προσθήκη στο Ημερολόγιο", "ics.map": "Στον χάρτη",
       "ics.allday": "όλη μέρα",
       "net.offline": "Χωρίς σύνδεση: βλέπεις όσα είναι αποθηκευμένα σε αυτή τη συσκευή.",
@@ -293,7 +300,10 @@
       "cmp.send": "Αποστολή", "cmp.sending": "Αποστολή…", "cmp.discard": "Απόρριψη",
       "drf.save": "Αποθήκευση πρόχειρου", "drf.saving": "Αποθήκευση…", "drf.saved": "Το πρόχειρο αποθηκεύτηκε στα Πρόχειρα", "drf.failed": "Το πρόχειρο δεν αποθηκεύτηκε.", "drf.edit": "Συνέχεια γραψίματος",
       "cmp.discardQ": "Να απορριφθεί το μήνυμα;", "cmp.keep": "Συνέχεια γραψίματος",
-      "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν. Χωρίς συνημμένα προς το παρόν.",
+      "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν.",
+      "cmp.attach": "Επισύναψη αρχείων", "cmp.fromFiles": "Από τα Αρχεία", "cmp.unattach": "Αφαίρεση: {name}", "cmp.attTotal": "Μαζί {size} (έως {max})",
+      "cmp.attBig": "Τα συνημμένα μπορούν να είναι έως {max} μαζί.", "cmp.attFail": "Το αρχείο δεν διαβάστηκε.",
+      "files.title": "Αρχεία orOS", "files.up": "Πάνω", "files.empty": "Ο φάκελος είναι άδειος.", "files.err": "Τα Αρχεία δεν διαβάστηκαν.",
       "rte.bar": "Μορφοποίηση", "rte.b": "Έντονα (Ctrl+B)", "rte.i": "Πλάγια (Ctrl+I)", "rte.u": "Υπογράμμιση (Ctrl+U)",
       "rte.ul": "Λίστα με κουκκίδες", "rte.ol": "Αριθμημένη λίστα", "rte.link": "Σύνδεσμος (Ctrl+K)", "rte.linkAsk": "Διεύθυνση συνδέσμου (web ή email):",
       "rte.color": "Χρώμα κειμένου", "rte.clear": "Καθαρισμός μορφοποίησης", "rte.img": "Εικόνα ή λογότυπο",
@@ -414,6 +424,7 @@
     gear: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
     plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
     mail: '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>',
+    eye: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
     clip: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
     star: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
     down: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
@@ -781,7 +792,8 @@
                       user: acct.smtp.user || body.acct.user, pass: pw };
       }
       var ctl = new AbortController();
-      var timer = setTimeout(function () { ctl.abort(); }, CALL_TIMEOUT);
+      // a large message takes longer to upload, send and file in Sent
+      var timer = setTimeout(function () { ctl.abort(); }, (op === "send" || op === "draft") ? SEND_TIMEOUT : CALL_TIMEOUT);
       return fetch(url + "/v1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1733,19 +1745,137 @@
     list.forEach(function (a) {
       var b = el("button", "att");
       b.type = "button";
-      b.title = t("att.save", { name: a.name });
+      b.title = t("att.open", { name: a.name });
       b.setAttribute("aria-label", b.title);
       var ic = el("span", "att-ic");
-      ic.innerHTML = UI.down;
+      ic.innerHTML = previewKind(a) ? UI.eye : UI.down;
       b.appendChild(ic);
       var tx = el("span", "att-tx");
       tx.appendChild(el("span", "att-name", a.name));
       tx.appendChild(el("span", "att-size", fmtSize(a.size)));
       b.appendChild(tx);
-      b.addEventListener("click", function () { saveAttachment(a); });
+      b.addEventListener("click", function () { attDialog(a); });
       row.appendChild(b);
     });
     box.appendChild(row);
+  }
+
+  // the message's files (not its inline pictures) for the composer
+  function fileAtts(p) {
+    return (p.attachments || []).filter(function (a) { return !(a.inline && a.cid && /^image\//.test(a.type)) && typeof a.data === "string"; })
+      .map(function (a) { return { name: a.name, type: a.type, bin: a.data }; });
+  }
+  function blobBin(blob) {
+    return blob.arrayBuffer().then(function (buf) {
+      var u8 = new Uint8Array(buf), out = "";
+      for (var i = 0; i < u8.length; i += 0x8000) out += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+      return out;
+    });
+  }
+  function binBlob(bin, type) {
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i) & 0xff;
+    return new Blob([bytes], { type: type || "application/octet-stream" });
+  }
+  function localPickFiles() {
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.multiple = true;
+      inp.style.display = "none";
+      inp.addEventListener("change", function () {
+        var list = inp.files ? Array.prototype.slice.call(inp.files) : [];
+        inp.remove();
+        resolve(list);
+      });
+      inp.addEventListener("cancel", function () { inp.remove(); resolve(null); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  // orOS Files (the shell's disk), when this runs inside orOS
+  function filesApi() {
+    try {
+      var fs = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return fs && typeof fs.ls === "function" && typeof fs.readBlob === "function" && typeof fs.writeBlob === "function" ? fs : null;
+    } catch (e) { return null; }
+  }
+  // A small browser of the Files disk; done(blob with .name) on a pick.
+  function filesPicker(done) {
+    var fs = filesApi();
+    if (!fs) return;
+    var dlg = makeDialog("ml-files");
+    dlg.appendChild(el("div", "dlg-title", t("files.title")));
+    var bar = el("div", "fl-bar");
+    var up = el("button", "org-btn");
+    up.type = "button";
+    up.innerHTML = UI.back;
+    up.title = t("files.up");
+    up.setAttribute("aria-label", t("files.up"));
+    var where = el("span", "fl-path", "");
+    bar.appendChild(up);
+    bar.appendChild(where);
+    dlg.appendChild(bar);
+    var list = el("ul", "set-accts fl-list");
+    dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    var ROOT = "/internal", cwd = ROOT, gen = 0;
+    up.addEventListener("click", function () { if (cwd !== ROOT) go(cwd.replace(/\/[^\/]+$/, "") || ROOT); });
+    function go(path) {
+      cwd = path;
+      var my = ++gen;
+      up.disabled = path === ROOT;
+      where.textContent = path === ROOT ? "/" : path.slice(ROOT.length);
+      list.innerHTML = "";
+      list.appendChild(el("li", "fl-note", t("list.loading")));
+      Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null).then(function () { return fs.ls(path); }).then(function (entries) {
+        if (my !== gen) return;
+        list.innerHTML = "";
+        var items = (entries || []).filter(function (en) { return en && typeof en.name === "string"; });
+        items.sort(function (a, b) { return (b.dir ? 1 : 0) - (a.dir ? 1 : 0) || cmpStr(a.name.toLowerCase(), b.name.toLowerCase()); });
+        if (!items.length) list.appendChild(el("li", "fl-note", t("files.empty")));
+        items.forEach(function (en) {
+          var li = el("li");
+          var b = el("button", "folder");
+          b.type = "button";
+          b.innerHTML = en.dir ? UI.folder : UI.clip;
+          b.appendChild(el("span", "folder-name", en.name));
+          if (!en.dir && en.size >= 0) b.appendChild(el("span", "att-size", fmtSize(en.size)));
+          b.addEventListener("click", function () {
+            var p = path + "/" + en.name;
+            if (en.dir) { go(p); return; }
+            fs.readBlob(p).then(function (blob) {
+              dlg.close();
+              var f = blob.slice(0, blob.size, blob.type || mimeOf(en.name));
+              f.name = en.name;
+              done(f);
+            }, function () { showToast(t("files.err")); });
+          });
+          li.appendChild(b);
+          list.appendChild(li);
+        });
+      }, function () {
+        if (my !== gen) return;
+        list.innerHTML = "";
+        list.appendChild(el("li", "fl-note", t("files.err")));
+      });
+    }
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    go(ROOT);
+  }
+  var EXT_TYPES = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
+    webp: "image/webp", txt: "text/plain", csv: "text/csv", zip: "application/zip", json: "application/json",
+    doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    odt: "application/vnd.oasis.opendocument.text", ods: "application/vnd.oasis.opendocument.spreadsheet",
+    mp3: "audio/mpeg", mp4: "video/mp4", ics: "text/calendar", vcf: "text/vcard", html: "text/html", svg: "image/svg+xml" };
+  function mimeOf(name) {
+    var ext = (/\.([a-z0-9]{1,5})$/i.exec(name || "") || ["", ""])[1].toLowerCase();
+    return EXT_TYPES[ext] || "application/octet-stream";
   }
 
   function dialogHost() {
@@ -1775,6 +1905,112 @@
     link.click();
     link.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
+  }
+
+  // ---------- attachment: preview, save, save to Files ----------
+  // Pictures show as data: images (raster only, never SVG); PDFs are
+  // drawn page by page by PDF.js (vendor/pdfjs, loaded on first use,
+  // eval and XFA off: the file's scripts, forms and links never run).
+  var PDF_LIB = "../vendor/pdfjs/pdf.min.js", PDF_WORKER = "../vendor/pdfjs/pdf.worker.min.js", PDF_PAGES = 20;
+  function previewKind(a) {
+    var type = String(a.type || "").toLowerCase();
+    if (/^image\/(png|jpe?g|gif|webp|bmp)$/.test(type) && a.data.length <= 5 * 1024 * 1024) return "image";
+    if ((type === "application/pdf" || /\.pdf$/i.test(a.name || "")) && a.data.length <= 20 * 1024 * 1024) return "pdf";
+    return "";
+  }
+  var pdfLib = null;
+  function loadPdf() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfLib) return pdfLib;
+    pdfLib = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.type = "module";
+      sc.src = PDF_LIB;
+      sc.onload = function () { if (window.pdfjsLib) res(window.pdfjsLib); else rej(new Error("pdfjs")); };
+      sc.onerror = function () { rej(new Error("pdfjs")); };
+      document.head.appendChild(sc);
+    });
+    pdfLib.catch(function () { pdfLib = null; });
+    return pdfLib;
+  }
+  function renderPdf(a, box) {
+    var note = el("p", "hint pad", t("read.loading"));
+    box.appendChild(note);
+    var bytes = new Uint8Array(a.data.length);
+    for (var i = 0; i < a.data.length; i++) bytes[i] = a.data.charCodeAt(i) & 0xff;
+    loadPdf().then(function (lib) {
+      lib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false, disableAutoFetch: true,
+                               disableStream: true }).promise;
+    }).then(function (pdf) {
+      note.remove();
+      var n = Math.min(pdf.numPages, PDF_PAGES), chain = Promise.resolve();
+      var width = Math.max(240, Math.min(900, box.clientWidth || 600));
+      for (var k = 1; k <= n; k++) (function (k) {
+        chain = chain.then(function () { return pdf.getPage(k); }).then(function (page) {
+          if (!box.isConnected) return null;
+          var v1 = page.getViewport({ scale: 1 });
+          var dpr = Math.min(2, window.devicePixelRatio || 1);
+          var vp = page.getViewport({ scale: width / v1.width * dpr });
+          var c = document.createElement("canvas");
+          c.width = Math.round(vp.width);
+          c.height = Math.round(vp.height);
+          c.className = "att-page";
+          c.setAttribute("aria-label", t("att.page", { n: k, of: pdf.numPages }));
+          box.appendChild(c);
+          return page.render({ canvasContext: c.getContext("2d"), viewport: vp, background: "#ffffff" }).promise;
+        });
+      })(k);
+      return chain.then(function () {
+        if (pdf.numPages > n) box.appendChild(el("p", "hint pad", t("att.more", { n: pdf.numPages - n })));
+      });
+    }).catch(function () {
+      note.textContent = t("att.noPreview");
+    });
+  }
+  function attDialog(a) {
+    var dlg = makeDialog("ml-att");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title att-dtitle", a.name));
+    dlg.appendChild(el("p", "dlg-hint", (a.type || "") + " · " + fmtSize(a.size)));
+    var kind = previewKind(a);
+    var box = el("div", "att-view");
+    if (kind === "image") {
+      var img = el("img");
+      img.alt = a.name;
+      img.src = dataUrl(a);
+      box.appendChild(img);
+    }
+    if (kind) dlg.appendChild(box);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+    if (filesApi()) acts.appendChild(button(t("att.toFiles"), "", function () { saveToFiles(a); }));
+    acts.appendChild(button(t("att.download"), "primary", function () { saveAttachment(a); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    if (kind === "pdf") renderPdf(a, box);
+  }
+  // into Files › Mail, never over another file: "name (2).pdf"
+  function saveToFiles(a) {
+    var fs = filesApi();
+    if (!fs) return;
+    var dir = "/internal/Mail";
+    var name = String(a.name || "attachment").replace(/[\/\\\x00-\x1f]+/g, "_").slice(0, 200) || "attachment";
+    Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null).then(function () {
+      return Promise.resolve(fs.mkdir(dir)).catch(function () {});
+    }).then(function () {
+      return fs.ls(dir).catch(function () { return []; });
+    }).then(function (entries) {
+      var taken = {};
+      (entries || []).forEach(function (en) { if (en && en.name) taken[en.name.toLowerCase()] = 1; });
+      var dot = name.lastIndexOf("."), stem = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+      var pick = name;
+      for (var i = 2; taken[pick.toLowerCase()] && i < 1000; i++) pick = stem + " (" + i + ")" + ext;
+      return fs.writeBlob(dir + "/" + pick, binBlob(a.data, a.type)).then(function () { return pick; });
+    }).then(function (pick) {
+      showToast(t("att.savedFiles", { name: pick }));
+    }, function () { showToast(t("files.err")); });
   }
 
   // Invitations (.ics): one card per event; Calendar gets a PREFILL
@@ -2213,7 +2449,7 @@
     var rich = d.html ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
                         subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
-                        inReplyTo: d.inReplyTo, references: d.references });
+                        attachments: d.atts || [], inReplyTo: d.inReplyTo, references: d.references });
     if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
     var sent = sentFolder(acct);
     var args = { smtp: true, from: acct.email, rcpt: msg.rcpt, raw: C.b64(msg.bin) };
@@ -2253,7 +2489,7 @@
     var rich = d.html ? RT.clean(d.html, { cid: true }) : null;
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc, keepBcc: true,
                         subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
-                        inReplyTo: d.inReplyTo, references: d.references });
+                        attachments: d.atts || [], inReplyTo: d.inReplyTo, references: d.references });
     if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
     return draftsFolder(acct).then(function (folder) {
       var same = ref && ref.acct === acct.id && ref.folder === folder && ref.uid > 0;
@@ -2284,7 +2520,7 @@
     openCompose({ acct: acct.id, to: m.to, cc: m.cc, bcc: bcc, subject: m.subj,
                   text: p.html === null ? String(p.text || "") : "", html: html,
                   inReplyTo: ((h["in-reply-to"] || [])[0] || "").trim(), references: (h.references || []).join(" "),
-                  noSig: true, draft: { acct: acct.id, folder: cur.folder, uid: openMsg.uid } });
+                  attachments: fileAtts(p), noSig: true, draft: { acct: acct.id, folder: cur.folder, uid: openMsg.uid } });
   }
 
   function sendErrText(e) {
@@ -2351,7 +2587,7 @@
         dlg.close();
         openCompose({ acct: r.draft.acct, to: r.draft.to, cc: r.draft.cc, bcc: r.draft.bcc,
                       subject: r.draft.subject, text: r.draft.text, html: r.draft.html || "", inReplyTo: r.draft.inReplyTo,
-                      references: r.draft.references, outId: r.id, noSig: true });
+                      references: r.draft.references, attachments: r.draft.atts || [], outId: r.id, noSig: true });
       }));
       acts.appendChild(button(t("out.del"), "small danger", function () { dropOut(r.id); outboxDialog(); }));
       li.appendChild(acts);
@@ -2409,7 +2645,8 @@
       fmtDate: fmtFullDate
     });
     openCompose({ acct: acct.id, to: d.to, cc: d.cc, subject: d.subject, quote: d.text,
-                  inReplyTo: d.inReplyTo, references: d.references });
+                  inReplyTo: d.inReplyTo, references: d.references,
+                  attachments: mode === "forward" ? fileAtts(p) : [] });
   }
 
   // init: { acct?, to[], cc[], bcc[], subject, text (above the
@@ -2465,6 +2702,79 @@
     bLab.addEventListener("click", function () { fBody.focus(); });
     form.appendChild(bLab);
     form.appendChild(ed.box);
+    // attached files: { name, type, bin, size }
+    var files = (init.attachments || []).filter(function (a) { return a && typeof a.bin === "string"; }).map(function (a) {
+      return { name: String(a.name || "attachment"), type: a.type || "application/octet-stream", bin: a.bin, size: a.bin.length };
+    });
+    var attRow = el("div", "cmp-attbar");
+    var attB = el("button", "link-btn cmp-attach");
+    attB.type = "button";
+    attB.innerHTML = UI.clip;
+    attB.appendChild(el("span", "", t("cmp.attach")));
+    attB.addEventListener("click", function () { pickDevice(); });
+    attRow.appendChild(attB);
+    if (filesApi()) {
+      var attF = el("button", "link-btn cmp-attach", t("cmp.fromFiles"));
+      attF.type = "button";
+      attF.addEventListener("click", function () { filesPicker(function (f) { addFiles([f]); }); });
+      attRow.appendChild(attF);
+    }
+    form.appendChild(attRow);
+    var chips = el("ul", "cmp-atts");
+    form.appendChild(chips);
+    function filesTotal() { return files.reduce(function (n, f) { return n + f.size; }, 0); }
+    function renderChips() {
+      chips.innerHTML = "";
+      chips.hidden = !files.length;
+      files.forEach(function (f, i) {
+        var li = el("li", "cmp-att");
+        var ic = el("span", "att-ic");
+        ic.innerHTML = UI.clip;
+        li.appendChild(ic);
+        li.appendChild(el("span", "att-name", f.name));
+        li.appendChild(el("span", "att-size", fmtSize(f.size)));
+        var x = el("button", "org-btn");
+        x.type = "button";
+        x.innerHTML = UI.close;
+        x.title = t("cmp.unattach", { name: f.name });
+        x.setAttribute("aria-label", x.title);
+        x.addEventListener("click", function () { files.splice(i, 1); dirty = true; renderChips(); });
+        li.appendChild(x);
+        chips.appendChild(li);
+      });
+      if (files.length > 1) chips.appendChild(el("li", "cmp-att-sum", t("cmp.attTotal", { size: fmtSize(filesTotal()), max: fmtSize(ATT_MAX) })));
+    }
+    // list: File / Blob objects (with .name)
+    function addFiles(list) {
+      errP.textContent = "";
+      var all = Array.prototype.slice.call(list || []).filter(Boolean);
+      var size = all.reduce(function (n, f) { return n + (f.size || 0); }, filesTotal());
+      if (size > ATT_MAX) { errP.textContent = t("cmp.attBig", { max: fmtSize(ATT_MAX) }); return; }
+      Promise.all(all.map(function (f) {
+        return blobBin(f).then(function (bin) {
+          return { name: String(f.name || "attachment").slice(0, 200), type: f.type || "application/octet-stream", bin: bin, size: bin.length };
+        });
+      })).then(function (got) {
+        if (filesTotal() + got.reduce(function (n, f) { return n + f.size; }, 0) > ATT_MAX) { errP.textContent = t("cmp.attBig", { max: fmtSize(ATT_MAX) }); return; }
+        files = files.concat(got);
+        dirty = true;
+        renderChips();
+      }, function () { errP.textContent = t("cmp.attFail"); });
+    }
+    function pickDevice() {
+      var host = dialogHost();
+      var pick = host && typeof host.openFiles === "function" ? host.openFiles("") : localPickFiles();
+      pick.then(function (list) { if (list && list.length) addFiles(list); });
+    }
+    renderChips();
+    dlg.addEventListener("dragover", function (e) {
+      if (e.dataTransfer && [].indexOf.call(e.dataTransfer.types || [], "Files") >= 0) e.preventDefault();
+    });
+    dlg.addEventListener("drop", function (e) {
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      addFiles(e.dataTransfer.files);
+    });
     form.appendChild(el("p", "dlg-hint dim", t("cmp.hint")));
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
@@ -2516,11 +2826,13 @@
       var count = to.list.length + cc.list.length + bcc.list.length;
       if (needRcpt && !count) { errP.textContent = t("cmp.noRcpt"); fTo.focus(); return null; }
       if (count > MAX_RCPT) { errP.textContent = t("cmp.many", { n: MAX_RCPT }); return null; }
+      if (filesTotal() > ATT_MAX) { errP.textContent = t("cmp.attBig", { max: fmtSize(ATT_MAX) }); return null; }
       var body = ed.get(false);
       return { acct: a.id, to: to.list, cc: cc.list, bcc: bcc.list,
                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: body.text.slice(0, 200000),
                html: body.rich ? body.html : "",
-               inReplyTo: init.inReplyTo || "", references: init.references || "" };
+               inReplyTo: init.inReplyTo || "", references: init.references || "",
+               atts: files.map(function (f) { return { name: f.name, type: f.type, bin: f.bin }; }) };
     }
     // Save draft; close: also close the composer once saved
     function saveNow(close) {
