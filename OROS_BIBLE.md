@@ -4537,3 +4537,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New mail/trust.js (device-only): "Verified sender" badge from the receiving server's Authentication-Results (forged passes ignored), "Careful" box on failures or display-name tricks, "Links that may mislead" list (text/host mismatch, look-alikes, punycode, bare IPs, user@host). Precached.
 - Device rules (filters, new pure mail/rules.js, synced as data.rules in the mail slice): sender/recipient/subject contains words → move, mark read or star; applied by the shell new-mail checker before notices; "Create a rule…" under a message. Precached.
 - Tests: tests/mail-trust.test.js and relay tests (with and without MOVE/UIDPLUS); Playwright E2E at 360px with mocked relay. Not tested: a real Papaki server.
+
+### 2026-10-11 — Label Maker / Ετικετογράφος (#164) — 0.70.00
+- New app Label Maker (labels/, Creativity, soffitta port 13/17): type a word and it is pressed into embossed plastic tape; keyboard or letter wheel; 7 tape colours, 9/12 mm, straight or round ends, margin; click sound (off at first); synced saved labels (slice "labels", LWW + tombstones, max 300) with duplicate and Undo; device-local Recent (10); PNG with transparent background, copy image, A4 print sheet at real size.
+- Storage: new "Make a label" tag button on space/room/furniture/position cards opens the Label Maker with the name (__orosOpenAt("labels",{text})).
+- Tests: tests/labels.test.js. No credits entry needed (no third-party code or data).
