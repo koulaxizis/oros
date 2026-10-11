@@ -1,7 +1,7 @@
 // ============================================================
 // orOS Wallpaper Generator — App logic (v1.0.0)
-// Generative wallpapers from a seed: five styles (waves, flow
-// field, orbits, grid, nebula), seven palettes (one follows the
+// Generative wallpapers from a seed: six styles (waves, flow
+// field, orbits, grid, nebula, tree), seven palettes (one follows the
 // skin), density / chaos / grain / light background, any size up
 // to 8192 px. The drawing itself lives in art.js, shared with the
 // shell, which paints the "Mine" desktop wallpaper from the same
@@ -12,6 +12,8 @@
 //     (parent.orosWallpaper); the recipe syncs in the shell slice,
 //     every device draws it at its own screen size
 //   - favourites: synced, LWW + tombstones, delete with Undo
+//   - the Tree style draws a Tree Sketcher tree; "Shape the tree"
+//     opens it there (__orosOpenAt("trees", { wall: recipe }))
 // Data:
 //   - synced slice "wallpaper" (oros-wallpaper-data): favourites
 //     (R5, R17, R26)
@@ -60,7 +62,9 @@
       "sec.style": "Style", "sec.pal": "Palette", "sec.tune": "Settings",
       "sec.size": "Size", "sec.favs": "Favourites",
       "st.waves": "Waves", "st.flow": "Flow field", "st.orbits": "Orbits",
-      "st.grid": "Grid", "st.nebula": "Nebula",
+      "st.grid": "Grid", "st.nebula": "Nebula", "st.tree": "Tree",
+      "tree.hint": "Density sets the leaves and Chaos the randomness. The kind of tree, the season and the branches come from Tree Sketcher.",
+      "tree.btn": "Shape the tree in Tree Sketcher",
       "pal.oros": "orOS skin", "pal.ember": "Ember", "pal.ocean": "Ocean", "pal.forest": "Forest",
       "pal.dusk": "Dusk", "pal.pastel": "Pastel", "pal.mono": "Mono",
       "f.dens": "Density", "f.chaos": "Chaos", "f.grain": "Film grain",
@@ -91,7 +95,9 @@
       "sec.style": "Στυλ", "sec.pal": "Παλέτα", "sec.tune": "Ρυθμίσεις",
       "sec.size": "Μέγεθος", "sec.favs": "Αγαπημένα",
       "st.waves": "Κύματα", "st.flow": "Ροή", "st.orbits": "Τροχιές",
-      "st.grid": "Πλέγμα", "st.nebula": "Νεφέλωμα",
+      "st.grid": "Πλέγμα", "st.nebula": "Νεφέλωμα", "st.tree": "Δέντρο",
+      "tree.hint": "Η Πυκνότητα ορίζει τα φύλλα και το Χάος την τυχαιότητα. Το είδος, η εποχή και τα κλαδιά έρχονται από τον Σκιτσογράφο δέντρων.",
+      "tree.btn": "Σχήμα δέντρου στον Σκιτσογράφο",
       "pal.oros": "Skin του orOS", "pal.ember": "Θράκα", "pal.ocean": "Ωκεανός", "pal.forest": "Δάσος",
       "pal.dusk": "Σούρουπο", "pal.pastel": "Παστέλ", "pal.mono": "Μονόχρωμο",
       "f.dens": "Πυκνότητα", "f.chaos": "Χάος", "f.grain": "Κόκκος φιλμ",
@@ -479,6 +485,8 @@
     $("light").checked = !!r.light;
     $("light").disabled = r.style === "nebula";
     $("light-hint").hidden = r.style !== "nebula";
+    $("tree-hint").hidden = r.style !== "tree";
+    $("tree-btn").hidden = r.style !== "tree" || !openAtHost();
     $("size").value = prefs.size;
     $("custom-row").hidden = prefs.size !== "custom";
     if (document.activeElement !== $("cw")) $("cw").value = prefs.cw;
@@ -712,6 +720,18 @@
     renderSetButton();
   }
 
+  // The Tree style: shape the tree in the Tree Sketcher.
+  function openAtHost() {
+    try {
+      var p = window.parent;
+      return (p && p !== window && typeof p.__orosOpenAt === "function") ? p : null;
+    } catch (e) { return null; }
+  }
+  function shapeTree() {
+    var p = openAtHost();
+    if (p) p.__orosOpenAt("trees", { wall: recipe() });
+  }
+
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -920,6 +940,7 @@
     $("roll-btn").addEventListener("click", rollSeed);
     $("fav-btn").addEventListener("click", toggleFav);
     $("set-btn").addEventListener("click", setWallpaper);
+    $("tree-btn").addEventListener("click", shapeTree);
     $("export-btn").addEventListener("click", exportDialog);
     $("panel").addEventListener("submit", function (e) { e.preventDefault(); });
 
