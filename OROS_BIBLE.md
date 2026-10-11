@@ -4553,3 +4553,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Formatted writing: bar for bold, italic, underline, lists, link, colour, Clear (Ctrl+B/I/U/K); formatted mail goes as multipart/alternative, plain stays text only; replies quote as blockquote; paste/drop insert text only.
 - HTML signatures (`accounts[].sigHtml`, ≤ 60 KB, synced next to text `sig`) with a small picture (≤ 300×150) sent inline (cid, multipart/related).
 - New `mail/rich.js`: editor + allowlist `clean()` (inert DOMParser, escapes all text/attributes, builds the text copy). Precached. Tests 1347; Playwright E2E at 360px. Not tested: real Papaki/Gmail rendering of the sent HTML.
+
+### 2026-10-11 — Ringtone Composer / Συνθέτης ήχων κλήσης (#166) — 0.72.00
+- New app Ringtone Composer (ringtones/, Sound, soffitta port 14/17): write a melody note by note with an old-phone keypad (1-7 notes, 0 rest, 8/9 length, * octave, # sharp) or a piano, letters C-B on the keyboard; staff + RTTTL-style token view, tap to select and edit, undo/redo; tempo, three sounds (phone beep, soft, bell), loop.
+- Synced melodies (slice "ringtones", LWW + tombstones, max 200, 255 notes each) with duplicate and Undo; 7 ready public-domain tunes; WAV download, RTTTL download/copy/import.
+- Tests: tests/ringtones.test.js. No credits entry (tunes written out by hand from public-domain melodies). No deep link, no bridges.
