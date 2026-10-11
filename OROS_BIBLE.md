@@ -4583,3 +4583,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New `mail/outbox.js`: each Outbox record is claimed in one IndexedDB transaction before sending (once even with two tabs; stale claims expire after 10 min). Precached.
 - Templates synced in the mail slice (`templates[]`, LWW by m, shared tombs, ≤ 30, html ≤ 8000 chars). Block sender adds a device rule → Junk and moves the message.
 - Tests 1368 (tests/mail-outbox.test.js, templates merge); Playwright E2E at 360/1200 px. Not tested: a real Papaki server; scheduled sends in a throttled background tab may go at the next check.
+
+### 2026-10-11 — Mail: integrations with Contacts, To-Do, Notes, Bookmarks, Calendar, Assistant (#171) — 0.77.00
+- To/Cc/Bcc suggest people from Contacts while typing (new pure `mail/people.js`, reads `oros-contacts-data` read-only, accent/case-insensitive). Precached.
+- "Other apps" under a message: To-Do task, Notes page, bookmark from a link, sender to Contacts, Assistant summary and reply draft (existing `__orosOpenAt` deep links, prefill only; Assistant ask capped at 2000 chars).
+- Contacts: new receiver `__orosOpenAt("contacts", {add:{email, name?}})` (opens the existing card or a prefilled new-contact dialog saved only on Save; takes `__orosTakeTarget("contacts")` at boot); card emails open Mail compose when Mail has an account. Calendar: saved events get an "Email" button → Mail compose (To = addresses in the event, subject = title, body = date/time/place/note).
+- Tests 1371 (tests/mail-people.test.js); E2E in the shell (Greek, 360/1200 px). Not tested: a real mail server.
