@@ -190,3 +190,64 @@ test("merge fuzz: symmetric, idempotent, associative, canonical, no input mutate
     assert.equal(ab.items.length, all.items.length);
   }
 });
+
+// ---------- Menu apps (launcher 1.3.0, slice "menu") ----------
+
+test("menu: normalize drops junk, sorts by id, keeps the newer duplicate", () => {
+  assert.deepEqual(L.menuNormalize(null), { ver: 1, apps: [] });
+  assert.deepEqual(L.menuNormalize({ apps: 7 }), { ver: 1, apps: [] });
+  const n = L.menuNormalize({ apps: [
+    { id: "notes", hidden: true, mtime: 5, x: 1 },
+    { id: "<b>", hidden: true, mtime: 1 },
+    { id: "calendar", hidden: "yes", mtime: -1 },
+    { id: "notes", hidden: false, mtime: 9 },
+    null,
+  ] });
+  assert.equal(J(n), J({ ver: 1, apps: [
+    { id: "calendar", hidden: false, mtime: 0 },
+    { id: "notes", hidden: false, mtime: 9 },
+  ] }));
+  assert.equal(L.MENU_KEY, "oros-menu-apps");
+});
+
+test("menu: hide and show only stamp real changes, never mutate the input", () => {
+  let d = L.menuSetHidden(null, ["notes", "todo"], true, 100);
+  assert.deepEqual(L.menuHiddenIds(d), ["notes", "todo"]);
+  const before = J(d);
+  assert.equal(J(L.menuSetHidden(d, ["notes"], true, 999)), before, "hiding twice changes nothing");
+  assert.equal(J(L.menuSetHidden(d, ["<img>", 3, null], true, 999)), before, "bad ids ignored");
+  const shown = L.menuSetHidden(d, ["notes", "calendar"], false, 200);
+  assert.equal(J(d), before, "input untouched");
+  assert.deepEqual(L.menuHiddenIds(shown), ["todo"]);
+  const notes = shown.apps.find((a) => a.id === "notes");
+  assert.equal(notes.hidden, false);
+  assert.equal(notes.mtime, 200);
+  assert.ok(!shown.apps.find((a) => a.id === "calendar"), "showing a shown app writes nothing");
+  assert.equal(shown.apps.find((a) => a.id === "todo").mtime, 100, "untouched app keeps its stamp");
+  // A clock behind the stored stamp still moves forward.
+  const back = L.menuSetHidden(shown, "notes", true, 50);
+  assert.equal(back.apps.find((a) => a.id === "notes").mtime, 201);
+});
+
+test("menu: merge is symmetric, idempotent and per app (R5 / R26)", () => {
+  const base = L.menuSetHidden(null, ["notes", "todo", "chess"], true, 100);
+  const a = L.menuSetHidden(base, ["notes"], false, 200);            // device A shows Notes
+  const b = L.menuSetHidden(base, ["weather"], true, 210);           // device B hides Weather
+  const m1 = L.menuMerge(a, b), m2 = L.menuMerge(b, a);
+  assert.equal(J(m1), J(m2));
+  assert.equal(J(L.menuMerge(m1, m1)), J(m1));
+  assert.deepEqual(L.menuHiddenIds(m1), ["chess", "todo", "weather"]);
+  // Same mtime, different values: hidden wins on both sides.
+  const x = { apps: [{ id: "notes", hidden: false, mtime: 5 }] };
+  const y = { apps: [{ id: "notes", hidden: true, mtime: 5 }] };
+  assert.equal(J(L.menuMerge(x, y)), J(L.menuMerge(y, x)));
+  assert.deepEqual(L.menuHiddenIds(L.menuMerge(x, y)), ["notes"]);
+  // Fuzz: any order of merges converges.
+  const ids = ["a", "b", "c", "d"];
+  for (let r = 0; r < 200; r++) {
+    const sides = [0, 1, 2].map(() => ({ apps: ids.map((id) => ({ id, hidden: Math.random() < 0.5, mtime: Math.floor(Math.random() * 4) })) }));
+    const p = L.menuMerge(L.menuMerge(sides[0], sides[1]), sides[2]);
+    const q = L.menuMerge(sides[2], L.menuMerge(sides[1], sides[0]));
+    assert.equal(J(p), J(q));
+  }
+});

@@ -1,8 +1,8 @@
 // ============================================================
 // orOS Settings — App logic (v1.0.0)
 // One place for the system settings that used to sit under the
-// app list in the menu: appearance, notifications, sync, backups,
-// language and search, system.
+// app list in the menu: appearance, menu apps, notifications, sync,
+// backups, language and search, system.
 //   - owns NO data: every value is read from the shell
 //     (window.parent.orosSettings.get) and every change goes back
 //     through it (set / act), so the shell stamps, saves and syncs
@@ -21,6 +21,7 @@
 //   2. Shell access
 //   3. Widgets
 //   4. Section: Appearance
+//   4b. Section: Menu (which apps the menu lists)
 //   5. Section: Notifications
 //   6. Section: Sync
 //   7. Section: Backups
@@ -72,6 +73,7 @@
     backup: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>',
     language: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
     eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
@@ -320,6 +322,68 @@
         { scope: "pet", hint: t("a.pet.hint") }));
       host.appendChild(c4);
     }
+  }
+
+  // ---------- 4b. Section: Menu (which apps the menu lists) ----------
+  var menuFilter = "";       // memory only: the list's find field
+
+  function secMenu(host, s) {
+    var c = card(t("m.apps"), "menu");
+    if (!s.menu) {
+      c.appendChild(el("p", "hint", t("m.none")));
+      host.appendChild(c);
+      return;
+    }
+    var total = s.menu.length;
+    var shownN = s.menu.filter(function (a) { return a.shown; }).length;
+    c.appendChild(el("p", "hint", t("m.hint")));
+    var showAll = button(t("m.showAll"), "m.showAll", function () { act("menu.showAll"); });
+    var hideAll = button(t("m.hideAll"), "m.hideAll", function () { act("menu.hideAll"); });
+    showAll.disabled = shownN === total;
+    hideAll.disabled = shownN === 0;
+    c.appendChild(actions(showAll, hideAll));
+    c.appendChild(el("p", "m-count", t("m.count", { n: shownN, total: total })));
+
+    var find = el("input", "m-find");
+    find.type = "text";
+    find.id = "f-menu-find";
+    find.autocomplete = "off";
+    find.spellcheck = false;
+    find.placeholder = t("m.filter");
+    find.setAttribute("aria-label", t("m.filter"));
+    find.setAttribute("data-k", "menu-find");
+    find.value = menuFilter;
+    find.addEventListener("input", function () { menuFilter = find.value; render(); });
+    find.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && find.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        menuFilter = "";
+        render();
+      }
+    });
+    c.appendChild(find);
+
+    var groups = C.menuGroups(s.menu, menuFilter, LANG);
+    if (!groups.length) c.appendChild(el("p", "hint", t("m.filter.none")));
+    groups.forEach(function (g) {
+      c.appendChild(el("h4", "m-cat", g.name));
+      var list = el("div", "checks");
+      g.apps.forEach(function (a) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = !!a.shown;
+        cb.setAttribute("data-k", "menu:" + a.id);
+        cb.addEventListener("change", function () { set("menu:" + a.id, cb.checked); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, a.name));
+        lab.title = a.name;
+        list.appendChild(lab);
+      });
+      c.appendChild(list);
+    });
+    host.appendChild(c);
   }
 
   // ---------- 5. Section: Notifications ----------
@@ -682,7 +746,7 @@
   }
 
   var SECTION_FN = {
-    appearance: secAppearance, notifications: secNotifications, sync: secSync,
+    appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync,
     backup: secBackup, language: secLanguage, system: secSystem
   };
 

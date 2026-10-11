@@ -315,6 +315,26 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 .check span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .check input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--accent); }
 
+/* Menu apps: count, find field, one heading per category */
+.m-count { color: var(--text-dim); font-size: 13px; margin: 2px 0 8px; font-variant-numeric: tabular-nums; }
+.m-find {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  margin-bottom: 4px;
+}
+.m-find:focus { border-color: var(--accent); }
+.m-cat {
+  margin: 12px 0 2px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+}
+
 /* ---------- 6. Appearance: swatches + wallpapers ---------- */
 .swatches {
   display: grid;

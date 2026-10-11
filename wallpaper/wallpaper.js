@@ -704,7 +704,7 @@
     if (!api) return;
     var cur = null;
     try { cur = api.get(); } catch (e) {}
-    var isSet = !!(cur && cur.active && cur.recipe &&
+    var isSet = !!(cur && cur.active && !cur.picture && cur.recipe &&
                    JSON.stringify(cur.recipe) === JSON.stringify(recipe()));
     b.classList.toggle("on", isSet);
     b.innerHTML = UI_ICONS.wall + "<span>" + t(isSet ? "btn.isSet" : "btn.set") + "</span>";
