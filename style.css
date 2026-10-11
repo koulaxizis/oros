@@ -1365,7 +1365,8 @@ body {
 .sc-cred { color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
 
 /* ===== v0.18.0: weather chip (taskbar) ===== */
-#rx-tray-chip {
+#rx-tray-chip,
+#mx-tray-chip {
   display: inline-flex;
   align-items: center;
   min-height: 44px;             /* same touch target as #wx-chip / #sync-dot-btn */
@@ -1384,6 +1385,8 @@ body {
 #rx-tray-chip[data-state="false"] {
   color: var(--text-dim);
 }
+#mx-tray-chip[data-state="off"] { color: var(--text-dim); }
+#mx-tray-chip[data-state="on"] { color: var(--accent); }
 
 #rx-tray-chip[data-state="true"] .rx-tray-eq {
   color: var(--accent);
@@ -1537,7 +1540,8 @@ body {
 #oros-bar.bar-tight .bar-right { gap: 2px; }
 #oros-bar.bar-tight #btn-menu,
 #oros-bar.bar-tight #btn-lang { padding-left: 6px; padding-right: 6px; }
-#oros-bar.bar-tight #rx-tray-chip { padding: 0 6px; }
+#oros-bar.bar-tight #rx-tray-chip,
+#oros-bar.bar-tight #mx-tray-chip { padding: 0 6px; }
 #oros-bar.bar-tight #bar-time,
 #oros-bar.bar-tight #bar-date { padding-left: 4px; padding-right: 4px; }
 #oros-bar.bar-nolabel #btn-menu-label { display: none; }

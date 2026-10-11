@@ -131,3 +131,83 @@ test("mergeMixer survives junk", () => {
   const out = MX.mergeMixer({ mixes: [null, 5, { id: ID }], tombs: { "BAD ID": 3, [ID]: -1 } }, undefined);
   assert.deepEqual(out, { ver: 1, mixes: [], tombs: {} });
 });
+
+// ---------- Engine in the shell window (mixer/engine.js) ----------
+const ROOT = path.join(__dirname, "..");
+const eng = fs.readFileSync(path.join(ROOT, "mixer/engine.js"), "utf8");
+
+// Runs engine.js against a fake window with no audio: the host API
+// must still answer, and play() reports "noaudio" instead of throwing.
+function fakeHost() {
+  const w = { navigator: {}, setInterval, clearInterval, setTimeout, clearTimeout };
+  new Function("window", eng)(w);
+  return w;
+}
+
+test("engine and app list the same channels, and every channel has a sound", () => {
+  const w = fakeHost();
+  assert.deepEqual(w.__orosMixerHost.CHANNELS, MX.CHANNELS);
+  assert.equal(MX.CHANNELS.length, 13);
+  ["train", "keyboard", "clock"].forEach((id) => {
+    assert.ok(MX.CHANNELS.includes(id), id);
+    assert.match(eng, new RegExp("\\n    " + id + ": function \\(ctx, out, rnd"), "BUILD." + id);
+    assert.match(src, new RegExp('"ch\\.' + id + '": "[^"]+"[^]*"ch\\.' + id + '": "[^"]+"'), "strings " + id);
+  });
+  MX.CHANNELS.forEach((id) => assert.match(eng, new RegExp("\\n    " + id + ": function"), "BUILD." + id));
+});
+
+test("engine host: state, update, timer and stop without audio", () => {
+  const w = fakeHost();
+  const h = w.__orosMixerHost;
+  const events = [];
+  const unsub = h.subscribe((e) => events.push(e));
+  assert.equal(h.state().active, false);
+  assert.equal(h.play({ mix: MX.mixOf({}) }), "none");
+  assert.equal(h.play({ mix: MX.mixOf({ train: 60 }), vol: 40, timer: 30, label: "Night train" }), "noaudio");
+  const st = h.state();
+  assert.equal(st.playing, false);
+  assert.equal(st.vol, 40);
+  assert.equal(st.timer, 30);
+  assert.equal(st.label, "Night train");
+  assert.deepEqual(st.mix.ch.train, { o: 1, v: 60 });
+  h.update({ vol: 140, mute: 1 });
+  assert.equal(h.state().vol, 100);
+  assert.equal(h.state().mute, 1);
+  h.setTimer(17);                                   // not a timer choice
+  assert.equal(h.state().timer, 0);
+  h.stop();
+  assert.equal(h.state().active, false);
+  assert.ok(events.includes("change"));
+  unsub();
+  h.update({ vol: 10 });
+  assert.equal(events.filter((e) => e === "change").length, 3);
+  h.subscribe(() => { throw new Error("closed frame"); });
+  h.update({ vol: 20 });                            // a dead listener is dropped, not fatal
+  // A second load keeps the first engine (one per shell).
+  const first = w.__orosMixerHost;
+  new Function("window", eng)(w);
+  assert.equal(w.__orosMixerHost, first);
+});
+
+test("the app drives the shell engine and never makes its own sound", () => {
+  assert.doesNotMatch(src, /AudioContext/);
+  assert.match(src, /data-oros-mixer/);
+  assert.match(src, /"engine\.js"/);
+  assert.match(src, /eng\.setTimer\(/);
+  // Leaving the app only unsubscribes: the sound keeps playing.
+  const ph = src.slice(src.indexOf('"pagehide"'), src.indexOf('"pagehide"') + 200);
+  assert.match(ph, /unsub/);
+  assert.doesNotMatch(ph, /pause\(/);
+});
+
+test("shell: taskbar chip for the Mixer engine", () => {
+  const sh = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  assert.match(sh, /tickSafe\("mixerTrayTick", mixerTrayTick\)/);
+  const fn = sh.slice(sh.indexOf("function mixerTrayTick"), sh.indexOf("// Radio deep-link bridge"));
+  assert.match(fn, /window\.__orosMixerHost|mxHost\(\)/);
+  assert.match(fn, /!st\.active/);                  // stopped → no chip
+  assert.match(sh, /x\.setTimer\(m\)/);
+  assert.match(sh, /x\.update\(\{ vol: v, mute: 0 \}\)/);
+  assert.match(sh, /x\.stop\(\)/);
+  assert.match(fs.readFileSync(path.join(ROOT, "style.css"), "utf8"), /#mx-tray-chip/);
+});
