@@ -212,5 +212,6 @@ test("wiring: app, palette, sync, wallpaper, help", () => {
     assert.ok(h.indexOf("../trees/core.js") > 0 && h.indexOf("../trees/core.js") < h.indexOf("art.js"), f);
   }
   assert.ok(read("wallpaper/wallpaper.js").includes('__orosOpenAt("trees", { wall: recipe() })'));
+  assert.ok(read("wallpaper/index.html").includes('id="tree-btn"') && read("wallpaper/index.html").includes('id="tree-hint"'));
   for (const f of ["help.en.txt", "help.el.txt"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "trees", f)));
 });
