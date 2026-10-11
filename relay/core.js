@@ -18,7 +18,7 @@ import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
-  sendBytes: 512 * 1024,       // request JSON of a "send" (carries the message)
+  sendBytes: 14 * 1024 * 1024 + 64 * 1024,   // request JSON of a "send" / "draft" (carries the message, base64)
   fetchBytes: 20 * 1024 * 1024, // one message source
   perMinute: 60                 // requests per client IP (per isolate, best effort)
 };
@@ -229,7 +229,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     let appended = false, appendErr = "";
     if (b.sent) {
       try {
-        await withSession(connectFn, acct, (api) => api.append(b.sent, bin, ["\\Seen"]));
+        await withSession(connectFn, acct, (api) => api.append(b.sent, bin, ["\\Seen"]), { timeoutMs: 60000 });
         appended = true;
       } catch (e) { appendErr = String(e && e.message || "append failed").slice(0, 200); }
     }
@@ -253,7 +253,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
         case "draft": return api.saveDraft(b.folder, atob(b.raw), b.replace, b.mid);
       }
       return null;
-    });
+    }, b.op === "draft" ? { timeoutMs: 60000 } : undefined);   // a draft may carry files
     return json(200, { ok: true, data }, okOrigin);
   } catch (e) {
     const code = e instanceof ImapError ? e.code : "proto";

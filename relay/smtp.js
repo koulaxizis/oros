@@ -15,8 +15,8 @@ const CRLF = "\r\n";
 
 export const SMTP_LIMITS = {
   rcpts: 50,
-  messageBytes: 380 * 1024,   // decoded message (base64 in the request)
-  timeoutMs: 30000
+  messageBytes: 10 * 1024 * 1024,   // decoded message (base64 in the request), attachments included
+  timeoutMs: 60000
 };
 
 // An envelope address: plain ASCII or UTF-8 local part, no spaces,

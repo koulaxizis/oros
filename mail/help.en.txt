@@ -31,7 +31,7 @@ Pictures from the internet are hidden at first, so the sender can't tell you ope
 - The checks run on this device and send nothing anywhere. No badge doesn't mean a message is fake; many servers don't record the checks.
 
 ### Attachments and invitations
-Attachments are listed under the message; tap one to save it. An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
+Attachments are listed under the message. Tap one to open it: pictures and PDFs show a preview (PDFs up to 20 pages), and every file has `Save to device` and `Save to Files` (into the Mail folder of [Files](app:files)). An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
 
 ## Organise your mail
 - Under an open message, the buttons `Archive`, `Delete`, `Spam` (`Not spam` inside Spam), `Star`, `Mark as unread` and `Move to…` act on it. `Archive` uses the account's Archive folder and creates one if there is none.
@@ -57,6 +57,7 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 ## Write and reply
 - The pen button at the top (`New message`) opens a new message. Fill in `To` (several addresses separated by commas), press `Cc / Bcc` for copies, add a `Subject` and write in `Message`, then press `Send`.
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
+- `Attach files` adds files from this device (or drop them on the message), `From Files` from [Files](app:files); the × removes one. Files can be up to 7 MB together. `Forward` brings the message's files along.
 - With several accounts, `From` chooses which one sends.
 - A copy of what you send goes to the account's `Sent` folder.
 - `Discard` (or [[Esc]]) asks first when you have written something, and offers `Save draft`.
@@ -93,7 +94,7 @@ Your accounts (without passwords), your rules, the relay address and the senders
 - The relay you set here also lets [Reader](app:feeds) and [Podcasts](app:podcasts) read sites that block browsers.
 
 ## Limits
-- No attachments yet; forwarding sends the text only.
-- Drafts are not saved on the server; the Outbox stays on the device where it was written.
+- Attached files can be up to 7 MB together; previews show pictures and up to 20 pages of a PDF.
+- The Outbox stays on the device where it was written; use `Save draft` to continue on another device.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.

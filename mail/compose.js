@@ -1,7 +1,8 @@
 // ============================================================
 // orOS Mail — building outgoing messages (RFC 5322 + MIME)
 // Pure functions, no DOM: plain-text messages in UTF-8 (or text +
-// HTML as multipart/alternative, pictures inline as multipart/related),
+// HTML as multipart/alternative, pictures inline as multipart/related,
+// files as multipart/mixed),
 // header words encoded per RFC 2047, reply / forward helpers.
 // Exposed as window.orosMailCompose; module.exports in Node (tests).
 // ============================================================
@@ -140,8 +141,43 @@
     body += CRLF + "--" + bd + "--";
     return { head: "Content-Type: multipart/" + sub + "; boundary=\"" + bd + "\"" + (extra || "") + CRLF, body: body };
   }
+  // ---------- attachments ----------
+  var TYPE = /^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,63}\/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,63}$/;
+  function safeName(n) {
+    n = String(n || "").replace(/[\x00-\x1f\x7f"\\\/]+/g, "_").replace(/\s+/g, " ").trim().slice(0, 200);
+    return n || "attachment";
+  }
+  // filename: plain when ASCII, else RFC 2231 (UTF-8, percent-encoded,
+  // in pieces of ≤ 60 characters that never split a %XX)
+  function fileParam(name) {
+    if (/^[\x20-\x7e]*$/.test(name)) return "; filename=\"" + name + "\"";
+    var enc = encodeURIComponent(name).replace(/['()*!]/g, function (c) { return "%" + c.charCodeAt(0).toString(16).toUpperCase(); });
+    var parts = [], i = 0;
+    while (i < enc.length) {
+      var j = Math.min(enc.length, i + 60);
+      while (j < enc.length && (enc.charAt(j - 1) === "%" || enc.charAt(j - 2) === "%")) j--;
+      parts.push(enc.slice(i, j));
+      i = j;
+    }
+    return parts.map(function (p, k) { return ";" + CRLF + " filename*" + k + "*=" + (k ? "" : "utf-8''") + p; }).join("");
+  }
+  // name= on Content-Type for older readers: RFC 2047 words, folded
+  function nameParam(name) {
+    if (/^[\x20-\x7e]*$/.test(name)) return "; name=\"" + name + "\"";
+    return ";" + CRLF + " name=\"" + encodeWords(name).split(" ").join(CRLF + " ") + "\"";
+  }
+  // a: { name, type, bin }
+  function attPart(a) {
+    var type = TYPE.test(a.type || "") ? a.type.toLowerCase() : "application/octet-stream";
+    var name = safeName(a.name);
+    return { head: "Content-Type: " + type + nameParam(name) + CRLF + "Content-Transfer-Encoding: base64" + CRLF +
+                   "Content-Disposition: attachment" + fileParam(name) + CRLF,
+             body: wrap76(b64(a.bin)) };
+  }
+
   // o: { from{name,addr}, to[], cc[], bcc[], subject, text, html?,
-  //      inline?[{ cid, type, bin }], inReplyTo?, references?, date? }
+  //      inline?[{ cid, type, bin }], attachments?[{ name, type, bin }],
+  //      keepBcc?, inReplyTo?, references?, date? }
   //   → { bin, messageId, rcpt[] }
   // With html: multipart/alternative (text first, then HTML); inline
   // pictures (referenced as cid: in the HTML) make the HTML side a
@@ -164,6 +200,8 @@
       }
       part = multi("alternative", [part, html]);
     }
+    var atts = (Array.isArray(o.attachments) ? o.attachments : []).filter(function (a) { return a && typeof a.bin === "string"; });
+    if (atts.length) part = multi("mixed", [part].concat(atts.map(attPart)));
     var h = "";
     h += header("Date", rfcDate(date));
     h += header("From", fmtAddr(o.from));

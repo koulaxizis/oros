@@ -768,3 +768,24 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .fold-list { max-height: 55vh; overflow-y: auto; }
 .fold-list li { gap: 6px; padding: 6px 8px; }
 .fold-list .set-acct-name { white-space: normal; overflow-wrap: anywhere; font-weight: 600; }
+
+/* ---------- 19. Attachments: compose chips, preview ---------- */
+.cmp-attbar { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; }
+.cmp-attach { display: inline-flex; align-items: center; gap: 6px; }
+.cmp-atts { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.cmp-atts[hidden] { display: none; }
+.cmp-att { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 10px; border: 1px solid var(--border); border-radius: 8px; min-width: 0; }
+.cmp-att .att-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.cmp-att .att-size { flex-shrink: 0; font-size: 11px; color: var(--text-dim); }
+.cmp-att-sum { font-size: 11px; color: var(--text-dim); padding-left: 2px; }
+.att-dtitle { overflow-wrap: anywhere; text-transform: none; }
+.att-view { max-height: 65vh; overflow: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
+.att-view img { max-width: 100%; height: auto; }
+.att-page { width: 100%; height: auto; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
+.fl-bar { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.fl-path { font-size: 13px; color: var(--text-dim); overflow-wrap: anywhere; }
+.fl-list { max-height: 55vh; overflow-y: auto; }
+.fl-list li { padding: 0; border: none; }
+.fl-list .folder { gap: 8px; }
+.fl-list .folder-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-note { font-size: 13px; color: var(--text-dim); padding: 8px; }
