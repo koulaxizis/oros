@@ -746,3 +746,17 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .rte-area a { color: var(--accent); }
 .rte-area img { max-width: 100%; height: auto; vertical-align: middle; }
 .rte-area [data-sig] { color: var(--text-dim); }
+
+/* ---------- 16. Conversations (threads.js) ---------- */
+.row-count {
+  flex-shrink: 0; min-width: 20px; padding: 0 6px; border-radius: 10px;
+  font-size: 11px; line-height: 18px; text-align: center; font-weight: 700;
+  background: var(--accent-soft); color: var(--text); font-variant-numeric: tabular-nums;
+}
+.row.thread[aria-expanded="true"] .row-count { background: var(--accent); color: var(--panel-bg); }
+.row.child { padding-left: 30px; box-shadow: inset 2px 0 0 var(--border); }
+.row.child .row-from { font-size: 13px; }
+
+/* ---------- 17. All inboxes ---------- */
+.uni-btn { margin: 8px 0; font-weight: 700; }
+.row-acct { position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px; border-radius: 0 3px 3px 0; }

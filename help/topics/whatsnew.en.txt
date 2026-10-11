@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.73.00
+- Mail groups replies into conversations, and with two or more accounts, All inboxes shows every Inbox together.
+
 ## Version 0.72.00
 - New app: Ringtone Composer. Write a melody note by note like on the old phones, hear it, and download it as a ringtone (WAV) or as RTTTL text.
 
