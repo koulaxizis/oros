@@ -4735,3 +4735,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Micro-Zen: own breathing patterns + Habits row (#188) — 0.87.00
 - Micro-Zen: make your own breathing patterns, and see your sessions as a row in Habits. `zen/core.js` is shared by Micro-Zen and Habits (precached).
+
+### 2026-10-11 — Netizen ID: QR code, Add me to Contacts, Pixel Avatar face (#189) — 0.88.00
+- Netizen ID: a QR code on the back of your card, Add me to Contacts, and a face straight from Pixel Avatar. Uses the already precached `qr/qr-encode.js`.
