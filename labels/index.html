@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Label Maker · orOS</title>
+
+  <link rel="stylesheet" href="labels.css?v=0.68.01">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="list-btn" class="icon-btn" aria-controls="panel" aria-expanded="false"></button>
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="mode-btn" class="icon-btn toggle"></button>
+    <button type="button" id="sound-btn" class="icon-btn toggle"></button>
+  </header>
+
+  <main id="main">
+    <section id="bench">
+      <div class="bench-inner">
+        <!-- The tape -->
+        <div id="tape-wrap">
+          <canvas id="tape" role="img"></canvas>
+        </div>
+
+        <!-- Typing -->
+        <div class="type-row">
+          <label for="text-in" class="sr-only" data-i18n="f.text">Text</label>
+          <input type="text" id="text-in" maxlength="60" autocomplete="off" autocapitalize="characters" spellcheck="false" data-i18n-ph="f.text.ph">
+          <span id="count" class="count" aria-hidden="true"></span>
+        </div>
+
+        <!-- The wheel -->
+        <div id="wheel" hidden>
+          <div id="sets" class="chips center" role="radiogroup" data-i18n-aria="wheel.sets"></div>
+          <div id="dial" class="dial" role="slider" tabindex="0" aria-valuemin="1">
+            <div id="ring" class="ring" aria-hidden="true"></div>
+            <span class="pointer" aria-hidden="true"></span>
+            <button type="button" id="press-btn" class="press" tabindex="-1" aria-hidden="true"><span id="press-ch"></span></button>
+          </div>
+          <div class="chips center wheel-ctl">
+            <button type="button" id="prev-btn" class="icon-btn"></button>
+            <button type="button" id="press2-btn" class="gen-btn small" data-i18n="wheel.press">Press</button>
+            <button type="button" id="next-btn" class="icon-btn"></button>
+          </div>
+          <div class="chips center">
+            <button type="button" id="space-btn" class="chip" data-i18n="wheel.space">Space</button>
+            <button type="button" id="back-btn" class="chip" data-i18n="wheel.back">Remove last</button>
+          </div>
+          <p class="hint small center" data-i18n="wheel.hint"></p>
+        </div>
+
+        <!-- Tape and cut -->
+        <div class="opts">
+          <div class="opt">
+            <h2 id="tape-lbl" data-i18n="sec.tape">Tape</h2>
+            <div id="tapes" class="swatches" role="radiogroup" aria-labelledby="tape-lbl"></div>
+          </div>
+          <div class="opt">
+            <h2 id="width-lbl" data-i18n="sec.width">Width</h2>
+            <div id="widths" class="chips" role="radiogroup" aria-labelledby="width-lbl"></div>
+          </div>
+          <div class="opt">
+            <h2 id="cut-lbl" data-i18n="sec.cut">Ends</h2>
+            <div id="cuts" class="chips" role="radiogroup" aria-labelledby="cut-lbl"></div>
+          </div>
+          <div class="opt">
+            <h2 id="margin-lbl" data-i18n="sec.margin">Margin</h2>
+            <div id="margins" class="chips" role="radiogroup" aria-labelledby="margin-lbl"></div>
+          </div>
+        </div>
+
+        <!-- Keep it -->
+        <div class="actions">
+          <button type="button" id="save-btn" class="gen-btn"></button>
+          <button type="button" id="new-btn" class="gen-btn ghost" data-i18n="btn.new">New label</button>
+          <button type="button" id="png-btn" class="chip" data-i18n="btn.png">Download PNG</button>
+          <button type="button" id="copy-btn" class="chip" data-i18n="btn.copy" hidden>Copy image</button>
+          <button type="button" id="print-btn" class="chip" data-i18n="btn.print">Print</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="scrim" hidden></div>
+
+    <!-- My labels, recent, printing -->
+    <aside id="panel">
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.mine">My labels</h2>
+          <span id="mine-count" class="count"></span>
+          <span class="spacer"></span>
+          <button type="button" id="close-panel" class="icon-btn phone-only"></button>
+        </div>
+        <p id="mine-empty" class="hint" data-i18n="mine.empty"></p>
+        <ul id="mine" class="rows"></ul>
+      </div>
+
+      <div class="sec">
+        <h2 data-i18n="sec.recent">Recent</h2>
+        <p id="recent-empty" class="hint" data-i18n="recent.empty"></p>
+        <ul id="recent" class="rows"></ul>
+      </div>
+
+      <div class="sec">
+        <h2 data-i18n="sec.print">Print sheet</h2>
+        <label class="lbl" for="copies-in" data-i18n="f.copies">Copies of each</label>
+        <input type="number" id="copies-in" min="1" max="60" step="1" inputmode="numeric">
+        <p id="print-note" class="hint small"></p>
+        <button type="button" id="print2-btn" class="gen-btn ghost" data-i18n="btn.printSheet">Print A4 sheet</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- What gets printed (only in print) -->
+  <div id="sheet" aria-hidden="true"></div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.68.01"></script>
+  <script src="labels.js?v=0.68.01"></script>
+
+</body>
+</html>
