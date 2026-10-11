@@ -19,6 +19,8 @@
                    "Ταπετσαρία", "φόντο επιφάνεια εργασίας εικόνα"],
     ["appearance", "Screen pet", "companion pet",
                    "Συντροφάκι", "κατοικίδιο σύντροφος"],
+    ["menu", "Apps in the menu", "hide show hidden choose menu apps list",
+             "Εφαρμογές στο μενού", "απόκρυψη εμφάνιση κρυφές κρυμμένες επιλογή μενού λίστα"],
     ["notifications", "Notifications", "pop-up toast sound volume position style",
                       "Ειδοποιήσεις", "αναδυόμενα ήχος ένταση θέση στυλ"],
     ["notifications", "Quiet hours", "silent night do not disturb",
@@ -44,9 +46,9 @@
   ];
 
   var SECTION_NAME = {
-    en: { appearance: "Appearance", notifications: "Notifications", sync: "Sync",
+    en: { appearance: "Appearance", menu: "Menu", notifications: "Notifications", sync: "Sync",
           backup: "Backups", language: "Language & search", files: "Opening files", system: "System" },
-    el: { appearance: "Εμφάνιση", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός",
+    el: { appearance: "Εμφάνιση", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός",
           backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Άνοιγμα αρχείων", system: "Σύστημα" }
   };
 

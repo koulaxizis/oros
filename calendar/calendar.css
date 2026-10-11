@@ -177,6 +177,44 @@ body {
 .chip-manage { border-style: dashed; color: var(--text-dim); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
+/* Chip toggle: phones only. Desktop keeps the chips inline. */
+#lbl-toggle { display: none; }
+@media (max-width: 700px) {
+  #lbl-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+  }
+  #lbl-toggle:hover { background: var(--accent-soft); }
+  .lbl-tg-name { flex-shrink: 0; }
+  .lbl-tg-count {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lbl-tg-chev { transition: transform 0.15s ease; }
+  #lbl-bar.open .lbl-tg-chev { transform: rotate(180deg); }
+  #lbl-bar:not(.open) #lbl-chips { display: none; }
+}
+
 /* ---------- Weekday header + grid ---------- */
 #cal-wd {
   display: grid;
@@ -820,6 +858,24 @@ dialog#del-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   color: var(--text-dim);
   margin: 4px 0 2px;
 }
+
+/* ---------- ICS import preview ---------- */
+dialog#imp-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 16px;
+  width: min(360px, calc(100vw - 32px));
+}
+dialog#imp-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+#imp-dlg h3 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+#imp-dlg .del-text { margin-bottom: 8px; }
 
 /* ---------- Label management dialog ---------- */
 dialog#lbl-dlg {

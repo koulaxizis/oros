@@ -22,7 +22,7 @@ On a computer you can drag a single-day event that doesn't repeat onto another d
 Tap or click a location to open it in [Maps](app:maps). Maps can also send a planned route to Calendar as a new event.
 
 ## Labels and feeds
-The chips above the calendar are your labels. You start with `Personal`, `Work` and `Family`. Tap or click a chip to hide or show those events. `＋ Manage labels` lets you add, rename, recolour and delete labels; a label still used by events can't be deleted.
+The chips above the calendar are your labels. You start with `Personal`, `Work` and `Family`. Tap or click a chip to hide or show those events. `＋ Manage labels` lets you add, rename, recolour and delete labels; a label still used by events can't be deleted. On a phone the chips are folded behind one `Labels & feeds` button that shows how many are on; tap it to open or close the list. Your device remembers whether you left it open.
 
 Other apps add read-only rows, each with its own chip so you can hide them:
 - `Birthdays`, `Anniversaries` and `Custom Feed` from [Contacts](app:contacts).

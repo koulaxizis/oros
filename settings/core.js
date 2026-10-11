@@ -8,16 +8,17 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "notifications", "sync", "backup", "language", "files", "system"];
+  var SECTIONS = ["appearance", "menu", "notifications", "sync", "backup", "language", "files", "system"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
   // skin, wallpaper, syncInterval, autoexport ride in the shell slice;
   // the pet switch in the pet slice; notifications in the notifs slice;
   // search switches, backup folder and passphrase stay on the device.
+  // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
     theme: "all", skin: "all", wallpaper: "all", pet: "all",
-    notifications: "all", syncInterval: "all", autoexport: "all", lang: "all",
+    notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device"
   };
 
@@ -38,7 +39,9 @@
 
       "s.appearance": "Appearance", "s.notifications": "Notifications", "s.sync": "Sync",
       "s.backup": "Backups", "s.language": "Language & search", "s.system": "System",
+      "s.menu": "Menu",
       "d.appearance": "Theme, colours, wallpaper, Dock, screen pet",
+      "d.menu": "Which apps the menu shows",
       "d.notifications": "Pop-ups, sound, quiet hours, per app",
       "d.sync": "Encrypted sync through Dropbox",
       "d.backup": "Backup files and the backup folder",
@@ -61,6 +64,13 @@
       "k.hover.pulse": "Pulse", "k.hover.frame": "Frame", "k.hover.glow": "Glow",
       "k.hover.lift": "Lift", "k.hover.wiggle": "Wiggle", "k.hover.none": "None",
       "k.empty": "Add apps with the ☆ next to each app in the menu.",
+
+      "m.apps": "Apps in the menu",
+      "m.hint": "Untick an app to hide it from the menu. Hidden apps still open from the menu search, links from other apps, the desktop and the Dock.",
+      "m.showAll": "Show all", "m.hideAll": "Hide all",
+      "m.count": "{n} of {total} shown",
+      "m.filter": "Find an app", "m.filter.none": "No app matches.",
+      "m.none": "This orOS version cannot hide apps from the menu yet.",
 
       "n.enabled": "Notifications", "n.test": "Send a test",
       "n.test.title": "Test notification", "n.test.body": "This is how notifications look.",
@@ -142,7 +152,9 @@
 
       "s.appearance": "Εμφάνιση", "s.notifications": "Ειδοποιήσεις", "s.sync": "Συγχρονισμός",
       "s.backup": "Αντίγραφα ασφαλείας", "s.language": "Γλώσσα και αναζήτηση", "s.system": "Σύστημα",
+      "s.menu": "Μενού",
       "d.appearance": "Θέμα, χρώματα, ταπετσαρία, Dock, συντροφάκι",
+      "d.menu": "Ποιες εφαρμογές δείχνει το μενού",
       "d.notifications": "Αναδυόμενα, ήχος, ώρες ησυχίας, ανά εφαρμογή",
       "d.sync": "Κρυπτογραφημένος συγχρονισμός μέσω Dropbox",
       "d.backup": "Αρχεία αντιγράφων και φάκελος αντιγράφων",
@@ -165,6 +177,13 @@
       "k.hover.pulse": "Παλμός", "k.hover.frame": "Πλαίσιο", "k.hover.glow": "Λάμψη",
       "k.hover.lift": "Ανύψωση", "k.hover.wiggle": "Κούνημα", "k.hover.none": "Κανένα",
       "k.empty": "Πρόσθεσε εφαρμογές με το ☆ δίπλα σε κάθε εφαρμογή στο μενού.",
+
+      "m.apps": "Εφαρμογές στο μενού",
+      "m.hint": "Βγάλε το τικ από μια εφαρμογή για να κρυφτεί από το μενού. Οι κρυφές εφαρμογές ανοίγουν ακόμα από την αναζήτηση του μενού, από συνδέσμους άλλων εφαρμογών, από την επιφάνεια εργασίας και από το Dock.",
+      "m.showAll": "Εμφάνιση όλων", "m.hideAll": "Απόκρυψη όλων",
+      "m.count": "Φαίνονται {n} από {total}",
+      "m.filter": "Βρες εφαρμογή", "m.filter.none": "Καμία εφαρμογή δεν ταιριάζει.",
+      "m.none": "Αυτή η έκδοση του orOS δεν μπορεί ακόμα να κρύβει εφαρμογές από το μενού.",
 
       "n.enabled": "Ειδοποιήσεις", "n.test": "Δοκιμαστική",
       "n.test.title": "Δοκιμαστική ειδοποίηση", "n.test.body": "Έτσι φαίνονται οι ειδοποιήσεις.",
@@ -263,6 +282,37 @@
 
   function scopeOf(name) { return SCOPE[name] || "device"; }
 
+  // Case-, accent- and final-ς-insensitive, like the menu search.
+  function fold(v) {
+    var s = String(v == null ? "" : v).toLowerCase();
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/ς/g, "σ");
+  }
+
+  // Menu apps for the Settings list: filtered by `query` (name, id or
+  // category), grouped by category, groups and apps sorted by their
+  // shown names in the UI language.
+  function menuGroups(apps, query, lang) {
+    var q = fold(String(query || "").trim());
+    var loc = langOf(lang);
+    var cmp = function (a, b) {
+      var r = 0;
+      try { r = a.localeCompare(b, loc, { sensitivity: "base" }); } catch (e) { r = 0; }
+      return r || (a < b ? -1 : a > b ? 1 : 0);
+    };
+    var byCat = {};
+    (Array.isArray(apps) ? apps : []).forEach(function (a) {
+      if (!a || typeof a.id !== "string") return;
+      if (q && [a.name, a.id, a.catName].every(function (f) { return fold(f).indexOf(q) === -1; })) return;
+      var c = String(a.cat || "other");
+      (byCat[c] = byCat[c] || { cat: c, name: String(a.catName || c), apps: [] }).apps.push(a);
+    });
+    return Object.keys(byCat).map(function (c) {
+      byCat[c].apps.sort(function (x, y) { return cmp(String(x.name), String(y.name)); });
+      return byCat[c];
+    }).sort(function (x, y) { return cmp(x.name, y.name); });
+  }
+
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function hourLabel(h) { return pad2(h) + ":00"; }
 
@@ -295,7 +345,7 @@
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
-    intervalLabel: intervalLabel, syncState: syncState
+    intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.SettingsCore = api;

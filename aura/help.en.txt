@@ -1,0 +1,49 @@
+# Aura Painter
+Paint with light. Drag a finger, a pen or the mouse across the dark canvas and glowing strokes follow, like a photo with a slow shutter. Where colours cross, they shine brighter.
+
+## Getting started
+Just start drawing on the canvas. Each stroke is added to the work; `Undo` and `Redo` at the top step back and forward, and the bin button clears the canvas (`Undo` in the message brings it back).
+- No idea where to start? The star button, `Surprise: a random work`, makes a work for you and paints it in front of you.
+- `Hide brushes` folds the tools away; `Brushes` brings them back. On a phone the canvas stays at the top while you scroll the tools.
+
+## Brushes
+- `Glow`: a soft line with a halo. `Neon`: a thin, bright core. `Sparks`: specks fly off the stroke. `Mist`: a wide, hazy cloud of colour. `Ribbon`: a flat band that gets wider and thinner as it turns.
+- `Size` and `Brightness` set the brush. Moving fast makes a thinner line, moving slowly a fuller one. With a pen, pressing harder makes it wider.
+
+## Colour
+- Pick a palette (`Aurora`, `Sunset`, `Ocean`, `Neon` or `Fire`) and one of its colours, or any colour with the colour button next to them.
+- `Rainbow` changes the colour along each stroke, and every new stroke starts from another colour.
+
+## Symmetry
+`Mirror` repeats each stroke on the other side. `×4`, `×6`, `×8` and `×12` turn the canvas into a kaleidoscope with that many rays. Each stroke keeps the symmetry it was painted with.
+
+## Background and play
+- `Background`: `Black`, `Deep blue`, `Night purple` or `Light`. On the light background the colours mix like watercolour.
+- With `Strokes fade away` ticked, new strokes fade after a few seconds, for painting without an end. Fading strokes are not saved.
+
+## My works
+- Type a name and tap `Save`. Changes to an open saved work, its name included, are saved as you go.
+- The button at the top left shows `My works`: open, duplicate (copy button) or delete (×) a work; `Undo` brings it back.
+- An unsaved canvas stays on this device until you save it or start a `New` one.
+
+## Download, replay and wallpaper
+- Choose `Screen size` or `Double` and tap `PNG` to download the picture.
+- `Replay` paints the work again, stroke by stroke, the way you made it. Tap the canvas or `Stop replay` to stop.
+- `As wallpaper` makes the work the orOS wallpaper of this device. It shows as `Mine` in Settings here; other devices keep their own wallpaper. Picking another wallpaper on this device puts the work away again.
+
+## Sync and backup
+- `My works` follow you to all your devices through orOS sync. Works are kept as strokes, not pictures, so they redraw sharply on every screen.
+- The brush, colour, symmetry, background, fade setting and the unsaved canvas stay on this device.
+
+## Keyboard shortcuts
+- [[Ctrl+Z]]: undo. [[Ctrl+Y]] or [[Ctrl+Shift+Z]]: redo.
+- [[1]] to [[5]]: the five brushes. [[S]]: the next symmetry.
+- `[` and `]`: smaller or bigger brush.
+- [[Esc]]: stop a replay or close `My works`.
+
+## Tips
+> Try `×8` with `Mist` first and `Neon` on top: a few strokes make a mandala.
+
+## Limits
+- Up to 4,000 points a work and 60 saved works. The counter under `Save` shows how full a work is.
+- When the same work is changed on two devices before they sync, the most recent change wins.
