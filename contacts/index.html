@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Contacts · orOS</title>
-  <link rel="stylesheet" href="contacts.css?v=0.82.00">
+  <link rel="stylesheet" href="contacts.css?v=0.83.00">
 </head>
 <body>
   <main id="cmain">
@@ -13,6 +13,7 @@
     <header id="ct-top">
       <button id="ct-import" type="button" class="nav-mini" data-i18n="ct.import"></button>
       <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
+      <button id="ct-phone" type="button" class="nav-mini" data-i18n="ct.phone" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
@@ -144,6 +145,17 @@
     </div>
   </dialog>
 
+  <!-- vCard handed over by the shell: confirm first -->
+  <dialog id="vcf-dlg" aria-labelledby="vcf-dlg-title">
+    <h3 id="vcf-dlg-title" data-i18n="ct.vcf.title"></h3>
+    <p id="vcf-name" class="del-name"></p>
+    <p id="vcf-sum" class="del-text"></p>
+    <div class="dlg-row">
+      <button id="vcf-go" type="button" class="btn prim" data-i18n="ct.vcf.go"></button>
+      <button id="vcf-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
   <!-- Merge confirmation (shows proposed merged data) -->
   <dialog id="merge-dlg">
     <h3 id="merge-title" data-i18n="dup.merge"></h3>
@@ -172,6 +184,6 @@
     </div>
   </dialog>
 
-  <script src="contacts.js?v=0.82.00"></script>
+  <script src="contacts.js?v=0.83.00"></script>
 </body>
 </html>
