@@ -169,6 +169,8 @@
     h += header("From", fmtAddr(o.from));
     if (o.to && o.to.length) h += header("To", o.to.map(fmtAddr).join(", "));
     if (o.cc && o.cc.length) h += header("Cc", o.cc.map(fmtAddr).join(", "));
+    // a draft keeps its Bcc; a message being sent never shows it
+    if (o.keepBcc && o.bcc && o.bcc.length) h += header("Bcc", o.bcc.map(fmtAddr).join(", "));
     h += header("Subject", encodeWords(o.subject || ""));
     h += header("Message-ID", mid);
     var irt = cleanId(o.inReplyTo);

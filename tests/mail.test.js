@@ -309,6 +309,17 @@ function imapServer(mailbox) {
         mailbox.folders[c[1]] = { flags: "\\HasNoChildren", uidv: 77, msgs: [] };
         return ok();
       }
+      if ((c = /^APPEND "([^"]*)" \(([^)]*)\) \{\d+\}\u0001$/i.exec(cmd))) {
+        const to = mailbox.folders[c[1]];
+        if (!to) return reply(tag + " NO [TRYCREATE] no such mailbox\r\n");
+        put(to, { flags: c[2].split(" ").filter(Boolean), raw: lits[0] });
+        return ok(/UIDPLUS/.test(mailbox.caps || "") ? "[APPENDUID " + to.uidv + " " + to.next + "] done" : "done");
+      }
+      if ((c = /^UID SEARCH HEADER Message-ID "([^"]*)"$/i.exec(cmd))) {
+        const hits = selected.msgs.filter((x) => x.raw.indexOf("Message-ID: " + c[1] + "\r\n") >= 0);
+        reply("* SEARCH" + hits.map((x) => " " + x.uid).join("") + "\r\n");
+        return ok();
+      }
       if ((c = /^RENAME "([^"]*)" "([^"]*)"$/i.exec(cmd))) {
         if (!mailbox.folders[c[1]]) return reply(tag + " NO [NONEXISTENT] no such mailbox\r\n");
         if (mailbox.folders[c[2]]) return reply(tag + " NO [ALREADYEXISTS] Mailbox exists\r\n");
@@ -642,4 +653,41 @@ test("folders: names in modified UTF-7, rename paths, rules follow a renamed fol
   assert.equal(rules[0].to, "INBOX.Work.2026");   // not changed in place
   r = A.retargetRules(rules, "a1", "INBOX.Work.2026", null, ".", 100);
   assert.deepEqual([r.n, r.rules[0].on, r.rules[0].m, r.rules[0].to], [1, false, 100, "INBOX.Work.2026"]);
+});
+
+test("relay: draft saves with \\Draft, replaces the previous one, finds its UID without UIDPLUS", async () => {
+  const core = await import("../relay/core.js");
+  for (const caps of ["IMAP4rev1 UIDPLUS", "IMAP4rev1"]) {
+    const box = { user: "u@pmail.gr", pass: "pw", caps, log: [], folders: {
+      INBOX: { flags: "\\HasNoChildren", uidv: 5, msgs: [] },
+      "INBOX.Drafts": { flags: "\\Drafts", uidv: 9, msgs: [] }
+    } };
+    const srv = await imapServer(box);
+    const connectFn = connectTo(srv.address().port);
+    const acct = { host: "mail.pmail.gr", port: 993, sec: "tls", user: box.user, pass: box.pass };
+    const post = (body) => core.handle(new Request("https://relay.test/v1", { method: "POST",
+      headers: { Origin: "https://useoros.online", "CF-Connecting-IP": caps === "IMAP4rev1" ? "1.2.4.5" : "1.2.4.4" }, body: JSON.stringify(Object.assign({ acct }, body)) }), {}, connectFn)
+      .then((r) => r.json());
+    const draft = (mid, subj) => b64(bin("From: u@pmail.gr\r\nBcc: x@y.gr\r\nSubject: " + subj + "\r\nMessage-ID: " + mid + "\r\n\r\nΚείμενο\r\n"));
+    try {
+      for (const bad of [{ op: "draft", raw: draft("<a@x>", "s") }, { op: "draft", folder: "INBOX.Drafts", raw: "!!" },
+                         { op: "draft", folder: "INBOX.Drafts", raw: draft("<a@x>", "s"), replace: 0 },
+                         { op: "draft", folder: "INBOX.Drafts", raw: draft("<a@x>", "s"), mid: "a@x\r\nA1 LOGOUT" }]) {
+        assert.equal((await post(bad)).error.code, "bad-request", caps + " " + JSON.stringify(bad));
+      }
+      let r = await post({ op: "draft", folder: "INBOX.Drafts", raw: draft("<d1@x>", "one"), mid: "<d1@x>" });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.deepEqual([r.data.uid, r.data.uidvalidity, r.data.replaced], [1, 9, false]);
+      assert.deepEqual(box.folders["INBOX.Drafts"].msgs[0].flags, ["\\Draft", "\\Seen"]);
+      r = await post({ op: "draft", folder: "INBOX.Drafts", raw: draft("<d2@x>", "two"), mid: "<d2@x>", replace: 1 });
+      assert.equal(r.ok, true, JSON.stringify(r));
+      assert.deepEqual([r.data.uid, r.data.replaced], [2, true]);
+      assert.deepEqual(box.folders["INBOX.Drafts"].msgs.map((x) => x.uid), [2]);
+      assert.ok(/Bcc: x@y.gr/.test(box.folders["INBOX.Drafts"].msgs[0].raw));
+      assert.equal(box.log.some((l) => /^UID SEARCH HEADER/.test(l)), caps === "IMAP4rev1");
+      assert.equal((await post({ op: "draft", folder: "Nope", raw: draft("<d3@x>", "x") })).error.code, "no");
+    } finally {
+      srv.close();
+    }
+  }
 });

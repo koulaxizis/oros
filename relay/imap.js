@@ -538,6 +538,29 @@ function makeApi(conn) {
                msgs: await heads(want) };
     },
 
+    // Saves a draft in `folder` (\Draft \Seen) and erases the one it
+    // replaces. Its UID comes from APPENDUID (UIDPLUS), else from a
+    // search for its Message-ID, else 0 (the next save then adds a new
+    // copy instead of replacing this one).
+    async saveDraft(folder, bin, replace, mid) {
+      const r = await conn.run(["APPEND ", arg(folder, true), " (\\Draft \\Seen) ", { text: "{" + bin.length + "}", lit: bin }]);
+      const au = /\[APPENDUID (\d+) (\d+)\]/i.exec(r.text || "");
+      let uid = au ? +au[2] : 0, replaced = false;
+      if (replace || (!uid && mid)) {
+        const info = await select(folder, true);
+        if (!uid && mid) {
+          const s = await conn.run(["UID SEARCH HEADER Message-ID ", arg(mid)]);
+          const hits = searchUids(s.untagged);
+          uid = hits.length ? hits[hits.length - 1] : 0;
+        }
+        if (replace && replace !== uid) {
+          try { await expungeSet(String(replace), await capability(conn)); replaced = true; } catch (e) {}
+        }
+        if (!au) return { uid, uidvalidity: info.uidvalidity, replaced };
+      }
+      return { uid, uidvalidity: au ? +au[1] : 0, replaced };
+    },
+
     // Stores a message (binary string) in `folder`, e.g. a copy of a
     // sent message in Sent, marked \Seen.
     async append(folder, bin, flags) {

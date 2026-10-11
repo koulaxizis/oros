@@ -175,6 +175,7 @@
       "cmp.title": "New message", "cmp.from": "From", "cmp.to": "To", "cmp.cc": "Cc", "cmp.bcc": "Bcc",
       "cmp.ccbcc": "Cc / Bcc", "cmp.subject": "Subject", "cmp.body": "Message", "cmp.date": "Date",
       "cmp.send": "Send", "cmp.sending": "Sending…", "cmp.discard": "Discard",
+      "drf.save": "Save draft", "drf.saving": "Saving…", "drf.saved": "Draft saved in Drafts", "drf.failed": "The draft was not saved.", "drf.edit": "Continue writing",
       "cmp.discardQ": "Discard this message?", "cmp.keep": "Keep writing",
       "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it. No attachments yet.",
       "rte.bar": "Formatting", "rte.b": "Bold (Ctrl+B)", "rte.i": "Italic (Ctrl+I)", "rte.u": "Underline (Ctrl+U)",
@@ -290,6 +291,7 @@
       "cmp.title": "Νέο μήνυμα", "cmp.from": "Από", "cmp.to": "Προς", "cmp.cc": "Κοιν.", "cmp.bcc": "Κρυφή κοιν.",
       "cmp.ccbcc": "Κοιν. / Κρυφή κοιν.", "cmp.subject": "Θέμα", "cmp.body": "Μήνυμα", "cmp.date": "Ημερομηνία",
       "cmp.send": "Αποστολή", "cmp.sending": "Αποστολή…", "cmp.discard": "Απόρριψη",
+      "drf.save": "Αποθήκευση πρόχειρου", "drf.saving": "Αποθήκευση…", "drf.saved": "Το πρόχειρο αποθηκεύτηκε στα Πρόχειρα", "drf.failed": "Το πρόχειρο δεν αποθηκεύτηκε.", "drf.edit": "Συνέχεια γραψίματος",
       "cmp.discardQ": "Να απορριφθεί το μήνυμα;", "cmp.keep": "Συνέχεια γραψίματος",
       "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν. Χωρίς συνημμένα προς το παρόν.",
       "rte.bar": "Μορφοποίηση", "rte.b": "Έντονα (Ctrl+B)", "rte.i": "Πλάγια (Ctrl+I)", "rte.u": "Υπογράμμιση (Ctrl+U)",
@@ -1569,9 +1571,13 @@
     var p = openMsg.parsed;
     renderTrust(p, m, sender, bars);
     acts.hidden = false;
-    [["reply", "act.reply"], ["all", "act.all"], ["forward", "act.fwd"]].forEach(function (a) {
-      acts.appendChild(button(t(a[1]), "small", function () { replyTo(a[0]); }));
-    });
+    if (folderRole(currentFolder() || {}) === "drafts") {
+      acts.appendChild(button(t("drf.edit"), "small primary", editDraft));
+    } else {
+      [["reply", "act.reply"], ["all", "act.all"], ["forward", "act.fwd"]].forEach(function (a) {
+        acts.appendChild(button(t(a[1]), "small", function () { replyTo(a[0]); }));
+      });
+    }
     var org = el("span", "org-acts");
     orgButtons(org, [openMsg.uid], true);
     acts.appendChild(org);
@@ -2214,9 +2220,73 @@
     if (sent) args.sent = sent;
     return call("send", acct, args).then(function (res) {
       if (sent && cur && cur.acct === acct.id && cur.folder === sent) refreshCurrent(false);
+      if (d.serverDraft) dropServerDraft(d.serverDraft);
       return { copyFailed: !!sent && !(res && res.appended) };
     });
   }
+  // ---------- server drafts ----------
+  // "Save draft" files the message in the account's Drafts folder
+  // (created when missing), so it can be finished on another device or
+  // in webmail; saving again replaces that copy, sending erases it.
+  // "Continue writing" on a message in Drafts opens it in the composer.
+  function draftsFolder(acct) {
+    var name = roleFolder(acct, "drafts");
+    if (name) return Promise.resolve(name);
+    name = newFolderName(acct, "Drafts");
+    return call("create", acct, { folder: name }).then(function () {
+      return refreshFolders(acct).catch(function () {});
+    }).then(function () { return name; });
+  }
+  // ref: { acct, folder, uid }; best effort (an old copy may stay)
+  function dropServerDraft(ref) {
+    var a = acctById(ref.acct);
+    if (!a || !(ref.uid > 0)) return Promise.resolve();
+    return call("expunge", a, { folder: ref.folder, uids: [ref.uid] }).then(function () {
+      if (cur && cur.acct === a.id && cur.folder === ref.folder) refreshCurrent(false);
+    }, function () {});
+  }
+  // d: as sendDraft; ref: the copy it replaces, or null → new ref
+  function saveServerDraft(d, ref) {
+    var acct = acctById(d.acct);
+    if (!acct) return Promise.reject(new MailError("noacct"));
+    if (!navigator.onLine) return Promise.reject(new MailError("offline"));
+    var rich = d.html ? RT.clean(d.html, { cid: true }) : null;
+    var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc, keepBcc: true,
+                        subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
+                        inReplyTo: d.inReplyTo, references: d.references });
+    if (msg.bin.length > MSG_MAX) return Promise.reject(new MailError("big"));
+    return draftsFolder(acct).then(function (folder) {
+      var same = ref && ref.acct === acct.id && ref.folder === folder && ref.uid > 0;
+      var args = { folder: folder, raw: C.b64(msg.bin), mid: msg.messageId };
+      if (same) args.replace = ref.uid;
+      return call("draft", acct, args).then(function (res) {
+        if (ref && !same) dropServerDraft(ref);
+        if (cur && cur.acct === acct.id && cur.folder === folder) refreshCurrent(false);
+        return { acct: acct.id, folder: folder, uid: res && res.uid > 0 ? res.uid : 0 };
+      });
+    });
+  }
+  function editDraft() {
+    var acct = curAcct();
+    if (!acct || !cur || !openMsg || !openMsg.parsed) return;
+    var p = openMsg.parsed, m = openMsg.sum, h = p.headers || {};
+    var bcc = [];
+    (h.bcc || []).forEach(function (v) { bcc = bcc.concat(M.parseAddresses(M.decodeWords(v))); });
+    var html = "";
+    if (p.html !== null) {
+      // inline pictures back to data: so the editor shows (and keeps) them
+      html = String(p.html).replace(/cid:([^"'\s)>]+)/gi, function (all, id) {
+        var a = p.cids[id];
+        try { a = a || p.cids[decodeURIComponent(id)]; } catch (e) {}
+        return (a && dataUrl(a)) || all;
+      });
+    }
+    openCompose({ acct: acct.id, to: m.to, cc: m.cc, bcc: bcc, subject: m.subj,
+                  text: p.html === null ? String(p.text || "") : "", html: html,
+                  inReplyTo: ((h["in-reply-to"] || [])[0] || "").trim(), references: (h.references || []).join(" "),
+                  noSig: true, draft: { acct: acct.id, folder: cur.folder, uid: openMsg.uid } });
+  }
+
   function sendErrText(e) {
     if (e && (e.code === "too-big" || e.code === "big")) return t("err.big");
     if (e && e.code === "timeout") return t("cmp.timeout");
@@ -2343,12 +2413,14 @@
   }
 
   // init: { acct?, to[], cc[], bcc[], subject, text (above the
-  // signature), quote (below it), inReplyTo, references, outId?, noSig? }
+  // signature), html? (instead of text), quote (below it), inReplyTo,
+  // references, outId?, noSig?, draft? ({ acct, folder, uid } in Drafts) }
   function openCompose(init) {
     init = init || {};
     if (!data.accounts.length) { showToast(t("cmp.noacct")); acctDialog(null); return; }
     var acct = acctById(init.acct) || curAcct();
     var dirty = !!init.outId;
+    var draftRef = init.draft || null;   // its copy in Drafts on the server
     editingOut = init.outId || null;
     var dlg = makeDialog("ml-compose", true);
     dlg.classList.add("wide", "compose");
@@ -2411,6 +2483,8 @@
 
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("cmp.discard"), "", function () { leave(); }));
+    var saveB = button(t("drf.save"), "", function () { saveNow(false); });
+    acts.appendChild(saveB);
     var ok = button(t("cmp.send"), "primary", null);
     ok.type = "submit";
     acts.appendChild(ok);
@@ -2428,6 +2502,43 @@
         if (init.outId) dropOut(init.outId);
         dirty = false;
         dlg.close();
+      }, function () { saveNow(true); });
+    }
+    // the form as a draft { acct, to, cc, bcc, subject, text, html, … },
+    // or null after showing what is wrong
+    function collect(needRcpt) {
+      errP.textContent = "";
+      var a = fFrom ? acctById(fFrom.value) : acct;
+      if (!a) return null;
+      var to = C.parseList(fTo.value), cc = C.parseList(fCc.value), bcc = C.parseList(fBcc.value);
+      var bad = to.bad.concat(cc.bad, bcc.bad);
+      if (bad.length) { errP.textContent = t("cmp.bad", { list: bad.join(", ").slice(0, 200) }); return null; }
+      var count = to.list.length + cc.list.length + bcc.list.length;
+      if (needRcpt && !count) { errP.textContent = t("cmp.noRcpt"); fTo.focus(); return null; }
+      if (count > MAX_RCPT) { errP.textContent = t("cmp.many", { n: MAX_RCPT }); return null; }
+      var body = ed.get(false);
+      return { acct: a.id, to: to.list, cc: cc.list, bcc: bcc.list,
+               subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: body.text.slice(0, 200000),
+               html: body.rich ? body.html : "",
+               inReplyTo: init.inReplyTo || "", references: init.references || "" };
+    }
+    // Save draft; close: also close the composer once saved
+    function saveNow(close) {
+      var d = collect(false);
+      if (!d) return;
+      saveB.disabled = true;
+      saveB.textContent = t("drf.saving");
+      saveServerDraft(d, draftRef).then(function (ref) {
+        draftRef = ref;
+        dirty = false;
+        saveB.disabled = false;
+        saveB.textContent = t("drf.save");
+        if (close) finish(t("drf.saved"));
+        else showToast(t("drf.saved"));
+      }, function (e) {
+        saveB.disabled = false;
+        saveB.textContent = t("drf.save");
+        errP.textContent = t("drf.failed") + " " + sendErrText(e);
       });
     }
     // Esc: same as Discard (asks when something was written)
@@ -2436,21 +2547,10 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      errP.textContent = "";
-      var a = fFrom ? acctById(fFrom.value) : acct;
-      if (!a) return;
-      if (!a.smtp) { errP.textContent = t("err.nosmtp"); return; }
-      var to = C.parseList(fTo.value), cc = C.parseList(fCc.value), bcc = C.parseList(fBcc.value);
-      var bad = to.bad.concat(cc.bad, bcc.bad);
-      if (bad.length) { errP.textContent = t("cmp.bad", { list: bad.join(", ").slice(0, 200) }); return; }
-      var count = to.list.length + cc.list.length + bcc.list.length;
-      if (!count) { errP.textContent = t("cmp.noRcpt"); fTo.focus(); return; }
-      if (count > MAX_RCPT) { errP.textContent = t("cmp.many", { n: MAX_RCPT }); return; }
-      var body = ed.get(false);
-      var d = { acct: a.id, to: to.list, cc: cc.list, bcc: bcc.list,
-                subject: fSubj.value.replace(/\s+/g, " ").trim().slice(0, 300), text: body.text.slice(0, 200000),
-                html: body.rich ? body.html : "",
-                inReplyTo: init.inReplyTo || "", references: init.references || "" };
+      var d = collect(true);
+      if (!d) return;
+      if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
+      if (draftRef) d.serverDraft = draftRef;
       ok.disabled = true;
       ok.textContent = t("cmp.sending");
       function failed(err) {
@@ -2481,11 +2581,12 @@
     }
   }
 
-  function confirmDiscard(yes) {
+  function confirmDiscard(yes, save) {
     var dlg = makeDialog("ml-discard");
     dlg.appendChild(el("p", "dlg-text", t("cmp.discardQ")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("cmp.keep"), "", function () { dlg.close(); }));
+    if (save) acts.appendChild(button(t("drf.save"), "primary", function () { dlg.close(); save(); }));
     acts.appendChild(button(t("cmp.discard"), "danger", function () { dlg.close(); yes(); }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);

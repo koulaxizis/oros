@@ -59,7 +59,10 @@ Rules sort new mail in the Inbox by themselves: for example, move newsletters to
 - Under an open message, `Reply` answers the sender, `Reply all` everyone else in it too, and `Forward` sends it on to someone new. The original text is quoted under yours.
 - With several accounts, `From` chooses which one sends.
 - A copy of what you send goes to the account's `Sent` folder.
-- `Discard` (or [[Esc]]) asks first when you have written something.
+- `Discard` (or [[Esc]]) asks first when you have written something, and offers `Save draft`.
+
+### Drafts
+`Save draft` files the message in the account's `Drafts` folder on the server (created if there is none), so you can finish it later, on another device or in webmail. Saving again replaces the earlier copy, and sending erases it. Open a message in `Drafts` and press `Continue writing` to carry on. Drafts keep `Bcc`; it never goes out with the sent message.
 
 ### Formatting
 The bar above `Message` adds **bold** ([[Ctrl+B]]), italic ([[Ctrl+I]]), underline ([[Ctrl+U]]), lists, links ([[Ctrl+K]]) and colour; `Clear formatting` removes them. A formatted message also carries a plain-text copy for people whose mail app shows only text. A message with no formatting goes as plain text. Pasted text keeps only its words, not its look.

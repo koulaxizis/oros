@@ -26,7 +26,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1 };
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -92,6 +92,12 @@ export function validRequest(b, env) {
     if (!Array.isArray(b.rcpt) || !b.rcpt.length || b.rcpt.length > SMTP_LIMITS.rcpts || !b.rcpt.every(validAddr)) return "rcpt";
     if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
     if (b.sent !== undefined && !folderArg(b.sent)) return "sent";
+  }
+  if (b.op === "draft") {
+    if (!folderArg(b.folder)) return "folder";
+    if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
+    if (b.replace !== undefined && !(Number.isInteger(b.replace) && b.replace > 0)) return "replace";
+    if (b.mid !== undefined && !(typeof b.mid === "string" && /^<[^<>\s"\\]{3,250}>$/.test(b.mid))) return "mid";
   }
   if (b.op === "flag" || b.op === "move" || b.op === "expunge") {
     if (!folderArg(b.folder)) return "folder";
@@ -177,7 +183,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (text.length > LIMITS.sendBytes) return fail(413, "bad-request", "request too large", okOrigin);
   let b;
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
-  if (text.length > LIMITS.bodyBytes && !(b && b.op === "send")) return fail(413, "bad-request", "request too large", okOrigin);
+  if (text.length > LIMITS.bodyBytes && !(b && (b.op === "send" || b.op === "draft"))) return fail(413, "bad-request", "request too large", okOrigin);
   const bad = validRequest(b, env);
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
@@ -244,6 +250,7 @@ export async function handle(request, env, connectFn, now, fetchFn) {
         case "rename": return api.rename(b.folder, b.to);
         case "delete": return api.remove(b.folder);
         case "search": return api.search(b.folder, b.q, b.where, b.limit);
+        case "draft": return api.saveDraft(b.folder, atob(b.raw), b.replace, b.mid);
       }
       return null;
     });
