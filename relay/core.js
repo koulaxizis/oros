@@ -25,7 +25,8 @@ export const LIMITS = {
 
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
-const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1 };
+const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
+              move: 1, expunge: 1, create: 1, search: 1 };
 
 // ---------- validation ----------
 export function validHost(h) {
@@ -92,10 +93,20 @@ export function validRequest(b, env) {
     if (!b64Arg(b.raw, SMTP_LIMITS.messageBytes)) return "raw";
     if (b.sent !== undefined && !folderArg(b.sent)) return "sent";
   }
-  if (b.op === "flag") {
+  if (b.op === "flag" || b.op === "move" || b.op === "expunge") {
     if (!folderArg(b.folder)) return "folder";
     if (!Array.isArray(b.uids) || !b.uids.length || b.uids.length > 500 ||
         !b.uids.every((u) => Number.isInteger(u) && u > 0)) return "uids";
+  }
+  if (b.op === "move" && (!folderArg(b.to) || b.to === b.folder)) return "to";
+  if (b.op === "create" && !folderArg(b.folder)) return "folder";
+  if (b.op === "search") {
+    if (!folderArg(b.folder)) return "folder";
+    if (!str(b.q, 200) || !b.q.trim() || /[\r\n\0]/.test(b.q)) return "q";
+    if (b.where !== undefined && ["text", "from", "subject"].indexOf(b.where) < 0) return "where";
+    if (b.limit !== undefined && !(Number.isInteger(b.limit) && b.limit > 0 && b.limit <= 100)) return "limit";
+  }
+  if (b.op === "flag") {
     const fl = (x) => Array.isArray(x) && x.length <= 10 && x.every((f) => typeof f === "string");
     if (!fl(b.add || []) || !fl(b.remove || [])) return "flags";
   }
@@ -222,6 +233,10 @@ export async function handle(request, env, connectFn, now, fetchFn) {
         case "list": return api.list(b.folder, { limit: b.limit, beforeUid: b.beforeUid, known: b.known });
         case "fetch": return api.fetch(b.folder, b.uid, LIMITS.fetchBytes);
         case "flag": return api.flag(b.folder, b.uids, b.add || [], b.remove || []);
+        case "move": return api.move(b.folder, b.uids, b.to);
+        case "expunge": return api.expunge(b.folder, b.uids);
+        case "create": return api.create(b.folder);
+        case "search": return api.search(b.folder, b.q, b.where, b.limit);
       }
       return null;
     });

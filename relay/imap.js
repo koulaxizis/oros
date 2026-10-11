@@ -323,6 +323,44 @@ function makeApi(conn) {
     return info;
   }
 
+  // Headers (flags, date, size, the header block) of `uids`, newest first.
+  async function heads(uids) {
+    const msgs = [];
+    if (!uids.length) return msgs;
+    const r = await conn.run(["UID FETCH " + compressUids(uids) +
+      " (UID FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (" + HDR_FIELDS + ")])"]);
+    fetchItems(r.untagged).forEach((it) => {
+      const uid = +it.UID;
+      if (!(uid > 0)) return;
+      let hdr = "";
+      Object.keys(it).forEach((k) => { if (k.indexOf("BODY[HEADER") === 0) hdr = it[k] || ""; });
+      msgs.push({
+        uid,
+        flags: Array.isArray(it.FLAGS) ? it.FLAGS.map(String) : [],
+        date: it.INTERNALDATE || "",
+        size: +it["RFC822.SIZE"] || 0,
+        hdr: binToB64(hdr)
+      });
+    });
+    return msgs.sort((a, b) => b.uid - a.uid);
+  }
+  function searchUids(untagged) {
+    const out = [];
+    untagged.forEach((u) => {
+      const m = /^\* SEARCH ?(.*)\r\n$/i.exec(u);
+      if (m && m[1]) m[1].trim().split(/\s+/).forEach((x) => { const v = +x; if (v > 0) out.push(v); });
+    });
+    return out.sort((a, b) => a - b);
+  }
+  // \Deleted + expunge of exactly these UIDs when the server has
+  // UIDPLUS; else a plain EXPUNGE (also removes other messages already
+  // marked \Deleted in that folder, as every client does there).
+  async function expungeSet(set, caps) {
+    await conn.run(["UID STORE " + set + " +FLAGS.SILENT (\\Deleted)"]);
+    if (caps.indexOf("UIDPLUS") >= 0) await conn.run(["UID EXPUNGE " + set]);
+    else await conn.run(["EXPUNGE"]);
+  }
+
   function fetchItems(untagged) {
     const out = [];
     untagged.forEach((u) => {
@@ -377,34 +415,10 @@ function makeApi(conn) {
       const limit = Math.max(1, Math.min(200, opts.limit || 50));
       const info = await select(folder, false);
       let all = [];
-      if (info.exists > 0) {
-        const s = await conn.run(["UID SEARCH ALL"]);
-        s.untagged.forEach((u) => {
-          const m = /^\* SEARCH ?(.*)\r\n$/i.exec(u);
-          if (m && m[1]) m[1].trim().split(/\s+/).forEach((x) => { const v = +x; if (v > 0) all.push(v); });
-        });
-      }
-      all.sort((a, b) => a - b);
+      if (info.exists > 0) all = searchUids((await conn.run(["UID SEARCH ALL"])).untagged);
       const pool = opts.beforeUid ? all.filter((u) => u < opts.beforeUid) : all;
       const want = pool.slice(-limit);
-      const msgs = [];
-      if (want.length) {
-        const r = await conn.run(["UID FETCH " + compressUids(want) +
-          " (UID FLAGS INTERNALDATE RFC822.SIZE BODY.PEEK[HEADER.FIELDS (" + HDR_FIELDS + ")])"]);
-        fetchItems(r.untagged).forEach((it) => {
-          const uid = +it.UID;
-          if (!(uid > 0)) return;
-          let hdr = "";
-          Object.keys(it).forEach((k) => { if (k.indexOf("BODY[HEADER") === 0) hdr = it[k] || ""; });
-          msgs.push({
-            uid,
-            flags: Array.isArray(it.FLAGS) ? it.FLAGS.map(String) : [],
-            date: it.INTERNALDATE || "",
-            size: +it["RFC822.SIZE"] || 0,
-            hdr: binToB64(hdr)
-          });
-        });
-      }
+      const msgs = await heads(want);
       const flags = {};
       const allSet = {};
       all.forEach((u) => { allSet[u] = 1; });
@@ -415,7 +429,6 @@ function makeApi(conn) {
           if (+it.UID > 0) flags[+it.UID] = Array.isArray(it.FLAGS) ? it.FLAGS.map(String) : [];
         });
       }
-      msgs.sort((a, b) => b.uid - a.uid);
       return {
         uidvalidity: info.uidvalidity, exists: info.exists,
         uids: compressUids(all), msgs, flags,
@@ -445,6 +458,58 @@ function makeApi(conn) {
       if (a.length) await conn.run(["UID STORE " + set + " +FLAGS.SILENT (" + a.join(" ") + ")"]);
       if (r.length) await conn.run(["UID STORE " + set + " -FLAGS.SILENT (" + r.join(" ") + ")"]);
       return { uidvalidity: info.uidvalidity };
+    },
+
+    // Moves messages to `to` (UID MOVE, RFC 6851; else COPY + expunge).
+    async move(folder, uids, to) {
+      const info = await select(folder, true);
+      const caps = await capability(conn);
+      const set = compressUids(uids);
+      if (caps.indexOf("MOVE") >= 0) await conn.run(["UID MOVE " + set + " ", arg(to, true)]);
+      else {
+        await conn.run(["UID COPY " + set + " ", arg(to, true)]);
+        await expungeSet(set, caps);
+      }
+      return { uidvalidity: info.uidvalidity };
+    },
+
+    // Deletes messages for good (used in Trash / Spam, or with no Trash).
+    async expunge(folder, uids) {
+      const info = await select(folder, true);
+      const caps = await capability(conn);
+      await expungeSet(compressUids(uids), caps);
+      return { uidvalidity: info.uidvalidity };
+    },
+
+    // Creates a folder (e.g. Archive when the account has none).
+    async create(folder) {
+      const r = await conn.run(["CREATE ", arg(folder, true)], { allowNo: true });
+      // NO [ALREADYEXISTS] is fine: the folder is there.
+      if (r.status !== "OK" && !/ALREADYEXISTS|exist/i.test(r.text)) throw new ImapError("no", r.text);
+      return { ok: true };
+    },
+
+    // Server-side search in one folder: words in the whole message
+    // (TEXT), or in From / Subject only. Returns every matching UID
+    // and the headers of the newest `limit`.
+    async search(folder, q, where, limit) {
+      const info = await select(folder, false);
+      const key = where === "from" ? "FROM" : (where === "subject" ? "SUBJECT" : "TEXT");
+      const words = String(q).trim().split(/\s+/).filter(Boolean).slice(0, 6);
+      const crit = [];
+      words.forEach((w) => { crit.push(" " + key + " "); crit.push(arg(w)); });
+      const utf8 = /[^\x00-\x7f]/.test(q);
+      let r;
+      try {
+        r = await conn.run([utf8 ? "UID SEARCH CHARSET UTF-8" : "UID SEARCH"].concat(crit));
+      } catch (e) {
+        if (!utf8 || e.code !== "no") throw e;
+        throw new ImapError("no", "the server cannot search for these characters");
+      }
+      const all = info.exists > 0 ? searchUids(r.untagged) : [];
+      const want = all.slice(-Math.max(1, Math.min(100, limit || 50)));
+      return { uidvalidity: info.uidvalidity, uids: compressUids(all.slice(-2000)), total: all.length,
+               msgs: await heads(want) };
     },
 
     // Stores a message (binary string) in `folder`, e.g. a copy of a

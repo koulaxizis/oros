@@ -13,6 +13,9 @@
      8. Dialogs — centered (R32)
      9. Toast + screen-reader helper
     10. Reduced motion
+    11. Organise: actions, selection, swipe
+    12. Sender check and suspicious links
+    13. Rules
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -583,3 +586,90 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
   #side { transition: none; }
   .icon-btn.spin svg { animation: none; }
 }
+
+/* ---------- 11. Organise: actions, selection, swipe ---------- */
+.org-acts { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.org-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+.org-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.org-btn.on { color: var(--accent); }
+.org-btn.danger { color: var(--danger); }
+.org-btn svg { flex-shrink: 0; }
+.list-head #sel-btn { margin-left: auto; flex-shrink: 0; }
+.sel-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.sel-bar[hidden] { display: none; }
+.sel-all { width: 20px; height: 20px; accent-color: var(--accent); }
+.sel-count { font-size: 13px; font-weight: 700; flex: 1 1 auto; min-width: 0; }
+.sel-acts { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.row-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: 7px;
+  border-radius: 6px;
+  border: 2px solid var(--text-dim);
+}
+.row-check.on { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 3px var(--panel-bg); }
+.row { touch-action: pan-y; transition: transform 0.12s ease; }
+.row.swipe-r { box-shadow: inset 4px 0 0 var(--accent); }
+.row.swipe-l { box-shadow: inset -4px 0 0 var(--danger); }
+.move-list { list-style: none; max-height: 50vh; overflow-y: auto; }
+.move-list .folder { width: 100%; }
+#toast.act { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+
+/* ---------- 12. Sender check and suspicious links (trust.js) ---------- */
+.trust-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 1px 7px 1px 5px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3fae64;
+  background: rgba(63, 174, 100, .15);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.bar.warn {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  color: var(--text);
+  background: rgba(200, 40, 40, .09);
+  border-color: rgba(200, 40, 40, .45);
+}
+.bar.warn strong { color: var(--danger); }
+.sus-list { margin: 0; padding-left: 18px; overflow-wrap: anywhere; }
+.plain a.sus { color: var(--danger); text-decoration: underline wavy; }
+
+/* ---------- 13. Rules ---------- */
+.rule-list li { align-items: center; }
+.rule-on { display: inline-flex; align-items: center; padding: 4px; }
+.rule-on input { width: 18px; height: 18px; accent-color: var(--accent); }
+.rule-list .set-acct-name { white-space: normal; font-weight: 600; overflow-wrap: anywhere; }

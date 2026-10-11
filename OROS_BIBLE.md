@@ -667,7 +667,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Calculator** | oros-calculator-data | hist union + tombs; scalars ⚠ | v1.3.0 [log]; ⚠ sync audit pending (A2) |
 | **Maps** | oros-maps-data | place union by id + LWW + tombs, canonical (R26) | Audit Doses 1–3 delivered 2026-10-04 → deploy + 2-device smoke test pending |
 | **Television** | oros-television-data | channel-id union + LWW + tombs (Radio mirror) + shell proxy slice | **ON HOLD** (Christos, 2026-10-05: it has several problems; revisit when the audit reaches it). Last note: v0.3 (Wave 3) [log] |
-| **Mail** | oros-mail-data (+ device-local `oros-mail-prefs`, IndexedDB `oros-mail`) | account / image-permission LWW + tombs, canonical (R26) | **Phase 1 (0.46.00):** relay (`relay/`, Cloudflare Worker, IMAP only) + reading. **Phase 2 (0.66.00):** write / reply / forward / send (relay `smtp.js`, ops `smtpcheck`, `send`, IMAP `append`), signature, offline Outbox, compose deep link. Phases 3–5 (organisation, attachments into Files, integrations) wait for the owner. Plan: `mail-plan.md` (project files) |
+| **Mail** | oros-mail-data (+ device-local `oros-mail-prefs`, IndexedDB `oros-mail`) | account / image-permission LWW + tombs, canonical (R26) | **Phase 1 (0.46.00):** relay (`relay/`, Cloudflare Worker, IMAP only) + reading. **Phase 2 (0.66.00):** write / reply / forward / send (relay `smtp.js`, ops `smtpcheck`, `send`, IMAP `append`), signature, offline Outbox, compose deep link. **Phase 3 (0.69.00):** organise (archive, delete+Undo, move, spam, star, read/unread, multi-select, swipe; relay ops `move`, `expunge`, `create`, `search`) + device-only `mail/trust.js` (verified-sender badge, Careful box, misleading-link list) + device rules `mail/rules.js` (`data.rules`, LWW + tombs, applied by `notify.js`). Phases 4–5 (attachments into Files, integrations) wait for the owner. Plan: `mail-plan.md` (project files) |
 | Notifications (shell) | oros-notifs | per-field LWW | Core done |
 | Screen Pet (shell) | oros-pet-data / oros-pet-events / oros-pet-settings | field-LWW / union by id + clearedAt / field-LWW | v0.3.2 full sync; smoke test pending |
 | Vault Drive (core) | cloud `/vault/*` (not a slice) | encrypted manifest + content-addressed objects | v0.1.1 [log]; Dropbox only |
@@ -4520,3 +4520,20 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-10 — Help: Calendar guide lists every chip (#159) — 0.68.01
 - The Calendar help (EN/EL) now lists the Moon & Sky, Holidays, Name days and World days chips, and explains which hidden chips are remembered (sticky and opt-in feeds).
 - Help text only. Tests: tests/help.test.js green.
+
+### 2026-10-11 — Dock: magnify without overlap + hover effects (#160) — 0.68.02
+- Dock magnification now makes room for the enlarged icon instead of covering its neighbours.
+- New hover effects for Dock icons (bounce, pulse, frame, glow, lift, wiggle), chosen in Settings > Dock > Hover.
+- Merged without a stamp; version and changelog added in the release PR. Tests: tests/settings.test.js green.
+
+### 2026-10-11 — Mail: new-mail notifications while orOS is open (#161) — 0.68.03
+- Mail checks the inbox while orOS is open and shows a notice for new messages (Settings > Notifications > Mail).
+- mail/notify.js added to the sw.js precache. Tests: tests/mail-notify.test.js green.
+- Not tested: a real pmail.gr inbox receiving new mail.
+
+### 2026-10-11 — Mail: organise messages + sender check and suspicious-link warnings (#163) — 0.69.00
+- Archive, Delete (Delete for good in Trash/Spam), Spam / Not spam, Star, Read/Unread and Move to… on an open message; Select mode for many messages; swipe right to archive, left to delete; keys e, Del/#, !, s, u, v. Moves show Undo for 6 s and flush on page close.
+- Relay ops move (UID MOVE or COPY+\Deleted+EXPUNGE), expunge, create, search (TEXT/FROM/SUBJECT, UTF-8 literals). Archive creates INBOX.Archive when missing.
+- New mail/trust.js (device-only): "Verified sender" badge from the receiving server's Authentication-Results (forged passes ignored), "Careful" box on failures or display-name tricks, "Links that may mislead" list (text/host mismatch, look-alikes, punycode, bare IPs, user@host). Precached.
+- Device rules (filters, new pure mail/rules.js, synced as data.rules in the mail slice): sender/recipient/subject contains words → move, mark read or star; applied by the shell new-mail checker before notices; "Create a rule…" under a message. Precached.
+- Tests: tests/mail-trust.test.js and relay tests (with and without MOVE/UIDPLUS); Playwright E2E at 360px with mocked relay. Not tested: a real Papaki server.

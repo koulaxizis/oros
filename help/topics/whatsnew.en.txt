@@ -1,8 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.69.00
+- Mail: archive, delete (with Undo), move, star, mark as spam or unread, one message or many at once (swipe on a phone). A green badge shows a verified sender, and Mail warns you about forged senders and links that lead somewhere else. Rules can file, mark or star new mail by themselves.
+
 ## Version 0.68.00
 - New app Moon & Sky (Accessories): tonight's Moon, a sky map with the constellations, a month view and a red night view. Calendar can show Moon phases, solstices, meteor showers and eclipses (turn the chip on).
+- Dock: magnified icons no longer cover their neighbours, and you can pick a hover effect (bounce, pulse, frame, glow, lift, wiggle) in Settings > Dock.
+- Mail: a notice for new messages while orOS is open (turn it on in Settings > Notifications).
 
 ## Version 0.67.00
 - Assistant: it can now prepare entries (a task, an event, an expense, a quote, a sheet, slides, a bookmark or a note) for you to check and save in that app, read a whole item when you allow it, and keep your conversations on all your devices (optional, encrypted). Ask it from the menu search or with Ctrl+Alt+Shift+A.

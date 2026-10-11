@@ -6,8 +6,10 @@
 // sandboxed iframe (no scripts, opaque origin, CSP) — the second
 // wall (mail.js, renderHtml). Either wall alone must hold.
 //
-// window.orosMailSanitize(html, { remote: bool, cids: {cid: dataUrl} })
-//   → { html, blocked }   blocked = remote resources left out
+// window.orosMailSanitize(html, { remote: bool, cids: {cid: dataUrl}, linkCheck?: fn(text, href) })
+//   → { html, blocked, links }   blocked = remote resources left out;
+//   links = [{ text, href, code, host, shown }] flagged by linkCheck
+//   (trust.js link()); each one also gets a "⚠ real-host" mark after it
 // ============================================================
 (function () {
   "use strict";
@@ -111,12 +113,25 @@
       }
       copy(c, n, doc, ctx);
       out.appendChild(n);
+      if (tag === "A" && n.getAttribute("href") && ctx.linkCheck) {
+        var txt = String(c.textContent || "").replace(/\s+/g, " ").trim();
+        var bad = null;
+        try { bad = ctx.linkCheck(txt, n.getAttribute("href")); } catch (e) {}
+        if (bad) {
+          if (ctx.links.length < 50) ctx.links.push({ text: txt.slice(0, 200), href: n.getAttribute("href"), code: bad.code, host: bad.host, shown: bad.shown });
+          var w = doc.createElement("span");
+          w.setAttribute("style", "color:#b00020;background:#fff0f0;font-weight:bold;padding:0 3px;border-radius:3px");
+          w.textContent = " \u26a0 " + bad.host;
+          out.appendChild(w);
+        }
+      }
     }
   }
 
   window.orosMailSanitize = function (html, opts) {
     opts = opts || {};
-    var ctx = { remote: !!opts.remote, cids: opts.cids || {}, blocked: 0 };
+    var ctx = { remote: !!opts.remote, cids: opts.cids || {}, blocked: 0,
+                linkCheck: typeof opts.linkCheck === "function" ? opts.linkCheck : null, links: [] };
     var src = new DOMParser().parseFromString(String(html || ""), "text/html");
     var doc = document.implementation.createHTMLDocument("");
     var box = doc.createElement("div");
@@ -130,6 +145,6 @@
     var bg = body && body.getAttribute && body.getAttribute("bgcolor");
     copy(body, box, doc, ctx);
     if (bg && /^#?[0-9a-z]{3,20}$/i.test(bg)) box.setAttribute("style", "background-color:" + bg);
-    return { html: box.outerHTML, blocked: ctx.blocked };
+    return { html: box.outerHTML, blocked: ctx.blocked, links: ctx.links };
   };
 })();
