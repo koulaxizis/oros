@@ -34,8 +34,14 @@
              data-i18n-ph="cal.search.ph">
     </div>
 
-    <!-- ===== Label filter chips ===== -->
-    <div id="lbl-chips"></div>
+    <!-- ===== Label filter chips =====
+         Phones: folded behind one toggle (many chips filled the
+         screen). Desktop: chips stay inline, toggle hidden. -->
+    <div id="lbl-bar">
+      <button id="lbl-toggle" type="button" aria-expanded="false"
+              aria-controls="lbl-chips"></button>
+      <div id="lbl-chips"></div>
+    </div>
 
     <!-- ===== Month view ===== -->
     <div id="cal-wd"></div>
