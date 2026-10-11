@@ -48,7 +48,7 @@ Your events and labels sync between your devices through [orOS sync](help:t/sync
 
 `Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows aren't included.
 
-`Import`, next to `Export`, reads a .ics file from Google Calendar, Outlook, your phone or another orOS Calendar. Before anything is saved you see how many events are new, updated or already in the Calendar, and you choose `Import` or `Cancel`. Importing the same file again updates those events instead of adding copies. A category in the file is matched to one of your labels with the same name; no new labels are made. Cancelled events are skipped.
+`Import`, next to `Export`, reads a .ics file from Google Calendar, Outlook, your phone or another orOS Calendar. Before anything is saved you see how many events are new, updated or already in the Calendar, and you choose `Import` or `Cancel`. Importing the same file again updates those events instead of adding copies. A category in the file is matched to one of your labels with the same name; no new labels are made. Cancelled events are skipped. With orOS installed on a computer you can also open a .ics file straight from your device with `Open with`; see [opening files](help:t/install).
 
 For a full copy, see [backup](help:t/backup).
 
