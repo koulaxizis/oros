@@ -1509,6 +1509,16 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - **BR-TD-ADD-5 · Travel sender (0.60.02, #133).** Trip menu items "Send "Before I leave" to To-Do" and "Send "Still to pack" to To-Do", shown only when the bridge exists and the list has open items: `newList` = "<trip> · before I leave" / "<trip> · to pack" (≤ 60 chars), `from` = Travel, `items` = the open (not done) packing items of the `@before` group or of all other groups (≤ 200): `text` = name or "n × name" when qty > 1, `note` = who · note. A copy, not a live link; Travel data is not changed.
 - **BR-TD-ADD-6 · Garage sender (0.61.02, #140).** "→ To-Do" in the head of Overview's "Coming up" sends every row shown there (alerts first, then the next renewals / service items, up to 5); a "To-Do" button in the renewal and service-plan editors sends that one. No `list` (To-Do's open list), `from` = Garage / Γκαράζ. `text`: KTEO "Book the KTEO test · <vehicle>", other renewals "Renew <what> · <vehicle>", service "Book a service: <item> · <vehicle>", tyres "Replace tyres: <set> · <vehicle>". `note` = "Garage · expires <date>" (or the due date / km) · provider · reference · plate. Shown only when `__orosOpenAt` exists. Garage data is not changed.
 
+### Today summary: apps → Today (BR-TODAY)
+
+- **BR-TODAY-1 · Provider.** An app with something dated ships `<app>/today.js` and names it in apps.json: `"today": "today.js"` (or a list of at most 4 files of that folder, loaded in order). The shell (`today/host.js`) loads it the first time a summary is built. The file pushes ONE object onto `window.orosTodayProviders`: `{ id, keys: [storage keys it reads], collect(ctx) → [row] | Promise, open?(target, win) }`; under Node it is `module.exports` (tests/today.test.js runs every provider against its app's real core).
+- **BR-TODAY-2 · Rows.** `{ id, due: "YYYY-MM-DD"|null, time: "HH:MM"|null, title, text, kind: "task"|"event"|"info", target }`. `today/agg.js` cleans them (plain text, title ≤ 160, text ≤ 240, target JSON ≤ 500 chars) and groups them: info lines (today only), Overdue (tasks only; a past event is gone, not late), Today (timed first), Coming up (next 3 days). At most 50 rows of one app per group, the rest is a count.
+- **BR-TODAY-3 · Read-only.** A provider never writes storage, never talks to sync, never fetches. `ctx = { today, horizon, now, lang, readJSON(key), readRaw(key), addDays, diff }`. The date logic stays in the app's own core. A provider that throws or answers after 1 s is left out of that summary.
+- **BR-TODAY-4 · The notice.** One `orosNotifs.emit({ ns: "today", key: "day-<ymd>", type: "reminder", deepLink: "today:<ymd>" })` a day, numbers only, only when Overdue + Today > 0. Built from the start hour (slice `hour`, default 6, 0–12), after the unlock and the first sync merge (`settled`: no cloud → at once; locked → never; else after a pull, 2 min after a failure / offline boot, 10 min with no answer). Device-local `oros-today-local {last, sent}` stops a second build; the inbox dedup (ns:key) stops a second device. An empty day retries after 30 min or after new synced data.
+- **BR-TODAY-5 · Morning reminders.** `orosToday.absorbs(ns)` (shell `todayAbsorbs`) keeps the shell's own morning reminders of the apps in the summary quiet (calendar name days, garage, petcare (doses still ring), plants, chores, weather briefing) when the "quiet" setting is on: quiet once today's notice is in the inbox; held while it is being built (≤ 10 min after boot); released on an empty day, with Today off, the app switched off, or Today not registered.
+- **BR-TODAY-6 · Assistant.** The row button only pre-fills `__orosOpenAt("assistant", {ask})` (≤ 2000 chars) and shows only when the Assistant is set up and `OrosAssistCore.permFor` gives "ask" or "always" for that app. NEVER_APPS unchanged. Mail is not a provider in wave 1.
+- **BR-TODAY-7 · Settings slice "today"** (`oros-today-data`, registered with a null storage key, always live in the shell): `{ ver, on, hour, absorb, apps: { id: {v, m} } }`, each field `{v, m}`, newest m wins, a tie goes to the larger JSON (R5), canonical order (R26), stamped only on a real change (R27). Cycle and Mood are off by default (sensitive); every app can be switched either way (Chris 2026-10-11).
+
 ### `LABEL_COLORS` (shared, 8)
 
 `#e06c75 #ecc75f #87cf3e #4fc4cf #6d4aff #e09ecf #f28c5a #9aa4b0`
@@ -1712,6 +1722,12 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-11 · Chris (Today / Σήμερα, plan /mnt/project-files/today/today-plan.md: "Ναι σε όλα, με μία διευκρίνηση: Να υπάρχει δυνατότητα να συμπεριληφθούν και οι «ευαίσθητες» εφαρμογές αν το θέλει ο χρήστης.")**
+  - New System app `today/`, one daily notice in the bell; local only, no AI, no network. Contract: Part VI "Today summary" (BR-TODAY).
+  - Absorbs the morning reminders it covers (setting, on by default). Mail: unread counts only, no Assistant button (wave 2). Calendar events, To-Do and "Done" (opens the app) in wave 2.
+  - Sensitive apps: Health, Baby, Budget on by default; Cycle and Mood off; the user can switch any of them on or off. Kanban later leaves out its last column. Offline grace 2 min. Shortcut Ctrl+Alt+Shift+Y.
+  - Weather briefing fix in the same PR: it reads only today's daily row and skips a cache older than 24 h.
 
 - **2026-10-09 · Chris (Favourites: desktop shortcuts + Dock, plan /mnt/project-files/launcher/launcher-plan.md: "Συμφωνώ απόλυτα με το πλάνο σου! Προχώρα!")**
   - A star next to every app in the menu adds it to the orOS desktop and / or a mac-style Dock. The Dock has its own settings in the menu and is off until turned on.

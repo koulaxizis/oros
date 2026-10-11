@@ -234,20 +234,28 @@
   }
 
   // Should the shell's own morning reminder for `ns` stay quiet?
-  // Only once today's summary notice is in the inbox, it is on, the
-  // "quiet the morning reminders" setting is on and that app is in
-  // the summary. Everything else (Today off, an empty day, a locked
-  // device, notices switched off) leaves the old reminder as it was.
+  // Only when Today is on, the "quiet the morning reminders" setting is
+  // on and that app is in the summary, and then:
+  //   - today's summary notice is in the inbox → quiet;
+  //   - today is decided without a notice (empty day, notices off) → ring;
+  //   - not decided yet, from the start hour on → hold (the reminder
+  //     engines simply try again on a later tick), while the summary is
+  //     being built or is about to be, and never longer than
+  //     SYNC_WAIT_MS after the boot (a locked device does not hold the
+  //     reminders back for good).
   function absorbs(ns) {
     ns = String(ns || "");
     if (!A.ID_RE.test(ns)) return false;
-    var local = readLocal();
-    if (!local.sent || local.last !== A.ymdOf(new Date())) return false;
     var data = read();
-    if (!data.on.v || !data.absorb.v || !A.appOn(data, ns)) return false;
-    var list = todayApps();
-    for (var i = 0; i < list.length; i++) if (list[i].id === ns) return true;
-    return false;
+    if (!data.on.v || !data.absorb.v || !A.appOn(data, ns) || !registered()) return false;
+    var mine = false, list = todayApps();
+    for (var i = 0; i < list.length; i++) if (list[i].id === ns) mine = true;
+    if (!mine) return false;
+    var now = Date.now(), d = new Date(now), today = A.ymdOf(d), local = readLocal();
+    if (local.last === today) return local.sent;
+    if (d.getHours() < data.hour.v) return false;
+    if (emptyAt && A.ymdOf(new Date(emptyAt)) === today) return false;   // nothing to say today (yet)
+    return !!building || now - bootAt < A.SYNC_WAIT_MS;
   }
 
   function onChange(fn) {

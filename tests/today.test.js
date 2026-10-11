@@ -507,3 +507,80 @@ test("time: today's later alarms; timers and other days left out", () => {
   assert.deepEqual(P.time.collect(ctx({}, "2026-10-11", now)), []);
   delete globalThis.orosAlarms;
 });
+
+// ---------------------------------------------------------------
+// Shell side (today/host.js) in a fake shell window
+// ---------------------------------------------------------------
+
+function fakeShell(opts) {
+  const vm = require("vm"), fs = require("fs");
+  const store = new Map(Object.entries(opts.store || {}));
+  const items = [];
+  const win = {
+    OrosTodayAgg: A, orosTodayProviders: [],
+    localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) },
+    document: { createElement: () => ({}), head: { appendChild: (s) => setTimeout(() => s.onload && s.onload(), 0) } },
+    navigator: { onLine: true },
+    setTimeout, clearTimeout, Date, JSON, Math, Promise, String, Object, Array,
+    orosTodayEnv: { apps: () => opts.apps, version: "", lang: () => "en", icon: () => "" },
+    orosSync: { registerSlice: () => {}, onAutoSync: () => {}, isConnected: () => false, hasPassphrase: () => true, markDirty: () => {} },
+    orosNotifs: {
+      emit: (n) => { const k = n.ns + ":" + n.key; if (items.some((i) => i.dedupKey === k)) return null; items.push(Object.assign({ dedupKey: k }, n)); return "id" + items.length; },
+      getSlice: () => ({ items })
+    }
+  };
+  win.window = win;
+  vm.createContext(win);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "today/host.js"), "utf8"), win);
+  return { win, store, items, T: win.orosToday };
+}
+const flush = () => new Promise((r) => setTimeout(r, 30));
+
+test("host: notice once a day; morning reminders held, then quiet or released", async () => {
+  const apps = [{ id: "today", type: "internal", url: "today/" }, { id: "plants", type: "internal", url: "plants/", today: "today.js" },
+                { id: "garage", type: "internal", url: "garage/", today: "today.js" }];
+  const hourOk = { "oros-today-data": JSON.stringify({ hour: { v: 0, m: 1 } }) };
+  // a day with something late
+  let s = fakeShell({ apps, store: hourOk });
+  s.win.orosTodayProviders.push({ id: "plants", collect: () => [{ id: "a", title: "Basil: water", due: "2000-01-01" }] });
+  assert.equal(s.T.absorbs("plants"), true);          // not decided yet: held
+  assert.equal(s.T.absorbs("weather"), false);        // no provider: never held
+  s.T.tick(); await flush();
+  assert.equal(s.items.length, 1);
+  assert.equal(s.items[0].dedupKey, "today:day-" + A.ymdOf(new Date()));
+  assert.equal(s.items[0].body, "1 overdue");
+  assert.equal(s.T.absorbs("plants"), true);          // in the inbox: quiet
+  s.T.tick(); await flush();
+  assert.equal(s.items.length, 1);                    // once a day
+  // an empty day: nothing sent, the old reminders ring
+  s = fakeShell({ apps, store: hourOk });
+  s.win.orosTodayProviders.push({ id: "plants", collect: () => [] });
+  s.T.tick(); await flush();
+  assert.equal(s.items.length, 0);
+  assert.equal(s.T.absorbs("plants"), false);
+  // the setting off, or the app out of the summary: never held
+  s = fakeShell({ apps, store: { "oros-today-data": JSON.stringify({ hour: { v: 0, m: 1 }, absorb: { v: false, m: 1 } }) } });
+  assert.equal(s.T.absorbs("plants"), false);
+  s = fakeShell({ apps, store: { "oros-today-data": JSON.stringify({ hour: { v: 0, m: 1 }, apps: { garage: { v: false, m: 1 } } }) } });
+  assert.equal(s.T.absorbs("garage"), false);
+  assert.equal(s.T.absorbs("plants"), true);
+  // Today not registered: nothing changes for the old reminders
+  s = fakeShell({ apps: apps.slice(1), store: hourOk });
+  assert.equal(s.T.absorbs("plants"), false);
+  s.T.tick(); await flush();
+  assert.equal(s.items.length, 0);
+});
+
+test("host: a device that is locked never announces", async () => {
+  const apps = [{ id: "today", type: "internal", url: "today/" }, { id: "plants", type: "internal", url: "plants/", today: "today.js" }];
+  const s = fakeShell({ apps, store: { "oros-today-data": JSON.stringify({ hour: { v: 0, m: 1 } }) } });
+  s.win.orosSync.isConnected = () => true;
+  s.win.orosSync.hasPassphrase = () => false;
+  s.win.orosTodayProviders.push({ id: "plants", collect: () => [{ title: "x" }] });
+  s.T.tick(); await flush();
+  assert.equal(s.items.length, 0);
+  s.T.syncSettled(true);                                // unlocked + pulled
+  s.win.orosSync.hasPassphrase = () => true;
+  s.T.tick(); await flush();
+  assert.equal(s.items.length, 1);
+});
