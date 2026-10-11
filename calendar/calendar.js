@@ -93,6 +93,7 @@
       "ev.cancel": "Cancel",
       "ev.delete": "Delete event",
       "ev.qr": "QR code",
+      "ev.mail": "Email",
       "ev.delete.confirm": "Delete this event?",
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
@@ -241,6 +242,7 @@
       "ev.cancel": "Άκυρο",
       "ev.delete": "Διαγραφή συμβάντος",
       "ev.qr": "Κωδικός QR",
+      "ev.mail": "Email",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
@@ -3156,6 +3158,39 @@ function transientNote(title, body) {
     });
   }
 
+  // Mail: "Email" writes a message about the SAVED event (orOS Mail
+  // compose receiver: a prefilled draft, never sent by itself). To =
+  // the addresses written in the event; shown only when Mail has an
+  // account on this device.
+  var dlgMail = null;
+  function mailReady() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      return !!(d && Array.isArray(d.accounts) && d.accounts.length);
+    } catch (e) { return false; }
+  }
+  function mailFromEvent(ev, ymd) {
+    var loc = LANG === "el" ? "el-GR" : "en-GB";
+    var when = new Date(dparse(ymd)).toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    if (ev.start) when += ", " + ev.start + (ev.end ? "\u2013" + ev.end : "");
+    var lines = [ev.title, when];
+    if (ev.location) lines.push(ev.location);
+    if (ev.note) lines.push("", ev.note);
+    var seen = {}, to = [];
+    String([ev.title, ev.location, ev.note].join(" ")).replace(/[^\s<>(),;:"']+@[^\s<>(),;:"']+\.[a-z]{2,}/gi, function (a) {
+      if (!seen[a.toLowerCase()] && to.length < 50) { seen[a.toLowerCase()] = 1; to.push(a); }
+    });
+    return { compose: { to: to.join(", "), subject: String(ev.title || "").slice(0, 300), body: lines.join("\n").slice(0, 20000) } };
+  }
+  if ($("ev-mail")) {
+    $("ev-mail").addEventListener("click", function () {
+      var p = shellOpenAt(), target = dlgMail;
+      if (!p || !target) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      p.__orosOpenAt("mail", target);
+    });
+  }
+
   function openDlg(existing, mode) {
     dlgMode = mode || null;
     if (mode !== "occ") pendingOverride = null;   // kept by openDlgOccurrence
@@ -3219,6 +3254,10 @@ function transientNote(title, body) {
     if (dlgQr && mode === "occ" && pendingOverride) dlgQr.date = pendingOverride.occYmd;
     var qrBtn = $("ev-qr");
     if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
+    dlgMail = existing && shellOpenAt() && mailReady()
+      ? mailFromEvent(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : existing.date) : null;
+    var mailBtn = $("ev-mail");
+    if (mailBtn) mailBtn.hidden = !dlgMail;
     // CA-8: what the dialog showed at open — a pull may update every
     // field the user has not touched since.
     dlgBase = (existing && mode !== "occ") ? {
