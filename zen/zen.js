@@ -1,7 +1,8 @@
 // ============================================================
 // orOS Micro-Zen — App logic (v1.0.0)
 // A breathing circle and a minute of quiet.
-//   - three patterns: Box 4-4-4-4, Relax 4-7-8, Coherent 5.5
+//   - three patterns: Box 4-4-4-4, Relax 4-7-8, Coherent 5.5, plus
+//     up to 12 of my own (name + in / hold / out / hold), synced
 //   - sessions of 1, 3, 5 or 10 minutes, always ending on a whole
 //     breath; a 3-2-1 countdown; paused when the app is hidden
 //   - the circle grows on the in-breath, rests on a hold and shrinks
@@ -12,6 +13,8 @@
 //   - synced slice "zen" (oros-zen-data): per-device rows of
 //     per-day [sessions, seconds, breaths], join + reset stamp br,
 //     canonical (R5, R26)
+//   - synced slice "zenpat" (oros-zen-patterns, zen/core.js): my
+//     patterns + "Show in Habits" (the Habits feed row, on by default)
 //   - device-local (R10): oros-zen-prefs (pattern, minutes, sound,
 //     vibration), oros-zen-device
 // Sections:
@@ -68,7 +71,15 @@
       "confirm.yes": "Reset", "confirm.no": "Cancel",
       "toast.reset": "Stats reset", "toast.short": "Too short to count: finish one whole breath",
       "toast.save": "Could not save: storage is full", "toast.locked": "Pause first",
-      "toast.ended": "Session ended"
+      "toast.ended": "Session ended",
+      "btn.newPat": "My pattern", "btn.editPat": "Edit this pattern",
+      "dlg.patNew": "New breathing pattern", "dlg.patEdit": "Edit pattern",
+      "f.name": "Name", "f.in": "Breathe in", "f.hold1": "Hold (full)", "f.out": "Breathe out", "f.hold2": "Hold (empty)",
+      "f.sec": "seconds", "pat.preview": "{l} · {s} seconds a breath", "pat.mine.sub": "{l} · mine",
+      "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete",
+      "toast.patSaved": "Pattern saved", "toast.patDeleted": "Pattern deleted", "toast.undo": "Undo",
+      "toast.needName": "Give the pattern a name", "toast.maxPats": "Up to {n} patterns of your own",
+      "hb.on": "Show in Habits", "hb.hint": "Days with a finished session get a tick in the Habits app, on all your devices."
     },
     el: {
       "pat.box": "Κουτί", "pat.relax": "Χαλάρωση", "pat.coherent": "Σταθερή",
@@ -87,7 +98,15 @@
       "confirm.yes": "Επαναφορά", "confirm.no": "Άκυρο",
       "toast.reset": "Τα στατιστικά μηδενίστηκαν", "toast.short": "Πολύ σύντομη για να μετρήσει: ολοκλήρωσε μία ανάσα",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.locked": "Κάνε πρώτα παύση",
-      "toast.ended": "Η συνεδρία τελείωσε"
+      "toast.ended": "Η συνεδρία τελείωσε",
+      "btn.newPat": "Δικό μου μοτίβο", "btn.editPat": "Επεξεργασία μοτίβου",
+      "dlg.patNew": "Νέο μοτίβο αναπνοής", "dlg.patEdit": "Επεξεργασία μοτίβου",
+      "f.name": "Όνομα", "f.in": "Εισπνοή", "f.hold1": "Κράτα (γεμάτα)", "f.out": "Εκπνοή", "f.hold2": "Κράτα (άδεια)",
+      "f.sec": "δευτερόλεπτα", "pat.preview": "{l} · {s} δευτερόλεπτα η ανάσα", "pat.mine.sub": "{l} · δικό μου",
+      "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή",
+      "toast.patSaved": "Το μοτίβο αποθηκεύτηκε", "toast.patDeleted": "Το μοτίβο διαγράφηκε", "toast.undo": "Αναίρεση",
+      "toast.needName": "Δώσε όνομα στο μοτίβο", "toast.maxPats": "Έως {n} δικά σου μοτίβα",
+      "hb.on": "Εμφάνιση στις Συνήθειες", "hb.hint": "Οι μέρες με ολοκληρωμένη συνεδρία τσεκάρονται στην εφαρμογή Συνήθειες, σε όλες τις συσκευές σου."
     }
   };
 
@@ -123,6 +142,13 @@
     relax:    [{ k: "in", ms: 4000 }, { k: "hold", ms: 7000 }, { k: "out", ms: 8000 }],
     coherent: [{ k: "in", ms: 5500 }, { k: "out", ms: 5500 }]
   };
+
+  // My patterns join PATTERNS as "c:<id>" (zen/core.js holds the
+  // model). The pattern of a running session stays until it ends.
+  function syncCustom(pats, keep) {
+    Object.keys(PATTERNS).forEach(function (k) { if (k.indexOf("c:") === 0 && k !== keep) delete PATTERNS[k]; });
+    (pats || []).forEach(function (pt) { PATTERNS["c:" + pt.id] = window.ZenCore.phasesOf(pt); });
+  }
 
   function cycleMs(id) {
     return PATTERNS[id].reduce(function (s, p) { return s + p.ms; }, 0);
@@ -317,7 +343,7 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = (p && typeof p === "object") ? p : {};
     prefs = {
-      pat: PATTERN_IDS.indexOf(p.pat) >= 0 ? p.pat : "box",
+      pat: PATTERNS[p.pat] ? p.pat : "box",
       min: MINUTES.indexOf(p.min) >= 0 ? p.min : 3,
       sound: p.sound === 1 ? 1 : 0,
       vibe: p.vibe === 1 ? 1 : 0
@@ -326,6 +352,28 @@
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
   }
+
+  // My patterns + "Show in Habits" (slice "zenpat", zen/core.js)
+  var Z = window.ZenCore, pats = null;
+  function loadPats() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(Z.PATS_KEY) || "null"); } catch (e) {}
+    pats = Z.mergePats(raw, null);
+    syncCustom(pats.pats);
+  }
+  function savePats() {
+    pats = Z.mergePats(pats, null);
+    syncCustom(pats.pats, busy() ? S.pat : null);
+    try { localStorage.setItem(Z.PATS_KEY, JSON.stringify(pats)); } catch (e) {
+      if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }
+    }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+  function patById(id) {
+    for (var i = 0; i < pats.pats.length; i++) if (pats.pats[i].id === id) return pats.pats[i];
+    return null;
+  }
+  function patName(id) { var c = id.indexOf("c:") === 0 ? patById(id.slice(2)) : null; return c ? c.n : t("pat." + id); }
 
   // ---------- 6. Session engine ----------
   // state: idle | countdown | run | paused
@@ -559,13 +607,15 @@
   function buildPatterns() {
     var host = $("patterns");
     host.innerHTML = "";
-    PATTERN_IDS.forEach(function (id) {
-      var b = el("button", "pat");
+    var mine = pats.pats.slice().sort(function (a, b) { return a.n.localeCompare(b.n) || cmpStr(a.id, b.id); });
+    PATTERN_IDS.concat(mine.map(function (x) { return "c:" + x.id; })).forEach(function (id) {
+      var b = el("button", "pat" + (id.indexOf("c:") === 0 ? " mine" : ""));
       b.type = "button";
       b.setAttribute("data-p", id);
       b.setAttribute("role", "radio");
-      b.appendChild(el("span", "pat-name", t("pat." + id)));
-      b.appendChild(el("span", "pat-sub", t("pat." + id + ".sub")));
+      var c = id.indexOf("c:") === 0 ? patById(id.slice(2)) : null;
+      b.appendChild(el("span", "pat-name", c ? c.n : t("pat." + id)));
+      b.appendChild(el("span", "pat-sub", c ? t("pat.mine.sub", { l: Z.patLabel(c) }) : t("pat." + id + ".sub")));
       b.addEventListener("click", function () {
         if (busy()) { showToast(t("toast.locked")); return; }
         prefs.pat = id; savePrefs(); render(); paint();
@@ -620,7 +670,10 @@
     vb.hidden = !navigator.vibrate;
     vb.setAttribute("aria-pressed", prefs.vibe ? "true" : "false");
     vb.classList.toggle("on", !!prefs.vibe);
-    $("title-sub").textContent = t("pat." + (busy() ? S.pat : prefs.pat)) + " · " + t("min", { n: prefs.min });
+    $("title-sub").textContent = patName(busy() ? S.pat : prefs.pat) + " · " + t("min", { n: prefs.min });
+    $("edit-pat").hidden = busy() || prefs.pat.indexOf("c:") !== 0;
+    $("new-pat").hidden = busy();
+    $("hb-on").checked = pats.hb.on === 1;
   }
 
   function minutesText(sec) {
@@ -692,6 +745,108 @@
     again.focus();
   }
 
+  // New / edit one of my patterns.
+  function patDialog(existing) {
+    if (!existing && pats.pats.length >= Z.MAX_PATS) { showToast(t("toast.maxPats", { n: Z.MAX_PATS })); return; }
+    var dlg = makeDialog("zen-pat");
+    dlg.classList.add("pat-dlg");
+    dlg.appendChild(el("div", "dlg-title", t(existing ? "dlg.patEdit" : "dlg.patNew")));
+    var form = el("form");
+    form.method = "dialog";
+    var nl = el("label", "dlg-lbl", t("f.name"));
+    nl.setAttribute("for", "zp-name");
+    var name = el("input");
+    name.id = "zp-name";
+    name.maxLength = Z.NAME_LEN;
+    name.autocomplete = "off";
+    name.value = existing ? existing.n : "";
+    form.appendChild(nl); form.appendChild(name);
+    var grid = el("div", "pat-grid"), ins = [];
+    var vals = existing ? existing.p : [4000, 2000, 6000, 0];
+    ["f.in", "f.hold1", "f.out", "f.hold2"].forEach(function (k, i) {
+      var cell = el("div", "pat-cell");
+      var lab = el("label", "dlg-lbl", t(k));
+      lab.setAttribute("for", "zp-" + i);
+      var inp = el("input");
+      inp.id = "zp-" + i;
+      inp.type = "text";                        // text: "5,5" and "5.5" both work
+      inp.inputMode = "decimal";
+      inp.autocomplete = "off";
+      inp.maxLength = 4;
+      inp.value = String(vals[i] / 1000).replace(".", LANG === "el" ? "," : ".");
+      inp.setAttribute("aria-describedby", "zp-unit");
+      inp.addEventListener("input", preview);
+      cell.appendChild(lab); cell.appendChild(inp);
+      grid.appendChild(cell);
+      ins.push(inp);
+    });
+    form.appendChild(grid);
+    var unit = el("p", "dlg-sub", t("f.sec"));
+    unit.id = "zp-unit";
+    form.appendChild(unit);
+    var pv = el("p", "pat-preview");
+    pv.setAttribute("aria-live", "polite");
+    form.appendChild(pv);
+    function phases() { return Z.normPhases(ins.map(function (x) { return parseFloat(String(x.value).replace(",", ".")) * 1000; })); }
+    function preview() {
+      var p = phases();
+      pv.textContent = p ? t("pat.preview", { l: Z.patLabel({ p: p }), s: String(Z.cycleSec({ p: p })) }) : "";
+    }
+    preview();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    if (existing) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deletePat(existing.id); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var n = Z.normName(name.value), p = phases();
+      if (!n) { showToast(t("toast.needName")); name.focus(); return; }
+      if (!p) { ins[0].focus(); return; }
+      var id;
+      if (existing) {
+        var cur = patById(existing.id);
+        if (!cur) { dlg.close(); return; }
+        cur.n = n; cur.p = p; cur.m = Math.max(Date.now(), cur.m + 1);
+        id = cur.id;
+      } else {
+        var r = new Uint32Array(2);
+        crypto.getRandomValues(r);
+        id = Date.now().toString(36) + r[0].toString(36) + r[1].toString(36).slice(0, 4);
+        pats.pats.push({ id: id, m: Date.now(), n: n, p: p });
+      }
+      savePats();
+      prefs.pat = "c:" + id;
+      savePrefs();
+      dlg.close();
+      buildPatterns(); render(); paint();
+      showToast(t("toast.patSaved"));
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    name.focus();
+  }
+
+  function deletePat(id) {
+    var x = patById(id);
+    if (!x || busy()) return;
+    var snap = JSON.parse(JSON.stringify(x)), wasPrefs = prefs.pat;
+    pats.tombs[id] = Math.max(Date.now(), x.m);
+    savePats();
+    if (prefs.pat === "c:" + id) { prefs.pat = "box"; savePrefs(); }
+    buildPatterns(); render(); paint();
+    undoToast(t("toast.patDeleted"), function () {
+      snap.m = Math.max(Date.now(), (pats.tombs[id] || 0) + 1);   // R17: newer than the tombstone
+      pats.pats.push(snap);
+      savePats();
+      if (!busy()) { prefs.pat = wasPrefs; savePrefs(); }
+      buildPatterns(); render(); paint();
+    });
+  }
+
   function confirmReset() {
     var dlg = makeDialog("zen-confirm");
     dlg.appendChild(el("div", "dlg-title", t("confirm.title")));
@@ -736,6 +891,22 @@
     box.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { box.classList.remove("show"); }, 4000);
+  }
+  function undoToast(text, fn) {
+    var box = $("toast");
+    if (!box) return;
+    hostToast();
+    box.innerHTML = "";
+    box.classList.remove("show");
+    box.appendChild(el("span", "", text));
+    var b = el("button", "", t("toast.undo"));
+    b.type = "button";
+    b.addEventListener("click", function () { box.classList.remove("show"); clearTimeout(toastTimer); fn(); });
+    box.appendChild(b);
+    void box.offsetWidth;
+    box.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, 6000);
   }
   function hostToast() {
     var box = $("toast"), d = document.querySelector("dialog[open]");
@@ -820,6 +991,25 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("zen", sliceGet, sliceSet, STORAGE_KEY, mergeZen);
+    api.registerSlice("zenpat", patsGet, patsSet, Z.PATS_KEY, Z.mergePats);
+  }
+
+  function patsGet() { return Z.mergePats(pats, null); }
+  function patsSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.pats)) return;
+    var before = JSON.stringify(pats);
+    window.__orosSyncApi._suppress = true;   // R6
+    try {
+      pats = Z.mergePats(incoming, incoming);
+      localStorage.setItem(Z.PATS_KEY, JSON.stringify(pats));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(pats) === before) return;
+    syncCustom(pats.pats, busy() ? S.pat : null);
+    if (!busy() && !PATTERNS[prefs.pat]) { prefs.pat = "box"; savePrefs(); }
+    buildPatterns(); render(); paint();
   }
 
   function sliceGet() { return mergeZen(data, data); }   // canonical copy (R26)
@@ -854,6 +1044,8 @@
     vb.setAttribute("aria-label", t("btn.vibe"));
     vb.title = t("btn.vibe");
     $("reset-btn").textContent = t("st.reset");
+    $("new-pat").textContent = "+ " + t("btn.newPat");
+    $("edit-pat").textContent = t("btn.editPat");
   }
 
   function wire() {
@@ -873,6 +1065,15 @@
       render();
     });
     $("reset-btn").addEventListener("click", confirmReset);
+    $("new-pat").addEventListener("click", function () { if (!busy()) patDialog(null); });
+    $("edit-pat").addEventListener("click", function () {
+      var c = prefs.pat.indexOf("c:") === 0 ? patById(prefs.pat.slice(2)) : null;
+      if (c && !busy()) patDialog(c);
+    });
+    $("hb-on").addEventListener("change", function () {
+      pats.hb = { on: $("hb-on").checked ? 1 : 0, m: Math.max(Date.now(), pats.hb.m + 1) };
+      savePats();
+    });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") pause();
       else renderStats();                     // a new day may have started
@@ -887,6 +1088,7 @@
   function boot() {
     load();
     ensureDeviceId();
+    loadPats();
     loadPrefs();
     applyI18n();
     buildPatterns();
