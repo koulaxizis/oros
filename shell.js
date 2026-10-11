@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.91.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.92.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -387,6 +387,7 @@
       if (classes[i].indexOf("wp-") === 0) desktop.classList.remove(classes[i]);
     }
     desktop.classList.add("wp-" + state.wallpaper);
+    wpLiveSync();
   }
 
   // ---------- 5b'. "Mine" — the Wallpaper Generator wallpaper ----------
@@ -533,10 +534,70 @@
     });
   }
 
+  // What "Mine" shows now: the recipe's picture, or with "A new
+  // picture every day" today's picture of it (art.js forDay: the date
+  // joins the seed, so every device shows the same one). wpDay = the
+  // day drawn, for the daily check.
+  var wpDay = "";
+  function wpYmd(d) {
+    function p2(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+  }
+  function wpRecipeNow() {
+    var A = wpArt(), r = state.wpart;
+    if (!A || !r) return null;
+    if (typeof A.forDay !== "function") return r;          // stale art.js
+    if (!r.daily) return A.picture(r);
+    wpDay = wpYmd(new Date());
+    return A.forDay(r, wpDay);
+  }
+  // Clock engine (1/s, checks once a minute): a new day redraws.
+  var wpDailyLast = 0;
+  function wpDailyTick() {
+    var now = Date.now();
+    if (now - wpDailyLast < 60000) return;
+    wpDailyLast = now;
+    if (state.wallpaper !== "custom" || wpPic() || !state.wpart || !state.wpart.daily) return;
+    if (wpYmd(new Date()) !== wpDay) applyWallpaper();
+  }
+
+  // "Live wallpaper": soft lights moving over "Mine" (art.js live) on a
+  // canvas behind the desktop's content. Paused while an app is open
+  // or the tab is hidden; never with reduced motion.
+  var wpLive = null, wpLiveKey = "";
+  function wpLiveSync() {
+    var A = wpArt(), desk = document.getElementById("oros-desktop");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var on = !!(A && typeof A.live === "function" && desk && state.wallpaper === "custom" &&
+                !wpPic() && state.wpart && state.wpart.live && !reduce);
+    var r = on ? wpRecipeNow() : null;
+    var key = on ? A.key(r, wpAccent()) : "";
+    if (key === wpLiveKey && on === !!wpLive) return;
+    if (wpLive) { wpLive.stop(); wpLive = null; }
+    wpLiveKey = key;
+    var cv = document.getElementById("wp-live");
+    if (!on) { if (cv) cv.parentNode.removeChild(cv); return; }
+    if (!cv) {
+      cv = document.createElement("canvas");
+      cv.id = "wp-live";
+      cv.setAttribute("aria-hidden", "true");
+      desk.insertBefore(cv, desk.firstChild);
+    }
+    wpLive = A.live(cv, r, {
+      accent: wpAccent(),
+      paused: function () { return !!state.running || document.hidden; }
+    });
+  }
+
+  try {                                    // motion setting changed: follow it
+    var wpMq = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (wpMq && wpMq.addEventListener) wpMq.addEventListener("change", wpLiveSync);
+  } catch (e) {}
+
   function wpCustomApply(desktop) {
     var pic = wpPic();
     if (pic) { wpPicApply(desktop, pic); return; }
-    var A = wpArt(), r = state.wpart;
+    var A = wpArt(), r = wpRecipeNow();
     if (!A || !r) {                       // nothing drawn yet: the default look
       wpCustomStop();
       desktop.style.background = findWallpaper(DEFAULT_WALLPAPER).css;
@@ -583,9 +644,16 @@
   // Public API for the Wallpaper Generator app (same origin iframe).
   window.orosWallpaper = {
     // recipe → the "Mine" wallpaper, selected. User action: syncs.
+    // A recipe without daily / live keeps the ones already set.
     setCustom: function (recipe) {
       var A = wpArt();
-      var r = A ? A.normRecipe(recipe) : null;
+      var src = recipe;
+      if (recipe && typeof recipe === "object" && state.wpart) {
+        src = JSON.parse(JSON.stringify(recipe));
+        if (!("daily" in src) && state.wpart.daily) src.daily = 1;
+        if (!("live" in src) && state.wpart.live) src.live = 1;
+      }
+      var r = A ? A.normRecipe(src) : null;
       if (!r) return false;
       if (wpPic()) wpPicClear();  // a recipe made here replaces the device picture
       state.wpart = r;
@@ -594,6 +662,22 @@
       localStorage.setItem("oros-wallpaper", state.wallpaper);
       applyWallpaper();
       noteLocalChange();          // user action → sync engine
+      return true;
+    },
+    // { daily, live } for the "Mine" recipe (Wallpaper Generator).
+    // User action: syncs with the recipe. false when there is none.
+    setOptions: function (opts) {
+      var A = wpArt();
+      if (!A || !state.wpart || !opts || typeof opts !== "object") return false;
+      var src = JSON.parse(JSON.stringify(state.wpart));
+      if (typeof opts.daily === "boolean") { if (opts.daily) src.daily = 1; else delete src.daily; }
+      if (typeof opts.live === "boolean") { if (opts.live) src.live = 1; else delete src.live; }
+      var r = A.normRecipe(src);
+      if (!r) return false;
+      state.wpart = r;
+      wpArtWrite(r);
+      applyWallpaper();
+      noteLocalChange();
       return true;
     },
     // A finished picture (Blob, image/*) → the wallpaper of THIS
@@ -615,10 +699,13 @@
         return true;
       });
     },
+    // recipe = the picture part (no daily / live); daily, live = the options
     get: function () {
-      var pic = wpPic();
-      return { active: !!pic || state.wallpaper === "custom", recipe: state.wpart,
-               picture: pic ? pic.at : null };
+      var pic = wpPic(), A = wpArt(), r = state.wpart;
+      return { active: !!pic || state.wallpaper === "custom",
+               recipe: r && A && A.picture ? A.picture(r) : r,
+               picture: pic ? pic.at : null,
+               daily: !!(r && r.daily), live: !!(r && r.live) };
     }
   };
 
@@ -1017,6 +1104,7 @@
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
+    tickSafe("wpDailyTick", wpDailyTick);     // Wallpaper "a new picture every day" (checks once a minute)
     tickSafe("timesheetTrayTick", timesheetTrayTick); // Timesheet Wave 3: running timer chip (cheap, 1/s)
   }
 

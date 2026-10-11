@@ -5,7 +5,10 @@
 // wallpaper). Pure Canvas 2D, no libraries, no network.
 //
 // A wallpaper is a RECIPE, a few bytes that travel through sync:
-//   { seed, style, pal, dens, chaos, grain, light [, tree] }
+//   { seed, style, pal, dens, chaos, grain, light [, tree] [, daily] [, live] }
+// daily / live (1 or absent) only matter for the "Mine" desktop
+// wallpaper: a new seed every day (forDay), soft moving lights (live).
+// They never change the picture itself (picture, key).
 // The "tree" style draws a tree of the Tree Sketcher (trees/core.js,
 // window.TreesCore, loaded before this file): tree holds its shape
 // { sp, season, br, ang, wind, ink, ground }; density stands for the
@@ -26,12 +29,17 @@
 //   renderSync(ctx, w, h, recipe, o)
 //   render(ctx, w, h, recipe, o) → Promise<boolean> (false = cancelled)
 //     o = { accent, makeCanvas(w, h), onProgress(f), cancelled(), slice }
+//   picture(recipe)             the recipe without daily / live
+//   forDay(recipe, "YYYY-MM-DD") that day's picture (the date joins the seed)
+//   live(canvas, recipe, o)     start the moving lights → { stop() }
+//     o = { accent, paused() }; liveDots / livePos are the pure parts
 // Sections:
 //   1. Recipe
 //   2. Random numbers + noise
 //   3. Colour
 //   4. Styles (waves, flow, orbits, grid, nebula, tree) + grain
 //   5. Runner
+//   6. Live layer
 // ============================================================
 (function (root) {
   "use strict";
@@ -86,7 +94,28 @@
       light: r.light === 1 || r.light === true ? 1 : 0
     };
     if (out.style === "tree") out.tree = normTree(r.tree);
+    if (r.daily === 1 || r.daily === true) out.daily = 1;
+    if (r.live === 1 || r.live === true) out.live = 1;
     return out;
+  }
+
+  // The picture part of a recipe (daily / live left out), or null.
+  function picture(recipe) {
+    var r = normRecipe(recipe);
+    if (!r) return null;
+    delete r.daily;
+    delete r.live;
+    return r;
+  }
+
+  // A "new picture every day": the same recipe with the date joined
+  // to the seed, so every device shows the same picture on the same
+  // day without syncing anything new.
+  function forDay(recipe, ymd) {
+    var r = picture(recipe);
+    if (!r || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return r;
+    r.seed = normSeed(r.seed.slice(0, SEED_LEN - ymd.length - 1) + " " + ymd);
+    return r;
   }
 
   function defaultRecipe() {
@@ -238,7 +267,7 @@
   // Changes exactly when the picture does: the skin colour only
   // matters for the "orOS" palette.
   function key(recipe, accent) {
-    var r = normRecipe(recipe);
+    var r = picture(recipe);
     if (!r) return "";
     var a = r.pal === "oros" ? hex(parseColor(accent) || parseColor("#d4af37")) : "";
     return "v" + VER + "|" + JSON.stringify(r) + "|" + a;
@@ -620,6 +649,86 @@
     });
   }
 
+  // ---------- 6. Live layer ----------
+  // Soft lights drifting over the picture: a few dozen dots in the
+  // recipe's inks, each rising slowly with a gentle sway and a slow
+  // fade. A dot's place is a pure function of the seed and the time.
+  var LIVE_FPS_MS = 40;              // 25 frames a second is plenty
+
+  function liveDots(recipe, n) {
+    var R = picture(recipe) || defaultRecipe();
+    var rnd = prng(hash32("live|" + R.seed)), out = [];
+    for (var i = 0; i < n; i++) {
+      out.push({ x: rnd(), y: rnd(), r: 0.004 + rnd() * 0.012, sp: 0.004 + rnd() * 0.012,
+                 sw: 0.01 + rnd() * 0.03, ph: rnd() * TAU, c: Math.floor(rnd() * 1000) });
+    }
+    return out;
+  }
+
+  // Dot d at t seconds: x, y in screen fractions, r in short sides, a = alpha.
+  function livePos(d, t) {
+    var y = (d.y - d.sp * t) % 1;
+    if (y < 0) y += 1;
+    var x = d.x + Math.sin(t * 0.25 + d.ph) * d.sw;
+    var a = 0.3 + 0.3 * Math.sin(t * 0.6 + d.ph * 2);
+    var edge = Math.min(y, 1 - y) / 0.08;           // fade in at the bottom, out at the top
+    if (edge < 1) a *= edge;
+    return { x: x, y: y, r: d.r, a: Math.max(0, a) };
+  }
+
+  function live(canvas, recipe, o) {
+    o = o || {};
+    // lights glow: each ink lifted towards white
+    var inks = colors(recipe, o.accent).ink.map(function (c) { return mix(c, "#ffffff", 0.4); });
+    var ctx = canvas.getContext("2d");
+    var raf = 0, timer = 0, last = 0, stopped = false, w = 0, h = 0, dots = [];
+    var t0 = Date.now();
+    function size() {
+      var dpr = Math.min(2, root.devicePixelRatio || 1);
+      var cw = Math.max(1, Math.round(canvas.clientWidth * dpr));
+      var ch = Math.max(1, Math.round(canvas.clientHeight * dpr));
+      if (cw === w && ch === h) return;
+      w = canvas.width = cw; h = canvas.height = ch;
+      var css = (cw * ch) / (dpr * dpr);
+      dots = liveDots(recipe, Math.round(Math.min(60, 16 + css / 40000)));
+    }
+    function frame(now) {
+      raf = 0;
+      if (stopped) return;
+      if (o.paused && o.paused()) { timer = setTimeout(wake, 1000); return; }
+      if (now - last >= LIVE_FPS_MS) {
+        last = now;
+        size();
+        var t = (Date.now() - t0) / 1000, u = Math.min(w, h);
+        ctx.clearRect(0, 0, w, h);
+        for (var i = 0; i < dots.length; i++) {
+          var d = dots[i], p = livePos(d, t);
+          if (p.a <= 0.01) continue;
+          var c = inks[d.c % inks.length], x = p.x * w, y = p.y * h, rad = p.r * u * 3;
+          var g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+          g.addColorStop(0, rgba(c, p.a));
+          g.addColorStop(0.35, rgba(c, p.a * 0.45));
+          g.addColorStop(1, rgba(c, 0));
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(x, y, rad, 0, TAU);
+          ctx.fill();
+        }
+      }
+      raf = root.requestAnimationFrame(frame);
+    }
+    function wake() { timer = 0; if (!stopped) raf = root.requestAnimationFrame(frame); }
+    wake();
+    return {
+      stop: function () {
+        stopped = true;
+        if (raf) root.cancelAnimationFrame(raf);
+        if (timer) clearTimeout(timer);
+        ctx.clearRect(0, 0, w, h);
+      }
+    };
+  }
+
   root.OrosWallArt = {
     VER: VER,
     STYLES: STYLES.slice(),
@@ -632,6 +741,11 @@
     key: key,
     steps: steps,
     renderSync: renderSync,
-    render: render
+    render: render,
+    picture: picture,
+    forDay: forDay,
+    liveDots: liveDots,
+    livePos: livePos,
+    live: live
   };
 })(typeof window !== "undefined" ? window : this);

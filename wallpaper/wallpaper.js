@@ -10,7 +10,8 @@
 //     with a progress bar
 //   - "Set as wallpaper": hands the recipe to the shell
 //     (parent.orosWallpaper); the recipe syncs in the shell slice,
-//     every device draws it at its own screen size
+//     every device draws it at its own screen size; "On your desktop"
+//     turns on a new picture every day and the live wallpaper
 //   - favourites: synced, LWW + tombstones, delete with Undo
 //   - the Tree style draws a Tree Sketcher tree; "Shape the tree"
 //     opens it there (__orosOpenAt("trees", { wall: recipe }))
@@ -79,6 +80,12 @@
       "fav.open": "Open {name}", "fav.del": "Remove {name} from favourites",
       "btn.roll": "Random seed (R)", "btn.fav": "Keep in favourites", "btn.unfav": "Remove from favourites",
       "btn.set": "Set as wallpaper", "btn.isSet": "Your wallpaper", "btn.export": "Export",
+      "sec.desk": "On your desktop",
+      "desk.daily": "A new picture every day",
+      "desk.dailyHint": "Same style and colours, a new seed at midnight. All your devices show the same picture.",
+      "desk.live": "Live wallpaper",
+      "desk.liveHint": "Soft lights drift over the picture. They pause while an app is open, and stay off if your device reduces motion.",
+      "desk.need": "Set a design as your wallpaper first.",
       "exp.title": "Export", "exp.png": "PNG · lossless", "exp.jpg": "JPG · smaller file",
       "exp.size": "{w} × {h} pixels", "exp.close": "Close",
       "prog.title": "Drawing…", "prog.cancel": "Cancel",
@@ -112,6 +119,12 @@
       "fav.open": "Άνοιγμα του {name}", "fav.del": "Αφαίρεση του {name} από τα αγαπημένα",
       "btn.roll": "Τυχαίο seed (R)", "btn.fav": "Στα αγαπημένα", "btn.unfav": "Αφαίρεση από τα αγαπημένα",
       "btn.set": "Ορισμός ως ταπετσαρία", "btn.isSet": "Η ταπετσαρία σου", "btn.export": "Εξαγωγή",
+      "sec.desk": "Στην επιφάνεια εργασίας",
+      "desk.daily": "Νέα εικόνα κάθε μέρα",
+      "desk.dailyHint": "Ίδιο στυλ και χρώματα, νέο seed τα μεσάνυχτα. Όλες οι συσκευές σου δείχνουν την ίδια εικόνα.",
+      "desk.live": "Ζωντανή ταπετσαρία",
+      "desk.liveHint": "Απαλά φωτάκια ταξιδεύουν πάνω στην εικόνα. Σταματούν όσο είναι ανοιχτή μια εφαρμογή και δεν εμφανίζονται αν η συσκευή σου έχει μειωμένη κίνηση.",
+      "desk.need": "Όρισε πρώτα ένα σχέδιο ως ταπετσαρία.",
       "exp.title": "Εξαγωγή", "exp.png": "PNG · χωρίς απώλειες", "exp.jpg": "JPG · μικρότερο αρχείο",
       "exp.size": "{w} × {h} pixel", "exp.close": "Κλείσιμο",
       "prog.title": "Ζωγραφίζω…", "prog.cancel": "Ακύρωση",
@@ -709,6 +722,29 @@
     b.classList.toggle("on", isSet);
     b.innerHTML = UI_ICONS.wall + "<span>" + t(isSet ? "btn.isSet" : "btn.set") + "</span>";
     b.setAttribute("aria-pressed", isSet ? "true" : "false");
+    renderDesk(api, cur);
+  }
+
+  // "On your desktop": options of the "Mine" wallpaper, whatever
+  // design it shows (shell orosWallpaper.setOptions; they sync with it).
+  function renderDesk(api, cur) {
+    var sec = $("desk-sec");
+    sec.hidden = !api || typeof api.setOptions !== "function";
+    if (sec.hidden) return;
+    var mine = !!(cur && cur.active && !cur.picture && cur.recipe);
+    $("desk-daily").disabled = !mine;
+    $("desk-live").disabled = !mine;
+    $("desk-daily").checked = mine && !!cur.daily;
+    $("desk-live").checked = mine && !!cur.live;
+    $("desk-need").hidden = mine;
+  }
+  function setDesk(k) {
+    var api = wallApi();
+    if (!api || typeof api.setOptions !== "function") return;
+    var o = {};
+    o[k] = $("desk-" + k).checked;
+    try { api.setOptions(o); } catch (e) {}
+    renderSetButton();
   }
 
   function setWallpaper() {
@@ -940,6 +976,8 @@
     $("roll-btn").addEventListener("click", rollSeed);
     $("fav-btn").addEventListener("click", toggleFav);
     $("set-btn").addEventListener("click", setWallpaper);
+    $("desk-daily").addEventListener("change", function () { setDesk("daily"); });
+    $("desk-live").addEventListener("change", function () { setDesk("live"); });
     $("tree-btn").addEventListener("click", shapeTree);
     $("export-btn").addEventListener("click", exportDialog);
     $("panel").addEventListener("submit", function (e) { e.preventDefault(); });

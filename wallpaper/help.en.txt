@@ -19,6 +19,9 @@ Choose `This screen`, `Phone`, `iPhone`, `Desktop`, `QHD`, `Ultrawide`, `4K`, `S
 
 ## Set as wallpaper and export
 - `Set as wallpaper` makes the current design your orOS desktop wallpaper. The button then reads `Your wallpaper`. It appears in [Settings](app:settings), under `Wallpaper`, as `Mine`; see [Appearance](help:t/appearance).
+- Under `On your desktop`, once a design is your wallpaper, `A new picture every day` keeps the style, palette and settings but changes the seed at midnight, so you get a fresh picture each day. All your devices show the same one.
+- `Live wallpaper` (also under `On your desktop`) lets soft lights in the palette's colours drift slowly over the picture. They pause while an app is open, and they stay off if your device is set to reduce motion.
+- Both options sync with your `Mine` wallpaper, and setting another design keeps them on.
 - `Export` asks for `PNG · lossless` or `JPG · smaller file` at the chosen size. Big sizes take a moment; a progress bar shows with `Cancel`.
 
 ## Favourites

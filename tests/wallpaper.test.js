@@ -246,3 +246,62 @@ test("tree style: keeps the shape of the tree, draws it, and falls back without 
   assert.doesNotThrow(() => OLD.renderSync(rec.ctx, 320, 200, o, {}));
   assert.ok(rec.log.length > 50);
 });
+
+// ---------- "On your desktop": a new picture every day, live wallpaper ----------
+test("daily / live: kept only as 1, never part of the picture or its key", () => {
+  const r = R({ daily: true, live: 1 });
+  assert.equal(r.daily, 1);
+  assert.equal(r.live, 1);
+  assert.deepEqual(ART.normRecipe(r), r, "idempotent");
+  assert.ok(!("daily" in R({ daily: 0 })) && !("live" in R({ live: "yes" })));
+  const p = ART.picture(r);
+  assert.ok(!("daily" in p) && !("live" in p));
+  assert.equal(ART.key(r, "#d4af37"), ART.key(R({}), "#d4af37"), "same picture, same cache key");
+  assert.equal(ART.picture(null), null);
+});
+
+test("forDay: the date joins the seed, same day same picture, seed length kept", () => {
+  const r = R({ daily: 1 });
+  const a = ART.forDay(r, "2026-10-11"), b = ART.forDay(r, "2026-10-11"), c = ART.forDay(r, "2026-10-12");
+  assert.deepEqual(a, b);
+  assert.notEqual(a.seed, c.seed);
+  assert.equal(a.seed, "hello 2026-10-11");
+  assert.ok(!("daily" in a));
+  assert.notEqual(ART.key(a, "#fff"), ART.key(c, "#fff"), "a new day draws a new picture");
+  const long = R({ seed: "x".repeat(40), daily: 1 });
+  const d = ART.forDay(long, "2026-10-11");
+  assert.equal(d.seed.length, ART.SEED_LEN);
+  assert.ok(d.seed.endsWith(" 2026-10-11"));
+  assert.deepEqual(ART.forDay(r, "nope"), ART.picture(r), "a bad date: the plain picture");
+});
+
+test("live layer: deterministic dots, gentle and on screen", () => {
+  const a = ART.liveDots(R({}), 40), b = ART.liveDots(R({ live: 1 }), 40);
+  assert.equal(JSON.stringify(a), JSON.stringify(b));
+  assert.notEqual(JSON.stringify(a), JSON.stringify(ART.liveDots(R({ seed: "other" }), 40)));
+  for (const d of a) {
+    for (let t = 0; t < 600; t += 7.3) {
+      const p = ART.livePos(d, t);
+      assert.ok(p.y >= 0 && p.y < 1, "y on screen");
+      assert.ok(p.x > -0.05 && p.x < 1.05, "x near the screen");
+      assert.ok(p.a >= 0 && p.a <= 0.6, "never bright");
+    }
+    // slow: under a fifth of the screen in 10 s
+    assert.ok(d.sp * 10 < 0.2);
+  }
+});
+
+test("shell: daily redraw, live canvas, options API", () => {
+  const sh = fs.readFileSync(path.join(__dirname, "..", "shell.js"), "utf8");
+  assert.ok(sh.includes('tickSafe("wpDailyTick", wpDailyTick);'));
+  assert.ok(sh.includes("return A.forDay(r, wpDay);"));
+  assert.ok(sh.includes("var A = wpArt(), r = wpRecipeNow();"), "Mine draws today's picture");
+  assert.ok(sh.includes('(prefers-reduced-motion: reduce)").matches;\n    var on = '), "no live layer with reduced motion");
+  assert.ok(sh.includes("paused: function () { return !!state.running || document.hidden; }"));
+  assert.ok(sh.includes("setOptions: function (opts)"));
+  assert.ok(/applyWallpaper\(\);\n      noteLocalChange\(\);\n      return true;\n    },\n    \/\/ A finished picture/.test(sh), "options sync");
+  const css = fs.readFileSync(path.join(__dirname, "..", "style.css"), "utf8");
+  assert.match(css, /#wp-live \{[^}]*pointer-events: none;/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "wallpaper", "wallpaper.js"), "utf8");
+  assert.ok(app.includes("api.setOptions(o)"));
+});
