@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 0.85.00
 - New app: Today. See what is late, due today and coming up across your apps in one place, with one short notice each morning. Open it with Ctrl+Alt+Shift+Y.
+- Help: the Install guide explains how to open files from your computer with orOS.
 
 ## Version 0.84.00
 - Open with orOS: once orOS is installed from Chrome or Edge, documents, spreadsheets, .ics, .vcf and more open straight from your computer in the right orOS app. See Settings › Opening files.

@@ -4707,3 +4707,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - One daily notice (ns `today`, key `day-<ymd>`, numbers only) on the first open after the start hour (default 06:00), after the unlock and the first sync merge; never on an empty day; one per day across devices. Optional quieting of the morning reminders it covers. Rows deep-link to their item (`__orosOpenAt("today", { day })`, deep link `today:<ymd>`); "Ask the Assistant" pre-fills only (permFor; NEVER_APPS unchanged).
 - Settings slice `today` (oros-today-data, per-field LWW); device-local `oros-today-local`, sessionStorage `oros-today-ui`. Cycle and Mood off by default, every app switchable. Shortcut Ctrl+Alt+Shift+Y.
 - Fix: the weather briefing reads only today's forecast row and skips a cache older than 24 h. Tests: tests/today.test.js.
+
+### 2026-10-11 — Help: "Open files from your computer" (#182) — 0.85.01
+- Install guide: new section "Open files from your computer": where it works, which app opens which file types (from the HANDLERS table), the original file is never written back, the chooser with "Always use this app", Settings › Opening files and how to set the default, the fallback for Firefox, Safari, iPhone and Android. Calendar (.ics) and Contacts (.vcf) guides link to it. Help text only.
