@@ -312,6 +312,7 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; flex: 0 0 aut
 .style-sw[data-st="paper"] { font-family: Georgia, "Times New Roman", serif; }
 
 .hint { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+.qr-opt { display: grid; gap: 4px; margin-top: 12px; }
 .chk { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 
 /* ---------- 5. Avatar painter ---------- */

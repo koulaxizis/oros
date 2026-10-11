@@ -79,6 +79,9 @@
       "av.px": "Row {r}, column {c}",
       "av.col0": "Background / eraser", "av.col1": "Skin", "av.col2": "Hair",
       "av.col3": "Eyes", "av.col4": "Mouth", "av.col5": "Clothes", "av.col6": "Accent",
+      "av.colN": "Colour {n}",
+      "f.qr": "QR code on the back",
+      "f.qrHint": "A phone camera saves you as a contact from it: name, username, email, phone and website, if they are shown.",
       "link.add": "Add link", "link.up": "Move up", "link.down": "Move down", "link.del": "Remove link",
       "tag.add": "Add", "tag.del": "Remove tag {tag}",
       "style.oros": "orOS", "style.terminal": "Terminal", "style.paper": "Paper",
@@ -95,6 +98,7 @@
       "exp.title": "Export", "exp.side": "Side shown: {side}",
       "exp.png": "Card · PNG", "exp.svg": "Card · SVG", "exp.pdf": "Card · PDF (both sides)",
       "exp.avpng": "Avatar · PNG", "exp.avsvg": "Avatar · SVG", "exp.vcf": "Contact · vCard (.vcf)",
+      "exp.contacts": "Add me to orOS Contacts",
       "exp.close": "Close",
       "share.title": "Share link",
       "share.warn": "The link carries everything shown on this card. Anyone who has it can see it. Hidden fields stay out. Nothing is sent to a server.",
@@ -109,7 +113,9 @@
       "toast.rolled": "New face", "toast.maxCards": "Up to {n} cards",
       "toast.maxLinks": "Up to {n} links", "toast.maxTags": "Up to {n} tags",
       "toast.tagDup": "That tag is already there", "toast.badLink": "This share link is damaged",
-      "toast.exportFail": "Export failed", "toast.dup": "Card duplicated", "toast.new": "New card"
+      "toast.exportFail": "Export failed", "toast.dup": "Card duplicated", "toast.new": "New card",
+      "toast.avatar": "Avatar from Pixel Avatar", "toast.named": "New card with this name",
+      "toast.namedHere": "Name added to this card"
     },
     el: {
       "tab.edit": "Επεξεργασία", "tab.card": "Κάρτα",
@@ -132,6 +138,9 @@
       "av.px": "Γραμμή {r}, στήλη {c}",
       "av.col0": "Φόντο / γόμα", "av.col1": "Δέρμα", "av.col2": "Μαλλιά",
       "av.col3": "Μάτια", "av.col4": "Στόμα", "av.col5": "Ρούχα", "av.col6": "Αξεσουάρ",
+      "av.colN": "Χρώμα {n}",
+      "f.qr": "Κωδικός QR στην πίσω όψη",
+      "f.qrHint": "Η κάμερα ενός κινητού σε αποθηκεύει από αυτόν ως επαφή: όνομα, όνομα χρήστη, email, τηλέφωνο και ιστοσελίδα, όσα φαίνονται.",
       "link.add": "Προσθήκη συνδέσμου", "link.up": "Πάνω", "link.down": "Κάτω", "link.del": "Αφαίρεση συνδέσμου",
       "tag.add": "Προσθήκη", "tag.del": "Αφαίρεση ετικέτας {tag}",
       "style.oros": "orOS", "style.terminal": "Τερματικό", "style.paper": "Χαρτί",
@@ -148,6 +157,7 @@
       "exp.title": "Εξαγωγή", "exp.side": "Όψη: {side}",
       "exp.png": "Κάρτα · PNG", "exp.svg": "Κάρτα · SVG", "exp.pdf": "Κάρτα · PDF (και οι δύο όψεις)",
       "exp.avpng": "Avatar · PNG", "exp.avsvg": "Avatar · SVG", "exp.vcf": "Επαφή · vCard (.vcf)",
+      "exp.contacts": "Πρόσθεσέ με στις Επαφές του orOS",
       "exp.close": "Κλείσιμο",
       "share.title": "Σύνδεσμος κοινοποίησης",
       "share.warn": "Ο σύνδεσμος περιέχει ό,τι δείχνει η κάρτα. Όποιος τον έχει, το βλέπει. Τα κρυφά πεδία μένουν έξω. Τίποτα δεν στέλνεται σε server.",
@@ -162,7 +172,9 @@
       "toast.rolled": "Νέο πρόσωπο", "toast.maxCards": "Έως {n} κάρτες",
       "toast.maxLinks": "Έως {n} σύνδεσμοι", "toast.maxTags": "Έως {n} ετικέτες",
       "toast.tagDup": "Η ετικέτα υπάρχει ήδη", "toast.badLink": "Ο σύνδεσμος κοινοποίησης είναι χαλασμένος",
-      "toast.exportFail": "Η εξαγωγή απέτυχε", "toast.dup": "Δημιουργήθηκε αντίγραφο", "toast.new": "Νέα κάρτα"
+      "toast.exportFail": "Η εξαγωγή απέτυχε", "toast.dup": "Δημιουργήθηκε αντίγραφο", "toast.new": "Νέα κάρτα",
+      "toast.avatar": "Avatar από το Pixel Avatar", "toast.named": "Νέα κάρτα με αυτό το όνομα",
+      "toast.namedHere": "Το όνομα μπήκε σε αυτή την κάρτα"
     }
   };
 
@@ -238,7 +250,9 @@
   //   tags: [string],
   //   hide: [field…]          // sorted; fields kept but not shown on the card
   //   st: style id,
-  //   av: { s: seed, px: "" | 144 digits 0–6 (painted), t: 0 | 1 (transparent) }
+  //   av: { s: seed, px: "" | 144 digits 0–6 (painted), t: 0 | 1 (transparent),
+  //         c?: [8 × "#rrggbb"] (own colours, from Pixel Avatar; px may use 0–7) },
+  //   qr: 0 | 1               // a contact QR code on the back
   // }
   // data = { ver: 1, cards: [card…] sorted by id, tombs: { id: deletedAt } }
   function normCard(c) {
@@ -267,11 +281,26 @@
     out.hide = hide.sort(cmpStr);
     out.st = STYLES.indexOf(c.st) >= 0 ? c.st : "oros";
     var av = (c.av && typeof c.av === "object") ? c.av : {};
+    var cols = normCols(av.c);
     out.av = {
       s: (typeof av.s === "string" && /^[a-z0-9]{1,24}$/.test(av.s)) ? av.s : "netizen",
-      px: (typeof av.px === "string" && /^[0-6]{144}$/.test(av.px)) ? av.px : "",
+      px: (typeof av.px === "string" && (cols ? /^[0-7]{144}$/ : /^[0-6]{144}$/).test(av.px)) ? av.px : "",
       t: av.t === 1 ? 1 : 0
     };
+    // own colours only make sense with the face painted in them
+    if (cols && out.av.px) out.av.c = cols;
+    out.qr = c.qr === 1 ? 1 : 0;
+    return out;
+  }
+
+  // 8 colours as lowercase #rrggbb, else null.
+  function normCols(v) {
+    if (!Array.isArray(v) || v.length !== 8) return null;
+    var out = [];
+    for (var i = 0; i < 8; i++) {
+      if (typeof v[i] !== "string" || !/^#[0-9a-fA-F]{6}$/.test(v[i])) return null;
+      out.push(v[i].toLowerCase());
+    }
     return out;
   }
 
@@ -378,7 +407,7 @@
 
   function avatarOf(card) {
     var gen = genAvatar(card.av.s);
-    return { pal: gen.pal, px: card.av.px || gen.px };
+    return { pal: card.av.c || gen.pal, px: card.av.px || gen.px };
   }
 
   // ---------- 4. Storage + prefs ----------
@@ -657,10 +686,47 @@
     return frame(th, standalone, s);
   }
 
+  // The back's QR code: a short vCard (name, username, email, phone,
+  // website; no notes, tags or photo) that a phone camera saves as a
+  // contact. Level L keeps the modules big on a small card. Too long or
+  // no encoder: no QR, nothing breaks.
+  function qrText(card) {
+    var c = JSON.parse(JSON.stringify(card));
+    ["bio", "motto", "pron", "langs", "tags", "links", "loc"].forEach(function (k) {
+      if (c.hide.indexOf(k) < 0) c.hide.push(k);
+    });
+    return buildVCard(c, "");
+  }
+  function qrModules(card) {
+    var Q = window.orosQR;
+    if (!Q || typeof Q.encode !== "function") return null;
+    try { return Q.encode(qrText(card), { ecl: "L" }).modules; } catch (e) { return null; }
+  }
+  // Dark modules on a white box with a 2-module quiet zone.
+  function qrRects(mods, x0, y0, size) {
+    var n = mods.length, k = size / (n + 4), out = "";
+    out += '<rect x="' + x0 + '" y="' + y0 + '" width="' + size + '" height="' + size + '" rx="10" fill="#ffffff"/>';
+    for (var y = 0; y < n; y++) {
+      var x = 0;
+      while (x < n) {
+        if (!mods[y][x]) { x++; continue; }
+        var run = 1;
+        while (x + run < n && mods[y][x + run]) run++;
+        out += '<rect x="' + (x0 + (x + 2) * k).toFixed(2) + '" y="' + (y0 + (y + 2) * k).toFixed(2) +
+          '" width="' + (run * k).toFixed(2) + '" height="' + k.toFixed(2) + '" fill="#000000"/>';
+        x += run;
+      }
+    }
+    return '<g shape-rendering="crispEdges">' + out + "</g>";
+  }
+  var QR_SIZE = 200;
+
   function cardBack(card, standalone) {
     var th = theme(card.st), f = th.font, s = "";
     s += header(th, "@" + (card.user.trim() || t("c.noname")));
-    var y = 124, W = CW - 80, any = false;
+    var qr = card.qr ? qrModules(card) : null;
+    var y = 124, W = CW - 80 - (qr ? QR_SIZE + 24 : 0), R = 40 + W, any = !!qr;
+    if (qr) s += qrRects(qr, CW - 40 - QR_SIZE, 104, QR_SIZE);
     if (shown(card, "bio") && card.bio.trim()) {
       any = true;
       s += txt(40, y, t("c.about"), 13, 800, th.dim, f, ' letter-spacing="2"');
@@ -677,11 +743,11 @@
       var x = 40, rows = 1;
       for (var i = 0; i < card.tags.length; i++) {
         var label = card.tags[i], w = textW(label, 15, 700, f) + 24;
-        if (x + w > CW - 40 && x > 40) {
+        if (x + w > R && x > 40) {
           if (rows === 2) break;
           rows++; x = 40; y += 40;
         }
-        if (w > CW - 80) { label = fit(label, 15, 700, f, CW - 104); w = CW - 80; }
+        if (w > W) { label = fit(label, 15, 700, f, W - 24); w = W; }
         s += '<rect x="' + x + '" y="' + (y - 21) + '" width="' + w + '" height="30" rx="15" fill="none" stroke="' +
           th.accent + '" stroke-width="2"/>';
         s += txt(x + 12, y, label, 15, 700, th.accent, f);
@@ -906,16 +972,38 @@
     L.push("END:VCARD");
     return L.map(vFold).join("\r\n") + "\r\n";
   }
-  function exportVcf() {
-    var c = cur();
-    if (needUser(c)) return;
+  // The avatar as base64 PNG for the vCard ("" when hidden or on failure).
+  function vcardPhoto(c) {
     var photo = shown(c, "avatar")
       ? rasterize(avatarSvg(c, 240, true), 240, 240).then(blobToDataUrl).then(function (u) { return u.split(",")[1]; })
       : Promise.resolve("");
-    photo.catch(function () { return ""; }).then(function (b64) {
+    return photo.catch(function () { return ""; });
+  }
+  function exportVcf() {
+    var c = cur();
+    if (needUser(c)) return;
+    vcardPhoto(c).then(function (b64) {
       var b = new Blob([buildVCard(c, b64)], { type: "text/vcard;charset=utf-8" });
       downloadBlob(b, fileBase(c) + ".vcf", "text/vcard",
         [{ description: "vCard", accept: { "text/vcard": [".vcf"] } }]);
+    });
+  }
+
+  function shellWin() {
+    try {
+      return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null;
+    } catch (e) { return null; }
+  }
+  // "Add me to orOS Contacts": the same vCard as the export, handed to
+  // Contacts, which asks before it imports (BR-FILE-IMPORT).
+  function addToContacts() {
+    var c = cur(), sh = shellWin();
+    if (!sh || needUser(c)) return;
+    flush();
+    vcardPhoto(c).then(function (b64) {
+      try {
+        sh.__orosOpenAt("contacts", { importVcf: { name: fileBase(c) + ".vcf", text: buildVCard(c, b64) } });
+      } catch (e) { showToast(t("toast.exportFail")); }
     });
   }
 
@@ -950,7 +1038,9 @@
     if (shown(card, "avatar")) {
       p.av = { s: card.av.s, t: card.av.t };
       if (card.av.px) p.av.px = card.av.px;
+      if (card.av.c) p.av.c = card.av.c.slice();
     }
+    if (card.qr) p.qr = 1;
     return p;
   }
   // The viewer's card: a payload back through normCard, avatar hidden if absent.
@@ -1111,6 +1201,7 @@
     renderTags();
     renderStyles();
     renderAvatarEditor();
+    $("f-qr").checked = !!c.qr;
   }
 
   function renderEyes() {
@@ -1157,14 +1248,13 @@
       g.appendChild(b);
     }
     var pal = $("av-pal");
-    for (var k = 0; k < 7; k++) {
+    // 8 swatches: the 8th shows only with own colours (from Pixel Avatar)
+    for (var k = 0; k < 8; k++) {
       var s = document.createElement("button");
       s.type = "button";
       s.className = "sw";
       s.setAttribute("role", "radio");
       s.setAttribute("data-c", String(k));
-      s.title = t("av.col" + k);
-      s.setAttribute("aria-label", s.title);
       pal.appendChild(s);
     }
     pal.addEventListener("click", function (e) {
@@ -1221,6 +1311,7 @@
 
   function paintAt(i) {
     var c = cur(), a = avatarOf(c);
+    if (paintColor >= a.pal.length) paintColor = 1;
     if (+a.px.charAt(i) === paintColor) return;
     var px = a.px.slice(0, i) + paintColor + a.px.slice(i + 1);
     mutate(function (cc) { cc.av.px = px; });
@@ -1229,10 +1320,10 @@
 
   function rollAvatar() {
     var prev = JSON.parse(JSON.stringify(cur().av));
-    mutate(function (c) { c.av.s = newSeed(); c.av.px = ""; });
+    mutate(function (c) { c.av.s = newSeed(); c.av.px = ""; delete c.av.c; });
     renderAvatarEditor();
     undoToast(t("toast.rolled"), function () {
-      mutate(function (c) { c.av.s = prev.s; c.av.px = prev.px; c.av.t = prev.t; });
+      mutate(function (c) { c.av = prev; });
       renderAvatarEditor();
     });
   }
@@ -1248,10 +1339,15 @@
   }
 
   function renderAvatarEditor() {
-    var c = cur(), a = avatarOf(c);
+    var c = cur(), a = avatarOf(c), own = !!c.av.c;
+    if (paintColor >= a.pal.length) paintColor = 1;
     paintCells();
     [].forEach.call($("av-pal").children, function (s) {
       var k = +s.getAttribute("data-c");
+      s.hidden = k >= a.pal.length;
+      var title = k === 0 || !own ? t("av.col" + k) : t("av.colN", { n: k + 1 });
+      if (s.title !== title) { s.title = title; s.setAttribute("aria-label", title); }
+      if (s.hidden) return;
       s.style.background = k === 0 && c.av.t ? "transparent" : a.pal[k];
       s.classList.toggle("eraser", k === 0);
       s.setAttribute("aria-checked", k === paintColor ? "true" : "false");
@@ -1536,11 +1632,12 @@
     dlg.appendChild(el("div", "dlg-title", t("exp.title")));
     dlg.appendChild(el("div", "dlg-sub", t("exp.side", { side: t(prefs.side === "back" ? "side.back" : "side.front") })));
     var list = el("div", "exp-list");
-    [["exp.png", exportCardPng], ["exp.svg", exportCardSvg], ["exp.pdf", exportPdf],
-     ["exp.avpng", exportAvatarPng], ["exp.avsvg", exportAvatarSvg], ["exp.vcf", exportVcf]]
-      .forEach(function (x) {
-        list.appendChild(button(t(x[0]), "exp-btn", function () { dlg.close(); x[1](); }));
-      });
+    var items = [["exp.png", exportCardPng], ["exp.svg", exportCardSvg], ["exp.pdf", exportPdf],
+     ["exp.avpng", exportAvatarPng], ["exp.avsvg", exportAvatarSvg], ["exp.vcf", exportVcf]];
+    if (shellWin()) items.push(["exp.contacts", addToContacts]);
+    items.forEach(function (x) {
+      list.appendChild(button(t(x[0]), "exp-btn", function () { dlg.close(); x[1](); }));
+    });
     dlg.appendChild(list);
     var acts = el("div", "dlg-actions");
     var close = button(t("exp.close"), "", function () { dlg.close(); });
@@ -1731,6 +1828,12 @@
       });
     });
     $("form").addEventListener("submit", function (e) { e.preventDefault(); });
+    $("f-qr").addEventListener("change", function () {
+      var v = $("f-qr").checked ? 1 : 0;
+      mutate(function (c) { c.qr = v; });
+      // show the side the QR is on
+      if (v && prefs.side !== "back") flipCard();
+    });
     $("link-add").addEventListener("click", addLink);
     $("tag-add").addEventListener("click", addTag);
     $("tag-in").addEventListener("keydown", function (e) {
@@ -1772,6 +1875,85 @@
     });
   }
 
+  // ---------- Deep links ----------
+  // __orosOpenAt("netizen", target), live or taken at boot:
+  //   { avatar: { c: [8 × "#rrggbb"], px: 144 digits 0–7, t: 0|1 } }
+  //       Pixel Avatar's "Use in Netizen ID": the face replaces the
+  //       current card's avatar (Undo).
+  //   { set: { user?, motto? } }
+  //       Name Generator: a new card with these filled in, or the
+  //       current card when there are already MAX_CARDS (Undo).
+  // Anything else is ignored.
+  function takeTarget(target) {
+    if (!target || typeof target !== "object") return;
+    if (target.avatar && typeof target.avatar === "object") { applyAvatar(target.avatar); return; }
+    if (target.set && typeof target.set === "object") applySet(target.set);
+  }
+
+  function applyAvatar(a) {
+    var probe = normCard({ id: "probe1", m: 0, av: { s: "netizen", c: a.c, px: a.px, t: a.t } });
+    if (!probe || !probe.av.c) return;
+    var prev = JSON.parse(JSON.stringify(cur().av));
+    var next = probe.av;
+    mutate(function (c) { c.av = { s: c.av.s, px: next.px, t: next.t, c: next.c }; });
+    afterTarget();
+    undoToast(t("toast.avatar"), function () {
+      mutate(function (c) { c.av = prev; });
+      renderAvatarEditor();
+    });
+  }
+
+  function applySet(v) {
+    var fields = {};
+    ["user", "motto"].forEach(function (k) {
+      if (typeof v[k] === "string" && v[k].trim()) fields[k] = v[k].replace(/\s+/g, " ").trim().slice(0, TEXT_FIELDS[k]);
+    });
+    if (!Object.keys(fields).length) return;
+    flush();
+    var c = cur();
+    // a full set of cards: fill the current card in place
+    if (!isDraft(c) && data.cards.length >= MAX_CARDS) {
+      var prev = {};
+      Object.keys(fields).forEach(function (k) { prev[k] = c[k]; });
+      mutate(function (cc) { Object.keys(fields).forEach(function (k) { cc[k] = fields[k]; }); });
+      afterTarget();
+      undoToast(t("toast.namedHere"), function () {
+        mutate(function (cc) { Object.keys(prev).forEach(function (k) { cc[k] = prev[k]; }); });
+        renderForm();
+      });
+      return;
+    }
+    draft = blankCard();
+    prefs.cur = draft.id; savePrefs();
+    mutate(function (cc) { Object.keys(fields).forEach(function (k) { cc[k] = fields[k]; }); });
+    var made = cur();
+    afterTarget();
+    undoToast(t("toast.named"), function () {
+      if (cardById(made.id) && prefs.cur !== made.id) switchCard(made.id);
+      if (cardById(made.id)) deleteCardSilent();
+    });
+  }
+
+  // Remove the current (stored) card without the Undo toast.
+  function deleteCardSilent() {
+    var c = cur();
+    if (isDraft(c)) return;
+    data.tombs[c.id] = Math.max(Date.now(), c.m);
+    data = mergeNetizen(data, data);
+    prefs.cur = data.cards.length ? data.cards[0].id : "";
+    savePrefs();
+    saveNow();
+    renderAll();
+  }
+
+  function afterTarget() {
+    renderAll();
+    if (viewCard) closeViewer();
+    if (prefs.tab === "card") setTab("edit");
+  }
+
+  window.__orosOpenAt = takeTarget;
+
   function boot() {
     load();
     loadPrefs();
@@ -1786,6 +1968,13 @@
     watchPalette();
     renderAll();
     checkHash();
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var target = window.parent.__orosTakeTarget("netizen");
+        if (target) takeTarget(target);
+      }
+    } catch (e) {}
   }
 
   boot();

@@ -26,7 +26,7 @@ const P = new Function("crypto",
   block("  // ---------- 2. Random", "  // ---------- 7. Storage") +
   "\nreturn { SIZES, NCOL, MAX_SEED, MAX_NAME, PAL_IDS, PALETTES, OROS_FALLBACK, hash32, randomSeed," +
   " toHex, darken, faceColors, faceParts, genFace, normFace, faceGrid, sameFace, faceSvg, exportPx," +
-  " normItem, mergePixel, newId, shelf };")(require("crypto").webcrypto);
+  " normItem, mergePixel, newId, shelf, toNetizen };")(require("crypto").webcrypto);
 
 const SEEDS = ["chris", "Χρήστος", "a", "orOS", "pixel-42", "🙂", "zzzzzzzz", "The quick brown fox"];
 for (let i = 0; i < 200; i++) SEEDS.push("s" + i);
@@ -217,4 +217,23 @@ test("museum: new ids are valid and unique, shelf is newest first", () => {
   const d = P.mergePixel({ items: [item("aaaaaa", 1), item("bbbbbb", 3), item("cccccc", 2)] }, null);
   assert.deepEqual(P.shelf(d).map((x) => x.id), ["bbbbbb", "cccccc", "aaaaaa"]);
   assert.match(P.randomSeed(), /^[a-z2-9]{8}$/);
+});
+
+test("Use in Netizen ID: 12×12 resample keeps the face symmetric and the colours", () => {
+  P.SIZES.forEach((n) => {
+    SEEDS.slice(0, 40).forEach((s) => {
+      const f = face(s, n, { b: 1 });
+      const cols = P.faceColors(s, "classic", null);
+      const a = P.toNetizen(f, cols);
+      assert.match(a.px, /^[0-7]{144}$/);
+      assert.equal(a.t, 1);
+      assert.equal(a.c.length, 8);
+      a.c.forEach((c) => assert.match(c, HEX));
+      for (let y = 0; y < 12; y++) {
+        const row = a.px.slice(y * 12, y * 12 + 12);
+        assert.equal(row, row.split("").reverse().join(""), n + " " + s + " row " + y);
+      }
+      if (n === 12) assert.equal(a.px, P.faceGrid(f), "12 → 12 is the same face");
+    });
+  });
 });
