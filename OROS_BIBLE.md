@@ -4732,3 +4732,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-11 — Device Info: never show a faked 100% battery (#187) — 0.86.02
 - Device Info: when the browser hides the real battery, the app says so instead of showing a number. Brave: "this browser hides the real battery level"; any other browser reporting exactly the default "100% and charging": "if you are not plugged in, this is a placeholder" until a real battery event arrives. New pure helper `DeviceCore.batteryState(b, {brave, changed})` (none / hidden / suspect / ok). Tests: tests/device.test.js.
+
+### 2026-10-11 — Micro-Zen: own breathing patterns + Habits row (#188) — 0.87.00
+- Micro-Zen: make your own breathing patterns, and see your sessions as a row in Habits. `zen/core.js` is shared by Micro-Zen and Habits (precached).
