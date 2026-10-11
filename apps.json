@@ -51,7 +51,8 @@
       "icon": "check",
       "url": "todo/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "kanban",
@@ -60,7 +61,8 @@
       "icon": "columns",
       "url": "kanban/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "mindmap",
@@ -97,7 +99,8 @@
       "icon": "quote",
       "url": "quote/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "timesheet",
@@ -163,7 +166,8 @@
       "icon": "contacts",
       "url": "contacts/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["dates.js", "today.js"]
     },
     {
       "id": "storage",
