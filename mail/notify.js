@@ -217,6 +217,14 @@
     });
   }
 
+  // Rules the mail server runs itself (Sieve, set up in Mail's
+  // settings) are left to it. Same test as sieve.js runs().
+  function serverRuns(acct, r) {
+    var sv = acct.sieve;
+    if (!sv || sv.on !== true || !Array.isArray(sv.ext)) return false;
+    return sv.ext.indexOf(r.act === "move" ? "fileinto" : "imap4flags") >= 0;
+  }
+
   // Runs the rules on `newer`; → the same list without the messages a
   // rule moved or marked read. A failed call leaves those messages in.
   function applyRules(url, acct, pw, rules, newer, M, Rl) {
@@ -341,7 +349,7 @@
           return p.then(function () {
             return password(d, acct.id).then(function (pw) {
               if (!pw || silenced[acct.id] === pw) return;
-              var mine = rules.filter(function (x) { return x && x.acct === acct.id && x.on !== false; });
+              var mine = rules.filter(function (x) { return x && x.acct === acct.id && x.on !== false && !serverRuns(acct, x); });
               return relay(url, acct, pw, { op: "list", folder: "INBOX", limit: mine.length ? PEEK_RULES : PEEK }).then(function (res) {
                 var out = freshMessages(res, marks[acct.id]);
                 marks[acct.id] = out.mark;
