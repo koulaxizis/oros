@@ -151,6 +151,7 @@ var PRECACHE_URLS = [
   "calendar/calendar.css",
   "calendar/calendar.js",
   "calendar/namedays.js",
+  "calendar/ics.js",
   "calendar/days.json",
   "calendar/search.js",
   "quote/",
