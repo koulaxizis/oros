@@ -13,6 +13,7 @@
     <header id="ct-top">
       <button id="ct-import" type="button" class="nav-mini" data-i18n="ct.import"></button>
       <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
+      <button id="ct-phone" type="button" class="nav-mini" data-i18n="ct.phone" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
@@ -141,6 +142,17 @@
     <div class="dlg-row">
       <button id="del-dlg-yes" type="button" class="btn danger" data-i18n="ct.del.yes"></button>
       <button id="del-dlg-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- vCard handed over by the shell: confirm first -->
+  <dialog id="vcf-dlg" aria-labelledby="vcf-dlg-title">
+    <h3 id="vcf-dlg-title" data-i18n="ct.vcf.title"></h3>
+    <p id="vcf-name" class="del-name"></p>
+    <p id="vcf-sum" class="del-text"></p>
+    <div class="dlg-row">
+      <button id="vcf-go" type="button" class="btn prim" data-i18n="ct.vcf.go"></button>
+      <button id="vcf-no" type="button" class="btn" data-i18n="ct.cancel"></button>
     </div>
   </dialog>
 

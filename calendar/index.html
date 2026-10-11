@@ -17,6 +17,7 @@
         <button id="cal-prev" type="button" data-i18n-aria="cal.prev">‹</button>
         <button id="cal-today" type="button" class="nav-mini" data-i18n="cal.today"></button>
         <button id="cal-next" type="button" data-i18n-aria="cal.next">›</button>
+        <button id="cal-import" type="button" class="nav-mini" data-i18n="cal.import"></button>
         <button id="cal-export" type="button" class="nav-mini" data-i18n="cal.export"></button>
         <button id="cal-stats" type="button" class="nav-mini" data-i18n="cal.stats"></button>
       </div>
@@ -164,6 +165,19 @@
     </div>
   </dialog>
 
+  <!-- ICS import preview (never a silent import) -->
+  <dialog id="imp-dlg" aria-labelledby="imp-dlg-title">
+    <h3 id="imp-dlg-title" data-i18n="imp.title"></h3>
+    <p id="imp-name" class="del-name"></p>
+    <p id="imp-sum" class="del-text"></p>
+    <p id="imp-notes" class="del-text" hidden></p>
+    <div class="dlg-row">
+      <button id="imp-go" type="button" class="btn prim" data-i18n="imp.go"></button>
+      <button id="imp-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+  </dialog>
+  <input id="ics-file" type="file" accept=".ics,text/calendar" hidden>
+
   <dialog id="stat-dlg" aria-labelledby="stat-dlg-title">
     <h3 id="stat-dlg-title" data-i18n="stat.title"></h3>
     <div id="stat-body"></div>
@@ -185,6 +199,7 @@
   <script src="../familytree/ft-core.js?v=0.80.00"></script>
   <script src="../sky/core.js?v=0.80.00"></script>
   <script src="namedays.js?v=0.80.00"></script>
+  <script src="ics.js?v=0.80.00"></script>
   <script src="calendar.js?v=0.80.00"></script>
 
 </body>

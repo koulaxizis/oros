@@ -108,6 +108,17 @@
       "undo": "Undo",
       "toast.quota": "Storage is full: changes are not saved on this device",
       "exp.done": "Calendar exported (.ics)",
+      "cal.import": "Import",
+      "imp.title": "Import events",
+      "imp.sum": "{new} new · {upd} updated · {same} already in the Calendar",
+      "imp.simpl": "{n} repeating event(s) use a rule the Calendar does not have: only their first date is imported.",
+      "imp.skip": "{n} skipped (cancelled or without a date).",
+      "imp.more": "Only the first {n} events are imported.",
+      "imp.go": "Import",
+      "imp.done": "{n} event(s) imported",
+      "imp.none": "No new or changed events in this file",
+      "imp.bad": "Could not read that file",
+      "imp.big": "That file is too large (5 MB at most)",
       "lbl.personal": "Personal",
       "lbl.work": "Work",
       "lbl.family": "Family",
@@ -257,6 +268,17 @@
       "undo": "Αναίρεση",
       "toast.quota": "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές δεν αποθηκεύονται σε αυτή τη συσκευή",
       "exp.done": "Το ημερολόγιο εξήχθη (.ics)",
+      "cal.import": "Εισαγωγή",
+      "imp.title": "Εισαγωγή συμβάντων",
+      "imp.sum": "{new} νέα · {upd} ενημερωμένα · {same} υπάρχουν ήδη στο Ημερολόγιο",
+      "imp.simpl": "{n} επαναλαμβανόμενο/α συμβάν/τα έχουν κανόνα που δεν υποστηρίζει το Ημερολόγιο: εισάγεται μόνο η πρώτη ημερομηνία.",
+      "imp.skip": "{n} παραλείφθηκαν (ακυρωμένα ή χωρίς ημερομηνία).",
+      "imp.more": "Εισάγονται μόνο τα πρώτα {n} συμβάντα.",
+      "imp.go": "Εισαγωγή",
+      "imp.done": "Εισήχθησαν {n} συμβάν/τα",
+      "imp.none": "Δεν υπάρχουν νέα ή αλλαγμένα συμβάντα σε αυτό το αρχείο",
+      "imp.bad": "Το αρχείο δεν μπόρεσε να διαβαστεί",
+      "imp.big": "Το αρχείο είναι πολύ μεγάλο (έως 5 MB)",
       "lbl.personal": "Προσωπικό",
       "lbl.work": "Εργασία",
       "lbl.family": "Οικογένεια",
@@ -3902,6 +3924,121 @@ function transientNote(title, body) {
     $("cal-export").addEventListener("click", exportICS);
   }
 
+  /* ---------- 7e2. ICS import ----------
+     calendar/ics.js parses (pure, RFC 5545 subset); this part only
+     compares with what is stored, asks, and saves. Never silent: a
+     themed dialog shows new / updated / unchanged counts first. The
+     same path serves the Import button and BR-FILE-IMPORT
+     (__orosOpenAt("calendar", { importIcs: { name, text } }), a file
+     handed over by the shell). Imported events are ordinary events:
+     fresh mtime, so they sync and win over an older copy or
+     tombstone like any edit. */
+  var ICS_MAX_CHARS = 5 * 1024 * 1024;
+  var impPending = null;
+  function sameEvent(a, b) {
+    var ka = ["date", "dateEnd", "start", "end", "title", "note", "location", "labelId", "remindMin"];
+    for (var i = 0; i < ka.length; i++) if (a[ka[i]] !== b[ka[i]]) return false;
+    return JSON.stringify(a.recur) === JSON.stringify(b.recur);
+  }
+  function importIcsText(text, name) {
+    if (typeof text !== "string" || !window.OrosIcs) { transientNote(t("imp.bad")); return; }
+    if (text.length > ICS_MAX_CHARS) { transientNote(t("imp.big")); return; }
+    var res;
+    try { res = window.OrosIcs.parse(text); } catch (e) {
+      console.error("calendar: ICS import failed:", e);
+      transientNote(t("imp.bad"));
+      return;
+    }
+    if (!res.found) { transientNote(t("imp.bad")); return; }
+    var byId = {};
+    state.events.forEach(function (e) { byId[e.id] = e; });
+    var lblByName = {};
+    state.labels.forEach(function (l) { lblByName[String(l.name).toLowerCase()] = l.id; });
+    var add = [], upd = [], same = 0;
+    res.events.forEach(function (pe) {
+      var lid = null;
+      for (var c = 0; c < pe.cats.length && !lid; c++) lid = lblByName[pe.cats[c].toLowerCase()] || null;
+      var ev = sanitizeEvent({
+        id: pe.id, date: pe.date, dateEnd: pe.dateEnd, start: pe.start, end: pe.end,
+        title: pe.title, note: pe.note, location: pe.location, labelId: lid,
+        recur: pe.recur, remindMin: pe.remindMin, mtime: 0
+      });
+      if (!ev) return;
+      var cur = byId[ev.id];
+      if (!cur) add.push(ev);
+      else if (sameEvent(cur, ev)) same++;
+      else { if (!lid) ev.labelId = cur.labelId; upd.push(ev); }
+    });
+    if (!add.length && !upd.length) { transientNote(t("imp.none")); return; }
+    impPending = { add: add, upd: upd };
+    $("imp-name").textContent = String(name || "").slice(0, 120);
+    $("imp-sum").textContent = t("imp.sum").replace("{new}", add.length)
+      .replace("{upd}", upd.length).replace("{same}", same);
+    var notes = [];
+    if (res.simplified) notes.push(t("imp.simpl").replace("{n}", res.simplified));
+    if (res.skipped) notes.push(t("imp.skip").replace("{n}", res.skipped));
+    if (res.more) notes.push(t("imp.more").replace("{n}", window.OrosIcs.MAX_EVENTS));
+    $("imp-notes").textContent = notes.join(" ");
+    $("imp-notes").hidden = !notes.length;
+    try { if ($("imp-dlg").open) $("imp-dlg").close(); } catch (e) {}
+    $("imp-dlg").showModal();
+  }
+  function commitIcsImport() {
+    var p = impPending;
+    impPending = null;
+    $("imp-dlg").close();
+    if (!p) return;
+    var now = Date.now();
+    var ids = {};
+    p.upd.forEach(function (ev) { ev.mtime = now; ids[ev.id] = ev; });
+    state.events = state.events.map(function (e) { return ids[e.id] || e; });
+    p.add.forEach(function (ev) { ev.mtime = now; state.events.push(ev); ids[ev.id] = ev; });
+    state.deleted = state.deleted.filter(function (d) { return !ids[d.id]; });
+    saveState();
+    renderAll();
+    renderDay();
+    transientNote(t("imp.done").replace("{n}", p.add.length + p.upd.length));
+  }
+  function readIcsFile(f) {
+    if (!f) return;
+    if (f.size > ICS_MAX_CHARS) { transientNote(t("imp.big")); return; }
+    var fr = new FileReader();
+    fr.onload = function () { importIcsText(String(fr.result), f.name); };
+    fr.onerror = function () { transientNote(t("imp.bad")); };
+    fr.readAsText(f, "utf-8");
+  }
+  if ($("cal-import")) {
+    $("cal-import").addEventListener("click", function () {
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.openFile === "function") {
+        dlg.openFile(".ics,text/calendar").then(readIcsFile);
+        return;                          // cancel (null) = silent exit
+      }
+      $("ics-file").click();             // standalone fallback
+    });
+  }
+  if ($("ics-file")) {
+    $("ics-file").addEventListener("change", function () {
+      var f = this.files && this.files[0];
+      this.value = "";
+      readIcsFile(f);
+    });
+  }
+  if ($("imp-dlg")) {
+    $("imp-go").addEventListener("click", commitIcsImport);
+    $("imp-no").addEventListener("click", function () { impPending = null; $("imp-dlg").close(); });
+    $("imp-dlg").addEventListener("close", function () { impPending = null; });
+  }
+
+  // Generic shell deep link (one receiver per app). BR-FILE-IMPORT:
+  // { importIcs: { name, text } }. Anything else just opens the app.
+  window.__orosOpenAt = function (target) {
+    var f = target && typeof target === "object" ? target.importIcs : null;
+    if (f && typeof f === "object" && typeof f.text === "string") {
+      importIcsText(f.text, typeof f.name === "string" ? f.name : "");
+    }
+  };
+
   /* ---------- 7f. Stats dialog (v0.3.0) ---------- */
   function openStats() {
     var body = $("stat-body");
@@ -4544,4 +4681,13 @@ function transientNote(title, body) {
     // visible in the console instead of a silently dead sync.
     console.warn("[Calendar] sync registration failed:", e);
   }
+
+  // A deep link staged while the Calendar was closed (one-shot take).
+  try {
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var bootTarget = window.parent.__orosTakeTarget("calendar");
+      if (bootTarget) window.__orosOpenAt(bootTarget);
+    }
+  } catch (e) {}
 })();
