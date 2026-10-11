@@ -4620,3 +4620,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New sync slice `atelier-folders` (key `oros-atelier-folders`, owner `atelier/folders.js`, UI `atelier/homefolders.js`): ATELIER-FOLDERS v1 `{ver:1, folders[{id "af-…", m, nm, pos}] ≤ 200, place{docId:{f, m}} ≤ 20000, dt{folderId:m}}`, merged per folder / per place by `m` (ties: larger canonical JSON), tombstones remove folders not newer than them; a place naming a missing folder counts as no folder.
 - Canva: the relay check gives up after 15 s with the reason and `Try again`; the dialog's close listener ends only its own import (a late `close` could leave the window stuck). Files: "Reading files… i of n", each disk call time-limited (`within()`: 20 s `ls`, 10 s per `stat`, 40 at a time). Home buttons get an 8 px gap.
 - Tests: tests/atelier-folders.test.js. Not tested: real Canva, sync of the new slice between two real devices.
+
+### 2026-10-11 — Calendar: label/feed chips folded behind a toggle on phones (#175) — 0.80.01
+- On screens up to 700px the label and feed chips sit behind one "Labels & feeds / Ετικέτες & ροές" button showing "n of m on"; tapping it opens or closes the list. Desktop keeps the chips inline.
+- `#lbl-toggle` in `calendar/index.html`, rendered from `renderChips()` (count follows every toggle and language change). Open/closed state is device-local (`oros-calendar-chips-open`), never synced. Help pages EN/EL updated. No new files.
+- Not tested: real phone, Safari.
