@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.77.00
+- Mail works with your other apps: names from Contacts while you type, and a message can become a task, a note, a bookmark or a contact. Emails in Contacts and a new Email button in Calendar open Mail.
+
 ## Version 0.76.00
 - Mail: undo send, send later, templates for messages you write often, and Block sender.
 

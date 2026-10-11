@@ -1211,6 +1211,18 @@ function ensureViewCss() {
 }
 
 var viewCardId = null;   // CT-2: which contact the open card shows
+// orOS Mail with an account on this device (shell only) → the shell,
+// so an e-mail address opens Mail's composer; else null (mailto:).
+function mailOpener() {
+  var shell = null;
+  try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+  if (!shell) return null;
+  try {
+    var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+    return d && Array.isArray(d.accounts) && d.accounts.length ? shell : null;
+  } catch (e) { return null; }
+}
+
 function closeViewCard() {
   var ov = $("ct-view");
   if (ov) ov.parentNode.removeChild(ov);
@@ -1435,8 +1447,17 @@ function openViewCard(c) {
   }
   if (c.emails.length) {
     var em = viewSection(card, "ct.field.emails");
+    var mailShell = mailOpener();
     c.emails.forEach(function (e) {
-      viewRow(em, t("ty." + e.type), e.v, "mailto:" + e.v);
+      var a = viewRow(em, t("ty." + e.type), e.v, "mailto:" + e.v);
+      // orOS Mail set up on this device: write there instead of mailto:
+      if (mailShell) a.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        closeViewCard();
+        var name = displayName(c);
+        if (name === t("ct.unnamed")) name = "";
+        mailShell.__orosOpenAt("mail", { compose: { to: (name ? "\"" + name.replace(/[\\"]/g, "\\$&") + "\" <" : "") + e.v + (name ? ">" : "") } });
+      });
     });
   }
   if (c.addresses.length) {
@@ -2231,6 +2252,28 @@ document.addEventListener("keydown", function (e) {
   // land here via window.parent.__orosOpenContact (live iframe push
   // when Contacts is already open). Opens the contact's edit dialog
   // — identical to tapping its row. Stale/deleted id → silent no-op.
+  // Mail "Add sender to Contacts": __orosOpenAt("contacts", { add: {
+  // email, name? } }). Someone already has that address → their card;
+  // otherwise a NEW contact dialog prefilled (saved only on Save).
+  window.__orosOpenAt = function (target) {
+    var a = target && typeof target === "object" ? target.add : null;
+    if (!a || typeof a !== "object" || typeof a.email !== "string") return;
+    var email = a.email.trim().slice(0, 120);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    var low = email.toLowerCase();
+    for (var i = 0; i < state.contacts.length; i++) {
+      var hit = state.contacts[i].emails.some(function (x) { return String(x.v).toLowerCase() === low; });
+      if (hit) { window.__orosContactsOpen(state.contacts[i].id); return; }
+    }
+    try { closeViewCard(); } catch (e) {}
+    try { if ($("ct-dlg").open) $("ct-dlg").close(); } catch (e) {}
+    openDlg(null);
+    var words = (typeof a.name === "string" ? a.name : "").replace(/\s+/g, " ").trim().slice(0, 120).split(" ").filter(Boolean);
+    if (words.length > 1) { $("ct-family").value = words.pop(); }
+    $("ct-given").value = words.join(" ");
+    fillHolder($("ct-emails"), [{ v: email, type: "home" }], function (h, r) { buildValRow(h, r && r.v, r && r.type, EMAIL_TYPES, "name@example.com", 120, "em"); });
+  };
+
   window.__orosContactsOpen = function (contactId) {
     if (typeof contactId !== "string" || !contactId) return;
     for (var i = 0; i < state.contacts.length; i++) {
@@ -3751,6 +3794,11 @@ document.addEventListener("keydown", function (e) {
         typeof window.parent.__orosContactsTakePending === "function") {
       var pending = window.parent.__orosContactsTakePending();
       if (pending) window.__orosContactsOpen(pending);
+    }
+    if (window.parent && window.parent !== window &&
+        typeof window.parent.__orosTakeTarget === "function") {
+      var target = window.parent.__orosTakeTarget("contacts");
+      if (target) window.__orosOpenAt(target);
     }
   } catch (e) {}
 
