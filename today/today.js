@@ -60,12 +60,12 @@
       off: "The daily summary is off. Turn it on in Settings (the gear button).",
       oldNote: "That notice was for {d}. Here is today.",
       noShell: "Open Today inside orOS to see your day.",
-      ask: "Ask the Assistant about this", asked: "Opened in the Assistant. Nothing is sent until you press Send.",
+      ask: "Ask the Assistant about this", done: "Done (opens the app)", asked: "Opened in the Assistant. Nothing is sent until you press Send.",
       "s.title": "Today settings",
       "s.on": "Daily summary", "s.onHint": "One notice a day when something is late or due today.",
       "s.hour": "From", "s.hourHint": "The notice comes on the first open of orOS after this time.",
       "s.absorb": "Quiet the morning reminders the summary covers",
-      "s.absorbHint": "Plants, chores, pet care, garage, name days and the weather briefing stay quiet once the summary has come. Reminders at a set time still ring.",
+      "s.absorbHint": "Plants, chores, pet care, garage, to-dos, quotes, name days and the weather briefing stay quiet once the summary has come. Reminders at a set time still ring.",
       "s.apps": "Apps in the summary", "s.sens": "sensitive",
       "s.sensHint": "Sensitive apps are off until you switch them on.",
       "s.none": "No app gives the summary anything yet.",
@@ -81,12 +81,12 @@
       off: "Η ημερήσια σύνοψη είναι κλειστή. Άνοιξέ τη από τις Ρυθμίσεις (το γρανάζι).",
       oldNote: "Η ειδοποίηση ήταν για τις {d}. Εδώ είναι το σήμερα.",
       noShell: "Άνοιξε το «Σήμερα» μέσα από το orOS για να δεις τη μέρα σου.",
-      ask: "Ρώτα τον Βοηθό γι' αυτό", asked: "Άνοιξε στον Βοηθό. Τίποτα δεν στέλνεται πριν πατήσεις Αποστολή.",
+      ask: "Ρώτα τον Βοηθό γι' αυτό", done: "Έγινε (ανοίγει την εφαρμογή)", asked: "Άνοιξε στον Βοηθό. Τίποτα δεν στέλνεται πριν πατήσεις Αποστολή.",
       "s.title": "Ρυθμίσεις «Σήμερα»",
       "s.on": "Ημερήσια σύνοψη", "s.onHint": "Μία ειδοποίηση τη μέρα, όταν κάτι έχει καθυστερήσει ή λήγει σήμερα.",
       "s.hour": "Από", "s.hourHint": "Η ειδοποίηση έρχεται στο πρώτο άνοιγμα του orOS μετά από αυτή την ώρα.",
       "s.absorb": "Σίγαση των πρωινών υπενθυμίσεων που καλύπτει η σύνοψη",
-      "s.absorbHint": "Φυτά, δουλειές, κατοικίδια, γκαράζ, γιορτές και ο πρωινός καιρός σωπαίνουν όταν έχει έρθει η σύνοψη. Οι υπενθυμίσεις με συγκεκριμένη ώρα χτυπούν κανονικά.",
+      "s.absorbHint": "Φυτά, δουλειές, κατοικίδια, γκαράζ, εργασίες, προσφορές, γιορτές και ο πρωινός καιρός σωπαίνουν όταν έχει έρθει η σύνοψη. Οι υπενθυμίσεις με συγκεκριμένη ώρα χτυπούν κανονικά.",
       "s.apps": "Εφαρμογές στη σύνοψη", "s.sens": "ευαίσθητη",
       "s.sensHint": "Οι ευαίσθητες εφαρμογές είναι κλειστές μέχρι να τις ανοίξεις.",
       "s.none": "Καμία εφαρμογή δεν δίνει ακόμη κάτι στη σύνοψη.",
@@ -110,6 +110,7 @@
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     chev: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     ask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
     dot: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg>'
   };
 
@@ -283,6 +284,18 @@
       if (H) H.open(r.app, r.target);
     });
     li.appendChild(b);
+    if (r.done && r.kind === "task") {
+      var dn = el("button", "ask done-btn");
+      dn.type = "button";
+      dn.innerHTML = SVG.check;
+      dn.title = t("done");
+      dn.setAttribute("aria-label", t("done") + ": " + r.title);
+      dn.addEventListener("click", function () {
+        var H = host();
+        if (H && typeof H.done === "function") H.done(r.app, r.done);
+      });
+      li.appendChild(dn);
+    }
     if (canAsk(info)) {
       var a = el("button", "ask");
       a.type = "button";
