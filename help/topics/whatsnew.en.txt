@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.75.00
+- Mail: attach files, forward with attachments, preview pictures and PDFs, and save attachments to Files.
+
 ## Version 0.74.00
 - Mail: create, rename and delete folders, and save drafts on the server to finish them on any device.
 
