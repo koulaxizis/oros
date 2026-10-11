@@ -34,10 +34,10 @@ function cutBlock(from, to) {
 const NZ = new Function(
   [cutBlock("  var DATA_VER", "  // ---------- 1."),
    cutBlock("  var AV_BG", "  function genAvatar("),
-   ...["cmpStr", "isInt", "str", "hash32", "prng", "normCard", "mergeNetizen", "shown",
-       "genAvatar", "vEsc", "vFold", "buildVCard", "sharePayload", "cardFromPayload",
+   ...["cmpStr", "isInt", "str", "hash32", "prng", "normCard", "normCols", "mergeNetizen", "shown",
+       "genAvatar", "vEsc", "vFold", "buildVCard", "qrText", "sharePayload", "cardFromPayload",
        "b64urlFromBytes", "bytesFromB64url"].map(cutFunction)].join("\n") +
-  "\nreturn { normCard, mergeNetizen, genAvatar, buildVCard, vFold, sharePayload, cardFromPayload," +
+  "\nreturn { normCard, mergeNetizen, genAvatar, buildVCard, qrText, vFold, sharePayload, cardFromPayload," +
   " b64urlFromBytes, bytesFromB64url };")();
 
 function card(over) {
@@ -61,6 +61,7 @@ test("normCard drops bad cards and clips fields", () => {
   assert.deepEqual(c.tags, ["a", "b"]);
   assert.deepEqual(c.hide, ["avatar", "bio"]);
   assert.deepEqual(c.av, { s: "netizen", px: "", t: 1 });
+  assert.equal(c.qr, 0);
   assert.equal(J(NZ.normCard(c)), J(c), "idempotent");
 });
 
@@ -149,4 +150,76 @@ test("share payload: only what the card shows, round trip through base64url", ()
   // no username / not an object → refused
   assert.equal(NZ.cardFromPayload({ user: "  " }), null);
   assert.equal(NZ.cardFromPayload("x"), null);
+});
+
+// ---------- Pixel Avatar colours, QR on the back, deep links ----------
+const PX8 = "7".repeat(4) + "0123456".repeat(20).slice(0, 140);
+const COLS = ["#AABBCC", "#000000", "#111111", "#222222", "#333333", "#444444", "#555555", "#ffffff"];
+
+test("own colours: 8 valid hex values with a painted face, digits 0–7", () => {
+  const c = card({ av: { s: "seed1", px: PX8, t: 1, c: COLS }, qr: 1 });
+  assert.equal(c.av.px, PX8);
+  assert.deepEqual(c.av.c, COLS.map((x) => x.toLowerCase()));
+  assert.equal(c.qr, 1);
+  assert.equal(J(NZ.normCard(c)), J(c), "idempotent");
+  // without own colours a 7 is not a valid pixel
+  assert.equal(card({ av: { s: "seed1", px: PX8 } }).av.px, "");
+  // bad palettes are dropped (and then the 0–7 face with them)
+  assert.ok(!("c" in card({ av: { s: "seed1", px: PX8, c: COLS.slice(0, 7) } }).av));
+  assert.ok(!("c" in card({ av: { s: "seed1", px: PX8, c: COLS.map((x, i) => i ? x : "red") } }).av));
+  // colours without a painted face are meaningless
+  assert.ok(!("c" in card({ av: { s: "seed1", px: "", c: COLS } }).av));
+  // anything but 1 is "no QR"
+  assert.equal(card({ qr: true }).qr, 0);
+});
+
+test("merge keeps own colours and the QR flag", () => {
+  const A = { cards: [card({ id: "aaaaaa", m: 10 })], tombs: {} };
+  const B = { cards: [card({ id: "aaaaaa", m: 20, qr: 1, av: { s: "s", px: PX8, c: COLS } })], tombs: {} };
+  const ab = NZ.mergeNetizen(A, B);
+  assert.equal(J(ab), J(NZ.mergeNetizen(B, A)));
+  assert.equal(ab.cards[0].qr, 1);
+  assert.equal(ab.cards[0].av.c.length, 8);
+});
+
+test("QR text: a short vCard, no notes, tags, links or photo; it fits a QR code", () => {
+  const c = card({
+    user: "ada", disp: "Ada Lovelace", email: "ada@example.org", phone: "+30 123", web: "ada.example",
+    bio: "A long bio ".repeat(20), motto: "Hello", tags: ["math"], loc: "London",
+    links: [{ l: "Site", u: "https://ada.example" }], hide: ["phone"]
+  });
+  const v = NZ.qrText(c);
+  assert.ok(v.includes("FN:Ada Lovelace\r\n") && v.includes("EMAIL;TYPE=INTERNET:ada@example.org"));
+  assert.ok(v.includes("URL:ada.example"));
+  for (const k of ["NOTE", "CATEGORIES", "PHOTO", "ADR", "item1", "TEL"]) assert.ok(!v.includes(k), k + " stays out");
+  assert.deepEqual(c.hide, ["phone"], "the card itself is untouched");
+  const QR = require(path.join(__dirname, "..", "qr", "qr-encode.js"));
+  const q = QR.encode(v, { ecl: "L" });
+  assert.ok(q.size <= 49, "small enough to scan on a card (" + q.size + ")");
+});
+
+test("share payload carries own colours and the QR flag", () => {
+  const c = card({ qr: 1, av: { s: "seed1", px: PX8, c: COLS } });
+  const p = NZ.sharePayload(c);
+  assert.equal(p.qr, 1);
+  const back = NZ.cardFromPayload(JSON.parse(J(p)));
+  assert.deepEqual(back.av.c, c.av.c);
+  assert.equal(back.av.px, PX8);
+  assert.equal(back.qr, 1);
+  assert.ok(!("qr" in NZ.sharePayload(card({}))));
+});
+
+test("deep links: avatar + set targets, taken at boot; the QR encoder loads first", () => {
+  assert.match(SRC, /window\.__orosOpenAt = takeTarget;/);
+  assert.match(SRC, /__orosTakeTarget\("netizen"\)/);
+  assert.match(SRC, /target\.avatar/);
+  assert.match(SRC, /target\.set/);
+  assert.match(SRC, /importVcf: \{ name: /);
+  const html = fs.readFileSync(path.join(__dirname, "..", "netizen", "index.html"), "utf8");
+  const q = html.indexOf("../qr/qr-encode.js"), n = html.indexOf("netizen.js?v=");
+  assert.ok(q > 0 && q < n, "qr-encode.js before netizen.js");
+  assert.match(html, /id="f-qr"/);
+  // Pixel Avatar's sender
+  const PX = fs.readFileSync(path.join(__dirname, "..", "pixel", "pixel.js"), "utf8");
+  assert.match(PX, /__orosOpenAt\("netizen", \{ avatar:/);
 });

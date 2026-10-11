@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Netizen ID · orOS</title>
 
-  <link rel="stylesheet" href="netizen.css?v=0.87.00">
+  <link rel="stylesheet" href="netizen.css?v=0.88.00">
 
 </head>
 <body>
@@ -93,6 +93,10 @@
           <label for="f-web" data-i18n="f.web">Website</label>
           <div class="in-row"><input id="f-web" data-f="web" type="url" maxlength="120" spellcheck="false" autocapitalize="off"></div>
         </div>
+        <div class="qr-opt">
+          <label class="chk"><input type="checkbox" id="f-qr"><span data-i18n="f.qr">QR code on the back</span></label>
+          <p class="hint" data-i18n="f.qrHint">A phone camera saves you as a contact from it.</p>
+        </div>
       </section>
 
       <section class="sec">
@@ -157,8 +161,9 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../vendor/jspdf.umd.min.js?v=0.87.00"></script>
-  <script src="netizen.js?v=0.87.00"></script>
+  <script src="../vendor/jspdf.umd.min.js?v=0.88.00"></script>
+  <script src="../qr/qr-encode.js?v=0.88.00"></script>
+  <script src="netizen.js?v=0.88.00"></script>
 
 </body>
 </html>

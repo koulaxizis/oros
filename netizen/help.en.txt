@@ -19,14 +19,19 @@ Each optional field, and the avatar, has an eye button. A hidden field stays sav
 ## Pixel avatar
 The avatar is a 12×12 pixel face. `New face` draws a random one (you can undo it). To change pixels, pick a colour and tap or drag on the grid; `Background / eraser` clears a pixel. With the keyboard, use the arrow keys on the grid and [[Enter]] or [[Space]] to paint. `Transparent background` leaves the background see-through.
 
+A face from [Pixel Avatar](app:pixel) can be your avatar too: there, press `Use in Netizen ID` and it replaces the avatar of the card that's open here (with `Undo`). It keeps its own 8 colours, so the colour swatches change to `Colour 2` to `Colour 8`. `New face` goes back to a generated face.
+
 ## The card
 Tap or click the card, or use `Flip card`, to see the other side. The front has the avatar, username, name, details and motto; the back has the bio, tags, contact details and links.
+
+### QR code
+Under `Contact`, tick `QR code on the back` to put a QR code on the back of the card. A phone camera that scans it offers to save you as a contact, with your name, username, email, phone and website (only the ones shown on the card). It travels with the card in exports and in the share link.
 
 ### Several cards
 Keep up to 20 cards, for example one for work and one for gaming. Choose a card from `Cards`, and use `New card`, `Duplicate card` or `Delete card` (with `Undo`).
 
 ## Share and export
-`Export` offers the side you're looking at as `Card · PNG` or `Card · SVG`, both sides as `Card · PDF (both sides)`, the avatar as `Avatar · PNG` or `Avatar · SVG`, and `Contact · vCard (.vcf)` for address books. `Copy card image` puts a picture of the card on the clipboard.
+`Export` offers the side you're looking at as `Card · PNG` or `Card · SVG`, both sides as `Card · PDF (both sides)`, the avatar as `Avatar · PNG` or `Avatar · SVG`, and `Contact · vCard (.vcf)` for address books. `Add me to orOS Contacts` hands the same vCard to [Contacts](app:contacts), which asks before it adds you. `Copy card image` puts a picture of the card on the clipboard.
 
 `Share link` makes a link that contains the card itself. Anyone who opens it sees a view-only card they can flip, with a button to open Netizen ID.
 

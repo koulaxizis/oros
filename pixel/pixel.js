@@ -70,6 +70,7 @@
       "btn.undo": "Undo (Ctrl+Z)", "btn.redo": "Redo (Ctrl+Y)",
       "grid": "Face, {n} by {n} pixels", "px": "Row {r}, column {c}: {col}",
       "btn.png": "PNG", "btn.svg": "SVG", "btn.copyImg": "Copy image", "exp.px": "{n} px",
+      "btn.netizen": "Use in Netizen ID",
       "btn.save": "Save to the Museum", "museum.empty": "No faces saved yet. Saved faces follow you to all your devices.",
       "item.open": "Open", "item.rename": "Rename", "item.delete": "Delete",
       "rename.title": "Rename", "rename.ok": "Save", "cancel": "Cancel",
@@ -93,6 +94,7 @@
       "btn.undo": "Αναίρεση (Ctrl+Z)", "btn.redo": "Επανάληψη (Ctrl+Y)",
       "grid": "Πρόσωπο, {n} επί {n} pixel", "px": "Γραμμή {r}, στήλη {c}: {col}",
       "btn.png": "PNG", "btn.svg": "SVG", "btn.copyImg": "Αντιγραφή εικόνας", "exp.px": "{n} px",
+      "btn.netizen": "Βάλ' το στο Netizen ID",
       "btn.save": "Αποθήκευση στο Μουσείο", "museum.empty": "Δεν υπάρχουν ακόμα αποθηκευμένα πρόσωπα. Σε ακολουθούν σε όλες τις συσκευές σου.",
       "item.open": "Άνοιγμα", "item.rename": "Μετονομασία", "item.delete": "Διαγραφή",
       "rename.title": "Μετονομασία", "rename.ok": "Αποθήκευση", "cancel": "Άκυρο",
@@ -481,6 +483,20 @@
   // Newest first for the shelf.
   function shelf(dat) {
     return dat.items.slice().sort(function (x, y) { return y.m - x.m || cmpStr(x.id, y.id); });
+  }
+
+  // Netizen ID avatars are 12×12: nearest-neighbour resample, mirrored
+  // around the centre so a symmetric face stays symmetric.
+  // → { c: 8 colours, px: 144 digits 0–7, t: clear background }
+  function toNetizen(f, colors) {
+    var n = f.n, grid = faceGrid(f), N = 12, H = N / 2, px = "";
+    function src(i) {
+      return i < H ? Math.floor((i + 0.5) * n / N - 1e-9) : n - 1 - src(N - 1 - i);
+    }
+    for (var y = 0; y < N; y++) {
+      for (var x = 0; x < N; x++) px += grid.charAt(src(y) * n + src(x));
+    }
+    return { c: colors.map(function (c) { return toHex(c) || "#808080"; }), px: px, t: f.b ? 1 : 0 };
   }
 
   // ---------- 7. Storage + prefs ----------
@@ -932,6 +948,19 @@
       .then(function () { showToast(t("toast.copied")); },
             function () { showToast(t("toast.copyFail")); });
   }
+  // "Use in Netizen ID": the face becomes the avatar of the card open
+  // there (Netizen offers Undo).
+  function shellWin() {
+    try {
+      return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null;
+    } catch (e) { return null; }
+  }
+  function sendToNetizen() {
+    var sh = shellWin(), f = prefs.face;
+    if (!sh) return;
+    try { sh.__orosOpenAt("netizen", { avatar: toNetizen(f, colorsOf(f)) }); } catch (e) {}
+  }
+
   function copySeed() {
     var s = prefs.face.s;
     var p = (navigator.clipboard && navigator.clipboard.writeText)
@@ -1139,6 +1168,8 @@
     $("png-btn").addEventListener("click", exportPng);
     $("svg-btn").addEventListener("click", exportSvg);
     $("copyimg-btn").addEventListener("click", copyImage);
+    $("netizen-btn").hidden = !shellWin();
+    $("netizen-btn").addEventListener("click", sendToNetizen);
     $("save-btn").addEventListener("click", saveCurrent);
     wireKeyboard();
   }
