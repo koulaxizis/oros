@@ -1027,7 +1027,11 @@
     return A.normRecipe({
       seed: A.randomSeed(), style: style, pal: pick(A.PALETTES),
       dens: 30 + Math.floor(rand() * 50), chaos: 20 + Math.floor(rand() * 60),
-      grain: 0, light: rand() < 0.3 ? 1 : 0
+      grain: 0, light: rand() < 0.3 ? 1 : 0,
+      tree: style === "tree" && window.TreesCore ? {          // a Tree Sketcher tree
+        sp: pick(window.TreesCore.SPECIES), season: pick(window.TreesCore.SEASONS),
+        ink: rand() < 0.7 ? "colour" : pick(window.TreesCore.INKS), ground: "hill"
+      } : undefined
     });
   }
   function accent() {

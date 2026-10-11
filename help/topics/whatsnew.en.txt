@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.78.00
+- New app: Tree Sketcher. Move a few sliders and a hand-drawn tree grows: choose the kind, the season and the style, keep your trees, download them or set one as your wallpaper.
+
 ## Version 0.77.00
 - Mail works with your other apps: names from Contacts while you type, and a message can become a task, a note, a bookmark or a contact. Emails in Contacts and a new Email button in Calendar open Mail.
 

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wallpaper Generator · orOS</title>
 
-  <link rel="stylesheet" href="wallpaper.css?v=0.77.00">
+  <link rel="stylesheet" href="wallpaper.css?v=0.78.00">
 
 </head>
 <body>
@@ -53,6 +53,8 @@
         <label class="chk"><input type="checkbox" id="grain"><span data-i18n="f.grain">Film grain</span></label>
         <label class="chk"><input type="checkbox" id="light"><span data-i18n="f.light">Light background</span></label>
         <p class="hint" id="light-hint" data-i18n="f.lightNo" hidden>A nebula is always drawn at night.</p>
+        <p class="hint" id="tree-hint" data-i18n="tree.hint" hidden></p>
+        <button type="button" class="txt-btn" id="tree-btn" data-i18n="tree.btn" hidden>Shape the tree in Tree Sketcher</button>
       </section>
 
       <section class="sec">
@@ -85,8 +87,9 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="art.js?v=0.77.00"></script>
-  <script src="wallpaper.js?v=0.77.00"></script>
+  <script src="../trees/core.js?v=0.78.00"></script>
+  <script src="art.js?v=0.78.00"></script>
+  <script src="wallpaper.js?v=0.78.00"></script>
 
 </body>
 </html>

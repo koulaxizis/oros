@@ -279,6 +279,14 @@
       "type": "internal"
     },
     {
+      "id": "trees",
+      "name": "Tree Sketcher",
+      "category": "Creativity",
+      "icon": "trees",
+      "url": "trees/",
+      "type": "internal"
+    },
+    {
       "id": "atelier",
       "name": "Atelier",
       "category": "Creativity",

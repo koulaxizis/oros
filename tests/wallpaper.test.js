@@ -19,9 +19,13 @@ const vm = require("vm");
 const ART_SRC = fs.readFileSync(path.join(__dirname, "..", "wallpaper", "art.js"), "utf8");
 const APP_SRC = fs.readFileSync(path.join(__dirname, "..", "wallpaper", "wallpaper.js"), "utf8");
 
-function loadArt() {
+const TREES_SRC = fs.readFileSync(path.join(__dirname, "..", "trees", "core.js"), "utf8");
+
+// withTrees: the Tree Sketcher core is loaded first, as in the pages.
+function loadArt(withTrees) {
   const ctx = { setTimeout, Promise, Math, JSON, Date, Uint8Array, Uint32Array, Float32Array };
   vm.createContext(ctx);
+  if (withTrees !== false) vm.runInContext(TREES_SRC, ctx);
   vm.runInContext(ART_SRC, ctx);
   return ctx.OrosWallArt;
 }
@@ -219,4 +223,26 @@ test("tombstones: delete wins ties, a newer save resurrects", () => {
   assert.equal(back.favs.length, 1);
   assert.deepEqual(back.tombs, { aaa111: 10 });
   assert.deepEqual(WP.mergeWall({ tombs: { "BAD!": 3, zzz999: -1, yyy888: 1.5 } }, null).tombs, {});
+});
+
+test("tree style: keeps the shape of the tree, draws it, and falls back without the tree core", () => {
+  const r = ART.normRecipe({ seed: "oak", style: "tree", tree: { sp: "willow", season: "winter", br: 99, junk: 1 } });
+  assert.deepEqual(Object.keys(r), ["seed", "style", "pal", "dens", "chaos", "grain", "light", "tree"]);
+  assert.equal(r.tree.sp, "willow");
+  assert.equal(r.tree.br, 11);
+  assert.equal(r.tree.junk, undefined);
+  assert.deepEqual(ART.normRecipe(r), r);
+  assert.equal(ART.normRecipe({ seed: "x", style: "waves", tree: { sp: "oak" } }).tree, undefined);
+  assert.notEqual(ART.key(r, "#000"), ART.key(Object.assign({}, r, { tree: { sp: "oak" } }), "#000"));
+  const a = draw(r, 320, 200);
+  assert.ok(a.includes("ellipse(") || a.includes("lineTo("));
+  assert.notEqual(a, draw(ART.normRecipe(Object.assign({}, r, { tree: { sp: "cypress", season: "winter" } })), 320, 200));
+  // Without trees/core.js (an older page) the recipe survives and waves are drawn.
+  const OLD = loadArt(false);
+  const o = OLD.normRecipe(r);
+  assert.equal(o.style, "tree");
+  assert.equal(o.tree.sp, "willow");
+  const rec = recorder();
+  assert.doesNotThrow(() => OLD.renderSync(rec.ctx, 320, 200, o, {}));
+  assert.ok(rec.log.length > 50);
 });

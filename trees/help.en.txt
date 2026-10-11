@@ -1,0 +1,47 @@
+# Tree Sketcher
+Move a few sliders and a tree grows on the screen, drawn as if by hand. Every seed gives a slightly different tree, and the same seed and settings always give the same one.
+
+## Getting started
+A tree is already there when you open the app. Tap or click `New tree` (or the dice, `New tree (R)`) for another seed, and watch it grow.
+- `Seed` is any word or number. Type your name and you get your own tree.
+- `Hide settings` folds the settings away so the tree has more room; `Settings` brings them back. On a phone the tree stays at the top while you scroll the settings.
+
+## Shape the tree
+- `Kind of tree`: `Oak`, `Willow`, `Cypress`, `Olive`, `Bonsai` or `Wild`. Choosing one also sets the sliders to suit it.
+- `Season`: blossom in `Spring`, full leaves in `Summer`, orange leaves that fall in `Autumn`, bare branches with snow in `Winter`. The cypress, the olive and the bonsai keep their leaves all year.
+- `Branches` sets how many times the branches split, from 4 to 11.
+- `Angle` sets how wide the branches open.
+- `Randomness` goes from tidy and even to wild.
+- `Leaves` sets how full the crown is. At 0 the tree is bare.
+- `Wind` bends the tree to the left or to the right. With `Branches move in the wind` ticked, the branches also sway gently. They stay still when your system asks for less motion.
+- `Ground`: `None`, `Grass` or `Hill`.
+
+## Drawing styles
+`Drawn with` sets how the tree looks: `Pencil` on paper, black `Ink`, `Chalk` on a blackboard, or `Colour`, with a sky that changes with the season.
+
+## My trees
+- Type a name next to `Save tree` and save the tree; with no name it takes the seed. Changes to an open saved tree, its name included, are saved as you go.
+- Tap the trees button at the top left to show `My trees`. Tap a tree to open it, use the copy button to duplicate it, or the × to delete it; `Undo` brings it back.
+- Only the settings are kept, not a picture, so a saved tree takes almost no room.
+
+## Download and wallpaper
+- Pick a shape (`Portrait`, `Square` or `Landscape`) and tap `PNG` for a large picture, or `SVG` for clean lines you can print at any size or open in a drawing program.
+- `Copy image` puts the picture on the clipboard, where your browser allows it.
+- `As wallpaper` makes the tree your orOS desktop wallpaper. It is drawn to fit each of your screens, in colours chosen to suit the style and season. You can change its palette and more in the [Wallpaper Generator](app:wallpaper), under the `Tree` style.
+
+## Sync and backup
+- `My trees` follow you to all your devices through orOS sync.
+- The tree on the screen, the sway setting, the picture shape and whether the settings are open stay on this device.
+
+## Keyboard shortcuts
+- [[R]]: a new tree (not while typing in a field).
+- Arrow keys on a row of choices or on a slider change it.
+- [[Enter]] in the name box saves the tree.
+
+## Tips
+> Try the same seed in all four seasons: it is the same tree through the year.
+
+## Limits
+- Up to 200 saved trees.
+- Very big trees are kept to a few thousand branches and leaves so they draw quickly.
+- When the same tree is changed on two devices before they sync, the most recent change wins.

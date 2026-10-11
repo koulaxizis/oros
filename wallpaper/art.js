@@ -5,7 +5,11 @@
 // wallpaper). Pure Canvas 2D, no libraries, no network.
 //
 // A wallpaper is a RECIPE, a few bytes that travel through sync:
-//   { seed, style, pal, dens, chaos, grain, light }
+//   { seed, style, pal, dens, chaos, grain, light [, tree] }
+// The "tree" style draws a tree of the Tree Sketcher (trees/core.js,
+// window.TreesCore, loaded before this file): tree holds its shape
+// { sp, season, br, ang, wind, ink, ground }; density stands for the
+// leaves and chaos for the randomness. Without TreesCore it draws waves.
 // The same recipe gives the same picture on every device and in
 // every size of the same shape: all geometry is measured in units
 // of the short side, and element counts scale with the area in
@@ -26,14 +30,14 @@
 //   1. Recipe
 //   2. Random numbers + noise
 //   3. Colour
-//   4. Styles (waves, flow, orbits, grid, nebula) + grain
+//   4. Styles (waves, flow, orbits, grid, nebula, tree) + grain
 //   5. Runner
 // ============================================================
 (function (root) {
   "use strict";
 
   var VER = 1;
-  var STYLES = ["waves", "flow", "orbits", "grid", "nebula"];
+  var STYLES = ["waves", "flow", "orbits", "grid", "nebula", "tree"];
   var PALETTES = ["oros", "ember", "ocean", "forest", "dusk", "pastel", "mono"];
   var SEED_LEN = 40;
   var TAU = Math.PI * 2;
@@ -60,12 +64,19 @@
     return s.replace(/\s+/g, " ").trim().slice(0, SEED_LEN);
   }
 
+  // The shape of a "tree" wallpaper (see trees/core.js wallParams).
+  function normTree(t) {
+    var TC = root.TreesCore;
+    if (TC && typeof TC.wallParams === "function") return TC.wallParams(t);
+    return (t && typeof t === "object" && !Array.isArray(t)) ? JSON.parse(JSON.stringify(t)) : {};
+  }
+
   // Canonical form, fixed key order. null when it is not a recipe.
   function normRecipe(r) {
     if (!r || typeof r !== "object" || Array.isArray(r)) return null;
     var seed = normSeed(r.seed);
     if (!seed) return null;
-    return {
+    var out = {
       seed:  seed,
       style: STYLES.indexOf(r.style) >= 0 ? r.style : "waves",
       pal:   PALETTES.indexOf(r.pal) >= 0 ? r.pal : "oros",
@@ -74,6 +85,8 @@
       grain: r.grain === 1 || r.grain === true ? 1 : 0,
       light: r.light === 1 || r.light === true ? 1 : 0
     };
+    if (out.style === "tree") out.tree = normTree(r.tree);
+    return out;
   }
 
   function defaultRecipe() {
@@ -502,7 +515,23 @@
     return out;
   }
 
-  var STYLE_FN = { waves: waves, flow: flow, orbits: orbits, grid: grid, nebula: nebula };
+  // A tree of the Tree Sketcher in the wallpaper's colours, standing
+  // on the ground line; on a wide screen a little off centre.
+  function tree(T, w, h, u, R, C) {
+    var TC = root.TreesCore;
+    if (!TC || typeof TC.grow !== "function") return waves(T, w, h, u, R, C);
+    var tr = normTree(R.tree);
+    var rec = TC.normRecipe({ seed: R.seed, sp: tr.sp, season: tr.season, br: tr.br, ang: tr.ang,
+                              rnd: R.chaos, fol: R.dens, wind: tr.wind, ink: tr.ink, ground: tr.ground });
+    var model = TC.grow(rec), L = TC.wallLook(C, tr, mix);
+    var wide = w > h * 1.15;
+    var f = TC.fit(model, w, h, { ground: 0.9, top: 0.1, width: wide ? 0.62 : 0.86, cx: wide ? T.rr(0.36, 0.64) : 0.5 });
+    return [function (ctx) {
+      TC.paint(model, L, TC.canvasPen(ctx), { k: f.k, ox: f.ox, oy: f.oy, w: w, h: h });
+    }];
+  }
+
+  var STYLE_FN = { waves: waves, flow: flow, orbits: orbits, grid: grid, nebula: nebula, tree: tree };
 
   // Film grain: one seeded 128×128 noise tile, repeated.
   function grain(recipe, C, w, h, makeCanvas) {

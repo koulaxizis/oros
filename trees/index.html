@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tree Sketcher · orOS</title>
+
+  <link rel="stylesheet" href="trees.css?v=0.78.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="list-btn" class="icon-btn" aria-controls="panel" aria-expanded="false"></button>
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="roll-btn" class="icon-btn"></button>
+  </header>
+
+  <main id="main">
+    <section id="bench">
+      <!-- The tree -->
+      <div id="stage">
+        <canvas id="cv" role="img"></canvas>
+      </div>
+
+      <div class="bench-inner">
+        <!-- Keep it -->
+        <div class="actions keep">
+          <label for="name-in" class="sr-only" data-i18n="f.name">Name of this tree</label>
+          <input type="text" id="name-in" maxlength="60" autocomplete="off">
+          <button type="button" id="save-btn" class="gen-btn"></button>
+          <button type="button" id="new-btn" class="gen-btn ghost" data-i18n="btn.new">New tree</button>
+          <button type="button" id="tune-btn" class="chip tune-toggle" aria-controls="tune" aria-expanded="true"></button>
+        </div>
+
+        <!-- Settings -->
+        <div id="tune">
+          <div class="opt seed-opt">
+            <label class="lbl" for="seed-in" data-i18n="f.seed">Seed</label>
+            <div class="seed-row">
+              <input type="text" id="seed-in" maxlength="40" autocomplete="off" spellcheck="false">
+              <button type="button" id="roll2-btn" class="icon-btn"></button>
+            </div>
+            <p class="hint small" data-i18n="f.seed.hint"></p>
+          </div>
+
+          <div class="opt wide">
+            <h2 id="sp-lbl" data-i18n="sec.sp">Kind of tree</h2>
+            <div id="sps" class="chips" role="radiogroup" aria-labelledby="sp-lbl"></div>
+          </div>
+          <div class="opt">
+            <h2 id="season-lbl" data-i18n="sec.season">Season</h2>
+            <div id="seasons" class="chips" role="radiogroup" aria-labelledby="season-lbl"></div>
+          </div>
+          <div class="opt">
+            <h2 id="ink-lbl" data-i18n="sec.ink">Drawn with</h2>
+            <div id="inks" class="chips" role="radiogroup" aria-labelledby="ink-lbl"></div>
+          </div>
+
+          <div class="opt sliders">
+            <div class="slider">
+              <label for="br-in" data-i18n="f.br">Branches</label><output id="br-out" for="br-in"></output>
+              <input type="range" id="br-in" min="4" max="11" step="1">
+            </div>
+            <div class="slider">
+              <label for="ang-in" data-i18n="f.ang">Angle</label><output id="ang-out" for="ang-in"></output>
+              <input type="range" id="ang-in" min="5" max="80" step="1">
+            </div>
+            <div class="slider">
+              <label for="rnd-in" data-i18n="f.rnd">Randomness</label><output id="rnd-out" for="rnd-in"></output>
+              <input type="range" id="rnd-in" min="0" max="100" step="1">
+            </div>
+            <div class="slider">
+              <label for="fol-in" data-i18n="f.fol">Leaves</label><output id="fol-out" for="fol-in"></output>
+              <input type="range" id="fol-in" min="0" max="100" step="1">
+            </div>
+            <div class="slider">
+              <label for="wind-in" data-i18n="f.wind">Wind</label><output id="wind-out" for="wind-in"></output>
+              <input type="range" id="wind-in" min="-100" max="100" step="1">
+            </div>
+            <label class="check" for="sway-in">
+              <input type="checkbox" id="sway-in">
+              <span data-i18n="f.sway">Branches move in the wind</span>
+            </label>
+          </div>
+
+          <div class="opt">
+            <h2 id="ground-lbl" data-i18n="sec.ground">Ground</h2>
+            <div id="grounds" class="chips" role="radiogroup" aria-labelledby="ground-lbl"></div>
+          </div>
+        </div>
+
+        <!-- Out -->
+        <div class="opt out">
+          <h2 data-i18n="sec.out">Download</h2>
+          <div class="actions">
+            <label for="shape-sel" class="sr-only" data-i18n="f.shape">Shape of the picture</label>
+            <select id="shape-sel"></select>
+            <button type="button" id="png-btn" class="chip" data-i18n="btn.png">PNG</button>
+            <button type="button" id="svg-btn" class="chip" data-i18n="btn.svg">SVG</button>
+            <button type="button" id="copy-btn" class="chip" data-i18n="btn.copy" hidden>Copy image</button>
+            <button type="button" id="wall-btn" class="chip" hidden></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="scrim" hidden></div>
+
+    <!-- My trees -->
+    <aside id="panel">
+      <div class="sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.mine">My trees</h2>
+          <span id="mine-count" class="count"></span>
+          <span class="spacer"></span>
+          <button type="button" id="close-panel" class="icon-btn phone-only"></button>
+        </div>
+        <p id="mine-empty" class="hint" data-i18n="mine.empty"></p>
+        <ul id="mine" class="rows"></ul>
+      </div>
+    </aside>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.78.00"></script>
+  <script src="trees.js?v=0.78.00"></script>
+
+</body>
+</html>
