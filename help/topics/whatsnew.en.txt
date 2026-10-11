@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.72.00
+- New app: Ringtone Composer. Write a melody note by note like on the old phones, hear it, and download it as a ringtone (WAV) or as RTTTL text.
+
 ## Version 0.71.00
 - Mail: search your messages (press /), write with bold, lists, links and colour, and use a signature with your logo.
 

@@ -1,0 +1,50 @@
+# Ringtone Composer
+Write a melody note by note, like on the old phones, hear it, and take it with you as a ringtone.
+
+## Getting started
+Press a key on the phone keypad and the note is written and played. The melody shows on a small staff and, under it, as short notes like `8e6`: the length, the note and the octave.
+- `Length` and `Octave` set what the next note will be.
+- The play button at the top right plays the melody from the selected note, and stops it.
+- The piano button at the top swaps the keypad for a piano.
+
+## The phone keypad
+- `1` to `7` write the notes C D E F G A B (do re mi fa sol la si). `0` writes a rest.
+- `8` makes the selected note shorter and `9` longer.
+- `*` moves the selected note one octave up, round from 4 to 7.
+- `#` puts a sharp on the selected note, or takes it off. E and B have no sharp.
+- On a computer keyboard the same keys work, and the letters C to B write notes too. `.` adds a dot (half as long again), `+` and `-` move a note a semitone, Space plays and stops.
+
+## Editing
+- Tap or click a note on the staff or in the list to select it. New notes go after the selected one.
+- The arrows move the selection, and `Delete note` removes the selected note.
+- Undo and Redo are at the top, and with [[Ctrl+Z]] and [[Ctrl+Y]].
+- Give the melody a name at the top of the screen.
+
+## Tempo and sound
+- `Tempo` sets how fast the melody plays, in beats a minute.
+- `Sound` picks `Phone beep`, `Soft` or `Bell`.
+- `Play again and again` keeps playing the melody until you stop it.
+
+## My melodies and ready tunes
+- `Save melody` keeps it under `My melodies`. Changes to an open saved melody are saved as you go.
+- `New melody` starts an empty one.
+- In the list, the play button plays a melody without opening it. The copy button makes a duplicate, and the × deletes it; `Undo` brings it back.
+- `Ready tunes` are old public-domain melodies to start from. Tapping one opens it as a new melody.
+
+## Take it with you
+- `Download WAV` saves the melody as a sound file you can set as a ringtone on your phone.
+- `Download RTTTL` and `Copy RTTTL` give the melody as RTTTL text, the format of old phones.
+- `Import RTTTL` reads a ringtone in RTTTL text, pasted or from a .txt or .rtttl file.
+
+## Sync and backup
+- `My melodies` follow you to all your devices through orOS sync.
+- The keypad or piano, the note names, the volume and the next length and octave stay on this device only.
+
+## Tips
+> Under `Note names` choose `C D E` or `Do Re Mi`, whichever you learned.
+- RTTTL ringtones from the internet can be imported and then changed.
+
+## Limits
+- Up to 200 saved melodies, each up to 255 notes, as on the old phones.
+- Notes go from octave 4 to octave 7, and one note sounds at a time.
+- When the same melody is changed on two devices before they sync, the most recent change wins.
