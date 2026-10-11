@@ -177,6 +177,44 @@ body {
 .chip-manage { border-style: dashed; color: var(--text-dim); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
+/* Chip toggle: phones only. Desktop keeps the chips inline. */
+#lbl-toggle { display: none; }
+@media (max-width: 700px) {
+  #lbl-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+  }
+  #lbl-toggle:hover { background: var(--accent-soft); }
+  .lbl-tg-name { flex-shrink: 0; }
+  .lbl-tg-count {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lbl-tg-chev { transition: transform 0.15s ease; }
+  #lbl-bar.open .lbl-tg-chev { transform: rotate(180deg); }
+  #lbl-bar:not(.open) #lbl-chips { display: none; }
+}
+
 /* ---------- Weekday header + grid ---------- */
 #cal-wd {
   display: grid;

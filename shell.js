@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.80.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "0.82.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -173,6 +173,7 @@
     layout: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="M12.5 13h5M12.5 17h5"/></svg>',
     wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
     trees: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-8"/><path d="M12 14l-3.5-3.5M12 16l4-4"/><path d="M12 14c-5 0-8-3-8-6.5a4.5 4.5 0 0 1 4.5-4.5c1.4 0 2.6.6 3.5 1.6A4.5 4.5 0 0 1 20 7.5C20 11 17 14 12 14z"/></svg>',
+    aura: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 4-5 7-7s6-1 9-5"/><path d="M4 13c2 0 3-2 5-3" opacity=".55"/><circle cx="18" cy="17" r="1.2"/><circle cx="14" cy="20" r=".8"/><circle cx="20.5" cy="12.5" r=".8"/></svg>',
     atelier: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.58 9 8 0 2.5-2 4-4.5 4H14a1.5 1.5 0 0 0-1 2.6A1.5 1.5 0 0 1 12 21z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="16.5" cy="9.5" r="1"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
@@ -375,7 +376,7 @@
     // Inline style: wins over any #oros-desktop background rule
     // (specificity-proof — the v0.4.0 class-based approach lost to
     // the existing ID rule).
-    if (w.id === "custom") wpCustomApply(desktop);
+    if (w.id === "custom" || wpPic()) wpCustomApply(desktop);
     else { wpCustomStop(); desktop.style.background = w.css; }
 
     // Keep the class for potential future hooks, cleaned of stale ids
@@ -398,6 +399,27 @@
   var WP_MAX_SIDE = 3840;
   var wpShown = null;        // { key, w, h, url } of the picture on the desktop
   var wpGen = 0;             // newer request = older drawing is dropped
+
+  // A finished picture (Aura Painter, setImage): THIS device only,
+  // never synced, and it never changes state.wallpaper (the synced
+  // choice), so other devices keep theirs. The picture sits in the
+  // same IndexedDB under "picture"; WP_PIC_KEY ({ at, bg }) says it
+  // is on, and then it is the desktop here, shown as "Mine" in
+  // Settings. Picking another wallpaper here, or making a recipe in
+  // the Generator (setCustom), takes it away.
+  var WP_PIC_KEY = "oros-wallpaper-pic";
+  var WP_PIC_MAX = 20 * 1024 * 1024;
+
+  function wpPic() {
+    try {
+      var p = JSON.parse(localStorage.getItem(WP_PIC_KEY));
+      return (p && typeof p.at === "number" && /^#[0-9a-f]{6}$/i.test(p.bg)) ? p : null;
+    } catch (e) { return null; }
+  }
+  function wpPicClear() {
+    try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}
+    wpCacheDel("picture");
+  }
 
   function wpArt() { return window.OrosWallArt || null; }
 
@@ -440,19 +462,29 @@
       req.onerror   = function () { reject(req.error); };
     });
   }
-  function wpCacheGet() {
+  function wpCacheGet(slot) {
     return wpDb().then(function (db) {
       return new Promise(function (resolve) {
-        var req = db.transaction("img").objectStore("img").get("desktop");
+        var req = db.transaction("img").objectStore("img").get(slot || "desktop");
         req.onsuccess = function () { db.close(); resolve(req.result || null); };
         req.onerror   = function () { db.close(); resolve(null); };
       });
     }).catch(function () { return null; });
   }
-  function wpCachePut(rec) {
+  function wpCachePut(rec, slot) {
+    return wpDb().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction("img", "readwrite");
+        tx.objectStore("img").put(rec, slot || "desktop");
+        tx.oncomplete = function () { db.close(); resolve(true); };
+        tx.onerror = tx.onabort = function () { db.close(); resolve(false); };
+      });
+    }).catch(function () { return false; });
+  }
+  function wpCacheDel(slot) {
     return wpDb().then(function (db) {
       var tx = db.transaction("img", "readwrite");
-      tx.objectStore("img").put(rec, "desktop");
+      tx.objectStore("img").delete(slot);
       tx.oncomplete = tx.onerror = function () { db.close(); };
     }).catch(function () {});
   }
@@ -482,7 +514,26 @@
     wpShown = null;
   }
 
+  // The device picture: shown as it is (cover scaling), never redrawn.
+  function wpPicApply(desktop, pic) {
+    var key = "pic:" + pic.at;
+    if (wpShown && wpShown.key === key) {
+      desktop.style.background = wpBg(pic.bg, wpShown.url);
+      return;
+    }
+    var gen = ++wpGen;
+    desktop.style.background = pic.bg;
+    wpCacheGet("picture").then(function (rec) {
+      if (gen !== wpGen) return;
+      if (rec && rec.key === key && rec.blob) { wpShow(desktop, rec, pic.bg); return; }
+      try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}   // picture gone: back to the choice
+      applyWallpaper();
+    });
+  }
+
   function wpCustomApply(desktop) {
+    var pic = wpPic();
+    if (pic) { wpPicApply(desktop, pic); return; }
     var A = wpArt(), r = state.wpart;
     if (!A || !r) {                       // nothing drawn yet: the default look
       wpCustomStop();
@@ -534,6 +585,7 @@
       var A = wpArt();
       var r = A ? A.normRecipe(recipe) : null;
       if (!r) return false;
+      if (wpPic()) wpPicClear();  // a recipe made here replaces the device picture
       state.wpart = r;
       wpArtWrite(r);
       state.wallpaper = "custom";
@@ -542,8 +594,29 @@
       noteLocalChange();          // user action → sync engine
       return true;
     },
+    // A finished picture (Blob, image/*) → the wallpaper of THIS
+    // device ("Mine" in Settings). opts.bg = colour around the
+    // picture. Resolves true once it is stored and shown. Nothing
+    // syncs: not the picture, not the choice.
+    setImage: function (blob, opts) {
+      var bg = opts && typeof opts.bg === "string" ? opts.bg.toLowerCase() : "#000000";
+      // duck-typed: a Blob made in the app's frame is another realm's Blob
+      if (!blob || typeof blob.size !== "number" || typeof blob.slice !== "function" ||
+          typeof blob.type !== "string" || !/^image\//.test(blob.type) ||
+          !blob.size || blob.size > WP_PIC_MAX || !/^#[0-9a-f]{6}$/.test(bg)) return Promise.resolve(false);
+      var at = Date.now();
+      return wpCachePut({ key: "pic:" + at, w: 0, h: 0, blob: blob }, "picture").then(function (ok) {
+        if (!ok) return false;
+        try { localStorage.setItem(WP_PIC_KEY, JSON.stringify({ at: at, bg: bg })); }
+        catch (e) { return false; }
+        applyWallpaper();
+        return true;
+      });
+    },
     get: function () {
-      return { active: state.wallpaper === "custom", recipe: state.wpart };
+      var pic = wpPic();
+      return { active: !!pic || state.wallpaper === "custom", recipe: state.wpart,
+               picture: pic ? pic.at : null };
     }
   };
 
@@ -2500,8 +2573,19 @@
       // and the groups in the alphabetical order of the label the
       // user actually READS — in Greek the menu followed the English
       // names.
+      // Menu apps (launcher.js 1.3.0): hidden apps leave the list but
+      // a search still finds them (and search hits, deep links, the
+      // desktop and the Dock still open them).
+      var q = menuFold(menuQuery.trim());
+      var L = window.orosLauncher;
+      var hideOk = !!(L && typeof L.menuHidden === "function");
+      var hiddenCount = 0;
       var cats = {}, catRaw = {}, catAll = {};
       state.apps.forEach(function (app) {
+        if (hideOk && L.menuHidden(app.id)) {
+          hiddenCount++;
+          if (!q) return;
+        }
         var raw = String(app.category || "other");
         var c = raw.toLowerCase();
         if (!catRaw[c]) catRaw[c] = raw;
@@ -2527,7 +2611,12 @@
       // A74: while searching, keep only the matching apps (by the shown
       // name, the apps.json name, the id or the category label) and
       // show their categories open; the count becomes the match count.
-      var q = menuFold(menuQuery.trim());
+      if (!q && hiddenCount === state.apps.length) {
+        var allHid = document.createElement("div");
+        allHid.className = "menu-empty menu-search-none";
+        allHid.textContent = window.t("menu.hidden.all");
+        appsHost.appendChild(allHid);
+      }
       if (q) {
         Object.keys(cats).forEach(function (c) {
           var cl = catTextOf(c);
@@ -2605,6 +2694,21 @@
         wrap.appendChild(catList);
         appsHost.appendChild(wrap);
       });
+
+      // Hidden apps: one quiet row under the list, into Settings › Menu.
+      if (!q && hiddenCount) {
+        var hidBtn = document.createElement("button");
+        hidBtn.type = "button";
+        hidBtn.className = "menu-hidden-row";
+        hidBtn.textContent = (hiddenCount === 1 ? window.t("menu.hidden.one")
+          : window.t("menu.hidden.some").replace("{n}", hiddenCount)) +
+          " · " + window.t("menu.hidden.choose");
+        hidBtn.addEventListener("click", function () {
+          closeMenu();
+          if (window.orosSettings) window.orosSettings.open("menu");
+        });
+        appsHost.appendChild(hidBtn);
+      }
     }
     }   // renderAppList
 
@@ -2685,7 +2789,13 @@
   }
 
   function setWallpaperUser(id) {
-    if (!findWallpaper(id) || state.wallpaper === id) return;
+    if (!findWallpaper(id)) return;
+    if (wpPic()) {                     // the device picture gives way to the pick
+      if (id === "custom") return;     // "Mine" = the picture: already on
+      wpPicClear();
+      if (state.wallpaper === id) { applyWallpaper(); renderMenu(); return; }
+    }
+    if (state.wallpaper === id) return;
     state.wallpaper = id;
     localStorage.setItem("oros-wallpaper", state.wallpaper);
     applyWallpaper();
@@ -6619,12 +6729,36 @@
     } catch (e) { return null; }
   }
 
+  // Menu apps (launcher.js 1.3.0): which apps the menu lists. Only
+  // when the launcher offers it; an older bundle shows no section.
+  function settingsMenuL() {
+    var L = window.orosLauncher;
+    return (L && typeof L.menuHidden === "function" && typeof L.setMenuHidden === "function") ? L : null;
+  }
+  function settingsMenuIds() {
+    return state.apps.filter(function (a) { return a && a.type === "internal"; })
+      .map(function (a) { return a.id; });
+  }
+  function settingsMenuApps() {
+    var L = settingsMenuL();
+    if (!L) return null;
+    return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+      var k = "app." + a.id, v = window.t(k);
+      var raw = String(a.category || "other"), ck = "category." + raw.toLowerCase(), cv = window.t(ck);
+      return { id: a.id, name: (v === k) ? a.name : v,
+               cat: raw.toLowerCase(),
+               catName: (cv === ck) ? raw.charAt(0).toUpperCase() + raw.slice(1) : cv,
+               shown: !L.menuHidden(a.id) };
+    });
+  }
+
   function settingsSnapshot() {
     var S = window.orosSync || null;
     var connected = !!(S && S.isConnected());
     var unlocked = !!(connected && S.hasPassphrase());
     var art = wpArt();
-    var hasArt = !!(state.wpart && art);
+    var pic = wpPic();
+    var hasArt = !!(pic || (state.wpart && art));
     var folder = null, lapsed = false;
     try {
       folder = localStorage.getItem(FS_FOLDER_NAME_KEY);
@@ -6639,13 +6773,13 @@
       skins: SKINS.map(function (k) {
         return { id: k.id, color: k.color, name: skinTitle(k.id) };
       }),
-      wallpaper: state.wallpaper,
+      wallpaper: pic ? "custom" : state.wallpaper,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "custom") {
           if (!hasArt) css = null;   // nothing made yet → "make one"
           else {
-            var bgc = art.colors(state.wpart, wpAccent()).bg;
+            var bgc = pic ? pic.bg : art.colors(state.wpart, wpAccent()).bg;
             css = (wpShown && wpShown.url) ? wpBg(bgc, wpShown.url) : bgc;
           }
         }
@@ -6681,6 +6815,7 @@
       }),
       install: !!state.deferredPrompt,
       dock: settingsDock(),
+      menu: settingsMenuApps(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -6698,7 +6833,7 @@
       case "theme":      setThemeUser(value); return;
       case "skin":       setSkinUser(value); return;
       case "wallpaper":
-        if (value === "custom" && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
+        if (value === "custom" && !wpPic() && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
         setWallpaperUser(value);
         return;
       case "pet":
@@ -6714,6 +6849,11 @@
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
+      return;
+    }
+    if (/^menu:/.test(name)) {
+      var mid = name.slice(5), ML = settingsMenuL();
+      if (ML && settingsMenuIds().indexOf(mid) !== -1) ML.setMenuHidden([mid], !value);
       return;
     }
     if (/^search:/.test(name)) {
@@ -6759,6 +6899,9 @@
       case "updates":         scCheckUpdates(); return;
       case "info":            showInfoModal(); return;
       case "openApp":         if (typeof arg === "string") openAppById(arg); return;
+      // Menu apps: show or hide every app at once (one change, one push).
+      case "menu.showAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), false); return;
+      case "menu.hideAll":    if (settingsMenuL()) settingsMenuL().setMenuHidden(settingsMenuIds(), true); return;
       // The app arms and confirms first (two taps, like the Info modal);
       // this is the same wipe, with no button of its own to update.
       case "reset":           scFactoryReset({ disabled: false, textContent: "" }); return;
@@ -7941,7 +8084,8 @@
         var k = "app." + app.id, v = window.t(k);
         return (v === k) ? app.name : v;
       },
-      desktop: document.getElementById("oros-desktop")
+      desktop: document.getElementById("oros-desktop"),
+      menuChanged: function () { renderMenu(); }
     });
   }
   applySkin();
