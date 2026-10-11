@@ -80,6 +80,88 @@ function releaseCopy(request, url) {
   }).catch(function () { return undefined; });
 }
 
+// SW-T1: on a bad connection ("lie-fi": online, but packets crawl or
+// stall) a network-first fetch() could hang for minutes before it
+// failed, and only THEN fell back to the cache — the installed PWA
+// sat on the splash or never opened. Network-first now waits at most
+// NET_TIMEOUT_MS: after that the cached copy answers, and the network
+// response, if it still arrives, refreshes the cache in the
+// background (the next open is fresh). With no cached copy the
+// request keeps waiting for the network, as before.
+var NET_TIMEOUT_MS = 3000;
+// After one timeout the connection is known to be bad: for the next
+// NET_SLOW_MS a network-first request with a cached copy answers from
+// the cache at once (the network still refreshes it in the
+// background). Opening orOS then costs one wait, not one per request
+// (page, then apps.json, then every app frame). A quick network
+// answer ends the slow spell.
+var NET_SLOW_MS = 30000;
+var netSlowUntil = 0;
+
+// SW-T2: stored in this release's shell cache while its precache is
+// incomplete (see install).
+var PARTIAL_MARK = "./__oros-precache-partial__";
+
+// fetchInit: options for fetch(). store(response): may it be cached.
+// cached(): Promise of the cached answer, or undefined.
+// offline(): the answer when the network FAILS and nothing is cached.
+function networkFirst(event, request, fetchInit, store, cached, offline) {
+  var started = Date.now();
+  var wait = started < netSlowUntil ? 0 : NET_TIMEOUT_MS;
+  var net = fetch(request, fetchInit).then(function (response) {
+    if (Date.now() - started < NET_TIMEOUT_MS) netSlowUntil = 0;
+    if (response && store(response)) {
+      var copy = response.clone();
+      // waitUntil: the SW stays alive until the cache write LANDS —
+      // also when the cached copy already answered the page.
+      event.waitUntil(
+        caches.open(RUNTIME_CACHE).then(function (cache) {
+          return cache.put(request, copy);
+        }).catch(function () {})
+      );
+    }
+    return response;
+  });
+  // Keep the worker alive for a late network answer (background update).
+  event.waitUntil(net.catch(function () {}));
+
+  return new Promise(function (resolve) {
+    var settled = false;
+    var timer = null;
+    function answer(r) {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolve(r);
+    }
+    function lookup() {
+      return Promise.resolve().then(cached).catch(function () { return undefined; });
+    }
+    timer = setTimeout(function () {
+      timer = null;
+      if (wait) netSlowUntil = Date.now() + NET_SLOW_MS;
+      lookup().then(function (c) { if (c) answer(c); });   // a miss keeps waiting
+    }, wait);
+    net.then(answer, function () {
+      lookup().then(function (c) { answer(c || offline()); });
+    });
+  });
+}
+
+// SW2: exact-match the ROOT apps.json (pathname ends with it).
+// A substring test would silently swallow any future asset whose
+// name merely CONTAINS "apps.json" into the network-first branch.
+// SW-T3: the old test, lastIndexOf(...) === length - 10, was also
+// true for EVERY 9-character path ("/shell.js", "/vault.js",
+// "/icon.svg"): lastIndexOf gives -1 and so did the subtraction. The
+// shell's own scripts went network-first, so on a bad connection
+// orOS hung on them even with a cached page.
+function isAppsList(pathname) {
+  var tail = "/apps.json";
+  var at = pathname.length - tail.length;
+  return at >= 0 && pathname.indexOf(tail, at) === at;
+}
+
 var PRECACHE_URLS = [
   "./",
   "./index.html",
@@ -1000,11 +1082,47 @@ self.addEventListener("install", function (event) {
       // PREVIOUS release's files under the new version's name — and
       // these unversioned copies are exactly what an offline first
       // open of an app is served. "reload" = always from the network.
+      // SW-T2: an UPDATE on a bad connection used to activate with
+      // whatever half of the precache made it — and activation then
+      // deleted the previous release's caches. The next offline (or
+      // slow) open found neither copy: orOS did not open at all.
+      // Now, while an older worker is active, a NETWORK failure fails
+      // the install: the old release keeps serving, and the next
+      // open retries. The retry is resumable — files this release
+      // already stored are not downloaded again. A file the server
+      // answers with an error (404) still only logs, as before, so
+      // one bad entry can never block every future update. The very
+      // first install stays tolerant: some offline beats none.
+      var updating = !!(self.registration && self.registration.active);
+      var netFailed = [];
+      // Resume only after a FAILED attempt of this same release (its
+      // marker): a worker re-installed under an unchanged version
+      // still refreshes every file, as before.
+      return cache.match(PARTIAL_MARK).then(function (resume) {
       return Promise.all(PRECACHE_URLS.map(function (u) {
-        return cache.add(new Request(u, { cache: "reload" })).catch(function (e) {
-          console.warn("[SW] precache MISS:", u, e && e.message);
+        return (resume ? cache.match(u) : Promise.resolve(undefined)).then(function (have) {
+          if (have) return;
+          return fetch(new Request(u, { cache: "reload" })).then(function (response) {
+            if (!response.ok) {
+              console.warn("[SW] precache MISS:", u, response.status);
+              return;
+            }
+            return cache.put(u, response);
+          }, function (e) {
+            netFailed.push(u);
+            console.warn("[SW] precache MISS:", u, e && e.message);
+          });
         });
-      }));
+      })).then(function () {
+        if (updating && netFailed.length) {
+          return cache.put(PARTIAL_MARK, new Response("")).catch(function () {}).then(function () {
+            throw new Error("precache: " + netFailed.length +
+              " file(s) unreachable, keeping the current release");
+          });
+        }
+        return cache.delete(PARTIAL_MARK);
+      });
+      });   // PARTIAL_MARK
     })
   );
 });
@@ -1098,94 +1216,71 @@ self.addEventListener("fetch", function (event) {
   // the next full release. Network-first keeps the list fresh on
   // every online visit; the precached copy remains the offline
   // fallback (zero offline regression).
-  // SW2: exact-match the ROOT apps.json (pathname ends with it).
-  // A substring test would silently swallow any future asset whose
-  // name merely CONTAINS "apps.json" into the network-first branch.
-  if (url.pathname.lastIndexOf("/apps.json") ===
-        url.pathname.length - "/apps.json".length) {
+  if (isAppsList(url.pathname)) {
     // SW-2/H10: "network-first" must mean network. A plain fetch()
     // honors the HTTP cache — a freshly deployed app could stay
     // invisible for the max-age window. no-store bypasses the HTTP
     // cache entirely; the RUNTIME_CACHE copy below stays as the
     // offline fallback (zero offline regression).
-    event.respondWith(
-      fetch(request, { cache: "no-store" }).then(function (response) {
-        if (response && response.ok) {
-          var copy = response.clone();
-          event.waitUntil(
-            caches.open(RUNTIME_CACHE).then(function (cache) {
-              return cache.put(request, copy);
-            })
-          );
-        }
-        return response;
-      }).catch(function () {
-        return caches.match(request)
-          .then(function (c) { return c || Response.error(); });
-      })
-    );
+    // SW-T1: at most NET_TIMEOUT_MS, then the cached list answers.
+    event.respondWith(networkFirst(event, request, { cache: "no-store" },
+      function (response) { return response.ok; },
+      function () { return caches.match(request); },
+      function () { return Response.error(); }));
     return;
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(
-      // SW-2: GitHub Pages serves HTML with max-age=600 — a plain
-      // fetch() honors the HTTP disk cache, so an online user (and
-      // critically the broker's post-update reload) could receive a
-      // 10-minute-stale index.html carrying old ?v= stamps: the
-      // version toast would then LIE about having updated. no-cache
-      // = always revalidate with the server (304s are cheap) — the
-      // auto-update chain stays end-to-end fresh.
-      fetch(request, { cache: "no-cache" })
-        .then(function (response) {
-          // Cache only REAL pages: a cached 404/502 becomes the
-          // offline "truth" for that URL. OAuth redirects (?code=...)
-          // are one-shot URLs — never worth a cache entry; so are
-          // "Send to orOS" launches (?share-url=…, one per link) and
-          // address-bar searches (?search=…), and "Open with" file
-          // launches (?file-open=…).
-          // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
-          // replayed to a navigation from the cache — the browser
-          // rejects it and the page fails offline. Never store one.
-          if (response.ok && !response.redirected &&
-              url.search.indexOf("code=") === -1 &&
-              url.search.indexOf("share-") === -1 &&
-              url.search.indexOf("search=") === -1 &&
-              url.search.indexOf("file-open=") === -1) {
-            var copy = response.clone();
-            // waitUntil: the SW stays alive until the cache write
-            // LANDS. A fire-and-forget put can be killed mid-flight
-            // by an idle SW termination — the user who then goes
-            // offline loses an asset they were entitled to.
-            event.waitUntil(
-              caches.open(RUNTIME_CACHE).then(function (cache) {
-                return cache.put(request, copy);
-              })
-            );
-          }
-          return response;
-        })
-        .catch(function () {
-          return caches.match(request).then(function (cached) {
-            if (cached) return cached;
-            // SWK-3: the shell page is the right fallback for the TOP
-            // window only. For an app frame it loaded orOS inside
-            // orOS — a second shell, with its own sync engine, in the
-            // iframe. An app that is not cached says so instead.
-            if (request.destination === "iframe" || request.destination === "frame") {
-              return new Response(
-                '<!doctype html><meta charset="utf-8"><title>orOS</title>' +
-                '<body style="margin:0;min-height:100vh;display:flex;align-items:center;' +
-                'justify-content:center;text-align:center;padding:24px;box-sizing:border-box;' +
-                'font-family:system-ui,sans-serif;background:#1b1a18;color:#e8eaf0;">' +
-                '<p>Offline — this app has not been saved for offline use yet.<br>' +
-                'Εκτός σύνδεσης — η εφαρμογή δεν έχει αποθηκευτεί ακόμη για χρήση χωρίς δίκτυο.</p></body>',
-                { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
-            }
-            return caches.match("./index.html");
-          });
-        })
-    );
+    var frame = request.destination === "iframe" || request.destination === "frame";
+    // SW-2: GitHub Pages serves HTML with max-age=600 — a plain
+    // fetch() honors the HTTP disk cache, so an online user (and
+    // critically the broker's post-update reload) could receive a
+    // 10-minute-stale index.html carrying old ?v= stamps: the
+    // version toast would then LIE about having updated. no-cache
+    // = always revalidate with the server (304s are cheap) — the
+    // auto-update chain stays end-to-end fresh.
+    // SW-T1: the network gets NET_TIMEOUT_MS; then the cached page.
+    event.respondWith(networkFirst(event, request, { cache: "no-cache" },
+      function (response) {
+        // Cache only REAL pages: a cached 404/502 becomes the
+        // offline "truth" for that URL. OAuth redirects (?code=...)
+        // are one-shot URLs — never worth a cache entry; so are
+        // "Send to orOS" launches (?share-url=…, one per link) and
+        // address-bar searches (?search=…), and "Open with" file
+        // launches (?file-open=…).
+        // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
+        // replayed to a navigation from the cache — the browser
+        // rejects it and the page fails offline. Never store one.
+        return response.ok && !response.redirected &&
+          url.search.indexOf("code=") === -1 &&
+          url.search.indexOf("share-") === -1 &&
+          url.search.indexOf("search=") === -1 &&
+          url.search.indexOf("file-open=") === -1;
+      },
+      function () {
+        return caches.match(request).then(function (cached) {
+          if (cached) return cached;
+          // SWK-3: the shell page is the right fallback for the TOP
+          // window only. For an app frame it loaded orOS inside
+          // orOS — a second shell, with its own sync engine, in the
+          // iframe.
+          return frame ? undefined : caches.match("./index.html");
+        });
+      },
+      function () {
+        // An app that is not cached says so instead.
+        if (frame) {
+          return new Response(
+            '<!doctype html><meta charset="utf-8"><title>orOS</title>' +
+            '<body style="margin:0;min-height:100vh;display:flex;align-items:center;' +
+            'justify-content:center;text-align:center;padding:24px;box-sizing:border-box;' +
+            'font-family:system-ui,sans-serif;background:#1b1a18;color:#e8eaf0;">' +
+            '<p>Offline — this app has not been saved for offline use yet.<br>' +
+            'Εκτός σύνδεσης — η εφαρμογή δεν έχει αποθηκευτεί ακόμη για χρήση χωρίς δίκτυο.</p></body>',
+            { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
+        }
+        return Response.error();
+      }));
     return;
   }
 
