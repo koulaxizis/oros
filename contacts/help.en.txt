@@ -30,6 +30,7 @@ Above the list, `All` and `★ Favorites` switch between everyone and your favou
 Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved.
 
 - `Import` reads a vCard file (.vcf) or a Google Contacts CSV. A contact whose email or phone already exists here is updated: only missing details are added, nothing is overwritten. Afterwards you see a list of what was added, updated or skipped.
+- `From phone` (only in Chrome on Android) opens your phone's contact list. Pick the people you want; only those reach orOS, with their names, phones and emails, and addresses when the phone shares them. They are added the same way as `Import`: a contact with the same phone or email is completed, never overwritten, and nothing is deleted.
 - `Export` saves all your contacts as a .vcf file that other address books can open.
 - `Export JSON` saves a complete copy of your contacts. `Import JSON` restores it; it combines with what you have and keeps the newer version of each contact.
 
@@ -48,3 +49,4 @@ See also [backup](help:t/backup).
 ## Limits
 - `Import JSON` only accepts files made by `Export JSON` in orOS Contacts.
 - CSV import expects the Google Contacts format.
+- `From phone` appears only in Chrome on Android, because other browsers can't open the phone's contact list.

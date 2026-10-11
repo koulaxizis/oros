@@ -46,7 +46,11 @@ The search box looks through the title, note and location of your own events and
 ## Sync and backup
 Your events and labels sync between your devices through [orOS sync](help:t/sync). Which of your own labels you've hidden is not saved: they all show again next time. The `Holidays`, `Name days`, `World days`, `Work time` and `Moon & Sky` chips remember whether they are on or off, on this device only. Feed rows are never stored in Calendar; they come from the other apps' own data.
 
-`Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows aren't included. Calendar can't import .ics files. For a full copy, see [backup](help:t/backup).
+`Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows aren't included.
+
+`Import`, next to `Export`, reads a .ics file from Google Calendar, Outlook, your phone or another orOS Calendar. Before anything is saved you see how many events are new, updated or already in the Calendar, and you choose `Import` or `Cancel`. Importing the same file again updates those events instead of adding copies. A category in the file is matched to one of your labels with the same name; no new labels are made. Cancelled events are skipped.
+
+For a full copy, see [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[←]] / [[→]] go to the previous or next month, week or agenda page.
@@ -61,3 +65,4 @@ Your events and labels sync between your devices through [orOS sync](help:t/sync
 - Reminders can't fire when the browser or the orOS tab is closed.
 - An event can either repeat or span several days, not both.
 - Repeating and multi-day events can't be moved by dragging.
+- When importing, a repeating event whose rule the Calendar can't hold (for example "the last Friday of each month") comes in with only its first date. The preview tells you how many. A file can bring in at most 5000 events and be at most 5 MB.
