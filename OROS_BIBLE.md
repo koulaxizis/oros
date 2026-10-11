@@ -4577,3 +4577,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Reader: attachment preview for pictures and PDFs up to 20 pages (bundled PDF.js from the precached `vendor/pdfjs`, loaded on first use, eval and XFA off); "Save to device" and "Save to Files" (Files › Mail, never over an existing file).
 - `compose.js`: multipart/mixed, RFC 2231 `filename*` + RFC 2047 `name=`. Relay: send and draft up to 10 MB (request 14 MB), SMTP and APPEND timeouts 60 s.
 - Tests 1365 (compose files, RFC 2231 round trip); Playwright E2E at 360px. Not tested: a real Papaki server or a real 10 MB send.
+
+### 2026-10-11 — Mail: templates, block sender, undo send, send later (#170) — 0.76.00
+- Undo send: Send waits 0/5/10/20 s with Undo (device setting). Send later: in an hour, tomorrow morning, Monday morning or any time up to a year; scheduled messages wait in the Outbox (Send now, Edit, Delete) and go out even with Mail closed while orOS is open (shell checker `notify.js`, "Sent"/"Not sent" notice).
+- New `mail/outbox.js`: each Outbox record is claimed in one IndexedDB transaction before sending (once even with two tabs; stale claims expire after 10 min). Precached.
+- Templates synced in the mail slice (`templates[]`, LWW by m, shared tombs, ≤ 30, html ≤ 8000 chars). Block sender adds a device rule → Junk and moves the message.
+- Tests 1368 (tests/mail-outbox.test.js, templates merge); Playwright E2E at 360/1200 px. Not tested: a real Papaki server; scheduled sends in a throttled background tab may go at the next check.
