@@ -1,32 +1,50 @@
 // ============================================================
-// orOS Calendar — Today provider (v1.0.0, wave 1)
+// orOS Calendar — Today provider (v1.1.0, wave 2)
 // Loaded by the shell (today/host.js) through apps.json "today".
-// Read-only: reads oros-contacts-data and the Calendar's cached copy
-// of its world days (oros-cal-days), never writes, never fetches.
-// The rules are calendar/namedays.js (holidaysOn, namesOn,
-// contactsCelebrating, observancesOn), the same the Calendar chips and
-// the shell's name-day notice use. Rows: today's public holidays,
-// who celebrates and world days as top lines; contacts who celebrate
-// today (a row: you may want to call them); public holidays of the
-// next days. The Calendar's own events join in wave 2.
-// Opens: a contact → Contacts (__orosOpenContact), else the Calendar
-// on that day (__orosOpenCalendar).
+// Read-only: reads oros-calendar-data, oros-contacts-data and the
+// Calendar's cached copy of its world days (oros-cal-days), never
+// writes, never fetches. The rules are calendar/occur.js (eventsOn:
+// your own events, series included, the same walk the Calendar draws
+// and the reminder engine uses) and calendar/namedays.js (holidaysOn,
+// namesOn, contactsCelebrating, observancesOn). Rows: your events of
+// today and the next days (a multi-day event once, on its first day,
+// or today while it runs); today's public holidays, who celebrates
+// and world days as top lines; contacts who celebrate today; public
+// holidays of the next days.
+// Opens: an event → that event in the Calendar; a contact → Contacts
+// (__orosOpenContact); else the Calendar on that day
+// (__orosOpenCalendar).
 // ============================================================
 (function (root) {
   "use strict";
   var W = {
-    en: { names: "Name day: {n}", more: " and {n} more", contact: "{name}: name day" },
-    el: { names: "Γιορτάζουν: {n}", more: " και {n} ακόμα", contact: "Γιορτάζει: {name}" }
+    en: { names: "Name day: {n}", more: " and {n} more", contact: "{name}: name day", untitled: "(untitled)" },
+    el: { names: "Γιορτάζουν: {n}", more: " και {n} ακόμα", contact: "Γιορτάζει: {name}", untitled: "(χωρίς τίτλο)" }
   };
   var MAX_NAMES = 6;
 
   var PROVIDER = {
     id: "calendar",
-    keys: ["oros-contacts-data", "oros-cal-days"],
+    keys: ["oros-calendar-data", "oros-contacts-data", "oros-cal-days"],
     collect: function (ctx) {
-      var ND = root.OrosNamedays;
-      if (!ND) return [];
+      var ND = root.OrosNamedays, OCC = root.OrosCalOccur;
       var w = W[ctx.lang] || W.en, el = ctx.lang === "el", out = [];
+      var cal = OCC ? ctx.readJSON("oros-calendar-data") : null;
+      if (cal && Array.isArray(cal.events)) {
+        for (var e = 0; e <= ctx.horizon; e++) {
+          var on = ctx.addDays(ctx.today, e);
+          OCC.eventsOn(cal, on).forEach(function (ev) {
+            var span = !OCC.validRecur(ev.recur) && typeof ev.dateEnd === "string" && ev.dateEnd > ev.date;
+            if (span && on !== ev.date && on !== ctx.today) return;     // a running span: once
+            out.push({ id: "ev:" + ev.id + ":" + on, due: on, kind: "event",
+                       time: typeof ev.start === "string" ? ev.start : null,
+                       title: typeof ev.title === "string" && ev.title ? ev.title : w.untitled,
+                       text: typeof ev.location === "string" ? ev.location : "",
+                       target: { ev: ev.id, date: on } });
+          });
+        }
+      }
+      if (!ND) return out;
       for (var d = 0; d <= ctx.horizon; d++) {
         var day = ctx.addDays(ctx.today, d);
         ND.holidaysOn(day).forEach(function (h) {
@@ -62,7 +80,8 @@
         return;
       }
       var day = target && typeof target.date === "string" ? target.date : "";
-      if (typeof win.__orosOpenCalendar === "function") win.__orosOpenCalendar("day", day);
+      var ev = target && typeof target.ev === "string" ? target.ev : "day";   // unknown id → that day
+      if (typeof win.__orosOpenCalendar === "function") win.__orosOpenCalendar(ev, day);
     }
   };
 

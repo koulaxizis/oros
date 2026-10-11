@@ -22,6 +22,9 @@
 //       kind   "task" (can be late) | "event" (happens on its day)
 //              | "info" (the line at the top: weather, name days…)
 //       target small JSON value handed back to the app on open
+//       done   optional small JSON value: the row gets a "Done" button
+//              that opens the app with __orosOpenAt(app, { done });
+//              the APP ticks it with its own code (Today never writes)
 //   • READ-ONLY: a provider never writes storage, never talks to sync,
 //     never fetches. The date logic stays in the app's own core; the
 //     provider only turns its answer into rows.
@@ -112,7 +115,8 @@
       title: title,
       text: str(r.text, TEXT_LEN),
       kind: kind,
-      target: cleanTarget(r.target)
+      target: cleanTarget(r.target),
+      done: cleanTarget(r.done)
     };
   }
 

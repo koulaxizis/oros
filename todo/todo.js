@@ -98,6 +98,9 @@
       "tab.rename":    "Rename list",
       "toast.deleted": "Deleted",
       "toast.undone":  "Restored",
+      "toast.ticked":  "Done: {t}",
+      "toast.already": "That task is already done",
+      "toast.gone":    "That task is no longer on your lists",
       "toast.cleared": "Completed items cleared",
       "toast.listdel": "List deleted",
       "toast.labeladd": "Label created",
@@ -163,6 +166,9 @@
       "tab.rename":    "Μετονομασία λίστας",
       "toast.deleted": "Διαγράφηκε",
       "toast.undone":  "Επαναφέρθηκε",
+      "toast.ticked":  "Έγινε: {t}",
+      "toast.already": "Η εργασία έχει ήδη γίνει",
+      "toast.gone":    "Η εργασία δεν υπάρχει πια στις λίστες σου",
       "toast.cleared": "Καθαρίστηκαν οι ολοκληρωμένες εργασίες",
       "toast.listdel": "Η λίστα διαγράφηκε",
       "toast.labeladd": "Η ετικέτα δημιουργήθηκε",
@@ -1123,6 +1129,15 @@
     });
   }
 
+  // The tick: the checkbox and "Done" from the Today summary
+  // (openSearchTarget { done }) run this one function.
+  function setDone(item, done) {
+    item.done = !!done;
+    touchField(item, "done");               // TD-3: the tick only
+    if (item.done && recycleItem(item)) touchField(item, "due");   // recurring → reopens, new date
+    save(); scheduleRender();
+  }
+
   // Shared row builder (both view modes render identical rows —
   // the ONLY difference is the drag handle vs the source chip).
   function makeItemRow(list, item, opts) {
@@ -1135,12 +1150,7 @@
     check.type = "checkbox";
     check.className = "check";
     check.checked = item.done;
-    check.addEventListener("change", function () {
-      item.done = check.checked;
-      touchField(item, "done");               // TD-3: the tick only
-      if (item.done && recycleItem(item)) touchField(item, "due");   // recurring → reopens, new date
-      save(); scheduleRender();
-    });
+    check.addEventListener("change", function () { setDone(item, check.checked); });
     li.appendChild(check);
 
     // body (text + extras) — click opens detail dialog
@@ -2744,6 +2754,7 @@
   // dialog. Unknown ids, or a dialog already open → no-op.
   function openSearchTarget(t) {
     if (t && t.addItems) { openAddItems(t.addItems); return; }   // section 13
+    if (t && t.done) { doneFromToday(t.done); return; }
     if (!t || typeof t.list !== "string" || !listById(t.list)) return;
     // A dialog in progress (maybe with unsaved edits) wins: no jump.
     if (document.querySelector("dialog[open]")) return;
@@ -2752,6 +2763,20 @@
     if (typeof t.item === "string" && itemById(listById(t.list), t.item)) {
       openItemDialog(t.list, t.item);
     }
+  }
+  // "Done" from the Today summary: { done: { list, item } } ticks the
+  // task with the checkbox's own setDone and shows its list (untick
+  // to take it back). Gone or already done → a note, nothing written.
+  function doneFromToday(d) {
+    if (!d || typeof d.list !== "string" || typeof d.item !== "string") return;
+    if (document.querySelector("dialog[open]")) return;
+    var list = listById(d.list), item = list ? itemById(list, d.item) : null;
+    if (!item) { showToast(t("toast.gone"), false); return; }
+    setActiveList(list.id);
+    renderAll();
+    if (item.done) { showToast(t("toast.already"), false); return; }
+    setDone(item, true);
+    showToast(t("toast.ticked").replace("{t}", item.text || ""), false);
   }
   window.__orosOpenAt = openSearchTarget;
   try {

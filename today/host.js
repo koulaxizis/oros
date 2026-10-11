@@ -176,6 +176,15 @@
     if (typeof root.__orosOpenAt === "function") root.__orosOpenAt(appId, target === undefined ? null : target);
   }
 
+  // "Done": the app itself does the write, with its own code, when it
+  // receives { done } (To-Do: the tick; Plant Care: logTask). Today
+  // only opens it.
+  function done(appId, payload) {
+    appId = String(appId || "");
+    if (!A.ID_RE.test(appId) || payload === null || typeof payload !== "object") return;
+    if (typeof root.__orosOpenAt === "function") root.__orosOpenAt(appId, { done: payload });
+  }
+
   // ---------- The daily notice ----------
   function isSettled(now) {
     var s = S(), connected = false, unlocked = false;
@@ -271,6 +280,7 @@
     VERSION: "1.0.0",
     build: build,
     open: open,
+    done: done,
     tick: tick,
     absorbs: absorbs,
     syncSettled: syncSettled,

@@ -5859,12 +5859,6 @@
     } catch (e) {}
   }
 
-  function calRemPad(n) { return (n < 10 ? "0" : "") + n; }
-  function calRemYmd(y, m, d) {
-    return y + "-" + calRemPad(m + 1) + "-" + calRemPad(d);
-  }
-  function calRemDim(y, m) { return new Date(y, m + 1, 0).getDate(); }
-
   // Start timestamp of one OCCURRENCE — ev.start rides along with
   // every occurrence; all-day = local midnight.
   function calRemOccTs(ev, y, m, d) {
@@ -5875,59 +5869,18 @@
     return ts;
   }
 
-  // Occurrence generator — MUST mirror calendar.js exactly:
-  //   D/W step days (interval 2 = bi-weekly),
-  //   M/Y clamp to month length with the ORIGINAL day sticky
-  //     (Jan 31 → Feb 28 → Mar 31, Google-style),
-  //   exdates skipped, "until" stops the walk.
+  // Occurrences come from calendar/occur.js (window.OrosCalOccur), the
+  // same walk the Calendar draws and the Today summary reads: sticky
+  // clamp (Jan 31 → Feb 28 → Mar 31), D/W step days, interval 2 =
+  // bi-weekly, exdates skipped, "until" stops the walk.
   // cb(ts, ymd) — return false to stop iterating.
   function calRemEachOccurrence(ev, cb) {
-    var p = ev.date.split("-");
-    var y = +p[0], m = +p[1] - 1;
-    var origDay = +p[2];
-    var d = origDay;
-    var r = ev.recur;
-    var interval = (r.interval === 2) ? 2 : 1;
-    var until = (typeof r.until === "string" &&
-                /^\d{4}-\d{2}-\d{2}$/.test(r.until)) ? r.until : null;
-    var exSet = {};
-    if (Array.isArray(r.exdates)) {
-      for (var x = 0; x < r.exdates.length && x < 100; x++) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(r.exdates[x])) exSet[r.exdates[x]] = true;
-      }
-    }
-
-    // Mirror of calendar.js MAX_STEPS (per freq). The old uniform
-    // 500 was NOT a mirror: a daily series anchored more than ~500
-    // DAYS ago ends this walk before it ever reaches NOW — the
-    // shell engine silently never fires for old daily reminders.
-    var maxSteps = (r.freq === "D") ? 40000
-                 : (r.freq === "W") ? 5200 : 600;
-    for (var step = 0; step < maxSteps; step++) {
-      var occYmd = calRemYmd(y, m, d);
-      if (until && occYmd > until) return;
-      if (!exSet[occYmd]) {
-        var ts = calRemOccTs(ev, y, m, d);
-        if (cb(ts, occYmd) === false) return;
-      }
-      if (r.freq === "D") {
-        d += interval;
-      } else if (r.freq === "W") {
-        d += 7 * interval;
-      } else if (r.freq === "M") {
-        m += interval;
-        while (m > 11) { m -= 12; y++; }
-        d = Math.min(origDay, calRemDim(y, m));   // sticky clamp
-      } else if (r.freq === "Y") {
-        y += interval;
-        d = Math.min(origDay, calRemDim(y, m));   // Feb 29 → Feb 28
-      } else {
-        return;
-      }
-      // normalize day overflow from D/W stepping (max +14 days)
-      var dim = calRemDim(y, m);
-      if (d > dim) { d -= dim; m++; if (m > 11) { m = 0; y++; } }
-    }
+    var OCC = window.OrosCalOccur;
+    if (!OCC) return;                                  // stale bundle — silent
+    OCC.eachOccurrence(ev, function (occYmd) {
+      var p = occYmd.split("-");
+      return cb(calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), occYmd);
+    });
   }
 
   function calRemTick() {
@@ -6267,9 +6220,10 @@
   // "oros-todo-data" (same doctrine as cycleShellCheck: app stays
   // untouched, works with the app closed, dedup key carries the
   // day + count so a GROWING backlog re-fires — new information,
-  // not spam). Criterion mirrors overdueCount(): !done && due <=
-  // today (ISO string compare). Suppression = the "todo" toggle
-  // in Settings → Notifications; no in-app pref by design.
+  // not spam). Criterion = todo/core.js dueSummary: !done && due <=
+  // today, "due or overdue" (the app's own overdueCount badge counts
+  // only due < today). Suppression = the "todo" toggle in Settings →
+  // Notifications; no in-app pref by design.
   var TODO_DATA_KEY = "oros-todo-data";
 
   function todoCheckTick() {
@@ -6277,23 +6231,14 @@
     try { raw = JSON.parse(localStorage.getItem(TODO_DATA_KEY)); }
     catch (e) { return; }
     if (!raw || !Array.isArray(raw.lists)) return;
+    var TC = window.OrosTodoCore;
+    if (!TC) return;                                    // stale bundle — silent
 
     var today = sysYmd();
-    var due = 0, earliest = null, earliestList = null;
-    raw.lists.forEach(function (l) {
-      if (!l || !Array.isArray(l.items)) return;
-      l.items.forEach(function (it) {
-        if (!it || it.done || typeof it.due !== "string") return;
-        if (it.due <= today) {
-          due++;
-          if (earliest === null || it.due < earliest) {
-            earliest = it.due;
-            earliestList = l.id;
-          }
-        }
-      });
-    });
+    var sum = TC.dueSummary(raw, today);
+    var due = sum.count, earliestList = sum.earliestList;
     if (due === 0) return;
+    if (todayAbsorbs("todo")) return;                   // said in today's summary
 
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
@@ -6317,7 +6262,9 @@
 
   // Wave 13 — Quote due-date reminders. Shell-side scan of
   // "oros-quote-data" for sent/accepted quotes with due dates
-  // within ≤2 days or overdue. Drafts/expired/rejected excluded.
+  // within ≤2 days or overdue (quote/core.js dueQuotes, shared with
+  // the Today summary). Drafts/expired/rejected and quotes without
+  // a due date excluded.
   // Dedup key "due-<ymd>-<count>" prevents spam while growing
   // backlogs re-trigger (new information each time).
   var QUOTE_DATA_KEY = "oros-quote-data";
@@ -6327,29 +6274,19 @@
     try { raw = JSON.parse(localStorage.getItem(QUOTE_DATA_KEY)); }
     catch (e) { return; }
     if (!raw || !Array.isArray(raw.quotes)) return;
+    var QC = window.OrosQuoteCore;
+    if (!QC) return;                                    // stale bundle — silent
 
     var today = sysYmd();
-    var due = 0, earliestId = null, earliestDue = null;
-    raw.quotes.forEach(function (q) {
-      if (!q || !q.id || typeof q.dueDate !== "string") return;
-      // Filter: only sent/accepted quotes trigger reminders
-      if (q.status !== "sent" && q.status !== "accepted") return;
-      
-      // Horizon: today + 2 days (≤2 days or overdue)
-      var hd = new Date();
-      hd.setDate(hd.getDate() + 2);
-      var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
-      var horizon = hd.getFullYear() + "-" + p2(hd.getMonth() + 1) + "-" + p2(hd.getDate());
-      
-      if (q.dueDate <= horizon) {
-        due++;
-        if (earliestDue === null || q.dueDate < earliestDue) {
-          earliestId = q.id;
-          earliestDue = q.dueDate;
-        }
-      }
-    });
+    // Horizon: today + 2 days (≤2 days or overdue)
+    var hd = new Date();
+    hd.setDate(hd.getDate() + 2);
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var horizon = hd.getFullYear() + "-" + p2(hd.getMonth() + 1) + "-" + p2(hd.getDate());
+    var list = QC.dueQuotes(raw, horizon);
+    var due = list.length, earliestId = due ? list[0].id : null;
     if (due === 0) return;
+    if (todayAbsorbs("quote")) return;                  // said in today's summary
 
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent

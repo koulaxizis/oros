@@ -9,7 +9,9 @@ Below come three groups:
 - `Today`: what is due today. Rows with a time come first, in time order.
 - `Coming up`: the next three days, day by day.
 
-Tap or click a group's title to fold it. Tap or click a row to open it in its app, on that plant, pet, car, trip or day. `Refresh` (the round arrow) builds the summary again.
+Tap or click a group's title to fold it. Tap or click a row to open it in its app, on that event, task, card, quote, contact, plant, pet, car, trip or day. `Refresh` (the round arrow) builds the summary again.
+
+Tasks from [To-Do](app:todo) and [Plant Care](app:plants) also have a tick button, `Done (opens the app)`. It opens that app, which marks the task done itself: To-Do ticks it (untick it there to take it back) and Plant Care logs it, with `Undo` in its message.
 
 ## The daily notice
 On your first open of orOS each day after the start time (06:00 unless you change it), Today leaves one notice in the bell when something is late or due today. It only shows numbers, for example "2 overdue · 1 today", never the names of your tasks. Opening it brings you here.
@@ -23,7 +25,7 @@ When the [Assistant](app:assistant) is set up, rows have a speech-bubble button,
 Open them with the gear button:
 - `Daily summary` turns the daily notice on or off. The Today tab works either way.
 - `From` is the start time, from 00:00 to 12:00.
-- `Quiet the morning reminders the summary covers`: once the summary has come, the separate morning reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
+- `Quiet the morning reminders the summary covers`: once the summary has come, the separate reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, To-Do, Quote, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
 - `Apps in the summary`: choose which apps take part. Apps marked `sensitive` (Cycle and Mood) are off until you switch them on.
 
 ## Sync and backup
@@ -38,5 +40,6 @@ Your Today settings sync between your devices through [orOS sync](help:t/sync). 
 
 ## Limits
 - The notice can only come while orOS is open: if you don't open it, nothing arrives, and it comes on your next open.
-- Your calendar events and to-do lists are not in the summary yet.
-- You can't tick a task as done from Today; open its app to do it.
+- Mail, Meal Planner, Budget, Health, Workouts and Habits are not in the summary yet.
+- Only To-Do and Plant Care tasks have the `Done` button; other tasks are done in their app.
+- From Kanban, cards in each board's last column (usually "Done") are left out.

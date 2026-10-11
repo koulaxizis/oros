@@ -904,11 +904,10 @@ function transientNote(title, body) {
 
   /* ---------- 3b. Recurrence + multi-day engine ----------
      Masters stored in state.events with "recur". Occurrences are
-     COMPUTED here — never stored. Algorithm mirrors shell.js
-     calRemEachOccurrence 1:1 (sticky-clamp contract: Jan 31 →
-     Feb 28 → Mar 31; D/W step days; interval 2 = bi-weekly;
-     exdates skipped; "until" stops the walk). The reminder engine
-     and this expansion MUST never disagree.
+     COMPUTED — never stored — by calendar/occur.js, shared with the
+     shell's reminder engine and the Today summary (sticky-clamp
+     contract: Jan 31 → Feb 28 → Mar 31; D/W step days; interval 2 =
+     bi-weekly; exdates skipped; "until" stops the walk).
      MULTI-DAY (v0.3): plain events may span date → dateEnd. Spans
      and recurrence are mutually exclusive BY SANITIZER (see §2) —
      one engine per shape keeps occurrencesOn provable. */
@@ -942,75 +941,16 @@ function transientNote(title, body) {
     };
   }
 
-  // Generator: walks occurrences in strict ascending date order.
-  // cb(occYmd) — return false to stop. Exdate occurrences are
-  // skipped (but the walk continues past them, so an occurrence
-  // AFTER the exclusion is still reachable).
-  function eachOccurrence(e, cb) {
-    if (!validRecur(e.recur)) return;
-    var p = e.date.split("-");
-    var y = +p[0], m = +p[1] - 1;
-    var origDay = +p[2];
-    var d = origDay;
-    var r = e.recur;
-    var interval = (r.interval === 2) ? 2 : 1;
-    var until = (typeof r.until === "string" &&
-                 /^\d{4}-\d{2}-\d{2}$/.test(r.until)) ? r.until : null;
-    var exSet = {};
-    if (Array.isArray(r.exdates)) {
-      for (var x = 0; x < r.exdates.length && x < 100; x++) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(r.exdates[x])) exSet[r.exdates[x]] = true;
-      }
-    }
-    // Step budget must outlive any realistic series age (500 ≈ 16
-    // months of dailies was too tight): D ≈ 110 years, W (incl. ×2)
-    // ≈ 200 years, M/Y ≈ 50+ years. Reminders stop far earlier via
-    // the horizon, occursOn exits at the target date — both cheap.
-    var MAX_STEPS = (r.freq === "D") ? 40000 : (r.freq === "W") ? 5200 : 600;
-    for (var step = 0; step < MAX_STEPS; step++) {
-      var occYmd = ymd(y, m, d);
-      if (until && occYmd > until) return;
-      if (!exSet[occYmd]) {
-        if (cb(occYmd) === false) return;
-      }
-      if (r.freq === "D") {
-        d += interval;
-      } else if (r.freq === "W") {
-        d += 7 * interval;
-      } else if (r.freq === "M") {
-        m += interval;
-        while (m > 11) { m -= 12; y++; }
-        d = Math.min(origDay, dimOfMonth(y, m));   // sticky clamp
-      } else if (r.freq === "Y") {
-        y += interval;
-        d = Math.min(origDay, dimOfMonth(y, m));   // Feb 29 → Feb 28
-      } else {
-        return;
-      }
-      // normalize day overflow from D/W stepping (max +14 days)
-      var dim = dimOfMonth(y, m);
-      if (d > dim) { d -= dim; m++; if (m > 11) { m = 0; y++; } }
-    }
-  }
+  // Occurrences live in calendar/occur.js (window.OrosCalOccur), the
+  // one copy the shell's reminder engine and the Today summary use
+  // too. cb(occYmd) — return false to stop; exdates skipped.
+  var OCC = window.OrosCalOccur;
+  function eachOccurrence(e, cb) { OCC.eachOccurrence(e, cb); }
 
   // The single truth of "does e occupy dateStr":
   //   - series: computed occurrences (exdates respected)
   //   - plain:  anchor day, or the whole date → dateEnd span
-  function occursOn(e, dateStr) {
-    if (validRecur(e.recur)) {
-      if (e.recur.until && dateStr > e.recur.until) return false;
-      var found = false;
-      eachOccurrence(e, function (occYmd) {
-        if (occYmd >= dateStr) {          // ascending walk: past the
-          found = (occYmd === dateStr);   // target → answer is final
-          return false;
-        }
-      });
-      return found;
-    }
-    if (e.date > dateStr) return false;
-    return dateStr <= (e.dateEnd || e.date);
-  }
+  function occursOn(e, dateStr) { return OCC.occursOn(e, dateStr); }
 
   // Multi-day span info: null on single-day events, otherwise
   // { days: total, idx: 1-based position of dateStr inside }.
@@ -1078,27 +1018,27 @@ function transientNote(title, body) {
   function contactsFeedOn(dateStr) {
     // dateStr "YYYY-MM-DD" → tail is the "MM-DD" the contact
     // events carry (yearless by design: the day is the whole story).
-    var mmdd = dateStr.slice(5);
+    // contacts/dates.js decides which dates fall on the day (one copy
+    // with the Today summary; 29 February shows on the 28th in years
+    // without one).
     var out = [];
-    var cs = contactsRaw().contacts;
-    if (!Array.isArray(cs)) return out;
-    cs.forEach(function (c) {
-      if (!c || typeof c !== "object" || typeof c.id !== "string") return;
-      (Array.isArray(c.events) ? c.events : []).forEach(function (ev, ix) {
-        if (!ev || typeof ev !== "object" || ev.day !== mmdd) return;
-        var labelId = feedLabelIdFor(ev.type);
-        if (!labelVisible(labelId)) return;
-        var who = ctName(c);
-        out.push({
-          id: "feed-" + c.id + "-" + ix,        // per-render key, never stored
-          title: (ev.type === "custom" && ev.label)
-            ? who + " · " + ev.label.slice(0, 40)
-            : who,
-          labelId: labelId,
-          start: null,                          // all-day → sorted last
-          _feed: true,
-          _contactId: c.id
-        });
+    var CD = window.OrosContactDates;
+    var raw = contactsRaw();
+    if (!CD || !Array.isArray(raw.contacts)) return out;
+    CD.eventsOn(raw.contacts, dateStr, raw.deleted).forEach(function (x) {
+      var c = x.contact, ev = x.ev;
+      var labelId = feedLabelIdFor(ev.type);
+      if (!labelVisible(labelId)) return;
+      var who = ctName(c);
+      out.push({
+        id: "feed-" + c.id + "-" + x.ix,        // per-render key, never stored
+        title: (ev.type === "custom" && ev.label)
+          ? who + " · " + ev.label.slice(0, 40)
+          : who,
+        labelId: labelId,
+        start: null,                            // all-day → sorted last
+        _feed: true,
+        _contactId: c.id
       });
     });
     return out;
@@ -1300,26 +1240,23 @@ function transientNote(title, body) {
     if (!data) return [];
     if (!labelVisible("lbl-feed-kanban")) return [];
 
-    var out = [];
-    (data.boards || []).forEach(function (bd) {
-      if (!bd || bd.archived) return;            // archived board → skip
-      (Array.isArray(bd.columns) ? bd.columns : []).forEach(function (col) {
-        (Array.isArray(col.cards) ? col.cards : []).forEach(function (card) {
-          if (!card || card.due !== dateStr) return;
-          out.push({
-            id: "kb-" + card.id + "-" + dateStr,   // per-render key, never stored
-            title: (col.name || "").slice(0, 24) + " · " +
-                   (card.text || "").slice(0, 60),
-            labelId: "lbl-feed-kanban",
-            start: null,                           // all-day event
-            note: (card.notes || "").slice(0, 500),
-            _feed: true,
-            _kanban: { boardId: bd.id, colId: col.id, cardId: card.id }
-          });
-        });
-      });
+    var KC = window.OrosKanbanCore;
+    if (!KC) return [];
+    // kanban/core.js: archived boards skipped (#6); every column,
+    // the last one included, shows on the Calendar.
+    return KC.dueCards(data, dateStr, dateStr).map(function (x) {
+      var bd = x.board, col = x.col, card = x.card;
+      return {
+        id: "kb-" + card.id + "-" + dateStr,   // per-render key, never stored
+        title: (col.name || "").slice(0, 24) + " · " +
+               (card.text || "").slice(0, 60),
+        labelId: "lbl-feed-kanban",
+        start: null,                           // all-day event
+        note: (card.notes || "").slice(0, 500),
+        _feed: true,
+        _kanban: { boardId: bd.id, colId: col.id, cardId: card.id }
+      };
     });
-    return out;
   }
 
   // Wave — To-Do read-only feed. Reads "oros-todo-data" (written
@@ -1351,22 +1288,22 @@ function transientNote(title, body) {
     if (!data) return [];
     if (!labelVisible("lbl-feed-todo")) return [];
 
-    var out = [];
-    (data.lists || []).forEach(function (list) {
-      (Array.isArray(list.items) ? list.items : []).forEach(function (item) {
-        if (!item || item.done || item.due !== dateStr) return;
-        out.push({
-          id: "tdo-" + item.id + "-" + dateStr,   // per-render key, never stored
-          title: (item.text || "").slice(0, 60),
-          labelId: "lbl-feed-todo",
-          start: null,                           // all-day
-          note: (item.notes || "").slice(0, 500),
-          _feed: true,
-          _todo: { listId: list.id, itemId: item.id }
-        });
-      });
+    var TC = window.OrosTodoCore;
+    if (!TC) return [];
+    // todo/core.js: open tasks due on the day (one copy with the shell
+    // reminder and the Today summary).
+    return TC.dueOn(data, dateStr).map(function (x) {
+      var list = x.list, item = x.item;
+      return {
+        id: "tdo-" + item.id + "-" + dateStr,   // per-render key, never stored
+        title: (item.text || "").slice(0, 60),
+        labelId: "lbl-feed-todo",
+        start: null,                           // all-day
+        note: (item.notes || "").slice(0, 500),
+        _feed: true,
+        _todo: { listId: list.id, itemId: item.id }
+      };
     });
-    return out;
   }
 
   // Workouts read-only feed. Reads "oros-fitness-data" (written by
