@@ -82,16 +82,17 @@
     var o = {
       dev: typeof v.dev === "string" && /^[a-z0-9]{6,20}$/.test(v.dev) ? v.dev : C.randomId("d", null).slice(0, 11),
       used: v.used && typeof v.used === "object" ? v.used : {},
-      inbox: v.inbox && typeof v.inbox === "object" ? v.inbox : {}
+      inbox: v.inbox && typeof v.inbox === "object" ? v.inbox : {},
+      papi: v.papi && typeof v.papi === "object" ? v.papi : {}       // chan id → last read of its API events (ms)
     };
     if (!v.dev) saveDev(o);
     return o;
   }
   function saveDev(o) { try { localStorage.setItem(DEV_KEY, JSON.stringify(o)); } catch (e) {} }
-  function countUsed(chanId) {
+  function countUsed(chanId, n) {
     var o = devState(), k = dayKey();
     var u = o.used[chanId];
-    o.used[chanId] = { d: k, n: (u && u.d === k ? u.n : 0) + 1 };
+    o.used[chanId] = { d: k, n: (u && u.d === k ? u.n : 0) + (n || 1) };
     Object.keys(o.used).forEach(function (id) { if (!o.used[id] || o.used[id].d !== k) delete o.used[id]; });
     saveDev(o);
   }
@@ -252,6 +253,30 @@
                hdr: p.hdr || null };
     });
   }
+  // → { prov, key, dom? } for the relay's "papi" (the key is device-local, like a password)
+  function apiCreds(ch) {
+    if (!C.isApi(ch)) return Promise.reject({ code: "nochan" });
+    if (/^mailgun/.test(ch.preset) && !ch.dom) return Promise.reject({ code: "nodom" });
+    return ownPass(ch.id).then(function (key) {
+      if (!key) throw { code: "nopass" };
+      var o = { prov: ch.preset, key: key };
+      if (ch.dom) o.dom = ch.dom;
+      return o;
+    });
+  }
+  function papi(cr, reqs, ms) {
+    var b = { op: "papi", prov: cr.prov, key: cr.key, reqs: reqs };
+    if (cr.dom) b.dom = cr.dom;
+    return relay(b, ms || SEND_TIMEOUT).then(function (r) { return (r && Array.isArray(r.res) ? r.res : []); });
+  }
+  // "Test login" for an API account → resolves, or rejects { code }
+  function apiCheck(ch) {
+    return apiCreds(ch).then(function (cr) { return papi(cr, [C.apiCheckReq(ch)], CALL_TIMEOUT); }).then(function (res) {
+      var o = C.apiOutcome(ch.preset, res[0]);
+      if (o.k === "ok") return true;
+      throw o.k === "auth" ? { code: "apikey" } : o.k === "retry" ? { code: "network" } : { code: "no", msg: o.msg };
+    });
+  }
   function inboxAccount(ch) {
     if (!ch) return null;
     return mailAccount(ch.kind === "mail" ? ch.acct : ch.inbox);
@@ -300,18 +325,20 @@
                         if (!inline.some(function (i) { return i.cid === cid; })) inline.push({ cid: cid, type: d.type, bin: d.bin });
                         return "cid:" + cid;
                       } });
-    return R.message(M, {
+    var mo = {
       from: { name: l.fromName, addr: l.from }, to: { name: s ? s.name : "", addr: opts.to || s.email },
       reply: l.reply, subject: e.subject, text: e.text, html: e.html, inline: inline,
       listId: l.id, listName: l.name, unsub: unsub, unsubWeb: unsubWeb, tag: x.id, hdr: opts.hdr
-    });
+    };
+    return opts.raw ? mo : R.message(M, mo);          // raw: the parts, for R.apiReq
   }
-  function confirmFor(l, s, hdr) {
+  function confirmFor(l, s, hdr, raw) {
     var box = l.reply || l.from, tok = C.token(l, s.id);
     var ce = R.confirmEmail({ list: l, sub: s, lang: C.langOf(s, l), mailbox: box, tok: tok, confirm: R.mailto(box, "confirm " + tok) });
-    return R.message(root.orosMailCompose, { from: { name: l.fromName, addr: l.from }, to: { name: s.name, addr: s.email },
-                                             reply: l.reply, subject: ce.subject, text: ce.text, html: ce.html,
-                                             listId: l.id, listName: l.name, hdr: hdr });
+    var mo = { from: { name: l.fromName, addr: l.from }, to: { name: s.name, addr: s.email },
+               reply: l.reply, subject: ce.subject, text: ce.text, html: ce.html,
+               listId: l.id, listName: l.name, hdr: hdr };
+    return raw ? mo : R.message(root.orosMailCompose, mo);
   }
   function sendBin(ch, from, to, bin) {
     return sendCreds(ch).then(function (cr) {
@@ -583,11 +610,65 @@
   // Reads subscribe / confirm / unsubscribe e-mails and delivery
   // failure reports in the Inbox of every list's account, applies
   // them, and files them in a "Newsletter" folder.
+  // One provider event (C.apiEvents) → changes d (not saved), on the
+  // lists sending through chanId. An event older than a subscription
+  // (they signed up again later) is left alone.
+  function applyApiEvent(d, chanId, ev, tally) {
+    var k = C.emailKey(ev.addr), now = Date.now();
+    C.live(d.subs).forEach(function (s) {
+      if (C.emailKey(s.email) !== k) return;
+      var l = C.list(d, s.list);
+      if (!l || l.chan !== chanId || (ev.at && ev.at < s.at)) return;
+      var st = C.status(s);
+      if (st !== "on" && !(st === "pend" && ev.ev !== "bounce")) return;
+      var z = copy(s);
+      z.off = now; z.offSt = ev.ev;
+      if (ev.ev === "bounce") { z.bnc = Math.max(z.bnc, C.SOFT_LIMIT); tally.b++; } else tally.u++;
+      z.m = stamp(z.m);
+      replaceIn(d.subs, z);
+    });
+  }
+  // Bounces, complaints and unsubscribes kept by the providers of the
+  // API accounts this device has a key for.
+  function checkApi(tally) {
+    var d0 = read(), now = Date.now(), seen = {};
+    var chans = C.live(d0.chans).filter(function (ch) {
+      if (!C.isApi(ch) || seen[ch.id]) return false;
+      seen[ch.id] = 1;
+      return C.live(d0.lists).some(function (l) { return l.chan === ch.id; });
+    });
+    if (!chans.length || !navigator.onLine) return Promise.resolve(tally);
+    return chans.reduce(function (p, ch) {
+      return p.then(function () {
+        var since = (devState().papi[ch.id] || now - 7 * 864e5) - 864e5;     // a day of overlap: events arrive late
+        var reqs = C.apiEventReqs(ch, since, now);
+        return apiCreds(ch).then(function (cr) {
+          return papi(cr, reqs.map(function (r) { return { m: r.m, path: r.path }; }), CALL_TIMEOUT);
+        }).then(function (res) {
+          var evs = [];
+          res.forEach(function (r, i) {
+            if (r && r.status === 200 && typeof r.body === "string") evs = evs.concat(C.apiEvents(ch.preset, reqs[i].k, r.body));
+          });
+          if (evs.length) {
+            var d = read();
+            evs.forEach(function (ev) { applyApiEvent(d, ch.id, ev, tally); });
+            write(d);
+          }
+          if (res.some(function (r) { return r && (r.status === 401 || r.status === 403); })) throw { code: "apikey" };
+          var o = devState();
+          o.papi[ch.id] = now;
+          saveDev(o);
+        });
+      })["catch"](function (e) { if (!tally.err && !(e && e.code === "nopass")) tally.err = e; });
+    }, Promise.resolve()).then(function () { return tally; });
+  }
   // → { u, s, c, b, err (the first error, or null) }
   function checkInbox() {
     if (inboxBusy) return inboxBusy;
     var t0 = { u: 0, s: 0, c: 0, b: 0, err: null };
-    inboxBusy = pullForms(t0).then(function () { inboxBusy = null; return checkMail(t0); }, function () { inboxBusy = null; return checkMail(t0); });
+    var next = function () { return checkApi(t0)["catch"](function () { return t0; }); };
+    inboxBusy = pullForms(t0).then(next, next).then(function () { inboxBusy = null; return checkMail(t0); },
+                                                       function () { inboxBusy = null; return checkMail(t0); });
     return inboxBusy;
   }
   function checkMail(tally) {
@@ -599,7 +680,13 @@
     });
     var ids = Object.keys(accts);
     var MM = root.orosMailMime;
-    if (!ids.length || !navigator.onLine || !MM) return Promise.resolve(tally);
+    if (!ids.length || !navigator.onLine || !MM) {
+      // still a check (API accounts, forms): the engine waits INBOX_EVERY for the next
+      var o0 = devState();
+      o0.inbox.at = Date.now();
+      saveDev(o0);
+      return Promise.resolve(tally);
+    }
     var run = function () {
       return ids.reduce(function (p, id) {
         return p.then(function () {
@@ -735,6 +822,7 @@
   function create(env) {
     var timer = null, busy = false, state = { k: "" }, stopped = false;
     var failedInv = {};       // list id → true: no more invitations in this window after an error
+    var apiMax = {};          // chan id → a smaller batch after a failed relay call
     function call(name, a) { try { if (env[name]) env[name](a, arguments[2]); } catch (e) {} }
     function setState(s) { state = s; call("onState", s); }
     function changed() { call("dirty"); call("onChange"); }
@@ -794,7 +882,7 @@
       return t;
     }
     function hasInbox(d) {
-      return C.live(d.lists).some(function (l) { return !!inboxAccount(C.chan(d, l.chan)); });
+      return C.live(d.lists).some(function (l) { var ch = C.chan(d, l.chan); return !!inboxAccount(ch) || C.isApi(ch); });
     }
     function idle(d, now) {
       var ms = Math.min(IDLE_EVERY, Math.max(1000, nextSchedIn(d, now, devState().dev)));
@@ -842,7 +930,7 @@
       }
       if (!navigator.onLine) { setState({ k: "offline" }); release(); later(30000); return; }
       // Unsubscribe requests are read before an issue goes on.
-      if (job.kind === "issue" && inboxAccount(job.chan) && now - (devState().inbox.at || 0) > INBOX_EVERY) {
+      if (job.kind === "issue" && (inboxAccount(job.chan) || C.isApi(job.chan)) && now - (devState().inbox.at || 0) > INBOX_EVERY) {
         busy = true;
         release();
         inbox(false).then(function () { busy = false; later(50); });
@@ -864,6 +952,7 @@
         }
         setState({ k: "issue", issue: job.issue, prog: job.prog });
       } else setState({ k: "inv", left: job.left });
+      if (C.isApi(job.chan)) { runApi(job, release); return; }
       var l = job.list, ch = job.chan, s = job.sub;
       var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       p.then(function (ok) {
@@ -897,6 +986,92 @@
         busy = false;
         release();
         if (e && e.code === "skip") { later(50); return; }
+        handleError(job, e);
+      });
+    }
+    // An API account: up to C.API_BATCH messages in one relay call
+    // (at most what the daily limit has left). Each answer counts on its
+    // own: sent, refused (that address bounces), or left for the next try.
+    function runApi(job, release) {
+      var l = job.list, ch = job.chan, max = Math.min(apiMax[ch.id] || C.API_BATCH, capLeft(ch));
+      var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
+      var batch = [];
+      p.then(function (ok) {
+        if (!ok) throw { code: "noImg" };
+        return apiCreds(ch);
+      }).then(function (cr) {
+        // fresh data: subscribers may have left meanwhile
+        var fresh = read(), xi = null, subs;
+        if (job.kind === "issue") {
+          xi = C.issue(fresh, job.issue.id);
+          if (!xi || xi.st !== "sending") throw { code: "skip" };
+          subs = C.nextSubs(fresh, xi, max).filter(function (s) { return C.status(s) === "on"; });
+        } else {
+          subs = C.invitesDue(fresh, l.id).slice(0, max);
+        }
+        if (!subs.length) throw { code: "skip" };
+        var lf = C.list(fresh, l.id) || l, size = 0;
+        for (var i = 0; i < subs.length; i++) {
+          var s = subs[i];
+          var o = job.kind === "inv" ? confirmFor(lf, s, null, true) : buildFor(xi, lf, s, { raw: true });
+          var rq = R.apiReq(root.orosMailCompose, ch.preset, ch.dom, o);
+          var n = JSON.stringify(rq).length;
+          if (n > 2 * 1024 * 1024 - 1024) { if (!batch.length) throw { code: "too-big" }; break; }
+          if (batch.length && size + n > 1024 * 1024) break;         // about 1 MB a call (relay CPU)
+          size += n;
+          batch.push({ sub: s, req: rq });
+        }
+        return papi(cr, batch.map(function (b) { return b.req; }));
+      }).then(function (res) {
+        delete apiMax[ch.id];
+        var sent = [], refused = [], stop = null, retry = false;
+        batch.forEach(function (b, i) {
+          var o = C.apiOutcome(ch.preset, res[i]);
+          if (o.k === "ok") sent.push(b.sub.id);
+          else if (o.k === "refused") refused.push(b.sub.id);
+          else if (o.k === "retry") retry = true;
+          else if (!stop || o.k === "auth") stop = o;
+        });
+        if (sent.length) countUsed(ch.id, sent.length);
+        if (sent.length || refused.length) {
+          change(function (dd) {
+            var at = Date.now();
+            sent.concat(refused).forEach(function (id) {
+              var cur = C.sub(dd, id);
+              if (!cur) return;
+              var z = copy(cur);
+              if (refused.indexOf(id) >= 0) { z.off = at; z.offSt = "bounce"; }
+              else if (job.kind === "inv") z.inv = at;
+              else return;
+              put(dd, "subs", z);
+            });
+            if (job.kind === "issue") {
+              dd.sent[job.issue.id] = (dd.sent[job.issue.id] || []).concat(sent);
+              var xi = C.issue(dd, job.issue.id);
+              if (xi && refused.length) { var y = copy(xi); refused.forEach(function (id) { y.fail[id] = "refused"; }); put(dd, "issues", y); }
+            }
+          });
+          changed();
+        }
+        busy = false;
+        release();
+        if (stop && stop.k === "rate") { setState({ k: "wait" }); later(60000); return; }
+        if (stop) {
+          handleError(job, stop.k === "auth" ? { code: "apikey" } : { code: "no", msg: stop.msg });
+          return;
+        }
+        if (retry && !sent.length) { setState({ k: "wait" }); later(5 * 60000); return; }
+        later(ch.rate * 1000);
+      }, function (e) {
+        busy = false;
+        release();
+        if (e && e.code === "skip") { later(50); return; }
+        // the whole call failed at the relay (e.g. its CPU limit): try again with half as many
+        if (batch.length > 1 && e && (e.code === "relay" || e.code === "timeout")) {
+          apiMax[ch.id] = Math.max(1, Math.floor(batch.length / 2));
+          later(5000);
+          return;
+        }
         handleError(job, e);
       });
     }
@@ -953,6 +1128,7 @@
     read: read, write: write, put: put, change: change, stamp: stamp, dayKey: dayKey,
     devState: devState, saveDev: saveDev, capLeft: capLeft, countUsed: countUsed,
     mailAccounts: mailAccounts, mailAccount: mailAccount, inboxAccount: inboxAccount,
+    apiCreds: apiCreds, apiCheck: apiCheck, checkApi: checkApi, applyApiEvent: applyApiEvent,
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
     images: imgData, loadImages: loadImages, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
