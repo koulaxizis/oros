@@ -1,6 +1,16 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.28.00
+- Send to someone: send a list, note, contact, event, recipe or links as a link anyone can open, with an optional password.
+
+## Version 1.27.00
+- Stock: scan barcodes with the phone camera, and sales that arrive filled in from another app (Invoices).
+- Help: the Privacy page now covers the Library's word look-up and the Newsletter app.
+
+## Version 1.26.00
+- Atelier: AI ideas and texts with your Assistant's AI, and background removal on the device.
+
 ## Version 1.25.00
 - CRM: Invoice and Quote buttons on a customer and on a deal open a filled-in draft in Invoices or Quote. A customer's new Documents tab lists their invoices (invoiced, paid, unpaid) and quotes; the Dashboard shows what customers still owe.
 

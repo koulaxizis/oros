@@ -30,6 +30,8 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Public Domain](app:pubdomain): Wikidata, for authors and their works.
 - [Reader](app:feeds) and [Podcasts](app:podcasts): the sites whose feeds you add.
 - [Mail](app:mail): your own mail provider, through the orOS mail relay, which passes your mail through and keeps nothing.
+- [Library](app:library): Wiktionary, only for `Look up` and only after you agree; only the word is sent.
+- [Newsletter](app:newsletter): your own mail account or sending provider, via the orOS mail relay; `Check domain` asks Cloudflare's public DNS for your domain's SPF, DKIM and DMARC records.
 - [Assistant](app:assistant): only the AI service you choose, with your own key, straight from your browser.
 - Sync: Dropbox, only if you connect it.
 

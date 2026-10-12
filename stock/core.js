@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.2.0)
+// orOS Stock — core.js (shared logic, v1.3.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -38,6 +38,8 @@
 //     deadStock(data, today, days), reportRange(key, today)
 //   photos (1.2): normPic, picName, picPath, picOf(data, itemId), picsInUse
 //   barcodes (1.2): eanCheck, ean13, code128, barcodeFor(item), barSvg
+//   other apps (1.3): outRequest(data, req, today) (BR-ST-OUT),
+//     srcUses(data, src), catalog(data)
 // Data (synced slice "stock", key oros-stock-data):
 //   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
 //     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
@@ -976,6 +978,64 @@
     return { notify: p.notify === false ? false : true };
   }
 
+  // ---------- BR-ST-OUT (1.3): a sale asked for by another app ----------
+  // Invoices (or any app) calls __orosOpenAt("stock", { out: req }):
+  //   req = { ref?, src?: "invoices:<id>", d?: "YYYY-MM-DD",
+  //           t?: "out" | "ret", lines: [{ code | sku, q, p? }] }
+  //   q is a plain number of units (2.5), p the net unit price in cents.
+  // Stock opens a PREFILLED movement; nothing is written until Save.
+  // outRequest only reads and cleans: lines are matched to products by
+  // SKU or barcode (findByCode), the same product twice is summed, and
+  // what can't be matched comes back in miss. used = live movements that
+  // already carry this src (the invoice was taken out of stock before).
+  function outRequest(data, req, today) {
+    if (!req || typeof req !== "object" || !Array.isArray(req.lines)) return null;
+    var tt = req.t === "ret" ? "ret" : "out";
+    var src = typeof req.src === "string" && SRC_RE.test(req.src) ? req.src : "";
+    var d = isYmd(req.d) && dayNum(req.d) <= dayNum(addDays(today, 1)) ? req.d : today;
+    var lines = [], at = dict(), miss = [];
+    req.lines.slice(0, MAX_LINES).forEach(function (l) {
+      if (!l || typeof l !== "object") return;
+      var code = cleanText(typeof l.code === "string" && l.code ? l.code : l.sku, SKU_LEN, false);
+      var q = typeof l.q === "number" && isFinite(l.q) ? Math.abs(l.q) : 0;
+      if (!code) return;
+      var it = findByCode(data, code);
+      if (!it) { if (miss.indexOf(code) < 0 && miss.length < 50) miss.push(code); return; }
+      var step = Math.pow(10, 3 - unitDec(data, it.unit));
+      var qq = Math.round(q * 1000 / step) * step;
+      if (!(qq > 0) || qq > Q_MAX) return;
+      var p = typeof l.p === "number" && isFinite(l.p) && l.p >= 0 && l.p <= C_MAX ? Math.round(l.p) : null;
+      if (at[it.id] !== undefined) {
+        var o = lines[at[it.id]];
+        o.q = Math.min(Q_MAX, o.q + qq);
+        if (o.p !== undefined && p !== null && p !== o.p) delete o.p;    // two prices: let the person type it
+        return;
+      }
+      var line = { i: it.id, q: qq };
+      if (p !== null) line.p = p;
+      at[it.id] = lines.length;
+      lines.push(line);
+    });
+    return {
+      t: tt, d: d, src: src, ref: cleanText(req.ref, REF_LEN, false),
+      lines: lines, miss: miss, used: src ? srcUses(data, src) : 0
+    };
+  }
+  function srcUses(data, src) {
+    return live(data && data.moves).filter(function (x) { return x.src === src; }).length;
+  }
+  // Read-only list for another app's product picker: live products with
+  // their code (SKU, else barcode), prices, VAT and current quantity.
+  function catalog(data) {
+    return stockRows(data).filter(function (r) { return !r.item.arch; }).map(function (r) {
+      var it = r.item;
+      return {
+        id: it.id, code: it.sku || it.bc, name: it.name, unit: it.unit,
+        price: it.price, vat: it.vat, q: r.q / 1000
+      };
+    });
+  }
+
   var api = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, UNITS: UNITS, UNIT_IDS: UNIT_IDS, unitName: unitName,
     MOVE_TYPES: MOVE_TYPES, SIGN: SIGN, CURRENCIES: CURRENCIES, VAT_RATES: VAT_RATES, LIST_KEYS: LIST_KEYS,
@@ -996,7 +1056,8 @@
     poViews: poViews, onOrder: onOrder, poNext: poNext,
     reportRange: reportRange, valueByCat: valueByCat, periodSummary: periodSummary, deadStock: deadStock,
     PHOTO_DIR: PHOTO_DIR, PIC_RE: PIC_RE, normPic: normPic, picName: picName, picPath: picPath, picOf: picOf, picsInUse: picsInUse,
-    eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg
+    eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg,
+    outRequest: outRequest, srcUses: srcUses, catalog: catalog
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;
