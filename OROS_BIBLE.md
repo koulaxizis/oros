@@ -5166,3 +5166,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Mail: Log in CRM from a message (#235) — 1.29.01
 - Mail: "Log in CRM" under a message (BR-CRM-MAIL sender): opens CRM with `{ log: { email, name, subject, text, at } }`, which prefills an Email log entry for the customer with that address, or a New customer form when the address is unknown. Nothing is saved in CRM without Save. Mail help EN/EL. Not tested: real pmail.gr mailbox, Safari.
+
+### 2026-10-12 — Atelier: Edit in Photo Lab (#244) — 1.29.02
+- Atelier: "Edit in Photo Lab" on a selected photo opens it in Photo Lab (BR-PL-EDIT); "Done" there brings the edited picture back into the same element of the design (`editedPicture` receiver, Undo). New file atelier/editpic.js (precached). Help EN/EL, tests. Not tested: real phones, Safari, Vault Drive sync of the edited asset.
