@@ -81,7 +81,10 @@
       "clash.fix": "Give {n} a new number", "clash.sentWarn": "{n} was already sent. A new number means the copy your client has no longer matches. Renumber anyway?",
       "clash.done": "{a} is now {b}",
       "cli.search": "Search clients…", "cli.new": "New client", "cli.empty": "No clients yet. Add one, or bring them in from Contacts or Quote.",
-      "cli.fromContacts": "From Contacts", "cli.fromQuote": "From Quote", "cli.open": "{a} open",
+      "cli.fromContacts": "From Contacts", "cli.fromQuote": "From Quote", "cli.fromCrm": "From CRM",
+      "pay.toBudget": "Add to Budget", "pay.inBudget": "In Budget", "pay.resend": "This payment was already sent to Budget. Send it again?",
+      "pay.resendGo": "Send again", "toast.budgetSent": "Budget is open with the payment filled in: check and save",
+      "toast.budgetNo": "Budget could not take this payment", "cli.open": "{a} open",
       "cli.docs": "{n} documents", "cli.docs1": "1 document", "cli.none": "No documents",
       "dash.range": "Period", "dash.from": "From", "dash.to": "To", "dash.cur": "Currency",
       "range.thisMonth": "This month", "range.lastMonth": "Last month", "range.thisQuarter": "This quarter",
@@ -209,7 +212,10 @@
       "clash.fix": "Νέος αριθμός για το {n}", "clash.sentWarn": "Το {n} έχει ήδη σταλεί. Με νέο αριθμό, το αντίγραφο του πελάτη δεν θα ταιριάζει. Να αλλάξει παρ' όλα αυτά;",
       "clash.done": "Το {a} έγινε {b}",
       "cli.search": "Αναζήτηση πελατών…", "cli.new": "Νέος πελάτης", "cli.empty": "Δεν υπάρχουν πελάτες. Πρόσθεσε έναν ή φέρε τους από τις Επαφές ή την Προσφορά.",
-      "cli.fromContacts": "Από τις Επαφές", "cli.fromQuote": "Από την Προσφορά", "cli.open": "οφείλει {a}",
+      "cli.fromContacts": "Από τις Επαφές", "cli.fromQuote": "Από την Προσφορά", "cli.fromCrm": "Από το CRM",
+      "pay.toBudget": "Στον Προϋπολογισμό", "pay.inBudget": "Στον Προϋπολογισμό", "pay.resend": "Αυτή η πληρωμή στάλθηκε ήδη στον Προϋπολογισμό. Να σταλεί ξανά;",
+      "pay.resendGo": "Αποστολή ξανά", "toast.budgetSent": "Ο Προϋπολογισμός άνοιξε με την πληρωμή συμπληρωμένη: έλεγξε και αποθήκευσε",
+      "toast.budgetNo": "Ο Προϋπολογισμός δεν δέχτηκε αυτή την πληρωμή", "cli.open": "οφείλει {a}",
       "cli.docs": "{n} παραστατικά", "cli.docs1": "1 παραστατικό", "cli.none": "Κανένα παραστατικό",
       "dash.range": "Περίοδος", "dash.from": "Από", "dash.to": "Έως", "dash.cur": "Νόμισμα",
       "range.thisMonth": "Αυτός ο μήνας", "range.lastMonth": "Προηγούμενος μήνας", "range.thisQuarter": "Αυτό το τρίμηνο",
@@ -726,6 +732,7 @@
     $("clients-empty").hidden = liveList("clients").length > 0;
     $("imp-contacts").hidden = !readOther("oros-contacts-data", "contacts");
     $("imp-quote").hidden = !readOther("oros-quote-data", "clients");
+    $("imp-crm").hidden = !readOther("oros-crm-data", "cust");
   }
 
   // ---------- 6. Render: dashboard ----------
@@ -1550,6 +1557,12 @@
         b.appendChild(el("span", "pay-a", money(p.amt, d.cur)));
         b.addEventListener("click", function () { paymentDialog(d, p); });
         li.appendChild(b);
+        if (p.amt > 0 && budgetFor(d.cur)) {
+          var bb = el("button", "mini-btn bud" + (p.bud ? " on" : ""), p.bud ? "\u2713 " + t("pay.inBudget") : t("pay.toBudget"));
+          bb.type = "button";
+          bb.addEventListener("click", function () { sendToBudget(d, p); });
+          li.appendChild(bb);
+        }
         ul.appendChild(li);
       });
       pc.appendChild(ul);
@@ -1975,6 +1988,75 @@
   }
 
   // Read another app's slice (read-only); null when absent or not usable.
+  // Budget bridge (BR-B1): Budget opens its New entry form PREFILLED
+  // with the payment as Freelance income; nothing is written until the
+  // user saves there. Offered when the shell has the bridge and the
+  // payment's currency is Budget's (one currency there, no conversion).
+  function budgetFor(cur) {
+    var open = null;
+    try {
+      var par = window.parent;
+      open = par && par !== window && typeof par.__orosOpenBudgetNew === "function" ? par.__orosOpenBudgetNew : null;
+    } catch (e) { open = null; }
+    if (!open) return null;
+    var bcur = "EUR";
+    try {
+      var o = JSON.parse(localStorage.getItem("oros-budget-data") || "null");
+      if (o && o.set && typeof o.set.cur === "string" && o.set.cur) bcur = o.set.cur;
+    } catch (e) {}
+    return bcur === cur ? open : null;
+  }
+  function sendToBudget(d, p) {
+    var open = budgetFor(d.cur);
+    if (!open) return;
+    function go() {
+      var who = C.partyName(data, d);
+      var ok;
+      try {
+        ok = open({ k: "i", a: p.amt, d: p.date, c: "i-free", src: "invoices",
+                    n: ((d.num || kindName(d.kind)) + (who ? " \u00b7 " + who : "")).slice(0, 140) });
+      } catch (e) { ok = false; }
+      if (ok === false) { showToast(t("toast.budgetNo")); return; }
+      var cur = C.byId(data.pays, p.id);
+      if (cur && !cur.bud) {
+        var x = JSON.parse(JSON.stringify(cur));
+        x.bud = 1;
+        x.m = stamp(x.m);
+        replaceIn(data.pays, C.normPay(x));
+        saveNow();
+      }
+      showToast(t("toast.budgetSent"));
+    }
+    if (p.bud) confirmDialog(t("pay.toBudget"), t("pay.resend"), t("pay.resendGo"), go);
+    else go();
+  }
+
+  // CRM Lite customers (BR-CRM-INV): crm/core.js customersForBilling
+  // over CRM's own data, loaded on demand. Each client keeps its crm id.
+  function loadCrmCore(done) {
+    if (window.OrosCrmCore) { done(window.OrosCrmCore); return; }
+    var sc = document.createElement("script");
+    sc.src = "../crm/core.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+    sc.onload = function () { done(window.OrosCrmCore || null); };
+    sc.onerror = function () { done(null); };
+    document.head.appendChild(sc);
+  }
+  function fromCrm() {
+    var raw = readOther("oros-crm-data", "cust");
+    if (!raw) return;
+    loadCrmCore(function (K) {
+      if (!K || typeof K.norm !== "function" || typeof K.customersForBilling !== "function") return;
+      var rows = [];
+      K.customersForBilling(K.norm(raw)).forEach(function (c) {
+        if (!c || !c.name) return;
+        var party = { name: c.name, afm: c.afm, doy: c.doy, job: c.job, addr: c.addr, country: c.country,
+                      email: c.email, phone: c.phone, crm: c.id };
+        rows.push({ key: c.id, title: c.name, sub: [c.afm, c.email].filter(Boolean).join(" \u00b7 "),
+                    have: !!C.matchClient(data, { crm: c.id, afm: c.afm, name: c.name }), c: party });
+      });
+      pickDialog(t("cli.fromCrm"), rows, importClients, true);
+    });
+  }
   function readOther(key, listName) {
     try {
       var o = JSON.parse(localStorage.getItem(key) || "null");
@@ -1987,7 +2069,7 @@
   function importClients(rows) {
     var n = 0;
     rows.forEach(function (r) {
-      if (haveClient(r.c.name, r.c.afm)) return;
+      if (r.c.crm ? C.matchClient(data, { crm: r.c.crm, afm: r.c.afm, name: r.c.name }) : haveClient(r.c.name, r.c.afm)) return;
       var rec = C.normClient(Object.assign({ id: C.newId(), m: 1 }, r.c));
       if (!rec) return;
       putClient(rec);
@@ -2984,6 +3066,7 @@
     $("add-client").lastChild.textContent = t("cli.new");
     $("imp-contacts").textContent = t("cli.fromContacts");
     $("imp-quote").textContent = t("cli.fromQuote");
+    $("imp-crm").textContent = t("cli.fromCrm");
     $("setup-text").textContent = t("setup.text");
     $("setup-go").textContent = t("setup.go");
     $("f-status").setAttribute("aria-label", t("f.allStatus"));
@@ -3025,6 +3108,7 @@
     $("add-client").addEventListener("click", function () { clientDialog(null, null); });
     $("imp-contacts").addEventListener("click", fromContacts);
     $("imp-quote").addEventListener("click", fromQuote);
+    $("imp-crm").addEventListener("click", fromCrm);
     $("d-range").addEventListener("change", function () { prefs.dash.range = $("d-range").value; savePrefs(); renderDash(); });
     $("d-cur").addEventListener("change", function () { prefs.dash.cur = $("d-cur").value; savePrefs(); renderDash(); });
     ["d-from", "d-to"].forEach(function (idn) {
@@ -3089,6 +3173,12 @@
   function openTarget(tg) {
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg["new"]) { prefillNew(tg["new"]); return; }
+    if (tg.recurring) {   // Today: "recurring invoice ready" → its draft in the list
+      if (view === "edit" && ed && ed.dirty) return;
+      runRecurring();
+      setTab("docs");
+      return;
+    }
     if (typeof tg.invoice === "string") {
       if (view === "edit" && ed && ed.dirty) return;
       openDoc(tg.invoice);
@@ -3113,9 +3203,13 @@
           if (cl) { x.cli = cl.id; x.c = C.partyOfClient(cl); x.crm = cl.crm || p.crm; }
           else if (p.client) { x.c = C.normParty(p.client); x.crm = p.crm; }
           if (p.items.length) {
-            x.lines = p.items.map(function (it) { return { code: "", d: it.d, q: it.q, unit: "", p: it.p, disc: 0, vat: data.prof.vat }; });
+            x.lines = p.items.map(function (it) {
+              return { code: it.code || "", d: it.d, q: it.q, unit: it.unit || "", p: it.p, disc: it.disc || 0,
+                       vat: it.vat !== undefined ? it.vat : data.prof.vat };
+            });
           }
           if (p.notes) x.notes = p.notes;
+          if (p.gDisc) x.gDisc = p.gDisc;
         });
         ed.dirty = true;
         shelter();

@@ -34,6 +34,10 @@
 - [Νοητικός χάρτης](app:mindmap): .mm, .xmind, και αν το διαλέξεις .opml, .md και .txt
 - [Οικογενειακό δέντρο](app:familytree): .ged, .gedcom
 - [Συνθέτης ήχων κλήσης](app:ringtones): .rtttl, .rtx
+- [Εργαστήριο εικόνας](app:photolab): .png, .jpg, .webp, .gif, .bmp, .avif, .psd, .ora
+- [Βιβλιοθήκη](app:library): .epub, .pdf
+- [Μοντάζ](app:montage): .mp4, .m4v, .webm, .mov
+- [Σημειώσεις](app:notes): .txt, .md, ως επιλογή δίπλα στον Κειμενογράφο
 - [Ημερολόγιο](app:calendar): .ics, με την προεπισκόπηση εισαγωγής πρώτα
 - [Επαφές](app:contacts): .vcf, με ερώτηση πριν την εισαγωγή
 
