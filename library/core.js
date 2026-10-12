@@ -5,7 +5,8 @@
 //   2. Model: normalize books, positions, marks (bookmarks and
 //      highlights), the whole library state
 //   3. Merge (sync slice "library"): books and marks LWW per id,
-//      positions LWW per book, tombstones (R5, R17, R26, R27)
+//      positions LWW per book, tombstones, reading stats (max per
+//      device) (R5, R17, R26, R27)
 //   4. Locations ("loc") in a book: parse, compare, label
 //   5. Text: accent-free search with a map back to the source,
 //      re-anchoring a highlight by its quote, snippets
@@ -13,6 +14,9 @@
 //      the OPF package (metadata, manifest, spine, cover), the TOC
 //      (EPUB 3 nav document or EPUB 2 NCX), paths inside the ZIP
 //   7. Views: sorting / filtering the library, Markdown export
+//   8. Media Shelf link (read only)
+//   9. Read aloud: a section's text cut into parts to speak
+//  10. Reading stats: seconds per day and per book, per device (max merge)
 // Exposes window.LibCore (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -225,7 +229,10 @@
     Object.keys(pos).sort(cmpStr).forEach(function (id) { posOut[id] = pos[id]; });
     var tombOut = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { tombOut[id] = tombs[id]; });
-    return { ver: DATA_VER, books: books, pos: posOut, marks: marks, tombs: tombOut };
+    var out = { ver: DATA_VER, books: books, pos: posOut, marks: marks, tombs: tombOut };
+    var st = mergeStats(a && a.stats, b && b.stats);
+    if (!statsEmpty(st)) out.stats = st;            // left out while empty
+    return out;
   }
 
   // ---------- 4. Locations ----------
@@ -679,6 +686,160 @@
     return { addBook: b };
   }
 
+  // ---------- 9. Read aloud ----------
+  // The text of a section cut into short parts to speak one by one:
+  // [{ a, b }] offsets in text. A part ends after . ! ? … (and ; in
+  // Greek, its question mark) followed by a space or a block edge, at
+  // a block edge (breaks: sorted offsets where a paragraph starts), or
+  // at the last space before max characters. Parts with no letter or
+  // digit are left out; spaces at both ends are trimmed.
+  var SPEAK_MAX = 300;
+  function speechParts(text, breaks, lang, max) {
+    text = String(text || "");
+    max = max || SPEAK_MAX;
+    var ends = lang === "el" ? /[.!?…;;]/ : /[.!?…]/;
+    var closers = /["'”’»)\]·]/;
+    var brk = {};
+    (breaks || []).forEach(function (o) { if (o > 0) brk[o] = 1; });
+    var out = [], a = 0, lastSpace = -1;
+    function push(x, y) {
+      while (x < y && /\s/.test(text.charAt(x))) x++;
+      while (y > x && /\s/.test(text.charAt(y - 1))) y--;
+      if (y > x && /[0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]/.test(text.slice(x, y))) out.push({ a: x, b: y });
+    }
+    for (var i = 0; i < text.length; i++) {
+      if (brk[i] && i > a) { push(a, i); a = i; lastSpace = -1; }
+      var c = text.charAt(i);
+      if (/\s/.test(c)) lastSpace = i;
+      if (ends.test(c)) {
+        var j = i + 1;
+        while (j < text.length && (ends.test(text.charAt(j)) || closers.test(text.charAt(j)))) j++;
+        if (j >= text.length || /\s/.test(text.charAt(j)) || brk[j]) {
+          push(a, j); a = j; lastSpace = -1; i = j - 1;
+          continue;
+        }
+      }
+      if (i - a >= max) {
+        var cut = lastSpace > a ? lastSpace : i;
+        push(a, cut); a = cut; lastSpace = -1;
+      }
+    }
+    if (a < text.length) push(a, text.length);
+    return out;
+  }
+  // What the voice is given: line-end hyphens joined, spaces squashed.
+  function speechText(s) {
+    return String(s || "").replace(/(\S)[-­]\n(?=[a-zß-ÿά-ώἀ-῿])/g, "$1")
+      .replace(/­/g, "").replace(/\s+/g, " ").trim();
+  }
+  // A book with no language: Greek when most of its letters are.
+  function guessLang(text) {
+    var s = String(text || "").slice(0, 4000);
+    var gr = (s.match(/[Ͱ-Ͽἀ-῿]/g) || []).length;
+    var lat = (s.match(/[A-Za-z]/g) || []).length;
+    return gr > lat ? "el" : lat ? "en" : "";
+  }
+
+  // ---------- 10. Reading stats ----------
+  // stats: { d: { "YYYY-MM-DD": { <device>: seconds } },
+  //          b: { <book id>: { <device>: seconds } } }
+  // Each device only adds to its own counter, so the merge takes the
+  // larger number per day (or book) and device. Only the latest
+  // STAT_DAYS days are kept.
+  var STAT_DAYS = 400;
+  var DEV_RE = /^[a-z0-9]{6,16}$/;
+  function normCounters(src, max) {
+    var out = {};
+    if (!src || typeof src !== "object") return out;
+    Object.keys(src).sort(cmpStr).forEach(function (dev) {
+      if (!DEV_RE.test(dev)) return;
+      var v = src[dev];
+      if (typeof v === "number" && isFinite(v) && v >= 1) out[dev] = Math.min(max, Math.floor(v));
+    });
+    return out;
+  }
+  function mergeStats(a, b) {
+    var d = {}, bk = {};
+    function into(target, src, keyRe, max) {
+      if (!src || typeof src !== "object") return;
+      Object.keys(src).forEach(function (k) {
+        if (!keyRe.test(k)) return;
+        var c = normCounters(src[k], max);
+        if (!Object.keys(c).length) return;
+        var t = target[k] || (target[k] = {});
+        Object.keys(c).forEach(function (dev) { if (!(t[dev] >= c[dev])) t[dev] = c[dev]; });
+      });
+    }
+    [a, b].forEach(function (s) {
+      if (!s || typeof s !== "object") return;
+      into(d, s.d, YMD_RE, 86400);
+      into(bk, s.b, BOOK_ID_RE, 1e9);
+    });
+    function sorted(o, keys) {
+      var r = {};
+      keys.forEach(function (k) {
+        var c = {};
+        Object.keys(o[k]).sort(cmpStr).forEach(function (dev) { c[dev] = o[k][dev]; });
+        r[k] = c;
+      });
+      return r;
+    }
+    var days = Object.keys(d).sort(cmpStr);
+    if (days.length > STAT_DAYS) days = days.slice(days.length - STAT_DAYS);
+    var books = Object.keys(bk).sort(cmpStr);
+    if (books.length > MAX_BOOKS) books = books.slice(0, MAX_BOOKS);
+    return { d: sorted(d, days), b: sorted(bk, books) };
+  }
+  function statsEmpty(s) { return !s || (!Object.keys(s.d || {}).length && !Object.keys(s.b || {}).length); }
+  function sumOf(c) { var n = 0; Object.keys(c || {}).forEach(function (k) { n += c[k]; }); return n; }
+  // Add seconds read today on this device (a new stats object).
+  function addReading(stats, day, dev, bookId, secs) {
+    var s = mergeStats(stats, null);
+    secs = Math.floor(secs);
+    if (!(secs >= 1) || !YMD_RE.test(day) || !DEV_RE.test(dev)) return s;
+    var c = s.d[day] || (s.d[day] = {});
+    c[dev] = Math.min(86400, (c[dev] || 0) + secs);
+    if (BOOK_ID_RE.test(bookId)) {
+      var cb = s.b[bookId] || (s.b[bookId] = {});
+      cb[dev] = Math.min(1e9, (cb[dev] || 0) + secs);
+    }
+    return mergeStats(s, null);
+  }
+  function ymdOf(d) {
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function dayBefore(ymd, n) {
+    var p = ymd.split("-");
+    return ymdOf(new Date(+p[0], +p[1] - 1, +p[2] - (n === undefined ? 1 : n), 12));
+  }
+  // Totals for the stats screen. A day counts towards the streak with
+  // at least a minute read; today not read yet does not break it.
+  function statsSummary(stats, today, nDays) {
+    var d = (stats && stats.d) || {};
+    var day = function (k) { return sumOf(d[k]); };
+    var out = { today: day(today), week: 0, total: 0, streak: 0, best: 0, days: [] };
+    for (var i = 0; i < 7; i++) out.week += day(dayBefore(today, i));
+    Object.keys(d).forEach(function (k) { out.total += sumOf(d[k]); });
+    var k = day(today) >= 60 ? today : dayBefore(today, 1);
+    while (day(k) >= 60) { out.streak++; k = dayBefore(k, 1); }
+    var run = 0, prev = null;
+    Object.keys(d).sort(cmpStr).forEach(function (x) {
+      if (day(x) < 60) return;
+      run = prev && dayBefore(x, 1) === prev ? run + 1 : 1;
+      prev = x;
+      if (run > out.best) out.best = run;
+    });
+    for (var j = (nDays || 14) - 1; j >= 0; j--) { var y = dayBefore(today, j); out.days.push({ d: y, s: day(y) }); }
+    return out;
+  }
+  function bookSeconds(stats, bookId) { return sumOf(stats && stats.b && stats.b[bookId]); }
+  // Time left in a book from the time read so far and the progress
+  // (per-mille); null until a twentieth of the book is read.
+  function timeLeft(secs, pct) {
+    if (!(secs > 0) || !(pct >= 50) || pct >= 1000) return null;
+    return Math.round(secs * (1000 - pct) / pct);
+  }
+
   var api = {
     DATA_VER: DATA_VER, MAX_BOOKS: MAX_BOOKS, MAX_MARKS: MAX_MARKS, MAX_BYTES: MAX_BYTES, NCOLORS: NCOLORS,
     TITLE_LEN: TITLE_LEN, BY_LEN: BY_LEN, NOTE_LEN: NOTE_LEN, QUOTE_LEN: QUOTE_LEN, CTX_LEN: CTX_LEN,
@@ -692,7 +853,10 @@
     parseOpf: parseOpf, parseNav: parseNav, parseNcx: parseNcx, cleanText: cleanText,
     viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown,
     estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
-    COLOR_NAMES: COLOR_NAMES
+    COLOR_NAMES: COLOR_NAMES,
+    speechParts: speechParts, speechText: speechText, guessLang: guessLang,
+    mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
+    bookSeconds: bookSeconds, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LibCore = api;

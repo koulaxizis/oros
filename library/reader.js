@@ -39,6 +39,9 @@
       label(b, t(d[2]));
       b.addEventListener("click", d[3]);
     });
+    $("rd-speak").innerHTML = UI.speak;
+    label($("rd-speak"), t("speak.start"));
+    $("rd-speak").addEventListener("click", function () { LIB.speak.toggle(); });
     $("rd-prev").innerHTML = UI.back;
     label($("rd-prev"), t("rd.prev"));
     $("rd-prev").addEventListener("click", function () { if (cur) cur.engine.prev(); });
@@ -111,7 +114,10 @@
   }
   function close(quiet) {
     if (!cur) return;
+    LIB.speak.stop(true);
+    speakChanged(false);
     flush();
+    flushTime(true);
     hideSel();
     hidePop();
     var c = cur;
@@ -134,6 +140,7 @@
       onMove: function (h) {
         if (cur !== c || !h) return;
         c.here = h;
+        touched();
         if (c.keep && c.ready && !keptVisible(c)) c.keep = null;
         bars();
         hidePop();
@@ -147,10 +154,11 @@
           });
         }
       },
-      onSelect: function (rect) { if (cur === c) { if (rect) showSel(rect); else hideSel(); } },
+      onSelect: function (rect) { if (cur === c) { touched(); if (rect) showSel(rect); else hideSel(); } },
       onMarkTap: function (id, rect) { if (cur === c) markPop(id, rect); },
       onTap: function (zone) {
         if (cur !== c) return;
+        touched();
         if (zone === "next") c.engine.next();
         else if (zone === "prev") c.engine.prev();
         else document.body.classList.toggle("bare");
@@ -175,6 +183,27 @@
     cur.keep = null;
     LIB.setPos(cur.book.id, cur.here.loc, cur.here.pct);
   }
+  // ---------- Reading time (stats.js shows it) ----------
+  // Every 15 s with the book on screen counts, while you turn pages,
+  // select, press keys or listen; five minutes with none of that and
+  // the clock stops until the next one. Saved once a minute and when
+  // the book closes or orOS hides.
+  var TICK = 15, IDLE_MS = 5 * 60000, lastAct = 0;
+  function touched() { lastAct = Date.now(); }
+  function tick() {
+    if (!cur || !cur.ready || document.visibilityState !== "visible") return;
+    if (Date.now() - lastAct > IDLE_MS && !LIB.speak.playing()) return;
+    cur.secs = (cur.secs || 0) + TICK;
+    if (cur.secs >= 60) flushTime(true);
+  }
+  function flushTime(force) {
+    if (!cur || !cur.secs || (!force && cur.secs < 60)) return;
+    var s = cur.secs;
+    cur.secs = 0;
+    LIB.addReading(cur.book.id, s);
+  }
+  setInterval(tick, TICK * 1000);
+
   function keptVisible(c) {
     try { return !!c.engine.visible(c.keep); } catch (e) { return false; }
   }
@@ -556,6 +585,7 @@
   // ---------- Keys ----------
   function onKey(e) {
     if (!cur || $("reader").hidden) return;
+    touched();
     if (e.ctrlKey && e.altKey && e.shiftKey) return;
     var tag = e.target && e.target.tagName;
     var typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
@@ -574,13 +604,22 @@
     else if (k === "b" || k === "B") { e.preventDefault(); toggleBookmark(); }
     else if (k === "t" || k === "T") { e.preventDefault(); panel("toc"); }
     else if (k === "n" || k === "N") { e.preventDefault(); panel("notes"); }
+    else if (k === "s" || k === "S") { e.preventDefault(); LIB.speak.toggle(); }
+  }
+  // The footer button shows whether reading aloud is on.
+  function speakChanged(on) {
+    var b = $("rd-speak");
+    if (!b) return;
+    b.classList.toggle("on", !!on);
+    document.body.classList.toggle("speaking", !!on);
   }
 
   function paletteChanged() { if (cur) cur.engine.applyPrefs(LIB.prefs); }
 
   LIB.reader = {
     build: build, open: open, close: close, flush: flush, marksChanged: marksChanged,
-    dataChanged: dataChanged, paletteChanged: paletteChanged,
+    dataChanged: dataChanged, paletteChanged: paletteChanged, speakChanged: speakChanged,
+    touched: touched, flushTime: flushTime,
     current: function () { return cur; }
   };
 })();

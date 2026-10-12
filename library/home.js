@@ -268,6 +268,7 @@
   }
   function moreMenu(anchor) {
     menu(anchor, [
+      { label: t("more.stats"), icon: UI.stats, fn: function () { LIB.stats.show(); } },
       { label: t("more.rescan"), icon: UI.refresh, fn: function () { scan(true); } }
     ]);
   }
@@ -434,6 +435,8 @@
     if (b.year) row(t("details.year"), b.year);
     if (b.lang) row(t("details.lang"), b.lang);
     row(t("details.progress"), pctText(b));
+    var tm = LIB.stats.ofBook(b);
+    if (tm) { row(t("details.timeRead"), tm.read); if (tm.left) row(t("details.timeLeft"), tm.left); }
     var nHl = 0, nBm = 0;
     LIB.data.marks.forEach(function (k) { if (k.b === id) { if (k.k === "hl") nHl++; else nBm++; } });
     row(t("details.marks"), t("details.marksN", { h: nHl, b: nBm }));

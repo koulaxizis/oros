@@ -283,6 +283,7 @@
         HL.map(function (c, i) { return "mark.lib-hl.c" + i + "{background:" + c + " !important}"; }).join("") +
         "mark.lib-hl.has-n{border-bottom:2px dotted currentColor}" +
         "::highlight(lib-flash){background-color:" + th.link + ";color:" + th.bg + "}" +
+        "::highlight(lib-speak){background-color:rgba(255,170,40,.32);background-color:color-mix(in srgb," + th.link + " 30%,transparent)}" +
         "::selection{background:" + (P.theme === "night" ? "rgba(138,180,248,.4)" : "rgba(66,133,244,.32)") + "}";
       return css;
     }
@@ -776,6 +777,60 @@
       return l ? tocIndexAt(l.s, l.o) : -1;
     }
 
+    // ---------- Read aloud (speak.js) ----------
+    function speechStart() { return doc && root ? { s: idx, o: firstVisible(), n: spine.length } : null; }
+    var BLOCK = "p,div,h1,h2,h3,h4,h5,h6,li,dt,dd,blockquote,pre,td,th,caption,figcaption,section,article,aside,header,footer,hr,table,tr";
+    // Offsets where a new block starts, so a heading with no full stop
+    // is not read on into the next paragraph.
+    function blockStarts() {
+      var out = [], last = null;
+      nodes.forEach(function (x) {
+        var p = x.n.parentNode, b = p && p.closest ? p.closest(BLOCK) : null;
+        if (x.s > 0 && b !== last) out.push(x.s);
+        last = b;
+      });
+      return out;
+    }
+    // The chapter is shown first: offsets and the mark share its text.
+    function speechSection(si) {
+      var fin = function () {
+        if (!doc || idx !== si) throw new Error("gone");
+        reindexIfNeeded();
+        return { text: text, breaks: blockStarts(), lang: doc.documentElement.lang || "" };
+      };
+      if (si === idx && doc) return Promise.resolve(fin());
+      return render(si).then(function () { setPage(0); report(true); return fin(); });
+    }
+    function speakMark(si, a, b) {
+      var w = frame && frame.contentWindow;
+      try { if (w && w.CSS && w.CSS.highlights) w.CSS.highlights.delete("lib-speak"); } catch (e) {}
+      if (si === null || si === undefined || !doc) return;
+      if (si !== idx) {         // you turned to another chapter: the voice takes you back
+        render(si).then(function () { setPage(0); speakMark(si, a, b); report(true); });
+        return;
+      }
+      try {
+        var r = rangeOf(a, b);
+        if (r && typeof w.Highlight === "function") w.CSS.highlights.set("lib-speak", new w.Highlight(r));
+      } catch (e) {}
+      // the page follows the start of the part being read
+      var rc = charRect(a);
+      if (!rc) return;
+      if (P.mode === "paged") {
+        var p = Math.floor((rc.left + rc.width / 2 + scroller().scrollLeft) / W);
+        if (p !== page) { setPage(p); report(false); }
+      } else if (rc.top < 0 || rc.bottom > H) { goOffset(a, null); report(false); }
+    }
+    // The voice reached offset o (word boundary): a part that runs on to
+    // the next page turns it there, not at the next part.
+    function speakAt(si, o) {
+      if (si !== idx || !doc || P.mode !== "paged") return;
+      var rc = charRect(o);
+      if (!rc) return;
+      var p = Math.floor((rc.left + rc.width / 2 + scroller().scrollLeft) / W);
+      if (p > page) { setPage(p); report(false); }
+    }
+
     // ---------- Search the whole book ----------
     function search(q, onHit) {
       var count = 0, stop = false, i = 0;
@@ -834,7 +889,8 @@
     return {
       open: open, go: go, goToc: goToc, goPct: goPct, next: next, prev: prev, lineDown: lineDown, lineUp: lineUp,
       here: here, visible: visible, selection: selection, clearSel: clearSel, paint: paint, search: search,
-      applyPrefs: applyPrefs, labelOf: labelOf, tocIndex: tocIndex, resize: resize, destroy: destroy
+      applyPrefs: applyPrefs, labelOf: labelOf, tocIndex: tocIndex, resize: resize, destroy: destroy,
+      speechStart: speechStart, speechSection: speechSection, speakMark: speakMark, speakAt: speakAt
     };
   }
 

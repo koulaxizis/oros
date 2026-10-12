@@ -273,7 +273,51 @@ ul { list-style: none; }
 .rd-where { font-size: 12px; color: var(--text-dim); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; max-width: 34%; }
 #rd-slider { flex: 1 1 auto; min-width: 60px; accent-color: var(--accent); height: 32px; }
 .rd-pct { font-size: 12px; color: var(--text-dim); min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
-#rd-bm.on { color: var(--accent); }
+#rd-bm.on, #rd-speak.on { color: var(--accent); }
+
+/* ---------- Read aloud ----------
+   While reading aloud its controls take the place of the bottom bar
+   (which keeps its height, so the page does not reflow). */
+.speak-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 8px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  background: var(--bar-bg);
+  border-top: 1px solid var(--border);
+}
+.speak-bar[hidden] { display: none; }
+body.speaking #rd-bottom { visibility: hidden; }
+body.bare.speaking #rd-bottom { display: flex; }
+.speak-bar .speak-main { color: var(--accent); }
+.speak-bar .speak-rate { min-width: 56px; font-variant-numeric: tabular-nums; }
+
+/* ---------- Reading stats ---------- */
+.st-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 4px 0 8px; }
+.st-tile { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; min-width: 0; }
+.st-val { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.st-name { font-size: 12px; color: var(--text-dim); }
+.st-sub { font-size: 12px; color: var(--accent); }
+.st-h { font-size: 14px; font-weight: 700; margin: 16px 0 8px; }
+.st-chart { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; height: 130px; align-items: stretch; }
+.st-day { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.st-col { flex: 1 1 auto; display: flex; align-items: flex-end; background: color-mix(in srgb, var(--border) 35%, transparent); border-radius: 4px; overflow: hidden; }
+.st-bar { display: block; width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; }
+.st-day.today .st-col { outline: 1px solid var(--accent); }
+.st-wd { font-size: 11px; color: var(--text-dim); text-align: center; }
+.st-books { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.st-book { display: flex; flex-direction: column; padding: 6px 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.st-btitle { background: none; border: none; padding: 0; text-align: left; color: var(--text); font-weight: 700; cursor: pointer; overflow-wrap: anywhere; min-height: 36px; }
+.st-btitle:hover { color: var(--accent); }
+.st-bmeta { font-size: 12px; color: var(--text-dim); }
+.st-note { margin-top: 14px; }
 
 #rd-panel {
   width: 340px;
@@ -341,8 +385,8 @@ body.bare #rd-top, body.bare #rd-bottom { display: none; }
 .pdf-pages { padding: 12px 0 40px; display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: min-content; transform-origin: 0 0; }
 .pdf-page { position: relative; background: #fff; box-shadow: 0 2px 10px var(--shadow); flex-shrink: 0; --scale-round-x: 1px; --scale-round-y: 1px; }
 .pdf-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.pdf-hl, .pdf-flash { position: absolute; inset: 0; pointer-events: none; z-index: 1; mix-blend-mode: multiply; }
-.pdf-hl-box, .pdf-flash > div { position: absolute; border-radius: 2px; }
+.pdf-hl, .pdf-flash, .pdf-speak { position: absolute; inset: 0; pointer-events: none; z-index: 1; mix-blend-mode: multiply; }
+.pdf-hl-box, .pdf-flash > div, .pdf-speak > div { position: absolute; border-radius: 2px; }
 .pdf-hl-box.has-n { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.55); }
 .pdf-flash > div { background: rgba(255, 140, 0, 0.45); }
 .pdf-links { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
@@ -350,7 +394,8 @@ body.bare #rd-top, body.bare #rd-bottom { display: none; }
 .pdf-link:hover { background: rgba(66, 133, 244, 0.12); }
 .pdf-night .pdf-canvas { filter: invert(0.9) hue-rotate(180deg); }
 .pdf-night .pdf-page { background: #191919; }
-.pdf-night .pdf-hl, .pdf-night .pdf-flash { mix-blend-mode: screen; }
+.pdf-speak > div { background: rgba(255, 170, 40, 0.35); }
+.pdf-night .pdf-hl, .pdf-night .pdf-flash, .pdf-night .pdf-speak { mix-blend-mode: screen; }
 
 /* PDF.js text layer (from pdf_viewer.css 5.4, Apache-2.0) */
 .textLayer {

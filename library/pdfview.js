@@ -389,6 +389,56 @@
       flashTimer = setTimeout(function () { if (flashEl) { flashEl.remove(); flashEl = null; } }, 2500);
     }
 
+    // ---------- Read aloud (speak.js) ----------
+    // The page on screen and the first line of it that shows.
+    function speechStart() {
+      if (!scroller) return null;
+      var pl = placeNow(), o = 0, ix = idxs[pl.i];
+      if (ix && pl.f > 0.02) {
+        var top = scroller.getBoundingClientRect().top, r = document.createRange();
+        for (var k = 0; k < ix.length; k++) {
+          if (!ix[k].n) continue;
+          r.selectNodeContents(ix[k].n);
+          var rc = r.getBoundingClientRect();
+          if (rc.height && rc.bottom > top) { o = ix[k].s; break; }
+        }
+      }
+      return { s: pl.i, o: o, n: n };
+    }
+    function speechSection(i) { return pageText(i).then(function (tx) { return { text: tx, breaks: [], lang: "" }; }); }
+    var speakEl = null, speakGen = 0;
+    function speakMark(i, a, b) {
+      var my = ++speakGen;
+      if (speakEl) { speakEl.remove(); speakEl = null; }
+      if (i === null || i === undefined || !scroller || i < 0 || i >= n) return;
+      var vt = scroller.scrollTop, vh = scroller.clientHeight;
+      if (tops[i] + pageEls[i].offsetHeight < vt || tops[i] > vt + vh) { scrollToY(tops[i] - PAD); report(false); }
+      renderPage(i);
+      var tries = 0;
+      (function wait() {
+        if (destroyed || my !== speakGen) return;
+        if (!idxs[i]) { if (tries++ < 40) setTimeout(wait, 100); return; }
+        var r = rangeIn(i, a, b);
+        if (!r) return;
+        var el = pageEls[i], base = el.getBoundingClientRect();
+        speakEl = document.createElement("div");
+        speakEl.className = "pdf-speak";
+        [].forEach.call(r.getClientRects(), function (rc) {
+          if (rc.width < 1 || rc.height < 1) return;
+          var d = document.createElement("div");
+          d.style.left = (rc.left - base.left) + "px"; d.style.top = (rc.top - base.top) + "px";
+          d.style.width = rc.width + "px"; d.style.height = rc.height + "px";
+          speakEl.appendChild(d);
+        });
+        el.appendChild(speakEl);
+        var box = r.getBoundingClientRect(), sr = scroller.getBoundingClientRect();
+        if (box.top < sr.top || box.bottom > sr.bottom) {
+          scrollToY(scroller.scrollTop + box.top - sr.top - scroller.clientHeight / 3);
+          report(false);
+        }
+      })();
+    }
+
     // ---------- Place ----------
     function pageAtY(y) {
       var lo = 0, hi = n - 1, best = 0;
@@ -636,7 +686,8 @@
     return {
       open: open, go: go, goToc: goToc, goPct: goPct, next: next, prev: prev, lineDown: lineDown, lineUp: lineUp,
       here: here, visible: visible, selection: selection, clearSel: clearSel, paint: paint, search: search,
-      applyPrefs: applyPrefs, labelOf: labelOf, tocIndex: tocIndex, resize: resize, destroy: destroy, zoomValue: zoomValue
+      applyPrefs: applyPrefs, labelOf: labelOf, tocIndex: tocIndex, resize: resize, destroy: destroy, zoomValue: zoomValue,
+      speechStart: speechStart, speechSection: speechSection, speakMark: speakMark
     };
   }
 

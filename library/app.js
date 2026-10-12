@@ -11,12 +11,14 @@
 // Data:
 //   - synced slice "library" (oros-library-data): books (one per
 //     file, id from its SHA-256), the last place read per book,
-//     marks (bookmarks + highlights with notes), tombstones.
+//     marks (bookmarks + highlights with notes), tombstones, reading
+//     time per day and per book for each device (stats).
 //     core.js mergeLibrary (R5, R17, R26). The book FILES are files
 //     of the orOS disk, synced by Vault Drive like any other file.
 //   - device-local (R10): oros-library-prefs (view, sort, reading
-//     settings), oros-library-paths (which disk file is which book
-//     on this device), covers in IndexedDB "oros-library-cache".
+//     settings, reading-aloud speed), oros-library-dev (this
+//     device's random id for the stats), oros-library-paths (which
+//     disk file is which book on this device), covers in IndexedDB "oros-library-cache".
 // Deep link: __orosOpenAt("library", { book, loc? }) opens a book
 // (at loc or where you stopped); { openFile: { token } } takes a
 // file handed over by the shell (BR-FILE-OPEN); { path } opens a
@@ -122,6 +124,12 @@
     info: svg("<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4M12 8h.01\"/>"),
     check: svg("<path d=\"M20 6L9 17l-5-5\"/>"),
     export: svg("<path d=\"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4\"/><path d=\"M17 8l-5-5-5 5\"/><path d=\"M12 3v12\"/>"),
+    speak: svg("<path d=\"M11 5L6 9H2v6h4l5 4z\"/><path d=\"M15.5 8.5a5 5 0 010 7M19 5a10 10 0 010 14\"/>"),
+    play: svg("<path d=\"M7 4l13 8-13 8z\" fill=\"currentColor\"/>"),
+    pause: svg("<path d=\"M7 4h3v16H7zM14 4h3v16h-3z\" fill=\"currentColor\"/>"),
+    skipBack: svg("<path d=\"M19 20L9 12l10-8z\"/><path d=\"M5 19V5\"/>"),
+    skipFwd: svg("<path d=\"M5 4l10 8-10 8z\"/><path d=\"M19 5v14\"/>"),
+    stats: svg("<path d=\"M4 20V10M10 20V4M16 20v-7M22 20H2\"/>"),
     refresh: svg("<path d=\"M23 4v6h-6M1 20v-6h6\"/><path d=\"M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15\"/>")
   };
 
@@ -317,12 +325,30 @@
     });
   };
 
+  // Reading time on this device (stats; core.addReading). The device
+  // id only keeps devices' counters apart; it is random, made once.
+  LIB.devId = function () {
+    var id = null;
+    try { id = localStorage.getItem("oros-library-dev"); } catch (e) {}
+    if (!id || !C.DEV_RE.test(id)) {
+      id = "";
+      for (var i = 0; i < 10; i++) id += "abcdefghijklmnopqrstuvwxyz0123456789".charAt(Math.floor(Math.random() * 36));
+      try { localStorage.setItem("oros-library-dev", id); } catch (e) {}
+    }
+    return id;
+  };
+  LIB.addReading = function (bookId, secs) {
+    if (!(secs >= 1)) return;
+    LIB.data.stats = C.addReading(LIB.data.stats, C.ymdOf(new Date()), LIB.devId(), bookId, secs);
+    LIB.commit(true);
+  };
+
   // ---------- Device-local preferences ----------
   var PREF_DEF = {
     view: "grid", sort: "recent", filter: "all",
     size: 100, font: "pub", lh: 1.5, margin: 1, justify: true, hyph: true,
     theme: "auto", mode: "paged", spread: true,
-    pdfZoom: "width", pdfNight: false, panelOpen: null
+    pdfZoom: "width", pdfNight: false, panelOpen: null, rate: 1
   };
   LIB.prefs = Object.assign({}, PREF_DEF);
   function loadPrefs() {
@@ -345,6 +371,7 @@
     if (p.pdfZoom === "width" || p.pdfZoom === "page" || (typeof p.pdfZoom === "number" && p.pdfZoom >= 0.25 && p.pdfZoom <= 5)) P.pdfZoom = p.pdfZoom;
     if (typeof p.pdfNight === "boolean") P.pdfNight = p.pdfNight;
     if (["toc", "search", "notes"].indexOf(p.panelOpen) >= 0) P.panelOpen = p.panelOpen;
+    if ([0.8, 1, 1.2, 1.4, 1.6, 2].indexOf(p.rate) >= 0) P.rate = p.rate;
   }
   LIB.savePrefs = function () {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(LIB.prefs)); } catch (e) {}
@@ -394,7 +421,7 @@
     api.registerSlice("library", sliceGet, sliceSet, STORAGE_KEY, C.mergeLibrary);
   }
   function sliceGet() {
-    if (LIB.reader && LIB.reader.flush) LIB.reader.flush();
+    if (LIB.reader && LIB.reader.flush) { LIB.reader.flush(); LIB.reader.flushTime(true); }
     return C.mergeLibrary(LIB.data, LIB.data);   // canonical copy (R26)
   }
   function sliceSet(incoming) {
@@ -468,9 +495,9 @@
     LIB.home.refresh();
     LIB.home.scan();
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden" && LIB.reader) LIB.reader.flush();
+      if (document.visibilityState === "hidden" && LIB.reader) { LIB.reader.flush(); LIB.reader.flushTime(true); }
     });
-    window.addEventListener("pagehide", function () { if (LIB.reader) LIB.reader.flush(); });
+    window.addEventListener("pagehide", function () { if (LIB.reader) { LIB.reader.flush(); LIB.reader.flushTime(true); } });
     try {
       var p = LIB.parentWin();
       if (p && typeof p.__orosTakeTarget === "function") {

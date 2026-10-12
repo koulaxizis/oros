@@ -348,3 +348,73 @@ test("Media Shelf link: find the linked item, build the add target", () => {
   assert.equal(C.estPagesBytes(240000), 100);
   assert.equal(C.estPagesBytes(0), 1);
 });
+
+test("read aloud: a section is cut into sentences, blocks and short parts", () => {
+  const tx = "Chapter OneIt was night. He said: “Go!” Then; nothing… The end";
+  const parts = (lang) => C.speechParts(tx, [11], lang).map((p) => tx.slice(p.a, p.b));
+  assert.deepEqual(parts("el"), ["Chapter One", "It was night.", "He said: “Go!”", "Then;", "nothing…", "The end"]);
+  assert.deepEqual(parts("en"), ["Chapter One", "It was night.", "He said: “Go!”", "Then; nothing…", "The end"],
+    "a semicolon only ends a sentence in Greek (its question mark)");
+  // no full stop for a long run: cut at a space before the limit
+  const long = "word ".repeat(200);
+  const lp = C.speechParts(long, [], "en", 100);
+  assert.ok(lp.length >= 10);
+  lp.forEach((p) => { assert.ok(p.b - p.a <= 100); assert.notEqual(long.charAt(p.a), " "); });
+  // 3.14 and e.g. inside words do not split; parts with no letters drop
+  assert.deepEqual(C.speechParts("Pi is 3.14 here. * * * Next.", [], "en").map((p) => "Pi is 3.14 here. * * * Next.".slice(p.a, p.b)),
+    ["Pi is 3.14 here.", "* * * Next."]);
+  assert.deepEqual(C.speechParts("  ...  ", [], "en"), []);
+  // offsets cover the text in order, never overlap
+  const g = "Ήταν νύχτα. Τι έγινε; Τίποτα.";
+  const gp = C.speechParts(g, [], "el");
+  assert.deepEqual(gp.map((p) => g.slice(p.a, p.b)), ["Ήταν νύχτα.", "Τι έγινε;", "Τίποτα."]);
+  for (let i = 1; i < gp.length; i++) assert.ok(gp[i].a >= gp[i - 1].b);
+  assert.equal(C.speechText("exam-\nple  of\ntext"), "example of text");
+  assert.equal(C.speechText("Line-\nEnd"), "Line- End", "a hyphen before a capital stays");
+  assert.equal(C.guessLang("Ήταν νύχτα και έβρεχε"), "el");
+  assert.equal(C.guessLang("It was night"), "en");
+  assert.equal(C.guessLang("123"), "");
+});
+
+test("reading stats: per device counters, max merge, streak and time left", () => {
+  const D1 = "dev0000001", D2 = "dev0000002";
+  let a = C.addReading(null, "2026-10-12", D1, B1, 120);
+  a = C.addReading(a, "2026-10-11", D1, B1, 70);
+  let b = C.addReading(null, "2026-10-12", D2, B1, 300);
+  b = C.addReading(b, "2026-10-10", D2, B2, 30);
+  const m = C.mergeStats(a, b);
+  assert.deepEqual(m.d["2026-10-12"], { [D1]: 120, [D2]: 300 });
+  assert.equal(C.bookSeconds(m, B1), 490);
+  // symmetric, idempotent, associative; a stale copy never lowers a counter
+  assert.deepEqual(C.mergeStats(b, a), m);
+  assert.deepEqual(C.mergeStats(m, m), m);
+  const c = C.addReading(a, "2026-10-12", D1, B1, 60);
+  assert.deepEqual(C.mergeStats(C.mergeStats(a, b), c), C.mergeStats(a, C.mergeStats(b, c)));
+  assert.equal(C.mergeStats(c, a).d["2026-10-12"][D1], 180);
+  // junk is dropped
+  const j = C.mergeStats({ d: { "x": { [D1]: 5 }, "2026-10-01": { "BAD!": 5, [D1]: -3, [D2]: "7" } }, b: { nope: { [D1]: 9 } } }, null);
+  assert.deepEqual(j, { d: {}, b: {} });
+  // only the latest 400 days are kept
+  let big = null;
+  for (let i = 0; i < 410; i++) big = C.addReading(big, C.dayBefore("2026-10-12", i), D1, null, 61);
+  const kept = Object.keys(big.d);
+  assert.equal(kept.length, 400);
+  assert.ok(!kept.includes(C.dayBefore("2026-10-12", 405)));
+  // summary
+  const s = C.statsSummary(m, "2026-10-12", 3);
+  assert.equal(s.today, 420);
+  assert.equal(s.week, 520);
+  assert.equal(s.streak, 2, "the 10th had under a minute");
+  assert.equal(s.best, 2);
+  assert.deepEqual(s.days.map((d) => d.d), ["2026-10-10", "2026-10-11", "2026-10-12"]);
+  assert.equal(C.statsSummary(m, "2026-10-13", 1).streak, 2, "today not read yet keeps the streak");
+  assert.equal(C.statsSummary(m, "2026-10-14", 1).streak, 0);
+  assert.equal(C.timeLeft(600, 250), 1800);
+  assert.equal(C.timeLeft(600, 20), null);
+  assert.equal(C.timeLeft(600, 1000), null);
+  // in the library state: left out while empty, merged when present
+  const st1 = state({ stats: a }), st2 = state({ stats: b });
+  assert.equal("stats" in C.mergeLibrary(state(), state()), false);
+  assert.deepEqual(C.mergeLibrary(st1, st2).stats, m);
+  assert.deepEqual(C.mergeLibrary(st1, st2), C.mergeLibrary(st2, st1));
+});
