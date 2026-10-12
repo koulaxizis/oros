@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.27.00
+- Stock: scan barcodes with the phone camera, and sales that arrive filled in from another app (Invoices).
+
 ## Version 1.26.00
 - Atelier: AI ideas and texts with your Assistant's AI, and background removal on the device.
 

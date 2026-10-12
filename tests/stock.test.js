@@ -489,3 +489,53 @@ test("barcodes: EAN-13 check digit and bars, Code 128 B, the label's choice, SVG
   assert.match(svg, /^<svg [^>]*viewBox="0 0 \d+ 40"/);
   assert.equal((svg.match(/<rect /g) || []).length, 1 + (C.code128("<x>").match(/1+/g) || []).length);
 });
+
+test("BR-ST-OUT: another app's sale is matched by code, summed, cleaned; nothing written", () => {
+  const d = data({
+    items: [item("item01", { sku: "MUG-1", bc: "5012345678900", price: 900 }), item("item02", { sku: "RICE", unit: "kg" }),
+      item("item03", { sku: "OLD", arch: 1 })],
+    moves: [mv("mv0001", "in", "2026-10-01", [{ i: "item01", q: k(10), c: 300 }]),
+      mv("mv0002", "out", "2026-10-02", [{ i: "item01", q: -k(1) }], { src: "invoices:inv0001" }),
+      mv("mv0003", "out", "2026-10-02", [{ i: "item01", q: -k(1) }], { src: "invoices:inv0001", v: 1 })]
+  });
+  const before = JSON.stringify(d);
+  const r = C.outRequest(d, {
+    ref: " INV-12 ", src: "invoices:inv0001", d: "2026-10-11",
+    lines: [{ code: "mug-1", q: 2, p: 850 }, { sku: "5012345678900", q: 1, p: 850 }, { code: "RICE", q: 2.3456 },
+      { code: "NOPE", q: 1 }, { code: "NOPE", q: 3 }, { code: "RICE", q: 0 }, { code: "", q: 1 }, null, { code: "OLD", q: -2 }]
+  }, TODAY);
+  assert.equal(r.t, "out");
+  assert.equal(r.ref, "INV-12");
+  assert.equal(r.d, "2026-10-11");
+  assert.equal(r.src, "invoices:inv0001");
+  assert.equal(r.used, 1);                                   // the voided one doesn't count
+  assert.deepEqual(r.miss, ["NOPE"]);
+  assert.deepEqual(r.lines, [{ i: "item01", q: k(3), p: 850 }, { i: "item02", q: 2346 }, { i: "item03", q: k(2) }]);
+  assert.equal(JSON.stringify(d), before);
+  // two prices for one product: the price is left for the person
+  const r2 = C.outRequest(d, { t: "ret", src: "bad src!", d: "2030-01-01", lines: [{ code: "MUG-1", q: 1, p: 1 }, { code: "MUG-1", q: 1, p: 2 }] }, TODAY);
+  assert.equal(r2.t, "ret");
+  assert.equal(r2.src, "");
+  assert.equal(r2.used, 0);
+  assert.equal(r2.d, TODAY);                                 // a far future date falls back to today
+  assert.deepEqual(r2.lines, [{ i: "item01", q: k(2) }]);
+  // pcs round to whole units
+  assert.deepEqual(C.outRequest(d, { lines: [{ code: "MUG-1", q: 1.6 }] }, TODAY).lines, [{ i: "item01", q: k(2) }]);
+  assert.equal(C.outRequest(d, { lines: "x" }, TODAY), null);
+  assert.equal(C.outRequest(d, null, TODAY), null);
+  // the move it becomes keeps its src
+  const saved = C.normMove({ id: "mv0009", m: 2, d: r.d, t: "out", ref: r.ref, src: r.src, lines: r.lines.map((l) => ({ i: l.i, q: -l.q, p: l.p })) });
+  assert.equal(saved.src, "invoices:inv0001");
+  assert.equal(C.srcUses(m(d, data({ moves: [saved] })), "invoices:inv0001"), 2);
+});
+
+test("catalog: live products with code, prices, VAT and quantity for another app's picker", () => {
+  const d = data({
+    items: [item("item01", { sku: "MUG-1", price: 900, vat: 13 }), item("item02", { bc: "123", unit: "kg", price: 0, vat: 24 }), item("item03", { arch: 1 })],
+    moves: [mv("mv0001", "in", "2026-10-01", [{ i: "item01", q: k(4), c: 300 }, { i: "item02", q: 1500, c: 100 }])]
+  });
+  assert.deepEqual(C.catalog(d), [
+    { id: "item01", code: "MUG-1", name: "Item item01", unit: "pcs", price: 900, vat: 13, q: 4 },
+    { id: "item02", code: "123", name: "Item item02", unit: "kg", price: 0, vat: 24, q: 1.5 }
+  ]);
+});
