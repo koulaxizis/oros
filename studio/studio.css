@@ -467,6 +467,45 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
 #busy-text { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 14px; max-width: calc(100vw - 48px); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---------- 7b. Effects ---------- */
+.ms.fx { width: auto; padding: 0 6px; letter-spacing: 0.04em; }
+.ms.fx.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+#master-fx { height: 24px; }
+dialog.wide { width: min(760px, calc(100vw - 32px)); }
+.tbtn.small { width: 36px; height: 32px; flex: 0 0 auto; }
+#fx-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.fx-slot { border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg, var(--bg)); }
+.fx-slot.off .fx-label, .fx-slot.unknown .fx-label { color: var(--text-dim); text-decoration: line-through; }
+.fx-head { display: flex; align-items: center; gap: 4px; padding: 4px; }
+.fx-pw {
+  flex: 0 0 auto; width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text-dim);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.fx-pw svg { width: 16px; height: 16px; }
+.fx-pw.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.fx-pw:focus-visible, .fx-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fx-name {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px;
+  background: transparent; border: none; color: var(--text); text-align: left; padding: 6px 4px; border-radius: 6px;
+}
+.fx-label { flex: 0 1 auto; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the category gives way first, so the effect's name stays readable */
+.fx-cat { flex: 0 1000 auto; min-width: 0; font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-body { padding: 0 10px 10px; }
+.fx-gfx { display: block; width: 100%; max-width: 720px; margin: 0 auto 8px; border-radius: 8px; background: #1b1a18; cursor: default; }
+.fx-ctl summary { cursor: pointer; font-size: 13px; color: var(--text-dim); padding: 6px 0; }
+.fx-ctl summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.fx-row select { width: 100%; margin-top: 4px; }
+.fx-row .chip { margin-top: 6px; }
+.fx-row .field output { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#fx-pick { margin-top: 12px; }
+#fx-search { width: 100%; }
+.fx-picks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.fx-picks .chip.has-gfx::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.fx-credit { margin-top: 14px; }
+
 /* ---------- 8. Phone + touch ---------- */
 @media (max-width: 760px) {
   :root { --head-w: 118px; --lane-h: 76px; }
@@ -481,6 +520,8 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
   .tp-master { display: none; }
   #zoom-in, #zoom-out { display: none; }
   .h-vol { display: none; }
+  .h-btns .ms.fx { display: none; }
+  dialog.wide { width: calc(100vw - 16px); padding: 12px 10px 14px; }
   .row.track .head { padding: 5px 6px; }
   .ms { width: 30px; height: 28px; }
   .clip-name { max-width: 100%; flex: 1 1 100%; }
@@ -498,6 +539,9 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
 @media (pointer: coarse) {
   .icon-btn { width: 44px; height: 44px; }
   .ms { width: 36px; height: 32px; }
+  .ms.fx { width: auto; }
+  .fx-pw { width: 40px; height: 40px; }
+  .fx-name { min-height: 40px; align-items: center; }
   .h-name { min-height: 32px; }
   .icon-btn.small { width: 40px; height: 40px; }
   .chip, .row-open { min-height: 44px; }

@@ -11,10 +11,12 @@
 //   - recording on the armed track, with a latency offset
 //   - export of the whole song or the loop to WAV (16 or 24 bit)
 //   - undo / redo, several projects
-// Effects (NULL JSFX) come later; this is the base without them.
+//   - effects: NULL JSFX chains on every track and the master (fx.js)
 // Data:
 //   - synced slice "studio" (oros-studio-data): projects, tracks,
-//     audio sources and clips, one entity at a time (core.js)
+//     audio sources and clips, one entity at a time (core.js); the
+//     effect chains are part of their track or project
+//   - effect files (Convolution's IR) on the orOS disk, /internal/Studio/fx/
 //   - audio files on the orOS disk, /internal/Studio/audio/, which
 //     Vault Drive carries to the other devices (never in localStorage)
 //   - device-local (R10): oros-studio-prefs (open project, zoom, snap,
@@ -111,7 +113,18 @@
       "toast.recSaved": "Take saved on {name}", "toast.recFail": "The take could not be saved",
       "toast.armed": "Recording goes to {name}", "toast.noRec": "This browser cannot record here",
       "toast.recEmpty": "Nothing was recorded",
-      "live.playing": "Playing", "live.stopped": "Stopped", "live.recording": "Recording"
+      "live.playing": "Playing", "live.stopped": "Stopped", "live.recording": "Recording",
+      "fx.btn": "FX", "fx.open": "Effects", "fx.openMaster": "Master effects", "fx.title": "Effects: {name}",
+      "fx.empty": "No effects yet. Add one: they play in order, top to bottom.", "fx.addBtn": "+ Effect", "fx.add": "Add",
+      "fx.search": "Search effects", "fx.none": "No effect matches.", "fx.on": "On", "fx.remove": "Remove",
+      "fx.removed": "Effect removed", "fx.max": "A chain has up to {n} effects", "fx.controls": "All controls",
+      "fx.gfx": "{name} interface", "fx.unknown": "Unknown effect ({id})",
+      "fx.unknownHint": "This effect comes from a newer Studio. It is kept, but does not play here.",
+      "fx.cat1": "One Slider", "fx.cat2": "Essentials", "fx.cat3": "Advanced",
+      "fx.noFile": "No file", "fx.chooseFile": "Choose file", "fx.failed": "{name} stopped: it is bypassed",
+      "fx.noCatalog": "The effects could not be loaded.", "fx.credit": "Effects: NULL JSFX (nulljsfx.tech), MIT License.",
+      "fx.n": "{n} effects", "fx.n1": "1 effect",
+      "toast.tooBig20": "{name} is larger than 20 MB", "toast.noFx": "This browser cannot run the effects"
     },
     el: {
       "app.name": "Studio", "proj.untitled": "Έργο χωρίς όνομα", "proj.default": "Έργο {n}",
@@ -163,7 +176,18 @@
       "toast.recSaved": "Η λήψη αποθηκεύτηκε στο {name}", "toast.recFail": "Η λήψη δεν αποθηκεύτηκε",
       "toast.armed": "Η ηχογράφηση πάει στο {name}", "toast.noRec": "Αυτός ο browser δεν ηχογραφεί εδώ",
       "toast.recEmpty": "Δεν ηχογραφήθηκε τίποτα",
-      "live.playing": "Αναπαραγωγή", "live.stopped": "Σταμάτησε", "live.recording": "Ηχογράφηση"
+      "live.playing": "Αναπαραγωγή", "live.stopped": "Σταμάτησε", "live.recording": "Ηχογράφηση",
+      "fx.btn": "FX", "fx.open": "Εφέ", "fx.openMaster": "Εφέ του master", "fx.title": "Εφέ: {name}",
+      "fx.empty": "Κανένα εφέ ακόμη. Πρόσθεσε ένα: παίζουν με τη σειρά, από πάνω προς τα κάτω.", "fx.addBtn": "+ Εφέ", "fx.add": "Προσθήκη",
+      "fx.search": "Αναζήτηση εφέ", "fx.none": "Κανένα εφέ δεν ταιριάζει.", "fx.on": "Ενεργό", "fx.remove": "Αφαίρεση",
+      "fx.removed": "Το εφέ αφαιρέθηκε", "fx.max": "Μια αλυσίδα έχει έως {n} εφέ", "fx.controls": "Όλα τα χειριστήρια",
+      "fx.gfx": "Περιβάλλον του {name}", "fx.unknown": "Άγνωστο εφέ ({id})",
+      "fx.unknownHint": "Αυτό το εφέ έρχεται από νεότερο Studio. Κρατιέται, αλλά δεν παίζει εδώ.",
+      "fx.cat1": "Ένα ρυθμιστικό", "fx.cat2": "Βασικά", "fx.cat3": "Προχωρημένα",
+      "fx.noFile": "Κανένα αρχείο", "fx.chooseFile": "Επιλογή αρχείου", "fx.failed": "Το {name} σταμάτησε: παρακάμπτεται",
+      "fx.noCatalog": "Τα εφέ δεν φόρτωσαν.", "fx.credit": "Εφέ: NULL JSFX (nulljsfx.tech), άδεια MIT.",
+      "fx.n": "{n} εφέ", "fx.n1": "1 εφέ",
+      "toast.tooBig20": "Το {name} είναι μεγαλύτερο από 20 MB", "toast.noFx": "Αυτός ο browser δεν μπορεί να παίξει τα εφέ"
     }
   };
 
@@ -212,11 +236,12 @@
   };
 
   // BOOT MARKER
-  (function () {
+  var VER = (function () {
     var m = ((document.currentScript && document.currentScript.src) || "")
       .match(/[?&]v=([^&#]+)/);
     document.documentElement.lang = LANG;
     console.log("studio.js v" + (m ? m[1] : "?") + " boot");
+    return m ? m[1] : "0";
   })();
 
   // ---------- 2. Storage + prefs ----------
@@ -376,6 +401,7 @@
     restore(undoStack.pop());
     fixSelection();
     changed();
+    FX.render();
   }
   function redo() {
     if (!redoStack.length || recording) return;
@@ -383,6 +409,7 @@
     restore(redoStack.pop());
     fixSelection();
     changed();
+    FX.render();
   }
   // Typing a name or dragging a slider is one undo step, not one per change.
   var lastField = "", lastAt = 0;
@@ -598,6 +625,9 @@
     var mi = $("master-in");
     if (document.activeElement !== mi) mi.value = String(p.vol);
     setLabel(mi, t("f.master") + ": " + dbTxt(p.vol));
+    var mf = $("master-fx"), mn = FX.count(proj ? proj.fx : []);
+    mf.classList.toggle("on", mn > 0);
+    setLabel(mf, t("fx.openMaster") + (mn ? " (" + (mn === 1 ? t("fx.n1") : t("fx.n", { n: mn })) + ")" : ""));
     var lb = $("loop-btn"), lon = !!(proj && proj.loop.on);
     lb.setAttribute("aria-pressed", lon ? "true" : "false");
     lb.classList.toggle("on", lon);
@@ -613,6 +643,9 @@
     pb.innerHTML = playing && !recording ? ICON.pause : ICON.play;
     setLabel(pb, playing && !recording ? t("btn.pause") : t("btn.play"));
     pb.classList.toggle("on", !!playing && !recording);
+    var fp = $("fx-play");
+    fp.innerHTML = playing && !recording ? ICON.pause : ICON.play;
+    setLabel(fp, playing && !recording ? t("btn.pause") : t("btn.play"));
     rb.classList.toggle("on", recording);
     setLabel(rb, recording ? t("btn.recStop") : t("btn.rec"));
     rb.setAttribute("aria-pressed", recording ? "true" : "false");
@@ -648,6 +681,7 @@
       btns.appendChild(toggleBtn("ms m", "M", tr.mute, t("track.mute"), function () { setTrack(tr.id, { mute: !tr.mute }, { live: true }); }));
       btns.appendChild(toggleBtn("ms s", "S", tr.solo, t("track.solo"), function () { setTrack(tr.id, { solo: !tr.solo }, { live: true }); }));
       btns.appendChild(toggleBtn("ms r", "R", prefs.arm === tr.id, t("track.arm"), function () { armTrack(tr.id); }));
+      btns.appendChild(fxBtn("ms fx", tr.fx, t("fx.open") + ": " + tr.name, function () { FX.open(tr.id); }));
       head.appendChild(btns);
       var vol = el("input", "h-vol");
       vol.type = "range"; vol.min = String(C.VOL_MIN); vol.max = String(C.VOL_MAX); vol.step = "0.5"; vol.value = String(tr.vol);
@@ -668,6 +702,15 @@
     $("empty").hidden = trs.length > 0;
     $("add-track").disabled = trs.length >= C.MAX_TRACKS;
     renderLanes();
+  }
+  // opens the Effects dialog; lit when the chain has effects that play
+  function fxBtn(cls, items, label, fn) {
+    var n = FX.count(items), b = el("button", cls + (n ? " on" : ""), t("fx.btn"));
+    b.type = "button";
+    b.setAttribute("aria-haspopup", "dialog");
+    setLabel(b, label + (n ? " (" + (n === 1 ? t("fx.n1") : t("fx.n", { n: n })) + ")" : ""));
+    b.addEventListener("click", fn);
+    return b;
   }
   function toggleBtn(cls, txt, on, label, fn) {
     var b = el("button", cls + (on ? " on" : ""), txt);
@@ -900,6 +943,9 @@
 
   // ---------- 7. Engine ----------
   var actx = null, masterGain = null, analyser = null, trackNodes = {};
+  var FX = null;                 // effects (fx.js)
+  var fxLat = 0;                 // seconds the effects delay what is heard
+  var fxFail = false;
   var playing = null;            // { t0, from, loop, passes, ... } while playing
   var recording = false;
   var tickTimer = null, rafId = 0;
@@ -922,16 +968,34 @@
   }
   function resume() { try { if (actx && actx.state === "suspended") return actx.resume(); } catch (e) {} return Promise.resolve(); }
 
-  // Track nodes: clip sources → track gain → pan → master.
-  function buildTracks(a, out, nodes) {
-    var trs = tracks(), solo = C.anySolo(trs);
+  // Track nodes: clip sources → effects → track gain → pan → master.
+  // A track whose effects delay it less than the slowest track's has its
+  // clips started later by the difference (nodes[id].shift, seconds), so
+  // all tracks stay in time. Returns the largest delay (samples).
+  function buildTracks(a, out, nodes, offline) {
+    var trs = tracks(), solo = C.anySolo(trs), sr = a.sampleRate, lat = {}, max = 0;
+    trs.forEach(function (tr) {
+      lat[tr.id] = FX.isReady(a, [tr.fx]) ? FX.chainLatency(tr.fx, sr) : 0;
+      max = Math.max(max, lat[tr.id]);
+    });
     trs.forEach(function (tr) {
       var g = a.createGain(), pn = a.createStereoPanner ? a.createStereoPanner() : null;
       g.gain.value = C.trackGain(tr, solo);
       if (pn) { pn.pan.value = tr.pan / 100; g.connect(pn); pn.connect(out); } else g.connect(out);
-      nodes[tr.id] = { gain: g, pan: pn };
+      var input = FX.insert(a, tr.id, tr.fx, g, offline) || g;
+      // not a DelayNode: Chromium drops a DelayNode's tail once its source has ended
+      nodes[tr.id] = { gain: g, pan: pn, input: input, shift: (max - lat[tr.id]) / sr };
     });
+    return max;
   }
+  // master → its effects → `to`; returns the effects' delay (samples)
+  function routeMaster(a, from, to, offline) {
+    try { from.disconnect(); } catch (e) {}
+    var n = FX.insert(a, "master", proj.fx, to, offline);
+    from.connect(n || to);
+    return n ? FX.chainLatency(proj.fx, a.sampleRate) : 0;
+  }
+  function fxChains() { return tracks().map(function (tr) { return tr.fx; }).concat(proj ? [proj.fx] : []); }
   function updateMix() {
     if (!actx || !proj) return;
     masterGain.gain.setTargetAtTime(C.dbToGain(proj.vol), actx.currentTime, 0.01);
@@ -992,7 +1056,18 @@
     resume();
     masterGain.gain.value = C.dbToGain(proj.vol);
     trackNodes = {};
-    buildTracks(a, masterGain, trackNodes);
+    var chains = fxChains();
+    if (!FX.isReady(a, chains) && !fxFail) {
+      var pid = proj.id;                          // plays dry until the effects are loaded
+      FX.ensure(a, chains).then(function () {
+        if (playing && !recording && proj && proj.id === pid) replayIfPlaying();
+      }, function () { fxFail = true; showToast(t("toast.noFx")); });
+    }
+    var lat = buildTracks(a, masterGain, trackNodes, false);
+    lat += routeMaster(a, masterGain, analyser, false);
+    fxLat = lat / a.sampleRate;
+    FX.prune(tracks().map(function (tr) { return tr.id; }).concat(["master"]));
+    FX.setTime({ playing: true, tempo: proj.bpm, num: proj.sig, denom: 4, position: fromSec });
     var loop = !opts.noLoop && proj.loop.on && fromSec < proj.loop.b ? proj.loop : null;
     var end = loop ? loop.b : Math.max(songLen(), opts.open ? C.MAX_SEC : 0);
     if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
@@ -1014,7 +1089,7 @@
     p.passes.forEach(function (ps) {
       while (ps.pending.length && ps.start + (Math.max(ps.from, ps.pending[0].at) - ps.from) < horizon) {
         var c = ps.pending.shift(), n = trackNodes[c.t];
-        if (n) scheduleClip(a, c, ps.from, ps.to, ps.start, n.gain, p.sources);
+        if (n) scheduleClip(a, c, ps.from, ps.to, ps.start + n.shift, n.input, p.sources);
       }
       if (prefs.metro) {
         var bs = C.beatSec(proj.bpm);
@@ -1035,7 +1110,7 @@
   function position() {
     var p = playing, a = actx;
     if (!p || !a) return playhead;
-    var now = a.currentTime - (a.outputLatency || 0);
+    var now = a.currentTime - (a.outputLatency || 0) - fxLat;
     for (var i = p.passes.length - 1; i >= 0; i--) {
       var ps = p.passes[i];
       if (now >= ps.start) return ps.from + Math.min(now - ps.start, ps.to - ps.from);
@@ -1079,6 +1154,7 @@
       try { if (trackNodes[k].pan) trackNodes[k].pan.disconnect(); } catch (e) {}
     });
     trackNodes = {};
+    if (FX) { FX.setTime({ playing: false }); FX.disconnect(); }
     playing = null;
   }
   function pause() {
@@ -1201,7 +1277,7 @@
     });
     // Where the first frame belongs on the timeline: the audio clock of
     // the first frame, minus the output delay and the user's offset.
-    var lat = (a.outputLatency || 0) + (a.baseLatency || 0) + prefs.lat / 1000;
+    var lat = (a.outputLatency || 0) + (a.baseLatency || 0) + prefs.lat / 1000 + fxLat;
     var at = from + (r.ctx0 - t0) - lat, skip = 0;
     if (at < 0) { skip = Math.min(r.frames - 1, Math.round(-at * rate)); at = 0; }
     if (skip) chans = chans.map(function (d) { return d.subarray(skip); });
@@ -1299,26 +1375,35 @@
     if (clips.some(function (c) { return C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OAC) { showToast(t("toast.noAudio")); return; }
-    var rate = prefs.rate, oc;
-    try { oc = new OAC(2, Math.ceil((r.b - r.a) * rate), rate); } catch (e) { showToast(t("toast.noAudio")); return; }
+    var rate = prefs.rate, oc, chains = fxChains(), skip = 0, len = Math.ceil((r.b - r.a) * rate);
+    var fail = function () { $("export-go").disabled = false; $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
     $("export-status").textContent = t("export.busy");
     $("export-go").disabled = true;
-    var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol); master.connect(oc.destination);
-    var nodes = {};
-    buildTracks(oc, master, nodes);
-    clips.forEach(function (c) { var n = nodes[c.t]; if (n) scheduleClip(oc, c, r.a, r.b, 0, n.gain, null); });
+    // the effects' delay is rendered too and cut from the start
+    FX.preparePage(chains).then(function () {
+      var trLat = tracks().reduce(function (m, tr) { return Math.max(m, FX.chainLatency(tr.fx, rate)); }, 0);
+      skip = trLat + FX.chainLatency(proj.fx, rate);
+      oc = new OAC(2, len + skip, rate);
+      return FX.ensure(oc, chains);
+    }).then(function () {
+      var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol);
+      var nodes = {};
+      buildTracks(oc, master, nodes, true);
+      routeMaster(oc, master, oc.destination, true);
+      clips.forEach(function (c) { var n = nodes[c.t]; if (n) scheduleClip(oc, c, r.a, r.b, n.shift, n.input, null); });
+      var p = oc.startRendering();
+      if (p && typeof p.then === "function") return p;
+      return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
+    }).then(function (out) { done(out); }, fail);
     var title = proj.name || t("proj.untitled");
     var done = function (out) {
-      var chans = [out.getChannelData(0), out.getChannelData(1)];
+      var chans = [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)];
       var blob = new Blob([C.wavBytes(chans, rate, prefs.bits)], { type: "audio/wav" });
       $("export-go").disabled = false;
       $("export-status").textContent = "";
       hideDlg("export-dlg");
       saveBlob(blob, C.fileName(title, "wav"), "audio/wav", "WAV", ".wav");
     };
-    var p = oc.startRendering();
-    if (p && typeof p.then === "function") p.then(done, function () { $("export-go").disabled = false; showToast(t("toast.noAudio")); });
-    else oc.oncomplete = function (e) { done(e.renderedBuffer); };
   }
   function saveBlob(blob, name, mime, desc, ext) {
     var dlg = dialogHost();
@@ -1492,6 +1577,8 @@
     if (document.activeElement !== pi) pi.value = String(tr.pan);
     $("tvol-out").textContent = dbTxt(tr.vol);
     $("tpan-out").textContent = panTxt(tr.pan);
+    var n = FX.count(tr.fx);
+    $("track-fx").textContent = t("fx.open") + (n ? " · " + n : "");
     var trs = tracks();
     $("track-up").disabled = trs[0] && trs[0].id === tr.id;
     $("track-down").disabled = trs.length && trs[trs.length - 1].id === tr.id;
@@ -1627,7 +1714,10 @@
       if (p.orosShortcuts.handle(e)) e.stopPropagation();
     }, true);
     document.addEventListener("keydown", function (e) {
-      if (e.defaultPrevented || typing(e) || e.altKey || document.querySelector("dialog[open]")) return;
+      var dlg = document.querySelector("dialog[open]");
+      if (dlg && dlg.id === "fx-dlg" && e.key === " " && !e.defaultPrevented && !typing(e) &&
+          !(e.target && /^(BUTTON|SELECT|SUMMARY|INPUT)$/.test(e.target.tagName))) { e.preventDefault(); togglePlay(); return; }
+      if (e.defaultPrevented || typing(e) || e.altKey || dlg) return;
       var k = e.key, lk = k.length === 1 ? k.toLowerCase() : k;
       if ((e.ctrlKey || e.metaKey) && (lk === "z")) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if ((e.ctrlKey || e.metaKey) && (lk === "y")) { e.preventDefault(); redo(); return; }
@@ -1720,6 +1810,7 @@
     loadProjectAudio();
     if ($("proj-dlg").open) renderProjects();
     if ($("track-dlg").open) renderTrackDlg();
+    FX.render();
     if (playing && !recording) replayIfPlaying();
   }
 
@@ -1731,13 +1822,16 @@
     [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) {
       n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria")));
     });
+    [].forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (n) {
+      n.setAttribute("placeholder", t(n.getAttribute("data-i18n-ph")));
+    });
     document.title = t("app.name") + " · orOS";
     var icons = [["proj-btn", "list", "btn.projects"], ["undo-btn", "undo", "btn.undo"], ["redo-btn", "redo", "btn.redo"],
                  ["import-btn", "import", "btn.import"], ["export-btn", "export", "btn.exportOpen"], ["more-btn", "more", "btn.more"],
                  ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
                  ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
                  ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
-                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"]];
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"]];
     icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
     var sig = $("sig-in");
     C.SIGS.forEach(function (n) { var o = el("option", "", t("sig.n", { n: n })); o.value = String(n); sig.appendChild(o); });
@@ -1845,6 +1939,11 @@
     $("track-up").addEventListener("click", function () { moveTrack(dlgTrack, -1); renderTrackDlg(); });
     $("track-down").addEventListener("click", function () { moveTrack(dlgTrack, 1); renderTrackDlg(); });
     $("track-del").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); deleteTrack(id); });
+    $("track-fx").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); FX.open(id); });
+    $("master-fx").addEventListener("click", function () { if (ensureProject()) FX.open("master"); });
+    $("more-fx").addEventListener("click", function () { hideDlg("more-dlg"); if (ensureProject()) FX.open("master"); });
+    $("fx-play").addEventListener("click", function () { togglePlay(); });
+    FX.wire();
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
     $("export-go").addEventListener("click", doExport);
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
@@ -1870,9 +1969,30 @@
     wireKeyboard();
   }
 
+  // what fx.js needs from here
+  function makeFx() {
+    FX = window.StudioFX({
+      C: C, t: t, el: el, setLabel: setLabel, numTxt: numTxt, version: VER,
+      data: function () { return data; }, proj: function () { return proj; },
+      audio: function () { return actx; }, isPlaying: function () { return !!playing; },
+      fsApi: fsApi, decode: decode, showToast: showToast, burst: burst,
+      undoToast: function (text) { undoToast(text, function () { undo(); }); },
+      showDlg: showDlg, hideDlg: hideDlg,
+      pickFiles: function (accept) {
+        var dlg = dialogHost();
+        return Promise.resolve(dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept));
+      },
+      setFx: function (key, items, opts) {
+        if (key === "master") setProject({ fx: items }, opts);
+        else setTrack(key, { fx: items }, opts);
+      }
+    });
+  }
+
   function boot() {
     load();
     loadPrefs();
+    makeFx();
     applyI18n();
     wire();
     registerSync();
@@ -1882,6 +2002,7 @@
     var start = (prefs.cur && C.find(data, "projects", prefs.cur)) || C.newestFirst(data.projects)[0] || null;
     openProject(start);
     drawMeter();
+    FX.loadCatalog().catch(function () {});
   }
 
   boot();

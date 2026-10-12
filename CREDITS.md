@@ -24,6 +24,7 @@ list in `shell.js` and the "Credits register" in `OROS_BIBLE.md`.
 | [hls.js](https://github.com/video-dev/hls.js) (light build) | 1.7.3 | © 2017 Dailymotion and contributors | [Apache-2.0](https://github.com/video-dev/hls.js/blob/master/LICENSE) | Television |
 | [PDF.js](https://mozilla.github.io/pdf.js/) (legacy build, `vendor/pdfjs/`) | 5.4.394 | © Mozilla Foundation and contributors | [Apache-2.0](vendor/pdfjs/LICENSE) | Layout: opening PDF files |
 | [Mediabunny](https://mediabunny.dev/) (`vendor/mediabunny.min.js`) | 1.60.0 | © Vanilagy and contributors | [MPL-2.0](vendor/mediabunny.LICENSE) | Montage: reading video, sound and picture files and writing MP4/WebM |
+| [NULL JSFX](https://nulljsfx.tech) (web build in `studio/nullfx/`, from [null-jsfx](https://github.com/koulaxizis/null-jsfx) `web/`) | 2026-10 | © 2026 Christos Koulaxizis | [MIT](studio/nullfx/LICENSE.md) | Studio: the effects and their interfaces |
 
 Used only by the test suite (`tests/`, never shipped to users):
 [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe, Apache-2.0

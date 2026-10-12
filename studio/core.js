@@ -8,14 +8,19 @@
 // Data (sync slice "studio", oros-studio-data), four flat lists merged
 // one entity at a time, last change wins (R5, R17, R26):
 //   { ver: 1,
-//     projects: [{ id, m, name, bpm, sig, vol, loop: { on, a, b } }],
-//     tracks:   [{ id, m, p, name, color, vol, pan, mute, solo, ord }],
+//     projects: [{ id, m, name, bpm, sig, vol, loop: { on, a, b }, fx }],
+//     tracks:   [{ id, m, p, name, color, vol, pan, mute, solo, ord, fx }],
 //     sources:  [{ id, m, p, name, path, dur, ch }],
 //     clips:    [{ id, m, p, t, s, at, off, len, gain, fi, fo }],
 //     tombs:    { id: deletedAt } }
 // p = project, t = track, s = source. A source is one audio file on
 // the orOS disk (path); a clip plays part of a source on a track.
 // Times are in seconds; volumes and gains in dB; pan -100..100.
+// fx: the effect chain (NULL JSFX) of a track, or of the master on the
+// project: [{ u, id, on, s: { slider: value }, f: { slider: path } }],
+// u = the slot's own id, id = the effect (nullfx/fx/<id>.js), on =
+// false when bypassed, f = audio files on the disk for file sliders
+// (Convolution's IR). At most 8 per chain.
 // The audio itself is never in this slice: it lives on the disk and
 // travels with Vault Drive.
 // ============================================================
@@ -40,6 +45,10 @@
   var ID_RE        = /^[ptsc][a-z0-9]{6,20}$/;
   var PATH_RE      = /^\/internal\/Studio\/[^\u0000-\u001f\\]{1,200}$/;
   var DEFAULT      = { bpm: 120, sig: 4 };
+  var MAX_FX       = 8;            // effects in one chain
+  var FX_ID_RE     = /^[a-z0-9_]{1,40}$/;
+  var FXU_RE       = /^f[a-z0-9]{6,20}$/;
+  var SLIDER_RE    = /^[1-9][0-9]?$/;  // slider1 .. slider64
 
   function isNum(n) { return typeof n === "number" && isFinite(n); }
   function isInt(n) { return isNum(n) && Math.floor(n) === n; }
@@ -54,6 +63,33 @@
   function okM(m) { return isInt(m) && m >= 0; }
 
   // ---------- Normalise (every field bounded; unknown fields dropped) ----------
+  // An effect chain; effects this version does not know are kept, so a
+  // newer device's chain survives a round trip through an older one.
+  function normFx(list) {
+    var out = [], seen = {};
+    if (!Array.isArray(list)) return out;
+    list.forEach(function (x) {
+      if (out.length >= MAX_FX || !x || typeof x !== "object") return;
+      if (typeof x.u !== "string" || !FXU_RE.test(x.u) || seen[x.u]) return;
+      if (typeof x.id !== "string" || !FX_ID_RE.test(x.id)) return;
+      seen[x.u] = true;
+      var s = {}, f = {}, hasF = false;
+      if (x.s && typeof x.s === "object") {
+        Object.keys(x.s).filter(function (k) { return SLIDER_RE.test(k) && +k <= 64 && isNum(x.s[k]); })
+          .sort(function (a, b) { return a - b; })
+          .forEach(function (k) { s[k] = round(clamp(x.s[k], -1e9, 1e9), 6); });
+      }
+      if (x.f && typeof x.f === "object") {
+        Object.keys(x.f).filter(function (k) {
+          return SLIDER_RE.test(k) && +k <= 64 && typeof x.f[k] === "string" && PATH_RE.test(x.f[k]) && x.f[k].indexOf("/..") < 0;
+        }).sort(function (a, b) { return a - b; }).forEach(function (k) { f[k] = x.f[k]; hasF = true; });
+      }
+      var o = { u: x.u, id: x.id, on: x.on !== false, s: s };
+      if (hasF) o.f = f;
+      out.push(o);
+    });
+    return out;
+  }
   function normProject(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "p") || !okM(x.m)) return null;
     var lp = x.loop && typeof x.loop === "object" ? x.loop : {};
@@ -65,7 +101,8 @@
       bpm: num(x.bpm, MIN_BPM, MAX_BPM, DEFAULT.bpm, 2),
       sig: SIGS.indexOf(x.sig) >= 0 ? x.sig : DEFAULT.sig,
       vol: num(x.vol, VOL_MIN, VOL_MAX, 0, 1),
-      loop: { on: !!(x.loop && x.loop.on === true && b - a >= MIN_LEN), a: a, b: b }
+      loop: { on: !!(x.loop && x.loop.on === true && b - a >= MIN_LEN), a: a, b: b },
+      fx: normFx(x.fx)
     };
   }
   function normTrack(x) {
@@ -78,7 +115,8 @@
       pan: isNum(x.pan) ? Math.round(clamp(x.pan, -100, 100)) : 0,
       mute: x.mute === true,
       solo: x.solo === true,
-      ord: isNum(x.ord) ? round(clamp(x.ord, -1e6, 1e6), 4) : 0
+      ord: isNum(x.ord) ? round(clamp(x.ord, -1e6, 1e6), 4) : 0,
+      fx: normFx(x.fx)
     };
   }
   function normSource(x) {
@@ -304,6 +342,37 @@
     return buf;
   }
 
+  // ---------- Effects: slider controls ----------
+  // A JSFX slider { min, max, inc, shape, shapeArg, enums } shown as a
+  // range input of POS_STEPS steps: position 0..1 <-> value.
+  var POS_STEPS = 1000;
+  function sliderLog(sl) { return sl.shape === "log" && sl.min > 0 && sl.max > sl.min; }
+  function sliderStep(sl, v) {
+    var inc = sl.inc > 0 ? sl.inc : 0;
+    if (inc) v = sl.min + Math.round((v - sl.min) / inc) * inc;
+    v = clamp(v, Math.min(sl.min, sl.max), Math.max(sl.min, sl.max));
+    return round(v, 6);
+  }
+  function sliderFromPos(sl, x) {
+    x = clamp(x, 0, 1);
+    var v = sliderLog(sl) ? sl.min * Math.pow(sl.max / sl.min, x) : sl.min + (sl.max - sl.min) * x;
+    return sliderStep(sl, v);
+  }
+  function sliderToPos(sl, v) {
+    if (sl.max === sl.min) return 0;
+    var x = sliderLog(sl) ? Math.log(Math.max(v, sl.min) / sl.min) / Math.log(sl.max / sl.min) : (v - sl.min) / (sl.max - sl.min);
+    return clamp(x, 0, 1);
+  }
+  // The value of slider i in a chain item (the effect's default otherwise).
+  function fxValue(item, sl) {
+    var v = item && item.s ? item.s[String(sl.i)] : undefined;
+    return isNum(v) ? v : sl.def;
+  }
+  // Where an IR (or other file for an effect) goes on the orOS disk.
+  function fxFilePath(u, name, ext) {
+    return sourcePath(u, name, ext).replace("/internal/Studio/audio/", "/internal/Studio/fx/");
+  }
+
   // ---------- Names ----------
   function fileName(name, ext) {
     var base = clipLine(name, MAX_NAME).replace(/[\\/:*?"<>|.]+/g, "").replace(/\s+/g, "-").replace(/^-+|-+$/g, "");
@@ -342,7 +411,9 @@
     clipEnd: clipEnd, projectEnd: projectEnd, moveClip: moveClip, trimStart: trimStart, trimEnd: trimEnd,
     splitClip: splitClip, fadeGainAt: fadeGainAt, exportRange: exportRange,
     peaks: peaks, wavBytes: wavBytes, fileName: fileName, sourcePath: sourcePath, extOf: extOf,
-    clipLine: clipLine
+    clipLine: clipLine,
+    MAX_FX: MAX_FX, FX_ID_RE: FX_ID_RE, normFx: normFx, POS_STEPS: POS_STEPS,
+    sliderFromPos: sliderFromPos, sliderToPos: sliderToPos, sliderStep: sliderStep, fxValue: fxValue, fxFilePath: fxFilePath
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioCore = api;
