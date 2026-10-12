@@ -1661,6 +1661,11 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - Each side only READS the other's slice: Library reads `oros-shelf-data` to show "Open in Media Shelf"; the Shelf reads `oros-library-data` in `libSync` (boot + visible) and writes progress as its own normal entries. Pages only move forward; a finish is logged only when Library marked the book finished on or after the run began; dropped and finished items are left alone.
 - Shelf item extra field `lib` = Library book id (kept by older devices, no schema change). Pure helpers `libOf`, `libPlan`, `libItem` (shelf section 4d), tests on both sides.
 
+### Invoices wave 2 bridges (1.13.00)
+- One due rule in `invoices/core.js` (`dueOn`, `dueRows`, `reminder`) serves the Calendar "Invoices" feed chip, the Today provider `invoices/today.js` (BR-TODAY: overdue, due in the horizon, recurring drafts ready) and the shell tick (one daily notice for overdue + due within 2 days, repeated when the count grows; deep link opens the invoice).
+- Senders into Invoices (`__orosOpenAt("invoices", { new })`, BR-CRM-INV payload, now also line `vat`, `disc`, `code`, `unit` and a total discount; older payloads unchanged): Quote "Make invoice" (accepted quotes), Timesheet report "Create invoice". From CRM imports customers through `crm/core.js customersForBilling()` and keeps `crm`.
+- Add to Budget on a payment uses BR-B1 (Freelance income) and marks the payment `bud`.
+
 ## Part VII — UI standards
 
 - **Scrollbars:** 10px, transparent track, pill thumb (999px radius, 2px border `var(--bg)`), hover `var(--accent)`; Firefox `scrollbar-width:thin`. `overscroll-behavior:contain` on main panes.
@@ -5001,3 +5006,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Android app: Digital Asset Links + .nojekyll (#215) — 1.12.01
 - `.well-known/assetlinks.json` (Chris's file from the PWABuilder package, `online.useoros.twa`) so Android verifies the TWA and opens orOS full screen; empty `.nojekyll` so GitHub Pages serves dot-folders. No app code. With Play App Signing, Google's signing-key SHA-256 must be added to the same array. Bible: note under the manifest section.
+
+### 2026-10-12 — Invoices wave 2: Calendar, Today, reminders, Budget, Quote, Timesheet, CRM (#216) — 1.13.00
+- Calendar "Invoices" chip (unpaid invoices on their due date); Today provider `invoices/today.js` (overdue, due soon, recurring drafts ready); shell tick sends one daily reminder for overdue and due-within-2-days invoices (again when the count grows; opens the invoice; `notifications.js` KNOWN_APPS + deep link). One rule for all three in `invoices/core.js` (`dueOn`, `dueRows`, `reminder`).
+- Add to Budget on a payment (BR-B1, Freelance income; payment flag `bud`); Quote "Make invoice" on an accepted quote and Timesheet "Create invoice" open a prefilled invoice (`{new}` now also takes line VAT, discount, code, unit and a total discount; older payloads still work); From CRM imports customers keeping the crm id (BR-CRM-INV).
+- Tests: tests/invoices.test.js (+4). Not tested: real phone, Safari, real Dropbox, Timesheet button end to end. Assistant "new invoice" card left to the Assistant thread.

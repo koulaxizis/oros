@@ -394,3 +394,54 @@ test("search provider: documents and clients, drafts unnumbered, tombstones skip
   assert.deepEqual(P.search({ readJSON: () => null, lang: "en" }), []);
   assert.ok(!/setItem|removeItem|registerSlice|innerHTML/.test(fs.readFileSync(require.resolve("../invoices/search.js"), "utf8")));
 });
+
+// ---------------------------------------------------------------
+// Wave 2: Calendar feed, Today, shell reminder, prefill extras
+// ---------------------------------------------------------------
+test("wave 2: dueOn, dueRows and reminder agree; paid and drafts stay out", () => {
+  const d = model({ docs: [inv("doc-1", { due: "2026-10-20" }), inv("doc-2", { seq: 2, due: "2026-10-12" }),
+                           inv("doc-3", { seq: 3, due: "2026-10-20", st: "draft" }), inv("doc-4", { seq: 4, due: "2026-10-20" })],
+                    pays: [pay("pay-1", "doc-4", 12400), pay("pay-2", "doc-1", 400)] });
+  assert.deepEqual(C.dueOn(d, "2026-10-20").map((x) => x.id), ["doc-1"]);
+  assert.deepEqual(C.dueOn(d, "bad"), []);
+  const rows = C.dueRows(d, "2026-10-18", "2026-10-21");
+  assert.deepEqual(rows.map((r) => [r.id, r.late, r.bal]), [["doc-2", true, 12400], ["doc-1", false, 12000]]);
+  assert.equal(rows[0].who, "Acme");
+  const r = C.reminder(d, "2026-10-18", 2);
+  assert.deepEqual(r, { late: 1, soon: 1, first: "doc-2", key: "due-2026-10-18-1-1" });
+  assert.equal(C.reminder(d, "2026-10-01", 2), null);
+  assert.equal(C.reminder(d, "2026-10-10", 2).soon, 1);
+});
+
+test("wave 2: Today provider rows, recurring line once, nothing when empty", () => {
+  global.OrosInvoicesCore = C;
+  const P = require("../invoices/today.js");
+  const d = model({ docs: [inv("doc-1", { due: "2026-10-20" })],
+                    tpls: [{ id: "tpl-1", name: "Hosting", kind: "inv", cli: "", cur: "EUR", lines: [line(1000)], rep: "m",
+                             next: "2026-10-01", dom: 1, m: 1 }] });
+  const ctx = (raw) => ({ today: "2026-10-18", horizon: 3, lang: "en", readRaw: () => raw,
+    addDays: (k, n) => C.addDays(k, n) });
+  const rows = P.collect(ctx(JSON.stringify(d)));
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0].target, { invoice: "doc-1" });
+  assert.equal(rows[0].kind, "task");
+  assert.ok(/€|EUR/.test(rows[0].text));
+  assert.deepEqual(rows[1].target, { recurring: 1 });
+  assert.ok(rows[1].title.includes("Hosting"));
+  assert.deepEqual(P.collect(ctx(null)), []);
+  delete global.OrosInvoicesCore;
+});
+
+test("wave 2: prefill keeps line VAT, discount, code, unit and the total discount", () => {
+  const p = C.normPrefill({ name: "Acme", gDisc: 5, items: [{ d: "Web", q: 2, p: 100, vat: 13, disc: 10, code: "W1", unit: "h" },
+                                                            { d: "X", q: 1, p: 1, vat: 150, disc: -1 }] });
+  assert.deepEqual(p.items, [{ d: "Web", q: 2, p: 10000, vat: 13, disc: 10, code: "W1", unit: "h" }, { d: "X", q: 1, p: 100 }]);
+  assert.equal(p.gDisc, 5);
+  assert.equal(C.normPrefill({ name: "A", gDisc: 300 }).gDisc, 0);
+});
+
+test("wave 2: a payment remembers it went to Budget (bud) and merges like any field", () => {
+  const d = model({ docs: [inv("doc-1")], pays: [Object.assign(pay("pay-1", "doc-1", 1000), { bud: 1 })] });
+  assert.equal(d.pays[0].bud, 1);
+  assert.equal(model({ docs: [inv("doc-1")], pays: [Object.assign(pay("pay-1", "doc-1", 1000), { bud: "yes" })] }).pays[0].bud, 0);
+});

@@ -295,7 +295,8 @@
       "url": "invoices/",
       "type": "internal",
       "search": "search.js",
-      "searchOff": true
+      "searchOff": true,
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "prompter",
