@@ -143,6 +143,27 @@
     s.tiles.clear();
   }
 
+  // ---------- Layer masks ----------
+  // A mask is a surface painted in grey; where a pixel is (partly)
+  // transparent the mask's bg (0 or 255) shows through. → an RGBA
+  // tile whose alpha is the mask value (rgb 0), for destination-in.
+  function maskAlpha(t, bg) {
+    var out = new Uint8ClampedArray(TB);
+    if (!t) { if (bg) for (var j = 3; j < TB; j += 4) out[j] = bg; return out; }
+    for (var i = 0; i < TB; i += 4) {
+      var a = t[i + 3];
+      out[i + 3] = (t[i] * a + bg * (255 - a) + 127) / 255;
+    }
+    return out;
+  }
+  // Mask value at one layer-grid pixel (0-255).
+  function maskAt(s, bg, x, y) {
+    var t = s.tiles.get(key(floorDiv(x), floorDiv(y)));
+    if (!t) return bg;
+    var i = ((y - floorDiv(y) * TILE) * TILE + (x - floorDiv(x) * TILE)) * 4, a = t[i + 3];
+    return Math.round((t[i] * a + bg * (255 - a)) / 255);
+  }
+
   // ---------- Snapshots (undo) ----------
   // { key: copy | null } for the given keys.
   function snapshot(s, keys) {
@@ -231,7 +252,7 @@
     isEmpty: isEmpty, prune: prune, keysIn: keysIn, tileBounds: tileBounds,
     contentBounds: contentBounds, readRect: readRect, writeRect: writeRect, clear: clear,
     snapshot: snapshot, restore: restore, snapBytes: snapBytes, clone: clone,
-    tileName: tileName, encodeTile: encodeTile, decodeTile: decodeTile
+    maskAlpha: maskAlpha, maskAt: maskAt, tileName: tileName, encodeTile: encodeTile, decodeTile: decodeTile
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

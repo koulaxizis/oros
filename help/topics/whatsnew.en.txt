@@ -1,6 +1,26 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.18.00
+- Text Tools: pull e-mails, links or phone numbers out of a text, encode URL/Base64/HTML, make slugs, compare two texts line by line, and open .txt/.csv/.tsv files with it.
+
+## Version 1.17.00
+- Photo Lab: layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay).
+
+## Version 1.16.00
+- Atelier: Resize now re-lays your design for each new size and can make copies in several sizes at once; Duplicate keeps every element's height.
+
+## Version 1.15.00
+- Stock: purchase orders (draft, sent, partly received), a Reports tab, and links to To-Do, Mail, Budget, Quote, Spreadsheet and Today.
+
+## Version 1.14.00
+- CRM: follow-up reminders now arrive even when CRM is closed. Open follow-ups show in Today (tick to mark done) and in the Calendar under Customers, with the expected close day of deals. Contacts shows a Customer button on people linked to a customer.
+
+## Version 1.13.00
+- Invoices: unpaid invoices in Calendar and Today, due reminders, Add to Budget, Make invoice from Quote and Timesheet, clients from CRM.
+- Help: the guide pages on the menu, notifications, installing, privacy and getting started now cover the latest releases.
+- Mail: other apps can open a new message with files attached, e.g. an invoice PDF.
+
 ## Version 1.12.00
 - Sticky Notes: rings can repeat (every day, weekdays, every week), a Ringtone Composer melody can be the ring sound, Send to To-Do and Copy to Notes, and your notes show in the menu search and in Today.
 

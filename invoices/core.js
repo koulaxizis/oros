@@ -173,7 +173,7 @@
     doc:    ["id", "kind", "st", "ser", "seq", "num", "date", "due", "cur", "cli", "c", "s", "lines",
              "gDisc", "wht", "exempt", "terms", "notes", "ref", "crm", "mark", "file", "sent", "plang",
              "xnet", "xvat", "m", "del"],
-    pay:    ["id", "doc", "date", "amt", "how", "note", "m", "del"],
+    pay:    ["id", "doc", "date", "amt", "how", "note", "bud", "m", "del"],
     tpl:    ["id", "name", "kind", "cli", "cur", "lines", "gDisc", "wht", "exempt", "terms", "notes",
              "rep", "next", "dom", "m", "del"],
     prof:   ["name", "trade", "job", "addr", "country", "afm", "doy", "phone", "email", "web", "iban",
@@ -300,7 +300,7 @@
     return withExtras({
       id: x.id, doc: x.doc, date: x.date, amt: x.amt,
       how: HOWS.indexOf(x.how) >= 0 ? x.how : "other",
-      note: cleanText(x.note, LIM.short * 2), m: x.m
+      note: cleanText(x.note, LIM.short * 2), bud: x.bud === 1 ? 1 : 0, m: x.m
     }, x, KNOWN.pay);
   }
   function normTpl(x) {
@@ -614,6 +614,34 @@
       return owes(d) && d.due && d.due <= until && balance(data, d) > 0;
     }).sort(function (x, y) { return cmpStr(x.due, y.due) || cmpStr(x.id, y.id); });
   }
+  // Wave 2 — the Calendar feed, the Today provider and the shell
+  // reminder all read these, so they can never disagree.
+  // Unpaid documents whose due date is `day` (Calendar rows).
+  function dueOn(data, day) {
+    if (!validDay(day)) return [];
+    return live(data.docs).filter(function (d) {
+      return owes(d) && d.due === day && balance(data, d) > 0;
+    }).sort(function (x, y) { return cmpStr(x.num, y.num) || cmpStr(x.id, y.id); });
+  }
+  // Unpaid documents due by `until` (overdue ones included), as rows
+  // for Today: { id, num, kind, who, due, bal, cur, late }.
+  function dueRows(data, day, until) {
+    return dueList(data, until).map(function (d) {
+      return { id: d.id, num: d.num, kind: d.kind, who: partyName(data, d), due: d.due,
+               bal: balance(data, d), cur: d.cur, late: d.due < day };
+    });
+  }
+  // The shell reminder: unpaid documents overdue or due within `days`
+  // days of `day`. null when there is nothing to say. `key` changes
+  // with the day and the counts, so a growing list says it again.
+  function reminder(data, day, days) {
+    if (!validDay(day)) return null;
+    var list = dueList(data, addDays(day, days > 0 ? days : 0));
+    if (!list.length) return null;
+    var late = list.filter(function (d) { return d.due < day; }).length;
+    return { late: late, soon: list.length - late, first: list[0].id,
+             key: "due-" + day + "-" + late + "-" + (list.length - late) };
+  }
   // Currencies in use (documents that count), the profile's first.
   function currencies(data) {
     var seen = {}, out = [];
@@ -746,7 +774,8 @@
   //   units (not cents) −10000000 ≤ p ≤ 10000000.
   function normPrefill(o) {
     if (!o || typeof o !== "object") return null;
-    var out = { client: null, crm: crmId(o.crm), cur: "", items: [], notes: cleanBlock(o.notes, 500), ref: null };
+    var out = { client: null, crm: crmId(o.crm), cur: "", items: [], notes: cleanBlock(o.notes, 500), ref: null,
+                gDisc: isNum(o.gDisc) && o.gDisc > 0 && o.gDisc <= 100 ? round(o.gDisc, 2) : 0 };
     var p = normParty(o);
     if (p.name) out.client = p;
     if (typeof o.cur === "string" && o.cur) {
@@ -760,7 +789,15 @@
         var q = isNum(it.q) && it.q > 0 && it.q <= 100000 ? round(it.q, 3) : 0;
         var pr = isNum(it.p) && Math.abs(it.p) <= 10000000 ? Math.round(it.p * 100) : NaN;
         if (!d || !q || isNaN(pr)) return;
-        out.items.push({ d: d, q: q, p: pr });
+        var row = { d: d, q: q, p: pr };
+        // Optional (Quote, Timesheet): VAT % and discount % per line,
+        // code and unit. Left out → the profile's VAT, no discount.
+        if (isNum(it.vat) && it.vat >= 0 && it.vat <= 100) row.vat = round(it.vat, 2);
+        if (isNum(it.disc) && it.disc > 0 && it.disc <= 100) row.disc = round(it.disc, 2);
+        var code = cleanText(it.code, LIM.code), unit = cleanText(it.unit, LIM.unit);
+        if (code) row.code = code;
+        if (unit) row.unit = unit;
+        out.items.push(row);
       });
     }
     if (o.ref && typeof o.ref === "object" && /^[a-z0-9]{1,20}$/.test(o.ref.app || "") &&
@@ -906,7 +943,7 @@
     clashes: clashes, clashKeeper: clashKeeper,
     lineNet: lineNet, totals: totals, paysOf: paysOf, paidOf: paidOf, creditsOf: creditsOf,
     owes: owes, balance: balance, status: status, lateDays: lateDays, sign: sign, counts: counts,
-    byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, currencies: currencies, dashboard: dashboard,
+    byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, currencies: currencies, dashboard: dashboard,
     recurringDue: recurringDue, nextRun: nextRun, draftFrom: draftFrom, stepRep: stepRep,
     normPrefill: normPrefill, matchClient: matchClient, fold: fold,
     parseMoney: parseMoney, parseNum: parseNum, fmtMoney: fmtMoney, fmtNumber: fmtNumber,

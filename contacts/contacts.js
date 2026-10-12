@@ -192,6 +192,7 @@
       "ct.share": "Share",
       "ct.familytree": "Family tree",
       "ct.qr": "QR code",
+      "ct.crm": "Customer: {name}",
       "ct.share.done": "Contact copied to clipboard",
       "ct.share.fail": "Could not copy — please retry",
       "ct.maps": "Show on map",
@@ -320,6 +321,7 @@
       "ct.share": "Κοινοποίηση",
       "ct.familytree": "Οικογενειακό δέντρο",
       "ct.qr": "Κωδικός QR",
+      "ct.crm": "Πελάτης: {name}",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
       "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά",
       "ct.maps": "Εμφάνιση στον χάρτη"
@@ -1573,6 +1575,25 @@ function openViewCard(c) {
       shell.__orosOpenAt("qr", { from: "contacts", id: c.id });
     });
     foot.appendChild(qr);
+    // CRM (read-only): each customer that lists this contact as a
+    // person (at most 3) opens there. The shell's OrosCrmCore reads
+    // the same oros-crm-data the app writes; no CRM data → no button.
+    var crmCore = null, crmData = null;
+    try { crmCore = shell.OrosCrmCore || null; } catch (e) {}
+    if (crmCore) {
+      try { crmData = crmCore.norm(JSON.parse(localStorage.getItem("oros-crm-data"))); } catch (e) { crmData = null; }
+    }
+    if (crmData) crmCore.custsForContact(crmData, c.id).slice(0, 3).forEach(function (cu) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ct-view-share";
+      b.textContent = t("ct.crm").replace("{name}", cu.name);
+      b.addEventListener("click", function () {
+        closeViewCard();
+        shell.__orosOpenAt("crm", { cust: cu.id });
+      });
+      foot.appendChild(b);
+    });
   }
   var ed = document.createElement("button");
   ed.type = "button";

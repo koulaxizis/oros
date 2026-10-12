@@ -61,7 +61,10 @@
     merge: svg('<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>'),
     swap: svg('<path d="M7 4L3 8l4 4M3 8h13a4 4 0 0 1 4 4M17 20l4-4-4-4M21 16H8a4 4 0 0 1-4-4"/>'),
     close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
-    check: svg('<path d="M5 13l4 4L19 7"/>')
+    check: svg('<path d="M5 13l4 4L19 7"/>'),
+    mask: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="5" fill="currentColor"/>'),
+    adj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'),
+    fx: svg('<path d="M10 20l1-8M6 12h7M14 4h-1a3 3 0 0 0-3 3l-1 5"/><path d="M15 13l5 6M20 13l-5 6"/>')
   };
   PL.ICON = ICON;
 
@@ -404,9 +407,114 @@
     };
   }
 
+  // ---------- Adjustment layers + layer styles ----------
+  // Labels of the C.ADJ / C.FX_SPEC parameters.
+  var PARAM_LABEL = {
+    levels: { ib: "adj.inBlack", iw: "adj.inWhite", g: "adj.gamma", ob: "adj.outBlack", ow: "adj.outWhite" },
+    curves: { s: "adj.shadows", m: "adj.mids", h: "adj.highs" },
+    hsl: { h: "adj.hue", s: "adj.sat", l: "adj.light" },
+    balance: { r: "adj.cr", g: "adj.mg", b: "adj.yb" },
+    bc: { b: "adj.bright", c: "adj.contrast" },
+    photo: { c: "f.color", d: "adj.density" },
+    gradmap: { c0: "adj.dark", c1: "adj.lightCol" },
+    threshold: { t: "adj.threshold" },
+    posterize: { n: "adj.levels" },
+    fx: { c: "f.color", op: "f.opacity", a: "flt.angle", d: "flt.distance", s: "fx.size", w: "fx.width" }
+  };
+  // Controls for a parameter list; p is changed in place, then onChange().
+  function paramControls(spec, labels, p, onChange) {
+    return spec.map(function (q) {
+      var key = q[0], label = t(labels[key]);
+      if (q[1] === "c") {
+        var c = el("input"); c.type = "color"; c.value = p[key];
+        c.addEventListener("input", function () { p[key] = c.value; onChange(); });
+        return field(label, c);
+      }
+      if (key === "g") {                                   // gamma ×100 on a whole-number slider
+        return range(label, Math.round(p.g * 100), 10, 999, function (x) { p.g = x / 100; onChange(); });
+      }
+      return range(label, p[key], q[1], q[2], function (x) { p[key] = x; onChange(); });
+    });
+  }
+  // L: edit that adjustment layer; null: make a new one (one undo
+  // step), which Cancel takes back.
+  function adjLayerDialog(L) {
+    if (!st.doc) return;
+    var isNew = !L;
+    if (isNew) { L = ops().newAdjLayer("levels"); if (!L) return; L = PL.layer(); }
+    var orig = JSON.parse(JSON.stringify(L.aj)), cur = JSON.parse(JSON.stringify(L.aj));
+    var type = select(C.ADJ_IDS.map(function (id) { return [id, t("adjk." + id)]; }), cur.id);
+    var box = el("div", "adj-params");
+    function live() { L.aj = C.normAdj(cur); PL.view.invalidate(); }
+    function build() {
+      box.innerHTML = "";
+      paramControls(C.ADJ[cur.id], PARAM_LABEL[cur.id] || {}, cur.p, live).forEach(function (n) { box.appendChild(n); });
+    }
+    type.addEventListener("change", function () { cur = C.normAdj({ id: type.value }); build(); live(); });
+    build();
+    PL.dialog({
+      title: t("dlg.adj"), ok: t(isNew ? "btn.add" : "btn.save"),
+      body: [field(t("f.adjType"), type), box, hint(t("hint.adjLayer"))],
+      onOk: function () {
+        L.aj = orig;
+        var n = C.normAdj(cur);
+        // A new layer is made again with its final type: one undo step.
+        if (isNew) { PL.undo(); ops().newAdjLayer(n.id, n.p); }
+        else ops().setAdj(L, n);
+      },
+      onCancel: function () {
+        L.aj = orig; PL.view.invalidate();
+        if (isNew) PL.undo();
+      }
+    });
+  }
+  function fxDialog(L) {
+    if (L.k === "adj") { PL.toast(t("msg.fxAdj")); return; }
+    if (L.lock) { PL.toast(t("msg.locked")); return; }
+    var orig = L.fx ? JSON.parse(JSON.stringify(L.fx)) : null;
+    var on = {}, vals = {};
+    C.FX_IDS.forEach(function (k) {
+      on[k] = !!(orig && orig[k]);
+      vals[k] = C.normFx((function () { var o = {}; o[k] = orig && orig[k] || {}; return o; })())[k];
+    });
+    function current() {
+      var o = {};
+      C.FX_IDS.forEach(function (k) { if (on[k]) o[k] = vals[k]; });
+      return C.normFx(o);
+    }
+    function live() { var n = current(); if (n) L.fx = n; else delete L.fx; PL.view.invalidate(); }
+    var body = C.FX_IDS.map(function (k) {
+      var sec = el("fieldset", "fx-sec");
+      var head = check(t("fx." + k), on[k]);
+      head.classList.add("fx-head");
+      var inner = el("div", "fx-params");
+      paramControls(C.FX_SPEC[k], PARAM_LABEL.fx, vals[k], function () {
+        if (!on[k]) { on[k] = true; head.input.checked = true; }
+        live();
+      }).forEach(function (n) { inner.appendChild(n); });
+      inner.hidden = !on[k];
+      head.input.addEventListener("change", function () { on[k] = head.input.checked; inner.hidden = !on[k]; live(); });
+      sec.appendChild(head); sec.appendChild(inner);
+      return sec;
+    });
+    body.push(hint(t("hint.fx")));
+    PL.dialog({
+      title: t("dlg.fx"), ok: t("btn.apply"), body: body, wide: true,
+      onOk: function () {
+        var n = current();
+        if (orig) L.fx = orig; else delete L.fx;
+        ops().setFx(L, n);
+      },
+      onCancel: function () { if (orig) L.fx = orig; else delete L.fx; PL.view.invalidate(); }
+    });
+  }
+  PL.panels.adjLayerDialog = adjLayerDialog;
+  PL.panels.fxDialog = fxDialog;
+
   // ---------- Menus ----------
   function has() { return !!st.doc; }
   function hasSel() { return !!st.sel; }
+  function hasMask() { var L = st.doc && PL.layer(); return !!(L && L.mk); }
   // Browsers keep Ctrl+N, Ctrl+T and Ctrl+Shift+N, so New, Free
   // transform and New layer use Alt instead.
   var MENUS = [
@@ -459,6 +567,15 @@
       { id: "layerRotCw", run: function () { ops().layerRotate(1); }, on: has },
       { id: "layerRotCcw", run: function () { ops().layerRotate(3); }, on: has },
       { id: "rasterize", run: function () { var L = PL.layer(); if (L && L.k !== "raster") ops().rasterize(L); else PL.toast(t("msg.alreadyRaster")); }, on: has },
+      "-",
+      { id: "newAdj", run: function () { adjLayerDialog(null); }, on: has },
+      { id: "layerStyle", run: function () { var L = PL.layer(); if (L) fxDialog(L); }, on: has },
+      { id: "addMask", run: function () { ops().addMask(false); }, on: has },
+      { id: "maskSel", run: function () { ops().addMask(true); }, on: hasSel },
+      { id: "editMask", k: "Ctrl+\\", run: function () { ops().editMask(); }, on: hasMask },
+      { id: "toggleMask", run: function () { ops().toggleMask(); }, on: hasMask },
+      { id: "applyMask", run: function () { ops().applyMask(); }, on: hasMask },
+      { id: "deleteMask", run: function () { ops().deleteMask(); }, on: hasMask },
       "-",
       { id: "mergeDown", k: "Ctrl+E", run: function () { ops().mergeDown(); }, on: has },
       { id: "flatten", run: function () { ops().flatten(); }, on: has }
@@ -752,9 +869,28 @@
     var d = st.doc, k = 40 / Math.max(d.w, d.h);
     var c = PL.view.canvas(Math.max(1, Math.round(d.w * k)), Math.max(1, Math.round(d.h * k)));
     var g = c.getContext("2d");
+    if (L.k === "adj") {                                  // half dark, half light disc
+      var r = Math.min(c.width, c.height) / 2 - 3, cx = c.width / 2, cy = c.height / 2;
+      g.fillStyle = "#fff"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#222"; g.beginPath(); g.arc(cx, cy, r, Math.PI / 2, Math.PI * 1.5); g.fill();
+      g.strokeStyle = "#888"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+      return c;
+    }
     g.setTransform(k, 0, 0, k, 0, 0);
     g.imageSmoothingQuality = "low";
     PL.view.drawLayer(g, L, null);
+    return c;
+  }
+  // The mask as grey (white shows, black hides).
+  function maskThumb(L) {
+    var d = st.doc, k = 40 / Math.max(d.w, d.h);
+    var c = PL.view.canvas(Math.max(1, Math.round(d.w * k)), Math.max(1, Math.round(d.h * k)));
+    var g = c.getContext("2d");
+    g.setTransform(k, 0, 0, k, 0, 0);
+    PL.view.drawMask(g, L, { x: 0, y: 0, w: d.w, h: d.h });
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "source-in"; g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    g.globalCompositeOperation = "destination-over"; g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
     return c;
   }
   var layersTimer = null;
@@ -770,16 +906,37 @@
       var eye = el("button", "icon-btn small"); eye.type = "button";
       eye.innerHTML = L.vis ? ICON.eye : ICON.eyeOff; PL.setLabel(eye, t(L.vis ? "btn.hide" : "btn.show"));
       eye.addEventListener("click", function (e) { e.stopPropagation(); ops().setProp(L, "vis", L.vis ? 0 : 1, t(L.vis ? "step.hide" : "step.show")); });
-      var th = el("span", "lthumb"); th.appendChild(layerThumb(L));
+      var on = A && A.id === L.id, editing = on && st.maskEdit;
+      var th = el("button", "lthumb" + (L.mk && on && !editing ? " cur" : "")); th.type = "button";
+      th.appendChild(layerThumb(L));
+      PL.setLabel(th, t("btn.pixThumb", { name: L.name }));
+      th.addEventListener("click", function () { PL.selectLayer(L.id, false); });
+      th.addEventListener("dblclick", function () { if (L.k === "adj") adjLayerDialog(L); });
+      var mth = null;
+      if (L.mk) {
+        mth = el("button", "lthumb lmask" + (editing ? " cur" : "") + (L.mk.on ? "" : " off")); mth.type = "button";
+        mth.appendChild(maskThumb(L));
+        PL.setLabel(mth, t("btn.maskThumb", { name: L.name }));
+        mth.addEventListener("click", function () { PL.selectLayer(L.id, true); });
+      }
       var name = el("button", "lname", L.name); name.type = "button";
       if (L.k !== "raster") name.appendChild(el("span", "lkind", t("kind." + L.k)));
-      name.addEventListener("click", function () { PL.selectLayer(L.id); });
-      name.addEventListener("dblclick", function () { if (L.k === "text") textDialog(L); else renameLayer(L); });
+      if (L.mk && (editing || !L.mk.on)) name.appendChild(el("span", "lkind", t(editing ? "kind.mask" : "kind.maskOff")));
+      name.addEventListener("click", function () { PL.selectLayer(L.id, editing); });
+      name.addEventListener("dblclick", function () { if (L.k === "text") textDialog(L); else if (L.k === "adj") adjLayerDialog(L); else renameLayer(L); });
+      var fxb = null;
+      if (L.fx) {
+        fxb = el("button", "icon-btn small lfx"); fxb.type = "button"; fxb.innerHTML = ICON.fx;
+        PL.setLabel(fxb, t("btn.fx"));
+        fxb.addEventListener("click", function (e) { e.stopPropagation(); PL.selectLayer(L.id); fxDialog(L); });
+      }
       var lock = el("button", "icon-btn small"); lock.type = "button";
       lock.innerHTML = L.lock ? ICON.lock : ICON.unlock; PL.setLabel(lock, t(L.lock ? "btn.unlock" : "btn.lock"));
       lock.classList.toggle("dim", !L.lock);
       lock.addEventListener("click", function (e) { e.stopPropagation(); ops().setProp(L, "lock", L.lock ? 0 : 1, t(L.lock ? "step.unlock" : "step.lock")); });
-      row.appendChild(eye); row.appendChild(th); row.appendChild(name); row.appendChild(lock);
+      row.appendChild(eye); row.appendChild(th); if (mth) row.appendChild(mth); row.appendChild(name);
+      if (fxb) row.appendChild(fxb);
+      row.appendChild(lock);
       list.appendChild(row);
     });
     // Active layer properties.
@@ -788,6 +945,7 @@
     C.BLENDS.forEach(function (b) { var o = el("option", "", b[PL.LANG] || b.en); o.value = b.id; bl.appendChild(o); });
     if (A) { bl.value = A.bl; op.value = String(A.op); $("opacity-out").textContent = A.op + "%"; }
     bl.disabled = op.disabled = !A;
+    if (A && A.k === "adj") bl.disabled = true;           // adjustments mix normally
   }
   function renderHistory() {
     var list = $("history-list"), h = st.hist.list();
@@ -920,6 +1078,9 @@
                 ["up-layer", ICON.up, "btn.up", function () { ops().moveBy(1); }],
                 ["down-layer", ICON.down, "btn.down", function () { ops().moveBy(-1); }],
                 ["merge-layer", ICON.merge, "btn.merge", function () { ops().mergeDown(); }],
+                ["mask-layer", ICON.mask, "btn.mask", function () { ops().addMask(!!st.sel); }],
+                ["adj-layer", ICON.adj, "btn.adj", function () { adjLayerDialog(null); }],
+                ["fx-layer", ICON.fx, "btn.fx", function () { var L = PL.layer(); if (L) fxDialog(L); }],
                 ["del-layer", ICON.del, "btn.deleteLayer", function () { ops().remove(); }]];
     acts.forEach(function (a) {
       var b = $(a[0]); b.innerHTML = a[1]; PL.setLabel(b, t(a[2])); b.addEventListener("click", a[3]);

@@ -67,9 +67,9 @@
   function save(fs, C, T, doc, surfaces, known) {
     known = known || {};
     var written = 0, jobs = [];
-    doc.layers.forEach(function (L) {
-      if (L.k !== "raster") return;
-      var s = surfaces[L.id];
+    // Raster layers and layer masks (C.tileOwners) own tiles.
+    C.tileOwners(doc).forEach(function (o) {
+      var L = o.rec, s = surfaces[o.id];
       if (!s) return;
       Object.keys(s.dirty).forEach(function (k) {
         var t = s.tiles.get(k);
@@ -120,9 +120,8 @@
     known = known || {};
     return readDoc(fs, C, dirOf(id) + "/doc.json").then(function (doc) {
       var surfaces = {}, missing = 0, cache = {}, chain = Promise.resolve();
-      doc.layers.forEach(function (L) {
-        if (L.k !== "raster") return;
-        var s = surfaces[L.id] = T.create();
+      C.tileOwners(doc).forEach(function (o) {
+        var L = o.rec, s = surfaces[o.id] = T.create();
         Object.keys(L.t).forEach(function (k) {
           var name = L.t[k];
           chain = chain.then(function () {
