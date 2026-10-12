@@ -19,7 +19,8 @@
   var PL = window.PL, C = PL.C, st = PL.st;
   var MAX_FILE = 50 * 1024 * 1024;
   var PICTURES = "/internal/Pictures";
-  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico)$/i;
+  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora)$/i;
+  var LAYERED_MAX = 300 * 1024 * 1024;              // a PSD or OpenRaster file
   function t(k, p) { return PL.t(k, p); }
 
   function dialogHost() {
@@ -63,7 +64,15 @@
       return { w: fit.w, h: fit.h, data: d.data, scaled: fit.scaled };
     });
   }
+  function kindOf(file) {
+    var n = String(file && file.name || "");
+    if (/\.psd$/i.test(n) || /photoshop/i.test(file.type || "")) return "psd";
+    if (/\.ora$/i.test(n) || /openraster/i.test(file.type || "")) return "ora";
+    return "";
+  }
   function openPictureFile(file, asLayer) {
+    var kind = kindOf(file);
+    if (kind) return openLayered(file, kind);
     PL.busy(true);
     return decode(file).then(function (img) {
       PL.busy(false);
@@ -77,7 +86,7 @@
   }
   function openPicture(asLayer) {
     var dlg = dialogHost();
-    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*") : Promise.resolve(null);
+    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora") : Promise.resolve(null);
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
@@ -92,6 +101,103 @@
       var type = /\.svg$/i.test(name) ? "image/svg+xml" : (b.type || "");
       return openPictureFile(new File([b], name, { type: type }), false);
     }).catch(function () { PL.toast(t("msg.openFail")); });
+  }
+
+  // ---------- Layered files (PSD, OpenRaster) ----------
+  // Always a new project. Too big for this device: every layer is
+  // scaled with the canvas (one notice). Over the layer limit: the
+  // lowest layers are merged into one, so the picture looks the same.
+  function openLayered(file, kind) {
+    if (file.size > LAYERED_MAX) { PL.toast(t("msg.layeredBig")); return Promise.resolve(); }
+    PL.busy(true);
+    return file.arrayBuffer().then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      if (kind === "psd") return PL.job("psd", { bytes: bytes, o: { maxPixels: PL.phone ? PL.limits.area * 2 : 120e6 } });
+      return PL.ORA.read(bytes, window.AtelierZip).then(oraPixels);
+    }).then(function (r) {
+      var layers = r.layers;
+      if (!layers.length && r.merged) layers = [{ name: t("layer.bg"), x: 0, y: 0, img: r.merged, op: 100, bl: "normal", vis: 1 }];
+      if (!layers.length) throw new Error("empty");
+      var fit = C.fitSize(r.w, r.h, PL.limits);
+      if (fit.scaled) layers = scaleLayers(layers, fit.w / r.w);
+      layers = capLayers(layers);
+      return PL.closeProject(true).then(function () {
+        PL.busy(false);
+        PL.newFromLayers(fit.w, fit.h, baseName(file.name), layers);
+        var notes = [];
+        if (fit.scaled) notes.push(t("msg.scaled", { w: fit.w, h: fit.h }));
+        if (r.skipped && (r.skipped.groups || r.skipped.masks)) notes.push(t("msg.layeredFlat"));
+        if (r.skipped && (r.skipped.empty || r.skipped.missing)) notes.push(t("msg.layeredSkipped"));
+        if (r.skipped && r.skipped.blends) notes.push(t("msg.layeredBlend"));
+        if (layers.capped) notes.push(t("msg.layeredMerged", { n: C.MAX_LAYERS }));
+        if (notes.length) PL.toast(notes.join(" "));
+      });
+    }).catch(function (e) {
+      PL.busy(false);
+      var m = e && e.message || "";
+      PL.toast(t(m === "psd-mode" ? "msg.psdMode" : m === "psd-big" ? "msg.layeredBig" : m === "psd-zip" ? "msg.psdZip" : "msg.layeredFail"));
+    });
+  }
+  // OpenRaster layers are PNGs: decoded by the browser, one by one.
+  function oraPixels(r) {
+    var out = [], chain = Promise.resolve();
+    r.layers.forEach(function (L) {
+      chain = chain.then(function () {
+        return source(new Blob([L.png], { type: "image/png" })).then(function (s) {
+          if (s.w * s.h > PL.limits.area) { s.done(); throw new Error("psd-big"); }
+          out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, img: pixelsOf(s) });
+        });
+      });
+    });
+    return chain.then(function () {
+      if (out.length || !r.merged) return { w: r.w, h: r.h, layers: out, merged: null, skipped: r.skipped };
+      return source(new Blob([r.merged], { type: "image/png" })).then(function (s) {
+        return { w: r.w, h: r.h, layers: [], merged: pixelsOf(s), skipped: r.skipped };
+      });
+    });
+  }
+  function pixelsOf(s) {
+    var c = PL.view.canvas(s.w, s.h), g = c.getContext("2d");
+    g.drawImage(s.src, 0, 0);
+    s.done();
+    var d = g.getImageData(0, 0, s.w, s.h).data;
+    c.width = c.height = 0;
+    return { w: s.w, h: s.h, data: d };
+  }
+  function scaleLayers(layers, k) {
+    return layers.map(function (L) {
+      var w = Math.max(1, Math.round(L.img.w * k)), h = Math.max(1, Math.round(L.img.h * k));
+      return { name: L.name, x: Math.round(L.x * k), y: Math.round(L.y * k), op: L.op, bl: L.bl, vis: L.vis,
+               img: PL.R.resize(L.img, w, h) };
+    });
+  }
+  function capLayers(layers) {
+    if (layers.length <= C.MAX_LAYERS) return layers;
+    var n = layers.length - C.MAX_LAYERS + 1, low = layers.slice(0, n);
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    low.forEach(function (L) {
+      if (!L.vis) return;
+      x0 = Math.min(x0, L.x); y0 = Math.min(y0, L.y);
+      x1 = Math.max(x1, L.x + L.img.w); y1 = Math.max(y1, L.y + L.img.h);
+    });
+    var merged = { name: t("layer.merged"), x: 0, y: 0, op: 100, bl: "normal", vis: 1, img: { w: 1, h: 1, data: new Uint8ClampedArray(4) } };
+    if (x1 > x0) {
+      var c = PL.view.canvas(x1 - x0, y1 - y0), g = c.getContext("2d"), tmp = PL.view.canvas(1, 1);
+      low.forEach(function (L) {
+        if (!L.vis) return;
+        tmp.width = L.img.w; tmp.height = L.img.h;
+        tmp.getContext("2d").putImageData(new ImageData(L.img.data, L.img.w, L.img.h), 0, 0);
+        g.globalAlpha = L.op / 100;
+        g.globalCompositeOperation = C.blendOp(L.bl);
+        g.drawImage(tmp, L.x - x0, L.y - y0);
+      });
+      merged.x = x0; merged.y = y0;
+      merged.img = { w: c.width, h: c.height, data: g.getImageData(0, 0, c.width, c.height).data };
+      c.width = c.height = tmp.width = tmp.height = 0;
+    }
+    var out = [merged].concat(layers.slice(n));
+    out.capped = true;
+    return out;
   }
 
   // ---------- Clipboard ----------
@@ -135,7 +241,8 @@
   }
 
   // ---------- Export ----------
-  var MIME = { png: "image/png", jpg: "image/jpeg", webp: "image/webp" };
+  var MIME = { png: "image/png", jpg: "image/jpeg", webp: "image/webp", psd: "image/vnd.adobe.photoshop", ora: "image/openraster" };
+  var LAYERED = { psd: 1, ora: 1 };
   function render(fmt, q, scale) {
     var c = PL.view.flatten(null, scale);
     if (fmt === "jpg") {                                  // JPEG has no transparency: white below
@@ -150,10 +257,62 @@
   function fileName(ext) {
     return (C.cleanName(st.doc.name).replace(/[\\\/:*?"<>|]+/g, "-") || "picture") + "." + ext;
   }
+  // ---------- Layered export (PSD, OpenRaster) ----------
+  // Every layer as { name, x, y, img, op, bl, vis } (text and shapes
+  // as their pixels), trimmed to its content, bottom → top.
+  function layerPixels() {
+    return st.doc.layers.map(function (L) {
+      var o = { name: L.name, op: L.op, bl: L.bl, vis: L.vis, x: L.x, y: L.y, img: { w: 0, h: 0, data: new Uint8ClampedArray(0) } };
+      if (L.k !== "raster") {
+        var v = PL.ops.vectorPixels(L);
+        o.x = v.x; o.y = v.y; o.img = v.img;
+        return o;
+      }
+      var s = PL.surface(L.id), b = PL.T.contentBounds(s);
+      if (b) { o.x = L.x + b.x; o.y = L.y + b.y; o.img = PL.T.readRect(s, b.x, b.y, b.w, b.h); }
+      return o;
+    });
+  }
+  function pngOf(img) {
+    var c = PL.view.canvas(Math.max(1, img.w), Math.max(1, img.h));
+    if (img.w && img.h) c.getContext("2d").putImageData(new ImageData(img.data, img.w, img.h), 0, 0);
+    return new Promise(function (ok, fail) {
+      c.toBlob(function (b) {
+        c.width = c.height = 0;
+        if (!b) { fail(new Error("png")); return; }
+        b.arrayBuffer().then(function (x) { ok(new Uint8Array(x)); }, fail);
+      }, "image/png");
+    });
+  }
+  function renderLayered(fmt) {
+    var d = st.doc, layers = layerPixels();
+    var mc = PL.view.flatten(null, 1), merged = { w: d.w, h: d.h, data: mc.getContext("2d").getImageData(0, 0, d.w, d.h).data };
+    mc.width = mc.height = 0;
+    if (fmt === "psd") {
+      return PL.job("psdWrite", { doc: { w: d.w, h: d.h, layers: layers, merged: merged } }).then(function (bytes) {
+        return new Blob([bytes], { type: MIME.psd });
+      });
+    }
+    var k = Math.min(1, 256 / Math.max(d.w, d.h));
+    var out = { w: d.w, h: d.h, layers: [] }, chain = Promise.resolve();
+    layers.forEach(function (L) {
+      chain = chain.then(function () { return pngOf(L.img); }).then(function (png) {
+        out.layers.push({ name: L.name, x: L.img.w ? L.x : 0, y: L.img.w ? L.y : 0, op: L.op, bl: L.bl, vis: L.vis, png: png });
+      });
+    });
+    return chain.then(function () { return pngOf(merged); }).then(function (png) {
+      out.merged = png;
+      return pngOf(PL.R.resize(merged, d.w * k, d.h * k));
+    }).then(function (thumb) {
+      out.thumb = thumb;
+      return new Blob([PL.ORA.write(out)], { type: MIME.ora });
+    });
+  }
+
   function exportImage(fmt, q, scale, toPictures) {
     if (!st.doc) return;
     PL.busy(true);
-    render(fmt, q, scale).then(function (blob) {
+    (LAYERED[fmt] ? renderLayered(fmt) : render(fmt, q, scale)).then(function (blob) {
       PL.busy(false);
       if (!blob) { PL.toast(t("msg.exportFail")); return; }
       if (fmt === "webp" && blob.type !== "image/webp") { PL.toast(t("msg.noWebp")); fmt = "png"; }

@@ -77,7 +77,9 @@
       "image/webp": [".webp"],
       "image/gif": [".gif"],
       "image/bmp": [".bmp"],
-      "image/avif": [".avif"] } },
+      "image/avif": [".avif"],
+      "image/vnd.adobe.photoshop": [".psd"],
+      "image/openraster": [".ora"] } },
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"] } },
