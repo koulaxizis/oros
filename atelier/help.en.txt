@@ -5,7 +5,7 @@ Design posts, stories, flyers, posters, cards and more, from a blank page or a r
 Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also pick one of the designs under `Start from a template`; its texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
 
 ## Add and edit elements
-- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `Sources`, `Uploads` and `Background`.
+- The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `AI`, `Sources`, `Uploads` and `Background`.
 - `Elements` has shapes, lines and arrows, and icons you can search in English or Greek.
 - `Text` adds a heading, a subheading or body text, and has ready `Styles` such as neon, shadow and curved text.
 - Tap or click an element to select it. Drag it to move, use the handles to resize, and the round handle below it to rotate. Guides help you line things up.
@@ -18,6 +18,7 @@ Under `What will you make?` tap or click a size, for example a square post or an
 - With a photo selected you get `Filters`, `Adjust` (brightness, contrast, warmth and more), `Shape` to cut it into a circle, star or other shape, `Flip` and `Replace`.
 - `Crop`, or a double-click on the photo, lets you move and zoom the photo inside its frame.
 - `Background` can use the selected photo as the page background.
+- `Edit in Photo Lab` opens the photo in Photo Lab for deeper changes (layers, retouching, selections). Press `Done` there and you come back to the design with the new picture in the same frame; the Photo Lab project stays, so you can change it again later. `Undo` brings back the earlier picture.
 
 ## Free photos, illustrations and icons
 `Sources` searches open libraries: Openverse and Wikimedia Commons for photos and illustrations, Iconify for icons and clipart. Pixabay and Pexels appear too once you add your own free key under `Pixabay and Pexels keys`. Tap or click a result to add it.
@@ -52,6 +53,12 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` makes the design in other sizes, for example a square post as a story and a banner. Tick one or more sizes (or a custom size): the elements are placed again for each one, so things at the edges stay at the edges, bars and photos across the page stretch, and nothing is distorted. With `Keep this design, make a copy in each size` on, each size becomes a new design next to this one (in the same folder); with it off, this design itself changes size (`Undo` brings it back).
 - `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
+
+## AI
+- The `AI` tab writes for you. `Ideas for this page` gives three ideas with new words for every text box of the page (and new colours, if `New colours too` is ticked), keeping the layout: tell it what the design is about, then tap an idea to try it, or another one; `Undo` brings back your own.
+- `Write a new text` adds a text box with words written from what you ask. A selected text has `Write with AI` in the bar above the canvas: write it for me, shorter, longer, fix spelling, more formal, friendlier, or translate between Greek and English. You see the answer first and choose `Use this`.
+- The words come from the AI you set up in the Assistant app: your own key for Claude, ChatGPT, Gemini and others, a model server on your computer, or the browser's built-in model. Only the text in question goes to it, straight from this device.
+- `Remove background` (on a selected photo, or in the `AI` tab) keeps the main subject and makes the rest transparent. It runs on this device and the picture is not sent anywhere. The first time it downloads the tool (about 16 MB), then works offline; `Keep more · keep less` adjusts the edge before you apply it. The original picture stays in `Uploads`, and `Undo` brings it back.
 
 ## Import from Canva and other files
 `Import` on the home screen offers `From a file (.pptx, picture, package)…` and `From your Canva account…`.

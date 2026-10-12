@@ -1,8 +1,8 @@
 // ============================================================
-// orOS Stock — App logic (v1.0.0)
+// orOS Stock — App logic (v1.3.0)
 // Business inventory (not the home Storage app):
 //   - products with SKU, barcode, category, unit, minimum, reorder
-//     quantity, supplier, purchase / sale price, VAT, location
+//     quantity, supplier, purchase / sale price, VAT, location, photo
 //   - a ledger of movements: receive, sell, customer return, return
 //     to supplier, loss, stock count, correction; several lines per
 //     movement, a reference (invoice / receipt no.), void instead of
@@ -11,13 +11,18 @@
 //     never a stored number: two devices selling at once never lose
 //     a sale through sync
 //   - Reorder: items at or below their minimum, by supplier, with a
-//     suggested quantity, "Copy list" and "Receive this order"
+//     suggested quantity; purchase orders received in parts (1.1)
+//   - Reports: value, period totals, best sellers, dead stock (1.1)
+//   - counter (quick sale), barcode labels on A4 (1.2)
 //   - suppliers (also from Contacts), categories, own units
 //   - a USB / Bluetooth barcode scanner works as a keyboard in every
-//     search and line field (code + Enter)
+//     search and line field (code + Enter); the phone camera too
+//     where the browser has BarcodeDetector (1.3)
 //   - CSV import of products (own export, WooCommerce export, any
 //     sheet with known column names), CSV export of products and
 //     movements, JSON export / import (a merge)
+//   - bridges (all prefills): To-Do, Mail, Budget, Quote, Spreadsheet,
+//     Today (today.js); receiver BR-ST-OUT for Invoices (1.3)
 //   - the low-stock notice comes from the shell (stockCheckTick, which
 //     uses core.js too)
 // Data:
@@ -30,10 +35,12 @@
 //   3. Mutations
 //   4. Products view + product sheet
 //   5. Movements view + movement sheet
-//   6. Reorder view
+//   6. Reorder view + purchase orders + bridges
+//      6b. Reports  6c. Counter  6d. Labels  6e. Photos
 //   7. Suppliers view
 //   8. Editors: product, movement, supplier, categories, units
 //   9. Settings, CSV / JSON
+//      9b. Camera scanning
 //  10. Dialogs + toasts
 //  11. Keyboard (Contract B) + deep link
 //  12. Sync slice + palette
@@ -87,11 +94,11 @@
       "sheet.delHint": "A product with movements can't be deleted; archive it instead.",
       "act.in": "+ Receive", "act.out": "− Sell", "act.count": "Count",
       "t.in": "Receive", "t.out": "Sale", "t.ret": "Customer return", "t.rts": "Return to supplier",
-      "t.loss": "Loss / damage", "t.count": "Stock count", "t.fix": "Correction",
+      "t.loss": "Loss / damage", "t.count": "Stock count", "t.fix": "Correction", "t.xfer": "Transfer",
       "voided": "voided",
       "moves.none": "No movements in this period.",
       "r.30": "Last 30 days", "r.month": "This month", "r.year": "This year", "r.all": "All",
-      "mf.all": "All", "mf.in": "Receipts", "mf.out": "Sales", "mf.ret": "Returns", "mf.loss": "Losses", "mf.count": "Counts", "mf.fix": "Corrections",
+      "mf.all": "All", "mf.in": "Receipts", "mf.out": "Sales", "mf.ret": "Returns", "mf.loss": "Losses", "mf.count": "Counts", "mf.fix": "Corrections", "mf.xfer": "Transfers",
       "lines": "{n} products", "lines1": "1 product",
       "mv.ref": "Ref.", "mv.sup": "Supplier", "mv.note": "Note", "mv.total": "Total",
       "mv.void": "Void this movement", "mv.voidQ": "Void this movement? Its quantities stop counting. It stays in the list, crossed out.",
@@ -177,6 +184,20 @@
       "ctr.done": "Complete sale", "ctr.clear": "Clear", "ctr.clearQ": "Clear this sale?", "ctr.sold": "Sale saved: {t}",
       "ctr.unknown": "No product with the code “{c}”.", "ctr.less": "One less", "ctr.more": "One more", "ctr.noPrice": "no price",
       "ctr.ref": "Counter",
+      "wh.main": "Main warehouse", "wh.title": "Warehouses", "wh.one": "Warehouse", "wh.from": "From", "wh.to": "To",
+      "wh.all": "All warehouses", "wh.new": "New warehouse", "wh.name": "Warehouse name", "wh.rename": "Rename",
+      "wh.arch": "Archive", "wh.unarch": "Bring back", "wh.archived": "archived", "wh.del": "Delete",
+      "wh.hint": "With a second warehouse, every movement says where it happened and Transfer moves stock between them. Totals, value and reorder stay for the whole business.",
+      "wh.byWh": "By warehouse", "wh.same": "Choose two different warehouses.", "wh.here": "here {q}",
+      "wh.archQ": "Archive this warehouse? It still holds stock; move it first with a Transfer.",
+      "wh.value": "Value per warehouse",
+      "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app",
+      "out.used1": "This document was already taken out of stock once.",
+      "out.used": "This document was already taken out of stock {n} times.",
+      "out.miss": "Not found in Stock, left out ({n}):",
+      "cam.scan": "Scan with the camera", "cam.title": "Point the camera at a barcode", "cam.close": "Done",
+      "cam.wait": "Starting the camera…", "cam.denied": "The camera could not start. Check that orOS may use it.",
+      "cam.found": "Added: {n}", "cam.unknown": "No product with code {c}",
       "lbl.title": "Barcode labels", "lbl.copies": "Copies", "lbl.price": "Price on the label", "lbl.print": "Print",
       "lbl.sheet": "A4 sheet, 3 × 8 labels (70 × 37 mm)", "lbl.skip": "No barcode or SKU: {n}",
       "lbl.withPrice": "Show the price", "lbl.max": "At most {n} labels at a time.", "lbl.none": "Nothing to print: add products with a barcode or SKU.",
@@ -214,11 +235,11 @@
       "sheet.delHint": "Προϊόν με κινήσεις δεν διαγράφεται· αρχειοθέτησέ το.",
       "act.in": "+ Παραλαβή", "act.out": "− Πώληση", "act.count": "Απογραφή",
       "t.in": "Παραλαβή", "t.out": "Πώληση", "t.ret": "Επιστροφή πελάτη", "t.rts": "Επιστροφή σε προμηθευτή",
-      "t.loss": "Φθορά / απώλεια", "t.count": "Απογραφή", "t.fix": "Διόρθωση",
+      "t.loss": "Φθορά / απώλεια", "t.count": "Απογραφή", "t.fix": "Διόρθωση", "t.xfer": "Μεταφορά",
       "voided": "ακυρωμένη",
       "moves.none": "Καμία κίνηση σε αυτό το διάστημα.",
       "r.30": "Τελευταίες 30 μέρες", "r.month": "Αυτός ο μήνας", "r.year": "Φέτος", "r.all": "Όλες",
-      "mf.all": "Όλες", "mf.in": "Παραλαβές", "mf.out": "Πωλήσεις", "mf.ret": "Επιστροφές", "mf.loss": "Φθορές", "mf.count": "Απογραφές", "mf.fix": "Διορθώσεις",
+      "mf.all": "Όλες", "mf.in": "Παραλαβές", "mf.out": "Πωλήσεις", "mf.ret": "Επιστροφές", "mf.loss": "Φθορές", "mf.count": "Απογραφές", "mf.fix": "Διορθώσεις", "mf.xfer": "Μεταφορές",
       "lines": "{n} προϊόντα", "lines1": "1 προϊόν",
       "mv.ref": "Παραστατικό", "mv.sup": "Προμηθευτής", "mv.note": "Σημείωση", "mv.total": "Σύνολο",
       "mv.void": "Ακύρωση κίνησης", "mv.voidQ": "Να ακυρωθεί η κίνηση; Οι ποσότητές της δεν μετράνε πια. Μένει στη λίστα, διαγραμμένη.",
@@ -304,6 +325,20 @@
       "ctr.done": "Ολοκλήρωση πώλησης", "ctr.clear": "Καθαρισμός", "ctr.clearQ": "Να καθαρίσει αυτή η πώληση;", "ctr.sold": "Η πώληση καταχωρήθηκε: {t}",
       "ctr.unknown": "Δεν υπάρχει προϊόν με κωδικό «{c}».", "ctr.less": "Ένα λιγότερο", "ctr.more": "Ένα ακόμα", "ctr.noPrice": "χωρίς τιμή",
       "ctr.ref": "Ταμείο",
+      "wh.main": "Κεντρική αποθήκη", "wh.title": "Αποθήκες", "wh.one": "Αποθήκη", "wh.from": "Από", "wh.to": "Προς",
+      "wh.all": "Όλες οι αποθήκες", "wh.new": "Νέα αποθήκη", "wh.name": "Όνομα αποθήκης", "wh.rename": "Μετονομασία",
+      "wh.arch": "Αρχειοθέτηση", "wh.unarch": "Επαναφορά", "wh.archived": "αρχειοθετημένη", "wh.del": "Διαγραφή",
+      "wh.hint": "Με δεύτερη αποθήκη, κάθε κίνηση λέει πού έγινε και η Μεταφορά μετακινεί απόθεμα ανάμεσά τους. Σύνολα, αξία και παραγγελίες μένουν για όλη την επιχείρηση.",
+      "wh.byWh": "Ανά αποθήκη", "wh.same": "Διάλεξε δύο διαφορετικές αποθήκες.", "wh.here": "εδώ {q}",
+      "wh.archQ": "Αρχειοθέτηση αυτής της αποθήκης; Έχει ακόμα απόθεμα· μετάφερέ το πρώτα με Μεταφορά.",
+      "wh.value": "Αξία ανά αποθήκη",
+      "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή",
+      "out.used1": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα μία φορά.",
+      "out.used": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα {n} φορές.",
+      "out.miss": "Δεν βρέθηκαν στο Απόθεμα και παραλείφθηκαν ({n}):",
+      "cam.scan": "Σάρωση με την κάμερα", "cam.title": "Στόχευσε ένα barcode με την κάμερα", "cam.close": "Τέλος",
+      "cam.wait": "Ξεκινάει η κάμερα…", "cam.denied": "Η κάμερα δεν ξεκίνησε. Έλεγξε ότι το orOS έχει άδεια να τη χρησιμοποιεί.",
+      "cam.found": "Προστέθηκε: {n}", "cam.unknown": "Κανένα προϊόν με κωδικό {c}",
       "lbl.title": "Ετικέτες barcode", "lbl.copies": "Αντίτυπα", "lbl.price": "Τιμή στην ετικέτα", "lbl.print": "Εκτύπωση",
       "lbl.sheet": "Σελίδα A4, 3 × 8 ετικέτες (70 × 37 mm)", "lbl.skip": "Χωρίς barcode ή SKU: {n}",
       "lbl.withPrice": "Να φαίνεται η τιμή", "lbl.max": "Το πολύ {n} ετικέτες κάθε φορά.", "lbl.none": "Δεν υπάρχει κάτι για εκτύπωση: πρόσθεσε προϊόντα με barcode ή SKU.",
@@ -332,7 +367,7 @@
     gear:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
-  var T_ICON = { "in": "📥", out: "📤", ret: "↩️", rts: "↪️", loss: "💔", count: "📋", fix: "✏️" };
+  var T_ICON = { "in": "📥", out: "📤", ret: "↩️", rts: "↪️", loss: "💔", count: "📋", fix: "✏️", xfer: "🔀" };
 
   // "{n} products" with a singular for 1 (key + "1")
   function tn(key, n) { return n === 1 ? t(key + "1") : t(key, { n: n }); }
@@ -465,7 +500,7 @@
 
   var TABS = ["items", "moves", "order", "sups", "reports"];
   var IFILTERS = ["all", "low", "out", "arch"];
-  var MFILTERS = ["all", "in", "out", "ret", "loss", "count", "fix"];
+  var MFILTERS = ["all", "in", "out", "ret", "loss", "count", "fix", "xfer"];
   var RANGES = ["30", "month", "year", "all"];
   var SORTS = ["name", "sku", "qty", "value"];
   function loadPrefs() {
@@ -482,7 +517,9 @@
       mf: MFILTERS.indexOf(p.mf) >= 0 ? p.mf : "all",
       range: RANGES.indexOf(p.range) >= 0 ? p.range : "30",
       rr: RANGES.indexOf(p.rr) >= 0 ? p.rr : "30",
-      poAll: p.poAll === true
+      poAll: p.poAll === true,
+      wh: typeof p.wh === "string" ? p.wh : "",        // this device's warehouse for new movements
+      wf: typeof p.wf === "string" ? p.wf : "*"        // Products: "*" all, else one warehouse
     };
   }
   var prefsTimer = null;
@@ -505,6 +542,27 @@
     return stats;
   }
   function rowOf(id) { return rows().by[id] || null; }
+  // ----- warehouses (1.4) -----
+  function mainWh() { return C.whName(data, "", t("wh.main")); }
+  function whLabel(w) { return C.whName(data, w, t("wh.main")); }
+  function extraWhs(withArch) {
+    return byName(data.whs.filter(function (w) { return w.id !== C.WH_MAIN && (withArch || !w.arch); }));
+  }
+  // several warehouses in use: the extra UI shows
+  function multiWh() { return extraWhs(false).length > 0; }
+  function whOk(w) { return w === "" || extraWhs(false).some(function (x) { return x.id === w; }); }
+  function defWh() { return whOk(prefs.wh) ? prefs.wh : ""; }
+  function whAll() {
+    var st = rows();
+    if (!st.wh) st.wh = C.whQty(data);
+    return st.wh;
+  }
+  function qtyAt(itemId, w) { var r = whAll()[itemId]; return (r && r[w || ""]) || 0; }
+  function whSelect(value) {
+    var opts = [["", mainWh()]].concat(extraWhs(false).map(function (w) { return [w.id, w.name]; }));
+    var sel = selectInput(opts, whOk(value) ? value : "");
+    return sel;
+  }
   function byName(list) {
     return list.slice().sort(function (a, b) { return a.name.localeCompare(b.name, LOCALE) || cmpStr(a.id, b.id); });
   }
@@ -605,6 +663,22 @@
     });
     if (prefs.cat && prefs.cat !== "-" && !byId("cats", prefs.cat)) prefs.cat = "";
     cs.value = prefs.cat;
+    var ws = $("items-wh");
+    ws.innerHTML = "";
+    ws.hidden = !multiWh();
+    if (!ws.hidden) {
+      [["*", t("wh.all")], ["", mainWh()]].concat(extraWhs(false).map(function (w) { return [w.id, w.name]; })).forEach(function (o) {
+        var op = el("option", "", o[1]);
+        op.value = o[0];
+        ws.appendChild(op);
+      });
+    }
+    if (ws.hidden || (prefs.wf !== "*" && !whOk(prefs.wf))) prefs.wf = "*";
+    ws.value = prefs.wf;
+    // one warehouse chosen: its quantity is shown, "out of stock" and the
+    // qty order use it; low stock stays the business-wide minimum
+    var wf = prefs.wf;
+    function qOf(r) { return wf === "*" ? r.q : qtyAt(r.item.id, wf); }
     var ss = $("items-sort");
     ss.innerHTML = "";
     SORTS.forEach(function (s) { var op = el("option", "", t("sort." + s)); op.value = s; ss.appendChild(op); });
@@ -615,7 +689,7 @@
       var it = r.item;
       if (prefs.f === "arch" ? !it.arch : it.arch) return false;
       if (prefs.f === "low" && !r.low) return false;
-      if (prefs.f === "out" && !r.out) return false;
+      if (prefs.f === "out" && qOf(r) > 0) return false;
       if (prefs.cat === "-" && it.cat && byId("cats", it.cat)) return false;
       if (prefs.cat && prefs.cat !== "-" && it.cat !== prefs.cat) return false;
       return matchItem(it, words);
@@ -623,20 +697,20 @@
     list.sort(function (a, b) {
       var x = a.item, y = b.item;
       if (prefs.sort === "sku") return (x.sku ? 0 : 1) - (y.sku ? 0 : 1) || x.sku.localeCompare(y.sku, LOCALE, { numeric: true }) || x.name.localeCompare(y.name, LOCALE);
-      if (prefs.sort === "qty") return (a.q - b.q) || x.name.localeCompare(y.name, LOCALE);
+      if (prefs.sort === "qty") return (qOf(a) - qOf(b)) || x.name.localeCompare(y.name, LOCALE);
       if (prefs.sort === "value") return (b.value - a.value) || x.name.localeCompare(y.name, LOCALE);
       return x.name.localeCompare(y.name, LOCALE) || cmpStr(x.id, y.id);
     });
     var ul = $("items-list");
     ul.innerHTML = "";
     if (!list.length) { ul.appendChild(el("li", "muted pad", t("items.none"))); return; }
-    list.slice(0, MAX_SHOWN).forEach(function (r) { ul.appendChild(itemRow(r)); });
+    list.slice(0, MAX_SHOWN).forEach(function (r) { ul.appendChild(itemRow(r, qOf(r))); });
     if (list.length > MAX_SHOWN) ul.appendChild(el("li", "muted pad", t("items.more", { n: MAX_SHOWN, all: list.length })));
   }
-  function itemRow(r) {
-    var it = r.item;
+  function itemRow(r, q) {
+    var it = r.item, out = q <= 0;
     var li = el("li");
-    var b = el("button", "row row-btn" + (r.out ? " lvl-out" : (r.low ? " lvl-low" : "")));
+    var b = el("button", "row row-btn" + (out ? " lvl-out" : (r.low ? " lvl-low" : "")));
     b.type = "button";
     var body = el("span", "r-body");
     body.appendChild(el("span", "r-name", it.name));
@@ -646,7 +720,7 @@
     if (it.arch) sub.appendChild(el("span", "badge", t("badge.arch")));
     if (sub.childNodes.length) body.appendChild(sub);
     b.appendChild(body);
-    var val = el("span", "r-val" + (r.out ? " bad" : (r.low ? " warn" : "")), fmtQ(r.q, it));
+    var val = el("span", "r-val" + (out ? " bad" : (r.low ? " warn" : "")), fmtQ(q, it));
     if (it.price) val.appendChild(el("small", "", money(it.price)));
     b.appendChild(val);
     b.addEventListener("click", function () { itemSheet(it.id); });
@@ -718,6 +792,16 @@
     kv(box, t("sheet.bc"), it.bc);
     kv(box, t("sheet.loc"), it.loc);
     dlg.appendChild(box);
+    if (multiWh() || Object.keys(whAll()[it.id] || {}).some(function (w) { return w && qtyAt(it.id, w); })) {
+      dlg.appendChild(el("div", "dlg-lbl", t("wh.byWh")));
+      var wb = el("div", "kvs");
+      [""].concat(extraWhs(true).map(function (w) { return w.id; })).forEach(function (w) {
+        var q = qtyAt(it.id, w), wh = byId("whs", w);
+        if (w && wh && wh.arch && !q) return;
+        kv(wb, whLabel(w), fmtQ(q, it), q < 0 ? "bad" : "");
+      });
+      dlg.appendChild(wb);
+    }
     var rate = C.outRate(data, it.id, todayYmd(), 30);
     if (rate > 0 && r.q > 0) dlg.appendChild(el("p", "hint", t("sheet.days", { n: Math.max(1, Math.round(r.q / rate)) })));
     if (it.note) dlg.appendChild(el("p", "notes", it.note));
@@ -737,10 +821,11 @@
         var s = el("span", "r-sub");
         s.appendChild(el("span", "", fmtDay(h.move.d)));
         if (h.move.t === "count") s.appendChild(el("span", "", t("mv.counted", { n: fmtQ(h.line.n, it) })));
+        if (whText(h.move)) s.appendChild(el("span", "", whText(h.move)));
         if (h.move.v === 1) s.appendChild(el("span", "badge", t("voided")));
         body.appendChild(s);
         b.appendChild(body);
-        var v = el("span", "r-val", fmtSigned(h.line.q, it));
+        var v = el("span", "r-val", lineQty(h.move, h.line.q, it));
         if (h.after !== null) v.appendChild(el("small", "", "→ " + fmtQ(h.after, it, true)));
         b.appendChild(v);
         b.addEventListener("click", function () { dlg.close(); moveSheet(h.move.id); });
@@ -809,7 +894,9 @@
   function renderMoves() {
     var chips = $("moves-chips");
     chips.innerHTML = "";
+    if (prefs.mf === "xfer" && !multiWh()) prefs.mf = "all";
     MFILTERS.forEach(function (f) {
+      if (f === "xfer" && !multiWh()) return;
       var b = el("button", "chip" + (prefs.mf === f ? " on" : ""), t("mf." + f));
       b.type = "button";
       b.setAttribute("aria-pressed", prefs.mf === f ? "true" : "false");
@@ -844,6 +931,13 @@
     });
     if (list.length > MAX_SHOWN) box.appendChild(el("p", "muted pad", t("items.more", { n: MAX_SHOWN, all: list.length })));
   }
+  // where a movement happened: "" with one warehouse, "A → B" for a transfer
+  function whText(mv) {
+    if (mv.t === "xfer") return whLabel(mv.w) + " → " + whLabel(mv.w2);
+    return mv.w || multiWh() ? whLabel(mv.w) : "";
+  }
+  // a transfer's quantity has no sign: it changes no total
+  function lineQty(mv, q, it) { return mv.t === "xfer" ? "⇄ " + fmtQ(q, it) : fmtSigned(q, it); }
   function moveTitle(mv) {
     if (mv.lines.length === 1) {
       var it = byId("items", mv.lines[0].i);
@@ -871,12 +965,13 @@
     if (mv.ref) sub.appendChild(el("span", "", mv.ref));
     var sup = byId("sups", mv.sup);
     if (sup) sub.appendChild(el("span", "", sup.name));
+    if (whText(mv)) sub.appendChild(el("span", "", whText(mv)));
     if (mv.v === 1) sub.appendChild(el("span", "badge", t("voided")));
     body.appendChild(sub);
     b.appendChild(body);
     var val;
     if (mv.lines.length === 1) {
-      val = el("span", "r-val", fmtSigned(mv.lines[0].q, byId("items", mv.lines[0].i)));
+      val = el("span", "r-val", lineQty(mv, mv.lines[0].q, byId("items", mv.lines[0].i)));
     } else val = el("span", "r-val", "");
     var tot = moveTotal(mv);
     if (tot !== null) val.appendChild(el("small", "", money(tot)));
@@ -896,6 +991,8 @@
     kv(box, t("mv.ref"), mv.ref);
     var sup = byId("sups", mv.sup);
     if (sup) kv(box, t("mv.sup"), sup.name);
+    if (mv.t === "xfer") { kv(box, t("wh.from"), whLabel(mv.w)); kv(box, t("wh.to"), whLabel(mv.w2)); }
+    else if (whText(mv)) kv(box, t("wh.one"), whText(mv));
     var tot = moveTotal(mv);
     if (tot !== null) kv(box, t("mv.total"), money(tot));
     dlg.appendChild(box);
@@ -914,7 +1011,7 @@
       if (typeof l.p === "number") s.appendChild(el("span", "", money(l.p) + " / " + unitLabel(it ? it.unit : "pcs")));
       if (s.childNodes.length) body.appendChild(s);
       b.appendChild(body);
-      b.appendChild(el("span", "r-val", fmtSigned(l.q, it)));
+      b.appendChild(el("span", "r-val", lineQty(mv, l.q, it)));
       if (it) b.addEventListener("click", function () { dlg.close(); itemSheet(it.id); });
       li.appendChild(b);
       ul.appendChild(li);
@@ -1239,7 +1336,7 @@
     finder.spellcheck = false;
     finder.setAttribute("enterkeyhint", "done");
     finder.setAttribute("aria-label", t("mv.add"));
-    dlg.appendChild(finder);
+    dlg.appendChild(withCam(finder, true));
     var hits = el("div", "hits");
     dlg.appendChild(hits);
     var box = el("ul", "lines");
@@ -1573,6 +1670,28 @@
     });
     s1.appendChild(u1);
     body.appendChild(s1);
+    // value per warehouse (several warehouses): positive quantities at
+    // the average cost, like the stock value
+    if (multiWh()) {
+      var sw = el("div", "sec");
+      sw.appendChild(el("h2", "sec-title", t("wh.value")));
+      var uw = el("ul", "rows"), all = whAll(), vals = Object.create(null);
+      rows().list.forEach(function (r) {
+        var per = all[r.item.id] || {};
+        Object.keys(per).forEach(function (w) { if (per[w] > 0) vals[w] = (vals[w] || 0) + Math.round(per[w] * r.avg / 1000); });
+      });
+      [""].concat(extraWhs(true).map(function (w) { return w.id; })).forEach(function (w) {
+        var wh = byId("whs", w);
+        if (w && wh && wh.arch && !vals[w]) return;
+        var li = el("li"), row = el("div", "row compact");
+        row.appendChild(el("span", "r-body r-name", whLabel(w)));
+        row.appendChild(el("span", "r-val", money(vals[w] || 0)));
+        li.appendChild(row);
+        uw.appendChild(li);
+      });
+      sw.appendChild(uw);
+      body.appendChild(sw);
+    }
     // most sold in the period
     var s2 = el("div", "sec");
     s2.appendChild(el("h2", "sec-title", t("rep.top") + " · " + t("r." + prefs.rr)));
@@ -1622,6 +1741,14 @@
     var dlg = makeDialog("st-counter", true);
     dlg.classList.add("counter-dlg");
     dlg.appendChild(el("div", "dlg-title", "🛒 " + t("ctr.title")));
+    // several warehouses: the counter sells from this device's one
+    var ctrWh = null;
+    if (multiWh()) {
+      ctrWh = whSelect(defWh());
+      ctrWh.addEventListener("change", function () { prefs.wh = ctrWh.value; savePrefs(); paint(); });
+      dlg.appendChild(field(t("wh.one"), ctrWh, "st-ctr-wh"));
+    }
+    function ctrQ(id) { return ctrWh ? qtyAt(id, ctrWh.value) : (rowOf(id) || { q: 0 }).q; }
     var scan = el("input");
     scan.type = "search";
     scan.id = "st-ctr-q";
@@ -1631,7 +1758,7 @@
     scan.spellcheck = false;
     scan.setAttribute("enterkeyhint", "done");
     scan.setAttribute("aria-label", t("ctr.ph"));
-    dlg.appendChild(scan);
+    dlg.appendChild(withCam(scan, true));
     var hits = el("div", "hits");
     dlg.appendChild(hits);
     var msg = el("p", "hint warn");
@@ -1686,7 +1813,7 @@
         var sub = el("span", "r-sub");
         if (it.sku) sub.appendChild(el("span", "", it.sku));
         sub.appendChild(el("span", "", it.price ? money(it.price) + " / " + unitLabel(it.unit) : t("ctr.noPrice")));
-        sub.appendChild(el("span", "", t("mv.now", { q: fmtQ(r.q, it) })));
+        sub.appendChild(el("span", "", ctrWh ? t("wh.here", { q: fmtQ(ctrQ(it.id), it) }) : t("mv.now", { q: fmtQ(r.q, it) })));
         body.appendChild(sub);
         li.appendChild(body);
         var qb = el("span", "ctr-q");
@@ -1747,16 +1874,16 @@
         return ln;
       });
       if (!force) {
-        var neg = lines.filter(function (l) { var r = rowOf(l.i) || { q: 0 }; return r.q + l.q < 0 && r.q + l.q < r.q; })[0];
+        var neg = lines.filter(function (l) { var q0 = ctrQ(l.i); return q0 + l.q < 0 && q0 + l.q < q0; })[0];
         if (neg) {
-          var nit = byId("items", neg.i), after = (rowOf(neg.i) || { q: 0 }).q + neg.q;
+          var nit = byId("items", neg.i), after = ctrQ(neg.i) + neg.q;
           if (data.settings.neg === 0) { msg.textContent = t("mv.neg", { n: nit.name, q: fmtQ(after, nit) }) + " " + t("mv.negBlocked"); msg.hidden = false; return; }
           confirmDialog(t("mv.negQ", { n: nit.name, q: fmtQ(after, nit) }), t("mv.negSave"), false, function () { complete(true); });
           return;
         }
       }
       var sum = total();
-      var mv = C.normMove({ id: newId(), m: Date.now(), d: todayYmd(), t: "out", ref: t("ctr.ref"), lines: lines });
+      var mv = C.normMove({ id: newId(), m: Date.now(), d: todayYmd(), t: "out", ref: t("ctr.ref"), lines: lines, w: ctrWh ? ctrWh.value : undefined });
       if (!mv) return;
       addMove(mv);
       cart = [];
@@ -2056,10 +2183,10 @@
     });
     return s;
   }
-  function askName(title, max, onOk) {
+  function askName(title, max, onOk, value) {
     var dlg = makeDialog("st-ask");
     dlg.appendChild(el("div", "dlg-title", title));
-    var inp = textInput("", max);
+    var inp = textInput(value || "", max);
     dlg.appendChild(inp);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
@@ -2234,14 +2361,45 @@
     dlg.classList.add("move-dlg");
     dlg.appendChild(el("div", "dlg-title", t("mv.new")));
     var r1 = el("div", "fld-row");
-    var tsel = selectInput(C.MOVE_TYPES.map(function (k) { return [k, T_ICON[k] + " " + t("t." + k)]; }), type || "in");
+    var multi = multiWh() || type === "xfer";
+    var tsel = selectInput(C.MOVE_TYPES.filter(function (k) { return k !== "xfer" || multi; })
+      .map(function (k) { return [k, T_ICON[k] + " " + t("t." + k)]; }), type || "in");
     var date = el("input");
     date.type = "date";
-    date.value = todayYmd();
+    date.value = o.date && C.isYmd(o.date) ? o.date : todayYmd();
     date.max = C.addDays(todayYmd(), 1);
     r1.appendChild(field(t("mv.type"), tsel, "st-mtype"));
     r1.appendChild(field(t("mv.date"), date, "st-mdate"));
     dlg.appendChild(r1);
+    // where (several warehouses): this device's last one by default; a
+    // transfer has From and To
+    var wsel = null, w2sel = null, wFld = null, w2Fld = null;
+    if (multi) {
+      var rw = el("div", "fld-row");
+      wsel = whSelect(o.w !== undefined ? o.w : defWh());
+      w2sel = whSelect("");
+      wFld = field(t("wh.one"), wsel, "st-mwh");
+      w2Fld = field(t("wh.to"), w2sel, "st-mwh2");
+      rw.appendChild(wFld);
+      rw.appendChild(w2Fld);
+      dlg.appendChild(rw);
+      // a transfer's To starts at the first other warehouse
+      var pickTo = function () {
+        if (w2sel.value !== wsel.value) return;
+        for (var oi = 0; oi < w2sel.options.length; oi++) {
+          if (w2sel.options[oi].value !== wsel.value) { w2sel.value = w2sel.options[oi].value; return; }
+        }
+      };
+      pickTo();
+      wsel.addEventListener("change", function () { pickTo(); refresh(); });
+      w2sel.addEventListener("change", refresh);
+    }
+    // the quantity that counts for this movement: the chosen warehouse's,
+    // else the business total
+    function baseQ(itemId) {
+      if (wsel) return qtyAt(itemId, wsel.value);
+      return (rowOf(itemId) || { q: 0 }).q;
+    }
     var r2 = el("div", "fld-row");
     var ref = textInput(o.ref || "", C.REF_LEN, t("mv.refPh"));
     var supSel = listSelect("sups", o.sup || "", t("ed.newSup"), newSupQuick);
@@ -2249,6 +2407,18 @@
     r2.appendChild(field(t("mv.ref"), ref, "st-mref"));
     r2.appendChild(supFld);
     dlg.appendChild(r2);
+    // asked for by another app (BR-ST-OUT): say where it came from, what
+    // could not be matched, and whether it was already taken out once
+    if (o.from) {
+      var fromBox = el("div", "hint from-box");
+      fromBox.appendChild(el("p", "", t("out.from", { a: o.from })));
+      if (o.used) fromBox.appendChild(el("p", "warn", t(o.used === 1 ? "out.used1" : "out.used", { n: o.used })));
+      if (o.miss && o.miss.length) {
+        fromBox.appendChild(el("p", "warn", t("out.miss", { n: o.miss.length })));
+        fromBox.appendChild(el("p", "muted miss-codes", o.miss.join(", ")));
+      }
+      dlg.appendChild(fromBox);
+    }
 
     // the lines
     var lines = [];          // { i, qIn, cIn, row }
@@ -2351,12 +2521,17 @@
     function refresh() {
       var k = cur(), total = 0, any = false;
       supFld.hidden = !(k === "in" || k === "rts");
+      if (wFld) {
+        wFld.querySelector("label").textContent = k === "xfer" ? t("wh.from") : t("wh.one");
+        w2Fld.hidden = k !== "xfer";
+      }
       lines.forEach(function (ln) {
         var it = ln.it, r = rowOf(it.id) || { q: 0 };
         var parts = [it.sku, t("mv.now", { q: fmtQ(r.q, it) })].filter(Boolean);
+        if (wsel) parts.push(t("wh.here", { q: fmtQ(baseQ(it.id), it) }));
         if (k === "count") {
           var n = readQty(ln.qIn, it);
-          if (n !== null && ln.qIn.value.trim()) parts.push(t("mv.diff", { d: fmtSigned(n - r.q, it) }));
+          if (n !== null && ln.qIn.value.trim()) parts.push(t("mv.diff", { d: fmtSigned(n - baseQ(it.id), it) }));
         }
         ln.sub.textContent = parts.join(" · ");
         if ((k === "in" || k === "out") && !ln.cf.hidden) {
@@ -2416,6 +2591,7 @@
       addLine(p.i, p.q || 0, false);
       var last = lines[lines.length - 1];
       if (last && last.i === p.i && typeof p.c === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.c);
+      if (last && last.i === p.i && typeof p.p === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.p);
     });
     refresh();
 
@@ -2430,13 +2606,14 @@
       var k = cur(), sign = C.SIGN[k];
       if (!C.isYmd(date.value)) { fail(t("ed.badNum")); return; }
       if (!lines.length) { fail(t("mv.noLines")); finder.focus(); return; }
+      if (k === "xfer" && (!w2sel || w2sel.value === wsel.value)) { fail(t("wh.same")); return; }
       var out = [];
       for (var i = 0; i < lines.length; i++) {
-        var ln = lines[i], it = ln.it, r = rowOf(it.id) || { q: 0 };
+        var ln = lines[i], it = ln.it;
         var v = readQty(ln.qIn, it, k === "fix");
         if (v === null || !ln.qIn.value.trim()) { fail(t("mv.badLine", { n: it.name })); ln.qIn.focus(); return; }
         var line = { i: it.id };
-        if (k === "count") { line.q = v - r.q; line.n = v; }
+        if (k === "count") { line.q = v - baseQ(it.id); line.n = v; }
         else if (k === "fix") {
           if (v === 0) { fail(t("mv.badLine", { n: it.name })); ln.qIn.focus(); return; }
           line.q = v;
@@ -2451,11 +2628,12 @@
         }
         out.push(line);
       }
-      // below zero? (sums lines of one product too)
+      // below zero? (sums lines of one product too; with warehouses, in
+      // the chosen one, the From one for a transfer)
       if (!forceNeg) {
         var after = Object.create(null);
-        out.forEach(function (l) { after[l.i] = (after[l.i] === undefined ? (rowOf(l.i) || { q: 0 }).q : after[l.i]) + l.q; });
-        var neg = Object.keys(after).filter(function (id) { return after[id] < 0 && after[id] < (rowOf(id) || { q: 0 }).q; })[0];
+        out.forEach(function (l) { after[l.i] = (after[l.i] === undefined ? baseQ(l.i) : after[l.i]) + (k === "xfer" ? -l.q : l.q); });
+        var neg = Object.keys(after).filter(function (id) { return after[id] < 0 && after[id] < baseQ(id); })[0];
         if (neg) {
           var nit = byId("items", neg);
           if (data.settings.neg === 0) { fail(t("mv.neg", { n: nit.name, q: fmtQ(after[neg], nit) }) + " " + t("mv.negBlocked")); return; }
@@ -2466,9 +2644,14 @@
       var mv = C.normMove({
         id: newId(), m: Date.now(), d: date.value, t: k, ref: ref.value,
         sup: supSel.value, note: note.value, lines: out,
-        src: k === "in" && o.src ? o.src : undefined      // a receipt against a purchase order
+        // a receipt against a purchase order ("in"), or a sale / return
+        // asked for by another app: kept only on the type it came with
+        src: o.src && k === (o.srcT || "in") ? o.src : undefined,
+        w: wsel ? wsel.value : undefined,
+        w2: k === "xfer" && w2sel ? w2sel.value : undefined
       });
       if (!mv) { fail(t("ed.badNum")); return; }
+      if (wsel && k !== "xfer" && prefs.wh !== wsel.value) { prefs.wh = wsel.value; savePrefs(); }
       addMove(mv);
       if (o.onSaved) o.onSaved(mv);
       dlg.close();
@@ -2653,6 +2836,70 @@
     showDialog(dlg);
   }
 
+  // ----- Warehouses -----
+  // The main one can only be renamed (its row WH_MAIN holds the name).
+  // Another one is archived, never deleted, once a movement used it.
+  function whsDialog() {
+    var dlg = makeDialog("st-whs");
+    dlg.appendChild(el("div", "dlg-title", t("wh.title")));
+    dlg.appendChild(el("p", "hint", t("wh.hint")));
+    var ul = el("ul", "vlist");
+    dlg.appendChild(ul);
+    function setName(id, v) {
+      var cur = byId("whs", id);
+      if (cur) { if (cur.name !== v) { cur.name = v; stamp(cur); } }
+      else data.whs.push({ id: id, m: Date.now(), name: v, arch: 0 });
+      save(); render(); draw();
+    }
+    function used(id) { return data.moves.some(function (x) { return x.w === id || x.w2 === id; }); }
+    function holds(id) { var a = whAll(); return Object.keys(a).some(function (i) { return a[i][id]; }); }
+    function draw() {
+      ul.innerHTML = "";
+      [{ id: "", name: mainWh(), main: true }].concat(extraWhs(true)).forEach(function (w) {
+        var li = el("li", "row");
+        var nm = el("span", "r-body r-name", w.name);
+        if (w.arch) nm.appendChild(el("span", "badge", t("wh.archived")));
+        li.appendChild(nm);
+        var ren = el("button", "link-btn", t("wh.rename"));
+        ren.type = "button";
+        ren.addEventListener("click", function () {
+          askName(t("wh.name"), C.NAME_LEN, function (v) { setName(w.main ? C.WH_MAIN : w.id, v); }, w.name);
+        });
+        li.appendChild(ren);
+        if (!w.main) {
+          var useIt = used(w.id);
+          var b2 = el("button", "link-btn" + (useIt && !w.arch ? "" : " danger"), w.arch ? t("wh.unarch") : (useIt ? t("wh.arch") : t("wh.del")));
+          b2.type = "button";
+          b2.addEventListener("click", function () {
+            var cur = byId("whs", w.id);
+            if (!cur) return;
+            if (cur.arch) { cur.arch = 0; stamp(cur); save(); render(); draw(); return; }
+            if (useIt) {
+              var go = function () { cur.arch = 1; stamp(cur); if (prefs.wh === cur.id) prefs.wh = ""; save(); render(); draw(); };
+              if (holds(w.id)) confirmDialog(t("wh.archQ"), t("wh.arch"), true, go); else go();
+              return;
+            }
+            data.tombs[cur.id] = Math.max(Date.now(), cur.m);
+            data.whs = data.whs.filter(function (x) { return x.id !== cur.id; });
+            if (prefs.wh === cur.id) prefs.wh = "";
+            save(); render(); draw();
+          });
+          li.appendChild(b2);
+        }
+        ul.appendChild(li);
+      });
+    }
+    draw();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("wh.new"), "", function () {
+      if (data.whs.length >= 200) return;
+      askName(t("wh.name"), C.NAME_LEN, function (v) { setName(newId(), v); });
+    }));
+    acts.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
   // ----- Units -----
   function unitsDialog(onNew) {
     var dlg = makeDialog("st-units");
@@ -2716,11 +2963,11 @@
      ["📥", t("add.in"), function () { moveEditor("in", []); }],
      ["📤", t("add.out"), function () { moveEditor("out", []); }],
      ["📋", t("add.count"), function () { moveEditor("count", []); }],
-     ["✏️", t("add.other"), function () { moveEditor("loss", []); }],
+     ["✏️", t("add.other"), function () { moveEditor("loss", []); }]].concat(multiWh() ? [["🔀", t("t.xfer"), function () { moveEditor("xfer", []); }]] : []).concat([
      ["🛒", t("add.counter"), counter],
      ["🧾", t("add.po"), function () { poEditor(null, null); }],
      ["🏷️", t("add.labels"), function () { labelsDialog(null); }],
-     ["🏭", t("add.sup"), function () { supEditor(null); }]].concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
+     ["🏭", t("add.sup"), function () { supEditor(null); }]]).concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
       var b = button(a[0] + "  " + a[1], "sheet-btn", function () { dlg.close(); a[2](); });
       box.appendChild(b);
     });
@@ -2763,6 +3010,7 @@
     var la = el("div", "dlg-actions tight");
     la.appendChild(button(t("set.cats"), "", function () { dlg.close(); catsDialog(); }));
     la.appendChild(button(t("set.units"), "", function () { dlg.close(); unitsDialog(null); }));
+    la.appendChild(button(t("wh.title"), "", function () { dlg.close(); whsDialog(); }));
     dlg.appendChild(la);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight wrap");
@@ -2849,7 +3097,9 @@
     var head = LANG === "el"
       ? ["Ημερομηνία", "Είδος", "Παραστατικό", "Προμηθευτής", "SKU", "Προϊόν", "Ποσότητα", "Τιμή μονάδας (" + cur + ")", "Σημείωση", "Ακυρωμένη"]
       : ["Date", "Type", "Ref", "Supplier", "SKU", "Product", "Quantity", "Unit price (" + cur + ")", "Note", "Voided"];
-    saveText(csvText(head, C.csvMoves(data, names)), "orOS-stock-movements-" + todayYmd() + ".csv", "text/csv", "CSV", ".csv");
+    var wh = extraWhs(true).length > 0;
+    if (wh) head = head.concat(LANG === "el" ? ["Αποθήκη", "Προς αποθήκη"] : ["Warehouse", "To warehouse"]);
+    saveText(csvText(head, C.csvMoves(data, names, wh ? mainWh() : undefined)), "orOS-stock-movements-" + todayYmd() + ".csv", "text/csv", "CSV", ".csv");
   }
   function exportData() {
     var payload = { app: "oros-stock", ver: C.DATA_VER, exported: new Date().toISOString(), data: canonical(data) };
@@ -2926,6 +3176,100 @@
     });
     if (p.move) { p.move.m = now; data.moves.push(p.move); }
     save();
+  }
+
+  // ---------- 9b. Camera scanning ----------
+  // BarcodeDetector (Chrome on Android, no library). Where the browser
+  // lacks it the button never shows and a scanner that types still works.
+  // A read code goes into the field as if typed and Enter was pressed, so
+  // every scan field keeps its own rules. multi: stay open for more codes;
+  // the same code is read again only after it left the picture.
+  var CAM_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "code_93", "itf", "codabar", "qr_code"];
+  function camOk() {
+    return typeof window.BarcodeDetector === "function" &&
+      !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
+  }
+  function camButton(input, multi) {
+    if (!camOk()) return null;
+    var b = el("button", "icon-btn cam-btn", "📷");
+    b.type = "button";
+    b.title = t("cam.scan");
+    b.setAttribute("aria-label", t("cam.scan"));
+    b.addEventListener("click", function () {
+      camScan(function (code) {
+        input.value = code;
+        input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+      }, multi);
+    });
+    return b;
+  }
+  // the field with its camera button beside it (or the field alone)
+  function withCam(input, multi) {
+    var b = camButton(input, multi);
+    if (!b) return input;
+    var w = el("div", "cam-wrap");
+    w.appendChild(input);
+    w.appendChild(b);
+    return w;
+  }
+  function camScan(onCode, multi) {
+    var dlg = makeDialog("st-cam");
+    dlg.classList.add("cam-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("cam.title")));
+    var v = el("video", "cam-video");
+    v.muted = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("aria-hidden", "true");
+    dlg.appendChild(v);
+    var msg = el("p", "hint cam-msg", "");
+    msg.setAttribute("aria-live", "polite");
+    dlg.appendChild(msg);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cam.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    var stream = null, timer = 0, done = false, last = "", seenAt = 0, det = null;
+    function stop() {
+      done = true;
+      clearTimeout(timer);
+      if (stream) stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+      stream = null;
+      try { v.srcObject = null; } catch (e) {}
+    }
+    function failCam() { msg.textContent = t("cam.denied"); msg.classList.add("warn"); }
+    dlg.addEventListener("close", stop);
+    try { det = new window.BarcodeDetector({ formats: CAM_FORMATS }); }
+    catch (e) { try { det = new window.BarcodeDetector(); } catch (e2) { det = null; } }
+    function loop() {
+      if (done) return;
+      if (v.readyState < 2) { timer = setTimeout(loop, 200); return; }
+      det.detect(v).then(function (list) {
+        if (done) return;
+        var raw = list && list[0] && typeof list[0].rawValue === "string" ? list[0].rawValue.trim() : "";
+        var now = Date.now();
+        if (!raw) { if (now - seenAt > 1200) last = ""; }
+        else if (raw === last) seenAt = now;
+        else {
+          last = raw; seenAt = now;
+          var code = raw.slice(0, 120);
+          try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+          if (!multi) { dlg.close(); onCode(code); return; }
+          onCode(code);
+          var it = C.findByCode(data, code);
+          msg.classList.toggle("warn", !it);
+          msg.textContent = it ? t("cam.found", { n: it.name }) : t("cam.unknown", { c: code });
+        }
+        timer = setTimeout(loop, 150);
+      }, function () { timer = setTimeout(loop, 400); });
+    }
+    showDialog(dlg);
+    if (!det) { failCam(); return; }
+    msg.textContent = t("cam.wait");
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
+      if (done) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      stream = st;
+      v.srcObject = st;
+      return v.play().then(function () { msg.textContent = ""; loop(); });
+    }).catch(function () { if (!done) failCam(); });
   }
 
   // ---------- 10. Dialogs + toasts ----------
@@ -3041,10 +3385,12 @@
   //   { view: "reorder" } → the Reorder tab (low-stock notice)
   //   { view: "reports" } → the Reports tab
   //   { po: id }    → that purchase order (Today: expected deliveries)
+  //   { out: req }  → a prefilled sale / return (BR-ST-OUT, core outRequest)
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (document.querySelector("dialog[open]")) return;
+    if (target.out && typeof target.out === "object") { openOut(target.out); return; }
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
     if (typeof target.po === "string" && byId("pos", target.po)) {
@@ -3065,6 +3411,19 @@
       supEditor(byId("sups", target.sup));
     }
   }
+  function openOut(req) {
+    var r = C.outRequest(data, req, todayYmd());
+    if (!r) return;
+    var app = r.src ? r.src.split(":")[0] : "";
+    var name = appName(app);
+    setTab("moves");
+    moveEditor(r.t, r.lines, {
+      ref: r.ref, date: r.d, src: r.src || undefined, srcT: r.t,
+      from: name, miss: r.miss, used: r.used
+    });
+  }
+  // the asking app's name: Invoices is known, anything else is "another app"
+  function appName(id) { return id === "invoices" ? t("out.invoices") : t("out.other"); }
   window.__orosOpenAt = openTarget;
   function takeStaged() {
     try {
@@ -3231,6 +3590,9 @@
     $("items-q").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); clearTimeout(qTimer); renderItems(); onSearchEnter(); }
     });
+    var qCam = camButton($("items-q"), false);
+    if (qCam) { $("items-q").parentNode.appendChild(qCam); $("items-q").parentNode.classList.add("cam-wrap"); }
+    $("items-wh").addEventListener("change", function () { prefs.wf = $("items-wh").value; savePrefs(); render(); });
     $("items-cat").addEventListener("change", function () { prefs.cat = $("items-cat").value; savePrefs(); render(); });
     $("items-sort").addEventListener("change", function () { prefs.sort = $("items-sort").value; savePrefs(); render(); });
     $("moves-range").addEventListener("change", function () { prefs.range = $("moves-range").value; savePrefs(); render(); });

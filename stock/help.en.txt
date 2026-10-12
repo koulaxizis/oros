@@ -15,6 +15,8 @@ Tap or click a product to see its quantity, average cost, value, prices and ever
 
 > A barcode scanner (USB or Bluetooth) works in the search field: scan a code and the product opens. An unknown code offers `New product` with the SKU filled in.
 
+On a phone, the 📷 button next to a search or scan field reads barcodes with the camera (Chrome on Android). In a receipt, a sale or the counter it stays open, so you can scan one product after another; tap `Done` when you are finished. Where the button doesn't show, the browser can't read barcodes, but a scanner still works.
+
 A product can have a photo: `Add photo` in its sheet. The picture is made smaller and kept in [Files](app:files), folder Stock/Photos (without location or camera data); it reaches your other devices with Vault Drive.
 
 ### Barcode labels
@@ -28,6 +30,8 @@ Open `New` › `Receive stock` or `Sell / issue`. Pick a `Date`, a `Ref.` (your 
 
 Other types: `Customer return`, `Return to supplier`, `Loss / damage` and `Correction` (a + or − quantity).
 
+A sale can also come from another orOS app, already filled in, for example the products of an invoice. Stock matches them by SKU or barcode, lists any code it couldn't find, and warns if the same document was taken out of stock before. Nothing is saved until you press `Save`.
+
 ### Counter
 `New` › `Counter (quick sale)` is made for a shop with a scanner: scan products (each scan adds one), change quantities with − and +, and press `Complete sale`. It saves one sale at the products' sale prices, and you can `Undo` it right away. A sale you leave open stays in the counter until you complete or clear it.
 
@@ -38,6 +42,16 @@ In a `Stock count` you type what you `Counted`. Stock saves the difference from 
 A movement is never edited or deleted. Open it and choose `Void this movement`: its quantities stop counting and it stays in the list, crossed out. Then record the right one.
 
 >! If a sale would take a product below zero, Stock asks first. You can forbid it in Settings.
+
+### Warehouses
+If you keep stock in more than one place (a shop and a storeroom, two branches), add them in Settings › `Warehouses`. From then on:
+- every receipt, sale, count and the counter has a `Warehouse` (this device remembers the last one you used);
+- `New` › `Transfer` moves products `From` one warehouse `To` another; totals don't change;
+- the Products tab can show one warehouse, and a product's sheet shows its quantity `By warehouse`;
+- a stock count compares with what that warehouse should have;
+- Reports adds the `Value per warehouse`.
+
+Reorder, minimums and the total value stay for the whole business. A warehouse that was used can be archived, not deleted; move its stock out first.
 
 ## Reorder
 `Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum, less what is already on order). For each supplier:
@@ -77,6 +91,6 @@ Products, movements, suppliers, categories, units and settings sync between your
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 
 ## Limits
-- One warehouse: there are no separate locations with transfers yet.
-- No camera scanning yet; a scanner that types works.
+- Minimums and reorder are for the whole business, not per warehouse.
+- Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.

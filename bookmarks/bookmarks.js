@@ -164,6 +164,10 @@ const STR = {
     "sel.selected": "{n} selected",
     "sel.move": "Move to…",
     "sel.delete": "Delete",
+    "sel.share": "Send…",
+    "ctx.share": "Send to someone…",
+    "many.added": "{n} bookmark(s) added to {f}",
+    "many.none": "You already have all of these",
     "sel.done": "Done",
     "sel.deleted": "Deleted {n} bookmark(s)",
     "sel.moved": "Moved {n} bookmark(s)",
@@ -265,6 +269,10 @@ const STR = {
     "sel.selected": "{n} επιλεγμένα",
     "sel.move": "Μετακίνηση σε…",
     "sel.delete": "Διαγραφή",
+    "sel.share": "Αποστολή…",
+    "ctx.share": "Στείλε σε κάποιον…",
+    "many.added": "Μπήκαν {n} σελιδοδείκτες στον φάκελο «{f}»",
+    "many.none": "Τους έχεις ήδη όλους",
     "sel.done": "Τέλος",
     "sel.deleted": "Διεγράφησαν {n} συντόμευση(εις)",
     "sel.moved": "Μετακινήθηκαν {n} συντόμευση(εις)",
@@ -1145,10 +1153,67 @@ function updateSelButtons() {
   $("#sel-move").textContent = t("sel.move");
   $("#sel-delete").textContent = t("sel.delete");
   $("#sel-done").textContent = t("sel.done");
+  $("#sel-share").textContent = t("sel.share");
+  $("#sel-share").hidden = !shareApi();
+  $("#sel-share").disabled = !n;
+  $("#sel-share").style.opacity = n ? "1" : ".45";
   $("#sel-move").disabled = !n;
   $("#sel-delete").disabled = !n;
   $("#sel-move").style.opacity = n ? "1" : ".45";
   $("#sel-delete").style.opacity = n ? "1" : ".45";
+}
+
+/* "Send to someone" (shell share/, kind "links"): one bookmark from
+   its menu, or the selection (≤ 200) from the bulk bar. Title = the
+   open folder's name. Tags, visits and favourites stay at home. */
+function shareApi() {
+  try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+  catch (e) { return null; }
+}
+function shareItems(ids) {
+  const api = shareApi();
+  const items = ids.map((id) => state.items[id]).filter(Boolean).slice(0, 200)
+    .map((it) => ({ u: it.url, t: it.title, n: it.note }));
+  if (!api || !items.length) { if (!items.length) transientNote(t("sel.none")); return; }
+  const fld = state.folders[uiActiveFolder];
+  api.open({ kind: "links", data: { t: fld && fld.id !== ROOT_FOLDER ? folderName(fld) : "", i: items } });
+}
+
+/* "Add to my orOS" with several links: { addMany: { folder, items } }.
+   The person already saw the list on the receiving page and asked for
+   it; they land in a folder of that name (created when missing) and
+   links already saved are skipped. */
+function addManyTarget(p) {
+  if (!p || !Array.isArray(p.items)) return;
+  const name = sanText(p.folder, 60) || t("tab.add");
+  let fid = null;
+  folderList().forEach((f) => { if (!fid && f.name.toLowerCase() === name.toLowerCase()) fid = f.id; });
+  const made = [];
+  let newFolder = false;
+  if (!fid) {
+    const f = sanitizeFolder({ name: name, pos: nextFolderPos(), modified: Date.now() });
+    if (!f) return;
+    state.folders[f.id] = f;
+    fid = f.id;
+    newFolder = true;
+  }
+  p.items.slice(0, 200).forEach((x) => {
+    const norm = normalizeUrl(x && x.url);
+    if (!norm || findByUrl(norm)) return;
+    const it = sanitizeItem({ url: norm, title: sanText(x.title, 256) || norm, folderId: fid });
+    if (!it) return;
+    state.items[it.id] = it;
+    made.push(it.id);
+  });
+  if (!made.length) {
+    if (newFolder) delete state.folders[fid];   // nothing new: no empty folder either
+    transientNote(t("many.none"));
+    return;
+  }
+  uiActiveFolder = fid;
+  save();
+  renderAll();
+  transientNote(t("many.added", { n: made.length, f: name }));
 }
 
 /* Move all selected → folder chosen from a small runtime menu
@@ -1852,6 +1917,7 @@ function showCtxMenu(id, x, y) {
   row(t("ctx.open"), () => openItem(id));
   row(t("ctx.open_maps"), () => openInMaps(it)); // NEW: Open in Maps integration
   row(t("ctx.edit"), () => openItemDialog(id));
+  if (shareApi()) row(t("ctx.share"), () => shareItems([id]));
   row(it.fav ? t("fav.remove") : t("fav.add"), () => toggleFav(id));
   const others = folderList().filter((f) => f.id !== it.folderId);
   if (others.length) {
@@ -2555,6 +2621,9 @@ function wire() {
   $("#sel-done").addEventListener("click", exitSelectionMode);
   $("#sel-delete").addEventListener("click", bulkDelete);
   $("#sel-move").addEventListener("click", bulkMoveMenu);
+  $("#sel-share").addEventListener("click", () => {
+    if (selectedIds.size) shareItems(Array.from(selectedIds));
+  });
 
   /* Typing in search while selecting exits selection mode
      (mixing the two is a foot-gun for destructive ops). */
@@ -2699,6 +2768,10 @@ function boot() {
    to its row and opens its dialog. Unknown id, or a dialog already
    open (maybe with unsaved edits) → no-op. */
 function openSearchTarget(t) {
+  if (t && t.addMany && typeof t.addMany === "object") {
+    addManyTarget(t.addMany);
+    return;
+  }
   if (t && t.add && typeof t.add === "object") {
     if (!document.querySelector("dialog[open]")) openAddDialog(t.add);
     return;
