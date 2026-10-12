@@ -1,8 +1,8 @@
 // Pure logic of Sticky Notes (stickies/core.js): normalising, the
 // merge (sync slice "stickies"), the changes, the engine the shell
 // runs (ring, fade at the vanish time, the Faded bin), quick times,
-// tick-box lines and the desktop placement; plus the wiring of the
-// shell host, the app and the shell.
+// tick-box lines and the desktop placement; phase 2: repeating rings,
+// Send to To-Do / Copy to Notes, the search and Today providers.
 // Run: node --test tests/*.test.js
 
 "use strict";
@@ -89,7 +89,8 @@ test("random merge fuzz: laws hold", () => {
   const randNote = (id) => mk(id, {
     text: ["x", "y", "z"][Math.floor(rnd() * 3)],
     color: C.COLORS[Math.floor(rnd() * 6)],
-    ring: rnd() < 0.5 ? { at: T0 + Math.floor(rnd() * 5) } : null,
+    ring: rnd() < 0.5 ? (rnd() < 0.5 ? { at: T0 + Math.floor(rnd() * 5) }
+      : { at: T0 + Math.floor(rnd() * 5), rep: ["daily", "weekdays", "weekly", "yearly"][Math.floor(rnd() * 4)], t: T0 + Math.floor(rnd() * 3) }) : null,
     vanish: rnd() < 0.5 ? { at: T0 + Math.floor(rnd() * 5), onDone: rnd() < 0.5 } : null,
     faded: rnd() < 0.3 ? T0 + 2 : 0,
     fm: { text: T0 + Math.floor(rnd() * 4), color: T0 + Math.floor(rnd() * 4), ring: Math.floor(rnd() * 4),
@@ -267,4 +268,134 @@ test("toText: notes on the desktop, newest first", () => {
   d = C.create(d, { id: "c", text: "gone" }, T0 + 2).data;
   d = C.fadeNow(d, "c", T0 + 3);
   assert.equal(C.toText(d), "second\n\n—\n\nfirst\n");
+});
+
+// ---------- Phase 2 ----------
+const local = (y, mo, d, h, mi) => new Date(y, mo - 1, d, h, mi || 0).getTime();
+
+test("repeat: a ring without a repeat keeps the v1 bytes; junk repeats are dropped", () => {
+  assert.equal(J(C.normNote(mk("a", { ring: { at: T0 }, fm: { ring: T0 } })).ring), J({ at: T0 }));
+  assert.equal(J(C.normNote(mk("a", { ring: { at: T0, rep: "hourly", t: 5 }, fm: { ring: T0 } })).ring), J({ at: T0 }));
+  assert.equal(J(C.normNote(mk("a", { ring: { at: T0, rep: "daily" }, fm: { ring: T0 } })).ring), J({ at: T0, rep: "daily", t: T0 }));
+  let d = C.create(C.empty(), { id: "a", text: "x" }, T0).data;
+  d = C.setRing(d, "a", T0 + DAY, T0 + 1, "");
+  assert.equal(J(C.find(d, "a").ring), J({ at: T0 + DAY }));
+  d = C.setRepeat(d, "a", "weekly", T0 + 2);
+  assert.equal(J(C.find(d, "a").ring), J({ at: T0 + DAY, rep: "weekly", t: T0 + DAY }));
+  d = C.setRepeat(d, "a", "", T0 + 3);
+  assert.equal(J(C.find(d, "a").ring), J({ at: T0 + DAY }));
+  assert.equal(J(C.setRepeat(d, "nope", "daily", T0 + 4)), J(d));
+});
+
+test("nextRound: daily, weekdays (skips the weekend), weekly; keeps the clock time; long gaps jump", () => {
+  const fri = local(2026, 10, 16, 9, 0);                       // Friday 16 Oct 2026, 09:00
+  assert.equal(C.nextRound("daily", fri, fri), local(2026, 10, 17, 9, 0));
+  assert.equal(C.nextRound("weekdays", fri, fri), local(2026, 10, 19, 9, 0));
+  assert.equal(C.nextRound("weekly", fri, fri), local(2026, 10, 23, 9, 0));
+  assert.equal(C.nextRound("daily", fri, local(2026, 10, 20, 10, 0)), local(2026, 10, 21, 9, 0));
+  assert.equal(C.nextRound("weekly", fri, local(2027, 3, 1, 0, 0)), local(2027, 3, 5, 9, 0));
+  assert.equal(C.nextRound("weekdays", fri, local(2028, 1, 1, 12, 0)), local(2028, 1, 3, 9, 0));   // Sat 1 Jan 2028 → Mon
+  assert.equal(C.nextRound("yearly", fri, fri), 0);
+  for (let i = 0; i < 200; i++) {                             // every answer is after `after` and on the right weekday
+    const after = fri + i * 37 * 3600000;
+    const w = C.nextRound("weekdays", fri, after), x = new Date(w);
+    assert.ok(w > after && w - after <= 3 * DAY + 3600000);
+    assert.ok(x.getDay() >= 1 && x.getDay() <= 5);
+    assert.equal(x.getHours(), 9);
+  }
+});
+
+test("repeat: Done moves to the next round (no fade), Snooze keeps the plan, restore moves on", () => {
+  const fri = local(2026, 10, 16, 9, 0);
+  let d = C.create(C.empty(), { id: "a", text: "pills" }, fri - DAY).data;
+  d = C.setRing(d, "a", fri, fri - DAY + 1, "daily");
+  d = C.setVanish(d, "a", { at: 0, onDone: true }, fri - DAY + 2);
+  let s = C.snooze(d, "a", fri + 60000);
+  assert.equal(J(C.find(s, "a").ring), J({ at: fri + 60000 + C.SNOOZE_MS, rep: "daily", t: fri }));
+  s = C.ringDone(s, "a", fri + 20 * 60000);                    // done after a snooze: tomorrow 09:00
+  assert.equal(J(C.find(s, "a").ring), J({ at: fri + DAY, rep: "daily", t: fri + DAY }));
+  assert.equal(C.find(s, "a").faded, 0, "a repeating ring never fades the note");
+  // done two days late: the next round after now, not a missed one
+  const late = C.ringDone(d, "a", fri + 2 * DAY + 3600000);
+  assert.equal(C.find(late, "a").ring.at, fri + 3 * DAY);
+  // a once-only ring with vanish-when-done still fades
+  let o = C.setRing(d, "a", fri, fri - DAY + 3, "");
+  o = C.ringDone(o, "a", fri + 1);
+  assert.ok(C.find(o, "a").faded > 0);
+  // restore of a faded note whose repeating ring is in the past
+  let f = C.fadeNow(d, "a", fri - 1000);
+  f = C.restore(f, "a", fri + 5 * 3600000);
+  assert.equal(J(C.find(f, "a").ring), J({ at: fri + DAY, rep: "daily", t: fri + DAY }));
+});
+
+test("Send to To-Do and Copy to Notes: what goes", () => {
+  assert.deepEqual(C.todoItems("Shopping\n[ ] milk\n[x] eggs\n  [ ]  bread \n[ ] "), [{ text: "milk" }, { text: "bread" }]);
+  assert.deepEqual(C.todoItems("\n\nCall the garage\nabout the tyres\n\nbefore Friday"),
+    [{ text: "Call the garage", note: "about the tyres\n\nbefore Friday" }]);
+  assert.deepEqual(C.todoItems("[x] all done\nlist"), [{ text: "all done", note: "list" }]);
+  assert.deepEqual(C.todoItems("   \n "), []);
+  assert.equal(C.todoItems("x".repeat(400))[0].text.length, 300);
+  assert.deepEqual(C.notePage("Title line\nbody"), { title: "Title line", text: "Title line\nbody" });
+});
+
+const store = (o) => ({
+  readJSON: (k) => (Object.prototype.hasOwnProperty.call(o, k) ? JSON.parse(JSON.stringify(o[k])) : null),
+  readRaw: (k) => (Object.prototype.hasOwnProperty.call(o, k) ? JSON.stringify(o[k]) : null)
+});
+
+test("search provider: notes on the desktop only, read-only, opens the note", () => {
+  const S = require(path.join(__dirname, "..", "stickies/search.js"));
+  assert.equal(S.id, "stickies");
+  assert.deepEqual(S.keys, ["oros-stickies-data"]);
+  let d = C.create(C.empty(), { id: "a", text: "Buy  milk\nand bread" }, T0).data;
+  d = C.create(d, { id: "b", text: "faded one" }, T0 + 1).data;
+  d = C.create(d, { id: "c", text: "" }, T0 + 2).data;
+  d = C.create(d, { id: "e", text: "deleted" }, T0 + 3).data;
+  d = C.fadeNow(d, "b", T0 + 4);
+  d = C.remove(d, "e", T0 + 5);
+  d = C.setRing(d, "a", T0 + DAY, T0 + 6);
+  assert.deepEqual(S.search(Object.assign({ q: "milk", lang: "en" }, store({ "oros-stickies-data": d }))),
+    [{ id: "a", title: "Buy  milk", text: "Buy milk and bread", target: { note: "a" }, when: T0 + DAY }]);
+  assert.deepEqual(S.search(Object.assign({ q: "x", lang: "el" }, store({}))), []);
+  let opened = null;
+  S.open({ note: "a" }, { __orosOpenStickies: (id) => { opened = id; } });
+  assert.equal(opened, "a");
+  const src = read("stickies/search.js");
+  assert.ok(!/setItem|innerHTML|orosSync|fetch\(/.test(src), "read-only");
+});
+
+test("Today provider: open rings are tasks (late or today), repeats up to the horizon", () => {
+  const P = require(path.join(__dirname, "..", "stickies/today.js"));
+  const A = require(path.join(__dirname, "..", "today/agg.js"));
+  assert.equal(P.id, "stickies");
+  const now = local(2026, 10, 16, 12, 0);
+  let d = C.create(C.empty(), { id: "late", text: "Call mum" }, now - 3 * DAY).data;
+  d = C.setRing(d, "late", local(2026, 10, 15, 18, 30), now - 3 * DAY + 1);
+  d = C.create(d, { id: "rep", text: "" }, now - DAY).data;
+  d = C.setRing(d, "rep", local(2026, 10, 16, 20, 0), now - DAY + 1, "weekdays");
+  d = C.create(d, { id: "far", text: "far away" }, now - DAY).data;
+  d = C.setRing(d, "far", local(2026, 10, 30, 9, 0), now - DAY + 1);
+  d = C.create(d, { id: "gone", text: "faded" }, now - DAY).data;
+  d = C.setRing(d, "gone", local(2026, 10, 16, 15, 0), now - DAY + 1);
+  d = C.fadeNow(d, "gone", now - DAY + 2);
+  const ctx = Object.assign({ today: "2026-10-16", horizon: A.HORIZON, now, lang: "el", addDays: A.addDays, diff: A.diff },
+    store({ "oros-stickies-data": d }));
+  const rows = P.collect(ctx);
+  assert.deepEqual(rows.map((r) => [r.id.split("@")[0], r.due, r.time, r.title, r.kind]), [
+    ["late", "2026-10-15", "18:30", "Call mum", "task"],
+    ["rep", "2026-10-16", "20:00", "Post-it", "task"],
+    ["rep", "2026-10-19", "20:00", "Post-it", "task"]           // Fri, then Mon (the weekend skipped; 19 = today + 3)
+  ]);
+  assert.deepEqual(P.collect(Object.assign({}, ctx, store({}))), []);
+  let opened = null;
+  P.open({ note: "rep" }, { __orosOpenStickies: (id) => { opened = id; } });
+  assert.equal(opened, "rep");
+  assert.ok(!/setItem|innerHTML|orosSync|fetch\(/.test(read("stickies/today.js")), "read-only");
+});
+
+test("host: melody chimes read Ringtone Composer read-only; sends are prefill only", () => {
+  const h = read("stickies/host.js");
+  assert.ok(!/setItem\(RT_KEY/.test(h) && !/registerSlice\("ringtones"/.test(h), "never writes the ringtones data");
+  assert.ok(/__orosOpenAt\("todo", \{ addItems:/.test(h) && /__orosOpenAt\("notes", \{ add:/.test(h));
+  assert.ok(!/oros-todo-data|oros-notes/.test(h), "never touches To-Do or Notes data");
 });
