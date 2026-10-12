@@ -539,7 +539,8 @@
       }, function () { LIB.toast(t("msg.deleteFail")); });
     });
   }
-  // Markdown of the book's notes: to the orOS disk (Notes folder) or a download.
+  // Markdown of the book's notes: to the orOS disk (Notes folder), a
+  // download or the clipboard; or a new page of the Notes app.
   function exportNotes(id) {
     var b = LIB.book(id);
     if (!b) return;
@@ -569,6 +570,15 @@
     acts.appendChild(LIB.textBtn("btn", t("export.copy"), function () {
       dlg.close();
       copyText(md);
+    }));
+    // Notes: a new page, plain text (BR: __orosOpenAt("notes", { add }))
+    var plain = C.notesPlain(b, LIB.data.marks, LIB.LANG);
+    var hasHl = LIB.data.marks.some(function (k) { return k.b === id && (k.k === "hl" || k.n); });
+    if (hasHl && LIB.parentWin()) acts.appendChild(LIB.textBtn("btn", t("export.notes"), function () {
+      dlg.close();
+      if (LIB.openApp("notes", { add: { title: t("export.notesTitle", { title: b.title }), text: plain.text } })) {
+        LIB.toast(t("export.notesSent"));
+      } else LIB.toast(t("export.notesFail"));
     }));
     dlg.appendChild(acts);
     dlg.showModal();

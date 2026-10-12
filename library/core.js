@@ -17,6 +17,7 @@
 //   8. Media Shelf link (read only)
 //   9. Read aloud: a section's text cut into parts to speak
 //  10. Reading stats: seconds per day and per book, per device (max merge)
+//  11. The Today line
 // Exposes window.LibCore (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -658,6 +659,34 @@
     });
     return out.join("\n") + "\n";
   }
+  // The same as plain text for a Notes page (Notes takes plain text,
+  // max characters): author, then per section its label and the
+  // highlights as "• «quote»" with the note under them. What does not
+  // fit is counted in the last line. → { text, left }
+  function notesPlain(book, marks, lang, max) {
+    max = max || 20000;
+    var el = lang === "el";
+    var out = book.by ? [book.by] : [];
+    var list = sortMarks(marks.filter(function (k) { return k.b === book.id && (k.k === "hl" || k.n); }));
+    var lastSec = null, size = out.join("\n").length, left = 0;
+    list.forEach(function (k, i) {
+      if (left) { left++; return; }
+      var lines = [];
+      var sec = k.lbl || "";
+      if (sec && sec !== lastSec) lines.push("", sec);
+      lines.push("", k.k === "bm" ? "🔖 " + squash(k.q || "").trim().slice(0, 120)
+        : "• " + (el ? "«" : "“") + squash(k.q || "").trim() + (el ? "»" : "”"));
+      if (k.n) k.n.trim().split("\n").forEach(function (l) { lines.push("  " + l); });
+      var add = lines.join("\n").length + 1;
+      if (size + add > max - 120) { left = 1; return; }
+      out = out.concat(lines);
+      size += add;
+      if (sec) lastSec = sec;
+    });
+    if (left) out.push("", el ? "… και " + left + " ακόμη: η «Εξαγωγή σημειώσεων» της Βιβλιοθήκης τα έχει όλα."
+      : "… and " + left + " more: Library's “Export notes” has them all.");
+    return { text: out.join("\n").replace(/^\n+/, ""), left: left };
+  }
   function estPages(chars) { return Math.max(1, Math.round((chars || 0) / 1500)); }
   // EPUB page estimate from the chapters' file sizes (markup included:
   // about 2400 bytes per printed page of ~1500 characters).
@@ -840,6 +869,28 @@
     return Math.round(secs * (1000 - pct) / pct);
   }
 
+  // ---------- 11. Today line (library/today.js) ----------
+  // The book you're reading (opened in the last 14 days, not finished)
+  // with its progress, today's reading time and the streak. → { book,
+  // title } or null.
+  var TODAY_WORDS = {
+    en: { reading: "Reading “{t}” · {p}%", today: "{m} min today", streak: "{n} days in a row" },
+    el: { reading: "Διαβάζεις «{t}» · {p}%", today: "{m} λεπ. σήμερα", streak: "{n} μέρες στη σειρά" }
+  };
+  function todayLine(state, today, nowMs, lang) {
+    var b = continueList(state, 1)[0];
+    if (!b) return null;
+    var p = state.pos[b.id];
+    if (!(nowMs - p.m < 14 * 86400000)) return null;
+    var W = TODAY_WORDS[lang === "el" ? "el" : "en"];
+    var title = b.title.length > 80 ? b.title.slice(0, 79) + "…" : b.title;
+    var parts = [W.reading.replace("{t}", title).replace("{p}", Math.floor(p.pct / 10))];
+    var sum = statsSummary(state.stats, today, 1);
+    if (sum.today >= 60) parts.push(W.today.replace("{m}", Math.round(sum.today / 60)));
+    if (sum.streak >= 2) parts.push(W.streak.replace("{n}", sum.streak));
+    return { book: b.id, title: parts.join(" · ") };
+  }
+
   var api = {
     DATA_VER: DATA_VER, MAX_BOOKS: MAX_BOOKS, MAX_MARKS: MAX_MARKS, MAX_BYTES: MAX_BYTES, NCOLORS: NCOLORS,
     TITLE_LEN: TITLE_LEN, BY_LEN: BY_LEN, NOTE_LEN: NOTE_LEN, QUOTE_LEN: QUOTE_LEN, CTX_LEN: CTX_LEN,
@@ -851,12 +902,12 @@
     foldMap: foldMap, findAll: findAll, snippet: snippet, squash: squash, reanchor: reanchor, contextOf: contextOf,
     decodeEnt: decodeEnt, xmlParse: xmlParse, resolvePath: resolvePath, parseContainer: parseContainer,
     parseOpf: parseOpf, parseNav: parseNav, parseNcx: parseNcx, cleanText: cleanText,
-    viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown,
+    viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown, notesPlain: notesPlain,
     estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
     COLOR_NAMES: COLOR_NAMES,
     speechParts: speechParts, speechText: speechText, guessLang: guessLang,
     mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
-    bookSeconds: bookSeconds, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
+    bookSeconds: bookSeconds, todayLine: todayLine, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LibCore = api;

@@ -418,3 +418,44 @@ test("reading stats: per device counters, max merge, streak and time left", () =
   assert.deepEqual(C.mergeLibrary(st1, st2).stats, m);
   assert.deepEqual(C.mergeLibrary(st1, st2), C.mergeLibrary(st2, st1));
 });
+
+test("Send to Notes: plain text, sections, notes, cut to fit", () => {
+  const b = C.normBook(book(B1, 1, { title: "Ζορμπάς", by: "Ν. Καζαντζάκης" }));
+  const mk = (i, q, n, lbl, k) => ({ id: "k00000" + i, b: B1, m: 1, k: k || "hl", loc: "e:1:" + i * 10, end: "e:1:" + (i * 10 + 5), q, n, lbl });
+  const marks = [mk(3, "τρίτο", null, "Β"), mk(1, "πρώτο   απόσπασμα", "σημείωση\nδεύτερη γραμμή", "Α"), mk(2, "δεύτερο", null, "Α"),
+    mk(4, "σελιδοδείκτης", null, "Β", "bm"), mk(5, "with note", "why", "Β", "bm"), { ...mk(6, "other book"), b: B2 }];
+  const r = C.notesPlain(b, marks, "el");
+  assert.equal(r.left, 0);
+  assert.equal(r.text, "Ν. Καζαντζάκης\n\nΑ\n\n• «πρώτο απόσπασμα»\n  σημείωση\n  δεύτερη γραμμή\n\n• «δεύτερο»\n\nΒ\n\n• «τρίτο»\n\n🔖 with note\n  why");
+  assert.doesNotMatch(r.text, /other book|σελιδοδείκτης/, "other books and bare bookmarks stay out");
+  const many = [];
+  for (let i = 0; i < 300; i++) many.push(mk(100 + i, "x".repeat(200), null, "S"));
+  const big = C.notesPlain(b, many, "en");
+  assert.ok(big.text.length <= 20000, "fits a Notes page");
+  assert.ok(big.left > 0);
+  assert.match(big.text, new RegExp("and " + big.left + " more"));
+});
+
+test("Today line: the book being read, today's time, streak; provider is read-only", () => {
+  const today = "2026-10-12", now = new Date(2026, 9, 12, 20).getTime();
+  let s = state({ books: [book(B1, 5, { title: "Ζορμπάς" }), book(B2, 5, { title: "Done", fin: "2026-10-01" })],
+    pos: { [B1]: { m: now - 3600e3, loc: "e:1:0", pct: 374 }, [B2]: { m: now - 60e3, loc: "e:9:0", pct: 1000 } } });
+  s = C.mergeLibrary(s, s);
+  assert.deepEqual(C.todayLine(s, today, now, "el"), { book: B1, title: "Διαβάζεις «Ζορμπάς» · 37%" });
+  let st = C.addReading(null, today, "dev0000001", B1, 1500);
+  st = C.addReading(st, C.dayBefore(today), "dev0000001", B1, 600);
+  s = C.mergeLibrary({ ...s, stats: st }, s);
+  assert.equal(C.todayLine(s, today, now, "en").title, "Reading “Ζορμπάς” · 37% · 25 min today · 2 days in a row");
+  assert.equal(C.todayLine(s, today, now + 15 * 86400e3, "en"), null, "not opened for two weeks: no line");
+  const prov = require("../library/today.js");
+  globalThis.LibCore = C;
+  const raw = JSON.parse(JSON.stringify(s)), snap = JSON.stringify(raw);
+  const rows = prov.collect({ today, now, lang: "en", readJSON: (k) => (k === "oros-library-data" ? raw : null) });
+  delete globalThis.LibCore;
+  assert.deepEqual(rows, [{ id: "reading", kind: "info", title: "Reading “Ζορμπάς” · 37% · 25 min today · 2 days in a row", target: { book: B1 } }]);
+  assert.equal(JSON.stringify(raw), snap);
+  assert.deepEqual(prov.keys, ["oros-library-data"]);
+  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8"));
+  const lib = (apps.apps || apps).find((a) => a.id === "library");
+  assert.deepEqual(lib.today, ["core.js", "today.js"]);
+});

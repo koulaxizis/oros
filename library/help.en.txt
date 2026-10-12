@@ -27,12 +27,12 @@ While it reads, its controls take the place of the bottom bar: `Pause`, `Previou
 ## Reading stats
 `More` › `Reading stats` shows how long you've read today, in the last seven days and in all, how many days in a row, a bar for each of the last two weeks, and the time spent in each book with about how long is left at your pace. A book's details show the same for that book.
 
-Time counts while a book is open and you turn pages, select or listen; after five minutes with none of that it stops until you carry on. Every device adds to the same totals.
+Time counts while a book is open and you turn pages, select or listen; after five minutes with none of that it stops until you carry on. Every device adds to the same totals. The [Today](app:today) summary shows the book you're reading, today's time and your streak; tap it to carry on reading.
 
 ## Highlights, notes and bookmarks
 Select some text and pick one of four colours to highlight it. From the same bar you can `Add a note`, `Copy` or `Find in the book`. Tap a highlight to change its colour, edit the note or delete it. The bookmark button at the top marks the page.
 
-`Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard.
+`Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard. From the same window, `Send to Notes` makes a page of your highlights and notes in [Notes](app:notes).
 
 ## Sync and backup
 With orOS sync on, your library list, reading place, highlights, notes, bookmarks and reading time follow you to every device. The book files travel through the orOS disk sync. If a book was added elsewhere and its file hasn't arrived yet, it shows as not on this device; adding the same file here keeps your place, because the library knows a book by its content. Reading settings and the reading-aloud speed stay on each device.
