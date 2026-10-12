@@ -5216,3 +5216,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Data: projects and tracks gain `fx: [{u, id, on, s: {slider: value}, f?: {slider: path}}]` (≤ 8), normalised by C.normFx. Unknown effect ids are kept (a newer device's effect) and do not play.
   - Not offered yet: Sidechain Ducker (needs a second input routed). Effects reset (@init) at every play, as in REAPER.
 - Credits: CREDITS.md, shell credits, Bible credits register. Not tested: sound on real devices and phones, Safari, offline use after precache.
+
+### 2026-10-12 — Stock v1.5.0 (phase 3C, #247) — 1.33.00
+
+- **Lots and expiry dates:** per-lot quantities (first to expire goes first), Expiring filter and report, Today reminder 7 days ahead.
+- Not tested: real phones, Safari.
