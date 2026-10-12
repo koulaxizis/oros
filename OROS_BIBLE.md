@@ -5017,3 +5017,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Mail: compose deep link takes attachments (#218) — 1.13.02
 - `__orosOpenAt("mail", { compose: { …, attach: [{ path } | { name, b64 }] } })`: other apps can open a new message with files already attached (orOS disk path or inline bytes), e.g. an invoice PDF. mail/mail.js only.
+
+### 2026-10-12 — CRM phase 2: shell reminders, Today, Calendar, Contacts (#219) — 1.14.00
+- CRM v1.1.0: shell `crmCheckTick` (follow-up reminders with the app closed; the app's own reminder loop is gone), Today provider `crm/today.js` (open follow-ups as tasks, Done → `__orosOpenAt("crm", {done:{fup}})`), Calendar feed "Customers" / «Πελάτες» (`lbl-feed-crm`), Contacts "Customer: <name>" button. Shared `crm/core.js` gains reminders, reminderText, calendarOn, custsForContact. No data format change.
