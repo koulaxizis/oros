@@ -5046,3 +5046,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-12 — Atelier: magic resize into several sizes; Duplicate keeps element heights (#221) — 1.16.00
 - `More › Resize…` re-lays each element for the new page (`atelier/relayout.js`, pure, precached): edge-anchored elements keep their gap, others their fraction; spanning bars/photos stretch (photos crop to fill); backgrounds cover; even content scale `k = min(w/W, h/H)`; text re-measured. Several presets or a custom px/mm size at once; by default each size becomes a copy next to the original (`AT.addCopies`, new ids, same folder), else this design changes size with Undo.
 - Bug fix: copy code cleared `h` on every entity (`if (e.h) e.h = []`), so Duplicate reset every element's height to 100; now only stories. Tests: tests/atelier-relayout.test.js (3).
+
+### 2026-10-12 — Photo Lab 2C: layer masks, adjustment layers, layer styles (#222) — 1.17.00
+- Layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay). photolab/ + tests only.
