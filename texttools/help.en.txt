@@ -1,0 +1,51 @@
+# Text Tools
+Text Tools cleans up and rearranges plain text and simple tables: sort lines, remove duplicates, trim spaces, number lines, change the separator of a CSV and find and replace. Paste your text, pick a tool and the result appears straight away.
+
+## Getting started
+1. Paste or type your text in the `Text` box, or tap or click the folder button to open a file (.txt, .csv, .tsv, .md and similar, up to 5 MB). The clipboard button pastes what you copied.
+2. Pick a group at the top (`Lines`, `Clean up`, `Numbers`, `Columns`, `Find`) and then a tool.
+3. Set its options. The `Result` box follows as you type.
+4. `Copy` the result, `Save` it as a file, or press `Use as text` to move it up into the `Text` box and work on it again.
+
+Under the text you see how many characters, words and lines it has. Tap or click that line for more: sentences, paragraphs, reading time and the most used words.
+
+## Tools
+- `Lines`: `Sort` (A → Z with Greek and English in the right order, natural order so that 2 comes before 10, by number, by length or at random), `Reverse order`, `Remove duplicates`, `Only duplicates`, `Count lines`, `Remove empty lines`, `One empty line`, `Keep / remove lines` that contain, start with or end with a text, `Join lines` and `Split into lines`.
+- `Clean up`: `Trim spaces`, `Collapse spaces`, `Tabs ↔ spaces`, `Unwrap lines` (one line per paragraph), `Wrap lines`, `Hidden characters` (invisible characters, odd spaces, curly quotes) and `Line endings` (LF or CRLF for Windows).
+- `Numbers`: `Number lines` with your own start, step and style, `Remove numbers / bullets`, and `Prefix / suffix` with ready choices such as bullets or «…».
+- `Columns` for CSV-like tables: `Change separator` (comma, semicolon, tab, pipe or your own; quotes are handled), `Pick columns` (for example 3,1 or 2-4, in the order you write them), `Rows ↔ columns`, `Markdown table` and `JSON`.
+- `Find`: `Find and replace`, with options to ignore case, ignore Greek accents, match whole words, or use a pattern (regular expression, with $1 for groups).
+
+`Ignore case` and `Ignore accents` only change how lines are compared; your text keeps its own letters. To change capitals or accents, use the Case Converter.
+
+In separator, prefix and suffix fields, `\t` means a tab and `\n` a new line.
+
+## Steps and recipes
+Each tool is a step. Press `+ Step` to add another one: the text goes through the steps in order, for example `Trim spaces`, then `Remove duplicates`, then `Sort`. Tap or click a step to change it, the arrow moves it up, × removes it (`Undo` brings it back).
+
+`Save as recipe` keeps the steps under a name. Open `Recipes` at the top to use a recipe again, rename it or delete it. When you change the steps of a recipe you opened, `Update` saves the change.
+
+## Send to other apps
+`Send` hands the result to another orOS app:
+- [Notes](app:notes): a new page with the result.
+- [Spreadsheet](app:spreadsheet): a new sheet, one row per line and one column per field.
+- [To-Do](app:todo): one task per line. To-Do shows them first and adds them only when you confirm.
+- Case Converter, when it is installed.
+
+## Sync and backup
+Your recipes sync between your devices through [orOS sync](help:t/sync). In `Recipes` you can also `Export` them to a file and `Import` them on another device; imported recipes are added next to yours.
+
+>! Your text is never saved on the device and never synced. It stays only while orOS is open, so save or send the result before you close the browser.
+
+## Keyboard shortcuts
+- [[Ctrl+Enter]]: run the steps now.
+
+## Tips
+- Cleaning a list from an e-shop or an e-mail? Try `Hidden characters`, then `Trim spaces`, then `Remove duplicates`.
+- For an Excel file in Greek, change the separator to `Semicolon ;` before you open it there.
+
+## Limits
+- Up to 2,000,000 characters of text. Above 200,000 the result is not live: press `Apply` (or [[Ctrl+Enter]]).
+- A pattern that runs for more than two seconds is stopped.
+- Up to 100 recipes with up to 30 steps each.
+- Notes gets up to 20,000 characters, Spreadsheet up to 500 rows and 64 columns, To-Do up to 200 tasks.
