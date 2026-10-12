@@ -271,8 +271,17 @@ export async function handleNl(request, env, url, now) {
     text = await readSmall(request);
     if (text === null) return page(413, lang, "bad");
   }
-  let d;
-  try { d = await db(env); } catch (e) { return page(503, lang, "off"); }
+  // Any storage failure (a transient D1 error, a quota) → a page, never
+  // the platform's raw error.
+  try {
+    return await afterRead(request, env, url, now, kind, k, tok, lang, text);
+  } catch (e) {
+    return page(503, lang, "off");
+  }
+}
+async function afterRead(request, env, url, now, kind, k, tok, lang, text) {
+  const method = request.method;
+  const d = await db(env);
   const list = await q(d, SQL.getList, k).first();
   if (!list) return page(404, lang, "gone");
 

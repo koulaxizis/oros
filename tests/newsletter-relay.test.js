@@ -231,3 +231,19 @@ test("pull pages by 200", async () => {
   assert.equal(b.body.data.rows.length, 50);
   assert.equal(b.body.data.more, false);
 });
+
+test("a failing D1 call gives the visitor a page, never a raw error", async () => {
+  const { D, env } = await setup();
+  const prep = D.prepare;
+  D.prepare = (sql) => {
+    const st = prep(sql);
+    const wrap = (x) => Object.assign({}, x, { bind: (...b) => wrap(x.bind(...b)), run: async () => { throw new Error("D1 quota"); },
+                                              first: sql === NL.SQL.getList ? x.first : async () => { throw new Error("D1 down"); } });
+    return wrap(st);
+  };
+  const p = await pub(env, "/nl/s/" + K, form({ email: "a@x.gr" }));
+  assert.equal(p.status, 503);
+  assert.match(p.text, /Not available/);
+  const u = await pub(env, "/nl/u/" + K + "/abcd1234", { method: "POST", body: "List-Unsubscribe=One-Click" });
+  assert.equal(u.status, 503);
+});
