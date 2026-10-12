@@ -5272,3 +5272,17 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Montage phase 2 wave 1 (#252) — 1.37.00
 - Montage v1.1.0: subtitles (open and save .srt, edit on the timeline, burned into the export), music ducking under voice-over, freeze frame, sound-only export, three new transitions and four new filters. Schema additions in Part IV (MONTAGE v1). Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari, long projects on low-end devices.
+
+### 2026-10-12 — Newsletter phase 3C: HTTP API sending (#254, relay #253) — 1.38.00
+- Relay (merged in #253): op `papi` (relay/papi.js). It has fixed hosts per provider, an exact path and query allowlist, at most 40 requests, 4 MB per call, 6 at a time, no redirects, and the key is never stored or echoed.
+- Newsletter v1.4.0 (phase 3C).
+  - Sending accounts gain `via: "smtp"|"api"` and `dom` (Mailgun). The API key is device-local in IDB, like the SMTP passwords.
+  - The engine sends API accounts in batches of up to 10 (the daily limit left, about 1 MB; a whole call that fails at the relay is retried with half the batch: Mail thread review on #253, Workers CPU limit). Each answer counts on its own:
+    - a refused address bounces;
+    - 5xx or timeout is retried;
+    - 401/403 pauses the issue with "apikey";
+    - 429 waits a minute.
+  - The 10-minute check also reads the provider's events and applies them to that account's lists. It reads hard bounces, spam complaints and unsubscribes, but no soft bounces, and an event older than a later sign-up is ignored.
+  - The pre-send check adds `apiImg`: Brevo's API can't carry inline pictures.
+  - Fix: with no Mail Inbox account, the check time is still recorded.
+- Newsletter phase 3 complete. Not tested: real Brevo / Postmark / SendGrid / Mailgun accounts, the live relay, phones, Safari.
