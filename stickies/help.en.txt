@@ -1,0 +1,50 @@
+# Sticky Notes
+Small coloured notes that sit on the orOS desktop. A note can ring at a time you pick, and it can fade away by itself when you no longer need it.
+
+## Getting started
+- Press the round `+` button at the bottom left of the desktop, right-click (or long-press) an empty spot of the desktop and choose `New sticky note`, or press [[Ctrl+Alt+Shift+N]]. You can also press `New note` in the app.
+- Type your note. It saves as you type. Click outside the note, or press [[Esc]], when you are done. A new note you leave empty goes away by itself.
+- Lines that start with `[ ]` become tick boxes. Tick them on the note itself.
+
+## On the desktop
+- Drag a note by its top strip. Drag its bottom-right corner to make it bigger or smaller. Clicking a note brings it to the front.
+- The `Fold` button folds a note into a small tab with its first line; `Unfold` opens it again.
+- On a phone the notes are a row of cards at the top of the desktop. Swipe the row and tap a card to open it.
+- Where a note sits and how big it is stays on each device, because a phone and a computer have different screens.
+- Too many notes over your icons? Right-click the desktop and choose `Tidy up sticky notes`.
+
+## Ring at a time
+Open a note's options (the `…` button, or tap the card on a phone) and choose `Ring`: `In 15 minutes`, `In 1 hour`, `In the evening at 20:00`, `Tomorrow at 09:00` or `At a time I pick…`.
+- At that time the note wiggles, a chime plays and a notice lands in the bell.
+- `Done` clears the ring. `Snooze 10 min` rings again in ten minutes.
+- The chime follows the notification volume and quiet hours, and you can turn Sticky Notes off in [Settings](app:settings) › `Notifications`.
+
+## Vanish
+In the same window, `Vanish` makes a note fade away by itself: `In 1 hour`, `At the end of today`, `At the end of tomorrow`, `In a week` or `At a time I pick…`.
+- Tick `Also vanish when I press Done on the ring` for a reminder that goes away once you have dealt with it.
+- A faded note is not deleted at once. It waits 7 days under `Faded` in the app, where `Restore` puts it back on the desktop.
+
+## The app
+- `On the desktop` lists every note, newest first, with a search box. `Edit` opens the note, `Show` takes you to it on the desktop, `Delete` removes it (`Undo` in the message brings it back).
+- `Faded` lists the notes that faded and when each one will be deleted.
+
+## Settings
+The gear button opens the settings for this device:
+- `Show sticky notes on the desktop`: turn it off for a clean desktop. The notes still ring, and you edit them from the app.
+- `Ring sound`: `Bell`, `Ding-dong`, `Wind chime` or `No sound`. `Play` lets you hear it.
+- `A soft sound when a note fades`, and the colour of new notes.
+- `Tidy up the desktop` and `Export as text`.
+
+## Sync and backup
+- The notes (text, colour, ring and vanish times) follow you to every device through orOS sync, encrypted like the rest of your data. They are in the full backup too.
+- The place and size of each note, and the settings, stay on each device.
+- When the same note changes on two devices before they sync, each part (text, colour, times) keeps its most recent change.
+
+## Keyboard shortcuts
+- [[Ctrl+Alt+Shift+N]]: a new sticky note, from anywhere in orOS.
+- [[Enter]] on a selected note: start typing. [[Esc]]: stop typing.
+
+## Limits
+- Notes ring and fade only while orOS is open. With orOS closed, a missed ring waits in the bell for the next time you open it, without a sound.
+- A browser plays sound only after you have tapped or typed something on the page since it opened.
+- Up to 60 notes on the desktop, 1,000 characters each, plain text only.

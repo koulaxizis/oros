@@ -1104,6 +1104,7 @@
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
+      tickSafe("stickiesTick", stickiesTick);              // Sticky Notes: ring + fade on the desktop (cheap, 1/s)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
@@ -1154,6 +1155,19 @@
     var T = window.orosToday;
     if (T && typeof T.tick === "function") T.tick();
   }
+  // Sticky Notes (stickies/host.js): the module owns the rule (ring,
+  // fade, the Faded bin) and draws the notes; the shell only gives it
+  // the clock. A stale index.html without the module → silent.
+  function stickiesTick() {
+    var S = window.orosStickies;
+    if (S && typeof S.tick === "function") S.tick();
+  }
+  function scNewSticky() {
+    var S = window.orosStickies;
+    if (S && typeof S.newNote === "function" && S.registered()) S.newNote();
+    else openAppById("stickies");          // stale bundle: the app (or the menu)
+  }
+
   // The manual unlock pulls directly (no auto-sync event): tell the
   // summary that this device's data has caught up (or failed to).
   function todaySyncSettled(ok) {
@@ -2306,6 +2320,19 @@
       }
       return "";
     }
+  };
+  // Sticky Notes (stickies/host.js): language, whether the app is
+  // installed (the module is inert until then), the running app, the
+  // way back to the desktop and a plain app open.
+  window.orosStickiesEnv = {
+    lang: function () { return state.lang; },
+    registered: function () {
+      for (var i = 0; i < state.apps.length; i++) if (state.apps[i] && state.apps[i].id === "stickies") return true;
+      return false;
+    },
+    running: function () { return !!state.running; },
+    home: function () { if (state.running) returnToDesktop(); },
+    open: function (id) { openAppById(id); }
   };
   window.orosAssistSearch = function (q, ids) {
     var S = window.orosSearch;
@@ -5001,7 +5028,8 @@
     { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
     { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
     { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
-    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } }
+    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
+    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
