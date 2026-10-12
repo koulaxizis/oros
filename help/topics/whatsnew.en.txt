@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.99.00
+- Photo Lab opens and saves Photoshop (PSD) and OpenRaster files with layers.
+
 ## Version 0.98.00
 - Today now also shows your expected period and mood check-in (both only if you turn them on in Settings), today's minimalism proposal, remembrance days from your family tree, tonight's sky events and your pet's birthday.
 
