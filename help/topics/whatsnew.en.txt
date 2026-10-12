@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.15.00
+- Stock: purchase orders (draft, sent, partly received), a Reports tab, and links to To-Do, Mail, Budget, Quote, Spreadsheet and Today.
+
 ## Version 1.14.00
 - CRM: follow-up reminders now arrive even when CRM is closed. Open follow-ups show in Today (tick to mark done) and in the Calendar under Customers, with the expected close day of deals. Contacts shows a Customer button on people linked to a customer.
 
