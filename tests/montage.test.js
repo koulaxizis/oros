@@ -249,3 +249,88 @@ test("compositor helpers: contain / cover placement, title entrance", () => {
   // every filter the model accepts, the compositor draws
   assert.deepEqual(G.FILTERS.slice().sort(), C.FILTERS.slice().sort());
 });
+
+test("undo: restoring an earlier copy is a fresh edit that survives sync", () => {
+  const before = base();
+  const snap = JSON.parse(JSON.stringify(proj(before)));
+  let d = C.split(before, "p1", "v1", 4, T0 + 10, "v1b");
+  d = C.delItem(d, "p1", "i1", T0 + 11);
+  d = C.setProject(d, "p1", { name: "Changed" }, T0 + 12);
+  const r = C.restoreProject(d, "p1", snap, T0 + 20);
+  const p = proj(r);
+  assert.equal(p.name, "Holiday");
+  assert.deepEqual(C.mainSeq(p).map((s) => s.it.id), ["v1", "i1", "v2"]);
+  assert.equal(p.items.v1.out, 12);
+  assert.ok(p.items.i1.m > proj(d).tombs.i1);                    // back, newer than its tombstone
+  assert.ok(p.tombs.v1b >= T0 + 20);
+  // the other device that still has the split copy converges on the restore
+  assert.deepEqual(C.mainSeq(proj(C.merge(d, r))).map((s) => s.it.id), ["v1", "i1", "v2"]);
+  // unchanged items keep their stamp
+  assert.equal(p.items.v2.m, proj(before).items.v2.m);
+});
+
+test("hash: streaming SHA-256 equals the standard one at every boundary", () => {
+  const Hh = require(path.join(__dirname, "..", "montage/hash.js"));
+  const crypto = require("crypto");
+  for (const n of [0, 1, 55, 56, 63, 64, 65, 127, 128, 1000, 70001]) {
+    const b = crypto.randomBytes(n), h = Hh.create();
+    for (let i = 0; i < n; i += 37) h.update(b.subarray(i, Math.min(n, i + 37)));
+    assert.equal(h.hex(), crypto.createHash("sha256").update(b).digest("hex"), "size " + n);
+  }
+});
+
+test("relink with another file: clips switch to it, points clamp to its length", () => {
+  const NEW = H("e") + ".mp4";
+  const d = C.replaceSrc(base(), "p1", VID, NEW, 9, T0 + 30);
+  const v = proj(d).items.v1;
+  assert.equal(v.src, NEW); assert.equal(v.len, 9); assert.equal(v.out, 9); assert.equal(v.in, 2);
+  assert.ok(v.m >= T0 + 30);
+  assert.equal(proj(d).items.v2.src, VID2);
+});
+
+test("undo a project delete: it comes back whole and beats the tombstone on every device", () => {
+  const before = base();
+  const del = C.delProject(before, "p1", T0 + 50);
+  assert.equal(proj(del), undefined);
+  const back = C.undeleteProject(del, proj(before), T0 + 51);
+  const p = proj(back);
+  assert.deepEqual(C.mainSeq(p).map((s) => s.it.id), ["v1", "i1", "v2"]);
+  assert.equal(p.name, "Holiday");
+  // a device that only saw the delete takes the return
+  assert.ok(proj(C.merge(del, back)));
+  assert.equal(J(C.merge(del, back)), J(C.merge(back, del)));
+  // undeleting a project that exists does nothing
+  assert.equal(J(C.undeleteProject(before, proj(before), T0 + 60)), J(before));
+});
+
+test("search provider: one hit per project with its text clips, read-only, safe on junk", () => {
+  const P = require(path.join(__dirname, "..", "montage/search.js"));
+  let d = base();
+  d = C.addItem(d, "p1", { id: "t1", k: "title", tr: "tt", at: 1, d: 3, text: { t: "Summer\nin Crete" } }, T0 + 9);
+  d = C.newProject(d, { name: "" }, T0 + 10, "p2");
+  const raw = JSON.stringify(d);
+  const hits = P.search({ readJSON: () => JSON.parse(raw), lang: "el" });
+  assert.equal(P.id, "montage"); assert.deepEqual(P.keys, ["oros-montage"]);
+  const h1 = hits.find((h) => h.id === "p:p1"), h2 = hits.find((h) => h.id === "p:p2");
+  assert.equal(h1.title, "Holiday"); assert.equal(h1.text, "Summer in Crete");
+  assert.deepEqual(h1.target, { project: "p1" });
+  assert.equal(h2.title, "Untitled");                            // the core names an empty project
+  for (const junk of [null, 5, "x", [], { projects: [] }, { projects: { "BAD ID": {} , p3: 7 } }]) {
+    assert.deepEqual(P.search({ readJSON: () => junk, lang: "en" }), []);
+  }
+});
+
+test("app strings: English and Greek have the same keys; help pages share their outline", () => {
+  const fs = require("fs");
+  const src = fs.readFileSync(path.join(__dirname, "..", "montage/montage.js"), "utf8");
+  const block = src.slice(src.indexOf("var STRINGS = {"), src.indexOf("\n  };", src.indexOf("var STRINGS = {")));
+  const en = block.slice(block.indexOf("en: {"), block.indexOf("el: {")), el = block.slice(block.indexOf("el: {"));
+  const keys = (s) => [...s.matchAll(/"([a-zA-Z0-9.:]+)":/g)].map((m) => m[1]).sort();
+  assert.ok(keys(en).length > 100);
+  assert.deepEqual(keys(el), keys(en));
+  // every t("key") used in the app exists
+  const used = new Set([...src.matchAll(/\bt\("([a-zA-Z0-9.:]+)"/g)].map((m) => m[1]));
+  for (const k of used) if (!k.endsWith(".")) assert.ok(keys(en).includes(k), "missing string " + k);
+  const outline = (f) => fs.readFileSync(path.join(__dirname, "..", "montage", f), "utf8").split("\n").filter((l) => /^#{1,3} /.test(l)).map((l) => l.match(/^#+/)[0]);
+  assert.deepEqual(outline("help.el.txt"), outline("help.en.txt"));
+});

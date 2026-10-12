@@ -529,6 +529,69 @@
     return merge(d, null);
   }
 
+  // Relink with a different file: every clip that used oldId uses
+  // newId (its length clamps in/out points to the new file).
+  function replaceSrc(data, pid, oldId, newId, len, now) {
+    var d = clone(data), p = d.projects[pid];
+    if (!p) return d;
+    Object.keys(p.items).forEach(function (k) {
+      var it = p.items[k];
+      if (it.src !== oldId) return;
+      var next = JSON.parse(JSON.stringify(it));
+      next.src = newId;
+      if (it.k === "video" || it.k === "audio") {
+        next.len = len || 0;
+        if (len > 0 && next.out > len) { next.out = len; next["in"] = Math.min(next["in"], Math.max(0, len - MIN)); }
+      }
+      var n = normItem(next, k);
+      if (!n) return;
+      n.m = tick(it.m, now);
+      p.items[k] = n;
+    });
+    return merge(d, null);
+  }
+
+  // Undo / redo: bring a project back to an earlier copy of itself.
+  // Every item that differs gets a fresh m (and items gone since then
+  // come back newer than their tombstone), so the restore is an edit
+  // like any other and travels through sync.
+  function restoreProject(data, pid, snap, now) {
+    var d = clone(data), p = d.projects[pid];
+    var wrap = { projects: {} };
+    wrap.projects[pid] = snap;
+    var s = snap ? merge(wrap, null).projects[pid] : null;
+    if (!p || !s) return d;
+    var f = normFields(p), fs = normFields(s), changed = false;
+    ["name", "ar", "fps", "bg", "vs"].forEach(function (k) { if (f[k] !== fs[k]) { p[k] = fs[k]; changed = true; } });
+    if (changed) p.m = tick(p.m, now);
+    Object.keys(p.items).forEach(function (k) {
+      if (!s.items[k]) { p.tombs[k] = tick(p.items[k].m, now); delete p.items[k]; }
+    });
+    Object.keys(s.items).forEach(function (k) {
+      var want = JSON.parse(JSON.stringify(s.items[k])), cur = p.items[k];
+      if (cur) { want.m = cur.m; if (JSON.stringify(want) === JSON.stringify(cur)) return; }
+      want.m = tick(Math.max(cur ? cur.m : 0, p.tombs[k] || 0), now);
+      p.items[k] = want;
+    });
+    return merge(d, null);
+  }
+
+  // Bring a deleted project back (undo): a fresh edit newer than its
+  // tombstone, so every device sees it return (R17).
+  function undeleteProject(data, snap, now) {
+    var d = clone(data);
+    if (!snap || !isId(snap.id) || d.projects[snap.id]) return d;
+    var wrap = { projects: {} };
+    wrap.projects[snap.id] = snap;
+    var s = merge(wrap, null).projects[snap.id];
+    if (!s) return d;
+    var m = tick(Math.max(d.tombs[snap.id] || 0, lastEdit(s)), now);
+    s.m = m;
+    Object.keys(s.items).forEach(function (k) { s.items[k].m = m; });
+    d.projects[snap.id] = s;
+    return merge(d, null);
+  }
+
   // ---------- Small helpers for the app ----------
   function projectList(data) {
     var ps = (data && data.projects) || {};
@@ -556,7 +619,7 @@
     outputSize: outputSize, framePlan: framePlan, soundPlan: soundPlan, gainAt: gainAt, fadeAt: fadeAt, mediaOf: mediaOf,
     newProject: newProject, setProject: setProject, delProject: delProject,
     addItem: addItem, setItem: setItem, delItem: delItem, moveMain: moveMain,
-    split: split, duplicate: duplicate, detachSound: detachSound,
+    split: split, duplicate: duplicate, detachSound: detachSound, restoreProject: restoreProject, undeleteProject: undeleteProject, replaceSrc: replaceSrc,
     projectList: projectList, fmtTime: fmtTime, exportName: exportName
   };
   if (typeof module === "object" && module.exports) module.exports = api;

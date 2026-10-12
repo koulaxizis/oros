@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Montage · orOS</title>
+
+  <link rel="stylesheet" href="montage.css?v=0.94.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="back-btn" class="icon-btn" hidden></button>
+    <div class="title">
+      <span id="title-main" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="undo-btn" class="icon-btn" hidden></button>
+    <button type="button" id="redo-btn" class="icon-btn" hidden></button>
+    <button type="button" id="proj-btn" class="icon-btn" hidden></button>
+    <button type="button" id="export-btn" class="btn primary" data-i18n="btn.export" hidden>Export</button>
+  </header>
+
+  <!-- Projects -->
+  <main id="home" class="view">
+    <div class="home-head">
+      <h1 data-i18n="home.title">Your projects</h1>
+      <span class="spacer"></span>
+      <button type="button" id="new-btn" class="btn primary" data-i18n="btn.new">New project</button>
+    </div>
+    <ul id="proj-list" class="proj-list"></ul>
+    <div id="home-empty" class="empty" hidden>
+      <p class="empty-title" data-i18n="home.emptyTitle">No projects yet</p>
+      <p class="hint" data-i18n="home.empty">Start a project, add your videos, pictures and music, and export a video file.</p>
+    </div>
+    <p id="storage" class="hint small"></p>
+  </main>
+
+  <!-- Editor -->
+  <main id="editor" class="view" hidden>
+    <div id="stage-wrap">
+      <canvas id="stage" width="1280" height="720"></canvas>
+      <div id="stage-empty" class="stage-empty" hidden>
+        <p data-i18n="ed.empty">Add your first video or picture</p>
+        <button type="button" id="first-add" class="btn primary" data-i18n="tool.media">Media</button>
+      </div>
+    </div>
+
+    <div id="transport">
+      <span id="tc" class="tc">0:00.00</span>
+      <span class="spacer"></span>
+      <button type="button" id="prev-btn" class="icon-btn"></button>
+      <button type="button" id="play-btn" class="icon-btn play"></button>
+      <button type="button" id="next-btn" class="icon-btn"></button>
+      <span class="spacer"></span>
+      <button type="button" id="zout-btn" class="icon-btn"></button>
+      <button type="button" id="zin-btn" class="icon-btn"></button>
+    </div>
+
+    <div id="tl-wrap">
+      <div id="tl-heads" aria-hidden="true"></div>
+      <div id="timeline" tabindex="0" role="application">
+        <div id="tl-inner">
+          <div id="ruler"></div>
+          <div id="tracks"></div>
+        </div>
+      </div>
+      <div id="playhead" aria-hidden="true"></div>
+    </div>
+
+    <nav id="tools" aria-label="Tools"></nav>
+  </main>
+
+  <!-- Dialogs (centered, R32) -->
+  <div id="scrim" hidden></div>
+  <div id="dlg" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title" hidden>
+    <div class="dlg-head">
+      <h2 id="dlg-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="dlg-close" class="icon-btn"></button>
+    </div>
+    <div id="dlg-body"></div>
+  </div>
+
+  <div id="busy" class="busy" hidden>
+    <div class="busy-card" role="status" aria-live="polite">
+      <p id="busy-text"></p>
+      <progress id="busy-prog" max="1" value="0"></progress>
+      <button type="button" id="busy-cancel" class="btn" data-i18n="btn.cancel" hidden>Cancel</button>
+    </div>
+  </div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../vendor/mediabunny.min.js?v=0.94.00"></script>
+  <script src="core.js?v=0.94.00"></script>
+  <script src="hash.js?v=0.94.00"></script>
+  <script src="gl.js?v=0.94.00"></script>
+  <script src="media.js?v=0.94.00"></script>
+  <script src="player.js?v=0.94.00"></script>
+  <script src="export.js?v=0.94.00"></script>
+  <script src="montage.js?v=0.94.00"></script>
+
+</body>
+</html>
