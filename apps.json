@@ -274,9 +274,26 @@
       "type": "internal"
     },
     {
+      "id": "atelier",
+      "name": "Atelier",
+      "category": "Creativity",
+      "icon": "atelier",
+      "url": "atelier/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
+      "id": "photolab",
+      "name": "Photo Lab",
+      "category": "Image",
+      "icon": "photolab",
+      "url": "photolab/",
+      "type": "internal"
+    },
+    {
       "id": "pixel",
       "name": "Pixel Avatar",
-      "category": "Creativity",
+      "category": "Image",
       "icon": "pixel",
       "url": "pixel/",
       "type": "internal"
@@ -284,7 +301,7 @@
     {
       "id": "wallpaper",
       "name": "Wallpaper Generator",
-      "category": "Creativity",
+      "category": "Image",
       "icon": "wallpaper",
       "url": "wallpaper/",
       "type": "internal"
@@ -292,7 +309,7 @@
     {
       "id": "trees",
       "name": "Tree Sketcher",
-      "category": "Creativity",
+      "category": "Image",
       "icon": "trees",
       "url": "trees/",
       "type": "internal"
@@ -300,18 +317,9 @@
     {
       "id": "aura",
       "name": "Aura Painter",
-      "category": "Creativity",
+      "category": "Image",
       "icon": "aura",
       "url": "aura/",
-      "type": "internal"
-    },
-    {
-      "id": "atelier",
-      "name": "Atelier",
-      "category": "Creativity",
-      "icon": "atelier",
-      "url": "atelier/",
-      "search": "search.js",
       "type": "internal"
     },
     {
