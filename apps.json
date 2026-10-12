@@ -540,6 +540,15 @@
       "today": "today.js"
     },
     {
+      "id": "library",
+      "name": "Library",
+      "category": "Personal",
+      "icon": "library",
+      "url": "library/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "bookmarks",
       "name": "Bookmarks",
       "category": "Internet",
@@ -681,6 +690,15 @@
       "category": "Video",
       "icon": "television",
       "url": "television/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
+      "id": "montage",
+      "name": "Montage",
+      "category": "Video",
+      "icon": "montage",
+      "url": "montage/",
       "search": "search.js",
       "type": "internal"
     },

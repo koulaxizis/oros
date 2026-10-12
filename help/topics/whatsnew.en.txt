@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.10.00
+- New app Montage (Video): edit videos on a timeline with pictures, music, your voice and titles, add transitions and filters, and export an MP4 or WebM video. Your videos stay on your device unless you turn on media sync for a project.
+
+## Version 1.08.00
+- New app Library (Personal): read EPUB and PDF books from the orOS disk with highlights, notes, bookmarks and search.
+- The menu closes its categories again after you open an app, and the menu and the notifications panel no longer stay open together.
+
 ## Version 1.07.00
 - New app: Invoices. Invoices, receipts, proformas and credit notes with VAT, automatic numbering and PDF; payments and overdue tracking, a revenue dashboard, clients and recurring drafts. Invoices issued in myDATA can be recorded with their ΜΑΡΚ.
 

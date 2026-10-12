@@ -1,0 +1,71 @@
+# Montage
+Montage is a video editor. Put your videos, pictures, music and text on a timeline, trim and arrange them, add transitions and titles, and export a video file. Everything happens in your browser, even offline.
+
+## Getting started
+1. Tap or click `New project`, give it a `Name`, pick a `Shape` (`Wide 16:9` for a screen, `Tall 9:16` for a phone story, `Square 1:1` or `Portrait 4:5`) and `Frames per second`, then `Create`.
+2. Tap `Media` and pick videos or pictures. They line up one after another on the `Main` row.
+3. Press `Play` to watch, then `Export` when you are happy.
+
+Your projects are listed on the first screen. Tap a project to open it; its `More` button lets you `Rename`, `Duplicate` or `Delete` it (with `Undo` for a few seconds).
+
+## The timeline
+The timeline has five rows: `Text`, `Overlay`, `Main`, `Music` and `Voice`. The playhead stays in the middle; scroll the timeline to move through your video. `Zoom in` and `Zoom out` change how much you see; on a computer, Ctrl + mouse wheel zooms too.
+
+- Tap a clip to select it. The tools bar then shows what you can do with it; `Done` deselects.
+- Drag a clip to move it. On the `Main` row this changes the order; on the other rows it changes when the clip starts. Clips snap to the playhead and to the edges of other clips.
+- Drag the left or right edge of a selected clip to trim it.
+- `Split` cuts the clip under the playhead in two.
+
+## Edit clips
+With a clip selected:
+- `Speed` plays it faster or slower. Speed also changes the pitch of the sound.
+- `Volume` (up to 200 %), `Fade` (`Fade in`, `Fade out`) and `Mute` for its sound. `Extract sound` puts the sound of a video on the `Music` row (or `Voice`, if `Music` is taken there) so you can move it on its own.
+- `Transition` into the clip: `Dissolve`, `Through black`, `Slide` or `Wipe`, with a `Length`.
+- `Adjust`: `Brightness`, `Contrast`, `Saturation`, `Warmth` and a `Filter` such as `Mono`, `Sepia` or `Film`.
+- `Frame`: `Whole picture` or `Fill the frame`, `Rotate` and `Mirror`.
+- `To overlay` turns a clip into a picture in picture on top of the main video; `Position` sets `Left – right`, `Top – bottom`, `Size` and `Opacity`. `To main` puts it back.
+- `Duplicate` and `Delete` (with `Undo`).
+
+## Text, music and voice
+- `Text` adds a title at the playhead. `Edit text` changes the words, `Font`, `Text size`, `Colour`, `Outline`, `Box behind the text`, `Alignment` and `Entrance` (`Fade`, `Rise`, `Pop`). Drag its edges to make it show longer or shorter.
+- `Sound` adds music or a sound file at the playhead, on `Music` or `Voice`.
+- `Voice` records your voice from the microphone. After a 3-2-1 count the video plays from the playhead and you speak over it; `Stop` puts the take on the `Voice` row (or `Music`, if `Voice` is taken there). Use headphones so the video's sound does not get into the recording. The first time, the browser asks to let orOS use the microphone.
+- Sound clips show their waveform, so you can see where the loud and quiet parts are.
+- `Overlay` adds a video or picture on top of the main video.
+- Pictures and texts have a `Duration` instead of a speed.
+- Drag a text onto the `Main` row to make a title card between clips; there `Background` sets the colour behind it.
+
+## Grab a frame
+With nothing selected, `Grab frame` saves the picture at the playhead as a PNG in Files › Pictures and opens it in [Photo Lab](app:photolab), where you can edit it.
+
+## Export
+`Export` opens `Export video`. Pick a `Size` (720p, 1080p or 4K, as your device allows) and, if you like, `Also keep a copy in Files › Videos`. Montage makes an MP4 file when your browser can, otherwise a WebM file. When it is ready you can `Play it` or `Save` it to your device. Keep the app open while it exports; `Cancel` stops it.
+
+## Sync and backup
+The edit itself (clips, cuts, texts, settings) travels with orOS sync to your other devices. The media files do not: by default your videos stay on the device you added them on, because big files are slow to upload.
+
+In `Project settings` you can switch on `Sync this project's media`. Montage then copies its files to Files › Assets and Vault Drive syncs them, encrypted. On another device, a file that is not there shows as `Missing on this device`; `Find file` lets you point to it again (a different file of the same kind works too).
+
+`Free space` removes media that no project on this device uses.
+
+>! Clearing your browser's site data removes the media stored on this device. Keep the original files, or switch on media sync for projects that matter.
+
+## Keyboard shortcuts
+- [[Space]] or [[K]]: play or pause.
+- [[←]] / [[→]]: one frame back or forward; with [[Shift]], one second.
+- [[Home]] / [[End]]: start or end.
+- [[S]]: split; [[Delete]]: delete the selected clip.
+- [[Ctrl+Z]] undo, [[Ctrl+Y]] or [[Ctrl+Shift+Z]] redo.
+- [[+]] / [[-]]: zoom the timeline.
+- [[Esc]]: deselect or close a window.
+
+## Tips
+> The preview and the export use the same picture recipe, so what you see while editing is what you get in the file.
+
+- For a phone story, start the project as `Tall 9:16`; you can still change the `Shape` later in `Project settings`.
+- Adding the same file again, even to another project, does not take extra space: Montage keeps one copy.
+
+## Limits
+- One file can be up to 4 GB. Very long 4K projects need a lot of browser storage.
+- Some browsers cannot make 4K or MP4 files; Montage offers only what your browser can do.
+- Pictures other than JPEG and PNG are turned into JPEG when you add them.

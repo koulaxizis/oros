@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.07.00";
+var CACHE_VERSION = "oros-v1.10.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -291,6 +291,19 @@ var PRECACHE_URLS = [
   "shelf/feed.js",
   "shelf/shelf.css",
   "shelf/shelf.js",
+  "library/",
+  "library/index.html",
+  "library/search.js",
+  "library/library.css",
+  "library/core.js",
+  "library/sanitize.js",
+  "library/strings.js",
+  "library/app.js",
+  "library/store.js",
+  "library/home.js",
+  "library/reader.js",
+  "library/epub.js",
+  "library/pdfview.js",
   "water/water.js",
   "water/help.en.txt",
   "water/help.el.txt",
@@ -599,6 +612,8 @@ var PRECACHE_URLS = [
   "scores/help.el.txt",
   "shelf/help.en.txt",
   "shelf/help.el.txt",
+  "library/help.en.txt",
+  "library/help.el.txt",
   "simon/help.en.txt",
   "simon/help.el.txt",
   "slider/help.en.txt",
@@ -617,6 +632,8 @@ var PRECACHE_URLS = [
   "sudoku/help.el.txt",
   "television/help.en.txt",
   "television/help.el.txt",
+  "montage/help.en.txt",
+  "montage/help.el.txt",
   "tetris/help.en.txt",
   "tetris/help.el.txt",
   "tictactoe/help.en.txt",
@@ -949,6 +966,7 @@ var PRECACHE_URLS = [
   "museum/help.el.txt",
   "vendor/leaflet.css",
   "vendor/leaflet.js",
+  "vendor/mediabunny.min.js",
   "calculator/",
   "calculator/index.html",
   "calculator/calculator.css",
@@ -981,6 +999,17 @@ var PRECACHE_URLS = [
   "television/search.js",
   "television/television.css",
   "television/television.js",
+  "montage/",
+  "montage/index.html",
+  "montage/montage.css",
+  "montage/core.js",
+  "montage/hash.js",
+  "montage/gl.js",
+  "montage/media.js",
+  "montage/player.js",
+  "montage/export.js",
+  "montage/montage.js",
+  "montage/search.js",
   "memory/",
   "memory/index.html",
   "memory/memory.css",

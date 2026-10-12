@@ -80,6 +80,13 @@
       "image/avif": [".avif"],
       "image/vnd.adobe.photoshop": [".psd"],
       "image/openraster": [".ora"] } },
+    { app: "library", accept: {
+      "application/epub+zip": [".epub"],
+      "application/pdf": [".pdf"] } },
+    { app: "montage", max: 4096 * 1024 * 1024, accept: {
+      "video/mp4": [".mp4", ".m4v"],
+      "video/webm": [".webm"],
+      "video/quicktime": [".mov"] } },
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"] } },
@@ -370,12 +377,19 @@
     if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   }
 
-  // One file in: size check, pick the app (or ask), hand it over.
+  // Size cap for one file: the app's own (max) when it has one, else
+  // MAX_BYTES (also while the person still has to choose an app).
+  function maxFor(app) {
+    for (var i = 0; app && i < HANDLERS.length; i++) if (HANDLERS[i].app === app && HANDLERS[i].max) return HANDLERS[i].max;
+    return MAX_BYTES;
+  }
+
+  // One file in: pick the app (or ask), size check, hand it over.
   function deliver(file) {
     if (!file) return;
-    if (file.size > MAX_BYTES) { notice(T("big")); return; }
     var c = choose(file.name, loadPrefs());
     if (!c) { notice(T("unknown")); return; }
+    if (file.size > maxFor(c.app)) { notice(T("big")); return; }
     if (c.app) openWith(c.app, file);
     else chooser(file, c.ask, c.ext);
   }

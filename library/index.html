@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Library · orOS</title>
+
+  <link rel="stylesheet" href="library.css?v=1.10.00">
+
+</head>
+<body>
+
+  <!-- Library -->
+  <section id="home">
+    <header id="toolbar">
+      <span id="app-name" class="app-name"></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn primary" id="add-btn"></button>
+      <button type="button" class="icon-btn" id="more-btn"></button>
+    </header>
+    <div id="home-bar">
+      <div id="filters" class="chips scroll-x" role="group"></div>
+      <div class="find">
+        <label class="q-wrap">
+          <span id="q-ic" class="q-ic" aria-hidden="true"></span>
+          <input id="q" type="search" autocomplete="off" maxlength="80">
+        </label>
+        <select id="sort"></select>
+        <button type="button" class="icon-btn" id="view-btn"></button>
+      </div>
+    </div>
+    <main id="home-main">
+      <p id="scan-note" class="hint scan-note" hidden></p>
+      <section id="cont" hidden>
+        <h2 id="cont-h" class="sec-h"></h2>
+        <ul id="cont-list" class="cont"></ul>
+      </section>
+      <ul id="grid" class="grid"></ul>
+      <div id="empty" class="empty" hidden></div>
+    </main>
+  </section>
+
+  <!-- Reader -->
+  <section id="reader" hidden>
+    <header id="rd-top">
+      <button type="button" class="icon-btn" id="rd-back"></button>
+      <div class="rd-titles">
+        <span id="rd-title" class="rd-title"></span>
+        <span id="rd-sub" class="rd-sub"></span>
+      </div>
+      <button type="button" class="icon-btn" id="rd-search"></button>
+      <button type="button" class="icon-btn" id="rd-toc"></button>
+      <button type="button" class="icon-btn" id="rd-notes"></button>
+      <button type="button" class="icon-btn" id="rd-aa"></button>
+      <button type="button" class="icon-btn" id="rd-bm"></button>
+    </header>
+    <div id="rd-body">
+      <div id="rd-stage" class="rd-stage" tabindex="-1"></div>
+      <aside id="rd-panel" hidden>
+        <div class="panel-head">
+          <nav id="panel-tabs" role="tablist">
+            <button type="button" role="tab" data-tab="toc"></button>
+            <button type="button" role="tab" data-tab="search"></button>
+            <button type="button" role="tab" data-tab="notes"></button>
+          </nav>
+          <button type="button" class="icon-btn" id="panel-close"></button>
+        </div>
+        <form id="ps-form" class="ps-form" hidden>
+          <input id="ps-q" type="search" autocomplete="off" maxlength="120">
+          <button type="submit" class="btn" id="ps-go"></button>
+        </form>
+        <div id="panel-body"></div>
+      </aside>
+    </div>
+    <footer id="rd-bottom">
+      <button type="button" class="icon-btn" id="rd-prev"></button>
+      <span id="rd-where" class="rd-where"></span>
+      <input id="rd-slider" type="range" min="0" max="1000" step="1" value="0">
+      <span id="rd-pct" class="rd-pct"></span>
+      <button type="button" class="icon-btn" id="rd-next"></button>
+    </footer>
+  </section>
+
+  <div id="sel-pop" class="pop" role="toolbar" hidden></div>
+  <div id="mark-pop" class="pop" role="toolbar" hidden></div>
+  <div id="fn-pop" class="pop fn" role="note" hidden></div>
+  <div id="busy" hidden><div class="spinner"></div><span id="busy-text"></span></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.10.00"></script>
+  <script src="sanitize.js?v=1.10.00"></script>
+  <script src="../atelier/zip.js?v=1.10.00"></script>
+  <script src="strings.js?v=1.10.00"></script>
+  <script src="app.js?v=1.10.00"></script>
+  <script src="store.js?v=1.10.00"></script>
+  <script src="home.js?v=1.10.00"></script>
+  <script src="reader.js?v=1.10.00"></script>
+  <script src="epub.js?v=1.10.00"></script>
+  <script src="pdfview.js?v=1.10.00"></script>
+
+</body>
+</html>
