@@ -5115,3 +5115,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Tests:** `tests/stock.test.js` +2 (photos list merge, removal, tombstone, 1.1 copy; EAN-13 / Code 128 vectors, label choice, SVG has only bars).
 - **Verified (Chromium, real shell + sync, EN 1280 × 800 and EL 360 × 760):** counter (scans, − / +, total, kept after close, below-zero confirm, one movement with prices, Undo voids); 26 labels on 2 sheets with 26 SVGs, product without a code named; photo picked on the phone → JPEG 1200 × 675 on the orOS disk, row synced, the other device shows "not on this device yet"; no overflow at 360 (counter, labels, sheet with photo); slices identical, 0 idle uploads; no page errors.
 - **NOT tested:** a real phone or scanner, a real printer (the print window itself), Safari / iOS, real Dropbox / Vault Drive carrying the photo file, picking a photo through the desktop file picker (the E2E used the phone's file input).
+
+### 2026-10-12 — Help: guide catch-up for 1.13–1.19 (#236) — 1.24.01
+- Calendar help and the Install guide page (EN + EL) cover the releases 1.13.00–1.19.00. Text only.
