@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — App logic (v1.2.0)
+// orOS CRM — App logic (v1.3.0)
 // A small customer book for a freelancer or a small business:
 //   - customers (company or person) with ΑΦΜ / ΔΟΥ / profession,
 //     status lead / active / past, tags, a star, notes
@@ -85,7 +85,19 @@
       "afm.ok": "valid", "afm.bad": "check digit does not match",
       "people.add": "+ Person", "people.none": "No people yet. Link someone from Contacts or add a name.",
       "people.open": "Open in Contacts", "people.gone": "removed from Contacts",
-      "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups",
+      "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups", "sub.docs": "Documents",
+      "act.inv": "Invoice", "act.quote": "Quote",
+      "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
+      "docs.invNone": "No invoices yet. Invoices you issue with the Invoice button show up here.",
+      "docs.quoteNone": "No quotes yet. Quotes for a client with this name or VAT ID show up here.",
+      "docs.tot": "Invoiced {i} · paid {p}", "docs.open": "unpaid {v}", "docs.overdue": "overdue {v}",
+      "ik.inv": "Invoice", "ik.rcpt": "Receipt", "ik.pro": "Proforma", "ik.cred": "Credit note", "ik.ext": "Recorded invoice",
+      "is.void": "Cancelled", "is.pro": "Proforma", "is.credit": "Credit note", "is.paid": "Paid",
+      "is.partial": "Partly paid", "is.overdue": "Overdue", "is.unpaid": "Unpaid",
+      "qs.draft": "Draft", "qs.sent": "Sent", "qs.accepted": "Accepted", "qs.rejected": "Rejected", "qs.expired": "Expired",
+      "deal.inv": "Invoice this deal", "deal.quote": "Quote for this deal",
+      "toast.noInv": "The Invoices app is not available.", "toast.noQuote": "The Quote app is not available.",
+      "toast.quoteCur": "Quote works in EUR or USD. Change the currency in CRM settings, or create the quote in Quote.",
       "hist.none": "Nothing logged yet.", "deals.none": "No deals yet.", "fups.none": "No follow-ups.",
       "fups.done": "Done", "hist.add": "+ Log", "deals.add": "+ Deal", "fups.add": "+ Follow-up",
       "stage.new": "New", "stage.contact": "Contacted", "stage.proposal": "Proposal", "stage.nego": "Negotiation",
@@ -104,6 +116,7 @@
       "d.forgot": "Not contacted", "d.forgotSub": "{n}+ days", "d.leads": "New leads", "d.leadsSub": "this month",
       "d.byStage": "Open deals by stage", "d.byStatus": "Customers", "d.forgotList": "Time to get in touch",
       "d.none": "Add customers and deals to see numbers here.",
+      "d.unpaid": "Unpaid invoices", "d.unpaidSub": "overdue {v}", "d.unpaidNone": "nothing overdue",
       "ed.save": "Save", "ed.cancel": "Cancel", "ed.delete": "Delete", "ed.close": "Close",
       "ed.custNew": "New customer", "ed.custEdit": "Edit customer", "ed.kind": "Type", "ed.name": "Name",
       "ed.namePh.co": "Company name", "ed.namePh.person": "Full name", "ed.alias": "Trade name", "ed.status": "Status",
@@ -178,7 +191,19 @@
       "afm.ok": "έγκυρο", "afm.bad": "το ψηφίο ελέγχου δεν ταιριάζει",
       "people.add": "+ Άνθρωπος", "people.none": "Κανένας ακόμη. Σύνδεσε κάποιον από τις Επαφές ή γράψε ένα όνομα.",
       "people.open": "Άνοιγμα στις Επαφές", "people.gone": "δεν υπάρχει πια στις Επαφές",
-      "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups",
+      "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups", "sub.docs": "Έγγραφα",
+      "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
+      "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
+      "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
+      "docs.quoteNone": "Δεν υπάρχουν προσφορές ακόμη. Εδώ εμφανίζονται οι προσφορές σε πελάτη με αυτό το όνομα ή ΑΦΜ.",
+      "docs.tot": "Τιμολογήθηκαν {i} · εισπράχθηκαν {p}", "docs.open": "ανεξόφλητα {v}", "docs.overdue": "ληξιπρόθεσμα {v}",
+      "ik.inv": "Τιμολόγιο", "ik.rcpt": "Απόδειξη", "ik.pro": "Προτιμολόγιο", "ik.cred": "Πιστωτικό", "ik.ext": "Καταχωρισμένο τιμολόγιο",
+      "is.void": "Ακυρωμένο", "is.pro": "Προτιμολόγιο", "is.credit": "Πιστωτικό", "is.paid": "Εξοφλημένο",
+      "is.partial": "Μερικώς εξοφλημένο", "is.overdue": "Ληξιπρόθεσμο", "is.unpaid": "Ανεξόφλητο",
+      "qs.draft": "Πρόχειρη", "qs.sent": "Απεστάλη", "qs.accepted": "Αποδεκτή", "qs.rejected": "Απορρίφθηκε", "qs.expired": "Έληξε",
+      "deal.inv": "Τιμολόγηση της ευκαιρίας", "deal.quote": "Προσφορά για την ευκαιρία",
+      "toast.noInv": "Η εφαρμογή Τιμολόγια δεν είναι διαθέσιμη.", "toast.noQuote": "Η εφαρμογή Προσφορές δεν είναι διαθέσιμη.",
+      "toast.quoteCur": "Οι Προσφορές δουλεύουν σε EUR ή USD. Άλλαξε το νόμισμα στις ρυθμίσεις του CRM ή φτιάξε την προσφορά στις Προσφορές.",
       "hist.none": "Τίποτα καταγεγραμμένο ακόμη.", "deals.none": "Καμία ευκαιρία ακόμη.", "fups.none": "Κανένα follow-up.",
       "fups.done": "Ολοκληρωμένα", "hist.add": "+ Καταγραφή", "deals.add": "+ Ευκαιρία", "fups.add": "+ Follow-up",
       "stage.new": "Νέα", "stage.contact": "Επικοινωνία", "stage.proposal": "Πρόταση", "stage.nego": "Διαπραγμάτευση",
@@ -197,6 +222,7 @@
       "d.forgot": "Χωρίς επαφή", "d.forgotSub": "{n}+ μέρες", "d.leads": "Νέοι υποψήφιοι", "d.leadsSub": "αυτόν τον μήνα",
       "d.byStage": "Ανοιχτές ευκαιρίες ανά στάδιο", "d.byStatus": "Πελάτες", "d.forgotList": "Ώρα να τους μιλήσεις",
       "d.none": "Πρόσθεσε πελάτες και ευκαιρίες για να δεις αριθμούς εδώ.",
+      "d.unpaid": "Ανεξόφλητα τιμολόγια", "d.unpaidSub": "ληξιπρόθεσμα {v}", "d.unpaidNone": "τίποτα ληξιπρόθεσμο",
       "ed.save": "Αποθήκευση", "ed.cancel": "Άκυρο", "ed.delete": "Διαγραφή", "ed.close": "Κλείσιμο",
       "ed.custNew": "Νέος πελάτης", "ed.custEdit": "Επεξεργασία πελάτη", "ed.kind": "Είδος", "ed.name": "Επωνυμία",
       "ed.namePh.co": "Επωνυμία εταιρείας", "ed.namePh.person": "Ονοματεπώνυμο", "ed.alias": "Διακριτικός τίτλος", "ed.status": "Κατάσταση",
@@ -271,6 +297,7 @@
     meet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
     msg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>',
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
     map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     log: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M3 4h18M3 9h18M3 14h9"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
@@ -390,7 +417,7 @@
         if (["all", "lead", "active", "past", "star", "forgot"].indexOf(p.filter) >= 0) prefs.filter = p.filter;
         if (typeof p.tag === "string") prefs.tag = p.tag;
         if (["name", "last", "next", "value"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
-        if (["hist", "deals", "fups"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
+        if (["hist", "deals", "fups", "docs"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
         if (typeof p.stage === "string") prefs.stage = p.stage;
       }
     } catch (e) {}
@@ -779,6 +806,8 @@
     acts.appendChild(txtBtn("log", t("act.log"), function () { logEditor(null, c.id); }, "primary"));
     acts.appendChild(txtBtn("clock", t("act.fup"), function () { fupEditor(null, c.id); }));
     acts.appendChild(txtBtn("deal", t("act.deal"), function () { dealEditor(null, c.id); }));
+    if (canInvoice()) acts.appendChild(txtBtn("doc", t("act.inv"), function () { newInvoice(c, null); }));
+    if (canQuote()) acts.appendChild(txtBtn("doc", t("act.quote"), function () { newQuote(c, null); }));
     box.appendChild(acts);
 
     // details
@@ -888,6 +917,9 @@
     var subs = [["hist", t("sub.hist") + " (" + custActs.length + ")"],
                 ["deals", t("sub.deals") + " (" + custDeals.length + ")"],
                 ["fups", t("sub.fups") + " (" + openF.length + ")"]];
+    var docs = docsFor(c);
+    if (docs) subs.push(["docs", t("sub.docs") + " (" + (docs.inv.rows.length + docs.quotes.length) + ")"]);
+    else if (prefs.sub === "docs") prefs.sub = "hist";
     var st = el("div", "subtabs");
     st.setAttribute("role", "tablist");
     subs.forEach(function (s) {
@@ -903,6 +935,7 @@
     box.appendChild(pane);
     if (prefs.sub === "hist") renderHistory(pane, c, custActs);
     else if (prefs.sub === "deals") renderCustDeals(pane, c, custDeals);
+    else if (prefs.sub === "docs") renderCustDocs(pane, c, docs);
     else renderCustFups(pane, c, custFups);
   }
 
@@ -971,6 +1004,160 @@
       return oa - ob || rank(b) - rank(a) || b.m - a.m;
     }).forEach(function (d) { box.appendChild(dealRowEl(d, false)); });
     pane.appendChild(box);
+  }
+
+  // ----- Invoices and Quote (phase 3, BR-CRM-INV and BR-Q1) -----
+  // Read-only: oros-invoices-data only through OrosInvoicesCore,
+  // oros-quote-data only through OrosQuoteCore. Both are parsed once
+  // per stored string.
+  var INV_KEY = "oros-invoices-data", QUOTE_KEY = "oros-quote-data";
+  var invCache = { raw: undefined, data: null }, quoteCache = { raw: undefined, data: null };
+  function invData() {
+    var I = window.OrosInvoicesCore;
+    if (!I) return null;
+    var raw = null;
+    try { raw = localStorage.getItem(INV_KEY); } catch (e) {}
+    if (raw !== invCache.raw) {
+      invCache.raw = raw;
+      try { invCache.data = raw ? I.parse(raw) : null; } catch (e) { invCache.data = null; }
+    }
+    return invCache.data;
+  }
+  function quoteData() {
+    if (!window.OrosQuoteCore) return null;
+    var raw = null;
+    try { raw = localStorage.getItem(QUOTE_KEY); } catch (e) {}
+    if (raw !== quoteCache.raw) {
+      quoteCache.raw = raw;
+      try { quoteCache.data = raw ? JSON.parse(raw) : null; } catch (e) { quoteCache.data = null; }
+    }
+    return quoteCache.data;
+  }
+  // null when neither app can be reached (the tab stays hidden)
+  function docsFor(c) {
+    if (!canInvoice() && !canQuote()) return null;
+    var di = invData(), dq = quoteData();
+    return {
+      inv: di ? window.OrosInvoicesCore.byCrm(di, c.id, todayYmd()) : { rows: [], totals: {} },
+      quotes: dq ? window.OrosQuoteCore.forClient(dq, { name: c.name, afm: c.afm }) : []
+    };
+  }
+  function canInvoice() {
+    var s = shell();
+    return !!(s && typeof s.__orosOpenAt === "function" && window.OrosInvoicesCore);
+  }
+  function canQuote() {
+    var s = shell();
+    return !!(s && typeof s.__orosOpenQuoteNew === "function" && typeof s.__orosOpenQuote === "function");
+  }
+  function openInvoices(target) {
+    var s = shell();
+    if (s && typeof s.__orosOpenAt === "function") s.__orosOpenAt("invoices", target);
+    else showToast(t("toast.noInv"));
+  }
+  // BR-CRM-INV 1: a prefilled draft in Invoices, saved only there.
+  // From a won deal: one line (title, 1, value) and ref crm/deal id.
+  // Payloads: C.invoicePrefill / C.quotePrefill.
+  function newInvoice(c, d) { openInvoices({ "new": C.invoicePrefill(c, d, data.prefs.cur) }); }
+  // BR-Q1: a new unsaved draft in Quote. Quote needs at least one
+  // line and knows only EUR and USD.
+  function newQuote(c, d) {
+    var s = shell();
+    if (!s || typeof s.__orosOpenQuoteNew !== "function") { showToast(t("toast.noQuote")); return; }
+    var p = C.quotePrefill(c, d, data.prefs.cur);
+    if (!p) { showToast(t("toast.quoteCur")); return; }
+    if (!s.__orosOpenQuoteNew(p)) showToast(t("toast.noQuote"));
+  }
+  function curMoney(cents, cur) { return C.moneyStr(cents, cur, LANG); }
+  function renderCustDocs(pane, c, docs) {
+    var si = el("div", "sec");
+    var hi = secHead(t("docs.inv"));
+    if (canInvoice()) {
+      hi.appendChild(el("span", "spacer"));
+      if (docs.inv.rows.length) {
+        var all = el("button", "link-btn", t("docs.allInv"));
+        all.type = "button";
+        all.addEventListener("click", function () { openInvoices({ client: { crm: c.id, afm: c.afm || "", name: c.name } }); });
+        hi.appendChild(all);
+      }
+      var ni = el("button", "link-btn", "+ " + t("act.inv"));
+      ni.type = "button";
+      ni.addEventListener("click", function () { newInvoice(c, null); });
+      hi.appendChild(ni);
+    }
+    si.appendChild(hi);
+    Object.keys(docs.inv.totals).sort().forEach(function (cur) {
+      var x = docs.inv.totals[cur];
+      var line = t("docs.tot", { i: curMoney(x.invoiced, cur), p: curMoney(x.paid, cur) });
+      if (x.open > 0) line += " · " + t("docs.open", { v: curMoney(x.open, cur) });
+      var p = el("p", "doc-tot", line);
+      if (x.overdue > 0) {
+        p.appendChild(document.createTextNode(" · "));
+        p.appendChild(el("span", "late", t("docs.overdue", { v: curMoney(x.overdue, cur) })));
+      }
+      si.appendChild(p);
+    });
+    if (!docs.inv.rows.length) si.appendChild(el("p", "hint", t("docs.invNone")));
+    else {
+      var rows = el("div", "rows");
+      docs.inv.rows.slice(0, 30).forEach(function (r) {
+        rows.appendChild(docRow(r.no || t("ik." + r.kind), [t("ik." + r.kind), r.date ? fmtDate(r.date) : ""],
+          curMoney(r.total, r.cur), "is." + r.status, r.status === "overdue",
+          function () { openInvoices({ invoice: r.id }); }));
+      });
+      si.appendChild(rows);
+    }
+    pane.appendChild(si);
+
+    var sq = el("div", "sec");
+    var hq = secHead(t("docs.quote"));
+    if (canQuote()) {
+      hq.appendChild(el("span", "spacer"));
+      var nq = el("button", "link-btn", "+ " + t("act.quote"));
+      nq.type = "button";
+      nq.addEventListener("click", function () { newQuote(c, null); });
+      hq.appendChild(nq);
+    }
+    sq.appendChild(hq);
+    if (!docs.quotes.length) sq.appendChild(el("p", "hint", t("docs.quoteNone")));
+    else {
+      var qr = el("div", "rows");
+      docs.quotes.slice(0, 30).forEach(function (q) {
+        qr.appendChild(docRow(q.num || t("act.quote"), [q.date ? fmtDate(q.date) : ""],
+          curMoney(Math.round(q.total * 100), q.cur), "qs." + q.status, false,
+          function () { var s = shell(); if (s && typeof s.__orosOpenQuote === "function") s.__orosOpenQuote(q.id); }));
+      });
+      sq.appendChild(qr);
+    }
+    pane.appendChild(sq);
+  }
+  function docRow(title, bits, amount, stKey, late, fn) {
+    var b = el("button", "row doc-row");
+    b.type = "button";
+    var main = el("span", "row-main");
+    main.appendChild(el("span", "row-title", title));
+    var sub = el("span", "row-sub", bits.filter(Boolean).join(" · ") + " · ");
+    sub.appendChild(el("span", late ? "late" : "", t(stKey)));
+    main.appendChild(sub);
+    b.appendChild(main);
+    b.appendChild(el("span", "deal-val", amount));
+    b.addEventListener("click", fn);
+    return b;
+  }
+  // Dashboard: what CRM customers still owe, per currency (BR-CRM-INV 3).
+  function unpaidTotals() {
+    var di = invData();
+    if (!di || !window.OrosInvoicesCore) return null;
+    var out = {}, any = false, today = todayYmd();
+    data.cust.forEach(function (c) {
+      var tt = window.OrosInvoicesCore.byCrm(di, c.id, today).totals;
+      Object.keys(tt).forEach(function (cur) {
+        any = true;
+        var o = out[cur] || (out[cur] = { open: 0, overdue: 0 });
+        o.open += tt[cur].open; o.overdue += tt[cur].overdue;
+      });
+    });
+    return any ? out : null;
   }
 
   function fupRowEl(f, showCust) {
@@ -1231,6 +1418,14 @@
     tiles.appendChild(tile(t("d.leads"), String(s.newLeads), t("d.leadsSub"), function () {
       prefs.filter = "lead"; prefs.tag = ""; $("cust-q").value = ""; setTab("cust");
     }));
+    var up = unpaidTotals();
+    if (up) {
+      var curs = Object.keys(up).sort(function (a, b) { return (a === data.prefs.cur ? -1 : 0) - (b === data.prefs.cur ? -1 : 0) || (a < b ? -1 : 1); });
+      var od = curs.filter(function (k) { return up[k].overdue > 0; });
+      tiles.appendChild(tile(t("d.unpaid"), curs.map(function (k) { return curMoney(up[k].open, k); }).join(" · "),
+        od.length ? t("d.unpaidSub", { v: od.map(function (k) { return curMoney(up[k].overdue, k); }).join(" · ") }) : t("d.unpaidNone"),
+        function () { openInvoices({}); }));
+    }
     box.appendChild(tiles);
 
     var p = C.pipeline(data), max = 0;
@@ -1662,6 +1857,14 @@
     stage.addEventListener("change", syncStage);
     syncStage();
     var note = field(dlg, t("ed.notes"), area(x.note, 2000));
+    // Saved deals: hand it to Invoices (won) or Quote (open or won)
+    var oc = orig ? C.byId(data.cust, orig.cust) : null;
+    if (oc && (canInvoice() || canQuote())) {
+      var links = el("div", "c-actions deal-docs");
+      if (canInvoice() && orig.stage === "won") links.appendChild(txtBtn("doc", t("deal.inv"), function () { dlg.close(); newInvoice(oc, orig); }));
+      if (canQuote() && orig.stage !== "lost") links.appendChild(txtBtn("doc", t("deal.quote"), function () { dlg.close(); newQuote(oc, orig); }));
+      if (links.childNodes.length) dlg.appendChild(links);
+    }
 
     function save() {
       var tt = C.cleanText(title.value, 120);
@@ -2423,7 +2626,9 @@
     });
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
-      if (e.key === CONTACTS_KEY && prefs.tab === "cust" && !document.querySelector("dialog[open]")) renderDetail();
+      if (document.querySelector("dialog[open]")) return;
+      if ((e.key === CONTACTS_KEY || e.key === INV_KEY || e.key === QUOTE_KEY) && prefs.tab === "cust") renderDetail();
+      else if (e.key === INV_KEY && prefs.tab === "dash") renderDash();
     });
     setInterval(function () {
       if (document.visibilityState === "hidden") return;
@@ -2444,7 +2649,7 @@
     watchPalette();
     render();
     takeTarget();
-    console.log("[orOS CRM] v1.2.0 boot OK");
+    console.log("[orOS CRM] v1.3.0 boot OK");
   }
 
   boot();
