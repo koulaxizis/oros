@@ -43,6 +43,16 @@ A movement is never edited or deleted. Open it and choose `Void this movement`: 
 
 >! If a sale would take a product below zero, Stock asks first. You can forbid it in Settings.
 
+### Warehouses
+If you keep stock in more than one place (a shop and a storeroom, two branches), add them in Settings › `Warehouses`. From then on:
+- every receipt, sale, count and the counter has a `Warehouse` (this device remembers the last one you used);
+- `New` › `Transfer` moves products `From` one warehouse `To` another; totals don't change;
+- the Products tab can show one warehouse, and a product's sheet shows its quantity `By warehouse`;
+- a stock count compares with what that warehouse should have;
+- Reports adds the `Value per warehouse`.
+
+Reorder, minimums and the total value stay for the whole business. A warehouse that was used can be archived, not deleted; move its stock out first.
+
 ## Reorder
 `Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum, less what is already on order). For each supplier:
 - `Create order` makes a purchase order with those lines.
@@ -81,6 +91,6 @@ Products, movements, suppliers, categories, units and settings sync between your
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 
 ## Limits
-- One warehouse: there are no separate locations with transfers yet.
+- Minimums and reorder are for the whole business, not per warehouse.
 - Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.
