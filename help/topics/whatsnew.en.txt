@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.21.00
+- New app: Newsletter. Write newsletters with blocks or Markdown and send them to your own subscriber lists from your Mail account or a sending provider (Brevo, Amazon SES, Mailgun, Postmark, SendGrid…). Subscribe and unsubscribe work by e-mail, bounces are read from the Inbox, and nothing is tracked.
+
 ## Version 1.20.00
 - Library: read aloud, reading stats, send highlights to Notes, a line in Today, FB2 books and CBZ comics, word look-up (Wiktionary) and Ask the Assistant.
 
