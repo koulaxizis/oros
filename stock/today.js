@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — Today provider (v1.0.0)
+// orOS Stock — Today provider (v1.1.0)
 // Loaded by the shell (today/host.js) through apps.json "today".
 // Read-only: reads oros-stock-data, never writes. The rules are
 // stock/core.js (OrosStockCore, loaded by the shell for the low-stock
@@ -8,14 +8,17 @@
 //     their minimum (opens the Reorder tab);
 //   - purchase orders still expected (sent / partly received) whose
 //     expected day is past or inside the horizon, as tasks on that
-//     day: a late delivery shows under Overdue (opens the order).
+//     day: a late delivery shows under Overdue (opens the order);
+//   - lots with stock left that expire within 7 days, as tasks on
+//     their expiry day: an expired lot shows under Overdue (opens the
+//     product).
 // ============================================================
 (function (root) {
   "use strict";
   var KEY = "oros-stock-data";
   var S = {
-    en: { low: "To reorder: {n}", po: "Delivery expected: {no}", from: "from {s}", items: "{n} products to come" },
-    el: { low: "Για παραγγελία: {n}", po: "Αναμένεται παράδοση: {no}", from: "από {s}", items: "έρχονται {n} προϊόντα" }
+    en: { low: "To reorder: {n}", po: "Delivery expected: {no}", from: "from {s}", items: "{n} products to come", exp: "Expires: {n}", lot: "lot {l}" },
+    el: { low: "Για παραγγελία: {n}", po: "Αναμένεται παράδοση: {no}", from: "από {s}", items: "έρχονται {n} προϊόντα", exp: "Λήγει: {n}", lot: "παρτίδα {l}" }
   };
   function tr(lang, k, p) {
     var s = (S[lang === "el" ? "el" : "en"])[k];
@@ -46,6 +49,18 @@
           target: { po: v.po.id }
         });
       });
+      if (C.expiring) {
+        C.expiring(data, ctx.today, 7).forEach(function (x) {
+          out.push({
+            id: "exp-" + x.item.id + "-" + x.lot,
+            due: x.exp,
+            title: tr(ctx.lang, "exp", { n: x.item.name }),
+            text: tr(ctx.lang, "lot", { l: x.lot }),
+            kind: "task",
+            target: { item: x.item.id }
+          });
+        });
+      }
       return out;
     }
     // no open(): Today falls back to __orosOpenAt("stock", target)

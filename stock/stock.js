@@ -191,6 +191,10 @@
       "wh.byWh": "By warehouse", "wh.same": "Choose two different warehouses.", "wh.here": "here {q}",
       "wh.archQ": "Archive this warehouse? It still holds stock; move it first with a Transfer.",
       "wh.value": "Value per warehouse",
+      "lot.lot": "Lot", "lot.exp": "Expires", "lot.ph": "e.g. L2410", "lot.auto": "First to expire",
+      "lot.add": "Lot / expiry", "lot.title": "Lots", "lot.none": "Without a lot", "lot.expired": "expired",
+      "f.exp": "Expiring", "lot.rep": "Expiring within 30 days", "lot.repNone": "Nothing expires in the next 30 days.",
+      "lot.line": "Lot {l} · expires {d}",
       "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app",
       "out.used1": "This document was already taken out of stock once.",
       "out.used": "This document was already taken out of stock {n} times.",
@@ -332,6 +336,10 @@
       "wh.byWh": "Ανά αποθήκη", "wh.same": "Διάλεξε δύο διαφορετικές αποθήκες.", "wh.here": "εδώ {q}",
       "wh.archQ": "Αρχειοθέτηση αυτής της αποθήκης; Έχει ακόμα απόθεμα· μετάφερέ το πρώτα με Μεταφορά.",
       "wh.value": "Αξία ανά αποθήκη",
+      "lot.lot": "Παρτίδα", "lot.exp": "Λήγει", "lot.ph": "π.χ. L2410", "lot.auto": "Πρώτη που λήγει",
+      "lot.add": "Παρτίδα / λήξη", "lot.title": "Παρτίδες", "lot.none": "Χωρίς παρτίδα", "lot.expired": "έληξε",
+      "f.exp": "Λήγουν", "lot.rep": "Λήγουν μέσα σε 30 μέρες", "lot.repNone": "Τίποτα δεν λήγει τις επόμενες 30 μέρες.",
+      "lot.line": "Παρτίδα {l} · λήγει {d}",
       "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή",
       "out.used1": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα μία φορά.",
       "out.used": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα {n} φορές.",
@@ -499,7 +507,7 @@
   }
 
   var TABS = ["items", "moves", "order", "sups", "reports"];
-  var IFILTERS = ["all", "low", "out", "arch"];
+  var IFILTERS = ["all", "low", "out", "exp", "arch"];
   var MFILTERS = ["all", "in", "out", "ret", "loss", "count", "fix", "xfer"];
   var RANGES = ["30", "month", "year", "all"];
   var SORTS = ["name", "sku", "qty", "value"];
@@ -556,6 +564,23 @@
     var st = rows();
     if (!st.wh) st.wh = C.whQty(data);
     return st.wh;
+  }
+  // lots (1.5): cached like the rows; soon = expiring within 30 days
+  var EXP_SOON = 30;
+  function lotsAll() {
+    var st = rows();
+    if (!st.lots) st.lots = C.allLots(data);
+    return st.lots;
+  }
+  function soonList() {
+    var st = rows();
+    if (!st.soon) st.soon = C.expiring(data, todayYmd(), EXP_SOON);
+    return st.soon;
+  }
+  function soonIds() {
+    var ids = Object.create(null);
+    soonList().forEach(function (x) { ids[x.item.id] = true; });
+    return ids;
   }
   function qtyAt(itemId, w) { var r = whAll()[itemId]; return (r && r[w || ""]) || 0; }
   function whSelect(value) {
@@ -645,8 +670,11 @@
     renderTiles();
     var chips = $("items-chips");
     chips.innerHTML = "";
+    var soon = soonIds(), anySoon = Object.keys(soon).length > 0;
+    if (prefs.f === "exp" && !anySoon) prefs.f = "all";
     IFILTERS.forEach(function (f) {
-      var b = el("button", "chip" + (prefs.f === f ? " on" : ""), t("f." + f));
+      if (f === "exp" && !anySoon) return;
+      var b = el("button", "chip" + (prefs.f === f ? " on" : "") + (f === "exp" ? " warn" : ""), t("f." + f));
       b.type = "button";
       b.setAttribute("aria-pressed", prefs.f === f ? "true" : "false");
       b.addEventListener("click", function () { prefs.f = f; savePrefs(); render(); });
@@ -690,6 +718,7 @@
       if (prefs.f === "arch" ? !it.arch : it.arch) return false;
       if (prefs.f === "low" && !r.low) return false;
       if (prefs.f === "out" && qOf(r) > 0) return false;
+      if (prefs.f === "exp" && !soon[it.id]) return false;
       if (prefs.cat === "-" && it.cat && byId("cats", it.cat)) return false;
       if (prefs.cat && prefs.cat !== "-" && it.cat !== prefs.cat) return false;
       return matchItem(it, words);
@@ -801,6 +830,18 @@
         kv(wb, whLabel(w), fmtQ(q, it), q < 0 ? "bad" : "");
       });
       dlg.appendChild(wb);
+    }
+    var lots = lotsAll()[it.id];
+    if (lots && lots.lots.length) {
+      dlg.appendChild(el("div", "dlg-lbl", t("lot.title")));
+      var lb = el("div", "kvs"), today = todayYmd(), soonDay = C.addDays(today, EXP_SOON);
+      lots.lots.forEach(function (x) {
+        var tone = x.exp && x.exp < today ? "bad" : (x.exp && x.exp <= soonDay ? "warn" : "");
+        var label = x.lot + (x.exp ? " · " + fmtDay(x.exp, true) + (x.exp < today ? " (" + t("lot.expired") + ")" : "") : "");
+        kv(lb, label, fmtQ(x.q, it), tone);
+      });
+      if (lots.none) kv(lb, t("lot.none"), fmtQ(lots.none, it), lots.none < 0 ? "bad" : "");
+      dlg.appendChild(lb);
     }
     var rate = C.outRate(data, it.id, todayYmd(), 30);
     if (rate > 0 && r.q > 0) dlg.appendChild(el("p", "hint", t("sheet.days", { n: Math.max(1, Math.round(r.q / rate)) })));
@@ -1692,6 +1733,30 @@
       sw.appendChild(uw);
       body.appendChild(sw);
     }
+    // lots that expire soon (or did, with stock left)
+    if (Object.keys(lotsAll()).some(function (i) { return lotsAll()[i].lots.length; })) {
+      var se = el("div", "sec");
+      se.appendChild(el("h2", "sec-title", t("lot.rep")));
+      var ue = el("ul", "rows"), tdy = todayYmd();
+      if (!soonList().length) ue.appendChild(el("li", "muted pad", t("lot.repNone")));
+      soonList().forEach(function (x) {
+        var li = el("li"), b = el("button", "row row-btn compact" + (x.exp < tdy ? " lvl-out" : " lvl-low"));
+        b.type = "button";
+        var bd = el("span", "r-body");
+        bd.appendChild(el("span", "r-name", x.item.name));
+        var sb = el("span", "r-sub");
+        sb.appendChild(el("span", "", t("lot.line", { l: x.lot, d: fmtDay(x.exp, true) })));
+        if (x.exp < tdy) sb.appendChild(el("span", "badge", t("lot.expired")));
+        bd.appendChild(sb);
+        b.appendChild(bd);
+        b.appendChild(el("span", "r-val" + (x.exp < tdy ? " bad" : " warn"), fmtQ(x.q, x.item)));
+        b.addEventListener("click", function () { itemSheet(x.item.id); });
+        li.appendChild(b);
+        ue.appendChild(li);
+      });
+      se.appendChild(ue);
+      body.appendChild(se);
+    }
     // most sold in the period
     var s2 = el("div", "sec");
     s2.appendChild(el("h2", "sec-title", t("rep.top") + " · " + t("r." + prefs.rr)));
@@ -2490,6 +2555,40 @@
       row.appendChild(qf);
       row.appendChild(cf);
       li.appendChild(row);
+      // lots (1.5): a receipt / customer return takes a lot and its
+      // expiry (an expiry alone becomes the lot's name); a sale, a
+      // return to supplier or a loss may name the lot that left (else
+      // the first to expire goes)
+      var names = C.lotNames(data, itemId);
+      var lrow = el("div", "fld-row lot-row");
+      var lotIn = textInput("", C.LOT_LEN, t("lot.ph"));
+      if (names.length) {
+        var dl = el("datalist");
+        dl.id = "st-dl-" + itemId;
+        names.slice(0, 30).forEach(function (n) { var op = el("option"); op.value = n; dl.appendChild(op); });
+        lrow.appendChild(dl);
+        lotIn.setAttribute("list", dl.id);
+      }
+      var expIn = el("input");
+      expIn.type = "date";
+      var left = C.lotsOf(data, itemId).lots;
+      var lotSel = selectInput([["", t("lot.auto")]].concat(left.map(function (r) {
+        return [r.lot, r.lot + (r.exp ? " · " + fmtDay(r.exp, true) : "") + " · " + fmtQ(r.q, it)];
+      })), "");
+      var lotF = field(t("lot.lot"), lotIn, "st-lot-" + itemId);
+      var expF = field(t("lot.exp"), expIn, "st-exp-" + itemId);
+      var lselF = field(t("lot.lot"), lotSel, "st-lsel-" + itemId);
+      lrow.appendChild(lotF);
+      lrow.appendChild(expF);
+      lrow.appendChild(lselF);
+      var lotLink = el("button", "link-btn lot-link", "+ " + t("lot.add"));
+      lotLink.type = "button";
+      lotLink.addEventListener("click", function () { ln.lotOpen = true; setLineMode(ln); lotIn.focus(); });
+      li.appendChild(lotLink);
+      li.appendChild(lrow);
+      ln.lrow = lrow; ln.lotIn = lotIn; ln.expIn = expIn; ln.lotSel = lotSel;
+      ln.lotF = lotF; ln.expF = expF; ln.lselF = lselF; ln.lotLink = lotLink;
+      ln.hasLots = names.length > 0; ln.lotOpen = false; ln.hasLeft = left.length > 0;
       ln.qIn = qIn; ln.cIn = cIn; ln.qf = qf; ln.cf = cf; ln.li = li; ln.it = it;
       ln.sub = nm.lastChild;
       qIn.addEventListener("input", refresh);
@@ -2517,6 +2616,13 @@
         if (ln.cMode !== "out") ln.cIn.value = centsStr(it.price);
       } else ln.cf.hidden = true;
       ln.cMode = k;
+      var inK = k === "in" || k === "ret", outK = k === "out" || k === "rts" || k === "loss";
+      var showIn = inK && (ln.hasLots || ln.lotOpen);
+      ln.lotF.hidden = !showIn;
+      ln.expF.hidden = !showIn;
+      ln.lselF.hidden = !(outK && ln.hasLeft);
+      ln.lrow.hidden = ln.lotF.hidden && ln.lselF.hidden;
+      ln.lotLink.hidden = !(inK && !showIn);
     }
     function refresh() {
       var k = cur(), total = 0, any = false;
@@ -2621,6 +2727,10 @@
           if (v === 0) { fail(t("mv.badLine", { n: it.name })); ln.qIn.focus(); return; }
           line.q = sign * Math.abs(v);
         }
+        if (!ln.lotF.hidden) {
+          var lv = C.cleanText(ln.lotIn.value, C.LOT_LEN, false), ev = C.isYmd(ln.expIn.value) ? ln.expIn.value : "";
+          if (lv || ev) { line.lot = lv || ev; if (ev) line.exp = ev; }
+        } else if (!ln.lselF.hidden && ln.lotSel.value) line.lot = ln.lotSel.value;
         if (k === "in" || k === "out") {
           var c = ln.cIn.value.trim() ? readCents(ln.cIn) : null;
           if (ln.cIn.value.trim() && c === null) { fail(t("ed.badNum")); ln.cIn.focus(); return; }
@@ -3099,7 +3209,9 @@
       : ["Date", "Type", "Ref", "Supplier", "SKU", "Product", "Quantity", "Unit price (" + cur + ")", "Note", "Voided"];
     var wh = extraWhs(true).length > 0;
     if (wh) head = head.concat(LANG === "el" ? ["Αποθήκη", "Προς αποθήκη"] : ["Warehouse", "To warehouse"]);
-    saveText(csvText(head, C.csvMoves(data, names, wh ? mainWh() : undefined)), "orOS-stock-movements-" + todayYmd() + ".csv", "text/csv", "CSV", ".csv");
+    var withLots = data.moves.some(function (x) { return x.lines.some(function (l) { return l.lot; }); });
+    if (withLots) head = head.concat(LANG === "el" ? ["Παρτίδα", "Λήξη"] : ["Lot", "Expiry"]);
+    saveText(csvText(head, C.csvMoves(data, names, wh ? mainWh() : undefined, withLots)), "orOS-stock-movements-" + todayYmd() + ".csv", "text/csv", "CSV", ".csv");
   }
   function exportData() {
     var payload = { app: "oros-stock", ver: C.DATA_VER, exported: new Date().toISOString(), data: canonical(data) };

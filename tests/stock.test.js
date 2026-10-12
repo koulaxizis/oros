@@ -589,3 +589,65 @@ test("warehouses: per-warehouse quantities, transfers leave totals, old copies s
   assert.equal(rowsCsv[1][1], "Transfer");
   assert.equal(C.csvMoves(d, {})[0].length, 10);
 });
+
+test("lots: what is left per lot, named lots first then first to expire, expiring list, old copies lose the tie", () => {
+  const d = C.merge(data({
+    items: [item("item01"), item("item02", { arch: 1 })],
+    moves: [
+      mv("mv0001", "count", "2026-10-01", [{ i: "item01", q: k(2), n: k(2) }]),                                  // no lot
+      mv("mv0002", "in", "2026-10-02", [{ i: "item01", q: k(5), lot: " L-A ", exp: "2026-10-15" }]),
+      mv("mv0003", "in", "2026-10-03", [{ i: "item01", q: k(5), lot: "L-B", exp: "2026-12-01" }, { i: "item02", q: k(1), lot: "Z", exp: "2026-10-01" }]),
+      mv("mv0004", "in", "2026-10-03", [{ i: "item01", q: k(1), lot: "L-A", exp: "2026-10-14" }]),              // earlier expiry wins
+      mv("mv0005", "out", "2026-10-04", [{ i: "item01", q: -k(2), lot: "L-B", exp: "2030-01-01" }]),            // exp dropped on a sale
+      mv("mv0006", "out", "2026-10-05", [{ i: "item01", q: -k(7) }]),                                            // FEFO: L-A 6, then L-B 1
+      mv("mv0007", "count", "2026-10-05", [{ i: "item01", q: k(1), n: k(9), lot: "X" }]),                       // no lot on a count
+      mv("mv0008", "xfer", "2026-10-06", [{ i: "item01", q: k(1), lot: "L-B" }], { w2: "wh0001" })                // no lot on a transfer
+    ]
+  }), null, NOW);
+  assert.equal(d.moves[1].lines[0].lot, "L-A");
+  assert.equal(d.moves[4].lines[0].exp, undefined);
+  assert.equal(d.moves[6].lines[0].lot, undefined);
+  assert.equal(d.moves[7].lines[0].lot, undefined);
+  const L = C.lotsOf(d, "item01");
+  assert.deepEqual(L.lots, [{ lot: "L-B", exp: "2026-12-01", q: k(2) }]);
+  assert.equal(L.none, k(3));
+  assert.equal(L.none + L.lots.reduce((a, r) => a + r.q, 0), C.qtyMap(d).item01);
+  // an over-sale beyond every lot goes below zero on "none"
+  const d2 = C.merge(d, data({ moves: [mv("mv0009", "loss", "2026-10-07", [{ i: "item01", q: -k(6), lot: "L-B" }])] }), NOW);
+  assert.deepEqual(C.lotsOf(d2, "item01"), { lots: [], none: -k(1) });
+  // expiring: archived products left out; 30 days from 2026-11-05 reaches L-B
+  assert.deepEqual(C.expiring(d, TODAY, 7), []);
+  assert.deepEqual(C.expiring(d, "2026-11-05", 30).map((x) => [x.item.id, x.lot, x.exp, x.q]), [["item01", "L-B", "2026-12-01", k(2)]]);
+  assert.deepEqual(C.lotNames(d, "item01"), ["L-B", "L-A"]);
+  // a 1.4 device strips lot / exp (same m): the copy with lots wins both ways
+  const stripped = JSON.parse(JSON.stringify(d));
+  stripped.moves.forEach((x) => x.lines.forEach((l) => { delete l.lot; delete l.exp; }));
+  assert.equal(JSON.stringify(m(d, stripped)), JSON.stringify(m(d, d)));
+  assert.equal(JSON.stringify(m(stripped, d)), JSON.stringify(m(d, d)));
+  const rows = C.csvMoves(d, {}, undefined, true);
+  assert.deepEqual(rows.find((r) => r[0] === "2026-10-02").slice(10), ["L-A", "2026-10-15"]);
+});
+
+test("Today provider: lots expiring within 7 days, expired ones overdue", () => {
+  globalThis.OrosStockCore = C;
+  const T = require(path.join(__dirname, "..", "stock/today.js"));
+  const A = require(path.join(__dirname, "..", "today/agg.js"));
+  const store = {
+    "oros-stock-data": data({
+      items: [item("item01", { name: "Milk" })],
+      moves: [mv("mv0001", "in", "2026-10-01", [{ i: "item01", q: k(2), lot: "A1", exp: "2026-10-10" }, { i: "item01", q: k(3), lot: "B2", exp: "2026-10-18" }, { i: "item01", q: k(1), lot: "C3", exp: "2026-10-25" }])]
+    })
+  };
+  const ctx = {
+    today: TODAY, horizon: A.HORIZON, now: NOW, lang: "en",
+    readJSON: (key) => (key in store ? JSON.parse(JSON.stringify(store[key])) : null),
+    readRaw: (key) => (key in store ? JSON.stringify(store[key]) : null), addDays: A.addDays, diff: A.diff
+  };
+  const rows = T.collect(ctx);
+  assert.deepEqual(rows.map((r) => [r.id, r.due, r.title, r.text]), [
+    ["exp-item01-A1", "2026-10-10", "Expires: Milk", "lot A1"],
+    ["exp-item01-B2", "2026-10-18", "Expires: Milk", "lot B2"]
+  ]);
+  assert.deepEqual(rows[0].target, { item: "item01" });
+  delete globalThis.OrosStockCore;
+});

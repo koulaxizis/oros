@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.4.0)
+// orOS Stock — core.js (shared logic, v1.5.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -41,6 +41,8 @@
 //   other apps (1.3): outRequest(data, req, today) (BR-ST-OUT),
 //     srcUses(data, src), catalog(data)
 //   warehouses (1.4): WH_MAIN, normWh, whName, whQty(data), qtyIn(data, w)
+//   lots (1.5): LOT_LEN, lotsOf(data, itemId), allLots(data),
+//     expiring(data, today, days), lotNames(data, itemId)
 // Data (synced slice "stock", key oros-stock-data):
 //   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
 //     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
@@ -59,6 +61,10 @@
 //   device drops it (its totals stay right) and the union keeps it on
 //   the others. A 1.3 device also strips w from the movements it
 //   re-uploads, so a tie on m prefers the copy that carries w / w2.
+//   lots (1.5): a line may carry lot (≤ 40 chars; not on count / fix /
+//   xfer) and, on a receipt or a customer return, exp (YYYY-MM-DD).
+//   What is left of each lot is derived (lotsOf): sales name a lot or
+//   take the first to expire. Same tie rule: the copy with lots wins.
 // ============================================================
 (function (root) {
   "use strict";
@@ -70,7 +76,7 @@
   var DAY_MS = 86400000;
   var NAME_LEN = 80, SKU_LEN = 40, BC_LEN = 40, LOC_LEN = 60, REF_LEN = 60,
       NOTE_LEN = 500, MNOTE_LEN = 300, UNIT_LEN = 16, PERSON_LEN = 60,
-      TEL_LEN = 40, EMAIL_LEN = 120, VATNO_LEN = 20;
+      TEL_LEN = 40, EMAIL_LEN = 120, VATNO_LEN = 20, LOT_LEN = 40;
   var MAX_ITEMS = 20000, MAX_LIST = 2000, MAX_MOVES = 100000, MAX_LINES = 500;
   var TOMB_DAYS = 365;
   var Q_MAX = 1000000000000;      // thousandths: a billion units
@@ -248,6 +254,11 @@
       if (clampInt(l.n, 0, Q_MAX) === null) return null;
       out.n = l.n;
     }
+    if (t !== "count" && t !== "fix" && t !== "xfer") {
+      var lot = cleanText(l.lot, LOT_LEN, false);
+      if (lot) out.lot = lot;
+      if (lot && (t === "in" || t === "ret") && isYmd(l.exp)) out.exp = l.exp;
+    }
     return out;
   }
   function normMove(x) {
@@ -344,6 +355,10 @@
     if (!cur || x.m > cur.m || (x.m === cur.m && canon(x) > canon(cur))) best[x.id] = x;
   }
   // A void is final: the voided copy always wins, whatever its m.
+  // knows more than a 1.3 / 1.4 copy of itself: a warehouse or lots
+  function richer(x) {
+    return !!(x.w || x.w2 || x.lines.some(function (l) { return l.lot || l.exp; }));
+  }
   function moveWins(best, x) {
     var cur = best[x.id];
     if (!cur) { best[x.id] = x; return; }
@@ -351,7 +366,7 @@
     if (xv !== cv) { if (xv) best[x.id] = x; return; }
     // same m: the copy that knows its warehouse wins over one a 1.3
     // device stripped
-    var xw = !!(x.w || x.w2), cw = !!(cur.w || cur.w2);
+    var xw = richer(x), cw = richer(cur);
     if (x.m === cur.m && xw !== cw) { if (xw) best[x.id] = x; return; }
     lww(best, x);
   }
@@ -757,7 +772,8 @@
   // Movements, one row per line: [date, type, ref, supplier, sku, name,
   // qty, unit cost / price, note, voided] — types by names[type].
   // mainLabel given (several warehouses): + [warehouse, to warehouse].
-  function csvMoves(data, names, mainLabel) {
+  // withLots: + [lot, expiry].
+  function csvMoves(data, names, mainLabel, withLots) {
     var nm = names || {}, items = dict(), sups = dict();
     ((data && data.items) || []).forEach(function (x) { items[x.id] = x; });
     ((data && data.sups) || []).forEach(function (x) { sups[x.id] = x.name; });
@@ -768,6 +784,7 @@
         var money = typeof l.c === "number" ? l.c / 100 : (typeof l.p === "number" ? l.p / 100 : null);
         var row = [x.d, has(nm, x.t) ? nm[x.t] : x.t, x.ref, sups[x.sup] || "", it.sku, it.name, l.q / 1000, money, x.note, x.v === 1 ? (nm.voided || "void") : ""];
         if (mainLabel) row.push(whName(data, x.w, mainLabel), x.t === "xfer" ? whName(data, x.w2, mainLabel) : "");
+        if (withLots) row.push(l.lot || "", l.exp || "");
         row.push(x.id);
         rows.push(row);
       });
@@ -1102,6 +1119,83 @@
     return w ? "?" : (mainLabel || "Main");
   }
 
+  // ---------- Lots and expiry (1.5) ----------
+  // What is left of each lot of one item, walking the ledger in time
+  // order (transfers skipped: lots are business-wide). Incoming lines
+  // with a lot fill it (its expiry = the earliest one given); incoming
+  // lines without one are "none". Outgoing lines take from the lot they
+  // name, then from the lots that expire first (no expiry last), then
+  // from "none". → { lots: [{ lot, exp, q }] (q > 0, soonest first),
+  // none: thousandths without a lot (may go below zero) }
+  function cmpExp(x, y) {
+    return (x.exp ? 0 : 1) - (y.exp ? 0 : 1) || cmpStr(x.exp, y.exp) || cmpStr(x.lot, y.lot);
+  }
+  function walkLots(data, only) {
+    var by = dict();
+    chrono(data && data.moves).forEach(function (x) {
+      x.lines.forEach(function (l) {
+        if (only && l.i !== only) return;
+        var st = by[l.i] || (by[l.i] = { lots: dict(), none: 0 });
+        if (l.q > 0) {
+          if (!l.lot) { st.none += l.q; return; }
+          var r = st.lots[l.lot] || (st.lots[l.lot] = { lot: l.lot, exp: "", q: 0 });
+          r.q += l.q;
+          if (l.exp && (!r.exp || l.exp < r.exp)) r.exp = l.exp;
+          return;
+        }
+        var need = -l.q;
+        if (l.lot && st.lots[l.lot] && st.lots[l.lot].q > 0) {
+          var a = Math.min(need, st.lots[l.lot].q);
+          st.lots[l.lot].q -= a; need -= a;
+        }
+        if (need > 0) {
+          Object.keys(st.lots).map(function (k) { return st.lots[k]; }).filter(function (r2) { return r2.q > 0; })
+            .sort(cmpExp).forEach(function (r2) {
+              if (need <= 0) return;
+              var b = Math.min(need, r2.q);
+              r2.q -= b; need -= b;
+            });
+        }
+        st.none -= need;
+      });
+    });
+    return by;
+  }
+  function lotsOut(st) {
+    if (!st) return { lots: [], none: 0 };
+    return {
+      lots: Object.keys(st.lots).map(function (k) { return st.lots[k]; }).filter(function (r) { return r.q > 0; }).sort(cmpExp),
+      none: st.none
+    };
+  }
+  function lotsOf(data, itemId) { return lotsOut(walkLots(data, itemId)[itemId]); }
+  function allLots(data) {
+    var by = walkLots(data, null), out = dict();
+    Object.keys(by).forEach(function (i) { out[i] = lotsOut(by[i]); });
+    return out;
+  }
+  // Lots with stock left that expire on or before today + days (already
+  // expired included), soonest first: [{ item, lot, exp, q }]. Archived
+  // products are left out.
+  function expiring(data, today, days) {
+    var last = addDays(today, days || 0), all = allLots(data), out = [];
+    ((data && data.items) || []).forEach(function (it) {
+      if (it.arch || !all[it.id]) return;
+      all[it.id].lots.forEach(function (r) {
+        if (r.exp && r.exp <= last) out.push({ item: it, lot: r.lot, exp: r.exp, q: r.q });
+      });
+    });
+    return out.sort(function (x, y) { return cmpStr(x.exp, y.exp) || cmpStr(fold(x.item.name), fold(y.item.name)) || cmpStr(x.lot, y.lot); });
+  }
+  // Every lot name this item ever had (newest first), for the editor
+  function lotNames(data, itemId) {
+    var seen = dict(), out = [];
+    liveAll(data && data.moves).slice().sort(function (x, y) { return cmpStr(y.d, x.d) || cmpStr(y.id, x.id); }).forEach(function (x) {
+      x.lines.forEach(function (l) { if (l.i === itemId && l.lot && !seen[l.lot]) { seen[l.lot] = true; out.push(l.lot); } });
+    });
+    return out;
+  }
+
   var api = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, UNITS: UNITS, UNIT_IDS: UNIT_IDS, unitName: unitName,
     MOVE_TYPES: MOVE_TYPES, SIGN: SIGN, CURRENCIES: CURRENCIES, VAT_RATES: VAT_RATES, LIST_KEYS: LIST_KEYS,
@@ -1124,7 +1218,8 @@
     PHOTO_DIR: PHOTO_DIR, PIC_RE: PIC_RE, normPic: normPic, picName: picName, picPath: picPath, picOf: picOf, picsInUse: picsInUse,
     eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg,
     outRequest: outRequest, srcUses: srcUses, catalog: catalog,
-    WH_MAIN: WH_MAIN, normWh: normWh, whName: whName, whQty: whQty, qtyIn: qtyIn
+    WH_MAIN: WH_MAIN, normWh: normWh, whName: whName, whQty: whQty, qtyIn: qtyIn,
+    LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;
