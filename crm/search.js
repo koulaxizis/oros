@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — universal search provider (v1.0.0)
+// orOS CRM — universal search provider (v1.1.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"; "searchOff": true, so it starts switched off: the data
 // is about other people). Read-only: reads oros-crm-data, never
@@ -7,7 +7,8 @@
 // Hits:
 //   • a customer: name (+ trade name); VAT ID, phone, email,
 //     profession, people, notes as text
-//   • a deal: its title; customer, stage, value as text; the day
+//   • a deal: its title; customer, stage (the user's name for it,
+//     else the built-in one), value as text; the day
 //     shown is the expected close (open) or the close day
 //   • an open follow-up: its text; customer as text; its day
 //   • a history entry with text: its first line; customer; its day
@@ -46,7 +47,8 @@
         return !x || typeof x.id !== "string" ||
           (typeof tombs[x.id] === "number" && tombs[x.id] >= (Number(x.m) || 0));
       }
-      var names = {};
+      var names = {}, stg = {};
+      arr(d.stg).forEach(function (r) { if (!gone(r)) stg[r.id] = r; });
       d.cust.forEach(function (c) {
         if (gone(c) || !str(c.name)) return;
         names[c.id] = str(c.name);
@@ -67,7 +69,8 @@
         });
       }
       rows(d.deals, function (x, cn) {
-        var stage = STAGE[L][x.stage] || "";
+        var own = stg[x.stage];
+        var stage = (own && own.name) || STAGE[L][x.stage] || "";
         var val = typeof x.val === "number" && x.val > 0 ? (x.val / 100).toLocaleString(L === "el" ? "el-GR" : "en-GB") : "";
         return {
           id: x.id,

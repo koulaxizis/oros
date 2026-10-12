@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.18.01";
+var CACHE_VERSION = "oros-v1.29.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -254,6 +254,13 @@ var PRECACHE_URLS = [
   "invoices/core.js",
   "invoices/invoices.js",
   "invoices/search.js",
+  "newsletter/",
+  "newsletter/index.html",
+  "newsletter/newsletter.css",
+  "newsletter/core.js",
+  "newsletter/render.js",
+  "newsletter/newsletter.js",
+  "newsletter/search.js",
   "invoices/today.js",
   "crm/",
   "crm/index.html",
@@ -296,6 +303,10 @@ var PRECACHE_URLS = [
   "library/",
   "library/index.html",
   "library/search.js",
+  "library/speak.js",
+  "library/stats.js",
+  "library/today.js",
+  "library/lookup.js",
   "library/library.css",
   "library/core.js",
   "library/sanitize.js",
@@ -444,6 +455,8 @@ var PRECACHE_URLS = [
   "help/topics/privacy.en.txt",
   "help/topics/reset.el.txt",
   "help/topics/reset.en.txt",
+  "help/topics/share.el.txt",
+  "help/topics/share.en.txt",
   "help/topics/shortcuts.el.txt",
   "help/topics/shortcuts.en.txt",
   "help/topics/start.el.txt",
@@ -644,6 +657,8 @@ var PRECACHE_URLS = [
   "timesheet/help.el.txt",
   "invoices/help.en.txt",
   "invoices/help.el.txt",
+  "newsletter/help.en.txt",
+  "newsletter/help.el.txt",
   "crm/help.en.txt",
   "crm/help.el.txt",
   "travel/help.en.txt",
@@ -772,9 +787,16 @@ var PRECACHE_URLS = [
   "assistant/index.html",
   "assistant/assistant.css",
   "assistant/core.js",
+  "assistant/summary.js",
   "assistant/assistant.js",
   "assistant/help.en.txt",
   "assistant/help.el.txt",
+  "share/",
+  "share/index.html",
+  "share/share.css",
+  "share/kinds.js",
+  "share/send.js",
+  "share/view.js",
   "settings/",
   "settings/index.html",
   "settings/settings.css",
@@ -853,6 +875,7 @@ var PRECACHE_URLS = [
   "photolab/tiles.js",
   "photolab/history.js",
   "photolab/select.js",
+  "photolab/guides.js",
   "photolab/paint.js",
   "photolab/resample.js",
   "photolab/adjust.js",
@@ -890,6 +913,9 @@ var PRECACHE_URLS = [
   "atelier/folders.js",
   "atelier/homefolders.js",
   "atelier/relayout.js",
+  "atelier/aitext.js",
+  "atelier/cutout.js",
+  "atelier/ai.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",
@@ -1483,6 +1509,11 @@ self.addEventListener("fetch", function (event) {
   // this release's own precache copy (releaseCopy). Everything else
   // goes to the network; the loose ignoreSearch match across caches
   // stays in the network-FAILURE branch only (offline best effort).
+  // Atelier's background tool (vendor/ort + vendor/u2netp, about
+  // 16 MB) is fetched once and kept in Atelier's own IndexedDB
+  // (atelier/cutout.js): no second copy in the runtime cache.
+  if (/\/vendor\/(ort|u2netp)\//.test(url.pathname)) return;
+
   event.respondWith(
     caches.match(request).then(function (cached) {
       if (cached) return cached;

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — App logic (v1.1.0)
+// orOS CRM — App logic (v1.4.0)
 // A small customer book for a freelancer or a small business:
 //   - customers (company or person) with ΑΦΜ / ΔΟΥ / profession,
 //     status lead / active / past, tags, a star, notes
@@ -10,7 +10,8 @@
 //     reminders through the shell inbox (shell crmCheckTick, also
 //     with the app closed), rows in Today and in the Calendar,
 //     "Send to To-Do" (BR-TD-ADD)
-//   - a pipeline of deals: value, stage, probability, won / lost
+//   - a pipeline of deals: value, stage, probability, won / lost;
+//     own stages (rename, reorder, add, hide) in Settings
 //   - a dashboard; CSV export, JSON backup / restore (merge)
 // Data:
 //   - synced slice "crm" (oros-crm-data): every list LWW per id +
@@ -84,7 +85,26 @@
       "afm.ok": "valid", "afm.bad": "check digit does not match",
       "people.add": "+ Person", "people.none": "No people yet. Link someone from Contacts or add a name.",
       "people.open": "Open in Contacts", "people.gone": "removed from Contacts",
-      "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups",
+      "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups", "sub.docs": "Documents",
+      "act.inv": "Invoice", "act.quote": "Quote",
+      "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
+      "docs.invNone": "No invoices yet. Invoices you issue with the Invoice button show up here.",
+      "docs.quoteNone": "No quotes yet. Quotes for a client with this name or VAT ID show up here.",
+      "docs.tot": "Invoiced {i} · paid {p}", "docs.open": "unpaid {v}", "docs.overdue": "overdue {v}",
+      "ik.inv": "Invoice", "ik.rcpt": "Receipt", "ik.pro": "Proforma", "ik.cred": "Credit note", "ik.ext": "Recorded invoice",
+      "is.void": "Cancelled", "is.pro": "Proforma", "is.credit": "Credit note", "is.paid": "Paid",
+      "is.partial": "Partly paid", "is.overdue": "Overdue", "is.unpaid": "Unpaid",
+      "qs.draft": "Draft", "qs.sent": "Sent", "qs.accepted": "Accepted", "qs.rejected": "Rejected", "qs.expired": "Expired",
+      "deal.inv": "Invoice this deal", "deal.quote": "Quote for this deal",
+      "toast.noInv": "The Invoices app is not available.", "toast.noQuote": "The Quote app is not available.",
+      "toast.quoteCur": "Quote works in EUR or USD. Change the currency in CRM settings, or create the quote in Quote.",
+      "set.import": "Import customers (CSV)",
+      "imp.title": "Import customers", "imp.new": "New customers: {n}", "imp.dup": "Already in CRM (skipped): {n}",
+      "imp.noName": "Rows without a name (skipped): {n}", "imp.over": "Over the limit of {max} customers (skipped): {n}",
+      "imp.tags": "New tags: {n}", "imp.more": "and {n} more", "imp.go": "Import {n}", "imp.none": "There is nothing new to import.",
+      "imp.bad": "No name column found. The first row must hold column names such as Name, Company or First name.",
+      "imp.done": "Imported {n} customers",
+      "mail.subj": "Subject: {s}", "mail.noCust": "No customer has {email}. Add one, then log the email.",
       "hist.none": "Nothing logged yet.", "deals.none": "No deals yet.", "fups.none": "No follow-ups.",
       "fups.done": "Done", "hist.add": "+ Log", "deals.add": "+ Deal", "fups.add": "+ Follow-up",
       "stage.new": "New", "stage.contact": "Contacted", "stage.proposal": "Proposal", "stage.nego": "Negotiation",
@@ -103,6 +123,7 @@
       "d.forgot": "Not contacted", "d.forgotSub": "{n}+ days", "d.leads": "New leads", "d.leadsSub": "this month",
       "d.byStage": "Open deals by stage", "d.byStatus": "Customers", "d.forgotList": "Time to get in touch",
       "d.none": "Add customers and deals to see numbers here.",
+      "d.unpaid": "Unpaid invoices", "d.unpaidSub": "overdue {v}", "d.unpaidNone": "nothing overdue",
       "ed.save": "Save", "ed.cancel": "Cancel", "ed.delete": "Delete", "ed.close": "Close",
       "ed.custNew": "New customer", "ed.custEdit": "Edit customer", "ed.kind": "Type", "ed.name": "Name",
       "ed.namePh.co": "Company name", "ed.namePh.person": "Full name", "ed.alias": "Trade name", "ed.status": "Status",
@@ -119,7 +140,7 @@
       "ed.linked": "Linked to Contacts: {name}", "ed.unlink": "Unlink",
       "ed.dealNew": "New deal", "ed.dealEdit": "Deal", "ed.cust": "Customer", "ed.title": "Title", "ed.titlePh": "Website redesign, 50 chairs…",
       "ed.value": "Value ({c})", "ed.stage": "Stage", "ed.prob": "Chance (%)", "ed.probPh": "{p} (stage default)",
-      "ed.close": "Expected close", "ed.why": "Why it was lost", "ed.titleReq": "Give the deal a title.",
+      "ed.closeDay": "Expected close", "ed.why": "Why it was lost", "ed.titleReq": "Give the deal a title.",
       "ed.valBad": "That amount is not a number.",
       "ed.logNew": "Log a contact", "ed.logEdit": "Contact", "ed.when": "When", "ed.date": "Date", "ed.time": "Time",
       "ed.who": "With", "ed.whoNone": "—", "ed.deal": "Deal", "ed.dealNone": "No deal", "ed.text": "What was said",
@@ -129,6 +150,13 @@
       "ed.fupDone": "Done", "ed.textReq": "Write what to do.", "ed.timeOpt": "Time (optional)",
       "ed.needCust": "Add a customer first.",
       "set.title": "Settings", "set.cur": "Currency", "set.forget": "\"Not contacted\" after", "set.days": "{n} days",
+      "set.stages": "Pipeline stages",
+      "stg.title": "Pipeline stages", "stg.hint": "Rename, reorder, add your own or hide the ones you do not use. The number is the default chance. Won and Lost stay as they are.",
+      "stg.name": "Stage name", "stg.prob": "Default chance (%)", "stg.up": "Move up", "stg.down": "Move down",
+      "stg.hide": "Hide", "stg.del": "Delete", "stg.show": "Show {name}", "stg.hiddenHead": "Hidden",
+      "stg.newPh": "New stage", "stg.add": "Add", "stg.max": "Up to {n} open stages.",
+      "stg.notEmpty": "{name} still has deals ({n}). Move them to another stage first.", "stg.last": "One open stage is needed.",
+      "stg.hidden": "{name} hidden", "stg.deleted": "{name} deleted",
       "set.tags": "Tags", "set.export": "Export customers (CSV)", "set.backup": "Backup (JSON)", "set.restore": "Restore a backup",
       "set.restoreHint": "A backup is merged into what you have: nothing here is deleted or overwritten by older copies.",
       "set.usage": "This app uses {kb} KB of the browser storage that all orOS apps share.",
@@ -170,7 +198,26 @@
       "afm.ok": "έγκυρο", "afm.bad": "το ψηφίο ελέγχου δεν ταιριάζει",
       "people.add": "+ Άνθρωπος", "people.none": "Κανένας ακόμη. Σύνδεσε κάποιον από τις Επαφές ή γράψε ένα όνομα.",
       "people.open": "Άνοιγμα στις Επαφές", "people.gone": "δεν υπάρχει πια στις Επαφές",
-      "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups",
+      "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups", "sub.docs": "Έγγραφα",
+      "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
+      "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
+      "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
+      "docs.quoteNone": "Δεν υπάρχουν προσφορές ακόμη. Εδώ εμφανίζονται οι προσφορές σε πελάτη με αυτό το όνομα ή ΑΦΜ.",
+      "docs.tot": "Τιμολογήθηκαν {i} · εισπράχθηκαν {p}", "docs.open": "ανεξόφλητα {v}", "docs.overdue": "ληξιπρόθεσμα {v}",
+      "ik.inv": "Τιμολόγιο", "ik.rcpt": "Απόδειξη", "ik.pro": "Προτιμολόγιο", "ik.cred": "Πιστωτικό", "ik.ext": "Καταχωρισμένο τιμολόγιο",
+      "is.void": "Ακυρωμένο", "is.pro": "Προτιμολόγιο", "is.credit": "Πιστωτικό", "is.paid": "Εξοφλημένο",
+      "is.partial": "Μερικώς εξοφλημένο", "is.overdue": "Ληξιπρόθεσμο", "is.unpaid": "Ανεξόφλητο",
+      "qs.draft": "Πρόχειρη", "qs.sent": "Απεστάλη", "qs.accepted": "Αποδεκτή", "qs.rejected": "Απορρίφθηκε", "qs.expired": "Έληξε",
+      "deal.inv": "Τιμολόγηση της ευκαιρίας", "deal.quote": "Προσφορά για την ευκαιρία",
+      "toast.noInv": "Η εφαρμογή Τιμολόγια δεν είναι διαθέσιμη.", "toast.noQuote": "Η εφαρμογή Προσφορές δεν είναι διαθέσιμη.",
+      "toast.quoteCur": "Οι Προσφορές δουλεύουν σε EUR ή USD. Άλλαξε το νόμισμα στις ρυθμίσεις του CRM ή φτιάξε την προσφορά στις Προσφορές.",
+      "set.import": "Εισαγωγή πελατών (CSV)",
+      "imp.title": "Εισαγωγή πελατών", "imp.new": "Νέοι πελάτες: {n}", "imp.dup": "Υπάρχουν ήδη (παραλείπονται): {n}",
+      "imp.noName": "Γραμμές χωρίς όνομα (παραλείπονται): {n}", "imp.over": "Πάνω από το όριο των {max} πελατών (παραλείπονται): {n}",
+      "imp.tags": "Νέες ετικέτες: {n}", "imp.more": "και άλλοι {n}", "imp.go": "Εισαγωγή {n}", "imp.none": "Δεν υπάρχει κάτι νέο για εισαγωγή.",
+      "imp.bad": "Δεν βρέθηκε στήλη ονόματος. Η πρώτη γραμμή πρέπει να έχει ονόματα στηλών, όπως Επωνυμία, Όνομα ή Name.",
+      "imp.done": "Εισήχθησαν {n} πελάτες",
+      "mail.subj": "Θέμα: {s}", "mail.noCust": "Κανένας πελάτης δεν έχει το {email}. Πρόσθεσέ τον και μετά κατέγραψε το email.",
       "hist.none": "Τίποτα καταγεγραμμένο ακόμη.", "deals.none": "Καμία ευκαιρία ακόμη.", "fups.none": "Κανένα follow-up.",
       "fups.done": "Ολοκληρωμένα", "hist.add": "+ Καταγραφή", "deals.add": "+ Ευκαιρία", "fups.add": "+ Follow-up",
       "stage.new": "Νέα", "stage.contact": "Επικοινωνία", "stage.proposal": "Πρόταση", "stage.nego": "Διαπραγμάτευση",
@@ -189,6 +236,7 @@
       "d.forgot": "Χωρίς επαφή", "d.forgotSub": "{n}+ μέρες", "d.leads": "Νέοι υποψήφιοι", "d.leadsSub": "αυτόν τον μήνα",
       "d.byStage": "Ανοιχτές ευκαιρίες ανά στάδιο", "d.byStatus": "Πελάτες", "d.forgotList": "Ώρα να τους μιλήσεις",
       "d.none": "Πρόσθεσε πελάτες και ευκαιρίες για να δεις αριθμούς εδώ.",
+      "d.unpaid": "Ανεξόφλητα τιμολόγια", "d.unpaidSub": "ληξιπρόθεσμα {v}", "d.unpaidNone": "τίποτα ληξιπρόθεσμο",
       "ed.save": "Αποθήκευση", "ed.cancel": "Άκυρο", "ed.delete": "Διαγραφή", "ed.close": "Κλείσιμο",
       "ed.custNew": "Νέος πελάτης", "ed.custEdit": "Επεξεργασία πελάτη", "ed.kind": "Είδος", "ed.name": "Επωνυμία",
       "ed.namePh.co": "Επωνυμία εταιρείας", "ed.namePh.person": "Ονοματεπώνυμο", "ed.alias": "Διακριτικός τίτλος", "ed.status": "Κατάσταση",
@@ -205,7 +253,7 @@
       "ed.linked": "Συνδεδεμένος με τις Επαφές: {name}", "ed.unlink": "Αποσύνδεση",
       "ed.dealNew": "Νέα ευκαιρία", "ed.dealEdit": "Ευκαιρία", "ed.cust": "Πελάτης", "ed.title": "Τίτλος", "ed.titlePh": "Νέο site, 50 καρέκλες…",
       "ed.value": "Αξία ({c})", "ed.stage": "Στάδιο", "ed.prob": "Πιθανότητα (%)", "ed.probPh": "{p} (του σταδίου)",
-      "ed.close": "Αναμενόμενο κλείσιμο", "ed.why": "Γιατί χάθηκε", "ed.titleReq": "Δώσε έναν τίτλο στην ευκαιρία.",
+      "ed.closeDay": "Αναμενόμενο κλείσιμο", "ed.why": "Γιατί χάθηκε", "ed.titleReq": "Δώσε έναν τίτλο στην ευκαιρία.",
       "ed.valBad": "Αυτό το ποσό δεν είναι αριθμός.",
       "ed.logNew": "Καταγραφή επικοινωνίας", "ed.logEdit": "Επικοινωνία", "ed.when": "Πότε", "ed.date": "Ημερομηνία", "ed.time": "Ώρα",
       "ed.who": "Με", "ed.whoNone": "—", "ed.deal": "Ευκαιρία", "ed.dealNone": "Καμία ευκαιρία", "ed.text": "Τι ειπώθηκε",
@@ -215,6 +263,13 @@
       "ed.fupDone": "Έγινε", "ed.textReq": "Γράψε τι να κάνεις.", "ed.timeOpt": "Ώρα (προαιρετικά)",
       "ed.needCust": "Πρόσθεσε πρώτα έναν πελάτη.",
       "set.title": "Ρυθμίσεις", "set.cur": "Νόμισμα", "set.forget": "«Χωρίς επαφή» μετά από", "set.days": "{n} μέρες",
+      "set.stages": "Στάδια pipeline",
+      "stg.title": "Στάδια pipeline", "stg.hint": "Μετονόμασε, άλλαξε σειρά, πρόσθεσε δικά σου ή κρύψε όσα δεν χρησιμοποιείς. Ο αριθμός είναι η προεπιλεγμένη πιθανότητα. Τα Κερδήθηκε και Χάθηκε μένουν ως έχουν.",
+      "stg.name": "Όνομα σταδίου", "stg.prob": "Προεπιλεγμένη πιθανότητα (%)", "stg.up": "Πάνω", "stg.down": "Κάτω",
+      "stg.hide": "Απόκρυψη", "stg.del": "Διαγραφή", "stg.show": "Εμφάνιση: {name}", "stg.hiddenHead": "Κρυμμένα",
+      "stg.newPh": "Νέο στάδιο", "stg.add": "Προσθήκη", "stg.max": "Έως {n} ανοιχτά στάδια.",
+      "stg.notEmpty": "Το {name} έχει ακόμα ευκαιρίες ({n}). Μετακίνησέ τες πρώτα σε άλλο στάδιο.", "stg.last": "Χρειάζεται ένα ανοιχτό στάδιο.",
+      "stg.hidden": "Κρύφτηκε: {name}", "stg.deleted": "Διαγράφηκε: {name}",
       "set.tags": "Ετικέτες", "set.export": "Εξαγωγή πελατών (CSV)", "set.backup": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου",
       "set.restoreHint": "Το αντίγραφο συγχωνεύεται με ό,τι έχεις: τίποτα δεν σβήνεται και κανένα παλιότερο αντίγραφο δεν γράφει πάνω σε νεότερο.",
       "set.usage": "Η εφαρμογή χρησιμοποιεί {kb} KB από τον χώρο του browser που μοιράζονται όλες οι εφαρμογές του orOS.",
@@ -243,6 +298,8 @@
   var UI = {
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
     starOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
@@ -254,6 +311,7 @@
     meet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
     msg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>',
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
     map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
     log: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M3 4h18M3 9h18M3 14h9"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
@@ -333,7 +391,14 @@
     var tg = c && c.tags && c.tags.length ? tagOf(c.tags[0]) : null;
     return tg ? COLORS[tg.col] : "";
   }
-  function stageName(s) { return t("stage." + s); }
+  // A stage's label: the user's name, else the built-in one. An id
+  // that is gone (deleted on another device) reads as the stage the
+  // deal now shows in (C.stageOf).
+  function stageObj(id) { return C.stageOf(data, { stage: id }); }
+  function stageName(id) {
+    var s = stageObj(id);
+    return s.name || t("stage." + s.id);
+  }
   function safeUrl(u) {
     var s = String(u || "").trim();
     if (!s) return "";
@@ -366,8 +431,8 @@
         if (["all", "lead", "active", "past", "star", "forgot"].indexOf(p.filter) >= 0) prefs.filter = p.filter;
         if (typeof p.tag === "string") prefs.tag = p.tag;
         if (["name", "last", "next", "value"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
-        if (["hist", "deals", "fups"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
-        if (C.STAGES.indexOf(p.stage) >= 0) prefs.stage = p.stage;
+        if (["hist", "deals", "fups", "docs"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
+        if (typeof p.stage === "string") prefs.stage = p.stage;
       }
     } catch (e) {}
   }
@@ -755,6 +820,8 @@
     acts.appendChild(txtBtn("log", t("act.log"), function () { logEditor(null, c.id); }, "primary"));
     acts.appendChild(txtBtn("clock", t("act.fup"), function () { fupEditor(null, c.id); }));
     acts.appendChild(txtBtn("deal", t("act.deal"), function () { dealEditor(null, c.id); }));
+    if (canInvoice()) acts.appendChild(txtBtn("doc", t("act.inv"), function () { newInvoice(c, null); }));
+    if (canQuote()) acts.appendChild(txtBtn("doc", t("act.quote"), function () { newQuote(c, null); }));
     box.appendChild(acts);
 
     // details
@@ -864,6 +931,9 @@
     var subs = [["hist", t("sub.hist") + " (" + custActs.length + ")"],
                 ["deals", t("sub.deals") + " (" + custDeals.length + ")"],
                 ["fups", t("sub.fups") + " (" + openF.length + ")"]];
+    var docs = docsFor(c);
+    if (docs) subs.push(["docs", t("sub.docs") + " (" + (docs.inv.rows.length + docs.quotes.length) + ")"]);
+    else if (prefs.sub === "docs") prefs.sub = "hist";
     var st = el("div", "subtabs");
     st.setAttribute("role", "tablist");
     subs.forEach(function (s) {
@@ -879,6 +949,7 @@
     box.appendChild(pane);
     if (prefs.sub === "hist") renderHistory(pane, c, custActs);
     else if (prefs.sub === "deals") renderCustDeals(pane, c, custDeals);
+    else if (prefs.sub === "docs") renderCustDocs(pane, c, docs);
     else renderCustFups(pane, c, custFups);
   }
 
@@ -928,7 +999,7 @@
     var bits = [];
     if (showCust) bits.push(c ? c.name : t("unknown"));
     if (!showCust || !C.isOpen(d)) bits.push(stageName(d.stage));
-    if (C.isOpen(d)) bits.push(t("pipe.prob", { p: C.dealProb(d) }));
+    if (C.isOpen(d)) bits.push(t("pipe.prob", { p: C.dealProb(d, data) }));
     if (d.close && C.isOpen(d)) bits.push(relDay(d.close));
     if (d.cd && !C.isOpen(d)) bits.push(fmtDate(d.cd));
     b.appendChild(el("div", "deal-sub", bits.join(" · ")));
@@ -940,11 +1011,167 @@
     addLine(pane, t("deals.add"), function () { dealEditor(null, c.id); });
     if (!list.length) { pane.appendChild(el("p", "hint", t("deals.none"))); return; }
     var box = el("div", "rows");
+    var order = C.stages(data).map(function (x) { return x.id; });
+    var rank = function (d) { return order.indexOf(C.stageOf(data, d).id); };
     list.slice().sort(function (a, b) {
       var oa = C.isOpen(a) ? 0 : 1, ob = C.isOpen(b) ? 0 : 1;
-      return oa - ob || C.STAGES.indexOf(b.stage) - C.STAGES.indexOf(a.stage) || b.m - a.m;
+      return oa - ob || rank(b) - rank(a) || b.m - a.m;
     }).forEach(function (d) { box.appendChild(dealRowEl(d, false)); });
     pane.appendChild(box);
+  }
+
+  // ----- Invoices and Quote (phase 3, BR-CRM-INV and BR-Q1) -----
+  // Read-only: oros-invoices-data only through OrosInvoicesCore,
+  // oros-quote-data only through OrosQuoteCore. Both are parsed once
+  // per stored string.
+  var INV_KEY = "oros-invoices-data", QUOTE_KEY = "oros-quote-data";
+  var invCache = { raw: undefined, data: null }, quoteCache = { raw: undefined, data: null };
+  function invData() {
+    var I = window.OrosInvoicesCore;
+    if (!I) return null;
+    var raw = null;
+    try { raw = localStorage.getItem(INV_KEY); } catch (e) {}
+    if (raw !== invCache.raw) {
+      invCache.raw = raw;
+      try { invCache.data = raw ? I.parse(raw) : null; } catch (e) { invCache.data = null; }
+    }
+    return invCache.data;
+  }
+  function quoteData() {
+    if (!window.OrosQuoteCore) return null;
+    var raw = null;
+    try { raw = localStorage.getItem(QUOTE_KEY); } catch (e) {}
+    if (raw !== quoteCache.raw) {
+      quoteCache.raw = raw;
+      try { quoteCache.data = raw ? JSON.parse(raw) : null; } catch (e) { quoteCache.data = null; }
+    }
+    return quoteCache.data;
+  }
+  // null when neither app can be reached (the tab stays hidden)
+  function docsFor(c) {
+    if (!canInvoice() && !canQuote()) return null;
+    var di = invData(), dq = quoteData();
+    return {
+      inv: di ? window.OrosInvoicesCore.byCrm(di, c.id, todayYmd()) : { rows: [], totals: {} },
+      quotes: dq ? window.OrosQuoteCore.forClient(dq, { name: c.name, afm: c.afm }) : []
+    };
+  }
+  function canInvoice() {
+    var s = shell();
+    return !!(s && typeof s.__orosOpenAt === "function" && window.OrosInvoicesCore);
+  }
+  function canQuote() {
+    var s = shell();
+    return !!(s && typeof s.__orosOpenQuoteNew === "function" && typeof s.__orosOpenQuote === "function");
+  }
+  function openInvoices(target) {
+    var s = shell();
+    if (s && typeof s.__orosOpenAt === "function") s.__orosOpenAt("invoices", target);
+    else showToast(t("toast.noInv"));
+  }
+  // BR-CRM-INV 1: a prefilled draft in Invoices, saved only there.
+  // From a won deal: one line (title, 1, value) and ref crm/deal id.
+  // Payloads: C.invoicePrefill / C.quotePrefill.
+  function newInvoice(c, d) { openInvoices({ "new": C.invoicePrefill(c, d, data.prefs.cur) }); }
+  // BR-Q1: a new unsaved draft in Quote. Quote needs at least one
+  // line and knows only EUR and USD.
+  function newQuote(c, d) {
+    var s = shell();
+    if (!s || typeof s.__orosOpenQuoteNew !== "function") { showToast(t("toast.noQuote")); return; }
+    var p = C.quotePrefill(c, d, data.prefs.cur);
+    if (!p) { showToast(t("toast.quoteCur")); return; }
+    if (!s.__orosOpenQuoteNew(p)) showToast(t("toast.noQuote"));
+  }
+  function curMoney(cents, cur) { return C.moneyStr(cents, cur, LANG); }
+  function renderCustDocs(pane, c, docs) {
+    var si = el("div", "sec");
+    var hi = secHead(t("docs.inv"));
+    if (canInvoice()) {
+      hi.appendChild(el("span", "spacer"));
+      if (docs.inv.rows.length) {
+        var all = el("button", "link-btn", t("docs.allInv"));
+        all.type = "button";
+        all.addEventListener("click", function () { openInvoices({ client: { crm: c.id, afm: c.afm || "", name: c.name } }); });
+        hi.appendChild(all);
+      }
+      var ni = el("button", "link-btn", "+ " + t("act.inv"));
+      ni.type = "button";
+      ni.addEventListener("click", function () { newInvoice(c, null); });
+      hi.appendChild(ni);
+    }
+    si.appendChild(hi);
+    Object.keys(docs.inv.totals).sort().forEach(function (cur) {
+      var x = docs.inv.totals[cur];
+      var line = t("docs.tot", { i: curMoney(x.invoiced, cur), p: curMoney(x.paid, cur) });
+      if (x.open > 0) line += " · " + t("docs.open", { v: curMoney(x.open, cur) });
+      var p = el("p", "doc-tot", line);
+      if (x.overdue > 0) {
+        p.appendChild(document.createTextNode(" · "));
+        p.appendChild(el("span", "late", t("docs.overdue", { v: curMoney(x.overdue, cur) })));
+      }
+      si.appendChild(p);
+    });
+    if (!docs.inv.rows.length) si.appendChild(el("p", "hint", t("docs.invNone")));
+    else {
+      var rows = el("div", "rows");
+      docs.inv.rows.slice(0, 30).forEach(function (r) {
+        rows.appendChild(docRow(r.no || t("ik." + r.kind), [t("ik." + r.kind), r.date ? fmtDate(r.date) : ""],
+          curMoney(r.total, r.cur), "is." + r.status, r.status === "overdue",
+          function () { openInvoices({ invoice: r.id }); }));
+      });
+      si.appendChild(rows);
+    }
+    pane.appendChild(si);
+
+    var sq = el("div", "sec");
+    var hq = secHead(t("docs.quote"));
+    if (canQuote()) {
+      hq.appendChild(el("span", "spacer"));
+      var nq = el("button", "link-btn", "+ " + t("act.quote"));
+      nq.type = "button";
+      nq.addEventListener("click", function () { newQuote(c, null); });
+      hq.appendChild(nq);
+    }
+    sq.appendChild(hq);
+    if (!docs.quotes.length) sq.appendChild(el("p", "hint", t("docs.quoteNone")));
+    else {
+      var qr = el("div", "rows");
+      docs.quotes.slice(0, 30).forEach(function (q) {
+        qr.appendChild(docRow(q.num || t("act.quote"), [q.date ? fmtDate(q.date) : ""],
+          curMoney(Math.round(q.total * 100), q.cur), "qs." + q.status, false,
+          function () { var s = shell(); if (s && typeof s.__orosOpenQuote === "function") s.__orosOpenQuote(q.id); }));
+      });
+      sq.appendChild(qr);
+    }
+    pane.appendChild(sq);
+  }
+  function docRow(title, bits, amount, stKey, late, fn) {
+    var b = el("button", "row doc-row");
+    b.type = "button";
+    var main = el("span", "row-main");
+    main.appendChild(el("span", "row-title", title));
+    var sub = el("span", "row-sub", bits.filter(Boolean).join(" · ") + " · ");
+    sub.appendChild(el("span", late ? "late" : "", t(stKey)));
+    main.appendChild(sub);
+    b.appendChild(main);
+    b.appendChild(el("span", "deal-val", amount));
+    b.addEventListener("click", fn);
+    return b;
+  }
+  // Dashboard: what CRM customers still owe, per currency (BR-CRM-INV 3).
+  function unpaidTotals() {
+    var di = invData();
+    if (!di || !window.OrosInvoicesCore) return null;
+    var out = {}, any = false, today = todayYmd();
+    data.cust.forEach(function (c) {
+      var tt = window.OrosInvoicesCore.byCrm(di, c.id, today).totals;
+      Object.keys(tt).forEach(function (cur) {
+        any = true;
+        var o = out[cur] || (out[cur] = { open: 0, overdue: 0 });
+        o.open += tt[cur].open; o.overdue += tt[cur].overdue;
+      });
+    });
+    return any ? out : null;
   }
 
   function fupRowEl(f, showCust) {
@@ -1010,10 +1237,13 @@
       return;
     }
     var p = C.pipeline(data), s = C.dashboard(data, Date.now(), todayYmd());
+    var st = C.stages(data), ids = st.map(function (x) { return x.id; });
+    if (ids.indexOf(prefs.stage) < 0) prefs.stage = ids[0];
     // phones open on the first stage that has deals, until one is picked
     if (!stagePicked && !p[prefs.stage].n) {
-      for (var si = 0; si < C.STAGES.length; si++) if (p[C.STAGES[si]].n) { prefs.stage = C.STAGES[si]; break; }
+      for (var si = 0; si < ids.length; si++) if (p[ids[si]].n) { prefs.stage = ids[si]; break; }
     }
+    var isOpenStage = function (id) { return id !== "won" && id !== "lost"; };
     var sum = el("div", "pipe-sum");
     [t("pipe.open", { n: s.openN }), t("pipe.val", { v: money(s.openVal) }), t("pipe.w", { v: money(s.openW) }),
      t("pipe.wonM", { v: money(s.wonMonth) })].forEach(function (x, i) {
@@ -1026,7 +1256,7 @@
 
     var limit = C.addDays(todayYmd(), -90);
     function stageDeals(stage) {
-      var list = data.deals.filter(function (d) { return d.stage === stage; });
+      var list = data.deals.filter(function (d) { return C.stageOf(data, d, st).id === stage; });
       if (stage === "won" || stage === "lost") {
         list.sort(function (a, b) { return (a.cd || "") < (b.cd || "") ? 1 : -1; });
       } else {
@@ -1037,13 +1267,14 @@
 
     // wide: a board with drag and drop
     var board = el("div", "board");
-    C.STAGES.forEach(function (stage) {
+    board.style.gridTemplateColumns = "repeat(" + ids.length + ", minmax(190px, 1fr))";
+    ids.forEach(function (stage) {
       var col = el("div", "col");
       col.dataset.stage = stage;
       var head = el("div", "col-head");
       head.appendChild(el("div", "col-name", stageName(stage) + " · " + p[stage].n));
       head.appendChild(el("div", "col-sum", money(p[stage].val) +
-        (C.OPEN_STAGES.indexOf(stage) >= 0 ? " · " + t("pipe.w", { v: money(p[stage].wval) }) : "")));
+        (isOpenStage(stage) ? " · " + t("pipe.w", { v: money(p[stage].wval) }) : "")));
       col.appendChild(head);
       var cards = el("div", "col-cards");
       var list = stageDeals(stage), older = 0;
@@ -1067,7 +1298,7 @@
         col.classList.remove("drop");
         var d = C.byId(data.deals, dragId);
         dragId = "";
-        if (d && d.stage !== stage) {
+        if (d && C.stageOf(data, d, st).id !== stage) {
           if (stage === "lost") dealEditor(Object.assign({}, d, { stage: "lost" }), d.cust, true);
           else setStage(d, stage);
         }
@@ -1078,7 +1309,7 @@
 
     // narrow: stage chips + a list with "move to stage"
     var chips = el("div", "stage-chips");
-    C.STAGES.forEach(function (stage) {
+    ids.forEach(function (stage) {
       var b = el("button", "chip" + (prefs.stage === stage ? " on" : ""), stageName(stage) + " " + p[stage].n);
       b.type = "button";
       b.setAttribute("aria-pressed", prefs.stage === stage ? "true" : "false");
@@ -1089,7 +1320,7 @@
     var mob = el("div", "rows mob-list");
     var cur = p[prefs.stage];
     mob.appendChild(el("div", "col-sum", money(cur.val) +
-      (C.OPEN_STAGES.indexOf(prefs.stage) >= 0 ? " · " + t("pipe.w", { v: money(cur.wval) }) : "")));
+      (isOpenStage(prefs.stage) ? " · " + t("pipe.w", { v: money(cur.wval) }) : "")));
     var ml = stageDeals(prefs.stage);
     if (!ml.length) mob.appendChild(el("p", "hint", t("deals.none")));
     ml.slice(0, LIST_CAP).forEach(function (d) {
@@ -1105,10 +1336,12 @@
     var dlg = makeDialog("crm-stage");
     dlg.appendChild(el("h2", "dlg-title", t("pipe.move")));
     var list = el("div", "sheet-list");
-    C.STAGES.forEach(function (stage) {
-      var b = button(stageName(stage), "sheet-btn" + (d.stage === stage ? " primary" : ""), function () {
+    var curId = C.stageOf(data, d).id;
+    C.stages(data).forEach(function (sx) {
+      var stage = sx.id;
+      var b = button(stageName(stage), "sheet-btn" + (curId === stage ? " primary" : ""), function () {
         dlg.close();
-        if (stage === d.stage) return;
+        if (stage === curId) return;
         if (stage === "lost") dealEditor(Object.assign({}, d, { stage: "lost" }), d.cust, true);
         else setStage(d, stage);
       });
@@ -1199,14 +1432,23 @@
     tiles.appendChild(tile(t("d.leads"), String(s.newLeads), t("d.leadsSub"), function () {
       prefs.filter = "lead"; prefs.tag = ""; $("cust-q").value = ""; setTab("cust");
     }));
+    var up = unpaidTotals();
+    if (up) {
+      var curs = Object.keys(up).sort(function (a, b) { return (a === data.prefs.cur ? -1 : 0) - (b === data.prefs.cur ? -1 : 0) || (a < b ? -1 : 1); });
+      var od = curs.filter(function (k) { return up[k].overdue > 0; });
+      tiles.appendChild(tile(t("d.unpaid"), curs.map(function (k) { return curMoney(up[k].open, k); }).join(" · "),
+        od.length ? t("d.unpaidSub", { v: od.map(function (k) { return curMoney(up[k].overdue, k); }).join(" · ") }) : t("d.unpaidNone"),
+        function () { openInvoices({}); }));
+    }
     box.appendChild(tiles);
 
     var p = C.pipeline(data), max = 0;
-    C.OPEN_STAGES.forEach(function (st) { if (p[st].val > max) max = p[st].val; });
+    var openIds = C.stages(data).filter(function (x) { return x.open; }).map(function (x) { return x.id; });
+    openIds.forEach(function (st) { if (p[st].val > max) max = p[st].val; });
     var sec = el("section", "sec");
     sec.appendChild(secHead(t("d.byStage")));
     var bars = el("div", "bars");
-    C.OPEN_STAGES.forEach(function (st) {
+    openIds.forEach(function (st) {
       var r = el("div", "bar-row");
       r.appendChild(el("span", "", stageName(st)));
       var tr = el("div", "bar-track");
@@ -1345,9 +1587,9 @@
   }
 
   // ----- Customer -----
-  function custEditor(c) {
+  function custEditor(c, pre) {
     var dlg = makeDialog("crm-cust", true);
-    var x = c ? Object.assign({}, c) : { kind: "co", st: "lead" };
+    var x = c ? Object.assign({}, c) : Object.assign({ kind: "co", st: "lead" }, pre && pre.fill);
     dlg.appendChild(el("h2", "dlg-title", t(c ? "ed.custEdit" : "ed.custNew")));
     var name;
     var kind = seg([["co", t("kind.co")], ["person", t("kind.person")]], x.kind, function (v) {
@@ -1454,6 +1696,7 @@
       dlg.close();
       var saved = upsert("cust", row);
       if (saved && !c) { prefs.sel = saved.id; prefs.sub = "hist"; savePrefs(); if (prefs.tab !== "cust") setTab("cust"); else render(); }
+      if (saved && !c && pre && pre.then) pre.then(saved);
     }
     actions(dlg, save, c ? function () {
       confirmDialog(t("confirm.cust", { name: c.name }), t("ed.delete"), true, function () { dlg.close(); removeCustomer(c); });
@@ -1597,7 +1840,8 @@
     if (!d && needCustomer()) return;
     var dlg = makeDialog("crm-deal", true);
     var orig = d ? C.byId(data.deals, d.id) : null;
-    var x = d ? Object.assign({}, d) : { cust: custId || prefs.sel || "", stage: "new", val: 0 };
+    var x = d ? Object.assign({}, d) : { cust: custId || prefs.sel || "", stage: C.stages(data)[0].id, val: 0 };
+    x.stage = C.stageOf(data, x).id;
     dlg.appendChild(el("h2", "dlg-title", t(orig ? "ed.dealEdit" : "ed.dealNew")));
     var opts = custOptions();
     if (!C.byId(data.cust, x.cust)) x.cust = opts[0][0];
@@ -1609,25 +1853,33 @@
     dlg.appendChild(row1);
     var val = field(row1, t("ed.value", { c: data.prefs.cur }), inp("text", x.val ? (x.val / 100).toLocaleString(LOCALE) : "", 20));
     val.inputMode = "decimal";
-    var stage = field(row1, t("ed.stage"), selectEl(C.STAGES.map(function (s) { return [s, stageName(s)]; }), x.stage));
+    var stage = field(row1, t("ed.stage"), selectEl(C.stages(data).map(function (s) { return [s.id, stageName(s.id)]; }), x.stage));
     var row2 = el("div", "fld-row");
     dlg.appendChild(row2);
     var prob = field(row2, t("ed.prob"), inp("number", typeof x.prob === "number" ? x.prob : "", 3, ""));
     prob.min = 0; prob.max = 100; prob.step = 1;
-    var close = field(row2, t("ed.close"), inp("date", x.close || "", 10));
+    var close = field(row2, t("ed.closeDay"), inp("date", x.close || "", 10));
     var whyLbl = el("label", "dlg-lbl", t("ed.why"));
     var why = inp("text", x.why, 200);
     whyLbl.htmlFor = why.id = "crm-why";
     dlg.appendChild(whyLbl);
     dlg.appendChild(why);
     function syncStage() {
-      prob.placeholder = t("ed.probPh", { p: C.STAGE_PROB[stage.value] });
+      prob.placeholder = t("ed.probPh", { p: stageObj(stage.value).prob });
       var lost = stage.value === "lost";
       whyLbl.hidden = !lost; why.hidden = !lost;
     }
     stage.addEventListener("change", syncStage);
     syncStage();
     var note = field(dlg, t("ed.notes"), area(x.note, 2000));
+    // Saved deals: hand it to Invoices (won) or Quote (open or won)
+    var oc = orig ? C.byId(data.cust, orig.cust) : null;
+    if (oc && (canInvoice() || canQuote())) {
+      var links = el("div", "c-actions deal-docs");
+      if (canInvoice() && orig.stage === "won") links.appendChild(txtBtn("doc", t("deal.inv"), function () { dlg.close(); newInvoice(oc, orig); }));
+      if (canQuote() && orig.stage !== "lost") links.appendChild(txtBtn("doc", t("deal.quote"), function () { dlg.close(); newQuote(oc, orig); }));
+      if (links.childNodes.length) dlg.appendChild(links);
+    }
 
     function save() {
       var tt = C.cleanText(title.value, 120);
@@ -1659,7 +1911,8 @@
   function logEditor(a, custId, pre) {
     if (!a && !custId && needCustomer()) return;
     var dlg = makeDialog("crm-log", true);
-    var x = a ? Object.assign({}, a) : { cust: custId || prefs.sel || "", k: "call", at: Date.now(), text: (pre && pre.text) || "", deal: (pre && pre.deal) || "" };
+    var x = a ? Object.assign({}, a) : { cust: custId || prefs.sel || "", k: (pre && pre.k) || "call", at: (pre && pre.at) || Date.now(),
+                                         text: (pre && pre.text) || "", deal: (pre && pre.deal) || "", who: (pre && pre.who) || "" };
     dlg.appendChild(el("h2", "dlg-title", t(a ? "ed.logEdit" : "ed.logNew")));
     var opts = custOptions();
     if (!C.byId(data.cust, x.cust)) x.cust = opts[0][0];
@@ -1814,7 +2067,9 @@
 
     var list = el("div", "sheet-list");
     list.style.marginTop = "16px";
+    list.appendChild(button(t("set.stages"), "sheet-btn", stagesEditor));
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
+    list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
     list.appendChild(button(t("set.restore"), "sheet-btn", function () { dlg.close(); importJson(); }));
@@ -1826,6 +2081,121 @@
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("ed.close"), "primary", function () { dlg.close(); }));
     dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // ----- Pipeline stages -----
+  // The open stages in board order: rename, default probability, up /
+  // down, hide (built-in) or delete (own), only when no deal is in it.
+  // Won and Lost stay fixed. Every change is one "stg" record (LWW).
+  function stagesEditor() {
+    var dlg = makeDialog("crm-stages");
+    dlg.appendChild(el("h2", "dlg-title", t("stg.title")));
+    dlg.appendChild(el("p", "hint", t("stg.hint")));
+    var box = el("div", "rows");
+    dlg.appendChild(box);
+    var hid = el("div", "stg-hidden");
+    dlg.appendChild(hid);
+    function write(id, patch) {
+      var row = Object.assign({}, C.byId(data.stg, id) || { id: id }, patch);
+      if (!row.off) delete row.off;
+      return upsert("stg", row);
+    }
+    function inStage(id) {
+      return data.deals.filter(function (d) { return C.stageOf(data, d).id === id; }).length;
+    }
+    function draw() {
+      box.innerHTML = "";
+      hid.innerHTML = "";
+      var open = C.stages(data).filter(function (x) { return x.open; });
+      function move(i, j) {
+        var ids = open.map(function (x) { return x.id; });
+        var a = ids[i]; ids[i] = ids[j]; ids[j] = a;
+        ids.forEach(function (id, k) {
+          var want = (k + 1) * 10, sx = open.filter(function (x) { return x.id === id; })[0];
+          if (sx.pos !== want) write(id, { pos: want });
+        });
+        draw();
+      }
+      open.forEach(function (sx, i) {
+        var label = sx.name || t("stage." + sx.id);
+        var r = el("div", "stg-row");
+        var nm = inp("text", sx.name, 30, sx.own ? "" : t("stage." + sx.id));
+        nm.setAttribute("aria-label", t("stg.name"));
+        nm.addEventListener("change", function () {
+          var v = C.cleanText(nm.value, 30);
+          if ((sx.own && !v) || v === sx.name) { draw(); return; }
+          write(sx.id, { name: v });
+          draw();
+        });
+        r.appendChild(nm);
+        var pr = inp("number", String(sx.prob), 3, "");
+        pr.min = 0; pr.max = 100; pr.step = 1;
+        pr.classList.add("stg-prob");
+        pr.setAttribute("aria-label", t("stg.prob"));
+        pr.addEventListener("change", function () {
+          var v = Math.round(Number(pr.value));
+          if (pr.value.trim() !== "" && v >= 0 && v <= 100 && v !== sx.prob) write(sx.id, { prob: v });
+          draw();
+        });
+        r.appendChild(pr);
+        var up = iconBtn("up", t("stg.up"), function () { move(i, i - 1); }, "mini");
+        up.disabled = i === 0;
+        r.appendChild(up);
+        var dn = iconBtn("down", t("stg.down"), function () { move(i, i + 1); }, "mini");
+        dn.disabled = i === open.length - 1;
+        r.appendChild(dn);
+        r.appendChild(iconBtn("x", t(sx.own ? "stg.del" : "stg.hide") + ": " + label, function () {
+          var n = inStage(sx.id);
+          if (n) { showToast(t("stg.notEmpty", { name: label, n: n })); return; }
+          if (open.length < 2) { showToast(t("stg.last")); return; }
+          if (sx.own) removeRow("stg", sx.id, t("stg.deleted", { name: label }));
+          else if (write(sx.id, { off: 1 })) undoToast(t("stg.hidden", { name: label }), function () { write(sx.id, { off: 0 }); });
+          draw();
+        }, "mini"));
+        box.appendChild(r);
+      });
+      var hidden = C.OPEN_STAGES.filter(function (id) { var r = C.byId(data.stg, id); return r && r.off; });
+      if (hidden.length) {
+        hid.appendChild(el("div", "dlg-lbl", t("stg.hiddenHead")));
+        hidden.forEach(function (id) {
+          var r = C.byId(data.stg, id);
+          hid.appendChild(button(t("stg.show", { name: r.name || t("stage." + id) }), "", function () {
+            if (open.length >= C.LIMITS.openStages) { showToast(t("stg.max", { n: C.LIMITS.openStages })); return; }
+            write(id, { off: 0 });
+            draw();
+          }));
+        });
+      }
+      addRow.hidden = open.length >= C.LIMITS.openStages;
+      maxNote.hidden = !addRow.hidden;
+    }
+    var addRow = el("div", "list-tools");
+    addRow.style.marginTop = "12px";
+    var nn = inp("text", "", 30, t("stg.newPh"));
+    nn.setAttribute("aria-label", t("stg.newPh"));
+    addRow.appendChild(nn);
+    var ab = button(t("stg.add"), "primary", function () {
+      var v = C.cleanText(nn.value, 30);
+      if (!v) { nn.focus(); return; }
+      var open = C.stages(data).filter(function (x) { return x.open; });
+      if (open.length >= C.LIMITS.openStages) return;
+      var pos = open.reduce(function (mx, x) { return Math.max(mx, x.pos); }, 0) + 10;
+      upsert("stg", { id: C.newId(Date.now()), name: v, prob: 50, pos: pos });
+      nn.value = "";
+      draw();
+      nn.focus();
+    });
+    ab.style.flex = "0 0 auto";
+    addRow.appendChild(ab);
+    nn.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); ab.click(); } });
+    dlg.appendChild(addRow);
+    var maxNote = el("p", "hint", t("stg.max", { n: C.LIMITS.openStages }));
+    dlg.appendChild(maxNote);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    draw();
     showDialog(dlg);
   }
 
@@ -1959,6 +2329,77 @@
     }).catch(function () {});
   }
 
+  // CSV of customers from another program: preview, then one write
+  // (Undo removes them all again).
+  function importCsv() {
+    var dlg = dialogHost(), acc = ".csv,text/csv,.txt,text/plain";
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(acc) : localPick(acc);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var r = C.csvImport(data, String(fr.result || ""), Date.now());
+        if (!r) { showToast(t("imp.bad")); return; }
+        importPreview(r);
+      };
+      fr.readAsText(file);
+    }).catch(function () {});
+  }
+  function importPreview(r) {
+    var dlg = makeDialog("crm-import", true);
+    dlg.appendChild(el("h2", "dlg-title", t("imp.title")));
+    var ul = el("ul", "imp-sum");
+    var line = function (key, n) { if (n) ul.appendChild(el("li", "", t(key, { n: n, max: C.LIMITS.cust }))); };
+    ul.appendChild(el("li", "", t("imp.new", { n: r.add.length })));
+    line("imp.dup", r.dup); line("imp.noName", r.noName); line("imp.over", r.over); line("imp.tags", r.tags.length);
+    dlg.appendChild(ul);
+    if (r.add.length) {
+      var names = r.add.slice(0, 8).map(function (c) { return c.name; }).join(", ");
+      if (r.add.length > 8) names += " " + t("imp.more", { n: r.add.length - 8 });
+      dlg.appendChild(el("p", "hint", names));
+    } else dlg.appendChild(el("p", "hint", t("imp.none")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    if (r.add.length) acts.appendChild(button(t("imp.go", { n: r.add.length }), "primary", function () {
+      dlg.close();
+      var ids = [];
+      r.tags.forEach(function (tg) { tg = Object.assign({}, tg, { m: stamp(null) }); data.tags.push(tg); ids.push(tg.id); });
+      r.add.forEach(function (c) { c = Object.assign({}, c, { m: stamp(null) }); data.cust.push(c); ids.push(c.id); });
+      if (!commit()) return;
+      undoToast(t("imp.done", { n: r.add.length }), function () {
+        ids.forEach(function (id) { tomb(id); });
+        commit();
+      });
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // BR-CRM-MAIL: an email from Mail becomes a prefilled "Email" log
+  // entry of the customer with that address (or one of its people).
+  // Unknown address: the New customer form, then the log entry.
+  function mailToLog(raw) {
+    var m = C.mailLog(raw);
+    if (!m) return false;
+    var text = [m.subject ? t("mail.subj", { s: m.subject }) : "", m.text].filter(Boolean).join("\n\n").slice(0, 2000);
+    var c = C.custByEmail(data, m.email, function (p) { return personView(p).email; });
+    var open = function (cust) {
+      var who = "";
+      (cust.people || []).forEach(function (p) {
+        var v = personView(p);
+        if (!who && String(v.email || "").toLowerCase() === m.email) who = v.name;
+      });
+      prefs.sel = cust.id; prefs.sub = "hist"; savePrefs();
+      setTab("cust");
+      logEditor(null, cust.id, { k: "mail", at: m.at || Date.now(), text: text, who: who });
+    };
+    if (c) { open(c); return true; }
+    setTab("cust");
+    showToast(t("mail.noCust", { email: m.email }));
+    custEditor(null, { fill: { name: m.name, email: m.email }, then: open });
+    return true;
+  }
+
   // ---------- 12. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -2077,6 +2518,7 @@
       doneFup(df);
       return true;
     }
+    if (x.log) return mailToLog(x.log);
     var c = id(x.cust) ? C.byId(data.cust, x.cust) : null;
     var d = id(x.deal) ? C.byId(data.deals, x.deal) : null;
     var f = id(x.fup) ? C.byId(data.fups, x.fup) : null;
@@ -2273,7 +2715,9 @@
     });
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
-      if (e.key === CONTACTS_KEY && prefs.tab === "cust" && !document.querySelector("dialog[open]")) renderDetail();
+      if (document.querySelector("dialog[open]")) return;
+      if ((e.key === CONTACTS_KEY || e.key === INV_KEY || e.key === QUOTE_KEY) && prefs.tab === "cust") renderDetail();
+      else if (e.key === INV_KEY && prefs.tab === "dash") renderDash();
     });
     setInterval(function () {
       if (document.visibilityState === "hidden") return;
@@ -2294,7 +2738,7 @@
     watchPalette();
     render();
     takeTarget();
-    console.log("[orOS CRM] v1.1.0 boot OK");
+    console.log("[orOS CRM] v1.4.0 boot OK");
   }
 
   boot();

@@ -450,3 +450,92 @@ test("Today provider: reorder line and expected deliveries, read-only", () => {
   assert.deepEqual(T.collect(Object.assign({}, ctx, { readJSON: () => null })), []);
   delete globalThis.OrosStockCore;
 });
+
+// ---------- 1.2: photos, barcodes ----------
+test("photos: own list keyed by item, LWW, removed = empty name, hidden with the item, 1.1 copy loses nothing", () => {
+  assert.equal(C.picName("2026-10-12", "item01", "AB12cd"), "20261012-item01-ab12cd.jpg");
+  assert.equal(C.picName("2026-10-12", "x", "ab12cd"), null);
+  assert.equal(C.picPath("20261012-item01-ab12cd.jpg"), "/internal/Stock/Photos/20261012-item01-ab12cd.jpg");
+  assert.equal(C.picPath("../../etc/passwd"), null);
+  assert.equal(C.normPic({ id: "item01", m: 1, f: "../x.jpg" }).f, "");
+  const A = data({ items: [item("item01"), item("item02")], pics: [{ id: "item01", m: 2000, f: "20261012-item01-aaaa.jpg" }] });
+  const B = data({ pics: [{ id: "item01", m: 3000, f: "" }, { id: "item02", m: 1000, f: "20261012-item02-bbbb.jpg" }] });
+  const ab = m(A, B);
+  assert.deepEqual(ab, m(B, A));
+  assert.equal(C.picOf(ab, "item01"), "");                  // the newer removal wins
+  assert.deepEqual(C.picsInUse(ab), ["20261012-item02-bbbb.jpg"]);
+  const gone = m(ab, data({ tombs: { item02: NOW - 1000 } }));
+  assert.equal(C.picOf(gone, "item02"), "");               // the item's tombstone hides its photo row
+  const old = JSON.parse(JSON.stringify(ab));
+  delete old.pics;
+  assert.deepEqual(m(ab, old).pics, ab.pics);
+});
+
+test("barcodes: EAN-13 check digit and bars, Code 128 B, the label's choice, SVG has only bars", () => {
+  assert.equal(C.eanCheck("501234567890"), "0");
+  assert.equal(C.eanCheck("400638133393"), "1");
+  assert.equal(C.ean13("5012345678900"), "10100011010110011001101101111010100011011100101010101000010001001001000111010011100101110010101");
+  assert.equal(C.ean13("5012345678901"), null);            // wrong check digit
+  assert.equal(C.code128("MUG-1"), "110100100001011101100011011101110110100010001001101110010011100110111101010001100011101011");
+  assert.equal(C.code128("Ω"), null);
+  assert.equal(C.code128(""), null);
+  assert.equal(C.barcodeFor({ bc: "501234567890" }).type, "ean13");   // 12 digits get their check digit
+  assert.equal(C.barcodeFor({ bc: "501234567890" }).text, "5012345678900");
+  assert.equal(C.barcodeFor({ bc: "5012345678901", sku: "X" }).type, "code128");   // not a valid EAN: Code 128 of the barcode
+  assert.deepEqual([C.barcodeFor({ bc: "", sku: "MUG-1" }).type, C.barcodeFor({ bc: "", sku: "MUG-1" }).text], ["code128", "MUG-1"]);
+  assert.equal(C.barcodeFor({ bc: "", sku: "" }), null);
+  const svg = C.barSvg(C.code128("<x>"), 40);
+  assert.ok(!/<x>/.test(svg));
+  assert.match(svg, /^<svg [^>]*viewBox="0 0 \d+ 40"/);
+  assert.equal((svg.match(/<rect /g) || []).length, 1 + (C.code128("<x>").match(/1+/g) || []).length);
+});
+
+test("BR-ST-OUT: another app's sale is matched by code, summed, cleaned; nothing written", () => {
+  const d = data({
+    items: [item("item01", { sku: "MUG-1", bc: "5012345678900", price: 900 }), item("item02", { sku: "RICE", unit: "kg" }),
+      item("item03", { sku: "OLD", arch: 1 })],
+    moves: [mv("mv0001", "in", "2026-10-01", [{ i: "item01", q: k(10), c: 300 }]),
+      mv("mv0002", "out", "2026-10-02", [{ i: "item01", q: -k(1) }], { src: "invoices:inv0001" }),
+      mv("mv0003", "out", "2026-10-02", [{ i: "item01", q: -k(1) }], { src: "invoices:inv0001", v: 1 })]
+  });
+  const before = JSON.stringify(d);
+  const r = C.outRequest(d, {
+    ref: " INV-12 ", src: "invoices:inv0001", d: "2026-10-11",
+    lines: [{ code: "mug-1", q: 2, p: 850 }, { sku: "5012345678900", q: 1, p: 850 }, { code: "RICE", q: 2.3456 },
+      { code: "NOPE", q: 1 }, { code: "NOPE", q: 3 }, { code: "RICE", q: 0 }, { code: "", q: 1 }, null, { code: "OLD", q: -2 }]
+  }, TODAY);
+  assert.equal(r.t, "out");
+  assert.equal(r.ref, "INV-12");
+  assert.equal(r.d, "2026-10-11");
+  assert.equal(r.src, "invoices:inv0001");
+  assert.equal(r.used, 1);                                   // the voided one doesn't count
+  assert.deepEqual(r.miss, ["NOPE"]);
+  assert.deepEqual(r.lines, [{ i: "item01", q: k(3), p: 850 }, { i: "item02", q: 2346 }, { i: "item03", q: k(2) }]);
+  assert.equal(JSON.stringify(d), before);
+  // two prices for one product: the price is left for the person
+  const r2 = C.outRequest(d, { t: "ret", src: "bad src!", d: "2030-01-01", lines: [{ code: "MUG-1", q: 1, p: 1 }, { code: "MUG-1", q: 1, p: 2 }] }, TODAY);
+  assert.equal(r2.t, "ret");
+  assert.equal(r2.src, "");
+  assert.equal(r2.used, 0);
+  assert.equal(r2.d, TODAY);                                 // a far future date falls back to today
+  assert.deepEqual(r2.lines, [{ i: "item01", q: k(2) }]);
+  // pcs round to whole units
+  assert.deepEqual(C.outRequest(d, { lines: [{ code: "MUG-1", q: 1.6 }] }, TODAY).lines, [{ i: "item01", q: k(2) }]);
+  assert.equal(C.outRequest(d, { lines: "x" }, TODAY), null);
+  assert.equal(C.outRequest(d, null, TODAY), null);
+  // the move it becomes keeps its src
+  const saved = C.normMove({ id: "mv0009", m: 2, d: r.d, t: "out", ref: r.ref, src: r.src, lines: r.lines.map((l) => ({ i: l.i, q: -l.q, p: l.p })) });
+  assert.equal(saved.src, "invoices:inv0001");
+  assert.equal(C.srcUses(m(d, data({ moves: [saved] })), "invoices:inv0001"), 2);
+});
+
+test("catalog: live products with code, prices, VAT and quantity for another app's picker", () => {
+  const d = data({
+    items: [item("item01", { sku: "MUG-1", price: 900, vat: 13 }), item("item02", { bc: "123", unit: "kg", price: 0, vat: 24 }), item("item03", { arch: 1 })],
+    moves: [mv("mv0001", "in", "2026-10-01", [{ i: "item01", q: k(4), c: 300 }, { i: "item02", q: 1500, c: 100 }])]
+  });
+  assert.deepEqual(C.catalog(d), [
+    { id: "item01", code: "MUG-1", name: "Item item01", unit: "pcs", price: 900, vat: 13, q: 4 },
+    { id: "item02", code: "123", name: "Item item02", unit: "kg", price: 0, vat: 24, q: 1.5 }
+  ]);
+});

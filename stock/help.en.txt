@@ -15,6 +15,13 @@ Tap or click a product to see its quantity, average cost, value, prices and ever
 
 > A barcode scanner (USB or Bluetooth) works in the search field: scan a code and the product opens. An unknown code offers `New product` with the SKU filled in.
 
+On a phone, the 📷 button next to a search or scan field reads barcodes with the camera (Chrome on Android). In a receipt, a sale or the counter it stays open, so you can scan one product after another; tap `Done` when you are finished. Where the button doesn't show, the browser can't read barcodes, but a scanner still works.
+
+A product can have a photo: `Add photo` in its sheet. The picture is made smaller and kept in [Files](app:files), folder Stock/Photos (without location or camera data); it reaches your other devices with Vault Drive.
+
+### Barcode labels
+`New` › `Barcode labels` (or the button in a product's sheet) prints labels on an A4 sheet of 3 × 8 (70 × 37 mm): name, barcode and, if you want, the price. Choose the products and how many copies of each. A product with a 13-digit barcode gets an EAN-13; any other gets a Code 128 of its barcode or SKU. Print to paper or save as PDF from the print window.
+
 ## Movements
 Every change in stock is a movement. The `Movements` tab lists them day by day; filter by type and period.
 
@@ -22,6 +29,11 @@ Every change in stock is a movement. The `Movements` tab lists them day by day; 
 Open `New` › `Receive stock` or `Sell / issue`. Pick a `Date`, a `Ref.` (your invoice or receipt number) and, for receipts, a `Supplier`. Then add products: type a name, or scan. Scanning the same product again adds one more. Receipts take a `Unit cost`, sales a `Unit price`, and the `Total` is shown.
 
 Other types: `Customer return`, `Return to supplier`, `Loss / damage` and `Correction` (a + or − quantity).
+
+A sale can also come from another orOS app, already filled in, for example the products of an invoice. Stock matches them by SKU or barcode, lists any code it couldn't find, and warns if the same document was taken out of stock before. Nothing is saved until you press `Save`.
+
+### Counter
+`New` › `Counter (quick sale)` is made for a shop with a scanner: scan products (each scan adds one), change quantities with − and +, and press `Complete sale`. It saves one sale at the products' sale prices, and you can `Undo` it right away. A sale you leave open stays in the counter until you complete or clear it.
 
 ### Stock count
 In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
@@ -70,5 +82,5 @@ Products, movements, suppliers, categories, units and settings sync between your
 
 ## Limits
 - One warehouse: there are no separate locations with transfers yet.
-- No camera scanning yet; a scanner that types works.
+- Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.

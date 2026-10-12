@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Newsletter · orOS</title>
+
+  <link rel="stylesheet" href="newsletter.css?v=1.29.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <nav id="tabs" role="tablist">
+      <button type="button" class="tab" role="tab" data-tab="issues" id="tab-issues"></button>
+      <button type="button" class="tab" role="tab" data-tab="subs" id="tab-subs"></button>
+      <button type="button" class="tab" role="tab" data-tab="lists" id="tab-lists"></button>
+    </nav>
+    <span class="spacer"></span>
+    <button type="button" class="new-btn" id="new-btn"></button>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <div id="sendbar" hidden>
+    <span id="sendbar-text"></span>
+    <button type="button" class="mini-btn" id="sendbar-btn"></button>
+  </div>
+
+  <main id="main">
+    <!-- Issues -->
+    <section id="v-issues" class="view" role="tabpanel">
+      <div class="list-row">
+        <select id="list-pick-i" class="list-pick"></select>
+        <span class="list-sum" id="sum-i"></span>
+      </div>
+      <div id="setup" class="banner info" hidden>
+        <span id="setup-text"></span>
+        <button type="button" class="mini-btn" id="setup-go"></button>
+      </div>
+      <ol id="issues" class="rows"></ol>
+      <div id="issues-empty" class="empty" hidden>
+        <p class="empty-t" data-i18n="iss.empty">No issues yet.</p>
+        <p class="hint" data-i18n="iss.emptyHint">Write your first one with New.</p>
+      </div>
+    </section>
+
+    <!-- Subscribers -->
+    <section id="v-subs" class="view" role="tabpanel" hidden>
+      <div class="list-row">
+        <select id="list-pick-s" class="list-pick"></select>
+        <span class="list-sum" id="sum-s"></span>
+      </div>
+      <div class="filters">
+        <input type="search" id="sq" autocomplete="off" spellcheck="false">
+        <select id="f-st"></select>
+        <select id="f-tag"></select>
+      </div>
+      <div class="acts" id="subs-acts"></div>
+      <p class="hint" id="inbox-note"></p>
+      <ol id="subs" class="rows"></ol>
+      <p class="hint" id="subs-more" hidden></p>
+      <div id="subs-empty" class="empty" hidden>
+        <p class="empty-t" data-i18n="subs.empty">No subscribers yet.</p>
+        <p class="hint" data-i18n="subs.emptyHint">Add them one by one, paste a list, import a CSV file or pick them from Contacts.</p>
+      </div>
+    </section>
+
+    <!-- Lists + sending accounts -->
+    <section id="v-lists" class="view" role="tabpanel" hidden>
+      <h3 class="sec-h" data-i18n="lists.h">Lists</h3>
+      <div id="lists"></div>
+      <button type="button" class="wide-btn" id="add-list"></button>
+      <h3 class="sec-h" data-i18n="chans.h">Sending accounts</h3>
+      <p class="hint" data-i18n="chans.hint">The account each list sends from: one of your Mail accounts, or a sending provider (Brevo, Amazon SES, Mailgun, Postmark, SendGrid…) for bigger lists.</p>
+      <ol id="chans" class="rows"></ol>
+      <button type="button" class="wide-btn" id="add-chan"></button>
+    </section>
+
+    <!-- Issue editor -->
+    <section id="v-edit" class="view" hidden>
+      <div class="view-head">
+        <button type="button" class="icon-btn" id="ed-back"></button>
+        <div class="vh-txt">
+          <div class="vh-title" id="ed-title"></div>
+          <div class="vh-sub" id="ed-sub"></div>
+        </div>
+      </div>
+      <form id="ed-form" autocomplete="off" novalidate></form>
+    </section>
+
+    <!-- An issue that is out (or going out) -->
+    <section id="v-view" class="view" hidden>
+      <div class="view-head">
+        <button type="button" class="icon-btn" id="vw-back"></button>
+        <div class="vh-txt">
+          <div class="vh-title" id="vw-title"></div>
+          <div class="vh-sub" id="vw-sub"></div>
+        </div>
+        <span class="chip" id="vw-chip"></span>
+      </div>
+      <div id="vw-body"></div>
+    </section>
+
+    <!-- Settings -->
+    <section id="v-set" class="view" hidden>
+      <div class="view-head">
+        <button type="button" class="icon-btn" id="set-back"></button>
+        <div class="vh-txt"><div class="vh-title" data-i18n="set.title">Settings</div></div>
+      </div>
+      <div id="set-body"></div>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../mail/compose.js?v=1.29.00"></script>
+  <script src="../mail/mime.js?v=1.29.00"></script>
+  <script src="core.js?v=1.29.00"></script>
+  <script src="render.js?v=1.29.00"></script>
+  <script src="newsletter.js?v=1.29.00"></script>
+
+</body>
+</html>

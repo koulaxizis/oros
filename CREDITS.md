@@ -24,6 +24,8 @@ list in `shell.js` and the "Credits register" in `OROS_BIBLE.md`.
 | [hls.js](https://github.com/video-dev/hls.js) (light build) | 1.7.3 | © 2017 Dailymotion and contributors | [Apache-2.0](https://github.com/video-dev/hls.js/blob/master/LICENSE) | Television |
 | [PDF.js](https://mozilla.github.io/pdf.js/) (legacy build, `vendor/pdfjs/`) | 5.4.394 | © Mozilla Foundation and contributors | [Apache-2.0](vendor/pdfjs/LICENSE) | Layout: opening PDF files |
 | [Mediabunny](https://mediabunny.dev/) (`vendor/mediabunny.min.js`) | 1.60.0 | © Vanilagy and contributors | [MPL-2.0](vendor/mediabunny.LICENSE) | Montage: reading video, sound and picture files and writing MP4/WebM |
+| [ONNX Runtime Web](https://onnxruntime.ai/) (WebAssembly build, `vendor/ort/`) | 1.22.0 | © Microsoft Corporation | [MIT](vendor/ort/LICENSE) | Atelier: removing a picture's background on the device (downloaded on first use, not precached) |
+| [U²-Net](https://github.com/xuebinqin/U-2-Net) model u2netp (`vendor/u2netp/u2netp.onnx`, ONNX export from [rembg](https://github.com/danielgatis/rembg)) | — | © 2020 Xuebin Qin and contributors | [Apache-2.0](vendor/u2netp/LICENSE) | Atelier: the background removal model |
 
 Used only by the test suite (`tests/`, never shipped to users):
 [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe, Apache-2.0
@@ -96,6 +98,7 @@ there are no recorded audio files. Emoji come from the device's own font.
 | [MusicBrainz](https://musicbrainz.org/) | MetaBrainz Foundation | Core data [CC0](https://creativecommons.org/publicdomain/zero/1.0/); called only when you tap Find details online | Media Shelf (albums) |
 | AI providers you choose: [Anthropic](https://www.anthropic.com/) (Claude), [OpenAI](https://openai.com/), [Google](https://ai.google.dev/) (Gemini API), [Mistral AI](https://mistral.ai/), [OpenRouter](https://openrouter.ai/), or a local server ([Ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai/)) | Each provider | Each provider's terms; only with the user's own key, called straight from the browser; no code from them is shipped | Assistant |
 | [Frankfurter](https://frankfurter.dev/) | Hakan Ensari (open source, MIT); rates published by the [European Central Bank](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html) | Free API, no key; ECB euro reference rates (information only); called only when Currency is opened (at most every 6 hours) or Update rates is tapped | Unit Converter (exchange rates) |
+| [Wiktionary](https://en.wiktionary.org/) | Wiktionary editors, Wikimedia Foundation | Text [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); called only after a one-time opt-in on each device, only the word is sent | Library (word look-up) |
 | [Cloudflare Workers](https://workers.cloudflare.com/) | Cloudflare, Inc. | Runs the orOS mail relay (`relay/`, stateless, no logs); anyone can deploy their own | Mail |
 | [Dropbox](https://www.dropbox.com/) | Dropbox, Inc. | The user's own account; data end-to-end encrypted by orOS | Optional sync |
 | [GitHub Pages](https://pages.github.com/) | GitHub, Inc. | Hosting | Serves useoros.online |

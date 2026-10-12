@@ -82,6 +82,8 @@
       "item.delete":   "Delete",
       "save":          "Save",
       "list.settings": "List settings",
+      "list.share":    "Send to someone…",
+      "list.share.empty": "This list is empty: nothing to send",
       "list.name":     "Name",
       "list.delete":   "Delete list",
       "recur.list.title": "List cycle",
@@ -150,6 +152,8 @@
       "item.delete":   "Διαγραφή",
       "save":          "Αποθήκευση",
       "list.settings": "Ρυθμίσεις λίστας",
+      "list.share":    "Στείλε σε κάποιον…",
+      "list.share.empty": "Η λίστα είναι άδεια: δεν υπάρχει κάτι να στείλεις",
       "list.name":     "Όνομα",
       "list.delete":   "Διαγραφή λίστας",
       "recur.list.title": "Κύκλος λίστας",
@@ -2380,6 +2384,19 @@
     });
     $("list-settings").addEventListener("click", function () {
       openListDialog(activeList().id);
+    });
+    // "Send to someone" (shell share/): the open list travels in a link.
+    var shareApi = null;
+    try { shareApi = window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) {}
+    $("list-share").hidden = !shareApi;
+    $("list-share").addEventListener("click", function () {
+      var list = activeList();
+      if (!shareApi) return;
+      if (!list.items.length) { showToast(t("list.share.empty"), false); return; }
+      shareApi.open({ kind: "list", data: {
+        t: list.name || t("new.list"),
+        i: list.items.map(function (it) { return { x: it.text, n: it.notes || "", d: it.done ? 1 : 0 }; })
+      } });
     });
 
     // New list

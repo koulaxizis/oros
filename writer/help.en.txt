@@ -44,6 +44,7 @@ With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versio
 - [[F2]] rename the current document.
 
 ## Tips
+- With the Assistant installed, the sparkle button sends the selected text (or the whole document) to the Assistant to summarize, rephrase or correct it. Nothing is sent until you press `Send` there; copy the answer back with `Copy`.
 - Use heading styles: they build the table of contents. Take a `Snapshot` before big changes.
 
 ## Limits

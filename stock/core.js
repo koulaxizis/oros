@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.1.0)
+// orOS Stock — core.js (shared logic, v1.3.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -36,6 +36,10 @@
 //     onOrder(data), poNext(data, today)
 //   reports (1.1): valueByCat(data), periodSummary(data, from, to),
 //     deadStock(data, today, days), reportRange(key, today)
+//   photos (1.2): normPic, picName, picPath, picOf(data, itemId), picsInUse
+//   barcodes (1.2): eanCheck, ean13, code128, barcodeFor(item), barSvg
+//   other apps (1.3): outRequest(data, req, today) (BR-ST-OUT),
+//     srcUses(data, src), catalog(data)
 // Data (synced slice "stock", key oros-stock-data):
 //   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
 //     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
@@ -43,6 +47,10 @@
 //   merge, which costs nothing (a pull never marks dirty, a 1.1
 //   device keeps it). A receipt against an order is a normal "in"
 //   movement with src "po:<order id>" (1.0 already carries src).
+//   pics (1.2) is a top-level list too, one row per product photo
+//   { id: itemId, m, f: file name | "" }: a separate list rather than a
+//   field of the item, so a 1.0/1.1 device that edits the item can
+//   never drop the photo (its own merge only drops the whole list).
 // ============================================================
 (function (root) {
   "use strict";
@@ -291,8 +299,18 @@
     };
   }
 
-  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo };
-  var LIST_KEYS = ["items", "cats", "units", "sups", "pos"];
+  // Product photo: the row's id IS the item id (one photo per item; a
+  // tombstone of the item hides it too). f = the JPEG's file name on
+  // the orOS disk, "" = removed (an LWW edit, no tombstone needed).
+  var PHOTO_DIR = "/internal/Stock/Photos";
+  var PIC_RE = /^\d{8}-[a-z0-9]{6,40}-[a-z0-9]{4,12}\.jpg$/;
+  function normPic(x) {
+    if (!base(x)) return null;
+    return { id: x.id, m: x.m, f: typeof x.f === "string" && PIC_RE.test(x.f) ? x.f : "" };
+  }
+
+  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo, pics: normPic };
+  var LIST_KEYS = ["items", "cats", "units", "sups", "pos", "pics"];
 
   function canon(v) { return JSON.stringify(v); }
   function lww(best, x) {
@@ -778,6 +796,102 @@
     return pre + (n + 1);
   }
 
+  // ---------- Photos ----------
+  function picName(ymd, itemId, rnd) {
+    var r = typeof rnd === "string" ? rnd.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) : "";
+    if (!isYmd(ymd) || typeof itemId !== "string" || !ID_RE.test(itemId) || r.length < 4) return null;
+    return ymd.replace(/-/g, "") + "-" + itemId + "-" + r + ".jpg";
+  }
+  function picPath(name) { return typeof name === "string" && PIC_RE.test(name) ? PHOTO_DIR + "/" + name : null; }
+  function picOf(data, itemId) {
+    var list = (data && data.pics) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === itemId) return list[i].f;
+    return "";
+  }
+  // Every file name some live product still points at
+  function picsInUse(data) {
+    var items = dict(), out = [];
+    ((data && data.items) || []).forEach(function (it) { items[it.id] = true; });
+    ((data && data.pics) || []).forEach(function (p) { if (p.f && items[p.id]) out.push(p.f); });
+    return out;
+  }
+
+  // ---------- Barcodes (pure: module strings "1" bar / "0" space) ----------
+  // EAN-13: the check digit of 12 digits
+  function eanCheck(d12) {
+    if (!/^\d{12}$/.test(d12)) return null;
+    var sum = 0;
+    for (var i = 0; i < 12; i++) sum += (+d12[i]) * (i % 2 ? 3 : 1);
+    return String((10 - sum % 10) % 10);
+  }
+  var EAN_L = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"];
+  var EAN_G = ["0100111", "0110011", "0011011", "0100001", "0011101", "0111001", "0000101", "0010001", "0001001", "0010111"];
+  var EAN_P = ["LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG", "LGGLLG", "LGGGLL", "LGLGLG", "LGLGGL", "LGGLGL"];
+  function ean13(code) {
+    if (!/^\d{13}$/.test(code) || eanCheck(code.slice(0, 12)) !== code[12]) return null;
+    var par = EAN_P[+code[0]], out = "101";
+    for (var i = 1; i <= 6; i++) out += (par[i - 1] === "L" ? EAN_L : EAN_G)[+code[i]];
+    out += "01010";
+    for (var j = 7; j <= 12; j++) out += EAN_L[+code[j]].replace(/[01]/g, function (c) { return c === "0" ? "1" : "0"; });
+    return out + "101";
+  }
+  // Code 128 (set B: printable ASCII 32–126), widths bar/space/…
+  var C128 = ("212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 " +
+    "221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 " +
+    "221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 " +
+    "212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 " +
+    "231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 " +
+    "231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 " +
+    "314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 " +
+    "112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 " +
+    "111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 " +
+    "214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 " +
+    "114131 311141 411131 211412 211214 211232 2331112").split(" ");
+  function code128(text) {
+    var s = String(text || "");
+    if (!s || s.length > 40) return null;
+    var vals = [104];
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c < 32 || c > 126) return null;
+      vals.push(c - 32);
+    }
+    var sum = 104;
+    for (var k = 1; k < vals.length; k++) sum += vals[k] * k;
+    vals.push(sum % 103, 106);
+    var out = "";
+    vals.forEach(function (v) {
+      var w = C128[v];
+      for (var j = 0; j < w.length; j++) out += new Array(+w[j] + 1).join(j % 2 ? "0" : "1");
+    });
+    return out;
+  }
+  // The barcode a label prints for an item: its barcode as EAN-13 when
+  // it is one (12 digits get their check digit), else Code 128 of the
+  // barcode or the SKU. → { type, text, modules } | null
+  function barcodeFor(item) {
+    var bc = item && item.bc ? String(item.bc) : "", sku = item && item.sku ? String(item.sku) : "";
+    if (/^\d{12}$/.test(bc)) bc += eanCheck(bc);
+    if (/^\d{13}$/.test(bc) && ean13(bc)) return { type: "ean13", text: bc, modules: ean13(bc) };
+    var src = bc || sku, m = code128(src);
+    return m ? { type: "code128", text: src, modules: m } : null;
+  }
+  // An SVG of the bars (quiet zone of 10 modules each side), width in
+  // modules; height h in the same units. Only rects: nothing from the
+  // item's text goes into the markup.
+  function barSvg(modules, h) {
+    var q = 10, hh = h || 50, w = modules.length + 2 * q, rects = [], i = 0;
+    while (i < modules.length) {
+      if (modules[i] !== "1") { i++; continue; }
+      var j = i;
+      while (j < modules.length && modules[j] === "1") j++;
+      rects.push('<rect x="' + (i + q) + '" y="0" width="' + (j - i) + '" height="' + hh + '"/>');
+      i = j;
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + " " + hh + '" preserveAspectRatio="none" shape-rendering="crispEdges">' +
+      '<rect width="' + w + '" height="' + hh + '" fill="#fff"/><g fill="#000">' + rects.join("") + "</g></svg>";
+  }
+
   // ---------- Reports ----------
   // Period keys: "30" (last 30 days) | "month" | "year" | "all"
   function reportRange(key, today) {
@@ -864,6 +978,64 @@
     return { notify: p.notify === false ? false : true };
   }
 
+  // ---------- BR-ST-OUT (1.3): a sale asked for by another app ----------
+  // Invoices (or any app) calls __orosOpenAt("stock", { out: req }):
+  //   req = { ref?, src?: "invoices:<id>", d?: "YYYY-MM-DD",
+  //           t?: "out" | "ret", lines: [{ code | sku, q, p? }] }
+  //   q is a plain number of units (2.5), p the net unit price in cents.
+  // Stock opens a PREFILLED movement; nothing is written until Save.
+  // outRequest only reads and cleans: lines are matched to products by
+  // SKU or barcode (findByCode), the same product twice is summed, and
+  // what can't be matched comes back in miss. used = live movements that
+  // already carry this src (the invoice was taken out of stock before).
+  function outRequest(data, req, today) {
+    if (!req || typeof req !== "object" || !Array.isArray(req.lines)) return null;
+    var tt = req.t === "ret" ? "ret" : "out";
+    var src = typeof req.src === "string" && SRC_RE.test(req.src) ? req.src : "";
+    var d = isYmd(req.d) && dayNum(req.d) <= dayNum(addDays(today, 1)) ? req.d : today;
+    var lines = [], at = dict(), miss = [];
+    req.lines.slice(0, MAX_LINES).forEach(function (l) {
+      if (!l || typeof l !== "object") return;
+      var code = cleanText(typeof l.code === "string" && l.code ? l.code : l.sku, SKU_LEN, false);
+      var q = typeof l.q === "number" && isFinite(l.q) ? Math.abs(l.q) : 0;
+      if (!code) return;
+      var it = findByCode(data, code);
+      if (!it) { if (miss.indexOf(code) < 0 && miss.length < 50) miss.push(code); return; }
+      var step = Math.pow(10, 3 - unitDec(data, it.unit));
+      var qq = Math.round(q * 1000 / step) * step;
+      if (!(qq > 0) || qq > Q_MAX) return;
+      var p = typeof l.p === "number" && isFinite(l.p) && l.p >= 0 && l.p <= C_MAX ? Math.round(l.p) : null;
+      if (at[it.id] !== undefined) {
+        var o = lines[at[it.id]];
+        o.q = Math.min(Q_MAX, o.q + qq);
+        if (o.p !== undefined && p !== null && p !== o.p) delete o.p;    // two prices: let the person type it
+        return;
+      }
+      var line = { i: it.id, q: qq };
+      if (p !== null) line.p = p;
+      at[it.id] = lines.length;
+      lines.push(line);
+    });
+    return {
+      t: tt, d: d, src: src, ref: cleanText(req.ref, REF_LEN, false),
+      lines: lines, miss: miss, used: src ? srcUses(data, src) : 0
+    };
+  }
+  function srcUses(data, src) {
+    return live(data && data.moves).filter(function (x) { return x.src === src; }).length;
+  }
+  // Read-only list for another app's product picker: live products with
+  // their code (SKU, else barcode), prices, VAT and current quantity.
+  function catalog(data) {
+    return stockRows(data).filter(function (r) { return !r.item.arch; }).map(function (r) {
+      var it = r.item;
+      return {
+        id: it.id, code: it.sku || it.bc, name: it.name, unit: it.unit,
+        price: it.price, vat: it.vat, q: r.q / 1000
+      };
+    });
+  }
+
   var api = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, UNITS: UNITS, UNIT_IDS: UNIT_IDS, unitName: unitName,
     MOVE_TYPES: MOVE_TYPES, SIGN: SIGN, CURRENCIES: CURRENCIES, VAT_RATES: VAT_RATES, LIST_KEYS: LIST_KEYS,
@@ -882,7 +1054,10 @@
     csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs,
     PO_ST: PO_ST, normPo: normPo, poSrc: poSrc, receivedMap: receivedMap, poView: poView,
     poViews: poViews, onOrder: onOrder, poNext: poNext,
-    reportRange: reportRange, valueByCat: valueByCat, periodSummary: periodSummary, deadStock: deadStock
+    reportRange: reportRange, valueByCat: valueByCat, periodSummary: periodSummary, deadStock: deadStock,
+    PHOTO_DIR: PHOTO_DIR, PIC_RE: PIC_RE, normPic: normPic, picName: picName, picPath: picPath, picOf: picOf, picsInUse: picsInUse,
+    eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg,
+    outRequest: outRequest, srcUses: srcUses, catalog: catalog
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;

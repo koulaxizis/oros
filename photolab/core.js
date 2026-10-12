@@ -27,6 +27,12 @@
 //   fx     layer styles: { sh: drop shadow, gl: outer glow, ig: inner
 //          glow, st: stroke, co: colour overlay }, each { c, op, ... }
 //          (see FX_SPEC); only the styles that are on are kept.
+//   Doc extras (optional): gd = { x: [px], y: [px] } guides (vertical
+//          lines at x, horizontal at y); sels = [{ id, name, t }]
+//          saved selections (tiles like a mask: white, alpha = how
+//          much is selected; x, y = grid offset, moved with the
+//          canvas like a layer); bk = { app, key } where
+//          "Done" sends the picture back (the Atelier bridge).
 //   Index  { ver, projects: [{ id, m, name, w, h }], tombs: { id: ms } }
 //          = sync slice "photolab"; LWW per project + tombstones
 //          (R5, R17, R26).
@@ -289,8 +295,47 @@
       if (L.mk) seen[L.mk.id] = 1;
       layers.push(L);
     });
-    return { ver: DOC_VER, id: raw.id, m: raw.m, name: cleanName(raw.name) || "Untitled",
-             w: sz.w, h: sz.h, layers: layers };
+    var d = { ver: DOC_VER, id: raw.id, m: raw.m, name: cleanName(raw.name) || "Untitled",
+              w: sz.w, h: sz.h, layers: layers };
+    var gd = normGuides(raw.gd);
+    if (gd) d.gd = gd;
+    var sels = [];
+    (Array.isArray(raw.sels) ? raw.sels : []).forEach(function (v) {
+      if (sels.length >= MAX_SELS || !v || typeof v !== "object") return;
+      if (typeof v.id !== "string" || !LAYER_RE.test(v.id) || seen[v.id]) return;
+      seen[v.id] = 1;
+      sels.push({ id: v.id, name: cleanName(v.name) || "Selection", t: normTiles(v.t),
+                  x: clampInt(v.x, -DESKTOP_SIDE * 4, DESKTOP_SIDE * 4, 0), y: clampInt(v.y, -DESKTOP_SIDE * 4, DESKTOP_SIDE * 4, 0) });
+    });
+    if (sels.length) d.sels = sels;
+    var bk = normBack(raw.bk);
+    if (bk) d.bk = bk;
+    return d;
+  }
+
+  // ---------- Guides, saved selections, back link ----------
+  var MAX_GUIDES = 64, MAX_SELS = 20, GUIDE_MIN = -8192, GUIDE_MAX = 16384;
+  function guideList(a) {
+    var seen = {}, out = [];
+    (Array.isArray(a) ? a : []).forEach(function (v) {
+      if (typeof v !== "number" || !isFinite(v)) return;
+      v = Math.round(v);
+      if (v < GUIDE_MIN || v > GUIDE_MAX || seen[v] || out.length >= MAX_GUIDES) return;
+      seen[v] = 1; out.push(v);
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+  // → { x, y } or null when there are none.
+  function normGuides(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var g = { x: guideList(raw.x), y: guideList(raw.y) };
+    return g.x.length || g.y.length ? g : null;
+  }
+  var APP_RE = /^[a-z][a-z0-9-]{1,30}$/;
+  function normBack(raw) {
+    if (!raw || typeof raw !== "object" || typeof raw.app !== "string" || !APP_RE.test(raw.app)) return null;
+    if (typeof raw.key !== "string" || !raw.key || raw.key.length > 200 || /[\u0000-\u001f\u007f]/.test(raw.key)) return null;
+    return { app: raw.app, key: raw.key };
   }
 
   function newDoc(o, rnd) {
@@ -310,6 +355,7 @@
       if (L.k === "raster") out.push({ id: L.id, rec: L });
       if (L.mk) out.push({ id: L.mk.id, rec: L.mk });
     });
+    (doc && doc.sels || []).forEach(function (v) { out.push({ id: v.id, rec: v }); });
     return out;
   }
   function ownerOf(doc, id) {
@@ -418,6 +464,7 @@
     tileKey: tileKey, parseTileKey: parseTileKey,
     normLayer: normLayer, normDoc: normDoc, newDoc: newDoc, tilesOf: tilesOf,
     tileOwners: tileOwners, ownerOf: ownerOf, ADJ: ADJ, ADJ_IDS: ADJ_IDS, FX_SPEC: FX_SPEC, FX_IDS: FX_IDS,
+    normGuides: normGuides, normBack: normBack, MAX_SELS: MAX_SELS,
     normAdj: normAdj, normFx: normFx, normMask: normMask, fxPad: fxPad,
     findLayer: findLayer, moveLayer: moveLayer, blendOp: blendOp,
     entryOf: entryOf, emptyIndex: emptyIndex, normIndex: normIndex, mergeIndex: mergeIndex,

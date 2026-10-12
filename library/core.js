@@ -5,7 +5,8 @@
 //   2. Model: normalize books, positions, marks (bookmarks and
 //      highlights), the whole library state
 //   3. Merge (sync slice "library"): books and marks LWW per id,
-//      positions LWW per book, tombstones (R5, R17, R26, R27)
+//      positions LWW per book, tombstones, reading stats (max per
+//      device) (R5, R17, R26, R27)
 //   4. Locations ("loc") in a book: parse, compare, label
 //   5. Text: accent-free search with a map back to the source,
 //      re-anchoring a highlight by its quote, snippets
@@ -13,6 +14,12 @@
 //      the OPF package (metadata, manifest, spine, cover), the TOC
 //      (EPUB 3 nav document or EPUB 2 NCX), paths inside the ZIP
 //   7. Views: sorting / filtering the library, Markdown export
+//   8. Media Shelf link (read only)
+//   9. Read aloud: a section's text cut into parts to speak
+//  10. Reading stats: seconds per day and per book, per device (max merge)
+//  11. The Today line
+//  12. FB2 and CBZ turned into the files of a small EPUB
+//  13. Dictionary lookups (Wiktionary) and questions for the Assistant
 // Exposes window.LibCore (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -32,6 +39,7 @@
   var NOTE_LEN   = 4000;
   var NCOLORS    = 4;
   var MAX_BYTES  = 50 * 1024 * 1024;
+  var MAX_COMIC  = 200 * 1024 * 1024;     // a CBZ is mostly pictures
   var FORMATS    = ["epub", "pdf"];
   var BOOK_ID_RE = /^b[0-9a-f]{16}$/;
   var MARK_ID_RE = /^k[0-9a-z]{6,24}$/;
@@ -76,10 +84,23 @@
     var m = /\.([a-z0-9]{1,8})$/i.exec(String(name || ""));
     return m ? m[1].toLowerCase() : "";
   }
+  // The engine a file opens with: "pdf", or "epub" (EPUB, and FB2 and
+  // CBZ, which open as a book built in memory: see section 12).
   function formatOf(name) {
-    var e = extOf(name);
-    return e === "epub" ? "epub" : e === "pdf" ? "pdf" : null;
+    var k = kindOf(name);
+    return k === "pdf" ? "pdf" : k ? "epub" : null;
   }
+  // What the file is: "epub" | "pdf" | "fb2" (also .fb2.zip) | "cbz".
+  function kindOf(name) {
+    var n = String(name || "").toLowerCase();
+    if (/\.fb2(\.zip)?$/.test(n)) return "fb2";
+    var e = extOf(n);
+    return e === "epub" || e === "pdf" || e === "cbz" ? e : null;
+  }
+  // "EPUB", "PDF", "FB2", "CBZ" for a book record (kind is an extra
+  // field: older versions keep it and still see fmt "epub").
+  function maxBytesOf(name) { return kindOf(name) === "cbz" ? MAX_COMIC : MAX_BYTES; }
+  function fmtLabel(b) { return String(b && (b.kind || b.fmt) || "epub").toUpperCase(); }
   function titleFromName(name) {
     var n = String(name || "").split("/").pop().replace(/\.[a-z0-9]{1,8}$/i, "");
     n = n.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
@@ -121,7 +142,7 @@
   }
 
   var BOOK_KEYS = { id: 1, m: 1, h: 1, fmt: 1, title: 1, by: 1, lang: 1, year: 1, pages: 1,
-                    path: 1, size: 1, tags: 1, shelf: 1, added: 1, fin: 1 };
+                    path: 1, size: 1, tags: 1, shelf: 1, added: 1, fin: 1, kind: 1 };
   function normBook(b) {
     if (!b || typeof b !== "object" || !BOOK_ID_RE.test(b.id)) return null;
     var m = stamp(b.m);
@@ -141,6 +162,7 @@
     var shelf = str(b.shelf, 40); if (shelf && /^[A-Za-z0-9_-]+$/.test(shelf)) out.shelf = shelf;
     var added = stamp(b.added); if (added) out.added = added;
     if (typeof b.fin === "string" && YMD_RE.test(b.fin)) out.fin = b.fin;
+    if ((b.kind === "fb2" || b.kind === "cbz") && out.fmt === "epub") out.kind = b.kind;   // built in memory, opens as EPUB
     extras(b, out, BOOK_KEYS);
     return out;
   }
@@ -225,7 +247,10 @@
     Object.keys(pos).sort(cmpStr).forEach(function (id) { posOut[id] = pos[id]; });
     var tombOut = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { tombOut[id] = tombs[id]; });
-    return { ver: DATA_VER, books: books, pos: posOut, marks: marks, tombs: tombOut };
+    var out = { ver: DATA_VER, books: books, pos: posOut, marks: marks, tombs: tombOut };
+    var st = mergeStats(a && a.stats, b && b.stats);
+    if (!statsEmpty(st)) out.stats = st;            // left out while empty
+    return out;
   }
 
   // ---------- 4. Locations ----------
@@ -346,8 +371,9 @@
   }
   // Tolerant XML → { n (name), l (local name, lower case), a {attrs},
   // c [children: nodes or strings] }. Never throws; unknown or broken
-  // markup is skipped. Only for the small packaging files of an EPUB
-  // (container, OPF, NCX, nav), never for content shown to a person.
+  // markup is skipped. For the packaging files of an EPUB (container,
+  // OPF, NCX, nav) and FB2 books; what it reads is never shown as
+  // markup: fb2Book escapes it and sanitize.js cleans the result.
   function xmlParse(src) {
     src = String(src || "");
     if (src.length > 8 * 1024 * 1024) src = src.slice(0, 8 * 1024 * 1024);
@@ -587,14 +613,15 @@
     var p = state && state.pos && state.pos[id];
     return p ? p.pct : 0;
   }
-  // filter: all | epub | pdf | unread | reading | done
+  // filter: all | epub | pdf | fb2 | cbz | unread | reading | done
   function viewBooks(state, opts) {
     opts = opts || {};
     var q = fold(opts.q || "").trim();
     var list = liveBooks(state).filter(function (b) {
       var pct = progressOf(state, b.id);
       switch (opts.filter) {
-        case "epub": case "pdf": if (b.fmt !== opts.filter) return false; break;
+        case "epub": case "pdf": if (b.fmt !== opts.filter || b.kind) return false; break;
+        case "fb2": case "cbz": if (b.kind !== opts.filter) return false; break;
         case "unread": if (pct > 0 || b.fin) return false; break;
         case "reading": if (!(pct > 0) || b.fin) return false; break;
         case "done": if (!b.fin) return false; break;
@@ -651,6 +678,34 @@
     });
     return out.join("\n") + "\n";
   }
+  // The same as plain text for a Notes page (Notes takes plain text,
+  // max characters): author, then per section its label and the
+  // highlights as "• «quote»" with the note under them. What does not
+  // fit is counted in the last line. → { text, left }
+  function notesPlain(book, marks, lang, max) {
+    max = max || 20000;
+    var el = lang === "el";
+    var out = book.by ? [book.by] : [];
+    var list = sortMarks(marks.filter(function (k) { return k.b === book.id && (k.k === "hl" || k.n); }));
+    var lastSec = null, size = out.join("\n").length, left = 0;
+    list.forEach(function (k, i) {
+      if (left) { left++; return; }
+      var lines = [];
+      var sec = k.lbl || "";
+      if (sec && sec !== lastSec) lines.push("", sec);
+      lines.push("", k.k === "bm" ? "🔖 " + squash(k.q || "").trim().slice(0, 120)
+        : "• " + (el ? "«" : "“") + squash(k.q || "").trim() + (el ? "»" : "”"));
+      if (k.n) k.n.trim().split("\n").forEach(function (l) { lines.push("  " + l); });
+      var add = lines.join("\n").length + 1;
+      if (size + add > max - 120) { left = 1; return; }
+      out = out.concat(lines);
+      size += add;
+      if (sec) lastSec = sec;
+    });
+    if (left) out.push("", el ? "… και " + left + " ακόμη: η «Εξαγωγή σημειώσεων» της Βιβλιοθήκης τα έχει όλα."
+      : "… and " + left + " more: Library's “Export notes” has them all.");
+    return { text: out.join("\n").replace(/^\n+/, ""), left: left };
+  }
   function estPages(chars) { return Math.max(1, Math.round((chars || 0) / 1500)); }
   // EPUB page estimate from the chapters' file sizes (markup included:
   // about 2400 bytes per printed page of ~1500 characters).
@@ -679,20 +734,518 @@
     return { addBook: b };
   }
 
+  // ---------- 9. Read aloud ----------
+  // The text of a section cut into short parts to speak one by one:
+  // [{ a, b }] offsets in text. A part ends after . ! ? … (and ; in
+  // Greek, its question mark) followed by a space or a block edge, at
+  // a block edge (breaks: sorted offsets where a paragraph starts), or
+  // at the last space before max characters. Parts with no letter or
+  // digit are left out; spaces at both ends are trimmed.
+  var SPEAK_MAX = 300;
+  function speechParts(text, breaks, lang, max) {
+    text = String(text || "");
+    max = max || SPEAK_MAX;
+    var ends = lang === "el" ? /[.!?…;;]/ : /[.!?…]/;
+    var closers = /["'”’»)\]·]/;
+    var brk = {};
+    (breaks || []).forEach(function (o) { if (o > 0) brk[o] = 1; });
+    var out = [], a = 0, lastSpace = -1;
+    function push(x, y) {
+      while (x < y && /\s/.test(text.charAt(x))) x++;
+      while (y > x && /\s/.test(text.charAt(y - 1))) y--;
+      if (y > x && /[0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]/.test(text.slice(x, y))) out.push({ a: x, b: y });
+    }
+    for (var i = 0; i < text.length; i++) {
+      if (brk[i] && i > a) { push(a, i); a = i; lastSpace = -1; }
+      var c = text.charAt(i);
+      if (/\s/.test(c)) lastSpace = i;
+      if (ends.test(c)) {
+        var j = i + 1;
+        while (j < text.length && (ends.test(text.charAt(j)) || closers.test(text.charAt(j)))) j++;
+        if (j >= text.length || /\s/.test(text.charAt(j)) || brk[j]) {
+          push(a, j); a = j; lastSpace = -1; i = j - 1;
+          continue;
+        }
+      }
+      if (i - a >= max) {
+        var cut = lastSpace > a ? lastSpace : i;
+        push(a, cut); a = cut; lastSpace = -1;
+      }
+    }
+    if (a < text.length) push(a, text.length);
+    return out;
+  }
+  // What the voice is given: line-end hyphens joined, spaces squashed.
+  function speechText(s) {
+    return String(s || "").replace(/(\S)[-­]\n(?=[a-zß-ÿά-ώἀ-῿])/g, "$1")
+      .replace(/­/g, "").replace(/\s+/g, " ").trim();
+  }
+  // A book with no language: Greek when most of its letters are.
+  function guessLang(text) {
+    var s = String(text || "").slice(0, 4000);
+    var gr = (s.match(/[Ͱ-Ͽἀ-῿]/g) || []).length;
+    var lat = (s.match(/[A-Za-z]/g) || []).length;
+    return gr > lat ? "el" : lat ? "en" : "";
+  }
+
+  // ---------- 10. Reading stats ----------
+  // stats: { d: { "YYYY-MM-DD": { <device>: seconds } },
+  //          b: { <book id>: { <device>: seconds } } }
+  // Each device only adds to its own counter, so the merge takes the
+  // larger number per day (or book) and device. Only the latest
+  // STAT_DAYS days are kept.
+  var STAT_DAYS = 400;
+  var DEV_RE = /^[a-z0-9]{6,16}$/;
+  function normCounters(src, max) {
+    var out = {};
+    if (!src || typeof src !== "object") return out;
+    Object.keys(src).sort(cmpStr).forEach(function (dev) {
+      if (!DEV_RE.test(dev)) return;
+      var v = src[dev];
+      if (typeof v === "number" && isFinite(v) && v >= 1) out[dev] = Math.min(max, Math.floor(v));
+    });
+    return out;
+  }
+  function mergeStats(a, b) {
+    var d = {}, bk = {};
+    function into(target, src, keyRe, max) {
+      if (!src || typeof src !== "object") return;
+      Object.keys(src).forEach(function (k) {
+        if (!keyRe.test(k)) return;
+        var c = normCounters(src[k], max);
+        if (!Object.keys(c).length) return;
+        var t = target[k] || (target[k] = {});
+        Object.keys(c).forEach(function (dev) { if (!(t[dev] >= c[dev])) t[dev] = c[dev]; });
+      });
+    }
+    [a, b].forEach(function (s) {
+      if (!s || typeof s !== "object") return;
+      into(d, s.d, YMD_RE, 86400);
+      into(bk, s.b, BOOK_ID_RE, 1e9);
+    });
+    function sorted(o, keys) {
+      var r = {};
+      keys.forEach(function (k) {
+        var c = {};
+        Object.keys(o[k]).sort(cmpStr).forEach(function (dev) { c[dev] = o[k][dev]; });
+        r[k] = c;
+      });
+      return r;
+    }
+    var days = Object.keys(d).sort(cmpStr);
+    if (days.length > STAT_DAYS) days = days.slice(days.length - STAT_DAYS);
+    var books = Object.keys(bk).sort(cmpStr);
+    if (books.length > MAX_BOOKS) books = books.slice(0, MAX_BOOKS);
+    return { d: sorted(d, days), b: sorted(bk, books) };
+  }
+  function statsEmpty(s) { return !s || (!Object.keys(s.d || {}).length && !Object.keys(s.b || {}).length); }
+  function sumOf(c) { var n = 0; Object.keys(c || {}).forEach(function (k) { n += c[k]; }); return n; }
+  // Add seconds read today on this device (a new stats object).
+  function addReading(stats, day, dev, bookId, secs) {
+    var s = mergeStats(stats, null);
+    secs = Math.floor(secs);
+    if (!(secs >= 1) || !YMD_RE.test(day) || !DEV_RE.test(dev)) return s;
+    var c = s.d[day] || (s.d[day] = {});
+    c[dev] = Math.min(86400, (c[dev] || 0) + secs);
+    if (BOOK_ID_RE.test(bookId)) {
+      var cb = s.b[bookId] || (s.b[bookId] = {});
+      cb[dev] = Math.min(1e9, (cb[dev] || 0) + secs);
+    }
+    return mergeStats(s, null);
+  }
+  function ymdOf(d) {
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function dayBefore(ymd, n) {
+    var p = ymd.split("-");
+    return ymdOf(new Date(+p[0], +p[1] - 1, +p[2] - (n === undefined ? 1 : n), 12));
+  }
+  // Totals for the stats screen. A day counts towards the streak with
+  // at least a minute read; today not read yet does not break it.
+  function statsSummary(stats, today, nDays) {
+    var d = (stats && stats.d) || {};
+    var day = function (k) { return sumOf(d[k]); };
+    var out = { today: day(today), week: 0, total: 0, streak: 0, best: 0, days: [] };
+    for (var i = 0; i < 7; i++) out.week += day(dayBefore(today, i));
+    Object.keys(d).forEach(function (k) { out.total += sumOf(d[k]); });
+    var k = day(today) >= 60 ? today : dayBefore(today, 1);
+    while (day(k) >= 60) { out.streak++; k = dayBefore(k, 1); }
+    var run = 0, prev = null;
+    Object.keys(d).sort(cmpStr).forEach(function (x) {
+      if (day(x) < 60) return;
+      run = prev && dayBefore(x, 1) === prev ? run + 1 : 1;
+      prev = x;
+      if (run > out.best) out.best = run;
+    });
+    for (var j = (nDays || 14) - 1; j >= 0; j--) { var y = dayBefore(today, j); out.days.push({ d: y, s: day(y) }); }
+    return out;
+  }
+  function bookSeconds(stats, bookId) { return sumOf(stats && stats.b && stats.b[bookId]); }
+  // Time left in a book from the time read so far and the progress
+  // (per-mille); null until a twentieth of the book is read.
+  function timeLeft(secs, pct) {
+    if (!(secs > 0) || !(pct >= 50) || pct >= 1000) return null;
+    return Math.round(secs * (1000 - pct) / pct);
+  }
+
+  // ---------- 11. Today line (library/today.js) ----------
+  // The book you're reading (opened in the last 14 days, not finished)
+  // with its progress, today's reading time and the streak. → { book,
+  // title } or null.
+  var TODAY_WORDS = {
+    en: { reading: "Reading “{t}” · {p}%", today: "{m} min today", streak: "{n} days in a row" },
+    el: { reading: "Διαβάζεις «{t}» · {p}%", today: "{m} λεπ. σήμερα", streak: "{n} μέρες στη σειρά" }
+  };
+  function todayLine(state, today, nowMs, lang) {
+    var b = continueList(state, 1)[0];
+    if (!b) return null;
+    var p = state.pos[b.id];
+    if (!(nowMs - p.m < 14 * 86400000)) return null;
+    var W = TODAY_WORDS[lang === "el" ? "el" : "en"];
+    var title = b.title.length > 80 ? b.title.slice(0, 79) + "…" : b.title;
+    var parts = [W.reading.replace("{t}", title).replace("{p}", Math.floor(p.pct / 10))];
+    var sum = statsSummary(state.stats, today, 1);
+    if (sum.today >= 60) parts.push(W.today.replace("{m}", Math.round(sum.today / 60)));
+    if (sum.streak >= 2) parts.push(W.streak.replace("{n}", sum.streak));
+    return { book: b.id, title: parts.join(" · ") };
+  }
+
+  // ---------- 12. FB2 and CBZ as a book in memory ----------
+  // FB2 (FictionBook XML) and CBZ (a ZIP of pictures) are turned into
+  // the files of a small EPUB: container.xml, content.opf, nav.xhtml,
+  // one XHTML file per chapter (or per picture), a stylesheet and the
+  // pictures. The EPUB engine then reads them like any book, through
+  // the same sanitizer (sanitize.js): nothing here is trusted markup,
+  // every text and attribute is escaped on the way out.
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function xhtml(title, lang, body, bodyClass) {
+    return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"" +
+      (lang ? " xml:lang=\"" + esc(lang) + "\" lang=\"" + esc(lang) + "\"" : "") + "><head><title>" + esc(title || "") +
+      "</title><link rel=\"stylesheet\" type=\"text/css\" href=\"book.css\"/></head><body" +
+      (bodyClass ? " class=\"" + esc(bodyClass) + "\"" : "") + ">" + body + "</body></html>";
+  }
+  var CONTAINER = "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">" +
+    "<rootfiles><rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>";
+  // files: { name: string | Uint8Array }, chapters [{ file, title }],
+  // images [{ file, type, cover? }], meta { title, by, lang, year, desc }
+  function packBook(meta, chapters, images, css) {
+    var files = {};
+    files["META-INF/container.xml"] = CONTAINER;
+    var man = "<item id=\"nav\" href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>" +
+      "<item id=\"css\" href=\"book.css\" media-type=\"text/css\"/>";
+    var spine = "";
+    chapters.forEach(function (c, i) {
+      man += "<item id=\"c" + i + "\" href=\"" + esc(c.file) + "\" media-type=\"application/xhtml+xml\"/>";
+      spine += "<itemref idref=\"c" + i + "\"/>";
+    });
+    images.forEach(function (im, i) {
+      man += "<item id=\"i" + i + "\" href=\"" + esc(im.file) + "\" media-type=\"" + esc(im.type) + "\"" + (im.cover ? " properties=\"cover-image\"" : "") + "/>";
+    });
+    var md = "<dc:title>" + esc(meta.title || "") + "</dc:title>" +
+      (meta.by ? "<dc:creator>" + esc(meta.by) + "</dc:creator>" : "") +
+      (meta.lang ? "<dc:language>" + esc(meta.lang) + "</dc:language>" : "") +
+      (meta.year ? "<dc:date>" + esc(meta.year) + "</dc:date>" : "") +
+      (meta.desc ? "<dc:description>" + esc(meta.desc) + "</dc:description>" : "");
+    files["OEBPS/content.opf"] = "<?xml version=\"1.0\" encoding=\"utf-8\"?><package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\">" +
+      "<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">" + md + "</metadata><manifest>" + man + "</manifest><spine>" + spine + "</spine></package>";
+    var nav = "";
+    chapters.forEach(function (c) { if (c.title) nav += "<li><a href=\"" + esc(c.file) + "\">" + esc(c.title) + "</a></li>"; });
+    files["OEBPS/nav.xhtml"] = xhtml(meta.title, meta.lang, "<nav epub:type=\"toc\"><ol>" + nav + "</ol></nav>");
+    files["OEBPS/book.css"] = css || "";
+    chapters.forEach(function (c) { files["OEBPS/" + c.file] = c.html; });
+    images.forEach(function (im) { files["OEBPS/" + im.file] = im.data; });
+    return files;
+  }
+
+  // FB2 → { meta, files } or null. src is the decoded XML text (see
+  // fb2Encoding); pictures come base64 in <binary> and are handed back
+  // as { file, type, b64 } for the caller to decode (data: never used).
+  var FB2_CSS = ".epigraph{margin:1em 0 1em 25%;font-style:italic}.author{text-align:right;font-style:italic}" +
+    ".poem{margin:1em 0 1em 2em}.stanza{margin-bottom:1em}.stanza p{margin:0;text-indent:0}" +
+    ".subtitle{text-align:center;font-weight:bold}.fb2-img{text-align:center;text-indent:0}" +
+    "section.note{margin-bottom:1em}h1,h2,h3,h4{text-align:center}";
+  var IMG_TYPES = { "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" };
+  function fb2Encoding(head) {
+    var m = /<\?xml[^>]*encoding\s*=\s*["']([A-Za-z0-9_.:-]{2,40})["']/.exec(String(head || ""));
+    return m ? m[1].toLowerCase() : "utf-8";
+  }
+  function fb2Book(src) {
+    src = String(src || "");
+    var bins = [], nb = 0;
+    // pictures out first: they are most of a big file
+    src = src.replace(/<binary\b([^>]*)>([\s\S]*?)<\/binary\s*>/gi, function (all, attrs, data) {
+      var id = /\bid\s*=\s*["']([^"']{1,200})["']/.exec(attrs), ct = /content-type\s*=\s*["']([^"']{1,60})["']/i.exec(attrs);
+      var ext = ct && IMG_TYPES[ct[1].toLowerCase()];
+      if (id && ext && nb < 2000) bins.push({ id: id[1], file: "img/p" + (nb++) + "." + ext, type: ct[1].toLowerCase() === "image/jpg" ? "image/jpeg" : ct[1].toLowerCase(), b64: data.replace(/\s+/g, "") });
+      return "";
+    });
+    var doc = xmlParse(src);
+    var fb = find(doc, "fictionbook");
+    if (!fb) return null;
+    var desc = find(fb, "description") || { c: [] };
+    var ti = find(desc, "title-info") || { c: [] };
+    function names(n) {
+      return [attr(n, "x") || "", textOf(find(n, "first-name")), textOf(find(n, "middle-name")), textOf(find(n, "last-name"))]
+        .map(function (x) { return cleanText(x, 60); }).filter(Boolean).join(" ") || cleanText(textOf(find(n, "nickname")), 60);
+    }
+    var meta = {
+      title: cleanText(textOf(find(ti, "book-title")), TITLE_LEN),
+      by: kids(ti, "author").map(names).filter(Boolean).join(", ").slice(0, BY_LEN),
+      lang: cleanText(textOf(find(ti, "lang")), 20),
+      year: "",
+      desc: cleanText(textOf(find(ti, "annotation")), 2000)
+    };
+    if (meta.lang && !/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(meta.lang)) meta.lang = "";
+    var ym = /(\d{4})/.exec(textOf(find(ti, "date")) + " " + attr(find(ti, "date"), "value"));
+    if (ym) meta.year = ym[1];
+    var binById = {};
+    bins.forEach(function (b) { binById[b.id] = b; });
+    function imgFile(n) {
+      var h = attr(n, "href");
+      return h && h.charAt(0) === "#" && binById[h.slice(1)] ? binById[h.slice(1)].file : "";
+    }
+    var cov = find(ti, "coverpage"), covImg = cov ? find(cov, "image") : null;
+    var coverFile = covImg ? imgFile(covImg) : "";
+    bins.forEach(function (b) { if (b.file === coverFile) b.cover = true; });
+
+    var bodies = kids(fb, "body");
+    var main = bodies.filter(function (b) { return !/^(notes|comments|footnotes)$/i.test(attr(b, "name")); })[0] || bodies[0];
+    var notes = bodies.filter(function (b) { return b !== main; });
+    // ids → the chapter file that holds them (links between chapters)
+    var where = {}, chapters = [];
+    function inline(n, file) {
+      if (typeof n === "string") return esc(n);
+      var inner = function () { return n.c.map(function (c) { return inline(c, file); }).join(""); };
+      switch (n.l) {
+        case "emphasis": return "<em>" + inner() + "</em>";
+        case "strong": return "<strong>" + inner() + "</strong>";
+        case "strikethrough": return "<s>" + inner() + "</s>";
+        case "sub": case "sup": case "code": return "<" + n.l + ">" + inner() + "</" + n.l + ">";
+        case "style": return "<span>" + inner() + "</span>";
+        case "image": var f = imgFile(n); return f ? "<img src=\"" + esc(f) + "\" alt=\"\"/>" : "";
+        case "a":
+          var h = attr(n, "href");
+          if (!h) return inner();
+          if (h.charAt(0) === "#") {
+            var tgt = h.slice(1), note = attr(n, "type") === "note";
+            return "<a href=\"" + esc((where[tgt] || "notes.xhtml") + "#" + tgt) + "\"" + (note ? " epub:type=\"noteref\"" : "") + ">" + inner() + "</a>";
+          }
+          return /^https?:\/\//i.test(h) ? "<a href=\"" + esc(h) + "\">" + inner() + "</a>" : inner();
+        default: return inner();
+      }
+    }
+    function idAttr(n) { var id = attr(n, "id"); return id ? " id=\"" + esc(id) + "\"" : ""; }
+    function block(n, depth, file) {
+      if (typeof n === "string") return n.trim() ? "<p>" + esc(n) + "</p>" : "";
+      var all = function (d) { return n.c.map(function (c) { return block(c, d, file); }).join(""); };
+      switch (n.l) {
+        case "section": return "<section" + idAttr(n) + ">" + all(depth + 1) + "</section>";
+        case "title":
+          var hl = "h" + Math.min(4, depth + 1);
+          return "<" + hl + idAttr(n) + ">" + kids(n, "p").map(function (p) { return inline(p, file); }).join("<br/>") + "</" + hl + ">";
+        case "subtitle": return "<p class=\"subtitle\"" + idAttr(n) + ">" + inline(n, file) + "</p>";
+        case "p": return "<p" + idAttr(n) + ">" + inline(n, file) + "</p>";
+        case "v": return "<p" + idAttr(n) + ">" + inline(n, file) + "</p>";
+        case "empty-line": return "<br/>";
+        case "epigraph": return "<blockquote class=\"epigraph\"" + idAttr(n) + ">" + all(depth) + "</blockquote>";
+        case "cite": return "<blockquote" + idAttr(n) + ">" + all(depth) + "</blockquote>";
+        case "text-author": return "<p class=\"author\">" + inline(n, file) + "</p>";
+        case "poem": return "<div class=\"poem\"" + idAttr(n) + ">" + all(depth) + "</div>";
+        case "stanza": return "<div class=\"stanza\">" + all(depth) + "</div>";
+        case "date": return "<p class=\"author\">" + inline(n, file) + "</p>";
+        case "image": var f = imgFile(n); return f ? "<p class=\"fb2-img\"" + idAttr(n) + "><img src=\"" + esc(f) + "\" alt=\"\"/></p>" : "";
+        case "table": case "tr": case "td": case "th":
+          return "<" + n.l + ">" + (n.l === "td" || n.l === "th" ? inline(n, file) : all(depth)) + "</" + n.l + ">";
+        case "annotation": return "<div>" + all(depth) + "</div>";
+        default: return all(depth);
+      }
+    }
+    // the chapters: what comes before the first section, then one
+    // file per top-level section
+    var head = [], secs = [];
+    (main ? main.c : []).forEach(function (c) { if (typeof c === "object" && c.l === "section") secs.push(c); else if (typeof c === "object") head.push(c); });
+    var plan = [];
+    if (head.length) plan.push({ nodes: head, title: "" });
+    secs.forEach(function (sct) { plan.push({ nodes: [sct], title: cleanText(textOf(find(sct, "title")), 200) }); });
+    if (!plan.length) plan.push({ nodes: [], title: "" });
+    plan.forEach(function (pl, i) { pl.file = "c" + i + ".xhtml"; });
+    var notesFile = "notes.xhtml";
+    // first pass: where each id lives
+    plan.forEach(function (pl) {
+      pl.nodes.forEach(function (n) { (function walk(x) { if (typeof x !== "object") return; var id = attr(x, "id"); if (id && !where[id]) where[id] = pl.file; x.c.forEach(walk); })(n); });
+    });
+    notes.forEach(function (b) { (function walk(x) { if (typeof x !== "object") return; var id = attr(x, "id"); if (id && !where[id]) where[id] = notesFile; x.c.forEach(walk); })(b); });
+    plan.forEach(function (pl, i) {
+      var body = pl.nodes.map(function (n) { return block(n, n.l === "section" ? 0 : 0, pl.file); }).join("");
+      if (i === 0 && !pl.title && !body.replace(/<[^>]*>/g, "").trim() && !/<img/.test(body)) body = "<h1>" + esc(meta.title || "") + "</h1>";
+      chapters.push({ file: pl.file, title: pl.title || (i === 0 ? meta.title : ""), html: xhtml(pl.title || meta.title, meta.lang, body) });
+    });
+    if (notes.length) {
+      var nbody = notes.map(function (b) {
+        return b.c.map(function (c) {
+          if (typeof c !== "object") return "";
+          if (c.l === "section") return "<section class=\"note\" epub:type=\"footnote\"" + idAttr(c) + ">" + c.c.map(function (x) { return block(x, 2, notesFile); }).join("\n") + "</section>";
+          return block(c, 1, notesFile);
+        }).join("");
+      }).join("");
+      var nt = cleanText(textOf(find(notes[0], "title")), 200) || "Notes";
+      chapters.push({ file: notesFile, title: nt, html: xhtml(nt, meta.lang, nbody) });
+    }
+    return { meta: meta, chapters: chapters, images: bins, css: FB2_CSS };
+  }
+
+  // CBZ: the pictures in natural order ("page 2" before "page 10"),
+  // ComicInfo.xml for the details when there is one.
+  function natCmp(a, b) {
+    var x = String(a).toLowerCase().split(/(\d+)/), y = String(b).toLowerCase().split(/(\d+)/);
+    for (var i = 0; i < Math.min(x.length, y.length); i++) {
+      if (x[i] === y[i]) continue;
+      if (i % 2) return (+x[i] - +y[i]) || (x[i].length - y[i].length);
+      return x[i] < y[i] ? -1 : 1;
+    }
+    return x.length - y.length;
+  }
+  var CBZ_IMG = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", avif: "image/avif", bmp: "image/bmp" };
+  function cbzPages(names) {
+    return (names || []).filter(function (n) {
+      return CBZ_IMG[extOf(n)] && !/(^|\/)(__macosx|\.)/i.test(n);
+    }).sort(natCmp);
+  }
+  function comicInfo(xml) {
+    var d = xmlParse(xml), ci = find(d, "comicinfo");
+    if (!ci) return {};
+    function f(k) { return cleanText(textOf(find(ci, k)), 200); }
+    var title = f("title"), series = f("series"), num = f("number");
+    var t = series ? series + (num ? " #" + num : "") + (title && title !== series ? ": " + title : "") : title;
+    var by = [f("writer"), f("penciller")].filter(Boolean).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(", ");
+    var lang = f("languageiso");
+    return { title: t.slice(0, TITLE_LEN), by: by.slice(0, BY_LEN), year: /^\d{4}$/.test(f("year")) ? f("year") : "",
+             lang: /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(lang) ? lang : "", desc: f("summary") };
+  }
+  var CBZ_CSS = ".comic{margin:0;text-align:center;text-indent:0}.comic img{display:block;margin:0 auto}";
+  // → { meta, chapters, images } with pictures { file, type, src } (src
+  // = the name inside the CBZ, read by the caller).
+  function cbzBook(names, info, fallbackTitle) {
+    var pages = cbzPages(names);
+    if (!pages.length) return null;
+    var meta = { title: (info && info.title) || fallbackTitle || "", by: info && info.by || "", lang: info && info.lang || "",
+                 year: info && info.year || "", desc: info && info.desc || "" };
+    var images = pages.map(function (n, i) {
+      return { file: "img/p" + i + "." + extOf(n), type: CBZ_IMG[extOf(n)], src: n, cover: i === 0 };
+    });
+    var chapters = images.map(function (im, i) {
+      return { file: "p" + i + ".xhtml", title: "", html: xhtml(meta.title, meta.lang, "<p class=\"comic\"><img src=\"" + esc(im.file) + "\" alt=\"\"/></p>", "comic") };
+    });
+    return { meta: meta, chapters: chapters, images: images, css: CBZ_CSS };
+  }
+
+  // ---------- 13. Dictionary (Wiktionary, opt-in) and the Assistant ----------
+  // A selection that can be looked up: one to three words, without the
+  // punctuation around them. → the word(s) or null.
+  function dictWord(sel) {
+    var w = squash(sel).trim().replace(/^[^0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]+|[^0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]+$/g, "");
+    if (!w || w.length > 60 || w.split(" ").length > 3) return null;
+    return w;
+  }
+  // The sentence(s) a selection [a, b) sits in (core.speechParts), at
+  // most max characters: the context of a word for the Assistant.
+  function sentenceAround(text, breaks, a, b, lang, max) {
+    max = max || 600;
+    var parts = speechParts(text, breaks, lang), out = [];
+    parts.forEach(function (p) { if (p.b > a && p.a < Math.max(b, a + 1)) out.push(text.slice(p.a, p.b)); });
+    var s = squash(out.join(" ")).trim();
+    return s.length > max ? s.slice(0, max - 1) + "\u2026" : s;
+  }
+  function dictUrl(word) {
+    return "https://en.wiktionary.org/api/rest_v1/page/definition/" + encodeURIComponent(word.replace(/ /g, "_")) + "?redirect=true";
+  }
+  function dictPage(word, lang) {
+    var host = lang === "el" ? "el" : "en";
+    return "https://" + host + ".wiktionary.org/wiki/" + encodeURIComponent(word.replace(/ /g, "_"));
+  }
+  // Wiktionary's definitions come as HTML: only their text is kept.
+  function htmlText(h) {
+    return squash(decodeEnt(String(h || "").replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ").replace(/<[^>]*>/g, ""))).trim();
+  }
+  // The REST answer { "<lang code>": [{ partOfSpeech, language,
+  // definitions: [{ definition, examples }] }] } → [{ code, name,
+  // items: [{ pos, defs: [{ d, ex }] }] }], the book's language first,
+  // then English, then the rest; at most 3 languages, 8 meanings each.
+  function dictParse(json, lang) {
+    if (!json || typeof json !== "object") return [];
+    var base = String(lang || "").toLowerCase().split("-")[0];
+    var codes = Object.keys(json).filter(function (k) { return Array.isArray(json[k]); });
+    codes.sort(function (a, b) {
+      var ra = a === base ? 0 : a === "en" ? 1 : 2, rb = b === base ? 0 : b === "en" ? 1 : 2;
+      return ra - rb || cmpStr(a, b);
+    });
+    var out = [];
+    codes.slice(0, 3).forEach(function (code) {
+      var items = [], name = "", n = 0;
+      json[code].forEach(function (e) {
+        if (!e || typeof e !== "object" || n >= 8) return;
+        if (!name && typeof e.language === "string") name = cleanText(e.language, 40);
+        var defs = [];
+        (Array.isArray(e.definitions) ? e.definitions : []).forEach(function (d) {
+          if (!d || n >= 8) return;
+          var txt = htmlText(d.definition).slice(0, 400);
+          if (!txt) return;
+          var ex = Array.isArray(d.examples) && d.examples.length ? htmlText(d.examples[0]).slice(0, 300) : "";
+          defs.push(ex ? { d: txt, ex: ex } : { d: txt });
+          n++;
+        });
+        if (defs.length) items.push({ pos: cleanText(e.partOfSpeech, 40), defs: defs });
+      });
+      if (items.length) out.push({ code: code, name: name || code, items: items });
+    });
+    return out;
+  }
+  // The question handed to the Assistant (__orosOpenAt("assistant",
+  // { ask })), at most 2000 characters; nothing is sent until you do.
+  var ASK_WORDS = {
+    en: { passage: "In the book “{t}”{by}, explain this passage to me: what it means and its context. Don't reveal anything from later in the book.",
+          word: "In the book “{t}”{by}, what does “{w}” mean in this sentence?",
+          book: "Tell me about the book “{t}”{by}{y}: what it is about, its themes and its background. I've read {p}% of it, so no spoilers beyond that." },
+    el: { passage: "Στο βιβλίο «{t}»{by}, εξήγησέ μου αυτό το απόσπασμα: τι σημαίνει και ποιο είναι το πλαίσιό του. Μη μου αποκαλύψεις τίποτα από τη συνέχεια του βιβλίου.",
+          word: "Στο βιβλίο «{t}»{by}, τι σημαίνει «{w}» σε αυτή την πρόταση;",
+          book: "Πες μου για το βιβλίο «{t}»{by}: τι πραγματεύεται, τα θέματά του και το πλαίσιό του. Έχω διαβάσει το {p}%, οπότε χωρίς αποκαλύψεις πέρα από αυτό." }
+  };
+  function askText(kind, book, opts, lang) {
+    opts = opts || {};
+    var el = lang === "el", W = ASK_WORDS[el ? "el" : "en"];
+    // Greek names can't be put in the genitive here: "(author, year)"
+    var by = el ? (book.by || book.year ? " (" + [book.by, kind === "book" ? book.year : ""].filter(Boolean).join(", ") + ")" : "")
+      : book.by ? " by " + book.by : "";
+    var y = !el && book.year ? " (" + book.year + ")" : "";
+    var head = W[kind].replace("{t}", book.title).replace("{by}", by).replace("{y}", y)
+      .replace("{p}", Math.floor((opts.pct || 0) / 10)).replace("{w}", opts.word || "");
+    var quote = squash(opts.quote || "").trim();
+    if (!quote) return head.slice(0, 2000);
+    var room = 2000 - head.length - 4;
+    if (quote.length > room) quote = quote.slice(0, Math.max(0, room - 1)) + "…";
+    return head + "\n\n" + (el ? "«" : "“") + quote + (el ? "»" : "”");
+  }
+
   var api = {
     DATA_VER: DATA_VER, MAX_BOOKS: MAX_BOOKS, MAX_MARKS: MAX_MARKS, MAX_BYTES: MAX_BYTES, NCOLORS: NCOLORS,
     TITLE_LEN: TITLE_LEN, BY_LEN: BY_LEN, NOTE_LEN: NOTE_LEN, QUOTE_LEN: QUOTE_LEN, CTX_LEN: CTX_LEN,
     BOOK_ID_RE: BOOK_ID_RE, MARK_ID_RE: MARK_ID_RE, LOC_RE: LOC_RE,
     str: str, canon: canon, cmpStr: cmpStr, bookIdOf: bookIdOf, newMarkId: newMarkId, extOf: extOf,
-    formatOf: formatOf, titleFromName: titleFromName, fold: fold, normTags: normTags, parseTags: parseTags,
+    formatOf: formatOf, kindOf: kindOf, fmtLabel: fmtLabel, maxBytesOf: maxBytesOf, MAX_COMIC: MAX_COMIC, titleFromName: titleFromName, fold: fold, normTags: normTags, parseTags: parseTags,
     normBook: normBook, normPos: normPos, normMark: normMark, emptyState: emptyState, mergeLibrary: mergeLibrary,
     parseLoc: parseLoc, makeLoc: makeLoc, cmpLoc: cmpLoc, sortMarks: sortMarks,
     foldMap: foldMap, findAll: findAll, snippet: snippet, squash: squash, reanchor: reanchor, contextOf: contextOf,
     decodeEnt: decodeEnt, xmlParse: xmlParse, resolvePath: resolvePath, parseContainer: parseContainer,
     parseOpf: parseOpf, parseNav: parseNav, parseNcx: parseNcx, cleanText: cleanText,
-    viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown,
+    viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown, notesPlain: notesPlain,
     estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
-    COLOR_NAMES: COLOR_NAMES
+    COLOR_NAMES: COLOR_NAMES,
+    speechParts: speechParts, speechText: speechText, guessLang: guessLang,
+    mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
+    bookSeconds: bookSeconds, todayLine: todayLine,
+    packBook: packBook, dictWord: dictWord, sentenceAround: sentenceAround, dictUrl: dictUrl, dictPage: dictPage, dictParse: dictParse, htmlText: htmlText, askText: askText, fb2Book: fb2Book, fb2Encoding: fb2Encoding, cbzBook: cbzBook, cbzPages: cbzPages, comicInfo: comicInfo, natCmp: natCmp, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LibCore = api;

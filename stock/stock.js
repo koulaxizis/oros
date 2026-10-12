@@ -1,8 +1,8 @@
 // ============================================================
-// orOS Stock — App logic (v1.0.0)
+// orOS Stock — App logic (v1.3.0)
 // Business inventory (not the home Storage app):
 //   - products with SKU, barcode, category, unit, minimum, reorder
-//     quantity, supplier, purchase / sale price, VAT, location
+//     quantity, supplier, purchase / sale price, VAT, location, photo
 //   - a ledger of movements: receive, sell, customer return, return
 //     to supplier, loss, stock count, correction; several lines per
 //     movement, a reference (invoice / receipt no.), void instead of
@@ -11,13 +11,18 @@
 //     never a stored number: two devices selling at once never lose
 //     a sale through sync
 //   - Reorder: items at or below their minimum, by supplier, with a
-//     suggested quantity, "Copy list" and "Receive this order"
+//     suggested quantity; purchase orders received in parts (1.1)
+//   - Reports: value, period totals, best sellers, dead stock (1.1)
+//   - counter (quick sale), barcode labels on A4 (1.2)
 //   - suppliers (also from Contacts), categories, own units
 //   - a USB / Bluetooth barcode scanner works as a keyboard in every
-//     search and line field (code + Enter)
+//     search and line field (code + Enter); the phone camera too
+//     where the browser has BarcodeDetector (1.3)
 //   - CSV import of products (own export, WooCommerce export, any
 //     sheet with known column names), CSV export of products and
 //     movements, JSON export / import (a merge)
+//   - bridges (all prefills): To-Do, Mail, Budget, Quote, Spreadsheet,
+//     Today (today.js); receiver BR-ST-OUT for Invoices (1.3)
 //   - the low-stock notice comes from the shell (stockCheckTick, which
 //     uses core.js too)
 // Data:
@@ -30,10 +35,12 @@
 //   3. Mutations
 //   4. Products view + product sheet
 //   5. Movements view + movement sheet
-//   6. Reorder view
+//   6. Reorder view + purchase orders + bridges
+//      6b. Reports  6c. Counter  6d. Labels  6e. Photos
 //   7. Suppliers view
 //   8. Editors: product, movement, supplier, categories, units
 //   9. Settings, CSV / JSON
+//      9b. Camera scanning
 //  10. Dialogs + toasts
 //  11. Keyboard (Contract B) + deep link
 //  12. Sync slice + palette
@@ -173,6 +180,25 @@
       "rep.h.in": "Received", "rep.h.out": "Sold", "rep.h.loss": "Lost", "rep.h.sales": "Sales",
       "rep.cut": "Only the first {n} rows went to the sheet.",
       "add.po": "Purchase order", "add.quote": "Quote from products",
+      "ctr.title": "Counter", "ctr.ph": "Scan or search a product", "ctr.empty": "Scan a product to start a sale.",
+      "ctr.done": "Complete sale", "ctr.clear": "Clear", "ctr.clearQ": "Clear this sale?", "ctr.sold": "Sale saved: {t}",
+      "ctr.unknown": "No product with the code “{c}”.", "ctr.less": "One less", "ctr.more": "One more", "ctr.noPrice": "no price",
+      "ctr.ref": "Counter",
+      "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app",
+      "out.used1": "This document was already taken out of stock once.",
+      "out.used": "This document was already taken out of stock {n} times.",
+      "out.miss": "Not found in Stock, left out ({n}):",
+      "cam.scan": "Scan with the camera", "cam.title": "Point the camera at a barcode", "cam.close": "Done",
+      "cam.wait": "Starting the camera…", "cam.denied": "The camera could not start. Check that orOS may use it.",
+      "cam.found": "Added: {n}", "cam.unknown": "No product with code {c}",
+      "lbl.title": "Barcode labels", "lbl.copies": "Copies", "lbl.price": "Price on the label", "lbl.print": "Print",
+      "lbl.sheet": "A4 sheet, 3 × 8 labels (70 × 37 mm)", "lbl.skip": "No barcode or SKU: {n}",
+      "lbl.withPrice": "Show the price", "lbl.max": "At most {n} labels at a time.", "lbl.none": "Nothing to print: add products with a barcode or SKU.",
+      "lbl.hint": "Products with a 13-digit barcode get an EAN-13; the rest get a Code 128 of their barcode or SKU.",
+      "ph.add": "Add photo", "ph.change": "Change photo", "ph.remove": "Remove photo", "ph.missing": "Photo not on this device yet",
+      "ph.bad": "That picture can't be read.", "ph.noDisk": "The orOS disk isn't available here.",
+      "ph.where": "Kept in Files, folder Stock/Photos.",
+      "add.counter": "Counter (quick sale)", "add.labels": "Barcode labels",
       "u.custom": "unit"
     },
     el: {
@@ -288,6 +314,25 @@
       "rep.h.in": "Παραλήφθηκαν", "rep.h.out": "Πουλήθηκαν", "rep.h.loss": "Χάθηκαν", "rep.h.sales": "Πωλήσεις",
       "rep.cut": "Στο φύλλο πήγαν μόνο οι πρώτες {n} γραμμές.",
       "add.po": "Εντολή αγοράς", "add.quote": "Προσφορά από προϊόντα",
+      "ctr.title": "Ταμείο", "ctr.ph": "Σάρωσε ή ψάξε προϊόν", "ctr.empty": "Σάρωσε ένα προϊόν για να ξεκινήσει η πώληση.",
+      "ctr.done": "Ολοκλήρωση πώλησης", "ctr.clear": "Καθαρισμός", "ctr.clearQ": "Να καθαρίσει αυτή η πώληση;", "ctr.sold": "Η πώληση καταχωρήθηκε: {t}",
+      "ctr.unknown": "Δεν υπάρχει προϊόν με κωδικό «{c}».", "ctr.less": "Ένα λιγότερο", "ctr.more": "Ένα ακόμα", "ctr.noPrice": "χωρίς τιμή",
+      "ctr.ref": "Ταμείο",
+      "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή",
+      "out.used1": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα μία φορά.",
+      "out.used": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα {n} φορές.",
+      "out.miss": "Δεν βρέθηκαν στο Απόθεμα και παραλείφθηκαν ({n}):",
+      "cam.scan": "Σάρωση με την κάμερα", "cam.title": "Στόχευσε ένα barcode με την κάμερα", "cam.close": "Τέλος",
+      "cam.wait": "Ξεκινάει η κάμερα…", "cam.denied": "Η κάμερα δεν ξεκίνησε. Έλεγξε ότι το orOS έχει άδεια να τη χρησιμοποιεί.",
+      "cam.found": "Προστέθηκε: {n}", "cam.unknown": "Κανένα προϊόν με κωδικό {c}",
+      "lbl.title": "Ετικέτες barcode", "lbl.copies": "Αντίτυπα", "lbl.price": "Τιμή στην ετικέτα", "lbl.print": "Εκτύπωση",
+      "lbl.sheet": "Σελίδα A4, 3 × 8 ετικέτες (70 × 37 mm)", "lbl.skip": "Χωρίς barcode ή SKU: {n}",
+      "lbl.withPrice": "Να φαίνεται η τιμή", "lbl.max": "Το πολύ {n} ετικέτες κάθε φορά.", "lbl.none": "Δεν υπάρχει κάτι για εκτύπωση: πρόσθεσε προϊόντα με barcode ή SKU.",
+      "lbl.hint": "Τα προϊόντα με barcode 13 ψηφίων παίρνουν EAN-13· τα υπόλοιπα Code 128 με το barcode ή το SKU τους.",
+      "ph.add": "Προσθήκη φωτογραφίας", "ph.change": "Αλλαγή φωτογραφίας", "ph.remove": "Αφαίρεση φωτογραφίας", "ph.missing": "Η φωτογραφία δεν έχει έρθει ακόμα σε αυτή τη συσκευή",
+      "ph.bad": "Αυτή η εικόνα δεν διαβάζεται.", "ph.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
+      "ph.where": "Φυλάσσεται στα Αρχεία, φάκελος Stock/Photos.",
+      "add.counter": "Ταμείο (γρήγορη πώληση)", "add.labels": "Ετικέτες barcode",
       "u.custom": "μονάδα"
     }
   };
@@ -667,6 +712,8 @@
     big.appendChild(el("div", "sheet-qv", fmtQ(r.q, it)));
     head.appendChild(big);
     dlg.appendChild(head);
+    var ph = photoBox(it, dlg);
+    if (ph) dlg.appendChild(ph);
     if (it.arch) dlg.appendChild(el("p", "hint warn", t("badge.arch")));
 
     var acts = el("div", "quick");
@@ -732,6 +779,7 @@
       poEditor(null, { sup: it.sup, lines: [{ i: it.id, q: C.suggestQty(r, decOf(it)), c: it.cost || undefined }] });
     }));
     if (quoteReady() && !it.arch) foot.appendChild(button(t("br.quote"), "", function () { dlg.close(); quoteDialog([{ i: it.id, q: Math.pow(10, 3 - decOf(it)) }]); }));
+    if (C.barcodeFor(it)) foot.appendChild(button(t("add.labels"), "", function () { dlg.close(); labelsDialog([it.id]); }));
     if (labelBridge()) foot.appendChild(button(t("sheet.label"), "", function () {
       labelBridge()("labels", { text: (it.name + (it.sku ? " · " + it.sku : "")).slice(0, 120) });
     }));
@@ -746,7 +794,12 @@
       showToast(cur.arch ? t("toast.archived") : t("toast.unarchived"));
     }));
     if (!C.hasMoves(data, it.id)) {
-      foot.appendChild(button(t("sheet.delete"), "danger", function () { dlg.close(); removeRow("items", it); }));
+      foot.appendChild(button(t("sheet.delete"), "danger", function () {
+        var pic = C.picOf(data, it.id);
+        dlg.close();
+        removeRow("items", it);
+        if (pic) dropPicLater(pic);
+      }));
     }
     dlg.appendChild(foot);
     if (C.hasMoves(data, it.id)) dlg.appendChild(el("p", "hint", t("sheet.delHint")));
@@ -1207,7 +1260,7 @@
     finder.spellcheck = false;
     finder.setAttribute("enterkeyhint", "done");
     finder.setAttribute("aria-label", t("mv.add"));
-    dlg.appendChild(finder);
+    dlg.appendChild(withCam(finder, true));
     var hits = el("div", "hits");
     dlg.appendChild(hits);
     var box = el("ul", "lines");
@@ -1231,7 +1284,7 @@
       for (var i = 0; i < lines.length; i++) {
         if (lines[i].i === itemId) {
           var now = readQty(lines[i].qIn, it);
-          lines[i].qIn.value = qtyStr((now === null ? 0 : now) + (q || Math.pow(10, 3 - decOf(it))), it);
+          lines[i].qIn.value = qtyStr((now === null ? 0 : now) + (q || (o.whole ? 1000 : Math.pow(10, 3 - decOf(it)))), it);
           refresh();
           live(t("mv.lineMore", { n: it.name, q: lines[i].qIn.value }));
           return;
@@ -1261,7 +1314,7 @@
       ln.qIn = numInput(q ? qtyStr(q, it) : "");
       var pc = typeof c === "number" ? c : o.priceOf(it);
       ln.cIn = numInput(pc ? centsStr(pc) : "");
-      row.appendChild(field(t("mv.qty") + " (" + unitLabel(it.unit) + ")", ln.qIn, o.idp + "-q-" + itemId));
+      row.appendChild(field(o.qtyLabel || (t("mv.qty") + " (" + unitLabel(it.unit) + ")"), ln.qIn, o.idp + "-q-" + itemId));
       row.appendChild(field(o.priceLabel + " (" + curSym() + ")", ln.cIn, o.idp + "-c-" + itemId));
       li.appendChild(row);
       ln.li = li;
@@ -1307,7 +1360,7 @@
       if (it) {
         finder.value = "";
         hits.innerHTML = "";
-        add(it.id, Math.pow(10, 3 - decOf(it)), undefined, false);   // a scan adds one unit
+        add(it.id, o.whole ? 1000 : Math.pow(10, 3 - decOf(it)), undefined, false);   // a scan adds one unit
         finder.focus();
       } else showHits();
     });
@@ -1317,7 +1370,7 @@
       var out = [];
       for (var i = 0; i < lines.length; i++) {
         var ln = lines[i], q = readQty(ln.qIn, ln.it);
-        if (!q || q <= 0) return { bad: t("mv.badLine", { n: ln.it.name }), at: ln.qIn };
+        if (!q || q <= 0 || (o.whole && q % 1000)) return { bad: t("mv.badLine", { n: ln.it.name }), at: ln.qIn };
         var line = { i: ln.i, q: q };
         if (ln.cIn.value.trim()) {
           var c = readCents(ln.cIn);
@@ -1579,6 +1632,341 @@
     b.addEventListener("click", function () { itemSheet(it.id); });
     li.appendChild(b);
     return li;
+  }
+
+  // ---------- 6c. Counter (quick sale with a scanner) ----------
+  // The open sale lives in this page only (closing the counter keeps
+  // it until "Complete sale" or "Clear"); nothing is written before
+  // Complete, which saves ONE sale movement at the products' prices.
+  var cart = [];                       // [{ i, q }] thousandths
+  function counter() {
+    var dlg = makeDialog("st-counter", true);
+    dlg.classList.add("counter-dlg");
+    dlg.appendChild(el("div", "dlg-title", "🛒 " + t("ctr.title")));
+    var scan = el("input");
+    scan.type = "search";
+    scan.id = "st-ctr-q";
+    scan.className = "ctr-scan";
+    scan.placeholder = t("ctr.ph");
+    scan.autocomplete = "off";
+    scan.spellcheck = false;
+    scan.setAttribute("enterkeyhint", "done");
+    scan.setAttribute("aria-label", t("ctr.ph"));
+    dlg.appendChild(withCam(scan, true));
+    var hits = el("div", "hits");
+    dlg.appendChild(hits);
+    var msg = el("p", "hint warn");
+    msg.hidden = true;
+    dlg.appendChild(msg);
+    var ul = el("ul", "rows cart");
+    dlg.appendChild(ul);
+    var tot = el("p", "ctr-total");
+    dlg.appendChild(tot);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+    var clearB = button(t("ctr.clear"), "", function () {
+      if (!cart.length) return;
+      confirmDialog(t("ctr.clearQ"), t("ctr.clear"), true, function () { cart = []; paint(); scan.focus(); });
+    });
+    var doneB = button(t("ctr.done"), "primary", function () { complete(false); });
+    acts.appendChild(clearB);
+    acts.appendChild(doneB);
+    dlg.appendChild(acts);
+
+    function step(it) { return Math.pow(10, 3 - decOf(it)); }
+    function addItem(it, n) {
+      msg.hidden = true;
+      for (var i = 0; i < cart.length; i++) {
+        if (cart[i].i === it.id) {
+          cart[i].q += n;
+          if (cart[i].q <= 0) cart.splice(i, 1);
+          paint();
+          live(it.name + ": " + (cart[i] ? fmtQ(cart[i].q, it) : "0"));
+          return;
+        }
+      }
+      if (n <= 0) return;
+      cart.push({ i: it.id, q: n });
+      paint();
+      live(t("mv.lineAdded", { n: it.name }));
+    }
+    function total() {
+      var sum = 0;
+      cart.forEach(function (l) { var it = byId("items", l.i); if (it) sum += Math.round(l.q * it.price / 1000); });
+      return sum;
+    }
+    function paint() {
+      cart = cart.filter(function (l) { return byId("items", l.i); });
+      ul.innerHTML = "";
+      if (!cart.length) ul.appendChild(el("li", "muted pad", t("ctr.empty")));
+      cart.forEach(function (l) {
+        var it = byId("items", l.i), r = rowOf(it.id) || { q: 0 };
+        var li = el("li", "row cart-line");
+        var body = el("span", "r-body");
+        body.appendChild(el("span", "r-name", it.name));
+        var sub = el("span", "r-sub");
+        if (it.sku) sub.appendChild(el("span", "", it.sku));
+        sub.appendChild(el("span", "", it.price ? money(it.price) + " / " + unitLabel(it.unit) : t("ctr.noPrice")));
+        sub.appendChild(el("span", "", t("mv.now", { q: fmtQ(r.q, it) })));
+        body.appendChild(sub);
+        li.appendChild(body);
+        var qb = el("span", "ctr-q");
+        var minus = el("button", "icon-btn ctr-btn", "−");
+        minus.type = "button";
+        minus.setAttribute("aria-label", t("ctr.less") + ": " + it.name);
+        minus.addEventListener("click", function () { addItem(it, -step(it)); });
+        var plus = el("button", "icon-btn ctr-btn", "+");
+        plus.type = "button";
+        plus.setAttribute("aria-label", t("ctr.more") + ": " + it.name);
+        plus.addEventListener("click", function () { addItem(it, step(it)); });
+        qb.appendChild(minus);
+        qb.appendChild(el("span", "ctr-n", fmtQ(l.q, it, true)));
+        qb.appendChild(plus);
+        li.appendChild(qb);
+        li.appendChild(el("span", "r-val", it.price ? money(Math.round(l.q * it.price / 1000)) : ""));
+        ul.appendChild(li);
+      });
+      tot.textContent = t("mv.total") + ": " + money(total());
+      doneB.disabled = !cart.length;
+      clearB.disabled = !cart.length;
+    }
+    function findHits(q) {
+      var words = C.fold(q).split(" ").filter(Boolean);
+      if (!words.length) return [];
+      return byName(data.items.filter(function (it) { return !it.arch && matchItem(it, words); })).slice(0, 6);
+    }
+    scan.addEventListener("input", function () {
+      hits.innerHTML = "";
+      var q = scan.value.trim();
+      if (q.length < 2) return;
+      findHits(q).forEach(function (it) {
+        var b = el("button", "hit");
+        b.type = "button";
+        b.appendChild(el("span", "", it.name));
+        if (it.sku) b.appendChild(el("span", "muted", it.sku));
+        b.addEventListener("click", function () { scan.value = ""; hits.innerHTML = ""; addItem(it, step(it)); scan.focus(); });
+        hits.appendChild(b);
+      });
+    });
+    scan.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      var q = scan.value.trim();
+      if (!q) { if (cart.length && e.ctrlKey) complete(false); return; }
+      var it = C.findByCode(data, q);
+      if (!it) { var list = findHits(q); if (list.length === 1) it = list[0]; }
+      scan.value = "";
+      hits.innerHTML = "";
+      if (it) addItem(it, step(it));
+      else { msg.textContent = t("ctr.unknown", { c: q }); msg.hidden = false; }
+    });
+    function complete(force) {
+      if (!cart.length) return;
+      var lines = cart.map(function (l) {
+        var it = byId("items", l.i), ln = { i: l.i, q: -l.q };
+        if (it.price) ln.p = it.price;
+        return ln;
+      });
+      if (!force) {
+        var neg = lines.filter(function (l) { var r = rowOf(l.i) || { q: 0 }; return r.q + l.q < 0 && r.q + l.q < r.q; })[0];
+        if (neg) {
+          var nit = byId("items", neg.i), after = (rowOf(neg.i) || { q: 0 }).q + neg.q;
+          if (data.settings.neg === 0) { msg.textContent = t("mv.neg", { n: nit.name, q: fmtQ(after, nit) }) + " " + t("mv.negBlocked"); msg.hidden = false; return; }
+          confirmDialog(t("mv.negQ", { n: nit.name, q: fmtQ(after, nit) }), t("mv.negSave"), false, function () { complete(true); });
+          return;
+        }
+      }
+      var sum = total();
+      var mv = C.normMove({ id: newId(), m: Date.now(), d: todayYmd(), t: "out", ref: t("ctr.ref"), lines: lines });
+      if (!mv) return;
+      addMove(mv);
+      cart = [];
+      render();
+      paint();
+      actionToast(t("ctr.sold", { t: money(sum) }), null, null, function () { voidMove(mv); });
+      scan.focus();
+    }
+    showDialog(dlg);
+    paint();
+    scan.focus();
+  }
+
+  // ---------- 6d. Barcode labels (A4, printed from a hidden frame) ----------
+  var LABELS_MAX = 240;              // ten sheets
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+  // [{ it, n (copies), c (price cents or null) }] → { html, count, skipped }
+  function labelsHtml(list, withPrice) {
+    var cells = [], skipped = [];
+    list.forEach(function (x) {
+      var bc = C.barcodeFor(x.it);
+      if (!bc) { skipped.push(x.it.name); return; }
+      var cell = '<div class="l"><div class="n">' + esc(x.it.name) + '</div><div class="b">' + C.barSvg(bc.modules, 40) +
+        '</div><div class="t"><span>' + esc(bc.text) + "</span>" +
+        (withPrice && x.c ? '<b>' + esc(money(x.c)) + "</b>" : "") + "</div></div>";
+      for (var k = 0; k < x.n && cells.length < LABELS_MAX; k++) cells.push(cell);
+    });
+    var pages = [];
+    for (var i = 0; i < cells.length; i += 24) pages.push('<div class="sheet">' + cells.slice(i, i + 24).join("") + "</div>");
+    var css = "@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff;color:#000}" +
+      "body{font:9pt/1.2 Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+      ".sheet{width:210mm;height:296mm;padding:0 0 0 0;box-sizing:border-box;display:grid;grid-template-columns:repeat(3,70mm);grid-template-rows:repeat(8,37mm);page-break-after:always;break-after:page}" +
+      ".sheet:last-child{page-break-after:auto;break-after:auto}" +
+      ".l{box-sizing:border-box;padding:2.5mm 4mm;display:flex;flex-direction:column;overflow:hidden}" +
+      ".n{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".b{flex:1 1 auto;min-height:0;margin:1.5mm 0}.b svg{display:block;width:100%;height:100%}" +
+      ".t{display:flex;justify-content:space-between;gap:2mm;font-family:'Courier New',monospace}.t b{font-family:Arial,sans-serif}";
+    var html = '<!DOCTYPE html><html lang="' + LANG + '"><head><meta charset="utf-8"><title>' + esc(t("lbl.title")) +
+      "</title><style>" + css + "</style></head><body>" + pages.join("") + "</body></html>";
+    return { html: html, count: cells.length, skipped: skipped };
+  }
+  function printHtml(html) {
+    var old = document.getElementById("st-print");
+    if (old) old.remove();
+    var fr = document.createElement("iframe");
+    fr.id = "st-print";
+    fr.setAttribute("aria-hidden", "true");
+    fr.tabIndex = -1;
+    fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    fr.addEventListener("load", function () {
+      try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { showToast(t("ed.badNum")); }
+    }, { once: true });
+    fr.srcdoc = html;
+    document.body.appendChild(fr);
+  }
+  function labelsDialog(presetIds) {
+    var dlg = makeDialog("st-labels", true);
+    dlg.appendChild(el("div", "dlg-title", "🏷️ " + t("lbl.title")));
+    dlg.appendChild(el("p", "hint", t("lbl.sheet") + ". " + t("lbl.hint")));
+    var lp = linePicker(dlg, { priceLabel: t("lbl.price"), priceOf: function (it) { return it.price; }, idp: "st-lb", qtyLabel: t("lbl.copies"), whole: true });
+    (presetIds || []).forEach(function (id) { lp.add(id, 1000, undefined, false); });
+    var wp = checkRow(t("lbl.withPrice"), true);
+    dlg.appendChild(wp);
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("lbl.print"), "primary", function () {
+      err.hidden = true;
+      var r = lp.read();
+      if (r.bad) { err.textContent = r.bad; err.hidden = false; if (r.at) r.at.focus(); return; }
+      var list = r.lines.map(function (l) {
+        return { it: byId("items", l.i), n: Math.max(1, Math.round(l.q / 1000)), c: typeof l.c === "number" ? l.c : null };
+      });
+      var want = list.reduce(function (a, x) { return a + x.n; }, 0);
+      var out = labelsHtml(list, wp.querySelector("input").checked);
+      var notes = [];
+      if (out.skipped.length) notes.push(t("lbl.skip", { n: out.skipped.join(", ") }));
+      if (want > LABELS_MAX) notes.push(t("lbl.max", { n: LABELS_MAX }));
+      if (!out.count) { err.textContent = notes.concat([t("lbl.none")]).join(" "); err.hidden = false; return; }
+      if (notes.length) { err.textContent = notes.join(" "); err.hidden = false; }
+      printHtml(out.html);
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    if (!lp.count()) lp.finder.focus();
+  }
+
+  // ---------- 6e. Product photos (files on the orOS disk) ----------
+  // The slice keeps the file NAME only (list "pics", one row per item);
+  // the JPEG lives in Files under Stock/Photos and travels with Vault
+  // Drive. Re-drawn on a canvas (long side ≤ 1200 px, JPEG): no EXIF,
+  // no location, no foreign bytes.
+  var PIC_MAX_IN = 40 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function rnd6() {
+    var a = new Uint8Array(6), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 6; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function encodePic(file) {
+    return new Promise(function (resolve) {
+      if (!file || file.size > PIC_MAX_IN) { resolve(null); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 1200 / Math.max(w, h || 1));
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? b : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function setPic(itemId, f) {
+    var row = byId("pics", itemId), old = row ? row.f : "";
+    if (old === f) return;
+    if (!row) data.pics.push({ id: itemId, m: Date.now(), f: f });
+    else { row.f = f; stamp(row); }
+    save();
+    if (old) dropPicLater(old);
+  }
+  // A file no live product points at leaves the disk after the Undo
+  // window (a product deleted and brought back keeps its photo).
+  function dropPicLater(name) {
+    var fs = fsApi();
+    if (!fs || !name) return;
+    setTimeout(function () {
+      if (C.picsInUse(data).indexOf(name) >= 0) return;
+      Promise.resolve(fs.rm(C.picPath(name))).catch(function () {});
+    }, 12000);
+  }
+  // The photo block of a product sheet (thumbnail + add / change / remove)
+  function photoBox(it, dlg) {
+    var fs = fsApi(), name = C.picOf(data, it.id);
+    if (!fs && !name) return null;
+    var box = el("div", "ph-box");
+    var url = null;
+    if (name) {
+      var th = el("div", "ph-th");
+      box.appendChild(th);
+      if (fs) Promise.resolve(fs.readBlob(C.picPath(name))).then(function (b) {
+        if (!b) throw new Error("ENOENT");
+        url = URL.createObjectURL(b);
+        var im = el("img");
+        im.alt = it.name;
+        im.src = url;
+        th.appendChild(im);
+      }).catch(function () { th.appendChild(el("span", "muted", t("ph.missing"))); });
+      else th.appendChild(el("span", "muted", t("ph.missing")));
+      dlg.addEventListener("close", function () { if (url) URL.revokeObjectURL(url); });
+    }
+    if (fs) {
+      var acts = el("div", "ph-acts");
+      acts.appendChild(button(name ? t("ph.change") : "📷 " + t("ph.add"), "", function () {
+        pickFile("image/*").then(function (file) {
+          if (!file) return;
+          return encodePic(file).then(function (blob) {
+            if (!blob) { showToast(t("ph.bad")); return; }
+            var nm = C.picName(todayYmd(), it.id, rnd6());
+            return Promise.resolve(fs.writeBlob(C.picPath(nm), blob)).then(function () {
+              setPic(it.id, nm);
+              dlg.close();
+              itemSheet(it.id);
+            });
+          });
+        }).catch(function () { showToast(t("ph.noDisk")); });
+      }));
+      if (name) acts.appendChild(button(t("ph.remove"), "danger", function () { setPic(it.id, ""); dlg.close(); itemSheet(it.id); }));
+      box.appendChild(acts);
+    }
+    return box;
   }
 
   // ---------- 7. Suppliers view ----------
@@ -1870,7 +2258,7 @@
     var tsel = selectInput(C.MOVE_TYPES.map(function (k) { return [k, T_ICON[k] + " " + t("t." + k)]; }), type || "in");
     var date = el("input");
     date.type = "date";
-    date.value = todayYmd();
+    date.value = o.date && C.isYmd(o.date) ? o.date : todayYmd();
     date.max = C.addDays(todayYmd(), 1);
     r1.appendChild(field(t("mv.type"), tsel, "st-mtype"));
     r1.appendChild(field(t("mv.date"), date, "st-mdate"));
@@ -1882,6 +2270,18 @@
     r2.appendChild(field(t("mv.ref"), ref, "st-mref"));
     r2.appendChild(supFld);
     dlg.appendChild(r2);
+    // asked for by another app (BR-ST-OUT): say where it came from, what
+    // could not be matched, and whether it was already taken out once
+    if (o.from) {
+      var fromBox = el("div", "hint from-box");
+      fromBox.appendChild(el("p", "", t("out.from", { a: o.from })));
+      if (o.used) fromBox.appendChild(el("p", "warn", t(o.used === 1 ? "out.used1" : "out.used", { n: o.used })));
+      if (o.miss && o.miss.length) {
+        fromBox.appendChild(el("p", "warn", t("out.miss", { n: o.miss.length })));
+        fromBox.appendChild(el("p", "muted miss-codes", o.miss.join(", ")));
+      }
+      dlg.appendChild(fromBox);
+    }
 
     // the lines
     var lines = [];          // { i, qIn, cIn, row }
@@ -2049,6 +2449,7 @@
       addLine(p.i, p.q || 0, false);
       var last = lines[lines.length - 1];
       if (last && last.i === p.i && typeof p.c === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.c);
+      if (last && last.i === p.i && typeof p.p === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.p);
     });
     refresh();
 
@@ -2099,7 +2500,9 @@
       var mv = C.normMove({
         id: newId(), m: Date.now(), d: date.value, t: k, ref: ref.value,
         sup: supSel.value, note: note.value, lines: out,
-        src: k === "in" && o.src ? o.src : undefined      // a receipt against a purchase order
+        // a receipt against a purchase order ("in"), or a sale / return
+        // asked for by another app: kept only on the type it came with
+        src: o.src && k === (o.srcT || "in") ? o.src : undefined
       });
       if (!mv) { fail(t("ed.badNum")); return; }
       addMove(mv);
@@ -2350,7 +2753,9 @@
      ["📤", t("add.out"), function () { moveEditor("out", []); }],
      ["📋", t("add.count"), function () { moveEditor("count", []); }],
      ["✏️", t("add.other"), function () { moveEditor("loss", []); }],
+     ["🛒", t("add.counter"), counter],
      ["🧾", t("add.po"), function () { poEditor(null, null); }],
+     ["🏷️", t("add.labels"), function () { labelsDialog(null); }],
      ["🏭", t("add.sup"), function () { supEditor(null); }]].concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
       var b = button(a[0] + "  " + a[1], "sheet-btn", function () { dlg.close(); a[2](); });
       box.appendChild(b);
@@ -2559,6 +2964,100 @@
     save();
   }
 
+  // ---------- 9b. Camera scanning ----------
+  // BarcodeDetector (Chrome on Android, no library). Where the browser
+  // lacks it the button never shows and a scanner that types still works.
+  // A read code goes into the field as if typed and Enter was pressed, so
+  // every scan field keeps its own rules. multi: stay open for more codes;
+  // the same code is read again only after it left the picture.
+  var CAM_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "code_93", "itf", "codabar", "qr_code"];
+  function camOk() {
+    return typeof window.BarcodeDetector === "function" &&
+      !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
+  }
+  function camButton(input, multi) {
+    if (!camOk()) return null;
+    var b = el("button", "icon-btn cam-btn", "📷");
+    b.type = "button";
+    b.title = t("cam.scan");
+    b.setAttribute("aria-label", t("cam.scan"));
+    b.addEventListener("click", function () {
+      camScan(function (code) {
+        input.value = code;
+        input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+      }, multi);
+    });
+    return b;
+  }
+  // the field with its camera button beside it (or the field alone)
+  function withCam(input, multi) {
+    var b = camButton(input, multi);
+    if (!b) return input;
+    var w = el("div", "cam-wrap");
+    w.appendChild(input);
+    w.appendChild(b);
+    return w;
+  }
+  function camScan(onCode, multi) {
+    var dlg = makeDialog("st-cam");
+    dlg.classList.add("cam-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("cam.title")));
+    var v = el("video", "cam-video");
+    v.muted = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("aria-hidden", "true");
+    dlg.appendChild(v);
+    var msg = el("p", "hint cam-msg", "");
+    msg.setAttribute("aria-live", "polite");
+    dlg.appendChild(msg);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cam.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    var stream = null, timer = 0, done = false, last = "", seenAt = 0, det = null;
+    function stop() {
+      done = true;
+      clearTimeout(timer);
+      if (stream) stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+      stream = null;
+      try { v.srcObject = null; } catch (e) {}
+    }
+    function failCam() { msg.textContent = t("cam.denied"); msg.classList.add("warn"); }
+    dlg.addEventListener("close", stop);
+    try { det = new window.BarcodeDetector({ formats: CAM_FORMATS }); }
+    catch (e) { try { det = new window.BarcodeDetector(); } catch (e2) { det = null; } }
+    function loop() {
+      if (done) return;
+      if (v.readyState < 2) { timer = setTimeout(loop, 200); return; }
+      det.detect(v).then(function (list) {
+        if (done) return;
+        var raw = list && list[0] && typeof list[0].rawValue === "string" ? list[0].rawValue.trim() : "";
+        var now = Date.now();
+        if (!raw) { if (now - seenAt > 1200) last = ""; }
+        else if (raw === last) seenAt = now;
+        else {
+          last = raw; seenAt = now;
+          var code = raw.slice(0, 120);
+          try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+          if (!multi) { dlg.close(); onCode(code); return; }
+          onCode(code);
+          var it = C.findByCode(data, code);
+          msg.classList.toggle("warn", !it);
+          msg.textContent = it ? t("cam.found", { n: it.name }) : t("cam.unknown", { c: code });
+        }
+        timer = setTimeout(loop, 150);
+      }, function () { timer = setTimeout(loop, 400); });
+    }
+    showDialog(dlg);
+    if (!det) { failCam(); return; }
+    msg.textContent = t("cam.wait");
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
+      if (done) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      stream = st;
+      v.srcObject = st;
+      return v.play().then(function () { msg.textContent = ""; loop(); });
+    }).catch(function () { if (!done) failCam(); });
+  }
+
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -2574,7 +3073,7 @@
     dlg.className = "pc-dlg" + (wide ? " wide" : "");
     dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
     dlg.addEventListener("close", function () {
-      parkToast();
+      parkToast(dlg);
       setTimeout(function () { dlg.remove(); }, 0);
     });
     return dlg;
@@ -2638,9 +3137,14 @@
     var box = $("toast"), d = document.querySelector("dialog[open]");
     if (box && d && box.parentNode !== d) d.appendChild(box);
   }
-  function parkToast() {
+  // A closing dialog hands the toast on to the dialog still open under
+  // it (a confirm over the counter), else back to the page.
+  function parkToast(closing) {
     var box = $("toast");
-    if (box && box.parentNode !== document.body) document.body.appendChild(box);
+    if (!box || (closing && box.parentNode !== closing)) return;
+    var open = Array.prototype.filter.call(document.querySelectorAll("dialog[open]"), function (d) { return d !== closing; });
+    var to = open.length ? open[open.length - 1] : document.body;
+    if (box.parentNode !== to) to.appendChild(box);
   }
   function live(msg) {
     var n = $("live");
@@ -2667,10 +3171,12 @@
   //   { view: "reorder" } → the Reorder tab (low-stock notice)
   //   { view: "reports" } → the Reports tab
   //   { po: id }    → that purchase order (Today: expected deliveries)
+  //   { out: req }  → a prefilled sale / return (BR-ST-OUT, core outRequest)
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (document.querySelector("dialog[open]")) return;
+    if (target.out && typeof target.out === "object") { openOut(target.out); return; }
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
     if (typeof target.po === "string" && byId("pos", target.po)) {
@@ -2691,6 +3197,19 @@
       supEditor(byId("sups", target.sup));
     }
   }
+  function openOut(req) {
+    var r = C.outRequest(data, req, todayYmd());
+    if (!r) return;
+    var app = r.src ? r.src.split(":")[0] : "";
+    var name = appName(app);
+    setTab("moves");
+    moveEditor(r.t, r.lines, {
+      ref: r.ref, date: r.d, src: r.src || undefined, srcT: r.t,
+      from: name, miss: r.miss, used: r.used
+    });
+  }
+  // the asking app's name: Invoices is known, anything else is "another app"
+  function appName(id) { return id === "invoices" ? t("out.invoices") : t("out.other"); }
   window.__orosOpenAt = openTarget;
   function takeStaged() {
     try {
@@ -2857,6 +3376,8 @@
     $("items-q").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); clearTimeout(qTimer); renderItems(); onSearchEnter(); }
     });
+    var qCam = camButton($("items-q"), false);
+    if (qCam) { $("items-q").parentNode.appendChild(qCam); $("items-q").parentNode.classList.add("cam-wrap"); }
     $("items-cat").addEventListener("change", function () { prefs.cat = $("items-cat").value; savePrefs(); render(); });
     $("items-sort").addEventListener("change", function () { prefs.sort = $("items-sort").value; savePrefs(); render(); });
     $("moves-range").addEventListener("change", function () { prefs.range = $("moves-range").value; savePrefs(); render(); });

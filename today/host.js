@@ -166,6 +166,32 @@
     });
   }
 
+  // One app's rows over the next `days` days (1–31), for the
+  // Assistant's app_summary tool (assistant/summary.js agenda). Same
+  // provider and clean rows as the summary, whatever Today's own
+  // on/off says (the Assistant asks with its own permissions).
+  // → Promise<[row]> ([] when the app has no provider).
+  function agenda(appId, days) {
+    appId = String(appId || "");
+    days = Math.max(1, Math.min(31, Math.floor(Number(days)) || 7));
+    var app = null;
+    todayApps().forEach(function (a) { if (a.id === appId) app = a; });
+    if (!app) return Promise.resolve([]);
+    var e = env(), version = "";
+    try { version = e ? e.version : ""; } catch (x) {}
+    var now = Date.now(), today = A.ymdOf(new Date(now));
+    return loadApp(app, version).then(function () {
+      var p = provider(appId);
+      if (!p) return [];
+      var ctx = { today: today, horizon: days, now: now, lang: lang(), readJSON: readJSON, readRaw: readRaw,
+                  addDays: A.addDays, diff: A.diff };
+      return A.run([p], ctx, {}).then(function (res) { return res.rows; });
+    });
+  }
+  function agendaApps() {
+    return todayApps().map(function (a) { return a.id; });
+  }
+
   function open(appId, target) {
     appId = String(appId || "");
     if (!A.ID_RE.test(appId)) return;
@@ -279,6 +305,8 @@
   root.orosToday = {
     VERSION: "1.0.0",
     build: build,
+    agenda: agenda,
+    agendaApps: agendaApps,
     open: open,
     done: done,
     tick: tick,

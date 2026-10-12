@@ -175,7 +175,20 @@ window.PL_STRINGS = {
     "msg.adjNoPixels": "An adjustment layer has no pixels. Double-click it to change it.",
     "msg.mergeAdj": "The layer below is an adjustment layer: merge it into a picture layer first.",
     "hint.adjLayer": "Changes every visible layer below it. Paint its mask to choose where.",
-    "hint.fx": "Styles follow the layer's pixels and stay editable."
+    "hint.fx": "Styles follow the layer's pixels and stay editable.",
+    "tool.quick": "Quick selection", "step.quick": "Quick selection", "hint.quick": "Paint over what you want; it grows to the edges. Alt takes away.",
+    "menu.rulers": "Rulers", "menu.guides": "Guides", "menu.grid": "Grid", "menu.snap": "Snap",
+    "menu.newGuide": "New guide…", "menu.clearGuides": "Clear guides", "menu.gridSize": "Grid size…",
+    "menu.colorRange": "Colour range…", "menu.saveSel": "Save selection…", "menu.loadSel": "Load selection…",
+    "dlg.newGuide": "New guide", "dlg.gridSize": "Grid size", "dlg.colorRange": "Colour range", "dlg.saveSel": "Save selection", "dlg.loadSel": "Load selection",
+    "guide.h": "Horizontal", "guide.v": "Vertical", "f.orientation": "Orientation", "f.positionPx": "Position (px)", "f.fuzziness": "Fuzziness",
+    "hint.colorRange": "Selects every pixel close to this colour. The eyedropper (I) sets the foreground colour first.",
+    "sel.default": "Selection", "btn.deleteSel": "Delete {name}",
+    "step.guideAdd": "New guide", "step.guideMove": "Move guide", "step.guideDelete": "Delete guide", "step.guideClear": "Clear guides",
+    "step.colorRange": "Colour range", "step.selSave": "Save selection", "step.selLoad": "Load selection", "step.selDelete": "Delete saved selection",
+    "msg.noGuides": "There are no guides.", "msg.maxSels": "Up to {n} saved selections.", "msg.selNothing": "Nothing matched that colour.",
+    "btn.sendBack": "Done", "btn.sendBackTo": "Send the picture back to {app}", "app.atelier": "Atelier",
+    "msg.sentBack": "Sent back to {app}. The project stays in Photo Lab.", "msg.noBridge": "The app that asked for this picture is not open."
   },
   el: {
     "app.name": "Εργαστήριο εικόνας",
@@ -350,6 +363,19 @@ window.PL_STRINGS = {
     "msg.adjNoPixels": "Ένα layer ρύθμισης δεν έχει pixels. Κάνε διπλό κλικ πάνω του για να το αλλάξεις.",
     "msg.mergeAdj": "Το από κάτω layer είναι layer ρύθμισης: συγχώνευσέ το πρώτα σε layer με pixels.",
     "hint.adjLayer": "Αλλάζει όλα τα ορατά layers από κάτω του. Ζωγράφισε τη μάσκα του για να διαλέξεις πού.",
-    "hint.fx": "Τα στυλ ακολουθούν τα pixels του layer και αλλάζουν όποτε θες."
+    "hint.fx": "Τα στυλ ακολουθούν τα pixels του layer και αλλάζουν όποτε θες.",
+    "tool.quick": "Γρήγορη επιλογή", "step.quick": "Γρήγορη επιλογή", "hint.quick": "Ζωγράφισε πάνω σε αυτό που θες· απλώνεται ως τις άκρες. Με Alt αφαιρείς.",
+    "menu.rulers": "Χάρακες", "menu.guides": "Οδηγοί", "menu.grid": "Πλέγμα", "menu.snap": "Κούμπωμα",
+    "menu.newGuide": "Νέος οδηγός…", "menu.clearGuides": "Σβήσιμο οδηγών", "menu.gridSize": "Μέγεθος πλέγματος…",
+    "menu.colorRange": "Εύρος χρώματος…", "menu.saveSel": "Αποθήκευση επιλογής…", "menu.loadSel": "Φόρτωση επιλογής…",
+    "dlg.newGuide": "Νέος οδηγός", "dlg.gridSize": "Μέγεθος πλέγματος", "dlg.colorRange": "Εύρος χρώματος", "dlg.saveSel": "Αποθήκευση επιλογής", "dlg.loadSel": "Φόρτωση επιλογής",
+    "guide.h": "Οριζόντιος", "guide.v": "Κάθετος", "f.orientation": "Κατεύθυνση", "f.positionPx": "Θέση (px)", "f.fuzziness": "Ανοχή",
+    "hint.colorRange": "Επιλέγει κάθε pixel κοντά σε αυτό το χρώμα. Με το σταγονόμετρο (I) ορίζεις πρώτα το χρώμα.",
+    "sel.default": "Επιλογή", "btn.deleteSel": "Διαγραφή: {name}",
+    "step.guideAdd": "Νέος οδηγός", "step.guideMove": "Μετακίνηση οδηγού", "step.guideDelete": "Διαγραφή οδηγού", "step.guideClear": "Σβήσιμο οδηγών",
+    "step.colorRange": "Εύρος χρώματος", "step.selSave": "Αποθήκευση επιλογής", "step.selLoad": "Φόρτωση επιλογής", "step.selDelete": "Διαγραφή αποθηκευμένης επιλογής",
+    "msg.noGuides": "Δεν υπάρχουν οδηγοί.", "msg.maxSels": "Έως {n} αποθηκευμένες επιλογές.", "msg.selNothing": "Τίποτα δεν ταιριάζει με αυτό το χρώμα.",
+    "btn.sendBack": "Τέλος", "btn.sendBackTo": "Επιστροφή της εικόνας στο {app}", "app.atelier": "Ατελιέ",
+    "msg.sentBack": "Επέστρεψε στο {app}. Το έργο μένει και στο Εργαστήριο εικόνας.", "msg.noBridge": "Η εφαρμογή που ζήτησε την εικόνα δεν είναι ανοιχτή."
   }
 };

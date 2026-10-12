@@ -294,6 +294,7 @@
       // Pixels and mask, each in the layer's grid (a mask's stand-in
       // shares the layer's x, y).
       var own = (L.k === "raster" ? [L] : []).concat(L.mk ? [{ id: L.mk.id, x: L.x, y: L.y }] : []);
+      if (L === d.layers[d.layers.length - 1]) (d.sels || []).forEach(function (v) { own.push({ id: v.id, x: v.x, y: v.y }); });
       own.forEach(function (O) {
         var c = content(O);
         if (!c) return;
@@ -325,7 +326,10 @@
       L.x = Math.round(L.x * kx); L.y = Math.round(L.y * ky);
       if (L.k === "text") L.tx.z = Math.max(4, Math.min(2000, Math.round(L.tx.z * Math.min(kx, ky))));
       else { L.sh.w = Math.max(1, Math.round(L.sh.w * kx)); L.sh.h = Math.max(1, Math.round(L.sh.h * ky)); L.sh.sw = Math.round(L.sh.sw * Math.min(kx, ky)); }
-    }, function () { d.w = w; d.h = h; });
+    }, function () {
+      mapGuides(function (x) { return x * kx; }, function (y) { return y * ky; });
+      d.w = w; d.h = h;
+    });
   }
   function canvasSize(w, h, anchor) {
     var d = st.doc;
@@ -335,6 +339,8 @@
     PL.docChange(t("step.canvasSize"), function () {
       d.w = fit.w; d.h = fit.h;
       d.layers.forEach(function (L) { L.x += off.dx; L.y += off.dy; });
+      (d.sels || []).forEach(function (v) { v.x += off.dx; v.y += off.dy; });
+      mapGuides(function (x) { return x + off.dx; }, function (y) { return y + off.dy; });
       st.sel = null; view().selChanged();
     }, []);
     view().fit();
@@ -353,7 +359,16 @@
       var b = view().layerBounds(L), p = mapRect(b.x, b.y, b.w, b.h);
       var nb = turns === 2 ? { w: b.w, h: b.h } : { w: b.h, h: b.w };
       L.x += Math.round(p.x + (nb.w - b.w) / 2 - b.x); L.y += Math.round(p.y + (nb.h - b.h) / 2 - b.y);
-    }, function () { if (turns !== 2) { d.w = Hh; d.h = W; } });
+    }, function () {
+      var g = d.gd;
+      if (g) {
+        if (turns === 1) d.gd = C.normGuides({ x: g.y.map(function (y) { return Hh - y; }), y: g.x });
+        else if (turns === 3) d.gd = C.normGuides({ x: g.y, y: g.x.map(function (x) { return W - x; }) });
+        else mapGuides(function (x) { return W - x; }, function (y) { return Hh - y; });
+        if (!d.gd) delete d.gd;
+      }
+      if (turns !== 2) { d.w = Hh; d.h = W; }
+    });
   }
   function flipImage(horiz) {
     var d = st.doc;
@@ -364,7 +379,10 @@
     }, function (L) {
       var b = view().layerBounds(L);
       if (horiz) L.x += d.w - (b.x + b.w) - b.x; else L.y += d.h - (b.y + b.h) - b.y;
-    }, function () {});
+    }, function () {
+      if (horiz) mapGuides(function (x) { return d.w - x; }, null);
+      else mapGuides(null, function (y) { return d.h - y; });
+    });
   }
   function rotateAny(deg) {
     var d = st.doc;
@@ -597,6 +615,74 @@
     PL.docChange(t("step.fx"), function () { if (n) L.fx = n; else delete L.fx; }, []);
   }
 
+  // ---------- Guides ----------
+  // Moves the guides with the canvas (crop, canvas size, resize, flip).
+  function mapGuides(fx, fy) {
+    var g = st.doc.gd;
+    if (!g) return;
+    var n = C.normGuides({ x: fx ? g.x.map(fx) : g.x, y: fy ? g.y.map(fy) : g.y });
+    if (n) st.doc.gd = n; else delete st.doc.gd;
+  }
+  function setGuides(gd, label) {
+    PL.docChange(label, function () {
+      var n = C.normGuides(gd);
+      if (n) st.doc.gd = n; else delete st.doc.gd;
+    }, []);
+  }
+  // axis "x": a vertical guide at x px; "y": a horizontal one.
+  function newGuide(axis, v) {
+    if (!needDoc()) return;
+    var gd = st.doc.gd || { x: [], y: [] }, n = { x: gd.x.slice(), y: gd.y.slice() };
+    n[axis].push(Math.round(v));
+    if (!PL.prefs.guides) { PL.prefs.guides = true; PL.savePrefs(); }
+    setGuides(n, t("step.guideAdd"));
+  }
+  function clearGuides() {
+    if (!st.doc || !st.doc.gd) { PL.toast(t("msg.noGuides")); return; }
+    setGuides(null, t("step.guideClear"));
+  }
+
+  // ---------- Saved selections ----------
+  // Kept in the project as tile surfaces (white, alpha = selection),
+  // so they save and sync like layers.
+  function saveSelection(name) {
+    if (!st.sel) { PL.toast(t("msg.noSel")); return; }
+    var list = st.doc.sels || [];
+    if (list.length >= C.MAX_SELS) { PL.toast(t("msg.maxSels", { n: C.MAX_SELS })); return; }
+    var id = C.newLayerId(), sel = st.sel, b = S.bounds(sel);
+    PL.docChange(t("step.selSave"), function () {
+      var s = T.create(), img = { w: b.w, h: b.h, data: new Uint8ClampedArray(b.w * b.h * 4) };
+      for (var y = 0; y < b.h; y++) for (var x = 0; x < b.w; x++) {
+        var i = (y * b.w + x) * 4;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = 255;
+        img.data[i + 3] = sel.data[(y + b.y) * sel.w + x + b.x];
+      }
+      T.writeRect(s, b.x, b.y, img);
+      st.surfaces[id] = s;
+      st.doc.sels = (st.doc.sels || []).concat([{ id: id, name: C.cleanName(name) || t("sel.default"), t: {}, x: 0, y: 0 }]);
+    }, [id]);
+  }
+  function savedMask(id) {
+    var d = st.doc, v = (d.sels || []).filter(function (x) { return x.id === id; })[0] || { x: 0, y: 0 };
+    var img = T.readRect(PL.surface(id), -v.x, -v.y, d.w, d.h), m = S.make(d.w, d.h);
+    for (var i = 0; i < m.data.length; i++) m.data[i] = img.data[i * 4 + 3];
+    return m;
+  }
+  // mode: "replace" | "add" | "sub" | "and"
+  function loadSelection(id, mode) {
+    var v = (st.doc.sels || []).filter(function (x) { return x.id === id; })[0];
+    if (!v) return;
+    var m = savedMask(id);
+    PL.setSel(S.combine(st.sel, m, mode || "replace"), t("step.selLoad"));
+  }
+  function deleteSavedSelection(id) {
+    PL.docChange(t("step.selDelete"), function () {
+      st.doc.sels = (st.doc.sels || []).filter(function (x) { return x.id !== id; });
+      if (!st.doc.sels.length) delete st.doc.sels;
+      delete st.surfaces[id];
+    }, [id]);
+  }
+
   PL.ops = {
     newLayer: newLayer, duplicate: duplicate, remove: remove, moveBy: moveBy, setProp: setProp,
     rasterize: rasterize, mergeDown: mergeDown, flatten: flatten, viaCopy: viaCopy,
@@ -609,6 +695,8 @@
     filterTarget: filterTarget, filtered: filtered, applyFilter: applyFilter, applyAdjust: applyAdjust, quickAdjust: quickAdjust,
     layerName: layerName, vectorPixels: vectorPixels,
     addMask: addMask, deleteMask: deleteMask, applyMask: applyMask, toggleMask: toggleMask, editMask: editMask,
+    newGuide: newGuide, mapGuides: mapGuides, clearGuides: clearGuides, setGuides: setGuides,
+    saveSelection: saveSelection, loadSelection: loadSelection, deleteSavedSelection: deleteSavedSelection, savedMask: savedMask,
     newAdjLayer: newAdjLayer, setAdj: setAdj, setFx: setFx, maskable: maskable
   };
 })();
