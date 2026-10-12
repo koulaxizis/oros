@@ -163,6 +163,16 @@
       "l.delete": "Delete list", "l.delText": "Delete the list \"{l}\" with its {n} subscribers and its issues on all your devices?",
       "l.needChan": "Add a sending account first.",
       "lk.title": "Subscribe link", "lk.text": "People subscribe by sending an e-mail. Put this link on your site or in your profile: it opens an e-mail with everything filled in. Newsletter reads it from the Inbox, sends a confirmation request, and adds them once they confirm.",
+      "fm.title": "Sign-up form for your site", "fm.text": "A form people fill in on your own site, and a one-click unsubscribe link in every issue. orOS's relay holds sign-ups, encrypted for this list, until orOS collects them (every few minutes while it is open); then each one gets a confirmation request.",
+      "fm.on": "Set up the form", "fm.ready": "The form is ready: copy its HTML to your site", "fm.html": "Form HTML",
+      "fm.htmlHint": "Paste it into any page of your site. It needs no script; style it as you like.",
+      "fm.email": "Your e-mail", "fm.name": "Your name", "fm.back": "Thank-you page (optional)",
+      "fm.backHint": "Where people land after signing up. Empty: a short page from orOS.", "fm.badBack": "The address must start with https://",
+      "fm.saved": "Saved", "fm.here": "Sign-ups are collected on this device.", "fm.there": "Sign-ups are collected on another device.",
+      "fm.collectHere": "Collect here", "fm.off": "Turn the form off",
+      "fm.offText": "The form and the one-click links in issues already sent stop working, and sign-ups not yet collected are lost. The e-mail way keeps working.",
+      "fm.nostore": "The relay doesn't offer sign-up forms yet", "fm.fail": "Couldn't reach the relay ({e})",
+      "src.form": "Web form",
       "lk.link": "Link", "lk.html": "HTML for your site", "lk.copy": "Copy", "lk.copied": "Copied", "lk.btn": "Subscribe",
       "ch.title": "Sending account", "ch.kind": "Send through", "ch.acct": "Mail account", "ch.noAcct": "Add an e-mail account in Mail first (with its outgoing server).",
       "ch.preset": "Provider", "ch.host": "SMTP server", "ch.port": "Port", "ch.user": "User name",
@@ -338,6 +348,16 @@
       "l.delete": "Διαγραφή λίστας", "l.delText": "Να διαγραφεί η λίστα «{l}» με τους {n} συνδρομητές και τα τεύχη της σε όλες τις συσκευές σου;",
       "l.needChan": "Πρόσθεσε πρώτα λογαριασμό αποστολής.",
       "lk.title": "Σύνδεσμος εγγραφής", "lk.text": "Η εγγραφή γίνεται με email. Βάλε αυτόν τον σύνδεσμο στο site ή στο προφίλ σου: ανοίγει ένα email έτοιμο. Το Ενημερωτικό δελτίο το διαβάζει από τα Εισερχόμενα, στέλνει αίτημα επιβεβαίωσης και προσθέτει τον συνδρομητή μόλις επιβεβαιώσει.",
+      "fm.title": "Φόρμα εγγραφής για το site σου", "fm.text": "Μια φόρμα που συμπληρώνουν στο δικό σου site, και σύνδεσμος διαγραφής με ένα κλικ σε κάθε τεύχος. Το relay του orOS κρατά τις εγγραφές, κρυπτογραφημένες για αυτή τη λίστα, μέχρι να τις μαζέψει το orOS (κάθε λίγα λεπτά όσο είναι ανοιχτό)· τότε ο καθένας παίρνει αίτημα επιβεβαίωσης.",
+      "fm.on": "Δημιουργία φόρμας", "fm.ready": "Η φόρμα είναι έτοιμη: αντίγραψε το HTML της στο site σου", "fm.html": "HTML της φόρμας",
+      "fm.htmlHint": "Επικόλλησέ το σε οποιαδήποτε σελίδα του site σου. Δεν θέλει script· μορφοποίησέ το όπως θέλεις.",
+      "fm.email": "Το email σου", "fm.name": "Το όνομά σου", "fm.back": "Σελίδα ευχαριστίας (προαιρετικά)",
+      "fm.backHint": "Πού καταλήγουν μετά την εγγραφή. Κενό: μια μικρή σελίδα του orOS.", "fm.badBack": "Η διεύθυνση πρέπει να αρχίζει με https://",
+      "fm.saved": "Αποθηκεύτηκε", "fm.here": "Οι εγγραφές μαζεύονται σε αυτή τη συσκευή.", "fm.there": "Οι εγγραφές μαζεύονται σε άλλη συσκευή.",
+      "fm.collectHere": "Να μαζεύονται εδώ", "fm.off": "Απενεργοποίηση φόρμας",
+      "fm.offText": "Η φόρμα και οι σύνδεσμοι διαγραφής με ένα κλικ στα τεύχη που έχουν σταλεί σταματούν να δουλεύουν, και χάνονται όσες εγγραφές δεν έχουν μαζευτεί. Ο τρόπος με email συνεχίζει να δουλεύει.",
+      "fm.nostore": "Το relay δεν προσφέρει ακόμα φόρμες εγγραφής", "fm.fail": "Δεν βρέθηκε το relay ({e})",
+      "src.form": "Φόρμα στο site",
       "lk.link": "Σύνδεσμος", "lk.html": "HTML για το site σου", "lk.copy": "Αντιγραφή", "lk.copied": "Αντιγράφηκε", "lk.btn": "Εγγραφή",
       "ch.title": "Λογαριασμός αποστολής", "ch.kind": "Αποστολή μέσω", "ch.acct": "Λογαριασμός Mail", "ch.noAcct": "Πρόσθεσε πρώτα έναν λογαριασμό email στο Mail (με τον διακομιστή εξερχομένων).",
       "ch.preset": "Πάροχος", "ch.host": "Διακομιστής SMTP", "ch.port": "Θύρα", "ch.user": "Όνομα χρήστη",
@@ -1462,6 +1482,7 @@
         var n = C.subsOf(data, l.id).length;
         dlg.close();
         confirmDialog(t("l.delete"), t("l.delText", { l: l.name, n: n }), t("dlg.delete"), function () {
+          if (l.form) E.formOff(l.id)["catch"](function () {});      // the relay forgets it (best effort)
           remove("lists", l.id);
           renderAll();
         }, true);
@@ -1476,7 +1497,7 @@
       var rec = C.normList({
         id: l ? l.id : C.randomId("l", null), m: l ? l.m : 0, name: f.name.value, chan: f.chan.value,
         from: from, fromName: f.fromName.value, reply: f.reply.value, lang: f.lang.value, addr: f.addr.value, why: f.why.value,
-        theme: f.theme.value, color: f.color.value, salt: l ? l.salt : C.randomId("", null)
+        theme: f.theme.value, color: f.color.value, salt: l ? l.salt : C.randomId("", null), form: l ? l.form : null
       });
       put("lists", rec);
       prefs.list = rec.id;
@@ -1508,8 +1529,64 @@
     });
     var ch = C.chan(data, l.chan);
     if (!inboxAccount(ch)) dlg.appendChild(el("p", "banner", t("inbox.no")));
+    dlg.appendChild(formCard(l, dlg));
     actionsRow(dlg, [], "", null);
     openDialog(dlg);
+  }
+  // The web sign-up form (kept by the relay until orOS collects it).
+  function formCard(l, dlg) {
+    var c = el("div", "card form-card");
+    c.appendChild(el("h3", "sec-h", t("fm.title")));
+    var busyBtn = function (b, p) {
+      b.disabled = true;
+      return p.then(function (r) { b.disabled = false; return r; }, function (e) {
+        b.disabled = false;
+        showToast(e && e.code === "nostore" ? t("fm.nostore") : t("fm.fail", { e: errText(e) }));
+        throw e;
+      });
+    };
+    var reopen = function () { dlg.close(); data = E.read(); renderAll(); linkDialog(l.id); };
+    if (!l.form) {
+      c.appendChild(el("p", "dlg-text", t("fm.text")));
+      var a = el("div", "acts");
+      var on = btn(t("fm.on"), "primary", function () {
+        busyBtn(on, E.formOn(l.id, "")).then(function () { showToast(t("fm.ready")); reopen(); }, function () {});
+      });
+      a.appendChild(on);
+      c.appendChild(a);
+      return c;
+    }
+    var html = C.formHtml(l, E.relayUrl(), { email: t("fm.email"), name: t("fm.name"), btn: t("lk.btn") });
+    var ta = area(html, 7);
+    ta.readOnly = true;
+    var w = field(t("fm.html"), ta, t("fm.htmlHint"));
+    w.appendChild(mini(t("lk.copy"), function () {
+      var done = function () { showToast(t("lk.copied")); };
+      try { navigator.clipboard.writeText(html).then(done, function () { ta.select(); }); } catch (e) { ta.select(); }
+    }));
+    c.appendChild(w);
+    var back = inp("url", l.form.back, 300);
+    back.placeholder = "https://…";
+    var bw = field(t("fm.back"), back, t("fm.backHint"));
+    var save = mini(t("dlg.save"), function () {
+      var v = back.value.trim();
+      if (v && !/^https:\/\/[^\s]+$/i.test(v)) { back.classList.add("bad"); showToast(t("fm.badBack")); return; }
+      busyBtn(save, E.formOn(l.id, v)).then(function () { showToast(t("fm.saved")); reopen(); }, function () {});
+    });
+    bw.appendChild(save);
+    c.appendChild(bw);
+    var here = !l.form.dev || l.form.dev === E.devState().dev;
+    c.appendChild(el("p", "hint", here ? t("fm.here") : t("fm.there")));
+    var acts = el("div", "acts");
+    if (!here) acts.appendChild(btn(t("fm.collectHere"), "", function () { E.formHere(l.id); reopen(); }));
+    var off = btn(t("fm.off"), "danger", function () {
+      confirmDialog(t("fm.off"), t("fm.offText"), t("fm.off"), function () {
+        busyBtn(off, E.formOff(l.id)).then(reopen, function () {});
+      }, true);
+    });
+    acts.appendChild(off);
+    c.appendChild(acts);
+    return c;
   }
 
   // A sending account: new (id null) or existing.

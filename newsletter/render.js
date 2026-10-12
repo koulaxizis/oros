@@ -20,6 +20,7 @@
       why: "You receive this because you subscribed to {l}.",
       unsub: "Unsubscribe", unsubText: "To unsubscribe, send an e-mail to {a} with the subject: unsubscribe {t}",
       unsubHint: "The link opens an e-mail with everything filled in: just send it.",
+      unsubWeb: "One click, nothing else to do.", unsubWebText: "To unsubscribe, open: {u}",
       friend: "", web: "Newsletter archive",
       confSubj: "Please confirm: {l}",
       confHi: "Hello{n},",
@@ -32,6 +33,7 @@
       why: "Το λαμβάνεις επειδή έχεις εγγραφεί στο {l}.",
       unsub: "Κατάργηση εγγραφής", unsubText: "Για κατάργηση εγγραφής, στείλε email στο {a} με θέμα: unsubscribe {t}",
       unsubHint: "Ο σύνδεσμος ανοίγει ένα email έτοιμο: απλώς στείλ' το.",
+      unsubWeb: "Ένα κλικ, τίποτε άλλο.", unsubWebText: "Για κατάργηση εγγραφής, άνοιξε: {u}",
       friend: "", web: "Αρχείο τευχών",
       confSubj: "Επιβεβαίωσε την εγγραφή: {l}",
       confHi: "Γεια σου{n},",
@@ -204,7 +206,7 @@
 
   // ---------- the whole e-mail ----------
   // o: { issue, list, sub (null on the web page / a test), lang,
-  //      img(block) → src, unsub (mailto: URL or ""), tok, mailbox, test }
+  //      img(block) → src, unsub (mailto: URL or ""), unsubWeb (https: or ""), tok, mailbox, test }
   // → { subject, html (for compose.js: inside <body>), text }
   function email(o) {
     var lang = o.lang === "el" ? "el" : "en", l = o.list;
@@ -228,9 +230,11 @@
     var small = "margin:0 0 8px;font-size:12px;line-height:1.5;color:" + th.dim;
     if (o.why !== false) p.push("<p style=\"" + small + "\">" + esc(l.why || S(lang, "why", { l: l.name })).replace(/\n/g, "<br>") + "</p>");
     if (l.addr) p.push("<p style=\"" + small + "\">" + esc(l.addr).replace(/\n/g, "<br>") + "</p>");
-    if (o.unsub) {
-      p.push("<p style=\"" + small + "\"><a href=\"" + esc(o.unsub) + "\" style=\"color:" + th.dim + ";text-decoration:underline\">" + esc(S(lang, "unsub")) +
-             "</a> · " + esc(S(lang, "unsubHint")) + "</p>");
+    // the relay's one-click page when the list has a web form, else the mailto
+    var web = o.unsubWeb && /^https:\/\//.test(o.unsubWeb) ? o.unsubWeb : "";
+    if (o.unsub || web) {
+      p.push("<p style=\"" + small + "\"><a href=\"" + esc(web || o.unsub) + "\" style=\"color:" + th.dim + ";text-decoration:underline\">" + esc(S(lang, "unsub")) +
+             "</a> · " + esc(S(lang, web ? "unsubWeb" : "unsubHint")) + "</p>");
     }
     return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"max-width:600px\"><tr><td style=\"padding:16px " +
            (o.list.theme === "plain" ? 8 : 24) + "px;font-family:" + FONT + ";text-align:center\">" + p.join("") + "</td></tr></table>";
@@ -238,6 +242,7 @@
   function footText(o, lang) {
     var l = o.list, p = [l.why || S(lang, "why", { l: l.name })];
     if (l.addr) p.push(l.addr);
+    if (o.unsubWeb && /^https:\/\//.test(o.unsubWeb)) p.push(S(lang, "unsubWebText", { u: o.unsubWeb }));
     if (o.unsub && o.mailbox && o.tok) p.push(S(lang, "unsubText", { a: o.mailbox, t: o.tok }));
     return p.join("\n\n");
   }
@@ -270,7 +275,7 @@
   // ---------- the message ----------
   // M = Mail's compose.js (window.orosMailCompose).
   // o: { from{name,addr}, to{name,addr}, reply, subject, text, html,
-  //      inline[{cid,type,bin}], listId, listName, unsub (mailto:), tag,
+  //      inline[{cid,type,bin}], listId, listName, unsub (mailto:), unsubWeb (https:), tag,
   //      hdr ([name, value] extra header of the provider) }
   // → { bin, messageId, rcpt[] }
   function message(M, o) {
@@ -283,7 +288,11 @@
       h += "List-Id: " + (o.listName ? M.encodeWords(String(o.listName).replace(/[<>"]/g, "")) + " " : "") +
            "<" + o.listId + ".newsletter." + dom.toLowerCase().replace(/[^a-z0-9.-]/g, "") + ">" + CRLF;
     }
-    if (o.unsub) h += "List-Unsubscribe: <" + o.unsub + ">" + CRLF;
+    // RFC 8058: the https one-click address first (when the list has a
+    // web form), the mailto as the fallback
+    var web = o.unsubWeb && /^https:\/\/[\x21-\x7e]+$/.test(o.unsubWeb) && !/[<>]/.test(o.unsubWeb) ? o.unsubWeb : "";
+    if (o.unsub || web) h += "List-Unsubscribe: " + [web, o.unsub].filter(Boolean).map(function (u) { return "<" + u + ">"; }).join(", ") + CRLF;
+    if (web) h += "List-Unsubscribe-Post: List-Unsubscribe=One-Click" + CRLF;
     if (o.tag) h += "X-Oros-Newsletter: " + String(o.tag).replace(/[^a-z0-9-]/gi, "") + CRLF;
     if (o.hdr && /^[A-Za-z0-9-]{1,40}$/.test(o.hdr[0]) && /^[\x20-\x7e]{1,200}$/.test(o.hdr[1])) h += o.hdr[0] + ": " + o.hdr[1] + CRLF;
     built.bin = h + built.bin;
