@@ -12,7 +12,7 @@ Under `Applications`, apps are grouped in categories such as `Office`, `Accessor
 - Tap or click a category to open or close it.
 - The two small buttons next to `Applications` are `Expand all` and `Collapse all`.
 
-Every time orOS starts, all categories are closed. While orOS stays open, the menu remembers which ones you opened, even after you open an app.
+All categories are closed every time orOS starts and every time you open an app, and the search box is cleared, so the menu always opens tidy.
 
 ## Quick search
 The `Search apps and your data…` box at the top of the menu finds apps as you type.
