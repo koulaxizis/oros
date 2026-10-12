@@ -916,6 +916,7 @@ var PRECACHE_URLS = [
   "atelier/aitext.js",
   "atelier/cutout.js",
   "atelier/ai.js",
+  "atelier/editpic.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",
