@@ -16,6 +16,7 @@
       <button type="button" class="tab" id="tab-moves" role="tab" data-view="moves"></button>
       <button type="button" class="tab" id="tab-order" role="tab" data-view="order"></button>
       <button type="button" class="tab" id="tab-sups" role="tab" data-view="sups"></button>
+      <button type="button" class="tab" id="tab-reports" role="tab" data-view="reports"></button>
     </div>
     <span class="spacer"></span>
     <button type="button" class="icon-btn" id="settings-btn"></button>
@@ -46,14 +47,26 @@
       <div id="moves-list"></div>
     </section>
 
-    <!-- Reorder: low items by supplier -->
+    <!-- Reorder: purchase orders, then low items by supplier -->
     <section id="view-order" class="view" role="tabpanel" aria-labelledby="tab-order" hidden>
+      <div id="po-list"></div>
       <div id="order-list"></div>
     </section>
 
     <!-- Suppliers -->
     <section id="view-sups" class="view" role="tabpanel" aria-labelledby="tab-sups" hidden>
       <ul id="sups-list" class="rows"></ul>
+    </section>
+
+    <!-- Reports: value, period totals, best sellers, dead stock -->
+    <section id="view-reports" class="view" role="tabpanel" aria-labelledby="tab-reports" hidden>
+      <div class="filter-row">
+        <select id="rep-range"></select>
+        <span class="spacer"></span>
+        <div id="rep-acts" class="dlg-actions tight"></div>
+      </div>
+      <div id="rep-tiles" class="tiles"></div>
+      <div id="rep-body"></div>
     </section>
 
     <div id="empty" class="view empty" hidden></div>
