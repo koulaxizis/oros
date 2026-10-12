@@ -652,6 +652,32 @@
     return out.join("\n") + "\n";
   }
   function estPages(chars) { return Math.max(1, Math.round((chars || 0) / 1500)); }
+  // EPUB page estimate from the chapters' file sizes (markup included:
+  // about 2400 bytes per printed page of ~1500 characters).
+  function estPagesBytes(bytes) { return Math.max(1, Math.min(100000, Math.round((bytes || 0) / 2400))); }
+
+  // ---------- 8. Media Shelf link (BR-LIB-SHELF) ----------
+  // Media Shelf data (oros-shelf-data) is only read here: the live item
+  // linked to this book (`lib` field), else null.
+  function shelfItemOf(shelfData, bookId) {
+    if (!shelfData || typeof shelfData !== "object" || !BOOK_ID_RE.test(bookId)) return null;
+    var tombs = shelfData.tombs && typeof shelfData.tombs === "object" ? shelfData.tombs : {};
+    var hit = null;
+    (Array.isArray(shelfData.items) ? shelfData.items : []).forEach(function (it) {
+      if (!it || it.lib !== bookId || typeof it.id !== "string" || typeof it.m !== "number") return;
+      if (typeof tombs[it.id] === "number" && tombs[it.id] >= it.m) return;
+      if (!hit || it.m > hit.m) hit = it;
+    });
+    return hit ? hit.id : null;
+  }
+  // The deep-link target that adds the book to Media Shelf.
+  function shelfTarget(book) {
+    var b = { lib: book.id, title: book.title };
+    if (book.by) b.by = book.by;
+    if (book.year) b.year = book.year;
+    if (book.pages) b.size = book.pages;
+    return { addBook: b };
+  }
 
   var api = {
     DATA_VER: DATA_VER, MAX_BOOKS: MAX_BOOKS, MAX_MARKS: MAX_MARKS, MAX_BYTES: MAX_BYTES, NCOLORS: NCOLORS,
@@ -665,7 +691,8 @@
     decodeEnt: decodeEnt, xmlParse: xmlParse, resolvePath: resolvePath, parseContainer: parseContainer,
     parseOpf: parseOpf, parseNav: parseNav, parseNcx: parseNcx, cleanText: cleanText,
     viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown,
-    estPages: estPages, COLOR_NAMES: COLOR_NAMES
+    estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
+    COLOR_NAMES: COLOR_NAMES
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LibCore = api;

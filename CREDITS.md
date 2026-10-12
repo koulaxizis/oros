@@ -23,6 +23,7 @@ list in `shell.js` and the "Credits register" in `OROS_BIBLE.md`.
 | [SheetJS Community Edition](https://sheetjs.com/) (`xlsx.full.min.js`) | 0.20.3 | © 2013-present SheetJS LLC | [Apache-2.0](https://git.sheetjs.com/sheetjs/sheetjs/src/branch/github/LICENSE) | Spreadsheet, Budget |
 | [hls.js](https://github.com/video-dev/hls.js) (light build) | 1.7.3 | © 2017 Dailymotion and contributors | [Apache-2.0](https://github.com/video-dev/hls.js/blob/master/LICENSE) | Television |
 | [PDF.js](https://mozilla.github.io/pdf.js/) (legacy build, `vendor/pdfjs/`) | 5.4.394 | © Mozilla Foundation and contributors | [Apache-2.0](vendor/pdfjs/LICENSE) | Layout: opening PDF files |
+| [Mediabunny](https://mediabunny.dev/) (`vendor/mediabunny.min.js`) | 1.60.0 | © Vanilagy and contributors | [MPL-2.0](vendor/mediabunny.LICENSE) | Montage: reading video, sound and picture files and writing MP4/WebM |
 
 Used only by the test suite (`tests/`, never shipped to users):
 [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe, Apache-2.0

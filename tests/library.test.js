@@ -329,3 +329,22 @@ test("the EPUB frame is locked down by CSP", () => {
   assert.match(src, /default-src 'none'/);
   assert.doesNotMatch(src, /script-src/, "no script source is ever allowed");
 });
+
+test("Media Shelf link: find the linked item, build the add target", () => {
+  const shelf = { ver: 1, items: [
+    { id: "item000001", m: 5, type: "book", title: "Other" },
+    { id: "item000002", m: 6, type: "book", title: "Linked", lib: B1 },
+    { id: "item000003", m: 7, type: "book", title: "Removed", lib: B2 }
+  ], sess: [], goals: {}, tombs: { item000003: 7 } };
+  const snap = JSON.stringify(shelf);
+  assert.equal(C.shelfItemOf(shelf, B1), "item000002");
+  assert.equal(C.shelfItemOf(shelf, B2), null, "a deleted Shelf item is not a link");
+  assert.equal(C.shelfItemOf(null, B1), null);
+  assert.equal(C.shelfItemOf({ items: "x" }, B1), null);
+  assert.equal(JSON.stringify(shelf), snap, "Shelf data is only read");
+  assert.deepEqual(C.shelfTarget(C.normBook(book(B1, 1, { title: "Ζορμπάς", by: "Ν. Κ.", year: 1946, pages: 320 }))),
+    { addBook: { lib: B1, title: "Ζορμπάς", by: "Ν. Κ.", year: 1946, size: 320 } });
+  assert.deepEqual(C.shelfTarget(C.normBook(book(B1, 1, { title: "T" }))), { addBook: { lib: B1, title: "T" } });
+  assert.equal(C.estPagesBytes(240000), 100);
+  assert.equal(C.estPagesBytes(0), 1);
+});
