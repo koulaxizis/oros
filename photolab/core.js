@@ -5,8 +5,8 @@
 // (photolab/store.js); this file only describes them.
 //
 //   Doc    { ver, id, m, name, w, h, layers: [layer] }   bottom → top
-//   Layer  { id, k: "raster" | "text" | "shape", name, vis, lock,
-//            op 0-100, bl: blend id, x, y, ... }
+//   Layer  { id, k: "raster" | "text" | "shape" | "adj", name, vis,
+//            lock, op 0-100, bl: blend id, x, y, mk?, fx?, ... }
 //          raster: t = { "tx,ty": tile name }  (tiles of TILE px,
 //                  in the layer's own grid; x, y = the layer's
 //                  offset on the canvas, so pixels moved off the
@@ -16,6 +16,17 @@
 //                  lh: line height % }
 //          shape:  sh = { id: fx shape id, w, h, f: fill|"",
 //                  s: stroke|"", sw: stroke width, r: rotation }
+//          adj:    aj = { id: ADJ id, p: { params of that id } }
+//                  an adjustment layer: changes the layers below it
+//                  (all of the canvas; x, y only place its mask)
+//   mk     layer mask (raster and adj layers): { id: its tile
+//          surface's id, t: tiles like a raster layer, on: 0|1,
+//          bg: 0|255 }. Grey = how much of the layer shows; where
+//          nothing is painted the mask is bg. In the layer's grid
+//          (moves with the layer).
+//   fx     layer styles: { sh: drop shadow, gl: outer glow, ig: inner
+//          glow, st: stroke, co: colour overlay }, each { c, op, ... }
+//          (see FX_SPEC); only the styles that are on are kept.
 //   Index  { ver, projects: [{ id, m, name, w, h }], tombs: { id: ms } }
 //          = sync slice "photolab"; LWW per project + tombstones
 //          (R5, R17, R26).
@@ -136,6 +147,71 @@
     return { tx: +k.slice(0, i), ty: +k.slice(i + 1) };
   }
 
+  // ---------- Adjustment layers, masks, styles ----------
+  // Parameters: [key, min, max, default] numbers, or [key, "c", hex].
+  var ADJ = {
+    levels:    [["ib", 0, 254, 0], ["iw", 1, 255, 255], ["g", 0.1, 9.99, 1], ["ob", 0, 255, 0], ["ow", 0, 255, 255]],
+    curves:    [["s", 0, 255, 64], ["m", 0, 255, 128], ["h", 0, 255, 192]],
+    hsl:       [["h", -180, 180, 0], ["s", -100, 100, 0], ["l", -100, 100, 0]],
+    balance:   [["r", -100, 100, 0], ["g", -100, 100, 0], ["b", -100, 100, 0]],
+    bc:        [["b", -150, 150, 0], ["c", -100, 100, 0]],
+    gray:      [],
+    photo:     [["c", "c", "#ec8a00"], ["d", 1, 100, 25]],
+    gradmap:   [["c0", "c", "#000000"], ["c1", "c", "#ffffff"]],
+    invert:    [],
+    threshold: [["t", 0, 255, 128]],
+    posterize: [["n", 2, 32, 4]]
+  };
+  var ADJ_IDS = ["levels", "curves", "hsl", "balance", "bc", "gray", "photo", "gradmap", "invert", "threshold", "posterize"];
+  var FX_SPEC = {
+    sh: [["c", "c", "#000000"], ["op", 0, 100, 75], ["a", -180, 180, 120], ["d", 0, 500, 10], ["s", 0, 250, 10]],
+    gl: [["c", "c", "#ffffbe"], ["op", 0, 100, 75], ["s", 0, 250, 10]],
+    ig: [["c", "c", "#ffffbe"], ["op", 0, 100, 75], ["s", 0, 250, 10]],
+    st: [["c", "c", "#000000"], ["op", 0, 100, 100], ["w", 1, 100, 3]],
+    co: [["c", "c", "#ff0000"], ["op", 0, 100, 100]]
+  };
+  var FX_IDS = ["sh", "gl", "ig", "st", "co"];
+
+  function normParams(spec, raw) {
+    raw = raw && typeof raw === "object" ? raw : {};
+    var out = {};
+    spec.forEach(function (q) {
+      if (q[1] === "c") { out[q[0]] = normHex(raw[q[0]], q[2]); return; }
+      var v = raw[q[0]];
+      if (typeof v !== "number" || !isFinite(v)) v = q[3];
+      v = v < q[1] ? q[1] : (v > q[2] ? q[2] : v);
+      out[q[0]] = q[0] === "g" ? Math.round(v * 100) / 100 : Math.round(v);
+    });
+    return out;
+  }
+  function normAdj(raw) {
+    raw = raw && typeof raw === "object" ? raw : {};
+    var id = ADJ_IDS.indexOf(raw.id) >= 0 ? raw.id : "levels";
+    return { id: id, p: normParams(ADJ[id], raw.p) };
+  }
+  function normMask(raw) {
+    if (!raw || typeof raw !== "object" || typeof raw.id !== "string" || !LAYER_RE.test(raw.id)) return null;
+    return { id: raw.id, t: normTiles(raw.t), on: raw.on === 0 ? 0 : 1, bg: raw.bg === 0 ? 0 : 255 };
+  }
+  function normFx(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var out = {}, any = false;
+    FX_IDS.forEach(function (k) {
+      if (!raw[k] || typeof raw[k] !== "object") return;
+      out[k] = normParams(FX_SPEC[k], raw[k]); any = true;
+    });
+    return any ? out : null;
+  }
+  // How far styles reach past the layer's pixels (doc px).
+  function fxPad(fx) {
+    if (!fx) return 0;
+    var p = 0;
+    if (fx.sh) p = Math.max(p, fx.sh.d + fx.sh.s * 2);
+    if (fx.gl) p = Math.max(p, fx.gl.s * 2);
+    if (fx.st) p = Math.max(p, fx.st.w + 1);
+    return Math.ceil(p);
+  }
+
   // ---------- Layers ----------
   function normTiles(t) {
     var out = {};
@@ -174,11 +250,11 @@
   function normLayer(raw) {
     if (!raw || typeof raw !== "object") return null;
     if (typeof raw.id !== "string" || !LAYER_RE.test(raw.id)) return null;
-    var k = raw.k === "text" || raw.k === "shape" ? raw.k : (raw.k === "raster" ? "raster" : null);
+    var k = ["raster", "text", "shape", "adj"].indexOf(raw.k) >= 0 ? raw.k : null;
     if (!k) return null;
     var L = {
       id: raw.id, k: k,
-      name: cleanName(raw.name) || (k === "text" ? "Text" : k === "shape" ? "Shape" : "Layer"),
+      name: cleanName(raw.name) || (k === "text" ? "Text" : k === "shape" ? "Shape" : k === "adj" ? "Adjustment" : "Layer"),
       vis: raw.vis === 0 ? 0 : 1,
       lock: raw.lock ? 1 : 0,
       op: clampInt(raw.op, 0, 100, 100),
@@ -188,7 +264,12 @@
     };
     if (k === "raster") L.t = normTiles(raw.t);
     else if (k === "text") L.tx = normTextSpec(raw.tx);
-    else L.sh = normShapeSpec(raw.sh);
+    else if (k === "shape") L.sh = normShapeSpec(raw.sh);
+    else L.aj = normAdj(raw.aj);
+    var mk = (k === "raster" || k === "adj") && normMask(raw.mk);
+    if (mk && mk.id !== L.id) L.mk = mk;
+    var fx = k !== "adj" && normFx(raw.fx);
+    if (fx) L.fx = fx;
     return L;
   }
 
@@ -203,8 +284,9 @@
     (Array.isArray(raw.layers) ? raw.layers : []).forEach(function (l) {
       if (layers.length >= MAX_LAYERS) return;
       var L = normLayer(l);
-      if (!L || seen[L.id]) return;
+      if (!L || seen[L.id] || (L.mk && seen[L.mk.id])) return;
       seen[L.id] = 1;
+      if (L.mk) seen[L.mk.id] = 1;
       layers.push(L);
     });
     return { ver: DOC_VER, id: raw.id, m: raw.m, name: cleanName(raw.name) || "Untitled",
@@ -220,12 +302,26 @@
     return d;
   }
 
+  // Everything that owns tiles: raster layers and layer masks, as
+  // [{ id: surface id, rec: the record with .t }].
+  function tileOwners(doc) {
+    var out = [];
+    (doc && doc.layers || []).forEach(function (L) {
+      if (L.k === "raster") out.push({ id: L.id, rec: L });
+      if (L.mk) out.push({ id: L.mk.id, rec: L.mk });
+    });
+    return out;
+  }
+  function ownerOf(doc, id) {
+    var list = tileOwners(doc);
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i].rec;
+    return null;
+  }
   // Every tile name the document needs on disk.
   function tilesOf(doc) {
     var set = {};
-    (doc && doc.layers || []).forEach(function (L) {
-      if (L.k !== "raster") return;
-      Object.keys(L.t).forEach(function (k) { set[L.t[k]] = 1; });
+    tileOwners(doc).forEach(function (o) {
+      Object.keys(o.rec.t).forEach(function (k) { set[o.rec.t[k]] = 1; });
     });
     return Object.keys(set).sort(cmpStr);
   }
@@ -321,6 +417,8 @@
     limitsFor: limitsFor, fitSize: fitSize, normSize: normSize,
     tileKey: tileKey, parseTileKey: parseTileKey,
     normLayer: normLayer, normDoc: normDoc, newDoc: newDoc, tilesOf: tilesOf,
+    tileOwners: tileOwners, ownerOf: ownerOf, ADJ: ADJ, ADJ_IDS: ADJ_IDS, FX_SPEC: FX_SPEC, FX_IDS: FX_IDS,
+    normAdj: normAdj, normFx: normFx, normMask: normMask, fxPad: fxPad,
     findLayer: findLayer, moveLayer: moveLayer, blendOp: blendOp,
     entryOf: entryOf, emptyIndex: emptyIndex, normIndex: normIndex, mergeIndex: mergeIndex,
     upsertEntry: upsertEntry, removeEntry: removeEntry

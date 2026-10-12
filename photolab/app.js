@@ -79,7 +79,7 @@
   PL.phone = phone;
   PL.limits = C.limitsFor(phone);
   var st = PL.st = {
-    doc: null, surfaces: {}, active: null, sel: null,
+    doc: null, surfaces: {}, active: null, sel: null, maskEdit: false,
     hist: H.create(phone ? H.PHONE_BUDGET : H.DESKTOP_BUDGET),
     fg: "#000000", bg: "#ffffff", tool: "brush",
     dirty: false, fresh: false, saving: false, known: {}, missing: 0
@@ -94,7 +94,21 @@
     return i >= 0 ? d.layers[i] : (d.layers[d.layers.length - 1] || null);
   };
   PL.surface = function (id) { return st.surfaces[id] || (st.surfaces[id] = T.create()); };
-  PL.selectLayer = function (id) { st.active = id; PL.emit("layers"); };
+  PL.selectLayer = function (id, mask) {
+    st.active = id;
+    var L = PL.layer();
+    st.maskEdit = !!(mask && L && L.mk);
+    PL.emit("layers");
+  };
+  // What pixel tools paint on: the active layer, or (while its mask is
+  // being edited) a raster stand-in for the mask surface, in the same
+  // grid as the layer.
+  PL.paintLayer = function () {
+    var L = PL.layer();
+    if (!L || !st.maskEdit || !L.mk) return L;
+    return { id: L.mk.id, k: "raster", mask: 1, bg: L.mk.bg, owner: L.id, name: L.name, vis: L.vis, lock: L.lock,
+             x: L.x, y: L.y, op: 100, bl: "normal", t: L.mk.t };
+  };
 
   // ---------- Prefs (device-local) ----------
   function dflt() {
@@ -213,12 +227,15 @@
     // Tile names describe the surfaces, which an undo of a layer-list
     // change does not touch: keep the current names (a stale copy
     // would point the saved doc at old pixels).
-    if (st.doc) rec.layers.forEach(function (L) {
-      var i = C.findLayer(st.doc, L.id);
-      if (L.k === "raster" && i >= 0 && st.doc.layers[i].k === "raster") L.t = st.doc.layers[i].t;
-    });
+    if (st.doc) {
+      var names = {};
+      C.tileOwners(st.doc).forEach(function (o) { names[o.id] = o.rec.t; });
+      C.tileOwners(rec).forEach(function (o) { if (names[o.id]) o.rec.t = names[o.id]; });
+    }
     st.doc = rec;
     if (C.findLayer(rec, st.active) < 0) st.active = rec.layers.length ? rec.layers[rec.layers.length - 1].id : null;
+    var A = PL.layer();
+    if (st.maskEdit && !(A && A.mk)) st.maskEdit = false;
     if (st.sel && (st.sel.w !== rec.w || st.sel.h !== rec.h)) { st.sel = null; PL.view.selChanged(); }
     PL.view.invalidate();
     PL.emit("layers");
@@ -235,7 +252,7 @@
     var d = st.doc;
     var before = JSON.stringify(d), selBefore = st.sel;
     function pick() {
-      if (ids === "all") return st.doc.layers.filter(function (L) { return L.k === "raster"; }).map(function (L) { return L.id; });
+      if (ids === "all") return C.tileOwners(st.doc).map(function (o) { return o.id; });
       return ids || [];
     }
     var idsBefore = pick(), snapB = {};
@@ -250,8 +267,8 @@
       Object.keys(snap).forEach(function (id) {
         var s = T.clone(snap[id]);
         st.surfaces[id] = s;
-        var i = C.findLayer(rec, id);
-        if (i >= 0) markAllDirty(rec.layers[i], s);
+        var o = C.ownerOf(rec, id);
+        if (o) markAllDirty(o, s);
         PL.view.dropLayer(id);
       });
       all.forEach(function (id) { if (!(id in snap)) { delete st.surfaces[id]; PL.view.dropLayer(id); } });
@@ -276,8 +293,8 @@
       }
     });
     idsAfter.forEach(function (id) {
-      var i = C.findLayer(st.doc, id);
-      if (i >= 0 && st.surfaces[id]) markAllDirty(st.doc.layers[i], st.surfaces[id]);
+      var o = C.ownerOf(st.doc, id);
+      if (o && st.surfaces[id]) markAllDirty(o, st.surfaces[id]);
       PL.view.dropLayer(id);
     });
     PL.view.invalidate();
@@ -321,7 +338,8 @@
       st.doc.layers.splice(at, 0, L);
       st.active = L.id;
       if (raw.surface) st.surfaces[L.id] = raw.surface;
-    }, raw.surface ? [L.id] : []);
+      if (L.mk) st.surfaces[L.mk.id] = raw.maskSurface || T.create();
+    }, (raw.surface ? [L.id] : []).concat(L.mk ? [L.mk.id] : []));
     return L;
   };
   PL.shapeName = function (id) {
