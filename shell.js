@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.08.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.08.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2191,9 +2191,9 @@
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
-  // boot starts with ALL categories collapsed; opening an app keeps
-  // the menu exactly as it was left (this map lives in memory, not in
-  // storage). Keys are the LOWERCASE category (SH-B11). Never synced,
+  // boot starts with ALL categories collapsed, and so does every app
+  // launch (Chris 2026-10-12, menuReset below; this map lives in
+  // memory, not in storage). Keys are the LOWERCASE category (SH-B11). Never synced,
   // never dirty. The old persisted map (oros-menu-cat-collapsed) is
   // dropped once at boot so it cannot linger on the device.
   var menuCatOpen = {};
@@ -2207,6 +2207,17 @@
     s = String(s || "").toLowerCase();
     try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
     return s.replace(/ς/g, "σ");
+  }
+  // Back to the boot state (all categories collapsed, empty search)
+  // whenever an app opens, so the next menu open starts clean.
+  function menuReset() {
+    if (!menuQuery && !Object.keys(menuCatOpen).length) return;
+    menuCatOpen = {};
+    menuQuery = "";
+    clearTimeout(searchTimer);
+    searchToken++;                       // drop a data search in flight
+    searchRes = { q: null, groups: null, pending: false, at: 0 };
+    renderMenu();
   }
 
   // ---------- Universal search (search.js core + per-app providers) ----------
@@ -2277,6 +2288,7 @@
     try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
     if (state.running && state.running.id === appId) {
       closeMenu();
+      menuReset();
       var f = document.getElementById("app-frame");
       try {
         if (f && f.contentWindow && typeof f.contentWindow.__orosOpenAt === "function") {
@@ -2348,6 +2360,7 @@
 
   function openSearchHit(id, hit) {
     closeMenu();
+    menuReset();
     var p = searchProvider(id);
     if (p && typeof p.open === "function") {
       try { p.open(hit.target, window); return; } catch (e) {}
@@ -2443,6 +2456,7 @@
   // from the desktop or from inside an app.
   function openMenuSearch() {
     var menu = document.getElementById("app-menu");
+    closeNotifPanel();
     if (!menu.classList.contains("open")) menu.classList.add("open");
     var inp = menu.querySelector(".menu-search input");
     if (!inp) { renderMenu(); inp = menu.querySelector(".menu-search input"); }
@@ -7300,6 +7314,7 @@
 
   function openApp(app) {
     closeMenu();
+    menuReset();
     if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
     if (app.type === "external") {
       window.open(app.url, "_blank", "noopener");
@@ -7335,7 +7350,15 @@
   }
 
   // ---------- 11. Menu open/close ----------
+  // The bell's panel never sees a menu-button click (the button stops
+  // it), so the menu closes it: one tray popup at a time (Chris 2026-10-12).
+  function closeNotifPanel() {
+    if (window.orosNotifs && typeof window.orosNotifs.closeNotificationPanel === "function") {
+      window.orosNotifs.closeNotificationPanel();
+    }
+  }
   function toggleMenu() {
+    closeNotifPanel();
     if (state.running) { returnToDesktop(); return; }
     document.getElementById("app-menu").classList.toggle("open");
   }
