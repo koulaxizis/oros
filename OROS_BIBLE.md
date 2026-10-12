@@ -5014,3 +5014,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Help: guide catch-up for 1.00–1.10 (#217) — 1.13.01
 - Guide pages brought up to date with the releases 1.00.00–1.10.00: help/topics menu, notifications, install, privacy, start, and the Calendar help page (EN + EL). Text only.
+
+### 2026-10-12 — Mail: compose deep link takes attachments (#218) — 1.13.02
+- `__orosOpenAt("mail", { compose: { …, attach: [{ path } | { name, b64 }] } })`: other apps can open a new message with files already attached (orOS disk path or inline bytes), e.g. an invoice PDF. mail/mail.js only.
