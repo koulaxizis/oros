@@ -1,6 +1,23 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.14.00
+- CRM: follow-up reminders now arrive even when CRM is closed. Open follow-ups show in Today (tick to mark done) and in the Calendar under Customers, with the expected close day of deals. Contacts shows a Customer button on people linked to a customer.
+
+## Version 1.13.00
+- Invoices: unpaid invoices in Calendar and Today, due reminders, Add to Budget, Make invoice from Quote and Timesheet, clients from CRM.
+- Help: the guide pages on the menu, notifications, installing, privacy and getting started now cover the latest releases.
+- Mail: other apps can open a new message with files attached, e.g. an invoice PDF.
+
+## Version 1.12.00
+- Sticky Notes: rings can repeat (every day, weekdays, every week), a Ringtone Composer melody can be the ring sound, Send to To-Do and Copy to Notes, and your notes show in the menu search and in Today.
+
+## Version 1.11.00
+- Library: Add to Media Shelf; linked books follow your reading.
+
+## Version 1.10.00
+- New app Montage (Video): edit videos on a timeline with pictures, music, your voice and titles, add transitions and filters, and export an MP4 or WebM video. Your videos stay on your device unless you turn on media sync for a project.
+
 ## Version 1.08.00
 - New app Library (Personal): read EPUB and PDF books from the orOS disk with highlights, notes, bookmarks and search.
 - The menu closes its categories again after you open an app, and the menu and the notifications panel no longer stay open together.

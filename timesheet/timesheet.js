@@ -80,7 +80,7 @@
       "rep.empty": "Nothing in this period.",
       "rep.noteRound": "Times rounded {mode} to {n} min per entry (Settings). Stored times are exact.",
       "rep.noteExact": "Exact times, no rounding.", "rep.up": "up", "rep.near": "to the nearest",
-      "rep.csv": "Export CSV", "rep.quote": "Create quote",
+      "rep.csv": "Export CSV", "rep.quote": "Create quote", "rep.invoice": "Create invoice",
       "quote.cur": "Quotes support only EUR and USD. Change the currency in Settings first.",
       "quote.none": "No billable time with a rate in this period.", "quote.fail": "Could not open Quote.",
       "rep.mark": "Mark {n} as invoiced", "rep.unmark": "Unmark {n} invoiced",
@@ -162,7 +162,7 @@
       "rep.empty": "Τίποτα σε αυτή την περίοδο.",
       "rep.noteRound": "Οι χρόνοι στρογγυλεύονται {mode} στα {n} λεπτά ανά καταγραφή (Ρυθμίσεις). Οι αποθηκευμένοι χρόνοι μένουν ακριβείς.",
       "rep.noteExact": "Ακριβείς χρόνοι, χωρίς στρογγυλοποίηση.", "rep.up": "προς τα πάνω", "rep.near": "στο πλησιέστερο",
-      "rep.csv": "Εξαγωγή CSV", "rep.quote": "Δημιουργία προσφοράς",
+      "rep.csv": "Εξαγωγή CSV", "rep.quote": "Δημιουργία προσφοράς", "rep.invoice": "Δημιουργία τιμολογίου",
       "quote.cur": "Οι προσφορές δέχονται μόνο EUR και USD. Άλλαξε πρώτα το νόμισμα στις Ρυθμίσεις.",
       "quote.none": "Δεν υπάρχει χρεώσιμος χρόνος με τιμή σε αυτή την περίοδο.", "quote.fail": "Δεν ήταν δυνατό να ανοίξει η Προσφορά.",
       "rep.mark": "Σήμανση {n} ως τιμολογημένων", "rep.unmark": "Αναίρεση τιμολόγησης ({n})",
@@ -989,6 +989,10 @@
     var qb = $("rep-quote");
     qb.hidden = !quoteBridge();
     qb.disabled = !rep.total.billMs;
+    // Invoices (BR-INV-NEW, generic deep link { new }): same lines.
+    var ib = $("rep-invoice");
+    ib.hidden = !invoicesOpener();
+    ib.disabled = !rep.total.billMs;
   }
 
   // ---------- 7. Render: projects ----------
@@ -1585,6 +1589,24 @@
     try { ok = fn({ items: q.items, cur: cur, client: q.client }); } catch (e) { ok = false; }
     if (!ok) showToast(t("quote.fail"));
   }
+  function invoicesOpener() {
+    try { return typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
+    catch (e) { return null; }
+  }
+  // The same billable lines as Create quote, as a new prefilled
+  // invoice in Invoices (any currency). Nothing is saved there until
+  // the user saves or issues. Marking time as invoiced stays here.
+  function createInvoice() {
+    var p = invoicesOpener();
+    if (!p || !repState) return;
+    var f = repState.f;
+    var q = C.quoteLines(data, repState.keys[0], repState.keys[1],
+      { client: f.client, project: f.project, billed: f.billed, tag: f.tag }, Date.now(), LANG);
+    if (!q.items.length) { showToast(t("quote.none")); return; }
+    var payload = { items: q.items.slice(0, 50), cur: data.prefs.cur, ref: { app: "timesheet", id: "report" } };
+    if (q.client) payload.name = q.client;
+    p.__orosOpenAt("invoices", { "new": payload });
+  }
   function exportBackup() {
     saveText(C.toBackup(data), "oros-timesheet-backup-" + todayKey() + ".json", "application/json", ".json", "JSON");
   }
@@ -1880,6 +1902,7 @@
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
     $("rep-quote").textContent = t("rep.quote");
+    $("rep-invoice").textContent = t("rep.invoice");
     $("day-btn").title = t("today");
     $("week-btn").title = t("thisWeek");
   }
@@ -1933,6 +1956,7 @@
     });
     $("rep-csv").addEventListener("click", exportCsv);
     $("rep-quote").addEventListener("click", createQuote);
+    $("rep-invoice").addEventListener("click", createInvoice);
     $("rep-mark").addEventListener("click", function () {
       if (repState && repState.markIds.length) markBilled(repState.markIds, repState.markFlag);
     });

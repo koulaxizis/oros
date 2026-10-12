@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.08.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.14.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -248,6 +248,7 @@
     ringtones: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 15V8l4-1v6"/><circle cx="10" cy="15" r="1.5"/><circle cx="14" cy="13" r="1.5"/></svg>',
     studio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V14"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
+    montage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
 
@@ -1098,7 +1099,9 @@
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
+      tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
@@ -1405,6 +1408,52 @@
     if (now - stockLastTick < 60000) return;
     stockLastTick = now;
     stockCheckTick();
+  }
+
+  // CRM — follow-up reminders. Reads "oros-crm-data" directly (works
+  // with the app CLOSED, and is the only reminder engine while it is
+  // open) and asks crm/core.js (loaded by index.html, the SAME file
+  // the app runs) which open follow-ups are due: earlier days, today
+  // without a time, today once the time has come. One notice per
+  // follow-up (key = id + day + time: moved to another day or time,
+  // it rings again); device-local "oros-crm-notified" keeps only what
+  // is still due. Nothing is marked before the inbox is ready.
+  // SH-B7: no follow-ups → silent.
+  var CRM_DATA_KEY = "oros-crm-data";
+  var CRM_NOTIFIED_KEY = "oros-crm-notified";
+  function crmCheckTick() {
+    var Core = window.OrosCrmCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;
+    try { if (!N.getState().ready) return; } catch (e) { return; }
+    var raw, seen;
+    try {
+      raw = JSON.parse(localStorage.getItem(CRM_DATA_KEY));
+      seen = JSON.parse(localStorage.getItem(CRM_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.fups) || !raw.fups.length) return;
+    var data = Core.norm(raw);
+    var now = new Date(), today = sysYmd();
+    var hm = (now.getHours() < 10 ? "0" : "") + now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
+    var r = Core.reminders(data, today, hm, seen);
+    r.fresh.slice(0, 10).forEach(function (x) {         // a long-closed orOS: at most 10 per tick
+      var txt = Core.reminderText(data, x.fup, today, state.lang);
+      N.emit({ ns: "crm", key: "fup-" + x.key, type: "reminder",
+               title: txt.title, body: txt.body, deepLink: "crm:" + x.fup.id });
+    });
+    r.fresh.slice(10).forEach(function (x) { delete r.next[x.key]; });   // next tick
+    if (JSON.stringify(r.next) !== JSON.stringify(seen)) {
+      try { localStorage.setItem(CRM_NOTIFIED_KEY, JSON.stringify(r.next)); } catch (e) {}
+    }
+  }
+
+  var crmLastTick = 0;
+  function crmCheckTickThrottled() {
+    var now = Date.now();
+    if (now - crmLastTick < 60000) return;
+    crmLastTick = now;
+    crmCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -4665,7 +4714,10 @@
           en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" },
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
-          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" }
+          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" },
+        { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
+          by: "Vanilagy & contributors", lic: "MPL-2.0",
+          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" }
       ]
     },
     {
@@ -5029,6 +5081,21 @@
     } catch (e) { return Promise.resolve(false); }
   }
 
+  // Montage keeps device-only media outside orosFS (OPFS dir
+  // "montage-media", IDB fallback "oros-montage-media", thumbnails and
+  // waveforms in "oros-montage-thumbs"), so neither the orosFS wipe nor
+  // the sweep sees it. The two IDBs go in stage 2; the OPFS dir here.
+  function wipeMontageMedia() {
+    try {
+      if (!navigator.storage || typeof navigator.storage.getDirectory !== "function") return Promise.resolve(false);
+      return Promise.race([
+        navigator.storage.getDirectory().then(function (r) { return r.removeEntry("montage-media", { recursive: true }); })
+          .then(function () { return true; }, function () { return false; }),
+        new Promise(function (res) { setTimeout(function () { res(false); }, 5000); })
+      ]);
+    } catch (e) { return Promise.resolve(false); }
+  }
+
   function scFactoryReset(btn) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
@@ -5045,7 +5112,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), cloud]).then(function () {
+    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -5082,7 +5149,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -6425,6 +6492,50 @@
         : (due + (due === 1 ? " quote is due or overdue"
                             : " quotes are due or overdue")),
       deepLink: earliestId ? "quote:" + earliestId : ""
+    });
+  }
+
+  // Invoices wave 2 — due / overdue reminder. Shell-side scan of
+  // "oros-invoices-data" with invoices/core.js (reminder: the same
+  // rule as the Calendar feed and Today): issued documents with money
+  // still owed, overdue or due within 2 days. Key "due-<ymd>-<late>-
+  // <soon>": once a day, again when the list grows. Said in today's
+  // summary → silent. Click → the first document.
+  var INV_DATA_KEY = "oros-invoices-data";
+  var invoicesCheckLastTick = 0;
+  function invoicesCheckTickThrottled() {
+    var now = Date.now();
+    if (now - invoicesCheckLastTick < 60000) return;
+    invoicesCheckLastTick = now;
+    invoicesCheckTick();
+  }
+  function invoicesCheckTick() {
+    var IC = window.OrosInvoicesCore;
+    if (!IC) return;                                    // stale bundle — silent
+    var raw;
+    try { raw = localStorage.getItem(INV_DATA_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var data = IC.parse(raw);
+    if (!data) return;
+    var r = IC.reminder(data, sysYmd(), 2);
+    if (!r) return;
+    if (todayAbsorbs("invoices")) return;               // said in today's summary
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
+    var title = window.t("app.invoices");
+    if (title === "app.invoices") title = "Invoices";   // missing-key fallback
+    var el = state.lang === "el", parts = [];
+    if (r.late) parts.push(el ? (r.late + (r.late === 1 ? " ληξιπρόθεσμο" : " ληξιπρόθεσμα"))
+                              : (r.late + " overdue"));
+    if (r.soon) parts.push(el ? (r.soon + " λήγ" + (r.soon === 1 ? "ει" : "ουν") + " σύντομα")
+                              : (r.soon + " due soon"));
+    N.emit({
+      ns: "invoices",
+      key: r.key,
+      type: "due",
+      title: title,
+      body: parts.join(" · ") + (el ? " (ανεξόφλητα παραστατικά)" : (r.late + r.soon === 1 ? " (unpaid document)" : " (unpaid documents)")),
+      deepLink: "invoices:" + r.first
     });
   }
 

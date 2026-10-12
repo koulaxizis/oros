@@ -480,6 +480,10 @@ table.tbl tfoot th, table.tbl tfoot td { font-weight: 900; border-bottom: none; 
   font-size: 13px;
 }
 .pay-main:hover { border-color: var(--accent); }
+.pay { display: flex; gap: 6px; align-items: stretch; }
+.pay .pay-main { flex: 1 1 auto; min-width: 0; }
+.mini-btn.bud { flex-shrink: 0; }
+.mini-btn.bud.on { color: var(--good); border-color: var(--good); }
 .pay-d { font-variant-numeric: tabular-nums; color: var(--text-dim); }
 .pay-h { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-a { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -674,6 +678,8 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
   .dlg-actions .spacer, .ed-acts .spacer { display: none; }
   .dlg-actions .dlg-btn, .ed-acts .dlg-btn { flex: 1 1 40%; }
   .row-sub { white-space: normal; }
+  .pay { flex-wrap: wrap; }
+  .pay .mini-btn.bud { flex: 1 1 100%; }
   .tile-v { font-size: 16px; }
 }
 @media (pointer: coarse) {

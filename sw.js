@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.08.01";
+var CACHE_VERSION = "oros-v1.14.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -254,12 +254,14 @@ var PRECACHE_URLS = [
   "invoices/core.js",
   "invoices/invoices.js",
   "invoices/search.js",
+  "invoices/today.js",
   "crm/",
   "crm/index.html",
   "crm/crm.css",
   "crm/core.js",
   "crm/crm.js",
   "crm/search.js",
+  "crm/today.js",
   "timesheet/",
   "timesheet/index.html",
   "timesheet/search.js",
@@ -632,6 +634,8 @@ var PRECACHE_URLS = [
   "sudoku/help.el.txt",
   "television/help.en.txt",
   "television/help.el.txt",
+  "montage/help.en.txt",
+  "montage/help.el.txt",
   "tetris/help.en.txt",
   "tetris/help.el.txt",
   "tictactoe/help.en.txt",
@@ -964,6 +968,7 @@ var PRECACHE_URLS = [
   "museum/help.el.txt",
   "vendor/leaflet.css",
   "vendor/leaflet.js",
+  "vendor/mediabunny.min.js",
   "calculator/",
   "calculator/index.html",
   "calculator/calculator.css",
@@ -986,6 +991,8 @@ var PRECACHE_URLS = [
   "stickies/core.js",
   "stickies/host.js",
   "stickies/stickies.js",
+  "stickies/search.js",
+  "stickies/today.js",
   "textcase/",
   "textcase/index.html",
   "textcase/textcase.css",
@@ -996,6 +1003,17 @@ var PRECACHE_URLS = [
   "television/search.js",
   "television/television.css",
   "television/television.js",
+  "montage/",
+  "montage/index.html",
+  "montage/montage.css",
+  "montage/core.js",
+  "montage/hash.js",
+  "montage/gl.js",
+  "montage/media.js",
+  "montage/player.js",
+  "montage/export.js",
+  "montage/montage.js",
+  "montage/search.js",
   "memory/",
   "memory/index.html",
   "memory/memory.css",
