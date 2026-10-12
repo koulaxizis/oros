@@ -111,6 +111,8 @@
       "actions.save":         "Save",
       "actions.save_template":"Save as Template",
       "actions.duplicate":    "Duplicate",
+      "actions.invoice":      "Make invoice",
+      "invoice.note":         "From quote {n}",
       "actions.delete":       "Delete",
       "actions.export_pdf":   "Export PDF",
       "actions.send":         "Send via email",
@@ -215,6 +217,8 @@
       "actions.save":         "Αποθήκευση",
       "actions.save_template":"Αποθήκευση ως Πρότυπο",
       "actions.duplicate":    "Αντιγραφή",
+      "actions.invoice":      "Έκδοση τιμολογίου",
+      "invoice.note":         "Από την προσφορά {n}",
       "actions.delete":       "Διαγραφή",
       "actions.export_pdf":   "Εξαγωγή PDF",
       "actions.send":         "Αποστολή μέσω email",
@@ -786,6 +790,47 @@
     renderItems();
     renderInstalments();
     recalcTotals();
+    syncInvoiceBtn();
+  }
+
+  // Invoices wave 2 — "Make invoice" on an accepted quote: Invoices
+  // opens a NEW invoice prefilled with the client and the lines
+  // (BR-INV-NEW, generic deep link { new }); nothing is written until
+  // the user saves or issues there. The quote itself is not changed.
+  function invoicesOpener() {
+    try {
+      var p = window.parent;
+      return p && p !== window && typeof p.__orosOpenAt === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  function syncInvoiceBtn() {
+    var b = $("invoice-quote");
+    if (b) b.hidden = !(cur && cur.status === "accepted" && invoicesOpener());
+  }
+  function sendToInvoices() {
+    var p = invoicesOpener();
+    if (!p || !cur) return;
+    var c = cur.clientId ? clientById(cur.clientId) : null;
+    var items = (cur.items || []).filter(function (it) {
+      return (it.desc || "").trim() && (it.qty || 0) > 0;
+    }).slice(0, 50).map(function (it) {
+      var row = { d: String(it.desc).trim().slice(0, 200), q: it.qty, p: it.price || 0 };
+      if (typeof it.vat === "number") row.vat = it.vat;
+      if (it.disc > 0) row.disc = it.disc;
+      if (it.code) row.code = String(it.code).slice(0, 30);
+      return row;
+    });
+    var payload = { cur: cur.currency || "EUR", items: items, ref: { app: "quote", id: cur.id },
+                    notes: cur.num ? t("invoice.note").replace("{n}", String(cur.num).slice(0, 60)) : "" };
+    if (cur.gDisc > 0) payload.gDisc = cur.gDisc;
+    if (c) {
+      payload.name = c.name || "";
+      if (c.taxId) payload.afm = c.taxId;
+      if (c.address) payload.addr = c.address;
+      if (c.email) payload.email = c.email;
+      if (c.phone) payload.phone = c.phone;
+    }
+    p.__orosOpenAt("invoices", { "new": payload });
   }
 
   // --- Draft shelter (Option A): device-local, never synced ---
@@ -2133,7 +2178,7 @@
       cur.dueDate = this.value; editCommitted();
     });
     $("q-status").addEventListener("change", function () {
-      cur.status = this.value; editCommitted();
+      cur.status = this.value; editCommitted(); syncInvoiceBtn();
     });
     $("q-currency").addEventListener("change", function () {
       cur.currency = this.value;
@@ -2193,6 +2238,7 @@
     $("save-template").addEventListener("click", saveCurrentAsTemplate);
     $("open-templates").addEventListener("click", openTemplateLibrary);
     $("duplicate-quote").addEventListener("click", duplicateCurrent);
+    $("invoice-quote").addEventListener("click", sendToInvoices);
     $("delete-quote").addEventListener("click", deleteCurrent);
     $("export-btn").addEventListener("click", exportPdf);
     $("send-btn").addEventListener("click", sendEmail);

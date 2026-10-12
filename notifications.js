@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -513,6 +513,9 @@
     // Wave 13 — "quote:<id>": due-date notifications open the quote
     // in the editor. Guarded until the shell bridge ships.
     quote:    function (id) { if (typeof window.__orosOpenQuote === 'function') window.__orosOpenQuote(id); },
+    // Invoices wave 2 — "invoices:<docId>": the due / overdue reminder
+    // opens that document. Generic shell deep link, no own bridge.
+    invoices: function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('invoices', { invoice: String(id) }); },
     // Wave 2 — "minimalism:today:<ymd>": daily ritual reminder opens
     // the app on that exact date. Payload = bare ymd ("today" is
     // context, same shape as "mood:entry:<id>"). The shell bridge
