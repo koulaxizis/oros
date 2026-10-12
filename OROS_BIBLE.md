@@ -5056,3 +5056,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Layout: Duplicate keeps frame heights (#224) — 1.18.01
 - Duplicating a document no longer resets every frame's height (the copy loop `if (e.h) e.h = []`); new `orosDK.model.copyDoc` in designkit/model.js, used by layout/layout.js.
+
+### 2026-10-12 — Invoices: Email attaches the PDF in orOS Mail (#226) — 1.18.02
+- Email on an invoice opens orOS Mail compose with the invoice PDF already attached (Mail compose `attach`, #218). invoices/ only.
