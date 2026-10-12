@@ -1,8 +1,26 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.23.00
+- Photo Lab: rulers, guides, grid and snapping, a Quick selection brush, Colour range and saved selections.
+
+## Version 1.22.00
+- CRM: your own pipeline stages. In Settings › Pipeline stages rename, reorder, add or hide stages and set their default probability.
+
+## Version 1.21.00
+- New app: Newsletter. Write newsletters with blocks or Markdown and send them to your own subscriber lists from your Mail account or a sending provider (Brevo, Amazon SES, Mailgun, Postmark, SendGrid…). Subscribe and unsubscribe work by e-mail, bounces are read from the Inbox, and nothing is tracked.
+
+## Version 1.20.00
+- Library: read aloud, reading stats, send highlights to Notes, a line in Today, FB2 books and CBZ comics, word look-up (Wiktionary) and Ask the Assistant.
+
+## Version 1.19.00
+- Assistant: ask it for totals and overviews, such as your spending per category this month, your hours on each project or what's on this week; orOS works them out on your device and shows you the summary before it is shared. It can also prepare an invoice draft, every answer has a Copy button, Writer's new sparkle button sends the selected text to it to summarize, rephrase or correct, and Chrome's built-in model works with no key and no internet (chat only).
+- Help: the Calendar guide explains the Invoices feed.
+
 ## Version 1.18.00
 - Text Tools: pull e-mails, links or phone numbers out of a text, encode URL/Base64/HTML, make slugs, compare two texts line by line, and open .txt/.csv/.tsv files with it.
+- Layout: duplicating a document keeps every frame's size.
+- Invoices: Email opens orOS Mail with the invoice PDF already attached.
 
 ## Version 1.17.00
 - Photo Lab: layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay).

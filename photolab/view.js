@@ -407,7 +407,7 @@
   function fit() {
     var d = PL.st.doc;
     if (!d) return;
-    var pad = W < 500 ? 12 : 40;
+    var pad = (W < 500 ? 12 : 40) + (PL.prefs && PL.prefs.rulers ? RULER : 0);
     var z = Math.min((W - pad * 2) / d.w, (H - pad * 2) / d.h, 1);
     setView(z, (W - d.w * z) / 2, (H - d.h * z) / 2);
   }
@@ -456,6 +456,87 @@
   }
   function reducedMotion() {
     try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+  }
+
+  // ---------- Rulers, guides, grid ----------
+  var RULER = 18;                        // ruler strip, CSS px
+  var guideDrag = null;                  // { axis: "x"|"y", v } while a guide is dragged
+  function cssVar(n, d) {
+    try { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || d; } catch (e) { return d; }
+  }
+  // g: identity transform scaled by DPR (CSS px).
+  function drawGrid(g) {
+    var d = PL.st.doc, P = PL.prefs, gs = P.gridSize, step = gs * vw.z;
+    if (step < 4) return;
+    g.save();
+    g.beginPath(); g.rect(vw.ox, vw.oy, d.w * vw.z, d.h * vw.z); g.clip();
+    g.strokeStyle = "rgba(128,128,128,0.45)"; g.lineWidth = 1;
+    g.beginPath();
+    for (var x = gs; x < d.w; x += gs) { var X = Math.round(x * vw.z + vw.ox) + 0.5; g.moveTo(X, vw.oy); g.lineTo(X, vw.oy + d.h * vw.z); }
+    for (var y = gs; y < d.h; y += gs) { var Y = Math.round(y * vw.z + vw.oy) + 0.5; g.moveTo(vw.ox, Y); g.lineTo(vw.ox + d.w * vw.z, Y); }
+    g.stroke();
+    g.restore();
+  }
+  function drawGuides(g) {
+    var gd = PL.st.doc.gd || { x: [], y: [] };
+    g.save();
+    g.strokeStyle = "#00c8ff"; g.lineWidth = 1;
+    g.beginPath();
+    gd.x.forEach(function (x) { var X = Math.round(x * vw.z + vw.ox) + 0.5; g.moveTo(X, 0); g.lineTo(X, H); });
+    gd.y.forEach(function (y) { var Y = Math.round(y * vw.z + vw.oy) + 0.5; g.moveTo(0, Y); g.lineTo(W, Y); });
+    g.stroke();
+    if (guideDrag) {
+      g.strokeStyle = "#ff3df2"; g.setLineDash([6, 4]);
+      g.beginPath();
+      if (guideDrag.axis === "x") { var X2 = Math.round(guideDrag.v * vw.z + vw.ox) + 0.5; g.moveTo(X2, 0); g.lineTo(X2, H); }
+      else { var Y2 = Math.round(guideDrag.v * vw.z + vw.oy) + 0.5; g.moveTo(0, Y2); g.lineTo(W, Y2); }
+      g.stroke();
+    }
+    g.restore();
+  }
+  function drawRulers(g) {
+    var st = PL.G.tickStep(vw.z), bg = cssVar("--panel-bg", "#222"), fg = cssVar("--text-dim", "#999");
+    g.save();
+    g.fillStyle = bg; g.fillRect(0, 0, W, RULER); g.fillRect(0, 0, RULER, H);
+    g.strokeStyle = fg; g.fillStyle = fg; g.lineWidth = 1;
+    g.font = "10px system-ui, sans-serif"; g.textBaseline = "top";
+    g.beginPath();
+    var x0 = Math.floor((RULER - vw.ox) / vw.z / st.minor) * st.minor, x1 = (W - vw.ox) / vw.z;
+    for (var x = x0; x <= x1; x += st.minor) {
+      var X = Math.round(x * vw.z + vw.ox) + 0.5, major = Math.abs(x % st.major) < 1e-6;
+      if (X < RULER) continue;
+      g.moveTo(X, RULER); g.lineTo(X, major ? 2 : RULER - 5);
+      if (major) g.fillText(String(Math.round(x)), X + 2, 1);
+    }
+    var y0 = Math.floor((RULER - vw.oy) / vw.z / st.minor) * st.minor, y1 = (H - vw.oy) / vw.z;
+    for (var y = y0; y <= y1; y += st.minor) {
+      var Y = Math.round(y * vw.z + vw.oy) + 0.5, maj = Math.abs(y % st.major) < 1e-6;
+      if (Y < RULER) continue;
+      g.moveTo(RULER, Y); g.lineTo(maj ? 2 : RULER - 5, Y);
+      if (maj) { g.save(); g.translate(1, Y + 2); g.rotate(Math.PI / 2); g.fillText(String(Math.round(y)), 0, -9); g.restore(); }
+    }
+    g.stroke();
+    g.strokeStyle = cssVar("--border", "#444");
+    g.beginPath(); g.moveTo(0, RULER - 0.5); g.lineTo(W, RULER - 0.5); g.moveTo(RULER - 0.5, 0); g.lineTo(RULER - 0.5, H); g.stroke();
+    g.fillStyle = bg; g.fillRect(0, 0, RULER - 1, RULER - 1);
+    g.restore();
+  }
+  // Is a screen point (CSS px in the canvas) on a ruler? → "x" (left
+  // ruler: drag out a vertical guide), "y" (top ruler) or null.
+  function rulerAt(sp) {
+    if (!PL.prefs.rulers) return null;
+    if (sp.y < RULER && sp.x >= RULER) return "y";
+    if (sp.x < RULER && sp.y >= RULER) return "x";
+    return null;
+  }
+  // The guide under a screen point (within 5 px): { axis, i, v } or null.
+  function guideAt(sp) {
+    var gd = PL.st.doc && PL.st.doc.gd;
+    if (!gd || !PL.prefs.guides) return null;
+    var best = null, bd = 5;
+    gd.x.forEach(function (x, i) { var dd = Math.abs(x * vw.z + vw.ox - sp.x); if (dd <= bd) { bd = dd; best = { axis: "x", i: i, v: x }; } });
+    gd.y.forEach(function (y, i) { var dd = Math.abs(y * vw.z + vw.oy - sp.y); if (dd <= bd) { bd = dd; best = { axis: "y", i: i, v: y }; } });
+    return best;
   }
 
   // ---------- Painting the screen ----------
@@ -521,10 +602,24 @@
       ctx.strokeStyle = "#fff"; ctx.lineDashOffset = (4 - antOffset) / z; ctx.stroke(selPath);
       ctx.restore();
     }
+    var P = PL.prefs || {};
+    if (P.grid || P.guides && (d.gd || guideDrag) || P.rulers) {
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (P.grid) drawGrid(ctx);
+      if (P.guides && (d.gd || guideDrag) || guideDrag) drawGuides(ctx);
+      ctx.restore();
+    }
     if (PL.tools && PL.tools.overlay) {
       ctx.save();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       PL.tools.overlay(ctx, vw);
+      ctx.restore();
+    }
+    if (P.rulers) {
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      drawRulers(ctx);
       ctx.restore();
     }
   }
@@ -538,6 +633,8 @@
     schedule: schedule, selChanged: selChanged, themeChanged: function () { checker = null; schedule(); },
     drawLayer: drawLayer, composite: composite, flatten: flatten, layerBounds: layerBounds,
     fxBounds: fxBounds, renderLayer: renderLayer, drawMask: drawMask,
+    RULER: RULER, rulerAt: rulerAt, guideAt: guideAt,
+    setGuideDrag: function (gdr) { guideDrag = gdr; schedule(); },
     renderText: renderText, shapePath: shapePath, canvas: canvas, vector: vector
   };
 })();

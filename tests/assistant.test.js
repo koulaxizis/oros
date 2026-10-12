@@ -460,3 +460,152 @@ test("shell: assistant bridges exist and the factory reset wipes its database", 
   ["window.orosAssistApps", "window.orosAssistSearch", "window.orosAssistOpen"].forEach((n) => assert.ok(sh.includes(n), n));
   assert.match(sh, /"oros-assistant", "oros-legacy"\]/);
 });
+
+// ---------- phase 3: app summaries (assistant/summary.js) ----------
+const SUM = require("../assistant/summary.js");
+
+test("summary args: app id, month YYYY-MM (default this month), days 1-31 (default 7)", () => {
+  assert.deepEqual(SUM.normArgs({ app: "budget" }, "2026-10-12"), { ok: true, app: "budget", month: "2026-10", days: 7 });
+  assert.deepEqual(SUM.normArgs({ app: "Calendar", days: 14 }, "2026-10-12"), { ok: true, app: "calendar", month: "2026-10", days: 14 });
+  assert.equal(SUM.normArgs({ app: "budget", month: "2026-09" }, "2026-10-12").month, "2026-09");
+  ["2026-13", "26-09", "2026-9", "x"].forEach((m) => assert.equal(SUM.normArgs({ app: "budget", month: m }, "2026-10-12").ok, false, m));
+  [0, 32, 2.5, "a"].forEach((d) => assert.equal(SUM.normArgs({ app: "todo", days: d }, "2026-10-12").ok, false, String(d)));
+  assert.equal(SUM.normArgs({ app: "../x" }, "2026-10-12").ok, false);
+  assert.equal(SUM.normArgs(null, "2026-10-12").ok, false);
+});
+
+test("summary Budget: one month's income, expenses and categories; tombstones and other months left out", () => {
+  const d = {
+    set: { cur: "EUR" },
+    cats: [{ id: "c-mine", name: "Coffee", m: 1 }],
+    tombs: { "tx:t4": 9 },
+    tx: [
+      { id: "t1", k: "o", a: 4550, c: "o-groc", d: "2026-10-02", m: 1 },
+      { id: "t2", k: "o", a: 1250, c: "o-groc", d: "2026-10-05", m: 1 },
+      { id: "t3", k: "i", a: 150000, c: "i-salary", d: "2026-10-01", m: 1 },
+      { id: "t4", k: "o", a: 99999, c: "o-fun", d: "2026-10-03", m: 1 },      // deleted
+      { id: "t5", k: "o", a: 300, c: "c-mine", d: "2026-10-04", m: 1 },
+      { id: "t6", k: "o", a: 700, c: "o-groc", d: "2026-09-30", m: 1 },      // other month
+      { id: "t7", k: "o", a: 100, c: "", d: "2026-10-04", m: 1 }
+    ]
+  };
+  const s = SUM.budgetMonth(d, "2026-10", "en");
+  assert.equal(s.income, 1500);
+  assert.equal(s.expenses, 62);
+  assert.equal(s.net, 1438);
+  assert.equal(s.entries, 5);
+  assert.deepEqual(s.categories, [
+    { kind: "income", name: "Salary", total: 1500, entries: 1 },
+    { kind: "expense", name: "Groceries", total: 58, entries: 2 },
+    { kind: "expense", name: "Coffee", total: 3, entries: 1 },
+    { kind: "expense", name: "Uncategorized", total: 1, entries: 1 }
+  ]);
+  assert.equal(SUM.budgetMonth(d, "2026-10", "el").categories[1].name, "Σούπερ μάρκετ");
+  assert.equal(SUM.budgetMonth(null, "2026-10", "en").entries, 0);
+  const lines = SUM.preview(s, "en");
+  assert.ok(lines.some((l) => l.includes("Groceries: 58.00 EUR (2)")), lines.join("\n"));
+});
+
+test("summary Timesheet: hours and amounts per project through the app's own report", () => {
+  const T = require("../timesheet/core.js");
+  const at = (d, h) => new Date(2026, 9, d, h).getTime();
+  const raw = JSON.stringify({
+    ver: 1,
+    clients: [{ id: "client01", name: "ACME", rate: 0, m: 1 }],
+    projects: [{ id: "proj0001", name: "Site", client: "client01", color: 0, rate: 5000, bill: 1, arch: 0, m: 1 },
+               { id: "proj0002", name: "Admin", client: "", color: 0, rate: 0, bill: 0, arch: 0, m: 1 }],
+    entries: [{ id: "entry001", p: "proj0001", desc: "", s: at(5, 9), e: at(5, 12), billed: 0, m: 1 },
+              { id: "entry002", p: "proj0002", desc: "", s: at(6, 9), e: at(6, 10), billed: 0, m: 1 },
+              { id: "entry003", p: "proj0001", desc: "", s: at(2 + 28, 9) + 86400000 * 3, e: at(2 + 28, 10) + 86400000 * 3, billed: 0, m: 1 }],
+    prefs: { cur: "EUR", rate: 0, goal: 0, round: 0, rup: 1 }, pm: 1
+  });
+  const s = SUM.timesheetMonth(T, T.parse(raw), "2026-10", Date.now());
+  assert.equal(s.hours, 4);
+  assert.equal(s.billable_hours, 3);
+  assert.equal(s.amount, 150);
+  assert.deepEqual(s.projects, [{ name: "Site", hours: 3, client: "ACME", billable_hours: 3, amount: 150 }, { name: "Admin", hours: 1 }]);
+});
+
+test("summary To-Do: counts per list; agenda keeps late tasks, drops past events and later days", () => {
+  const d = { lists: [
+    { id: "a", name: "Home", items: [{ id: "1", text: "x", due: "2026-10-01" }, { id: "2", text: "y", due: "2026-10-12" }, { id: "3", text: "z", done: true }] },
+    { id: "b", name: "Work", items: [{ id: "4", text: "w" }] }
+  ] };
+  assert.deepEqual(SUM.todoLists(d, "2026-10-12"), {
+    app: "todo", today: "2026-10-12", open: 3, done: 1, overdue: 1, due_today: 1,
+    lists: [{ name: "Home", open: 2, done: 1, overdue: 1, due_today: 1 }, { name: "Work", open: 1, done: 0, overdue: 0, due_today: 0 }]
+  });
+  const g = SUM.agenda("calendar", [
+    { due: "2026-10-14", time: "10:00", title: "Dentist", kind: "event", target: { ev: "e1" } },
+    { due: "2026-10-10", title: "Old event", kind: "event" },
+    { due: "2026-10-10", title: "Late task", kind: "task" },
+    { due: "2026-10-30", title: "Too far", kind: "event" },
+    { due: null, title: "Info line", kind: "info" }
+  ], "2026-10-12", 7);
+  assert.equal(g.to, "2026-10-18");
+  assert.deepEqual(g.items.map((x) => x.title), ["Late task", "Info line", "Dentist"]);
+  assert.equal(g.items[0].late, true);
+  assert.deepEqual(g.items[2].target, { ev: "e1" });
+  assert.ok(SUM.preview(g, "el").some((l) => l.includes("Dentist")));
+});
+
+test("app_summary tool is offered only with data access and a summary app", () => {
+  const names = (o) => A.toolsFor(o).map((t) => t.name);
+  assert.ok(!names({ data: true }).includes("app_summary"));
+  assert.ok(names({ data: true, summary: true }).includes("app_summary"));
+  assert.ok(!names({ data: false, summary: true }).includes("app_summary"));
+});
+
+// ---------- phase 3: invoice card (BR-INV-NEW) ----------
+test("entries: an invoice card becomes Invoices' own prefill, and Invoices accepts it", () => {
+  const I = require("../invoices/core.js");
+  const e = A.normEntry({ kind: "invoice", client: "ACME", currency: "GBP", note: "Thanks",
+                          lines: [{ text: "Design", qty: 2, price: 150 }, { text: "Hosting", qty: 1.5, price: "10.5" }] }, {});
+  assert.equal(e.ok, true);
+  assert.equal(e.app, "invoices");
+  assert.deepEqual(e.call, { fn: "openAt", args: ["invoices", { "new": {
+    name: "ACME", items: [{ d: "Design", q: 2, p: 150 }, { d: "Hosting", q: 1.5, p: 10.5 }], cur: "GBP", notes: "Thanks" } }] });
+  const p = I.normPrefill(e.call.args[1]["new"]);
+  assert.equal(p.client.name, "ACME");
+  assert.deepEqual(p.items, [{ d: "Design", q: 2, p: 15000 }, { d: "Hosting", q: 1.5, p: 1050 }]);
+  assert.equal(p.cur, "GBP");
+  assert.equal(A.normEntry({ kind: "invoice", currency: "XYZ", lines: [{ text: "a", qty: 1, price: 1 }] }, {}).ok, false);
+  assert.equal(A.normEntry({ kind: "invoice", lines: [] }, {}).ok, false);
+  assert.equal(A.normEntry({ kind: "invoice", lines: [{ text: "", qty: 1, price: 1 }] }, {}).ok, false);
+  assert.equal(A.normEntry({ kind: "quote", currency: "GBP", lines: [{ text: "a", qty: 1, price: 1 }] }, {}).ok, false);
+  assert.ok(A.entryKinds((id) => id === "invoices").includes("invoice"));
+});
+
+// ---------- phase 3: the browser's built-in model ----------
+test("browser model: no key, no tools, history as initial prompts, kept by the slice", () => {
+  assert.equal(A.PROVIDERS.browser.key, "no");
+  assert.ok(A.PROV_IDS.includes("browser"));
+  const pr = A.browserPrompts([
+    { r: "user", text: "Hi" },
+    { r: "asst", prov: "anthropic", text: "Hello", tools: [{ id: "x", name: "search_data", args: {} }], raw: { prov: "anthropic" } },
+    { r: "tool", results: [{ id: "x", content: "{}" }] },
+    { r: "asst", prov: "anthropic", text: "Found it" },
+    { r: "user", text: "Thanks, and?" }
+  ], "SYS");
+  assert.deepEqual(pr.initial, [{ role: "system", content: "SYS" }, { role: "user", content: "Hi" },
+                                { role: "assistant", content: "Hello" }, { role: "assistant", content: "Found it" }]);
+  assert.equal(pr.prompt, "Thanks, and?");
+  assert.equal(A.browserPrompts([{ r: "asst", text: "x" }], "").prompt, "");
+  const d = A.mergeAssist({ set: { m: 5, chat: 0, prov: "browser" } }, null);
+  assert.equal(d.set.prov, "browser");
+  const sp = A.systemPrompt({ builtin: true, apps: ["Notes (notes)"], entries: ["todo"] });
+  assert.match(sp, /no access to their orOS data and no tools/);
+  assert.doesNotMatch(sp, /search_data|propose_entry/);
+});
+
+test("phase 3 wiring: summary.js loaded, Today agenda bridge, Writer ask button, precache-free text", () => {
+  const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
+  assert.ok(html.indexOf("summary.js") > html.indexOf("core.js") && html.indexOf("summary.js") < html.indexOf("assistant.js"));
+  const host = fs.readFileSync(path.join(ROOT, "today/host.js"), "utf8");
+  assert.match(host, /agenda: agenda,/);
+  const w = fs.readFileSync(path.join(ROOT, "writer/writer.js"), "utf8");
+  assert.match(w, /__orosOpenAt\('assistant', \{ ask: ask \}\)/);
+  const as = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(as, /app_summary/);
+  assert.match(as, /slice\(0, MAX_INPUT\)/);
+});
