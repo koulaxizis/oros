@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Invoices · orOS</title>
+
+  <link rel="stylesheet" href="invoices.css?v=0.99.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <nav id="tabs" role="tablist">
+      <button type="button" class="tab" role="tab" data-tab="docs" id="tab-docs"></button>
+      <button type="button" class="tab" role="tab" data-tab="clients" id="tab-clients"></button>
+      <button type="button" class="tab" role="tab" data-tab="dash" id="tab-dash"></button>
+    </nav>
+    <span class="spacer"></span>
+    <button type="button" class="new-btn" id="new-btn"></button>
+    <button type="button" class="icon-btn" id="set-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Documents -->
+    <section id="v-docs" class="view" role="tabpanel">
+      <div id="clash" class="banner" hidden></div>
+      <div id="setup" class="banner info" hidden>
+        <span id="setup-text"></span>
+        <button type="button" class="mini-btn" id="setup-go"></button>
+      </div>
+      <div class="filters">
+        <input type="search" id="q" autocomplete="off" spellcheck="false">
+        <select id="f-status"></select>
+        <select id="f-kind"></select>
+        <select id="f-year"></select>
+      </div>
+      <p class="hint" id="f-client" hidden></p>
+      <ol id="docs" class="rows"></ol>
+      <div id="docs-empty" class="empty" hidden>
+        <p class="empty-t" data-i18n="docs.empty">No invoices yet.</p>
+        <p class="hint" data-i18n="docs.emptyHint">Create your first invoice with New, or record one you issued elsewhere.</p>
+      </div>
+    </section>
+
+    <!-- Clients -->
+    <section id="v-clients" class="view" role="tabpanel" hidden>
+      <div class="filters two">
+        <input type="search" id="cq" autocomplete="off" spellcheck="false">
+        <button type="button" class="wide-btn" id="add-client"></button>
+      </div>
+      <div class="acts">
+        <button type="button" class="mini-btn" id="imp-contacts" hidden></button>
+        <button type="button" class="mini-btn" id="imp-quote" hidden></button>
+      </div>
+      <ol id="clients" class="rows"></ol>
+      <p class="hint" id="clients-empty" data-i18n="cli.empty">No clients yet. Add one, or bring them in from Contacts or Quote.</p>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="v-dash" class="view" role="tabpanel" hidden>
+      <div class="filters">
+        <select id="d-range"></select>
+        <input type="date" id="d-from" hidden>
+        <input type="date" id="d-to" hidden>
+        <select id="d-cur"></select>
+      </div>
+      <div id="tiles" class="tiles"></div>
+      <p class="hint" id="d-sub"></p>
+      <h3 class="sec-h" data-i18n="dash.months">Per month</h3>
+      <div id="bars" class="bars"></div>
+      <div class="legend">
+        <span><i class="lg inv"></i><span data-i18n="dash.inv">Invoiced</span></span>
+        <span><i class="lg col"></i><span data-i18n="dash.col">Collected</span></span>
+      </div>
+      <div class="two-col">
+        <div>
+          <h3 class="sec-h" data-i18n="dash.top">Top clients</h3>
+          <ol id="top" class="plain"></ol>
+        </div>
+        <div>
+          <h3 class="sec-h" data-i18n="dash.vat">VAT per rate</h3>
+          <div class="grid-wrap"><table id="vat-table" class="tbl"></table></div>
+          <p class="hint" data-i18n="dash.vatHint">For reference when you prepare your VAT return; your accountant has the final word.</p>
+        </div>
+      </div>
+      <div class="acts">
+        <button type="button" class="wide-btn" id="csv-docs"></button>
+        <button type="button" class="wide-btn" id="csv-pays"></button>
+      </div>
+    </section>
+
+    <!-- Editor: a draft, a new document or a record -->
+    <section id="v-edit" class="view" hidden>
+      <div class="view-head">
+        <button type="button" class="icon-btn" id="ed-back"></button>
+        <div class="vh-txt">
+          <div class="vh-title" id="ed-title"></div>
+          <div class="vh-sub" id="ed-sub"></div>
+        </div>
+      </div>
+      <form id="ed-form" autocomplete="off" novalidate></form>
+    </section>
+
+    <!-- An issued document -->
+    <section id="v-view" class="view" hidden>
+      <div class="view-head">
+        <button type="button" class="icon-btn" id="vw-back"></button>
+        <div class="vh-txt">
+          <div class="vh-title" id="vw-title"></div>
+          <div class="vh-sub" id="vw-sub"></div>
+        </div>
+        <span class="chip" id="vw-chip"></span>
+      </div>
+      <div id="vw-acts" class="acts"></div>
+      <div id="vw-body"></div>
+    </section>
+
+    <!-- Settings -->
+    <section id="v-set" class="view" hidden>
+      <div class="view-head">
+        <button type="button" class="icon-btn" id="set-back"></button>
+        <div class="vh-txt"><div class="vh-title" data-i18n="set.title">Settings</div></div>
+      </div>
+      <div id="set-body"></div>
+    </section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.99.00"></script>
+  <script src="invoices.js?v=0.99.00"></script>
+
+</body>
+</html>
