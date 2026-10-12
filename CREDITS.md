@@ -26,6 +26,7 @@ list in `shell.js` and the "Credits register" in `OROS_BIBLE.md`.
 | [Mediabunny](https://mediabunny.dev/) (`vendor/mediabunny.min.js`) | 1.60.0 | © Vanilagy and contributors | [MPL-2.0](vendor/mediabunny.LICENSE) | Montage: reading video, sound and picture files and writing MP4/WebM |
 | [ONNX Runtime Web](https://onnxruntime.ai/) (WebAssembly build, `vendor/ort/`) | 1.22.0 | © Microsoft Corporation | [MIT](vendor/ort/LICENSE) | Atelier: removing a picture's background on the device (downloaded on first use, not precached) |
 | [U²-Net](https://github.com/xuebinqin/U-2-Net) model u2netp (`vendor/u2netp/u2netp.onnx`, ONNX export from [rembg](https://github.com/danielgatis/rembg)) | — | © 2020 Xuebin Qin and contributors | [Apache-2.0](vendor/u2netp/LICENSE) | Atelier: the background removal model |
+| [NULL JSFX](https://nulljsfx.tech) (web build in `studio/nullfx/`, from [null-jsfx](https://github.com/koulaxizis/null-jsfx) `web/`) | 2026-10 | © 2026 Christos Koulaxizis | [MIT](studio/nullfx/LICENSE.md) | Studio: the effects and their interfaces |
 
 Used only by the test suite (`tests/`, never shipped to users):
 [jsQR](https://github.com/cozmo/jsQR) by Cosmo Wolfe, Apache-2.0

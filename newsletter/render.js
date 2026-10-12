@@ -207,7 +207,8 @@
   //      img(block) → src, unsub (mailto: URL or ""), tok, mailbox, test }
   // → { subject, html (for compose.js: inside <body>), text }
   function email(o) {
-    var x = o.issue, l = o.list, lang = o.lang === "el" ? "el" : "en";
+    var lang = o.lang === "el" ? "el" : "en", l = o.list;
+    var x = o.issue.l2 ? C.contentFor(o.issue, lang) : o.issue;     // the version in their language
     var th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
     var body = blocksOf(x).map(function (b) { return blockHtml(b, th, accent, o.img, o.sub); }).join("");
     var foot = footer(o, th, accent, lang);

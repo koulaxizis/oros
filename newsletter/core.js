@@ -14,9 +14,12 @@
 //                inbox, rate (s between messages), cap (messages a day) }],
 //     lists:  [{ id, m, name, chan, from, fromName, reply, lang, addr, why, theme, color, salt }],
 //     subs:   [{ id, m, list, email, name, lang, tags[], src, basis, at, conf, off, offSt, inv, bnc, c }],
-//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md", blocks[], md, tags[],
-//                st: "draft"|"sending"|"paused"|"sent", lock: { dev, at }|null,
-//                start, done, n, err, fail: { subId: code } }],
+//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md", blocks[], md, tags[], seg,
+//                l2: { lang, subj, pre, fmt, blocks[], md }|null   (the other-language version),
+//                st: "draft"|"sched"|"sending"|"paused"|"sent", when (sched: start time),
+//                lock: { dev, at }|null, start, done, n, err, fail: { subId: code } }],
+//     segs:   [{ id, m, list, name, tags[], match: "any"|"all", lang: ""|"en"|"el" }],
+//     tpls:   [{ id, m, name, subj, pre, fmt, blocks[], md, l2 }],
 //     sent:   { issueId: [subId, …] },     grow-only while an issue is out
 //     supp:   [hash, …] }                   grow-only suppression list
 //   Every record may instead be a tombstone { id, m, del: 1 }.
@@ -30,15 +33,15 @@
   var LIM = {
     chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
     name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
-    imgBytes: 400 * 1024, email: 254
+    imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50
   };
   var KINDS = ["mail", "smtp"];
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm"];
   var OFF_STS = ["off", "bounce", "spam"];
-  var ISSUE_STS = ["draft", "sending", "paused", "sent"];
+  var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols"];
   var LOCK_STALE = 15 * 60 * 1000;       // a sending device silent this long lets another take over
   var SOFT_LIMIT = 3;                    // soft bounces before an address counts as bounced
@@ -212,17 +215,43 @@
       lock = { dev: x.lock.dev, at: nat(x.lock.at) };
     }
     var st = ISSUE_STS.indexOf(x.st) >= 0 ? x.st : "draft";
+    var when = st === "sched" ? nat(x.when) : 0;
+    if (st === "sched" && !when) st = "draft";
+    var c = normContent(x);
     return {
       id: x.id, m: nat(x.m), list: validId(x.list) ? x.list : "",
-      subj: oneLine(x.subj, LIM.subj), pre: oneLine(x.pre, LIM.pre),
-      fmt: x.fmt === "md" ? "md" : "blocks",
-      blocks: (Array.isArray(x.blocks) ? x.blocks : []).map(normBlock).filter(Boolean).slice(0, LIM.blocks),
-      md: multi(x.md, LIM.md),
-      tags: normTags(x.tags),
-      st: st, lock: st === "sending" ? lock : null,
+      subj: c.subj, pre: c.pre, fmt: c.fmt, blocks: c.blocks, md: c.md,
+      tags: normTags(x.tags), seg: validId(x.seg) ? x.seg : "",
+      l2: normL2(x.l2),
+      st: st, when: when, lock: st === "sending" || st === "sched" ? lock : null,
       start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
       err: oneLine(x.err, 300), fail: fail
     };
+  }
+  // The written part of an issue or template (subject … Markdown).
+  function normContent(x) {
+    return {
+      subj: oneLine(x.subj, LIM.subj), pre: oneLine(x.pre, LIM.pre),
+      fmt: x.fmt === "md" ? "md" : "blocks",
+      blocks: (Array.isArray(x.blocks) ? x.blocks : []).map(normBlock).filter(Boolean).slice(0, LIM.blocks),
+      md: multi(x.md, LIM.md)
+    };
+  }
+  function normL2(v) {
+    if (!v || typeof v !== "object" || (v.lang !== "en" && v.lang !== "el")) return null;
+    var c = normContent(v);
+    c.lang = v.lang;
+    return c;
+  }
+  function normSeg(x) {
+    if (!validId(x.list)) return null;
+    return { id: x.id, m: nat(x.m), list: x.list, name: oneLine(x.name, LIM.name), tags: normTags(x.tags),
+             match: x.match === "all" ? "all" : "any", lang: x.lang === "en" || x.lang === "el" ? x.lang : "" };
+  }
+  function normTpl(x) {
+    var c = normContent(x);
+    return { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
+             blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
   }
   function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
   function normColl(arr, fn, max) {
@@ -237,7 +266,7 @@
     out.sort(byId);
     return max ? out.slice(0, max) : out;
   }
-  function empty() { return { ver: 1, chans: [], lists: [], subs: [], issues: [], sent: {}, supp: [] }; }
+  function empty() { return { ver: 1, chans: [], lists: [], subs: [], issues: [], segs: [], tpls: [], sent: {}, supp: [] }; }
   function normalize(d) {
     d = d && typeof d === "object" ? d : {};
     var o = empty();
@@ -248,6 +277,8 @@
     // a subscriber / issue of a deleted (or unknown) list goes with it
     o.subs = normColl(d.subs, normSub, 40000).filter(function (s) { return s.del || liveLists[s.list]; });
     o.issues = normColl(d.issues, normIssue, 2000).filter(function (x) { return x.del || liveLists[x.list]; });
+    o.segs = normColl(d.segs, normSeg, 400).filter(function (x) { return x.del || liveLists[x.list]; });
+    o.tpls = normColl(d.tpls, normTpl, 400);
     var open = {};
     o.issues.forEach(function (x) { if (!x.del && (x.st === "sending" || x.st === "paused")) open[x.id] = 1; });
     var sent = d.sent && typeof d.sent === "object" ? d.sent : {};
@@ -314,6 +345,8 @@
       lists: mergeColl(A.lists, B.lists),
       subs: mergeColl(A.subs, B.subs, mergeSub),
       issues: mergeColl(A.issues, B.issues),
+      segs: mergeColl(A.segs, B.segs),
+      tpls: mergeColl(A.tpls, B.tpls),
       sent: {},
       supp: A.supp.concat(B.supp)
     };
@@ -357,17 +390,48 @@
   }
 
   // ---------- audience + sending progress ----------
-  // Active subscribers of the issue's list, with any of its tags (no
-  // tags: everyone), in id order.
+  // Does a subscriber fit a segment? tags: any or all of them (none:
+  // everyone); lang: the subscriber's language (or the list's).
+  function segMatch(seg, s, list) {
+    if (seg.lang && (s.lang || (list && list.lang) || "en") !== seg.lang) return false;
+    if (!seg.tags.length) return true;
+    var have = {};
+    s.tags.forEach(function (t) { have[fold(t)] = 1; });
+    var hit = seg.tags.filter(function (t) { return have[fold(t)]; }).length;
+    return seg.match === "all" ? hit === seg.tags.length : hit > 0;
+  }
+  function seg(d, id) { return find(d.segs, id); }
+  function segsOf(d, listId) { return live(d.segs).filter(function (g) { return g.list === listId; }); }
+  // Active subscribers of the issue's list: those of its segment, or
+  // with any of its tags (no tags: everyone), in id order.
   function audience(d, x) {
+    var g = x.seg ? seg(d, x.seg) : null;
+    if (x.seg && (!g || g.list !== x.list)) return [];      // its segment was deleted: nobody, never everyone
+    var l = list(d, x.list);
     var want = {};
     (x.tags || []).forEach(function (t) { want[fold(t)] = 1; });
     var any = !(x.tags && x.tags.length);
     return subsOf(d, x.list).filter(function (s) {
       if (status(s) !== "on") return false;
+      if (g) return segMatch(g, s, l);
       if (any) return true;
       return s.tags.some(function (t) { return want[fold(t)]; });
     });
+  }
+  // The language a subscriber reads: their own, else the list's.
+  function langOf(s, l) { return (s && s.lang) || (l && l.lang) || "en"; }
+  // The version of an issue (or template) for one language: the
+  // second-language version when it is that language, else the main.
+  function contentFor(x, lang) {
+    var v = x.l2 && x.l2.lang === lang ? x.l2 : x;
+    return { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
+  }
+  // A scheduled issue whose time has come, on the device that
+  // scheduled it (lock.dev: the sending passwords live there).
+  function schedMine(x, dev) { return x.st === "sched" && (!dev || !x.lock || x.lock.dev === dev); }
+  function schedDue(d, now, dev) {
+    return live(d.issues).filter(function (x) { return schedMine(x, dev) && x.when <= now; })
+      .sort(function (a, b) { return a.when - b.when || (a.id < b.id ? -1 : 1); });
   }
   function sentSet(d, issueId) {
     var m = {};
@@ -568,30 +632,37 @@
     var out = [];
     var add = function (lvl, k) { out.push({ lvl: lvl, k: k }); };
     var l = list(d, x.list);
-    if (!x.subj) add("err", "noSubj");
-    else {
-      if (x.subj.length > 90) add("warn", "longSubj");
-      var letters = x.subj.replace(/[^A-Za-zΑ-Ωα-ωΆ-ώ]/g, "");
-      if (letters.length >= 8 && letters === letters.toUpperCase()) add("warn", "shouty");
-      if (/!!|\$\$\$|€€€/.test(x.subj)) add("warn", "shouty");
-    }
-    var hasBody = x.fmt === "md" ? !!x.md.trim() : x.blocks.some(function (b) {
-      if (b.k === "img") return !!b.f;
-      return b.k !== "hr" && !!(b.t || b.a || b.b);
+    // the main version and, when there is one, the other language
+    [x].concat(x.l2 ? [x.l2] : []).forEach(function (v) {
+      if (!v.subj) add("err", "noSubj");
+      else {
+        if (v.subj.length > 90) add("warn", "longSubj");
+        var letters = v.subj.replace(/[^A-Za-zΑ-Ωα-ωΆ-ώ]/g, "");
+        if (letters.length >= 8 && letters === letters.toUpperCase()) add("warn", "shouty");
+        if (/!!|\$\$\$|€€€/.test(v.subj)) add("warn", "shouty");
+      }
+      var hasBody = v.fmt === "md" ? !!v.md.trim() : v.blocks.some(function (b) {
+        if (b.k === "img") return !!b.f;
+        return b.k !== "hr" && !!(b.t || b.a || b.b);
+      });
+      if (!hasBody) add("err", "noBody");
+      if (v.fmt === "blocks" && v.blocks.some(function (b) { return (b.k === "btn" && (!b.href || !b.t)) || (b.k === "img" && !b.f); })) {
+        add("err", "badBlock");
+      }
+      var text = v.fmt === "md" ? v.md : v.blocks.map(function (b) { return [b.t, b.a, b.b].join(" "); }).join(" ");
+      if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
     });
-    if (!hasBody) add("err", "noBody");
     if (!l || !l.addr) add("err", "noAddr");
     if (!l || !l.from) add("err", "noFrom");
     if (!info.chan) add("err", "noChan");
     if (info.inbox === false) add("warn", "noInbox");
     if ((info.imgBytes || 0) > LIM.imgBytes) add("warn", "bigImgs");
-    if (x.fmt === "blocks" && x.blocks.some(function (b) { return (b.k === "btn" && (!b.href || !b.t)) || (b.k === "img" && !b.f); })) {
-      add("err", "badBlock");
-    }
-    var text = x.fmt === "md" ? x.md : x.blocks.map(function (b) { return [b.t, b.a, b.b].join(" "); }).join(" ");
-    if (badPlaceholders(text + " " + x.subj)) add("warn", "placeholder");
-    if (!(info.aud > 0)) add("err", "noAudience");
-    return out;
+    if (x.seg && !seg(d, x.seg)) add("err", "segGone");
+    else if (!(info.aud > 0)) add("err", "noAudience");
+    // keep each finding once, errors first
+    var seen = {};
+    return out.filter(function (r) { var k = r.lvl + r.k; if (seen[k]) return false; seen[k] = 1; return true; })
+      .sort(function (a, b) { return a.lvl === b.lvl ? 0 : (a.lvl === "err" ? -1 : 1); });
   }
 
   // ---------- Inbox requests ----------
@@ -664,7 +735,8 @@
     randomId: randomId, oneLine: oneLine, multi: multi,
     empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, normSub: normSub,
     normChan: normChan, normList: normList, normIssue: normIssue,
-    status: status, mergeNewsletter: mergeNewsletter,
+    status: status, mergeNewsletter: mergeNewsletter, normSeg: normSeg, normTpl: normTpl, normL2: normL2,
+    segMatch: segMatch, seg: seg, segsOf: segsOf, langOf: langOf, contentFor: contentFor, schedDue: schedDue, schedMine: schedMine,
     live: live, list: list, chan: chan, issue: issue, sub: sub, subsOf: subsOf, counts: counts, allTags: allTags,
     byToken: byToken, byCode: byCode,
     audience: audience, sentSet: sentSet, progress: progress, canSend: canSend, invitesDue: invitesDue, usedToday: usedToday,

@@ -180,3 +180,69 @@ test("app wiring: scripts, slice, palette, no code sinks", () => {
   };
   assert.deepEqual(keys("el"), keys("en"));
 });
+
+test("effects: chains normalise, survive merge, keep unknown effects", () => {
+  const fx = C.normFx([
+    { u: "fabc1234", id: "tilt", s: { 1: 40, "x": 3, 0: 1, 99: 2, 2: "5" } },
+    { u: "fabc1234", id: "reverb" },                                         // duplicate slot id
+    { u: "fdef5678", id: "../evil" },                                        // bad effect id
+    { u: "fghi9012", id: "future_fx", on: false, f: { 2: "/internal/Studio/fx/ir-a.wav", 3: "/etc/passwd", 4: "/internal/Studio/../x" } },
+    null, "x"
+  ]);
+  assert.deepEqual(fx, [
+    { u: "fabc1234", id: "tilt", on: true, s: { 1: 40 } },
+    { u: "fghi9012", id: "future_fx", on: false, s: {}, f: { 2: "/internal/Studio/fx/ir-a.wav" } }
+  ]);
+  const many = Array.from({ length: 12 }, (_, i) => ({ u: "fslot" + String(i).padStart(3, "0"), id: "tilt" }));
+  assert.equal(C.normFx(many).length, C.MAX_FX);
+  assert.deepEqual(C.normFx("nope"), []);
+  // on tracks and on the project (master), through a merge
+  const a = data({ projects: [P("pproject1", 5, { fx: [{ u: "fmaster01", id: "reverb", s: { 4: 50 } }] })], tracks: [T("ttrack01", 5, { fx: fx })] });
+  const b = data({ projects: [P("pproject1", 3)], tracks: [T("ttrack01", 3)] });
+  const m = C.mergeStudio(a, b);
+  assert.deepEqual(m, C.mergeStudio(b, a));
+  assert.equal(C.find(m, "projects", "pproject1").fx[0].id, "reverb");
+  assert.equal(C.find(m, "tracks", "ttrack01").fx.length, 2);
+  assert.deepEqual(C.normTrack(T("ttrack02", 1)).fx, []);
+});
+
+test("effects: slider positions, steps, values and IR file paths", () => {
+  const lin = { i: 1, min: -12, max: 12, inc: 0.5, def: 0 };
+  assert.equal(C.sliderFromPos(lin, 0), -12);
+  assert.equal(C.sliderFromPos(lin, 1), 12);
+  assert.equal(C.sliderFromPos(lin, 0.52), 0.5);                      // to the step
+  near(C.sliderToPos(lin, 6), 0.75);
+  assert.equal(C.sliderStep(lin, 99), 12);
+  const log = { i: 2, min: 20, max: 20000, inc: 0, def: 1000, shape: "log" };
+  near(C.sliderFromPos(log, 0.5), Math.sqrt(20 * 20000), 1e-3);
+  near(C.sliderToPos(log, 632.455532), 0.5);
+  for (let x = 0; x <= 1; x += 0.125) near(C.sliderToPos(log, C.sliderFromPos(log, x)), x, 1e-6);
+  const flat = { i: 3, min: 0, max: 0, inc: 1, def: 0 };
+  assert.equal(C.sliderToPos(flat, 0), 0);
+  const rev = { i: 4, min: 10, max: -10, inc: 1, def: 0 };            // JSFX allows min > max
+  assert.equal(C.sliderStep(rev, 50), 10);
+  assert.equal(C.fxValue({ s: { 1: 3 } }, lin), 3);
+  assert.equal(C.fxValue({ s: {} }, lin), 0);
+  assert.equal(C.fxValue(null, log), 1000);
+  const p = C.fxFilePath("fabc1234", "My Hall/IR.wav", "wav");
+  assert.match(p, /^\/internal\/Studio\/fx\/[A-Za-z0-9_-]+-fabc1234\.wav$/);
+});
+
+test("effects: runtime files are static and loaded through validated ids", () => {
+  const fxjs = read("studio/fx.js"), html = read("studio/index.html");
+  const idx = JSON.parse(read("studio/nullfx/fx/index.json"));
+  assert.ok(idx.effects.length >= 70);
+  idx.effects.forEach((e) => {
+    assert.match(e.id, /^[a-z0-9_]{1,40}$/);
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "studio/nullfx/fx", e.id + ".js")), e.id);
+  });
+  const dir = path.join(__dirname, "..", "studio/nullfx");
+  const files = ["runtime/eel-rt.js", "runtime/null-fx.js", "runtime/null-gfx.js", "runtime/null-node.js", "runtime/null-worklet.js"]
+    .concat(idx.effects.map((e) => "fx/" + e.id + ".js"));
+  files.forEach((f) => assert.doesNotMatch(fs.readFileSync(path.join(dir, f), "utf8"), /\beval\(|new Function|importScripts|XMLHttpRequest|innerHTML|document\.write/, f));
+  assert.doesNotMatch(fxjs, /\beval\(|new Function|insertAdjacentHTML|outerHTML\s*=|document\.write/);
+  (fxjs.match(/innerHTML\s*=\s*[^;]+;/g) || []).forEach((s) => assert.match(s, /innerHTML\s*=\s*(""|'<svg[^']*'\s*\+\s*path\s*\+\s*'[^']*'|'<svg[^']*')/, s));
+  assert.ok(fxjs.includes("if (!C.FX_ID_RE.test(id)) return Promise.reject"));
+  ["nullfx/runtime/eel-rt.js", "nullfx/runtime/null-fx.js", "nullfx/runtime/null-gfx.js", "nullfx/runtime/null-node.js", "fx.js"]
+    .forEach((s) => assert.ok(html.indexOf('src="' + s) >= 0 && html.indexOf('src="' + s) < html.indexOf('src="core.js'), s));
+});
