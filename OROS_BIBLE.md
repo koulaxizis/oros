@@ -691,7 +691,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **CRM** | oros-crm-data (+ device-local `oros-crm-prefs`, `oros-crm-notified`) | CRM v1: cust / deals / acts / fups / tags LWW by m per id (equal m → larger canonical JSON), prefs one record by pm, tombs max per id (tomb ≥ m hides; tombs pruned 365 days before the newest stamp in the data, no clock); rows whose customer is gone are dropped by the merge; canonical (R26) | v1.0.0 at 1.03.00; Business; v1.1.0 at 1.14.00 (phase 2: shell reminders, Today, Calendar feed, Contacts button); v1.2.0 at 1.22.00 (own stages: list stg); v1.3.0 at 1.25.00 (Invoices + Quote bridges, Documents tab); v1.4.0 at 1.29.00 (CSV import, BR-CRM-MAIL receiver) |
 | **Stock** | oros-stock-data | items / cats / units / sups / pos / pics / whs LWW per id by m (equal m: larger canonical JSON) + tombs (365 days; a tomb at or after a row's m hides it, EXCEPT an item or warehouse that has movements); moves union by id, a void wins; on equal m the copy carrying w / w2 wins (a 1.3 device strips them); settings LWW; canonical (R26). Quantity = sum of movement lines, never stored | v1.0.0 at 1.04.00; v1.1.0 at 1.15.00 (purchase orders, reports, bridges, Today); Business; v1.2.0 at 1.24.00 (counter, barcode labels, photos); v1.3.0 at 1.27.00 (BR-ST-OUT receiver, camera scanning); v1.4.0 at 1.30.00 (warehouses, transfers) |
 | **Invoices** | oros-invoices-data (+ device-local `oros-invoices-prefs`, `oros-invoices-draft`) | Invoices v1: series / clients / docs / pays / tpls LWW by m per id (equal m → tombstone, then larger JSON); prof one record by m; tombstones `{id,m,del:1}`; totals never stored; canonical (R26) | v1.0.0 at 1.07.00; Business |
-| **Newsletter** | oros-newsletter-data (+ device-local `oros-newsletter-prefs`; IDB `oros-newsletter` keys/creds for provider passwords) | slice `newsletter` | merge: LWW per id (equal m: tombstone, then larger JSON); subscribers merge at/conf/inv/bnc as max and off by latest; `sent` per issue = union while sending; `supp` = union | search.js (issues, lists); v1.0.0 at 1.21.00; Business (new app) |
+| **Newsletter** | oros-newsletter-data (+ device-local `oros-newsletter-prefs` UI, `oros-newsletter-dev` {dev, used, inbox}; IDB `oros-newsletter` keys/creds for provider passwords) | slice `newsletter`, registered by the SHELL (newsletter/runner.js, always live); the app registers it only when opened without the shell | merge: LWW per id (equal m: tombstone, then larger JSON) for chans/lists/subs/issues/segs/tpls; subscribers merge at/conf/inv/bnc as max and off by latest; `sent` per issue = union while sending; `supp` = union | search.js (issues, lists); today.js; v1.0.0 at 1.21.00; v1.1.0 at 1.31.00 (phase 2: shell runner, scheduling, segments, templates, bilingual, CRM source, Today); Business |
 | **Library** | oros-library-data (settings slice "library"; + device-local `oros-library-prefs`, `oros-library-paths`, IndexedDB `oros-library-cache`) | LIBRARY v1: `{ver:1, books[], pos{}, marks[], tombs{}}`; books, positions and marks LWW by m (tie: larger canonical JSON), tombstones keep the max and hide records with m <= tomb; symmetric, canonical (R26) | v1.0.0 at 1.08.00 (phase 1: EPUB + PDF reader, highlights, notes, bookmarks, search, contents, Markdown export; `.epub` / `.pdf` "Open with"); Personal (new app, after Media Shelf); search provider `library/search.js` |
 | **Label Maker** | oros-labels-data (+ device-local `oros-labels-prefs`: tape settings, Recent ≤ 10) | LABELS v1: saved labels LWW by m + tombstones (delete wins ties), max 300, canonical (R26) | v1.0.0 at 0.70.00; Creativity (soffitta.site port 13/17) |
 | **Ringtone Composer** | oros-ringtones-data (+ device-local `oros-ringtones-prefs`) | RINGTONES v1: melodies LWW by m + tombstones (delete wins ties), max 200, 255 notes each, canonical (R26) | v1.0.0 at 0.72.00; Sound (soffitta.site port 14/17) |
@@ -1205,6 +1205,7 @@ oros-menu-apps = { ver:1, apps[{ id, hidden: boolean, mtime }] }
 - Device-local: `oros-invoices-prefs` (tab, filters, dashboard range/currency, series per kind), `oros-invoices-draft` (the editor's unsaved work).
 
 **NEWSLETTER v1** (`newsletter/`, slice `newsletter`, key `oros-newsletter-data`, 1.21.00): `{ ver:1, chans:[{id,m,name,kind:"mail"|"smtp",acct,preset,host,port,sec,user,inbox,rate,cap}], lists:[{id,m,name,chan,from,fromName,reply,lang,addr,why,theme,color,salt}], subs:[{id:"s"+cyrb53(list|email),m,list,email,name,lang,tags[],src,basis,at,conf,off,offSt,inv,bnc,c}], issues:[{id,m,list,subj,pre,fmt:"blocks"|"md",blocks[],md,tags[],st:"draft"|"sending"|"paused"|"sent",lock:{dev,at},start,done,n,err,fail{subId:reason}}], sent:{issueId:[subId]}, supp:["x"+cyrb53("supp|"+email)] }`. Tokens: unsubscribe/confirm "nl-"+cyrb53(salt|subId) (14 chars), subscribe code "nl-"+salt[0..6] (9 chars).
+- **1.1 (1.31.00):** issues gain `seg`, `l2:{lang:"en"|"el",subj,pre,fmt,blocks,md}|null`, `when` (ms, st "sched"), st adds "sched" (lock kept for "sched" = scheduling device). New collections: `segs:[{id,m,list,name,tags[],match:"any"|"all",lang:""|"en"|"el"}]` (≤50), `tpls:[{id,m,name,subj,pre,fmt,blocks,md,l2}]` (≤50). Subscriber src adds "crm".
 
 **LIBRARY v1** (`library/`, Library / Βιβλιοθήκη, 1.08.00)
 - `library`: Library / Βιβλιοθήκη, category **Personal**, right after Media Shelf (Chris 2026-10-12 11:38 "Ναι σε όλα"). EPUB and PDF reader for books on the orOS disk. Universal search provider `library/search.js` (books, highlights and noted bookmarks; target `{ book, loc? }`).
@@ -1923,6 +1924,9 @@ Rebuild this in any session where code is delivered.
   - Chris 2026-10-12 18:15: name "Newsletter / Ενημερωτικό δελτίο"; other sending providers supported from phase 1; the sending address is each user's own (no Papaki/glarolykoi defaults). Relay quota is shared with Mail.
   - Sending only while the app is open (one #app-frame); a background shell tick is phase 2.
   - No open/click tracking, ever. Subscribers are not in universal search (privacy).
+  - Sending, scheduling and the Inbox run in the shell while orOS is open on the device. With orOS closed nothing is sent. A scheduled issue starts the next time orOS opens on its device. A background tab is throttled to about one message a minute. (1.31.00, phase 2)
+  - A scheduled issue goes out only from the device that scheduled it, because provider and Mail passwords never sync.
+  - CRM is read only from Newsletter (crm/ belongs to the CRM thread). There is no customersForMailing() contract yet: Newsletter uses OrosCrmCore.norm plus cust.email, st and tags.
 
 - **2026-10-12 18:36 · Chris (merge thread):** approved waves continue automatically after each merge; phase 3 was part of the approved plan (2026-10-10 13:18). Invoice card added at the Invoices thread's request (Chris-approved Invoices plan).
 
@@ -5181,3 +5185,19 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 - **Warehouses and transfers:** per-warehouse quantities, counts, counter and filter; transfers change no total; value per warehouse in Reports; old devices keep correct totals.
 - Not tested: real phones, Safari, a real 1.3 device syncing with 1.4.
+
+### 2026-10-12 — Newsletter phase 2 (#243) — 1.31.00
+- Newsletter v1.1.0 (phase 2). The sending engine moved into newsletter/engine.js, shared by the app and the shell.
+  - newsletter/runner.js runs the engine in the shell, so sending, scheduled starts and Inbox checks (every 10 minutes) work with the app closed while orOS is open.
+  - The runner owns the slice "newsletter", always live. It waits for the first sync merge, a sync failure plus 15 s, or 60 s before it sends.
+  - Every writer merge-writes through C.mergeNewsletter, so the app, the shell and other tabs never undo each other.
+  - Web Locks "oros-newsletter-send" and "oros-newsletter-inbox" stop two windows of one device from working at once. A fresh re-read before each message skips anyone who left or was already sent to.
+  - Notices use ns "newsletter": issue sent, paused, scheduled issue started, and new subscribers, unsubscribes and bounces from the Inbox.
+  - Scheduled issues have st "sched" with when, and lock.dev is the scheduling device, which holds the passwords. Only that device starts them. Users can cancel or send now.
+  - Segments (segs: name, tags, any/all, language) are per list. An issue's seg wins over its tags. A deleted segment gives an empty audience, never everyone, and the preflight check flags it as "segGone".
+  - Templates (tpls).
+  - Bilingual issues: l2 = {lang, subj, pre, fmt, blocks, md}. Each subscriber gets their language (their own, else the list's). Preview and test cover both versions, and preflight checks both.
+  - CRM import reads oros-crm-data through the shell's OrosCrmCore.norm, read only. CRM status and tags become tags. The basis is "customer" only when every pick is an active or past customer, else double opt-in. Source "crm".
+  - Today provider newsletter/today.js.
+  - Device state (dev, used, inbox) moved from oros-newsletter-prefs to oros-newsletter-dev, migrated on first read. Paused reasons are stored as codes and translated on display.
+- Not tested: a real sending provider, real phones, Safari, a background tab over hours.

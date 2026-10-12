@@ -12,7 +12,7 @@ A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer l
 `Seconds between messages` and `Messages a day (at most)` keep you under your provider's limits. A provider's password or API key stays sealed on the device where you typed it and is never synced: enter it once on each device that sends.
 
 ## Subscribers
-`Add`, `Paste addresses`, `Import CSV` or pick people `From Contacts`. Each person has a status (`Active`, `Waiting to confirm`, `Unsubscribed`, `Bounced`), tags, and the basis you have for writing to them:
+`Add`, `Paste addresses`, `Import CSV`, or pick people `From Contacts` or `From CRM` (your CRM customers with an e-mail; their CRM status and tags become tags). Each person has a status (`Active`, `Waiting to confirm`, `Unsubscribed`, `Bounced`), tags, and the basis you have for writing to them:
 - `Gave consent`: they agreed, for example on a form.
 - `Existing customer`: news about similar products or services.
 - `Confirms by e-mail`: they get a confirmation request and receive issues only after they confirm.
@@ -20,17 +20,23 @@ A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer l
 An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
 
 ## Writing an issue
-Write in `Blocks` (heading, text, picture, button, line, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you can send to everyone active or only to some tags. Pictures are shrunk and sent inside the e-mail.
+Write in `Blocks` (heading, text, picture, button, line, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you send to everyone active, to subscribers with some tags, or to a saved segment. `Segments…` makes segments: subscribers with some tags (any or all of them), a language, or both. Pictures are shrunk and sent inside the e-mail.
 
-`Preview` shows the issue on a phone and a desktop, `Send a test` mails it to you, and `Check` lists what must be fixed before sending.
+`+ Greek version` (or `+ English version`) adds a second language to the issue: subscribers who read that language get it, everyone else gets the main one. Switch between the two versions at the top of the editor.
+
+`Save as template` keeps an issue's content; `New` then offers `Blank issue` or one of your templates.
+
+`Preview` shows the issue on a phone and a desktop (and in each language), `Send a test` mails it to you, and `Check` lists what must be fixed before sending.
 
 ## Sending
-`Send…` shows how many messages will go out and how long it takes; type the number to confirm. Sending goes one message at a time while Newsletter is open, and the bar on top shows progress with `Pause`. If the daily limit is reached it goes on the next day. Messages that fail are listed under `Not delivered`.
+`Send…` shows how many messages will go out and how long it takes; type the number to confirm. Choose `Now`, or `Later` and a day and time to schedule it. Sending goes one message at a time while orOS is open on this device, even with Newsletter closed, and the bar on top shows progress with `Pause`. If the daily limit is reached it goes on the next day. Messages that fail are listed under `Not delivered`. orOS lets you know when an issue has gone out or paused, and [Today](app:today) shows issues being sent and scheduled.
 
->! Keep Newsletter open while it sends: if you leave it, sending pauses and goes on when you open it again.
+A scheduled issue goes out from the device that scheduled it, where the passwords are. Open it to `Cancel the schedule` or `Send now`.
+
+>! orOS has to be open: with orOS closed nothing is sent, and a scheduled issue starts the next time you open orOS on that device. A tab in the background sends more slowly.
 
 ## Subscribe and unsubscribe by e-mail
-Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
+Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, every few minutes while orOS is open, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
 
 ## Sync and backup
 Lists, subscribers and issues sync through orOS sync, and pictures through the orOS disk. Passwords, the daily counter and when the Inbox was last read stay on each device. `Settings` has `Back up (JSON)` and `Restore from backup`, and `Export CSV` saves a list's subscribers.
@@ -47,6 +53,6 @@ Lists, subscribers and issues sync through orOS sync, and pictures through the o
 > Ask your provider for SPF and DKIM before your first send: it matters more than the subject line.
 
 ## Limits
-- Sending happens only while the app is open, and the daily limit is counted per device.
+- Sending happens only while orOS is open, and the daily limit is counted per device.
 - Up to 5,000 subscribers in all and 20 lists.
 - No open or click statistics, no automations, no web sign-up form hosted for you: people subscribe by e-mail.
