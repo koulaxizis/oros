@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.35.00
+- Newsletter: RSS to e-mail turns a blog or Reader feed into a new issue every day, week or month, as a draft for you to check or sent on its own. You can also import past issues from Buttondown, MailerLite and other services.
+
 ## Version 1.34.00
 - Stock: close a period. Old movements go to an archive file in Files and are replaced by an opening balance; quantities, value and lots stay the same.
 

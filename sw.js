@@ -262,6 +262,7 @@ var PRECACHE_URLS = [
   "newsletter/engine.js",
   "newsletter/runner.js",
   "newsletter/today.js",
+  "newsletter/archive.js",
   "newsletter/newsletter.js",
   "newsletter/search.js",
   "invoices/today.js",
