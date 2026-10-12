@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Photo Lab · orOS</title>
+
+  <link rel="stylesheet" href="photolab.css?v=0.94.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="home-btn" class="icon-btn"></button>
+    <button type="button" id="menu-btn" class="icon-btn"></button>
+    <nav id="menubar"></nav>
+    <button type="button" id="doc-title" class="doc-title"></button>
+    <span id="save-state" class="save-state"></span>
+    <span class="spacer"></span>
+    <button type="button" id="undo-btn" class="icon-btn"></button>
+    <button type="button" id="redo-btn" class="icon-btn"></button>
+    <button type="button" id="panel-btn" class="icon-btn" aria-controls="side" aria-expanded="false"></button>
+  </header>
+
+  <!-- Projects -->
+  <main id="home">
+    <div class="home-inner">
+      <h1 id="home-title"></h1>
+      <p id="home-sub" class="hint"></p>
+      <div class="home-acts">
+        <button type="button" id="home-new" class="btn primary"></button>
+        <button type="button" id="home-open" class="btn"></button>
+        <button type="button" id="home-paste" class="btn ghost"></button>
+      </div>
+      <p id="disk-note" class="hint warn-note" hidden></p>
+      <div class="sec-head">
+        <h2 id="projects-h"></h2>
+        <span id="projects-count" class="count"></span>
+      </div>
+      <p id="projects-empty" class="hint"></p>
+      <ul id="projects" class="cards"></ul>
+    </div>
+  </main>
+
+  <!-- Editor -->
+  <section id="editor">
+    <div id="tools" class="tools" role="toolbar" aria-orientation="vertical"></div>
+    <div class="work">
+      <div id="opts" class="opts"></div>
+      <div id="stage"><canvas id="cv"></canvas></div>
+      <footer id="status">
+        <span id="status-size"></span>
+        <span id="status-pos" class="pos"></span>
+        <span class="spacer"></span>
+        <button type="button" id="zoom-out" class="icon-btn small"></button>
+        <button type="button" id="zoom-btn" class="zoom-btn"></button>
+        <button type="button" id="zoom-in" class="icon-btn small"></button>
+      </footer>
+    </div>
+    <aside id="side">
+      <div class="tabs" role="tablist">
+        <button type="button" id="tab-layers" class="tab" role="tab" aria-controls="pane-layers"></button>
+        <button type="button" id="tab-history" class="tab" role="tab" aria-controls="pane-history"></button>
+      </div>
+      <div id="pane-layers" class="pane" role="tabpanel" aria-labelledby="tab-layers">
+        <div class="layer-props">
+          <label class="prop"><span id="blend-lbl"></span><select id="blend-sel"></select></label>
+          <label class="prop"><span id="opacity-lbl"></span>
+            <span class="prop-row"><input type="range" id="opacity-in" min="0" max="100" step="1"><output id="opacity-out" for="opacity-in"></output></span>
+          </label>
+        </div>
+        <ul id="layer-list" class="layers"></ul>
+        <div class="layer-acts">
+          <button type="button" id="add-layer" class="icon-btn small"></button>
+          <button type="button" id="dup-layer" class="icon-btn small"></button>
+          <button type="button" id="up-layer" class="icon-btn small"></button>
+          <button type="button" id="down-layer" class="icon-btn small"></button>
+          <button type="button" id="merge-layer" class="icon-btn small"></button>
+          <button type="button" id="del-layer" class="icon-btn small"></button>
+        </div>
+      </div>
+      <div id="pane-history" class="pane" role="tabpanel" aria-labelledby="tab-history" hidden>
+        <ul id="history-list" class="history"></ul>
+      </div>
+    </aside>
+  </section>
+
+  <div id="drop-hint" class="drop-hint"></div>
+  <div id="busy" class="busy" hidden><span class="spin"></span></div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=0.94.00"></script>
+  <script src="tiles.js?v=0.94.00"></script>
+  <script src="history.js?v=0.94.00"></script>
+  <script src="select.js?v=0.94.00"></script>
+  <script src="paint.js?v=0.94.00"></script>
+  <script src="resample.js?v=0.94.00"></script>
+  <script src="adjust.js?v=0.94.00"></script>
+  <script src="store.js?v=0.94.00"></script>
+  <script src="../designkit/fx.js?v=0.94.00"></script>
+  <script src="strings.js?v=0.94.00"></script>
+  <script src="app.js?v=0.94.00"></script>
+  <script src="view.js?v=0.94.00"></script>
+  <script src="jobs.js?v=0.94.00"></script>
+  <script src="tools.js?v=0.94.00"></script>
+  <script src="ops.js?v=0.94.00"></script>
+  <script src="io.js?v=0.94.00"></script>
+  <script src="home.js?v=0.94.00"></script>
+  <script src="panels.js?v=0.94.00"></script>
+
+</body>
+</html>
