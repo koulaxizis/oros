@@ -4801,3 +4801,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Photo Lab 2A: open and save PSD + OpenRaster with layers (#201) — 0.99.00
 - Photo Lab opens and saves Photoshop (.psd) and OpenRaster (.ora) files with their layers (`photolab/psd.js`, `photolab/ora.js`; OpenRaster zips through `atelier/zip.js`). `fileopen.js` sends .psd and .ora to Photo Lab ("Open with" and Android Share), manifest `file_handlers` / `share_target` rebuilt; both files precached. Tests: `tests/photolab-files.test.js`.
+
+### 2026-10-12 — orOS 1.00.00 · Photo Lab 2B: Filter menu + retouch tools (#202) — 1.00.00
+- First 1.x version (Chris chose 1.00.00 after 0.99.00 on 2026-10-12; numbering continues 1.01.00, 1.02.00 …).
+- Photo Lab: new Filter menu with 10 filters (blur, sharpen, noise, pixelate, emboss, edges, vignette and more; `photolab/filters.js`, precached) and retouch tools: clone stamp, healing brush, red eye, dodge, burn, sponge, smudge.
