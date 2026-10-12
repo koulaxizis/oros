@@ -651,3 +651,82 @@ test("Today provider: lots expiring within 7 days, expired ones overdue", () => 
   assert.deepEqual(rows[0].target, { item: "item01" });
   delete globalThis.OrosStockCore;
 });
+
+// ---------- 1.6: closing a period ----------
+function sample() {
+  return C.merge(data({
+    items: [item("item01", { cost: 100 }), item("item02", { cost: 50 }), item("item03")],
+    whs: [{ id: "wh0001", m: 1, name: "Shop" }],
+    pos: [{ id: "po0001", m: 1, no: "PO-1", sup: "", d: "2026-01-02", st: "sent", lines: [{ i: "item01", q: k(20), c: 120 }] }],
+    moves: [
+      mv("mv0001", "in", "2026-01-05", [{ i: "item01", q: k(10), c: 120, lot: "A", exp: "2027-01-01" }, { i: "item02", q: k(4), c: 60 }], { src: "po:po0001" }),
+      mv("mv0002", "in", "2026-02-05", [{ i: "item01", q: k(5), c: 180, lot: "B", exp: "2026-12-01" }]),
+      mv("mv0003", "xfer", "2026-03-01", [{ i: "item01", q: k(6) }], { w2: "wh0001" }),
+      mv("mv0004", "out", "2026-04-01", [{ i: "item01", q: -k(3), p: 300 }], { w: "wh0001" }),
+      mv("mv0005", "out", "2026-05-01", [{ i: "item02", q: -k(6) }]),                     // tea below zero, no lot
+      mv("mv0006", "loss", "2026-06-01", [{ i: "item01", q: -k(1) }], { v: 1 }),           // voided
+      mv("mv0007", "in", "2026-11-01", [{ i: "item01", q: k(2), c: 200 }]),                // after the close
+      mv("mv0008", "out", "2026-11-02", [{ i: "item02", q: -k(1) }])
+    ]
+  }), null, NOW);
+}
+function views(d) {
+  return JSON.stringify({
+    q: { ...C.qtyMap(d) }, avg: Object.fromEntries(Object.entries(C.costMap(d)).map(([k2, v]) => [k2, Math.round(v * 1000) / 1000])),
+    wh: Object.fromEntries(Object.entries(C.whQty(d)).map(([k2, v]) => [k2, Object.fromEntries(Object.entries(v).filter(([, n]) => n))])),
+    lots: { ...C.allLots(d) }, rcv: Object.fromEntries(Object.entries(C.receivedMap(d)).map(([k2, v]) => [k2, { ...v }])),
+    dead: C.deadStock(d, "2026-12-20", 90).map((x) => [x.row.item.id, x.last]), low: C.lowList(d).length
+  });
+}
+
+test("closing a period: every derived number is the same after, the old movements are gone", () => {
+  const d = sample();
+  assert.deepEqual(C.closeInfo(d, "2026-10-31", "2026-12-20"), { ok: true, n: 6 });
+  assert.equal(C.closeInfo(d, "2026-12-20", "2026-12-20").ok, false);       // not today or later
+  const c = C.closePeriod(d, "2026-10-31", NOW, "cls00001");
+  assert.deepEqual(c.moves.map((x) => x.id), ["mv0007", "mv0008"]);
+  assert.equal(c.close.ids, "mv0001,mv0002,mv0003,mv0004,mv0005,mv0006");
+  assert.equal(views(c), views(d));
+  // item01 at the close: Main 9, Shop 3; lots B 2 (the sale took it first), A 10, soonest first; item02 −2 without a lot
+  assert.deepEqual(c.close.bal, [
+    { i: "item01", q: k(2), lot: "B", exp: "2026-12-01" }, { i: "item01", q: k(7), lot: "A", exp: "2027-01-01" },
+    { i: "item01", q: k(3), w: "wh0001", lot: "A", exp: "2027-01-01" }, { i: "item02", q: -k(2) }
+  ]);
+  // history starts with the opening balance
+  const h = C.itemMoves(c, "item01");
+  assert.equal(h[h.length - 1].move.t, "open");
+  assert.equal(C.hasMoves(c, "item02"), true);
+  // a second close builds on the first
+  const c2 = C.closePeriod(c, "2026-11-01", NOW + 1000, "cls00002");
+  assert.equal(views(c2), views(d));
+  assert.equal(C.closePeriod(c2, "2026-10-01", NOW, "cls00003"), null);   // not before the current one
+  // the item of the opening can't be deleted away
+  const del = m(c, data({ tombs: { item02: NOW } }));
+  assert.ok(del.items.some((x) => x.id === "item02"));
+});
+
+test("closing a period with two devices: the other device's old copies drop, its offline movements stay", () => {
+  const d = sample();
+  const c = C.closePeriod(d, "2026-10-31", NOW, "cls00001");
+  // device B still has the old movements, plus a sale typed offline (dated inside the period, before the close)
+  const offline = mv("mv0099", "out", "2026-10-30", [{ i: "item01", q: -k(1) }], { m: NOW - 5000 });
+  const b = m(d, data({ moves: [offline] }));
+  const after = m(c, b);
+  assert.deepEqual(after.moves.map((x) => x.id), ["mv0007", "mv0008", "mv0099"]);
+  assert.equal(C.qtyMap(after).item01, C.qtyMap(d).item01 - k(1));
+  assert.equal(JSON.stringify(m(b, c)), JSON.stringify(after));            // symmetric
+  // 90 days later the id list is gone: old copies (m ≤ at) still drop, a later backdated fix stays
+  const later = NOW + 91 * 86400000;
+  const late = mv("mv0100", "fix", "2026-10-15", [{ i: "item02", q: k(1) }], { m: NOW + 10000 });
+  const z = C.merge(after, m(d, data({ moves: [late] })), later);
+  assert.equal(z.close.ids, "");
+  assert.deepEqual(z.moves.map((x) => x.id), ["mv0007", "mv0008", "mv0100"]);
+  // reopening: a tombstone on the close, the archive merged back
+  const re = C.merge(C.merge(c, data({ tombs: { cls00001: NOW + 2000 } }), NOW + 2000), d, NOW + 2000);
+  assert.equal(re.close, undefined);
+  assert.equal(views(re), views(d));
+  // a 1.5 copy (no close key) changes nothing
+  const old = JSON.parse(JSON.stringify(d));
+  assert.equal(JSON.stringify(m(c, old)), JSON.stringify(m(c, c)));
+  assert.equal(C.normClose({ id: "cls00001", m: 1, d: "2026-01-01", at: 1, ids: "bad id!" }).ids, "");
+});

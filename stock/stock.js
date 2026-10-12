@@ -195,6 +195,17 @@
       "lot.add": "Lot / expiry", "lot.title": "Lots", "lot.none": "Without a lot", "lot.expired": "expired",
       "f.exp": "Expiring", "lot.rep": "Expiring within 30 days", "lot.repNone": "Nothing expires in the next 30 days.",
       "lot.line": "Lot {l} · expires {d}",
+      "t.open": "Opening balance",
+      "cl.btn": "Close a period", "cl.title": "Close a period", "cl.through": "Close the books through",
+      "cl.now": "Closed through {d}.", "cl.never": "No period closed yet.",
+      "cl.info": "{n} movements up to that day go to a file in Files (Stock/Archive) and are replaced by an opening balance per product: quantities per warehouse, lots, average costs. Quantities, value and reorder stay the same; the Movements tab and Reports then start after that day.",
+      "cl.info1": "1 movement up to that day goes to a file in Files (Stock/Archive) and is replaced by an opening balance per product: quantities per warehouse, lots, average costs. Quantities, value and reorder stay the same; the Movements tab and Reports then start after that day.",
+      "cl.size": "Stock data on this device: {kb} KB.", "cl.go": "Archive and close", "cl.bad": "Choose a day before today and after the last close.",
+      "cl.none": "Nothing to archive up to that day.", "cl.noFs": "Files isn't available, so nothing was archived or closed.",
+      "cl.fail": "The archive file could not be written, so nothing was closed.", "cl.done": "Closed through {d}. The full history is in Files › Stock/Archive.",
+      "cl.locked": "The books are closed through {d}: choose a later date.", "cl.reopen": "Reopen",
+      "cl.reopenQ": "Reopen the period? The archived movements come back from the file and the opening balance goes.",
+      "cl.noFile": "The archive file isn't on this device yet.", "cl.reopened": "Period reopened.",
       "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app",
       "out.used1": "This document was already taken out of stock once.",
       "out.used": "This document was already taken out of stock {n} times.",
@@ -340,6 +351,17 @@
       "lot.add": "Παρτίδα / λήξη", "lot.title": "Παρτίδες", "lot.none": "Χωρίς παρτίδα", "lot.expired": "έληξε",
       "f.exp": "Λήγουν", "lot.rep": "Λήγουν μέσα σε 30 μέρες", "lot.repNone": "Τίποτα δεν λήγει τις επόμενες 30 μέρες.",
       "lot.line": "Παρτίδα {l} · λήγει {d}",
+      "t.open": "Υπόλοιπο έναρξης",
+      "cl.btn": "Κλείσιμο χρήσης", "cl.title": "Κλείσιμο χρήσης", "cl.through": "Κλείσιμο έως και",
+      "cl.now": "Κλεισμένη έως {d}.", "cl.never": "Δεν έχει κλείσει ακόμη καμία περίοδος.",
+      "cl.info": "{n} κινήσεις έως εκείνη τη μέρα πάνε σε αρχείο στα Αρχεία (Stock/Archive) και αντικαθίστανται από υπόλοιπο έναρξης ανά προϊόν: ποσότητες ανά αποθήκη, παρτίδες, μέσα κόστη. Ποσότητες, αξία και παραγγελία μένουν ίδιες· η καρτέλα Κινήσεις και οι Αναφορές ξεκινούν μετά από εκείνη τη μέρα.",
+      "cl.info1": "1 κίνηση έως εκείνη τη μέρα πηγαίνει σε αρχείο στα Αρχεία (Stock/Archive) και αντικαθίσταται από υπόλοιπο έναρξης ανά προϊόν: ποσότητες ανά αποθήκη, παρτίδες, μέσα κόστη. Ποσότητες, αξία και παραγγελία μένουν ίδιες· η καρτέλα Κινήσεις και οι Αναφορές ξεκινούν μετά από εκείνη τη μέρα.",
+      "cl.size": "Δεδομένα Αποθέματος σε αυτή τη συσκευή: {kb} KB.", "cl.go": "Αρχειοθέτηση και κλείσιμο", "cl.bad": "Διάλεξε μέρα πριν από σήμερα και μετά το τελευταίο κλείσιμο.",
+      "cl.none": "Δεν υπάρχει τίποτα για αρχειοθέτηση έως εκείνη τη μέρα.", "cl.noFs": "Τα Αρχεία δεν είναι διαθέσιμα, οπότε δεν αρχειοθετήθηκε ούτε έκλεισε τίποτα.",
+      "cl.fail": "Το αρχείο δεν γράφτηκε, οπότε δεν έκλεισε τίποτα.", "cl.done": "Κλεισμένη έως {d}. Όλο το ιστορικό είναι στα Αρχεία › Stock/Archive.",
+      "cl.locked": "Η χρήση είναι κλεισμένη έως {d}: διάλεξε μεταγενέστερη ημερομηνία.", "cl.reopen": "Επανάνοιγμα",
+      "cl.reopenQ": "Επανάνοιγμα της περιόδου; Οι αρχειοθετημένες κινήσεις επιστρέφουν από το αρχείο και το υπόλοιπο έναρξης φεύγει.",
+      "cl.noFile": "Το αρχείο δεν έχει έρθει ακόμη σε αυτή τη συσκευή.", "cl.reopened": "Η περίοδος άνοιξε ξανά.",
       "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή",
       "out.used1": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα μία φορά.",
       "out.used": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα {n} φορές.",
@@ -375,7 +397,7 @@
     gear:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
-  var T_ICON = { "in": "📥", out: "📤", ret: "↩️", rts: "↪️", loss: "💔", count: "📋", fix: "✏️", xfer: "🔀" };
+  var T_ICON = { "in": "📥", out: "📤", ret: "↩️", rts: "↪️", loss: "💔", count: "📋", fix: "✏️", xfer: "🔀", open: "📒" };
 
   // "{n} products" with a singular for 1 (key + "1")
   function tn(key, n) { return n === 1 ? t(key + "1") : t(key, { n: n }); }
@@ -949,7 +971,8 @@
     RANGES.forEach(function (r) { var op = el("option", "", t("r." + r)); op.value = r; rs.appendChild(op); });
     rs.value = prefs.range;
     var from = rangeFrom(todayYmd());
-    var list = data.moves.filter(function (mv) { return (!from || mv.d >= from) && typeMatch(mv); })
+    var op = C.openMove(data);
+    var list = (op ? [op] : []).concat(data.moves).filter(function (mv) { return (!from || mv.d >= from) && typeMatch(mv); })
       .sort(function (a, b) { return cmpStr(b.d, a.d) || cmpStr(b.id, a.id); });
     var box = $("moves-list");
     box.innerHTML = "";
@@ -974,17 +997,20 @@
   }
   // where a movement happened: "" with one warehouse, "A → B" for a transfer
   function whText(mv) {
+    if (mv.t === "open") return "";
     if (mv.t === "xfer") return whLabel(mv.w) + " → " + whLabel(mv.w2);
     return mv.w || multiWh() ? whLabel(mv.w) : "";
   }
   // a transfer's quantity has no sign: it changes no total
   function lineQty(mv, q, it) { return mv.t === "xfer" ? "⇄ " + fmtQ(q, it) : fmtSigned(q, it); }
   function moveTitle(mv) {
-    if (mv.lines.length === 1) {
-      var it = byId("items", mv.lines[0].i);
+    var ids = [];
+    mv.lines.forEach(function (l) { if (ids.indexOf(l.i) < 0) ids.push(l.i); });
+    if (ids.length === 1) {
+      var it = byId("items", ids[0]);
       return it ? it.name : "?";
     }
-    return tn("lines", mv.lines.length);
+    return tn("lines", ids.length);
   }
   function moveTotal(mv) {
     var sum = 0, any = false;
@@ -1022,7 +1048,7 @@
     return li;
   }
   function moveSheet(id) {
-    var mv = byId("moves", id);
+    var mv = id === C.OPEN_ID ? C.openMove(data) : byId("moves", id);
     if (!mv) return;
     var dlg = makeDialog("st-move", true);
     dlg.appendChild(el("div", "dlg-title", T_ICON[mv.t] + " " + t("t." + mv.t)));
@@ -1050,6 +1076,8 @@
       if (mv.t === "count") s.appendChild(el("span", "", t("mv.counted", { n: fmtQ(l.n, it) })));
       if (typeof l.c === "number") s.appendChild(el("span", "", money(l.c) + " / " + unitLabel(it ? it.unit : "pcs")));
       if (typeof l.p === "number") s.appendChild(el("span", "", money(l.p) + " / " + unitLabel(it ? it.unit : "pcs")));
+      if (mv.t === "open" && (l.w || multiWh())) s.appendChild(el("span", "", whLabel(l.w)));
+      if (l.lot) s.appendChild(el("span", "", l.exp ? t("lot.line", { l: l.lot, d: fmtDay(l.exp, true) }) : t("lot.lot") + " " + l.lot));
       if (s.childNodes.length) body.appendChild(s);
       b.appendChild(body);
       b.appendChild(el("span", "r-val", lineQty(mv, l.q, it)));
@@ -1065,7 +1093,7 @@
     if (mv.v !== 1 && (mv.t === "in" || mv.t === "out") && moveTotal(mv) && budgetReady()) {
       acts.appendChild(button(t("br.budget"), "", function () { dlg.close(); sendBudget(mv); }));
     }
-    if (mv.v !== 1) acts.appendChild(button(t("mv.void"), "danger", function () {
+    if (mv.v !== 1 && mv.t !== "open") acts.appendChild(button(t("mv.void"), "danger", function () {
       confirmDialog(t("mv.voidQ"), t("mv.voidYes"), true, function () { dlg.close(); voidMove(mv); });
     }));
     acts.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
@@ -2433,6 +2461,10 @@
     date.type = "date";
     date.value = o.date && C.isYmd(o.date) ? o.date : todayYmd();
     date.max = C.addDays(todayYmd(), 1);
+    if (data.close) {
+      date.min = C.addDays(data.close.d, 1);
+      if (date.value < date.min) date.value = todayYmd();
+    }
     r1.appendChild(field(t("mv.type"), tsel, "st-mtype"));
     r1.appendChild(field(t("mv.date"), date, "st-mdate"));
     dlg.appendChild(r1);
@@ -2711,6 +2743,7 @@
       err.hidden = true;
       var k = cur(), sign = C.SIGN[k];
       if (!C.isYmd(date.value)) { fail(t("ed.badNum")); return; }
+      if (data.close && date.value <= data.close.d) { fail(t("cl.locked", { d: fmtDay(data.close.d, true) })); date.focus(); return; }
       if (!lines.length) { fail(t("mv.noLines")); finder.focus(); return; }
       if (k === "xfer" && (!w2sel || w2sel.value === wsel.value)) { fail(t("wh.same")); return; }
       var out = [];
@@ -2946,6 +2979,92 @@
     showDialog(dlg);
   }
 
+  // ----- Closing a period -----
+  // Archive first (the whole data as it is now, a JSON file in Files),
+  // then replace the movements up to the day by the opening balance.
+  // Nothing is closed when the file can't be written.
+  function closeDialog() {
+    var dlg = makeDialog("st-close");
+    dlg.appendChild(el("div", "dlg-title", t("cl.title")));
+    var cl = data.close, today = todayYmd();
+    dlg.appendChild(el("p", "", cl ? t("cl.now", { d: fmtDay(cl.d, true) }) : t("cl.never")));
+    var kb = 0;
+    try { kb = Math.round((localStorage.getItem(STORAGE_KEY) || "").length / 1024); } catch (e) {}
+    dlg.appendChild(el("p", "hint", t("cl.size", { kb: kb })));
+    var d = el("input");
+    d.type = "date";
+    d.max = C.addDays(today, -1);
+    if (cl) d.min = C.addDays(cl.d, 1);
+    var lastDec = (Number(today.slice(0, 4)) - 1) + "-12-31";
+    d.value = (!cl || lastDec > cl.d) ? lastDec : d.max;
+    dlg.appendChild(field(t("cl.through"), d, "st-cl-d"));
+    var info = el("p", "hint");
+    dlg.appendChild(info);
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var go = button(t("cl.go"), "danger-fill", function () { run(); });
+    function upd() {
+      var ci = C.closeInfo(data, d.value, today);
+      info.textContent = ci.ok ? (ci.n ? tn("cl.info", ci.n) : t("cl.none")) : t("cl.bad");
+      go.disabled = !ci.ok || !ci.n;
+    }
+    d.addEventListener("input", upd);
+    d.addEventListener("change", upd);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    if (cl && cl.f) acts.appendChild(button(t("cl.reopen"), "", function () {
+      confirmDialog(t("cl.reopenQ"), t("cl.reopen"), true, function () { dlg.close(); reopenPeriod(); });
+    }));
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    upd();
+    function run() {
+      var day = d.value, ci = C.closeInfo(data, day, todayYmd());
+      if (!ci.ok || !ci.n) return;
+      var fs = fsApi();
+      if (!fs) { err.textContent = t("cl.noFs"); err.hidden = false; return; }
+      confirmDialog(tn("cl.info", ci.n), t("cl.go"), true, function () {
+        var name = "stock-until-" + day + "-" + rnd6() + ".json";
+        var snap = canonical(data);
+        var payload = { app: "oros-stock", ver: C.DATA_VER, exported: new Date().toISOString(), closedThrough: day, data: snap };
+        var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+        go.disabled = true;
+        Promise.resolve(fs.writeBlob(C.archivePath(name), blob)).then(function () {
+          var next = C.closePeriod(data, day, Date.now(), newId(), name);
+          if (!next) throw new Error("close");
+          data = next;
+          save();
+          render();
+          dlg.close();
+          showToast(t("cl.done", { d: fmtDay(day, true) }));
+        }).catch(function () { err.textContent = t("cl.fail"); err.hidden = false; go.disabled = false; });
+      });
+    }
+    showDialog(dlg);
+  }
+  // Reopen: tombstone the close, then merge the archived data back
+  function reopenPeriod() {
+    var cl = data.close, fs = fsApi();
+    if (!cl || !cl.f || !fs) return;
+    Promise.resolve(fs.readBlob(C.archivePath(cl.f))).then(function (b) {
+      if (!b) throw new Error("missing");
+      return b.text();
+    }).then(function (text) {
+      var p = JSON.parse(text);
+      var arch = p && p.app === "oros-stock" && p.data && typeof p.data === "object" ? p.data : null;
+      if (!arch) throw new Error("bad");
+      var cur = data.close;
+      if (!cur || cur.id !== cl.id) return;
+      data.tombs[cl.id] = Math.max(Date.now(), cl.m);
+      delete data.close;
+      data = C.merge(canonical(data), arch);
+      save();
+      render();
+      showToast(t("cl.reopened"));
+    }).catch(function () { showToast(t("cl.noFile")); });
+  }
+
   // ----- Warehouses -----
   // The main one can only be renamed (its row WH_MAIN holds the name).
   // Another one is archived, never deleted, once a movement used it.
@@ -3121,6 +3240,7 @@
     la.appendChild(button(t("set.cats"), "", function () { dlg.close(); catsDialog(); }));
     la.appendChild(button(t("set.units"), "", function () { dlg.close(); unitsDialog(null); }));
     la.appendChild(button(t("wh.title"), "", function () { dlg.close(); whsDialog(); }));
+    la.appendChild(button(t("cl.btn"), "", function () { dlg.close(); closeDialog(); }));
     dlg.appendChild(la);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight wrap");
@@ -3526,6 +3646,7 @@
   function openOut(req) {
     var r = C.outRequest(data, req, todayYmd());
     if (!r) return;
+    if (data.close && r.d <= data.close.d) r.d = todayYmd();
     var app = r.src ? r.src.split(":")[0] : "";
     var name = appName(app);
     setTab("moves");

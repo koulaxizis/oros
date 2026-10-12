@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.5.0)
+// orOS Stock — core.js (shared logic, v1.6.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -43,6 +43,8 @@
 //   warehouses (1.4): WH_MAIN, normWh, whName, whQty(data), qtyIn(data, w)
 //   lots (1.5): LOT_LEN, lotsOf(data, itemId), allLots(data),
 //     expiring(data, today, days), lotNames(data, itemId)
+//   closing a period (1.6): normClose, closePeriod(data, d, nowMs, id),
+//     openMove(data), OPEN_ID, closeInfo(data, d)
 // Data (synced slice "stock", key oros-stock-data):
 //   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
 //     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
@@ -65,6 +67,17 @@
 //   xfer) and, on a receipt or a customer return, exp (YYYY-MM-DD).
 //   What is left of each lot is derived (lotsOf): sales name a lot or
 //   take the first to expire. Same tie rule: the copy with lots wins.
+//   close (1.6): one object { id, m, d, at, bal, avg, ls, fs, rcv, ids }:
+//   the books are closed through day d. The movements up to d were
+//   archived (a JSON file in Files) and replaced by an opening balance
+//   (bal lines per item / warehouse / lot, avg costs, last sale day ls,
+//   first day fs, PO receipts rcv). ids lists the archived movement ids
+//   for 90 days: a movement dated ≤ d that is NOT listed (typed on a
+//   device that was offline, or backdated later) stays live and counts
+//   on top of the opening. After 90 days the list goes and anything
+//   dated ≤ d with m ≤ at is dropped. Merge keeps the close with the
+//   latest d; a tombstone on its id reopens the period. A 1.5 device
+//   doesn't know close: it keeps showing full history until updated.
 // ============================================================
 (function (root) {
   "use strict";
@@ -396,10 +409,24 @@
         if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
       });
     });
+    // the closed period (1.6): the latest close that is not tombstoned
+    var close = null;
+    [a.close, b.close].forEach(function (raw) {
+      var c = normClose(raw);
+      if (!c || (c.id in tombs && tombs[c.id] >= c.m)) return;
+      if (!close || c.d > close.d || (c.d === close.d && (c.m > close.m || (c.m === close.m && canon(c) > canon(close))))) close = c;
+    });
+    if (close && close.ids && now - close.at > CLOSE_IDS_DAYS * DAY_MS) close.ids = "";
+    var gone = null;
+    if (close && close.ids) { gone = dict(); close.ids.split(",").forEach(function (id) { gone[id] = true; }); }
+    function archived(x) {
+      if (!close || x.d > close.d) return false;
+      return gone ? !!gone[x.id] : x.m <= close.at;
+    }
     // movements first: they decide which items must stay
     var bestM = dict();
     [a.moves, b.moves].forEach(function (list) {
-      if (Array.isArray(list)) list.forEach(function (raw) { var x = normMove(raw); if (x) moveWins(bestM, x); });
+      if (Array.isArray(list)) list.forEach(function (raw) { var x = normMove(raw); if (x && !archived(x)) moveWins(bestM, x); });
     });
     var moves = [], used = dict();
     Object.keys(bestM).sort(cmpStr).forEach(function (id) {
@@ -410,6 +437,7 @@
       if (x.w) used[x.w] = true;
       if (x.w2) used[x.w2] = true;
     });
+    if (close) close.bal.forEach(function (l) { used[l.i] = true; if (l.w) used[l.w] = true; });
     function pick(key, norm, cap) {
       var best = dict();
       [a[key], b[key]].forEach(function (list) {
@@ -427,6 +455,7 @@
     var out = { ver: DATA_VER };
     LIST_KEYS.forEach(function (k) { out[k] = pick(k, LISTS[k], k === "items" ? MAX_ITEMS : MAX_LIST); });
     out.moves = moves;
+    if (close) out.close = close;
     var sa = normSettings(a.settings), sb = normSettings(b.settings);
     out.settings = sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa;
     var sortedTombs = {};
@@ -449,11 +478,21 @@
   // Chronological order: day, then id (ids start with the creation
   // time), so every device walks the ledger the same way.
   function chrono(moves) {
-    return live(moves).slice().sort(function (x, y) { return cmpStr(x.d, y.d) || cmpStr(x.id, y.id); });
+    return live(moves).slice().sort(byTime);
+  }
+  // time order; the opening balance comes first, whatever its day: a
+  // late movement dated inside the closed period counts on top of it
+  function byTime(x, y) {
+    return (x.t === "open" ? 0 : 1) - (y.t === "open" ? 0 : 1) || cmpStr(x.d, y.d) || cmpStr(x.id, y.id);
+  }
+  // the movements plus the opening balance of a closed period (1.6)
+  function ledger(data) {
+    var o = openMove(data), list = (data && data.moves) || [];
+    return o ? [o].concat(list) : list;
   }
   function qtyMap(data) {
     var q = dict();
-    live(data && data.moves).forEach(function (x) {
+    live(ledger(data)).forEach(function (x) {
       x.lines.forEach(function (l) { q[l.i] = (q[l.i] || 0) + l.q; });
     });
     return q;
@@ -468,6 +507,12 @@
   function costMap(data) {
     var q = dict(), avg = dict(), own = dict();
     ((data && data.items) || []).forEach(function (it) { own[it.id] = it.cost; });
+    // a closed period starts from its quantities and average costs
+    var cl = data && data.close;
+    if (cl) {
+      cl.bal.forEach(function (l) { q[l.i] = (q[l.i] || 0) + l.q; });
+      Object.keys(cl.avg).forEach(function (i) { avg[i] = cl.avg[i]; });
+    }
     chrono(data && data.moves).forEach(function (x) {
       x.lines.forEach(function (l) {
         var before = q[l.i] || 0;
@@ -522,7 +567,7 @@
   // where after = the quantity right after it (voided ones: null).
   function itemMoves(data, itemId) {
     var run = 0, out = [];
-    liveAll(data && data.moves).slice().sort(function (x, y) { return cmpStr(x.d, y.d) || cmpStr(x.id, y.id); }).forEach(function (x) {
+    liveAll(ledger(data)).slice().sort(byTime).forEach(function (x) {
       x.lines.forEach(function (l) {
         if (l.i !== itemId) return;
         if (x.t !== "xfer") run += l.q;       // a transfer leaves the total
@@ -537,7 +582,7 @@
     return out;
   }
   function hasMoves(data, itemId) {
-    var list = (data && data.moves) || [];
+    var list = ledger(data);
     for (var i = 0; i < list.length; i++) {
       for (var j = 0; j < list[i].lines.length; j++) if (list[i].lines[j].i === itemId) return true;
     }
@@ -797,7 +842,11 @@
   function poSrc(id) { return "po:" + id; }
   // What arrived per item for each order: { poId: { itemId: q } }
   function receivedMap(data) {
-    var by = dict();
+    var by = dict(), cl = data && data.close;
+    if (cl) Object.keys(cl.rcv).forEach(function (po) {
+      var r = by[po] = dict();
+      Object.keys(cl.rcv[po]).forEach(function (i) { r[i] = cl.rcv[po][i]; });
+    });
     live(data && data.moves).forEach(function (x) {
       if (x.t !== "in" || typeof x.src !== "string" || x.src.indexOf("po:") !== 0) return;
       var id = x.src.slice(3), r = by[id] || (by[id] = dict());
@@ -1010,14 +1059,18 @@
   // return to supplier, no loss) for `days` days or more. last = the
   // last such day or null (never). Biggest value first.
   function deadStock(data, today, days) {
-    var n = days || 90, since = addDays(today, -(n - 1)), last = dict();
+    var n = days || 90, since = addDays(today, -(n - 1)), last = dict(), first = dict();
+    var cl = data && data.close;
+    if (cl) {
+      Object.keys(cl.ls).forEach(function (i) { last[i] = cl.ls[i]; });
+      Object.keys(cl.fs).forEach(function (i) { first[i] = cl.fs[i]; });
+    }
     live(data && data.moves).forEach(function (x) {
       if (x.t !== "out" && x.t !== "rts" && x.t !== "loss") return;
       x.lines.forEach(function (l) { if (!last[l.i] || x.d > last[l.i]) last[l.i] = x.d; });
     });
-    var first = dict();
-    chrono(data && data.moves).forEach(function (x) {
-      x.lines.forEach(function (l) { if (!first[l.i]) first[l.i] = x.d; });
+    live(data && data.moves).forEach(function (x) {
+      x.lines.forEach(function (l) { if (!first[l.i] || x.d < first[l.i]) first[l.i] = x.d; });
     });
     return stockRows(data).filter(function (r) {
       if (r.item.arch || r.q <= 0) return false;
@@ -1098,11 +1151,11 @@
   function whQty(data) {
     var q = dict();
     function add(i, w, n) { var r = q[i] || (q[i] = dict()); r[w] = (r[w] || 0) + n; }
-    liveAll(data && data.moves).forEach(function (x) {
+    liveAll(ledger(data)).forEach(function (x) {
       var w = x.w || "";
       x.lines.forEach(function (l) {
         if (x.t === "xfer") { add(l.i, w, -l.q); add(l.i, x.w2 || "", l.q); }
-        else add(l.i, w, l.q);
+        else add(l.i, x.t === "open" ? (l.w || "") : w, l.q);
       });
     });
     return q;
@@ -1132,10 +1185,12 @@
   }
   function walkLots(data, only) {
     var by = dict();
-    chrono(data && data.moves).forEach(function (x) {
+    chrono(ledger(data)).forEach(function (x) {
       x.lines.forEach(function (l) {
         if (only && l.i !== only) return;
         var st = by[l.i] || (by[l.i] = { lots: dict(), none: 0 });
+        // the opening balance's minus lines are what "none" owed
+        if (x.t === "open" && l.q < 0) { st.none += l.q; return; }
         if (l.q > 0) {
           if (!l.lot) { st.none += l.q; return; }
           var r = st.lots[l.lot] || (st.lots[l.lot] = { lot: l.lot, exp: "", q: 0 });
@@ -1190,10 +1245,136 @@
   // Every lot name this item ever had (newest first), for the editor
   function lotNames(data, itemId) {
     var seen = dict(), out = [];
-    liveAll(data && data.moves).slice().sort(function (x, y) { return cmpStr(y.d, x.d) || cmpStr(y.id, x.id); }).forEach(function (x) {
+    liveAll(ledger(data)).slice().sort(function (x, y) { return byTime(y, x); }).forEach(function (x) {
       x.lines.forEach(function (l) { if (l.i === itemId && l.lot && !seen[l.lot]) { seen[l.lot] = true; out.push(l.lot); } });
     });
     return out;
+  }
+
+  // ---------- Closing a period (1.6) ----------
+  var CLOSE_IDS_DAYS = 90, OPEN_ID = "!open", IDS_RE = /^[a-z0-9]{6,40}(,[a-z0-9]{6,40})*$/;
+  // the archive: a JSON file in Files, named by the close (f)
+  var ARCHIVE_DIR = "/internal/Stock/Archive", ARCH_RE = /^stock-until-\d{4}-\d{2}-\d{2}-[a-z0-9]{4,12}\.json$/;
+  function archivePath(f) { return ARCHIVE_DIR + "/" + f; }
+  function normClose(x) {
+    if (!base(x) || !isYmd(x.d) || !isInt(x.at) || x.at < 0) return null;
+    var bal = [];
+    (Array.isArray(x.bal) ? x.bal : []).slice(0, MAX_ITEMS * 4).forEach(function (l) {
+      if (!l || typeof l !== "object" || !ID_RE.test(String(l.i))) return;
+      var q = clampInt(l.q, -Q_MAX, Q_MAX);
+      if (!q) return;
+      var o = { i: l.i, q: q }, w = whRef(l.w);
+      if (w) o.w = w;
+      var lot = q > 0 ? cleanText(l.lot, LOT_LEN, false) : "";
+      if (lot) { o.lot = lot; if (isYmd(l.exp)) o.exp = l.exp; }
+      bal.push(o);
+    });
+    function idMap(v, ok) {
+      var out = {};
+      if (v && typeof v === "object") Object.keys(v).sort(cmpStr).forEach(function (k) { if (ID_RE.test(k) && ok(v[k])) out[k] = v[k]; });
+      return out;
+    }
+    var avg = idMap(x.avg, function (n) { return typeof n === "number" && isFinite(n) && n >= 0 && n <= C_MAX; });
+    Object.keys(avg).forEach(function (k) { avg[k] = Math.round(avg[k] * 10000) / 10000; });
+    var rcv = {};
+    if (x.rcv && typeof x.rcv === "object") Object.keys(x.rcv).sort(cmpStr).forEach(function (po) {
+      if (!ID_RE.test(po)) return;
+      var r = idMap(x.rcv[po], function (n) { return isInt(n) && n > 0 && n <= Q_MAX; });
+      if (Object.keys(r).length) rcv[po] = r;
+    });
+    return {
+      id: x.id, m: x.m, d: x.d, at: x.at, bal: bal, avg: avg,
+      ls: idMap(x.ls, isYmd), fs: idMap(x.fs, isYmd), rcv: rcv,
+      ids: typeof x.ids === "string" && x.ids.length <= 4000000 && IDS_RE.test(x.ids) ? x.ids : "",
+      f: typeof x.f === "string" && ARCH_RE.test(x.f) ? x.f : ""
+    };
+  }
+  // The opening balance as a read-only movement (never stored, never
+  // voided): lines carry their own warehouse and lot.
+  function openMove(data) {
+    var cl = data && data.close;
+    if (!cl || !cl.bal.length) return null;
+    return { id: OPEN_ID, m: cl.m, d: cl.d, t: "open", ref: "", sup: "", note: "", lines: cl.bal };
+  }
+  // What closing through day d would do: { n: movements archived,
+  // ok: d is before today and after the current close }
+  function closeInfo(data, d, today) {
+    var cl = data && data.close;
+    var ok = isYmd(d) && d < today && (!cl || d > cl.d);
+    var n = ((data && data.moves) || []).filter(function (x) { return x.d <= d; }).length;
+    return { ok: ok, n: n };
+  }
+  // Close the books through day d. Pure: returns the new data (the
+  // caller archives the old one first). The opening balance keeps, per
+  // item, the quantity of each warehouse and what is left of each lot
+  // (lots spread over the warehouses that hold stock), the average
+  // cost, the last sale and first day, and what each order received.
+  function closePeriod(data, d, nowMs, id, file) {
+    if (!isYmd(d) || !ID_RE.test(String(id))) return null;
+    var cl = data.close;
+    if (cl && d <= cl.d) return null;
+    var upTo = data.moves.filter(function (x) { return x.d <= d; });
+    var sub = {}; Object.keys(data).forEach(function (k) { sub[k] = data[k]; });
+    sub.moves = upTo;
+    var whq = whQty(sub), lots = allLots(sub), avg = costMap(sub), rcvAll = receivedMap(sub);
+    var ls = dict(), fs = dict();
+    if (cl) {
+      Object.keys(cl.ls).forEach(function (i) { ls[i] = cl.ls[i]; });
+      Object.keys(cl.fs).forEach(function (i) { fs[i] = cl.fs[i]; });
+    }
+    live(upTo).forEach(function (x) {
+      x.lines.forEach(function (l) {
+        if ((x.t === "out" || x.t === "rts" || x.t === "loss") && (!ls[l.i] || x.d > ls[l.i])) ls[l.i] = x.d;
+        if (!fs[l.i] || x.d < fs[l.i]) fs[l.i] = x.d;
+      });
+    });
+    var bal = [], avgOut = {}, lsOut = {}, fsOut = {};
+    Object.keys(whq).sort(cmpStr).forEach(function (i) {
+      var per = whq[i], L = lots[i] || { lots: [], none: 0 };
+      var ws = Object.keys(per).filter(function (w) { return per[w]; }).sort(cmpStr);
+      if (!ws.length) return;
+      // pool: the lots (soonest first), then stock without a lot
+      var pool = L.lots.map(function (r) { return { lot: r.lot, exp: r.exp, q: r.q }; });
+      if (L.none > 0) pool.push({ lot: "", exp: "", q: L.none });
+      function take(w, need) {
+        while (need > 0 && pool.length) {
+          var c = pool[0], n = Math.min(need, c.q), o = { i: i, q: n };
+          if (w) o.w = w;
+          if (c.lot) { o.lot = c.lot; if (c.exp) o.exp = c.exp; }
+          bal.push(o);
+          c.q -= n; need -= n;
+          if (!c.q) pool.shift();
+        }
+        return need;
+      }
+      ws.forEach(function (w) {
+        if (per[w] <= 0) return;
+        var rest = take(w, per[w]);
+        if (rest > 0) { var o = { i: i, q: rest }; if (w) o.w = w; bal.push(o); }
+      });
+      ws.forEach(function (w) {
+        if (per[w] >= 0) return;
+        var o = { i: i, q: per[w] }; if (w) o.w = w; bal.push(o);
+      });
+      // lots left over (stock without a lot was below zero): in the
+      // main warehouse, balanced by a minus line there
+      var extra = pool.reduce(function (a, c) { return a + c.q; }, 0);
+      if (extra > 0) { take("", extra); bal.push({ i: i, q: -extra }); }
+    });
+    // every average that isn't just the item's own purchase price
+    (data.items || []).forEach(function (it) { if (typeof avg[it.id] === "number" && avg[it.id] !== it.cost) avgOut[it.id] = avg[it.id]; });
+    Object.keys(ls).sort(cmpStr).forEach(function (i) { lsOut[i] = ls[i]; });
+    Object.keys(fs).sort(cmpStr).forEach(function (i) { fsOut[i] = fs[i]; });
+    var rcv = {};
+    Object.keys(rcvAll).sort(cmpStr).forEach(function (po) { rcv[po] = rcvAll[po]; });
+    var close = normClose({
+      id: id, m: nowMs, d: d, at: nowMs, bal: bal, avg: avgOut, ls: lsOut, fs: fsOut, rcv: rcv,
+      ids: upTo.map(function (x) { return x.id; }).sort(cmpStr).join(","), f: file || ""
+    });
+    var out = {}; Object.keys(data).forEach(function (k) { out[k] = data[k]; });
+    out.moves = data.moves.filter(function (x) { return x.d > d; });
+    out.close = close;
+    return merge(out, out, nowMs);
   }
 
   var api = {
@@ -1219,7 +1400,9 @@
     eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg,
     outRequest: outRequest, srcUses: srcUses, catalog: catalog,
     WH_MAIN: WH_MAIN, normWh: normWh, whName: whName, whQty: whQty, qtyIn: qtyIn,
-    LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames
+    LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
+    OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
+    ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;
