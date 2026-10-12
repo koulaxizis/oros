@@ -1,8 +1,8 @@
 // ============================================================
-// orOS Stock — App logic (v1.0.0)
+// orOS Stock — App logic (v1.3.0)
 // Business inventory (not the home Storage app):
 //   - products with SKU, barcode, category, unit, minimum, reorder
-//     quantity, supplier, purchase / sale price, VAT, location
+//     quantity, supplier, purchase / sale price, VAT, location, photo
 //   - a ledger of movements: receive, sell, customer return, return
 //     to supplier, loss, stock count, correction; several lines per
 //     movement, a reference (invoice / receipt no.), void instead of
@@ -11,13 +11,18 @@
 //     never a stored number: two devices selling at once never lose
 //     a sale through sync
 //   - Reorder: items at or below their minimum, by supplier, with a
-//     suggested quantity, "Copy list" and "Receive this order"
+//     suggested quantity; purchase orders received in parts (1.1)
+//   - Reports: value, period totals, best sellers, dead stock (1.1)
+//   - counter (quick sale), barcode labels on A4 (1.2)
 //   - suppliers (also from Contacts), categories, own units
 //   - a USB / Bluetooth barcode scanner works as a keyboard in every
-//     search and line field (code + Enter)
+//     search and line field (code + Enter); the phone camera too
+//     where the browser has BarcodeDetector (1.3)
 //   - CSV import of products (own export, WooCommerce export, any
 //     sheet with known column names), CSV export of products and
 //     movements, JSON export / import (a merge)
+//   - bridges (all prefills): To-Do, Mail, Budget, Quote, Spreadsheet,
+//     Today (today.js); receiver BR-ST-OUT for Invoices (1.3)
 //   - the low-stock notice comes from the shell (stockCheckTick, which
 //     uses core.js too)
 // Data:
@@ -30,10 +35,12 @@
 //   3. Mutations
 //   4. Products view + product sheet
 //   5. Movements view + movement sheet
-//   6. Reorder view
+//   6. Reorder view + purchase orders + bridges
+//      6b. Reports  6c. Counter  6d. Labels  6e. Photos
 //   7. Suppliers view
 //   8. Editors: product, movement, supplier, categories, units
 //   9. Settings, CSV / JSON
+//      9b. Camera scanning
 //  10. Dialogs + toasts
 //  11. Keyboard (Contract B) + deep link
 //  12. Sync slice + palette
@@ -177,6 +184,13 @@
       "ctr.done": "Complete sale", "ctr.clear": "Clear", "ctr.clearQ": "Clear this sale?", "ctr.sold": "Sale saved: {t}",
       "ctr.unknown": "No product with the code “{c}”.", "ctr.less": "One less", "ctr.more": "One more", "ctr.noPrice": "no price",
       "ctr.ref": "Counter",
+      "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app",
+      "out.used1": "This document was already taken out of stock once.",
+      "out.used": "This document was already taken out of stock {n} times.",
+      "out.miss": "Not found in Stock, left out ({n}):",
+      "cam.scan": "Scan with the camera", "cam.title": "Point the camera at a barcode", "cam.close": "Done",
+      "cam.wait": "Starting the camera…", "cam.denied": "The camera could not start. Check that orOS may use it.",
+      "cam.found": "Added: {n}", "cam.unknown": "No product with code {c}",
       "lbl.title": "Barcode labels", "lbl.copies": "Copies", "lbl.price": "Price on the label", "lbl.print": "Print",
       "lbl.sheet": "A4 sheet, 3 × 8 labels (70 × 37 mm)", "lbl.skip": "No barcode or SKU: {n}",
       "lbl.withPrice": "Show the price", "lbl.max": "At most {n} labels at a time.", "lbl.none": "Nothing to print: add products with a barcode or SKU.",
@@ -304,6 +318,13 @@
       "ctr.done": "Ολοκλήρωση πώλησης", "ctr.clear": "Καθαρισμός", "ctr.clearQ": "Να καθαρίσει αυτή η πώληση;", "ctr.sold": "Η πώληση καταχωρήθηκε: {t}",
       "ctr.unknown": "Δεν υπάρχει προϊόν με κωδικό «{c}».", "ctr.less": "Ένα λιγότερο", "ctr.more": "Ένα ακόμα", "ctr.noPrice": "χωρίς τιμή",
       "ctr.ref": "Ταμείο",
+      "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή",
+      "out.used1": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα μία φορά.",
+      "out.used": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα {n} φορές.",
+      "out.miss": "Δεν βρέθηκαν στο Απόθεμα και παραλείφθηκαν ({n}):",
+      "cam.scan": "Σάρωση με την κάμερα", "cam.title": "Στόχευσε ένα barcode με την κάμερα", "cam.close": "Τέλος",
+      "cam.wait": "Ξεκινάει η κάμερα…", "cam.denied": "Η κάμερα δεν ξεκίνησε. Έλεγξε ότι το orOS έχει άδεια να τη χρησιμοποιεί.",
+      "cam.found": "Προστέθηκε: {n}", "cam.unknown": "Κανένα προϊόν με κωδικό {c}",
       "lbl.title": "Ετικέτες barcode", "lbl.copies": "Αντίτυπα", "lbl.price": "Τιμή στην ετικέτα", "lbl.print": "Εκτύπωση",
       "lbl.sheet": "Σελίδα A4, 3 × 8 ετικέτες (70 × 37 mm)", "lbl.skip": "Χωρίς barcode ή SKU: {n}",
       "lbl.withPrice": "Να φαίνεται η τιμή", "lbl.max": "Το πολύ {n} ετικέτες κάθε φορά.", "lbl.none": "Δεν υπάρχει κάτι για εκτύπωση: πρόσθεσε προϊόντα με barcode ή SKU.",
@@ -1239,7 +1260,7 @@
     finder.spellcheck = false;
     finder.setAttribute("enterkeyhint", "done");
     finder.setAttribute("aria-label", t("mv.add"));
-    dlg.appendChild(finder);
+    dlg.appendChild(withCam(finder, true));
     var hits = el("div", "hits");
     dlg.appendChild(hits);
     var box = el("ul", "lines");
@@ -1631,7 +1652,7 @@
     scan.spellcheck = false;
     scan.setAttribute("enterkeyhint", "done");
     scan.setAttribute("aria-label", t("ctr.ph"));
-    dlg.appendChild(scan);
+    dlg.appendChild(withCam(scan, true));
     var hits = el("div", "hits");
     dlg.appendChild(hits);
     var msg = el("p", "hint warn");
@@ -2237,7 +2258,7 @@
     var tsel = selectInput(C.MOVE_TYPES.map(function (k) { return [k, T_ICON[k] + " " + t("t." + k)]; }), type || "in");
     var date = el("input");
     date.type = "date";
-    date.value = todayYmd();
+    date.value = o.date && C.isYmd(o.date) ? o.date : todayYmd();
     date.max = C.addDays(todayYmd(), 1);
     r1.appendChild(field(t("mv.type"), tsel, "st-mtype"));
     r1.appendChild(field(t("mv.date"), date, "st-mdate"));
@@ -2249,6 +2270,18 @@
     r2.appendChild(field(t("mv.ref"), ref, "st-mref"));
     r2.appendChild(supFld);
     dlg.appendChild(r2);
+    // asked for by another app (BR-ST-OUT): say where it came from, what
+    // could not be matched, and whether it was already taken out once
+    if (o.from) {
+      var fromBox = el("div", "hint from-box");
+      fromBox.appendChild(el("p", "", t("out.from", { a: o.from })));
+      if (o.used) fromBox.appendChild(el("p", "warn", t(o.used === 1 ? "out.used1" : "out.used", { n: o.used })));
+      if (o.miss && o.miss.length) {
+        fromBox.appendChild(el("p", "warn", t("out.miss", { n: o.miss.length })));
+        fromBox.appendChild(el("p", "muted miss-codes", o.miss.join(", ")));
+      }
+      dlg.appendChild(fromBox);
+    }
 
     // the lines
     var lines = [];          // { i, qIn, cIn, row }
@@ -2416,6 +2449,7 @@
       addLine(p.i, p.q || 0, false);
       var last = lines[lines.length - 1];
       if (last && last.i === p.i && typeof p.c === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.c);
+      if (last && last.i === p.i && typeof p.p === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.p);
     });
     refresh();
 
@@ -2466,7 +2500,9 @@
       var mv = C.normMove({
         id: newId(), m: Date.now(), d: date.value, t: k, ref: ref.value,
         sup: supSel.value, note: note.value, lines: out,
-        src: k === "in" && o.src ? o.src : undefined      // a receipt against a purchase order
+        // a receipt against a purchase order ("in"), or a sale / return
+        // asked for by another app: kept only on the type it came with
+        src: o.src && k === (o.srcT || "in") ? o.src : undefined
       });
       if (!mv) { fail(t("ed.badNum")); return; }
       addMove(mv);
@@ -2928,6 +2964,100 @@
     save();
   }
 
+  // ---------- 9b. Camera scanning ----------
+  // BarcodeDetector (Chrome on Android, no library). Where the browser
+  // lacks it the button never shows and a scanner that types still works.
+  // A read code goes into the field as if typed and Enter was pressed, so
+  // every scan field keeps its own rules. multi: stay open for more codes;
+  // the same code is read again only after it left the picture.
+  var CAM_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "code_93", "itf", "codabar", "qr_code"];
+  function camOk() {
+    return typeof window.BarcodeDetector === "function" &&
+      !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
+  }
+  function camButton(input, multi) {
+    if (!camOk()) return null;
+    var b = el("button", "icon-btn cam-btn", "📷");
+    b.type = "button";
+    b.title = t("cam.scan");
+    b.setAttribute("aria-label", t("cam.scan"));
+    b.addEventListener("click", function () {
+      camScan(function (code) {
+        input.value = code;
+        input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+      }, multi);
+    });
+    return b;
+  }
+  // the field with its camera button beside it (or the field alone)
+  function withCam(input, multi) {
+    var b = camButton(input, multi);
+    if (!b) return input;
+    var w = el("div", "cam-wrap");
+    w.appendChild(input);
+    w.appendChild(b);
+    return w;
+  }
+  function camScan(onCode, multi) {
+    var dlg = makeDialog("st-cam");
+    dlg.classList.add("cam-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("cam.title")));
+    var v = el("video", "cam-video");
+    v.muted = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("aria-hidden", "true");
+    dlg.appendChild(v);
+    var msg = el("p", "hint cam-msg", "");
+    msg.setAttribute("aria-live", "polite");
+    dlg.appendChild(msg);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cam.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    var stream = null, timer = 0, done = false, last = "", seenAt = 0, det = null;
+    function stop() {
+      done = true;
+      clearTimeout(timer);
+      if (stream) stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+      stream = null;
+      try { v.srcObject = null; } catch (e) {}
+    }
+    function failCam() { msg.textContent = t("cam.denied"); msg.classList.add("warn"); }
+    dlg.addEventListener("close", stop);
+    try { det = new window.BarcodeDetector({ formats: CAM_FORMATS }); }
+    catch (e) { try { det = new window.BarcodeDetector(); } catch (e2) { det = null; } }
+    function loop() {
+      if (done) return;
+      if (v.readyState < 2) { timer = setTimeout(loop, 200); return; }
+      det.detect(v).then(function (list) {
+        if (done) return;
+        var raw = list && list[0] && typeof list[0].rawValue === "string" ? list[0].rawValue.trim() : "";
+        var now = Date.now();
+        if (!raw) { if (now - seenAt > 1200) last = ""; }
+        else if (raw === last) seenAt = now;
+        else {
+          last = raw; seenAt = now;
+          var code = raw.slice(0, 120);
+          try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+          if (!multi) { dlg.close(); onCode(code); return; }
+          onCode(code);
+          var it = C.findByCode(data, code);
+          msg.classList.toggle("warn", !it);
+          msg.textContent = it ? t("cam.found", { n: it.name }) : t("cam.unknown", { c: code });
+        }
+        timer = setTimeout(loop, 150);
+      }, function () { timer = setTimeout(loop, 400); });
+    }
+    showDialog(dlg);
+    if (!det) { failCam(); return; }
+    msg.textContent = t("cam.wait");
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
+      if (done) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      stream = st;
+      v.srcObject = st;
+      return v.play().then(function () { msg.textContent = ""; loop(); });
+    }).catch(function () { if (!done) failCam(); });
+  }
+
   // ---------- 10. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -3041,10 +3171,12 @@
   //   { view: "reorder" } → the Reorder tab (low-stock notice)
   //   { view: "reports" } → the Reports tab
   //   { po: id }    → that purchase order (Today: expected deliveries)
+  //   { out: req }  → a prefilled sale / return (BR-ST-OUT, core outRequest)
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (document.querySelector("dialog[open]")) return;
+    if (target.out && typeof target.out === "object") { openOut(target.out); return; }
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
     if (typeof target.po === "string" && byId("pos", target.po)) {
@@ -3065,6 +3197,19 @@
       supEditor(byId("sups", target.sup));
     }
   }
+  function openOut(req) {
+    var r = C.outRequest(data, req, todayYmd());
+    if (!r) return;
+    var app = r.src ? r.src.split(":")[0] : "";
+    var name = appName(app);
+    setTab("moves");
+    moveEditor(r.t, r.lines, {
+      ref: r.ref, date: r.d, src: r.src || undefined, srcT: r.t,
+      from: name, miss: r.miss, used: r.used
+    });
+  }
+  // the asking app's name: Invoices is known, anything else is "another app"
+  function appName(id) { return id === "invoices" ? t("out.invoices") : t("out.other"); }
   window.__orosOpenAt = openTarget;
   function takeStaged() {
     try {
@@ -3231,6 +3376,8 @@
     $("items-q").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); clearTimeout(qTimer); renderItems(); onSearchEnter(); }
     });
+    var qCam = camButton($("items-q"), false);
+    if (qCam) { $("items-q").parentNode.appendChild(qCam); $("items-q").parentNode.classList.add("cam-wrap"); }
     $("items-cat").addEventListener("change", function () { prefs.cat = $("items-cat").value; savePrefs(); render(); });
     $("items-sort").addEventListener("change", function () { prefs.sort = $("items-sort").value; savePrefs(); render(); });
     $("moves-range").addEventListener("change", function () { prefs.range = $("moves-range").value; savePrefs(); render(); });

@@ -16,7 +16,7 @@ The contact window has:
 
 `Delete contact` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
 
-`Share` on the card sends the contact as text through your phone's share menu. On a computer it copies the text to the clipboard.
+`Share` on the card opens `Send to someone`: send the contact as a link that opens in any browser (they can save it to their phone or add it to their own orOS), or pick `Send as text` for plain text as before. Photo, labels and relations are not sent.
 
 ## Search, labels and favourites
 The search box finds contacts by name, nickname, company, job title, note, email or phone number. It ignores Greek accents and understands Latin spelling of Greek names, so `dionisis` finds “Διονύσης”. Three or more digits find a phone number however it's written. Searching for a name also finds people linked to that person.
