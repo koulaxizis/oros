@@ -379,6 +379,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - `[hidden] { display:none !important }` is the LAST rule of the file.
 - Fonts: Nunito 400–800 from `fonts/` (`font-display: swap`).
 - `manifest.webmanifest`: `name` / `short_name` orOS, `start_url` `/?source=pwa`, `id` and `scope` `/`, `display` standalone, `background_color` #14120d (the splash), `theme_color` #1b1a18 (the meta tag), five icons (SVG any, PNG 192 / 512 any, PNG 192 / 512 maskable), `lang` en, plus the non-standard `version` member stamped by the workflow. Since the launch-shortcuts release: `shortcuts` (Notes, To-Do, Calendar, Calculator → `/?open=<id>`, app icon PNG 192), shown on long-press of the installed app icon (Android PWA/TWA, Windows); a launcher shows at most about 4.
+- **Android app (TWA, package `online.useoros.twa`):** `.well-known/assetlinks.json` lists the SHA-256 of the signing key so the TWA opens without the address bar (relation `handle_all_urls`) and may use the TWA postMessage channel (relation `use_as_origin`); `.nojekyll` makes GitHub Pages serve the dot-folder. With Play App Signing, Google's app-signing key fingerprint (Play Console → App integrity) must be ADDED to that array, or the bar returns for Play installs. The TWA loads the live site, so app updates need no new package; a new package only for its own settings (name, icon, share target, signing) and Play's yearly target SDK.
 
 ### `sw.js` [verified 2026-10-06, `CACHE_VERSION` "oros-v0.39.06"]
 
@@ -4997,3 +4998,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Universal search provider stickies/search.js and Today provider stickies/today.js (apps.json "search" + "today", precached).
 - Tests: tests/stickies.test.js (repeat rounds in 3 time zones, fuzz with repeats, providers). E2E by the owner: melody chime, repeat Done, To-Do dialog, Notes page, search hit, Today rows, two-device sync with concurrent repeat + text edits (equal slices, 0 idle uploads), phone 390/360 Greek.
 - Not tested: a real phone, Safari, real Dropbox, sound on a real speaker.
+
+### 2026-10-12 — Android app: Digital Asset Links + .nojekyll (#215) — 1.12.01
+- `.well-known/assetlinks.json` (Chris's file from the PWABuilder package, `online.useoros.twa`) so Android verifies the TWA and opens orOS full screen; empty `.nojekyll` so GitHub Pages serves dot-folders. No app code. With Play App Signing, Google's signing-key SHA-256 must be added to the same array. Bible: note under the manifest section.
