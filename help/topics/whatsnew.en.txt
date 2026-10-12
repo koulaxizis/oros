@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.33.00
+- Stock: lots and expiry dates, an Expiring filter and report, and a reminder in Today a week before.
+
 ## Version 1.32.00
 - Studio: effects. More than 70 NULL JSFX effects (EQ, compressors, delays, reverbs, saturation and more) on every track and on the master, many with their own interface, in time with each other and in the export.
 

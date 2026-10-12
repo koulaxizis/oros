@@ -32,6 +32,11 @@ Other types: `Customer return`, `Return to supplier`, `Loss / damage` and `Corre
 
 A sale can also come from another orOS app, already filled in, for example the products of an invoice. Stock matches them by SKU or barcode, lists any code it couldn't find, and warns if the same document was taken out of stock before. Nothing is saved until you press `Save`.
 
+### Lots and expiry dates
+For food, cosmetics or anything that expires, tap `+ Lot / expiry` on a receipt line and type the `Lot` and the date it `Expires` (a date alone is enough; it becomes the lot's name). From then on that product's receipts ask for them every time.
+
+When you sell, a product with lots offers a `Lot` choice; leave it on `First to expire` and Stock takes the lot that expires first. A product's sheet shows what is left of each lot, the `Expiring` filter on Products lists what expires within 30 days, Reports shows them too, and [Today](app:today) reminds you a week before.
+
 ### Counter
 `New` › `Counter (quick sale)` is made for a shop with a scanner: scan products (each scan adds one), change quantities with − and +, and press `Complete sale`. It saves one sale at the products' sale prices, and you can `Undo` it right away. A sale you leave open stays in the counter until you complete or clear it.
 
@@ -92,5 +97,6 @@ Products, movements, suppliers, categories, units and settings sync between your
 
 ## Limits
 - Minimums and reorder are for the whole business, not per warehouse.
+- Lots are counted for the whole business, not per warehouse; the counter always sells the first lot to expire.
 - Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.

@@ -179,6 +179,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   white-space: nowrap;
 }
 .chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.chip.warn:not(.on) { color: var(--warn); }
 
 .empty {
   text-align: center;
@@ -403,6 +404,9 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .from-box p { margin: 2px 0; }
 .from-box .warn { color: var(--warn); font-weight: 700; }
 .miss-codes { overflow-wrap: anywhere; }
+/* lots and expiry on a movement line */
+.lot-link { align-self: flex-start; margin-top: 4px; font-size: 13px; }
+.lot-row { margin-top: 4px; }
 .notes { font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .vlist { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 
