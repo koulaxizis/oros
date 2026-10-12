@@ -27,6 +27,14 @@ With a clip selected:
 - `Freeze frame` (videos on the `Main` row) holds the picture at the playhead for 2 seconds: the clip splits there and a still of that frame, at the video's full size, goes in between. Change its `Duration` like any picture.
 - `Duplicate` and `Delete` (with `Undo`).
 
+## Keyframes
+`Keyframes` makes a clip move, grow, fade or change volume while it plays (a slow zoom on a photo, a picture that slides in, music that rises).
+1. Select the clip and tap `Keyframes`. The panel shows the values at the playhead.
+2. Change `Left – right`, `Top – bottom`, `Size`, `Opacity` or (for clips with sound) `Volume`: a key is set at the playhead.
+3. Move with `+½ s`, `−½ s`, `Previous key` and `Next key`, and change values again. Between two keys Montage changes them at an even pace; before the first key and after the last one they stay put.
+
+`Add key` keeps the current values at the playhead, `Remove key` takes it away, `Remove all keys` starts over. Small diamonds on the clip in the timeline show its keys. Keys belong to the clip: `Split` and `Duplicate` keep the motion as it was, but trimming the start of a clip shifts its keys with it. A clip can have up to 60 keys.
+
 ## Text, music and voice
 - `Text` adds a title at the playhead. `Edit text` changes the words, `Font`, `Text size`, `Colour`, `Outline`, `Box behind the text`, `Alignment` and `Entrance` (`Fade`, `Rise`, `Pop`). Drag its edges to make it show longer or shorter.
 - `Sound` adds music or a sound file at the playhead, on `Music` or `Voice`.

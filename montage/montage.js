@@ -129,6 +129,13 @@
       "exp.what": "Export", "exp.video": "Video", "exp.sound": "Sound only",
       "exp.keepSound": "Also keep a copy in Files › Music", "exp.readySound": "Your sound file is ready",
       "exp.noSound": "Nothing in this project makes sound.", "toast.keptSound": "A copy is in Files › Music",
+      "tool.kf": "Keyframes",
+      "kf.at": "{t} into this clip", "kf.here": "Key here", "kf.none": "No key here",
+      "kf.prev": "Previous key", "kf.next": "Next key", "kf.back": "−½ s", "kf.fwd": "+½ s",
+      "kf.add": "Add key", "kf.del": "Remove key", "kf.clear": "Remove all keys",
+      "kf.hint": "Move the playhead and change a value: a key is set there. Montage glides from one key to the next.",
+      "kf.x": "Left – right", "kf.y": "Top – bottom", "kf.s": "Size", "kf.o": "Opacity", "kf.v": "Volume",
+      "kf.full": "{n} keys: the most a clip can have.",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -210,6 +217,13 @@
       "exp.what": "Εξαγωγή", "exp.video": "Βίντεο", "exp.sound": "Μόνο ήχος",
       "exp.keepSound": "Κράτα και αντίγραφο στα Αρχεία › Music", "exp.readySound": "Το αρχείο ήχου είναι έτοιμο",
       "exp.noSound": "Τίποτα σε αυτό το project δεν έχει ήχο.", "toast.keptSound": "Ένα αντίγραφο είναι στα Αρχεία › Music",
+      "tool.kf": "Keyframes",
+      "kf.at": "{t} μέσα στο clip", "kf.here": "Υπάρχει key εδώ", "kf.none": "Κανένα key εδώ",
+      "kf.prev": "Προηγούμενο key", "kf.next": "Επόμενο key", "kf.back": "−½ δ", "kf.fwd": "+½ δ",
+      "kf.add": "Πρόσθεσε key", "kf.del": "Αφαίρεσε key", "kf.clear": "Αφαίρεσε όλα τα key",
+      "kf.hint": "Μετακίνησε την κεφαλή και άλλαξε μια τιμή: μπαίνει key εκεί. Το Μοντάζ περνά ομαλά από το ένα key στο επόμενο.",
+      "kf.x": "Αριστερά – δεξιά", "kf.y": "Πάνω – κάτω", "kf.s": "Μέγεθος", "kf.o": "Αδιαφάνεια", "kf.v": "Ένταση",
+      "kf.full": "{n} key: τα περισσότερα που χωράει ένα clip.",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -543,6 +557,7 @@
     b.style.width = Math.max(6, (end - start) * pps()) + "px";
     b.appendChild(el("span", null, clipLabel(it)));
     if (tx > 0) { var m = el("i", "tx-mark"); m.style.width = (tx * pps()) + "px"; b.appendChild(m); }
+    (it.kf || []).forEach(function (k) { var d = el("i", "kf-mark"); d.style.left = (k.t * pps()) + "px"; b.appendChild(d); });
     if (it.src) {
       if (missingCache[it.src]) b.classList.add("missing");
       var key = it.src + "@" + (it.k === "video" ? it["in"] : 0);
@@ -779,6 +794,7 @@
       bar.appendChild(toolBtn("clock", t("p.duration"), panelDuration));
     }
     bar.appendChild(toolBtn("fade", t("tool.fade"), panelFade));
+    bar.appendChild(toolBtn("kf", t("tool.kf"), panelKeys));
     if (it.tr === "main" && C.mainSeq(p)[0].it.id !== it.id) bar.appendChild(toolBtn("transition", t("tool.transition"), panelTransition));
     if (it.k === "title") {
       bar.appendChild(toolBtn("text", t("tool.edit"), function () { panelText(); }));
@@ -895,6 +911,61 @@
     rangeField(body, t("p.x"), -50, 150, 1, Math.round((box.x + box.w / 2) * 100), function (v) { return v + "%"; }, function (v) { box.x = v / 100 - box.w / 2; upd(); });
     rangeField(body, t("p.y"), -50, 150, 1, Math.round((box.y + box.h / 2) * 100), function (v) { return v + "%"; }, function (v) { box.y = v / 100 - box.h / 2; upd(); });
     if (it.k !== "title") rangeField(body, t("p.opacity"), 0, 100, 1, it.op, function (v) { return v + "%"; }, function (v) { live({ op: v }); });
+  }
+  // Keyframes: the values at the playhead; changing one sets a key there.
+  function panelKeys() {
+    var it = selItem(), p = cur();
+    if (!it || !p) return;
+    var pl = C.placeOf(p, it.id), dur = pl.end - pl.start;
+    if (tNow < pl.start || tNow > pl.end) setTime(pl.start);
+    var local = Math.min(dur, Math.max(0, tNow - pl.start)), body = panel(t("tool.kf"));
+    function keyAt() { return (selItem().kf || []).filter(function (k) { return Math.abs(k.t - local) <= 1 / 120; })[0] || null; }
+    function go(tt) { closeDialog(); setTime(pl.start + Math.min(dur, Math.max(0, tt))); panelKeys(); }
+    var info = el("p", "hint");
+    body.appendChild(info);
+    function showInfo() {
+      info.textContent = t("kf.at", { t: C.fmtTime(local, true, p.fps) }) + " · " + t(keyAt() ? "kf.here" : "kf.none");
+      var btn = body.querySelector(".actions .btn.primary");
+      if (btn) btn.textContent = t(keyAt() ? "kf.del" : "kf.add");
+    }
+    showInfo();
+    var keys = it.kf || [];
+    var prev = keys.filter(function (k) { return k.t < local - 1 / 120; }).pop(), next = keys.filter(function (k) { return k.t > local + 1 / 120; })[0];
+    var nav = el("div", "actions kf-nav");
+    [[t("kf.prev"), prev ? function () { go(prev.t); } : null], [t("kf.back"), function () { go(local - 0.5); }],
+     [t("kf.fwd"), function () { go(local + 0.5); }], [t("kf.next"), next ? function () { go(next.t); } : null]].forEach(function (a) {
+      var b = el("button", "btn", a[0]); b.type = "button";
+      if (a[1]) b.addEventListener("click", a[1]); else b.disabled = true;
+      nav.appendChild(b);
+    });
+    body.appendChild(nav);
+    var v = C.kfAt(it, local), props = C.kfProps(it);
+    function set(k, val) {
+      var cur0 = selItem(), vals = {};
+      vals[k] = val;
+      if (!keyAt() && (cur0.kf || []).length >= C.MAX_KEYS) { showToast(t("kf.full", { n: C.MAX_KEYS })); return; }
+      live({ kf: C.kfSet(cur0, local, vals) });
+      showInfo();
+    }
+    var pct = function (x) { return Math.round(x) + "%"; };
+    if (props.indexOf("x") >= 0) {
+      rangeField(body, t("kf.x"), -100, 100, 1, Math.round(v.x * 100), pct, function (x) { set("x", x / 100); });
+      rangeField(body, t("kf.y"), -100, 100, 1, Math.round(v.y * 100), pct, function (x) { set("y", x / 100); });
+      rangeField(body, t("kf.s"), 10, 400, 1, Math.round(v.s * 100), pct, function (x) { set("s", x / 100); });
+      rangeField(body, t("kf.o"), 0, 100, 1, Math.round(v.o), pct, function (x) { set("o", x); });
+    }
+    if (props.indexOf("v") >= 0) rangeField(body, t("kf.v"), 0, 200, 1, Math.round(v.v), pct, function (x) { set("v", x); });
+    body.appendChild(el("p", "hint small", t("kf.hint")));
+    actions(body, [
+      [t("kf.clear"), "", function () { live({ kf: [] }); go(local); }],
+      [t("kf.add"), "primary", function () {
+        var cur0 = selItem();
+        if (!keyAt() && (cur0.kf || []).length >= C.MAX_KEYS) { showToast(t("kf.full", { n: C.MAX_KEYS })); return; }
+        live({ kf: C.kfSet(cur0, local, keyAt() ? null : {}) });
+        go(local);
+      }]
+    ]);
+    showInfo();
   }
   var COLORS = ["#ffffff", "#000000", "#f8d14a", "#f08c3a", "#e04848", "#e868b0", "#7c5cf0", "#3b82f6", "#2fb87e", "#7a7a7a"];
   function panelText(isNew) {
@@ -1691,6 +1762,7 @@
     tr_a1: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
     cc: SV('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M10 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3"/>'),
     freeze: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4"/>'),
+    kf: SV('<path d="M12 3l6 9-6 9-6-9z"/><path d="M2 12h3M19 12h3"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };
 

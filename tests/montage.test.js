@@ -408,6 +408,52 @@ test("new transitions: push, zoom and circle shape the incoming clip", () => {
   assert.equal(proj(C.setItem(d, "p1", "i1", { flt: "golden" }, T0 + 13)).items.i1.flt, "golden");
 });
 
+test("keyframes: normalized, even pace between keys, applied to picture and sound, kept across a split", () => {
+  let d = base();
+  const it0 = proj(d).items.v1;
+  // garbage is dropped, values clamp, one key per time, sorted; absent when empty
+  d = C.setItem(d, "p1", "v1", { kf: [{ t: 4, x: 9, s: 0.5, v: 300 }, { t: 0 }, { t: "x" }, null, { t: 4, o: 50 }] }, T0 + 10);
+  let v1 = proj(d).items.v1;
+  assert.deepEqual(v1.kf, [{ t: 0, x: 0, y: 0, s: 1, o: 100, v: 100 }, { t: 4, x: 0, y: 0, s: 1, o: 50, v: 100 }]);
+  assert.equal("kf" in it0, false);
+  assert.equal("kf" in proj(C.setItem(d, "p1", "v1", { kf: [] }, T0 + 11)).items.v1, false);
+  assert.equal(J(C.merge(d, d)), J(d));
+  // an even pace between keys, held outside them
+  assert.equal(C.kfAt(v1, 2).o, 75);
+  assert.equal(C.kfAt(v1, 1).o, 87.5);
+  assert.equal(C.kfAt(v1, 9).o, 50);
+  // set a key: scale + move the picture; sound keys on a sound clip only
+  d = C.setItem(d, "p1", "v1", { kf: C.kfSet(v1, 4, { s: 2, x: 0.1 }) }, T0 + 12);
+  v1 = proj(d).items.v1;
+  assert.deepEqual(v1.kf[1], { t: 4, x: 0.1, y: 0, s: 2, o: 50, v: 100 });
+  const L = C.framePlan(proj(d), 4.5).find((x) => x.id === "v1");
+  assert.deepEqual(L.box, { x: -0.4, y: -0.5, w: 2, h: 2 });
+  assert.equal(L.alpha, 0.5);
+  assert.deepEqual(C.kfSet(v1, 4, null).map((k) => k.t), [0]);
+  // volume keys reach the sound plan and gainAt
+  d = C.setItem(d, "p1", "v1", { kf: C.kfSet(v1, 0, { v: 0 }) }, T0 + 13);
+  const seg = C.soundPlan(proj(d)).find((x) => x.id === "v1");
+  assert.deepEqual(seg.kv, [[0, 0], [4, 1]]);
+  assert.equal(C.gainAt(seg, 0), 0);
+  assert.equal(C.gainAt(seg, 2), 0.5);
+  assert.equal(C.gainAt(seg, 6), 1);
+  const music = C.addItem(d, "p1", { id: "m1", k: "audio", tr: "a1", src: SND, len: 9, in: 0, out: 9, at: 0, kf: [{ t: 1, x: 1, v: 50 }] }, T0 + 14);
+  assert.deepEqual(proj(music).items.m1.kf, [{ t: 1, v: 50 }]);
+  // split: both halves move exactly as before
+  const before = [1, 3, 5, 7].map((t) => C.framePlan(proj(d), t).find((x) => x.id === "v1"));
+  const ds = C.split(d, "p1", "v1", 3, T0 + 15, "v1b");
+  [1, 3, 5, 7].forEach((t, i) => {
+    const L2 = C.framePlan(proj(ds), t).find((x) => x.id === (t < 3 ? "v1" : "v1b"));
+    assert.ok(Math.abs(L2.alpha - before[i].alpha) < 1e-9, "alpha at " + t);
+    assert.deepEqual(L2.box, before[i].box);
+  });
+  assert.equal(proj(ds).items.v1b.kf[0].t, 0);
+  // overlay box moves around its own place
+  let o = C.addItem(base(), "p1", { id: "ov1", k: "image", tr: "ov", src: PIC, d: 4, at: 0, kf: [{ t: 0, y: 0.1 }] }, T0 + 16);
+  const Lo = C.framePlan(proj(o), 1).find((x) => x.id === "ov1");
+  assert.ok(Math.abs(Lo.box.y - 0.16) < 1e-9 && Lo.box.x === 0.6);
+});
+
 test("app strings: English and Greek have the same keys; help pages share their outline", () => {
   const fs = require("fs");
   const src = fs.readFileSync(path.join(__dirname, "..", "montage/montage.js"), "utf8");
