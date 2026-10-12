@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.26.00";
+var CACHE_VERSION = "oros-v1.29.02";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -455,6 +455,8 @@ var PRECACHE_URLS = [
   "help/topics/privacy.en.txt",
   "help/topics/reset.el.txt",
   "help/topics/reset.en.txt",
+  "help/topics/share.el.txt",
+  "help/topics/share.en.txt",
   "help/topics/shortcuts.el.txt",
   "help/topics/shortcuts.en.txt",
   "help/topics/start.el.txt",
@@ -789,6 +791,12 @@ var PRECACHE_URLS = [
   "assistant/assistant.js",
   "assistant/help.en.txt",
   "assistant/help.el.txt",
+  "share/",
+  "share/index.html",
+  "share/share.css",
+  "share/kinds.js",
+  "share/send.js",
+  "share/view.js",
   "settings/",
   "settings/index.html",
   "settings/settings.css",
@@ -908,6 +916,7 @@ var PRECACHE_URLS = [
   "atelier/aitext.js",
   "atelier/cutout.js",
   "atelier/ai.js",
+  "atelier/editpic.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",

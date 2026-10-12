@@ -1086,6 +1086,7 @@
     bar.appendChild(tool("mask", t("ctx.mask"), function () { openView("mask"); }, view === "mask"));
     bar.appendChild(tool("replace", t("ctx.replace"), function () { AT.io.uploadImage(it.id); }));
     if (AT.ai && !it.ax.vid) bar.appendChild(tool("cutout", t("ai.cut"), function () { AT.ai.cutout(it.id); }));
+    if (AT.editPic && AT.editPic.can(it)) bar.appendChild(tool("editpic", t("ctx.editPic"), function () { AT.editPic.open(it.id); }));
     if (it.ax.vid) bar.insertBefore(btn("ctx-txt" + (view === "video" ? " on" : ""), t("ctx.video"), function () { openView("video"); }), bar.firstChild);
   }
 

@@ -178,7 +178,8 @@
       "ctx.stroke": "Border", "ctx.sw": "Border weight", "ctx.weight": "Weight", "ctx.round": "Roundness",
       "ctx.dashed": "Dashed", "ctx.start": "Start", "ctx.end": "End", "ctx.head.none": "None", "ctx.head.arrow": "Arrow",
       "ctx.head.dot": "Dot", "ctx.filters": "Filters", "ctx.adjust": "Adjust", "ctx.crop": "Crop", "ctx.flip": "Flip",
-      "ctx.flipH": "Flip horizontal", "ctx.flipV": "Flip vertical", "ctx.mask": "Shape", "ctx.replace": "Replace",
+      "ctx.flipH": "Flip horizontal", "ctx.flipV": "Flip vertical", "ctx.mask": "Shape", "ctx.replace": "Replace", "ctx.editPic": "Edit in Photo Lab",
+      "ep.done": "Picture updated from Photo Lab", "ep.gone": "That picture is no longer in the design.", "ep.missing": "The edited picture could not be opened.",
       "ctx.op": "Transparency", "ctx.position": "Position", "ctx.lock": "Lock", "ctx.unlock": "Unlock",
       "ctx.dup": "Duplicate", "ctx.del": "Delete", "ctx.bg": "Background", "ctx.hint": "Tap an element to edit it.",
       "ctx.n": "{n} selected", "ctx.done": "Done", "ctx.edit": "Edit text",
@@ -349,7 +350,8 @@
       "ctx.stroke": "Περίγραμμα", "ctx.sw": "Πάχος περιγράμματος", "ctx.weight": "Πάχος", "ctx.round": "Στρογγύλεμα",
       "ctx.dashed": "Διακεκομμένη", "ctx.start": "Αρχή", "ctx.end": "Τέλος", "ctx.head.none": "Τίποτα", "ctx.head.arrow": "Βέλος",
       "ctx.head.dot": "Τελεία", "ctx.filters": "Φίλτρα", "ctx.adjust": "Ρυθμίσεις", "ctx.crop": "Περικοπή", "ctx.flip": "Αναστροφή",
-      "ctx.flipH": "Οριζόντια αναστροφή", "ctx.flipV": "Κάθετη αναστροφή", "ctx.mask": "Σχήμα", "ctx.replace": "Αντικατάσταση",
+      "ctx.flipH": "Οριζόντια αναστροφή", "ctx.flipV": "Κάθετη αναστροφή", "ctx.mask": "Σχήμα", "ctx.replace": "Αντικατάσταση", "ctx.editPic": "Επεξεργασία στο Εργαστήριο εικόνας",
+      "ep.done": "Η εικόνα ενημερώθηκε από το Εργαστήριο εικόνας", "ep.gone": "Αυτή η εικόνα δεν υπάρχει πια στο σχέδιο.", "ep.missing": "Η επεξεργασμένη εικόνα δεν άνοιξε.",
       "ctx.op": "Διαφάνεια", "ctx.position": "Θέση", "ctx.lock": "Κλείδωμα", "ctx.unlock": "Ξεκλείδωμα",
       "ctx.dup": "Διπλασιασμός", "ctx.del": "Διαγραφή", "ctx.bg": "Φόντο", "ctx.hint": "Πάτα ένα στοιχείο για να το αλλάξεις.",
       "ctx.n": "{n} επιλεγμένα", "ctx.done": "Τέλος", "ctx.edit": "Επεξεργασία κειμένου",
@@ -457,6 +459,7 @@
     present: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/>',
     ai: '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"/>',
     cutout: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="9.5" r="2.5"/><path d="M7.5 17a4.5 4.5 0 0 1 9 0"/>',
+    editpic: '<path d="M3 17l5-5 4 4 3-3 6 6"/><circle cx="8" cy="7" r="2"/><path d="M14 4l6 6-3 3-6-6z"/>',
     replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>'
   };
   function icon(name) {
@@ -1393,6 +1396,12 @@
     if (!searchReady) { searchLater = tg; return; }
     // { openFile: { token } }: a file from the system's "Open with"
     // (shell fileopen.js), taken once, then Home › Import.
+    // { editedPicture: { key, path, w, h } }: a picture back from Photo
+    // Lab ("Edit picture", BR-PL-EDIT, editpic.js)
+    if (tg && tg.editedPicture) {
+      if (AT.editPic) AT.editPic.back(tg.editedPicture);
+      return;
+    }
     if (tg && tg.openFile) {
       if (document.querySelector("dialog[open]")) return;
       var f = takeOpenFile(tg.openFile);

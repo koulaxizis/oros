@@ -94,6 +94,7 @@
       "ev.delete": "Delete event",
       "ev.qr": "QR code",
       "ev.mail": "Email",
+      "ev.share": "Send…",
       "ev.delete.confirm": "Delete this event?",
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
@@ -260,6 +261,7 @@
       "ev.delete": "Διαγραφή συμβάντος",
       "ev.qr": "Κωδικός QR",
       "ev.mail": "Email",
+      "ev.share": "Αποστολή…",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
@@ -3269,6 +3271,33 @@ function transientNote(title, body) {
     });
     return { compose: { to: to.join(", "), subject: String(ev.title || "").slice(0, 300), body: lines.join("\n").slice(0, 20000) } };
   }
+  // "Send to someone" (shell share/, kind "event"): the SAVED event in
+  // a link; an occurrence of a series goes as that one day.
+  var dlgShare = null;
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+    catch (e) { return null; }
+  }
+  function sharePayload(ev, occYmd) {
+    var d = { id: ev.id, t: ev.title || t("ev.untitled"), d: occYmd || ev.date, l: ev.location, x: ev.note };
+    if (ev.start) { d.s = ev.start; if (ev.end) d.e = ev.end; }
+    if (!occYmd && ev.dateEnd) d.de = ev.dateEnd;
+    if (!occYmd && validRecur(ev.recur)) {
+      d.r = { f: ev.recur.freq, i: ev.recur.interval === 2 ? 2 : 1 };
+      if (ev.recur.until) d.r.u = ev.recur.until;
+    }
+    if (occYmd) d.id = ev.id + "-" + occYmd.replace(/-/g, "");
+    return d;
+  }
+  if ($("ev-share")) {
+    $("ev-share").addEventListener("click", function () {
+      var api = shareApi(), d = dlgShare;
+      if (!api || !d) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      api.open({ kind: "event", data: d });
+    });
+  }
+
   if ($("ev-mail")) {
     $("ev-mail").addEventListener("click", function () {
       var p = shellOpenAt(), target = dlgMail;
@@ -3343,6 +3372,10 @@ function transientNote(title, body) {
     if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
     dlgMail = existing && shellOpenAt() && mailReady()
       ? mailFromEvent(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : existing.date) : null;
+    dlgShare = existing && shareApi()
+      ? sharePayload(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : null) : null;
+    var shareBtn = $("ev-share");
+    if (shareBtn) shareBtn.hidden = !dlgShare;
     var mailBtn = $("ev-mail");
     if (mailBtn) mailBtn.hidden = !dlgMail;
     // CA-8: what the dialog showed at open — a pull may update every
