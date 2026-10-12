@@ -1280,6 +1280,21 @@ function shareText(c) {
   return L.join("\n");
 }
 
+// "Send to someone" (shell share/, kind "contact"): the card's own
+// fields only. Photo, labels, star and relations stay at home.
+function sharePayload(c) {
+  var vt = function (r) { return { v: r.v, ty: r.type }; };
+  return {
+    g: c.given, mi: c.middle, f: c.family, nn: c.nickname, o: c.org, j: c.jobTitle,
+    p: c.phones.map(vt), e: c.emails.map(vt), im: c.im.map(vt), u: c.websites.map(vt),
+    a: c.addresses.map(function (a) {
+      return { s: a.street, c: a.city, r: a.region, z: a.zip, co: a.country, ty: a.type };
+    }),
+    ev: c.events.map(function (e) { return { ty: e.type, d: e.day, y: e.year, l: e.label }; }),
+    x: c.note
+  };
+}
+
 // Legacy fallback for non-secure contexts / older browsers where
 // the async Clipboard API is unavailable (execCommand path).
 function legacyCopy(text) {
@@ -1547,7 +1562,10 @@ function openViewCard(c) {
   sh.className = "ct-view-share";
   sh.textContent = t("ct.share");
   sh.addEventListener("click", function () {
-    shareContact(c);
+    var api = null;
+    try { api = window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) {}
+    if (api) api.open({ kind: "contact", data: sharePayload(c), text: shareText(c) });
+    else shareContact(c);
   });
   foot.appendChild(sh);
   // Family Tree (read-only bridge, generic deep link): the person

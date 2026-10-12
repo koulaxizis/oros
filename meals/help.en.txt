@@ -9,7 +9,7 @@ Open `Settings` (the gear) to set `Our diet`, the `Meals of the day`, when the `
 ## Recipes
 In the editor, type `Ingredients, one per line` (like "200 g feta, crumbled"; a line such as "For the sauce:" starts a group) and `Steps, one per line`. Add servings, prep and cook times, a course, tags, notes and a source. `Suggest from the ingredients` ticks the `Diets it fits`; check keto, low-carb and raw yourself.
 
-Open a recipe to see it. The + and − buttons change the servings and scale every quantity. From there you can `Cook`, `Add to plan`, `Edit`, `Share`, `Print`, `Duplicate` or `Delete` it (with `Undo`), and tap the star to keep it in your favourites.
+Open a recipe to see it. The + and − buttons change the servings and scale every quantity. From there you can `Cook`, `Add to plan`, `Edit`, `Share`, `Print`, `Duplicate` or `Delete` it (with `Undo`), and tap the star to keep it in your favourites. `Share` opens `Send to someone`: the recipe goes as a link that opens in any browser, and someone with orOS can save it to their own recipes; `Send as text` sends plain text instead.
 
 The search box finds recipes by name. Type ingredients separated by commas (like "eggs, spinach") to find recipes that use them. `★ Favourites` and `Fits our diet` filter the list.
 

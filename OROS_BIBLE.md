@@ -1702,6 +1702,17 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - BR-CRM-INV (CRM side live, 1.25.00): CRM → Invoices `__orosOpenAt("invoices", { new: OrosCrmCore.invoicePrefill(cust, deal?, cur) })`; Invoices → CRM read-only `OrosInvoicesCore.byCrm(OrosInvoicesCore.parse(raw), crmId, today)`.
 - BR-CRM-Q (new, read-only, 1.25.00): `OrosQuoteCore.forClient(quoteData, { name, afm })` → `[{ id, num, date, due, status, cur, total }]` (total in currency units); CRM opens a row with `__orosOpenQuote(id)` and creates with `__orosOpenQuoteNew(OrosCrmCore.quotePrefill(cust, deal?, cur))`.
 
+### "Send to someone" share links (BR-SHARE) — phase 1
+- **What.** One item from an app becomes a link `https://<orOS>/share/#<code>`. The item lives only in the URL fragment, which browsers never send to a server; `share/index.html` opens it locally, so the other person needs no account and no orOS. Chris 2026-10-12 chose this instead of a Messages chat (Part IX).
+- **Code.** Envelope `{v:1,k,d}` (k = kind, d = normalized data). Plain: `1.` + base64url(deflate-raw(JSON)), or `0.` + base64url(JSON) when `CompressionStream` is missing. Locked: `p1.` + base64url(salt16 | iv12 | AES-GCM ciphertext), key = PBKDF2-SHA256 600,000 rounds; the first plaintext byte says deflated (1) or raw (0). Password optional, off by default, at least 6 characters.
+- **Limits.** Send side refuses codes over `MAX_LINK` 32,768 characters (the link buttons go off; "Save as file" still works). Decode refuses codes over MAX_LINK+8 and stops inflating past `MAX_JSON` 262,144 bytes (decompression bomb). Every field is normalized with caps in `share/kinds.js` (`norm(kind, data)`), on send and again on receive; URLs http(s) only, emails must look like emails. The page renders with `textContent` only (`view.js` has no innerHTML; `send.js` only sets the eye icon constant).
+- **Kinds (phase 1).** `list` (To-Do list: title + items with note/done), `note` (Notes page title + plain text), `contact` (Contacts card without photo, labels, star, relations), `event` (Calendar event or one occurrence, UID `<id>@share.oros`), `recipe` (Meal Planner recipe), `links` (one or many Bookmarks).
+- **Sender API.** `window.orosShare.open({kind, data, text?})` in the shell (apps call `parent.orosShare`). The shell lazy-loads `share/kinds.js` + `share/send.js` on first use, so they are not in index.html. Window: Share… (navigator.share), Copy link, QR code (`qr/qr-encode.js`), Email (only with a Mail account, `__orosOpenAt("mail",{compose})`), Save as file (`<name> (orOS).txt` with the link), Send as text (old behaviour, when `text` is given). Senders: To-Do `#list-share`, Notes `#btn-share-page` + page menu, Contacts card Share, Calendar `#ev-share`, Meals recipe Share, Bookmarks context menu + `#sel-share` in the selection bar.
+- **Receiving.** "Add to my orOS" writes `sessionStorage["oros-share-in"] = {at,k,d}` and goes to `../?share-in=1`; the shell strips the flag and calls the module's `deliver`, which runs `__orosOpenAt(app, target)` (30 min validity). Targets from `OrosShareKinds.target(env, lang)`: list → `todo {addItems:{newList, from, items}}` (BR-TD-ADD); note → `notes {add:{title,text}}`; contact → `contacts {importVcf}` and event → `calendar {importIcs}` (BR-FILE-IMPORT, they ask before saving); recipe → `meals {addRecipe: recipe}` (new, below); links → `bookmarks {add}` for one, `{addMany}` for several (new, below). Nothing is written without the user's own Save / Import / Add, except Notes (makes a page, as its `add` always did) and Bookmarks addMany (adds, toast says how many).
+- **BR-SHARE-RECIPE.** `__orosOpenAt("meals", {addRecipe: r})` — `r` goes through `OrosMealsCore.normRecipe`, loses id/m/fv, and opens in the recipe editor as a new unsaved recipe.
+- **BR-BM-MANY.** `__orosOpenAt("bookmarks", {addMany:{folder, items:[{url,title}]}})` — finds the folder by name or makes it, skips URLs already in it, removes a folder it made when nothing was added, toast with the count.
+- **Files.** `share/kinds.js` (pure, UMD, Node-testable), `share/send.js` (shell window), `share/index.html` + `view.js` + `share.css` (page, has inheritPalette/watchPalette for G3), help topic `help/topics/share.*.txt`, tests `tests/share.test.js`.
+
 ## Part VII — UI standards
 
 - **Scrollbars:** 10px, transparent track, pill thumb (999px radius, 2px border `var(--bg)`), hover `var(--accent)`; Firefox `scrollbar-width:thin`. `overscroll-behavior:contain` on main panes.
@@ -2191,6 +2202,10 @@ Rebuild this in any session where code is delivered.
 - One brush stroke never passes its opacity (coverage map, recomposite from the pre-stroke pixels; those pixels are the undo step).
 - `designkit/fx.js` is used read-only (owner Atelier). No new third-party library.
 - New category Image / Εικόνα right after Creativity (Chris 2026-10-12 05:40); Pixel Avatar, Wallpaper Generator, Tree Sketcher, Aura Painter moved into it (Chris 2026-10-12 10:19). Pictures (`fileopen.js`) open in Photo Lab; store packages (TWA/MSIX) need regenerating to carry the picture types.
+
+### "Send to someone" decisions (2026-10-12)
+- **2026-10-12 · Chris: the Messages chat app is REJECTED.** An E2EE chat between orOS users would need a server, accounts and moderation, and would compete with apps everyone already has. Do not propose it again. Plan kept only as a record: /mnt/project-files/messages/messages-plan.md.
+- **2026-10-12 · Chris chose "Μόνο κοινοποίηση"** and then "Ναι σε όλα, σύμφωνα με το πλάνο σου": server-less share links (BR-SHARE, Part VI), plan /mnt/project-files/messages/share-link-plan.md. Phase 1 = six kinds (To-Do list, note, contact, event, recipe, bookmarks); password optional and off by default; name "Send to someone" / «Στείλε σε κάποιον». No new third-party library, no server, nothing synced.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -5139,3 +5154,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Help: privacy page adds Library and Newsletter (#240) — 1.27.01
 - Privacy help (EN + EL) now covers the Library's Wiktionary look-up (opt-in, only the word is sent) and the Newsletter app. Text only.
+
+### 2026-10-12 — Send to someone: share links, phase 1 (#241) — 1.28.00
+- New "Send to someone" / «Στείλε σε κάποιον» (BR-SHARE): To-Do, Notes, Contacts, Calendar, Meals and Bookmarks can send one item as a link whose content lives only in the URL fragment (never sent to a server), with an optional password; also QR, email or file. `share/` opens it in any browser; with orOS, "Add to my orOS" adds it to the matching app (new receivers BR-SHARE-RECIPE, BR-BM-MANY). A sent link cannot be taken back and does not expire.
+- New folder share/ (not an app) precached, help topic `share`. Chris rejected the Messages chat app; this replaces it. Tests: share kinds + receivers. Not tested: real phones, Safari, real Dropbox, the phone share sheet.

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.27.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.28.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2401,7 +2401,71 @@
     if (s.bad) return;
     pendingShare = s;
   })();
+  // "Send to someone" (share/): share/kinds.js + share/send.js load on
+  // first use, never at boot. Apps call window.parent.orosShare.open(
+  // { kind, data, text? }). The receiving page's "Add to my orOS"
+  // leaves the item in sessionStorage "oros-share-in" (this tab only)
+  // and opens /?share-in=1; the flag leaves the address bar at boot
+  // and the item goes to its app once the app list is in.
+  var shareLoad = null;
+  function shareModule() {
+    if (window.__orosShareImpl) return Promise.resolve(window.__orosShareImpl);
+    if (!shareLoad) {
+      window.__orosShareV = APP_VERSION;
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      };
+      shareLoad = load("share/kinds.js").then(function () { return load("share/send.js"); })
+        .then(function () {
+          if (!window.__orosShareImpl) throw new Error("share module missing");
+          return window.__orosShareImpl;
+        });
+      shareLoad.catch(function () { shareLoad = null; });
+    }
+    return shareLoad;
+  }
+  window.orosShare = {
+    open: function (opts) {
+      shareModule().then(function (m) { m.open(opts); }, function () {
+        notifySys("dim", window.orosLang === "el"
+          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+          : "Sending could not load. Check your connection and try again.");
+      });
+    }
+  };
+  var pendingShareIn = false;
+  (function () {
+    try {
+      var u = new URL(window.location.href);
+      if (!u.searchParams.has("share-in")) return;
+      u.searchParams.delete("share-in");
+      window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+      pendingShareIn = true;
+    } catch (e) {}
+  })();
+  function deliverShareIn() {
+    if (!pendingShareIn || !state.apps.length) return;
+    pendingShareIn = false;
+    shareModule().then(function (m) {
+      m.deliver({
+        hasApp: function (id) {
+          for (var i = 0; i < state.apps.length; i++) {
+            if (state.apps[i].id === id && state.apps[i].type === "internal") return true;
+          }
+          return false;
+        }
+      });
+    }, function () {});
+  }
+
   function deliverShare() {
+    deliverShareIn();
     if (!pendingShare || !state.apps.length) return;
     var s = pendingShare;
     pendingShare = null;
