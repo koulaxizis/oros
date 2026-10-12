@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Sticky Notes — shell side (v1.0.0)
+// orOS Sticky Notes — shell side (v1.1.0)
 // Runs in the SHELL window (index.html loads it after
 // notifications.js, with stickies/core.js before it). It
 //   - keeps the synced slice "stickies" (oros-stickies-data); it is
@@ -10,11 +10,16 @@
 //   - rings (chime + wiggle + one inbox item) and fades notes at
 //     their times, on the shell's clock tick (no timer of its own)
 //   - owns the note editor (a centred dialog in the shell document,
-//     also over the app)
+//     also over the app), with Send to To-Do (BR-TD-ADD) and Copy to
+//     Notes ({ add: { title, text } })
+//   - plays a Ringtone Composer melody as the chime when the device
+//     setting says so (reads oros-ringtones-data, never writes it;
+//     ringtones/core.js is loaded on first need)
 // Device-local (R10, never synced):
 //   oros-stickies-pos    { <id>: { x, y, w, h, z, fold } } positions
 //                        as fractions of the desktop + size in px
-//   oros-stickies-prefs  { show, sound, color, pop }
+//   oros-stickies-prefs  { show, sound, color, pop }; sound is a
+//                        built-in chime or "rt:<melody id>"
 //   oros-stickies-local  { rung: { <id>: at } } rings this device
 //                        already announced
 // Nothing happens while orOS is closed; the next open catches up (a
@@ -44,6 +49,18 @@
   var LATE_MS = 2 * 60000;                       // a ring found later than this is announced without sound
   var NARROW_Q = "(max-width: 599px)";
   var SOUNDS = ["bell", "dingdong", "wind", "off"];
+  var RT_RE = /^rt:[A-Za-z0-9_-]{1,64}$/;        // a Ringtone Composer melody
+  var RT_KEY = "oros-ringtones-data";
+  var RT_MAX_S = 15;                             // a melody chime stops after 15 s
+  function validSound(v) { return SOUNDS.indexOf(v) >= 0 || RT_RE.test(String(v)); }
+  // ringtones/core.js next to this file's folder, with the same ?v= stamp
+  var RT_SRC = "ringtones/core.js";
+  try {
+    var cs0 = root.document && root.document.currentScript;
+    if (cs0 && typeof cs0.src === "string" && /stickies\/host\.js(?=[?#]|$)/.test(cs0.src)) {
+      RT_SRC = cs0.src.replace(/stickies\/host\.js(?=[?#]|$)/, "ringtones/core.js");
+    }
+  } catch (e) {}
 
   // ---------- 1. Strings, helpers ----------
   var STRINGS = {
@@ -64,7 +81,11 @@
       saveFail: "Could not save the sticky note: storage is full",
       "rel.min": "in {n} min", "rel.min1": "in 1 min", "rel.h": "in {n} h", "rel.h1": "in 1 h", "rel.ago1": "1 min ago", "rel.today": "today {t}", "rel.tomorrow": "tomorrow {t}",
       "rel.yesterday": "yesterday {t}", "rel.now": "now", "rel.ago": "{n} min ago",
-      layer: "Sticky notes", strip: "Sticky notes"
+      layer: "Sticky notes", strip: "Sticky notes",
+      repeat: "Repeat", "rep.": "Once", "rep.daily": "Every day", "rep.weekdays": "Every weekday (Mon–Fri)", "rep.weekly": "Every week",
+      "repf.daily": "every day", "repf.weekdays": "Mon–Fri", "repf.weekly": "every week",
+      send: "Send to other apps", toTodo: "Send to To-Do", toNotes: "Copy to Notes", appName: "Sticky Notes",
+      nothing: "Write something on the note first"
     },
     el: {
       note: "Post-it", "new": "Νέο post-it", tidy: "Τακτοποίηση των post-it", app: "Άνοιγμα της εφαρμογής Post-it",
@@ -83,7 +104,11 @@
       saveFail: "Το post-it δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "rel.min": "σε {n} λεπτά", "rel.min1": "σε 1 λεπτό", "rel.h": "σε {n} ώρες", "rel.h1": "σε 1 ώρα", "rel.ago1": "πριν από 1 λεπτό", "rel.today": "σήμερα {t}", "rel.tomorrow": "αύριο {t}",
       "rel.yesterday": "χθες {t}", "rel.now": "τώρα", "rel.ago": "πριν από {n} λεπτά",
-      layer: "Post-it", strip: "Post-it"
+      layer: "Post-it", strip: "Post-it",
+      repeat: "Επανάληψη", "rep.": "Μία φορά", "rep.daily": "Κάθε μέρα", "rep.weekdays": "Κάθε εργάσιμη (Δευ–Παρ)", "rep.weekly": "Κάθε εβδομάδα",
+      "repf.daily": "κάθε μέρα", "repf.weekdays": "Δευ–Παρ", "repf.weekly": "κάθε εβδομάδα",
+      send: "Αποστολή σε άλλες εφαρμογές", toTodo: "Αποστολή στις Εργασίες", toNotes: "Αντιγραφή στις Σημειώσεις", appName: "Post-it",
+      nothing: "Γράψε πρώτα κάτι στο post-it"
     }
   };
 
@@ -189,7 +214,7 @@
     var p = readJSON(PREFS_KEY) || {};
     return {
       show: p.show !== false,
-      sound: SOUNDS.indexOf(p.sound) >= 0 ? p.sound : "bell",
+      sound: validSound(p.sound) ? p.sound : "bell",
       color: C.COLORS.indexOf(p.color) >= 0 ? p.color : "yellow",
       pop: p.pop === true
     };
@@ -197,7 +222,7 @@
   function setPref(k, v) {
     var p = prefs();
     if (k === "show") p.show = v !== false;
-    else if (k === "sound" && SOUNDS.indexOf(v) >= 0) p.sound = v;
+    else if (k === "sound" && validSound(v)) { p.sound = v; if (RT_RE.test(v)) rtCore(); }
     else if (k === "color" && C.COLORS.indexOf(v) >= 0) p.color = v;
     else if (k === "pop") p.pop = v === true;
     else return false;
@@ -292,8 +317,73 @@
     o.connect(g); g.connect(a.destination);
     o.start(t0); o.stop(t0 + dur + 0.05);
   }
+  // ---- Ringtone Composer melodies (read only) ----
+  var rtWait = null;
+  function rtCore() {
+    if (root.RingtonesCore) return Promise.resolve(root.RingtonesCore);
+    if (rtWait) return rtWait;
+    rtWait = new Promise(function (resolve) {
+      var sc = doc.createElement("script");
+      sc.src = RT_SRC;
+      sc.onload = function () { resolve(root.RingtonesCore || null); };
+      sc.onerror = function () { rtWait = null; resolve(null); };
+      doc.head.appendChild(sc);
+    });
+    return rtWait;
+  }
+  function rtRead() {
+    try { return JSON.parse(localStorage.getItem(RT_KEY) || "null"); } catch (e) { return null; }
+  }
+  // [{ id, name }] newest first, without the deleted ones. Light check
+  // here (no core needed); playing goes through the core's own merge.
+  function melodies() {
+    var d = rtRead(), out = [];
+    if (!d || !Array.isArray(d.melodies)) return out;
+    var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+    d.melodies.forEach(function (m) {
+      if (!m || typeof m.id !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(m.id) || typeof m.m !== "number") return;
+      if (typeof tombs[m.id] === "number" && tombs[m.id] >= m.m) return;
+      out.push({ id: m.id, name: String(m.name || "").replace(/\s+/g, " ").trim().slice(0, 60), m: m.m });
+    });
+    out.sort(function (x, y) { return y.m - x.m || (x.id < y.id ? -1 : 1); });
+    return out.map(function (m) { return { id: m.id, name: m.name }; });
+  }
+  var rtNode = null;
+  function stopMelody() { if (rtNode) { try { rtNode.stop(); } catch (e) {} rtNode = null; } }
+  function playMelody(id) {
+    rtCore().then(function (R) {
+      var raw = rtRead(), m = null;
+      try { if (R && raw) m = R.findMelody(R.mergeRingtones(raw, null), id); } catch (e) { m = null; }
+      if (!m) { play("bell"); return; }                 // gone (or no core): the bell instead
+      var a = ctx();
+      if (!a) return;
+      try {
+        if (a.state === "suspended") a.resume().catch(function () {});
+        var v = volume();
+        if (!v) return;
+        var rate = 22050, smp = R.renderSamples(R.parseNotes(m.notes), m.bpm, m.voice, rate);
+        var max = rate * RT_MAX_S;
+        if (smp.length > max) {                         // a soft end instead of a cut
+          smp = smp.subarray(0, max);
+          for (var i = 0, f = Math.round(rate * 0.4); i < f; i++) smp[max - f + i] *= 1 - i / f;
+        }
+        var buf = a.createBuffer(1, smp.length, rate);
+        if (buf.copyToChannel) buf.copyToChannel(smp, 0); else buf.getChannelData(0).set(smp);
+        var src = a.createBufferSource(), g = a.createGain();
+        g.gain.value = Math.min(1, v * 2.2);
+        src.buffer = buf;
+        src.connect(g); g.connect(a.destination);
+        stopMelody();
+        rtNode = src;
+        src.onended = function () { if (rtNode === src) rtNode = null; };
+        src.start(a.currentTime + 0.03);
+      } catch (e) {}
+    });
+  }
+
   function play(kind) {
     if (kind === "off") return;
+    if (RT_RE.test(String(kind))) { playMelody(String(kind).slice(3)); return; }
     var a = ctx();
     if (!a) return;
     try {
@@ -441,6 +531,9 @@
     "#sn-sheet .sn-ringnow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;border-radius:8px;",
     "background:var(--accent-soft);font-size:13px;font-weight:600}",
     "#sn-sheet .sn-ringnow span{flex:1}",
+    "#sn-sheet .sn-rep{margin-top:8px}",
+    "#sn-sheet .sn-links{display:flex;gap:8px;flex-wrap:wrap}",
+    "#sn-sheet .sn-links .sn-btn{flex:1 1 auto}",
     "@media (prefers-reduced-motion:reduce){.sn-ringing,.sn-flash{animation:none}.sn-note,.sn-card{transition:none}}",
     "[hidden]{display:none!important}"
   ].join("\n");
@@ -500,8 +593,8 @@
     if (n.ring) {
       var r = el("span", "sn-flag");
       r.innerHTML = ICON.bell;
-      r.appendChild(doc.createTextNode(when(n.ring.at, now)));
-      r.title = T(n.ring.at <= now ? "ringing" : "rings", { when: when(n.ring.at, now) });
+      r.appendChild(doc.createTextNode(when(n.ring.at, now) + (n.ring.rep ? " ↻" : "")));
+      r.title = T(n.ring.at <= now ? "ringing" : "rings", { when: when(n.ring.at, now) }) + (n.ring.rep ? " · " + T("repf." + n.ring.rep) : "");
       f.appendChild(r);
     }
     if (n.vanish) {
@@ -948,6 +1041,17 @@
     s.ringAt.type = "datetime-local";
     s.ringAt.setAttribute("aria-label", T("ring"));
     rw.appendChild(s.ringAt);
+    s.repW = el("div", "sn-rep");
+    var repL = el("label", "sn-lbl", T("repeat"));
+    repL.setAttribute("for", "sn-rep");
+    s.rep = el("select");
+    s.rep.id = "sn-rep";
+    ["", "daily", "weekdays", "weekly"].forEach(function (k) {
+      var o = el("option", "", T("rep." + k)); o.value = k; s.rep.appendChild(o);
+    });
+    s.repW.appendChild(repL);
+    s.repW.appendChild(s.rep);
+    rw.appendChild(s.repW);
     s.ringSt = el("div", "sn-st");
     s.ringSt.setAttribute("aria-live", "polite");
     rw.appendChild(s.ringSt);
@@ -956,14 +1060,15 @@
       var k = s.ring.value, now = Date.now();
       if (k === "off") commit(C.setRing(cur(), id, 0, now));
       else if (k === "custom") { s.ringAt.hidden = false; if (!s.ringAt.value) s.ringAt.value = C.toLocalInput(C.pick("1h", now)); s.ringAt.focus(); }
-      else commit(C.setRing(cur(), id, C.pick(k, now), now));
+      else commit(C.setRing(cur(), id, C.pick(k, now), now, s.rep.value));
       fillSheet();
     });
+    s.rep.addEventListener("change", function () { commit(C.setRepeat(cur(), id, s.rep.value, Date.now())); });
     s.ringAt.addEventListener("change", function () {
       var at = C.fromLocalInput(s.ringAt.value), now = Date.now();
       if (!at) return;
       if (at <= now) { notify(T("past")); return; }
-      commit(C.setRing(cur(), id, at, now));
+      commit(C.setRing(cur(), id, at, now, s.rep.value));
     });
 
     // Vanish
@@ -1012,6 +1117,21 @@
       var nn = C.find(cur(), id);
       vanishNow(nn && nn.vanish ? nn.vanish.at : 0);
     });
+    // Send to other apps (only the ones installed here)
+    var lw = el("div", "sn-links");
+    lw.setAttribute("role", "group");
+    lw.setAttribute("aria-label", T("send"));
+    if (hasApp("todo")) {
+      var tb = el("button", "sn-btn", T("toTodo")); tb.type = "button";
+      tb.addEventListener("click", function () { flushSheet(s); sendTo(id, "todo"); });
+      lw.appendChild(tb);
+    }
+    if (hasApp("notes")) {
+      var nb = el("button", "sn-btn", T("toNotes")); nb.type = "button";
+      nb.addEventListener("click", function () { flushSheet(s); sendTo(id, "notes"); });
+      lw.appendChild(nb);
+    }
+    if (lw.firstChild) body.appendChild(lw);
     dlg.appendChild(body);
 
     var foot = el("div", "sn-sf");
@@ -1064,7 +1184,10 @@
       if (n.ring) s.ringAt.value = C.toLocalInput(n.ring.at);
       s.ringAt.hidden = s.ring.value !== "custom";
     }
-    s.ringSt.textContent = n.ring ? T(ringing ? "ringing" : "rings", { when: when(n.ring.at, now) }) : "";
+    s.repW.hidden = !n.ring;
+    if (doc.activeElement !== s.rep) s.rep.value = n.ring && n.ring.rep ? n.ring.rep : "";
+    s.ringSt.textContent = n.ring ? T(ringing ? "ringing" : "rings", { when: when(n.ring.at, now) }) +
+      (n.ring.rep ? " · " + T("repf." + n.ring.rep) : "") : "";
     if (doc.activeElement !== s.van && doc.activeElement !== s.vanAt) {
       var hasAt = !!(n.vanish && n.vanish.at);
       s.van.value = hasAt ? "custom" : (s.van.value === "custom" && !s.vanAt.hidden ? "custom" : "off");
@@ -1073,6 +1196,23 @@
     }
     s.onDone.checked = !!(n.vanish && n.vanish.onDone);
     s.vanSt.textContent = n.vanish && n.vanish.at ? T("vanishes", { when: when(n.vanish.at, now) }) : "";
+  }
+
+  function hasApp(id) {
+    try {
+      var f = root.orosAssistInstalled;
+      return typeof f === "function" && f().some(function (a) { return a && a.id === id; });
+    } catch (e) { return false; }
+  }
+  // Prefill only: To-Do and Notes write with their own code (BR-TD-ADD,
+  // Notes { add }), so each slice keeps one writer.
+  function sendTo(id, app) {
+    var n = C.find(cur(), id);
+    if (!n || typeof root.__orosOpenAt !== "function") return;
+    if (!C.firstLine(n.text)) { notify(T("nothing")); return; }
+    closeEditor();
+    if (app === "todo") root.__orosOpenAt("todo", { addItems: { from: T("appName"), items: C.todoItems(n.text) } });
+    else root.__orosOpenAt("notes", { add: C.notePage(n.text) });
   }
 
   function removeWithUndo(id) {
@@ -1208,7 +1348,7 @@
   root.__orosOpenStickies = function (id) { show(String(id || "")); };
 
   root.orosStickies = {
-    VERSION: "1.0.0",
+    VERSION: "1.1.0",
     tick: tick,
     registered: registered,
     data: function () { flushText(); return clone(cur()); },
@@ -1233,7 +1373,8 @@
       tidy();
       return true;
     },
-    testSound: function (kind) { play(SOUNDS.indexOf(kind) >= 0 ? kind : prefs().sound); },
+    testSound: function (kind) { play(validSound(kind) ? kind : prefs().sound); },
+    melodies: melodies,
     exportText: function () { flushText(); return C.toText(cur()); },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
@@ -1244,6 +1385,8 @@
 
   function boot() {
     registerSlice();
+    // a melody chime: have its core ready before the first ring
+    if (RT_RE.test(prefs().sound)) setTimeout(function () { if (registered()) rtCore(); }, 4000);
     if (mq) {
       var onMq = function () { stopEdit(true); render(); };
       if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq);

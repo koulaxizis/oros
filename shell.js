@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.10.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.13.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1099,6 +1099,7 @@
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
@@ -6444,6 +6445,50 @@
         : (due + (due === 1 ? " quote is due or overdue"
                             : " quotes are due or overdue")),
       deepLink: earliestId ? "quote:" + earliestId : ""
+    });
+  }
+
+  // Invoices wave 2 — due / overdue reminder. Shell-side scan of
+  // "oros-invoices-data" with invoices/core.js (reminder: the same
+  // rule as the Calendar feed and Today): issued documents with money
+  // still owed, overdue or due within 2 days. Key "due-<ymd>-<late>-
+  // <soon>": once a day, again when the list grows. Said in today's
+  // summary → silent. Click → the first document.
+  var INV_DATA_KEY = "oros-invoices-data";
+  var invoicesCheckLastTick = 0;
+  function invoicesCheckTickThrottled() {
+    var now = Date.now();
+    if (now - invoicesCheckLastTick < 60000) return;
+    invoicesCheckLastTick = now;
+    invoicesCheckTick();
+  }
+  function invoicesCheckTick() {
+    var IC = window.OrosInvoicesCore;
+    if (!IC) return;                                    // stale bundle — silent
+    var raw;
+    try { raw = localStorage.getItem(INV_DATA_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var data = IC.parse(raw);
+    if (!data) return;
+    var r = IC.reminder(data, sysYmd(), 2);
+    if (!r) return;
+    if (todayAbsorbs("invoices")) return;               // said in today's summary
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
+    var title = window.t("app.invoices");
+    if (title === "app.invoices") title = "Invoices";   // missing-key fallback
+    var el = state.lang === "el", parts = [];
+    if (r.late) parts.push(el ? (r.late + (r.late === 1 ? " ληξιπρόθεσμο" : " ληξιπρόθεσμα"))
+                              : (r.late + " overdue"));
+    if (r.soon) parts.push(el ? (r.soon + " λήγ" + (r.soon === 1 ? "ει" : "ουν") + " σύντομα")
+                              : (r.soon + " due soon"));
+    N.emit({
+      ns: "invoices",
+      key: r.key,
+      type: "due",
+      title: title,
+      body: parts.join(" · ") + (el ? " (ανεξόφλητα παραστατικά)" : (r.late + r.soon === 1 ? " (unpaid document)" : " (unpaid documents)")),
+      deepLink: "invoices:" + r.first
     });
   }
 
