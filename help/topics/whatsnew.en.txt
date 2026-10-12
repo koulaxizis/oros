@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.25.00
+- CRM: Invoice and Quote buttons on a customer and on a deal open a filled-in draft in Invoices or Quote. A customer's new Documents tab lists their invoices (invoiced, paid, unpaid) and quotes; the Dashboard shows what customers still owe.
+
 ## Version 1.24.00
 - Stock: a counter for quick sales with a scanner, barcode labels on A4, and product photos.
 - Help: the Calendar and Install guide pages cover the latest releases.
