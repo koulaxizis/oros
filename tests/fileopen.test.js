@@ -38,8 +38,8 @@ test("manifest file_handlers are built from the table, one handler per type", ()
   assert.equal(m.launch_handler, undefined);
 });
 
-test("no SVG, media, html, json or zip are taken over", () => {
-  [".svg", ".mp3", ".mp4", ".html", ".htm", ".json", ".zip", ".exe", ".js"]
+test("no SVG, sound, mkv, html, json or zip are taken over", () => {
+  [".svg", ".mp3", ".mkv", ".html", ".htm", ".json", ".zip", ".exe", ".js"]
     .forEach((x) => assert.deepEqual(F.appsFor(x), [], x));
 });
 
@@ -50,7 +50,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     atelier: ["atelier/core.js"], slides: ["slides/app.js"], layout: ["layout/layout.js"],
     feeds: ["feeds/feeds.js"], podcasts: ["podcasts/podcasts.js"], mindmap: ["mindmap/mindmap.js"],
     familytree: ["familytree/familytree.js"], ringtones: ["ringtones/ringtones.js"],
-    notes: ["notes/notes.js"], photolab: ["photolab/app.js"], library: ["library/app.js"],
+    notes: ["notes/notes.js"], photolab: ["photolab/app.js"], montage: ["montage/montage.js"], library: ["library/app.js"],
     calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"]
   };
   F.HANDLERS.forEach((h) => {
