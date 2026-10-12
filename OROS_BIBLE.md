@@ -4828,3 +4828,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Ring at a time (chime, wiggle, inbox item, Done / Snooze 10 min) and vanish at a time or when the ring is Done; faded notes wait 7 days in the app's Faded tab (Restore).
 - Synced slice "stickies" (per-field LWW + tombstones), positions and settings device-local. Tests: tests/stickies.test.js (merge laws + fuzz, engine, quick times, placement).
 - Not tested: a real phone, Safari, real Dropbox, sound on a real speaker (headless Chromium).
+
+### 2026-10-12 — CRM / Πελάτες + new category Business (#206) — 1.03.00
+- CRM / Πελάτες v1.0.0 (new app, category Business): customers (company/person, ΑΦΜ check, people linked to Contacts read-only), deals with fixed stages New → Contacted → Proposal → Negotiation → Won/Lost (drag on desktop, stage chips on phones, lost reason), history (call/mail/meeting/message/note), follow-ups with day and optional time, Agenda (late/today/next 7 days), Dashboard (open pipeline, weighted, won this month/year, forgotten customers), reminders in the inbox, CSV export, JSON backup/restore, universal search (opt-in). New category Business; Quote and Timesheet moved from Office.
