@@ -5224,3 +5224,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 - **Lots and expiry dates:** per-lot quantities (first to expire goes first), Expiring filter and report, Today reminder 7 days ahead.
 - Not tested: real phones, Safari.
+
+### 2026-10-12 — Stock v1.6.0 (phase 3D, #248) — 1.34.00
+
+- **Close a period:** archive in Files › Stock/Archive, opening balance per product / warehouse / lot, identical numbers, closed dates locked, offline-safe for 90 days, Reopen.
+- Stock plan complete. Not tested: real phones, Safari, real Vault Drive with the archive file.
