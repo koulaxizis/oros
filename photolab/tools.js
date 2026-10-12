@@ -45,6 +45,26 @@
   function sx(x) { return x * view().state().z + view().state().ox; }
   function sy(y) { return y * view().state().z + view().state().oy; }
 
+  // ---------- Snapping (View › Snap) ----------
+  // To guides, the canvas edges and centre, and the grid when shown,
+  // within 8 screen px.
+  function snapTargets() {
+    var P = pr();
+    if (!P.snap || !st.doc) return null;
+    return PL.G.targets(st.doc, { guides: P.guides, grid: P.grid ? P.gridSize : 0 });
+  }
+  function snapTol() { return 8 / view().state().z; }
+  function snapP(p) {
+    var tg = snapTargets();
+    if (!tg) return p;
+    var s = PL.G.snapPoint(p, tg, snapTol());
+    return { x: s.x, y: s.y };
+  }
+  function snapV(v, axis) {
+    var tg = snapTargets();
+    return tg ? PL.G.snap1(v, tg[axis], snapTol()) : v;
+  }
+
   // The active layer (or the mask being edited) if a paint tool may
   // use it, else a message (R28).
   function paintable(needRaster) {
@@ -183,10 +203,10 @@
     return {
       id: id, cursor: "crosshair",
       down: function (p, e) {
-        var a = { x: p.x, y: p.y }, mode = selMode(e);
+        var a = snapP(p), mode = selMode(e);
         drag = { kind: ellipse ? "ellipse" : "rect", r: { x: a.x, y: a.y, w: 0, h: 0 } };
         return {
-          move: function (q, ev) { drag.r = normRect(a, q, ev.shiftKey && !e.shiftKey, ev.altKey && !e.altKey); view().schedule(); },
+          move: function (q, ev) { drag.r = normRect(a, snapP(q), ev.shiftKey && !e.shiftKey, ev.altKey && !e.altKey); view().schedule(); },
           up: function () {
             var r = absRect(drag.r); drag = null;
             if (r.w < 1 || r.h < 1) {                         // a click: deselect
@@ -226,7 +246,7 @@
         if (!poly) poly = { pts: [], mode: selMode(e) };
         var f = poly.pts[0];
         if (f && poly.pts.length >= 3 && Math.hypot((p.x - f.x) * view().state().z, (p.y - f.y) * view().state().z) < 10) { closePoly(); return null; }
-        poly.pts.push({ x: p.x, y: p.y });
+        poly.pts.push(snapP(p));
         view().schedule();
         return null;
       }
@@ -275,6 +295,54 @@
     }
   };
 
+  // ---------- Quick selection ----------
+  // Paint over an area: it grows out to the edges of similar colour.
+  // Shift adds (default once there is a selection), Alt subtracts.
+  // One undo step per stroke.
+  var quick = {
+    id: "quick", cursor: "crosshair",
+    down: function (p, e) {
+      if (!inDoc(p)) { PL.toast(PL.t("msg.outside")); return null; }
+      var L = PL.layer(), o = pr().quick;
+      var img = o.all || !L || L.k !== "raster" ? mergedImage() : layerImage(L);
+      var sub = e.altKey, before = st.sel, d = st.doc;
+      var area = null, last = null, timer = null;
+      function show() {
+        st.sel = sub ? S.combine(before, area, "sub") : S.combine(before, area, "add");
+        view().selChanged();
+      }
+      function dab(q) {
+        if (!inDoc(q)) return;
+        if (last && Math.hypot(q.x - last.x, q.y - last.y) < o.size / 3) return;
+        last = { x: q.x, y: q.y };
+        area = S.quickGrow(img, area, q.x, q.y, o.size / 2, o.tol);
+        if (!timer) timer = setTimeout(function () { timer = null; show(); }, 60);
+      }
+      dab(p);
+      return {
+        move: function (q) { dab(q); },
+        up: function () {
+          clearTimeout(timer); timer = null;
+          st.sel = before;
+          if (!area) return;
+          var next = sub ? S.combine(before, area, "sub") : S.combine(before, area, "add");
+          PL.setSel(next && S.isEmpty(next) ? null : next, PL.t("step.quick"));
+          if (!next || !before) view().selChanged();
+        },
+        cancel: function () { clearTimeout(timer); timer = null; st.sel = before; view().selChanged(); }
+      };
+    },
+    overlay: function (g, vw) {
+      if (!hoverPt) return;
+      var r = Math.max(1, pr().quick.size * vw.z / 2);
+      g.beginPath(); g.arc(sx(hoverPt.x), sy(hoverPt.y), r, 0, Math.PI * 2);
+      g.lineWidth = 1; g.strokeStyle = "rgba(0,0,0,0.7)"; g.stroke();
+      g.beginPath(); g.moveTo(sx(hoverPt.x) - 4, sy(hoverPt.y)); g.lineTo(sx(hoverPt.x) + 4, sy(hoverPt.y));
+      g.moveTo(sx(hoverPt.x), sy(hoverPt.y) - 4); g.lineTo(sx(hoverPt.x), sy(hoverPt.y) + 4);
+      g.strokeStyle = "rgba(255,255,255,0.9)"; g.stroke();
+    }
+  };
+
   // ---------- Move ----------
   function blendOver(dst, src) {           // straight-alpha "over", same size
     var d = dst.data, s = src.data;
@@ -296,10 +364,18 @@
       var a = { x: p.x, y: p.y };
       if (st.sel && L.k === "raster") return liftAndMove(L, a);
       var before = JSON.stringify(st.doc), x0 = L.x, y0 = L.y;
+      var b0 = L.k === "adj" ? null : view().layerBounds(L);
+      if (L.k === "raster") { var cb = T.contentBounds(PL.surface(L.id)); b0 = cb && { x: cb.x + L.x, y: cb.y + L.y, w: cb.w, h: cb.h }; }
       return {
         move: function (q, ev) {
           var dx = Math.round(q.x - a.x), dy = Math.round(q.y - a.y);
           if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
+          var tg = b0 && snapTargets();
+          if (tg) {
+            var sr = PL.G.snapRect({ x: b0.x + dx, y: b0.y + dy, w: b0.w, h: b0.h }, tg, snapTol());
+            if (!ev.shiftKey || dx) dx += Math.round(sr.dx);
+            if (!ev.shiftKey || dy) dy += Math.round(sr.dy);
+          }
           L.x = x0 + dx; L.y = y0 + dy; view().invalidate();
         },
         up: function () {
@@ -491,10 +567,10 @@
   var shape = {
     id: "shape", cursor: "crosshair",
     down: function (p) {
-      var a = { x: p.x, y: p.y };
+      var a = snapP(p);
       drag = { kind: "shape", r: { x: a.x, y: a.y, w: 0, h: 0 } };
       return {
-        move: function (q, ev) { drag.r = normRect(a, q, ev.shiftKey, ev.altKey); view().schedule(); },
+        move: function (q, ev) { drag.r = normRect(a, snapP(q), ev.shiftKey, ev.altKey); view().schedule(); },
         up: function () {
           var r = absRect(drag.r); drag = null; view().schedule();
           if (r.w < 2 || r.h < 2) return;
@@ -540,19 +616,22 @@
     enter: function () { crop.r = { x: 0, y: 0, w: st.doc.w, h: st.doc.h }; PL.emit("tool"); view().schedule(); },
     leave: function () { crop.r = null; view().schedule(); },
     down: function (p) {
-      var r0 = crop.r, h = r0 && handleAt(r0, p), a = { x: p.x, y: p.y };
+      var r0 = crop.r, h = r0 && handleAt(r0, p), a = h ? { x: p.x, y: p.y } : snapP(p);
       var start = r0 ? { x: r0.x, y: r0.y, w: r0.w, h: r0.h } : null, ratio = cropRatio();
       return {
         move: function (q) {
           var dx = q.x - a.x, dy = q.y - a.y, r;
-          if (!h) r = absRect(normRect(a, q, false, false));
-          else if (h === "move") r = { x: start.x + dx, y: start.y + dy, w: start.w, h: start.h };
-          else {
+          if (!h) r = absRect(normRect(a, snapP(q), false, false));
+          else if (h === "move") {
+            r = { x: start.x + dx, y: start.y + dy, w: start.w, h: start.h };
+            var tg = snapTargets();
+            if (tg) r = PL.G.snapRect(r, tg, snapTol());
+          } else {
             var x0 = start.x, y0 = start.y, x1 = start.x + start.w, y1 = start.y + start.h;
-            if (h.indexOf("w") >= 0) x0 += dx;
-            if (h.indexOf("e") >= 0) x1 += dx;
-            if (h.indexOf("n") >= 0) y0 += dy;
-            if (h.indexOf("s") >= 0) y1 += dy;
+            if (h.indexOf("w") >= 0) x0 = snapV(x0 + dx, "x");
+            if (h.indexOf("e") >= 0) x1 = snapV(x1 + dx, "x");
+            if (h.indexOf("n") >= 0) y0 = snapV(y0 + dy, "y");
+            if (h.indexOf("s") >= 0) y1 = snapV(y1 + dy, "y");
             r = { x: Math.min(x0, x1), y: Math.min(y0, y1), w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) };
           }
           if (ratio && h !== "move") {
@@ -765,7 +844,7 @@
 
   // ---------- Registry ----------
   var TOOLS = {
-    move: move, marquee: null, lasso: lasso, wand: wand, crop: cropTool,
+    move: move, marquee: null, lasso: lasso, wand: wand, quick: quick, crop: cropTool,
     brush: brushTool("brush", false), eraser: brushTool("eraser", true),
     clone: brushTool("clone", false, true), heal: brushTool("heal", false, true),
     tone: brushTool("tone", false, true), smudge: brushTool("smudge", false, true),
@@ -777,7 +856,7 @@
     if (id === "marquee") return pr().marqueeEllipse ? ellSel : rectSel;
     return TOOLS[id] || TOOLS.brush;
   }
-  var ORDER = ["move", "marquee", "lasso", "wand", "crop", "brush", "eraser", "clone", "heal", "tone", "smudge", "fill", "gradient", "picker", "text", "shape", "hand", "zoom"];
+  var ORDER = ["move", "marquee", "lasso", "wand", "quick", "crop", "brush", "eraser", "clone", "heal", "tone", "smudge", "fill", "gradient", "picker", "text", "shape", "hand", "zoom"];
 
   var PAINTS = ["brush", "eraser", "clone", "heal", "tone", "smudge"];
 
@@ -800,7 +879,51 @@
     var p = view().toDoc(e.clientX, e.clientY);
     if (e.button === 1 || spaceDown) { op = panOp(e); return; }
     if (e.button === 2) return;
+    var sp = view().screenPoint(e.clientX, e.clientY), ax = view().rulerAt(sp);
+    if (ax) { op = guideOp(ax, -1, ax === "x" ? p.x : p.y); return; }
+    if (st.tool === "move" || st.tool === "hand") {
+      var gh = view().guideAt(sp);
+      if (gh) { op = guideOp(gh.axis, gh.i, gh.v); return; }
+    }
     op = tool(st.tool).down(p, e);
+  }
+  // Drags a guide out of a ruler (i = -1) or moves guide i; dropping
+  // it on a ruler or outside the picture's surroundings deletes it.
+  // One undo step.
+  function guideOp(axis, i, v0) {
+    if (!pr().guides) { pr().guides = true; PL.savePrefs(); }
+    var before = JSON.stringify(st.doc), gd = st.doc.gd || { x: [], y: [] };
+    var list = gd[axis].slice();
+    if (i >= 0) list.splice(i, 1);
+    function setList(l) {
+      var n = { x: axis === "x" ? l : gd.x, y: axis === "y" ? l : gd.y };
+      st.doc.gd = PL.C.normGuides(n) || undefined;
+      if (!st.doc.gd) delete st.doc.gd;
+    }
+    setList(list);
+    var v = Math.round(v0);
+    view().setGuideDrag({ axis: axis, v: v });
+    function at(q, ev) {
+      var sp = view().screenPoint(ev.clientX, ev.clientY), sz = view().size();
+      var gone = view().rulerAt(sp) === axis || sp.x < 0 || sp.y < 0 || sp.x > sz.w || sp.y > sz.h;
+      v = Math.round(snapV(axis === "x" ? q.x : q.y, axis));
+      view().setGuideDrag(gone ? null : { axis: axis, v: v });
+      PL.emit("pointer", axis === "x" ? { x: v, y: q.y } : { x: q.x, y: v });
+      return !gone;
+    }
+    return {
+      move: function (q, ev) { at(q, ev); },
+      up: function (q, ev) {
+        var keep = at(q, ev);
+        view().setGuideDrag(null);
+        if (keep) setList(list.concat([v]));
+        var after = JSON.stringify(st.doc);
+        if (after === before) return;
+        PL.pushStep(H.docStep(PL.t(i < 0 ? "step.guideAdd" : keep ? "step.guideMove" : "step.guideDelete"), before, after, PL.setDocRecord));
+        PL.changed();
+      },
+      cancel: function () { view().setGuideDrag(null); PL.setDocRecord(JSON.parse(before)); }
+    };
   }
   function onMove(e) {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });

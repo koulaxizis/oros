@@ -353,3 +353,90 @@ test("Today provider: open follow-ups as tasks with Done, read-only", () => {
   assert.equal(P.id, "crm");
   assert.deepEqual(P.keys, ["oros-crm-data"]);
 });
+
+// ---------------------------------------------------------------
+// Phase 2b: own pipeline stages
+// ---------------------------------------------------------------
+
+test("stages: defaults, rename, hide, own stages in order, Won/Lost fixed", () => {
+  assert.deepEqual(C.stages(C.empty()).map(s => s.id), ["new", "contact", "proposal", "nego", "won", "lost"]);
+  const d = C.norm(data({ stg: [
+    { id: "contact", m: 5, name: "Called", prob: 30 },
+    { id: "proposal", m: 5, off: 1 },
+    { id: "ssssss01", m: 5, name: "Demo", prob: 40, pos: 15 },
+    { id: "ssssss02", m: 5, name: "Trial", pos: 45 },
+    { id: "won", m: 5, name: "Paid" },                 // Won / Lost are not editable
+    { id: "ssssss03", m: 5 },                          // own stage needs a name
+    { id: "nego", m: 5, off: 0, name: "" }
+  ] }));
+  assert.deepEqual(d.stg.map(r => r.id), ["contact", "nego", "proposal", "ssssss01", "ssssss02"]);
+  assert.deepEqual(d.stg.find(r => r.id === "nego"), { id: "nego", m: 5 });
+  const st = C.stages(d);
+  assert.deepEqual(st.map(s => s.id), ["new", "ssssss01", "contact", "nego", "ssssss02", "won", "lost"]);
+  assert.deepEqual(st[2], { id: "contact", name: "Called", prob: 30, pos: 20, open: true, own: false });
+  assert.equal(st[4].prob, 50);
+  // every open stage hidden → New comes back so a deal always has a column
+  const none = C.norm(data({ stg: ["new", "contact", "proposal", "nego"].map(id => ({ id, m: 1, off: 1 })) }));
+  assert.deepEqual(C.stages(none).map(s => s.id), ["new", "won", "lost"]);
+});
+
+test("stages: deals in own stages, a deleted or hidden stage shows in the first one, probabilities", () => {
+  const d = C.norm(data({
+    cust: [cust("cccccc01")],
+    stg: [{ id: "ssssss01", m: 5, name: "Demo", prob: 40, pos: 15 }, { id: "proposal", m: 5, off: 1 }],
+    deals: [deal("dddddd01", "cccccc01", { stage: "ssssss01", val: 10000 }),
+            deal("dddddd02", "cccccc01", { stage: "ssssss09", val: 5000 }),     // stage deleted elsewhere
+            deal("dddddd03", "cccccc01", { stage: "proposal", val: 2000 }),     // stage hidden elsewhere
+            deal("dddddd04", "cccccc01", { stage: "ssssss01", val: 10000, prob: 90 }),
+            deal("dddddd05", "cccccc01", { stage: "won", val: 700, cd: TODAY })],
+    tombs: { ssssss09: 4 }
+  }));
+  assert.equal(d.deals.find(x => x.id === "dddddd02").stage, "ssssss09");   // never rewritten
+  assert.equal(C.stageOf(d, d.deals.find(x => x.id === "dddddd02")).id, "new");
+  assert.equal(C.dealProb(d.deals[0], d), 40);
+  assert.equal(C.dealProb(d.deals[1], d), 10);
+  const p = C.pipeline(d);
+  assert.deepEqual(p.ssssss01, { n: 2, val: 20000, wval: 13000 });
+  assert.deepEqual(p.new, { n: 2, val: 7000, wval: 700 });
+  assert.equal(p.proposal, undefined);
+  const s = C.dashboard(d, NOW, TODAY);
+  assert.equal(s.openN, 4);
+  assert.equal(s.openVal, 27000);
+  assert.equal(s.openW, 13700);
+});
+
+test("stages merge like rows: LWW, tombstones, symmetric", () => {
+  const A = data({ stg: [{ id: "ssssss01", m: 10, name: "Demo", pos: 15 }, { id: "contact", m: 3, name: "A" }] });
+  const B = data({ stg: [{ id: "ssssss01", m: 12, name: "Demo call", pos: 15 }, { id: "contact", m: 4, name: "B" }],
+                   tombs: { ssssss02: 9 } });
+  const ab = C.merge(A, B);
+  assert.equal(J(ab), J(C.merge(B, A)));
+  assert.equal(ab.stg.find(r => r.id === "ssssss01").name, "Demo call");
+  assert.equal(ab.stg.find(r => r.id === "contact").name, "B");
+  const del = C.merge(ab, data({ tombs: { ssssss01: 20 } }));
+  assert.deepEqual(del.stg.map(r => r.id), ["contact"]);
+});
+
+test("search shows the user's stage name", () => {
+  const S = require(path.join(__dirname, "..", "crm/search.js"));
+  const store = { "oros-crm-data": data({ cust: [cust("cccccc01", { name: "Acme" })],
+    stg: [{ id: "ssssss01", m: 5, name: "Demo", pos: 15 }, { id: "contact", m: 5, name: "Called" }],
+    deals: [deal("dddddd01", "cccccc01", { stage: "ssssss01" }), deal("dddddd02", "cccccc01", { stage: "contact" }),
+            deal("dddddd03", "cccccc01", { stage: "nego" })] }) };
+  const hits = S.search({ lang: "en", readJSON: (k) => (k in store ? JSON.parse(J(store[k])) : null) });
+  const txt = (id) => hits.find(h => h.id === id).text;
+  assert.match(txt("dddddd01"), /Demo/);
+  assert.match(txt("dddddd02"), /Called/);
+  assert.match(txt("dddddd03"), /Negotiation/);
+});
+
+test("app strings: no key twice, EN and EL have the same keys", () => {
+  const fs = require("fs");
+  const s = fs.readFileSync(path.join(__dirname, "..", "crm/crm.js"), "utf8");
+  const a = s.indexOf("    en: {"), b = s.indexOf("    el: {"), c = s.indexOf("  };", b);
+  const keys = (part) => [...part.matchAll(/"([a-zA-Z0-9_.]+)":\s/g)].map(m => m[1]);
+  const en = keys(s.slice(a, b)), el = keys(s.slice(b, c));
+  assert.deepEqual(en.filter((k, i) => en.indexOf(k) !== i), []);
+  assert.deepEqual(el.filter((k, i) => el.indexOf(k) !== i), []);
+  assert.deepEqual(en.slice().sort(), el.slice().sort());
+});

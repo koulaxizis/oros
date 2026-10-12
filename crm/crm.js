@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — App logic (v1.1.0)
+// orOS CRM — App logic (v1.2.0)
 // A small customer book for a freelancer or a small business:
 //   - customers (company or person) with ΑΦΜ / ΔΟΥ / profession,
 //     status lead / active / past, tags, a star, notes
@@ -10,7 +10,8 @@
 //     reminders through the shell inbox (shell crmCheckTick, also
 //     with the app closed), rows in Today and in the Calendar,
 //     "Send to To-Do" (BR-TD-ADD)
-//   - a pipeline of deals: value, stage, probability, won / lost
+//   - a pipeline of deals: value, stage, probability, won / lost;
+//     own stages (rename, reorder, add, hide) in Settings
 //   - a dashboard; CSV export, JSON backup / restore (merge)
 // Data:
 //   - synced slice "crm" (oros-crm-data): every list LWW per id +
@@ -119,7 +120,7 @@
       "ed.linked": "Linked to Contacts: {name}", "ed.unlink": "Unlink",
       "ed.dealNew": "New deal", "ed.dealEdit": "Deal", "ed.cust": "Customer", "ed.title": "Title", "ed.titlePh": "Website redesign, 50 chairs…",
       "ed.value": "Value ({c})", "ed.stage": "Stage", "ed.prob": "Chance (%)", "ed.probPh": "{p} (stage default)",
-      "ed.close": "Expected close", "ed.why": "Why it was lost", "ed.titleReq": "Give the deal a title.",
+      "ed.closeDay": "Expected close", "ed.why": "Why it was lost", "ed.titleReq": "Give the deal a title.",
       "ed.valBad": "That amount is not a number.",
       "ed.logNew": "Log a contact", "ed.logEdit": "Contact", "ed.when": "When", "ed.date": "Date", "ed.time": "Time",
       "ed.who": "With", "ed.whoNone": "—", "ed.deal": "Deal", "ed.dealNone": "No deal", "ed.text": "What was said",
@@ -129,6 +130,13 @@
       "ed.fupDone": "Done", "ed.textReq": "Write what to do.", "ed.timeOpt": "Time (optional)",
       "ed.needCust": "Add a customer first.",
       "set.title": "Settings", "set.cur": "Currency", "set.forget": "\"Not contacted\" after", "set.days": "{n} days",
+      "set.stages": "Pipeline stages",
+      "stg.title": "Pipeline stages", "stg.hint": "Rename, reorder, add your own or hide the ones you do not use. The number is the default chance. Won and Lost stay as they are.",
+      "stg.name": "Stage name", "stg.prob": "Default chance (%)", "stg.up": "Move up", "stg.down": "Move down",
+      "stg.hide": "Hide", "stg.del": "Delete", "stg.show": "Show {name}", "stg.hiddenHead": "Hidden",
+      "stg.newPh": "New stage", "stg.add": "Add", "stg.max": "Up to {n} open stages.",
+      "stg.notEmpty": "{name} still has deals ({n}). Move them to another stage first.", "stg.last": "One open stage is needed.",
+      "stg.hidden": "{name} hidden", "stg.deleted": "{name} deleted",
       "set.tags": "Tags", "set.export": "Export customers (CSV)", "set.backup": "Backup (JSON)", "set.restore": "Restore a backup",
       "set.restoreHint": "A backup is merged into what you have: nothing here is deleted or overwritten by older copies.",
       "set.usage": "This app uses {kb} KB of the browser storage that all orOS apps share.",
@@ -205,7 +213,7 @@
       "ed.linked": "Συνδεδεμένος με τις Επαφές: {name}", "ed.unlink": "Αποσύνδεση",
       "ed.dealNew": "Νέα ευκαιρία", "ed.dealEdit": "Ευκαιρία", "ed.cust": "Πελάτης", "ed.title": "Τίτλος", "ed.titlePh": "Νέο site, 50 καρέκλες…",
       "ed.value": "Αξία ({c})", "ed.stage": "Στάδιο", "ed.prob": "Πιθανότητα (%)", "ed.probPh": "{p} (του σταδίου)",
-      "ed.close": "Αναμενόμενο κλείσιμο", "ed.why": "Γιατί χάθηκε", "ed.titleReq": "Δώσε έναν τίτλο στην ευκαιρία.",
+      "ed.closeDay": "Αναμενόμενο κλείσιμο", "ed.why": "Γιατί χάθηκε", "ed.titleReq": "Δώσε έναν τίτλο στην ευκαιρία.",
       "ed.valBad": "Αυτό το ποσό δεν είναι αριθμός.",
       "ed.logNew": "Καταγραφή επικοινωνίας", "ed.logEdit": "Επικοινωνία", "ed.when": "Πότε", "ed.date": "Ημερομηνία", "ed.time": "Ώρα",
       "ed.who": "Με", "ed.whoNone": "—", "ed.deal": "Ευκαιρία", "ed.dealNone": "Καμία ευκαιρία", "ed.text": "Τι ειπώθηκε",
@@ -215,6 +223,13 @@
       "ed.fupDone": "Έγινε", "ed.textReq": "Γράψε τι να κάνεις.", "ed.timeOpt": "Ώρα (προαιρετικά)",
       "ed.needCust": "Πρόσθεσε πρώτα έναν πελάτη.",
       "set.title": "Ρυθμίσεις", "set.cur": "Νόμισμα", "set.forget": "«Χωρίς επαφή» μετά από", "set.days": "{n} μέρες",
+      "set.stages": "Στάδια pipeline",
+      "stg.title": "Στάδια pipeline", "stg.hint": "Μετονόμασε, άλλαξε σειρά, πρόσθεσε δικά σου ή κρύψε όσα δεν χρησιμοποιείς. Ο αριθμός είναι η προεπιλεγμένη πιθανότητα. Τα Κερδήθηκε και Χάθηκε μένουν ως έχουν.",
+      "stg.name": "Όνομα σταδίου", "stg.prob": "Προεπιλεγμένη πιθανότητα (%)", "stg.up": "Πάνω", "stg.down": "Κάτω",
+      "stg.hide": "Απόκρυψη", "stg.del": "Διαγραφή", "stg.show": "Εμφάνιση: {name}", "stg.hiddenHead": "Κρυμμένα",
+      "stg.newPh": "Νέο στάδιο", "stg.add": "Προσθήκη", "stg.max": "Έως {n} ανοιχτά στάδια.",
+      "stg.notEmpty": "Το {name} έχει ακόμα ευκαιρίες ({n}). Μετακίνησέ τες πρώτα σε άλλο στάδιο.", "stg.last": "Χρειάζεται ένα ανοιχτό στάδιο.",
+      "stg.hidden": "Κρύφτηκε: {name}", "stg.deleted": "Διαγράφηκε: {name}",
       "set.tags": "Ετικέτες", "set.export": "Εξαγωγή πελατών (CSV)", "set.backup": "Αντίγραφο (JSON)", "set.restore": "Επαναφορά αντιγράφου",
       "set.restoreHint": "Το αντίγραφο συγχωνεύεται με ό,τι έχεις: τίποτα δεν σβήνεται και κανένα παλιότερο αντίγραφο δεν γράφει πάνω σε νεότερο.",
       "set.usage": "Η εφαρμογή χρησιμοποιεί {kb} KB από τον χώρο του browser που μοιράζονται όλες οι εφαρμογές του orOS.",
@@ -243,6 +258,8 @@
   var UI = {
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
     starOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
@@ -333,7 +350,14 @@
     var tg = c && c.tags && c.tags.length ? tagOf(c.tags[0]) : null;
     return tg ? COLORS[tg.col] : "";
   }
-  function stageName(s) { return t("stage." + s); }
+  // A stage's label: the user's name, else the built-in one. An id
+  // that is gone (deleted on another device) reads as the stage the
+  // deal now shows in (C.stageOf).
+  function stageObj(id) { return C.stageOf(data, { stage: id }); }
+  function stageName(id) {
+    var s = stageObj(id);
+    return s.name || t("stage." + s.id);
+  }
   function safeUrl(u) {
     var s = String(u || "").trim();
     if (!s) return "";
@@ -367,7 +391,7 @@
         if (typeof p.tag === "string") prefs.tag = p.tag;
         if (["name", "last", "next", "value"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
         if (["hist", "deals", "fups"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
-        if (C.STAGES.indexOf(p.stage) >= 0) prefs.stage = p.stage;
+        if (typeof p.stage === "string") prefs.stage = p.stage;
       }
     } catch (e) {}
   }
@@ -928,7 +952,7 @@
     var bits = [];
     if (showCust) bits.push(c ? c.name : t("unknown"));
     if (!showCust || !C.isOpen(d)) bits.push(stageName(d.stage));
-    if (C.isOpen(d)) bits.push(t("pipe.prob", { p: C.dealProb(d) }));
+    if (C.isOpen(d)) bits.push(t("pipe.prob", { p: C.dealProb(d, data) }));
     if (d.close && C.isOpen(d)) bits.push(relDay(d.close));
     if (d.cd && !C.isOpen(d)) bits.push(fmtDate(d.cd));
     b.appendChild(el("div", "deal-sub", bits.join(" · ")));
@@ -940,9 +964,11 @@
     addLine(pane, t("deals.add"), function () { dealEditor(null, c.id); });
     if (!list.length) { pane.appendChild(el("p", "hint", t("deals.none"))); return; }
     var box = el("div", "rows");
+    var order = C.stages(data).map(function (x) { return x.id; });
+    var rank = function (d) { return order.indexOf(C.stageOf(data, d).id); };
     list.slice().sort(function (a, b) {
       var oa = C.isOpen(a) ? 0 : 1, ob = C.isOpen(b) ? 0 : 1;
-      return oa - ob || C.STAGES.indexOf(b.stage) - C.STAGES.indexOf(a.stage) || b.m - a.m;
+      return oa - ob || rank(b) - rank(a) || b.m - a.m;
     }).forEach(function (d) { box.appendChild(dealRowEl(d, false)); });
     pane.appendChild(box);
   }
@@ -1010,10 +1036,13 @@
       return;
     }
     var p = C.pipeline(data), s = C.dashboard(data, Date.now(), todayYmd());
+    var st = C.stages(data), ids = st.map(function (x) { return x.id; });
+    if (ids.indexOf(prefs.stage) < 0) prefs.stage = ids[0];
     // phones open on the first stage that has deals, until one is picked
     if (!stagePicked && !p[prefs.stage].n) {
-      for (var si = 0; si < C.STAGES.length; si++) if (p[C.STAGES[si]].n) { prefs.stage = C.STAGES[si]; break; }
+      for (var si = 0; si < ids.length; si++) if (p[ids[si]].n) { prefs.stage = ids[si]; break; }
     }
+    var isOpenStage = function (id) { return id !== "won" && id !== "lost"; };
     var sum = el("div", "pipe-sum");
     [t("pipe.open", { n: s.openN }), t("pipe.val", { v: money(s.openVal) }), t("pipe.w", { v: money(s.openW) }),
      t("pipe.wonM", { v: money(s.wonMonth) })].forEach(function (x, i) {
@@ -1026,7 +1055,7 @@
 
     var limit = C.addDays(todayYmd(), -90);
     function stageDeals(stage) {
-      var list = data.deals.filter(function (d) { return d.stage === stage; });
+      var list = data.deals.filter(function (d) { return C.stageOf(data, d, st).id === stage; });
       if (stage === "won" || stage === "lost") {
         list.sort(function (a, b) { return (a.cd || "") < (b.cd || "") ? 1 : -1; });
       } else {
@@ -1037,13 +1066,14 @@
 
     // wide: a board with drag and drop
     var board = el("div", "board");
-    C.STAGES.forEach(function (stage) {
+    board.style.gridTemplateColumns = "repeat(" + ids.length + ", minmax(190px, 1fr))";
+    ids.forEach(function (stage) {
       var col = el("div", "col");
       col.dataset.stage = stage;
       var head = el("div", "col-head");
       head.appendChild(el("div", "col-name", stageName(stage) + " · " + p[stage].n));
       head.appendChild(el("div", "col-sum", money(p[stage].val) +
-        (C.OPEN_STAGES.indexOf(stage) >= 0 ? " · " + t("pipe.w", { v: money(p[stage].wval) }) : "")));
+        (isOpenStage(stage) ? " · " + t("pipe.w", { v: money(p[stage].wval) }) : "")));
       col.appendChild(head);
       var cards = el("div", "col-cards");
       var list = stageDeals(stage), older = 0;
@@ -1067,7 +1097,7 @@
         col.classList.remove("drop");
         var d = C.byId(data.deals, dragId);
         dragId = "";
-        if (d && d.stage !== stage) {
+        if (d && C.stageOf(data, d, st).id !== stage) {
           if (stage === "lost") dealEditor(Object.assign({}, d, { stage: "lost" }), d.cust, true);
           else setStage(d, stage);
         }
@@ -1078,7 +1108,7 @@
 
     // narrow: stage chips + a list with "move to stage"
     var chips = el("div", "stage-chips");
-    C.STAGES.forEach(function (stage) {
+    ids.forEach(function (stage) {
       var b = el("button", "chip" + (prefs.stage === stage ? " on" : ""), stageName(stage) + " " + p[stage].n);
       b.type = "button";
       b.setAttribute("aria-pressed", prefs.stage === stage ? "true" : "false");
@@ -1089,7 +1119,7 @@
     var mob = el("div", "rows mob-list");
     var cur = p[prefs.stage];
     mob.appendChild(el("div", "col-sum", money(cur.val) +
-      (C.OPEN_STAGES.indexOf(prefs.stage) >= 0 ? " · " + t("pipe.w", { v: money(cur.wval) }) : "")));
+      (isOpenStage(prefs.stage) ? " · " + t("pipe.w", { v: money(cur.wval) }) : "")));
     var ml = stageDeals(prefs.stage);
     if (!ml.length) mob.appendChild(el("p", "hint", t("deals.none")));
     ml.slice(0, LIST_CAP).forEach(function (d) {
@@ -1105,10 +1135,12 @@
     var dlg = makeDialog("crm-stage");
     dlg.appendChild(el("h2", "dlg-title", t("pipe.move")));
     var list = el("div", "sheet-list");
-    C.STAGES.forEach(function (stage) {
-      var b = button(stageName(stage), "sheet-btn" + (d.stage === stage ? " primary" : ""), function () {
+    var curId = C.stageOf(data, d).id;
+    C.stages(data).forEach(function (sx) {
+      var stage = sx.id;
+      var b = button(stageName(stage), "sheet-btn" + (curId === stage ? " primary" : ""), function () {
         dlg.close();
-        if (stage === d.stage) return;
+        if (stage === curId) return;
         if (stage === "lost") dealEditor(Object.assign({}, d, { stage: "lost" }), d.cust, true);
         else setStage(d, stage);
       });
@@ -1202,11 +1234,12 @@
     box.appendChild(tiles);
 
     var p = C.pipeline(data), max = 0;
-    C.OPEN_STAGES.forEach(function (st) { if (p[st].val > max) max = p[st].val; });
+    var openIds = C.stages(data).filter(function (x) { return x.open; }).map(function (x) { return x.id; });
+    openIds.forEach(function (st) { if (p[st].val > max) max = p[st].val; });
     var sec = el("section", "sec");
     sec.appendChild(secHead(t("d.byStage")));
     var bars = el("div", "bars");
-    C.OPEN_STAGES.forEach(function (st) {
+    openIds.forEach(function (st) {
       var r = el("div", "bar-row");
       r.appendChild(el("span", "", stageName(st)));
       var tr = el("div", "bar-track");
@@ -1597,7 +1630,8 @@
     if (!d && needCustomer()) return;
     var dlg = makeDialog("crm-deal", true);
     var orig = d ? C.byId(data.deals, d.id) : null;
-    var x = d ? Object.assign({}, d) : { cust: custId || prefs.sel || "", stage: "new", val: 0 };
+    var x = d ? Object.assign({}, d) : { cust: custId || prefs.sel || "", stage: C.stages(data)[0].id, val: 0 };
+    x.stage = C.stageOf(data, x).id;
     dlg.appendChild(el("h2", "dlg-title", t(orig ? "ed.dealEdit" : "ed.dealNew")));
     var opts = custOptions();
     if (!C.byId(data.cust, x.cust)) x.cust = opts[0][0];
@@ -1609,19 +1643,19 @@
     dlg.appendChild(row1);
     var val = field(row1, t("ed.value", { c: data.prefs.cur }), inp("text", x.val ? (x.val / 100).toLocaleString(LOCALE) : "", 20));
     val.inputMode = "decimal";
-    var stage = field(row1, t("ed.stage"), selectEl(C.STAGES.map(function (s) { return [s, stageName(s)]; }), x.stage));
+    var stage = field(row1, t("ed.stage"), selectEl(C.stages(data).map(function (s) { return [s.id, stageName(s.id)]; }), x.stage));
     var row2 = el("div", "fld-row");
     dlg.appendChild(row2);
     var prob = field(row2, t("ed.prob"), inp("number", typeof x.prob === "number" ? x.prob : "", 3, ""));
     prob.min = 0; prob.max = 100; prob.step = 1;
-    var close = field(row2, t("ed.close"), inp("date", x.close || "", 10));
+    var close = field(row2, t("ed.closeDay"), inp("date", x.close || "", 10));
     var whyLbl = el("label", "dlg-lbl", t("ed.why"));
     var why = inp("text", x.why, 200);
     whyLbl.htmlFor = why.id = "crm-why";
     dlg.appendChild(whyLbl);
     dlg.appendChild(why);
     function syncStage() {
-      prob.placeholder = t("ed.probPh", { p: C.STAGE_PROB[stage.value] });
+      prob.placeholder = t("ed.probPh", { p: stageObj(stage.value).prob });
       var lost = stage.value === "lost";
       whyLbl.hidden = !lost; why.hidden = !lost;
     }
@@ -1814,6 +1848,7 @@
 
     var list = el("div", "sheet-list");
     list.style.marginTop = "16px";
+    list.appendChild(button(t("set.stages"), "sheet-btn", stagesEditor));
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
@@ -1826,6 +1861,121 @@
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("ed.close"), "primary", function () { dlg.close(); }));
     dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // ----- Pipeline stages -----
+  // The open stages in board order: rename, default probability, up /
+  // down, hide (built-in) or delete (own), only when no deal is in it.
+  // Won and Lost stay fixed. Every change is one "stg" record (LWW).
+  function stagesEditor() {
+    var dlg = makeDialog("crm-stages");
+    dlg.appendChild(el("h2", "dlg-title", t("stg.title")));
+    dlg.appendChild(el("p", "hint", t("stg.hint")));
+    var box = el("div", "rows");
+    dlg.appendChild(box);
+    var hid = el("div", "stg-hidden");
+    dlg.appendChild(hid);
+    function write(id, patch) {
+      var row = Object.assign({}, C.byId(data.stg, id) || { id: id }, patch);
+      if (!row.off) delete row.off;
+      return upsert("stg", row);
+    }
+    function inStage(id) {
+      return data.deals.filter(function (d) { return C.stageOf(data, d).id === id; }).length;
+    }
+    function draw() {
+      box.innerHTML = "";
+      hid.innerHTML = "";
+      var open = C.stages(data).filter(function (x) { return x.open; });
+      function move(i, j) {
+        var ids = open.map(function (x) { return x.id; });
+        var a = ids[i]; ids[i] = ids[j]; ids[j] = a;
+        ids.forEach(function (id, k) {
+          var want = (k + 1) * 10, sx = open.filter(function (x) { return x.id === id; })[0];
+          if (sx.pos !== want) write(id, { pos: want });
+        });
+        draw();
+      }
+      open.forEach(function (sx, i) {
+        var label = sx.name || t("stage." + sx.id);
+        var r = el("div", "stg-row");
+        var nm = inp("text", sx.name, 30, sx.own ? "" : t("stage." + sx.id));
+        nm.setAttribute("aria-label", t("stg.name"));
+        nm.addEventListener("change", function () {
+          var v = C.cleanText(nm.value, 30);
+          if ((sx.own && !v) || v === sx.name) { draw(); return; }
+          write(sx.id, { name: v });
+          draw();
+        });
+        r.appendChild(nm);
+        var pr = inp("number", String(sx.prob), 3, "");
+        pr.min = 0; pr.max = 100; pr.step = 1;
+        pr.classList.add("stg-prob");
+        pr.setAttribute("aria-label", t("stg.prob"));
+        pr.addEventListener("change", function () {
+          var v = Math.round(Number(pr.value));
+          if (pr.value.trim() !== "" && v >= 0 && v <= 100 && v !== sx.prob) write(sx.id, { prob: v });
+          draw();
+        });
+        r.appendChild(pr);
+        var up = iconBtn("up", t("stg.up"), function () { move(i, i - 1); }, "mini");
+        up.disabled = i === 0;
+        r.appendChild(up);
+        var dn = iconBtn("down", t("stg.down"), function () { move(i, i + 1); }, "mini");
+        dn.disabled = i === open.length - 1;
+        r.appendChild(dn);
+        r.appendChild(iconBtn("x", t(sx.own ? "stg.del" : "stg.hide") + ": " + label, function () {
+          var n = inStage(sx.id);
+          if (n) { showToast(t("stg.notEmpty", { name: label, n: n })); return; }
+          if (open.length < 2) { showToast(t("stg.last")); return; }
+          if (sx.own) removeRow("stg", sx.id, t("stg.deleted", { name: label }));
+          else if (write(sx.id, { off: 1 })) undoToast(t("stg.hidden", { name: label }), function () { write(sx.id, { off: 0 }); });
+          draw();
+        }, "mini"));
+        box.appendChild(r);
+      });
+      var hidden = C.OPEN_STAGES.filter(function (id) { var r = C.byId(data.stg, id); return r && r.off; });
+      if (hidden.length) {
+        hid.appendChild(el("div", "dlg-lbl", t("stg.hiddenHead")));
+        hidden.forEach(function (id) {
+          var r = C.byId(data.stg, id);
+          hid.appendChild(button(t("stg.show", { name: r.name || t("stage." + id) }), "", function () {
+            if (open.length >= C.LIMITS.openStages) { showToast(t("stg.max", { n: C.LIMITS.openStages })); return; }
+            write(id, { off: 0 });
+            draw();
+          }));
+        });
+      }
+      addRow.hidden = open.length >= C.LIMITS.openStages;
+      maxNote.hidden = !addRow.hidden;
+    }
+    var addRow = el("div", "list-tools");
+    addRow.style.marginTop = "12px";
+    var nn = inp("text", "", 30, t("stg.newPh"));
+    nn.setAttribute("aria-label", t("stg.newPh"));
+    addRow.appendChild(nn);
+    var ab = button(t("stg.add"), "primary", function () {
+      var v = C.cleanText(nn.value, 30);
+      if (!v) { nn.focus(); return; }
+      var open = C.stages(data).filter(function (x) { return x.open; });
+      if (open.length >= C.LIMITS.openStages) return;
+      var pos = open.reduce(function (mx, x) { return Math.max(mx, x.pos); }, 0) + 10;
+      upsert("stg", { id: C.newId(Date.now()), name: v, prob: 50, pos: pos });
+      nn.value = "";
+      draw();
+      nn.focus();
+    });
+    ab.style.flex = "0 0 auto";
+    addRow.appendChild(ab);
+    nn.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); ab.click(); } });
+    dlg.appendChild(addRow);
+    var maxNote = el("p", "hint", t("stg.max", { n: C.LIMITS.openStages }));
+    dlg.appendChild(maxNote);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    draw();
     showDialog(dlg);
   }
 
@@ -2294,7 +2444,7 @@
     watchPalette();
     render();
     takeTarget();
-    console.log("[orOS CRM] v1.1.0 boot OK");
+    console.log("[orOS CRM] v1.2.0 boot OK");
   }
 
   boot();

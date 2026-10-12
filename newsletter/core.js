@@ -1,0 +1,678 @@
+// ============================================================
+// orOS Newsletter — shared core (pure, no DOM)
+// The model of the synced slice "newsletter" (oros-newsletter-data):
+// normalize, the symmetric sync merge, subscriber status, ids and
+// tokens, audiences, imports (CSV, pasted addresses), CSV export,
+// the pre-send check, Inbox requests (subscribe / confirm /
+// unsubscribe by e-mail) and delivery-failure reports (DSN), the
+// sending-provider presets and the daily limit.
+// Exposed as window.OrosNewsletterCore; module.exports in Node (tests).
+//
+// Data (v1):
+//   { ver: 1,
+//     chans:  [{ id, m, name, kind: "mail"|"smtp", acct, preset, host, port, sec, user,
+//                inbox, rate (s between messages), cap (messages a day) }],
+//     lists:  [{ id, m, name, chan, from, fromName, reply, lang, addr, why, theme, color, salt }],
+//     subs:   [{ id, m, list, email, name, lang, tags[], src, basis, at, conf, off, offSt, inv, bnc, c }],
+//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md", blocks[], md, tags[],
+//                st: "draft"|"sending"|"paused"|"sent", lock: { dev, at }|null,
+//                start, done, n, err, fail: { subId: code } }],
+//     sent:   { issueId: [subId, …] },     grow-only while an issue is out
+//     supp:   [hash, …] }                   grow-only suppression list
+//   Every record may instead be a tombstone { id, m, del: 1 }.
+// A subscriber's status is never stored: it comes from three event
+// times (status()), so two devices always agree on it after a merge.
+// ============================================================
+(function (root) {
+  "use strict";
+
+  var STORAGE_KEY = "oros-newsletter-data";
+  var LIM = {
+    chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
+    name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
+    imgBytes: 400 * 1024, email: 254
+  };
+  var KINDS = ["mail", "smtp"];
+  var SECS = { 465: "tls", 587: "starttls" };
+  var THEMES = ["classic", "warm", "dark", "plain"];
+  var BASES = ["consent", "customer", "optin"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail"];
+  var OFF_STS = ["off", "bounce", "spam"];
+  var ISSUE_STS = ["draft", "sending", "paused", "sent"];
+  var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols"];
+  var LOCK_STALE = 15 * 60 * 1000;       // a sending device silent this long lets another take over
+  var SOFT_LIMIT = 3;                    // soft bounces before an address counts as bounced
+
+  // Sending providers (SMTP). Starting points: the user checks the
+  // host and their plan's limits in the provider's own docs.
+  var PRESETS = {
+    brevo:      { host: "smtp-relay.brevo.com", port: 587, rate: 1, cap: 300 },
+    ses:        { host: "email-smtp.eu-west-1.amazonaws.com", port: 587, rate: 1, cap: 200 },
+    mailgun:    { host: "smtp.mailgun.org", port: 587, rate: 1, cap: 100 },
+    "mailgun-eu": { host: "smtp.eu.mailgun.org", port: 587, rate: 1, cap: 100 },
+    postmark:   { host: "smtp.postmarkapp.com", port: 587, rate: 1, cap: 100, hdr: ["X-PM-Message-Stream", "broadcast"] },
+    sendgrid:   { host: "smtp.sendgrid.net", port: 587, rate: 1, cap: 100, user: "apikey" },
+    smtp2go:    { host: "mail.smtp2go.com", port: 587, rate: 1, cap: 200 },
+    gmail:      { host: "smtp.gmail.com", port: 465, rate: 6, cap: 450 },
+    other:      { host: "", port: 587, rate: 6, cap: 450 }
+  };
+  var MAIL_DEFAULTS = { rate: 6, cap: 450 };   // an ordinary mailbox (Mail account)
+
+  // ---------- small helpers ----------
+  function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
+  function nat(v, max) { return isInt(v) && v >= 0 && v <= (max || 9e15) ? v : 0; }
+  function clamp(v, lo, hi, dflt) { return isInt(v) && v >= lo && v <= hi ? v : dflt; }
+  function oneLine(v, max) {
+    return typeof v === "string" ? v.replace(/[\x00-\x1f\x7f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
+  }
+  function multi(v, max) {
+    return typeof v === "string"
+      ? v.replace(/\r\n?/g, "\n").replace(/[\x00-\x08\x0b-\x1f\x7f]/g, "").replace(/[ \t]+$/gm, "").slice(0, max)
+      : "";
+  }
+  function validId(v) { return typeof v === "string" && /^[a-z0-9][a-z0-9-]{2,39}$/.test(v); }
+  var ADDR = /^[^\s@<>()",;:\\\[\]]+@[^\s@<>()",;:\\\[\]]+\.[^\s@<>()",;:\\\[\]]+$/;
+  function validEmail(v) { return typeof v === "string" && v.length <= LIM.email && ADDR.test(v); }
+  function normEmail(v) {
+    var e = typeof v === "string" ? v.trim().replace(/^mailto:/i, "") : "";
+    return validEmail(e) ? e : "";
+  }
+  function emailKey(e) { return String(e || "").trim().toLowerCase(); }
+  function validHost(h) {
+    if (typeof h !== "string") return false;
+    h = h.trim().toLowerCase();
+    return h.length >= 4 && h.length <= 253 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(h) &&
+           !/^[0-9.]+$/.test(h);
+  }
+  function validColor(c) { return typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c); }
+  function safeUrl(u) {
+    u = typeof u === "string" ? u.trim() : "";
+    if (u.length > 2000 || /[\x00-\x20"'<>\\`]/.test(u)) return "";
+    return /^(https?:\/\/[^\/\s]+|mailto:[^\s]+@)/i.test(u) ? u : "";
+  }
+  function fold(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ς/g, "σ");
+  }
+
+  // cyrb53 (public domain, bryc): a fast 53-bit string hash, the same
+  // in every browser and in Node. Ids and tokens only, never secrets.
+  function hash53(str) {
+    var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (var i = 0; i < str.length; i++) {
+      var ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    var n = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+    var s = n.toString(36);
+    while (s.length < 11) s = "0" + s;
+    return s;
+  }
+  // The same address on the same list is the same subscriber on every
+  // device: two devices adding it never make two records.
+  function subId(listId, email) { return "s" + hash53(listId + "|" + emailKey(email)); }
+  function suppHash(email) { return "x" + hash53("supp|" + emailKey(email)); }
+  // The unsubscribe / confirm token of a subscriber (never stored):
+  // derived from the list's random salt, so it can't be guessed from
+  // the address, and it is the same on every device.
+  function token(list, sid) { return "nl-" + hash53((list && list.salt || "") + "|" + sid); }
+  // The code people put in the subject to subscribe to a list.
+  function listCode(list) { return "nl-" + String(list && list.salt || "").slice(0, 6); }
+  function randomId(prefix, rnd) {
+    var r = rnd || Math.random, s = "";
+    for (var i = 0; i < 10; i++) s += "abcdefghijklmnopqrstuvwxyz0123456789".charAt(Math.floor(r() * 36));
+    return prefix + s;
+  }
+
+  // ---------- normalize ----------
+  function tomb(x) { return { id: x.id, m: nat(x.m), del: 1 }; }
+  function normTags(v) {
+    var seen = {}, out = [];
+    (Array.isArray(v) ? v : []).forEach(function (t) {
+      var s = oneLine(t, LIM.tag);
+      var k = fold(s);
+      if (s && !seen[k] && out.length < LIM.tags) { seen[k] = 1; out.push(s); }
+    });
+    return out.sort();
+  }
+  function normChan(x) {
+    var kind = KINDS.indexOf(x.kind) >= 0 ? x.kind : "mail";
+    var o = { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), kind: kind,
+              acct: "", preset: "", host: "", port: 587, sec: "starttls", user: "", inbox: "",
+              rate: clamp(x.rate, 1, 600, kind === "mail" ? MAIL_DEFAULTS.rate : 1),
+              cap: clamp(x.cap, 1, 100000, kind === "mail" ? MAIL_DEFAULTS.cap : 300) };
+    if (kind === "mail") {
+      o.acct = typeof x.acct === "string" && /^[a-z0-9]{6,40}$/.test(x.acct) ? x.acct : "";
+      o.inbox = o.acct;
+    } else {
+      o.preset = PRESETS[x.preset] ? x.preset : "other";
+      o.host = validHost(x.host) ? x.host.trim().toLowerCase() : "";
+      o.port = SECS[x.port] ? x.port : 587;
+      o.sec = SECS[o.port];
+      o.user = oneLine(x.user, 320);
+      o.inbox = typeof x.inbox === "string" && /^[a-z0-9]{6,40}$/.test(x.inbox) ? x.inbox : "";
+    }
+    return o;
+  }
+  function normList(x) {
+    return {
+      id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name),
+      chan: validId(x.chan) ? x.chan : "",
+      from: normEmail(x.from), fromName: oneLine(x.fromName, LIM.name),
+      reply: normEmail(x.reply), lang: x.lang === "el" ? "el" : "en",
+      addr: multi(x.addr, LIM.addr).trim(), why: multi(x.why, LIM.why).trim(),
+      theme: THEMES.indexOf(x.theme) >= 0 ? x.theme : "classic",
+      color: validColor(x.color) ? x.color.toLowerCase() : "#2f6fde",
+      salt: typeof x.salt === "string" && /^[a-z0-9]{8,32}$/.test(x.salt) ? x.salt : hash53("salt|" + x.id)
+    };
+  }
+  function normSub(x) {
+    var email = normEmail(x.email);
+    if (!email || !validId(x.list)) return null;
+    var off = nat(x.off);
+    return {
+      id: x.id, m: nat(x.m), list: x.list, email: email, name: oneLine(x.name, LIM.name),
+      lang: x.lang === "el" || x.lang === "en" ? x.lang : "",
+      tags: normTags(x.tags),
+      src: SRCS.indexOf(x.src) >= 0 ? x.src : "manual",
+      basis: BASES.indexOf(x.basis) >= 0 ? x.basis : "consent",
+      at: nat(x.at), conf: nat(x.conf), off: off,
+      offSt: off ? (OFF_STS.indexOf(x.offSt) >= 0 ? x.offSt : "off") : "",
+      inv: nat(x.inv), bnc: clamp(x.bnc, 0, 99, 0),
+      c: typeof x.c === "string" && x.c.length <= 60 && !/[\x00-\x1f]/.test(x.c) ? x.c : ""
+    };
+  }
+  function normBlock(b) {
+    if (!b || typeof b !== "object" || BLOCK_KINDS.indexOf(b.k) < 0) return null;
+    switch (b.k) {
+      case "h": return { k: "h", t: oneLine(b.t, 300) };
+      case "p": return { k: "p", t: multi(b.t, LIM.text) };
+      case "btn": return { k: "btn", t: oneLine(b.t, 80), href: safeUrl(b.href) };
+      case "hr": return { k: "hr" };
+      case "cols": return { k: "cols", a: multi(b.a, LIM.text), b: multi(b.b, LIM.text) };
+      case "img":
+        return { k: "img",
+                 f: typeof b.f === "string" && /^\/internal\/Newsletter\/[A-Za-z0-9._-]{1,80}\.(jpg|png)$/.test(b.f) ? b.f : "",
+                 alt: oneLine(b.alt, 300), href: safeUrl(b.href),
+                 w: clamp(b.w, 1, 4000, 600), h: clamp(b.h, 1, 8000, 400), b: clamp(b.b, 0, 10000000, 0) };
+    }
+    return null;
+  }
+  function normIssue(x) {
+    var fail = {};
+    if (x.fail && typeof x.fail === "object") {
+      Object.keys(x.fail).sort().slice(0, LIM.fail).forEach(function (k) {
+        if (validId(k)) fail[k] = oneLine(x.fail[k], 40) || "error";
+      });
+    }
+    var lock = null;
+    if (x.lock && typeof x.lock === "object" && typeof x.lock.dev === "string" && /^[a-z0-9]{6,20}$/.test(x.lock.dev)) {
+      lock = { dev: x.lock.dev, at: nat(x.lock.at) };
+    }
+    var st = ISSUE_STS.indexOf(x.st) >= 0 ? x.st : "draft";
+    return {
+      id: x.id, m: nat(x.m), list: validId(x.list) ? x.list : "",
+      subj: oneLine(x.subj, LIM.subj), pre: oneLine(x.pre, LIM.pre),
+      fmt: x.fmt === "md" ? "md" : "blocks",
+      blocks: (Array.isArray(x.blocks) ? x.blocks : []).map(normBlock).filter(Boolean).slice(0, LIM.blocks),
+      md: multi(x.md, LIM.md),
+      tags: normTags(x.tags),
+      st: st, lock: st === "sending" ? lock : null,
+      start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
+      err: oneLine(x.err, 300), fail: fail
+    };
+  }
+  function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
+  function normColl(arr, fn, max) {
+    var seen = {}, out = [];
+    (Array.isArray(arr) ? arr : []).forEach(function (x) {
+      if (!x || typeof x !== "object" || !validId(x.id) || seen[x.id]) return;
+      var r = x.del ? tomb(x) : fn(x);
+      if (!r) return;
+      seen[x.id] = 1;
+      out.push(r);
+    });
+    out.sort(byId);
+    return max ? out.slice(0, max) : out;
+  }
+  function empty() { return { ver: 1, chans: [], lists: [], subs: [], issues: [], sent: {}, supp: [] }; }
+  function normalize(d) {
+    d = d && typeof d === "object" ? d : {};
+    var o = empty();
+    o.chans = normColl(d.chans, normChan, 200);
+    o.lists = normColl(d.lists, normList, 400);
+    var liveLists = {};
+    o.lists.forEach(function (l) { if (!l.del) liveLists[l.id] = 1; });
+    // a subscriber / issue of a deleted (or unknown) list goes with it
+    o.subs = normColl(d.subs, normSub, 40000).filter(function (s) { return s.del || liveLists[s.list]; });
+    o.issues = normColl(d.issues, normIssue, 2000).filter(function (x) { return x.del || liveLists[x.list]; });
+    var open = {};
+    o.issues.forEach(function (x) { if (!x.del && (x.st === "sending" || x.st === "paused")) open[x.id] = 1; });
+    var sent = d.sent && typeof d.sent === "object" ? d.sent : {};
+    Object.keys(sent).sort().forEach(function (k) {
+      if (!open[k] || !Array.isArray(sent[k])) return;
+      var seen = {}, ids = [];
+      sent[k].forEach(function (s) { if (validId(s) && !seen[s]) { seen[s] = 1; ids.push(s); } });
+      if (ids.length) o.sent[k] = ids.sort();
+    });
+    var sp = {};
+    (Array.isArray(d.supp) ? d.supp : []).forEach(function (h) { if (typeof h === "string" && /^x[0-9a-z]{11}$/.test(h)) sp[h] = 1; });
+    o.supp = Object.keys(sp).sort();
+    return o;
+  }
+  function parse(raw) {
+    if (raw === null || raw === undefined || raw === "") return empty();
+    try {
+      var d = JSON.parse(raw);
+      return d && typeof d === "object" ? normalize(d) : null;
+    } catch (e) { return null; }
+  }
+
+  // ---------- subscriber status ----------
+  // Three event times decide: the latest of "subscribed" (at),
+  // "confirmed" (conf) and "left" (off).
+  function status(s) {
+    if (!s || s.del) return "";
+    if (s.off && s.off > Math.max(s.at, s.conf)) return s.offSt || "off";
+    return s.conf && s.conf >= s.at ? "on" : "pend";
+  }
+
+  // ---------- merge (symmetric: merge(a, b) equals merge(b, a)) ----------
+  function cmpRec(a, b) {
+    if (a.m !== b.m) return a.m > b.m ? a : b;
+    if (!!a.del !== !!b.del) return a.del ? a : b;       // delete wins ties
+    var ja = JSON.stringify(a), jb = JSON.stringify(b);
+    return ja >= jb ? a : b;
+  }
+  var OFF_RANK = { off: 1, bounce: 2, spam: 3 };
+  function mergeSub(a, b) {
+    var w = cmpRec(a, b);
+    if (a.del || b.del) return w;
+    var o = JSON.parse(JSON.stringify(w));
+    o.at = Math.max(a.at, b.at);
+    o.conf = Math.max(a.conf, b.conf);
+    o.inv = Math.max(a.inv, b.inv);
+    o.bnc = Math.max(a.bnc, b.bnc);
+    var src = a.off !== b.off ? (a.off > b.off ? a : b) : ((OFF_RANK[a.offSt] || 0) >= (OFF_RANK[b.offSt] || 0) ? a : b);
+    o.off = src.off;
+    o.offSt = src.off ? src.offSt : "";
+    return o;
+  }
+  function mergeColl(a, b, fn) {
+    var map = {};
+    (a || []).forEach(function (x) { map[x.id] = x; });
+    (b || []).forEach(function (x) { map[x.id] = map[x.id] ? (fn || cmpRec)(map[x.id], x) : x; });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+  function mergeNewsletter(a, b) {
+    var A = normalize(a), B = normalize(b);
+    var o = {
+      ver: 1,
+      chans: mergeColl(A.chans, B.chans),
+      lists: mergeColl(A.lists, B.lists),
+      subs: mergeColl(A.subs, B.subs, mergeSub),
+      issues: mergeColl(A.issues, B.issues),
+      sent: {},
+      supp: A.supp.concat(B.supp)
+    };
+    [A.sent, B.sent].forEach(function (s) {
+      Object.keys(s).forEach(function (k) { o.sent[k] = (o.sent[k] || []).concat(s[k]); });
+    });
+    return normalize(o);
+  }
+
+  // ---------- lookups ----------
+  function live(arr) { return (arr || []).filter(function (x) { return x && !x.del; }); }
+  function find(arr, id) {
+    for (var i = 0; i < (arr || []).length; i++) if (arr[i].id === id && !arr[i].del) return arr[i];
+    return null;
+  }
+  function list(d, id) { return find(d.lists, id); }
+  function chan(d, id) { return find(d.chans, id); }
+  function issue(d, id) { return find(d.issues, id); }
+  function sub(d, id) { return find(d.subs, id); }
+  function subsOf(d, listId) { return live(d.subs).filter(function (s) { return s.list === listId; }); }
+  function counts(d, listId) {
+    var c = { all: 0, on: 0, pend: 0, off: 0, bounce: 0, spam: 0 };
+    subsOf(d, listId).forEach(function (s) { c.all++; c[status(s)]++; });
+    return c;
+  }
+  function allTags(d, listId) {
+    var seen = {};
+    subsOf(d, listId).forEach(function (s) { s.tags.forEach(function (t) { seen[t] = 1; }); });
+    return Object.keys(seen).sort(function (x, y) { return fold(x) < fold(y) ? -1 : 1; });
+  }
+  function byToken(d) {
+    var lists = {}, map = {};
+    live(d.lists).forEach(function (l) { lists[l.id] = l; });
+    live(d.subs).forEach(function (s) { if (lists[s.list]) map[token(lists[s.list], s.id)] = s; });
+    return map;
+  }
+  function byCode(d) {
+    var map = {};
+    live(d.lists).forEach(function (l) { map[listCode(l)] = l; });
+    return map;
+  }
+
+  // ---------- audience + sending progress ----------
+  // Active subscribers of the issue's list, with any of its tags (no
+  // tags: everyone), in id order.
+  function audience(d, x) {
+    var want = {};
+    (x.tags || []).forEach(function (t) { want[fold(t)] = 1; });
+    var any = !(x.tags && x.tags.length);
+    return subsOf(d, x.list).filter(function (s) {
+      if (status(s) !== "on") return false;
+      if (any) return true;
+      return s.tags.some(function (t) { return want[fold(t)]; });
+    });
+  }
+  function sentSet(d, issueId) {
+    var m = {};
+    (d.sent[issueId] || []).forEach(function (id) { m[id] = 1; });
+    return m;
+  }
+  // → { total, sent, failed, left, next (subscriber or null) }
+  function progress(d, x) {
+    var aud = audience(d, x), done = sentSet(d, x.id), fail = x.fail || {};
+    var sent = Object.keys(done).length, failed = Object.keys(fail).length, next = null, left = 0;
+    aud.forEach(function (s) {
+      if (done[s.id] || fail[s.id]) return;
+      left++;
+      if (!next) next = s;
+    });
+    if (x.st === "sent") return { total: x.n + failed, sent: x.n, failed: failed, left: 0, next: null };
+    return { total: sent + failed + left, sent: sent, failed: failed, left: left, next: next };
+  }
+  // Who may send the issue now: this device holds the lock, or the
+  // lock is free or stale.
+  function canSend(x, dev, now) {
+    if (x.st !== "sending") return false;
+    return !x.lock || x.lock.dev === dev || now - x.lock.at > LOCK_STALE;
+  }
+  // Pending subscribers whose confirmation request has not gone out yet.
+  function invitesDue(d, listId) {
+    return subsOf(d, listId).filter(function (s) { return status(s) === "pend" && s.inv < s.at; });
+  }
+  // Device-local daily counter { chanId: { d: "YYYY-MM-DD", n } }.
+  function usedToday(used, chanId, dayKey) {
+    var u = used && used[chanId];
+    return u && u.d === dayKey ? nat(u.n) : 0;
+  }
+
+  // ---------- imports ----------
+  function parseCsv(text) {
+    text = String(text || "").replace(/^﻿/, "");
+    var first = text.split(/\r?\n/)[0] || "";
+    var delims = [",", ";", "\t"], delim = ",", best = -1;
+    delims.forEach(function (c) { var n = first.split(c).length; if (n > best) { best = n; delim = c; } });
+    var rows = [], row = [], cur = "", q = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (q) {
+        if (ch === "\"") {
+          if (text.charAt(i + 1) === "\"") { cur += "\""; i++; } else q = false;
+        } else cur += ch;
+        continue;
+      }
+      if (ch === "\"" && cur === "") { q = true; continue; }
+      if (ch === delim) { row.push(cur); cur = ""; continue; }
+      if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text.charAt(i + 1) === "\n") i++;
+        row.push(cur); cur = "";
+        if (row.some(function (c) { return c.trim(); })) rows.push(row);
+        row = [];
+        if (rows.length > LIM.subs * 4) break;
+        continue;
+      }
+      cur += ch;
+    }
+    row.push(cur);
+    if (row.some(function (c) { return c.trim(); })) rows.push(row);
+    return rows;
+  }
+  // CSV rows → [{ email, name, tags[], lang }] + how many rows had no address.
+  function peopleFromRows(rows) {
+    if (!rows.length) return { people: [], bad: 0 };
+    var head = rows[0].map(function (h) { return fold(String(h).trim()).replace(/[\s_-]+/g, ""); });
+    var col = function (re) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) return i; return -1; };
+    var ie = col(/^(e?mail|emailaddress|email1|ηλεκτρονικοταχυδρομειο|διευθυνσηemail)$/);
+    var hasHead = ie >= 0;
+    var iname = col(/^(name|fullname|ονομα|ονοματεπωνυμο|displayname)$/);
+    var ifirst = col(/^(firstname|first|givenname|μικροονομα)$/);
+    var ilast = col(/^(lastname|last|surname|familyname|επωνυμο)$/);
+    var itags = col(/^(tags?|groups?|labels?|ετικετεσ|ομαδεσ)$/);
+    var ilang = col(/^(lang|language|γλωσσα)$/);
+    var body = rows;
+    if (hasHead) body = rows.slice(1);
+    else {
+      // no header: the first column holding an address in the first row
+      ie = rows[0].findIndex(function (c) { return validEmail(String(c).trim()); });
+      if (ie < 0) return { people: [], bad: rows.length };
+    }
+    var people = [], bad = 0;
+    body.forEach(function (r) {
+      var email = normEmail(String(r[ie] || ""));
+      if (!email) { bad++; return; }
+      var name = iname >= 0 ? String(r[iname] || "") : "";
+      if (!name && (ifirst >= 0 || ilast >= 0)) name = [ifirst >= 0 ? r[ifirst] : "", ilast >= 0 ? r[ilast] : ""].join(" ");
+      var tags = itags >= 0 ? String(r[itags] || "").split(/[,;|]/) : [];
+      var lang = ilang >= 0 ? fold(String(r[ilang] || "")).trim() : "";
+      people.push({ email: email, name: oneLine(name, LIM.name), tags: normTags(tags),
+                    lang: /^(el|gr|ελληνικα|greek)/.test(lang) ? "el" : (/^(en|english|αγγλικα)/.test(lang) ? "en" : "") });
+    });
+    return { people: people, bad: bad };
+  }
+  // Pasted text: "Name <a@b>, c@d" or one per line.
+  function peopleFromText(text) {
+    var people = [], bad = 0;
+    String(text || "").split(/[\n,;]+/).forEach(function (p) {
+      p = p.trim();
+      if (!p) return;
+      var m = /^(.*?)<\s*([^<>\s]+)\s*>\s*$/.exec(p);
+      var name = m ? m[1].trim().replace(/^"(.*)"$/, "$1") : "";
+      var email = normEmail(m ? m[2] : p);
+      if (!email) { bad++; return; }
+      people.push({ email: email, name: oneLine(name, LIM.name), tags: [], lang: "" });
+    });
+    return { people: people, bad: bad };
+  }
+  // What adding `people` to a list would do. Nothing is changed.
+  //   → { add: [subscriber], dup, supp, left, over, bad }
+  // dup: already on the list (kept as they are); supp: deleted for good
+  // earlier; left: unsubscribed or bounced earlier (an import never
+  // brings them back); over: past the subscriber limit.
+  function planImport(d, listId, people, opts) {
+    opts = opts || {};
+    var now = opts.now || Date.now();
+    var basis = BASES.indexOf(opts.basis) >= 0 ? opts.basis : "optin";
+    var src = SRCS.indexOf(opts.src) >= 0 ? opts.src : "csv";
+    var supp = {};
+    d.supp.forEach(function (h) { supp[h] = 1; });
+    var existing = {};
+    d.subs.forEach(function (s) { existing[s.id] = s; });
+    var room = LIM.subs - live(d.subs).length;
+    var out = { add: [], dup: 0, supp: 0, left: 0, over: 0, bad: opts.bad || 0 };
+    var seen = {};
+    people.forEach(function (p) {
+      var id = subId(listId, p.email);
+      if (seen[id]) { out.dup++; return; }
+      seen[id] = 1;
+      var cur = existing[id];
+      if (cur && !cur.del) {
+        if (OFF_STS.indexOf(status(cur)) >= 0) out.left++;
+        else out.dup++;
+        return;
+      }
+      if (supp[suppHash(p.email)]) { out.supp++; return; }
+      if (out.add.length >= room) { out.over++; return; }
+      out.add.push(normSub({
+        id: id, m: Math.max(now, cur ? cur.m + 1 : 0), list: listId, email: p.email, name: p.name,
+        lang: p.lang, tags: (p.tags || []).concat(opts.tags || []), src: src, basis: basis,
+        at: now, conf: basis === "optin" ? 0 : now, c: p.c || ""
+      }));
+    });
+    return out;
+  }
+
+  // ---------- export ----------
+  function csvCell(v) {
+    var s = String(v === undefined || v === null ? "" : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;                   // no formulas in Excel / Calc
+    return /[";\n\r]/.test(s) ? "\"" + s.replace(/"/g, "\"\"") + "\"" : s;
+  }
+  function iso(ms) { return ms ? new Date(ms).toISOString().slice(0, 16).replace("T", " ") : ""; }
+  // heads: column titles in the user's language; st(s) → status name
+  function subsCsv(d, listId, heads, stName, basisName) {
+    var lines = [heads.map(csvCell).join(";")];
+    subsOf(d, listId).sort(function (a, b) { return a.email < b.email ? -1 : 1; }).forEach(function (s) {
+      lines.push([s.email, s.name, s.lang, s.tags.join(", "), stName(status(s)), s.src, basisName(s.basis),
+                  iso(s.at), iso(s.conf), iso(s.off)].map(csvCell).join(";"));
+    });
+    return "﻿" + lines.join("\r\n") + "\r\n";
+  }
+  // Everything kept about one person (right of access).
+  function personData(d, email) {
+    var k = emailKey(email);
+    return {
+      email: email,
+      exported: new Date().toISOString(),
+      subscriptions: live(d.subs).filter(function (s) { return emailKey(s.email) === k; }).map(function (s) {
+        var l = list(d, s.list) || {};
+        return { list: l.name || "", name: s.name, language: s.lang, tags: s.tags, status: status(s),
+                 source: s.src, basis: s.basis, consentText: l.why || "",
+                 subscribed: s.at ? new Date(s.at).toISOString() : "",
+                 confirmed: s.conf ? new Date(s.conf).toISOString() : "",
+                 left: s.off ? new Date(s.off).toISOString() : "",
+                 invitationSent: s.inv ? new Date(s.inv).toISOString() : "", bounces: s.bnc };
+      })
+    };
+  }
+
+  // ---------- pre-send check ----------
+  // {name}, {first}, {name|friend}, {first|friend} are the only
+  // placeholders; anything else in braces is probably a typo.
+  function badPlaceholders(text) {
+    var m, re = /\{([^{}\n]{0,80})\}/g;
+    while ((m = re.exec(String(text || "")))) {
+      if (!/^(name|first)(\|[^{}|]{0,60})?$/.test(m[1])) return true;
+    }
+    return false;
+  }
+  // info: { imgBytes, chan (resolved or null), inbox (bool), aud (number) }
+  // → [{ lvl: "err"|"warn", k }]
+  function preflight(d, x, info) {
+    info = info || {};
+    var out = [];
+    var add = function (lvl, k) { out.push({ lvl: lvl, k: k }); };
+    var l = list(d, x.list);
+    if (!x.subj) add("err", "noSubj");
+    else {
+      if (x.subj.length > 90) add("warn", "longSubj");
+      var letters = x.subj.replace(/[^A-Za-zΑ-Ωα-ωΆ-ώ]/g, "");
+      if (letters.length >= 8 && letters === letters.toUpperCase()) add("warn", "shouty");
+      if (/!!|\$\$\$|€€€/.test(x.subj)) add("warn", "shouty");
+    }
+    var hasBody = x.fmt === "md" ? !!x.md.trim() : x.blocks.some(function (b) {
+      if (b.k === "img") return !!b.f;
+      return b.k !== "hr" && !!(b.t || b.a || b.b);
+    });
+    if (!hasBody) add("err", "noBody");
+    if (!l || !l.addr) add("err", "noAddr");
+    if (!l || !l.from) add("err", "noFrom");
+    if (!info.chan) add("err", "noChan");
+    if (info.inbox === false) add("warn", "noInbox");
+    if ((info.imgBytes || 0) > LIM.imgBytes) add("warn", "bigImgs");
+    if (x.fmt === "blocks" && x.blocks.some(function (b) { return (b.k === "btn" && (!b.href || !b.t)) || (b.k === "img" && !b.f); })) {
+      add("err", "badBlock");
+    }
+    var text = x.fmt === "md" ? x.md : x.blocks.map(function (b) { return [b.t, b.a, b.b].join(" "); }).join(" ");
+    if (badPlaceholders(text + " " + x.subj)) add("warn", "placeholder");
+    if (!(info.aud > 0)) add("err", "noAudience");
+    return out;
+  }
+
+  // ---------- Inbox requests ----------
+  // The subject of a request e-mail: "unsubscribe nl-…", "confirm nl-…",
+  // "subscribe nl-…" (also after "Re:" and similar).
+  function classify(subject) {
+    var s = String(subject || "").toLowerCase();
+    var m = /\b(unsubscribe|subscribe|confirm)\s+(nl-[a-z0-9]{6,11})\b/.exec(s);
+    if (!m) return null;
+    var tok = m[2];
+    if (m[1] === "subscribe") return tok.length === 9 ? { act: "sub", code: tok } : null;
+    return tok.length === 14 ? { act: m[1] === "confirm" ? "confirm" : "unsub", tok: tok } : null;
+  }
+  function isBounceFrom(addr, name) {
+    return /^(mailer-daemon|postmaster|mail-daemon|bounce[s]?)@/i.test(String(addr || "")) ||
+           /mail delivery (sub)?system|mail delivery subsystem|delivery status notification/i.test(String(name || ""));
+  }
+  // A delivery-failure report (RFC 3464, plus the common
+  // X-Failed-Recipients header) → [{ addr, hard }]. "delayed" reports
+  // are ignored: the server is still trying.
+  function parseDsn(raw) {
+    var text = String(raw || "").replace(/\r\n?/g, "\n");
+    var out = [], seen = {};
+    var push = function (addr, hard) {
+      var e = normEmail(String(addr || "").replace(/^<|>$/g, ""));
+      if (!e || seen[emailKey(e)]) return;
+      seen[emailKey(e)] = 1;
+      out.push({ addr: e, hard: hard });
+    };
+    var xf = /^X-Failed-Recipients:\s*(.+(?:\n[ \t].+)*)/im.exec(text);
+    if (xf) xf[1].split(/[,\s]+/).forEach(function (a) { if (a) push(a, true); });
+    var cur = null;
+    var flush = function () {
+      if (cur && cur.addr && cur.action === "failed") push(cur.addr, !/^4/.test(cur.status || "5"));
+      cur = null;
+    };
+    text.split("\n").forEach(function (line) {
+      var m;
+      if ((m = /^Final-Recipient:\s*[a-z0-9-]+\s*;\s*(\S+)/i.exec(line))) { flush(); cur = { addr: m[1] }; return; }
+      if (!cur) return;
+      if ((m = /^Action:\s*([a-z]+)/i.exec(line))) cur.action = m[1].toLowerCase();
+      else if ((m = /^Status:\s*([245]\.\d{1,3}\.\d{1,3})/i.exec(line))) cur.status = m[1];
+      else if (!line.trim()) flush();
+    });
+    flush();
+    return out;
+  }
+
+  // ---------- the issue as a web page / file name ----------
+  function slug(s) {
+    return fold(s).replace(/[^a-z0-9α-ω]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60)
+      .replace(/σ(?=-|$)/g, "ς") || "issue";
+  }
+
+  // ---------- backup ----------
+  function toBackup(d) { return JSON.stringify({ app: "newsletter", ver: 1, data: normalize(d) }); }
+  function fromBackup(text) {
+    try {
+      var j = JSON.parse(text);
+      if (!j || j.app !== "newsletter" || !j.data || typeof j.data !== "object") return null;
+      return normalize(j.data);
+    } catch (e) { return null; }
+  }
+
+  var api = {
+    STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
+    THEMES: THEMES, BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
+    validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
+    safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
+    randomId: randomId, oneLine: oneLine, multi: multi,
+    empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, normSub: normSub,
+    normChan: normChan, normList: normList, normIssue: normIssue,
+    status: status, mergeNewsletter: mergeNewsletter,
+    live: live, list: list, chan: chan, issue: issue, sub: sub, subsOf: subsOf, counts: counts, allTags: allTags,
+    byToken: byToken, byCode: byCode,
+    audience: audience, sentSet: sentSet, progress: progress, canSend: canSend, invitesDue: invitesDue, usedToday: usedToday,
+    parseCsv: parseCsv, peopleFromRows: peopleFromRows, peopleFromText: peopleFromText, planImport: planImport,
+    csvCell: csvCell, subsCsv: subsCsv, personData: personData,
+    preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
+    toBackup: toBackup, fromBackup: fromBackup
+  };
+  root.OrosNewsletterCore = api;
+  if (typeof module === "object" && module.exports) module.exports = api;
+})(typeof window !== "undefined" ? window : globalThis);

@@ -613,3 +613,11 @@ body.dropping .drop-hint { display: flex; }
   .icon-btn, #toast { transition: none !important; }
   .spin { animation-duration: 2.4s; }
 }
+
+/* ---------- 2D: Done button (Atelier bridge), check menu items ---------- */
+.btn.small { min-height: 32px; padding: 4px 12px; font-size: 13px; white-space: nowrap; }
+#back-btn[hidden] { display: none; }
+.mi-c { width: 1.2em; flex: 0 0 auto; color: var(--accent); }
+.selsave-list { display: flex; flex-direction: column; gap: 4px; max-height: 40vh; overflow-y: auto; }
+.selsave-row { display: flex; align-items: center; gap: 6px; }
+.selsave-row .chip { flex: 1 1 auto; text-align: left; }
