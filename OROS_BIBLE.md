@@ -183,7 +183,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 |---|---|---|
 | `orosSync` | sync.js | `registerSlice`, `markDirty`, `exportData`, `importData`, `reconcile`, `pull`, `push`, `isDirty`, `onAutoSync`, `kickAutoEngine`, passphrase/vault API |
 | `orosSync.storage` | sync.js | **[log]** the internal storage adapter (R34); used by `vault.js` |
-| `orosNotifs` | notifications.js | `emit`, `transient`, `getAppToggle`/`setAppToggle`, `getKnownApps`, `markAsRead`, `updateBadge`, `openNotificationPanel` |
+| `orosNotifs` | notifications.js | `emit`, `transient`, `getAppToggle`/`setAppToggle`, `getKnownApps`, `markAsRead`, `updateBadge`, `openNotificationPanel`, `closeNotificationPanel` |
 | `orosShortcuts` | shell.js | `handle(e)` → boolean; yields when the target is contentEditable/input |
 | `orosLang` | shell.js | shell window ONLY; also mirrored to `localStorage["oros-lang"]` |
 | `orosAlarms` | shell.js | alarms survive iframe close |
@@ -359,7 +359,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - Container `#oros-toast-stack`, z-index 10000, `pointer-events:none` on the container, `auto` on each toast; newest first; 5 visible, the rest mounted and promoted on removal (`applyStackLimits()` on insert and on removal); each toast owns its node, timer and observer (observing the stack).
   - `applyStackPosition()` applies `position` live (`setSetting`, `init`, lazy creation, and after a sync apply). Bottom positions use `column-reverse`. Default `bottom-right` everywhere (decision 2026-10-06).
   - A native Web Notification is added only when permission is already granted, never for catch-up or transient toasts.
-- **Inbox panel `#oros-notif-panel`:** z-index 10001, anchored under the bell, width `min(360px, 100vw − 24px)`; closes on the bell, an outside click, or Escape (capture phase on `window`, so the shell's Escape handler does not also close the running app).
+- **Inbox panel `#oros-notif-panel`:** z-index 10001, anchored under the bell, width `min(360px, 100vw − 24px)`; closes on the bell, an outside click, or Escape (capture phase on `window`, so the shell's Escape handler does not also close the running app). Only one tray popup at a time (Chris 2026-10-12): opening the orOS menu (button or Ctrl+Alt+Shift+F) calls `orosNotifs.closeNotificationPanel()`, and the bell closes the menu before it opens the panel.
 - **Bell:** `#oros-taskbar-bell`, 44×44, inserted before `#btn-lang`; badge = unread count.
 - Boot line: `[orOS][notifs] Module v1.0.0 initialized`.
 

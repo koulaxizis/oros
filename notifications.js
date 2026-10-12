@@ -783,6 +783,17 @@
     document.body.appendChild(panel);
   }
 
+  // The shell closes the panel when the orOS menu opens (Chris
+  // 2026-10-12): only one tray popup at a time. The panel's own
+  // listeners unhook themselves once it is gone (see NT-3 above).
+  function closeNotificationPanel() {
+    const panel = document.getElementById('oros-notif-panel');
+    if (!panel) return false;
+    panel.remove();
+    updateBadge();
+    return true;
+  }
+
   function renderPanelItems(container) {
     // .slice() — sort() mutates; the live slice must stay untouched
     // (pure-read doctrine, same lesson as fdSliceGet)
@@ -1155,6 +1166,7 @@
     emit: emitCandidate,
     transient: transientToast,
     openNotificationPanel,
+    closeNotificationPanel,
     updateBadge,
     
     // Direct access (for debugging)
@@ -1298,6 +1310,9 @@
     
     bellBtn.addEventListener('click', function (e) {
       e.stopPropagation();   // never falls through to the outside-close handler
+      // ...so close the orOS menu here: one tray popup at a time.
+      const menu = document.getElementById('app-menu');
+      if (menu) menu.classList.remove('open');
       openNotificationPanel();
     });
     

@@ -2456,6 +2456,7 @@
   // from the desktop or from inside an app.
   function openMenuSearch() {
     var menu = document.getElementById("app-menu");
+    closeNotifPanel();
     if (!menu.classList.contains("open")) menu.classList.add("open");
     var inp = menu.querySelector(".menu-search input");
     if (!inp) { renderMenu(); inp = menu.querySelector(".menu-search input"); }
@@ -7349,7 +7350,15 @@
   }
 
   // ---------- 11. Menu open/close ----------
+  // The bell's panel never sees a menu-button click (the button stops
+  // it), so the menu closes it: one tray popup at a time (Chris 2026-10-12).
+  function closeNotifPanel() {
+    if (window.orosNotifs && typeof window.orosNotifs.closeNotificationPanel === "function") {
+      window.orosNotifs.closeNotificationPanel();
+    }
+  }
   function toggleMenu() {
+    closeNotifPanel();
     if (state.running) { returnToDesktop(); return; }
     document.getElementById("app-menu").classList.toggle("open");
   }
