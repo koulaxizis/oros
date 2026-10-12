@@ -276,7 +276,8 @@
       "url": "crm/",
       "type": "internal",
       "search": "search.js",
-      "searchOff": true
+      "searchOff": true,
+      "today": "today.js"
     },
     {
       "id": "stock",
