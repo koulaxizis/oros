@@ -1653,6 +1653,11 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - **BR-CRM-INV (agreed with CRM, same text in crm-plan §6 and invoices-plan §4):** receiver live in this release: `__orosOpenAt("invoices",{new:{crm?,name?,afm?,doy?,job?,addr?,country?,email?,phone?,cur?,items?:[{d,q,p}],notes?,ref?:{app,id}}})` opens a new invoice prefilled (an unknown client opens the New client dialog filled in); open `{invoice:id}` / `{client:{id?|crm?|afm?|name?}}`. Read-only `invoices/core.js byCrm(data, crmId)` → `{rows:[{id,kind,no,date,due,total,paid,status,cur}], totals:{CUR:{invoiced,paid,open,overdue}}}`. CRM import into Invoices clients = wave 2.
 - Invoices uses: Mail compose (`__orosOpenAt("mail",{compose})` when Mail has an account, else mailto), orOS disk `orosFS.write/readBlob` for official PDFs, `orosDialog.saveFile/openFile`, Contacts and Quote data read-only for client import.
 
+### Library ↔ Media Shelf (BR-LIB-SHELF) — live 1.11.00
+- Owners: Library (`library/`) sends, Media Shelf (`shelf/`) receives. Deep link `__orosOpenAt("shelf", { addBook: { lib, title, by, year, size } })` adds the book as an e-book (or shows it if `lib` is already there).
+- Each side only READS the other's slice: Library reads `oros-shelf-data` to show "Open in Media Shelf"; the Shelf reads `oros-library-data` in `libSync` (boot + visible) and writes progress as its own normal entries. Pages only move forward; a finish is logged only when Library marked the book finished on or after the run began; dropped and finished items are left alone.
+- Shelf item extra field `lib` = Library book id (kept by older devices, no schema change). Pure helpers `libOf`, `libPlan`, `libItem` (shelf section 4d), tests on both sides.
+
 ## Part VII — UI standards
 
 - **Scrollbars:** 10px, transparent track, pill thumb (999px radius, 2px border `var(--bg)`), hover `var(--accent)`; Firefox `scrollbar-width:thin`. `overscroll-behavior:contain` on main panes.
@@ -2121,7 +2126,7 @@ Rebuild this in any session where code is delivered.
 - Security: EPUB chapters go through an allowlist sanitizer (no scripts, forms, iframes, event handlers, javascript: links, remote URLs, @import, position:fixed) and render in an iframe whose CSP is `default-src 'none'` with blob:/data: images and inline styles only. Outside links are asked before opening. DRM-protected books are refused with a message.
 - PDF: pdfjs 5.4 (vendor/pdfjs, offline), isEvalSupported false, text layer for selection/search; scans read but are not searchable.
 - Imports are copied to `/internal/Books`; whole-disk scan (depth 10, 6000 files). Max 50 MB per book.
-- Media Shelf link (button only) is phase 1b, with the Media Shelf owner.
+- Media Shelf link: phase 1b LIVE 1.11.00 (#213), contract BR-LIB-SHELF (Part VI); Media Shelf 1.4.0.
 - No new third-party library. Uses PDF.js (already vendored) and atelier/zip.js read-only (owner Atelier).
 
 ### Sticky Notes decision (2026-10-12, 1.02.00)
@@ -4977,3 +4982,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New app Montage / Μοντάζ (montage/, Video, after Television), merged in #199 and registered now: timeline with videos, pictures, music, voice-over and titles; cuts, transitions, filters; MP4 (H.264 + AAC) or WebM export frame by frame through WebCodecs + Mediabunny 1.60.0 (MPL-2.0, vendored, credited in CREDITS.md and the shell). Media stay on the device unless a project turns on media sync.
 - `.mp4 .m4v .webm .mov` open in Montage through "Open with" (own 4 GB cap, `maxFor()` in fileopen.js; manifest file_handlers + share_target rebuilt); factory reset removes Montage's device media (OPFS `montage-media`, IDB `oros-montage-media`, `oros-montage-thumbs`). Precache: app files, help pages, vendor/mediabunny.min.js.
 - Version 1.09.00 skipped (briefly on main without Montage).
+
+### 2026-10-12 — Library ↔ Media Shelf link: Library phase 1b + Media Shelf 1.4.0 (#213) — 1.11.00
+- Library: a book's details have **Add to Media Shelf** (then **Open in Media Shelf**), through `__orosOpenAt("shelf", { addBook: { lib, title, by, year, size } })`. EPUB books get a page estimate (~2400 bytes per page). Library only reads `oros-shelf-data`.
+- Media Shelf 1.4.0: a linked book keeps `lib` (Library book id) as an extra field; `libSync` on boot and when the Shelf comes back into view reads `oros-library-data` (read only) and logs progress as normal Shelf entries (pages only forward, start added from the wishlist, finish only when Library marked it finished on or after the run began; dropped/finished items untouched). **Read in Library** opens the book at your place. No schema change. Tests on both sides.
+- Bible: Part VI "Library ↔ Media Shelf (BR-LIB-SHELF)".

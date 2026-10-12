@@ -166,7 +166,7 @@
           if (st && st.f === "e" && st.s === s) goOffset(st.o, false);
           else setPage(0);
           report(true);
-          return { toc: toc };
+          return { toc: toc, pages: C.estPagesBytes(total) };
         });
       });
     }

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.11.00
+- Library: Add to Media Shelf; linked books follow your reading.
+
 ## Version 1.10.00
 - New app Montage (Video): edit videos on a timeline with pictures, music, your voice and titles, add transitions and filters, and export an MP4 or WebM video. Your videos stay on your device unless you turn on media sync for a project.
 

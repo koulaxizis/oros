@@ -455,6 +455,12 @@
       LIB.putBook({ id: id, fin: b.fin ? undefined : ymd(new Date()) });
     }));
     if (nHl + nBm) acts.appendChild(LIB.textBtn("btn", t("details.export"), function () { dlg.close(); exportNotes(id); }));
+    var shelfId = C.shelfItemOf(LIB.readShelf(), id);
+    acts.appendChild(LIB.textBtn("btn", shelfId ? t("details.shelfOpen") : t("details.shelfAdd"), function () {
+      dlg.close();
+      var cur = LIB.book(id);
+      if (cur) LIB.openApp("shelf", shelfId ? { item: shelfId } : C.shelfTarget(cur));
+    }));
     acts.appendChild(LIB.textBtn("btn", t("details.remove"), function () { dlg.close(); LIB.removeBook(id); }));
     dlg.appendChild(acts);
     var missing = el("div", "dt-missing");
