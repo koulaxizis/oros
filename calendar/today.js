@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Calendar — Today provider (v1.1.0, wave 2)
+// orOS Calendar — Today provider (v1.2.0, wave 4)
 // Loaded by the shell (today/host.js) through apps.json "today".
 // Read-only: reads oros-calendar-data, oros-contacts-data and the
 // Calendar's cached copy of its world days (oros-cal-days), never
@@ -10,22 +10,26 @@
 // today and the next days (a multi-day event once, on its first day,
 // or today while it runs); today's public holidays, who celebrates
 // and world days as top lines; contacts who celebrate today; public
-// holidays of the next days.
-// Opens: an event → that event in the Calendar; a contact → Contacts
+// holidays of the next days; the screen pet's birthday (wave 4,
+// namedays.js petBirthday, the Calendar's pet feed rule; left out when
+// the pet's Calendar feed is switched off on this device).
+// Opens: the pet's birthday → the screen pet (__orosOpenPet); an event → that event in the Calendar; a contact → Contacts
 // (__orosOpenContact); else the Calendar on that day
 // (__orosOpenCalendar).
 // ============================================================
 (function (root) {
   "use strict";
   var W = {
-    en: { names: "Name day: {n}", more: " and {n} more", contact: "{name}: name day", untitled: "(untitled)" },
-    el: { names: "Γιορτάζουν: {n}", more: " και {n} ακόμα", contact: "Γιορτάζει: {name}", untitled: "(χωρίς τίτλο)" }
+    en: { names: "Name day: {n}", more: " and {n} more", contact: "{name}: name day", untitled: "(untitled)",
+          pet: "{name}'s birthday", age1: "1 year old", ageN: "{n} years old" },
+    el: { names: "Γιορτάζουν: {n}", more: " και {n} ακόμα", contact: "Γιορτάζει: {name}", untitled: "(χωρίς τίτλο)",
+          pet: "Γενέθλια του/της {name}", age1: "1 έτους", ageN: "{n} ετών" }
   };
   var MAX_NAMES = 6;
 
   var PROVIDER = {
     id: "calendar",
-    keys: ["oros-calendar-data", "oros-contacts-data", "oros-cal-days"],
+    keys: ["oros-calendar-data", "oros-contacts-data", "oros-cal-days", "oros-pet-data"],
     collect: function (ctx) {
       var ND = root.OrosNamedays, OCC = root.OrosCalOccur;
       var w = W[ctx.lang] || W.en, el = ctx.lang === "el", out = [];
@@ -72,9 +76,23 @@
                      target: { contact: x.id } });
         });
       }
+      var pd = ctx.readJSON("oros-pet-data"), pet = pd && typeof pd.pet === "object" ? pd.pet : null;
+      if (pet && typeof ND.petBirthday === "function" && ctx.readRaw("oros-pet-calendar-sync") !== "0") {
+        for (var q = 0; q <= ctx.horizon; q++) {
+          var pday = ctx.addDays(ctx.today, q), age = ND.petBirthday(pet, pday);
+          if (!age) continue;
+          out.push({ id: "pet:" + pday, due: pday, kind: "event",
+                     title: w.pet.replace("{name}", typeof pet.name === "string" && pet.name ? pet.name : "?"),
+                     text: age === 1 ? w.age1 : w.ageN.replace("{n}", age), target: { pet: true } });
+        }
+      }
       return out;
     },
     open: function (target, win) {
+      if (target && target.pet === true) {
+        if (typeof win.__orosOpenPet === "function") win.__orosOpenPet(null);
+        return;
+      }
       if (target && typeof target.contact === "string") {
         if (typeof win.__orosOpenContact === "function") win.__orosOpenContact(target.contact);
         return;

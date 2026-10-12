@@ -260,8 +260,6 @@
     for (var i = 0; i < 7; i++) out.push(addDays(s, i));
     return out;
   }
-  // weekday index 0..6 with MONDAY = 0 (schedule space)
-  function schedIdx(d) { return (d.getDay() + 6) % 7; }
 
   // ===== DATA LAYER =====
   var db = null;   // { ver, habits:[], comps:[] }
@@ -377,22 +375,16 @@
   }
   // completed = comp entity exists AND not tombstoned
   function compKey(habitId, dateK) { return habitId + "|" + dateK; }
-  function isDone(habitId, dateK) {
-    for (var i = 0; i < db.comps.length; i++) {
-      var c = db.comps[i];
-      if (c.id === habitId + "|" + dateK) return !c.del;
-    }
-    return false;
-  }
+  // The rules live in habits/core.js (OrosHabitsCore), shared with the
+  // Calendar feed and the Today summary.
+  var HC = window.OrosHabitsCore;
+  function isDone(habitId, dateK) { return HC.isDone(db, habitId, dateK); }
   // Schedule: empty days = flexible (any day counts), subset = those
-  // weekdays only. Always consults the MONDAY-FIRST schedIdx.
+  // weekdays only, Monday = 0 (OrosHabitsCore.schedIdx).
   // HB-1: flexible habits (days=[] = any day) are interactable
   // everywhere but excluded from rate-based metrics (perfect days,
   // consistency ranking). They count toward total completions.
-  function isScheduledOn(habit, d) {
-    if (!habit.days.length) return false;   // flexible ≠ scheduled
-    return habit.days.indexOf(schedIdx(d)) !== -1;
-  }
+  function isScheduledOn(habit, d) { return HC.isScheduledOn(habit, dateKey(d)); }
 
   function isFlexible(habit) { return !habit.days.length; }
   function freqBadge(habit) {

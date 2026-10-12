@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "0.94.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.00.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -175,6 +175,7 @@
     wallpaper: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="2.5"/><path d="M2.5 15c3-3 5.5-3 8.5 0s5.5 3 10.5-1"/><path d="M2.5 10.5c3-2.5 5.5-2.5 8.5 0s5.5 2.5 10.5-1"/></svg>',
     trees: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-8"/><path d="M12 14l-3.5-3.5M12 16l4-4"/><path d="M12 14c-5 0-8-3-8-6.5a4.5 4.5 0 0 1 4.5-4.5c1.4 0 2.6.6 3.5 1.6A4.5 4.5 0 0 1 20 7.5C20 11 17 14 12 14z"/></svg>',
     aura: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c3-1 4-5 7-7s6-1 9-5"/><path d="M4 13c2 0 3-2 5-3" opacity=".55"/><circle cx="18" cy="17" r="1.2"/><circle cx="14" cy="20" r=".8"/><circle cx="20.5" cy="12.5" r=".8"/></svg>',
+    photolab: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M3 15l4-4 4 4 2-2 4 4"/><path d="M14 3l7 7"/><path d="M19 3l2 2-6 6-3 1 1-3z"/></svg>',
     atelier: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.58 9 8 0 2.5-2 4-4.5 4H14a1.5 1.5 0 0 0-1 2.6A1.5 1.5 0 0 1 12 21z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="16.5" cy="9.5" r="1"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
@@ -237,6 +238,7 @@
     podcasts: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M12 13v8"/><path d="M8.5 15.5a5 5 0 1 1 7 0"/><path d="M5.6 18.4a9 9 0 1 1 12.8 0"/></svg>',
     mixer: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/><rect x="4" y="13" width="4" height="3" rx="1"/><rect x="10" y="6" width="4" height="3" rx="1"/><rect x="16" y="10" width="4" height="3" rx="1"/></svg>',
     ringtones: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 15V8l4-1v6"/><circle cx="10" cy="15" r="1.5"/><circle cx="14" cy="13" r="1.5"/></svg>',
+    studio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V14"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
@@ -1192,49 +1194,22 @@
     return state.lang === "el" ? el : en;
   }
 
-  function minimalismHasToday() {
-    var today = sysYmd();
-    var raw;
-    try { raw = JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY)); }
-    catch (e) { return false; }
-    if (!raw || !Array.isArray(raw.days)) return false;
-    for (var i = 0; i < raw.days.length; i++) {
-      var e = raw.days[i];
-      if (e && e.date === today &&
-          (e.status === "done" || e.status === "skip")) return true;
-    }
-    return false;
-  }
-
-  // Prefs live in the app's slice; read defensively — a fresh
-  // install has no data yet, the design default (10:00) stands.
-  function minimalismPrefHour() {
-    try {
-      var raw = JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY));
-      if (raw && raw.prefs && typeof raw.prefs.remindHour === "number" &&
-          raw.prefs.remindHour >= 0 && raw.prefs.remindHour <= 23) {
-        return raw.prefs.remindHour;
-      }
-    } catch (e) {}
-    return 10;
-  }
-
-  // SH-B7 (owner decision 2026-10-05): same rule as Mood — the ritual
-  // whisper starts only after the first day record (done or skip).
-  function minimalismHasAnyDay() {
-    try {
-      var raw = JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY));
-      return !!(raw && Array.isArray(raw.days) && raw.days.length > 0);
-    } catch (e) { return false; }
+  // The rule lives in minimalism/core.js (OrosMinimalismCore, loaded
+  // by index.html), shared with the Today summary.
+  function minimalismRaw() {
+    try { return JSON.parse(localStorage.getItem(MINIMALISM_DATA_KEY)); } catch (e) { return null; }
   }
 
   function minimalismCheckTick() {
-    if (!minimalismHasAnyDay()) return;   // SH-B7: app never used — silent
-    if (minimalismHasToday()) return;   // engaged today — silent
-    if (new Date().getHours() < minimalismPrefHour()) return;
+    var MC = window.OrosMinimalismCore;
+    if (!MC) return;                                    // stale bundle — silent
+    var raw = minimalismRaw(), today = sysYmd();
+    if (!MC.hasAny(raw)) return;          // SH-B7: app never used — silent
+    if (MC.engagedOn(raw, today)) return; // engaged today — silent
+    if (new Date().getHours() < MC.remindHour(raw)) return;
+    if (todayAbsorbs("minimalism")) return;             // said in today's summary
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
-    var today = sysYmd();
     N.emit({
       ns: "minimalism",
       key: "ritual-" + today,
@@ -6154,28 +6129,21 @@
     return yy + "-" + mm + "-" + dd;
   }
 
+  // The rule lives in mood/core.js (OrosMoodCore, loaded by
+  // index.html), shared with the Today summary.
+  function moodRaw() {
+    try { return JSON.parse(localStorage.getItem("oros-mood-data")); } catch (e) { return null; }
+  }
   function moodCheckInHasToday() {
-    try {
-      var raw = JSON.parse(localStorage.getItem("oros-mood-data"));
-      if (!raw || !Array.isArray(raw.entries)) return false;
-      var dk = moodCheckInDayKey();
-      for (var i = 0; i < raw.entries.length; i++) {
-        var e = raw.entries[i];
-        if (!e || !e.ts) continue;
-        var edk = moodCheckInDayKey(new Date(e.ts));
-        if (edk === dk) return true;
-      }
-      return false;
-    } catch (e) { return false; }
+    var MC = window.OrosMoodCore;
+    return !!(MC && MC.hasOn(moodRaw(), moodCheckInDayKey()));
   }
 
   // SH-B7 (owner decision 2026-10-05): a reminder only makes sense
   // once the app has data. No Mood entry ever → no daily nagging.
   function moodHasAnyEntry() {
-    try {
-      var raw = JSON.parse(localStorage.getItem("oros-mood-data"));
-      return !!(raw && Array.isArray(raw.entries) && raw.entries.length > 0);
-    } catch (e) { return false; }
+    var MC = window.OrosMoodCore;
+    return !!(MC && MC.hasAny(moodRaw()));
   }
 
   function moodCheckInTick() {
@@ -6207,33 +6175,18 @@
 
   // Wave 5 — closed-app fallback. When the Cycle iframe is NOT
   // running, the shell reads "oros-cycle-data" directly (same
-  // origin — moodCheckInTick pattern) and re-applies the
-  // nextPrediction math shell-side: byte-level mirror of cycle.js
-  // (avg cycle = mean gap between consecutive starts, avg period =
-  // mean inclusive length over ENDED periods, default 5, threshold
-  // ≤2 days, Math.ceil against local midnight). The i18n strings
-  // are DUPLICATED here on purpose — cycle.js STRINGS are
-  // unreachable with the app closed; keys/bodies must stay
-  // IDENTICAL so the app-open and app-closed paths produce the
-  // same dedup key. If a string changes in cycle.js, change it
-  // here too (maintenance note — changelog knows).
+  // origin — moodCheckInTick pattern) and asks cycle/core.js
+  // (OrosCycleCore.dueIn, loaded by index.html: the SAME file the
+  // app runs) whether the predicted start is ≤2 days away or past.
+  // The i18n strings are DUPLICATED here on purpose — cycle.js
+  // STRINGS are unreachable with the app closed; keys/bodies must
+  // stay IDENTICAL so the app-open and app-closed paths produce the
+  // same dedup key. If a string changes in cycle.js, change it here
+  // too (maintenance note — changelog knows).
   var CYCLE_DATA_KEY = "oros-cycle-data";
 
   function cycleT(en, el) {
     return state.lang === "el" ? el : en;
-  }
-
-  function cycleSnapMidnight(ts) {
-    if (typeof ts !== "number" || !isFinite(ts)) return null;
-    var d = new Date(ts);
-    if (isNaN(d.getTime())) return null;
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  }
-
-  function cycleDayKey(ts) {
-    var d = new Date(ts);
-    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
-    return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
   }
 
   function cycleShellCheck() {
@@ -6242,46 +6195,14 @@
     catch (e) { return null; }
     if (!raw || !Array.isArray(raw.periods)) return null;
     if (raw.prefs && raw.prefs.remind === false) return null;
-
-    // valid starts, snapped to local midnight (storage arrives
-    // migrated, but the app snaps defensively — we mirror that)
-    var starts = [];
-    raw.periods.forEach(function (p) {
-      if (!p) return;
-      var s = cycleSnapMidnight(p.start);
-      if (s !== null) starts.push(s);
-    });
-    starts.sort(function (a, b) { return a - b; });   // oldest first
-    if (starts.length < 2) return null;               // avgCycleLen honesty
-
-    var gaps = [];
-    for (var i = 1; i < starts.length; i++) {
-      gaps.push(Math.round((starts[i] - starts[i - 1]) / DAY_MS));
-    }
-    var sum = 0;
-    gaps.forEach(function (g) { sum += g; });
-    var avg = Math.round(sum / gaps.length);
-
-    // avg period length: ENDED periods only, inclusive days,
-    // cycle.js default 5 when history has no ended period yet
-    var lenSum = 0, lenN = 0;
-    raw.periods.forEach(function (p) {
-      if (p && typeof p.end === "number" && isFinite(p.end) &&
-          typeof p.start === "number" && p.end >= p.start) {
-        lenSum += Math.round((p.end - p.start) / DAY_MS) + 1;
-        lenN++;
-      }
-    });
-    var len = lenN ? Math.round(lenSum / lenN) : 5;
-
-    var last = starts[starts.length - 1];
-    var predStart = last + avg * DAY_MS;
-    var ymd = cycleDayKey(predStart);
+    var CC = window.OrosCycleCore;
+    if (!CC) return null;                               // stale bundle — silent
 
     var now = new Date();
     var today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    var daysLeft = Math.ceil((predStart - today) / DAY_MS);
-    if (daysLeft > 2) return null;
+    var due = CC.dueIn(raw.periods, today);
+    if (!due) return null;
+    var daysLeft = due.daysLeft, ymd = due.ymd;
 
     if (daysLeft >= 0) {
       return {

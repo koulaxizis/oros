@@ -1,0 +1,57 @@
+# Studio
+A small multitrack studio: put audio clips on tracks, record over a click, loop a part, mix and export the song as a WAV file. Effects will come later.
+
+## Getting started
+- `Import audio` at the top (the down arrow) brings in audio files: WAV, MP3, OGG, FLAC, M4A, whatever this browser can play. You can also drop files from your computer onto the timeline.
+- `+ Track` adds a track. A project has up to 8.
+- The first import or track makes a new project. Tap or click the project name at the top to rename it, and the menu button at the top left lists your projects.
+
+## Playing and the timeline
+- `Play` starts from the white playhead and pauses; `Stop` stops and goes back to where you started; pressed again, it goes to the start (or to the start of the loop).
+- Tap or click the ruler to move the playhead. Tapping an empty part of a track also moves it there.
+- Drag along the ruler to mark a loop. `Loop` turns it on and off; with no loop yet it makes one of four bars from the playhead.
+- Set the tempo (BPM) and the beats in a bar next to the clock. `Click` turns the metronome on.
+- The zoom buttons, or [[Ctrl]] and the mouse wheel, make the timeline wider or narrower.
+
+## Editing clips
+- Tap or click a clip to select it. Drag it to move it, also up or down to another track.
+- Drag the left or right edge of a clip to trim it.
+- `Snap` makes moves and trims land on a bar or a beat; `Free` lets them land anywhere.
+- With a clip selected, the bar at the bottom offers `Split` (at the playhead), `Duplicate` (a copy right after it), `Delete`, `Gain`, `Fade in` and `Fade out`.
+- Undo and Redo are at the top.
+
+## Tracks and mixing
+- `M` mutes a track and `S` solos it. When a track is soloed, only soloed tracks are heard.
+- The slider under a track's buttons is its volume. The dots button opens the track's settings: name, colour, volume, pan, move up or down, delete.
+- `Master` sets the volume of the whole mix, and the meter next to it shows the level while playing.
+
+## Recording
+- `R` on a track arms it: new takes go there. With no armed track, Studio records on the selected one.
+- Press the red record button. The browser asks once for the microphone. Studio plays from the playhead (with the click, if it is on) and records until you press it again.
+- The take is saved as a WAV file and placed where it was played. If takes land late against the click, raise `Recording offset` in the settings.
+- In the settings (the three dots at the top) choose the input and, where the browser allows it, the output of your sound card.
+
+## Export
+`Export WAV` (the up arrow) mixes the song into one stereo WAV file: the loop if it is on, else everything from the start to the end of the last clip. Choose 16 or 24 bit and 44.1 or 48 kHz.
+
+## Sync and backup
+- Projects, tracks and clips follow you to your other devices through orOS sync.
+- The audio itself is kept as files on the orOS disk, in the `Studio` folder of the [Files](app:files) app. With sync on and [Vault Drive](help:t/sync) turned on, the files travel to your other devices too. Until a file arrives, its clips show that the audio is not on this device yet.
+- The zoom, the snap, the click, the sound card choices and the armed track stay on this device.
+
+## Keyboard shortcuts
+- [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[Home]] back to the start.
+- [[S]] split, [[D]] duplicate, [[Delete]] delete the selected clip, [[Esc]] deselect.
+- [[+]] and [[-]] zoom, [[Ctrl+Z]] undo, [[Ctrl+Y]] redo.
+- On the ruler, the arrow keys move the playhead by a beat, and by a bar with [[Shift]].
+
+## Tips
+> Use headphones when you record, so the click and the other tracks do not end up in the take.
+- Browsers cannot use ASIO drivers. Your sound card works through the system's own driver, with a little more delay than in a desktop studio app.
+
+## Limits
+- Up to 50 projects, 8 tracks and 500 clips per project, one hour per project.
+- An imported file can be up to 100 MB, and a take up to 30 minutes.
+- No effects yet, no MIDI and no automation.
+- Audio of deleted clips stays in the `Studio` folder; deleting a project removes its files.
+- When the same clip is changed on two devices before they sync, the most recent change wins.

@@ -1,6 +1,24 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.00.00
+- Photo Lab: new Filter menu (blur, sharpen, noise, pixelate, emboss, edges, vignette) and retouch tools (clone stamp, healing brush, red eye, dodge, burn, sponge, smudge)
+
+## Version 0.99.00
+- Photo Lab opens and saves Photoshop (PSD) and OpenRaster files with layers.
+
+## Version 0.98.00
+- Today now also shows your expected period and mood check-in (both only if you turn them on in Settings), today's minimalism proposal, remembrance days from your family tree, tonight's sky events and your pet's birthday.
+
+## Version 0.97.00
+- New app Photo Lab in the new Image category: edit pictures with layers, selections, 14 tools and adjustments, then export or set them as wallpaper. Pixel Avatar, Wallpaper Generator, Tree Sketcher and Aura Painter moved to Image.
+
+## Version 0.96.00
+- New app Studio (Sound): record and arrange audio on up to 8 tracks, with loop, click and WAV export. Effects come later.
+
+## Version 0.95.00
+- Today now also shows your habits, today's workout, Health reminder times, upcoming bills and income, today's meals and how many unread e-mails wait in each Inbox.
+
 ## Version 0.94.00
 - Notes opens .txt and .md files; on Android, "Share → orOS" now takes files too and opens them in the right app.
 

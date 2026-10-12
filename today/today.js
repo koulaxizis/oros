@@ -65,7 +65,7 @@
       "s.on": "Daily summary", "s.onHint": "One notice a day when something is late or due today.",
       "s.hour": "From", "s.hourHint": "The notice comes on the first open of orOS after this time.",
       "s.absorb": "Quiet the morning reminders the summary covers",
-      "s.absorbHint": "Plants, chores, pet care, garage, to-dos, quotes, name days and the weather briefing stay quiet once the summary has come. Reminders at a set time still ring.",
+      "s.absorbHint": "Plants, chores, pet care, garage, to-dos, quotes, name days, the Minimalism proposal and the weather briefing stay quiet once the summary has come. Reminders at a set time still ring.",
       "s.apps": "Apps in the summary", "s.sens": "sensitive",
       "s.sensHint": "Sensitive apps are off until you switch them on.",
       "s.none": "No app gives the summary anything yet.",
@@ -86,7 +86,7 @@
       "s.on": "Ημερήσια σύνοψη", "s.onHint": "Μία ειδοποίηση τη μέρα, όταν κάτι έχει καθυστερήσει ή λήγει σήμερα.",
       "s.hour": "Από", "s.hourHint": "Η ειδοποίηση έρχεται στο πρώτο άνοιγμα του orOS μετά από αυτή την ώρα.",
       "s.absorb": "Σίγαση των πρωινών υπενθυμίσεων που καλύπτει η σύνοψη",
-      "s.absorbHint": "Φυτά, δουλειές, κατοικίδια, γκαράζ, εργασίες, προσφορές, γιορτές και ο πρωινός καιρός σωπαίνουν όταν έχει έρθει η σύνοψη. Οι υπενθυμίσεις με συγκεκριμένη ώρα χτυπούν κανονικά.",
+      "s.absorbHint": "Φυτά, δουλειές, κατοικίδια, γκαράζ, εργασίες, προσφορές, γιορτές, η πρόταση του Μινιμαλισμού και ο πρωινός καιρός σωπαίνουν όταν έχει έρθει η σύνοψη. Οι υπενθυμίσεις με συγκεκριμένη ώρα χτυπούν κανονικά.",
       "s.apps": "Εφαρμογές στη σύνοψη", "s.sens": "ευαίσθητη",
       "s.sensHint": "Οι ευαίσθητες εφαρμογές είναι κλειστές μέχρι να τις ανοίξεις.",
       "s.none": "Καμία εφαρμογή δεν δίνει ακόμη κάτι στη σύνοψη.",
@@ -200,8 +200,15 @@
       var top = el("ul", "top");
       g.info.forEach(function (r) {
         var li = el("li");
-        li.appendChild(iconFor(r.app));
-        li.appendChild(el("span", "txt", r.title + (r.text ? " · " + r.text : "")));
+        var b = el("button", "top-open");          // a top line opens its app too
+        b.type = "button";
+        b.appendChild(iconFor(r.app));
+        b.appendChild(el("span", "txt", r.title + (r.text ? " · " + r.text : "")));
+        b.addEventListener("click", function () {
+          var H = host();
+          if (H) H.open(r.app, r.target);
+        });
+        li.appendChild(b);
         top.appendChild(li);
       });
       main.appendChild(top);
