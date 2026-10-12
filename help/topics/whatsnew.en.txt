@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.40.00
+- Montage: play clips backwards, colour looks from .cube LUT files, and GIF export.
+
 ## Version 1.39.00
 - Montage: keyframes, so clips can move, zoom, fade and change volume while they play.
 
