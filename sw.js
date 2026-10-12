@@ -989,6 +989,8 @@ var PRECACHE_URLS = [
   "stickies/core.js",
   "stickies/host.js",
   "stickies/stickies.js",
+  "stickies/search.js",
+  "stickies/today.js",
   "textcase/",
   "textcase/index.html",
   "textcase/textcase.css",
