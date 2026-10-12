@@ -48,6 +48,13 @@ Choose `Make a draft for me to check` and you get a draft and a notice, or `Send
 ## Subscribe and unsubscribe by e-mail
 Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, every few minutes while orOS is open, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
 
+## Sign-up form on your site
+In `Subscribe link`, `Set up the form` makes a form for your own website: copy its HTML into any page. People type their e-mail and name, and orOS's relay keeps the sign-up, encrypted so only your Newsletter can read it, until orOS collects it, every few minutes while it is open. Each new subscriber then gets a confirmation request. You can set a `Thank-you page` on your site where people land afterwards.
+
+With the form on, every issue also has a one-click unsubscribe link, and Gmail and other mail apps show their own Unsubscribe button.
+
+>! Sign-ups are collected on one device, the one that set the form up. Use `Collect here` to change it. `Turn the form off` deletes what the relay holds, and the one-click links in issues already sent stop working; the e-mail way keeps working.
+
 ## Sync and backup
 Lists, subscribers and issues sync through orOS sync, and pictures through the orOS disk. Passwords, the daily counter and when the Inbox was last read stay on each device. `Settings` has `Back up (JSON)` and `Restore from backup`, and `Export CSV` saves a list's subscribers.
 
@@ -66,4 +73,5 @@ Lists, subscribers and issues sync through orOS sync, and pictures through the o
 - Sending happens only while orOS is open, and the daily limit is counted per device.
 - Up to 5,000 subscribers in all and 20 lists.
 - Up to 20 RSS feeds and 500 issues.
-- No open or click statistics and no web sign-up form hosted for you: people subscribe by e-mail.
+- No open or click statistics.
+- The relay holds at most 2,000 sign-ups and unsubscribes per list waiting to be collected.

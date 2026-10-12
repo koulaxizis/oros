@@ -290,8 +290,9 @@
     var box = l.reply || l.from;
     var tok = s ? C.token(l, s.id) : "nl-test";
     var unsub = s ? R.mailto(box, "unsubscribe " + tok) : "";
+    var unsubWeb = s && l.form ? relayUrl() + C.unsubPath(l, s) : "";
     var inline = [];
-    var e = R.email({ issue: x, list: l, sub: s, lang: lang, test: !!opts.test, unsub: unsub, tok: tok, mailbox: box,
+    var e = R.email({ issue: x, list: l, sub: s, lang: lang, test: !!opts.test, unsub: unsub, unsubWeb: unsubWeb, tok: tok, mailbox: box,
                       img: function (b) {
                         var d = imgData[b.f];
                         if (!d) return "";
@@ -302,7 +303,7 @@
     return R.message(M, {
       from: { name: l.fromName, addr: l.from }, to: { name: s ? s.name : "", addr: opts.to || s.email },
       reply: l.reply, subject: e.subject, text: e.text, html: e.html, inline: inline,
-      listId: l.id, listName: l.name, unsub: unsub, tag: x.id, hdr: opts.hdr
+      listId: l.id, listName: l.name, unsub: unsub, unsubWeb: unsubWeb, tag: x.id, hdr: opts.hdr
     });
   }
   function confirmFor(l, s, hdr) {
@@ -354,6 +355,146 @@
       out = y;
     });
     return out;
+  }
+
+  // ---------- web sign-up form (relay/newsletter.js) ----------
+  // Turn on (or update the thank-you page of) a list's form: a new RSA
+  // key pair, list key and secret are registered with the relay; they
+  // sync with the list. → Promise<form>
+  function rnd(n, abc) {
+    var b = crypto.getRandomValues(new Uint8Array(n)), out = "";
+    for (var i = 0; i < n; i++) out += abc.charAt(b[i] % abc.length);
+    return out;
+  }
+  function formOn(listId, back) {
+    var l = C.list(read(), listId);
+    if (!l) return Promise.reject({ code: "gone" });
+    var dev = devState().dev;
+    var made = l.form ? Promise.resolve({ k: l.form.k, sec: l.form.sec, priv: l.form.priv }) :
+      crypto.subtle.generateKey({ name: "RSA-OAEP", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+                                true, ["encrypt", "decrypt"]).then(function (kp) {
+        return crypto.subtle.exportKey("jwk", kp.privateKey).then(function (priv) {
+          return { k: rnd(16, "abcdefghijklmnopqrstuvwxyz0123456789"),
+                   sec: rnd(32, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"), priv: priv };
+        });
+      });
+    return made.then(function (f) {
+      var form = C.normForm({ k: f.k, sec: f.sec, priv: f.priv, back: back || "", dev: (l.form && l.form.dev) || dev, at: Date.now() });
+      if (!form) throw { code: "bad-request" };
+      return relay({ op: "nl", act: "reg", k: form.k, sec: form.sec, pub: C.formPub(form), back: form.back }).then(function () {
+        change(function (d) {
+          var cur = C.list(d, listId);
+          if (!cur) return false;
+          var y = copy(cur); y.form = form;
+          put(d, "lists", y);
+        });
+        return form;
+      });
+    });
+  }
+  // Turn the form off: the relay forgets the list and anything waiting.
+  function formOff(listId) {
+    var l = C.list(read(), listId);
+    if (!l || !l.form) return Promise.resolve();
+    return relay({ op: "nl", act: "drop", k: l.form.k, sec: l.form.sec })["catch"](function (e) {
+      if (!(e && e.code === "gone")) throw e;
+    }).then(function () {
+      change(function (d) {
+        var cur = C.list(d, listId);
+        if (!cur || !cur.form) return false;
+        var y = copy(cur); y.form = null;
+        put(d, "lists", y);
+      });
+    });
+  }
+  // This device collects the list's sign-ups from now on.
+  function formHere(listId) {
+    var dev = devState().dev;
+    change(function (d) {
+      var cur = C.list(d, listId);
+      if (!cur || !cur.form || cur.form.dev === dev) return false;
+      var y = copy(cur); y.form.dev = dev;
+      put(d, "lists", y);
+    });
+  }
+  function unb64(s) {
+    var bin = atob(s), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }
+  // One sealed sign-up → { e, n, l, t } (see relay/newsletter.js seal)
+  function openSealed(priv, v) {
+    var o = JSON.parse(atob(v));
+    return crypto.subtle.decrypt({ name: "RSA-OAEP" }, priv, unb64(o.w)).then(function (raw) {
+      return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["decrypt"]);
+    }).then(function (key) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(o.iv) }, key, unb64(o.c));
+    }).then(function (plain) { return JSON.parse(new TextDecoder().decode(plain)); });
+  }
+  // A sign-up from the web form → a pending subscriber (the engine then
+  // sends the confirmation request). Changes d. → true if it applied.
+  function applySignup(d, l, o, tally) {
+    var email = C.normEmail(o && o.e), now = Date.now();
+    if (!email) return false;
+    var id = C.subId(l.id, email), cur = C.sub(d, id);
+    if (cur) {
+      var st = C.status(cur);
+      if (st === "on" || st === "pend" || st === "spam") return false;
+      var y = copy(cur); y.at = now; y.m = stamp(y.m); y.bnc = 0;
+      replaceIn(d.subs, y);
+    } else {
+      if (C.live(d.subs).length >= C.LIM.subs) return false;
+      var tomb = null;
+      d.subs.forEach(function (s) { if (s.id === id) tomb = s; });
+      replaceIn(d.subs, C.normSub({ id: id, m: stamp(tomb ? tomb.m : 0), list: l.id, email: email, name: C.oneLine(o.n, C.LIM.name),
+                                    lang: o.l === "el" || o.l === "en" ? o.l : "", src: "form", basis: "optin", at: now, conf: 0 }));
+    }
+    tally.s++;
+    return true;
+  }
+  // Sign-ups and one-click unsubscribes waiting at the relay for the
+  // lists this device collects: applied on fresh data, then acked.
+  function pullForms(tally) {
+    var dev = devState().dev;
+    var lists = C.live(read().lists).filter(function (l) { return l.form && (!l.form.dev || l.form.dev === dev); });
+    if (!lists.length || !navigator.onLine) return Promise.resolve(tally);
+    return lists.reduce(function (p, l) {
+      return p.then(function () {
+        var f = l.form;
+        return crypto.subtle.importKey("jwk", f.priv, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["decrypt"]).then(function (priv) {
+          var page = function (n) {
+            return relay({ op: "nl", act: "pull", k: f.k, sec: f.sec, after: 0 }).then(function (res) {
+              var rows = res && Array.isArray(res.rows) ? res.rows : [];
+              if (!rows.length) return;
+              var opened = [];
+              return rows.reduce(function (q, r) {
+                return q.then(function () {
+                  if (r.kind !== "s") return;
+                  return openSealed(priv, r.v).then(function (o) { opened.push(o); }, function () {});
+                });
+              }, Promise.resolve()).then(function () {
+                var d = read(), cur = C.list(d, l.id);
+                if (cur) {
+                  var toks = C.byToken(d);
+                  opened.forEach(function (o) { applySignup(d, cur, o, tally); });
+                  rows.forEach(function (r) {
+                    if (r.kind !== "u" || typeof r.v !== "string") return;
+                    var s = toks["nl-" + r.v];
+                    if (s && s.list === l.id) applyRequest(d, { act: "unsub", tok: "nl-" + r.v }, {}, tally);
+                  });
+                  write(d);
+                }
+                var upto = rows[rows.length - 1].id;
+                return relay({ op: "nl", act: "ack", k: f.k, sec: f.sec, upto: upto }).then(function () {
+                  if (res.more && n < 10) return page(n + 1);
+                });
+              });
+            });
+          };
+          return page(0);
+        });
+      })["catch"](function (e) { if (!tally.err && !(e && e.code === "nostore")) tally.err = e; });
+    }, Promise.resolve()).then(function () { return tally; });
   }
 
   // ---------- Inbox: requests and delivery failures ----------
@@ -445,13 +586,18 @@
   // → { u, s, c, b, err (the first error, or null) }
   function checkInbox() {
     if (inboxBusy) return inboxBusy;
+    var t0 = { u: 0, s: 0, c: 0, b: 0, err: null };
+    inboxBusy = pullForms(t0).then(function () { inboxBusy = null; return checkMail(t0); }, function () { inboxBusy = null; return checkMail(t0); });
+    return inboxBusy;
+  }
+  function checkMail(tally) {
+    if (inboxBusy) return inboxBusy;
     var d0 = read(), accts = {};
     C.live(d0.lists).forEach(function (l) {
       var a = inboxAccount(C.chan(d0, l.chan));
       if (a) accts[a.id] = a;
     });
     var ids = Object.keys(accts);
-    var tally = { u: 0, s: 0, c: 0, b: 0, err: null };
     var MM = root.orosMailMime;
     if (!ids.length || !navigator.onLine || !MM) return Promise.resolve(tally);
     var run = function () {
@@ -810,6 +956,7 @@
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
     images: imgData, loadImages: loadImages, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
+    formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create
   };
