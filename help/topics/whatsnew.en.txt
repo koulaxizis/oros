@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.17.00
+- Photo Lab: layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay).
+
 ## Version 1.16.00
 - Atelier: Resize now re-lays your design for each new size and can make copies in several sizes at once; Duplicate keeps every element's height.
 

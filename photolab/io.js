@@ -263,6 +263,17 @@
   function layerPixels() {
     return st.doc.layers.map(function (L) {
       var o = { name: L.name, op: L.op, bl: L.bl, vis: L.vis, x: L.x, y: L.y, img: { w: 0, h: 0, data: new Uint8ClampedArray(0) } };
+      // Masks, styles and adjustment layers go baked into pixels
+      // (cut to the canvas).
+      if (L.mk || L.fx || L.k === "adj") {
+        var d = st.doc, c = PL.view.renderLayer(L);
+        var px = { w: d.w, h: d.h, data: c.getContext("2d").getImageData(0, 0, d.w, d.h).data };
+        c.width = c.height = 0;
+        var r = PL.R.trimRect(px);
+        if (r) { o.x = r.x; o.y = r.y; o.img = PL.R.crop(px, r); }
+        else { o.x = 0; o.y = 0; }
+        return o;
+      }
       if (L.k !== "raster") {
         var v = PL.ops.vectorPixels(L);
         o.x = v.x; o.y = v.y; o.img = v.img;
