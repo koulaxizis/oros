@@ -772,6 +772,7 @@ var PRECACHE_URLS = [
   "assistant/index.html",
   "assistant/assistant.css",
   "assistant/core.js",
+  "assistant/summary.js",
   "assistant/assistant.js",
   "assistant/help.en.txt",
   "assistant/help.el.txt",

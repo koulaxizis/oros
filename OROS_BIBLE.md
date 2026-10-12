@@ -582,6 +582,11 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **AS-R2 (read_item):** finds the item again by the search's query and hit id (refs keep `{app, target, title, q, id}`), sends at most 12 000 characters; an "Ask first" app shows one more card with the beginning and the size. Apps set to Never or no longer readable answer with an error. No provider `get()` was needed: every search provider already returns the item's full plain text.
 - **Ask from anywhere:** the menu search's last row "Ask the Assistant: «q»" (`.menu-ask`, only when the Assistant is installed) and Ctrl+Alt+Shift+A both open the Assistant; the row passes `{ask: q}` (the text lands in the message box, nothing is sent).
 - **Unconfigured device:** a synced conversation can be read without a key; only sending needs setup.
+- **AS-SUM (app_summary, phase 3):** tool `app_summary {app, month?: "YYYY-MM", days?: 1–31}`, offered with data access when a readable app has a summary; `list_apps` marks those apps `summary: true`. `assistant/summary.js` (OrosAssistSummary, pure) works it out on the device, read-only: Budget = income, expenses, net and each category of one month (budget/search.js names and tombstone rule, entries only, recurring rules not projected); Timesheet = hours, billable hours and amount per project of one month with the app's own rounding (`OrosTimesheetCore.report`, the core is loaded on first use from `../timesheet/core.js`); To-Do = open / done / late / due-today in total and per list, plus its agenda; every other app with a Today provider = its agenda: late tasks, today and the next `days` days (past events dropped, ≤ 60 rows), through `orosToday.agenda(appId, days)`. Permissions are the assistant's own per app: "Always" shares, "Ask first" shows the summary lines on a card (Share / Don't share), "Never" answers with an error naming the setting. Agenda rows with a target get a ref (`oros:rN`), so the answer can link them. Only the summary leaves the device.
+- **Entry kind invoice (phase 3, request from the Invoices thread):** `propose_entry {kind: "invoice", lines, currency?, client?, note?}` → `__orosOpenAt("invoices", {new: {name?, items: [{d, q, p}], cur?, notes?}})` (BR-INV-NEW; prices in currency units, Invoices adds its VAT). Checked like Invoices' `normPrefill`: 1–50 lines with text, 0 < qty ≤ 100000, 0 ≤ price ≤ 10 000 000, currency one of Invoices' 16. Opens a new draft (and the New client dialog for an unknown client); nothing is saved until the user saves.
+- **Copy:** every answer has a `Copy` button (the answer's Markdown as written; navigator.clipboard, textarea fallback).
+- **Built-in browser model (phase 3):** provider `browser` ("Built-in browser model" / «Ενσωματωμένο μοντέλο του browser»), Chrome's Prompt API (`window.LanguageModel`): no key, no address, no network; chat only (no tools, its own system prompt line). One session per answer: system prompt + earlier turns as `initialPrompts`, the last user message streamed with `promptStreaming`, then `destroy()`. Settings show its state from `availability()` (ready / downloadable with a "Download the model" button that shows progress / not in this browser). Older devices drop the unknown provider id on their own merge (harmless: a pull never marks dirty).
+- **Ask from Writer:** with the Assistant installed, Writer's toolbar gets `#btn-ask` (sparkle, before Settings): Summarize / Rephrase / Fix spelling & grammar / Ask something else… put the selected text (else the whole document, ≤ 12 000 characters) and the request into the Assistant's message box through `__orosOpenAt("assistant", {ask})`. Nothing is sent until the user presses Send. The `ask` text cap is now 20 000 characters (was 2 000).
 
 ## Part III — App registry
 
@@ -1395,6 +1400,7 @@ The menu's search field (A74) also searches the apps' own data. `search.js` (roo
 - Time → Moon & Sky: `__orosOpenAt("sky", {})` from the "More in Moon & Sky" button on Time's Sun & Moon card (`time/astro.js`).
 - Moon & Sky → Time: `__orosOpenAt("time", { astro: "location" })` opens Time's location dialog. It is Time's only `window.__orosOpenAt` receiver (in `time/astro.js`), which also reads `__orosTakeTarget("time")` at boot.
 - Deep link: `__orosOpenAt("sky", { date: "YYYY-MM-DD", tab?: "tonight"|"map"|"month" })`.
+- `orosToday.agenda(appId, days)` → Promise<[clean row]> one app's Today provider over the next 1–31 days, whatever Today's own on/off says; `orosToday.agendaApps()` → ids of apps with a provider. Read-only, used by the Assistant.
 
 ### Mail integrations (0.77.00)
 - Contacts receiver: `__orosOpenAt("contacts", { add: { email, name? } })` opens the card that already has that address, else a prefilled new-contact dialog (saved only on Save). Contacts also takes `__orosTakeTarget("contacts")` at boot.
@@ -1876,6 +1882,8 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-12 18:36 · Chris (merge thread):** approved waves continue automatically after each merge; phase 3 was part of the approved plan (2026-10-10 13:18). Invoice card added at the Invoices thread's request (Chris-approved Invoices plan).
 
 - **2026-10-12 · Chris (video editor Montage / Μοντάζ, plan /mnt/project-files/video-editor/video-editor-plan.md: "Ναι σε όλα!")**
   - New app `montage/`, category Video, CapCut-style on phones and Kdenlive-style on desktops. Schema: Part IV "MONTAGE v1".
