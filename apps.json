@@ -46,6 +46,15 @@
       "type": "internal"
     },
     {
+      "id": "units",
+      "name": "Unit Converter",
+      "category": "Accessories",
+      "icon": "units",
+      "url": "units/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "stickies",
       "name": "Sticky Notes",
       "category": "Accessories",

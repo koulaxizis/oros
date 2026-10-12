@@ -234,6 +234,7 @@
     pong: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v8M20 11v8"/><path d="M12 3v2M12 9v2M12 15v2M12 20v1"/><circle cx="16.5" cy="7" r="1.6"/></svg>',
     backgammon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M5 3l2 7 2-7M15 3l2 7 2-7M5 21l2-7 2 7M15 21l2-7 2 7"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
+    units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="13" width="20" height="8" rx="1.5"/><path d="M6 13v3M10 13v4M14 13v3M18 13v4"/><path d="M4 6h16"/><path d="M7 3L4 6l3 3"/><path d="M17 3l3 3-3 3"/></svg>',
     stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
     textcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L7.5 6 12 18"/><path d="M4.7 14h5.6"/><circle cx="17.5" cy="15" r="3"/><path d="M20.5 12v6"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
@@ -4731,6 +4732,9 @@
         { name: "Wikidata", url: "https://www.wikidata.org/",
           by: "Wikidata editors, Wikimedia Foundation", lic: "CC0 (data)",
           en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
+        { name: "Frankfurter", url: "https://frankfurter.dev/",
+          by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
+          en: "Exchange rates (Unit Converter)", el: "Ισοτιμίες (Μετατροπέας μονάδων)" },
         { name: "Openverse", url: "https://openverse.org/",
           by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
           en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },
@@ -4885,6 +4889,7 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.pubdomain")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.museum")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.shelf")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.units")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.assistant")) + '</span></div>' +
         '<div class="sc-sec">' + escapeHtml(window.t("sc.info.shortcuts")) + '</div>' +
         rows +
