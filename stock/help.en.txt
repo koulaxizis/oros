@@ -76,6 +76,15 @@ What is on order shows next to low products and lowers their suggested quantity.
 ## Reports
 The `Reports` tab shows the stock value, sales, purchases and losses of a period (last 30 days, this month, this year or all), the value per category, the products that sold most and the ones that sold nothing for 90 days. `Open in Spreadsheet` sends the full table to a new sheet; `Report (CSV)` saves it as a file.
 
+## Closing a period
+A busy shop writes thousands of movements a year, and they take space on every device. Settings › `Close a period` archives everything up to a day you choose (for example 31 December):
+1. the full data as it was goes to a file in [Files](app:files), folder Stock/Archive (it travels with Vault Drive like any file);
+2. the movements up to that day are replaced by an `Opening balance` per product: quantities per warehouse, lots and average costs.
+
+Quantities, value and reorder stay exactly the same. The Movements tab and Reports then start after that day, and new movements can't be dated inside the closed period.
+
+If a device was offline and recorded a sale inside the period before it synced, that sale still counts when it arrives (within 90 days). `Reopen` in the same place brings the archived movements back from the file.
+
 ## Suppliers
 The `Suppliers` tab keeps names, contact person, phone, e-mail, VAT number and delivery time. `From Contacts` copies a person or company from [Contacts](app:contacts) into a new supplier.
 
@@ -100,3 +109,4 @@ Products, movements, suppliers, categories, units and settings sync between your
 - Lots are counted for the whole business, not per warehouse; the counter always sells the first lot to expire.
 - Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.
+- After closing a period, the Movements tab and Reports show only what came after it; the older history is in the archive file.

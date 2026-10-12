@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.34.00
+- Stock: close a period. Old movements go to an archive file in Files and are replaced by an opening balance; quantities, value and lots stay the same.
+
 ## Version 1.33.00
 - Stock: lots and expiry dates, an Expiring filter and report, and a reminder in Today a week before.
 
