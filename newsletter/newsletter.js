@@ -182,6 +182,9 @@
       "ch.rate": "Seconds between messages", "ch.cap": "Messages a day (at most)",
       "ch.capHint": "Keep it under your provider's daily limit: an ordinary mailbox often allows about 500 a day, a sending provider says it in your plan.",
       "ch.presetHint": "Starting values: check the server and your plan's limits in the provider's own guide.",
+      "ch.via": "Connection", "ch.viaSmtp": "SMTP", "ch.viaApi": "HTTP API",
+      "ch.viaHint": "With the API, up to 40 messages go in one call, and the provider's bounces, complaints and unsubscribes come back to your list.",
+      "ch.key": "API key", "ch.dom": "Mailgun sending domain", "ch.domHint": "The domain as it appears in Mailgun, for example mg.example.com.",
       "ch.test": "Test login", "ch.testOk": "Login works", "ch.delete": "Remove account",
       "ch.inUse": "Lists use this account: choose another account for them first.",
       "p.other": "Other", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (US)", "p.mailgun-eu": "Mailgun (EU)",
@@ -209,6 +212,7 @@
       "ck.noAddr": "The list has no postal address for the footer (Lists › Edit).", "ck.noFrom": "The list has no From address.",
       "ck.noChan": "The list's sending account is missing or has no password on this device.",
       "ck.noInbox": "No Inbox for this list: unsubscribe e-mails won't be read automatically.",
+      "ck.apiImg": "Brevo's API can't carry pictures inside a message: remove the pictures, or send this list through Brevo's SMTP.",
       "ck.bigImgs": "The pictures add up to more than 400 KB: every subscriber downloads them.",
       "ck.badBlock": "A button without text or link, or a picture block without a picture.",
       "ck.placeholder": "Something in braces isn't {first}, {name} or {first|…}.",
@@ -230,6 +234,7 @@
       "err.no": "the server refused the message ({m})", "err.rcpt": "the server refused the address", "err.connect": "couldn't reach the server",
       "err.tls": "secure connection failed", "err.proto": "the server answered unexpectedly", "err.closed": "the server closed the connection",
       "err.origin": "this page may not use the relay", "err.bad-request": "the relay refused the request",
+      "err.apikey": "the provider refused the API key: check it and its permissions", "err.nodom": "the Mailgun domain is missing",
       "set.title": "Settings", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup", "set.data": "Data",
       "set.about": "About", "set.aboutText": "Newsletter sends one e-mail per subscriber through the orOS mail relay, from your own account or a provider's SMTP, while orOS is open. Nothing is tracked: no open or click counting. Subscribe, confirm and unsubscribe requests are e-mails it reads from your Inbox.",
       "set.dev": "Sent from this device today: {n}",
@@ -367,6 +372,9 @@
       "ch.rate": "Δευτερόλεπτα ανάμεσα στα μηνύματα", "ch.cap": "Μηνύματα τη μέρα (το πολύ)",
       "ch.capHint": "Κράτα το κάτω από το ημερήσιο όριο του παρόχου σου: ένα απλό γραμματοκιβώτιο συχνά επιτρέπει περίπου 500 τη μέρα, ένας πάροχος αποστολής το γράφει στο πακέτο σου.",
       "ch.presetHint": "Αρχικές τιμές: έλεγξε τον διακομιστή και τα όρια του πακέτου σου στον οδηγό του παρόχου.",
+      "ch.via": "Σύνδεση", "ch.viaSmtp": "SMTP", "ch.viaApi": "HTTP API",
+      "ch.viaHint": "Με το API φεύγουν έως 40 μηνύματα σε μία κλήση και οι επιστροφές, οι καταγγελίες και οι διαγραφές του παρόχου γυρίζουν στη λίστα σου.",
+      "ch.key": "Κλειδί API", "ch.dom": "Domain αποστολής στο Mailgun", "ch.domHint": "Το domain όπως φαίνεται στο Mailgun, για παράδειγμα mg.example.com.",
       "ch.test": "Δοκιμή σύνδεσης", "ch.testOk": "Η σύνδεση δουλεύει", "ch.delete": "Αφαίρεση λογαριασμού",
       "ch.inUse": "Τον χρησιμοποιούν λίστες: διάλεξε πρώτα άλλον λογαριασμό για αυτές.",
       "p.other": "Άλλος", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (ΗΠΑ)", "p.mailgun-eu": "Mailgun (ΕΕ)",
@@ -394,6 +402,7 @@
       "ck.noAddr": "Η λίστα δεν έχει ταχυδρομική διεύθυνση για το κάτω μέρος (Λίστες › Επεξεργασία).", "ck.noFrom": "Η λίστα δεν έχει διεύθυνση αποστολέα.",
       "ck.noChan": "Ο λογαριασμός αποστολής της λίστας λείπει ή δεν έχει κωδικό σε αυτή τη συσκευή.",
       "ck.noInbox": "Η λίστα δεν έχει Εισερχόμενα: τα email διαγραφής δεν θα διαβάζονται αυτόματα.",
+      "ck.apiImg": "Το API του Brevo δεν μεταφέρει εικόνες μέσα στο μήνυμα: βγάλε τις εικόνες ή στείλε αυτή τη λίστα μέσω του SMTP του Brevo.",
       "ck.bigImgs": "Οι εικόνες ξεπερνούν τα 400 KB: τις κατεβάζει κάθε συνδρομητής.",
       "ck.badBlock": "Ένα κουμπί χωρίς κείμενο ή σύνδεσμο, ή block εικόνας χωρίς εικόνα.",
       "ck.placeholder": "Κάτι μέσα σε άγκιστρα δεν είναι {first}, {name} ή {first|…}.",
@@ -415,6 +424,7 @@
       "err.no": "ο διακομιστής δεν δέχτηκε το μήνυμα ({m})", "err.rcpt": "ο διακομιστής δεν δέχτηκε τη διεύθυνση", "err.connect": "δεν βρέθηκε ο διακομιστής",
       "err.tls": "απέτυχε η ασφαλής σύνδεση", "err.proto": "ο διακομιστής απάντησε απρόσμενα", "err.closed": "ο διακομιστής έκλεισε τη σύνδεση",
       "err.origin": "αυτή η σελίδα δεν επιτρέπεται να χρησιμοποιεί το relay", "err.bad-request": "το relay απέρριψε το αίτημα",
+      "err.apikey": "ο πάροχος απέρριψε το κλειδί API: έλεγξέ το και τα δικαιώματά του", "err.nodom": "λείπει το domain του Mailgun",
       "set.title": "Ρυθμίσεις", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.data": "Δεδομένα",
       "set.about": "Σχετικά", "set.aboutText": "Το Ενημερωτικό δελτίο στέλνει ένα email σε κάθε συνδρομητή μέσω του relay του orOS, από τον δικό σου λογαριασμό ή το SMTP ενός παρόχου, όσο το orOS είναι ανοιχτό. Δεν παρακολουθεί τίποτα: δεν μετρά ανοίγματα ή κλικ. Τα αιτήματα εγγραφής, επιβεβαίωσης και διαγραφής είναι email που διαβάζει από τα Εισερχόμενά σου.",
       "set.dev": "Στάλθηκαν από αυτή τη συσκευή σήμερα: {n}",
@@ -766,7 +776,7 @@
       b.type = "button";
       var txt = el("span", "row-txt");
       txt.appendChild(el("span", "row-no", chanName(ch)));
-      var note = el("span", "row-sub", [ch.kind === "mail" ? t("chans.mail") : (t("p." + ch.preset) + " · " + ch.host),
+      var note = el("span", "row-sub", [ch.kind === "mail" ? t("chans.mail") : (t("p." + ch.preset) + " · " + (C.isApi(ch) ? t("ch.viaApi") : ch.host)),
                                         t("chans.limit", { s: ch.rate, n: ch.cap })].join(" · "));
       txt.appendChild(note);
       b.appendChild(txt);
@@ -1610,6 +1620,16 @@
     var presets = Object.keys(C.PRESETS).filter(function (k) { return k !== "other"; }).concat(["other"]);
     f.preset = sel(presets.map(function (k) { return [k, t("p." + k)]; }), src.preset || "brevo");
     smtpBox.appendChild(field(t("ch.preset"), f.preset, t("ch.presetHint")));
+    // a provider's HTTP API instead of SMTP (phase 3C)
+    f.via = sel([["smtp", t("ch.viaSmtp")], ["api", t("ch.viaApi")]], src.via || "smtp");
+    var viaF = field(t("ch.via"), f.via, t("ch.viaHint"));
+    smtpBox.appendChild(viaF);
+    f.dom = inp("text", src.dom || "", 253);
+    f.dom.autocapitalize = "off";
+    f.dom.spellcheck = false;
+    f.dom.placeholder = "mg.example.com";
+    var domF = field(t("ch.dom"), f.dom, t("ch.domHint"));
+    smtpBox.appendChild(domF);
     var r1 = el("div", "fld-row");
     f.host = inp("text", src.host, 253);
     f.host.autocapitalize = "off";
@@ -1624,10 +1644,12 @@
     f.user.autocapitalize = "off";
     f.user.spellcheck = false;
     f.user.autocomplete = "off";
-    smtpBox.appendChild(field(t("ch.user"), f.user));
+    var userF = field(t("ch.user"), f.user);
+    smtpBox.appendChild(userF);
     f.pass = inp("password", "", 512);
     f.pass.autocomplete = "new-password";
     var passF = field(t("ch.pass"), f.pass, t("ch.passHint"));
+    var passLbl = passF.querySelector(".dlg-lbl");
     smtpBox.appendChild(passF);
     if (ch && ch.kind === "smtp") hasOwnPass(ch.id).then(function (ok) { if (ok) f.pass.placeholder = t("ch.passKeep"); });
     var all = mailAccounts();
@@ -1646,7 +1668,14 @@
     var sync = function () {
       mailBox.hidden = f.kind.value !== "mail";
       smtpBox.hidden = f.kind.value !== "smtp";
+      var canApi = !!C.API_PROVS[f.preset.value], api = canApi && f.via.value === "api";
+      viaF.hidden = !canApi;
+      domF.hidden = !api || !/^mailgun/.test(f.preset.value);
+      r1.hidden = api;
+      userF.hidden = api;
+      passLbl.textContent = api ? t("ch.key") : t("ch.pass");
     };
+    f.via.addEventListener("change", sync);
     f.kind.addEventListener("change", function () {
       sync();
       var d = f.kind.value === "mail" ? C.MAIL_DEFAULTS : C.PRESETS[f.preset.value];
@@ -1658,6 +1687,7 @@
       f.port.value = String(p.port);
       if (p.user) f.user.value = p.user;
       f.rate.value = p.rate; f.cap.value = p.cap;
+      sync();
     });
     sync();
     var collect = function () {
@@ -1665,10 +1695,17 @@
       var rec = C.normChan({
         id: ch ? ch.id : C.randomId("c", null), m: ch ? ch.m : 0, kind: kind, acct: f.acct ? f.acct.value : "",
         preset: f.preset.value, host: f.host.value, port: +f.port.value, user: f.user.value, inbox: f.inbox.value,
+        via: f.via.value, dom: f.dom.value,
         rate: Math.round(+f.rate.value), cap: Math.round(+f.cap.value), name: ""
       });
       if (kind === "mail" && !rec.acct) return null;
-      if (kind === "smtp") {
+      if (C.isApi(rec)) {
+        var needDom = /^mailgun/.test(rec.preset);
+        f.dom.classList.toggle("bad", needDom && !rec.dom);
+        if (needDom && !rec.dom) return null;
+        // the SMTP fields stay as they were (switching back keeps them)
+        if (!rec.host) rec.host = (C.PRESETS[rec.preset] || {}).host || "";
+      } else if (kind === "smtp") {
         f.host.classList.toggle("bad", !rec.host);
         f.user.classList.toggle("bad", !rec.user);
         if (!rec.host || !rec.user) return null;
@@ -1682,8 +1719,9 @@
     var left = [btn(t("ch.test"), "", function () {
       var rec = collect();
       if (!rec) return;
-      withPass(rec).then(function () { return sendCreds(rec); }).then(function (cr) {
-        return relay({ op: "smtpcheck", acct: cr.acct, smtp: cr.smtp });
+      withPass(rec).then(function () {
+        if (C.isApi(rec)) return E.apiCheck(rec);
+        return sendCreds(rec).then(function (cr) { return relay({ op: "smtpcheck", acct: cr.acct, smtp: cr.smtp }); });
       }).then(function () { showToast(t("ch.testOk")); }, function (e) { showToast(t("toast.chanFail", { e: errText(e) })); });
     })];
     if (ch) {
