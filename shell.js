@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.19.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.20.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4804,6 +4804,9 @@
         { name: "Frankfurter", url: "https://frankfurter.dev/",
           by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
           en: "Exchange rates (Unit Converter)", el: "Ισοτιμίες (Μετατροπέας μονάδων)" },
+        { name: "Wiktionary", url: "https://en.wiktionary.org/",
+          by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
+          en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
         { name: "Openverse", url: "https://openverse.org/",
           by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
           en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },

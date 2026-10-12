@@ -550,6 +550,7 @@
       "icon": "library",
       "url": "library/",
       "search": "search.js",
+      "today": ["core.js", "today.js"],
       "type": "internal"
     },
     {
