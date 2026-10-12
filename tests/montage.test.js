@@ -454,6 +454,61 @@ test("keyframes: normalized, even pace between keys, applied to picture and soun
   assert.ok(Math.abs(Lo.box.y - 0.16) < 1e-9 && Lo.box.x === 0.6);
 });
 
+test("reverse: frames run backwards from the out point, without sound; split keeps the order", () => {
+  let d = C.setItem(base(), "p1", "v1", { rv: true }, T0 + 10);
+  const at = (dd, t, id) => C.framePlan(proj(dd), t).find((L) => L.id === id);
+  assert.equal(proj(d).items.v1.rv, true);
+  assert.ok(Math.abs(at(d, 0, "v1").st - 12) < 0.01);
+  assert.ok(Math.abs(at(d, 4, "v1").st - 8) < 0.01);
+  assert.equal(C.soundPlan(proj(d)).some((s) => s.id === "v1"), false);
+  const ds = C.split(d, "p1", "v1", 4, T0 + 11, "v1b");
+  assert.equal(proj(ds).items.v1.in, 8); assert.equal(proj(ds).items.v1.out, 12);
+  assert.equal(proj(ds).items.v1b.in, 2); assert.equal(proj(ds).items.v1b.out, 8);
+  [1, 3, 5, 9].forEach((t) => assert.ok(Math.abs(at(ds, t, t < 4 ? "v1" : "v1b").st - at(d, t, "v1").st) < 1e-6, "st at " + t));
+  assert.equal("rv" in proj(C.setItem(d, "p1", "v1", { rv: false }, T0 + 12)).items.v1, false);
+  assert.equal("rv" in proj(C.setItem(base(), "p1", "i1", { rv: true }, T0 + 12)).items.i1, false);   // pictures do not reverse
+});
+
+test("colour looks: .cube parsing, the table picture, media list and relink", () => {
+  const cube = "# test\nTITLE \"x\"\nLUT_3D_SIZE 2\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1\n" +
+    "0 0 0\n1 0 0\n0 1 0\n1 1 0\n0 0 1\n1 0 1\n0 1 1\n1 1 1\n";
+  const lut = C.parseCube(cube);
+  assert.equal(lut.n, 2); assert.equal(lut.data.length, 24);
+  const px = C.lutPixels(lut);
+  assert.equal(px.w, 4); assert.equal(px.h, 2);
+  // blue slice 1, red 1, green 0 → x = 1·2 + 1 = 3, y = 0: white minus green = magenta
+  assert.deepEqual([...px.data.slice(12, 16)], [255, 0, 255, 255]);
+  assert.equal(C.parseCube("LUT_1D_SIZE 4\n0 0 0"), null);
+  assert.equal(C.parseCube("LUT_3D_SIZE 2\n0 0 0\n"), null);
+  assert.equal(C.parseCube("LUT_3D_SIZE 65\n"), null);
+  assert.equal(C.parseCube("<script>"), null);
+  const LUT = H("f") + ".png", LUT2 = H("9") + ".png";
+  let d = C.setItem(base(), "p1", "v1", { lut: LUT }, T0 + 10);
+  assert.equal(proj(d).items.v1.lut, LUT);
+  assert.equal(C.framePlan(proj(d), 1).find((L) => L.id === "v1").lut, LUT);
+  assert.ok(C.mediaOf(proj(d)).includes(LUT));
+  assert.equal(proj(C.setItem(d, "p1", "v1", { lut: "x.exe" }, T0 + 11)).items.v1.lut, undefined);
+  d = C.replaceSrc(d, "p1", LUT, LUT2, 0, T0 + 12);
+  assert.equal(proj(d).items.v1.lut, LUT2);
+});
+
+test("GIF writer: header, a palette per frame, loop, trailer", async () => {
+  const vm = require("vm"), fs = require("fs");
+  const ctx = { performance, setTimeout, Blob, Map, Uint8Array, Uint16Array, Uint32Array, Int16Array, Float32Array, Math };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "montage/export.js"), "utf8"), ctx);
+  const g = new ctx.MontageExport.GifWriter(8, 4, 8), px = new Uint8ClampedArray(8 * 4 * 4);
+  for (let i = 0; i < 32; i++) { px[i * 4] = i * 8; px[i * 4 + 3] = 255; }
+  g.frame(px); g.frame(px);
+  const b = new Uint8Array(await g.finish().arrayBuffer());
+  assert.equal(Buffer.from(b.slice(0, 6)).toString(), "GIF89a");
+  assert.equal(b[6] | (b[7] << 8), 8); assert.equal(b[8] | (b[9] << 8), 4);
+  assert.ok(Buffer.from(b).includes(Buffer.from("NETSCAPE2.0")));
+  assert.equal(b[b.length - 1], 0x3b);
+  assert.equal(C.exportName("Loop", "gif"), "Loop.gif");
+});
+
 test("app strings: English and Greek have the same keys; help pages share their outline", () => {
   const fs = require("fs");
   const src = fs.readFileSync(path.join(__dirname, "..", "montage/montage.js"), "utf8");

@@ -106,14 +106,18 @@
       Object.keys(near).forEach(function (k) {
         var n = near[k], it = n.it, e = element(it);
         var local = time - n.pl.start, inside = local >= 0 && local < n.pl.end - n.pl.start;
-        var want = Math.min(it.out, it["in"] + Math.max(0, local) * it.sp);
+        var want = C.srcTime(it, Math.max(0, local));
         e.el.playbackRate = it.sp;
         var g = gainOf[k] || 0;
         if (playing) audioOut(e);
         if (e.gain) { e.gain.gain.value = g; e.el.muted = false; e.el.volume = 1; }
         else { e.el.muted = g === 0; e.el.volume = Math.min(1, g); }
         if (!e.ready) return;
-        if (playing && inside) {
+        if (playing && inside && it.rv) {
+          // backwards: the element stays paused and is moved frame by frame
+          if (!e.el.paused) e.el.pause();
+          if (!e.seeking && Math.abs(e.el.currentTime - want) > 0.03) { e.seeking = true; e.el.currentTime = want; }
+        } else if (playing && inside) {
           if (Math.abs(e.el.currentTime - want) > DRIFT && !e.seeking) { e.seeking = true; e.el.currentTime = want; }
           if (e.el.paused) { var pr = e.el.play(); if (pr && pr["catch"]) pr["catch"](function () {}); }
         } else {
@@ -124,7 +128,7 @@
     }
 
     function source(L) {
-      if (L.k === "image") {
+      if (L.k === "image" || L.k === "lut") {
         var b = picture(L.src);
         return b ? { img: b, w: b.width, h: b.height } : null;
       }

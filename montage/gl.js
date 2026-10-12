@@ -15,7 +15,9 @@
 // Per layer: fit (contain) or fill (cover, cropped to its box),
 // rotation 0/90/180/270, mirror, opacity, brightness, contrast,
 // saturation, temperature, a filter, transitions (dx/dy shift, sc
-// zoom, iris circle, wipe clip, fade to black). Titles are drawn with the 2D canvas into a
+// zoom, iris circle, wipe clip, fade to black), a colour look from a
+// .cube table (layer lut: the table as an n²×n picture, asked from
+// source({ k: "lut" })). Titles are drawn with the 2D canvas into a
 // texture and cached until their text or size changes.
 // ============================================================
 (function (root) {
@@ -27,7 +29,7 @@
     " if(rot==1)q=vec2(q.y,1.0-q.x);else if(rot==2)q=vec2(1.0-q.x,1.0-q.y);else if(rot==3)q=vec2(1.0-q.y,q.x);\n" +
     " uv=q;vec2 d=r.xy+p*r.zw;gl_Position=vec4(d.x*2.0-1.0,1.0-d.y*2.0,0.0,1.0);}";
   var FS = "#version 300 es\nprecision highp float;\n" +
-    "uniform sampler2D t;uniform float a;uniform float bri;uniform vec4 lk;uniform mat3 fm;uniform vec3 fo;\n" +
+    "uniform sampler2D t;uniform sampler2D lt;uniform float ln;uniform float a;uniform float bri;uniform vec4 lk;uniform mat3 fm;uniform vec3 fo;\n" +
     "uniform vec4 clip;uniform vec2 res;uniform bool solid;uniform vec3 col;uniform float iris;in vec2 uv;out vec4 o;\n" +
     "void main(){vec2 f=vec2(gl_FragCoord.x/res.x,1.0-gl_FragCoord.y/res.y);\n" +
     " if(f.x<clip.x||f.x>clip.z||f.y<clip.y||f.y>clip.w)discard;\n" +
@@ -36,7 +38,11 @@
     " c.rgb+=lk.x;c.rgb=(c.rgb-0.5)*(1.0+lk.y)+0.5;\n" +
     " float l=dot(c.rgb,vec3(0.2126,0.7152,0.0722));c.rgb=mix(vec3(l),c.rgb,1.0+lk.z);\n" +
     " c.r+=lk.w*0.1;c.b-=lk.w*0.1;\n" +
-    " c.rgb=clamp(fm*c.rgb+fo,0.0,1.0)*bri;o=vec4(c.rgb,c.a*a);}";
+    " c.rgb=clamp(fm*c.rgb+fo,0.0,1.0);\n" +
+    " if(ln>1.0){vec3 q=clamp(c.rgb,0.0,1.0)*(ln-1.0);float b0=floor(q.b),b1=min(b0+1.0,ln-1.0);\n" +
+    "  vec2 rg=(q.rg+0.5)/vec2(ln*ln,ln);\n" +
+    "  c.rgb=mix(texture(lt,rg+vec2(b0/ln,0.0)).rgb,texture(lt,rg+vec2(b1/ln,0.0)).rgb,q.b-b0);}\n" +
+    " c.rgb*=bri;o=vec4(c.rgb,c.a*a);}";
 
   // Filters: colour matrix (rows) + offset
   var ID = [1, 0, 0, 0, 1, 0, 0, 0, 1], Z = [0, 0, 0];
@@ -143,7 +149,7 @@
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     var U = {};
-    ["r", "rot", "fl", "t", "a", "bri", "lk", "fm", "fo", "clip", "res", "solid", "col", "iris"].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+    ["r", "rot", "fl", "t", "lt", "ln", "a", "bri", "lk", "fm", "fo", "clip", "res", "solid", "col", "iris"].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
     var tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -151,6 +157,29 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.uniform1i(U.t, 0);
+    // colour look (.cube) table: texture unit 1, uploaded when it changes
+    var lutTex = gl.createTexture(), lutId = null;
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, lutTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(U.lt, 1);
+    gl.uniform1f(U.ln, 0);
+    function useLut(id, source) {
+      if (!id) { gl.uniform1f(U.ln, 0); return; }
+      var s = source({ k: "lut", id: "lut:" + id, src: id });
+      if (!s || !s.img || !(s.h >= 2) || s.w !== s.h * s.h) { gl.uniform1f(U.ln, 0); return; }
+      if (lutId !== id) {
+        gl.activeTexture(gl.TEXTURE1);
+        try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, s.img); lutId = id; }
+        catch (e) { lutId = null; }
+        gl.activeTexture(gl.TEXTURE0);
+      }
+      gl.uniform1f(U.ln, lutId === id ? s.h : 0);
+    }
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     var titles = {};                                  // layer id → { key, cv }
@@ -218,7 +247,9 @@
         }
         try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, s.img); }
         catch (e) { return; }                         // a frame that cannot be read yet
+        useLut(L.lut, source);
         quad(rect, L.rot, L.fl, L.alpha, L.bri, L.lk, L.flt, clip, null, iris);
+        gl.uniform1f(U.ln, 0);
       });
       Object.keys(titles).forEach(function (k) { if (!seen[k]) delete titles[k]; });
       gl.flush();
@@ -226,7 +257,7 @@
 
     function dispose() {
       titles = {};
-      try { gl.deleteTexture(tex); gl.deleteBuffer(buf); gl.deleteProgram(prog); } catch (e) {}
+      try { gl.deleteTexture(tex); gl.deleteTexture(lutTex); gl.deleteBuffer(buf); gl.deleteProgram(prog); } catch (e) {}
       var ext = gl.getExtension("WEBGL_lose_context");
       if (ext) ext.loseContext();
     }

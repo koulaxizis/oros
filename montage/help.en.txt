@@ -21,10 +21,11 @@ With a clip selected:
 - `Speed` plays it faster or slower. Speed also changes the pitch of the sound.
 - `Volume` (up to 200 %), `Fade` (`Fade in`, `Fade out`) and `Mute` for its sound. `Extract sound` puts the sound of a video on the `Music` row (or `Voice`, if `Music` is taken there) so you can move it on its own.
 - `Transition` into the clip: `Dissolve`, `Through black`, `Slide`, `Wipe`, `Push up`, `Zoom` or `Circle`, with a `Length`.
-- `Adjust`: `Brightness`, `Contrast`, `Saturation`, `Warmth` and a `Filter` such as `Mono`, `Sepia`, `Film`, `Vintage` or `Golden`.
+- `Adjust`: `Brightness`, `Contrast`, `Saturation`, `Warmth` and a `Filter` such as `Mono`, `Sepia`, `Film`, `Vintage` or `Golden`. `Open a .cube file` adds a `Colour look (.cube)`: a 3D LUT from a colour-grading app or a LUT pack, up to 64 points a side. It is kept like a picture (on this device, or synced with the project's media); `Remove the look` takes it off.
 - `Frame`: `Whole picture` or `Fill the frame`, `Rotate` and `Mirror`.
 - `To overlay` turns a clip into a picture in picture on top of the main video; `Position` sets `Left – right`, `Top – bottom`, `Size` and `Opacity`. `To main` puts it back.
 - `Freeze frame` (videos on the `Main` row) holds the picture at the playhead for 2 seconds: the clip splits there and a still of that frame, at the video's full size, goes in between. Change its `Duration` like any picture.
+- `Reverse` (videos) plays the clip backwards, without sound; `Forwards` turns it back.
 - `Duplicate` and `Delete` (with `Undo`).
 
 ## Keyframes
@@ -57,7 +58,9 @@ With nothing selected, `Grab frame` saves the picture at the playhead as a PNG i
 ## Export
 `Export` opens `Export video`. Pick a `Size` (720p, 1080p or 4K, as your device allows) and, if you like, `Also keep a copy in Files › Videos`. Montage makes an MP4 file when your browser can, otherwise a WebM file.
 
-Choose `Sound only` to get just the mixed sound of the project (music, voice, clip sound, with every volume, fade and ducking) as an M4A file, or Ogg or WAV where the browser cannot make M4A. `Also keep a copy in Files › Music` keeps it in orOS too. When it is ready you can `Play it` or `Save` it to your device. Keep the app open while it exports; `Cancel` stops it.
+Choose `Sound only` to get just the mixed sound of the project (music, voice, clip sound, with every volume, fade and ducking) as an M4A file, or Ogg or WAV where the browser cannot make M4A. `Also keep a copy in Files › Music` keeps it in orOS too.
+
+Choose `GIF` for a silent looping picture for chats and web pages: `Small (320 px)` or `Medium (480 px)` on the long side, 12 frames a second, up to 30 seconds. GIF files get big quickly, so keep it short. `Also keep a copy in Files › Pictures` keeps it in orOS too. When it is ready you can `Play it` or `Save` it to your device. Keep the app open while it exports; `Cancel` stops it.
 
 ## Sync and backup
 The edit itself (clips, cuts, texts, settings) travels with orOS sync to your other devices. The media files do not: by default your videos stay on the device you added them on, because big files are slow to upload.
