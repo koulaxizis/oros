@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — App logic (v1.3.0)
+// orOS CRM — App logic (v1.4.0)
 // A small customer book for a freelancer or a small business:
 //   - customers (company or person) with ΑΦΜ / ΔΟΥ / profession,
 //     status lead / active / past, tags, a star, notes
@@ -98,6 +98,13 @@
       "deal.inv": "Invoice this deal", "deal.quote": "Quote for this deal",
       "toast.noInv": "The Invoices app is not available.", "toast.noQuote": "The Quote app is not available.",
       "toast.quoteCur": "Quote works in EUR or USD. Change the currency in CRM settings, or create the quote in Quote.",
+      "set.import": "Import customers (CSV)",
+      "imp.title": "Import customers", "imp.new": "New customers: {n}", "imp.dup": "Already in CRM (skipped): {n}",
+      "imp.noName": "Rows without a name (skipped): {n}", "imp.over": "Over the limit of {max} customers (skipped): {n}",
+      "imp.tags": "New tags: {n}", "imp.more": "and {n} more", "imp.go": "Import {n}", "imp.none": "There is nothing new to import.",
+      "imp.bad": "No name column found. The first row must hold column names such as Name, Company or First name.",
+      "imp.done": "Imported {n} customers",
+      "mail.subj": "Subject: {s}", "mail.noCust": "No customer has {email}. Add one, then log the email.",
       "hist.none": "Nothing logged yet.", "deals.none": "No deals yet.", "fups.none": "No follow-ups.",
       "fups.done": "Done", "hist.add": "+ Log", "deals.add": "+ Deal", "fups.add": "+ Follow-up",
       "stage.new": "New", "stage.contact": "Contacted", "stage.proposal": "Proposal", "stage.nego": "Negotiation",
@@ -204,6 +211,13 @@
       "deal.inv": "Τιμολόγηση της ευκαιρίας", "deal.quote": "Προσφορά για την ευκαιρία",
       "toast.noInv": "Η εφαρμογή Τιμολόγια δεν είναι διαθέσιμη.", "toast.noQuote": "Η εφαρμογή Προσφορές δεν είναι διαθέσιμη.",
       "toast.quoteCur": "Οι Προσφορές δουλεύουν σε EUR ή USD. Άλλαξε το νόμισμα στις ρυθμίσεις του CRM ή φτιάξε την προσφορά στις Προσφορές.",
+      "set.import": "Εισαγωγή πελατών (CSV)",
+      "imp.title": "Εισαγωγή πελατών", "imp.new": "Νέοι πελάτες: {n}", "imp.dup": "Υπάρχουν ήδη (παραλείπονται): {n}",
+      "imp.noName": "Γραμμές χωρίς όνομα (παραλείπονται): {n}", "imp.over": "Πάνω από το όριο των {max} πελατών (παραλείπονται): {n}",
+      "imp.tags": "Νέες ετικέτες: {n}", "imp.more": "και άλλοι {n}", "imp.go": "Εισαγωγή {n}", "imp.none": "Δεν υπάρχει κάτι νέο για εισαγωγή.",
+      "imp.bad": "Δεν βρέθηκε στήλη ονόματος. Η πρώτη γραμμή πρέπει να έχει ονόματα στηλών, όπως Επωνυμία, Όνομα ή Name.",
+      "imp.done": "Εισήχθησαν {n} πελάτες",
+      "mail.subj": "Θέμα: {s}", "mail.noCust": "Κανένας πελάτης δεν έχει το {email}. Πρόσθεσέ τον και μετά κατέγραψε το email.",
       "hist.none": "Τίποτα καταγεγραμμένο ακόμη.", "deals.none": "Καμία ευκαιρία ακόμη.", "fups.none": "Κανένα follow-up.",
       "fups.done": "Ολοκληρωμένα", "hist.add": "+ Καταγραφή", "deals.add": "+ Ευκαιρία", "fups.add": "+ Follow-up",
       "stage.new": "Νέα", "stage.contact": "Επικοινωνία", "stage.proposal": "Πρόταση", "stage.nego": "Διαπραγμάτευση",
@@ -1573,9 +1587,9 @@
   }
 
   // ----- Customer -----
-  function custEditor(c) {
+  function custEditor(c, pre) {
     var dlg = makeDialog("crm-cust", true);
-    var x = c ? Object.assign({}, c) : { kind: "co", st: "lead" };
+    var x = c ? Object.assign({}, c) : Object.assign({ kind: "co", st: "lead" }, pre && pre.fill);
     dlg.appendChild(el("h2", "dlg-title", t(c ? "ed.custEdit" : "ed.custNew")));
     var name;
     var kind = seg([["co", t("kind.co")], ["person", t("kind.person")]], x.kind, function (v) {
@@ -1682,6 +1696,7 @@
       dlg.close();
       var saved = upsert("cust", row);
       if (saved && !c) { prefs.sel = saved.id; prefs.sub = "hist"; savePrefs(); if (prefs.tab !== "cust") setTab("cust"); else render(); }
+      if (saved && !c && pre && pre.then) pre.then(saved);
     }
     actions(dlg, save, c ? function () {
       confirmDialog(t("confirm.cust", { name: c.name }), t("ed.delete"), true, function () { dlg.close(); removeCustomer(c); });
@@ -1896,7 +1911,8 @@
   function logEditor(a, custId, pre) {
     if (!a && !custId && needCustomer()) return;
     var dlg = makeDialog("crm-log", true);
-    var x = a ? Object.assign({}, a) : { cust: custId || prefs.sel || "", k: "call", at: Date.now(), text: (pre && pre.text) || "", deal: (pre && pre.deal) || "" };
+    var x = a ? Object.assign({}, a) : { cust: custId || prefs.sel || "", k: (pre && pre.k) || "call", at: (pre && pre.at) || Date.now(),
+                                         text: (pre && pre.text) || "", deal: (pre && pre.deal) || "", who: (pre && pre.who) || "" };
     dlg.appendChild(el("h2", "dlg-title", t(a ? "ed.logEdit" : "ed.logNew")));
     var opts = custOptions();
     if (!C.byId(data.cust, x.cust)) x.cust = opts[0][0];
@@ -2053,6 +2069,7 @@
     list.style.marginTop = "16px";
     list.appendChild(button(t("set.stages"), "sheet-btn", stagesEditor));
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
+    list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
     list.appendChild(button(t("set.restore"), "sheet-btn", function () { dlg.close(); importJson(); }));
@@ -2312,6 +2329,77 @@
     }).catch(function () {});
   }
 
+  // CSV of customers from another program: preview, then one write
+  // (Undo removes them all again).
+  function importCsv() {
+    var dlg = dialogHost(), acc = ".csv,text/csv,.txt,text/plain";
+    var pick = dlg && typeof dlg.openFile === "function" ? dlg.openFile(acc) : localPick(acc);
+    Promise.resolve(pick).then(function (file) {
+      if (!file) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var r = C.csvImport(data, String(fr.result || ""), Date.now());
+        if (!r) { showToast(t("imp.bad")); return; }
+        importPreview(r);
+      };
+      fr.readAsText(file);
+    }).catch(function () {});
+  }
+  function importPreview(r) {
+    var dlg = makeDialog("crm-import", true);
+    dlg.appendChild(el("h2", "dlg-title", t("imp.title")));
+    var ul = el("ul", "imp-sum");
+    var line = function (key, n) { if (n) ul.appendChild(el("li", "", t(key, { n: n, max: C.LIMITS.cust }))); };
+    ul.appendChild(el("li", "", t("imp.new", { n: r.add.length })));
+    line("imp.dup", r.dup); line("imp.noName", r.noName); line("imp.over", r.over); line("imp.tags", r.tags.length);
+    dlg.appendChild(ul);
+    if (r.add.length) {
+      var names = r.add.slice(0, 8).map(function (c) { return c.name; }).join(", ");
+      if (r.add.length > 8) names += " " + t("imp.more", { n: r.add.length - 8 });
+      dlg.appendChild(el("p", "hint", names));
+    } else dlg.appendChild(el("p", "hint", t("imp.none")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    if (r.add.length) acts.appendChild(button(t("imp.go", { n: r.add.length }), "primary", function () {
+      dlg.close();
+      var ids = [];
+      r.tags.forEach(function (tg) { tg = Object.assign({}, tg, { m: stamp(null) }); data.tags.push(tg); ids.push(tg.id); });
+      r.add.forEach(function (c) { c = Object.assign({}, c, { m: stamp(null) }); data.cust.push(c); ids.push(c.id); });
+      if (!commit()) return;
+      undoToast(t("imp.done", { n: r.add.length }), function () {
+        ids.forEach(function (id) { tomb(id); });
+        commit();
+      });
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // BR-CRM-MAIL: an email from Mail becomes a prefilled "Email" log
+  // entry of the customer with that address (or one of its people).
+  // Unknown address: the New customer form, then the log entry.
+  function mailToLog(raw) {
+    var m = C.mailLog(raw);
+    if (!m) return false;
+    var text = [m.subject ? t("mail.subj", { s: m.subject }) : "", m.text].filter(Boolean).join("\n\n").slice(0, 2000);
+    var c = C.custByEmail(data, m.email, function (p) { return personView(p).email; });
+    var open = function (cust) {
+      var who = "";
+      (cust.people || []).forEach(function (p) {
+        var v = personView(p);
+        if (!who && String(v.email || "").toLowerCase() === m.email) who = v.name;
+      });
+      prefs.sel = cust.id; prefs.sub = "hist"; savePrefs();
+      setTab("cust");
+      logEditor(null, cust.id, { k: "mail", at: m.at || Date.now(), text: text, who: who });
+    };
+    if (c) { open(c); return true; }
+    setTab("cust");
+    showToast(t("mail.noCust", { email: m.email }));
+    custEditor(null, { fill: { name: m.name, email: m.email }, then: open });
+    return true;
+  }
+
   // ---------- 12. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -2430,6 +2518,7 @@
       doneFup(df);
       return true;
     }
+    if (x.log) return mailToLog(x.log);
     var c = id(x.cust) ? C.byId(data.cust, x.cust) : null;
     var d = id(x.deal) ? C.byId(data.deals, x.deal) : null;
     var f = id(x.fup) ? C.byId(data.fups, x.fup) : null;
@@ -2649,7 +2738,7 @@
     watchPalette();
     render();
     takeTarget();
-    console.log("[orOS CRM] v1.3.0 boot OK");
+    console.log("[orOS CRM] v1.4.0 boot OK");
   }
 
   boot();

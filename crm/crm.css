@@ -457,3 +457,4 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .doc-row .deal-val { margin-top: 0; flex: 0 0 auto; }
 .doc-tot { font-size: 13px; margin: 4px 0 8px; color: var(--text-dim); }
 .deal-docs { margin: 10px 0 0; }
+.imp-sum { margin: 4px 0 10px; padding-left: 20px; line-height: 1.6; }

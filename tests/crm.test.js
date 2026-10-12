@@ -488,3 +488,48 @@ test("Quote read-out (quote/core.js forClient, total): name or tax id, deleted l
   // same sum as quote.js calcTotals: line and global discount, then VAT
   assert.equal(Q.total({ gDisc: 10, items: [{ qty: 2, price: 100, disc: 50, vat: 24 }, { qty: 1, price: 10, vat: 0 }] }), 120.6);
 });
+
+test("CSV import: own export round trip, HubSpot / Excel headers, duplicates by ΑΦΜ or name, tags", () => {
+  const d = C.norm(data({ cust: [cust("cccccc01", { name: "Acme AE", afm: "099999999" })], tags: [{ id: "tttttt01", m: 1, name: "VIP" }] }));
+  // our own Greek export, read back into an empty CRM
+  const own = C.norm(data({ cust: [cust("cccccc02", { name: "Γάμμα ΟΕ", afm: "123456789", doy: "Α' Αθηνών", st: "past", kind: "person", note: "a\nb" })] }));
+  const csv = "﻿" + C.csvRows(own, "el").map(r => r.map(C.csvCell).join(";")).join("\r\n");
+  const back = C.csvImport(C.empty(), csv, NOW);
+  assert.equal(back.add.length, 1);
+  const g = back.add[0];
+  assert.equal(g.name, "Γάμμα ΟΕ"); assert.equal(g.afm, "123456789"); assert.equal(g.doy, "Α' Αθηνών");
+  assert.equal(g.st, "past"); assert.equal(g.kind, "person"); assert.equal(g.note, "a\nb");
+  // HubSpot contacts
+  const hs = "First Name,Last Name,Company Name,Email,Phone Number,Street Address,City,Postal Code,Country/Region,Lifecycle Stage,Tags\n" +
+    "Maria,Papa,Beta OE,m@b.gr,210,Odos 1,Athens,10558,Greece,lead,\"VIP, New\"\n" +
+    "John,Doe,,j@d.com,,,,,,customer,\n,,acme ae,,,,,,,,\n,,,,,,,,,,x\n,,Beta OE,,,,,,,,";
+  const r = C.csvImport(d, hs, NOW);
+  assert.deepEqual(r.add.map(c => c.name), ["Beta OE", "John Doe"]);
+  assert.equal(r.dup, 2);           // acme ae (existing), Beta OE (twice in the file)
+  assert.equal(r.noName, 1);
+  const b = r.add[0];
+  assert.equal(b.st, "lead"); assert.equal(b.addr, "Odos 1, 10558 Athens"); assert.deepEqual(b.people, [{ c: "", n: "Maria Papa", phone: "210", email: "m@b.gr" }]);
+  assert.equal(r.add[1].kind, "person"); assert.equal(r.add[1].st, "active");
+  assert.deepEqual(r.tags.map(x => x.name), ["New"]);
+  assert.ok(b.tags.includes("tttttt01") && b.tags.includes(r.tags[0].id));
+  // ΑΦΜ with EL prefix and spaces is a duplicate; ";" file; no name column → null
+  const r2 = C.csvImport(d, "Επωνυμία;ΑΦΜ\nΆλλο όνομα;EL 099 999 999\nΔέλτα;", NOW);
+  assert.deepEqual([r2.add.map(c => c.name), r2.dup], [["Δέλτα"], 1]);
+  assert.equal(C.csvImport(d, "Email;Phone\na@b.gr;1", NOW), null);
+  // the result merges like any other edit
+  const merged = C.norm(Object.assign({}, d, { cust: d.cust.concat(r.add), tags: d.tags.concat(r.tags) }));
+  assert.equal(merged.cust.length, 3);
+});
+
+test("Mail → CRM (BR-CRM-MAIL): payload cleaned, customer found by its email or a person's", () => {
+  assert.equal(C.mailLog({ email: "not an email" }), null);
+  assert.equal(C.mailLog(null), null);
+  const m = C.mailLog({ email: " Maria@Beta.GR ", name: "Maria\u0000", subject: "Offer", text: "Hi\r\nthere", at: 5, x: 1 });
+  assert.deepEqual(m, { email: "maria@beta.gr", name: "Maria", subject: "Offer", text: "Hi\nthere", at: 5 });
+  const d = C.norm(data({ cust: [cust("cccccc01", { email: "info@acme.gr" }),
+    cust("cccccc02", { people: [{ c: "", n: "Maria", email: "maria@beta.gr" }, { c: "ct1", n: "Linked" }] })] }));
+  assert.equal(C.custByEmail(d, "INFO@acme.gr").id, "cccccc01");
+  assert.equal(C.custByEmail(d, "maria@beta.gr").id, "cccccc02");
+  assert.equal(C.custByEmail(d, "nobody@x.gr"), null);
+  assert.equal(C.custByEmail(d, "l@contacts.gr", (p) => (p.c === "ct1" ? "l@contacts.gr" : p.email)).id, "cccccc02");
+});
