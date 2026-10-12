@@ -664,7 +664,8 @@
     copy.name = t("doc.copy", { name: docTitle(d) }).slice(0, 120);
     copy.m = nw;
     // fresh stamps so the copy is not older than anything it holds
-    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (e.h) e.h = []; }); });
+    // (a story's h is its stamp history; an item's h is its height)
+    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (c === "stories") e.h = []; }); });
     copy.tombs = {};
     data.docs.push(M.normDoc(copy));
     data = M.normData(data);
