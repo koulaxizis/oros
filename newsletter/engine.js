@@ -40,7 +40,7 @@
   var CALL_TIMEOUT = 45000, SEND_TIMEOUT = 120000;
   var INBOX_EVERY = 10 * 60 * 1000;
   var IDLE_EVERY = 5 * 60 * 1000;
-  var LOCK_SEND = "oros-newsletter-send", LOCK_INBOX = "oros-newsletter-inbox";
+  var LOCK_SEND = "oros-newsletter-send", LOCK_INBOX = "oros-newsletter-inbox", LOCK_RSS = "oros-newsletter-rss";
 
   function stamp(prev) { return Math.max(Date.now(), (prev || 0) + 1); }
   function copy(x) { return JSON.parse(JSON.stringify(x)); }
@@ -507,6 +507,80 @@
     return inboxBusy;
   }
 
+  // ---------- RSS to e-mail ----------
+  // A feed's articles → a new issue on its list: a draft, or (mode
+  // "send") an issue that starts sending when the pre-send check finds
+  // nothing to fix (else a draft). `force`: the button "Make one now"
+  // (uses the newest articles even when none is new; always a draft).
+  // → { rss, issue, sending } or null when there is nothing new.
+  function issueFromFeed(rssId, items, force) {
+    var out = null, now = Date.now(), dev = devState().dev;
+    change(function (d) {
+      var r = C.live(d.rss).filter(function (x) { return x.id === rssId; })[0];
+      var l = r ? C.list(d, r.list) : null;
+      if (!r || !l) return false;
+      var picks = C.rssPick(r, items);
+      if (!picks.length && force) picks = C.rssPick({ last: 0, max: r.max }, items);
+      if (!picks.length) return false;
+      var x = C.digestIssue(r, l, picks, C.randomId("i", null));
+      var sending = false;
+      if (r.mode === "send" && !force) {
+        var res = C.preflight(d, x, { chan: C.chan(d, l.chan), aud: C.audience(d, x).length });
+        if (!res.some(function (f) { return f.lvl === "err"; })) {
+          x.st = "sending"; x.start = now; x.lock = { dev: dev, at: now };
+          sending = true;
+        }
+      }
+      put(d, "issues", x);
+      var y = copy(r);
+      picks.forEach(function (it) { if ((it.date || 0) > y.last) y.last = it.date || 0; });
+      if (!y.last) y.last = now;
+      put(d, "rss", y);
+      out = { rss: y, issue: x, sending: sending };
+    });
+    return out;
+  }
+  var RETRY_FEED = { offline: 1, network: 1, timeout: 1, relay: 1, nofeeds: 1 };
+  // Every feed due on this device: marked as run first (so a second
+  // window or a crash never runs it twice), then fetched one by one.
+  // fetchItems(url) → Promise<[Reader item]>. → Promise<[result]>
+  function runFeeds(fetchItems) {
+    var run = function () {
+      var now = Date.now(), dev = devState().dev, due = C.rssDue(read(), now, dev);
+      if (!due.length) return Promise.resolve([]);
+      change(function (d) {
+        due.forEach(function (r) {
+          var c = C.live(d.rss).filter(function (x) { return x.id === r.id; })[0];
+          if (!c) return;
+          var y = copy(c); y.ran = now; if (!y.dev) y.dev = dev;
+          put(d, "rss", y);
+        });
+      });
+      var done = [];
+      return due.reduce(function (p, r) {
+        return p.then(function () { return fetchItems(r.url); }).then(function (items) {
+          var res = issueFromFeed(r.id, items, false);
+          if (res) done.push(res);
+        }, function (e) {
+          // no network (or the feed code didn't load): try again on the
+          // next round instead of skipping this slot
+          if (!RETRY_FEED[e && e.code]) return;
+          change(function (d) {
+            var c = C.live(d.rss).filter(function (x) { return x.id === r.id; })[0];
+            if (!c || c.ran !== now) return false;
+            var y = copy(c); y.ran = r.ran;
+            put(d, "rss", y);
+          });
+        });
+      }, Promise.resolve()).then(function () { return done; });
+    };
+    if (root.navigator && navigator.locks && typeof navigator.locks.request === "function") {
+      return navigator.locks.request(LOCK_RSS, { ifAvailable: true }, function (lock) { return lock ? run() : []; })
+        .then(function (r) { return r || []; }, function () { return []; });
+    }
+    return run();
+  }
+
   // ---------- the engine ----------
   // env: { fs() → orosFS|null, dirty(), onState(state), onChange(),
   //        notify(kind, info) }   kind: "done" {issue} | "paused" {issue, err}
@@ -735,7 +809,7 @@
     mailAccounts: mailAccounts, mailAccount: mailAccount, inboxAccount: inboxAccount,
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
     images: imgData, loadImages: loadImages, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
-    pause: pause, resume: resume, finish: finish,
+    pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create
   };

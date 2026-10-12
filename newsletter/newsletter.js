@@ -127,6 +127,27 @@
       "bk.alt": "Description (for people who can't see it)", "bk.pick": "Choose picture", "bk.noImg": "No picture yet",
       "bk.imgMissing": "This picture isn't on this device yet (it syncs with the orOS disk).",
       "bk.up": "Move up", "bk.down": "Move down", "bk.remove": "Remove",
+      "lists.rss": "RSS to e-mail",
+      "rss.title": "RSS to e-mail", "rss.none": "No feeds yet. Pick one of your Reader feeds or any feed address, and orOS makes an issue from its new articles on the day you choose.",
+      "rss.add": "Add a feed", "rss.edit": "RSS to e-mail", "rss.src": "Feed", "rss.other": "Another address…",
+      "rss.noReader": "You have no feeds in Reader: type the feed address.", "rss.url": "Feed address", "rss.name": "Name (used in the subject)",
+      "rss.every": "How often", "rss.day": "Every day", "rss.week": "Every week", "rss.month": "Every month (on the 1st)",
+      "rss.wd": "Day", "rss.hour": "Time", "rss.mode": "What to do", "rss.draft": "Make a draft for me to check", "rss.send": "Send it by itself",
+      "rss.sendHint": "It sends only if the check before sending finds no errors; otherwise it leaves a draft and tells you.",
+      "rss.draftShort": "draft", "rss.sendShort": "sends", "rss.aud": "Send to", "rss.max": "Most articles per issue", "rss.on": "On",
+      "rss.hint": "Only articles newer than the last issue go in. It runs on this device while orOS is open; if orOS is closed it runs the next time it opens.",
+      "rss.now": "Make one now", "rss.reading": "Reading the feed…", "rss.nothing": "The feed has no articles",
+      "rss.made": "Draft made from the feed", "rss.fail": "Couldn't read the feed ({e})", "rss.full": "You have the most feeds allowed",
+      "rss.badUrl": "Type a feed address that starts with https://", "rss.next": "next {t}", "rss.off": "off", "rss.otherDev": "runs on another device",
+      "wd.0": "Sunday", "wd.1": "Monday", "wd.2": "Tuesday", "wd.3": "Wednesday", "wd.4": "Thursday", "wd.5": "Friday", "wd.6": "Saturday",
+      "set.archive": "Past issues", "set.archiveText": "Bring in the issues you sent with Buttondown, MailerLite or another service: a .zip export, or Markdown, HTML, CSV or JSON files. Pictures stay at their web address.",
+      "set.archiveBtn": "Import past issues…",
+      "arc.title": "Import past issues", "arc.none": "No issues found in this file.", "arc.found": "Found {n} issues.", "arc.list": "Into list",
+      "arc.mode": "Import as", "arc.modeHint": "Past issues show among the issues as already sent, ready to save as a web page or copy; nobody gets an e-mail.",
+      "arc.archive": "Past issues (already sent)", "arc.drafts": "Drafts", "arc.do": "Import {n}", "arc.done": "Imported {n} issues",
+      "arc.full": "Imported {n} issues: there is no room for more", "arc.bad": "This file can't be read",
+      "iss.imported": "imported", "vw.imported": "Imported from another service; sent {t}.",
+      "err.nofeed": "it isn't a feed", "err.nofeeds": "the feed reader isn't loaded",
       "vw.started": "Started {t}", "vw.done": "Finished {t}", "vw.sent": "Sent", "vw.failed": "Failed", "vw.left": "Left",
       "vw.unsubs": "Unsubscribed since", "vw.pause": "Pause", "vw.resume": "Resume", "vw.stop": "Stop for good",
       "vw.web": "Save as web page", "vw.other": "Being sent from another device.", "vw.take": "Send from here",
@@ -200,7 +221,7 @@
       "err.tls": "secure connection failed", "err.proto": "the server answered unexpectedly", "err.closed": "the server closed the connection",
       "err.origin": "this page may not use the relay", "err.bad-request": "the relay refused the request",
       "set.title": "Settings", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup", "set.data": "Data",
-      "set.about": "About", "set.aboutText": "Newsletter sends one e-mail per subscriber through the orOS mail relay, from your own account or a provider's SMTP, while it is open. Nothing is tracked: no open or click counting. Subscribe, confirm and unsubscribe requests are e-mails it reads from your Inbox.",
+      "set.about": "About", "set.aboutText": "Newsletter sends one e-mail per subscriber through the orOS mail relay, from your own account or a provider's SMTP, while orOS is open. Nothing is tracked: no open or click counting. Subscribe, confirm and unsubscribe requests are e-mails it reads from your Inbox.",
       "set.dev": "Sent from this device today: {n}",
       "dom.title": "Domain check: {d}", "dom.spf": "SPF", "dom.dkim": "DKIM", "dom.dmarc": "DMARC",
       "dom.spfOk": "Found: {v}", "dom.spfNo": "Not found: ask your e-mail provider for the SPF record of your domain.",
@@ -281,6 +302,27 @@
       "bk.alt": "Περιγραφή (για όσους δεν τη βλέπουν)", "bk.pick": "Επιλογή εικόνας", "bk.noImg": "Δεν έχει μπει εικόνα",
       "bk.imgMissing": "Αυτή η εικόνα δεν υπάρχει ακόμα σε αυτή τη συσκευή (συγχρονίζεται με τον δίσκο του orOS).",
       "bk.up": "Μετακίνηση πάνω", "bk.down": "Μετακίνηση κάτω", "bk.remove": "Αφαίρεση",
+      "lists.rss": "RSS σε email",
+      "rss.title": "RSS σε email", "rss.none": "Δεν υπάρχουν ροές ακόμα. Διάλεξε μια ροή από τον Αναγνώστη ή οποιαδήποτε διεύθυνση ροής, και το orOS φτιάχνει τεύχος από τα νέα άρθρα της τη μέρα που θέλεις.",
+      "rss.add": "Προσθήκη ροής", "rss.edit": "RSS σε email", "rss.src": "Ροή", "rss.other": "Άλλη διεύθυνση…",
+      "rss.noReader": "Δεν έχεις ροές στον Αναγνώστη: γράψε τη διεύθυνση της ροής.", "rss.url": "Διεύθυνση ροής", "rss.name": "Όνομα (μπαίνει στο θέμα)",
+      "rss.every": "Κάθε πότε", "rss.day": "Κάθε μέρα", "rss.week": "Κάθε εβδομάδα", "rss.month": "Κάθε μήνα (την 1η)",
+      "rss.wd": "Μέρα", "rss.hour": "Ώρα", "rss.mode": "Τι να γίνει", "rss.draft": "Πρόχειρο για να το ελέγξω", "rss.send": "Να σταλεί μόνο του",
+      "rss.sendHint": "Στέλνεται μόνο αν ο έλεγχος πριν την αποστολή δεν βρει σφάλματα· αλλιώς μένει πρόχειρο και σε ειδοποιεί.",
+      "rss.draftShort": "πρόχειρο", "rss.sendShort": "στέλνεται", "rss.aud": "Αποστολή σε", "rss.max": "Το πολύ άρθρα ανά τεύχος", "rss.on": "Ενεργό",
+      "rss.hint": "Μπαίνουν μόνο άρθρα νεότερα από το προηγούμενο τεύχος. Τρέχει σε αυτή τη συσκευή όσο το orOS είναι ανοιχτό· αν είναι κλειστό, τρέχει την επόμενη φορά που θα ανοίξει.",
+      "rss.now": "Φτιάξε ένα τώρα", "rss.reading": "Διαβάζω τη ροή…", "rss.nothing": "Η ροή δεν έχει άρθρα",
+      "rss.made": "Έγινε πρόχειρο από τη ροή", "rss.fail": "Δεν διαβάστηκε η ροή ({e})", "rss.full": "Έχεις τις περισσότερες ροές που επιτρέπονται",
+      "rss.badUrl": "Γράψε διεύθυνση ροής που αρχίζει με https://", "rss.next": "επόμενο {t}", "rss.off": "ανενεργό", "rss.otherDev": "τρέχει σε άλλη συσκευή",
+      "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη", "wd.4": "Πέμπτη", "wd.5": "Παρασκευή", "wd.6": "Σάββατο",
+      "set.archive": "Παλιά τεύχη", "set.archiveText": "Φέρε τα τεύχη που έστειλες με το Buttondown, το MailerLite ή άλλη υπηρεσία: ένα .zip εξαγωγής ή αρχεία Markdown, HTML, CSV ή JSON. Οι εικόνες μένουν στη διεύθυνσή τους στο διαδίκτυο.",
+      "set.archiveBtn": "Εισαγωγή παλιών τευχών…",
+      "arc.title": "Εισαγωγή παλιών τευχών", "arc.none": "Δεν βρέθηκαν τεύχη σε αυτό το αρχείο.", "arc.found": "Βρέθηκαν {n} τεύχη.", "arc.list": "Στη λίστα",
+      "arc.mode": "Εισαγωγή ως", "arc.modeHint": "Τα παλιά τεύχη φαίνονται στα τεύχη ως ήδη σταλμένα, έτοιμα για αποθήκευση ως ιστοσελίδα ή αντιγραφή· δεν στέλνεται κανένα email.",
+      "arc.archive": "Παλιά τεύχη (ήδη σταλμένα)", "arc.drafts": "Πρόχειρα", "arc.do": "Εισαγωγή {n}", "arc.done": "Εισήχθησαν {n} τεύχη",
+      "arc.full": "Εισήχθησαν {n} τεύχη: δεν χωράνε άλλα", "arc.bad": "Αυτό το αρχείο δεν διαβάζεται",
+      "iss.imported": "εισαγωγή", "vw.imported": "Εισαγωγή από άλλη υπηρεσία· στάλθηκε {t}.",
+      "err.nofeed": "δεν είναι ροή", "err.nofeeds": "ο αναγνώστης ροών δεν φορτώθηκε",
       "vw.started": "Ξεκίνησε {t}", "vw.done": "Ολοκληρώθηκε {t}", "vw.sent": "Στάλθηκαν", "vw.failed": "Απέτυχαν", "vw.left": "Απομένουν",
       "vw.unsubs": "Διαγραφές από τότε", "vw.pause": "Παύση", "vw.resume": "Συνέχεια", "vw.stop": "Οριστική διακοπή",
       "vw.web": "Αποθήκευση ως ιστοσελίδα", "vw.other": "Στέλνεται από άλλη συσκευή.", "vw.take": "Αποστολή από εδώ",
@@ -354,7 +396,7 @@
       "err.tls": "απέτυχε η ασφαλής σύνδεση", "err.proto": "ο διακομιστής απάντησε απρόσμενα", "err.closed": "ο διακομιστής έκλεισε τη σύνδεση",
       "err.origin": "αυτή η σελίδα δεν επιτρέπεται να χρησιμοποιεί το relay", "err.bad-request": "το relay απέρριψε το αίτημα",
       "set.title": "Ρυθμίσεις", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο", "set.data": "Δεδομένα",
-      "set.about": "Σχετικά", "set.aboutText": "Το Ενημερωτικό δελτίο στέλνει ένα email σε κάθε συνδρομητή μέσω του relay του orOS, από τον δικό σου λογαριασμό ή το SMTP ενός παρόχου, όσο είναι ανοιχτό. Δεν παρακολουθεί τίποτα: δεν μετρά ανοίγματα ή κλικ. Τα αιτήματα εγγραφής, επιβεβαίωσης και διαγραφής είναι email που διαβάζει από τα Εισερχόμενά σου.",
+      "set.about": "Σχετικά", "set.aboutText": "Το Ενημερωτικό δελτίο στέλνει ένα email σε κάθε συνδρομητή μέσω του relay του orOS, από τον δικό σου λογαριασμό ή το SMTP ενός παρόχου, όσο το orOS είναι ανοιχτό. Δεν παρακολουθεί τίποτα: δεν μετρά ανοίγματα ή κλικ. Τα αιτήματα εγγραφής, επιβεβαίωσης και διαγραφής είναι email που διαβάζει από τα Εισερχόμενά σου.",
       "set.dev": "Στάλθηκαν από αυτή τη συσκευή σήμερα: {n}",
       "dom.title": "Έλεγχος domain: {d}", "dom.spf": "SPF", "dom.dkim": "DKIM", "dom.dmarc": "DMARC",
       "dom.spfOk": "Βρέθηκε: {v}", "dom.spfNo": "Δεν βρέθηκε: ζήτα από τον πάροχο email σου την εγγραφή SPF του domain σου.",
@@ -564,7 +606,8 @@
       top.appendChild(el("span", "row-no", shownSubj(x)));
       txt.appendChild(top);
       var p = C.progress(data, x);
-      var sub = x.st === "sent" ? [when(x.done), p.sent === 1 ? t("iss.sentTo1") : t("iss.sentTo", { n: p.sent })]
+      var sub = x.imp ? [when(x.done), t("iss.imported")]
+              : x.st === "sent" ? [when(x.done), p.sent === 1 ? t("iss.sentTo1") : t("iss.sentTo", { n: p.sent })]
               : x.st === "draft" ? [when(x.m)] : x.st === "sched" ? [t("iss.sched", { t: when(x.when) })]
               : [t("iss.prog", { a: p.sent, b: p.total })];
       if (p.failed) sub.push(t("iss.failed", { n: p.failed }));
@@ -684,6 +727,7 @@
       var acts = el("div", "acts");
       acts.appendChild(mini(t("lists.edit"), function () { listDialog(l.id); }));
       acts.appendChild(mini(t("lists.subLink"), function () { linkDialog(l.id); }));
+      acts.appendChild(mini(t("lists.rss") + (rssOf(l.id).length ? " (" + rssOf(l.id).length + ")" : ""), function () { rssListDialog(l.id); }));
       if (l.from) acts.appendChild(mini(t("lists.check"), function () { domainDialog(l.from); }));
       card.appendChild(acts);
       box.appendChild(card);
@@ -1198,6 +1242,15 @@
     var body = $("vw-body");
     body.innerHTML = "";
     if (x.st === "sched") { renderScheduled(x, body); return; }
+    if (x.imp) {
+      body.appendChild(el("div", "banner info", t("vw.imported", { t: when(x.done) })));
+      var ia = el("div", "acts");
+      ia.appendChild(btn(t("ed.preview"), "", function () { previewDialog(x); }));
+      ia.appendChild(btn(t("vw.web"), "", function () { saveWebPage(x); }));
+      ia.appendChild(btn(t("ed.dup"), "", function () { duplicateIssue(x); }));
+      body.appendChild(ia);
+      return;
+    }
     var p = C.progress(data, x);
     var tiles = el("div", "tiles");
     var tile = function (lbl, v, cls) {
@@ -1283,7 +1336,7 @@
   function duplicateIssue(x) {
     var y = copy(x);
     y.id = C.randomId("i", null);
-    y.m = 0; y.st = "draft"; y.when = 0; y.lock = null; y.start = 0; y.done = 0; y.n = 0; y.err = ""; y.fail = {};
+    y.m = 0; y.st = "draft"; y.when = 0; y.imp = 0; y.lock = null; y.start = 0; y.done = 0; y.n = 0; y.err = ""; y.fail = {};
     put("issues", C.normIssue(y));
     viewId = y.id;
     showView("edit");
@@ -2307,6 +2360,241 @@
     });
   }
 
+  // ---------- 15b. RSS to e-mail ----------
+  // A feed (usually one of the Reader's) becomes an issue on a schedule:
+  // the shell checks it while orOS is open on the device that set it up.
+  function readerFeeds() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-feeds-data") || "null");
+      var tombs = d && d.tombs || {};
+      return (d && Array.isArray(d.feeds) ? d.feeds : []).filter(function (f) {
+        return f && typeof f.url === "string" && /^https?:\/\//.test(f.url) && !(tombs[f.id] >= f.m);
+      }).map(function (f) { return { url: f.url, title: C.oneLine(f.title || f.url, 120) }; })
+        .sort(function (a, b) { return C.fold(a.title) < C.fold(b.title) ? -1 : 1; });
+    } catch (e) { return []; }
+  }
+  function rssOf(listId) { return C.live(data.rss).filter(function (r) { return r.list === listId; }); }
+  var WDS = [1, 2, 3, 4, 5, 6, 0];
+  function rssWhen(r) {
+    var parts = [r.every === "day" ? t("rss.day") : r.every === "month" ? t("rss.month") : t("rss.week") + " · " + t("wd." + r.wd),
+                 ("0" + r.hour).slice(-2) + ":00", r.mode === "send" ? t("rss.sendShort") : t("rss.draftShort")];
+    if (!r.on) parts.push(t("rss.off"));
+    else if (r.dev && r.dev !== E.devState().dev) parts.push(t("rss.otherDev"));
+    else parts.push(t("rss.next", { t: when(C.rssNext(r, r.ran || r.m)) }));
+    return parts.join(" · ");
+  }
+  function rssListDialog(listId) {
+    var dlg = makeDialog("nl-rss-list", t("rss.title"), true);
+    var all = rssOf(listId);
+    dlg.appendChild(el("p", "hint", all.length ? t("rss.hint") : t("rss.none")));
+    var ul = el("ul", "plain tpl-list");
+    all.forEach(function (r) {
+      var li = el("li", "tpl-row");
+      var b = el("button", "row");
+      b.type = "button";
+      var tx = el("span", "row-txt");
+      tx.appendChild(el("span", "row-no", r.name || r.url.replace(/^https?:\/\//, "")));
+      tx.appendChild(el("span", "row-sub", rssWhen(r)));
+      b.appendChild(tx);
+      b.addEventListener("click", function () { dlg.close(); rssDialog(listId, r); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    actionsRow(dlg, [], t("rss.add"), function () {
+      if (C.live(data.rss).length >= C.LIM.rss) { showToast(t("rss.full")); return; }
+      dlg.close();
+      rssDialog(listId, null);
+    });
+    openDialog(dlg);
+  }
+  function rssDialog(listId, r0) {
+    var now = Date.now();
+    var src = r0 ? copy(r0) : { id: C.randomId("r", null), m: 0, list: listId, url: "", name: "", every: "week", wd: 1, hour: 9,
+                                mode: "draft", max: 10, seg: "", last: 0, ran: now, dev: E.devState().dev, on: 1 };
+    var dlg = makeDialog("nl-rss", t("rss.edit"), true);
+    var feeds = readerFeeds();
+    var f = {};
+    var opts = feeds.map(function (x) { return [x.url, x.title]; });
+    var known = feeds.some(function (x) { return x.url === src.url; });
+    opts.push(["", t("rss.other")]);
+    f.src = sel(opts, known ? src.url : (feeds.length && !src.url ? feeds[0].url : ""));
+    dlg.appendChild(field(t("rss.src"), f.src, feeds.length ? "" : t("rss.noReader")));
+    f.url = inp("url", known ? "" : src.url, 2000);
+    f.url.placeholder = "https://…";
+    var urlF = field(t("rss.url"), f.url);
+    dlg.appendChild(urlF);
+    f.name = inp("text", src.name, C.LIM.name);
+    dlg.appendChild(field(t("rss.name"), f.name));
+    f.every = sel([["day", t("rss.day")], ["week", t("rss.week")], ["month", t("rss.month")]], src.every);
+    dlg.appendChild(field(t("rss.every"), f.every));
+    f.wd = sel(WDS.map(function (d) { return [String(d), t("wd." + d)]; }), String(src.wd));
+    var wdF = field(t("rss.wd"), f.wd);
+    dlg.appendChild(wdF);
+    var hours = [];
+    for (var h = 0; h < 24; h++) hours.push([String(h), ("0" + h).slice(-2) + ":00"]);
+    f.hour = sel(hours, String(src.hour));
+    dlg.appendChild(field(t("rss.hour"), f.hour));
+    f.mode = sel([["draft", t("rss.draft")], ["send", t("rss.send")]], src.mode);
+    var modeHint = el("p", "hint", "");
+    var modeF = field(t("rss.mode"), f.mode);
+    modeF.appendChild(modeHint);
+    dlg.appendChild(modeF);
+    f.seg = sel([["", t("aud.all")]].concat(C.segsOf(data, listId).map(function (g) { return [g.id, t("aud.seg", { n: g.name || t("seg.unnamed") })]; })), src.seg);
+    dlg.appendChild(field(t("rss.aud"), f.seg));
+    f.max = inp("number", src.max, 2);
+    f.max.min = 1; f.max.max = 20;
+    dlg.appendChild(field(t("rss.max"), f.max));
+    var onL = el("label", "check");
+    f.on = el("input");
+    f.on.type = "checkbox";
+    f.on.checked = !!src.on;
+    onL.appendChild(f.on);
+    onL.appendChild(el("span", "", t("rss.on")));
+    dlg.appendChild(onL);
+    dlg.appendChild(el("p", "hint", t("rss.hint")));
+    function sync() {
+      urlF.hidden = !!f.src.value;
+      wdF.hidden = f.every.value !== "week";
+      modeHint.textContent = f.mode.value === "send" ? t("rss.sendHint") : "";
+    }
+    [f.src, f.every, f.mode].forEach(function (s) { s.addEventListener("change", sync); });
+    sync();
+    function collect() {
+      var url = f.src.value || f.url.value.trim();
+      if (url && !/^[a-z]+:/i.test(url)) url = "https://" + url;
+      var rec = copy(src);
+      rec.url = url;
+      rec.name = f.name.value || (f.src.value ? f.src.options[f.src.selectedIndex].textContent : "");
+      rec.every = f.every.value; rec.wd = +f.wd.value; rec.hour = +f.hour.value;
+      rec.mode = f.mode.value; rec.seg = f.seg.value; rec.max = +f.max.value || 10; rec.on = f.on.checked ? 1 : 0;
+      if (!rec.dev) rec.dev = E.devState().dev;
+      var n = C.normRss(rec);
+      f.url.classList.toggle("bad", !n);
+      if (!n) showToast(t("rss.badUrl"));
+      return n;
+    }
+    var left = [btn(t("rss.now"), "", function () {
+      var rec = collect();
+      if (!rec) return;
+      put("rss", rec);
+      dlg.close();
+      rssNow(rec);
+    })];
+    if (r0) {
+      left.unshift(btn(t("ed.delete"), "danger", function () {
+        var before = remove("rss", r0.id);
+        dlg.close();
+        renderAll();
+        undoToast(t("toast.deleted"), function () { if (before) restore("rss", before); renderAll(); });
+      }));
+    }
+    actionsRow(dlg, left, t("dlg.save"), function () {
+      var rec = collect();
+      if (!rec) return;
+      put("rss", rec);
+      dlg.close();
+      renderAll();
+    });
+    openDialog(dlg, f.src);
+  }
+  // Fetch, parse with the Reader's own code, and use the shell's fetch
+  // when there is one (the same way the scheduled runs read it).
+  function fetchItems(url) {
+    if (runner && typeof runner.fetchItems === "function") return runner.fetchItems(url);
+    var F = window.orosFeedsFetch, FC = window.orosFeedsCore;
+    if (!F || !FC) return Promise.reject({ code: "nofeed" });
+    return F.fetchOne(url, { accept: "application/rss+xml, application/atom+xml, application/feed+json, application/xml;q=0.9, */*;q=0.8" })
+      .then(function (r) {
+        var fd = r.status >= 200 && r.status < 300 ? FC.parseFeed(r.text, r.finalUrl || url, Date.now()) : null;
+        if (!fd) throw { code: "nofeed" };
+        return fd.items;
+      });
+  }
+  function rssNow(r) {
+    showToast(t("rss.reading"));
+    fetchItems(r.url).then(function (items) {
+      var res = E.issueFromFeed(r.id, items, true);
+      if (!res) { showToast(t("rss.nothing")); return; }
+      dirty();
+      data = E.read();
+      viewId = res.issue.id;
+      showView("edit");
+      showToast(t("rss.made"));
+    }, function (e) { showToast(t("rss.fail", { e: errText(e) })); });
+  }
+
+  // ---------- 15c. Past issues from other services ----------
+  function importArchive() {
+    var host = dialogHost(), acc = ".zip,.md,.markdown,.txt,.html,.htm,.csv,.json,application/zip,text/plain,text/html,text/csv,application/json";
+    var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
+    pick.then(function (file) {
+      if (!file) return;
+      if (file.size > 60 * 1024 * 1024) throw new Error("big");
+      var A = window.OrosNewsletterArchive;
+      if (/\.zip$/i.test(file.name)) {
+        return file.arrayBuffer().then(function (buf) {
+          var z = window.AtelierZip.open(new Uint8Array(buf));
+          var names = z.names.filter(A.supported).slice(0, 2000);
+          var items = [];
+          return names.reduce(function (p, n) {
+            return p.then(function () { return z.text(n, 5 * 1024 * 1024); }).then(function (txt) {
+              items = items.concat(A.parseFile(n, txt));
+            }, function () {});
+          }, Promise.resolve()).then(function () { return items; });
+        });
+      }
+      if (!A.supported(file.name) || file.size > 5 * 1024 * 1024) throw new Error("type");
+      return file.text().then(function (txt) { return A.parseFile(file.name, txt); });
+    }).then(function (items) {
+      if (items) archiveDialog(items);
+    })["catch"](function () { showToast(t("arc.bad")); });
+  }
+  function archiveDialog(items) {
+    var dlg = makeDialog("nl-archive", t("arc.title"), true);
+    if (!items.length) {
+      dlg.appendChild(el("p", "dlg-text", t("arc.none")));
+      actionsRow(dlg, [], "", null);
+      openDialog(dlg);
+      return;
+    }
+    var lists = C.live(data.lists);
+    if (!lists.length) { showToast(t("lists.none")); return; }
+    dlg.appendChild(el("p", "dlg-text", t("arc.found", { n: items.length })));
+    var listSel = sel(lists.map(function (l) { return [l.id, l.name]; }), (curList() || lists[0]).id);
+    dlg.appendChild(field(t("arc.list"), listSel));
+    var mode = sel([["archive", t("arc.archive")], ["draft", t("arc.drafts")]], "archive");
+    dlg.appendChild(field(t("arc.mode"), mode, t("arc.modeHint")));
+    var ul = el("ul", "plain arc-list");
+    items.slice(0, 8).forEach(function (it) {
+      ul.appendChild(el("li", "hint", (it.date ? when(it.date) + " · " : "") + (it.subj || t("iss.noSubj"))));
+    });
+    if (items.length > 8) ul.appendChild(el("li", "hint", "…"));
+    dlg.appendChild(ul);
+    actionsRow(dlg, [], t("arc.do", { n: items.length }), function () {
+      var room = C.LIM.archive - C.live(data.issues).length;
+      var xs = window.OrosNewsletterArchive.toIssues(items, listSel.value, mode.value, Date.now())
+        .filter(function (x) { return !C.issue(data, x.id); });
+      // Storage budget: the whole slice lives in localStorage and sync,
+      // so past issues stop at about 2.5 MB of data in all.
+      var size = JSON.stringify(data).length, keep = [];
+      xs.forEach(function (x) {
+        var n = JSON.stringify(x).length;
+        if (keep.length < room && size + n <= C.LIM.dataChars) { keep.push(x); size += n; }
+      });
+      var full = keep.length < xs.length;
+      xs = keep;
+      xs.forEach(function (x) { x.m = stamp(0); replaceIn(data.issues, x); });
+      saveNow();
+      dlg.close();
+      prefs.list = listSel.value;
+      savePrefs();
+      showView("issues");
+      showToast(t(full ? "arc.full" : "arc.done", { n: xs.length }));
+    });
+    openDialog(dlg, listSel);
+  }
+
   // ---------- 16. Settings ----------
   function renderSettings() {
     var b = $("set-body");
@@ -2321,6 +2609,13 @@
     Object.keys(used).forEach(function (id) { if (used[id] && used[id].d === k) today += used[id].n; });
     c1.appendChild(el("p", "hint", t("set.dev", { n: today })));
     b.appendChild(c1);
+    var c3 = el("div", "card");
+    c3.appendChild(el("h3", "sec-h", t("set.archive")));
+    c3.appendChild(el("p", "dlg-text", t("set.archiveText")));
+    var a3 = el("div", "acts");
+    a3.appendChild(btn(t("set.archiveBtn"), "", importArchive));
+    c3.appendChild(a3);
+    b.appendChild(c3);
     var c2 = el("div", "card");
     c2.appendChild(el("h3", "sec-h", t("set.about")));
     c2.appendChild(el("p", "dlg-text", t("set.aboutText")));
