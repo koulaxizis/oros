@@ -301,6 +301,15 @@
       "today": ["core.js", "today.js"]
     },
     {
+      "id": "newsletter",
+      "name": "Newsletter",
+      "category": "Business",
+      "icon": "newsletter",
+      "url": "newsletter/",
+      "type": "internal",
+      "search": "search.js"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",
@@ -550,6 +559,7 @@
       "icon": "library",
       "url": "library/",
       "search": "search.js",
+      "today": ["core.js", "today.js"],
       "type": "internal"
     },
     {

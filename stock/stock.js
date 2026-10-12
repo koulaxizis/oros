@@ -173,6 +173,18 @@
       "rep.h.in": "Received", "rep.h.out": "Sold", "rep.h.loss": "Lost", "rep.h.sales": "Sales",
       "rep.cut": "Only the first {n} rows went to the sheet.",
       "add.po": "Purchase order", "add.quote": "Quote from products",
+      "ctr.title": "Counter", "ctr.ph": "Scan or search a product", "ctr.empty": "Scan a product to start a sale.",
+      "ctr.done": "Complete sale", "ctr.clear": "Clear", "ctr.clearQ": "Clear this sale?", "ctr.sold": "Sale saved: {t}",
+      "ctr.unknown": "No product with the code “{c}”.", "ctr.less": "One less", "ctr.more": "One more", "ctr.noPrice": "no price",
+      "ctr.ref": "Counter",
+      "lbl.title": "Barcode labels", "lbl.copies": "Copies", "lbl.price": "Price on the label", "lbl.print": "Print",
+      "lbl.sheet": "A4 sheet, 3 × 8 labels (70 × 37 mm)", "lbl.skip": "No barcode or SKU: {n}",
+      "lbl.withPrice": "Show the price", "lbl.max": "At most {n} labels at a time.", "lbl.none": "Nothing to print: add products with a barcode or SKU.",
+      "lbl.hint": "Products with a 13-digit barcode get an EAN-13; the rest get a Code 128 of their barcode or SKU.",
+      "ph.add": "Add photo", "ph.change": "Change photo", "ph.remove": "Remove photo", "ph.missing": "Photo not on this device yet",
+      "ph.bad": "That picture can't be read.", "ph.noDisk": "The orOS disk isn't available here.",
+      "ph.where": "Kept in Files, folder Stock/Photos.",
+      "add.counter": "Counter (quick sale)", "add.labels": "Barcode labels",
       "u.custom": "unit"
     },
     el: {
@@ -288,6 +300,18 @@
       "rep.h.in": "Παραλήφθηκαν", "rep.h.out": "Πουλήθηκαν", "rep.h.loss": "Χάθηκαν", "rep.h.sales": "Πωλήσεις",
       "rep.cut": "Στο φύλλο πήγαν μόνο οι πρώτες {n} γραμμές.",
       "add.po": "Εντολή αγοράς", "add.quote": "Προσφορά από προϊόντα",
+      "ctr.title": "Ταμείο", "ctr.ph": "Σάρωσε ή ψάξε προϊόν", "ctr.empty": "Σάρωσε ένα προϊόν για να ξεκινήσει η πώληση.",
+      "ctr.done": "Ολοκλήρωση πώλησης", "ctr.clear": "Καθαρισμός", "ctr.clearQ": "Να καθαρίσει αυτή η πώληση;", "ctr.sold": "Η πώληση καταχωρήθηκε: {t}",
+      "ctr.unknown": "Δεν υπάρχει προϊόν με κωδικό «{c}».", "ctr.less": "Ένα λιγότερο", "ctr.more": "Ένα ακόμα", "ctr.noPrice": "χωρίς τιμή",
+      "ctr.ref": "Ταμείο",
+      "lbl.title": "Ετικέτες barcode", "lbl.copies": "Αντίτυπα", "lbl.price": "Τιμή στην ετικέτα", "lbl.print": "Εκτύπωση",
+      "lbl.sheet": "Σελίδα A4, 3 × 8 ετικέτες (70 × 37 mm)", "lbl.skip": "Χωρίς barcode ή SKU: {n}",
+      "lbl.withPrice": "Να φαίνεται η τιμή", "lbl.max": "Το πολύ {n} ετικέτες κάθε φορά.", "lbl.none": "Δεν υπάρχει κάτι για εκτύπωση: πρόσθεσε προϊόντα με barcode ή SKU.",
+      "lbl.hint": "Τα προϊόντα με barcode 13 ψηφίων παίρνουν EAN-13· τα υπόλοιπα Code 128 με το barcode ή το SKU τους.",
+      "ph.add": "Προσθήκη φωτογραφίας", "ph.change": "Αλλαγή φωτογραφίας", "ph.remove": "Αφαίρεση φωτογραφίας", "ph.missing": "Η φωτογραφία δεν έχει έρθει ακόμα σε αυτή τη συσκευή",
+      "ph.bad": "Αυτή η εικόνα δεν διαβάζεται.", "ph.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
+      "ph.where": "Φυλάσσεται στα Αρχεία, φάκελος Stock/Photos.",
+      "add.counter": "Ταμείο (γρήγορη πώληση)", "add.labels": "Ετικέτες barcode",
       "u.custom": "μονάδα"
     }
   };
@@ -667,6 +691,8 @@
     big.appendChild(el("div", "sheet-qv", fmtQ(r.q, it)));
     head.appendChild(big);
     dlg.appendChild(head);
+    var ph = photoBox(it, dlg);
+    if (ph) dlg.appendChild(ph);
     if (it.arch) dlg.appendChild(el("p", "hint warn", t("badge.arch")));
 
     var acts = el("div", "quick");
@@ -732,6 +758,7 @@
       poEditor(null, { sup: it.sup, lines: [{ i: it.id, q: C.suggestQty(r, decOf(it)), c: it.cost || undefined }] });
     }));
     if (quoteReady() && !it.arch) foot.appendChild(button(t("br.quote"), "", function () { dlg.close(); quoteDialog([{ i: it.id, q: Math.pow(10, 3 - decOf(it)) }]); }));
+    if (C.barcodeFor(it)) foot.appendChild(button(t("add.labels"), "", function () { dlg.close(); labelsDialog([it.id]); }));
     if (labelBridge()) foot.appendChild(button(t("sheet.label"), "", function () {
       labelBridge()("labels", { text: (it.name + (it.sku ? " · " + it.sku : "")).slice(0, 120) });
     }));
@@ -746,7 +773,12 @@
       showToast(cur.arch ? t("toast.archived") : t("toast.unarchived"));
     }));
     if (!C.hasMoves(data, it.id)) {
-      foot.appendChild(button(t("sheet.delete"), "danger", function () { dlg.close(); removeRow("items", it); }));
+      foot.appendChild(button(t("sheet.delete"), "danger", function () {
+        var pic = C.picOf(data, it.id);
+        dlg.close();
+        removeRow("items", it);
+        if (pic) dropPicLater(pic);
+      }));
     }
     dlg.appendChild(foot);
     if (C.hasMoves(data, it.id)) dlg.appendChild(el("p", "hint", t("sheet.delHint")));
@@ -1231,7 +1263,7 @@
       for (var i = 0; i < lines.length; i++) {
         if (lines[i].i === itemId) {
           var now = readQty(lines[i].qIn, it);
-          lines[i].qIn.value = qtyStr((now === null ? 0 : now) + (q || Math.pow(10, 3 - decOf(it))), it);
+          lines[i].qIn.value = qtyStr((now === null ? 0 : now) + (q || (o.whole ? 1000 : Math.pow(10, 3 - decOf(it)))), it);
           refresh();
           live(t("mv.lineMore", { n: it.name, q: lines[i].qIn.value }));
           return;
@@ -1261,7 +1293,7 @@
       ln.qIn = numInput(q ? qtyStr(q, it) : "");
       var pc = typeof c === "number" ? c : o.priceOf(it);
       ln.cIn = numInput(pc ? centsStr(pc) : "");
-      row.appendChild(field(t("mv.qty") + " (" + unitLabel(it.unit) + ")", ln.qIn, o.idp + "-q-" + itemId));
+      row.appendChild(field(o.qtyLabel || (t("mv.qty") + " (" + unitLabel(it.unit) + ")"), ln.qIn, o.idp + "-q-" + itemId));
       row.appendChild(field(o.priceLabel + " (" + curSym() + ")", ln.cIn, o.idp + "-c-" + itemId));
       li.appendChild(row);
       ln.li = li;
@@ -1307,7 +1339,7 @@
       if (it) {
         finder.value = "";
         hits.innerHTML = "";
-        add(it.id, Math.pow(10, 3 - decOf(it)), undefined, false);   // a scan adds one unit
+        add(it.id, o.whole ? 1000 : Math.pow(10, 3 - decOf(it)), undefined, false);   // a scan adds one unit
         finder.focus();
       } else showHits();
     });
@@ -1317,7 +1349,7 @@
       var out = [];
       for (var i = 0; i < lines.length; i++) {
         var ln = lines[i], q = readQty(ln.qIn, ln.it);
-        if (!q || q <= 0) return { bad: t("mv.badLine", { n: ln.it.name }), at: ln.qIn };
+        if (!q || q <= 0 || (o.whole && q % 1000)) return { bad: t("mv.badLine", { n: ln.it.name }), at: ln.qIn };
         var line = { i: ln.i, q: q };
         if (ln.cIn.value.trim()) {
           var c = readCents(ln.cIn);
@@ -1579,6 +1611,341 @@
     b.addEventListener("click", function () { itemSheet(it.id); });
     li.appendChild(b);
     return li;
+  }
+
+  // ---------- 6c. Counter (quick sale with a scanner) ----------
+  // The open sale lives in this page only (closing the counter keeps
+  // it until "Complete sale" or "Clear"); nothing is written before
+  // Complete, which saves ONE sale movement at the products' prices.
+  var cart = [];                       // [{ i, q }] thousandths
+  function counter() {
+    var dlg = makeDialog("st-counter", true);
+    dlg.classList.add("counter-dlg");
+    dlg.appendChild(el("div", "dlg-title", "🛒 " + t("ctr.title")));
+    var scan = el("input");
+    scan.type = "search";
+    scan.id = "st-ctr-q";
+    scan.className = "ctr-scan";
+    scan.placeholder = t("ctr.ph");
+    scan.autocomplete = "off";
+    scan.spellcheck = false;
+    scan.setAttribute("enterkeyhint", "done");
+    scan.setAttribute("aria-label", t("ctr.ph"));
+    dlg.appendChild(scan);
+    var hits = el("div", "hits");
+    dlg.appendChild(hits);
+    var msg = el("p", "hint warn");
+    msg.hidden = true;
+    dlg.appendChild(msg);
+    var ul = el("ul", "rows cart");
+    dlg.appendChild(ul);
+    var tot = el("p", "ctr-total");
+    dlg.appendChild(tot);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+    var clearB = button(t("ctr.clear"), "", function () {
+      if (!cart.length) return;
+      confirmDialog(t("ctr.clearQ"), t("ctr.clear"), true, function () { cart = []; paint(); scan.focus(); });
+    });
+    var doneB = button(t("ctr.done"), "primary", function () { complete(false); });
+    acts.appendChild(clearB);
+    acts.appendChild(doneB);
+    dlg.appendChild(acts);
+
+    function step(it) { return Math.pow(10, 3 - decOf(it)); }
+    function addItem(it, n) {
+      msg.hidden = true;
+      for (var i = 0; i < cart.length; i++) {
+        if (cart[i].i === it.id) {
+          cart[i].q += n;
+          if (cart[i].q <= 0) cart.splice(i, 1);
+          paint();
+          live(it.name + ": " + (cart[i] ? fmtQ(cart[i].q, it) : "0"));
+          return;
+        }
+      }
+      if (n <= 0) return;
+      cart.push({ i: it.id, q: n });
+      paint();
+      live(t("mv.lineAdded", { n: it.name }));
+    }
+    function total() {
+      var sum = 0;
+      cart.forEach(function (l) { var it = byId("items", l.i); if (it) sum += Math.round(l.q * it.price / 1000); });
+      return sum;
+    }
+    function paint() {
+      cart = cart.filter(function (l) { return byId("items", l.i); });
+      ul.innerHTML = "";
+      if (!cart.length) ul.appendChild(el("li", "muted pad", t("ctr.empty")));
+      cart.forEach(function (l) {
+        var it = byId("items", l.i), r = rowOf(it.id) || { q: 0 };
+        var li = el("li", "row cart-line");
+        var body = el("span", "r-body");
+        body.appendChild(el("span", "r-name", it.name));
+        var sub = el("span", "r-sub");
+        if (it.sku) sub.appendChild(el("span", "", it.sku));
+        sub.appendChild(el("span", "", it.price ? money(it.price) + " / " + unitLabel(it.unit) : t("ctr.noPrice")));
+        sub.appendChild(el("span", "", t("mv.now", { q: fmtQ(r.q, it) })));
+        body.appendChild(sub);
+        li.appendChild(body);
+        var qb = el("span", "ctr-q");
+        var minus = el("button", "icon-btn ctr-btn", "−");
+        minus.type = "button";
+        minus.setAttribute("aria-label", t("ctr.less") + ": " + it.name);
+        minus.addEventListener("click", function () { addItem(it, -step(it)); });
+        var plus = el("button", "icon-btn ctr-btn", "+");
+        plus.type = "button";
+        plus.setAttribute("aria-label", t("ctr.more") + ": " + it.name);
+        plus.addEventListener("click", function () { addItem(it, step(it)); });
+        qb.appendChild(minus);
+        qb.appendChild(el("span", "ctr-n", fmtQ(l.q, it, true)));
+        qb.appendChild(plus);
+        li.appendChild(qb);
+        li.appendChild(el("span", "r-val", it.price ? money(Math.round(l.q * it.price / 1000)) : ""));
+        ul.appendChild(li);
+      });
+      tot.textContent = t("mv.total") + ": " + money(total());
+      doneB.disabled = !cart.length;
+      clearB.disabled = !cart.length;
+    }
+    function findHits(q) {
+      var words = C.fold(q).split(" ").filter(Boolean);
+      if (!words.length) return [];
+      return byName(data.items.filter(function (it) { return !it.arch && matchItem(it, words); })).slice(0, 6);
+    }
+    scan.addEventListener("input", function () {
+      hits.innerHTML = "";
+      var q = scan.value.trim();
+      if (q.length < 2) return;
+      findHits(q).forEach(function (it) {
+        var b = el("button", "hit");
+        b.type = "button";
+        b.appendChild(el("span", "", it.name));
+        if (it.sku) b.appendChild(el("span", "muted", it.sku));
+        b.addEventListener("click", function () { scan.value = ""; hits.innerHTML = ""; addItem(it, step(it)); scan.focus(); });
+        hits.appendChild(b);
+      });
+    });
+    scan.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      var q = scan.value.trim();
+      if (!q) { if (cart.length && e.ctrlKey) complete(false); return; }
+      var it = C.findByCode(data, q);
+      if (!it) { var list = findHits(q); if (list.length === 1) it = list[0]; }
+      scan.value = "";
+      hits.innerHTML = "";
+      if (it) addItem(it, step(it));
+      else { msg.textContent = t("ctr.unknown", { c: q }); msg.hidden = false; }
+    });
+    function complete(force) {
+      if (!cart.length) return;
+      var lines = cart.map(function (l) {
+        var it = byId("items", l.i), ln = { i: l.i, q: -l.q };
+        if (it.price) ln.p = it.price;
+        return ln;
+      });
+      if (!force) {
+        var neg = lines.filter(function (l) { var r = rowOf(l.i) || { q: 0 }; return r.q + l.q < 0 && r.q + l.q < r.q; })[0];
+        if (neg) {
+          var nit = byId("items", neg.i), after = (rowOf(neg.i) || { q: 0 }).q + neg.q;
+          if (data.settings.neg === 0) { msg.textContent = t("mv.neg", { n: nit.name, q: fmtQ(after, nit) }) + " " + t("mv.negBlocked"); msg.hidden = false; return; }
+          confirmDialog(t("mv.negQ", { n: nit.name, q: fmtQ(after, nit) }), t("mv.negSave"), false, function () { complete(true); });
+          return;
+        }
+      }
+      var sum = total();
+      var mv = C.normMove({ id: newId(), m: Date.now(), d: todayYmd(), t: "out", ref: t("ctr.ref"), lines: lines });
+      if (!mv) return;
+      addMove(mv);
+      cart = [];
+      render();
+      paint();
+      actionToast(t("ctr.sold", { t: money(sum) }), null, null, function () { voidMove(mv); });
+      scan.focus();
+    }
+    showDialog(dlg);
+    paint();
+    scan.focus();
+  }
+
+  // ---------- 6d. Barcode labels (A4, printed from a hidden frame) ----------
+  var LABELS_MAX = 240;              // ten sheets
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+  // [{ it, n (copies), c (price cents or null) }] → { html, count, skipped }
+  function labelsHtml(list, withPrice) {
+    var cells = [], skipped = [];
+    list.forEach(function (x) {
+      var bc = C.barcodeFor(x.it);
+      if (!bc) { skipped.push(x.it.name); return; }
+      var cell = '<div class="l"><div class="n">' + esc(x.it.name) + '</div><div class="b">' + C.barSvg(bc.modules, 40) +
+        '</div><div class="t"><span>' + esc(bc.text) + "</span>" +
+        (withPrice && x.c ? '<b>' + esc(money(x.c)) + "</b>" : "") + "</div></div>";
+      for (var k = 0; k < x.n && cells.length < LABELS_MAX; k++) cells.push(cell);
+    });
+    var pages = [];
+    for (var i = 0; i < cells.length; i += 24) pages.push('<div class="sheet">' + cells.slice(i, i + 24).join("") + "</div>");
+    var css = "@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff;color:#000}" +
+      "body{font:9pt/1.2 Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+      ".sheet{width:210mm;height:296mm;padding:0 0 0 0;box-sizing:border-box;display:grid;grid-template-columns:repeat(3,70mm);grid-template-rows:repeat(8,37mm);page-break-after:always;break-after:page}" +
+      ".sheet:last-child{page-break-after:auto;break-after:auto}" +
+      ".l{box-sizing:border-box;padding:2.5mm 4mm;display:flex;flex-direction:column;overflow:hidden}" +
+      ".n{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".b{flex:1 1 auto;min-height:0;margin:1.5mm 0}.b svg{display:block;width:100%;height:100%}" +
+      ".t{display:flex;justify-content:space-between;gap:2mm;font-family:'Courier New',monospace}.t b{font-family:Arial,sans-serif}";
+    var html = '<!DOCTYPE html><html lang="' + LANG + '"><head><meta charset="utf-8"><title>' + esc(t("lbl.title")) +
+      "</title><style>" + css + "</style></head><body>" + pages.join("") + "</body></html>";
+    return { html: html, count: cells.length, skipped: skipped };
+  }
+  function printHtml(html) {
+    var old = document.getElementById("st-print");
+    if (old) old.remove();
+    var fr = document.createElement("iframe");
+    fr.id = "st-print";
+    fr.setAttribute("aria-hidden", "true");
+    fr.tabIndex = -1;
+    fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    fr.addEventListener("load", function () {
+      try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { showToast(t("ed.badNum")); }
+    }, { once: true });
+    fr.srcdoc = html;
+    document.body.appendChild(fr);
+  }
+  function labelsDialog(presetIds) {
+    var dlg = makeDialog("st-labels", true);
+    dlg.appendChild(el("div", "dlg-title", "🏷️ " + t("lbl.title")));
+    dlg.appendChild(el("p", "hint", t("lbl.sheet") + ". " + t("lbl.hint")));
+    var lp = linePicker(dlg, { priceLabel: t("lbl.price"), priceOf: function (it) { return it.price; }, idp: "st-lb", qtyLabel: t("lbl.copies"), whole: true });
+    (presetIds || []).forEach(function (id) { lp.add(id, 1000, undefined, false); });
+    var wp = checkRow(t("lbl.withPrice"), true);
+    dlg.appendChild(wp);
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("lbl.print"), "primary", function () {
+      err.hidden = true;
+      var r = lp.read();
+      if (r.bad) { err.textContent = r.bad; err.hidden = false; if (r.at) r.at.focus(); return; }
+      var list = r.lines.map(function (l) {
+        return { it: byId("items", l.i), n: Math.max(1, Math.round(l.q / 1000)), c: typeof l.c === "number" ? l.c : null };
+      });
+      var want = list.reduce(function (a, x) { return a + x.n; }, 0);
+      var out = labelsHtml(list, wp.querySelector("input").checked);
+      var notes = [];
+      if (out.skipped.length) notes.push(t("lbl.skip", { n: out.skipped.join(", ") }));
+      if (want > LABELS_MAX) notes.push(t("lbl.max", { n: LABELS_MAX }));
+      if (!out.count) { err.textContent = notes.concat([t("lbl.none")]).join(" "); err.hidden = false; return; }
+      if (notes.length) { err.textContent = notes.join(" "); err.hidden = false; }
+      printHtml(out.html);
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    if (!lp.count()) lp.finder.focus();
+  }
+
+  // ---------- 6e. Product photos (files on the orOS disk) ----------
+  // The slice keeps the file NAME only (list "pics", one row per item);
+  // the JPEG lives in Files under Stock/Photos and travels with Vault
+  // Drive. Re-drawn on a canvas (long side ≤ 1200 px, JPEG): no EXIF,
+  // no location, no foreign bytes.
+  var PIC_MAX_IN = 40 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function rnd6() {
+    var a = new Uint8Array(6), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 6; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function encodePic(file) {
+    return new Promise(function (resolve) {
+      if (!file || file.size > PIC_MAX_IN) { resolve(null); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 1200 / Math.max(w, h || 1));
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? b : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function setPic(itemId, f) {
+    var row = byId("pics", itemId), old = row ? row.f : "";
+    if (old === f) return;
+    if (!row) data.pics.push({ id: itemId, m: Date.now(), f: f });
+    else { row.f = f; stamp(row); }
+    save();
+    if (old) dropPicLater(old);
+  }
+  // A file no live product points at leaves the disk after the Undo
+  // window (a product deleted and brought back keeps its photo).
+  function dropPicLater(name) {
+    var fs = fsApi();
+    if (!fs || !name) return;
+    setTimeout(function () {
+      if (C.picsInUse(data).indexOf(name) >= 0) return;
+      Promise.resolve(fs.rm(C.picPath(name))).catch(function () {});
+    }, 12000);
+  }
+  // The photo block of a product sheet (thumbnail + add / change / remove)
+  function photoBox(it, dlg) {
+    var fs = fsApi(), name = C.picOf(data, it.id);
+    if (!fs && !name) return null;
+    var box = el("div", "ph-box");
+    var url = null;
+    if (name) {
+      var th = el("div", "ph-th");
+      box.appendChild(th);
+      if (fs) Promise.resolve(fs.readBlob(C.picPath(name))).then(function (b) {
+        if (!b) throw new Error("ENOENT");
+        url = URL.createObjectURL(b);
+        var im = el("img");
+        im.alt = it.name;
+        im.src = url;
+        th.appendChild(im);
+      }).catch(function () { th.appendChild(el("span", "muted", t("ph.missing"))); });
+      else th.appendChild(el("span", "muted", t("ph.missing")));
+      dlg.addEventListener("close", function () { if (url) URL.revokeObjectURL(url); });
+    }
+    if (fs) {
+      var acts = el("div", "ph-acts");
+      acts.appendChild(button(name ? t("ph.change") : "📷 " + t("ph.add"), "", function () {
+        pickFile("image/*").then(function (file) {
+          if (!file) return;
+          return encodePic(file).then(function (blob) {
+            if (!blob) { showToast(t("ph.bad")); return; }
+            var nm = C.picName(todayYmd(), it.id, rnd6());
+            return Promise.resolve(fs.writeBlob(C.picPath(nm), blob)).then(function () {
+              setPic(it.id, nm);
+              dlg.close();
+              itemSheet(it.id);
+            });
+          });
+        }).catch(function () { showToast(t("ph.noDisk")); });
+      }));
+      if (name) acts.appendChild(button(t("ph.remove"), "danger", function () { setPic(it.id, ""); dlg.close(); itemSheet(it.id); }));
+      box.appendChild(acts);
+    }
+    return box;
   }
 
   // ---------- 7. Suppliers view ----------
@@ -2350,7 +2717,9 @@
      ["📤", t("add.out"), function () { moveEditor("out", []); }],
      ["📋", t("add.count"), function () { moveEditor("count", []); }],
      ["✏️", t("add.other"), function () { moveEditor("loss", []); }],
+     ["🛒", t("add.counter"), counter],
      ["🧾", t("add.po"), function () { poEditor(null, null); }],
+     ["🏷️", t("add.labels"), function () { labelsDialog(null); }],
      ["🏭", t("add.sup"), function () { supEditor(null); }]].concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
       var b = button(a[0] + "  " + a[1], "sheet-btn", function () { dlg.close(); a[2](); });
       box.appendChild(b);
@@ -2574,7 +2943,7 @@
     dlg.className = "pc-dlg" + (wide ? " wide" : "");
     dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
     dlg.addEventListener("close", function () {
-      parkToast();
+      parkToast(dlg);
       setTimeout(function () { dlg.remove(); }, 0);
     });
     return dlg;
@@ -2638,9 +3007,14 @@
     var box = $("toast"), d = document.querySelector("dialog[open]");
     if (box && d && box.parentNode !== d) d.appendChild(box);
   }
-  function parkToast() {
+  // A closing dialog hands the toast on to the dialog still open under
+  // it (a confirm over the counter), else back to the page.
+  function parkToast(closing) {
     var box = $("toast");
-    if (box && box.parentNode !== document.body) document.body.appendChild(box);
+    if (!box || (closing && box.parentNode !== closing)) return;
+    var open = Array.prototype.filter.call(document.querySelectorAll("dialog[open]"), function (d) { return d !== closing; });
+    var to = open.length ? open[open.length - 1] : document.body;
+    if (box.parentNode !== to) to.appendChild(box);
   }
   function live(msg) {
     var n = $("live");
