@@ -5295,3 +5295,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Montage phase 2 wave 2: keyframes (#255) — 1.39.00
 - Montage v1.2.0: keyframes on clips (position, size, opacity, volume), so a clip can move, zoom, fade and change volume while it plays; same values in preview and export. Optional item field `kf` (Part IV, MONTAGE v1). Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari.
+
+### 2026-10-12 — Montage phase 2 wave 3A: reverse, LUT looks, GIF (#256) — 1.40.00
+- Montage v1.3.0: play clips backwards, colour looks from .cube LUT files, and GIF export. Schema notes in Part IV (MONTAGE v1). Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari, large LUTs on low-end GPUs.
