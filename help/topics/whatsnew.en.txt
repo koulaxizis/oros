@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.19.00
 - Assistant: ask it for totals and overviews, such as your spending per category this month, your hours on each project or what's on this week; orOS works them out on your device and shows you the summary before it is shared. It can also prepare an invoice draft, every answer has a Copy button, Writer's new sparkle button sends the selected text to it to summarize, rephrase or correct, and Chrome's built-in model works with no key and no internet (chat only).
+- Help: the Calendar guide explains the Invoices feed.
 
 ## Version 1.18.00
 - Text Tools: pull e-mails, links or phone numbers out of a text, encode URL/Base64/HTML, make slugs, compare two texts line by line, and open .txt/.csv/.tsv files with it.
