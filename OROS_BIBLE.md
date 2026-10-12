@@ -5011,3 +5011,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Calendar "Invoices" chip (unpaid invoices on their due date); Today provider `invoices/today.js` (overdue, due soon, recurring drafts ready); shell tick sends one daily reminder for overdue and due-within-2-days invoices (again when the count grows; opens the invoice; `notifications.js` KNOWN_APPS + deep link). One rule for all three in `invoices/core.js` (`dueOn`, `dueRows`, `reminder`).
 - Add to Budget on a payment (BR-B1, Freelance income; payment flag `bud`); Quote "Make invoice" on an accepted quote and Timesheet "Create invoice" open a prefilled invoice (`{new}` now also takes line VAT, discount, code, unit and a total discount; older payloads still work); From CRM imports customers keeping the crm id (BR-CRM-INV).
 - Tests: tests/invoices.test.js (+4). Not tested: real phone, Safari, real Dropbox, Timesheet button end to end. Assistant "new invoice" card left to the Assistant thread.
+
+### 2026-10-12 — Help: guide catch-up for 1.00–1.10 (#217) — 1.13.01
+- Guide pages brought up to date with the releases 1.00.00–1.10.00: help/topics menu, notifications, install, privacy, start, and the Calendar help page (EN + EL). Text only.
