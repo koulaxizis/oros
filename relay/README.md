@@ -21,6 +21,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE/MOVE/COPY/EXPUNGE, CREATE, APPEND) |
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
+| `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -139,6 +140,29 @@ owner; whether Canva lets the owner's own account use it day to day
 without review was not verified (Canva's docs do not say). Other
 people's accounts need the review. Private integrations need a Canva
 Enterprise plan.
+
+## The `papi` operation (Newsletter: provider HTTP APIs)
+
+Brevo, Postmark, SendGrid and Mailgun don't answer browsers, so the
+relay forwards a few exact requests for Newsletter.
+
+`POST /v1 { op: "papi", prov, key, dom?, reqs: [{ m, path, body? | type: "multipart/form-data", to, mime }] }` (≤ 40)
+→ `{ res: [{ status, body } | { status, err: "too-big" } | { err: "timeout" | "network" }] }`
+
+| prov | Base (fixed) | Auth | Allowed |
+|---|---|---|---|
+| `brevo` | `https://api.brevo.com/v3` | `api-key` | `POST /smtp/email`, `GET /account`, `GET /smtp/statistics/events?event,limit,offset,startDate,endDate,sort` |
+| `postmark` | `https://api.postmarkapp.com` | `X-Postmark-Server-Token` | `POST /email`, `POST /email/batch`, `GET /server`, `GET /bounces?count,offset,fromdate,todate,type` |
+| `sendgrid` | `https://api.sendgrid.com/v3` | `Bearer` | `POST /mail/send`, `GET /user/profile`, `GET /suppression/(bounces\|spam_reports\|unsubscribes)?start_time,end_time,limit,offset` |
+| `mailgun`, `mailgun-eu` | `https://api.mailgun.net/v3`, `https://api.eu.mailgun.net/v3` | Basic `api:<key>` | `POST /<dom>/messages.mime` (multipart: `to`, the MIME message), `GET /domains/<dom>`, `GET /<dom>/(bounces\|complaints\|unsubscribes)?limit` |
+
+Rules:
+- Paths must match exactly, and every query value has its own pattern. `%`, `#`, `\`, `@`, `//` and `.`/`..` segments are refused before matching, and the built URL is checked again against the base.
+- Only the relay's own headers are sent (auth, `Accept`, `Content-Type` for JSON). JSON bodies pass through untouched.
+- Redirects are not followed.
+- Up to 2 MB per request and 4 MB per call. 6 requests at a time, 15 s each, and a 25 s budget per call: requests not done in time come back as `timeout` for the app to retry.
+- Answers are capped at 256 KB per body and 2 MB per call.
+- The key is used for this call only. It never appears in an answer, an error or a log (fetch errors are reported only as `network`).
 
 ## Newsletter: sign-up form and one-click unsubscribe
 

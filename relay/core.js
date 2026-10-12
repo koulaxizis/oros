@@ -10,6 +10,7 @@
 //           POST /v1  { op: "send", acct, smtp, from, rcpt[], raw, sent? }  (SMTP, see smtp.js)
 //           POST /v1  { op: "sieve", acct, act, host?, script?, prev? }  (ManageSieve, see sieve.js)
 //           POST /v1  { op: "nl", act, k, sec, ... }  (Newsletter, see newsletter.js)
+//           POST /v1  { op: "papi", prov, key, dom?, reqs:[...] }  (Newsletter: provider APIs, see papi.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
@@ -20,6 +21,7 @@ import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
 import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 import { validNl, runNl, handleNl, page as nlPage, NlError } from "./newsletter.js";
+import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -31,7 +33,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -79,6 +81,7 @@ export function validRequest(b, env) {
   if (b.op === "web") return validWeb(b);   // Reader: public pages, no account
   if (b.op === "canva") return validCanva(b, allowedOrigins(env));   // Atelier: Canva Connect
   if (b.op === "nl") return validNl(b);   // Newsletter: sign-ups and unsubscribes waiting in D1
+  if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
   const bad = validAccount(b.acct);
   if (bad) return bad;
   if (b.op === "list") {
@@ -204,7 +207,10 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (text.length > LIMITS.sendBytes) return fail(413, "bad-request", "request too large", okOrigin);
   let b;
   try { b = JSON.parse(text); } catch (e) { return fail(400, "bad-request", "invalid JSON", okOrigin); }
-  if (text.length > LIMITS.bodyBytes && !(b && (b.op === "send" || b.op === "draft"))) return fail(413, "bad-request", "request too large", okOrigin);
+  if (text.length > LIMITS.bodyBytes && !(b && (b.op === "send" || b.op === "draft"))) {
+    // provider API calls carry message bodies too, up to their own cap
+    if (!(b && b.op === "papi" && text.length <= PAPI_LIMITS.totalBytes + LIMITS.bodyBytes)) return fail(413, "bad-request", "request too large", okOrigin);
+  }
   const bad = validRequest(b, env);
   if (bad) return fail(400, "bad-request", "invalid " + bad, okOrigin);
 
@@ -225,6 +231,15 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     } catch (e) {
       const code = e instanceof CanvaError ? e.code : "proto";
       return fail(200, code, String(e && e.message || code).slice(0, 300), okOrigin);
+    }
+  }
+
+  if (b.op === "papi") {
+    try {
+      const data = await runPapi(b, fetchFn || ((u, o) => fetch(u, o)));
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      return fail(200, "proto", "provider call failed", okOrigin);       // never the message: it may carry the key
     }
   }
 
