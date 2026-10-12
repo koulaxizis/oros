@@ -375,16 +375,18 @@
     saveTimer = setTimeout(PL.saveNow, SAVE_MS);
     PL.emit("dirty");
   };
-  var thumbAt = 0;
+  var thumbAt = 0, saving = Promise.resolve(true);
   PL.saveNow = function () {
     clearTimeout(saveTimer); saveTimer = null;
+    // A save already running: wait for it, then save what changed since
+    // (closing or reopening must never race a half-written project).
+    if (st.saving) return saving.then(function () { return PL.saveNow(); });
     var fs = PL.fs();
     if (!st.doc || !st.dirty) return Promise.resolve(true);
     if (!fs) { PL.emit("dirty"); return Promise.resolve(false); }
-    if (st.saving) { saveTimer = setTimeout(PL.saveNow, 400); return Promise.resolve(false); }
     st.saving = true; st.dirty = false;
     var doc = st.doc;
-    return PL.ST.save(fs, C, T, doc, st.surfaces, st.known).then(function (r) {
+    return (saving = PL.ST.save(fs, C, T, doc, st.surfaces, st.known).then(function (r) {
       st.saving = false;
       // store.save() wrote the tile names into the open record itself.
       setIndex(C.upsertEntry(index, r.doc), true);
@@ -397,7 +399,7 @@
       PL.toast(PL.t(e && /quota|space|full/i.test(String(e.message || e.name)) ? "msg.diskFull" : "msg.saveFail"));
       PL.emit("dirty");
       return false;
-    });
+    }));
   };
 
   // ---------- Projects ----------
