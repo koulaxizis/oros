@@ -307,7 +307,8 @@
       "icon": "newsletter",
       "url": "newsletter/",
       "type": "internal",
-      "search": "search.js"
+      "search": "search.js",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "prompter",
