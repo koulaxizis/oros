@@ -539,6 +539,15 @@
       "today": "today.js"
     },
     {
+      "id": "library",
+      "name": "Library",
+      "category": "Personal",
+      "icon": "library",
+      "url": "library/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "bookmarks",
       "name": "Bookmarks",
       "category": "Internet",
