@@ -70,6 +70,28 @@
       "iss.empty": "No issues yet.", "iss.emptyHint": "Write your first one with New.",
       "iss.noSubj": "(no subject)", "iss.prog": "{a} of {b} sent", "iss.sentTo": "sent to {n}", "iss.sentTo1": "sent to 1",
       "iss.failed": "{n} failed",
+      "st.sched": "Scheduled", "iss.sched": "goes out {t}",
+      "aud.all": "Everyone active", "aud.tags": "Subscribers with some tags", "aud.seg": "Segment: {n}",
+      "ed.audSeg": "Segment", "seg.manage": "Segments…", "seg.title": "Segments",
+      "seg.none": "No segments yet. A segment is a saved group: subscribers with some tags, a language, or both.",
+      "seg.add": "New segment", "seg.edit": "Segment", "seg.name": "Name", "seg.unnamed": "(no name)", "seg.tags": "Tags",
+      "seg.noTags": "This list has no tags yet: the segment can still pick a language.",
+      "seg.match": "Match", "seg.any": "Any of these tags", "seg.all": "All of these tags", "seg.lang": "Language", "seg.anyLang": "Any language",
+      "seg.count": "{n} active subscribers match", "seg.inUse": "An issue that is scheduled or being sent uses this segment.",
+      "seg.full": "Too many segments", "ck.segGone": "The issue's segment was deleted: pick the audience again.",
+      "lang.en": "English", "lang.el": "Greek", "ed.version": "Version",
+      "ed.l2Add": "+ {l} version", "ed.l2Remove": "Remove the {l} version", "ed.l2Removed": "Version removed",
+      "ed.l2Hint": "Subscribers who read {b} get the {b} version; everyone else gets the {a} one.",
+      "tpl.save": "Save as template", "tpl.name": "Template name", "tpl.saved": "Template saved", "tpl.full": "Too many templates: delete one first",
+      "tpl.new": "New issue", "tpl.blank": "Blank issue", "tpl.from": "Or start from a template", "tpl.delete": "Delete template",
+      "sd.now": "Now", "sd.later": "Later", "sd.when": "Send on", "sd.schedule": "Schedule", "sd.whenBad": "Pick a time in the future",
+      "sd.whenHint": "orOS sends it from this device: if orOS isn't open then, it starts the next time you open it here.",
+      "vw.sched": "Goes out {t}.", "vw.schedOther": "Scheduled on another device: it goes out from there.",
+      "vw.unsched": "Cancel the schedule", "vw.sendNow": "Send now", "toast.sched": "Scheduled for {t}", "toast.unsched": "Back to drafts",
+      "subs.crm": "From CRM", "imp.crm": "From CRM", "imp.crmNone": "No CRM customers with an e-mail address.",
+      "imp.crmHint": "Pick the customers who should get the newsletter. If you pick only customers (now or past) they count as \"Existing customer\"; with leads among them, everyone confirms by e-mail.",
+      "imp.crmTags": "Their CRM status and tags become tags", "crm.lead": "lead", "crm.active": "customer", "crm.past": "past customer",
+      "src.crm": "CRM", "pv.lang": "Language", "ts.lang": "Version",
       "st.draft": "Draft", "st.sending": "Sending", "st.paused": "Paused", "st.sent": "Sent",
       "sst.on": "Active", "sst.pend": "Waiting to confirm", "sst.off": "Unsubscribed", "sst.bounce": "Bounced", "sst.spam": "Complained",
       "basis.consent": "Gave consent", "basis.customer": "Existing customer", "basis.optin": "Confirms by e-mail",
@@ -163,7 +185,7 @@
       "sd.title": "Send", "sd.text": "{n} messages from {f} through {c}.",
       "sd.time": "At one message every {s} s it takes about {m} minutes; with up to {cap} a day it needs {d} days.",
       "sd.time1": "At one message every {s} s it takes about {m} minutes.",
-      "sd.keep": "Keep Newsletter open while it sends: if you leave it, sending pauses and goes on when you open it again. It is faster with the window in front.",
+      "sd.keep": "orOS goes on sending while it is open on this device, even with Newsletter closed. A tab in the background sends more slowly.",
       "sd.type": "Type {n} to confirm", "sd.go": "Send now",
       "bar.sending": "Sending \"{s}\": {a} of {b}", "bar.inv": "Sending confirmation requests: {n} left",
       "bar.cap": "Daily limit of {c} reached: sending goes on tomorrow.", "bar.offline": "Offline: sending waits for the connection.",
@@ -202,6 +224,28 @@
       "iss.empty": "Δεν υπάρχουν τεύχη ακόμα.", "iss.emptyHint": "Γράψε το πρώτο με το Νέο.",
       "iss.noSubj": "(χωρίς θέμα)", "iss.prog": "στάλθηκαν {a} από {b}", "iss.sentTo": "στάλθηκε σε {n}", "iss.sentTo1": "στάλθηκε σε 1",
       "iss.failed": "{n} απέτυχαν",
+      "st.sched": "Προγραμματισμένο", "iss.sched": "φεύγει {t}",
+      "aud.all": "Όλοι οι ενεργοί", "aud.tags": "Συνδρομητές με κάποιες ετικέτες", "aud.seg": "Τμήμα: {n}",
+      "ed.audSeg": "Τμήμα", "seg.manage": "Τμήματα…", "seg.title": "Τμήματα",
+      "seg.none": "Δεν υπάρχουν τμήματα ακόμα. Ένα τμήμα είναι μια αποθηκευμένη ομάδα: συνδρομητές με κάποιες ετικέτες, μια γλώσσα ή και τα δύο.",
+      "seg.add": "Νέο τμήμα", "seg.edit": "Τμήμα", "seg.name": "Όνομα", "seg.unnamed": "(χωρίς όνομα)", "seg.tags": "Ετικέτες",
+      "seg.noTags": "Η λίστα δεν έχει ακόμα ετικέτες: το τμήμα μπορεί πάντως να διαλέξει γλώσσα.",
+      "seg.match": "Ταίριασμα", "seg.any": "Οποιαδήποτε από αυτές", "seg.all": "Όλες αυτές", "seg.lang": "Γλώσσα", "seg.anyLang": "Οποιαδήποτε γλώσσα",
+      "seg.count": "Ταιριάζουν {n} ενεργοί συνδρομητές", "seg.inUse": "Αυτό το τμήμα το χρησιμοποιεί τεύχος που είναι προγραμματισμένο ή στέλνεται.",
+      "seg.full": "Πάρα πολλά τμήματα", "ck.segGone": "Το τμήμα του τεύχους διαγράφηκε: διάλεξε ξανά παραλήπτες.",
+      "lang.en": "Αγγλικά", "lang.el": "Ελληνικά", "ed.version": "Έκδοση",
+      "ed.l2Add": "+ Έκδοση στα {l}", "ed.l2Remove": "Αφαίρεση της έκδοσης στα {l}", "ed.l2Removed": "Η έκδοση αφαιρέθηκε",
+      "ed.l2Hint": "Όσοι διαβάζουν {b} παίρνουν την έκδοση στα {b}· όλοι οι άλλοι αυτή στα {a}.",
+      "tpl.save": "Αποθήκευση ως πρότυπο", "tpl.name": "Όνομα προτύπου", "tpl.saved": "Το πρότυπο αποθηκεύτηκε", "tpl.full": "Πάρα πολλά πρότυπα: διάγραψε πρώτα ένα",
+      "tpl.new": "Νέο τεύχος", "tpl.blank": "Κενό τεύχος", "tpl.from": "Ή ξεκίνα από πρότυπο", "tpl.delete": "Διαγραφή προτύπου",
+      "sd.now": "Τώρα", "sd.later": "Αργότερα", "sd.when": "Αποστολή στις", "sd.schedule": "Προγραμματισμός", "sd.whenBad": "Διάλεξε μια μελλοντική ώρα",
+      "sd.whenHint": "Το στέλνει το orOS από αυτή τη συσκευή: αν δεν είναι ανοιχτό τότε, ξεκινά μόλις το ανοίξεις εδώ.",
+      "vw.sched": "Φεύγει {t}.", "vw.schedOther": "Προγραμματίστηκε σε άλλη συσκευή: θα φύγει από εκεί.",
+      "vw.unsched": "Ακύρωση προγραμματισμού", "vw.sendNow": "Αποστολή τώρα", "toast.sched": "Προγραμματίστηκε για {t}", "toast.unsched": "Επέστρεψε στα πρόχειρα",
+      "subs.crm": "Από το CRM", "imp.crm": "Από το CRM", "imp.crmNone": "Κανένας πελάτης του CRM με email.",
+      "imp.crmHint": "Διάλεξε τους πελάτες που θα παίρνουν το δελτίο. Αν διαλέξεις μόνο πελάτες (τωρινούς ή πρώην) μετράνε ως «Υπάρχων πελάτης»· αν υπάρχουν και υποψήφιοι, όλοι επιβεβαιώνουν με email.",
+      "imp.crmTags": "Η κατάσταση και οι ετικέτες τους στο CRM γίνονται ετικέτες", "crm.lead": "υποψήφιος", "crm.active": "πελάτης", "crm.past": "πρώην πελάτης",
+      "src.crm": "CRM", "pv.lang": "Γλώσσα", "ts.lang": "Έκδοση",
       "st.draft": "Πρόχειρο", "st.sending": "Αποστέλλεται", "st.paused": "Σε παύση", "st.sent": "Στάλθηκε",
       "sst.on": "Ενεργός", "sst.pend": "Περιμένει επιβεβαίωση", "sst.off": "Διαγράφηκε", "sst.bounce": "Επιστροφή (bounce)", "sst.spam": "Παράπονο",
       "basis.consent": "Έδωσε συναίνεση", "basis.customer": "Υπάρχων πελάτης", "basis.optin": "Επιβεβαιώνει με email",
@@ -295,7 +339,7 @@
       "sd.title": "Αποστολή", "sd.text": "{n} μηνύματα από {f} μέσω {c}.",
       "sd.time": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά· με έως {cap} τη μέρα χρειάζεται {d} μέρες.",
       "sd.time1": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά.",
-      "sd.keep": "Κράτα το Ενημερωτικό δελτίο ανοιχτό όσο στέλνει: αν βγεις, η αποστολή σταματά και συνεχίζει όταν το ξανανοίξεις. Πάει πιο γρήγορα με το παράθυρο μπροστά.",
+      "sd.keep": "Το orOS συνεχίζει την αποστολή όσο είναι ανοιχτό σε αυτή τη συσκευή, ακόμα κι αν κλείσεις το Ενημερωτικό δελτίο. Σε καρτέλα στο παρασκήνιο στέλνει πιο αργά.",
       "sd.type": "Γράψε {n} για επιβεβαίωση", "sd.go": "Αποστολή τώρα",
       "bar.sending": "Αποστολή «{s}»: {a} από {b}", "bar.inv": "Αποστολή αιτημάτων επιβεβαίωσης: απομένουν {n}",
       "bar.cap": "Έφτασε το ημερήσιο όριο των {c}: η αποστολή συνεχίζει αύριο.", "bar.offline": "Εκτός σύνδεσης: η αποστολή περιμένει τη σύνδεση.",
@@ -346,7 +390,8 @@
   var stamp = E.stamp, dayKey = E.dayKey;
   function when(ms) {
     if (!ms) return "";
-    if (Date.now() - ms < 60000) return t("time.now");
+    var ago = Date.now() - ms;
+    if (ago >= 0 && ago < 60000) return t("time.now");
     try {
       return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
         { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -505,7 +550,7 @@
     var l = curList(), ol = $("issues");
     ol.innerHTML = "";
     var items = l ? C.live(data.issues).filter(function (x) { return x.list === l.id; }) : [];
-    var order = { sending: 0, paused: 1, draft: 2, sent: 3 };
+    var order = { sending: 0, paused: 1, sched: 2, draft: 3, sent: 4 };
     items.sort(function (a, b) {
       if (order[a.st] !== order[b.st]) return order[a.st] - order[b.st];
       return (b.done || b.m) - (a.done || a.m);
@@ -520,7 +565,8 @@
       txt.appendChild(top);
       var p = C.progress(data, x);
       var sub = x.st === "sent" ? [when(x.done), p.sent === 1 ? t("iss.sentTo1") : t("iss.sentTo", { n: p.sent })]
-              : (x.st === "draft" ? [when(x.m)] : [t("iss.prog", { a: p.sent, b: p.total })]);
+              : x.st === "draft" ? [when(x.m)] : x.st === "sched" ? [t("iss.sched", { t: when(x.when) })]
+              : [t("iss.prog", { a: p.sent, b: p.total })];
       if (p.failed) sub.push(t("iss.failed", { n: p.failed }));
       txt.appendChild(el("span", "row-sub", sub.filter(Boolean).join(" · ")));
       b.appendChild(txt);
@@ -568,6 +614,7 @@
     acts.appendChild(mini(t("subs.paste"), pasteDialog));
     acts.appendChild(mini(t("subs.csv"), importCsv));
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
+    if (crmPeople()) acts.appendChild(mini(t("subs.crm"), crmDialog));
     acts.appendChild(mini(t("subs.export"), exportCsv));
     var ch = C.chan(data, l.chan), inbox = inboxAccount(ch);
     if (inbox) acts.appendChild(mini(t("subs.inbox"), inboxNow));
@@ -692,65 +739,105 @@
   function newIssue() {
     var l = curList();
     if (!l) { listDialog(null); return; }
-    var x = C.normIssue({ id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
-                          blocks: [{ k: "h", t: "" }, { k: "p", t: LANG === "el" ? "Γεια σου {first|φίλε}," : "Hi {first|there}," }] });
+    var tpls = C.live(data.tpls);
+    if (!tpls.length) { createIssue(l, null); return; }
+    var dlg = makeDialog("nl-new", t("tpl.new"));
+    var ul = el("ul", "plain tpl-list");
+    var row = function (label, fn, tpl) {
+      var li = el("li", "tpl-row");
+      var b = el("button", "row", label);
+      b.type = "button";
+      b.addEventListener("click", function () { dlg.close(); fn(); });
+      li.appendChild(b);
+      if (tpl) {
+        var ib = el("button", "icon-btn sm");
+        ib.type = "button";
+        ib.innerHTML = UI.x;
+        ib.title = t("tpl.delete");
+        ib.setAttribute("aria-label", t("tpl.delete") + ": " + tpl.name);
+        ib.addEventListener("click", function () {
+          var before = remove("tpls", tpl.id);
+          li.remove();
+          undoToast(t("toast.deleted"), function () { if (before) restore("tpls", before); });
+        });
+        li.appendChild(ib);
+      }
+      ul.appendChild(li);
+    };
+    row(t("tpl.blank"), function () { createIssue(l, null); });
+    dlg.appendChild(ul);
+    dlg.appendChild(el("p", "dlg-h", t("tpl.from")));
+    var ul2 = el("ul", "plain tpl-list");
+    ul = ul2;
+    tpls.sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; })
+      .forEach(function (tp) { row(tp.name || shownSubj(tp), function () { createIssue(l, tp); }, tp); });
+    dlg.appendChild(ul2);
+    actionsRow(dlg, [], "", null);
+    openDialog(dlg);
+  }
+  function createIssue(l, tpl) {
+    var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
+                                blocks: copy(tpl.blocks), md: tpl.md, l2: tpl.l2 ? copy(tpl.l2) : null }
+      : { id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
+          blocks: [{ k: "h", t: "" }, { k: "p", t: LANG === "el" ? "Γεια σου {first|φίλε}," : "Hi {first|there}," }] });
     put("issues", x);
     viewId = x.id;
     showView("edit");
   }
+  function saveTemplate(x) {
+    if (C.live(data.tpls).length >= C.LIM.tpls) { showToast(t("tpl.full")); return; }
+    var dlg = makeDialog("nl-tpl", t("tpl.save"));
+    var name = inp("text", shownSubj(x) === t("iss.noSubj") ? "" : shownSubj(x), C.LIM.name);
+    dlg.appendChild(field(t("tpl.name"), name));
+    actionsRow(dlg, [], t("dlg.save"), function () {
+      var nm = name.value.trim();
+      name.classList.toggle("bad", !nm);
+      if (!nm) return;
+      put("tpls", C.normTpl({ id: C.randomId("t", null), m: 0, name: nm, subj: x.subj, pre: x.pre, fmt: x.fmt,
+                              blocks: copy(x.blocks), md: x.md, l2: x.l2 ? copy(x.l2) : null }));
+      dlg.close();
+      showToast(t("tpl.saved"));
+    });
+    openDialog(dlg, name);
+  }
+  // The editor shows the main version or the other language's (x.l2).
+  var edSide = { id: "", l2: false };
+  function side(x) { return edSide.id === x.id && edSide.l2 && x.l2 ? x.l2 : x; }
+  function langName(k) { return t("lang." + (k === "el" ? "el" : "en")); }
+  // The main version's language: the other one when there is a second
+  // version, else the list's.
+  function mainLang(x, l) { return x.l2 ? (x.l2.lang === "el" ? "en" : "el") : ((l && l.lang) || "en"); }
   function renderEditor() {
     var x0 = C.issue(data, viewId);
     if (!x0 || x0.st !== "draft") { showView(x0 ? "view" : "issues"); return; }
     var x = edIssue = copy(x0);
     var l = C.list(data, x.list);
+    var cx = side(x);
     $("ed-title").textContent = x.subj || t("ed.new");
     $("ed-sub").textContent = l ? l.name : "";
     var form = $("ed-form");
     form.innerHTML = "";
 
     var c1 = el("div", "card");
-    var subj = inp("text", x.subj, C.LIM.subj);
-    subj.addEventListener("input", function () { x.subj = subj.value; $("ed-title").textContent = x.subj || t("ed.new"); touchIssue(x); });
+    c1.appendChild(versionBar(x, l));
+    var subj = inp("text", cx.subj, C.LIM.subj);
+    subj.addEventListener("input", function () { cx.subj = subj.value; $("ed-title").textContent = x.subj || t("ed.new"); touchIssue(x); });
     c1.appendChild(field(t("ed.subj"), subj));
-    var pre = inp("text", x.pre, C.LIM.pre);
-    pre.addEventListener("input", function () { x.pre = pre.value; touchIssue(x); });
+    var pre = inp("text", cx.pre, C.LIM.pre);
+    pre.addEventListener("input", function () { cx.pre = pre.value; touchIssue(x); });
     c1.appendChild(field(t("ed.pre"), pre, t("ed.preHint")));
-    // audience: every active subscriber, or only some tags
-    var tags = C.allTags(data, x.list);
-    var audW = el("div", "fld");
-    audW.appendChild(el("span", "dlg-lbl", t("ed.aud")));
-    if (tags.length) {
-      var chips = el("div", "chips");
-      tags.forEach(function (tg) {
-        var lab = el("label", "tag-chip");
-        var cb = el("input");
-        cb.type = "checkbox";
-        cb.checked = x.tags.indexOf(tg) >= 0;
-        cb.addEventListener("change", function () {
-          x.tags = x.tags.filter(function (y) { return y !== tg; });
-          if (cb.checked) x.tags.push(tg);
-          x.tags.sort();
-          touchIssue(x, true);
-        });
-        lab.appendChild(cb);
-        lab.appendChild(el("span", "", tg));
-        chips.appendChild(lab);
-      });
-      audW.appendChild(chips);
-    }
-    audW.appendChild(el("p", "hint", "")).id = "aud-note";
-    c1.appendChild(audW);
+    c1.appendChild(audienceField(x));
     form.appendChild(c1);
 
     var c2 = el("div", "card");
     var seg = el("div", "seg");
     [["blocks", t("ed.blocks")], ["md", t("ed.md")]].forEach(function (o) {
-      var b = el("button", "seg-btn" + (x.fmt === o[0] ? " on" : ""), o[1]);
+      var b = el("button", "seg-btn" + (cx.fmt === o[0] ? " on" : ""), o[1]);
       b.type = "button";
-      b.setAttribute("aria-pressed", x.fmt === o[0] ? "true" : "false");
+      b.setAttribute("aria-pressed", cx.fmt === o[0] ? "true" : "false");
       b.addEventListener("click", function () {
-        if (x.fmt === o[0]) return;
-        x.fmt = o[0];
+        if (cx.fmt === o[0]) return;
+        cx.fmt = o[0];
         put("issues", x);
         renderEditor();
       });
@@ -760,13 +847,13 @@
     hc.appendChild(el("h3", "sec-h", t("ed.content")));
     hc.appendChild(seg);
     c2.appendChild(hc);
-    if (x.fmt === "md") {
+    if (cx.fmt === "md") {
       var ta = el("textarea", "md-area");
-      ta.value = x.md;
+      ta.value = cx.md;
       ta.maxLength = C.LIM.md;
       ta.rows = 16;
       ta.spellcheck = true;
-      ta.addEventListener("input", function () { x.md = ta.value; touchIssue(x); });
+      ta.addEventListener("input", function () { cx.md = ta.value; touchIssue(x); });
       c2.appendChild(ta);
       c2.appendChild(el("p", "hint", t("ed.mdHint")));
     } else {
@@ -777,12 +864,12 @@
       var add = el("div", "acts");
       ["h", "p", "img", "btn", "hr", "cols"].forEach(function (k) {
         add.appendChild(mini("+ " + t("bk." + k), function () {
-          if (x.blocks.length >= C.LIM.blocks) return;
-          x.blocks.push(k === "hr" ? { k: "hr" } : (k === "cols" ? { k: "cols", a: "", b: "" } :
+          if (cx.blocks.length >= C.LIM.blocks) return;
+          cx.blocks.push(k === "hr" ? { k: "hr" } : (k === "cols" ? { k: "cols", a: "", b: "" } :
                         (k === "img" ? { k: "img", f: "", alt: "", href: "", w: 600, h: 400, b: 0 } : { k: k, t: "", href: "" })));
           put("issues", x);
           renderBlocks(x, $("blocks"));
-          if (k === "img") pickImage(x, x.blocks.length - 1);
+          if (k === "img") pickImage(x, cx.blocks.length - 1);
         }));
       });
       c2.appendChild(add);
@@ -795,6 +882,7 @@
     actsB.appendChild(btn(t("ed.preview"), "", function () { flushIssue(); previewDialog(C.issue(data, x.id)); }));
     actsB.appendChild(btn(t("ed.test"), "", function () { flushIssue(); testDialog(C.issue(data, x.id)); }));
     actsB.appendChild(btn(t("ed.check"), "", function () { flushIssue(); checkDialog(C.issue(data, x.id), false); }));
+    actsB.appendChild(btn(t("tpl.save"), "", function () { flushIssue(); saveTemplate(C.issue(data, x.id)); }));
     actsB.appendChild(el("span", "spacer"));
     actsB.appendChild(btn(t("ed.delete"), "danger", function () {
       flushIssue();
@@ -807,22 +895,227 @@
     form.appendChild(bar);
     audienceNote(x);
   }
+  // Main version | other language, and adding / removing the second one.
+  function versionBar(x, l) {
+    var w = el("div", "ver-bar");
+    var a = mainLang(x, l), b = a === "el" ? "en" : "el";
+    if (!x.l2) {
+      w.appendChild(mini(t("ed.l2Add", { l: langName(b) }), function () {
+        flushIssue();
+        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md });
+        edSide = { id: x.id, l2: true };
+        put("issues", x);
+        renderEditor();
+      }));
+      return w;
+    }
+    var seg = el("div", "seg");
+    seg.setAttribute("role", "group");
+    seg.setAttribute("aria-label", t("ed.version"));
+    [[false, a], [true, b]].forEach(function (o) {
+      var on = (side(x) !== x) === o[0];
+      var bt = el("button", "seg-btn" + (on ? " on" : ""), langName(o[1]));
+      bt.type = "button";
+      bt.setAttribute("aria-pressed", on ? "true" : "false");
+      bt.addEventListener("click", function () {
+        if (on) return;
+        flushIssue();
+        edSide = { id: x.id, l2: o[0] };
+        renderEditor();
+      });
+      seg.appendChild(bt);
+    });
+    w.appendChild(seg);
+    if (side(x) !== x) {
+      w.appendChild(mini(t("ed.l2Remove", { l: langName(b) }), function () {
+        flushIssue();
+        var gone = copy(x.l2);
+        x.l2 = null;
+        edSide = { id: x.id, l2: false };
+        put("issues", x);
+        renderEditor();
+        undoToast(t("ed.l2Removed"), function () {
+          var cur = C.issue(data, x.id);
+          if (!cur || cur.st !== "draft") return;
+          var y = copy(cur); y.l2 = gone; put("issues", y);
+          if (view === "edit" && viewId === x.id) renderEditor();
+        });
+      }));
+    }
+    w.appendChild(el("p", "hint", t("ed.l2Hint", { a: langName(a), b: langName(b) })));
+    return w;
+  }
+  // Everyone, some tags, or a saved segment.
+  function audienceField(x) {
+    var w = el("div", "fld");
+    w.appendChild(el("span", "dlg-lbl", t("ed.aud")));
+    var tags = C.allTags(data, x.list), segs = C.segsOf(data, x.list);
+    var mode = x.seg ? "g:" + x.seg : (x.tags.length ? "tags" : "all");
+    var opts = [["all", t("aud.all")]];
+    if (tags.length || mode === "tags") opts.push(["tags", t("aud.tags")]);
+    segs.forEach(function (g) { opts.push(["g:" + g.id, t("aud.seg", { n: g.name || t("seg.unnamed") })]); });
+    if (x.seg && !segs.some(function (g) { return g.id === x.seg; })) opts.push([mode, t("ck.segGone")]);
+    var pick = sel(opts, mode);
+    pick.setAttribute("aria-label", t("ed.aud"));
+    var row = el("div", "aud-row");
+    row.appendChild(pick);
+    row.appendChild(mini(t("seg.manage"), function () { flushIssue(); segmentsDialog(x.list); }));
+    w.appendChild(row);
+    var chips = el("div", "chips");
+    tags.forEach(function (tg) {
+      var lab = el("label", "tag-chip");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = x.tags.indexOf(tg) >= 0;
+      cb.addEventListener("change", function () {
+        x.tags = x.tags.filter(function (y) { return y !== tg; });
+        if (cb.checked) x.tags.push(tg);
+        x.tags.sort();
+        touchIssue(x, true);
+      });
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", tg));
+      chips.appendChild(lab);
+    });
+    chips.hidden = mode !== "tags";
+    w.appendChild(chips);
+    pick.addEventListener("change", function () {
+      var v = pick.value;
+      x.seg = v.indexOf("g:") === 0 ? v.slice(2) : "";
+      if (v !== "tags") {
+        x.tags = [];
+        [].forEach.call(chips.querySelectorAll("input"), function (c) { c.checked = false; });
+      }
+      chips.hidden = v !== "tags";
+      touchIssue(x, true);
+    });
+    var note = el("p", "hint", "");
+    note.id = "aud-note";
+    w.appendChild(note);
+    return w;
+  }
   function audienceNote(x) {
     var n = $("aud-note");
     if (!n) return;
     var count = C.audience(data, x).length;
-    n.textContent = x.tags.length ? t("ed.audTags") + ": " + (count === 1 ? t("ed.audN1") : t("ed.audN", { n: count }))
-                                  : t("ed.audAll", { n: count });
+    var cnt = count === 1 ? t("ed.audN1") : t("ed.audN", { n: count });
+    n.textContent = x.seg ? t("ed.audSeg") + ": " + cnt
+                  : x.tags.length ? t("ed.audTags") + ": " + cnt : t("ed.audAll", { n: count });
+  }
+  // ---------- segments ----------
+  function segmentsDialog(listId) {
+    var dlg = makeDialog("nl-segs", t("seg.title"), true);
+    var segs = C.segsOf(data, listId);
+    if (!segs.length) dlg.appendChild(el("p", "hint", t("seg.none")));
+    var ul = el("ul", "plain tpl-list");
+    segs.forEach(function (g) {
+      var li = el("li", "tpl-row");
+      var b = el("button", "row");
+      b.type = "button";
+      var tx = el("span", "row-txt");
+      tx.appendChild(el("span", "row-no", g.name || t("seg.unnamed")));
+      tx.appendChild(el("span", "row-sub", segText(g, listId)));
+      b.appendChild(tx);
+      b.addEventListener("click", function () { dlg.close(); segDialog(listId, g); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    actionsRow(dlg, [], t("seg.add"), function () {
+      if (C.live(data.segs).length >= C.LIM.segs) { showToast(t("seg.full")); return; }
+      dlg.close();
+      segDialog(listId, null);
+    });
+    openDialog(dlg);
+  }
+  function segCount(g, listId) {
+    var l = C.list(data, listId);
+    return C.subsOf(data, listId).filter(function (s) { return C.status(s) === "on" && C.segMatch(g, s, l); }).length;
+  }
+  function segText(g, listId) {
+    var parts = [];
+    if (g.tags.length) parts.push((g.match === "all" ? t("seg.all") : t("seg.any")) + ": " + g.tags.join(", "));
+    if (g.lang) parts.push(langName(g.lang));
+    parts.push(t("seg.count", { n: segCount(g, listId) }));
+    return parts.join(" · ");
+  }
+  function segDialog(listId, g) {
+    var src = g ? copy(g) : { id: C.randomId("g", null), m: 0, list: listId, name: "", tags: [], match: "any", lang: "" };
+    var dlg = makeDialog("nl-seg", t("seg.edit"), true);
+    var name = inp("text", src.name, C.LIM.name);
+    dlg.appendChild(field(t("seg.name"), name));
+    var tags = C.allTags(data, listId);
+    src.tags.forEach(function (tg) { if (tags.indexOf(tg) < 0) tags.push(tg); });
+    var tw = el("div", "fld");
+    tw.appendChild(el("span", "dlg-lbl", t("seg.tags")));
+    if (!tags.length) tw.appendChild(el("p", "hint", t("seg.noTags")));
+    var chips = el("div", "chips");
+    tags.forEach(function (tg) {
+      var lab = el("label", "tag-chip");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.value = tg;
+      cb.checked = src.tags.indexOf(tg) >= 0;
+      cb.addEventListener("change", update);
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", tg));
+      chips.appendChild(lab);
+    });
+    tw.appendChild(chips);
+    dlg.appendChild(tw);
+    var match = sel([["any", t("seg.any")], ["all", t("seg.all")]], src.match);
+    match.addEventListener("change", update);
+    dlg.appendChild(field(t("seg.match"), match));
+    var lang = sel([["", t("seg.anyLang")], ["en", langName("en")], ["el", langName("el")]], src.lang);
+    lang.addEventListener("change", update);
+    dlg.appendChild(field(t("seg.lang"), lang));
+    var count = el("p", "dlg-text");
+    dlg.appendChild(count);
+    function collect() {
+      var r = copy(src);
+      r.name = name.value;
+      r.tags = [].filter.call(chips.querySelectorAll("input"), function (c) { return c.checked; }).map(function (c) { return c.value; });
+      r.match = match.value;
+      r.lang = lang.value;
+      return C.normSeg(r);
+    }
+    function update() { var r = collect(); if (r) count.textContent = t("seg.count", { n: segCount(r, listId) }); }
+    var left = [];
+    if (g) {
+      left.push(btn(t("ed.delete"), "danger", function () {
+        var busy = C.live(data.issues).some(function (x) { return x.seg === g.id && x.st !== "draft" && x.st !== "sent"; });
+        if (busy) { showToast(t("seg.inUse")); return; }
+        var before = remove("segs", g.id);
+        dlg.close();
+        segsChanged();
+        undoToast(t("toast.deleted"), function () { if (before) restore("segs", before); segsChanged(); });
+      }));
+    }
+    actionsRow(dlg, left, t("dlg.save"), function () {
+      var r = collect();
+      if (!r || !r.name.trim()) { name.classList.add("bad"); return; }
+      put("segs", r);
+      dlg.close();
+      segsChanged();
+    });
+    update();
+    openDialog(dlg, name);
+  }
+  // the editor's audience picker lists segments: draw it again
+  function segsChanged() {
+    if (view === "edit") { flushIssue(); renderEditor(); }
+    else renderAll();
   }
   var thumbs = {};      // path → object URL (this session)
   function renderBlocks(x, box) {
     box.innerHTML = "";
-    x.blocks.forEach(function (b, i) {
+    var cx = side(x);
+    cx.blocks.forEach(function (b, i) {
       var card = el("div", "blk");
       var head = el("div", "blk-head");
       head.appendChild(el("span", "blk-k", t("bk." + b.k)));
       head.appendChild(el("span", "spacer"));
-      [["up", UI.up, t("bk.up"), i > 0], ["down", UI.down, t("bk.down"), i < x.blocks.length - 1], ["x", UI.x, t("bk.remove"), true]]
+      [["up", UI.up, t("bk.up"), i > 0], ["down", UI.down, t("bk.down"), i < cx.blocks.length - 1], ["x", UI.x, t("bk.remove"), true]]
         .forEach(function (a) {
           var ib = el("button", "icon-btn sm");
           ib.type = "button";
@@ -832,18 +1125,18 @@
           ib.disabled = !a[3];
           ib.addEventListener("click", function () {
             if (a[0] === "x") {
-              var gone = x.blocks.splice(i, 1)[0];
+              var gone = cx.blocks.splice(i, 1)[0];
               put("issues", x);
               renderBlocks(x, box);
               undoToast(t("toast.deleted"), function () {
-                x.blocks.splice(Math.min(i, x.blocks.length), 0, gone);
+                cx.blocks.splice(Math.min(i, cx.blocks.length), 0, gone);
                 put("issues", x);
                 renderBlocks(x, box);
               });
               return;
             }
             var j = a[0] === "up" ? i - 1 : i + 1;
-            var tmp = x.blocks[i]; x.blocks[i] = x.blocks[j]; x.blocks[j] = tmp;
+            var tmp = cx.blocks[i]; cx.blocks[i] = cx.blocks[j]; cx.blocks[j] = tmp;
             put("issues", x);
             renderBlocks(x, box);
           });
@@ -904,6 +1197,7 @@
     chip.textContent = t("st." + x.st);
     var body = $("vw-body");
     body.innerHTML = "";
+    if (x.st === "sched") { renderScheduled(x, body); return; }
     var p = C.progress(data, x);
     var tiles = el("div", "tiles");
     var tile = function (lbl, v, cls) {
@@ -953,10 +1247,43 @@
       body.appendChild(det);
     }
   }
+  function renderScheduled(x, body) {
+    var mine = C.schedMine(x, E.devState().dev);
+    body.appendChild(el("div", "banner info", t("vw.sched", { t: when(x.when) }) + " " +
+                                          (C.audience(data, x).length === 1 ? t("ed.audN1") : t("ed.audN", { n: C.audience(data, x).length }))));
+    if (!mine) body.appendChild(el("div", "banner", t("vw.schedOther")));
+    var acts = el("div", "acts");
+    acts.appendChild(btn(t("vw.unsched"), "", function () { unschedule(x.id); }));
+    if (mine) acts.appendChild(btn(t("vw.sendNow"), "primary", function () { sendScheduledNow(x.id); }));
+    acts.appendChild(btn(t("ed.preview"), "", function () { previewDialog(x); }));
+    acts.appendChild(btn(t("ed.dup"), "", function () { duplicateIssue(x); }));
+    body.appendChild(acts);
+  }
+  function unschedule(id) {
+    var out = E.change(function (d) {
+      var c = C.issue(d, id);
+      if (!c || c.st !== "sched") return false;
+      var y = copy(c);
+      y.st = "draft"; y.when = 0; y.lock = null;
+      E.put(d, "issues", y);
+    });
+    if (out) showToast(t("toast.unsched"));
+    changed(out);
+  }
+  function sendScheduledNow(id) {
+    var now = Date.now();
+    changed(E.change(function (d) {
+      var c = C.issue(d, id);
+      if (!c || c.st !== "sched") return false;
+      var y = copy(c);
+      y.st = "sending"; y.start = now; y.when = 0; y.lock = { dev: E.devState().dev, at: now }; y.err = ""; y.fail = {}; y.n = 0;
+      E.put(d, "issues", y);
+    }));
+  }
   function duplicateIssue(x) {
     var y = copy(x);
     y.id = C.randomId("i", null);
-    y.m = 0; y.st = "draft"; y.lock = null; y.start = 0; y.done = 0; y.n = 0; y.err = ""; y.fail = {};
+    y.m = 0; y.st = "draft"; y.when = 0; y.lock = null; y.start = 0; y.done = 0; y.n = 0; y.err = ""; y.fail = {};
     put("issues", C.normIssue(y));
     viewId = y.id;
     showView("edit");
@@ -1408,15 +1735,49 @@
       people.push({ email: email, name: C.oneLine(name, C.LIM.name), c: String(c.id).slice(0, 60),
                     lt: (Array.isArray(c.labelIds) ? c.labelIds : []).map(function (id) { return labels[id]; }).filter(Boolean) });
     });
+    pickPeople({ id: "nl-contacts", title: t("imp.contacts"), none: t("imp.cNone"), hint: t("imp.cHint"),
+                 tags: t("imp.labelsTags"), people: people, src: "contacts", basis: "optin" });
+  }
+  // People with an e-mail from the CRM (customers; their status and
+  // tags as tags). Read only: crm/ belongs to the CRM app.
+  function crmPeople() {
+    var K = null;
+    try { K = window.parent && window.parent !== window ? window.parent.OrosCrmCore : null; } catch (e) {}
+    if (!K || typeof K.norm !== "function") return null;
+    var d = null;
+    try { d = K.norm(JSON.parse(localStorage.getItem("oros-crm-data") || "null")); } catch (e) { return null; }
+    if (!d || !Array.isArray(d.cust)) return null;
+    var tagName = {};
+    (d.tags || []).forEach(function (tg) { if (tg && tg.id) tagName[tg.id] = String(tg.name || ""); });
+    var out = [];
+    d.cust.forEach(function (c) {
+      var email = C.normEmail(c.email);
+      if (!email) return;
+      var lt = [t("crm." + (c.st === "active" || c.st === "past" ? c.st : "lead"))]
+        .concat((c.tags || []).map(function (id) { return tagName[id]; }).filter(Boolean));
+      out.push({ email: email, name: C.oneLine(c.name, C.LIM.name), c: "", lt: lt, st: c.st });
+    });
+    return out.length ? out : null;
+  }
+  function crmDialog() {
+    var people = crmPeople() || [];
+    pickPeople({ id: "nl-crm", title: t("imp.crm"), none: t("imp.crmNone"), hint: t("imp.crmHint"),
+                 tags: t("imp.crmTags"), people: people, src: "crm",
+                 basis: function (chosen) {     // leads aren't customers: they confirm by e-mail
+                   return chosen.every(function (p) { return p.st === "active" || p.st === "past"; }) ? "customer" : "optin";
+                 } });
+  }
+  function pickPeople(o) {
+    var people = o.people;
     people.sort(function (a, b) { return C.fold(a.name || a.email) < C.fold(b.name || b.email) ? -1 : 1; });
-    var dlg = makeDialog("nl-contacts", t("imp.contacts"), true);
+    var dlg = makeDialog(o.id, o.title, true);
     if (!people.length) {
-      dlg.appendChild(el("p", "dlg-text", t("imp.cNone")));
+      dlg.appendChild(el("p", "dlg-text", o.none));
       actionsRow(dlg, [], "", null);
       openDialog(dlg);
       return;
     }
-    dlg.appendChild(el("p", "banner info", t("imp.cHint")));
+    dlg.appendChild(el("p", "banner info", o.hint));
     var q = inp("search", "", 100);
     q.placeholder = t("imp.cFilter");
     dlg.appendChild(q);
@@ -1425,7 +1786,7 @@
     ltc.type = "checkbox";
     ltc.checked = true;
     lt.appendChild(ltc);
-    lt.appendChild(el("span", "", t("imp.labelsTags")));
+    lt.appendChild(el("span", "", o.tags));
     dlg.appendChild(lt);
     var all = mini(t("imp.cAll"), function () {
       [].forEach.call(listBox.querySelectorAll("input[type=checkbox]"), function (cb) { if (!cb.closest("[hidden]")) { cb.checked = true; picked[cb.value] = true; } });
@@ -1454,11 +1815,11 @@
     dlg.appendChild(listBox);
     actionsRow(dlg, [], t("imp.next"), function () {
       var chosen = people.filter(function (p, i) { return picked[i]; }).map(function (p) {
-        return { email: p.email, name: p.name, c: p.c, tags: ltc.checked ? p.lt : [], lang: "" };
+        return { email: p.email, name: p.name, c: p.c, tags: ltc.checked ? p.lt : [], lang: "", st: p.st };
       });
       if (!chosen.length) return;
       dlg.close();
-      importDialog(chosen, 0, "contacts", "optin");
+      importDialog(chosen, 0, o.src, typeof o.basis === "function" ? o.basis(chosen) : o.basis);
     });
     openDialog(dlg, q);
   }
@@ -1466,31 +1827,45 @@
   // ---------- 11. Preview, test, check, send ----------
   var imgData = E.images;   // path → { bin, type, url (data:) } this window
   function loadImages(x) { return E.loadImages(x, orosFS()); }
+  // [lang, label] for an issue's versions (one entry without a second version)
+  function versionsOf(x, l) {
+    var a = mainLang(x, l);
+    return x.l2 ? [[a, langName(a)], [x.l2.lang, langName(x.l2.lang)]] : [[a, langName(a)]];
+  }
   function previewDialog(x) {
     if (!x) return;
     var l = C.list(data, x.list);
     if (!l) return;
     var dlg = makeDialog("nl-preview", t("pv.title"), true);
     dlg.classList.add("xwide");
-    var sample = C.audience(data, x)[0] || null;
-    var seg = el("div", "seg");
+    var aud = C.audience(data, x);
+    var vers = versionsOf(x, l), lang = vers[0][0];
     var frame = el("iframe", "pv-frame");
     frame.setAttribute("sandbox", "");
     frame.setAttribute("referrerpolicy", "no-referrer");
     frame.title = t("pv.title");
-    var mode = "phone";
-    [["phone", t("pv.phone")], ["desktop", t("pv.desktop")]].forEach(function (o) {
-      var b = el("button", "seg-btn" + (o[0] === mode ? " on" : ""), o[1]);
-      b.type = "button";
-      b.addEventListener("click", function () {
-        mode = o[0];
-        [].forEach.call(seg.children, function (c) { c.classList.toggle("on", c === b); });
-        frame.classList.toggle("phone", mode === "phone");
+    var top = el("div", "pv-top");
+    var segBar = function (opts, cur, label, fn) {
+      var seg = el("div", "seg");
+      seg.setAttribute("role", "group");
+      seg.setAttribute("aria-label", label);
+      opts.forEach(function (o) {
+        var b = el("button", "seg-btn" + (o[0] === cur ? " on" : ""), o[1]);
+        b.type = "button";
+        b.addEventListener("click", function () {
+          [].forEach.call(seg.children, function (c) { c.classList.toggle("on", c === b); });
+          fn(o[0]);
+        });
+        seg.appendChild(b);
       });
-      seg.appendChild(b);
+      top.appendChild(seg);
+    };
+    segBar([["phone", t("pv.phone")], ["desktop", t("pv.desktop")]], "phone", t("pv.title"), function (m) {
+      frame.classList.toggle("phone", m === "phone");
     });
-    dlg.appendChild(seg);
-    var who = el("p", "hint", t("pv.as", { n: sample ? (sample.name || sample.email) : t("pv.sample") }));
+    if (vers.length > 1) segBar(vers, lang, t("pv.lang"), function (k) { lang = k; draw(); });
+    dlg.appendChild(top);
+    var who = el("p", "hint");
     dlg.appendChild(who);
     var subj = el("p", "pv-subj");
     dlg.appendChild(subj);
@@ -1498,15 +1873,22 @@
     dlg.appendChild(frame);
     actionsRow(dlg, [], "", null);
     openDialog(dlg);
-    loadImages(x).then(function () {
+    function draw() {
+      // a subscriber who reads this version, if there is one
+      var sample = null;
+      if (vers.length > 1) {
+        for (var i = 0; i < aud.length && !sample; i++) if (C.langOf(aud[i], l) === lang) sample = aud[i];
+      } else sample = aud[0] || null;
+      who.textContent = t("pv.as", { n: sample ? (sample.name || sample.email) : t("pv.sample") });
       var tok = sample ? C.token(l, sample.id) : "nl-preview";
-      var e = R.email({ issue: x, list: l, sub: sample, lang: (sample && sample.lang) || l.lang,
+      var e = R.email({ issue: x, list: l, sub: sample, lang: vers.length > 1 ? lang : C.langOf(sample, l),
                         img: function (b) { return imgData[b.f] ? imgData[b.f].url : ""; },
                         unsub: R.mailto(l.reply || l.from, "unsubscribe " + tok), tok: tok, mailbox: l.reply || l.from });
       subj.textContent = e.subject;
       frame.srcdoc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width\"></head><body style=\"margin:0;background:" + (R.THEMES[l.theme] || R.THEMES.classic).bg + "\">" +
                      e.html + "</body></html>";
-    });
+    }
+    loadImages(x).then(draw);
   }
   function testDialog(x) {
     if (!x) return;
@@ -1515,6 +1897,11 @@
     var dlg = makeDialog("nl-test", t("ts.title"));
     var to = inp("email", l.from, 254);
     dlg.appendChild(field(t("ts.to"), to));
+    var vers = versionsOf(x, l), ver = null;
+    if (vers.length > 1) {
+      ver = sel(vers, vers[0][0]);
+      dlg.appendChild(field(t("ts.lang"), ver));
+    }
     actionsRow(dlg, [], t("ts.title"), function () {
       var addr = C.normEmail(to.value);
       to.classList.toggle("bad", !addr);
@@ -1526,7 +1913,7 @@
         return sendCreds(ch);
       }).then(function (cr) {
         var sample = C.audience(data, x)[0] || null;
-        var msg = E.buildFor(x, l, sample, { test: true, to: addr, hdr: cr.hdr });
+        var msg = E.buildFor(x, l, sample, { test: true, to: addr, hdr: cr.hdr, lang: ver ? ver.value : mainLang(x, l) });
         return E.sendBin(ch, l.from, addr, msg.bin);
       }).then(function () {
         E.countUsed(ch.id);
@@ -1537,7 +1924,9 @@
   }
   function imgBytes(x) {
     var seen = {}, n = 0;
-    R.blocksOf(x).forEach(function (b) { if (b.k === "img" && b.f && !seen[b.f]) { seen[b.f] = 1; n += b.b || 0; } });
+    R.blocksOf(x).concat(x.l2 ? R.blocksOf(x.l2) : []).forEach(function (b) {
+      if (b.k === "img" && b.f && !seen[b.f]) { seen[b.f] = 1; n += b.b || 0; }
+    });
     return n;
   }
   // The pre-send check; with `send` it continues to the send dialog.
@@ -1566,6 +1955,21 @@
       openDialog(dlg);
     });
   }
+  // <input type=datetime-local> works in local time "YYYY-MM-DDTHH:MM"
+  function localInput(ms) {
+    var d = new Date(ms), z = function (n) { return ("0" + n).slice(-2); };
+    return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()) + "T" + z(d.getHours()) + ":" + z(d.getMinutes());
+  }
+  function fromLocalInput(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(v || ""));
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
+  }
+  function nextMorning() {
+    var d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return d.getTime();
+  }
   function sendDialog(x, l, ch, aud, res) {
     var dlg = makeDialog("nl-send", t("sd.title"), true);
     var warns = res.filter(function (r) { return r.lvl === "warn"; });
@@ -1578,20 +1982,48 @@
     var mins = Math.max(1, Math.ceil(aud * ch.rate / 60));
     var days = Math.ceil(aud / ch.cap);
     dlg.appendChild(el("p", "dlg-text", days > 1 ? t("sd.time", { s: ch.rate, m: mins, cap: ch.cap, d: days }) : t("sd.time1", { s: ch.rate, m: mins })));
-    dlg.appendChild(el("p", "banner info", t("sd.keep")));
+    // now, or at a time (this device starts it then)
+    var later = false;
+    var mode = el("div", "seg");
+    mode.setAttribute("role", "group");
+    mode.setAttribute("aria-label", t("sd.when"));
+    var whenIn = inp("datetime-local", localInput(nextMorning()), 0);
+    whenIn.min = localInput(Date.now());
+    var whenF = field(t("sd.when"), whenIn, t("sd.whenHint"));
+    whenF.hidden = true;
+    var keep = el("p", "banner info", t("sd.keep"));
+    [[false, t("sd.now")], [true, t("sd.later")]].forEach(function (o) {
+      var b = el("button", "seg-btn" + (o[0] === later ? " on" : ""), o[1]);
+      b.type = "button";
+      b.addEventListener("click", function () {
+        later = o[0];
+        [].forEach.call(mode.children, function (c) { c.classList.toggle("on", c === b); });
+        whenF.hidden = !later;
+        keep.hidden = later;
+        go.textContent = later ? t("sd.schedule") : t("sd.go");
+      });
+      mode.appendChild(b);
+    });
+    dlg.appendChild(mode);
+    dlg.appendChild(whenF);
+    dlg.appendChild(keep);
     var typed = inp("text", "", 10);
     typed.inputMode = "numeric";
     dlg.appendChild(field(t("sd.type", { n: aud }), typed));
     var acts = actionsRow(dlg, [], t("sd.go"), function () {
       if (typed.value.trim() !== String(aud)) { typed.classList.add("bad"); return; }
+      var now = Date.now(), at = later ? fromLocalInput(whenIn.value) : 0;
+      if (later && !(at > now + 30000 && at < now + 366 * 864e5)) { whenIn.classList.add("bad"); showToast(t("sd.whenBad")); return; }
       var y = copy(C.issue(data, x.id));
       if (!y || y.st !== "draft") { dlg.close(); return; }
-      var now = Date.now();
-      y.st = "sending"; y.start = now; y.lock = { dev: E.devState().dev, at: now }; y.err = ""; y.fail = {}; y.n = 0;
+      y.lock = { dev: E.devState().dev, at: now }; y.err = ""; y.fail = {}; y.n = 0;
+      if (later) { y.st = "sched"; y.when = at; }
+      else { y.st = "sending"; y.start = now; }
       put("issues", y);
       dlg.close();
       viewId = y.id;
       showView("view");
+      if (later) showToast(t("toast.sched", { t: when(at) }));
       kick();
     });
     var go = acts.lastChild;
@@ -1706,7 +2138,7 @@
   // A picture → at most 1200 px wide JPEG (PNG kept when small and
   // transparent-looking is not worth the bytes), on the orOS disk.
   function pickImage(x, i) {
-    var fs = orosFS();
+    var fs = orosFS(), onL2 = side(x) !== x;
     if (!fs) { showToast(t("toast.noDisk")); return; }
     var host = dialogHost(), acc = "image/png,image/jpeg,image/webp,image/gif";
     var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
@@ -1715,9 +2147,9 @@
       return shrink(file).then(function (r) {
         var path = "/internal/Newsletter/img-" + C.randomId("", null) + ".jpg";
         return fs.write(path, r.blob).then(function () {
-          var cur = C.issue(data, x.id);
-          if (!cur || !cur.blocks[i] || cur.blocks[i].k !== "img") return;
-          x.blocks[i].f = path; x.blocks[i].w = r.w; x.blocks[i].h = r.h; x.blocks[i].b = r.blob.size;
+          var cur = C.issue(data, x.id), cb = cur && (onL2 ? cur.l2 : cur), xb = onL2 ? x.l2 : x;
+          if (!cb || !xb || !cb.blocks[i] || cb.blocks[i].k !== "img" || !xb.blocks[i]) return;
+          xb.blocks[i].f = path; xb.blocks[i].w = r.w; xb.blocks[i].h = r.h; xb.blocks[i].b = r.blob.size;
           put("issues", x);
           if (view === "edit") renderBlocks(x, $("blocks"));
         });

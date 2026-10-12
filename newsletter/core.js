@@ -39,7 +39,7 @@
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols"];
@@ -223,7 +223,7 @@
       subj: c.subj, pre: c.pre, fmt: c.fmt, blocks: c.blocks, md: c.md,
       tags: normTags(x.tags), seg: validId(x.seg) ? x.seg : "",
       l2: normL2(x.l2),
-      st: st, when: when, lock: st === "sending" ? lock : null,
+      st: st, when: when, lock: st === "sending" || st === "sched" ? lock : null,
       start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
       err: oneLine(x.err, 300), fail: fail
     };
@@ -406,7 +406,7 @@
   // with any of its tags (no tags: everyone), in id order.
   function audience(d, x) {
     var g = x.seg ? seg(d, x.seg) : null;
-    if (g && g.list !== x.list) g = null;
+    if (x.seg && (!g || g.list !== x.list)) return [];      // its segment was deleted: nobody, never everyone
     var l = list(d, x.list);
     var want = {};
     (x.tags || []).forEach(function (t) { want[fold(t)] = 1; });
@@ -426,9 +426,11 @@
     var v = x.l2 && x.l2.lang === lang ? x.l2 : x;
     return { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
   }
-  // A scheduled issue whose time has come.
-  function schedDue(d, now) {
-    return live(d.issues).filter(function (x) { return x.st === "sched" && x.when <= now; })
+  // A scheduled issue whose time has come, on the device that
+  // scheduled it (lock.dev: the sending passwords live there).
+  function schedMine(x, dev) { return x.st === "sched" && (!dev || !x.lock || x.lock.dev === dev); }
+  function schedDue(d, now, dev) {
+    return live(d.issues).filter(function (x) { return schedMine(x, dev) && x.when <= now; })
       .sort(function (a, b) { return a.when - b.when || (a.id < b.id ? -1 : 1); });
   }
   function sentSet(d, issueId) {
@@ -655,7 +657,8 @@
     if (!info.chan) add("err", "noChan");
     if (info.inbox === false) add("warn", "noInbox");
     if ((info.imgBytes || 0) > LIM.imgBytes) add("warn", "bigImgs");
-    if (!(info.aud > 0)) add("err", "noAudience");
+    if (x.seg && !seg(d, x.seg)) add("err", "segGone");
+    else if (!(info.aud > 0)) add("err", "noAudience");
     // keep each finding once, errors first
     var seen = {};
     return out.filter(function (r) { var k = r.lvl + r.k; if (seen[k]) return false; seen[k] = 1; return true; })
@@ -733,7 +736,7 @@
     empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, normSub: normSub,
     normChan: normChan, normList: normList, normIssue: normIssue,
     status: status, mergeNewsletter: mergeNewsletter, normSeg: normSeg, normTpl: normTpl, normL2: normL2,
-    segMatch: segMatch, seg: seg, segsOf: segsOf, langOf: langOf, contentFor: contentFor, schedDue: schedDue,
+    segMatch: segMatch, seg: seg, segsOf: segsOf, langOf: langOf, contentFor: contentFor, schedDue: schedDue, schedMine: schedMine,
     live: live, list: list, chan: chan, issue: issue, sub: sub, subsOf: subsOf, counts: counts, allTags: allTags,
     byToken: byToken, byCode: byCode,
     audience: audience, sentSet: sentSet, progress: progress, canSend: canSend, invitesDue: invitesDue, usedToday: usedToday,

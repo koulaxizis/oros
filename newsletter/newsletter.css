@@ -304,6 +304,7 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
 .chip.st-sending { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .chip.st-paused { color: var(--warn); border-color: var(--warn); }
 .chip.st-sent { color: var(--good); border-color: var(--good); background: var(--good-soft); }
+.chip.st-sched { color: var(--accent); border-color: var(--accent); border-style: dashed; }
 .chip.sst-on { color: var(--good); border-color: var(--good); }
 .chip.sst-pend { color: var(--warn); border-color: var(--warn); border-style: dashed; }
 .chip.sst-off { text-decoration: line-through; }
@@ -617,6 +618,16 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 .pick-t small { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- 11. Mobile + touch ---------- */
+/* phase 2: versions, audience, templates, segments, preview */
+.ver-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ver-bar .hint { flex: 1 1 100%; margin: 0; }
+.aud-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+.aud-row select { flex: 1 1 200px; min-width: 0; }
+.tpl-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.tpl-row { display: flex; align-items: center; gap: 6px; }
+.tpl-row .row { flex: 1 1 auto; min-width: 0; }
+.pv-top { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+#nl-send .seg { margin-bottom: 10px; }
 @media (max-width: 760px) {
   .view { padding: 12px 12px 32px; }
   .tiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

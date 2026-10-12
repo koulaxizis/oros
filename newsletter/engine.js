@@ -554,7 +554,7 @@
     function startDue(dev, now) {
       var started = [];
       change(function (d) {
-        var due = C.schedDue(d, now);
+        var due = C.schedDue(d, now, dev);
         if (!due.length) return false;
         due.forEach(function (x) {
           var y = copy(x);
@@ -568,16 +568,16 @@
         started.forEach(function (y) { call("notify", "started", { issue: y }); });
       }
     }
-    function nextSchedIn(d, now) {
+    function nextSchedIn(d, now, dev) {
       var t = Infinity;
-      C.live(d.issues).forEach(function (x) { if (x.st === "sched") t = Math.min(t, x.when - now); });
+      C.live(d.issues).forEach(function (x) { if (C.schedMine(x, dev)) t = Math.min(t, x.when - now); });
       return t;
     }
     function hasInbox(d) {
       return C.live(d.lists).some(function (l) { return !!inboxAccount(C.chan(d, l.chan)); });
     }
     function idle(d, now) {
-      var ms = Math.min(IDLE_EVERY, Math.max(1000, nextSchedIn(d, now)));
+      var ms = Math.min(IDLE_EVERY, Math.max(1000, nextSchedIn(d, now, devState().dev)));
       if (hasInbox(d) && navigator.onLine) {
         var due = (devState().inbox.at || 0) + INBOX_EVERY - now;
         if (due <= 0) { busy = true; inbox(false).then(function () { busy = false; later(1000); }); return; }
