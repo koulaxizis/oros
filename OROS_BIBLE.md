@@ -5291,3 +5291,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The pre-send check adds `apiImg`: Brevo's API can't carry inline pictures.
   - Fix: with no Mail Inbox account, the check time is still recorded.
 - Newsletter phase 3 complete. Not tested: real Brevo / Postmark / SendGrid / Mailgun accounts, the live relay, phones, Safari.
+
+### 2026-10-12 — Montage phase 2 wave 2: keyframes (#255) — 1.39.00
+- Montage v1.2.0: keyframes on clips (position, size, opacity, volume), so a clip can move, zoom, fade and change volume while it plays; same values in preview and export. Optional item field `kf` (Part IV, MONTAGE v1). Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari.
