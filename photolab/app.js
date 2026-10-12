@@ -25,7 +25,7 @@
   var NS = window.PhotoLab;
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
-    R: NS.resample, A: NS.adjust, ST: NS.store, PSD: NS.psd, ORA: NS.ora,
+    R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora,
     FX: window.orosDK && window.orosDK.fx
   };
   var C = PL.C, T = PL.T, H = PL.H;
@@ -102,6 +102,10 @@
       tool: "brush", fg: "#000000", bg: "#ffffff", panel: "layers", panelOpen: !phone,
       brush: { size: 20, hard: 80, opacity: 100, flow: 100, lockAlpha: false },
       eraser: { size: 30, hard: 80, opacity: 100, flow: 100 },
+      clone: { size: 40, hard: 60, opacity: 100, flow: 100 },
+      heal: { size: 40, hard: 50, opacity: 100, flow: 100, kind: "heal", strength: 50 },
+      tone: { size: 60, hard: 30, opacity: 100, flow: 100, kind: "dodge", range: "mid", strength: 30, sat: "down" },
+      smudge: { size: 30, hard: 50, opacity: 100, flow: 100, strength: 50 },
       fill: { tol: 32, contiguous: true, opacity: 100, all: false },
       wand: { tol: 32, contiguous: true, all: false },
       gradient: { type: "linear", opacity: 100, toClear: false },
@@ -124,10 +128,15 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     PL.prefs = mergePrefs(dflt(), p && typeof p === "object" ? p : {});
     var P = PL.prefs;
-    ["brush", "eraser"].forEach(function (k) {
+    ["brush", "eraser", "clone", "heal", "tone", "smudge"].forEach(function (k) {
       P[k].size = Math.max(1, Math.min(2000, Math.round(P[k].size) || 20));
       ["hard", "opacity", "flow"].forEach(function (f) { P[k][f] = Math.max(1, Math.min(100, Math.round(P[k][f]) || 100)); });
     });
+    ["heal", "tone", "smudge"].forEach(function (k) { P[k].strength = Math.max(1, Math.min(100, Math.round(P[k].strength) || 50)); });
+    if (["heal", "redeye"].indexOf(P.heal.kind) < 0) P.heal.kind = "heal";
+    if (["dodge", "burn", "sponge"].indexOf(P.tone.kind) < 0) P.tone.kind = "dodge";
+    if (["shadows", "mid", "high"].indexOf(P.tone.range) < 0) P.tone.range = "mid";
+    if (["up", "down"].indexOf(P.tone.sat) < 0) P.tone.sat = "down";
     if (!/^#[0-9a-f]{6}$/i.test(P.fg)) P.fg = "#000000";
     if (!/^#[0-9a-f]{6}$/i.test(P.bg)) P.bg = "#ffffff";
     if (["replace", "add", "sub", "and"].indexOf(P.selMode) < 0) P.selMode = "replace";

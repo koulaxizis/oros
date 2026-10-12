@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.01.00
+- New app Case Converter (Accessories): UPPERCASE, lowercase, Title Case and more, with Greek done right (ΤΣΑΪ, final ς), Greek in Latin letters (ELOT 743, Greeklish), names for code and Unicode styles.
+
+## Version 1.00.00
+- Photo Lab: new Filter menu (blur, sharpen, noise, pixelate, emboss, edges, vignette) and retouch tools (clone stamp, healing brush, red eye, dodge, burn, sponge, smudge)
+
 ## Version 0.99.00
 - Photo Lab opens and saves Photoshop (PSD) and OpenRaster files with layers.
 
