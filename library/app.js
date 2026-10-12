@@ -358,7 +358,7 @@
     var P = LIB.prefs;
     if (p.view === "list" || p.view === "grid") P.view = p.view;
     if (["recent", "title", "author", "progress"].indexOf(p.sort) >= 0) P.sort = p.sort;
-    if (["all", "reading", "unread", "done", "epub", "pdf"].indexOf(p.filter) >= 0) P.filter = p.filter;
+    if (["all", "reading", "unread", "done", "epub", "pdf", "fb2", "cbz"].indexOf(p.filter) >= 0) P.filter = p.filter;
     if (typeof p.size === "number" && p.size >= 70 && p.size <= 250) P.size = Math.round(p.size / 10) * 10;
     if (["pub", "serif", "sans"].indexOf(p.font) >= 0) P.font = p.font;
     if (typeof p.lh === "number" && p.lh >= 1.2 && p.lh <= 2.2) P.lh = Math.round(p.lh * 10) / 10;

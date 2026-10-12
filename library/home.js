@@ -9,7 +9,8 @@
   "use strict";
 
   var LIB = window.LIB, C = LIB.C, t = LIB.t, el = LIB.el, $ = LIB.$, UI = LIB.UI;
-  var FILTERS = ["all", "reading", "unread", "done", "epub", "pdf"];
+  var FILTERS = ["all", "reading", "unread", "done", "epub", "pdf", "fb2", "cbz"];
+  var RARE = { fb2: 1, cbz: 1 };        // chips shown only when the library has such books
   var SORTS = ["recent", "title", "author", "progress"];
   var COVER_COLORS = ["#8e5a3c", "#3c6e8e", "#5a8e3c", "#8e3c6e", "#6e3c8e", "#3c8e7a", "#8e7a3c", "#5b5f8f"];
   var here = {};          // book id → true when its file is on this device (filled lazily)
@@ -87,8 +88,12 @@
   // ---------- Rendering ----------
   function refresh() {
     var P = LIB.prefs;
+    var kinds = {};
+    LIB.data.books.forEach(function (b) { if (b.kind) kinds[b.kind] = 1; });
+    if (RARE[P.filter] && !kinds[P.filter]) P.filter = "all";
     [].forEach.call($("filters").children, function (b) {
-      var on = b.getAttribute("data-f") === P.filter;
+      var f = b.getAttribute("data-f"), on = f === P.filter;
+      b.hidden = !!RARE[f] && !kinds[f];
       b.classList.toggle("on", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
@@ -138,7 +143,7 @@
     box.style.setProperty("--cv", c);
     box.appendChild(el("span", "cv-title", b.title));
     if (b.by) box.appendChild(el("span", "cv-by", b.by));
-    box.appendChild(el("span", "cv-fmt", b.fmt.toUpperCase()));
+    box.appendChild(el("span", "cv-fmt", C.fmtLabel(b)));
     box.setAttribute("data-cover", b.id);
     LIB.store.getCover(b.id).then(function (d) {
       if (d) setCover(box, d);
@@ -185,7 +190,7 @@
     var row = el("div", "card-row");
     row.appendChild(el("span", "card-pct", pctText(b)));
     if (LIB.prefs.view === "list") {
-      var bits = [b.fmt.toUpperCase()];
+      var bits = [C.fmtLabel(b)];
       if (b.pages) bits.push(t("book.pages", { n: LIB.num(b.pages) }));
       var mk = LIB.data.marks.filter(function (k) { return k.b === b.id && k.k === "hl"; }).length;
       if (mk) bits.push(t("book.hls", { n: mk }));
@@ -277,7 +282,7 @@
   function pickDevice() {
     var p = LIB.parentWin();
     var dlg = p && p.orosDialog;
-    var accept = ".epub,.pdf,application/epub+zip,application/pdf";
+    var accept = ".epub,.pdf,.fb2,.cbz,.zip,application/epub+zip,application/pdf,application/x-fictionbook+xml,application/vnd.comicbook+zip";
     var pr = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) :
       dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept).then(function (f) { return f ? [f] : null; }) :
       standalonePick(accept);
@@ -388,7 +393,7 @@
         return api.stat(path).then(function (st) {
           return LIB.store.readBytes(path).then(function (bytes) { return LIB.store.describe(bytes, path); }).then(function (info) {
             var rec = { id: id, h: hex, fmt: info.fmt, title: info.title || C.titleFromName(path), path: path, size: st.size, added: Date.now() };
-            ["by", "lang", "year", "pages"].forEach(function (k) { if (info[k]) rec[k] = info[k]; });
+            ["by", "lang", "year", "pages", "kind"].forEach(function (k) { if (info[k]) rec[k] = info[k]; });
             LIB.putBook(rec);
             LIB.busy(false);
             here[id] = true;
@@ -430,7 +435,7 @@
     if (b.by) info.appendChild(el("p", "dt-by", b.by));
     var dl = el("dl", "dt-list");
     function row(k, v) { if (!v && v !== 0) return; dl.appendChild(el("dt", "", k)); dl.appendChild(el("dd", "", String(v))); }
-    row(t("details.format"), b.fmt === "pdf" ? "PDF" : "EPUB");
+    row(t("details.format"), C.fmtLabel(b));
     if (b.pages) row(t("details.pages"), LIB.num(b.pages));
     if (b.year) row(t("details.year"), b.year);
     if (b.lang) row(t("details.lang"), b.lang);

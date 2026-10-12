@@ -127,8 +127,9 @@
     }
 
     // ---------- Open ----------
-    function open(bytes, startLoc) {
-      return LIB.store.openEpub(bytes).then(function (e) {
+    // kind "fb2" / "cbz": built into an EPUB in memory (store.openEpub)
+    function open(bytes, startLoc, kind, name) {
+      return LIB.store.openEpub(bytes, kind, name).then(function (e) {
         zip = e.zip;
         pkg = e.pkg;
         zip.names.forEach(function (nm) { lower[nm.toLowerCase()] = nm; });

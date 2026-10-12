@@ -18,6 +18,7 @@
 //   9. Read aloud: a section's text cut into parts to speak
 //  10. Reading stats: seconds per day and per book, per device (max merge)
 //  11. The Today line
+//  12. FB2 and CBZ turned into the files of a small EPUB
 // Exposes window.LibCore (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -37,6 +38,7 @@
   var NOTE_LEN   = 4000;
   var NCOLORS    = 4;
   var MAX_BYTES  = 50 * 1024 * 1024;
+  var MAX_COMIC  = 200 * 1024 * 1024;     // a CBZ is mostly pictures
   var FORMATS    = ["epub", "pdf"];
   var BOOK_ID_RE = /^b[0-9a-f]{16}$/;
   var MARK_ID_RE = /^k[0-9a-z]{6,24}$/;
@@ -81,10 +83,23 @@
     var m = /\.([a-z0-9]{1,8})$/i.exec(String(name || ""));
     return m ? m[1].toLowerCase() : "";
   }
+  // The engine a file opens with: "pdf", or "epub" (EPUB, and FB2 and
+  // CBZ, which open as a book built in memory: see section 12).
   function formatOf(name) {
-    var e = extOf(name);
-    return e === "epub" ? "epub" : e === "pdf" ? "pdf" : null;
+    var k = kindOf(name);
+    return k === "pdf" ? "pdf" : k ? "epub" : null;
   }
+  // What the file is: "epub" | "pdf" | "fb2" (also .fb2.zip) | "cbz".
+  function kindOf(name) {
+    var n = String(name || "").toLowerCase();
+    if (/\.fb2(\.zip)?$/.test(n)) return "fb2";
+    var e = extOf(n);
+    return e === "epub" || e === "pdf" || e === "cbz" ? e : null;
+  }
+  // "EPUB", "PDF", "FB2", "CBZ" for a book record (kind is an extra
+  // field: older versions keep it and still see fmt "epub").
+  function maxBytesOf(name) { return kindOf(name) === "cbz" ? MAX_COMIC : MAX_BYTES; }
+  function fmtLabel(b) { return String(b && (b.kind || b.fmt) || "epub").toUpperCase(); }
   function titleFromName(name) {
     var n = String(name || "").split("/").pop().replace(/\.[a-z0-9]{1,8}$/i, "");
     n = n.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
@@ -126,7 +141,7 @@
   }
 
   var BOOK_KEYS = { id: 1, m: 1, h: 1, fmt: 1, title: 1, by: 1, lang: 1, year: 1, pages: 1,
-                    path: 1, size: 1, tags: 1, shelf: 1, added: 1, fin: 1 };
+                    path: 1, size: 1, tags: 1, shelf: 1, added: 1, fin: 1, kind: 1 };
   function normBook(b) {
     if (!b || typeof b !== "object" || !BOOK_ID_RE.test(b.id)) return null;
     var m = stamp(b.m);
@@ -146,6 +161,7 @@
     var shelf = str(b.shelf, 40); if (shelf && /^[A-Za-z0-9_-]+$/.test(shelf)) out.shelf = shelf;
     var added = stamp(b.added); if (added) out.added = added;
     if (typeof b.fin === "string" && YMD_RE.test(b.fin)) out.fin = b.fin;
+    if ((b.kind === "fb2" || b.kind === "cbz") && out.fmt === "epub") out.kind = b.kind;   // built in memory, opens as EPUB
     extras(b, out, BOOK_KEYS);
     return out;
   }
@@ -354,8 +370,9 @@
   }
   // Tolerant XML → { n (name), l (local name, lower case), a {attrs},
   // c [children: nodes or strings] }. Never throws; unknown or broken
-  // markup is skipped. Only for the small packaging files of an EPUB
-  // (container, OPF, NCX, nav), never for content shown to a person.
+  // markup is skipped. For the packaging files of an EPUB (container,
+  // OPF, NCX, nav) and FB2 books; what it reads is never shown as
+  // markup: fb2Book escapes it and sanitize.js cleans the result.
   function xmlParse(src) {
     src = String(src || "");
     if (src.length > 8 * 1024 * 1024) src = src.slice(0, 8 * 1024 * 1024);
@@ -595,14 +612,15 @@
     var p = state && state.pos && state.pos[id];
     return p ? p.pct : 0;
   }
-  // filter: all | epub | pdf | unread | reading | done
+  // filter: all | epub | pdf | fb2 | cbz | unread | reading | done
   function viewBooks(state, opts) {
     opts = opts || {};
     var q = fold(opts.q || "").trim();
     var list = liveBooks(state).filter(function (b) {
       var pct = progressOf(state, b.id);
       switch (opts.filter) {
-        case "epub": case "pdf": if (b.fmt !== opts.filter) return false; break;
+        case "epub": case "pdf": if (b.fmt !== opts.filter || b.kind) return false; break;
+        case "fb2": case "cbz": if (b.kind !== opts.filter) return false; break;
         case "unread": if (pct > 0 || b.fin) return false; break;
         case "reading": if (!(pct > 0) || b.fin) return false; break;
         case "done": if (!b.fin) return false; break;
@@ -891,12 +909,243 @@
     return { book: b.id, title: parts.join(" · ") };
   }
 
+  // ---------- 12. FB2 and CBZ as a book in memory ----------
+  // FB2 (FictionBook XML) and CBZ (a ZIP of pictures) are turned into
+  // the files of a small EPUB: container.xml, content.opf, nav.xhtml,
+  // one XHTML file per chapter (or per picture), a stylesheet and the
+  // pictures. The EPUB engine then reads them like any book, through
+  // the same sanitizer (sanitize.js): nothing here is trusted markup,
+  // every text and attribute is escaped on the way out.
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function xhtml(title, lang, body, bodyClass) {
+    return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"" +
+      (lang ? " xml:lang=\"" + esc(lang) + "\" lang=\"" + esc(lang) + "\"" : "") + "><head><title>" + esc(title || "") +
+      "</title><link rel=\"stylesheet\" type=\"text/css\" href=\"book.css\"/></head><body" +
+      (bodyClass ? " class=\"" + esc(bodyClass) + "\"" : "") + ">" + body + "</body></html>";
+  }
+  var CONTAINER = "<?xml version=\"1.0\"?><container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">" +
+    "<rootfiles><rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/></rootfiles></container>";
+  // files: { name: string | Uint8Array }, chapters [{ file, title }],
+  // images [{ file, type, cover? }], meta { title, by, lang, year, desc }
+  function packBook(meta, chapters, images, css) {
+    var files = {};
+    files["META-INF/container.xml"] = CONTAINER;
+    var man = "<item id=\"nav\" href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/>" +
+      "<item id=\"css\" href=\"book.css\" media-type=\"text/css\"/>";
+    var spine = "";
+    chapters.forEach(function (c, i) {
+      man += "<item id=\"c" + i + "\" href=\"" + esc(c.file) + "\" media-type=\"application/xhtml+xml\"/>";
+      spine += "<itemref idref=\"c" + i + "\"/>";
+    });
+    images.forEach(function (im, i) {
+      man += "<item id=\"i" + i + "\" href=\"" + esc(im.file) + "\" media-type=\"" + esc(im.type) + "\"" + (im.cover ? " properties=\"cover-image\"" : "") + "/>";
+    });
+    var md = "<dc:title>" + esc(meta.title || "") + "</dc:title>" +
+      (meta.by ? "<dc:creator>" + esc(meta.by) + "</dc:creator>" : "") +
+      (meta.lang ? "<dc:language>" + esc(meta.lang) + "</dc:language>" : "") +
+      (meta.year ? "<dc:date>" + esc(meta.year) + "</dc:date>" : "") +
+      (meta.desc ? "<dc:description>" + esc(meta.desc) + "</dc:description>" : "");
+    files["OEBPS/content.opf"] = "<?xml version=\"1.0\" encoding=\"utf-8\"?><package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\">" +
+      "<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\">" + md + "</metadata><manifest>" + man + "</manifest><spine>" + spine + "</spine></package>";
+    var nav = "";
+    chapters.forEach(function (c) { if (c.title) nav += "<li><a href=\"" + esc(c.file) + "\">" + esc(c.title) + "</a></li>"; });
+    files["OEBPS/nav.xhtml"] = xhtml(meta.title, meta.lang, "<nav epub:type=\"toc\"><ol>" + nav + "</ol></nav>");
+    files["OEBPS/book.css"] = css || "";
+    chapters.forEach(function (c) { files["OEBPS/" + c.file] = c.html; });
+    images.forEach(function (im) { files["OEBPS/" + im.file] = im.data; });
+    return files;
+  }
+
+  // FB2 → { meta, files } or null. src is the decoded XML text (see
+  // fb2Encoding); pictures come base64 in <binary> and are handed back
+  // as { file, type, b64 } for the caller to decode (data: never used).
+  var FB2_CSS = ".epigraph{margin:1em 0 1em 25%;font-style:italic}.author{text-align:right;font-style:italic}" +
+    ".poem{margin:1em 0 1em 2em}.stanza{margin-bottom:1em}.stanza p{margin:0;text-indent:0}" +
+    ".subtitle{text-align:center;font-weight:bold}.fb2-img{text-align:center;text-indent:0}" +
+    "section.note{margin-bottom:1em}h1,h2,h3,h4{text-align:center}";
+  var IMG_TYPES = { "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" };
+  function fb2Encoding(head) {
+    var m = /<\?xml[^>]*encoding\s*=\s*["']([A-Za-z0-9_.:-]{2,40})["']/.exec(String(head || ""));
+    return m ? m[1].toLowerCase() : "utf-8";
+  }
+  function fb2Book(src) {
+    src = String(src || "");
+    var bins = [], nb = 0;
+    // pictures out first: they are most of a big file
+    src = src.replace(/<binary\b([^>]*)>([\s\S]*?)<\/binary\s*>/gi, function (all, attrs, data) {
+      var id = /\bid\s*=\s*["']([^"']{1,200})["']/.exec(attrs), ct = /content-type\s*=\s*["']([^"']{1,60})["']/i.exec(attrs);
+      var ext = ct && IMG_TYPES[ct[1].toLowerCase()];
+      if (id && ext && nb < 2000) bins.push({ id: id[1], file: "img/p" + (nb++) + "." + ext, type: ct[1].toLowerCase() === "image/jpg" ? "image/jpeg" : ct[1].toLowerCase(), b64: data.replace(/\s+/g, "") });
+      return "";
+    });
+    var doc = xmlParse(src);
+    var fb = find(doc, "fictionbook");
+    if (!fb) return null;
+    var desc = find(fb, "description") || { c: [] };
+    var ti = find(desc, "title-info") || { c: [] };
+    function names(n) {
+      return [attr(n, "x") || "", textOf(find(n, "first-name")), textOf(find(n, "middle-name")), textOf(find(n, "last-name"))]
+        .map(function (x) { return cleanText(x, 60); }).filter(Boolean).join(" ") || cleanText(textOf(find(n, "nickname")), 60);
+    }
+    var meta = {
+      title: cleanText(textOf(find(ti, "book-title")), TITLE_LEN),
+      by: kids(ti, "author").map(names).filter(Boolean).join(", ").slice(0, BY_LEN),
+      lang: cleanText(textOf(find(ti, "lang")), 20),
+      year: "",
+      desc: cleanText(textOf(find(ti, "annotation")), 2000)
+    };
+    if (meta.lang && !/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(meta.lang)) meta.lang = "";
+    var ym = /(\d{4})/.exec(textOf(find(ti, "date")) + " " + attr(find(ti, "date"), "value"));
+    if (ym) meta.year = ym[1];
+    var binById = {};
+    bins.forEach(function (b) { binById[b.id] = b; });
+    function imgFile(n) {
+      var h = attr(n, "href");
+      return h && h.charAt(0) === "#" && binById[h.slice(1)] ? binById[h.slice(1)].file : "";
+    }
+    var cov = find(ti, "coverpage"), covImg = cov ? find(cov, "image") : null;
+    var coverFile = covImg ? imgFile(covImg) : "";
+    bins.forEach(function (b) { if (b.file === coverFile) b.cover = true; });
+
+    var bodies = kids(fb, "body");
+    var main = bodies.filter(function (b) { return !/^(notes|comments|footnotes)$/i.test(attr(b, "name")); })[0] || bodies[0];
+    var notes = bodies.filter(function (b) { return b !== main; });
+    // ids → the chapter file that holds them (links between chapters)
+    var where = {}, chapters = [];
+    function inline(n, file) {
+      if (typeof n === "string") return esc(n);
+      var inner = function () { return n.c.map(function (c) { return inline(c, file); }).join(""); };
+      switch (n.l) {
+        case "emphasis": return "<em>" + inner() + "</em>";
+        case "strong": return "<strong>" + inner() + "</strong>";
+        case "strikethrough": return "<s>" + inner() + "</s>";
+        case "sub": case "sup": case "code": return "<" + n.l + ">" + inner() + "</" + n.l + ">";
+        case "style": return "<span>" + inner() + "</span>";
+        case "image": var f = imgFile(n); return f ? "<img src=\"" + esc(f) + "\" alt=\"\"/>" : "";
+        case "a":
+          var h = attr(n, "href");
+          if (!h) return inner();
+          if (h.charAt(0) === "#") {
+            var tgt = h.slice(1), note = attr(n, "type") === "note";
+            return "<a href=\"" + esc((where[tgt] || "notes.xhtml") + "#" + tgt) + "\"" + (note ? " epub:type=\"noteref\"" : "") + ">" + inner() + "</a>";
+          }
+          return /^https?:\/\//i.test(h) ? "<a href=\"" + esc(h) + "\">" + inner() + "</a>" : inner();
+        default: return inner();
+      }
+    }
+    function idAttr(n) { var id = attr(n, "id"); return id ? " id=\"" + esc(id) + "\"" : ""; }
+    function block(n, depth, file) {
+      if (typeof n === "string") return n.trim() ? "<p>" + esc(n) + "</p>" : "";
+      var all = function (d) { return n.c.map(function (c) { return block(c, d, file); }).join(""); };
+      switch (n.l) {
+        case "section": return "<section" + idAttr(n) + ">" + all(depth + 1) + "</section>";
+        case "title":
+          var hl = "h" + Math.min(4, depth + 1);
+          return "<" + hl + idAttr(n) + ">" + kids(n, "p").map(function (p) { return inline(p, file); }).join("<br/>") + "</" + hl + ">";
+        case "subtitle": return "<p class=\"subtitle\"" + idAttr(n) + ">" + inline(n, file) + "</p>";
+        case "p": return "<p" + idAttr(n) + ">" + inline(n, file) + "</p>";
+        case "v": return "<p" + idAttr(n) + ">" + inline(n, file) + "</p>";
+        case "empty-line": return "<br/>";
+        case "epigraph": return "<blockquote class=\"epigraph\"" + idAttr(n) + ">" + all(depth) + "</blockquote>";
+        case "cite": return "<blockquote" + idAttr(n) + ">" + all(depth) + "</blockquote>";
+        case "text-author": return "<p class=\"author\">" + inline(n, file) + "</p>";
+        case "poem": return "<div class=\"poem\"" + idAttr(n) + ">" + all(depth) + "</div>";
+        case "stanza": return "<div class=\"stanza\">" + all(depth) + "</div>";
+        case "date": return "<p class=\"author\">" + inline(n, file) + "</p>";
+        case "image": var f = imgFile(n); return f ? "<p class=\"fb2-img\"" + idAttr(n) + "><img src=\"" + esc(f) + "\" alt=\"\"/></p>" : "";
+        case "table": case "tr": case "td": case "th":
+          return "<" + n.l + ">" + (n.l === "td" || n.l === "th" ? inline(n, file) : all(depth)) + "</" + n.l + ">";
+        case "annotation": return "<div>" + all(depth) + "</div>";
+        default: return all(depth);
+      }
+    }
+    // the chapters: what comes before the first section, then one
+    // file per top-level section
+    var head = [], secs = [];
+    (main ? main.c : []).forEach(function (c) { if (typeof c === "object" && c.l === "section") secs.push(c); else if (typeof c === "object") head.push(c); });
+    var plan = [];
+    if (head.length) plan.push({ nodes: head, title: "" });
+    secs.forEach(function (sct) { plan.push({ nodes: [sct], title: cleanText(textOf(find(sct, "title")), 200) }); });
+    if (!plan.length) plan.push({ nodes: [], title: "" });
+    plan.forEach(function (pl, i) { pl.file = "c" + i + ".xhtml"; });
+    var notesFile = "notes.xhtml";
+    // first pass: where each id lives
+    plan.forEach(function (pl) {
+      pl.nodes.forEach(function (n) { (function walk(x) { if (typeof x !== "object") return; var id = attr(x, "id"); if (id && !where[id]) where[id] = pl.file; x.c.forEach(walk); })(n); });
+    });
+    notes.forEach(function (b) { (function walk(x) { if (typeof x !== "object") return; var id = attr(x, "id"); if (id && !where[id]) where[id] = notesFile; x.c.forEach(walk); })(b); });
+    plan.forEach(function (pl, i) {
+      var body = pl.nodes.map(function (n) { return block(n, n.l === "section" ? 0 : 0, pl.file); }).join("");
+      if (i === 0 && !pl.title && !body.replace(/<[^>]*>/g, "").trim() && !/<img/.test(body)) body = "<h1>" + esc(meta.title || "") + "</h1>";
+      chapters.push({ file: pl.file, title: pl.title || (i === 0 ? meta.title : ""), html: xhtml(pl.title || meta.title, meta.lang, body) });
+    });
+    if (notes.length) {
+      var nbody = notes.map(function (b) {
+        return b.c.map(function (c) {
+          if (typeof c !== "object") return "";
+          if (c.l === "section") return "<section class=\"note\" epub:type=\"footnote\"" + idAttr(c) + ">" + c.c.map(function (x) { return block(x, 2, notesFile); }).join("\n") + "</section>";
+          return block(c, 1, notesFile);
+        }).join("");
+      }).join("");
+      var nt = cleanText(textOf(find(notes[0], "title")), 200) || "Notes";
+      chapters.push({ file: notesFile, title: nt, html: xhtml(nt, meta.lang, nbody) });
+    }
+    return { meta: meta, chapters: chapters, images: bins, css: FB2_CSS };
+  }
+
+  // CBZ: the pictures in natural order ("page 2" before "page 10"),
+  // ComicInfo.xml for the details when there is one.
+  function natCmp(a, b) {
+    var x = String(a).toLowerCase().split(/(\d+)/), y = String(b).toLowerCase().split(/(\d+)/);
+    for (var i = 0; i < Math.min(x.length, y.length); i++) {
+      if (x[i] === y[i]) continue;
+      if (i % 2) return (+x[i] - +y[i]) || (x[i].length - y[i].length);
+      return x[i] < y[i] ? -1 : 1;
+    }
+    return x.length - y.length;
+  }
+  var CBZ_IMG = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp", avif: "image/avif", bmp: "image/bmp" };
+  function cbzPages(names) {
+    return (names || []).filter(function (n) {
+      return CBZ_IMG[extOf(n)] && !/(^|\/)(__macosx|\.)/i.test(n);
+    }).sort(natCmp);
+  }
+  function comicInfo(xml) {
+    var d = xmlParse(xml), ci = find(d, "comicinfo");
+    if (!ci) return {};
+    function f(k) { return cleanText(textOf(find(ci, k)), 200); }
+    var title = f("title"), series = f("series"), num = f("number");
+    var t = series ? series + (num ? " #" + num : "") + (title && title !== series ? ": " + title : "") : title;
+    var by = [f("writer"), f("penciller")].filter(Boolean).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(", ");
+    var lang = f("languageiso");
+    return { title: t.slice(0, TITLE_LEN), by: by.slice(0, BY_LEN), year: /^\d{4}$/.test(f("year")) ? f("year") : "",
+             lang: /^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(lang) ? lang : "", desc: f("summary") };
+  }
+  var CBZ_CSS = ".comic{margin:0;text-align:center;text-indent:0}.comic img{display:block;margin:0 auto}";
+  // → { meta, chapters, images } with pictures { file, type, src } (src
+  // = the name inside the CBZ, read by the caller).
+  function cbzBook(names, info, fallbackTitle) {
+    var pages = cbzPages(names);
+    if (!pages.length) return null;
+    var meta = { title: (info && info.title) || fallbackTitle || "", by: info && info.by || "", lang: info && info.lang || "",
+                 year: info && info.year || "", desc: info && info.desc || "" };
+    var images = pages.map(function (n, i) {
+      return { file: "img/p" + i + "." + extOf(n), type: CBZ_IMG[extOf(n)], src: n, cover: i === 0 };
+    });
+    var chapters = images.map(function (im, i) {
+      return { file: "p" + i + ".xhtml", title: "", html: xhtml(meta.title, meta.lang, "<p class=\"comic\"><img src=\"" + esc(im.file) + "\" alt=\"\"/></p>", "comic") };
+    });
+    return { meta: meta, chapters: chapters, images: images, css: CBZ_CSS };
+  }
+
   var api = {
     DATA_VER: DATA_VER, MAX_BOOKS: MAX_BOOKS, MAX_MARKS: MAX_MARKS, MAX_BYTES: MAX_BYTES, NCOLORS: NCOLORS,
     TITLE_LEN: TITLE_LEN, BY_LEN: BY_LEN, NOTE_LEN: NOTE_LEN, QUOTE_LEN: QUOTE_LEN, CTX_LEN: CTX_LEN,
     BOOK_ID_RE: BOOK_ID_RE, MARK_ID_RE: MARK_ID_RE, LOC_RE: LOC_RE,
     str: str, canon: canon, cmpStr: cmpStr, bookIdOf: bookIdOf, newMarkId: newMarkId, extOf: extOf,
-    formatOf: formatOf, titleFromName: titleFromName, fold: fold, normTags: normTags, parseTags: parseTags,
+    formatOf: formatOf, kindOf: kindOf, fmtLabel: fmtLabel, maxBytesOf: maxBytesOf, MAX_COMIC: MAX_COMIC, titleFromName: titleFromName, fold: fold, normTags: normTags, parseTags: parseTags,
     normBook: normBook, normPos: normPos, normMark: normMark, emptyState: emptyState, mergeLibrary: mergeLibrary,
     parseLoc: parseLoc, makeLoc: makeLoc, cmpLoc: cmpLoc, sortMarks: sortMarks,
     foldMap: foldMap, findAll: findAll, snippet: snippet, squash: squash, reanchor: reanchor, contextOf: contextOf,
@@ -907,7 +1156,8 @@
     COLOR_NAMES: COLOR_NAMES,
     speechParts: speechParts, speechText: speechText, guessLang: guessLang,
     mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
-    bookSeconds: bookSeconds, todayLine: todayLine, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
+    bookSeconds: bookSeconds, todayLine: todayLine,
+    packBook: packBook, fb2Book: fb2Book, fb2Encoding: fb2Encoding, cbzBook: cbzBook, cbzPages: cbzPages, comicInfo: comicInfo, natCmp: natCmp, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LibCore = api;

@@ -80,7 +80,7 @@
       var factory = book.fmt === "pdf" ? LIB.pdfEngine : LIB.epubEngine;
       var stage = $("rd-stage");
       stage.textContent = "";
-      stage.className = "rd-stage fmt-" + book.fmt;
+      stage.className = "rd-stage fmt-" + book.fmt + (book.kind ? " kind-" + book.kind : "");
       var c = { book: book, path: path, toc: [], here: null, saveTimer: null, gen: my, panel: null, searchQ: "" };
       cur = c;
       c.engine = factory.create(stage, ctxFor(c));
@@ -91,7 +91,7 @@
       var saved = LIB.data.pos[book.id] && LIB.data.pos[book.id].loc;
       var start = loc || saved || null;
       c.keep = saved && (!loc || loc === saved) ? saved : null;
-      return c.engine.open(bytes, start).then(function (info) {
+      return c.engine.open(bytes, start, C.kindOf(path), path).then(function (info) {
         if (cur !== c) return;
         c.toc = info && info.toc || [];
         // books added before page estimates: fill them in once

@@ -459,3 +459,70 @@ test("Today line: the book being read, today's time, streak; provider is read-on
   const lib = (apps.apps || apps).find((a) => a.id === "library");
   assert.deepEqual(lib.today, ["core.js", "today.js"]);
 });
+
+test("FB2 becomes a small EPUB: metadata, chapters, notes, pictures, all escaped", () => {
+  const fb = `<?xml version="1.0" encoding="windows-1253"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><author><first-name>Αλέξανδρος</first-name><last-name>Παπαδιαμάντης</last-name></author><book-title>Η Φόνισσα &amp; άλλα</book-title>
+<lang>el</lang><date value="1903-01-01">1903</date><coverpage><image l:href="#cov"/></coverpage><annotation><p>Μυθιστόρημα.</p></annotation></title-info></description>
+<body><title><p>Η Φόνισσα</p></title><epigraph><p>Στίχος</p><text-author>Κάποιος</text-author></epigraph>
+<section id="s1"><title><p>Κεφάλαιο 1</p></title><p onclick="x()">Η <emphasis>Χαδούλα</emphasis><a l:href="#n1" type="note">[1]</a> &lt;script&gt;alert(1)&lt;/script&gt;.</p><poem><stanza><v>Ένα</v></stanza></poem></section>
+<section><title><p>Κεφάλαιο 2</p></title><p>Δες <a l:href="#s1">πίσω</a>, <a l:href="javascript:alert(1)">κακό</a>, <a l:href="https://example.org/">έξω</a>.</p><image l:href="#pic"/></section></body>
+<body name="notes"><title><p>Σημειώσεις</p></title><section id="n1"><p>Η σημείωση.</p></section></body>
+<binary id="cov" content-type="image/png">iVBORw0K
+Ggo=</binary><binary id="pic" content-type="image/jpeg">/9j/</binary><binary id="x" content-type="text/html">PHNjcmlwdD4=</binary></FictionBook>`;
+  assert.equal(C.fb2Encoding(fb.slice(0, 200)), "windows-1253");
+  assert.equal(C.fb2Encoding("<FictionBook>"), "utf-8");
+  const b = C.fb2Book(fb);
+  assert.deepEqual(b.meta, { title: "Η Φόνισσα & άλλα", by: "Αλέξανδρος Παπαδιαμάντης", lang: "el", year: "1903", desc: "Μυθιστόρημα." });
+  assert.deepEqual(b.images.map((i) => [i.id, i.file, i.type, !!i.cover, i.b64]),
+    [["cov", "img/p0.png", "image/png", true, "iVBORw0KGgo="], ["pic", "img/p1.jpg", "image/jpeg", false, "/9j/"]], "only pictures, no other binaries");
+  assert.deepEqual(b.chapters.map((c) => [c.file, c.title]),
+    [["c0.xhtml", "Η Φόνισσα & άλλα"], ["c1.xhtml", "Κεφάλαιο 1"], ["c2.xhtml", "Κεφάλαιο 2"], ["notes.xhtml", "Σημειώσεις"]]);
+  const c1 = b.chapters[1].html, c2 = b.chapters[2].html;
+  assert.match(c1, /<a href="notes\.xhtml#n1" epub:type="noteref">\[1\]<\/a>/);
+  assert.match(c1, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(c1, /<script|onclick/);
+  assert.match(c2, /<a href="c1\.xhtml#s1">πίσω<\/a>/, "links between chapters find their file");
+  assert.doesNotMatch(c2, /javascript/);
+  assert.match(c2, /<a href="https:\/\/example\.org\/">έξω<\/a>/);
+  assert.match(c2, /<img src="img\/p1\.jpg" alt=""\/>/);
+  assert.match(b.chapters[3].html, /<section class="note" epub:type="footnote" id="n1">/);
+  // packed: the EPUB readers in core read it back
+  const files = C.packBook(b.meta, b.chapters, b.images.map((i) => ({ file: i.file, type: i.type, cover: i.cover, data: new Uint8Array(1) })), b.css);
+  assert.equal(C.parseContainer(files["META-INF/container.xml"]), "OEBPS/content.opf");
+  const opf = C.parseOpf(files["OEBPS/content.opf"], "OEBPS/content.opf");
+  assert.equal(opf.meta.title, "Η Φόνισσα & άλλα");
+  assert.equal(opf.meta.year, 1903);
+  assert.deepEqual(opf.spine.map((s) => s.path), ["OEBPS/c0.xhtml", "OEBPS/c1.xhtml", "OEBPS/c2.xhtml", "OEBPS/notes.xhtml"]);
+  assert.equal(opf.coverPath, "OEBPS/img/p0.png");
+  assert.deepEqual(C.parseNav(files["OEBPS/nav.xhtml"], "OEBPS/nav.xhtml").map((e) => e.t), ["Η Φόνισσα & άλλα", "Κεφάλαιο 1", "Κεφάλαιο 2", "Σημειώσεις"]);
+  assert.equal(C.fb2Book("<html><body>no</body></html>"), null);
+  // a title with markup characters stays text everywhere
+  const evil = C.fb2Book('<FictionBook><description><title-info><book-title>&lt;img src=x onerror=alert(1)&gt;"</book-title></title-info></description><body><p>x</p></body></FictionBook>');
+  const pk = C.packBook(evil.meta, evil.chapters, [], "");
+  assert.doesNotMatch(pk["OEBPS/content.opf"] + pk["OEBPS/nav.xhtml"] + pk["OEBPS/c0.xhtml"], /<img src=x/);
+});
+
+test("CBZ: pictures in natural order, ComicInfo details, kinds and filters", () => {
+  assert.deepEqual(C.cbzPages(["b/page10.jpg", "b/page2.jpg", "__MACOSX/b/._page1.jpg", "b/page1.JPG", "ComicInfo.xml", "b/.hidden.png", "b/notes.txt"]),
+    ["b/page1.JPG", "b/page2.jpg", "b/page10.jpg"]);
+  const info = C.comicInfo("<?xml version=\"1.0\"?><ComicInfo><Series>Asterix</Series><Number>3</Number><Title>Gladiator</Title><Writer>Goscinny</Writer><Penciller>Uderzo</Penciller><Year>1964</Year><LanguageISO>el</LanguageISO></ComicInfo>");
+  assert.deepEqual(info, { title: "Asterix #3: Gladiator", by: "Goscinny, Uderzo", year: "1964", lang: "el", desc: "" });
+  const bk = C.cbzBook(["p2.png", "p1.png"], {}, "My comic");
+  assert.equal(bk.meta.title, "My comic");
+  assert.deepEqual(bk.images.map((i) => [i.src, i.file, i.cover]), [["p1.png", "img/p0.png", true], ["p2.png", "img/p1.png", false]]);
+  assert.match(bk.chapters[0].html, /<body class="comic"><p class="comic"><img src="img\/p0\.png" alt=""\/><\/p>/);
+  assert.equal(C.cbzBook(["a.txt"], {}, "x"), null);
+  assert.deepEqual(["a.epub", "b.PDF", "c.fb2", "d.fb2.zip", "e.cbz", "f.zip", "g.cbr"].map(C.kindOf), ["epub", "pdf", "fb2", "fb2", "cbz", null, null]);
+  assert.deepEqual(["c.fb2", "e.cbz", "b.pdf"].map(C.formatOf), ["epub", "epub", "pdf"]);
+  assert.equal(C.maxBytesOf("e.cbz"), C.MAX_COMIC);
+  assert.equal(C.maxBytesOf("a.epub"), C.MAX_BYTES);
+  // kind rides on an EPUB record only; filters tell them apart
+  assert.equal(C.normBook(book(B1, 1, { kind: "cbz" })).kind, "cbz");
+  assert.equal(C.normBook(book(B1, 1, { kind: "exe" })).kind, undefined);
+  assert.equal(C.normBook(book(B1, 1, { fmt: "pdf", kind: "cbz" })).kind, undefined);
+  assert.equal(C.fmtLabel(C.normBook(book(B1, 1, { kind: "fb2" }))), "FB2");
+  const s = C.mergeLibrary(state({ books: [book(B1, 1), book(B2, 1, { kind: "cbz" })] }), null);
+  assert.deepEqual(C.viewBooks(s, { filter: "epub" }).map((b) => b.id), [B1]);
+  assert.deepEqual(C.viewBooks(s, { filter: "cbz" }).map((b) => b.id), [B2]);
+});

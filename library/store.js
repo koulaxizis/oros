@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Library — disk, files and book details (v1.0.0)
-//   - finds every .epub / .pdf on the orOS disk (window.parent.orosFS)
+//   - finds every .epub / .pdf / .fb2 / .cbz on the orOS disk (window.parent.orosFS)
 //     and knows which file is which book on THIS device:
 //     oros-library-paths { ver, map: { path: { s: size, t: mtime, id } } }
 //     (device-local, never synced: two devices may keep one book in
@@ -9,7 +9,8 @@
 //   - adds files from the device into /internal/Books (≤ 50 MB);
 //     a file already in the library is never copied twice
 //   - reads a book's details: EPUB package (title, author, language,
-//     year, cover) or PDF info (title, author, pages, first page)
+//     year, cover) or PDF info (title, author, pages, first page);
+//     FB2 and CBZ are built into an EPUB in memory first (openEpub)
 //   - covers: small JPEG data URLs in IndexedDB "oros-library-cache"
 //     (this device only; rebuilt whenever missing)
 //   - PDF.js (vendor/pdfjs, Apache-2.0) is loaded only when needed,
@@ -100,7 +101,7 @@
         return api.stat(p).then(function (st) {
           var rec = paths.map[p];
           if (rec && rec.s === st.size && rec.t === st.mtime && rec.id) return null;
-          if (!(st.size > 0) || st.size > C.MAX_BYTES) return null;
+          if (!(st.size > 0) || st.size > C.maxBytesOf(p)) return null;
           return api.readBlob(p).then(function (blob) {
             return blob.arrayBuffer();
           }).then(function (buf) {
@@ -124,6 +125,7 @@
 
   function record(id, hex, path, size, info) {
     var r = { id: id, h: hex, fmt: info.fmt, title: info.title || C.titleFromName(path), path: path, size: size, added: Date.now() };
+    if (info.kind) r.kind = info.kind;
     if (info.by) r.by = info.by;
     if (info.lang) r.lang = info.lang;
     if (info.year) r.year = info.year;
@@ -186,7 +188,7 @@
     var fmt = C.formatOf(file && file.name);
     if (!fmt) return Promise.reject(new Error("type"));
     if (!(file.size > 0)) return Promise.reject(new Error("read"));
-    if (file.size > C.MAX_BYTES) return Promise.reject(new Error("big"));
+    if (file.size > C.maxBytesOf(file.name)) return Promise.reject(new Error("big"));
     var buf;
     return file.arrayBuffer().then(function (b) { buf = b; return sha256(b); }).then(function (hex) {
       var id = C.bookIdOf(hex);
@@ -203,7 +205,7 @@
           api.mkdir(BOOKS_DIR).catch(function () {}).then(function () { return freePath(api, BOOKS_DIR, safeName(file.name)); })
             .then(function (p) {
               if (!p) throw new Error("read");
-              var blob = new Blob([buf], { type: fmt === "pdf" ? "application/pdf" : "application/epub+zip" });
+              var blob = new Blob([buf], { type: MIME_OF[C.kindOf(file.name)] || "application/octet-stream" });
               return (api.writeBlob || api.write)(p, blob).then(function () { return p; });
             });
         return write.then(function (p) {
@@ -223,19 +225,104 @@
   }
 
   // ---------- Book details ----------
+  var MIME_OF = { epub: "application/epub+zip", pdf: "application/pdf", fb2: "application/x-fictionbook+xml",
+                  cbz: "application/vnd.comicbook+zip" };
   function describe(buf, path) {
-    var fmt = C.formatOf(path);
-    var p = fmt === "pdf" ? describePdf(buf) : describeEpub(buf);
-    return p.then(function (info) { info.fmt = fmt; return info; }, function () {
-      return { fmt: fmt, title: C.titleFromName(path) };
-    });
+    var fmt = C.formatOf(path), kind = C.kindOf(path);
+    var p = fmt === "pdf" ? describePdf(buf) : describeEpub(buf, kind, path);
+    var withKind = function (info) { info.fmt = fmt; if (kind === "fb2" || kind === "cbz") info.kind = kind; return info; };
+    return p.then(withKind, function () { return withKind({ title: C.titleFromName(path) }); });
   }
   function openZip(buf) {
     return window.AtelierZip.open(buf instanceof Uint8Array ? buf : new Uint8Array(buf));
   }
-  // → { zip, opfPath, pkg } (pkg = core.parseOpf)
-  function openEpub(bytes) {
-    var zip = openZip(bytes);
+  // → { zip, opfPath, pkg } (pkg = core.parseOpf). kind "fb2" / "cbz":
+  // the book is first built in memory (core section 12) and read the
+  // same way, from a ZIP-like object.
+  function openEpub(bytes, kind, name) {
+    var zp;
+    if (kind === "fb2") zp = fb2Zip(bytes);
+    else if (kind === "cbz") zp = cbzZip(bytes, name);
+    else zp = new Promise(function (res) { res(openZip(bytes)); });
+    return zp.then(readPackage);
+  }
+  // A ZIP-like object over files in memory: { name: string |
+  // Uint8Array | { size, read() → Promise<Uint8Array> } }.
+  function memZip(files) {
+    var enc = new TextEncoder(), dec = new TextDecoder("utf-8");
+    var names = Object.keys(files);
+    function get(n) {
+      var v = files[n];
+      if (typeof v === "string") return Promise.resolve(enc.encode(v));
+      if (v instanceof Uint8Array) return Promise.resolve(v);
+      return v.read();
+    }
+    return {
+      names: names,
+      has: function (n) { return Object.prototype.hasOwnProperty.call(files, n); },
+      size: function (n) {
+        var v = files[n];
+        return v === undefined ? 0 : typeof v === "string" ? v.length : v instanceof Uint8Array ? v.length : v.size;
+      },
+      bytes: function (n, max) {
+        if (!this.has(n)) return Promise.reject(new Error("missing"));
+        return get(n).then(function (b) { if (max && b.length > max) throw new Error("big"); return b; });
+      },
+      text: function (n, max) {
+        if (!this.has(n)) return Promise.reject(new Error("missing"));
+        var v = files[n];
+        if (typeof v === "string") return Promise.resolve(max && v.length > max ? v.slice(0, max) : v);
+        return get(n).then(function (b) { return dec.decode(b); });
+      }
+    };
+  }
+  function b64bytes(s) {
+    try {
+      var bin = atob(s), out = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    } catch (e) { return null; }
+  }
+  // FB2 (or .fb2.zip): decode in its own encoding (many are
+  // windows-1251 / -1253), build the book.
+  function fb2Zip(bytes) {
+    var u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    var src = u8[0] === 0x50 && u8[1] === 0x4b ? new Promise(function (res) { res(openZip(u8)); }).then(function (z) {
+      var n = z.names.filter(function (x) { return /\.fb2$/i.test(x); })[0];
+      if (!n) throw new Error("fb2");
+      return z.bytes(n, 60 * 1024 * 1024);
+    }) : Promise.resolve(u8);
+    return src.then(function (b) {
+      var head = "";
+      for (var i = 0; i < Math.min(300, b.length); i++) head += String.fromCharCode(b[i]);
+      var enc = C.fb2Encoding(head), text;
+      try { text = new TextDecoder(enc).decode(b); } catch (e) { text = new TextDecoder("utf-8").decode(b); }
+      var book = C.fb2Book(text);
+      if (!book) throw new Error("fb2");
+      var images = [];
+      book.images.forEach(function (im) {
+        var data = b64bytes(im.b64);
+        if (data) images.push({ file: im.file, type: im.type, cover: !!im.cover, data: data });
+      });
+      return memZip(C.packBook(book.meta, book.chapters, images, book.css));
+    });
+  }
+  // CBZ: the pictures stay in the ZIP and are read when shown.
+  function cbzZip(bytes, name) {
+    return new Promise(function (res) { res(openZip(bytes)); }).then(function (z) {
+      var ci = z.names.filter(function (x) { return /(^|\/)comicinfo\.xml$/i.test(x); })[0];
+      return (ci ? z.text(ci, 1024 * 1024).then(C.comicInfo, function () { return {}; }) : Promise.resolve({})).then(function (info) {
+        var book = C.cbzBook(z.names, info, C.titleFromName(name || ""));
+        if (!book) throw new Error("cbz");
+        var images = book.images.map(function (im) {
+          return { file: im.file, type: im.type, cover: im.cover,
+                   data: { size: z.size(im.src), read: function () { return z.bytes(im.src, 60 * 1024 * 1024); } } };
+        });
+        return memZip(C.packBook(book.meta, book.chapters, images, book.css));
+      });
+    });
+  }
+  function readPackage(zip) {
     var getText = function (name) { return zip.has(name) ? zip.text(name, 8 * 1024 * 1024) : Promise.reject(new Error("missing " + name)); };
     return getText("META-INF/container.xml").then(function (xml) {
       var opf = C.parseContainer(xml);
@@ -245,13 +332,14 @@
       });
     });
   }
-  function describeEpub(buf) {
-    return openEpub(buf).then(function (e) {
+  function describeEpub(buf, kind, path) {
+    return openEpub(buf, kind, path).then(function (e) {
       var m = e.pkg.meta;
       var info = { title: m.title, by: m.by, lang: m.lang, year: m.year, publisher: m.publisher, desc: m.desc };
       var bytes = 0;
       e.pkg.spine.forEach(function (s) { bytes += e.zip.size(s.path) || 0; });
-      if (bytes) info.pages = C.estPagesBytes(bytes);
+      if (kind === "cbz") info.pages = e.pkg.spine.length;        // a picture is a page
+      else if (bytes) info.pages = C.estPagesBytes(bytes);
       var cp = e.pkg.coverPath;
       if (!cp || !e.zip.has(cp)) return info;
       return e.zip.bytes(cp, 20 * 1024 * 1024).then(function (bytes) {

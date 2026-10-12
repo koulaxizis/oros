@@ -1,13 +1,13 @@
 # Library
-Library is your e-book reader. Open EPUB and PDF books from the orOS disk, keep your place on every device, and highlight, bookmark and take notes as you read.
+Library is your e-book reader. Open EPUB, PDF and FB2 books and CBZ comics from the orOS disk, keep your place on every device, and highlight, bookmark and take notes as you read.
 
 ## Getting started
-Books already on the orOS disk show up by themselves: the library looks for EPUB and PDF files each time it opens. To add more, tap or click `Add` and pick `From this device…` or `From the orOS disk…`. Books you add from this device are copied to the `Books` folder of the disk. You can also drag files onto the window, or open an EPUB or PDF from Files with Library.
+Books already on the orOS disk show up by themselves: the library looks for EPUB, PDF, FB2 (also `.fb2.zip`) and CBZ files each time it opens. To add more, tap or click `Add` and pick `From this device…` or `From the orOS disk…`. Books you add from this device are copied to the `Books` folder of the disk. You can also drag files onto the window, or open a book from Files with Library.
 
 Tap a cover to read. The `Continue reading` row at the top takes you back to where you stopped.
 
 ## Find and organise
-The chips filter by `Reading`, `Not started`, `Finished`, `EPUB` or `PDF`. `Search title, author, tag…` ignores accents. Sort by `Recently read`, `Title`, `Author` or `Progress`, and switch between covers and a list.
+The chips filter by `Reading`, `Not started`, `Finished`, `EPUB` or `PDF` (and `FB2` and `Comics` once you have such books). `Search title, author, tag…` ignores accents. Sort by `Recently read`, `Title`, `Author` or `Progress`, and switch between covers and a list.
 
 The info button on a cover opens the book's details, where you can `Edit` the title, author and tags, `Mark as finished`, `Export notes`, `Remove from library` or `Delete the file`.
 
@@ -48,5 +48,7 @@ With orOS sync on, your library list, reading place, highlights, notes, bookmark
 
 ## Limits
 - Copy-protected (DRM) books can't be opened.
-- Books larger than 50 MB can't be added.
+- Books larger than 50 MB can't be added; comics (CBZ) can be up to 200 MB.
+- CBR comics (RAR) can't be opened: save them as CBZ first.
+- A comic shows one page at a time; it has no text to search, highlight or read aloud.
 - PDFs without a text layer (scans) can be read but not searched or highlighted.
