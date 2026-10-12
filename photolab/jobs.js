@@ -20,7 +20,7 @@
         var m = e.data || {}, w = waiting[m.id];
         if (!w) return;
         delete waiting[m.id];
-        if (m.ok) w.ok(m.r); else w.fail(new Error("job"));
+        if (m.ok) w.ok(m.r); else w.fail(new Error(m.e || "job"));
       };
       worker.onerror = function () {
         broken = true; worker = null;
@@ -43,6 +43,8 @@
         A.run(a.img, a.id, a.p, PL.FX);
         if (a.before) A.masked(a.before, a.img, a.mask, a.ox, a.oy);
         return a.img;
+      case "psd": return PL.PSD.read(a.bytes, a.o);
+      case "psdWrite": return PL.PSD.write(a.doc);
     }
     throw new Error("op");
   }

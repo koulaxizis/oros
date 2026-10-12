@@ -2,11 +2,12 @@
 // orOS Photo Lab — worker (v1.0.0)
 // Runs the heavy pure engine functions off the main thread, so the
 // editor never freezes on a big picture. Messages:
-//   in:  { id, op, a }     out: { id, ok, r } | { id, ok: false }
+//   in:  { id, op, a }     out: { id, ok, r } | { id, ok: false, e }
+//   (r may come from a promise: the PSD reader is asynchronous)
 // Images travel as { w, h, data } with their buffers transferred.
 // ============================================================
 /* global importScripts, self */
-importScripts("select.js", "resample.js", "adjust.js", "../designkit/fx.js");
+importScripts("select.js", "resample.js", "adjust.js", "psd.js", "../designkit/fx.js");
 
 var PLW = self.PhotoLab;
 
@@ -23,17 +24,27 @@ function run(op, a) {
       A.run(a.img, a.id, a.p, self.orosDK && self.orosDK.fx);
       if (a.before) A.masked(a.before, a.img, a.mask, a.ox, a.oy);
       return a.img;
+    case "psd": return PLW.psd.read(a.bytes, a.o);
+    case "psdWrite": return PLW.psd.write(a.doc);
   }
   throw new Error("op");
 }
 
+// Buffers of the result go back transferred (a PSD's layers too).
+function buffers(r) {
+  var out = [];
+  if (r instanceof Uint8Array) out.push(r.buffer);
+  if (r && r.data && r.data.buffer) out.push(r.data.buffer);
+  if (r && r.layers) r.layers.forEach(function (L) { out.push(L.img.data.buffer); });
+  if (r && r.merged) out.push(r.merged.data.buffer);
+  return out;
+}
+
 self.onmessage = function (e) {
   var m = e.data || {};
-  try {
-    var r = run(m.op, m.a || {});
-    var tr = r && r.data && r.data.buffer ? [r.data.buffer] : [];
-    self.postMessage({ id: m.id, ok: true, r: r }, tr);
-  } catch (err) {
-    self.postMessage({ id: m.id, ok: false });
-  }
+  new Promise(function (ok) { ok(run(m.op, m.a || {})); }).then(function (r) {
+    self.postMessage({ id: m.id, ok: true, r: r }, buffers(r));
+  }, function (err) {
+    self.postMessage({ id: m.id, ok: false, e: String(err && err.message || "job") });
+  });
 };

@@ -2,7 +2,7 @@
 Edit photos and pictures with layers, selections, brushes and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
 
 ## Getting started
-- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device, and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
+- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (or a Photoshop or OpenRaster file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
 - Your pictures are under `Projects`. Tap or click one to open it; the pencil renames it and the bin deletes it (`Undo` in the message brings it back).
 - In the editor, the button at the top left goes back to `Projects`. Your work is saved as you go.
 
@@ -28,8 +28,13 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
 - `Select`: `Select all`, `Invert selection`, `Feather…`, `Grow…`, `Shrink…`.
 - `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
-- `File`: `Export…` saves a PNG, JPG or WebP to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
+- `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
+
+## Photoshop and OpenRaster files
+- Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
+- Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.
+- `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text and shapes go as pixels.
 
 ## Sync and backup
 - The list of projects follows you through [orOS sync](help:t/sync). The pictures themselves are kept on the orOS disk, in the `Photo Lab` folder, and Vault Drive syncs them file by file, encrypted.
@@ -54,4 +59,4 @@ On a phone all menus are under the menu button.
 - Pictures up to 8192 px a side on computers, and 4096 px (about 16 megapixels) on phones. Bigger pictures are made smaller when they open.
 - Up to 100 layers a picture. Text and shape layers move and scale but do not rotate; rasterize them first.
 - Old undo steps are dropped when they would use too much memory.
-- Photoshop files (PSD) do not open yet.
+- Photoshop files: RGB, Grayscale and CMYK at 8 or 16 bits (CMYK colours are converted simply, without a colour profile). Large documents (PSB) and other colour modes do not open.

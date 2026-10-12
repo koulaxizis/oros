@@ -805,6 +805,8 @@ var PRECACHE_URLS = [
   "photolab/resample.js",
   "photolab/adjust.js",
   "photolab/store.js",
+  "photolab/psd.js",
+  "photolab/ora.js",
   "photolab/strings.js",
   "photolab/app.js",
   "photolab/view.js",
