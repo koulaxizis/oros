@@ -260,6 +260,15 @@
       "searchOff": true
     },
     {
+      "id": "stock",
+      "name": "Stock",
+      "category": "Business",
+      "icon": "stock",
+      "url": "stock/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",

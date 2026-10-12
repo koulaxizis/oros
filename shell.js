@@ -179,6 +179,7 @@
     photolab: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M3 15l4-4 4 4 2-2 4 4"/><path d="M14 3l7 7"/><path d="M19 3l2 2-6 6-3 1 1-3z"/></svg>',
     atelier: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 0 1 0-18c4.97 0 9 3.58 9 8 0 2.5-2 4-4.5 4H14a1.5 1.5 0 0 0-1 2.6A1.5 1.5 0 0 1 12 21z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="16.5" cy="9.5" r="1"/></svg>',
     netizen: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5" height="6" rx="1"/><path d="M13.5 9.5h5M13.5 13h3.5M5.5 16.5h13"/></svg>',
+    stock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M4 21V9l8-5 8 5v12"/><rect x="8" y="13" width="4" height="4"/><rect x="12" y="13" width="4" height="4"/><rect x="10" y="9" width="4" height="4"/></svg>',
     garage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3.5a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .6-1.4L5 9.5l1.6-3.6A2 2 0 0 1 8.4 4.7h7.2a2 2 0 0 1 1.8 1.2L19 9.5l1.9 1.9a2 2 0 0 1 .6 1.4V16a1 1 0 0 1-1 1H19"/><path d="M5 9.5h14"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
     dice: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
     petcare: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="9.5" r="1.8"/><circle cx="8.5" cy="5" r="1.8"/><circle cx="13.5" cy="5" r="1.8"/><path d="M11 10.5c-2.8 0-5 3.3-5 5.6 0 1.6 1.2 2.4 2.7 2.4.9 0 1.5-.5 2.3-.5"/><path d="M18 12v8M14 16h8"/></svg>',
@@ -1093,6 +1094,7 @@
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
@@ -1344,6 +1346,61 @@
     if (now - namedayLastTick < 60000) return;
     namedayLastTick = now;
     namedayCheckTick();
+  }
+
+  // Stock — low-stock notice. Reads "oros-stock-data" directly (works
+  // with the app CLOSED) and asks stock/core.js (loaded by index.html,
+  // the SAME file the app runs) which products are at or below their
+  // minimum; the quantity is the sum of the movements there too. A
+  // product is announced once when it ENTERS that list and again only
+  // after it left it (device-local "oros-stock-notified" = { id: 1 }).
+  // One grouped notification at most per tick. Switch: oros-stock-prefs
+  // .notify (default on); while off the map still follows the list, so
+  // switching on does not replay old news. SH-B7: no products → silent.
+  var STOCK_DATA_KEY = "oros-stock-data";
+  var STOCK_NOTIFIED_KEY = "oros-stock-notified";
+  function stockCheckTick() {
+    var Core = window.OrosStockCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      raw = JSON.parse(localStorage.getItem(STOCK_DATA_KEY));
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-stock-prefs")));
+      notified = JSON.parse(localStorage.getItem(STOCK_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.items) || !raw.items.length) return;
+    var data = Core.merge(raw, raw);
+    var low = Core.lowList(data);
+    var st = Core.toNotify(low.map(function (r) { return r.item.id; }), notified);
+    if (JSON.stringify(st.next) !== JSON.stringify(notified)) {
+      try { localStorage.setItem(STOCK_NOTIFIED_KEY, JSON.stringify(st.next)); } catch (e) {}
+    }
+    if (!prefs.notify || !st.fresh.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var el = state.lang === "el";
+    var names = {};
+    low.forEach(function (r) { names[r.item.id] = r.item.name; });
+    var shown = st.fresh.slice(0, 3).map(function (id) { return names[id]; }).join(", ");
+    if (st.fresh.length > 3) shown += el ? " και " + (st.fresh.length - 3) + " ακόμα" : " and " + (st.fresh.length - 3) + " more";
+    var title = window.t("app.stock");
+    if (title === "app.stock") title = "Stock";        // missing-key fallback
+    N.emit({
+      ns: "stock",
+      key: "low-" + sysYmd() + "-" + garageHash(st.fresh.join("|")),
+      type: "reminder",
+      title: title,
+      body: (el ? "Για παραγγελία: " : "Time to reorder: ") + shown,
+      deepLink: st.fresh.length === 1 ? "stock:" + st.fresh[0] : "stock:reorder"
+    });
+  }
+
+  var stockLastTick = 0;
+  function stockCheckTickThrottled() {
+    var now = Date.now();
+    if (now - stockLastTick < 60000) return;
+    stockLastTick = now;
+    stockCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
