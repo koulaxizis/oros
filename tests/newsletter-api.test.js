@@ -161,7 +161,7 @@ test("pre-send check: Brevo's API refuses issues with pictures", () => {
   assert.ok(!ks(pic, C.normChan(Object.assign({}, API))).includes("apiImg"), "Postmark carries pictures");
 });
 
-test("engine: 45 subscribers go in two relay calls; a refused address bounces; the daily count adds up", async () => {
+test("engine: 45 subscribers go in five relay calls of at most 10; a refused address bounces; the daily count adds up", async () => {
   const now = Date.now();
   const subs = Array.from({ length: 45 }, (_, i) => sub("p" + i + "@x.gr"));
   const S = await sandbox(model({ subs, issues: [issue("iss-1", { st: "sending", start: now, lock: { dev: "devaaa1", at: now } })] }));
@@ -171,8 +171,8 @@ test("engine: 45 subscribers go in two relay calls; a refused address bounces; t
     if (j.To === "p7@x.gr") return new Response("{\"ErrorCode\":406,\"Message\":\"inactive\"}", { status: 422 });
     return ok();
   });
-  await S.run(20);
-  assert.deepEqual(S.relayLog.filter((op) => op === "papi").length, 2);
+  await S.run(30);
+  assert.deepEqual(S.relayLog.filter((op) => op === "papi").length, 5);
   assert.equal(calls.length, 45);
   assert.equal(calls[0].url, "https://api.postmarkapp.com/email");
   assert.equal(calls[0].init.headers["X-Postmark-Server-Token"], KEY);
@@ -195,6 +195,24 @@ test("engine: with only API accounts the 10-minute check runs once, then the iss
   await S.run(12);
   assert.equal(S.read().issues[0].st, "sent");
   assert.deepEqual(calls.map((c) => c.url.replace(/\?.*/, "")), ["https://api.postmarkapp.com/bounces", "https://api.postmarkapp.com/email"]);
+});
+
+test("engine: a whole call failing at the relay retries with half the batch", async () => {
+  const now = Date.now();
+  const S = await sandbox(model({ subs: Array.from({ length: 10 }, (_, i) => sub("h" + i + "@x.gr")),
+                                  issues: [issue("iss-1", { st: "sending", start: now, lock: { dev: "devaaa1", at: now } })] }));
+  await S.E.savePass("chan-1", KEY);
+  const calls = wire(S, ok);
+  const real = S.ctx.fetch, sizes = [];
+  S.ctx.fetch = async (url, o) => {
+    const b = JSON.parse(o.body);
+    if (b.op === "papi") { sizes.push(b.reqs.length); if (b.reqs.length > 5) return { json: async () => { throw new Error("error code: 1102"); } }; }
+    return real(url, o);
+  };
+  await S.run(20);
+  assert.deepEqual(sizes.slice(0, 3), [10, 5, 5]);
+  assert.equal(S.read().issues[0].st, "sent");
+  assert.equal(calls.length, 10);
 });
 
 test("engine: the daily limit caps a batch", async () => {

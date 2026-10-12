@@ -13,7 +13,7 @@ A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer l
 
 ## Sending through a provider's API
 For Brevo, Postmark, SendGrid and Mailgun, set `Connection` to `HTTP API` in the sending account and paste the provider's API key (Mailgun also needs its sending domain). Then:
-- Up to 40 messages leave in one call instead of one at a time.
+- Up to 10 messages leave in one call instead of one at a time.
 - Every 10 minutes, Newsletter reads the provider's hard bounces, spam complaints and unsubscribes and marks those subscribers on your lists.
 - A refused address counts as bounced; a refused key pauses the issue until you fix it.
 
@@ -83,4 +83,4 @@ Lists, subscribers and issues sync through orOS sync, and pictures through the o
 - Up to 20 RSS feeds and 500 issues.
 - No open or click statistics.
 - The relay holds at most 2,000 sign-ups and unsubscribes per list waiting to be collected.
-- A provider's API takes at most 40 messages per call; bounces older than 7 days before the first read are not fetched.
+- Each call to a provider's API sends up to 10 messages (about 1 MB); bounces older than 7 days before the first read are not fetched.

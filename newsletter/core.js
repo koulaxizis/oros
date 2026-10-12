@@ -69,7 +69,7 @@
   // (relay/papi.js): up to API_BATCH messages per relay call, and their
   // bounces, complaints and unsubscribes can be read back.
   var API_PROVS = { brevo: 1, postmark: 1, sendgrid: 1, mailgun: 1, "mailgun-eu": 1 };
-  var API_BATCH = 40;
+  var API_BATCH = 10;           // per relay call: keeps the relay within its CPU limit (the relay allows 40)
 
   // ---------- small helpers ----------
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }

@@ -822,6 +822,7 @@
   function create(env) {
     var timer = null, busy = false, state = { k: "" }, stopped = false;
     var failedInv = {};       // list id → true: no more invitations in this window after an error
+    var apiMax = {};          // chan id → a smaller batch after a failed relay call
     function call(name, a) { try { if (env[name]) env[name](a, arguments[2]); } catch (e) {} }
     function setState(s) { state = s; call("onState", s); }
     function changed() { call("dirty"); call("onChange"); }
@@ -992,7 +993,7 @@
     // (at most what the daily limit has left). Each answer counts on its
     // own: sent, refused (that address bounces), or left for the next try.
     function runApi(job, release) {
-      var l = job.list, ch = job.chan, max = Math.min(C.API_BATCH, capLeft(ch));
+      var l = job.list, ch = job.chan, max = Math.min(apiMax[ch.id] || C.API_BATCH, capLeft(ch));
       var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       var batch = [];
       p.then(function (ok) {
@@ -1016,12 +1017,13 @@
           var rq = R.apiReq(root.orosMailCompose, ch.preset, ch.dom, o);
           var n = JSON.stringify(rq).length;
           if (n > 2 * 1024 * 1024 - 1024) { if (!batch.length) throw { code: "too-big" }; break; }
-          if (size + n > 3.5 * 1024 * 1024) break;
+          if (batch.length && size + n > 1024 * 1024) break;         // about 1 MB a call (relay CPU)
           size += n;
           batch.push({ sub: s, req: rq });
         }
         return papi(cr, batch.map(function (b) { return b.req; }));
       }).then(function (res) {
+        delete apiMax[ch.id];
         var sent = [], refused = [], stop = null, retry = false;
         batch.forEach(function (b, i) {
           var o = C.apiOutcome(ch.preset, res[i]);
@@ -1064,6 +1066,12 @@
         busy = false;
         release();
         if (e && e.code === "skip") { later(50); return; }
+        // the whole call failed at the relay (e.g. its CPU limit): try again with half as many
+        if (batch.length > 1 && e && (e.code === "relay" || e.code === "timeout")) {
+          apiMax[ch.id] = Math.max(1, Math.floor(batch.length / 2));
+          later(5000);
+          return;
+        }
         handleError(job, e);
       });
     }
