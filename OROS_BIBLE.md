@@ -5129,3 +5129,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Atelier: new `AI` tab. "Ideas for this page" (three ideas with new words for every text box, optional new colours, layout kept, Undo), "Write a new text", and "Write with AI" on a selected text (write, shorter, longer, fix spelling, formal, friendly, EL ↔ EN). Text goes through the AI the user set up in Assistant (own key, local server or browser model); only the text in question is sent, the answer is shown first ("Use this").
 - "Remove background" on the device: ONNX Runtime Web 1.22.0 (MIT, `vendor/ort/`) + U²-Net u2netp (Apache-2.0, `vendor/u2netp/`), about 16 MB downloaded on first use and kept in Atelier's IndexedDB (not precached; sw.js skips `vendor/ort|u2netp` in the runtime cache). Edge slider, original kept in Uploads, Undo.
 - New files precached: atelier/aitext.js, cutout.js, ai.js. CREDITS.md + shell credits + Bible credits register. Help EN/EL. Tests: tests/atelier-ai.test.js. Not tested: real AI providers, background removal on a real phone, Safari.
+
+### 2026-10-12 — Stock v1.3.0 (phase 3A, #239) — 1.27.00
+
+- **Camera barcode scanning** (Chrome on Android, no library) in search, receipts / sales and the counter.
+- **BR-ST-OUT:** another app (Invoices) can open a prefilled sale or customer return; unmatched codes listed, repeat documents warned.
+- Not tested: camera scanning on a real phone, Safari.
