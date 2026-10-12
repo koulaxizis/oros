@@ -85,6 +85,7 @@
       "vd.soundHint": "Pages that share a sound play it on without starting over. It plays in Play, Present and Download › Video.",
       "an.stop": "Stop",
       "tab.brand": "Brand kit", "col.brand": "Brand colours",
+      "tab.ai": "AI", "ai.menu": "Write with AI", "ai.cut": "Remove background",
       "br.intro": "Your colours, fonts and logos, on all your devices.", "br.edit": "Edit", "br.done": "Done",
       "br.colors": "Colours", "br.pickEl": "Select an element first, then tap a colour.", "br.remove": "Remove",
       "br.noColors": "No brand colours yet.", "br.addColor": "Add colour", "br.fromDesign": "From this design",
@@ -255,6 +256,7 @@
       "vd.soundHint": "Οι σελίδες με τον ίδιο ήχο τον συνεχίζουν χωρίς να ξεκινά από την αρχή. Παίζει στην Αναπαραγωγή, στην Παρουσίαση και στη Λήψη › Βίντεο.",
       "an.stop": "Διακοπή",
       "tab.brand": "Ταυτότητα", "col.brand": "Χρώματα ταυτότητας",
+      "tab.ai": "AI", "ai.menu": "Γράψε με AI", "ai.cut": "Αφαίρεση φόντου",
       "br.intro": "Τα χρώματα, οι γραμματοσειρές και τα λογότυπά σου, σε όλες τις συσκευές σου.", "br.edit": "Επεξεργασία", "br.done": "Τέλος",
       "br.colors": "Χρώματα", "br.pickEl": "Διάλεξε πρώτα ένα στοιχείο και μετά πάτα ένα χρώμα.", "br.remove": "Αφαίρεση",
       "br.noColors": "Δεν υπάρχουν ακόμα χρώματα ταυτότητας.", "br.addColor": "Προσθήκη χρώματος", "br.fromDesign": "Από αυτό το σχέδιο",
@@ -453,6 +455,8 @@
     anim: '<path d="M4 12h3"/><path d="M5 7h4"/><path d="M5 17h4"/><circle cx="15" cy="12" r="6"/>',
     brand: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
     present: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/>',
+    ai: '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"/>',
+    cutout: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="9.5" r="2.5"/><path d="M7.5 17a4.5 4.5 0 0 1 9 0"/>',
     replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>'
   };
   function icon(name) {

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.25.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.26.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4718,7 +4718,13 @@
           en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" },
         { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
           by: "Vanilagy & contributors", lic: "MPL-2.0",
-          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" }
+          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" },
+        { name: "ONNX Runtime Web 1.22.0", url: "https://onnxruntime.ai/",
+          by: "Microsoft Corporation", lic: "MIT",
+          en: "Removing a picture's background on the device (Atelier)", el: "Αφαίρεση φόντου εικόνας στη συσκευή (Ατελιέ)" },
+        { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
+          by: "Xuebin Qin & contributors", lic: "Apache-2.0",
+          en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" }
       ]
     },
     {
