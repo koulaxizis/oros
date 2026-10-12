@@ -46,6 +46,14 @@
       "type": "internal"
     },
     {
+      "id": "stickies",
+      "name": "Sticky Notes",
+      "category": "Accessories",
+      "icon": "stickies",
+      "url": "stickies/",
+      "type": "internal"
+    },
+    {
       "id": "textcase",
       "name": "Case Converter",
       "category": "Accessories",
