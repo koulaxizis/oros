@@ -889,6 +889,7 @@ var PRECACHE_URLS = [
   "atelier/brand.js",
   "atelier/folders.js",
   "atelier/homefolders.js",
+  "atelier/relayout.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",

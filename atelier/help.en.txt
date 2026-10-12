@@ -50,7 +50,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, or a PDF for printing at 150 or 300 dpi.
 - `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
-- `More` › `Resize…` scales the whole design to another size.
+- `More` › `Resize…` makes the design in other sizes, for example a square post as a story and a banner. Tick one or more sizes (or a custom size): the elements are placed again for each one, so things at the edges stay at the edges, bars and photos across the page stretch, and nothing is distorted. With `Keep this design, make a copy in each size` on, each size becomes a new design next to this one (in the same folder); with it off, this design itself changes size (`Undo` brings it back).
 - `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
 
 ## Import from Canva and other files
