@@ -256,6 +256,36 @@
     }
   }
 
+  // One frame at time t from the original files (never a light copy),
+  // short side `short` px, as a PNG (Grab frame).
+  async function still(opts) {
+    var M = MB(), C = root.MontageCore, G = root.MontageGL, p = opts.project;
+    var size = C.outputSize(p.ar, opts.short || 1080), lib = new Library(opts.file);
+    var cv = document.createElement("canvas");
+    cv.width = size.w; cv.height = size.h;
+    var comp = G.create(cv);
+    try {
+      var layers = C.framePlan(p, opts.t || 0), frame = {};
+      for (var j = 0; j < layers.length; j++) {
+        var L = layers[j];
+        if (L.k === "video") {
+          var vt = await (await lib.input(L.src)).getPrimaryVideoTrack();
+          if (vt && await vt.canDecode()) {
+            var off = await vt.getFirstTimestamp();
+            var wc = await new M.CanvasSink(vt, Object.assign({ fit: "fill" }, sinkSize(vt, size.w, size.h))).getCanvas(L.st + off);
+            if (wc) frame[L.id] = { img: wc.canvas, w: wc.canvas.width, h: wc.canvas.height };
+          }
+        } else if (L.k === "image") frame[L.id] = await lib.picture(L.src);
+        if (L.lut && !frame["lut:" + L.lut]) frame["lut:" + L.lut] = await lib.picture(L.lut).catch(function () { return null; });
+      }
+      comp.draw(layers, function (L) { return frame[L.id] || null; }, { bg: p.bg });
+      return await new Promise(function (resolve) { cv.toBlob(resolve, "image/png"); });
+    } finally {
+      comp.dispose();
+      lib.close();
+    }
+  }
+
   // ---------- GIF: a short silent loop ----------
   // GIF_FPS frames a second, the long side at most opts.gifSide px, one
   // palette of up to 256 colours per frame (the most used colours,
@@ -428,6 +458,6 @@
     }
   }
 
-  var api = { pickFormat: pickFormat, pickSoundFormat: pickSoundFormat, run: run, WIN: WIN, GIF_MAX_SEC: GIF_MAX_SEC, GifWriter: GifWriter };
+  var api = { pickFormat: pickFormat, pickSoundFormat: pickSoundFormat, run: run, still: still, WIN: WIN, GIF_MAX_SEC: GIF_MAX_SEC, GifWriter: GifWriter };
   root.MontageExport = api;
 })(typeof window !== "undefined" ? window : this);
