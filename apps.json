@@ -68,6 +68,8 @@
       "category": "Accessories",
       "icon": "stickies",
       "url": "stickies/",
+      "search": "search.js",
+      "today": "today.js",
       "type": "internal"
     },
     {
