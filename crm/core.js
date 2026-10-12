@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.3.0)
+// orOS CRM — core.js (shared logic, v1.4.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -33,6 +33,11 @@
 //   quotePrefill(cust, deal?, cur) → BR-Q1 payload, or null when a
 //     deal's value is in a currency Quote does not know (EUR, USD)
 //   csvRows(data, lang) → rows · csvCell(v)
+//   mailLog(x) → BR-CRM-MAIL payload cleaned { email, name, subject,
+//     text, at } | null · custByEmail(data, email, emailOf?) → cust | null
+//   parseCsv(text) → { sep, rows } (",", ";" or tab, quoted cells)
+//   csvImport(data, text, nowMs) → { add: [cust], tags: [tag], dup,
+//     noName, over, cols: [field] } | null (no name column)
 //   backup(data) / restore(data, file) → merged data | null
 //   reminders(data, today, hhmm, seen) → { fresh: [{ key, fup }], next }
 //   reminderText(data, fup, today, lang) → { title, body }
@@ -501,6 +506,31 @@
     }).sort(function (a, b) { return a.name.localeCompare(b.name) || cmpStr(a.id, b.id); });
   }
 
+  // BR-CRM-MAIL: Mail's "Log in CRM" under a message calls
+  // __orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } }).
+  // Only a prefill: the log entry is saved by the user.
+  var EMAIL_RE = /^[^\s@<>"]{1,64}@[^\s@<>"]{1,190}$/;
+  function mailLog(x) {
+    if (!x || typeof x !== "object") return null;
+    var email = cleanText(x.email, 254).toLowerCase();
+    if (!EMAIL_RE.test(email)) return null;
+    return { email: email, name: cleanText(x.name, 120), subject: cleanText(x.subject, 200),
+             text: cleanText(x.text, 1800, true), at: isInt(x.at) && x.at > 0 ? x.at : 0 };
+  }
+  // The customer an address belongs to: its own email, then a person's
+  // (emailOf(person) gives a Contacts-linked person's live address).
+  function custByEmail(data, email, emailOf) {
+    var e = String(email || "").trim().toLowerCase(), i, j;
+    if (!e) return null;
+    var same = function (v) { return String(v || "").trim().toLowerCase() === e; };
+    for (i = 0; i < data.cust.length; i++) if (same(data.cust[i].email)) return data.cust[i];
+    for (i = 0; i < data.cust.length; i++) {
+      var pp = data.cust[i].people || [];
+      for (j = 0; j < pp.length; j++) if (same(emailOf ? emailOf(pp[j]) : pp[j].email)) return data.cust[i];
+    }
+    return null;
+  }
+
   // What CRM hands Invoices (BR-CRM-INV 1) and Quote (BR-Q1). Both
   // apps only prefill a draft; nothing is saved before their Save.
   // Prices go in currency units (cents / 100). A deal is one line:
@@ -540,6 +570,139 @@
     en: { co: "Company", person: "Person", lead: "Lead", active: "Active", past: "Past" },
     el: { co: "Εταιρεία", person: "Ιδιώτης", lead: "Υποψήφιος", active: "Ενεργός", past: "Παλιός" }
   };
+  // Reading a customer file: this app's own export (EN / EL), and the
+  // usual words of Excel lists, HubSpot (companies and contacts) and
+  // Greek accounting programs. Headers are matched folded, without
+  // "(…)", dots and extra spaces.
+  function parseCsv(text) {
+    var s = String(text || "").replace(/^\ufeff/, "");
+    var first = s.split(/\r?\n/)[0] || "", cnt = { ",": 0, ";": 0, "\t": 0 }, inQ = false;
+    for (var k = 0; k < first.length; k++) {
+      var ch0 = first[k];
+      if (ch0 === '"') inQ = !inQ;
+      else if (!inQ && cnt.hasOwnProperty(ch0)) cnt[ch0]++;
+    }
+    var sep = cnt[";"] > cnt[","] && cnt[";"] >= cnt["\t"] ? ";" : (cnt["\t"] > cnt[","] ? "\t" : ",");
+    var rows = [], row = [], cell = "", q = false;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (q) {
+        if (ch === '"') {
+          if (s[i + 1] === '"') { cell += '"'; i++; } else q = false;
+        } else cell += ch;
+      } else if (ch === '"' && cell === "") q = true;
+      else if (ch === sep) { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && s[i + 1] === "\n") i++;
+        row.push(cell); cell = "";
+        if (row.some(function (c) { return c.trim() !== ""; })) rows.push(row);
+        row = [];
+      } else cell += ch;
+    }
+    row.push(cell);
+    if (row.some(function (c) { return c.trim() !== ""; })) rows.push(row);
+    return { sep: sep, rows: rows };
+  }
+  var CSV_IN = {
+    name: ["name", "trade name", "company", "company name", "customer", "customer name", "client", "account name", "organization",
+           "επωνυμια", "επωνυμια πελατη", "πελατησ", "ονομα πελατη", "εταιρεια", "ονοματεπωνυμο"],
+    alias: ["alias", "διακριτικοσ τιτλοσ", "διακριτικοσ"],
+    first: ["first name", "firstname", "given name", "ονομα"],
+    last: ["last name", "lastname", "surname", "family name", "επωνυμο"],
+    kind: ["type", "kind", "ειδοσ", "τυποσ"],
+    st: ["status", "lifecycle stage", "κατασταση"],
+    afm: ["vat id", "vat", "vat number", "tax id", "tin", "afm", "αφμ", "α.φ.μ"],
+    doy: ["tax office", "δου", "δ.ο.υ"],
+    job: ["profession", "industry", "occupation", "επαγγελμα", "δραστηριοτητα"],
+    addr: ["address", "street address", "street", "address 1", "διευθυνση", "οδοσ"],
+    city: ["city", "town", "πολη", "περιοχη"],
+    zip: ["zip", "postal code", "postcode", "zip code", "τκ", "τ.κ", "ταχυδρομικοσ κωδικασ"],
+    country: ["country", "country/region", "χωρα"],
+    phone: ["phone", "phone number", "telephone", "tel", "mobile", "mobile phone number", "τηλεφωνο", "τηλ", "κινητο"],
+    email: ["email", "e-mail", "email address", "mail"],
+    web: ["website", "website url", "web", "url", "company domain name", "ιστοτοποσ", "ιστοσελιδα"],
+    src: ["source", "lead source", "original source", "πηγη"],
+    tags: ["tags", "labels", "ετικετεσ"],
+    note: ["notes", "note", "description", "comments", "σημειωσεισ", "σχολια", "παρατηρησεισ"]
+  };
+  function csvKey(h) {
+    return fold(h).replace(/\([^)]*\)/g, " ").replace(/[.:*]/g, "").replace(/\s+/g, " ").trim();
+  }
+  function csvStatus(v) {
+    var f = csvKey(v);
+    if (!f) return "";
+    if (/^(lead|subscriber|marketing ?qualified ?lead|sales ?qualified ?lead|opportunity|prospect|υποψηφιοσ|υποψηφια)$/.test(f)) return "lead";
+    if (/^(past|former|inactive|lost|other|παλιοσ|παλια|ανενεργοσ)$/.test(f)) return "past";
+    return "active";
+  }
+  function csvImport(data, text, nowMs) {
+    var rows = parseCsv(text).rows;
+    if (!rows.length) return null;
+    var col = {};
+    rows[0].forEach(function (h, i) {
+      var k = csvKey(h);
+      Object.keys(CSV_IN).forEach(function (f) {
+        if (col[f] === undefined && CSV_IN[f].indexOf(k) >= 0) col[f] = i;
+      });
+    });
+    if (col.name === undefined && col.first === undefined && col.last === undefined) return null;
+    var seenAfm = {}, seenName = {};
+    data.cust.forEach(function (c) { if (c.afm) seenAfm[c.afm] = 1; seenName[fold(cleanText(c.name, 120))] = 1; });
+    var tagByName = {}, newTags = [], tagCount = data.tags.length;
+    data.tags.forEach(function (t) { tagByName[fold(t.name)] = t.id; });
+    var out = { add: [], tags: newTags, dup: 0, noName: 0, over: 0, cols: Object.keys(col).sort() };
+    var room = LIMITS.cust - data.cust.length, n = 0;
+    var cell = function (r, f) { return col[f] === undefined ? "" : cleanText(r[col[f]], 2000); };
+    rows.slice(1).forEach(function (r) {
+      var person = "";
+      if (col.first !== undefined || col.last !== undefined) person = [cell(r, "first"), cell(r, "last")].filter(Boolean).join(" ");
+      var name = cleanText(cell(r, "name") || person, 120);
+      if (!name) { out.noName++; return; }
+      var afm = cell(r, "afm").replace(/\s+/g, "").replace(/^el/i, "");
+      if ((afm && seenAfm[afm]) || seenName[fold(name)]) { out.dup++; return; }
+      if (out.add.length >= room) { out.over++; return; }
+      var kv = csvKey(cell(r, "kind"));
+      var kind = /^(person|individual|ιδιωτησ|φυσικο προσωπο)$/.test(kv) || (!cell(r, "name") && person) ? "person" : "co";
+      var c = { id: newId(nowMs + n++), m: nowMs, ct: nowMs, name: name, kind: kind, st: csvStatus(cell(r, "st")) || "active" };
+      if (afm) c.afm = afm;
+      ["alias", "doy", "job", "country", "phone", "email", "web", "src"].forEach(function (f) { var v = cell(r, f); if (v) c[f] = v; });
+      if (col.note !== undefined) c.note = cleanText(r[col.note], 2000, true);
+      var addr = [cell(r, "addr"), [cell(r, "zip"), cell(r, "city")].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+      if (addr) c.addr = addr;
+      // a contact list with a company column: the person is its first "People" line
+      // (HubSpot contacts: the email and phone are that person's too)
+      if (person && cell(r, "name") && fold(person) !== fold(name)) {
+        var pp = { c: "", n: person };
+        if (c.phone) pp.phone = c.phone;
+        if (c.email) pp.email = c.email;
+        c.people = [pp];
+      }
+      var tags = [];
+      cell(r, "tags").split(/[,;|]/).forEach(function (w) {
+        w = cleanText(w, 30);
+        if (!w) return;
+        var id = tagByName[fold(w)];
+        if (!id && tagCount < LIMITS.tags) {
+          id = newId(nowMs + n++);
+          tagByName[fold(w)] = id;
+          newTags.push({ id: id, m: nowMs, name: w, col: (tagCount++) % 8 });
+        }
+        if (id && tags.indexOf(id) < 0 && tags.length < LIMITS.custTags) tags.push(id);
+      });
+      if (tags.length) c.tags = tags;
+      var nc = normCust(c);
+      if (!nc) { out.noName++; return; }
+      if (nc.afm) seenAfm[nc.afm] = 1;
+      seenName[fold(nc.name)] = 1;
+      out.add.push(nc);
+    });
+    // only the tags a kept customer uses
+    var used = {};
+    out.add.forEach(function (c) { (c.tags || []).forEach(function (id) { used[id] = 1; }); });
+    out.tags = newTags.filter(function (t) { return used[t.id]; }).map(normTag).filter(Boolean);
+    return out;
+  }
+
   function csvRows(data, lang) {
     var L = lang === "el" ? "el" : "en", W = CSV_WORDS[L];
     var tagName = {};
@@ -638,7 +801,7 @@
     stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
-    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows,
+    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail,
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact
   };
