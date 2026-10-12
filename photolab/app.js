@@ -25,7 +25,7 @@
   var NS = window.PhotoLab;
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
-    R: NS.resample, A: NS.adjust, ST: NS.store,
+    R: NS.resample, A: NS.adjust, ST: NS.store, PSD: NS.psd, ORA: NS.ora,
     FX: window.orosDK && window.orosDK.fx
   };
   var C = PL.C, T = PL.T, H = PL.H;
@@ -409,6 +409,24 @@
     var s = T.create();
     T.writeRect(s, 0, 0, img);
     var surfaces = {}; surfaces[doc.layers[0].id] = s;
+    resetDoc(doc, surfaces);
+    PL.showEditor();
+    PL.changed();
+  };
+  // A project from a layered file (PSD, OpenRaster): layers bottom →
+  // top, each { name, x, y, img, op, bl, vis }, already within limits.
+  PL.newFromLayers = function (w, h, name, layers) {
+    var doc = C.newDoc({ w: w, h: h, name: name, now: Date.now(), layerName: PL.t("layer.bg") });
+    var surfaces = {};
+    doc.layers = [];
+    layers.forEach(function (src) {
+      var L = C.normLayer({ id: C.newLayerId(), k: "raster", name: src.name, x: src.x, y: src.y,
+                            op: src.op, bl: src.bl, vis: src.vis });
+      var s = T.create();
+      T.writeRect(s, 0, 0, src.img);
+      surfaces[L.id] = s;
+      doc.layers.push(L);
+    });
     resetDoc(doc, surfaces);
     PL.showEditor();
     PL.changed();

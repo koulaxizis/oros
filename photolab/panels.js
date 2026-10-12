@@ -263,17 +263,21 @@
 
   function exportDialog(toPictures) {
     var d = st.doc;
-    var fmt = select([["png", "PNG"], ["jpg", "JPG"], ["webp", "WebP"]], pr().exportFmt);
+    var fmt = select([["png", "PNG"], ["jpg", "JPG"], ["webp", "WebP"], ["psd", t("fmt.psd")], ["ora", t("fmt.ora")]], pr().exportFmt);
     var q = range(t("f.quality"), pr().exportQ, 10, 100);
-    var scale = numIn(100, 1, 400), size = el("p", "hint"), jpg = hint(t("hint.jpg"));
+    var scale = numIn(100, 1, 400), scaleF = field(t("f.scalePct"), scale);
+    var size = el("p", "hint"), jpg = hint(t("hint.jpg")), layered = hint(t("hint.layered"));
     function upd() {
-      q.hidden = fmt.value === "png";
+      var lay = fmt.value === "psd" || fmt.value === "ora";
+      q.hidden = fmt.value === "png" || lay;
+      scaleF.hidden = lay;
       jpg.hidden = fmt.value !== "jpg";
-      var k = Math.max(1, +scale.value || 100) / 100;
+      layered.hidden = !lay;
+      var k = lay ? 1 : Math.max(1, +scale.value || 100) / 100;
       size.textContent = t("export.size", { w: Math.max(1, Math.round(d.w * k)), h: Math.max(1, Math.round(d.h * k)) });
     }
     fmt.addEventListener("change", upd); scale.addEventListener("input", upd); upd();
-    var body = [field(t("f.format"), fmt), q, field(t("f.scalePct"), scale), size, jpg];
+    var body = [field(t("f.format"), fmt), q, scaleF, size, jpg, layered];
     PL.dialog({
       title: t(toPictures ? "dlg.toPictures" : "dlg.export"), ok: t(toPictures ? "btn.save" : "btn.export"), body: body,
       onOk: function () {

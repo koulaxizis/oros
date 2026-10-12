@@ -440,6 +440,6 @@
     resizeImage: resizeImage, canvasSize: canvasSize, rotateImage: rotateImage, flipImage: flipImage,
     rotateAny: rotateAny, trim: trim, cropToSel: cropToSel, layerFlip: layerFlip, layerRotate: layerRotate,
     adjustTarget: adjustTarget, adjusted: adjusted, applyAdjust: applyAdjust, quickAdjust: quickAdjust,
-    layerName: layerName
+    layerName: layerName, vectorPixels: vectorPixels
   };
 })();
