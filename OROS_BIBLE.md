@@ -5001,3 +5001,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Android app: Digital Asset Links + .nojekyll (#215) — 1.12.01
 - `.well-known/assetlinks.json` (Chris's file from the PWABuilder package, `online.useoros.twa`) so Android verifies the TWA and opens orOS full screen; empty `.nojekyll` so GitHub Pages serves dot-folders. No app code. With Play App Signing, Google's signing-key SHA-256 must be added to the same array. Bible: note under the manifest section.
+
+### 2026-10-12 — Invoices wave 2: Calendar, Today, reminders, Budget, Quote, Timesheet, CRM (#216) — 1.13.00
+- Calendar "Invoices" chip (unpaid invoices on their due date); Today provider `invoices/today.js` (overdue, due soon, recurring drafts ready); shell tick sends one daily reminder for overdue and due-within-2-days invoices (again when the count grows; opens the invoice; `notifications.js` KNOWN_APPS + deep link). One rule for all three in `invoices/core.js` (`dueOn`, `dueRows`, `reminder`).
+- Add to Budget on a payment (BR-B1, Freelance income; payment flag `bud`); Quote "Make invoice" on an accepted quote and Timesheet "Create invoice" open a prefilled invoice (`{new}` now also takes line VAT, discount, code, unit and a total discount; older payloads still work); From CRM imports customers keeping the crm id (BR-CRM-INV).
+- Tests: tests/invoices.test.js (+4). Not tested: real phone, Safari, real Dropbox, Timesheet button end to end. Assistant "new invoice" card left to the Assistant thread.
