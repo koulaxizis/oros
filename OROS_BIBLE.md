@@ -5118,3 +5118,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Help: guide catch-up for 1.13–1.19 (#236) — 1.24.01
 - Calendar help and the Install guide page (EN + EL) cover the releases 1.13.00–1.19.00. Text only.
+
+### 2026-10-12 — CRM phase 3a: Invoices + Quote bridges, Documents tab (#237) — 1.25.00
+- CRM v1.3.0: BR-CRM-INV wired on the CRM side (Invoice from a customer or a won deal = prefill `{new}` with crm id, billing fields and one line, `ref {app:"crm", id:deal}`; Documents tab read via `OrosInvoicesCore.byCrm`; rows open `{invoice}`, "All in Invoices" opens `{client:{crm,afm,name}}`; Dashboard tile "Unpaid invoices"). Quote via BR-Q1 (`__orosOpenQuoteNew`, client = customer name; a deal's line only in EUR/USD, else a toast) and a read-only list from the new `OrosQuoteCore.forClient`. Customer sub-tabs wrap on phones.
+- Quote core v1.1.0: `total(q)` (same sum as calcTotals) and `forClient(data, {name, afm})` (client tax id or folded name, deleted quotes left out).
