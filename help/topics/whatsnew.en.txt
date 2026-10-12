@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.13.00
 - Invoices: unpaid invoices in Calendar and Today, due reminders, Add to Budget, Make invoice from Quote and Timesheet, clients from CRM.
+- Help: the guide pages on the menu, notifications, installing, privacy and getting started now cover the latest releases.
 
 ## Version 1.12.00
 - Sticky Notes: rings can repeat (every day, weekdays, every week), a Ringtone Composer melody can be the ring sound, Send to To-Do and Copy to Notes, and your notes show in the menu search and in Today.
