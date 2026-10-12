@@ -16,6 +16,8 @@ Under `People` tap `+ Person`. Pick someone `From Contacts` (their phone and ema
 
 A follow-up has a day, an optional time and what to do. `Agenda` shows the late ones, today's and the next 7 days. Tap the circle to mark one done; the note that appears offers `Log it`. The menu of a follow-up moves it to `Tomorrow` or `In a week`, or sends it to [To-Do](app:todo).
 
+Open follow-ups also show in [Today](app:today), where the tick marks one done in CRM, and in the [Calendar](app:calendar) under `Customers`, together with the expected close day of open deals. A contact that is a person of a customer gets a `Customer:` button in [Contacts](app:contacts).
+
 ## Pipeline
 A deal has a title, a value, a stage (`New`, `Contacted`, `Proposal`, `Negotiation`, `Won`, `Lost`), a chance in percent and an expected close day. On a wide screen drag a card to another column. On a phone pick a stage at the top and use the `⋯` button of a deal to move it. The totals show the value and the weighted value (value × chance).
 
@@ -28,11 +30,11 @@ Customers, people, history, follow-ups, deals, tags and the currency sync betwee
 In `Settings`: `Export customers (CSV)`, `Backup (JSON)` and `Restore a backup`. A backup is merged into what you have; nothing is deleted.
 
 ## Tips
-- Follow-up reminders reach the [notifications](help:t/notifications) inbox while CRM is open.
+- Follow-up reminders reach the [notifications](help:t/notifications) inbox even when CRM is closed: on the day, or at the time you set.
 - Change `"Not contacted" after` in `Settings` to decide when a customer counts as forgotten.
 - Deleting a customer also deletes its deals, history and follow-ups; `Undo` brings them all back.
 - CRM is not in the menu search until you switch it on under `Search in`, because it holds other people's details.
 
 ## Limits
-- Reminders arrive only while CRM is open.
+- Reminders need orOS to be open in a tab or window; a reminder missed while it was closed arrives the next time you open it.
 - Up to 2,000 customers and 20,000 history entries, to leave room for the other apps.

@@ -276,7 +276,8 @@
       "url": "crm/",
       "type": "internal",
       "search": "search.js",
-      "searchOff": true
+      "searchOff": true,
+      "today": "today.js"
     },
     {
       "id": "stock",
@@ -285,6 +286,7 @@
       "icon": "stock",
       "url": "stock/",
       "search": "search.js",
+      "today": "today.js",
       "type": "internal"
     },
     {
@@ -295,7 +297,8 @@
       "url": "invoices/",
       "type": "internal",
       "search": "search.js",
-      "searchOff": true
+      "searchOff": true,
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "prompter",

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.12.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.16.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1099,7 +1099,9 @@
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
+      tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
+      tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
@@ -1406,6 +1408,52 @@
     if (now - stockLastTick < 60000) return;
     stockLastTick = now;
     stockCheckTick();
+  }
+
+  // CRM — follow-up reminders. Reads "oros-crm-data" directly (works
+  // with the app CLOSED, and is the only reminder engine while it is
+  // open) and asks crm/core.js (loaded by index.html, the SAME file
+  // the app runs) which open follow-ups are due: earlier days, today
+  // without a time, today once the time has come. One notice per
+  // follow-up (key = id + day + time: moved to another day or time,
+  // it rings again); device-local "oros-crm-notified" keeps only what
+  // is still due. Nothing is marked before the inbox is ready.
+  // SH-B7: no follow-ups → silent.
+  var CRM_DATA_KEY = "oros-crm-data";
+  var CRM_NOTIFIED_KEY = "oros-crm-notified";
+  function crmCheckTick() {
+    var Core = window.OrosCrmCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;
+    try { if (!N.getState().ready) return; } catch (e) { return; }
+    var raw, seen;
+    try {
+      raw = JSON.parse(localStorage.getItem(CRM_DATA_KEY));
+      seen = JSON.parse(localStorage.getItem(CRM_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.fups) || !raw.fups.length) return;
+    var data = Core.norm(raw);
+    var now = new Date(), today = sysYmd();
+    var hm = (now.getHours() < 10 ? "0" : "") + now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
+    var r = Core.reminders(data, today, hm, seen);
+    r.fresh.slice(0, 10).forEach(function (x) {         // a long-closed orOS: at most 10 per tick
+      var txt = Core.reminderText(data, x.fup, today, state.lang);
+      N.emit({ ns: "crm", key: "fup-" + x.key, type: "reminder",
+               title: txt.title, body: txt.body, deepLink: "crm:" + x.fup.id });
+    });
+    r.fresh.slice(10).forEach(function (x) { delete r.next[x.key]; });   // next tick
+    if (JSON.stringify(r.next) !== JSON.stringify(seen)) {
+      try { localStorage.setItem(CRM_NOTIFIED_KEY, JSON.stringify(r.next)); } catch (e) {}
+    }
+  }
+
+  var crmLastTick = 0;
+  function crmCheckTickThrottled() {
+    var now = Date.now();
+    if (now - crmLastTick < 60000) return;
+    crmLastTick = now;
+    crmCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -6444,6 +6492,50 @@
         : (due + (due === 1 ? " quote is due or overdue"
                             : " quotes are due or overdue")),
       deepLink: earliestId ? "quote:" + earliestId : ""
+    });
+  }
+
+  // Invoices wave 2 — due / overdue reminder. Shell-side scan of
+  // "oros-invoices-data" with invoices/core.js (reminder: the same
+  // rule as the Calendar feed and Today): issued documents with money
+  // still owed, overdue or due within 2 days. Key "due-<ymd>-<late>-
+  // <soon>": once a day, again when the list grows. Said in today's
+  // summary → silent. Click → the first document.
+  var INV_DATA_KEY = "oros-invoices-data";
+  var invoicesCheckLastTick = 0;
+  function invoicesCheckTickThrottled() {
+    var now = Date.now();
+    if (now - invoicesCheckLastTick < 60000) return;
+    invoicesCheckLastTick = now;
+    invoicesCheckTick();
+  }
+  function invoicesCheckTick() {
+    var IC = window.OrosInvoicesCore;
+    if (!IC) return;                                    // stale bundle — silent
+    var raw;
+    try { raw = localStorage.getItem(INV_DATA_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var data = IC.parse(raw);
+    if (!data) return;
+    var r = IC.reminder(data, sysYmd(), 2);
+    if (!r) return;
+    if (todayAbsorbs("invoices")) return;               // said in today's summary
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;   // stale bundle — silent
+    var title = window.t("app.invoices");
+    if (title === "app.invoices") title = "Invoices";   // missing-key fallback
+    var el = state.lang === "el", parts = [];
+    if (r.late) parts.push(el ? (r.late + (r.late === 1 ? " ληξιπρόθεσμο" : " ληξιπρόθεσμα"))
+                              : (r.late + " overdue"));
+    if (r.soon) parts.push(el ? (r.soon + " λήγ" + (r.soon === 1 ? "ει" : "ουν") + " σύντομα")
+                              : (r.soon + " due soon"));
+    N.emit({
+      ns: "invoices",
+      key: r.key,
+      type: "due",
+      title: title,
+      body: parts.join(" · ") + (el ? " (ανεξόφλητα παραστατικά)" : (r.late + r.soon === 1 ? " (unpaid document)" : " (unpaid documents)")),
+      deepLink: "invoices:" + r.first
     });
   }
 

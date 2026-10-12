@@ -1,9 +1,9 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.0.0)
+// orOS CRM — core.js (shared logic, v1.1.0)
 // One file holds the model, the merge and every derived number,
-// so the app, the universal search provider and (later) the
-// Calendar feed, the Today provider and Invoices can never
-// disagree. Pure functions, no DOM, no network, no clock: callers
+// so the app, the universal search provider, the shell reminder,
+// the Calendar feed, the Today provider, Contacts and (later)
+// Invoices can never disagree. Pure functions, no DOM, no network, no clock: callers
 // pass "now" / "today".
 //
 // API (window.OrosCrmCore, module.exports under Node):
@@ -17,7 +17,7 @@
 //   normCust / normDeal / normAct / normFup / normTag / normPrefs
 //   merge(A, B) → canonical data (symmetric, idempotent)
 //   empty() → fresh data
-//   byId(list, id), alive(data, id)
+//   byId(list, id)
 //   custName(c), lastContact(data, custId) → ms | 0
 //   dealProb(d), openDeals(data, custId?)
 //   pipeline(data) → { stage: { n, val, wval } }
@@ -29,6 +29,10 @@
 //     country, email, phone }] (BR-CRM-INV, read by Invoices)
 //   csvRows(data, lang) → rows · csvCell(v)
 //   backup(data) / restore(data, file) → merged data | null
+//   reminders(data, today, hhmm, seen) → { fresh: [{ key, fup }], next }
+//   reminderText(data, fup, today, lang) → { title, body }
+//   calendarOn(data, ymd, today) → [{ k: fup|late|done|close, fup|deal }]
+//   custsForContact(data, contactId) → [cust]
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags: [row…] each sorted by
 //     id, prefs: { pm, cur, forget }, tombs: { id: deletedAt } }
@@ -484,6 +488,61 @@
     return merge(data, d);
   }
 
+  // ---------- Other apps read this (shell, Today, Calendar, Contacts) ----------
+  // Reminders (shell crmCheckTick, works with the app closed): what is
+  // due now and not yet announced on this device. `seen` is the
+  // device-local map { "<id>|<day><time>": 1 }; `next` keeps only the
+  // keys still due, so it never grows. A follow-up moved to another
+  // day or time is a new key and rings again.
+  function reminders(data, today, hhmm, seen) {
+    var s = seen && typeof seen === "object" ? seen : {};
+    var fresh = [], next = {};
+    dueNow(data, today, hhmm).forEach(function (f) {
+      var k = f.id + "|" + f.d + (f.t || "");
+      next[k] = 1;
+      if (s[k] !== 1) fresh.push({ key: k, fup: f });
+    });
+    return { fresh: fresh, next: next };
+  }
+  var REM_WORDS = {
+    en: { title: "Follow-up: {name}", unknown: "Unknown customer", today: "today", yday: "yesterday", late: "{n} days late" },
+    el: { title: "Follow-up: {name}", unknown: "Άγνωστος πελάτης", today: "σήμερα", yday: "χθες", late: "καθυστερεί {n} μέρες" }
+  };
+  function reminderText(data, f, today, lang) {
+    var w = REM_WORDS[lang === "el" ? "el" : "en"];
+    var c = byId(data.cust, f.cust);
+    var n = dayDiff(f.d, today);
+    var when = n <= 0 ? w.today : (n === 1 ? w.yday : w.late.replace("{n}", n));
+    return { title: w.title.replace("{name}", c ? c.name : w.unknown),
+             body: f.text + " · " + when + (f.t ? " " + f.t : "") };
+  }
+
+  // Calendar feed: an open follow-up on its day (late ones show on
+  // today, never on the past days), a done one on the day it was done,
+  // an open deal on its expected close day (today and later).
+  function calendarOn(data, ymd, today) {
+    var out = [];
+    data.fups.forEach(function (f) {
+      if (f.done) { if (f.done === ymd) out.push({ k: "done", fup: f }); return; }
+      if (ymd === today ? f.d <= today : (ymd > today && f.d === ymd)) out.push({ k: f.d < today ? "late" : "fup", fup: f });
+    });
+    data.deals.forEach(function (d) {
+      if (isOpen(d) && d.close === ymd && ymd >= today) out.push({ k: "close", deal: d });
+    });
+    return out.sort(function (a, b) {
+      var x = a.fup || a.deal, y = b.fup || b.deal;
+      return cmpStr(x.t || "", y.t || "") || cmpStr(x.id, y.id);
+    });
+  }
+
+  // Contacts: the living customers that list this contact as a person.
+  function custsForContact(data, contactId) {
+    if (typeof contactId !== "string" || !contactId) return [];
+    return data.cust.filter(function (c) {
+      return (c.people || []).some(function (p) { return p.c === contactId; });
+    }).sort(function (a, b) { return cmpStr(fold(a.name), fold(b.name)) || cmpStr(a.id, b.id); });
+  }
+
   var API = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, STAGES: STAGES, OPEN_STAGES: OPEN_STAGES, STAGE_PROB: STAGE_PROB,
     ACT_KINDS: ACT_KINDS, CUST_ST: CUST_ST, CURRENCIES: CURRENCIES, LIMITS: LIMITS, HM_RE: HM_RE,
@@ -495,7 +554,8 @@
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
     customersForBilling: customersForBilling, csvCell: csvCell, csvRows: csvRows,
-    backup: backup, restore: restore
+    backup: backup, restore: restore,
+    reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosCrmCore = API;

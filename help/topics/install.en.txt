@@ -34,6 +34,10 @@ With orOS installed from Chrome or Edge on Windows, Linux or Mac, orOS appears i
 - [Mind Map](app:mindmap): .mm, .xmind, and on request .opml, .md and .txt
 - [Family Tree](app:familytree): .ged, .gedcom
 - [Ringtone Composer](app:ringtones): .rtttl, .rtx
+- [Photo Lab](app:photolab): .png, .jpg, .webp, .gif, .bmp, .avif, .psd, .ora
+- [Library](app:library): .epub, .pdf
+- [Montage](app:montage): .mp4, .m4v, .webm, .mov
+- [Notes](app:notes): .txt, .md, as a choice next to Writer
 - [Calendar](app:calendar): .ics, with the import preview first
 - [Contacts](app:contacts): .vcf, with a question before importing
 
