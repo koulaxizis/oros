@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.24.01";
+var CACHE_VERSION = "oros-v1.27.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -905,6 +905,9 @@ var PRECACHE_URLS = [
   "atelier/folders.js",
   "atelier/homefolders.js",
   "atelier/relayout.js",
+  "atelier/aitext.js",
+  "atelier/cutout.js",
+  "atelier/ai.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",
@@ -1498,6 +1501,11 @@ self.addEventListener("fetch", function (event) {
   // this release's own precache copy (releaseCopy). Everything else
   // goes to the network; the loose ignoreSearch match across caches
   // stays in the network-FAILURE branch only (offline best effort).
+  // Atelier's background tool (vendor/ort + vendor/u2netp, about
+  // 16 MB) is fetched once and kept in Atelier's own IndexedDB
+  // (atelier/cutout.js): no second copy in the runtime cache.
+  if (/\/vendor\/(ort|u2netp)\//.test(url.pathname)) return;
+
   event.respondWith(
     caches.match(request).then(function (cached) {
       if (cached) return cached;
