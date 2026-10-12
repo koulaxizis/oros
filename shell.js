@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.14.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.21.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -144,6 +144,7 @@
     quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     invoices: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M13 15h2"/></svg>',
+    newsletter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/><path d="M8 16h4"/></svg>',
     crm: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="12" cy="13" r="2"/><path d="M8.5 18a3.5 3.5 0 0 1 7 0"/></svg>',
     prompter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/><line x1="21" y1="2" x2="21" y2="6"/><line x1="19" y1="4" x2="23" y2="4"/></svg>',
     typewriter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="9" rx="2"/><path d="M7 11V6h10v5"/><path d="M7 15h.01M10 15h.01M13 15h.01M16 15h.01M9 18h6"/></svg>',
@@ -4804,6 +4805,9 @@
         { name: "Frankfurter", url: "https://frankfurter.dev/",
           by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
           en: "Exchange rates (Unit Converter)", el: "Ισοτιμίες (Μετατροπέας μονάδων)" },
+        { name: "Wiktionary", url: "https://en.wiktionary.org/",
+          by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
+          en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
         { name: "Openverse", url: "https://openverse.org/",
           by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
           en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },

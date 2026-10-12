@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.0.0)
+// orOS Stock — core.js (shared logic, v1.1.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -32,9 +32,17 @@
 //   csvCell, parseCsv(text), importPlan(data, text, opts)
 //   csvProducts(data, names) · csvMoves(data, names)
 //   readPrefs(raw)
+//   purchase orders (1.1): normPo, poSrc, poView(data, po), poViews,
+//     onOrder(data), poNext(data, today)
+//   reports (1.1): valueByCat(data), periodSummary(data, from, to),
+//     deadStock(data, today, days), reportRange(key, today)
 // Data (synced slice "stock", key oros-stock-data):
-//   { ver: 1, items, cats, units, sups, moves: [row…] each sorted by
-//     id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
+//   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
+//     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
+//   pos (1.1) is a top-level list: a 1.0 device drops it on its own
+//   merge, which costs nothing (a pull never marks dirty, a 1.1
+//   device keeps it). A receipt against an order is a normal "in"
+//   movement with src "po:<order id>" (1.0 already carries src).
 // ============================================================
 (function (root) {
   "use strict";
@@ -255,8 +263,36 @@
     };
   }
 
-  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup };
-  var LIST_KEYS = ["items", "cats", "units", "sups"];
+  // Purchase order: what was ordered from a supplier. What arrived is
+  // NOT stored here: it is the sum of the live "in" movements whose src
+  // is "po:<id>" (so a receipt voided later un-receives by itself, and
+  // two devices receiving parts at the same time both count).
+  //   st: draft (being written) | sent | closed (nothing more is
+  //   coming) | cancel. "partial" and "received" are derived.
+  var PO_ST = ["draft", "sent", "closed", "cancel"];
+  function normPo(x) {
+    if (!base(x) || !isYmd(x.d) || !Array.isArray(x.lines)) return null;
+    var lines = [], seen = dict();
+    for (var i = 0; i < x.lines.length && lines.length < MAX_LINES; i++) {
+      var l = x.lines[i];
+      if (!l || typeof l !== "object" || typeof l.i !== "string" || !ID_RE.test(l.i) || seen[l.i]) continue;
+      var q = clampInt(l.q, 1, Q_MAX);
+      if (q === null) continue;
+      seen[l.i] = true;
+      var line = { i: l.i, q: q };
+      if (clampInt(l.c, 0, C_MAX) !== null) line.c = l.c;
+      lines.push(line);
+    }
+    if (!lines.length) return null;
+    return {
+      id: x.id, m: x.m, no: cleanText(x.no, REF_LEN, false), sup: ref(x.sup), d: x.d,
+      exp: isYmd(x.exp) ? x.exp : "", st: PO_ST.indexOf(x.st) >= 0 ? x.st : "draft",
+      note: cleanText(x.note, MNOTE_LEN, true), lines: lines
+    };
+  }
+
+  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo };
+  var LIST_KEYS = ["items", "cats", "units", "sups", "pos"];
 
   function canon(v) { return JSON.stringify(v); }
   function lww(best, x) {
@@ -683,6 +719,145 @@
     return rows.map(function (r) { return r.slice(0, 10); });
   }
 
+  // ---------- Purchase orders ----------
+  function poSrc(id) { return "po:" + id; }
+  // What arrived per item for each order: { poId: { itemId: q } }
+  function receivedMap(data) {
+    var by = dict();
+    live(data && data.moves).forEach(function (x) {
+      if (x.t !== "in" || typeof x.src !== "string" || x.src.indexOf("po:") !== 0) return;
+      var id = x.src.slice(3), r = by[id] || (by[id] = dict());
+      x.lines.forEach(function (l) { r[l.i] = (r[l.i] || 0) + l.q; });
+    });
+    return by;
+  }
+  // { po, lines: [{ i, q, c?, got, left }], got (anything arrived),
+  //   left (sum left), state: draft|sent|partial|received|closed|cancel,
+  //   open (still expected: sent or partial), receipts: [move] }
+  function poView(data, po, recv) {
+    var r = (recv || receivedMap(data))[po.id] || dict(), any = false, left = 0;
+    var lines = po.lines.map(function (l) {
+      var got = r[l.i] || 0, rest = Math.max(0, l.q - got);
+      if (got > 0) any = true;
+      left += rest;
+      var o = { i: l.i, q: l.q, got: got, left: rest };
+      if (typeof l.c === "number") o.c = l.c;
+      return o;
+    });
+    // an item received against the order but not on it still counts
+    Object.keys(r).forEach(function (id) { if (r[id] > 0) any = true; });
+    var st = po.st;
+    if (st === "draft" || st === "sent") st = left === 0 ? "received" : (any ? "partial" : st);
+    return { po: po, lines: lines, got: any, left: left, state: st, open: st === "sent" || st === "partial" };
+  }
+  // All orders, newest first (order date, then id).
+  function poViews(data) {
+    var recv = receivedMap(data);
+    return ((data && data.pos) || []).map(function (p) { return poView(data, p, recv); })
+      .sort(function (x, y) { return cmpStr(y.po.d, x.po.d) || cmpStr(y.po.id, x.po.id); });
+  }
+  // Still expected per item from open orders: { itemId: q }
+  function onOrder(data) {
+    var map = dict();
+    poViews(data).forEach(function (v) {
+      if (!v.open) return;
+      v.lines.forEach(function (l) { if (l.left > 0) map[l.i] = (map[l.i] || 0) + l.left; });
+    });
+    return map;
+  }
+  // "PO-261012-3": the day plus the next free number of that day on
+  // this device's copy (a clash with another device only looks odd).
+  function poNext(data, today) {
+    var day = isYmd(today) ? today : ymdOf(Date.now());
+    var pre = "PO-" + day.slice(2, 4) + day.slice(5, 7) + day.slice(8, 10) + "-", n = 0;
+    ((data && data.pos) || []).forEach(function (p) {
+      if (p.no.indexOf(pre) !== 0) return;
+      var k = parseInt(p.no.slice(pre.length), 10);
+      if (isFinite(k) && k > n) n = k;
+    });
+    return pre + (n + 1);
+  }
+
+  // ---------- Reports ----------
+  // Period keys: "30" (last 30 days) | "month" | "year" | "all"
+  function reportRange(key, today) {
+    if (key === "month") return { from: today.slice(0, 8) + "01", to: today };
+    if (key === "year") return { from: today.slice(0, 5) + "01-01", to: today };
+    if (key === "all") return { from: "1900-01-01", to: "2200-12-31" };
+    return { from: addDays(today, -29), to: today };
+  }
+  // Stock value per category (live items): { total, rows: [{ cat, value, n }] }
+  // cat "" = no category; biggest value first.
+  function valueByCat(data) {
+    var cats = dict(), by = dict(), total = 0;
+    ((data && data.cats) || []).forEach(function (c) { cats[c.id] = true; });
+    stockRows(data).forEach(function (r) {
+      if (r.item.arch) return;
+      var k = cats[r.item.cat] ? r.item.cat : "";
+      var row = by[k] || (by[k] = { cat: k, value: 0, n: 0 });
+      row.value += r.value;
+      row.n++;
+      total += r.value;
+    });
+    var rows = Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (x, y) { return y.value - x.value || cmpStr(x.cat, y.cat); });
+    return { total: total, rows: rows };
+  }
+  // What moved between two days (inclusive), per item and in total.
+  // Quantities are positive amounts; money in cents. sales = Σ q × p of
+  // sales lines with a price; buys = Σ q × c of receipts with a cost;
+  // lossValue = losses at the average cost of today.
+  //   { rows: [{ i, inQ, outQ, retQ, rtsQ, lossQ, adj, sales, buys }]
+  //     (most sold first), sales, buys, lossValue, moves }
+  function periodSummary(data, from, to) {
+    var by = dict(), totals = { sales: 0, buys: 0, lossValue: 0, moves: 0 };
+    var avg = costMap(data);
+    live(data && data.moves).forEach(function (x) {
+      if (x.d < from || x.d > to) return;
+      totals.moves++;
+      x.lines.forEach(function (l) {
+        var r = by[l.i] || (by[l.i] = { i: l.i, inQ: 0, outQ: 0, retQ: 0, rtsQ: 0, lossQ: 0, adj: 0, sales: 0, buys: 0 });
+        var a = Math.abs(l.q);
+        if (x.t === "in") {
+          r.inQ += a;
+          if (typeof l.c === "number") { var b = Math.round(a * l.c / 1000); r.buys += b; totals.buys += b; }
+        } else if (x.t === "out") {
+          r.outQ += a;
+          if (typeof l.p === "number") { var s = Math.round(a * l.p / 1000); r.sales += s; totals.sales += s; }
+        } else if (x.t === "ret") r.retQ += a;
+        else if (x.t === "rts") r.rtsQ += a;
+        else if (x.t === "loss") {
+          r.lossQ += a;
+          totals.lossValue += Math.round(a * (avg[l.i] || 0) / 1000);
+        } else r.adj += l.q;
+      });
+    });
+    var rows = Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (x, y) { return y.outQ - x.outQ || y.sales - x.sales || cmpStr(x.i, y.i); });
+    return { rows: rows, sales: totals.sales, buys: totals.buys, lossValue: totals.lossValue, moves: totals.moves };
+  }
+  // Dead stock: live items with stock that sold nothing (no sale, no
+  // return to supplier, no loss) for `days` days or more. last = the
+  // last such day or null (never). Biggest value first.
+  function deadStock(data, today, days) {
+    var n = days || 90, since = addDays(today, -(n - 1)), last = dict();
+    live(data && data.moves).forEach(function (x) {
+      if (x.t !== "out" && x.t !== "rts" && x.t !== "loss") return;
+      x.lines.forEach(function (l) { if (!last[l.i] || x.d > last[l.i]) last[l.i] = x.d; });
+    });
+    var first = dict();
+    chrono(data && data.moves).forEach(function (x) {
+      x.lines.forEach(function (l) { if (!first[l.i]) first[l.i] = x.d; });
+    });
+    return stockRows(data).filter(function (r) {
+      if (r.item.arch || r.q <= 0) return false;
+      if (last[r.item.id] && last[r.item.id] >= since) return false;
+      // stock that arrived inside the window is not "dead" yet
+      return !first[r.item.id] || first[r.item.id] < since;
+    }).map(function (r) { return { row: r, last: last[r.item.id] || null }; })
+      .sort(function (x, y) { return y.row.value - x.row.value || cmpStr(x.row.item.id, y.row.item.id); });
+  }
+
   // ---------- Prefs (device-local, oros-stock-prefs; the shell reads them too) ----------
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
@@ -704,7 +879,10 @@
     suggestQty: suggestQty, lowList: lowList, outRate: outRate, itemMoves: itemMoves,
     hasMoves: hasMoves, findByCode: findByCode, toNotify: toNotify,
     csvCell: csvCell, parseCsv: parseCsv, headKey: headKey, importPlan: importPlan,
-    csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs
+    csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs,
+    PO_ST: PO_ST, normPo: normPo, poSrc: poSrc, receivedMap: receivedMap, poView: poView,
+    poViews: poViews, onOrder: onOrder, poNext: poNext,
+    reportRange: reportRange, valueByCat: valueByCat, periodSummary: periodSummary, deadStock: deadStock
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;

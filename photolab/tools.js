@@ -20,6 +20,13 @@
   function view() { return PL.view; }
   function pr() { return PL.prefs; }
   function rgb(hex) { return P.rgbOf(hex); }
+  // On a layer mask the colours paint as grey (their luminance).
+  function ink(L, hex) {
+    if (!L || !L.mask) return hex;
+    var c = P.rgbOf(hex), v = Math.round(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]);
+    var h = (v < 16 ? "0" : "") + v.toString(16);
+    return "#" + h + h + h;
+  }
   function clampRect(r) {
     var d = st.doc;
     var x0 = Math.max(0, Math.min(r.x, r.x + r.w)), y0 = Math.max(0, Math.min(r.y, r.y + r.h));
@@ -38,9 +45,10 @@
   function sx(x) { return x * view().state().z + view().state().ox; }
   function sy(y) { return y * view().state().z + view().state().oy; }
 
-  // The active layer if a paint tool may use it, else a message (R28).
+  // The active layer (or the mask being edited) if a paint tool may
+  // use it, else a message (R28).
   function paintable(needRaster) {
-    var L = PL.layer();
+    var L = PL.paintLayer();
     if (!L) { PL.toast(PL.t("msg.noLayer")); return null; }
     if (!L.vis) { PL.toast(PL.t("msg.hidden")); return null; }
     if (L.lock) { PL.toast(PL.t("msg.locked")); return null; }
@@ -114,9 +122,11 @@
         var L = paintable(true);
         if (!L) return null;
         var s = PL.surface(L.id), o = pr()[id];
+        // On a mask the eraser paints the background colour (hides
+        // or reveals), like Photoshop.
         var stroke = retouch ? retouchStroke(id, L, s) : P.stroke(T, s, {
-          color: rgb(st.fg), size: o.size, hard: o.hard, opacity: o.opacity, flow: o.flow,
-          erase: erase, mask: st.sel, ox: L.x, oy: L.y, lockAlpha: !erase && !!o.lockAlpha
+          color: rgb(ink(L, erase && L.mask ? st.bg : st.fg)), size: o.size, hard: o.hard, opacity: o.opacity, flow: o.flow,
+          erase: erase && !L.mask, mask: st.sel, ox: L.x, oy: L.y, lockAlpha: !erase && !L.mask && !!o.lockAlpha
         });
         var label = retouch ? PL.t("rk." + retouchKind(id)) : PL.t(erase ? "step.erase" : "step.brush");
         var pres = function (ev) { return ev.pointerType === "pen" && ev.pressure > 0 ? ev.pressure : null; };
@@ -384,7 +394,7 @@
       PL.job("wand", { img: img, x: p.x, y: p.y, tol: o.tol, contiguous: o.contiguous }).then(function (area) {
         PL.busy(false);
         var s = PL.surface(L.id);
-        var r = P.fillArea(T, s, area, { color: rgb(st.fg), opacity: o.opacity, mask: st.sel, ox: L.x, oy: L.y });
+        var r = P.fillArea(T, s, area, { color: rgb(ink(L, st.fg)), opacity: o.opacity, mask: st.sel, ox: L.x, oy: L.y });
         pushPaint(PL.t("step.fill"), L, s, r);
       }, function () { PL.busy(false); PL.toast(PL.t("msg.failed")); });
       return null;
@@ -419,8 +429,8 @@
         up: function () {
           var b = drag.b; drag = null; view().schedule();
           if (Math.hypot(b.x - a.x, b.y - a.y) < 1) return;
-          var o = pr().gradient, s = PL.surface(L.id), c0 = rgb(st.fg).concat(255);
-          var c1 = o.toClear ? rgb(st.fg).concat(0) : rgb(st.bg).concat(255);
+          var o = pr().gradient, s = PL.surface(L.id), c0 = rgb(ink(L, st.fg)).concat(255);
+          var c1 = o.toClear ? rgb(ink(L, st.fg)).concat(0) : rgb(ink(L, st.bg)).concat(255);
           PL.busy(true);
           setTimeout(function () {
             var r = P.gradient(T, s, st.doc.w, st.doc.h, { type: o.type, x0: a.x, y0: a.y, x1: b.x, y1: b.y,
@@ -630,6 +640,7 @@
     var L = PL.layer();
     if (!L) { PL.toast(PL.t("msg.noLayer")); return; }
     if (L.lock) { PL.toast(PL.t("msg.locked")); return; }
+    if (L.k === "adj") { PL.toast(PL.t("msg.adjNoPixels")); return; }
     var b = view().layerBounds(L);
     if (!b || L.k === "raster" && !T.contentBounds(PL.surface(L.id))) { PL.toast(PL.t("msg.emptyLayer")); return; }
     if (L.k === "raster") b = (function (cb) { return { x: cb.x + L.x, y: cb.y + L.y, w: cb.w, h: cb.h }; })(T.contentBounds(PL.surface(L.id)));

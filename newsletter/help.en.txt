@@ -1,0 +1,52 @@
+# Newsletter
+Newsletter writes and sends e-mail newsletters to your own subscriber lists, like Mailerlite or Buttondown, but from your own e-mail account or a sending provider. Subscribers live in orOS, not on someone else's service, and nothing is tracked: there is no open or click counting.
+
+## Getting started
+1. On `Lists`, choose `Add sending account`. Pick a `Mail account` you already set up in [Mail](app:mail), or `Provider (SMTP)` for a sending provider such as Brevo, Amazon SES, Mailgun, Postmark or SendGrid. `Test login` checks it.
+2. Make a `New list`: its name, the account it `Sends from`, the `From address`, and `Your name and postal address (footer)`, which the law asks every newsletter to show.
+3. Add subscribers on `Subscribers`, then write your first issue with `New` on `Issues`.
+
+## Lists and sending accounts
+A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer language and the text that says `Why they receive it (footer)`. `Check domain` looks up the SPF, DKIM and DMARC records of your From address: without them newsletters often land in spam.
+
+`Seconds between messages` and `Messages a day (at most)` keep you under your provider's limits. A provider's password or API key stays sealed on the device where you typed it and is never synced: enter it once on each device that sends.
+
+## Subscribers
+`Add`, `Paste addresses`, `Import CSV` or pick people `From Contacts`. Each person has a status (`Active`, `Waiting to confirm`, `Unsubscribed`, `Bounced`), tags, and the basis you have for writing to them:
+- `Gave consent`: they agreed, for example on a form.
+- `Existing customer`: news about similar products or services.
+- `Confirms by e-mail`: they get a confirmation request and receive issues only after they confirm.
+
+An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
+
+## Writing an issue
+Write in `Blocks` (heading, text, picture, button, line, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you can send to everyone active or only to some tags. Pictures are shrunk and sent inside the e-mail.
+
+`Preview` shows the issue on a phone and a desktop, `Send a test` mails it to you, and `Check` lists what must be fixed before sending.
+
+## Sending
+`Send…` shows how many messages will go out and how long it takes; type the number to confirm. Sending goes one message at a time while Newsletter is open, and the bar on top shows progress with `Pause`. If the daily limit is reached it goes on the next day. Messages that fail are listed under `Not delivered`.
+
+>! Keep Newsletter open while it sends: if you leave it, sending pauses and goes on when you open it again.
+
+## Subscribe and unsubscribe by e-mail
+Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
+
+## Sync and backup
+Lists, subscribers and issues sync through orOS sync, and pictures through the orOS disk. Passwords, the daily counter and when the Inbox was last read stay on each device. `Settings` has `Back up (JSON)` and `Restore from backup`, and `Export CSV` saves a list's subscribers.
+
+## Keyboard shortcuts
+- [[N]]: new issue, subscriber or list (on the tab you are on).
+- [[/]]: search subscribers.
+- [[Esc]]: back to the list.
+- [[Ctrl+Z]]: undo the last delete.
+
+## Tips
+> Send a test to your own phone and a Gmail address before each big send.
+
+> Ask your provider for SPF and DKIM before your first send: it matters more than the subject line.
+
+## Limits
+- Sending happens only while the app is open, and the daily limit is counted per device.
+- Up to 5,000 subscribers in all and 20 lists.
+- No open or click statistics, no automations, no web sign-up form hosted for you: people subscribe by e-mail.

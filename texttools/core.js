@@ -1,8 +1,9 @@
 // ============================================================
-// orOS Text Tools — core (v1.0.0)
+// orOS Text Tools — core (v1.1.0)
 // Pure logic, no DOM: the tools (lines, spaces, numbering, columns,
-// find and replace), the pipeline that runs a chain of steps, the
-// text statistics and the saved-recipe merge. Loaded by texttools.js
+// find and replace, extract, encode / decode, compare), the pipeline
+// that runs a chain of steps, the text statistics and the saved-recipe
+// merge. Loaded by texttools.js
 // (window.TextToolsCore), by worker.js (importScripts) and the tests.
 //
 // Data (sync slice "texttools", oros-texttools-data):
@@ -210,6 +211,305 @@
     return { re: re };
   }
 
+  // ---------- Extract helpers (wave 2) ----------
+  // Patterns built once; "u" flag with \p{…} when the engine has it.
+  function mkRe(withU, plain) {
+    try { return new RegExp(withU, "gu"); } catch (e) { return new RegExp(plain, "g"); }
+  }
+  var L_ = "\\p{L}\\p{N}", L0 = "0-9A-Za-z\\u00C0-\\u024F\\u0370-\\u03FF\\u1F00-\\u1FFF\\u0400-\\u04FF";
+  var EXTRACT = {
+    emails: function () {
+      return mkRe("(?<![" + L_ + "._%+-])[" + L_ + "._%+-]{1,64}@[" + L_ + "-]+(?:\\.[" + L_ + "-]+)*\\.\\p{L}{2,24}",
+                  "[" + L0 + "._%+-]{1,64}@[" + L0 + "-]+(?:\\.[" + L0 + "-]+)*\\.[A-Za-z]{2,24}");
+    },
+    links: function () { return /\b(?:https?:\/\/|www\.)[^\s<>"'«»“”‘’`{}|\\^]+/gi; },
+    phones: function () { return /(?:\+|\b00)?\(?\d[\d \t().\/-]{5,22}\d\b/g; },
+    numbers: function () {
+      return mkRe("(?<![\\p{L}\\p{N}.,])[-+−]?\\d+(?:[.,]\\d+)*(?:[.,]\\d+)?%?(?![\\p{L}\\p{N}])",
+                  "[-+]?\\d+(?:[.,]\\d+)*%?");
+    },
+    hashtags: function () {
+      return mkRe("(?<![\\p{L}\\p{N}_&#/])#[\\p{L}\\p{N}_]*\\p{L}[\\p{L}\\p{N}_]*", "#[" + L0 + "_]*[A-Za-z\\u00C0-\\u03FF\\u1F00-\\u1FFF][" + L0 + "_]*");
+    },
+    mentions: function () {
+      return mkRe("(?<![\\p{L}\\p{N}._%+@-])@[\\p{L}\\p{N}_](?:[\\p{L}\\p{N}_.]*[\\p{L}\\p{N}_])?(?![@\\p{L}\\p{N}])", "@[" + L0 + "_]+");
+    }
+  };
+  // Tidy one match: links lose trailing punctuation (a ")" stays when the
+  // link opened one), phones need 7–15 digits and are not dates.
+  function tidyFound(what, s) {
+    if (what === "links") {
+      s = s.replace(/[.,;:!?…'"»)\]]+$/, function (tail) {
+        var open = (s.match(/\(/g) || []).length, close = (s.slice(0, s.length - tail.length).match(/\)/g) || []).length;
+        return tail.charAt(0) === ")" && open > close ? ")" : "";
+      });
+      return /^(?:https?:\/\/|www\.)[^.\s]*\.?\S/i.test(s) && s.length > 7 ? s : "";
+    }
+    if (what === "phones") {
+      s = s.replace(/^[\s(]+(?=\+|\d)/, function (m) { return m.indexOf("(") >= 0 ? "(" : ""; }).trim();
+      var digits = s.replace(/\D/g, "").length;
+      if (digits < 7 || digits > 15) return "";
+      if (/^\d{1,4}[-.\/]\d{1,2}[-.\/]\d{1,4}$/.test(s)) return "";       // a date
+      if (/^\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(s) || /^\d+[.,]\d+$/.test(s)) return "";   // an amount
+      if ((s.match(/\(/g) || []).length !== (s.match(/\)/g) || []).length) s = s.replace(/[()]/g, "").trim();
+      return s;
+    }
+    if (what === "emails") return s.replace(/^[._-]+|[._-]+$/g, "");
+    return s;
+  }
+  function extractAll(text, o) {
+    var re = EXTRACT[o.what](), out = [], seen = {}, s = String(text), m, n = 0;
+    re.lastIndex = 0;
+    while ((m = re.exec(s)) !== null) {
+      if (m[0] === "") { re.lastIndex++; continue; }
+      var v = tidyFound(o.what, m[0]);
+      if (!v) continue;
+      n++;
+      if (o.unique) {
+        var k = o.what === "phones" ? v.replace(/[^\d+]/g, "").replace(/^00/, "+") : v.toLocaleLowerCase("el");
+        if (has(seen, "\u0001" + k)) continue;
+        seen["\u0001" + k] = 1;
+      }
+      out.push(v);
+      if (out.length >= 200000) break;
+    }
+    return { list: out, found: n };
+  }
+
+  // ---------- Encode helpers (wave 2) ----------
+  function utf8Bytes(s) {
+    if (typeof TextEncoder !== "undefined") return new TextEncoder().encode(s);
+    var u = unescape(encodeURIComponent(s)), b = new Uint8Array(u.length);
+    for (var i = 0; i < u.length; i++) b[i] = u.charCodeAt(i);
+    return b;
+  }
+  var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  function b64enc(s, urlSafe) {
+    var b = utf8Bytes(s), out = [], i, n;
+    for (i = 0; i + 2 < b.length; i += 3) {
+      n = (b[i] << 16) | (b[i + 1] << 8) | b[i + 2];
+      out.push(B64.charAt(n >> 18) + B64.charAt((n >> 12) & 63) + B64.charAt((n >> 6) & 63) + B64.charAt(n & 63));
+    }
+    if (i < b.length) {
+      n = (b[i] << 16) | ((i + 1 < b.length ? b[i + 1] : 0) << 8);
+      out.push(B64.charAt(n >> 18) + B64.charAt((n >> 12) & 63) +
+               (i + 1 < b.length ? B64.charAt((n >> 6) & 63) : "=") + "=");
+    }
+    var r = out.join("");
+    return urlSafe ? r.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") : r;
+  }
+  // null when it is not Base64, or not UTF-8 text once decoded.
+  function b64dec(s) {
+    var t = String(s).replace(/[\s]+/g, "").replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "");
+    if (!t || /[^A-Za-z0-9+\/]/.test(t) || t.length % 4 === 1) return null;
+    var bytes = new Uint8Array(Math.floor(t.length * 3 / 4)), j = 0, acc = 0, bits = 0;
+    for (var i = 0; i < t.length; i++) {
+      acc = (acc << 6) | B64.indexOf(t.charAt(i));
+      bits += 6;
+      if (bits >= 8) { bits -= 8; bytes[j++] = (acc >> bits) & 255; }
+    }
+    bytes = bytes.subarray(0, j);
+    try {
+      if (typeof TextDecoder !== "undefined") return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch (e) { return null; }
+    var bin = "";
+    for (var k = 0; k < bytes.length; k++) bin += String.fromCharCode(bytes[k]);
+    try { return decodeURIComponent(escape(bin)); } catch (e2) { return null; }
+  }
+  // %XX runs decoded one run at a time: a broken run stays as it was.
+  function urlDec(s, plus) {
+    var n = 0;
+    if (plus) s = s.replace(/\+/g, function () { n++; return " "; });
+    s = s.replace(/(?:%[0-9A-Fa-f]{2})+/g, function (m) {
+      try { var v = decodeURIComponent(m); n++; return v; } catch (e) { return m; }
+    });
+    return { text: s, n: n };
+  }
+  var ENT = {
+    amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " ", shy: "­", copy: "©", reg: "®",
+    trade: "™", hellip: "…", mdash: "—", ndash: "–", laquo: "«", raquo: "»", lsquo: "‘", rsquo: "’",
+    sbquo: "‚", ldquo: "“", rdquo: "”", bdquo: "„", euro: "€", pound: "£", yen: "¥", cent: "¢",
+    bull: "•", middot: "·", deg: "°", times: "×", divide: "÷", plusmn: "±", sect: "§", para: "¶",
+    frac12: "½", frac14: "¼", frac34: "¾", sup2: "²", sup3: "³", micro: "µ", iexcl: "¡", iquest: "¿",
+    larr: "←", rarr: "→", uarr: "↑", darr: "↓", harr: "↔", hearts: "♥", check: "✓", zwj: "‍", zwnj: "‌",
+    thinsp: " ", ensp: " ", emsp: " ", tab: "\t", newline: "\n", dagger: "†", Dagger: "‡", permil: "‰",
+    prime: "′", Prime: "″", oline: "‾", infin: "∞", ne: "≠", le: "≤", ge: "≥", asymp: "≈", minus: "−"
+  };
+  // Latin letters with accents (&eacute; …) and the Greek letters (&alpha; …).
+  (function () {
+    var marks = { grave: "\u0300", acute: "\u0301", circ: "\u0302", tilde: "\u0303", uml: "\u0308", ring: "\u030A", cedil: "\u0327" };
+    var sets = { grave: "aeiou", acute: "aeiouy", circ: "aeiou", tilde: "ano", uml: "aeiouy", ring: "a", cedil: "c" };
+    Object.keys(sets).forEach(function (mk) {
+      sets[mk].split("").forEach(function (c) {
+        ENT[c + mk] = (c + marks[mk]).normalize("NFC");
+        ENT[c.toUpperCase() + mk] = (c.toUpperCase() + marks[mk]).normalize("NFC");
+      });
+    });
+    ENT.szlig = "ß"; ENT.aelig = "æ"; ENT.AElig = "Æ"; ENT.oslash = "ø"; ENT.Oslash = "Ø"; ENT.eth = "ð"; ENT.thorn = "þ";
+    ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi",
+     "Omicron", "Pi", "Rho", "", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega"].forEach(function (nm, i) {
+      if (!nm) return;
+      ENT[nm] = String.fromCharCode(0x391 + i);
+      ENT[nm.toLowerCase()] = String.fromCharCode(0x3B1 + i);
+    });
+    ENT.sigmaf = "ς";
+  })();
+  function htmlDec(s) {
+    var n = 0;
+    var out = s.replace(/&(#[xX][0-9A-Fa-f]{1,6}|#\d{1,7}|[A-Za-z][A-Za-z0-9]{1,31});/g, function (m, e) {
+      var cp;
+      if (e.charAt(0) === "#") {
+        cp = /^#[xX]/.test(e) ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+        if (!(cp > 0 && cp <= 0x10FFFF) || (cp >= 0xD800 && cp <= 0xDFFF)) return m;
+        n++;
+        return String.fromCodePoint(cp);
+      }
+      if (!has(ENT, e)) return m;
+      n++;
+      return ENT[e];
+    });
+    return { text: out, n: n };
+  }
+  function htmlEnc(s, all) {
+    var n = 0, map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" };
+    var out = s.replace(all ? /[&<>"']|[^\x00-\x7F]/gu : /[&<>"']/g, function (c) {
+      n++;
+      return has(map, c) ? map[c] : "&#" + c.codePointAt(0) + ";";
+    });
+    return { text: out, n: n };
+  }
+
+  // Greek → Latin for slugs (ELOT 743 simplified): "Καλή Χρονιά" → "kali-chronia".
+  var GR_PAIRS = { "ου": "ou", "αυ": "av", "ευ": "ev", "ηυ": "iv", "γγ": "ng", "γκ": "gk", "μπ": "mp", "ντ": "nt", "τσ": "ts", "τζ": "tz" };
+  var GR_ONE = {
+    "α": "a", "β": "v", "γ": "g", "δ": "d", "ε": "e", "ζ": "z", "η": "i", "θ": "th", "ι": "i", "κ": "k",
+    "λ": "l", "μ": "m", "ν": "n", "ξ": "x", "ο": "o", "π": "p", "ρ": "r", "σ": "s", "ς": "s", "τ": "t",
+    "υ": "y", "φ": "f", "χ": "ch", "ψ": "ps", "ω": "o"
+  };
+  function greekLatin(s) {
+    var out = "", i = 0;
+    while (i < s.length) {
+      var two = s.substr(i, 2);
+      if (has(GR_PAIRS, two)) { out += GR_PAIRS[two]; i += 2; continue; }
+      var c = s.charAt(i);
+      out += has(GR_ONE, c) ? GR_ONE[c] : c;
+      i++;
+    }
+    return out;
+  }
+  function slugOf(s, o) {
+    var t = foldAccents(String(s).toLocaleLowerCase("el"));
+    if (o.greek === "latin") t = greekLatin(t);
+    t = t.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss").replace(/æ/g, "ae").replace(/ø/g, "o");
+    var sep = o.sep === "under" ? "_" : "-";
+    var keep = o.greek === "latin" ? /[^a-z0-9]+/g : mkRe("[^\\p{L}\\p{N}]+", "[^a-z0-9\\u0370-\\u03FF]+");
+    t = t.replace(keep, sep);
+    t = t.split(sep).filter(Boolean).join(sep);
+    if (o.max > 0 && t.length > o.max) {
+      t = t.slice(0, o.max);
+      var cut = t.lastIndexOf(sep);
+      if (cut > o.max / 2) t = t.slice(0, cut);
+    }
+    return t;
+  }
+
+  // ---------- Compare helpers (wave 2) ----------
+  // Line diff on comparison keys. Ops: [0, i, j] same, [-1, i] removed,
+  // [1, j] added. Myers (shortest edit) first; when the texts differ in
+  // too many places for that (DIFF_MAX_D changes or DIFF_WORK steps), the
+  // lines found once in each text anchor the two (patience diff) and
+  // Myers runs between the anchors. A stretch still too different is
+  // shown as removed + added. Never freezes, never loses a line.
+  var DIFF_MAX_D = 2000, DIFF_WORK = 20000000;
+  function myers(ka, kb) {
+    var n0 = ka.length, m0 = kb.length, pre = 0, suf = 0, i;
+    while (pre < n0 && pre < m0 && ka[pre] === kb[pre]) pre++;
+    while (suf < n0 - pre && suf < m0 - pre && ka[n0 - 1 - suf] === kb[m0 - 1 - suf]) suf++;
+    var N = n0 - pre - suf, M = m0 - pre - suf, ops = [], mid = [];
+    for (i = 0; i < pre; i++) ops.push([0, i, i]);
+    if (!N) for (i = 0; i < M; i++) mid.push([1, pre + i]);
+    else if (!M) for (i = 0; i < N; i++) mid.push([-1, pre + i]);
+    else {
+      var max = N + M, off = max + 1, v = new Int32Array(2 * max + 3), trace = [], found = false;
+      var d, k, x, y, work = 0;
+      for (d = 0; d <= max && !found; d++) {
+        if (d > DIFF_MAX_D) return null;
+        var snap = new Int32Array(2 * d + 3);
+        for (k = -d - 1; k <= d + 1; k++) snap[k + d + 1] = v[off + k];
+        trace.push(snap);
+        for (k = -d; k <= d; k += 2) {
+          x = (k === -d || (k !== d && v[off + k - 1] < v[off + k + 1])) ? v[off + k + 1] : v[off + k - 1] + 1;
+          y = x - k;
+          while (x < N && y < M && ka[pre + x] === kb[pre + y]) { x++; y++; work++; }
+          v[off + k] = x;
+          if (++work > DIFF_WORK) return null;
+          if (x >= N && y >= M) { found = true; break; }
+        }
+      }
+      x = N; y = M;
+      for (var dd = trace.length - 1; dd > 0; dd--) {
+        var V = trace[dd], kk = x - y;
+        var prevK = (kk === -dd || (kk !== dd && V[kk + dd] < V[kk + dd + 2])) ? kk + 1 : kk - 1;
+        var px = V[prevK + dd + 1], py = px - prevK;
+        while (x > px && y > py) { mid.push([0, pre + x - 1, pre + y - 1]); x--; y--; }
+        if (x === px) mid.push([1, pre + y - 1]); else mid.push([-1, pre + x - 1]);
+        x = px; y = py;
+      }
+      while (x > 0 && y > 0) { mid.push([0, pre + x - 1, pre + y - 1]); x--; y--; }
+      mid.reverse();
+    }
+    for (i = 0; i < mid.length; i++) ops.push(mid[i]);
+    for (i = 0; i < suf; i++) ops.push([0, n0 - suf + i, m0 - suf + i]);
+    return ops;
+  }
+  // Lines that appear exactly once in each text, kept in the longest
+  // order both agree on (patience sorting): [[i, j], …].
+  function anchors(ka, kb) {
+    var ca = {}, cb = {}, pos = {}, i;
+    for (i = 0; i < ka.length; i++) ca["\u0001" + ka[i]] = (ca["\u0001" + ka[i]] || 0) + 1;
+    for (i = 0; i < kb.length; i++) { var q = "\u0001" + kb[i]; cb[q] = (cb[q] || 0) + 1; pos[q] = i; }
+    var pairs = [];
+    for (i = 0; i < ka.length; i++) {
+      var k = "\u0001" + ka[i];
+      if (ca[k] === 1 && cb[k] === 1) pairs.push([i, pos[k]]);
+    }
+    var tails = [], prev = new Int32Array(pairs.length);
+    pairs.forEach(function (p, n) {
+      var lo = 0, hi = tails.length;
+      while (lo < hi) { var m = (lo + hi) >> 1; if (pairs[tails[m]][1] < p[1]) lo = m + 1; else hi = m; }
+      prev[n] = lo ? tails[lo - 1] : -1;
+      tails[lo] = n;
+    });
+    var out = [];
+    for (var t = tails.length ? tails[tails.length - 1] : -1; t >= 0; t = prev[t]) out.push(pairs[t]);
+    return out.reverse();
+  }
+  function diffLines(ka, kb) {
+    var ops = myers(ka, kb);
+    if (ops) return ops;
+    ops = [];
+    var piece = function (a0, a1, b0, b1) {
+      var sub = a1 > a0 || b1 > b0 ? myers(ka.slice(a0, a1), kb.slice(b0, b1)) : [];
+      var i;
+      if (!sub) {
+        for (i = a0; i < a1; i++) ops.push([-1, i]);
+        for (i = b0; i < b1; i++) ops.push([1, i]);
+        return;
+      }
+      sub.forEach(function (op) {
+        ops.push(op[0] === 0 ? [0, a0 + op[1], b0 + op[2]] : (op[0] < 0 ? [-1, a0 + op[1]] : [1, b0 + op[1]]));
+      });
+    };
+    var a = 0, b = 0;
+    anchors(ka, kb).forEach(function (p) {
+      piece(a, p[0], b, p[1]);
+      ops.push([0, p[0], p[1]]);
+      a = p[0] + 1; b = p[1] + 1;
+    });
+    piece(a, ka.length, b, kb.length);
+    return ops;
+  }
+
   // ---------- The tools ----------
   // Each tool: group, option defaults (+ field kinds for the UI), run.
   // f: "sel" (choices), "chk", "txt", "num" ([min, max]). `when` hides
@@ -261,9 +561,23 @@
             f: { delim: ["sel", ["auto"].concat(DELIM_CHOICES)], custom: ["txt", null, { delim: ["custom"] }], header: ["chk"] } },
     // Find and replace
     replace: { g: "find", o: { find: "", repl: "", regex: false, icase: false, word: false, iaccent: false },
-               f: { find: ["txt"], repl: ["txt"], icase: ["chk"], iaccent: ["chk", null, { regex: [false] }], word: ["chk"], regex: ["chk"] } }
+               f: { find: ["txt"], repl: ["txt"], icase: ["chk"], iaccent: ["chk", null, { regex: [false] }], word: ["chk"], regex: ["chk"] } },
+    extract: { g: "find", o: { what: "emails", unique: true, sort: false },
+               f: { what: ["sel", ["emails", "links", "phones", "numbers", "hashtags", "mentions"]], unique: ["chk"], sort: ["chk"] } },
+    // Encode / decode (wave 2)
+    url: { g: "code", o: { dir: "enc", full: false, plus: false },
+           f: { dir: ["sel", ["enc", "dec"]], full: ["chk", null, { dir: ["enc"] }], plus: ["chk", null, { dir: ["dec"] }] } },
+    base64: { g: "code", o: { dir: "enc", each: false, urlsafe: false },
+              f: { dir: ["sel", ["enc", "dec"]], each: ["chk"], urlsafe: ["chk", null, { dir: ["enc"] }] } },
+    html: { g: "code", o: { dir: "enc", all: false }, f: { dir: ["sel", ["enc", "dec"]], all: ["chk", null, { dir: ["enc"] }] } },
+    slug: { g: "code", o: { greek: "latin", sep: "dash", max: 0 },
+            f: { greek: ["sel", ["latin", "keep"]], sep: ["sel", ["dash", "under"]], max: ["num", [0, 200]] } },
+    // Compare two texts (wave 2): the second text comes from ctx.other
+    // (the "Compare with" box), never from the step, so recipes stay small.
+    diff: { g: "cmp", o: { show: "all", trim: false, icase: false, iaccent: false },
+            f: { show: ["sel", ["all", "changes", "added", "removed", "same"]], trim: ["chk"], icase: ["chk"], iaccent: ["chk"] } }
   };
-  var GROUPS = ["lines", "space", "num", "cols", "find"];
+  var GROUPS = ["lines", "space", "num", "cols", "find", "code", "cmp"];
   var TOOL_IDS = Object.keys(TOOLS);
   function toolsOf(g) { return TOOL_IDS.filter(function (id) { return TOOLS[id].g === g; }); }
 
@@ -578,6 +892,73 @@
         });
       });
       return { text: out, n: n };
+    },
+    extract: function (text, o) {
+      var r = extractAll(text, o), list = r.list;
+      if (o.sort) { var c = collator({ icase: true }, true); list = list.slice().sort(function (a, b) { return c.compare(a, b); }); }
+      return { text: list.length ? list.join("\n") + "\n" : "", n: list.length };
+    },
+    url: function (text, o) {
+      if (o.dir === "dec") return urlDec(String(text), o.plus);
+      var L = splitLines(text), n = 0;
+      var out = joinLines(L, L.ls.map(function (l) {
+        var e = o.full ? encodeURI(l) : encodeURIComponent(l);
+        if (e !== l) n++;
+        return e;
+      }));
+      return { text: out, n: n };
+    },
+    base64: function (text, o) {
+      var s = String(text), bad = 0, n = 0;
+      if (!o.each) {
+        if (o.dir === "enc") return { text: s ? b64enc(s, o.urlsafe) + "\n" : "" };
+        if (!s.trim()) return { text: "" };
+        var v = b64dec(s);
+        return v === null ? { text: s, err: "b64" } : { text: v };
+      }
+      var L = splitLines(s);
+      var out = joinLines(L, L.ls.map(function (l) {
+        if (l === "") return l;
+        if (o.dir === "enc") { n++; return b64enc(l, o.urlsafe); }
+        var d = b64dec(l);
+        if (d === null) { bad++; return l; }
+        n++;
+        return d.replace(/\r\n|\r|\n/g, " ");
+      }));
+      return bad && !n ? { text: s, err: "b64" } : { text: out, n: n };
+    },
+    html: function (text, o) {
+      return o.dir === "dec" ? htmlDec(String(text)) : htmlEnc(String(text), o.all);
+    },
+    slug: function (text, o) {
+      var n = 0;
+      return { text: perLine(text, function (l) { if (isBlank(l)) return ""; n++; return slugOf(l, o); }), n: n };
+    },
+    diff: function (text, o, ctx) {
+      var other = ctx && typeof ctx.other === "string" ? ctx.other : "";
+      if (!other) return { text: text, err: "noother" };
+      var A = splitLines(text).ls, B = splitLines(other).ls;
+      var ka = A.map(function (l) { return keyOf(l, o); }), kb = B.map(function (l) { return keyOf(l, o); });
+      var ops = diffLines(ka, kb);
+      // Inside each run of changes: removed lines first, then added ones.
+      var sorted = [], run = [];
+      var flush = function () {
+        run.forEach(function (op) { if (op[0] < 0) sorted.push(op); });
+        run.forEach(function (op) { if (op[0] > 0) sorted.push(op); });
+        run = [];
+      };
+      ops.forEach(function (op) { if (op[0]) run.push(op); else { flush(); sorted.push(op); } });
+      flush();
+      var out = [], add = 0, del = 0;
+      sorted.forEach(function (op) {
+        if (op[0] > 0) add++; else if (op[0] < 0) del++;
+        if (o.show === "all") out.push((op[0] > 0 ? "+ " : (op[0] < 0 ? "- " : "  ")) + (op[0] > 0 ? B[op[1]] : A[op[1]]));
+        else if (o.show === "changes") { if (op[0]) out.push((op[0] > 0 ? "+ " : "- ") + (op[0] > 0 ? B[op[1]] : A[op[1]])); }
+        else if (o.show === "added") { if (op[0] > 0) out.push(B[op[1]]); }
+        else if (o.show === "removed") { if (op[0] < 0) out.push(A[op[1]]); }
+        else if (!op[0]) out.push(A[op[1]]);
+      });
+      return { text: out.length ? out.join("\n") + "\n" : "", n: add + del, x: { add: add, del: del } };
     }
   };
 
@@ -589,7 +970,10 @@
     return false;
   }
 
-  // Run a chain. ctx = { rand? }. Returns { text, notes: [{ tool, n, err }] }.
+  // Chains with a Compare step read the second text.
+  function usesOther(steps) { return (steps || []).some(function (s) { return s && s.tool === "diff"; }); }
+
+  // Run a chain. ctx = { rand?, other? } (other: the "Compare with" text). Returns { text, notes: [{ tool, n, err }] }.
   function run(text, steps, ctx) {
     var s = String(text == null ? "" : text);
     if (s.length > MAX_TEXT) s = s.slice(0, MAX_TEXT);
@@ -601,7 +985,7 @@
       try { r = RUN[st.tool](s, o, ctx || {}); }
       catch (e) { r = { text: s, err: "failed" }; }
       s = r.text;
-      notes.push({ tool: st.tool, n: r.n === undefined ? null : r.n, err: r.err || null, d: r.d || null });
+      notes.push({ tool: st.tool, n: r.n === undefined ? null : r.n, err: r.err || null, d: r.d || null, x: r.x || null });
     });
     return { text: s, notes: notes };
   }
@@ -768,7 +1152,8 @@
     writeDelimited: writeDelimited, colSpec: colSpec, foldAccents: foldAccents, unescapeSep: unescapeSep,
     normName: normName, normStep: normStep, normSteps: normSteps, normRecipe: normRecipe,
     emptyData: emptyData, mergeRecipes: mergeRecipes, parseRecipesFile: parseRecipesFile, recipesFile: recipesFile,
-    sheetRows: sheetRows, todoItems: todoItems, outKind: outKind
+    sheetRows: sheetRows, todoItems: todoItems, outKind: outKind,
+    usesOther: usesOther, slugOf: slugOf, b64enc: b64enc, b64dec: b64dec, diffLines: diffLines
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.TextToolsCore = api;

@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.14.00";
+var CACHE_VERSION = "oros-v1.21.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -254,6 +254,13 @@ var PRECACHE_URLS = [
   "invoices/core.js",
   "invoices/invoices.js",
   "invoices/search.js",
+  "newsletter/",
+  "newsletter/index.html",
+  "newsletter/newsletter.css",
+  "newsletter/core.js",
+  "newsletter/render.js",
+  "newsletter/newsletter.js",
+  "newsletter/search.js",
   "invoices/today.js",
   "crm/",
   "crm/index.html",
@@ -296,6 +303,10 @@ var PRECACHE_URLS = [
   "library/",
   "library/index.html",
   "library/search.js",
+  "library/speak.js",
+  "library/stats.js",
+  "library/today.js",
+  "library/lookup.js",
   "library/library.css",
   "library/core.js",
   "library/sanitize.js",
@@ -644,6 +655,8 @@ var PRECACHE_URLS = [
   "timesheet/help.el.txt",
   "invoices/help.en.txt",
   "invoices/help.el.txt",
+  "newsletter/help.en.txt",
+  "newsletter/help.el.txt",
   "crm/help.en.txt",
   "crm/help.el.txt",
   "travel/help.en.txt",
@@ -709,6 +722,7 @@ var PRECACHE_URLS = [
   "stock/core.js",
   "stock/stock.css",
   "stock/stock.js",
+  "stock/today.js",
   "garage/",
   "garage/index.html",
   "garage/search.js",
@@ -771,6 +785,7 @@ var PRECACHE_URLS = [
   "assistant/index.html",
   "assistant/assistant.css",
   "assistant/core.js",
+  "assistant/summary.js",
   "assistant/assistant.js",
   "assistant/help.en.txt",
   "assistant/help.el.txt",
@@ -888,6 +903,7 @@ var PRECACHE_URLS = [
   "atelier/brand.js",
   "atelier/folders.js",
   "atelier/homefolders.js",
+  "atelier/relayout.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",
