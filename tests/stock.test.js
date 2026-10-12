@@ -539,3 +539,53 @@ test("catalog: live products with code, prices, VAT and quantity for another app
     { id: "item02", code: "123", name: "Item item02", unit: "kg", price: 0, vat: 24, q: 1.5 }
   ]);
 });
+
+test("warehouses: per-warehouse quantities, transfers leave totals, old copies stripped of w lose the tie", () => {
+  const d = C.merge(data({
+    items: [item("item01", { cost: 100 })],
+    whs: [{ id: "wh0001", m: 1, name: "Shop" }, { id: C.WH_MAIN, m: 1, name: "Depot", arch: 1 }],
+    moves: [
+      mv("mv0001", "in", "2026-10-01", [{ i: "item01", q: k(10), c: 200 }]),
+      mv("mv0002", "xfer", "2026-10-02", [{ i: "item01", q: k(4) }], { w2: "wh0001" }),
+      mv("mv0003", "out", "2026-10-03", [{ i: "item01", q: -k(1), p: 500 }], { w: "wh0001" }),
+      mv("mv0004", "xfer", "2026-10-03", [{ i: "item01", q: k(1) }], { w: "wh0001", w2: "wh0001" }),   // same place: dropped
+      mv("mv0005", "xfer", "2026-10-03", [{ i: "item01", q: -k(1) }], { w2: "wh0001" }),              // negative: dropped
+      mv("mv0006", "out", "2026-10-04", [{ i: "item01", q: -k(1) }], { w: C.WH_MAIN })                 // main is never stored as w
+    ]
+  }), null, NOW);
+  assert.deepEqual(d.moves.map((x) => x.id), ["mv0001", "mv0002", "mv0003", "mv0006"]);
+  assert.equal(d.moves[3].w, undefined);
+  assert.equal(d.whs.find((w) => w.id === C.WH_MAIN).arch, 0);           // main can't be archived
+  assert.equal(C.qtyMap(d).item01, k(8));                                // the transfer changes no total
+  assert.deepEqual({ ...C.whQty(d).item01 }, { "": k(5), wh0001: k(3) });
+  assert.deepEqual({ ...C.qtyIn(d, "wh0001") }, { item01: k(3) });
+  assert.equal(C.costMap(d).item01, 200);
+  const R = C.periodSummary(d, "2026-10-01", "2026-10-31");
+  assert.equal(R.rows[0].outQ, k(2));
+  assert.equal(R.rows[0].adj, 0);
+  assert.equal(R.moves, 3);
+  const hist = C.itemMoves(d, "item01");
+  assert.deepEqual(hist.map((h) => [h.move.id, h.after]), [["mv0006", k(8)], ["mv0003", k(9)], ["mv0002", k(10)], ["mv0001", k(10)]]);
+  assert.equal(C.whName(d, "", "Main"), "Depot");
+  assert.equal(C.whName(d, "wh0001", "Main"), "Shop");
+  assert.equal(C.whName(d, "wh9999", "Main"), "?");
+  // a 1.3 device re-uploads the sale without w (same m): the copy with w wins, both ways round
+  const stripped = JSON.parse(JSON.stringify(d));
+  delete stripped.moves[2].w;
+  assert.equal(m(d, stripped).moves[2].w, "wh0001");
+  assert.equal(m(stripped, d).moves[2].w, "wh0001");
+  // a 1.3 device knows no transfers and no whs list: merging its slice in loses nothing
+  const old = JSON.parse(JSON.stringify(stripped));
+  old.moves = old.moves.filter((x) => x.t !== "xfer");
+  delete old.whs;
+  const back = m(old, d);
+  assert.equal(JSON.stringify(back), JSON.stringify(m(d, d)));
+  // a warehouse deleted on one device while another used it stays
+  const del = m(d, data({ tombs: { wh0001: NOW - 1000 } }));
+  assert.ok(del.whs.some((w) => w.id === "wh0001"));
+  // CSV with warehouses
+  const rowsCsv = C.csvMoves(d, { xfer: "Transfer" }, "Main");
+  assert.deepEqual(rowsCsv[1].slice(10), ["Depot", "Shop"]);
+  assert.equal(rowsCsv[1][1], "Transfer");
+  assert.equal(C.csvMoves(d, {})[0].length, 10);
+});

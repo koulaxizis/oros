@@ -209,7 +209,7 @@ test("preflight: errors and warnings", () => {
     ["err:noAudience", "err:noBody", "err:noChan", "err:noSubj"]);
   assert.deepEqual(keys(issue("iss-1", { subj: "BIG NEWS TODAY!!", blocks: [{ k: "p", t: "Hi {nmae}" }, { k: "btn", t: "Go", href: "" }] }),
     { chan: CHAN, inbox: false, aud: 1, imgBytes: C.LIM.imgBytes + 1 }),
-    ["err:badBlock", "warn:bigImgs", "warn:noInbox", "warn:placeholder", "warn:shouty", "warn:shouty"]);
+    ["err:badBlock", "warn:bigImgs", "warn:noInbox", "warn:placeholder", "warn:shouty"]);
   assert.equal(C.badPlaceholders("{name} {first|φίλε} {name|}"), false);
   assert.equal(C.badPlaceholders("{email}"), true);
 });
@@ -349,11 +349,12 @@ test("app: EN and EL strings have the same keys and every used key exists", () =
   const dyn = [].concat(
     Object.keys(C.PRESETS).map((k) => "p." + k), C.THEMES.map((k) => "th." + k),
     C.BASES.map((k) => "basis." + k), C.BASES.map((k) => "basis." + k + "Hint"),
-    ["manual", "paste", "csv", "contacts", "mail"].map((k) => "src." + k),
+    ["manual", "paste", "csv", "contacts", "mail", "crm"].map((k) => "src." + k),
     ["h", "p", "img", "btn", "hr", "cols"].map((k) => "bk." + k),
-    ["draft", "sending", "paused", "sent"].map((k) => "st." + k),
+    ["draft", "sched", "sending", "paused", "sent"].map((k) => "st." + k),
+    ["lead", "active", "past"].map((k) => "crm." + k), ["en", "el"].map((k) => "lang." + k),
     ["on", "pend", "off", "bounce", "spam"].map((k) => "sst." + k),
-    ["noSubj", "longSubj", "shouty", "noBody", "noAddr", "noFrom", "noChan", "noInbox", "bigImgs", "badBlock", "placeholder", "noAudience"].map((k) => "ck." + k),
+    ["noSubj", "longSubj", "shouty", "noBody", "noAddr", "noFrom", "noChan", "noInbox", "bigImgs", "badBlock", "placeholder", "noAudience", "segGone"].map((k) => "ck." + k),
     ["issues", "subs", "lists"].map((k) => "tab." + k));
   for (const k of dyn) used.add(k);
   for (const k of used) assert.ok(S.en[k] !== undefined, "missing string " + k);
@@ -363,6 +364,7 @@ test("app: palette contract, sync slice and no eval", () => {
   const js = fs.readFileSync(path.join(ROOT, "newsletter/newsletter.js"), "utf8");
   assert.ok(js.includes("inheritPalette") && js.includes("watchPalette"));
   assert.match(js, /registerSlice\(\s*"newsletter"/);
+  assert.match(fs.readFileSync(path.join(ROOT, "newsletter/runner.js"), "utf8"), /registerSlice\(\s*"newsletter"/);
   assert.ok(!/\beval\(|new Function\(/.test(js));
   const html = fs.readFileSync(path.join(ROOT, "newsletter/index.html"), "utf8");
   for (const m of html.matchAll(/(?:src|href)="([^"?]+)/g)) assert.ok(fs.existsSync(path.join(ROOT, "newsletter", m[1])), m[1]);

@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.31.00
+- Newsletter: orOS now goes on sending an issue with Newsletter closed, and you can schedule an issue for a day and time. New: segments (tags and language), templates, a second language per issue, subscribers from CRM, and a Today line for issues being sent or scheduled.
+
+## Version 1.30.00
+- Stock: several warehouses with transfers, quantities per warehouse, and value per warehouse in Reports.
+
 ## Version 1.29.00
 - CRM: import customers from a CSV file (Excel, HubSpot, other programs): a preview shows what is new, customers you already have are skipped, Undo removes the import.
 - Mail: Log in CRM from a message.
