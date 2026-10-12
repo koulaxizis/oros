@@ -90,6 +90,10 @@
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"] } },
+    { app: "texttools", accept: {
+      "text/plain": [".txt"],
+      "text/csv": [".csv"],
+      "text/tab-separated-values": [".tsv"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
     // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
     { app: "calendar", text: "importIcs", accept: {

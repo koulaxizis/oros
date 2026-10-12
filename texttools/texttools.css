@@ -245,6 +245,10 @@ input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; accent-color:
 #opts { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .opt-lbl { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 4px; }
 .opt.chk { display: flex; align-items: center; gap: 10px; font-size: 14px; min-height: 32px; cursor: pointer; }
+/* Compare: the second text */
+.other-head { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.other-head .opt-lbl { margin-bottom: 0; }
+#opts textarea#other { height: 22vh; height: 22dvh; min-height: 120px; }
 
 /* ---------- 6. Text panes ---------- */
 .pane { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; }

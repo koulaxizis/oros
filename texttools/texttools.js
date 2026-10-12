@@ -50,6 +50,7 @@
     en: {
       "app": "Text Tools",
       "grp.lines": "Lines", "grp.space": "Clean up", "grp.num": "Numbers", "grp.cols": "Columns", "grp.find": "Find",
+      "grp.code": "Encode", "grp.cmp": "Compare",
       "tool.sort": "Sort", "tool.reverse": "Reverse order", "tool.dedupe": "Remove duplicates", "tool.dupes": "Only duplicates",
       "tool.count": "Count lines", "tool.noempty": "Remove empty lines", "tool.squeeze": "One empty line",
       "tool.filter": "Keep / remove lines", "tool.join": "Join lines", "tool.split": "Split into lines",
@@ -58,6 +59,8 @@
       "tool.number": "Number lines", "tool.unnumber": "Remove numbers / bullets", "tool.affix": "Prefix / suffix",
       "tool.convert": "Change separator", "tool.columns": "Pick columns", "tool.transpose": "Rows ↔ columns",
       "tool.markdown": "Markdown table", "tool.json": "JSON", "tool.replace": "Find and replace",
+      "tool.extract": "Extract", "tool.url": "URL", "tool.base64": "Base64", "tool.html": "HTML entities",
+      "tool.slug": "Slug", "tool.diff": "Compare texts",
       "hint.sort": "Sorts the lines in alphabetical order (Greek and English), by number, by length or at random.",
       "hint.reverse": "Puts the last line first.",
       "hint.dedupe": "Keeps each line once.",
@@ -84,6 +87,12 @@
       "hint.markdown": "Makes a Markdown table from a CSV-like table.",
       "hint.json": "Makes JSON from a CSV-like table.",
       "hint.replace": "Finds a text and replaces it everywhere.",
+      "hint.extract": "Lists the emails, links, phone numbers, numbers, #hashtags or @names found in the text, one per line.",
+      "hint.url": "Encodes text for a web address (Ελλάδα → %CE%95…) or decodes it back.",
+      "hint.base64": "Encodes text as Base64 or decodes Base64 back to text (UTF-8).",
+      "hint.html": "Turns < > & \" ' into HTML entities, or entities like &amp; and &#233; back into characters.",
+      "hint.slug": "Makes each line a web-friendly name: “Καλή Χρονιά!” → kali-chronia.",
+      "hint.diff": "Compares the text with a second text, line by line: - removed, + added. The second text is not saved in recipes.",
       "opt.by": "Order", "val.by.az": "A → Z", "val.by.za": "Z → A", "val.by.natural": "Natural (2 before 10)",
       "val.by.num": "By number", "val.by.len": "By length", "val.by.random": "Random",
       "opt.icase": "Ignore case", "opt.iaccent": "Ignore accents", "opt.emptyLast": "Empty lines at the end",
@@ -112,6 +121,21 @@
       "opt.cols": "Columns", "ph.cols": "e.g. 3,1 or 2-4",
       "opt.header": "First row is the heading",
       "opt.word": "Whole words", "opt.regex": "Pattern (regular expression)",
+      "opt.what": "Find", "val.what.emails": "Emails", "val.what.links": "Links", "val.what.phones": "Phone numbers",
+      "val.what.numbers": "Numbers", "val.what.hashtags": "#hashtags", "val.what.mentions": "@names",
+      "opt.unique": "Each one once", "opt.extract.sort": "Sort A → Z",
+      "opt.url.dir": "Action", "opt.base64.dir": "Action", "opt.html.dir": "Action",
+      "val.dir.enc": "Encode", "val.dir.dec": "Decode",
+      "opt.full": "Whole address (keep : / ? & =)", "opt.plus": "+ means a space (forms)",
+      "opt.each": "Each line on its own", "opt.urlsafe": "URL-safe (- _ without =)",
+      "opt.all": "Also every non-English character (&#…;)",
+      "opt.greek": "Greek letters", "val.greek.latin": "To Latin (kali-mera)", "val.greek.keep": "Keep (καλη-μερα)",
+      "opt.slug.sep": "Between words", "val.sep.dash": "Dash -", "val.sep.under": "Underscore _",
+      "opt.slug.max": "Longest (0 = no limit)",
+      "opt.show": "Show", "val.show.all": "Everything (- removed, + added)", "val.show.changes": "Only the changes",
+      "val.show.added": "Only lines added", "val.show.removed": "Only lines removed", "val.show.same": "Only lines in both",
+      "other.label": "Compare with", "other.ph": "Paste the second text here…", "btn.openOther": "Open a file for the second text",
+      "btn.swap": "Swap the two texts",
       "ph.sep": "\\t = tab, \\n = new line",
       "preset.bullet": "• bullet", "preset.dash": "- dash", "preset.quotes": "\"…\"", "preset.gr": "«…»", "preset.sql": "'…',",
       "sec.steps": "Steps", "step.add": "+ Step", "step.aria": "Step {n}: {tool}", "step.del": "Remove step {n}",
@@ -131,9 +155,12 @@
       "note.join": "{n} lines joined", "note.split": "{n} lines", "note.number": "{n} numbered",
       "note.unnumber": "{n} removed", "note.convert": "{n} rows", "note.columns": "{n} rows", "note.transpose": "{n} rows",
       "note.markdown": "{n} rows", "note.json": "{n} items", "note.replace": "{n} replaced", "note.clean": "Nothing to clean",
+      "note.extract": "{n} found", "note.url": "{n} changed", "note.base64": "{n} lines", "note.html": "{n} changed",
+      "note.slug": "{n} lines", "note.diff": "{a} added · {r} removed", "note.same": "The texts are the same",
       "err.pattern": "The pattern is not valid", "err.long": "The text to find is too long", "err.cols": "Write the column numbers, e.g. 3,1",
       "err.unknown": "A step is from a newer orOS and was skipped", "err.failed": "A step failed and was skipped",
       "err.time": "The pattern took too long and was stopped", "err.run": "Could not run the steps",
+      "err.b64": "This is not Base64 text", "err.noother": "Paste the second text in “Compare with”",
       "note.stale": "Text is long: press Apply", "note.working": "Working…",
       "rec.title": "Recipes", "rec.empty": "No recipes yet. Build a few steps and press “Save as recipe”.",
       "rec.open": "Use {name}", "rec.rename": "Rename {name}", "rec.del": "Delete {name}", "rec.steps": "{n} steps",
@@ -154,12 +181,13 @@
       "imp.err.kind": "This is not a Text Tools recipes file", "imp.err.empty": "The file has no recipes this version can use",
       "toast.noBridge": "Open orOS to send to other apps", "toast.notesCut": "Only the first 20,000 characters were sent",
       "toast.sheetCut": "Only the first 500 rows and 64 columns were sent", "toast.todoNone": "There are no lines to send",
-      "toast.todoCut": "Only the first 200 lines were sent",
+      "toast.todoCut": "Only the first 200 lines were sent", "toast.opened": "Opened “{name}”",
       "sheet.name": "Text Tools", "note.title": "Text Tools · {d}", "from": "Text Tools"
     },
     el: {
       "app": "Εργαλεία κειμένου",
       "grp.lines": "Γραμμές", "grp.space": "Καθάρισμα", "grp.num": "Αρίθμηση", "grp.cols": "Στήλες", "grp.find": "Εύρεση",
+      "grp.code": "Κωδικοποίηση", "grp.cmp": "Σύγκριση",
       "tool.sort": "Ταξινόμηση", "tool.reverse": "Αντίστροφη σειρά", "tool.dedupe": "Αφαίρεση διπλότυπων", "tool.dupes": "Μόνο τα διπλότυπα",
       "tool.count": "Μέτρημα γραμμών", "tool.noempty": "Χωρίς κενές γραμμές", "tool.squeeze": "Μία κενή γραμμή",
       "tool.filter": "Κράτα / βγάλε γραμμές", "tool.join": "Ένωση γραμμών", "tool.split": "Σπάσιμο σε γραμμές",
@@ -168,6 +196,8 @@
       "tool.number": "Αρίθμηση γραμμών", "tool.unnumber": "Χωρίς αριθμούς / κουκκίδες", "tool.affix": "Πρόθεμα / κατάληξη",
       "tool.convert": "Αλλαγή διαχωριστικού", "tool.columns": "Επιλογή στηλών", "tool.transpose": "Γραμμές ↔ στήλες",
       "tool.markdown": "Πίνακας Markdown", "tool.json": "JSON", "tool.replace": "Εύρεση και αντικατάσταση",
+      "tool.extract": "Εξαγωγή", "tool.url": "URL", "tool.base64": "Base64", "tool.html": "Οντότητες HTML",
+      "tool.slug": "Slug", "tool.diff": "Σύγκριση κειμένων",
       "hint.sort": "Βάζει τις γραμμές σε αλφαβητική σειρά (ελληνικά και αγγλικά), κατά αριθμό, κατά μήκος ή τυχαία.",
       "hint.reverse": "Η τελευταία γραμμή έρχεται πρώτη.",
       "hint.dedupe": "Κρατά κάθε γραμμή μία φορά.",
@@ -194,6 +224,12 @@
       "hint.markdown": "Φτιάχνει πίνακα Markdown από έναν πίνακα τύπου CSV.",
       "hint.json": "Φτιάχνει JSON από έναν πίνακα τύπου CSV.",
       "hint.replace": "Βρίσκει ένα κείμενο και το αντικαθιστά παντού.",
+      "hint.extract": "Βγάζει σε λίστα τα emails, τους συνδέσμους, τα τηλέφωνα, τους αριθμούς, τα #hashtags ή τα @ονόματα του κειμένου, ένα σε κάθε γραμμή.",
+      "hint.url": "Κωδικοποιεί κείμενο για διεύθυνση ιστού (Ελλάδα → %CE%95…) ή το αποκωδικοποιεί.",
+      "hint.base64": "Κωδικοποιεί κείμενο σε Base64 ή φέρνει το Base64 πίσω σε κείμενο (UTF-8).",
+      "hint.html": "Κάνει τα < > & \" ' οντότητες HTML, ή φέρνει οντότητες όπως &amp; και &#233; πίσω σε χαρακτήρες.",
+      "hint.slug": "Κάνει κάθε γραμμή όνομα για διεύθυνση ιστού: «Καλή Χρονιά!» → kali-chronia.",
+      "hint.diff": "Συγκρίνει το κείμενο με ένα δεύτερο, γραμμή προς γραμμή: - βγήκε, + μπήκε. Το δεύτερο κείμενο δεν μπαίνει στις συνταγές.",
       "opt.by": "Σειρά", "val.by.az": "Α → Ω", "val.by.za": "Ω → Α", "val.by.natural": "Φυσική (το 2 πριν το 10)",
       "val.by.num": "Κατά αριθμό", "val.by.len": "Κατά μήκος", "val.by.random": "Τυχαία",
       "opt.icase": "Χωρίς διάκριση πεζών-κεφαλαίων", "opt.iaccent": "Χωρίς διάκριση τόνων", "opt.emptyLast": "Οι κενές γραμμές στο τέλος",
@@ -222,6 +258,21 @@
       "opt.cols": "Στήλες", "ph.cols": "π.χ. 3,1 ή 2-4",
       "opt.header": "Η πρώτη γραμμή είναι επικεφαλίδα",
       "opt.word": "Ολόκληρες λέξεις", "opt.regex": "Μοτίβο (regular expression)",
+      "opt.what": "Βρες", "val.what.emails": "Emails", "val.what.links": "Συνδέσμους", "val.what.phones": "Τηλέφωνα",
+      "val.what.numbers": "Αριθμούς", "val.what.hashtags": "#hashtags", "val.what.mentions": "@ονόματα",
+      "opt.unique": "Το καθένα μία φορά", "opt.extract.sort": "Ταξινόμηση Α → Ω",
+      "opt.url.dir": "Ενέργεια", "opt.base64.dir": "Ενέργεια", "opt.html.dir": "Ενέργεια",
+      "val.dir.enc": "Κωδικοποίηση", "val.dir.dec": "Αποκωδικοποίηση",
+      "opt.full": "Ολόκληρη διεύθυνση (μένουν τα : / ? & =)", "opt.plus": "Το + σημαίνει κενό (φόρμες)",
+      "opt.each": "Κάθε γραμμή χωριστά", "opt.urlsafe": "Για URL (- _ χωρίς =)",
+      "opt.all": "Και κάθε μη αγγλικός χαρακτήρας (&#…;)",
+      "opt.greek": "Ελληνικά γράμματα", "val.greek.latin": "Σε λατινικά (kali-mera)", "val.greek.keep": "Μένουν (καλη-μερα)",
+      "opt.slug.sep": "Ανάμεσα στις λέξεις", "val.sep.dash": "Παύλα -", "val.sep.under": "Κάτω παύλα _",
+      "opt.slug.max": "Μέγιστο μήκος (0 = χωρίς όριο)",
+      "opt.show": "Δείξε", "val.show.all": "Όλα (- βγήκε, + μπήκε)", "val.show.changes": "Μόνο τις αλλαγές",
+      "val.show.added": "Μόνο όσες μπήκαν", "val.show.removed": "Μόνο όσες βγήκαν", "val.show.same": "Μόνο όσες είναι και στα δύο",
+      "other.label": "Σύγκριση με", "other.ph": "Επικόλλησε εδώ το δεύτερο κείμενο…", "btn.openOther": "Άνοιγμα αρχείου για το δεύτερο κείμενο",
+      "btn.swap": "Αντιμετάθεση των δύο κειμένων",
       "ph.sep": "\\t = tab, \\n = νέα γραμμή",
       "preset.bullet": "• κουκκίδα", "preset.dash": "- παύλα", "preset.quotes": "\"…\"", "preset.gr": "«…»", "preset.sql": "'…',",
       "sec.steps": "Βήματα", "step.add": "+ Βήμα", "step.aria": "Βήμα {n}: {tool}", "step.del": "Αφαίρεση βήματος {n}",
@@ -241,9 +292,12 @@
       "note.join": "Ενώθηκαν {n} γραμμές", "note.split": "{n} γραμμές", "note.number": "Αριθμήθηκαν {n}",
       "note.unnumber": "{n} βγήκαν", "note.convert": "{n} γραμμές", "note.columns": "{n} γραμμές", "note.transpose": "{n} γραμμές",
       "note.markdown": "{n} γραμμές", "note.json": "{n} στοιχεία", "note.replace": "{n} αντικαταστάσεις", "note.clean": "Δεν βρέθηκε κάτι",
+      "note.extract": "Βρέθηκαν {n}", "note.url": "{n} άλλαξαν", "note.base64": "{n} γραμμές", "note.html": "{n} άλλαξαν",
+      "note.slug": "{n} γραμμές", "note.diff": "{a} μπήκαν · {r} βγήκαν", "note.same": "Τα κείμενα είναι ίδια",
       "err.pattern": "Το μοτίβο δεν είναι σωστό", "err.long": "Το κείμενο αναζήτησης είναι πολύ μεγάλο", "err.cols": "Γράψε τους αριθμούς των στηλών, π.χ. 3,1",
       "err.unknown": "Ένα βήμα είναι από νεότερο orOS και παραλείφθηκε", "err.failed": "Ένα βήμα απέτυχε και παραλείφθηκε",
       "err.time": "Το μοτίβο άργησε πολύ και σταμάτησε", "err.run": "Τα βήματα δεν έτρεξαν",
+      "err.b64": "Αυτό δεν είναι κείμενο Base64", "err.noother": "Επικόλλησε το δεύτερο κείμενο στο «Σύγκριση με»",
       "note.stale": "Μεγάλο κείμενο: πάτα Εφαρμογή", "note.working": "Δουλεύει…",
       "rec.title": "Συνταγές", "rec.empty": "Δεν υπάρχουν συνταγές ακόμη. Φτιάξε μερικά βήματα και πάτα «Αποθήκευση ως συνταγή».",
       "rec.open": "Χρήση: {name}", "rec.rename": "Μετονομασία: {name}", "rec.del": "Διαγραφή: {name}", "rec.steps": "{n} βήματα",
@@ -264,7 +318,7 @@
       "imp.err.kind": "Αυτό δεν είναι αρχείο συνταγών των Εργαλείων κειμένου", "imp.err.empty": "Το αρχείο δεν έχει συνταγές που μπορεί να χρησιμοποιήσει αυτή η έκδοση",
       "toast.noBridge": "Άνοιξε το orOS για αποστολή σε άλλες εφαρμογές", "toast.notesCut": "Στάλθηκαν μόνο οι πρώτοι 20.000 χαρακτήρες",
       "toast.sheetCut": "Στάλθηκαν μόνο οι πρώτες 500 γραμμές και 64 στήλες", "toast.todoNone": "Δεν υπάρχουν γραμμές για αποστολή",
-      "toast.todoCut": "Στάλθηκαν μόνο οι πρώτες 200 γραμμές",
+      "toast.todoCut": "Στάλθηκαν μόνο οι πρώτες 200 γραμμές", "toast.opened": "Άνοιξε το «{name}»",
       "sheet.name": "Εργαλεία κειμένου", "note.title": "Εργαλεία κειμένου · {d}", "from": "Εργαλεία κειμένου"
     }
   };
@@ -307,7 +361,8 @@
     book: ICON('<path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h6"/><path d="M8 12h6"/>'),
     x: ICON('<path d="M18 6L6 18"/><path d="M6 6l12 12"/>'),
     up: ICON('<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>'),
-    edit: ICON('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>')
+    edit: ICON('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
+    swap: ICON('<path d="M7 4v16"/><path d="M3 8l4-4 4 4"/><path d="M17 20V4"/><path d="M13 16l4 4 4-4"/>')
   };
 
   // BOOT MARKER
@@ -321,7 +376,7 @@
   var data = null;                 // recipes (synced)
   var prefs = { layout: "stack" };
   // Session: the text, the steps and which step is open.
-  var S = { text: "", chain: [{ tool: "sort", opts: {} }], active: 0, group: "lines", loaded: null };
+  var S = { text: "", other: "", chain: [{ tool: "sort", opts: {} }], active: 0, group: "lines", loaded: null };
 
   function load() {
     var raw = null;
@@ -356,6 +411,7 @@
     try { p = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); } catch (e) {}
     if (!p || typeof p !== "object") return;
     if (typeof p.text === "string") S.text = p.text.slice(0, C.MAX_TEXT);
+    if (typeof p.other === "string") S.other = p.other.slice(0, C.MAX_TEXT);
     var chain = C.normSteps(p.chain);
     if (chain.length) S.chain = chain;
     S.active = typeof p.active === "number" && p.active >= 0 && p.active < S.chain.length ? Math.floor(p.active) : 0;
@@ -366,10 +422,10 @@
   function saveSession() { clearTimeout(sessTimer); sessTimer = setTimeout(saveSessionNow, 400); }
   function saveSessionNow() {
     clearTimeout(sessTimer); sessTimer = null;
-    var v = { text: S.text, chain: S.chain, active: S.active, group: S.group, loaded: S.loaded };
+    var v = { text: S.text, other: S.other, chain: S.chain, active: S.active, group: S.group, loaded: S.loaded };
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(v)); }
     catch (e) {                      // a huge text: keep at least the steps
-      try { v.text = ""; sessionStorage.setItem(SESSION_KEY, JSON.stringify(v)); } catch (e2) {}
+      try { v.text = ""; v.other = ""; sessionStorage.setItem(SESSION_KEY, JSON.stringify(v)); } catch (e2) {}
     }
   }
 
@@ -399,7 +455,7 @@
         workerBroken = true;
         try { worker.terminate(); } catch (e) {}
         worker = null;
-        if (pending) { var p = pending; pending = null; clearTimeout(p.timer); runLocal(p.text, p.steps); }
+        if (pending) { var p = pending; pending = null; clearTimeout(p.timer); runLocal(p.text, p.steps, p.ctx); }
       };
     } catch (e) { workerBroken = true; worker = null; }
     return worker;
@@ -408,21 +464,21 @@
     if (worker) { try { worker.terminate(); } catch (e) {} }
     worker = null;
   }
-  function runLocal(text, steps) {
+  function runLocal(text, steps, ctx) {
     var r;
-    try { r = C.run(text, steps, {}); } catch (e) { showError("err.run"); return; }
+    try { r = C.run(text, steps, ctx || {}); } catch (e) { showError("err.run"); return; }
     showResult(r.text, r.notes);
   }
 
   function runNow() {
     clearTimeout(liveTimer); liveTimer = null;
-    var text = S.text, steps = copyObj(S.chain);
+    var text = S.text, steps = copyObj(S.chain), ctx = C.usesOther(steps) ? { other: S.other } : {};
     if (pending) { clearTimeout(pending.timer); pending = null; }
     $("apply-btn").hidden = true;
     var w = getWorker();
-    if (!w) { runLocal(text, steps); return; }
+    if (!w) { runLocal(text, steps, ctx); return; }
     var id = ++seq, pattern = steps.some(C.usesPattern);
-    pending = { id: id, text: text, steps: steps };
+    pending = { id: id, text: text, steps: steps, ctx: ctx };
     pending.timer = setTimeout(function () {
       if (!pending || pending.id !== id) return;
       pending = null;
@@ -430,14 +486,14 @@
       showError(pattern ? "err.time" : "err.run");
     }, pattern ? PATTERN_MS : CHAIN_MS);
     setNote(t("note.working"), false);
-    try { w.postMessage({ id: id, text: text, steps: steps }); }
-    catch (e) { clearTimeout(pending.timer); pending = null; runLocal(text, steps); }
+    try { w.postMessage({ id: id, text: text, steps: steps, ctx: ctx }); }
+    catch (e) { clearTimeout(pending.timer); pending = null; runLocal(text, steps, ctx); }
   }
 
   // Live preview while the text is not huge; above that, "Apply".
   function schedule() {
     clearTimeout(liveTimer);
-    if (S.text.length > C.LIVE_MAX) {
+    if (S.text.length + (C.usesOther(S.chain) ? S.other.length : 0) > C.LIVE_MAX) {
       $("apply-btn").hidden = false;
       setNote(t("note.stale"), false);
       return;
@@ -452,6 +508,10 @@
     lastNotes.forEach(function (n) { if (n.err && !err) err = n.err; });
     if (err) { setNote(t("err." + err), true); return; }
     var act = lastNotes[S.active];
+    if (act && act.tool === "diff" && act.x) {
+      setNote(act.n ? t("note.diff", { a: fmtNum(act.x.add), r: fmtNum(act.x.del) }) : t("note.same"), false);
+      return;
+    }
     if (act && act.n !== null && act.n !== undefined && hasKey("note." + act.tool) &&
         !(act.tool === "clean" && act.n !== 0)) {
       info = t("note." + act.tool, { n: fmtNum(act.n) });
@@ -660,6 +720,46 @@
       host.appendChild(row);
     });
     if (st.tool === "affix") host.appendChild(affixPresets());
+    if (st.tool === "diff") host.appendChild(otherBox());
+  }
+
+  // Compare: the second text. Session only, like the first one; never
+  // part of a step or a recipe.
+  function otherBox() {
+    var box = el("div", "opt other");
+    var head = el("div", "other-head");
+    var lab = el("label", "opt-lbl", t("other.label"));
+    lab.setAttribute("for", "other");
+    head.appendChild(lab);
+    head.appendChild(el("span", "spacer"));
+    head.appendChild(iconBtn("", UI.swap, t("btn.swap"), swapTexts));
+    head.appendChild(iconBtn("", UI.open, t("btn.openOther"), function () {
+      readPicked(function (text) { setOther(text); renderOpts(); });
+    }));
+    box.appendChild(head);
+    var ta = el("textarea");
+    ta.id = "other";
+    ta.spellcheck = false;
+    ta.autocomplete = "off";
+    ta.rows = 8;
+    ta.placeholder = t("other.ph");
+    ta.value = S.other;
+    ta.addEventListener("input", function () { setOther(ta.value); });
+    box.appendChild(ta);
+    return box;
+  }
+  function setOther(v) {
+    v = String(v);
+    if (v.length > C.MAX_TEXT) { v = v.slice(0, C.MAX_TEXT); showToast(t("toast.cut", { n: fmtNum(C.MAX_TEXT) })); }
+    S.other = v;
+    saveSession();
+    schedule();
+  }
+  function swapTexts() {
+    var a = S.text, b = S.other;
+    S.other = a;
+    setText(b, null);
+    renderOpts();
   }
 
   // Some options show or hide others (a "when" rule): rebuild then.
@@ -822,12 +922,18 @@
       catch (e2) { return new TextDecoder("utf-8").decode(bytes).replace(/^﻿/, ""); }
     }
   }
-  function openFile() {
+  function readPicked(done) {
     pickFile(OPEN_ACCEPT).then(function (f) {
       if (!f) return;                  // cancel: silent exit
-      if (f.size > FILE_MAX) { showToast(t("toast.big")); return; }
-      return f.arrayBuffer().then(function (buf) { setText(decodeText(buf), "toast.replaced"); });
+      return readFile(f, done);
     }).catch(function () {});
+  }
+  function readFile(f, done) {
+    if (f.size > FILE_MAX) { showToast(t("toast.big")); return Promise.resolve(); }
+    return Promise.resolve(f.arrayBuffer()).then(function (buf) { done(decodeText(buf)); });
+  }
+  function openFile() {
+    readPicked(function (text) { setText(text, "toast.replaced"); });
   }
 
   var KINDS = {
@@ -1247,12 +1353,34 @@
 
   // ---------- 11. Deep link, wiring & boot ----------
   // Target { text }: another app (Case Converter, …) hands over a text.
-  // It replaces the Text box with Undo; nothing else changes.
+  // Target { openFile: { token, name, size } }: a .txt / .csv / .tsv from
+  // the system's "Open with" or Android Share (BR-FILE-OPEN); the File
+  // itself is taken once from the shell with __orosTakeFile(token).
+  // Either replaces the Text box with Undo; nothing runs by itself.
   function openTarget(tg) {
-    if (!tg || typeof tg !== "object" || typeof tg.text !== "string") return;
+    if (!tg || typeof tg !== "object") return;
+    if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
+    if (typeof tg.text !== "string") return;
     if (document.querySelector("dialog[open]")) return;
     setText(tg.text, "toast.replaced");
     $("in").focus();
+  }
+  function openFileTarget(o) {
+    var f = null;
+    try {
+      var p = window.parent;
+      if (typeof o.token === "string" && p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(o.token);
+    } catch (e) { f = null; }
+    if (!f || typeof f.arrayBuffer !== "function") return;
+    var open = document.querySelector("dialog[open]");
+    if (open) open.close();
+    var name = String(f.name || o.name || "").slice(0, 120);
+    readFile(f, function (text) {
+      var had = !!S.text && S.text !== text;
+      setText(text, had ? "toast.replaced" : null);    // Undo when it replaced a text
+      $("in").focus();
+      if (!had && name) showToast(t("toast.opened", { name: name }));
+    }).catch(function () {});
   }
   window.__orosOpenAt = openTarget;
 

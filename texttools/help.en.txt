@@ -1,11 +1,13 @@
 # Text Tools
-Text Tools cleans up and rearranges plain text and simple tables: sort lines, remove duplicates, trim spaces, number lines, change the separator of a CSV and find and replace. Paste your text, pick a tool and the result appears straight away.
+Text Tools cleans up and rearranges plain text and simple tables: sort lines, remove duplicates, trim spaces, number lines, change the separator of a CSV, find and replace, pull out e-mails or links, encode text and compare two texts. Paste your text, pick a tool and the result appears straight away.
 
 ## Getting started
 1. Paste or type your text in the `Text` box, or tap or click the folder button to open a file (.txt, .csv, .tsv, .md and similar, up to 5 MB). The clipboard button pastes what you copied.
-2. Pick a group at the top (`Lines`, `Clean up`, `Numbers`, `Columns`, `Find`) and then a tool.
+2. Pick a group at the top (`Lines`, `Clean up`, `Numbers`, `Columns`, `Find`, `Encode`, `Compare`) and then a tool.
 3. Set its options. The `Result` box follows as you type.
 4. `Copy` the result, `Save` it as a file, or press `Use as text` to move it up into the `Text` box and work on it again.
+
+You can also open a .txt, .csv or .tsv file with Text Tools straight from your computer's `Open with` menu or from `Share` on Android, when orOS is installed. Writer, Notes, Mind Map and Spreadsheet open those files too, so orOS asks which app you want; tick the `Always` box to stop asking. [Settings](app:settings) › `Opening files` changes that choice.
 
 Under the text you see how many characters, words and lines it has. Tap or click that line for more: sentences, paragraphs, reading time and the most used words.
 
@@ -14,7 +16,9 @@ Under the text you see how many characters, words and lines it has. Tap or click
 - `Clean up`: `Trim spaces`, `Collapse spaces`, `Tabs ↔ spaces`, `Unwrap lines` (one line per paragraph), `Wrap lines`, `Hidden characters` (invisible characters, odd spaces, curly quotes) and `Line endings` (LF or CRLF for Windows).
 - `Numbers`: `Number lines` with your own start, step and style, `Remove numbers / bullets`, and `Prefix / suffix` with ready choices such as bullets or «…».
 - `Columns` for CSV-like tables: `Change separator` (comma, semicolon, tab, pipe or your own; quotes are handled), `Pick columns` (for example 3,1 or 2-4, in the order you write them), `Rows ↔ columns`, `Markdown table` and `JSON`.
-- `Find`: `Find and replace`, with options to ignore case, ignore Greek accents, match whole words, or use a pattern (regular expression, with $1 for groups).
+- `Find`: `Find and replace`, with options to ignore case, ignore Greek accents, match whole words, or use a pattern (regular expression, with $1 for groups). `Extract` lists the e-mails, links, phone numbers, numbers, #hashtags or @names in the text, one per line, each one once if you like.
+- `Encode`: `URL` (Ελλάδα becomes %CE%95… and back), `Base64` (the whole text or each line), `HTML entities` (&amp; and &#233; and back) and `Slug`, which turns a title into a web-friendly name such as kali-chronia.
+- `Compare`: `Compare texts` puts your text next to a second one, line by line. Paste the second text in the `Compare with` box under the options, or open a file for it; the arrows button swaps the two texts. Lines marked `-` are only in your text, lines marked `+` only in the second one. You can show only the changes, only the added or removed lines, or only the lines both texts share.
 
 `Ignore case` and `Ignore accents` only change how lines are compared; your text keeps its own letters. To change capitals or accents, use the Case Converter.
 
@@ -47,5 +51,6 @@ Your recipes sync between your devices through [orOS sync](help:t/sync). In `Rec
 ## Limits
 - Up to 2,000,000 characters of text. Above 200,000 the result is not live: press `Apply` (or [[Ctrl+Enter]]).
 - A pattern that runs for more than two seconds is stopped.
+- The `Compare with` text is not kept in recipes; like your text, it stays only while orOS is open. When two long texts differ almost everywhere, the comparison may mark a few more lines as changed than strictly needed.
 - Up to 100 recipes with up to 30 steps each.
 - Notes gets up to 20,000 characters, Spreadsheet up to 500 rows and 64 columns, To-Do up to 200 tasks.

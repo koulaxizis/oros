@@ -268,6 +268,20 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   border: 1px solid currentColor;
 }
 
+/* purchase orders + reports (1.1) */
+.badge.st-draft { color: var(--text-dim); }
+.badge.st-sent, .badge.st-partial { color: var(--accent); }
+.badge.st-received { color: var(--s-in); }
+.badge.st-closed, .badge.st-cancel { color: var(--text-dim); opacity: .8; }
+.badge.warn, .warn-txt { color: var(--warn); }
+.badge + .badge { margin-left: 6px; }
+.row-btn.po-closed, .row-btn.po-cancel, .row-btn.po-received { opacity: .75; }
+.sec-title { font-size: 13px; font-weight: 900; margin: 4px 0 6px; }
+div.row { cursor: default; }
+#view-reports .filter-row { align-items: center; }
+#rep-range { flex: 0 1 220px; min-width: 0; }
+#rep-acts { flex-wrap: wrap; justify-content: flex-end; }
+
 .sheet-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .sheet-hb { flex: 1 1 auto; min-width: 0; }
 .sheet-name { font-size: 18px; font-weight: 900; overflow-wrap: anywhere; }
