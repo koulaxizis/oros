@@ -340,6 +340,21 @@
     return m;
   }
 
+  // A duplicate of a document: new id, every entity stamped `now` so the copy is
+  // not older than anything it holds, no tombstones. Only stories carry an edit
+  // history in `h`; on items, pages etc. `h` is a size and must survive.
+  function copyDoc(doc, now) {
+    var copy = JSON.parse(JSON.stringify(doc));
+    var t = stamp(now);
+    copy.id = newId("doc");
+    copy.m = t;
+    COLLECTIONS.forEach(function (c) {
+      (copy[c[0]] || []).forEach(function (e) { e.m = t; if (c[0] === "stories") e.h = []; });
+    });
+    copy.tombs = {};
+    return normDoc(copy);
+  }
+
   function mergeDoc(a, b) {
     var x = a && isId(a.id) ? a : null, y = b && isId(b.id) ? b : null;
     var base = x || y;
@@ -494,7 +509,7 @@
     newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt,
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
-    normDoc: normDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
+    normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
     newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,

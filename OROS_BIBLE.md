@@ -5053,3 +5053,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Text Tools wave 2 (#223) — 1.18.00
 - Text Tools: Extract (emails, links, phone numbers, numbers, #hashtags, @names), Encode (URL, Base64, HTML entities, Slug), Compare two texts line by line ("Compare with" box, session only, swap, open a file). Opens .txt/.csv/.tsv from "Open with" and Android Share (fileopen.js + manifest). Help EN/EL, tests.
+
+### 2026-10-12 — Layout: Duplicate keeps frame heights (#224) — 1.18.01
+- Duplicating a document no longer resets every frame's height (the copy loop `if (e.h) e.h = []`); new `orosDK.model.copyDoc` in designkit/model.js, used by layout/layout.js.
