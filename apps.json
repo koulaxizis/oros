@@ -25,7 +25,8 @@
       "category": "Accessories",
       "icon": "sky",
       "url": "sky/",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "files",
@@ -119,7 +120,8 @@
       "icon": "minimalism",
       "url": "minimalism/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "split",
@@ -330,7 +332,8 @@
       "url": "mood/",
       "search": "search.js",
       "searchOff": true,
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "diary",
@@ -409,7 +412,8 @@
       "url": "cycle/",
       "search": "search.js",
       "searchOff": true,
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "petcare",
@@ -439,7 +443,8 @@
       "icon": "familytree",
       "url": "familytree/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["ft-core.js", "today.js"]
     },
     {
       "id": "garage",
