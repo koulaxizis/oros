@@ -1,0 +1,1888 @@
+// ============================================================
+// orOS Studio — App logic (v1.0.0)
+// A small multitrack audio studio: tracks of audio clips on a
+// timeline, recorded from a microphone or sound card or imported from
+// files, played and looped against a click, and exported as WAV.
+//   - up to 8 stereo tracks: volume, pan, mute, solo, colour, order
+//   - clips: move (also to another track), trim both edges, split,
+//     duplicate, delete, gain, fade in / out; snap to bar or beat
+//   - transport: play / stop, back to start, loop region (drag on the
+//     ruler), tempo and beats in a bar, click (metronome), master
+//   - recording on the armed track, with a latency offset
+//   - export of the whole song or the loop to WAV (16 or 24 bit)
+//   - undo / redo, several projects
+// Effects (NULL JSFX) come later; this is the base without them.
+// Data:
+//   - synced slice "studio" (oros-studio-data): projects, tracks,
+//     audio sources and clips, one entity at a time (core.js)
+//   - audio files on the orOS disk, /internal/Studio/audio/, which
+//     Vault Drive carries to the other devices (never in localStorage)
+//   - device-local (R10): oros-studio-prefs (open project, zoom, snap,
+//     click, devices, recording offset, armed track, export format)
+// Sections:
+//   1. Constants, i18n, helpers
+//   2. Storage + prefs
+//   3. The open project, edits, undo
+//   4. Audio files: disk, decoding, peaks
+//   5. Drawing: header, transport, tracks, clips, ruler, playhead
+//   6. Pointer: clips, ruler, lanes
+//   7. Engine: playback, loop, click, meter
+//   8. Recording
+//   9. Import, export
+//  10. Dialogs: projects, names, track, settings
+//  11. Toasts
+//  12. Keyboard (Contract Β)
+//  13. Sync slice + palette
+//  14. Wiring & boot
+// ============================================================
+(function () {
+  "use strict";
+
+  var C           = window.StudioCore;
+  var STORAGE_KEY = "oros-studio-data";
+  var PREFS_KEY   = "oros-studio-prefs";
+  var SAVE_MS     = 400;
+  var MAX_UNDO    = 100;
+  var MAX_FILE    = 100 * 1024 * 1024;   // one imported file
+  var MAX_REC_SEC = 30 * 60;             // one take
+  var PEAKS_PER_S = 100;
+  var ZOOMS       = [4, 6, 10, 16, 25, 40, 60, 100, 160, 250, 400];   // pixels per second
+  var LOOKAHEAD   = 1.0;                 // seconds of audio scheduled ahead
+  var TICK_MS     = 50;
+
+  // ---------- 1. Constants, i18n, helpers ----------
+  function appLang() {
+    try {
+      var l = localStorage.getItem("oros-lang") ||
+              (window.parent && window.parent.orosLang) || "en";
+      return l === "el" ? "el" : "en";
+    } catch (e) { return "en"; }
+  }
+  var LANG = appLang();
+
+  var STRINGS = {
+    en: {
+      "app.name": "Studio", "proj.untitled": "Untitled project", "proj.default": "Project {n}",
+      "sub.tracks": "{n} tracks · {t}", "sub.tracks1": "1 track · {t}", "sub.none": "No tracks yet",
+      "transport.label": "Transport", "ruler.label": "Timeline: click to move the playhead, drag to set the loop",
+      "f.bpm": "Tempo (BPM)", "f.sig": "Beats in a bar", "f.master": "Master",
+      "sig.n": "{n}/4", "snap.bar": "Bar", "snap.beat": "Beat", "snap.off": "Free", "snap.lbl": "Snap",
+      "btn.metro": "Click", "btn.home": "Back to start", "btn.play": "Play", "btn.pause": "Pause", "btn.stop": "Stop",
+      "btn.rec": "Record", "btn.recStop": "Stop recording", "btn.loop": "Loop",
+      "btn.zoomIn": "Zoom in", "btn.zoomOut": "Zoom out",
+      "btn.projects": "Projects", "btn.undo": "Undo", "btn.redo": "Redo", "btn.import": "Import audio",
+      "btn.exportOpen": "Export WAV", "btn.more": "Studio settings", "btn.close": "Close",
+      "btn.addTrack": "+ Track", "btn.split": "Split", "btn.dupClip": "Duplicate", "btn.delClip": "Delete",
+      "btn.newProject": "New project", "btn.cancel": "Cancel", "btn.ok": "OK", "btn.rename": "Rename",
+      "btn.up": "Move up", "btn.down": "Move down", "btn.delTrack": "Delete track", "btn.export": "Export",
+      "btn.devices": "Show device names", "btn.open": "Open", "btn.delProject": "Delete project",
+      "track.mute": "Mute", "track.solo": "Solo", "track.arm": "Arm for recording", "track.more": "Track settings",
+      "track.default": "Track {n}", "track.vol": "Volume",
+      "empty.hint": "Import audio or add a track to start.",
+      "f.gain": "Gain", "f.fadeIn": "Fade in", "f.fadeOut": "Fade out", "f.name": "Name",
+      "f.vol": "Volume", "f.pan": "Pan", "sec.color": "Colour",
+      "pan.c": "Centre", "pan.l": "{n} L", "pan.r": "{n} R", "db": "{n} dB", "db.off": "Off", "sec": "{n} s", "ms": "{n} ms",
+      "proj.title": "Projects", "proj.empty": "No projects yet.", "proj.desc": "{n} tracks · {t}",
+      "name.project": "Name of the project", "name.track": "Name of the track",
+      "export.title": "Export WAV", "sec.bits": "Bit depth", "sec.rate": "Sample rate",
+      "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44.1 kHz", "rate.48000": "48 kHz",
+      "export.loop": "The loop: {a} to {b}.", "export.all": "The whole song: {a} to {b}.",
+      "export.busy": "Mixing…", "export.empty": "There is nothing to export yet.",
+      "more.title": "Studio settings", "sec.audio": "Sound card", "f.input": "Input (recording)", "f.output": "Output",
+      "dev.default": "System default", "dev.n": "Device {n}",
+      "out.hint": "This browser always plays through the system output.",
+      "sec.latency": "Recording offset", "f.latency": "Move new takes earlier by",
+      "lat.hint": "If takes land late against the click, raise this until they line up. The output delay the browser reports is already taken off.",
+      "sec.metro": "Click", "f.metroVol": "Click volume",
+      "disk.vault": "Audio files are kept on the orOS disk (Studio/audio) and Vault Drive carries them to your other devices.",
+      "disk.local": "Audio files are kept on the orOS disk (Studio/audio), on this device. Turn on sync and Vault Drive to have them on your other devices too.",
+      "clip.missing": "Audio not on this device yet", "clip.loading": "Loading…", "clip.bad": "Cannot read this audio",
+      "busy.import": "Reading {name}…", "busy.saveTake": "Saving the take…",
+      "toast.saveFail": "Could not save: storage is full", "toast.noAudio": "This browser cannot play sound",
+      "toast.noDisk": "The orOS disk is not available, so audio cannot be kept",
+      "toast.writeFail": "The audio could not be written to the orOS disk",
+      "toast.tooBig": "{name} is larger than 100 MB", "toast.badFile": "{name} is not audio this browser can read",
+      "toast.imported": "Imported: {name}", "toast.maxTracks": "A project has up to {n} tracks",
+      "toast.maxClips": "A project has up to {n} clips", "toast.maxProjects": "You have {n} projects, the most there can be",
+      "toast.noClip": "Select a clip first", "toast.noSplit": "Put the playhead inside the clip to split it",
+      "toast.clipDeleted": "Clip deleted", "toast.trackDeleted": "Track deleted", "toast.projDeleted": "Project deleted",
+      "toast.undo": "Undo", "toast.file": "Saved", "toast.missing": "Some audio is not on this device yet",
+      "toast.noMic": "No microphone or input could be opened", "toast.recMax": "A take is at most 30 minutes",
+      "toast.recSaved": "Take saved on {name}", "toast.recFail": "The take could not be saved",
+      "toast.armed": "Recording goes to {name}", "toast.noRec": "This browser cannot record here",
+      "toast.recEmpty": "Nothing was recorded",
+      "live.playing": "Playing", "live.stopped": "Stopped", "live.recording": "Recording"
+    },
+    el: {
+      "app.name": "Studio", "proj.untitled": "Έργο χωρίς όνομα", "proj.default": "Έργο {n}",
+      "sub.tracks": "{n} κανάλια · {t}", "sub.tracks1": "1 κανάλι · {t}", "sub.none": "Κανένα κανάλι ακόμη",
+      "transport.label": "Αναπαραγωγή", "ruler.label": "Χρονολόγιο: κλικ για να μετακινήσεις τον δείκτη, σύρε για να ορίσεις το loop",
+      "f.bpm": "Ρυθμός (BPM)", "f.sig": "Χτύποι στο μέτρο", "f.master": "Master",
+      "sig.n": "{n}/4", "snap.bar": "Μέτρο", "snap.beat": "Χτύπος", "snap.off": "Ελεύθερα", "snap.lbl": "Κούμπωμα",
+      "btn.metro": "Κλικ", "btn.home": "Στην αρχή", "btn.play": "Αναπαραγωγή", "btn.pause": "Παύση", "btn.stop": "Σταμάτημα",
+      "btn.rec": "Ηχογράφηση", "btn.recStop": "Τέλος ηχογράφησης", "btn.loop": "Loop",
+      "btn.zoomIn": "Μεγέθυνση", "btn.zoomOut": "Σμίκρυνση",
+      "btn.projects": "Έργα", "btn.undo": "Αναίρεση", "btn.redo": "Επανάληψη", "btn.import": "Εισαγωγή ήχου",
+      "btn.exportOpen": "Εξαγωγή WAV", "btn.more": "Ρυθμίσεις Studio", "btn.close": "Κλείσιμο",
+      "btn.addTrack": "+ Κανάλι", "btn.split": "Κόψιμο", "btn.dupClip": "Αντίγραφο", "btn.delClip": "Διαγραφή",
+      "btn.newProject": "Νέο έργο", "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.rename": "Μετονομασία",
+      "btn.up": "Πάνω", "btn.down": "Κάτω", "btn.delTrack": "Διαγραφή καναλιού", "btn.export": "Εξαγωγή",
+      "btn.devices": "Δείξε τα ονόματα των συσκευών", "btn.open": "Άνοιγμα", "btn.delProject": "Διαγραφή έργου",
+      "track.mute": "Σίγαση", "track.solo": "Σόλο", "track.arm": "Ηχογράφηση σε αυτό το κανάλι", "track.more": "Ρυθμίσεις καναλιού",
+      "track.default": "Κανάλι {n}", "track.vol": "Ένταση",
+      "empty.hint": "Κάνε εισαγωγή ήχου ή πρόσθεσε ένα κανάλι για να ξεκινήσεις.",
+      "f.gain": "Gain", "f.fadeIn": "Fade in", "f.fadeOut": "Fade out", "f.name": "Όνομα",
+      "f.vol": "Ένταση", "f.pan": "Pan", "sec.color": "Χρώμα",
+      "pan.c": "Κέντρο", "pan.l": "{n} Α", "pan.r": "{n} Δ", "db": "{n} dB", "db.off": "Κλειστό", "sec": "{n} δ", "ms": "{n} ms",
+      "proj.title": "Έργα", "proj.empty": "Κανένα έργο ακόμη.", "proj.desc": "{n} κανάλια · {t}",
+      "name.project": "Όνομα του έργου", "name.track": "Όνομα του καναλιού",
+      "export.title": "Εξαγωγή WAV", "sec.bits": "Βάθος bit", "sec.rate": "Συχνότητα δειγματοληψίας",
+      "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44,1 kHz", "rate.48000": "48 kHz",
+      "export.loop": "Το loop: από {a} έως {b}.", "export.all": "Όλο το τραγούδι: από {a} έως {b}.",
+      "export.busy": "Γίνεται η μίξη…", "export.empty": "Δεν υπάρχει ακόμη κάτι για εξαγωγή.",
+      "more.title": "Ρυθμίσεις Studio", "sec.audio": "Κάρτα ήχου", "f.input": "Είσοδος (ηχογράφηση)", "f.output": "Έξοδος",
+      "dev.default": "Προεπιλογή συστήματος", "dev.n": "Συσκευή {n}",
+      "out.hint": "Αυτός ο browser παίζει πάντα από την έξοδο του συστήματος.",
+      "sec.latency": "Διόρθωση ηχογράφησης", "f.latency": "Μετακίνησε τις νέες λήψεις νωρίτερα κατά",
+      "lat.hint": "Αν οι λήψεις πέφτουν αργά σε σχέση με τον μετρονόμο, ανέβασέ το μέχρι να συμπέσουν. Η καθυστέρηση εξόδου που δηλώνει ο browser αφαιρείται ήδη.",
+      "sec.metro": "Μετρονόμος", "f.metroVol": "Ένταση μετρονόμου",
+      "disk.vault": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio) και το Vault Drive τα μεταφέρει στις άλλες συσκευές σου.",
+      "disk.local": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio), σε αυτή τη συσκευή. Άνοιξε το sync και το Vault Drive για να τα έχεις και στις άλλες συσκευές σου.",
+      "clip.missing": "Ο ήχος δεν έχει φτάσει ακόμη σε αυτή τη συσκευή", "clip.loading": "Φόρτωση…", "clip.bad": "Ο ήχος δεν διαβάζεται",
+      "busy.import": "Διαβάζεται το {name}…", "busy.saveTake": "Αποθηκεύεται η λήψη…",
+      "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.noAudio": "Αυτός ο browser δεν παίζει ήχο",
+      "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος, οπότε ο ήχος δεν μπορεί να κρατηθεί",
+      "toast.writeFail": "Ο ήχος δεν γράφτηκε στον δίσκο του orOS",
+      "toast.tooBig": "Το {name} είναι μεγαλύτερο από 100 MB", "toast.badFile": "Το {name} δεν είναι ήχος που διαβάζει αυτός ο browser",
+      "toast.imported": "Εισήχθη: {name}", "toast.maxTracks": "Ένα έργο έχει έως {n} κανάλια",
+      "toast.maxClips": "Ένα έργο έχει έως {n} clips", "toast.maxProjects": "Έχεις {n} έργα, όσα χωράνε",
+      "toast.noClip": "Διάλεξε πρώτα ένα clip", "toast.noSplit": "Βάλε τον δείκτη μέσα στο clip για να το κόψεις",
+      "toast.clipDeleted": "Το clip διαγράφηκε", "toast.trackDeleted": "Το κανάλι διαγράφηκε", "toast.projDeleted": "Το έργο διαγράφηκε",
+      "toast.undo": "Αναίρεση", "toast.file": "Αποθηκεύτηκε", "toast.missing": "Κάποιος ήχος δεν έχει φτάσει ακόμη σε αυτή τη συσκευή",
+      "toast.noMic": "Δεν άνοιξε μικρόφωνο ή είσοδος", "toast.recMax": "Μια λήψη κρατά έως 30 λεπτά",
+      "toast.recSaved": "Η λήψη αποθηκεύτηκε στο {name}", "toast.recFail": "Η λήψη δεν αποθηκεύτηκε",
+      "toast.armed": "Η ηχογράφηση πάει στο {name}", "toast.noRec": "Αυτός ο browser δεν ηχογραφεί εδώ",
+      "toast.recEmpty": "Δεν ηχογραφήθηκε τίποτα",
+      "live.playing": "Αναπαραγωγή", "live.stopped": "Σταμάτησε", "live.recording": "Ηχογράφηση"
+    }
+  };
+
+  function t(key, params) {
+    var p = STRINGS[LANG] || STRINGS.en;
+    var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+    if (params) {
+      Object.keys(params).forEach(function (k) {
+        s = s.split("{" + k + "}").join(String(params[k]));
+      });
+    }
+    return s;
+  }
+  function numTxt(n, d) {
+    var s = Number(n).toFixed(d);
+    return LANG === "el" ? s.replace(".", ",") : s;
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function setLabel(b, label) { b.setAttribute("aria-label", label); b.title = label; }
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+  var ICON = {
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
+    undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
+    redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>',
+    import: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
+    export: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 21h14"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.5" height="14" rx="1"/><path d="M19 5v14L9 12z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+    rec: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/></svg>',
+    loop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>',
+    zin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6M11 8v6"/></svg>',
+    zout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    dots: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'
+  };
+
+  // BOOT MARKER
+  (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "")
+      .match(/[?&]v=([^&#]+)/);
+    document.documentElement.lang = LANG;
+    console.log("studio.js v" + (m ? m[1] : "?") + " boot");
+  })();
+
+  // ---------- 2. Storage + prefs ----------
+  var data = C.emptyData();
+  var prefs = null;
+
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && Array.isArray(parsed.projects)) {
+          data = C.mergeStudio(parsed, parsed);
+          return;
+        }
+      } catch (e) {}
+      try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
+      try { console.error("[orOS] studio: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
+    }
+    data = C.emptyData();
+  }
+
+  var saveFailShown = false, saveTimer = null;
+  function save() {
+    clearTimeout(saveTimer); saveTimer = null;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      saveFailShown = false;
+    } catch (e) {
+      if (!saveFailShown) { saveFailShown = true; showToast(t("toast.saveFail")); }   // R30
+    }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+  function saveSoon() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, SAVE_MS);
+  }
+  function flush() { if (saveTimer) save(); }
+
+  function loadPrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
+    p = (p && typeof p === "object") ? p : {};
+    function int(v, a, b, d) { v = parseInt(v, 10); return isFinite(v) ? clamp(v, a, b) : d; }
+    prefs = {
+      cur: typeof p.cur === "string" ? p.cur : "",
+      zoom: ZOOMS.indexOf(p.zoom) >= 0 ? p.zoom : 40,
+      snap: p.snap === "bar" || p.snap === "off" ? p.snap : "beat",
+      metro: p.metro === true,
+      mvol: int(p.mvol, 0, 100, 60),
+      inDev: typeof p.inDev === "string" ? p.inDev : "",
+      outDev: typeof p.outDev === "string" ? p.outDev : "",
+      lat: int(p.lat, 0, 300, 0),
+      arm: typeof p.arm === "string" ? p.arm : "",
+      bits: p.bits === 16 ? 16 : 24,
+      rate: p.rate === 44100 ? 44100 : 48000
+    };
+  }
+  function savePrefs() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+  }
+
+  // ---------- 3. The open project, edits, undo ----------
+  var proj = null;                 // the open project, or null (nothing made yet)
+  var selClip = "";                // id of the selected clip
+  var selTrack = "";               // id of the selected track (where imports go)
+  var playhead = 0;                // seconds, when stopped
+  var undoStack = [], redoStack = [];
+
+  function tracks() { return proj ? C.tracksOf(data, proj.id) : []; }
+  function clipsOf(tid) { return C.clipsOfTrack(data, tid); }
+  function projClips() {
+    if (!proj) return [];
+    var ids = {};
+    tracks().forEach(function (tr) { ids[tr.id] = true; });
+    return data.clips.filter(function (c) { return c.p === proj.id && ids[c.t]; });
+  }
+  function sourceOf(sid) { return C.find(data, "sources", sid); }
+
+  function nextM(id, old) {
+    return Math.max(Date.now(), (data.tombs[id] || 0) + 1, old ? old.m + 1 : 0);
+  }
+  // Store a changed or new entity (stamped here: R27).
+  function put(key, x) {
+    var old = C.find(data, key, x.id);
+    x.m = nextM(x.id, old);
+    var part = C.emptyData(); part[key] = [x];
+    data = C.mergeStudio(data, part);
+    if (key === "projects" && proj && x.id === proj.id) proj = C.find(data, "projects", x.id);
+  }
+  function remove(key, id) {
+    var x = C.find(data, key, id);
+    if (!x) return;
+    var part = C.emptyData();
+    part.tombs[id] = Math.max(Date.now(), x.m);
+    data = C.mergeStudio(data, part);
+  }
+
+  function snapshot() {
+    if (!proj) return "";
+    var pid = proj.id;
+    return JSON.stringify({
+      project: C.find(data, "projects", pid),
+      tracks: C.ofProject(data, "tracks", pid),
+      sources: C.ofProject(data, "sources", pid),
+      clips: C.ofProject(data, "clips", pid)
+    }, function (k, v) { return k === "m" ? undefined : v; });
+  }
+  // Bring the open project back to a snapshot: entities that are not in
+  // it are deleted, the others are written with fresh stamps (R17).
+  function restore(snap) {
+    var s = JSON.parse(snap), pid = proj.id, part = C.emptyData(), now = Date.now();
+    ["tracks", "sources", "clips"].forEach(function (key) {
+      var keep = {};
+      s[key].forEach(function (x) { keep[x.id] = true; });
+      C.ofProject(data, key, pid).forEach(function (x) {
+        if (!keep[x.id]) part.tombs[x.id] = Math.max(now, x.m);
+      });
+      s[key].forEach(function (x) {
+        var n = Object.assign({}, x);
+        n.m = nextM(x.id, C.find(data, key, x.id));
+        part[key].push(n);
+      });
+    });
+    if (s.project) {
+      var p = Object.assign({}, s.project);
+      p.m = nextM(p.id, C.find(data, "projects", p.id));
+      part.projects.push(p);
+    }
+    data = C.mergeStudio(data, part);
+    proj = C.find(data, "projects", pid);
+  }
+  // Every change goes through edit(): undo point, store, redraw.
+  function edit(fn, opts) {
+    opts = opts || {};
+    var before = snapshot();
+    fn();
+    var after = snapshot();
+    if (after === before) { renderAll(); return; }
+    if (before && (!opts.merge || !undoStack.length)) {
+      undoStack.push(before);
+      if (undoStack.length > MAX_UNDO) undoStack.shift();
+    }
+    redoStack = [];
+    changed(opts);
+  }
+  function changed(opts) {
+    saveSoon();
+    renderAll();
+    if (!(opts && opts.live)) replayIfPlaying();
+    else updateMix();
+  }
+  function undo() {
+    if (!undoStack.length || recording) return;
+    redoStack.push(snapshot());
+    restore(undoStack.pop());
+    fixSelection();
+    changed();
+  }
+  function redo() {
+    if (!redoStack.length || recording) return;
+    undoStack.push(snapshot());
+    restore(redoStack.pop());
+    fixSelection();
+    changed();
+  }
+  // Typing a name or dragging a slider is one undo step, not one per change.
+  var lastField = "", lastAt = 0;
+  function burst(field, extra) {
+    var now = Date.now(), merge = field === lastField && now - lastAt < 1500;
+    lastField = field; lastAt = now;
+    return Object.assign({ merge: merge }, extra || {});
+  }
+
+  // A project is made on the first real action (R16, R28).
+  function ensureProject() {
+    if (proj) return true;
+    if (data.projects.length >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return false; }
+    var p = C.normProject({ id: C.newId("p", Math.random), m: 0, name: t("proj.default", { n: data.projects.length + 1 }), bpm: C.DEFAULT.bpm, sig: C.DEFAULT.sig });
+    put("projects", p);
+    openProject(C.find(data, "projects", p.id));
+    save();
+    return true;
+  }
+  function openProject(p) {
+    stopAll();
+    flush();
+    proj = p || null;
+    prefs.cur = proj ? proj.id : ""; savePrefs();
+    undoStack = []; redoStack = [];
+    selClip = ""; selTrack = "";
+    playhead = 0;
+    fixSelection();
+    renderAll();
+    if (proj) loadProjectAudio();
+  }
+  function fixSelection() {
+    var trs = tracks();
+    if (selClip && !C.find(data, "clips", selClip)) selClip = "";
+    if (selTrack && !trs.some(function (x) { return x.id === selTrack; })) selTrack = "";
+    if (!selTrack && trs.length) selTrack = trs[0].id;
+    if (prefs.arm && !trs.some(function (x) { return x.id === prefs.arm; })) { prefs.arm = ""; savePrefs(); }
+  }
+
+  function addTrack(name) {
+    if (!ensureProject()) return null;
+    var trs = tracks();
+    if (trs.length >= C.MAX_TRACKS) { showToast(t("toast.maxTracks", { n: C.MAX_TRACKS })); return null; }
+    var tr = C.normTrack({
+      id: C.newId("t", Math.random), m: 0, p: proj.id,
+      name: name || t("track.default", { n: trs.length + 1 }),
+      color: C.nextColor(trs),
+      ord: trs.length ? trs[trs.length - 1].ord + 1 : 0
+    });
+    put("tracks", tr);
+    selTrack = tr.id;
+    return tr;
+  }
+  function deleteTrack(tid) {
+    var tr = C.find(data, "tracks", tid);
+    if (!tr) return;
+    edit(function () {
+      clipsOf(tid).forEach(function (c) { remove("clips", c.id); });
+      remove("tracks", tid);
+      fixSelection();
+    });
+    undoToast(t("toast.trackDeleted"), undo);
+  }
+  function moveTrack(tid, d) {
+    var trs = tracks(), i = -1;
+    trs.forEach(function (x, k) { if (x.id === tid) i = k; });
+    var j = i + d;
+    if (i < 0 || j < 0 || j >= trs.length) return;
+    edit(function () {
+      var a = Object.assign({}, trs[i]), b = Object.assign({}, trs[j]);
+      var oa = a.ord; a.ord = b.ord; b.ord = oa;
+      if (a.ord === b.ord) { a.ord = j; b.ord = i; }
+      put("tracks", a); put("tracks", b);
+    });
+  }
+  function setTrack(tid, fields, opts) {
+    var tr = C.find(data, "tracks", tid);
+    if (!tr) return;
+    edit(function () { put("tracks", Object.assign({}, tr, fields)); }, opts);
+  }
+  function setProject(fields, opts) {
+    if (!ensureProject()) return;
+    edit(function () { put("projects", Object.assign({}, proj, fields)); }, opts);
+  }
+
+  // ---------- 4. Audio files: disk, decoding, peaks ----------
+  var buffers = {};      // source id → AudioBuffer
+  var peakCache = {};    // source id → Float32Array
+  var state = {};        // source id → "loading" | "ok" | "missing" | "bad"
+
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.readBlob === "function" && typeof f.writeBlob === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function vaultApi() {
+    try {
+      var v = window.parent && window.parent !== window ? window.parent.orosVault : null;
+      return v && typeof v.status === "function" ? v : null;
+    } catch (e) { return null; }
+  }
+  function decode(arrayBuf) {
+    var a = audio();
+    if (!a) return Promise.reject(new Error("no audio"));
+    return new Promise(function (res, rej) {
+      var p = a.decodeAudioData(arrayBuf, res, rej);
+      if (p && typeof p.then === "function") p.then(res, rej);
+    });
+  }
+  function keepBuffer(sid, buf) {
+    buffers[sid] = buf;
+    var chans = [];
+    for (var c = 0; c < Math.min(2, buf.numberOfChannels); c++) chans.push(buf.getChannelData(c));
+    peakCache[sid] = C.peaks(chans, Math.max(1, Math.ceil(buf.duration * PEAKS_PER_S)));
+    state[sid] = "ok";
+  }
+  function loadSource(src) {
+    if (state[src.id] === "ok" || state[src.id] === "loading") return Promise.resolve();
+    var fs = fsApi();
+    if (!fs) { state[src.id] = "missing"; return Promise.resolve(); }
+    state[src.id] = "loading";
+    return Promise.resolve(fs.readBlob(src.path)).then(function (blob) {
+      if (!blob) throw { code: "ENOENT" };
+      return blob.arrayBuffer();
+    }).then(decode).then(function (buf) {
+      keepBuffer(src.id, buf);
+    }, function (e) {
+      state[src.id] = e && typeof e.code === "string" ? "missing" : "bad";   // a disk error code, else undecodable
+    });
+  }
+  var loadingAll = null, loadAgain = false;
+  function loadProjectAudio() {
+    if (!proj) return Promise.resolve();
+    if (loadingAll) { loadAgain = true; return loadingAll; }
+    var pid = proj.id;
+    var list = C.ofProject(data, "sources", pid).filter(function (s) { return state[s.id] !== "ok"; });
+    list.forEach(function (s) { delete state[s.id]; });
+    if (!list.length) return Promise.resolve();
+    renderLanes();
+    loadingAll = list.reduce(function (p, s) {
+      return p.then(function () { return loadSource(s); }).then(function () { if (proj && proj.id === pid) renderLanes(); });
+    }, Promise.resolve()).then(function () {
+      loadingAll = null;
+      if (loadAgain) { loadAgain = false; return loadProjectAudio(); }
+    });
+    return loadingAll;
+  }
+  // Files that were missing may arrive with Vault Drive.
+  var vaultUnsub = null;
+  function watchVault() {
+    var v = vaultApi();
+    if (!v || typeof v.onStatus !== "function") return;
+    try {
+      vaultUnsub = v.onStatus(function (kind) {
+        if (kind !== "done" || !proj) return;
+        var again = C.ofProject(data, "sources", proj.id).some(function (s) { return state[s.id] === "missing"; });
+        if (again) {
+          C.ofProject(data, "sources", proj.id).forEach(function (s) { if (state[s.id] === "missing") delete state[s.id]; });
+          loadProjectAudio();
+        }
+      });
+    } catch (e) {}
+  }
+  // Write a new audio file to the disk and make it a source.
+  function addSource(name, ext, blob, buf) {
+    var fs = fsApi();
+    if (!fs) return Promise.reject(new Error("nodisk"));
+    var id = C.newId("s", Math.random), path = C.sourcePath(id, name, ext);
+    return Promise.resolve(fs.writeBlob(path, blob)).then(function () {
+      var src = C.normSource({ id: id, m: 0, p: proj.id, name: name, path: path, dur: buf.duration, ch: buf.numberOfChannels > 1 ? 2 : 1 });
+      put("sources", src);
+      keepBuffer(id, buf);
+      return C.find(data, "sources", id);
+    });
+  }
+  // Files of a deleted project leave the disk once its Undo has passed.
+  var pendingRm = {};
+  function removeFilesLater(pid, paths) {
+    clearTimeout(pendingRm[pid]);
+    pendingRm[pid] = setTimeout(function () {
+      delete pendingRm[pid];
+      if (C.find(data, "projects", pid)) return;
+      var fs = fsApi();
+      if (!fs || typeof fs.rm !== "function") return;
+      paths.forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
+    }, 9000);
+  }
+
+  // ---------- 5. Drawing ----------
+  function zoom() { return prefs.zoom; }
+  function headW() { var c = $("corner"); return c ? c.offsetWidth : 0; }
+  function songLen() { return C.projectEnd(projClips()); }
+  function timelineSec() {
+    var view = $("view"), vis = (view.clientWidth - headW()) / zoom();
+    var lp = proj && proj.loop ? proj.loop.b : 0;
+    return Math.max(vis, songLen() + 30, lp + 10, playhead + 10, 30);
+  }
+
+  function renderHead() {
+    $("title-view").textContent = proj ? (proj.name || t("proj.untitled")) : t("app.name");
+    var n = tracks().length, tt = C.fmtTime(songLen()).replace(/\.\d+$/, "");
+    $("title-sub").textContent = !n ? t("sub.none") : n === 1 ? t("sub.tracks1", { t: tt }) : t("sub.tracks", { n: n, t: tt });
+    $("undo-btn").disabled = !undoStack.length || recording;
+    $("redo-btn").disabled = !redoStack.length || recording;
+  }
+  function renderTransport() {
+    var p = proj || C.normProject({ id: "pxxxxxxxx", m: 0 });
+    var bi = $("bpm-in");
+    if (document.activeElement !== bi) bi.value = String(p.bpm);
+    $("sig-in").value = String(p.sig);
+    $("snap-in").value = prefs.snap;
+    var mi = $("master-in");
+    if (document.activeElement !== mi) mi.value = String(p.vol);
+    setLabel(mi, t("f.master") + ": " + dbTxt(p.vol));
+    var lb = $("loop-btn"), lon = !!(proj && proj.loop.on);
+    lb.setAttribute("aria-pressed", lon ? "true" : "false");
+    lb.classList.toggle("on", lon);
+    var mb = $("metro-btn");
+    mb.setAttribute("aria-pressed", prefs.metro ? "true" : "false");
+    mb.classList.toggle("on", prefs.metro);
+    $("zoom-in").disabled = zoom() >= ZOOMS[ZOOMS.length - 1];
+    $("zoom-out").disabled = zoom() <= ZOOMS[0];
+    renderPlayState();
+  }
+  function renderPlayState() {
+    var pb = $("play-btn"), rb = $("rec-btn");
+    pb.innerHTML = playing && !recording ? ICON.pause : ICON.play;
+    setLabel(pb, playing && !recording ? t("btn.pause") : t("btn.play"));
+    pb.classList.toggle("on", !!playing && !recording);
+    rb.classList.toggle("on", recording);
+    setLabel(rb, recording ? t("btn.recStop") : t("btn.rec"));
+    rb.setAttribute("aria-pressed", recording ? "true" : "false");
+    document.body.classList.toggle("is-rec", recording);
+  }
+  function dbTxt(db) { return db <= C.VOL_MIN ? t("db.off") : t("db", { n: (db > 0 ? "+" : "") + numTxt(db, 1) }); }
+  function panTxt(p) { return p === 0 ? t("pan.c") : p < 0 ? t("pan.l", { n: -p }) : t("pan.r", { n: p }); }
+
+  function renderRows() {
+    var host = $("rows"), trs = tracks();
+    host.innerHTML = "";
+    var solo = C.anySolo(trs);
+    trs.forEach(function (tr) {
+      var row = el("div", "row track" + (tr.id === selTrack ? " sel" : ""));
+      row.setAttribute("data-t", tr.id);
+      row.style.setProperty("--tc", tr.color);
+      var head = el("div", "head");
+      var top = el("div", "h-top");
+      var name = el("button", "h-name");
+      name.type = "button";
+      name.appendChild(el("span", "dot"));
+      name.appendChild(el("span", "h-label", tr.name || t("track.default", { n: "" })));
+      setLabel(name, tr.name);
+      name.addEventListener("click", function () { selTrack = tr.id; renderRows(); });
+      top.appendChild(name);
+      var more = el("button", "icon-btn small h-more");
+      more.type = "button"; more.innerHTML = ICON.dots;
+      setLabel(more, t("track.more") + ": " + tr.name);
+      more.addEventListener("click", function () { openTrack(tr.id); });
+      top.appendChild(more);
+      head.appendChild(top);
+      var btns = el("div", "h-btns");
+      btns.appendChild(toggleBtn("ms m", "M", tr.mute, t("track.mute"), function () { setTrack(tr.id, { mute: !tr.mute }, { live: true }); }));
+      btns.appendChild(toggleBtn("ms s", "S", tr.solo, t("track.solo"), function () { setTrack(tr.id, { solo: !tr.solo }, { live: true }); }));
+      btns.appendChild(toggleBtn("ms r", "R", prefs.arm === tr.id, t("track.arm"), function () { armTrack(tr.id); }));
+      head.appendChild(btns);
+      var vol = el("input", "h-vol");
+      vol.type = "range"; vol.min = String(C.VOL_MIN); vol.max = String(C.VOL_MAX); vol.step = "0.5"; vol.value = String(tr.vol);
+      setLabel(vol, t("track.vol") + ": " + dbTxt(tr.vol));
+      vol.addEventListener("input", function () {
+        var v = parseFloat(vol.value);
+        setLabel(vol, t("track.vol") + ": " + dbTxt(v));
+        setTrack(tr.id, { vol: v }, burst("vol" + tr.id, { live: true }));
+      });
+      head.appendChild(vol);
+      if (solo && !tr.solo || tr.mute) row.classList.add("silent");
+      row.appendChild(head);
+      var lane = el("div", "lane");
+      lane.setAttribute("data-t", tr.id);
+      row.appendChild(lane);
+      host.appendChild(row);
+    });
+    $("empty").hidden = trs.length > 0;
+    $("add-track").disabled = trs.length >= C.MAX_TRACKS;
+    renderLanes();
+  }
+  function toggleBtn(cls, txt, on, label, fn) {
+    var b = el("button", cls + (on ? " on" : ""), txt);
+    b.type = "button";
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    setLabel(b, label);
+    b.addEventListener("click", fn);
+    return b;
+  }
+
+  function renderLanes() {
+    var w = Math.ceil(timelineSec() * zoom());
+    $("sheet").style.setProperty("--tl-w", w + "px");
+    $("sheet").style.setProperty("--beat-w", (C.beatSec(proj ? proj.bpm : 120) * zoom()) + "px");
+    $("sheet").style.setProperty("--bar-w", (C.barSec(proj ? proj.bpm : 120, proj ? proj.sig : 4) * zoom()) + "px");
+    [].forEach.call(document.querySelectorAll("#rows .lane"), function (lane) {
+      var tid = lane.getAttribute("data-t");
+      lane.innerHTML = "";
+      clipsOf(tid).forEach(function (c) { lane.appendChild(clipEl(c)); });
+    });
+    renderRuler();
+    renderPlayhead();
+    renderClipbar();
+    renderHead();
+  }
+  function clipEl(c) {
+    var src = sourceOf(c.s), st = state[c.s] || "loading";
+    var d = el("div", "clip" + (c.id === selClip ? " sel" : "") + (st !== "ok" ? " " + st : ""));
+    d.setAttribute("data-c", c.id);
+    d.style.left = (c.at * zoom()) + "px";
+    d.style.width = Math.max(4, c.len * zoom()) + "px";
+    d.tabIndex = 0;
+    d.setAttribute("role", "button");
+    var name = src ? src.name : "";
+    d.setAttribute("aria-label", name + ", " + C.fmtTime(c.at) + " – " + C.fmtTime(C.clipEnd(c)));
+    d.appendChild(el("span", "c-name", name));
+    if (st === "ok") {
+      var cv = el("canvas", "c-wave");
+      d.appendChild(cv);
+      drawWave(cv, c);
+    } else {
+      d.appendChild(el("span", "c-state", st === "missing" ? t("clip.missing") : st === "bad" ? t("clip.bad") : t("clip.loading")));
+    }
+    if (c.fi > 0) { var fi = el("span", "c-fade in"); fi.style.width = (c.fi * zoom()) + "px"; d.appendChild(fi); }
+    if (c.fo > 0) { var fo = el("span", "c-fade out"); fo.style.width = (c.fo * zoom()) + "px"; d.appendChild(fo); }
+    d.appendChild(el("span", "c-edge l"));
+    d.appendChild(el("span", "c-edge r"));
+    return d;
+  }
+  function drawWave(cv, c) {
+    var pk = peakCache[c.s];
+    if (!pk) return;
+    var w = Math.max(1, Math.min(4096, Math.round(c.len * zoom()))), h = 48;
+    cv.width = w; cv.height = h;
+    var g = cv.getContext("2d");
+    if (!g) return;
+    var n = pk.length / 2, cg = C.dbToGain(c.gain);
+    g.fillStyle = "rgba(255,255,255,0.85)";
+    for (var x = 0; x < w; x++) {
+      var t0 = c.off + (x / w) * c.len, t1 = c.off + ((x + 1) / w) * c.len;
+      var b0 = Math.floor(t0 * PEAKS_PER_S), b1 = Math.max(b0 + 1, Math.floor(t1 * PEAKS_PER_S));
+      var lo = 0, hi = 0;
+      for (var b = b0; b < b1 && b < n; b++) { if (pk[b * 2] < lo) lo = pk[b * 2]; if (pk[b * 2 + 1] > hi) hi = pk[b * 2 + 1]; }
+      var fg = C.fadeGainAt(c, (x + 0.5) / w * c.len) * cg;
+      lo = clamp(lo * fg, -1, 1); hi = clamp(hi * fg, -1, 1);
+      var y0 = Math.round(h / 2 - hi * h / 2), y1 = Math.round(h / 2 - lo * h / 2);
+      g.fillRect(x, y0, 1, Math.max(1, y1 - y0));
+    }
+  }
+
+  function renderRuler() {
+    var r = $("ruler"), z = zoom();
+    r.innerHTML = "";
+    var bpm = proj ? proj.bpm : 120, sig = proj ? proj.sig : 4;
+    var bar = C.barSec(bpm, sig), every = 1;
+    while (bar * every * z < 48) every *= 2;
+    var total = timelineSec();
+    for (var i = 0; i * bar < total; i += every) {
+      var m = el("span", "tick", String(i + 1));
+      m.style.left = (i * bar * z) + "px";
+      r.appendChild(m);
+    }
+    if (proj && (proj.loop.b > proj.loop.a)) {
+      var lp = el("div", "loop" + (proj.loop.on ? " on" : ""));
+      lp.style.left = (proj.loop.a * z) + "px";
+      lp.style.width = ((proj.loop.b - proj.loop.a) * z) + "px";
+      r.appendChild(lp);
+    }
+    r.setAttribute("aria-valuemax", String(Math.round(total)));
+  }
+  function renderPlayhead() {
+    var pos = playing ? position() : playhead;
+    $("playhead").style.transform = "translateX(" + (headW() + pos * zoom()) + "px)";
+    var r = $("ruler");
+    r.setAttribute("aria-valuenow", String(Math.round(pos * 10) / 10));
+    r.setAttribute("aria-valuetext", C.fmtTime(pos));
+    $("clock-time").textContent = C.fmtTime(pos);
+    var bb = C.barBeat(pos, proj ? proj.bpm : 120, proj ? proj.sig : 4);
+    $("clock-bar").textContent = bb.bar + "." + bb.beat;
+  }
+  // Keep the playhead in view while playing.
+  function followPlayhead(pos) {
+    var view = $("view"), x = headW() + pos * zoom(), left = view.scrollLeft + headW();
+    if (x > view.scrollLeft + view.clientWidth - 40 || x < left) view.scrollLeft = Math.max(0, x - headW() - 40);
+  }
+
+  function renderClipbar() {
+    var c = selClip ? C.find(data, "clips", selClip) : null, bar = $("clipbar");
+    bar.hidden = !c;
+    document.body.classList.toggle("has-clip", !!c);
+    if (!c) return;
+    var src = sourceOf(c.s);
+    $("clip-name").textContent = src ? src.name : "";
+    var gi = $("gain-in"), fi = $("fi-in"), fo = $("fo-in");
+    var maxF = Math.max(0.01, Math.min(10, c.len));
+    fi.max = String(maxF); fo.max = String(maxF);
+    fi.step = fo.step = maxF > 2 ? "0.05" : "0.01";
+    if (document.activeElement !== gi) gi.value = String(c.gain);
+    if (document.activeElement !== fi) fi.value = String(c.fi);
+    if (document.activeElement !== fo) fo.value = String(c.fo);
+    $("gain-out").textContent = dbTxt(c.gain);
+    $("fi-out").textContent = t("sec", { n: numTxt(c.fi, 2) });
+    $("fo-out").textContent = t("sec", { n: numTxt(c.fo, 2) });
+  }
+  function renderAll() {
+    renderTransport();
+    renderRows();
+  }
+
+  // ---------- 6. Pointer: clips, ruler, lanes ----------
+  function secAt(clientX) {
+    var view = $("view"), rect = view.getBoundingClientRect();
+    return Math.max(0, (clientX - rect.left + view.scrollLeft - headW()) / zoom());
+  }
+  function laneAt(clientX, clientY) {
+    var n = document.elementFromPoint(clientX, clientY);
+    var row = n && n.closest ? n.closest(".row.track") : null;
+    return row ? row.getAttribute("data-t") : "";
+  }
+  var drag = null;
+  function onRowsDown(e) {
+    if (e.button !== 0 || recording) return;
+    var cEl = e.target.closest && e.target.closest(".clip");
+    var lane = e.target.closest && e.target.closest(".lane");
+    if (!lane) return;
+    if (!cEl) {                                            // empty lane: select the track, move the playhead
+      selTrack = lane.getAttribute("data-t");
+      selClip = "";
+      seek(C.snap(secAt(e.clientX), proj.bpm, proj.sig, prefs.snap));
+      renderRows();
+      return;
+    }
+    var c = C.find(data, "clips", cEl.getAttribute("data-c"));
+    if (!c) return;
+    e.preventDefault();
+    selClip = c.id; selTrack = c.t;
+    var rect = cEl.getBoundingClientRect(), edge = Math.min(10, rect.width / 4);
+    var mode = e.clientX - rect.left < edge ? "l" : rect.right - e.clientX < edge ? "r" : "move";
+    drag = { id: c.id, mode: mode, x0: e.clientX, y0: e.clientY, orig: c, before: snapshot(), moved: false, pid: e.pointerId };
+    try { $("rows").setPointerCapture(e.pointerId); } catch (err) {}
+    renderRows();
+  }
+  function onRowsMove(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    if (!drag.moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+    drag.moved = true;
+    var o = drag.orig, src = sourceOf(o.s), dur = src ? src.dur : 0, n, ds = dx / zoom();
+    if (drag.mode === "move") {
+      var at = C.snap(o.at + ds, proj.bpm, proj.sig, prefs.snap);
+      n = C.moveClip(o, at);
+      var tid = laneAt(e.clientX, e.clientY);
+      if (tid) n.t = tid;
+    } else if (drag.mode === "l") {
+      n = C.trimStart(o, C.snap(o.at + ds, proj.bpm, proj.sig, prefs.snap), dur);
+    } else {
+      n = C.trimEnd(o, C.snap(C.clipEnd(o) + ds, proj.bpm, proj.sig, prefs.snap), dur);
+    }
+    put("clips", n);
+    selTrack = n.t;
+    renderLanesFast();
+  }
+  function onRowsUp(e) {
+    if (!drag || e.pointerId !== drag.pid) return;
+    var d = drag; drag = null;
+    if (!d.moved) { renderClipbar(); return; }
+    if (snapshot() !== d.before) {
+      undoStack.push(d.before);
+      if (undoStack.length > MAX_UNDO) undoStack.shift();
+      redoStack = [];
+      changed();
+    }
+  }
+  var fastTimer = 0;
+  function renderLanesFast() {
+    if (fastTimer) return;
+    fastTimer = requestAnimationFrame(function () { fastTimer = 0; renderRows(); });
+  }
+
+  var rdrag = null;
+  function onRulerDown(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    rdrag = { x0: e.clientX, a: secAt(e.clientX), moved: false, pid: e.pointerId };
+    try { $("ruler").setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  function onRulerMove(e) {
+    if (!rdrag || e.pointerId !== rdrag.pid || !proj && !ensureProject()) return;
+    if (!rdrag.moved && Math.abs(e.clientX - rdrag.x0) < 5) return;
+    rdrag.moved = true;
+    var a = C.snap(rdrag.a, proj.bpm, proj.sig, prefs.snap), b = C.snap(secAt(e.clientX), proj.bpm, proj.sig, prefs.snap);
+    if (b < a) { var x = a; a = b; b = x; }
+    rdrag.loop = { on: b - a >= C.MIN_LEN, a: a, b: b };
+    proj = Object.assign({}, proj, { loop: rdrag.loop });
+    renderRuler();
+  }
+  function onRulerUp(e) {
+    if (!rdrag || e.pointerId !== rdrag.pid) return;
+    var d = rdrag; rdrag = null;
+    if (!d.moved) { seek(C.snap(d.a, proj ? proj.bpm : 120, proj ? proj.sig : 4, prefs.snap)); return; }
+    proj = C.find(data, "projects", proj.id);
+    if (d.loop) setProject({ loop: d.loop });
+  }
+  function onRulerKey(e) {
+    var step = e.shiftKey ? C.barSec(proj ? proj.bpm : 120, proj ? proj.sig : 4) : C.beatSec(proj ? proj.bpm : 120);
+    var pos = playing ? position() : playhead;
+    if (e.key === "ArrowLeft") { e.preventDefault(); e.stopPropagation(); seek(Math.max(0, pos - step)); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); seek(pos + step); }
+  }
+
+  // ---------- 7. Engine ----------
+  var actx = null, masterGain = null, analyser = null, trackNodes = {};
+  var playing = null;            // { t0, from, loop, passes, ... } while playing
+  var recording = false;
+  var tickTimer = null, rafId = 0;
+
+  function audio() {
+    try {
+      if (!actx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        actx = new AC({ latencyHint: "interactive" });
+        masterGain = actx.createGain();
+        analyser = actx.createAnalyser();
+        analyser.fftSize = 1024;
+        masterGain.connect(analyser);
+        analyser.connect(actx.destination);
+        applyOutput();
+      }
+      return actx;
+    } catch (e) { return null; }
+  }
+  function resume() { try { if (actx && actx.state === "suspended") return actx.resume(); } catch (e) {} return Promise.resolve(); }
+
+  // Track nodes: clip sources → track gain → pan → master.
+  function buildTracks(a, out, nodes) {
+    var trs = tracks(), solo = C.anySolo(trs);
+    trs.forEach(function (tr) {
+      var g = a.createGain(), pn = a.createStereoPanner ? a.createStereoPanner() : null;
+      g.gain.value = C.trackGain(tr, solo);
+      if (pn) { pn.pan.value = tr.pan / 100; g.connect(pn); pn.connect(out); } else g.connect(out);
+      nodes[tr.id] = { gain: g, pan: pn };
+    });
+  }
+  function updateMix() {
+    if (!actx || !proj) return;
+    masterGain.gain.setTargetAtTime(C.dbToGain(proj.vol), actx.currentTime, 0.01);
+    var trs = tracks(), solo = C.anySolo(trs);
+    trs.forEach(function (tr) {
+      var n = trackNodes[tr.id];
+      if (!n) return;
+      n.gain.gain.setTargetAtTime(C.trackGain(tr, solo), actx.currentTime, 0.01);
+      if (n.pan) n.pan.pan.setTargetAtTime(tr.pan / 100, actx.currentTime, 0.01);
+    });
+  }
+
+  // One clip, from project time `a` to `b`, starting at context time `when`.
+  function scheduleClip(a, c, from, to, when, out, list) {
+    var buf = buffers[c.s];
+    if (!buf) return;
+    var s = Math.max(from, c.at), e = Math.min(to, C.clipEnd(c));
+    if (e - s <= 0.0005) return;
+    var src = a.createBufferSource(), g = a.createGain(), cg = C.dbToGain(c.gain);
+    src.buffer = buf;
+    var at = when + (s - from), x0 = s - c.at, x1 = e - c.at;
+    g.gain.setValueAtTime(C.fadeGainAt(c, x0) * cg, at);
+    if (c.fi > 0 && x0 < c.fi) g.gain.linearRampToValueAtTime(cg * C.fadeGainAt(c, Math.min(c.fi, x1)), at + (Math.min(c.fi, x1) - x0));
+    if (c.fo > 0 && x1 > c.len - c.fo) {
+      var foStart = Math.max(x0, c.len - c.fo);
+      g.gain.setValueAtTime(cg * C.fadeGainAt(c, foStart), at + (foStart - x0));
+      g.gain.linearRampToValueAtTime(cg * C.fadeGainAt(c, x1), at + (x1 - x0));
+    }
+    src.connect(g); g.connect(out);
+    src.start(Math.max(at, a.currentTime), c.off + x0 + Math.max(0, a.currentTime - at), x1 - x0);
+    if (list) list.push(src);
+  }
+  function scheduleClick(a, when, accent) {
+    var o = a.createOscillator(), g = a.createGain(), v = Math.pow(prefs.mvol / 100, 1.5) * 0.6;
+    o.frequency.value = accent ? 1600 : 1000;
+    g.gain.setValueAtTime(0, when);
+    g.gain.linearRampToValueAtTime(v, when + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    o.connect(g); g.connect(analyser || a.destination);
+    o.start(when); o.stop(when + 0.06);
+    return o;
+  }
+
+  // Passes: one straight run from `from` (to the loop end or the song
+  // end), then one per loop round. Each pass maps project time to the
+  // context clock; clips and clicks are scheduled LOOKAHEAD ahead.
+  function newPass(from, to, ctxStart) {
+    var pending = projClips().filter(function (c) { return C.clipEnd(c) > from && c.at < to; })
+      .sort(function (x, y) { return x.at - y.at; });
+    return { from: from, to: to, start: ctxStart, end: ctxStart + (to - from), pending: pending, beat: Math.ceil(from / C.beatSec(proj.bpm) - 1e-9) };
+  }
+  function play(fromSec, opts) {
+    opts = opts || {};
+    var a = audio();
+    if (!a) { showToast(t("toast.noAudio")); return false; }
+    if (!proj) return false;
+    stopNodes();
+    resume();
+    masterGain.gain.value = C.dbToGain(proj.vol);
+    trackNodes = {};
+    buildTracks(a, masterGain, trackNodes);
+    var loop = !opts.noLoop && proj.loop.on && fromSec < proj.loop.b ? proj.loop : null;
+    var end = loop ? loop.b : Math.max(songLen(), opts.open ? C.MAX_SEC : 0);
+    if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
+    var t0 = a.currentTime + 0.06;
+    playing = { t0: t0, loop: loop, passes: [newPass(fromSec, end, t0)], sources: [], clicks: [] };
+    if (projClips().some(function (c) { return state[c.s] !== "ok"; })) showToast(t("toast.missing"));
+    tick();
+    tickTimer = setInterval(tick, TICK_MS);
+    rafId = requestAnimationFrame(frame);
+    renderPlayState();
+    live(t("live.playing"));
+    return true;
+  }
+  function tick() {
+    var p = playing, a = actx;
+    if (!p || !a) return;
+    var horizon = a.currentTime + LOOKAHEAD, last = p.passes[p.passes.length - 1];
+    if (p.loop && last.end < horizon) p.passes.push(newPass(p.loop.a, p.loop.b, last.end));
+    p.passes.forEach(function (ps) {
+      while (ps.pending.length && ps.start + (Math.max(ps.from, ps.pending[0].at) - ps.from) < horizon) {
+        var c = ps.pending.shift(), n = trackNodes[c.t];
+        if (n) scheduleClip(a, c, ps.from, ps.to, ps.start, n.gain, p.sources);
+      }
+      if (prefs.metro) {
+        var bs = C.beatSec(proj.bpm);
+        while (ps.beat * bs < ps.to && ps.start + (ps.beat * bs - ps.from) < horizon) {
+          var when = ps.start + (ps.beat * bs - ps.from);
+          if (when >= a.currentTime - 0.01) p.clicks.push(scheduleClick(a, when, ps.beat % proj.sig === 0));
+          ps.beat++;
+        }
+      }
+    });
+    p.passes = p.passes.filter(function (ps) { return ps.end > a.currentTime - 0.5 || ps === p.passes[p.passes.length - 1]; });
+    if (p.sources.length > 200) p.sources = p.sources.slice(-200);
+    if (p.clicks.length > 64) p.clicks = p.clicks.slice(-64);
+    if (!p.loop && !recording && a.currentTime > last.end + 0.1) { playhead = last.to; stopAll(); renderPlayhead(); }
+    if (recording && recMeta && a.currentTime - recMeta.ctx0 > MAX_REC_SEC) { showToast(t("toast.recMax")); stopRecording(); }
+  }
+  // Project time now (what is heard, after the output latency).
+  function position() {
+    var p = playing, a = actx;
+    if (!p || !a) return playhead;
+    var now = a.currentTime - (a.outputLatency || 0);
+    for (var i = p.passes.length - 1; i >= 0; i--) {
+      var ps = p.passes[i];
+      if (now >= ps.start) return ps.from + Math.min(now - ps.start, ps.to - ps.from);
+    }
+    return p.passes[0].from;
+  }
+  function frame() {
+    if (!playing) return;
+    var pos = position();
+    renderPlayhead();
+    followPlayhead(pos);
+    drawMeter();
+    rafId = requestAnimationFrame(frame);
+  }
+  var meterBuf = null;
+  function drawMeter() {
+    var cv = $("meter"), g = cv.getContext && cv.getContext("2d");
+    if (!g) return;
+    if (analyser && !meterBuf) meterBuf = new Float32Array(analyser.fftSize);
+    var pk = 0;
+    if (playing && analyser) {
+      analyser.getFloatTimeDomainData(meterBuf);
+      for (var i = 0; i < meterBuf.length; i++) { var v = Math.abs(meterBuf[i]); if (v > pk) pk = v; }
+    }
+    var db = pk > 0 ? 20 * Math.log10(pk) : -60, f = clamp((db + 48) / 48, 0, 1);
+    g.clearRect(0, 0, cv.width, cv.height);
+    var css = getComputedStyle(document.documentElement);
+    g.fillStyle = css.getPropertyValue("--border").trim() || "#333";
+    g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = pk >= 0.99 ? "#e01b24" : db > -6 ? "#f6d32d" : "#33d17a";
+    g.fillRect(0, 0, Math.round(cv.width * f), cv.height);
+  }
+  function stopNodes() {
+    clearInterval(tickTimer); tickTimer = null;
+    cancelAnimationFrame(rafId); rafId = 0;
+    if (playing) {
+      playing.sources.concat(playing.clicks).forEach(function (s) { try { s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} });
+    }
+    Object.keys(trackNodes).forEach(function (k) {
+      try { trackNodes[k].gain.disconnect(); } catch (e) {}
+      try { if (trackNodes[k].pan) trackNodes[k].pan.disconnect(); } catch (e) {}
+    });
+    trackNodes = {};
+    playing = null;
+  }
+  function pause() {
+    if (!playing) return;
+    if (recording) { stopRecording(); return; }
+    playhead = position();
+    stopNodes();
+    renderPlayState(); renderPlayhead(); drawMeter();
+    live(t("live.stopped"));
+  }
+  function stopAll() {
+    if (recording) { stopRecording(); return; }
+    var was = !!playing;
+    stopNodes();
+    renderPlayState(); drawMeter();
+    if (was) live(t("live.stopped"));
+  }
+  function stopBtn() {
+    if (recording) { stopRecording(); return; }
+    if (playing) { stopAll(); }
+    else playhead = proj && proj.loop.on ? proj.loop.a : 0;
+    renderPlayhead();
+  }
+  function togglePlay() {
+    if (recording) { stopRecording(); return; }
+    if (playing) { pause(); return; }
+    if (!proj) return;
+    play(playhead, { open: prefs.metro });
+  }
+  function seek(sec) {
+    playhead = Math.max(0, Math.min(C.MAX_SEC, sec));
+    if (playing && !recording) play(playhead, { open: prefs.metro });
+    else renderPlayhead();
+  }
+  function replayIfPlaying() {
+    if (playing && !recording) play(position(), { open: prefs.metro });
+  }
+  function applyOutput() {
+    if (!actx || typeof actx.setSinkId !== "function") return;
+    try { Promise.resolve(actx.setSinkId(prefs.outDev || "")).catch(function () {}); } catch (e) {}
+  }
+
+  // ---------- 8. Recording ----------
+  var recMeta = null;            // { stream, node, srcNode, chunks, ch, ctx0, tid, from }
+  var recWorklet = null;
+  function armTrack(tid) {
+    prefs.arm = prefs.arm === tid ? "" : tid; savePrefs();
+    renderRows();
+    var tr = C.find(data, "tracks", prefs.arm);
+    if (tr) live(t("toast.armed", { name: tr.name }));
+  }
+  function startRecording() {
+    if (recording) { stopRecording(); return; }
+    var a = audio();
+    if (!a || !a.audioWorklet || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast(t("toast.noRec")); return; }
+    if (!ensureProject()) return;
+    var tr = C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack);
+    if (!tr || tr.p !== proj.id) { edit(function () { tr = addTrack(); }); }
+    if (!tr) return;
+    prefs.arm = tr.id; savePrefs();
+    if (playing) { playhead = position(); stopNodes(); }
+    resume();
+    var cons = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } };
+    if (prefs.inDev) cons.deviceId = { exact: prefs.inDev };
+    var stream = null;
+    navigator.mediaDevices.getUserMedia({ audio: cons }).catch(function () {
+      if (!prefs.inDev) throw new Error("nomic");
+      return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    }).then(function (s) {
+      stream = s;
+      recWorklet = recWorklet || a.audioWorklet.addModule("rec.worklet.js");
+      return recWorklet;
+    }).then(function () {
+      var srcNode = a.createMediaStreamSource(stream);
+      var node = new AudioWorkletNode(a, "studio-recorder", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+      var mute = a.createGain(); mute.gain.value = 0;
+      srcNode.connect(node); node.connect(mute); mute.connect(a.destination);
+      recMeta = { stream: stream, node: node, srcNode: srcNode, mute: mute, chunks: [], ch: 1, ctx0: 0, tid: tr.id, from: playhead, frames: 0, done: null };
+      node.port.onmessage = function (e) {
+        var m = e.data || {};
+        if (typeof m.start === "number") { recMeta.ctx0 = m.start; recMeta.ch = m.ch; }
+        if (m.chunk) { recMeta.chunks.push(m.chunk); recMeta.frames += m.chunk[0].length; }
+        if (m.done && recMeta.done) recMeta.done();
+      };
+      recording = true;
+      play(playhead, { noLoop: true, open: true });
+      renderAll();
+      live(t("live.recording"));
+    }).catch(function () {
+      if (stream) stream.getTracks().forEach(function (k) { k.stop(); });
+      recording = false; recMeta = null; recWorklet = null;
+      showToast(t("toast.noMic"));
+      renderPlayState();
+    });
+  }
+  function stopRecording() {
+    if (!recording || !recMeta) return;
+    var r = recMeta, a = actx, t0 = playing ? playing.t0 : 0, from = r.from;
+    recording = false;
+    stopNodes();
+    renderPlayState();
+    var finish = function () {
+      try { r.srcNode.disconnect(); r.node.disconnect(); r.mute.disconnect(); } catch (e) {}
+      r.stream.getTracks().forEach(function (k) { k.stop(); });
+      recMeta = null;
+      saveTake(r, a, t0, from);
+    };
+    r.done = finish;
+    r.node.port.postMessage("stop");
+    setTimeout(function () { if (recMeta === r) finish(); }, 1500);
+  }
+  function saveTake(r, a, t0, from) {
+    if (!r.frames) { showToast(t("toast.recEmpty")); renderAll(); return; }
+    var rate = a.sampleRate, ch = r.ch > 1 ? 2 : 1, chans = [];
+    for (var c = 0; c < ch; c++) chans.push(new Float32Array(r.frames));
+    var o = 0;
+    r.chunks.forEach(function (k) {
+      for (var c2 = 0; c2 < ch; c2++) chans[c2].set(k[Math.min(c2, k.length - 1)], o);
+      o += k[0].length;
+    });
+    // Where the first frame belongs on the timeline: the audio clock of
+    // the first frame, minus the output delay and the user's offset.
+    var lat = (a.outputLatency || 0) + (a.baseLatency || 0) + prefs.lat / 1000;
+    var at = from + (r.ctx0 - t0) - lat, skip = 0;
+    if (at < 0) { skip = Math.min(r.frames - 1, Math.round(-at * rate)); at = 0; }
+    if (skip) chans = chans.map(function (d) { return d.subarray(skip); });
+    var buf = a.createBuffer(ch, chans[0].length, rate);
+    chans.forEach(function (d, k) { buf.copyToChannel(d, k); });
+    var tr = C.find(data, "tracks", r.tid);
+    if (!tr || !proj || tr.p !== proj.id) { showToast(t("toast.recFail")); return; }
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+    busy(t("busy.saveTake"));
+    var blob = new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" });
+    var name = (tr.name || "take") + " " + new Date().toTimeString().slice(0, 5).replace(":", ".");
+    var before = snapshot();
+    addSource(name, "wav", blob, buf).then(function (src) {
+      put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, s: src.id, at: at, off: 0, len: buf.duration }));
+      undoStack.push(before); redoStack = [];
+      playhead = from;
+      busy(null);
+      changed();
+      showToast(t("toast.recSaved", { name: tr.name }));
+    }, function (e) {
+      busy(null);
+      showToast(e && e.message === "nodisk" ? t("toast.noDisk") : t("toast.recFail"));
+      renderAll();
+    });
+  }
+
+  // ---------- 9. Import, export ----------
+  function dialogHost() {
+    try { return window.orosDialog || (window.parent && window.parent.orosDialog) || null; }
+    catch (e) { return window.orosDialog || null; }
+  }
+  // Standalone fallback only (no shell): a one-shot file input.
+  function localPickFiles(accept) {
+    return new Promise(function (res) {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.accept = accept; inp.multiple = true;
+      inp.addEventListener("change", function () { res(inp.files ? [].slice.call(inp.files) : null); });
+      inp.addEventListener("cancel", function () { res(null); });
+      inp.click();
+    });
+  }
+  function pickAudio() {
+    if (!fsApi()) { showToast(t("toast.noDisk")); return; }
+    var dlg = dialogHost(), accept = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.aac,.webm";
+    var p = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept);
+    Promise.resolve(p).then(function (files) { if (files && files.length) importFiles(files); });
+  }
+  function importFiles(files) {
+    if (!fsApi()) { showToast(t("toast.noDisk")); return; }
+    if (!ensureProject()) return;
+    var before = snapshot(), any = false;
+    files.reduce(function (p, f) {
+      return p.then(function () {
+        if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); return; }
+        if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+        busy(t("busy.import", { name: f.name }));
+        return f.arrayBuffer().then(decode).then(function (buf) {
+          var tr = C.find(data, "tracks", selTrack);
+          if (!tr || tr.p !== proj.id || (files.length > 1 && clipsOf(tr.id).length)) {
+            tr = tracks().length < C.MAX_TRACKS ? addTrack(C.clipLine(f.name.replace(/\.[^.]+$/, ""), C.MAX_NAME)) : tr;
+          }
+          if (!tr) { showToast(t("toast.maxTracks", { n: C.MAX_TRACKS })); return; }
+          return addSource(f.name, C.extOf(f.name, f.type), f, buf).then(function (src) {
+            put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, s: src.id, at: playhead, off: 0, len: buf.duration }));
+            any = true;
+            showToast(t("toast.imported", { name: f.name }));
+          });
+        }, function () { showToast(t("toast.badFile", { name: f.name })); });
+      });
+    }, Promise.resolve()).catch(function (e) {
+      showToast(e && e.message === "nodisk" ? t("toast.noDisk") : t("toast.writeFail"));
+    }).then(function () {
+      busy(null);
+      if (any) { undoStack.push(before); redoStack = []; changed(); }
+      else renderAll();
+    });
+  }
+
+  function openExport() {
+    if (!proj || !projClips().length) { showToast(t("export.empty")); return; }
+    var r = C.exportRange(proj, projClips());
+    $("export-range").textContent = t(proj.loop.on ? "export.loop" : "export.all", { a: C.fmtTime(r.a), b: C.fmtTime(r.b) });
+    $("export-status").textContent = "";
+    $("export-go").disabled = false;
+    renderExportChips();
+    showDlg("export-dlg");
+  }
+  function renderExportChips() {
+    radioChips($("export-bits"), [16, 24], prefs.bits, function (v) { return t("bits." + v); }, function (v) { prefs.bits = v; savePrefs(); renderExportChips(); });
+    radioChips($("export-rate"), [44100, 48000], prefs.rate, function (v) { return t("rate." + v); }, function (v) { prefs.rate = v; savePrefs(); renderExportChips(); });
+  }
+  function doExport() {
+    var clips = projClips(), r = C.exportRange(proj, clips);
+    if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
+    if (clips.some(function (c) { return C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) { showToast(t("toast.noAudio")); return; }
+    var rate = prefs.rate, oc;
+    try { oc = new OAC(2, Math.ceil((r.b - r.a) * rate), rate); } catch (e) { showToast(t("toast.noAudio")); return; }
+    $("export-status").textContent = t("export.busy");
+    $("export-go").disabled = true;
+    var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol); master.connect(oc.destination);
+    var nodes = {};
+    buildTracks(oc, master, nodes);
+    clips.forEach(function (c) { var n = nodes[c.t]; if (n) scheduleClip(oc, c, r.a, r.b, 0, n.gain, null); });
+    var title = proj.name || t("proj.untitled");
+    var done = function (out) {
+      var chans = [out.getChannelData(0), out.getChannelData(1)];
+      var blob = new Blob([C.wavBytes(chans, rate, prefs.bits)], { type: "audio/wav" });
+      $("export-go").disabled = false;
+      $("export-status").textContent = "";
+      hideDlg("export-dlg");
+      saveBlob(blob, C.fileName(title, "wav"), "audio/wav", "WAV", ".wav");
+    };
+    var p = oc.startRendering();
+    if (p && typeof p.then === "function") p.then(done, function () { $("export-go").disabled = false; showToast(t("toast.noAudio")); });
+    else oc.oncomplete = function (e) { done(e.renderedBuffer); };
+  }
+  function saveBlob(blob, name, mime, desc, ext) {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      var acc = {}; acc[mime] = [ext];
+      dlg.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: desc, accept: acc }] })
+        .then(function (res) { if (res && res.ok) showToast(t("toast.file")); });
+      return;                       // cancel (ok=false) = silent exit
+    }
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 40000);
+    showToast(t("toast.file"));
+  }
+
+  // ---------- Clip actions ----------
+  function selectedClip() {
+    var c = selClip ? C.find(data, "clips", selClip) : null;
+    if (!c) showToast(t("toast.noClip"));
+    return c;
+  }
+  function splitSel() {
+    var c = selectedClip();
+    if (!c) return;
+    var at = playing ? position() : playhead, parts = C.splitClip(c, at, C.newId("c", Math.random));
+    if (!parts) { showToast(t("toast.noSplit")); return; }
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+    edit(function () { put("clips", parts[0]); put("clips", parts[1]); selClip = parts[1].id; });
+  }
+  function dupSel() {
+    var c = selectedClip();
+    if (!c) return;
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+    var n = Object.assign({}, c, { id: C.newId("c", Math.random), at: C.clipEnd(c) });
+    edit(function () { put("clips", n); selClip = n.id; });
+  }
+  function delSel() {
+    var c = selectedClip();
+    if (!c) return;
+    edit(function () { remove("clips", c.id); selClip = ""; });
+    undoToast(t("toast.clipDeleted"), undo);
+  }
+  function setClip(fields, field) {
+    var c = selClip ? C.find(data, "clips", selClip) : null;
+    if (!c) return;
+    edit(function () { put("clips", C.normClip(Object.assign({}, c, fields))); }, burst(field + c.id));
+  }
+
+  // ---------- 10. Dialogs ----------
+  function showDlg(id) {
+    var d = $(id);
+    if (d.open) return;
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  }
+  function hideDlg(id) { var d = $(id); if (d.close) d.close(); else d.removeAttribute("open"); }
+
+  function radioChips(host, values, curVal, label, onPick) {
+    host.innerHTML = "";
+    values.forEach(function (v) {
+      var on = v === curVal;
+      var b = el("button", "chip" + (on ? " on" : ""), label(v));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+      b.addEventListener("click", function () { onPick(v); });
+      host.appendChild(b);
+    });
+    host.onkeydown = function (e) {
+      var d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : (e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0);
+      if (!d) return;
+      e.preventDefault(); e.stopPropagation();
+      var i = values.indexOf(curVal), j = (i + d + values.length) % values.length;
+      onPick(values[j]);
+      var nb = host.querySelectorAll('[role="radio"]')[j];
+      if (nb) nb.focus();
+    };
+  }
+
+  // Projects
+  function openProjects() { renderProjects(); showDlg("proj-dlg"); }
+  function renderProjects() {
+    var host = $("proj-list"), list = C.newestFirst(data.projects);
+    host.innerHTML = "";
+    $("proj-empty").hidden = list.length > 0;
+    list.forEach(function (p) {
+      var li = el("li", "row-item" + (proj && proj.id === p.id ? " on" : ""));
+      var open = el("button", "row-open");
+      open.type = "button";
+      open.appendChild(el("span", "row-title", p.name || t("proj.untitled")));
+      var n = C.ofProject(data, "tracks", p.id).length;
+      var len = C.fmtTime(C.projectEnd(C.ofProject(data, "clips", p.id))).replace(/\.\d+$/, "");
+      open.appendChild(el("span", "row-desc", t("proj.desc", { n: n, t: len })));
+      if (proj && proj.id === p.id) open.setAttribute("aria-current", "true");
+      setLabel(open, t("btn.open") + ": " + (p.name || t("proj.untitled")));
+      open.addEventListener("click", function () { hideDlg("proj-dlg"); openProject(C.find(data, "projects", p.id)); });
+      li.appendChild(open);
+      var del = el("button", "icon-btn del-btn");
+      del.type = "button"; del.innerHTML = ICON.close;
+      setLabel(del, t("btn.delProject") + ": " + (p.name || t("proj.untitled")));
+      del.addEventListener("click", function () { deleteProject(p.id); });
+      li.appendChild(del);
+      host.appendChild(li);
+    });
+  }
+  function newProject() {
+    if (data.projects.length >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    hideDlg("proj-dlg");
+    proj = null;
+    ensureProject();
+  }
+  function deleteProject(pid) {
+    var p = C.find(data, "projects", pid);
+    if (!p) return;
+    var keep = {};
+    C.LISTS.forEach(function (key) { keep[key] = key === "projects" ? [p] : C.ofProject(data, key, pid).map(function (x) { return Object.assign({}, x); }); });
+    var paths = keep.sources.map(function (s) { return s.path; });
+    if (proj && proj.id === pid) openProject(null);
+    var part = C.emptyData(), now = Date.now();
+    C.LISTS.forEach(function (key) { keep[key].forEach(function (x) { part.tombs[x.id] = Math.max(now, x.m); }); });
+    data = C.mergeStudio(data, part);
+    save();
+    renderProjects(); renderAll();
+    removeFilesLater(pid, paths);
+    undoToast(t("toast.projDeleted"), function () {
+      clearTimeout(pendingRm[pid]); delete pendingRm[pid];
+      var back = C.emptyData();
+      C.LISTS.forEach(function (key) {
+        keep[key].forEach(function (x) { x.m = Math.max(Date.now(), (data.tombs[x.id] || 0) + 1); back[key].push(x); });
+      });
+      data = C.mergeStudio(data, back);
+      save();
+      openProject(C.find(data, "projects", pid));
+      renderProjects();
+    });
+  }
+
+  // Name prompt
+  var nameDone = null;
+  function askName(title, value, done) {
+    $("name-title").textContent = title;
+    $("name-in").value = value || "";
+    nameDone = done;
+    showDlg("name-dlg");
+    setTimeout(function () { $("name-in").focus(); $("name-in").select(); }, 0);
+  }
+  function renameProject() {
+    if (!ensureProject()) return;
+    askName(t("name.project"), proj.name, function (v) { setProject({ name: v }); });
+  }
+
+  // Track settings
+  var dlgTrack = "";
+  function openTrack(tid) {
+    dlgTrack = tid; selTrack = tid;
+    renderTrackDlg();
+    showDlg("track-dlg");
+  }
+  function renderTrackDlg() {
+    var tr = C.find(data, "tracks", dlgTrack);
+    if (!tr) { hideDlg("track-dlg"); return; }
+    $("track-title").textContent = tr.name;
+    var host = $("track-colors");
+    radioChips(host, C.COLORS, tr.color, function () { return ""; }, function (v) { setTrack(tr.id, { color: v }); renderTrackDlg(); });
+    [].forEach.call(host.querySelectorAll("button"), function (b, i) {
+      b.className += " swatch"; b.style.background = C.COLORS[i]; setLabel(b, t("sec.color") + " " + (i + 1));
+    });
+    var vi = $("tvol-in"), pi = $("tpan-in");
+    if (document.activeElement !== vi) vi.value = String(tr.vol);
+    if (document.activeElement !== pi) pi.value = String(tr.pan);
+    $("tvol-out").textContent = dbTxt(tr.vol);
+    $("tpan-out").textContent = panTxt(tr.pan);
+    var trs = tracks();
+    $("track-up").disabled = trs[0] && trs[0].id === tr.id;
+    $("track-down").disabled = trs.length && trs[trs.length - 1].id === tr.id;
+  }
+
+  // Settings
+  function openMore() {
+    renderDevices();
+    $("lat-in").value = String(prefs.lat); $("lat-out").textContent = t("ms", { n: prefs.lat });
+    $("mvol-in").value = String(prefs.mvol); $("mvol-out").textContent = prefs.mvol + "%";
+    var v = vaultApi(), usable = false;
+    try { usable = !!(v && v.status().usable); } catch (e) {}
+    $("disk-info").textContent = usable ? t("disk.vault") : t("disk.local");
+    showDlg("more-dlg");
+  }
+  function renderDevices() {
+    var md = navigator.mediaDevices;
+    var outOk = !!(audio() && typeof actx.setSinkId === "function");
+    $("out-dev").disabled = !outOk;
+    $("out-hint").hidden = outOk;
+    if (!md || typeof md.enumerateDevices !== "function") return;
+    md.enumerateDevices().then(function (list) {
+      fill($("in-dev"), list.filter(function (d) { return d.kind === "audioinput"; }), prefs.inDev);
+      fill($("out-dev"), list.filter(function (d) { return d.kind === "audiooutput"; }), prefs.outDev);
+    }).catch(function () {});
+  }
+  function fill(sel, devs, cur) {
+    sel.innerHTML = "";
+    var o = el("option", "", t("dev.default")); o.value = ""; sel.appendChild(o);
+    devs.forEach(function (d, i) {
+      if (!d.deviceId || d.deviceId === "default") return;
+      var op = el("option", "", d.label || t("dev.n", { n: i + 1 }));
+      op.value = d.deviceId;
+      sel.appendChild(op);
+    });
+    sel.value = cur;
+    if (sel.value !== cur) sel.value = "";
+  }
+  function askDeviceNames() {
+    var md = navigator.mediaDevices;
+    if (!md || !md.getUserMedia) { showToast(t("toast.noRec")); return; }
+    md.getUserMedia({ audio: true }).then(function (s) {
+      s.getTracks().forEach(function (k) { k.stop(); });
+      renderDevices();
+    }, function () { showToast(t("toast.noMic")); });
+  }
+
+  // Busy overlay (import / saving a take)
+  function busy(text) {
+    $("busy").hidden = !text;
+    $("busy-text").textContent = text || "";
+  }
+
+  // ---------- 11. Toasts ----------
+  function showToast(text) {
+    try {
+      var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
+      if (n && typeof n.transient === "function" &&
+          n.transient({ ns: "studio", title: String(text) })) return;
+    } catch (e) {}
+    localToast(text, null);
+  }
+  // Undo toasts stay local (the closure never leaves the frame), 8 s.
+  function undoToast(text, onUndo) { localToast(text, onUndo); }
+
+  var toastTimer = null;
+  function localToast(text, onUndo) {
+    var box = $("toast");
+    if (!box) return;
+    var host = document.querySelector("dialog[open]") || document.body;
+    if (box.parentNode !== host) host.appendChild(box);
+    box.innerHTML = "";
+    box.classList.remove("show");
+    box.appendChild(el("span", "", text));
+    if (onUndo) {
+      var b = el("button", "", t("toast.undo"));
+      b.type = "button";
+      b.addEventListener("click", function () {
+        box.classList.remove("show");
+        clearTimeout(toastTimer);
+        onUndo();
+      });
+      box.appendChild(b);
+    }
+    void box.offsetWidth;
+    box.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, onUndo ? 8000 : 4000);
+  }
+
+  function live(msg) {
+    var n = $("live");
+    if (!n) return;
+    n.textContent = "";
+    setTimeout(function () { n.textContent = msg; }, 30);
+  }
+
+  // ---------- 12. Keyboard ----------
+  function typing(e) {
+    var tg = e.target, tag = tg && tg.tagName;
+    return tag === "INPUT" && tg.type !== "checkbox" && tg.type !== "range" || tag === "TEXTAREA" || tag === "SELECT" || (tg && tg.isContentEditable);
+  }
+  function setZoom(d) {
+    var i = ZOOMS.indexOf(zoom()), j = clamp(i + d, 0, ZOOMS.length - 1);
+    if (i === j) return;
+    var view = $("view"), pos = playing ? position() : playhead;
+    var anchor = headW() + pos * zoom() - view.scrollLeft;
+    prefs.zoom = ZOOMS[j]; savePrefs();
+    renderAll();
+    view.scrollLeft = Math.max(0, headW() + pos * zoom() - anchor);
+  }
+  function toggleLoop() {
+    if (!ensureProject()) return;
+    var lp = proj.loop;
+    if (!(lp.b - lp.a >= C.MIN_LEN)) {                   // no region yet: four bars from the playhead
+      var bar = C.barSec(proj.bpm, proj.sig), a = Math.floor(playhead / bar) * bar;
+      setProject({ loop: { on: true, a: a, b: a + 4 * bar } });
+    } else setProject({ loop: { on: !lp.on, a: lp.a, b: lp.b } });
+  }
+  function toggleMetro() {
+    prefs.metro = !prefs.metro; savePrefs();
+    renderTransport();
+    if (playing && !recording) replayIfPlaying();
+  }
+  function wireKeyboard() {
+    // Contract Β: forward Ctrl+Alt+Shift shortcuts to the shell (capture)
+    document.addEventListener("keydown", function (e) {
+      if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
+      var p = null;
+      try { p = window.parent; } catch (err) { return; }
+      if (!(p && p !== window && p.orosShortcuts &&
+            typeof p.orosShortcuts.handle === "function")) return;
+      if (p.orosShortcuts.handle(e)) e.stopPropagation();
+    }, true);
+    document.addEventListener("keydown", function (e) {
+      if (e.defaultPrevented || typing(e) || e.altKey || document.querySelector("dialog[open]")) return;
+      var k = e.key, lk = k.length === 1 ? k.toLowerCase() : k;
+      if ((e.ctrlKey || e.metaKey) && (lk === "z")) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+      if ((e.ctrlKey || e.metaKey) && (lk === "y")) { e.preventDefault(); redo(); return; }
+      if (e.ctrlKey || e.metaKey) return;
+      if (k === " " && !(e.target && e.target.tagName === "BUTTON")) { e.preventDefault(); togglePlay(); }
+      else if (k === "Home") { e.preventDefault(); seek(0); }
+      else if (lk === "r") { e.preventDefault(); startRecording(); }
+      else if (lk === "l") { e.preventDefault(); toggleLoop(); }
+      else if (lk === "k") { e.preventDefault(); toggleMetro(); }
+      else if (lk === "s" && selClip) { e.preventDefault(); splitSel(); }
+      else if (lk === "d" && selClip) { e.preventDefault(); dupSel(); }
+      else if ((k === "Delete" || k === "Backspace") && selClip) { e.preventDefault(); delSel(); }
+      else if (k === "+" || k === "=") { e.preventDefault(); setZoom(1); }
+      else if (k === "-") { e.preventDefault(); setZoom(-1); }
+      else if (k === "Escape" && selClip) { selClip = ""; renderRows(); }
+    });
+  }
+
+  // ---------- 13. Sync slice + palette ----------
+  var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
+                  "--accent", "--accent-hover", "--accent-soft",
+                  "--panel-bg", "--border", "--shadow", "--danger"];
+
+  function inheritPalette() {
+    try {
+      var pRoot = window.parent.document.documentElement;
+      document.documentElement.setAttribute("data-theme",
+        pRoot.getAttribute("data-theme") || "dark");
+      var cs = window.parent.getComputedStyle(pRoot);
+      PAL_VARS.forEach(function (v) {
+        var val = cs.getPropertyValue(v).trim();
+        if (val) document.documentElement.style.setProperty(v, val);
+      });
+    } catch (e) { /* standalone */ }
+  }
+
+  function watchPalette() {
+    try {
+      new MutationObserver(inheritPalette).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  function syncApi() {
+    try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
+    catch (e) { return window.orosSync || null; }
+  }
+
+  function registerSync() {
+    // LOCAL FIRST: load() has already run (boot order).
+    var api = syncApi();
+    window.__orosSyncApi = {
+      _suppress: false,
+      dirty: function () {
+        if (this._suppress) return;
+        if (api && typeof api.markDirty === "function") api.markDirty();
+      }
+    };
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("studio", sliceGet, sliceSet, STORAGE_KEY, C.mergeStudio);
+  }
+
+  function sliceGet() { flush(); return C.mergeStudio(data, data); }   // canonical copy (R26)
+
+  function sliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.projects)) return;
+    var before = JSON.stringify(data);
+    window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
+    try {
+      data = C.mergeStudio(incoming, incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(data) === before) return;   // no toast on merge
+    if (drag || rdrag || recording) return;        // the gesture finishes on the local copy; the next edit merges
+    if (proj) {
+      var fresh = C.find(data, "projects", proj.id);
+      if (!fresh) { openProject(null); return; }   // deleted elsewhere
+      proj = fresh;
+    } else if (prefs.cur) {
+      var p = C.find(data, "projects", prefs.cur);
+      if (p) { openProject(p); return; }
+    }
+    fixSelection();
+    renderAll();
+    loadProjectAudio();
+    if ($("proj-dlg").open) renderProjects();
+    if ($("track-dlg").open) renderTrackDlg();
+    if (playing && !recording) replayIfPlaying();
+  }
+
+  // ---------- 14. Wiring & boot ----------
+  function applyI18n() {
+    [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
+      n.textContent = t(n.getAttribute("data-i18n"));
+    });
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) {
+      n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria")));
+    });
+    document.title = t("app.name") + " · orOS";
+    var icons = [["proj-btn", "list", "btn.projects"], ["undo-btn", "undo", "btn.undo"], ["redo-btn", "redo", "btn.redo"],
+                 ["import-btn", "import", "btn.import"], ["export-btn", "export", "btn.exportOpen"], ["more-btn", "more", "btn.more"],
+                 ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
+                 ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
+                 ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"]];
+    icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
+    var sig = $("sig-in");
+    C.SIGS.forEach(function (n) { var o = el("option", "", t("sig.n", { n: n })); o.value = String(n); sig.appendChild(o); });
+    var sn = $("snap-in");
+    ["bar", "beat", "off"].forEach(function (v) { var o = el("option", "", t("snap." + v)); o.value = v; sn.appendChild(o); });
+    setLabel($("title-btn"), t("name.project"));
+  }
+
+  function wire() {
+    $("proj-btn").addEventListener("click", openProjects);
+    $("title-btn").addEventListener("click", renameProject);
+    $("undo-btn").addEventListener("click", undo);
+    $("redo-btn").addEventListener("click", redo);
+    $("import-btn").addEventListener("click", pickAudio);
+    $("export-btn").addEventListener("click", openExport);
+    $("more-btn").addEventListener("click", openMore);
+    $("home-btn").addEventListener("click", function () { seek(0); });
+    $("play-btn").addEventListener("click", function () { if (!proj) { ensureProject(); } togglePlay(); });
+    $("stop-btn").addEventListener("click", stopBtn);
+    $("rec-btn").addEventListener("click", startRecording);
+    $("loop-btn").addEventListener("click", toggleLoop);
+    $("metro-btn").addEventListener("click", toggleMetro);
+    $("zoom-in").addEventListener("click", function () { setZoom(1); });
+    $("zoom-out").addEventListener("click", function () { setZoom(-1); });
+    $("bpm-in").addEventListener("change", function () {
+      var v = parseFloat($("bpm-in").value);
+      if (!isFinite(v)) { renderTransport(); return; }
+      setProject({ bpm: clamp(Math.round(v), C.MIN_BPM, C.MAX_BPM) });
+    });
+    $("sig-in").addEventListener("change", function () { setProject({ sig: parseInt($("sig-in").value, 10) }); });
+    $("snap-in").addEventListener("change", function () { prefs.snap = $("snap-in").value; savePrefs(); });
+    $("master-in").addEventListener("input", function () {
+      var v = parseFloat($("master-in").value);
+      setLabel($("master-in"), t("f.master") + ": " + dbTxt(v));
+      setProject({ vol: v }, burst("master", { live: true }));
+    });
+    $("add-track").addEventListener("click", function () { edit(function () { addTrack(); }); });
+    var rows = $("rows");
+    rows.addEventListener("pointerdown", onRowsDown);
+    rows.addEventListener("pointermove", onRowsMove);
+    rows.addEventListener("pointerup", onRowsUp);
+    rows.addEventListener("pointercancel", onRowsUp);
+    rows.addEventListener("keydown", function (e) {
+      var cEl = e.target.closest && e.target.closest(".clip");
+      if (cEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); e.stopPropagation(); selClip = cEl.getAttribute("data-c"); renderRows(); var f = document.querySelector('.clip[data-c="' + selClip + '"]'); if (f) f.focus(); }
+    });
+    var ruler = $("ruler");
+    ruler.addEventListener("pointerdown", onRulerDown);
+    ruler.addEventListener("pointermove", onRulerMove);
+    ruler.addEventListener("pointerup", onRulerUp);
+    ruler.addEventListener("pointercancel", function () { rdrag = null; if (proj) proj = C.find(data, "projects", proj.id); renderRuler(); });
+    ruler.addEventListener("keydown", onRulerKey);
+    $("view").addEventListener("wheel", function (e) {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom(e.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
+    // Files dropped from the desktop
+    var view = $("view");
+    view.addEventListener("dragover", function (e) { if (e.dataTransfer && [].indexOf.call(e.dataTransfer.types || [], "Files") >= 0) { e.preventDefault(); view.classList.add("drop"); } });
+    view.addEventListener("dragleave", function () { view.classList.remove("drop"); });
+    view.addEventListener("drop", function (e) {
+      view.classList.remove("drop");
+      var fl = e.dataTransfer && e.dataTransfer.files;
+      if (!fl || !fl.length) return;
+      e.preventDefault();
+      var lane = e.target.closest && e.target.closest(".row.track");
+      if (lane) selTrack = lane.getAttribute("data-t");
+      importFiles([].slice.call(fl));
+    });
+    // Clip bar
+    $("split-btn").addEventListener("click", splitSel);
+    $("dupclip-btn").addEventListener("click", dupSel);
+    $("delclip-btn").addEventListener("click", delSel);
+    $("clip-close").addEventListener("click", function () { selClip = ""; renderRows(); });
+    $("gain-in").addEventListener("input", function () { setClip({ gain: parseFloat($("gain-in").value) }, "gain"); });
+    $("fi-in").addEventListener("input", function () { setClip({ fi: parseFloat($("fi-in").value) }, "fi"); });
+    $("fo-in").addEventListener("input", function () { setClip({ fo: parseFloat($("fo-in").value) }, "fo"); });
+    // Dialogs
+    $("proj-close").addEventListener("click", function () { hideDlg("proj-dlg"); });
+    $("proj-new").addEventListener("click", newProject);
+    $("name-cancel").addEventListener("click", function () { nameDone = null; hideDlg("name-dlg"); });
+    $("name-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = C.clipLine($("name-in").value, C.MAX_NAME), fn = nameDone;
+      nameDone = null;
+      hideDlg("name-dlg");
+      if (fn && v) fn(v);
+    });
+    $("track-close").addEventListener("click", function () { hideDlg("track-dlg"); });
+    $("track-rename").addEventListener("click", function () {
+      var tr = C.find(data, "tracks", dlgTrack);
+      if (tr) askName(t("name.track"), tr.name, function (v) { setTrack(tr.id, { name: v }); renderTrackDlg(); });
+    });
+    $("tvol-in").addEventListener("input", function () {
+      var v = parseFloat($("tvol-in").value);
+      $("tvol-out").textContent = dbTxt(v);
+      setTrack(dlgTrack, { vol: v }, burst("vol" + dlgTrack, { live: true }));
+    });
+    $("tpan-in").addEventListener("input", function () {
+      var v = parseInt($("tpan-in").value, 10);
+      $("tpan-out").textContent = panTxt(v);
+      setTrack(dlgTrack, { pan: v }, burst("pan" + dlgTrack, { live: true }));
+    });
+    $("track-up").addEventListener("click", function () { moveTrack(dlgTrack, -1); renderTrackDlg(); });
+    $("track-down").addEventListener("click", function () { moveTrack(dlgTrack, 1); renderTrackDlg(); });
+    $("track-del").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); deleteTrack(id); });
+    $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
+    $("export-go").addEventListener("click", doExport);
+    $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
+    $("in-dev").addEventListener("change", function () { prefs.inDev = $("in-dev").value; savePrefs(); });
+    $("out-dev").addEventListener("change", function () { prefs.outDev = $("out-dev").value; savePrefs(); applyOutput(); });
+    $("dev-refresh").addEventListener("click", askDeviceNames);
+    $("lat-in").addEventListener("input", function () { prefs.lat = parseInt($("lat-in").value, 10) || 0; savePrefs(); $("lat-out").textContent = t("ms", { n: prefs.lat }); });
+    $("mvol-in").addEventListener("input", function () { prefs.mvol = parseInt($("mvol-in").value, 10) || 0; savePrefs(); $("mvol-out").textContent = prefs.mvol + "%"; });
+    // Dialogs close on the backdrop
+    [].forEach.call(document.querySelectorAll("dialog"), function (d) {
+      d.addEventListener("click", function (e) { if (e.target === d) { if (d.id === "name-dlg") nameDone = null; hideDlg(d.id); } });
+      d.addEventListener("close", function () { var box = $("toast"); if (box && box.parentNode === d) document.body.appendChild(box); });
+    });
+    var rz = null;
+    window.addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(renderLanes, 80); });
+    window.addEventListener("pagehide", function () {
+      flush();
+      if (recording) stopRecording();
+      stopNodes();
+      if (vaultUnsub) { try { vaultUnsub(); } catch (e) {} vaultUnsub = null; }
+    });
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(); });
+    wireKeyboard();
+  }
+
+  function boot() {
+    load();
+    loadPrefs();
+    applyI18n();
+    wire();
+    registerSync();
+    inheritPalette();
+    watchPalette();
+    watchVault();
+    var start = (prefs.cur && C.find(data, "projects", prefs.cur)) || C.newestFirst(data.projects)[0] || null;
+    openProject(start);
+    drawMeter();
+  }
+
+  boot();
+})();
