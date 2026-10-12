@@ -557,6 +557,11 @@ body.dropping .drop-hint { display: flex; }
     box-shadow: -8px 0 30px var(--shadow);
   }
 }
+/* Not enough height for one column of tools: two columns. */
+@media (min-width: 641px) and (max-height: 940px) {
+  .tools { display: grid; grid-template-columns: 36px 36px; justify-content: center; align-content: start; width: 84px; }
+  .colors { grid-column: 1 / -1; justify-self: center; }
+}
 @media (max-width: 640px) {
   #toolbar { gap: 2px; padding-left: 6px; padding-right: 6px; }
   .save-state { display: none; }

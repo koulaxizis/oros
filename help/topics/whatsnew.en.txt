@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.00.00
+- Photo Lab: new Filter menu (blur, sharpen, noise, pixelate, emboss, edges, vignette) and retouch tools (clone stamp, healing brush, red eye, dodge, burn, sponge, smudge)
+
 ## Version 0.99.00
 - Photo Lab opens and saves Photoshop (PSD) and OpenRaster files with layers.
 

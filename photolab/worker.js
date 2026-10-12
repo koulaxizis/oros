@@ -7,7 +7,7 @@
 // Images travel as { w, h, data } with their buffers transferred.
 // ============================================================
 /* global importScripts, self */
-importScripts("select.js", "resample.js", "adjust.js", "psd.js", "../designkit/fx.js");
+importScripts("select.js", "resample.js", "adjust.js", "filters.js", "psd.js", "../designkit/fx.js");
 
 var PLW = self.PhotoLab;
 
@@ -24,10 +24,19 @@ function run(op, a) {
       A.run(a.img, a.id, a.p, self.orosDK && self.orosDK.fx);
       if (a.before) A.masked(a.before, a.img, a.mask, a.ox, a.oy);
       return a.img;
+    case "filter": return filtered(PLW.filters, A, a);
     case "psd": return PLW.psd.read(a.bytes, a.o);
     case "psdWrite": return PLW.psd.write(a.doc);
   }
   throw new Error("op");
+}
+
+// A filter on the padded area, cropped back, the selection mixed in.
+function filtered(F, A, a) {
+  var out = F.run(a.img, a.id, a.p, a.at), e = a.pad || 0;
+  out = F.crop(out, e, e, a.img.w - 2 * e, a.img.h - 2 * e);
+  if (a.before) A.masked(a.before, out, a.mask, a.ox, a.oy);
+  return out;
 }
 
 // Buffers of the result go back transferred (a PSD's layers too).
