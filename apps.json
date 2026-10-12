@@ -46,6 +46,22 @@
       "type": "internal"
     },
     {
+      "id": "stickies",
+      "name": "Sticky Notes",
+      "category": "Accessories",
+      "icon": "stickies",
+      "url": "stickies/",
+      "type": "internal"
+    },
+    {
+      "id": "textcase",
+      "name": "Case Converter",
+      "category": "Accessories",
+      "icon": "textcase",
+      "url": "textcase/",
+      "type": "internal"
+    },
+    {
       "id": "todo",
       "name": "To-Do",
       "category": "Office",
@@ -89,26 +105,6 @@
       "category": "Office",
       "icon": "calendar",
       "url": "calendar/",
-      "search": "search.js",
-      "type": "internal",
-      "today": "today.js"
-    },
-    {
-      "id": "quote",
-      "name": "Quote",
-      "category": "Office",
-      "icon": "quote",
-      "url": "quote/",
-      "search": "search.js",
-      "type": "internal",
-      "today": "today.js"
-    },
-    {
-      "id": "timesheet",
-      "name": "Timesheet",
-      "category": "Office",
-      "icon": "timesheet",
-      "url": "timesheet/",
       "search": "search.js",
       "type": "internal",
       "today": "today.js"
@@ -232,6 +228,36 @@
       "icon": "qr",
       "url": "qr/",
       "type": "internal"
+    },
+    {
+      "id": "quote",
+      "name": "Quote",
+      "category": "Business",
+      "icon": "quote",
+      "url": "quote/",
+      "search": "search.js",
+      "type": "internal",
+      "today": "today.js"
+    },
+    {
+      "id": "timesheet",
+      "name": "Timesheet",
+      "category": "Business",
+      "icon": "timesheet",
+      "url": "timesheet/",
+      "search": "search.js",
+      "type": "internal",
+      "today": "today.js"
+    },
+    {
+      "id": "crm",
+      "name": "CRM",
+      "category": "Business",
+      "icon": "crm",
+      "url": "crm/",
+      "type": "internal",
+      "search": "search.js",
+      "searchOff": true
     },
     {
       "id": "prompter",

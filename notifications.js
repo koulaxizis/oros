@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -551,6 +551,9 @@
     // Media Shelf — "shelf:item:<itemId>": the daily reading reminder
     // opens the title it names. Generic shell deep link, no own bridge.
     shelf:    function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('shelf', { item: id }); },
+    // CRM — "crm:<followUpId>": a due follow-up opens its editor.
+    // Generic shell deep link, no own bridge.
+    crm:      function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('crm', { fup: String(id) }); },
     // One-Sentence Diary — "diary:day:<YYYY-MM-DD>": the evening
     // reminder opens that day to write. Generic shell deep link.
     diary:    function (ymd) {
@@ -563,6 +566,9 @@
     today:    function (ymd) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(ymd)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('today', { day: String(ymd) });
     },
+    // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
+    // with that note in front (its editor on a phone).
+    stickies: function (id) { if (typeof window.__orosOpenStickies === 'function') window.__orosOpenStickies(String(id)); },
     mail:     function (p) {
       var m = /^([a-z0-9]{6,40})\.(\d{1,10})$/.exec(String(p));
       if (m && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('mail', { acct: m[1], folder: 'INBOX', uid: +m[2] });

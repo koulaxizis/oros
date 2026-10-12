@@ -1,5 +1,5 @@
 # Photo Lab
-Edit photos and pictures with layers, selections, brushes and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
+Edit photos and pictures with layers, selections, brushes, retouch tools, filters and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
 
 ## Getting started
 - `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (or a Photoshop or OpenRaster file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
@@ -12,6 +12,8 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Marquee selection` and `Lasso`: select an area. Press the tool again to switch between `Rectangle` and `Ellipse`, or between a freehand and a point-by-point lasso. Hold Shift to add to the selection, Alt to subtract.
 - `Magic wand`: selects similar colours; set the `Tolerance` and whether only `Contiguous` pixels count.
 - `Brush` and `Eraser`: `Size`, `Hardness`, `Opacity` and `Flow`. A pen paints wider when you press harder.
+- `Clone stamp`: Alt+click (or `Set source`, then a tap) where to copy from, then paint where the copy should go. `Healing brush` does the same but keeps the colour around the spot, for blemishes and dust; its `Red eye` kind turns red pupils dark.
+- `Dodge / burn / sponge`: `Dodge` lightens and `Burn` darkens the `Shadows`, `Midtones` or `Highlights`; `Sponge` takes colour away or adds it. `Smudge` drags colour like a finger in wet paint.
 - `Paint bucket` and `Gradient` (`Linear` or `Radial`) fill with the foreground colour.
 - `Eyedropper`: click picks the foreground colour, Alt+click the background colour.
 - `Text` and `Shape` add their own layers; click a text to change it.
@@ -28,6 +30,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
 - `Select`: `Select all`, `Invert selection`, `Feather…`, `Grow…`, `Shrink…`.
 - `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
+- `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
 - `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
 
@@ -49,7 +52,7 @@ On a phone all menus are under the menu button.
 - [[Alt+T]]: free transform. [[Alt+Shift+N]]: new layer. [[Ctrl+J]]: layer via copy. [[Ctrl+E]]: merge down.
 - [[Ctrl+U]]: hue / saturation. [[Ctrl+L]]: levels. [[Ctrl+I]]: invert.
 - [[Ctrl+=]], [[Ctrl+-]], [[Ctrl+0]], [[Ctrl+1]]: zoom in, zoom out, fit, 100%.
-- Tools: [[V]] move, [[M]] marquee, [[L]] lasso, [[W]] magic wand, [[C]] crop, [[B]] brush, [[E]] eraser, [[G]] paint bucket ([[Shift+G]] gradient), [[I]] eyedropper, [[T]] text, [[U]] shape, [[H]] hand, [[Z]] zoom.
+- Tools: [[V]] move, [[M]] marquee, [[L]] lasso, [[W]] magic wand, [[C]] crop, [[B]] brush, [[E]] eraser, [[S]] clone stamp, [[J]] healing brush, [[O]] dodge / burn / sponge, [[R]] smudge, [[G]] paint bucket ([[Shift+G]] gradient), [[I]] eyedropper, [[T]] text, [[U]] shape, [[H]] hand, [[Z]] zoom.
 - [[X]] swaps the colours, [[D]] resets them, `[` and `]` change the brush size. Hold [[Space]] to move around.
 
 ## Tips

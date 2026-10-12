@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v0.99.00";
+var CACHE_VERSION = "oros-v1.03.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -248,6 +248,12 @@ var PRECACHE_URLS = [
   "quote/search.js",
   "quote/quote.css",
   "quote/quote.js",
+  "crm/",
+  "crm/index.html",
+  "crm/crm.css",
+  "crm/core.js",
+  "crm/crm.js",
+  "crm/search.js",
   "timesheet/",
   "timesheet/index.html",
   "timesheet/search.js",
@@ -469,6 +475,10 @@ var PRECACHE_URLS = [
   "budget/help.el.txt",
   "calculator/help.en.txt",
   "calculator/help.el.txt",
+  "stickies/help.en.txt",
+  "stickies/help.el.txt",
+  "textcase/help.en.txt",
+  "textcase/help.el.txt",
   "characters/help.en.txt",
   "characters/help.el.txt",
   "checkers/help.en.txt",
@@ -601,6 +611,8 @@ var PRECACHE_URLS = [
   "tictactoe/help.el.txt",
   "timesheet/help.en.txt",
   "timesheet/help.el.txt",
+  "crm/help.en.txt",
+  "crm/help.el.txt",
   "travel/help.en.txt",
   "travel/help.el.txt",
   "wallpaper/help.en.txt",
@@ -804,6 +816,7 @@ var PRECACHE_URLS = [
   "photolab/paint.js",
   "photolab/resample.js",
   "photolab/adjust.js",
+  "photolab/filters.js",
   "photolab/store.js",
   "photolab/psd.js",
   "photolab/ora.js",
@@ -920,6 +933,17 @@ var PRECACHE_URLS = [
   "calculator/index.html",
   "calculator/calculator.css",
   "calculator/calculator.js",
+  "stickies/",
+  "stickies/index.html",
+  "stickies/stickies.css",
+  "stickies/core.js",
+  "stickies/host.js",
+  "stickies/stickies.js",
+  "textcase/",
+  "textcase/index.html",
+  "textcase/textcase.css",
+  "textcase/core.js",
+  "textcase/textcase.js",
   "television/",
   "television/index.html",
   "television/search.js",
