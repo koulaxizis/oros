@@ -4998,3 +4998,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Universal search provider stickies/search.js and Today provider stickies/today.js (apps.json "search" + "today", precached).
 - Tests: tests/stickies.test.js (repeat rounds in 3 time zones, fuzz with repeats, providers). E2E by the owner: melody chime, repeat Done, To-Do dialog, Notes page, search hit, Today rows, two-device sync with concurrent repeat + text edits (equal slices, 0 idle uploads), phone 390/360 Greek.
 - Not tested: a real phone, Safari, real Dropbox, sound on a real speaker.
+
+### 2026-10-12 — Android app: Digital Asset Links + .nojekyll (#215) — 1.12.01
+- `.well-known/assetlinks.json` (Chris's file from the PWABuilder package, `online.useoros.twa`) so Android verifies the TWA and opens orOS full screen; empty `.nojekyll` so GitHub Pages serves dot-folders. No app code. With Play App Signing, Google's signing-key SHA-256 must be added to the same array. Bible: note under the manifest section.
