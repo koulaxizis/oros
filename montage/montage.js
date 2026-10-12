@@ -114,6 +114,21 @@
       "rec.hint": "Recording starts at the playhead after a short count and the video plays along. Use headphones so its sound does not get into the recording.",
       "rec.none": "This browser cannot record sound here.", "rec.denied": "Montage may not use the microphone. Allow it in the browser's site settings and try again.",
       "rec.name": "Voice {n}",
+      "tx.push": "Push up", "tx.zoom": "Zoom", "tx.circle": "Circle",
+      "flt.vintage": "Vintage", "flt.chrome": "Chrome", "flt.dusk": "Dusk", "flt.golden": "Golden",
+      "tool.subs": "Subtitles", "tool.freeze": "Freeze frame",
+      "sub.title": "Subtitles", "sub.count": "{n} text clips on the Text row. Each one becomes a subtitle line when you save an SRT file.",
+      "sub.add": "Add a subtitle", "sub.import": "Open an SRT file", "sub.export": "Save as SRT",
+      "sub.hint": "SRT files (and WebVTT) from YouTube, subtitle sites or other editors come in as text clips you can edit.",
+      "sub.none": "No subtitles found in this file.", "sub.added": "{n} subtitles added", "sub.big": "This subtitle file is too big.",
+      "sub.empty": "There are no text clips to save yet.",
+      "frz.working": "Freezing the frame…", "frz.fail": "Could not read this frame.",
+      "set.duck": "Lower the music when someone speaks",
+      "set.duckHint": "While anything plays on the Voice row, the Music row gets quieter, then comes back.",
+      "duck.0": "Off", "duck.40": "A little", "duck.60": "Medium", "duck.80": "A lot",
+      "exp.what": "Export", "exp.video": "Video", "exp.sound": "Sound only",
+      "exp.keepSound": "Also keep a copy in Files › Music", "exp.readySound": "Your sound file is ready",
+      "exp.noSound": "Nothing in this project makes sound.", "toast.keptSound": "A copy is in Files › Music",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -180,6 +195,21 @@
       "rec.hint": "Η ηχογράφηση ξεκινά από την κεφαλή μετά από μια σύντομη αντίστροφη μέτρηση, και το βίντεο παίζει μαζί. Βάλε ακουστικά για να μη γραφτεί και ο ήχος του.",
       "rec.none": "Αυτός ο browser δεν μπορεί να ηχογραφήσει εδώ.", "rec.denied": "Το Μοντάζ δεν έχει άδεια για το μικρόφωνο. Δώσε άδεια στις ρυθμίσεις του site στον browser και ξαναδοκίμασε.",
       "rec.name": "Φωνή {n}",
+      "tx.push": "Σπρώξιμο πάνω", "tx.zoom": "Ζουμ", "tx.circle": "Κύκλος",
+      "flt.vintage": "Παλιό", "flt.chrome": "Χρώμιο", "flt.dusk": "Σούρουπο", "flt.golden": "Χρυσό",
+      "tool.subs": "Υπότιτλοι", "tool.freeze": "Πάγωμα καρέ",
+      "sub.title": "Υπότιτλοι", "sub.count": "{n} κείμενα στη γραμμή Κείμενο. Το καθένα γίνεται μια γραμμή υποτίτλων όταν αποθηκεύεις αρχείο SRT.",
+      "sub.add": "Πρόσθεσε υπότιτλο", "sub.import": "Άνοιξε αρχείο SRT", "sub.export": "Αποθήκευση ως SRT",
+      "sub.hint": "Αρχεία SRT (και WebVTT) από το YouTube, σελίδες υποτίτλων ή άλλα προγράμματα μπαίνουν ως κείμενα που μπορείς να αλλάξεις.",
+      "sub.none": "Δεν βρέθηκαν υπότιτλοι σε αυτό το αρχείο.", "sub.added": "Προστέθηκαν {n} υπότιτλοι", "sub.big": "Αυτό το αρχείο υποτίτλων είναι πολύ μεγάλο.",
+      "sub.empty": "Δεν υπάρχουν ακόμα κείμενα για αποθήκευση.",
+      "frz.working": "Παγώνω το καρέ…", "frz.fail": "Δεν διαβάστηκε αυτό το καρέ.",
+      "set.duck": "Χαμήλωνε τη μουσική όταν μιλάει κάποιος",
+      "set.duckHint": "Όσο παίζει κάτι στη γραμμή Φωνή, η γραμμή Μουσική χαμηλώνει και μετά ξαναδυναμώνει.",
+      "duck.0": "Όχι", "duck.40": "Λίγο", "duck.60": "Μέτρια", "duck.80": "Πολύ",
+      "exp.what": "Εξαγωγή", "exp.video": "Βίντεο", "exp.sound": "Μόνο ήχος",
+      "exp.keepSound": "Κράτα και αντίγραφο στα Αρχεία › Music", "exp.readySound": "Το αρχείο ήχου είναι έτοιμο",
+      "exp.noSound": "Τίποτα σε αυτό το project δεν έχει ήχο.", "toast.keptSound": "Ένα αντίγραφο είναι στα Αρχεία › Music",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -202,7 +232,10 @@
     for (var i = 0; i < a.length; i++) s += (a[i] % 36).toString(36);
     return Date.now().toString(36) + s;
   }
-  function fmtMB(n) { return n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB" : Math.round(n / 1048576) + " MB"; }
+  function fmtMB(n) {
+    if (n >= 1073741824) return (n / 1073741824).toFixed(1) + " GB";
+    return n >= 1048576 ? Math.round(n / 1048576) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  }
   function whenText(ms) {
     var d = new Date(ms), now = new Date();
     var day = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
@@ -221,7 +254,7 @@
 
   // ---------- 2. Storage, prefs, edits + undo ----------
   var data = C.merge(null, null);
-  var prefs = { pps: 40, short: 1080, keep: false };
+  var prefs = { pps: 40, short: 1080, keep: false, what: "video" };
 
   function load() {
     var raw = null;
@@ -249,6 +282,7 @@
         if (typeof p.pps === "number" && p.pps >= 4 && p.pps <= 400) prefs.pps = p.pps;
         if ([720, 1080, 2160].indexOf(p.short) >= 0) prefs.short = p.short;
         prefs.keep = p.keep === true;
+        prefs.what = p.what === "sound" ? "sound" : "video";
       }
     } catch (e) {}
   }
@@ -729,6 +763,7 @@
       bar.appendChild(toolBtn("overlay", t("tool.overlay"), function () { addMedia("ov"); }));
       bar.appendChild(toolBtn("audio", t("tool.audio"), addSound));
       bar.appendChild(toolBtn("text", t("tool.text"), addText));
+      bar.appendChild(toolBtn("cc", t("tool.subs"), subtitlesDialog));
       bar.appendChild(toolBtn("tr_a2", t("tool.voice"), recordVoice));
       bar.appendChild(toolBtn("split", t("tool.split"), splitAtPlayhead, null, !clipAt(tNow)));
       bar.appendChild(toolBtn("frame", t("tool.grab"), grabFrame, null, !C.duration(p)));
@@ -757,6 +792,7 @@
     if (it.k === "video") {
       bar.appendChild(toolBtn(it.mu ? "volume" : "mute", t(it.mu ? "tool.unmute" : "tool.mute"), function () { edit({ mu: !it.mu }); }));
       if (!it.mu) bar.appendChild(toolBtn("detach", t("tool.detach"), detachSound));
+      if (it.tr === "main") bar.appendChild(toolBtn("freeze", t("tool.freeze"), freezeFrame));
     }
     if (it.k === "video" || it.k === "image") {
       if (it.tr === "main") bar.appendChild(toolBtn("overlay", t("tool.toOv"), function () { edit({ tr: "ov" }); }));
@@ -988,6 +1024,75 @@
     panelText(true);
   }
 
+  // ---------- 7a. Subtitles: text clips on the Text row ⇄ SRT files ----------
+  var SUB_MAX_BYTES = 2 * 1024 * 1024;
+  function subtitlesDialog() {
+    var p = cur();
+    if (!p) return;
+    if (player && player.playing()) player.pause();
+    var n = C.trackItems(p, "tt").length, body = openDialog(t("sub.title"));
+    body.appendChild(el("p", "hint", t("sub.count", { n: n })));
+    body.appendChild(el("p", "hint small", t("sub.hint")));
+    actions(body, [
+      [t("sub.import"), "", function () { closeDialog(); importSubtitles(); }],
+      [t("sub.export"), "", function () { closeDialog(); exportSubtitles(); }],
+      [t("sub.add"), "primary", function () { closeDialog(); addSubtitle(); }]
+    ]);
+  }
+  function addSubtitle() {
+    var b = C.SUB_BOX;
+    var it = { id: uid(), k: "title", tr: "tt", at: tNow, d: 2.5, box: { x: b.x, y: b.y, w: b.w, h: b.h },
+      text: { t: t("text.default"), sz: 5.5, col: "#ffffff", ol: "#000000", an: "none" } };
+    if (!commit(C.addItem(data, pid, it, Date.now()))) return;
+    sel = it.id;
+    refreshEditor();
+    panelText(true);
+  }
+  function importSubtitles() {
+    pickFiles(".srt,.vtt,text/plain,application/x-subrip,text/vtt", false).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      if (f.size > SUB_MAX_BYTES) { showToast(t("sub.big")); return; }
+      f.text().then(function (txt) {
+        var cues = C.parseSrt(txt);
+        if (!cues.length) { showToast(t("sub.none")); return; }
+        var before = Object.keys(cur().items).length;
+        if (commit(C.addSubtitles(data, pid, cues, Date.now(), cues.map(function () { return uid(); })))) {
+          showToast(t("sub.added", { n: Object.keys(cur().items).length - before }));
+          setTime(cues[0].start);
+        }
+      }, function () { showToast(t("err.fail")); });
+    });
+  }
+  function exportSubtitles() {
+    var p = cur(), srt = p ? C.toSrt(p) : "";
+    if (!srt) { showToast(t("sub.empty")); return; }
+    saveBlob(new Blob([srt], { type: "application/x-subrip" }), C.exportName(p.name, "srt"), "application/x-subrip", "srt");
+  }
+
+  // Freeze frame: the frame at the playhead (full size, from the file)
+  // becomes a 2 s picture between the two halves of the clip.
+  function freezeFrame() {
+    var p = cur(), it = selItem();
+    if (!p || !it || it.k !== "video" || it.tr !== "main") return;
+    if (player && player.playing()) player.pause();
+    var pl = C.placeOf(p, it.id), at = Math.min(Math.max(tNow, pl.start), pl.end - 1 / p.fps);
+    var srcT = Math.min(it.out, it["in"] + (at - pl.start) * it.sp), vid = it.id;
+    busy(t("frz.working"), 0);
+    MM.frameAt(it.src, srcT).then(function (png) {
+      if (!png) { busy(null); showToast(t("frz.fail")); return; }
+      var file = new File([png], C.exportName(p.name + " " + C.fmtTime(at).replace(/:/g, "-"), "png"), { type: "image/png" });
+      var ids = { tail: uid(), still: uid() };
+      importMany([file], function (info) {
+        if (commit(C.freezeAt(data, pid, vid, at, info.id, 2, Date.now(), ids))) {
+          var still = C.placeOf(cur(), ids.still);
+          select(ids.still);
+          if (still) setTime(still.start);
+        }
+      });
+    }, function () { busy(null); showToast(t("frz.fail")); });
+  }
+
   // ---------- 7b. Voice-over: record the microphone while the project plays ----------
   // The take starts at the playhead and lands on the Voice row (Music
   // when Voice is taken there). MediaRecorder writes WebM/Opus (MP4/AAC
@@ -1140,6 +1245,10 @@
     chipField(body, t("f.ratio"), C.RATIOS.map(function (r) { return [r, t("ratio." + r)]; }), p.ar, function (v) { commit(C.setProject(data, pid, { ar: v }, Date.now()), { undo: false }); });
     chipField(body, t("f.fps"), [[30, "30"], [60, "60"]], p.fps, function (v) { commit(C.setProject(data, pid, { fps: v }, Date.now()), { undo: false }); });
     colorField(body, t("set.bg"), p.bg, false, function (v) { commit(C.setProject(data, pid, { bg: v }, Date.now()), { undo: false }); });
+    var dk = p.dk || 0;
+    chipField(body, t("set.duck"), [0, 40, 60, 80].map(function (v) { return [v, t("duck." + v)]; }), [0, 40, 60, 80].indexOf(dk) >= 0 ? dk : 60,
+      function (v) { commit(C.setProject(data, pid, { dk: v }, Date.now()), { undo: false }); });
+    body.appendChild(el("p", "hint small", t("set.duckHint")));
     checkField(body, t("set.sync"), p.vs, function (v) {
       commit(C.setProject(data, pid, { vs: v }, Date.now()), { undo: false });
       if (v) shareMedia();
@@ -1206,9 +1315,15 @@
     if (!Object.keys(p.items).length) { showToast(t("exp.empty")); return; }
     if (player && player.playing()) player.pause();
     var body = openDialog(t("exp.title"));
-    var sizes = [[720, "720p"], [1080, "1080p"], [2160, t("exp.k4")]];
-    chipField(body, t("exp.size"), sizes, prefs.short, function (v) { prefs.short = v; savePrefs(); });
-    var keep = checkField(body, t("exp.keep"), prefs.keep, function (v) { prefs.keep = v; savePrefs(); });
+    var sizes = [[720, "720p"], [1080, "1080p"], [2160, t("exp.k4")]], sizeRow = null, keep = null;
+    chipField(body, t("exp.what"), [["video", t("exp.video")], ["sound", t("exp.sound")]], prefs.what, function (v) { prefs.what = v; savePrefs(); show(); });
+    sizeRow = chipField(body, t("exp.size"), sizes, prefs.short, function (v) { prefs.short = v; savePrefs(); });
+    keep = checkField(body, t("exp.keep"), prefs.keep, function (v) { prefs.keep = v; savePrefs(); });
+    function show() {
+      sizeRow.parentNode.hidden = prefs.what === "sound";
+      keep.nextSibling.textContent = t(prefs.what === "sound" ? "exp.keepSound" : "exp.keep");
+    }
+    show();
     if (!fsApi()) keep.closest(".check").hidden = true;
     actions(body, [[t("exp.go"), "primary", runExport]]);
   }
@@ -1217,24 +1332,25 @@
     catch (e) { return window.orosFS || null; }
   }
   function runExport() {
-    var p = cur();
+    var p = cur(), sound = prefs.what === "sound";
     closeDialog();
+    if (sound && !C.soundPlan(p).length) { showToast(t("exp.noSound")); return; }
     var size = C.outputSize(p.ar, prefs.short);
-    MX.pickFormat(size.w, size.h).then(function (fmt) {
+    (sound ? MX.pickSoundFormat() : MX.pickFormat(size.w, size.h)).then(function (fmt) {
       if (!fmt) { showToast(t("exp.noCodec")); return; }
       exportCancel = false;
       busy(t("exp.working", { p: 0 }), 0, function () { exportCancel = true; });
       var lock = null;
       try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { lock = l; }, function () {}); } catch (e) {}
       return MX.run({
-        project: p, short: prefs.short, file: MM.get,
+        project: p, short: prefs.short, file: MM.get, soundOnly: sound,
         progress: function (f) { busy(t("exp.working", { p: Math.round(f * 100) }), f, function () { exportCancel = true; }); },
         cancelled: function () { return exportCancel; }
       }).then(function (r) {
         busy(null);
         if (lock) lock.release().then(null, function () {});
         var name = C.exportName(p.name, r.ext);
-        lastExport = { blob: r.blob, name: name, mime: r.mime, ext: r.ext };
+        lastExport = { blob: r.blob, name: name, mime: r.mime, ext: r.ext, sound: sound };
         if (prefs.keep) keepInFiles(lastExport);
         exportReady();
       }, function (e) {
@@ -1249,18 +1365,19 @@
     if (!F) return;
     var base = x.name.replace(/\.[^.]+$/, ""), n = 1;
     function tryName() {
-      var path = "/internal/Videos/" + (n === 1 ? x.name : base + " (" + n + ")." + x.ext);
+      var path = (x.sound ? "/internal/Music/" : "/internal/Videos/") + (n === 1 ? x.name : base + " (" + n + ")." + x.ext);
       return F.stat(path).then(function () { n++; return n < 100 ? tryName() : null; }, function () {
-        return F.write(path, x.blob).then(function () { showToast(t("toast.kept")); });
+        return F.write(path, x.blob).then(function () { showToast(t(x.sound ? "toast.keptSound" : "toast.kept")); });
       });
     }
     tryName().then(null, function () { showToast(t("toast.saveFail")); });
   }
   function exportReady() {
-    var x = lastExport, body = openDialog(t("exp.ready"));
+    var x = lastExport, body = openDialog(t(x.sound ? "exp.readySound" : "exp.ready"));
     body.appendChild(el("p", "hint", t("exp.readyHint", { f: x.name, s: fmtMB(x.blob.size) })));
-    var v = el("video");
-    v.controls = true; v.playsInline = true; v.style.width = "100%"; v.style.borderRadius = "8px"; v.style.background = "#000";
+    var v = el(x.sound ? "audio" : "video");
+    v.controls = true; v.style.width = "100%";
+    if (!x.sound) { v.playsInline = true; v.style.borderRadius = "8px"; v.style.background = "#000"; }
     var u = URL.createObjectURL(x.blob);
     v.src = u; v.hidden = true;
     body.appendChild(v);
@@ -1572,6 +1689,8 @@
     tr_ov: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="8" width="6" height="5" rx="1"/>'),
     tr_main: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/>'),
     tr_a1: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+    cc: SV('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M10 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3"/>'),
+    freeze: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };
 

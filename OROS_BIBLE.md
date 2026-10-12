@@ -1231,15 +1231,16 @@ oros-menu-apps = { ver:1, apps[{ id, hidden: boolean, mtime }] }
 
 ```
 oros-montage = { ver:1, projects{ <pid>: project }, tombs{ <pid>: ms } }
-project = { id, name, ar: "16:9"|"9:16"|"1:1"|"4:5", fps: 30|60, bg:"#rrggbb", vs: bool, m, items{ <iid>: item }, tombs{ <iid>: ms } }
+project = { id, name, ar: "16:9"|"9:16"|"1:1"|"4:5", fps: 30|60, bg:"#rrggbb", vs: bool, dk?: 1-90, m, items{ <iid>: item }, tombs{ <iid>: ms } }
 item    = { id, k: video|image|audio|title, tr: main|ov|tt|a1|a2, m, … }
 ```
 
-- Tracks: `main` is magnetic (order key `o`, clips follow each other, a transition `tx{k: fade|black|slide|wipe, d}` overlaps the clip before, at most half of either clip); `ov` (picture in picture), `tt` (titles), `a1`/`a2` (sound) use a start `at`. Which kinds go on which track: `TRACK_KINDS`.
+- Tracks: `main` is magnetic (order key `o`, clips follow each other, a transition `tx{k: fade|black|slide|wipe|push|zoom|circle, d}` overlaps the clip before, at most half of either clip); `ov` (picture in picture), `tt` (titles), `a1`/`a2` (sound) use a start `at`. Which kinds go on which track: `TRACK_KINDS`.
 - video/audio: `src`, `len` (file length), `in`/`out` (seconds in the file), `sp` 0.25-4, `vol` 0-200, `mu`; image: `src`, `d`; title: `d`, `text{t,f,sz,col,ol,bx,al,an}` (+ `bg` on main = a title card). Pictures also `op`, `fit` fit|fill, `rot`, `fl`, `lk{b,c,s,t}`, `flt`; off-main pictures `box{x,y,w,h}`; all `fi`/`fo` fades.
 - Media are never in the slice: `src` is an orOS disk id `/internal/Assets/<sha256>.<ext>` in the forms Atelier's `clips.js` and `designkit/assets.js` use (jpg|png, webm|mp4, mp3|m4a|ogg|wav|weba), so Atelier's "unused files" check sees them as in use. `vs` = this project's media travel through Vault Drive (off by default: device only).
 - **Merge:** projects and items are separate entities, LWW by their own `m` (tie → greater canonical JSON); tombstones max-union, per project and per item; a project survives its tombstone when any edit in it is newer (R17). Strict normalizer drops invalid rows; output canonical (keys sorted). Edits stamp `m` at the mutation site, always forward (R27). Tests: `tests/montage.test.js`.
 - Rendering: `framePlan(project, t)` (layers on screen) and `soundPlan(project)` (sound segments) are the single source for preview and export; `montage/gl.js` draws a plan (WebGL2), `montage/export.js` encodes frame by frame with WebCodecs via `vendor/mediabunny.min.js`.
+- Phase 2 wave 1 (no new item fields): `dk` = ducking, % the Music row (`a1`) drops while anything sounds on Voice (`a2`), 0.25 s ramps, applied in `gainAt` so preview and export match. It is written only when on (absent = off), so a project without ducking is byte-identical on copies that predate it. Subtitles are ordinary `tt` titles (`SUB_BOX` style); `parseSrt`/`toSrt` read SRT and WebVTT (markup dropped, at most 1500 cues) and write SRT. Freeze frame = the video splits at the playhead and a full-size PNG of that frame (`MontageMedia.frameAt`, imported like any picture) goes between as a 2 s image (`freezeAt`). Filters added: vintage, chrome, dusk, golden. Sound-only export: M4A (AAC), else Ogg (Opus), else WAV; "keep a copy" goes to `/internal/Music/`.
 
 ## Part V — Sync + data-safety essentials
 
@@ -1953,6 +1954,8 @@ Rebuild this in any session where code is delivered.
   - Release day (1.10.00): the real-time MediaRecorder export fallback is dropped from phase 1, since every target browser (Chrome/Edge on Windows, Linux, Android; Firefox desktop) has WebCodecs; without it Montage says "This browser cannot make a video file of this size."
   - Spike numbers (2026-10-12): Android (Xiaomi, Chrome 153) 1080p export 1.25x real time; Windows desktop (Chrome 155, 16 cores) 1080p export 3.0x real time, a 520 MB 4K file copied to OPFS at 31 MB/s with +7 MB JS memory, random seek 22-173 ms.
   - Version 1.09.00 is skipped: main briefly carried it at 2026-10-12 17:34 UTC without Montage, so devices may hold files cached under that number (R23).
+  - Phase 2 runs in waves without asking again (standing rule: the next approved wave starts once one merges). Wave 1: subtitles (type, SRT in/out), automatic ducking of the music under the voice, freeze frame, sound-only export, transitions push/zoom/circle, four filters. Wave 2: keyframes. Wave 3: proxies, reverse, GIF export, LUT `.cube`, stickers/shapes.
+  - Ducking is a project setting, not per clip: Music (`a1`) ducks under Voice (`a2`), the rows the voice recorder and "Sound" already fill that way. Sound-only exports are kept in `/internal/Music/` (new folder, beside Videos and Pictures).
 
 - **2026-10-11 · Chris (Today / Σήμερα, plan /mnt/project-files/today/today-plan.md: "Ναι σε όλα, με μία διευκρίνηση: Να υπάρχει δυνατότητα να συμπεριληφθούν και οι «ευαίσθητες» εφαρμογές αν το θέλει ο χρήστης.")**
   - New System app `today/`, one daily notice in the bell; local only, no AI, no network. Contract: Part VI "Today summary" (BR-TODAY).

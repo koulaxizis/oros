@@ -6,6 +6,8 @@
 //   MontageExport.pickFormat(w, h) → { ext, mime, vc, ac } | null
 //     MP4 (H.264 + AAC, or Opus) where the browser can encode H.264,
 //     else WebM (VP9 / VP8 / AV1 + Opus).
+//   MontageExport.pickSoundFormat() → { ext, mime, ac }
+//     sound only: M4A (AAC), else Ogg (Opus), else WAV (no encoder needed)
 //   MontageExport.run(opts) → Promise<{ blob?, ext, mime, vc, ac, seconds }>
 //     opts.project    a normalized project (MontageCore)
 //     opts.file(id)   → Promise<Blob> of a media file on the orOS disk
@@ -13,6 +15,7 @@
 //     opts.writable   optional WritableStream (e.g. an OPFS file) that
 //                     receives the file as it is written; without it
 //                     the whole file comes back as opts → blob
+//     opts.soundOnly  true: just the mixed sound (pickSoundFormat), no picture
 //     opts.progress(f) 0..1;  opts.cancelled() → true stops the export
 //
 // Every frame is planned by MontageCore.framePlan and drawn by
@@ -49,6 +52,50 @@
     });
   }
 
+  function pickSoundFormat() {
+    var M = MB();
+    return M.getFirstEncodableAudioCodec(["aac", "opus"], { numberOfChannels: 2, sampleRate: SR }).then(function (ac) {
+      if (ac === "aac") return { ext: "m4a", mime: "audio/mp4", ac: ac };
+      if (ac === "opus") return { ext: "ogg", mime: "audio/ogg", ac: ac };
+      return { ext: "wav", mime: "audio/wav", ac: "pcm-s16" };
+    }, function () { return { ext: "wav", mime: "audio/wav", ac: "pcm-s16" }; });
+  }
+  function soundFormat(M, ext, streaming) {
+    if (ext === "m4a") return new M.Mp4OutputFormat({ fastStart: streaming ? false : "in-memory" });
+    if (ext === "ogg") return new M.OggOutputFormat();
+    return new M.WavOutputFormat();
+  }
+
+  // Sound only: the same mix as a video export, written without a picture.
+  async function runSound(opts) {
+    var M = MB(), C = root.MontageCore, p = opts.project;
+    var cancelled = opts.cancelled || function () { return false; };
+    var progress = opts.progress || function () {};
+    var total = C.duration(p), sound = C.soundPlan(p);
+    var fmt = await pickSoundFormat();
+    var lib = new Library(opts.file);
+    var target = opts.writable ? new M.StreamTarget(opts.writable, { chunked: true }) : new M.BufferTarget();
+    var out = new M.Output({ format: soundFormat(M, fmt.ext, !!opts.writable), target: target });
+    var asrc = new M.AudioBufferSource(fmt.ac === "pcm-s16" ? { codec: "pcm-s16" } : { codec: fmt.ac, bitrate: 192e3 });
+    out.addAudioTrack(asrc);
+    var t0 = performance.now();
+    try {
+      await out.start();
+      await mixSound(p, sound, lib, asrc, Math.max(0.1, total), cancelled, progress);
+      if (cancelled()) throw new Error("cancelled");
+      await out.finalize();
+      progress(1);
+      var res = { ext: fmt.ext, mime: fmt.mime, vc: null, ac: fmt.ac, seconds: (performance.now() - t0) / 1000 };
+      if (!opts.writable) res.blob = new Blob([target.buffer], { type: fmt.mime });
+      return res;
+    } catch (e) {
+      try { await out.cancel(); } catch (e2) {}
+      throw e;
+    } finally {
+      lib.close();
+    }
+  }
+
   // One open file per media id (shared by every clip that uses it).
   function Library(fileOf) {
     var M = MB(), inputs = {}, pics = {};
@@ -83,6 +130,7 @@
   }
 
   async function run(opts) {
+    if (opts.soundOnly) return runSound(opts);
     var M = MB(), C = root.MontageCore, G = root.MontageGL;
     var p = opts.project, fps = p.fps, size = C.outputSize(p.ar, opts.short || 1080);
     var total = C.duration(p), N = Math.max(1, Math.round(total * fps));
@@ -170,7 +218,7 @@
 
   // Sound: windows of WIN seconds, each mixed offline and handed to the
   // encoder in order (so the timestamps run on without gaps).
-  async function mixSound(p, sound, lib, asrc, length, cancelled) {
+  async function mixSound(p, sound, lib, asrc, length, cancelled, progress) {
     var C = root.MontageCore, M = MB();
     var tracks = {};
     function track(id) {
@@ -219,9 +267,10 @@
       }
       var mixed = await ctx.startRendering();
       await asrc.add(mixed);
+      if (progress) progress(Math.min(0.99, (w0 + wl) / length));
     }
   }
 
-  var api = { pickFormat: pickFormat, run: run, WIN: WIN };
+  var api = { pickFormat: pickFormat, pickSoundFormat: pickSoundFormat, run: run, WIN: WIN };
   root.MontageExport = api;
 })(typeof window !== "undefined" ? window : this);
