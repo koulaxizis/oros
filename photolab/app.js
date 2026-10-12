@@ -17,7 +17,10 @@
 // Deep link: __orosOpenAt("photolab", { id }) opens a project;
 // { openFile: { token } } opens a device file handed over by the
 // shell (BR-FILE-OPEN); { openFile: "/internal/…" } opens a picture
-// already on the orOS disk (e.g. a frame grabbed in Montage).
+// already on the orOS disk (e.g. a frame grabbed in Montage);
+// { openFile: "/internal/…", back: { app, key } } also remembers who
+// asked (Atelier "Edit picture"): "Done" sends the result back as
+// __orosOpenAt(app, { editedPicture: { key, path, w, h } }).
 // ============================================================
 (function () {
   "use strict";
@@ -26,6 +29,7 @@
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
     R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora,
+    G: NS.guides,
     FX: window.orosDK && window.orosDK.fx
   };
   var C = PL.C, T = PL.T, H = PL.H;
@@ -122,8 +126,10 @@
       smudge: { size: 30, hard: 50, opacity: 100, flow: 100, strength: 50 },
       fill: { tol: 32, contiguous: true, opacity: 100, all: false },
       wand: { tol: 32, contiguous: true, all: false },
+      quick: { size: 20, tol: 40, all: false },
       gradient: { type: "linear", opacity: 100, toClear: false },
       shape: { id: "rect", noFill: false, stroke: false, sw: 8 },
+      rulers: false, guides: true, grid: false, gridSize: 50, snap: true,
       selMode: "replace", feather: 0, marqueeEllipse: false, lassoPoly: false, cropRatio: "free",
       exportFmt: "png", exportQ: 90, recent: []
     };
@@ -353,6 +359,8 @@
     PL.docChange(label, function () {
       st.doc.w = r.w; st.doc.h = r.h;
       st.doc.layers.forEach(function (L) { L.x -= r.x; L.y -= r.y; });
+      (st.doc.sels || []).forEach(function (v) { v.x -= r.x; v.y -= r.y; });
+      PL.ops.mapGuides(function (x) { return x - r.x; }, function (y) { return y - r.y; });
       st.sel = null; PL.view.selChanged();
     }, []);
   };
@@ -623,7 +631,7 @@
       else PL.toast(PL.t("msg.openFail"));
       return;
     }
-    if (typeof f === "string") PL.io.openDiskPath(f);
+    if (typeof f === "string") PL.io.openDiskPath(f, C.normBack(target.back));
   }
   window.__orosOpenAt = function (target) { openTarget(target); };
 
