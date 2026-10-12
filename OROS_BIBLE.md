@@ -4809,3 +4809,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — New app Case Converter (#203) — 1.01.00
 - New app `textcase/` ("Case Converter" / «Κεφαλαία & πεζά», Accessories): Text + live Result (Copy, Use as text, Selection only), four tabs: Basic (UPPERCASE, lowercase, Sentence case, Title Case with EN/EL small words, Capitalize Each Word, tOGGLE, aLtErNaTiNg), Greek (remove accents, ELOT 743, Greeklish, fix mixed Greek/Latin letters), Code (8 cases, Greek transliterated or kept), Styles (11 Unicode styles + Plain text). Greek rules are the core's own (no accents in capitals, diaeresis kept/added: τσάι → ΤΣΑΪ, lone Ή, final ς), Turkish/German through Language. My words synced (slice "textcase"); the text stays on the device. Tests `tests/textcase.test.js`.
+
+### 2026-10-12 — Sticky Notes / Post-it (#204) — 1.02.00
+- New app Sticky Notes / Post-it (stickies/, Accessories): coloured notes on the desktop, drawn by the shell (stickies/host.js) so they stay with the app closed. Free notes with drag, resize, fold and tick-box lines on wide screens; a row of cards at the top under 600 px; editor dialog in the shell; right-click on the desktop and Ctrl+Alt+Shift+N for a new note.
+- Ring at a time (chime, wiggle, inbox item, Done / Snooze 10 min) and vanish at a time or when the ring is Done; faded notes wait 7 days in the app's Faded tab (Restore).
+- Synced slice "stickies" (per-field LWW + tombstones), positions and settings device-local. Tests: tests/stickies.test.js (merge laws + fuzz, engine, quick times, placement).
+- Not tested: a real phone, Safari, real Dropbox, sound on a real speaker (headless Chromium).
