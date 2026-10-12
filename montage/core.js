@@ -114,6 +114,7 @@
       it.sp = r3(num(o.sp, 1, 0.25, 4));
       it.vol = Math.round(num(o.vol, 100, 0, 200));
       it.mu = o.mu === true;
+      if (k === "video" && o.rv === true) it.rv = true;   // plays backwards, without sound
     } else {
       if (k === "image" && !isPicture(o.src)) return null;
       if (k === "image") it.src = o.src;
@@ -131,6 +132,7 @@
         it.fl = o.fl === true;
         it.lk = normLook(o.lk);
         it.flt = oneOf(o.flt, FILTERS, "none");
+        if (isPicture(o.lut)) it.lut = o.lut;       // a colour look (.cube) stored as a picture
       }
       if (tr !== "main") it.box = normBox(o.box, tr === "tt" ? BOX_TT : BOX_OV);
       if (k === "title") {
@@ -373,7 +375,12 @@
     if (it.fo > 0 && local > dur - it.fo) g = Math.min(g, (dur - local) / it.fo);
     return clamp(g, 0, 1);
   }
-  function srcTime(it, local) { return Math.min(it.out, it["in"] + local * it.sp); }
+  // Seconds into the file shown `local` seconds into a clip (backwards
+  // from the out point when reversed).
+  function srcTime(it, local) {
+    if (it.rv) return Math.max(it["in"], it.out - local * it.sp - 0.001);
+    return Math.min(it.out, it["in"] + local * it.sp);
+  }
 
   function pictureLayer(it, local, dur) {
     var L = {
@@ -381,7 +388,7 @@
       bri: 1, dx: 0, dy: 0, sc: 1, iris: -1, clip: null, local: local
     };
     if (it.k === "video") L.st = srcTime(it, local);
-    if (it.k !== "title") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; }
+    if (it.k !== "title") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; if (it.lut) L.lut = it.lut; }
     if (it.box) L.box = it.box;
     if (it.k === "title") { L.text = it.text; if (it.bg) L.bg = it.bg; }
     if (it.kf) {
@@ -444,7 +451,7 @@
     var out = [], seq = mainSeq(p);
     seq.forEach(function (s, i) {
       var it = s.it;
-      if (it.k !== "video" || it.mu || it.vol === 0) return;
+      if (it.k !== "video" || it.mu || it.rv || it.vol === 0) return;
       var next = seq[i + 1];
       out.push(volKeys({
         id: it.id, src: it.src, start: s.start, dur: s.end - s.start, "in": it["in"], sp: it.sp, vol: it.vol / 100,
@@ -453,7 +460,7 @@
     });
     ["ov", "a1", "a2"].forEach(function (tr) {
       trackItems(p, tr).forEach(function (it) {
-        if ((it.k !== "video" && it.k !== "audio") || it.mu || it.vol === 0) return;
+        if ((it.k !== "video" && it.k !== "audio") || it.mu || it.rv || it.vol === 0) return;
         out.push(volKeys({ id: it.id, src: it.src, start: it.at, dur: itemDur(it), "in": it["in"], sp: it.sp, vol: it.vol / 100, fi: it.fi, fo: it.fo }, it));
       });
     });
@@ -510,7 +517,10 @@
   // Every media id a project (or all projects) needs.
   function mediaOf(p) {
     var ids = {};
-    Object.keys(p.items).forEach(function (k) { if (p.items[k].src) ids[p.items[k].src] = 1; });
+    Object.keys(p.items).forEach(function (k) {
+      if (p.items[k].src) ids[p.items[k].src] = 1;
+      if (p.items[k].lut) ids[p.items[k].lut] = 1;
+    });
     return Object.keys(ids).sort(cmpStr);
   }
 
@@ -621,8 +631,8 @@
     var left = JSON.parse(JSON.stringify(it)), right = JSON.parse(JSON.stringify(it));
     right.id = newId; right.fi = 0; left.fo = 0;
     if (it.k === "video" || it.k === "audio") {
-      var cut = it["in"] + local * it.sp;
-      left.out = cut; right["in"] = cut;
+      if (it.rv) { var rcut = it.out - local * it.sp; left["in"] = rcut; right.out = rcut; }
+      else { var cut = it["in"] + local * it.sp; left.out = cut; right["in"] = cut; }
     } else { left.d = local; right.d = dur - local; }
     if (it.tr === "main") { right.tx = null; right.o = orderKey(p, iid, now); }
     else right.at = it.at + local;
@@ -668,6 +678,12 @@
     if (!p) return d;
     Object.keys(p.items).forEach(function (k) {
       var it = p.items[k];
+      if (it.lut === oldId && isPicture(newId)) {
+        var nl = JSON.parse(JSON.stringify(it));
+        nl.lut = newId;
+        var nn = normItem(nl, k);
+        if (nn) { nn.m = tick(it.m, now); p.items[k] = it = nn; }
+      }
       if (it.src !== oldId) return;
       var next = JSON.parse(JSON.stringify(it));
       next.src = newId;
@@ -745,7 +761,52 @@
     var base = String(name || "montage").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "montage";
     return base + "." + (EXTS.indexOf(ext) >= 0 ? ext : "mp4");
   }
-  var EXTS = ["mp4", "webm", "png", "m4a", "ogg", "wav", "srt"];
+  var EXTS = ["mp4", "webm", "png", "gif", "m4a", "ogg", "wav", "srt"];
+
+  // ---------- Colour looks: .cube 3D LUT files ----------
+  // parseCube(text) → { n, data: Float32Array(n³·3) } (red fastest, then
+  // green, then blue, as the format lists them) or null. Only 3D tables
+  // of 2–64 points per side; DOMAIN_MIN/MAX rescale to 0–1.
+  var MAX_LUT = 64;
+  function parseCube(text) {
+    var lines = String(text || "").replace(/\r\n?/g, "\n").split("\n");
+    var n = 0, lo = [0, 0, 0], hi = [1, 1, 1], data = null, i = 0;
+    for (var li = 0; li < lines.length; li++) {
+      var ln = lines[li].replace(/#.*/, "").trim();
+      if (!ln) continue;
+      var w = ln.split(/\s+/);
+      if (/^LUT_3D_SIZE$/i.test(w[0])) {
+        n = Number(w[1]);
+        if (!isInt(n) || n < 2 || n > MAX_LUT) return null;
+        data = new Float32Array(n * n * n * 3);
+      } else if (/^LUT_1D_SIZE$/i.test(w[0])) return null;
+      else if (/^DOMAIN_MIN$/i.test(w[0])) lo = w.slice(1, 4).map(Number);
+      else if (/^DOMAIN_MAX$/i.test(w[0])) hi = w.slice(1, 4).map(Number);
+      else if (/^[-+.\d]/.test(w[0])) {
+        if (!data || w.length < 3 || i >= data.length) return null;
+        for (var c = 0; c < 3; c++) {
+          var v = Number(w[c]), span = hi[c] - lo[c];
+          if (!isFinite(v) || !(span > 0)) return null;
+          data[i++] = clamp((v - lo[c]) / span, 0, 1);
+        }
+      }
+    }
+    return data && i === data.length ? { n: n, data: data } : null;
+  }
+  // The table as an RGBA picture n² wide and n high: blue slice b sits
+  // at x = b·n, red runs along x inside it, green down y (the layout
+  // MontageGL samples).
+  function lutPixels(lut) {
+    var n = lut.n, w = n * n, px = new Uint8ClampedArray(w * n * 4);
+    for (var b = 0; b < n; b++) for (var g = 0; g < n; g++) for (var r = 0; r < n; r++) {
+      var src = ((b * n + g) * n + r) * 3, dst = (g * w + b * n + r) * 4;
+      px[dst] = Math.round(lut.data[src] * 255);
+      px[dst + 1] = Math.round(lut.data[src + 1] * 255);
+      px[dst + 2] = Math.round(lut.data[src + 2] * 255);
+      px[dst + 3] = 255;
+    }
+    return { w: w, h: n, data: px };
+  }
 
   // ---------- Subtitles (SRT, and WebVTT on the way in) ----------
   var SUB_BOX = { x: 0.05, y: 0.8, w: 0.9, h: 0.14 };
@@ -842,6 +903,7 @@
     split: split, duplicate: duplicate, detachSound: detachSound, restoreProject: restoreProject, undeleteProject: undeleteProject, replaceSrc: replaceSrc,
     projectList: projectList, fmtTime: fmtTime, exportName: exportName,
     kfAt: kfAt, kfSet: kfSet, kfSplit: kfSplit, kfProps: kfProps, MAX_KEYS: MAX_KEYS,
+    parseCube: parseCube, lutPixels: lutPixels, srcTime: srcTime,
     parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP
   };
   if (typeof module === "object" && module.exports) module.exports = api;

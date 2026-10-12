@@ -136,6 +136,14 @@
       "kf.hint": "Move the playhead and change a value: a key is set there. Montage glides from one key to the next.",
       "kf.x": "Left – right", "kf.y": "Top – bottom", "kf.s": "Size", "kf.o": "Opacity", "kf.v": "Volume",
       "kf.full": "{n} keys: the most a clip can have.",
+      "tool.reverse": "Reverse", "tool.forward": "Forwards", "toast.reversed": "This clip now plays backwards, without sound.",
+      "lut.title": "Colour look (.cube)", "lut.open": "Open a .cube file", "lut.remove": "Remove the look",
+      "lut.hint": "A 3D LUT from a colour-grading app or a LUT pack (.cube, up to 64 points a side).",
+      "lut.on": "A colour look is on.", "lut.bad": "This is not a 3D .cube file Montage can use.",
+      "exp.gif": "GIF", "exp.gifSize": "Size", "exp.gifSmall": "Small (320 px)", "exp.gifMedium": "Medium (480 px)",
+      "exp.gifHint": "A silent loop for chats and web pages, up to 30 seconds. Big GIF files are normal: keep it short.",
+      "exp.gifLong": "A GIF can be at most 30 seconds long. Make the project shorter or export a video.",
+      "exp.keepGif": "Also keep a copy in Files › Pictures", "exp.readyGif": "Your GIF is ready", "toast.keptGif": "A copy is in Files › Pictures",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -224,6 +232,14 @@
       "kf.hint": "Μετακίνησε την κεφαλή και άλλαξε μια τιμή: μπαίνει key εκεί. Το Μοντάζ περνά ομαλά από το ένα key στο επόμενο.",
       "kf.x": "Αριστερά – δεξιά", "kf.y": "Πάνω – κάτω", "kf.s": "Μέγεθος", "kf.o": "Αδιαφάνεια", "kf.v": "Ένταση",
       "kf.full": "{n} key: τα περισσότερα που χωράει ένα clip.",
+      "tool.reverse": "Ανάποδα", "tool.forward": "Κανονικά", "toast.reversed": "Αυτό το clip παίζει πια ανάποδα, χωρίς ήχο.",
+      "lut.title": "Χρωματικό look (.cube)", "lut.open": "Άνοιξε αρχείο .cube", "lut.remove": "Βγάλε το look",
+      "lut.hint": "Ένα 3D LUT από πρόγραμμα χρωματικής διόρθωσης ή πακέτο LUT (.cube, έως 64 σημεία ανά πλευρά).",
+      "lut.on": "Υπάρχει χρωματικό look.", "lut.bad": "Αυτό δεν είναι αρχείο 3D .cube που μπορεί να χρησιμοποιήσει το Μοντάζ.",
+      "exp.gif": "GIF", "exp.gifSize": "Μέγεθος", "exp.gifSmall": "Μικρό (320 px)", "exp.gifMedium": "Μεσαίο (480 px)",
+      "exp.gifHint": "Ένα βουβό loop για συνομιλίες και ιστοσελίδες, έως 30 δευτερόλεπτα. Τα GIF βγαίνουν μεγάλα αρχεία: κράτα το σύντομο.",
+      "exp.gifLong": "Ένα GIF μπορεί να είναι έως 30 δευτερόλεπτα. Κάνε το project πιο σύντομο ή βγάλε βίντεο.",
+      "exp.keepGif": "Κράτα και αντίγραφο στα Αρχεία › Pictures", "exp.readyGif": "Το GIF σου είναι έτοιμο", "toast.keptGif": "Ένα αντίγραφο είναι στα Αρχεία › Pictures",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -268,7 +284,7 @@
 
   // ---------- 2. Storage, prefs, edits + undo ----------
   var data = C.merge(null, null);
-  var prefs = { pps: 40, short: 1080, keep: false, what: "video" };
+  var prefs = { pps: 40, short: 1080, keep: false, what: "video", gif: 480 };
 
   function load() {
     var raw = null;
@@ -296,7 +312,8 @@
         if (typeof p.pps === "number" && p.pps >= 4 && p.pps <= 400) prefs.pps = p.pps;
         if ([720, 1080, 2160].indexOf(p.short) >= 0) prefs.short = p.short;
         prefs.keep = p.keep === true;
-        prefs.what = p.what === "sound" ? "sound" : "video";
+        prefs.what = p.what === "sound" || p.what === "gif" ? p.what : "video";
+        prefs.gif = p.gif === 320 ? 320 : 480;
       }
     } catch (e) {}
   }
@@ -809,6 +826,9 @@
       bar.appendChild(toolBtn(it.mu ? "volume" : "mute", t(it.mu ? "tool.unmute" : "tool.mute"), function () { edit({ mu: !it.mu }); }));
       if (!it.mu) bar.appendChild(toolBtn("detach", t("tool.detach"), detachSound));
       if (it.tr === "main") bar.appendChild(toolBtn("freeze", t("tool.freeze"), freezeFrame));
+      bar.appendChild(toolBtn("reverse", t(it.rv ? "tool.forward" : "tool.reverse"), function () {
+        if (edit({ rv: !it.rv }) && !it.rv) showToast(t("toast.reversed"));
+      }));
     }
     if (it.k === "video" || it.k === "image") {
       if (it.tr === "main") bar.appendChild(toolBtn("overlay", t("tool.toOv"), function () { edit({ tr: "ov" }); }));
@@ -893,6 +913,38 @@
       rangeField(body, t(f[1]), -100, 100, 1, lk[f[0]], function (v) { return (v > 0 ? "+" : "") + v; }, function (v) { lk[f[0]] = v; live({ lk: JSON.parse(JSON.stringify(lk)) }); });
     });
     chipField(body, t("p.filter"), C.FILTERS.map(function (f) { return [f, t("flt." + f)]; }), it.flt, function (v) { live({ flt: v }); });
+    var lf = el("div", "field");
+    lf.appendChild(el("span", "lbl", t("lut.title")));
+    lf.appendChild(el("p", "hint small", it.lut ? t("lut.on") : t("lut.hint")));
+    body.appendChild(lf);
+    actions(body, (it.lut ? [[t("lut.remove"), "", function () { live({ lut: null }); closeDialog(); }]] : [])
+      .concat([[t("lut.open"), "", function () { closeDialog(); openLut(); }]]));
+  }
+  // A .cube file → a picture of its table (n² × n PNG), stored like any
+  // picture (device, optional media sync), set as the clip's look.
+  function openLut() {
+    var id = sel;
+    pickFiles(".cube,text/plain", false).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      if (f.size > 16 * 1024 * 1024) { showToast(t("lut.bad")); return; }
+      f.text().then(function (txt) {
+        var lut = C.parseCube(txt);
+        if (!lut) { showToast(t("lut.bad")); return; }
+        var px = C.lutPixels(lut), cv = document.createElement("canvas");
+        cv.width = px.w; cv.height = px.h;
+        cv.getContext("2d").putImageData(new ImageData(px.data, px.w, px.h), 0, 0);
+        cv.toBlob(function (png) {
+          if (!png) { showToast(t("err.fail")); return; }
+          var name = String(f.name || "look").replace(/\.cube$/i, "") + ".png";
+          importMany([new File([png], name, { type: "image/png" })], function (info) {
+            if (!cur() || !cur().items[id]) return;
+            sel = id;
+            edit({ lut: info.id });
+          });
+        }, "image/png");
+      }, function () { showToast(t("lut.bad")); });
+    });
   }
   function panelFrame() {
     var it = selItem(), body = panel(t("tool.frame"));
@@ -1148,7 +1200,7 @@
     if (!p || !it || it.k !== "video" || it.tr !== "main") return;
     if (player && player.playing()) player.pause();
     var pl = C.placeOf(p, it.id), at = Math.min(Math.max(tNow, pl.start), pl.end - 1 / p.fps);
-    var srcT = Math.min(it.out, it["in"] + (at - pl.start) * it.sp), vid = it.id;
+    var srcT = C.srcTime(it, at - pl.start), vid = it.id;
     busy(t("frz.working"), 0);
     MM.frameAt(it.src, srcT).then(function (png) {
       if (!png) { busy(null); showToast(t("frz.fail")); return; }
@@ -1387,12 +1439,16 @@
     if (player && player.playing()) player.pause();
     var body = openDialog(t("exp.title"));
     var sizes = [[720, "720p"], [1080, "1080p"], [2160, t("exp.k4")]], sizeRow = null, keep = null;
-    chipField(body, t("exp.what"), [["video", t("exp.video")], ["sound", t("exp.sound")]], prefs.what, function (v) { prefs.what = v; savePrefs(); show(); });
+    chipField(body, t("exp.what"), [["video", t("exp.video")], ["sound", t("exp.sound")], ["gif", t("exp.gif")]], prefs.what, function (v) { prefs.what = v; savePrefs(); show(); });
     sizeRow = chipField(body, t("exp.size"), sizes, prefs.short, function (v) { prefs.short = v; savePrefs(); });
+    var gifRow = chipField(body, t("exp.gifSize"), [[320, t("exp.gifSmall")], [480, t("exp.gifMedium")]], prefs.gif, function (v) { prefs.gif = v; savePrefs(); });
+    var gifHint = el("p", "hint small", t("exp.gifHint"));
+    body.appendChild(gifHint);
     keep = checkField(body, t("exp.keep"), prefs.keep, function (v) { prefs.keep = v; savePrefs(); });
     function show() {
-      sizeRow.parentNode.hidden = prefs.what === "sound";
-      keep.nextSibling.textContent = t(prefs.what === "sound" ? "exp.keepSound" : "exp.keep");
+      sizeRow.parentNode.hidden = prefs.what !== "video";
+      gifRow.parentNode.hidden = gifHint.hidden = prefs.what !== "gif";
+      keep.nextSibling.textContent = t(prefs.what === "sound" ? "exp.keepSound" : (prefs.what === "gif" ? "exp.keepGif" : "exp.keep"));
     }
     show();
     if (!fsApi()) keep.closest(".check").hidden = true;
@@ -1403,25 +1459,26 @@
     catch (e) { return window.orosFS || null; }
   }
   function runExport() {
-    var p = cur(), sound = prefs.what === "sound";
+    var p = cur(), sound = prefs.what === "sound", gif = prefs.what === "gif";
     closeDialog();
     if (sound && !C.soundPlan(p).length) { showToast(t("exp.noSound")); return; }
+    if (gif && C.duration(p) > MX.GIF_MAX_SEC + 0.01) { showToast(t("exp.gifLong")); return; }
     var size = C.outputSize(p.ar, prefs.short);
-    (sound ? MX.pickSoundFormat() : MX.pickFormat(size.w, size.h)).then(function (fmt) {
+    (gif ? Promise.resolve({ ext: "gif" }) : sound ? MX.pickSoundFormat() : MX.pickFormat(size.w, size.h)).then(function (fmt) {
       if (!fmt) { showToast(t("exp.noCodec")); return; }
       exportCancel = false;
       busy(t("exp.working", { p: 0 }), 0, function () { exportCancel = true; });
       var lock = null;
       try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { lock = l; }, function () {}); } catch (e) {}
       return MX.run({
-        project: p, short: prefs.short, file: MM.get, soundOnly: sound,
+        project: p, short: prefs.short, file: MM.get, soundOnly: sound, gif: gif, gifSide: prefs.gif,
         progress: function (f) { busy(t("exp.working", { p: Math.round(f * 100) }), f, function () { exportCancel = true; }); },
         cancelled: function () { return exportCancel; }
       }).then(function (r) {
         busy(null);
         if (lock) lock.release().then(null, function () {});
         var name = C.exportName(p.name, r.ext);
-        lastExport = { blob: r.blob, name: name, mime: r.mime, ext: r.ext, sound: sound };
+        lastExport = { blob: r.blob, name: name, mime: r.mime, ext: r.ext, sound: sound, gif: gif };
         if (prefs.keep) keepInFiles(lastExport);
         exportReady();
       }, function (e) {
@@ -1436,19 +1493,21 @@
     if (!F) return;
     var base = x.name.replace(/\.[^.]+$/, ""), n = 1;
     function tryName() {
-      var path = (x.sound ? "/internal/Music/" : "/internal/Videos/") + (n === 1 ? x.name : base + " (" + n + ")." + x.ext);
+      var path = (x.sound ? "/internal/Music/" : (x.gif ? "/internal/Pictures/" : "/internal/Videos/")) + (n === 1 ? x.name : base + " (" + n + ")." + x.ext);
       return F.stat(path).then(function () { n++; return n < 100 ? tryName() : null; }, function () {
-        return F.write(path, x.blob).then(function () { showToast(t(x.sound ? "toast.keptSound" : "toast.kept")); });
+        return F.write(path, x.blob).then(function () { showToast(t(x.sound ? "toast.keptSound" : (x.gif ? "toast.keptGif" : "toast.kept"))); });
       });
     }
     tryName().then(null, function () { showToast(t("toast.saveFail")); });
   }
   function exportReady() {
-    var x = lastExport, body = openDialog(t(x.sound ? "exp.readySound" : "exp.ready"));
+    var x = lastExport, body = openDialog(t(x.sound ? "exp.readySound" : (x.gif ? "exp.readyGif" : "exp.ready")));
     body.appendChild(el("p", "hint", t("exp.readyHint", { f: x.name, s: fmtMB(x.blob.size) })));
-    var v = el(x.sound ? "audio" : "video");
-    v.controls = true; v.style.width = "100%";
-    if (!x.sound) { v.playsInline = true; v.style.borderRadius = "8px"; v.style.background = "#000"; }
+    var v = el(x.sound ? "audio" : (x.gif ? "img" : "video"));
+    v.style.width = "100%";
+    if (x.gif) { v.alt = x.name; v.play = function () { return Promise.resolve(); }; v.pause = function () {}; }
+    else v.controls = true;
+    if (!x.sound && !x.gif) { v.playsInline = true; v.style.borderRadius = "8px"; v.style.background = "#000"; }
     var u = URL.createObjectURL(x.blob);
     v.src = u; v.hidden = true;
     body.appendChild(v);
@@ -1763,6 +1822,7 @@
     cc: SV('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M10 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3"/>'),
     freeze: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4"/>'),
     kf: SV('<path d="M12 3l6 9-6 9-6-9z"/><path d="M2 12h3M19 12h3"/>'),
+    reverse: SV('<path d="M20 7H8l3-3M8 7l3 3"/><path d="M4 17h12l-3-3M16 17l-3 3"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };
 
