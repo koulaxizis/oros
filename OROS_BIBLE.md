@@ -5233,3 +5233,17 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 - **Close a period:** archive in Files › Stock/Archive, opening balance per product / warehouse / lot, identical numbers, closed dates locked, offline-safe for 90 days, Reopen.
 - Stock plan complete. Not tested: real phones, Safari, real Vault Drive with the archive file.
+
+### 2026-10-12 — Newsletter phase 3A: RSS to e-mail, past issues (#249) — 1.35.00
+- Newsletter v1.2.0 (phase 3A).
+  - RSS to e-mail: new collection `rss` (up to 20 feeds) per list: url, name, every day/week (weekday)/month (the 1st), hour, mode draft|send, max articles (1–20), segment, on.
+    - A feed runs only on the device that set it up (`dev`), from the shell runner every 10 minutes (first after 30 s), under the Web Lock "oros-newsletter-rss".
+    - Due feeds are marked as run before fetching, so two windows or a crash never run one twice. Offline, timeouts and relay errors give the slot back for the next round; a bad feed waits for its next slot.
+    - Articles newer than `last` (the newest article already used), newest first, become a Markdown issue: a heading, an https picture, the snippet as plain text and a "Read more" button per article. Text from the feed can never become a link, picture or button.
+    - Mode "send" starts sending only when the pre-send check finds no errors, else it leaves a draft. Notices: "New draft from RSS" and "Sending (RSS)".
+    - Feeds are read through the Reader's own network layer (direct, else the relay's "web" op). Newsletter never edits feeds/.
+  - Past issues: Settings › Import past issues… reads a .zip export or .md/.html/.csv/.json files (newsletter/archive.js, pure, no DOM, never runs anything in them).
+    - HTML becomes Markdown. Scripts, styles, comments, javascript: links, data: pictures and tracking pixels are dropped.
+    - Import as past issues (st sent, `imp: 1`, n 0, nobody gets an e-mail) or as drafts. Ids are a hash of subject, date and length, so the same file twice adds nothing.
+    - Capped at 500 issues and about 2.5 MB of Newsletter data in all.
+- Not tested: real feeds over a real relay, a real sending provider, real Buttondown / MailerLite exports, phones, Safari.
