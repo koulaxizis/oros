@@ -1119,6 +1119,20 @@ oros-menu-apps = { ver:1, apps[{ id, hidden: boolean, mtime }] }
 - A fresh device writes nothing until the first real change. Unreadable data is copied to `oros-menu-apps-broken`. Factory reset sweeps it (`oros-*`).
 - Hidden means "not in the menu list" only: the menu search still lists it (while a query is typed), universal search hits, deep links (`__orosOpenAt`, `openAppById`), desktop shortcuts and the Dock still open it.
 
+**MONTAGE v1** (`montage/core.js`, slice `montage`, key `oros-montage`; video editor, plan `/mnt/project-files/video-editor/video-editor-plan.md`, Chris 2026-10-12 "Ναι σε όλα"; app not registered yet):
+
+```
+oros-montage = { ver:1, projects{ <pid>: project }, tombs{ <pid>: ms } }
+project = { id, name, ar: "16:9"|"9:16"|"1:1"|"4:5", fps: 30|60, bg:"#rrggbb", vs: bool, m, items{ <iid>: item }, tombs{ <iid>: ms } }
+item    = { id, k: video|image|audio|title, tr: main|ov|tt|a1|a2, m, … }
+```
+
+- Tracks: `main` is magnetic (order key `o`, clips follow each other, a transition `tx{k: fade|black|slide|wipe, d}` overlaps the clip before, at most half of either clip); `ov` (picture in picture), `tt` (titles), `a1`/`a2` (sound) use a start `at`. Which kinds go on which track: `TRACK_KINDS`.
+- video/audio: `src`, `len` (file length), `in`/`out` (seconds in the file), `sp` 0.25-4, `vol` 0-200, `mu`; image: `src`, `d`; title: `d`, `text{t,f,sz,col,ol,bx,al,an}` (+ `bg` on main = a title card). Pictures also `op`, `fit` fit|fill, `rot`, `fl`, `lk{b,c,s,t}`, `flt`; off-main pictures `box{x,y,w,h}`; all `fi`/`fo` fades.
+- Media are never in the slice: `src` is an orOS disk id `/internal/Assets/<sha256>.<ext>` in the forms Atelier's `clips.js` and `designkit/assets.js` use (jpg|png, webm|mp4, mp3|m4a|ogg|wav|weba), so Atelier's "unused files" check sees them as in use. `vs` = this project's media travel through Vault Drive (off by default: device only).
+- **Merge:** projects and items are separate entities, LWW by their own `m` (tie → greater canonical JSON); tombstones max-union, per project and per item; a project survives its tombstone when any edit in it is newer (R17). Strict normalizer drops invalid rows; output canonical (keys sorted). Edits stamp `m` at the mutation site, always forward (R27). Tests: `tests/montage.test.js`.
+- Rendering: `framePlan(project, t)` (layers on screen) and `soundPlan(project)` (sound segments) are the single source for preview and export; `montage/gl.js` draws a plan (WebGL2), `montage/export.js` encodes frame by frame with WebCodecs via `vendor/mediabunny.min.js`.
+
 ## Part V — Sync + data-safety essentials
 
 ### Security model (absolute)
@@ -1748,6 +1762,12 @@ Rebuild this in any session where code is delivered.
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+
+- **2026-10-12 · Chris (video editor Montage / Μοντάζ, plan /mnt/project-files/video-editor/video-editor-plan.md: "Ναι σε όλα!")**
+  - New app `montage/`, category Video, CapCut-style on phones and Kdenlive-style on desktops. Schema: Part IV "MONTAGE v1".
+  - Export frame by frame with WebCodecs through Mediabunny 1.60.0 (MPL-2.0, vendored unchanged as `vendor/mediabunny.min.js` + `vendor/mediabunny.LICENSE`): MP4 (H.264 + AAC) where the browser encodes H.264, else WebM. Spike on Chris's Android (Chrome 153): 1080p MP4 export 1.25× faster than real time.
+  - Media on the orOS disk (`/internal/Assets`, shared with Atelier); device only by default, per-project switch to sync them through Vault Drive; missing media shown as "media missing" with Relink. Exports go to `/internal/Videos/` (proposed with the image editor thread, which uses `/internal/Pictures/`; Chris has not decided the shared folder yet).
+  - Speed changes the pitch of the sound in both preview and export (pitch-kept speed is a later phase).
 
 - **2026-10-11 · Chris (Today / Σήμερα, plan /mnt/project-files/today/today-plan.md: "Ναι σε όλα, με μία διευκρίνηση: Να υπάρχει δυνατότητα να συμπεριληφθούν και οι «ευαίσθητες» εφαρμογές αν το θέλει ο χρήστης.")**
   - New System app `today/`, one daily notice in the bell; local only, no AI, no network. Contract: Part VI "Today summary" (BR-TODAY).
