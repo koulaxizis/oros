@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.3.0)
+// orOS Stock — core.js (shared logic, v1.4.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -40,6 +40,7 @@
 //   barcodes (1.2): eanCheck, ean13, code128, barcodeFor(item), barSvg
 //   other apps (1.3): outRequest(data, req, today) (BR-ST-OUT),
 //     srcUses(data, src), catalog(data)
+//   warehouses (1.4): WH_MAIN, normWh, whName, whQty(data), qtyIn(data, w)
 // Data (synced slice "stock", key oros-stock-data):
 //   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
 //     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
@@ -51,6 +52,13 @@
 //   { id: itemId, m, f: file name | "" }: a separate list rather than a
 //   field of the item, so a 1.0/1.1 device that edits the item can
 //   never drop the photo (its own merge only drops the whole list).
+//   whs (1.4): warehouses { id, m, name, arch }, LWW + tombs; the row
+//   with id WH_MAIN only names the main warehouse. A movement may carry
+//   w (its warehouse; none = main). Type "xfer" (transfer) moves its
+//   positive line quantities from w to w2 and changes no total: a 1.3
+//   device drops it (its totals stay right) and the union keeps it on
+//   the others. A 1.3 device also strips w from the movements it
+//   re-uploads, so a tie on m prefers the copy that carries w / w2.
 // ============================================================
 (function (root) {
   "use strict";
@@ -96,8 +104,8 @@
   //   loss damage / loss / expiry (−)
   //   count stock count (difference, any sign or 0; n = counted)
   //   fix  correction (any sign, not 0)
-  var MOVE_TYPES = ["in", "out", "ret", "rts", "loss", "count", "fix"];
-  var SIGN = { "in": 1, out: -1, ret: 1, rts: -1, loss: -1, count: 0, fix: 0 };
+  var MOVE_TYPES = ["in", "out", "ret", "rts", "loss", "count", "fix", "xfer"];
+  var SIGN = { "in": 1, out: -1, ret: 1, rts: -1, loss: -1, count: 0, fix: 0, xfer: 1 };
 
   // ---------- Dates ----------
   function p2(n) { return (n < 10 ? "0" : "") + n; }
@@ -258,9 +266,17 @@
       lines: lines
     };
     if (typeof x.src === "string" && SRC_RE.test(x.src)) out.src = x.src;
+    var w = whRef(x.w), w2 = whRef(x.w2);
+    if (x.t === "xfer") {
+      if (w === w2) return null;            // a transfer goes somewhere else
+      if (w2) out.w2 = w2;
+    }
+    if (w) out.w = w;
     if (x.v === 1) out.v = 1;
     return out;
   }
+  // a warehouse reference: "" = the main warehouse
+  function whRef(v) { var r = ref(v); return r === WH_MAIN ? "" : r; }
   function normSettings(x) {
     var s = x && typeof x === "object" ? x : {};
     return {
@@ -309,8 +325,18 @@
     return { id: x.id, m: x.m, f: typeof x.f === "string" && PIC_RE.test(x.f) ? x.f : "" };
   }
 
-  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo, pics: normPic };
-  var LIST_KEYS = ["items", "cats", "units", "sups", "pos", "pics"];
+  // Warehouses (1.4). WH_MAIN's row only gives the main warehouse a
+  // name (it can't be archived); movements never carry it as w.
+  var WH_MAIN = "whmain";
+  function normWh(x) {
+    if (!base(x)) return null;
+    var name = cleanText(x.name, NAME_LEN, false);
+    if (!name) return null;
+    return { id: x.id, m: x.m, name: name, arch: x.arch === 1 && x.id !== WH_MAIN ? 1 : 0 };
+  }
+
+  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo, pics: normPic, whs: normWh };
+  var LIST_KEYS = ["items", "cats", "units", "sups", "pos", "pics", "whs"];
 
   function canon(v) { return JSON.stringify(v); }
   function lww(best, x) {
@@ -323,6 +349,10 @@
     if (!cur) { best[x.id] = x; return; }
     var xv = x.v === 1, cv = cur.v === 1;
     if (xv !== cv) { if (xv) best[x.id] = x; return; }
+    // same m: the copy that knows its warehouse wins over one a 1.3
+    // device stripped
+    var xw = !!(x.w || x.w2), cw = !!(cur.w || cur.w2);
+    if (x.m === cur.m && xw !== cw) { if (xw) best[x.id] = x; return; }
     lww(best, x);
   }
 
@@ -362,6 +392,8 @@
       var x = bestM[id];
       moves.push(x);
       x.lines.forEach(function (l) { used[l.i] = true; });
+      if (x.w) used[x.w] = true;
+      if (x.w2) used[x.w2] = true;
     });
     function pick(key, norm, cap) {
       var best = dict();
@@ -371,7 +403,7 @@
       var out = [];
       Object.keys(best).sort(cmpStr).forEach(function (id) {
         var x = best[id];
-        if (id in tombs && tombs[id] >= x.m && !(key === "items" && used[id])) return;
+        if (id in tombs && tombs[id] >= x.m && !((key === "items" || key === "whs") && used[id])) return;
         if (out.length >= cap) return;
         out.push(x);
       });
@@ -395,7 +427,10 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === unitId) return list[i].dec;
     return 0;
   }
-  function live(moves) { return (moves || []).filter(function (x) { return x.v !== 1; }); }
+  // live movements that change totals: a transfer only moves stock
+  // between warehouses, so totals, costs and reports skip it
+  function live(moves) { return (moves || []).filter(function (x) { return x.v !== 1 && x.t !== "xfer"; }); }
+  function liveAll(moves) { return (moves || []).filter(function (x) { return x.v !== 1; }); }
   // Chronological order: day, then id (ids start with the creation
   // time), so every device walks the ledger the same way.
   function chrono(moves) {
@@ -472,10 +507,10 @@
   // where after = the quantity right after it (voided ones: null).
   function itemMoves(data, itemId) {
     var run = 0, out = [];
-    chrono(data && data.moves).forEach(function (x) {
+    liveAll(data && data.moves).slice().sort(function (x, y) { return cmpStr(x.d, y.d) || cmpStr(x.id, y.id); }).forEach(function (x) {
       x.lines.forEach(function (l) {
         if (l.i !== itemId) return;
-        run += l.q;
+        if (x.t !== "xfer") run += l.q;       // a transfer leaves the total
         out.push({ move: x, line: l, after: run });
       });
     });
@@ -721,7 +756,8 @@
   }
   // Movements, one row per line: [date, type, ref, supplier, sku, name,
   // qty, unit cost / price, note, voided] — types by names[type].
-  function csvMoves(data, names) {
+  // mainLabel given (several warehouses): + [warehouse, to warehouse].
+  function csvMoves(data, names, mainLabel) {
     var nm = names || {}, items = dict(), sups = dict();
     ((data && data.items) || []).forEach(function (x) { items[x.id] = x; });
     ((data && data.sups) || []).forEach(function (x) { sups[x.id] = x.name; });
@@ -730,11 +766,14 @@
       x.lines.forEach(function (l) {
         var it = items[l.i] || { sku: "", name: "?" };
         var money = typeof l.c === "number" ? l.c / 100 : (typeof l.p === "number" ? l.p / 100 : null);
-        rows.push([x.d, has(nm, x.t) ? nm[x.t] : x.t, x.ref, sups[x.sup] || "", it.sku, it.name, l.q / 1000, money, x.note, x.v === 1 ? (nm.voided || "void") : "", x.id]);
+        var row = [x.d, has(nm, x.t) ? nm[x.t] : x.t, x.ref, sups[x.sup] || "", it.sku, it.name, l.q / 1000, money, x.note, x.v === 1 ? (nm.voided || "void") : ""];
+        if (mainLabel) row.push(whName(data, x.w, mainLabel), x.t === "xfer" ? whName(data, x.w2, mainLabel) : "");
+        row.push(x.id);
+        rows.push(row);
       });
     });
-    rows.sort(function (p, r) { return cmpStr(p[0], r[0]) || cmpStr(p[10], r[10]); });
-    return rows.map(function (r) { return r.slice(0, 10); });
+    rows.sort(function (p, r) { return cmpStr(p[0], r[0]) || cmpStr(p[p.length - 1], r[r.length - 1]); });
+    return rows.map(function (r) { return r.slice(0, r.length - 1); });
   }
 
   // ---------- Purchase orders ----------
@@ -1022,7 +1061,7 @@
     };
   }
   function srcUses(data, src) {
-    return live(data && data.moves).filter(function (x) { return x.src === src; }).length;
+    return liveAll(data && data.moves).filter(function (x) { return x.src === src; }).length;
   }
   // Read-only list for another app's product picker: live products with
   // their code (SKU, else barcode), prices, VAT and current quantity.
@@ -1034,6 +1073,33 @@
         price: it.price, vat: it.vat, q: r.q / 1000
       };
     });
+  }
+
+  // ---------- Warehouses (1.4) ----------
+  // { itemId: { warehouseId ("" = main): thousandths } }, transfers
+  // included: −q where they leave, +q where they arrive.
+  function whQty(data) {
+    var q = dict();
+    function add(i, w, n) { var r = q[i] || (q[i] = dict()); r[w] = (r[w] || 0) + n; }
+    liveAll(data && data.moves).forEach(function (x) {
+      var w = x.w || "";
+      x.lines.forEach(function (l) {
+        if (x.t === "xfer") { add(l.i, w, -l.q); add(l.i, x.w2 || "", l.q); }
+        else add(l.i, w, l.q);
+      });
+    });
+    return q;
+  }
+  // { itemId: thousandths } in one warehouse ("" = main)
+  function qtyIn(data, w) {
+    var all = whQty(data), out = dict(), key = w || "";
+    Object.keys(all).forEach(function (i) { if (all[i][key]) out[i] = all[i][key]; });
+    return out;
+  }
+  function whName(data, w, mainLabel) {
+    var id = w || WH_MAIN, list = (data && data.whs) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i].name;
+    return w ? "?" : (mainLabel || "Main");
   }
 
   var api = {
@@ -1057,7 +1123,8 @@
     reportRange: reportRange, valueByCat: valueByCat, periodSummary: periodSummary, deadStock: deadStock,
     PHOTO_DIR: PHOTO_DIR, PIC_RE: PIC_RE, normPic: normPic, picName: picName, picPath: picPath, picOf: picOf, picsInUse: picsInUse,
     eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg,
-    outRequest: outRequest, srcUses: srcUses, catalog: catalog
+    outRequest: outRequest, srcUses: srcUses, catalog: catalog,
+    WH_MAIN: WH_MAIN, normWh: normWh, whName: whName, whQty: whQty, qtyIn: qtyIn
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;

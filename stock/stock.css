@@ -245,7 +245,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .row.k-in, .row.k-ret { --rc: var(--s-in); }
 .row.k-out, .row.k-rts { --rc: var(--s-out); }
 .row.k-loss { --rc: var(--s-loss); }
-.row.k-count, .row.k-fix { --rc: var(--text-dim); }
+.row.k-count, .row.k-fix, .row.k-xfer { --rc: var(--text-dim); }
 .row.voided { opacity: 0.55; }
 .row.voided .r-name, .row.voided .r-val { text-decoration: line-through; }
 .row-btn { text-align: left; width: 100%; cursor: pointer; }
