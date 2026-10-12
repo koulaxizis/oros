@@ -41,6 +41,7 @@
   "use strict";
 
   var C = window.OrosAssistCore;
+  var S = window.OrosAssistSummary;
   var STORAGE_KEY = "oros-assistant-data";
   var PREFS_KEY   = "oros-assistant-prefs";
   var DB_NAME     = "oros-assistant";
@@ -64,7 +65,7 @@
       "btn.send": "Send", "btn.stop": "Stop", "btn.close": "Close", "btn.cancel": "Cancel",
       "btn.delete": "Delete", "btn.setup": "Set up the assistant",
       "wel.title": "Your AI assistant",
-      "wel.text": "Pick the assistant you want: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model running on your own computer. It reads your orOS data only when you allow it, and nothing is saved in your apps until you save it yourself.",
+      "wel.text": "Pick the assistant you want: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model running on your own computer, or the browser's own built-in model. It reads your orOS data only when you allow it, and nothing is saved in your apps until you save it yourself.",
       "wel.ready": "Ask anything. For questions about your own notes, tasks or events, the assistant searches your apps and shows you what it found before anything is shared. It can also prepare a task, an event or an expense for you to save.",
       "ph.input": "Message the assistant…", "ph.noSetup": "Set up the assistant first",
       "chats.empty": "No conversations yet",
@@ -148,7 +149,19 @@
       "toast.deleted": "Deleted", "toast.lock": "Unlock orOS sync to use the keys from your other devices",
       "open.gone": "That item is no longer there",
       "chat.untitled": "New conversation", "time.today": "Today", "time.yesterday": "Yesterday",
-      "you": "You"
+      "you": "You",
+      "entry.invoice": "New invoice · {app}",
+      "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back",
+      "sum.title": "Share this summary of {app} with {name}?",
+      "sum.text": "Worked out on this device. Only these lines are sent, not the entries themselves.",
+      "btn.copy": "Copy", "toast.copied": "Copied", "toast.copyFail": "Could not copy",
+      "prov.browser": "Built-in browser model", "who.device": "Stays on this device: chat only",
+      "set.bi.ok": "Ready on this device. It works offline; it is smaller than the online assistants and can't search your data or prepare entries.",
+      "set.bi.get": "The browser can download its model (about 2 GB, once).",
+      "set.bi.getBtn": "Download the model", "set.bi.busy": "Downloading… {p}%",
+      "set.bi.none": "This browser has no built-in model. Recent Chrome on Windows, Linux or a Mac with enough space and memory has one; other browsers don't yet.",
+      "set.bi.fail": "The model could not be prepared: {msg}",
+      "err.builtin": "The built-in browser model is not available on this device. Pick another assistant in Settings."
     },
     el: {
       "app": "Βοηθός",
@@ -156,7 +169,7 @@
       "btn.send": "Αποστολή", "btn.stop": "Διακοπή", "btn.close": "Κλείσιμο", "btn.cancel": "Άκυρο",
       "btn.delete": "Διαγραφή", "btn.setup": "Ρύθμιση του βοηθού",
       "wel.title": "Ο AI βοηθός σου",
-      "wel.text": "Διάλεξε τον βοηθό που θέλεις: Claude, ChatGPT, Gemini, Mistral, OpenRouter ή ένα μοντέλο στον δικό σου υπολογιστή. Διαβάζει τα δεδομένα σου στο orOS μόνο όταν το επιτρέψεις, και τίποτα δεν αποθηκεύεται στις εφαρμογές σου αν δεν το αποθηκεύσεις εσύ.",
+      "wel.text": "Διάλεξε τον βοηθό που θέλεις: Claude, ChatGPT, Gemini, Mistral, OpenRouter, ένα μοντέλο στον δικό σου υπολογιστή ή το ενσωματωμένο μοντέλο του browser. Διαβάζει τα δεδομένα σου στο orOS μόνο όταν το επιτρέψεις, και τίποτα δεν αποθηκεύεται στις εφαρμογές σου αν δεν το αποθηκεύσεις εσύ.",
       "wel.ready": "Ρώτα ό,τι θέλεις. Για ερωτήσεις πάνω στις σημειώσεις, τις εργασίες ή τα γεγονότα σου, ο βοηθός ψάχνει στις εφαρμογές σου και σου δείχνει τι βρήκε πριν μοιραστεί οτιδήποτε. Μπορεί επίσης να σου ετοιμάσει μια εργασία, ένα γεγονός ή ένα έξοδο για να το αποθηκεύσεις.",
       "ph.input": "Γράψε στον βοηθό…", "ph.noSetup": "Ρύθμισε πρώτα τον βοηθό",
       "chats.empty": "Καμία συζήτηση ακόμη",
@@ -240,7 +253,19 @@
       "toast.deleted": "Διαγράφηκε", "toast.lock": "Ξεκλείδωσε το sync του orOS για να χρησιμοποιηθούν τα κλειδιά από τις άλλες συσκευές σου",
       "open.gone": "Αυτό το στοιχείο δεν υπάρχει πια",
       "chat.untitled": "Νέα συζήτηση", "time.today": "Σήμερα", "time.yesterday": "Χθες",
-      "you": "Εσύ"
+      "you": "Εσύ",
+      "entry.invoice": "Νέο τιμολόγιο · {app}",
+      "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})",
+      "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
+      "sum.text": "Υπολογίστηκε σε αυτή τη συσκευή. Στέλνονται μόνο αυτές οι γραμμές, όχι οι ίδιες οι καταχωρήσεις.",
+      "btn.copy": "Αντιγραφή", "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν αντιγράφηκε",
+      "prov.browser": "Ενσωματωμένο μοντέλο του browser", "who.device": "Μένει σε αυτή τη συσκευή: μόνο συζήτηση",
+      "set.bi.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει και χωρίς σύνδεση· είναι μικρότερο από τους online βοηθούς και δεν ψάχνει στα δεδομένα σου ούτε ετοιμάζει καταχωρήσεις.",
+      "set.bi.get": "Ο browser μπορεί να κατεβάσει το μοντέλο του (περίπου 2 GB, μία φορά).",
+      "set.bi.getBtn": "Λήψη του μοντέλου", "set.bi.busy": "Λήψη… {p}%",
+      "set.bi.none": "Αυτός ο browser δεν έχει ενσωματωμένο μοντέλο. Το έχει ο πρόσφατος Chrome σε Windows, Linux ή Mac με αρκετό χώρο και μνήμη· οι άλλοι browsers όχι ακόμη.",
+      "set.bi.fail": "Το μοντέλο δεν ετοιμάστηκε: {msg}",
+      "err.builtin": "Το ενσωματωμένο μοντέλο του browser δεν υπάρχει σε αυτή τη συσκευή. Διάλεξε άλλον βοηθό στις Ρυθμίσεις."
     }
   };
 
@@ -335,7 +360,10 @@
     savePrefs();
   }
 
-  function provName(pid) { return C.PROVIDERS[pid] ? C.PROVIDERS[pid].name : pid; }
+  function provName(pid) {
+    if (pid === "browser") return t("prov.browser");
+    return C.PROVIDERS[pid] ? C.PROVIDERS[pid].name : pid;
+  }
   function curProv() { return data.set.prov; }
   function provConf(pid) { return data.provs[pid] || { m: 0, base: "", model: "" }; }
   function modelOf(pid) { return provConf(pid).model || (C.PROVIDERS[pid] && C.PROVIDERS[pid].model) || ""; }
@@ -604,6 +632,7 @@
   function ready() {
     var pid = curProv();
     if (!pid || !modelOf(pid)) return false;
+    if (C.PROVIDERS[pid].builtin) return builtinState() !== "none";
     if (C.PROVIDERS[pid].local) return !!baseOf(pid);
     return !!(keyCache[pid] && keyCache[pid].key);
   }
@@ -611,6 +640,7 @@
   // One streamed request → reducer result. onText(text) as it arrives.
   function callModel(pid, msgs, opts, signal, onText) {
     var p = C.PROVIDERS[pid];
+    if (p.builtin) return builtinCall(msgs, opts, signal, onText);
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid) }, msgs, opts);
@@ -650,10 +680,76 @@
     });
   }
 
+  // ---------- 6b. The browser's built-in model (Prompt API) ----------
+  // Chrome's window.LanguageModel: on the device, no key, no network.
+  // availability() → "unavailable" | "downloadable" | "downloading" |
+  // "available"; create() downloads the model when it has to (it then
+  // needs a click: the Settings button). Chat only, no tools.
+  var bi = { st: "", checking: null };
+  function LM() {
+    try { return typeof window.LanguageModel !== "undefined" && window.LanguageModel &&
+                 typeof window.LanguageModel.create === "function" ? window.LanguageModel : null; } catch (e) { return null; }
+  }
+  // "" not checked yet, "none", "get" (downloadable), "busy", "ok"
+  function builtinState() {
+    if (!LM()) return "none";
+    return bi.st;
+  }
+  function checkBuiltin() {
+    var api = LM();
+    if (!api) { bi.st = "none"; return Promise.resolve("none"); }
+    if (bi.checking) return bi.checking;
+    bi.checking = Promise.resolve().then(function () {
+      return typeof api.availability === "function" ? api.availability() : "available";
+    }).then(function (a) {
+      bi.st = a === "available" ? "ok" : a === "downloadable" ? "get" : a === "downloading" ? "busy" : "none";
+      return bi.st;
+    }, function () { bi.st = "none"; return "none"; }).then(function (st) { bi.checking = null; return st; });
+    return bi.checking;
+  }
+  function builtinCall(msgs, opts, signal, onText) {
+    var api = LM();
+    if (!api) return Promise.reject(new C.ProviderError("builtin"));
+    var pr = C.browserPrompts(msgs, opts && opts.system);
+    if (!pr.prompt) return Promise.reject(new C.ProviderError("builtin"));
+    var session = null;
+    function done() { try { if (session && session.destroy) session.destroy(); } catch (e) {} }
+    var conf = { initialPrompts: pr.initial };
+    if (signal) conf.signal = signal;
+    return Promise.resolve().then(function () { return api.create(conf); }).then(function (sess) {
+      session = sess;
+      var text = "";
+      if (typeof sess.promptStreaming !== "function") {
+        return sess.prompt(pr.prompt, signal ? { signal: signal } : undefined).then(function (t2) { text = String(t2 || ""); return text; });
+      }
+      var stream = sess.promptStreaming(pr.prompt, signal ? { signal: signal } : undefined);
+      var reader = stream.getReader();
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) return text;
+          text += String(r.value == null ? "" : r.value);
+          if (onText) onText(text);
+          return pump();
+        });
+      }
+      return pump();
+    }).then(function (text) {
+      done();
+      bi.st = "ok";
+      return { text: text, tools: [], usage: null };
+    }, function (e) {
+      done();
+      if (signal && signal.aborted) throw e;
+      if (e && (e.name === "NotSupportedError" || e.name === "NotAllowedError")) throw new C.ProviderError("builtin");
+      throw new C.ProviderError("server", String(e && e.message || e).slice(0, 200));
+    });
+  }
+
   function errText(e, pid) {
     var name = provName(pid), host = hostOf(baseOf(pid));
     if (!(e instanceof C.ProviderError)) return t("err.stream");
     if (e.code === "nokey") return t("err.noKey", { name: name });
+    if (e.code === "builtin") return t("err.builtin");
     if (e.code === "net") return t("err.net", { host: host });
     return t("err." + e.code, { name: name, host: host, model: modelOf(pid), msg: e.msg || ("HTTP " + e.status) });
   }
@@ -740,11 +836,13 @@
     busy = { abort: ctl, live: "", consent: null, chat: c };
     renderAll();
     scrollEnd();
-    var apps = readableApps();
-    var kinds = entryKinds();
-    var tools = C.toolsFor({ data: apps.length > 0, entries: kinds.length > 0 });
+    var builtin = !!C.PROVIDERS[pid].builtin;
+    var apps = builtin ? [] : readableApps();
+    var kinds = builtin ? [] : entryKinds();
+    var sumIds = summaryIds(apps);
+    var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0 });
     var system = C.systemPrompt({
-      lang: LANG, now: Date.now(), chatOnly: !!data.set.chat,
+      lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds
@@ -820,11 +918,18 @@
     }
     if (call.bad) return Promise.resolve({ content: "Error: the arguments were not valid JSON.", err: 1 });
     if (call.name === "list_apps") {
+      var sum = {};
+      summaryIds(apps).forEach(function (id) { sum[id] = 1; });
       return Promise.resolve({
-        content: JSON.stringify({ apps: apps.map(function (a) { return { id: a.id, name: a.name }; }) }),
+        content: JSON.stringify({ apps: apps.map(function (a) {
+          var o = { id: a.id, name: a.name };
+          if (sum[a.id]) o.summary = true;
+          return o;
+        }) }),
         ui: { k: "apps" }
       });
     }
+    if (call.name === "app_summary") return appSummary(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
@@ -920,7 +1025,116 @@
       return { content: "Error: the item could not be read.", err: 1, ui: { k: "err" } };
     });
   }
+  // ---------- app_summary (assistant/summary.js) ----------
+  // Which readable apps have a summary: Budget, Timesheet and To-Do of
+  // their own, any other app through its Today provider.
+  function agendaIds() {
+    var p = shell();
+    try { return p && p.orosToday && typeof p.orosToday.agendaApps === "function" ? p.orosToday.agendaApps() || [] : []; }
+    catch (e) { return []; }
+  }
+  function summaryIds(apps) {
+    var ag = {};
+    agendaIds().forEach(function (id) { ag[id] = 1; });
+    return apps.filter(function (a) { return S.OWN[a.id] || ag[a.id]; }).map(function (a) { return a.id; });
+  }
+  function readStore(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  function ymdNow() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+  }
+  // Timesheet's own core, loaded the first time (read-only, precached).
+  var tsCore = null;
+  function timesheetCore() {
+    if (window.orosTimesheetCore) return Promise.resolve(window.orosTimesheetCore);
+    if (tsCore) return tsCore;
+    tsCore = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "../timesheet/core.js";
+      sc.onload = sc.onerror = function () { resolve(window.orosTimesheetCore || null); };
+      document.head.appendChild(sc);
+    });
+    return tsCore;
+  }
+  function agendaRows(appId, days) {
+    var p = shell();
+    try {
+      if (p && p.orosToday && typeof p.orosToday.agenda === "function") return Promise.resolve(p.orosToday.agenda(appId, days));
+    } catch (e) {}
+    return Promise.resolve([]);
+  }
+  function buildSummary(a, today) {
+    var ag = agendaIds().indexOf(a.app) >= 0;
+    if (a.app === "budget") return Promise.resolve(S.budgetMonth(readStore("oros-budget-data"), a.month, LANG));
+    if (a.app === "timesheet") {
+      return timesheetCore().then(function (core) {
+        if (!core) throw new Error("no core");
+        var d = core.parse(localStorage.getItem(core.STORAGE_KEY || "oros-timesheet-data"));
+        if (!d) throw new Error("unreadable");
+        return S.timesheetMonth(core, d, a.month, Date.now());
+      });
+    }
+    var own = a.app === "todo" ? S.todoLists(readStore("oros-todo-data"), today) : null;
+    if (!ag) return Promise.resolve(own);
+    return agendaRows(a.app, a.days).then(function (rows) {
+      var g = S.agenda(a.app, rows, today, a.days);
+      if (!own) return g;
+      own.from = g.from; own.to = g.to; own.items = g.items;
+      if (g.more_items) own.more_items = g.more_items;
+      return own;
+    });
+  }
+  function appSummary(c, args, apps) {
+    var today = ymdNow();
+    var a = S.normArgs(args, today);
+    if (!a.ok) return Promise.resolve({ content: "Error: " + a.err, err: 1 });
+    var app = null;
+    apps.forEach(function (x) { if (x.id === a.app) app = x; });
+    if (!app) {
+      var known = null;
+      appList().forEach(function (x) { if (x.id === a.app) known = x; });
+      return Promise.resolve(known
+        ? { content: "Error: the user does not let you read " + known.name + ". They can allow it in the assistant's settings.", err: 1, ui: { k: "sumNo", app: known.name } }
+        : { content: "Error: unknown app. Use an id from list_apps.", err: 1 });
+    }
+    if (summaryIds([app]).length === 0) {
+      return Promise.resolve({ content: "Error: " + app.name + " has no summary. Use search_data instead.", err: 1 });
+    }
+    return buildSummary(a, today).then(function (sum) {
+      if (!sum) return { content: "Error: " + app.name + " has no summary. Use search_data instead.", err: 1 };
+      var lines = S.preview(sum, LANG);
+      var okP = app.perm === "always" ? Promise.resolve(true) : askSummary(app.name, lines);
+      return okP.then(function (ok) {
+        if (!ok) return { content: JSON.stringify({ app: app.id, note: "The user chose not to share this summary." }), ui: { k: "sumNo", app: app.name } };
+        // Rows that open an item get a ref, like search results.
+        (sum.items || []).forEach(function (it) {
+          if (it.target === undefined) return;
+          c.refN = (c.refN || 0) + 1;
+          it.ref = "r" + c.refN;
+          c.refs[it.ref] = { app: app.id, target: it.target, title: it.title };
+          delete it.target;
+        });
+        sum.app_name = app.name;
+        return { content: JSON.stringify(sum), ui: { k: "sum", app: app.name } };
+      });
+    }, function () {
+      return { content: "Error: the summary could not be worked out.", err: 1, ui: { k: "err" } };
+    });
+  }
+  function askSummary(appName, lines) {
+    return askCard(t("sum.title", { app: appName, name: provName(curProv()) }), t("sum.text"),
+      lines.slice(0, 60).join("\n") + (lines.length > 60 ? "\n…" : ""));
+  }
+
   function askRead(title, appName, text) {
+    return askCard(t("read.title", { title: title, name: provName(curProv()) }),
+      t("read.text", { app: appName, n: fmtNum(text.length) }),
+      text.length > 600 ? text.slice(0, 600) + "…" : text);
+  }
+  // One yes / no card in the conversation. → Promise<bool>
+  function askCard(head, sub, preview) {
     return new Promise(function (resolve) {
       var done = false;
       function finish(v) {
@@ -932,10 +1146,9 @@
       }
       var card = el("section", "consent");
       card.setAttribute("role", "group");
-      card.appendChild(el("h3", "", t("read.title", { title: title, name: provName(curProv()) })));
-      card.appendChild(el("p", "consent-text", t("read.text", { app: appName, n: fmtNum(text.length) })));
-      var pre = el("p", "consent-preview", text.length > 600 ? text.slice(0, 600) + "…" : text);
-      card.appendChild(pre);
+      card.appendChild(el("h3", "", head));
+      card.appendChild(el("p", "consent-text", sub));
+      card.appendChild(el("p", "consent-preview", preview));
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("read.no"), "", function () { finish(false); }));
       var yes = button(t("read.yes"), "primary", function () { finish(true); });
@@ -1243,15 +1456,16 @@
     if (!pid || !ready()) { who.hidden = true; }
     else {
       who.hidden = false;
-      who.appendChild(el("span", "who-name", t("who", { name: provName(pid), model: modelOf(pid) })));
-      who.appendChild(el("span", "who-to", data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
-      if (!data.set.chat) {
+      var isBi = !!C.PROVIDERS[pid].builtin;
+      who.appendChild(el("span", "who-name", isBi ? provName(pid) : t("who", { name: provName(pid), model: modelOf(pid) })));
+      who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
+      if (!data.set.chat && !isBi) {
         var tip = t("who.to", { host: hostOf(baseOf(pid)) });
         who.title = tip;
       }
     }
     var off = $("net");
-    var offline = typeof navigator !== "undefined" && navigator.onLine === false && pid && !C.PROVIDERS[pid].local;
+    var offline = typeof navigator !== "undefined" && navigator.onLine === false && pid && !C.PROVIDERS[pid].local && !C.PROVIDERS[pid].builtin;
     off.hidden = !offline;
     if (offline) off.textContent = t("off.line", { name: provName(pid) });
     $("new-btn").disabled = !!busy;
@@ -1332,6 +1546,9 @@
       var body = el("div", "md");
       drawMd(body, m.text, c);
       a.appendChild(body);
+      var cp = button(t("btn.copy"), "msg-copy", function () { copyText(m.text); });
+      cp.title = t("btn.copy");
+      a.appendChild(cp);
       host.appendChild(a);
     } else if (m.r === "tool") {
       (m.results || []).forEach(function (r) {
@@ -1354,6 +1571,8 @@
         else if (ui.k === "read") txt = t("tool.read", { title: ui.title || "" });
         else if (ui.k === "readNo") txt = t("tool.readNo", { title: ui.title || "" });
         else if (ui.k === "readGone") txt = t("tool.readGone", { title: ui.title || "" });
+        else if (ui.k === "sum") txt = t("tool.sum", { app: ui.app || "" });
+        else if (ui.k === "sumNo") txt = t("tool.sumNo", { app: ui.app || "" });
         else txt = t("tool.err");
         line.appendChild(el("span", "", txt));
         host.appendChild(line);
@@ -1361,6 +1580,30 @@
     } else if (m.r === "note") {
       host.appendChild(el("div", "note" + (m.kind === "err" ? " err" : ""), m.text));
     }
+  }
+
+  // The answer as written (Markdown kept), to paste anywhere.
+  function copyText(text) {
+    function fallback() {
+      var ta = el("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      ta.remove();
+      showToast(ok ? t("toast.copied") : t("toast.copyFail"));
+    }
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        navigator.clipboard.writeText(text).then(function () { showToast(t("toast.copied")); }, fallback);
+        return;
+      }
+    } catch (e) {}
+    fallback();
   }
 
   // An entry card (propose_entry). What it shows and what its button
@@ -1503,7 +1746,7 @@
     o0.value = "";
     sel.appendChild(o0);
     C.PROV_IDS.forEach(function (pid) {
-      var o = el("option", "", C.PROVIDERS[pid].name);
+      var o = el("option", "", provName(pid));
       o.value = pid;
       sel.appendChild(o);
     });
@@ -1522,6 +1765,7 @@
       var pid = sel.value;
       if (!pid) return;
       var P = C.PROVIDERS[pid];
+      if (P.builtin) { drawBuiltin(); return; }
       if (P.local) {
         var bl = label(provBox, "as-base", t("set.base"));
         var base = el("input", "dlg-input");
@@ -1650,6 +1894,49 @@
           mstat.classList.add("err");
         }).then(function () { lm.disabled = false; });
       }
+    }
+    // The browser's own model: its state, and the download (a click
+    // is needed for it).
+    function drawBuiltin() {
+      var st = el("p", "key-status");
+      st.setAttribute("role", "status");
+      provBox.appendChild(st);
+      var row = el("div", "row");
+      var get = button(t("set.bi.getBtn"), "small", function () {
+        var api = LM();
+        if (!api) return;
+        get.disabled = true;
+        st.textContent = t("set.bi.busy", { p: 0 });
+        Promise.resolve().then(function () {
+          return api.create({ monitor: function (m) {
+            try {
+              m.addEventListener("downloadprogress", function (e) {
+                st.textContent = t("set.bi.busy", { p: Math.round((e.loaded || 0) * 100) });
+              });
+            } catch (x) {}
+          } });
+        }).then(function (sess) {
+          try { if (sess && sess.destroy) sess.destroy(); } catch (x) {}
+          bi.st = "ok";
+          paint();
+          renderAll();
+        }, function (e) {
+          st.textContent = t("set.bi.fail", { msg: String(e && e.message || e).slice(0, 200) });
+          get.disabled = false;
+        });
+      });
+      row.appendChild(get);
+      provBox.appendChild(row);
+      function paint() {
+        var s0 = builtinState();
+        st.classList.toggle("ok", s0 === "ok");
+        st.textContent = s0 === "ok" ? t("set.bi.ok") : s0 === "get" ? t("set.bi.get") :
+                         s0 === "busy" ? t("set.bi.busy", { p: "…" }) : s0 === "none" ? t("set.bi.none") : "…";
+        row.hidden = !(s0 === "get" || s0 === "busy");
+        get.disabled = s0 === "busy";
+      }
+      paint();
+      checkBuiltin().then(function () { paint(); renderAll(); });
     }
     drawProv();
 
@@ -1974,7 +2261,7 @@
   // by itself. A dialog open or an answer running → ignored.
   function openTarget(tg) {
     if (!tg || typeof tg.ask !== "string" || busy || document.querySelector("dialog[open]")) return false;
-    var text = tg.ask.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 2000);
+    var text = tg.ask.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, MAX_INPUT);
     if (!text.trim()) return false;
     newChat();
     var box = $("input");
@@ -2000,7 +2287,8 @@
       var p = shell();
       if (p && typeof p.__orosTakeTarget === "function") pending = p.__orosTakeTarget("assistant");
     } catch (e) {}
-    Promise.all([loadChats(), loadKey(curProv() || "anthropic")]).then(function () {
+    var biP = curProv() === "browser" ? checkBuiltin() : null;
+    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), biP]).then(function () {
       renderAll();
       scrollEnd();
       if (pending) openTarget(pending);

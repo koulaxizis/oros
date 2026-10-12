@@ -289,6 +289,13 @@ button.row:hover, .row.click:hover { border-color: var(--accent); }
 /* ---------- 6. Agenda + Dashboard ---------- */
 .ag-sec { margin-bottom: 18px; }
 .ag-row { display: flex; align-items: center; gap: 8px; }
+#crm-stages .hint { margin-bottom: 12px; }
+.stg-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.stg-row input[type=text] { flex: 1 1 auto; min-width: 0; }
+.stg-row input.stg-prob { flex: 0 0 64px; width: 64px; }
+.stg-row .icon-btn:disabled { opacity: .35; cursor: default; }
+.stg-hidden { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.stg-hidden .dlg-lbl { flex-basis: 100%; }
 .ag-row .row { min-height: 52px; }
 .check {
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
@@ -423,6 +430,8 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .bar-row { grid-template-columns: 1fr auto; gap: 4px 10px; }
   .bar-row > span:first-child { grid-column: 1 / -1; }
   .facts { grid-template-columns: 1fr; gap: 2px; }
+  .stg-row { flex-wrap: wrap; margin-bottom: 12px; }
+  .stg-row input[type=text] { flex-basis: 100%; }
   .facts dd { margin-bottom: 6px; }
   .c-name { font-size: 18px; }
 }

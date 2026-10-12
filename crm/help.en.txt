@@ -21,6 +21,8 @@ Open follow-ups also show in [Today](app:today), where the tick marks one done i
 ## Pipeline
 A deal has a title, a value, a stage (`New`, `Contacted`, `Proposal`, `Negotiation`, `Won`, `Lost`), a chance in percent and an expected close day. On a wide screen drag a card to another column. On a phone pick a stage at the top and use the `⋯` button of a deal to move it. The totals show the value and the weighted value (value × chance).
 
+Under `Settings` › `Pipeline stages` you can rename a stage, change its default chance, move it up or down, add your own (up to 8 open stages) or hide the ones you do not use. A stage that still has deals cannot be hidden or deleted. `Won` and `Lost` stay as they are.
+
 ## Dashboard
 Open pipeline, won this month and this year, win rate, late follow-ups, customers you have not contacted for a while and new leads. Tap a tile to see the list behind it.
 

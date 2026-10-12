@@ -2482,12 +2482,19 @@
     return ((d.num || kindName(d.kind)) + (who ? " " + who : "")).slice(0, 100).replace(/[.\s]+$/, "") + ".pdf";
   }
   // mode: "save" (file dialog) | "share" (the device's share sheet)
-  function makePdf(d, mode) {
+  // done(blob) once the PDF is built, done(null) if it couldn't be.
+  function pdfBlob(d, done) {
     loadJsPdf(function (ok) {
-      if (!ok) { showToast(t("toast.pdfFail")); return; }
+      if (!ok) { done(null); return; }
       loadFonts(function (f) {
         var blob = null;
         try { blob = buildPdf(d, f); } catch (e) { try { console.error(e); } catch (x) {} }
+        done(blob);
+      });
+    });
+  }
+  function makePdf(d, mode) {
+    pdfBlob(d, function (blob) {
         if (!blob) { showToast(t("toast.pdfFail")); return; }
         var name = pdfName(d);
         if (mode === "share") {
@@ -2496,7 +2503,6 @@
           return;
         }
         saveBlob(blob, name, "application/pdf", ".pdf", "PDF");
-      });
     });
   }
   // Greek capitals carry no accents ("Πελάτης" → "ΠΕΛΑΤΗΣ").
@@ -2866,8 +2872,10 @@
     }).catch(function () { showToast(t("toast.fileGone")); });
   }
 
-  // Email: orOS Mail (an account on this device) or mailto:. The PDF
-  // is attached by hand (Mail's bridge carries text only).
+  // Email: orOS Mail (an account on this device) or mailto:. With Mail
+  // and the orOS disk, the PDF rides along: Mail's deep link is JSON, so
+  // the file goes to /internal/Invoices/ first and Mail gets its path.
+  // A record keeps its official file; a document gets a fresh PDF.
   function mailShell() {
     var shell = null;
     try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
@@ -2876,6 +2884,20 @@
       var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
       return m && Array.isArray(m.accounts) && m.accounts.length ? shell : null;
     } catch (e) { return null; }
+  }
+  // done(path) with the file to attach, or done(null) to send without.
+  function mailAttachment(d, done) {
+    var fs = orosFS();
+    if (!fs) { done(null); return; }
+    if (d.file) { done(d.file); return; }
+    if (d.kind === "ext") { done(null); return; }
+    var write = typeof fs.writeBlob === "function" ? fs.writeBlob : fs.write;
+    if (typeof write !== "function") { done(null); return; }
+    pdfBlob(d, function (blob) {
+      if (!blob) { done(null); return; }
+      var path = "/internal/Invoices/" + pdfName(d);
+      Promise.resolve(write.call(fs, path, blob)).then(function () { done(path); }, function () { done(null); });
+    });
   }
   function sendEmail(d) {
     var lang = d.plang || data.prof.plang || LANG;
@@ -2892,7 +2914,14 @@
     var to = (d.c && d.c.email) || "";
     var shell = mailShell();
     if (shell) {
-      shell.__orosOpenAt("mail", { compose: { to: to, subject: subj.slice(0, 300), body: body.slice(0, 20000) } });
+      var compose = { to: to, subject: subj.slice(0, 300), body: body.slice(0, 20000) };
+      var go = function (path) {
+        if (path) compose.attach = [{ path: path, name: path.split("/").pop() }];
+        shell.__orosOpenAt("mail", { compose: compose });
+        if (!path && d.kind !== "ext") showToast(t("toast.emailHint"));
+      };
+      mailAttachment(d, go);
+      return;
     } else {
       var href = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(body);
       var a = document.createElement("a");

@@ -348,3 +348,216 @@ test("Media Shelf link: find the linked item, build the add target", () => {
   assert.equal(C.estPagesBytes(240000), 100);
   assert.equal(C.estPagesBytes(0), 1);
 });
+
+test("read aloud: a section is cut into sentences, blocks and short parts", () => {
+  const tx = "Chapter OneIt was night. He said: “Go!” Then; nothing… The end";
+  const parts = (lang) => C.speechParts(tx, [11], lang).map((p) => tx.slice(p.a, p.b));
+  assert.deepEqual(parts("el"), ["Chapter One", "It was night.", "He said: “Go!”", "Then;", "nothing…", "The end"]);
+  assert.deepEqual(parts("en"), ["Chapter One", "It was night.", "He said: “Go!”", "Then; nothing…", "The end"],
+    "a semicolon only ends a sentence in Greek (its question mark)");
+  // no full stop for a long run: cut at a space before the limit
+  const long = "word ".repeat(200);
+  const lp = C.speechParts(long, [], "en", 100);
+  assert.ok(lp.length >= 10);
+  lp.forEach((p) => { assert.ok(p.b - p.a <= 100); assert.notEqual(long.charAt(p.a), " "); });
+  // 3.14 and e.g. inside words do not split; parts with no letters drop
+  assert.deepEqual(C.speechParts("Pi is 3.14 here. * * * Next.", [], "en").map((p) => "Pi is 3.14 here. * * * Next.".slice(p.a, p.b)),
+    ["Pi is 3.14 here.", "* * * Next."]);
+  assert.deepEqual(C.speechParts("  ...  ", [], "en"), []);
+  // offsets cover the text in order, never overlap
+  const g = "Ήταν νύχτα. Τι έγινε; Τίποτα.";
+  const gp = C.speechParts(g, [], "el");
+  assert.deepEqual(gp.map((p) => g.slice(p.a, p.b)), ["Ήταν νύχτα.", "Τι έγινε;", "Τίποτα."]);
+  for (let i = 1; i < gp.length; i++) assert.ok(gp[i].a >= gp[i - 1].b);
+  assert.equal(C.speechText("exam-\nple  of\ntext"), "example of text");
+  assert.equal(C.speechText("Line-\nEnd"), "Line- End", "a hyphen before a capital stays");
+  assert.equal(C.guessLang("Ήταν νύχτα και έβρεχε"), "el");
+  assert.equal(C.guessLang("It was night"), "en");
+  assert.equal(C.guessLang("123"), "");
+});
+
+test("reading stats: per device counters, max merge, streak and time left", () => {
+  const D1 = "dev0000001", D2 = "dev0000002";
+  let a = C.addReading(null, "2026-10-12", D1, B1, 120);
+  a = C.addReading(a, "2026-10-11", D1, B1, 70);
+  let b = C.addReading(null, "2026-10-12", D2, B1, 300);
+  b = C.addReading(b, "2026-10-10", D2, B2, 30);
+  const m = C.mergeStats(a, b);
+  assert.deepEqual(m.d["2026-10-12"], { [D1]: 120, [D2]: 300 });
+  assert.equal(C.bookSeconds(m, B1), 490);
+  // symmetric, idempotent, associative; a stale copy never lowers a counter
+  assert.deepEqual(C.mergeStats(b, a), m);
+  assert.deepEqual(C.mergeStats(m, m), m);
+  const c = C.addReading(a, "2026-10-12", D1, B1, 60);
+  assert.deepEqual(C.mergeStats(C.mergeStats(a, b), c), C.mergeStats(a, C.mergeStats(b, c)));
+  assert.equal(C.mergeStats(c, a).d["2026-10-12"][D1], 180);
+  // junk is dropped
+  const j = C.mergeStats({ d: { "x": { [D1]: 5 }, "2026-10-01": { "BAD!": 5, [D1]: -3, [D2]: "7" } }, b: { nope: { [D1]: 9 } } }, null);
+  assert.deepEqual(j, { d: {}, b: {} });
+  // only the latest 400 days are kept
+  let big = null;
+  for (let i = 0; i < 410; i++) big = C.addReading(big, C.dayBefore("2026-10-12", i), D1, null, 61);
+  const kept = Object.keys(big.d);
+  assert.equal(kept.length, 400);
+  assert.ok(!kept.includes(C.dayBefore("2026-10-12", 405)));
+  // summary
+  const s = C.statsSummary(m, "2026-10-12", 3);
+  assert.equal(s.today, 420);
+  assert.equal(s.week, 520);
+  assert.equal(s.streak, 2, "the 10th had under a minute");
+  assert.equal(s.best, 2);
+  assert.deepEqual(s.days.map((d) => d.d), ["2026-10-10", "2026-10-11", "2026-10-12"]);
+  assert.equal(C.statsSummary(m, "2026-10-13", 1).streak, 2, "today not read yet keeps the streak");
+  assert.equal(C.statsSummary(m, "2026-10-14", 1).streak, 0);
+  assert.equal(C.timeLeft(600, 250), 1800);
+  assert.equal(C.timeLeft(600, 20), null);
+  assert.equal(C.timeLeft(600, 1000), null);
+  // in the library state: left out while empty, merged when present
+  const st1 = state({ stats: a }), st2 = state({ stats: b });
+  assert.equal("stats" in C.mergeLibrary(state(), state()), false);
+  assert.deepEqual(C.mergeLibrary(st1, st2).stats, m);
+  assert.deepEqual(C.mergeLibrary(st1, st2), C.mergeLibrary(st2, st1));
+});
+
+test("Send to Notes: plain text, sections, notes, cut to fit", () => {
+  const b = C.normBook(book(B1, 1, { title: "Ζορμπάς", by: "Ν. Καζαντζάκης" }));
+  const mk = (i, q, n, lbl, k) => ({ id: "k00000" + i, b: B1, m: 1, k: k || "hl", loc: "e:1:" + i * 10, end: "e:1:" + (i * 10 + 5), q, n, lbl });
+  const marks = [mk(3, "τρίτο", null, "Β"), mk(1, "πρώτο   απόσπασμα", "σημείωση\nδεύτερη γραμμή", "Α"), mk(2, "δεύτερο", null, "Α"),
+    mk(4, "σελιδοδείκτης", null, "Β", "bm"), mk(5, "with note", "why", "Β", "bm"), { ...mk(6, "other book"), b: B2 }];
+  const r = C.notesPlain(b, marks, "el");
+  assert.equal(r.left, 0);
+  assert.equal(r.text, "Ν. Καζαντζάκης\n\nΑ\n\n• «πρώτο απόσπασμα»\n  σημείωση\n  δεύτερη γραμμή\n\n• «δεύτερο»\n\nΒ\n\n• «τρίτο»\n\n🔖 with note\n  why");
+  assert.doesNotMatch(r.text, /other book|σελιδοδείκτης/, "other books and bare bookmarks stay out");
+  const many = [];
+  for (let i = 0; i < 300; i++) many.push(mk(100 + i, "x".repeat(200), null, "S"));
+  const big = C.notesPlain(b, many, "en");
+  assert.ok(big.text.length <= 20000, "fits a Notes page");
+  assert.ok(big.left > 0);
+  assert.match(big.text, new RegExp("and " + big.left + " more"));
+});
+
+test("Today line: the book being read, today's time, streak; provider is read-only", () => {
+  const today = "2026-10-12", now = new Date(2026, 9, 12, 20).getTime();
+  let s = state({ books: [book(B1, 5, { title: "Ζορμπάς" }), book(B2, 5, { title: "Done", fin: "2026-10-01" })],
+    pos: { [B1]: { m: now - 3600e3, loc: "e:1:0", pct: 374 }, [B2]: { m: now - 60e3, loc: "e:9:0", pct: 1000 } } });
+  s = C.mergeLibrary(s, s);
+  assert.deepEqual(C.todayLine(s, today, now, "el"), { book: B1, title: "Διαβάζεις «Ζορμπάς» · 37%" });
+  let st = C.addReading(null, today, "dev0000001", B1, 1500);
+  st = C.addReading(st, C.dayBefore(today), "dev0000001", B1, 600);
+  s = C.mergeLibrary({ ...s, stats: st }, s);
+  assert.equal(C.todayLine(s, today, now, "en").title, "Reading “Ζορμπάς” · 37% · 25 min today · 2 days in a row");
+  assert.equal(C.todayLine(s, today, now + 15 * 86400e3, "en"), null, "not opened for two weeks: no line");
+  const prov = require("../library/today.js");
+  globalThis.LibCore = C;
+  const raw = JSON.parse(JSON.stringify(s)), snap = JSON.stringify(raw);
+  const rows = prov.collect({ today, now, lang: "en", readJSON: (k) => (k === "oros-library-data" ? raw : null) });
+  delete globalThis.LibCore;
+  assert.deepEqual(rows, [{ id: "reading", kind: "info", title: "Reading “Ζορμπάς” · 37% · 25 min today · 2 days in a row", target: { book: B1 } }]);
+  assert.equal(JSON.stringify(raw), snap);
+  assert.deepEqual(prov.keys, ["oros-library-data"]);
+  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8"));
+  const lib = (apps.apps || apps).find((a) => a.id === "library");
+  assert.deepEqual(lib.today, ["core.js", "today.js"]);
+});
+
+test("FB2 becomes a small EPUB: metadata, chapters, notes, pictures, all escaped", () => {
+  const fb = `<?xml version="1.0" encoding="windows-1253"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><author><first-name>Αλέξανδρος</first-name><last-name>Παπαδιαμάντης</last-name></author><book-title>Η Φόνισσα &amp; άλλα</book-title>
+<lang>el</lang><date value="1903-01-01">1903</date><coverpage><image l:href="#cov"/></coverpage><annotation><p>Μυθιστόρημα.</p></annotation></title-info></description>
+<body><title><p>Η Φόνισσα</p></title><epigraph><p>Στίχος</p><text-author>Κάποιος</text-author></epigraph>
+<section id="s1"><title><p>Κεφάλαιο 1</p></title><p onclick="x()">Η <emphasis>Χαδούλα</emphasis><a l:href="#n1" type="note">[1]</a> &lt;script&gt;alert(1)&lt;/script&gt;.</p><poem><stanza><v>Ένα</v></stanza></poem></section>
+<section><title><p>Κεφάλαιο 2</p></title><p>Δες <a l:href="#s1">πίσω</a>, <a l:href="javascript:alert(1)">κακό</a>, <a l:href="https://example.org/">έξω</a>.</p><image l:href="#pic"/></section></body>
+<body name="notes"><title><p>Σημειώσεις</p></title><section id="n1"><p>Η σημείωση.</p></section></body>
+<binary id="cov" content-type="image/png">iVBORw0K
+Ggo=</binary><binary id="pic" content-type="image/jpeg">/9j/</binary><binary id="x" content-type="text/html">PHNjcmlwdD4=</binary></FictionBook>`;
+  assert.equal(C.fb2Encoding(fb.slice(0, 200)), "windows-1253");
+  assert.equal(C.fb2Encoding("<FictionBook>"), "utf-8");
+  const b = C.fb2Book(fb);
+  assert.deepEqual(b.meta, { title: "Η Φόνισσα & άλλα", by: "Αλέξανδρος Παπαδιαμάντης", lang: "el", year: "1903", desc: "Μυθιστόρημα." });
+  assert.deepEqual(b.images.map((i) => [i.id, i.file, i.type, !!i.cover, i.b64]),
+    [["cov", "img/p0.png", "image/png", true, "iVBORw0KGgo="], ["pic", "img/p1.jpg", "image/jpeg", false, "/9j/"]], "only pictures, no other binaries");
+  assert.deepEqual(b.chapters.map((c) => [c.file, c.title]),
+    [["c0.xhtml", "Η Φόνισσα & άλλα"], ["c1.xhtml", "Κεφάλαιο 1"], ["c2.xhtml", "Κεφάλαιο 2"], ["notes.xhtml", "Σημειώσεις"]]);
+  const c1 = b.chapters[1].html, c2 = b.chapters[2].html;
+  assert.match(c1, /<a href="notes\.xhtml#n1" epub:type="noteref">\[1\]<\/a>/);
+  assert.match(c1, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.doesNotMatch(c1, /<script|onclick/);
+  assert.match(c2, /<a href="c1\.xhtml#s1">πίσω<\/a>/, "links between chapters find their file");
+  assert.doesNotMatch(c2, /javascript/);
+  assert.match(c2, /<a href="https:\/\/example\.org\/">έξω<\/a>/);
+  assert.match(c2, /<img src="img\/p1\.jpg" alt=""\/>/);
+  assert.match(b.chapters[3].html, /<section class="note" epub:type="footnote" id="n1">/);
+  // packed: the EPUB readers in core read it back
+  const files = C.packBook(b.meta, b.chapters, b.images.map((i) => ({ file: i.file, type: i.type, cover: i.cover, data: new Uint8Array(1) })), b.css);
+  assert.equal(C.parseContainer(files["META-INF/container.xml"]), "OEBPS/content.opf");
+  const opf = C.parseOpf(files["OEBPS/content.opf"], "OEBPS/content.opf");
+  assert.equal(opf.meta.title, "Η Φόνισσα & άλλα");
+  assert.equal(opf.meta.year, 1903);
+  assert.deepEqual(opf.spine.map((s) => s.path), ["OEBPS/c0.xhtml", "OEBPS/c1.xhtml", "OEBPS/c2.xhtml", "OEBPS/notes.xhtml"]);
+  assert.equal(opf.coverPath, "OEBPS/img/p0.png");
+  assert.deepEqual(C.parseNav(files["OEBPS/nav.xhtml"], "OEBPS/nav.xhtml").map((e) => e.t), ["Η Φόνισσα & άλλα", "Κεφάλαιο 1", "Κεφάλαιο 2", "Σημειώσεις"]);
+  assert.equal(C.fb2Book("<html><body>no</body></html>"), null);
+  // a title with markup characters stays text everywhere
+  const evil = C.fb2Book('<FictionBook><description><title-info><book-title>&lt;img src=x onerror=alert(1)&gt;"</book-title></title-info></description><body><p>x</p></body></FictionBook>');
+  const pk = C.packBook(evil.meta, evil.chapters, [], "");
+  assert.doesNotMatch(pk["OEBPS/content.opf"] + pk["OEBPS/nav.xhtml"] + pk["OEBPS/c0.xhtml"], /<img src=x/);
+});
+
+test("CBZ: pictures in natural order, ComicInfo details, kinds and filters", () => {
+  assert.deepEqual(C.cbzPages(["b/page10.jpg", "b/page2.jpg", "__MACOSX/b/._page1.jpg", "b/page1.JPG", "ComicInfo.xml", "b/.hidden.png", "b/notes.txt"]),
+    ["b/page1.JPG", "b/page2.jpg", "b/page10.jpg"]);
+  const info = C.comicInfo("<?xml version=\"1.0\"?><ComicInfo><Series>Asterix</Series><Number>3</Number><Title>Gladiator</Title><Writer>Goscinny</Writer><Penciller>Uderzo</Penciller><Year>1964</Year><LanguageISO>el</LanguageISO></ComicInfo>");
+  assert.deepEqual(info, { title: "Asterix #3: Gladiator", by: "Goscinny, Uderzo", year: "1964", lang: "el", desc: "" });
+  const bk = C.cbzBook(["p2.png", "p1.png"], {}, "My comic");
+  assert.equal(bk.meta.title, "My comic");
+  assert.deepEqual(bk.images.map((i) => [i.src, i.file, i.cover]), [["p1.png", "img/p0.png", true], ["p2.png", "img/p1.png", false]]);
+  assert.match(bk.chapters[0].html, /<body class="comic"><p class="comic"><img src="img\/p0\.png" alt=""\/><\/p>/);
+  assert.equal(C.cbzBook(["a.txt"], {}, "x"), null);
+  assert.deepEqual(["a.epub", "b.PDF", "c.fb2", "d.fb2.zip", "e.cbz", "f.zip", "g.cbr"].map(C.kindOf), ["epub", "pdf", "fb2", "fb2", "cbz", null, null]);
+  assert.deepEqual(["c.fb2", "e.cbz", "b.pdf"].map(C.formatOf), ["epub", "epub", "pdf"]);
+  assert.equal(C.maxBytesOf("e.cbz"), C.MAX_COMIC);
+  assert.equal(C.maxBytesOf("a.epub"), C.MAX_BYTES);
+  // kind rides on an EPUB record only; filters tell them apart
+  assert.equal(C.normBook(book(B1, 1, { kind: "cbz" })).kind, "cbz");
+  assert.equal(C.normBook(book(B1, 1, { kind: "exe" })).kind, undefined);
+  assert.equal(C.normBook(book(B1, 1, { fmt: "pdf", kind: "cbz" })).kind, undefined);
+  assert.equal(C.fmtLabel(C.normBook(book(B1, 1, { kind: "fb2" }))), "FB2");
+  const s = C.mergeLibrary(state({ books: [book(B1, 1), book(B2, 1, { kind: "cbz" })] }), null);
+  assert.deepEqual(C.viewBooks(s, { filter: "epub" }).map((b) => b.id), [B1]);
+  assert.deepEqual(C.viewBooks(s, { filter: "cbz" }).map((b) => b.id), [B2]);
+});
+
+test("look up: the word, Wiktionary as plain text, the Assistant's question", () => {
+  assert.equal(C.dictWord("  «Χαδούλα,» "), "Χαδούλα");
+  assert.equal(C.dictWord("ice   cream."), "ice cream");
+  assert.equal(C.dictWord("one two three four"), null);
+  assert.equal(C.dictWord("…"), null);
+  assert.equal(C.dictUrl("ice cream"), "https://en.wiktionary.org/api/rest_v1/page/definition/ice_cream?redirect=true");
+  assert.equal(C.dictPage("γριά", "el"), "https://el.wiktionary.org/wiki/%CE%B3%CF%81%CE%B9%CE%AC");
+  const j = {
+    fr: [{ partOfSpeech: "Adjective", language: "French", definitions: [{ definition: "y" }] }],
+    en: [{ partOfSpeech: "Noun", language: "English", definitions: [{ definition: "x" }] }],
+    el: [{ partOfSpeech: "Noun", language: "Greek", definitions: [
+      { definition: '<a href="/wiki/old" onclick="x()">old</a> woman<script>alert(1)</script>', examples: ["<i>η γριά</i> &amp; ο γέρος"] },
+      { definition: "<img src=x onerror=alert(1)>" }] }],
+    de: [{ language: "German", definitions: [{ definition: "z" }] }],
+    other: "junk"
+  };
+  assert.deepEqual(C.dictParse(j, "el-GR"), [
+    { code: "el", name: "Greek", items: [{ pos: "Noun", defs: [{ d: "old woman", ex: "η γριά & ο γέρος" }] }] },
+    { code: "en", name: "English", items: [{ pos: "Noun", defs: [{ d: "x" }] }] },
+    { code: "de", name: "German", items: [{ pos: "", defs: [{ d: "z" }] }] }]);
+  assert.deepEqual(C.dictParse(null, "en"), []);
+  assert.deepEqual(C.dictParse({ title: "Not found" }, "en"), []);
+  const bk = { title: "Ζορμπάς", by: "Ν. Καζαντζάκης", year: 1946 };
+  assert.equal(C.askText("word", bk, { word: "γριά", quote: "Η γριά Χαδούλα" }, "el"),
+    "Στο βιβλίο «Ζορμπάς» (Ν. Καζαντζάκης), τι σημαίνει «γριά» σε αυτή την πρόταση;\n\n«Η γριά Χαδούλα»");
+  assert.match(C.askText("book", bk, { pct: 374 }, "el"), /^Πες μου για το βιβλίο «Ζορμπάς» \(Ν\. Καζαντζάκης, 1946\): .*το 37%/);
+  const tx = "Κεφάλαιο 1Η γριά Χαδούλα ξαγρυπνούσε. Έβλεπε τον ουρανό.";
+  assert.equal(C.sentenceAround(tx, [10], 12, 16, "el"), "Η γριά Χαδούλα ξαγρυπνούσε.");
+  assert.equal(C.sentenceAround(tx, [10], 30, 45, "el"), "Η γριά Χαδούλα ξαγρυπνούσε. Έβλεπε τον ουρανό.");
+  assert.match(C.askText("book", bk, { pct: 374 }, "en"), /^Tell me about the book “Ζορμπάς” by Ν\. Καζαντζάκης \(1946\).*read 37% of it/);
+  const long = C.askText("passage", bk, { quote: "λ".repeat(5000) }, "el");
+  assert.equal(long.length, 2000);
+  assert.ok(long.endsWith("…»"));
+});
