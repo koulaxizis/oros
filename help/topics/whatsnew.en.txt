@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.04.00
+- New app Stock: business inventory with products, movements, reorder list and suppliers.
+
 ## Version 1.03.00
 - New app: CRM. A customer book with a sales pipeline, contact history and dated follow-ups. New menu category Business (Quote and Timesheet moved there).
 
