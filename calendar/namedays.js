@@ -21,6 +21,7 @@
 //   skeleton(name)              → match key (Greek or Latin input)
 //   celebrates(givenName, ymd)  → bool
 //   contactsCelebrating(contacts, ymd) → [{ id, name }]
+//   petBirthday(pet, ymd)       → years (≥ 1) on the screen pet's birthday, else 0
 //   cleanDays(json)             → sanitized observances data | null
 //   observancesOn(ymd, data)    → [{ id, en, el }]
 // ============================================================
@@ -282,6 +283,19 @@
     return out;
   }
 
+  // The screen pet's birthday (oros-pet-data "pet", birthTs ms): on
+  // every local-day anniversary after the year of birth → the age in
+  // years, else 0. One rule for the Calendar's pet feed and the Today
+  // summary.
+  function petBirthday(pet, ymd) {
+    if (!pet || typeof pet !== "object" || typeof pet.birthTs !== "number" || !isFinite(pet.birthTs) || !isYmd(ymd)) return 0;
+    var b = new Date(pet.birthTs), p = ymd.split("-");
+    var cell = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(b.getTime()) || isNaN(cell.getTime())) return 0;
+    if (cell.getMonth() !== b.getMonth() || cell.getDate() !== b.getDate()) return 0;
+    return cell.getFullYear() > b.getFullYear() ? cell.getFullYear() - b.getFullYear() : 0;
+  }
+
   /* ---------- 6. Observances (calendar/days.json) ----------
      Data, not code: each entry is one rule.
        { id, en, el, md: "MM-DD" }                     fixed date
@@ -358,7 +372,7 @@
   var api = {
     isYmd: isYmd, addDays: addDays, weekday: weekday, easter: easter,
     holidaysOn: holidaysOn, namesOn: namesOn, keysOn: keysOn,
-    skeleton: skeleton, celebrates: celebrates, contactsCelebrating: contactsCelebrating,
+    skeleton: skeleton, celebrates: celebrates, contactsCelebrating: contactsCelebrating, petBirthday: petBirthday,
     cleanDays: cleanDays, observancesOn: observancesOn, nthWeekday: nthWeekday,
     _NAMES_FIXED: NAMES_FIXED, _NAMES_EASTER: NAMES_EASTER
   };

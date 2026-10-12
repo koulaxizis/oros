@@ -681,13 +681,14 @@ function applyPetSettings(s) {
     }
     return Math.max(0, years);
   }
+  // The rule is calendar/namedays.js petBirthday (index.html loads it
+  // after this file; it is there by the first tick), shared with the
+  // Calendar's pet feed and the Today summary.
   function isBirthdayToday(now) {
-    var b = new Date(state.pet.birthTs || now);
-    if (isNaN(b.getTime())) return false;
-    var n = new Date(now);
-    return n.getMonth() === b.getMonth() &&
-           n.getDate() === b.getDate() &&
-           n.getFullYear() > b.getFullYear();   // birth day itself ≠ birthday
+    var ND = window.OrosNamedays;
+    if (!ND || typeof ND.petBirthday !== "function") return false;
+    var pet = { birthTs: typeof state.pet.birthTs === "number" ? state.pet.birthTs : now };
+    return ND.petBirthday(pet, tsLocalYmd(now) || "") > 0;   // birth day itself ≠ birthday
   }
   
     // ---------- 3. Derived stats (pure functions — no writes) ----------
