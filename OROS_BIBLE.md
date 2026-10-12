@@ -1701,7 +1701,7 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - `crm/core.js` gains `reminders`, `reminderText`, `calendarOn`, `custsForContact`. No data format change.
 - BR-CRM-INV (CRM side live, 1.25.00): CRM → Invoices `__orosOpenAt("invoices", { new: OrosCrmCore.invoicePrefill(cust, deal?, cur) })`; Invoices → CRM read-only `OrosInvoicesCore.byCrm(OrosInvoicesCore.parse(raw), crmId, today)`.
 - BR-CRM-Q (new, read-only, 1.25.00): `OrosQuoteCore.forClient(quoteData, { name, afm })` → `[{ id, num, date, due, status, cur, total }]` (total in currency units); CRM opens a row with `__orosOpenQuote(id)` and creates with `__orosOpenQuoteNew(OrosCrmCore.quotePrefill(cust, deal?, cur))`.
-- BR-CRM-MAIL (receiver live in CRM since 1.29.00; sender = Mail thread, a "Log in CRM" button under a message): `__orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } })`. email required (lower-cased, else ignored); subject ≤ 200, text ≤ 1800 chars, at = message time in ms. Prefill only.
+- BR-CRM-MAIL (receiver live in CRM since 1.29.00; sender live in Mail since 1.29.01, a "Log in CRM" button under a message): `__orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } })`. email required (lower-cased, else ignored); subject ≤ 200, text ≤ 1800 chars, at = message time in ms. Prefill only.
 
 ### "Send to someone" share links (BR-SHARE) — phase 1
 - **What.** One item from an app becomes a link `https://<orOS>/share/#<code>`. The item lives only in the URL fragment, which browsers never send to a server; `share/index.html` opens it locally, so the other person needs no account and no orOS. Chris 2026-10-12 chose this instead of a Messages chat (Part IX).
