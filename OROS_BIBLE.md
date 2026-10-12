@@ -5251,3 +5251,14 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
     - Import as past issues (st sent, `imp: 1`, n 0, nobody gets an e-mail) or as drafts. Ids are a hash of subject, date and length, so the same file twice adds nothing.
     - Capped at 500 issues and about 2.5 MB of Newsletter data in all.
 - Not tested: real feeds over a real relay, a real sending provider, real Buttondown / MailerLite exports, phones, Safari.
+
+### 2026-10-12 — Newsletter phase 3B: sign-up form, one-click unsubscribe (#251, relay #250) — 1.36.00
+- Newsletter v1.3.0 (phase 3B).
+  - Lists gain `form`: `{k, sec, priv (RSA-OAEP-256 private JWK), back, dev, at}`. It is registered with the relay op `nl` (`reg`), which keeps only the public key and the secret's SHA-256.
+  - The Inbox check (shell runner, every 10 minutes, and before sends) first pulls the waiting rows on the collecting device (`form.dev`), applies them on fresh data, merge-writes, then acks:
+    - sign-ups (decrypted AES-GCM + RSA-OAEP) become pending subscribers with src "form" and basis optin, so the engine sends the confirmation request;
+    - one-click unsubscribes (`tok` = token() without "nl-") turn the subscriber off.
+  - Issues of a list with a form carry `List-Unsubscribe: <https://relay/nl/u/k/tok>, <mailto:…>` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`. The footer link opens the relay's one-click page.
+  - The UI lives in the Subscribe link dialog: form HTML (no script, honeypot, list language), thank-you page (https), Collect here, and Turn the form off (relay `drop`). Deleting a list drops its form.
+  - A relay without D1 (`nostore`) is not an Inbox error.
+- Relay side merged in #250 (relay/newsletter.js, `/nl/*`, op `nl`); until Chris creates the D1 database and its binding `NL_DB` is added, the form pages answer 503 "not available". Not tested: the live relay, real Gmail one-click, phones, Safari.
