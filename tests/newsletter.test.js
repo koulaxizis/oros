@@ -209,7 +209,7 @@ test("preflight: errors and warnings", () => {
     ["err:noAudience", "err:noBody", "err:noChan", "err:noSubj"]);
   assert.deepEqual(keys(issue("iss-1", { subj: "BIG NEWS TODAY!!", blocks: [{ k: "p", t: "Hi {nmae}" }, { k: "btn", t: "Go", href: "" }] }),
     { chan: CHAN, inbox: false, aud: 1, imgBytes: C.LIM.imgBytes + 1 }),
-    ["err:badBlock", "warn:bigImgs", "warn:noInbox", "warn:placeholder", "warn:shouty", "warn:shouty"]);
+    ["err:badBlock", "warn:bigImgs", "warn:noInbox", "warn:placeholder", "warn:shouty"]);
   assert.equal(C.badPlaceholders("{name} {first|φίλε} {name|}"), false);
   assert.equal(C.badPlaceholders("{email}"), true);
 });

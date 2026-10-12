@@ -44,11 +44,8 @@
   var C = window.OrosNewsletterCore;
   var R = window.OrosNewsletterRender;
   var STORAGE_KEY = C.STORAGE_KEY;
+  var E = window.OrosNewsletterEngine;
   var PREFS_KEY = "oros-newsletter-prefs";
-  var DB_NAME = "oros-newsletter";
-  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
-  var CALL_TIMEOUT = 45000, SEND_TIMEOUT = 120000;
-  var INBOX_EVERY = 10 * 60 * 1000;
   var SCRIPT_V = (function () {
     var m = ((document.currentScript && document.currentScript.src) || "").match(/[?&]v=([^&#]+)/);
     return m ? m[1] : "";
@@ -88,7 +85,7 @@
       "inbox.never": "The Inbox has not been checked on this device yet.",
       "inbox.at": "Inbox checked {t}.", "inbox.no": "This list's sending account has no Inbox here: unsubscribe and subscribe e-mails can't be read automatically. Set one in Lists › Sending accounts.",
       "inbox.result": "Inbox: {u} unsubscribed, {s} new, {c} confirmed, {b} bounced",
-      "inbox.nothing": "Inbox: nothing new", "inbox.fail": "Couldn't read the Inbox ({e})",
+      "inbox.nothing": "Inbox: nothing new", "inbox.fail": "Couldn't read the Inbox ({e})", "inbox.wait": "orOS is still syncing: try again in a minute",
       "lists.h": "Lists", "lists.none": "No lists yet.", "lists.new": "New list", "lists.edit": "Edit",
       "lists.subLink": "Subscribe link", "lists.check": "Check domain", "lists.via": "via {c}", "lists.noChan": "no sending account",
       "chans.h": "Sending accounts", "chans.hint": "The account each list sends from: one of your Mail accounts, or a sending provider (Brevo, Amazon SES, Mailgun, Postmark, SendGrid…) for bigger lists.", "chans.add": "Add sending account", "chans.none": "No sending accounts yet.",
@@ -171,7 +168,7 @@
       "bar.sending": "Sending \"{s}\": {a} of {b}", "bar.inv": "Sending confirmation requests: {n} left",
       "bar.cap": "Daily limit of {c} reached: sending goes on tomorrow.", "bar.offline": "Offline: sending waits for the connection.",
       "bar.wait": "The server asked to slow down: trying again in a few minutes.", "bar.paused": "Paused: \"{s}\"",
-      "bar.other": "\"{s}\" is being sent from another device.", "bar.pause": "Pause", "bar.resume": "Resume", "bar.open": "Open",
+      "bar.other": "\"{s}\" is being sent from another device.", "bar.here": "Another orOS window on this device is sending.", "bar.pause": "Pause", "bar.resume": "Resume", "bar.open": "Open",
       "err.offline": "you are offline", "err.network": "no connection to the relay", "err.timeout": "the server didn't answer in time",
       "err.auth": "the server refused the login: check the password", "err.nopass": "the password isn't on this device",
       "err.noacct": "the Mail account is gone", "err.nosmtp": "the Mail account has no outgoing server",
@@ -220,7 +217,7 @@
       "inbox.never": "Τα Εισερχόμενα δεν έχουν ελεγχθεί ακόμα σε αυτή τη συσκευή.",
       "inbox.at": "Τα Εισερχόμενα ελέγχθηκαν {t}.", "inbox.no": "Ο λογαριασμός αποστολής αυτής της λίστας δεν έχει Εισερχόμενα εδώ: τα email εγγραφής και διαγραφής δεν διαβάζονται αυτόματα. Όρισέ τα στις Λίστες › Λογαριασμοί αποστολής.",
       "inbox.result": "Εισερχόμενα: {u} διαγραφές, {s} νέοι, {c} επιβεβαιώσεις, {b} επιστροφές",
-      "inbox.nothing": "Εισερχόμενα: τίποτα νέο", "inbox.fail": "Δεν διαβάστηκαν τα Εισερχόμενα ({e})",
+      "inbox.nothing": "Εισερχόμενα: τίποτα νέο", "inbox.fail": "Δεν διαβάστηκαν τα Εισερχόμενα ({e})", "inbox.wait": "Το orOS συγχρονίζει ακόμα: δοκίμασε ξανά σε ένα λεπτό",
       "lists.h": "Λίστες", "lists.none": "Δεν υπάρχουν λίστες ακόμα.", "lists.new": "Νέα λίστα", "lists.edit": "Επεξεργασία",
       "lists.subLink": "Σύνδεσμος εγγραφής", "lists.check": "Έλεγχος domain", "lists.via": "μέσω {c}", "lists.noChan": "χωρίς λογαριασμό αποστολής",
       "chans.h": "Λογαριασμοί αποστολής", "chans.hint": "Ο λογαριασμός από τον οποίο στέλνει κάθε λίστα: ένας από τους λογαριασμούς σου στο Mail ή ένας πάροχος αποστολής (Brevo, Amazon SES, Mailgun, Postmark, SendGrid…) για μεγαλύτερες λίστες.", "chans.add": "Προσθήκη λογαριασμού αποστολής", "chans.none": "Δεν υπάρχουν λογαριασμοί αποστολής ακόμα.",
@@ -303,7 +300,7 @@
       "bar.sending": "Αποστολή «{s}»: {a} από {b}", "bar.inv": "Αποστολή αιτημάτων επιβεβαίωσης: απομένουν {n}",
       "bar.cap": "Έφτασε το ημερήσιο όριο των {c}: η αποστολή συνεχίζει αύριο.", "bar.offline": "Εκτός σύνδεσης: η αποστολή περιμένει τη σύνδεση.",
       "bar.wait": "Ο διακομιστής ζήτησε πιο αργό ρυθμό: νέα προσπάθεια σε λίγα λεπτά.", "bar.paused": "Σε παύση: «{s}»",
-      "bar.other": "Το «{s}» στέλνεται από άλλη συσκευή.", "bar.pause": "Παύση", "bar.resume": "Συνέχεια", "bar.open": "Άνοιγμα",
+      "bar.other": "Το «{s}» στέλνεται από άλλη συσκευή.", "bar.here": "Στέλνει ένα άλλο παράθυρο του orOS σε αυτή τη συσκευή.", "bar.pause": "Παύση", "bar.resume": "Συνέχεια", "bar.open": "Άνοιγμα",
       "err.offline": "είσαι εκτός σύνδεσης", "err.network": "δεν υπάρχει σύνδεση με το relay", "err.timeout": "ο διακομιστής δεν απάντησε εγκαίρως",
       "err.auth": "ο διακομιστής δεν δέχτηκε τη σύνδεση: έλεγξε τον κωδικό", "err.nopass": "ο κωδικός δεν υπάρχει σε αυτή τη συσκευή",
       "err.noacct": "ο λογαριασμός του Mail δεν υπάρχει πια", "err.nosmtp": "ο λογαριασμός του Mail δεν έχει διακομιστή εξερχομένων",
@@ -346,7 +343,7 @@
     if (text !== undefined && text !== null) n.textContent = text;
     return n;
   }
-  function stamp(prev) { return Math.max(Date.now(), (prev || 0) + 1); }
+  var stamp = E.stamp, dayKey = E.dayKey;
   function when(ms) {
     if (!ms) return "";
     if (Date.now() - ms < 60000) return t("time.now");
@@ -355,15 +352,19 @@
         { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch (e) { return new Date(ms).toISOString().slice(0, 16).replace("T", " "); }
   }
-  function dayKey(ms) {
-    var d = new Date(ms || Date.now());
-    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
-  }
   function errText(e) {
     var code = e && e.code ? e.code : "relay";
     var key = "err." + code;
     var s = t(key, { m: String(e && e.msg || "").slice(0, 120) });
     return s === key ? t("err.relay") : s;
+  }
+  // A paused issue's stored reason: a code ("auth", "no:<server text>"),
+  // or phase 1's already translated text.
+  function errStored(v) {
+    v = String(v || "");
+    var m = /^no:([\s\S]*)$/.exec(v);
+    if (m) return errText({ code: "no", msg: m[1] });
+    return /^[a-z-]{1,20}$/.test(v) ? errText({ code: v }) : v;
   }
 
   var UI = {
@@ -398,15 +399,26 @@
     data = C.empty();
   }
   var saveFailShown = false;
+  // Merge-on-write: what orOS (sending with this window closed), another
+  // tab or a sync pull wrote meanwhile is kept, never undone.
   function saveNow() {
-    data = C.normalize(data);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      saveFailShown = false;
-    } catch (e) {
+    var out = E.write(data);
+    if (out) { data = out; saveFailShown = false; }
+    else {
+      data = C.normalize(data);
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
     }
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    dirty();
+  }
+  function dirty() { if (window.__orosSyncApi) window.__orosSyncApi.dirty(); }
+  // Someone else wrote (orOS sending, another tab): take it in quietly.
+  function reloadQuiet() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    var d = C.parse(raw);
+    if (!d || JSON.stringify(d) === JSON.stringify(data)) return;
+    data = d;
+    refreshQuiet();
   }
   var TABS = ["issues", "subs", "lists"];
   function loadPrefs() {
@@ -417,11 +429,9 @@
     prefs = {
       tab: TABS.indexOf(v.tab) >= 0 ? v.tab : "issues",
       list: typeof v.list === "string" ? v.list.slice(0, 40) : "",
-      dev: typeof v.dev === "string" && /^[a-z0-9]{6,20}$/.test(v.dev) ? v.dev : C.randomId("d", null).slice(0, 11),
-      used: v.used && typeof v.used === "object" ? v.used : {},
-      inbox: v.inbox && typeof v.inbox === "object" ? v.inbox : {},
       f: { st: typeof f.st === "string" ? f.st.slice(0, 10) : "", tag: typeof f.tag === "string" ? f.tag.slice(0, 40) : "" }
     };
+    E.devState();                 // moves phase 1's device fields out of prefs first
     savePrefs();
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
@@ -450,173 +460,10 @@
   }
   function restore(coll, rec) { put(coll, rec); }
 
-  // ---------- 4. Mail accounts, passwords, relay ----------
-  function mailData() {
-    try {
-      var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
-      return d && Array.isArray(d.accounts) ? d : null;
-    } catch (e) { return null; }
-  }
-  function mailAccounts() {
-    var d = mailData();
-    if (!d) return [];
-    var tombs = d.tombs || {};
-    return d.accounts.filter(function (a) {
-      return a && typeof a.id === "string" && /^[a-z0-9]{6,40}$/.test(a.id) && a.imap && a.imap.host && a.email &&
-             !(tombs[a.id] >= a.m);
-    });
-  }
-  function mailAccount(id) {
-    var all = mailAccounts();
-    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
-    return null;
-  }
-  function relayUrl() {
-    var d = mailData();
-    var u = d && d.relay && typeof d.relay.url === "string" ? d.relay.url.trim().replace(/\/+$/, "") : "";
-    return /^https:\/\/[^\s]+$/.test(u) ? u : DEFAULT_RELAY;
-  }
-  function idbReq(r) {
-    return new Promise(function (resolve, reject) {
-      r.onsuccess = function () { resolve(r.result); };
-      r.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); reject(r.error); };
-    });
-  }
-  // Mail's database, opened WITHOUT a version (never blocks Mail's
-  // upgrades) and closed after reading. Read-only.
-  function mailPass(acctId) {
-    return new Promise(function (resolve) {
-      var rq;
-      try { rq = indexedDB.open("oros-mail"); } catch (e) { resolve(null); return; }
-      rq.onupgradeneeded = function () { try { rq.transaction.abort(); } catch (e) {} };
-      rq.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); resolve(null); };
-      rq.onblocked = function () { resolve(null); };
-      rq.onsuccess = function () {
-        var d = rq.result;
-        if (!d.objectStoreNames.contains("keys") || !d.objectStoreNames.contains("creds")) { d.close(); resolve(null); return; }
-        var tx = d.transaction(["keys", "creds"], "readonly");
-        Promise.all([idbReq(tx.objectStore("keys").get("device")), idbReq(tx.objectStore("creds").get(acctId))]).then(function (r) {
-          d.close();
-          var key = r[0], rec = r[1];
-          if (!key || !rec || !rec.iv || !rec.data) return null;
-          return crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, key, rec.data)
-            .then(function (plain) { return new TextDecoder().decode(plain); });
-        }).then(resolve, function () { try { d.close(); } catch (e) {} resolve(null); });
-      };
-    });
-  }
-  // This app's own database: provider passwords, sealed with a
-  // non-extractable device key (the raw key can't be read by script).
-  var ownDbP = null;
-  function ownDb() {
-    if (ownDbP) return ownDbP;
-    ownDbP = new Promise(function (resolve, reject) {
-      var rq = indexedDB.open(DB_NAME, 1);
-      rq.onupgradeneeded = function () {
-        var d = rq.result;
-        if (!d.objectStoreNames.contains("keys")) d.createObjectStore("keys");
-        if (!d.objectStoreNames.contains("creds")) d.createObjectStore("creds");
-      };
-      rq.onsuccess = function () { resolve(rq.result); };
-      rq.onerror = function () { ownDbP = null; reject(rq.error); };
-    });
-    return ownDbP;
-  }
-  function ownGet(store, key) {
-    return ownDb().then(function (d) { return idbReq(d.transaction(store, "readonly").objectStore(store).get(key)); });
-  }
-  function ownPut(store, key, val) {
-    return ownDb().then(function (d) { return idbReq(d.transaction(store, "readwrite").objectStore(store).put(val, key)); });
-  }
-  function ownDel(store, key) {
-    return ownDb().then(function (d) { return idbReq(d.transaction(store, "readwrite").objectStore(store)["delete"](key)); });
-  }
-  function deviceKey() {
-    return ownGet("keys", "device").then(function (k) {
-      if (k) return k;
-      return crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"])
-        .then(function (nk) { return ownPut("keys", "device", nk).then(function () { return nk; }); });
-    });
-  }
-  var passCache = {};
-  function savePass(chanId, pass) {
-    return deviceKey().then(function (key) {
-      var iv = crypto.getRandomValues(new Uint8Array(12));
-      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(pass))
-        .then(function (sealed) { return ownPut("creds", chanId, { iv: iv.buffer, data: sealed }); })
-        .then(function () { passCache[chanId] = pass; });
-    });
-  }
-  function ownPass(chanId) {
-    if (passCache[chanId] !== undefined) return Promise.resolve(passCache[chanId]);
-    return ownGet("creds", chanId).then(function (rec) {
-      if (!rec) return null;
-      return deviceKey().then(function (key) {
-        return crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, key, rec.data);
-      }).then(function (plain) {
-        var p = new TextDecoder().decode(plain);
-        passCache[chanId] = p;
-        return p;
-      });
-    })["catch"](function () { return null; });
-  }
-  function hasOwnPass(chanId) { return ownPass(chanId).then(function (p) { return !!p; }); }
-
-  function relay(body, ms) {
-    if (!navigator.onLine) return Promise.reject({ code: "offline" });
-    var ctl = new AbortController();
-    var timer = setTimeout(function () { ctl.abort(); }, ms || CALL_TIMEOUT);
-    return fetch(relayUrl() + "/v1", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-      signal: ctl.signal, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
-    }).then(function (r) {
-      return r.json()["catch"](function () { return null; });
-    }, function () {
-      throw { code: ctl.signal.aborted ? "timeout" : "network" };
-    }).then(function (j) {
-      clearTimeout(timer);
-      if (!j || typeof j !== "object") throw { code: "relay" };
-      if (!j.ok) throw { code: (j.error && j.error.code) || "relay", msg: (j.error && j.error.msg) || "" };
-      return j.data;
-    }, function (e) { clearTimeout(timer); throw e; });
-  }
-  function imapOf(a, pw) {
-    return { host: a.imap.host, port: a.imap.port, sec: a.imap.sec, user: a.imap.user || a.email, pass: pw };
-  }
-  // → { acct, smtp, hdr } for the relay's "send" / "smtpcheck"
-  function sendCreds(ch) {
-    if (!ch) return Promise.reject({ code: "nochan" });
-    if (ch.kind === "mail") {
-      var a = mailAccount(ch.acct);
-      if (!a) return Promise.reject({ code: "noacct" });
-      if (!a.smtp) return Promise.reject({ code: "nosmtp" });
-      return mailPass(a.id).then(function (pw) {
-        if (!pw) throw { code: "nopass" };
-        var acct = imapOf(a, pw);
-        return { acct: acct, smtp: { host: a.smtp.host, port: a.smtp.port, sec: a.smtp.sec, user: a.smtp.user || acct.user, pass: pw } };
-      });
-    }
-    return ownPass(ch.id).then(function (pw) {
-      if (!pw) throw { code: "nopass" };
-      var p = C.PRESETS[ch.preset] || {};
-      // The relay checks an IMAP account on every mail operation even
-      // when "send" files no copy (no "sent"): these fields are
-      // validated, never used to connect.
-      return { acct: { host: ch.host, port: 993, sec: "tls", user: ch.user || "user", pass: pw },
-               smtp: { host: ch.host, port: ch.port, sec: ch.sec, user: ch.user, pass: pw },
-               hdr: p.hdr || null };
-    });
-  }
-  function inboxAccount(ch) {
-    if (!ch) return null;
-    return mailAccount(ch.kind === "mail" ? ch.acct : ch.inbox);
-  }
-  function sendBin(ch, from, to, bin) {
-    var M = window.orosMailCompose;
-    return sendCreds(ch).then(function (cr) {
-      return relay({ op: "send", acct: cr.acct, smtp: cr.smtp, from: from, rcpt: [to], raw: M.b64(bin) }, SEND_TIMEOUT);
-    });
-  }
+  // ---------- 4. Mail accounts, passwords, relay (engine.js) ----------
+  var mailAccounts = E.mailAccounts, mailAccount = E.mailAccount, inboxAccount = E.inboxAccount;
+  var savePass = E.savePass, sendCreds = E.sendCreds, relay = E.relay;
+  function hasOwnPass(chanId) { return E.ownPass(chanId).then(function (p) { return !!p; }); }
 
   // ---------- 5. Render: issues ----------
   function chanName(ch) {
@@ -723,10 +570,10 @@
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
     acts.appendChild(mini(t("subs.export"), exportCsv));
     var ch = C.chan(data, l.chan), inbox = inboxAccount(ch);
-    if (inbox) acts.appendChild(mini(t("subs.inbox"), function () { checkInbox(true); }));
+    if (inbox) acts.appendChild(mini(t("subs.inbox"), inboxNow));
     var due = C.invitesDue(data, l.id).length;
-    if (due) acts.appendChild(mini(t("subs.invite", { n: due }), function () { engine.kick(); }));
-    var at = prefs.inbox.at || 0;
+    if (due) acts.appendChild(mini(t("subs.invite", { n: due }), kick));
+    var at = E.devState().inbox.at || 0;
     $("inbox-note").textContent = !inbox ? t("inbox.no") : (at ? t("inbox.at", { t: when(at) }) : t("inbox.never"));
 
     var q = C.fold($("sq").value.trim());
@@ -1078,16 +925,16 @@
       bar.appendChild(fillB);
       body.appendChild(bar);
     }
-    if (x.err && x.st === "paused") body.appendChild(el("div", "banner", t("vw.err", { e: x.err })));
-    var now = Date.now();
-    if (x.st === "sending" && !C.canSend(x, prefs.dev, now)) body.appendChild(el("div", "banner info", t("vw.other")));
+    if (x.err && x.st === "paused") body.appendChild(el("div", "banner", t("vw.err", { e: errStored(x.err) })));
+    var now = Date.now(), dev = E.devState().dev;
+    if (x.st === "sending" && !C.canSend(x, dev, now)) body.appendChild(el("div", "banner info", t("vw.other")));
     var acts = el("div", "acts");
     if (x.st === "sending") {
-      if (C.canSend(x, prefs.dev, now)) acts.appendChild(btn(t("vw.pause"), "", function () { pauseIssue(x.id, ""); }));
+      if (C.canSend(x, dev, now)) acts.appendChild(btn(t("vw.pause"), "", function () { pauseIssue(x.id, ""); }));
     }
     if (x.st === "paused") {
       acts.appendChild(btn(t("vw.resume"), "primary", function () { resumeIssue(x.id); }));
-      acts.appendChild(btn(t("vw.stop"), "danger", function () { finishIssue(x.id); renderAll(); }));
+      acts.appendChild(btn(t("vw.stop"), "danger", function () { finishIssue(x.id); }));
     }
     acts.appendChild(btn(t("ed.preview"), "", function () { previewDialog(x); }));
     acts.appendChild(btn(t("vw.web"), "", function () { saveWebPage(x); }));
@@ -1386,8 +1233,7 @@
       left.push(btn(t("ch.delete"), "danger", function () {
         if (C.live(data.lists).some(function (l) { return l.chan === ch.id; })) { showToast(t("ch.inUse")); return; }
         remove("chans", ch.id);
-        ownDel("creds", ch.id)["catch"](function () {});
-        delete passCache[ch.id];
+        E.delPass(ch.id);
         dlg.close();
         renderAll();
       }));
@@ -1491,7 +1337,7 @@
       saveNow();
       dlg.close();
       renderAll();
-      if (f.basis.value === "optin") engine.kick();
+      if (f.basis.value === "optin") kick();
     });
     openDialog(dlg, s ? f.name : f.email);
   }
@@ -1529,7 +1375,7 @@
       dlg.close();
       renderAll();
       showToast(plan.add.length === 1 ? t("imp.done1") : t("imp.done", { n: plan.add.length }));
-      if (f.basis.value === "optin") engine.kick();
+      if (f.basis.value === "optin") kick();
     });
     okBtn = acts.lastChild;
     update();
@@ -1618,24 +1464,8 @@
   }
 
   // ---------- 11. Preview, test, check, send ----------
-  var imgData = {};        // path → { bin, type, url (data:) } this session
-  function loadImages(x) {
-    var fs = orosFS();
-    var paths = R.blocksOf(x).filter(function (b) { return b.k === "img" && b.f; }).map(function (b) { return b.f; });
-    var todo = paths.filter(function (p, i) { return paths.indexOf(p) === i && !imgData[p]; });
-    if (!todo.length) return Promise.resolve(true);
-    if (!fs) return Promise.resolve(false);
-    return Promise.all(todo.map(function (p) {
-      return fs.readBlob(p).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
-        var u8 = new Uint8Array(buf), bin = "";
-        for (var i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-        var type = /\.png$/.test(p) ? "image/png" : "image/jpeg";
-        imgData[p] = { bin: bin, type: type, url: "data:" + type + ";base64," + btoa(bin) };
-        return true;
-      })["catch"](function () { return false; });
-    })).then(function (r) { return r.every(Boolean); });
-  }
-  function cidOf(path) { return path.split("/").pop().replace(/[^A-Za-z0-9._-]/g, "") + "@oros"; }
+  var imgData = E.images;   // path → { bin, type, url (data:) } this window
+  function loadImages(x) { return E.loadImages(x, orosFS()); }
   function previewDialog(x) {
     if (!x) return;
     var l = C.list(data, x.list);
@@ -1678,29 +1508,6 @@
                      e.html + "</body></html>";
     });
   }
-  // One message for one subscriber (or a test) → bin
-  function buildFor(x, l, s, opts) {
-    opts = opts || {};
-    var M = window.orosMailCompose;
-    var lang = (s && s.lang) || l.lang;
-    var box = l.reply || l.from;
-    var tok = s ? C.token(l, s.id) : "nl-test";
-    var unsub = s ? R.mailto(box, "unsubscribe " + tok) : "";
-    var inline = [];
-    var e = R.email({ issue: x, list: l, sub: s, lang: lang, test: !!opts.test, unsub: unsub, tok: tok, mailbox: box,
-                      img: function (b) {
-                        var d = imgData[b.f];
-                        if (!d) return "";
-                        var cid = cidOf(b.f);
-                        if (!inline.some(function (i) { return i.cid === cid; })) inline.push({ cid: cid, type: d.type, bin: d.bin });
-                        return "cid:" + cid;
-                      } });
-    return R.message(M, {
-      from: { name: l.fromName, addr: l.from }, to: { name: s ? s.name : "", addr: opts.to || s.email },
-      reply: l.reply, subject: e.subject, text: e.text, html: e.html, inline: inline,
-      listId: l.id, listName: l.name, unsub: unsub, tag: x.id, hdr: opts.hdr
-    });
-  }
   function testDialog(x) {
     if (!x) return;
     var l = C.list(data, x.list);
@@ -1719,10 +1526,10 @@
         return sendCreds(ch);
       }).then(function (cr) {
         var sample = C.audience(data, x)[0] || null;
-        var msg = buildFor(x, l, sample, { test: true, to: addr, hdr: cr.hdr });
-        return sendBin(ch, l.from, addr, msg.bin);
+        var msg = E.buildFor(x, l, sample, { test: true, to: addr, hdr: cr.hdr });
+        return E.sendBin(ch, l.from, addr, msg.bin);
       }).then(function () {
-        countUsed(ch.id);
+        E.countUsed(ch.id);
         showToast(t("ts.sent", { a: addr }));
       }, function (e) { showToast(t("toast.testFail", { e: errText(e) })); });
     });
@@ -1780,60 +1587,56 @@
       var y = copy(C.issue(data, x.id));
       if (!y || y.st !== "draft") { dlg.close(); return; }
       var now = Date.now();
-      y.st = "sending"; y.start = now; y.lock = { dev: prefs.dev, at: now }; y.err = ""; y.fail = {}; y.n = 0;
+      y.st = "sending"; y.start = now; y.lock = { dev: E.devState().dev, at: now }; y.err = ""; y.fail = {}; y.n = 0;
       put("issues", y);
       dlg.close();
       viewId = y.id;
       showView("view");
-      engine.kick();
+      kick();
     });
     var go = acts.lastChild;
     go.disabled = true;
     typed.addEventListener("input", function () { go.disabled = typed.value.trim() !== String(aud); typed.classList.remove("bad"); });
     openDialog(dlg, typed);
   }
-  function pauseIssue(id, err) {
-    var x = C.issue(data, id);
-    if (!x || (x.st !== "sending" && x.st !== "paused")) return;
-    var y = copy(x);
-    y.st = "paused"; y.lock = null; y.err = err || "";
-    put("issues", y);
+  // Issue state changes go through engine.js (re-read, change, merge-write).
+  function changed(out) {
+    if (out) { data = out; dirty(); }
     renderAll();
+    kick();
   }
-  function resumeIssue(id) {
-    var x = C.issue(data, id);
-    if (!x || x.st !== "paused") return;
-    var y = copy(x);
-    y.st = "sending"; y.lock = { dev: prefs.dev, at: Date.now() }; y.err = "";
-    put("issues", y);
-    renderAll();
-    engine.kick();
-  }
-  function finishIssue(id) {
-    var x = C.issue(data, id);
-    if (!x) return;
-    var y = copy(x);
-    var p = C.progress(data, x);
-    y.st = "sent"; y.done = Date.now(); y.n = p.sent; y.lock = null; y.err = "";
-    put("issues", y);
-    return y;
-  }
+  function pauseIssue(id) { changed(E.pause(id, "")); }
+  function resumeIssue(id) { changed(E.resume(id, E.devState().dev)); }
+  function finishIssue(id) { changed(E.finish(id) ? E.read() : null); }
 
-  // ---------- 12. Sending engine ----------
-  // One message at a time while Newsletter is open: confirmation
-  // requests first, then the issue being sent. Paced by the sending
-  // account's "seconds between messages", stopped by its daily limit
-  // (counted on this device), a sent subscriber is recorded in the
-  // synced grow-only set before the next one goes, so nobody gets an
-  // issue twice, not even from a second device.
-  function countUsed(chanId) {
-    var k = dayKey();
-    var u = prefs.used[chanId];
-    prefs.used[chanId] = { d: k, n: (u && u.d === k ? u.n : 0) + 1 };
-    Object.keys(prefs.used).forEach(function (id) { if (prefs.used[id].d !== k) delete prefs.used[id]; });
-    savePrefs();
+  // ---------- 12. Sending ----------
+  // engine.js does the sending. Inside orOS the shell runs it
+  // (newsletter/runner.js), so an issue goes on, a scheduled issue
+  // starts and the Inbox is read with this window closed; this window
+  // only shows the state and kicks it after a change. Opened on its
+  // own (no runner), the window runs its own engine as in phase 1.
+  var runner = null, engine = null;
+  function findRunner() {
+    try {
+      var r = window.parent && window.parent !== window ? window.parent.orosNewsletterRunner : null;
+      if (r && r.v >= 1 && typeof r.kick === "function") runner = r;
+    } catch (e) {}
   }
-  function capLeft(ch) { return ch.cap - C.usedToday(prefs.used, ch.id, dayKey()); }
+  function kick() { if (runner) runner.kick(); else if (engine) engine.kick(); }
+  function sendState() {
+    try { return (runner ? runner.state() : engine ? engine.state() : null) || { k: "" }; } catch (e) { return { k: "" }; }
+  }
+  function inboxNow() {
+    var p = runner ? runner.checkInbox() : engine ? engine.checkInbox() : null;
+    if (!p) return;
+    p.then(function (tally) {
+      reloadQuiet();
+      if (tally.err && tally.err.code === "wait-sync") showToast(t("inbox.wait"));
+      else if (tally.err) showToast(t("inbox.fail", { e: errText(tally.err) }));
+      else showToast(tally.u + tally.s + tally.c + tally.b ? t("inbox.result", tally) : t("inbox.nothing"));
+      renderAll();
+    });
+  }
   var wakeLock = null;
   function holdAwake(on) {
     try {
@@ -1845,143 +1648,26 @@
       } else if (!on && wakeLock) { wakeLock.release(); wakeLock = null; }
     } catch (e) {}
   }
-  var engine = (function () {
-    var timer = null, busy = false, state = { k: "" };
-    function setState(s) { state = s; renderBar(); }
-    function later(ms) { clearTimeout(timer); timer = setTimeout(step, ms); }
-    function kick() { if (!busy) later(50); }
-    // the next job: { kind: "inv"|"issue", list, chan, sub, issue }
-    function nextJob(now) {
-      var lists = C.live(data.lists);
-      for (var i = 0; i < lists.length; i++) {
-        var l = lists[i], ch = C.chan(data, l.chan);
-        if (!ch || capLeft(ch) <= 0) continue;
-        var inv = C.invitesDue(data, l.id);
-        if (inv.length && !failedInv[l.id]) return { kind: "inv", list: l, chan: ch, sub: inv[0], left: inv.length };
-      }
-      var mine = C.live(data.issues).filter(function (x) { return C.canSend(x, prefs.dev, now); })
-        .sort(function (a, b) { return a.start - b.start; });
-      for (var j = 0; j < mine.length; j++) {
-        var x = mine[j], l2 = C.list(data, x.list), ch2 = l2 ? C.chan(data, l2.chan) : null;
-        if (!l2 || !ch2) { pauseIssue(x.id, errText({ code: "nochan" })); continue; }
-        var p = C.progress(data, x);
-        if (!p.next) { done(x); continue; }
-        if (capLeft(ch2) <= 0) return { kind: "cap", chan: ch2, issue: x };
-        return { kind: "issue", list: l2, chan: ch2, sub: p.next, issue: x, prog: p };
-      }
-      var other = C.live(data.issues).filter(function (x) { return x.st === "sending"; })[0];
-      if (other) return { kind: "other", issue: other };
-      var paused = C.live(data.issues).filter(function (x) { return x.st === "paused"; })[0];
-      if (paused) return { kind: "paused", issue: paused };
-      return null;
+  function sendingHere() { var k = sendState().k; return !runner && (k === "issue" || k === "inv"); }
+  function startSending() {
+    if (runner) {
+      var off = runner.on(function (kind) { if (kind === "data") reloadQuiet(); else refreshQuiet(); });
+      window.addEventListener("pagehide", function () { if (off) off(); off = null; });
+      kick();
+      return;
     }
-    var failedInv = {};       // list id → true: stop invitations for this session after an error
-    function done(x) {
-      var y = finishIssue(x.id);
-      if (y) {
-        try {
-          var n = window.parent && window.parent.orosNotifs;
-          if (n && typeof n.transient === "function") n.transient({ ns: "newsletter", title: t("toast.sentAll", { s: shownSubj(y), n: y.n }) });
-          else showToast(t("toast.sentAll", { s: shownSubj(y), n: y.n }));
-        } catch (e) {}
+    engine = E.create({
+      fs: orosFS,
+      dirty: dirty,
+      onState: function () { holdAwake(sendingHere()); refreshQuiet(); },
+      onChange: reloadQuiet,
+      notify: function (kind, info) {
+        if (kind === "done") showToast(t("toast.sentAll", { s: shownSubj(info.issue), n: info.issue.n }));
+        else if (kind === "paused") showToast(t("vw.err", { e: errStored(info.err) }));
+        else if (kind === "invfail") showToast(errStored(info.err));
       }
-      renderAll();
-    }
-    function step() {
-      timer = null;
-      if (busy) return;
-      var now = Date.now();
-      var job = nextJob(now);
-      if (!job || job.kind === "other" || job.kind === "paused") {
-        holdAwake(false);
-        setState(job ? { k: job.kind, issue: job.issue } : { k: "" });
-        if (job && job.kind === "other") later(60000);       // the lock may go stale
-        return;
-      }
-      if (job.kind === "cap") {
-        holdAwake(false);
-        setState({ k: "cap", chan: job.chan, issue: job.issue });
-        later(10 * 60000);
-        return;
-      }
-      if (!navigator.onLine) { setState({ k: "offline" }); later(30000); return; }
-      // Unsubscribe requests are read before an issue goes on.
-      if (job.kind === "issue" && inboxAccount(job.chan) && now - (prefs.inbox.at || 0) > INBOX_EVERY) {
-        busy = true;
-        checkInbox(false).then(function () { busy = false; later(50); });
-        return;
-      }
-      busy = true;
-      holdAwake(true);
-      if (job.kind === "issue") {
-        // hold the lock (refreshed at most once a minute: each refresh syncs)
-        var x = job.issue;
-        if (!x.lock || x.lock.dev !== prefs.dev || now - x.lock.at > 60000) {
-          var y = copy(x);
-          y.lock = { dev: prefs.dev, at: now };
-          put("issues", y);
-        }
-        setState({ k: "issue", issue: job.issue, prog: job.prog });
-      } else setState({ k: "inv", left: job.left });
-      var l = job.list, ch = job.chan, s = job.sub;
-      var p = job.kind === "issue" ? loadImages(job.issue) : Promise.resolve(true);
-      p.then(function (ok) {
-        if (!ok) throw { code: "noImg", stop: true };
-        return sendCreds(ch);
-      }).then(function (cr) {
-        var bin;
-        if (job.kind === "inv") {
-          var box = l.reply || l.from, tok = C.token(l, s.id);
-          var ce = R.confirmEmail({ list: l, sub: s, lang: s.lang || l.lang, mailbox: box, tok: tok,
-                                    confirm: R.mailto(box, "confirm " + tok) });
-          bin = R.message(window.orosMailCompose, { from: { name: l.fromName, addr: l.from }, to: { name: s.name, addr: s.email },
-                                                    reply: l.reply, subject: ce.subject, text: ce.text, html: ce.html,
-                                                    listId: l.id, listName: l.name, hdr: cr.hdr }).bin;
-        } else bin = buildFor(job.issue, l, s, { hdr: cr.hdr }).bin;
-        return relay({ op: "send", acct: cr.acct, smtp: cr.smtp, from: l.from, rcpt: [s.email],
-                       raw: window.orosMailCompose.b64(bin) }, SEND_TIMEOUT);
-      }).then(function () {
-        countUsed(ch.id);
-        if (job.kind === "inv") {
-          var cur = C.sub(data, s.id);
-          if (cur) { var z = copy(cur); z.inv = Date.now(); put("subs", z); }
-        } else {
-          data.sent[job.issue.id] = (data.sent[job.issue.id] || []).concat([s.id]);
-          saveNow();
-        }
-        busy = false;
-        refreshQuiet();
-        later(ch.rate * 1000);
-      }, function (e) {
-        busy = false;
-        handleError(job, e);
-      });
-    }
-    function temporary(e) { return /^4\d\d/.test(String(e && e.msg || "")); }
-    function handleError(job, e) {
-      var code = e && e.code || "relay";
-      if (code === "offline" || code === "network" || code === "timeout") { setState({ k: "offline" }); later(30000); return; }
-      if (code === "rate") { later(60000); return; }
-      if ((code === "no" || code === "rcpt") && temporary(e)) { setState({ k: "wait" }); later(5 * 60000); return; }
-      if (code === "rcpt") {
-        // a refused address: this one fails, the others go on
-        var cur = C.sub(data, job.sub.id);
-        if (cur) { var z = copy(cur); z.off = Date.now(); z.offSt = "bounce"; put("subs", z); }
-        if (job.kind === "issue") {
-          var y = copy(C.issue(data, job.issue.id));
-          y.fail[job.sub.id] = "refused";
-          put("issues", y);
-        }
-        later(job.chan.rate * 1000);
-        refreshQuiet();
-        return;
-      }
-      if (job.kind === "inv") { failedInv[job.list.id] = true; showToast(errText(e)); later(1000); return; }
-      pauseIssue(job.issue.id, errText(e));
-      later(1000);
-    }
-    return { kick: kick, state: function () { return state; } };
-  })();
+    });
+  }
   // Light refresh while sending: the bar always, the visible list/viewer.
   function refreshQuiet() {
     renderBar();
@@ -1990,167 +1676,23 @@
     else if (view === "issues") renderIssues();
   }
   function renderBar() {
-    var s = engine.state(), bar = $("sendbar"), b = $("sendbar-btn");
+    var s = sendState(), bar = $("sendbar"), b = $("sendbar-btn");
     var txt = "", label = "", fn = null;
     if (s.k === "issue") {
       txt = t("bar.sending", { s: shownSubj(s.issue), a: s.prog.sent + 1, b: s.prog.total });
-      label = t("bar.pause"); fn = function () { pauseIssue(s.issue.id, ""); };
+      label = t("bar.pause"); fn = function () { pauseIssue(s.issue.id); };
     } else if (s.k === "inv") txt = t("bar.inv", { n: s.left });
     else if (s.k === "cap") { txt = t("bar.cap", { c: s.chan.cap }); }
     else if (s.k === "offline") txt = t("bar.offline");
     else if (s.k === "wait") txt = t("bar.wait");
     else if (s.k === "paused") { txt = t("bar.paused", { s: shownSubj(s.issue) }); label = t("bar.open"); fn = function () { viewId = s.issue.id; showView("view"); }; }
     else if (s.k === "other") { txt = t("bar.other", { s: shownSubj(s.issue) }); }
+    else if (s.k === "here") txt = t("bar.here");
     bar.hidden = !txt;
     $("sendbar-text").textContent = txt;
     b.hidden = !fn;
     b.textContent = label;
     b.onclick = fn;
-  }
-
-  // ---------- 13. Inbox: requests and delivery failures ----------
-  var inboxBusy = null;
-  // Reads subscribe / confirm / unsubscribe e-mails and delivery
-  // failure reports in the Inbox of every list's account, applies
-  // them, and files them in a "Newsletter" folder. `loud`: toast the
-  // result (the button); quiet before sending and at start.
-  function checkInbox(loud) {
-    if (inboxBusy) return inboxBusy;
-    var accts = {};
-    C.live(data.lists).forEach(function (l) {
-      var a = inboxAccount(C.chan(data, l.chan));
-      if (a) accts[a.id] = a;
-    });
-    var ids = Object.keys(accts);
-    var tally = { u: 0, s: 0, c: 0, b: 0 };
-    if (!ids.length || !navigator.onLine) return Promise.resolve(tally);
-    var MM = window.orosMailMime;
-    var failed = null;
-    inboxBusy = ids.reduce(function (p, id) {
-      return p.then(function () {
-        var a = accts[id];
-        return mailPass(a.id).then(function (pw) {
-          if (!pw) throw { code: "nopass" };
-          var acct = imapOf(a, pw);
-          var call = function (body) { body.acct = acct; return relay(body); };
-          var handled = [];
-          return call({ op: "search", folder: "INBOX", q: "nl-", where: "subject", limit: 100 }).then(function (res) {
-            (res.msgs || []).forEach(function (m) {
-              var sm = null;
-              try { sm = MM.summary(MM.b64ToBin(m.hdr || "")); } catch (e) {}
-              if (!sm) return;
-              var req = C.classify(sm.subject);
-              if (!req) return;
-              if (applyRequest(req, sm.from || {}, tally)) handled.push(m.uid);
-              else handled.push(m.uid);    // unknown token: filed too (nothing to do)
-            });
-          }).then(function () {
-            return bounces(call, MM, tally).then(function (uids) { handled = handled.concat(uids); });
-          }).then(function () {
-            if (!handled.length) return;
-            return call({ op: "create", folder: "Newsletter" })["catch"](function () {}).then(function () {
-              return call({ op: "move", folder: "INBOX", uids: handled.slice(0, 500), to: "Newsletter" });
-            })["catch"](function () {});
-          });
-        });
-      })["catch"](function (e) { failed = e; });
-    }, Promise.resolve()).then(function () {
-      prefs.inbox.at = Date.now();
-      savePrefs();
-      inboxBusy = null;
-      if (tally.u + tally.s + tally.c + tally.b) saveNow();
-      if (loud) {
-        if (failed) showToast(t("inbox.fail", { e: errText(failed) }));
-        else showToast(tally.u + tally.s + tally.c + tally.b ? t("inbox.result", tally) : t("inbox.nothing"));
-      }
-      if (tally.s) engine.kick();
-      if (!document.querySelector("dialog[open]") && (view === "subs" || view === "issues" || view === "view")) renderAll();
-      return tally;
-    });
-    return inboxBusy;
-  }
-  // One request e-mail → changes data (not saved here). → true if it applied.
-  function applyRequest(req, from, tally) {
-    var now = Date.now();
-    if (req.act === "sub") {
-      var l = C.byCode(data)[req.code];
-      var email = C.normEmail(from.addr);
-      if (!l || !email) return false;
-      var id = C.subId(l.id, email), cur = C.sub(data, id);
-      if (cur) {
-        var st = C.status(cur);
-        if (st === "on" || st === "pend") return false;
-        var y = copy(cur); y.at = now; y.m = stamp(y.m); y.bnc = 0;
-        replaceIn(data.subs, y);
-      } else {
-        if (C.live(data.subs).length >= C.LIM.subs) return false;
-        var tomb = null;
-        data.subs.forEach(function (s) { if (s.id === id) tomb = s; });
-        replaceIn(data.subs, C.normSub({ id: id, m: stamp(tomb ? tomb.m : 0), list: l.id, email: email,
-                                         name: C.oneLine(from.name, C.LIM.name), src: "mail", basis: "optin", at: now, conf: 0 }));
-      }
-      tally.s++;
-      return true;
-    }
-    var s = C.byToken(data)[req.tok];
-    if (!s) return false;
-    var st2 = C.status(s), z = copy(s);
-    if (req.act === "unsub") {
-      if (st2 === "off" || st2 === "bounce" || st2 === "spam") return false;
-      z.off = now; z.offSt = "off";
-      tally.u++;
-    } else {
-      if (st2 !== "pend") return false;
-      z.conf = now;
-      tally.c++;
-    }
-    z.m = stamp(z.m);
-    replaceIn(data.subs, z);
-    return true;
-  }
-  // Delivery failure reports about our own messages (they quote our
-  // X-Oros-Newsletter or List-Id header). → the uids handled.
-  function bounces(call, MM, tally) {
-    var uids = {};
-    var found = [];
-    return ["mailer-daemon", "postmaster"].reduce(function (p, q) {
-      return p.then(function () {
-        return call({ op: "search", folder: "INBOX", q: q, where: "from", limit: 50 }).then(function (res) {
-          (res.msgs || []).forEach(function (m) {
-            if (uids[m.uid] || m.size > 2 * 1024 * 1024) return;
-            var sm = null;
-            try { sm = MM.summary(MM.b64ToBin(m.hdr || "")); } catch (e) {}
-            if (!sm || !C.isBounceFrom(sm.from && sm.from.addr, sm.from && sm.from.name)) return;
-            uids[m.uid] = 1;
-            found.push(m.uid);
-          });
-        })["catch"](function () {});
-      });
-    }, Promise.resolve()).then(function () {
-      var handled = [];
-      return found.slice(0, 40).reduce(function (p, uid) {
-        return p.then(function () {
-          return call({ op: "fetch", folder: "INBOX", uid: uid }).then(function (r) {
-            var raw = MM.b64ToBin(r.raw || "");
-            if (!/X-Oros-Newsletter:|List-Id:[^\n]*\.newsletter\./i.test(raw)) return;
-            C.parseDsn(raw).forEach(function (f) { if (markBounce(f.addr, f.hard)) tally.b++; });
-            handled.push(uid);
-          })["catch"](function () {});
-        });
-      }, Promise.resolve()).then(function () { return handled; });
-    });
-  }
-  function markBounce(addr, hard) {
-    var k = C.emailKey(addr), hit = false, now = Date.now();
-    C.live(data.subs).forEach(function (s) {
-      if (C.emailKey(s.email) !== k || C.status(s) !== "on") return;
-      var z = copy(s);
-      z.bnc = Math.min(99, z.bnc + (hard ? C.SOFT_LIMIT : 1));
-      if (z.bnc >= C.SOFT_LIMIT) { z.off = now; z.offSt = "bounce"; hit = true; }
-      z.m = stamp(z.m);
-      replaceIn(data.subs, z);
-    });
-    return hit;
   }
 
   // ---------- 14. Pictures ----------
@@ -2343,8 +1885,8 @@
     a1.appendChild(btn(t("set.backup"), "", exportBackup));
     a1.appendChild(btn(t("set.restore"), "", restoreBackup));
     c1.appendChild(a1);
-    var today = 0, k = dayKey();
-    Object.keys(prefs.used).forEach(function (id) { if (prefs.used[id].d === k) today += prefs.used[id].n; });
+    var today = 0, k = dayKey(), used = E.devState().used;
+    Object.keys(used).forEach(function (id) { if (used[id] && used[id].d === k) today += used[id].n; });
     c1.appendChild(el("p", "hint", t("set.dev", { n: today })));
     b.appendChild(c1);
     var c2 = el("div", "card");
@@ -2454,6 +1996,7 @@
         if (api && typeof api.markDirty === "function") api.markDirty();
       }
     };
+    if (runner) return;          // orOS owns the slice (newsletter/runner.js)
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("newsletter", sliceGet, sliceSet, STORAGE_KEY, C.mergeNewsletter);
   }
@@ -2470,7 +2013,7 @@
       window.__orosSyncApi._suppress = false;
     }
     if (JSON.stringify(data) === before) return;
-    engine.kick();
+    kick();
     if (document.querySelector("dialog[open]") || view === "edit") return;
     renderAll();
   }
@@ -2553,15 +2096,17 @@
     $("ed-form").addEventListener("submit", function (e) { e.preventDefault(); });
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) { flushIssue(); holdAwake(false); return; }
-      if (engine.state().k === "issue" || engine.state().k === "inv") holdAwake(true);
+      if (sendingHere()) holdAwake(true);
       if (!document.querySelector("dialog[open]") && view !== "edit") renderAll();
     });
     window.addEventListener("pagehide", flushIssue);
-    window.addEventListener("online", function () { engine.kick(); });
+    window.addEventListener("online", function () { kick(); });
+    window.addEventListener("storage", function (e) { if (e.key === STORAGE_KEY) reloadQuiet(); });
     wireKeyboard();
   }
 
   function boot() {
+    findRunner();
     load();
     loadPrefs();
     applyI18n();
@@ -2570,10 +2115,7 @@
     inheritPalette();
     watchPalette();
     showView(prefs.tab);
-    // a quiet Inbox check at start, then whatever waits to be sent
-    var go = function () { engine.kick(); };
-    if (navigator.onLine && C.live(data.lists).length && Date.now() - (prefs.inbox.at || 0) > INBOX_EVERY) checkInbox(false).then(go, go);
-    else go();
+    startSending();               // the engine reads the Inbox when it is due
   }
 
   boot();
