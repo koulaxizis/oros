@@ -5299,3 +5299,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Montage phase 2 wave 3A: reverse, LUT looks, GIF (#256) — 1.40.00
 - Montage v1.3.0: play clips backwards, colour looks from .cube LUT files, and GIF export. Schema notes in Part IV (MONTAGE v1). Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari, large LUTs on low-end GPUs.
+
+### 2026-10-12 — Montage phase 2 wave 3B: stickers, shapes, light copies (#257) — 1.41.00
+- Montage v1.4.0: shapes on the Overlay row (rectangle, rounded, circle, triangle, star, heart, arrow, speech bubble; fill, outline, keyframes) and emoji stickers on the Text row; "Make light copies" in Project settings makes small preview-only copies of big videos on this device (export still uses the originals). New item kind `shape` with `sh` (Part IV, MONTAGE v1). Montage phase 2 complete. Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari.
