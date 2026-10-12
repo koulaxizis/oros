@@ -1,11 +1,12 @@
 // ============================================================
-// orOS Sticky Notes — App logic (v1.0.0)
+// orOS Sticky Notes — App logic (v1.1.0)
 // The notes live on the desktop (stickies/host.js, shell side); this
 // app is the list of every note, the Faded bin and the settings.
 //   - On the desktop: every note, newest first, search; Edit opens
 //     the shell's note editor over the app, Show goes to the desktop
 //   - Faded: notes that faded (kept 7 days): Restore, Delete now
-//   - Settings: show the notes on this desktop, ring sound, a sound
+//   - Settings: show the notes on this desktop, ring sound (a chime
+//     or a Ringtone Composer melody), a sound
 //     when a note fades, colour of new notes (all device-local);
 //     tidy up the desktop, export as text
 // The app never writes the data itself: every change goes through
@@ -58,6 +59,8 @@
       "set.show": "Show sticky notes on the desktop", "set.sound": "Ring sound",
       "snd.bell": "Bell", "snd.dingdong": "Ding-dong", "snd.wind": "Wind chime", "snd.off": "No sound",
       "set.pop": "A soft sound when a note fades", "set.color": "Colour of new notes",
+      "snd.melodies": "Your melodies (Ringtone Composer)", "snd.gone": "A melody that was deleted (the bell plays)",
+      "rep.daily": "every day", "rep.weekdays": "Mon–Fri", "rep.weekly": "every week",
       "set.hint": "These settings stay on this device. The notes themselves follow you to every device through orOS sync.",
       "c.yellow": "Yellow", "c.pink": "Pink", "c.green": "Green", "c.blue": "Blue", "c.orange": "Orange", "c.lilac": "Lilac",
       "standalone": "Sticky Notes lives on the orOS desktop. Open it from inside orOS.",
@@ -87,6 +90,8 @@
       "set.show": "Εμφάνιση των post-it στην επιφάνεια εργασίας", "set.sound": "Ήχος κουδουνίσματος",
       "snd.bell": "Καμπανάκι", "snd.dingdong": "Ντινγκ-ντονγκ", "snd.wind": "Καμπανάκια ανέμου", "snd.off": "Χωρίς ήχο",
       "set.pop": "Απαλός ήχος όταν ξεθωριάζει ένα post-it", "set.color": "Χρώμα για τα νέα post-it",
+      "snd.melodies": "Οι μελωδίες σου (Συνθέτης ήχων κλήσης)", "snd.gone": "Μελωδία που διαγράφηκε (παίζει το κουδούνι)",
+      "rep.daily": "κάθε μέρα", "rep.weekdays": "Δευ–Παρ", "rep.weekly": "κάθε εβδομάδα",
       "set.hint": "Αυτές οι ρυθμίσεις μένουν σε αυτή τη συσκευή. Τα ίδια τα post-it σε ακολουθούν σε κάθε συσκευή μέσω του συγχρονισμού του orOS.",
       "c.yellow": "Κίτρινο", "c.pink": "Ροζ", "c.green": "Πράσινο", "c.blue": "Μπλε", "c.orange": "Πορτοκαλί", "c.lilac": "Λιλά",
       "standalone": "Τα post-it ζουν στην επιφάνεια εργασίας του orOS. Άνοιξε την εφαρμογή μέσα από το orOS.",
@@ -167,7 +172,8 @@
       li.setAttribute("aria-label", t("aria.note", { text: C.firstLine(n.text) || t("note.empty") }));
       li.appendChild(el("div", "txt", preview(n)));
       var meta = [];
-      if (n.ring) meta.push(n.ring.at <= now ? "🔔 " + t("ringing") : "🔔 " + t("rings", { when: when(n.ring.at) }));
+      if (n.ring) meta.push((n.ring.at <= now ? "🔔 " + t("ringing") : "🔔 " + t("rings", { when: when(n.ring.at) })) +
+        (n.ring.rep ? " ↻ " + t("rep." + n.ring.rep) : ""));
       if (n.vanish) meta.push("⏳ " + (n.vanish.at ? t("vanishes", { when: when(n.vanish.at) }) : t("vanishDone")));
       if (meta.length) li.appendChild(el("div", "meta", meta.join(" · ")));
       var acts = el("div", "acts");
@@ -227,10 +233,39 @@
     $("more").hidden = true;
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
+  // Built-in chimes, then the melodies of Ringtone Composer (read by
+  // the host from oros-ringtones-data; nothing is copied here).
+  function fillSounds(cur) {
+    var sel = $("sound-sel");
+    [].slice.call(sel.querySelectorAll("optgroup.mel, option.mel")).forEach(function (o) { o.remove(); });
+    var list = [];
+    try { list = typeof H.melodies === "function" ? H.melodies() : []; } catch (e) { list = []; }
+    var g = null;
+    if (list.length) {
+      g = document.createElement("optgroup");
+      g.className = "mel";
+      g.label = t("snd.melodies");
+      list.forEach(function (m) {
+        var o = document.createElement("option");
+        o.value = "rt:" + m.id;
+        o.textContent = m.name || "♪";
+        g.appendChild(o);
+      });
+      sel.appendChild(g);
+    }
+    if (/^rt:/.test(cur) && !list.some(function (m) { return "rt:" + m.id === cur; })) {
+      var gone = document.createElement("option");
+      gone.className = "mel";
+      gone.value = cur;
+      gone.textContent = t("snd.gone");
+      sel.appendChild(gone);
+    }
+    sel.value = cur;
+  }
   function fillMore() {
     var p = H.prefs();
     $("show-on").checked = p.show;
-    $("sound-sel").value = p.sound;
+    fillSounds(p.sound);
     $("pop-on").checked = p.pop;
     [].forEach.call($("colors").children, function (b) {
       var on = b.getAttribute("data-c") === p.color;

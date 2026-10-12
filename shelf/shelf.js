@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Media Shelf — App logic (v1.3.0)
+// orOS Media Shelf — App logic (v1.4.0)
 // A wishlist and tracker for books, films, series, music,
 // podcasts and games.
 //   - four states: Want → Now → Done, or Dropped; every start,
@@ -11,6 +11,9 @@
 //   - JSON export / import (import merges, never replaces)
 //   - Goodreads / Letterboxd CSV import with a preview; titles already
 //     on the shelf are skipped; Undo takes an import back (1.1.0)
+//   - Library link (1.4.0, BR-LIB-SHELF): Library's "Add to Media Shelf"
+//     makes a linked book; its progress follows Library's place and
+//     "Read in Library" opens it there
 // Data:
 //   - synced slice "shelf" (oros-shelf-data): items LWW by mtime,
 //     sessions (the progress / status log) LWW by id, goals LWW,
@@ -24,6 +27,7 @@
 //   3. Merge (sync + import)
 //   4. Derived: progress, pace, completions, goal, statistics
 //  4b. CSV import (Goodreads, Letterboxd): parse, detect, plan
+//  4d. Library link: read Library's place, plan the entries to log
 //   5. Storage, prefs
 //   6. Actions (status, progress, rating, edit, delete)
 //   7. UI: toolbar, tabs, list, cards
@@ -117,6 +121,7 @@
       "act.again.book": "Read again", "act.again.film": "Watch again", "act.again.series": "Watch again",
       "act.again.album": "Listen again", "act.again.podcast": "Listen again", "act.again.game": "Play again",
       "act.done": "Mark done", "act.drop": "Drop", "act.want": "Back to wishlist", "act.resume": "Resume",
+      "lib.read": "Read in Library",
       "act.edit": "Edit", "act.delete": "Delete", "act.close": "Close",
       "f.type": "Type", "f.title": "Title", "f.year": "Year", "f.fmt": "Format", "f.plat": "Platform",
       "f.tags": "Tags (comma separated)", "f.src": "Where I heard of it", "f.color": "Cover colour",
@@ -204,6 +209,7 @@
       "act.again.book": "Ξαναδιαβάζω", "act.again.film": "Το ξαναβλέπω", "act.again.series": "Την ξαναβλέπω",
       "act.again.album": "Το ξανακούω", "act.again.podcast": "Το ξανακούω", "act.again.game": "Το ξαναπαίζω",
       "act.done": "Τελείωσε", "act.drop": "Το παρατάω", "act.want": "Πίσω στη wishlist", "act.resume": "Συνεχίζω",
+      "lib.read": "Διάβασέ το στη Βιβλιοθήκη",
       "act.edit": "Επεξεργασία", "act.delete": "Διαγραφή", "act.close": "Κλείσιμο",
       "f.type": "Τύπος", "f.title": "Τίτλος", "f.year": "Έτος", "f.fmt": "Μορφή", "f.plat": "Πλατφόρμα",
       "f.tags": "Ετικέτες (με κόμμα)", "f.src": "Από πού το έμαθα", "f.color": "Χρώμα εξωφύλλου",
@@ -840,6 +846,52 @@
     return out;
   }
 
+  // ---------- 4d. Library link (BR-LIB-SHELF) ----------
+  // A book can carry `lib`, the id of the same book in Library ("b" + 16
+  // hex; an extra field, so it rides along everywhere). Library's data
+  // (oros-library-data) is only read here, never written. Progress =
+  // Library's place x the item's size and only moves forward; a book
+  // marked finished in Library finishes the current run. A dropped or
+  // finished item is left alone (reading again is the person's call).
+  var LIB_KEY = "oros-library-data";
+  var LIB_ID_RE = /^b[0-9a-f]{16}$/;
+  // → { pct (0–1000), fin ("YYYY-MM-DD" | ""), pages } | null
+  function libOf(libData, lib) {
+    if (!libData || typeof libData !== "object" || !LIB_ID_RE.test(lib)) return null;
+    var tombs = libData.tombs && typeof libData.tombs === "object" ? libData.tombs : {};
+    var b = null;
+    (Array.isArray(libData.books) ? libData.books : []).forEach(function (x) {
+      if (x && x.id === lib && isInt(x.m) && !(isInt(tombs[lib]) && tombs[lib] >= x.m)) b = x;
+    });
+    if (!b) return null;
+    var p = libData.pos && typeof libData.pos === "object" ? libData.pos[lib] : null;
+    return {
+      pct: p && isInt(p.pct) ? Math.max(0, Math.min(1000, p.pct)) : 0,
+      fin: isYmd(b.fin) ? b.fin : "",
+      pages: isInt(b.pages) && b.pages > 0 && b.pages <= MAX_SIZE ? b.pages : 0
+    };
+  }
+  // What to log for a linked item: { start, v, done } or null.
+  function libPlan(it, list, info) {
+    if (!info || it.type !== "book" || it.st === "done" || it.st === "drop") return null;
+    var cur = it.st === "now" ? progressOf(list) : 0;
+    var v = it.size > 0 ? Math.min(it.size, Math.round(info.pct * it.size / 1000)) : 0;
+    var rs = it.st === "now" ? runStart(list) : null;
+    var done = !!info.fin && (!rs || info.fin >= rs);
+    var more = v > cur ? v : 0;
+    if (!more && !done) return null;
+    return { start: it.st === "want", v: more, done: done };
+  }
+  // A new book item for Library's "Add to Media Shelf" (null if invalid).
+  function libItem(b, id, ts, col) {
+    if (!b || typeof b !== "object" || !LIB_ID_RE.test(b.lib)) return null;
+    return normItem({
+      id: id, m: ts, a: ts, type: "book", fmt: "e", title: b.title, by: b.by,
+      year: isInt(b.year) ? b.year : 0, size: isInt(b.size) && b.size > 0 ? Math.min(b.size, MAX_SIZE) : 0,
+      st: "want", tags: [], rev: "", src: "", col: col || 0, lib: b.lib
+    });
+  }
+
   // ---------- 5. Storage, prefs ----------
   var data = null, prefs = null;
 
@@ -1012,6 +1064,58 @@
     var k = year + "-" + type, cur = data.goals[k];
     if ((cur ? cur.n : 0) === n) return;
     data.goals[k] = { m: Math.max(now(), cur ? cur.m + 1 : 0), n: n };
+  }
+
+  // Library progress into linked books (boot and when orOS comes back).
+  function readLib() {
+    try { return JSON.parse(localStorage.getItem(LIB_KEY) || "null"); } catch (e) { return null; }
+  }
+  function libItemOf(lib) {
+    for (var i = 0; i < data.items.length; i++) if (data.items[i].lib === lib) return data.items[i];
+    return null;
+  }
+  function libSync() {
+    var raw = readLib();
+    if (!raw) return false;
+    var changed = false;
+    data.items.forEach(function (it) {
+      if (!it.lib) return;
+      var plan = libPlan(it, sessOf(data, it.id), libOf(raw, it.lib));
+      if (!plan) return;
+      var st = null;
+      if (plan.start) { st = addSess(it, "s"); it.st = "now"; }
+      if (plan.v) {
+        var ps = addSess(it, "p", plan.v);
+        if (st && ps.m <= st.m) ps.m = st.m + 1;     // the start sorts first: its run holds the page
+      }
+      if (plan.done) {
+        var last = null;
+        if (it.size > 0 && progressOf(sessOf(data, it.id)) < it.size) last = addSess(it, "p", it.size);
+        var ds = addSess(it, "d");
+        if (last && ds.m <= last.m) ds.m = last.m + 1;
+        it.st = "done";
+      }
+      touch(it);
+      changed = true;
+    });
+    if (changed) { saveNow(); renderAll(); }
+    return changed;
+  }
+  // Library's "Add to Media Shelf": the linked item, made once.
+  function libAdd(b) {
+    var it = b && LIB_ID_RE.test(b.lib) ? libItemOf(b.lib) : null;
+    if (!it) {
+      if (data.items.length >= MAX_ITEMS) { showToast(t("toast.max", { n: MAX_ITEMS })); return; }
+      it = libItem(b, newId(), now(), randCol());
+      if (!it) return;
+      data.items.push(it);
+      saveNow();
+      libSync();
+      it = itemById(it.id);
+      renderAll();
+      showToast(t("toast.added"));
+    }
+    if (it) itemDialog(it.id);
   }
 
   // ---------- 7. UI ----------
@@ -1279,6 +1383,13 @@
       var pr = button(t("prio"), "toggle" + (it.prio ? " on" : ""), function () { setField(it, "prio", it.prio ? 0 : 1); renderAll(); });
       pr.setAttribute("aria-pressed", it.prio ? "true" : "false");
       acts.appendChild(pr);
+    }
+    if (it.lib) {
+      acts.appendChild(button(t("lib.read"), "", function () {
+        var lib = it.lib;
+        dlg.close();
+        try { window.parent.__orosOpenAt("library", { book: lib }); } catch (e) {}
+      }));
     }
     dlg.appendChild(acts);
 
@@ -2311,6 +2422,7 @@
     });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") flushReview();
+      else libSync();
     });
     window.addEventListener("pagehide", flushReview);
     wireKeyboard();
@@ -2325,6 +2437,7 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    libSync();
     try {
       if (window.parent && window.parent !== window &&
           typeof window.parent.__orosTakeTarget === "function") {
@@ -2337,8 +2450,12 @@
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { item }. Opens the item's details dialog. Unknown item →
   // no-op; an open dialog → no-op (unsaved edits win).
+  // Library (BR-LIB-SHELF): target { addBook: { lib, title, by, year, size } }
+  // opens the item linked to that book, adding it first if needed.
   function openSearchTarget(t) {
-    if (!t || typeof t.item !== "string" || document.querySelector("dialog[open]")) return;
+    if (!t || document.querySelector("dialog[open]")) return;
+    if (t.addBook && typeof t.addBook === "object") { libAdd(t.addBook); return; }
+    if (typeof t.item !== "string") return;
     if (itemById(t.item)) itemDialog(t.item);
   }
   window.__orosOpenAt = openSearchTarget;
