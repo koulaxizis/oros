@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.18.00
+- Text Tools: pull e-mails, links or phone numbers out of a text, encode URL/Base64/HTML, make slugs, compare two texts line by line, and open .txt/.csv/.tsv files with it.
+
 ## Version 1.17.00
 - Photo Lab: layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay).
 
