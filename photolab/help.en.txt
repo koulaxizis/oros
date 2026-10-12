@@ -1,0 +1,57 @@
+# Photo Lab
+Edit photos and pictures with layers, selections, brushes and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
+
+## Getting started
+- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device, and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
+- Your pictures are under `Projects`. Tap or click one to open it; the pencil renames it and the bin deletes it (`Undo` in the message brings it back).
+- In the editor, the button at the top left goes back to `Projects`. Your work is saved as you go.
+
+## Tools
+The tool bar is on the left (at the bottom on a phone). The bar above the picture shows the options of the current tool.
+- `Move`: drag the layer. With a selection, it lifts and moves the selected pixels.
+- `Marquee selection` and `Lasso`: select an area. Press the tool again to switch between `Rectangle` and `Ellipse`, or between a freehand and a point-by-point lasso. Hold Shift to add to the selection, Alt to subtract.
+- `Magic wand`: selects similar colours; set the `Tolerance` and whether only `Contiguous` pixels count.
+- `Brush` and `Eraser`: `Size`, `Hardness`, `Opacity` and `Flow`. A pen paints wider when you press harder.
+- `Paint bucket` and `Gradient` (`Linear` or `Radial`) fill with the foreground colour.
+- `Eyedropper`: click picks the foreground colour, Alt+click the background colour.
+- `Text` and `Shape` add their own layers; click a text to change it.
+- `Crop`: drag the frame, choose a `Ratio`, then `Crop` or [[Enter]].
+- `Hand` and `Zoom` move around. Two fingers pinch to zoom on touch screens.
+
+## Layers
+`Show or hide panels` (the layers button at the top right) opens `Layers` and `History`.
+- Each layer has an eye (show or hide), a lock and a name (tap it to choose the layer). `Blend` and `Opacity` apply to the chosen layer.
+- The buttons below add, duplicate, move, merge down and delete layers. The `Layer` menu has more: `Layer via copy`, `Rasterize layer`, `Flatten image` and more.
+- `History` lists your steps; tap one to go back to it.
+
+## Menus
+- `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
+- `Select`: `Select all`, `Invert selection`, `Feather…`, `Grow…`, `Shrink…`.
+- `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
+- `File`: `Export…` saves a PNG, JPG or WebP to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
+On a phone all menus are under the menu button.
+
+## Sync and backup
+- The list of projects follows you through [orOS sync](help:t/sync). The pictures themselves are kept on the orOS disk, in the `Photo Lab` folder, and Vault Drive syncs them file by file, encrypted.
+- If the same picture changed on two devices before they synced, nothing is lost: the other device's version is kept as its own project.
+- Undo history, tool settings and colours stay on this device.
+
+## Keyboard shortcuts
+- [[Ctrl+Z]]: undo. [[Ctrl+Shift+Z]] or [[Ctrl+Y]]: redo.
+- [[Alt+N]]: new picture. [[Ctrl+O]]: open picture. [[Ctrl+Shift+S]]: export.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]]: copy, cut, paste. [[Delete]]: clear the selection.
+- [[Ctrl+A]]: select all. [[Ctrl+D]]: deselect. [[Ctrl+Shift+I]]: invert selection.
+- [[Alt+T]]: free transform. [[Alt+Shift+N]]: new layer. [[Ctrl+J]]: layer via copy. [[Ctrl+E]]: merge down.
+- [[Ctrl+U]]: hue / saturation. [[Ctrl+L]]: levels. [[Ctrl+I]]: invert.
+- [[Ctrl+=]], [[Ctrl+-]], [[Ctrl+0]], [[Ctrl+1]]: zoom in, zoom out, fit, 100%.
+- Tools: [[V]] move, [[M]] marquee, [[L]] lasso, [[W]] magic wand, [[C]] crop, [[B]] brush, [[E]] eraser, [[G]] paint bucket ([[Shift+G]] gradient), [[I]] eyedropper, [[T]] text, [[U]] shape, [[H]] hand, [[Z]] zoom.
+- [[X]] swaps the colours, [[D]] resets them, `[` and `]` change the brush size. Hold [[Space]] to move around.
+
+## Tips
+> Want to edit only part of a photo? Select it first: brushes, fills and adjustments stay inside the selection.
+
+## Limits
+- Pictures up to 8192 px a side on computers, and 4096 px (about 16 megapixels) on phones. Bigger pictures are made smaller when they open.
+- Up to 100 layers a picture. Text and shape layers move and scale but do not rotate; rasterize them first.
+- Old undo steps are dropped when they would use too much memory.
+- Photoshop files (PSD) do not open yet.
