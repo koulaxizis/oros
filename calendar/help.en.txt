@@ -31,7 +31,7 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Garage`: renewals and service due dates from [Garage](app:garage).
 - `Budget`: upcoming recurring entries from [Budget](app:budget).
 - `Pet health`: vaccines, deworming, visits, next due dates and birthdays from [Pet health](app:petcare).
-- `Invoices`: unpaid invoices on their due date, from [Invoices](app:invoices).
+- `Customers`: open follow-ups and the expected close day of open deals, from [CRM](app:crm).
 - `Travel`: trip days and timed itinerary entries from [Travel](app:travel).
 - `Baby`: milestones, vaccines, doctor visits and monthly age from [Baby](app:baby).
 - `Chores` from [Chore Wheel](app:chores); only yours if you picked who you are there.
