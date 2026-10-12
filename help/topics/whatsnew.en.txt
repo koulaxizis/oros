@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.97.00
+- New app Photo Lab in the new Image category: edit pictures with layers, selections, 14 tools and adjustments, then export or set them as wallpaper. Pixel Avatar, Wallpaper Generator, Tree Sketcher and Aura Painter moved to Image.
+
 ## Version 0.96.00
 - New app Studio (Sound): record and arrange audio on up to 8 tracks, with loop, click and WAV export. Effects come later.
 

@@ -71,6 +71,13 @@
       "application/x-gedcom": [".ged", ".gedcom"] } },
     { app: "ringtones", accept: {
       "audio/x-rtttl": [".rtttl", ".rtx"] } },
+    { app: "photolab", accept: {
+      "image/png": [".png"],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/webp": [".webp"],
+      "image/gif": [".gif"],
+      "image/bmp": [".bmp"],
+      "image/avif": [".avif"] } },
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"] } },
