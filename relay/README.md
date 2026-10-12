@@ -21,6 +21,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `imap.js` | Minimal IMAP4rev1 client (login, LIST, STATUS, EXAMINE/SELECT, UID SEARCH/FETCH/STORE/MOVE/COPY/EXPUNGE, CREATE, APPEND) |
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
+| `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
 Tests: `tests/mail.test.js` (Node, runs in CI) drives `core.js` +
@@ -138,6 +139,38 @@ owner; whether Canva lets the owner's own account use it day to day
 without review was not verified (Canva's docs do not say). Other
 people's accounts need the review. Private integrations need a Canva
 Enterprise plan.
+
+## Newsletter: sign-up form and one-click unsubscribe
+
+Needs a D1 database bound as `NL_DB` (`[[d1_databases]]` in
+`wrangler.toml`; a binding added only in the dashboard is replaced on
+the next deploy). The tables are created on first use. Without the
+binding every route below answers 503 (`nostore`) and Newsletter keeps
+its e-mail way (subscribe/unsubscribe e-mails read from the Inbox).
+
+Public routes (no Origin check and no CORS: browsers and mail clients
+call them; same per-IP rate limit; pages carry no JavaScript, a strict
+CSP, `X-Frame-Options: DENY` and `Referrer-Policy: no-referrer`):
+
+| Route | What it does |
+|---|---|
+| `POST /nl/s/<k>` | Sign-up form (≤4 KB): `email`, `name?`, `lang?`, honeypot `website`. Stored encrypted for the list (AES-256-GCM, key wrapped with the list's RSA-OAEP-256 public key), then a "check your inbox" page or a 303 to the list's https thank-you page |
+| `GET /nl/u/<k>/<tok>` | A page with one button. Never unsubscribes (link scanners open links) |
+| `POST /nl/u/<k>/<tok>` | Unsubscribe: RFC 8058 `List-Unsubscribe=One-Click` or the page's button. Stores only the subscriber's random token, once a day |
+
+At most 2,000 rows wait per list; beyond that nothing more is stored.
+
+App operation `POST /v1 { op: "nl", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
+
+| act | Extra fields | Returns |
+|---|---|---|
+| `reg` | `pub` (RSA-OAEP-256 JWK, 2048-bit), `back` ("" or https ≤300) | `{ ok }`. A new `k` takes this `sec` (only its SHA-256 is kept; at most 5,000 lists); an existing one needs the same `sec` |
+| `pull` | `after` (row id) | `{ rows[{ id, kind: "s"\|"u", v, at }], more }` (≤200) |
+| `ack` | `upto` (row id) | `{ n }`: deletes the list's rows up to that id |
+| `drop` | | `{ ok }`: deletes the list and its rows |
+
+Errors: `nostore` (503), `auth` (403, wrong `sec`), `gone` (404,
+unknown `k`), `full`, `bad-request`.
 
 ## Rules it enforces
 

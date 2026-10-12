@@ -9,6 +9,8 @@
 //           POST /v1  { op: "canva", act, ... }  (Atelier, see canva.js)
 //           POST /v1  { op: "send", acct, smtp, from, rcpt[], raw, sent? }  (SMTP, see smtp.js)
 //           POST /v1  { op: "sieve", acct, act, host?, script?, prev? }  (ManageSieve, see sieve.js)
+//           POST /v1  { op: "nl", act, k, sec, ... }  (Newsletter, see newsletter.js)
+//           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
@@ -17,6 +19,7 @@ import { validWeb, runWeb } from "./web.js";
 import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
 import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
+import { validNl, runNl, handleNl, page as nlPage, NlError } from "./newsletter.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -28,7 +31,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -75,6 +78,7 @@ export function validRequest(b, env) {
   if (!b || typeof b !== "object" || !OPS[b.op]) return "op";
   if (b.op === "web") return validWeb(b);   // Reader: public pages, no account
   if (b.op === "canva") return validCanva(b, allowedOrigins(env));   // Atelier: Canva Connect
+  if (b.op === "nl") return validNl(b);   // Newsletter: sign-ups and unsubscribes waiting in D1
   const bad = validAccount(b.acct);
   if (bad) return bad;
   if (b.op === "list") {
@@ -175,6 +179,13 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   const okOrigin = allowedOrigins(env).indexOf(origin) >= 0 ? origin : "";
   const url = new URL(request.url);
 
+  // Newsletter's public pages: called by any browser or mail client, so
+  // no Origin check and no CORS headers.
+  if (url.pathname.startsWith("/nl/")) {
+    if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return nlPage(429, "en", "busy");
+    return handleNl(request, env, url, now || Date.now());
+  }
+
   if (request.method === "OPTIONS") {
     if (!okOrigin) return new Response(null, { status: 403 });
     return new Response(null, { status: 204, headers: corsHeaders(okOrigin) });
@@ -214,6 +225,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     } catch (e) {
       const code = e instanceof CanvaError ? e.code : "proto";
       return fail(200, code, String(e && e.message || code).slice(0, 300), okOrigin);
+    }
+  }
+
+  if (b.op === "nl") {
+    try {
+      const data = await runNl(b, env, now || Date.now());
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof NlError) return fail(e.status, e.code, e.message, okOrigin);
+      return fail(200, "proto", String(e && e.message || "proto").slice(0, 300), okOrigin);
     }
   }
 
