@@ -5,7 +5,7 @@ Change the case and the letters of any text: capitals, small letters, Title Case
 1. Type or paste your text in `Text`. `Paste` takes what you copied; `Clear` empties the box (`Undo` brings it back).
 2. Pick a conversion. The `Result` changes as you type.
 3. Press `Copy`, or `Use as text` to convert the result again (for example `Remove accents`, then `UPPERCASE`).
-Under the text you see its characters, words and lines.
+Under the text you see its characters, words and lines. When you have the Text Tools app, `Text Tools` next to the result opens the result there.
 
 ## The conversions
 - `Basic`: `UPPERCASE`, `lowercase`, `Sentence case` (a capital at the start of each sentence), `Title Case` (small words such as "of", "the", "και", "του" stay small), `Capitalize Each Word`, `tOGGLE cASE` (fixes text typed with Caps Lock on) and `aLtErNaTiNg`.

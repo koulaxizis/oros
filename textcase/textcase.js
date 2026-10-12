@@ -16,7 +16,8 @@
 //     language, switches) and oros-textcase-draft (the text, up to
 //     100,000 characters; never synced: it may be private)
 // Deep link: __orosOpenAt("textcase", { text }) opens the app with
-// that text (Text Tools and other apps).
+// that text (Text Tools and other apps). "Text Tools" sends the
+// result to __orosOpenAt("texttools", { text }) when that app exists.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage: My words, prefs, draft
@@ -52,6 +53,7 @@
       "app.name": "Case Converter",
       "f.src": "Text", "f.out": "Result", "f.lang": "Language", "f.word": "New word",
       "ph.src": "Type or paste text here…", "ph.out": "The result appears here.", "ph.word": "e.g. iPhone",
+      "btn.tt": "Text Tools", "btn.ttLabel": "Open the result in Text Tools",
       "btn.paste": "Paste", "btn.clear": "Clear", "btn.use": "Use as text", "btn.copy": "Copy",
       "btn.words": "My words", "btn.close": "Close", "btn.add": "Add", "btn.remove": "Remove {w}",
       "tab.basic": "Basic", "tab.greek": "Greek", "tab.code": "Code", "tab.styles": "Styles",
@@ -96,6 +98,7 @@
       "app.name": "Κεφαλαία & πεζά",
       "f.src": "Κείμενο", "f.out": "Αποτέλεσμα", "f.lang": "Γλώσσα", "f.word": "Νέα λέξη",
       "ph.src": "Γράψε ή επικόλλησε κείμενο εδώ…", "ph.out": "Εδώ εμφανίζεται το αποτέλεσμα.", "ph.word": "π.χ. iPhone",
+      "btn.tt": "Εργαλεία κειμένου", "btn.ttLabel": "Άνοιγμα του αποτελέσματος στα Εργαλεία κειμένου",
       "btn.paste": "Επικόλληση", "btn.clear": "Καθαρισμός", "btn.use": "Χρήση ως κείμενο", "btn.copy": "Αντιγραφή",
       "btn.words": "Οι λέξεις μου", "btn.close": "Κλείσιμο", "btn.add": "Προσθήκη", "btn.remove": "Αφαίρεση {w}",
       "tab.basic": "Βασικά", "tab.greek": "Ελληνικά", "tab.code": "Κώδικας", "tab.styles": "Στυλ",
@@ -327,6 +330,22 @@
     } else {
       showToast(t(copyFallback() ? "toast.copied" : "toast.copyFail"));
     }
+  }
+
+  // Text Tools (texttools/): the button shows only when it is
+  // installed; the result replaces its Text box (it has Undo).
+  function hasTextTools() {
+    try {
+      var env = window.parent && window.parent !== window && window.parent.orosTodayEnv;
+      return !!(env && typeof env.apps === "function" && typeof window.parent.__orosOpenAt === "function" &&
+        env.apps().some(function (a) { return a && a.id === "texttools"; }));
+    } catch (e) { return false; }
+  }
+  function onTextTools() {
+    var v = $("out").value || $("src").value;
+    if (!v) { $("src").focus(); return; }
+    saveDraft();
+    try { window.parent.__orosOpenAt("texttools", { text: v }); } catch (e) {}
   }
 
   // ---------- 5. Tabs + conversion chips ----------
@@ -640,6 +659,8 @@
     $("tabs").setAttribute("aria-label", t("aria.tabs"));
     $("words-btn").innerHTML = ICON.words; setLabel($("words-btn"), t("btn.words"));
     $("words-close").innerHTML = ICON.close; setLabel($("words-close"), t("btn.close"));
+    $("tt-btn").setAttribute("aria-label", t("btn.ttLabel"));
+    $("tt-btn").hidden = !hasTextTools();
   }
 
   function wire() {
@@ -663,6 +684,7 @@
     $("clear-btn").addEventListener("click", onClear);
     $("use-btn").addEventListener("click", onUse);
     $("copy-btn").addEventListener("click", onCopy);
+    $("tt-btn").addEventListener("click", onTextTools);
     TAB_IDS.forEach(function (k) { $("tab-" + k).addEventListener("click", function () { showTab(k); }); });
     $("lang-sel").addEventListener("change", function () {
       prefs.lang = C.LANGS.indexOf($("lang-sel").value) >= 0 ? $("lang-sel").value : "auto";
