@@ -38,8 +38,8 @@ test("manifest file_handlers are built from the table, one handler per type", ()
   assert.equal(m.launch_handler, undefined);
 });
 
-test("no PDF, SVG, media, html, json or zip are taken over", () => {
-  [".pdf", ".svg", ".mp3", ".mp4", ".html", ".htm", ".json", ".zip", ".exe", ".js"]
+test("no SVG, media, html, json or zip are taken over", () => {
+  [".svg", ".mp3", ".mp4", ".html", ".htm", ".json", ".zip", ".exe", ".js"]
     .forEach((x) => assert.deepEqual(F.appsFor(x), [], x));
 });
 
@@ -50,7 +50,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     atelier: ["atelier/core.js"], slides: ["slides/app.js"], layout: ["layout/layout.js"],
     feeds: ["feeds/feeds.js"], podcasts: ["podcasts/podcasts.js"], mindmap: ["mindmap/mindmap.js"],
     familytree: ["familytree/familytree.js"], ringtones: ["ringtones/ringtones.js"],
-    notes: ["notes/notes.js"], photolab: ["photolab/app.js"],
+    notes: ["notes/notes.js"], photolab: ["photolab/app.js"], library: ["library/app.js"],
     calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"]
   };
   F.HANDLERS.forEach((h) => {
@@ -92,7 +92,8 @@ test("choose: the only app, the person's choice, else ask", () => {
   assert.deepEqual(F.choose("a.txt", { map: { ".txt": "ask" } }), { ask: ["writer", "mindmap", "notes"], ext: ".txt" });
   // a choice for an app that cannot read the type is ignored
   assert.deepEqual(F.choose("a.txt", { map: { ".txt": "spreadsheet" } }).ask, ["writer", "mindmap", "notes"]);
-  assert.equal(F.choose("a.pdf", null), null);
+  assert.deepEqual(F.choose("a.pdf", null), { app: "library", ext: ".pdf" });
+  assert.equal(F.choose("a.svg", null), null);
   assert.equal(F.choose("", null), null);
 });
 
@@ -175,7 +176,7 @@ test("launch: several files open the first and say so; too big and unknown are r
   calls.length = 0;
   launch([file("huge.docx", F.MAX_BYTES + 1)]);
   await tick();
-  launch([file("x.pdf")]);
+  launch([file("x.svg")]);
   await tick();
   assert.deepEqual(calls.map((c) => c[0]), ["notice", "notice"]);
 });
