@@ -35,6 +35,16 @@ A scheduled issue goes out from the device that scheduled it, where the password
 
 >! orOS has to be open: with orOS closed nothing is sent, and a scheduled issue starts the next time you open orOS on that device. A tab in the background sends more slowly.
 
+## RSS to e-mail
+On a list card, `RSS to e-mail` turns a blog or news feed into issues. Pick one of your feeds in [Reader](app:feeds) or type any feed address, choose every day, every week or every month and the time, and how many articles go in. Each issue lists the new articles with their picture, a few lines and a `Read more` button.
+
+Choose `Make a draft for me to check` and you get a draft and a notice, or `Send it by itself` and it goes out on its own, but only if the check before sending finds no errors; otherwise it stays a draft and orOS tells you. `Make one now` builds a draft from the newest articles at once.
+
+>! A feed runs on the device where you set it up, while orOS is open. If orOS was closed at that time, it runs the next time you open it.
+
+## Past issues from another service
+`Settings` › `Import past issues…` brings in what you sent with Buttondown, MailerLite or another service: their .zip export, or Markdown, HTML, CSV or JSON files. Import them as past issues, which show among your issues as already sent (to save as a web page or `Duplicate`) without anyone getting an e-mail, or as drafts to send again. Text, headings, links and pictures come over; scripts and tracking pixels are dropped, and pictures stay at their web address. Importing the same file twice adds nothing new.
+
 ## Subscribe and unsubscribe by e-mail
 Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, every few minutes while orOS is open, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
 
@@ -55,4 +65,5 @@ Lists, subscribers and issues sync through orOS sync, and pictures through the o
 ## Limits
 - Sending happens only while orOS is open, and the daily limit is counted per device.
 - Up to 5,000 subscribers in all and 20 lists.
-- No open or click statistics, no automations, no web sign-up form hosted for you: people subscribe by e-mail.
+- Up to 20 RSS feeds and 500 issues.
+- No open or click statistics and no web sign-up form hosted for you: people subscribe by e-mail.

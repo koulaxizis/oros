@@ -624,6 +624,8 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 .aud-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
 .aud-row select { flex: 1 1 200px; min-width: 0; }
 .tpl-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.arc-list { list-style: none; display: flex; flex-direction: column; gap: 2px; margin: 6px 0 10px; max-height: 180px; overflow-y: auto; }
+.arc-list li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tpl-row { display: flex; align-items: center; gap: 6px; }
 .tpl-row .row { flex: 1 1 auto; min-width: 0; }
 .pv-top { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }

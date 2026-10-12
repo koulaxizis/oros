@@ -15,7 +15,12 @@
 //     error, a scheduled issue started, new subscribers / unsubscribes
 //     / bounces read from the Inbox
 // The app talks to it through window.orosNewsletterRunner:
-//   { v, kick(), state(), checkInbox() → Promise<tally>, on(fn) → off }
+//   { v, kick(), state(), checkInbox() → Promise<tally>, on(fn) → off,
+//     fetchItems(url) → Promise<[Reader item]> (v2) }
+// RSS to e-mail (v2): every 10 minutes the feeds due on this device
+// become issues (newsletter/engine.js runFeeds), read through the
+// Reader's network layer (feeds/core.js + feeds/fetch.js), which the
+// runner loads into the shell the first time a feed is due.
 // fn(kind) is called with "state" or "data".
 // Honest limit: orOS closed = nothing is sent; a background tab is
 // slowed by the browser (about one message a minute).
@@ -29,6 +34,11 @@
   var SYNC_WAIT_MS = 60000, FAIL_GRACE_MS = 15000;
   var bootAt = Date.now(), sync = { at: 0, failAt: 0 };
   var listeners = [];
+  var VER = (function () {
+    var s = root.document && root.document.currentScript;
+    var m = s && /[?&]v=([^&#]+)/.exec(s.src || "");
+    return m ? m[1] : "";
+  })();
   var engine = null;
 
   var TXT = {
@@ -37,14 +47,18 @@
       paused: "Newsletter paused: “{s}”", pausedBody: "Open Newsletter to see why and resume.",
       started: "Sending “{s}”", startedBody: "The scheduled issue started.",
       inbox: "Newsletter: {list}", subs: "{n} new", unsubs: "{n} unsubscribed", bounced: "{n} bounced",
-      inv: "Confirmation requests stopped", invBody: "Open Newsletter: the sending account needs a look."
+      inv: "Confirmation requests stopped", invBody: "Open Newsletter: the sending account needs a look.",
+      rssDraft: "New draft from RSS: “{s}”", rssDraftBody: "Open Newsletter to look it over and send it.",
+      rssSend: "Sending “{s}” (RSS)"
     },
     el: {
       done: "Το «{s}» στάλθηκε σε {n}", done1: "Το «{s}» στάλθηκε σε 1",
       paused: "Παύση αποστολής: «{s}»", pausedBody: "Άνοιξε το Ενημερωτικό δελτίο για να δεις γιατί και να συνεχίσεις.",
       started: "Αποστολή «{s}»", startedBody: "Το προγραμματισμένο τεύχος ξεκίνησε.",
       inbox: "Ενημερωτικό δελτίο: {list}", subs: "{n} νέοι", unsubs: "{n} διαγραφές", bounced: "{n} επιστροφές",
-      inv: "Σταμάτησαν τα αιτήματα επιβεβαίωσης", invBody: "Άνοιξε το Ενημερωτικό δελτίο: ο λογαριασμός αποστολής θέλει έλεγχο."
+      inv: "Σταμάτησαν τα αιτήματα επιβεβαίωσης", invBody: "Άνοιξε το Ενημερωτικό δελτίο: ο λογαριασμός αποστολής θέλει έλεγχο.",
+      rssDraft: "Νέο πρόχειρο από RSS: «{s}»", rssDraftBody: "Άνοιξε το Ενημερωτικό δελτίο για να το δεις και να το στείλεις.",
+      rssSend: "Αποστολή «{s}» (RSS)"
     }
   };
   function lang() {
@@ -87,6 +101,52 @@
     } else if (kind === "invfail") {
       emit({ key: "inv-" + info.list.id + "-" + E.dayKey(), type: "reminder", title: tx("inv"), body: tx("invBody") });
     }
+  }
+  // RSS to e-mail: feeds due on this device, read through the Reader's
+  // network layer (direct, else the relay's "web" op).
+  var RSS_EVERY = 10 * 60 * 1000;
+  var feedLib = null;
+  function loadScript(src) {
+    return new Promise(function (ok, no) {
+      var el = root.document.createElement("script");
+      el.src = src + (VER ? "?v=" + VER : "");
+      el.onload = ok;
+      el.onerror = function () { no({ code: "nofeeds" }); };
+      root.document.head.appendChild(el);
+    });
+  }
+  function feedsReady() {
+    if (root.orosFeedsFetch && root.orosFeedsCore) return Promise.resolve();
+    if (!root.document) return Promise.reject({ code: "nofeeds" });
+    if (!feedLib) {
+      feedLib = (root.orosFeedsCore ? Promise.resolve() : loadScript("feeds/core.js"))
+        .then(function () { return root.orosFeedsFetch ? null : loadScript("feeds/fetch.js"); });
+      feedLib["catch"](function () { feedLib = null; });
+    }
+    return feedLib;
+  }
+  function fetchItems(url) {
+    return feedsReady().then(function () { return fetchOne(url); });
+  }
+  function fetchOne(url) {
+    var F = root.orosFeedsFetch, FC = root.orosFeedsCore;
+    if (!F || !FC) return Promise.reject({ code: "nofeeds" });
+    return F.fetchOne(url, { accept: "application/rss+xml, application/atom+xml, application/feed+json, application/xml;q=0.9, */*;q=0.8" })
+      .then(function (r) {
+        var f = r.status >= 200 && r.status < 300 ? FC.parseFeed(r.text, r.finalUrl || url, Date.now()) : null;
+        if (!f) throw { code: "nofeed" };
+        return f.items;
+      });
+  }
+  function feeds() {
+    if (!engine) { setTimeout(feeds, RSS_EVERY); return; }
+    E.runFeeds(fetchItems).then(function (res) {
+      res.forEach(function (o) {
+        emit(o.sending ? { key: "rss-" + o.issue.id, type: "info", title: tx("rssSend", { s: subjOf(o.issue) }), body: "" }
+                       : { key: "rss-" + o.issue.id, type: "reminder", title: tx("rssDraft", { s: subjOf(o.issue) }), body: tx("rssDraftBody") });
+      });
+      if (res.length) { fire("data"); engine.kick(); }
+    }, function () {}).then(function () { setTimeout(feeds, RSS_EVERY); });
   }
   function fire(kind) {
     listeners = listeners.filter(function (fn) {
@@ -147,7 +207,8 @@
   root.addEventListener("online", function () { if (engine) engine.kick(); });
 
   root.orosNewsletterRunner = {
-    v: 1,
+    v: 2,
+    fetchItems: fetchItems,
     kick: function () { if (engine) engine.kick(); else start(); },
     state: function () { return engine ? engine.state() : { k: "wait-sync" }; },
     checkInbox: function () { return engine ? engine.checkInbox() : Promise.resolve({ u: 0, s: 0, c: 0, b: 0, err: { code: "wait-sync" } }); },
@@ -160,4 +221,5 @@
 
   registerSlice();
   setTimeout(start, 2000);
+  setTimeout(feeds, 30000);
 })(window);

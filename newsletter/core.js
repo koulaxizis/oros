@@ -20,6 +20,9 @@
 //                lock: { dev, at }|null, start, done, n, err, fail: { subId: code } }],
 //     segs:   [{ id, m, list, name, tags[], match: "any"|"all", lang: ""|"en"|"el" }],
 //     tpls:   [{ id, m, name, subj, pre, fmt, blocks[], md, l2 }],
+//     rss:    [{ id, m, list, url, name, every: "day"|"week"|"month", wd, hour,
+//                mode: "draft"|"send", max, seg, last (newest item used), ran, dev, on }],
+//   issues may carry imp: 1 (imported from an archive: sent elsewhere).
 //     sent:   { issueId: [subId, …] },     grow-only while an issue is out
 //     supp:   [hash, …] }                   grow-only suppression list
 //   Every record may instead be a tombstone { id, m, del: 1 }.
@@ -33,7 +36,8 @@
   var LIM = {
     chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
     name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
-    imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50
+    imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50, rss: 20, archive: 500,
+    dataChars: 2500000
   };
   var KINDS = ["mail", "smtp"];
   var SECS = { 465: "tls", 587: "starttls" };
@@ -225,7 +229,7 @@
       l2: normL2(x.l2),
       st: st, when: when, lock: st === "sending" || st === "sched" ? lock : null,
       start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
-      err: oneLine(x.err, 300), fail: fail
+      err: oneLine(x.err, 300), fail: fail, imp: x.imp === 1 && st === "sent" ? 1 : 0
     };
   }
   // The written part of an issue or template (subject … Markdown).
@@ -253,6 +257,24 @@
     return { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
              blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
   }
+  // A feed that becomes issues (RSS to e-mail), run by the device that
+  // set it up (dev), on its schedule; `last` is the date of the newest
+  // article already used, `ran` when it last ran.
+  var EVERY = ["day", "week", "month"];
+  function normRss(x) {
+    if (!validId(x.list)) return null;
+    var url = safeUrl(x.url);
+    if (!/^https?:/i.test(url)) return null;
+    return { id: x.id, m: nat(x.m), list: x.list, url: url, name: oneLine(x.name, LIM.name),
+             every: EVERY.indexOf(x.every) >= 0 ? x.every : "week", wd: clampInt(x.wd, 0, 6, 1), hour: clampInt(x.hour, 0, 23, 9),
+             mode: x.mode === "send" ? "send" : "draft", max: clampInt(x.max, 1, 20, 10), seg: validId(x.seg) ? x.seg : "",
+             last: nat(x.last), ran: nat(x.ran),
+             dev: typeof x.dev === "string" && /^[a-z0-9]{6,20}$/.test(x.dev) ? x.dev : "", on: x.on === 0 ? 0 : 1 };
+  }
+  function clampInt(v, lo, hi, def) {
+    v = Math.round(Number(v));
+    return isFinite(v) && v >= lo && v <= hi ? v : def;
+  }
   function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
   function normColl(arr, fn, max) {
     var seen = {}, out = [];
@@ -266,7 +288,7 @@
     out.sort(byId);
     return max ? out.slice(0, max) : out;
   }
-  function empty() { return { ver: 1, chans: [], lists: [], subs: [], issues: [], segs: [], tpls: [], sent: {}, supp: [] }; }
+  function empty() { return { ver: 1, chans: [], lists: [], subs: [], issues: [], segs: [], tpls: [], rss: [], sent: {}, supp: [] }; }
   function normalize(d) {
     d = d && typeof d === "object" ? d : {};
     var o = empty();
@@ -279,6 +301,7 @@
     o.issues = normColl(d.issues, normIssue, 2000).filter(function (x) { return x.del || liveLists[x.list]; });
     o.segs = normColl(d.segs, normSeg, 400).filter(function (x) { return x.del || liveLists[x.list]; });
     o.tpls = normColl(d.tpls, normTpl, 400);
+    o.rss = normColl(d.rss, normRss, 200).filter(function (x) { return x.del || liveLists[x.list]; });
     var open = {};
     o.issues.forEach(function (x) { if (!x.del && (x.st === "sending" || x.st === "paused")) open[x.id] = 1; });
     var sent = d.sent && typeof d.sent === "object" ? d.sent : {};
@@ -347,6 +370,7 @@
       issues: mergeColl(A.issues, B.issues),
       segs: mergeColl(A.segs, B.segs),
       tpls: mergeColl(A.tpls, B.tpls),
+      rss: mergeColl(A.rss, B.rss),
       sent: {},
       supp: A.supp.concat(B.supp)
     };
@@ -727,6 +751,58 @@
     } catch (e) { return null; }
   }
 
+  // ---------- RSS to e-mail ----------
+  // The next run after `after` (local time): every day at `hour`, every
+  // week on weekday `wd` (0 = Sunday), every month on the 1st.
+  function rssNext(r, after) {
+    var d = new Date(after);
+    d.setMinutes(0, 0, 0);
+    d.setHours(r.hour);
+    if (r.every === "month") { d.setDate(1); if (d.getTime() <= after) d.setMonth(d.getMonth() + 1); return d.getTime(); }
+    if (d.getTime() <= after) d.setDate(d.getDate() + 1);
+    if (r.every === "week") while (d.getDay() !== r.wd) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
+  // Due on this device: on, set up here, and its time came since it last
+  // ran (a new feed waits for its first slot).
+  function rssDue(d, now, dev) {
+    return live(d.rss).filter(function (r) {
+      return r.on && (!r.dev || r.dev === dev) && now >= rssNext(r, r.ran || r.m);
+    });
+  }
+  // Articles newer than the last ones used (all the newest on the first
+  // run), newest first, at most r.max. items: Reader's parsed items.
+  function rssPick(r, items) {
+    return (items || []).filter(function (it) { return it && it.title && safeUrl(it.link) && (!r.last || (it.date || 0) > r.last); })
+      .sort(function (a, b) { return (b.date || 0) - (a.date || 0); }).slice(0, r.max);
+  }
+  var MORE = { en: "Read more", el: "Διαβάστε περισσότερα" };
+  // A feed's text as one plain paragraph: nothing at its start that the
+  // Markdown reader would take for a heading, list, picture or button.
+  function mdLine(s) { return oneLine(s, 600).replace(/^(?:[#>*_+=|-]|\d+[.)]|!?\[+|\s)+/, ""); }
+  // The issue's Markdown: per article a heading, its picture, a few
+  // lines and a button to the article.
+  function digestMd(items, lang) {
+    return items.map(function (it) {
+      var out = ["## " + oneLine(it.title, 300)];
+      var img = safeUrl(it.img);
+      if (/^https:\/\/[^)\s]+$/.test(img)) out.push("![](" + img + ")");
+      var snip = oneLine(it.snip, 600);
+      if (snip) out.push(mdLine(snip));
+      out.push("[[" + (MORE[lang] || MORE.en) + "](" + safeUrl(it.link).replace(/\)/g, "%29") + ")]");
+      return out.join("\n\n");
+    }).join("\n\n---\n\n").slice(0, LIM.md);
+  }
+  // A new issue (draft) from a feed run.
+  function digestIssue(r, l, items, id) {
+    var lang = (l && l.lang) || "en";
+    var first = items[0] ? oneLine(items[0].title, 160) : "";
+    return normIssue({ id: id, m: 0, list: r.list, seg: r.seg, fmt: "md", md: digestMd(items, lang),
+                       subj: r.name ? r.name + (first ? ": " + first : "") : first,
+                       pre: items.slice(1, 4).map(function (it) { return oneLine(it.title, 80); }).join(" · "),
+                       tags: [], st: "draft" });
+  }
+
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
     THEMES: THEMES, BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
@@ -743,7 +819,8 @@
     parseCsv: parseCsv, peopleFromRows: peopleFromRows, peopleFromText: peopleFromText, planImport: planImport,
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
-    toBackup: toBackup, fromBackup: fromBackup
+    toBackup: toBackup, fromBackup: fromBackup,
+    normRss: normRss, rssNext: rssNext, rssDue: rssDue, rssPick: rssPick, digestMd: digestMd, digestIssue: digestIssue
   };
   root.OrosNewsletterCore = api;
   if (typeof module === "object" && module.exports) module.exports = api;
