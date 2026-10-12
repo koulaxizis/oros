@@ -71,6 +71,9 @@
       "application/x-gedcom": [".ged", ".gedcom"] } },
     { app: "ringtones", accept: {
       "audio/x-rtttl": [".rtttl", ".rtx"] } },
+    { app: "notes", accept: {
+      "text/plain": [".txt"],
+      "text/markdown": [".md", ".markdown"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
     // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
     { app: "calendar", text: "importIcs", accept: {
@@ -199,11 +202,39 @@
     return out;
   }
 
+  // Android "Share → orOS" (manifest share_target, POST): the file
+  // types it offers orOS for. Every MIME type and extension in the
+  // table, once each.
+  var SHARE_INBOX = "oros-share-inbox";
+  function shareAccept() {
+    var out = [];
+    HANDLERS.forEach(function (h) {
+      Object.keys(h.accept).forEach(function (mime) {
+        [mime].concat(h.accept[mime]).forEach(function (x) { if (out.indexOf(x) === -1) out.push(x); });
+      });
+    });
+    return out;
+  }
+  function shareTarget() {
+    return {
+      action: "/?share-target", method: "POST", enctype: "multipart/form-data",
+      params: { title: "title", text: "text", url: "url",
+                files: [{ name: "files", accept: shareAccept() }] }
+    };
+  }
+  // ?share-files=<id>: the sw.js inbox entry, or "big" (too large).
+  function shareIdFromUrl(href) {
+    var v = "";
+    try { v = new URL(href, "https://x.invalid/").searchParams.get("share-files") || ""; } catch (e) { v = ""; }
+    return /^(big|[a-z0-9]{6,40})$/.test(v) ? v : "";
+  }
+
   var api = {
     HANDLERS: HANDLERS, MAX_BYTES: MAX_BYTES, PREF_KEY: PREF_KEY, STRINGS: STRINGS,
     extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared,
     normPrefs: normPrefs, choose: choose, choiceFor: choiceFor, setChoice: setChoice,
-    manifestHandlers: manifestHandlers, textKey: textKey, TEXT_MAX: TEXT_MAX, str: str
+    manifestHandlers: manifestHandlers, shareTarget: shareTarget, shareAccept: shareAccept,
+    shareIdFromUrl: shareIdFromUrl, SHARE_INBOX: SHARE_INBOX, textKey: textKey, TEXT_MAX: TEXT_MAX, str: str
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document) return;
@@ -219,7 +250,9 @@
       return v && v !== k ? v : id;
     } catch (e) { return id; }
   }
+  var laterNotices = [];
   function notice(text) {
+    if (!isReady) { laterNotices.push(text); return; }    // notifications.js not up yet
     try {
       var n = w.orosNotifs;
       if (n && typeof n.transient === "function" && n.transient({ ns: "files", title: text })) return;
@@ -352,16 +385,41 @@
     while (queue.length) deliver(queue.shift());
   }
 
-  // The action URL (?file-open=…) is a one-shot: out of the address
-  // bar at once, so a reload is a plain orOS start.
+  // The action URL (?file-open=…) and a shared file (?share-files=…)
+  // are one-shots: out of the address bar at once, so a reload is a
+  // plain orOS start.
+  var shareId = shareIdFromUrl(w.location.href);
   (function () {
     try {
       var u = new URL(w.location.href);
-      if (!u.searchParams.has("file-open")) return;
+      if (!u.searchParams.has("file-open") && !u.searchParams.has("share-files")) return;
       u.searchParams.delete("file-open");
+      u.searchParams.delete("share-files");
       w.history.replaceState(w.history.state, "", u.pathname + u.search + u.hash);
     } catch (e) {}
   })();
+
+  // Android "Share → orOS" with a file: sw.js put it in the inbox
+  // cache (name in X-Name) and redirected here. Taken once; the inbox
+  // is emptied after every read so nothing lingers.
+  if (shareId === "big") notice(T("big"));
+  else if (shareId && w.caches && typeof w.caches.open === "function") {
+    w.caches.open(SHARE_INBOX).then(function (c) {
+      return c.match("/__share/" + shareId).then(function (r) {
+        if (!r) return null;
+        var name = "";
+        try { name = decodeURIComponent(r.headers.get("X-Name") || ""); } catch (e) { name = ""; }
+        var more = r.headers.get("X-More") === "1";
+        return r.blob().then(function (b) {
+          if (more) notice(T("more"));
+          return new w.File([b], name.slice(0, 255) || "file", { type: b.type || "" });
+        });
+      });
+    }).then(function (f) {
+      try { w.caches.delete(SHARE_INBOX); } catch (e) {}
+      if (f) { queue.push(f); flush(); }
+    }, function () {});
+  }
 
   if ("launchQueue" in w && w.launchQueue && typeof w.launchQueue.setConsumer === "function") {
     w.launchQueue.setConsumer(function (params) {
@@ -380,7 +438,11 @@
   w.orosFileOpen = {
     v: 1,
     // Shell: the app list is in, launches may go now.
-    ready: function () { isReady = true; flush(); },
+    ready: function () {
+      isReady = true;
+      laterNotices.splice(0).forEach(notice);
+      flush();
+    },
     // Same path for a File from elsewhere (drag onto the desktop, tests).
     open: function (files) { take(Array.prototype.slice.call(files || [])); },
     // Settings → Opening files.

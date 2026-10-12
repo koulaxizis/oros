@@ -36,6 +36,6 @@ Settings stores nothing of its own. Every option is saved by orOS in the same pl
 - Some apps keep their own settings inside the app, for example the weather in the top bar, which you set in [Weather](app:weather). `System` links to them under `More`.
 
 ## Limits
-- Opening files from your device works with orOS installed from Chrome or Edge on a computer. Firefox, Safari and Android can't hand files to orOS yet: use the Import button inside the app.
+- Opening files from your device works with orOS installed from Chrome or Edge on a computer. On Android, use Share › orOS from Files, Gmail or any app. Firefox and Safari can't hand files to orOS yet: use the Import button inside the app.
 - Settings works only inside the orOS desktop. Opened on its own, it asks you to open it from the orOS menu.
 - The `Backup folder` options appear only in browsers that can write to a folder, such as Chrome and Edge on a computer.

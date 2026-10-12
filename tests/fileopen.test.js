@@ -30,7 +30,11 @@ test("manifest file_handlers are built from the table, one handler per type", ()
   });
   assert.deepEqual(Object.keys(seen).sort(), F.extensions().slice().sort());
   // the link share stays as it was (Bookmarks), no launch_handler (Dropbox OAuth)
-  assert.equal(m.share_target.method, "GET");
+  // Android Share: POST multipart, links keep their url/title/text params
+  assert.deepEqual(m.share_target, F.shareTarget());
+  assert.equal(m.share_target.method, "POST");
+  assert.equal(m.share_target.enctype, "multipart/form-data");
+  F.extensions().forEach((x) => assert.ok(m.share_target.params.files[0].accept.includes(x), x));
   assert.equal(m.launch_handler, undefined);
 });
 
@@ -46,6 +50,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     atelier: ["atelier/core.js"], slides: ["slides/app.js"], layout: ["layout/layout.js"],
     feeds: ["feeds/feeds.js"], podcasts: ["podcasts/podcasts.js"], mindmap: ["mindmap/mindmap.js"],
     familytree: ["familytree/familytree.js"], ringtones: ["ringtones/ringtones.js"],
+    notes: ["notes/notes.js"],
     calendar: ["calendar/calendar.js"], contacts: ["contacts/contacts.js"]
   };
   F.HANDLERS.forEach((h) => {
@@ -73,7 +78,7 @@ test("extOf and appsFor", () => {
   assert.equal(F.extOf(null), "");
   assert.deepEqual(F.appsFor(".docx"), ["writer"]);
   assert.deepEqual(F.appsFor(".DOCX"), ["writer"]);
-  assert.deepEqual(F.appsFor(".txt"), ["writer", "mindmap"]);
+  assert.deepEqual(F.appsFor(".txt"), ["writer", "mindmap", "notes"]);
   assert.deepEqual(F.appsFor(".opml"), ["feeds", "podcasts", "mindmap"]);
   assert.deepEqual(F.appsFor("__proto__"), []);
   assert.deepEqual(F.appsFor("constructor"), []);
@@ -82,11 +87,11 @@ test("extOf and appsFor", () => {
 
 test("choose: the only app, the person's choice, else ask", () => {
   assert.deepEqual(F.choose("a.xlsx", null), { app: "spreadsheet", ext: ".xlsx" });
-  assert.deepEqual(F.choose("a.txt", null), { ask: ["writer", "mindmap"], ext: ".txt" });
+  assert.deepEqual(F.choose("a.txt", null), { ask: ["writer", "mindmap", "notes"], ext: ".txt" });
   assert.deepEqual(F.choose("a.txt", { map: { ".txt": "mindmap" } }), { app: "mindmap", ext: ".txt" });
-  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "ask" } }), { ask: ["writer", "mindmap"], ext: ".txt" });
+  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "ask" } }), { ask: ["writer", "mindmap", "notes"], ext: ".txt" });
   // a choice for an app that cannot read the type is ignored
-  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "spreadsheet" } }).ask, ["writer", "mindmap"]);
+  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "spreadsheet" } }).ask, ["writer", "mindmap", "notes"]);
   assert.equal(F.choose("a.pdf", null), null);
   assert.equal(F.choose("", null), null);
 });
@@ -131,6 +136,8 @@ function fakeWindow(opts) {
     orosNotifs: { transient: (n) => { calls.push(["notice", n.title]); return true; } },
     __orosOpenAt: (app, target) => calls.push(["open", app, target]),
     matchMedia: () => ({ matches: true }),
+    caches: opts.caches,
+    File: class { constructor(parts, name, o) { this.parts = parts; this.name = name; this.type = (o && o.type) || ""; this.size = 1; } },
     URL, Promise, console
   };
   w.window = w;
@@ -203,4 +210,76 @@ test("launch: a shared type follows the saved choice; Settings API checks its in
   assert.equal(w.orosFileOpen.choice(".opml"), "");
   assert.deepEqual(JSON.parse(store["oros-file-open"]), { ver: 1, map: {} });
   assert.ok(w.orosFileOpen.handlers().some((h) => h.app === "mindmap" && h.exts.includes(".xmind")));
+});
+
+test("Android share: ?share-files=<id> is taken once from the sw inbox", async () => {
+  const deleted = [];
+  const entry = { headers: { get: (k) => ({ "X-Name": encodeURIComponent("Λίστα.txt"), "X-More": "1" })[k] || null },
+                  blob: () => Promise.resolve({ type: "text/plain" }) };
+  const caches = {
+    open: (n) => { assert.equal(n, F.SHARE_INBOX); return Promise.resolve({ match: (k) => Promise.resolve(k === "/__share/abc123xyz" ? entry : undefined) }); },
+    delete: (n) => { deleted.push(n); return Promise.resolve(true); }
+  };
+  const { w, calls } = fakeWindow({ href: "https://useoros.online/?share-files=abc123xyz", caches,
+    store: { "oros-file-open": JSON.stringify({ map: { ".txt": "notes" } }) } });
+  assert.equal(w.replaced, "/");
+  await tick(); await tick(); await tick();
+  assert.deepEqual(calls, []);                         // waits for ready(), notices too
+  w.orosFileOpen.ready();
+  assert.deepEqual(calls.map((c) => c[0] + ":" + c[1]), ["notice:orOS opened the first file only.", "open:notes"]);
+  assert.equal(calls[1][2].openFile.name, "Λίστα.txt");
+  assert.deepEqual(deleted, [F.SHARE_INBOX]);
+});
+
+test("Android share: ids are checked; 'big' only says so", () => {
+  assert.equal(F.shareIdFromUrl("/?share-files=abc123"), "abc123");
+  assert.equal(F.shareIdFromUrl("/?share-files=big"), "big");
+  ["/?share-files=../x", "/?share-files=ab", "/?share-files=ABC123", "/", "/?share-files="].forEach((u) =>
+    assert.equal(F.shareIdFromUrl(u), "", u));
+  const { w, calls } = fakeWindow({ href: "https://useoros.online/?share-files=big" });
+  w.orosFileOpen.ready();
+  assert.deepEqual(calls.map((c) => c[0]), ["notice"]);
+});
+
+// ---------- sw.js: the POST share target ----------
+function swSandbox() {
+  const puts = {};
+  const sb = {
+    self: { location: { origin: "https://useoros.online" }, registration: { scope: "https://useoros.online/" },
+            addEventListener: () => {}, clients: {}, skipWaiting: () => {} },
+    caches: { open: () => Promise.resolve({ put: (k, r) => { puts[k] = r; return Promise.resolve(); } }) },
+    Response: class { constructor(body, o) { this.body = body; this.headers = (o && o.headers) || {}; }
+                      static redirect(u, s) { return { redirect: u, status: s }; } },
+    URL, URLSearchParams, Promise, console, setTimeout, clearTimeout, Date, Math
+  };
+  sb.self.caches = sb.caches;
+  vm.runInNewContext(read("sw.js"), sb);
+  return { sb, puts };
+}
+const form = (o) => ({ formData: () => Promise.resolve({
+  getAll: (k) => (k === "files" ? o.files || [] : []),
+  get: (k) => (k in o ? o[k] : null) }) });
+
+test("sw share target: a link goes on to Bookmarks as GET share- params", async () => {
+  const { sb, puts } = swSandbox();
+  const r = await sb.shareTargetPost(form({ url: "", title: "Read this", text: "see https://example.com/a" }));
+  assert.equal(r.status, 303);
+  assert.equal(r.redirect, "https://useoros.online/?share-title=Read+this&share-text=see+https%3A%2F%2Fexample.com%2Fa");
+  assert.deepEqual(Object.keys(puts), []);
+});
+
+test("sw share target: a file lands in the inbox, the first only; too big is refused", async () => {
+  const { sb, puts } = swSandbox();
+  const f1 = { name: "notes.md", size: 12, type: "text/markdown" }, f2 = { name: "b.txt", size: 3, type: "" };
+  const r = await sb.shareTargetPost(form({ files: [f1, f2] }));
+  const id = /\?share-files=([a-z0-9]+)$/.exec(r.redirect)[1];
+  assert.equal(F.shareIdFromUrl(r.redirect), id);
+  const put = puts["/__share/" + id];
+  assert.equal(put.body, f1);
+  assert.equal(put.headers["X-Name"], "notes.md");
+  assert.equal(put.headers["X-More"], "1");
+  const big = await sb.shareTargetPost(form({ files: [{ name: "x.docx", size: 60 * 1024 * 1024 }] }));
+  assert.equal(big.redirect, "https://useoros.online/?share-files=big");
+  const bad = await sb.shareTargetPost({ formData: () => Promise.reject(new Error("x")) });
+  assert.equal(bad.redirect, "https://useoros.online/");
 });
