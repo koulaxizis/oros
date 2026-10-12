@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.1.0)
+// orOS CRM — core.js (shared logic, v1.3.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -19,7 +19,9 @@
 //   empty() → fresh data
 //   byId(list, id)
 //   custName(c), lastContact(data, custId) → ms | 0
-//   dealProb(d), openDeals(data, custId?)
+//   stages(data) → [{ id, name, prob, open, own }] (board order)
+//   stageOf(data, deal) → the stage the deal shows in
+//   dealProb(d, data?), openDeals(data, custId?)
 //   pipeline(data) → { stage: { n, val, wval } }
 //   agenda(data, today, horizon) → { late, today, soon } (open fups)
 //   dueNow(data, today, hhmm) → open fups due by now (reminders)
@@ -27,6 +29,9 @@
 //   dashboard(data, nowMs, today) → numbers for the Dashboard tab
 //   customersForBilling(data) → [{ id, name, afm, doy, job, addr,
 //     country, email, phone }] (BR-CRM-INV, read by Invoices)
+//   invoicePrefill(cust, deal?, cur) → the { new } of BR-CRM-INV 1
+//   quotePrefill(cust, deal?, cur) → BR-Q1 payload, or null when a
+//     deal's value is in a currency Quote does not know (EUR, USD)
 //   csvRows(data, lang) → rows · csvCell(v)
 //   backup(data) / restore(data, file) → merged data | null
 //   reminders(data, today, hhmm, seen) → { fresh: [{ key, fup }], next }
@@ -34,8 +39,8 @@
 //   calendarOn(data, ymd, today) → [{ k: fup|late|done|close, fup|deal }]
 //   custsForContact(data, contactId) → [cust]
 // Data (synced slice "crm", key oros-crm-data):
-//   { ver: 1, cust, deals, acts, fups, tags: [row…] each sorted by
-//     id, prefs: { pm, cur, forget }, tombs: { id: deletedAt } }
+//   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
+//     sorted by id, prefs: { pm, cur, forget }, tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
 // ============================================================
@@ -50,14 +55,15 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, people: 20, custTags: 10 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
-  var OPEN_STAGES = ["new", "contact", "proposal", "nego"];
+  var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
+  var STAGE_POS = { "new": 10, contact: 20, proposal: 30, nego: 40 };
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -198,7 +204,7 @@
     if (!title) return null;
     var o = { id: x.id, m: x.m, cust: x.cust, title: title,
               val: isInt(x.val) && x.val >= 0 && x.val <= VAL_MAX ? x.val : 0,
-              stage: STAGES.indexOf(x.stage) >= 0 ? x.stage : "new" };
+              stage: STAGES.indexOf(x.stage) >= 0 || ID_RE.test(x.stage) ? x.stage : "new" };
     if (isInt(x.prob) && x.prob >= 0 && x.prob <= 100) o.prob = x.prob;
     if (isYmd(x.close)) o.close = x.close;
     if (isYmd(x.cd) && (o.stage === "won" || o.stage === "lost")) o.cd = x.cd;
@@ -246,10 +252,30 @@
     };
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag };
+  // Pipeline stages (phase 2): a record per built-in open stage the
+  // user changed (id "new" | "contact" | "proposal" | "nego": name ""
+  // = the built-in label, off = hidden) and one per own stage (id like
+  // any row, name required). prob = the default probability, pos =
+  // the order among the open stages (built-ins 10 / 20 / 30 / 40).
+  // Won and Lost stay fixed: the dashboard counts on them.
+  function normStg(x) {
+    if (!x || typeof x !== "object" || !stamp(x)) return null;
+    var bi = OPEN_STAGES.indexOf(x.id) >= 0;
+    if (!bi && !ID_RE.test(x.id)) return null;
+    var name = str(x, "name", 30);
+    if (!bi && !name) return null;
+    var o = { id: x.id, m: x.m };
+    put(o, "name", name);
+    if (isInt(x.prob) && x.prob >= 0 && x.prob <= 100) o.prob = x.prob;
+    if (isInt(x.pos) && x.pos >= 0 && x.pos <= 1000000) o.pos = x.pos;
+    if (bi && (x.off === 1 || x.off === true)) o.off = 1;
+    return o;
+  }
+
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg };
 
   function empty() {
-    return { ver: DATA_VER, cust: [], deals: [], acts: [], fups: [], tags: [], prefs: normPrefs(null), tombs: {} };
+    return { ver: DATA_VER, cust: [], deals: [], acts: [], fups: [], tags: [], stg: [], prefs: normPrefs(null), tombs: {} };
   }
 
   // ---------- Merge (R5 symmetric, R17 tombstones, R26 canonical) ----------
@@ -302,7 +328,7 @@
       Object.keys(best[k]).sort(cmpStr).forEach(function (id) {
         var x = best[k][id];
         if (id in tombs && tombs[id] >= x.m) return;
-        if (k !== "cust" && k !== "tags" && !aliveCust[x.cust]) return;
+        if (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust]) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
@@ -339,17 +365,54 @@
     return m;
   }
 
-  function dealProb(d) { return isInt(d.prob) ? d.prob : STAGE_PROB[d.stage]; }
-  function isOpen(d) { return OPEN_STAGES.indexOf(d.stage) >= 0; }
+  // ---------- Stages ----------
+  // The board, in order: the open stages (built-ins not hidden + own,
+  // by pos, then id), then Won, Lost. Each { id, name ("" → the
+  // built-in label), prob, open, own }.
+  function stages(data) {
+    var rec = {};
+    (data.stg || []).forEach(function (r) { rec[r.id] = r; });
+    var open = [];
+    OPEN_STAGES.forEach(function (id) {
+      var r = rec[id] || {};
+      if (r.off) return;
+      open.push({ id: id, name: r.name || "", prob: isInt(r.prob) ? r.prob : STAGE_PROB[id],
+                  pos: isInt(r.pos) ? r.pos : STAGE_POS[id], open: true, own: false });
+    });
+    (data.stg || []).forEach(function (r) {
+      if (OPEN_STAGES.indexOf(r.id) >= 0) return;
+      open.push({ id: r.id, name: r.name, prob: isInt(r.prob) ? r.prob : 50,
+                  pos: isInt(r.pos) ? r.pos : 1000, open: true, own: true });
+    });
+    open.sort(function (a, b) { return a.pos - b.pos || cmpStr(a.id, b.id); });
+    open = open.slice(0, LIMITS.openStages);
+    if (!open.length) open.push({ id: "new", name: "", prob: STAGE_PROB["new"], pos: 10, open: true, own: false });
+    return open.concat([{ id: "won", name: "", prob: 100, pos: 0, open: false, own: false },
+                        { id: "lost", name: "", prob: 0, pos: 0, open: false, own: false }]);
+  }
+  // The stage a deal shows in: its own, or (a stage deleted or hidden
+  // on another device) the first open stage. Nothing is rewritten.
+  function stageOf(data, d, list) {
+    var st = list || stages(data);
+    for (var i = 0; i < st.length; i++) if (st[i].id === d.stage) return st[i];
+    return st[0];
+  }
+  function dealProb(d, data) {
+    if (isInt(d.prob)) return d.prob;
+    if (data) return stageOf(data, d).prob;
+    return STAGE_PROB[d.stage] !== undefined ? STAGE_PROB[d.stage] : 50;
+  }
+  function isOpen(d) { return d.stage !== "won" && d.stage !== "lost"; }
   function openDeals(data, custId) {
     return data.deals.filter(function (d) { return isOpen(d) && (!custId || d.cust === custId); });
   }
 
   function pipeline(data) {
-    var out = {};
-    STAGES.forEach(function (s) { out[s] = { n: 0, val: 0, wval: 0 }; });
+    var out = {}, st = stages(data);
+    st.forEach(function (s) { out[s.id] = { n: 0, val: 0, wval: 0 }; });
     data.deals.forEach(function (d) {
-      var r = out[d.stage];
+      var s = stageOf(data, d, st), r = out[s.id];
+      d = isInt(d.prob) ? d : Object.assign({}, d, { prob: s.prob });
       r.n++;
       r.val += d.val;
       r.wval += Math.round(d.val * dealProb(d) / 100);
@@ -400,7 +463,7 @@
     var month = today.slice(0, 7), year = today.slice(0, 4);
     var p = pipeline(data);
     var openVal = 0, openW = 0, openN = 0;
-    OPEN_STAGES.forEach(function (s) { openVal += p[s].val; openW += p[s].wval; openN += p[s].n; });
+    stages(data).forEach(function (s) { if (s.open) { openVal += p[s.id].val; openW += p[s.id].wval; openN += p[s.id].n; } });
     var wonM = 0, wonY = 0, wonYn = 0, lostYn = 0;
     data.deals.forEach(function (d) {
       if (!d.cd) return;
@@ -436,6 +499,27 @@
       return { id: c.id, name: c.name, afm: c.afm || "", doy: c.doy || "", job: c.job || "",
                addr: c.addr || "", country: c.country || "", email: c.email || "", phone: c.phone || "" };
     }).sort(function (a, b) { return a.name.localeCompare(b.name) || cmpStr(a.id, b.id); });
+  }
+
+  // What CRM hands Invoices (BR-CRM-INV 1) and Quote (BR-Q1). Both
+  // apps only prefill a draft; nothing is saved before their Save.
+  // Prices go in currency units (cents / 100). A deal is one line:
+  // its title, quantity 1, its value.
+  function invoicePrefill(c, d, cur) {
+    var n = { crm: c.id, name: c.name, cur: cur };
+    ["afm", "doy", "job", "addr", "country", "email", "phone"].forEach(function (k) { if (c[k]) n[k] = c[k]; });
+    if (d) {
+      n.items = [{ d: d.title, q: 1, p: (d.val || 0) / 100 }];
+      n.ref = { app: "crm", id: d.id };
+    }
+    return n;
+  }
+  function quotePrefill(c, d, cur) {
+    var known = cur === "EUR" || cur === "USD";
+    if (d && !known) return null;
+    var p = { client: c.name, items: [d ? { d: d.title, q: 1, p: (d.val || 0) / 100 } : { d: "", q: 1, p: 0 }] };
+    if (known) p.cur = cur;
+    return p;
   }
 
   // ---------- CSV (customers) ----------
@@ -551,9 +635,10 @@
     normCust: normCust, normDeal: normDeal, normAct: normAct, normFup: normFup, normTag: normTag,
     normPrefs: normPrefs, norm: norm, merge: merge, empty: empty,
     byId: byId, custName: custName, lastContact: lastContact, lastContactMap: lastContactMap,
+    stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
-    customersForBilling: customersForBilling, csvCell: csvCell, csvRows: csvRows,
+    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows,
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact
   };
