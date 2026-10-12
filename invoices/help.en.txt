@@ -1,0 +1,62 @@
+# Invoices
+Invoices makes invoices, receipts, proformas and credit notes with VAT and automatic numbering, as PDF. It tracks who has paid and who still owes, shows your revenue, and keeps your clients. Invoices you issue elsewhere (for example in myDATA) can be recorded here too, so all payments are in one place.
+
+>! orOS does not send anything to ΑΑΔΕ / myDATA. Greek business-to-business invoices that must be issued electronically are issued in myDATA or with your provider; record them here with `New` › `Record an invoice issued elsewhere`. Your accountant has the final word on what you must issue.
+
+## Getting started
+The first time, a banner asks you to `Add details`: your name or company, tax number (ΑΦΜ), tax office (ΔΟΥ), address, bank accounts (IBAN) and, if you like, a logo. They go on every invoice you issue from then on.
+
+Press `New` and choose what to make: `Invoice`, `Receipt`, `Proforma`, `Credit note`, `Record an invoice issued elsewhere`, or `From a template`. Pick a `Client` (or add one with +), the `Date`, when it is `Due` (the buttons set 15, 30 or 60 days), and the `Currency`. Then add the `Items`: description, quantity, unit price, discount and VAT %. The totals update as you type.
+
+`Save draft` keeps it to finish later. `Preview PDF` shows how it will look, with a DRAFT mark. `Issue` gives it its number and freezes it.
+
+## Issuing and numbering
+When you issue, the document gets the next number of its series, such as INV-2026-0001. The number goes up by one and starts again each year. After issuing, the items and the client can't change: a mistake is corrected with a `Credit note`, and a document that should not exist is cancelled with `Cancel` (its number stays used and it counts as zero).
+
+If you issue on two devices before they sync, both may take the same number. Invoices then shows a banner with a button to give one of them a new number. To avoid it, add a second series in `Settings` › `Numbering` (for example with the prefix INV-B) and tick `Use on this device` on the second device.
+
+## Withholding, discount and VAT exemption
+- `Discount on the total (%)` is taken off before VAT.
+- `Withholding tax (%)` (for example 20 % on services by a freelancer) is taken off the amount payable; the invoice still shows the full total.
+- Under `Terms, notes and more` you can write a `VAT exemption reason` (printed when an item has 0 % VAT), the `Payment terms`, `Notes`, and choose the `PDF language` (Greek or English) for this document.
+
+## Payments and statuses
+Open an issued document to see it and its actions. `Mark as paid` records the whole balance as one payment; `Add payment` records part of it with its date and method (bank transfer, cash, card, IRIS, PayPal). Each document shows its status: `Unpaid`, `Partly paid`, `Paid` or `Overdue` (after its due date). A credit note lowers what the invoice it corrects still owes. Tap a payment to change or delete it.
+
+A receipt is usually paid at once: leave `Paid now` ticked when you issue it.
+
+## Proformas, credit notes and records
+- A `Proforma` asks for payment without being an invoice. `Make invoice` turns it into an invoice draft with the same items.
+- A `Credit note` corrects an invoice you issued: choose it under `Corrects`.
+- A recorded invoice (`Record an invoice issued elsewhere`) keeps the number, net and VAT amounts and the ΜΑΡΚ of an invoice issued in myDATA or by your provider. `Attach` keeps its official PDF on the orOS disk, under Invoices. Payments and statuses work as for any invoice.
+
+## PDF, sending and sharing
+`PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in: attach the PDF you saved. `Mark as sent` notes the date you sent it.
+
+## Clients
+On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address, country, email and phone. `From Contacts` and `From Quote` bring in people you already have. A client shows how many documents it has and what it still owes; open it to make a `New invoice` or `Show documents`. Changing a client never changes documents already issued: they keep the details they were issued with.
+
+## Templates and recurring invoices
+`Save as template` in the editor keeps the client and items to reuse with `New` › `From a template`. Set `Repeat` to every month, every 3 months or every year and a draft is made on that day for you to check and issue. Nothing is issued by itself.
+
+## Dashboard
+`Dashboard` shows, for a `Period`, how much you `Invoiced` and `Collected`, what is `Outstanding` and `Overdue`, a bar per month, your top clients and the VAT per rate. Choose the `Currency` when you invoice in more than one. `Export documents (CSV)` and `Export payments (CSV)` save them for a spreadsheet or your accountant.
+
+## Settings
+The gear button opens `Settings`: your business details and logo, the defaults for new documents (currency, VAT %, payment days, withholding, PDF language, payment terms, footer), the numbering series, and your templates.
+
+## Sync and backup
+Documents, payments, clients, series, templates and your business details sync between your devices through [orOS sync](help:t/sync). The filters and the series you use on each device stay on that device; an unsaved draft is kept on the device until you save it.
+
+In `Settings`, `Back up (JSON)` saves everything to a file and `Restore from backup` merges a backup with what you have: nothing is replaced or lost. The orOS [backup](help:t/backup) includes Invoices too. Attached official PDFs live on the orOS disk, not in the backup.
+
+## Keyboard shortcuts
+- [[N]] makes a new document.
+- [[/]] goes to the search box.
+- [[Esc]] goes back from a document, the editor or Settings.
+- [[Ctrl+Z]] undoes the last change that offered `Undo`.
+
+## Limits
+- A document has at most 200 items.
+- Amounts up to 1.000.000.000,00 in any currency; each document has one currency.
+- The logo is made smaller (at most 600 × 300) so sync stays light.

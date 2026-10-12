@@ -286,6 +286,16 @@
       "type": "internal"
     },
     {
+      "id": "invoices",
+      "name": "Invoices",
+      "category": "Business",
+      "icon": "invoices",
+      "url": "invoices/",
+      "type": "internal",
+      "search": "search.js",
+      "searchOff": true
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",
