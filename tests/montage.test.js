@@ -509,6 +509,26 @@ test("GIF writer: header, a palette per frame, loop, trailer", async () => {
   assert.equal(C.exportName("Loop", "gif"), "Loop.gif");
 });
 
+test("shapes: on the overlay row only, never invisible, drawn as a layer with keyframes", () => {
+  let d = C.addItem(base(), "p1", { id: "s1", k: "shape", tr: "ov", at: 1, d: 3, sh: { k: "star", col: "#ff0000", ol: "#000000", ow: 50 } }, T0 + 10);
+  const s1 = proj(d).items.s1;
+  assert.deepEqual(s1.sh, { k: "star", col: "#ff0000", ol: "#000000", ow: 20 });
+  assert.equal(s1.op, 100); assert.ok(s1.box);
+  assert.equal("fit" in s1, false); assert.equal("flt" in s1, false);
+  // no fill and no outline would be invisible: an outline is added
+  d = C.setItem(d, "p1", "s1", { sh: { k: "nope", col: "", ol: "", ow: 0 } }, T0 + 11);
+  assert.deepEqual(proj(d).items.s1.sh, { k: "rect", col: "", ol: "#ffffff", ow: 4 });
+  // not on the main or text rows
+  assert.equal(proj(C.addItem(base(), "p1", { id: "s2", k: "shape", tr: "main", d: 3 }, T0)).items.s2, undefined);
+  assert.equal(proj(C.setItem(d, "p1", "s1", { tr: "main" }, T0 + 12)).items.s1.tr, "ov");
+  const L = C.framePlan(proj(d), 2).find((x) => x.id === "s1");
+  assert.equal(L.k, "shape"); assert.equal(L.sh.k, "rect");
+  d = C.setItem(d, "p1", "s1", { kf: [{ t: 0, o: 0 }, { t: 2, o: 100 }] }, T0 + 13);
+  assert.equal(C.framePlan(proj(d), 2).find((x) => x.id === "s1").alpha, 0.5);
+  assert.equal(J(C.merge(d, d)), J(d));
+  assert.ok(C.SHAPES.includes("heart"));
+});
+
 test("app strings: English and Greek have the same keys; help pages share their outline", () => {
   const fs = require("fs");
   const src = fs.readFileSync(path.join(__dirname, "..", "montage/montage.js"), "utf8");

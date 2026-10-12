@@ -52,6 +52,12 @@ With a clip selected:
 - `Open an SRT file` adds every line of an SRT (or WebVTT) subtitle file as its own text at the right time. You can edit, move or delete each one like any text.
 - `Save as SRT` writes all texts on the `Text` row as an SRT file, for YouTube or a video player.
 
+## Stickers and shapes
+`Stickers` (with nothing selected) opens `Stickers and shapes`:
+- A shape (`Rectangle`, `Rounded`, `Circle`, `Triangle`, `Star`, `Heart`, `Arrow`, `Speech bubble`) goes on the `Overlay` row at the playhead. Select it and use `Style` to change the `Shape`, its `Fill`, `Outline` and `Outline width`.
+- A sticker (an emoji) goes on the `Text` row at the playhead and pops in.
+- Move and size both with `Position`, and make them move over time with `Keyframes`. Drag their edges to make them show longer or shorter.
+
 ## Grab a frame
 With nothing selected, `Grab frame` saves the picture at the playhead as a PNG in Files › Pictures and opens it in [Photo Lab](app:photolab), where you can edit it.
 
@@ -85,6 +91,7 @@ In `Project settings` you can switch on `Sync this project's media`. Montage the
 
 - For a phone story, start the project as `Tall 9:16`; you can still change the `Shape` later in `Project settings`.
 - Adding the same file again, even to another project, does not take extra space: Montage keeps one copy.
+- If a big video (4K, a long phone video) stutters while you edit, open `Project settings` and press `Make light copies` under `Smoother preview`. Montage makes small copies on this device for the preview only; the media list marks them `light copy`. The export, `Grab frame` and sync always use the originals. `Remove light copies` gives the space back.
 
 ## Limits
 - One file can be up to 4 GB. Very long 4K projects need a lot of browser storage.

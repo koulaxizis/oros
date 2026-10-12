@@ -42,15 +42,16 @@
   var SOUND_RE = /^[0-9a-f]{64}\.(mp3|m4a|ogg|wav|weba)$/;
   var COLOR_RE = /^#[0-9a-f]{6}$/;
 
-  var KINDS = ["video", "image", "audio", "title"];
+  var KINDS = ["video", "image", "audio", "title", "shape"];
   var TRACKS = ["main", "ov", "tt", "a1", "a2"];
-  var TRACK_KINDS = { main: ["video", "image", "title"], ov: ["video", "image"], tt: ["title"], a1: ["audio"], a2: ["audio"] };
+  var TRACK_KINDS = { main: ["video", "image", "title"], ov: ["video", "image", "shape"], tt: ["title"], a1: ["audio"], a2: ["audio"] };
   var RATIOS = { "16:9": [16, 9], "9:16": [9, 16], "1:1": [1, 1], "4:5": [4, 5] };
   var FPS = [30, 60];
   var TRANSITIONS = ["fade", "black", "slide", "wipe", "push", "zoom", "circle"];
   var FILTERS = ["none", "mono", "sepia", "warm", "cool", "vivid", "fade", "noir", "film", "vintage", "chrome", "dusk", "golden"];
   var ANIMS = ["none", "fade", "rise", "pop"];
   var ALIGNS = ["l", "c", "r"];
+  var SHAPES = ["rect", "round", "ellipse", "triangle", "star", "heart", "arrow", "bubble"];
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
   function isInt(v) { return isNum(v) && Math.floor(v) === v; }
@@ -94,6 +95,16 @@
     };
   }
   var BOX_OV = { x: 0.6, y: 0.06, w: 0.34, h: 0.34 };
+  // A shape: kind, fill colour ("" = none), outline colour ("" = none),
+  // outline width 0-20 (% of the shape's shorter side).
+  function normShape(v) {
+    var o = obj(v) || {};
+    var col = o.col === "" ? "" : (COLOR_RE.test(o.col) ? o.col : "#f8d14a");
+    var ol = COLOR_RE.test(o.ol) ? o.ol : "";
+    var ow = Math.round(num(o.ow, 0, 0, 20));
+    if (!col && (!ol || !ow)) { ol = ol || "#ffffff"; ow = ow || 4; }        // never invisible
+    return { k: oneOf(o.k, SHAPES, "rect"), col: col, ol: ol, ow: ow };
+  }
   var BOX_TT = { x: 0.05, y: 0.72, w: 0.9, h: 0.2 };
 
   function normItem(v, id) {
@@ -126,7 +137,7 @@
     it.fo = r3(num(o.fo, 0, 0, 10));
     if (k !== "audio") {
       it.op = Math.round(num(o.op, 100, 0, 100));
-      if (k !== "title") {
+      if (k === "video" || k === "image") {
         it.fit = oneOf(o.fit, ["fit", "fill"], "fit");
         it.rot = oneOf(o.rot, [0, 90, 180, 270], 0);
         it.fl = o.fl === true;
@@ -135,6 +146,7 @@
         if (isPicture(o.lut)) it.lut = o.lut;       // a colour look (.cube) stored as a picture
       }
       if (tr !== "main") it.box = normBox(o.box, tr === "tt" ? BOX_TT : BOX_OV);
+      if (k === "shape") it.sh = normShape(o.sh);
       if (k === "title") {
         it.text = normText(o.text);
         if (tr === "main") it.bg = COLOR_RE.test(o.bg) ? o.bg : "#000000";
@@ -388,7 +400,8 @@
       bri: 1, dx: 0, dy: 0, sc: 1, iris: -1, clip: null, local: local
     };
     if (it.k === "video") L.st = srcTime(it, local);
-    if (it.k !== "title") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; if (it.lut) L.lut = it.lut; }
+    if (it.k === "video" || it.k === "image") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; if (it.lut) L.lut = it.lut; }
+    if (it.k === "shape") L.sh = it.sh;
     if (it.box) L.box = it.box;
     if (it.k === "title") { L.text = it.text; if (it.bg) L.bg = it.bg; }
     if (it.kf) {
@@ -893,7 +906,7 @@
 
   var api = {
     VER: VER, MIN: MIN, MAX_ITEMS: MAX_ITEMS, KINDS: KINDS, TRACKS: TRACKS, TRACK_KINDS: TRACK_KINDS,
-    RATIOS: Object.keys(RATIOS), FPS: FPS.slice(), TRANSITIONS: TRANSITIONS.slice(), FILTERS: FILTERS.slice(), ANIMS: ANIMS.slice(),
+    SHAPES: SHAPES.slice(), RATIOS: Object.keys(RATIOS), FPS: FPS.slice(), TRANSITIONS: TRANSITIONS.slice(), FILTERS: FILTERS.slice(), ANIMS: ANIMS.slice(),
     isId: isId, isPicture: isPicture, isVideo: isVideo, isSound: isSound,
     normItem: normItem, merge: merge, lastEdit: lastEdit,
     itemDur: itemDur, trackItems: trackItems, mainSeq: mainSeq, placeOf: placeOf, duration: duration,

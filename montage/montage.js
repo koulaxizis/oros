@@ -144,6 +144,16 @@
       "exp.gifHint": "A silent loop for chats and web pages, up to 30 seconds. Big GIF files are normal: keep it short.",
       "exp.gifLong": "A GIF can be at most 30 seconds long. Make the project shorter or export a video.",
       "exp.keepGif": "Also keep a copy in Files › Pictures", "exp.readyGif": "Your GIF is ready", "toast.keptGif": "A copy is in Files › Pictures",
+      "px.title": "Smoother preview", "px.make": "Make light copies", "px.drop": "Remove light copies",
+      "px.hint": "For big videos (4K, long phone videos) that stutter while you edit: Montage makes small copies on this device just for the preview. The export always uses the originals.",
+      "px.working": "Making light copy {i} of {n}… {p}%", "px.done": "{n} light copies ready", "px.none": "These videos are light enough already.",
+      "px.dropped": "{n} light copies removed", "px.stopped": "Stopped. Light copies made so far are kept.", "px.has": "light copy",
+      "tool.shapes": "Stickers", "tool.style": "Style", "kind.shape": "Shape",
+      "shp.title": "Stickers and shapes", "shp.shapes": "Shapes", "shp.stickers": "Stickers",
+      "shp.hint": "They go on the Overlay row (shapes) or the Text row (stickers) at the playhead. Move them with Position, animate them with Keyframes.",
+      "shape.rect": "Rectangle", "shape.round": "Rounded", "shape.ellipse": "Circle", "shape.triangle": "Triangle",
+      "shape.star": "Star", "shape.heart": "Heart", "shape.arrow": "Arrow", "shape.bubble": "Speech bubble",
+      "shp.kind": "Shape", "shp.fill": "Fill", "shp.outline": "Outline", "shp.width": "Outline width",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -240,6 +250,16 @@
       "exp.gifHint": "Ένα βουβό loop για συνομιλίες και ιστοσελίδες, έως 30 δευτερόλεπτα. Τα GIF βγαίνουν μεγάλα αρχεία: κράτα το σύντομο.",
       "exp.gifLong": "Ένα GIF μπορεί να είναι έως 30 δευτερόλεπτα. Κάνε το project πιο σύντομο ή βγάλε βίντεο.",
       "exp.keepGif": "Κράτα και αντίγραφο στα Αρχεία › Pictures", "exp.readyGif": "Το GIF σου είναι έτοιμο", "toast.keptGif": "Ένα αντίγραφο είναι στα Αρχεία › Pictures",
+      "px.title": "Πιο ομαλή προεπισκόπηση", "px.make": "Φτιάξε ελαφριά αντίγραφα", "px.drop": "Σβήσε τα ελαφριά αντίγραφα",
+      "px.hint": "Για μεγάλα βίντεο (4K, μεγάλα βίντεο κινητού) που κολλάνε την ώρα που τα επεξεργάζεσαι: το Μοντάζ φτιάχνει μικρά αντίγραφα σε αυτή τη συσκευή μόνο για την προεπισκόπηση. Η εξαγωγή χρησιμοποιεί πάντα τα πρωτότυπα.",
+      "px.working": "Φτιάχνω ελαφρύ αντίγραφο {i} από {n}… {p}%", "px.done": "Έτοιμα {n} ελαφριά αντίγραφα", "px.none": "Αυτά τα βίντεο είναι ήδη αρκετά ελαφριά.",
+      "px.dropped": "Σβήστηκαν {n} ελαφριά αντίγραφα", "px.stopped": "Σταμάτησε. Όσα ελαφριά αντίγραφα έγιναν μένουν.", "px.has": "ελαφρύ αντίγραφο",
+      "tool.shapes": "Αυτοκόλλητα", "tool.style": "Στυλ", "kind.shape": "Σχήμα",
+      "shp.title": "Αυτοκόλλητα και σχήματα", "shp.shapes": "Σχήματα", "shp.stickers": "Αυτοκόλλητα",
+      "shp.hint": "Μπαίνουν στη γραμμή Επικάλυψη (σχήματα) ή στη γραμμή Κείμενο (αυτοκόλλητα) στην κεφαλή. Μετακίνησέ τα με τη Θέση, κίνησέ τα με τα Keyframes.",
+      "shape.rect": "Ορθογώνιο", "shape.round": "Στρογγυλεμένο", "shape.ellipse": "Κύκλος", "shape.triangle": "Τρίγωνο",
+      "shape.star": "Αστέρι", "shape.heart": "Καρδιά", "shape.arrow": "Βέλος", "shape.bubble": "Συννεφάκι διαλόγου",
+      "shp.kind": "Σχήμα", "shp.fill": "Γέμισμα", "shp.outline": "Περίγραμμα", "shp.width": "Πάχος περιγράμματος",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -467,7 +487,7 @@
     ["back-btn", "undo-btn", "redo-btn", "proj-btn", "export-btn"].forEach(function (k) { $(k).hidden = false; });
     try {
       player = MontagePlayer.create({
-        canvas: $("stage"), media: MM.get,
+        canvas: $("stage"), media: MM.get, proxy: MM.proxy,
         onTime: function (tt) { tNow = tt; followPlayhead(); },
         onState: function (on) { $("play-btn").innerHTML = on ? ICON.pause : ICON.play; setLabel($("play-btn"), t(on ? "btn.pause" : "btn.play")); }
       });
@@ -531,6 +551,7 @@
   var thumbCache = {}, missingCache = {};
   function clipLabel(it) {
     if (it.k === "title") return it.text.t.split("\n")[0] || t("kind.title");
+    if (it.k === "shape") return t("shape." + it.sh.k);
     var d = C.fmtTime(C.itemDur(it));
     if (it.k === "audio") return t("kind.audio") + " · " + d;
     return d + (it.sp !== undefined && it.sp !== 1 ? " · " + it.sp + "×" : "") + (it.mu ? " · 🔇" : "");
@@ -796,6 +817,7 @@
       bar.appendChild(toolBtn("audio", t("tool.audio"), addSound));
       bar.appendChild(toolBtn("text", t("tool.text"), addText));
       bar.appendChild(toolBtn("cc", t("tool.subs"), subtitlesDialog));
+      bar.appendChild(toolBtn("shapes", t("tool.shapes"), shapesDialog));
       bar.appendChild(toolBtn("tr_a2", t("tool.voice"), recordVoice));
       bar.appendChild(toolBtn("split", t("tool.split"), splitAtPlayhead, null, !clipAt(tNow)));
       bar.appendChild(toolBtn("frame", t("tool.grab"), grabFrame, null, !C.duration(p)));
@@ -813,6 +835,7 @@
     bar.appendChild(toolBtn("fade", t("tool.fade"), panelFade));
     bar.appendChild(toolBtn("kf", t("tool.kf"), panelKeys));
     if (it.tr === "main" && C.mainSeq(p)[0].it.id !== it.id) bar.appendChild(toolBtn("transition", t("tool.transition"), panelTransition));
+    if (it.k === "shape") bar.appendChild(toolBtn("palette", t("tool.style"), panelShape));
     if (it.k === "title") {
       bar.appendChild(toolBtn("text", t("tool.edit"), function () { panelText(); }));
       if (it.tr === "main") bar.appendChild(toolBtn("palette", t("tool.bg"), panelTitleBg));
@@ -1216,6 +1239,52 @@
     }, function () { busy(null); showToast(t("frz.fail")); });
   }
 
+  // ---------- 7c. Stickers (big emoji texts) and shapes ----------
+  var STICKERS = ["😀", "😂", "😍", "😎", "🥳", "😮", "😢", "😡", "👍", "👏", "🙌", "❤️", "🔥", "⭐", "✨", "🎉",
+    "🎂", "🎵", "📍", "☀️", "🌙", "🌊", "🌸", "🐶", "🐱", "⚽", "✈️", "🚗", "📷", "💡", "✅", "❗"];
+  function shapesDialog() {
+    var p = cur();
+    if (!p) return;
+    if (player && player.playing()) player.pause();
+    var body = openDialog(t("shp.title"));
+    body.appendChild(el("p", "hint small", t("shp.hint")));
+    chipField(body, t("shp.shapes"), C.SHAPES.map(function (k) { return [k, t("shape." + k)]; }), null, function (k) { closeDialog(); addShape(k); });
+    var f = el("div", "field"), grid = el("div", "stickers");
+    f.appendChild(el("span", "lbl", t("shp.stickers")));
+    STICKERS.forEach(function (e) {
+      var b = el("button", "sticker", e);
+      b.type = "button";
+      b.addEventListener("click", function () { closeDialog(); addSticker(e); });
+      grid.appendChild(b);
+    });
+    f.appendChild(grid); body.appendChild(f);
+  }
+  function placeBox(p, w, h) {
+    // a square-looking box in the middle of the frame
+    var sz = C.outputSize(p.ar, 1000), hh = h * sz.w / sz.h;
+    return { x: 0.5 - w / 2, y: 0.5 - hh / 2, w: w, h: hh };
+  }
+  function addShape(k) {
+    var p = cur(), it = { id: uid(), k: "shape", tr: "ov", at: tNow, d: 4, box: placeBox(p, 0.3, 0.3), sh: { k: k, col: k === "bubble" ? "#ffffff" : "#f8d14a", ol: k === "bubble" ? "#000000" : "", ow: k === "bubble" ? 3 : 0 } };
+    if (k === "arrow") it.box = placeBox(p, 0.3, 0.15);
+    if (!commit(C.addItem(data, pid, it, Date.now()))) return;
+    select(it.id);
+  }
+  function addSticker(e) {
+    var p = cur(), it = { id: uid(), k: "title", tr: "tt", at: tNow, d: 3, box: placeBox(p, 0.24, 0.24), text: { t: e, sz: 18, an: "pop" } };
+    if (!commit(C.addItem(data, pid, it, Date.now()))) return;
+    select(it.id);
+  }
+  function panelShape() {
+    var it = selItem(), body = panel(t("tool.style")), sh = JSON.parse(JSON.stringify(it.sh));
+    function upd() { live({ sh: JSON.parse(JSON.stringify(sh)) }); }
+    chipField(body, t("shp.kind"), C.SHAPES.map(function (k) { return [k, t("shape." + k)]; }), sh.k, function (v) { sh.k = v; upd(); });
+    colorField(body, t("shp.fill"), sh.col, true, function (v) { sh.col = v; upd(); });
+    colorField(body, t("shp.outline"), sh.ol, true, function (v) { sh.ol = v; if (v && !sh.ow) sh.ow = 4; upd(); });
+    rangeField(body, t("shp.width"), 0, 20, 1, sh.ow, function (v) { return v + "%"; }, function (v) { sh.ow = v; upd(); });
+    rangeField(body, t("p.opacity"), 0, 100, 1, it.op, function (v) { return v + "%"; }, function (v) { live({ op: v }); });
+  }
+
   // ---------- 7b. Voice-over: record the microphone while the project plays ----------
   // The take starts at the playhead and lands on the Voice row (Music
   // when Voice is taken there). MediaRecorder writes WebM/Opus (MP4/AAC
@@ -1340,7 +1409,7 @@
     var p = cur();
     if (!p || !player) return;
     if (player.playing()) player.pause();
-    player.grab(1080).then(function (png) {
+    MX.still({ project: p, file: MM.get, t: tNow, short: 1080 }).then(null, function () { return null; }).then(function (png) {
       if (!png) { showToast(t("err.fail")); return; }
       var name = C.exportName(p.name + " " + C.fmtTime(tNow).replace(/:/g, "-"), "png");
       var F = fsApi();
@@ -1388,7 +1457,11 @@
       row.appendChild(nm); row.appendChild(st);
       list.appendChild(row);
       MM.get(id).then(function (b) {
-        if (b) { st.textContent = t("set.ok") + " · " + fmtMB(b.size); return; }
+        if (b) {
+          st.textContent = t("set.ok") + " · " + fmtMB(b.size);
+          MM.proxy(id).then(function (px) { if (px) st.textContent += " · " + t("px.has"); });
+          return;
+        }
         st.textContent = t("set.missing");
         st.className = "hint small";
         var rb = el("button", "btn", t("btn.relink"));
@@ -1397,12 +1470,40 @@
         row.appendChild(rb);
       });
     });
+    if (C.mediaOf(p).some(C.isVideo)) {
+      var pf = el("div", "field");
+      pf.appendChild(el("span", "lbl", t("px.title")));
+      pf.appendChild(el("p", "hint small", t("px.hint")));
+      body.appendChild(pf);
+      actions(body, [[t("px.drop"), "", function () {
+        MM.dropProxies().then(function (n) { if (player) player.retry(); showToast(t("px.dropped", { n: n })); });
+      }], [t("px.make"), "", function () { closeDialog(); makeLightCopies(); }]]);
+    }
     body.appendChild(el("p", "hint small", t("set.cleanHint")));
     actions(body, [[t("btn.clean"), "", function () {
       var used = {};
       Object.keys(data.projects).forEach(function (k) { C.mediaOf(data.projects[k]).forEach(function (i) { used[i] = 1; }); });
       MM.cleanUnused(Object.keys(used)).then(function (n) { showToast(t("toast.cleaned", { n: n })); });
     }]]);
+  }
+  // Light copies of the project's videos, one after the other.
+  function makeLightCopies() {
+    var p = cur();
+    if (!p) return;
+    var vids = C.mediaOf(p).filter(C.isVideo), made = 0, stop = false, sig = {};
+    var cancel = function () { stop = true; if (sig.cancel) sig.cancel(); };
+    vids.reduce(function (ch, id, i) {
+      return ch.then(function () {
+        if (stop) return;
+        busy(t("px.working", { i: i + 1, n: vids.length, p: 0 }), 0, cancel);
+        return MM.makeProxy(id, function (f) { busy(t("px.working", { i: i + 1, n: vids.length, p: Math.round(f * 100) }), f, cancel); }, sig)
+          .then(function (r) { if (r === "made") made++; }, function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      busy(null);
+      if (player) player.retry();
+      showToast(stop ? t("px.stopped") : (made ? t("px.done", { n: made }) : t("px.none")));
+    });
   }
   function kindOf(id) {
     if (C.isPicture(id)) return t("kind.image");
@@ -1823,6 +1924,7 @@
     freeze: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4"/>'),
     kf: SV('<path d="M12 3l6 9-6 9-6-9z"/><path d="M2 12h3M19 12h3"/>'),
     reverse: SV('<path d="M20 7H8l3-3M8 7l3 3"/><path d="M4 17h12l-3-3M16 17l-3 3"/>'),
+    shapes: SV('<circle cx="8" cy="8" r="5"/><rect x="11" y="11" width="10" height="10" rx="1"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };
 

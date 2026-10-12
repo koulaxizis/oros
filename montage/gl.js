@@ -118,6 +118,41 @@
       g.fillStyle = text.col; g.fillText(ln, x, y);
     });
   }
+  // A shape filling a pw×ph canvas: fill and/or outline.
+  function drawShape(cv, sh, pw, ph) {
+    var g = cv.getContext("2d");
+    cv.width = Math.max(2, Math.round(pw)); cv.height = Math.max(2, Math.round(ph));
+    g.clearRect(0, 0, cv.width, cv.height);
+    var W = cv.width, H = cv.height, lw = sh.ol && sh.ow ? Math.max(1, sh.ow / 100 * Math.min(W, H)) : 0, m = lw / 2 + 1;
+    var x0 = m, y0 = m, x1 = W - m, y1 = H - m, w = x1 - x0, h = y1 - y0;
+    g.beginPath();
+    if (sh.k === "round" || sh.k === "bubble") {
+      var bh = sh.k === "bubble" ? h * 0.78 : h, r = Math.min(w, bh) * 0.22;
+      g.moveTo(x0 + r, y0); g.arcTo(x1, y0, x1, y0 + bh, r); g.arcTo(x1, y0 + bh, x0, y0 + bh, r);
+      if (sh.k === "bubble") { g.lineTo(x0 + w * 0.42, y0 + bh); g.lineTo(x0 + w * 0.2, y1); g.lineTo(x0 + w * 0.26, y0 + bh); }
+      g.arcTo(x0, y0 + bh, x0, y0, r); g.arcTo(x0, y0, x1, y0, r);
+    } else if (sh.k === "ellipse") g.ellipse(W / 2, H / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    else if (sh.k === "triangle") { g.moveTo(W / 2, y0); g.lineTo(x1, y1); g.lineTo(x0, y1); }
+    else if (sh.k === "star") {
+      for (var i = 0; i < 10; i++) {
+        var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 0.4 : 1;
+        var px = W / 2 + Math.cos(a) * w / 2 * rr, py = y0 + h * 0.52 + Math.sin(a) * h / 2 * rr;
+        if (i) g.lineTo(px, py); else g.moveTo(px, py);
+      }
+    } else if (sh.k === "heart") {
+      g.moveTo(W / 2, y0 + h * 0.28);
+      g.bezierCurveTo(W / 2, y0, x0, y0, x0, y0 + h * 0.32);
+      g.bezierCurveTo(x0, y0 + h * 0.62, W / 2, y0 + h * 0.8, W / 2, y1);
+      g.bezierCurveTo(W / 2, y0 + h * 0.8, x1, y0 + h * 0.62, x1, y0 + h * 0.32);
+      g.bezierCurveTo(x1, y0, W / 2, y0, W / 2, y0 + h * 0.28);
+    } else if (sh.k === "arrow") {
+      g.moveTo(x0, y0 + h * 0.32); g.lineTo(x0 + w * 0.6, y0 + h * 0.32); g.lineTo(x0 + w * 0.6, y0);
+      g.lineTo(x1, y0 + h / 2); g.lineTo(x0 + w * 0.6, y1); g.lineTo(x0 + w * 0.6, y0 + h * 0.68); g.lineTo(x0, y0 + h * 0.68);
+    } else g.rect(x0, y0, w, h);
+    g.closePath();
+    if (sh.col) { g.fillStyle = sh.col; g.fill(); }
+    if (lw) { g.lineWidth = lw; g.lineJoin = "round"; g.strokeStyle = sh.ol; g.stroke(); }
+  }
   // Entrance animation in the first 0.5 s: alpha, y shift, scale.
   function titleAnim(an, local) {
     var q = Math.min(1, Math.max(0, local / 0.5)), e = 1 - Math.pow(1 - q, 3);
@@ -218,6 +253,16 @@
         };
         // the wipe shows [clip0, clip1] of the frame; a fill picture is cut to its box
         var clip = [L.clip ? L.clip[0] : -9, -9, L.clip ? L.clip[1] : 9, 9];
+        if (L.k === "shape") {
+          seen[L.id] = 1;
+          var sw = box.w * fw, shh = box.h * fh, skey = "shape|" + JSON.stringify(L.sh) + "|" + Math.round(sw) + "x" + Math.round(shh);
+          var sc0 = titles[L.id];
+          if (!sc0) sc0 = titles[L.id] = { key: "", cv: document.createElement("canvas") };
+          if (sc0.key !== skey) { drawShape(sc0.cv, L.sh, sw, shh); sc0.key = skey; }
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sc0.cv);
+          quad(box, 0, false, L.alpha, L.bri, null, "none", clip, null, iris);
+          return;
+        }
         if (L.k === "title") {
           seen[L.id] = 1;
           if (L.bg) quad(box, 0, false, L.alpha, L.bri, null, "none", clip, hexRgb(L.bg), iris);
