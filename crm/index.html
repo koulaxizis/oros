@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CRM · orOS</title>
+
+  <link rel="stylesheet" href="crm.css?v=1.04.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="app-title"></h1>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+  </header>
+
+  <!-- Tabs: under the toolbar on wide screens, a bottom bar on phones -->
+  <nav id="tabbar" role="tablist">
+    <button type="button" class="tab" id="tab-cust" role="tab" data-view="cust"></button>
+    <button type="button" class="tab" id="tab-pipe" role="tab" data-view="pipe"></button>
+    <button type="button" class="tab" id="tab-agenda" role="tab" data-view="agenda"></button>
+    <button type="button" class="tab" id="tab-dash" role="tab" data-view="dash"></button>
+  </nav>
+
+  <main id="main">
+    <!-- Customers: list + the open customer (two panes when wide) -->
+    <section id="view-cust" class="view" role="tabpanel" aria-labelledby="tab-cust">
+      <div id="cust-list-pane" class="pane">
+        <div class="list-tools">
+          <input type="search" id="cust-q" autocomplete="off">
+          <select id="cust-sort"></select>
+        </div>
+        <div id="cust-filter" class="chips"></div>
+        <div id="cust-list" class="rows"></div>
+      </div>
+      <div id="cust-detail" class="pane detail"></div>
+    </section>
+
+    <!-- Pipeline: deals by stage -->
+    <section id="view-pipe" class="view" role="tabpanel" aria-labelledby="tab-pipe" hidden></section>
+
+    <!-- Agenda: open follow-ups -->
+    <section id="view-agenda" class="view" role="tabpanel" aria-labelledby="tab-agenda" hidden></section>
+
+    <!-- Dashboard -->
+    <section id="view-dash" class="view" role="tabpanel" aria-labelledby="tab-dash" hidden></section>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.04.00"></script>
+  <script src="crm.js?v=1.04.00"></script>
+
+</body>
+</html>

@@ -1,6 +1,24 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.04.00
+- New app Stock: business inventory with products, movements, reorder list and suppliers.
+
+## Version 1.03.00
+- New app: CRM. A customer book with a sales pipeline, contact history and dated follow-ups. New menu category Business (Quote and Timesheet moved there).
+
+## Version 1.02.00
+- New app: Sticky Notes. Coloured notes on the desktop that can ring at a time and fade away by themselves (Ctrl+Alt+Shift+N for a new one).
+
+## Version 1.01.00
+- New app Case Converter (Accessories): UPPERCASE, lowercase, Title Case and more, with Greek done right (ΤΣΑΪ, final ς), Greek in Latin letters (ELOT 743, Greeklish), names for code and Unicode styles.
+
+## Version 1.00.00
+- Photo Lab: new Filter menu (blur, sharpen, noise, pixelate, emboss, edges, vignette) and retouch tools (clone stamp, healing brush, red eye, dodge, burn, sponge, smudge)
+
+## Version 0.99.00
+- Photo Lab opens and saves Photoshop (PSD) and OpenRaster files with layers.
+
 ## Version 0.98.00
 - Today now also shows your expected period and mood check-in (both only if you turn them on in Settings), today's minimalism proposal, remembrance days from your family tree, tonight's sky events and your pet's birthday.
 

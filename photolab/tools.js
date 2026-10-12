@@ -71,19 +71,54 @@
   }
   function inDoc(p) { return p.x >= 0 && p.y >= 0 && p.x < st.doc.w && p.y < st.doc.h; }
 
-  // ---------- Brush + eraser ----------
+  // ---------- Retouch: source point and options ----------
+  // Clone stamp and healing copy from a source point (Alt+click, or
+  // "Set source" then a tap). The offset is kept between strokes
+  // (aligned), until a new source is set.
+  var cloneSrc = null, cloneOff = null, pickSrc = false;
+  function retouchKind(id) {
+    if (id === "clone") return "clone";
+    if (id === "heal") return pr().heal.kind === "redeye" ? "redeye" : "heal";
+    if (id === "tone") return pr().tone.kind;
+    return "smudge";
+  }
+  function copies(id) { var k = retouchKind(id); return k === "clone" || k === "heal"; }
+  function setSource(p) {
+    cloneSrc = { x: Math.round(p.x), y: Math.round(p.y) }; cloneOff = null; pickSrc = false;
+    PL.toast(PL.t("msg.srcSet")); view().schedule();
+  }
+  // → true when the stroke may start; false when the click set the source.
+  function retouchDown(id, p, e) {
+    if (!copies(id)) return true;
+    if (e.altKey || pickSrc) { setSource(p); return false; }
+    if (!cloneSrc) { pickSrc = true; PL.toast(PL.t("msg.needSrc")); return false; }
+    if (!cloneOff) cloneOff = { x: cloneSrc.x - Math.round(p.x), y: cloneSrc.y - Math.round(p.y) };
+    return true;
+  }
+  function retouchStroke(id, L, s) {
+    var o = pr()[id];
+    return P.retouch(T, s, {
+      kind: retouchKind(id), size: o.size, hard: o.hard, opacity: o.opacity, flow: o.flow, strength: o.strength,
+      range: o.range, sat: o.sat, dx: cloneOff ? cloneOff.x : 0, dy: cloneOff ? cloneOff.y : 0,
+      mask: st.sel, ox: L.x, oy: L.y
+    });
+  }
+
+  // ---------- Brush + eraser (and the retouch tools) ----------
   var lastPaint = null;
-  function brushTool(id, erase) {
+  function brushTool(id, erase, retouch) {
     return {
       id: id, cursor: "crosshair",
       down: function (p, e) {
+        if (retouch && !retouchDown(id, p, e)) return null;
         var L = paintable(true);
         if (!L) return null;
         var s = PL.surface(L.id), o = pr()[id];
-        var stroke = P.stroke(T, s, {
+        var stroke = retouch ? retouchStroke(id, L, s) : P.stroke(T, s, {
           color: rgb(st.fg), size: o.size, hard: o.hard, opacity: o.opacity, flow: o.flow,
           erase: erase, mask: st.sel, ox: L.x, oy: L.y, lockAlpha: !erase && !!o.lockAlpha
         });
+        var label = retouch ? PL.t("rk." + retouchKind(id)) : PL.t(erase ? "step.erase" : "step.brush");
         var pres = function (ev) { return ev.pointerType === "pen" && ev.pressure > 0 ? ev.pressure : null; };
         var last = { x: p.x, y: p.y };
         function touch(a, b) {
@@ -101,7 +136,7 @@
             lastPaint = { x: last.x, y: last.y };
             if (!r.keys.length) return;
             var after = T.snapshot(s, r.keys);
-            PL.pushStep(H.tileStep(PL.t(erase ? "step.erase" : "step.brush"), T, s, r.before, after, function () {
+            PL.pushStep(H.tileStep(label, T, s, r.before, after, function () {
               view().dirtyTiles(L.id, r.keys); PL.changed();
             }));
             view().dirtyTiles(L.id, r.keys);
@@ -115,6 +150,13 @@
         };
       },
       overlay: function (g, vw) {
+        if (retouch && copies(id) && cloneSrc) {
+          var c = cloneOff && hoverPt ? { x: hoverPt.x + cloneOff.x, y: hoverPt.y + cloneOff.y } : cloneSrc;
+          var X = sx(c.x), Y = sy(c.y);
+          g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,0.6)";
+          g.beginPath(); g.moveTo(X - 8, Y); g.lineTo(X + 8, Y); g.moveTo(X, Y - 8); g.lineTo(X, Y + 8); g.stroke();
+          g.lineWidth = 1; g.strokeStyle = "rgba(255,255,255,0.9)"; g.stroke();
+        }
         if (!hoverPt) return;
         var r = Math.max(1, pr()[id].size * vw.z / 2);
         g.beginPath(); g.arc(sx(hoverPt.x), sy(hoverPt.y), r, 0, Math.PI * 2);
@@ -714,6 +756,8 @@
   var TOOLS = {
     move: move, marquee: null, lasso: lasso, wand: wand, crop: cropTool,
     brush: brushTool("brush", false), eraser: brushTool("eraser", true),
+    clone: brushTool("clone", false, true), heal: brushTool("heal", false, true),
+    tone: brushTool("tone", false, true), smudge: brushTool("smudge", false, true),
     fill: fill, gradient: gradient, picker: picker, text: text, shape: shape,
     hand: hand, zoom: zoom, transform: transform
   };
@@ -722,7 +766,9 @@
     if (id === "marquee") return pr().marqueeEllipse ? ellSel : rectSel;
     return TOOLS[id] || TOOLS.brush;
   }
-  var ORDER = ["move", "marquee", "lasso", "wand", "crop", "brush", "eraser", "fill", "gradient", "picker", "text", "shape", "hand", "zoom"];
+  var ORDER = ["move", "marquee", "lasso", "wand", "crop", "brush", "eraser", "clone", "heal", "tone", "smudge", "fill", "gradient", "picker", "text", "shape", "hand", "zoom"];
+
+  var PAINTS = ["brush", "eraser", "clone", "heal", "tone", "smudge"];
 
   // ---------- Pointer routing ----------
   var hoverPt = null, op = null, pointers = new Map(), pinch = null, spaceDown = false;
@@ -761,7 +807,7 @@
     PL.emit("pointer", p);
     if (op) {
       var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
-      if (evs && evs.length > 1 && (st.tool === "brush" || st.tool === "eraser")) {
+      if (evs && evs.length > 1 && PAINTS.indexOf(st.tool) >= 0) {
         evs.forEach(function (ce) { op.move(view().toDoc(ce.clientX, ce.clientY), ce); });
       } else op.move(p, e);
     } else if (tool(st.tool).overlay) view().schedule();
@@ -809,6 +855,8 @@
     cancel: function () { if (op) { op.cancel(); op = null; } },
     enter: function (id) { var t = tool(id); if (t.enter) t.enter(); },
     leave: function (id) { var t = tool(id); if (t.leave) t.leave(); },
+    PAINTS: PAINTS,
+    armSource: function () { pickSrc = true; PL.toast(PL.t("msg.pickSrc")); },
     cropRect: function () { return crop.r; },
     setCropRect: function (r) { crop.r = clampRect(r); view().schedule(); },
     applyCrop: applyCrop,

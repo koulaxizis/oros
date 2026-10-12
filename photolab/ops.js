@@ -431,6 +431,48 @@
     if (tg) applyAdjust(tg, id, p, label);
   }
 
+  // ---------- Filters ----------
+  // A filter may spread pixels (blur): without a selection the result
+  // may grow past the layer's content (inside the canvas); with one,
+  // it covers the selection. Pixels around the area are read too, so
+  // the edges look at their real neighbours.
+  function filterTarget() {
+    var L = activeOr("msg.notRaster");
+    if (!L) return null;
+    var s = PL.surface(L.id), cb = T.contentBounds(s);
+    if (!cb) { PL.toast(t("msg.emptyLayer")); return null; }
+    var r = { x: cb.x + L.x, y: cb.y + L.y, w: cb.w, h: cb.h };
+    if (st.sel) {
+      var d = st.doc, sb = S.bounds(st.sel);
+      var x0 = Math.max(0, sb.x), y0 = Math.max(0, sb.y), x1 = Math.min(d.w, sb.x + sb.w), y1 = Math.min(d.h, sb.y + sb.h);
+      if (x1 <= x0 || y1 <= y0) { PL.toast(t("msg.selEmptyHere")); return null; }
+      r = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+    return { L: L, r: r };
+  }
+  // → Promise of { r, img }: the filtered area and where it goes.
+  function filtered(tg, id, p) {
+    var d = st.doc, L = tg.L, s = PL.surface(L.id), e = PL.F.reach(id, p), r = tg.r;
+    if (!st.sel && e) {
+      var x0 = Math.min(r.x, Math.max(0, r.x - e)), y0 = Math.min(r.y, Math.max(0, r.y - e));
+      var x1 = Math.max(r.x + r.w, Math.min(d.w, r.x + r.w + e)), y1 = Math.max(r.y + r.h, Math.min(d.h, r.y + r.h + e));
+      r = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+    var img = T.readRect(s, r.x - e - L.x, r.y - e - L.y, r.w + 2 * e, r.h + 2 * e);
+    var before = st.sel ? T.readRect(s, r.x - L.x, r.y - L.y, r.w, r.h) : null;
+    return PL.job("filter", { img: img, id: id, p: p, pad: e, at: { x: r.x - e, y: r.y - e, cw: d.w, ch: d.h },
+                              before: before, mask: st.sel, ox: r.x, oy: r.y }).then(function (out) { return { r: r, img: out }; });
+  }
+  function applyFilter(tg, id, p, label) {
+    PL.busy(true);
+    return filtered(tg, id, p).then(function (res) {
+      PL.busy(false);
+      PL.docChange(label, function () {
+        T.writeRect(PL.surface(tg.L.id), res.r.x - tg.L.x, res.r.y - tg.L.y, res.img);
+      }, [tg.L.id]);
+    }, function () { PL.busy(false); PL.toast(t("msg.failed")); });
+  }
+
   PL.ops = {
     newLayer: newLayer, duplicate: duplicate, remove: remove, moveBy: moveBy, setProp: setProp,
     rasterize: rasterize, mergeDown: mergeDown, flatten: flatten, viaCopy: viaCopy,
@@ -439,7 +481,8 @@
     featherSel: featherSel, growSel: growSel,
     resizeImage: resizeImage, canvasSize: canvasSize, rotateImage: rotateImage, flipImage: flipImage,
     rotateAny: rotateAny, trim: trim, cropToSel: cropToSel, layerFlip: layerFlip, layerRotate: layerRotate,
-    adjustTarget: adjustTarget, adjusted: adjusted, applyAdjust: applyAdjust, quickAdjust: quickAdjust,
-    layerName: layerName
+    adjustTarget: adjustTarget, adjusted: adjusted,
+    filterTarget: filterTarget, filtered: filtered, applyFilter: applyFilter, applyAdjust: applyAdjust, quickAdjust: quickAdjust,
+    layerName: layerName, vectorPixels: vectorPixels
   };
 })();

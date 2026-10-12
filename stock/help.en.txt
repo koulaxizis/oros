@@ -1,0 +1,59 @@
+# Stock
+Stock keeps the inventory of a business: your products, what comes in, what goes out and what is left. For things at home (where you put the winter blankets), use [Storage](app:storage) instead.
+
+## Getting started
+1. Add a product with `New` › `Product`, or bring all of them at once with `Import a CSV` (Settings › `Import products (CSV)`).
+2. Give it a `Name` and, if it has one, a `SKU` and a `Barcode`. A `Minimum` tells Stock when it's time to reorder.
+3. Type an `Opening quantity`, or record your first `Receive stock` later.
+
+The quantity of a product is never typed in directly: it is always the sum of its movements. That's why it stays right when two of your devices sell at the same time.
+
+## Products
+The `Products` tab shows what you have, with the total `Stock value` and how many products are `To reorder` or `Out of stock`. Filter with `Low`, `Out of stock` or `Archived`, pick a category and choose the order.
+
+Tap or click a product to see its quantity, average cost, value, prices and every movement it ever had. From there: `+ Receive`, `− Sell`, `Count`, `Edit`, `Make a label`, `Archive`.
+
+> A barcode scanner (USB or Bluetooth) works in the search field: scan a code and the product opens. An unknown code offers `New product` with the SKU filled in.
+
+## Movements
+Every change in stock is a movement. The `Movements` tab lists them day by day; filter by type and period.
+
+### Receive and sell
+Open `New` › `Receive stock` or `Sell / issue`. Pick a `Date`, a `Ref.` (your invoice or receipt number) and, for receipts, a `Supplier`. Then add products: type a name, or scan. Scanning the same product again adds one more. Receipts take a `Unit cost`, sales a `Unit price`, and the `Total` is shown.
+
+Other types: `Customer return`, `Return to supplier`, `Loss / damage` and `Correction` (a + or − quantity).
+
+### Stock count
+In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
+
+### Void a movement
+A movement is never edited or deleted. Open it and choose `Void this movement`: its quantities stop counting and it stays in the list, crossed out. Then record the right one.
+
+>! If a sale would take a product below zero, Stock asks first. You can forbid it in Settings.
+
+## Reorder
+`Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum). `Copy list` copies the order as text; `Receive this order` opens a receipt with those lines when the goods arrive.
+
+When a product reaches its minimum you also get one notice on this device (you can switch it off in Settings).
+
+## Suppliers
+The `Suppliers` tab keeps names, contact person, phone, e-mail, VAT number and delivery time. `From Contacts` copies a person or company from [Contacts](app:contacts) into a new supplier.
+
+## Import and export
+In Settings:
+- `Import products (CSV)` reads your own export, your e-shop's product export (WooCommerce works) or any sheet whose first row names the columns, such as Name, SKU, Price, Stock. Existing products are matched by SKU, then by name. Tick `Set the quantities from the file` to save the file's quantities as one stock count.
+- `Products (CSV)` and `Movements (CSV)` open in any spreadsheet.
+- `Backup (JSON)` saves everything; `Restore backup` merges a backup in, it never wipes what you have.
+
+## Sync and backup
+Products, movements, suppliers, categories, units and settings sync between your devices through [orOS sync](help:t/sync). The low-stock notice switch and your filters stay on each device. The orOS [backup](help:t/backup) keeps a copy too.
+
+## Tips
+- Set a `Location` such as "Shelf B3": it shows in the list and in search.
+- Archive products you no longer sell: their history stays.
+- Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
+
+## Limits
+- One warehouse: there are no separate locations with transfers yet.
+- No purchase orders, reports or camera scanning yet; a scanner that types works.
+- A product with movements can't be deleted, only archived.
