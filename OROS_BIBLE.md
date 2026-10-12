@@ -5027,3 +5027,13 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — CRM phase 2: shell reminders, Today, Calendar, Contacts (#219) — 1.14.00
 - CRM v1.1.0: shell `crmCheckTick` (follow-up reminders with the app closed; the app's own reminder loop is gone), Today provider `crm/today.js` (open follow-ups as tasks, Done → `__orosOpenAt("crm", {done:{fup}})`), Calendar feed "Customers" / «Πελάτες» (`lbl-feed-crm`), Contacts "Customer: <name>" button. Shared `crm/core.js` gains reminders, reminderText, calendarOn, custsForContact. No data format change.
+
+### 2026-10-12 — Stock v1.1.0 (phase 2A) (#220) — 1.15.00
+
+- **Purchase orders** (`Reorder` tab, `New` › `Purchase order`, product sheet): number, supplier, dates (expected from the supplier's delivery time), lines with unit cost; draft / sent / partly received / received / closed / cancelled. `Receive` opens a receipt with what is still to come (`src = "po:<id>"`); voiding a receipt puts it back on the order. Reorder groups gain `Create order`, `To-Do` and `E-mail`; low rows show what is on order and suggest only the rest.
+- **Reports tab:** stock value, sales, purchases and losses of a period, value per category, most sold, no sale for 90 days; to Spreadsheet or CSV.
+- **Bridges:** To-Do, Mail compose, Budget (receipt / sale total), Quote (one or several products), Spreadsheet; Today provider (reorder line, expected deliveries).
+- **Core:** apps.json `today` for stock, sw.js precache `stock/today.js`. App PR #220.
+- **Tests:** `tests/stock.test.js` +4 (orders: normalizer, merge, 1.0 copy without `pos`; received from receipts on two devices, void, closed, drafts, numbering; reports; Today provider read-only).
+- **Verified (Chromium, real shell + sync, EN 1280 × 800 and EL 360 × 760):** order from Reorder → sent → partly received on A → rest received on B → received on both; To-Do / Mail / Budget / Quote / Spreadsheet prefills; slices identical, 0 idle uploads; no overflow at 360 (Reorder, order sheet, order editor, Reports); deep link `{po}`; no page errors.
+- **NOT tested:** a real phone, Safari / iOS, real Dropbox, the receiving apps' own dialogs (the calls were checked, not the screens they open).
