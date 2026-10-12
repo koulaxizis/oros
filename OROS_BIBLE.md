@@ -4805,3 +4805,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-12 — orOS 1.00.00 · Photo Lab 2B: Filter menu + retouch tools (#202) — 1.00.00
 - First 1.x version (Chris chose 1.00.00 after 0.99.00 on 2026-10-12; numbering continues 1.01.00, 1.02.00 …).
 - Photo Lab: new Filter menu with 10 filters (blur, sharpen, noise, pixelate, emboss, edges, vignette and more; `photolab/filters.js`, precached) and retouch tools: clone stamp, healing brush, red eye, dodge, burn, sponge, smudge.
+
+### 2026-10-12 — New app Case Converter (#203) — 1.01.00
+- New app `textcase/` ("Case Converter" / «Κεφαλαία & πεζά», Accessories): Text + live Result (Copy, Use as text, Selection only), four tabs: Basic (UPPERCASE, lowercase, Sentence case, Title Case with EN/EL small words, Capitalize Each Word, tOGGLE, aLtErNaTiNg), Greek (remove accents, ELOT 743, Greeklish, fix mixed Greek/Latin letters), Code (8 cases, Greek transliterated or kept), Styles (11 Unicode styles + Plain text). Greek rules are the core's own (no accents in capitals, diaeresis kept/added: τσάι → ΤΣΑΪ, lone Ή, final ς), Turkish/German through Language. My words synced (slice "textcase"); the text stays on the device. Tests `tests/textcase.test.js`.
