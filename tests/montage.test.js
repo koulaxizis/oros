@@ -232,6 +232,7 @@ test("helpers: media list, project order, times, file names", () => {
   assert.equal(C.fmtTime(1.5, true, 30), "0:01.15");
   assert.equal(C.exportName("My: trip/2026", "mp4"), "My trip 2026.mp4");
   assert.equal(C.exportName("", "webm"), "montage.webm");
+  assert.equal(C.exportName("Trip 0-04", "png"), "Trip 0-04.png");
 });
 
 test("compositor helpers: contain / cover placement, title entrance", () => {

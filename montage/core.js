@@ -607,7 +607,7 @@
   }
   function exportName(name, ext) {
     var base = String(name || "montage").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "montage";
-    return base + "." + (ext === "webm" ? "webm" : "mp4");
+    return base + "." + (ext === "webm" || ext === "png" ? ext : "mp4");
   }
 
   var api = {

@@ -269,3 +269,11 @@ ul { list-style: none; }
 @media (prefers-reduced-motion: reduce) {
   #toast, .icon-btn { transition: none !important; }
 }
+
+/* Voice-over */
+.rec-time { font-size: 32px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; margin: 4px 0; }
+.rec-meter { height: 10px; border-radius: 5px; background: var(--border); overflow: hidden; }
+.rec-meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 60ms linear; }
+.rec-meter i.hot { background: var(--danger); }
+.clip canvas.wave { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.9; }
+.btn.primary.danger { background: var(--danger); border-color: var(--danger); color: #fff; }

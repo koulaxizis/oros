@@ -29,9 +29,14 @@ With a clip selected:
 ## Text, music and voice
 - `Text` adds a title at the playhead. `Edit text` changes the words, `Font`, `Text size`, `Colour`, `Outline`, `Box behind the text`, `Alignment` and `Entrance` (`Fade`, `Rise`, `Pop`). Drag its edges to make it show longer or shorter.
 - `Sound` adds music or a sound file at the playhead, on `Music` or `Voice`.
+- `Voice` records your voice from the microphone. After a 3-2-1 count the video plays from the playhead and you speak over it; `Stop` puts the take on the `Voice` row (or `Music`, if `Voice` is taken there). Use headphones so the video's sound does not get into the recording. The first time, the browser asks to let orOS use the microphone.
+- Sound clips show their waveform, so you can see where the loud and quiet parts are.
 - `Overlay` adds a video or picture on top of the main video.
 - Pictures and texts have a `Duration` instead of a speed.
 - Drag a text onto the `Main` row to make a title card between clips; there `Background` sets the colour behind it.
+
+## Grab a frame
+With nothing selected, `Grab frame` saves the picture at the playhead as a PNG in Files › Pictures and opens it in [Photo Lab](app:photolab), where you can edit it.
 
 ## Export
 `Export` opens `Export video`. Pick a `Size` (720p, 1080p or 4K, as your device allows) and, if you like, `Also keep a copy in Files › Videos`. Montage makes an MP4 file when your browser can, otherwise a WebM file. When it is ready you can `Play it` or `Save` it to your device. Keep the app open while it exports; `Cancel` stops it.

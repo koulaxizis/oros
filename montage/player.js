@@ -10,6 +10,7 @@
 //   pl.setProject(p)   after every edit (keeps the time)
 //   pl.seek(t)         shows the frame at t
 //   pl.play() / pl.pause() / pl.toggle(); pl.time(); pl.playing()
+//   pl.grab(short)     → Promise<PNG Blob> of the frame at the playhead
 //   pl.dispose()
 // Elements exist only for clips near the playhead (phones allow only
 // a few video decoders at once); far ones are released.
@@ -201,11 +202,23 @@
       comp.dispose();
       if (actx) { try { actx.close(); } catch (x) {} }
     }
+    // The frame at the playhead as a PNG, drawn at `short` px on the
+    // short side (the preview canvas grows for one draw, then shrinks).
+    function grab(short) {
+      if (!p) return Promise.resolve(null);
+      var size = C.outputSize(p.ar, short || 1080), w0 = canvas.width, h0 = canvas.height;
+      canvas.width = size.w; canvas.height = size.h;
+      comp.draw(C.framePlan(p, t), source, { bg: p.bg });
+      var out = new Promise(function (resolve) { canvas.toBlob(resolve, "image/png"); });
+      canvas.width = w0; canvas.height = h0;
+      drawQueued = false; queueDraw();
+      return out;
+    }
     // A file that turned up later (relink, sync) is tried again.
     function retry() { missing = {}; urls = {}; pics = {}; Object.keys(els).forEach(release); if (p) { syncElements(t); queueDraw(); } }
 
     return {
-      setProject: setProject, seek: seek, play: play, pause: pause, retry: retry,
+      setProject: setProject, seek: seek, grab: grab, play: play, pause: pause, retry: retry,
       toggle: function () { if (playing) pause(); else play(); },
       time: function () { return t; }, playing: function () { return playing; },
       isMissing: function (id) { return !!missing[id]; },

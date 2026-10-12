@@ -16,7 +16,7 @@
 //   - media: MontageMedia (device store; project "Sync media" copies
 //     them to the orOS disk for Vault Drive)
 //   - device-local (R10): oros-montage-prefs (zoom, export size, keep)
-// Deep link: __orosOpenAt("montage", { project } | { openFile: path })
+// Deep link: __orosOpenAt("montage", { project } | { openFile: path | { token } })
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage, prefs, edits + undo
@@ -66,8 +66,8 @@
       "ratio.16:9": "Wide 16:9", "ratio.9:16": "Tall 9:16", "ratio.1:1": "Square 1:1", "ratio.4:5": "Portrait 4:5",
       "ed.empty": "Add your first video or picture",
       "tr.tt": "Text", "tr.ov": "Overlay", "tr.main": "Main", "tr.a1": "Music", "tr.a2": "Voice",
-      "tool.media": "Media", "tool.overlay": "Overlay", "tool.audio": "Sound", "tool.text": "Text", "tool.project": "Project",
-      "tool.split": "Split", "tool.speed": "Speed", "tool.volume": "Volume", "tool.fade": "Fade",
+      "tool.media": "Media", "tool.overlay": "Overlay", "tool.audio": "Sound", "tool.text": "Text", "tool.voice": "Voice", "tool.project": "Project",
+      "tool.split": "Split", "tool.grab": "Grab frame", "tool.speed": "Speed", "tool.volume": "Volume", "tool.fade": "Fade",
       "tool.transition": "Transition", "tool.adjust": "Adjust", "tool.frame": "Frame", "tool.position": "Position",
       "tool.edit": "Edit text", "tool.bg": "Background", "tool.detach": "Extract sound", "tool.mute": "Mute", "tool.unmute": "Sound on",
       "tool.toOv": "To overlay", "tool.toMain": "To main", "tool.dup": "Duplicate", "tool.del": "Delete", "tool.done": "Done",
@@ -101,7 +101,7 @@
       "toast.clipDeleted": "Clip deleted", "toast.saved": "Saved", "toast.kept": "A copy is in Files › Videos",
       "toast.splitEdge": "Move the playhead inside the clip, away from its edges, to split it.",
       "toast.noSound": "This clip has no sound.", "toast.cleaned": "{n} unused files removed",
-      "toast.relinked": "Media found", "toast.notFound": "That project no longer exists.",
+      "toast.relinked": "Media found", "toast.grabbed": "The frame is in Files › Pictures", "toast.notFound": "That project no longer exists.",
       "toast.synced": "Media of this project are being copied to Files › Assets",
       "toast.cancelled": "Export cancelled", "toast.fail": "Export failed: {e}",
       "err.type": "This file is not a video, picture or sound Montage can use.",
@@ -110,6 +110,10 @@
       "err.noweb": "This browser cannot edit video here (WebGL2 is missing).",
       "kind.video": "Video", "kind.image": "Picture", "kind.audio": "Sound", "kind.title": "Text",
       "a11y.timeline": "Timeline. Scroll to move the playhead; tap a clip to select it.",
+      "rec.title": "Record your voice", "rec.start": "Record", "rec.stop": "Stop", "rec.level": "Microphone level",
+      "rec.hint": "Recording starts at the playhead after a short count and the video plays along. Use headphones so its sound does not get into the recording.",
+      "rec.none": "This browser cannot record sound here.", "rec.denied": "Montage may not use the microphone. Allow it in the browser's site settings and try again.",
+      "rec.name": "Voice {n}",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -128,8 +132,8 @@
       "ratio.16:9": "Φαρδύ 16:9", "ratio.9:16": "Ψηλό 9:16", "ratio.1:1": "Τετράγωνο 1:1", "ratio.4:5": "Πορτρέτο 4:5",
       "ed.empty": "Πρόσθεσε το πρώτο σου βίντεο ή φωτογραφία",
       "tr.tt": "Κείμενο", "tr.ov": "Επικάλυψη", "tr.main": "Κύριο", "tr.a1": "Μουσική", "tr.a2": "Φωνή",
-      "tool.media": "Πολυμέσα", "tool.overlay": "Επικάλυψη", "tool.audio": "Ήχος", "tool.text": "Κείμενο", "tool.project": "Project",
-      "tool.split": "Κόψιμο", "tool.speed": "Ταχύτητα", "tool.volume": "Ένταση", "tool.fade": "Σβήσιμο",
+      "tool.media": "Πολυμέσα", "tool.overlay": "Επικάλυψη", "tool.audio": "Ήχος", "tool.text": "Κείμενο", "tool.voice": "Φωνή", "tool.project": "Project",
+      "tool.split": "Κόψιμο", "tool.grab": "Κράτα καρέ", "tool.speed": "Ταχύτητα", "tool.volume": "Ένταση", "tool.fade": "Σβήσιμο",
       "tool.transition": "Μετάβαση", "tool.adjust": "Ρυθμίσεις", "tool.frame": "Κάδρο", "tool.position": "Θέση",
       "tool.edit": "Κείμενο", "tool.bg": "Φόντο", "tool.detach": "Ξεχώρισε ήχο", "tool.mute": "Σίγαση", "tool.unmute": "Με ήχο",
       "tool.toOv": "Σε επικάλυψη", "tool.toMain": "Στο κύριο", "tool.dup": "Αντίγραφο", "tool.del": "Διαγραφή", "tool.done": "Τέλος",
@@ -163,7 +167,7 @@
       "toast.clipDeleted": "Το clip διαγράφηκε", "toast.saved": "Αποθηκεύτηκε", "toast.kept": "Υπάρχει αντίγραφο στα Αρχεία › Videos",
       "toast.splitEdge": "Βάλε την κεφαλή μέσα στο clip, μακριά από τις άκρες του, για να το κόψεις.",
       "toast.noSound": "Αυτό το clip δεν έχει ήχο.", "toast.cleaned": "Σβήστηκαν {n} αχρησιμοποίητα αρχεία",
-      "toast.relinked": "Το αρχείο βρέθηκε", "toast.notFound": "Αυτό το project δεν υπάρχει πια.",
+      "toast.relinked": "Το αρχείο βρέθηκε", "toast.grabbed": "Το καρέ είναι στα Αρχεία › Pictures", "toast.notFound": "Αυτό το project δεν υπάρχει πια.",
       "toast.synced": "Τα πολυμέσα του project αντιγράφονται στα Αρχεία › Assets",
       "toast.cancelled": "Η εξαγωγή ακυρώθηκε", "toast.fail": "Η εξαγωγή απέτυχε: {e}",
       "err.type": "Αυτό το αρχείο δεν είναι βίντεο, φωτογραφία ή ήχος που μπορεί να χρησιμοποιήσει το Μοντάζ.",
@@ -172,6 +176,10 @@
       "err.noweb": "Αυτός ο browser δεν μπορεί να επεξεργαστεί βίντεο εδώ (λείπει το WebGL2).",
       "kind.video": "Βίντεο", "kind.image": "Φωτογραφία", "kind.audio": "Ήχος", "kind.title": "Κείμενο",
       "a11y.timeline": "Χρονολόγιο. Κύλισε για να μετακινήσεις την κεφαλή· πάτα ένα clip για να το επιλέξεις.",
+      "rec.title": "Ηχογράφηση φωνής", "rec.start": "Ηχογράφηση", "rec.stop": "Διακοπή", "rec.level": "Ένταση μικροφώνου",
+      "rec.hint": "Η ηχογράφηση ξεκινά από την κεφαλή μετά από μια σύντομη αντίστροφη μέτρηση, και το βίντεο παίζει μαζί. Βάλε ακουστικά για να μη γραφτεί και ο ήχος του.",
+      "rec.none": "Αυτός ο browser δεν μπορεί να ηχογραφήσει εδώ.", "rec.denied": "Το Μοντάζ δεν έχει άδεια για το μικρόφωνο. Δώσε άδεια στις ρυθμίσεις του site στον browser και ξαναδοκίμασε.",
+      "rec.name": "Φωνή {n}",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -513,6 +521,7 @@
           });
         }
       }
+      if (it.k === "audio") drawPeaks(b, it, end - start);
       if (missingCache[it.src] === undefined) {
         missingCache[it.src] = false;
         MM.get(it.src).then(function (blob) { if (!blob) { missingCache[it.src] = true; renderTimelineSoon(); } });
@@ -522,6 +531,30 @@
     hl.setAttribute("data-h", "l"); hr.setAttribute("data-h", "r");
     b.appendChild(hl); b.appendChild(hr);
     return b;
+  }
+  // Waveform of a sound clip: the peaks of its in…out part, one bar per
+  // 2 px (a canvas at most 4096 px wide, stretched beyond that).
+  var peakCache = {};
+  function drawPeaks(b, it, dur) {
+    var pk = peakCache[it.src];
+    if (pk === undefined) {
+      peakCache[it.src] = null;
+      MM.peaks(it.src).then(function (a) { peakCache[it.src] = a || false; if (a) renderTimelineSoon(); });
+      return;
+    }
+    if (!pk) return;
+    var w = Math.max(6, dur * pps()), cw = Math.min(4096, Math.ceil(w)), ch = 32;
+    var c = el("canvas", "wave"), g = c.getContext("2d");
+    c.width = cw; c.height = ch;
+    g.fillStyle = "rgba(255,255,255,0.55)";
+    var R = MM.PEAK_RATE, from = it["in"] * R, span = (it.out - it["in"]) * R;
+    for (var x = 0; x < cw; x += 2) {
+      var a = Math.floor(from + span * x / cw), z = Math.max(a + 1, Math.floor(from + span * (x + 2) / cw)), m = 0;
+      for (var k = a; k < z && k < pk.length; k++) if (pk[k] > m) m = pk[k];
+      var h = Math.max(1, Math.round(Math.sqrt(m / 255) * (ch - 2)));
+      g.fillRect(x, (ch - h) / 2, 1.5, h);
+    }
+    b.insertBefore(c, b.firstChild);
   }
   var tlTimer = 0;
   function renderTimelineSoon() { clearTimeout(tlTimer); tlTimer = setTimeout(renderTimeline, 60); }
@@ -696,7 +729,9 @@
       bar.appendChild(toolBtn("overlay", t("tool.overlay"), function () { addMedia("ov"); }));
       bar.appendChild(toolBtn("audio", t("tool.audio"), addSound));
       bar.appendChild(toolBtn("text", t("tool.text"), addText));
+      bar.appendChild(toolBtn("tr_a2", t("tool.voice"), recordVoice));
       bar.appendChild(toolBtn("split", t("tool.split"), splitAtPlayhead, null, !clipAt(tNow)));
+      bar.appendChild(toolBtn("frame", t("tool.grab"), grabFrame, null, !C.duration(p)));
       bar.appendChild(toolBtn("settings", t("tool.project"), projectSettings));
       return;
     }
@@ -951,6 +986,148 @@
     sel = it.id;
     refreshEditor();
     panelText(true);
+  }
+
+  // ---------- 7b. Voice-over: record the microphone while the project plays ----------
+  // The take starts at the playhead and lands on the Voice row (Music
+  // when Voice is taken there). MediaRecorder writes WebM/Opus (MP4/AAC
+  // on Safari); the file goes through the normal import (hash, device
+  // store), so it syncs and relinks like any other sound.
+  function recMime() {
+    var R = window.MediaRecorder;
+    if (!R) return null;
+    var list = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+    for (var i = 0; i < list.length; i++) if (!R.isTypeSupported || R.isTypeSupported(list[i])) return list[i];
+    return "";
+  }
+  function voiceTrack(p, from, len) {
+    var clash = function (tr) { return C.trackItems(p, tr).some(function (a) { return a.at < from + len && a.at + C.itemDur(a) > from; }); };
+    return !clash("a2") ? "a2" : (!clash("a1") ? "a1" : "a2");
+  }
+  function recordVoice() {
+    var p = cur();
+    if (!p) return;
+    var mime = recMime();
+    if (mime === null || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast(t("rec.none")); return; }
+    if (player && player.playing()) player.pause();
+    var body = openDialog(t("rec.title"));
+    body.appendChild(el("p", "hint", t("rec.hint")));
+    var big = el("p", "rec-time", "0:00.0"), meter = el("div", "rec-meter"), bar = el("i");
+    meter.appendChild(bar); setLabel(meter, t("rec.level"));
+    body.appendChild(big); body.appendChild(meter);
+    var row = el("div", "actions"), btn = el("button", "btn primary", t("rec.start"));
+    btn.type = "button"; btn.disabled = true;
+    row.appendChild(btn); body.appendChild(row);
+
+    var stream = null, actx = null, an = null, raf = 0, rec = null, chunks = [], startAt = 0, wall0 = 0, timer = 0, count = 0, closed = false, took = 0;
+    function cleanup() {
+      closed = true;
+      cancelAnimationFrame(raf); clearInterval(timer); clearTimeout(count);
+      if (rec && rec.state !== "inactive") { try { rec.onstop = null; rec.stop(); } catch (e) {} }
+      if (stream) stream.getTracks().forEach(function (tr) { tr.stop(); });
+      if (actx) { try { actx.close(); } catch (e) {} }
+      if (player && player.playing()) player.pause();
+    }
+    onDialogClose = cleanup;
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (s) {
+      if (closed) { s.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      stream = s;
+      try {
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        an = actx.createAnalyser(); an.fftSize = 1024;
+        actx.createMediaStreamSource(s).connect(an);
+        var buf = new Float32Array(an.fftSize);
+        (function level() {
+          an.getFloatTimeDomainData(buf);
+          var peak = 0;
+          for (var i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i]));
+          bar.style.width = Math.min(100, Math.round(Math.sqrt(peak) * 100)) + "%";
+          bar.classList.toggle("hot", peak > 0.9);
+          raf = requestAnimationFrame(level);
+        })();
+      } catch (e) { an = null; }
+      btn.disabled = false;
+    }, function () { closeDialog(); showToast(t("rec.denied")); });
+
+    btn.addEventListener("click", function () {
+      if (rec) { stop(); return; }
+      // 3-2-1, then record and play together
+      btn.disabled = true;
+      var n = 3;
+      big.textContent = String(n);
+      (function tick() {
+        count = setTimeout(function () {
+          if (closed) return;
+          if (--n > 0) { big.textContent = String(n); tick(); return; }
+          start();
+        }, 700);
+      })();
+    });
+    function start() {
+      try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+      catch (e) { closeDialog(); showToast(t("rec.none")); return; }
+      chunks = [];
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      rec.onstart = function () {
+        startAt = tNow; wall0 = performance.now();
+        if (player && duration() > tNow + 0.05) player.play();
+        btn.disabled = false; btn.textContent = t("rec.stop"); btn.classList.add("danger");
+        timer = setInterval(function () { var sec = (performance.now() - wall0) / 1000; big.textContent = C.fmtTime(sec) + "." + Math.floor((sec % 1) * 10); }, 100);
+      };
+      rec.onstop = finish;
+      rec.start(1000);
+    }
+    function stop() {
+      btn.disabled = true;
+      took = (performance.now() - wall0) / 1000;
+      clearInterval(timer);
+      if (player && player.playing()) player.pause();
+      try { rec.stop(); } catch (e) { finish(); }
+    }
+    function finish() {
+      var type = (rec && rec.mimeType) || mime || "audio/webm";
+      var blob = new Blob(chunks, { type: type.split(";")[0] });
+      var at = startAt, len = took;
+      closeDialog();
+      if (!blob.size || len < C.MIN) return;
+      var ext = /mp4/.test(type) ? "m4a" : (/ogg/.test(type) ? "ogg" : "weba");
+      var file = new File([blob], t("rec.name", { n: new Date().toTimeString().slice(0, 5) }) + "." + ext, { type: blob.type });
+      pushUndo();
+      importMany([file], function (info) {
+        if (!(info.len > 0) || !isFinite(info.len)) info.len = len;  // recorder files may carry no duration
+        var it = clipFrom(info, voiceTrack(cur(), at, info.len), { at: at });
+        it.k = "audio";
+        data = C.addItem(data, pid, it, Date.now());
+        save();
+        refreshEditor();
+        select(it.id);
+        setTime(at);
+      });
+    }
+  }
+
+  // Grab frame: the frame at the playhead → Files › Pictures as PNG,
+  // then Photo Lab opens it (aligned with its plan §6).
+  function grabFrame() {
+    var p = cur();
+    if (!p || !player) return;
+    if (player.playing()) player.pause();
+    player.grab(1080).then(function (png) {
+      if (!png) { showToast(t("err.fail")); return; }
+      var name = C.exportName(p.name + " " + C.fmtTime(tNow).replace(/:/g, "-"), "png");
+      var F = fsApi();
+      if (!F) { saveBlob(png, name, "image/png", "png"); return; }
+      var base = name.replace(/\.png$/, ""), n = 1;
+      (function tryName() {
+        var path = "/internal/Pictures/" + (n === 1 ? name : base + " (" + n + ").png");
+        F.stat(path).then(function () { n++; if (n < 100) tryName(); }, function () {
+          F.write(path, png).then(function () {
+            showToast(t("toast.grabbed"));
+            try { if (window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function") window.parent.__orosOpenAt("photolab", { openFile: path }); } catch (e) {}
+          }, function () { showToast(t("toast.saveFail")); });
+        });
+      })();
+    });
   }
 
   // ---------- 8. Project settings, media, relink ----------
@@ -1319,31 +1496,42 @@
     else if (!gesture) { if (!cur()) { showToast(t("toast.notFound")); showHome(); } else refreshEditor(); }
   }
 
-  // Deep link: { project } opens it; { openFile: path } adds that orOS
-  // disk file to the open project (or to a new one).
+  // Deep link: { project } opens it; { openFile: "/internal/…" } adds
+  // that orOS disk file, { openFile: { token } } a device file handed
+  // over by the shell (BR-FILE-OPEN), to the open project (or to a new
+  // one named after the file).
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.project === "string") { if (data.projects[target.project]) openProject(target.project); else showToast(t("toast.notFound")); return; }
-    if (typeof target.openFile === "string" && /^\/internal\//.test(target.openFile)) {
+    var f = target.openFile;
+    if (f && typeof f === "object" && typeof f.token === "string") {
+      var file = null;
+      try { file = window.parent.__orosTakeFile(f.token); } catch (e) {}
+      if (file) addOpenedFile(file); else showToast(t("err.fail"));
+      return;
+    }
+    if (typeof f === "string" && /^\/internal\//.test(f)) {
       var F = fsApi();
       if (!F) return;
-      F.read(target.openFile).then(function (b) {
-        var name = target.openFile.split("/").pop();
-        var file = b instanceof File ? b : new File([b], name, { type: b.type || "" });
-        if (!cur()) {
-          var id = uid();
-          data = C.newProject(data, { name: name.replace(/\.[^.]+$/, "") || t("proj.untitled") }, Date.now(), id);
-          save();
-          openProject(id);
-        }
-        pushUndo();
-        importMany([file], function (info) {
-          if (info.kind === "audio") { placeSound(info); return; }
-          data = C.addItem(data, pid, clipFrom(info, "main"), Date.now());
-          save(); refreshEditor();
-        });
+      F.read(f).then(function (b) {
+        var name = f.split("/").pop();
+        addOpenedFile(b instanceof File ? b : new File([b], name, { type: b.type || "" }));
       }, function () { showToast(t("err.fail")); });
     }
+  }
+  function addOpenedFile(file) {
+    if (view !== "editor" || !cur()) {
+      var id = uid();
+      data = C.newProject(data, { name: String(file.name || "").replace(/\.[^.]+$/, "") || t("proj.untitled") }, Date.now(), id);
+      save();
+      openProject(id);
+    }
+    pushUndo();
+    importMany([file], function (info) {
+      if (info.kind === "audio") { placeSound(info); return; }
+      data = C.addItem(data, pid, clipFrom(info, "main"), Date.now());
+      save(); refreshEditor();
+    });
   }
   window.__orosOpenAt = function (target) { openTarget(target); };
 

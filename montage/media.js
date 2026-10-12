@@ -267,6 +267,58 @@
     }).then(function (r) { if (input.dispose) input.dispose(); return r; }, function () { if (input.dispose) input.dispose(); return null; });
   }
 
+  // ---------- sound waveforms ----------
+  // peaks(id) → Promise<Uint8Array|null>: the loudest sample of every
+  // 1/PEAK_RATE s (0–255), cached next to the thumbnails. Read with
+  // Mediabunny's AudioBufferSink so a long video never decodes at once.
+  var PEAK_RATE = 20, peakJobs = {};
+  function peaks(id) {
+    if (peakJobs[id]) return peakJobs[id];
+    var key = id + "#peaks";
+    var p = peakJobs[id] = idbDo(TDB, "readonly", function (st) { return st.get(key); }).then(null, function () { return null; }).then(function (have) {
+      if (have) return have;
+      return get(id).then(function (b) {
+        if (!b || C().isPicture(id)) return null;
+        return makePeaks(b).then(function (arr) {
+          if (arr) idbDo(TDB, "readwrite", function (st) { return st.put(arr, key); }).then(null, function () {});
+          return arr;
+        });
+      });
+    }).then(null, function () { delete peakJobs[id]; return null; });
+    return p;
+  }
+  function makePeaks(blob) {
+    var M = root.Mediabunny;
+    if (!M || !M.AudioBufferSink) return Promise.resolve(null);
+    var input = new M.Input({ source: new M.BlobSource(blob), formats: M.ALL_FORMATS });
+    var done = function (r) { if (input.dispose) input.dispose(); return r; };
+    return input.getPrimaryAudioTrack().then(function (at2) {
+      if (!at2) return null;
+      return Promise.all([at2.getFirstTimestamp(), input.computeDuration()]).then(function (r) {
+        var off = r[0] || 0, len = Math.max(0, r[1] - off);
+        var out = new Uint8Array(Math.max(1, Math.ceil(len * PEAK_RATE)));
+        var it = new M.AudioBufferSink(at2).buffers()[Symbol.asyncIterator]();
+        function next() {
+          return it.next().then(function (step) {
+            if (step.done) return out;
+            var ab = step.value.buffer, t0 = step.value.timestamp - off, sr = ab.sampleRate;
+            for (var c = 0; c < ab.numberOfChannels; c++) {
+              var d = ab.getChannelData(c);
+              for (var i = 0; i < d.length; i += 4) {
+                var k = Math.floor((t0 + i / sr) * PEAK_RATE);
+                if (k < 0 || k >= out.length) continue;
+                var v = Math.min(255, Math.round(Math.abs(d[i]) * 255));
+                if (v > out[k]) out[k] = v;
+              }
+            }
+            return next();
+          });
+        }
+        return next();
+      });
+    }).then(done, function () { return done(null); });
+  }
+
   // ---------- housekeeping ----------
   // Remove device copies that no project on this device names any more.
   function cleanUnused(usedIds) {
@@ -283,6 +335,6 @@
 
   root.MontageMedia = {
     sniff: sniff, get: get, share: share, importFile: importFile, relink: relink,
-    thumb: thumb, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
+    thumb: thumb, peaks: peaks, PEAK_RATE: PEAK_RATE, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
   };
 })(typeof window !== "undefined" ? window : this);
