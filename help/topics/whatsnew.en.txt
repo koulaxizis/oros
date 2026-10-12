@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.06.00
+- New app Text Tools (Accessories): sort lines, remove duplicates, clean up spaces, number lines, change the separator of a CSV, find and replace, and keep your steps as recipes.
+
 ## Version 1.05.00
 - New app Unit Converter (Accessories): fifteen categories from length to fuel economy, cooking cups to grams and currencies with the ECB rates, also offline. Type "10 km to mi" in the menu search for a quick answer.
 

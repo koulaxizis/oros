@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Text Tools · orOS</title>
+
+  <link rel="stylesheet" href="texttools.css?v=1.06.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <span id="title" class="title"></span>
+    <button type="button" class="txt-btn" id="recipes-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Tools, steps, options -->
+    <aside id="side">
+      <div id="groups" class="tabs" role="tablist"></div>
+      <div id="tools" class="chips"></div>
+
+      <section class="sec" id="chain-sec">
+        <div class="sec-head">
+          <h2 data-i18n="sec.steps">Steps</h2>
+          <span class="spacer"></span>
+          <button type="button" class="link-btn" id="add-step"></button>
+        </div>
+        <ol id="chain"></ol>
+        <div class="row-btns">
+          <button type="button" class="txt-btn" id="save-recipe"></button>
+          <button type="button" class="txt-btn" id="update-recipe" hidden></button>
+        </div>
+      </section>
+
+      <section class="sec" id="opts-sec">
+        <h2 id="opts-title"></h2>
+        <p class="hint" id="tool-hint"></p>
+        <div id="opts"></div>
+      </section>
+    </aside>
+
+    <!-- Text in, result out -->
+    <section id="work">
+      <div class="pane" id="in-pane">
+        <div class="pane-head">
+          <h2><label for="in" data-i18n="pane.in">Text</label></h2>
+          <span class="spacer"></span>
+          <button type="button" class="icon-btn" id="open-btn"></button>
+          <button type="button" class="icon-btn" id="paste-btn"></button>
+          <button type="button" class="icon-btn" id="clear-btn"></button>
+          <button type="button" class="icon-btn desk-only" id="layout-btn"></button>
+        </div>
+        <textarea id="in" spellcheck="false" autocomplete="off"></textarea>
+        <button type="button" class="stats" id="stats"></button>
+      </div>
+      <div class="pane" id="out-pane">
+        <div class="pane-head">
+          <h2><label for="out" data-i18n="pane.out">Result</label></h2>
+          <span id="note" class="note" aria-live="polite"></span>
+          <span class="spacer"></span>
+          <button type="button" class="txt-btn primary" id="apply-btn" hidden></button>
+        </div>
+        <textarea id="out" spellcheck="false" readonly></textarea>
+        <div class="out-bar">
+          <button type="button" class="txt-btn" id="copy-btn"></button>
+          <button type="button" class="txt-btn" id="use-btn"></button>
+          <button type="button" class="txt-btn" id="save-btn"></button>
+          <button type="button" class="txt-btn" id="send-btn"></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.06.00"></script>
+  <script src="texttools.js?v=1.06.00"></script>
+
+</body>
+</html>
