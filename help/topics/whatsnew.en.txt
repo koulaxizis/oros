@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.07.00
+- New app: Invoices. Invoices, receipts, proformas and credit notes with VAT, automatic numbering and PDF; payments and overdue tracking, a revenue dashboard, clients and recurring drafts. Invoices issued in myDATA can be recorded with their ΜΑΡΚ.
+
 ## Version 1.06.00
 - New app Text Tools (Accessories): sort lines, remove duplicates, clean up spaces, number lines, change the separator of a CSV, find and replace, and keep your steps as recipes.
 
