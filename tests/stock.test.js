@@ -450,3 +450,42 @@ test("Today provider: reorder line and expected deliveries, read-only", () => {
   assert.deepEqual(T.collect(Object.assign({}, ctx, { readJSON: () => null })), []);
   delete globalThis.OrosStockCore;
 });
+
+// ---------- 1.2: photos, barcodes ----------
+test("photos: own list keyed by item, LWW, removed = empty name, hidden with the item, 1.1 copy loses nothing", () => {
+  assert.equal(C.picName("2026-10-12", "item01", "AB12cd"), "20261012-item01-ab12cd.jpg");
+  assert.equal(C.picName("2026-10-12", "x", "ab12cd"), null);
+  assert.equal(C.picPath("20261012-item01-ab12cd.jpg"), "/internal/Stock/Photos/20261012-item01-ab12cd.jpg");
+  assert.equal(C.picPath("../../etc/passwd"), null);
+  assert.equal(C.normPic({ id: "item01", m: 1, f: "../x.jpg" }).f, "");
+  const A = data({ items: [item("item01"), item("item02")], pics: [{ id: "item01", m: 2000, f: "20261012-item01-aaaa.jpg" }] });
+  const B = data({ pics: [{ id: "item01", m: 3000, f: "" }, { id: "item02", m: 1000, f: "20261012-item02-bbbb.jpg" }] });
+  const ab = m(A, B);
+  assert.deepEqual(ab, m(B, A));
+  assert.equal(C.picOf(ab, "item01"), "");                  // the newer removal wins
+  assert.deepEqual(C.picsInUse(ab), ["20261012-item02-bbbb.jpg"]);
+  const gone = m(ab, data({ tombs: { item02: NOW - 1000 } }));
+  assert.equal(C.picOf(gone, "item02"), "");               // the item's tombstone hides its photo row
+  const old = JSON.parse(JSON.stringify(ab));
+  delete old.pics;
+  assert.deepEqual(m(ab, old).pics, ab.pics);
+});
+
+test("barcodes: EAN-13 check digit and bars, Code 128 B, the label's choice, SVG has only bars", () => {
+  assert.equal(C.eanCheck("501234567890"), "0");
+  assert.equal(C.eanCheck("400638133393"), "1");
+  assert.equal(C.ean13("5012345678900"), "10100011010110011001101101111010100011011100101010101000010001001001000111010011100101110010101");
+  assert.equal(C.ean13("5012345678901"), null);            // wrong check digit
+  assert.equal(C.code128("MUG-1"), "110100100001011101100011011101110110100010001001101110010011100110111101010001100011101011");
+  assert.equal(C.code128("Ω"), null);
+  assert.equal(C.code128(""), null);
+  assert.equal(C.barcodeFor({ bc: "501234567890" }).type, "ean13");   // 12 digits get their check digit
+  assert.equal(C.barcodeFor({ bc: "501234567890" }).text, "5012345678900");
+  assert.equal(C.barcodeFor({ bc: "5012345678901", sku: "X" }).type, "code128");   // not a valid EAN: Code 128 of the barcode
+  assert.deepEqual([C.barcodeFor({ bc: "", sku: "MUG-1" }).type, C.barcodeFor({ bc: "", sku: "MUG-1" }).text], ["code128", "MUG-1"]);
+  assert.equal(C.barcodeFor({ bc: "", sku: "" }), null);
+  const svg = C.barSvg(C.code128("<x>"), 40);
+  assert.ok(!/<x>/.test(svg));
+  assert.match(svg, /^<svg [^>]*viewBox="0 0 \d+ 40"/);
+  assert.equal((svg.match(/<rect /g) || []).length, 1 + (C.code128("<x>").match(/1+/g) || []).length);
+});

@@ -7,7 +7,7 @@ Tap or click `Add your first customer`. Pick `Company` or `Person`, write the na
 The tabs are `Customers`, `Pipeline`, `Agenda` and `Dashboard`. On a phone they sit at the bottom of the screen.
 
 ## Customers and people
-The list has a search field, a sort menu and filters: `Leads`, `Active`, `Past`, `Starred`, `Not contacted` and your tags. Tap a customer to open the page with `Call`, `Email`, `Map`, `Log contact`, `Follow-up` and `Deal`.
+The list has a search field, a sort menu and filters: `Leads`, `Active`, `Past`, `Starred`, `Not contacted` and your tags. Tap a customer to open the page with `Call`, `Email`, `Map`, `Log contact`, `Follow-up`, `Deal`, `Invoice` and `Quote`.
 
 Under `People` tap `+ Person`. Pick someone `From Contacts` (their phone and email are read from [Contacts](app:contacts) and stay up to date), or write a name with a phone and email. `Add to Contacts` opens Contacts with that person filled in; it is saved there only when you press Save.
 
@@ -21,8 +21,15 @@ Open follow-ups also show in [Today](app:today), where the tick marks one done i
 ## Pipeline
 A deal has a title, a value, a stage (`New`, `Contacted`, `Proposal`, `Negotiation`, `Won`, `Lost`), a chance in percent and an expected close day. On a wide screen drag a card to another column. On a phone pick a stage at the top and use the `⋯` button of a deal to move it. The totals show the value and the weighted value (value × chance).
 
+Under `Settings` › `Pipeline stages` you can rename a stage, change its default chance, move it up or down, add your own (up to 8 open stages) or hide the ones you do not use. A stage that still has deals cannot be hidden or deleted. `Won` and `Lost` stay as they are.
+
+## Invoices and quotes
+`Invoice` on a customer's page opens [Invoices](app:invoices) with a new invoice for that customer: name, VAT ID, tax office, profession, address and contact details are filled in. `Quote` does the same in [Quote](app:quote). Open a deal to find `Invoice this deal` (won deals) and `Quote for this deal`: they add the deal as one line with its value. Nothing is saved until you press Save in that app. Quote works in EUR or USD only.
+
+The `Documents` tab of a customer lists their invoices with what was invoiced, paid and is still unpaid, and the quotes made for a client with the same name or VAT ID. Tap one to open it. CRM only reads them; you change them in their own app.
+
 ## Dashboard
-Open pipeline, won this month and this year, win rate, late follow-ups, customers you have not contacted for a while and new leads. Tap a tile to see the list behind it.
+Open pipeline, won this month and this year, win rate, late follow-ups, customers you have not contacted for a while, new leads and, once you invoice from CRM, what your customers still owe. Tap a tile to see the list behind it.
 
 ## Sync and backup
 Customers, people, history, follow-ups, deals, tags and the currency sync between your devices through [orOS sync](help:t/sync). The open tab, filters and sort stay on each device.

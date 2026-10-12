@@ -10,6 +10,10 @@
 //   combine(a, b, mode)   mode: "replace" | "add" | "sub" | "and"
 //   invert(m), feather(m, radius), grow(m, px), bounds(m), isEmpty(m)
 //   all(w, h), cover(m, x, y)  0-255 at a canvas pixel (255 if m null)
+//   colorRange(img, rgb, fuzz)  soft mask of the pixels near a colour
+//   quickGrow(img, m, x, y, r, tol)  quick selection: grows m (or a new
+//         mask) by the area around (x, y) that looks like the colours
+//         under the brush, up to edges, within 3 brush radii
 //
 // UMD: module.exports in Node (tests), window.PhotoLab.select in the app.
 // ============================================================
@@ -113,6 +117,65 @@
           downOpen = dno;
         }
       }
+    }
+    return m;
+  }
+
+  // Colour range: full inside fuzz (largest channel difference),
+  // fading out to nothing at 2 × fuzz. Transparent pixels never.
+  function colorRange(img, rgb, fuzz) {
+    var w = img.w, h = img.h, d = img.data, m = make(w, h);
+    fuzz = Math.max(0, Math.min(200, fuzz | 0));
+    for (var p = 0, q = 0; p < w * h; p++, q += 4) {
+      if (d[q + 3] < 8) continue;
+      var dist = Math.max(Math.abs(d[q] - rgb[0]), Math.abs(d[q + 1] - rgb[1]), Math.abs(d[q + 2] - rgb[2]));
+      if (dist <= fuzz) m.data[p] = 255;
+      else if (fuzz && dist < fuzz * 2) m.data[p] = Math.round(255 * (2 - dist / fuzz));
+    }
+    return m;
+  }
+
+  // Quick selection, one dab: flood fill (4-neighbours) from (x, y)
+  // through pixels within tol of the average colour under the brush,
+  // kept inside a window of 3 radii so it cannot run off across a
+  // whole flat background. → m with the area added (a new mask when
+  // m is null); m is changed in place.
+  function quickGrow(img, m, x, y, r, tol) {
+    var w = img.w, h = img.h, d = img.data;
+    m = m || make(w, h);
+    x = Math.floor(x); y = Math.floor(y); r = Math.max(1, Math.round(r));
+    if (x < 0 || y < 0 || x >= w || y >= h) return m;
+    var sr = 0, sg = 0, sb = 0, n = 0;
+    for (var yy = Math.max(0, y - r); yy <= Math.min(h - 1, y + r); yy++) {
+      for (var xx = Math.max(0, x - r); xx <= Math.min(w - 1, x + r); xx++) {
+        if ((xx - x) * (xx - x) + (yy - y) * (yy - y) > r * r) continue;
+        var o = (yy * w + xx) * 4;
+        sr += d[o]; sg += d[o + 1]; sb += d[o + 2]; n++;
+      }
+    }
+    sr /= n; sg /= n; sb /= n;
+    var R = Math.max(24, r * 3), x0 = Math.max(0, x - R), y0 = Math.max(0, y - R);
+    var x1 = Math.min(w - 1, x + R), y1 = Math.min(h - 1, y + R);
+    var ww = x1 - x0 + 1, seen = new Uint8Array(ww * (y1 - y0 + 1));
+    function ok(px, py) {
+      var q = (py * w + px) * 4;
+      return d[q + 3] >= 8 && Math.abs(d[q] - sr) <= tol && Math.abs(d[q + 1] - sg) <= tol && Math.abs(d[q + 2] - sb) <= tol;
+    }
+    var stack = [x, y];
+    seen[(y - y0) * ww + (x - x0)] = 1;
+    m.data[y * w + x] = 255;
+    while (stack.length) {
+      var py = stack.pop(), px = stack.pop();
+      [[px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]].forEach(function (c) {
+        var cx = c[0], cy = c[1];
+        if (cx < x0 || cy < y0 || cx > x1 || cy > y1) return;
+        var k = (cy - y0) * ww + (cx - x0);
+        if (seen[k]) return;
+        seen[k] = 1;
+        if (!ok(cx, cy)) return;
+        m.data[cy * w + cx] = 255;
+        stack.push(cx, cy);
+      });
     }
     return m;
   }
@@ -240,6 +303,7 @@
 
   var API = {
     make: make, all: all, rect: rect, ellipse: ellipse, polygon: polygon, wand: wand,
+    colorRange: colorRange, quickGrow: quickGrow,
     combine: combine, invert: invert, feather: feather, grow: grow, bounds: bounds,
     isEmpty: isEmpty, cover: cover, outline: outline
   };
