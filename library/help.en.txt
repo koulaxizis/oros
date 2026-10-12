@@ -1,0 +1,40 @@
+# Library
+Library is your e-book reader. Open EPUB and PDF books from the orOS disk, keep your place on every device, and highlight, bookmark and take notes as you read.
+
+## Getting started
+Books already on the orOS disk show up by themselves: the library looks for EPUB and PDF files each time it opens. To add more, tap or click `Add` and pick `From this device…` or `From the orOS disk…`. Books you add from this device are copied to the `Books` folder of the disk. You can also drag files onto the window, or open an EPUB or PDF from Files with Library.
+
+Tap a cover to read. The `Continue reading` row at the top takes you back to where you stopped.
+
+## Find and organise
+The chips filter by `Reading`, `Not started`, `Finished`, `EPUB` or `PDF`. `Search title, author, tag…` ignores accents. Sort by `Recently read`, `Title`, `Author` or `Progress`, and switch between covers and a list.
+
+The info button on a cover opens the book's details, where you can `Edit` the title, author and tags, `Mark as finished`, `Export notes`, `Remove from library` or `Delete the file`.
+
+## Reading
+- Turn pages with the arrows at the bottom, by tapping the left or right edge, or by swiping. Tap the middle to hide or show the bars.
+- The slider jumps anywhere in the book.
+- `Contents` lists the chapters; `Search in the book` finds every match.
+- `Reading settings` changes text size, font (`The book's`, `Serif` or `Sans`), line spacing, margins, justified text, hyphenation, `Pages` or `Scroll`, two pages on wide screens and the theme (`orOS`, `Paper`, `Sepia`, `Night`). PDFs have zoom (`Fit width`, `Whole page`) and `Night pages`.
+
+## Highlights, notes and bookmarks
+Select some text and pick one of four colours to highlight it. From the same bar you can `Add a note`, `Copy` or `Find in the book`. Tap a highlight to change its colour, edit the note or delete it. The bookmark button at the top marks the page.
+
+`Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard.
+
+## Sync and backup
+With orOS sync on, your library list, reading place, highlights, notes and bookmarks follow you to every device. The book files travel through the orOS disk sync. If a book was added elsewhere and its file hasn't arrived yet, it shows as not on this device; adding the same file here keeps your place, because the library knows a book by its content. Reading settings stay on each device.
+
+## Keyboard shortcuts
+- [[→]] / [[←]], [[PageDown]] / [[PageUp]], [[Space]]: next / previous page
+- [[B]]: bookmark, [[T]]: contents, [[N]]: notes
+- [[Ctrl+F]]: search in the book
+- [[Esc]]: close a popup or the side panel
+
+## Tips
+> On a wide screen, the side panel stays open next to the page and the library remembers it.
+
+## Limits
+- Copy-protected (DRM) books can't be opened.
+- Books larger than 50 MB can't be added.
+- PDFs without a text layer (scans) can be read but not searched or highlighted.

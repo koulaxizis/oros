@@ -80,6 +80,9 @@
       "image/avif": [".avif"],
       "image/vnd.adobe.photoshop": [".psd"],
       "image/openraster": [".ora"] } },
+    { app: "library", accept: {
+      "application/epub+zip": [".epub"],
+      "application/pdf": [".pdf"] } },
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"] } },

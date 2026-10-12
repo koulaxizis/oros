@@ -1,0 +1,48 @@
+# Unit Converter
+Convert lengths, weights, temperatures, currencies and more, on the spot. Fifteen categories, units in both languages, and it works offline (currencies use the last rates the device fetched).
+
+## Getting started
+Pick a category at the top: `Length`, `Weight`, `Volume`, `Temperature`, `Area`, `Speed`, `Cooking`, `Time`, `Data`, `Fuel economy`, `Pressure`, `Energy`, `Power`, `Angle` or `Currency`. On a phone, swipe the row sideways to see them all.
+
+Type a number in `From` and the result appears in `To` as you type. It also works the other way: type in `To` and `From` follows.
+- Tap or click a unit to change it. The list has a search field: type a name or a symbol in English or Greek (`ft`, `πόδι`, `στρέμμα`, `mpg`). [[Enter]] picks the first match.
+- The ⇄ button swaps the two units.
+- The line under the fields shows the rule used, for example `1 mi = 1.609344 km`.
+- The copy button copies the result. [[Esc]] clears the field you are in.
+
+## Typing numbers
+- Use a comma or a point for decimals: `1,5` and `1.5` are the same. With both, the last one is the decimal point (`1.234,5`).
+- A point (in Greek) or a comma (in English) followed by exactly three digits is a thousands mark: in Greek `1.500` is one thousand five hundred.
+- Simple sums work too: `2,5*3`, `12+8`, `(3+4)/2`, and `1,5e3` for 1500.
+- Results are rounded to 6 significant digits; very large or small numbers are shown as `1.2 × 10⁹`. Change the digits in `Converter settings`.
+
+## Categories worth knowing
+- `Cooking` turns cups and spoons into grams and back. Pick the `Ingredient` (water, flour, sugar, butter and more): a cup of flour weighs much less than a cup of honey. These kitchen weights are approximate.
+- `Fuel economy` converts L/100 km, km/L and miles per gallon (US and UK). Lower L/100 km means higher mpg, so zero has no counterpart.
+- `Data` has both kinds of units: kB, MB, GB (powers of 1000, as disks and networks use) and KiB, MiB, GiB (powers of 1024).
+- Traditional Greek units: the stremma (1,000 m²), the oka (1.2829 kg) and its drachm, and the builder's cubit (0.75 m).
+- `Time` months and years are averages (30.44 days, 365.2425 days).
+
+## Currencies
+`Currency` uses the euro reference rates of the European Central Bank, through the free Frankfurter service. The app fetches them when you open `Currency` (at most every 6 hours) or when you tap `Update rates`, and keeps them on this device, so currencies also work offline with the last rates. The line under the fields shows the date of the rates.
+
+>! The ECB rates come out once a day on working days. They are for information: banks and card payments use their own rates.
+
+## All units, favourites and recent
+- `All units` shows the value in every unit of the category. Tap a row to copy it. `Hide` folds the list away.
+- The ☆ button adds the pair you are using to `Favourites`, the chips above the converter. Tap a chip to go straight to that pair; tap ☆ again to remove it.
+- `Recent` keeps your last 20 conversions, newest first. Tap one to bring it back. `Clear` empties the list; `Undo` in the message brings it back.
+
+## Universal search
+In the orOS menu search, type a conversion such as `10 km to mi`, `72 f to c` or `5 stremma` and the answer appears under `In your data`. Tap it to open the converter with that conversion. Your favourite pairs can be found there too.
+
+## Sync and backup
+Your favourites, recent conversions and the number of digits sync between your devices through [orOS sync](help:t/sync), and the orOS [backup](help:t/backup) keeps them. The open category, the units you last used, the ingredient and the exchange rates stay on each device.
+
+## Tips
+- To compare prices in another currency, star the pair (for example `EUR → USD`) and it is one tap away.
+- Use `All units` to see a distance in metres, feet and miles at once.
+
+## Limits
+- Clothing and shoe sizes are not included: they differ between brands.
+- Currencies cover the about 30 currencies the European Central Bank publishes.

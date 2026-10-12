@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stock · orOS</title>
+
+  <link rel="stylesheet" href="stock.css?v=1.08.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" id="tab-items" role="tab" data-view="items"></button>
+      <button type="button" class="tab" id="tab-moves" role="tab" data-view="moves"></button>
+      <button type="button" class="tab" id="tab-order" role="tab" data-view="order"></button>
+      <button type="button" class="tab" id="tab-sups" role="tab" data-view="sups"></button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="settings-btn"></button>
+    <button type="button" class="txt-btn primary" id="add-btn"></button>
+  </header>
+
+  <main id="main">
+    <!-- Products: totals, search / scan, filters, the list -->
+    <section id="view-items" class="view" role="tabpanel" aria-labelledby="tab-items">
+      <div id="items-tiles" class="tiles"></div>
+      <div class="scan-row">
+        <input type="search" id="items-q" autocomplete="off" spellcheck="false" enterkeyhint="search">
+      </div>
+      <div class="filter-row">
+        <div id="items-chips" class="chips"></div>
+        <select id="items-cat"></select>
+        <select id="items-sort"></select>
+      </div>
+      <ul id="items-list" class="rows"></ul>
+    </section>
+
+    <!-- Movements: the ledger, day by day -->
+    <section id="view-moves" class="view" role="tabpanel" aria-labelledby="tab-moves" hidden>
+      <div class="filter-row">
+        <div id="moves-chips" class="chips"></div>
+        <select id="moves-range"></select>
+      </div>
+      <div id="moves-list"></div>
+    </section>
+
+    <!-- Reorder: low items by supplier -->
+    <section id="view-order" class="view" role="tabpanel" aria-labelledby="tab-order" hidden>
+      <div id="order-list"></div>
+    </section>
+
+    <!-- Suppliers -->
+    <section id="view-sups" class="view" role="tabpanel" aria-labelledby="tab-sups" hidden>
+      <ul id="sups-list" class="rows"></ul>
+    </section>
+
+    <div id="empty" class="view empty" hidden></div>
+  </main>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.08.00"></script>
+  <script src="stock.js?v=1.08.00"></script>
+
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Unit Converter · orOS</title>
+
+  <link rel="stylesheet" href="units.css?v=1.08.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-view" class="title-main"></span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="more-btn" class="icon-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <nav id="cats" role="tablist"></nav>
+
+  <main id="main">
+    <div class="wrap">
+      <div class="col">
+        <section id="favs-sec" hidden>
+          <h2 data-i18n="sec.favs">Favourites</h2>
+          <div id="favs" class="chips"></div>
+        </section>
+
+        <section id="conv" class="card">
+          <div class="field">
+            <label for="va" id="la" data-i18n="f.from">From</label>
+            <div class="field-row">
+              <input type="text" id="va" inputmode="decimal" autocomplete="off" spellcheck="false">
+              <button type="button" id="ua" class="unit-btn" aria-haspopup="dialog"></button>
+            </div>
+          </div>
+          <div class="mid">
+            <button type="button" id="swap" class="icon-btn"></button>
+            <span class="spacer"></span>
+            <button type="button" id="star" class="icon-btn toggle" aria-pressed="false"></button>
+            <button type="button" id="copy" class="icon-btn"></button>
+          </div>
+          <div class="field">
+            <label for="vb" id="lb" data-i18n="f.to">To</label>
+            <div class="field-row">
+              <input type="text" id="vb" inputmode="decimal" autocomplete="off" spellcheck="false">
+              <button type="button" id="ub" class="unit-btn" aria-haspopup="dialog"></button>
+            </div>
+          </div>
+          <p id="err" class="err" role="alert" hidden></p>
+          <p id="formula" class="formula"></p>
+
+          <div id="ing-row" class="extra" hidden>
+            <label for="ing" data-i18n="f.ing">Ingredient</label>
+            <select id="ing"></select>
+            <p class="hint small" data-i18n="ing.hint">Kitchen weights per cup or spoon are approximate.</p>
+          </div>
+
+          <div id="fx-row" class="extra" hidden>
+            <p id="fx-info" class="hint small" aria-live="polite"></p>
+            <button type="button" id="fx-btn" class="chip" data-i18n="fx.refresh">Update rates</button>
+          </div>
+        </section>
+
+        <section id="recent-sec" hidden>
+          <div class="sec-head">
+            <h2 data-i18n="sec.recent">Recent</h2>
+            <span class="spacer"></span>
+            <button type="button" id="recent-clear" class="link-btn" data-i18n="btn.clear">Clear</button>
+          </div>
+          <ul id="recent" class="rows"></ul>
+        </section>
+      </div>
+
+      <section id="all-sec" class="col">
+        <div class="sec-head">
+          <h2 id="all-title" data-i18n="sec.all">All units</h2>
+          <span class="spacer"></span>
+          <button type="button" id="all-toggle" class="link-btn" aria-controls="all"></button>
+        </div>
+        <ul id="all" class="rows"></ul>
+      </section>
+    </div>
+  </main>
+
+  <div id="scrim" hidden></div>
+
+  <!-- Unit picker -->
+  <div id="picker" class="dialog" role="dialog" aria-modal="true" aria-labelledby="picker-title" hidden>
+    <div class="dlg-head">
+      <h2 id="picker-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="picker-close" class="icon-btn"></button>
+    </div>
+    <label for="pq" class="sr-only" data-i18n="f.find">Find a unit</label>
+    <input type="search" id="pq" autocomplete="off" spellcheck="false">
+    <ul id="plist" class="plist"></ul>
+    <p id="pempty" class="hint" data-i18n="pick.none" hidden>No unit by that name.</p>
+  </div>
+
+  <!-- Settings -->
+  <div id="more" class="dialog" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="dlg-head">
+      <h2 id="more-title" data-i18n="more.title">Converter settings</h2>
+      <span class="spacer"></span>
+      <button type="button" id="more-close" class="icon-btn"></button>
+    </div>
+    <h3 data-i18n="sec.prec">Precision</h3>
+    <label for="prec" data-i18n="prec.label">Significant digits in results</label>
+    <select id="prec"></select>
+    <p class="hint small" data-i18n="prec.hint"></p>
+    <h3 data-i18n="sec.fx">Exchange rates</h3>
+    <p class="hint small" data-i18n="fx.about"></p>
+  </div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.08.00"></script>
+  <script src="units.js?v=1.08.00"></script>
+
+</body>
+</html>
