@@ -43,6 +43,10 @@
         A.run(a.img, a.id, a.p, PL.FX);
         if (a.before) A.masked(a.before, a.img, a.mask, a.ox, a.oy);
         return a.img;
+      case "filter":
+        var e = a.pad || 0, out = PL.F.crop(PL.F.run(a.img, a.id, a.p, a.at), e, e, a.img.w - 2 * e, a.img.h - 2 * e);
+        if (a.before) A.masked(a.before, out, a.mask, a.ox, a.oy);
+        return out;
       case "psd": return PL.PSD.read(a.bytes, a.o);
       case "psdWrite": return PL.PSD.write(a.doc);
     }
