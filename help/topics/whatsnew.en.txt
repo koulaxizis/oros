@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.39.00
+- Montage: keyframes, so clips can move, zoom, fade and change volume while they play.
+
 ## Version 1.38.00
 - Newsletter: send through Brevo, Postmark, SendGrid or Mailgun's HTTP API (up to 10 messages per call), and their bounces, spam complaints and unsubscribes now come back to your lists. Choose Connection: HTTP API in a sending account.
 

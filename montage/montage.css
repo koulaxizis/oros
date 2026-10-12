@@ -166,6 +166,7 @@ ul { list-style: none; }
 .clip.a2 { background-color: var(--tr-a2); }
 .clip.missing { background-image: repeating-linear-gradient(135deg, #0000 0 8px, #0005 8px 16px) !important; }
 .clip.sel { outline: 2px solid #fff; outline-offset: -1px; z-index: 2; touch-action: none; }
+.clip .kf-mark { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; background: #fff; border: 1px solid #0008; transform: rotate(45deg); pointer-events: none; z-index: 2; }
 .clip .tx-mark { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #fff6, #fff0); pointer-events: none; }
 .clip .handle {
   position: absolute; top: 0; bottom: 0; width: 16px; background: #fff; color: #222;
