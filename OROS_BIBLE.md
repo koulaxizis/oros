@@ -5201,3 +5201,14 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Today provider newsletter/today.js.
   - Device state (dev, used, inbox) moved from oros-newsletter-prefs to oros-newsletter-dev, migrated on first read. Paused reasons are stored as codes and translated on display.
 - Not tested: a real sending provider, real phones, Safari, a background tab over hours.
+
+### 2026-10-12 — Studio effects: NULL JSFX (#246) — 1.32.00
+- Studio v1.1.0: NULL JSFX effects.
+  - studio/nullfx/ is the web build of NULL JSFX (MIT), copied from koulaxizis/null-jsfx `web/` (translator web/tools/eel2js.js turns each JSFX's EEL2 into static JS ahead of time; nothing is evaluated at runtime). Null test against ysfx below 1e-6 for every effect.
+  - Effects run in one AudioWorklet processor per chain (`null-fx-chain`, nullfx/runtime/null-worklet.js), on each track (clip sources -> chain -> gain -> pan) and on the master.
+  - studio/fx.js: catalog, Effects dialog (search, categories, bypass, order, remove, up to 8 per chain), the effect's own @gfx interface drawn on a canvas (nullfx/runtime/null-gfx.js, mouse + wheel), "All controls" with every slider, live meters while playing.
+  - Latency compensation: a track whose chain delays less than the slowest track's starts its clips later by the difference (not a DelayNode: Chromium drops a DelayNode's tail once its source ends). Export renders the extra samples and cuts them from the start; recording placement adds the master chain's delay.
+  - Convolution IR files: picked by the user (≤ 20 MB), written to `/internal/Studio/fx/`, travel through Vault Drive like the audio.
+  - Data: projects and tracks gain `fx: [{u, id, on, s: {slider: value}, f?: {slider: path}}]` (≤ 8), normalised by C.normFx. Unknown effect ids are kept (a newer device's effect) and do not play.
+  - Not offered yet: Sidechain Ducker (needs a second input routed). Effects reset (@init) at every play, as in REAPER.
+- Credits: CREDITS.md, shell credits, Bible credits register. Not tested: sound on real devices and phones, Safari, offline use after precache.
