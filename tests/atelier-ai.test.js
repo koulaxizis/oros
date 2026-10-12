@@ -201,3 +201,20 @@ test("ai.js only reads the Assistant's settings and keys, never writes them", ()
   AIT.KINDS.forEach((k) => assert.ok("ai.k." + k in STR.en, k));
   used.filter((k) => !k.endsWith(".")).forEach((k) => assert.ok(k in STR.en || core.includes('"' + k + '":'), k));
 });
+
+// ---------- editpic: the Photo Lab bridge (BR-PL-EDIT) ----------
+test("editpic.parse: only well-formed keys and asset paths", () => {
+  const EP = require("../atelier/editpic.js");
+  const sha = "a".repeat(64);
+  assert.equal(EP.keyOf("d-abc", "i-xyz"), "d-abc:i-xyz");
+  assert.deepEqual(EP.parse({ key: "d-abc:i-xyz", path: "/internal/Assets/" + sha + ".png", w: 800.4, h: 600 }),
+    { doc: "d-abc", item: "i-xyz", asset: sha + ".png", w: 800, h: 600 });
+  assert.equal(EP.parse({ key: "d-abc:i-xyz", path: "/internal/Assets/../x.png" }), null);
+  assert.equal(EP.parse({ key: "d-abc:i-xyz", path: "/internal/Assets/" + sha + ".gif" }), null);
+  assert.equal(EP.parse({ key: "d-abc", path: "/internal/Assets/" + sha + ".png" }), null);
+  assert.equal(EP.parse({ key: "D-ABC:i-xyz", path: "/internal/Assets/" + sha + ".png" }), null);
+  assert.equal(EP.parse(null), null);
+  assert.equal(EP.parse({ key: "d-abc:i-xyz", path: "/internal/Assets/" + sha + ".jpg", w: -1, h: "x" }).w, 0);
+  const core = fs.readFileSync(path.join(ROOT, "atelier/core.js"), "utf8");
+  assert.match(core, /tg\.editedPicture[\s\S]{0,80}AT\.editPic\.back\(tg\.editedPicture\)/);
+});

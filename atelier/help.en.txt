@@ -18,6 +18,7 @@ Under `What will you make?` tap or click a size, for example a square post or an
 - With a photo selected you get `Filters`, `Adjust` (brightness, contrast, warmth and more), `Shape` to cut it into a circle, star or other shape, `Flip` and `Replace`.
 - `Crop`, or a double-click on the photo, lets you move and zoom the photo inside its frame.
 - `Background` can use the selected photo as the page background.
+- `Edit in Photo Lab` opens the photo in Photo Lab for deeper changes (layers, retouching, selections). Press `Done` there and you come back to the design with the new picture in the same frame; the Photo Lab project stays, so you can change it again later. `Undo` brings back the earlier picture.
 
 ## Free photos, illustrations and icons
 `Sources` searches open libraries: Openverse and Wikimedia Commons for photos and illustrations, Iconify for icons and clipart. Pixabay and Pexels appear too once you add your own free key under `Pixabay and Pexels keys`. Tap or click a result to add it.

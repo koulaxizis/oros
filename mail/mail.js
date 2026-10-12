@@ -217,7 +217,7 @@
       "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
       "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
       "to.link": "A bookmark", "to.linkHint": "Pick one of its {n} links.", "to.nolinks": "This message has no links.", "to.pick": "Pick a link",
-      "to.contact": "Sender to Contacts", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
+      "to.contact": "Sender to Contacts", "to.crm": "Log in CRM", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
       "to.aiHint": "Opens the Assistant with the question ready (long messages are cut); you send it.",
       "ai.sum": "Summarise this e-mail in a few sentences, in the language it is written in.",
       "ai.reply": "Write a short, polite reply to this e-mail, in its language. I will edit it before sending.",
@@ -379,7 +379,7 @@
       "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
       "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
       "to.link": "Σελιδοδείκτης", "to.linkHint": "Διάλεξε έναν από τους {n} συνδέσμους του.", "to.nolinks": "Το μήνυμα δεν έχει συνδέσμους.", "to.pick": "Διάλεξε σύνδεσμο",
-      "to.contact": "Αποστολέας στις Επαφές", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
+      "to.contact": "Αποστολέας στις Επαφές", "to.crm": "Καταγραφή στους Πελάτες", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
       "to.aiHint": "Ανοίγει τον Βοηθό με την ερώτηση έτοιμη (τα μεγάλα μηνύματα κόβονται)· τη στέλνεις εσύ.",
       "ai.sum": "Κάνε περίληψη αυτού του email σε λίγες προτάσεις, στη γλώσσα που είναι γραμμένο.",
       "ai.reply": "Γράψε μια σύντομη, ευγενική απάντηση σε αυτό το email, στη γλώσσα του. Θα τη διορθώσω πριν τη στείλω.",
@@ -3757,7 +3757,16 @@
   //   notes     { add: { title, text } }
   //   bookmarks { add: { url, title } }
   //   contacts  { add: { email, name } }
+  //   crm       { log: { email, name?, subject?, text?, at? } } (BR-CRM-MAIL)
   //   assistant { ask } (≤ 2000 characters; never sent by itself)
+  // Is that app installed? (shell list; unknown → assume yes)
+  function appThere(id) {
+    try {
+      var f = window.parent.orosAssistInstalled;
+      if (typeof f !== "function") return true;
+      return f().some(function (a) { return a && a.id === id; });
+    } catch (e) { return true; }
+  }
   function shellApps() {
     try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
     catch (e) { return null; }
@@ -3828,6 +3837,18 @@
       var head = lead + "\n\n" + msgHead(m) + "\n" + t("to.subj") + " " + subj + "\n\n";
       var room = 2000 - head.length;
       return head + (body.length > room ? body.slice(0, Math.max(0, room - 1)) + "\u2026" : body);
+    }
+    // CRM (BR-CRM-MAIL): the other person — the sender, or the first
+    // recipient of a message we sent. Prefills a log entry there.
+    var mine = function (x) { return x && x.addr && data.accounts.some(function (a) { return lowerAddr(a.email) === lowerAddr(x.addr); }); };
+    var who = mine(from) ? (m.to || []).filter(function (x) { return x && x.addr && !mine(x); })[0] : (from.addr ? from : null);
+    if (who && appThere("crm")) {
+      item(t("to.crm"), who.name ? who.name + " <" + who.addr + ">" : who.addr, function () {
+        var log = { email: lowerAddr(who.addr), subject: subj.slice(0, 200), text: body.slice(0, 1800) };
+        if (who.name) log.name = String(who.name).slice(0, 120);
+        if (typeof m.date === "number" && isFinite(m.date)) log.at = m.date;
+        go("crm", { log: log });
+      });
     }
     item(t("to.sum"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.sum")) }); });
     item(t("to.reply"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.reply")) }); });

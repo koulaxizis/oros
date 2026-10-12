@@ -670,7 +670,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Slides** | oros-slides-data | decks and slides merged in parts (each part LWW on its own clock, equal: larger canonical JSON), items LWW by m + tombs (delete wins ties; a later edit revives deck/slide) + ghosts; concurrent text losers kept as recovered text, canonical (R26) | v1.0.0 at 0.47.00; Office (new app) |
 | **Public Domain Calculator** | — (no sync slice) | none: device-local prefs and recent searches only (R10) | v1.0.0 at 0.47.00; Office (new app) |
 | **Pixel Avatar** | oros-pixel-data | Museum items LWW by m (equal m: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.47.00; Image since 0.97.00, was Creativity (new app) |
-| **Atelier** | oros-atelier-data | designkit model v1 (`designkit/model.js` `normData`/`mergeData`): docs LWW by stamp, items/pages per-entity LWW + tombs (R17), canonical (R26); Atelier fields in `item.ax`, normalised via `orosDK.model.setItemExt(normAx)`; images by sha256 in orOS disk `/internal/Assets/` (R30, sync via Vault Drive) | v1.0.0 at 0.47.00; Creativity; AI at 1.26.00 (`atelier/ai.js` tab + `aitext.js` through the Assistant provider, `cutout.js` on-device background removal with ONNX Runtime Web + u2netp, model cached in IndexedDB, not precached) |
+| **Atelier** | oros-atelier-data | designkit model v1 (`designkit/model.js` `normData`/`mergeData`): docs LWW by stamp, items/pages per-entity LWW + tombs (R17), canonical (R26); Atelier fields in `item.ax`, normalised via `orosDK.model.setItemExt(normAx)`; images by sha256 in orOS disk `/internal/Assets/` (R30, sync via Vault Drive) | v1.0.0 at 0.47.00; Creativity; AI at 1.26.00 (`atelier/ai.js` tab + `aitext.js` through the Assistant provider, `cutout.js` on-device background removal with ONNX Runtime Web + u2netp, model cached in IndexedDB, not precached); Edit in Photo Lab at 1.29.02 (`atelier/editpic.js`, BR-PL-EDIT sender + `editedPicture` receiver) |
 | **Atelier brand kit** | oros-atelier-brand | ATELIER-BRAND v1: colours / logos LWW per id by m, font slots h/s/t LWW by m (equal m: larger canonical JSON), tombstones `dt` remove entries not newer; canonical (R26) | Atelier 0.61.00 |
 | **Atelier folders** | oros-atelier-folders (+ device-local open folder) | ATELIER-FOLDERS v1: folders and design places LWW per entry by m (equal m: larger canonical JSON), tombstones `dt` remove folders not newer; a place naming a missing folder = no folder; canonical (R26) | Atelier 0.80.00 |
 | **Health** | oros-health-data | readings and kinds LWW by m (equal m: larger canonical JSON) + tombs (delete wins ties), settings LWW, canonical (R26); model and merge in `health/core.js`, shared with the shell engine | v1.0.0 at 0.47.00; Personal |
@@ -1677,6 +1677,10 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 ### Unit Converter bridge (1.05.00)
 - `__orosOpenAt("units", { cat, from, to, value })` opens a category and pair with a value (number or text); used by the search provider.
 
+### Photo Lab edit bridge BR-PL-EDIT (Photo Lab side 1.23.00, Atelier side 1.29.02)
+- Atelier → Photo Lab: `__orosOpenAt("photolab", { openFile: "/internal/Assets/<file>", back: { app: "atelier", key: "<doc id>:<element id>" } })` (back.app /^[a-z][a-z0-9-]{1,30}$/, key ≤ 200 chars); Photo Lab opens a new project with a "Done" button.
+- Photo Lab → Atelier on Done: flattened result saved as `/internal/Assets/<sha256>.png`, then `__orosOpenAt("atelier", { editedPicture: { key, path, w, h } })`; Atelier swaps the element's picture (Undo brings the old one back). Contract: /mnt/project-files/image-editor/atelier-edit-picture-contract.md.
+
 ### Text Tools deep link (1.06.00)
 - Text Tools receiver `__orosOpenAt("texttools", { text })` (≤ 2,000,000 chars): replaces the Text box with Undo; never runs anything by itself. Used by Case Converter.
 
@@ -1701,7 +1705,7 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - `crm/core.js` gains `reminders`, `reminderText`, `calendarOn`, `custsForContact`. No data format change.
 - BR-CRM-INV (CRM side live, 1.25.00): CRM → Invoices `__orosOpenAt("invoices", { new: OrosCrmCore.invoicePrefill(cust, deal?, cur) })`; Invoices → CRM read-only `OrosInvoicesCore.byCrm(OrosInvoicesCore.parse(raw), crmId, today)`.
 - BR-CRM-Q (new, read-only, 1.25.00): `OrosQuoteCore.forClient(quoteData, { name, afm })` → `[{ id, num, date, due, status, cur, total }]` (total in currency units); CRM opens a row with `__orosOpenQuote(id)` and creates with `__orosOpenQuoteNew(OrosCrmCore.quotePrefill(cust, deal?, cur))`.
-- BR-CRM-MAIL (receiver live in CRM since 1.29.00; sender = Mail thread, a "Log in CRM" button under a message): `__orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } })`. email required (lower-cased, else ignored); subject ≤ 200, text ≤ 1800 chars, at = message time in ms. Prefill only.
+- BR-CRM-MAIL (receiver live in CRM since 1.29.00; sender live in Mail since 1.29.01, a "Log in CRM" button under a message): `__orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } })`. email required (lower-cased, else ignored); subject ≤ 200, text ≤ 1800 chars, at = message time in ms. Prefill only.
 
 ### "Send to someone" share links (BR-SHARE) — phase 1
 - **What.** One item from an app becomes a link `https://<orOS>/share/#<code>`. The item lives only in the URL fragment, which browsers never send to a server; `share/index.html` opens it locally, so the other person needs no account and no orOS. Chris 2026-10-12 chose this instead of a Messages chat (Part IX).
@@ -5163,3 +5167,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-12 — CRM phase 3b: CSV import, Mail → CRM receiver (#242) — 1.29.00
 - CRM v1.4.0: Settings › Import customers (CSV): `,` `;` or tab, own EN/EL export headers plus common Excel / HubSpot / Greek names (Επωνυμία, ΑΦΜ, ΔΟΥ, Τ.Κ., Lifecycle Stage, First/Last Name, Company Name…); duplicates by ΑΦΜ (EL prefix and spaces ignored) or folded name, inside the file too; tags matched by name or created (limit 50); a contact list's person becomes the first People line with its email and phone; one write, Undo tombstones all. New deep-link receiver BR-CRM-MAIL `__orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } })`: the customer with that address (own email or a person's, Contacts-linked included) gets a prefilled Email log entry; unknown address → New customer form prefilled, then the log entry. Nothing is saved without Save.
 - Not tested: real Excel / HubSpot exports, Safari, real Dropbox.
+
+### 2026-10-12 — Mail: Log in CRM from a message (#235) — 1.29.01
+- Mail: "Log in CRM" under a message (BR-CRM-MAIL sender): opens CRM with `{ log: { email, name, subject, text, at } }`, which prefills an Email log entry for the customer with that address, or a New customer form when the address is unknown. Nothing is saved in CRM without Save. Mail help EN/EL. Not tested: real pmail.gr mailbox, Safari.
+
+### 2026-10-12 — Atelier: Edit in Photo Lab (#244) — 1.29.02
+- Atelier: "Edit in Photo Lab" on a selected photo opens it in Photo Lab (BR-PL-EDIT); "Done" there brings the edited picture back into the same element of the design (`editedPicture` receiver, Undo). New file atelier/editpic.js (precached). Help EN/EL, tests. Not tested: real phones, Safari, Vault Drive sync of the edited asset.
