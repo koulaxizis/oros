@@ -11,6 +11,8 @@ The chips filter by `Reading`, `Not started`, `Finished`, `EPUB` or `PDF`. `Sear
 
 The info button on a cover opens the book's details, where you can `Edit` the title, author and tags, `Mark as finished`, `Export notes`, `Remove from library` or `Delete the file`.
 
+`Add to Media Shelf` in a book's details puts it on your [Media Shelf](app:shelf) as an e-book. From then on, the Shelf follows how far you've read here (it updates when you open it), and finishing the book here finishes it there. If it's already there, the button reads `Open in Media Shelf`.
+
 ## Reading
 - Turn pages with the arrows at the bottom, by tapping the left or right edge, or by swiping. Tap the middle to hide or show the bars.
 - The slider jumps anywhere in the book.
