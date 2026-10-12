@@ -11,6 +11,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Move`: drag the layer. With a selection, it lifts and moves the selected pixels.
 - `Marquee selection` and `Lasso`: select an area. Press the tool again to switch between `Rectangle` and `Ellipse`, or between a freehand and a point-by-point lasso. Hold Shift to add to the selection, Alt to subtract.
 - `Magic wand`: selects similar colours; set the `Tolerance` and whether only `Contiguous` pixels count.
+- `Quick selection`: paint over what you want and the selection grows out to its edges; Alt+drag takes away. [[Shift+W]] switches between it and the magic wand.
 - `Brush` and `Eraser`: `Size`, `Hardness`, `Opacity` and `Flow`. A pen paints wider when you press harder.
 - `Clone stamp`: Alt+click (or `Set source`, then a tap) where to copy from, then paint where the copy should go. `Healing brush` does the same but keeps the colour around the spot, for blemishes and dust; its `Red eye` kind turns red pupils dark.
 - `Dodge / burn / sponge`: `Dodge` lightens and `Burn` darkens the `Shadows`, `Midtones` or `Highlights`; `Sponge` takes colour away or adds it. `Smudge` drags colour like a finger in wet paint.
@@ -33,11 +34,15 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 
 ## Menus
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
-- `Select`: `Select all`, `Invert selection`, `Feather…`, `Grow…`, `Shrink…`.
+- `Select`: `Select all`, `Invert selection`, `Colour range…` (every pixel near a colour), `Feather…`, `Grow…`, `Shrink…`, `Save selection…` and `Load selection…` (saved selections stay in the project).
+- `View`: `Rulers`, `Guides`, `Grid` and `Snap` turn on and off; `New guide…`, `Clear guides` and `Grid size…`. Drag a guide out of a ruler; with the `Move` or `Hand` tool drag a guide to move it, or back onto the ruler to remove it. With `Snap` on, selections, crops, shapes and moved layers stick to guides, the grid and the canvas edges and centre.
 - `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
 - `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
 - `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
+
+## Editing a picture from Atelier
+When Atelier sends a picture here to edit, a `Done` button appears at the top. It saves the result as a new picture and sends it back to Atelier; the project also stays in Photo Lab for later changes.
 
 ## Photoshop and OpenRaster files
 - Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
@@ -57,6 +62,7 @@ On a phone all menus are under the menu button.
 - [[Alt+T]]: free transform. [[Alt+Shift+N]]: new layer. [[Ctrl+J]]: layer via copy. [[Ctrl+E]]: merge down.
 - [[Ctrl+U]]: hue / saturation. [[Ctrl+L]]: levels. [[Ctrl+I]]: invert. [[Ctrl+\]]: edit the mask or the pixels.
 - [[Ctrl+=]], [[Ctrl+-]], [[Ctrl+0]], [[Ctrl+1]]: zoom in, zoom out, fit, 100%.
+- [[Ctrl+Alt+R]]: rulers. [[Ctrl+;]]: guides. [[Ctrl+']]: grid. [[Ctrl+Shift+;]]: snap.
 - Tools: [[V]] move, [[M]] marquee, [[L]] lasso, [[W]] magic wand, [[C]] crop, [[B]] brush, [[E]] eraser, [[S]] clone stamp, [[J]] healing brush, [[O]] dodge / burn / sponge, [[R]] smudge, [[G]] paint bucket ([[Shift+G]] gradient), [[I]] eyedropper, [[T]] text, [[U]] shape, [[H]] hand, [[Z]] zoom.
 - [[X]] swaps the colours, [[D]] resets them, `[` and `]` change the brush size. Hold [[Space]] to move around.
 

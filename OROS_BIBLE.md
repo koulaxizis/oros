@@ -5097,3 +5097,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — CRM phase 2b: own pipeline stages (#232) — 1.22.00
 - CRM v1.2.0: own pipeline stages (new synced list `stg`); a stage with deals cannot be hidden or deleted; a deal whose stage was deleted or hidden on another device shows in the first open stage (data not rewritten). Fix: the dialogs' "Close" button read "Expected close" (duplicate string key), now "Close" / «Κλείσιμο».
+
+### 2026-10-12 — Photo Lab 2D: rulers, guides, grid, quick selection, colour range, saved selections (#233) — 1.23.00
+- Rulers, guides, grid and snapping (new `photolab/guides.js`, precached), a Quick selection brush, Colour range and saved selections; Atelier "Edit picture" returns to Atelier. Fix: closing and reopening an image now waits for an autosave already running (old bug, found in the 2C E2E). photolab/ + tests only.
