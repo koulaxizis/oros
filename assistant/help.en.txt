@@ -1,5 +1,5 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, or a model that runs on your own computer. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
@@ -9,6 +9,8 @@ Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, M
 5. Press `Close`, type your question and press `Send`.
 
 For a model on your computer, choose `Local / OpenAI-compatible` and enter its `Server address`, for example `http://localhost:11434/v1` for Ollama. A key is optional there.
+
+`Built-in browser model` needs no key and no internet: recent Chrome on Windows, Linux or a Mac has a small model of its own. Settings say whether this device has it; `Download the model` fetches it once (about 2 GB). It only chats: it can't search your data, make summaries or prepare entries.
 
 ## Ask about your data
 When a question needs your data, the assistant searches your apps, much like the menu search. Before anything is shared you see a card, `Share with …?`, listing every result it found:
@@ -20,9 +22,18 @@ In the answer, titles in the accent colour are links: tap one to open that item 
 
 When a short result is not enough, the assistant may ask for the whole item, for example a long note. For an app set to `Ask first` you see one more card with the beginning of the item and its size; press `Share` or `Don't share`.
 
+## Summaries
+For totals and overviews, such as "how much did I spend on groceries this month?", "how many hours did I work in September?" or "what's on this week?", the assistant asks an app for a summary instead of searching item by item. orOS works it out on this device:
+- Budget: income, expenses and each category of a month.
+- Timesheet: hours and amounts of a month per project.
+- To-Do: open, late and due-today tasks per list, and what is due next.
+- Calendar, Habits, Plant Care and the other apps that appear in `Today`: what is late, today and in the next days.
+
+For an app set to `Ask first` you see the summary on a card before it is shared; press `Share` or `Don't share`. Only those lines leave the device, not the entries themselves. Budget starts at `Never`, so allow it in `Settings` → `Your data` first.
+
 ## Add entries
-Ask, for example, "remind me to call the plumber" or "I spent 12.50 on lunch". The assistant answers with a card that shows exactly what it would add, and two buttons:
-- `Open in …` opens that app with the entry filled in. For To-Do, Calendar, Budget, Quote and Bookmarks nothing is saved until you press Save or Add there; `Cancel` leaves no trace.
+Ask, for example, "remind me to call the plumber", "I spent 12.50 on lunch" or "make an invoice for ACME: 3 hours of design at 50". The assistant answers with a card that shows exactly what it would add, and two buttons:
+- `Open in …` opens that app with the entry filled in. For To-Do, Calendar, Budget, Quote, Invoices and Bookmarks nothing is saved until you press Save or Add there; `Cancel` leaves no trace.
 - `Dismiss` drops the card.
 
 Notes and Spreadsheet make the new note or sheet when you press `Open in …`, and Slides asks you to pick a theme first; you can change or delete them there. The assistant never changes or deletes anything you already have.
@@ -30,11 +41,14 @@ Notes and Spreadsheet make the new note or sheet when you press `Open in …`, a
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
+- In Writer, select some text and press the sparkle button: `Summarize`, `Rephrase`, `Fix spelling & grammar` or `Ask something else…` put the text and the request in the message box. Nothing is sent until you press `Send`.
+- `Copy` under every answer copies it, ready to paste into your document.
 
 ## Privacy: what leaves your device
 - Your messages and the results you share go only to the service you chose, straight from your browser. No orOS server is in between. The line above the message box says where they go.
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Password Generator are never offered.
 - `Chat only` turns off every search: the assistant then sees only what you type.
+- With `Built-in browser model` nothing leaves the device at all.
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.
@@ -57,6 +71,6 @@ Keys stay on each device unless you tick `Sync API keys to my other devices`. Th
 - If a service says the key or the model is wrong, open Settings and press `Load models` to check both.
 
 ## Limits
-- The assistant needs the internet, except a model on your own network.
-- It can suggest new entries for To-Do, Calendar, Budget, Quote, Spreadsheet, Slides, Bookmarks and Notes. It can't change or delete what you already have, and it can't send anything (no email).
+- The assistant needs the internet, except a model on your own network or the built-in browser model.
+- It can suggest new entries for To-Do, Calendar, Budget, Quote, Invoices, Spreadsheet, Slides, Bookmarks and Notes. It can't change or delete what you already have, and it can't send anything (no email).
 - Some services may refuse calls from a browser. A local server must allow this site: for Ollama, start it with `OLLAMA_ORIGINS=https://useoros.online`.

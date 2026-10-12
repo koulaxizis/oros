@@ -658,15 +658,9 @@
   function duplicateDoc(id) {
     var d = findDoc(id);
     if (!d) return;
-    var copy = JSON.parse(JSON.stringify(d));
-    var nw = now();
-    copy.id = M.newId("doc");
+    var copy = M.copyDoc(d, now());
     copy.name = t("doc.copy", { name: docTitle(d) }).slice(0, 120);
-    copy.m = nw;
-    // fresh stamps so the copy is not older than anything it holds
-    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (e.h) e.h = []; }); });
-    copy.tombs = {};
-    data.docs.push(M.normDoc(copy));
+    data.docs.push(copy);
     data = M.normData(data);
     save();
     renderHome();

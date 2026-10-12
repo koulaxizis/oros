@@ -261,3 +261,95 @@ test("search: customers, deals, open follow-ups, history; tombstones and orphans
   assert.equal(by.aaaaaa01.title, "Μίλησα με τη Μαρία");
   assert.equal(by.aaaaaa01.when, NOW);
 });
+
+// ---------------------------------------------------------------
+// Phase 2: shell reminders, Calendar feed, Contacts, Today
+// ---------------------------------------------------------------
+
+test("shell reminders: announce once, keep only what is still due, a moved follow-up rings again", () => {
+  let d = C.norm(data({
+    cust: [cust("cccccc01", { name: "Acme" })],
+    fups: [fup("ffffff01", "cccccc01", "2026-10-10"),
+           fup("ffffff02", "cccccc01", TODAY, { t: "15:30" }),
+           fup("ffffff03", "cccccc01", TODAY)]
+  }));
+  let r = C.reminders(d, TODAY, "10:00", {});
+  assert.deepEqual(r.fresh.map(x => x.fup.id), ["ffffff01", "ffffff03"]);
+  assert.deepEqual(r.next, { "ffffff01|2026-10-10": 1, "ffffff03|2026-10-12": 1 });
+  // next tick, nothing new; 15:30 comes
+  assert.equal(C.reminders(d, TODAY, "10:01", r.next).fresh.length, 0);
+  r = C.reminders(d, TODAY, "15:30", r.next);
+  assert.deepEqual(r.fresh.map(x => x.key), ["ffffff02|2026-10-1215:30"]);
+  // ffffff01 done, ffffff03 snoozed to tomorrow: both leave the map
+  d = C.merge(d, data({ fups: [fup("ffffff01", "cccccc01", "2026-10-10", { m: 2000, done: TODAY }),
+                                fup("ffffff03", "cccccc01", "2026-10-13", { m: 2000 })] }));
+  r = C.reminders(d, TODAY, "16:00", r.next);
+  assert.deepEqual(Object.keys(r.next), ["ffffff02|2026-10-1215:30"]);
+  // tomorrow the snoozed one is a new key
+  r = C.reminders(d, "2026-10-13", "08:00", r.next);
+  assert.deepEqual(r.fresh.map(x => x.key), ["ffffff03|2026-10-13"]);
+  // garbage map is tolerated
+  assert.equal(C.reminders(d, "2026-10-13", "08:00", null).fresh.length, 2);
+});
+
+test("reminder text in both languages", () => {
+  const d = C.norm(data({ cust: [cust("cccccc01", { name: "Acme" })],
+                          fups: [fup("ffffff01", "cccccc01", "2026-10-09", { text: "Send offer" }),
+                                 fup("ffffff02", "cccccc01", TODAY, { t: "09:15" })] }));
+  assert.deepEqual(C.reminderText(d, d.fups[0], TODAY, "en"), { title: "Follow-up: Acme", body: "Send offer · 3 days late" });
+  assert.deepEqual(C.reminderText(d, d.fups[1], TODAY, "el"), { title: "Follow-up: Acme", body: "Call back · σήμερα 09:15" });
+  assert.equal(C.reminderText(d, d.fups[0], "2026-10-10", "el").body, "Send offer · χθες");
+  assert.equal(C.reminderText(d, fup("ffffff09", "cccccc09", TODAY), TODAY, "en").title, "Follow-up: Unknown customer");
+});
+
+test("calendar feed: open on its day, late on today only, done on its done day, deal closes", () => {
+  const d = C.norm(data({
+    cust: [cust("cccccc01")],
+    fups: [fup("ffffff01", "cccccc01", "2026-10-10"),
+           fup("ffffff02", "cccccc01", TODAY, { t: "09:00" }),
+           fup("ffffff03", "cccccc01", "2026-10-14"),
+           fup("ffffff04", "cccccc01", "2026-10-01", { done: "2026-10-11" })],
+    deals: [deal("dddddd01", "cccccc01", { close: "2026-10-14", stage: "proposal" }),
+            deal("dddddd02", "cccccc01", { close: "2026-10-14", stage: "won", cd: TODAY }),
+            deal("dddddd03", "cccccc01", { close: "2026-10-05" })]
+  }));
+  const ks = (ymd) => C.calendarOn(d, ymd, TODAY).map(r => r.k + ":" + (r.fup || r.deal).id);
+  assert.deepEqual(ks(TODAY), ["late:ffffff01", "fup:ffffff02"]);
+  assert.deepEqual(ks("2026-10-10"), []);                 // late shows on today, not on its old day
+  assert.deepEqual(ks("2026-10-11"), ["done:ffffff04"]);
+  assert.deepEqual(ks("2026-10-14"), ["close:dddddd01", "fup:ffffff03"]);
+  assert.deepEqual(ks("2026-10-05"), []);                 // a past expected close is not shown
+});
+
+test("contacts: customers that list a contact", () => {
+  const d = C.norm(data({ cust: [cust("cccccc01", { name: "Zeta", people: [{ c: "ct_1", n: "" }] }),
+                                 cust("cccccc02", { name: "alpha", people: [{ c: "ct_1", n: "", role: "CEO" }, { c: "", n: "Bob" }] }),
+                                 cust("cccccc03", { name: "Beta", people: [{ c: "ct_2", n: "" }] })] }));
+  assert.deepEqual(C.custsForContact(d, "ct_1").map(c => c.name), ["alpha", "Zeta"]);
+  assert.deepEqual(C.custsForContact(d, "ct_9"), []);
+  assert.deepEqual(C.custsForContact(d, ""), []);
+});
+
+test("Today provider: open follow-ups as tasks with Done, read-only", () => {
+  globalThis.OrosCrmCore = C;
+  const P = require(path.join(__dirname, "..", "crm/today.js"));
+  const store = { "oros-crm-data": data({
+    cust: [cust("cccccc01", { name: "Acme", alias: "AC" })],
+    fups: [fup("ffffff01", "cccccc01", "2026-10-10", { text: "Old" }),
+           fup("ffffff02", "cccccc01", TODAY, { t: "09:00", text: "Call" }),
+           fup("ffffff03", "cccccc01", "2026-10-15", { text: "Later" }),
+           fup("ffffff04", "cccccc01", "2026-10-30", { text: "Far" }),
+           fup("ffffff05", "cccccc01", TODAY, { done: TODAY })]
+  }) };
+  const before = J(store);
+  const ctx = { today: TODAY, horizon: 3, now: NOW, lang: "en",
+                readJSON: (k) => (k in store ? JSON.parse(J(store[k])) : null) };
+  const rows = P.collect(ctx);
+  assert.equal(J(store), before);
+  assert.deepEqual(rows.map(r => r.id), ["ffffff01", "ffffff02", "ffffff03"]);
+  assert.deepEqual(rows[1], { id: "ffffff02", due: TODAY, time: "09:00", title: "Call", text: "Acme (AC)",
+                              kind: "task", target: { fup: "ffffff02" }, done: { fup: "ffffff02" } });
+  assert.deepEqual(P.collect({ today: TODAY, horizon: 3, now: NOW, lang: "en", readJSON: () => null }), []);
+  assert.equal(P.id, "crm");
+  assert.deepEqual(P.keys, ["oros-crm-data"]);
+});

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Stock · orOS</title>
 
-  <link rel="stylesheet" href="stock.css?v=1.13.01">
+  <link rel="stylesheet" href="stock.css?v=1.20.00">
 
 </head>
 <body>
@@ -16,6 +16,7 @@
       <button type="button" class="tab" id="tab-moves" role="tab" data-view="moves"></button>
       <button type="button" class="tab" id="tab-order" role="tab" data-view="order"></button>
       <button type="button" class="tab" id="tab-sups" role="tab" data-view="sups"></button>
+      <button type="button" class="tab" id="tab-reports" role="tab" data-view="reports"></button>
     </div>
     <span class="spacer"></span>
     <button type="button" class="icon-btn" id="settings-btn"></button>
@@ -46,8 +47,9 @@
       <div id="moves-list"></div>
     </section>
 
-    <!-- Reorder: low items by supplier -->
+    <!-- Reorder: purchase orders, then low items by supplier -->
     <section id="view-order" class="view" role="tabpanel" aria-labelledby="tab-order" hidden>
+      <div id="po-list"></div>
       <div id="order-list"></div>
     </section>
 
@@ -56,14 +58,25 @@
       <ul id="sups-list" class="rows"></ul>
     </section>
 
+    <!-- Reports: value, period totals, best sellers, dead stock -->
+    <section id="view-reports" class="view" role="tabpanel" aria-labelledby="tab-reports" hidden>
+      <div class="filter-row">
+        <select id="rep-range"></select>
+        <span class="spacer"></span>
+        <div id="rep-acts" class="dlg-actions tight"></div>
+      </div>
+      <div id="rep-tiles" class="tiles"></div>
+      <div id="rep-body"></div>
+    </section>
+
     <div id="empty" class="view empty" hidden></div>
   </main>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=1.13.01"></script>
-  <script src="stock.js?v=1.13.01"></script>
+  <script src="core.js?v=1.20.00"></script>
+  <script src="stock.js?v=1.20.00"></script>
 
 </body>
 </html>

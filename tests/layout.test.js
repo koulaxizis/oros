@@ -265,3 +265,19 @@ test("i18n: every key the app uses exists in English and Greek", () => {
   const missing = [...used].filter((k) => !k.endsWith(".") && !(k in STRINGS.en));
   assert.deepEqual(missing, []);
 });
+
+test("copyDoc: duplicating keeps frame and page sizes, clears only story history", () => {
+  const TP = require(path.join(ROOT, "designkit/templates.js"));
+  const d = TP.build("flyer", { lang: "en", now: 5000 });
+  d.stories.forEach((s) => { s.h = [4000, 4500]; });
+  const c = M.copyDoc(JSON.parse(J(d)), 9000);
+  assert.notEqual(c.id, d.id);
+  assert.equal(c.m, 9000);
+  assert.deepEqual(c.items.map((i) => [i.id, i.w, i.h]), d.items.map((i) => [i.id, i.w, i.h]), "frame sizes kept");
+  assert.ok(d.items.some((i) => i.h !== 100), "fixture has non-default heights");
+  assert.deepEqual(c.setup, d.setup);
+  assert.ok(c.stories.length && c.stories.every((s) => s.h.length === 0 && s.m === 9000), "story history cleared");
+  M.COLLECTIONS.forEach((k) => (c[k] || []).forEach((e) => assert.equal(e.m, 9000, k + " restamped")));
+  assert.deepEqual(c.tombs, {});
+  assert.equal(J(M.normDoc(JSON.parse(J(c)))), J(c), "canonical");
+});
