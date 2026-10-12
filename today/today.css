@@ -109,8 +109,15 @@ button:focus-visible, select:focus-visible, input:focus-visible {
   background: var(--panel-bg);
   border: 1px solid var(--border);
 }
-.top li { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 0.92rem; }
-.top li .ico { color: var(--accent); }
+.top li { padding: 2px 0; }
+.top-open {
+  display: flex; align-items: flex-start; gap: 8px; width: 100%;
+  padding: 4px 6px; margin: 0 -6px; box-sizing: content-box;
+  border: 0; border-radius: 8px; background: none; color: inherit;
+  font: inherit; font-size: 0.92rem; text-align: start; cursor: pointer;
+}
+.top-open:hover, .top-open:focus-visible { background: var(--accent-soft); }
+.top-open .ico { color: var(--accent); flex: none; }
 .empty {
   text-align: center;
   padding: 32px 12px;

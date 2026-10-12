@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 0.96.00
+- New app Studio (Sound): record and arrange audio on up to 8 tracks, with loop, click and WAV export. Effects come later.
+
+## Version 0.95.00
+- Today now also shows your habits, today's workout, Health reminder times, upcoming bills and income, today's meals and how many unread e-mails wait in each Inbox.
+
 ## Version 0.94.00
 - Notes opens .txt and .md files; on Android, "Share → orOS" now takes files too and opens them in the right app.
 

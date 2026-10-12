@@ -200,8 +200,15 @@
       var top = el("ul", "top");
       g.info.forEach(function (r) {
         var li = el("li");
-        li.appendChild(iconFor(r.app));
-        li.appendChild(el("span", "txt", r.title + (r.text ? " · " + r.text : "")));
+        var b = el("button", "top-open");          // a top line opens its app too
+        b.type = "button";
+        b.appendChild(iconFor(r.app));
+        b.appendChild(el("span", "txt", r.title + (r.text ? " · " + r.text : "")));
+        b.addEventListener("click", function () {
+          var H = host();
+          if (H) H.open(r.app, r.target);
+        });
+        li.appendChild(b);
         top.appendChild(li);
       });
       main.appendChild(top);

@@ -157,7 +157,8 @@
       "icon": "meals",
       "url": "meals/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "contacts",
@@ -340,7 +341,8 @@
       "icon": "habits",
       "url": "habits/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "zen",
@@ -358,7 +360,8 @@
       "url": "health/",
       "search": "search.js",
       "searchOff": true,
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "budget",
@@ -368,7 +371,8 @@
       "url": "budget/",
       "search": "search.js",
       "searchOff": true,
-      "type": "internal"
+      "type": "internal",
+      "today": ["feed.js", "today.js"]
     },
     {
       "id": "water",
@@ -386,7 +390,8 @@
       "icon": "fitness",
       "url": "fitness/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "cycle",
@@ -500,7 +505,8 @@
       "icon": "mail",
       "url": "mail/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "dice",
@@ -583,6 +589,14 @@
       "category": "Sound",
       "icon": "ringtones",
       "url": "ringtones/",
+      "type": "internal"
+    },
+    {
+      "id": "studio",
+      "name": "Studio",
+      "category": "Sound",
+      "icon": "studio",
+      "url": "studio/",
       "type": "internal"
     },
     {

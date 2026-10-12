@@ -1465,9 +1465,8 @@
     }
 
     // Today
-    var today = wdIdx(new Date()), todays = [];
-    data.pg.forEach(function (p) {
-      p.days.forEach(function (d) { if (d.wd.indexOf(today) >= 0 && d.it.length) todays.push(dayRef(p.id, d.id)); });
+    var todays = window.OrosFitnessCore.plannedOn(data, ymd(new Date())).map(function (r) {   // fitness/core.js
+      return dayRef(r.pg.id, r.day.id);
     });
     var st = section(t("train.today"));
     if (todays.length) todays.forEach(function (r) { st.appendChild(dayCard(r, !!act)); });
@@ -3191,7 +3190,13 @@
   // target { pg: id }. Programs tab with that program in its editor, as
   // its edit button does. Unknown program → no-op; an open dialog or a
   // program already in the editor (unsaved edits) wins → no-op.
+  // Today summary: { train: true } → the Train tab, where today's
+  // program days wait with their Start button.
   function openSearchTarget(t) {
+    if (t && t.train === true) {
+      if (!pgDraft && !document.querySelector("dialog[open]") && prefs.tab !== "train") setTab("train");
+      return;
+    }
     var p = t && typeof t.pg === "string" ? findRow("pg", t.pg) : null;
     if (!p || pgDraft || document.querySelector("dialog[open]")) return;
     pgDraft = JSON.parse(JSON.stringify(p));
