@@ -1,11 +1,20 @@
 // ============================================================
-// orOS Workouts — Habits feed provider (v1.0.0)
-// Loaded by habits/index.html before habits.js. Adds one read-only
-// row, "Workouts", to Habits through the generic
-// window.orosHabitFeeds registry: a day counts when it has a
-// finished workout. Reads oros-fitness-data only; never writes.
-// The row hides when the user turns it off in Workouts › Settings
-// (synced setting set.hb = 0) or when there is no workout yet.
+// orOS Workouts — core.js (shared read-only rules, v1.1.0)
+// 1. Habits feed provider. Loaded by habits/index.html before
+//    habits.js. Adds one read-only row, "Workouts", to Habits through
+//    the generic window.orosHabitFeeds registry: a day counts when it
+//    has a finished workout. The row hides when the user turns it off
+//    in Workouts › Settings (synced setting set.hb = 0) or when there
+//    is no workout yet.
+// 2. The training plan of a day (window.OrosFitnessCore), one copy
+//    for the Workouts app (Train tab, fitness/index.html loads this
+//    file) and the Today summary (fitness/today.js):
+//      plannedOn(data, ymd) → [{ pg, day }] program days whose
+//        weekdays (Monday = 0) hold that day and that have exercises,
+//        in program order
+//      doneOn(data, ymd, pgId, dayId) → a finished workout of that
+//        program day on that date
+// Reads oros-fitness-data only; never writes.
 // ============================================================
 (function (root) {
   "use strict";
@@ -25,6 +34,31 @@
     return any ? { days: days } : null;
   }
 
+  function wdOf(ymd) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ""));
+    if (!m) return -1;
+    return (new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay() + 6) % 7;
+  }
+  function plannedOn(data, ymd) {
+    var wd = wdOf(ymd), out = [];
+    if (wd < 0 || !data || !Array.isArray(data.pg)) return out;
+    data.pg.forEach(function (p) {
+      if (!p || typeof p.id !== "string" || !Array.isArray(p.days)) return;
+      p.days.forEach(function (d) {
+        if (d && Array.isArray(d.wd) && d.wd.indexOf(wd) >= 0 && Array.isArray(d.it) && d.it.length) {
+          out.push({ pg: p, day: d });
+        }
+      });
+    });
+    return out;
+  }
+  function doneOn(data, ymd, pgId, dayId) {
+    if (!data || !Array.isArray(data.wo)) return false;
+    return data.wo.some(function (w) {
+      return w && w.d === ymd && typeof w.en === "number" && w.en > 0 && w.p === pgId && w.pd === dayId;
+    });
+  }
+
   var FEED = {
     id: "fitness",
     app: "fitness",
@@ -40,7 +74,11 @@
     }
   };
 
-  if (typeof module !== "undefined" && module.exports) module.exports = { FEED: FEED, workoutDays: workoutDays };
+  var API = { plannedOn: plannedOn, doneOn: doneOn };
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = { FEED: FEED, workoutDays: workoutDays, plannedOn: plannedOn, doneOn: doneOn };
+  }
+  if (root) root.OrosFitnessCore = API;
   if (root && root.document) {
     var feeds = root.orosHabitFeeds = root.orosHabitFeeds || [];
     for (var i = 0; i < feeds.length; i++) if (feeds[i] && feeds[i].id === FEED.id) return;

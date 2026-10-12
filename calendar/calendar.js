@@ -1063,26 +1063,17 @@ function transientNote(title, body) {
     return habitsCache.data;
   }
 
-  function isHabitDoneOn(habitId, dateStr) {
-    var data = habitsRaw();
-    if (!data || !Array.isArray(data.comps)) return false;
-    var compKey = habitId + "|" + dateStr;
-    for (var i = 0; i < data.comps.length; i++) {
-      var c = data.comps[i];
-      if (c.id === compKey && !c.del) return true;
-    }
-    return false;
-  }
-
+  // "Done" is habits/core.js (OrosHabitsCore.isDone), the app's own rule.
   function habitsFeedOn(dateStr) {
+    var HC = window.OrosHabitsCore;
     var data = habitsRaw();
-    if (!data || !Array.isArray(data.habits) || !Array.isArray(data.comps)) return [];
+    if (!HC || !data || !Array.isArray(data.habits) || !Array.isArray(data.comps)) return [];
     
     var out = [];
     var livingHabits = data.habits.filter(function (h) { return h && !h.del; });
     
     livingHabits.forEach(function (h) {
-      if (isHabitDoneOn(h.id, dateStr)) {
+      if (HC.isDone(data, h.id, dateStr)) {
         if (!labelVisible("lbl-feed-habits")) return;
         out.push({
           id: "habit-" + h.id + "-" + dateStr,
@@ -1918,19 +1909,10 @@ function transientNote(title, body) {
       try {
         var raw = JSON.parse(localStorage.getItem(MEALS_DATA_KEY));
         if (raw && typeof raw === "object" && raw.pl && typeof raw.pl === "object") {
-          var d = Core.mergeMeals(raw, raw), names = {}, rows = {};
-          Core.allRecipes(d, LANG).forEach(function (r) { names[r.id] = r.t; });
-          d.set.sl.forEach(function (sl, order) {
-            Object.keys(d.pl).forEach(function (k) {
-              var i = k.indexOf("|"), day = k.slice(0, i);
-              if (k.slice(i + 1) !== sl) return;
-              var what = d.pl[k].it.map(function (it) { return it.r ? names[it.r] : it.t; })
-                .filter(Boolean);
-              if (!what.length) return;
-              (rows[day] = rows[day] || []).push({
-                key: sl, order: order,
-                title: (d.set.nm[sl] || t("feed.meals." + sl)) + ": " + what.join(", ")
-              });
+          var plan = Core.planByDay(raw, LANG), rows = {};
+          Object.keys(plan).forEach(function (day) {
+            rows[day] = plan[day].map(function (r) {
+              return { key: r.slot, order: r.order, title: (r.name || t("feed.meals." + r.slot)) + ": " + r.what.join(", ") };
             });
           });
           mealsCache.rows = rows;

@@ -4811,6 +4811,7 @@
   //  - universal search: { acct, folder, uid }. Opens the folder and,
   //    when the message is in its cached list, the message. Unknown
   //    account → no-op (returns false).
+  //  - the Today summary: { acct, folder } (no uid) opens that folder.
   //  - other apps (Reader…): { compose:{ to?, subject?, body? } } opens
   //    a prefilled draft, plain text; the person presses Send.
   // A dialog open (maybe with unsaved edits) → no-op (returns false).
@@ -4825,9 +4826,11 @@
       });
       return true;
     }
-    if (typeof target.acct !== "string" || typeof target.folder !== "string" || !target.folder ||
-        typeof target.uid !== "number") return false;
+    if (typeof target.acct !== "string" || typeof target.folder !== "string" || !target.folder) return false;
     if (!acctById(target.acct)) return false;
+    // No uid (the Today summary's unread line): just that folder.
+    if (target.uid === undefined) { openFolder(target.acct, target.folder); return true; }
+    if (typeof target.uid !== "number") return false;
     openFolder(target.acct, target.folder).then(function () {
       if (cur && cur.acct === target.acct && cur.folder === target.folder && findMsg(target.uid)) openMessage(target.uid);
     });

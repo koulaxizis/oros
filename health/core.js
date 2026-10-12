@@ -18,6 +18,7 @@
 //   inRange(list, from, to), stats(nums), movingAvg(pts, days)
 //   bpSplit(entries), glucoseByCtx(entries), timeInTarget(d, entries)
 //   fitnessWeights(raw), dueReminders(d, nowMs), slotKey(t, ymd, min)
+//   timesOn(d, nowMs) (today's reminder times + done, for Today)
 // Data (synced slice "health", key oros-health-data):
 //   { ver: 1,
 //     en: [entry…] by id, ty: [type…] by id, set: settings | null,
@@ -410,6 +411,32 @@
     return out;
   }
 
+  // Today's reminder times of every shown kind, for the Today summary:
+  // → [{ t, min, done }] sorted by time, then kind. A slot counts as
+  // done when a reading of that kind was taken from REM_EARLY before
+  // its time until REM_EARLY before the next slot of that kind (or the
+  // end of the day), so a late reading still ticks it.
+  function timesOn(d, nowMs) {
+    var out = [];
+    if (!d || !Array.isArray(d.ty)) return out;
+    var now = new Date(nowMs);
+    var y = now.getFullYear(), mo = now.getMonth(), da = now.getDate();
+    var end = new Date(y, mo, da + 1).getTime();
+    d.ty.forEach(function (ty) {
+      if (!ty || ty.h || !Array.isArray(ty.r) || !ty.r.length) return;
+      var mins = ty.r.slice().sort(function (a, b) { return a - b; });
+      mins.forEach(function (min, i) {
+        var at = new Date(y, mo, da, Math.floor(min / 60), min % 60).getTime();
+        var until = i + 1 < mins.length
+          ? new Date(y, mo, da, Math.floor(mins[i + 1] / 60), mins[i + 1] % 60).getTime() - REM_EARLY
+          : end;
+        var done = (d.en || []).some(function (e) { return e && e.t === ty.id && e.at >= at - REM_EARLY && e.at < until; });
+        out.push({ t: ty.id, min: min, done: done });
+      });
+    });
+    return out.sort(function (a, b) { return a.min - b.min || cmpStr(a.t, b.t); });
+  }
+
   var API = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, BUILTIN: BUILTIN, SPEC: SPEC, CTX: CTX, DEF_SET: DEF_SET,
     G_PER_LB: G_PER_LB, MGDL_PER_MMOL: MGDL_PER_MMOL, NOTE_LEN: NOTE_LEN, NAME_LEN: NAME_LEN,
@@ -419,7 +446,7 @@
     toUnit: toUnit, fromUnit: fromUnit, bmi: bmi, classify: classify, sleepEnd: sleepEnd,
     inRange: inRange, stats: stats, movingAvg: movingAvg, bpSplit: bpSplit, glucoseByCtx: glucoseByCtx,
     timeInTarget: timeInTarget, fitnessWeights: fitnessWeights, dueReminders: dueReminders,
-    slotKey: slotKey, ymdOf: ymdOf
+    slotKey: slotKey, ymdOf: ymdOf, timesOn: timesOn
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosHealthCore = API;

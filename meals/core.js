@@ -959,6 +959,28 @@
     return out;
   }
 
+  // The plan by day, as the Calendar feed and the Today summary show it:
+  // raw blob → { "YYYY-MM-DD": [{ slot, order, name, what: [text…] }] },
+  // in the slots the app shows (set.sl order), name = the user's own
+  // slot name or "" (the caller names it), what = recipe titles (ready
+  // recipes in `lang`) and typed items; deleted recipes are left out.
+  function planByDay(raw, lang) {
+    var out = {};
+    if (!raw || typeof raw !== "object" || !raw.pl || typeof raw.pl !== "object") return out;
+    var d = mergeMeals(raw, raw), names = {};
+    allRecipes(d, lang).forEach(function (r) { names[r.id] = r.t; });
+    d.set.sl.forEach(function (sl, order) {
+      Object.keys(d.pl).forEach(function (k) {
+        var i = k.indexOf("|"), day = k.slice(0, i);
+        if (k.slice(i + 1) !== sl) return;
+        var what = d.pl[k].it.map(function (it) { return it.r ? names[it.r] : it.t; }).filter(Boolean);
+        if (!what.length) return;
+        (out[day] = out[day] || []).push({ slot: sl, order: order, name: d.set.nm[sl] || "", what: what });
+      });
+    });
+    return out;
+  }
+
   root.OrosMealsCore = {
     VER: VER, DATA_VER: DATA_VER, LIM: LIM, ID_RE: ID_RE, MAN_RE: MAN_RE,
     SLOT_IDS: SLOT_IDS, COURSES: COURSES, DIETS: DIETS, AISLES: AISLES, UNITS: UNITS, UNIT_IDS: UNIT_IDS,
@@ -973,6 +995,6 @@
     normRecipe: normRecipe, normCell: normCell, normSet: normSet, defaultSet: defaultSet, emptyData: emptyData,
     mergeMeals: mergeMeals,
     inPantry: inPantry, pantryList: pantryList, buildShop: buildShop, shopText: shopText,
-    seedRecipe: seedRecipe, allRecipes: allRecipes, stepTimers: stepTimers
+    seedRecipe: seedRecipe, allRecipes: allRecipes, stepTimers: stepTimers, planByDay: planByDay
   };
 })(typeof window !== "undefined" ? window : this);
