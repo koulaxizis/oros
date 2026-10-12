@@ -119,6 +119,13 @@ const STRINGS = {
     'tt.find': 'Find and replace',
     'tt.chars': 'Special characters',
     'tt.settings': 'Settings',
+    'tt.ask': 'Ask the Assistant about the selected text',
+    'ask.m.sum': 'Summarize', 'ask.m.rephrase': 'Rephrase', 'ask.m.fix': 'Fix spelling & grammar',
+    'ask.m.other': 'Ask something else…', 'ask.empty': 'Write or select some text first',
+    'ask.sum': 'Summarize this text from my document:',
+    'ask.rephrase': 'Rephrase this text from my document, keeping its meaning and language:',
+    'ask.fix': 'Correct the spelling and grammar of this text from my document and give me the corrected text:',
+    'ask.other': 'About this text from my document:',
     'tt.smartTypography': 'Smart typography',
     'tt.autoCorrect': 'Auto-correction rules',
     'tt.lorem': 'Insert Lorem Ipsum',
@@ -365,6 +372,13 @@ const STRINGS = {
     'tt.find': 'Αναζήτηση και αντικατάσταση',
     'tt.chars': 'Ειδικοί χαρακτήρες',
     'tt.settings': 'Ρυθμίσεις',
+    'tt.ask': 'Ρώτα τον Βοηθό για το επιλεγμένο κείμενο',
+    'ask.m.sum': 'Σύνοψη', 'ask.m.rephrase': 'Αναδιατύπωση', 'ask.m.fix': 'Διόρθωση ορθογραφίας και γραμματικής',
+    'ask.m.other': 'Άλλη ερώτηση…', 'ask.empty': 'Γράψε ή επίλεξε πρώτα κείμενο',
+    'ask.sum': 'Κάνε μια σύνοψη αυτού του κειμένου από το έγγραφό μου:',
+    'ask.rephrase': 'Ξαναγράψε αυτό το κείμενο από το έγγραφό μου, με το ίδιο νόημα και στην ίδια γλώσσα:',
+    'ask.fix': 'Διόρθωσε την ορθογραφία και τη γραμματική αυτού του κειμένου από το έγγραφό μου και δώσε μου το διορθωμένο κείμενο:',
+    'ask.other': 'Σχετικά με αυτό το κείμενο από το έγγραφό μου:',
     'tt.smartTypography': 'Έξυπνη τυπογραφία',
     'tt.autoCorrect': 'Κανόνες αυτο-διόρθωσης',
     'tt.lorem': 'Εισαγωγή Lorem Ipsum',
@@ -631,6 +645,7 @@ const ICONS = {
   close:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
   plus:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>',
   lorem:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5h11"/><path d="M2.5 8h7"/><path d="M2.5 11.5h9"/></svg>',
+  ask:    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8l1.4 3.6 3.6 1.4-3.6 1.4L8 11.8 6.6 8.2 3 6.8l3.6-1.4z"/><path d="M12.5 10.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>',
   settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>',
   docs:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>',
   lock:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>'
@@ -1749,6 +1764,23 @@ function bindToolbar() {
   }
   binds['btn-settings'] = () => openSettingsDialog();
 
+  // btn-ask — "Ask the Assistant" (Assistant phase 3): only when the
+  // Assistant app is installed; placed before btn-settings.
+  if (assistantInstalled() && !document.getElementById('btn-ask')) {
+    const askBtn = document.createElement('button');
+    askBtn.type = 'button';
+    askBtn.id = 'btn-ask';
+    askBtn.className = 'tb-btn';
+    askBtn.title = t('tt.ask');
+    askBtn.setAttribute('aria-label', t('tt.ask'));
+    askBtn.setAttribute('aria-haspopup', 'menu');
+    askBtn.innerHTML = ICONS.ask;
+    if (setBtn.parentNode) setBtn.parentNode.insertBefore(askBtn, setBtn);
+    else EL.toolbar.appendChild(askBtn);
+    askBtn.addEventListener('mousedown', e => e.preventDefault());   // keep the selection
+    binds['btn-ask'] = () => openAskMenu(askBtn);
+  }
+
   Object.keys(binds).forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener('click', binds[id]);
@@ -2771,6 +2803,77 @@ function openQuickFormat(x, y) {
       { signal: ac.signal });
     window.addEventListener('blur', closeQfMenu, { signal: ac.signal });
   }, 0);
+}
+
+/* ----- ASK THE ASSISTANT (Assistant phase 3) ----- */
+// The selected text (else the whole document) goes into the
+// Assistant's message box with the chosen request, through the shell's
+// deep link __orosOpenAt("assistant", { ask }). Nothing is sent until
+// the user presses Send there; the Assistant's answer has a Copy
+// button, so the result comes back by pasting it.
+const ASK_MAX = 12000;
+function assistantInstalled() {
+  try {
+    const p = window.parent;
+    if (!p || p === window || typeof p.orosAssistInstalled !== 'function' || typeof p.__orosOpenAt !== 'function') return false;
+    return (p.orosAssistInstalled() || []).some(a => a && a.id === 'assistant');
+  } catch (e) { return false; }
+}
+function askSourceText() {
+  const sel = window.getSelection();
+  let text = '';
+  if (sel && sel.rangeCount && !sel.getRangeAt(0).collapsed &&
+      EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    text = sel.toString();
+  } else if (lastEditorRange && !lastEditorRange.collapsed) {
+    text = lastEditorRange.toString();
+  } else {
+    text = EL.editor.innerText || '';
+  }
+  text = text.replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return text.length > ASK_MAX ? text.slice(0, ASK_MAX) + '…' : text;
+}
+function askAssistant(kind) {
+  const text = askSourceText();
+  if (!text) { showToast(t('ask.empty')); return; }
+  const ask = t('ask.' + kind) + '\n\n"""\n' + text + '\n"""' + (kind === 'other' ? '\n\n' : '');
+  try { window.parent.__orosOpenAt('assistant', { ask: ask }); } catch (e) {}
+}
+function openAskMenu(anchor) {
+  closeQfMenu();
+  qfMenu = document.createElement('div');
+  qfMenu.className = 'qf-menu';
+  qfMenu.setAttribute('role', 'menu');
+  ['sum', 'rephrase', 'fix', 'other'].forEach(kind => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'qf-item';
+    btn.setAttribute('role', 'menuitem');
+    const label = document.createElement('span');
+    label.textContent = t('ask.m.' + kind);
+    btn.appendChild(label);
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => { closeQfMenu(); askAssistant(kind); });
+    qfMenu.appendChild(btn);
+  });
+  document.body.appendChild(qfMenu);
+  const r = anchor.getBoundingClientRect(), m = qfMenu.getBoundingClientRect();
+  qfMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - m.width - 8)) + 'px';
+  qfMenu.style.top = Math.max(8, Math.min(r.bottom + 4, window.innerHeight - m.height - 8)) + 'px';
+  const first = qfMenu.querySelector('button');
+  const ac = new AbortController();
+  qfMenu._ac = ac;
+  setTimeout(() => {
+    if (ac.signal.aborted) return;
+    document.addEventListener('click', e => {
+      if (qfMenu && (qfMenu.contains(e.target) || anchor.contains(e.target))) return;
+      closeQfMenu();
+    }, { signal: ac.signal });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeQfMenu(); anchor.focus(); } },
+      { signal: ac.signal });
+    window.addEventListener('blur', closeQfMenu, { signal: ac.signal });
+  }, 0);
+  if (first && (document.activeElement === anchor)) first.focus();
 }
 
 /* ----- LINK / IMAGE / TABLE DIALOGS ----- */
