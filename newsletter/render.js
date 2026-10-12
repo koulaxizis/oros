@@ -278,25 +278,65 @@
   //      inline[{cid,type,bin}], listId, listName, unsub (mailto:), unsubWeb (https:), tag,
   //      hdr ([name, value] extra header of the provider) }
   // → { bin, messageId, rcpt[] }
-  function message(M, o) {
-    var built = M.build({ from: o.from, to: [o.to], cc: [], bcc: [], subject: o.subject, text: o.text,
-                          html: o.html, inline: o.inline || [] });
-    var CRLF = "\r\n", h = "";
+  // The list headers of one message → [[name, value], …] (ASCII)
+  function listHeaders(M, o) {
+    var out = [];
     var dom = String(o.from.addr).split("@")[1] || "localhost";
-    if (o.reply && C.validEmail(o.reply)) h += "Reply-To: " + M.fmtAddr({ name: "", addr: o.reply }) + CRLF;
     if (o.listId) {
-      h += "List-Id: " + (o.listName ? M.encodeWords(String(o.listName).replace(/[<>"]/g, "")) + " " : "") +
-           "<" + o.listId + ".newsletter." + dom.toLowerCase().replace(/[^a-z0-9.-]/g, "") + ">" + CRLF;
+      out.push(["List-Id", (o.listName ? M.encodeWords(String(o.listName).replace(/[<>"]/g, "")) + " " : "") +
+                           "<" + o.listId + ".newsletter." + dom.toLowerCase().replace(/[^a-z0-9.-]/g, "") + ">"]);
     }
     // RFC 8058: the https one-click address first (when the list has a
     // web form), the mailto as the fallback
     var web = o.unsubWeb && /^https:\/\/[\x21-\x7e]+$/.test(o.unsubWeb) && !/[<>]/.test(o.unsubWeb) ? o.unsubWeb : "";
-    if (o.unsub || web) h += "List-Unsubscribe: " + [web, o.unsub].filter(Boolean).map(function (u) { return "<" + u + ">"; }).join(", ") + CRLF;
-    if (web) h += "List-Unsubscribe-Post: List-Unsubscribe=One-Click" + CRLF;
-    if (o.tag) h += "X-Oros-Newsletter: " + String(o.tag).replace(/[^a-z0-9-]/gi, "") + CRLF;
-    if (o.hdr && /^[A-Za-z0-9-]{1,40}$/.test(o.hdr[0]) && /^[\x20-\x7e]{1,200}$/.test(o.hdr[1])) h += o.hdr[0] + ": " + o.hdr[1] + CRLF;
+    if (o.unsub || web) out.push(["List-Unsubscribe", [web, o.unsub].filter(Boolean).map(function (u) { return "<" + u + ">"; }).join(", ")]);
+    if (web) out.push(["List-Unsubscribe-Post", "List-Unsubscribe=One-Click"]);
+    if (o.tag) out.push(["X-Oros-Newsletter", String(o.tag).replace(/[^a-z0-9-]/gi, "")]);
+    if (o.hdr && /^[A-Za-z0-9-]{1,40}$/.test(o.hdr[0]) && /^[\x20-\x7e]{1,200}$/.test(o.hdr[1])) out.push([o.hdr[0], o.hdr[1]]);
+    return out;
+  }
+  function message(M, o) {
+    var built = M.build({ from: o.from, to: [o.to], cc: [], bcc: [], subject: o.subject, text: o.text,
+                          html: o.html, inline: o.inline || [] });
+    var CRLF = "\r\n", h = "";
+    if (o.reply && C.validEmail(o.reply)) h += "Reply-To: " + M.fmtAddr({ name: "", addr: o.reply }) + CRLF;
+    listHeaders(M, o).forEach(function (x) { h += x[0] + ": " + x[1] + CRLF; });
     built.bin = h + built.bin;
     return built;
+  }
+  // The same message as one request of the relay's "papi" operation
+  // (relay/papi.js) in the provider's own format. Mailgun takes the MIME
+  // bytes; the others JSON, with the pictures as inline attachments.
+  function apiReq(M, prov, dom, o) {
+    if (prov === "mailgun" || prov === "mailgun-eu") {
+      return { m: "POST", path: "/" + dom + "/messages.mime", type: "multipart/form-data", to: o.to.addr, mime: M.b64(message(M, o).bin) };
+    }
+    var hdrs = listHeaders(M, o), reply = o.reply && C.validEmail(o.reply) ? o.reply : "";
+    var inline = (o.inline || []).map(function (i) {
+      return { cid: i.cid, type: i.type, name: i.cid.replace(/@oros$/, ""), b64: btoa(i.bin) };
+    });
+    var obj = function (pairs) { var h = {}; pairs.forEach(function (x) { h[x[0]] = x[1]; }); return h; };
+    var who = function (a) { var r = { email: a.addr }; if (a.name) r.name = a.name; return r; };
+    var body;
+    if (prov === "brevo") {
+      body = { sender: who(o.from), to: [who(o.to)], subject: o.subject, htmlContent: o.html, textContent: o.text, headers: obj(hdrs) };
+      if (reply) body.replyTo = { email: reply };
+      if (o.tag) body.tags = [String(o.tag).replace(/[^a-z0-9-]/gi, "")];
+    } else if (prov === "postmark") {
+      // UTF-8 names as they are (the JSON is UTF-8), quoted
+      var fmt = function (a) { return a.name ? "\"" + String(a.name).replace(/[\\"\r\n]/g, "") + "\" <" + a.addr + ">" : a.addr; };
+      body = { From: fmt(o.from), To: fmt(o.to), Subject: o.subject, HtmlBody: o.html, TextBody: o.text, MessageStream: "broadcast",
+               Headers: hdrs.filter(function (x) { return x[0] !== "X-PM-Message-Stream"; }).map(function (x) { return { Name: x[0], Value: x[1] }; }) };
+      if (reply) body.ReplyTo = reply;
+      if (o.tag) body.Tag = String(o.tag).replace(/[^a-z0-9-]/gi, "");
+      if (inline.length) body.Attachments = inline.map(function (i) { return { Name: i.name, Content: i.b64, ContentType: i.type, ContentID: "cid:" + i.cid }; });
+    } else {
+      body = { personalizations: [{ to: [who(o.to)] }], from: who(o.from), subject: o.subject,
+               content: [{ type: "text/plain", value: o.text }, { type: "text/html", value: o.html }], headers: obj(hdrs) };
+      if (reply) body.reply_to = { email: reply };
+      if (inline.length) body.attachments = inline.map(function (i) { return { content: i.b64, type: i.type, filename: i.name, disposition: "inline", content_id: i.cid }; });
+    }
+    return { m: "POST", path: prov === "brevo" ? "/smtp/email" : prov === "postmark" ? "/email" : "/mail/send", body: JSON.stringify(body) };
   }
   // mailto: URL whose subject the app reads back from the Inbox.
   function mailto(addr, subject) { return "mailto:" + addr + "?subject=" + encodeURIComponent(subject); }
@@ -304,7 +344,7 @@
   var api = {
     THEMES: THEMES, esc: esc, onColor: onColor, personalize: personalize, inlineHtml: inlineHtml, inlineText: inlineText,
     mdToBlocks: mdToBlocks, blocksOf: blocksOf, email: email, confirmEmail: confirmEmail, webPage: webPage,
-    message: message, mailto: mailto
+    message: message, listHeaders: listHeaders, apiReq: apiReq, mailto: mailto
   };
   root.OrosNewsletterRender = api;
   if (typeof module === "object" && module.exports) module.exports = api;

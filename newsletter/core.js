@@ -11,7 +11,8 @@
 // Data (v1):
 //   { ver: 1,
 //     chans:  [{ id, m, name, kind: "mail"|"smtp", acct, preset, host, port, sec, user,
-//                inbox, rate (s between messages), cap (messages a day) }],
+//                inbox, rate (s between messages), cap (messages a day),
+//                via: "smtp"|"api" (a provider's HTTP API, phase 3C), dom (Mailgun domain) }],
 //     lists:  [{ id, m, name, chan, from, fromName, reply, lang, addr, why, theme, color, salt }],
 //     subs:   [{ id, m, list, email, name, lang, tags[], src, basis, at, conf, off, offSt, inv, bnc, c }],
 //     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md", blocks[], md, tags[], seg,
@@ -64,6 +65,11 @@
     other:      { host: "", port: 587, rate: 6, cap: 450 }
   };
   var MAIL_DEFAULTS = { rate: 6, cap: 450 };   // an ordinary mailbox (Mail account)
+  // Providers whose HTTP API the relay's "papi" operation reaches
+  // (relay/papi.js): up to API_BATCH messages per relay call, and their
+  // bounces, complaints and unsubscribes can be read back.
+  var API_PROVS = { brevo: 1, postmark: 1, sendgrid: 1, mailgun: 1, "mailgun-eu": 1 };
+  var API_BATCH = 10;           // per relay call: keeps the relay within its CPU limit (the relay allows 40)
 
   // ---------- small helpers ----------
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
@@ -147,7 +153,7 @@
   function normChan(x) {
     var kind = KINDS.indexOf(x.kind) >= 0 ? x.kind : "mail";
     var o = { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), kind: kind,
-              acct: "", preset: "", host: "", port: 587, sec: "starttls", user: "", inbox: "",
+              acct: "", preset: "", host: "", port: 587, sec: "starttls", user: "", inbox: "", via: "smtp", dom: "",
               rate: clamp(x.rate, 1, 600, kind === "mail" ? MAIL_DEFAULTS.rate : 1),
               cap: clamp(x.cap, 1, 100000, kind === "mail" ? MAIL_DEFAULTS.cap : 300) };
     if (kind === "mail") {
@@ -160,9 +166,14 @@
       o.sec = SECS[o.port];
       o.user = oneLine(x.user, 320);
       o.inbox = typeof x.inbox === "string" && /^[a-z0-9]{6,40}$/.test(x.inbox) ? x.inbox : "";
+      if (x.via === "api" && API_PROVS[o.preset]) {
+        o.via = "api";
+        if (/^mailgun/.test(o.preset) && validHost(x.dom)) o.dom = x.dom.trim().toLowerCase();
+      }
     }
     return o;
   }
+  function isApi(ch) { return !!ch && ch.kind === "smtp" && ch.via === "api"; }
   function normList(x) {
     return {
       id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name),
@@ -502,6 +513,13 @@
     return m;
   }
   // → { total, sent, failed, left, next (subscriber or null) }
+  // The next n subscribers of an issue's audience still to send to
+  // (in the order progress() walks them).
+  function nextSubs(d, x, n) {
+    var done = sentSet(d, x.id), fail = x.fail || {}, out = [];
+    audience(d, x).forEach(function (s) { if (out.length < n && !done[s.id] && !fail[s.id]) out.push(s); });
+    return out;
+  }
   function progress(d, x) {
     var aud = audience(d, x), done = sentSet(d, x.id), fail = x.fail || {};
     var sent = Object.keys(done).length, failed = Object.keys(fail).length, next = null, left = 0;
@@ -718,6 +736,11 @@
     if (!l || !l.addr) add("err", "noAddr");
     if (!l || !l.from) add("err", "noFrom");
     if (!info.chan) add("err", "noChan");
+    // Brevo's API can't carry pictures inside a message (no Content-ID)
+    else if (isApi(info.chan) && info.chan.preset === "brevo" &&
+             [x].concat(x.l2 ? [x.l2] : []).some(function (v) { return v.fmt === "blocks" && v.blocks.some(function (b) { return b.k === "img" && b.f; }); })) {
+      add("err", "apiImg");
+    }
     if (info.inbox === false) add("warn", "noInbox");
     if ((info.imgBytes || 0) > LIM.imgBytes) add("warn", "bigImgs");
     if (x.seg && !seg(d, x.seg)) add("err", "segGone");
@@ -842,6 +865,86 @@
                        tags: [], st: "draft" });
   }
 
+  // ---------- provider HTTP APIs (phase 3C) ----------
+  // The request that checks an API key (relay "papi").
+  function apiCheckReq(ch) {
+    var p = ch.preset;
+    if (p === "brevo") return { m: "GET", path: "/account" };
+    if (p === "postmark") return { m: "GET", path: "/server" };
+    if (p === "sendgrid") return { m: "GET", path: "/user/profile" };
+    return { m: "GET", path: "/domains/" + ch.dom };
+  }
+  function ymd(ms) { return new Date(ms).toISOString().slice(0, 10); }
+  // Requests that read bounces, complaints and unsubscribes since `since`
+  // (ms) → [{ m, path, k }], k says how to read the answer (apiEvents).
+  function apiEventReqs(ch, since, now) {
+    var p = ch.preset, from = ymd(since), to = ymd(now), secs = Math.floor(since / 1000);
+    var q = function (path, k) { return { m: "GET", path: path, k: k }; };
+    if (p === "brevo") {
+      return ["hardBounces", "spam", "unsubscribed"].map(function (ev) {
+        return q("/smtp/statistics/events?event=" + ev + "&limit=500&offset=0&startDate=" + from + "&endDate=" + to, ev);
+      });
+    }
+    if (p === "postmark") return [q("/bounces?count=500&offset=0&fromdate=" + from, "bounces")];
+    if (p === "sendgrid") {
+      return ["bounces", "spam_reports", "unsubscribes"].map(function (k) { return q("/suppression/" + k + "?start_time=" + secs + "&limit=500", k); });
+    }
+    return ["bounces", "complaints", "unsubscribes"].map(function (k) { return q("/" + ch.dom + "/" + k + "?limit=1000", k); });
+  }
+  // One answer of apiEventReqs → [{ addr, ev: "bounce"|"spam"|"off", at (ms, 0 unknown) }]
+  // (soft bounces are left out: the provider retries them itself)
+  function apiEvents(prov, k, body) {
+    var j = null;
+    try { j = JSON.parse(body); } catch (e) { return []; }
+    var out = [];
+    var add = function (addr, ev, at) {
+      addr = normEmail(addr);
+      if (addr && out.length < 2000) out.push({ addr: addr, ev: ev, at: isFinite(at) && at > 0 ? at : 0 });
+    };
+    var arr = function (v) { return Array.isArray(v) ? v : []; };
+    if (prov === "brevo") {
+      var bev = { hardBounces: "bounce", spam: "spam", unsubscribed: "off" }[k];
+      arr(j && j.events).forEach(function (e) { if (e && bev) add(e.email, bev, Date.parse(e.date)); });
+    } else if (prov === "postmark") {
+      var ptype = { HardBounce: "bounce", BadEmailAddress: "bounce", SpamComplaint: "spam", Unsubscribe: "off" };
+      arr(j && j.Bounces).forEach(function (b) { if (b && ptype[b.Type]) add(b.Email, ptype[b.Type], Date.parse(b.BouncedAt)); });
+    } else if (prov === "sendgrid") {
+      var sev = { bounces: "bounce", spam_reports: "spam", unsubscribes: "off" }[k];
+      arr(j).forEach(function (e) { if (e && sev) add(e.email, sev, typeof e.created === "number" ? e.created * 1000 : 0); });
+    } else {
+      var mev = { bounces: "bounce", complaints: "spam", unsubscribes: "off" }[k];
+      arr(j && j.items).forEach(function (e) {
+        // Mailgun keeps soft failures out of "bounces" unless they turned permanent (5xx)
+        if (e && mev && (mev !== "bounce" || !e.code || /^5/.test(String(e.code)))) add(e.address, mev, Date.parse(e.created_at));
+      });
+    }
+    return out;
+  }
+  // One send answer ({ status, body } | { err }) → { k: "ok"|"refused"|"auth"|"rate"|"retry"|"no", msg }
+  function apiOutcome(prov, r) {
+    if (!r || r.err || !r.status) return { k: "retry", msg: r && r.err || "" };
+    var st = r.status, j = null;
+    try { j = JSON.parse(r.body || "null"); } catch (e) {}
+    var text = j ? (j.Message || j.message || (Array.isArray(j.errors) && j.errors[0] && j.errors[0].message) || "") : "";
+    var msg = oneLine("HTTP " + st + (text ? " " + text : ""), 120);
+    if (st >= 200 && st < 300) {
+      if (prov === "postmark" && j && j.ErrorCode) {            // Postmark answers some refusals with 200
+        return j.ErrorCode === 300 || j.ErrorCode === 406 ? { k: "refused", msg: msg } : { k: "no", msg: msg };
+      }
+      return { k: "ok", msg: "" };
+    }
+    if (st === 401 || st === 403) return { k: "auth", msg: msg };
+    if (st === 429) return { k: "rate", msg: msg };
+    if (st >= 500) return { k: "retry", msg: msg };
+    // a refused address (and not the whole message)
+    if (prov === "postmark" && j && (j.ErrorCode === 300 || j.ErrorCode === 406)) return { k: "refused", msg: msg };
+    if (prov === "sendgrid" && j && Array.isArray(j.errors) && j.errors.some(function (e) { return e && /^personalizations\.\d+\.to/.test(e.field || ""); })) {
+      return { k: "refused", msg: msg };
+    }
+    if (prov === "brevo" && j && /email/i.test(String(j.message || "")) && /invalid|not valid|blocked|blacklist/i.test(String(j.message || ""))) return { k: "refused", msg: msg };
+    return { k: "no", msg: msg };
+  }
+
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
     THEMES: THEMES, BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
@@ -860,6 +963,8 @@
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,
     normForm: normForm, formPub: formPub, unsubPath: unsubPath, formHtml: formHtml,
+    API_PROVS: API_PROVS, API_BATCH: API_BATCH, isApi: isApi, nextSubs: nextSubs,
+    apiCheckReq: apiCheckReq, apiEventReqs: apiEventReqs, apiEvents: apiEvents, apiOutcome: apiOutcome,
     normRss: normRss, rssNext: rssNext, rssDue: rssDue, rssPick: rssPick, digestMd: digestMd, digestIssue: digestIssue
   };
   root.OrosNewsletterCore = api;
