@@ -82,6 +82,15 @@
   LIB.parentWin = function () {
     try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
   };
+  // Another app through the generic deep link (the shell opens it).
+  LIB.openApp = function (app, target) {
+    var p = LIB.parentWin();
+    try { if (p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt(app, target); return true; } } catch (e) {}
+    return false;
+  };
+  LIB.readShelf = function () {
+    try { return JSON.parse(localStorage.getItem("oros-shelf-data") || "null"); } catch (e) { return null; }
+  };
 
   // ---------- Icons (inline SVG, R9) ----------
   function svg(d, extra) {
