@@ -23,6 +23,8 @@ The bar at the top is always there:
 
 Only one app is open at a time: going back to the desktop closes it.
 
+The desktop can also hold [Sticky Notes](app:stickies): press the round `+` at its bottom left, or [[Ctrl+Alt+Shift+N]], to add one.
+
 ## Where your data lives
 Your data is saved in this browser on this device. Nothing is sent anywhere unless you ask for it:
 - With [sync](help:t/sync) you can connect your own Dropbox and keep your devices in step. Your data is encrypted on your device first.
