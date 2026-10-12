@@ -4788,7 +4788,10 @@
           en: "Removing a picture's background on the device (Atelier)", el: "Αφαίρεση φόντου εικόνας στη συσκευή (Ατελιέ)" },
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
-          en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" }
+          en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
+        { name: "NULL JSFX", url: "https://nulljsfx.tech",
+          by: "Christos Koulaxizis", lic: "MIT",
+          en: "Effects and their interfaces (Studio)", el: "Εφέ και τα περιβάλλοντά τους (Studio)" }
       ]
     },
     {
