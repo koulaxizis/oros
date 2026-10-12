@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.00.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.02.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -232,6 +232,8 @@
     pong: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v8M20 11v8"/><path d="M12 3v2M12 9v2M12 15v2M12 20v1"/><circle cx="16.5" cy="7" r="1.6"/></svg>',
     backgammon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M5 3l2 7 2-7M15 3l2 7 2-7M5 21l2-7 2 7M15 21l2-7 2 7"/></svg>',
     calculator: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="3" x2="16" y2="3"/><line x1="8" y1="8" x2="8" y2="8"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="16" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="10" y2="16"/><line x1="12" y1="16" x2="14" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>',
+    stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
+    textcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L7.5 6 12 18"/><path d="M4.7 14h5.6"/><circle cx="17.5" cy="15" r="3"/><path d="M20.5 12v6"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
     radio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="2"/><path d="M7.5 13.5a6.5 6.5 0 0 1 0-5"/><path d="M16.5 8.5a6.5 6.5 0 0 1 0 5"/><path d="M5 16a10 10 0 0 1 0-10"/><path d="M19 6a10 10 0 0 1 0 10"/><line x1="12" y1="13" x2="12" y2="21"/></svg>',
@@ -1104,6 +1106,7 @@
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
+      tickSafe("stickiesTick", stickiesTick);              // Sticky Notes: ring + fade on the desktop (cheap, 1/s)
     }
     tickSafe("radioTrayTick", radioTrayTick); // Wave 2 Radio: tray chip paint (cheap, 1/s)
     tickSafe("mixerTrayTick", mixerTrayTick); // Sound Mixer: playing-with-app-closed chip (cheap, 1/s)
@@ -1154,6 +1157,19 @@
     var T = window.orosToday;
     if (T && typeof T.tick === "function") T.tick();
   }
+  // Sticky Notes (stickies/host.js): the module owns the rule (ring,
+  // fade, the Faded bin) and draws the notes; the shell only gives it
+  // the clock. A stale index.html without the module → silent.
+  function stickiesTick() {
+    var S = window.orosStickies;
+    if (S && typeof S.tick === "function") S.tick();
+  }
+  function scNewSticky() {
+    var S = window.orosStickies;
+    if (S && typeof S.newNote === "function" && S.registered()) S.newNote();
+    else openAppById("stickies");          // stale bundle: the app (or the menu)
+  }
+
   // The manual unlock pulls directly (no auto-sync event): tell the
   // summary that this device's data has caught up (or failed to).
   function todaySyncSettled(ok) {
@@ -2306,6 +2322,19 @@
       }
       return "";
     }
+  };
+  // Sticky Notes (stickies/host.js): language, whether the app is
+  // installed (the module is inert until then), the running app, the
+  // way back to the desktop and a plain app open.
+  window.orosStickiesEnv = {
+    lang: function () { return state.lang; },
+    registered: function () {
+      for (var i = 0; i < state.apps.length; i++) if (state.apps[i] && state.apps[i].id === "stickies") return true;
+      return false;
+    },
+    running: function () { return !!state.running; },
+    home: function () { if (state.running) returnToDesktop(); },
+    open: function (id) { openAppById(id); }
   };
   window.orosAssistSearch = function (q, ids) {
     var S = window.orosSearch;
@@ -5001,7 +5030,8 @@
     { key: "h", label: "sc.desc.help",       fn: function() { openHelp(); } },
     { key: "t", label: "sc.desc.timer",      fn: scTimesheetToggle },
     { key: "a", label: "sc.desc.assistant",  fn: function() { openAssistant(); } },
-    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } }
+    { key: "y", label: "sc.desc.today",      fn: function() { openAppById("today"); } },
+    { key: "n", label: "sc.desc.stickies",   fn: scNewSticky }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
