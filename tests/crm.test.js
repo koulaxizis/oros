@@ -440,3 +440,51 @@ test("app strings: no key twice, EN and EL have the same keys", () => {
   assert.deepEqual(el.filter((k, i) => el.indexOf(k) !== i), []);
   assert.deepEqual(en.slice().sort(), el.slice().sort());
 });
+
+test("Invoices prefill (BR-CRM-INV 1): customer fields, a won deal as one line, accepted by Invoices", () => {
+  const I = require(path.join(__dirname, "..", "invoices/core.js"));
+  const c = C.normCust(cust("cccccc01", { name: "Ελαιώνας ΑΕ", afm: "099999999", doy: "Α' Αθηνών", email: "a@b.gr" }));
+  const d = deal("dddddd01", "cccccc01", { title: "Website", val: 150050, stage: "won" });
+  const n = C.invoicePrefill(c, d, "EUR");
+  assert.deepEqual(n.items, [{ d: "Website", q: 1, p: 1500.5 }]);
+  assert.deepEqual(n.ref, { app: "crm", id: "dddddd01" });
+  const p = I.normPrefill(n);
+  assert.equal(p.crm, "cccccc01");
+  assert.equal(p.client.name, "Ελαιώνας ΑΕ");
+  assert.equal(p.client.afm, "099999999");
+  assert.deepEqual(p.items, [{ d: "Website", q: 1, p: 150050 }]);
+  assert.equal(p.cur, "EUR");
+  const bare = I.normPrefill(C.invoicePrefill(c, null, "GBP"));
+  assert.deepEqual(bare.items, []);
+  assert.equal(bare.cur, "GBP");
+  // every CRM currency is one Invoices knows
+  assert.ok(I.normPrefill(C.invoicePrefill(c, null, "JPY")));
+});
+
+test("Quote prefill (BR-Q1): a deal line in EUR/USD, a blank line for the customer, null for other currencies", () => {
+  const c = C.normCust(cust("cccccc01", { name: "Acme" }));
+  const d = deal("dddddd01", "cccccc01", { title: "Logo", val: 30000 });
+  assert.deepEqual(C.quotePrefill(c, d, "USD"), { client: "Acme", items: [{ d: "Logo", q: 1, p: 300 }], cur: "USD" });
+  assert.deepEqual(C.quotePrefill(c, null, "EUR"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }], cur: "EUR" });
+  assert.deepEqual(C.quotePrefill(c, null, "GBP"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }] });
+  assert.equal(C.quotePrefill(c, d, "GBP"), null);
+});
+
+test("Quote read-out (quote/core.js forClient, total): name or tax id, deleted left out, newest first", () => {
+  const Q = require(path.join(__dirname, "..", "quote/core.js"));
+  const q = (id, extra) => Object.assign({ id, num: "OFF-2026-00" + id.slice(-1), clientId: "k1", status: "sent",
+    date: "2026-10-0" + id.slice(-1), currency: "EUR", gDisc: 0, items: [{ qty: 1, price: 100, disc: 0, vat: 24 }] }, extra || {});
+  const qd = {
+    clients: [{ id: "k1", name: "Ελαιώνας  ΑΕ" }, { id: "k2", name: "Other", taxId: "099 999 999" }, { id: "k3", name: "Nope" }],
+    quotes: [q("q1"), q("q2", { clientId: "k2", currency: "USD" }), q("q3"), q("q4", { clientId: "k3" }), q("q5")],
+    deleted: { q3: 5 }
+  };
+  const rows = Q.forClient(qd, { name: "ελαιωνας αε", afm: "099999999" });
+  assert.deepEqual(rows.map(r => r.id), ["q5", "q2", "q1"]);
+  assert.equal(rows[1].cur, "USD");
+  assert.equal(rows[2].total, 124);
+  assert.deepEqual(Q.forClient(qd, { name: "", afm: "" }), []);
+  assert.deepEqual(Q.forClient(null, { name: "x" }), []);
+  // same sum as quote.js calcTotals: line and global discount, then VAT
+  assert.equal(Q.total({ gDisc: 10, items: [{ qty: 2, price: 100, disc: 50, vat: 24 }, { qty: 1, price: 10, vat: 0 }] }), 120.6);
+});

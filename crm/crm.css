@@ -240,7 +240,7 @@ button.row:hover, .row.click:hover { border-color: var(--accent); }
 .facts dt { color: var(--text-dim); font-weight: 700; }
 .facts dd { overflow-wrap: anywhere; min-width: 0; }
 .notes { font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
-.subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 20px 0 10px; overflow-x: auto; }
+.subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 20px 0 10px; flex-wrap: wrap; }
 .subtab {
   min-height: 36px; padding: 4px 12px; border: none; background: none;
   color: var(--text-dim); font-weight: 800; font-size: 13px; border-bottom: 2px solid transparent; white-space: nowrap;
@@ -452,3 +452,8 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 [hidden] { display: none !important; }
+
+/* Phase 3: Invoices and Quote documents of a customer (read-only) */
+.doc-row .deal-val { margin-top: 0; flex: 0 0 auto; }
+.doc-tot { font-size: 13px; margin: 4px 0 8px; color: var(--text-dim); }
+.deal-docs { margin: 10px 0 0; }
