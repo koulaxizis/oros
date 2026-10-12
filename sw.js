@@ -261,6 +261,7 @@ var PRECACHE_URLS = [
   "crm/core.js",
   "crm/crm.js",
   "crm/search.js",
+  "crm/today.js",
   "timesheet/",
   "timesheet/index.html",
   "timesheet/search.js",
