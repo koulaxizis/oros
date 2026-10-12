@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — App logic (v1.0.0)
+// orOS CRM — App logic (v1.1.0)
 // A small customer book for a freelancer or a small business:
 //   - customers (company or person) with ΑΦΜ / ΔΟΥ / profession,
 //     status lead / active / past, tags, a star, notes
@@ -7,7 +7,8 @@
 //     here by name; open in Contacts, add to Contacts (prefill)
 //   - history of contact (call, email, meeting, message, note)
 //   - follow-ups with an agenda (late / today / next 7 days),
-//     reminders through the shell inbox while the app runs,
+//     reminders through the shell inbox (shell crmCheckTick, also
+//     with the app closed), rows in Today and in the Calendar,
 //     "Send to To-Do" (BR-TD-ADD)
 //   - a pipeline of deals: value, stage, probability, won / lost
 //   - a dashboard; CSV export, JSON backup / restore (merge)
@@ -15,8 +16,8 @@
 //   - synced slice "crm" (oros-crm-data): every list LWW per id +
 //     tombstones; merge = OrosCrmCore.merge (R5, R17, R26)
 //   - device-local (R10): oros-crm-prefs (tab, open customer,
-//     filters, sort, sub-tab, pipeline stage on phones) and
-//     oros-crm-notified (follow-ups already announced)
+//     filters, sort, sub-tab, pipeline stage on phones); the shell
+//     keeps oros-crm-notified (follow-ups already announced)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage + prefs
@@ -30,10 +31,9 @@
 //  10. Editors: customer, person, deal, contact log, follow-up
 //  11. Settings, tags, export / import
 //  12. Dialogs + toasts
-//  13. Reminders
-//  14. Keyboard (Contract Β) + deep link
-//  15. Sync slice + palette
-//  16. Wiring & boot
+//  13. Keyboard (Contract Β) + deep link (+ Today's "Done")
+//  14. Sync slice + palette
+//  15. Wiring & boot
 // ============================================================
 (function () {
   "use strict";
@@ -41,7 +41,6 @@
   var C = window.OrosCrmCore;
   var STORAGE_KEY  = "oros-crm-data";
   var PREFS_KEY    = "oros-crm-prefs";
-  var NOTIFIED_KEY = "oros-crm-notified";
   var CONTACTS_KEY = "oros-contacts-data";
   var COLORS = ["#e06c75", "#ecc75f", "#87cf3e", "#4fc4cf", "#6d4aff", "#e09ecf", "#f28c5a", "#9aa4b0"];
   var DAY_MS = 86400000;
@@ -141,9 +140,9 @@
       "toast.restored": "Backup merged", "toast.badFile": "This is not a CRM backup.", "toast.exported": "Saved {name}",
       "toast.todo": "Sent to To-Do", "toast.gone": "This was deleted.",
       "confirm.cust": "Delete {name}? Its deals, history and follow-ups go with it.",
-      "notify.title": "Follow-up: {name}",
       "aria.star": "Star", "aria.edit": "Edit", "aria.more": "More", "aria.remove": "Remove",
-      "unknown": "Unknown customer"
+      "unknown": "Unknown customer",
+      "toast.already": "This follow-up is already done."
     },
     el: {
       "app": "Πελάτες",
@@ -227,9 +226,9 @@
       "toast.restored": "Το αντίγραφο συγχωνεύτηκε", "toast.badFile": "Αυτό δεν είναι αντίγραφο του CRM.", "toast.exported": "Αποθηκεύτηκε: {name}",
       "toast.todo": "Στάλθηκε στο To-Do", "toast.gone": "Αυτό έχει διαγραφεί.",
       "confirm.cust": "Διαγραφή του πελάτη {name}; Φεύγουν μαζί οι ευκαιρίες, το ιστορικό και τα follow-ups του.",
-      "notify.title": "Follow-up: {name}",
       "aria.star": "Αστέρι", "aria.edit": "Επεξεργασία", "aria.more": "Περισσότερα", "aria.remove": "Αφαίρεση",
-      "unknown": "Άγνωστος πελάτης"
+      "unknown": "Άγνωστος πελάτης",
+      "toast.already": "Αυτό το follow-up έχει ήδη γίνει."
     }
   };
 
@@ -296,7 +295,6 @@
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function todayYmd() { return C.ymdOf(Date.now()); }
-  function nowHM() { var d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
   function ymdDate(ymd) { var p = ymd.split("-"); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
   function fmtDate(ymd) {
     var d = ymdDate(ymd), sameYear = ymd.slice(0, 4) === todayYmd().slice(0, 4);
@@ -2050,42 +2048,7 @@
     setTimeout(function () { n.textContent = msg; }, 30);
   }
 
-  // ---------- 13. Reminders ----------
-  // While the app runs: every open follow-up that is due (earlier days,
-  // today untimed, today at or after its time) goes to the shell inbox
-  // once. The inbox dedups by key on every device; NOTIFIED_KEY stops a
-  // second emit on this device after the inbox item is cleared.
-  // (Reminders with the app closed come with the shell tick, phase 2.)
-  function notifyTick() {
-    var n = null;
-    try { n = window.parent && window.parent !== window ? window.parent.orosNotifs : null; } catch (e) { n = null; }
-    if (!n || typeof n.emit !== "function") return;
-    var seen = {};
-    try { seen = JSON.parse(localStorage.getItem(NOTIFIED_KEY) || "{}") || {}; } catch (e) { seen = {}; }
-    var due = C.dueNow(data, todayYmd(), nowHM());
-    var keep = {}, changed = false;
-    due.forEach(function (f) {
-      var key = f.id + "|" + f.d + (f.t || "");
-      keep[key] = 1;
-      if (seen[key]) return;
-      var c = C.byId(data.cust, f.cust);
-      var res = n.emit({
-        ns: "crm", type: "reminder", key: "fup-" + key,
-        title: t("notify.title", { name: c ? c.name : t("unknown") }),
-        body: f.text + " · " + relDay(f.d) + (f.t ? " " + f.t : ""),
-        deepLink: "crm:" + f.id
-      });
-      if (res !== undefined) changed = true;
-    });
-    // keep only what is still due (the map never grows without bound)
-    var next = {};
-    Object.keys(keep).forEach(function (k) { next[k] = 1; });
-    if (changed || Object.keys(seen).length !== Object.keys(next).length) {
-      try { localStorage.setItem(NOTIFIED_KEY, JSON.stringify(next)); } catch (e) {}
-    }
-  }
-
-  // ---------- 14. Keyboard (Contract Β) + deep link ----------
+  // ---------- 13. Keyboard (Contract Β) + deep link ----------
   function wireKeyboard() {
     document.addEventListener("keydown", function (e) {
       if (!(e.ctrlKey || e.metaKey) || !e.altKey || !e.shiftKey) return;
@@ -2104,6 +2067,16 @@
   function openTarget(x) {
     if (!x || typeof x !== "object" || document.querySelector("dialog[open]")) return false;
     var id = function (v) { return typeof v === "string" && C.ID_RE.test(v) ? v : ""; };
+    // Today's "Done" tick: the same code as the Agenda's tick (Undo,
+    // "Log it"); a follow-up already done or gone only shows a note.
+    if (x.done && typeof x.done === "object") {
+      var df = id(x.done.fup) ? C.byId(data.fups, x.done.fup) : null;
+      if (!df || df.done) { showToast(t(df ? "toast.already" : "toast.gone")); return false; }
+      prefs.sel = df.cust; prefs.sub = "fups"; savePrefs();
+      setTab("agenda");
+      doneFup(df);
+      return true;
+    }
     var c = id(x.cust) ? C.byId(data.cust, x.cust) : null;
     var d = id(x.deal) ? C.byId(data.deals, x.deal) : null;
     var f = id(x.fup) ? C.byId(data.fups, x.fup) : null;
@@ -2130,7 +2103,7 @@
     } catch (e) {}
   }
 
-  // ---------- 15. Sync slice + palette ----------
+  // ---------- 14. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
                   "--accent", "--accent-hover", "--accent-soft",
                   "--panel-bg", "--border", "--shadow", "--danger"];
@@ -2189,7 +2162,7 @@
     else renderBadge();
   }
 
-  // ---------- 16. Wiring & boot ----------
+  // ---------- 15. Wiring & boot ----------
   var TABS = ["cust", "pipe", "agenda", "dash"];
   function setTab(tab) {
     prefs.tab = TABS.indexOf(tab) >= 0 ? tab : "cust";
@@ -2296,10 +2269,7 @@
     $("cust-sort").addEventListener("change", function () { prefs.sort = this.value; savePrefs(); renderCustomers(); });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") savePrefsNow();
-      else {
-        if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
-        notifyTick();
-      }
+      else if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
     });
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
@@ -2308,7 +2278,6 @@
     setInterval(function () {
       if (document.visibilityState === "hidden") return;
       if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
-      notifyTick();
     }, 60000);
     window.addEventListener("pagehide", savePrefsNow);
     wireKeyboard();
@@ -2325,8 +2294,7 @@
     watchPalette();
     render();
     takeTarget();
-    setTimeout(notifyTick, 1500);   // after the shell's notifications are ready
-    console.log("[orOS CRM] v1.0.0 boot OK");
+    console.log("[orOS CRM] v1.1.0 boot OK");
   }
 
   boot();

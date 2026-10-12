@@ -17,12 +17,22 @@ Small coloured notes that sit on the orOS desktop. A note can ring at a time you
 Open a note's options (the `…` button, or tap the card on a phone) and choose `Ring`: `In 15 minutes`, `In 1 hour`, `In the evening at 20:00`, `Tomorrow at 09:00` or `At a time I pick…`.
 - At that time the note wiggles, a chime plays and a notice lands in the bell.
 - `Done` clears the ring. `Snooze 10 min` rings again in ten minutes.
+- `Repeat` (once a ring is set): `Every day`, `Every weekday (Mon–Fri)` or `Every week`. `Done` then moves the ring to its next time, and a snooze does not change the plan. A repeating note never vanishes on `Done`.
 - The chime follows the notification volume and quiet hours, and you can turn Sticky Notes off in [Settings](app:settings) › `Notifications`.
 
 ## Vanish
 In the same window, `Vanish` makes a note fade away by itself: `In 1 hour`, `At the end of today`, `At the end of tomorrow`, `In a week` or `At a time I pick…`.
 - Tick `Also vanish when I press Done on the ring` for a reminder that goes away once you have dealt with it.
 - A faded note is not deleted at once. It waits 7 days under `Faded` in the app, where `Restore` puts it back on the desktop.
+
+## Send to other apps
+In the same window:
+- `Send to To-Do` opens [To-Do](app:todo) with the note ready to add: every open `[ ]` line becomes a task; a note without tick boxes becomes one task (the first line, the rest as its note). Nothing is added until you press `Add` there.
+- `Copy to Notes` makes a new page in [Notes](app:notes), titled with the note's first line. The sticky note stays as it is.
+
+## Find it from anywhere
+- The menu's search box finds your sticky notes by their words (faded notes are left out). Choosing one brings it to the front on the desktop.
+- [Today](app:today) lists the notes that ring today and in the next days, and a ring you have not answered yet as late. Repeating rings show their next times too.
 
 ## The app
 - `On the desktop` lists every note, newest first, with a search box. `Edit` opens the note, `Show` takes you to it on the desktop, `Delete` removes it (`Undo` in the message brings it back).
@@ -31,7 +41,7 @@ In the same window, `Vanish` makes a note fade away by itself: `In 1 hour`, `At 
 ## Settings
 The gear button opens the settings for this device:
 - `Show sticky notes on the desktop`: turn it off for a clean desktop. The notes still ring, and you edit them from the app.
-- `Ring sound`: `Bell`, `Ding-dong`, `Wind chime` or `No sound`. `Play` lets you hear it.
+- `Ring sound`: `Bell`, `Ding-dong`, `Wind chime`, `No sound`, or any melody you wrote in [Ringtone Composer](app:ringtones) (it plays for up to 15 seconds). `Play` lets you hear it. If that melody is deleted later, the bell plays instead.
 - `A soft sound when a note fades`, and the colour of new notes.
 - `Tidy up the desktop` and `Export as text`.
 

@@ -142,6 +142,7 @@
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget",
       "lbl.feed.shelf": "Media Shelf",
+      "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
       "feed.garage.svc": "{vehicle}: {what} due",
@@ -173,6 +174,9 @@
       "lbl.feed.time": "Work time",
       "lbl.feed.sky": "Moon & Sky",
       "lbl.feed.famtree": "Death anniversaries",
+      "lbl.feed.crm": "Customers",
+      "feed.crm.late": "Late",
+      "feed.crm.close": "Expected close",
       "feed.famtree.one": "{name} · 1 year since death",
       "feed.famtree.n": "{name} · {n} years since death",
       "feed.time.noproj": "No project",
@@ -304,6 +308,7 @@
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός",
       "lbl.feed.shelf": "Το ράφι μου",
+      "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
       "feed.garage.svc": "{vehicle}: σέρβις ({what})",
@@ -335,6 +340,9 @@
       "lbl.feed.time": "Ώρες εργασίας",
       "lbl.feed.sky": "Σελήνη & Ουρανός",
       "lbl.feed.famtree": "Επέτειοι θανάτου",
+      "lbl.feed.crm": "Πελάτες",
+      "feed.crm.late": "Καθυστερεί",
+      "feed.crm.close": "Αναμένεται κλείσιμο",
       "feed.famtree.one": "{name} · 1 χρόνος από τον θάνατο",
       "feed.famtree.n": "{name} · {n} χρόνια από τον θάνατο",
       "feed.time.noproj": "Χωρίς έργο",
@@ -509,6 +517,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
     { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
+    { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
@@ -516,6 +525,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-obs",     color: "#64b5f6" },   // sky blue — world / internet days
     { id: "lbl-feed-time",    color: "#56b6c2" },   // cyan — Timesheet work time per project
     { id: "lbl-feed-famtree", color: "#9aa4b0" },   // slate grey — Family Tree death anniversaries
+    { id: "lbl-feed-crm",     color: "#8c9eff" },   // periwinkle — CRM follow-ups + expected deal closes
     { id: "lbl-feed-sky",     color: "#e9dfb4" }    // moonlight cream — Moon & Sky (opt-in)
   ];
   function feedLabelName(l) {
@@ -536,12 +546,14 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
     if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
+    if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
     if (l.id === "lbl-feed-obs") return t("lbl.feed.obs");
     if (l.id === "lbl-feed-time") return t("lbl.feed.time");
     if (l.id === "lbl-feed-famtree") return t("lbl.feed.famtree");
+    if (l.id === "lbl-feed-crm") return t("lbl.feed.crm");
     if (l.id === "lbl-feed-sky") return t("lbl.feed.sky");
     return t("lbl.feed.custom");
   }
@@ -1389,6 +1401,51 @@ function transientNote(title, body) {
     });
   }
 
+  // CRM read-only feed (crm/core.js, loaded by index.html: the same
+  // follow-up list as the app's Agenda, OrosCrmCore.calendarOn). An
+  // open follow-up on its day, at its time when it has one (late ones
+  // on today, marked); a done one on the day it was done (✓); an open
+  // deal on its expected close day. Rows are never stored;
+  // micro-cached ~1s. Click → __orosOpenAt("crm", { fup | deal }).
+  var crmCache = { when: 0, data: null };
+  function crmData() {
+    var C = window.OrosCrmCore, now = Date.now();
+    if (!C) return null;
+    if (now - crmCache.when > 1000) {
+      crmCache.data = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem("oros-crm-data"));
+        if (raw && typeof raw === "object" && Array.isArray(raw.cust)) crmCache.data = C.norm(raw);
+      } catch (e) { crmCache.data = null; }
+      crmCache.when = now;
+    }
+    return crmCache.data;
+  }
+  function crmFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-crm")) return [];
+    var data = crmData();
+    if (!data || !data.cust.length) return [];
+    var C = window.OrosCrmCore;
+    var today = C.ymdOf(Date.now());
+    return C.calendarOn(data, dateStr, today).map(function (r) {
+      var x = r.fup || r.deal;
+      var c = C.byId(data.cust, x.cust);
+      var who = c ? C.custName(c) : "";
+      var title = r.fup
+        ? (r.k === "done" ? "✓ " : (r.k === "late" ? t("feed.crm.late") + ": " : "")) + x.text
+        : t("feed.crm.close") + ": " + x.title;
+      return {
+        id: "crm-" + r.k + "-" + x.id + "-" + dateStr,   // per-render key, never stored
+        title: (who ? who + " · " : "") + title,
+        labelId: "lbl-feed-crm",
+        start: r.fup && r.k !== "done" && x.t ? x.t : null,
+        end: null,
+        _feed: true,
+        _openAt: { app: "crm", target: r.fup ? { fup: x.id } : { deal: x.id } }
+      };
+    });
+  }
+
   // Family Tree read-only feed (familytree/ft-core.js, loaded by
   // index.html): every year on the day of an exact death date (29 Feb
   // also on 28 Feb of common years), "Name · N years since death".
@@ -2024,6 +2081,48 @@ function transientNote(title, body) {
     });
   }
 
+  // Invoices read-only feed (invoices/core.js dueOn, loaded by
+  // index.html: the same rule as the app, Today and the reminder).
+  // Issued invoices, receipts and records with money still owed, on
+  // their due date: "INV-2026-0042 due · Acme". Rows are never
+  // stored; the parsed blob is micro-cached ~1s like the other feeds.
+  // Click → Invoices opens that document.
+  var INV_DATA_KEY = "oros-invoices-data";
+  var invCache = { when: 0, raw: null, data: null };
+  function invData() {
+    var C = window.OrosInvoicesCore;
+    if (!C) return null;
+    var now = Date.now();
+    if (now - invCache.when > 1000) {
+      invCache.when = now;
+      var raw = null;
+      try { raw = localStorage.getItem(INV_DATA_KEY); } catch (e) { raw = null; }
+      if (raw !== invCache.raw) {
+        invCache.raw = raw;
+        invCache.data = raw ? C.parse(raw) : null;
+      }
+    }
+    return invCache.data;
+  }
+  function invoicesFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-inv")) return [];
+    var data = invData();
+    if (!data || !data.docs.length) return [];
+    var C = window.OrosInvoicesCore;
+    return C.dueOn(data, dateStr).map(function (d) {
+      return {
+        id: "inv-" + d.id,                       // per-render key, never stored
+        title: t("feed.inv.due").replace("{n}", d.num || "").replace("{a}", C.partyName(data, d) || "")
+          .replace(/ · $/, "").slice(0, 120),
+        labelId: "lbl-feed-inv",
+        start: null,                             // all-day
+        note: C.fmtMoney(C.balance(data, d), d.cur, LANG),
+        _feed: true,
+        _openAt: { app: "invoices", target: { invoice: d.id } }
+      };
+    });
+  }
+
   /* ---------- 3d. Name days, holidays, world days ----------
      Data and rules live in namedays.js (window.OrosNamedays, pure).
      Three chips, all read-only virtual rows, never stored in the
@@ -2138,12 +2237,14 @@ function transientNote(title, body) {
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
     .concat(shelfFeedOn(dateStr))
+    .concat(invoicesFeedOn(dateStr))
     .concat(babyFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
     .concat(observancesFeedOn(dateStr))
     .concat(timesheetFeedOn(dateStr))
     .concat(familyTreeFeedOn(dateStr))
+    .concat(crmFeedOn(dateStr))
     .concat(skyFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;

@@ -22,7 +22,7 @@ Under `Instalments`, set a `Count` and press `Generate` to split the total evenl
 ## Payment terms, notes and templates
 Tap or click a payment preset (`Bank Transfer`, `PayPal`, `IRIS`, `Cash`) to add its text to `Payment Terms`. The pencil lets you change the preset texts, for example to add your IBAN. Use `Notes` for any other terms.
 
-`Save as Template` stores the items, discount, payment terms, notes and instalments under a name. The `Template Library` button opens your templates, where `Use` starts from one. `Duplicate` makes a copy with a new number and the status `Draft`.
+`Save as Template` stores the items, discount, payment terms, notes and instalments under a name. The `Template Library` button opens your templates, where `Use` starts from one. `Duplicate` makes a copy with a new number and the status `Draft`. On a quote marked `Accepted`, `Make invoice` opens a new invoice in [Invoices](app:invoices) with the same client and items; check it there and issue it.
 
 ## Your quotes, PDF and email
 The `Quotes` tab lists all your quotes. Search by number, client, item, notes or payment terms, and use the funnel to filter by status. Tap or click a quote to open it.

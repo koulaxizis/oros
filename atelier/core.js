@@ -205,7 +205,10 @@
       "img.added": "Image added", "img.missing": "Syncing…",
       "credits.title": "Credits", "credits.none": "Everything in this design is yours or from the built-in library.",
       "credits.copy": "Copy credits", "credits.copied": "Credits copied",
-      "resize.title": "Resize design", "resize.note": "Everything is scaled to fit the new size.",
+      "resize.title": "Resize design", "resize.note": "Pick one or more sizes. Elements are placed again for each size: edges stay at the edges, bars and photos across the page stretch, nothing is distorted.",
+      "resize.copies": "Keep this design, make a copy in each size", "resize.custom": "Custom size", "resize.w": "Width", "resize.h": "Height",
+      "resize.go": "Resize ({n})", "resize.copy": "{name} · {size}", "resize.made": "{n} copies made.", "resize.open": "Open",
+      "resize.current": "current", "resize.one": "Resizing this design itself works with one size at a time.",
       "btn.cancel": "Cancel", "btn.ok": "OK", "btn.create": "Create", "btn.close": "Close", "btn.undo": "Undo",
       "btn.apply": "Apply", "btn.reset": "Reset",
       "toast.deleted": "Deleted", "toast.docDeleted": "Design deleted",
@@ -372,7 +375,10 @@
       "img.added": "Η εικόνα προστέθηκε", "img.missing": "Συγχρονίζεται…",
       "credits.title": "Αναφορές δημιουργών", "credits.none": "Όλα σε αυτό το σχέδιο είναι δικά σου ή από την ενσωματωμένη βιβλιοθήκη.",
       "credits.copy": "Αντιγραφή αναφορών", "credits.copied": "Οι αναφορές αντιγράφηκαν",
-      "resize.title": "Αλλαγή μεγέθους", "resize.note": "Όλα κλιμακώνονται ώστε να χωρούν στο νέο μέγεθος.",
+      "resize.title": "Αλλαγή μεγέθους", "resize.note": "Διάλεξε ένα ή περισσότερα μεγέθη. Τα στοιχεία τοποθετούνται ξανά για κάθε μέγεθος: ό,τι είναι στις άκρες μένει στις άκρες, οι μπάρες και οι φωτογραφίες που πιάνουν όλη τη σελίδα απλώνονται, τίποτα δεν παραμορφώνεται.",
+      "resize.copies": "Κράτα αυτό το σχέδιο και φτιάξε αντίγραφο σε κάθε μέγεθος", "resize.custom": "Δικό σου μέγεθος", "resize.w": "Πλάτος", "resize.h": "Ύψος",
+      "resize.go": "Αλλαγή μεγέθους ({n})", "resize.copy": "{name} · {size}", "resize.made": "Φτιάχτηκαν {n} αντίγραφα.", "resize.open": "Άνοιγμα",
+      "resize.current": "τρέχον", "resize.one": "Η αλλαγή μεγέθους του ίδιου του σχεδίου γίνεται με ένα μέγεθος τη φορά.",
       "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.create": "Δημιουργία", "btn.close": "Κλείσιμο", "btn.undo": "Αναίρεση",
       "btn.apply": "Εφαρμογή", "btn.reset": "Επαναφορά",
       "toast.deleted": "Διαγράφηκε", "toast.docDeleted": "Το σχέδιο διαγράφηκε",
@@ -981,13 +987,40 @@
     copy.id = M.newId("doc");
     copy.name = t("doc.copy", { name: docTitle(d) }).slice(0, 120);
     copy.m = nw;
-    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (e.h) e.h = []; }); });
+    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (c === "stories") e.h = []; }); });
     copy.tombs = {};
     data.docs.push(M.normDoc(copy));
     data = M.normData(data);
     save();
     renderHome();
   }
+
+  // new designs made from an open one (magic resize copies): saved
+  // next to it, in the same folder; none of them is opened
+  function addCopies(list, fromId) {
+    var nw = now();
+    list.forEach(function (copy) {
+      copy.id = M.newId("doc");
+      copy.m = nw;
+      // new page and element ids: drawings cached for the original's
+      // elements (at their old sizes) must not be reused for these
+      var pg = {};
+      copy.pages.forEach(function (p) { pg[p.id] = M.newId("pg"); p.id = pg[p.id]; });
+      copy.items.forEach(function (it) { it.id = M.newId("it"); if (pg[it.pg]) it.pg = pg[it.pg]; });
+      (copy.guides || []).forEach(function (g) { if (pg[g.pg]) g.pg = pg[g.pg]; });
+      M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (c === "stories") e.h = []; }); });
+      copy.tombs = {};
+      data.docs.push(M.normDoc(copy));
+    });
+    data = M.normData(data);
+    save();
+    if (AT.folders && fromId) {
+      var f = AT.folders.folderOf(fromId);
+      if (f) AT.folders.place(list.map(function (c) { return c.id; }), f);
+    }
+    return list.map(function (c) { return c.id; });
+  }
+  AT.addCopies = addCopies;
 
   function deleteDoc(id) {
     var d = findDoc(id);
