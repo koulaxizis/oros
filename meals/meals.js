@@ -885,7 +885,12 @@
     acts.appendChild(button(t("v.cookmode"), "primary", function () { dlg.close(); openCook(id, sv); }));
     acts.appendChild(button(t("v.toplan"), "", function () { dlg.close(); openAddToPlan(id, sv); }));
     acts.appendChild(button(t("v.edit"), "", function () { dlg.close(); openEditor(r); }));
-    acts.appendChild(button(t("v.share"), "", function () { shareText(r.t, recipeText(r, sv)); }));
+    acts.appendChild(button(t("v.share"), "", function () {
+      var api = shareApi();
+      if (!api) { shareText(r.t, recipeText(r, sv)); return; }
+      dlg.close();
+      api.open({ kind: "recipe", data: sharePayload(r), text: recipeText(r, sv) });
+    }));
     acts.appendChild(button(t("v.print"), "", function () { printRecipe(r, sv); }));
     acts.appendChild(button(t("v.dup"), "", function () {
       var x = duplicateRecipe(id);
@@ -921,6 +926,16 @@
     if (r.no) out.push("", r.no);
     if (r.src) out.push("", t("v.source") + ": " + r.src);
     return out.join("\n");
+  }
+  // "Send to someone" (shell share/, kind "recipe"): the recipe as
+  // stored, without its id, stamp or favourite mark.
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+    catch (e) { return null; }
+  }
+  function sharePayload(r) {
+    return { t: r.t, e: r.e, c: r.c, sv: r.sv, pt: r.pt, ct: r.ct, dt: r.dt, tg: r.tg,
+      ig: r.ig, st: r.st, no: r.no, src: r.src };
   }
   function shareText(title, text) {
     if (!text) { showToast(t("toast.nothing")); return; }
@@ -2052,8 +2067,18 @@
   // target { recipe } → Recipes tab + the recipe; { day } → Week tab
   // at that day's week. Unknown recipe / bad day → no-op; an open
   // dialog → no-op (unsaved edits and cook mode win).
+  // Target { addRecipe: {…} } ("Add to my orOS" from a shared link):
+  // the recipe opens in the editor as a NEW draft, saved only on Save.
   function openSearchTarget(t) {
     if (!t || document.querySelector("dialog[open]")) return;
+    if (t.addRecipe && typeof t.addRecipe === "object") {
+      var rx = C.normRecipe(Object.assign({}, t.addRecipe, { id: "shared-draft", m: 0 }));
+      if (!rx) return;
+      delete rx.id; delete rx.m; rx.fv = 0;
+      setTab("rc");
+      openEditor(rx);
+      return;
+    }
     if (typeof t.recipe === "string") {
       if (!getRecipe(t.recipe)) return;
       setTab("rc");

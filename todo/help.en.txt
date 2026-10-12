@@ -29,6 +29,7 @@ Drag a task by its handle (the dotted grip on the right) to move it within the l
 - Drag tabs sideways to change their order.
 - `List cycle` clears all ticks in the list automatically every few days, weeks or months. It's handy for checklists you redo, like a weekly shopping list. The window shows the next reset date.
 - `Delete list` removes the list and all its tasks.
+- The paper-plane button above the list sends the open list to someone as a link (`Send to someone…`). They can open it in any browser, and add it to their own orOS.
 
 `Hide completed` hides ticked tasks in this view. `Clear completed` deletes all ticked tasks in the open list. After a delete or clear, an `Undo` button appears for a few seconds.
 
