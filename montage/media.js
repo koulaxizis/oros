@@ -165,8 +165,20 @@
 
   // File → { id, kind: "video"|"image"|"audio", len, w, h, audio, name }
   // Rejects with code: type | decode | big | full
+  // Device-only videos are the only copy orOS has: ask the browser once
+  // not to evict this site's storage when the disk runs low.
+  var persistAsked = false;
+  function askPersist() {
+    if (persistAsked) return;
+    persistAsked = true;
+    try {
+      var S = navigator.storage;
+      if (S && S.persisted && S.persist) S.persisted().then(function (y) { if (!y) return S.persist(); }).then(null, function () {});
+    } catch (e) {}
+  }
   function importFile(file, progress) {
     progress = progress || function () {};
+    askPersist();
     var M = root.Mediabunny;
     if (!file || !file.size) return Promise.reject(fail("type"));
     if (file.size > MAX_FILE) return Promise.reject(fail("big"));
