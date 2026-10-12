@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.36.00
+- Newsletter: a sign-up form for your own website, and a one-click unsubscribe link in every issue (Gmail and other mail apps show their own Unsubscribe button). Find it in a list's Subscribe link.
+
 ## Version 1.35.00
 - Newsletter: RSS to e-mail turns a blog or Reader feed into a new issue every day, week or month, as a draft for you to check or sent on its own. You can also import past issues from Buttondown, MailerLite and other services.
 

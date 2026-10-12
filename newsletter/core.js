@@ -43,7 +43,7 @@
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols"];
@@ -172,8 +172,47 @@
       addr: multi(x.addr, LIM.addr).trim(), why: multi(x.why, LIM.why).trim(),
       theme: THEMES.indexOf(x.theme) >= 0 ? x.theme : "classic",
       color: validColor(x.color) ? x.color.toLowerCase() : "#2f6fde",
-      salt: typeof x.salt === "string" && /^[a-z0-9]{8,32}$/.test(x.salt) ? x.salt : hash53("salt|" + x.id)
+      salt: typeof x.salt === "string" && /^[a-z0-9]{8,32}$/.test(x.salt) ? x.salt : hash53("salt|" + x.id),
+      form: normForm(x.form)
     };
+  }
+  // The web sign-up form + one-click unsubscribe kept by the relay
+  // (relay/newsletter.js): its list key k, secret sec and private key
+  // (RSA-OAEP-256 JWK). They guard only sign-ups for this list's data,
+  // so they sync with it. dev: the device that collects (pulls) them.
+  var JWK_PARTS = ["n", "e", "d", "p", "q", "dp", "dq", "qi"];
+  function normForm(f) {
+    if (!f || typeof f !== "object") return null;
+    if (typeof f.k !== "string" || !/^[a-z0-9]{16}$/.test(f.k)) return null;
+    if (typeof f.sec !== "string" || !/^[A-Za-z0-9]{32}$/.test(f.sec)) return null;
+    var j = f.priv;
+    if (!j || typeof j !== "object" || j.kty !== "RSA") return null;
+    var priv = { kty: "RSA", alg: "RSA-OAEP-256" };
+    for (var i = 0; i < JWK_PARTS.length; i++) {
+      var v = j[JWK_PARTS[i]];
+      if (typeof v !== "string" || !/^[A-Za-z0-9_-]{1,700}$/.test(v)) return null;
+      priv[JWK_PARTS[i]] = v;
+    }
+    var back = safeUrl(f.back);
+    return { k: f.k, sec: f.sec, priv: priv, back: /^https:\/\//i.test(back) && back.length <= 300 ? back : "",
+             dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at) };
+  }
+  // The public half (what the relay keeps) of a form's private key.
+  function formPub(f) { return f && f.priv ? { kty: "RSA", alg: "RSA-OAEP-256", n: f.priv.n, e: f.priv.e } : null; }
+  // The subscriber's token as the relay's unsubscribe path wants it.
+  function unsubPath(l, s) { return l && l.form && s ? "/nl/u/" + l.form.k + "/" + token(l, s.id).slice(3) : ""; }
+  // The HTML form for the user's own site: no script, a hidden field
+  // bots fill in (honeypot), the list's language.
+  function formHtml(l, relay, words) {
+    if (!l || !l.form) return "";
+    var e = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); };
+    return "<form method=\"post\" action=\"" + e(relay + "/nl/s/" + l.form.k) + "\">\n" +
+      "  <input type=\"email\" name=\"email\" required maxlength=\"254\" placeholder=\"" + e(words.email) + "\" aria-label=\"" + e(words.email) + "\">\n" +
+      "  <input type=\"text\" name=\"name\" maxlength=\"120\" placeholder=\"" + e(words.name) + "\" aria-label=\"" + e(words.name) + "\">\n" +
+      "  <input type=\"hidden\" name=\"lang\" value=\"" + l.lang + "\">\n" +
+      "  <div style=\"position:absolute;left:-5000px\" aria-hidden=\"true\"><input type=\"text\" name=\"website\" tabindex=\"-1\" autocomplete=\"off\"></div>\n" +
+      "  <button type=\"submit\">" + e(words.btn) + "</button>\n" +
+      "</form>";
   }
   function normSub(x) {
     var email = normEmail(x.email);
@@ -820,6 +859,7 @@
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,
+    normForm: normForm, formPub: formPub, unsubPath: unsubPath, formHtml: formHtml,
     normRss: normRss, rssNext: rssNext, rssDue: rssDue, rssPick: rssPick, digestMd: digestMd, digestIssue: digestIssue
   };
   root.OrosNewsletterCore = api;
