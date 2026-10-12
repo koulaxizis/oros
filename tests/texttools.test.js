@@ -219,3 +219,125 @@ test("hand-over: spreadsheet rows and To-Do items", () => {
   assert.deepEqual(T.todoItems("  milk \n\nbread\nmilk\n", 200), [{ text: "milk" }, { text: "bread" }]);
   assert.equal(T.todoItems(Array.from({ length: 300 }, (_, i) => "x" + i).join("\n"), 200).length, 200);
 });
+
+// ---------- Wave 2: extract, encode / decode, compare ----------
+
+test("extract: emails, links, phones, numbers, #hashtags, @names", () => {
+  const em = run1("extract", "Γράψε στο a.b@ex.gr, x@y.com. Ξανά: A.B@EX.gr και Γιώργος@παράδειγμα.ελ");
+  assert.equal(em.text, "a.b@ex.gr\nx@y.com\nΓιώργος@παράδειγμα.ελ\n");
+  assert.equal(em.notes[0].n, 3);
+  assert.equal(out("extract", "a@b.gr a@b.gr", { unique: false }), "a@b.gr\na@b.gr\n");
+  assert.equal(out("extract", "Δες https://el.wikipedia.org/wiki/Αθήνα_(πόλη)). και www.oros.gr, http://a.b/c?d=1&e=2.", { what: "links" }),
+    "https://el.wikipedia.org/wiki/Αθήνα_(πόλη)\nwww.oros.gr\nhttp://a.b/c?d=1&e=2\n");
+  assert.equal(out("extract", "Τηλ. 210 123 4567, +30 6912345678 και (210) 555-1234. Ημ. 12/10/2026, 2026-10-12, ποσό 1.234,56 €", { what: "phones" }),
+    "210 123 4567\n+30 6912345678\n(210) 555-1234\n");
+  assert.equal(out("extract", "Κόστος 12,50€ και -3 και 1.234,56 και 45% και A12", { what: "numbers" }), "12,50\n-3\n1.234,56\n45%\n");
+  assert.equal(out("extract", "#orOS #καλημέρα #2026 a#b &#39; #orOS", { what: "hashtags" }), "#orOS\n#καλημέρα\n");
+  assert.equal(out("extract", "@chris, @άννα. x@y.com @chris", { what: "mentions" }), "@chris\n@άννα\n");
+  assert.equal(out("extract", "c@x.gr b@x.gr a@x.gr", { sort: true }), "a@x.gr\nb@x.gr\nc@x.gr\n");
+  assert.equal(out("extract", "nothing here"), "");
+});
+
+test("URL encode / decode: parts, whole address, broken % runs stay", () => {
+  assert.equal(out("url", "a b&c=Ελλάδα\nx/y\n"), "a%20b%26c%3D%CE%95%CE%BB%CE%BB%CE%AC%CE%B4%CE%B1\nx%2Fy\n");
+  assert.equal(out("url", "https://x.gr/α?q=1&r=β", { full: true }), "https://x.gr/%CE%B1?q=1&r=%CE%B2");
+  assert.equal(out("url", "a%20b%26c%3D%CE%95 %E0%A4 q+r", { dir: "dec" }), "a b&c=Ε %E0%A4 q+r");
+  assert.equal(out("url", "q+r", { dir: "dec", plus: true }), "q r");
+});
+
+test("Base64: UTF-8 both ways, URL-safe, per line, not-Base64 noted", () => {
+  const s = "Γειά σου κόσμε 😀";
+  const enc = out("base64", s);
+  assert.equal(enc, Buffer.from(s, "utf8").toString("base64") + "\n");
+  assert.equal(out("base64", enc, { dir: "dec" }), s);
+  assert.equal(out("base64", "??>", { urlsafe: true }), Buffer.from("??>").toString("base64url") + "\n");
+  assert.equal(out("base64", Buffer.from("??>").toString("base64url"), { dir: "dec" }), "??>");
+  assert.equal(out("base64", "α\nβ\n", { each: true }), "zrE=\nzrI=\n");
+  assert.equal(out("base64", "zrE=\nzrI=\n", { dir: "dec", each: true }), "α\nβ\n");
+  assert.equal(run1("base64", "@@@", { dir: "dec" }).notes[0].err, "b64");
+  assert.equal(run1("base64", "//79", { dir: "dec" }).notes[0].err, "b64");   // bytes that are not UTF-8 text
+  for (let n = 1; n < 40; n++) {
+    const x = "ωx€😀".repeat(n % 5) + "a".repeat(n);
+    assert.equal(T.b64dec(T.b64enc(x)), x);
+    assert.equal(T.b64enc(x), Buffer.from(x, "utf8").toString("base64"));
+  }
+});
+
+test("HTML entities: encode, all non-ASCII, decode named and numeric", () => {
+  assert.equal(out("html", "<a href=\"x\">Tom & Jerry's</a>"), "&lt;a href=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/a&gt;");
+  assert.equal(out("html", "Ωé😀", { all: true }), "&#937;&#233;&#128512;");
+  const d = run1("html", "&lt;b&gt; &amp;amp; &eacute;&Uuml; &Omega;&sigmaf; &#x1F600; &#39; &bogus; &#xD800;", { dir: "dec" });
+  assert.equal(d.text, "<b> &amp; éÜ Ως 😀 ' &bogus; &#xD800;");
+  assert.equal(d.notes[0].n, 9);
+});
+
+test("slug: Greek to Latin, keep Greek, separator, length", () => {
+  assert.equal(out("slug", "Καλή Χρονιά! 2026\n\n  Ευχές & ούζο  \n"), "kali-chronia-2026\n\nevches-ouzo\n");
+  assert.equal(out("slug", "Καλή Χρονιά!", { greek: "keep", sep: "under" }), "καλη_χρονια");
+  assert.equal(out("slug", "Crème Brûlée — São Paulo"), "creme-brulee-sao-paulo");
+  assert.equal(out("slug", "one two three four", { max: 12 }), "one-two");
+});
+
+test("compare: line diff, options, show modes, second text needed", () => {
+  const r = T.run("a\nb\nc\nd\ne\n", [{ tool: "diff", opts: {} }], { other: "a\nB\nc\ne\nf\n" });
+  assert.equal(r.text, "  a\n- b\n+ B\n  c\n- d\n  e\n+ f\n");
+  assert.deepEqual(r.notes[0].x, { add: 2, del: 2 });
+  const d = (opts) => T.run("a\nb\n", [{ tool: "diff", opts }], { other: "A\nb\nc\n" }).text;
+  assert.equal(d({ icase: true, show: "changes" }), "+ c\n");
+  assert.equal(d({ show: "added" }), "A\nc\n");
+  assert.equal(d({ show: "removed" }), "a\n");
+  assert.equal(d({ show: "same" }), "b\n");
+  assert.equal(T.run(" x \nά", [{ tool: "diff", opts: { trim: true, iaccent: true } }], { other: "x\nα" }).notes[0].n, 0);
+  assert.equal(T.run("x", [{ tool: "diff", opts: {} }]).notes[0].err, "noother");
+  assert.equal(T.usesOther([{ tool: "sort" }, { tool: "diff" }]), true);
+  assert.equal(T.usesOther([{ tool: "sort" }]), false);
+});
+
+test("compare: the diff is the shortest one and keeps every line", () => {
+  const rnd = (n) => Array.from({ length: n }, () => "abcd"[Math.floor(Math.random() * 4)]);
+  const check = (a, b) => {
+    const ops = T.diffLines(a, b), ra = [], rb = [];
+    let same = 0;
+    ops.forEach((o) => {
+      if (o[0] <= 0) ra.push(a[o[1]]);
+      if (o[0] === 0) { rb.push(b[o[2]]); same++; assert.equal(a[o[1]], b[o[2]]); }
+      if (o[0] > 0) rb.push(b[o[1]]);
+    });
+    assert.deepEqual(ra, a);
+    assert.deepEqual(rb, b);
+    return same;
+  };
+  for (let t = 0; t < 400; t++) {
+    const a = rnd(Math.floor(Math.random() * 12)), b = rnd(Math.floor(Math.random() * 12));
+    const L = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+      L[i][j] = a[i - 1] === b[j - 1] ? L[i - 1][j - 1] + 1 : Math.max(L[i - 1][j], L[i][j - 1]);
+    assert.equal(check(a, b), L[a.length][b.length]);
+  }
+  // very different big texts: anchored diff, still every line, no freeze
+  const A = [], B = [];
+  for (let i = 0; i < 30000; i++) { A.push("line " + i); B.push(i % 7 === 0 ? "changed " + i : "line " + i); }
+  const t0 = Date.now();
+  check(A, B);
+  check(A.map((x, i) => "a" + i), B.map((x, i) => "b" + i));
+  assert.ok(Date.now() - t0 < 20000);
+});
+
+test("UI strings: English and Greek have the same keys, every tool and option is labelled", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "texttools", "texttools.js"), "utf8");
+  const block = (name) => {
+    const i = src.indexOf("\n    " + name + ": {"), j = src.indexOf("\n    }", i);
+    return Object.fromEntries([...src.slice(i, j).matchAll(/"([a-zA-Z0-9.]+)":\s*"/g)].map((m) => [m[1], 1]));
+  };
+  const en = block("en"), el = block("el");
+  assert.deepEqual(Object.keys(en).sort(), Object.keys(el).sort());
+  T.GROUPS.forEach((g) => assert.ok(en["grp." + g], "grp." + g));
+  T.TOOL_IDS.forEach((id) => {
+    assert.ok(en["tool." + id] && en["hint." + id], id);
+    Object.keys(T.TOOLS[id].f).forEach((k) => {
+      assert.ok(en["opt." + id + "." + k] || en["opt." + k], id + "." + k);
+      const f = T.TOOLS[id].f[k];
+      if (f[0] === "sel") f[1].forEach((v) => assert.ok(en["val." + k + "." + v] || en["dl." + v], id + "." + k + "=" + v));
+    });
+  });
+});
