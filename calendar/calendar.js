@@ -155,6 +155,7 @@
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget",
       "lbl.feed.shelf": "Media Shelf",
+      "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
       "feed.garage.svc": "{vehicle}: {what} due",
@@ -330,6 +331,7 @@
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός",
       "lbl.feed.shelf": "Το ράφι μου",
+      "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
       "feed.garage.svc": "{vehicle}: σέρβις ({what})",
@@ -535,6 +537,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
     { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
+    { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
     { id: "lbl-feed-hol",     color: "#ef6b5b" },   // coral red — Greek public holidays
@@ -562,6 +565,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-budget") return t("lbl.feed.budget");
     if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
     if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
+    if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -2050,6 +2054,48 @@ function transientNote(title, body) {
     });
   }
 
+  // Invoices read-only feed (invoices/core.js dueOn, loaded by
+  // index.html: the same rule as the app, Today and the reminder).
+  // Issued invoices, receipts and records with money still owed, on
+  // their due date: "INV-2026-0042 due · Acme". Rows are never
+  // stored; the parsed blob is micro-cached ~1s like the other feeds.
+  // Click → Invoices opens that document.
+  var INV_DATA_KEY = "oros-invoices-data";
+  var invCache = { when: 0, raw: null, data: null };
+  function invData() {
+    var C = window.OrosInvoicesCore;
+    if (!C) return null;
+    var now = Date.now();
+    if (now - invCache.when > 1000) {
+      invCache.when = now;
+      var raw = null;
+      try { raw = localStorage.getItem(INV_DATA_KEY); } catch (e) { raw = null; }
+      if (raw !== invCache.raw) {
+        invCache.raw = raw;
+        invCache.data = raw ? C.parse(raw) : null;
+      }
+    }
+    return invCache.data;
+  }
+  function invoicesFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-inv")) return [];
+    var data = invData();
+    if (!data || !data.docs.length) return [];
+    var C = window.OrosInvoicesCore;
+    return C.dueOn(data, dateStr).map(function (d) {
+      return {
+        id: "inv-" + d.id,                       // per-render key, never stored
+        title: t("feed.inv.due").replace("{n}", d.num || "").replace("{a}", C.partyName(data, d) || "")
+          .replace(/ · $/, "").slice(0, 120),
+        labelId: "lbl-feed-inv",
+        start: null,                             // all-day
+        note: C.fmtMoney(C.balance(data, d), d.cur, LANG),
+        _feed: true,
+        _openAt: { app: "invoices", target: { invoice: d.id } }
+      };
+    });
+  }
+
   /* ---------- 3d. Name days, holidays, world days ----------
      Data and rules live in namedays.js (window.OrosNamedays, pure).
      Three chips, all read-only virtual rows, never stored in the
@@ -2164,6 +2210,7 @@ function transientNote(title, body) {
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
     .concat(shelfFeedOn(dateStr))
+    .concat(invoicesFeedOn(dateStr))
     .concat(babyFeedOn(dateStr))
     .concat(holidaysFeedOn(dateStr))
     .concat(namedayContactsOn(dateStr))
