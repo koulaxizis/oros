@@ -187,7 +187,7 @@ export async function runPapi(b, fetchFn, now) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), Math.min(PAPI_LIMITS.timeout, left));
     try {
-      const res = await fetchFn(url, { method: r.m, headers, body, redirect: "manual", credentials: "omit", cache: "no-store", signal: ctl.signal });
+      const res = await fetchFn(url, { method: r.m, headers, body, redirect: "manual", signal: ctl.signal });
       // reserve room before reading, so parallel reads stay under the total
       const room = Math.max(0, Math.min(PAPI_LIMITS.bodyOut, PAPI_LIMITS.totalOut - outBytes));
       outBytes += room;

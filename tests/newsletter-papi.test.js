@@ -76,7 +76,8 @@ test("forwarding: fixed host, provider auth, only fixed headers, no redirects", 
   assert.equal(h["api-key"], KEY);
   assert.equal(f.calls[0].init.body, "{\"to\":[]}");                  // passed through, not re-parsed
   assert.equal(f.calls[0].init.redirect, "manual");
-  assert.equal(f.calls[0].init.credentials, "omit");
+  assert.equal(f.calls[0].init.credentials, undefined);                  // workerd throws on it
+  assert.equal(f.calls[0].init.cache, undefined);
   assert.equal(f.calls.length, 2);                                       // the 302 was not followed
   const auths = {};
   for (const [prov, path, extra] of [["postmark", "/server"], ["sendgrid", "/user/profile"], ["mailgun-eu", "/domains/mg.example.com", { dom: "mg.example.com" }]]) {
