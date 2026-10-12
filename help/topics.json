@@ -9,6 +9,7 @@
     { "id": "sync" },
     { "id": "backup" },
     { "id": "data" },
+    { "id": "share" },
     { "id": "notifications" },
     { "id": "shortcuts" },
     { "id": "privacy" },

@@ -777,7 +777,8 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .btn.danger { color: var(--danger, #e06c75); border-color: var(--danger, #e06c75); }
 .btn.danger:hover { background: rgba(224, 108, 117, 0.12); }
 #ev-del-row { display: none; }
-#ev-del-row.show { display: flex; }
+#ev-del-row.show { display: flex; flex-wrap: wrap; }
+#ev-del-row .btn { min-width: max-content; }
 
 /* Until row: same show/hide contract as ev-del-row (dialog select
    drives the JS toggle; default hidden = Repeat "None") */

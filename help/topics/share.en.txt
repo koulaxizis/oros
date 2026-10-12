@@ -1,0 +1,40 @@
+# Send to someone
+Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe or some bookmarks. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
+
+## Send something
+Look for the send button in these apps:
+- [To-Do](app:todo): the paper-plane button above the list sends the open list.
+- [Notes](app:notes): the paper-plane button next to the page title, or `Send to someone…` in the page menu.
+- [Contacts](app:contacts): `Share` on a contact's card.
+- [Calendar](app:calendar): `Send…` in a saved event.
+- [Meal Planner](app:meals): `Share` on an open recipe.
+- [Bookmarks](app:bookmarks): `Send to someone…` in a bookmark's menu, or select several and tap `Send…`.
+
+The `Send to someone` window shows what will travel. Then pick how to send it:
+- `Share…` opens your phone's or computer's share menu (Viber, WhatsApp, Signal, email and so on).
+- `Copy link` copies it so you can paste it anywhere.
+- `QR code` shows a code the other person can scan from your screen.
+- `Email` writes a message in [Mail](app:mail) with the link (when you have a mail account set up).
+- `Save as file` saves a small text file with the link, to attach anywhere.
+- `Send as text` (contacts and recipes) sends plain text, as before.
+
+## Lock it with a password
+Tick `Lock with a password` and type a password of at least 6 characters. Then the link alone shows nothing: the other person needs the password too. Tell it to them another way, in person or by phone, not in the same message as the link.
+
+## Open something you got
+Tap the link. A page opens with the item and these buttons:
+- `Add to my orOS` opens the right app with the item ready. To-Do, Contacts, Calendar, Meal Planner and Bookmarks show it to you before anything is saved; Notes makes a new page.
+- `Copy text` copies it as plain text.
+- `Download` saves it as a file other programs open too: a contact as .vcf, an event as .ics, bookmarks as .html, the rest as .txt.
+
+If you got a file instead of a link, open the link inside it, or use `Open a file` on that page.
+
+## Privacy
+The item travels inside the part of the link after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.
+
+>! Anyone who has the link can open it, unless it is locked with a password. A sent link cannot be taken back and does not expire.
+
+## Limits
+- Very long items (a huge list or note) can be too long for a link. orOS tells you, and `Save as file` still works.
+- A QR code holds only short links.
+- Photos of contacts, labels, favourites and reminders are not sent.
