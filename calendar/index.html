@@ -20,6 +20,7 @@
         <button id="cal-import" type="button" class="nav-mini" data-i18n="cal.import"></button>
         <button id="cal-export" type="button" class="nav-mini" data-i18n="cal.export"></button>
         <button id="cal-stats" type="button" class="nav-mini" data-i18n="cal.stats"></button>
+        <button id="cal-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       </div>
       <h2 id="cal-title"></h2>
     </header>
@@ -183,6 +184,18 @@
     </div>
   </dialog>
   <input id="ics-file" type="file" accept=".ics,text/calendar" hidden>
+
+  <!-- On this phone (BR-PHONE, Android app only) -->
+  <dialog id="ph-dlg" aria-labelledby="ph-dlg-title">
+    <h3 id="ph-dlg-title" data-i18n="ph.title"></h3>
+    <p class="del-text" data-i18n="ph.text"></p>
+    <label class="ph-row"><input id="ph-on" type="checkbox"> <span data-i18n="ph.on"></span></label>
+    <p id="ph-stat" class="del-text" aria-live="polite"></p>
+    <div class="dlg-row">
+      <button id="ph-allow" type="button" class="btn prim" data-i18n="ph.allow"></button>
+      <button id="ph-close" type="button" class="btn" data-i18n="ph.close"></button>
+    </div>
+  </dialog>
 
   <dialog id="stat-dlg" aria-labelledby="stat-dlg-title">
     <h3 id="stat-dlg-title" data-i18n="stat.title"></h3>

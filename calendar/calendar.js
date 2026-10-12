@@ -110,6 +110,19 @@
       "exp.done": "Calendar exported (.ics)",
       "cal.import": "Import",
       "imp.title": "Import events",
+      "ph.btn": "On this phone",
+      "ph.title": "orOS calendar on this phone",
+      "ph.text": "Adds your orOS events, with their reminders, to the phone's Calendar as an \"orOS\" calendar. They are read-only there: edit them here.",
+      "ph.on": "Show on this phone",
+      "ph.what": "events",
+      "ph.allow": "Allow access",
+      "ph.ask": "Android asks for permission once.",
+      "ph.denied": "Android access is off. Allow it from the app's settings.",
+      "ph.off": "Not shown on this phone.",
+      "ph.wait": "Sending…",
+      "ph.last": "Sent {t}: {n} {what}.",
+      "ph.err": "Last attempt failed: {e}",
+      "ph.close": "Close",
       "imp.sum": "{new} new · {upd} updated · {same} already in the Calendar",
       "imp.simpl": "{n} repeating event(s) use a rule the Calendar does not have: only their first date is imported.",
       "imp.skip": "{n} skipped (cancelled or without a date).",
@@ -272,6 +285,19 @@
       "exp.done": "Το ημερολόγιο εξήχθη (.ics)",
       "cal.import": "Εισαγωγή",
       "imp.title": "Εισαγωγή συμβάντων",
+      "ph.btn": "Στο κινητό",
+      "ph.title": "Το ημερολόγιο του orOS στο κινητό",
+      "ph.text": "Βάζει τα συμβάντα του orOS, με τις υπενθυμίσεις τους, στο Ημερολόγιο του κινητού ως ημερολόγιο \"orOS\". Εκεί είναι μόνο για ανάγνωση: τα αλλάζεις εδώ.",
+      "ph.on": "Εμφάνιση στο κινητό",
+      "ph.what": "συμβάντα",
+      "ph.allow": "Να επιτραπεί",
+      "ph.ask": "Το Android ζητά άδεια μία φορά.",
+      "ph.denied": "Η πρόσβαση στο Android είναι κλειστή. Άνοιξέ την από τις ρυθμίσεις της εφαρμογής.",
+      "ph.off": "Δεν εμφανίζονται στο κινητό.",
+      "ph.wait": "Αποστολή…",
+      "ph.last": "Στάλθηκαν {t}: {n} {what}.",
+      "ph.err": "Η τελευταία προσπάθεια απέτυχε: {e}",
+      "ph.close": "Κλείσιμο",
       "imp.sum": "{new} νέα · {upd} ενημερωμένα · {same} υπάρχουν ήδη στο Ημερολόγιο",
       "imp.simpl": "{n} επαναλαμβανόμενο/α συμβάν/τα έχουν κανόνα που δεν υποστηρίζει το Ημερολόγιο: εισάγεται μόνο η πρώτη ημερομηνία.",
       "imp.skip": "{n} παραλείφθηκαν (ακυρωμένα ή χωρίς ημερομηνία).",
@@ -3971,6 +3997,50 @@ function transientNote(title, body) {
     fr.onerror = function () { transientNote(t("imp.bad")); };
     fr.readAsText(f, "utf-8");
   }
+  // On this phone (BR-PHONE): only inside the orOS Android app, which
+  // mirrors this app's data into the phone's own Calendar. The shell
+  // (phone.js) owns the channel; this is just the switch and status.
+  var orosPhone = null;
+  try { if (window.parent && window.parent !== window) orosPhone = window.parent.orosPhone || null; } catch (e) {}
+  function phoneRender() {
+    if (!orosPhone || !$("cal-mirror")) return;
+    $("cal-mirror").hidden = !orosPhone.available();
+    if (!$("ph-dlg").open) return;
+    var st = orosPhone.state() || {}, perm = st.calendar || "ask";
+    var on = orosPhone.enabled("calendar"), last = orosPhone.lastSync("calendar");
+    $("ph-on").checked = on;
+    $("ph-allow").hidden = perm === "granted";
+    var msg;
+    if (perm === "denied") msg = t("ph.denied");
+    else if (perm !== "granted") msg = t("ph.ask");
+    else if (!on) msg = t("ph.off");
+    else if (last.err) msg = t("ph.err").replace("{e}", last.err);
+    else if (!last.at) msg = t("ph.wait");
+    else msg = t("ph.last").replace("{t}", new Date(last.at).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))
+      .replace("{n}", String(last.n)).replace("{what}", t("ph.what"));
+    $("ph-stat").textContent = msg;
+  }
+  if (orosPhone && $("cal-mirror") && $("ph-dlg")) {
+    var phoneOff = orosPhone.onChange(phoneRender);
+    window.addEventListener("pagehide", function () { phoneOff(); });
+    $("cal-mirror").addEventListener("click", function () {
+      $("ph-dlg").showModal();
+      orosPhone.refresh();
+      phoneRender();
+    });
+    $("ph-on").addEventListener("change", function () {
+      var st = orosPhone.state() || {};
+      orosPhone.setEnabled("calendar", $("ph-on").checked);
+      // Switching on before Android allowed it: ask in the same tap.
+      if ($("ph-on").checked && st.calendar !== "granted") orosPhone.askPermission("calendar");
+      phoneRender();
+    });
+    $("ph-allow").addEventListener("click", function () { orosPhone.askPermission("calendar"); });
+    $("ph-close").addEventListener("click", function () { $("ph-dlg").close(); });
+    phoneRender();
+  }
+
   if ($("cal-import")) {
     $("cal-import").addEventListener("click", function () {
       var dlg = dialogHost();

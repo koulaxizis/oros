@@ -1,0 +1,6 @@
+// orOS Android app: a Trusted Web Activity for https://useoros.online
+// plus the native "orOS" account that shows orOS Contacts and Calendar
+// in the phone's own apps (BR-PHONE, see android/README.md).
+plugins {
+    id 'com.android.application' version '8.9.1' apply false
+}

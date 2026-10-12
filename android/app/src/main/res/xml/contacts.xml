@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No custom data kinds: orOS contacts use the standard ones
+     (name, phone, email, address, event, note, website, photo). -->
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android" />

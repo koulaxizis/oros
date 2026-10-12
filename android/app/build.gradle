@@ -1,0 +1,79 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Version follows the web app (shell.js APP_VERSION "1.11.00" →
+// versionName 1.11.00, versionCode 1011000), so every build is newer
+// than the last one and above the PWABuilder package's code.
+def appVersion = {
+    def m = (file('../../shell.js').text =~ /APP_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"/)
+    if (!m.find()) throw new GradleException('APP_VERSION not found in shell.js')
+    [name: "${m.group(1)}.${m.group(2)}.${m.group(3)}",
+     code: (m.group(1) as int) * 1000000 + (m.group(2) as int) * 1000 + (m.group(3) as int)]
+}()
+
+// Release signing comes from the environment (GitHub secrets in CI):
+// the same upload key as the PWABuilder package, so Play and
+// assetlinks.json keep trusting the app.
+def ks = System.getenv('OROS_KEYSTORE_FILE')
+
+android {
+    namespace 'online.useoros.twa'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'online.useoros.twa'
+        minSdk 24
+        targetSdk 36
+        versionCode appVersion.code
+        versionName appVersion.name
+        manifestPlaceholders = [hostName: 'useoros.online']
+    }
+
+    signingConfigs {
+        if (ks) {
+            release {
+                storeFile file(ks)
+                storePassword System.getenv('OROS_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('OROS_KEY_ALIAS')
+                keyPassword System.getenv('OROS_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // A debug build cannot verify against assetlinks.json (other
+            // key), so it opens with an address bar and no phone bridge:
+            // it only proves the project compiles. Own id → installs
+            // next to the real app.
+            applicationIdSuffix '.debug'
+            resValue 'string', 'account_type', 'online.useoros.twa.debug.account'
+            manifestPlaceholders = [permissionScheme: 'oros-permission-debug']
+        }
+        release {
+            resValue 'string', 'account_type', 'online.useoros.twa.account'
+            manifestPlaceholders = [permissionScheme: 'oros-permission']
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (ks) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    lint {
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+}

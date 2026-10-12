@@ -1,0 +1,14 @@
+# Generated from manifest.webmanifest by tools/gen.js (CI runs it before
+# every build), so a manifest change never leaves them stale.
+app/src/main/AndroidManifest.xml
+app/src/main/res/values/web_manifest.xml
+app/src/main/res/xml/shortcuts.xml
+# Gradle / Android Studio
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+*.jks
+*.keystore

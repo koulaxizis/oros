@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_label">orOS</string>
+    <string name="calendar_name">orOS</string>
+    <string name="perm_denied">orOS needs this permission to show your orOS data in the phone\'s apps. You can allow it in the app settings.</string>
+</resources>

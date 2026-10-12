@@ -877,6 +877,25 @@ dialog#imp-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 #imp-dlg .del-text { margin-bottom: 8px; }
 
+/* ---------- On this phone (BR-PHONE) ---------- */
+dialog#ph-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+  padding: 16px;
+  width: min(360px, calc(100vw - 32px));
+}
+dialog#ph-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
+#ph-dlg h3 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+#ph-dlg .del-text { margin-bottom: 8px; }
+.ph-row { display: flex; gap: 8px; align-items: center; margin: 4px 0 10px; }
+
 /* ---------- Label management dialog ---------- */
 dialog#lbl-dlg {
   background: var(--panel-bg);
