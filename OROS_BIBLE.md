@@ -1661,6 +1661,11 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - Each side only READS the other's slice: Library reads `oros-shelf-data` to show "Open in Media Shelf"; the Shelf reads `oros-library-data` in `libSync` (boot + visible) and writes progress as its own normal entries. Pages only move forward; a finish is logged only when Library marked the book finished on or after the run began; dropped and finished items are left alone.
 - Shelf item extra field `lib` = Library book id (kept by older devices, no schema change). Pure helpers `libOf`, `libPlan`, `libItem` (shelf section 4d), tests on both sides.
 
+### Invoices wave 2 bridges (1.13.00)
+- One due rule in `invoices/core.js` (`dueOn`, `dueRows`, `reminder`) serves the Calendar "Invoices" feed chip, the Today provider `invoices/today.js` (BR-TODAY: overdue, due in the horizon, recurring drafts ready) and the shell tick (one daily notice for overdue + due within 2 days, repeated when the count grows; deep link opens the invoice).
+- Senders into Invoices (`__orosOpenAt("invoices", { new })`, BR-CRM-INV payload, now also line `vat`, `disc`, `code`, `unit` and a total discount; older payloads unchanged): Quote "Make invoice" (accepted quotes), Timesheet report "Create invoice". From CRM imports customers through `crm/core.js customersForBilling()` and keeps `crm`.
+- Add to Budget on a payment uses BR-B1 (Freelance income) and marks the payment `bud`.
+
 ## Part VII — UI standards
 
 - **Scrollbars:** 10px, transparent track, pill thumb (999px radius, 2px border `var(--bg)`), hover `var(--accent)`; Firefox `scrollbar-width:thin`. `overscroll-behavior:contain` on main panes.

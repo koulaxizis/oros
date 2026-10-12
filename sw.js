@@ -254,6 +254,7 @@ var PRECACHE_URLS = [
   "invoices/core.js",
   "invoices/invoices.js",
   "invoices/search.js",
+  "invoices/today.js",
   "crm/",
   "crm/index.html",
   "crm/crm.css",
