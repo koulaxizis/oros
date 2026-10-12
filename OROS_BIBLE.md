@@ -5181,3 +5181,19 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 - **Warehouses and transfers:** per-warehouse quantities, counts, counter and filter; transfers change no total; value per warehouse in Reports; old devices keep correct totals.
 - Not tested: real phones, Safari, a real 1.3 device syncing with 1.4.
+
+### 2026-10-12 — Newsletter phase 2 (#243) — 1.31.00
+- Newsletter v1.1.0 (phase 2). The sending engine moved into newsletter/engine.js, shared by the app and the shell.
+  - newsletter/runner.js runs the engine in the shell, so sending, scheduled starts and Inbox checks (every 10 minutes) work with the app closed while orOS is open.
+  - The runner owns the slice "newsletter", always live. It waits for the first sync merge, a sync failure plus 15 s, or 60 s before it sends.
+  - Every writer merge-writes through C.mergeNewsletter, so the app, the shell and other tabs never undo each other.
+  - Web Locks "oros-newsletter-send" and "oros-newsletter-inbox" stop two windows of one device from working at once. A fresh re-read before each message skips anyone who left or was already sent to.
+  - Notices use ns "newsletter": issue sent, paused, scheduled issue started, and new subscribers, unsubscribes and bounces from the Inbox.
+  - Scheduled issues have st "sched" with when, and lock.dev is the scheduling device, which holds the passwords. Only that device starts them. Users can cancel or send now.
+  - Segments (segs: name, tags, any/all, language) are per list. An issue's seg wins over its tags. A deleted segment gives an empty audience, never everyone, and the preflight check flags it as "segGone".
+  - Templates (tpls).
+  - Bilingual issues: l2 = {lang, subj, pre, fmt, blocks, md}. Each subscriber gets their language (their own, else the list's). Preview and test cover both versions, and preflight checks both.
+  - CRM import reads oros-crm-data through the shell's OrosCrmCore.norm, read only. CRM status and tags become tags. The basis is "customer" only when every pick is an active or past customer, else double opt-in. Source "crm".
+  - Today provider newsletter/today.js.
+  - Device state (dev, used, inbox) moved from oros-newsletter-prefs to oros-newsletter-dev, migrated on first read. Paused reasons are stored as codes and translated on display.
+- Not tested: a real sending provider, real phones, Safari, a background tab over hours.
