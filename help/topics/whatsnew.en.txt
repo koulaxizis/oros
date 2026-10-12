@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.03.00
+- New app: CRM. A customer book with a sales pipeline, contact history and dated follow-ups. New menu category Business (Quote and Timesheet moved there).
+
 ## Version 1.02.00
 - New app: Sticky Notes. Coloured notes on the desktop that can ring at a time and fade away by themselves (Ctrl+Alt+Shift+N for a new one).
 

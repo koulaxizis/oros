@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -551,6 +551,9 @@
     // Media Shelf — "shelf:item:<itemId>": the daily reading reminder
     // opens the title it names. Generic shell deep link, no own bridge.
     shelf:    function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('shelf', { item: id }); },
+    // CRM — "crm:<followUpId>": a due follow-up opens its editor.
+    // Generic shell deep link, no own bridge.
+    crm:      function (id) { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('crm', { fup: String(id) }); },
     // One-Sentence Diary — "diary:day:<YYYY-MM-DD>": the evening
     // reminder opens that day to write. Generic shell deep link.
     diary:    function (ymd) {
