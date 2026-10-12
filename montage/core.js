@@ -47,8 +47,8 @@
   var TRACK_KINDS = { main: ["video", "image", "title"], ov: ["video", "image"], tt: ["title"], a1: ["audio"], a2: ["audio"] };
   var RATIOS = { "16:9": [16, 9], "9:16": [9, 16], "1:1": [1, 1], "4:5": [4, 5] };
   var FPS = [30, 60];
-  var TRANSITIONS = ["fade", "black", "slide", "wipe"];
-  var FILTERS = ["none", "mono", "sepia", "warm", "cool", "vivid", "fade", "noir", "film"];
+  var TRANSITIONS = ["fade", "black", "slide", "wipe", "push", "zoom", "circle"];
+  var FILTERS = ["none", "mono", "sepia", "warm", "cool", "vivid", "fade", "noir", "film", "vintage", "chrome", "dusk", "golden"];
   var ANIMS = ["none", "fade", "rise", "pop"];
   var ALIGNS = ["l", "c", "r"];
 
@@ -146,7 +146,7 @@
   }
 
   function normFields(o) {
-    return {
+    var f = {
       name: str(o.name, 80).replace(/[\r\n\t]+/g, " ").trim() || "Untitled",
       ar: RATIOS[o.ar] ? o.ar : "16:9",
       fps: oneOf(o.fps, FPS, 30),
@@ -154,6 +154,11 @@
       vs: o.vs === true,
       m: stamp(o.m)
     };
+    // dk (ducking, % the music drops under the voice) is written only
+    // when on, so a project without it reads the same on older copies.
+    var dk = Math.round(num(o.dk, 0, 0, 90));
+    if (dk > 0) f.dk = dk;
+    return f;
   }
 
   function normTombs(v, keyOk) {
@@ -300,7 +305,7 @@
   function pictureLayer(it, local, dur) {
     var L = {
       id: it.id, k: it.k, tr: it.tr, src: it.src || null, alpha: fadeAt(it, local, dur) * (it.op / 100),
-      bri: 1, dx: 0, clip: null, local: local
+      bri: 1, dx: 0, dy: 0, sc: 1, iris: -1, clip: null, local: local
     };
     if (it.k === "video") L.st = srcTime(it, local);
     if (it.k !== "title") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; }
@@ -311,8 +316,9 @@
 
   // What is on screen at time t, bottom to top. Each layer:
   // { id, k, tr, src, st (video: seconds into the file), alpha, bri,
-  //   dx (horizontal shift, fraction of the frame), clip ([x0, x1] of
-  //   the frame shown, wipes), fit, rot, fl, lk, flt, box, text, bg,
+  //   dx, dy (shift, fraction of the frame: slide, push), sc (scale
+  //   around the centre: zoom), iris (0..1 circle that reveals the
+  //   clip, -1 = none), clip ([x0, x1] of the frame shown, wipes), fit, rot, fl, lk, flt, box, text, bg,
   //   local (seconds into the clip) }
   function framePlan(p, t) {
     var layers = [], seq = mainSeq(p);
@@ -328,12 +334,16 @@
         else if (k === "black") { if (q < 0.5) L.alpha = 0; else L.bri = 2 * q - 1; }
         else if (k === "slide") L.dx = 1 - q;
         else if (k === "wipe") L.clip = [0, q];
+        else if (k === "push") L.dy = 1 - q;
+        else if (k === "zoom") { var e = 1 - Math.pow(1 - q, 2); L.alpha *= q; L.sc = 1.3 - 0.3 * e; }
+        else if (k === "circle") L.iris = q;
       }
       // inside the transition out of this clip (into the next one)
       if (next && next.tx > 0 && t >= next.start) {
         var q2 = (t - next.start) / next.tx, k2 = next.it.tx.k;
         if (k2 === "black") { if (q2 >= 0.5) L.alpha = 0; else L.bri = 1 - 2 * q2; }
         else if (k2 === "slide") L.dx = -q2;
+        else if (k2 === "push") L.dy = -q2;
       }
       layers.push(L);
     }
@@ -347,7 +357,9 @@
   }
 
   // Everything that makes sound, on the timeline:
-  // [{ id, src, start, dur, in, sp, vol (0..2), fi, fo }]
+  // [{ id, src, start, dur, in, sp, vol (0..2), fi, fo, dk?, duck? }]
+  // (dk 0..0.9 and duck [[from, to], …] seconds into the segment: the
+  // voice-over parts the music ducks under)
   // A main transition crossfades the two clips' sound over its length.
   function soundPlan(p) {
     var out = [], seq = mainSeq(p);
@@ -366,13 +378,41 @@
         out.push({ id: it.id, src: it.src, start: it.at, dur: itemDur(it), "in": it["in"], sp: it.sp, vol: it.vol / 100, fi: it.fi, fo: it.fo });
       });
     });
+    // Ducking: Music (a1) drops by dk % while anything plays on Voice (a2).
+    if (p.dk > 0) {
+      var voice = [];
+      trackItems(p, "a2").forEach(function (it) {
+        if (!it.mu && it.vol > 0) voice.push([it.at, it.at + itemDur(it)]);
+      });
+      if (voice.length) out.forEach(function (seg) {
+        var it = p.items[seg.id];
+        if (!it || it.tr !== "a1") return;
+        var duck = [];
+        voice.forEach(function (v) {
+          if (v[0] < seg.start + seg.dur + DUCK_RAMP && v[1] > seg.start - DUCK_RAMP) duck.push([r3(v[0] - seg.start), r3(v[1] - seg.start)]);
+        });
+        if (duck.length) { seg.dk = p.dk / 100; seg.duck = duck; }
+      });
+    }
     return out.sort(function (a, b) { return a.start !== b.start ? a.start - b.start : cmpStr(a.id, b.id); });
   }
+  var DUCK_RAMP = 0.25;                // seconds the music takes to go down / up
   // Gain of a sound segment `local` seconds into it.
   function gainAt(seg, local) {
     var g = seg.vol;
     if (seg.fi > 0 && local < seg.fi) g *= clamp(local / seg.fi, 0, 1);
     if (seg.fo > 0 && local > seg.dur - seg.fo) g *= clamp((seg.dur - local) / seg.fo, 0, 1);
+    if (seg.duck) {
+      var cov = 0;
+      for (var i = 0; i < seg.duck.length && cov < 1; i++) {
+        var a = seg.duck[i][0], b = seg.duck[i][1], c;
+        if (local >= a && local <= b) c = 1;
+        else if (local < a) c = 1 - (a - local) / DUCK_RAMP;
+        else c = 1 - (local - b) / DUCK_RAMP;
+        if (c > cov) cov = c;
+      }
+      g *= 1 - seg.dk * clamp(cov, 0, 1);
+    }
     return g;
   }
 
@@ -404,7 +444,7 @@
     var d = clone(data), p = d.projects[pid];
     if (!p) return d;
     var f = normFields(p), changed = false;
-    ["name", "ar", "fps", "bg", "vs"].forEach(function (k) {
+    ["name", "ar", "fps", "bg", "vs", "dk"].forEach(function (k) {
       if (!patch || !(k in patch)) return;
       var cand = Object.assign({}, f);
       cand[k] = patch[k];
@@ -562,7 +602,11 @@
     var s = snap ? merge(wrap, null).projects[pid] : null;
     if (!p || !s) return d;
     var f = normFields(p), fs = normFields(s), changed = false;
-    ["name", "ar", "fps", "bg", "vs"].forEach(function (k) { if (f[k] !== fs[k]) { p[k] = fs[k]; changed = true; } });
+    ["name", "ar", "fps", "bg", "vs", "dk"].forEach(function (k) {
+      if (f[k] === fs[k]) return;
+      if (k in fs) p[k] = fs[k]; else delete p[k];
+      changed = true;
+    });
     if (changed) p.m = tick(p.m, now);
     Object.keys(p.items).forEach(function (k) {
       if (!s.items[k]) { p.tombs[k] = tick(p.items[k].m, now); delete p.items[k]; }
@@ -607,7 +651,91 @@
   }
   function exportName(name, ext) {
     var base = String(name || "montage").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "montage";
-    return base + "." + (ext === "webm" || ext === "png" ? ext : "mp4");
+    return base + "." + (EXTS.indexOf(ext) >= 0 ? ext : "mp4");
+  }
+  var EXTS = ["mp4", "webm", "png", "m4a", "ogg", "wav", "srt"];
+
+  // ---------- Subtitles (SRT, and WebVTT on the way in) ----------
+  var SUB_BOX = { x: 0.05, y: 0.8, w: 0.9, h: 0.14 };
+  var MAX_CUES = 1500;
+  function cueTime(s) {
+    var m = /^(?:(\d{1,3}):)?(\d{1,2}):(\d{1,2})(?:[,.](\d{1,3}))?$/.exec(String(s).trim());
+    if (!m) return NaN;
+    var ms = m[4] ? Number((m[4] + "00").slice(0, 3)) : 0;
+    return (m[1] ? Number(m[1]) * 3600 : 0) + Number(m[2]) * 60 + Number(m[3]) + ms / 1000;
+  }
+  // Text of a subtitle file → [{ start, end, text }] in time order.
+  // Markup (<i>, {\an8}, VTT cue settings) is dropped: titles are plain.
+  function parseSrt(text) {
+    var src = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+    var out = [];
+    src.split(/\n[ \t]*\n/).forEach(function (block) {
+      if (out.length >= MAX_CUES) return;
+      var lines = block.split("\n").filter(function (l, i, a) { return l.trim() || (i > 0 && i < a.length - 1); });
+      var at = -1;
+      for (var i = 0; i < lines.length && i < 3; i++) if (lines[i].indexOf("-->") >= 0) { at = i; break; }
+      if (at < 0) return;
+      var parts = lines[at].split("-->");
+      var a = cueTime(parts[0]), b = cueTime(String(parts[1] || "").trim().split(/\s+/)[0]);
+      if (!isNum(a) || !isNum(b) || !(b - a >= MIN - 1e-9) || a > MAX_DUR * 4) return;
+      var t = lines.slice(at + 1).join("\n")
+        .replace(/<[^>]*>/g, "").replace(/\{\\[^}]*\}/g, "")
+        .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ")
+        .split("\n").map(function (l) { return l.trim(); }).filter(Boolean).join("\n").slice(0, 500);
+      if (t) out.push({ start: r3(a), end: r3(b), text: t });
+    });
+    return out.sort(function (x, y) { return x.start - y.start; });
+  }
+  function srtTime(sec) {
+    var ms = Math.round(Math.max(0, sec) * 1000), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+    function pad(v, n) { v = String(v); while (v.length < n) v = "0" + v; return v; }
+    return pad(h, 2) + ":" + pad(m, 2) + ":" + pad(s, 2) + "," + pad(ms % 1000, 3);
+  }
+  // The text clips of the Text row (tt) as an SRT file, in time order.
+  function toSrt(p) {
+    var n = 0;
+    return trackItems(p, "tt").filter(function (it) { return it.text.t.trim(); }).map(function (it) {
+      n++;
+      return n + "\n" + srtTime(it.at) + " --> " + srtTime(it.at + it.d) + "\n" + it.text.t.replace(/\n{2,}/g, "\n").trim() + "\n";
+    }).join("\n");
+  }
+  // Cues → text clips on the Text row in the subtitle style (bottom
+  // band, outlined), all in one edit; newIds supplies one id per cue.
+  function addSubtitles(data, pid, cues, now, newIds) {
+    var d = clone(data), p = d.projects[pid];
+    if (!p) return d;
+    var room = MAX_ITEMS - Object.keys(p.items).length;
+    (cues || []).slice(0, Math.max(0, room)).forEach(function (c, i) {
+      var id = newIds && newIds[i];
+      if (!isId(id) || p.items[id]) return;
+      var it = normItem({
+        id: id, k: "title", tr: "tt", at: c.start, d: c.end - c.start, box: SUB_BOX, m: tick(p.tombs[id], now),
+        text: { t: c.text, f: "sans", sz: 5.5, col: "#ffffff", ol: "#000000", al: "c", an: "none" }
+      }, id);
+      if (it) p.items[id] = it;
+    });
+    return merge(d, null);
+  }
+
+  // Freeze frame: a still picture (pic, the frame at t) is held for
+  // `hold` seconds inside a main video clip: the clip splits at t and
+  // the still goes between the two parts. ids = { tail, still }.
+  function freezeAt(data, pid, iid, t, pic, hold, now, ids) {
+    var p0 = data && data.projects && data.projects[pid], it = p0 && p0.items[iid];
+    if (!it || it.tr !== "main" || it.k !== "video" || !isPicture(pic) || !ids || !isId(ids.still)) return data;
+    var pl = placeOf(p0, iid), local = t - pl.start, d = data, after = iid;
+    if (local >= MIN && pl.end - pl.start - local >= MIN) {
+      d = split(d, pid, iid, t, now, ids.tail);
+      if (!d.projects[pid].items[ids.tail]) return data;
+    } else if (local < MIN) {
+      after = null;
+      var seq = mainSeq(d.projects[pid]);
+      for (var i = 0; i < seq.length; i++) if (seq[i].it.id === iid) { after = i ? seq[i - 1].it.id : null; break; }
+    }
+    return addItem(d, pid, {
+      id: ids.still, k: "image", tr: "main", src: pic, d: r3(num(hold, 2, MIN, 60)),
+      fit: it.fit, rot: it.rot, fl: it.fl, lk: it.lk, flt: it.flt, op: it.op
+    }, now, { after: after });
   }
 
   var api = {
@@ -620,7 +748,8 @@
     newProject: newProject, setProject: setProject, delProject: delProject,
     addItem: addItem, setItem: setItem, delItem: delItem, moveMain: moveMain,
     split: split, duplicate: duplicate, detachSound: detachSound, restoreProject: restoreProject, undeleteProject: undeleteProject, replaceSrc: replaceSrc,
-    projectList: projectList, fmtTime: fmtTime, exportName: exportName
+    projectList: projectList, fmtTime: fmtTime, exportName: exportName,
+    parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MontageCore = api;
