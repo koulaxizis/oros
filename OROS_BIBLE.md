@@ -4964,3 +4964,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-12 — Library / Βιβλιοθήκη phase 1: EPUB + PDF reader (#210) — 1.08.00
 - New app Library / Βιβλιοθήκη (library/, Personal, after Media Shelf): lists the EPUB and PDF books on the orOS disk (imports go to `/internal/Books`, whole-disk scan) and reads them; highlights in four colours, notes, bookmarks, search in the book, contents, Markdown export of notes. Place and marks sync (slice `library`, book id = SHA-256 of the file, so the same file on two devices is the same book). `.epub` and `.pdf` open in Library through "Open with" / Android Share (manifest + tests/fileopen.test.js rebuilt).
 - Security: EPUB chapters pass an allowlist sanitizer and render in a CSP `default-src 'none'` iframe; outside links ask first; DRM books are refused with a message. PDF through the vendored PDF.js (eval off) with a text layer. Tests: tests/library.test.js (23).
+
+### 2026-10-12 — Menu closes back after opening an app; menu and bell close each other (#211) — 1.08.01
+- Opening an app from the menu returns the menu to its boot state (all categories closed, quick search cleared), so the next open starts tidy (A74 session-only state kept).
+- Opening the menu closes the notifications panel, and the bell closes the menu (shell.js + notifications.js).
