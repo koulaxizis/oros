@@ -279,6 +279,30 @@
     }).then(function (r) { if (input.dispose) input.dispose(); return r; }, function () { if (input.dispose) input.dispose(); return null; });
   }
 
+  // frameAt(id, sec) → Promise<Blob|null>: one frame of a video file at
+  // its own size (long side at most 3840), as PNG (freeze frame).
+  function frameAt(id, sec) {
+    if (!C().isVideo(id) || !root.Mediabunny) return Promise.resolve(null);
+    return get(id).then(function (blob) {
+      if (!blob) return null;
+      var M = root.Mediabunny, input = new M.Input({ source: new M.BlobSource(blob), formats: M.ALL_FORMATS });
+      var done = function (r) { if (input.dispose) input.dispose(); return r; };
+      return input.getPrimaryVideoTrack().then(function (vt) {
+        if (!vt) return null;
+        return vt.getFirstTimestamp().then(function (off) {
+          var w = vt.displayWidth, h = vt.displayHeight, k = Math.min(1, 3840 / Math.max(w, h));
+          var sink = new M.CanvasSink(vt, { width: Math.max(2, Math.round(w * k)), height: Math.max(2, Math.round(h * k)), fit: "fill" });
+          return sink.getCanvas(off + Math.max(0, sec));
+        }).then(function (wc) {
+          if (!wc) return null;
+          var cv = wc.canvas;
+          if (cv.convertToBlob) return cv.convertToBlob({ type: "image/png" });
+          return new Promise(function (resolve) { cv.toBlob(resolve, "image/png"); });
+        });
+      }).then(done, function () { return done(null); });
+    });
+  }
+
   // ---------- sound waveforms ----------
   // peaks(id) → Promise<Uint8Array|null>: the loudest sample of every
   // 1/PEAK_RATE s (0–255), cached next to the thumbnails. Read with
@@ -347,6 +371,6 @@
 
   root.MontageMedia = {
     sniff: sniff, get: get, share: share, importFile: importFile, relink: relink,
-    thumb: thumb, peaks: peaks, PEAK_RATE: PEAK_RATE, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
+    thumb: thumb, frameAt: frameAt, peaks: peaks, PEAK_RATE: PEAK_RATE, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
   };
 })(typeof window !== "undefined" ? window : this);
