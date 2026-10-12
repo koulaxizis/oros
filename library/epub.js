@@ -763,6 +763,12 @@
       return { loc: C.makeLoc("e", idx, a), end: C.makeLoc("e", idx, b), q: cx.q, pre: cx.pre, suf: cx.suf,
                label: ti >= 0 ? toc[ti].t : LIB.t("rd.section", { n: idx + 1 }) };
     }
+    // The sentence around a selection (for the Assistant).
+    function sentenceAt(loc, end) {
+      var l = C.parseLoc(loc), e = C.parseLoc(end);
+      if (!l || l.s !== idx || !doc) return "";
+      return C.sentenceAround(text, blockStarts(), l.o, e && e.s === l.s ? e.o : l.o + 1, (doc.documentElement.lang || "").split("-")[0]);
+    }
     function clearSel() {
       try { doc.getSelection().removeAllRanges(); } catch (e) {}
       ctx.onSelect(null);
@@ -891,7 +897,7 @@
       open: open, go: go, goToc: goToc, goPct: goPct, next: next, prev: prev, lineDown: lineDown, lineUp: lineUp,
       here: here, visible: visible, selection: selection, clearSel: clearSel, paint: paint, search: search,
       applyPrefs: applyPrefs, labelOf: labelOf, tocIndex: tocIndex, resize: resize, destroy: destroy,
-      speechStart: speechStart, speechSection: speechSection, speakMark: speakMark, speakAt: speakAt
+      speechStart: speechStart, speechSection: speechSection, speakMark: speakMark, speakAt: speakAt, sentenceAt: sentenceAt
     };
   }
 

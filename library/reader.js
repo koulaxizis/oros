@@ -256,6 +256,15 @@
       cur.engine.clearSel();
       hideSel();
     }));
+    pop.appendChild(LIB.btn("icon-btn", t("look.title"), UI.dict, function () {
+      var s = cur && cur.engine.selection();
+      cur.engine.clearSel();
+      hideSel();
+      if (s) {
+        try { s.sent = cur.engine.sentenceAt(s.loc, s.end); } catch (e) { s.sent = ""; }
+        LIB.lookup.open(s, cur.book, cur.here ? cur.here.pct : 0);
+      }
+    }));
     pop.appendChild(LIB.btn("icon-btn", t("hl.find"), UI.search, function () {
       var s = cur && cur.engine.selection();
       cur.engine.clearSel();

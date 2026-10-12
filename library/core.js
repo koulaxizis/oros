@@ -19,6 +19,7 @@
 //  10. Reading stats: seconds per day and per book, per device (max merge)
 //  11. The Today line
 //  12. FB2 and CBZ turned into the files of a small EPUB
+//  13. Dictionary lookups (Wiktionary) and questions for the Assistant
 // Exposes window.LibCore (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -1140,6 +1141,93 @@
     return { meta: meta, chapters: chapters, images: images, css: CBZ_CSS };
   }
 
+  // ---------- 13. Dictionary (Wiktionary, opt-in) and the Assistant ----------
+  // A selection that can be looked up: one to three words, without the
+  // punctuation around them. → the word(s) or null.
+  function dictWord(sel) {
+    var w = squash(sel).trim().replace(/^[^0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]+|[^0-9A-Za-zÀ-ɏͰ-Ͽἀ-῿Ѐ-ӿ]+$/g, "");
+    if (!w || w.length > 60 || w.split(" ").length > 3) return null;
+    return w;
+  }
+  // The sentence(s) a selection [a, b) sits in (core.speechParts), at
+  // most max characters: the context of a word for the Assistant.
+  function sentenceAround(text, breaks, a, b, lang, max) {
+    max = max || 600;
+    var parts = speechParts(text, breaks, lang), out = [];
+    parts.forEach(function (p) { if (p.b > a && p.a < Math.max(b, a + 1)) out.push(text.slice(p.a, p.b)); });
+    var s = squash(out.join(" ")).trim();
+    return s.length > max ? s.slice(0, max - 1) + "\u2026" : s;
+  }
+  function dictUrl(word) {
+    return "https://en.wiktionary.org/api/rest_v1/page/definition/" + encodeURIComponent(word.replace(/ /g, "_")) + "?redirect=true";
+  }
+  function dictPage(word, lang) {
+    var host = lang === "el" ? "el" : "en";
+    return "https://" + host + ".wiktionary.org/wiki/" + encodeURIComponent(word.replace(/ /g, "_"));
+  }
+  // Wiktionary's definitions come as HTML: only their text is kept.
+  function htmlText(h) {
+    return squash(decodeEnt(String(h || "").replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, " ").replace(/<[^>]*>/g, ""))).trim();
+  }
+  // The REST answer { "<lang code>": [{ partOfSpeech, language,
+  // definitions: [{ definition, examples }] }] } → [{ code, name,
+  // items: [{ pos, defs: [{ d, ex }] }] }], the book's language first,
+  // then English, then the rest; at most 3 languages, 8 meanings each.
+  function dictParse(json, lang) {
+    if (!json || typeof json !== "object") return [];
+    var base = String(lang || "").toLowerCase().split("-")[0];
+    var codes = Object.keys(json).filter(function (k) { return Array.isArray(json[k]); });
+    codes.sort(function (a, b) {
+      var ra = a === base ? 0 : a === "en" ? 1 : 2, rb = b === base ? 0 : b === "en" ? 1 : 2;
+      return ra - rb || cmpStr(a, b);
+    });
+    var out = [];
+    codes.slice(0, 3).forEach(function (code) {
+      var items = [], name = "", n = 0;
+      json[code].forEach(function (e) {
+        if (!e || typeof e !== "object" || n >= 8) return;
+        if (!name && typeof e.language === "string") name = cleanText(e.language, 40);
+        var defs = [];
+        (Array.isArray(e.definitions) ? e.definitions : []).forEach(function (d) {
+          if (!d || n >= 8) return;
+          var txt = htmlText(d.definition).slice(0, 400);
+          if (!txt) return;
+          var ex = Array.isArray(d.examples) && d.examples.length ? htmlText(d.examples[0]).slice(0, 300) : "";
+          defs.push(ex ? { d: txt, ex: ex } : { d: txt });
+          n++;
+        });
+        if (defs.length) items.push({ pos: cleanText(e.partOfSpeech, 40), defs: defs });
+      });
+      if (items.length) out.push({ code: code, name: name || code, items: items });
+    });
+    return out;
+  }
+  // The question handed to the Assistant (__orosOpenAt("assistant",
+  // { ask })), at most 2000 characters; nothing is sent until you do.
+  var ASK_WORDS = {
+    en: { passage: "In the book “{t}”{by}, explain this passage to me: what it means and its context. Don't reveal anything from later in the book.",
+          word: "In the book “{t}”{by}, what does “{w}” mean in this sentence?",
+          book: "Tell me about the book “{t}”{by}{y}: what it is about, its themes and its background. I've read {p}% of it, so no spoilers beyond that." },
+    el: { passage: "Στο βιβλίο «{t}»{by}, εξήγησέ μου αυτό το απόσπασμα: τι σημαίνει και ποιο είναι το πλαίσιό του. Μη μου αποκαλύψεις τίποτα από τη συνέχεια του βιβλίου.",
+          word: "Στο βιβλίο «{t}»{by}, τι σημαίνει «{w}» σε αυτή την πρόταση;",
+          book: "Πες μου για το βιβλίο «{t}»{by}: τι πραγματεύεται, τα θέματά του και το πλαίσιό του. Έχω διαβάσει το {p}%, οπότε χωρίς αποκαλύψεις πέρα από αυτό." }
+  };
+  function askText(kind, book, opts, lang) {
+    opts = opts || {};
+    var el = lang === "el", W = ASK_WORDS[el ? "el" : "en"];
+    // Greek names can't be put in the genitive here: "(author, year)"
+    var by = el ? (book.by || book.year ? " (" + [book.by, kind === "book" ? book.year : ""].filter(Boolean).join(", ") + ")" : "")
+      : book.by ? " by " + book.by : "";
+    var y = !el && book.year ? " (" + book.year + ")" : "";
+    var head = W[kind].replace("{t}", book.title).replace("{by}", by).replace("{y}", y)
+      .replace("{p}", Math.floor((opts.pct || 0) / 10)).replace("{w}", opts.word || "");
+    var quote = squash(opts.quote || "").trim();
+    if (!quote) return head.slice(0, 2000);
+    var room = 2000 - head.length - 4;
+    if (quote.length > room) quote = quote.slice(0, Math.max(0, room - 1)) + "…";
+    return head + "\n\n" + (el ? "«" : "“") + quote + (el ? "»" : "”");
+  }
+
   var api = {
     DATA_VER: DATA_VER, MAX_BOOKS: MAX_BOOKS, MAX_MARKS: MAX_MARKS, MAX_BYTES: MAX_BYTES, NCOLORS: NCOLORS,
     TITLE_LEN: TITLE_LEN, BY_LEN: BY_LEN, NOTE_LEN: NOTE_LEN, QUOTE_LEN: QUOTE_LEN, CTX_LEN: CTX_LEN,
@@ -1157,7 +1245,7 @@
     speechParts: speechParts, speechText: speechText, guessLang: guessLang,
     mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
     bookSeconds: bookSeconds, todayLine: todayLine,
-    packBook: packBook, fb2Book: fb2Book, fb2Encoding: fb2Encoding, cbzBook: cbzBook, cbzPages: cbzPages, comicInfo: comicInfo, natCmp: natCmp, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
+    packBook: packBook, dictWord: dictWord, sentenceAround: sentenceAround, dictUrl: dictUrl, dictPage: dictPage, dictParse: dictParse, htmlText: htmlText, askText: askText, fb2Book: fb2Book, fb2Encoding: fb2Encoding, cbzBook: cbzBook, cbzPages: cbzPages, comicInfo: comicInfo, natCmp: natCmp, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LibCore = api;

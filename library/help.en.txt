@@ -19,6 +19,11 @@ The info button on a cover opens the book's details, where you can `Edit` the ti
 - `Contents` lists the chapters; `Search in the book` finds every match.
 - `Reading settings` changes text size, font (`The book's`, `Serif` or `Sans`), line spacing, margins, justified text, hyphenation, `Pages` or `Scroll`, two pages on wide screens and the theme (`orOS`, `Paper`, `Sepia`, `Night`). PDFs have zoom (`Fit width`, `Whole page`) and `Night pages`.
 
+## Look up and ask
+Select a word and pick `Look up` in the bar: its meanings come from Wiktionary. The first time, Library asks before going online; only the word is sent, to wiktionary.org, and you can turn lookups off again under the meanings. `Open in Wiktionary` shows the full entry.
+
+`Ask the Assistant` opens the orOS [Assistant](app:assistant) with a question ready: what the word means in its sentence, or what a selected passage means. A book's details have `Ask the Assistant` about the whole book, without spoilers past where you are. Nothing is sent until you send it there.
+
 ## Read aloud
 The speaker button at the bottom left (`Read aloud`) reads the book to you from the page on screen, with your device's own voices: nothing is sent anywhere. The sentence being read is marked and the pages turn by themselves, so your place moves on as you listen.
 

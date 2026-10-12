@@ -526,3 +526,38 @@ test("CBZ: pictures in natural order, ComicInfo details, kinds and filters", () 
   assert.deepEqual(C.viewBooks(s, { filter: "epub" }).map((b) => b.id), [B1]);
   assert.deepEqual(C.viewBooks(s, { filter: "cbz" }).map((b) => b.id), [B2]);
 });
+
+test("look up: the word, Wiktionary as plain text, the Assistant's question", () => {
+  assert.equal(C.dictWord("  «Χαδούλα,» "), "Χαδούλα");
+  assert.equal(C.dictWord("ice   cream."), "ice cream");
+  assert.equal(C.dictWord("one two three four"), null);
+  assert.equal(C.dictWord("…"), null);
+  assert.equal(C.dictUrl("ice cream"), "https://en.wiktionary.org/api/rest_v1/page/definition/ice_cream?redirect=true");
+  assert.equal(C.dictPage("γριά", "el"), "https://el.wiktionary.org/wiki/%CE%B3%CF%81%CE%B9%CE%AC");
+  const j = {
+    fr: [{ partOfSpeech: "Adjective", language: "French", definitions: [{ definition: "y" }] }],
+    en: [{ partOfSpeech: "Noun", language: "English", definitions: [{ definition: "x" }] }],
+    el: [{ partOfSpeech: "Noun", language: "Greek", definitions: [
+      { definition: '<a href="/wiki/old" onclick="x()">old</a> woman<script>alert(1)</script>', examples: ["<i>η γριά</i> &amp; ο γέρος"] },
+      { definition: "<img src=x onerror=alert(1)>" }] }],
+    de: [{ language: "German", definitions: [{ definition: "z" }] }],
+    other: "junk"
+  };
+  assert.deepEqual(C.dictParse(j, "el-GR"), [
+    { code: "el", name: "Greek", items: [{ pos: "Noun", defs: [{ d: "old woman", ex: "η γριά & ο γέρος" }] }] },
+    { code: "en", name: "English", items: [{ pos: "Noun", defs: [{ d: "x" }] }] },
+    { code: "de", name: "German", items: [{ pos: "", defs: [{ d: "z" }] }] }]);
+  assert.deepEqual(C.dictParse(null, "en"), []);
+  assert.deepEqual(C.dictParse({ title: "Not found" }, "en"), []);
+  const bk = { title: "Ζορμπάς", by: "Ν. Καζαντζάκης", year: 1946 };
+  assert.equal(C.askText("word", bk, { word: "γριά", quote: "Η γριά Χαδούλα" }, "el"),
+    "Στο βιβλίο «Ζορμπάς» (Ν. Καζαντζάκης), τι σημαίνει «γριά» σε αυτή την πρόταση;\n\n«Η γριά Χαδούλα»");
+  assert.match(C.askText("book", bk, { pct: 374 }, "el"), /^Πες μου για το βιβλίο «Ζορμπάς» \(Ν\. Καζαντζάκης, 1946\): .*το 37%/);
+  const tx = "Κεφάλαιο 1Η γριά Χαδούλα ξαγρυπνούσε. Έβλεπε τον ουρανό.";
+  assert.equal(C.sentenceAround(tx, [10], 12, 16, "el"), "Η γριά Χαδούλα ξαγρυπνούσε.");
+  assert.equal(C.sentenceAround(tx, [10], 30, 45, "el"), "Η γριά Χαδούλα ξαγρυπνούσε. Έβλεπε τον ουρανό.");
+  assert.match(C.askText("book", bk, { pct: 374 }, "en"), /^Tell me about the book “Ζορμπάς” by Ν\. Καζαντζάκης \(1946\).*read 37% of it/);
+  const long = C.askText("passage", bk, { quote: "λ".repeat(5000) }, "el");
+  assert.equal(long.length, 2000);
+  assert.ok(long.endsWith("…»"));
+});

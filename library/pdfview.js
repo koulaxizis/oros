@@ -582,6 +582,11 @@
       return { loc: C.makeLoc("p", i + 1, a), end: C.makeLoc("p", i + 1, b), q: cx.q, pre: cx.pre, suf: cx.suf,
                label: li >= 0 ? outline[li].t : LIB.t("rd.pageN", { n: i + 1 }) };
     }
+    function sentenceAt(loc, end) {
+      var l = C.parseLoc(loc), e = C.parseLoc(end);
+      if (!l || l.y || !texts[l.s - 1]) return "";
+      return C.sentenceAround(texts[l.s - 1], [], l.o, e && e.s === l.s ? e.o : l.o + 1, "");
+    }
     function clearSel() {
       try { document.getSelection().removeAllRanges(); } catch (e) {}
       ctx.onSelect(null);
@@ -687,7 +692,7 @@
       open: open, go: go, goToc: goToc, goPct: goPct, next: next, prev: prev, lineDown: lineDown, lineUp: lineUp,
       here: here, visible: visible, selection: selection, clearSel: clearSel, paint: paint, search: search,
       applyPrefs: applyPrefs, labelOf: labelOf, tocIndex: tocIndex, resize: resize, destroy: destroy, zoomValue: zoomValue,
-      speechStart: speechStart, speechSection: speechSection, speakMark: speakMark
+      speechStart: speechStart, speechSection: speechSection, speakMark: speakMark, sentenceAt: sentenceAt
     };
   }
 
