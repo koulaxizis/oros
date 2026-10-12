@@ -463,44 +463,121 @@
     });
   }
 
-  // ---------- Resize ----------
+  // ---------- Resize (magic resize: atelier/relayout.js) ----------
+  var RL = window.AtelierRelayout;
+  function textH(it) { return AX.textHeight(M.normItem(it)); }
+  function relaid(d, w, h, unit) { return RL.relayout(d, w, h, { unit: unit, textHeight: textH }); }
+  // this design itself, one size (undo brings the old size back)
   function resizeTo(w, h, unit) {
     AT.op(function (d, nw) {
-      var W0 = d.setup.w, H0 = d.setup.h;
-      var k = Math.min(w / W0, h / H0), ox = (w - W0 * k) / 2, oy = (h - H0 * k) / 2;
-      d.setup.w = w; d.setup.h = h;
-      d.setup.unit = unit === "mm" ? "mm" : "pt";
-      d.setup.bleed = unit === "mm" ? 3 * M.PT_PER.mm : 0;
+      var r = relaid(d, w, h, unit);
+      d.setup = r.setup;
+      d.items = r.items;
       d.m = Math.max(nw, d.m + 1);
-      d.items.forEach(function (it) {
-        if (it.ax && it.ax.bg) { it.x = 0; it.y = 0; it.w = w; it.h = h; }
-        else {
-          it.x = ox + it.x * k; it.y = oy + it.y * k; it.w *= k; it.h *= k; it.sw *= k;
-          if (it.t === "img" && it.fit === "custom") { it.ix *= k; it.iy *= k; it.isc *= k; }
-          if (it.ax && it.ax.k === "text") { it.ax.size = Math.round(it.ax.size * k * 10) / 10; it.h = AX.textHeight(M.normItem(it)); }
-        }
-        M.touch(it, nw);
-      });
+      d.items.forEach(function (it) { M.touch(it, nw); });
     });
     ED.fit();
     ED.renderPages();
   }
+  // copies in each size, saved next to this design
+  function resizeCopies(sizes) {
+    var src = AT.doc;
+    if (!src) return;
+    var name = AT.docTitle(src);
+    var list = sizes.map(function (s) {
+      var c = relaid(src, s.w, s.h, s.unit);
+      c.name = t("resize.copy", { name: name, size: s.label }).slice(0, 120);
+      return c;
+    });
+    var ids = AT.addCopies(list, src.id);
+    if (ids.length === 1) AT.toast(t("resize.made", { n: 1 }), t("resize.open"), function () { AT.openDoc(ids[0]); });
+    else AT.toast(t("resize.made", { n: ids.length }));
+  }
   function resizeDialog() {
+    var d = AT.doc;
+    if (!d) return;
+    var pick = {}, copies = true, custom = { on: false, w: Math.round(M.toUnit(d.setup.w, AT.unitLbl(d) === "mm" ? "mm" : "pt")), h: Math.round(M.toUnit(d.setup.h, AT.unitLbl(d) === "mm" ? "mm" : "pt")), unit: AT.unitLbl(d) === "mm" ? "mm" : "px" };
     AT.openDialog(t("resize.title"), function (body, close) {
       body.appendChild(el("p", "hint", t("resize.note")));
-      var list = el("div", "pn-col resize-list");
-      AT.PRESETS.list.forEach(function (p) {
-        var b = el("button", "menu-item", (AT.LANG === "el" ? p[3] : p[2]) + " · " + p[4] + " × " + p[5] + " " + p[6]);
-        b.type = "button";
-        b.addEventListener("click", function () { var s = AT.presetSize(p); close(); resizeTo(s.w, s.h, p[6]); });
-        list.appendChild(b);
+      var list = el("div", "rs-list");
+      var go = el("button", "btn primary", ""); go.type = "button";
+      var warn = el("p", "hint warn", t("resize.one"));
+      function sizes() {
+        var out = [];
+        AT.PRESETS.list.forEach(function (p, i) {
+          if (!pick[i]) return;
+          var s = AT.presetSize(p);
+          out.push({ w: s.w, h: s.h, unit: p[6], label: AT.LANG === "el" ? p[3] : p[2] });
+        });
+        if (custom.on && custom.w > 0 && custom.h > 0) {
+          var mm = custom.unit === "mm";
+          out.push({ w: mm ? M.fromUnit(custom.w, "mm") : custom.w, h: mm ? M.fromUnit(custom.h, "mm") : custom.h, unit: custom.unit,
+            label: custom.w + " × " + custom.h + " " + custom.unit });
+        }
+        return out;
+      }
+      function update() {
+        var n = sizes().length;
+        go.textContent = t("resize.go", { n: n });
+        go.disabled = !n || (!copies && n > 1);
+        warn.hidden = copies || n <= 1;
+      }
+      function row(label, sub, on, fn, extra) {
+        var r = el("label", "rs-row");
+        var cb = el("input"); cb.type = "checkbox"; cb.checked = on;
+        cb.addEventListener("change", function () { fn(cb.checked); update(); });
+        r.appendChild(cb);
+        var tx = el("span", "rs-txt");
+        tx.appendChild(el("span", "rs-name", label));
+        tx.appendChild(el("span", "rs-dim", sub));
+        r.appendChild(tx);
+        if (extra) r.appendChild(extra);
+        list.appendChild(r);
+      }
+      AT.PRESETS.list.forEach(function (p, i) {
+        var s = AT.presetSize(p);
+        var same = Math.abs(s.w - d.setup.w) < 0.5 && Math.abs(s.h - d.setup.h) < 0.5;
+        row(AT.LANG === "el" ? p[3] : p[2], p[4] + " × " + p[5] + " " + p[6] + (same ? " · " + t("resize.current") : ""), false,
+          function (v) { if (v) pick[i] = 1; else delete pick[i]; });
       });
+      // custom size
+      var cw = el("div", "rs-custom");
+      function num(lbl, key) {
+        var f = el("label", "fld");
+        f.appendChild(el("span", "fld-lbl", lbl));
+        var i = el("input", "inp num"); i.type = "number"; i.min = "1"; i.max = "20000"; i.value = custom[key];
+        i.addEventListener("input", function () { custom[key] = Math.max(0, Math.min(20000, +i.value || 0)); update(); });
+        f.appendChild(i);
+        cw.appendChild(f);
+      }
+      num(t("resize.w"), "w"); num(t("resize.h"), "h");
+      var us = el("select", "inp sm");
+      ["px", "mm"].forEach(function (u) { var o = el("option", "", u); o.value = u; if (u === custom.unit) o.selected = true; us.appendChild(o); });
+      us.addEventListener("change", function () { custom.unit = us.value; update(); });
+      cw.appendChild(us);
+      row(t("resize.custom"), "", false, function (v) { custom.on = v; });
+      list.appendChild(cw);
       body.appendChild(list);
+      var keep = el("label", "rs-keep");
+      var kc = el("input"); kc.type = "checkbox"; kc.checked = true;
+      kc.addEventListener("change", function () { copies = kc.checked; update(); });
+      keep.appendChild(kc);
+      keep.appendChild(el("span", "", t("resize.copies")));
+      body.appendChild(keep);
+      body.appendChild(warn);
       var act = el("div", "dlg-actions");
       var c = el("button", "btn", t("btn.cancel")); c.type = "button";
       c.addEventListener("click", close);
-      act.appendChild(c);
+      go.addEventListener("click", function () {
+        var s = sizes();
+        if (!s.length) return;
+        close();
+        if (copies) resizeCopies(s);
+        else resizeTo(s[0].w, s[0].h, s[0].unit);
+      });
+      act.appendChild(c); act.appendChild(go);
       body.appendChild(act);
+      update();
     }, true);
   }
 

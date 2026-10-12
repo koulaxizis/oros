@@ -20,8 +20,11 @@
 //   - organise: star, read / unread, archive, spam / not spam, move,
 //     delete (to Trash with Undo; erase in Trash / Spam), selection
 //     of many messages, swipe on touch (right archive, left delete)
-//   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body } })
-//     opens a prefilled draft (never sends by itself)
+//   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body,
+//     attach?: [{ name?, path } | { name, type?, b64 }] } }) opens a
+//     prefilled draft (never sends by itself); path = a file on the
+//     orOS disk (/internal/…), b64 = the file's bytes in base64
+
 // Data:
 //   - synced slice "mail" (oros-mail-data): accounts WITHOUT
 //     passwords, relay address, senders with images allowed;
@@ -192,6 +195,7 @@
       "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it.",
       "cmp.attach": "Attach files", "cmp.fromFiles": "From Files", "cmp.unattach": "Remove {name}", "cmp.attTotal": "Together {size} (up to {max})",
       "cmp.attBig": "Attached files can be up to {max} together.", "cmp.attFail": "The file could not be read.",
+      "cmp.attHanded": "{n} of the files could not be attached (missing, or over {max} together).",
       "files.title": "orOS Files", "files.up": "Up", "files.empty": "This folder is empty.", "files.err": "Files could not be read.",
       "rte.bar": "Formatting", "rte.b": "Bold (Ctrl+B)", "rte.i": "Italic (Ctrl+I)", "rte.u": "Underline (Ctrl+U)",
       "rte.ul": "Bulleted list", "rte.ol": "Numbered list", "rte.link": "Link (Ctrl+K)", "rte.linkAsk": "Link address (web or e-mail):",
@@ -353,6 +357,7 @@
       "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν.",
       "cmp.attach": "Επισύναψη αρχείων", "cmp.fromFiles": "Από τα Αρχεία", "cmp.unattach": "Αφαίρεση: {name}", "cmp.attTotal": "Μαζί {size} (έως {max})",
       "cmp.attBig": "Τα συνημμένα μπορούν να είναι έως {max} μαζί.", "cmp.attFail": "Το αρχείο δεν διαβάστηκε.",
+      "cmp.attHanded": "{n} από τα αρχεία δεν επισυνάφθηκαν (λείπουν ή ξεπερνούν μαζί τα {max}).",
       "files.title": "Αρχεία orOS", "files.up": "Πάνω", "files.empty": "Ο φάκελος είναι άδειος.", "files.err": "Τα Αρχεία δεν διαβάστηκαν.",
       "rte.bar": "Μορφοποίηση", "rte.b": "Έντονα (Ctrl+B)", "rte.i": "Πλάγια (Ctrl+I)", "rte.u": "Υπογράμμιση (Ctrl+U)",
       "rte.ul": "Λίστα με κουκκίδες", "rte.ol": "Αριθμημένη λίστα", "rte.link": "Σύνδεσμος (Ctrl+K)", "rte.linkAsk": "Διεύθυνση συνδέσμου (web ή email):",
@@ -1996,6 +2001,39 @@
     ppt: "application/vnd.ms-powerpoint", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     odt: "application/vnd.oasis.opendocument.text", ods: "application/vnd.oasis.opendocument.spreadsheet",
     mp3: "audio/mpeg", mp4: "video/mp4", ics: "text/calendar", vcf: "text/vcard", html: "text/html", svg: "image/svg+xml" };
+  // Files another app hands to compose (deep link `attach`, JSON):
+  // { name?, path } a file on the orOS disk under /internal, or
+  // { name, type?, b64 } its bytes. Up to 10, ATT_MAX together.
+  // → Promise of { files: [{ name, type, bin }], failed }
+  var MAX_HANDED = 10;
+  function diskPath(p) {
+    if (typeof p !== "string" || p.length > 1000 || p.indexOf("/internal/") !== 0) return false;
+    return p.split("/").slice(2).every(function (seg) { return seg && seg !== "." && seg !== ".." && !/[\x00-\x1f]/.test(seg); });
+  }
+  function handedFiles(list) {
+    list = Array.isArray(list) ? list : [];
+    var fs = filesApi(), total = 0, failed = Math.max(0, list.length - MAX_HANDED);
+    return list.slice(0, MAX_HANDED).reduce(function (p, a) {
+      return p.then(function (out) {
+        var name = a && typeof a.name === "string" ? a.name.replace(/[\x00-\x1f\/\\]/g, "").trim().slice(0, 200) : "";
+        var get = null;
+        if (a && typeof a.b64 === "string" && a.b64.length <= Math.ceil(ATT_MAX / 3) * 4 + 4) {
+          get = Promise.resolve().then(function () { return atob(a.b64.replace(/\s+/g, "")); });
+        } else if (a && fs && diskPath(a.path)) {
+          if (!name) name = a.path.replace(/^.*\//, "").slice(0, 200);
+          get = fs.readBlob(a.path).then(function (b) { return b && b.size <= ATT_MAX ? blobBin(b) : null; });
+        }
+        if (!get) { failed++; return out; }
+        return get.then(function (bin) {
+          if (typeof bin !== "string" || total + bin.length > ATT_MAX) { failed++; return out; }
+          total += bin.length;
+          var type = a.type && typeof a.type === "string" && /^[\w.+-]+\/[\w.+-]+$/.test(a.type) ? a.type.toLowerCase() : mimeOf(name);
+          out.push({ name: name || "attachment", type: type, bin: bin });
+          return out;
+        }, function () { failed++; return out; });
+      });
+    }, Promise.resolve([])).then(function (files) { return { files: files, failed: failed }; });
+  }
   function mimeOf(name) {
     var ext = (/\.([a-z0-9]{1,5})$/i.exec(name || "") || ["", ""])[1].toLowerCase();
     return EXT_TYPES[ext] || "application/octet-stream";
@@ -3029,7 +3067,7 @@
     init = init || {};
     if (!data.accounts.length) { showToast(t("cmp.noacct")); acctDialog(null); return; }
     var acct = acctById(init.acct) || curAcct();
-    var dirty = !!init.outId;
+    var dirty = !!init.outId || !!init.handed;
     var draftRef = init.draft || null;   // its copy in Drafts on the server
     editingOut = init.outId || null;
     var dlg = makeDialog("ml-compose", true);
@@ -3192,6 +3230,7 @@
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
     form.appendChild(errP);
+    if (init.handedFailed) errP.textContent = t("cmp.attHanded", { n: init.handedFailed, max: fmtSize(ATT_MAX) });
 
     form.addEventListener("input", function () { dirty = true; });
     if (fFrom) fFrom.addEventListener("change", function () {
@@ -4812,17 +4851,26 @@
   //    when the message is in its cached list, the message. Unknown
   //    account → no-op (returns false).
   //  - the Today summary: { acct, folder } (no uid) opens that folder.
-  //  - other apps (Reader…): { compose:{ to?, subject?, body? } } opens
-  //    a prefilled draft, plain text; the person presses Send.
+  //  - other apps (Reader, Invoices…): { compose:{ to?, subject?, body?,
+  //    attach? } } opens a prefilled draft, plain text, with the files
+  //    (handedFiles); the person presses Send.
   // A dialog open (maybe with unsaved edits) → no-op (returns false).
   function openSearchTarget(target) {
     if (!target || typeof target !== "object" || document.querySelector("dialog[open]")) return false;
     var c = target.compose;
     if (c && typeof c === "object") {
-      openCompose({
+      var init = {
         to: C.parseList(typeof c.to === "string" ? c.to.slice(0, 2000) : "").list.slice(0, MAX_RCPT),
         subject: typeof c.subject === "string" ? c.subject.replace(/\s+/g, " ").trim().slice(0, 300) : "",
         text: typeof c.body === "string" ? c.body.slice(0, 20000) : ""
+      };
+      if (!Array.isArray(c.attach) || !c.attach.length) { openCompose(init); return true; }
+      handedFiles(c.attach).then(function (r) {
+        if (document.querySelector("dialog[open]")) return;
+        init.attachments = r.files;
+        init.handedFailed = r.failed;
+        init.handed = r.files.length > 0;
+        openCompose(init);
       });
       return true;
     }

@@ -31,7 +31,7 @@ A receipt is usually paid at once: leave `Paid now` ticked when you issue it.
 - A recorded invoice (`Record an invoice issued elsewhere`) keeps the number, net and VAT amounts and the ΜΑΡΚ of an invoice issued in myDATA or by your provider. `Attach` keeps its official PDF on the orOS disk, under Invoices. Payments and statuses work as for any invoice.
 
 ## PDF, sending and sharing
-`PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in: attach the PDF you saved. `Mark as sent` notes the date you sent it.
+`PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in. In Mail the PDF is already attached (a recorded invoice brings its official PDF) and a copy stays on the orOS disk under Invoices; in another email app, attach the PDF you saved. `Mark as sent` notes the date you sent it.
 
 ## Clients
 On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address, country, email and phone. `From Contacts` and `From Quote` bring in people you already have. A client shows how many documents it has and what it still owes; open it to make a `New invoice` or `Show documents`. Changing a client never changes documents already issued: they keep the details they were issued with.
