@@ -4977,3 +4977,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - New app Montage / Μοντάζ (montage/, Video, after Television), merged in #199 and registered now: timeline with videos, pictures, music, voice-over and titles; cuts, transitions, filters; MP4 (H.264 + AAC) or WebM export frame by frame through WebCodecs + Mediabunny 1.60.0 (MPL-2.0, vendored, credited in CREDITS.md and the shell). Media stay on the device unless a project turns on media sync.
 - `.mp4 .m4v .webm .mov` open in Montage through "Open with" (own 4 GB cap, `maxFor()` in fileopen.js; manifest file_handlers + share_target rebuilt); factory reset removes Montage's device media (OPFS `montage-media`, IDB `oros-montage-media`, `oros-montage-thumbs`). Precache: app files, help pages, vendor/mediabunny.min.js.
 - Version 1.09.00 skipped (briefly on main without Montage).
+
+### 2026-10-12 — Library ↔ Media Shelf link: Library phase 1b + Media Shelf 1.4.0 (#213) — 1.11.00
+- Library: a book's details have **Add to Media Shelf** (then **Open in Media Shelf**), through `__orosOpenAt("shelf", { addBook: { lib, title, by, year, size } })`. EPUB books get a page estimate (~2400 bytes per page). Library only reads `oros-shelf-data`.
+- Media Shelf 1.4.0: a linked book keeps `lib` (Library book id) as an extra field; `libSync` on boot and when the Shelf comes back into view reads `oros-library-data` (read only) and logs progress as normal Shelf entries (pages only forward, start added from the wishlist, finish only when Library marked it finished on or after the run began; dropped/finished items untouched). **Read in Library** opens the book at your place. No schema change. Tests on both sides.
+- Bible: Part VI "Library ↔ Media Shelf (BR-LIB-SHELF)".
