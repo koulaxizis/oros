@@ -8,7 +8,11 @@
 //           fm: { text, color, ring, vanish, faded } }
 //     text    plain text, up to 1,000 characters, line breaks kept
 //     color   one of COLORS
-//     ring    { at } or null: rings at that moment
+//     ring    { at } or null: rings at that moment; a repeating
+//             ring is { at, rep, t }: rep "daily" | "weekdays" |
+//             "weekly", t = the planned moment of this round (at
+//             moves with Snooze, t does not); Done moves both to the
+//             next round after now
 //     vanish  { at, onDone } or null: fades at `at` (0 = no time),
 //             and/or when the ring is answered with Done (onDone)
 //     faded   0, or the moment it faded (in the Faded bin)
@@ -39,6 +43,7 @@
   var TOMB_MS   = 30 * DAY;
   var SNOOZE_MS = 10 * 60000;
   var ID_RE     = /^[A-Za-z0-9_-]{1,64}$/;
+  var REPEATS   = ["daily", "weekdays", "weekly"];
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
   function stamp(v) { return isInt(v) && v > 0 ? v : 0; }
@@ -54,9 +59,12 @@
     return s.replace(/\s+$/, "");
   }
   function normColor(c) { return COLORS.indexOf(c) >= 0 ? c : COLORS[0]; }
+  // A ring without a repeat stays { at } (the v1 bytes, so devices on
+  // v1.0 and v1.1 agree on every note that does not repeat).
   function normRing(r) {
     if (!r || typeof r !== "object" || !isInt(r.at) || r.at <= 0) return null;
-    return { at: r.at };
+    if (REPEATS.indexOf(r.rep) < 0) return { at: r.at };
+    return { at: r.at, rep: r.rep, t: isInt(r.t) && r.t > 0 ? r.t : r.at };
   }
   function normVanish(v) {
     if (!v || typeof v !== "object") return null;
@@ -126,7 +134,7 @@
   function canonNote(n) {
     return {
       id: n.id, text: n.text, color: n.color,
-      ring: n.ring ? { at: n.ring.at } : null,
+      ring: n.ring ? (n.ring.rep ? { at: n.ring.at, rep: n.ring.rep, t: n.ring.t } : { at: n.ring.at }) : null,
       vanish: n.vanish ? { at: n.vanish.at, onDone: n.vanish.onDone } : null,
       faded: n.faded, ct: n.ct,
       fm: { text: n.fm.text, color: n.fm.color, ring: n.fm.ring, vanish: n.fm.vanish, faded: n.fm.faded }
@@ -227,16 +235,55 @@
   }
   function setText(data, id, text, now) { return setField(data, id, "text", text, now); }
   function setColor(data, id, color, now) { return setField(data, id, "color", color, now); }
-  function setRing(data, id, at, now) { return setField(data, id, "ring", at ? { at: at } : null, now); }
+  // rep: "" (once) or one of REPEATS; a new time starts a new series.
+  function setRing(data, id, at, now, rep) {
+    return setField(data, id, "ring", at ? { at: at, rep: rep || "", t: at } : null, now);
+  }
+  // Change only the repeat of the ring the note has.
+  function setRepeat(data, id, rep, now) {
+    var n = find(merge(data, null), id);
+    if (!n || !n.ring) return merge(data, null);
+    var t = n.ring.rep ? n.ring.t : n.ring.at;
+    return setField(data, id, "ring", REPEATS.indexOf(rep) >= 0 ? { at: n.ring.at, rep: rep, t: t } : { at: t }, now);
+  }
+
+  // The first round of a repeat after `after`, counted from the planned
+  // moment t in local time (so 09:00 stays 09:00 across a clock change).
+  function nextRound(rep, t, after) {
+    if (REPEATS.indexOf(rep) < 0 || !isInt(t) || t <= 0) return 0;
+    var d = new Date(t), y = d.getFullYear(), mo = d.getMonth(), day = d.getDate();
+    var h = d.getHours(), mi = d.getMinutes(), step = rep === "weekly" ? 7 : 1;
+    // jump close to `after` first: a long-closed orOS must not loop for years
+    var gap = Math.floor((after - t) / DAY) - 2;
+    if (gap > 0) day += rep === "weekly" ? gap - gap % 7 : gap;
+    for (var i = 0; i < 40; i++) {
+      day += step;
+      var x = new Date(y, mo, day, h, mi, 0, 0), wd = x.getDay();
+      if (rep === "weekdays" && (wd === 0 || wd === 6)) continue;
+      if (x.getTime() > after) return x.getTime();
+    }
+    return 0;
+  }
   function setVanish(data, id, v, now) { return setField(data, id, "vanish", v, now); }
 
   // The ring answered: gone; with "vanish when done" the note fades now.
+  // A repeating ring moves on to its next round instead (and the note
+  // stays: "vanish when done" is for rings that happen once).
   function ringDone(data, id, now) {
+    var n0 = find(merge(data, null), id);
+    if (n0 && n0.ring && n0.ring.rep) {
+      var nx = nextRound(n0.ring.rep, n0.ring.t, Math.max(now, n0.ring.t));
+      return setField(data, id, "ring", nx ? { at: nx, rep: n0.ring.rep, t: nx } : null, now);
+    }
     var cur = setRing(data, id, 0, now), n = find(cur, id);
     if (n && !n.faded && n.vanish && n.vanish.onDone) cur = fadeNow(cur, id, now);
     return cur;
   }
-  function snooze(data, id, now) { return setRing(data, id, now + SNOOZE_MS, now); }
+  function snooze(data, id, now) {
+    var n = find(merge(data, null), id);
+    if (n && n.ring && n.ring.rep) return setField(data, id, "ring", { at: now + SNOOZE_MS, rep: n.ring.rep, t: n.ring.t }, now);
+    return setField(data, id, "ring", { at: now + SNOOZE_MS }, now);
+  }
 
   function fadeNow(data, id, now) {
     var cur = merge(data, null), n = find(cur, id);
@@ -253,7 +300,11 @@
     var c = canonNote(n);
     c.faded = 0; c.fm.faded = Math.max(now, n.fm.faded + 1);
     c.vanish = null; c.fm.vanish = Math.max(now, n.fm.vanish + 1);
-    if (c.ring && c.ring.at <= now) { c.ring = null; c.fm.ring = Math.max(now, n.fm.ring + 1); }
+    if (c.ring && c.ring.at <= now) {
+      var nx = c.ring.rep ? nextRound(c.ring.rep, c.ring.t, Math.max(now, c.ring.t)) : 0;
+      c.ring = nx ? { at: nx, rep: c.ring.rep, t: nx } : null;
+      c.fm.ring = Math.max(now, n.fm.ring + 1);
+    }
     return merge(cur, { notes: [c] });
   }
   function remove(data, id, now) {
@@ -376,6 +427,27 @@
     var words = fold(q).split(/\s+/).filter(Boolean), f = fold(n.text);
     return words.every(function (w) { return f.indexOf(w) >= 0; });
   }
+  // Send to To-Do (BR-TD-ADD items): the open tick-box lines, one task
+  // each; a note without open tick boxes is one task (first line, the
+  // rest as its note).
+  function todoItems(text) {
+    var ls = lines(text), out = [];
+    ls.forEach(function (l) { if (l.box && !l.done && l.text.trim()) out.push({ text: l.text.trim().slice(0, 300) }); });
+    if (out.length) return out;
+    var first = firstLine(text);
+    if (!first) return [];
+    var all = String(text || "").split("\n"), i = 0;
+    while (i < all.length && !all[i].trim()) i++;
+    var rest = all.slice(i + 1).join("\n").trim();
+    var it = { text: first.slice(0, 300) };
+    if (rest) it.note = rest.slice(0, 1000);
+    return [it];
+  }
+  // Copy to Notes (Notes' { add: { title, text } } receiver).
+  function notePage(text) {
+    return { title: firstLine(text).slice(0, 200), text: String(text || "") };
+  }
+
   // Every note on the desktop, blank line between notes.
   function toText(data) {
     return newestFirst(live(data)).map(function (n) { return n.text; }).join("\n\n—\n\n") + "\n";
@@ -443,15 +515,15 @@
 
   var api = {
     VER: DATA_VER, MAX_LEN: MAX_LEN, MAX_NOTES: MAX_NOTES, COLORS: COLORS.slice(), FIELDS: FIELDS.slice(),
-    BIN_MS: BIN_MS, SNOOZE_MS: SNOOZE_MS, SIZE: SIZE, ID_RE: ID_RE,
+    BIN_MS: BIN_MS, SNOOZE_MS: SNOOZE_MS, SIZE: SIZE, ID_RE: ID_RE, REPEATS: REPEATS.slice(),
     cleanText: cleanText, normNote: normNote, mtime: mtime, merge: merge, empty: empty,
     find: find, live: live, faded: faded, newestFirst: newestFirst, isRinging: isRinging, purgeAt: purgeAt,
     newId: newId, create: create, setField: setField, setText: setText, setColor: setColor,
-    setRing: setRing, setVanish: setVanish, ringDone: ringDone, snooze: snooze, fadeNow: fadeNow,
+    setRing: setRing, setRepeat: setRepeat, nextRound: nextRound, setVanish: setVanish, ringDone: ringDone, snooze: snooze, fadeNow: fadeNow,
     restore: restore, remove: remove, revive: revive,
     due: due, ringing: ringing, nextEvent: nextEvent,
     pick: pick, toLocalInput: toLocalInput, fromLocalInput: fromLocalInput,
-    lines: lines, toggleLine: toggleLine, firstLine: firstLine, fold: fold, matches: matches, toText: toText,
+    lines: lines, toggleLine: toggleLine, firstLine: firstLine, todoItems: todoItems, notePage: notePage, fold: fold, matches: matches, toText: toText,
     clampSize: clampSize, normPos: normPos, box: box, overlaps: overlaps, place: place, tidy: tidy
   };
 

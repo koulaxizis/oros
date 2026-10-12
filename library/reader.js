@@ -91,6 +91,10 @@
       return c.engine.open(bytes, start).then(function (info) {
         if (cur !== c) return;
         c.toc = info && info.toc || [];
+        // books added before page estimates: fill them in once
+        if (info && info.pages && !book.pages && book.fmt === "epub") {
+          c.book = LIB.putBook({ id: book.id, pages: info.pages }) || c.book;
+        }
         c.ready = true;
         c.engine.applyPrefs(LIB.prefs);
         c.engine.paint(LIB.marksOf(book.id));
