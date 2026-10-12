@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sticky Notes · orOS</title>
+
+  <link rel="stylesheet" href="stickies.css?v=1.05.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Sticky Notes</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="new-btn" class="chip pri" data-i18n="btn.new">New note</button>
+    <button type="button" id="more-btn" class="icon-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-notes" aria-controls="v-notes" data-i18n="tab.notes">On the desktop</button>
+    <button type="button" role="tab" id="tab-faded" aria-controls="v-faded" data-i18n="tab.faded">Faded</button>
+  </nav>
+
+  <main id="main">
+    <section id="v-notes" class="view" role="tabpanel" aria-labelledby="tab-notes">
+      <label for="q" class="sr-only" data-i18n="f.search">Search your notes</label>
+      <input type="search" id="q" autocomplete="off">
+      <p id="hidden-hint" class="hint" hidden></p>
+      <ul id="list" class="notes"></ul>
+      <p id="empty" class="hint"></p>
+    </section>
+
+    <section id="v-faded" class="view" role="tabpanel" aria-labelledby="tab-faded" hidden>
+      <p class="hint" data-i18n="faded.hint">Notes that faded stay here for 7 days. Restore puts one back on the desktop.</p>
+      <ul id="faded-list" class="notes"></ul>
+      <p id="faded-empty" class="hint" data-i18n="faded.empty">Nothing has faded.</p>
+    </section>
+
+    <section id="standalone" class="view" hidden>
+      <p class="hint" data-i18n="standalone">Sticky Notes lives on the orOS desktop. Open it from inside orOS.</p>
+    </section>
+  </main>
+
+  <!-- Settings -->
+  <div id="scrim" hidden></div>
+  <div id="more" class="dialog" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="dlg-head">
+      <h2 id="more-title" data-i18n="more.title">Sticky Notes settings</h2>
+      <span class="spacer"></span>
+      <button type="button" id="more-close" class="icon-btn"></button>
+    </div>
+
+    <h3 data-i18n="sec.desk">On this device</h3>
+    <label class="check" for="show-on">
+      <input type="checkbox" id="show-on">
+      <span data-i18n="set.show">Show sticky notes on the desktop</span>
+    </label>
+    <div class="row">
+      <label for="sound-sel" data-i18n="set.sound">Ring sound</label>
+      <select id="sound-sel">
+        <option value="bell" data-i18n="snd.bell">Bell</option>
+        <option value="dingdong" data-i18n="snd.dingdong">Ding-dong</option>
+        <option value="wind" data-i18n="snd.wind">Wind chime</option>
+        <option value="off" data-i18n="snd.off">No sound</option>
+      </select>
+      <button type="button" id="sound-test" class="chip" data-i18n="btn.test">Play</button>
+    </div>
+    <label class="check" for="pop-on">
+      <input type="checkbox" id="pop-on">
+      <span data-i18n="set.pop">A soft sound when a note fades</span>
+    </label>
+    <div>
+      <span id="col-lbl" class="lbl" data-i18n="set.color">Colour of new notes</span>
+      <div id="colors" class="swatches" role="radiogroup" aria-labelledby="col-lbl"></div>
+    </div>
+    <p class="hint small" data-i18n="set.hint">These settings stay on this device. The notes themselves follow you to every device through orOS sync.</p>
+
+    <h3 data-i18n="sec.tools">Notes</h3>
+    <div class="actions">
+      <button type="button" id="tidy-btn" class="chip" data-i18n="btn.tidy">Tidy up the desktop</button>
+      <button type="button" id="exp-btn" class="chip" data-i18n="btn.export">Export as text</button>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.05.00"></script>
+  <script src="stickies.js?v=1.05.00"></script>
+
+</body>
+</html>

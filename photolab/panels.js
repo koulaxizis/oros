@@ -33,6 +33,10 @@
     crop: svg('<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>'),
     brush: svg('<path d="M18 3l3 3-9 9-3-3z"/><path d="M9 12c-3 0-5 2-5 5 0 1-1 2-2 2 2 2 7 2 9-1 1-2 1-3 1-3"/>'),
     eraser: svg('<path d="M20 20H8l-5-5a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l6 6a2 2 0 0 1 0 3l-8 8"/><path d="M6 11l7 7"/>'),
+    clone: svg('<path d="M9 3h6v5l3 3v3H6v-3l3-3z"/><path d="M5 18h14v3H5z"/>'),
+    heal: svg('<rect x="2" y="8" width="20" height="8" rx="4" transform="rotate(-45 12 12)"/><path d="M10 12h.01M14 12h.01M12 10h.01M12 14h.01"/>'),
+    tone: svg('<circle cx="9" cy="9" r="6"/><path d="M13.5 13.5L21 21"/>'),
+    smudge: svg('<path d="M8 13V5a2 2 0 0 1 4 0v6"/><path d="M12 11V9a2 2 0 0 1 4 0v4c0 4-2 8-6 8-3 0-5-2-6-5l-1-3a1.5 1.5 0 0 1 3-1l1 2"/>'),
     fill: svg('<path d="M19 11L11 3 3 11l8 8z"/><path d="M5 9h12"/><path d="M20 14s2 3 2 4a2 2 0 0 1-4 0c0-1 2-4 2-4z"/>'),
     gradient: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l6-6M3 21L21 3M9 21l12-12M15 21l6-6"/>'),
     picker: svg('<path d="M2 22l1-4 10-10 3 3-10 10z"/><path d="M14 4l3-1 4 4-1 3-3 1-4-4z"/>'),
@@ -263,17 +267,21 @@
 
   function exportDialog(toPictures) {
     var d = st.doc;
-    var fmt = select([["png", "PNG"], ["jpg", "JPG"], ["webp", "WebP"]], pr().exportFmt);
+    var fmt = select([["png", "PNG"], ["jpg", "JPG"], ["webp", "WebP"], ["psd", t("fmt.psd")], ["ora", t("fmt.ora")]], pr().exportFmt);
     var q = range(t("f.quality"), pr().exportQ, 10, 100);
-    var scale = numIn(100, 1, 400), size = el("p", "hint"), jpg = hint(t("hint.jpg"));
+    var scale = numIn(100, 1, 400), scaleF = field(t("f.scalePct"), scale);
+    var size = el("p", "hint"), jpg = hint(t("hint.jpg")), layered = hint(t("hint.layered"));
     function upd() {
-      q.hidden = fmt.value === "png";
+      var lay = fmt.value === "psd" || fmt.value === "ora";
+      q.hidden = fmt.value === "png" || lay;
+      scaleF.hidden = lay;
       jpg.hidden = fmt.value !== "jpg";
-      var k = Math.max(1, +scale.value || 100) / 100;
+      layered.hidden = !lay;
+      var k = lay ? 1 : Math.max(1, +scale.value || 100) / 100;
       size.textContent = t("export.size", { w: Math.max(1, Math.round(d.w * k)), h: Math.max(1, Math.round(d.h * k)) });
     }
     fmt.addEventListener("change", upd); scale.addEventListener("input", upd); upd();
-    var body = [field(t("f.format"), fmt), q, field(t("f.scalePct"), scale), size, jpg];
+    var body = [field(t("f.format"), fmt), q, scaleF, size, jpg, layered];
     PL.dialog({
       title: t(toPictures ? "dlg.toPictures" : "dlg.export"), ok: t(toPictures ? "btn.save" : "btn.export"), body: body,
       onOk: function () {
@@ -286,21 +294,28 @@
 
   // Adjustments with a live preview of the active layer.
   var adjPreview = null;
+  // Filters (photolab/filters.js) share the dialog and the preview.
+  function isFilter(kind) { return PL.F.IDS.indexOf(kind) >= 0; }
   function adjustDialog(kind) {
-    var tg = ops().adjustTarget();
+    var isF = isFilter(kind);
+    var tg = isF ? ops().filterTarget() : ops().adjustTarget();
     if (!tg) return;
     var p = {}, body = [], seq = 0, timer = null;
+    function run() {
+      if (isF) return ops().filtered(tg, kind, p);
+      return ops().adjusted(tg, kind === "looks" ? "preset" : kind, p).then(function (img) { return { r: tg.r, img: img }; });
+    }
     function preview() {
       clearTimeout(timer);
       timer = setTimeout(function () {
         var my = ++seq;
-        ops().adjusted(tg, kind === "looks" ? "preset" : kind, p).then(function (img) {
+        run().then(function (res) {
           if (my !== seq || !adjPreview) return;
-          var c = PL.view.canvas(img.w, img.h);
+          var img = res.img, c = PL.view.canvas(img.w, img.h);
           c.getContext("2d").putImageData(new ImageData(img.data, img.w, img.h), 0, 0);
-          adjPreview.cv = c; PL.view.invalidate();
-        });
-      }, 60);
+          adjPreview.cv = c; adjPreview.r = res.r; PL.view.invalidate();
+        }, function () {});
+      }, isF ? 120 : 60);
     }
     function slider(key, label, v, min, max) {
       p[key] = v;
@@ -331,12 +346,38 @@
       });
       body.push(grid);
     }
+    else if (kind === "gauss") slider("r", t("f.radius"), 4, 1, 250);
+    else if (kind === "lens") slider("r", t("f.radius"), 8, 1, 60);
+    else if (kind === "motion") { slider("a", t("flt.angle"), 0, -180, 180); slider("d", t("flt.distance"), 20, 1, 500); }
+    else if (kind === "unsharp") { slider("amt", t("flt.amountPct"), 100, 1, 500); slider("r", t("f.radius"), 2, 1, 100); slider("th", t("flt.threshold"), 0, 0, 255); }
+    else if (kind === "noise") {
+      slider("amt", t("flt.amount"), 10, 1, 100);
+      p.mono = false; p.seed = 1 + Math.floor(Math.random() * 1e6);
+      var mono = check(t("flt.mono"), false);
+      mono.input.addEventListener("change", function () { p.mono = mono.input.checked; preview(); });
+      body.push(mono);
+    }
+    else if (kind === "median") slider("r", t("f.radius"), 1, 1, 10);
+    else if (kind === "pixelate") slider("s", t("flt.cell"), 10, 2, 200);
+    else if (kind === "emboss") { slider("a", t("flt.angle"), 135, -180, 180); slider("h", t("flt.height"), 3, 1, 10); slider("amt", t("flt.amountPct"), 100, 1, 500); }
+    else if (kind === "vignette") { slider("amt", t("flt.amountVig"), -50, -100, 100); slider("size", t("flt.size"), 50, 0, 100); }
+    var title = t(isF ? "fk." + kind : "adjk." + kind);
+    if (isF) body.push(hint(t("hint.filter")));
     adjPreview = { L: tg.L, r: tg.r, cv: null };
     PL.dialog({
-      title: t("adjk." + kind), ok: t("btn.apply"), body: body, wide: kind === "fx",
-      onOk: function () { adjPreview = null; ops().applyAdjust(tg, kind === "looks" ? "preset" : kind, p, t("adjk." + kind)); },
+      title: title, ok: t("btn.apply"), body: body, wide: kind === "fx",
+      onOk: function () {
+        adjPreview = null;
+        if (isF) ops().applyFilter(tg, kind, p, title);
+        else ops().applyAdjust(tg, kind === "looks" ? "preset" : kind, p, title);
+      },
       onCancel: function () { adjPreview = null; PL.view.invalidate(); }
     });
+    if (isF) preview();
+  }
+  function quickFilter(kind) {
+    var tg = ops().filterTarget();
+    if (tg) ops().applyFilter(tg, kind, {}, t("fk." + kind));
   }
   function histogram(img) {
     var h = PL.A.histogram(img), c = PL.view.canvas(256, 60), g = c.getContext("2d"), mx = 1;
@@ -443,6 +484,21 @@
       { id: "adjThreshold", run: function () { adjustDialog("threshold"); }, on: has },
       { id: "adjPosterize", run: function () { adjustDialog("posterize"); }, on: has }
     ] },
+    { id: "filter", items: [
+      { id: "fGauss", run: function () { adjustDialog("gauss"); }, on: has },
+      { id: "fMotion", run: function () { adjustDialog("motion"); }, on: has },
+      { id: "fLens", run: function () { adjustDialog("lens"); }, on: has },
+      "-",
+      { id: "fUnsharp", run: function () { adjustDialog("unsharp"); }, on: has },
+      "-",
+      { id: "fNoise", run: function () { adjustDialog("noise"); }, on: has },
+      { id: "fMedian", run: function () { adjustDialog("median"); }, on: has },
+      "-",
+      { id: "fPixelate", run: function () { adjustDialog("pixelate"); }, on: has },
+      { id: "fEmboss", run: function () { adjustDialog("emboss"); }, on: has },
+      { id: "fEdges", run: function () { quickFilter("edges"); }, on: has },
+      { id: "fVignette", run: function () { adjustDialog("vignette"); }, on: has }
+    ] },
     { id: "view", items: [
       { id: "zoomIn", k: "Ctrl+=", run: function () { PL.view.zoomStep(1); }, on: has },
       { id: "zoomOut", k: "Ctrl+-", run: function () { PL.view.zoomStep(-1); }, on: has },
@@ -541,7 +597,7 @@
     box.appendChild(cols);
   }
   function swapColors() { var x = st.fg; st.fg = st.bg; st.bg = x; PL.emit("colors"); renderTools(); }
-  var TOOL_KEYS = { move: "v", marquee: "m", lasso: "l", wand: "w", crop: "c", brush: "b", eraser: "e", fill: "g", gradient: "", picker: "i", text: "t", shape: "u", hand: "h", zoom: "z" };
+  var TOOL_KEYS = { move: "v", marquee: "m", lasso: "l", wand: "w", crop: "c", brush: "b", eraser: "e", clone: "s", heal: "j", tone: "o", smudge: "r", fill: "g", gradient: "", picker: "i", text: "t", shape: "u", hand: "h", zoom: "z" };
 
   PL.setTool = function (id, internal) {
     if (st.tool === id && !internal) {
@@ -606,6 +662,24 @@
       box.appendChild(optRange(t("f.opacity"), P[id], "opacity", 1, 100));
       box.appendChild(optRange(t("f.flow"), P[id], "flow", 1, 100));
       if (id === "brush") box.appendChild(optCheck(t("f.lockAlpha"), P.brush, "lockAlpha"));
+    } else if (id === "clone" || id === "heal" || id === "tone" || id === "smudge") {
+      var o = P[id];
+      if (id === "heal") box.appendChild(optSelect(t("f.kind"), [["heal", t("tool.heal")], ["redeye", t("rk.redeye")]], o.kind,
+        function (v) { o.kind = v; renderOptions(); }));
+      if (id === "tone") box.appendChild(optSelect(t("f.kind"), [["dodge", t("rk.dodge")], ["burn", t("rk.burn")], ["sponge", t("rk.sponge")]], o.kind,
+        function (v) { o.kind = v; renderOptions(); }));
+      box.appendChild(optRange(t("f.size"), o, "size", 1, 1000));
+      box.appendChild(optRange(t("f.hardness"), o, "hard", 1, 100));
+      if (id === "tone" && o.kind !== "sponge") box.appendChild(optSelect(t("f.range"), [["shadows", t("range.shadows")], ["mid", t("range.mid")], ["high", t("range.high")]], o.range,
+        function (v) { o.range = v; }));
+      if (id === "tone" && o.kind === "sponge") box.appendChild(optSelect(t("f.mode"), [["down", t("sat.down")], ["up", t("sat.up")]], o.sat,
+        function (v) { o.sat = v; }));
+      if (id === "tone" || id === "smudge" || (id === "heal" && o.kind === "redeye")) box.appendChild(optRange(t(id === "tone" ? "f.exposure" : "f.strength"), o, "strength", 1, 100));
+      if (id === "clone") { box.appendChild(optRange(t("f.opacity"), o, "opacity", 1, 100)); box.appendChild(optRange(t("f.flow"), o, "flow", 1, 100)); }
+      if (id === "clone" || (id === "heal" && o.kind === "heal")) {
+        box.appendChild(optButton(t("btn.setSource"), function () { PL.tools.armSource(); }));
+        box.appendChild(el("span", "opt-hint", t("hint.clone")));
+      }
     } else if (id === "marquee") {
       box.appendChild(optSelect(t("f.shape"), [["rect", t("sel.rect")], ["ellipse", t("sel.ellipse")]], P.marqueeEllipse ? "ellipse" : "rect",
         function (v) { P.marqueeEllipse = v === "ellipse"; renderTools(); }));
@@ -801,7 +875,7 @@
       if (k === "x") { swapColors(); return; }
       if (k === "d") { st.fg = "#000000"; st.bg = "#ffffff"; PL.emit("colors"); renderTools(); return; }
       if (k === "[" || k === "]") {
-        var o = PL.prefs[st.tool === "eraser" ? "eraser" : "brush"];
+        var o = PL.prefs[PL.tools.PAINTS.indexOf(st.tool) >= 0 ? st.tool : "brush"];
         o.size = Math.max(1, Math.min(1000, Math.round(o.size * (k === "]" ? 1.2 : 1 / 1.2)) + (k === "]" ? 1 : -1)));
         PL.savePrefs(); renderOptions(); PL.view.schedule(); return;
       }

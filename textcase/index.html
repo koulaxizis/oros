@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Case Converter · orOS</title>
+
+  <link rel="stylesheet" href="textcase.css?v=1.05.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Case Converter</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="words-btn" class="icon-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <main id="main">
+    <div id="layout">
+      <!-- Text -->
+      <section id="src-box" class="box">
+        <div class="box-head">
+          <label for="src" class="lbl" data-i18n="f.src">Text</label>
+          <span class="spacer"></span>
+          <button type="button" id="paste-btn" class="chip small" data-i18n="btn.paste">Paste</button>
+          <button type="button" id="clear-btn" class="chip small" data-i18n="btn.clear">Clear</button>
+        </div>
+        <textarea id="src" rows="6" autocomplete="off" spellcheck="false"></textarea>
+        <p id="counts" class="hint small" aria-live="off"></p>
+      </section>
+
+      <!-- Conversions -->
+      <section id="modes-box" class="box">
+        <nav id="tabs" role="tablist" aria-label="Conversions">
+          <button type="button" role="tab" id="tab-basic" data-tab="basic" data-i18n="tab.basic">Basic</button>
+          <button type="button" role="tab" id="tab-greek" data-tab="greek" data-i18n="tab.greek">Greek</button>
+          <button type="button" role="tab" id="tab-code" data-tab="code" data-i18n="tab.code">Code</button>
+          <button type="button" role="tab" id="tab-styles" data-tab="styles" data-i18n="tab.styles">Styles</button>
+        </nav>
+        <div id="modes" class="chips" role="radiogroup" aria-labelledby="tabs"></div>
+        <div class="opts">
+          <label class="opt" for="lang-sel">
+            <span data-i18n="f.lang">Language</span>
+            <select id="lang-sel"></select>
+          </label>
+          <label class="check" for="sel-on">
+            <input type="checkbox" id="sel-on">
+            <span data-i18n="opt.sel">Selection only</span>
+          </label>
+          <label class="check" for="keep-greek" id="keep-greek-row" hidden>
+            <input type="checkbox" id="keep-greek">
+            <span data-i18n="opt.keepGreek">Keep Greek letters</span>
+          </label>
+        </div>
+        <p id="mode-hint" class="hint small" aria-live="polite"></p>
+      </section>
+
+      <!-- Result -->
+      <section id="out-box" class="box">
+        <div class="box-head">
+          <label for="out" class="lbl" data-i18n="f.out">Result</label>
+          <span class="spacer"></span>
+          <button type="button" id="tt-btn" class="chip small" data-i18n="btn.tt" hidden>Text Tools</button>
+          <button type="button" id="use-btn" class="chip small" data-i18n="btn.use">Use as text</button>
+          <button type="button" id="copy-btn" class="chip small primary" data-i18n="btn.copy">Copy</button>
+        </div>
+        <textarea id="out" rows="6" readonly spellcheck="false"></textarea>
+      </section>
+    </div>
+  </main>
+
+  <!-- My words -->
+  <div id="scrim" hidden></div>
+  <div id="words" class="dialog" role="dialog" aria-modal="true" aria-labelledby="words-title" hidden>
+    <div class="dlg-head">
+      <h2 id="words-title" data-i18n="words.title">My words</h2>
+      <span class="spacer"></span>
+      <button type="button" id="words-close" class="icon-btn"></button>
+    </div>
+    <p class="hint small" data-i18n="words.hint"></p>
+    <form id="word-form" class="word-form" autocomplete="off">
+      <label for="word-in" class="sr-only" data-i18n="f.word">New word</label>
+      <input type="text" id="word-in" maxlength="40" spellcheck="false">
+      <button type="submit" id="word-add" class="chip primary" data-i18n="btn.add">Add</button>
+    </form>
+    <p id="words-count" class="hint small"></p>
+    <ul id="word-list" class="word-list"></ul>
+    <p id="words-empty" class="hint" data-i18n="words.empty" hidden></p>
+  </div>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.05.00"></script>
+  <script src="textcase.js?v=1.05.00"></script>
+
+</body>
+</html>
