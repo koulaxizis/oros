@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.37.00
+- Montage: subtitles (open and save SRT), music that lowers under your voice, freeze frame, sound-only export, new transitions and filters.
+
 ## Version 1.36.00
 - Newsletter: a sign-up form for your own website, and a one-click unsubscribe link in every issue (Gmail and other mail apps show their own Unsubscribe button). Find it in a list's Subscribe link.
 
