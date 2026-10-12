@@ -46,6 +46,14 @@
       "type": "internal"
     },
     {
+      "id": "texttools",
+      "name": "Text Tools",
+      "category": "Accessories",
+      "icon": "texttools",
+      "url": "texttools/",
+      "type": "internal"
+    },
+    {
       "id": "units",
       "name": "Unit Converter",
       "category": "Accessories",
