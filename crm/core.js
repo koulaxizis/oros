@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.2.0)
+// orOS CRM — core.js (shared logic, v1.3.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -29,6 +29,9 @@
 //   dashboard(data, nowMs, today) → numbers for the Dashboard tab
 //   customersForBilling(data) → [{ id, name, afm, doy, job, addr,
 //     country, email, phone }] (BR-CRM-INV, read by Invoices)
+//   invoicePrefill(cust, deal?, cur) → the { new } of BR-CRM-INV 1
+//   quotePrefill(cust, deal?, cur) → BR-Q1 payload, or null when a
+//     deal's value is in a currency Quote does not know (EUR, USD)
 //   csvRows(data, lang) → rows · csvCell(v)
 //   backup(data) / restore(data, file) → merged data | null
 //   reminders(data, today, hhmm, seen) → { fresh: [{ key, fup }], next }
@@ -498,6 +501,27 @@
     }).sort(function (a, b) { return a.name.localeCompare(b.name) || cmpStr(a.id, b.id); });
   }
 
+  // What CRM hands Invoices (BR-CRM-INV 1) and Quote (BR-Q1). Both
+  // apps only prefill a draft; nothing is saved before their Save.
+  // Prices go in currency units (cents / 100). A deal is one line:
+  // its title, quantity 1, its value.
+  function invoicePrefill(c, d, cur) {
+    var n = { crm: c.id, name: c.name, cur: cur };
+    ["afm", "doy", "job", "addr", "country", "email", "phone"].forEach(function (k) { if (c[k]) n[k] = c[k]; });
+    if (d) {
+      n.items = [{ d: d.title, q: 1, p: (d.val || 0) / 100 }];
+      n.ref = { app: "crm", id: d.id };
+    }
+    return n;
+  }
+  function quotePrefill(c, d, cur) {
+    var known = cur === "EUR" || cur === "USD";
+    if (d && !known) return null;
+    var p = { client: c.name, items: [d ? { d: d.title, q: 1, p: (d.val || 0) / 100 } : { d: "", q: 1, p: 0 }] };
+    if (known) p.cur = cur;
+    return p;
+  }
+
   // ---------- CSV (customers) ----------
   // Leading = + - @ get a quote mark so a spreadsheet never runs a
   // cell as a formula.
@@ -614,7 +638,7 @@
     stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
-    customersForBilling: customersForBilling, csvCell: csvCell, csvRows: csvRows,
+    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows,
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact
   };
