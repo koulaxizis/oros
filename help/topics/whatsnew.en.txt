@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.27.00
 - Stock: scan barcodes with the phone camera, and sales that arrive filled in from another app (Invoices).
+- Help: the Privacy page now covers the Library's word look-up and the Newsletter app.
 
 ## Version 1.26.00
 - Atelier: AI ideas and texts with your Assistant's AI, and background removal on the device.

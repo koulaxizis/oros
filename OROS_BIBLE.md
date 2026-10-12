@@ -5136,3 +5136,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Camera barcode scanning** (Chrome on Android, no library) in search, receipts / sales and the counter.
 - **BR-ST-OUT:** another app (Invoices) can open a prefilled sale or customer return; unmatched codes listed, repeat documents warned.
 - Not tested: camera scanning on a real phone, Safari.
+
+### 2026-10-12 — Help: privacy page adds Library and Newsletter (#240) — 1.27.01
+- Privacy help (EN + EL) now covers the Library's Wiktionary look-up (opt-in, only the word is sent) and the Newsletter app. Text only.
