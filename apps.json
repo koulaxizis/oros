@@ -46,6 +46,14 @@
       "type": "internal"
     },
     {
+      "id": "textcase",
+      "name": "Case Converter",
+      "category": "Accessories",
+      "icon": "textcase",
+      "url": "textcase/",
+      "type": "internal"
+    },
+    {
       "id": "todo",
       "name": "To-Do",
       "category": "Office",
