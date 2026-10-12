@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Studio · orOS</title>
 
-  <link rel="stylesheet" href="studio.css?v=1.31.00">
+  <link rel="stylesheet" href="studio.css?v=1.32.00">
 
 </head>
 <body>
@@ -50,6 +50,7 @@
     <div class="tp-master">
       <label for="master-in" class="tp-lbl" data-i18n="f.master">Master</label>
       <input type="range" id="master-in" min="-60" max="6" step="0.5">
+      <button type="button" id="master-fx" class="ms fx" aria-haspopup="dialog" data-i18n="fx.btn">FX</button>
       <canvas id="meter" width="80" height="10" aria-hidden="true"></canvas>
     </div>
   </div>
@@ -115,7 +116,10 @@
       <span class="spacer"></span>
       <button type="button" id="track-close" class="icon-btn"></button>
     </div>
-    <button type="button" id="track-rename" class="chip" data-i18n="btn.rename">Rename</button>
+    <div class="dlg-actions spread">
+      <button type="button" id="track-rename" class="chip" data-i18n="btn.rename">Rename</button>
+      <button type="button" id="track-fx" class="chip" aria-haspopup="dialog" data-i18n="fx.open">Effects</button>
+    </div>
     <h3 data-i18n="sec.color">Colour</h3>
     <div id="track-colors" class="colors" role="radiogroup" data-i18n-aria="sec.color"></div>
     <label class="field" for="tvol-in"><span data-i18n="f.vol">Volume</span><output id="tvol-out"></output></label>
@@ -165,18 +169,49 @@
     <label class="field" for="lat-in"><span data-i18n="f.latency">Move new takes earlier by</span><output id="lat-out"></output></label>
     <input type="range" id="lat-in" min="0" max="300" step="1">
     <p class="hint small" data-i18n="lat.hint"></p>
+    <h3 data-i18n="fx.open">Effects</h3>
+    <button type="button" id="more-fx" class="chip" aria-haspopup="dialog" data-i18n="fx.openMaster">Master effects</button>
     <h3 data-i18n="sec.metro">Click</h3>
     <label class="field" for="mvol-in"><span data-i18n="f.metroVol">Click volume</span><output id="mvol-out"></output></label>
     <input type="range" id="mvol-in" min="0" max="100" step="1">
     <p id="disk-info" class="hint small"></p>
   </dialog>
 
+  <!-- Effects of a track or the master -->
+  <dialog id="fx-dlg" class="wide" aria-labelledby="fx-title">
+    <div class="dlg-head">
+      <button type="button" id="fx-play" class="tbtn small"></button>
+      <h2 id="fx-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="fx-close" class="icon-btn"></button>
+    </div>
+    <ol id="fx-list" class="fx-list"></ol>
+    <p id="fx-empty" class="hint" data-i18n="fx.empty">No effects yet.</p>
+    <div class="dlg-actions spread">
+      <button type="button" id="fx-add" class="chip primary" aria-controls="fx-pick" data-i18n="fx.addBtn">+ Effect</button>
+      <span id="fx-status" class="hint small" aria-live="polite"></span>
+    </div>
+    <div id="fx-pick" hidden>
+      <label for="fx-search" class="sr-only" data-i18n="fx.search">Search effects</label>
+      <input type="search" id="fx-search" autocomplete="off" data-i18n-ph="fx.search">
+      <div id="fx-cats"></div>
+    </div>
+    <p class="hint small fx-credit" data-i18n="fx.credit">Effects: NULL JSFX (nulljsfx.tech), MIT License.</p>
+  </dialog>
+
   <div id="busy" hidden><span id="busy-text"></span></div>
+  <!-- effects runtime (NULL JSFX) and the Effects dialog; before core.js -->
+  <script src="nullfx/runtime/eel-rt.js?v=1.32.00"></script>
+  <script src="nullfx/runtime/null-fx.js?v=1.32.00"></script>
+  <script src="nullfx/runtime/null-gfx.js?v=1.32.00"></script>
+  <script src="nullfx/runtime/null-node.js?v=1.32.00"></script>
+  <script src="fx.js?v=1.32.00"></script>
+
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=1.31.00"></script>
-  <script src="studio.js?v=1.31.00"></script>
+  <script src="core.js?v=1.32.00"></script>
+  <script src="studio.js?v=1.32.00"></script>
 
 </body>
 </html>
