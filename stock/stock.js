@@ -92,7 +92,7 @@
       "moves.none": "No movements in this period.",
       "r.30": "Last 30 days", "r.month": "This month", "r.year": "This year", "r.all": "All",
       "mf.all": "All", "mf.in": "Receipts", "mf.out": "Sales", "mf.ret": "Returns", "mf.loss": "Losses", "mf.count": "Counts", "mf.fix": "Corrections",
-      "lines": "{n} products",
+      "lines": "{n} products", "lines1": "1 product",
       "mv.ref": "Ref.", "mv.sup": "Supplier", "mv.note": "Note", "mv.total": "Total",
       "mv.void": "Void this movement", "mv.voidQ": "Void this movement? Its quantities stop counting. It stays in the list, crossed out.",
       "mv.voidYes": "Void", "mv.voided": "This movement was voided.",
@@ -101,7 +101,7 @@
       "order.noSup": "No supplier", "order.copy": "Copy list", "order.receive": "Receive this order",
       "order.have": "have {q} · min {m}", "order.copied": "List copied",
       "order.head": "Order from {s} · {d}",
-      "sups.none": "No suppliers yet.", "sups.items": "{n} products",
+      "sups.none": "No suppliers yet.", "sups.items": "{n} products", "sups.items1": "1 product",
       "ed.newItem": "New product", "ed.editItem": "Edit product",
       "ed.name": "Name", "ed.sku": "SKU", "ed.bc": "Barcode", "ed.cat": "Category", "ed.unit": "Unit",
       "ed.min": "Minimum", "ed.rq": "Reorder qty", "ed.sup": "Supplier", "ed.ssku": "Supplier's code",
@@ -144,6 +144,35 @@
       "toast.badFile": "That file can't be read.", "toast.imported": "Backup merged: {n} products",
       "toast.voided": "Movement voided", "toast.archived": "Archived", "toast.unarchived": "Back in the list",
       "open.ref": "Opening stock", "csv.ref": "CSV",
+      "tab.reports": "Reports",
+      "po.section": "Purchase orders", "po.new": "New order", "po.edit": "Edit order", "po.none": "No open orders.",
+      "po.showDone": "Show finished ({n})", "po.hideDone": "Hide finished",
+      "po.no": "Order no.", "po.date": "Order date", "po.exp": "Expected", "po.sup": "Supplier", "po.note": "Note",
+      "po.lines": "Products", "po.ordered": "ordered {q}", "po.got": "received {q}", "po.left": "{q} to come",
+      "po.total": "Order total", "po.receipts": "Receipts",
+      "st.draft": "Draft", "st.sent": "Sent", "st.partial": "Partly received", "st.received": "Received",
+      "st.closed": "Closed", "st.cancel": "Cancelled",
+      "po.saveDraft": "Save as draft", "po.saveSent": "Save, mark sent", "po.markSent": "Mark sent",
+      "po.receive": "Receive", "po.close": "Close order", "po.reopen": "Reopen", "po.cancel": "Cancel order",
+      "po.closeQ": "Close this order? What has not arrived stops counting as on order.",
+      "po.cancelQ": "Cancel this order?", "po.delQ": "Delete this order?",
+      "po.late": "late", "po.dueOn": "expected {d}",
+      "po.create": "Create order", "po.onOrder": "on order {q}", "po.covered": "ordered",
+      "po.noLines": "Add at least one product.",
+      "po.mailSubject": "Order {no}", "po.mailHi": "Hello,", "po.mailAsk": "Please send us:", "po.mailBye": "Thank you.",
+      "br.todo": "To-Do", "br.mail": "E-mail", "br.budget": "Add to Budget", "br.quote": "New quote",
+      "br.sheet": "Open in Spreadsheet", "br.todoList": "Order · {s}",
+      "br.quoteCur": "Quote works in EUR or USD; Stock is set to {c}.", "br.quoteTitle": "New quote from products",
+      "br.quoteGo": "Create quote", "br.sent": "Sent to {a}",
+      "rep.range": "Period", "rep.value": "Stock value", "rep.sales": "Sales", "rep.buys": "Purchases", "rep.losses": "Losses",
+      "rep.byCat": "Value by category", "rep.top": "Most sold", "rep.dead": "Not sold for 90 days",
+      "rep.sold": "sold {q}", "rep.lastSale": "last sale {d}", "rep.never": "never sold",
+      "rep.none": "Nothing in this period.", "rep.noDead": "No product with stock has gone 90 days without a sale.",
+      "rep.csv": "Report (CSV)", "rep.sheetName": "Stock report",
+      "rep.h.name": "Product", "rep.h.sku": "SKU", "rep.h.qty": "On hand", "rep.h.avg": "Average cost", "rep.h.value": "Value",
+      "rep.h.in": "Received", "rep.h.out": "Sold", "rep.h.loss": "Lost", "rep.h.sales": "Sales",
+      "rep.cut": "Only the first {n} rows went to the sheet.",
+      "add.po": "Purchase order", "add.quote": "Quote from products",
       "u.custom": "unit"
     },
     el: {
@@ -178,7 +207,7 @@
       "moves.none": "Καμία κίνηση σε αυτό το διάστημα.",
       "r.30": "Τελευταίες 30 μέρες", "r.month": "Αυτός ο μήνας", "r.year": "Φέτος", "r.all": "Όλες",
       "mf.all": "Όλες", "mf.in": "Παραλαβές", "mf.out": "Πωλήσεις", "mf.ret": "Επιστροφές", "mf.loss": "Φθορές", "mf.count": "Απογραφές", "mf.fix": "Διορθώσεις",
-      "lines": "{n} προϊόντα",
+      "lines": "{n} προϊόντα", "lines1": "1 προϊόν",
       "mv.ref": "Παραστατικό", "mv.sup": "Προμηθευτής", "mv.note": "Σημείωση", "mv.total": "Σύνολο",
       "mv.void": "Ακύρωση κίνησης", "mv.voidQ": "Να ακυρωθεί η κίνηση; Οι ποσότητές της δεν μετράνε πια. Μένει στη λίστα, διαγραμμένη.",
       "mv.voidYes": "Ακύρωση", "mv.voided": "Αυτή η κίνηση ακυρώθηκε.",
@@ -187,7 +216,7 @@
       "order.noSup": "Χωρίς προμηθευτή", "order.copy": "Αντιγραφή λίστας", "order.receive": "Παραλαβή παραγγελίας",
       "order.have": "έχεις {q} · ελάχιστο {m}", "order.copied": "Η λίστα αντιγράφηκε",
       "order.head": "Παραγγελία προς {s} · {d}",
-      "sups.none": "Κανένας προμηθευτής ακόμα.", "sups.items": "{n} προϊόντα",
+      "sups.none": "Κανένας προμηθευτής ακόμα.", "sups.items": "{n} προϊόντα", "sups.items1": "1 προϊόν",
       "ed.newItem": "Νέο προϊόν", "ed.editItem": "Επεξεργασία προϊόντος",
       "ed.name": "Όνομα", "ed.sku": "SKU", "ed.bc": "Barcode", "ed.cat": "Κατηγορία", "ed.unit": "Μονάδα",
       "ed.min": "Ελάχιστο", "ed.rq": "Ποσότητα παραγγελίας", "ed.sup": "Προμηθευτής", "ed.ssku": "Κωδικός προμηθευτή",
@@ -230,6 +259,35 @@
       "toast.badFile": "Αυτό το αρχείο δεν διαβάζεται.", "toast.imported": "Το αντίγραφο ενώθηκε: {n} προϊόντα",
       "toast.voided": "Η κίνηση ακυρώθηκε", "toast.archived": "Αρχειοθετήθηκε", "toast.unarchived": "Ξανά στη λίστα",
       "open.ref": "Αρχικό απόθεμα", "csv.ref": "CSV",
+      "tab.reports": "Αναφορές",
+      "po.section": "Εντολές αγοράς", "po.new": "Νέα εντολή", "po.edit": "Επεξεργασία εντολής", "po.none": "Καμία ανοιχτή εντολή.",
+      "po.showDone": "Δείξε τις ολοκληρωμένες ({n})", "po.hideDone": "Κρύψε τις ολοκληρωμένες",
+      "po.no": "Αρ. εντολής", "po.date": "Ημερομηνία", "po.exp": "Αναμένεται", "po.sup": "Προμηθευτής", "po.note": "Σημείωση",
+      "po.lines": "Προϊόντα", "po.ordered": "παραγγέλθηκαν {q}", "po.got": "ήρθαν {q}", "po.left": "έρχονται {q}",
+      "po.total": "Σύνολο εντολής", "po.receipts": "Παραλαβές",
+      "st.draft": "Πρόχειρη", "st.sent": "Στάλθηκε", "st.partial": "Ήρθε μέρος", "st.received": "Παραλήφθηκε",
+      "st.closed": "Κλειστή", "st.cancel": "Ακυρωμένη",
+      "po.saveDraft": "Αποθήκευση ως πρόχειρη", "po.saveSent": "Αποθήκευση, στάλθηκε", "po.markSent": "Σημείωσε ότι στάλθηκε",
+      "po.receive": "Παραλαβή", "po.close": "Κλείσιμο εντολής", "po.reopen": "Άνοιγμα ξανά", "po.cancel": "Ακύρωση εντολής",
+      "po.closeQ": "Να κλείσει η εντολή; Ό,τι δεν ήρθε σταματά να μετρά ως «σε παραγγελία».",
+      "po.cancelQ": "Να ακυρωθεί η εντολή;", "po.delQ": "Να διαγραφεί η εντολή;",
+      "po.late": "καθυστερεί", "po.dueOn": "αναμένεται {d}",
+      "po.create": "Δημιουργία εντολής", "po.onOrder": "σε παραγγελία {q}", "po.covered": "παραγγέλθηκε",
+      "po.noLines": "Πρόσθεσε τουλάχιστον ένα προϊόν.",
+      "po.mailSubject": "Παραγγελία {no}", "po.mailHi": "Καλησπέρα σας,", "po.mailAsk": "Παρακαλούμε να μας στείλετε:", "po.mailBye": "Ευχαριστούμε.",
+      "br.todo": "To-Do", "br.mail": "E-mail", "br.budget": "Στα Έσοδα & Έξοδα", "br.quote": "Νέα προσφορά",
+      "br.sheet": "Άνοιγμα στο Υπολογιστικό φύλλο", "br.todoList": "Παραγγελία · {s}",
+      "br.quoteCur": "Η Προσφορά δουλεύει σε EUR ή USD· το Απόθεμα είναι σε {c}.", "br.quoteTitle": "Νέα προσφορά από προϊόντα",
+      "br.quoteGo": "Δημιουργία προσφοράς", "br.sent": "Στάλθηκε: {a}",
+      "rep.range": "Διάστημα", "rep.value": "Αξία αποθήκης", "rep.sales": "Πωλήσεις", "rep.buys": "Αγορές", "rep.losses": "Φθορές",
+      "rep.byCat": "Αξία ανά κατηγορία", "rep.top": "Πιο πολλές πωλήσεις", "rep.dead": "Χωρίς πώληση 90 μέρες",
+      "rep.sold": "πουλήθηκαν {q}", "rep.lastSale": "τελευταία πώληση {d}", "rep.never": "δεν πουλήθηκε ποτέ",
+      "rep.none": "Τίποτα σε αυτό το διάστημα.", "rep.noDead": "Κανένα προϊόν με απόθεμα δεν έμεινε 90 μέρες χωρίς πώληση.",
+      "rep.csv": "Αναφορά (CSV)", "rep.sheetName": "Αναφορά αποθέματος",
+      "rep.h.name": "Προϊόν", "rep.h.sku": "SKU", "rep.h.qty": "Διαθέσιμα", "rep.h.avg": "Μέσο κόστος", "rep.h.value": "Αξία",
+      "rep.h.in": "Παραλήφθηκαν", "rep.h.out": "Πουλήθηκαν", "rep.h.loss": "Χάθηκαν", "rep.h.sales": "Πωλήσεις",
+      "rep.cut": "Στο φύλλο πήγαν μόνο οι πρώτες {n} γραμμές.",
+      "add.po": "Εντολή αγοράς", "add.quote": "Προσφορά από προϊόντα",
       "u.custom": "μονάδα"
     }
   };
@@ -252,6 +310,8 @@
   };
   var T_ICON = { "in": "📥", out: "📤", ret: "↩️", rts: "↪️", loss: "💔", count: "📋", fix: "✏️" };
 
+  // "{n} products" with a singular for 1 (key + "1")
+  function tn(key, n) { return n === 1 ? t(key + "1") : t(key, { n: n }); }
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -379,7 +439,7 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  var TABS = ["items", "moves", "order", "sups"];
+  var TABS = ["items", "moves", "order", "sups", "reports"];
   var IFILTERS = ["all", "low", "out", "arch"];
   var MFILTERS = ["all", "in", "out", "ret", "loss", "count", "fix"];
   var RANGES = ["30", "month", "year", "all"];
@@ -396,7 +456,9 @@
       cat: typeof p.cat === "string" ? p.cat : "",
       sort: SORTS.indexOf(p.sort) >= 0 ? p.sort : "name",
       mf: MFILTERS.indexOf(p.mf) >= 0 ? p.mf : "all",
-      range: RANGES.indexOf(p.range) >= 0 ? p.range : "30"
+      range: RANGES.indexOf(p.range) >= 0 ? p.range : "30",
+      rr: RANGES.indexOf(p.rr) >= 0 ? p.rr : "30",
+      poAll: p.poAll === true
     };
   }
   var prefsTimer = null;
@@ -665,6 +727,11 @@
     var foot = el("div", "dlg-actions wrap");
     foot.appendChild(button(t("sheet.edit"), "", function () { dlg.close(); itemEditor(it); }));
     foot.appendChild(button(t("add.other"), "", function () { dlg.close(); moveEditor("loss", [{ i: it.id }]); }));
+    foot.appendChild(button(t("add.po"), "", function () {
+      dlg.close();
+      poEditor(null, { sup: it.sup, lines: [{ i: it.id, q: C.suggestQty(r, decOf(it)), c: it.cost || undefined }] });
+    }));
+    if (quoteReady() && !it.arch) foot.appendChild(button(t("br.quote"), "", function () { dlg.close(); quoteDialog([{ i: it.id, q: Math.pow(10, 3 - decOf(it)) }]); }));
     if (labelBridge()) foot.appendChild(button(t("sheet.label"), "", function () {
       labelBridge()("labels", { text: (it.name + (it.sku ? " · " + it.sku : "")).slice(0, 120) });
     }));
@@ -750,7 +817,7 @@
       var it = byId("items", mv.lines[0].i);
       return it ? it.name : "?";
     }
-    return t("lines", { n: mv.lines.length });
+    return tn("lines", mv.lines.length);
   }
   function moveTotal(mv) {
     var sum = 0, any = false;
@@ -822,7 +889,12 @@
     });
     dlg.appendChild(ul);
     if (mv.note) dlg.appendChild(el("p", "notes", mv.note));
-    var acts = el("div", "dlg-actions");
+    var poId = mv.src && mv.src.indexOf("po:") === 0 ? mv.src.slice(3) : "";
+    var acts = el("div", "dlg-actions wrap");
+    if (poId && byId("pos", poId)) acts.appendChild(button("🧾 " + (byId("pos", poId).no || t("po.section")), "", function () { dlg.close(); poSheet(poId); }));
+    if (mv.v !== 1 && (mv.t === "in" || mv.t === "out") && moveTotal(mv) && budgetReady()) {
+      acts.appendChild(button(t("br.budget"), "", function () { dlg.close(); sendBudget(mv); }));
+    }
     if (mv.v !== 1) acts.appendChild(button(t("mv.void"), "danger", function () {
       confirmDialog(t("mv.voidQ"), t("mv.voidYes"), true, function () { dlg.close(); voidMove(mv); });
     }));
@@ -831,7 +903,7 @@
     showDialog(dlg);
   }
 
-  // ---------- 6. Reorder view ----------
+  // ---------- 6. Reorder view: purchase orders + low items ----------
   function orderGroups() {
     var groups = [], by = Object.create(null);
     C.lowList(data).forEach(function (r) {
@@ -846,10 +918,16 @@
     });
     return groups;
   }
+  // What to order of one low row: the suggestion minus what is already
+  // on order (open purchase orders).
+  function needOf(r, oo) {
+    return Math.max(0, C.suggestQty(r, decOf(r.item)) - (oo[r.item.id] || 0));
+  }
   function renderOrder() {
+    renderPos();
     var box = $("order-list");
     box.innerHTML = "";
-    var groups = orderGroups();
+    var groups = orderGroups(), oo = C.onOrder(data);
     if (!groups.length) { box.appendChild(el("p", "empty-line", t("order.none"))); return; }
     groups.forEach(function (g) {
       var sec = el("div", "sec");
@@ -859,7 +937,7 @@
       if (g.sup && (g.sup.tel || g.sup.email)) sec.appendChild(el("p", "muted sec-sub", [g.sup.person, g.sup.tel, g.sup.email].filter(Boolean).join(" · ")));
       var ul = el("ul", "rows");
       g.rows.forEach(function (r) {
-        var it = r.item;
+        var it = r.item, need = needOf(r, oo);
         var li = el("li");
         var b = el("button", "row row-btn " + (r.out ? "lvl-out" : "lvl-low"));
         b.type = "button";
@@ -869,16 +947,32 @@
         if (it.sku) s.appendChild(el("span", "", it.sku));
         if (it.ssku) s.appendChild(el("span", "", it.ssku));
         s.appendChild(el("span", "", t("order.have", { q: fmtQ(r.q, it, true), m: fmtQ(it.min, it, true) })));
+        if (oo[it.id]) s.appendChild(el("span", "", t("po.onOrder", { q: fmtQ(oo[it.id], it, true) })));
         body.appendChild(s);
         b.appendChild(body);
-        b.appendChild(el("span", "r-val", "+" + fmtQ(C.suggestQty(r, decOf(it)), it)));
+        b.appendChild(el("span", "r-val", need > 0 ? "+" + fmtQ(need, it) : "✓ " + t("po.covered")));
         b.addEventListener("click", function () { itemSheet(it.id); });
         li.appendChild(b);
         ul.appendChild(li);
       });
       sec.appendChild(ul);
+      var want = g.rows.filter(function (r) { return needOf(r, oo) > 0; });
       var acts = el("div", "dlg-actions tight sec-acts");
-      acts.appendChild(button(t("order.copy"), "", function () { copyOrder(g); }));
+      if (want.length) {
+        acts.appendChild(button(t("po.create"), "primary", function () {
+          poEditor(null, { sup: g.sup ? g.sup.id : "", lines: want.map(function (r) { return { i: r.item.id, q: needOf(r, oo), c: r.item.cost || undefined }; }) });
+        }));
+        acts.appendChild(button(t("order.copy"), "", function () { copyText(orderText(g.sup, want.map(function (r) { return { i: r.item.id, q: needOf(r, oo) }; }))); }));
+        if (openAtFn()) acts.appendChild(button(t("br.todo"), "", function () {
+          sendTodo(t("br.todoList", { s: g.sup ? g.sup.name : t("order.noSup") }), want.map(function (r) {
+            return { text: lineText(r.item, needOf(r, oo)) };
+          }));
+        }));
+        if (mailReady()) acts.appendChild(button(t("br.mail"), "", function () {
+          var lines = want.map(function (r) { return { i: r.item.id, q: needOf(r, oo) }; });
+          sendMail(g.sup ? g.sup.email : "", t("order.head", { s: g.sup ? g.sup.name : t("order.noSup"), d: fmtDay(todayYmd(), true) }), mailBody(lines));
+        }));
+      }
       acts.appendChild(button(t("order.receive"), "", function () {
         moveEditor("in", g.rows.map(function (r) { return { i: r.item.id, q: C.suggestQty(r, decOf(r.item)) }; }), { sup: g.sup ? g.sup.id : "" });
       }));
@@ -886,16 +980,24 @@
       box.appendChild(sec);
     });
   }
-  function orderText(g) {
-    var lines = [t("order.head", { s: g.sup ? g.sup.name : t("order.noSup"), d: fmtDay(todayYmd(), true) })];
-    g.rows.forEach(function (r) {
-      var it = r.item, code = it.ssku || it.sku;
-      lines.push("- " + fmtQ(C.suggestQty(r, decOf(it)), it) + " × " + it.name + (code ? " (" + code + ")" : ""));
-    });
-    return lines.join("\n");
+  // "5 pcs × Blue mug (MUG-1)": the supplier's code when there is one
+  function lineText(it, q) {
+    var code = it.ssku || it.sku;
+    return fmtQ(q, it) + " × " + it.name + (code ? " (" + code + ")" : "");
   }
-  function copyOrder(g) {
-    var text = orderText(g);
+  function orderText(sup, lines) {
+    var out = [t("order.head", { s: sup ? sup.name : t("order.noSup"), d: fmtDay(todayYmd(), true) })];
+    lines.forEach(function (l) { var it = byId("items", l.i); if (it) out.push("- " + lineText(it, l.q)); });
+    return out.join("\n");
+  }
+  function mailBody(lines, no) {
+    var out = [t("po.mailHi"), "", t("po.mailAsk")];
+    lines.forEach(function (l) { var it = byId("items", l.i); if (it) out.push("- " + lineText(it, l.q)); });
+    out.push("", t("po.mailBye"));
+    if (no) out.push(no);
+    return out.join("\n");
+  }
+  function copyText(text) {
     var done = function () { showToast(t("order.copied")); };
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -915,6 +1017,568 @@
     ta.select();
     try { document.execCommand("copy"); } catch (e) {}
     ta.remove();
+  }
+
+  // ----- Purchase orders -----
+  function poTotal(po) {
+    var sum = 0, any = false;
+    po.lines.forEach(function (l) { if (typeof l.c === "number") { any = true; sum += Math.round(l.q * l.c / 1000); } });
+    return any ? sum : null;
+  }
+  function poName(po) {
+    var sup = byId("sups", po.sup);
+    return (po.no || t("po.section")) + (sup ? " · " + sup.name : "");
+  }
+  function isLate(v, today) { return v.open && v.po.exp && v.po.exp < today; }
+  function renderPos() {
+    var box = $("po-list");
+    box.innerHTML = "";
+    var views = C.poViews(data), today = todayYmd();
+    if (!views.length) return;               // the section comes with the first order
+    var active = views.filter(function (v) { return v.state === "draft" || v.open; });
+    var done = views.filter(function (v) { return !(v.state === "draft" || v.open); });
+    var sec = el("div", "sec");
+    var h = el("div", "sec-head");
+    h.appendChild(el("h2", "", t("po.section")));
+    var nb = el("button", "txt-btn", "+ " + t("po.new"));
+    nb.type = "button";
+    nb.addEventListener("click", function () { poEditor(null, null); });
+    h.appendChild(nb);
+    sec.appendChild(h);
+    var ul = el("ul", "rows");
+    if (!active.length) ul.appendChild(el("li", "muted pad", t("po.none")));
+    active.concat(prefs.poAll ? done : []).forEach(function (v) { ul.appendChild(poRow(v, today)); });
+    sec.appendChild(ul);
+    if (done.length) {
+      var tg = el("button", "txt-btn", prefs.poAll ? t("po.hideDone") : t("po.showDone", { n: done.length }));
+      tg.type = "button";
+      tg.addEventListener("click", function () { prefs.poAll = !prefs.poAll; savePrefs(); renderPos(); });
+      sec.appendChild(tg);
+    }
+    box.appendChild(sec);
+  }
+  function poRow(v, today) {
+    var po = v.po, li = el("li");
+    var b = el("button", "row row-btn po-" + v.state + (isLate(v, today) ? " lvl-low" : ""));
+    b.type = "button";
+    b.appendChild(el("span", "r-ico", "🧾"));
+    var body = el("span", "r-body");
+    body.appendChild(el("span", "r-name", poName(po)));
+    var s = el("span", "r-sub");
+    s.appendChild(el("span", "badge st-" + v.state, t("st." + v.state)));
+    s.appendChild(el("span", "", fmtDay(po.d)));
+    if (v.open && po.exp) s.appendChild(el("span", isLate(v, today) ? "warn-txt" : "", t("po.dueOn", { d: fmtDay(po.exp) }) + (isLate(v, today) ? " · " + t("po.late") : "")));
+    s.appendChild(el("span", "", tn("lines", po.lines.length)));
+    body.appendChild(s);
+    b.appendChild(body);
+    var tot = poTotal(po);
+    b.appendChild(el("span", "r-val", tot === null ? "" : money(tot)));
+    b.addEventListener("click", function () { poSheet(po.id); });
+    li.appendChild(b);
+    return li;
+  }
+  function setPoSt(id, st) {
+    var cur = byId("pos", id);
+    if (!cur || cur.st === st) return;
+    cur.st = st;
+    stamp(cur);
+    save();
+    render();
+  }
+  function poSheet(id) {
+    var po = byId("pos", id);
+    if (!po) return;
+    var v = C.poView(data, po), sup = byId("sups", po.sup), today = todayYmd();
+    var dlg = makeDialog("st-po-sheet", true);
+    dlg.appendChild(el("div", "dlg-title", "🧾 " + (po.no || t("po.section"))));
+    var st = el("p", "");
+    st.appendChild(el("span", "badge st-" + v.state, t("st." + v.state)));
+    if (isLate(v, today)) st.appendChild(el("span", "badge warn", t("po.late")));
+    dlg.appendChild(st);
+    var box = el("div", "kvs");
+    if (sup) kv(box, t("po.sup"), sup.name);
+    kv(box, t("po.date"), fmtDay(po.d, true));
+    if (po.exp) kv(box, t("po.exp"), fmtDay(po.exp, true));
+    var tot = poTotal(po);
+    if (tot !== null) kv(box, t("po.total"), money(tot));
+    dlg.appendChild(box);
+    dlg.appendChild(el("div", "dlg-lbl", t("po.lines")));
+    var ul = el("ul", "rows");
+    v.lines.forEach(function (l) {
+      var it = byId("items", l.i), li = el("li");
+      var b = el("button", "row row-btn compact");
+      b.type = "button";
+      var body = el("span", "r-body");
+      body.appendChild(el("span", "r-name", it ? it.name : "?"));
+      var s = el("span", "r-sub");
+      if (it && (it.ssku || it.sku)) s.appendChild(el("span", "", it.ssku || it.sku));
+      s.appendChild(el("span", "", t("po.ordered", { q: fmtQ(l.q, it, true) })));
+      if (l.got) s.appendChild(el("span", "", t("po.got", { q: fmtQ(l.got, it, true) })));
+      if (typeof l.c === "number") s.appendChild(el("span", "", money(l.c) + " / " + unitLabel(it ? it.unit : "pcs")));
+      body.appendChild(s);
+      b.appendChild(body);
+      b.appendChild(el("span", "r-val", l.left > 0 && v.state !== "closed" && v.state !== "cancel" ? t("po.left", { q: fmtQ(l.left, it) }) : (l.got >= l.q ? "✓" : "")));
+      if (it) b.addEventListener("click", function () { dlg.close(); itemSheet(it.id); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var src = C.poSrc(po.id);
+    var rec = data.moves.filter(function (m) { return m.src === src; })
+      .sort(function (x, y) { return cmpStr(y.d, x.d) || cmpStr(y.id, x.id); });
+    if (rec.length) {
+      dlg.appendChild(el("div", "dlg-lbl", t("po.receipts")));
+      var ru = el("ul", "rows");
+      rec.forEach(function (m) {
+        var li = el("li");
+        var b = el("button", "row row-btn compact" + (m.v === 1 ? " voided" : ""));
+        b.type = "button";
+        b.appendChild(el("span", "r-ico", T_ICON[m.t]));
+        var body = el("span", "r-body");
+        body.appendChild(el("span", "r-name", fmtDay(m.d, true) + (m.ref ? " · " + m.ref : "")));
+        var s = el("span", "r-sub");
+        s.appendChild(el("span", "", tn("lines", m.lines.length)));
+        if (m.v === 1) s.appendChild(el("span", "badge", t("voided")));
+        body.appendChild(s);
+        b.appendChild(body);
+        b.addEventListener("click", function () { dlg.close(); moveSheet(m.id); });
+        li.appendChild(b);
+        ru.appendChild(li);
+      });
+      dlg.appendChild(ru);
+    }
+    if (po.note) dlg.appendChild(el("p", "notes", po.note));
+
+    var left = v.lines.filter(function (l) { return l.left > 0; });
+    var acts = el("div", "dlg-actions wrap");
+    if (v.state !== "closed" && v.state !== "cancel" && left.length) {
+      acts.appendChild(button(t("po.receive"), "primary", function () {
+        dlg.close();
+        moveEditor("in", left.map(function (l) { return { i: l.i, q: l.left, c: l.c }; }), {
+          sup: po.sup, ref: po.no, src: src,
+          onSaved: function () { var cur = byId("pos", po.id); if (cur && cur.st === "draft") { cur.st = "sent"; stamp(cur); save(); } }
+        });
+      }));
+    }
+    if (po.st === "draft") acts.appendChild(button(t("po.markSent"), "", function () { dlg.close(); setPoSt(po.id, "sent"); showToast(t("toast.saved")); }));
+    var pending = (left.length ? left : v.lines).map(function (l) { return { i: l.i, q: l.left > 0 ? l.left : l.q }; });
+    if (mailReady()) acts.appendChild(button(t("br.mail"), "", function () {
+      dlg.close();
+      sendMail(sup ? sup.email : "", t("po.mailSubject", { no: po.no || "" }).trim(), mailBody(pending, po.no));
+    }));
+    acts.appendChild(button(t("order.copy"), "", function () { copyText(orderText(sup, pending) + (po.no ? "\n" + po.no : "")); }));
+    if (openAtFn()) acts.appendChild(button(t("br.todo"), "", function () {
+      dlg.close();
+      sendTodo(t("br.todoList", { s: sup ? sup.name : (po.no || t("order.noSup")) }), pending.map(function (l) {
+        var it = byId("items", l.i);
+        return it ? { text: lineText(it, l.q), note: po.no } : null;
+      }).filter(Boolean));
+    }));
+    if (v.state !== "closed" && v.state !== "cancel" && v.state !== "received") {
+      acts.appendChild(button(t("sheet.edit"), "", function () { dlg.close(); poEditor(po, null); }));
+    }
+    if (v.open) acts.appendChild(button(t("po.close"), "", function () {
+      confirmDialog(t("po.closeQ"), t("po.close"), false, function () { dlg.close(); setPoSt(po.id, "closed"); });
+    }));
+    if (po.st === "closed" || (po.st === "cancel" && !v.got)) acts.appendChild(button(t("po.reopen"), "", function () { dlg.close(); setPoSt(po.id, "sent"); }));
+    if (!v.got && (po.st === "draft" || po.st === "sent")) acts.appendChild(button(t("po.cancel"), "danger", function () {
+      confirmDialog(t("po.cancelQ"), t("po.cancel"), true, function () { dlg.close(); setPoSt(po.id, "cancel"); });
+    }));
+    if (!rec.length && (po.st === "draft" || po.st === "cancel")) acts.appendChild(button(t("ed.delete"), "danger", function () {
+      confirmDialog(t("po.delQ"), t("ed.delete"), true, function () { dlg.close(); removeRow("pos", po); });
+    }));
+    dlg.appendChild(acts);
+    var close = el("div", "dlg-actions");
+    close.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(close);
+    showDialog(dlg);
+  }
+
+  // A product finder (search or scan) with a list of lines: quantity
+  // plus one money field. Used by the purchase order and the quote.
+  //   o: { priceLabel, priceOf(item) → cents | 0, idp (id prefix) }
+  function linePicker(dlg, o) {
+    var lines = [];                 // { i, it, qIn, cIn, li }
+    dlg.appendChild(el("div", "dlg-lbl", t("mv.add")));
+    var finder = el("input");
+    finder.type = "search";
+    finder.placeholder = t("mv.addPh");
+    finder.autocomplete = "off";
+    finder.spellcheck = false;
+    finder.setAttribute("enterkeyhint", "done");
+    finder.setAttribute("aria-label", t("mv.add"));
+    dlg.appendChild(finder);
+    var hits = el("div", "hits");
+    dlg.appendChild(hits);
+    var box = el("ul", "lines");
+    dlg.appendChild(box);
+    var totalP = el("p", "total");
+    totalP.hidden = true;
+    dlg.appendChild(totalP);
+
+    function refresh() {
+      var total = 0, any = false;
+      lines.forEach(function (ln) {
+        var q = readQty(ln.qIn, ln.it), c = readCents(ln.cIn);
+        if (q && c) { total += Math.round(q * c / 1000); any = true; }
+      });
+      totalP.textContent = any ? t("mv.total") + ": " + money(total) : "";
+      totalP.hidden = !any;
+    }
+    function add(itemId, q, c, focusQty) {
+      var it = byId("items", itemId);
+      if (!it) return;
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].i === itemId) {
+          var now = readQty(lines[i].qIn, it);
+          lines[i].qIn.value = qtyStr((now === null ? 0 : now) + (q || Math.pow(10, 3 - decOf(it))), it);
+          refresh();
+          live(t("mv.lineMore", { n: it.name, q: lines[i].qIn.value }));
+          return;
+        }
+      }
+      var ln = { i: itemId, it: it };
+      var li = el("li", "line");
+      var head = el("div", "line-head");
+      var nm = el("div", "line-name");
+      nm.appendChild(el("span", "r-name", it.name));
+      var r = rowOf(it.id) || { q: 0 };
+      nm.appendChild(el("span", "muted line-sub", [it.ssku || it.sku, t("mv.now", { q: fmtQ(r.q, it) })].filter(Boolean).join(" · ")));
+      head.appendChild(nm);
+      var rm = el("button", "icon-btn mini");
+      rm.type = "button";
+      rm.innerHTML = UI.x;
+      rm.setAttribute("aria-label", t("mv.remove"));
+      rm.title = t("mv.remove");
+      rm.addEventListener("click", function () {
+        lines = lines.filter(function (l) { return l !== ln; });
+        li.remove();
+        refresh();
+      });
+      head.appendChild(rm);
+      li.appendChild(head);
+      var row = el("div", "fld-row");
+      ln.qIn = numInput(q ? qtyStr(q, it) : "");
+      var pc = typeof c === "number" ? c : o.priceOf(it);
+      ln.cIn = numInput(pc ? centsStr(pc) : "");
+      row.appendChild(field(t("mv.qty") + " (" + unitLabel(it.unit) + ")", ln.qIn, o.idp + "-q-" + itemId));
+      row.appendChild(field(o.priceLabel + " (" + curSym() + ")", ln.cIn, o.idp + "-c-" + itemId));
+      li.appendChild(row);
+      ln.li = li;
+      ln.qIn.addEventListener("input", refresh);
+      ln.cIn.addEventListener("input", refresh);
+      [ln.qIn, ln.cIn].forEach(function (inp) {
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); finder.focus(); } });
+      });
+      lines.push(ln);
+      box.appendChild(li);
+      refresh();
+      if (focusQty) ln.qIn.focus();
+      live(t("mv.lineAdded", { n: it.name }));
+    }
+    function findHits(q) {
+      var words = C.fold(q).split(" ").filter(Boolean);
+      if (!words.length) return [];
+      return byName(data.items.filter(function (it) { return !it.arch && matchItem(it, words); })).slice(0, 8);
+    }
+    function showHits() {
+      hits.innerHTML = "";
+      var q = finder.value.trim();
+      if (!q) return;
+      var list = findHits(q);
+      if (!list.length) { hits.appendChild(el("p", "muted", t("mv.noMatch"))); return; }
+      list.forEach(function (it) {
+        var b = el("button", "hit");
+        b.type = "button";
+        b.appendChild(el("span", "", it.name));
+        if (it.sku) b.appendChild(el("span", "muted", it.sku));
+        b.addEventListener("click", function () { finder.value = ""; hits.innerHTML = ""; add(it.id, 0, undefined, true); });
+        hits.appendChild(b);
+      });
+    }
+    finder.addEventListener("input", showHits);
+    finder.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      var q = finder.value.trim();
+      if (!q) return;
+      var it = C.findByCode(data, q);
+      if (!it) { var list = findHits(q); if (list.length === 1) it = list[0]; }
+      if (it) {
+        finder.value = "";
+        hits.innerHTML = "";
+        add(it.id, Math.pow(10, 3 - decOf(it)), undefined, false);   // a scan adds one unit
+        finder.focus();
+      } else showHits();
+    });
+    // → { lines: [{ i, q, c? }] } or { bad: message, at: input }
+    function read() {
+      if (!lines.length) return { bad: t("po.noLines"), at: finder };
+      var out = [];
+      for (var i = 0; i < lines.length; i++) {
+        var ln = lines[i], q = readQty(ln.qIn, ln.it);
+        if (!q || q <= 0) return { bad: t("mv.badLine", { n: ln.it.name }), at: ln.qIn };
+        var line = { i: ln.i, q: q };
+        if (ln.cIn.value.trim()) {
+          var c = readCents(ln.cIn);
+          if (c === null) return { bad: t("ed.badNum"), at: ln.cIn };
+          line.c = c;
+        }
+        out.push(line);
+      }
+      return { lines: out };
+    }
+    return { add: add, read: read, finder: finder, count: function () { return lines.length; } };
+  }
+
+  function poEditor(po, preset) {
+    var pr = preset || {}, isNew = !po, today = todayYmd();
+    var dlg = makeDialog("st-po", true);
+    dlg.appendChild(el("div", "dlg-title", isNew ? t("po.new") : t("po.edit")));
+    var r1 = el("div", "fld-row");
+    var no = textInput(po ? po.no : C.poNext(data, today), C.REF_LEN, "");
+    var supSel = listSelect("sups", po ? po.sup : (pr.sup || ""), t("ed.newSup"), newSupQuick);
+    r1.appendChild(field(t("po.no"), no, "st-po-no"));
+    r1.appendChild(field(t("po.sup"), supSel, "st-po-sup"));
+    dlg.appendChild(r1);
+    var r2 = el("div", "fld-row");
+    var d = el("input");
+    d.type = "date";
+    d.value = po ? po.d : today;
+    var exp = el("input");
+    exp.type = "date";
+    function leadExp() {
+      var s = byId("sups", supSel.value);
+      return s && s.lead && C.isYmd(d.value) ? C.addDays(d.value, s.lead) : "";
+    }
+    exp.value = po ? po.exp : leadExp();
+    var expTouched = !!(po && po.exp);
+    exp.addEventListener("input", function () { expTouched = true; });
+    function autoExp() { if (!expTouched) exp.value = leadExp(); }
+    supSel.addEventListener("change", autoExp);
+    d.addEventListener("change", autoExp);
+    r2.appendChild(field(t("po.date"), d, "st-po-d"));
+    r2.appendChild(field(t("po.exp"), exp, "st-po-exp"));
+    dlg.appendChild(r2);
+    var lp = linePicker(dlg, { priceLabel: t("mv.cost"), priceOf: function (it) { return it.cost; }, idp: "st-po" });
+    (po ? po.lines : (pr.lines || [])).forEach(function (l) { lp.add(l.i, l.q, l.c, false); });
+    var note = textarea(po ? po.note : "", C.MNOTE_LEN);
+    dlg.appendChild(field(t("po.note"), note, "st-po-note"));
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    if (isNew) {
+      acts.appendChild(button(t("po.saveDraft"), "", function () { trySave("draft"); }));
+      acts.appendChild(button(t("po.saveSent"), "primary", function () { trySave("sent"); }));
+    } else acts.appendChild(button(t("ed.save"), "primary", function () { trySave(po.st); }));
+    dlg.appendChild(acts);
+    function trySave(st) {
+      err.hidden = true;
+      if (!C.isYmd(d.value) || (exp.value && !C.isYmd(exp.value))) { err.textContent = t("ed.badNum"); err.hidden = false; return; }
+      var r = lp.read();
+      if (r.bad) { err.textContent = r.bad; err.hidden = false; if (r.at) r.at.focus(); return; }
+      var row = C.normPo({
+        id: po ? po.id : newId(), m: po ? po.m : Date.now(), no: no.value, sup: supSel.value,
+        d: d.value, exp: exp.value, st: st, note: note.value, lines: r.lines
+      });
+      if (!row) { err.textContent = t("ed.badNum"); err.hidden = false; return; }
+      var res = upsert("pos", row);
+      if (res) save();
+      dlg.close();
+      render();
+      if (res) showToast(isNew ? t("toast.added") : t("toast.saved"));
+      if (isNew) setTab("order");
+    }
+    showDialog(dlg);
+    if (lp.count()) no.focus(); else lp.finder.focus();
+  }
+
+  // ----- Bridges to other apps. All of them are PREFILLS: nothing is
+  // written in the other app until the user saves there. -----
+  function shellWin() {
+    try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
+  }
+  function openAtFn() {
+    var p = shellWin();
+    try { return p && typeof p.__orosOpenAt === "function" ? p : null; } catch (e) { return null; }
+  }
+  // Mail compose only when Mail has an account on this device
+  function mailReady() {
+    if (!openAtFn()) return false;
+    var d = readOther("oros-mail-data");
+    return !!(d && Array.isArray(d.accounts) && d.accounts.length);
+  }
+  function sendTodo(newList, items) {
+    var p = openAtFn();
+    if (!p || !items.length) return;
+    p.__orosOpenAt("todo", { addItems: { newList: newList.slice(0, 60), from: t("app"), items: items.slice(0, 200) } });
+  }
+  function sendMail(to, subject, body) {
+    var p = openAtFn();
+    if (!p) return;
+    p.__orosOpenAt("mail", { compose: { to: to || "", subject: subject.slice(0, 300), body: body.slice(0, 20000) } });
+  }
+  function budgetReady() {
+    var p = shellWin();
+    try { return !!(p && typeof p.__orosOpenBudgetNew === "function"); } catch (e) { return false; }
+  }
+  // A receipt is an expense, a sale an income; amount = the movement total.
+  function sendBudget(mv) {
+    var p = shellWin(), tot = moveTotal(mv), sup = byId("sups", mv.sup);
+    if (!budgetReady() || !tot) return;
+    var n = [sup ? sup.name : "", mv.ref || t("t." + mv.t)].filter(Boolean).join(" · ");
+    var ok = p.__orosOpenBudgetNew({
+      k: mv.t === "in" ? "o" : "i", a: tot, d: mv.d, n: n,
+      c: mv.t === "in" ? "o-other" : "i-other", src: "stock"
+    });
+    if (ok === false) showToast(t("ed.badNum"));
+  }
+  function quoteReady() {
+    var p = shellWin();
+    try { return !!(p && typeof p.__orosOpenQuoteNew === "function"); } catch (e) { return false; }
+  }
+  function quoteDialog(preset) {
+    var cur = data.settings.cur;
+    if (cur !== "EUR" && cur !== "USD") { showToast(t("br.quoteCur", { c: cur })); return; }
+    var dlg = makeDialog("st-quote", true);
+    dlg.appendChild(el("div", "dlg-title", t("br.quoteTitle")));
+    var lp = linePicker(dlg, { priceLabel: t("mv.price"), priceOf: function (it) { return it.price; }, idp: "st-qt" });
+    (preset || []).forEach(function (l) { lp.add(l.i, l.q, undefined, false); });
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("br.quoteGo"), "primary", function () {
+      var r = lp.read();
+      if (r.bad) { err.textContent = r.bad; err.hidden = false; if (r.at) r.at.focus(); return; }
+      var items = r.lines.slice(0, 50).map(function (l) {
+        var it = byId("items", l.i);
+        return {
+          d: (it.name + (it.sku ? " · " + it.sku : "")).slice(0, 200),
+          q: Math.min(100000, Math.round(l.q / 10) / 100),
+          p: Math.min(10000000, Math.round(l.c || 0) / 100)
+        };
+      }).filter(function (x) { return x.q > 0; });
+      if (!items.length) { err.textContent = t("po.noLines"); err.hidden = false; return; }
+      var p = shellWin(), ok = false;
+      try { ok = p.__orosOpenQuoteNew({ items: items, cur: cur }); } catch (e) { ok = false; }
+      if (ok === false) { err.textContent = t("ed.badNum"); err.hidden = false; return; }
+      dlg.close();
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    if (!lp.count()) lp.finder.focus();
+  }
+
+  // ---------- 6b. Reports view ----------
+  function repTable(R) {
+    var ps = C.periodSummary(data, R.from, R.to), by = Object.create(null);
+    ps.rows.forEach(function (r) { by[r.i] = r; });
+    return rows().list.filter(function (r) { return !r.item.arch || by[r.item.id]; })
+      .sort(function (a, b) { return a.item.name.localeCompare(b.item.name, LOCALE) || cmpStr(a.item.id, b.item.id); })
+      .map(function (r) {
+        var p = by[r.item.id] || { inQ: 0, outQ: 0, lossQ: 0, sales: 0 };
+        return [r.item.name, r.item.sku, r.q / 1000, Math.round(r.avg) / 100, r.value / 100,
+                p.inQ / 1000, p.outQ / 1000, p.lossQ / 1000, p.sales / 100];
+      });
+  }
+  function repHead() {
+    var cur = " (" + data.settings.cur + ")";
+    return [t("rep.h.name"), t("rep.h.sku"), t("rep.h.qty"), t("rep.h.avg") + cur, t("rep.h.value") + cur,
+            t("rep.h.in"), t("rep.h.out"), t("rep.h.loss"), t("rep.h.sales") + cur];
+  }
+  function renderReports() {
+    var sel = $("rep-range");
+    sel.innerHTML = "";
+    RANGES.forEach(function (k) {
+      var o = el("option", "", t("r." + k));
+      o.value = k;
+      sel.appendChild(o);
+    });
+    sel.value = prefs.rr;
+    var today = todayYmd(), R = C.reportRange(prefs.rr, today);
+    var vc = C.valueByCat(data), ps = C.periodSummary(data, R.from, R.to), dead = C.deadStock(data, today, 90);
+    var tiles = $("rep-tiles");
+    tiles.innerHTML = "";
+    tiles.appendChild(tile(t("rep.value"), money(vc.total), null));
+    tiles.appendChild(tile(t("rep.sales"), money(ps.sales), null));
+    tiles.appendChild(tile(t("rep.buys"), money(ps.buys), null));
+    tiles.appendChild(tile(t("rep.losses"), money(ps.lossValue), null, ps.lossValue ? "warn" : ""));
+    var acts = $("rep-acts");
+    acts.innerHTML = "";
+    if (openAtFn()) acts.appendChild(button(t("br.sheet"), "", function () {
+      var rowsT = repTable(R), max = 499;
+      if (rowsT.length > max) showToast(t("rep.cut", { n: max }));
+      openAtFn().__orosOpenAt("spreadsheet", { newSheet: { name: t("rep.sheetName") + " " + today, rows: [repHead()].concat(rowsT.slice(0, max)), sum: [4, 8] } });
+    }));
+    acts.appendChild(button(t("rep.csv"), "", function () {
+      saveText(csvText(repHead(), repTable(R)), "orOS-stock-report-" + today + ".csv", "text/csv", "CSV", ".csv");
+    }));
+
+    var body = $("rep-body");
+    body.innerHTML = "";
+    // value by category
+    var s1 = el("div", "sec");
+    s1.appendChild(el("h2", "sec-title", t("rep.byCat")));
+    var u1 = el("ul", "rows");
+    if (!vc.rows.length) u1.appendChild(el("li", "muted pad", t("rep.none")));
+    vc.rows.forEach(function (r) {
+      var cat = byId("cats", r.cat), li = el("li");
+      var row = el("div", "row compact");
+      var b = el("span", "r-body");
+      b.appendChild(el("span", "r-name", cat ? cat.name : t("f.noCat")));
+      var sub = el("span", "r-sub");
+      sub.appendChild(el("span", "", tn("sups.items", r.n)));
+      if (vc.total) sub.appendChild(el("span", "", Math.round(r.value * 100 / vc.total) + "%"));
+      b.appendChild(sub);
+      row.appendChild(b);
+      row.appendChild(el("span", "r-val", money(r.value)));
+      li.appendChild(row);
+      u1.appendChild(li);
+    });
+    s1.appendChild(u1);
+    body.appendChild(s1);
+    // most sold in the period
+    var s2 = el("div", "sec");
+    s2.appendChild(el("h2", "sec-title", t("rep.top") + " · " + t("r." + prefs.rr)));
+    var u2 = el("ul", "rows"), top = ps.rows.filter(function (r) { return r.outQ > 0 && byId("items", r.i); }).slice(0, 10);
+    if (!top.length) u2.appendChild(el("li", "muted pad", t("rep.none")));
+    top.forEach(function (r) {
+      var it = byId("items", r.i);
+      u2.appendChild(itemLine(it, [t("rep.sold", { q: fmtQ(r.outQ, it) })], r.sales ? money(r.sales) : ""));
+    });
+    s2.appendChild(u2);
+    body.appendChild(s2);
+    // dead stock
+    var s3 = el("div", "sec");
+    s3.appendChild(el("h2", "sec-title", t("rep.dead")));
+    var u3 = el("ul", "rows");
+    if (!dead.length) u3.appendChild(el("li", "muted pad", t("rep.noDead")));
+    dead.slice(0, 20).forEach(function (x) {
+      var it = x.row.item;
+      u3.appendChild(itemLine(it, [fmtQ(x.row.q, it), x.last ? t("rep.lastSale", { d: fmtDay(x.last, true) }) : t("rep.never")], money(x.row.value)));
+    });
+    s3.appendChild(u3);
+    body.appendChild(s3);
+  }
+  function itemLine(it, subs, val) {
+    var li = el("li");
+    var b = el("button", "row row-btn compact");
+    b.type = "button";
+    var body = el("span", "r-body");
+    body.appendChild(el("span", "r-name", it.name));
+    var s = el("span", "r-sub");
+    if (it.sku) s.appendChild(el("span", "", it.sku));
+    subs.forEach(function (x) { if (x) s.appendChild(el("span", "", x)); });
+    body.appendChild(s);
+    b.appendChild(body);
+    b.appendChild(el("span", "r-val", val || ""));
+    b.addEventListener("click", function () { itemSheet(it.id); });
+    li.appendChild(b);
+    return li;
   }
 
   // ---------- 7. Suppliers view ----------
@@ -938,7 +1602,7 @@
       [s.person, s.tel, s.email].forEach(function (x) { if (x) sub.appendChild(el("span", "", x)); });
       if (sub.childNodes.length) body.appendChild(sub);
       b.appendChild(body);
-      b.appendChild(el("span", "r-val", t("sups.items", { n: count[s.id] || 0 })));
+      b.appendChild(el("span", "r-val", tn("sups.items", count[s.id] || 0)));
       b.addEventListener("click", function () { supEditor(s); });
       li.appendChild(b);
       ul.appendChild(li);
@@ -1212,7 +1876,7 @@
     r1.appendChild(field(t("mv.date"), date, "st-mdate"));
     dlg.appendChild(r1);
     var r2 = el("div", "fld-row");
-    var ref = textInput("", C.REF_LEN, t("mv.refPh"));
+    var ref = textInput(o.ref || "", C.REF_LEN, t("mv.refPh"));
     var supSel = listSelect("sups", o.sup || "", t("ed.newSup"), newSupQuick);
     var supFld = field(t("mv.sup"), supSel, "st-msup");
     r2.appendChild(field(t("mv.ref"), ref, "st-mref"));
@@ -1381,7 +2045,11 @@
       } else showHits();
     });
 
-    (presetLines || []).forEach(function (p) { addLine(p.i, p.q || 0, false); });
+    (presetLines || []).forEach(function (p) {
+      addLine(p.i, p.q || 0, false);
+      var last = lines[lines.length - 1];
+      if (last && last.i === p.i && typeof p.c === "number" && !last.cf.hidden) last.cIn.value = centsStr(p.c);
+    });
     refresh();
 
     var acts = el("div", "dlg-actions");
@@ -1430,10 +2098,12 @@
       }
       var mv = C.normMove({
         id: newId(), m: Date.now(), d: date.value, t: k, ref: ref.value,
-        sup: supSel.value, note: note.value, lines: out
+        sup: supSel.value, note: note.value, lines: out,
+        src: k === "in" && o.src ? o.src : undefined      // a receipt against a purchase order
       });
       if (!mv) { fail(t("ed.badNum")); return; }
       addMove(mv);
+      if (o.onSaved) o.onSaved(mv);
       dlg.close();
       render();
       actionToast(t("toast.saved"), null, null, function () { voidMove(mv); });
@@ -1680,7 +2350,8 @@
      ["📤", t("add.out"), function () { moveEditor("out", []); }],
      ["📋", t("add.count"), function () { moveEditor("count", []); }],
      ["✏️", t("add.other"), function () { moveEditor("loss", []); }],
-     ["🏭", t("add.sup"), function () { supEditor(null); }]].forEach(function (a) {
+     ["🧾", t("add.po"), function () { poEditor(null, null); }],
+     ["🏭", t("add.sup"), function () { supEditor(null); }]].concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
       var b = button(a[0] + "  " + a[1], "sheet-btn", function () { dlg.close(); a[2](); });
       box.appendChild(b);
     });
@@ -1994,11 +2665,19 @@
   //   { item: id }  → that product's sheet (universal search)
   //   { sup: id }   → that supplier (universal search)
   //   { view: "reorder" } → the Reorder tab (low-stock notice)
+  //   { view: "reports" } → the Reports tab
+  //   { po: id }    → that purchase order (Today: expected deliveries)
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (document.querySelector("dialog[open]")) return;
     if (target.view === "reorder") { setTab("order"); return; }
+    if (target.view === "reports") { setTab("reports"); return; }
+    if (typeof target.po === "string" && byId("pos", target.po)) {
+      setTab("order");
+      poSheet(target.po);
+      return;
+    }
     if (typeof target.item === "string" && byId("items", target.item)) {
       var it = byId("items", target.item);
       if (it.arch && prefs.f !== "arch") prefs.f = "arch";
@@ -2134,6 +2813,7 @@
     if (prefs.tab === "items") renderItems();
     else if (prefs.tab === "moves") renderMoves();
     else if (prefs.tab === "order") renderOrder();
+    else if (prefs.tab === "reports") renderReports();
     else renderSups();
   }
 
@@ -2154,6 +2834,7 @@
     $("items-cat").setAttribute("aria-label", t("ed.cat"));
     $("items-sort").setAttribute("aria-label", t("sort.name"));
     $("moves-range").setAttribute("aria-label", t("r.all"));
+    $("rep-range").setAttribute("aria-label", t("rep.range"));
     document.title = t("app") + " · orOS";
   }
 
@@ -2179,6 +2860,7 @@
     $("items-cat").addEventListener("change", function () { prefs.cat = $("items-cat").value; savePrefs(); render(); });
     $("items-sort").addEventListener("change", function () { prefs.sort = $("items-sort").value; savePrefs(); render(); });
     $("moves-range").addEventListener("change", function () { prefs.range = $("moves-range").value; savePrefs(); render(); });
+    $("rep-range").addEventListener("change", function () { prefs.rr = $("rep-range").value; savePrefs(); render(); });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") savePrefsNow();
       else if (renderedDay !== todayYmd()) render();

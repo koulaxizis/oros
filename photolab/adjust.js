@@ -9,7 +9,12 @@
 //                         "preset" (p.id = fx filter id) | "invert" |
 //                         "gray" | "threshold" (p.t) | "posterize"
 //                         (p.n) | "hsl" (p.h, p.s, p.l) | "levels"
-//                         (p.ib, p.iw, p.g, p.ob, p.ow)
+//                         (p.ib, p.iw, p.g, p.ob, p.ow) | "curves"
+//                         (p.s, p.m, p.h: outputs at 64/128/192) |
+//                         "balance" (p.r, p.g, p.b midtones ±100) |
+//                         "bc" (p.b brightness, p.c contrast) |
+//                         "photo" (p.c tint, p.d density %) |
+//                         "gradmap" (p.c0 shadows → p.c1 highlights)
 //   masked(before, after, mask, ox, oy)  mixes by the selection:
 //                         after = before where the mask is 0
 //
@@ -19,7 +24,8 @@
 (function (root) {
   "use strict";
 
-  var IDS = ["fx", "preset", "invert", "gray", "threshold", "posterize", "hsl", "levels"];
+  var IDS = ["fx", "preset", "invert", "gray", "threshold", "posterize", "hsl", "levels",
+    "curves", "balance", "bc", "photo", "gradmap"];
 
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
   function num(v, lo, hi, d) { v = Number(v); return isFinite(v) ? clamp(v, lo, hi) : d; }
@@ -82,6 +88,42 @@
     return lut;
   }
 
+  function hexRgb(h, d) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(h || ""));
+    var v = parseInt(m ? m[1] : d, 16);
+    return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+  }
+
+  // Monotone cubic (Fritsch-Carlson) through (0,0) (64,s) (128,m)
+  // (192,h) (255,255) → 256-entry LUT.
+  function curvesLut(p) {
+    var xs = [0, 64, 128, 192, 255];
+    var ys = [0, num(p.s, 0, 255, 64), num(p.m, 0, 255, 128), num(p.h, 0, 255, 192), 255];
+    var n = xs.length, dx = [], sl = [], tg = [], i;
+    for (i = 0; i < n - 1; i++) { dx[i] = xs[i + 1] - xs[i]; sl[i] = (ys[i + 1] - ys[i]) / dx[i]; }
+    tg[0] = sl[0]; tg[n - 1] = sl[n - 2];
+    for (i = 1; i < n - 1; i++) tg[i] = sl[i - 1] * sl[i] <= 0 ? 0 : (sl[i - 1] + sl[i]) / 2;
+    for (i = 0; i < n - 1; i++) {
+      if (!sl[i]) { tg[i] = tg[i + 1] = 0; continue; }
+      var a = tg[i] / sl[i], b = tg[i + 1] / sl[i], q = a * a + b * b;
+      if (q > 9) { var t = 3 / Math.sqrt(q); tg[i] = t * a * sl[i]; tg[i + 1] = t * b * sl[i]; }
+    }
+    var lut = new Uint8ClampedArray(256), seg = 0;
+    for (var v = 0; v < 256; v++) {
+      while (seg < n - 2 && v > xs[seg + 1]) seg++;
+      var h = dx[seg], u = (v - xs[seg]) / h, u2 = u * u, u3 = u2 * u;
+      lut[v] = Math.round((2 * u3 - 3 * u2 + 1) * ys[seg] + (u3 - 2 * u2 + u) * h * tg[seg] +
+        (-2 * u3 + 3 * u2) * ys[seg + 1] + (u3 - u2) * h * tg[seg + 1]);
+    }
+    return lut;
+  }
+  function bcLut(p) {
+    var br = num(p.b, -150, 150, 0), c = num(p.c, -100, 100, 0) * 2.55;
+    var f = (259 * (c + 255)) / (255 * (259 - c)), lut = new Uint8ClampedArray(256);
+    for (var v = 0; v < 256; v++) lut[v] = Math.round(f * (v + br - 128) + 128);
+    return lut;
+  }
+
   function run(img, id, p, FX) {
     p = p || {};
     switch (id) {
@@ -122,6 +164,40 @@
       case "levels":
         lutRun(img, levelsLut(p));
         return true;
+      case "curves":
+        lutRun(img, curvesLut(p));
+        return true;
+      case "bc":
+        lutRun(img, bcLut(p));
+        return true;
+      case "balance":
+        var add = [num(p.r, -100, 100, 0) * 0.64, num(p.g, -100, 100, 0) * 0.64, num(p.b, -100, 100, 0) * 0.64];
+        if (!add[0] && !add[1] && !add[2]) return true;
+        eachRGB(img, function (c) {
+          var l = lum(c[0], c[1], c[2]) / 255, w = 4 * l * (1 - l);
+          c[0] = clamp(Math.round(c[0] + add[0] * w), 0, 255);
+          c[1] = clamp(Math.round(c[1] + add[1] * w), 0, 255);
+          c[2] = clamp(Math.round(c[2] + add[2] * w), 0, 255);
+        });
+        return true;
+      case "photo":
+        var tc = hexRgb(p.c, "ec8a00"), dens = num(p.d, 1, 100, 25) / 100;
+        var tl = lum(tc[0], tc[1], tc[2]) || 1;
+        eachRGB(img, function (c) {
+          var l = lum(c[0], c[1], c[2]), k = l / tl;
+          for (var j = 0; j < 3; j++) {
+            var tv = tc[j] * k;
+            c[j] = clamp(Math.round(c[j] + (Math.min(tv, 255) - c[j]) * dens), 0, 255);
+          }
+        });
+        return true;
+      case "gradmap":
+        var c0 = hexRgb(p.c0, "000000"), c1 = hexRgb(p.c1, "ffffff");
+        eachRGB(img, function (c) {
+          var t = lum(c[0], c[1], c[2]) / 255;
+          for (var j = 0; j < 3; j++) c[j] = Math.round(c0[j] + (c1[j] - c0[j]) * t);
+        });
+        return true;
     }
     return false;
   }
@@ -150,7 +226,8 @@
     return hist;
   }
 
-  var API = { IDS: IDS, run: run, masked: masked, histogram: histogram, toHsl: toHsl, fromHsl: fromHsl, levelsLut: levelsLut };
+  var API = { IDS: IDS, run: run, masked: masked, histogram: histogram, toHsl: toHsl, fromHsl: fromHsl, levelsLut: levelsLut,
+    curvesLut: curvesLut, bcLut: bcLut };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else { root.PhotoLab = root.PhotoLab || {}; root.PhotoLab.adjust = API; }
