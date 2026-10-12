@@ -5269,3 +5269,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The UI lives in the Subscribe link dialog: form HTML (no script, honeypot, list language), thank-you page (https), Collect here, and Turn the form off (relay `drop`). Deleting a list drops its form.
   - A relay without D1 (`nostore`) is not an Inbox error.
 - Relay side merged in #250 (relay/newsletter.js, `/nl/*`, op `nl`); until Chris creates the D1 database and its binding `NL_DB` is added, the form pages answer 503 "not available". Not tested: the live relay, real Gmail one-click, phones, Safari.
+
+### 2026-10-12 — Montage phase 2 wave 1 (#252) — 1.37.00
+- Montage v1.1.0: subtitles (open and save .srt, edit on the timeline, burned into the export), music ducking under voice-over, freeze frame, sound-only export, three new transitions and four new filters. Schema additions in Part IV (MONTAGE v1). Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari, long projects on low-end devices.
