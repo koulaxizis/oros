@@ -4,6 +4,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 1.29.00
 - CRM: import customers from a CSV file (Excel, HubSpot, other programs): a preview shows what is new, customers you already have are skipped, Undo removes the import.
 - Mail: Log in CRM from a message.
+- Atelier: edit a photo in Photo Lab and bring it back into your design.
 
 ## Version 1.28.00
 - Send to someone: send a list, note, contact, event, recipe or links as a link anyone can open, with an optional password.

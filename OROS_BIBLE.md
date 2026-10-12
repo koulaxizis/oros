@@ -670,7 +670,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | **Slides** | oros-slides-data | decks and slides merged in parts (each part LWW on its own clock, equal: larger canonical JSON), items LWW by m + tombs (delete wins ties; a later edit revives deck/slide) + ghosts; concurrent text losers kept as recovered text, canonical (R26) | v1.0.0 at 0.47.00; Office (new app) |
 | **Public Domain Calculator** | — (no sync slice) | none: device-local prefs and recent searches only (R10) | v1.0.0 at 0.47.00; Office (new app) |
 | **Pixel Avatar** | oros-pixel-data | Museum items LWW by m (equal m: larger canonical JSON) + tombs (delete wins ties), canonical (R26) | v1.0.0 at 0.47.00; Image since 0.97.00, was Creativity (new app) |
-| **Atelier** | oros-atelier-data | designkit model v1 (`designkit/model.js` `normData`/`mergeData`): docs LWW by stamp, items/pages per-entity LWW + tombs (R17), canonical (R26); Atelier fields in `item.ax`, normalised via `orosDK.model.setItemExt(normAx)`; images by sha256 in orOS disk `/internal/Assets/` (R30, sync via Vault Drive) | v1.0.0 at 0.47.00; Creativity; AI at 1.26.00 (`atelier/ai.js` tab + `aitext.js` through the Assistant provider, `cutout.js` on-device background removal with ONNX Runtime Web + u2netp, model cached in IndexedDB, not precached) |
+| **Atelier** | oros-atelier-data | designkit model v1 (`designkit/model.js` `normData`/`mergeData`): docs LWW by stamp, items/pages per-entity LWW + tombs (R17), canonical (R26); Atelier fields in `item.ax`, normalised via `orosDK.model.setItemExt(normAx)`; images by sha256 in orOS disk `/internal/Assets/` (R30, sync via Vault Drive) | v1.0.0 at 0.47.00; Creativity; AI at 1.26.00 (`atelier/ai.js` tab + `aitext.js` through the Assistant provider, `cutout.js` on-device background removal with ONNX Runtime Web + u2netp, model cached in IndexedDB, not precached); Edit in Photo Lab at 1.29.02 (`atelier/editpic.js`, BR-PL-EDIT sender + `editedPicture` receiver) |
 | **Atelier brand kit** | oros-atelier-brand | ATELIER-BRAND v1: colours / logos LWW per id by m, font slots h/s/t LWW by m (equal m: larger canonical JSON), tombstones `dt` remove entries not newer; canonical (R26) | Atelier 0.61.00 |
 | **Atelier folders** | oros-atelier-folders (+ device-local open folder) | ATELIER-FOLDERS v1: folders and design places LWW per entry by m (equal m: larger canonical JSON), tombstones `dt` remove folders not newer; a place naming a missing folder = no folder; canonical (R26) | Atelier 0.80.00 |
 | **Health** | oros-health-data | readings and kinds LWW by m (equal m: larger canonical JSON) + tombs (delete wins ties), settings LWW, canonical (R26); model and merge in `health/core.js`, shared with the shell engine | v1.0.0 at 0.47.00; Personal |
@@ -1676,6 +1676,10 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 
 ### Unit Converter bridge (1.05.00)
 - `__orosOpenAt("units", { cat, from, to, value })` opens a category and pair with a value (number or text); used by the search provider.
+
+### Photo Lab edit bridge BR-PL-EDIT (Photo Lab side 1.23.00, Atelier side 1.29.02)
+- Atelier → Photo Lab: `__orosOpenAt("photolab", { openFile: "/internal/Assets/<file>", back: { app: "atelier", key: "<doc id>:<element id>" } })` (back.app /^[a-z][a-z0-9-]{1,30}$/, key ≤ 200 chars); Photo Lab opens a new project with a "Done" button.
+- Photo Lab → Atelier on Done: flattened result saved as `/internal/Assets/<sha256>.png`, then `__orosOpenAt("atelier", { editedPicture: { key, path, w, h } })`; Atelier swaps the element's picture (Undo brings the old one back). Contract: /mnt/project-files/image-editor/atelier-edit-picture-contract.md.
 
 ### Text Tools deep link (1.06.00)
 - Text Tools receiver `__orosOpenAt("texttools", { text })` (≤ 2,000,000 chars): replaces the Text box with Undo; never runs anything by itself. Used by Case Converter.
