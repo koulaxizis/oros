@@ -4987,3 +4987,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Library: a book's details have **Add to Media Shelf** (then **Open in Media Shelf**), through `__orosOpenAt("shelf", { addBook: { lib, title, by, year, size } })`. EPUB books get a page estimate (~2400 bytes per page). Library only reads `oros-shelf-data`.
 - Media Shelf 1.4.0: a linked book keeps `lib` (Library book id) as an extra field; `libSync` on boot and when the Shelf comes back into view reads `oros-library-data` (read only) and logs progress as normal Shelf entries (pages only forward, start added from the wishlist, finish only when Library marked it finished on or after the run began; dropped/finished items untouched). **Read in Library** opens the book at your place. No schema change. Tests on both sides.
 - Bible: Part VI "Library ↔ Media Shelf (BR-LIB-SHELF)".
+
+### 2026-10-12 — Sticky Notes phase 2 (#214) — 1.12.00
+- Repeating rings (every day, Mon–Fri, every week): Done moves the ring to its next round, Snooze keeps the plan; a ring that happens once keeps the v1 bytes.
+- Ring sound can be a Ringtone Composer melody (read-only, ≤ 15 s; deleted melody → bell).
+- Send to To-Do (BR-TD-ADD) and Copy to Notes from the note editor (prefill only).
+- Universal search provider stickies/search.js and Today provider stickies/today.js (apps.json "search" + "today", precached).
+- Tests: tests/stickies.test.js (repeat rounds in 3 time zones, fuzz with repeats, providers). E2E by the owner: melody chime, repeat Done, To-Do dialog, Notes page, search hit, Today rows, two-device sync with concurrent repeat + text edits (equal slices, 0 idle uploads), phone 390/360 Greek.
+- Not tested: a real phone, Safari, real Dropbox, sound on a real speaker.
