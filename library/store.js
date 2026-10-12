@@ -249,6 +249,9 @@
     return openEpub(buf).then(function (e) {
       var m = e.pkg.meta;
       var info = { title: m.title, by: m.by, lang: m.lang, year: m.year, publisher: m.publisher, desc: m.desc };
+      var bytes = 0;
+      e.pkg.spine.forEach(function (s) { bytes += e.zip.size(s.path) || 0; });
+      if (bytes) info.pages = C.estPagesBytes(bytes);
       var cp = e.pkg.coverPath;
       if (!cp || !e.zip.has(cp)) return info;
       return e.zip.bytes(cp, 20 * 1024 * 1024).then(function (bytes) {

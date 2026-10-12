@@ -27,7 +27,7 @@ const S = new Function("crypto",
   block("  // ---------- 2. Model", "  // ---------- 5. Storage") +
   "\nreturn { TYPES, MAX_TAGS, TITLE_LEN, REV_LEN, isYmd, dayNum, fold, normItem, normSess, normTags, parseTags," +
   " mergeShelf, sessOf, currentRun, progressOf, completions, paceOf, goalState, yearStats, viewList, matches," +
-  " initials, inkFor, COLORS, hasProgress, unitKey, parseCsv, csvKind, planImport, lookupUrl, parseLookup };")(webcrypto);
+  " initials, inkFor, COLORS, hasProgress, unitKey, parseCsv, csvKind, planImport, lookupUrl, parseLookup, libOf, libPlan, libItem };")(webcrypto);
 
 const I1 = "item000001", I2 = "item000002", I3 = "item000003";
 function item(id, m, over) {
@@ -486,4 +486,53 @@ test("reading reminder: the shell loads feed.js, runs the engine and routes the 
   assert.ok(/KNOWN_APPS = \[[^\]]*'shelf'/.test(notifs));
   assert.ok(notifs.includes("window.__orosOpenAt('shelf', { item: id })"));
   assert.ok(src.includes('var REM_KEY = "oros-shelf-rem";'));
+});
+
+// ---------- Library link (BR-LIB-SHELF) ----------
+const LB = "b0123456789abcdef";
+function libData(over) {
+  return Object.assign({ ver: 1, books: [{ id: LB, m: 5, fmt: "epub", title: "T", pages: 300 }],
+    pos: { [LB]: { m: 6, loc: "e:1:0", pct: 500 } }, marks: [], tombs: {} }, over || {});
+}
+
+test("libOf reads Library's place read-only and respects its tombstones", () => {
+  const d = libData();
+  const snap = JSON.stringify(d);
+  assert.deepEqual(S.libOf(d, LB), { pct: 500, fin: "", pages: 300 });
+  assert.equal(JSON.stringify(d), snap);
+  assert.equal(S.libOf(libData({ tombs: { [LB]: 5 } }), LB), null);
+  assert.equal(S.libOf(d, "bnope"), null);
+  assert.equal(S.libOf(null, LB), null);
+  assert.equal(S.libOf(libData({ pos: {} }), LB).pct, 0);
+  assert.equal(S.libOf(libData({ books: [{ id: LB, m: 5, fin: "2026-10-12" }] }), LB).fin, "2026-10-12");
+});
+
+test("libPlan: progress only forward, finished in Library finishes the run", () => {
+  const info = { pct: 500, fin: "", pages: 300 };
+  const it = S.normItem(item(I1, 1, { size: 300, st: "want", lib: LB }));
+  assert.equal(it.lib, LB, "the link rides along as an extra field");
+  assert.deepEqual(S.libPlan(it, [], info), { start: true, v: 150, done: false });
+  const now = Object.assign({}, it, { st: "now" });
+  const run = [sess("s000000001", 1, I1, "s", "2026-10-01"), sess("s000000002", 2, I1, "p", "2026-10-02", 200)];
+  assert.equal(S.libPlan(now, run, info), null, "never moves back");
+  assert.deepEqual(S.libPlan(now, run, { pct: 800, fin: "" }), { start: false, v: 240, done: false });
+  assert.deepEqual(S.libPlan(now, run, { pct: 999, fin: "2026-10-12" }), { start: false, v: 300, done: true });
+  assert.deepEqual(S.libPlan(now, run, { pct: 100, fin: "2026-10-12" }), { start: false, v: 0, done: true });
+  assert.equal(S.libPlan(now, run, { pct: 100, fin: "2026-09-01" }), null, "an older finish belongs to an earlier run");
+  assert.equal(S.libPlan(Object.assign({}, it, { st: "done" }), [], info), null);
+  assert.equal(S.libPlan(Object.assign({}, it, { st: "drop" }), [], info), null);
+  assert.equal(S.libPlan(Object.assign({}, it, { size: 0 }), [], info), null, "no size, no pages to log");
+  assert.equal(S.libPlan(Object.assign({}, it, { type: "film" }), [], info), null);
+});
+
+test("libItem makes a linked e-book", () => {
+  const it = S.libItem({ lib: LB, title: " Ζορμπάς ", by: "Καζαντζάκης", year: 1946, size: 320 }, "item000009", 7, 2);
+  assert.equal(it.type, "book");
+  assert.equal(it.fmt, "e");
+  assert.equal(it.title, "Ζορμπάς");
+  assert.equal(it.size, 320);
+  assert.equal(it.st, "want");
+  assert.equal(it.lib, LB);
+  assert.equal(S.libItem({ lib: "x", title: "T" }, "item000009", 7), null);
+  assert.equal(S.libItem({ lib: LB, title: "" }, "item000009", 7), null);
 });

@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.08.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.11.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -248,6 +248,7 @@
     ringtones: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 15V8l4-1v6"/><circle cx="10" cy="15" r="1.5"/><circle cx="14" cy="13" r="1.5"/></svg>',
     studio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V14"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>',
     television: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>',
+    montage: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 4v16M17 4v16M2 9h5M2 15h5M17 9h5M17 15h5"/><path d="M10.5 9.5l4 2.5-4 2.5z"/></svg>',
     mail: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>'
   };
 
@@ -2191,9 +2192,9 @@
   }
 
   // Collapsible menu categories — SESSION state only (A74): every
-  // boot starts with ALL categories collapsed; opening an app keeps
-  // the menu exactly as it was left (this map lives in memory, not in
-  // storage). Keys are the LOWERCASE category (SH-B11). Never synced,
+  // boot starts with ALL categories collapsed, and so does every app
+  // launch (Chris 2026-10-12, menuReset below; this map lives in
+  // memory, not in storage). Keys are the LOWERCASE category (SH-B11). Never synced,
   // never dirty. The old persisted map (oros-menu-cat-collapsed) is
   // dropped once at boot so it cannot linger on the device.
   var menuCatOpen = {};
@@ -2207,6 +2208,17 @@
     s = String(s || "").toLowerCase();
     try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
     return s.replace(/ς/g, "σ");
+  }
+  // Back to the boot state (all categories collapsed, empty search)
+  // whenever an app opens, so the next menu open starts clean.
+  function menuReset() {
+    if (!menuQuery && !Object.keys(menuCatOpen).length) return;
+    menuCatOpen = {};
+    menuQuery = "";
+    clearTimeout(searchTimer);
+    searchToken++;                       // drop a data search in flight
+    searchRes = { q: null, groups: null, pending: false, at: 0 };
+    renderMenu();
   }
 
   // ---------- Universal search (search.js core + per-app providers) ----------
@@ -2277,6 +2289,7 @@
     try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
     if (state.running && state.running.id === appId) {
       closeMenu();
+      menuReset();
       var f = document.getElementById("app-frame");
       try {
         if (f && f.contentWindow && typeof f.contentWindow.__orosOpenAt === "function") {
@@ -2348,6 +2361,7 @@
 
   function openSearchHit(id, hit) {
     closeMenu();
+    menuReset();
     var p = searchProvider(id);
     if (p && typeof p.open === "function") {
       try { p.open(hit.target, window); return; } catch (e) {}
@@ -2443,6 +2457,7 @@
   // from the desktop or from inside an app.
   function openMenuSearch() {
     var menu = document.getElementById("app-menu");
+    closeNotifPanel();
     if (!menu.classList.contains("open")) menu.classList.add("open");
     var inp = menu.querySelector(".menu-search input");
     if (!inp) { renderMenu(); inp = menu.querySelector(".menu-search input"); }
@@ -4651,7 +4666,10 @@
           en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" },
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
-          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" }
+          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" },
+        { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
+          by: "Vanilagy & contributors", lic: "MPL-2.0",
+          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" }
       ]
     },
     {
@@ -5015,6 +5033,21 @@
     } catch (e) { return Promise.resolve(false); }
   }
 
+  // Montage keeps device-only media outside orosFS (OPFS dir
+  // "montage-media", IDB fallback "oros-montage-media", thumbnails and
+  // waveforms in "oros-montage-thumbs"), so neither the orosFS wipe nor
+  // the sweep sees it. The two IDBs go in stage 2; the OPFS dir here.
+  function wipeMontageMedia() {
+    try {
+      if (!navigator.storage || typeof navigator.storage.getDirectory !== "function") return Promise.resolve(false);
+      return Promise.race([
+        navigator.storage.getDirectory().then(function (r) { return r.removeEntry("montage-media", { recursive: true }); })
+          .then(function () { return true; }, function () { return false; }),
+        new Promise(function (res) { setTimeout(function () { res(false); }, 5000); })
+      ]);
+    } catch (e) { return Promise.resolve(false); }
+  }
+
   function scFactoryReset(btn) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
@@ -5031,7 +5064,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), cloud]).then(function () {
+    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -5068,7 +5101,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -7300,6 +7333,7 @@
 
   function openApp(app) {
     closeMenu();
+    menuReset();
     if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
     if (app.type === "external") {
       window.open(app.url, "_blank", "noopener");
@@ -7335,7 +7369,15 @@
   }
 
   // ---------- 11. Menu open/close ----------
+  // The bell's panel never sees a menu-button click (the button stops
+  // it), so the menu closes it: one tray popup at a time (Chris 2026-10-12).
+  function closeNotifPanel() {
+    if (window.orosNotifs && typeof window.orosNotifs.closeNotificationPanel === "function") {
+      window.orosNotifs.closeNotificationPanel();
+    }
+  }
   function toggleMenu() {
+    closeNotifPanel();
     if (state.running) { returnToDesktop(); return; }
     document.getElementById("app-menu").classList.toggle("open");
   }

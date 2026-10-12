@@ -17,6 +17,8 @@ Tap a title to open it. Start it with a button such as `Start reading` or `Start
 
 You'll see a progress bar and percentage, and, once there's enough to go on, how long you'll take at your pace. When you reach the end, the app offers `Mark done`. You can also `Drop` a title, put it `Back to wishlist`, `Resume` it, or start it again (`Read again`, `Watch again`…). The history inside a title lists each start, progress and finish; you can remove an entry.
 
+Books you add from [Library](app:library) with `Add to Media Shelf` are linked: their pages follow how far you've read there each time you open Media Shelf, finishing the book in Library marks it done here, and `Read in Library` opens it at your place.
+
 ## Rating and review
 Rate with five stars in half steps: tap the left or right half of a star. Mark a `Favourite` with the heart and write a `Review / notes`.
 
