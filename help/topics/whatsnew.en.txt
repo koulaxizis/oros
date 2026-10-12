@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.26.00
+- Atelier: AI ideas and texts with your Assistant's AI, and background removal on the device.
+
 ## Version 1.25.00
 - CRM: Invoice and Quote buttons on a customer and on a deal open a filled-in draft in Invoices or Quote. A customer's new Documents tab lists their invoices (invoiced, paid, unpaid) and quotes; the Dashboard shows what customers still owe.
 
