@@ -1,0 +1,38 @@
+# Case Converter
+Change the case and the letters of any text: capitals, small letters, Title Case, Greek without accents, Greek in Latin letters, names for code and fancy Unicode letters. Greek is done right: ΤΣΑΪ, ΜΑΪΟΣ, capitals without accents and a final ς.
+
+## Getting started
+1. Type or paste your text in `Text`. `Paste` takes what you copied; `Clear` empties the box (`Undo` brings it back).
+2. Pick a conversion. The `Result` changes as you type.
+3. Press `Copy`, or `Use as text` to convert the result again (for example `Remove accents`, then `UPPERCASE`).
+Under the text you see its characters, words and lines.
+
+## The conversions
+- `Basic`: `UPPERCASE`, `lowercase`, `Sentence case` (a capital at the start of each sentence), `Title Case` (small words such as "of", "the", "και", "του" stay small), `Capitalize Each Word`, `tOGGLE cASE` (fixes text typed with Caps Lock on) and `aLtErNaTiNg`.
+- `Greek`: `Remove accents` (also diaereses and the accents of other languages), `Greek → Latin (ELOT 743)` as on Greek passports (Θεσσαλονίκη → Thessaloniki), `Greeklish` as in messages, and `Fix mixed letters`, which finds Latin letters hiding in Greek words (an English A in ΑΘΗΝΑ) and the other way round.
+- `Code`: camelCase, PascalCase, snake_case, kebab-case, CONSTANT_CASE, dot.case, path/case and Train-Case. Each line becomes one name. Greek is written in Latin letters unless you tick `Keep Greek letters`.
+- `Styles`: bold, italic, monospace, double-struck, small caps, fullwidth, circled, strikethrough and underline letters for posts. `Plain text` turns them back.
+
+## Language and selection
+- `Language` is `Automatic` at first: the app looks at the letters. Choose `Türkçe` for the Turkish i and İ, or `Deutsch`, when the text needs it.
+- Tick `Selection only` and select part of the text: only that part changes; the rest of the result stays as it is.
+
+## My words
+The button at the top right opens `My words`: words that always keep their capitals in `Sentence case`, `Title Case` and `Capitalize Each Word`, such as iPhone, NASA or ΔΕΗ. Type a word and press `Add`; the × next to a word removes it (`Undo` brings it back). A few common words are there at first.
+
+## Sync and backup
+- `My words` follows you to all your devices through orOS sync, encrypted like the rest of your data, and is part of the orOS export.
+- Your text is never synced. It stays on this device, so it is still there the next time you open the app; `Clear` removes it. Very long texts (over 100,000 characters) are kept only while the app is open.
+
+## Keyboard shortcuts
+- [[Ctrl+Enter]]: copy the result.
+- [[←]] and [[→]] on the tabs or the conversions: move between them.
+- [[Esc]]: close `My words`.
+
+## Tips
+> Writing a title in Greek capitals? Use `UPPERCASE`: the accents go away by themselves and the diaereses stay where they belong.
+
+## Limits
+- Small letters cannot get back the accents of a text written in capitals (ΚΑΛΗΜΕΡΑ → καλημερα).
+- Greeklish to Greek is not available: the same Latin letters can be several Greek ones.
+- Many screen readers read the `Styles` letters badly; keep them for short titles. Letters a style has no form for, such as Greek in monospace, stay as they are.
