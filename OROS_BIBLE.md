@@ -5173,3 +5173,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Atelier: Edit in Photo Lab (#244) — 1.29.02
 - Atelier: "Edit in Photo Lab" on a selected photo opens it in Photo Lab (BR-PL-EDIT); "Done" there brings the edited picture back into the same element of the design (`editedPicture` receiver, Undo). New file atelier/editpic.js (precached). Help EN/EL, tests. Not tested: real phones, Safari, Vault Drive sync of the edited asset.
+
+### 2026-10-12 — Stock v1.4.0 (phase 3B, #245) — 1.30.00
+
+- **Warehouses and transfers:** per-warehouse quantities, counts, counter and filter; transfers change no total; value per warehouse in Reports; old devices keep correct totals.
+- Not tested: real phones, Safari, a real 1.3 device syncing with 1.4.
