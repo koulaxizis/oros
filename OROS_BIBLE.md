@@ -5154,3 +5154,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Help: privacy page adds Library and Newsletter (#240) — 1.27.01
 - Privacy help (EN + EL) now covers the Library's Wiktionary look-up (opt-in, only the word is sent) and the Newsletter app. Text only.
+
+### 2026-10-12 — Send to someone: share links, phase 1 (#241) — 1.28.00
+- New "Send to someone" / «Στείλε σε κάποιον» (BR-SHARE): To-Do, Notes, Contacts, Calendar, Meals and Bookmarks can send one item as a link whose content lives only in the URL fragment (never sent to a server), with an optional password; also QR, email or file. `share/` opens it in any browser; with orOS, "Add to my orOS" adds it to the matching app (new receivers BR-SHARE-RECIPE, BR-BM-MANY). A sent link cannot be taken back and does not expire.
+- New folder share/ (not an app) precached, help topic `share`. Chris rejected the Messages chat app; this replaces it. Tests: share kinds + receivers. Not tested: real phones, Safari, real Dropbox, the phone share sheet.
