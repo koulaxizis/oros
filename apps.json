@@ -286,6 +286,7 @@
       "icon": "stock",
       "url": "stock/",
       "search": "search.js",
+      "today": "today.js",
       "type": "internal"
     },
     {
