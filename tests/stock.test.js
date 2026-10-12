@@ -327,3 +327,126 @@ test("search: products and suppliers, archived and deleted skipped, read-only", 
   const src = fs.readFileSync(path.join(__dirname, "..", "stock/search.js"), "utf8");
   assert.ok(!/setItem|removeItem|registerSlice|innerHTML/.test(src));
 });
+
+// ---------- 1.1: purchase orders, reports, Today ----------
+function po(id, extra) {
+  return Object.assign({ id, m: 1000, no: "PO-1", sup: "sup001", d: "2026-10-01", exp: "2026-10-10", st: "sent",
+                         lines: [{ i: "item01", q: k(10), c: 300 }, { i: "item02", q: k(4) }] }, extra || {});
+}
+
+test("purchase orders: normalizer, merge LWW + tombstones, a 1.0 copy without pos loses nothing", () => {
+  assert.equal(C.normPo(po("po0001", { lines: [] })), null);
+  assert.equal(C.normPo(po("po0001", { d: "2026-13-01" })), null);
+  const x = C.normPo(po("po0001", { st: "weird", exp: "soon", lines: [{ i: "item01", q: 5 }, { i: "item01", q: 9 }, { i: "item02", q: 0 }, { i: "bad", q: 1 }] }));
+  assert.equal(x.st, "draft");
+  assert.equal(x.exp, "");
+  assert.deepEqual(x.lines, [{ i: "item01", q: 5 }]);          // one line per item, q > 0
+  const A = data({ pos: [po("po0001", { m: 2000, st: "closed" })] });
+  const B = data({ pos: [po("po0001", { m: 1500 }), po("po0002", { no: "PO-2" })] });
+  const ab = m(A, B), ba = m(B, A);
+  assert.deepEqual(ab, ba);
+  assert.deepEqual(m(ab, ab), ab);
+  assert.equal(ab.pos.length, 2);
+  assert.equal(ab.pos[0].st, "closed");
+  const del = m(ab, data({ tombs: { po0002: NOW - 1000 } }));
+  assert.deepEqual(del.pos.map((p) => p.id), ["po0001"]);
+  // a 1.0 device's copy has no "pos" key: the merge keeps them
+  const old = JSON.parse(JSON.stringify(ab));
+  delete old.pos;
+  assert.deepEqual(m(ab, old).pos, ab.pos);
+});
+
+test("purchase orders: received = live receipts with src po:<id>; state; on order; numbering", () => {
+  const items = [item("item01"), item("item02")];
+  const P0 = po("po0001");
+  let d = m(data({ items, pos: [P0] }), null);
+  let v = C.poView(d, d.pos[0]);
+  assert.equal(v.state, "sent");
+  assert.equal(v.open, true);
+  assert.deepEqual(C.onOrder(d), Object.assign(Object.create(null), { item01: k(10), item02: k(4) }));
+  // part arrives on device A, the rest of item02 on device B at the same time
+  const rA = mv("mvrec01", "in", "2026-10-05", [{ i: "item01", q: k(6), c: 300 }], { src: C.poSrc("po0001") });
+  const rB = mv("mvrec02", "in", "2026-10-05", [{ i: "item02", q: k(4) }], { src: C.poSrc("po0001") });
+  d = m(m(d, data({ moves: [rA] })), data({ moves: [rB] }));
+  v = C.poView(d, d.pos[0]);
+  assert.equal(v.state, "partial");
+  assert.deepEqual(v.lines.map((l) => [l.got, l.left]), [[k(6), k(4)], [k(4), 0]]);
+  assert.deepEqual(C.onOrder(d), Object.assign(Object.create(null), { item01: k(4) }));
+  // a receipt that is not "in", or has another src, does not count
+  d = m(d, data({ moves: [mv("mvx0001", "fix", "2026-10-06", [{ i: "item01", q: k(4) }], { src: C.poSrc("po0001") }),
+                          mv("mvx0002", "in", "2026-10-06", [{ i: "item01", q: k(4) }], { src: "po:other1" })] }));
+  assert.equal(C.poView(d, d.pos[0]).state, "partial");
+  const rC = mv("mvrec03", "in", "2026-10-07", [{ i: "item01", q: k(4) }], { src: C.poSrc("po0001") });
+  d = m(d, data({ moves: [rC] }));
+  assert.equal(C.poView(d, d.pos[0]).state, "received");
+  assert.equal(C.poView(d, d.pos[0]).open, false);
+  // voiding a receipt un-receives it
+  d = m(d, data({ moves: [Object.assign({}, rC, { v: 1, m: 2000 })] }));
+  assert.equal(C.poView(d, d.pos[0]).state, "partial");
+  // closed: nothing more on order, even with lines left
+  d = m(d, data({ pos: [Object.assign({}, P0, { st: "closed", m: 3000 })] }));
+  assert.equal(C.poView(d, d.pos[0]).state, "closed");
+  assert.deepEqual(Object.keys(C.onOrder(d)), []);
+  // a draft is not on order yet
+  assert.deepEqual(Object.keys(C.onOrder(m(data({ items, pos: [po("po0003", { st: "draft" })] }), null))), []);
+  // numbering per day
+  assert.equal(C.poNext(data(), TODAY), "PO-261012-1");
+  assert.equal(C.poNext(data({ pos: [{ no: "PO-261012-1" }, { no: "PO-261012-7" }, { no: "PO-261011-9" }] }), TODAY), "PO-261012-8");
+});
+
+test("reports: value by category, period summary, dead stock, ranges", () => {
+  const items = [item("item01", { cat: "cat001" }), item("item02"), item("item03", { cat: "gone01" }), item("item04", { arch: 1 })];
+  const d = m(data({
+    items, cats: [{ id: "cat001", m: 1, name: "Mugs" }],
+    moves: [
+      mv("mv00001", "in", "2026-06-01", [{ i: "item01", q: k(10), c: 200 }, { i: "item02", q: k(5), c: 100 }, { i: "item03", q: k(2), c: 50 }, { i: "item04", q: k(1), c: 999 }]),
+      mv("mv00002", "out", "2026-10-02", [{ i: "item01", q: -k(3), p: 500 }]),
+      mv("mv00003", "loss", "2026-10-03", [{ i: "item02", q: -k(1) }]),
+      mv("mv00004", "out", "2026-10-04", [{ i: "item01", q: -k(1), p: 500 }], { v: 1 })
+    ]
+  }), null);
+  const vc = C.valueByCat(d);
+  assert.equal(vc.total, 7 * 200 + 4 * 100 + 2 * 50);          // archived item left out
+  assert.deepEqual(vc.rows.map((r) => [r.cat, r.value, r.n]), [["cat001", 1400, 1], ["", 500, 2]]);   // unknown category → none
+  const R = C.reportRange("30", TODAY);
+  assert.deepEqual(R, { from: "2026-09-13", to: TODAY });
+  assert.deepEqual(C.reportRange("month", TODAY), { from: "2026-10-01", to: TODAY });
+  assert.deepEqual(C.reportRange("year", TODAY), { from: "2026-01-01", to: TODAY });
+  const ps = C.periodSummary(d, R.from, R.to);
+  assert.equal(ps.sales, 1500);                                 // the voided sale does not count
+  assert.equal(ps.buys, 0);                                     // the receipt is outside the period
+  assert.equal(ps.lossValue, 100);
+  assert.equal(ps.rows[0].i, "item01");
+  assert.equal(ps.rows[0].outQ, k(3));
+  const all = C.periodSummary(d, "1900-01-01", "2200-12-31");
+  assert.equal(all.buys, 2000 + 500 + 100 + 999);
+  const dead = C.deadStock(d, TODAY, 90);
+  assert.deepEqual(dead.map((x) => [x.row.item.id, x.last]), [["item03", null]]);   // item02 lost one (counts as moving)
+});
+
+test("Today provider: reorder line and expected deliveries, read-only", () => {
+  globalThis.OrosStockCore = C;
+  const T = require(path.join(__dirname, "..", "stock/today.js"));
+  const A = require(path.join(__dirname, "..", "today/agg.js"));
+  const store = {
+    "oros-stock-data": data({
+      items: [item("item01", { min: k(5) }), item("item02")],
+      sups: [{ id: "sup001", m: 1, name: "Acme" }],
+      pos: [po("po0001", { exp: "2026-10-10" }), po("po0002", { no: "PO-2", exp: "2026-12-01" }), po("po0003", { no: "PO-3", st: "draft", exp: TODAY })]
+    })
+  };
+  const before = JSON.stringify(store);
+  const ctx = {
+    today: TODAY, horizon: A.HORIZON, now: NOW, lang: "el",
+    readJSON: (key) => (key in store ? JSON.parse(JSON.stringify(store[key])) : null),
+    readRaw: (key) => (key in store ? JSON.stringify(store[key]) : null), addDays: A.addDays, diff: A.diff
+  };
+  const rows = T.collect(ctx);
+  assert.equal(JSON.stringify(store), before);
+  assert.deepEqual(rows.map((r) => [r.id, r.kind, r.due]), [["low", "info", null], ["po-po0001", "task", "2026-10-10"]]);
+  assert.equal(rows[0].title, "Για παραγγελία: 1");
+  assert.deepEqual(rows[1].target, { po: "po0001" });
+  assert.match(rows[1].text, /Acme/);
+  assert.deepEqual(T.collect(Object.assign({}, ctx, { readJSON: () => null })), []);
+  delete globalThis.OrosStockCore;
+});

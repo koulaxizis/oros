@@ -32,9 +32,22 @@ A movement is never edited or deleted. Open it and choose `Void this movement`: 
 >! If a sale would take a product below zero, Stock asks first. You can forbid it in Settings.
 
 ## Reorder
-`Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum). `Copy list` copies the order as text; `Receive this order` opens a receipt with those lines when the goods arrive.
+`Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum, less what is already on order). For each supplier:
+- `Create order` makes a purchase order with those lines.
+- `Copy list` copies the order as text; `To-Do` sends it to a new To-Do list; `E-mail` opens a message to the supplier in [Mail](app:mail) (when Mail has an account on this device).
+- `Receive this order` opens a receipt with those lines when the goods arrive.
 
 When a product reaches its minimum you also get one notice on this device (you can switch it off in Settings).
+
+### Purchase orders
+A purchase order keeps what you asked a supplier for: `Order no.`, `Supplier`, `Order date`, `Expected` day (filled in from the supplier's delivery time) and the products with quantity and unit cost. Save it as a draft or mark it sent. Open orders show at the top of `Reorder`.
+
+When goods arrive, open the order and choose `Receive`: a receipt opens with what is still to come. Save it, even if only part arrived; the order shows `Partly received` until everything is in, then `Received`. Voiding a receipt puts its quantities back on the order. `Close order` when nothing more is coming; `Cancel order` if it never went out.
+
+What is on order shows next to low products and lowers their suggested quantity. A late delivery shows in [Today](app:today).
+
+## Reports
+The `Reports` tab shows the stock value, sales, purchases and losses of a period (last 30 days, this month, this year or all), the value per category, the products that sold most and the ones that sold nothing for 90 days. `Open in Spreadsheet` sends the full table to a new sheet; `Report (CSV)` saves it as a file.
 
 ## Suppliers
 The `Suppliers` tab keeps names, contact person, phone, e-mail, VAT number and delivery time. `From Contacts` copies a person or company from [Contacts](app:contacts) into a new supplier.
@@ -51,9 +64,11 @@ Products, movements, suppliers, categories, units and settings sync between your
 ## Tips
 - Set a `Location` such as "Shelf B3": it shows in the list and in search.
 - Archive products you no longer sell: their history stays.
+- From a product: `New quote` starts a quote in [Quote](app:quote) with that product and its sale price (Quote works in EUR or USD). `Quote from products` in `New` takes several.
+- Open a receipt or a sale and choose `Add to Budget` to log its total in [Budget](app:budget).
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 
 ## Limits
 - One warehouse: there are no separate locations with transfers yet.
-- No purchase orders, reports or camera scanning yet; a scanner that types works.
+- No camera scanning yet; a scanner that types works.
 - A product with movements can't be deleted, only archived.
