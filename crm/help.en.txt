@@ -1,0 +1,38 @@
+# CRM
+CRM is a small customer book for a freelancer or a small business: your customers, the people you talk to there, what was said, what you promised to do next and the deals you are working on.
+
+## Getting started
+Tap or click `Add your first customer`. Pick `Company` or `Person`, write the name and choose a `Status`: `Lead` (not a customer yet), `Active` or `Past`. Under `Billing details` you can keep the `VAT ID (ΑΦΜ)`, `Tax office (ΔΟΥ)`, `Profession`, `Address` and `Country`. For a Greek VAT ID the app checks the check digit and warns when another customer already has it.
+
+The tabs are `Customers`, `Pipeline`, `Agenda` and `Dashboard`. On a phone they sit at the bottom of the screen.
+
+## Customers and people
+The list has a search field, a sort menu and filters: `Leads`, `Active`, `Past`, `Starred`, `Not contacted` and your tags. Tap a customer to open the page with `Call`, `Email`, `Map`, `Log contact`, `Follow-up` and `Deal`.
+
+Under `People` tap `+ Person`. Pick someone `From Contacts` (their phone and email are read from [Contacts](app:contacts) and stay up to date), or write a name with a phone and email. `Add to Contacts` opens Contacts with that person filled in; it is saved there only when you press Save.
+
+## History, follow-ups and the agenda
+`Log contact` records a call, email, meeting, message or note with its date and time, who you spoke to and the deal it was about. Pick `Next follow-up` to plan the next step in the same window.
+
+A follow-up has a day, an optional time and what to do. `Agenda` shows the late ones, today's and the next 7 days. Tap the circle to mark one done; the note that appears offers `Log it`. The menu of a follow-up moves it to `Tomorrow` or `In a week`, or sends it to [To-Do](app:todo).
+
+## Pipeline
+A deal has a title, a value, a stage (`New`, `Contacted`, `Proposal`, `Negotiation`, `Won`, `Lost`), a chance in percent and an expected close day. On a wide screen drag a card to another column. On a phone pick a stage at the top and use the `⋯` button of a deal to move it. The totals show the value and the weighted value (value × chance).
+
+## Dashboard
+Open pipeline, won this month and this year, win rate, late follow-ups, customers you have not contacted for a while and new leads. Tap a tile to see the list behind it.
+
+## Sync and backup
+Customers, people, history, follow-ups, deals, tags and the currency sync between your devices through [orOS sync](help:t/sync). The open tab, filters and sort stay on each device.
+
+In `Settings`: `Export customers (CSV)`, `Backup (JSON)` and `Restore a backup`. A backup is merged into what you have; nothing is deleted.
+
+## Tips
+- Follow-up reminders reach the [notifications](help:t/notifications) inbox while CRM is open.
+- Change `"Not contacted" after` in `Settings` to decide when a customer counts as forgotten.
+- Deleting a customer also deletes its deals, history and follow-ups; `Undo` brings them all back.
+- CRM is not in the menu search until you switch it on under `Search in`, because it holds other people's details.
+
+## Limits
+- Reminders arrive only while CRM is open.
+- Up to 2,000 customers and 20,000 history entries, to leave room for the other apps.
