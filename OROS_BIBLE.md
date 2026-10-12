@@ -5071,3 +5071,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-12 — Assistant phase 3 (#228) — 1.19.00
 - Assistant phase 3: app_summary tool (assistant/summary.js: Budget month by category, Timesheet month per project through OrosTimesheetCore.report, To-Do counts per list, any Today-provider app's agenda through new today/host.js orosToday.agenda), consent card per "Ask first" app, agenda rows get refs; invoice entry card (BR-INV-NEW, __orosOpenAt("invoices", {new})); Copy button on answers; "Built-in browser model" provider (Prompt API window.LanguageModel, chat only, no tools); Writer sparkle button → __orosOpenAt("assistant", {ask}); ask text cap 2000 → 20000. Tests: tests/assistant.test.js (37). Not tested: a real Chrome built-in model (mocked), real provider calls with real keys, Safari/iPhone, a real phone.
 - Precache: assistant/summary.js (new).
+
+### 2026-10-12 — Help: Calendar "Invoices" feed (#229) — 1.19.01
+- Calendar help (EN + EL) describes the Invoices feed chip (unpaid invoices on their due date). Text only.
