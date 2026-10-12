@@ -5049,3 +5049,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Photo Lab 2C: layer masks, adjustment layers, layer styles (#222) — 1.17.00
 - Layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay). photolab/ + tests only.
+
+### 2026-10-12 — Text Tools wave 2 (#223) — 1.18.00
+- Text Tools: Extract (emails, links, phone numbers, numbers, #hashtags, @names), Encode (URL, Base64, HTML entities, Slug), Compare two texts line by line ("Compare with" box, session only, swap, open a file). Opens .txt/.csv/.tsv from "Open with" and Android Share (fileopen.js + manifest). Help EN/EL, tests.
