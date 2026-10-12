@@ -1504,13 +1504,10 @@ function transientNote(title, body) {
                typeof c.petData.pet === "object") ? c.petData.pet : null;
 
     // 1. Birthday — computed from the synced birthTs
-    if (pet && typeof pet.birthTs === "number" && isFinite(pet.birthTs)) {
-      var b = new Date(pet.birthTs);
-      var pd = dateStr.split("-");
-      var cell = new Date(+pd[0], +pd[1] - 1, +pd[2]);
-      if (!isNaN(cell.getTime()) && cell.getMonth() === b.getMonth() &&
-          cell.getDate() === b.getDate() &&
-          cell.getFullYear() > b.getFullYear()) {
+    // (namedays.js petBirthday: the rule the Today summary uses too)
+    var ND = window.OrosNamedays;
+    if (pet && ND && typeof ND.petBirthday === "function") {
+      if (ND.petBirthday(pet, dateStr) > 0) {
         out.push({
           id: "pet-bday-" + dateStr,        // per-render key, never stored
           title: t("feed.pet.bday")

@@ -917,41 +917,18 @@
   }
   // avg cycle length = mean gap between CONSECUTIVE starts,
   // needs ≥2 starts. Null until then — honesty over guessing.
-  function avgCycleLen() {
-    var ps = sortedPeriods().slice().reverse();   // oldest first
-    if (ps.length < 2) return null;
-    var gaps = [];
-    for (var i = 1; i < ps.length; i++) {
-      gaps.push(Math.round((ps[i].start - ps[i - 1].start) / DAY_MS));
-    }
-    var sum = 0;
-    gaps.forEach(function (g) { sum += g; });
-    return Math.round(sum / gaps.length);
-  }
-  function avgPeriodLen() {
-    var ps = sortedPeriods().filter(function (p) { return p.end !== null; });
-    if (ps.length < 1) return null;
-    var sum = 0;
-    ps.forEach(function (p) {
-      sum += Math.round((p.end - p.start) / DAY_MS) + 1;   // inclusive
-    });
-    return Math.round(sum / ps.length);
-  }
+  // The math lives in cycle/core.js (OrosCycleCore), shared with the
+  // shell's closed-app reminder and the Today summary.
+  var CC = window.OrosCycleCore;
+  function avgCycleLen() { return CC.avgCycleLen(state.periods); }
+  function avgPeriodLen() { return CC.avgPeriodLen(state.periods); }
 
   // ---------- predictions (Wave 2) ----------
   // An ESTIMATE built from the user's OWN history: next start =
   // last start + avg cycle length; window = avg period length.
   // Render-time derived only — never stored, never authoritative,
   // and always escorted by the disclaimer (pred.disc).
-  function nextPrediction() {
-    var avg = avgCycleLen();
-    if (avg === null) return null;
-    var last = sortedPeriods()[0];
-    var len = avgPeriodLen();
-    if (len === null) len = 5;   // no ended period in history yet
-    var start = last.start + avg * DAY_MS;
-    return { start: start, end: start + (len - 1) * DAY_MS, avg: avg };
-  }
+  function nextPrediction() { return CC.nextPrediction(state.periods); }
 
   // Cycle info strip — where you are RIGHT NOW. Facts only.
   function renderCycleInfo() {
@@ -3280,11 +3257,9 @@
   // owns STRINGS.
   window.__orosCycleCheck = function () {
     if (!state.prefs || !state.prefs.remind) return null;
-    var pr = nextPrediction();
-    if (!pr) return null;
-    var daysLeft = Math.ceil((pr.start - todayTs()) / DAY_MS);
-    if (daysLeft > 2) return null;
-    var ymd = dayKey(pr.start);
+    var due = CC.dueIn(state.periods, todayTs());       // cycle/core.js, = the shell's closed-app rule
+    if (!due) return null;
+    var daysLeft = due.daysLeft, ymd = due.ymd;
     if (daysLeft >= 0) {
       return {
         key: "pred-" + ymd + "-soon",
