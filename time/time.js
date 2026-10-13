@@ -56,7 +56,7 @@
       "zones.ok": "Add", "zones.cancel": "Cancel", "zones.none": "No zones yet",
       "zones.edit": "Change zone", "zones.del": "Delete zone",
       "qc.athens": "Athens", "qc.london": "London", "qc.nyork": "New York", "qc.tokyo": "Tokyo",
-      "tab.alarm": "Alarm", "tab.timer": "Timer", "tab.stopwatch": "Stopwatch", "tab.pomodoro": "Pomodoro",
+      "tab.alarm": "Alarm", "tab.timer": "Timer", "tab.stopwatch": "Stopwatch", "tab.pomodoro": "Pomodoro", "tab.stage": "Stage",
       "al.ph.label": "Label…", "al.daily": "Daily", "al.sound": "Sound",
       "al.add": "Add alarm", "al.none": "No alarms",
       "tm.start": "Start", "tm.reset": "Reset", "tm.done": "Timer finished",
@@ -78,7 +78,7 @@
       "zones.ok": "Προσθήκη", "zones.cancel": "Άκυρο", "zones.none": "Δεν έχουν προστεθεί ζώνες",
       "zones.edit": "Αλλαγή ζώνης", "zones.del": "Διαγραφή ζώνης",
       "qc.athens": "Αθήνα", "qc.london": "Λονδίνο", "qc.nyork": "Νέα Υόρκη", "qc.tokyo": "Τόκιο",
-      "tab.alarm": "Ξυπνητήρι", "tab.timer": "Αντίστροφη μέτρηση", "tab.stopwatch": "Χρονόμετρο", "tab.pomodoro": "Pomodoro",
+      "tab.alarm": "Ξυπνητήρι", "tab.timer": "Αντίστροφη μέτρηση", "tab.stopwatch": "Χρονόμετρο", "tab.pomodoro": "Pomodoro", "tab.stage": "Σκηνή",
       "al.ph.label": "Ετικέτα…", "al.daily": "Καθημερινά", "al.sound": "Ήχος",
       "al.add": "Προσθήκη ξυπνητηριού", "al.none": "Κανένα ξυπνητήρι",
       "tm.start": "Έναρξη", "tm.reset": "Επαναφορά", "tm.done": "Η αντίστροφη μέτρηση ολοκληρώθηκε",
@@ -1320,7 +1320,7 @@
 // (DL_BRIDGES → "time:<target>"). Depends ONLY on the time.html
 // DOM contract (.tab[data-pane] click switching) — no internals
 // of this file are touched. Panes: pane-alarm / pane-timer /
-// pane-stop / pane-pomo.
+// pane-stop / pane-pomo / pane-stage.
 (function () {
   "use strict";
 
@@ -1333,7 +1333,8 @@
     stopwatch:"pane-stop",
     stop:     "pane-stop",
     pomodoro: "pane-pomo",
-    pomo:     "pane-pomo"
+    pomo:     "pane-pomo",
+    stage:    "pane-stage"
   };
 
   function openPane(name) {

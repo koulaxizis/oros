@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Time · orOS</title>
 
-  <link rel="stylesheet" href="time.css?v=1.47.00">
+  <link rel="stylesheet" href="time.css?v=1.49.00">
 
 </head>
 <body>
@@ -56,6 +56,7 @@
         <button class="tab" data-pane="pane-timer" type="button" data-i18n="tab.timer"></button>
         <button class="tab" data-pane="pane-stop" type="button" data-i18n="tab.stopwatch"></button>
         <button class="tab" data-pane="pane-pomo" type="button" data-i18n="tab.pomodoro"></button>
+        <button class="tab" data-pane="pane-stage" type="button" data-i18n="tab.stage"></button>
       </div>
 
       <!-- Alarm -->
@@ -120,6 +121,52 @@
         <p id="pm-log-hint" data-i18n="pm.log.hint" hidden></p>
         <div id="pm-count"></div>
       </div>
+
+      <!-- Stage: conference / stage timer (time/stage.js) -->
+      <div class="pane" id="pane-stage" hidden>
+        <div class="stg-bar">
+          <select id="stg-ev" data-i18n-s="stg.ev"></select>
+          <button id="stg-ev-new" type="button" class="mini" data-i18n-s="stg.ev.new"></button>
+          <button id="stg-ev-edit" type="button" class="mini" data-i18n-s="stg.ev.edit"></button>
+        </div>
+        <div id="stg-empty" hidden>
+          <p data-i18n-s="stg.empty"></p>
+          <button id="stg-empty-new" type="button" class="btn prim" data-i18n-s="stg.ev.create"></button>
+        </div>
+        <div id="stg-main" hidden>
+          <div id="stg-sum" aria-live="polite"></div>
+          <div id="stg-live" class="stg-live">
+            <div id="stg-live-title"></div>
+            <div id="stg-live-spk"></div>
+            <div id="stg-time" class="stg-time">00:00</div>
+            <div class="stg-prog"><span id="stg-prog-bar"></span></div>
+            <div id="stg-next"></div>
+          </div>
+          <div class="stg-ctl">
+            <button id="stg-prev" type="button" class="btn" data-i18n-s="stg.prev"></button>
+            <button id="stg-go" type="button" class="btn prim"></button>
+            <button id="stg-nxt" type="button" class="btn" data-i18n-s="stg.next"></button>
+          </div>
+          <div class="stg-ctl">
+            <button id="stg-minus" type="button" class="btn" data-i18n-s="stg.minus"></button>
+            <button id="stg-plus" type="button" class="btn" data-i18n-s="stg.plus"></button>
+            <button id="stg-reset" type="button" class="btn" data-i18n-s="stg.reset"></button>
+            <button id="stg-show" type="button" class="btn prim" data-i18n-s="stg.show"></button>
+          </div>
+          <div class="stg-opts">
+            <label class="chk">
+              <input id="stg-sound" type="checkbox">
+              <span data-i18n-s="stg.sound"></span>
+            </label>
+          </div>
+          <div class="sec-head stg-head">
+            <span data-i18n-s="stg.rundown"></span>
+            <button id="stg-add" type="button" class="mini" data-i18n-s="stg.add"></button>
+          </div>
+          <ol id="stg-list"></ol>
+          <p class="stg-keys" data-i18n-s="stg.keys"></p>
+        </div>
+      </div>
     </section>
 
     <!-- Converter mode toggle -->
@@ -161,10 +208,99 @@
     </div>
   </dialog>
 
+  <!-- Stage view: what the speaker sees (full screen) -->
+  <div id="stg-view" hidden role="dialog" aria-modal="true" data-i18n-s-a="stg.view">
+    <div class="sv-top">
+      <div id="sv-title"></div>
+      <div id="sv-spk"></div>
+    </div>
+    <div id="sv-time" class="sv-time">00:00</div>
+    <div class="sv-prog"><span id="sv-bar"></span></div>
+    <div class="sv-bottom">
+      <div id="sv-next"></div>
+      <div id="sv-clock"></div>
+    </div>
+    <div id="sv-black" hidden></div>
+    <div class="sv-tools" id="sv-tools">
+      <button id="sv-black-btn" type="button" class="btn" data-i18n-s="stg.black"></button>
+      <button id="sv-fs" type="button" class="btn" data-i18n-s="stg.fs"></button>
+      <button id="sv-close" type="button" class="btn" data-i18n-s="stg.close"></button>
+    </div>
+  </div>
 
-  <script src="../timesheet/core.js?v=1.47.00"></script>
-  <script src="time.js?v=1.47.00"></script>
-  <script src="astro.js?v=1.47.00"></script>
+  <!-- Stage: event settings -->
+  <dialog id="stg-ev-dlg" class="stg-dlg">
+    <h3 id="stg-ev-h"></h3>
+    <div class="stg-form">
+      <label for="se-name" data-i18n-s="stg.f.name"></label>
+      <input id="se-name" type="text" maxlength="120">
+      <label for="se-date" data-i18n-s="stg.f.date"></label>
+      <input id="se-date" type="date">
+      <label for="se-start" data-i18n-s="stg.f.start"></label>
+      <input id="se-start" type="time">
+      <label for="se-yellow" data-i18n-s="stg.f.yellow"></label>
+      <input id="se-yellow" type="number" min="0" max="60" step="0.5" inputmode="decimal">
+      <label for="se-red" data-i18n-s="stg.f.red"></label>
+      <input id="se-red" type="number" min="0" max="60" step="0.5" inputmode="decimal">
+      <label class="chk wide">
+        <input id="se-flash" type="checkbox">
+        <span data-i18n-s="stg.f.flash"></span>
+      </label>
+    </div>
+    <div class="dlg-row">
+      <button id="se-save" type="button" class="btn prim" data-i18n-s="stg.save"></button>
+      <button id="se-cancel" type="button" class="btn" data-i18n-s="stg.cancel"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="se-dup" type="button" class="btn" data-i18n-s="stg.ev.dup"></button>
+      <button id="se-del" type="button" class="btn danger" data-i18n-s="stg.ev.del"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: rundown item -->
+  <dialog id="stg-it-dlg" class="stg-dlg">
+    <h3 id="stg-it-h"></h3>
+    <div class="stg-form">
+      <label for="si-title" data-i18n-s="stg.f.title"></label>
+      <input id="si-title" type="text" maxlength="200">
+      <label for="si-spk" data-i18n-s="stg.f.speaker"></label>
+      <input id="si-spk" type="text" maxlength="120">
+      <label for="si-kind" data-i18n-s="stg.f.kind"></label>
+      <select id="si-kind"></select>
+      <label for="si-min" data-i18n-s="stg.f.dur" id="si-dur-l"></label>
+      <span class="stg-dur" id="si-dur-w">
+        <input id="si-min" type="number" min="0" max="1440" inputmode="numeric" data-i18n-s-a="stg.f.min">
+        <span>:</span>
+        <input id="si-sec" type="number" min="0" max="59" inputmode="numeric" data-i18n-s-a="stg.f.sec">
+      </span>
+      <label for="si-until" data-i18n-s="stg.f.until" id="si-until-l"></label>
+      <input id="si-until" type="time">
+      <label for="si-yellow" data-i18n-s="stg.f.yellow"></label>
+      <input id="si-yellow" type="number" min="0" max="60" step="0.5" inputmode="decimal" data-i18n-s-ph="stg.f.default">
+      <label for="si-red" data-i18n-s="stg.f.red"></label>
+      <input id="si-red" type="number" min="0" max="60" step="0.5" inputmode="decimal" data-i18n-s-ph="stg.f.default">
+      <label class="chk wide">
+        <input id="si-auto" type="checkbox">
+        <span data-i18n-s="stg.f.auto"></span>
+      </label>
+      <label for="si-notes" data-i18n-s="stg.f.notes" class="wide"></label>
+      <textarea id="si-notes" rows="3" maxlength="2000" class="wide"></textarea>
+    </div>
+    <div class="dlg-row">
+      <button id="si-save" type="button" class="btn prim" data-i18n-s="stg.save"></button>
+      <button id="si-cancel" type="button" class="btn" data-i18n-s="stg.cancel"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="si-del" type="button" class="btn danger" data-i18n-s="stg.it.del"></button>
+    </div>
+  </dialog>
+
+
+  <script src="../timesheet/core.js?v=1.49.00"></script>
+  <script src="time.js?v=1.49.00"></script>
+  <script src="astro.js?v=1.49.00"></script>
+  <script src="stage-core.js?v=1.49.00"></script>
+  <script src="stage.js?v=1.49.00"></script>
 
 </body>
 </html>
