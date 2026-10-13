@@ -22,7 +22,7 @@ Tap or click a row to open the link in a new tab.
 
 Each row has a star (favourites), a pencil (`Edit`) and an open button. In the edit window you can change `Title`, `Address`, `Description`, `Tags` and `Folder`, or `Delete` the bookmark. `Follow in Reader` opens [Reader](app:feeds) to follow that site's news. `QR code` opens [QR Generator](app:qr) with a code for the saved address.
 
-Right-click a row (long-press on a phone) for a menu with `Open`, `Open in Maps`, `Edit`, `Add to favorites`, `Move to…` any other folder and `Delete`. On a computer you can also drag a row onto a folder tab. Dropping it on `All` moves it to `Unsorted`.
+Right-click a row (long-press on a phone) for a menu with `Open`, `Open in Maps`, `Edit`, `Add to favorites`, `Send to someone…` (the bookmark as a link that opens in any browser), `Move to…` any other folder and `Delete`. On a computer you can also drag a row onto a folder tab. Dropping it on `All` moves it to `Unsorted`.
 
 Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Open in Maps` searches for the bookmark's title and description in [Maps](app:maps).
 
@@ -35,7 +35,7 @@ Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Op
 
 ## Tidy up
 
-- `Select bookmarks` (the checkbox button) lets you tick several rows and use `Move to…` or `Delete` on all of them. `Done` ends selection. It's off while you search or filter.
+- `Select bookmarks` (the checkbox button) lets you tick several rows and use `Move to…`, `Send…` (all of them in one link) or `Delete` on all of them. `Done` ends selection. It's off while you search or filter.
 - `Duplicate bookmarks` finds addresses saved more than once (http/https and `www.` count as the same). Use `Keep oldest, delete …` on one group, or `Apply selected` / `Apply all`.
 - Deleting or moving shows a message with `Undo` for a few seconds.
 
@@ -44,6 +44,7 @@ Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Op
 Bookmarks, folders, tags and favourites sync through [orOS sync](help:t/sync). Your sort choice stays on this device.
 
 - **Import**: `Import bookmarks (Netscape HTML)` reads the bookmarks HTML file that most browsers can export. Folders are matched by name or created, and addresses you already have are skipped.
+- **From Raindrop.io**: connect Raindrop.io in [Settings](app:settings) › `Connected services` with a test token, then the cloud button `Import from Raindrop.io…` › `Read the account` shows what will come in, and `Import` brings it (`Undo` in the message takes it back). Each collection becomes a folder (a folder with the same name is used, nested collections become folders of their own), with titles, notes (or the page excerpt), tags and favourites; links you already have are skipped. Import again whenever you like: only new bookmarks come in, and with `Update what was imported before` the title and note follow Raindrop's and new tags are added. Deleted bookmarks don't come back unless you tick `Bring back what was deleted here`. orOS only reads Raindrop: nothing there changes.
 - **Export**: `Export bookmarks (Netscape HTML)` saves `oros-bookmarks.html` for a browser or for orOS.
 
 For a copy of all your orOS data, see [Backup](help:t/backup).

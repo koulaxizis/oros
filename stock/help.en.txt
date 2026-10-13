@@ -15,6 +15,13 @@ Tap or click a product to see its quantity, average cost, value, prices and ever
 
 > A barcode scanner (USB or Bluetooth) works in the search field: scan a code and the product opens. An unknown code offers `New product` with the SKU filled in.
 
+On a phone, the 📷 button next to a search or scan field reads barcodes with the camera (Chrome on Android). In a receipt, a sale or the counter it stays open, so you can scan one product after another; tap `Done` when you are finished. Where the button doesn't show, the browser can't read barcodes, but a scanner still works.
+
+A product can have a photo: `Add photo` in its sheet. The picture is made smaller and kept in [Files](app:files), folder Stock/Photos (without location or camera data); it reaches your other devices with Vault Drive.
+
+### Barcode labels
+`New` › `Barcode labels` (or the button in a product's sheet) prints labels on an A4 sheet of 3 × 8 (70 × 37 mm): name, barcode and, if you want, the price. Choose the products and how many copies of each. A product with a 13-digit barcode gets an EAN-13; any other gets a Code 128 of its barcode or SKU. Print to paper or save as PDF from the print window.
+
 ## Movements
 Every change in stock is a movement. The `Movements` tab lists them day by day; filter by type and period.
 
@@ -22,6 +29,16 @@ Every change in stock is a movement. The `Movements` tab lists them day by day; 
 Open `New` › `Receive stock` or `Sell / issue`. Pick a `Date`, a `Ref.` (your invoice or receipt number) and, for receipts, a `Supplier`. Then add products: type a name, or scan. Scanning the same product again adds one more. Receipts take a `Unit cost`, sales a `Unit price`, and the `Total` is shown.
 
 Other types: `Customer return`, `Return to supplier`, `Loss / damage` and `Correction` (a + or − quantity).
+
+A sale can also come from another orOS app, already filled in, for example the products of an invoice. Stock matches them by SKU or barcode, lists any code it couldn't find, and warns if the same document was taken out of stock before. Nothing is saved until you press `Save`.
+
+### Lots and expiry dates
+For food, cosmetics or anything that expires, tap `+ Lot / expiry` on a receipt line and type the `Lot` and the date it `Expires` (a date alone is enough; it becomes the lot's name). From then on that product's receipts ask for them every time.
+
+When you sell, a product with lots offers a `Lot` choice; leave it on `First to expire` and Stock takes the lot that expires first. A product's sheet shows what is left of each lot, the `Expiring` filter on Products lists what expires within 30 days, Reports shows them too, and [Today](app:today) reminds you a week before.
+
+### Counter
+`New` › `Counter (quick sale)` is made for a shop with a scanner: scan products (each scan adds one), change quantities with − and +, and press `Complete sale`. It saves one sale at the products' sale prices, and you can `Undo` it right away. A sale you leave open stays in the counter until you complete or clear it.
 
 ### Stock count
 In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
@@ -31,13 +48,53 @@ A movement is never edited or deleted. Open it and choose `Void this movement`: 
 
 >! If a sale would take a product below zero, Stock asks first. You can forbid it in Settings.
 
+### Warehouses
+If you keep stock in more than one place (a shop and a storeroom, two branches), add them in Settings › `Warehouses`. From then on:
+- every receipt, sale, count and the counter has a `Warehouse` (this device remembers the last one you used);
+- `New` › `Transfer` moves products `From` one warehouse `To` another; totals don't change;
+- the Products tab can show one warehouse, and a product's sheet shows its quantity `By warehouse`;
+- a stock count compares with what that warehouse should have;
+- Reports adds the `Value per warehouse`.
+
+Reorder, minimums and the total value stay for the whole business. A warehouse that was used can be archived, not deleted; move its stock out first.
+
 ## Reorder
-`Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum). `Copy list` copies the order as text; `Receive this order` opens a receipt with those lines when the goods arrive.
+`Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum, less what is already on order). For each supplier:
+- `Create order` makes a purchase order with those lines.
+- `Copy list` copies the order as text; `To-Do` sends it to a new To-Do list; `E-mail` opens a message to the supplier in [Mail](app:mail) (when Mail has an account on this device).
+- `Receive this order` opens a receipt with those lines when the goods arrive.
 
 When a product reaches its minimum you also get one notice on this device (you can switch it off in Settings).
 
+### Purchase orders
+A purchase order keeps what you asked a supplier for: `Order no.`, `Supplier`, `Order date`, `Expected` day (filled in from the supplier's delivery time) and the products with quantity and unit cost. Save it as a draft or mark it sent. Open orders show at the top of `Reorder`.
+
+When goods arrive, open the order and choose `Receive`: a receipt opens with what is still to come. Save it, even if only part arrived; the order shows `Partly received` until everything is in, then `Received`. Voiding a receipt puts its quantities back on the order. `Close order` when nothing more is coming; `Cancel order` if it never went out.
+
+What is on order shows next to low products and lowers their suggested quantity. A late delivery shows in [Today](app:today).
+
+## Reports
+The `Reports` tab shows the stock value, sales, purchases and losses of a period (last 30 days, this month, this year or all), the value per category, the products that sold most and the ones that sold nothing for 90 days. `Open in Spreadsheet` sends the full table to a new sheet; `Report (CSV)` saves it as a file.
+
+## Closing a period
+A busy shop writes thousands of movements a year, and they take space on every device. Settings › `Close a period` archives everything up to a day you choose (for example 31 December):
+1. the full data as it was goes to a file in [Files](app:files), folder Stock/Archive (it travels with Vault Drive like any file);
+2. the movements up to that day are replaced by an `Opening balance` per product: quantities per warehouse, lots and average costs.
+
+Quantities, value and reorder stay exactly the same. The Movements tab and Reports then start after that day, and new movements can't be dated inside the closed period.
+
+If a device was offline and recorded a sale inside the period before it synced, that sale still counts when it arrives (within 90 days). `Reopen` in the same place brings the archived movements back from the file.
+
 ## Suppliers
 The `Suppliers` tab keeps names, contact person, phone, e-mail, VAT number and delivery time. `From Contacts` copies a person or company from [Contacts](app:contacts) into a new supplier.
+
+## The shop (WooCommerce)
+Connect your WooCommerce shop once in Settings › [Connected services](app:settings), then open `Shop (WooCommerce)` from `New` or from Settings here.
+- `Products`: `Get products from the shop` reads every product and variation. `Import into Stock` adds the new ones and updates name, SKU, sale price and category of those you already have (matched by the shop product, then SKU, then name). Tick the box under it to also set the quantities here to the shop's, as one stock count.
+- `Quantities that differ` lists the products whose stock the shop manages and whose quantity is different here. `Send to shop` sets the shop's quantity to yours; `Take the shop's` counts yours at the shop's.
+- `Orders`: the shop's orders of the last 30 days. For each one: `Record the sale` opens a sale with its lines (it shows `Sale recorded` once saved, so you don't record it twice), `Invoice` opens a new invoice in [Invoices](app:invoices), `Customer in CRM` logs it on the customer in [CRM](app:crm), `Add to Budget` logs the income in [Budget](app:budget), and `Mark completed` completes the order in the shop.
+
+Nothing is sent to the shop without a button, and nothing is saved here or in another app until you save it there.
 
 ## Import and export
 In Settings:
@@ -51,9 +108,14 @@ Products, movements, suppliers, categories, units and settings sync between your
 ## Tips
 - Set a `Location` such as "Shelf B3": it shows in the list and in search.
 - Archive products you no longer sell: their history stays.
+- From a product: `New quote` starts a quote in [Quote](app:quote) with that product and its sale price (Quote works in EUR or USD). `Quote from products` in `New` takes several.
+- Open a receipt or a sale and choose `Add to Budget` to log its total in [Budget](app:budget).
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 
 ## Limits
-- One warehouse: there are no separate locations with transfers yet.
-- No purchase orders, reports or camera scanning yet; a scanner that types works.
+- Minimums and reorder are for the whole business, not per warehouse.
+- Lots are counted for the whole business, not per warehouse; the counter always sells the first lot to expire.
+- Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.
+- The shop: WooCommerce only for now. Orders are read live (the last 30 days, up to 50), so they need a connection. The shop keeps whole units: a quantity with decimals is rounded when sent.
+- After closing a period, the Movements tab and Reports show only what came after it; the older history is in the archive file.

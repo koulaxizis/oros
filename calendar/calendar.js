@@ -94,6 +94,7 @@
       "ev.delete": "Delete event",
       "ev.qr": "QR code",
       "ev.mail": "Email",
+      "ev.share": "Send…",
       "ev.delete.confirm": "Delete this event?",
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
@@ -187,6 +188,9 @@
       "lbl.feed.time": "Work time",
       "lbl.feed.sky": "Moon & Sky",
       "lbl.feed.famtree": "Death anniversaries",
+      "lbl.feed.crm": "Customers",
+      "feed.crm.late": "Late",
+      "feed.crm.close": "Expected close",
       "feed.famtree.one": "{name} · 1 year since death",
       "feed.famtree.n": "{name} · {n} years since death",
       "feed.time.noproj": "No project",
@@ -270,6 +274,7 @@
       "ev.delete": "Διαγραφή συμβάντος",
       "ev.qr": "Κωδικός QR",
       "ev.mail": "Email",
+      "ev.share": "Αποστολή…",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
@@ -363,6 +368,9 @@
       "lbl.feed.time": "Ώρες εργασίας",
       "lbl.feed.sky": "Σελήνη & Ουρανός",
       "lbl.feed.famtree": "Επέτειοι θανάτου",
+      "lbl.feed.crm": "Πελάτες",
+      "feed.crm.late": "Καθυστερεί",
+      "feed.crm.close": "Αναμένεται κλείσιμο",
       "feed.famtree.one": "{name} · 1 χρόνος από τον θάνατο",
       "feed.famtree.n": "{name} · {n} χρόνια από τον θάνατο",
       "feed.time.noproj": "Χωρίς έργο",
@@ -545,6 +553,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-obs",     color: "#64b5f6" },   // sky blue — world / internet days
     { id: "lbl-feed-time",    color: "#56b6c2" },   // cyan — Timesheet work time per project
     { id: "lbl-feed-famtree", color: "#9aa4b0" },   // slate grey — Family Tree death anniversaries
+    { id: "lbl-feed-crm",     color: "#8c9eff" },   // periwinkle — CRM follow-ups + expected deal closes
     { id: "lbl-feed-sky",     color: "#e9dfb4" }    // moonlight cream — Moon & Sky (opt-in)
   ];
   function feedLabelName(l) {
@@ -572,6 +581,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-obs") return t("lbl.feed.obs");
     if (l.id === "lbl-feed-time") return t("lbl.feed.time");
     if (l.id === "lbl-feed-famtree") return t("lbl.feed.famtree");
+    if (l.id === "lbl-feed-crm") return t("lbl.feed.crm");
     if (l.id === "lbl-feed-sky") return t("lbl.feed.sky");
     return t("lbl.feed.custom");
   }
@@ -1419,6 +1429,51 @@ function transientNote(title, body) {
     });
   }
 
+  // CRM read-only feed (crm/core.js, loaded by index.html: the same
+  // follow-up list as the app's Agenda, OrosCrmCore.calendarOn). An
+  // open follow-up on its day, at its time when it has one (late ones
+  // on today, marked); a done one on the day it was done (✓); an open
+  // deal on its expected close day. Rows are never stored;
+  // micro-cached ~1s. Click → __orosOpenAt("crm", { fup | deal }).
+  var crmCache = { when: 0, data: null };
+  function crmData() {
+    var C = window.OrosCrmCore, now = Date.now();
+    if (!C) return null;
+    if (now - crmCache.when > 1000) {
+      crmCache.data = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem("oros-crm-data"));
+        if (raw && typeof raw === "object" && Array.isArray(raw.cust)) crmCache.data = C.norm(raw);
+      } catch (e) { crmCache.data = null; }
+      crmCache.when = now;
+    }
+    return crmCache.data;
+  }
+  function crmFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-crm")) return [];
+    var data = crmData();
+    if (!data || !data.cust.length) return [];
+    var C = window.OrosCrmCore;
+    var today = C.ymdOf(Date.now());
+    return C.calendarOn(data, dateStr, today).map(function (r) {
+      var x = r.fup || r.deal;
+      var c = C.byId(data.cust, x.cust);
+      var who = c ? C.custName(c) : "";
+      var title = r.fup
+        ? (r.k === "done" ? "✓ " : (r.k === "late" ? t("feed.crm.late") + ": " : "")) + x.text
+        : t("feed.crm.close") + ": " + x.title;
+      return {
+        id: "crm-" + r.k + "-" + x.id + "-" + dateStr,   // per-render key, never stored
+        title: (who ? who + " · " : "") + title,
+        labelId: "lbl-feed-crm",
+        start: r.fup && r.k !== "done" && x.t ? x.t : null,
+        end: null,
+        _feed: true,
+        _openAt: { app: "crm", target: r.fup ? { fup: x.id } : { deal: x.id } }
+      };
+    });
+  }
+
   // Family Tree read-only feed (familytree/ft-core.js, loaded by
   // index.html): every year on the day of an exact death date (29 Feb
   // also on 28 Feb of common years), "Name · N years since death".
@@ -2217,6 +2272,7 @@ function transientNote(title, body) {
     .concat(observancesFeedOn(dateStr))
     .concat(timesheetFeedOn(dateStr))
     .concat(familyTreeFeedOn(dateStr))
+    .concat(crmFeedOn(dateStr))
     .concat(skyFeedOn(dateStr))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
@@ -3241,6 +3297,33 @@ function transientNote(title, body) {
     });
     return { compose: { to: to.join(", "), subject: String(ev.title || "").slice(0, 300), body: lines.join("\n").slice(0, 20000) } };
   }
+  // "Send to someone" (shell share/, kind "event"): the SAVED event in
+  // a link; an occurrence of a series goes as that one day.
+  var dlgShare = null;
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+    catch (e) { return null; }
+  }
+  function sharePayload(ev, occYmd) {
+    var d = { id: ev.id, t: ev.title || t("ev.untitled"), d: occYmd || ev.date, l: ev.location, x: ev.note };
+    if (ev.start) { d.s = ev.start; if (ev.end) d.e = ev.end; }
+    if (!occYmd && ev.dateEnd) d.de = ev.dateEnd;
+    if (!occYmd && validRecur(ev.recur)) {
+      d.r = { f: ev.recur.freq, i: ev.recur.interval === 2 ? 2 : 1 };
+      if (ev.recur.until) d.r.u = ev.recur.until;
+    }
+    if (occYmd) d.id = ev.id + "-" + occYmd.replace(/-/g, "");
+    return d;
+  }
+  if ($("ev-share")) {
+    $("ev-share").addEventListener("click", function () {
+      var api = shareApi(), d = dlgShare;
+      if (!api || !d) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      api.open({ kind: "event", data: d });
+    });
+  }
+
   if ($("ev-mail")) {
     $("ev-mail").addEventListener("click", function () {
       var p = shellOpenAt(), target = dlgMail;
@@ -3315,6 +3398,10 @@ function transientNote(title, body) {
     if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
     dlgMail = existing && shellOpenAt() && mailReady()
       ? mailFromEvent(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : existing.date) : null;
+    dlgShare = existing && shareApi()
+      ? sharePayload(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : null) : null;
+    var shareBtn = $("ev-share");
+    if (shareBtn) shareBtn.hidden = !dlgShare;
     var mailBtn = $("ev-mail");
     if (mailBtn) mailBtn.hidden = !dlgMail;
     // CA-8: what the dialog showed at open — a pull may update every

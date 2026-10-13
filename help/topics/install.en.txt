@@ -34,6 +34,12 @@ With orOS installed from Chrome or Edge on Windows, Linux or Mac, orOS appears i
 - [Mind Map](app:mindmap): .mm, .xmind, and on request .opml, .md and .txt
 - [Family Tree](app:familytree): .ged, .gedcom
 - [Ringtone Composer](app:ringtones): .rtttl, .rtx
+- [Photo Lab](app:photolab): .png, .jpg, .webp, .gif, .bmp, .avif, .psd, .ora
+- [Library](app:library): .epub, .pdf
+- [Maps](app:maps): .gpx, .kml, .geojson
+- [Montage](app:montage): .mp4, .m4v, .webm, .mov
+- [Notes](app:notes): .txt, .md, as a choice next to Writer
+- [Text Tools](app:texttools): .txt, .csv, .tsv, as a choice next to the apps above
 - [Calendar](app:calendar): .ics, with the import preview first
 - [Contacts](app:contacts): .vcf, with a question before importing
 
@@ -41,7 +47,9 @@ The file is imported as a new item, or through the app's own preview; orOS never
 
 In [Settings](app:settings) under `Opening files` you see the list, pick the app for shared types, and find how to make orOS the default for a type on Windows, Linux or Mac. Only you can do that, in your system's settings.
 
-> Firefox, Safari, iPhone and Android can't hand files to orOS yet. There, open the app and use its `Import` or `Open` button.
+On Android, with orOS installed from Chrome, use `Share` › orOS in Files, Gmail or any app: the file opens in the matching orOS app. orOS can't be the default for opening files on Android yet.
+
+> Firefox, Safari and iPhone can't hand files to orOS yet. There, open the app and use its `Import` or `Open` button.
 
 ## How updates arrive
 You never need to download updates yourself. orOS checks for a new version every time it starts, every hour while it stays open, and when you come back to it or get your connection back.

@@ -14,12 +14,18 @@
 // refreshed only when the engine says they changed. The same
 // drawLayer() serves the screen, the export and Merge down.
 //
+// Per layer (composite): its pixels → its mask (destination-in) →
+// its styles (fx: shadow and outer glow under it, stroke around it,
+// colour overlay and inner glow on it) → blended into the picture.
+// An adjustment layer instead reads the picture below it, changes
+// the colours and mixes the result back by opacity × mask.
+//
 // Coordinates: doc px → screen CSS px: sx = x * z + ox.
 // ============================================================
 (function () {
   "use strict";
 
-  var PL = window.PL, C = PL.C, T = PL.T, FX = PL.FX;
+  var PL = window.PL, C = PL.C, T = PL.T, FX = PL.FX, A = PL.A;
   var TILE = T.TILE;
 
   var cv, ctx, docBuf, docCtx, layBuf, layCtx;
@@ -113,7 +119,9 @@
     return v;
   }
   // Bounds of a layer's content in doc px, or null (empty raster).
+  // Styles (fx) are not included; see fxBounds.
   function layerBounds(L) {
+    if (L.k === "adj") return { x: 0, y: 0, w: PL.st.doc.w, h: PL.st.doc.h };
     if (L.k === "raster") {
       var s = PL.st.surfaces[L.id], b = s && T.tileBounds(s);
       return b ? { x: b.x + L.x, y: b.y + L.y, w: b.w, h: b.h } : null;
@@ -121,10 +129,15 @@
     var v = vector(L);
     return { x: L.x - v.pad, y: L.y - v.pad, w: v.w, h: v.h };
   }
+  function fxBounds(L) {
+    var b = layerBounds(L), p = C.fxPad(L.fx);
+    return b && p ? { x: b.x - p, y: b.y - p, w: b.w + p * 2, h: b.h + p * 2 } : b;
+  }
 
   // Draws one layer's pixels (no opacity / blend) with ctx's current
   // transform in doc px. clip = { x, y, w, h } doc rect worth drawing.
   function drawLayer(g, L, clip) {
+    if (L.k === "adj") return;
     if (L.k !== "raster") {
       var v = vector(L);
       g.drawImage(v.cv, L.x - v.pad, L.y - v.pad);
@@ -141,31 +154,204 @@
     });
   }
 
-  // Composites the document's visible layers into g (transform set by
-  // the caller, doc px), clipped to `clip` doc rect. layerBuf: a
-  // canvas the size of g's canvas. preview(L, g): optional override
-  // to draw one layer differently (transform tool).
-  function composite(g, lb, clip, preview) {
+  // ---------- Buffers ----------
+  // Scratch canvases the size of the layer buffer, made on demand
+  // (only documents with masks, styles or adjustments need them).
+  var pool = [];
+  function buf(i, w, h) {
+    var c = pool[i] || (pool[i] = canvas(w, h));
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    else { var g = c.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h); }
+    return c;
+  }
+  function freePool() { pool.forEach(function (c) { c.width = c.height = 0; }); pool = []; }
+
+  // ---------- Layer masks ----------
+  var solid = null;                     // a tile of mask value 255
+  function solidTile() {
+    if (solid) return solid;
+    solid = canvas(TILE, TILE);
+    var g = solid.getContext("2d");
+    g.fillStyle = "#000"; g.fillRect(0, 0, TILE, TILE);
+    return solid;
+  }
+  // Draws L's mask as alpha (with g's transform, doc px) over clip.
+  function drawMask(g, L, clip) {
+    var mk = L.mk, s = PL.st.surfaces[mk.id];
+    var m = tileCache[mk.id] || (tileCache[mk.id] = new Map());
+    T.keysIn(Math.floor(clip.x - L.x), Math.floor(clip.y - L.y), Math.ceil(clip.w) + 1, Math.ceil(clip.h) + 1).forEach(function (k) {
+      var t = s && s.tiles.get(k), c;
+      if (!t) {
+        if (!mk.bg) return;
+        c = solidTile();
+      } else {
+        c = m.get(k);
+        if (!c) {
+          c = canvas(TILE, TILE);
+          c.getContext("2d").putImageData(new ImageData(T.maskAlpha(t, mk.bg), TILE, TILE), 0, 0);
+          m.set(k, c);
+        }
+      }
+      var i = k.indexOf(","), tx = +k.slice(0, i), ty = +k.slice(i + 1);
+      g.drawImage(c, tx * TILE + L.x, ty * TILE + L.y);
+    });
+  }
+  function maskBuffer(lb, L, clip, tf, smooth) {
+    var mb = buf(1, lb.width, lb.height), mg = mb.getContext("2d");
+    mg.setTransform(tf);
+    mg.imageSmoothingEnabled = smooth;
+    drawMask(mg, L, clip);
+    return mb;
+  }
+
+  // ---------- Layer styles ----------
+  function rgba(hex, a) {
+    var v = parseInt(String(hex).slice(1), 16) || 0;
+    return "rgba(" + ((v >> 16) & 255) + "," + ((v >> 8) & 255) + "," + (v & 255) + "," + a + ")";
+  }
+  // Draws only the (blurred, offset, coloured) shadow of src's box:
+  // the source itself is pushed out of the canvas.
+  function shadowOf(g, src, box, dx, dy, blur, color) {
+    var B = src.width + 64 + Math.ceil(Math.abs(dx));
+    g.save();
+    g.shadowColor = color; g.shadowBlur = blur;
+    g.shadowOffsetX = B + dx; g.shadowOffsetY = dy;
+    g.drawImage(src, box.x, box.y, box.w, box.h, box.x - B, box.y, box.w, box.h);
+    g.restore();
+  }
+  function grow(box, n, w, h) {
+    var x0 = Math.max(0, Math.floor(box.x - n)), y0 = Math.max(0, Math.floor(box.y - n));
+    var x1 = Math.min(w, Math.ceil(box.x + box.w + n)), y1 = Math.min(h, Math.ceil(box.y + box.h + n));
+    return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
+  }
+  // lb: the layer's (masked) pixels, identity transform, device px;
+  // z: device px per doc px; box: the device rect the styled layer
+  // can cover (work stays inside it). → a canvas with the styled layer.
+  function applyFx(lb, fx, z, box) {
+    var w = lb.width, h = lb.height, lg = lb.getContext("2d");
+    lg.setTransform(1, 0, 0, 1, 0, 0);
+    if (fx.co) {
+      lg.save();
+      lg.globalCompositeOperation = "source-atop";
+      lg.globalAlpha = fx.co.op / 100; lg.fillStyle = fx.co.c;
+      lg.fillRect(box.x, box.y, box.w, box.h);
+      lg.restore();
+    }
+    if (fx.ig) {
+      var blur = Math.max(1, fx.ig.s * z), ibox = grow(box, blur * 2, w, h);
+      var ib = buf(2, w, h), ig = ib.getContext("2d");    // everything but the layer
+      ig.fillStyle = "#000"; ig.fillRect(ibox.x, ibox.y, ibox.w, ibox.h);
+      ig.globalCompositeOperation = "destination-out"; ig.drawImage(lb, box.x, box.y, box.w, box.h, box.x, box.y, box.w, box.h);
+      ig.globalCompositeOperation = "source-over";
+      lg.save();
+      lg.globalCompositeOperation = "source-atop";
+      shadowOf(lg, ib, ibox, 0, 0, blur, rgba(fx.ig.c, fx.ig.op / 100));
+      lg.restore();
+    }
+    var rb = buf(3, w, h), rg = rb.getContext("2d");
+    if (fx.sh) {
+      var ang = fx.sh.a * Math.PI / 180;                 // light angle: shadow falls away
+      shadowOf(rg, lb, box, -Math.cos(ang) * fx.sh.d * z, Math.sin(ang) * fx.sh.d * z, fx.sh.s * z, rgba(fx.sh.c, fx.sh.op / 100));
+    }
+    if (fx.gl) shadowOf(rg, lb, box, 0, 0, Math.max(1, fx.gl.s * z), rgba(fx.gl.c, fx.gl.op / 100));
+    if (fx.st) {
+      var sb = buf(2, w, h), sg = sb.getContext("2d"), r = fx.st.w * z;
+      // Dilate: the layer drawn around rings of radius r, 2r/3, r/3
+      // (fewer for thin strokes).
+      var rings = r <= 1.5 ? 1 : r <= 4 ? 2 : 3;
+      for (var q = rings; q >= 1; q--) {
+        var rr = r * q / rings, n = Math.min(32, Math.max(8, Math.ceil(rr * 2)));
+        for (var j = 0; j < n; j++) {
+          var a = j / n * Math.PI * 2;
+          sg.drawImage(lb, box.x, box.y, box.w, box.h, box.x + Math.cos(a) * rr, box.y + Math.sin(a) * rr, box.w, box.h);
+        }
+      }
+      sg.globalCompositeOperation = "source-in";
+      sg.fillStyle = fx.st.c; sg.fillRect(box.x, box.y, box.w, box.h);
+      sg.globalCompositeOperation = "source-over";
+      rg.globalAlpha = fx.st.op / 100; rg.drawImage(sb, box.x, box.y, box.w, box.h, box.x, box.y, box.w, box.h); rg.globalAlpha = 1;
+    }
+    rg.drawImage(lb, box.x, box.y, box.w, box.h, box.x, box.y, box.w, box.h);
+    return rb;
+  }
+
+  // A doc rect → device px (axis-aligned transform), clipped to w×h.
+  function devRect(b, tf, w, h) {
+    var x0 = Math.max(0, Math.floor(tf.a * b.x + tf.e)), y0 = Math.max(0, Math.floor(tf.d * b.y + tf.f));
+    var x1 = Math.min(w, Math.ceil(tf.a * (b.x + b.w) + tf.e)), y1 = Math.min(h, Math.ceil(tf.d * (b.y + b.h) + tf.f));
+    return x1 > x0 && y1 > y0 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
+  }
+
+  // ---------- Adjustment layers ----------
+  // Changes what g already holds (the layers below) inside clip.
+  function adjustBelow(g, lb, L, clip, tf, smooth) {
+    var W0 = g.canvas.width, H0 = g.canvas.height;
+    var x0 = Math.max(0, Math.floor(tf.a * clip.x + tf.e)), y0 = Math.max(0, Math.floor(tf.d * clip.y + tf.f));
+    var x1 = Math.min(W0, Math.ceil(tf.a * (clip.x + clip.w) + tf.e)), y1 = Math.min(H0, Math.ceil(tf.d * (clip.y + clip.h) + tf.f));
+    var w = x1 - x0, h = y1 - y0;
+    if (w <= 0 || h <= 0) return;
+    var before = g.getImageData(x0, y0, w, h), b = before.data;
+    var img = { w: w, h: h, data: new Uint8ClampedArray(b) };
+    A.run(img, L.aj.id, L.aj.p, FX);
+    var a = img.data, k0 = L.op / 100;
+    var m = L.mk && L.mk.on ? maskBuffer(lb, L, clip, tf, smooth).getContext("2d").getImageData(x0, y0, w, h).data : null;
+    for (var i = 0; i < b.length; i += 4) {
+      if (!b[i + 3]) continue;
+      var k = m ? k0 * m[i + 3] / 255 : k0;
+      if (k >= 1) { b[i] = a[i]; b[i + 1] = a[i + 1]; b[i + 2] = a[i + 2]; continue; }
+      if (k <= 0) continue;
+      b[i] += (a[i] - b[i]) * k; b[i + 1] += (a[i + 1] - b[i + 1]) * k; b[i + 2] += (a[i + 2] - b[i + 2]) * k;
+    }
+    g.putImageData(before, x0, y0);
+  }
+
+  // Composites the document's visible layers (or `layers`) into g
+  // (transform set by the caller: an axis-aligned scale + offset, doc
+  // px), clipped to `clip` doc rect. lb: a canvas the size of g's
+  // canvas. preview(L, g): optional override to draw one layer
+  // differently (transform tool).
+  function composite(g, lb, clip, preview, layers) {
     var lg = lb.getContext("2d");
-    var tf = g.getTransform();
-    PL.st.doc.layers.forEach(function (L) {
+    var tf = g.getTransform(), z = Math.hypot(tf.a, tf.b), smooth = g.imageSmoothingEnabled;
+    clip = clip || { x: 0, y: 0, w: PL.st.doc.w, h: PL.st.doc.h };
+    (layers || PL.st.doc.layers).forEach(function (L) {
       if (!L.vis || !L.op) return;
+      if (L.k === "adj") { adjustBelow(g, lb, L, clip, tf, smooth); return; }
+      var pad = C.fxPad(L.fx), cl = pad ? { x: clip.x - pad, y: clip.y - pad, w: clip.w + pad * 2, h: clip.h + pad * 2 } : clip;
       lg.setTransform(1, 0, 0, 1, 0, 0);
       lg.clearRect(0, 0, lb.width, lb.height);
       lg.setTransform(tf);
-      lg.imageSmoothingEnabled = g.imageSmoothingEnabled;
-      if (!(preview && preview(L, lg))) drawLayer(lg, L, clip);
+      lg.imageSmoothingEnabled = smooth;
+      var moved = !!(preview && preview(L, lg));
+      if (!moved) drawLayer(lg, L, cl);
+      var src = lb;
+      if (L.mk && L.mk.on) {
+        var mb = maskBuffer(lb, L, cl, tf, smooth);
+        lg.save();
+        lg.setTransform(1, 0, 0, 1, 0, 0);
+        lg.globalCompositeOperation = "destination-in";
+        lg.drawImage(mb, 0, 0);
+        lg.restore();
+      }
+      if (L.fx) {
+        // Device rect the styles can reach (all of it while a tool
+        // previews the layer elsewhere).
+        var fb = moved ? null : fxBounds(L), box = fb && devRect(fb, tf, lb.width, lb.height);
+        if (moved) box = { x: 0, y: 0, w: lb.width, h: lb.height };
+        if (box) src = applyFx(lb, L.fx, z, box);
+      }
       g.save();
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = L.op / 100;
       g.globalCompositeOperation = C.blendOp(L.bl);
-      g.drawImage(lb, 0, 0);
+      g.drawImage(src, 0, 0);
       g.restore();
     });
   }
 
   // The whole picture (or a rect of it) at a scale, as a canvas.
-  function flatten(rect, scale) {
+  // layers: optional list to composite instead of the document's.
+  function flatten(rect, scale, layers) {
     var d = PL.st.doc;
     rect = rect || { x: 0, y: 0, w: d.w, h: d.h };
     scale = scale || 1;
@@ -173,9 +359,32 @@
     var out = canvas(w, h), g = out.getContext("2d"), lb = canvas(w, h);
     g.imageSmoothingQuality = "high";
     g.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale);
-    composite(g, lb, rect);
+    composite(g, lb, rect, null, layers);
     lb.width = lb.height = 0;
+    freePool();
     return out;
+  }
+
+  // One layer as the export sees it (doc size, 1:1): its pixels with
+  // mask and styles baked in, at full opacity, normal blend. An
+  // adjustment layer becomes the picture below it, adjusted, with its
+  // mask as alpha (so it looks the same over the layers below).
+  function renderLayer(L) {
+    var d = PL.st.doc, i = C.findLayer(d, L.id);
+    var solo = Object.assign({}, L, { op: 100, bl: "normal", vis: 1 });
+    if (L.k !== "adj") return flatten(null, 1, [solo]);
+    var below = d.layers.slice(0, i), c = flatten(null, 1, below);
+    var g = c.getContext("2d");
+    var lb = canvas(d.w, d.h);
+    adjustBelow(g, lb, Object.assign({}, solo, { mk: null }), { x: 0, y: 0, w: d.w, h: d.h }, new DOMMatrix(), true);
+    if (L.mk && L.mk.on) {
+      var mb = maskBuffer(lb, L, { x: 0, y: 0, w: d.w, h: d.h }, new DOMMatrix(), true);
+      g.globalCompositeOperation = "destination-in"; g.drawImage(mb, 0, 0);
+      g.globalCompositeOperation = "source-over";
+    }
+    lb.width = lb.height = 0;
+    freePool();
+    return c;
   }
 
   // ---------- Viewport ----------
@@ -198,7 +407,7 @@
   function fit() {
     var d = PL.st.doc;
     if (!d) return;
-    var pad = W < 500 ? 12 : 40;
+    var pad = (W < 500 ? 12 : 40) + (PL.prefs && PL.prefs.rulers ? RULER : 0);
     var z = Math.min((W - pad * 2) / d.w, (H - pad * 2) / d.h, 1);
     setView(z, (W - d.w * z) / 2, (H - d.h * z) / 2);
   }
@@ -247,6 +456,87 @@
   }
   function reducedMotion() {
     try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+  }
+
+  // ---------- Rulers, guides, grid ----------
+  var RULER = 18;                        // ruler strip, CSS px
+  var guideDrag = null;                  // { axis: "x"|"y", v } while a guide is dragged
+  function cssVar(n, d) {
+    try { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || d; } catch (e) { return d; }
+  }
+  // g: identity transform scaled by DPR (CSS px).
+  function drawGrid(g) {
+    var d = PL.st.doc, P = PL.prefs, gs = P.gridSize, step = gs * vw.z;
+    if (step < 4) return;
+    g.save();
+    g.beginPath(); g.rect(vw.ox, vw.oy, d.w * vw.z, d.h * vw.z); g.clip();
+    g.strokeStyle = "rgba(128,128,128,0.45)"; g.lineWidth = 1;
+    g.beginPath();
+    for (var x = gs; x < d.w; x += gs) { var X = Math.round(x * vw.z + vw.ox) + 0.5; g.moveTo(X, vw.oy); g.lineTo(X, vw.oy + d.h * vw.z); }
+    for (var y = gs; y < d.h; y += gs) { var Y = Math.round(y * vw.z + vw.oy) + 0.5; g.moveTo(vw.ox, Y); g.lineTo(vw.ox + d.w * vw.z, Y); }
+    g.stroke();
+    g.restore();
+  }
+  function drawGuides(g) {
+    var gd = PL.st.doc.gd || { x: [], y: [] };
+    g.save();
+    g.strokeStyle = "#00c8ff"; g.lineWidth = 1;
+    g.beginPath();
+    gd.x.forEach(function (x) { var X = Math.round(x * vw.z + vw.ox) + 0.5; g.moveTo(X, 0); g.lineTo(X, H); });
+    gd.y.forEach(function (y) { var Y = Math.round(y * vw.z + vw.oy) + 0.5; g.moveTo(0, Y); g.lineTo(W, Y); });
+    g.stroke();
+    if (guideDrag) {
+      g.strokeStyle = "#ff3df2"; g.setLineDash([6, 4]);
+      g.beginPath();
+      if (guideDrag.axis === "x") { var X2 = Math.round(guideDrag.v * vw.z + vw.ox) + 0.5; g.moveTo(X2, 0); g.lineTo(X2, H); }
+      else { var Y2 = Math.round(guideDrag.v * vw.z + vw.oy) + 0.5; g.moveTo(0, Y2); g.lineTo(W, Y2); }
+      g.stroke();
+    }
+    g.restore();
+  }
+  function drawRulers(g) {
+    var st = PL.G.tickStep(vw.z), bg = cssVar("--panel-bg", "#222"), fg = cssVar("--text-dim", "#999");
+    g.save();
+    g.fillStyle = bg; g.fillRect(0, 0, W, RULER); g.fillRect(0, 0, RULER, H);
+    g.strokeStyle = fg; g.fillStyle = fg; g.lineWidth = 1;
+    g.font = "10px system-ui, sans-serif"; g.textBaseline = "top";
+    g.beginPath();
+    var x0 = Math.floor((RULER - vw.ox) / vw.z / st.minor) * st.minor, x1 = (W - vw.ox) / vw.z;
+    for (var x = x0; x <= x1; x += st.minor) {
+      var X = Math.round(x * vw.z + vw.ox) + 0.5, major = Math.abs(x % st.major) < 1e-6;
+      if (X < RULER) continue;
+      g.moveTo(X, RULER); g.lineTo(X, major ? 2 : RULER - 5);
+      if (major) g.fillText(String(Math.round(x)), X + 2, 1);
+    }
+    var y0 = Math.floor((RULER - vw.oy) / vw.z / st.minor) * st.minor, y1 = (H - vw.oy) / vw.z;
+    for (var y = y0; y <= y1; y += st.minor) {
+      var Y = Math.round(y * vw.z + vw.oy) + 0.5, maj = Math.abs(y % st.major) < 1e-6;
+      if (Y < RULER) continue;
+      g.moveTo(RULER, Y); g.lineTo(maj ? 2 : RULER - 5, Y);
+      if (maj) { g.save(); g.translate(1, Y + 2); g.rotate(Math.PI / 2); g.fillText(String(Math.round(y)), 0, -9); g.restore(); }
+    }
+    g.stroke();
+    g.strokeStyle = cssVar("--border", "#444");
+    g.beginPath(); g.moveTo(0, RULER - 0.5); g.lineTo(W, RULER - 0.5); g.moveTo(RULER - 0.5, 0); g.lineTo(RULER - 0.5, H); g.stroke();
+    g.fillStyle = bg; g.fillRect(0, 0, RULER - 1, RULER - 1);
+    g.restore();
+  }
+  // Is a screen point (CSS px in the canvas) on a ruler? → "x" (left
+  // ruler: drag out a vertical guide), "y" (top ruler) or null.
+  function rulerAt(sp) {
+    if (!PL.prefs.rulers) return null;
+    if (sp.y < RULER && sp.x >= RULER) return "y";
+    if (sp.x < RULER && sp.y >= RULER) return "x";
+    return null;
+  }
+  // The guide under a screen point (within 5 px): { axis, i, v } or null.
+  function guideAt(sp) {
+    var gd = PL.st.doc && PL.st.doc.gd;
+    if (!gd || !PL.prefs.guides) return null;
+    var best = null, bd = 5;
+    gd.x.forEach(function (x, i) { var dd = Math.abs(x * vw.z + vw.ox - sp.x); if (dd <= bd) { bd = dd; best = { axis: "x", i: i, v: x }; } });
+    gd.y.forEach(function (y, i) { var dd = Math.abs(y * vw.z + vw.oy - sp.y); if (dd <= bd) { bd = dd; best = { axis: "y", i: i, v: y }; } });
+    return best;
   }
 
   // ---------- Painting the screen ----------
@@ -312,10 +602,24 @@
       ctx.strokeStyle = "#fff"; ctx.lineDashOffset = (4 - antOffset) / z; ctx.stroke(selPath);
       ctx.restore();
     }
+    var P = PL.prefs || {};
+    if (P.grid || P.guides && (d.gd || guideDrag) || P.rulers) {
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      if (P.grid) drawGrid(ctx);
+      if (P.guides && (d.gd || guideDrag) || guideDrag) drawGuides(ctx);
+      ctx.restore();
+    }
     if (PL.tools && PL.tools.overlay) {
       ctx.save();
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       PL.tools.overlay(ctx, vw);
+      ctx.restore();
+    }
+    if (P.rulers) {
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      drawRulers(ctx);
       ctx.restore();
     }
   }
@@ -328,6 +632,9 @@
     dirtyTiles: dirtyTiles, dropLayer: dropLayer, resetCaches: resetCaches, invalidate: invalidate,
     schedule: schedule, selChanged: selChanged, themeChanged: function () { checker = null; schedule(); },
     drawLayer: drawLayer, composite: composite, flatten: flatten, layerBounds: layerBounds,
+    fxBounds: fxBounds, renderLayer: renderLayer, drawMask: drawMask,
+    RULER: RULER, rulerAt: rulerAt, guideAt: guideAt,
+    setGuideDrag: function (gdr) { guideDrag = gdr; schedule(); },
     renderText: renderText, shapePath: shapePath, canvas: canvas, vector: vector
   };
 })();

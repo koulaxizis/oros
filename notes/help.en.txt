@@ -14,6 +14,7 @@ Right-click a page in the tree, or long-press it on a touch screen, to open its 
 - `Pin to top` keeps the page first among its neighbours; `Unpin` undoes it.
 - `Labels` attaches or removes labels.
 - `Export page (.txt)` and `Export notebook (.zip)`.
+- `Send to someone…` sends the page as a link that opens in any browser. The paper-plane button next to the page title does the same.
 - `Delete` removes the page after you confirm.
 
 On a computer you can also drag a page in the tree and drop it onto another page to make it a sub-page, or onto empty space to move it to the top level.
@@ -31,12 +32,19 @@ The search button (or [[Ctrl+K]]) searches titles and text in the current notebo
 ## Notebooks
 Pick a notebook from the list at the top of the tree. The book button with a plus under the tree (`New notebook`) creates one. The ⋯ button next to the list (or a right-click on the list) has `Rename notebook` and `Delete notebook`. Deleting a notebook removes all its pages and labels.
 
+## Import from Notion
+- In Notion, create an integration of your own (notion.so/profile/integrations › New integration, Internal, read content only), then share the pages you want with it: open a page, ••• › Connections › add the integration (its subpages come along).
+- Connect Notion in [Settings](app:settings) › `Connected services` with the integration's secret.
+- Then the cloud button under the tree, `Import from Notion…` › `Read the account` shows what will come in, and `Import` brings it into a notebook named Notion (`Undo` in the notice takes it back). Subpages stay under their page. The text keeps headings, lists, to-dos, quotes, code and tables as plain text; database rows, comments and Notion's own files stay in Notion.
+- Import again whenever you like: new pages come in. Pages you changed in Notion change here only if you tick `Replace the text of pages imported before`, and that replaces your edits here to those pages. Deleted pages don't come back unless you tick `Bring back what was deleted here`.
+- orOS only reads Notion: nothing there changes. Notion doesn't answer browsers, so the reading goes through the orOS relay, which keeps nothing; a large workspace takes a minute or two.
+
 ## Sync and backup
 Notebooks, pages and labels sync between your devices through [orOS sync](help:t/sync). Which page is open, which branches of the tree are unfolded and the tree's width stay on this device.
 
 If the same page is edited on two devices before they sync, both versions are kept: one of them appears in the tree marked `conflict copy`. Compare them, keep what you need and delete the other.
 
-The download button under the tree exports the notebook as a .zip of plain-text files, with folders for pages that have sub-pages. With more than one notebook it asks: `Current notebook (.zip)` or `All notebooks (.zip)`. There's no import. For a full copy of orOS, see [backup](help:t/backup).
+The download button under the tree exports the notebook as a .zip of plain-text files, with folders for pages that have sub-pages. With more than one notebook it asks: `Current notebook (.zip)` or `All notebooks (.zip)`. For a full copy of orOS, see [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[Ctrl+K]] opens search ([[Cmd+K]] on a Mac).

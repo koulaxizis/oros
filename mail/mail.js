@@ -20,8 +20,13 @@
 //   - organise: star, read / unread, archive, spam / not spam, move,
 //     delete (to Trash with Undo; erase in Trash / Spam), selection
 //     of many messages, swipe on touch (right archive, left delete)
-//   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body } })
-//     opens a prefilled draft (never sends by itself)
+//   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body,
+//     attach?: [{ name?, path } | { name, type?, b64 }] } }) opens a
+//     prefilled draft (never sends by itself); path = a file on the
+//     orOS disk (/internal/…), b64 = the file's bytes in base64
+//   - deep link: __orosOpenAt("mail", { signature:{ html, text, name } })
+//     from Email Signature: asks which account gets it (BR-MAIL-SIG)
+
 // Data:
 //   - synced slice "mail" (oros-mail-data): accounts WITHOUT
 //     passwords, relay address, senders with images allowed;
@@ -162,6 +167,7 @@
       "dlg.oauth": "Outlook.com / Hotmail no longer accept passwords from other apps. Support needs a later update.",
       "dlg.generic": "Most providers (Papaki among them) use mail.{domain}. If the connection fails, check the server name in your provider's panel.",
       "dlg.passDevice": "The password stays sealed on this device and is never synced. Enter it once on each device.",
+      "sigIn.title": "Use this signature?", "sigIn.text": "The signature \"{name}\" from Email Signature replaces the signature of the account you pick, on all your devices.", "sigIn.acct": "Account", "sigIn.ok": "Use", "sigIn.none": "Add a mail account first, then use the signature again.", "sigIn.done": "Signature saved for {email}",
       "dlg.remove": "Remove account", "dlg.removeQ": "Remove {name} from orOS on all your devices? Your mail stays on the server.",
       "dlg.removeOk": "Remove",
       "set.title": "Mail settings", "set.accounts": "Accounts", "set.plain": "Always show plain text", "set.threads": "Group messages by conversation", "uni.title": "All inboxes", "uni.older": "Older messages are in each account's Inbox.", "thr.count": "{n} messages in this conversation",
@@ -192,6 +198,7 @@
       "cmp.hint": "Formatting is sent with a plain-text copy for those who don't see it.",
       "cmp.attach": "Attach files", "cmp.fromFiles": "From Files", "cmp.unattach": "Remove {name}", "cmp.attTotal": "Together {size} (up to {max})",
       "cmp.attBig": "Attached files can be up to {max} together.", "cmp.attFail": "The file could not be read.",
+      "cmp.attHanded": "{n} of the files could not be attached (missing, or over {max} together).",
       "files.title": "orOS Files", "files.up": "Up", "files.empty": "This folder is empty.", "files.err": "Files could not be read.",
       "rte.bar": "Formatting", "rte.b": "Bold (Ctrl+B)", "rte.i": "Italic (Ctrl+I)", "rte.u": "Underline (Ctrl+U)",
       "rte.ul": "Bulleted list", "rte.ol": "Numbered list", "rte.link": "Link (Ctrl+K)", "rte.linkAsk": "Link address (web or e-mail):",
@@ -213,7 +220,7 @@
       "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
       "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
       "to.link": "A bookmark", "to.linkHint": "Pick one of its {n} links.", "to.nolinks": "This message has no links.", "to.pick": "Pick a link",
-      "to.contact": "Sender to Contacts", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
+      "to.contact": "Sender to Contacts", "to.crm": "Log in CRM", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
       "to.aiHint": "Opens the Assistant with the question ready (long messages are cut); you send it.",
       "ai.sum": "Summarise this e-mail in a few sentences, in the language it is written in.",
       "ai.reply": "Write a short, polite reply to this e-mail, in its language. I will edit it before sending.",
@@ -323,6 +330,7 @@
       "dlg.oauth": "Το Outlook.com / Hotmail δεν δέχεται πια κωδικούς από άλλες εφαρμογές. Θα υποστηριχτεί σε επόμενη ενημέρωση.",
       "dlg.generic": "Οι περισσότεροι πάροχοι (και το Papaki) χρησιμοποιούν mail.{domain}. Αν η σύνδεση αποτύχει, δες το όνομα του διακομιστή στο panel του παρόχου σου.",
       "dlg.passDevice": "Ο κωδικός μένει σφραγισμένος σε αυτή τη συσκευή και δεν συγχρονίζεται. Τον δίνεις μία φορά σε κάθε συσκευή.",
+      "sigIn.title": "Χρήση αυτής της υπογραφής;", "sigIn.text": "Η υπογραφή «{name}» από την Υπογραφή email αντικαθιστά την υπογραφή του λογαριασμού που θα διαλέξεις, σε όλες τις συσκευές σου.", "sigIn.acct": "Λογαριασμός", "sigIn.ok": "Χρήση", "sigIn.none": "Πρόσθεσε πρώτα έναν λογαριασμό email και μετά χρησιμοποίησε ξανά την υπογραφή.", "sigIn.done": "Η υπογραφή αποθηκεύτηκε για το {email}",
       "dlg.remove": "Αφαίρεση λογαριασμού", "dlg.removeQ": "Να αφαιρεθεί το {name} από το orOS σε όλες τις συσκευές σου; Τα μηνύματα μένουν στον διακομιστή.",
       "dlg.removeOk": "Αφαίρεση",
       "set.title": "Ρυθμίσεις αλληλογραφίας", "set.accounts": "Λογαριασμοί", "set.plain": "Πάντα ως απλό κείμενο", "set.threads": "Ομαδοποίηση μηνυμάτων ανά συζήτηση", "uni.title": "Όλα τα Εισερχόμενα", "uni.older": "Τα παλαιότερα μηνύματα είναι στα Εισερχόμενα κάθε λογαριασμού.", "thr.count": "{n} μηνύματα σε αυτή τη συζήτηση",
@@ -353,6 +361,7 @@
       "cmp.hint": "Η μορφοποίηση στέλνεται μαζί με αντίγραφο σε απλό κείμενο για όσους δεν τη βλέπουν.",
       "cmp.attach": "Επισύναψη αρχείων", "cmp.fromFiles": "Από τα Αρχεία", "cmp.unattach": "Αφαίρεση: {name}", "cmp.attTotal": "Μαζί {size} (έως {max})",
       "cmp.attBig": "Τα συνημμένα μπορούν να είναι έως {max} μαζί.", "cmp.attFail": "Το αρχείο δεν διαβάστηκε.",
+      "cmp.attHanded": "{n} από τα αρχεία δεν επισυνάφθηκαν (λείπουν ή ξεπερνούν μαζί τα {max}).",
       "files.title": "Αρχεία orOS", "files.up": "Πάνω", "files.empty": "Ο φάκελος είναι άδειος.", "files.err": "Τα Αρχεία δεν διαβάστηκαν.",
       "rte.bar": "Μορφοποίηση", "rte.b": "Έντονα (Ctrl+B)", "rte.i": "Πλάγια (Ctrl+I)", "rte.u": "Υπογράμμιση (Ctrl+U)",
       "rte.ul": "Λίστα με κουκκίδες", "rte.ol": "Αριθμημένη λίστα", "rte.link": "Σύνδεσμος (Ctrl+K)", "rte.linkAsk": "Διεύθυνση συνδέσμου (web ή email):",
@@ -374,7 +383,7 @@
       "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
       "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
       "to.link": "Σελιδοδείκτης", "to.linkHint": "Διάλεξε έναν από τους {n} συνδέσμους του.", "to.nolinks": "Το μήνυμα δεν έχει συνδέσμους.", "to.pick": "Διάλεξε σύνδεσμο",
-      "to.contact": "Αποστολέας στις Επαφές", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
+      "to.contact": "Αποστολέας στις Επαφές", "to.crm": "Καταγραφή στους Πελάτες", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
       "to.aiHint": "Ανοίγει τον Βοηθό με την ερώτηση έτοιμη (τα μεγάλα μηνύματα κόβονται)· τη στέλνεις εσύ.",
       "ai.sum": "Κάνε περίληψη αυτού του email σε λίγες προτάσεις, στη γλώσσα που είναι γραμμένο.",
       "ai.reply": "Γράψε μια σύντομη, ευγενική απάντηση σε αυτό το email, στη γλώσσα του. Θα τη διορθώσω πριν τη στείλω.",
@@ -1996,6 +2005,39 @@
     ppt: "application/vnd.ms-powerpoint", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     odt: "application/vnd.oasis.opendocument.text", ods: "application/vnd.oasis.opendocument.spreadsheet",
     mp3: "audio/mpeg", mp4: "video/mp4", ics: "text/calendar", vcf: "text/vcard", html: "text/html", svg: "image/svg+xml" };
+  // Files another app hands to compose (deep link `attach`, JSON):
+  // { name?, path } a file on the orOS disk under /internal, or
+  // { name, type?, b64 } its bytes. Up to 10, ATT_MAX together.
+  // → Promise of { files: [{ name, type, bin }], failed }
+  var MAX_HANDED = 10;
+  function diskPath(p) {
+    if (typeof p !== "string" || p.length > 1000 || p.indexOf("/internal/") !== 0) return false;
+    return p.split("/").slice(2).every(function (seg) { return seg && seg !== "." && seg !== ".." && !/[\x00-\x1f]/.test(seg); });
+  }
+  function handedFiles(list) {
+    list = Array.isArray(list) ? list : [];
+    var fs = filesApi(), total = 0, failed = Math.max(0, list.length - MAX_HANDED);
+    return list.slice(0, MAX_HANDED).reduce(function (p, a) {
+      return p.then(function (out) {
+        var name = a && typeof a.name === "string" ? a.name.replace(/[\x00-\x1f\/\\]/g, "").trim().slice(0, 200) : "";
+        var get = null;
+        if (a && typeof a.b64 === "string" && a.b64.length <= Math.ceil(ATT_MAX / 3) * 4 + 4) {
+          get = Promise.resolve().then(function () { return atob(a.b64.replace(/\s+/g, "")); });
+        } else if (a && fs && diskPath(a.path)) {
+          if (!name) name = a.path.replace(/^.*\//, "").slice(0, 200);
+          get = fs.readBlob(a.path).then(function (b) { return b && b.size <= ATT_MAX ? blobBin(b) : null; });
+        }
+        if (!get) { failed++; return out; }
+        return get.then(function (bin) {
+          if (typeof bin !== "string" || total + bin.length > ATT_MAX) { failed++; return out; }
+          total += bin.length;
+          var type = a.type && typeof a.type === "string" && /^[\w.+-]+\/[\w.+-]+$/.test(a.type) ? a.type.toLowerCase() : mimeOf(name);
+          out.push({ name: name || "attachment", type: type, bin: bin });
+          return out;
+        }, function () { failed++; return out; });
+      });
+    }, Promise.resolve([])).then(function (files) { return { files: files, failed: failed }; });
+  }
   function mimeOf(name) {
     var ext = (/\.([a-z0-9]{1,5})$/i.exec(name || "") || ["", ""])[1].toLowerCase();
     return EXT_TYPES[ext] || "application/octet-stream";
@@ -2423,6 +2465,56 @@
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+
+  // A signature handed over by Email Signature (BR-MAIL-SIG): the
+  // person picks the account; Use replaces its signature.
+  function signatureDialog(sg) {
+    if (!data.accounts.length) { showToast(t("sigIn.none")); return; }
+    var html = typeof sg.html === "string" && sg.html.length <= 400000 ? sg.html : "";
+    var cl = RT.clean(html, { cid: false });
+    var text = typeof sg.text === "string" ? sg.text.replace(/\r\n?/g, "\n").slice(0, MAX_SIG) : cl.text.slice(0, MAX_SIG);
+    if (!cl.html && !text) return;
+    var name = typeof sg.name === "string" ? sg.name.replace(/\s+/g, " ").trim().slice(0, 60) : "";
+    var dlg = makeDialog("ml-sig-in");
+    dlg.appendChild(el("div", "dlg-title", t("sigIn.title")));
+    dlg.appendChild(el("p", "dlg-text", t("sigIn.text", { name: name })));
+    var form = el("form");
+    form.method = "dialog";
+    var cur = curAcct();
+    var sel = portSelect(form, "ml-sig-acct", t("sigIn.acct"), data.accounts.map(function (a) {
+      return [a.id, a.name ? a.name + " <" + a.email + ">" : a.email];
+    }), cur ? cur.id : data.accounts[0].id);
+    var pv = el("div", "ml-sig-pv");
+    pv.innerHTML = cl.html || RT.fromText(text);   // cleaned by rich.js
+    form.appendChild(pv);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("sigIn.ok"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var a = acctById(sel.value);
+      if (!a) { dlg.close(); return; }
+      var next = JSON.parse(JSON.stringify(a));
+      next.m = Math.max(Date.now(), a.m + 1);
+      next.sig = text;
+      if (cl.rich && cl.html.length <= MAX_SIG_HTML) next.sigHtml = cl.html; else delete next.sigHtml;
+      var n = normAccount(next);
+      if (!n) { dlg.close(); return; }
+      data.accounts = data.accounts.filter(function (x) { return x.id !== n.id; }).concat([n]);
+      data = mergeMail(data, data);
+      saveData();
+      dlg.close();
+      showToast(t("sigIn.done", { email: n.email }));
+      renderAll();
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    sel.focus();
   }
 
   // Drops this device's password and cache of an account.
@@ -3029,7 +3121,7 @@
     init = init || {};
     if (!data.accounts.length) { showToast(t("cmp.noacct")); acctDialog(null); return; }
     var acct = acctById(init.acct) || curAcct();
-    var dirty = !!init.outId;
+    var dirty = !!init.outId || !!init.handed;
     var draftRef = init.draft || null;   // its copy in Drafts on the server
     editingOut = init.outId || null;
     var dlg = makeDialog("ml-compose", true);
@@ -3192,6 +3284,7 @@
     var errP = el("p", "dlg-err");
     errP.setAttribute("role", "alert");
     form.appendChild(errP);
+    if (init.handedFailed) errP.textContent = t("cmp.attHanded", { n: init.handedFailed, max: fmtSize(ATT_MAX) });
 
     form.addEventListener("input", function () { dirty = true; });
     if (fFrom) fFrom.addEventListener("change", function () {
@@ -3718,7 +3811,16 @@
   //   notes     { add: { title, text } }
   //   bookmarks { add: { url, title } }
   //   contacts  { add: { email, name } }
+  //   crm       { log: { email, name?, subject?, text?, at? } } (BR-CRM-MAIL)
   //   assistant { ask } (≤ 2000 characters; never sent by itself)
+  // Is that app installed? (shell list; unknown → assume yes)
+  function appThere(id) {
+    try {
+      var f = window.parent.orosAssistInstalled;
+      if (typeof f !== "function") return true;
+      return f().some(function (a) { return a && a.id === id; });
+    } catch (e) { return true; }
+  }
   function shellApps() {
     try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
     catch (e) { return null; }
@@ -3789,6 +3891,18 @@
       var head = lead + "\n\n" + msgHead(m) + "\n" + t("to.subj") + " " + subj + "\n\n";
       var room = 2000 - head.length;
       return head + (body.length > room ? body.slice(0, Math.max(0, room - 1)) + "\u2026" : body);
+    }
+    // CRM (BR-CRM-MAIL): the other person — the sender, or the first
+    // recipient of a message we sent. Prefills a log entry there.
+    var mine = function (x) { return x && x.addr && data.accounts.some(function (a) { return lowerAddr(a.email) === lowerAddr(x.addr); }); };
+    var who = mine(from) ? (m.to || []).filter(function (x) { return x && x.addr && !mine(x); })[0] : (from.addr ? from : null);
+    if (who && appThere("crm")) {
+      item(t("to.crm"), who.name ? who.name + " <" + who.addr + ">" : who.addr, function () {
+        var log = { email: lowerAddr(who.addr), subject: subj.slice(0, 200), text: body.slice(0, 1800) };
+        if (who.name) log.name = String(who.name).slice(0, 120);
+        if (typeof m.date === "number" && isFinite(m.date)) log.at = m.date;
+        go("crm", { log: log });
+      });
     }
     item(t("to.sum"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.sum")) }); });
     item(t("to.reply"), t("to.aiHint"), function () { go("assistant", { ask: ask(t("ai.reply")) }); });
@@ -4812,17 +4926,31 @@
   //    when the message is in its cached list, the message. Unknown
   //    account → no-op (returns false).
   //  - the Today summary: { acct, folder } (no uid) opens that folder.
-  //  - other apps (Reader…): { compose:{ to?, subject?, body? } } opens
-  //    a prefilled draft, plain text; the person presses Send.
+  //  - other apps (Reader, Invoices…): { compose:{ to?, subject?, body?,
+  //    attach? } } opens a prefilled draft, plain text, with the files
+  //    (handedFiles); the person presses Send.
+  //  - Email Signature (BR-MAIL-SIG): { signature:{ html, text, name } }
+  //    asks which account gets it; nothing changes before Use. The
+  //    HTML goes through rich.js clean() like a typed signature.
   // A dialog open (maybe with unsaved edits) → no-op (returns false).
   function openSearchTarget(target) {
     if (!target || typeof target !== "object" || document.querySelector("dialog[open]")) return false;
+    var sg = target.signature;
+    if (sg && typeof sg === "object") { signatureDialog(sg); return true; }
     var c = target.compose;
     if (c && typeof c === "object") {
-      openCompose({
+      var init = {
         to: C.parseList(typeof c.to === "string" ? c.to.slice(0, 2000) : "").list.slice(0, MAX_RCPT),
         subject: typeof c.subject === "string" ? c.subject.replace(/\s+/g, " ").trim().slice(0, 300) : "",
         text: typeof c.body === "string" ? c.body.slice(0, 20000) : ""
+      };
+      if (!Array.isArray(c.attach) || !c.attach.length) { openCompose(init); return true; }
+      handedFiles(c.attach).then(function (r) {
+        if (document.querySelector("dialog[open]")) return;
+        init.attachments = r.files;
+        init.handedFailed = r.failed;
+        init.handed = r.files.length > 0;
+        openCompose(init);
       });
       return true;
     }

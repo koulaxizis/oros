@@ -1,9 +1,9 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.0.0)
+// orOS CRM — core.js (shared logic, v1.4.0)
 // One file holds the model, the merge and every derived number,
-// so the app, the universal search provider and (later) the
-// Calendar feed, the Today provider and Invoices can never
-// disagree. Pure functions, no DOM, no network, no clock: callers
+// so the app, the universal search provider, the shell reminder,
+// the Calendar feed, the Today provider, Contacts and (later)
+// Invoices can never disagree. Pure functions, no DOM, no network, no clock: callers
 // pass "now" / "today".
 //
 // API (window.OrosCrmCore, module.exports under Node):
@@ -17,9 +17,11 @@
 //   normCust / normDeal / normAct / normFup / normTag / normPrefs
 //   merge(A, B) → canonical data (symmetric, idempotent)
 //   empty() → fresh data
-//   byId(list, id), alive(data, id)
+//   byId(list, id)
 //   custName(c), lastContact(data, custId) → ms | 0
-//   dealProb(d), openDeals(data, custId?)
+//   stages(data) → [{ id, name, prob, open, own }] (board order)
+//   stageOf(data, deal) → the stage the deal shows in
+//   dealProb(d, data?), openDeals(data, custId?)
 //   pipeline(data) → { stage: { n, val, wval } }
 //   agenda(data, today, horizon) → { late, today, soon } (open fups)
 //   dueNow(data, today, hhmm) → open fups due by now (reminders)
@@ -27,11 +29,23 @@
 //   dashboard(data, nowMs, today) → numbers for the Dashboard tab
 //   customersForBilling(data) → [{ id, name, afm, doy, job, addr,
 //     country, email, phone }] (BR-CRM-INV, read by Invoices)
+//   invoicePrefill(cust, deal?, cur) → the { new } of BR-CRM-INV 1
+//   quotePrefill(cust, deal?, cur) → BR-Q1 payload, or null when a
+//     deal's value is in a currency Quote does not know (EUR, USD)
 //   csvRows(data, lang) → rows · csvCell(v)
+//   mailLog(x) → BR-CRM-MAIL payload cleaned { email, name, subject,
+//     text, at } | null · custByEmail(data, email, emailOf?) → cust | null
+//   parseCsv(text) → { sep, rows } (",", ";" or tab, quoted cells)
+//   csvImport(data, text, nowMs) → { add: [cust], tags: [tag], dup,
+//     noName, over, cols: [field] } | null (no name column)
 //   backup(data) / restore(data, file) → merged data | null
+//   reminders(data, today, hhmm, seen) → { fresh: [{ key, fup }], next }
+//   reminderText(data, fup, today, lang) → { title, body }
+//   calendarOn(data, ymd, today) → [{ k: fup|late|done|close, fup|deal }]
+//   custsForContact(data, contactId) → [cust]
 // Data (synced slice "crm", key oros-crm-data):
-//   { ver: 1, cust, deals, acts, fups, tags: [row…] each sorted by
-//     id, prefs: { pm, cur, forget }, tombs: { id: deletedAt } }
+//   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
+//     sorted by id, prefs: { pm, cur, forget }, tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
 // ============================================================
@@ -46,14 +60,15 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, people: 20, custTags: 10 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
-  var OPEN_STAGES = ["new", "contact", "proposal", "nego"];
+  var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
+  var STAGE_POS = { "new": 10, contact: 20, proposal: 30, nego: 40 };
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -194,7 +209,7 @@
     if (!title) return null;
     var o = { id: x.id, m: x.m, cust: x.cust, title: title,
               val: isInt(x.val) && x.val >= 0 && x.val <= VAL_MAX ? x.val : 0,
-              stage: STAGES.indexOf(x.stage) >= 0 ? x.stage : "new" };
+              stage: STAGES.indexOf(x.stage) >= 0 || ID_RE.test(x.stage) ? x.stage : "new" };
     if (isInt(x.prob) && x.prob >= 0 && x.prob <= 100) o.prob = x.prob;
     if (isYmd(x.close)) o.close = x.close;
     if (isYmd(x.cd) && (o.stage === "won" || o.stage === "lost")) o.cd = x.cd;
@@ -242,10 +257,30 @@
     };
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag };
+  // Pipeline stages (phase 2): a record per built-in open stage the
+  // user changed (id "new" | "contact" | "proposal" | "nego": name ""
+  // = the built-in label, off = hidden) and one per own stage (id like
+  // any row, name required). prob = the default probability, pos =
+  // the order among the open stages (built-ins 10 / 20 / 30 / 40).
+  // Won and Lost stay fixed: the dashboard counts on them.
+  function normStg(x) {
+    if (!x || typeof x !== "object" || !stamp(x)) return null;
+    var bi = OPEN_STAGES.indexOf(x.id) >= 0;
+    if (!bi && !ID_RE.test(x.id)) return null;
+    var name = str(x, "name", 30);
+    if (!bi && !name) return null;
+    var o = { id: x.id, m: x.m };
+    put(o, "name", name);
+    if (isInt(x.prob) && x.prob >= 0 && x.prob <= 100) o.prob = x.prob;
+    if (isInt(x.pos) && x.pos >= 0 && x.pos <= 1000000) o.pos = x.pos;
+    if (bi && (x.off === 1 || x.off === true)) o.off = 1;
+    return o;
+  }
+
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg };
 
   function empty() {
-    return { ver: DATA_VER, cust: [], deals: [], acts: [], fups: [], tags: [], prefs: normPrefs(null), tombs: {} };
+    return { ver: DATA_VER, cust: [], deals: [], acts: [], fups: [], tags: [], stg: [], prefs: normPrefs(null), tombs: {} };
   }
 
   // ---------- Merge (R5 symmetric, R17 tombstones, R26 canonical) ----------
@@ -298,7 +333,7 @@
       Object.keys(best[k]).sort(cmpStr).forEach(function (id) {
         var x = best[k][id];
         if (id in tombs && tombs[id] >= x.m) return;
-        if (k !== "cust" && k !== "tags" && !aliveCust[x.cust]) return;
+        if (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust]) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
@@ -335,17 +370,54 @@
     return m;
   }
 
-  function dealProb(d) { return isInt(d.prob) ? d.prob : STAGE_PROB[d.stage]; }
-  function isOpen(d) { return OPEN_STAGES.indexOf(d.stage) >= 0; }
+  // ---------- Stages ----------
+  // The board, in order: the open stages (built-ins not hidden + own,
+  // by pos, then id), then Won, Lost. Each { id, name ("" → the
+  // built-in label), prob, open, own }.
+  function stages(data) {
+    var rec = {};
+    (data.stg || []).forEach(function (r) { rec[r.id] = r; });
+    var open = [];
+    OPEN_STAGES.forEach(function (id) {
+      var r = rec[id] || {};
+      if (r.off) return;
+      open.push({ id: id, name: r.name || "", prob: isInt(r.prob) ? r.prob : STAGE_PROB[id],
+                  pos: isInt(r.pos) ? r.pos : STAGE_POS[id], open: true, own: false });
+    });
+    (data.stg || []).forEach(function (r) {
+      if (OPEN_STAGES.indexOf(r.id) >= 0) return;
+      open.push({ id: r.id, name: r.name, prob: isInt(r.prob) ? r.prob : 50,
+                  pos: isInt(r.pos) ? r.pos : 1000, open: true, own: true });
+    });
+    open.sort(function (a, b) { return a.pos - b.pos || cmpStr(a.id, b.id); });
+    open = open.slice(0, LIMITS.openStages);
+    if (!open.length) open.push({ id: "new", name: "", prob: STAGE_PROB["new"], pos: 10, open: true, own: false });
+    return open.concat([{ id: "won", name: "", prob: 100, pos: 0, open: false, own: false },
+                        { id: "lost", name: "", prob: 0, pos: 0, open: false, own: false }]);
+  }
+  // The stage a deal shows in: its own, or (a stage deleted or hidden
+  // on another device) the first open stage. Nothing is rewritten.
+  function stageOf(data, d, list) {
+    var st = list || stages(data);
+    for (var i = 0; i < st.length; i++) if (st[i].id === d.stage) return st[i];
+    return st[0];
+  }
+  function dealProb(d, data) {
+    if (isInt(d.prob)) return d.prob;
+    if (data) return stageOf(data, d).prob;
+    return STAGE_PROB[d.stage] !== undefined ? STAGE_PROB[d.stage] : 50;
+  }
+  function isOpen(d) { return d.stage !== "won" && d.stage !== "lost"; }
   function openDeals(data, custId) {
     return data.deals.filter(function (d) { return isOpen(d) && (!custId || d.cust === custId); });
   }
 
   function pipeline(data) {
-    var out = {};
-    STAGES.forEach(function (s) { out[s] = { n: 0, val: 0, wval: 0 }; });
+    var out = {}, st = stages(data);
+    st.forEach(function (s) { out[s.id] = { n: 0, val: 0, wval: 0 }; });
     data.deals.forEach(function (d) {
-      var r = out[d.stage];
+      var s = stageOf(data, d, st), r = out[s.id];
+      d = isInt(d.prob) ? d : Object.assign({}, d, { prob: s.prob });
       r.n++;
       r.val += d.val;
       r.wval += Math.round(d.val * dealProb(d) / 100);
@@ -396,7 +468,7 @@
     var month = today.slice(0, 7), year = today.slice(0, 4);
     var p = pipeline(data);
     var openVal = 0, openW = 0, openN = 0;
-    OPEN_STAGES.forEach(function (s) { openVal += p[s].val; openW += p[s].wval; openN += p[s].n; });
+    stages(data).forEach(function (s) { if (s.open) { openVal += p[s.id].val; openW += p[s.id].wval; openN += p[s.id].n; } });
     var wonM = 0, wonY = 0, wonYn = 0, lostYn = 0;
     data.deals.forEach(function (d) {
       if (!d.cd) return;
@@ -434,6 +506,52 @@
     }).sort(function (a, b) { return a.name.localeCompare(b.name) || cmpStr(a.id, b.id); });
   }
 
+  // BR-CRM-MAIL: Mail's "Log in CRM" under a message calls
+  // __orosOpenAt("crm", { log: { email, name?, subject?, text?, at? } }).
+  // Only a prefill: the log entry is saved by the user.
+  var EMAIL_RE = /^[^\s@<>"]{1,64}@[^\s@<>"]{1,190}$/;
+  function mailLog(x) {
+    if (!x || typeof x !== "object") return null;
+    var email = cleanText(x.email, 254).toLowerCase();
+    if (!EMAIL_RE.test(email)) return null;
+    return { email: email, name: cleanText(x.name, 120), subject: cleanText(x.subject, 200),
+             text: cleanText(x.text, 1800, true), at: isInt(x.at) && x.at > 0 ? x.at : 0 };
+  }
+  // The customer an address belongs to: its own email, then a person's
+  // (emailOf(person) gives a Contacts-linked person's live address).
+  function custByEmail(data, email, emailOf) {
+    var e = String(email || "").trim().toLowerCase(), i, j;
+    if (!e) return null;
+    var same = function (v) { return String(v || "").trim().toLowerCase() === e; };
+    for (i = 0; i < data.cust.length; i++) if (same(data.cust[i].email)) return data.cust[i];
+    for (i = 0; i < data.cust.length; i++) {
+      var pp = data.cust[i].people || [];
+      for (j = 0; j < pp.length; j++) if (same(emailOf ? emailOf(pp[j]) : pp[j].email)) return data.cust[i];
+    }
+    return null;
+  }
+
+  // What CRM hands Invoices (BR-CRM-INV 1) and Quote (BR-Q1). Both
+  // apps only prefill a draft; nothing is saved before their Save.
+  // Prices go in currency units (cents / 100). A deal is one line:
+  // its title, quantity 1, its value.
+  function invoicePrefill(c, d, cur) {
+    var n = { crm: c.id, name: c.name, cur: cur };
+    ["afm", "doy", "job", "addr", "country", "email", "phone"].forEach(function (k) { if (c[k]) n[k] = c[k]; });
+    if (d) {
+      n.items = [{ d: d.title, q: 1, p: (d.val || 0) / 100 }];
+      n.ref = { app: "crm", id: d.id };
+    }
+    return n;
+  }
+  function quotePrefill(c, d, cur) {
+    var known = cur === "EUR" || cur === "USD";
+    if (d && !known) return null;
+    var p = { client: c.name, items: [d ? { d: d.title, q: 1, p: (d.val || 0) / 100 } : { d: "", q: 1, p: 0 }] };
+    if (known) p.cur = cur;
+    return p;
+  }
+
   // ---------- CSV (customers) ----------
   // Leading = + - @ get a quote mark so a spreadsheet never runs a
   // cell as a formula.
@@ -452,6 +570,139 @@
     en: { co: "Company", person: "Person", lead: "Lead", active: "Active", past: "Past" },
     el: { co: "Εταιρεία", person: "Ιδιώτης", lead: "Υποψήφιος", active: "Ενεργός", past: "Παλιός" }
   };
+  // Reading a customer file: this app's own export (EN / EL), and the
+  // usual words of Excel lists, HubSpot (companies and contacts) and
+  // Greek accounting programs. Headers are matched folded, without
+  // "(…)", dots and extra spaces.
+  function parseCsv(text) {
+    var s = String(text || "").replace(/^\ufeff/, "");
+    var first = s.split(/\r?\n/)[0] || "", cnt = { ",": 0, ";": 0, "\t": 0 }, inQ = false;
+    for (var k = 0; k < first.length; k++) {
+      var ch0 = first[k];
+      if (ch0 === '"') inQ = !inQ;
+      else if (!inQ && cnt.hasOwnProperty(ch0)) cnt[ch0]++;
+    }
+    var sep = cnt[";"] > cnt[","] && cnt[";"] >= cnt["\t"] ? ";" : (cnt["\t"] > cnt[","] ? "\t" : ",");
+    var rows = [], row = [], cell = "", q = false;
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+      if (q) {
+        if (ch === '"') {
+          if (s[i + 1] === '"') { cell += '"'; i++; } else q = false;
+        } else cell += ch;
+      } else if (ch === '"' && cell === "") q = true;
+      else if (ch === sep) { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && s[i + 1] === "\n") i++;
+        row.push(cell); cell = "";
+        if (row.some(function (c) { return c.trim() !== ""; })) rows.push(row);
+        row = [];
+      } else cell += ch;
+    }
+    row.push(cell);
+    if (row.some(function (c) { return c.trim() !== ""; })) rows.push(row);
+    return { sep: sep, rows: rows };
+  }
+  var CSV_IN = {
+    name: ["name", "trade name", "company", "company name", "customer", "customer name", "client", "account name", "organization",
+           "επωνυμια", "επωνυμια πελατη", "πελατησ", "ονομα πελατη", "εταιρεια", "ονοματεπωνυμο"],
+    alias: ["alias", "διακριτικοσ τιτλοσ", "διακριτικοσ"],
+    first: ["first name", "firstname", "given name", "ονομα"],
+    last: ["last name", "lastname", "surname", "family name", "επωνυμο"],
+    kind: ["type", "kind", "ειδοσ", "τυποσ"],
+    st: ["status", "lifecycle stage", "κατασταση"],
+    afm: ["vat id", "vat", "vat number", "tax id", "tin", "afm", "αφμ", "α.φ.μ"],
+    doy: ["tax office", "δου", "δ.ο.υ"],
+    job: ["profession", "industry", "occupation", "επαγγελμα", "δραστηριοτητα"],
+    addr: ["address", "street address", "street", "address 1", "διευθυνση", "οδοσ"],
+    city: ["city", "town", "πολη", "περιοχη"],
+    zip: ["zip", "postal code", "postcode", "zip code", "τκ", "τ.κ", "ταχυδρομικοσ κωδικασ"],
+    country: ["country", "country/region", "χωρα"],
+    phone: ["phone", "phone number", "telephone", "tel", "mobile", "mobile phone number", "τηλεφωνο", "τηλ", "κινητο"],
+    email: ["email", "e-mail", "email address", "mail"],
+    web: ["website", "website url", "web", "url", "company domain name", "ιστοτοποσ", "ιστοσελιδα"],
+    src: ["source", "lead source", "original source", "πηγη"],
+    tags: ["tags", "labels", "ετικετεσ"],
+    note: ["notes", "note", "description", "comments", "σημειωσεισ", "σχολια", "παρατηρησεισ"]
+  };
+  function csvKey(h) {
+    return fold(h).replace(/\([^)]*\)/g, " ").replace(/[.:*]/g, "").replace(/\s+/g, " ").trim();
+  }
+  function csvStatus(v) {
+    var f = csvKey(v);
+    if (!f) return "";
+    if (/^(lead|subscriber|marketing ?qualified ?lead|sales ?qualified ?lead|opportunity|prospect|υποψηφιοσ|υποψηφια)$/.test(f)) return "lead";
+    if (/^(past|former|inactive|lost|other|παλιοσ|παλια|ανενεργοσ)$/.test(f)) return "past";
+    return "active";
+  }
+  function csvImport(data, text, nowMs) {
+    var rows = parseCsv(text).rows;
+    if (!rows.length) return null;
+    var col = {};
+    rows[0].forEach(function (h, i) {
+      var k = csvKey(h);
+      Object.keys(CSV_IN).forEach(function (f) {
+        if (col[f] === undefined && CSV_IN[f].indexOf(k) >= 0) col[f] = i;
+      });
+    });
+    if (col.name === undefined && col.first === undefined && col.last === undefined) return null;
+    var seenAfm = {}, seenName = {};
+    data.cust.forEach(function (c) { if (c.afm) seenAfm[c.afm] = 1; seenName[fold(cleanText(c.name, 120))] = 1; });
+    var tagByName = {}, newTags = [], tagCount = data.tags.length;
+    data.tags.forEach(function (t) { tagByName[fold(t.name)] = t.id; });
+    var out = { add: [], tags: newTags, dup: 0, noName: 0, over: 0, cols: Object.keys(col).sort() };
+    var room = LIMITS.cust - data.cust.length, n = 0;
+    var cell = function (r, f) { return col[f] === undefined ? "" : cleanText(r[col[f]], 2000); };
+    rows.slice(1).forEach(function (r) {
+      var person = "";
+      if (col.first !== undefined || col.last !== undefined) person = [cell(r, "first"), cell(r, "last")].filter(Boolean).join(" ");
+      var name = cleanText(cell(r, "name") || person, 120);
+      if (!name) { out.noName++; return; }
+      var afm = cell(r, "afm").replace(/\s+/g, "").replace(/^el/i, "");
+      if ((afm && seenAfm[afm]) || seenName[fold(name)]) { out.dup++; return; }
+      if (out.add.length >= room) { out.over++; return; }
+      var kv = csvKey(cell(r, "kind"));
+      var kind = /^(person|individual|ιδιωτησ|φυσικο προσωπο)$/.test(kv) || (!cell(r, "name") && person) ? "person" : "co";
+      var c = { id: newId(nowMs + n++), m: nowMs, ct: nowMs, name: name, kind: kind, st: csvStatus(cell(r, "st")) || "active" };
+      if (afm) c.afm = afm;
+      ["alias", "doy", "job", "country", "phone", "email", "web", "src"].forEach(function (f) { var v = cell(r, f); if (v) c[f] = v; });
+      if (col.note !== undefined) c.note = cleanText(r[col.note], 2000, true);
+      var addr = [cell(r, "addr"), [cell(r, "zip"), cell(r, "city")].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+      if (addr) c.addr = addr;
+      // a contact list with a company column: the person is its first "People" line
+      // (HubSpot contacts: the email and phone are that person's too)
+      if (person && cell(r, "name") && fold(person) !== fold(name)) {
+        var pp = { c: "", n: person };
+        if (c.phone) pp.phone = c.phone;
+        if (c.email) pp.email = c.email;
+        c.people = [pp];
+      }
+      var tags = [];
+      cell(r, "tags").split(/[,;|]/).forEach(function (w) {
+        w = cleanText(w, 30);
+        if (!w) return;
+        var id = tagByName[fold(w)];
+        if (!id && tagCount < LIMITS.tags) {
+          id = newId(nowMs + n++);
+          tagByName[fold(w)] = id;
+          newTags.push({ id: id, m: nowMs, name: w, col: (tagCount++) % 8 });
+        }
+        if (id && tags.indexOf(id) < 0 && tags.length < LIMITS.custTags) tags.push(id);
+      });
+      if (tags.length) c.tags = tags;
+      var nc = normCust(c);
+      if (!nc) { out.noName++; return; }
+      if (nc.afm) seenAfm[nc.afm] = 1;
+      seenName[fold(nc.name)] = 1;
+      out.add.push(nc);
+    });
+    // only the tags a kept customer uses
+    var used = {};
+    out.add.forEach(function (c) { (c.tags || []).forEach(function (id) { used[id] = 1; }); });
+    out.tags = newTags.filter(function (t) { return used[t.id]; }).map(normTag).filter(Boolean);
+    return out;
+  }
+
   function csvRows(data, lang) {
     var L = lang === "el" ? "el" : "en", W = CSV_WORDS[L];
     var tagName = {};
@@ -484,6 +735,61 @@
     return merge(data, d);
   }
 
+  // ---------- Other apps read this (shell, Today, Calendar, Contacts) ----------
+  // Reminders (shell crmCheckTick, works with the app closed): what is
+  // due now and not yet announced on this device. `seen` is the
+  // device-local map { "<id>|<day><time>": 1 }; `next` keeps only the
+  // keys still due, so it never grows. A follow-up moved to another
+  // day or time is a new key and rings again.
+  function reminders(data, today, hhmm, seen) {
+    var s = seen && typeof seen === "object" ? seen : {};
+    var fresh = [], next = {};
+    dueNow(data, today, hhmm).forEach(function (f) {
+      var k = f.id + "|" + f.d + (f.t || "");
+      next[k] = 1;
+      if (s[k] !== 1) fresh.push({ key: k, fup: f });
+    });
+    return { fresh: fresh, next: next };
+  }
+  var REM_WORDS = {
+    en: { title: "Follow-up: {name}", unknown: "Unknown customer", today: "today", yday: "yesterday", late: "{n} days late" },
+    el: { title: "Follow-up: {name}", unknown: "Άγνωστος πελάτης", today: "σήμερα", yday: "χθες", late: "καθυστερεί {n} μέρες" }
+  };
+  function reminderText(data, f, today, lang) {
+    var w = REM_WORDS[lang === "el" ? "el" : "en"];
+    var c = byId(data.cust, f.cust);
+    var n = dayDiff(f.d, today);
+    var when = n <= 0 ? w.today : (n === 1 ? w.yday : w.late.replace("{n}", n));
+    return { title: w.title.replace("{name}", c ? c.name : w.unknown),
+             body: f.text + " · " + when + (f.t ? " " + f.t : "") };
+  }
+
+  // Calendar feed: an open follow-up on its day (late ones show on
+  // today, never on the past days), a done one on the day it was done,
+  // an open deal on its expected close day (today and later).
+  function calendarOn(data, ymd, today) {
+    var out = [];
+    data.fups.forEach(function (f) {
+      if (f.done) { if (f.done === ymd) out.push({ k: "done", fup: f }); return; }
+      if (ymd === today ? f.d <= today : (ymd > today && f.d === ymd)) out.push({ k: f.d < today ? "late" : "fup", fup: f });
+    });
+    data.deals.forEach(function (d) {
+      if (isOpen(d) && d.close === ymd && ymd >= today) out.push({ k: "close", deal: d });
+    });
+    return out.sort(function (a, b) {
+      var x = a.fup || a.deal, y = b.fup || b.deal;
+      return cmpStr(x.t || "", y.t || "") || cmpStr(x.id, y.id);
+    });
+  }
+
+  // Contacts: the living customers that list this contact as a person.
+  function custsForContact(data, contactId) {
+    if (typeof contactId !== "string" || !contactId) return [];
+    return data.cust.filter(function (c) {
+      return (c.people || []).some(function (p) { return p.c === contactId; });
+    }).sort(function (a, b) { return cmpStr(fold(a.name), fold(b.name)) || cmpStr(a.id, b.id); });
+  }
+
   var API = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, STAGES: STAGES, OPEN_STAGES: OPEN_STAGES, STAGE_PROB: STAGE_PROB,
     ACT_KINDS: ACT_KINDS, CUST_ST: CUST_ST, CURRENCIES: CURRENCIES, LIMITS: LIMITS, HM_RE: HM_RE,
@@ -492,10 +798,12 @@
     normCust: normCust, normDeal: normDeal, normAct: normAct, normFup: normFup, normTag: normTag,
     normPrefs: normPrefs, norm: norm, merge: merge, empty: empty,
     byId: byId, custName: custName, lastContact: lastContact, lastContactMap: lastContactMap,
+    stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
-    customersForBilling: customersForBilling, csvCell: csvCell, csvRows: csvRows,
-    backup: backup, restore: restore
+    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail,
+    backup: backup, restore: restore,
+    reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosCrmCore = API;

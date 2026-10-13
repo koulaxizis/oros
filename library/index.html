@@ -2,10 +2,12 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=library" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Library · orOS</title>
 
-  <link rel="stylesheet" href="library.css?v=1.13.00">
+  <link rel="stylesheet" href="library.css?v=1.80.00">
 
 </head>
 <body>
@@ -73,6 +75,7 @@
       </aside>
     </div>
     <footer id="rd-bottom">
+      <button type="button" class="icon-btn" id="rd-speak"></button>
       <button type="button" class="icon-btn" id="rd-prev"></button>
       <span id="rd-where" class="rd-where"></span>
       <input id="rd-slider" type="range" min="0" max="1000" step="1" value="0">
@@ -87,16 +90,19 @@
   <div id="busy" hidden><div class="spinner"></div><span id="busy-text"></span></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=1.13.00"></script>
-  <script src="sanitize.js?v=1.13.00"></script>
-  <script src="../atelier/zip.js?v=1.13.00"></script>
-  <script src="strings.js?v=1.13.00"></script>
-  <script src="app.js?v=1.13.00"></script>
-  <script src="store.js?v=1.13.00"></script>
-  <script src="home.js?v=1.13.00"></script>
-  <script src="reader.js?v=1.13.00"></script>
-  <script src="epub.js?v=1.13.00"></script>
-  <script src="pdfview.js?v=1.13.00"></script>
+  <script src="core.js?v=1.80.00"></script>
+  <script src="sanitize.js?v=1.80.00"></script>
+  <script src="../atelier/zip.js?v=1.80.00"></script>
+  <script src="strings.js?v=1.80.00"></script>
+  <script src="app.js?v=1.80.00"></script>
+  <script src="store.js?v=1.80.00"></script>
+  <script src="home.js?v=1.80.00"></script>
+  <script src="reader.js?v=1.80.00"></script>
+  <script src="epub.js?v=1.80.00"></script>
+  <script src="pdfview.js?v=1.80.00"></script>
+  <script src="speak.js?v=1.80.00"></script>
+  <script src="stats.js?v=1.80.00"></script>
+  <script src="lookup.js?v=1.80.00"></script>
 
 </body>
 </html>

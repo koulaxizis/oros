@@ -38,6 +38,15 @@ From the `More` menu:
 - `Backup (JSON)` saves everything to a file.
 - `Restore from backup` merges a backup into your data; it never overwrites newer items.
 
+## Stripe and Invoice Ninja
+`More` › `Import from Stripe or Invoice Ninja` brings in an account you connected in [Settings](app:settings) › `Connected services` (for Stripe, a restricted key that can only read Balance). Pick the account, a start date, the categories and, if you use them, a Budget account, then `Read the account`: you see what will be added before anything is.
+
+- A charge becomes income (the full amount) and its Stripe fee a separate expense. Refunds, Stripe's own fees and lost disputes become expenses.
+- Payouts to your bank are left out: they are your own money moving, not income.
+- From Invoice Ninja, each payment received becomes income, less what was refunded from it.
+- Only Budget's currency comes in; the others are counted and left out.
+- A second import adds only what is new. An entry you delete here doesn't come back. `Undo` takes back the whole import. orOS only reads Stripe and Invoice Ninja.
+
 ## Keyboard shortcuts
 - [[N]] opens a new entry.
 - [[←]] / [[→]] move to the previous or next month (when you're not typing).

@@ -445,3 +445,108 @@ test("wave 2: a payment remembers it went to Budget (bud) and merges like any fi
   assert.equal(d.pays[0].bud, 1);
   assert.equal(model({ docs: [inv("doc-1")], pays: [Object.assign(pay("pay-1", "doc-1", 1000), { bud: "yes" })] }).pays[0].bud, 0);
 });
+
+test("BR-ST-OUT: stockOut sends coded lines at the net unit price; credit notes return", () => {
+  const S = require("../stock/core.js");
+  const doc = { id: "abc1", st: "issued", kind: "inv", num: "INV-2026-0001", date: "2026-10-13", gDisc: 10,
+    lines: [{ code: "MUG-1", q: 2, p: 1000, disc: 20 }, { code: "", q: 1, p: 500, disc: 0 }] };
+  const r = C.stockOut(doc);
+  assert.deepEqual(r, { ref: "INV-2026-0001", d: "2026-10-13", t: "out", src: "invoices:abc1", lines: [{ code: "MUG-1", q: 2, p: 720 }] });
+  assert.equal(C.stockOut(Object.assign({}, doc, { kind: "cred" })).t, "ret");
+  assert.equal(C.stockOut(Object.assign({}, doc, { st: "draft" })), null);
+  assert.equal(C.stockOut(Object.assign({}, doc, { kind: "pro" })), null);
+  assert.equal(C.stockOut(Object.assign({}, doc, { lines: [{ code: "", q: 1, p: 1, disc: 0 }] })), null);
+  // Stock's own receiver accepts it as is.
+  assert.ok(typeof S.outRequest === "function");
+  const got = S.outRequest(S.normalize ? S.normalize({}) : {}, r, "2026-10-13");
+  assert.ok(got && got.miss.indexOf("MUG-1") >= 0);
+});
+
+// ---------------------------------------------------------------
+// Wave 3: statement, reverse charge, payment QR, business profiles
+// ---------------------------------------------------------------
+test("wave 3: statement lists what a client still owes, oldest first, per currency", () => {
+  const d = model({
+    clients: [{ id: "cli-a", name: "Acme", m: 1 }],
+    docs: [inv("doc-2", { cli: "cli-a", date: "2026-10-05", num: "INV-2026-0002", seq: 2 }),
+           inv("doc-1", { cli: "cli-a", due: "2026-10-10" }),
+           inv("doc-3", { cli: "cli-a", date: "2026-10-06", num: "INV-2026-0003", seq: 3, cur: "USD" }),
+           inv("doc-4", { cli: "cli-b", num: "INV-2026-0004", seq: 4 }),
+           inv("doc-5", { cli: "cli-a", st: "draft", seq: 0, num: "" })],
+    pays: [pay("pay-1", "doc-1", 4000), pay("pay-2", "doc-2", 12400)]
+  });
+  const st = C.statement(d, "cli-a", "2026-10-13");
+  assert.deepEqual(st.rows.map((r) => r.id), ["doc-1", "doc-3"]);
+  assert.deepEqual(st.rows[0], { id: "doc-1", num: "INV-2026-0001", kind: "inv", date: "2026-10-01", due: "2026-10-10",
+    total: 12400, paid: 4000, bal: 8400, cur: "EUR", late: 3 });
+  assert.deepEqual(st.totals, { EUR: 8400, USD: 12400 });
+  assert.deepEqual(C.statement(d, "", "2026-10-13"), { rows: [], totals: {} });
+});
+
+test("wave 3: EU countries from names, codes and VAT prefixes; reverse charge only across EU borders", () => {
+  assert.equal(C.euCountry("Germany"), "DE");
+  assert.equal(C.euCountry("Berlin, Germany"), "DE");
+  assert.equal(C.euCountry("Γερμανία"), "DE");
+  assert.equal(C.euCountry("Österreich"), "AT");
+  assert.equal(C.euCountry("el"), "GR");
+  assert.equal(C.euCountry("USA"), "");
+  assert.equal(C.vatPrefix("EL094014201"), "GR");
+  assert.equal(C.vatPrefix("DE 123456789"), "DE");
+  assert.equal(C.vatPrefix("123456789"), "");
+  // a Greek ΑΦΜ on the seller side means Greece
+  assert.deepEqual(C.reverseCharge({ afm: "094014201" }, { afm: "DE123456789" }), { seller: "GR", client: "DE" });
+  assert.deepEqual(C.reverseCharge({ country: "Ελλάδα" }, { country: "France", afm: "FR12345678901" }), { seller: "GR", client: "FR" });
+  assert.equal(C.reverseCharge({ country: "Greece" }, { country: "France" }), null, "no VAT number: a consumer");
+  assert.equal(C.reverseCharge({ country: "Greece" }, { country: "Greece", afm: "123456789" }), null);
+  assert.equal(C.reverseCharge({ country: "Greece" }, { country: "USA", afm: "12-3456789" }), null);
+});
+
+test("wave 3: EPC payment QR text from the first valid IBAN", () => {
+  assert.equal(C.ibanOf("Eurobank GR16 0110 1250 0000 0001 2300 695\nPiraeus …"), "GR1601101250000000012300695");
+  assert.equal(C.ibanOf("GR16 0110 1250 0000 0001 2300 696"), "", "bad checksum");
+  assert.equal(C.epcPayload("Chris K", "DE89 3704 0044 0532 0130 00", 12345, "INV-2026-0001"),
+    "BCD\n002\n1\nSCT\n\nChris K\nDE89370400440532013000\nEUR123.45\n\n\nINV-2026-0001");
+  assert.equal(C.epcPayload("Chris K", "DE89 3704 0044 0532 0130 00", 5, "x").split("\n")[7], "EUR0.05");
+  assert.equal(C.epcPayload("", "DE89370400440532013000", 100, "x"), "");
+  assert.equal(C.epcPayload("A", "no iban", 100, "x"), "");
+  assert.equal(C.epcPayload("A", "DE89370400440532013000", 0, "x"), "");
+  // it fits a QR code with the app's own encoder
+  const Q = require("../qr/qr-encode.js");
+  assert.ok(Q.encode(C.epcPayload("Ελληνική Επιχείρηση ΙΚΕ", "GR1601101250000000012300695", 99999999999, "INV-2026-0001"), { ecl: "M" }).size > 20);
+});
+
+test("wave 3: business profiles merge as a list, stay out of the data while empty, and pick the seller", () => {
+  const empty = C.normalize({ docs: [], clients: [] });
+  assert.equal("profs" in empty, false);
+  const biz = { id: "biz-1", name: "Shop ΙΚΕ", trade: "Shop", iban: "GR16 0110 1250 0000 0001 2300 695", terms: "30 days", footer: "Shop footer", m: 3 };
+  const a = model({ prof: { name: "Chris", m: 2 }, profs: [biz] });
+  assert.equal(a.profs.length, 1);
+  assert.equal(C.normBiz({ id: "biz-2", name: "", m: 1 }), null, "a profile needs a name");
+  // union with a device that never saw it (an older version drops the key)
+  const merged = C.mergeInvoices(a, { prof: { name: "Chris", m: 2 }, docs: [], clients: [] });
+  assert.equal(merged.profs[0].name, "Shop ΙΚΕ");
+  // newer edit wins, a tomb wins ties
+  const edited = C.mergeInvoices(a, { profs: [Object.assign({}, biz, { name: "Shop ΟΕ", m: 4 })], docs: [], clients: [] });
+  assert.equal(edited.profs[0].name, "Shop ΟΕ");
+  assert.equal(C.mergeInvoices(a, { profs: [{ id: "biz-1", m: 3, del: 1 }], docs: [], clients: [] }).profs[0].del, 1);
+  assert.deepEqual(C.profiles(a).map((p) => p.id), ["", "biz-1"]);
+  assert.equal(C.profileOf(a, "biz-1").name, "Shop ΙΚΕ");
+  assert.equal(C.profileOf(a, "gone").name, "Chris");
+  // a draft prints its profile; an issued document its frozen copy
+  assert.equal(C.sellerOf(a, { st: "draft", pid: "biz-1" }).name, "Shop ΙΚΕ");
+  assert.equal(C.sellerOf(a, { st: "issued", pid: "biz-1", s: { name: "Old" } }).name, "Old");
+  // doc.pid and series.pid ride along as flat fields
+  const d = model({ profs: [biz], docs: [inv("doc-1", { pid: "biz-1" })],
+                    series: [{ id: "ser-b", kind: "inv", prefix: "SH", year: 1, digits: 4, pid: "biz-1", m: 2 }] });
+  assert.equal(d.docs[0].pid, "biz-1");
+  assert.equal(C.seriesForProfile(d, "inv", "biz-1", "ser-inv"), "ser-b");
+  assert.equal(C.seriesForProfile(d, "inv", "", "ser-inv"), "ser-inv");
+  assert.equal(C.seriesForProfile(d, "rcpt", "biz-1", "ser-rcpt"), "ser-rcpt");
+  // a recurring template keeps its profile and that profile's series
+  const dr = C.draftFrom(d, { kind: "inv", cli: "", cur: "EUR", lines: [], gDisc: 0, wht: 0, exempt: "", terms: "", notes: "", pid: "biz-1" },
+    "2026-11-01", "rec-1", 9);
+  assert.equal(dr.pid, "biz-1");
+  assert.equal(dr.ser, "ser-b");
+  // prof.qr = 0 rides along (QR off)
+  assert.equal(model({ prof: { name: "C", qr: 0, m: 1 } }).prof.qr, 0);
+});

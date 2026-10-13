@@ -1,8 +1,235 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.80.00
+- To-Do: bring in your GitHub issues. List settings › `Import from Todoist or GitHub…` with a connected GitHub account: the open issues assigned to you, from every repository, each repository as a list and each issue as a task "#12 Title" with its text and link, its labels and its milestone date. Pull requests stay out. Read again later to bring in only the new ones. orOS only reads GitHub.
+
+## Version 1.79.00
+- Kanban: read a Notion database as a board. `Import from other apps` › a connected Notion account › `Show databases`: each option of the database's Status becomes a column and each entry a card, with its date as due date, its tags as labels and its other properties in the notes. Read it again later to bring in only the new entries. orOS only reads Notion.
+- Notifications: clicking an orOS notification from your system now opens what it points to.
+
+## Version 1.78.00
+- Maps: Discover (the compass button). See what's around: restaurants, cafés, pharmacies, ATMs, fuel and more, each with whether it's open now and when it closes, and an `Open now` filter. Wikipedia articles about places near you, and open street-level photos from Panoramax. Long-press › `What's nearby` for any point.
+
+## Version 1.77.00
+- New app: Email Signature (Business). Make a professional email signature once and use it in Gmail, Outlook, Thunderbird, Apple Mail, your phone or orOS Mail. Fill it in from your business profile in Invoices, a contact or your Atelier brand kit; pick one of six layouts; add a logo, photo, social profiles, a button, a dated banner, a QR code with your contact card and legal text. See it in a light or dark mail app, copy it or save it as .html or .txt, follow the steps for your mail app, or make signatures for a whole team from a CSV table.
+- Mail: `Use in orOS Mail` in Email Signature asks which account gets the signature; nothing changes until you press Use.
+- Studio: the NULL JSFX effect windows have the new 2.0 look, with clearer knobs and text.
+
+## Version 1.76.00
+- Spreadsheet: import from Notion. The databases you share with your Notion integration come in as sheets, one per database, with the property names in row 1 and one row per entry as plain values; import again to bring in new databases. orOS only reads Notion; connect it in Settings › Connected services, then the Notion button at the bottom right.
+
+## Version 1.75.00
+- Maps: favourite groups, like OsmAnd. Put saved places in groups with a name and a colour (the folder button next to a place, or `Group` in its popup); the pins take the group colour. Saved places lists each group, which you can fold, hide from the map or export as GPX. `Import` brings in the waypoints of a GPX, KML or GeoJSON file, for example favourites from OsmAnd.
+
+## Version 1.74.00
+- Notes: import from Notion. The pages you share with your Notion integration come in as a notebook, subpages under their page, with headings, lists, to-dos and code as plain text; import again to bring in new pages. orOS only reads Notion; connect it in Settings › Connected services, then the cloud button under the tree.
+- Notifications: the panel now closes when a notice opens an app or window, such as What's new.
+
+## Version 1.73.00
+- Maps: Plan a track, like OsmAnd. Tap points on the map; each part follows the roads for walking, cycling or driving, or goes in a straight line. See the length, the climb and descent and an elevation profile, then save it to My tracks to follow it later. Long-press › `Plan a track from here`, or My tracks › `Plan a track`.
+
+## Version 1.72.00
+- Bookmarks: import from Raindrop.io. Your collections become folders, with titles, notes, tags and favourites; import again to bring in only what's new. orOS only reads Raindrop; connect it in Settings › Connected services, then the cloud button in Bookmarks.
+- Info › Support: new links to become a monthly supporter on Ko-fi and to see the Supporters page.
+
+## Version 1.71.00
+- Maps: OsmAnd-style tools. A `Topo` map with contour lines for hiking. While you drive, a speed limit sign next to your speed (red when you're over). Long-press › `Measure distance` for distances and areas, and `I parked here` to mark your car, with a reminder that comes as a notification and a walking route back.
+
+## Version 1.70.00
+- Kanban: read a board straight from your Trello account, or a GitHub repository's issues as a board with Open and Closed columns (labels, milestone dates and task lists come along). Read it again later to bring in only what's new. orOS only reads Trello and GitHub; connect them in Settings › Connected services, then Import from other apps.
+
+## Version 1.69.00
+- Maps: Every Door tools. Places missing their name or opening hours get an orange ring. `Add place` has one-tap street furniture (bench, bin, bollard, street lamp, hydrant, tree and more). New `Entrances and flats`: tap a building's outline to add an entrance with its letter and flat numbers, ideal for apartment blocks. New `Buildings` overlay in Quests for floors and kind of building.
+
+## Version 1.68.00
+- To-Do: import from Todoist. Your projects with open tasks become lists, with due dates, descriptions as notes, labels and priority; import again to bring in what's new. orOS only reads Todoist; connect it in Settings › Connected services, then List settings › Import from Todoist.
+
+## Version 1.67.00
+- Maps: overlays in Quests, as in StreetComplete. Colour the streets by street lights, surface or sidewalks, or the buildings by house number, so the gaps stand out, and tap one to fix it. Arrows show which side is left and right for sidewalks. Changes upload with your quest answers.
+
+## Version 1.66.00
+- Atelier: import swatches from Illustrator, Photoshop or InDesign (.ase, .aco) into your Brand kit, and save your brand colours as an .ase file for Adobe apps.
+- Photo Lab: `Adjust` › `Lightroom preset (.xmp)…` adds a Lightroom or Camera Raw preset as editable adjustment layers. No Adobe account needed for either.
+
+## Version 1.65.00
+- Maps: 20 more quests (36 in all): speed limit, street name, steps and handrails, tactile paving, stop names, level crossing barriers, parking fee and kind, bicycle parking, vegetarian and vegan food, ways to pay, Wi-Fi, wheelchair toilets, defibrillators, fire hydrants, postbox collection times and kind of building. New achievements with a level for each group of quests, and team mapping: friends split the quests of an area between them, so nobody answers the same thing twice.
+
+## Version 1.64.00
+- CRM: import from Odoo (19 or Odoo Online). Companies come in with their people and VAT ID, people on their own as customers, opportunities as deals; your own company stays out. orOS only reads Odoo; connect it in Settings › Connected services.
+
+## Version 1.63.00
+- Maps: public transport. Find connections by bus, metro, tram and train (leave now, depart at or arrive by), with the lines in their colours, changes, walking and live delays. Open a trip to see it on the map, share it or save it to My tracks. Departure boards for any stop, stops on the map and live vehicles. Timetables come from Transitous, a free community service built on open data: in Greece, Athens, Thessaloniki and Hellenic Train.
+
+## Version 1.62.00
+- CRM and Budget: import from Invoice Ninja (invoicing.co or your own install). CRM brings in its active clients with their contacts and VAT ID; Budget its payments received, net of refunds. orOS only reads Invoice Ninja; connect it in Settings › Connected services.
+- Newsletter: MailerSend (MailerLite's sending service) is now in the provider list.
+
+## Version 1.61.00
+- Budget: import your Stripe payments. Charges come in as income, Stripe's fees and refunds as expenses; payouts to your bank are left out. orOS only reads Stripe, with a restricted key you connect in Settings › Connected services.
+
+## Version 1.60.00
+- CRM: import customers, deals and follow-ups from HubSpot or Pipedrive. orOS only reads them; a second import brings only what changed, and Undo takes it all back. Connect the account in Settings › Connected services.
+
+## Version 1.59.02
+- Help: the Privacy page now lists every online service added lately (OpenStreetMap editing, WooCommerce, timologisi.online, MailerLite, Mailchimp, Brevo), and the Open files page includes Maps routes and places (.gpx, .kml, .geojson).
+
+## Version 1.59.01
+- Maps: OpenStreetMap sign-in is switched on. Sign in under Mapping to send notes, place changes, quest answers and GPS traces with your own OpenStreetMap account.
+
+## Version 1.59.00
+- Newsletter: link a list to MailerLite, Mailchimp or Brevo. Sync brings their subscribers here, sends yours there, and every unsubscribe travels both ways. Connect the account in Settings › Connected services.
+
+## Version 1.58.00
+- Invoices: send invoices, receipts and credit notes to myDATA (AADE) through your timologisi.online account. Connect it in Settings › Connected services; each sent document shows its ΜΑΡΚ and the official PDF.
+
+## Version 1.57.01
+- Fix: the 1.57.00 update loaded part of orOS twice. This update puts it right.
+
+## Version 1.57.00
+- Connected services: link your WooCommerce shop in Settings › Connected services and see its products, stock and orders in Stock. Your keys stay sealed on your device.
+
+## Version 1.56.00
+- Time › Stage: import a rundown from a CSV file or a Calendar day, export it as CSV, and after the event get a report of planned vs actual times (CSV or print / PDF). Also new: a hard stop that tells you how many minutes to cut, quick-add items (talk, keynote + Q&A, panel, breaks), Stage events in the orOS search, and the next session on the Today page.
+
+## Version 1.55.00
+- Maps: smarter routes and sharing. See other routes and pick one, your arrival time, the lanes to take before a turn, and avoid tolls, motorways or ferries by car. Share a place or a route as a link, open it in another maps app, or keep a route in My tracks.
+
+## Version 1.54.00
+- Time › Stage: other devices. Pair a phone as a remote control, a tablet or TV as the stage screen, or give the moderator the clock and the rundown so they can ask you for more time. Each device joins with a 6-digit code or a QR code, and you allow it on the computer. Paired devices come back by themselves after a reload.
+
+## Version 1.53.00
+- Maps: quests, StreetComplete style. Small questions about the things around you (is this bench backed, is the street lit, when is this shop open…) appear as pins. Answer with one tap and upload your answers to OpenStreetMap.
+
+## Version 1.52.00
+- Time › Stage: a second screen and messages. Open the stage display in its own window (on Chrome and Edge it moves to the other monitor by itself). Send the speaker a message, ready-made or your own, in colour and flashing if needed. Choose clock only or clock with the rundown, mirror the picture, add your logo.
+
+## Version 1.51.00
+- Studio: effects on the tablet. FX on a remote strip opens that track's effects on the tablet or phone, with each effect's own interface and meters, every control, on/off, order, adding and removing.
+
+## Version 1.50.00
+- Maps: a heatmap of everywhere you've been, from all your tracks, with distance per year and month and the "new ground" you covered. You can also show where other people walk and drive (OpenStreetMap GPS traces).
+
+## Version 1.49.00
+- Time: a stage timer for conferences. The new Stage tab runs a rundown of talks and breaks with a big countdown that turns yellow and red, counts overtime, shows how far behind or ahead the day is, and fills the screen for the speaker. Works with the keyboard and presenter clickers.
+
+## Version 1.48.00
+- Maps: edit your tracks (keep or remove a part, split, join, simplify, with Undo) and upload them to OpenStreetMap GPS traces to help mappers.
+
+## Version 1.47.00
+- Maps: record your walks and rides as GPX tracks, keep them in a library with colours and folders, follow a track, and import or export GPX, KML and GeoJSON files.
+
+## Version 1.46.00
+- Studio: remote control. Run the mixer and the transport from a tablet or phone while Studio plays on the PC: pair with a 6-digit code or QR, works on the same Wi-Fi and through a VPN.
+
+## Version 1.45.00
+- Maps: fix shops, cafés and other places on OpenStreetMap: opening hours, phone, website, "checked today", closed places and new ones.
+
+## Version 1.44.00
+- A link straight to an app (for example useoros.online/notes/) now opens orOS with that app inside, instead of the bare page.
+
+## Version 1.43.00
+- Maps: report problems on the map to OpenStreetMap with notes, and comment on or resolve notes near you.
+
+## Version 1.42.00
+- Invoices: client statements as PDF, polite or firm payment reminders, an EU reverse charge helper, a payment QR code on euro PDFs, and more than one business profile.
+
+## Version 1.41.00
+- Montage: stickers and shapes, and light copies for a smoother preview of big videos.
+- Invoices: an invoice with product codes can take its goods out of Stock in one tap (a credit note puts them back).
+
+## Version 1.40.00
+- Montage: play clips backwards, colour looks from .cube LUT files, and GIF export.
+
+## Version 1.39.00
+- Montage: keyframes, so clips can move, zoom, fade and change volume while they play.
+
+## Version 1.38.00
+- Newsletter: send through Brevo, Postmark, SendGrid or Mailgun's HTTP API (up to 10 messages per call), and their bounces, spam complaints and unsubscribes now come back to your lists. Choose Connection: HTTP API in a sending account.
+
+## Version 1.37.00
+- Montage: subtitles (open and save SRT), music that lowers under your voice, freeze frame, sound-only export, new transitions and filters.
+
+## Version 1.36.00
+- Newsletter: a sign-up form for your own website, and a one-click unsubscribe link in every issue (Gmail and other mail apps show their own Unsubscribe button). Find it in a list's Subscribe link.
+
+## Version 1.35.00
+- Newsletter: RSS to e-mail turns a blog or Reader feed into a new issue every day, week or month, as a draft for you to check or sent on its own. You can also import past issues from Buttondown, MailerLite and other services.
+
+## Version 1.34.00
+- Stock: close a period. Old movements go to an archive file in Files and are replaced by an opening balance; quantities, value and lots stay the same.
+
+## Version 1.33.00
+- Stock: lots and expiry dates, an Expiring filter and report, and a reminder in Today a week before.
+
+## Version 1.32.00
+- Studio: effects. More than 70 NULL JSFX effects (EQ, compressors, delays, reverbs, saturation and more) on every track and on the master, many with their own interface, in time with each other and in the export.
+
+## Version 1.31.00
+- Newsletter: orOS now goes on sending an issue with Newsletter closed, and you can schedule an issue for a day and time. New: segments (tags and language), templates, a second language per issue, subscribers from CRM, and a Today line for issues being sent or scheduled.
+
+## Version 1.30.00
+- Stock: several warehouses with transfers, quantities per warehouse, and value per warehouse in Reports.
+
+## Version 1.29.00
+- CRM: import customers from a CSV file (Excel, HubSpot, other programs): a preview shows what is new, customers you already have are skipped, Undo removes the import.
+- Mail: Log in CRM from a message.
+- Atelier: edit a photo in Photo Lab and bring it back into your design.
+
+## Version 1.28.00
+- Send to someone: send a list, note, contact, event, recipe or links as a link anyone can open, with an optional password.
+
+## Version 1.27.00
+- Stock: scan barcodes with the phone camera, and sales that arrive filled in from another app (Invoices).
+- Help: the Privacy page now covers the Library's word look-up and the Newsletter app.
+
+## Version 1.26.00
+- Atelier: AI ideas and texts with your Assistant's AI, and background removal on the device.
+
+## Version 1.25.00
+- CRM: Invoice and Quote buttons on a customer and on a deal open a filled-in draft in Invoices or Quote. A customer's new Documents tab lists their invoices (invoiced, paid, unpaid) and quotes; the Dashboard shows what customers still owe.
+
+## Version 1.24.00
+- Stock: a counter for quick sales with a scanner, barcode labels on A4, and product photos.
+- Help: the Calendar and Install guide pages cover the latest releases.
+
+## Version 1.23.00
+- Photo Lab: rulers, guides, grid and snapping, a Quick selection brush, Colour range and saved selections.
+
+## Version 1.22.00
+- CRM: your own pipeline stages. In Settings › Pipeline stages rename, reorder, add or hide stages and set their default probability.
+
+## Version 1.21.00
+- New app: Newsletter. Write newsletters with blocks or Markdown and send them to your own subscriber lists from your Mail account or a sending provider (Brevo, Amazon SES, Mailgun, Postmark, SendGrid…). Subscribe and unsubscribe work by e-mail, bounces are read from the Inbox, and nothing is tracked.
+
+## Version 1.20.00
+- Library: read aloud, reading stats, send highlights to Notes, a line in Today, FB2 books and CBZ comics, word look-up (Wiktionary) and Ask the Assistant.
+
+## Version 1.19.00
+- Assistant: ask it for totals and overviews, such as your spending per category this month, your hours on each project or what's on this week; orOS works them out on your device and shows you the summary before it is shared. It can also prepare an invoice draft, every answer has a Copy button, Writer's new sparkle button sends the selected text to it to summarize, rephrase or correct, and Chrome's built-in model works with no key and no internet (chat only).
+- Help: the Calendar guide explains the Invoices feed.
+
+## Version 1.18.00
+- Text Tools: pull e-mails, links or phone numbers out of a text, encode URL/Base64/HTML, make slugs, compare two texts line by line, and open .txt/.csv/.tsv files with it.
+- Layout: duplicating a document keeps every frame's size.
+- Invoices: Email opens orOS Mail with the invoice PDF already attached.
+
+## Version 1.17.00
+- Photo Lab: layer masks, adjustment layers (Levels, Curves, Colour balance and more) and layer styles (shadow, glow, stroke, colour overlay).
+
+## Version 1.16.00
+- Atelier: Resize now re-lays your design for each new size and can make copies in several sizes at once; Duplicate keeps every element's height.
+
+## Version 1.15.00
+- Stock: purchase orders (draft, sent, partly received), a Reports tab, and links to To-Do, Mail, Budget, Quote, Spreadsheet and Today.
+
+## Version 1.14.00
+- CRM: follow-up reminders now arrive even when CRM is closed. Open follow-ups show in Today (tick to mark done) and in the Calendar under Customers, with the expected close day of deals. Contacts shows a Customer button on people linked to a customer.
+
 ## Version 1.13.00
 - Invoices: unpaid invoices in Calendar and Today, due reminders, Add to Budget, Make invoice from Quote and Timesheet, clients from CRM.
+- Help: the guide pages on the menu, notifications, installing, privacy and getting started now cover the latest releases.
+- Mail: other apps can open a new message with files attached, e.g. an invoice PDF.
 
 ## Version 1.12.00
 - Sticky Notes: rings can repeat (every day, weekdays, every week), a Ringtone Composer melody can be the ring sound, Send to To-Do and Copy to Notes, and your notes show in the menu search and in Today.

@@ -15,7 +15,7 @@ The event window has:
 - `Reminder`: from 5 minutes up to 5 days before.
 - `Location`, a label and a `Note`.
 
-Tap or click an event to edit it. For a repeating event you're asked first: `This occurrence` or `Entire series`. `Delete event` asks to confirm, and an `Undo` button appears for a few seconds afterwards. `QR code` in the same window opens [QR Generator](app:qr) with a code for the event, which phones can add to their own calendar. `Email` (when [Mail](app:mail) has an account) opens a new message about the event: its title as the subject, the date, time, place and notes as the text, and any email addresses written in the event as recipients.
+Tap or click an event to edit it. For a repeating event you're asked first: `This occurrence` or `Entire series`. `Delete event` asks to confirm, and an `Undo` button appears for a few seconds afterwards. `QR code` in the same window opens [QR Generator](app:qr) with a code for the event, which phones can add to their own calendar. `Email` (when [Mail](app:mail) has an account) opens a new message about the event: its title as the subject, the date, time, place and notes as the text, and any email addresses written in the event as recipients. `Send…` sends the event to someone as a link: they see it in any browser and can add it to their calendar (a single occurrence of a series goes as that one day).
 
 On a computer you can drag a single-day event that doesn't repeat onto another day in the month view to move it.
 
@@ -28,6 +28,10 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Birthdays`, `Anniversaries` and `Custom Feed` from [Contacts](app:contacts).
 - `To-Do`: unfinished tasks on their due date, from [To-Do](app:todo).
 - `Kanban` cards with a due date, `Habits` you completed, `Mood` entries, `Cycle` periods, `Workouts`, `Plants` care, and `Screen Pet` moments.
+- `Garage`: renewals and service due dates from [Garage](app:garage).
+- `Budget`: upcoming recurring entries from [Budget](app:budget).
+- `Pet health`: vaccines, deworming, visits, next due dates and birthdays from [Pet health](app:petcare).
+- `Customers`: open follow-ups and the expected close day of open deals, from [CRM](app:crm).
 - `Travel`: trip days and timed itinerary entries from [Travel](app:travel).
 - `Baby`: milestones, vaccines, doctor visits and monthly age from [Baby](app:baby).
 - `Chores` from [Chore Wheel](app:chores); only yours if you picked who you are there.

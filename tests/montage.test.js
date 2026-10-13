@@ -321,6 +321,214 @@ test("search provider: one hit per project with its text clips, read-only, safe 
   }
 });
 
+test("subtitles: SRT and WebVTT in, markup dropped, SRT out in time order", () => {
+  const cues = C.parseSrt("\uFEFF1\r\n00:00:01,000 --> 00:00:02,500\r\n<i>Hello</i>\r\nworld\r\n\r\n" +
+    "WEBVTT\n\n00:03.2 --> 00:04.000 align:start\n{\\an8}Bye &amp; thanks\n\n" +
+    "3\n00:00:09,000 --> 00:00:08,000\nbackwards\n\n4\n00:00:05,000 --> 00:00:06,000\n<script>x</script>\n");
+  assert.deepEqual(cues, [
+    { start: 1, end: 2.5, text: "Hello\nworld" },
+    { start: 3.2, end: 4, text: "Bye & thanks" },
+    { start: 5, end: 6, text: "x" }
+  ]);
+  assert.deepEqual(C.parseSrt(""), []);
+  assert.deepEqual(C.parseSrt(null), []);
+  let d = C.addSubtitles(base(), "p1", cues, T0 + 10, ["s1", "s2", "s3"]);
+  const s1 = proj(d).items.s1;
+  assert.equal(s1.tr, "tt"); assert.equal(s1.k, "title"); assert.equal(s1.at, 1); assert.equal(s1.d, 1.5);
+  assert.deepEqual(s1.box, C.SUB_BOX); assert.equal(s1.text.ol, "#000000"); assert.equal(s1.text.an, "none");
+  assert.equal(J(C.merge(d, d)), J(d));
+  assert.equal(C.toSrt(proj(d)),
+    "1\n00:00:01,000 --> 00:00:02,500\nHello\nworld\n\n2\n00:00:03,200 --> 00:00:04,000\nBye & thanks\n\n3\n00:00:05,000 --> 00:00:06,000\nx\n");
+  assert.deepEqual(C.parseSrt(C.toSrt(proj(d))), cues);
+  assert.equal(C.toSrt(proj(base())), "");
+  assert.equal(C.exportName("Trip", "srt"), "Trip.srt");
+  assert.equal(C.exportName("Trip", "m4a"), "Trip.m4a");
+  assert.equal(C.exportName("Trip", "exe"), "Trip.mp4");
+});
+
+test("ducking: music drops under the voice with short ramps; off by default and absent from the data", () => {
+  let d = base();
+  assert.equal("dk" in proj(d), false);
+  d = C.addItem(d, "p1", { id: "m1", k: "audio", tr: "a1", src: SND, len: 60, in: 0, out: 30, at: 0 }, T0 + 5);
+  d = C.addItem(d, "p1", { id: "vo", k: "audio", tr: "a2", src: SND, len: 60, in: 0, out: 4, at: 10 }, T0 + 6);
+  const seg = (dd) => C.soundPlan(proj(dd)).find((s) => s.id === "m1");
+  assert.equal(seg(d).duck, undefined);
+  assert.equal(C.gainAt(seg(d), 12), 1);
+  d = C.setProject(d, "p1", { dk: 60 }, T0 + 7);
+  assert.equal(proj(d).dk, 60);
+  const s = seg(d);
+  assert.deepEqual(s.duck, [[10, 14]]);
+  assert.ok(Math.abs(C.gainAt(s, 12) - 0.4) < 1e-9);
+  assert.equal(C.gainAt(s, 5), 1);
+  assert.ok(Math.abs(C.gainAt(s, 10 - C.DUCK_RAMP / 2) - 0.7) < 1e-9);
+  assert.ok(Math.abs(C.gainAt(s, 14 + C.DUCK_RAMP / 2) - 0.7) < 1e-9);
+  assert.equal(C.soundPlan(proj(d)).find((x) => x.id === "vo").duck, undefined);   // the voice itself never ducks
+  // a muted voice does not duck
+  const muted = C.setItem(d, "p1", "vo", { mu: true }, T0 + 8);
+  assert.equal(seg(muted).duck, undefined);
+  // off again: the field leaves the data, so older copies read the same project
+  const off = C.setProject(d, "p1", { dk: 0 }, T0 + 9);
+  assert.equal("dk" in proj(off), false);
+  assert.equal(J(C.merge(off, off)), J(off));
+  // undo brings the setting back and forth
+  const back = C.restoreProject(off, "p1", proj(d), T0 + 10);
+  assert.equal(proj(back).dk, 60);
+  assert.equal("dk" in proj(C.restoreProject(d, "p1", proj(off), T0 + 11)), false);
+  assert.equal(proj(C.merge({ projects: { p1: Object.assign({}, proj(d), { dk: 500 }) } }, null)).dk, 90);
+});
+
+test("freeze frame: the still sits between the two halves of the clip", () => {
+  const d0 = base(), STILL = H("e") + ".png";
+  const d = C.freezeAt(d0, "p1", "v1", 4, STILL, 2, T0 + 10, { tail: "v1b", still: "fz" });
+  const seq = C.mainSeq(proj(d)).map((s) => s.it.id);
+  assert.deepEqual(seq, ["v1", "fz", "v1b", "i1", "v2"]);
+  assert.equal(proj(d).items.fz.k, "image"); assert.equal(proj(d).items.fz.d, 2);
+  assert.equal(proj(d).items.v1.out, 6); assert.equal(proj(d).items.v1b.in, 6);
+  assert.equal(C.duration(proj(d)), C.duration(proj(d0)) + 2);
+  // at the very start: the still goes before the clip, nothing is split
+  const d2 = C.freezeAt(d0, "p1", "i1", 10, STILL, 2, T0 + 10, { tail: "x", still: "fz" });
+  assert.equal(J(d2), J(d0));                                   // pictures do not freeze
+  const d3 = C.freezeAt(d0, "p1", "v2", 14, STILL, 2, T0 + 10, { tail: "x", still: "fz" });
+  assert.deepEqual(C.mainSeq(proj(d3)).map((s) => s.it.id), ["v1", "i1", "fz", "v2"]);
+  assert.equal(J(C.freezeAt(d0, "p1", "v1", 4, "bad.png", 2, T0, { tail: "a", still: "b" })), J(d0));
+});
+
+test("new transitions: push, zoom and circle shape the incoming clip", () => {
+  let d = C.setItem(base(), "p1", "i1", { tx: { k: "zoom", d: 1 } }, T0 + 10);
+  const at = (dd, t, id) => C.framePlan(proj(dd), t).find((L) => L.id === id);
+  const pl = C.placeOf(proj(d), "i1");
+  const z = at(d, pl.start + 0.5, "i1");
+  assert.ok(z.sc > 1 && z.sc < 1.3); assert.ok(z.alpha > 0 && z.alpha < 1);
+  d = C.setItem(d, "p1", "i1", { tx: { k: "circle", d: 1 } }, T0 + 11);
+  assert.ok(Math.abs(at(d, pl.start + 0.25, "i1").iris - 0.25) < 1e-9);
+  assert.equal(at(d, pl.start + 2, "i1").iris, -1);
+  d = C.setItem(d, "p1", "i1", { tx: { k: "push", d: 1 } }, T0 + 12);
+  assert.ok(Math.abs(at(d, pl.start + 0.25, "i1").dy - 0.75) < 1e-9);
+  assert.ok(Math.abs(at(d, pl.start + 0.25, "v1").dy + 0.25) < 1e-9);
+  assert.equal(proj(C.setItem(d, "p1", "i1", { flt: "golden" }, T0 + 13)).items.i1.flt, "golden");
+});
+
+test("keyframes: normalized, even pace between keys, applied to picture and sound, kept across a split", () => {
+  let d = base();
+  const it0 = proj(d).items.v1;
+  // garbage is dropped, values clamp, one key per time, sorted; absent when empty
+  d = C.setItem(d, "p1", "v1", { kf: [{ t: 4, x: 9, s: 0.5, v: 300 }, { t: 0 }, { t: "x" }, null, { t: 4, o: 50 }] }, T0 + 10);
+  let v1 = proj(d).items.v1;
+  assert.deepEqual(v1.kf, [{ t: 0, x: 0, y: 0, s: 1, o: 100, v: 100 }, { t: 4, x: 0, y: 0, s: 1, o: 50, v: 100 }]);
+  assert.equal("kf" in it0, false);
+  assert.equal("kf" in proj(C.setItem(d, "p1", "v1", { kf: [] }, T0 + 11)).items.v1, false);
+  assert.equal(J(C.merge(d, d)), J(d));
+  // an even pace between keys, held outside them
+  assert.equal(C.kfAt(v1, 2).o, 75);
+  assert.equal(C.kfAt(v1, 1).o, 87.5);
+  assert.equal(C.kfAt(v1, 9).o, 50);
+  // set a key: scale + move the picture; sound keys on a sound clip only
+  d = C.setItem(d, "p1", "v1", { kf: C.kfSet(v1, 4, { s: 2, x: 0.1 }) }, T0 + 12);
+  v1 = proj(d).items.v1;
+  assert.deepEqual(v1.kf[1], { t: 4, x: 0.1, y: 0, s: 2, o: 50, v: 100 });
+  const L = C.framePlan(proj(d), 4.5).find((x) => x.id === "v1");
+  assert.deepEqual(L.box, { x: -0.4, y: -0.5, w: 2, h: 2 });
+  assert.equal(L.alpha, 0.5);
+  assert.deepEqual(C.kfSet(v1, 4, null).map((k) => k.t), [0]);
+  // volume keys reach the sound plan and gainAt
+  d = C.setItem(d, "p1", "v1", { kf: C.kfSet(v1, 0, { v: 0 }) }, T0 + 13);
+  const seg = C.soundPlan(proj(d)).find((x) => x.id === "v1");
+  assert.deepEqual(seg.kv, [[0, 0], [4, 1]]);
+  assert.equal(C.gainAt(seg, 0), 0);
+  assert.equal(C.gainAt(seg, 2), 0.5);
+  assert.equal(C.gainAt(seg, 6), 1);
+  const music = C.addItem(d, "p1", { id: "m1", k: "audio", tr: "a1", src: SND, len: 9, in: 0, out: 9, at: 0, kf: [{ t: 1, x: 1, v: 50 }] }, T0 + 14);
+  assert.deepEqual(proj(music).items.m1.kf, [{ t: 1, v: 50 }]);
+  // split: both halves move exactly as before
+  const before = [1, 3, 5, 7].map((t) => C.framePlan(proj(d), t).find((x) => x.id === "v1"));
+  const ds = C.split(d, "p1", "v1", 3, T0 + 15, "v1b");
+  [1, 3, 5, 7].forEach((t, i) => {
+    const L2 = C.framePlan(proj(ds), t).find((x) => x.id === (t < 3 ? "v1" : "v1b"));
+    assert.ok(Math.abs(L2.alpha - before[i].alpha) < 1e-9, "alpha at " + t);
+    assert.deepEqual(L2.box, before[i].box);
+  });
+  assert.equal(proj(ds).items.v1b.kf[0].t, 0);
+  // overlay box moves around its own place
+  let o = C.addItem(base(), "p1", { id: "ov1", k: "image", tr: "ov", src: PIC, d: 4, at: 0, kf: [{ t: 0, y: 0.1 }] }, T0 + 16);
+  const Lo = C.framePlan(proj(o), 1).find((x) => x.id === "ov1");
+  assert.ok(Math.abs(Lo.box.y - 0.16) < 1e-9 && Lo.box.x === 0.6);
+});
+
+test("reverse: frames run backwards from the out point, without sound; split keeps the order", () => {
+  let d = C.setItem(base(), "p1", "v1", { rv: true }, T0 + 10);
+  const at = (dd, t, id) => C.framePlan(proj(dd), t).find((L) => L.id === id);
+  assert.equal(proj(d).items.v1.rv, true);
+  assert.ok(Math.abs(at(d, 0, "v1").st - 12) < 0.01);
+  assert.ok(Math.abs(at(d, 4, "v1").st - 8) < 0.01);
+  assert.equal(C.soundPlan(proj(d)).some((s) => s.id === "v1"), false);
+  const ds = C.split(d, "p1", "v1", 4, T0 + 11, "v1b");
+  assert.equal(proj(ds).items.v1.in, 8); assert.equal(proj(ds).items.v1.out, 12);
+  assert.equal(proj(ds).items.v1b.in, 2); assert.equal(proj(ds).items.v1b.out, 8);
+  [1, 3, 5, 9].forEach((t) => assert.ok(Math.abs(at(ds, t, t < 4 ? "v1" : "v1b").st - at(d, t, "v1").st) < 1e-6, "st at " + t));
+  assert.equal("rv" in proj(C.setItem(d, "p1", "v1", { rv: false }, T0 + 12)).items.v1, false);
+  assert.equal("rv" in proj(C.setItem(base(), "p1", "i1", { rv: true }, T0 + 12)).items.i1, false);   // pictures do not reverse
+});
+
+test("colour looks: .cube parsing, the table picture, media list and relink", () => {
+  const cube = "# test\nTITLE \"x\"\nLUT_3D_SIZE 2\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1\n" +
+    "0 0 0\n1 0 0\n0 1 0\n1 1 0\n0 0 1\n1 0 1\n0 1 1\n1 1 1\n";
+  const lut = C.parseCube(cube);
+  assert.equal(lut.n, 2); assert.equal(lut.data.length, 24);
+  const px = C.lutPixels(lut);
+  assert.equal(px.w, 4); assert.equal(px.h, 2);
+  // blue slice 1, red 1, green 0 → x = 1·2 + 1 = 3, y = 0: white minus green = magenta
+  assert.deepEqual([...px.data.slice(12, 16)], [255, 0, 255, 255]);
+  assert.equal(C.parseCube("LUT_1D_SIZE 4\n0 0 0"), null);
+  assert.equal(C.parseCube("LUT_3D_SIZE 2\n0 0 0\n"), null);
+  assert.equal(C.parseCube("LUT_3D_SIZE 65\n"), null);
+  assert.equal(C.parseCube("<script>"), null);
+  const LUT = H("f") + ".png", LUT2 = H("9") + ".png";
+  let d = C.setItem(base(), "p1", "v1", { lut: LUT }, T0 + 10);
+  assert.equal(proj(d).items.v1.lut, LUT);
+  assert.equal(C.framePlan(proj(d), 1).find((L) => L.id === "v1").lut, LUT);
+  assert.ok(C.mediaOf(proj(d)).includes(LUT));
+  assert.equal(proj(C.setItem(d, "p1", "v1", { lut: "x.exe" }, T0 + 11)).items.v1.lut, undefined);
+  d = C.replaceSrc(d, "p1", LUT, LUT2, 0, T0 + 12);
+  assert.equal(proj(d).items.v1.lut, LUT2);
+});
+
+test("GIF writer: header, a palette per frame, loop, trailer", async () => {
+  const vm = require("vm"), fs = require("fs");
+  const ctx = { performance, setTimeout, Blob, Map, Uint8Array, Uint16Array, Uint32Array, Int16Array, Float32Array, Math };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "montage/export.js"), "utf8"), ctx);
+  const g = new ctx.MontageExport.GifWriter(8, 4, 8), px = new Uint8ClampedArray(8 * 4 * 4);
+  for (let i = 0; i < 32; i++) { px[i * 4] = i * 8; px[i * 4 + 3] = 255; }
+  g.frame(px); g.frame(px);
+  const b = new Uint8Array(await g.finish().arrayBuffer());
+  assert.equal(Buffer.from(b.slice(0, 6)).toString(), "GIF89a");
+  assert.equal(b[6] | (b[7] << 8), 8); assert.equal(b[8] | (b[9] << 8), 4);
+  assert.ok(Buffer.from(b).includes(Buffer.from("NETSCAPE2.0")));
+  assert.equal(b[b.length - 1], 0x3b);
+  assert.equal(C.exportName("Loop", "gif"), "Loop.gif");
+});
+
+test("shapes: on the overlay row only, never invisible, drawn as a layer with keyframes", () => {
+  let d = C.addItem(base(), "p1", { id: "s1", k: "shape", tr: "ov", at: 1, d: 3, sh: { k: "star", col: "#ff0000", ol: "#000000", ow: 50 } }, T0 + 10);
+  const s1 = proj(d).items.s1;
+  assert.deepEqual(s1.sh, { k: "star", col: "#ff0000", ol: "#000000", ow: 20 });
+  assert.equal(s1.op, 100); assert.ok(s1.box);
+  assert.equal("fit" in s1, false); assert.equal("flt" in s1, false);
+  // no fill and no outline would be invisible: an outline is added
+  d = C.setItem(d, "p1", "s1", { sh: { k: "nope", col: "", ol: "", ow: 0 } }, T0 + 11);
+  assert.deepEqual(proj(d).items.s1.sh, { k: "rect", col: "", ol: "#ffffff", ow: 4 });
+  // not on the main or text rows
+  assert.equal(proj(C.addItem(base(), "p1", { id: "s2", k: "shape", tr: "main", d: 3 }, T0)).items.s2, undefined);
+  assert.equal(proj(C.setItem(d, "p1", "s1", { tr: "main" }, T0 + 12)).items.s1.tr, "ov");
+  const L = C.framePlan(proj(d), 2).find((x) => x.id === "s1");
+  assert.equal(L.k, "shape"); assert.equal(L.sh.k, "rect");
+  d = C.setItem(d, "p1", "s1", { kf: [{ t: 0, o: 0 }, { t: 2, o: 100 }] }, T0 + 13);
+  assert.equal(C.framePlan(proj(d), 2).find((x) => x.id === "s1").alpha, 0.5);
+  assert.equal(J(C.merge(d, d)), J(d));
+  assert.ok(C.SHAPES.includes("heart"));
+});
+
 test("app strings: English and Greek have the same keys; help pages share their outline", () => {
   const fs = require("fs");
   const src = fs.readFileSync(path.join(__dirname, "..", "montage/montage.js"), "utf8");

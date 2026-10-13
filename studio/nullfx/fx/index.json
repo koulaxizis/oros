@@ -1,0 +1,1055 @@
+{
+ "version": "2.0",
+ "effects": [
+  {
+   "id": "brighter",
+   "name": "Brighter",
+   "category": "One Slider",
+   "tags": "bright treble highs presence air brilliance gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 19360
+  },
+  {
+   "id": "chorus_one",
+   "name": "Chorus One",
+   "category": "One Slider",
+   "tags": "chorus thickening detune stereo lfo width gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 21024
+  },
+  {
+   "id": "crunch",
+   "name": "Crunch",
+   "category": "One Slider",
+   "tags": "distortion grit crunch fuzz aggressive gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 18651
+  },
+  {
+   "id": "doubler",
+   "name": "Doubler",
+   "category": "One Slider",
+   "tags": "doubler vocal doubling double-tracking adt stereo width gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 19670
+  },
+  {
+   "id": "driver",
+   "name": "Driver",
+   "category": "One Slider",
+   "tags": "saturation drive warmth tube tape overdrive gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 18807
+  },
+  {
+   "id": "exciter",
+   "name": "Exciter",
+   "category": "One Slider",
+   "tags": "exciter enhancer harmonics brightness presence air saturation gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 20024
+  },
+  {
+   "id": "formant_shift",
+   "name": "Formant Shift",
+   "category": "One Slider",
+   "tags": "formant vocal morph gender shift voice vowel gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 23381
+  },
+  {
+   "id": "grit",
+   "name": "Grit",
+   "category": "One Slider",
+   "tags": "bitcrush samplerate lofi degradation digital gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 18408
+  },
+  {
+   "id": "louder",
+   "name": "Louder",
+   "category": "One Slider",
+   "tags": "loudness gain volume boost makeup utility gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 20966
+  },
+  {
+   "id": "mono_maker",
+   "name": "Mono Maker",
+   "category": "One Slider",
+   "tags": "mono bass low frequency summing stereo width gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 20329
+  },
+  {
+   "id": "phatter",
+   "name": "Phatter",
+   "category": "One Slider",
+   "tags": "bass low end enhancement sub weight boost gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 19254
+  },
+  {
+   "id": "pressure",
+   "name": "Pressure",
+   "category": "One Slider",
+   "tags": "compressor dynamics leveling glue squash gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 20856
+  },
+  {
+   "id": "pumper",
+   "name": "Pumper",
+   "category": "One Slider",
+   "tags": "sidechain ducking pumping rhythm groove gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 18864
+  },
+  {
+   "id": "riser",
+   "name": "Riser",
+   "category": "One Slider",
+   "tags": "riser build-up tension sweep transition edm pre-drop noise gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 23926
+  },
+  {
+   "id": "snappy",
+   "name": "Snappy",
+   "category": "One Slider",
+   "tags": "transient attack punch drums percussive snappy gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 20497
+  },
+  {
+   "id": "spread",
+   "name": "Spread",
+   "category": "One Slider",
+   "tags": "stereo width spread decorrelation widener mono-compatible gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 19535
+  },
+  {
+   "id": "stretch",
+   "name": "Stretch",
+   "category": "One Slider",
+   "tags": "stretch pitch shift granular slow-motion warp texture gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 21107
+  },
+  {
+   "id": "sweeper",
+   "name": "Sweeper",
+   "category": "One Slider",
+   "tags": "filter sweep lowpass resonance creative gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 20393
+  },
+  {
+   "id": "tilt",
+   "name": "Tilt",
+   "category": "One Slider",
+   "tags": "eq tilt tone bass treble balance tonal gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 19304
+  },
+  {
+   "id": "wetter",
+   "name": "Wetter",
+   "category": "One Slider",
+   "tags": "reverb space ambience hall room wet gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 27704
+  },
+  {
+   "id": "auto_pan",
+   "name": "Auto Pan",
+   "category": "Essentials",
+   "tags": "autopan pan modulation lfo movement stereo width tempo sync gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 25939
+  },
+  {
+   "id": "auto_leveler",
+   "name": "Auto-Leveler",
+   "category": "Essentials",
+   "tags": "auto leveler gain riding loudness level agc volume dialogue podcast gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 24236
+  },
+  {
+   "id": "breath_control",
+   "name": "Breath Control",
+   "category": "Essentials",
+   "tags": "breath vocal dynamics gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 24430
+  },
+  {
+   "id": "cabinet_simulator",
+   "name": "Cabinet Simulator",
+   "category": "Essentials",
+   "tags": "cabinet cab speaker guitar bass amp simulation di re-amp gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 55781
+  },
+  {
+   "id": "channel_utility",
+   "name": "Channel Utility",
+   "category": "Essentials",
+   "tags": "gain phase polarity dc block solo mute balance mono utility trim pad stereo channel gui",
+   "gfx": [
+    480,
+    408
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 30357
+  },
+  {
+   "id": "chorus",
+   "name": "Chorus",
+   "category": "Essentials",
+   "tags": "chorus modulation thickening detune lfo stereo width gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 23006
+  },
+  {
+   "id": "click_repair",
+   "name": "Click Repair",
+   "category": "Essentials",
+   "tags": "click repair audio restoration pop crackle vinyl denoise gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 2,
+   "bytes": 24621
+  },
+  {
+   "id": "deesser",
+   "name": "DeEsser",
+   "category": "Essentials",
+   "tags": "deess sibilance sibilants hiss vocal harshness frequency gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 2,
+   "bytes": 23981
+  },
+  {
+   "id": "delay",
+   "name": "Delay",
+   "category": "Essentials",
+   "tags": "delay echo slapback feedback pre-delay timing sync tempo gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 24625
+  },
+  {
+   "id": "dynamic_eq",
+   "name": "Dynamic EQ",
+   "category": "Essentials",
+   "tags": "dynamic eq equalizer parametric compressor expander essentials gui",
+   "gfx": [
+    480,
+    428
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 19,
+   "bytes": 38602
+  },
+  {
+   "id": "dynamics",
+   "name": "Dynamics",
+   "category": "Essentials",
+   "tags": "dynamics compressor expander gain reduction ratio threshold knee gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 27789
+  },
+  {
+   "id": "envelope_follower",
+   "name": "Envelope Follower",
+   "category": "Essentials",
+   "tags": "envelope follower auto wah filter dynamic modulation funk touch gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 31200
+  },
+  {
+   "id": "filter",
+   "name": "Filter",
+   "category": "Essentials",
+   "tags": "filter lowpass resonance q cutoff svf tpt gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 26059
+  },
+  {
+   "id": "flanger",
+   "name": "Flanger",
+   "category": "Essentials",
+   "tags": "flanger jet sweep modulation feedback comb filter gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 23429
+  },
+  {
+   "id": "gate",
+   "name": "Gate",
+   "category": "Essentials",
+   "tags": "gate noise vocal floor reduce silence threshold mute sidechain gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 26361
+  },
+  {
+   "id": "limiter",
+   "name": "Limiter",
+   "category": "Essentials",
+   "tags": "limiter ceiling clipper brickwall peak protection mastering gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 29603
+  },
+  {
+   "id": "maximizer",
+   "name": "Maximizer",
+   "category": "Essentials",
+   "tags": "limiter maximizing loudness ceiling mastering peak protection gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 29929
+  },
+  {
+   "id": "mid_side_matrix",
+   "name": "Mid/Side Matrix",
+   "category": "Essentials",
+   "tags": "mid side stereo matrix encode decode m/s processing gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 24481
+  },
+  {
+   "id": "multiband_compressor",
+   "name": "Multiband Comp",
+   "category": "Essentials",
+   "tags": "multiband compressor four-band crossover dynamics mastering per-band gui",
+   "gfx": [
+    480,
+    408
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 23,
+   "bytes": 41473
+  },
+  {
+   "id": "noise_generator",
+   "name": "Noise Generator",
+   "category": "Essentials",
+   "tags": "noise generator pink white brown test tone calibration stereo gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 25498
+  },
+  {
+   "id": "parametric_eq",
+   "name": "Parametric EQ",
+   "category": "Essentials",
+   "tags": "equalizer parametric eq 5-band shelving filter mixing mastering gui",
+   "gfx": [
+    480,
+    342
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 25,
+   "bytes": 55820
+  },
+  {
+   "id": "phaser",
+   "name": "Phaser",
+   "category": "Essentials",
+   "tags": "phaser modulation sweep notch moving filter allpass gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 24936
+  },
+  {
+   "id": "pitch_shifter",
+   "name": "Pitch Shifter",
+   "category": "Essentials",
+   "tags": "pitch shift detune harmonizer transposition semitone octave gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 24649
+  },
+  {
+   "id": "reverb",
+   "name": "Reverb",
+   "category": "Essentials",
+   "tags": "reverb room space ambience hall plate decay gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 34143
+  },
+  {
+   "id": "ring_mod",
+   "name": "Ring Mod",
+   "category": "Essentials",
+   "tags": "ringmod ring modulator amplitude modulation metallic carrier gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 21838
+  },
+  {
+   "id": "saturation",
+   "name": "Saturation",
+   "category": "Essentials",
+   "tags": "saturation distortion tape tube overdrive fuzz bitcrush waveshaper drive gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 27952
+  },
+  {
+   "id": "sidechain_ducker",
+   "name": "Sidechain Ducker",
+   "category": "Essentials",
+   "tags": "sidechain ducking ducker pump kick bass voice-over duck compressor gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 27444
+  },
+  {
+   "id": "stereo_width",
+   "name": "Stereo Width",
+   "category": "Essentials",
+   "tags": "stereo width mid side widening narrowing spread image crossover gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 23807
+  },
+  {
+   "id": "transient_shaper",
+   "name": "Transient Shaper",
+   "category": "Essentials",
+   "tags": "transient attack sustain punch envelope dynamics shaping gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 25011
+  },
+  {
+   "id": "tremolo",
+   "name": "Tremolo",
+   "category": "Essentials",
+   "tags": "tremolo amplitude modulation lfo rhythmic pulsing gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 21811
+  },
+  {
+   "id": "vibrato",
+   "name": "Vibrato",
+   "category": "Essentials",
+   "tags": "vibrato pitch modulation detune lfo warble gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 23332
+  },
+  {
+   "id": "comb_filter",
+   "name": "Comb Filter",
+   "category": "Advanced",
+   "tags": "filter comb delay feedback metallic frequency resonant gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 26301
+  },
+  {
+   "id": "convolution",
+   "name": "Convolution",
+   "category": "Advanced",
+   "tags": "convolution reverb impulse response ir room hall plate cabinet gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 40743
+  },
+  {
+   "id": "formant_filter",
+   "name": "Formant Filter",
+   "category": "Advanced",
+   "tags": "filter formant vowel voice speech synthesis a e i o u gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 29445
+  },
+  {
+   "id": "frequency_shifter",
+   "name": "Frequency Shifter",
+   "category": "Advanced",
+   "tags": "frequency shifter bode hilbert inharmonic barberpole metallic sci-fi gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 26635
+  },
+  {
+   "id": "glitch_fx",
+   "name": "Glitch FX",
+   "category": "Advanced",
+   "tags": "glitch stutter pitch tape-stop reverse granular freeze random creative gui",
+   "gfx": [
+    480,
+    408
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 34480
+  },
+  {
+   "id": "granular_delay",
+   "name": "Granular Delay",
+   "category": "Advanced",
+   "tags": "granular delay grains cloud texture pitch spray ambient glitch gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 28010
+  },
+  {
+   "id": "harmonizer",
+   "name": "Harmonizer",
+   "category": "Advanced",
+   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 24392
+  },
+  {
+   "id": "kick_shaper",
+   "name": "Kick Shaper",
+   "category": "Advanced",
+   "tags": "kick drum transient shaping punch body thump click decay gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 29840
+  },
+  {
+   "id": "ladder_filter",
+   "name": "Ladder Filter",
+   "category": "Advanced",
+   "tags": "filter ladder moog 24db lowpass highpass resonance drive analog gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 28926
+  },
+  {
+   "id": "loudness_meter",
+   "name": "Loudness Meter",
+   "category": "Advanced",
+   "tags": "loudness meter lufs lra true peak ebu r128 itu bs1770 metering analyzer mastering streaming gui",
+   "gfx": [
+    600,
+    414
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 36462
+  },
+  {
+   "id": "ott",
+   "name": "OTT",
+   "category": "Advanced",
+   "tags": "ott multiband upward downward compression edm loud aggressive gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 31596
+  },
+  {
+   "id": "reverser",
+   "name": "Reverser",
+   "category": "Advanced",
+   "tags": "reverse buffer playback realtime backwards filter gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 28949
+  },
+  {
+   "id": "robotizer",
+   "name": "Robotizer",
+   "category": "Advanced",
+   "tags": "robot robotizer voice monotone sci-fi dalek metallic fft gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 26948
+  },
+  {
+   "id": "rotary_speaker",
+   "name": "Rotary Speaker",
+   "category": "Advanced",
+   "tags": "rotary leslie organ speaker doppler tremolo chorale horn drum gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 28589
+  },
+  {
+   "id": "shimmer_reverb",
+   "name": "Shimmer Reverb",
+   "category": "Advanced",
+   "tags": "shimmer reverb octave pitch ambient pad ethereal cinematic gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 28921
+  },
+  {
+   "id": "spectral_freeze",
+   "name": "Spectral Freeze",
+   "category": "Advanced",
+   "tags": "spectral freeze fft sustain drone infinite hold pad ambient gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 32032
+  },
+  {
+   "id": "spectrum_analyzer",
+   "name": "Spectrum Analyzer",
+   "category": "Advanced",
+   "tags": "spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering gui",
+   "gfx": [
+    640,
+    540
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 30800
+  },
+  {
+   "id": "spring_reverb",
+   "name": "Spring Reverb",
+   "category": "Advanced",
+   "tags": "spring reverb guitar amp vintage surf drip boing dub gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 6,
+   "bytes": 24539
+  },
+  {
+   "id": "sub_bloom",
+   "name": "Sub Bloom",
+   "category": "Advanced",
+   "tags": "bass sub harmonic enhancement low frequency gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 41305
+  },
+  {
+   "id": "tape_stop",
+   "name": "Tape Stop",
+   "category": "Advanced",
+   "tags": "tape stop start motor slowdown pitch ramp dj gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 26435
+  },
+  {
+   "id": "trance_gate",
+   "name": "Trance Gate",
+   "category": "Advanced",
+   "tags": "trance gate 16-step sequencer rhythmic pattern staccato tempo sync gui",
+   "gfx": [
+    480,
+    408
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 22,
+   "bytes": 33426
+  },
+  {
+   "id": "vinyl_age",
+   "name": "Vinyl Age",
+   "category": "Advanced",
+   "tags": "vinyl lo-fi wow flutter crackle bitcrush degradation gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 26538
+  },
+  {
+   "id": "vocoder",
+   "name": "Vocoder",
+   "category": "Advanced",
+   "tags": "vocoder talkbox robot voice synth carrier modulator filterbank gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 31045
+  },
+  {
+   "id": "warped_delay",
+   "name": "Warped Delay",
+   "category": "Advanced",
+   "tags": "delay modulated feedback distortion filter warping gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 28221
+  }
+ ]
+}

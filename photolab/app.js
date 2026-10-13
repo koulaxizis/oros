@@ -17,7 +17,10 @@
 // Deep link: __orosOpenAt("photolab", { id }) opens a project;
 // { openFile: { token } } opens a device file handed over by the
 // shell (BR-FILE-OPEN); { openFile: "/internal/…" } opens a picture
-// already on the orOS disk (e.g. a frame grabbed in Montage).
+// already on the orOS disk (e.g. a frame grabbed in Montage);
+// { openFile: "/internal/…", back: { app, key } } also remembers who
+// asked (Atelier "Edit picture"): "Done" sends the result back as
+// __orosOpenAt(app, { editedPicture: { key, path, w, h } }).
 // ============================================================
 (function () {
   "use strict";
@@ -25,7 +28,8 @@
   var NS = window.PhotoLab;
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
-    R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora,
+    R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora, XMP: NS.xmp,
+    G: NS.guides,
     FX: window.orosDK && window.orosDK.fx
   };
   var C = PL.C, T = PL.T, H = PL.H;
@@ -79,7 +83,7 @@
   PL.phone = phone;
   PL.limits = C.limitsFor(phone);
   var st = PL.st = {
-    doc: null, surfaces: {}, active: null, sel: null,
+    doc: null, surfaces: {}, active: null, sel: null, maskEdit: false,
     hist: H.create(phone ? H.PHONE_BUDGET : H.DESKTOP_BUDGET),
     fg: "#000000", bg: "#ffffff", tool: "brush",
     dirty: false, fresh: false, saving: false, known: {}, missing: 0
@@ -94,7 +98,21 @@
     return i >= 0 ? d.layers[i] : (d.layers[d.layers.length - 1] || null);
   };
   PL.surface = function (id) { return st.surfaces[id] || (st.surfaces[id] = T.create()); };
-  PL.selectLayer = function (id) { st.active = id; PL.emit("layers"); };
+  PL.selectLayer = function (id, mask) {
+    st.active = id;
+    var L = PL.layer();
+    st.maskEdit = !!(mask && L && L.mk);
+    PL.emit("layers");
+  };
+  // What pixel tools paint on: the active layer, or (while its mask is
+  // being edited) a raster stand-in for the mask surface, in the same
+  // grid as the layer.
+  PL.paintLayer = function () {
+    var L = PL.layer();
+    if (!L || !st.maskEdit || !L.mk) return L;
+    return { id: L.mk.id, k: "raster", mask: 1, bg: L.mk.bg, owner: L.id, name: L.name, vis: L.vis, lock: L.lock,
+             x: L.x, y: L.y, op: 100, bl: "normal", t: L.mk.t };
+  };
 
   // ---------- Prefs (device-local) ----------
   function dflt() {
@@ -108,8 +126,10 @@
       smudge: { size: 30, hard: 50, opacity: 100, flow: 100, strength: 50 },
       fill: { tol: 32, contiguous: true, opacity: 100, all: false },
       wand: { tol: 32, contiguous: true, all: false },
+      quick: { size: 20, tol: 40, all: false },
       gradient: { type: "linear", opacity: 100, toClear: false },
       shape: { id: "rect", noFill: false, stroke: false, sw: 8 },
+      rulers: false, guides: true, grid: false, gridSize: 50, snap: true,
       selMode: "replace", feather: 0, marqueeEllipse: false, lassoPoly: false, cropRatio: "free",
       exportFmt: "png", exportQ: 90, recent: []
     };
@@ -213,12 +233,15 @@
     // Tile names describe the surfaces, which an undo of a layer-list
     // change does not touch: keep the current names (a stale copy
     // would point the saved doc at old pixels).
-    if (st.doc) rec.layers.forEach(function (L) {
-      var i = C.findLayer(st.doc, L.id);
-      if (L.k === "raster" && i >= 0 && st.doc.layers[i].k === "raster") L.t = st.doc.layers[i].t;
-    });
+    if (st.doc) {
+      var names = {};
+      C.tileOwners(st.doc).forEach(function (o) { names[o.id] = o.rec.t; });
+      C.tileOwners(rec).forEach(function (o) { if (names[o.id]) o.rec.t = names[o.id]; });
+    }
     st.doc = rec;
     if (C.findLayer(rec, st.active) < 0) st.active = rec.layers.length ? rec.layers[rec.layers.length - 1].id : null;
+    var A = PL.layer();
+    if (st.maskEdit && !(A && A.mk)) st.maskEdit = false;
     if (st.sel && (st.sel.w !== rec.w || st.sel.h !== rec.h)) { st.sel = null; PL.view.selChanged(); }
     PL.view.invalidate();
     PL.emit("layers");
@@ -235,7 +258,7 @@
     var d = st.doc;
     var before = JSON.stringify(d), selBefore = st.sel;
     function pick() {
-      if (ids === "all") return st.doc.layers.filter(function (L) { return L.k === "raster"; }).map(function (L) { return L.id; });
+      if (ids === "all") return C.tileOwners(st.doc).map(function (o) { return o.id; });
       return ids || [];
     }
     var idsBefore = pick(), snapB = {};
@@ -250,8 +273,8 @@
       Object.keys(snap).forEach(function (id) {
         var s = T.clone(snap[id]);
         st.surfaces[id] = s;
-        var i = C.findLayer(rec, id);
-        if (i >= 0) markAllDirty(rec.layers[i], s);
+        var o = C.ownerOf(rec, id);
+        if (o) markAllDirty(o, s);
         PL.view.dropLayer(id);
       });
       all.forEach(function (id) { if (!(id in snap)) { delete st.surfaces[id]; PL.view.dropLayer(id); } });
@@ -276,8 +299,8 @@
       }
     });
     idsAfter.forEach(function (id) {
-      var i = C.findLayer(st.doc, id);
-      if (i >= 0 && st.surfaces[id]) markAllDirty(st.doc.layers[i], st.surfaces[id]);
+      var o = C.ownerOf(st.doc, id);
+      if (o && st.surfaces[id]) markAllDirty(o, st.surfaces[id]);
       PL.view.dropLayer(id);
     });
     PL.view.invalidate();
@@ -321,7 +344,8 @@
       st.doc.layers.splice(at, 0, L);
       st.active = L.id;
       if (raw.surface) st.surfaces[L.id] = raw.surface;
-    }, raw.surface ? [L.id] : []);
+      if (L.mk) st.surfaces[L.mk.id] = raw.maskSurface || T.create();
+    }, (raw.surface ? [L.id] : []).concat(L.mk ? [L.mk.id] : []));
     return L;
   };
   PL.shapeName = function (id) {
@@ -335,6 +359,8 @@
     PL.docChange(label, function () {
       st.doc.w = r.w; st.doc.h = r.h;
       st.doc.layers.forEach(function (L) { L.x -= r.x; L.y -= r.y; });
+      (st.doc.sels || []).forEach(function (v) { v.x -= r.x; v.y -= r.y; });
+      PL.ops.mapGuides(function (x) { return x - r.x; }, function (y) { return y - r.y; });
       st.sel = null; PL.view.selChanged();
     }, []);
   };
@@ -349,16 +375,18 @@
     saveTimer = setTimeout(PL.saveNow, SAVE_MS);
     PL.emit("dirty");
   };
-  var thumbAt = 0;
+  var thumbAt = 0, saving = Promise.resolve(true);
   PL.saveNow = function () {
     clearTimeout(saveTimer); saveTimer = null;
+    // A save already running: wait for it, then save what changed since
+    // (closing or reopening must never race a half-written project).
+    if (st.saving) return saving.then(function () { return PL.saveNow(); });
     var fs = PL.fs();
     if (!st.doc || !st.dirty) return Promise.resolve(true);
     if (!fs) { PL.emit("dirty"); return Promise.resolve(false); }
-    if (st.saving) { saveTimer = setTimeout(PL.saveNow, 400); return Promise.resolve(false); }
     st.saving = true; st.dirty = false;
     var doc = st.doc;
-    return PL.ST.save(fs, C, T, doc, st.surfaces, st.known).then(function (r) {
+    return (saving = PL.ST.save(fs, C, T, doc, st.surfaces, st.known).then(function (r) {
       st.saving = false;
       // store.save() wrote the tile names into the open record itself.
       setIndex(C.upsertEntry(index, r.doc), true);
@@ -371,7 +399,7 @@
       PL.toast(PL.t(e && /quota|space|full/i.test(String(e.message || e.name)) ? "msg.diskFull" : "msg.saveFail"));
       PL.emit("dirty");
       return false;
-    });
+    }));
   };
 
   // ---------- Projects ----------
@@ -605,7 +633,7 @@
       else PL.toast(PL.t("msg.openFail"));
       return;
     }
-    if (typeof f === "string") PL.io.openDiskPath(f);
+    if (typeof f === "string") PL.io.openDiskPath(f, C.normBack(target.back));
   }
   window.__orosOpenAt = function (target) { openTarget(target); };
 

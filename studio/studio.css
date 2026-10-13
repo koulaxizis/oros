@@ -467,8 +467,107 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
 #busy-text { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 14px; max-width: calc(100vw - 48px); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---------- 7b. Effects ---------- */
+.ms.fx { width: auto; padding: 0 6px; letter-spacing: 0.04em; }
+.ms.fx.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+#master-fx { height: 24px; }
+dialog.wide { width: min(760px, calc(100vw - 32px)); }
+.tbtn.small { width: 36px; height: 32px; flex: 0 0 auto; }
+#fx-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.fx-slot { border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg, var(--bg)); }
+.fx-slot.off .fx-label, .fx-slot.unknown .fx-label { color: var(--text-dim); text-decoration: line-through; }
+.fx-head { display: flex; align-items: center; gap: 4px; padding: 4px; }
+.fx-pw {
+  flex: 0 0 auto; width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text-dim);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.fx-pw svg { width: 16px; height: 16px; }
+.fx-pw.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.fx-pw:focus-visible, .fx-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fx-name {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 8px;
+  background: transparent; border: none; color: var(--text); text-align: left; padding: 6px 4px; border-radius: 6px;
+}
+.fx-label { flex: 0 1 auto; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the category gives way first, so the effect's name stays readable */
+.fx-cat { flex: 0 1000 auto; min-width: 0; font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-body { padding: 0 10px 10px; }
+.fx-gfx { display: block; width: 100%; max-width: 720px; margin: 0 auto 8px; border-radius: 8px; background: #1b1a18; cursor: default; }
+.fx-ctl summary { cursor: pointer; font-size: 13px; color: var(--text-dim); padding: 6px 0; }
+.fx-ctl summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.fx-row select { width: 100%; margin-top: 4px; }
+.fx-row .chip { margin-top: 6px; }
+.fx-row .field output { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#fx-pick, #ruf-pick { margin-top: 12px; }
+#fx-search, #ruf-search { width: 100%; }
+.fx-picks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.fx-picks .chip.has-gfx::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.fx-credit { margin-top: 14px; }
+
 /* ---------- 8. Phone + touch ---------- */
+/* ---------- 7c. Remote control (remote.js) ---------- */
+.remote-ind.on { color: var(--accent); }
+.rm-pair { text-align: center; }
+.rm-code { font: 700 40px/1.2 ui-monospace, "Cascadia Mono", Menlo, monospace; letter-spacing: 0.08em; margin: 12px 0 8px; }
+.rm-qr { display: block; margin: 0 auto; width: 200px; height: 200px; image-rendering: pixelated; border-radius: 8px; }
+.rm-qr[hidden] { display: none; }
+.rm-url { word-break: break-all; margin-top: 6px; }
+.rm-status { font-weight: 700; margin: 12px 0 4px; min-height: 1.3em; }
+.rm-ask { border: 2px solid var(--accent, #c33); border-radius: 10px; padding: 10px 12px; margin: 12px 0 4px; }
+.rm-ask p { margin: 0 0 8px; font-weight: 700; }
+.rj-code { font: 700 24px ui-monospace, "Cascadia Mono", Menlo, monospace; letter-spacing: 0.15em; width: 9ch; padding: 6px 10px; flex: 1 1 auto; }
+
+body.remote-on > :not(#remote-ui):not(dialog):not(#toast):not(#live) { display: none !important; }
+#remote-ui { display: none; }
+body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
+.ru-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ru-name { font-size: 16px; font-weight: 700; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ru-link { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); white-space: nowrap; }
+.ru-link.ok { color: #33d17a; border-color: #33d17a; }
+.ru-link.via { color: #f6d32d; border-color: #f6d32d; }
+.ru-link.lost { color: var(--danger); border-color: var(--danger); }
+.ru-clock { font: 700 15px ui-monospace, "Cascadia Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
+.ru-tp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ru-tp .tbtn { width: 52px; height: 44px; }
+.ru-tp .tbtn svg { width: 22px; height: 22px; }
+.ru-tp #ru-bpm { width: 64px; }
+.ru-pos { width: 100%; height: 32px; accent-color: var(--accent); }
+.ru-empty { text-align: center; }
+.ru-strips { flex: 1 1 auto; min-height: 220px; display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; overscroll-behavior-x: contain; }
+.ru-strip { flex: 0 0 96px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 6px; border-radius: 10px;
+  background: var(--panel-bg); border: 1px solid var(--border); border-top: 4px solid var(--tc, var(--border)); min-height: 0; }
+.ru-strip.master { margin-left: auto; border-top-color: var(--accent); position: sticky; right: 0; box-shadow: -6px 0 12px var(--shadow); }
+.ru-sname { font-size: 13px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ru-fxo { font-size: 12px; font-weight: 700; min-height: 32px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-soft); cursor: pointer; }
+.ru-fxo:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ru-fx { display: flex; flex-direction: column; gap: 4px; max-height: 96px; overflow-y: auto; }
+.ru-fxb { font-size: 11px; padding: 4px 6px; min-height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: line-through; color: var(--text-dim); }
+.ru-fxb.on { text-decoration: none; color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.ru-pan { width: 100%; height: 32px; accent-color: var(--accent); }
+.ru-body { flex: 1 1 auto; min-height: 120px; display: flex; justify-content: center; gap: 8px; }
+.ru-fader { position: relative; width: 44px; touch-action: none; cursor: ns-resize; border-radius: 8px; }
+.ru-fader:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ru-track { position: absolute; left: 50%; top: 14px; bottom: 14px; width: 6px; margin-left: -3px; border-radius: 3px; background: var(--border); }
+.ru-knob { position: absolute; left: 2px; right: 2px; height: 28px; border-radius: 6px; background: linear-gradient(#e6e6e6, #a9a9a9);
+  border: 1px solid #555; box-shadow: 0 2px 6px var(--shadow); }
+.ru-knob::after { content: ""; position: absolute; left: 4px; right: 4px; top: 13px; height: 2px; background: #333; }
+.ru-fader.drag .ru-knob { background: linear-gradient(#fff, #c8c8c8); }
+.ru-meter { width: 10px; height: 100%; border-radius: 3px; }
+.ru-db { font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+.ru-ms { display: flex; gap: 4px; justify-content: center; }
+.ru-b { flex: 1 1 0; min-width: 32px; height: 36px; border-radius: 6px; border: 1px solid var(--border); background: transparent; font-weight: 800; font-size: 13px; }
+.ru-b.m.on { background: #f6d32d; border-color: #f6d32d; color: #000; }
+.ru-b.s.on { background: #33d17a; border-color: #33d17a; color: #000; }
+.ru-b.r.on { background: var(--rec); border-color: var(--rec); color: #fff; }
+
 @media (max-width: 760px) {
+  .ru-strip { flex-basis: 116px; padding: 6px 4px; }
+  .ru-tp .tbtn { width: 46px; }
+  .ru-fader { width: 38px; }
+  .rm-code { font-size: 34px; }
   :root { --head-w: 118px; --lane-h: 76px; }
   #transport { order: 3; border-top: 1px solid var(--border); border-bottom: none; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
   #clipbar { order: 2; }
@@ -481,6 +580,8 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
   .tp-master { display: none; }
   #zoom-in, #zoom-out { display: none; }
   .h-vol { display: none; }
+  .h-btns .ms.fx { display: none; }
+  dialog.wide { width: calc(100vw - 16px); padding: 12px 10px 14px; }
   .row.track .head { padding: 5px 6px; }
   .ms { width: 30px; height: 28px; }
   .clip-name { max-width: 100%; flex: 1 1 100%; }
@@ -498,6 +599,9 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
 @media (pointer: coarse) {
   .icon-btn { width: 44px; height: 44px; }
   .ms { width: 36px; height: 32px; }
+  .ms.fx { width: auto; }
+  .fx-pw { width: 40px; height: 40px; }
+  .fx-name { min-height: 40px; align-items: center; }
   .h-name { min-height: 32px; }
   .icon-btn.small { width: 40px; height: 40px; }
   .chip, .row-open { min-height: 44px; }
@@ -512,3 +616,5 @@ dialog input[type="range"] { width: 100%; min-height: 32px; }
 }
 
 [hidden] { display: none !important; }
+/* the tablet / phone Effects window: on a phone the name needs the room */
+@media (max-width: 420px) { #ruf-list .fx-cat { display: none; } }

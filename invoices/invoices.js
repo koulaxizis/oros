@@ -123,7 +123,15 @@
       "iss.go": "Issue",
       "vw.pdf": "PDF", "vw.share": "Share PDF", "vw.email": "Email", "vw.pay": "Add payment", "vw.paid": "Mark as paid",
       "vw.sent": "Mark as sent", "vw.unsent": "Not sent", "vw.dup": "Duplicate", "vw.credit": "Credit note",
-      "vw.convert": "Make invoice", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
+      "ed.prof": "Business", "set.profs": "Business profiles", "set.addBiz": "Add a business profile", "set.newBiz": "New business",
+      "set.profsHint": "Another business? Each profile has its own details, logo, bank lines, terms and footer; pick it on each document. Give it its own numbering series below (Profile) to keep separate numbers.",
+      "set.delBiz": "Delete this profile", "set.main": "Main", "set.serProf": "Profile", "set.serAny": "Any", "set.editing": "Editing", "toast.bizDel": "Profile deleted",
+      "set.qr": "Payment QR code on EUR PDFs (from the first IBAN)",
+      "rc.fits": "Business client in another EU country ({c}): reverse charge?", "rc.services": "Services, 0 % VAT", "rc.goods": "Goods, 0 % VAT",
+      "toast.rcDone": "VAT set to 0 % with the reverse charge note",
+      "c.statement": "Statement PDF", "toast.noOpen": "Nothing is owed by this client",
+      "vw.remind": "Payment reminder", "rem.text": "Pick a tone. The message opens as a draft you can still edit.", "rem.soft": "Polite", "rem.firm": "Firm",
+      "vw.convert": "Make invoice", "vw.stockOut": "Take out of stock", "vw.stockRet": "Back into stock", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
       "vw.sentOn": "Sent {d}", "vw.converted": "Turned into {n}", "vw.from": "From", "vw.to": "Bill to",
       "vw.dates": "Date {d} · due {u}", "vw.date": "Date {d}", "vw.corrects": "Corrects {n}", "vw.credits": "Credit notes",
       "vw.pays": "Payments", "vw.noPays": "No payments yet.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Edit ΜΑΡΚ",
@@ -181,6 +189,11 @@
       "toast.shareFail": "Sharing is not available here", "toast.emailHint": "Attach the PDF yourself: save it with the PDF button first.",
       "mail.subject": "{k} {n}", "mail.body": "Hello,\n\nPlease find {k} {n} of {d} for {a}, due {u}.\n\nThank you.",
       "mail.bodyNoDue": "Hello,\n\nPlease find {k} {n} of {d} for {a}.\n\nThank you.",
+      "mail.softSubject": "Payment reminder: {k} {n}",
+      "mail.soft": "Hello,\n\nThis is a friendly reminder that {k} {n} of {d}, for {a}, is due on {u}. If you have already paid it, please ignore this message.\n\nThank you.",
+      "mail.softLate": "Hello,\n\nThis is a friendly reminder that {k} {n} of {d} was due on {u}, and {a} is still open. If you have already paid it, please ignore this message.\n\nThank you.",
+      "mail.firmSubject": "Overdue: {k} {n}",
+      "mail.firm": "Hello,\n\n{k} {n} of {d} is {l} days overdue: {a} was due on {u} and is still unpaid. Please arrange payment within 7 days, or let us know when to expect it.\n\nThank you.",
       "pdf.draft": "DRAFT", "live.saved": "Saved"
     },
     el: {
@@ -254,7 +267,15 @@
       "iss.go": "Έκδοση",
       "vw.pdf": "PDF", "vw.share": "Κοινοποίηση PDF", "vw.email": "Email", "vw.pay": "Νέα πληρωμή", "vw.paid": "Εξόφληση",
       "vw.sent": "Σημείωση ως σταλμένο", "vw.unsent": "Δεν στάλθηκε", "vw.dup": "Αντίγραφο", "vw.credit": "Πιστωτικό",
-      "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
+      "ed.prof": "Επιχείρηση", "set.profs": "Επιχειρηματικά προφίλ", "set.addBiz": "Προσθήκη προφίλ επιχείρησης", "set.newBiz": "Νέα επιχείρηση",
+      "set.profsHint": "Κι άλλη επιχείρηση; Κάθε προφίλ έχει δικά του στοιχεία, λογότυπο, τράπεζες, όρους και υποσέλιδο· το διαλέγεις σε κάθε παραστατικό. Δώσε του δική του σειρά αρίθμησης πιο κάτω (Προφίλ) για χωριστή αρίθμηση.",
+      "set.delBiz": "Διαγραφή προφίλ", "set.main": "Κύριο", "set.serProf": "Προφίλ", "set.serAny": "Όλα", "set.editing": "Επεξεργασία", "toast.bizDel": "Το προφίλ διαγράφηκε",
+      "set.qr": "QR πληρωμής στα PDF σε ευρώ (από το πρώτο IBAN)",
+      "rc.fits": "Επιχείρηση-πελάτης σε άλλη χώρα της ΕΕ ({c}): αντίστροφη επιβάρυνση;", "rc.services": "Υπηρεσίες, ΦΠΑ 0 %", "rc.goods": "Αγαθά, ΦΠΑ 0 %",
+      "toast.rcDone": "ΦΠΑ 0 % με τη σημείωση αντίστροφης επιβάρυνσης",
+      "c.statement": "Καρτέλα σε PDF", "toast.noOpen": "Ο πελάτης δεν οφείλει τίποτα",
+      "vw.remind": "Υπενθύμιση πληρωμής", "rem.text": "Διάλεξε ύφος. Το μήνυμα ανοίγει ως πρόχειρο που μπορείς ακόμη να αλλάξεις.", "rem.soft": "Ευγενικό", "rem.firm": "Αυστηρό",
+      "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.stockOut": "Έξοδος από απόθεμα", "vw.stockRet": "Επιστροφή στο απόθεμα", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
       "vw.sentOn": "Στάλθηκε {d}", "vw.converted": "Έγινε {n}", "vw.from": "Εκδότης", "vw.to": "Πελάτης",
       "vw.dates": "Ημερομηνία {d} · λήξη {u}", "vw.date": "Ημερομηνία {d}", "vw.corrects": "Διορθώνει το {n}", "vw.credits": "Πιστωτικά",
       "vw.pays": "Πληρωμές", "vw.noPays": "Καμία πληρωμή ακόμη.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Αλλαγή ΜΑΡΚ",
@@ -312,6 +333,11 @@
       "toast.shareFail": "Η κοινοποίηση δεν είναι διαθέσιμη εδώ", "toast.emailHint": "Επισύναψε μόνος σου το PDF: αποθήκευσέ το πρώτα με το κουμπί PDF.",
       "mail.subject": "{k} {n}", "mail.body": "Καλησπέρα σας,\n\nσας στέλνουμε το {k} {n} της {d}, ποσού {a}, με λήξη {u}.\n\nΕυχαριστούμε.",
       "mail.bodyNoDue": "Καλησπέρα σας,\n\nσας στέλνουμε το {k} {n} της {d}, ποσού {a}.\n\nΕυχαριστούμε.",
+      "mail.softSubject": "Υπενθύμιση πληρωμής: {k} {n}",
+      "mail.soft": "Καλησπέρα σας,\n\nμια φιλική υπενθύμιση ότι το {k} {n} της {d}, ποσού {a}, λήγει στις {u}. Αν το έχετε ήδη εξοφλήσει, αγνοήστε αυτό το μήνυμα.\n\nΕυχαριστούμε.",
+      "mail.softLate": "Καλησπέρα σας,\n\nμια φιλική υπενθύμιση ότι το {k} {n} της {d} έληξε στις {u} και παραμένουν ανοιχτά {a}. Αν το έχετε ήδη εξοφλήσει, αγνοήστε αυτό το μήνυμα.\n\nΕυχαριστούμε.",
+      "mail.firmSubject": "Ληξιπρόθεσμο: {k} {n}",
+      "mail.firm": "Καλησπέρα σας,\n\nτο {k} {n} της {d} είναι ληξιπρόθεσμο εδώ και {l} ημέρες: τα {a} έληγαν στις {u} και παραμένουν απλήρωτα. Παρακαλούμε τακτοποιήστε την πληρωμή μέσα σε 7 ημέρες ή ενημερώστε μας πότε να την περιμένουμε.\n\nΕυχαριστούμε.",
       "pdf.draft": "ΠΡΟΧΕΙΡΟ", "live.saved": "Αποθηκεύτηκε"
     }
   };
@@ -327,7 +353,10 @@
       "sub": "Subtotal", "gdisc": "Discount {r} %", "net": "Net amount", "vatR": "VAT {r} %", "total": "Total",
       "wht": "Withholding tax {r} %", "pay": "Amount payable", "exempt": "VAT exemption", "terms": "Payment terms",
       "bank": "Bank account", "notes": "Notes", "page": "Page {a} of {b}",
-      "proNote": "This is a proforma invoice, not a tax document.", "draft": "DRAFT"
+      "proNote": "This is a proforma invoice, not a tax document.", "draft": "DRAFT",
+      "qr": "Scan with your banking app to pay", "qrAmt": "{a} to {n}",
+      "t.stmt": "STATEMENT OF ACCOUNT", "asOf": "As of {d}", "doc": "Document", "paid": "Paid", "bal": "Balance",
+      "open": "Open balance", "late": "{n} days late"
     },
     el: {
       "t.inv": "ΤΙΜΟΛΟΓΙΟ", "t.rcpt": "ΑΠΟΔΕΙΞΗ", "t.pro": "ΠΡΟΤΙΜΟΛΟΓΙΟ", "t.cred": "ΠΙΣΤΩΤΙΚΟ ΤΙΜΟΛΟΓΙΟ",
@@ -337,8 +366,19 @@
       "sub": "Υποσύνολο", "gdisc": "Έκπτωση {r} %", "net": "Καθαρή αξία", "vatR": "ΦΠΑ {r} %", "total": "Σύνολο",
       "wht": "Παρακράτηση φόρου {r} %", "pay": "Πληρωτέο", "exempt": "Απαλλαγή ΦΠΑ", "terms": "Όροι πληρωμής",
       "bank": "Τραπεζικός λογαριασμός", "notes": "Σημειώσεις", "page": "Σελίδα {a} από {b}",
-      "proNote": "Προτιμολόγιο: δεν είναι φορολογικό στοιχείο.", "draft": "ΠΡΟΧΕΙΡΟ"
+      "proNote": "Προτιμολόγιο: δεν είναι φορολογικό στοιχείο.", "draft": "ΠΡΟΧΕΙΡΟ",
+      "qr": "Σκανάρετε με την εφαρμογή της τράπεζάς σας για πληρωμή", "qrAmt": "{a} προς {n}",
+      "t.stmt": "ΚΑΤΑΣΤΑΣΗ ΛΟΓΑΡΙΑΣΜΟΥ", "asOf": "Στις {d}", "doc": "Παραστατικό", "paid": "Πληρωμένο", "bal": "Υπόλοιπο",
+      "open": "Ανοιχτό υπόλοιπο", "late": "{n} ημέρες καθυστέρηση"
     }
+  };
+
+  // EU reverse charge notes (wave 3), in the document's language.
+  var RC_NOTES = {
+    en: { services: "Reverse charge: VAT to be accounted for by the recipient (Article 196, Council Directive 2006/112/EC).",
+          goods: "VAT-exempt intra-Community supply of goods (Article 138, Council Directive 2006/112/EC)." },
+    el: { services: "Αντίστροφη επιβάρυνση: τον ΦΠΑ τον αποδίδει ο λήπτης (άρθρο 196 Οδηγίας 2006/112/ΕΚ).",
+          goods: "Απαλλασσόμενη ενδοκοινοτική παράδοση αγαθών (άρθρο 138 Οδηγίας 2006/112/ΕΚ)." }
   };
 
   function fill(s, params) {
@@ -452,6 +492,7 @@
   }
   function findDoc(id) { return C.doc(data, id); }
   function liveList(name) { return C.live(data[name]); }
+  function profList() { return data.profs || (data.profs = []); }   // left out of the data while empty
   function replaceIn(list, rec) {
     for (var i = 0; i < list.length; i++) if (list[i].id === rec.id) { list[i] = rec; return; }
     list.push(rec);
@@ -495,7 +536,7 @@
       d.c = C.partyOfClient(cl);
       if (cl.crm) d.crm = cl.crm;
     }
-    d.s = C.normSeller(data.prof);
+    d.s = C.normSeller(C.profileOf(data, d.pid));
     putDoc(d);
     if (paidNow && d.kind !== "pro" && d.kind !== "cred") {
       var bal = C.balance(data, findDoc(d.id));
@@ -527,6 +568,7 @@
   }
 
   function renumber(d) {
+    if (MD && MD.locked(d)) { showToast(MD.lockedText("num")); return; }
     var s = C.series(data, d.ser);
     if (!s) return;
     var old = d.num;
@@ -541,6 +583,7 @@
   // ---------- 4. Render: documents ----------
   var tab = "docs";
   var cliFilter = "";     // a client id from the Clients tab (session only)
+  var setPid = "";        // Settings: the business profile being edited (wave 3)
   function setTab(k) {
     if (TABS.indexOf(k) < 0) k = "docs";
     tab = k;
@@ -682,7 +725,8 @@
     box.textContent = "";
     box.hidden = !groups.length;
     groups.forEach(function (g) {
-      var keep = C.clashKeeper(g);
+      // a document already in myDATA keeps its number
+      var keep = g.filter(function (x) { return MD && MD.locked(x); })[0] || C.clashKeeper(g);
       var row = el("div", "clash-row");
       row.appendChild(el("span", "", t("clash.one", { n: keep.num })));
       g.forEach(function (d) {
@@ -952,12 +996,34 @@
     renderEdSub();
 
     var card = el("div", "card");
+    // Business profile (wave 3): only when there is more than one
+    var profs = C.profiles(data);
+    if (!isExt && profs.length > 1) {
+      var pSel = select(profs.map(function (pr) { return [pr.id, profName(pr)]; }), d.pid && C.byId(data.profs, d.pid) ? d.pid : "");
+      pSel.addEventListener("change", function () {
+        var was = C.profileOf(data, d.pid);
+        if (pSel.value) d.pid = pSel.value; else delete d.pid;
+        var now = C.profileOf(data, d.pid);
+        if (d.kind !== "cred") {
+          d.ser = C.seriesForProfile(data, d.kind, d.pid, deviceSeries(d.kind));
+          rebuildSeries();
+          if (!d.terms || d.terms === was.terms) {
+            d.terms = now.terms;
+            if (edRefs.terms) edRefs.terms.value = d.terms;
+          }
+        }
+        renderEdSub();
+        paintRc();
+        touch();
+      });
+      card.appendChild(field(t("ed.prof"), pSel));
+    }
     // Kind (drafts only switch between invoice, receipt and proforma)
     if (!isExt && d.kind !== "cred") {
       var kSel = select(["inv", "rcpt", "pro"].map(function (k) { return [k, kindName(k)]; }), d.kind);
       kSel.addEventListener("change", function () {
         d.kind = kSel.value;
-        d.ser = deviceSeries(d.kind);
+        d.ser = C.seriesForProfile(data, d.kind, d.pid, deviceSeries(d.kind));
         rebuildSeries();
         renderEdSub();
         $("ed-title").textContent = ed.isNew ? t("ed.new", { k: kindName(d.kind) }) : t("ed.draft", { k: kindName(d.kind) });
@@ -987,6 +1053,7 @@
         fillSelect(cSel, clientOpts(d.kind), d.cli);
         cEdit.hidden = false;
         rebuildRefs();
+        paintRc();
         touch();
       });
     });
@@ -1001,6 +1068,7 @@
       clientDialog(d.cli, function (c) {
         d.c = C.partyOfClient(c);
         fillSelect(cSel, clientOpts(d.kind), d.cli);
+        paintRc();
         touch();
       });
     });
@@ -1013,6 +1081,7 @@
       d.crm = c && c.crm ? c.crm : d.crm;
       cEdit.hidden = !d.cli;
       if (d.kind === "cred") rebuildRefs();
+      paintRc();
       touch();
     });
     var cliFld = el("div", "fld");
@@ -1122,6 +1191,11 @@
       var w = pctInput(d.wht, function (v) { d.wht = v; touch(); });
       lc.appendChild(row(field(t("ed.gDisc"), g), field(t("ed.wht"), w)));
       lc.appendChild(el("p", "hint", t("ed.whtHint")));
+      // EU reverse charge helper (wave 3): offered, never applied alone
+      var rc = el("div", "rc-box");
+      rc.hidden = true;
+      edRefs.rc = rc;
+      lc.appendChild(rc);
       var tot = el("div", "totals");
       edRefs.totals = tot;
       lc.appendChild(tot);
@@ -1132,10 +1206,13 @@
       var more = el("details", "card more");
       more.appendChild(el("summary", "", t("ed.more")));
       var ex = area(d.exempt, 2, C.LIM.exempt);
-      ex.addEventListener("input", function () { d.exempt = ex.value; touch(); });
+      ex.addEventListener("input", function () { d.exempt = ex.value; paintRc(); touch(); });
+      edRefs.exempt = ex;
+      edRefs.more = more;
       more.appendChild(field(t("ed.exempt"), ex, t("ed.exemptHint")));
       var tm = area(d.terms, 3, C.LIM.terms);
       tm.addEventListener("input", function () { d.terms = tm.value; touch(); });
+      edRefs.terms = tm;
       more.appendChild(field(t("ed.terms"), tm, t("ed.termsHint")));
       var no = area(d.notes, 3, C.LIM.notes);
       no.addEventListener("input", function () { d.notes = no.value; touch(); });
@@ -1174,6 +1251,41 @@
     bar.appendChild(acts);
     form.appendChild(bar);
     renderEdTotals();
+    paintRc();
+  }
+  function profName(pr) {
+    var n = pr.trade || pr.name || "";
+    return pr.id ? n || t("set.newBiz") : (n ? n + " (" + t("set.main") + ")" : t("set.main"));
+  }
+  // The reverse charge offer: a business client (VAT number) in another
+  // EU country than the document's profile, and not applied yet.
+  function rcLang(d) { return d.plang || data.prof.plang || LANG; }
+  function paintRc() {
+    if (!ed || !edRefs || !edRefs.rc) return;
+    var d = ed.doc, box = edRefs.rc;
+    var cl = C.client(data, d.cli);
+    var fit = d.kind !== "ext" && d.kind !== "cred" && cl ? C.reverseCharge(C.profileOf(data, d.pid), cl) : null;
+    var notes = [RC_NOTES.en.services, RC_NOTES.en.goods, RC_NOTES.el.services, RC_NOTES.el.goods];
+    var done = notes.indexOf((d.exempt || "").trim()) >= 0 && d.lines.every(function (l) { return !l.vat; });
+    box.hidden = !fit || done;
+    box.textContent = "";
+    if (box.hidden) return;
+    box.appendChild(el("p", "rc-txt", t("rc.fits", { c: fit.client })));
+    var acts = el("div", "acts");
+    ["services", "goods"].forEach(function (k) {
+      acts.appendChild(btn(t("rc." + k), "", function () {
+        d.lines.forEach(function (l) { l.vat = 0; });
+        d.exempt = (RC_NOTES[rcLang(d)] || RC_NOTES.en)[k];
+        if (edRefs.exempt) edRefs.exempt.value = d.exempt;
+        if (edRefs.more) edRefs.more.open = true;
+        renderLines();
+        renderEdTotals();
+        paintRc();
+        touch();
+        showToast(t("toast.rcDone"));
+      }));
+    });
+    box.appendChild(acts);
   }
   function btn(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -1387,7 +1499,7 @@
   }
   function previewDoc() {
     var p = C.normDoc(Object.assign(cleaned(ed.doc), { m: 1 }));
-    p.s = C.normSeller(data.prof);
+    p.s = C.normSeller(C.profileOf(data, p.pid));
     return p;
   }
   function saveDraft() {
@@ -1523,6 +1635,9 @@
     }
     var email = (d.c && d.c.email) || "";
     if (d.st === "issued") acts.appendChild(btn(t("vw.email"), "", function () { sendEmail(d); }));
+    if (d.st === "issued" && C.owes(d) && bal > 0 && d.due && d.due <= C.addDays(todayKey(), 7)) {
+      acts.appendChild(btn(t("vw.remind"), "", function () { reminderDialog(d); }));
+    }
     if (d.st === "issued" && !d.sent) acts.appendChild(btn(t("vw.sent"), "", function () {
       var x = JSON.parse(JSON.stringify(d));
       x.sent = todayKey();
@@ -1534,6 +1649,12 @@
     if (d.kind !== "ext") acts.appendChild(btn(t("vw.dup"), "", function () { duplicate(d); }));
     if (d.st === "issued" && (d.kind === "inv" || d.kind === "rcpt")) acts.appendChild(btn(t("vw.credit"), "", function () { creditFor(d); }));
     if (d.st === "issued" && d.kind === "pro") acts.appendChild(btn(t("vw.convert"), "", function () { convertPro(d); }));
+    var stockReq = stockShell() ? C.stockOut(d) : null;
+    if (stockReq) acts.appendChild(btn(t(stockReq.t === "ret" ? "vw.stockRet" : "vw.stockOut"), "", function () {
+      var sh = stockShell();
+      if (sh) sh.__orosOpenAt("stock", { out: stockReq });
+    }));
+    if (MD) MD.actions(d, acts);
     if (d.st === "issued" && d.kind !== "ext") acts.appendChild(btn(t("vw.void"), "danger", function () { voidDoc(d); }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.delete"), "danger", function () { deleteRecord(d.id); }));
     void email;
@@ -1588,8 +1709,16 @@
       pc.appendChild(tb);
       body.appendChild(pc);
     }
+    // myDATA (sent through timologisi.online): ΜΑΡΚ, UID, code, official PDF
+    var mdCard = MD ? MD.card(d) : null;
+    if (mdCard) body.appendChild(mdCard);
     // ΜΑΡΚ + official PDF (records and issued documents)
     var mc = el("div", "card");
+    if (MD && MD.locked(d)) {                      // the ΜΑΡΚ came from myDATA: not typed over
+      if (d.kind !== "ext") mc.appendChild(fileField(d, true));
+      body.appendChild(mc);
+      return;
+    }
     var mIn = input("text", d.mark, C.LIM.mark);
     var mSave = btn(t("dlg.save"), "", function () {
       var x = JSON.parse(JSON.stringify(findDoc(d.id)));
@@ -1613,7 +1742,7 @@
   // The document as a sheet of paper (same content as the PDF).
   function paperOf(d) {
     var p = el("div", "paper");
-    var s = d.s || C.normSeller(data.prof), c = d.c || {};
+    var s = C.sellerOf(data, d), c = d.c || {};
     var head = el("div", "pp-head");
     var from = el("div", "pp-party");
     if (d.kind !== "ext") {
@@ -1711,7 +1840,15 @@
       x.lines = JSON.parse(JSON.stringify(d.lines));
       x.gDisc = d.gDisc; x.wht = d.wht; x.exempt = d.exempt; x.terms = d.terms; x.notes = d.notes; x.plang = d.plang;
       x.crm = d.crm;
+      keepProfile(x, d);
     });
+  }
+  // A copy of a document stays with its business profile (wave 3).
+  function keepProfile(x, d) {
+    if (d.pid && C.byId(data.profs, d.pid)) {
+      x.pid = d.pid;
+      x.ser = C.seriesForProfile(data, x.kind, x.pid, x.ser);
+    }
   }
   function creditFor(d) {
     newDoc("cred", function (x) {
@@ -1724,6 +1861,7 @@
       x.gDisc = d.gDisc; x.wht = d.wht; x.exempt = d.exempt; x.plang = d.plang;
       x.terms = "";
       x.due = "";
+      keepProfile(x, d);
     });
   }
   function convertPro(d) {
@@ -1735,10 +1873,16 @@
       x.crm = d.crm;
       x.lines = JSON.parse(JSON.stringify(d.lines));
       x.gDisc = d.gDisc; x.wht = d.wht; x.exempt = d.exempt; x.terms = d.terms; x.notes = d.notes; x.plang = d.plang;
+      keepProfile(x, d);
     });
     showToast(t("toast.converted"));
   }
   function voidDoc(d) {
+    if (MD && MD.locked(d)) {                      // in myDATA: corrected by a credit note, never cancelled here
+      if (d.kind === "inv" || d.kind === "rcpt") confirmDialog(t("vw.voidTitle", { n: d.num }), MD.lockedText("void"), t("vw.credit"), function () { creditFor(d); });
+      else showToast(MD.lockedText("void"));
+      return;
+    }
     confirmDialog(t("vw.voidTitle", { n: d.num }), t("vw.voidText"), t("vw.voidGo"), function () {
       var before = JSON.parse(JSON.stringify(d));
       var x = JSON.parse(JSON.stringify(d));
@@ -1838,6 +1982,7 @@
           newDoc("inv", function (x) { x.cli = c.id; x.c = C.partyOfClient(c); x.crm = c.crm || ""; });
         }));
         if (n) left.push(btn(t("c.showDocs"), "", function () { dlg.close(); cliFilter = c.id; setTab("docs"); }));
+        if (C.statement(data, c.id).rows.length) left.push(btn(t("c.statement"), "", function () { makeStatement(c.id); }));
       }
     }
     actions(form, left, t("dlg.save"));
@@ -2144,7 +2289,8 @@
       var tp = C.normTpl({
         id: C.newId(), name: n, kind: x.kind === "cred" ? "inv" : x.kind, cli: x.cli, cur: x.cur, lines: x.lines,
         gDisc: x.gDisc, wht: x.wht, exempt: x.exempt, terms: x.terms, notes: x.notes,
-        rep: rep.value, next: rep.value ? start.value : "", dom: rep.value ? +start.value.slice(8, 10) : 0, m: stamp(0)
+        rep: rep.value, next: rep.value ? start.value : "", dom: rep.value ? +start.value.slice(8, 10) : 0, m: stamp(0),
+        pid: x.pid && C.byId(data.profs, x.pid) ? x.pid : undefined
       });
       if (!tp) return;
       data.tpls.push(tp);
@@ -2193,13 +2339,41 @@
     $("set-back").innerHTML = UI.left;
     $("set-back").title = t("back");
     $("set-back").setAttribute("aria-label", t("back"));
-    var p = data.prof;
+    // Wave 3: the profile being edited ("" = the main one, with the defaults)
+    var biz = setPid ? C.byId(data.profs, setPid) : null;
+    if (!biz) setPid = "";
+    var p = biz || data.prof;
 
     // Business profile + defaults: one form, one Save.
     var card = el("form", "card");
     card.noValidate = true;
     card.appendChild(el("h3", "sec-h", t("set.biz")));
     card.appendChild(el("p", "hint", t("set.bizHint")));
+    var profs = C.profiles(data);
+    if (profs.length > 1) {
+      var ps = select(profs.map(function (pr) { return [pr.id, profName(pr)]; }), setPid);
+      ps.id = "set-prof";
+      ps.addEventListener("change", function () { setPid = ps.value; renderSettings(); });
+      var pw = el("div", "cli-pick");
+      pw.appendChild(ps);
+      if (setPid) {
+        var pd = el("button", "icon-btn", null);
+        pd.type = "button";
+        pd.innerHTML = UI.x;
+        pd.title = t("set.delBiz");
+        pd.setAttribute("aria-label", t("set.delBiz"));
+        pd.addEventListener("click", function () {
+          var gone = biz;
+          replaceIn(profList(), tombOf(gone));
+          saveNow();
+          setPid = "";
+          renderSettings();
+          undoToast(t("toast.bizDel"), function () { restore("profs", gone); saveNow(); setPid = gone.id; renderSettings(); });
+        });
+        pw.appendChild(pd);
+      }
+      card.appendChild(field(t("set.editing"), pw));
+    }
     var f = {};
     function txt(key, label, max, type, note) {
       f[key] = input(type || "text", p[key], max);
@@ -2237,6 +2411,10 @@
     lf.appendChild(el("p", "hint", t("set.logoHint")));
     card.appendChild(lf);
 
+    var defs = el("div", "");
+    defs.hidden = !!setPid;
+    card.appendChild(defs);
+    card = defs;   // the defaults belong to the main profile only
     card.appendChild(el("h3", "sec-h", t("set.defs")));
     f.cur = select(currencyOpts(p.cur), p.cur);
     f.vat = input("text", C.numInput(p.vat, LANG));
@@ -2249,6 +2427,14 @@
     card.appendChild(row(field(t("set.cur"), f.cur), field(t("set.vat"), f.vat)));
     card.appendChild(row(field(t("set.days"), f.days), field(t("set.wht"), f.wht)));
     card.appendChild(field(t("set.plang"), f.plang));
+    var qrl = el("label", "check");
+    f.qr = el("input");
+    f.qr.type = "checkbox";
+    f.qr.checked = data.prof.qr !== 0;
+    qrl.appendChild(f.qr);
+    qrl.appendChild(el("span", "", t("set.qr")));
+    card.appendChild(qrl);
+    card = defs.parentNode;
     f.terms = area(p.terms, 2, C.LIM.terms);
     card.appendChild(field(t("set.terms"), f.terms));
     f.footer = area(p.footer, 2, C.LIM.footer);
@@ -2261,6 +2447,22 @@
     card.appendChild(sa);
     card.addEventListener("submit", function (e) {
       e.preventDefault();
+      if (biz) {
+        var b = JSON.parse(JSON.stringify(biz));
+        ["name", "trade", "job", "afm", "doy", "country", "phone", "email", "web"].forEach(function (k) { b[k] = f[k].value; });
+        b.addr = f.addr.value; b.iban = f.iban.value; b.logo = logo;
+        b.terms = f.terms.value; b.footer = f.footer.value;
+        if (!C.cleanText(b.name, C.LIM.name)) { showToast(t("toast.needName")); f.name.focus(); return; }
+        b.m = stamp(b.m);
+        var nb = C.normBiz(b);
+        if (!nb) return;
+        replaceIn(profList(), nb);
+        saveNow();
+        showToast(t("set.saved"));
+        if (document.activeElement) document.activeElement.blur();
+        renderSettings();
+        return;
+      }
       var vat = C.parseNum(f.vat.value), wht = C.parseNum(f.wht.value), days = parseInt(f.days.value || "0", 10);
       if (isNaN(vat) || vat < 0 || vat > 100) { showToast(t("toast.badNum", { f: t("set.vat") })); f.vat.focus(); return; }
       if (isNaN(wht) || wht < 0 || wht > 100) { showToast(t("toast.badNum", { f: t("set.wht") })); f.wht.focus(); return; }
@@ -2270,6 +2472,7 @@
       x.addr = f.addr.value; x.iban = f.iban.value; x.logo = logo; x.cur = f.cur.value;
       x.vat = C.round(vat, 2); x.wht = C.round(wht, 2); x.days = days; x.plang = f.plang.value;
       x.terms = f.terms.value; x.footer = f.footer.value;
+      if (f.qr.checked) delete x.qr; else x.qr = 0;
       x.m = stamp(x.m);
       data.prof = C.normProf(x);
       saveNow();
@@ -2278,6 +2481,22 @@
       renderSettings();
     });
     body.appendChild(card);
+    var addBiz = el("button", "link-btn", t("set.addBiz"));
+    addBiz.type = "button";
+    addBiz.addEventListener("click", function () {
+      var nb = C.normBiz({ id: C.newId(), name: t("set.newBiz"), m: stamp(0) });
+      replaceIn(profList(), nb);
+      saveNow();
+      setPid = nb.id;
+      renderSettings();
+      var n = $("set-name");
+      if (n) { n.focus(); n.select(); }
+    });
+    var ph = el("div", "card");
+    ph.appendChild(el("h3", "sec-h", t("set.profs")));
+    ph.appendChild(el("p", "hint", t("set.profsHint")));
+    ph.appendChild(addBiz);
+    body.appendChild(ph);
 
     // Numbering
     var sc = el("div", "card");
@@ -2318,6 +2537,7 @@
           x.prefix = pre.value;
           x.year = yb.checked ? 1 : 0;
           x.digits = +dg.value;
+          if (sp) { if (sp.value) x.pid = sp.value; else delete x.pid; }
           x.m = stamp(x.m);
           var n = C.normSeries(x);
           if (!n) return;
@@ -2326,11 +2546,21 @@
           s = n;
           sample.textContent = t("set.sample", { n: C.fmtNum(n, y, C.nextSeq(data, n.id, todayKey())) });
         }
+        var sp = null;
+        if (profs.length > 1) {
+          sp = select([["", t("set.serAny")]].concat(profs.slice(1).map(function (pr) { return [pr.id, profName(pr)]; })),
+                      s.pid && C.byId(data.profs, s.pid) ? s.pid : "");
+          sp.className = "ser-prof";
+          sp.title = t("set.serProf");
+          sp.setAttribute("aria-label", t("set.serProf"));
+          sp.addEventListener("change", saveSer);
+        }
         pre.addEventListener("change", saveSer);
         yb.addEventListener("change", saveSer);
         dg.addEventListener("change", saveSer);
         r.appendChild(pre);
         r.appendChild(dg);
+        if (sp) r.appendChild(sp);
         r.appendChild(yr);
         r.appendChild(use);
         r.appendChild(sample);
@@ -2482,12 +2712,58 @@
     return ((d.num || kindName(d.kind)) + (who ? " " + who : "")).slice(0, 100).replace(/[.\s]+$/, "") + ".pdf";
   }
   // mode: "save" (file dialog) | "share" (the device's share sheet)
-  function makePdf(d, mode) {
+  // done(blob) once the PDF is built, done(null) if it couldn't be.
+  function pdfBlob(d, done) { pdfWith(function (f) { return buildPdf(d, f); }, done); }
+  function pdfWith(build, done) {
     loadJsPdf(function (ok) {
-      if (!ok) { showToast(t("toast.pdfFail")); return; }
+      if (!ok) { done(null); return; }
       loadFonts(function (f) {
-        var blob = null;
-        try { blob = buildPdf(d, f); } catch (e) { try { console.error(e); } catch (x) {} }
+        loadQr(function () {
+          var blob = null;
+          try { blob = build(f); } catch (e) { try { console.error(e); } catch (x) {} }
+          done(blob);
+        });
+      });
+    });
+  }
+  // The QR encoder of the QR Generator app (wave 3, payment QR). Best
+  // effort: without it the PDF is made without the code.
+  var qrState = { loading: false, q: [] };
+  function loadQr(done) {
+    if (window.orosQR && typeof window.orosQR.encode === "function") { done(true); return; }
+    qrState.q.push(done);
+    if (qrState.loading) return;
+    qrState.loading = true;
+    var s = document.createElement("script");
+    s.src = "../qr/qr-encode.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+    s.onload = function () { qrState.loading = false; qrState.q.splice(0).forEach(function (cb) { cb(true); }); };
+    s.onerror = function () {
+      qrState.loading = false;
+      s.remove();
+      qrState.q.splice(0).forEach(function (cb) { cb(false); });
+    };
+    document.head.appendChild(s);
+  }
+  // EPC payload for a document's PDF, "" when none fits: EUR, an
+  // invoice or proforma, an IBAN in the seller's bank lines, something
+  // to pay (what is still owed on an issued invoice).
+  function payQrText(d, s, tt) {
+    if (data.prof.qr === 0 || d.cur !== "EUR" || (d.kind !== "inv" && d.kind !== "pro")) return "";
+    var amt = d.st === "issued" && C.owes(d) ? C.balance(data, d) : tt.pay;
+    return amt > 0 ? C.epcPayload(s.name, s.iban, amt, d.num || "") : "";
+  }
+  function drawQr(doc, txt, x, y, size) {
+    var q = window.orosQR.encode(txt, { ecl: "M" });
+    var cell = size / (q.size + 2);
+    doc.setFillColor(0, 0, 0);
+    for (var r = 0; r < q.size; r++) {
+      for (var c = 0; c < q.size; c++) {
+        if (q.modules[r][c]) doc.rect(x + (c + 1) * cell, y + (r + 1) * cell, cell + 0.02, cell + 0.02, "F");
+      }
+    }
+  }
+  function makePdf(d, mode) {
+    pdfBlob(d, function (blob) {
         if (!blob) { showToast(t("toast.pdfFail")); return; }
         var name = pdfName(d);
         if (mode === "share") {
@@ -2496,7 +2772,6 @@
           return;
         }
         saveBlob(blob, name, "application/pdf", ".pdf", "PDF");
-      });
     });
   }
   // Greek capitals carry no accents ("Πελάτης" → "ΠΕΛΑΤΗΣ").
@@ -2519,7 +2794,7 @@
       FONT = "NotoSans";
     }
     var W = 210, H = 297, M = 16, R = W - M, y = M;
-    var s = d.s || C.normSeller(data.prof), c = d.c || {};
+    var s = C.sellerOf(data, d), c = d.c || {};
     var draft = d.st === "draft";
     function font(bold, size) { doc.setFont(FONT, bold ? "bold" : "normal"); doc.setFontSize(size); }
     function gray(v) { doc.setTextColor(v, v, v); }
@@ -2706,12 +2981,29 @@
     else if (d.exempt) block(pt("exempt"), d.exempt);
     block(pt("terms"), d.terms);
     if (s.iban && d.kind !== "cred") block(pt("bank"), s.iban);
+    var qrTxt = window.orosQR ? payQrText(d, s, tt) : "";
+    if (qrTxt) {
+      try {
+        var qs = 30;
+        need(qs + 4);
+        drawQr(doc, qrTxt, M - 1, y - 3, qs);
+        var qa = d.st === "issued" && C.owes(d) ? C.balance(data, d) : tt.pay;
+        font(true, 8.5);
+        gray(0);
+        text(pt("qr"), M + qs + 3, y + 9);
+        font(false, 8.5);
+        gray(50);
+        wrap(pt("qrAmt", { a: pm(qa), n: s.name }), R - M - qs - 6).forEach(function (ln, k) { text(ln, M + qs + 3, y + 14 + k * 4.2); });
+        text(C.ibanOf(s.iban).replace(/(.{4})/g, "$1 ").trim(), M + qs + 3, y + 23);
+        y += qs + 2;
+      } catch (e) {}
+    }
     block(pt("notes"), d.notes);
     if (d.kind === "pro") block("", pt("proNote"));
 
     // Footer + page numbers on every page; DRAFT stamp on drafts.
     var pages = doc.getNumberOfPages();
-    var footer = data.prof.footer;
+    var footer = C.profileOf(data, d.pid).footer;
     for (var pg = 1; pg <= pages; pg++) {
       doc.setPage(pg);
       font(false, 7.5);
@@ -2723,6 +3015,165 @@
         doc.setTextColor(225, 225, 225);
         text(pt("draft"), W / 2, H / 2, { align: "center", angle: 30 });
       }
+    }
+    return doc.output("blob");
+  }
+
+  // Wave 3 — a client's statement: every document still owed, with the
+  // open balance per currency. Seller: the documents' common profile,
+  // else the main one. The app's PDF language.
+  function makeStatement(cliId) {
+    var c = C.client(data, cliId);
+    var st = C.statement(data, cliId, todayKey());
+    if (!c || !st.rows.length) { showToast(t("toast.noOpen")); return; }
+    pdfWith(function (f) { return buildStatement(c, st, f); }, function (blob) {
+      if (!blob) { showToast(t("toast.pdfFail")); return; }
+      var lang = data.prof.plang || LANG;
+      var name = ((lang === "el" ? "Καρτέλα " : "Statement ") + c.name + " " + todayKey())
+        .replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 100) + ".pdf";
+      saveBlob(blob, name, "application/pdf", ".pdf", "PDF");
+    });
+  }
+  function buildStatement(c, st, f) {
+    var lang = data.prof.plang || LANG;
+    var P = PDF_STRINGS[lang] || PDF_STRINGS.en;
+    function pt(k, params) { return fill(P[k] || PDF_STRINGS.en[k] || k, params); }
+    var doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+    var FONT = "helvetica";
+    if (f) {
+      doc.addFileToVFS("NotoSans-Regular.ttf", f.reg);
+      doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+      doc.addFileToVFS("NotoSans-Bold.ttf", f.bold);
+      doc.addFont("NotoSans-Bold.ttf", "NotoSans", "bold");
+      FONT = "NotoSans";
+    }
+    var W = 210, H = 297, M = 16, R = W - M, y = M;
+    var pids = {};
+    st.rows.forEach(function (r) { var dd = findDoc(r.id); pids[dd && dd.pid || ""] = 1; });
+    var pidList = Object.keys(pids);
+    var prof = C.profileOf(data, pidList.length === 1 ? pidList[0] : "");
+    var s = C.normSeller(prof);
+    function font(bold, size) { doc.setFont(FONT, bold ? "bold" : "normal"); doc.setFontSize(size); }
+    function gray(v) { doc.setTextColor(v, v, v); }
+    function text(str, x, yy, opts) { doc.text(String(str), x, yy, opts || {}); }
+    function wrap(str, width) { return doc.splitTextToSize(String(str || ""), width); }
+    function need(h) { if (y + h > H - 22) { doc.addPage(); y = M; return true; } return false; }
+
+    var topY = y;
+    if (s.logo) {
+      try {
+        var props = doc.getImageProperties(s.logo);
+        var lw = Math.min(50, props.width * 20 / props.height), lh = lw * props.height / props.width;
+        if (lh > 20) { lh = 20; lw = lh * props.width / props.height; }
+        doc.addImage(s.logo, s.logo.indexOf("image/png") > 0 ? "PNG" : "JPEG", M, y, lw, lh);
+        y += lh + 4;
+      } catch (e) {}
+    }
+    gray(0);
+    font(true, 11);
+    wrap(s.name || "", 95).forEach(function (ln) { text(ln, M, y + 4); y += 5; });
+    font(false, 8.5);
+    gray(60);
+    [s.trade, [(s.addr || "").split("\n").join(", "), s.country].filter(Boolean).join(", "),
+     [s.afm ? pt("afm") + ": " + s.afm : "", s.doy ? pt("doy") + ": " + s.doy : ""].filter(Boolean).join("   "),
+     [s.phone, s.email, s.web].filter(Boolean).join("   ")].filter(Boolean).forEach(function (ln) {
+      wrap(ln, 95).forEach(function (w) { text(w, M, y + 3.5); y += 4; });
+    });
+    gray(0);
+    font(true, 15);
+    text(pt("t.stmt"), R, topY + 6, { align: "right" });
+    font(false, 9);
+    gray(60);
+    text(pt("asOf", { d: C.fmtDay(todayKey()) }), R, topY + 12, { align: "right" });
+    y = Math.max(y, topY + 16) + 6;
+
+    // Client
+    font(false, 7.5);
+    gray(110);
+    text(upper(pt("to")), M, y);
+    y += 5;
+    gray(0);
+    font(true, 10.5);
+    wrap(c.name, 120).forEach(function (ln) { text(ln, M, y); y += 5; });
+    font(false, 8.5);
+    gray(50);
+    [c.afm ? pt("afm") + ": " + c.afm + (c.doy ? "   " + pt("doy") + ": " + c.doy : "") : "",
+     (c.addr || "").split("\n").join(", "), c.email].filter(Boolean).forEach(function (ln) {
+      wrap(ln, 120).forEach(function (w) { text(w, M, y); y += 4; });
+    });
+    y += 5;
+
+    // Rows
+    var X = { n: M + 2, d: 78, u: 100, t: 139, p: 164, b: R - 1 };
+    var saved = LANG;
+    LANG = lang;
+    var kinds = { inv: kindName("inv"), rcpt: kindName("rcpt"), ext: kindName("inv"), cred: kindName("cred"), pro: kindName("pro") };
+    LANG = saved;
+    function head() {
+      doc.setFillColor(235, 235, 235);
+      doc.rect(M, y - 4.5, R - M, 7, "F");
+      font(true, 8);
+      gray(40);
+      text(pt("doc"), X.n, y);
+      text(pt("date"), X.d, y);
+      text(pt("due"), X.u, y);
+      text(pt("total"), X.t, y, { align: "right" });
+      text(pt("paid"), X.p, y, { align: "right" });
+      text(pt("bal"), X.b, y, { align: "right" });
+      y += 6;
+    }
+    head();
+    st.rows.forEach(function (r) {
+      var h = r.late ? 8.4 : 5.4;
+      if (need(h)) head();
+      font(false, 8.5);
+      gray(0);
+      text(wrap((r.num || "") + "  " + (kinds[r.kind] || ""), X.d - X.n - 3)[0], X.n, y);
+      text(r.date ? C.fmtDay(r.date) : "", X.d, y);
+      text(r.due ? C.fmtDay(r.due) : "", X.u, y);
+      text(C.fmtMoney(r.total, r.cur, lang), X.t, y, { align: "right" });
+      text(C.fmtMoney(r.paid, r.cur, lang), X.p, y, { align: "right" });
+      font(true, 8.5);
+      text(C.fmtMoney(r.bal, r.cur, lang), X.b, y, { align: "right" });
+      if (r.late) {
+        font(false, 7.5);
+        doc.setTextColor(180, 40, 40);
+        text(pt("late", { n: r.late }), X.n, y + 3.6);
+      }
+      y += h;
+      doc.setDrawColor(225);
+      doc.line(M, y - 2.6, R, y - 2.6);
+    });
+    y += 3;
+    Object.keys(st.totals).sort().forEach(function (cur) {
+      need(9);
+      doc.setFillColor(235, 235, 235);
+      doc.rect(118, y - 4.3, R - 118, 7, "F");
+      font(true, 10.5);
+      gray(0);
+      text(pt("open"), 121, y);
+      text(C.fmtMoney(st.totals[cur], cur, lang), R - 1, y, { align: "right" });
+      y += 9;
+    });
+    if (s.iban) {
+      var ls = wrap(s.iban, R - M);
+      need(8 + ls.length * 4.2);
+      y += 2;
+      font(true, 8.5);
+      gray(0);
+      text(pt("bank"), M, y);
+      y += 4.6;
+      font(false, 8.5);
+      gray(50);
+      ls.forEach(function (ln) { text(ln, M, y); y += 4.2; });
+    }
+    var pages = doc.getNumberOfPages();
+    for (var pg = 1; pg <= pages; pg++) {
+      doc.setPage(pg);
+      font(false, 7.5);
+      gray(130);
+      if (prof.footer) wrap(prof.footer, R - M - 30).slice(0, 2).forEach(function (ln, k) { text(ln, M, H - 12 + k * 3.6); });
+      text(pt("page", { a: pg, b: pages }), R, H - 12, { align: "right" });
     }
     return doc.output("blob");
   }
@@ -2866,8 +3317,10 @@
     }).catch(function () { showToast(t("toast.fileGone")); });
   }
 
-  // Email: orOS Mail (an account on this device) or mailto:. The PDF
-  // is attached by hand (Mail's bridge carries text only).
+  // Email: orOS Mail (an account on this device) or mailto:. With Mail
+  // and the orOS disk, the PDF rides along: Mail's deep link is JSON, so
+  // the file goes to /internal/Invoices/ first and Mail gets its path.
+  // A record keeps its official file; a document gets a fresh PDF.
   function mailShell() {
     var shell = null;
     try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
@@ -2877,22 +3330,71 @@
       return m && Array.isArray(m.accounts) && m.accounts.length ? shell : null;
     } catch (e) { return null; }
   }
-  function sendEmail(d) {
+  // done(path) with the file to attach, or done(null) to send without.
+  function mailAttachment(d, done) {
+    var fs = orosFS();
+    if (!fs) { done(null); return; }
+    if (d.file) { done(d.file); return; }
+    if (d.kind === "ext") { done(null); return; }
+    var write = typeof fs.writeBlob === "function" ? fs.writeBlob : fs.write;
+    if (typeof write !== "function") { done(null); return; }
+    pdfBlob(d, function (blob) {
+      if (!blob) { done(null); return; }
+      var path = "/internal/Invoices/" + pdfName(d);
+      Promise.resolve(write.call(fs, path, blob)).then(function () { done(path); }, function () { done(null); });
+    });
+  }
+  // Stock (BR-ST-OUT): offered only when Stock is in use on this device.
+  function stockShell() {
+    try {
+      if (window.parent === window || typeof window.parent.__orosOpenAt !== "function") return null;
+      return localStorage.getItem("oros-stock-data") ? window.parent : null;
+    } catch (e) { return null; }
+  }
+  // Wave 3: a payment reminder, polite or (once overdue) firm.
+  function reminderDialog(d) {
+    var late = C.lateDays(d, todayKey());
+    var dlg = makeDialog("inv-remind", t("vw.remind") + " · " + d.num);
+    var form = el("form");
+    form.method = "dialog";
+    form.appendChild(el("p", "dlg-text", t("rem.text")));
+    var left = late ? [btn(t("rem.soft"), "", function () { dlg.close(); sendEmail(d, "soft"); })] : [];
+    actions(form, left, late ? t("rem.firm") : t("rem.soft"));
+    form.addEventListener("submit", function (e) { e.preventDefault(); dlg.close(); sendEmail(d, late ? "firm" : "soft"); });
+    dlg.appendChild(form);
+    openDialog(dlg, form.querySelector("button[type=submit]"));
+  }
+  // tone: undefined (the document itself) | "soft" | "firm" (reminders)
+  function sendEmail(d, tone) {
     var lang = d.plang || data.prof.plang || LANG;
     var saved = LANG;
     LANG = lang;
     var k = kindName(d.kind === "ext" ? "inv" : d.kind);
     var tt = C.totals(d);
+    var sel = C.sellerOf(data, d);
     var subj = t("mail.subject", { k: k, n: d.num });
     var body = d.due ? t("mail.body", { k: k, n: d.num, d: C.fmtDay(d.date), a: C.fmtMoney(tt.pay, d.cur, lang), u: C.fmtDay(d.due) })
                      : t("mail.bodyNoDue", { k: k, n: d.num, d: C.fmtDay(d.date), a: C.fmtMoney(tt.pay, d.cur, lang) });
-    if (data.prof.iban) body += "\n\n" + data.prof.iban;
-    if (data.prof.name) body += "\n\n" + data.prof.name;
+    if (tone && d.due) {
+      var late = C.lateDays(d, todayKey());
+      var pr = { k: k, n: d.num, d: C.fmtDay(d.date), a: C.fmtMoney(C.balance(data, d), d.cur, lang), u: C.fmtDay(d.due), l: late };
+      subj = t(tone === "firm" ? "mail.firmSubject" : "mail.softSubject", pr);
+      body = t(tone === "firm" ? "mail.firm" : (late ? "mail.softLate" : "mail.soft"), pr);
+    }
+    if (sel.iban) body += "\n\n" + sel.iban;
+    if (sel.name) body += "\n\n" + sel.name;
     LANG = saved;
     var to = (d.c && d.c.email) || "";
     var shell = mailShell();
     if (shell) {
-      shell.__orosOpenAt("mail", { compose: { to: to, subject: subj.slice(0, 300), body: body.slice(0, 20000) } });
+      var compose = { to: to, subject: subj.slice(0, 300), body: body.slice(0, 20000) };
+      var go = function (path) {
+        if (path) compose.attach = [{ path: path, name: path.split("/").pop() }];
+        shell.__orosOpenAt("mail", { compose: compose });
+        if (!path && d.kind !== "ext") showToast(t("toast.emailHint"));
+      };
+      mailAttachment(d, go);
+      return;
     } else {
       var href = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(body);
       var a = document.createElement("a");
@@ -3148,7 +3650,21 @@
     }, true);
   }
 
+  // Connected services wave 2: myDATA through timologisi.online (mydata-ui.js)
+  var MD = window.OrosInvoicesMyData || null;
+  function initMyData() {
+    if (!MD) return;
+    MD.init({
+      get lang() { return LANG; },
+      core: C, el: el, btn: btn, field: field, input: input, select: select, fillSelect: fillSelect,
+      makeDialog: makeDialog, actions: actions, openDialog: openDialog, toast: showToast,
+      day: day, kindName: kindName, today: todayKey, findDoc: findDoc, putDoc: putDoc,
+      data: function () { return data; }, renderViewer: function () { renderAll(); }
+    });
+  }
+
   function boot() {
+    initMyData();
     load();
     loadPrefs();
     tab = prefs.tab;

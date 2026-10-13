@@ -34,6 +34,10 @@ With [orOS sync](help:t/sync), all your boards, columns, cards and labels, plus 
 
 - Cards with a due date also appear in [Calendar](app:calendar) as all-day events, shown as "column · card text". Cards on archived boards are left out.
 - `Import from other apps` reads JSON exports from Kanri and Trello. It creates new boards and never changes your existing ones.
+- It can also read straight from a connected account: a Trello board, a GitHub repository's issues, or a Notion database. Connect Trello (API key and token), GitHub (a personal access token) or Notion (your integration's secret) in [Settings](app:settings) › `Connected services` first, then in `Import from other apps` pick the account, `Show boards` (or `Show repositories`, `Show databases`), pick one and `Read`.
+- A GitHub repository becomes a board with two columns, `Open` and `Closed`. Each issue is a card "#12 Title" with its text as notes, its labels, its milestone's date as due date and its "- [ ]" lines as subtasks. Pull requests are left out.
+- A Notion database becomes a board with a column for each option of its first `Status` property (or its first `Select`), plus `No status` for entries without one. Each entry is a card named by its title, with its first date as due date, its first multi-select as labels, and its other properties as "Name: value" lines in the notes, ending with its Notion link. In Notion, share the database with your integration first (••• › `Connections`).
+- Read the same board again later: only new cards, columns and labels come in. Cards you already have stay as you left them, and ones you deleted don't come back. orOS only reads Trello, GitHub and Notion: nothing there changes.
 - Kanban has no export of its own; your boards are included in orOS [backups](help:t/backup).
 
 ## Keyboard shortcuts

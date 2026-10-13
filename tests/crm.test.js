@@ -261,3 +261,275 @@ test("search: customers, deals, open follow-ups, history; tombstones and orphans
   assert.equal(by.aaaaaa01.title, "Μίλησα με τη Μαρία");
   assert.equal(by.aaaaaa01.when, NOW);
 });
+
+// ---------------------------------------------------------------
+// Phase 2: shell reminders, Calendar feed, Contacts, Today
+// ---------------------------------------------------------------
+
+test("shell reminders: announce once, keep only what is still due, a moved follow-up rings again", () => {
+  let d = C.norm(data({
+    cust: [cust("cccccc01", { name: "Acme" })],
+    fups: [fup("ffffff01", "cccccc01", "2026-10-10"),
+           fup("ffffff02", "cccccc01", TODAY, { t: "15:30" }),
+           fup("ffffff03", "cccccc01", TODAY)]
+  }));
+  let r = C.reminders(d, TODAY, "10:00", {});
+  assert.deepEqual(r.fresh.map(x => x.fup.id), ["ffffff01", "ffffff03"]);
+  assert.deepEqual(r.next, { "ffffff01|2026-10-10": 1, "ffffff03|2026-10-12": 1 });
+  // next tick, nothing new; 15:30 comes
+  assert.equal(C.reminders(d, TODAY, "10:01", r.next).fresh.length, 0);
+  r = C.reminders(d, TODAY, "15:30", r.next);
+  assert.deepEqual(r.fresh.map(x => x.key), ["ffffff02|2026-10-1215:30"]);
+  // ffffff01 done, ffffff03 snoozed to tomorrow: both leave the map
+  d = C.merge(d, data({ fups: [fup("ffffff01", "cccccc01", "2026-10-10", { m: 2000, done: TODAY }),
+                                fup("ffffff03", "cccccc01", "2026-10-13", { m: 2000 })] }));
+  r = C.reminders(d, TODAY, "16:00", r.next);
+  assert.deepEqual(Object.keys(r.next), ["ffffff02|2026-10-1215:30"]);
+  // tomorrow the snoozed one is a new key
+  r = C.reminders(d, "2026-10-13", "08:00", r.next);
+  assert.deepEqual(r.fresh.map(x => x.key), ["ffffff03|2026-10-13"]);
+  // garbage map is tolerated
+  assert.equal(C.reminders(d, "2026-10-13", "08:00", null).fresh.length, 2);
+});
+
+test("reminder text in both languages", () => {
+  const d = C.norm(data({ cust: [cust("cccccc01", { name: "Acme" })],
+                          fups: [fup("ffffff01", "cccccc01", "2026-10-09", { text: "Send offer" }),
+                                 fup("ffffff02", "cccccc01", TODAY, { t: "09:15" })] }));
+  assert.deepEqual(C.reminderText(d, d.fups[0], TODAY, "en"), { title: "Follow-up: Acme", body: "Send offer · 3 days late" });
+  assert.deepEqual(C.reminderText(d, d.fups[1], TODAY, "el"), { title: "Follow-up: Acme", body: "Call back · σήμερα 09:15" });
+  assert.equal(C.reminderText(d, d.fups[0], "2026-10-10", "el").body, "Send offer · χθες");
+  assert.equal(C.reminderText(d, fup("ffffff09", "cccccc09", TODAY), TODAY, "en").title, "Follow-up: Unknown customer");
+});
+
+test("calendar feed: open on its day, late on today only, done on its done day, deal closes", () => {
+  const d = C.norm(data({
+    cust: [cust("cccccc01")],
+    fups: [fup("ffffff01", "cccccc01", "2026-10-10"),
+           fup("ffffff02", "cccccc01", TODAY, { t: "09:00" }),
+           fup("ffffff03", "cccccc01", "2026-10-14"),
+           fup("ffffff04", "cccccc01", "2026-10-01", { done: "2026-10-11" })],
+    deals: [deal("dddddd01", "cccccc01", { close: "2026-10-14", stage: "proposal" }),
+            deal("dddddd02", "cccccc01", { close: "2026-10-14", stage: "won", cd: TODAY }),
+            deal("dddddd03", "cccccc01", { close: "2026-10-05" })]
+  }));
+  const ks = (ymd) => C.calendarOn(d, ymd, TODAY).map(r => r.k + ":" + (r.fup || r.deal).id);
+  assert.deepEqual(ks(TODAY), ["late:ffffff01", "fup:ffffff02"]);
+  assert.deepEqual(ks("2026-10-10"), []);                 // late shows on today, not on its old day
+  assert.deepEqual(ks("2026-10-11"), ["done:ffffff04"]);
+  assert.deepEqual(ks("2026-10-14"), ["close:dddddd01", "fup:ffffff03"]);
+  assert.deepEqual(ks("2026-10-05"), []);                 // a past expected close is not shown
+});
+
+test("contacts: customers that list a contact", () => {
+  const d = C.norm(data({ cust: [cust("cccccc01", { name: "Zeta", people: [{ c: "ct_1", n: "" }] }),
+                                 cust("cccccc02", { name: "alpha", people: [{ c: "ct_1", n: "", role: "CEO" }, { c: "", n: "Bob" }] }),
+                                 cust("cccccc03", { name: "Beta", people: [{ c: "ct_2", n: "" }] })] }));
+  assert.deepEqual(C.custsForContact(d, "ct_1").map(c => c.name), ["alpha", "Zeta"]);
+  assert.deepEqual(C.custsForContact(d, "ct_9"), []);
+  assert.deepEqual(C.custsForContact(d, ""), []);
+});
+
+test("Today provider: open follow-ups as tasks with Done, read-only", () => {
+  globalThis.OrosCrmCore = C;
+  const P = require(path.join(__dirname, "..", "crm/today.js"));
+  const store = { "oros-crm-data": data({
+    cust: [cust("cccccc01", { name: "Acme", alias: "AC" })],
+    fups: [fup("ffffff01", "cccccc01", "2026-10-10", { text: "Old" }),
+           fup("ffffff02", "cccccc01", TODAY, { t: "09:00", text: "Call" }),
+           fup("ffffff03", "cccccc01", "2026-10-15", { text: "Later" }),
+           fup("ffffff04", "cccccc01", "2026-10-30", { text: "Far" }),
+           fup("ffffff05", "cccccc01", TODAY, { done: TODAY })]
+  }) };
+  const before = J(store);
+  const ctx = { today: TODAY, horizon: 3, now: NOW, lang: "en",
+                readJSON: (k) => (k in store ? JSON.parse(J(store[k])) : null) };
+  const rows = P.collect(ctx);
+  assert.equal(J(store), before);
+  assert.deepEqual(rows.map(r => r.id), ["ffffff01", "ffffff02", "ffffff03"]);
+  assert.deepEqual(rows[1], { id: "ffffff02", due: TODAY, time: "09:00", title: "Call", text: "Acme (AC)",
+                              kind: "task", target: { fup: "ffffff02" }, done: { fup: "ffffff02" } });
+  assert.deepEqual(P.collect({ today: TODAY, horizon: 3, now: NOW, lang: "en", readJSON: () => null }), []);
+  assert.equal(P.id, "crm");
+  assert.deepEqual(P.keys, ["oros-crm-data"]);
+});
+
+// ---------------------------------------------------------------
+// Phase 2b: own pipeline stages
+// ---------------------------------------------------------------
+
+test("stages: defaults, rename, hide, own stages in order, Won/Lost fixed", () => {
+  assert.deepEqual(C.stages(C.empty()).map(s => s.id), ["new", "contact", "proposal", "nego", "won", "lost"]);
+  const d = C.norm(data({ stg: [
+    { id: "contact", m: 5, name: "Called", prob: 30 },
+    { id: "proposal", m: 5, off: 1 },
+    { id: "ssssss01", m: 5, name: "Demo", prob: 40, pos: 15 },
+    { id: "ssssss02", m: 5, name: "Trial", pos: 45 },
+    { id: "won", m: 5, name: "Paid" },                 // Won / Lost are not editable
+    { id: "ssssss03", m: 5 },                          // own stage needs a name
+    { id: "nego", m: 5, off: 0, name: "" }
+  ] }));
+  assert.deepEqual(d.stg.map(r => r.id), ["contact", "nego", "proposal", "ssssss01", "ssssss02"]);
+  assert.deepEqual(d.stg.find(r => r.id === "nego"), { id: "nego", m: 5 });
+  const st = C.stages(d);
+  assert.deepEqual(st.map(s => s.id), ["new", "ssssss01", "contact", "nego", "ssssss02", "won", "lost"]);
+  assert.deepEqual(st[2], { id: "contact", name: "Called", prob: 30, pos: 20, open: true, own: false });
+  assert.equal(st[4].prob, 50);
+  // every open stage hidden → New comes back so a deal always has a column
+  const none = C.norm(data({ stg: ["new", "contact", "proposal", "nego"].map(id => ({ id, m: 1, off: 1 })) }));
+  assert.deepEqual(C.stages(none).map(s => s.id), ["new", "won", "lost"]);
+});
+
+test("stages: deals in own stages, a deleted or hidden stage shows in the first one, probabilities", () => {
+  const d = C.norm(data({
+    cust: [cust("cccccc01")],
+    stg: [{ id: "ssssss01", m: 5, name: "Demo", prob: 40, pos: 15 }, { id: "proposal", m: 5, off: 1 }],
+    deals: [deal("dddddd01", "cccccc01", { stage: "ssssss01", val: 10000 }),
+            deal("dddddd02", "cccccc01", { stage: "ssssss09", val: 5000 }),     // stage deleted elsewhere
+            deal("dddddd03", "cccccc01", { stage: "proposal", val: 2000 }),     // stage hidden elsewhere
+            deal("dddddd04", "cccccc01", { stage: "ssssss01", val: 10000, prob: 90 }),
+            deal("dddddd05", "cccccc01", { stage: "won", val: 700, cd: TODAY })],
+    tombs: { ssssss09: 4 }
+  }));
+  assert.equal(d.deals.find(x => x.id === "dddddd02").stage, "ssssss09");   // never rewritten
+  assert.equal(C.stageOf(d, d.deals.find(x => x.id === "dddddd02")).id, "new");
+  assert.equal(C.dealProb(d.deals[0], d), 40);
+  assert.equal(C.dealProb(d.deals[1], d), 10);
+  const p = C.pipeline(d);
+  assert.deepEqual(p.ssssss01, { n: 2, val: 20000, wval: 13000 });
+  assert.deepEqual(p.new, { n: 2, val: 7000, wval: 700 });
+  assert.equal(p.proposal, undefined);
+  const s = C.dashboard(d, NOW, TODAY);
+  assert.equal(s.openN, 4);
+  assert.equal(s.openVal, 27000);
+  assert.equal(s.openW, 13700);
+});
+
+test("stages merge like rows: LWW, tombstones, symmetric", () => {
+  const A = data({ stg: [{ id: "ssssss01", m: 10, name: "Demo", pos: 15 }, { id: "contact", m: 3, name: "A" }] });
+  const B = data({ stg: [{ id: "ssssss01", m: 12, name: "Demo call", pos: 15 }, { id: "contact", m: 4, name: "B" }],
+                   tombs: { ssssss02: 9 } });
+  const ab = C.merge(A, B);
+  assert.equal(J(ab), J(C.merge(B, A)));
+  assert.equal(ab.stg.find(r => r.id === "ssssss01").name, "Demo call");
+  assert.equal(ab.stg.find(r => r.id === "contact").name, "B");
+  const del = C.merge(ab, data({ tombs: { ssssss01: 20 } }));
+  assert.deepEqual(del.stg.map(r => r.id), ["contact"]);
+});
+
+test("search shows the user's stage name", () => {
+  const S = require(path.join(__dirname, "..", "crm/search.js"));
+  const store = { "oros-crm-data": data({ cust: [cust("cccccc01", { name: "Acme" })],
+    stg: [{ id: "ssssss01", m: 5, name: "Demo", pos: 15 }, { id: "contact", m: 5, name: "Called" }],
+    deals: [deal("dddddd01", "cccccc01", { stage: "ssssss01" }), deal("dddddd02", "cccccc01", { stage: "contact" }),
+            deal("dddddd03", "cccccc01", { stage: "nego" })] }) };
+  const hits = S.search({ lang: "en", readJSON: (k) => (k in store ? JSON.parse(J(store[k])) : null) });
+  const txt = (id) => hits.find(h => h.id === id).text;
+  assert.match(txt("dddddd01"), /Demo/);
+  assert.match(txt("dddddd02"), /Called/);
+  assert.match(txt("dddddd03"), /Negotiation/);
+});
+
+test("app strings: no key twice, EN and EL have the same keys", () => {
+  const fs = require("fs");
+  const s = fs.readFileSync(path.join(__dirname, "..", "crm/crm.js"), "utf8");
+  const a = s.indexOf("    en: {"), b = s.indexOf("    el: {"), c = s.indexOf("  };", b);
+  const keys = (part) => [...part.matchAll(/"([a-zA-Z0-9_.]+)":\s/g)].map(m => m[1]);
+  const en = keys(s.slice(a, b)), el = keys(s.slice(b, c));
+  assert.deepEqual(en.filter((k, i) => en.indexOf(k) !== i), []);
+  assert.deepEqual(el.filter((k, i) => el.indexOf(k) !== i), []);
+  assert.deepEqual(en.slice().sort(), el.slice().sort());
+});
+
+test("Invoices prefill (BR-CRM-INV 1): customer fields, a won deal as one line, accepted by Invoices", () => {
+  const I = require(path.join(__dirname, "..", "invoices/core.js"));
+  const c = C.normCust(cust("cccccc01", { name: "Ελαιώνας ΑΕ", afm: "099999999", doy: "Α' Αθηνών", email: "a@b.gr" }));
+  const d = deal("dddddd01", "cccccc01", { title: "Website", val: 150050, stage: "won" });
+  const n = C.invoicePrefill(c, d, "EUR");
+  assert.deepEqual(n.items, [{ d: "Website", q: 1, p: 1500.5 }]);
+  assert.deepEqual(n.ref, { app: "crm", id: "dddddd01" });
+  const p = I.normPrefill(n);
+  assert.equal(p.crm, "cccccc01");
+  assert.equal(p.client.name, "Ελαιώνας ΑΕ");
+  assert.equal(p.client.afm, "099999999");
+  assert.deepEqual(p.items, [{ d: "Website", q: 1, p: 150050 }]);
+  assert.equal(p.cur, "EUR");
+  const bare = I.normPrefill(C.invoicePrefill(c, null, "GBP"));
+  assert.deepEqual(bare.items, []);
+  assert.equal(bare.cur, "GBP");
+  // every CRM currency is one Invoices knows
+  assert.ok(I.normPrefill(C.invoicePrefill(c, null, "JPY")));
+});
+
+test("Quote prefill (BR-Q1): a deal line in EUR/USD, a blank line for the customer, null for other currencies", () => {
+  const c = C.normCust(cust("cccccc01", { name: "Acme" }));
+  const d = deal("dddddd01", "cccccc01", { title: "Logo", val: 30000 });
+  assert.deepEqual(C.quotePrefill(c, d, "USD"), { client: "Acme", items: [{ d: "Logo", q: 1, p: 300 }], cur: "USD" });
+  assert.deepEqual(C.quotePrefill(c, null, "EUR"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }], cur: "EUR" });
+  assert.deepEqual(C.quotePrefill(c, null, "GBP"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }] });
+  assert.equal(C.quotePrefill(c, d, "GBP"), null);
+});
+
+test("Quote read-out (quote/core.js forClient, total): name or tax id, deleted left out, newest first", () => {
+  const Q = require(path.join(__dirname, "..", "quote/core.js"));
+  const q = (id, extra) => Object.assign({ id, num: "OFF-2026-00" + id.slice(-1), clientId: "k1", status: "sent",
+    date: "2026-10-0" + id.slice(-1), currency: "EUR", gDisc: 0, items: [{ qty: 1, price: 100, disc: 0, vat: 24 }] }, extra || {});
+  const qd = {
+    clients: [{ id: "k1", name: "Ελαιώνας  ΑΕ" }, { id: "k2", name: "Other", taxId: "099 999 999" }, { id: "k3", name: "Nope" }],
+    quotes: [q("q1"), q("q2", { clientId: "k2", currency: "USD" }), q("q3"), q("q4", { clientId: "k3" }), q("q5")],
+    deleted: { q3: 5 }
+  };
+  const rows = Q.forClient(qd, { name: "ελαιωνας αε", afm: "099999999" });
+  assert.deepEqual(rows.map(r => r.id), ["q5", "q2", "q1"]);
+  assert.equal(rows[1].cur, "USD");
+  assert.equal(rows[2].total, 124);
+  assert.deepEqual(Q.forClient(qd, { name: "", afm: "" }), []);
+  assert.deepEqual(Q.forClient(null, { name: "x" }), []);
+  // same sum as quote.js calcTotals: line and global discount, then VAT
+  assert.equal(Q.total({ gDisc: 10, items: [{ qty: 2, price: 100, disc: 50, vat: 24 }, { qty: 1, price: 10, vat: 0 }] }), 120.6);
+});
+
+test("CSV import: own export round trip, HubSpot / Excel headers, duplicates by ΑΦΜ or name, tags", () => {
+  const d = C.norm(data({ cust: [cust("cccccc01", { name: "Acme AE", afm: "099999999" })], tags: [{ id: "tttttt01", m: 1, name: "VIP" }] }));
+  // our own Greek export, read back into an empty CRM
+  const own = C.norm(data({ cust: [cust("cccccc02", { name: "Γάμμα ΟΕ", afm: "123456789", doy: "Α' Αθηνών", st: "past", kind: "person", note: "a\nb" })] }));
+  const csv = "﻿" + C.csvRows(own, "el").map(r => r.map(C.csvCell).join(";")).join("\r\n");
+  const back = C.csvImport(C.empty(), csv, NOW);
+  assert.equal(back.add.length, 1);
+  const g = back.add[0];
+  assert.equal(g.name, "Γάμμα ΟΕ"); assert.equal(g.afm, "123456789"); assert.equal(g.doy, "Α' Αθηνών");
+  assert.equal(g.st, "past"); assert.equal(g.kind, "person"); assert.equal(g.note, "a\nb");
+  // HubSpot contacts
+  const hs = "First Name,Last Name,Company Name,Email,Phone Number,Street Address,City,Postal Code,Country/Region,Lifecycle Stage,Tags\n" +
+    "Maria,Papa,Beta OE,m@b.gr,210,Odos 1,Athens,10558,Greece,lead,\"VIP, New\"\n" +
+    "John,Doe,,j@d.com,,,,,,customer,\n,,acme ae,,,,,,,,\n,,,,,,,,,,x\n,,Beta OE,,,,,,,,";
+  const r = C.csvImport(d, hs, NOW);
+  assert.deepEqual(r.add.map(c => c.name), ["Beta OE", "John Doe"]);
+  assert.equal(r.dup, 2);           // acme ae (existing), Beta OE (twice in the file)
+  assert.equal(r.noName, 1);
+  const b = r.add[0];
+  assert.equal(b.st, "lead"); assert.equal(b.addr, "Odos 1, 10558 Athens"); assert.deepEqual(b.people, [{ c: "", n: "Maria Papa", phone: "210", email: "m@b.gr" }]);
+  assert.equal(r.add[1].kind, "person"); assert.equal(r.add[1].st, "active");
+  assert.deepEqual(r.tags.map(x => x.name), ["New"]);
+  assert.ok(b.tags.includes("tttttt01") && b.tags.includes(r.tags[0].id));
+  // ΑΦΜ with EL prefix and spaces is a duplicate; ";" file; no name column → null
+  const r2 = C.csvImport(d, "Επωνυμία;ΑΦΜ\nΆλλο όνομα;EL 099 999 999\nΔέλτα;", NOW);
+  assert.deepEqual([r2.add.map(c => c.name), r2.dup], [["Δέλτα"], 1]);
+  assert.equal(C.csvImport(d, "Email;Phone\na@b.gr;1", NOW), null);
+  // the result merges like any other edit
+  const merged = C.norm(Object.assign({}, d, { cust: d.cust.concat(r.add), tags: d.tags.concat(r.tags) }));
+  assert.equal(merged.cust.length, 3);
+});
+
+test("Mail → CRM (BR-CRM-MAIL): payload cleaned, customer found by its email or a person's", () => {
+  assert.equal(C.mailLog({ email: "not an email" }), null);
+  assert.equal(C.mailLog(null), null);
+  const m = C.mailLog({ email: " Maria@Beta.GR ", name: "Maria\u0000", subject: "Offer", text: "Hi\r\nthere", at: 5, x: 1 });
+  assert.deepEqual(m, { email: "maria@beta.gr", name: "Maria", subject: "Offer", text: "Hi\nthere", at: 5 });
+  const d = C.norm(data({ cust: [cust("cccccc01", { email: "info@acme.gr" }),
+    cust("cccccc02", { people: [{ c: "", n: "Maria", email: "maria@beta.gr" }, { c: "ct1", n: "Linked" }] })] }));
+  assert.equal(C.custByEmail(d, "INFO@acme.gr").id, "cccccc01");
+  assert.equal(C.custByEmail(d, "maria@beta.gr").id, "cccccc02");
+  assert.equal(C.custByEmail(d, "nobody@x.gr"), null);
+  assert.equal(C.custByEmail(d, "l@contacts.gr", (p) => (p.c === "ct1" ? "l@contacts.gr" : p.email)).id, "cccccc02");
+});

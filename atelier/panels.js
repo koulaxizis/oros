@@ -15,7 +15,7 @@
   var AT = window.AT, M = AT.M, T = AT.T, FX = AT.FX, AX = AT.AX, A = AT.A, t = AT.t, $ = AT.$, el = AT.el;
   var ED = AT.ed, ICONS = window.ATELIER_ICONS;
 
-  var RAIL = ["templates", "elements", "text", "brand", "sources", "uploads", "background"];
+  var RAIL = ["templates", "elements", "text", "ai", "brand", "sources", "uploads", "background"];
   var PALETTE = ["#000000", "#545454", "#737373", "#a6a6a6", "#d9d9d9", "#ffffff",
     "#ff3131", "#ff5757", "#ff66c4", "#cb6ce6", "#8c52ff", "#5e17eb",
     "#0097b2", "#0cc0df", "#5ce1e6", "#38b6ff", "#5271ff", "#004aad",
@@ -1011,6 +1011,7 @@
     }));
     bar.appendChild(btn("ctx-txt" + (view === "effects" ? " on" : ""), t("ctx.effects"), function () { openView("effects"); }));
     bar.appendChild(tool("edit", t("ctx.edit"), function () { ED.enterText(it.id); }));
+    if (AT.ai) bar.appendChild(tool("ai", t("ai.menu"), function (b) { AT.ai.textMenu(b, it); }));
   }
 
   function shapeTools(bar, it) {
@@ -1084,6 +1085,8 @@
     }));
     bar.appendChild(tool("mask", t("ctx.mask"), function () { openView("mask"); }, view === "mask"));
     bar.appendChild(tool("replace", t("ctx.replace"), function () { AT.io.uploadImage(it.id); }));
+    if (AT.ai && !it.ax.vid) bar.appendChild(tool("cutout", t("ai.cut"), function () { AT.ai.cutout(it.id); }));
+    if (AT.editPic && AT.editPic.can(it)) bar.appendChild(tool("editpic", t("ctx.editPic"), function () { AT.editPic.open(it.id); }));
     if (it.ax.vid) bar.insertBefore(btn("ctx-txt" + (view === "video" ? " on" : ""), t("ctx.video"), function () { openView("video"); }), bar.firstChild);
   }
 

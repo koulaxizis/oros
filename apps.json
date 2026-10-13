@@ -17,7 +17,8 @@
       "icon": "clock",
       "url": "time/",
       "type": "internal",
-      "today": "today.js"
+      "search": "search.js",
+      "today": ["stage-core.js", "today.js"]
     },
     {
       "id": "sky",
@@ -276,7 +277,8 @@
       "url": "crm/",
       "type": "internal",
       "search": "search.js",
-      "searchOff": true
+      "searchOff": true,
+      "today": "today.js"
     },
     {
       "id": "stock",
@@ -285,6 +287,7 @@
       "icon": "stock",
       "url": "stock/",
       "search": "search.js",
+      "today": "today.js",
       "type": "internal"
     },
     {
@@ -297,6 +300,25 @@
       "search": "search.js",
       "searchOff": true,
       "today": ["core.js", "today.js"]
+    },
+    {
+      "id": "newsletter",
+      "name": "Newsletter",
+      "category": "Business",
+      "icon": "newsletter",
+      "url": "newsletter/",
+      "type": "internal",
+      "search": "search.js",
+      "today": ["core.js", "today.js"]
+    },
+    {
+      "id": "signature",
+      "name": "Email Signature",
+      "category": "Business",
+      "icon": "signature",
+      "url": "signature/",
+      "type": "internal",
+      "search": "search.js"
     },
     {
       "id": "prompter",
@@ -548,6 +570,7 @@
       "icon": "library",
       "url": "library/",
       "search": "search.js",
+      "today": ["core.js", "today.js"],
       "type": "internal"
     },
     {

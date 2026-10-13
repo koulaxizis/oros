@@ -90,17 +90,76 @@
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
+  // A Lightroom / Camera Raw preset (.xmp) → adjustment layers
+  // (xmp.js), above the active layer, as one undo step.
+  function openLrPreset() {
+    if (!st.doc) return Promise.resolve();
+    var dlg = dialogHost();
+    if (!dlg || typeof dlg.openFile !== "function") { PL.toast(t("msg.noDialogs")); return Promise.resolve(); }
+    return dlg.openFile(".xmp,application/rdf+xml").then(function (f) {
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { PL.toast(t("msg.xmpBad")); return; }
+      return f.text().then(function (text) {
+        var res;
+        try { res = PL.XMP.parse(text); } catch (e) { PL.toast(t("msg.xmpBad")); return; }
+        var name = res.name || baseName(f.name);
+        if (!res.layers.length) { PL.toast(t("msg.xmpEmpty", { name: name })); return; }
+        var n = PL.ops.addAdjLayers(res.layers, t("step.lrPreset"), name);
+        if (!n) return;
+        PL.toast(t("msg.xmpDone", { name: name, n: n }) + (res.skipped.length ? " " + t("msg.xmpSkipped", { n: res.skipped.length }) : ""));
+      });
+    }).catch(function () { PL.toast(t("msg.xmpBad")); });
+  }
   // A picture already on the orOS disk (e.g. Montage's frame grab).
-  function openDiskPath(path) {
+  // back: { app, key } (C.normBack) = the app that asked for the edit;
+  // "Done" sends the picture back there (sendBack).
+  function openDiskPath(path, back) {
     var fs = PL.fs();
     if (!fs || typeof path !== "string" || path.indexOf("/internal/") !== 0 || path.indexOf("..") >= 0 || !IMG_EXT.test(path)) {
-      PL.toast(t("msg.openFail")); return;
+      PL.toast(t("msg.openFail")); return Promise.resolve();
     }
-    fs.read(path).then(function (b) {
+    return fs.read(path).then(function (b) {
       var name = path.split("/").pop();
       var type = /\.svg$/i.test(name) ? "image/svg+xml" : (b.type || "");
       return openPictureFile(new File([b], name, { type: type }), false);
+    }).then(function () {
+      if (back && st.doc) { st.doc.bk = back; PL.emit("doc"); PL.changed(); }
     }).catch(function () { PL.toast(t("msg.openFail")); });
+  }
+
+  // ---------- Bridge back (Atelier "Edit picture") ----------
+  // The finished picture becomes a new asset, /internal/Assets/
+  // <sha256>.png (Atelier's naming: the hash is the name, so nothing
+  // is ever overwritten), then __orosOpenAt(bk.app, { editedPicture:
+  // { key, path, w, h } }) tells the app that asked. The project stays
+  // in Photo Lab for later changes.
+  function hex(buf) {
+    var b = new Uint8Array(buf), s = "";
+    for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return s;
+  }
+  function sendBack() {
+    var bk = st.doc && st.doc.bk, fs = PL.fs();
+    if (!bk) return Promise.resolve(false);
+    if (!fs) { PL.toast(t("msg.noDisk")); return Promise.resolve(false); }
+    var d = st.doc, c = PL.view.flatten(null, 1), blob = null, path = null;
+    PL.busy(true);
+    return new Promise(function (res) { c.toBlob(res, "image/png"); }).then(function (b) {
+      c.width = c.height = 0;
+      if (!b) throw new Error("png");
+      blob = b;
+      return b.arrayBuffer().then(function (ab) { return crypto.subtle.digest("SHA-256", ab); });
+    }).then(function (h) {
+      path = "/internal/Assets/" + hex(h) + ".png";
+      return fs.stat(path).catch(function () { return fs.write(path, blob); });
+    }).then(function () {
+      PL.busy(false);
+      var w = null;
+      try { w = window.parent; } catch (e) {}
+      if (!w || w === window || typeof w.__orosOpenAt !== "function") { PL.toast(t("msg.noBridge")); return false; }
+      w.__orosOpenAt(bk.app, { editedPicture: { key: bk.key, path: path, w: d.w, h: d.h } });
+      return true;
+    }).catch(function () { PL.busy(false); PL.toast(t("msg.exportFail")); return false; });
   }
 
   // ---------- Layered files (PSD, OpenRaster) ----------
@@ -263,6 +322,17 @@
   function layerPixels() {
     return st.doc.layers.map(function (L) {
       var o = { name: L.name, op: L.op, bl: L.bl, vis: L.vis, x: L.x, y: L.y, img: { w: 0, h: 0, data: new Uint8ClampedArray(0) } };
+      // Masks, styles and adjustment layers go baked into pixels
+      // (cut to the canvas).
+      if (L.mk || L.fx || L.k === "adj") {
+        var d = st.doc, c = PL.view.renderLayer(L);
+        var px = { w: d.w, h: d.h, data: c.getContext("2d").getImageData(0, 0, d.w, d.h).data };
+        c.width = c.height = 0;
+        var r = PL.R.trimRect(px);
+        if (r) { o.x = r.x; o.y = r.y; o.img = PL.R.crop(px, r); }
+        else { o.x = 0; o.y = 0; }
+        return o;
+      }
       if (L.k !== "raster") {
         var v = PL.ops.vectorPixels(L);
         o.x = v.x; o.y = v.y; o.img = v.img;
@@ -406,6 +476,6 @@
     PICTURES: PICTURES, decode: decode, openPicture: openPicture, openPictureFile: openPictureFile,
     openDiskPath: openDiskPath, setClipboard: setClipboard, pasteFromMenu: pasteFromMenu,
     exportImage: exportImage, setWallpaper: setWallpaper, canWallpaper: function () { return !!wallApi(); },
-    saveThumb: saveThumb, wire: wire
+    saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset
   };
 })();

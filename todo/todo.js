@@ -82,6 +82,8 @@
       "item.delete":   "Delete",
       "save":          "Save",
       "list.settings": "List settings",
+      "list.share":    "Send to someone…",
+      "list.share.empty": "This list is empty: nothing to send",
       "list.name":     "Name",
       "list.delete":   "Delete list",
       "recur.list.title": "List cycle",
@@ -150,6 +152,8 @@
       "item.delete":   "Διαγραφή",
       "save":          "Αποθήκευση",
       "list.settings": "Ρυθμίσεις λίστας",
+      "list.share":    "Στείλε σε κάποιον…",
+      "list.share.empty": "Η λίστα είναι άδεια: δεν υπάρχει κάτι να στείλεις",
       "list.name":     "Όνομα",
       "list.delete":   "Διαγραφή λίστας",
       "recur.list.title": "Κύκλος λίστας",
@@ -2049,7 +2053,9 @@
 
   var undoFreshListId = null;   // the empty list created when the LAST list was deleted
   var undoViewList = null;      // the tab that was open when the action happened
+  var undoFn = null;            // an action with its own way back (an import)
   function pushUndo(key) {
+    undoFn = null;
     undoSnapshot = JSON.stringify(state);
     undoFreshListId = null;
     undoViewList = view.activeList;
@@ -2063,6 +2069,7 @@
   // device that had not synced yet — and anything a pull had brought
   // in during the five seconds of the toast.
   function doUndo() {
+    if (undoFn) { var fn = undoFn; undoFn = null; undoSnapshot = null; fn(); return; }
     if (!undoSnapshot) return;
     var snap = JSON.parse(undoSnapshot);
     undoSnapshot = null;
@@ -2381,6 +2388,19 @@
     $("list-settings").addEventListener("click", function () {
       openListDialog(activeList().id);
     });
+    // "Send to someone" (shell share/): the open list travels in a link.
+    var shareApi = null;
+    try { shareApi = window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) {}
+    $("list-share").hidden = !shareApi;
+    $("list-share").addEventListener("click", function () {
+      var list = activeList();
+      if (!shareApi) return;
+      if (!list.items.length) { showToast(t("list.share.empty"), false); return; }
+      shareApi.open({ kind: "list", data: {
+        t: list.name || t("new.list"),
+        i: list.items.map(function (it) { return { x: it.text, n: it.notes || "", d: it.done ? 1 : 0 }; })
+      } });
+    });
 
     // New list
     $("tab-add").addEventListener("click", createList);
@@ -2539,6 +2559,141 @@
 
     editingListId = null;
     save(); scheduleRender();
+  }
+
+  // ---------- 14. Import from Todoist (todo/platforms.js) ----------
+  // The plan comes from links/todo.js; this is its one write. Undo takes
+  // out what came in (tombstoned, like any deletion here) and puts back
+  // the fields an update changed. Ids are the plan's (L.extId).
+  var TP = window.OrosTodoPlatforms || null;
+  function importApply(pl, doneText) {
+    var now = Date.now(), back = { lists: [], items: [], labels: [], upd: [], names: [] };
+    pl.labels.add.forEach(function (x) {
+      if (labelById(x.id)) return;
+      state.labels.push({ id: x.id, name: x.name, color: SWATCH_COLORS[state.labels.length % SWATCH_COLORS.length],
+                          mtime: now, om: 0, pos: state.labels.length });
+      delete state.deleted[x.id];
+      back.labels.push(x.id);
+    });
+    pl.lists.add.forEach(function (x) {
+      if (listById(x.id)) return;
+      var l = freshList(x.name);
+      l.id = x.id;
+      stampListNewest(l, now);
+      l.pos = state.lists.length;
+      state.lists.push(l);
+      delete state.deleted[x.id];
+      back.lists.push(x.id);
+    });
+    if (back.lists.length) state.om = now;
+    pl.lists.upd.forEach(function (x) {
+      var l = listById(x.id);
+      if (!l || l.name === x.name) return;
+      back.names.push({ id: l.id, name: l.name });
+      l.name = x.name;
+      touchListField(l, "name");
+    });
+    var touched = {};
+    pl.items.add.forEach(function (x) {
+      var l = listById(x.list);
+      if (!l || findItem(x.id)) return;
+      var it = freshItem(x.text, x.due);
+      it.id = x.id;
+      it.notes = x.notes || "";
+      it.labels = x.labels.filter(function (id) { return !!labelById(id); });
+      it.info = x.info.map(function (f) { return { id: f.id, label: f.label, value: f.value }; });
+      stampItemNewest(it, now);
+      l.items.push(it);
+      delete state.deleted[x.id];
+      back.items.push(x.id);
+      touched[l.id] = l;
+    });
+    Object.keys(touched).forEach(function (id) {
+      var l = touched[id];
+      l.items.forEach(function (it, i) { it.pos = i; });
+      l.om = now;
+    });
+    pl.items.upd.forEach(function (x) {
+      var hit = findItem(x.id);
+      if (!hit) return;
+      var it = hit.item, old = {};
+      Object.keys(x.f).forEach(function (f) {
+        if (ITEM_FIELDS.indexOf(f) < 0) return;
+        old[f] = JSON.parse(JSON.stringify(it[f] === undefined ? null : it[f]));
+        it[f] = f === "labels" ? x.f[f].filter(function (id) { return !!labelById(id); }) : x.f[f];
+        touchField(it, f);
+      });
+      back.upd.push({ id: x.id, old: old });
+    });
+    save(); renderAll();
+    undoSnapshot = null;
+    undoFn = function () { importUndo(back); };
+    undoViewList = view.activeList;
+    showToast(doneText, true);
+    return true;
+  }
+  function findItem(id) {
+    for (var i = 0; i < state.lists.length; i++) {
+      var it = itemById(state.lists[i], id);
+      if (it) return { list: state.lists[i], item: it };
+    }
+    return null;
+  }
+  function importUndo(back) {
+    var now = Date.now(), gone = {};
+    back.items.forEach(function (id) { gone[id] = 1; tombstone(id); });
+    state.lists.forEach(function (l) {
+      var before = l.items.length;
+      l.items = l.items.filter(function (it) { return !gone[it.id]; });
+      if (l.items.length !== before) { l.items.forEach(function (it, i) { it.pos = i; }); l.om = now; }
+    });
+    back.upd.forEach(function (u) {
+      var hit = findItem(u.id);
+      if (!hit) return;
+      Object.keys(u.old).forEach(function (f) { hit.item[f] = u.old[f]; touchField(hit.item, f); });
+    });
+    back.names.forEach(function (n) { var l = listById(n.id); if (l) { l.name = n.name; touchListField(l, "name"); } });
+    var dropList = {};
+    back.lists.forEach(function (id) {
+      var l = listById(id);
+      if (l && !l.items.length) { dropList[id] = 1; tombstone(id); }
+    });
+    if (Object.keys(dropList).length && state.lists.length > Object.keys(dropList).length) {
+      state.lists = state.lists.filter(function (l) { return !dropList[l.id]; });
+      state.lists.forEach(function (l, i) { l.pos = i; });
+      state.om = now;
+    }
+    var dropLabel = {};
+    back.labels.forEach(function (id) { dropLabel[id] = 1; tombstone(id); });
+    if (back.labels.length) {
+      state.lists.forEach(function (l) {
+        l.items.forEach(function (it) {
+          var next = (it.labels || []).filter(function (id) { return !dropLabel[id]; });
+          if (next.length !== (it.labels || []).length) { it.labels = next; touchField(it, "labels"); }
+        });
+      });
+      state.labels = state.labels.filter(function (lb) { return !dropLabel[lb.id]; });
+      state.labels.forEach(function (lb, i) { lb.pos = i; });
+      activeFilters = activeFilters.filter(function (id) { return !dropLabel[id]; });
+      updateFilterBtn();
+    }
+    if (!listById(view.activeList)) setActiveList((undoViewList && listById(undoViewList)) ? undoViewList : state.lists[0].id);
+    save(); renderAll();
+    showToast(t("toast.undone"), false);
+  }
+  if (TP) {
+    TP.init({ lang: LANG, data: function () { return state; }, apply: importApply });
+    var impBtn = $("l-import");
+    if (impBtn && TP.has()) {
+      impBtn.textContent = TP.label();
+      impBtn.hidden = false;
+      impBtn.addEventListener("click", function () {
+        if (editingListId !== null) saveListDialog();
+        editingListId = null;
+        $("dlg-list").close();
+        TP.open();
+      });
+    }
   }
 
   // ---------- Boot ----------

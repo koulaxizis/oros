@@ -299,6 +299,8 @@
       "page.new":           "New page",
       "page.newchild":      "New sub-page",
       "page.delete":        "Delete",
+      "page.share":         "Send to someone…",
+      "page.share.empty":   "This page is empty: nothing to send",
       "page.rename":        "Rename",
       "page.move.up":       "Move up",
       "page.move.down":     "Move down",
@@ -363,6 +365,8 @@
       "page.new":           "Νέα σελίδα",
       "page.newchild":      "Νέα υποσελίδα",
       "page.delete":        "Διαγραφή",
+      "page.share":         "Στείλε σε κάποιον…",
+      "page.share.empty":   "Η σελίδα είναι άδεια: δεν υπάρχει κάτι να στείλεις",
       "page.rename":        "Μετονομασία",
       "page.move.up":       "Μετακίνηση πάνω",
       "page.move.down":     "Μετακίνηση κάτω",
@@ -507,6 +511,7 @@
   var PAGE_SVG  = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
   var X_SVG     = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   var PLUS_SVG  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+  var SEND_SVG  = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>';
   var BURGER_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
 
   // v0.14.1: HTML ships the buttons EMPTY (icons are injected here —
@@ -515,6 +520,9 @@
     var nb = document.getElementById("btn-new-page");
     if (nb && !nb.innerHTML.trim()) nb.innerHTML = PLUS_SVG;
     if (nb) { nb.title = t("page.new"); nb.setAttribute("aria-label", t("page.new")); }
+    var sp = document.getElementById("btn-share-page");
+    if (sp && !sp.innerHTML.trim()) sp.innerHTML = SEND_SVG;
+    if (sp) { sp.title = t("page.share"); sp.setAttribute("aria-label", t("page.share")); }
     var st = document.getElementById("btn-show-tree");
     if (st && !st.innerHTML.trim()) st.innerHTML = BURGER_SVG;
     if (st) {
@@ -943,6 +951,19 @@
     el.scrollTop = top;
   }
 
+  // "Send to someone" (shell share/): one page as plain text in a link.
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
+    catch (e) { return null; }
+  }
+  function sharePage(page) {
+    var api = shareApi();
+    if (!api || !page) return;
+    var title = String(page.title || "").trim(), text = String(page.text || "");
+    if (!text.trim() && (!title || title === t("page.untitled"))) { notifyTransient(t("page.share.empty")); return; }
+    api.open({ kind: "note", data: { t: title, x: text } });
+  }
+
   function renderEditor() {
     var title = document.getElementById("page-title");
     var text  = document.getElementById("page-text");
@@ -969,6 +990,8 @@
 
     title.disabled = !page;
     text.disabled  = !page;
+    var shareBtn = document.getElementById("btn-share-page");
+    if (shareBtn) shareBtn.hidden = !page || !shareApi();
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
 	    renderChips(page);
@@ -1153,6 +1176,83 @@
     notifyTransient(t("toast.nbCreated"));
     return nb;
   }
+
+  // ---------- Import from Notion (integrations wave 6D, platforms.js) ----------
+  // The plan comes from links/notes.js; this is its one write: the
+  // "Notion" notebook (once), the new pages, the replaced texts. Undo
+  // takes out what came in (tombstoned, like any deletion here), puts
+  // back the old texts and drops the notebook again while it is empty.
+  function platformApply(pl, doneText) {
+    var now = Date.now(), back = { pages: [], upd: [], nb: null };
+    if (pl.notebook && !state.notebooks.some(function (n) { return n.id === pl.notebook.id; })) {
+      var maxPos = 0;
+      state.notebooks.forEach(function (n) { if (n.pos > maxPos) maxPos = n.pos; });
+      state.notebooks.push({ id: pl.notebook.id, name: pl.notebook.name, mtime: now, pos: maxPos + 1 });
+      delete state.tombs["nb:" + pl.notebook.id];
+      back.nb = pl.notebook.id;
+    }
+    var nbOk = state.notebooks.some(function (n) { return n.id === pl.nb; });
+    pl.pages.add.forEach(function (x) {
+      if (!nbOk || pageById(x.id)) return;
+      var par = x.parent && pageById(x.parent) ? x.parent : null;
+      state.pages.push({ id: x.id, nb: pl.nb, parent: par, title: x.title, text: x.text,
+                         mtime: now, pos: x.pos, labels: [], pinned: false, ct: now, st: now });
+      delete state.tombs[x.id];
+      back.pages.push(x.id);
+    });
+    pl.pages.upd.forEach(function (x) {
+      var pg = pageById(x.id);
+      if (!pg) return;
+      back.upd.push({ id: x.id, title: pg.title, text: pg.text });
+      pg.title = x.title;
+      pg.text = x.text;
+      touchContent(pg);
+    });
+    if (back.pages.length || back.nb) prefs.currentNb = pl.nb;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyUndo(doneText, function () { platformUndo(back); });
+    return true;
+  }
+  function platformUndo(back) {
+    var now = Date.now(), gone = {};
+    back.pages.forEach(function (id) { gone[id] = 1; state.tombs[id] = now; });
+    state.pages = state.pages.filter(function (p) { return !gone[p.id]; });
+    state.pages.forEach(function (p) { if (p.parent && gone[p.parent]) { p.parent = null; touchStruct(p); } });
+    back.upd.forEach(function (u) {
+      var pg = pageById(u.id);
+      if (!pg) return;
+      pg.title = u.title;
+      pg.text = u.text;
+      touchContent(pg);
+    });
+    if (back.nb && state.notebooks.length > 1 && !state.pages.some(function (p) { return p.nb === back.nb; })) {
+      state.notebooks = state.notebooks.filter(function (n) { return n.id !== back.nb; });
+      state.tombs["nb:" + back.nb] = now;
+      if (prefs.currentNb === back.nb) prefs.currentNb = state.notebooks[0].id;
+    }
+    if (prefs.current && gone[prefs.current]) prefs.current = null;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyTransient(PLAT ? PLAT.undone() : "");
+  }
+  // A notice with an Undo button (the shell's notifications); without
+  // the shell there is no import at all.
+  function notifyUndo(text, fn) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "notes", title: text, body: "", action: { label: PLAT ? PLAT.undoLabel() : "Undo", fn: fn } });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);
+  }
+  var PLAT = window.OrosNotesPlatforms || null;
 
   function renameNotebook(id, newName) {
     var nb = state.notebooks.find(function (n) { return n.id === id; });
@@ -2091,6 +2191,7 @@
       [t("menu.exportNotebook"),   function () { exportNotebookZip(); }],
       [t("page.delete"),   function () { deletePage(page.id); }]
     ];
+    if (shareApi()) actions.splice(actions.length - 1, 0, [t("page.share"), function () { sharePage(page); }]);
     actions.forEach(function (pair) {
       var b = document.createElement("button");
       b.className = "node-menu-item";
@@ -2807,6 +2908,8 @@
 
   function wireUI() {
 	      paintStaticIcons();
+    var shareBtn = document.getElementById("btn-share-page");
+    if (shareBtn) shareBtn.addEventListener("click", function () { sharePage(pageById(prefs.current)); });
     var showTree = document.getElementById("btn-show-tree");
     if (showTree) {
       showTree.addEventListener("click", function () {
@@ -2901,6 +3004,21 @@
           });
       });
       newBtn.parentNode.appendChild(nbBtn);
+
+      // Import from Notion (wave 6D): only inside the orOS shell
+      if (PLAT && PLAT.has()) {
+        PLAT.init({ lang: LANG, data: function () { return state; }, apply: platformApply });
+        var CLOUD_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><polyline points="9.5 13.5 12 16 14.5 13.5"/><line x1="12" y1="10" x2="12" y2="16"/></svg>';
+        var ntBtn = document.createElement("button");
+        ntBtn.id = "btn-notion";
+        ntBtn.type = "button";
+        ntBtn.className = "icon-btn";
+        ntBtn.title = PLAT.label();
+        ntBtn.setAttribute("aria-label", PLAT.label());
+        ntBtn.innerHTML = CLOUD_SVG;
+        ntBtn.addEventListener("click", function (e) { e.stopPropagation(); closeMenus(); PLAT.open(); });
+        newBtn.parentNode.appendChild(ntBtn);
+      }
     }
 
     var title = document.getElementById("page-title");

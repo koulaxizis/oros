@@ -1,0 +1,64 @@
+# Email Signature
+Make a professional email signature once and use it everywhere: Gmail, Outlook, Thunderbird, Apple Mail, your phone and orOS Mail. The signature is built from your details, so it looks right in every mail app and never carries hidden code.
+
+## Getting started
+1. Press `Make a signature` (or [[+]] at the top for another one).
+2. Fill in `Your details`. Only what you fill in is shown.
+3. Pick a `Layout`, a `Main colour` and a font under `Look`.
+4. Open `Preview and use` (on a phone it is the second tab), choose where you will use it, and follow the steps under `How to add it`.
+
+## Fill in from orOS
+- `Business profile (Invoices)`: company, VAT number, phone, email, website, address and the logo of your business profile. With several profiles you pick one.
+- `A contact`: name, job title, company, phones, email, website and address of a card in Contacts. Handy for a colleague's signature.
+- `Brand kit (Atelier)`: your brand colours, the closest email-safe font and your logo.
+Each button shows only when that app has something to give. `Undo` in the message that appears puts everything back.
+
+## Look
+- Six layouts: `Classic`, `Picture on the side`, `Minimal`, `Colour bar`, `Compact` (good on phones) and `Text only`.
+- `Main colour` colours the company name, the labels, the line and the button; `Text colour` the rest.
+- Fonts are the ones every computer has (Arial, Georgia, Verdana…). Mail apps do not load web fonts, so a fancy font would turn into something else anyway.
+- `Before phone and email`: letters (T, M, E), words, or nothing. A Greek signature writes them in Greek (Τ, Κ).
+
+## Logo and photo
+- `Choose a picture` keeps the picture on your orOS disk; it travels to your other devices with the disk and is put inside the signature, cut to size.
+- Gmail and Outlook on the web drop pictures put inside a signature. For those, also fill in `Address on your website` with the address of the same picture on your own website. orOS never uploads it for you.
+- A round photo is really cut round, so it stays round even in Outlook.
+
+## Social profiles, button and banner
+- `Add a profile`: up to 8 links. With `Social icons` on you get small round icons in your main colour; web mail apps show the names instead.
+- The button (for example "Book a meeting") is drawn so that Outlook shows it too.
+- The `Banner` is a picture under the signature, shown only between its two dates. Leave the dates empty to show it always.
+
+## QR code and legal text
+- `A QR code with my contact card` adds a code people can scan to save you as a contact.
+- `Legal text or disclaimer` goes at the bottom in small grey letters. `Ready texts` adds common ones in the signature's language.
+
+## Preview and use
+- `Where will you use it?` changes the preview and the steps: each mail app takes signatures a little differently.
+- `Short version (for replies)` keeps only name, title, company and two contact lines.
+- `Dark mail app` and `Phone width` show how it will look there.
+- `Copy signature` copies it with its formatting, ready to paste into the signature box. `Copy HTML code` copies the code itself, for apps that ask for HTML.
+- `Save .html` makes a file for Thunderbird or Outlook's Signatures folder; `Save .txt` the text version for plain-text apps.
+- `Use in orOS Mail` hands the signature to Mail, which asks which account gets it.
+- `Check` lists what to fix: wrong links, pale colours, pictures a web mail app would drop, and Gmail's limit of 10,000 characters.
+
+## Signatures for a team
+In [[⋯]] › `Signatures for a team (CSV)`, paste a table with a header row (name, title, department, email, phone, mobile, pronouns, photo) or open a CSV file. `Save all as .zip` makes one .html file per person, with the look, company details and logo of the signature open now. Photos come only from the table's photo column (an https address).
+
+## Sync and backup
+- Your signatures follow you to every device through orOS sync, encrypted, and are part of the orOS export. Up to 30 signatures.
+- Pictures stay on your orOS disk and travel with it; on a device where one has not arrived yet you see "Not on this device yet".
+- Nothing is sent anywhere: no tracking pixels, no counters, no pictures from other sites unless you type their address yourself.
+
+## Keyboard shortcuts
+- [[Ctrl+Shift+C]]: copy the signature.
+- [[←]] and [[→]] on the layouts or the tabs: move between them.
+- [[Esc]]: close a window.
+
+## Tips
+> Make two signatures from one with [[⋯]] › `Duplicate this signature`: one in English, one in Greek, or a long one for new emails and a short one for replies.
+
+## Limits
+- Pasting with formatting needs a browser that can copy HTML; if it cannot, use `Save .html` and open the file to copy from there.
+- Outlook classic ignores rounded corners on pictures from your website and shows some fonts differently.
+- Gmail on the phone and many phone mail apps take only plain text.

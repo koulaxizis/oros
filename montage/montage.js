@@ -114,6 +114,46 @@
       "rec.hint": "Recording starts at the playhead after a short count and the video plays along. Use headphones so its sound does not get into the recording.",
       "rec.none": "This browser cannot record sound here.", "rec.denied": "Montage may not use the microphone. Allow it in the browser's site settings and try again.",
       "rec.name": "Voice {n}",
+      "tx.push": "Push up", "tx.zoom": "Zoom", "tx.circle": "Circle",
+      "flt.vintage": "Vintage", "flt.chrome": "Chrome", "flt.dusk": "Dusk", "flt.golden": "Golden",
+      "tool.subs": "Subtitles", "tool.freeze": "Freeze frame",
+      "sub.title": "Subtitles", "sub.count": "{n} text clips on the Text row. Each one becomes a subtitle line when you save an SRT file.",
+      "sub.add": "Add a subtitle", "sub.import": "Open an SRT file", "sub.export": "Save as SRT",
+      "sub.hint": "SRT files (and WebVTT) from YouTube, subtitle sites or other editors come in as text clips you can edit.",
+      "sub.none": "No subtitles found in this file.", "sub.added": "{n} subtitles added", "sub.big": "This subtitle file is too big.",
+      "sub.empty": "There are no text clips to save yet.",
+      "frz.working": "Freezing the frame…", "frz.fail": "Could not read this frame.",
+      "set.duck": "Lower the music when someone speaks",
+      "set.duckHint": "While anything plays on the Voice row, the Music row gets quieter, then comes back.",
+      "duck.0": "Off", "duck.40": "A little", "duck.60": "Medium", "duck.80": "A lot",
+      "exp.what": "Export", "exp.video": "Video", "exp.sound": "Sound only",
+      "exp.keepSound": "Also keep a copy in Files › Music", "exp.readySound": "Your sound file is ready",
+      "exp.noSound": "Nothing in this project makes sound.", "toast.keptSound": "A copy is in Files › Music",
+      "tool.kf": "Keyframes",
+      "kf.at": "{t} into this clip", "kf.here": "Key here", "kf.none": "No key here",
+      "kf.prev": "Previous key", "kf.next": "Next key", "kf.back": "−½ s", "kf.fwd": "+½ s",
+      "kf.add": "Add key", "kf.del": "Remove key", "kf.clear": "Remove all keys",
+      "kf.hint": "Move the playhead and change a value: a key is set there. Montage glides from one key to the next.",
+      "kf.x": "Left – right", "kf.y": "Top – bottom", "kf.s": "Size", "kf.o": "Opacity", "kf.v": "Volume",
+      "kf.full": "{n} keys: the most a clip can have.",
+      "tool.reverse": "Reverse", "tool.forward": "Forwards", "toast.reversed": "This clip now plays backwards, without sound.",
+      "lut.title": "Colour look (.cube)", "lut.open": "Open a .cube file", "lut.remove": "Remove the look",
+      "lut.hint": "A 3D LUT from a colour-grading app or a LUT pack (.cube, up to 64 points a side).",
+      "lut.on": "A colour look is on.", "lut.bad": "This is not a 3D .cube file Montage can use.",
+      "exp.gif": "GIF", "exp.gifSize": "Size", "exp.gifSmall": "Small (320 px)", "exp.gifMedium": "Medium (480 px)",
+      "exp.gifHint": "A silent loop for chats and web pages, up to 30 seconds. Big GIF files are normal: keep it short.",
+      "exp.gifLong": "A GIF can be at most 30 seconds long. Make the project shorter or export a video.",
+      "exp.keepGif": "Also keep a copy in Files › Pictures", "exp.readyGif": "Your GIF is ready", "toast.keptGif": "A copy is in Files › Pictures",
+      "px.title": "Smoother preview", "px.make": "Make light copies", "px.drop": "Remove light copies",
+      "px.hint": "For big videos (4K, long phone videos) that stutter while you edit: Montage makes small copies on this device just for the preview. The export always uses the originals.",
+      "px.working": "Making light copy {i} of {n}… {p}%", "px.done": "{n} light copies ready", "px.none": "These videos are light enough already.",
+      "px.dropped": "{n} light copies removed", "px.stopped": "Stopped. Light copies made so far are kept.", "px.has": "light copy",
+      "tool.shapes": "Stickers", "tool.style": "Style", "kind.shape": "Shape",
+      "shp.title": "Stickers and shapes", "shp.shapes": "Shapes", "shp.stickers": "Stickers",
+      "shp.hint": "They go on the Overlay row (shapes) or the Text row (stickers) at the playhead. Move them with Position, animate them with Keyframes.",
+      "shape.rect": "Rectangle", "shape.round": "Rounded", "shape.ellipse": "Circle", "shape.triangle": "Triangle",
+      "shape.star": "Star", "shape.heart": "Heart", "shape.arrow": "Arrow", "shape.bubble": "Speech bubble",
+      "shp.kind": "Shape", "shp.fill": "Fill", "shp.outline": "Outline", "shp.width": "Outline width",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -180,6 +220,46 @@
       "rec.hint": "Η ηχογράφηση ξεκινά από την κεφαλή μετά από μια σύντομη αντίστροφη μέτρηση, και το βίντεο παίζει μαζί. Βάλε ακουστικά για να μη γραφτεί και ο ήχος του.",
       "rec.none": "Αυτός ο browser δεν μπορεί να ηχογραφήσει εδώ.", "rec.denied": "Το Μοντάζ δεν έχει άδεια για το μικρόφωνο. Δώσε άδεια στις ρυθμίσεις του site στον browser και ξαναδοκίμασε.",
       "rec.name": "Φωνή {n}",
+      "tx.push": "Σπρώξιμο πάνω", "tx.zoom": "Ζουμ", "tx.circle": "Κύκλος",
+      "flt.vintage": "Παλιό", "flt.chrome": "Χρώμιο", "flt.dusk": "Σούρουπο", "flt.golden": "Χρυσό",
+      "tool.subs": "Υπότιτλοι", "tool.freeze": "Πάγωμα καρέ",
+      "sub.title": "Υπότιτλοι", "sub.count": "{n} κείμενα στη γραμμή Κείμενο. Το καθένα γίνεται μια γραμμή υποτίτλων όταν αποθηκεύεις αρχείο SRT.",
+      "sub.add": "Πρόσθεσε υπότιτλο", "sub.import": "Άνοιξε αρχείο SRT", "sub.export": "Αποθήκευση ως SRT",
+      "sub.hint": "Αρχεία SRT (και WebVTT) από το YouTube, σελίδες υποτίτλων ή άλλα προγράμματα μπαίνουν ως κείμενα που μπορείς να αλλάξεις.",
+      "sub.none": "Δεν βρέθηκαν υπότιτλοι σε αυτό το αρχείο.", "sub.added": "Προστέθηκαν {n} υπότιτλοι", "sub.big": "Αυτό το αρχείο υποτίτλων είναι πολύ μεγάλο.",
+      "sub.empty": "Δεν υπάρχουν ακόμα κείμενα για αποθήκευση.",
+      "frz.working": "Παγώνω το καρέ…", "frz.fail": "Δεν διαβάστηκε αυτό το καρέ.",
+      "set.duck": "Χαμήλωνε τη μουσική όταν μιλάει κάποιος",
+      "set.duckHint": "Όσο παίζει κάτι στη γραμμή Φωνή, η γραμμή Μουσική χαμηλώνει και μετά ξαναδυναμώνει.",
+      "duck.0": "Όχι", "duck.40": "Λίγο", "duck.60": "Μέτρια", "duck.80": "Πολύ",
+      "exp.what": "Εξαγωγή", "exp.video": "Βίντεο", "exp.sound": "Μόνο ήχος",
+      "exp.keepSound": "Κράτα και αντίγραφο στα Αρχεία › Music", "exp.readySound": "Το αρχείο ήχου είναι έτοιμο",
+      "exp.noSound": "Τίποτα σε αυτό το project δεν έχει ήχο.", "toast.keptSound": "Ένα αντίγραφο είναι στα Αρχεία › Music",
+      "tool.kf": "Keyframes",
+      "kf.at": "{t} μέσα στο clip", "kf.here": "Υπάρχει key εδώ", "kf.none": "Κανένα key εδώ",
+      "kf.prev": "Προηγούμενο key", "kf.next": "Επόμενο key", "kf.back": "−½ δ", "kf.fwd": "+½ δ",
+      "kf.add": "Πρόσθεσε key", "kf.del": "Αφαίρεσε key", "kf.clear": "Αφαίρεσε όλα τα key",
+      "kf.hint": "Μετακίνησε την κεφαλή και άλλαξε μια τιμή: μπαίνει key εκεί. Το Μοντάζ περνά ομαλά από το ένα key στο επόμενο.",
+      "kf.x": "Αριστερά – δεξιά", "kf.y": "Πάνω – κάτω", "kf.s": "Μέγεθος", "kf.o": "Αδιαφάνεια", "kf.v": "Ένταση",
+      "kf.full": "{n} key: τα περισσότερα που χωράει ένα clip.",
+      "tool.reverse": "Ανάποδα", "tool.forward": "Κανονικά", "toast.reversed": "Αυτό το clip παίζει πια ανάποδα, χωρίς ήχο.",
+      "lut.title": "Χρωματικό look (.cube)", "lut.open": "Άνοιξε αρχείο .cube", "lut.remove": "Βγάλε το look",
+      "lut.hint": "Ένα 3D LUT από πρόγραμμα χρωματικής διόρθωσης ή πακέτο LUT (.cube, έως 64 σημεία ανά πλευρά).",
+      "lut.on": "Υπάρχει χρωματικό look.", "lut.bad": "Αυτό δεν είναι αρχείο 3D .cube που μπορεί να χρησιμοποιήσει το Μοντάζ.",
+      "exp.gif": "GIF", "exp.gifSize": "Μέγεθος", "exp.gifSmall": "Μικρό (320 px)", "exp.gifMedium": "Μεσαίο (480 px)",
+      "exp.gifHint": "Ένα βουβό loop για συνομιλίες και ιστοσελίδες, έως 30 δευτερόλεπτα. Τα GIF βγαίνουν μεγάλα αρχεία: κράτα το σύντομο.",
+      "exp.gifLong": "Ένα GIF μπορεί να είναι έως 30 δευτερόλεπτα. Κάνε το project πιο σύντομο ή βγάλε βίντεο.",
+      "exp.keepGif": "Κράτα και αντίγραφο στα Αρχεία › Pictures", "exp.readyGif": "Το GIF σου είναι έτοιμο", "toast.keptGif": "Ένα αντίγραφο είναι στα Αρχεία › Pictures",
+      "px.title": "Πιο ομαλή προεπισκόπηση", "px.make": "Φτιάξε ελαφριά αντίγραφα", "px.drop": "Σβήσε τα ελαφριά αντίγραφα",
+      "px.hint": "Για μεγάλα βίντεο (4K, μεγάλα βίντεο κινητού) που κολλάνε την ώρα που τα επεξεργάζεσαι: το Μοντάζ φτιάχνει μικρά αντίγραφα σε αυτή τη συσκευή μόνο για την προεπισκόπηση. Η εξαγωγή χρησιμοποιεί πάντα τα πρωτότυπα.",
+      "px.working": "Φτιάχνω ελαφρύ αντίγραφο {i} από {n}… {p}%", "px.done": "Έτοιμα {n} ελαφριά αντίγραφα", "px.none": "Αυτά τα βίντεο είναι ήδη αρκετά ελαφριά.",
+      "px.dropped": "Σβήστηκαν {n} ελαφριά αντίγραφα", "px.stopped": "Σταμάτησε. Όσα ελαφριά αντίγραφα έγιναν μένουν.", "px.has": "ελαφρύ αντίγραφο",
+      "tool.shapes": "Αυτοκόλλητα", "tool.style": "Στυλ", "kind.shape": "Σχήμα",
+      "shp.title": "Αυτοκόλλητα και σχήματα", "shp.shapes": "Σχήματα", "shp.stickers": "Αυτοκόλλητα",
+      "shp.hint": "Μπαίνουν στη γραμμή Επικάλυψη (σχήματα) ή στη γραμμή Κείμενο (αυτοκόλλητα) στην κεφαλή. Μετακίνησέ τα με τη Θέση, κίνησέ τα με τα Keyframes.",
+      "shape.rect": "Ορθογώνιο", "shape.round": "Στρογγυλεμένο", "shape.ellipse": "Κύκλος", "shape.triangle": "Τρίγωνο",
+      "shape.star": "Αστέρι", "shape.heart": "Καρδιά", "shape.arrow": "Βέλος", "shape.bubble": "Συννεφάκι διαλόγου",
+      "shp.kind": "Σχήμα", "shp.fill": "Γέμισμα", "shp.outline": "Περίγραμμα", "shp.width": "Πάχος περιγράμματος",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -202,7 +282,10 @@
     for (var i = 0; i < a.length; i++) s += (a[i] % 36).toString(36);
     return Date.now().toString(36) + s;
   }
-  function fmtMB(n) { return n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB" : Math.round(n / 1048576) + " MB"; }
+  function fmtMB(n) {
+    if (n >= 1073741824) return (n / 1073741824).toFixed(1) + " GB";
+    return n >= 1048576 ? Math.round(n / 1048576) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  }
   function whenText(ms) {
     var d = new Date(ms), now = new Date();
     var day = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
@@ -221,7 +304,7 @@
 
   // ---------- 2. Storage, prefs, edits + undo ----------
   var data = C.merge(null, null);
-  var prefs = { pps: 40, short: 1080, keep: false };
+  var prefs = { pps: 40, short: 1080, keep: false, what: "video", gif: 480 };
 
   function load() {
     var raw = null;
@@ -249,6 +332,8 @@
         if (typeof p.pps === "number" && p.pps >= 4 && p.pps <= 400) prefs.pps = p.pps;
         if ([720, 1080, 2160].indexOf(p.short) >= 0) prefs.short = p.short;
         prefs.keep = p.keep === true;
+        prefs.what = p.what === "sound" || p.what === "gif" ? p.what : "video";
+        prefs.gif = p.gif === 320 ? 320 : 480;
       }
     } catch (e) {}
   }
@@ -402,7 +487,7 @@
     ["back-btn", "undo-btn", "redo-btn", "proj-btn", "export-btn"].forEach(function (k) { $(k).hidden = false; });
     try {
       player = MontagePlayer.create({
-        canvas: $("stage"), media: MM.get,
+        canvas: $("stage"), media: MM.get, proxy: MM.proxy,
         onTime: function (tt) { tNow = tt; followPlayhead(); },
         onState: function (on) { $("play-btn").innerHTML = on ? ICON.pause : ICON.play; setLabel($("play-btn"), t(on ? "btn.pause" : "btn.play")); }
       });
@@ -466,6 +551,7 @@
   var thumbCache = {}, missingCache = {};
   function clipLabel(it) {
     if (it.k === "title") return it.text.t.split("\n")[0] || t("kind.title");
+    if (it.k === "shape") return t("shape." + it.sh.k);
     var d = C.fmtTime(C.itemDur(it));
     if (it.k === "audio") return t("kind.audio") + " · " + d;
     return d + (it.sp !== undefined && it.sp !== 1 ? " · " + it.sp + "×" : "") + (it.mu ? " · 🔇" : "");
@@ -509,6 +595,7 @@
     b.style.width = Math.max(6, (end - start) * pps()) + "px";
     b.appendChild(el("span", null, clipLabel(it)));
     if (tx > 0) { var m = el("i", "tx-mark"); m.style.width = (tx * pps()) + "px"; b.appendChild(m); }
+    (it.kf || []).forEach(function (k) { var d = el("i", "kf-mark"); d.style.left = (k.t * pps()) + "px"; b.appendChild(d); });
     if (it.src) {
       if (missingCache[it.src]) b.classList.add("missing");
       var key = it.src + "@" + (it.k === "video" ? it["in"] : 0);
@@ -729,6 +816,8 @@
       bar.appendChild(toolBtn("overlay", t("tool.overlay"), function () { addMedia("ov"); }));
       bar.appendChild(toolBtn("audio", t("tool.audio"), addSound));
       bar.appendChild(toolBtn("text", t("tool.text"), addText));
+      bar.appendChild(toolBtn("cc", t("tool.subs"), subtitlesDialog));
+      bar.appendChild(toolBtn("shapes", t("tool.shapes"), shapesDialog));
       bar.appendChild(toolBtn("tr_a2", t("tool.voice"), recordVoice));
       bar.appendChild(toolBtn("split", t("tool.split"), splitAtPlayhead, null, !clipAt(tNow)));
       bar.appendChild(toolBtn("frame", t("tool.grab"), grabFrame, null, !C.duration(p)));
@@ -744,7 +833,9 @@
       bar.appendChild(toolBtn("clock", t("p.duration"), panelDuration));
     }
     bar.appendChild(toolBtn("fade", t("tool.fade"), panelFade));
+    bar.appendChild(toolBtn("kf", t("tool.kf"), panelKeys));
     if (it.tr === "main" && C.mainSeq(p)[0].it.id !== it.id) bar.appendChild(toolBtn("transition", t("tool.transition"), panelTransition));
+    if (it.k === "shape") bar.appendChild(toolBtn("palette", t("tool.style"), panelShape));
     if (it.k === "title") {
       bar.appendChild(toolBtn("text", t("tool.edit"), function () { panelText(); }));
       if (it.tr === "main") bar.appendChild(toolBtn("palette", t("tool.bg"), panelTitleBg));
@@ -757,6 +848,10 @@
     if (it.k === "video") {
       bar.appendChild(toolBtn(it.mu ? "volume" : "mute", t(it.mu ? "tool.unmute" : "tool.mute"), function () { edit({ mu: !it.mu }); }));
       if (!it.mu) bar.appendChild(toolBtn("detach", t("tool.detach"), detachSound));
+      if (it.tr === "main") bar.appendChild(toolBtn("freeze", t("tool.freeze"), freezeFrame));
+      bar.appendChild(toolBtn("reverse", t(it.rv ? "tool.forward" : "tool.reverse"), function () {
+        if (edit({ rv: !it.rv }) && !it.rv) showToast(t("toast.reversed"));
+      }));
     }
     if (it.k === "video" || it.k === "image") {
       if (it.tr === "main") bar.appendChild(toolBtn("overlay", t("tool.toOv"), function () { edit({ tr: "ov" }); }));
@@ -841,6 +936,38 @@
       rangeField(body, t(f[1]), -100, 100, 1, lk[f[0]], function (v) { return (v > 0 ? "+" : "") + v; }, function (v) { lk[f[0]] = v; live({ lk: JSON.parse(JSON.stringify(lk)) }); });
     });
     chipField(body, t("p.filter"), C.FILTERS.map(function (f) { return [f, t("flt." + f)]; }), it.flt, function (v) { live({ flt: v }); });
+    var lf = el("div", "field");
+    lf.appendChild(el("span", "lbl", t("lut.title")));
+    lf.appendChild(el("p", "hint small", it.lut ? t("lut.on") : t("lut.hint")));
+    body.appendChild(lf);
+    actions(body, (it.lut ? [[t("lut.remove"), "", function () { live({ lut: null }); closeDialog(); }]] : [])
+      .concat([[t("lut.open"), "", function () { closeDialog(); openLut(); }]]));
+  }
+  // A .cube file → a picture of its table (n² × n PNG), stored like any
+  // picture (device, optional media sync), set as the clip's look.
+  function openLut() {
+    var id = sel;
+    pickFiles(".cube,text/plain", false).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      if (f.size > 16 * 1024 * 1024) { showToast(t("lut.bad")); return; }
+      f.text().then(function (txt) {
+        var lut = C.parseCube(txt);
+        if (!lut) { showToast(t("lut.bad")); return; }
+        var px = C.lutPixels(lut), cv = document.createElement("canvas");
+        cv.width = px.w; cv.height = px.h;
+        cv.getContext("2d").putImageData(new ImageData(px.data, px.w, px.h), 0, 0);
+        cv.toBlob(function (png) {
+          if (!png) { showToast(t("err.fail")); return; }
+          var name = String(f.name || "look").replace(/\.cube$/i, "") + ".png";
+          importMany([new File([png], name, { type: "image/png" })], function (info) {
+            if (!cur() || !cur().items[id]) return;
+            sel = id;
+            edit({ lut: info.id });
+          });
+        }, "image/png");
+      }, function () { showToast(t("lut.bad")); });
+    });
   }
   function panelFrame() {
     var it = selItem(), body = panel(t("tool.frame"));
@@ -859,6 +986,61 @@
     rangeField(body, t("p.x"), -50, 150, 1, Math.round((box.x + box.w / 2) * 100), function (v) { return v + "%"; }, function (v) { box.x = v / 100 - box.w / 2; upd(); });
     rangeField(body, t("p.y"), -50, 150, 1, Math.round((box.y + box.h / 2) * 100), function (v) { return v + "%"; }, function (v) { box.y = v / 100 - box.h / 2; upd(); });
     if (it.k !== "title") rangeField(body, t("p.opacity"), 0, 100, 1, it.op, function (v) { return v + "%"; }, function (v) { live({ op: v }); });
+  }
+  // Keyframes: the values at the playhead; changing one sets a key there.
+  function panelKeys() {
+    var it = selItem(), p = cur();
+    if (!it || !p) return;
+    var pl = C.placeOf(p, it.id), dur = pl.end - pl.start;
+    if (tNow < pl.start || tNow > pl.end) setTime(pl.start);
+    var local = Math.min(dur, Math.max(0, tNow - pl.start)), body = panel(t("tool.kf"));
+    function keyAt() { return (selItem().kf || []).filter(function (k) { return Math.abs(k.t - local) <= 1 / 120; })[0] || null; }
+    function go(tt) { closeDialog(); setTime(pl.start + Math.min(dur, Math.max(0, tt))); panelKeys(); }
+    var info = el("p", "hint");
+    body.appendChild(info);
+    function showInfo() {
+      info.textContent = t("kf.at", { t: C.fmtTime(local, true, p.fps) }) + " · " + t(keyAt() ? "kf.here" : "kf.none");
+      var btn = body.querySelector(".actions .btn.primary");
+      if (btn) btn.textContent = t(keyAt() ? "kf.del" : "kf.add");
+    }
+    showInfo();
+    var keys = it.kf || [];
+    var prev = keys.filter(function (k) { return k.t < local - 1 / 120; }).pop(), next = keys.filter(function (k) { return k.t > local + 1 / 120; })[0];
+    var nav = el("div", "actions kf-nav");
+    [[t("kf.prev"), prev ? function () { go(prev.t); } : null], [t("kf.back"), function () { go(local - 0.5); }],
+     [t("kf.fwd"), function () { go(local + 0.5); }], [t("kf.next"), next ? function () { go(next.t); } : null]].forEach(function (a) {
+      var b = el("button", "btn", a[0]); b.type = "button";
+      if (a[1]) b.addEventListener("click", a[1]); else b.disabled = true;
+      nav.appendChild(b);
+    });
+    body.appendChild(nav);
+    var v = C.kfAt(it, local), props = C.kfProps(it);
+    function set(k, val) {
+      var cur0 = selItem(), vals = {};
+      vals[k] = val;
+      if (!keyAt() && (cur0.kf || []).length >= C.MAX_KEYS) { showToast(t("kf.full", { n: C.MAX_KEYS })); return; }
+      live({ kf: C.kfSet(cur0, local, vals) });
+      showInfo();
+    }
+    var pct = function (x) { return Math.round(x) + "%"; };
+    if (props.indexOf("x") >= 0) {
+      rangeField(body, t("kf.x"), -100, 100, 1, Math.round(v.x * 100), pct, function (x) { set("x", x / 100); });
+      rangeField(body, t("kf.y"), -100, 100, 1, Math.round(v.y * 100), pct, function (x) { set("y", x / 100); });
+      rangeField(body, t("kf.s"), 10, 400, 1, Math.round(v.s * 100), pct, function (x) { set("s", x / 100); });
+      rangeField(body, t("kf.o"), 0, 100, 1, Math.round(v.o), pct, function (x) { set("o", x); });
+    }
+    if (props.indexOf("v") >= 0) rangeField(body, t("kf.v"), 0, 200, 1, Math.round(v.v), pct, function (x) { set("v", x); });
+    body.appendChild(el("p", "hint small", t("kf.hint")));
+    actions(body, [
+      [t("kf.clear"), "", function () { live({ kf: [] }); go(local); }],
+      [t("kf.add"), "primary", function () {
+        var cur0 = selItem();
+        if (!keyAt() && (cur0.kf || []).length >= C.MAX_KEYS) { showToast(t("kf.full", { n: C.MAX_KEYS })); return; }
+        live({ kf: C.kfSet(cur0, local, keyAt() ? null : {}) });
+        go(local);
+      }]
+    ]);
+    showInfo();
   }
   var COLORS = ["#ffffff", "#000000", "#f8d14a", "#f08c3a", "#e04848", "#e868b0", "#7c5cf0", "#3b82f6", "#2fb87e", "#7a7a7a"];
   function panelText(isNew) {
@@ -988,6 +1170,121 @@
     panelText(true);
   }
 
+  // ---------- 7a. Subtitles: text clips on the Text row ⇄ SRT files ----------
+  var SUB_MAX_BYTES = 2 * 1024 * 1024;
+  function subtitlesDialog() {
+    var p = cur();
+    if (!p) return;
+    if (player && player.playing()) player.pause();
+    var n = C.trackItems(p, "tt").length, body = openDialog(t("sub.title"));
+    body.appendChild(el("p", "hint", t("sub.count", { n: n })));
+    body.appendChild(el("p", "hint small", t("sub.hint")));
+    actions(body, [
+      [t("sub.import"), "", function () { closeDialog(); importSubtitles(); }],
+      [t("sub.export"), "", function () { closeDialog(); exportSubtitles(); }],
+      [t("sub.add"), "primary", function () { closeDialog(); addSubtitle(); }]
+    ]);
+  }
+  function addSubtitle() {
+    var b = C.SUB_BOX;
+    var it = { id: uid(), k: "title", tr: "tt", at: tNow, d: 2.5, box: { x: b.x, y: b.y, w: b.w, h: b.h },
+      text: { t: t("text.default"), sz: 5.5, col: "#ffffff", ol: "#000000", an: "none" } };
+    if (!commit(C.addItem(data, pid, it, Date.now()))) return;
+    sel = it.id;
+    refreshEditor();
+    panelText(true);
+  }
+  function importSubtitles() {
+    pickFiles(".srt,.vtt,text/plain,application/x-subrip,text/vtt", false).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      if (f.size > SUB_MAX_BYTES) { showToast(t("sub.big")); return; }
+      f.text().then(function (txt) {
+        var cues = C.parseSrt(txt);
+        if (!cues.length) { showToast(t("sub.none")); return; }
+        var before = Object.keys(cur().items).length;
+        if (commit(C.addSubtitles(data, pid, cues, Date.now(), cues.map(function () { return uid(); })))) {
+          showToast(t("sub.added", { n: Object.keys(cur().items).length - before }));
+          setTime(cues[0].start);
+        }
+      }, function () { showToast(t("err.fail")); });
+    });
+  }
+  function exportSubtitles() {
+    var p = cur(), srt = p ? C.toSrt(p) : "";
+    if (!srt) { showToast(t("sub.empty")); return; }
+    saveBlob(new Blob([srt], { type: "application/x-subrip" }), C.exportName(p.name, "srt"), "application/x-subrip", "srt");
+  }
+
+  // Freeze frame: the frame at the playhead (full size, from the file)
+  // becomes a 2 s picture between the two halves of the clip.
+  function freezeFrame() {
+    var p = cur(), it = selItem();
+    if (!p || !it || it.k !== "video" || it.tr !== "main") return;
+    if (player && player.playing()) player.pause();
+    var pl = C.placeOf(p, it.id), at = Math.min(Math.max(tNow, pl.start), pl.end - 1 / p.fps);
+    var srcT = C.srcTime(it, at - pl.start), vid = it.id;
+    busy(t("frz.working"), 0);
+    MM.frameAt(it.src, srcT).then(function (png) {
+      if (!png) { busy(null); showToast(t("frz.fail")); return; }
+      var file = new File([png], C.exportName(p.name + " " + C.fmtTime(at).replace(/:/g, "-"), "png"), { type: "image/png" });
+      var ids = { tail: uid(), still: uid() };
+      importMany([file], function (info) {
+        if (commit(C.freezeAt(data, pid, vid, at, info.id, 2, Date.now(), ids))) {
+          var still = C.placeOf(cur(), ids.still);
+          select(ids.still);
+          if (still) setTime(still.start);
+        }
+      });
+    }, function () { busy(null); showToast(t("frz.fail")); });
+  }
+
+  // ---------- 7c. Stickers (big emoji texts) and shapes ----------
+  var STICKERS = ["😀", "😂", "😍", "😎", "🥳", "😮", "😢", "😡", "👍", "👏", "🙌", "❤️", "🔥", "⭐", "✨", "🎉",
+    "🎂", "🎵", "📍", "☀️", "🌙", "🌊", "🌸", "🐶", "🐱", "⚽", "✈️", "🚗", "📷", "💡", "✅", "❗"];
+  function shapesDialog() {
+    var p = cur();
+    if (!p) return;
+    if (player && player.playing()) player.pause();
+    var body = openDialog(t("shp.title"));
+    body.appendChild(el("p", "hint small", t("shp.hint")));
+    chipField(body, t("shp.shapes"), C.SHAPES.map(function (k) { return [k, t("shape." + k)]; }), null, function (k) { closeDialog(); addShape(k); });
+    var f = el("div", "field"), grid = el("div", "stickers");
+    f.appendChild(el("span", "lbl", t("shp.stickers")));
+    STICKERS.forEach(function (e) {
+      var b = el("button", "sticker", e);
+      b.type = "button";
+      b.addEventListener("click", function () { closeDialog(); addSticker(e); });
+      grid.appendChild(b);
+    });
+    f.appendChild(grid); body.appendChild(f);
+  }
+  function placeBox(p, w, h) {
+    // a square-looking box in the middle of the frame
+    var sz = C.outputSize(p.ar, 1000), hh = h * sz.w / sz.h;
+    return { x: 0.5 - w / 2, y: 0.5 - hh / 2, w: w, h: hh };
+  }
+  function addShape(k) {
+    var p = cur(), it = { id: uid(), k: "shape", tr: "ov", at: tNow, d: 4, box: placeBox(p, 0.3, 0.3), sh: { k: k, col: k === "bubble" ? "#ffffff" : "#f8d14a", ol: k === "bubble" ? "#000000" : "", ow: k === "bubble" ? 3 : 0 } };
+    if (k === "arrow") it.box = placeBox(p, 0.3, 0.15);
+    if (!commit(C.addItem(data, pid, it, Date.now()))) return;
+    select(it.id);
+  }
+  function addSticker(e) {
+    var p = cur(), it = { id: uid(), k: "title", tr: "tt", at: tNow, d: 3, box: placeBox(p, 0.24, 0.24), text: { t: e, sz: 18, an: "pop" } };
+    if (!commit(C.addItem(data, pid, it, Date.now()))) return;
+    select(it.id);
+  }
+  function panelShape() {
+    var it = selItem(), body = panel(t("tool.style")), sh = JSON.parse(JSON.stringify(it.sh));
+    function upd() { live({ sh: JSON.parse(JSON.stringify(sh)) }); }
+    chipField(body, t("shp.kind"), C.SHAPES.map(function (k) { return [k, t("shape." + k)]; }), sh.k, function (v) { sh.k = v; upd(); });
+    colorField(body, t("shp.fill"), sh.col, true, function (v) { sh.col = v; upd(); });
+    colorField(body, t("shp.outline"), sh.ol, true, function (v) { sh.ol = v; if (v && !sh.ow) sh.ow = 4; upd(); });
+    rangeField(body, t("shp.width"), 0, 20, 1, sh.ow, function (v) { return v + "%"; }, function (v) { sh.ow = v; upd(); });
+    rangeField(body, t("p.opacity"), 0, 100, 1, it.op, function (v) { return v + "%"; }, function (v) { live({ op: v }); });
+  }
+
   // ---------- 7b. Voice-over: record the microphone while the project plays ----------
   // The take starts at the playhead and lands on the Voice row (Music
   // when Voice is taken there). MediaRecorder writes WebM/Opus (MP4/AAC
@@ -1112,7 +1409,7 @@
     var p = cur();
     if (!p || !player) return;
     if (player.playing()) player.pause();
-    player.grab(1080).then(function (png) {
+    MX.still({ project: p, file: MM.get, t: tNow, short: 1080 }).then(null, function () { return null; }).then(function (png) {
       if (!png) { showToast(t("err.fail")); return; }
       var name = C.exportName(p.name + " " + C.fmtTime(tNow).replace(/:/g, "-"), "png");
       var F = fsApi();
@@ -1140,6 +1437,10 @@
     chipField(body, t("f.ratio"), C.RATIOS.map(function (r) { return [r, t("ratio." + r)]; }), p.ar, function (v) { commit(C.setProject(data, pid, { ar: v }, Date.now()), { undo: false }); });
     chipField(body, t("f.fps"), [[30, "30"], [60, "60"]], p.fps, function (v) { commit(C.setProject(data, pid, { fps: v }, Date.now()), { undo: false }); });
     colorField(body, t("set.bg"), p.bg, false, function (v) { commit(C.setProject(data, pid, { bg: v }, Date.now()), { undo: false }); });
+    var dk = p.dk || 0;
+    chipField(body, t("set.duck"), [0, 40, 60, 80].map(function (v) { return [v, t("duck." + v)]; }), [0, 40, 60, 80].indexOf(dk) >= 0 ? dk : 60,
+      function (v) { commit(C.setProject(data, pid, { dk: v }, Date.now()), { undo: false }); });
+    body.appendChild(el("p", "hint small", t("set.duckHint")));
     checkField(body, t("set.sync"), p.vs, function (v) {
       commit(C.setProject(data, pid, { vs: v }, Date.now()), { undo: false });
       if (v) shareMedia();
@@ -1156,7 +1457,11 @@
       row.appendChild(nm); row.appendChild(st);
       list.appendChild(row);
       MM.get(id).then(function (b) {
-        if (b) { st.textContent = t("set.ok") + " · " + fmtMB(b.size); return; }
+        if (b) {
+          st.textContent = t("set.ok") + " · " + fmtMB(b.size);
+          MM.proxy(id).then(function (px) { if (px) st.textContent += " · " + t("px.has"); });
+          return;
+        }
         st.textContent = t("set.missing");
         st.className = "hint small";
         var rb = el("button", "btn", t("btn.relink"));
@@ -1165,12 +1470,40 @@
         row.appendChild(rb);
       });
     });
+    if (C.mediaOf(p).some(C.isVideo)) {
+      var pf = el("div", "field");
+      pf.appendChild(el("span", "lbl", t("px.title")));
+      pf.appendChild(el("p", "hint small", t("px.hint")));
+      body.appendChild(pf);
+      actions(body, [[t("px.drop"), "", function () {
+        MM.dropProxies().then(function (n) { if (player) player.retry(); showToast(t("px.dropped", { n: n })); });
+      }], [t("px.make"), "", function () { closeDialog(); makeLightCopies(); }]]);
+    }
     body.appendChild(el("p", "hint small", t("set.cleanHint")));
     actions(body, [[t("btn.clean"), "", function () {
       var used = {};
       Object.keys(data.projects).forEach(function (k) { C.mediaOf(data.projects[k]).forEach(function (i) { used[i] = 1; }); });
       MM.cleanUnused(Object.keys(used)).then(function (n) { showToast(t("toast.cleaned", { n: n })); });
     }]]);
+  }
+  // Light copies of the project's videos, one after the other.
+  function makeLightCopies() {
+    var p = cur();
+    if (!p) return;
+    var vids = C.mediaOf(p).filter(C.isVideo), made = 0, stop = false, sig = {};
+    var cancel = function () { stop = true; if (sig.cancel) sig.cancel(); };
+    vids.reduce(function (ch, id, i) {
+      return ch.then(function () {
+        if (stop) return;
+        busy(t("px.working", { i: i + 1, n: vids.length, p: 0 }), 0, cancel);
+        return MM.makeProxy(id, function (f) { busy(t("px.working", { i: i + 1, n: vids.length, p: Math.round(f * 100) }), f, cancel); }, sig)
+          .then(function (r) { if (r === "made") made++; }, function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      busy(null);
+      if (player) player.retry();
+      showToast(stop ? t("px.stopped") : (made ? t("px.done", { n: made }) : t("px.none")));
+    });
   }
   function kindOf(id) {
     if (C.isPicture(id)) return t("kind.image");
@@ -1206,9 +1539,19 @@
     if (!Object.keys(p.items).length) { showToast(t("exp.empty")); return; }
     if (player && player.playing()) player.pause();
     var body = openDialog(t("exp.title"));
-    var sizes = [[720, "720p"], [1080, "1080p"], [2160, t("exp.k4")]];
-    chipField(body, t("exp.size"), sizes, prefs.short, function (v) { prefs.short = v; savePrefs(); });
-    var keep = checkField(body, t("exp.keep"), prefs.keep, function (v) { prefs.keep = v; savePrefs(); });
+    var sizes = [[720, "720p"], [1080, "1080p"], [2160, t("exp.k4")]], sizeRow = null, keep = null;
+    chipField(body, t("exp.what"), [["video", t("exp.video")], ["sound", t("exp.sound")], ["gif", t("exp.gif")]], prefs.what, function (v) { prefs.what = v; savePrefs(); show(); });
+    sizeRow = chipField(body, t("exp.size"), sizes, prefs.short, function (v) { prefs.short = v; savePrefs(); });
+    var gifRow = chipField(body, t("exp.gifSize"), [[320, t("exp.gifSmall")], [480, t("exp.gifMedium")]], prefs.gif, function (v) { prefs.gif = v; savePrefs(); });
+    var gifHint = el("p", "hint small", t("exp.gifHint"));
+    body.appendChild(gifHint);
+    keep = checkField(body, t("exp.keep"), prefs.keep, function (v) { prefs.keep = v; savePrefs(); });
+    function show() {
+      sizeRow.parentNode.hidden = prefs.what !== "video";
+      gifRow.parentNode.hidden = gifHint.hidden = prefs.what !== "gif";
+      keep.nextSibling.textContent = t(prefs.what === "sound" ? "exp.keepSound" : (prefs.what === "gif" ? "exp.keepGif" : "exp.keep"));
+    }
+    show();
     if (!fsApi()) keep.closest(".check").hidden = true;
     actions(body, [[t("exp.go"), "primary", runExport]]);
   }
@@ -1217,24 +1560,26 @@
     catch (e) { return window.orosFS || null; }
   }
   function runExport() {
-    var p = cur();
+    var p = cur(), sound = prefs.what === "sound", gif = prefs.what === "gif";
     closeDialog();
+    if (sound && !C.soundPlan(p).length) { showToast(t("exp.noSound")); return; }
+    if (gif && C.duration(p) > MX.GIF_MAX_SEC + 0.01) { showToast(t("exp.gifLong")); return; }
     var size = C.outputSize(p.ar, prefs.short);
-    MX.pickFormat(size.w, size.h).then(function (fmt) {
+    (gif ? Promise.resolve({ ext: "gif" }) : sound ? MX.pickSoundFormat() : MX.pickFormat(size.w, size.h)).then(function (fmt) {
       if (!fmt) { showToast(t("exp.noCodec")); return; }
       exportCancel = false;
       busy(t("exp.working", { p: 0 }), 0, function () { exportCancel = true; });
       var lock = null;
       try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { lock = l; }, function () {}); } catch (e) {}
       return MX.run({
-        project: p, short: prefs.short, file: MM.get,
+        project: p, short: prefs.short, file: MM.get, soundOnly: sound, gif: gif, gifSide: prefs.gif,
         progress: function (f) { busy(t("exp.working", { p: Math.round(f * 100) }), f, function () { exportCancel = true; }); },
         cancelled: function () { return exportCancel; }
       }).then(function (r) {
         busy(null);
         if (lock) lock.release().then(null, function () {});
         var name = C.exportName(p.name, r.ext);
-        lastExport = { blob: r.blob, name: name, mime: r.mime, ext: r.ext };
+        lastExport = { blob: r.blob, name: name, mime: r.mime, ext: r.ext, sound: sound, gif: gif };
         if (prefs.keep) keepInFiles(lastExport);
         exportReady();
       }, function (e) {
@@ -1249,18 +1594,21 @@
     if (!F) return;
     var base = x.name.replace(/\.[^.]+$/, ""), n = 1;
     function tryName() {
-      var path = "/internal/Videos/" + (n === 1 ? x.name : base + " (" + n + ")." + x.ext);
+      var path = (x.sound ? "/internal/Music/" : (x.gif ? "/internal/Pictures/" : "/internal/Videos/")) + (n === 1 ? x.name : base + " (" + n + ")." + x.ext);
       return F.stat(path).then(function () { n++; return n < 100 ? tryName() : null; }, function () {
-        return F.write(path, x.blob).then(function () { showToast(t("toast.kept")); });
+        return F.write(path, x.blob).then(function () { showToast(t(x.sound ? "toast.keptSound" : (x.gif ? "toast.keptGif" : "toast.kept"))); });
       });
     }
     tryName().then(null, function () { showToast(t("toast.saveFail")); });
   }
   function exportReady() {
-    var x = lastExport, body = openDialog(t("exp.ready"));
+    var x = lastExport, body = openDialog(t(x.sound ? "exp.readySound" : (x.gif ? "exp.readyGif" : "exp.ready")));
     body.appendChild(el("p", "hint", t("exp.readyHint", { f: x.name, s: fmtMB(x.blob.size) })));
-    var v = el("video");
-    v.controls = true; v.playsInline = true; v.style.width = "100%"; v.style.borderRadius = "8px"; v.style.background = "#000";
+    var v = el(x.sound ? "audio" : (x.gif ? "img" : "video"));
+    v.style.width = "100%";
+    if (x.gif) { v.alt = x.name; v.play = function () { return Promise.resolve(); }; v.pause = function () {}; }
+    else v.controls = true;
+    if (!x.sound && !x.gif) { v.playsInline = true; v.style.borderRadius = "8px"; v.style.background = "#000"; }
     var u = URL.createObjectURL(x.blob);
     v.src = u; v.hidden = true;
     body.appendChild(v);
@@ -1572,6 +1920,11 @@
     tr_ov: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="8" width="6" height="5" rx="1"/>'),
     tr_main: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/>'),
     tr_a1: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+    cc: SV('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M10 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3"/>'),
+    freeze: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 8v8M8.5 10l7 4M15.5 10l-7 4"/>'),
+    kf: SV('<path d="M12 3l6 9-6 9-6-9z"/><path d="M2 12h3M19 12h3"/>'),
+    reverse: SV('<path d="M20 7H8l3-3M8 7l3 3"/><path d="M4 17h12l-3-3M16 17l-3 3"/>'),
+    shapes: SV('<circle cx="8" cy="8" r="5"/><rect x="11" y="11" width="10" height="10" rx="1"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };
 

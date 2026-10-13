@@ -862,7 +862,7 @@ dialog menu button.danger:hover {
 }
 
 /* "Send to To-Do" dialog (todo.js section 13) */
-#todo-add select {
+#todo-add select, #todo-plat select {
   width: 100%;
   min-height: 38px;
   padding: 6px 10px;
@@ -872,7 +872,7 @@ dialog menu button.danger:hover {
   border: 1px solid var(--border);
   border-radius: 6px;
 }
-#todo-add select:focus { border-color: var(--accent); outline: none; }
+#todo-add select:focus, #todo-plat select:focus { border-color: var(--accent); outline: none; }
 #todo-add .add-items {
   list-style: none;
   margin: 12px 0 0;
@@ -967,3 +967,9 @@ dialog menu button.danger:hover {
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+/* Import from Todoist (todo/platforms.js, todo.js section 14) */
+dialog .import-btn { width: 100%; margin-top: 12px; }
+#todo-plat .plat-msg { margin-top: 10px; font-size: 13.5px; overflow-wrap: anywhere; }
+#todo-plat .plat-msg p { margin: 6px 0; }
+#todo-plat menu button.primary { background: var(--accent); color: var(--bg); }
+#todo-plat menu button:disabled { opacity: 0.5; cursor: default; }

@@ -14,7 +14,15 @@
 //     docs:    [ doc | tomb ]
 //     pays:    [ { id, doc, date, amt, how, note, m } | tomb ]
 //     tpls:    [ { id, name, kind, cli, cur, lines, gDisc, wht, exempt,
-//                  terms, notes, rep, next, dom, m } | tomb ] }
+//                  terms, notes, rep, next, dom, m } | tomb ],
+//     profs:   [ { id, name, trade, job, addr, country, afm, doy, phone,
+//                  email, web, iban, logo, terms, footer, m } | tomb ] }
+//              (wave 3: more business profiles; the key is left out
+//              while empty, and an older device drops it on its own
+//              merge, which costs nothing: the union keeps it here)
+//   Wave 3 fields that ride as flat extras (so an older device keeps
+//   them, see withExtras): doc.pid / tpl.pid / series.pid = the profile
+//   (none = the main one, prof), prof.qr = 0 turns the payment QR off.
 //   tomb = { id, m, del: 1 }
 //   doc  = { id, kind inv|rcpt|pro|cred|ext, st draft|issued|void,
 //            ser, seq, num, date, due, cur, cli, c{party}, s{party}?,
@@ -177,7 +185,9 @@
     tpl:    ["id", "name", "kind", "cli", "cur", "lines", "gDisc", "wht", "exempt", "terms", "notes",
              "rep", "next", "dom", "m", "del"],
     prof:   ["name", "trade", "job", "addr", "country", "afm", "doy", "phone", "email", "web", "iban",
-             "logo", "cur", "vat", "days", "wht", "plang", "terms", "footer", "m"]
+             "logo", "cur", "vat", "days", "wht", "plang", "terms", "footer", "m"],
+    biz:    ["id", "name", "trade", "job", "addr", "country", "afm", "doy", "phone", "email", "web", "iban",
+             "logo", "terms", "footer", "m", "del"]
   };
   function withExtras(out, x, known) {
     var n = 0;
@@ -339,6 +349,20 @@
     return withExtras(out, p, KNOWN.prof);
   }
 
+  // Wave 3: another business profile (the main one is prof). Seller
+  // details only; the defaults (currency, VAT, days…) stay on prof.
+  function normBiz(x) {
+    if (!baseOk(x)) return null;
+    if (x.del) return tomb(x);
+    var s = normSeller(x);
+    if (!s.name) return null;
+    return withExtras({
+      id: x.id, name: s.name, trade: s.trade, job: s.job, addr: s.addr, country: s.country,
+      afm: s.afm, doy: s.doy, phone: s.phone, email: s.email, web: s.web, iban: s.iban, logo: s.logo,
+      terms: cleanBlock(x.terms, LIM.terms), footer: cleanBlock(x.footer, LIM.footer), m: x.m
+    }, x, KNOWN.biz);
+  }
+
   // ---------- 3. Merge, parse, backup ----------
   // Newer m wins; equal m: a tombstone wins, then the larger JSON
   // (symmetric, so both devices pick the same record).
@@ -367,7 +391,7 @@
   function mergeInvoices(A, B) {
     var a = (A && typeof A === "object") ? A : {};
     var b = (B && typeof B === "object") ? B : {};
-    return {
+    var out = {
       ver: DATA_VER,
       prof: mergeProf(a.prof, b.prof),
       series: mergeList(a.series, b.series, normSeries),
@@ -376,6 +400,9 @@
       pays: mergeList(a.pays, b.pays, normPay),
       tpls: mergeList(a.tpls, b.tpls, normTpl)
     };
+    var profs = mergeList(a.profs, b.profs, normBiz);
+    if (profs.length) out.profs = profs;
+    return out;
   }
   function normalize(x) { return mergeInvoices(x, x); }
   function empty() { return normalize(null); }
@@ -607,6 +634,127 @@
     });
     return out;
   }
+  // Wave 3 — client statement: every document of one client that
+  // still owes something, oldest first, with the open total per
+  // currency. → { rows: [{ id, num, kind, date, due, total, paid, bal,
+  // cur, late }], totals: { CUR: cents } }
+  function statement(data, cliId, day) {
+    var out = { rows: [], totals: {} };
+    if (!cliId || !data) return out;
+    day = day || today();
+    live(data.docs).forEach(function (d) {
+      if (d.cli !== cliId) return;
+      var bal = balance(data, d);
+      if (bal <= 0) return;
+      out.rows.push({ id: d.id, num: d.num, kind: d.kind, date: d.date, due: d.due, total: totals(d).pay,
+                      paid: totals(d).pay - bal, bal: bal, cur: d.cur, late: lateDays(d, day) });
+      out.totals[d.cur] = (out.totals[d.cur] || 0) + bal;
+    });
+    out.rows.sort(function (x, y) { return cmpStr(x.date, y.date) || cmpStr(x.num, y.num) || cmpStr(x.id, y.id); });
+    return out;
+  }
+
+  // Wave 3 — EU reverse charge helper. A country from what people type
+  // (ISO code, English, Greek or the local name) or from the prefix of
+  // an EU VAT number ("DE123456789"; Greece uses EL).
+  var EU = {
+    AT: "austria|osterreich|αυστρια", BE: "belgium|belgique|belgie|belgien|βελγιο",
+    BG: "bulgaria|българия|βουλγαρια", HR: "croatia|hrvatska|κροατια", CY: "cyprus|κυπρος",
+    CZ: "czechia|czech republic|cesko|τσεχια", DK: "denmark|danmark|δανια",
+    EE: "estonia|eesti|εσθονια", FI: "finland|suomi|φινλανδια", FR: "france|γαλλια",
+    DE: "germany|deutschland|γερμανια", GR: "greece|hellas|ελλαδα|ελλας", HU: "hungary|magyarorszag|ουγγαρια",
+    IE: "ireland|eire|ιρλανδια", IT: "italy|italia|ιταλια", LV: "latvia|latvija|λετονια",
+    LT: "lithuania|lietuva|λιθουανια", LU: "luxembourg|λουξεμβουργο", MT: "malta|μαλτα",
+    NL: "netherlands|nederland|holland|ολλανδια", PL: "poland|polska|πολωνια",
+    PT: "portugal|πορτογαλια", RO: "romania|ρουμανια", SK: "slovakia|slovensko|σλοβακια",
+    SI: "slovenia|slovenija|σλοβενια", ES: "spain|espana|ισπανια", SE: "sweden|sverige|σουηδια"
+  };
+  function euCountry(text) {
+    var f = fold(text).replace(/[^a-z\u03b1-\u03c9\u0430-\u044f]+/g, " ").replace(/\s+/g, " ").trim();
+    if (!f) return "";
+    if (f.length === 2) {
+      var up = f.toUpperCase() === "EL" ? "GR" : f.toUpperCase();
+      return EU[up] ? up : "";
+    }
+    var padded = " " + f + " ";
+    for (var k in EU) {
+      if (EU[k].split("|").some(function (n) { return padded.indexOf(" " + n + " ") >= 0; })) return k;
+    }
+    return "";
+  }
+  function vatPrefix(afm) {
+    var m = /^([A-Z]{2})[\s-]?[0-9A-Z]{2,13}$/.exec(String(afm || "").toUpperCase().replace(/\s+/g, ""));
+    if (!m) return "";
+    var c = m[1] === "EL" ? "GR" : m[1];
+    return EU[c] ? c : "";
+  }
+  function partyCountry(p, sellerSide) {
+    p = p || {};
+    var c = euCountry(p.country) || vatPrefix(p.afm);
+    if (!c && sellerSide && /^\d{9}$/.test(String(p.afm || "").replace(/\s+/g, ""))) c = "GR";   // a Greek ΑΦΜ
+    return c;
+  }
+  // → { seller, client } country codes when the client is a business
+  // (it has a VAT number) in another EU country than the seller; null
+  // otherwise. The person still decides: the app only offers it.
+  function reverseCharge(seller, cli) {
+    if (!cli || !String(cli.afm || "").trim()) return null;
+    var a = partyCountry(seller, true), b = partyCountry(cli, false);
+    return a && b && a !== b ? { seller: a, client: b } : null;
+  }
+
+  // Wave 3 — payment QR (EPC069-12 "SEPA credit transfer", the code
+  // European banking apps scan): the first valid IBAN in the profile's
+  // bank lines (mod-97 checked), a EUR amount and the document number.
+  function ibanOf(text) {
+    var re = /\b([A-Z]{2}\d{2}(?: ?[A-Z0-9]){11,30})\b/g, m;
+    var src = String(text || "").toUpperCase();
+    while ((m = re.exec(src))) {
+      var iban = m[1].replace(/ /g, "");
+      if (iban.length >= 15 && iban.length <= 34 && ibanOk(iban)) return iban;
+    }
+    return "";
+  }
+  function ibanOk(iban) {
+    var r = iban.slice(4) + iban.slice(0, 4), rem = 0;
+    for (var i = 0; i < r.length; i++) {
+      var ch = r.charCodeAt(i), v = ch >= 65 ? String(ch - 55) : r[i];
+      for (var j = 0; j < v.length; j++) rem = (rem * 10 + (+v[j])) % 97;
+    }
+    return rem === 1;
+  }
+  // "" when it can't be made (no IBAN, no name, amount out of range).
+  function epcPayload(name, ibanText, amt, ref) {
+    var iban = ibanOf(ibanText);
+    var nm = cleanText(name, 70);
+    if (!iban || !nm || !isInt(amt) || amt < 1 || amt > 99999999999) return "";
+    var eur = Math.floor(amt / 100) + "." + pad(amt % 100);
+    return ["BCD", "002", "1", "SCT", "", nm, iban, "EUR" + eur, "", "", cleanText(ref, 140)].join("\n");
+  }
+
+  // Wave 3 — business profiles. "" (or an unknown / deleted id) = the
+  // main profile, prof.
+  function profiles(data) {
+    return [Object.assign({ id: "" }, data.prof || DEFAULT_PROF)].concat(live(data.profs || []));
+  }
+  function profileOf(data, pid) {
+    return (pid && byId(data.profs, pid)) || data.prof || DEFAULT_PROF;
+  }
+  // The seller printed on a document: frozen at issue (s), else the
+  // document's profile as it is now.
+  function sellerOf(data, d) {
+    return d && d.s ? d.s : normSeller(profileOf(data, d && d.pid));
+  }
+  // The series a profile uses for a kind: the first one linked to it
+  // (series.pid), else `fallback` (the device's or the default).
+  function seriesForProfile(data, kind, pid, fallback) {
+    if (pid && byId(data.profs, pid)) {
+      var l = seriesFor(data, kind).filter(function (s) { return s.pid === pid; });
+      if (l.length) return l[0].id;
+    }
+    return fallback || defaultSeries(kind);
+  }
+
   // Documents still owed with a due date on or before `until`,
   // earliest first (ties by id). For reminders, Today and Calendar.
   function dueList(data, until) {
@@ -630,6 +778,25 @@
       return { id: d.id, num: d.num, kind: d.kind, who: partyName(data, d), due: d.due,
                bal: balance(data, d), cur: d.cur, late: d.due < day };
     });
+  }
+  // BR-ST-OUT (Stock's receiver, stock/core.js outRequest): the
+  // request that takes an issued invoice or receipt out of stock, or
+  // puts a credit note's goods back. Only lines with a code (SKU or
+  // barcode) go; p = net unit price after the line and global
+  // discounts, in cents. Stock opens a prefilled movement and writes
+  // nothing until the person saves. null = nothing to send.
+  var STOCK_SRC_RE = /^[A-Za-z0-9._-]{1,60}$/;
+  function stockOut(d) {
+    if (!d || d.st !== "issued" || ["inv", "rcpt", "cred"].indexOf(d.kind) < 0) return null;
+    var g = (100 - (d.gDisc || 0)) / 100, lines = [];
+    (d.lines || []).forEach(function (l) {
+      if (!l || !l.code || !(l.q > 0)) return;
+      lines.push({ code: l.code, q: l.q, p: Math.round(l.p * (100 - l.disc) / 100 * g) });
+    });
+    if (!lines.length) return null;
+    var req = { ref: String(d.num || "").slice(0, 60), d: d.date, t: d.kind === "cred" ? "ret" : "out", lines: lines };
+    if (STOCK_SRC_RE.test(d.id)) req.src = "invoices:" + d.id;
+    return req;
   }
   // The shell reminder: unpaid documents overdue or due within `days`
   // days of `day`. null when there is nothing to say. `key` changes
@@ -751,12 +918,15 @@
   function draftFrom(data, t, date, id, m) {
     var cl = client(data, t.cli);
     var prof = data.prof || DEFAULT_PROF;
-    return normDoc({
-      id: id, kind: t.kind, st: "draft", ser: defaultSeries(t.kind), date: date,
+    var pid = typeof t.pid === "string" && byId(data.profs, t.pid) ? t.pid : "";
+    var x = {
+      id: id, kind: t.kind, st: "draft", ser: seriesForProfile(data, t.kind, pid), date: date,
       due: prof.days ? addDays(date, prof.days) : "", cur: t.cur, cli: cl ? cl.id : "",
       c: cl ? partyOfClient(cl) : {}, lines: t.lines, gDisc: t.gDisc, wht: t.wht, exempt: t.exempt,
       terms: t.terms, notes: t.notes, crm: cl && cl.crm ? cl.crm : "", m: m
-    });
+    };
+    if (pid) x.pid = pid;
+    return normDoc(x);
   }
   function partyOfClient(c) {
     return { name: c.name, job: c.job, addr: c.addr, country: c.country, afm: c.afm,
@@ -943,7 +1113,11 @@
     clashes: clashes, clashKeeper: clashKeeper,
     lineNet: lineNet, totals: totals, paysOf: paysOf, paidOf: paidOf, creditsOf: creditsOf,
     owes: owes, balance: balance, status: status, lateDays: lateDays, sign: sign, counts: counts,
-    byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, currencies: currencies, dashboard: dashboard,
+    byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, stockOut: stockOut, statement: statement,
+    EU: EU, euCountry: euCountry, vatPrefix: vatPrefix, reverseCharge: reverseCharge,
+    ibanOf: ibanOf, ibanOk: ibanOk, epcPayload: epcPayload,
+    normBiz: normBiz, profiles: profiles, profileOf: profileOf, sellerOf: sellerOf, seriesForProfile: seriesForProfile,
+    currencies: currencies, dashboard: dashboard,
     recurringDue: recurringDue, nextRun: nextRun, draftFrom: draftFrom, stepRep: stepRep,
     normPrefill: normPrefill, matchClient: matchClient, fold: fold,
     parseMoney: parseMoney, parseNum: parseNum, fmtMoney: fmtMoney, fmtNumber: fmtNumber,

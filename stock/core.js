@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.0.0)
+// orOS Stock — core.js (shared logic, v1.6.0)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -32,9 +32,52 @@
 //   csvCell, parseCsv(text), importPlan(data, text, opts)
 //   csvProducts(data, names) · csvMoves(data, names)
 //   readPrefs(raw)
+//   purchase orders (1.1): normPo, poSrc, poView(data, po), poViews,
+//     onOrder(data), poNext(data, today)
+//   reports (1.1): valueByCat(data), periodSummary(data, from, to),
+//     deadStock(data, today, days), reportRange(key, today)
+//   photos (1.2): normPic, picName, picPath, picOf(data, itemId), picsInUse
+//   barcodes (1.2): eanCheck, ean13, code128, barcodeFor(item), barSvg
+//   other apps (1.3): outRequest(data, req, today) (BR-ST-OUT),
+//     srcUses(data, src), catalog(data)
+//   warehouses (1.4): WH_MAIN, normWh, whName, whQty(data), qtyIn(data, w)
+//   lots (1.5): LOT_LEN, lotsOf(data, itemId), allLots(data),
+//     expiring(data, today, days), lotNames(data, itemId)
+//   closing a period (1.6): normClose, closePeriod(data, d, nowMs, id),
+//     openMove(data), OPEN_ID, closeInfo(data, d)
 // Data (synced slice "stock", key oros-stock-data):
-//   { ver: 1, items, cats, units, sups, moves: [row…] each sorted by
-//     id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
+//   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
+//     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
+//   pos (1.1) is a top-level list: a 1.0 device drops it on its own
+//   merge, which costs nothing (a pull never marks dirty, a 1.1
+//   device keeps it). A receipt against an order is a normal "in"
+//   movement with src "po:<order id>" (1.0 already carries src).
+//   pics (1.2) is a top-level list too, one row per product photo
+//   { id: itemId, m, f: file name | "" }: a separate list rather than a
+//   field of the item, so a 1.0/1.1 device that edits the item can
+//   never drop the photo (its own merge only drops the whole list).
+//   whs (1.4): warehouses { id, m, name, arch }, LWW + tombs; the row
+//   with id WH_MAIN only names the main warehouse. A movement may carry
+//   w (its warehouse; none = main). Type "xfer" (transfer) moves its
+//   positive line quantities from w to w2 and changes no total: a 1.3
+//   device drops it (its totals stay right) and the union keeps it on
+//   the others. A 1.3 device also strips w from the movements it
+//   re-uploads, so a tie on m prefers the copy that carries w / w2.
+//   lots (1.5): a line may carry lot (≤ 40 chars; not on count / fix /
+//   xfer) and, on a receipt or a customer return, exp (YYYY-MM-DD).
+//   What is left of each lot is derived (lotsOf): sales name a lot or
+//   take the first to expire. Same tie rule: the copy with lots wins.
+//   close (1.6): one object { id, m, d, at, bal, avg, ls, fs, rcv, ids }:
+//   the books are closed through day d. The movements up to d were
+//   archived (a JSON file in Files) and replaced by an opening balance
+//   (bal lines per item / warehouse / lot, avg costs, last sale day ls,
+//   first day fs, PO receipts rcv). ids lists the archived movement ids
+//   for 90 days: a movement dated ≤ d that is NOT listed (typed on a
+//   device that was offline, or backdated later) stays live and counts
+//   on top of the opening. After 90 days the list goes and anything
+//   dated ≤ d with m ≤ at is dropped. Merge keeps the close with the
+//   latest d; a tombstone on its id reopens the period. A 1.5 device
+//   doesn't know close: it keeps showing full history until updated.
 // ============================================================
 (function (root) {
   "use strict";
@@ -46,7 +89,7 @@
   var DAY_MS = 86400000;
   var NAME_LEN = 80, SKU_LEN = 40, BC_LEN = 40, LOC_LEN = 60, REF_LEN = 60,
       NOTE_LEN = 500, MNOTE_LEN = 300, UNIT_LEN = 16, PERSON_LEN = 60,
-      TEL_LEN = 40, EMAIL_LEN = 120, VATNO_LEN = 20;
+      TEL_LEN = 40, EMAIL_LEN = 120, VATNO_LEN = 20, LOT_LEN = 40;
   var MAX_ITEMS = 20000, MAX_LIST = 2000, MAX_MOVES = 100000, MAX_LINES = 500;
   var TOMB_DAYS = 365;
   var Q_MAX = 1000000000000;      // thousandths: a billion units
@@ -80,8 +123,8 @@
   //   loss damage / loss / expiry (−)
   //   count stock count (difference, any sign or 0; n = counted)
   //   fix  correction (any sign, not 0)
-  var MOVE_TYPES = ["in", "out", "ret", "rts", "loss", "count", "fix"];
-  var SIGN = { "in": 1, out: -1, ret: 1, rts: -1, loss: -1, count: 0, fix: 0 };
+  var MOVE_TYPES = ["in", "out", "ret", "rts", "loss", "count", "fix", "xfer"];
+  var SIGN = { "in": 1, out: -1, ret: 1, rts: -1, loss: -1, count: 0, fix: 0, xfer: 1 };
 
   // ---------- Dates ----------
   function p2(n) { return (n < 10 ? "0" : "") + n; }
@@ -224,6 +267,11 @@
       if (clampInt(l.n, 0, Q_MAX) === null) return null;
       out.n = l.n;
     }
+    if (t !== "count" && t !== "fix" && t !== "xfer") {
+      var lot = cleanText(l.lot, LOT_LEN, false);
+      if (lot) out.lot = lot;
+      if (lot && (t === "in" || t === "ret") && isYmd(l.exp)) out.exp = l.exp;
+    }
     return out;
   }
   function normMove(x) {
@@ -242,9 +290,17 @@
       lines: lines
     };
     if (typeof x.src === "string" && SRC_RE.test(x.src)) out.src = x.src;
+    var w = whRef(x.w), w2 = whRef(x.w2);
+    if (x.t === "xfer") {
+      if (w === w2) return null;            // a transfer goes somewhere else
+      if (w2) out.w2 = w2;
+    }
+    if (w) out.w = w;
     if (x.v === 1) out.v = 1;
     return out;
   }
+  // a warehouse reference: "" = the main warehouse
+  function whRef(v) { var r = ref(v); return r === WH_MAIN ? "" : r; }
   function normSettings(x) {
     var s = x && typeof x === "object" ? x : {};
     return {
@@ -255,8 +311,56 @@
     };
   }
 
-  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup };
-  var LIST_KEYS = ["items", "cats", "units", "sups"];
+  // Purchase order: what was ordered from a supplier. What arrived is
+  // NOT stored here: it is the sum of the live "in" movements whose src
+  // is "po:<id>" (so a receipt voided later un-receives by itself, and
+  // two devices receiving parts at the same time both count).
+  //   st: draft (being written) | sent | closed (nothing more is
+  //   coming) | cancel. "partial" and "received" are derived.
+  var PO_ST = ["draft", "sent", "closed", "cancel"];
+  function normPo(x) {
+    if (!base(x) || !isYmd(x.d) || !Array.isArray(x.lines)) return null;
+    var lines = [], seen = dict();
+    for (var i = 0; i < x.lines.length && lines.length < MAX_LINES; i++) {
+      var l = x.lines[i];
+      if (!l || typeof l !== "object" || typeof l.i !== "string" || !ID_RE.test(l.i) || seen[l.i]) continue;
+      var q = clampInt(l.q, 1, Q_MAX);
+      if (q === null) continue;
+      seen[l.i] = true;
+      var line = { i: l.i, q: q };
+      if (clampInt(l.c, 0, C_MAX) !== null) line.c = l.c;
+      lines.push(line);
+    }
+    if (!lines.length) return null;
+    return {
+      id: x.id, m: x.m, no: cleanText(x.no, REF_LEN, false), sup: ref(x.sup), d: x.d,
+      exp: isYmd(x.exp) ? x.exp : "", st: PO_ST.indexOf(x.st) >= 0 ? x.st : "draft",
+      note: cleanText(x.note, MNOTE_LEN, true), lines: lines
+    };
+  }
+
+  // Product photo: the row's id IS the item id (one photo per item; a
+  // tombstone of the item hides it too). f = the JPEG's file name on
+  // the orOS disk, "" = removed (an LWW edit, no tombstone needed).
+  var PHOTO_DIR = "/internal/Stock/Photos";
+  var PIC_RE = /^\d{8}-[a-z0-9]{6,40}-[a-z0-9]{4,12}\.jpg$/;
+  function normPic(x) {
+    if (!base(x)) return null;
+    return { id: x.id, m: x.m, f: typeof x.f === "string" && PIC_RE.test(x.f) ? x.f : "" };
+  }
+
+  // Warehouses (1.4). WH_MAIN's row only gives the main warehouse a
+  // name (it can't be archived); movements never carry it as w.
+  var WH_MAIN = "whmain";
+  function normWh(x) {
+    if (!base(x)) return null;
+    var name = cleanText(x.name, NAME_LEN, false);
+    if (!name) return null;
+    return { id: x.id, m: x.m, name: name, arch: x.arch === 1 && x.id !== WH_MAIN ? 1 : 0 };
+  }
+
+  var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo, pics: normPic, whs: normWh };
+  var LIST_KEYS = ["items", "cats", "units", "sups", "pos", "pics", "whs"];
 
   function canon(v) { return JSON.stringify(v); }
   function lww(best, x) {
@@ -264,11 +368,19 @@
     if (!cur || x.m > cur.m || (x.m === cur.m && canon(x) > canon(cur))) best[x.id] = x;
   }
   // A void is final: the voided copy always wins, whatever its m.
+  // knows more than a 1.3 / 1.4 copy of itself: a warehouse or lots
+  function richer(x) {
+    return !!(x.w || x.w2 || x.lines.some(function (l) { return l.lot || l.exp; }));
+  }
   function moveWins(best, x) {
     var cur = best[x.id];
     if (!cur) { best[x.id] = x; return; }
     var xv = x.v === 1, cv = cur.v === 1;
     if (xv !== cv) { if (xv) best[x.id] = x; return; }
+    // same m: the copy that knows its warehouse wins over one a 1.3
+    // device stripped
+    var xw = richer(x), cw = richer(cur);
+    if (x.m === cur.m && xw !== cw) { if (xw) best[x.id] = x; return; }
     lww(best, x);
   }
 
@@ -297,10 +409,24 @@
         if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
       });
     });
+    // the closed period (1.6): the latest close that is not tombstoned
+    var close = null;
+    [a.close, b.close].forEach(function (raw) {
+      var c = normClose(raw);
+      if (!c || (c.id in tombs && tombs[c.id] >= c.m)) return;
+      if (!close || c.d > close.d || (c.d === close.d && (c.m > close.m || (c.m === close.m && canon(c) > canon(close))))) close = c;
+    });
+    if (close && close.ids && now - close.at > CLOSE_IDS_DAYS * DAY_MS) close.ids = "";
+    var gone = null;
+    if (close && close.ids) { gone = dict(); close.ids.split(",").forEach(function (id) { gone[id] = true; }); }
+    function archived(x) {
+      if (!close || x.d > close.d) return false;
+      return gone ? !!gone[x.id] : x.m <= close.at;
+    }
     // movements first: they decide which items must stay
     var bestM = dict();
     [a.moves, b.moves].forEach(function (list) {
-      if (Array.isArray(list)) list.forEach(function (raw) { var x = normMove(raw); if (x) moveWins(bestM, x); });
+      if (Array.isArray(list)) list.forEach(function (raw) { var x = normMove(raw); if (x && !archived(x)) moveWins(bestM, x); });
     });
     var moves = [], used = dict();
     Object.keys(bestM).sort(cmpStr).forEach(function (id) {
@@ -308,7 +434,10 @@
       var x = bestM[id];
       moves.push(x);
       x.lines.forEach(function (l) { used[l.i] = true; });
+      if (x.w) used[x.w] = true;
+      if (x.w2) used[x.w2] = true;
     });
+    if (close) close.bal.forEach(function (l) { used[l.i] = true; if (l.w) used[l.w] = true; });
     function pick(key, norm, cap) {
       var best = dict();
       [a[key], b[key]].forEach(function (list) {
@@ -317,7 +446,7 @@
       var out = [];
       Object.keys(best).sort(cmpStr).forEach(function (id) {
         var x = best[id];
-        if (id in tombs && tombs[id] >= x.m && !(key === "items" && used[id])) return;
+        if (id in tombs && tombs[id] >= x.m && !((key === "items" || key === "whs") && used[id])) return;
         if (out.length >= cap) return;
         out.push(x);
       });
@@ -326,6 +455,7 @@
     var out = { ver: DATA_VER };
     LIST_KEYS.forEach(function (k) { out[k] = pick(k, LISTS[k], k === "items" ? MAX_ITEMS : MAX_LIST); });
     out.moves = moves;
+    if (close) out.close = close;
     var sa = normSettings(a.settings), sb = normSettings(b.settings);
     out.settings = sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa;
     var sortedTombs = {};
@@ -341,15 +471,28 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === unitId) return list[i].dec;
     return 0;
   }
-  function live(moves) { return (moves || []).filter(function (x) { return x.v !== 1; }); }
+  // live movements that change totals: a transfer only moves stock
+  // between warehouses, so totals, costs and reports skip it
+  function live(moves) { return (moves || []).filter(function (x) { return x.v !== 1 && x.t !== "xfer"; }); }
+  function liveAll(moves) { return (moves || []).filter(function (x) { return x.v !== 1; }); }
   // Chronological order: day, then id (ids start with the creation
   // time), so every device walks the ledger the same way.
   function chrono(moves) {
-    return live(moves).slice().sort(function (x, y) { return cmpStr(x.d, y.d) || cmpStr(x.id, y.id); });
+    return live(moves).slice().sort(byTime);
+  }
+  // time order; the opening balance comes first, whatever its day: a
+  // late movement dated inside the closed period counts on top of it
+  function byTime(x, y) {
+    return (x.t === "open" ? 0 : 1) - (y.t === "open" ? 0 : 1) || cmpStr(x.d, y.d) || cmpStr(x.id, y.id);
+  }
+  // the movements plus the opening balance of a closed period (1.6)
+  function ledger(data) {
+    var o = openMove(data), list = (data && data.moves) || [];
+    return o ? [o].concat(list) : list;
   }
   function qtyMap(data) {
     var q = dict();
-    live(data && data.moves).forEach(function (x) {
+    live(ledger(data)).forEach(function (x) {
       x.lines.forEach(function (l) { q[l.i] = (q[l.i] || 0) + l.q; });
     });
     return q;
@@ -364,6 +507,12 @@
   function costMap(data) {
     var q = dict(), avg = dict(), own = dict();
     ((data && data.items) || []).forEach(function (it) { own[it.id] = it.cost; });
+    // a closed period starts from its quantities and average costs
+    var cl = data && data.close;
+    if (cl) {
+      cl.bal.forEach(function (l) { q[l.i] = (q[l.i] || 0) + l.q; });
+      Object.keys(cl.avg).forEach(function (i) { avg[i] = cl.avg[i]; });
+    }
     chrono(data && data.moves).forEach(function (x) {
       x.lines.forEach(function (l) {
         var before = q[l.i] || 0;
@@ -418,10 +567,10 @@
   // where after = the quantity right after it (voided ones: null).
   function itemMoves(data, itemId) {
     var run = 0, out = [];
-    chrono(data && data.moves).forEach(function (x) {
+    liveAll(ledger(data)).slice().sort(byTime).forEach(function (x) {
       x.lines.forEach(function (l) {
         if (l.i !== itemId) return;
-        run += l.q;
+        if (x.t !== "xfer") run += l.q;       // a transfer leaves the total
         out.push({ move: x, line: l, after: run });
       });
     });
@@ -433,7 +582,7 @@
     return out;
   }
   function hasMoves(data, itemId) {
-    var list = (data && data.moves) || [];
+    var list = ledger(data);
     for (var i = 0; i < list.length; i++) {
       for (var j = 0; j < list[i].lines.length; j++) if (list[i].lines[j].i === itemId) return true;
     }
@@ -667,7 +816,9 @@
   }
   // Movements, one row per line: [date, type, ref, supplier, sku, name,
   // qty, unit cost / price, note, voided] — types by names[type].
-  function csvMoves(data, names) {
+  // mainLabel given (several warehouses): + [warehouse, to warehouse].
+  // withLots: + [lot, expiry].
+  function csvMoves(data, names, mainLabel, withLots) {
     var nm = names || {}, items = dict(), sups = dict();
     ((data && data.items) || []).forEach(function (x) { items[x.id] = x; });
     ((data && data.sups) || []).forEach(function (x) { sups[x.id] = x.name; });
@@ -676,17 +827,554 @@
       x.lines.forEach(function (l) {
         var it = items[l.i] || { sku: "", name: "?" };
         var money = typeof l.c === "number" ? l.c / 100 : (typeof l.p === "number" ? l.p / 100 : null);
-        rows.push([x.d, has(nm, x.t) ? nm[x.t] : x.t, x.ref, sups[x.sup] || "", it.sku, it.name, l.q / 1000, money, x.note, x.v === 1 ? (nm.voided || "void") : "", x.id]);
+        var row = [x.d, has(nm, x.t) ? nm[x.t] : x.t, x.ref, sups[x.sup] || "", it.sku, it.name, l.q / 1000, money, x.note, x.v === 1 ? (nm.voided || "void") : ""];
+        if (mainLabel) row.push(whName(data, x.w, mainLabel), x.t === "xfer" ? whName(data, x.w2, mainLabel) : "");
+        if (withLots) row.push(l.lot || "", l.exp || "");
+        row.push(x.id);
+        rows.push(row);
       });
     });
-    rows.sort(function (p, r) { return cmpStr(p[0], r[0]) || cmpStr(p[10], r[10]); });
-    return rows.map(function (r) { return r.slice(0, 10); });
+    rows.sort(function (p, r) { return cmpStr(p[0], r[0]) || cmpStr(p[p.length - 1], r[r.length - 1]); });
+    return rows.map(function (r) { return r.slice(0, r.length - 1); });
+  }
+
+  // ---------- Purchase orders ----------
+  function poSrc(id) { return "po:" + id; }
+  // What arrived per item for each order: { poId: { itemId: q } }
+  function receivedMap(data) {
+    var by = dict(), cl = data && data.close;
+    if (cl) Object.keys(cl.rcv).forEach(function (po) {
+      var r = by[po] = dict();
+      Object.keys(cl.rcv[po]).forEach(function (i) { r[i] = cl.rcv[po][i]; });
+    });
+    live(data && data.moves).forEach(function (x) {
+      if (x.t !== "in" || typeof x.src !== "string" || x.src.indexOf("po:") !== 0) return;
+      var id = x.src.slice(3), r = by[id] || (by[id] = dict());
+      x.lines.forEach(function (l) { r[l.i] = (r[l.i] || 0) + l.q; });
+    });
+    return by;
+  }
+  // { po, lines: [{ i, q, c?, got, left }], got (anything arrived),
+  //   left (sum left), state: draft|sent|partial|received|closed|cancel,
+  //   open (still expected: sent or partial), receipts: [move] }
+  function poView(data, po, recv) {
+    var r = (recv || receivedMap(data))[po.id] || dict(), any = false, left = 0;
+    var lines = po.lines.map(function (l) {
+      var got = r[l.i] || 0, rest = Math.max(0, l.q - got);
+      if (got > 0) any = true;
+      left += rest;
+      var o = { i: l.i, q: l.q, got: got, left: rest };
+      if (typeof l.c === "number") o.c = l.c;
+      return o;
+    });
+    // an item received against the order but not on it still counts
+    Object.keys(r).forEach(function (id) { if (r[id] > 0) any = true; });
+    var st = po.st;
+    if (st === "draft" || st === "sent") st = left === 0 ? "received" : (any ? "partial" : st);
+    return { po: po, lines: lines, got: any, left: left, state: st, open: st === "sent" || st === "partial" };
+  }
+  // All orders, newest first (order date, then id).
+  function poViews(data) {
+    var recv = receivedMap(data);
+    return ((data && data.pos) || []).map(function (p) { return poView(data, p, recv); })
+      .sort(function (x, y) { return cmpStr(y.po.d, x.po.d) || cmpStr(y.po.id, x.po.id); });
+  }
+  // Still expected per item from open orders: { itemId: q }
+  function onOrder(data) {
+    var map = dict();
+    poViews(data).forEach(function (v) {
+      if (!v.open) return;
+      v.lines.forEach(function (l) { if (l.left > 0) map[l.i] = (map[l.i] || 0) + l.left; });
+    });
+    return map;
+  }
+  // "PO-261012-3": the day plus the next free number of that day on
+  // this device's copy (a clash with another device only looks odd).
+  function poNext(data, today) {
+    var day = isYmd(today) ? today : ymdOf(Date.now());
+    var pre = "PO-" + day.slice(2, 4) + day.slice(5, 7) + day.slice(8, 10) + "-", n = 0;
+    ((data && data.pos) || []).forEach(function (p) {
+      if (p.no.indexOf(pre) !== 0) return;
+      var k = parseInt(p.no.slice(pre.length), 10);
+      if (isFinite(k) && k > n) n = k;
+    });
+    return pre + (n + 1);
+  }
+
+  // ---------- Photos ----------
+  function picName(ymd, itemId, rnd) {
+    var r = typeof rnd === "string" ? rnd.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) : "";
+    if (!isYmd(ymd) || typeof itemId !== "string" || !ID_RE.test(itemId) || r.length < 4) return null;
+    return ymd.replace(/-/g, "") + "-" + itemId + "-" + r + ".jpg";
+  }
+  function picPath(name) { return typeof name === "string" && PIC_RE.test(name) ? PHOTO_DIR + "/" + name : null; }
+  function picOf(data, itemId) {
+    var list = (data && data.pics) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === itemId) return list[i].f;
+    return "";
+  }
+  // Every file name some live product still points at
+  function picsInUse(data) {
+    var items = dict(), out = [];
+    ((data && data.items) || []).forEach(function (it) { items[it.id] = true; });
+    ((data && data.pics) || []).forEach(function (p) { if (p.f && items[p.id]) out.push(p.f); });
+    return out;
+  }
+
+  // ---------- Barcodes (pure: module strings "1" bar / "0" space) ----------
+  // EAN-13: the check digit of 12 digits
+  function eanCheck(d12) {
+    if (!/^\d{12}$/.test(d12)) return null;
+    var sum = 0;
+    for (var i = 0; i < 12; i++) sum += (+d12[i]) * (i % 2 ? 3 : 1);
+    return String((10 - sum % 10) % 10);
+  }
+  var EAN_L = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"];
+  var EAN_G = ["0100111", "0110011", "0011011", "0100001", "0011101", "0111001", "0000101", "0010001", "0001001", "0010111"];
+  var EAN_P = ["LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG", "LGGLLG", "LGGGLL", "LGLGLG", "LGLGGL", "LGGLGL"];
+  function ean13(code) {
+    if (!/^\d{13}$/.test(code) || eanCheck(code.slice(0, 12)) !== code[12]) return null;
+    var par = EAN_P[+code[0]], out = "101";
+    for (var i = 1; i <= 6; i++) out += (par[i - 1] === "L" ? EAN_L : EAN_G)[+code[i]];
+    out += "01010";
+    for (var j = 7; j <= 12; j++) out += EAN_L[+code[j]].replace(/[01]/g, function (c) { return c === "0" ? "1" : "0"; });
+    return out + "101";
+  }
+  // Code 128 (set B: printable ASCII 32–126), widths bar/space/…
+  var C128 = ("212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 " +
+    "221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 " +
+    "221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 " +
+    "212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 " +
+    "231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 " +
+    "231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 " +
+    "314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 " +
+    "112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 " +
+    "111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 " +
+    "214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 " +
+    "114131 311141 411131 211412 211214 211232 2331112").split(" ");
+  function code128(text) {
+    var s = String(text || "");
+    if (!s || s.length > 40) return null;
+    var vals = [104];
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c < 32 || c > 126) return null;
+      vals.push(c - 32);
+    }
+    var sum = 104;
+    for (var k = 1; k < vals.length; k++) sum += vals[k] * k;
+    vals.push(sum % 103, 106);
+    var out = "";
+    vals.forEach(function (v) {
+      var w = C128[v];
+      for (var j = 0; j < w.length; j++) out += new Array(+w[j] + 1).join(j % 2 ? "0" : "1");
+    });
+    return out;
+  }
+  // The barcode a label prints for an item: its barcode as EAN-13 when
+  // it is one (12 digits get their check digit), else Code 128 of the
+  // barcode or the SKU. → { type, text, modules } | null
+  function barcodeFor(item) {
+    var bc = item && item.bc ? String(item.bc) : "", sku = item && item.sku ? String(item.sku) : "";
+    if (/^\d{12}$/.test(bc)) bc += eanCheck(bc);
+    if (/^\d{13}$/.test(bc) && ean13(bc)) return { type: "ean13", text: bc, modules: ean13(bc) };
+    var src = bc || sku, m = code128(src);
+    return m ? { type: "code128", text: src, modules: m } : null;
+  }
+  // An SVG of the bars (quiet zone of 10 modules each side), width in
+  // modules; height h in the same units. Only rects: nothing from the
+  // item's text goes into the markup.
+  function barSvg(modules, h) {
+    var q = 10, hh = h || 50, w = modules.length + 2 * q, rects = [], i = 0;
+    while (i < modules.length) {
+      if (modules[i] !== "1") { i++; continue; }
+      var j = i;
+      while (j < modules.length && modules[j] === "1") j++;
+      rects.push('<rect x="' + (i + q) + '" y="0" width="' + (j - i) + '" height="' + hh + '"/>');
+      i = j;
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + " " + hh + '" preserveAspectRatio="none" shape-rendering="crispEdges">' +
+      '<rect width="' + w + '" height="' + hh + '" fill="#fff"/><g fill="#000">' + rects.join("") + "</g></svg>";
+  }
+
+  // ---------- Reports ----------
+  // Period keys: "30" (last 30 days) | "month" | "year" | "all"
+  function reportRange(key, today) {
+    if (key === "month") return { from: today.slice(0, 8) + "01", to: today };
+    if (key === "year") return { from: today.slice(0, 5) + "01-01", to: today };
+    if (key === "all") return { from: "1900-01-01", to: "2200-12-31" };
+    return { from: addDays(today, -29), to: today };
+  }
+  // Stock value per category (live items): { total, rows: [{ cat, value, n }] }
+  // cat "" = no category; biggest value first.
+  function valueByCat(data) {
+    var cats = dict(), by = dict(), total = 0;
+    ((data && data.cats) || []).forEach(function (c) { cats[c.id] = true; });
+    stockRows(data).forEach(function (r) {
+      if (r.item.arch) return;
+      var k = cats[r.item.cat] ? r.item.cat : "";
+      var row = by[k] || (by[k] = { cat: k, value: 0, n: 0 });
+      row.value += r.value;
+      row.n++;
+      total += r.value;
+    });
+    var rows = Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (x, y) { return y.value - x.value || cmpStr(x.cat, y.cat); });
+    return { total: total, rows: rows };
+  }
+  // What moved between two days (inclusive), per item and in total.
+  // Quantities are positive amounts; money in cents. sales = Σ q × p of
+  // sales lines with a price; buys = Σ q × c of receipts with a cost;
+  // lossValue = losses at the average cost of today.
+  //   { rows: [{ i, inQ, outQ, retQ, rtsQ, lossQ, adj, sales, buys }]
+  //     (most sold first), sales, buys, lossValue, moves }
+  function periodSummary(data, from, to) {
+    var by = dict(), totals = { sales: 0, buys: 0, lossValue: 0, moves: 0 };
+    var avg = costMap(data);
+    live(data && data.moves).forEach(function (x) {
+      if (x.d < from || x.d > to) return;
+      totals.moves++;
+      x.lines.forEach(function (l) {
+        var r = by[l.i] || (by[l.i] = { i: l.i, inQ: 0, outQ: 0, retQ: 0, rtsQ: 0, lossQ: 0, adj: 0, sales: 0, buys: 0 });
+        var a = Math.abs(l.q);
+        if (x.t === "in") {
+          r.inQ += a;
+          if (typeof l.c === "number") { var b = Math.round(a * l.c / 1000); r.buys += b; totals.buys += b; }
+        } else if (x.t === "out") {
+          r.outQ += a;
+          if (typeof l.p === "number") { var s = Math.round(a * l.p / 1000); r.sales += s; totals.sales += s; }
+        } else if (x.t === "ret") r.retQ += a;
+        else if (x.t === "rts") r.rtsQ += a;
+        else if (x.t === "loss") {
+          r.lossQ += a;
+          totals.lossValue += Math.round(a * (avg[l.i] || 0) / 1000);
+        } else r.adj += l.q;
+      });
+    });
+    var rows = Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (x, y) { return y.outQ - x.outQ || y.sales - x.sales || cmpStr(x.i, y.i); });
+    return { rows: rows, sales: totals.sales, buys: totals.buys, lossValue: totals.lossValue, moves: totals.moves };
+  }
+  // Dead stock: live items with stock that sold nothing (no sale, no
+  // return to supplier, no loss) for `days` days or more. last = the
+  // last such day or null (never). Biggest value first.
+  function deadStock(data, today, days) {
+    var n = days || 90, since = addDays(today, -(n - 1)), last = dict(), first = dict();
+    var cl = data && data.close;
+    if (cl) {
+      Object.keys(cl.ls).forEach(function (i) { last[i] = cl.ls[i]; });
+      Object.keys(cl.fs).forEach(function (i) { first[i] = cl.fs[i]; });
+    }
+    live(data && data.moves).forEach(function (x) {
+      if (x.t !== "out" && x.t !== "rts" && x.t !== "loss") return;
+      x.lines.forEach(function (l) { if (!last[l.i] || x.d > last[l.i]) last[l.i] = x.d; });
+    });
+    live(data && data.moves).forEach(function (x) {
+      x.lines.forEach(function (l) { if (!first[l.i] || x.d < first[l.i]) first[l.i] = x.d; });
+    });
+    return stockRows(data).filter(function (r) {
+      if (r.item.arch || r.q <= 0) return false;
+      if (last[r.item.id] && last[r.item.id] >= since) return false;
+      // stock that arrived inside the window is not "dead" yet
+      return !first[r.item.id] || first[r.item.id] < since;
+    }).map(function (r) { return { row: r, last: last[r.item.id] || null }; })
+      .sort(function (x, y) { return y.row.value - x.row.value || cmpStr(x.row.item.id, y.row.item.id); });
   }
 
   // ---------- Prefs (device-local, oros-stock-prefs; the shell reads them too) ----------
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
     return { notify: p.notify === false ? false : true };
+  }
+
+  // ---------- BR-ST-OUT (1.3): a sale asked for by another app ----------
+  // Invoices (or any app) calls __orosOpenAt("stock", { out: req }):
+  //   req = { ref?, src?: "invoices:<id>", d?: "YYYY-MM-DD",
+  //           t?: "out" | "ret", lines: [{ code | sku, q, p? }] }
+  //   q is a plain number of units (2.5), p the net unit price in cents.
+  // Stock opens a PREFILLED movement; nothing is written until Save.
+  // outRequest only reads and cleans: lines are matched to products by
+  // SKU or barcode (findByCode), the same product twice is summed, and
+  // what can't be matched comes back in miss. used = live movements that
+  // already carry this src (the invoice was taken out of stock before).
+  function outRequest(data, req, today) {
+    if (!req || typeof req !== "object" || !Array.isArray(req.lines)) return null;
+    var tt = req.t === "ret" ? "ret" : "out";
+    var src = typeof req.src === "string" && SRC_RE.test(req.src) ? req.src : "";
+    var d = isYmd(req.d) && dayNum(req.d) <= dayNum(addDays(today, 1)) ? req.d : today;
+    var lines = [], at = dict(), miss = [];
+    req.lines.slice(0, MAX_LINES).forEach(function (l) {
+      if (!l || typeof l !== "object") return;
+      var code = cleanText(typeof l.code === "string" && l.code ? l.code : l.sku, SKU_LEN, false);
+      var q = typeof l.q === "number" && isFinite(l.q) ? Math.abs(l.q) : 0;
+      if (!code) return;
+      var it = findByCode(data, code);
+      if (!it) { if (miss.indexOf(code) < 0 && miss.length < 50) miss.push(code); return; }
+      var step = Math.pow(10, 3 - unitDec(data, it.unit));
+      var qq = Math.round(q * 1000 / step) * step;
+      if (!(qq > 0) || qq > Q_MAX) return;
+      var p = typeof l.p === "number" && isFinite(l.p) && l.p >= 0 && l.p <= C_MAX ? Math.round(l.p) : null;
+      if (at[it.id] !== undefined) {
+        var o = lines[at[it.id]];
+        o.q = Math.min(Q_MAX, o.q + qq);
+        if (o.p !== undefined && p !== null && p !== o.p) delete o.p;    // two prices: let the person type it
+        return;
+      }
+      var line = { i: it.id, q: qq };
+      if (p !== null) line.p = p;
+      at[it.id] = lines.length;
+      lines.push(line);
+    });
+    return {
+      t: tt, d: d, src: src, ref: cleanText(req.ref, REF_LEN, false),
+      lines: lines, miss: miss, used: src ? srcUses(data, src) : 0
+    };
+  }
+  function srcUses(data, src) {
+    return liveAll(data && data.moves).filter(function (x) { return x.src === src; }).length;
+  }
+  // Read-only list for another app's product picker: live products with
+  // their code (SKU, else barcode), prices, VAT and current quantity.
+  function catalog(data) {
+    return stockRows(data).filter(function (r) { return !r.item.arch; }).map(function (r) {
+      var it = r.item;
+      return {
+        id: it.id, code: it.sku || it.bc, name: it.name, unit: it.unit,
+        price: it.price, vat: it.vat, q: r.q / 1000
+      };
+    });
+  }
+
+  // ---------- Warehouses (1.4) ----------
+  // { itemId: { warehouseId ("" = main): thousandths } }, transfers
+  // included: −q where they leave, +q where they arrive.
+  function whQty(data) {
+    var q = dict();
+    function add(i, w, n) { var r = q[i] || (q[i] = dict()); r[w] = (r[w] || 0) + n; }
+    liveAll(ledger(data)).forEach(function (x) {
+      var w = x.w || "";
+      x.lines.forEach(function (l) {
+        if (x.t === "xfer") { add(l.i, w, -l.q); add(l.i, x.w2 || "", l.q); }
+        else add(l.i, x.t === "open" ? (l.w || "") : w, l.q);
+      });
+    });
+    return q;
+  }
+  // { itemId: thousandths } in one warehouse ("" = main)
+  function qtyIn(data, w) {
+    var all = whQty(data), out = dict(), key = w || "";
+    Object.keys(all).forEach(function (i) { if (all[i][key]) out[i] = all[i][key]; });
+    return out;
+  }
+  function whName(data, w, mainLabel) {
+    var id = w || WH_MAIN, list = (data && data.whs) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i].name;
+    return w ? "?" : (mainLabel || "Main");
+  }
+
+  // ---------- Lots and expiry (1.5) ----------
+  // What is left of each lot of one item, walking the ledger in time
+  // order (transfers skipped: lots are business-wide). Incoming lines
+  // with a lot fill it (its expiry = the earliest one given); incoming
+  // lines without one are "none". Outgoing lines take from the lot they
+  // name, then from the lots that expire first (no expiry last), then
+  // from "none". → { lots: [{ lot, exp, q }] (q > 0, soonest first),
+  // none: thousandths without a lot (may go below zero) }
+  function cmpExp(x, y) {
+    return (x.exp ? 0 : 1) - (y.exp ? 0 : 1) || cmpStr(x.exp, y.exp) || cmpStr(x.lot, y.lot);
+  }
+  function walkLots(data, only) {
+    var by = dict();
+    chrono(ledger(data)).forEach(function (x) {
+      x.lines.forEach(function (l) {
+        if (only && l.i !== only) return;
+        var st = by[l.i] || (by[l.i] = { lots: dict(), none: 0 });
+        // the opening balance's minus lines are what "none" owed
+        if (x.t === "open" && l.q < 0) { st.none += l.q; return; }
+        if (l.q > 0) {
+          if (!l.lot) { st.none += l.q; return; }
+          var r = st.lots[l.lot] || (st.lots[l.lot] = { lot: l.lot, exp: "", q: 0 });
+          r.q += l.q;
+          if (l.exp && (!r.exp || l.exp < r.exp)) r.exp = l.exp;
+          return;
+        }
+        var need = -l.q;
+        if (l.lot && st.lots[l.lot] && st.lots[l.lot].q > 0) {
+          var a = Math.min(need, st.lots[l.lot].q);
+          st.lots[l.lot].q -= a; need -= a;
+        }
+        if (need > 0) {
+          Object.keys(st.lots).map(function (k) { return st.lots[k]; }).filter(function (r2) { return r2.q > 0; })
+            .sort(cmpExp).forEach(function (r2) {
+              if (need <= 0) return;
+              var b = Math.min(need, r2.q);
+              r2.q -= b; need -= b;
+            });
+        }
+        st.none -= need;
+      });
+    });
+    return by;
+  }
+  function lotsOut(st) {
+    if (!st) return { lots: [], none: 0 };
+    return {
+      lots: Object.keys(st.lots).map(function (k) { return st.lots[k]; }).filter(function (r) { return r.q > 0; }).sort(cmpExp),
+      none: st.none
+    };
+  }
+  function lotsOf(data, itemId) { return lotsOut(walkLots(data, itemId)[itemId]); }
+  function allLots(data) {
+    var by = walkLots(data, null), out = dict();
+    Object.keys(by).forEach(function (i) { out[i] = lotsOut(by[i]); });
+    return out;
+  }
+  // Lots with stock left that expire on or before today + days (already
+  // expired included), soonest first: [{ item, lot, exp, q }]. Archived
+  // products are left out.
+  function expiring(data, today, days) {
+    var last = addDays(today, days || 0), all = allLots(data), out = [];
+    ((data && data.items) || []).forEach(function (it) {
+      if (it.arch || !all[it.id]) return;
+      all[it.id].lots.forEach(function (r) {
+        if (r.exp && r.exp <= last) out.push({ item: it, lot: r.lot, exp: r.exp, q: r.q });
+      });
+    });
+    return out.sort(function (x, y) { return cmpStr(x.exp, y.exp) || cmpStr(fold(x.item.name), fold(y.item.name)) || cmpStr(x.lot, y.lot); });
+  }
+  // Every lot name this item ever had (newest first), for the editor
+  function lotNames(data, itemId) {
+    var seen = dict(), out = [];
+    liveAll(ledger(data)).slice().sort(function (x, y) { return byTime(y, x); }).forEach(function (x) {
+      x.lines.forEach(function (l) { if (l.i === itemId && l.lot && !seen[l.lot]) { seen[l.lot] = true; out.push(l.lot); } });
+    });
+    return out;
+  }
+
+  // ---------- Closing a period (1.6) ----------
+  var CLOSE_IDS_DAYS = 90, OPEN_ID = "!open", IDS_RE = /^[a-z0-9]{6,40}(,[a-z0-9]{6,40})*$/;
+  // the archive: a JSON file in Files, named by the close (f)
+  var ARCHIVE_DIR = "/internal/Stock/Archive", ARCH_RE = /^stock-until-\d{4}-\d{2}-\d{2}-[a-z0-9]{4,12}\.json$/;
+  function archivePath(f) { return ARCHIVE_DIR + "/" + f; }
+  function normClose(x) {
+    if (!base(x) || !isYmd(x.d) || !isInt(x.at) || x.at < 0) return null;
+    var bal = [];
+    (Array.isArray(x.bal) ? x.bal : []).slice(0, MAX_ITEMS * 4).forEach(function (l) {
+      if (!l || typeof l !== "object" || !ID_RE.test(String(l.i))) return;
+      var q = clampInt(l.q, -Q_MAX, Q_MAX);
+      if (!q) return;
+      var o = { i: l.i, q: q }, w = whRef(l.w);
+      if (w) o.w = w;
+      var lot = q > 0 ? cleanText(l.lot, LOT_LEN, false) : "";
+      if (lot) { o.lot = lot; if (isYmd(l.exp)) o.exp = l.exp; }
+      bal.push(o);
+    });
+    function idMap(v, ok) {
+      var out = {};
+      if (v && typeof v === "object") Object.keys(v).sort(cmpStr).forEach(function (k) { if (ID_RE.test(k) && ok(v[k])) out[k] = v[k]; });
+      return out;
+    }
+    var avg = idMap(x.avg, function (n) { return typeof n === "number" && isFinite(n) && n >= 0 && n <= C_MAX; });
+    Object.keys(avg).forEach(function (k) { avg[k] = Math.round(avg[k] * 10000) / 10000; });
+    var rcv = {};
+    if (x.rcv && typeof x.rcv === "object") Object.keys(x.rcv).sort(cmpStr).forEach(function (po) {
+      if (!ID_RE.test(po)) return;
+      var r = idMap(x.rcv[po], function (n) { return isInt(n) && n > 0 && n <= Q_MAX; });
+      if (Object.keys(r).length) rcv[po] = r;
+    });
+    return {
+      id: x.id, m: x.m, d: x.d, at: x.at, bal: bal, avg: avg,
+      ls: idMap(x.ls, isYmd), fs: idMap(x.fs, isYmd), rcv: rcv,
+      ids: typeof x.ids === "string" && x.ids.length <= 4000000 && IDS_RE.test(x.ids) ? x.ids : "",
+      f: typeof x.f === "string" && ARCH_RE.test(x.f) ? x.f : ""
+    };
+  }
+  // The opening balance as a read-only movement (never stored, never
+  // voided): lines carry their own warehouse and lot.
+  function openMove(data) {
+    var cl = data && data.close;
+    if (!cl || !cl.bal.length) return null;
+    return { id: OPEN_ID, m: cl.m, d: cl.d, t: "open", ref: "", sup: "", note: "", lines: cl.bal };
+  }
+  // What closing through day d would do: { n: movements archived,
+  // ok: d is before today and after the current close }
+  function closeInfo(data, d, today) {
+    var cl = data && data.close;
+    var ok = isYmd(d) && d < today && (!cl || d > cl.d);
+    var n = ((data && data.moves) || []).filter(function (x) { return x.d <= d; }).length;
+    return { ok: ok, n: n };
+  }
+  // Close the books through day d. Pure: returns the new data (the
+  // caller archives the old one first). The opening balance keeps, per
+  // item, the quantity of each warehouse and what is left of each lot
+  // (lots spread over the warehouses that hold stock), the average
+  // cost, the last sale and first day, and what each order received.
+  function closePeriod(data, d, nowMs, id, file) {
+    if (!isYmd(d) || !ID_RE.test(String(id))) return null;
+    var cl = data.close;
+    if (cl && d <= cl.d) return null;
+    var upTo = data.moves.filter(function (x) { return x.d <= d; });
+    var sub = {}; Object.keys(data).forEach(function (k) { sub[k] = data[k]; });
+    sub.moves = upTo;
+    var whq = whQty(sub), lots = allLots(sub), avg = costMap(sub), rcvAll = receivedMap(sub);
+    var ls = dict(), fs = dict();
+    if (cl) {
+      Object.keys(cl.ls).forEach(function (i) { ls[i] = cl.ls[i]; });
+      Object.keys(cl.fs).forEach(function (i) { fs[i] = cl.fs[i]; });
+    }
+    live(upTo).forEach(function (x) {
+      x.lines.forEach(function (l) {
+        if ((x.t === "out" || x.t === "rts" || x.t === "loss") && (!ls[l.i] || x.d > ls[l.i])) ls[l.i] = x.d;
+        if (!fs[l.i] || x.d < fs[l.i]) fs[l.i] = x.d;
+      });
+    });
+    var bal = [], avgOut = {}, lsOut = {}, fsOut = {};
+    Object.keys(whq).sort(cmpStr).forEach(function (i) {
+      var per = whq[i], L = lots[i] || { lots: [], none: 0 };
+      var ws = Object.keys(per).filter(function (w) { return per[w]; }).sort(cmpStr);
+      if (!ws.length) return;
+      // pool: the lots (soonest first), then stock without a lot
+      var pool = L.lots.map(function (r) { return { lot: r.lot, exp: r.exp, q: r.q }; });
+      if (L.none > 0) pool.push({ lot: "", exp: "", q: L.none });
+      function take(w, need) {
+        while (need > 0 && pool.length) {
+          var c = pool[0], n = Math.min(need, c.q), o = { i: i, q: n };
+          if (w) o.w = w;
+          if (c.lot) { o.lot = c.lot; if (c.exp) o.exp = c.exp; }
+          bal.push(o);
+          c.q -= n; need -= n;
+          if (!c.q) pool.shift();
+        }
+        return need;
+      }
+      ws.forEach(function (w) {
+        if (per[w] <= 0) return;
+        var rest = take(w, per[w]);
+        if (rest > 0) { var o = { i: i, q: rest }; if (w) o.w = w; bal.push(o); }
+      });
+      ws.forEach(function (w) {
+        if (per[w] >= 0) return;
+        var o = { i: i, q: per[w] }; if (w) o.w = w; bal.push(o);
+      });
+      // lots left over (stock without a lot was below zero): in the
+      // main warehouse, balanced by a minus line there
+      var extra = pool.reduce(function (a, c) { return a + c.q; }, 0);
+      if (extra > 0) { take("", extra); bal.push({ i: i, q: -extra }); }
+    });
+    // every average that isn't just the item's own purchase price
+    (data.items || []).forEach(function (it) { if (typeof avg[it.id] === "number" && avg[it.id] !== it.cost) avgOut[it.id] = avg[it.id]; });
+    Object.keys(ls).sort(cmpStr).forEach(function (i) { lsOut[i] = ls[i]; });
+    Object.keys(fs).sort(cmpStr).forEach(function (i) { fsOut[i] = fs[i]; });
+    var rcv = {};
+    Object.keys(rcvAll).sort(cmpStr).forEach(function (po) { rcv[po] = rcvAll[po]; });
+    var close = normClose({
+      id: id, m: nowMs, d: d, at: nowMs, bal: bal, avg: avgOut, ls: lsOut, fs: fsOut, rcv: rcv,
+      ids: upTo.map(function (x) { return x.id; }).sort(cmpStr).join(","), f: file || ""
+    });
+    var out = {}; Object.keys(data).forEach(function (k) { out[k] = data[k]; });
+    out.moves = data.moves.filter(function (x) { return x.d > d; });
+    out.close = close;
+    return merge(out, out, nowMs);
   }
 
   var api = {
@@ -704,7 +1392,17 @@
     suggestQty: suggestQty, lowList: lowList, outRate: outRate, itemMoves: itemMoves,
     hasMoves: hasMoves, findByCode: findByCode, toNotify: toNotify,
     csvCell: csvCell, parseCsv: parseCsv, headKey: headKey, importPlan: importPlan,
-    csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs
+    csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs,
+    PO_ST: PO_ST, normPo: normPo, poSrc: poSrc, receivedMap: receivedMap, poView: poView,
+    poViews: poViews, onOrder: onOrder, poNext: poNext,
+    reportRange: reportRange, valueByCat: valueByCat, periodSummary: periodSummary, deadStock: deadStock,
+    PHOTO_DIR: PHOTO_DIR, PIC_RE: PIC_RE, normPic: normPic, picName: picName, picPath: picPath, picOf: picOf, picsInUse: picsInUse,
+    eanCheck: eanCheck, ean13: ean13, code128: code128, barcodeFor: barcodeFor, barSvg: barSvg,
+    outRequest: outRequest, srcUses: srcUses, catalog: catalog,
+    WH_MAIN: WH_MAIN, normWh: normWh, whName: whName, whQty: whQty, qtyIn: qtyIn,
+    LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
+    OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
+    ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;

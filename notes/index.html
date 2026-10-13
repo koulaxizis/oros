@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=notes" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Notes — orOS</title>
-  <link rel="stylesheet" href="notes.css?v=1.13.00">
+  <link rel="stylesheet" href="notes.css?v=1.80.00">
 </head>
 <body>
   <div id="notes-app">
@@ -30,11 +32,15 @@
       <header id="editor-header">
         <button id="btn-show-tree" class="icon-btn"></button>
         <input id="page-title" type="text" spellcheck="false" data-i18n-ph="notes.title.ph" placeholder="Title">
+        <button id="btn-share-page" class="icon-btn" hidden></button>
       </header>
       <textarea id="page-text" spellcheck="true" data-i18n-ph="notes.text.ph" placeholder="Start typing…"></textarea>
     </main>
 
   </div>
-  <script src="notes.js?v=1.13.00"></script>
+  <script src="../links/core.js?v=1.80.00"></script>
+  <script src="../links/notes.js?v=1.80.00"></script>
+  <script src="platforms.js?v=1.80.00"></script>
+  <script src="notes.js?v=1.80.00"></script>
 </body>
 </html>

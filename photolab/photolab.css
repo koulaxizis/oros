@@ -367,7 +367,17 @@ body.side-open #side { display: flex; }
   text-overflow: ellipsis;
 }
 .lkind { font-size: 11px; color: var(--text-dim); }
-.layer-acts { display: flex; justify-content: space-around; padding: 4px; border-top: 1px solid var(--border); }
+button.lthumb { padding: 0; cursor: pointer; color: inherit; }
+.lthumb.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.lmask { background: var(--panel-bg); }
+.lmask.off { opacity: 0.45; }
+.lfx { flex-shrink: 0; color: var(--accent); }
+.layer-acts { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 2px; padding: 4px; border-top: 1px solid var(--border); }
+/* Layer style + adjustment layer dialogs */
+.fx-sec { border: 1px solid var(--border); border-radius: 8px; margin: 0 0 8px; padding: 4px 10px 6px; min-width: 0; }
+.fx-head { font-weight: 700; }
+.fx-params { display: grid; gap: 4px 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); padding-top: 4px; }
+.adj-params { display: flex; flex-direction: column; gap: 6px; }
 .hrow {
   display: block;
   width: 100%;
@@ -603,3 +613,11 @@ body.dropping .drop-hint { display: flex; }
   .icon-btn, #toast { transition: none !important; }
   .spin { animation-duration: 2.4s; }
 }
+
+/* ---------- 2D: Done button (Atelier bridge), check menu items ---------- */
+.btn.small { min-height: 32px; padding: 4px 12px; font-size: 13px; white-space: nowrap; }
+#back-btn[hidden] { display: none; }
+.mi-c { width: 1.2em; flex: 0 0 auto; color: var(--accent); }
+.selsave-list { display: flex; flex-direction: column; gap: 4px; max-height: 40vh; overflow-y: auto; }
+.selsave-row { display: flex; align-items: center; gap: 6px; }
+.selsave-row .chip { flex: 1 1 auto; text-align: left; }

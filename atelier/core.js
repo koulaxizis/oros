@@ -85,9 +85,12 @@
       "vd.soundHint": "Pages that share a sound play it on without starting over. It plays in Play, Present and Download › Video.",
       "an.stop": "Stop",
       "tab.brand": "Brand kit", "col.brand": "Brand colours",
+      "tab.ai": "AI", "ai.menu": "Write with AI", "ai.cut": "Remove background",
       "br.intro": "Your colours, fonts and logos, on all your devices.", "br.edit": "Edit", "br.done": "Done",
       "br.colors": "Colours", "br.pickEl": "Select an element first, then tap a colour.", "br.remove": "Remove",
       "br.noColors": "No brand colours yet.", "br.addColor": "Add colour", "br.fromDesign": "From this design",
+      "br.swIn": "Import swatches (.ase, .aco)", "br.swOut": "Save as swatches (.ase)", "br.swGroup": "Brand colours", "br.swFile": "brand-colours",
+      "br.swBad": "That is not an Adobe swatch file (.ase or .aco).", "br.swFull": "The Brand kit holds up to {n} colours.", "br.swNothing": "No new colours in this file.",
       "br.added": "{n} colours added.", "br.nothingNew": "No new colours in this design.",
       "br.fonts": "Fonts", "br.slot.h": "Heading", "br.slot.s": "Subheading", "br.slot.t": "Body text",
       "br.notSet": "Not set", "br.addText": "Add a text in this font", "br.useSel": "Use selected",
@@ -177,7 +180,8 @@
       "ctx.stroke": "Border", "ctx.sw": "Border weight", "ctx.weight": "Weight", "ctx.round": "Roundness",
       "ctx.dashed": "Dashed", "ctx.start": "Start", "ctx.end": "End", "ctx.head.none": "None", "ctx.head.arrow": "Arrow",
       "ctx.head.dot": "Dot", "ctx.filters": "Filters", "ctx.adjust": "Adjust", "ctx.crop": "Crop", "ctx.flip": "Flip",
-      "ctx.flipH": "Flip horizontal", "ctx.flipV": "Flip vertical", "ctx.mask": "Shape", "ctx.replace": "Replace",
+      "ctx.flipH": "Flip horizontal", "ctx.flipV": "Flip vertical", "ctx.mask": "Shape", "ctx.replace": "Replace", "ctx.editPic": "Edit in Photo Lab",
+      "ep.done": "Picture updated from Photo Lab", "ep.gone": "That picture is no longer in the design.", "ep.missing": "The edited picture could not be opened.",
       "ctx.op": "Transparency", "ctx.position": "Position", "ctx.lock": "Lock", "ctx.unlock": "Unlock",
       "ctx.dup": "Duplicate", "ctx.del": "Delete", "ctx.bg": "Background", "ctx.hint": "Tap an element to edit it.",
       "ctx.n": "{n} selected", "ctx.done": "Done", "ctx.edit": "Edit text",
@@ -205,7 +209,10 @@
       "img.added": "Image added", "img.missing": "Syncing…",
       "credits.title": "Credits", "credits.none": "Everything in this design is yours or from the built-in library.",
       "credits.copy": "Copy credits", "credits.copied": "Credits copied",
-      "resize.title": "Resize design", "resize.note": "Everything is scaled to fit the new size.",
+      "resize.title": "Resize design", "resize.note": "Pick one or more sizes. Elements are placed again for each size: edges stay at the edges, bars and photos across the page stretch, nothing is distorted.",
+      "resize.copies": "Keep this design, make a copy in each size", "resize.custom": "Custom size", "resize.w": "Width", "resize.h": "Height",
+      "resize.go": "Resize ({n})", "resize.copy": "{name} · {size}", "resize.made": "{n} copies made.", "resize.open": "Open",
+      "resize.current": "current", "resize.one": "Resizing this design itself works with one size at a time.",
       "btn.cancel": "Cancel", "btn.ok": "OK", "btn.create": "Create", "btn.close": "Close", "btn.undo": "Undo",
       "btn.apply": "Apply", "btn.reset": "Reset",
       "toast.deleted": "Deleted", "toast.docDeleted": "Design deleted",
@@ -252,9 +259,12 @@
       "vd.soundHint": "Οι σελίδες με τον ίδιο ήχο τον συνεχίζουν χωρίς να ξεκινά από την αρχή. Παίζει στην Αναπαραγωγή, στην Παρουσίαση και στη Λήψη › Βίντεο.",
       "an.stop": "Διακοπή",
       "tab.brand": "Ταυτότητα", "col.brand": "Χρώματα ταυτότητας",
+      "tab.ai": "AI", "ai.menu": "Γράψε με AI", "ai.cut": "Αφαίρεση φόντου",
       "br.intro": "Τα χρώματα, οι γραμματοσειρές και τα λογότυπά σου, σε όλες τις συσκευές σου.", "br.edit": "Επεξεργασία", "br.done": "Τέλος",
       "br.colors": "Χρώματα", "br.pickEl": "Διάλεξε πρώτα ένα στοιχείο και μετά πάτα ένα χρώμα.", "br.remove": "Αφαίρεση",
       "br.noColors": "Δεν υπάρχουν ακόμα χρώματα ταυτότητας.", "br.addColor": "Προσθήκη χρώματος", "br.fromDesign": "Από αυτό το σχέδιο",
+      "br.swIn": "Εισαγωγή swatches (.ase, .aco)", "br.swOut": "Αποθήκευση ως swatches (.ase)", "br.swGroup": "Χρώματα ταυτότητας", "br.swFile": "brand-colours",
+      "br.swBad": "Αυτό δεν είναι αρχείο swatches της Adobe (.ase ή .aco).", "br.swFull": "Η ταυτότητα κρατά έως {n} χρώματα.", "br.swNothing": "Δεν υπάρχουν νέα χρώματα σε αυτό το αρχείο.",
       "br.added": "Προστέθηκαν {n} χρώματα.", "br.nothingNew": "Δεν υπάρχουν νέα χρώματα σε αυτό το σχέδιο.",
       "br.fonts": "Γραμματοσειρές", "br.slot.h": "Τίτλος", "br.slot.s": "Υπότιτλος", "br.slot.t": "Κείμενο",
       "br.notSet": "Δεν έχει οριστεί", "br.addText": "Πρόσθεσε κείμενο σε αυτή τη γραμματοσειρά", "br.useSel": "Από την επιλογή",
@@ -344,7 +354,8 @@
       "ctx.stroke": "Περίγραμμα", "ctx.sw": "Πάχος περιγράμματος", "ctx.weight": "Πάχος", "ctx.round": "Στρογγύλεμα",
       "ctx.dashed": "Διακεκομμένη", "ctx.start": "Αρχή", "ctx.end": "Τέλος", "ctx.head.none": "Τίποτα", "ctx.head.arrow": "Βέλος",
       "ctx.head.dot": "Τελεία", "ctx.filters": "Φίλτρα", "ctx.adjust": "Ρυθμίσεις", "ctx.crop": "Περικοπή", "ctx.flip": "Αναστροφή",
-      "ctx.flipH": "Οριζόντια αναστροφή", "ctx.flipV": "Κάθετη αναστροφή", "ctx.mask": "Σχήμα", "ctx.replace": "Αντικατάσταση",
+      "ctx.flipH": "Οριζόντια αναστροφή", "ctx.flipV": "Κάθετη αναστροφή", "ctx.mask": "Σχήμα", "ctx.replace": "Αντικατάσταση", "ctx.editPic": "Επεξεργασία στο Εργαστήριο εικόνας",
+      "ep.done": "Η εικόνα ενημερώθηκε από το Εργαστήριο εικόνας", "ep.gone": "Αυτή η εικόνα δεν υπάρχει πια στο σχέδιο.", "ep.missing": "Η επεξεργασμένη εικόνα δεν άνοιξε.",
       "ctx.op": "Διαφάνεια", "ctx.position": "Θέση", "ctx.lock": "Κλείδωμα", "ctx.unlock": "Ξεκλείδωμα",
       "ctx.dup": "Διπλασιασμός", "ctx.del": "Διαγραφή", "ctx.bg": "Φόντο", "ctx.hint": "Πάτα ένα στοιχείο για να το αλλάξεις.",
       "ctx.n": "{n} επιλεγμένα", "ctx.done": "Τέλος", "ctx.edit": "Επεξεργασία κειμένου",
@@ -372,7 +383,10 @@
       "img.added": "Η εικόνα προστέθηκε", "img.missing": "Συγχρονίζεται…",
       "credits.title": "Αναφορές δημιουργών", "credits.none": "Όλα σε αυτό το σχέδιο είναι δικά σου ή από την ενσωματωμένη βιβλιοθήκη.",
       "credits.copy": "Αντιγραφή αναφορών", "credits.copied": "Οι αναφορές αντιγράφηκαν",
-      "resize.title": "Αλλαγή μεγέθους", "resize.note": "Όλα κλιμακώνονται ώστε να χωρούν στο νέο μέγεθος.",
+      "resize.title": "Αλλαγή μεγέθους", "resize.note": "Διάλεξε ένα ή περισσότερα μεγέθη. Τα στοιχεία τοποθετούνται ξανά για κάθε μέγεθος: ό,τι είναι στις άκρες μένει στις άκρες, οι μπάρες και οι φωτογραφίες που πιάνουν όλη τη σελίδα απλώνονται, τίποτα δεν παραμορφώνεται.",
+      "resize.copies": "Κράτα αυτό το σχέδιο και φτιάξε αντίγραφο σε κάθε μέγεθος", "resize.custom": "Δικό σου μέγεθος", "resize.w": "Πλάτος", "resize.h": "Ύψος",
+      "resize.go": "Αλλαγή μεγέθους ({n})", "resize.copy": "{name} · {size}", "resize.made": "Φτιάχτηκαν {n} αντίγραφα.", "resize.open": "Άνοιγμα",
+      "resize.current": "τρέχον", "resize.one": "Η αλλαγή μεγέθους του ίδιου του σχεδίου γίνεται με ένα μέγεθος τη φορά.",
       "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.create": "Δημιουργία", "btn.close": "Κλείσιμο", "btn.undo": "Αναίρεση",
       "btn.apply": "Εφαρμογή", "btn.reset": "Επαναφορά",
       "toast.deleted": "Διαγράφηκε", "toast.docDeleted": "Το σχέδιο διαγράφηκε",
@@ -447,6 +461,9 @@
     anim: '<path d="M4 12h3"/><path d="M5 7h4"/><path d="M5 17h4"/><circle cx="15" cy="12" r="6"/>',
     brand: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
     present: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M12 16v4M8 20h8"/>',
+    ai: '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"/>',
+    cutout: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="9.5" r="2.5"/><path d="M7.5 17a4.5 4.5 0 0 1 9 0"/>',
+    editpic: '<path d="M3 17l5-5 4 4 3-3 6 6"/><circle cx="8" cy="7" r="2"/><path d="M14 4l6 6-3 3-6-6z"/>',
     replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>'
   };
   function icon(name) {
@@ -981,13 +998,40 @@
     copy.id = M.newId("doc");
     copy.name = t("doc.copy", { name: docTitle(d) }).slice(0, 120);
     copy.m = nw;
-    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (e.h) e.h = []; }); });
+    M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (c === "stories") e.h = []; }); });
     copy.tombs = {};
     data.docs.push(M.normDoc(copy));
     data = M.normData(data);
     save();
     renderHome();
   }
+
+  // new designs made from an open one (magic resize copies): saved
+  // next to it, in the same folder; none of them is opened
+  function addCopies(list, fromId) {
+    var nw = now();
+    list.forEach(function (copy) {
+      copy.id = M.newId("doc");
+      copy.m = nw;
+      // new page and element ids: drawings cached for the original's
+      // elements (at their old sizes) must not be reused for these
+      var pg = {};
+      copy.pages.forEach(function (p) { pg[p.id] = M.newId("pg"); p.id = pg[p.id]; });
+      copy.items.forEach(function (it) { it.id = M.newId("it"); if (pg[it.pg]) it.pg = pg[it.pg]; });
+      (copy.guides || []).forEach(function (g) { if (pg[g.pg]) g.pg = pg[g.pg]; });
+      M.COLLECTIONS.forEach(function (c) { (copy[c] || []).forEach(function (e) { e.m = nw; if (c === "stories") e.h = []; }); });
+      copy.tombs = {};
+      data.docs.push(M.normDoc(copy));
+    });
+    data = M.normData(data);
+    save();
+    if (AT.folders && fromId) {
+      var f = AT.folders.folderOf(fromId);
+      if (f) AT.folders.place(list.map(function (c) { return c.id; }), f);
+    }
+    return list.map(function (c) { return c.id; });
+  }
+  AT.addCopies = addCopies;
 
   function deleteDoc(id) {
     var d = findDoc(id);
@@ -1356,6 +1400,12 @@
     if (!searchReady) { searchLater = tg; return; }
     // { openFile: { token } }: a file from the system's "Open with"
     // (shell fileopen.js), taken once, then Home › Import.
+    // { editedPicture: { key, path, w, h } }: a picture back from Photo
+    // Lab ("Edit picture", BR-PL-EDIT, editpic.js)
+    if (tg && tg.editedPicture) {
+      if (AT.editPic) AT.editPic.back(tg.editedPicture);
+      return;
+    }
     if (tg && tg.openFile) {
       if (document.querySelector("dialog[open]")) return;
       var f = takeOpenFile(tg.openFile);

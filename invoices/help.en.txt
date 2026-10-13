@@ -31,7 +31,17 @@ A receipt is usually paid at once: leave `Paid now` ticked when you issue it.
 - A recorded invoice (`Record an invoice issued elsewhere`) keeps the number, net and VAT amounts and the ΜΑΡΚ of an invoice issued in myDATA or by your provider. `Attach` keeps its official PDF on the orOS disk, under Invoices. Payments and statuses work as for any invoice.
 
 ## PDF, sending and sharing
-`PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in: attach the PDF you saved. `Mark as sent` notes the date you sent it.
+`PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in. In Mail the PDF is already attached (a recorded invoice brings its official PDF) and a copy stays on the orOS disk under Invoices; in another email app, attach the PDF you saved. `Mark as sent` notes the date you sent it.
+
+## Send to myDATA (timologisi.online)
+If you issue through timologisi.online, connect your account first in [Settings](app:settings) › `Connected services` (environment, your ΑΦΜ and the API key from the timologisi.online developer portal). An issued invoice, receipt or credit note then shows `Send to myDATA`. Pick the account, the document type (orOS suggests one from the client and the items), the payment method and, when needed, the VAT exemption reason or the withholding category, then `Send`. The document gets its ΜΑΡΚ, UID, authentication code and a link to the official PDF, shown on the document.
+- myDATA only takes documents dated today and in euro. VAT rates 24, 13, 6, 17, 9, 4 and 0 %.
+- Each document uses the account's credits (1 for an invoice, 0.5 for a receipt).
+- A sent document can't be cancelled or renumbered. A mistake is corrected with a `Credit note`, which is sent the same way and points to the original ΜΑΡΚ.
+- If no answer comes, the document shows that it is waiting: press `Check in myDATA` before anything else. orOS never sends the same document twice by itself.
+- If AADE was unreachable, the provider issues it anyway and the ΜΑΡΚ comes later: `Check in myDATA` fetches it.
+- A test (sandbox) account issues nothing real, but the provider still e-mails the client's registered addresses: use the test ΑΦΜ 987654324 for test clients.
+- Nothing is sent unless you press `Send`. Your key never leaves your devices in clear.
 
 ## Clients
 On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address, country, email and phone. `From Contacts` and `From Quote` bring in people you already have. A client shows how many documents it has and what it still owes; open it to make a `New invoice` or `Show documents`. Changing a client never changes documents already issued: they keep the details they were issued with.
@@ -51,6 +61,14 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 - Next to each payment, `Add to Budget` opens [Budget](app:budget) with the payment filled in as freelance income; check it and save it there. It shows when the payment is in Budget's currency, and remembers that you sent it.
 - `Make invoice` on an accepted [Quote](app:quote), and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
 - On `Clients`, `From CRM` brings in customers from [CRM](app:crm); each one stays linked, so CRM can show its invoices.
+- On an issued invoice or receipt whose lines have a product code, `Take out of stock` opens a sale in [Stock](app:stock) with those products and prices; a credit note offers `Back into stock` for a customer return. Nothing changes in Stock until you save there. The button shows only once you use Stock.
+
+## Statements, reminders, EU clients and more businesses
+- `Statement PDF` on a client (tap the client on `Clients`) lists every document that client still owes, with what was paid, the balance and how late each one is, and the open total per currency.
+- On an invoice that is due within a week or already late, `Payment reminder` opens an email with a polite text, or a firm one once it is overdue. In [Mail](app:mail) the PDF is attached; edit the text before you send it.
+- When the client is a business (it has a VAT number) in another EU country, the editor offers the reverse charge: `Services, 0 % VAT` or `Goods, 0 % VAT` set every line to 0 % VAT and add the standard note to the VAT exemption. Check it with your accountant; nothing is applied unless you tap it.
+- A PDF in euros shows a payment QR code (EPC / SEPA, the one banking apps scan) with your first IBAN, the amount still owed and the document number. Turn it off in `Settings` (Defaults).
+- More than one business? In `Settings`, `Add a business profile` keeps another set of details, logo, bank lines, terms and footer. Pick the business on each document (`Business`, shown once there are two). Link a numbering series to a profile (`Profile`, next to each series) so each business keeps its own numbers. Templates and copies keep their business.
 
 ## Settings
 The gear button opens `Settings`: your business details and logo, the defaults for new documents (currency, VAT %, payment days, withholding, PDF language, payment terms, footer), the numbering series, and your templates.

@@ -279,6 +279,86 @@
     }).then(function (r) { if (input.dispose) input.dispose(); return r; }, function () { if (input.dispose) input.dispose(); return null; });
   }
 
+  // frameAt(id, sec) → Promise<Blob|null>: one frame of a video file at
+  // its own size (long side at most 3840), as PNG (freeze frame).
+  function frameAt(id, sec) {
+    if (!C().isVideo(id) || !root.Mediabunny) return Promise.resolve(null);
+    return get(id).then(function (blob) {
+      if (!blob) return null;
+      var M = root.Mediabunny, input = new M.Input({ source: new M.BlobSource(blob), formats: M.ALL_FORMATS });
+      var done = function (r) { if (input.dispose) input.dispose(); return r; };
+      return input.getPrimaryVideoTrack().then(function (vt) {
+        if (!vt) return null;
+        return vt.getFirstTimestamp().then(function (off) {
+          var w = vt.displayWidth, h = vt.displayHeight, k = Math.min(1, 3840 / Math.max(w, h));
+          var sink = new M.CanvasSink(vt, { width: Math.max(2, Math.round(w * k)), height: Math.max(2, Math.round(h * k)), fit: "fill" });
+          return sink.getCanvas(off + Math.max(0, sec));
+        }).then(function (wc) {
+          if (!wc) return null;
+          var cv = wc.canvas;
+          if (cv.convertToBlob) return cv.convertToBlob({ type: "image/png" });
+          return new Promise(function (resolve) { cv.toBlob(resolve, "image/png"); });
+        });
+      }).then(done, function () { return done(null); });
+    });
+  }
+
+  // ---------- light copies (proxies) for a smooth preview ----------
+  // proxy-<id>.<mp4|webm>: the video at most PROXY_SIDE px on its short
+  // side, no sound, in the device store next to the original. Only the
+  // preview plays it; export, freeze frame and grab read the original.
+  // Never synced: each device makes its own.
+  var PROXY_SIDE = 540, PROXY_RE = /^proxy-([0-9a-f]{64}\.(?:mp4|webm))\.(?:mp4|webm)$/, proxies = {};
+  function proxy(id) {
+    if (!C().isVideo(id)) return Promise.resolve(null);
+    if (proxies[id] !== undefined) return proxies[id];
+    proxies[id] = deviceGet("proxy-" + id + ".webm").then(function (b) { return b || deviceGet("proxy-" + id + ".mp4"); })
+      .then(function (b) { if (!b) delete proxies[id]; return b || null; }, function () { delete proxies[id]; return null; });
+    return proxies[id];
+  }
+  // makeProxy(id, progress, signal) → "made" | "small" (no copy needed) | "missing"
+  function makeProxy(id, progress, signal) {
+    var M = root.Mediabunny;
+    if (!M || !C().isVideo(id)) return Promise.resolve("missing");
+    return Promise.all([get(id), proxy(id)]).then(function (r) {
+      if (!r[0]) return "missing";
+      if (r[1]) return "made";
+      var input = new M.Input({ source: new M.BlobSource(r[0]), formats: M.ALL_FORMATS });
+      var done = function (x) { if (input.dispose) input.dispose(); return x; };
+      return input.getPrimaryVideoTrack().then(function (vt) {
+        if (!vt) return "missing";
+        var w = vt.displayWidth, h = vt.displayHeight, k = PROXY_SIDE / Math.min(w, h);
+        if (k >= 1) return "small";
+        var pw = Math.max(2, Math.round(w * k / 2) * 2), ph = Math.max(2, Math.round(h * k / 2) * 2);
+        return M.getFirstEncodableVideoCodec(["vp9", "vp8", "avc"], { width: pw, height: ph }).then(function (vc) {
+          if (!vc) throw fail("decode");
+          var ext = vc === "avc" ? "mp4" : "webm", target = new M.BufferTarget();
+          var output = new M.Output({ format: ext === "mp4" ? new M.Mp4OutputFormat({ fastStart: "in-memory" }) : new M.WebMOutputFormat(), target: target });
+          return M.Conversion.init({
+            input: input, output: output,
+            video: { width: pw, height: ph, fit: "fill", codec: vc, bitrate: M.QUALITY_LOW, keyFrameInterval: 1 },
+            audio: { discard: true }
+          }).then(function (conv) {
+            if (!conv.isValid) throw fail("decode");
+            conv.onProgress = function (f) { progress && progress(f); };
+            if (signal) signal.cancel = function () { conv.cancel(); };
+            return conv.execute();
+          }).then(function () {
+            var blob = new Blob([target.buffer], { type: ext === "mp4" ? "video/mp4" : "video/webm" });
+            return devicePut("proxy-" + id + "." + ext, blob).then(function () { delete proxies[id]; return "made"; });
+          });
+        });
+      }).then(done, function (e) { done(); throw e; });
+    });
+  }
+  function dropProxies() {
+    return deviceList().then(function (ids) {
+      var list = ids.filter(function (i) { return PROXY_RE.test(i); });
+      proxies = {};
+      return Promise.all(list.map(deviceDel)).then(function () { return list.length; });
+    });
+  }
+
   // ---------- sound waveforms ----------
   // peaks(id) → Promise<Uint8Array|null>: the loudest sample of every
   // 1/PEAK_RATE s (0–255), cached next to the thumbnails. Read with
@@ -337,7 +417,8 @@
     var used = {};
     (usedIds || []).forEach(function (i) { used[i] = 1; });
     return deviceList().then(function (ids) {
-      var gone = ids.filter(function (i) { return !used[i]; });
+      // a light copy goes with its original
+      var gone = ids.filter(function (i) { return !used[i] && !(PROXY_RE.test(i) && used[i.replace(PROXY_RE, "$1")]); });
       return Promise.all(gone.map(function (i) { delete cache[i]; return deviceDel(i); })).then(function () { return gone.length; });
     });
   }
@@ -347,6 +428,6 @@
 
   root.MontageMedia = {
     sniff: sniff, get: get, share: share, importFile: importFile, relink: relink,
-    thumb: thumb, peaks: peaks, PEAK_RATE: PEAK_RATE, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
+    thumb: thumb, frameAt: frameAt, proxy: proxy, makeProxy: makeProxy, dropProxies: dropProxies, peaks: peaks, PEAK_RATE: PEAK_RATE, cleanUnused: cleanUnused, usage: usage, mimeOf: mimeOf, MAX_FILE: MAX_FILE
   };
 })(typeof window !== "undefined" ? window : this);

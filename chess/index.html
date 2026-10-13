@@ -2,10 +2,12 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=chess" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Chess · orOS</title>
 
-  <link rel="stylesheet" href="chess.css?v=1.13.00">
+  <link rel="stylesheet" href="chess.css?v=1.80.00">
 
 </head>
 <body>
@@ -58,7 +60,7 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="chess.js?v=1.13.00"></script>
+  <script src="chess.js?v=1.80.00"></script>
 
 </body>
 </html>

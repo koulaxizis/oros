@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=minimalism" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Minimalism — a 365-day guided journey into physical and digital minimalism. Part of orOS. Works offline, no cookies, no tracking.">
   <title>Minimalism · orOS</title>
@@ -17,7 +19,7 @@
   <link rel="icon" href="../icon.svg" type="image/svg+xml">
 
   <!-- ============ Styles ============ -->
-  <link rel="stylesheet" href="minimalism.css?v=1.13.00">
+  <link rel="stylesheet" href="minimalism.css?v=1.80.00">
 
   <!-- Script load ORDER is a contract here: content.js declares
        window.MINIMALISM_CONTENT and MUST parse before
@@ -104,7 +106,7 @@
   })();
   </script>
 
-  <script src="content.js?v=1.13.00"></script>
-  <script src="minimalism.js?v=1.13.00"></script>
+  <script src="content.js?v=1.80.00"></script>
+  <script src="minimalism.js?v=1.80.00"></script>
 </body>
 </html>

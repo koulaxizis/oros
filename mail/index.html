@@ -2,11 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=mail" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <title>Mail · orOS</title>
 
-  <link rel="stylesheet" href="mail.css?v=1.13.00">
+  <link rel="stylesheet" href="mail.css?v=1.80.00">
 
 </head>
 <body data-view="list">
@@ -84,17 +86,17 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="mime.js?v=1.13.00"></script>
-  <script src="sanitize.js?v=1.13.00"></script>
-  <script src="trust.js?v=1.13.00"></script>
-  <script src="rules.js?v=1.13.00"></script>
-  <script src="compose.js?v=1.13.00"></script>
-  <script src="rich.js?v=1.13.00"></script>
-  <script src="threads.js?v=1.13.00"></script>
-  <script src="outbox.js?v=1.13.00"></script>
-  <script src="people.js?v=1.13.00"></script>
-  <script src="sieve.js?v=1.13.00"></script>
-  <script src="mail.js?v=1.13.00"></script>
+  <script src="mime.js?v=1.80.00"></script>
+  <script src="sanitize.js?v=1.80.00"></script>
+  <script src="trust.js?v=1.80.00"></script>
+  <script src="rules.js?v=1.80.00"></script>
+  <script src="compose.js?v=1.80.00"></script>
+  <script src="rich.js?v=1.80.00"></script>
+  <script src="threads.js?v=1.80.00"></script>
+  <script src="outbox.js?v=1.80.00"></script>
+  <script src="people.js?v=1.80.00"></script>
+  <script src="sieve.js?v=1.80.00"></script>
+  <script src="mail.js?v=1.80.00"></script>
 
 </body>
 </html>

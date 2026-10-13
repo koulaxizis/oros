@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.13.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.80.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -144,6 +144,8 @@
     quote: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10.7 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/><path d="M16.2 13.2c-1.1 0-2 .9-2 2s.8 2 1.8 2c0 1.6-.8 2.4-.8 2.4"/></svg>',
     timesheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
     invoices: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 7h6"/><path d="M9 11h6"/><path d="M13 15h2"/></svg>',
+    newsletter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 7l8 6 8-6"/><path d="M8 16h4"/></svg>',
+    signature: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5-6 4.5-9 6-9 2 0-1.5 8 .5 8 1.5 0 2.5-4 4-4 1.2 0 .8 3 2.3 3 1 0 2-1 3.2-2"/><path d="M3 21h18"/></svg>',
     crm: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="12" cy="13" r="2"/><path d="M8.5 18a3.5 3.5 0 0 1 7 0"/></svg>',
     prompter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/><line x1="21" y1="2" x2="21" y2="6"/><line x1="19" y1="4" x2="23" y2="4"/></svg>',
     typewriter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="9" rx="2"/><path d="M7 11V6h10v5"/><path d="M7 15h.01M10 15h.01M13 15h.01M16 15h.01M9 18h6"/></svg>',
@@ -1101,6 +1103,7 @@
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
       tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
+      tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
@@ -1112,6 +1115,7 @@
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
+      tickSafe("parkCheckTick", parkCheckTickThrottled);   // Maps: parking reminder (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
@@ -1407,6 +1411,52 @@
     if (now - stockLastTick < 60000) return;
     stockLastTick = now;
     stockCheckTick();
+  }
+
+  // CRM — follow-up reminders. Reads "oros-crm-data" directly (works
+  // with the app CLOSED, and is the only reminder engine while it is
+  // open) and asks crm/core.js (loaded by index.html, the SAME file
+  // the app runs) which open follow-ups are due: earlier days, today
+  // without a time, today once the time has come. One notice per
+  // follow-up (key = id + day + time: moved to another day or time,
+  // it rings again); device-local "oros-crm-notified" keeps only what
+  // is still due. Nothing is marked before the inbox is ready.
+  // SH-B7: no follow-ups → silent.
+  var CRM_DATA_KEY = "oros-crm-data";
+  var CRM_NOTIFIED_KEY = "oros-crm-notified";
+  function crmCheckTick() {
+    var Core = window.OrosCrmCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function" && typeof N.getState === "function")) return;
+    try { if (!N.getState().ready) return; } catch (e) { return; }
+    var raw, seen;
+    try {
+      raw = JSON.parse(localStorage.getItem(CRM_DATA_KEY));
+      seen = JSON.parse(localStorage.getItem(CRM_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.fups) || !raw.fups.length) return;
+    var data = Core.norm(raw);
+    var now = new Date(), today = sysYmd();
+    var hm = (now.getHours() < 10 ? "0" : "") + now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
+    var r = Core.reminders(data, today, hm, seen);
+    r.fresh.slice(0, 10).forEach(function (x) {         // a long-closed orOS: at most 10 per tick
+      var txt = Core.reminderText(data, x.fup, today, state.lang);
+      N.emit({ ns: "crm", key: "fup-" + x.key, type: "reminder",
+               title: txt.title, body: txt.body, deepLink: "crm:" + x.fup.id });
+    });
+    r.fresh.slice(10).forEach(function (x) { delete r.next[x.key]; });   // next tick
+    if (JSON.stringify(r.next) !== JSON.stringify(seen)) {
+      try { localStorage.setItem(CRM_NOTIFIED_KEY, JSON.stringify(r.next)); } catch (e) {}
+    }
+  }
+
+  var crmLastTick = 0;
+  function crmCheckTickThrottled() {
+    var now = Date.now();
+    if (now - crmLastTick < 60000) return;
+    crmLastTick = now;
+    crmCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -1902,6 +1952,40 @@
     });
   }
 
+  // Maps — the parking reminder (maps/tools.js "I parked here").
+  // Device-local record { lat, lon, at, until, note } in
+  // oros-maps-parking: the car is where this device is. One notice
+  // per parking (key "park-<at>"); it comes with Maps closed too.
+  var parkLastTick = 0;
+  function parkCheckTickThrottled() {
+    var now = Date.now();
+    if (now - parkLastTick < 60000) return;
+    parkLastTick = now;
+    parkCheckTick();
+  }
+  function parkCheckTick() {
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem("oros-maps-parking") || "null"); } catch (e) { p = null; }
+    if (!p || typeof p !== "object") return;
+    var at = +p.at, until = +p.until;
+    if (!(at > 0) || !(until > at) || Date.now() < until) return;
+    var title = window.t("maps.park.title");
+    if (title === "maps.park.title") title = "Parking";
+    var note = typeof p.note === "string" ? p.note.slice(0, 120) : "";
+    var body = window.t("maps.park.body");
+    if (body === "maps.park.body") body = "Time to go back to the car.";
+    N.emit({
+      ns: "maps",
+      key: "park-" + Math.round(at),
+      type: "reminder",
+      title: title,
+      body: note ? body + " " + note : body,
+      deepLink: "maps:park"
+    });
+  }
+
   // Ctrl+Alt+Shift+T: start or stop the Timesheet timer.
   function scTimesheetToggle() {
     var has = false;
@@ -2153,10 +2237,28 @@
   // open what the menu already offers. The parameter is stripped right
   // away (other parameters stay), so a reload or the update broker's
   // reload lands on the desktop instead of reopening the app.
+  // Direct app links (useoros.online/notes/…): every app page that
+  // finds itself outside the shell (top window) replaces itself with
+  // "/?open=<id>&app-at=<its own ?query#hash>" (DL-1, the inline
+  // snippet at the top of each <app>/index.html). app-at is handed
+  // back to the app frame unchanged so links like /maps/?q=… or
+  // /netizen/#c=… still land where they pointed. It may only be a
+  // query and/or fragment of the app's own page (starts with "?" or
+  // "#", no control characters, bounded), so it can never point the
+  // frame at another path or scheme.
+  function launchAppSuffix(v) {
+    v = String(v || "");
+    if (!v || v.length > 8000) return "";
+    if (v.charAt(0) !== "?" && v.charAt(0) !== "#") return "";
+    if (/[\u0000-\u001f\u007f]/.test(v)) return "";
+    return v;
+  }
   function openFromLaunchParam() {
-    var params, id, i;
+    var params, id, i, at;
     try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
     id = params.get("open");
+    at = launchAppSuffix(params.get("app-at"));
+    params.delete("app-at");
     if (!id) return;
     params.delete("open");
     try {
@@ -2165,7 +2267,8 @@
     } catch (e) {}
     for (i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id && state.apps[i].type !== "external") {
-        openAppById(id);
+        if (at) openApp(state.apps[i], at);
+        else openAppById(id);
         return;
       }
     }
@@ -2353,7 +2456,71 @@
     if (s.bad) return;
     pendingShare = s;
   })();
+  // "Send to someone" (share/): share/kinds.js + share/send.js load on
+  // first use, never at boot. Apps call window.parent.orosShare.open(
+  // { kind, data, text? }). The receiving page's "Add to my orOS"
+  // leaves the item in sessionStorage "oros-share-in" (this tab only)
+  // and opens /?share-in=1; the flag leaves the address bar at boot
+  // and the item goes to its app once the app list is in.
+  var shareLoad = null;
+  function shareModule() {
+    if (window.__orosShareImpl) return Promise.resolve(window.__orosShareImpl);
+    if (!shareLoad) {
+      window.__orosShareV = APP_VERSION;
+      var load = function (src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement("script");
+          s.src = src + "?v=" + APP_VERSION;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      };
+      shareLoad = load("share/kinds.js").then(function () { return load("share/send.js"); })
+        .then(function () {
+          if (!window.__orosShareImpl) throw new Error("share module missing");
+          return window.__orosShareImpl;
+        });
+      shareLoad.catch(function () { shareLoad = null; });
+    }
+    return shareLoad;
+  }
+  window.orosShare = {
+    open: function (opts) {
+      shareModule().then(function (m) { m.open(opts); }, function () {
+        notifySys("dim", window.orosLang === "el"
+          ? "Η αποστολή δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά."
+          : "Sending could not load. Check your connection and try again.");
+      });
+    }
+  };
+  var pendingShareIn = false;
+  (function () {
+    try {
+      var u = new URL(window.location.href);
+      if (!u.searchParams.has("share-in")) return;
+      u.searchParams.delete("share-in");
+      window.history.replaceState(window.history.state, "", u.pathname + u.search + u.hash);
+      pendingShareIn = true;
+    } catch (e) {}
+  })();
+  function deliverShareIn() {
+    if (!pendingShareIn || !state.apps.length) return;
+    pendingShareIn = false;
+    shareModule().then(function (m) {
+      m.deliver({
+        hasApp: function (id) {
+          for (var i = 0; i < state.apps.length; i++) {
+            if (state.apps[i].id === id && state.apps[i].type === "internal") return true;
+          }
+          return false;
+        }
+      });
+    }, function () {});
+  }
+
   function deliverShare() {
+    deliverShareIn();
     if (!pendingShare || !state.apps.length) return;
     var s = pendingShare;
     pendingShare = null;
@@ -4582,6 +4749,20 @@
       el:   "Κέρασέ με έναν καφέ!"
     }
   ];
+  // Extra plain links shown under the Ko-fi card (same rules: fixed
+  // URLs, new tab, rel=noopener, no fetch/embed/widget).
+  var SUPPORT_LINKS = [
+    {
+      url: "https://ko-fi.com/koulaxizis/tiers",
+      en:  "Become a monthly supporter",
+      el:  "Γίνε μηνιαίος υποστηρικτής"
+    },
+    {
+      url: "https://nulljsfx.tech/supporters/",
+      en:  "Supporters",
+      el:  "Υποστηρικτές"
+    }
+  ];
 
   function supT(en, el) {
     return state.lang === "el" ? el : en;
@@ -4634,6 +4815,21 @@
     });
     sec.appendChild(cards);
 
+    var links = document.createElement("div");
+    links.id = "sc-support-links";
+    links.style.cssText =
+      "display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 8px;";
+    SUPPORT_LINKS.forEach(function (l) {
+      var a = document.createElement("a");
+      a.href = l.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.style.cssText = "color:var(--accent);";
+      a.textContent = supT(l.en, l.el);
+      links.appendChild(a);
+    });
+    sec.appendChild(links);
+
     if (resetWrap) box.insertBefore(sec, resetWrap);
     else box.appendChild(sec);
   }
@@ -4670,7 +4866,16 @@
           en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" },
         { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
           by: "Vanilagy & contributors", lic: "MPL-2.0",
-          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" }
+          en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" },
+        { name: "ONNX Runtime Web 1.22.0", url: "https://onnxruntime.ai/",
+          by: "Microsoft Corporation", lic: "MIT",
+          en: "Removing a picture's background on the device (Atelier)", el: "Αφαίρεση φόντου εικόνας στη συσκευή (Ατελιέ)" },
+        { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
+          by: "Xuebin Qin & contributors", lic: "Apache-2.0",
+          en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
+        { name: "NULL JSFX", url: "https://nulljsfx.tech",
+          by: "Christos Koulaxizis", lic: "MIT",
+          en: "Effects and their interfaces (Studio)", el: "Εφέ και τα περιβάλλοντά τους (Studio)" }
       ]
     },
     {
@@ -4717,7 +4922,10 @@
           en: "Bright stars and their names (Moon & Sky)", el: "Λαμπρά αστέρια και τα ονόματά τους (Σελήνη & Ουρανός)" },
         { name: "d3-celestial (constellation figures)", url: "https://github.com/ofrohn/d3-celestial",
           by: "Olaf Frohn", lic: "BSD-3-Clause",
-          en: "Constellation lines (Moon & Sky)", el: "Γραμμές αστερισμών (Σελήνη & Ουρανός)" }
+          en: "Constellation lines (Moon & Sky)", el: "Γραμμές αστερισμών (Σελήνη & Ουρανός)" },
+        { name: "id-tagging-schema (iD presets)", url: "https://github.com/openstreetmap/id-tagging-schema",
+          by: "OpenStreetMap iD contributors", lic: "ISC",
+          en: "Place kinds and fields (Maps)", el: "Είδη και πεδία μερών (Χάρτες)" }
       ]
     },
     {
@@ -4729,13 +4937,25 @@
           en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
         { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
           by: "OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Map data and standard tiles (Maps)", el: "Δεδομένα και πλακίδια χάρτη (Χάρτες)" },
+          en: "Map data, standard tiles and the public GPS traces layer (Maps)", el: "Δεδομένα και πλακίδια χάρτη, επίπεδο δημόσιων GPS traces (Χάρτες)" },
         { name: "OpenStreetMap France / HOT", url: "https://www.hotosm.org/",
           by: "OSM France, Humanitarian OpenStreetMap Team", lic: "ODbL (data)",
           en: "Humanitarian map layer (Maps)", el: "Ανθρωπιστικό στρώμα χάρτη (Χάρτες)" },
         { name: "Esri World Imagery", url: "https://www.esri.com/",
           by: "Esri, Maxar, Earthstar Geographics", lic: { en: "Esri terms of use", el: "Όροι χρήσης της Esri" },
           en: "Satellite layer (Maps)", el: "Δορυφορικό στρώμα (Χάρτες)" },
+        { name: "OpenTopoMap", url: "https://opentopomap.org/",
+          by: "OpenTopoMap; data by OpenStreetMap contributors, SRTM", lic: "CC-BY-SA (style), ODbL (data)",
+          en: "Topo layer with contour lines (Maps)", el: "Τοπογραφικό στρώμα με ισοϋψείς (Χάρτες)" },
+        { name: "Terrain Tiles (AWS)", url: "https://registry.opendata.aws/terrain-tiles/",
+          by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { en: "Open data, attribution per source", el: "Ανοιχτά δεδομένα, αναφορά ανά πηγή" },
+          en: "Elevation profile in Plan a track (Maps)", el: "Προφίλ υψομέτρου στη Σχεδίαση διαδρομής (Χάρτες)" },
+        { name: "Wikipedia", url: "https://www.wikipedia.org/",
+          by: "Wikimedia Foundation, Wikipedia contributors", lic: "CC BY-SA 4.0 (text)",
+          en: "Articles near you in Discover (Maps)", el: "Άρθρα κοντά σου στην Ανακάλυψη (Χάρτες)" },
+        { name: "Panoramax", url: "https://panoramax.fr/",
+          by: "Panoramax (IGN, OpenStreetMap France and contributors)", lic: { en: "Each photo's own licence (usually CC BY-SA 4.0)", el: "Η άδεια κάθε φωτογραφίας (συνήθως CC BY-SA 4.0)" },
+          en: "Open street-level photos in Discover (Maps)", el: "Ανοιχτές φωτογραφίες δρόμου στην Ανακάλυψη (Χάρτες)" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
           en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
@@ -4745,6 +4965,15 @@
         { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
           by: "FOSSGIS e.V.", lic: "ODbL (data)",
           en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+        { name: "Transitous", url: "https://transitous.org/sources/",
+          by: "The Transitous community (MOTIS); timetables by each operator", lic: { en: "Each feed's open licence; ODbL (map data)", el: "Η ανοιχτή άδεια κάθε πηγής· ODbL (δεδομένα χάρτη)" },
+          en: "Public transport: connections, departures, live vehicles (Maps)", el: "Μέσα μαζικής μεταφοράς: δρομολόγια, αναχωρήσεις, οχήματα (Χάρτες)" },
+        { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
+          by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
+          en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
+        { name: "Overpass API", url: "https://overpass-api.de/",
+          by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
+          en: "Places and quests around you, speed limits while driving (Maps)", el: "Μέρη και ερωτήσεις γύρω σου, όρια ταχύτητας στην οδήγηση (Χάρτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
@@ -4757,6 +4986,9 @@
         { name: "Frankfurter", url: "https://frankfurter.dev/",
           by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
           en: "Exchange rates (Unit Converter)", el: "Ισοτιμίες (Μετατροπέας μονάδων)" },
+        { name: "Wiktionary", url: "https://en.wiktionary.org/",
+          by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
+          en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
         { name: "Openverse", url: "https://openverse.org/",
           by: "WordPress.org, the creators of every work", lic: { en: "Per item (CC / public domain)", el: "Ανά έργο (CC / κοινό κτήμα)" },
           en: "Photos, illustrations, sounds (Atelier)", el: "Φωτογραφίες, εικονογραφήσεις, ήχοι (Ατελιέ)" },
@@ -4787,6 +5019,42 @@
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
+        { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
+          by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
+          en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
+        { name: "MailerLite, Mailchimp, Brevo", url: "https://www.mailerlite.com/",
+          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
+          en: "Connected services: sync subscribers (Newsletter)", el: "Συνδεδεμένες υπηρεσίες: συγχρονισμός συνδρομητών (Newsletter)" },
+        { name: "HubSpot, Pipedrive", url: "https://developers.hubspot.com/",
+          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
+          en: "Connected services: import customers and deals (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών και deals (CRM)" },
+        { name: "Stripe API", url: "https://docs.stripe.com/api",
+          by: "Stripe, Inc.; your own account", lic: { en: "Their terms, your own restricted key", el: "Οι όροι τους, με δικό σου restricted key" },
+          en: "Connected services: import payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πληρωμών (Έσοδα & Έξοδα)" },
+        { name: "Invoice Ninja API", url: "https://api-docs.invoicing.co/",
+          by: "Invoice Ninja LLC; your own account or install", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
+          en: "Connected services: import clients (CRM) and payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών (CRM) και πληρωμών (Έσοδα & Έξοδα)" },
+        { name: "Odoo API", url: "https://www.odoo.com/documentation/19.0/developer/reference/external_api.html",
+          by: "Odoo S.A.; your own database", lic: { en: "Their terms, your own API key", el: "Οι όροι τους, με δικό σου κλειδί API" },
+          en: "Connected services: import contacts and opportunities (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή επαφών και ευκαιριών (CRM)" },
+        { name: "Todoist API", url: "https://developer.todoist.com/api/v1/",
+          by: "Doist Inc.; your own account", lic: { en: "Their terms, your own API token", el: "Οι όροι τους, με δικό σου API token" },
+          en: "Connected services: import projects and tasks (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή projects και εργασιών (To-Do)" },
+        { name: "Trello API", url: "https://developer.atlassian.com/cloud/trello/rest/",
+          by: "Atlassian; your own account", lic: { en: "Their terms, your own key and token", el: "Οι όροι τους, με δικό σου κλειδί και token" },
+          en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή boards (Kanban)" },
+        { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
+          by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
+          en: "Connected services: import a repository's issues (Kanban) and the issues assigned to you (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban) και όσων σου έχουν ανατεθεί (To-Do)" },
+        { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
+          by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
+          en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
+        { name: "Notion API", url: "https://developers.notion.com/reference/intro",
+          by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
+          en: "Connected services: import pages (Notes) and databases (Spreadsheet, Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο, Kanban)" },
+        { name: "timologisi.online", url: "https://www.timologisi.online/",
+          by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
+          en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },
         { name: "Dropbox", url: "https://www.dropbox.com/",
           by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
           en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
@@ -5102,7 +5370,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-time-stage", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -7376,7 +7644,7 @@
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 
-  function openApp(app) {
+  function openApp(app, at) {
     closeMenu();
     menuReset();
     if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
@@ -7386,7 +7654,7 @@
     }
     state.running = app;
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
-    document.getElementById("app-frame").src = app.url;
+    document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
     var mb = document.getElementById("btn-menu");

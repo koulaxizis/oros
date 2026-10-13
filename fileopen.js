@@ -82,7 +82,9 @@
       "image/openraster": [".ora"] } },
     { app: "library", accept: {
       "application/epub+zip": [".epub"],
-      "application/pdf": [".pdf"] } },
+      "application/pdf": [".pdf"],
+      "application/x-fictionbook+xml": [".fb2"],
+      "application/vnd.comicbook+zip": [".cbz"] } },
     { app: "montage", max: 4096 * 1024 * 1024, accept: {
       "video/mp4": [".mp4", ".m4v"],
       "video/webm": [".webm"],
@@ -90,6 +92,14 @@
     { app: "notes", accept: {
       "text/plain": [".txt"],
       "text/markdown": [".md", ".markdown"] } },
+    { app: "texttools", accept: {
+      "text/plain": [".txt"],
+      "text/csv": [".csv"],
+      "text/tab-separated-values": [".tsv"] } },
+    { app: "maps", accept: {
+      "application/gpx+xml": [".gpx"],
+      "application/vnd.google-earth.kml+xml": [".kml"],
+      "application/geo+json": [".geojson"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
     // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
     { app: "calendar", text: "importIcs", accept: {

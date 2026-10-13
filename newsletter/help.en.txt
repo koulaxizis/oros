@@ -1,0 +1,94 @@
+# Newsletter
+Newsletter writes and sends e-mail newsletters to your own subscriber lists, like Mailerlite or Buttondown, but from your own e-mail account or a sending provider. Subscribers live in orOS, not on someone else's service, and nothing is tracked: there is no open or click counting.
+
+## Getting started
+1. On `Lists`, choose `Add sending account`. Pick a `Mail account` you already set up in [Mail](app:mail), or `Provider (SMTP)` for a sending provider such as Brevo, Amazon SES, Mailgun, Postmark, SendGrid or MailerSend. `Test login` checks it. MailerLite itself offers no SMTP: its sending service is MailerSend.
+2. Make a `New list`: its name, the account it `Sends from`, the `From address`, and `Your name and postal address (footer)`, which the law asks every newsletter to show.
+3. Add subscribers on `Subscribers`, then write your first issue with `New` on `Issues`.
+
+## Lists and sending accounts
+A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer language and the text that says `Why they receive it (footer)`. `Check domain` looks up the SPF, DKIM and DMARC records of your From address: without them newsletters often land in spam.
+
+`Seconds between messages` and `Messages a day (at most)` keep you under your provider's limits. A provider's password or API key stays sealed on the device where you typed it and is never synced: enter it once on each device that sends.
+
+## Sending through a provider's API
+For Brevo, Postmark, SendGrid and Mailgun, set `Connection` to `HTTP API` in the sending account and paste the provider's API key (Mailgun also needs its sending domain). Then:
+- Up to 10 messages leave in one call instead of one at a time.
+- Every 10 minutes, Newsletter reads the provider's hard bounces, spam complaints and unsubscribes and marks those subscribers on your lists.
+- A refused address counts as bounced; a refused key pauses the issue until you fix it.
+
+The key needs permission to send and to read bounces or suppressions. Brevo's API can't carry pictures inside a message: for issues with pictures, use Brevo's SMTP. Payloads follow each provider's public API guide, so try a test send first.
+
+## Subscribers
+`Add`, `Paste addresses`, `Import CSV`, or pick people `From Contacts` or `From CRM` (your CRM customers with an e-mail; their CRM status and tags become tags). Each person has a status (`Active`, `Waiting to confirm`, `Unsubscribed`, `Bounced`), tags, and the basis you have for writing to them:
+- `Gave consent`: they agreed, for example on a form.
+- `Existing customer`: news about similar products or services.
+- `Confirms by e-mail`: they get a confirmation request and receive issues only after they confirm.
+
+An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
+
+## Email platforms (MailerLite, Mailchimp, Brevo)
+If you also keep subscribers on MailerLite, Mailchimp or Brevo, connect the account first in [Settings](app:settings) › `Connected services`. Then, on `Subscribers`, `Email platforms` links the list to a group (MailerLite), an audience (Mailchimp) or a contact list (Brevo). `Sync` reads everyone there and shows what would change before anything does; `Apply` makes the changes.
+- `Bring their subscribers here`: people on the platform who aren't on this list are added, with the tag of the platform and the basis `Gave consent`.
+- `Send our confirmed subscribers there`: only `Active` people go; people still waiting to confirm don't.
+- Unsubscribes always travel both ways: someone who left on the platform leaves here too, and someone who left here (or was deleted for good) is unsubscribed there. Nobody who left on one side is ever brought back on the other.
+- `Unlink` only removes the link: nobody is deleted here or there.
+- Mailchimp only talks to servers, so it always goes through the orOS relay; the relay keeps nothing. Your keys stay in Connected services and never come into Newsletter.
+
+## Writing an issue
+Write in `Blocks` (heading, text, picture, button, line, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you send to everyone active, to subscribers with some tags, or to a saved segment. `Segments…` makes segments: subscribers with some tags (any or all of them), a language, or both. Pictures are shrunk and sent inside the e-mail.
+
+`+ Greek version` (or `+ English version`) adds a second language to the issue: subscribers who read that language get it, everyone else gets the main one. Switch between the two versions at the top of the editor.
+
+`Save as template` keeps an issue's content; `New` then offers `Blank issue` or one of your templates.
+
+`Preview` shows the issue on a phone and a desktop (and in each language), `Send a test` mails it to you, and `Check` lists what must be fixed before sending.
+
+## Sending
+`Send…` shows how many messages will go out and how long it takes; type the number to confirm. Choose `Now`, or `Later` and a day and time to schedule it. Sending goes one message at a time while orOS is open on this device, even with Newsletter closed, and the bar on top shows progress with `Pause`. If the daily limit is reached it goes on the next day. Messages that fail are listed under `Not delivered`. orOS lets you know when an issue has gone out or paused, and [Today](app:today) shows issues being sent and scheduled.
+
+A scheduled issue goes out from the device that scheduled it, where the passwords are. Open it to `Cancel the schedule` or `Send now`.
+
+>! orOS has to be open: with orOS closed nothing is sent, and a scheduled issue starts the next time you open orOS on that device. A tab in the background sends more slowly.
+
+## RSS to e-mail
+On a list card, `RSS to e-mail` turns a blog or news feed into issues. Pick one of your feeds in [Reader](app:feeds) or type any feed address, choose every day, every week or every month and the time, and how many articles go in. Each issue lists the new articles with their picture, a few lines and a `Read more` button.
+
+Choose `Make a draft for me to check` and you get a draft and a notice, or `Send it by itself` and it goes out on its own, but only if the check before sending finds no errors; otherwise it stays a draft and orOS tells you. `Make one now` builds a draft from the newest articles at once.
+
+>! A feed runs on the device where you set it up, while orOS is open. If orOS was closed at that time, it runs the next time you open it.
+
+## Past issues from another service
+`Settings` › `Import past issues…` brings in what you sent with Buttondown, MailerLite or another service: their .zip export, or Markdown, HTML, CSV or JSON files. Import them as past issues, which show among your issues as already sent (to save as a web page or `Duplicate`) without anyone getting an e-mail, or as drafts to send again. Text, headings, links and pictures come over; scripts and tracking pixels are dropped, and pictures stay at their web address. Importing the same file twice adds nothing new.
+
+## Subscribe and unsubscribe by e-mail
+Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` gives a link and HTML for your site that does the same for new subscribers. Newsletter reads these e-mails from the Inbox of the list's account (`Check Inbox`, every few minutes while orOS is open, and before each send), applies them, and files them in a folder called Newsletter. Delivery-failure reports mark addresses as bounced.
+
+## Sign-up form on your site
+In `Subscribe link`, `Set up the form` makes a form for your own website: copy its HTML into any page. People type their e-mail and name, and orOS's relay keeps the sign-up, encrypted so only your Newsletter can read it, until orOS collects it, every few minutes while it is open. Each new subscriber then gets a confirmation request. You can set a `Thank-you page` on your site where people land afterwards.
+
+With the form on, every issue also has a one-click unsubscribe link, and Gmail and other mail apps show their own Unsubscribe button.
+
+>! Sign-ups are collected on one device, the one that set the form up. Use `Collect here` to change it. `Turn the form off` deletes what the relay holds, and the one-click links in issues already sent stop working; the e-mail way keeps working.
+
+## Sync and backup
+Lists, subscribers and issues sync through orOS sync, and pictures through the orOS disk. Passwords, the daily counter and when the Inbox was last read stay on each device. `Settings` has `Back up (JSON)` and `Restore from backup`, and `Export CSV` saves a list's subscribers.
+
+## Keyboard shortcuts
+- [[N]]: new issue, subscriber or list (on the tab you are on).
+- [[/]]: search subscribers.
+- [[Esc]]: back to the list.
+- [[Ctrl+Z]]: undo the last delete.
+
+## Tips
+> Send a test to your own phone and a Gmail address before each big send.
+
+> Ask your provider for SPF and DKIM before your first send: it matters more than the subject line.
+
+## Limits
+- Sending happens only while orOS is open, and the daily limit is counted per device.
+- Up to 5,000 subscribers in all and 20 lists.
+- Up to 20 RSS feeds and 500 issues.
+- No open or click statistics.
+- The relay holds at most 2,000 sign-ups and unsubscribes per list waiting to be collected.
+- Each call to a provider's API sends up to 10 messages (about 1 MB); bounces older than 7 days before the first read are not fetched.

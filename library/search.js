@@ -30,7 +30,7 @@
         out.push({
           id: b.id,
           title: titles[b.id],
-          text: [str(b.by), b.fmt === "pdf" ? "PDF" : "EPUB", arr(b.tags).map(str).filter(Boolean).join(", "),
+          text: [str(b.by), String(b.kind || b.fmt || "epub").toUpperCase(), arr(b.tags).map(str).filter(Boolean).join(", "),
                  typeof b.year === "number" ? String(b.year) : ""].filter(Boolean).join(" · "),
           target: { book: b.id }
         });

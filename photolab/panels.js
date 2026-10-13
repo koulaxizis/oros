@@ -61,7 +61,11 @@
     merge: svg('<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>'),
     swap: svg('<path d="M7 4L3 8l4 4M3 8h13a4 4 0 0 1 4 4M17 20l4-4-4-4M21 16H8a4 4 0 0 1-4-4"/>'),
     close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
-    check: svg('<path d="M5 13l4 4L19 7"/>')
+    check: svg('<path d="M5 13l4 4L19 7"/>'),
+    quick: svg('<path d="M4 20l7-7"/><circle cx="15" cy="9" r="5" stroke-dasharray="2.5 2.5"/>'),
+    mask: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="5" fill="currentColor"/>'),
+    adj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'),
+    fx: svg('<path d="M10 20l1-8M6 12h7M14 4h-1a3 3 0 0 0-3 3l-1 5"/><path d="M15 13l5 6M20 13l-5 6"/>')
   };
   PL.ICON = ICON;
 
@@ -404,9 +408,184 @@
     };
   }
 
+  // ---------- Adjustment layers + layer styles ----------
+  // Labels of the C.ADJ / C.FX_SPEC parameters.
+  var PARAM_LABEL = {
+    levels: { ib: "adj.inBlack", iw: "adj.inWhite", g: "adj.gamma", ob: "adj.outBlack", ow: "adj.outWhite" },
+    curves: { s: "adj.shadows", m: "adj.mids", h: "adj.highs" },
+    hsl: { h: "adj.hue", s: "adj.sat", l: "adj.light" },
+    balance: { r: "adj.cr", g: "adj.mg", b: "adj.yb" },
+    bc: { b: "adj.bright", c: "adj.contrast" },
+    photo: { c: "f.color", d: "adj.density" },
+    gradmap: { c0: "adj.dark", c1: "adj.lightCol" },
+    threshold: { t: "adj.threshold" },
+    posterize: { n: "adj.levels" },
+    fx: { c: "f.color", op: "f.opacity", a: "flt.angle", d: "flt.distance", s: "fx.size", w: "fx.width" }
+  };
+  // Controls for a parameter list; p is changed in place, then onChange().
+  function paramControls(spec, labels, p, onChange) {
+    return spec.map(function (q) {
+      var key = q[0], label = t(labels[key]);
+      if (q[1] === "c") {
+        var c = el("input"); c.type = "color"; c.value = p[key];
+        c.addEventListener("input", function () { p[key] = c.value; onChange(); });
+        return field(label, c);
+      }
+      if (key === "g") {                                   // gamma ×100 on a whole-number slider
+        return range(label, Math.round(p.g * 100), 10, 999, function (x) { p.g = x / 100; onChange(); });
+      }
+      return range(label, p[key], q[1], q[2], function (x) { p[key] = x; onChange(); });
+    });
+  }
+  // L: edit that adjustment layer; null: make a new one (one undo
+  // step), which Cancel takes back.
+  function adjLayerDialog(L) {
+    if (!st.doc) return;
+    var isNew = !L;
+    if (isNew) { L = ops().newAdjLayer("levels"); if (!L) return; L = PL.layer(); }
+    var orig = JSON.parse(JSON.stringify(L.aj)), cur = JSON.parse(JSON.stringify(L.aj));
+    var type = select(C.ADJ_IDS.map(function (id) { return [id, t("adjk." + id)]; }), cur.id);
+    var box = el("div", "adj-params");
+    function live() { L.aj = C.normAdj(cur); PL.view.invalidate(); }
+    function build() {
+      box.innerHTML = "";
+      paramControls(C.ADJ[cur.id], PARAM_LABEL[cur.id] || {}, cur.p, live).forEach(function (n) { box.appendChild(n); });
+    }
+    type.addEventListener("change", function () { cur = C.normAdj({ id: type.value }); build(); live(); });
+    build();
+    PL.dialog({
+      title: t("dlg.adj"), ok: t(isNew ? "btn.add" : "btn.save"),
+      body: [field(t("f.adjType"), type), box, hint(t("hint.adjLayer"))],
+      onOk: function () {
+        L.aj = orig;
+        var n = C.normAdj(cur);
+        // A new layer is made again with its final type: one undo step.
+        if (isNew) { PL.undo(); ops().newAdjLayer(n.id, n.p); }
+        else ops().setAdj(L, n);
+      },
+      onCancel: function () {
+        L.aj = orig; PL.view.invalidate();
+        if (isNew) PL.undo();
+      }
+    });
+  }
+  function fxDialog(L) {
+    if (L.k === "adj") { PL.toast(t("msg.fxAdj")); return; }
+    if (L.lock) { PL.toast(t("msg.locked")); return; }
+    var orig = L.fx ? JSON.parse(JSON.stringify(L.fx)) : null;
+    var on = {}, vals = {};
+    C.FX_IDS.forEach(function (k) {
+      on[k] = !!(orig && orig[k]);
+      vals[k] = C.normFx((function () { var o = {}; o[k] = orig && orig[k] || {}; return o; })())[k];
+    });
+    function current() {
+      var o = {};
+      C.FX_IDS.forEach(function (k) { if (on[k]) o[k] = vals[k]; });
+      return C.normFx(o);
+    }
+    function live() { var n = current(); if (n) L.fx = n; else delete L.fx; PL.view.invalidate(); }
+    var body = C.FX_IDS.map(function (k) {
+      var sec = el("fieldset", "fx-sec");
+      var head = check(t("fx." + k), on[k]);
+      head.classList.add("fx-head");
+      var inner = el("div", "fx-params");
+      paramControls(C.FX_SPEC[k], PARAM_LABEL.fx, vals[k], function () {
+        if (!on[k]) { on[k] = true; head.input.checked = true; }
+        live();
+      }).forEach(function (n) { inner.appendChild(n); });
+      inner.hidden = !on[k];
+      head.input.addEventListener("change", function () { on[k] = head.input.checked; inner.hidden = !on[k]; live(); });
+      sec.appendChild(head); sec.appendChild(inner);
+      return sec;
+    });
+    body.push(hint(t("hint.fx")));
+    PL.dialog({
+      title: t("dlg.fx"), ok: t("btn.apply"), body: body, wide: true,
+      onOk: function () {
+        var n = current();
+        if (orig) L.fx = orig; else delete L.fx;
+        ops().setFx(L, n);
+      },
+      onCancel: function () { if (orig) L.fx = orig; else delete L.fx; PL.view.invalidate(); }
+    });
+  }
+  PL.panels.adjLayerDialog = adjLayerDialog;
+  PL.panels.fxDialog = fxDialog;
+
+  // ---------- 2D: view prefs, guides, selections ----------
+  function togglePref(k) { pr()[k] = !pr()[k]; PL.savePrefs(); PL.view.schedule(); }
+  function guideDialog() {
+    var axis = select([["y", t("guide.h")], ["x", t("guide.v")]], "y");
+    var pos = numIn(Math.round(st.doc.h / 2), -8192, 16384);
+    axis.addEventListener("change", function () { pos.value = Math.round((axis.value === "x" ? st.doc.w : st.doc.h) / 2); });
+    PL.dialog({ title: t("dlg.newGuide"), ok: t("btn.add"), body: [field(t("f.orientation"), axis), field(t("f.positionPx"), pos)],
+      onOk: function () {
+        var v = Math.round(+pos.value);
+        if (!(v >= -8192 && v <= 16384)) { PL.toast(t("msg.badNumber")); return false; }
+        ops().newGuide(axis.value, v);
+      } });
+  }
+  // Select › Colour range: the pixels near a colour (starts with the
+  // foreground colour; the eyedropper sets it), live selection preview.
+  function colorRangeDialog() {
+    var L = PL.layer(), d = st.doc;
+    var c = el("input"); c.type = "color"; c.value = st.fg;
+    var all = check(t("f.allLayers"), !L || L.k !== "raster");
+    var fuzz = 40, before = st.sel, img = null, timer = null;
+    function source() {
+      if (all.input.checked || !L || L.k !== "raster") {
+        var cv = PL.view.flatten(null, 1), px = cv.getContext("2d").getImageData(0, 0, d.w, d.h).data;
+        cv.width = 0;
+        return { w: d.w, h: d.h, data: px };
+      }
+      return PL.T.readRect(PL.surface(L.id), -L.x, -L.y, d.w, d.h);
+    }
+    function preview() {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (!img) img = source();
+        var m = PL.S.colorRange(img, PL.P.rgbOf(c.value), fuzz);
+        st.sel = PL.S.isEmpty(m) ? null : m; PL.view.selChanged();
+      }, 80);
+    }
+    c.addEventListener("input", preview);
+    all.input.addEventListener("change", function () { img = null; preview(); });
+    var fz = range(t("f.fuzziness"), fuzz, 0, 200, function (x) { fuzz = x; preview(); });
+    PL.dialog({ title: t("dlg.colorRange"), ok: t("btn.ok"), body: [field(t("f.color"), c), fz, all, hint(t("hint.colorRange"))],
+      onOk: function () {
+        clearTimeout(timer);
+        if (!img) img = source();
+        var m = PL.S.colorRange(img, PL.P.rgbOf(c.value), fuzz);
+        st.sel = before;
+        PL.setSel(m, t("step.colorRange"));
+        if (!st.sel) { PL.view.selChanged(); PL.toast(t("msg.selNothing")); }
+      },
+      onCancel: function () { clearTimeout(timer); st.sel = before; PL.view.selChanged(); } });
+    preview();
+  }
+  function saveSelDialog() {
+    var n = textIn(t("sel.default") + " " + ((st.doc.sels || []).length + 1));
+    PL.dialog({ title: t("dlg.saveSel"), ok: t("btn.save"), body: [field(t("f.name"), n)], onOk: function () { ops().saveSelection(n.value); } });
+  }
+  function loadSelDialog() {
+    var mode = select([["replace", t("sel.replace")], ["add", t("sel.add")], ["sub", t("sel.sub")], ["and", t("sel.and")]], "replace");
+    var list = el("div", "selsave-list"), dlg = null;
+    (st.doc.sels || []).forEach(function (v) {
+      var row = el("div", "selsave-row");
+      var b = el("button", "chip", v.name); b.type = "button";
+      b.addEventListener("click", function () { ops().loadSelection(v.id, mode.value); dlg.close("ok"); });
+      var del = el("button", "icon-btn small"); del.type = "button"; del.innerHTML = ICON.del;
+      PL.setLabel(del, t("btn.deleteSel", { name: v.name }));
+      del.addEventListener("click", function () { ops().deleteSavedSelection(v.id); row.remove(); if (!list.children.length) dlg.close("ok"); });
+      row.appendChild(b); row.appendChild(del); list.appendChild(row);
+    });
+    dlg = PL.dialog({ title: t("dlg.loadSel"), ok: null, body: [field(t("f.selMode"), mode), list] });
+  }
+
   // ---------- Menus ----------
   function has() { return !!st.doc; }
   function hasSel() { return !!st.sel; }
+  function hasMask() { var L = st.doc && PL.layer(); return !!(L && L.mk); }
   // Browsers keep Ctrl+N, Ctrl+T and Ctrl+Shift+N, so New, Free
   // transform and New layer use Alt instead.
   var MENUS = [
@@ -460,6 +639,15 @@
       { id: "layerRotCcw", run: function () { ops().layerRotate(3); }, on: has },
       { id: "rasterize", run: function () { var L = PL.layer(); if (L && L.k !== "raster") ops().rasterize(L); else PL.toast(t("msg.alreadyRaster")); }, on: has },
       "-",
+      { id: "newAdj", run: function () { adjLayerDialog(null); }, on: has },
+      { id: "layerStyle", run: function () { var L = PL.layer(); if (L) fxDialog(L); }, on: has },
+      { id: "addMask", run: function () { ops().addMask(false); }, on: has },
+      { id: "maskSel", run: function () { ops().addMask(true); }, on: hasSel },
+      { id: "editMask", k: "Ctrl+\\", run: function () { ops().editMask(); }, on: hasMask },
+      { id: "toggleMask", run: function () { ops().toggleMask(); }, on: hasMask },
+      { id: "applyMask", run: function () { ops().applyMask(); }, on: hasMask },
+      { id: "deleteMask", run: function () { ops().deleteMask(); }, on: hasMask },
+      "-",
       { id: "mergeDown", k: "Ctrl+E", run: function () { ops().mergeDown(); }, on: has },
       { id: "flatten", run: function () { ops().flatten(); }, on: has }
     ] },
@@ -468,6 +656,9 @@
       { id: "deselect", k: "Ctrl+D", run: function () { ops().deselect(); }, on: hasSel },
       { id: "invertSel", k: "Ctrl+Shift+I", run: function () { ops().invertSel(); }, on: hasSel },
       { id: "selLayer", run: function () { ops().selectLayerPixels(); }, on: has },
+      { id: "colorRange", run: colorRangeDialog, on: has },
+      { id: "saveSel", run: saveSelDialog, on: hasSel },
+      { id: "loadSel", run: loadSelDialog, on: function () { return has() && !!st.doc.sels; } },
       "-",
       { id: "feather", run: function () { numberDialog(t("dlg.feather"), t("f.radius"), 10, 1, 250, ops().featherSel); }, on: hasSel },
       { id: "grow", run: function () { numberDialog(t("dlg.grow"), t("f.pixels"), 5, 1, 100, ops().growSel); }, on: hasSel },
@@ -478,6 +669,7 @@
       { id: "adjLooks", run: function () { adjustDialog("looks"); }, on: has },
       { id: "adjHsl", k: "Ctrl+U", run: function () { adjustDialog("hsl"); }, on: has },
       { id: "adjLevels", k: "Ctrl+L", run: function () { adjustDialog("levels"); }, on: has },
+      { id: "adjLr", run: function () { PL.io.openLrPreset(); }, on: has },
       "-",
       { id: "adjInvert", k: "Ctrl+I", run: function () { ops().quickAdjust("invert", {}, t("menu.adjInvert")); }, on: has },
       { id: "adjGray", k: "Ctrl+Shift+U", run: function () { ops().quickAdjust("gray", {}, t("menu.adjGray")); }, on: has },
@@ -504,6 +696,14 @@
       { id: "zoomOut", k: "Ctrl+-", run: function () { PL.view.zoomStep(-1); }, on: has },
       { id: "fit", k: "Ctrl+0", run: function () { PL.view.fit(); }, on: has },
       { id: "actual", k: "Ctrl+1", run: function () { var s = PL.view.size(); PL.view.zoomAt(1, s.w / 2, s.h / 2); }, on: has },
+      "-",
+      { id: "rulers", k: "Ctrl+Alt+R", checked: function () { return pr().rulers; }, run: function () { togglePref("rulers"); PL.view.fit(); }, on: has },
+      { id: "guides", k: "Ctrl+;", checked: function () { return pr().guides; }, run: function () { togglePref("guides"); }, on: has },
+      { id: "grid", k: "Ctrl+'", checked: function () { return pr().grid; }, run: function () { togglePref("grid"); }, on: has },
+      { id: "snap", k: "Ctrl+Shift+;", checked: function () { return pr().snap; }, run: function () { togglePref("snap"); }, on: has },
+      { id: "newGuide", run: guideDialog, on: has },
+      { id: "clearGuides", run: function () { ops().clearGuides(); }, on: function () { return has() && !!st.doc.gd; } },
+      { id: "gridSize", run: function () { numberDialog(t("dlg.gridSize"), t("f.pixels"), pr().gridSize, 2, 1000, function (n) { pr().gridSize = n; pr().grid = true; PL.savePrefs(); PL.view.schedule(); }); }, on: has },
       "-",
       { id: "panel", run: function () { setPanel(!document.body.classList.contains("side-open")); } },
       { id: "help", run: function () { openHelp(); } }
@@ -533,7 +733,12 @@
     m.items.forEach(function (it) {
       if (it === "-") { list.appendChild(el("hr")); return; }
       var b = el("button", "menu-item");
-      b.type = "button"; b.setAttribute("role", "menuitem");
+      b.type = "button"; b.setAttribute("role", it.checked ? "menuitemcheckbox" : "menuitem");
+      if (it.checked) {
+        var on = !!it.checked();
+        b.setAttribute("aria-checked", on ? "true" : "false");
+        b.appendChild(el("span", "mi-c", on ? "✓" : ""));
+      }
       b.appendChild(el("span", "mi-l", t("menu." + it.id)));
       if (it.k && !PL.phone) b.appendChild(el("span", "mi-k", keyLabel(it.k)));
       b.disabled = it.on ? !it.on() : false;
@@ -597,7 +802,7 @@
     box.appendChild(cols);
   }
   function swapColors() { var x = st.fg; st.fg = st.bg; st.bg = x; PL.emit("colors"); renderTools(); }
-  var TOOL_KEYS = { move: "v", marquee: "m", lasso: "l", wand: "w", crop: "c", brush: "b", eraser: "e", clone: "s", heal: "j", tone: "o", smudge: "r", fill: "g", gradient: "", picker: "i", text: "t", shape: "u", hand: "h", zoom: "z" };
+  var TOOL_KEYS = { move: "v", marquee: "m", lasso: "l", wand: "w", quick: "", crop: "c", brush: "b", eraser: "e", clone: "s", heal: "j", tone: "o", smudge: "r", fill: "g", gradient: "", picker: "i", text: "t", shape: "u", hand: "h", zoom: "z" };
 
   PL.setTool = function (id, internal) {
     if (st.tool === id && !internal) {
@@ -696,6 +901,11 @@
       box.appendChild(optRange(t("f.tolerance"), P.wand, "tol", 0, 255));
       box.appendChild(optCheck(t("f.contiguous"), P.wand, "contiguous"));
       box.appendChild(optCheck(t("f.allLayers"), P.wand, "all"));
+    } else if (id === "quick") {
+      box.appendChild(optRange(t("f.size"), P.quick, "size", 2, 300));
+      box.appendChild(optRange(t("f.tolerance"), P.quick, "tol", 1, 255));
+      box.appendChild(optCheck(t("f.allLayers"), P.quick, "all"));
+      box.appendChild(el("span", "opt-hint", t("hint.quick")));
     } else if (id === "fill") {
       box.appendChild(optRange(t("f.tolerance"), P.fill, "tol", 0, 255));
       box.appendChild(optRange(t("f.opacity"), P.fill, "opacity", 1, 100));
@@ -752,9 +962,28 @@
     var d = st.doc, k = 40 / Math.max(d.w, d.h);
     var c = PL.view.canvas(Math.max(1, Math.round(d.w * k)), Math.max(1, Math.round(d.h * k)));
     var g = c.getContext("2d");
+    if (L.k === "adj") {                                  // half dark, half light disc
+      var r = Math.min(c.width, c.height) / 2 - 3, cx = c.width / 2, cy = c.height / 2;
+      g.fillStyle = "#fff"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#222"; g.beginPath(); g.arc(cx, cy, r, Math.PI / 2, Math.PI * 1.5); g.fill();
+      g.strokeStyle = "#888"; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+      return c;
+    }
     g.setTransform(k, 0, 0, k, 0, 0);
     g.imageSmoothingQuality = "low";
     PL.view.drawLayer(g, L, null);
+    return c;
+  }
+  // The mask as grey (white shows, black hides).
+  function maskThumb(L) {
+    var d = st.doc, k = 40 / Math.max(d.w, d.h);
+    var c = PL.view.canvas(Math.max(1, Math.round(d.w * k)), Math.max(1, Math.round(d.h * k)));
+    var g = c.getContext("2d");
+    g.setTransform(k, 0, 0, k, 0, 0);
+    PL.view.drawMask(g, L, { x: 0, y: 0, w: d.w, h: d.h });
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = "source-in"; g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    g.globalCompositeOperation = "destination-over"; g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
     return c;
   }
   var layersTimer = null;
@@ -770,16 +999,37 @@
       var eye = el("button", "icon-btn small"); eye.type = "button";
       eye.innerHTML = L.vis ? ICON.eye : ICON.eyeOff; PL.setLabel(eye, t(L.vis ? "btn.hide" : "btn.show"));
       eye.addEventListener("click", function (e) { e.stopPropagation(); ops().setProp(L, "vis", L.vis ? 0 : 1, t(L.vis ? "step.hide" : "step.show")); });
-      var th = el("span", "lthumb"); th.appendChild(layerThumb(L));
+      var on = A && A.id === L.id, editing = on && st.maskEdit;
+      var th = el("button", "lthumb" + (L.mk && on && !editing ? " cur" : "")); th.type = "button";
+      th.appendChild(layerThumb(L));
+      PL.setLabel(th, t("btn.pixThumb", { name: L.name }));
+      th.addEventListener("click", function () { PL.selectLayer(L.id, false); });
+      th.addEventListener("dblclick", function () { if (L.k === "adj") adjLayerDialog(L); });
+      var mth = null;
+      if (L.mk) {
+        mth = el("button", "lthumb lmask" + (editing ? " cur" : "") + (L.mk.on ? "" : " off")); mth.type = "button";
+        mth.appendChild(maskThumb(L));
+        PL.setLabel(mth, t("btn.maskThumb", { name: L.name }));
+        mth.addEventListener("click", function () { PL.selectLayer(L.id, true); });
+      }
       var name = el("button", "lname", L.name); name.type = "button";
       if (L.k !== "raster") name.appendChild(el("span", "lkind", t("kind." + L.k)));
-      name.addEventListener("click", function () { PL.selectLayer(L.id); });
-      name.addEventListener("dblclick", function () { if (L.k === "text") textDialog(L); else renameLayer(L); });
+      if (L.mk && (editing || !L.mk.on)) name.appendChild(el("span", "lkind", t(editing ? "kind.mask" : "kind.maskOff")));
+      name.addEventListener("click", function () { PL.selectLayer(L.id, editing); });
+      name.addEventListener("dblclick", function () { if (L.k === "text") textDialog(L); else if (L.k === "adj") adjLayerDialog(L); else renameLayer(L); });
+      var fxb = null;
+      if (L.fx) {
+        fxb = el("button", "icon-btn small lfx"); fxb.type = "button"; fxb.innerHTML = ICON.fx;
+        PL.setLabel(fxb, t("btn.fx"));
+        fxb.addEventListener("click", function (e) { e.stopPropagation(); PL.selectLayer(L.id); fxDialog(L); });
+      }
       var lock = el("button", "icon-btn small"); lock.type = "button";
       lock.innerHTML = L.lock ? ICON.lock : ICON.unlock; PL.setLabel(lock, t(L.lock ? "btn.unlock" : "btn.lock"));
       lock.classList.toggle("dim", !L.lock);
       lock.addEventListener("click", function (e) { e.stopPropagation(); ops().setProp(L, "lock", L.lock ? 0 : 1, t(L.lock ? "step.unlock" : "step.lock")); });
-      row.appendChild(eye); row.appendChild(th); row.appendChild(name); row.appendChild(lock);
+      row.appendChild(eye); row.appendChild(th); if (mth) row.appendChild(mth); row.appendChild(name);
+      if (fxb) row.appendChild(fxb);
+      row.appendChild(lock);
       list.appendChild(row);
     });
     // Active layer properties.
@@ -788,6 +1038,7 @@
     C.BLENDS.forEach(function (b) { var o = el("option", "", b[PL.LANG] || b.en); o.value = b.id; bl.appendChild(o); });
     if (A) { bl.value = A.bl; op.value = String(A.op); $("opacity-out").textContent = A.op + "%"; }
     bl.disabled = op.disabled = !A;
+    if (A && A.k === "adj") bl.disabled = true;           // adjustments mix normally
   }
   function renderHistory() {
     var list = $("history-list"), h = st.hist.list();
@@ -808,8 +1059,15 @@
     $("undo-btn").disabled = !st.hist.canUndo();
     $("redo-btn").disabled = !st.hist.canRedo();
   }
+  function appName(id) {
+    try { var r = window.parent.orosAppName && window.parent.orosAppName(id); if (r) return r; } catch (e) {}
+    return id === "atelier" ? t("app.atelier") : id;
+  }
   function renderHead() {
     if (!st.doc) return;
+    var bb = $("back-btn");
+    bb.hidden = !st.doc.bk;
+    if (st.doc.bk) { bb.textContent = t("btn.sendBack"); bb.title = t("btn.sendBackTo", { app: appName(st.doc.bk.app) }); }
     $("doc-title").textContent = st.doc.name;
     $("status-size").textContent = st.doc.w + " × " + st.doc.h + " px";
     var s = $("save-state");
@@ -834,6 +1092,8 @@
     if (e.code === "Minus") k = "-";
     if (/^Key[A-Z]$/.test(e.code)) k = e.code.slice(3).toLowerCase();       // Greek layout too (R12 spirit)
     if (/^Digit\d$/.test(e.code)) k = e.code.slice(5);
+    if (e.code === "Semicolon") k = ";";                                      // Greek layout puts ΄ here
+    if (e.code === "Quote") k = "'";
     return (e.ctrlKey || e.metaKey ? "ctrl+" : "") + (e.altKey ? "alt+" : "") + (e.shiftKey ? "shift+" : "") + k;
   }
   function wireKeys() {
@@ -880,6 +1140,7 @@
         PL.savePrefs(); renderOptions(); PL.view.schedule(); return;
       }
       if (k === "shift+g") { PL.setTool(st.tool === "gradient" ? "fill" : "gradient", true); return; }
+      if (k === "shift+w") { PL.setTool(st.tool === "quick" ? "wand" : "quick", true); return; }
       for (var id in TOOL_KEYS) {
         if (TOOL_KEYS[id] && TOOL_KEYS[id] === k) { e.preventDefault(); PL.setTool(id); return; }
       }
@@ -903,6 +1164,9 @@
     $("panel-btn").innerHTML = ICON.layers; PL.setLabel($("panel-btn"), t("btn.panel"));
     $("panel-btn").addEventListener("click", function () { setPanel(!document.body.classList.contains("side-open")); });
     $("doc-title").addEventListener("click", renameDialog);
+    $("back-btn").addEventListener("click", function () {
+      PL.io.sendBack().then(function (ok) { if (ok) PL.toast(t("msg.sentBack", { app: appName(st.doc.bk.app) })); });
+    });
     var bar = $("menubar");
     MENUS.forEach(function (m) {
       var b = el("button", "menu-btn", t("menuh." + m.id));
@@ -920,6 +1184,9 @@
                 ["up-layer", ICON.up, "btn.up", function () { ops().moveBy(1); }],
                 ["down-layer", ICON.down, "btn.down", function () { ops().moveBy(-1); }],
                 ["merge-layer", ICON.merge, "btn.merge", function () { ops().mergeDown(); }],
+                ["mask-layer", ICON.mask, "btn.mask", function () { ops().addMask(!!st.sel); }],
+                ["adj-layer", ICON.adj, "btn.adj", function () { adjLayerDialog(null); }],
+                ["fx-layer", ICON.fx, "btn.fx", function () { var L = PL.layer(); if (L) fxDialog(L); }],
                 ["del-layer", ICON.del, "btn.deleteLayer", function () { ops().remove(); }]];
     acts.forEach(function (a) {
       var b = $(a[0]); b.innerHTML = a[1]; PL.setLabel(b, t(a[2])); b.addEventListener("click", a[3]);

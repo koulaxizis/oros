@@ -6,7 +6,8 @@
 // soundPlan). Sound goes element → gain → speakers (Web Audio), so a
 // volume above 100 % and fades work like in the export.
 //
-//   var pl = MontagePlayer.create({ canvas, media: id → Promise<Blob|null>, onTime(t), onState(playing) })
+//   var pl = MontagePlayer.create({ canvas, media: id → Promise<Blob|null>,
+//     proxy?: id → Promise<Blob|null> (light copy), onTime(t), onState(playing) })
 //   pl.setProject(p)   after every edit (keeps the time)
 //   pl.seek(t)         shows the frame at t
 //   pl.play() / pl.pause() / pl.toggle(); pl.time(); pl.playing()
@@ -29,9 +30,11 @@
     var onTime = opts.onTime || function () {}, onState = opts.onState || function () {};
     var drawQueued = false, disposed = false;
 
+    // a video's light copy (opts.proxy) when the device has one
     function url(id) {
       if (!urls[id]) {
-        urls[id] = opts.media(id).then(function (b) {
+        urls[id] = Promise.resolve(opts.proxy ? opts.proxy(id) : null).then(null, function () { return null; })
+          .then(function (px) { return px || opts.media(id); }).then(function (b) {
           if (!b) { missing[id] = 1; delete urls[id]; return null; }
           delete missing[id];
           return URL.createObjectURL(b);
@@ -106,14 +109,18 @@
       Object.keys(near).forEach(function (k) {
         var n = near[k], it = n.it, e = element(it);
         var local = time - n.pl.start, inside = local >= 0 && local < n.pl.end - n.pl.start;
-        var want = Math.min(it.out, it["in"] + Math.max(0, local) * it.sp);
+        var want = C.srcTime(it, Math.max(0, local));
         e.el.playbackRate = it.sp;
         var g = gainOf[k] || 0;
         if (playing) audioOut(e);
         if (e.gain) { e.gain.gain.value = g; e.el.muted = false; e.el.volume = 1; }
         else { e.el.muted = g === 0; e.el.volume = Math.min(1, g); }
         if (!e.ready) return;
-        if (playing && inside) {
+        if (playing && inside && it.rv) {
+          // backwards: the element stays paused and is moved frame by frame
+          if (!e.el.paused) e.el.pause();
+          if (!e.seeking && Math.abs(e.el.currentTime - want) > 0.03) { e.seeking = true; e.el.currentTime = want; }
+        } else if (playing && inside) {
           if (Math.abs(e.el.currentTime - want) > DRIFT && !e.seeking) { e.seeking = true; e.el.currentTime = want; }
           if (e.el.paused) { var pr = e.el.play(); if (pr && pr["catch"]) pr["catch"](function () {}); }
         } else {
@@ -124,7 +131,7 @@
     }
 
     function source(L) {
-      if (L.k === "image") {
+      if (L.k === "image" || L.k === "lut") {
         var b = picture(L.src);
         return b ? { img: b, w: b.width, h: b.height } : null;
       }

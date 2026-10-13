@@ -180,3 +180,163 @@ test("app wiring: scripts, slice, palette, no code sinks", () => {
   };
   assert.deepEqual(keys("el"), keys("en"));
 });
+
+test("effects: chains normalise, survive merge, keep unknown effects", () => {
+  const fx = C.normFx([
+    { u: "fabc1234", id: "tilt", s: { 1: 40, "x": 3, 0: 1, 99: 2, 2: "5" } },
+    { u: "fabc1234", id: "reverb" },                                         // duplicate slot id
+    { u: "fdef5678", id: "../evil" },                                        // bad effect id
+    { u: "fghi9012", id: "future_fx", on: false, f: { 2: "/internal/Studio/fx/ir-a.wav", 3: "/etc/passwd", 4: "/internal/Studio/../x" } },
+    null, "x"
+  ]);
+  assert.deepEqual(fx, [
+    { u: "fabc1234", id: "tilt", on: true, s: { 1: 40 } },
+    { u: "fghi9012", id: "future_fx", on: false, s: {}, f: { 2: "/internal/Studio/fx/ir-a.wav" } }
+  ]);
+  const many = Array.from({ length: 12 }, (_, i) => ({ u: "fslot" + String(i).padStart(3, "0"), id: "tilt" }));
+  assert.equal(C.normFx(many).length, C.MAX_FX);
+  assert.deepEqual(C.normFx("nope"), []);
+  // on tracks and on the project (master), through a merge
+  const a = data({ projects: [P("pproject1", 5, { fx: [{ u: "fmaster01", id: "reverb", s: { 4: 50 } }] })], tracks: [T("ttrack01", 5, { fx: fx })] });
+  const b = data({ projects: [P("pproject1", 3)], tracks: [T("ttrack01", 3)] });
+  const m = C.mergeStudio(a, b);
+  assert.deepEqual(m, C.mergeStudio(b, a));
+  assert.equal(C.find(m, "projects", "pproject1").fx[0].id, "reverb");
+  assert.equal(C.find(m, "tracks", "ttrack01").fx.length, 2);
+  assert.deepEqual(C.normTrack(T("ttrack02", 1)).fx, []);
+});
+
+test("effects: slider positions, steps, values and IR file paths", () => {
+  const lin = { i: 1, min: -12, max: 12, inc: 0.5, def: 0 };
+  assert.equal(C.sliderFromPos(lin, 0), -12);
+  assert.equal(C.sliderFromPos(lin, 1), 12);
+  assert.equal(C.sliderFromPos(lin, 0.52), 0.5);                      // to the step
+  near(C.sliderToPos(lin, 6), 0.75);
+  assert.equal(C.sliderStep(lin, 99), 12);
+  const log = { i: 2, min: 20, max: 20000, inc: 0, def: 1000, shape: "log" };
+  near(C.sliderFromPos(log, 0.5), Math.sqrt(20 * 20000), 1e-3);
+  near(C.sliderToPos(log, 632.455532), 0.5);
+  for (let x = 0; x <= 1; x += 0.125) near(C.sliderToPos(log, C.sliderFromPos(log, x)), x, 1e-6);
+  const flat = { i: 3, min: 0, max: 0, inc: 1, def: 0 };
+  assert.equal(C.sliderToPos(flat, 0), 0);
+  const rev = { i: 4, min: 10, max: -10, inc: 1, def: 0 };            // JSFX allows min > max
+  assert.equal(C.sliderStep(rev, 50), 10);
+  assert.equal(C.fxValue({ s: { 1: 3 } }, lin), 3);
+  assert.equal(C.fxValue({ s: {} }, lin), 0);
+  assert.equal(C.fxValue(null, log), 1000);
+  const p = C.fxFilePath("fabc1234", "My Hall/IR.wav", "wav");
+  assert.match(p, /^\/internal\/Studio\/fx\/[A-Za-z0-9_-]+-fabc1234\.wav$/);
+});
+
+test("effects: runtime files are static and loaded through validated ids", () => {
+  const fxjs = read("studio/fx.js"), html = read("studio/index.html");
+  const idx = JSON.parse(read("studio/nullfx/fx/index.json"));
+  assert.ok(idx.effects.length >= 70);
+  idx.effects.forEach((e) => {
+    assert.match(e.id, /^[a-z0-9_]{1,40}$/);
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "studio/nullfx/fx", e.id + ".js")), e.id);
+  });
+  const dir = path.join(__dirname, "..", "studio/nullfx");
+  const files = ["runtime/eel-rt.js", "runtime/null-fx.js", "runtime/null-gfx.js", "runtime/null-node.js", "runtime/null-worklet.js"]
+    .concat(idx.effects.map((e) => "fx/" + e.id + ".js"));
+  files.forEach((f) => assert.doesNotMatch(fs.readFileSync(path.join(dir, f), "utf8"), /\beval\(|new Function|importScripts|XMLHttpRequest|innerHTML|document\.write/, f));
+  assert.doesNotMatch(fxjs, /\beval\(|new Function|insertAdjacentHTML|outerHTML\s*=|document\.write/);
+  (fxjs.match(/innerHTML\s*=\s*[^;]+;/g) || []).forEach((s) => assert.match(s, /innerHTML\s*=\s*(""|'<svg[^']*'\s*\+\s*path\s*\+\s*'[^']*'|'<svg[^']*')/, s));
+  assert.ok(fxjs.includes("if (!C.FX_ID_RE.test(id)) return Promise.reject"));
+  ["nullfx/runtime/eel-rt.js", "nullfx/runtime/null-fx.js", "nullfx/runtime/null-gfx.js", "nullfx/runtime/null-node.js", "fx.js"]
+    .forEach((s) => assert.ok(html.indexOf('src="' + s) >= 0 && html.indexOf('src="' + s) < html.indexOf('src="core.js'), s));
+});
+
+test("remote: codes, keys and frames", async () => {
+  globalThis.window = globalThis;
+  require(path.join(__dirname, "..", "studio/remote.js"));
+  const T = globalThis.StudioRemote._test;
+  for (let i = 0; i < 50; i++) assert.match(T.newCode(), /^[1-9][0-9]{5}$/);
+  const a = await T.derive("123456"), b = await T.derive("123456"), c = await T.derive("123457");
+  assert.match(a.room, /^[0-9a-f]{64}$/);
+  assert.equal(a.room, b.room);
+  assert.notEqual(a.room, c.room);
+  const box = await T.seal(a.key, { k: "app", d: { t: "tp", a: "play" } });
+  assert.doesNotMatch(box, /play/);                                         // the relay sees ciphertext
+  assert.deepEqual(await T.unseal(b.key, box), { k: "app", d: { t: "tp", a: "play" } });
+  assert.equal(await T.unseal(c.key, box), null);                           // wrong code: nothing
+  assert.equal(await T.unseal(a.key, "!!not base64"), null);
+  assert.equal(T.wsUrl("https://r.example/", a.room), "wss://r.example/rt/" + a.room);
+});
+
+test("remote: the PC checks every command from the tablet", () => {
+  const calls = [];
+  const snap = { tracks: [{ id: "ttrack001", fx: [] }] };
+  const H = {
+    C, t: (k) => k, el: () => ({}), setLabel: () => {}, ICON: {}, relay: "https://r.example",
+    snapshot: () => snap, isPlaying: () => false,
+    togglePlay: () => calls.push("play"), stop: () => calls.push("stop"), record: () => calls.push("rec"),
+    toggleLoop: () => calls.push("loop"), toggleMetro: () => calls.push("metro"), seek: (s) => calls.push(["seek", s]),
+    setBpm: (v) => calls.push(["bpm", v]), setMaster: (v) => calls.push(["mv", v]), setTrack: (id, f) => calls.push(["tr", id, f]),
+    arm: (id) => calls.push(["arm", id]), toggleFx: (k, u, on) => calls.push(["fx", k, u, on])
+  };
+  const R = globalThis.StudioRemote(H), cmd = R._command;
+  cmd({ t: "tp", a: "play" }); cmd({ t: "tp", a: "rm -rf" }); cmd(null); cmd({ t: 5 });
+  cmd({ t: "seek", s: 12.5 }); cmd({ t: "seek", s: "12" }); cmd({ t: "seek", s: Infinity }); cmd({ t: "seek", s: -4 });
+  cmd({ t: "bpm", v: 999 }); cmd({ t: "mv", v: -100 }); cmd({ t: "mv", v: 3.3 });
+  cmd({ t: "tr", id: "ttrack001", f: { vol: 4.26, pan: 300, mute: true } });
+  cmd({ t: "tr", id: "ttrack001", f: { mute: "yes" } });
+  cmd({ t: "tr", id: "tother001", f: { vol: 0 } });                        // not a track of the project
+  cmd({ t: "tr", id: "../x", f: { vol: 0 } });
+  cmd({ t: "tr", id: "ttrack001", f: { name: "x", color: "red" } });        // fields the console does not own
+  cmd({ t: "arm", id: "ttrack001" });
+  cmd({ t: "fx", key: "master", u: "fabc1234", on: false }); cmd({ t: "fx", id: "ttrack001", u: "fabc1234", on: true });
+  cmd({ t: "fx", key: "master", u: "<x>", on: false }); cmd({ t: "fx", key: "master", u: "fabc1234", on: 1 });
+  assert.deepEqual(calls, [
+    "play", ["seek", 12.5], ["seek", 0], ["bpm", C.MAX_BPM], ["mv", C.VOL_MIN], ["mv", 3.5],
+    ["tr", "ttrack001", { vol: 4.5, pan: 100, mute: true }], ["arm", "ttrack001"],
+    ["fx", "master", "fabc1234", false], ["fx", "ttrack001", "fabc1234", true]
+  ]);
+});
+
+test("remote: the PC checks effect edits from the tablet", async () => {
+  const calls = [];
+  const chain = [{ u: "fabc1234", id: "tilt", on: true, s: { 1: 3 } }];
+  const meta = { sliders: [{ i: 1, min: -6, max: 6, def: 0 }, { i: 2, min: 0, max: 2, def: 0, enums: ["a", "b", "c"] }, { i: 3, path: "x", min: 0, max: 1, def: 0 }] };
+  const H = {
+    C, t: (k) => k, el: () => ({}), setLabel: () => {}, ICON: {}, relay: "https://r.example",
+    snapshot: () => ({ tracks: [{ id: "ttrack001", fx: [] }] }), isPlaying: () => false, srate: () => 48000,
+    data: () => ({ tracks: [{ id: "ttrack001" }] }),
+    fx: {
+      chainOf: (k) => (k === "master" ? [] : chain), meta: () => Promise.resolve(meta), catalog: () => [{ id: "tilt" }, { id: "louder" }],
+      setSlider: (k, u, i, v) => calls.push(["s", k, u, i, v]), addTo: (k, id) => calls.push(["add", k, id]),
+      removeFrom: (k, u) => calls.push(["del", k, u]), moveIn: (k, u, d) => calls.push(["move", k, u, d]), peek: () => Promise.resolve(null)
+    }
+  };
+  const cmd = globalThis.StudioRemote(H)._command, T = { id: "ttrack001", u: "fabc1234" };
+  cmd({ t: "fs", ...T, i: 1, v: 99 });                       // clamped to the slider's range
+  cmd({ t: "fs", ...T, i: 2, v: 1.6 });                      // a list: one of its choices
+  cmd({ t: "fs", ...T, i: 3, v: 1 });                        // file sliders are chosen on the PC
+  cmd({ t: "fs", ...T, i: 9, v: 1 }); cmd({ t: "fs", ...T, i: 1, v: "3" }); cmd({ t: "fs", ...T, i: 1.5, v: 1 });
+  cmd({ t: "fs", id: "ttrack001", u: "<x>", i: 1, v: 1 }); cmd({ t: "fs", id: "tother001", u: "fabc1234", i: 1, v: 1 });
+  cmd({ t: "fxa", key: "master", fid: "louder" }); cmd({ t: "fxa", key: "master", fid: "evil" }); cmd({ t: "fxa", key: "master", fid: "../x" });
+  cmd({ t: "fxd", ...T }); cmd({ t: "fxd", id: "ttrack001", u: "x y" });
+  cmd({ t: "fxm", ...T, d: 1 }); cmd({ t: "fxm", ...T, d: 2 });
+  cmd({ t: "fxw", ...T, w: ["fabc1234"] }); cmd({ t: "fxo", key: "master" }); cmd({ t: "nope", key: "master" });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(calls, [
+    ["add", "master", "louder"], ["del", "ttrack001", "fabc1234"], ["move", "ttrack001", "fabc1234", 1],
+    ["s", "ttrack001", "fabc1234", 1, 6], ["s", "ttrack001", "fabc1234", 2, 2]
+  ]);
+});
+
+test("remote: wiring, strings and no code sinks", () => {
+  const js = read("studio/remote.js"), html = read("studio/index.html"), studio = read("studio/studio.js");
+  assert.doesNotMatch(js, /\beval\(|new Function|insertAdjacentHTML|outerHTML\s*=|document\.write/);
+  (js.match(/innerHTML\s*=\s*[^;]+;/g) || []).forEach((s) => assert.match(s, /innerHTML\s*=\s*host\.ICON(\.[a-z]+;|\[)/, s));
+  ["../qr/qr-encode.js", "remote.js"].forEach((s) => assert.ok(html.indexOf('src="' + s) >= 0 && html.indexOf('src="' + s) < html.indexOf('src="core.js'), s));
+  (js.match(/t\("(rm\.[a-zA-Z.]*[a-zA-Z])"/g) || []).forEach((m) => {
+    const k = m.slice(3, -1);
+    assert.equal((studio.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k);
+  });
+  ["remote-dlg", "join-dlg", "remote-ui", "ru-strips", "rm-qr", "rj-code", "more-remote", "more-join", "remote-ind", "rm-ask", "rm-allow", "rm-deny", "ruf-dlg", "ruf-list", "ruf-add", "ruf-search", "ruf-play"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  // a guessable 6-digit code is not enough: the PC must allow each device, and only one
+  assert.match(js, /admit: askAllow/);
+  assert.match(js, /if \(okRid && r !== okRid\) \{ frame\(\{ k: "deny" \}\); return; \}/);
+  assert.match(js, /\} else if \(!peer\) \{\s*return;/);
+});

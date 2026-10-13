@@ -42,15 +42,16 @@
   var SOUND_RE = /^[0-9a-f]{64}\.(mp3|m4a|ogg|wav|weba)$/;
   var COLOR_RE = /^#[0-9a-f]{6}$/;
 
-  var KINDS = ["video", "image", "audio", "title"];
+  var KINDS = ["video", "image", "audio", "title", "shape"];
   var TRACKS = ["main", "ov", "tt", "a1", "a2"];
-  var TRACK_KINDS = { main: ["video", "image", "title"], ov: ["video", "image"], tt: ["title"], a1: ["audio"], a2: ["audio"] };
+  var TRACK_KINDS = { main: ["video", "image", "title"], ov: ["video", "image", "shape"], tt: ["title"], a1: ["audio"], a2: ["audio"] };
   var RATIOS = { "16:9": [16, 9], "9:16": [9, 16], "1:1": [1, 1], "4:5": [4, 5] };
   var FPS = [30, 60];
-  var TRANSITIONS = ["fade", "black", "slide", "wipe"];
-  var FILTERS = ["none", "mono", "sepia", "warm", "cool", "vivid", "fade", "noir", "film"];
+  var TRANSITIONS = ["fade", "black", "slide", "wipe", "push", "zoom", "circle"];
+  var FILTERS = ["none", "mono", "sepia", "warm", "cool", "vivid", "fade", "noir", "film", "vintage", "chrome", "dusk", "golden"];
   var ANIMS = ["none", "fade", "rise", "pop"];
   var ALIGNS = ["l", "c", "r"];
+  var SHAPES = ["rect", "round", "ellipse", "triangle", "star", "heart", "arrow", "bubble"];
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
   function isInt(v) { return isNum(v) && Math.floor(v) === v; }
@@ -94,6 +95,16 @@
     };
   }
   var BOX_OV = { x: 0.6, y: 0.06, w: 0.34, h: 0.34 };
+  // A shape: kind, fill colour ("" = none), outline colour ("" = none),
+  // outline width 0-20 (% of the shape's shorter side).
+  function normShape(v) {
+    var o = obj(v) || {};
+    var col = o.col === "" ? "" : (COLOR_RE.test(o.col) ? o.col : "#f8d14a");
+    var ol = COLOR_RE.test(o.ol) ? o.ol : "";
+    var ow = Math.round(num(o.ow, 0, 0, 20));
+    if (!col && (!ol || !ow)) { ol = ol || "#ffffff"; ow = ow || 4; }        // never invisible
+    return { k: oneOf(o.k, SHAPES, "rect"), col: col, ol: ol, ow: ow };
+  }
   var BOX_TT = { x: 0.05, y: 0.72, w: 0.9, h: 0.2 };
 
   function normItem(v, id) {
@@ -114,6 +125,7 @@
       it.sp = r3(num(o.sp, 1, 0.25, 4));
       it.vol = Math.round(num(o.vol, 100, 0, 200));
       it.mu = o.mu === true;
+      if (k === "video" && o.rv === true) it.rv = true;   // plays backwards, without sound
     } else {
       if (k === "image" && !isPicture(o.src)) return null;
       if (k === "image") it.src = o.src;
@@ -125,14 +137,16 @@
     it.fo = r3(num(o.fo, 0, 0, 10));
     if (k !== "audio") {
       it.op = Math.round(num(o.op, 100, 0, 100));
-      if (k !== "title") {
+      if (k === "video" || k === "image") {
         it.fit = oneOf(o.fit, ["fit", "fill"], "fit");
         it.rot = oneOf(o.rot, [0, 90, 180, 270], 0);
         it.fl = o.fl === true;
         it.lk = normLook(o.lk);
         it.flt = oneOf(o.flt, FILTERS, "none");
+        if (isPicture(o.lut)) it.lut = o.lut;       // a colour look (.cube) stored as a picture
       }
       if (tr !== "main") it.box = normBox(o.box, tr === "tt" ? BOX_TT : BOX_OV);
+      if (k === "shape") it.sh = normShape(o.sh);
       if (k === "title") {
         it.text = normText(o.text);
         if (tr === "main") it.bg = COLOR_RE.test(o.bg) ? o.bg : "#000000";
@@ -142,11 +156,84 @@
       var tx = obj(o.tx);
       it.tx = tx && TRANSITIONS.indexOf(tx.k) >= 0 ? { k: tx.k, d: r3(num(tx.d, 0.5, 0.1, 2)) } : null;
     }
+    var kf = normKf(o.kf, it);
+    if (kf.length) it.kf = kf;                  // written only when the clip has keys
     return it;
   }
 
+  // ---------- Keyframes ----------
+  // kf = [{ t, x, y, s, o, v }] sorted by t (seconds into the clip): x, y
+  // move the picture (fraction of the frame), s scales it, o opacity
+  // 0-100 (pictures and titles); v volume 0-200 (video and sound). A clip
+  // takes only the keys it can use. Between two keys values change at an
+  // even pace (so a cut between keys changes nothing); before the first
+  // and after the last they hold.
+  var MAX_KEYS = 60;
+  var KF_PROPS = { x: [0, -2, 2], y: [0, -2, 2], s: [1, 0.1, 5], o: [100, 0, 100], v: [100, 0, 200] };
+  function kfProps(it) {
+    var out = [];
+    if (it.k !== "audio") out.push("x", "y", "s", "o");
+    if (it.k === "video" || it.k === "audio") out.push("v");
+    return out;
+  }
+  function normKf(v, it) {
+    if (!Array.isArray(v)) return [];
+    var props = kfProps(it), byT = {};
+    v.slice(0, MAX_KEYS * 2).forEach(function (raw) {
+      var o = obj(raw);
+      if (!o || !isNum(o.t)) return;
+      var key = { t: r3(clamp(o.t, 0, MAX_DUR)) };
+      props.forEach(function (k) {
+        var d = KF_PROPS[k];
+        key[k] = r3(num(o[k], d[0], d[1], d[2]));
+      });
+      byT[key.t] = key;
+    });
+    return Object.keys(byT).map(function (k) { return byT[k]; })
+      .sort(function (a, b) { return a.t - b.t; }).slice(0, MAX_KEYS);
+  }
+  // Values of every keyframed property `local` seconds into the clip.
+  function kfAt(it, local) {
+    var out = {}, keys = it.kf || [], props = kfProps(it);
+    props.forEach(function (k) { out[k] = KF_PROPS[k][0]; });
+    if (!keys.length) return out;
+    var a = keys[0], b = keys[keys.length - 1];
+    if (local <= a.t) b = a;
+    else if (local >= b.t) a = b;
+    else for (var i = 1; i < keys.length; i++) if (keys[i].t >= local) { a = keys[i - 1]; b = keys[i]; break; }
+    var q = b.t > a.t ? (local - a.t) / (b.t - a.t) : 0;
+    props.forEach(function (k) { out[k] = a[k] + (b[k] - a[k]) * q; });
+    return out;
+  }
+  // The keys of a clip after setting `vals` at `local` (a key within half
+  // a frame at 60 fps is the same key), or removing it (vals null).
+  function kfSet(it, local, vals) {
+    var keys = (it.kf || []).filter(function (k) { return Math.abs(k.t - local) > 1 / 120; });
+    if (vals) {
+      var key = kfAt(it, local);
+      Object.keys(vals).forEach(function (k) { if (k in key) key[k] = vals[k]; });
+      key.t = local;
+      keys.push(key);
+    }
+    return normKf(keys, it);
+  }
+  // A clip cut at `local`: the keys of each side, with a key at the cut
+  // so that both halves keep moving exactly as before.
+  function kfSplit(it, local) {
+    var keys = it.kf || [];
+    if (!keys.length) return [[], []];
+    var mid = kfAt(it, local), left = [], right = [];
+    keys.forEach(function (k) {
+      if (k.t < local) left.push(k);
+      else if (k.t > local) right.push(Object.assign({}, k, { t: k.t - local }));
+    });
+    left.push(Object.assign({}, mid, { t: local }));
+    right.unshift(Object.assign({}, mid, { t: 0 }));
+    return [normKf(left, it), normKf(right, it)];
+  }
+
   function normFields(o) {
-    return {
+    var f = {
       name: str(o.name, 80).replace(/[\r\n\t]+/g, " ").trim() || "Untitled",
       ar: RATIOS[o.ar] ? o.ar : "16:9",
       fps: oneOf(o.fps, FPS, 30),
@@ -154,6 +241,11 @@
       vs: o.vs === true,
       m: stamp(o.m)
     };
+    // dk (ducking, % the music drops under the voice) is written only
+    // when on, so a project without it reads the same on older copies.
+    var dk = Math.round(num(o.dk, 0, 0, 90));
+    if (dk > 0) f.dk = dk;
+    return f;
   }
 
   function normTombs(v, keyOk) {
@@ -295,24 +387,37 @@
     if (it.fo > 0 && local > dur - it.fo) g = Math.min(g, (dur - local) / it.fo);
     return clamp(g, 0, 1);
   }
-  function srcTime(it, local) { return Math.min(it.out, it["in"] + local * it.sp); }
+  // Seconds into the file shown `local` seconds into a clip (backwards
+  // from the out point when reversed).
+  function srcTime(it, local) {
+    if (it.rv) return Math.max(it["in"], it.out - local * it.sp - 0.001);
+    return Math.min(it.out, it["in"] + local * it.sp);
+  }
 
   function pictureLayer(it, local, dur) {
     var L = {
       id: it.id, k: it.k, tr: it.tr, src: it.src || null, alpha: fadeAt(it, local, dur) * (it.op / 100),
-      bri: 1, dx: 0, clip: null, local: local
+      bri: 1, dx: 0, dy: 0, sc: 1, iris: -1, clip: null, local: local
     };
     if (it.k === "video") L.st = srcTime(it, local);
-    if (it.k !== "title") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; }
+    if (it.k === "video" || it.k === "image") { L.fit = it.fit; L.rot = it.rot; L.fl = it.fl; L.lk = it.lk; L.flt = it.flt; if (it.lut) L.lut = it.lut; }
+    if (it.k === "shape") L.sh = it.sh;
     if (it.box) L.box = it.box;
     if (it.k === "title") { L.text = it.text; if (it.bg) L.bg = it.bg; }
+    if (it.kf) {
+      var k = kfAt(it, local), b0 = it.box || { x: 0, y: 0, w: 1, h: 1 };
+      var w = b0.w * k.s, h = b0.h * k.s;
+      L.box = { x: b0.x + (b0.w - w) / 2 + k.x, y: b0.y + (b0.h - h) / 2 + k.y, w: w, h: h };
+      L.alpha *= k.o / 100;
+    }
     return L;
   }
 
   // What is on screen at time t, bottom to top. Each layer:
   // { id, k, tr, src, st (video: seconds into the file), alpha, bri,
-  //   dx (horizontal shift, fraction of the frame), clip ([x0, x1] of
-  //   the frame shown, wipes), fit, rot, fl, lk, flt, box, text, bg,
+  //   dx, dy (shift, fraction of the frame: slide, push), sc (scale
+  //   around the centre: zoom), iris (0..1 circle that reveals the
+  //   clip, -1 = none), clip ([x0, x1] of the frame shown, wipes), fit, rot, fl, lk, flt, box, text, bg,
   //   local (seconds into the clip) }
   function framePlan(p, t) {
     var layers = [], seq = mainSeq(p);
@@ -328,12 +433,16 @@
         else if (k === "black") { if (q < 0.5) L.alpha = 0; else L.bri = 2 * q - 1; }
         else if (k === "slide") L.dx = 1 - q;
         else if (k === "wipe") L.clip = [0, q];
+        else if (k === "push") L.dy = 1 - q;
+        else if (k === "zoom") { var e = 1 - Math.pow(1 - q, 2); L.alpha *= q; L.sc = 1.3 - 0.3 * e; }
+        else if (k === "circle") L.iris = q;
       }
       // inside the transition out of this clip (into the next one)
       if (next && next.tx > 0 && t >= next.start) {
         var q2 = (t - next.start) / next.tx, k2 = next.it.tx.k;
         if (k2 === "black") { if (q2 >= 0.5) L.alpha = 0; else L.bri = 1 - 2 * q2; }
         else if (k2 === "slide") L.dx = -q2;
+        else if (k2 === "push") L.dy = -q2;
       }
       layers.push(L);
     }
@@ -347,39 +456,84 @@
   }
 
   // Everything that makes sound, on the timeline:
-  // [{ id, src, start, dur, in, sp, vol (0..2), fi, fo }]
+  // [{ id, src, start, dur, in, sp, vol (0..2), fi, fo, kv?, dk?, duck? }]
+  // (dk 0..0.9 and duck [[from, to], …] seconds into the segment: the
+  // voice-over parts the music ducks under)
   // A main transition crossfades the two clips' sound over its length.
   function soundPlan(p) {
     var out = [], seq = mainSeq(p);
     seq.forEach(function (s, i) {
       var it = s.it;
-      if (it.k !== "video" || it.mu || it.vol === 0) return;
+      if (it.k !== "video" || it.mu || it.rv || it.vol === 0) return;
       var next = seq[i + 1];
-      out.push({
+      out.push(volKeys({
         id: it.id, src: it.src, start: s.start, dur: s.end - s.start, "in": it["in"], sp: it.sp, vol: it.vol / 100,
         fi: Math.max(it.fi, s.tx), fo: Math.max(it.fo, next ? next.tx : 0)
-      });
+      }, it));
     });
     ["ov", "a1", "a2"].forEach(function (tr) {
       trackItems(p, tr).forEach(function (it) {
-        if ((it.k !== "video" && it.k !== "audio") || it.mu || it.vol === 0) return;
-        out.push({ id: it.id, src: it.src, start: it.at, dur: itemDur(it), "in": it["in"], sp: it.sp, vol: it.vol / 100, fi: it.fi, fo: it.fo });
+        if ((it.k !== "video" && it.k !== "audio") || it.mu || it.rv || it.vol === 0) return;
+        out.push(volKeys({ id: it.id, src: it.src, start: it.at, dur: itemDur(it), "in": it["in"], sp: it.sp, vol: it.vol / 100, fi: it.fi, fo: it.fo }, it));
       });
     });
+    // Ducking: Music (a1) drops by dk % while anything plays on Voice (a2).
+    if (p.dk > 0) {
+      var voice = [];
+      trackItems(p, "a2").forEach(function (it) {
+        if (!it.mu && it.vol > 0) voice.push([it.at, it.at + itemDur(it)]);
+      });
+      if (voice.length) out.forEach(function (seg) {
+        var it = p.items[seg.id];
+        if (!it || it.tr !== "a1") return;
+        var duck = [];
+        voice.forEach(function (v) {
+          if (v[0] < seg.start + seg.dur + DUCK_RAMP && v[1] > seg.start - DUCK_RAMP) duck.push([r3(v[0] - seg.start), r3(v[1] - seg.start)]);
+        });
+        if (duck.length) { seg.dk = p.dk / 100; seg.duck = duck; }
+      });
+    }
     return out.sort(function (a, b) { return a.start !== b.start ? a.start - b.start : cmpStr(a.id, b.id); });
   }
+  // A segment carries its clip's volume keys as kv [[t, 0..2], …].
+  function volKeys(seg, it) {
+    if (it.kf && it.kf.some(function (k) { return k.v !== 100; })) seg.kv = it.kf.map(function (k) { return [k.t, k.v / 100]; });
+    return seg;
+  }
+  var DUCK_RAMP = 0.25;                // seconds the music takes to go down / up
   // Gain of a sound segment `local` seconds into it.
   function gainAt(seg, local) {
     var g = seg.vol;
+    if (seg.kv) {
+      var kv = seg.kv, a = kv[0], b = kv[kv.length - 1];
+      if (local <= a[0]) b = a;
+      else if (local >= b[0]) a = b;
+      else for (var j = 1; j < kv.length; j++) if (kv[j][0] >= local) { a = kv[j - 1]; b = kv[j]; break; }
+      g *= a[1] + (b[1] - a[1]) * (b[0] > a[0] ? (local - a[0]) / (b[0] - a[0]) : 0);
+    }
     if (seg.fi > 0 && local < seg.fi) g *= clamp(local / seg.fi, 0, 1);
     if (seg.fo > 0 && local > seg.dur - seg.fo) g *= clamp((seg.dur - local) / seg.fo, 0, 1);
+    if (seg.duck) {
+      var cov = 0;
+      for (var i = 0; i < seg.duck.length && cov < 1; i++) {
+        var a = seg.duck[i][0], b = seg.duck[i][1], c;
+        if (local >= a && local <= b) c = 1;
+        else if (local < a) c = 1 - (a - local) / DUCK_RAMP;
+        else c = 1 - (local - b) / DUCK_RAMP;
+        if (c > cov) cov = c;
+      }
+      g *= 1 - seg.dk * clamp(cov, 0, 1);
+    }
     return g;
   }
 
   // Every media id a project (or all projects) needs.
   function mediaOf(p) {
     var ids = {};
-    Object.keys(p.items).forEach(function (k) { if (p.items[k].src) ids[p.items[k].src] = 1; });
+    Object.keys(p.items).forEach(function (k) {
+      if (p.items[k].src) ids[p.items[k].src] = 1;
+      if (p.items[k].lut) ids[p.items[k].lut] = 1;
+    });
     return Object.keys(ids).sort(cmpStr);
   }
 
@@ -404,7 +558,7 @@
     var d = clone(data), p = d.projects[pid];
     if (!p) return d;
     var f = normFields(p), changed = false;
-    ["name", "ar", "fps", "bg", "vs"].forEach(function (k) {
+    ["name", "ar", "fps", "bg", "vs", "dk"].forEach(function (k) {
       if (!patch || !(k in patch)) return;
       var cand = Object.assign({}, f);
       cand[k] = patch[k];
@@ -490,11 +644,12 @@
     var left = JSON.parse(JSON.stringify(it)), right = JSON.parse(JSON.stringify(it));
     right.id = newId; right.fi = 0; left.fo = 0;
     if (it.k === "video" || it.k === "audio") {
-      var cut = it["in"] + local * it.sp;
-      left.out = cut; right["in"] = cut;
+      if (it.rv) { var rcut = it.out - local * it.sp; left["in"] = rcut; right.out = rcut; }
+      else { var cut = it["in"] + local * it.sp; left.out = cut; right["in"] = cut; }
     } else { left.d = local; right.d = dur - local; }
     if (it.tr === "main") { right.tx = null; right.o = orderKey(p, iid, now); }
     else right.at = it.at + local;
+    if (it.kf) { var ks = kfSplit(it, local); left.kf = ks[0]; right.kf = ks[1]; }
     left.m = tick(it.m, now); right.m = tick(p.tombs[newId], now);
     var nl = normItem(left, iid), nr = normItem(right, newId);
     if (!nl || !nr) return d;
@@ -521,7 +676,7 @@
     var pl = placeOf(p, iid);
     var a = normItem({
       id: newId, k: "audio", tr: track === "a2" ? "a2" : "a1", src: it.src, len: it.len, "in": it["in"], out: it.out,
-      sp: it.sp, vol: it.vol, fi: it.fi, fo: it.fo, at: pl.start, m: tick(p.tombs[newId], now)
+      sp: it.sp, vol: it.vol, fi: it.fi, fo: it.fo, at: pl.start, m: tick(p.tombs[newId], now), kf: it.kf
     }, newId);
     if (!a) return d;
     p.items[newId] = a;
@@ -536,6 +691,12 @@
     if (!p) return d;
     Object.keys(p.items).forEach(function (k) {
       var it = p.items[k];
+      if (it.lut === oldId && isPicture(newId)) {
+        var nl = JSON.parse(JSON.stringify(it));
+        nl.lut = newId;
+        var nn = normItem(nl, k);
+        if (nn) { nn.m = tick(it.m, now); p.items[k] = it = nn; }
+      }
       if (it.src !== oldId) return;
       var next = JSON.parse(JSON.stringify(it));
       next.src = newId;
@@ -562,7 +723,11 @@
     var s = snap ? merge(wrap, null).projects[pid] : null;
     if (!p || !s) return d;
     var f = normFields(p), fs = normFields(s), changed = false;
-    ["name", "ar", "fps", "bg", "vs"].forEach(function (k) { if (f[k] !== fs[k]) { p[k] = fs[k]; changed = true; } });
+    ["name", "ar", "fps", "bg", "vs", "dk"].forEach(function (k) {
+      if (f[k] === fs[k]) return;
+      if (k in fs) p[k] = fs[k]; else delete p[k];
+      changed = true;
+    });
     if (changed) p.m = tick(p.m, now);
     Object.keys(p.items).forEach(function (k) {
       if (!s.items[k]) { p.tombs[k] = tick(p.items[k].m, now); delete p.items[k]; }
@@ -607,12 +772,141 @@
   }
   function exportName(name, ext) {
     var base = String(name || "montage").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "montage";
-    return base + "." + (ext === "webm" || ext === "png" ? ext : "mp4");
+    return base + "." + (EXTS.indexOf(ext) >= 0 ? ext : "mp4");
+  }
+  var EXTS = ["mp4", "webm", "png", "gif", "m4a", "ogg", "wav", "srt"];
+
+  // ---------- Colour looks: .cube 3D LUT files ----------
+  // parseCube(text) → { n, data: Float32Array(n³·3) } (red fastest, then
+  // green, then blue, as the format lists them) or null. Only 3D tables
+  // of 2–64 points per side; DOMAIN_MIN/MAX rescale to 0–1.
+  var MAX_LUT = 64;
+  function parseCube(text) {
+    var lines = String(text || "").replace(/\r\n?/g, "\n").split("\n");
+    var n = 0, lo = [0, 0, 0], hi = [1, 1, 1], data = null, i = 0;
+    for (var li = 0; li < lines.length; li++) {
+      var ln = lines[li].replace(/#.*/, "").trim();
+      if (!ln) continue;
+      var w = ln.split(/\s+/);
+      if (/^LUT_3D_SIZE$/i.test(w[0])) {
+        n = Number(w[1]);
+        if (!isInt(n) || n < 2 || n > MAX_LUT) return null;
+        data = new Float32Array(n * n * n * 3);
+      } else if (/^LUT_1D_SIZE$/i.test(w[0])) return null;
+      else if (/^DOMAIN_MIN$/i.test(w[0])) lo = w.slice(1, 4).map(Number);
+      else if (/^DOMAIN_MAX$/i.test(w[0])) hi = w.slice(1, 4).map(Number);
+      else if (/^[-+.\d]/.test(w[0])) {
+        if (!data || w.length < 3 || i >= data.length) return null;
+        for (var c = 0; c < 3; c++) {
+          var v = Number(w[c]), span = hi[c] - lo[c];
+          if (!isFinite(v) || !(span > 0)) return null;
+          data[i++] = clamp((v - lo[c]) / span, 0, 1);
+        }
+      }
+    }
+    return data && i === data.length ? { n: n, data: data } : null;
+  }
+  // The table as an RGBA picture n² wide and n high: blue slice b sits
+  // at x = b·n, red runs along x inside it, green down y (the layout
+  // MontageGL samples).
+  function lutPixels(lut) {
+    var n = lut.n, w = n * n, px = new Uint8ClampedArray(w * n * 4);
+    for (var b = 0; b < n; b++) for (var g = 0; g < n; g++) for (var r = 0; r < n; r++) {
+      var src = ((b * n + g) * n + r) * 3, dst = (g * w + b * n + r) * 4;
+      px[dst] = Math.round(lut.data[src] * 255);
+      px[dst + 1] = Math.round(lut.data[src + 1] * 255);
+      px[dst + 2] = Math.round(lut.data[src + 2] * 255);
+      px[dst + 3] = 255;
+    }
+    return { w: w, h: n, data: px };
+  }
+
+  // ---------- Subtitles (SRT, and WebVTT on the way in) ----------
+  var SUB_BOX = { x: 0.05, y: 0.8, w: 0.9, h: 0.14 };
+  var MAX_CUES = 1500;
+  function cueTime(s) {
+    var m = /^(?:(\d{1,3}):)?(\d{1,2}):(\d{1,2})(?:[,.](\d{1,3}))?$/.exec(String(s).trim());
+    if (!m) return NaN;
+    var ms = m[4] ? Number((m[4] + "00").slice(0, 3)) : 0;
+    return (m[1] ? Number(m[1]) * 3600 : 0) + Number(m[2]) * 60 + Number(m[3]) + ms / 1000;
+  }
+  // Text of a subtitle file → [{ start, end, text }] in time order.
+  // Markup (<i>, {\an8}, VTT cue settings) is dropped: titles are plain.
+  function parseSrt(text) {
+    var src = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+    var out = [];
+    src.split(/\n[ \t]*\n/).forEach(function (block) {
+      if (out.length >= MAX_CUES) return;
+      var lines = block.split("\n").filter(function (l, i, a) { return l.trim() || (i > 0 && i < a.length - 1); });
+      var at = -1;
+      for (var i = 0; i < lines.length && i < 3; i++) if (lines[i].indexOf("-->") >= 0) { at = i; break; }
+      if (at < 0) return;
+      var parts = lines[at].split("-->");
+      var a = cueTime(parts[0]), b = cueTime(String(parts[1] || "").trim().split(/\s+/)[0]);
+      if (!isNum(a) || !isNum(b) || !(b - a >= MIN - 1e-9) || a > MAX_DUR * 4) return;
+      var t = lines.slice(at + 1).join("\n")
+        .replace(/<[^>]*>/g, "").replace(/\{\\[^}]*\}/g, "")
+        .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ")
+        .split("\n").map(function (l) { return l.trim(); }).filter(Boolean).join("\n").slice(0, 500);
+      if (t) out.push({ start: r3(a), end: r3(b), text: t });
+    });
+    return out.sort(function (x, y) { return x.start - y.start; });
+  }
+  function srtTime(sec) {
+    var ms = Math.round(Math.max(0, sec) * 1000), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+    function pad(v, n) { v = String(v); while (v.length < n) v = "0" + v; return v; }
+    return pad(h, 2) + ":" + pad(m, 2) + ":" + pad(s, 2) + "," + pad(ms % 1000, 3);
+  }
+  // The text clips of the Text row (tt) as an SRT file, in time order.
+  function toSrt(p) {
+    var n = 0;
+    return trackItems(p, "tt").filter(function (it) { return it.text.t.trim(); }).map(function (it) {
+      n++;
+      return n + "\n" + srtTime(it.at) + " --> " + srtTime(it.at + it.d) + "\n" + it.text.t.replace(/\n{2,}/g, "\n").trim() + "\n";
+    }).join("\n");
+  }
+  // Cues → text clips on the Text row in the subtitle style (bottom
+  // band, outlined), all in one edit; newIds supplies one id per cue.
+  function addSubtitles(data, pid, cues, now, newIds) {
+    var d = clone(data), p = d.projects[pid];
+    if (!p) return d;
+    var room = MAX_ITEMS - Object.keys(p.items).length;
+    (cues || []).slice(0, Math.max(0, room)).forEach(function (c, i) {
+      var id = newIds && newIds[i];
+      if (!isId(id) || p.items[id]) return;
+      var it = normItem({
+        id: id, k: "title", tr: "tt", at: c.start, d: c.end - c.start, box: SUB_BOX, m: tick(p.tombs[id], now),
+        text: { t: c.text, f: "sans", sz: 5.5, col: "#ffffff", ol: "#000000", al: "c", an: "none" }
+      }, id);
+      if (it) p.items[id] = it;
+    });
+    return merge(d, null);
+  }
+
+  // Freeze frame: a still picture (pic, the frame at t) is held for
+  // `hold` seconds inside a main video clip: the clip splits at t and
+  // the still goes between the two parts. ids = { tail, still }.
+  function freezeAt(data, pid, iid, t, pic, hold, now, ids) {
+    var p0 = data && data.projects && data.projects[pid], it = p0 && p0.items[iid];
+    if (!it || it.tr !== "main" || it.k !== "video" || !isPicture(pic) || !ids || !isId(ids.still)) return data;
+    var pl = placeOf(p0, iid), local = t - pl.start, d = data, after = iid;
+    if (local >= MIN && pl.end - pl.start - local >= MIN) {
+      d = split(d, pid, iid, t, now, ids.tail);
+      if (!d.projects[pid].items[ids.tail]) return data;
+    } else if (local < MIN) {
+      after = null;
+      var seq = mainSeq(d.projects[pid]);
+      for (var i = 0; i < seq.length; i++) if (seq[i].it.id === iid) { after = i ? seq[i - 1].it.id : null; break; }
+    }
+    return addItem(d, pid, {
+      id: ids.still, k: "image", tr: "main", src: pic, d: r3(num(hold, 2, MIN, 60)),
+      fit: it.fit, rot: it.rot, fl: it.fl, lk: it.lk, flt: it.flt, op: it.op
+    }, now, { after: after });
   }
 
   var api = {
     VER: VER, MIN: MIN, MAX_ITEMS: MAX_ITEMS, KINDS: KINDS, TRACKS: TRACKS, TRACK_KINDS: TRACK_KINDS,
-    RATIOS: Object.keys(RATIOS), FPS: FPS.slice(), TRANSITIONS: TRANSITIONS.slice(), FILTERS: FILTERS.slice(), ANIMS: ANIMS.slice(),
+    SHAPES: SHAPES.slice(), RATIOS: Object.keys(RATIOS), FPS: FPS.slice(), TRANSITIONS: TRANSITIONS.slice(), FILTERS: FILTERS.slice(), ANIMS: ANIMS.slice(),
     isId: isId, isPicture: isPicture, isVideo: isVideo, isSound: isSound,
     normItem: normItem, merge: merge, lastEdit: lastEdit,
     itemDur: itemDur, trackItems: trackItems, mainSeq: mainSeq, placeOf: placeOf, duration: duration,
@@ -620,7 +914,10 @@
     newProject: newProject, setProject: setProject, delProject: delProject,
     addItem: addItem, setItem: setItem, delItem: delItem, moveMain: moveMain,
     split: split, duplicate: duplicate, detachSound: detachSound, restoreProject: restoreProject, undeleteProject: undeleteProject, replaceSrc: replaceSrc,
-    projectList: projectList, fmtTime: fmtTime, exportName: exportName
+    projectList: projectList, fmtTime: fmtTime, exportName: exportName,
+    kfAt: kfAt, kfSet: kfSet, kfSplit: kfSplit, kfProps: kfProps, MAX_KEYS: MAX_KEYS,
+    parseCube: parseCube, lutPixels: lutPixels, srcTime: srcTime,
+    parseSrt: parseSrt, toSrt: toSrt, addSubtitles: addSubtitles, freezeAt: freezeAt, SUB_BOX: SUB_BOX, DUCK_RAMP: DUCK_RAMP
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MontageCore = api;

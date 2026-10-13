@@ -11,6 +11,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Move`: drag the layer. With a selection, it lifts and moves the selected pixels.
 - `Marquee selection` and `Lasso`: select an area. Press the tool again to switch between `Rectangle` and `Ellipse`, or between a freehand and a point-by-point lasso. Hold Shift to add to the selection, Alt to subtract.
 - `Magic wand`: selects similar colours; set the `Tolerance` and whether only `Contiguous` pixels count.
+- `Quick selection`: paint over what you want and the selection grows out to its edges; Alt+drag takes away. [[Shift+W]] switches between it and the magic wand.
 - `Brush` and `Eraser`: `Size`, `Hardness`, `Opacity` and `Flow`. A pen paints wider when you press harder.
 - `Clone stamp`: Alt+click (or `Set source`, then a tap) where to copy from, then paint where the copy should go. `Healing brush` does the same but keeps the colour around the spot, for blemishes and dust; its `Red eye` kind turns red pupils dark.
 - `Dodge / burn / sponge`: `Dodge` lightens and `Burn` darkens the `Shadows`, `Midtones` or `Highlights`; `Sponge` takes colour away or adds it. `Smudge` drags colour like a finger in wet paint.
@@ -26,18 +27,32 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - The buttons below add, duplicate, move, merge down and delete layers. The `Layer` menu has more: `Layer via copy`, `Rasterize layer`, `Flatten image` and more.
 - `History` lists your steps; tap one to go back to it.
 
+## Masks, adjustment layers and styles
+- A layer mask hides parts of a layer without erasing them: black hides, white shows, grey shows a little. `Add layer mask` (the mask button below the layers, or the `Layer` menu) shows everything; with a selection it shows only the selection. Paint the mask with the brush, gradient or fill; tap the layer's picture to paint its pixels again, and the mask's picture to go back to the mask ([[Ctrl+\]] switches). `Disable or enable mask`, `Apply mask` (into the pixels) and `Delete mask` are in the `Layer` menu.
+- `New adjustment layer…` (the half-filled circle button) changes the colours of every visible layer below it without touching their pixels: `Levels`, `Curves`, `Hue / saturation`, `Colour balance`, `Brightness / contrast`, `Black and white`, `Photo filter`, `Gradient map`, `Invert`, `Threshold`, `Posterize`. Double-click it to change it; its opacity and mask choose how much and where.
+- `Layer style…` (the fx button) adds a `Drop shadow`, `Outer glow`, `Inner glow`, `Stroke` or `Colour overlay` to a layer. Styles follow the layer's pixels and stay editable; a layer with styles shows an fx button in its row.
+
 ## Menus
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
-- `Select`: `Select all`, `Invert selection`, `Feather…`, `Grow…`, `Shrink…`.
-- `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
+- `Select`: `Select all`, `Invert selection`, `Colour range…` (every pixel near a colour), `Feather…`, `Grow…`, `Shrink…`, `Save selection…` and `Load selection…` (saved selections stay in the project).
+- `View`: `Rulers`, `Guides`, `Grid` and `Snap` turn on and off; `New guide…`, `Clear guides` and `Grid size…`. Drag a guide out of a ruler; with the `Move` or `Hand` tool drag a guide to move it, or back onto the ruler to remove it. With `Snap` on, selections, crops, shapes and moved layers stick to guides, the grid and the canvas edges and centre.
+- `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Lightroom preset (.xmp)…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
 - `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
 - `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
 
+## Editing a picture from Atelier
+When Atelier sends a picture here to edit, a `Done` button appears at the top. It saves the result as a new picture and sends it back to Atelier; the project also stays in Photo Lab for later changes.
+
 ## Photoshop and OpenRaster files
 - Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
 - Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.
-- `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text and shapes go as pixels.
+- `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text, shapes, masks, styles and adjustment layers go as pixels.
+
+## Lightroom presets
+- `Adjust` › `Lightroom preset (.xmp)…` opens a preset saved from Lightroom (Classic or CC) or Camera Raw and adds it as adjustment layers above the current layer, named after the preset: exposure, whites and blacks as `Levels`, contrast, shadows, highlights and the tone curve as `Curves`, white balance, saturation and vibrance, and black and white.
+- The layers stay editable: lower a layer's opacity to make the preset weaker, or hide one you don't want. One `Undo` removes them all.
+- It is an approximation, because Lightroom works on the raw data. Settings Photo Lab has no layer for (clarity, texture, dehaze, sharpening, noise, grain, vignette, colour mixer, colour grading) are left out, and a message says which.
 
 ## Sync and backup
 - The list of projects follows you through [orOS sync](help:t/sync). The pictures themselves are kept on the orOS disk, in the `Photo Lab` folder, and Vault Drive syncs them file by file, encrypted.
@@ -50,8 +65,9 @@ On a phone all menus are under the menu button.
 - [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]]: copy, cut, paste. [[Delete]]: clear the selection.
 - [[Ctrl+A]]: select all. [[Ctrl+D]]: deselect. [[Ctrl+Shift+I]]: invert selection.
 - [[Alt+T]]: free transform. [[Alt+Shift+N]]: new layer. [[Ctrl+J]]: layer via copy. [[Ctrl+E]]: merge down.
-- [[Ctrl+U]]: hue / saturation. [[Ctrl+L]]: levels. [[Ctrl+I]]: invert.
+- [[Ctrl+U]]: hue / saturation. [[Ctrl+L]]: levels. [[Ctrl+I]]: invert. [[Ctrl+\]]: edit the mask or the pixels.
 - [[Ctrl+=]], [[Ctrl+-]], [[Ctrl+0]], [[Ctrl+1]]: zoom in, zoom out, fit, 100%.
+- [[Ctrl+Alt+R]]: rulers. [[Ctrl+;]]: guides. [[Ctrl+']]: grid. [[Ctrl+Shift+;]]: snap.
 - Tools: [[V]] move, [[M]] marquee, [[L]] lasso, [[W]] magic wand, [[C]] crop, [[B]] brush, [[E]] eraser, [[S]] clone stamp, [[J]] healing brush, [[O]] dodge / burn / sponge, [[R]] smudge, [[G]] paint bucket ([[Shift+G]] gradient), [[I]] eyedropper, [[T]] text, [[U]] shape, [[H]] hand, [[Z]] zoom.
 - [[X]] swaps the colours, [[D]] resets them, `[` and `]` change the brush size. Hold [[Space]] to move around.
 
@@ -61,5 +77,6 @@ On a phone all menus are under the menu button.
 ## Limits
 - Pictures up to 8192 px a side on computers, and 4096 px (about 16 megapixels) on phones. Bigger pictures are made smaller when they open.
 - Up to 100 layers a picture. Text and shape layers move and scale but do not rotate; rasterize them first.
+- A mask stays in place when you flip, rotate or transform only its layer; whole-picture size, rotation and flips move it with the layer.
 - Old undo steps are dropped when they would use too much memory.
 - Photoshop files: RGB, Grayscale and CMYK at 8 or 16 bits (CMYK colours are converted simply, without a colour profile). Large documents (PSB) and other colour modes do not open.

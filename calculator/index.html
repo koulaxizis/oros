@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=calculator" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calculator</title>
 
 
-<link rel="stylesheet" href="calculator.css?v=1.13.00">
+<link rel="stylesheet" href="calculator.css?v=1.80.00">
 
 </head>
 <body>
@@ -86,7 +88,7 @@
   </main>
 </div>
 
-<script src="calculator.js?v=1.13.00"></script>
+<script src="calculator.js?v=1.80.00"></script>
 
 </body>
 </html>

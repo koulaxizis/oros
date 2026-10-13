@@ -2,10 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=time" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Time · orOS</title>
 
-  <link rel="stylesheet" href="time.css?v=1.13.00">
+  <link rel="stylesheet" href="time.css?v=1.80.00">
+  <link rel="stylesheet" href="stage-view.css?v=1.80.00">
 
 </head>
 <body>
@@ -54,6 +57,7 @@
         <button class="tab" data-pane="pane-timer" type="button" data-i18n="tab.timer"></button>
         <button class="tab" data-pane="pane-stop" type="button" data-i18n="tab.stopwatch"></button>
         <button class="tab" data-pane="pane-pomo" type="button" data-i18n="tab.pomodoro"></button>
+        <button class="tab" data-pane="pane-stage" type="button" data-i18n="tab.stage"></button>
       </div>
 
       <!-- Alarm -->
@@ -118,6 +122,97 @@
         <p id="pm-log-hint" data-i18n="pm.log.hint" hidden></p>
         <div id="pm-count"></div>
       </div>
+
+      <!-- Stage: conference / stage timer (time/stage.js) -->
+      <div class="pane" id="pane-stage" hidden>
+        <div class="stg-bar">
+          <select id="stg-ev" data-i18n-s="stg.ev"></select>
+          <button id="stg-ev-new" type="button" class="mini" data-i18n-s="stg.ev.new"></button>
+          <button id="stg-ev-edit" type="button" class="mini" data-i18n-s="stg.ev.edit"></button>
+          <button id="stg-join" type="button" class="mini" data-i18n-l="sl.join"></button>
+        </div>
+        <div id="stg-empty" hidden>
+          <p data-i18n-s="stg.empty"></p>
+          <button id="stg-empty-new" type="button" class="btn prim" data-i18n-s="stg.ev.create"></button>
+        </div>
+        <div id="stg-main" hidden>
+          <div id="stg-sum" aria-live="polite"></div>
+          <div id="stg-live" class="stg-live">
+            <div id="stg-live-title"></div>
+            <div id="stg-live-spk"></div>
+            <div id="stg-time" class="stg-time">00:00</div>
+            <div class="stg-prog"><span id="stg-prog-bar"></span></div>
+            <div id="stg-next"></div>
+            <div id="stg-live-msg" class="stg-live-msg" hidden></div>
+            <div id="stg-live-black" class="stg-live-black" data-i18n-s="stg.live.black" hidden></div>
+          </div>
+          <div id="sl-asks" class="sl-asks" role="alert" hidden></div>
+          <div class="stg-ctl">
+            <button id="stg-prev" type="button" class="btn" data-i18n-s="stg.prev"></button>
+            <button id="stg-go" type="button" class="btn prim"></button>
+            <button id="stg-nxt" type="button" class="btn" data-i18n-s="stg.next"></button>
+          </div>
+          <div class="stg-ctl">
+            <button id="stg-minus" type="button" class="btn" data-i18n-s="stg.minus"></button>
+            <button id="stg-plus" type="button" class="btn" data-i18n-s="stg.plus"></button>
+            <button id="stg-reset" type="button" class="btn" data-i18n-s="stg.reset"></button>
+            <button id="stg-show" type="button" class="btn prim" data-i18n-s="stg.show"></button>
+          </div>
+          <div class="stg-opts">
+            <label class="chk">
+              <input id="stg-sound" type="checkbox">
+              <span data-i18n-s="stg.sound"></span>
+            </label>
+          </div>
+          <div class="sec-head stg-head"><span data-i18n-s="stg.msg"></span></div>
+          <div class="stg-msg">
+            <input id="stg-msg" type="text" maxlength="200" data-i18n-s-ph="stg.msg.ph" data-i18n-s-a="stg.msg">
+            <div class="stg-msg-row">
+              <select id="stg-msg-color" data-i18n-s-a="stg.msg.color"></select>
+              <label class="chk"><input id="stg-msg-flash" type="checkbox"><span data-i18n-s="stg.msg.flash"></span></label>
+              <button id="stg-msg-show" type="button" class="btn prim"></button>
+              <button id="stg-msg-save" type="button" class="mini" data-i18n-s="stg.msg.save"></button>
+            </div>
+            <div id="stg-msg-presets" class="quick-chips"></div>
+          </div>
+          <div class="sec-head stg-head"><span data-i18n-s="stg.out"></span></div>
+          <div class="stg-ctl">
+            <button id="stg-display" type="button" class="btn" data-i18n-s="stg.display"></button>
+            <button id="stg-black" type="button" class="btn"></button>
+          </div>
+          <p id="stg-out-note" class="stg-note" role="alert" hidden></p>
+          <div class="stg-out">
+            <label for="stg-layout" data-i18n-s="stg.layout"></label>
+            <select id="stg-layout"></select>
+            <label class="chk"><input id="stg-mirror" type="checkbox"><span data-i18n-s="stg.mirror"></span></label>
+            <span class="stg-logo-row">
+              <button id="stg-logo" type="button" class="mini" data-i18n-s="stg.logo"></button>
+              <button id="stg-logo-x" type="button" class="mini" data-i18n-s="stg.logo.x" hidden></button>
+            </span>
+          </div>
+          <div class="sec-head stg-head">
+            <span data-i18n-l="sl.devs"></span>
+            <button id="sl-add" type="button" class="mini" data-i18n-l="sl.add"></button>
+          </div>
+          <ul id="sl-list" class="sl-list"></ul>
+          <p class="sl-hint" data-i18n-l="sl.hint"></p>
+          <div class="sec-head stg-head">
+            <span data-i18n-s="stg.rundown"></span>
+            <button id="stg-add" type="button" class="mini" data-i18n-s="stg.add"></button>
+          </div>
+          <ol id="stg-list"></ol>
+          <div class="st-quick-row">
+            <span class="st-quick-l" data-i18n-t="st.quick"></span>
+            <div id="st-quick" class="quick-chips"></div>
+          </div>
+          <div class="stg-ctl">
+            <button id="st-import" type="button" class="btn" data-i18n-t="st.import"></button>
+            <button id="st-export" type="button" class="btn" data-i18n-t="st.export"></button>
+            <button id="st-report" type="button" class="btn" data-i18n-t="st.report"></button>
+          </div>
+          <p class="stg-keys" data-i18n-s="stg.keys"></p>
+        </div>
+      </div>
     </section>
 
     <!-- Converter mode toggle -->
@@ -159,10 +254,229 @@
     </div>
   </dialog>
 
+  <!-- Stage view: what the speaker sees (full screen); drawn by time/stage-view.js -->
+  <div id="stg-view" hidden role="dialog" aria-modal="true" data-i18n-s-a="stg.view">
+    <div id="sv-root"></div>
+    <div class="sv-tools" id="sv-tools">
+      <button id="sv-black-btn" type="button" class="btn" data-i18n-s="stg.black"></button>
+      <button id="sv-fs" type="button" class="btn" data-i18n-s="stg.fs"></button>
+      <button id="sv-close" type="button" class="btn" data-i18n-s="stg.close"></button>
+    </div>
+  </div>
 
-  <script src="../timesheet/core.js?v=1.13.00"></script>
-  <script src="time.js?v=1.13.00"></script>
-  <script src="astro.js?v=1.13.00"></script>
+  <!-- Stage: import a rundown (time/stage-tools.js) -->
+  <dialog id="st-imp-dlg" class="stg-dlg" aria-labelledby="st-imp-h">
+    <h3 id="st-imp-h" data-i18n-t="st.imp.h"></h3>
+    <p class="st-hint" data-i18n-t="st.imp.into"></p>
+    <div class="st-imp-sec">
+      <b data-i18n-t="st.imp.csv"></b>
+      <p class="st-hint" data-i18n-t="st.imp.csvh"></p>
+      <button id="st-imp-file" type="button" class="btn" data-i18n-t="st.imp.pick"></button>
+    </div>
+    <div class="st-imp-sec">
+      <b data-i18n-t="st.imp.cal"></b>
+      <p class="st-hint" data-i18n-t="st.imp.calh"></p>
+      <div class="st-imp-row">
+        <input id="st-imp-day" type="date" data-i18n-t-a="st.imp.cal">
+        <button id="st-imp-cal" type="button" class="btn" data-i18n-t="st.imp.read"></button>
+      </div>
+    </div>
+    <div id="st-imp-plan" class="st-imp-plan" hidden>
+      <p id="st-imp-sum" role="status"></p>
+      <ol id="st-imp-list" class="st-imp-list"></ol>
+      <button id="st-imp-go" type="button" class="btn prim"></button>
+    </div>
+    <p id="st-imp-err" class="stg-note" role="alert" hidden></p>
+    <div class="dlg-row">
+      <button id="st-imp-close" type="button" class="btn" data-i18n-t="st.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: report after the event -->
+  <dialog id="st-rep-dlg" class="stg-dlg st-rep-dlg" aria-labelledby="st-rep-h">
+    <h3 id="st-rep-h"></h3>
+    <p id="st-rep-sum" class="st-hint"></p>
+    <div class="st-rep-wrap"><table id="st-rep-table" class="st-rep"></table></div>
+    <p class="st-hint" data-i18n-t="st.rep.local"></p>
+    <div class="dlg-row">
+      <button id="st-rep-csv" type="button" class="btn" data-i18n-t="st.rep.csv"></button>
+      <button id="st-rep-print" type="button" class="btn" data-i18n-t="st.rep.print"></button>
+      <button id="st-rep-close" type="button" class="btn" data-i18n-t="st.close"></button>
+    </div>
+  </dialog>
+  <div id="st-print" class="st-print" aria-hidden="true"></div>
+
+  <!-- Stage: connect a device (time/stage-link.js) -->
+  <dialog id="sl-pair-dlg" class="stg-dlg" aria-labelledby="sl-pair-h">
+    <h3 id="sl-pair-h" data-i18n-l="sl.pair.h"></h3>
+    <fieldset id="sl-pick" class="sl-pick">
+      <legend data-i18n-l="sl.pair.role"></legend>
+      <label class="sl-opt"><input type="radio" name="sl-role" value="remote" checked><span><b data-i18n-l="sl.r.remote"></b><small data-i18n-l="sl.rd.remote"></small></span></label>
+      <label class="sl-opt"><input type="radio" name="sl-role" value="display"><span><b data-i18n-l="sl.r.display"></b><small data-i18n-l="sl.rd.display"></small></span></label>
+      <label class="sl-opt"><input type="radio" name="sl-role" value="moderator"><span><b data-i18n-l="sl.r.moderator"></b><small data-i18n-l="sl.rd.moderator"></small></span></label>
+    </fieldset>
+    <p id="sl-full" class="stg-note" data-i18n-l="sl.pair.full" hidden></p>
+    <div id="sl-code-box" class="sl-code-box" hidden>
+      <p class="sl-how" data-i18n-l="sl.pair.how"></p>
+      <p id="sl-code" class="sl-code" aria-live="polite"></p>
+      <canvas id="sl-qr" class="sl-qr" width="232" height="232" aria-hidden="true"></canvas>
+      <p id="sl-url" class="sl-url"></p>
+    </div>
+    <div id="sl-ask-box" class="sl-ask-box" hidden>
+      <p id="sl-ask-text" role="alert"></p>
+      <div class="dlg-row">
+        <button id="sl-deny" type="button" class="btn" data-i18n-l="sl.deny"></button>
+        <button id="sl-allow" type="button" class="btn prim" data-i18n-l="sl.allow"></button>
+      </div>
+    </div>
+    <p id="sl-pair-st" class="sl-st" role="status"></p>
+    <div class="dlg-row">
+      <button id="sl-pair-go" type="button" class="btn prim" data-i18n-l="sl.pair.go"></button>
+      <button id="sl-pair-close" type="button" class="btn" data-i18n-l="sl.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: join Time on another device -->
+  <dialog id="sl-join-dlg" class="stg-dlg" aria-labelledby="sl-join-h">
+    <h3 id="sl-join-h" data-i18n-l="sl.join.h"></h3>
+    <label for="sl-join-code" class="sl-lbl" data-i18n-l="sl.code"></label>
+    <div class="sl-join-row">
+      <input id="sl-join-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7" pattern="[0-9 ]*">
+      <button id="sl-join-go" type="button" class="btn prim" data-i18n-l="sl.connect"></button>
+    </div>
+    <p id="sl-join-st" class="sl-st" role="status"></p>
+    <div class="dlg-row">
+      <button id="sl-join-close" type="button" class="btn" data-i18n-l="sl.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: this device is paired with Time on another one -->
+  <div id="sl-dev" hidden role="dialog" aria-modal="true" aria-labelledby="sd-role">
+    <div id="sd-bar" class="sd-bar on">
+      <span id="sd-role" class="sd-role"></span>
+      <span id="sd-link" class="sd-link"></span>
+      <button id="sd-fs" type="button" class="btn" data-i18n-l="sl.fs"></button>
+      <button id="sd-leave" type="button" class="btn" data-i18n-l="sl.leave"></button>
+    </div>
+    <div id="sd-view" class="sd-view"><div id="sd-root"></div></div>
+    <div id="sd-black-note" class="sd-note" data-i18n-l="sl.isblack" hidden></div>
+    <div id="sd-ctl" class="sd-ctl" hidden>
+      <div class="sd-row">
+        <button id="sd-prev" type="button" class="btn" data-i18n-l="sl.prev"></button>
+        <button id="sd-go" type="button" class="btn prim"></button>
+        <button id="sd-next" type="button" class="btn" data-i18n-l="sl.next"></button>
+      </div>
+      <div class="sd-row">
+        <button id="sd-minus" type="button" class="btn" data-i18n-l="sl.minus"></button>
+        <button id="sd-plus" type="button" class="btn" data-i18n-l="sl.plus"></button>
+        <button id="sd-reset" type="button" class="btn" data-i18n-l="sl.reset"></button>
+        <button id="sd-black" type="button" class="btn"></button>
+      </div>
+      <div class="sd-msg">
+        <span class="sd-h" data-i18n-l="sl.msg"></span>
+        <input id="sd-msg" type="text" maxlength="200" data-i18n-l-ph="sl.msg.ph" data-i18n-l-a="sl.msg">
+        <div class="sd-row sd-row-l">
+          <select id="sd-msg-color" data-i18n-l-a="sl.msg.color"></select>
+          <label class="chk"><input id="sd-msg-flash" type="checkbox"><span data-i18n-l="sl.msg.flash"></span></label>
+          <button id="sd-msg-send" type="button" class="btn prim" data-i18n-l="sl.msg.send"></button>
+          <button id="sd-msg-hide" type="button" class="btn" data-i18n-l="sl.msg.hide" hidden></button>
+        </div>
+        <div id="sd-presets" class="quick-chips sd-chips"></div>
+      </div>
+    </div>
+    <div id="sd-askp" class="sd-ctl" hidden>
+      <span class="sd-h" data-i18n-l="sl.ask.h"></span>
+      <div id="sd-asks" class="quick-chips sd-chips"></div>
+      <div class="sd-row sd-row-l">
+        <input id="sd-ask" type="text" maxlength="120" data-i18n-l-ph="sl.ask.ph" data-i18n-l-a="sl.ask.h">
+        <button id="sd-ask-send" type="button" class="btn prim" data-i18n-l="sl.ask.send"></button>
+      </div>
+      <p id="sd-ask-st" class="sd-ask-st" role="status"></p>
+    </div>
+    <p id="sd-cut" class="sd-cut" data-i18n-l="sl.cut" hidden></p>
+  </div>
+
+  <!-- Stage: event settings -->
+  <dialog id="stg-ev-dlg" class="stg-dlg">
+    <h3 id="stg-ev-h"></h3>
+    <div class="stg-form">
+      <label for="se-name" data-i18n-s="stg.f.name"></label>
+      <input id="se-name" type="text" maxlength="120">
+      <label for="se-date" data-i18n-s="stg.f.date"></label>
+      <input id="se-date" type="date">
+      <label for="se-start" data-i18n-s="stg.f.start"></label>
+      <input id="se-start" type="time">
+      <label for="se-stop" data-i18n-s="stg.f.stop"></label>
+      <input id="se-stop" type="time">
+      <label for="se-yellow" data-i18n-s="stg.f.yellow"></label>
+      <input id="se-yellow" type="number" min="0" max="60" step="0.5" inputmode="decimal">
+      <label for="se-red" data-i18n-s="stg.f.red"></label>
+      <input id="se-red" type="number" min="0" max="60" step="0.5" inputmode="decimal">
+      <label class="chk wide">
+        <input id="se-flash" type="checkbox">
+        <span data-i18n-s="stg.f.flash"></span>
+      </label>
+    </div>
+    <div class="dlg-row">
+      <button id="se-save" type="button" class="btn prim" data-i18n-s="stg.save"></button>
+      <button id="se-cancel" type="button" class="btn" data-i18n-s="stg.cancel"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="se-dup" type="button" class="btn" data-i18n-s="stg.ev.dup"></button>
+      <button id="se-del" type="button" class="btn danger" data-i18n-s="stg.ev.del"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: rundown item -->
+  <dialog id="stg-it-dlg" class="stg-dlg">
+    <h3 id="stg-it-h"></h3>
+    <div class="stg-form">
+      <label for="si-title" data-i18n-s="stg.f.title"></label>
+      <input id="si-title" type="text" maxlength="200">
+      <label for="si-spk" data-i18n-s="stg.f.speaker"></label>
+      <input id="si-spk" type="text" maxlength="120">
+      <label for="si-kind" data-i18n-s="stg.f.kind"></label>
+      <select id="si-kind"></select>
+      <label for="si-min" data-i18n-s="stg.f.dur" id="si-dur-l"></label>
+      <span class="stg-dur" id="si-dur-w">
+        <input id="si-min" type="number" min="0" max="1440" inputmode="numeric" data-i18n-s-a="stg.f.min">
+        <span>:</span>
+        <input id="si-sec" type="number" min="0" max="59" inputmode="numeric" data-i18n-s-a="stg.f.sec">
+      </span>
+      <label for="si-until" data-i18n-s="stg.f.until" id="si-until-l"></label>
+      <input id="si-until" type="time">
+      <label for="si-yellow" data-i18n-s="stg.f.yellow"></label>
+      <input id="si-yellow" type="number" min="0" max="60" step="0.5" inputmode="decimal" data-i18n-s-ph="stg.f.default">
+      <label for="si-red" data-i18n-s="stg.f.red"></label>
+      <input id="si-red" type="number" min="0" max="60" step="0.5" inputmode="decimal" data-i18n-s-ph="stg.f.default">
+      <label class="chk wide">
+        <input id="si-auto" type="checkbox">
+        <span data-i18n-s="stg.f.auto"></span>
+      </label>
+      <label for="si-notes" data-i18n-s="stg.f.notes" class="wide"></label>
+      <textarea id="si-notes" rows="3" maxlength="2000" class="wide"></textarea>
+    </div>
+    <div class="dlg-row">
+      <button id="si-save" type="button" class="btn prim" data-i18n-s="stg.save"></button>
+      <button id="si-cancel" type="button" class="btn" data-i18n-s="stg.cancel"></button>
+    </div>
+    <div class="dlg-row">
+      <button id="si-del" type="button" class="btn danger" data-i18n-s="stg.it.del"></button>
+    </div>
+  </dialog>
+
+
+  <script src="../timesheet/core.js?v=1.80.00"></script>
+  <script src="time.js?v=1.80.00"></script>
+  <script src="astro.js?v=1.80.00"></script>
+  <script src="stage-core.js?v=1.80.00"></script>
+  <script src="stage-view.js?v=1.80.00"></script>
+  <script src="stage.js?v=1.80.00"></script>
+  <script src="../qr/qr-encode.js?v=1.80.00"></script>
+  <script src="../remote-link.js?v=1.80.00"></script>
+  <script src="stage-link.js?v=1.80.00"></script>
+  <script src="../calendar/occur.js?v=1.80.00"></script>
+  <script src="stage-tools.js?v=1.80.00"></script>
 
 </body>
 </html>

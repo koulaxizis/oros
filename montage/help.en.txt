@@ -20,11 +20,21 @@ The timeline has five rows: `Text`, `Overlay`, `Main`, `Music` and `Voice`. The 
 With a clip selected:
 - `Speed` plays it faster or slower. Speed also changes the pitch of the sound.
 - `Volume` (up to 200 %), `Fade` (`Fade in`, `Fade out`) and `Mute` for its sound. `Extract sound` puts the sound of a video on the `Music` row (or `Voice`, if `Music` is taken there) so you can move it on its own.
-- `Transition` into the clip: `Dissolve`, `Through black`, `Slide` or `Wipe`, with a `Length`.
-- `Adjust`: `Brightness`, `Contrast`, `Saturation`, `Warmth` and a `Filter` such as `Mono`, `Sepia` or `Film`.
+- `Transition` into the clip: `Dissolve`, `Through black`, `Slide`, `Wipe`, `Push up`, `Zoom` or `Circle`, with a `Length`.
+- `Adjust`: `Brightness`, `Contrast`, `Saturation`, `Warmth` and a `Filter` such as `Mono`, `Sepia`, `Film`, `Vintage` or `Golden`. `Open a .cube file` adds a `Colour look (.cube)`: a 3D LUT from a colour-grading app or a LUT pack, up to 64 points a side. It is kept like a picture (on this device, or synced with the project's media); `Remove the look` takes it off.
 - `Frame`: `Whole picture` or `Fill the frame`, `Rotate` and `Mirror`.
 - `To overlay` turns a clip into a picture in picture on top of the main video; `Position` sets `Left – right`, `Top – bottom`, `Size` and `Opacity`. `To main` puts it back.
+- `Freeze frame` (videos on the `Main` row) holds the picture at the playhead for 2 seconds: the clip splits there and a still of that frame, at the video's full size, goes in between. Change its `Duration` like any picture.
+- `Reverse` (videos) plays the clip backwards, without sound; `Forwards` turns it back.
 - `Duplicate` and `Delete` (with `Undo`).
+
+## Keyframes
+`Keyframes` makes a clip move, grow, fade or change volume while it plays (a slow zoom on a photo, a picture that slides in, music that rises).
+1. Select the clip and tap `Keyframes`. The panel shows the values at the playhead.
+2. Change `Left – right`, `Top – bottom`, `Size`, `Opacity` or (for clips with sound) `Volume`: a key is set at the playhead.
+3. Move with `+½ s`, `−½ s`, `Previous key` and `Next key`, and change values again. Between two keys Montage changes them at an even pace; before the first key and after the last one they stay put.
+
+`Add key` keeps the current values at the playhead, `Remove key` takes it away, `Remove all keys` starts over. Small diamonds on the clip in the timeline show its keys. Keys belong to the clip: `Split` and `Duplicate` keep the motion as it was, but trimming the start of a clip shifts its keys with it. A clip can have up to 60 keys.
 
 ## Text, music and voice
 - `Text` adds a title at the playhead. `Edit text` changes the words, `Font`, `Text size`, `Colour`, `Outline`, `Box behind the text`, `Alignment` and `Entrance` (`Fade`, `Rise`, `Pop`). Drag its edges to make it show longer or shorter.
@@ -34,12 +44,29 @@ With a clip selected:
 - `Overlay` adds a video or picture on top of the main video.
 - Pictures and texts have a `Duration` instead of a speed.
 - Drag a text onto the `Main` row to make a title card between clips; there `Background` sets the colour behind it.
+- In `Project settings`, `Lower the music when someone speaks` (`A little`, `Medium` or `A lot`) makes the `Music` row quieter while anything plays on the `Voice` row, with a short smooth slope down and back up. You hear it in the preview and in the exported file.
+
+## Subtitles
+`Subtitles` (with nothing selected) works with the texts on the `Text` row:
+- `Add a subtitle` puts a text at the playhead in subtitle style: small white letters with a black outline along the bottom of the picture.
+- `Open an SRT file` adds every line of an SRT (or WebVTT) subtitle file as its own text at the right time. You can edit, move or delete each one like any text.
+- `Save as SRT` writes all texts on the `Text` row as an SRT file, for YouTube or a video player.
+
+## Stickers and shapes
+`Stickers` (with nothing selected) opens `Stickers and shapes`:
+- A shape (`Rectangle`, `Rounded`, `Circle`, `Triangle`, `Star`, `Heart`, `Arrow`, `Speech bubble`) goes on the `Overlay` row at the playhead. Select it and use `Style` to change the `Shape`, its `Fill`, `Outline` and `Outline width`.
+- A sticker (an emoji) goes on the `Text` row at the playhead and pops in.
+- Move and size both with `Position`, and make them move over time with `Keyframes`. Drag their edges to make them show longer or shorter.
 
 ## Grab a frame
 With nothing selected, `Grab frame` saves the picture at the playhead as a PNG in Files › Pictures and opens it in [Photo Lab](app:photolab), where you can edit it.
 
 ## Export
-`Export` opens `Export video`. Pick a `Size` (720p, 1080p or 4K, as your device allows) and, if you like, `Also keep a copy in Files › Videos`. Montage makes an MP4 file when your browser can, otherwise a WebM file. When it is ready you can `Play it` or `Save` it to your device. Keep the app open while it exports; `Cancel` stops it.
+`Export` opens `Export video`. Pick a `Size` (720p, 1080p or 4K, as your device allows) and, if you like, `Also keep a copy in Files › Videos`. Montage makes an MP4 file when your browser can, otherwise a WebM file.
+
+Choose `Sound only` to get just the mixed sound of the project (music, voice, clip sound, with every volume, fade and ducking) as an M4A file, or Ogg or WAV where the browser cannot make M4A. `Also keep a copy in Files › Music` keeps it in orOS too.
+
+Choose `GIF` for a silent looping picture for chats and web pages: `Small (320 px)` or `Medium (480 px)` on the long side, 12 frames a second, up to 30 seconds. GIF files get big quickly, so keep it short. `Also keep a copy in Files › Pictures` keeps it in orOS too. When it is ready you can `Play it` or `Save` it to your device. Keep the app open while it exports; `Cancel` stops it.
 
 ## Sync and backup
 The edit itself (clips, cuts, texts, settings) travels with orOS sync to your other devices. The media files do not: by default your videos stay on the device you added them on, because big files are slow to upload.
@@ -64,6 +91,7 @@ In `Project settings` you can switch on `Sync this project's media`. Montage the
 
 - For a phone story, start the project as `Tall 9:16`; you can still change the `Shape` later in `Project settings`.
 - Adding the same file again, even to another project, does not take extra space: Montage keeps one copy.
+- If a big video (4K, a long phone video) stutters while you edit, open `Project settings` and press `Make light copies` under `Smoother preview`. Montage makes small copies on this device for the preview only; the media list marks them `light copy`. The export, `Grab frame` and sync always use the originals. `Remove light copies` gives the space back.
 
 ## Limits
 - One file can be up to 4 GB. Very long 4K projects need a lot of browser storage.
