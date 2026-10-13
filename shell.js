@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.66.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.67.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4957,6 +4957,12 @@
         { name: "Invoice Ninja API", url: "https://api-docs.invoicing.co/",
           by: "Invoice Ninja LLC; your own account or install", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
           en: "Connected services: import clients (CRM) and payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών (CRM) και πληρωμών (Έσοδα & Έξοδα)" },
+        { name: "Odoo API", url: "https://www.odoo.com/documentation/19.0/developer/reference/external_api.html",
+          by: "Odoo S.A.; your own database", lic: { en: "Their terms, your own API key", el: "Οι όροι τους, με δικό σου κλειδί API" },
+          en: "Connected services: import contacts and opportunities (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή επαφών και ευκαιριών (CRM)" },
+        { name: "Todoist API", url: "https://developer.todoist.com/api/v1/",
+          by: "Doist Inc.; your own account", lic: { en: "Their terms, your own API token", el: "Οι όροι τους, με δικό σου API token" },
+          en: "Connected services: import projects and tasks (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή projects και εργασιών (To-Do)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },
