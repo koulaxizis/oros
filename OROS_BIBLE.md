@@ -5508,3 +5508,36 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The help pages gained the "Another device" section and a limits line.
   - tests/time-stage.test.js now has 26 tests. The 7 new ones cover link compatibility with Studio, devState, devAdopt, the role matrix of devCommand, clockOffset and the page wiring.
   - Not tested: real phones / tablets / TVs, the live relay path.
+
+### 2026-10-13 — Time › Stage wave 4: import, export, report, hard stop, search, Today (#274) — 1.56.00
+- Time › Stage wave 4: import, export, report (plan /mnt/project-files/time/stage-timer-plan.md). This completes the plan.
+  - **time/stage-tools.js (new):**
+    - Quick add: ready-made items.
+    - Import dialog:
+      - CSV file: a header row in EN/EL in any order, or the columns title, speaker, duration, start. `;`, `,` or tab separated. At most 2 MB and 500 rows.
+      - A Calendar day through calendar/occur.js. The gaps between events become breaks.
+      - It shows a preview, and the items are added to the end of the open event. Nothing is replaced.
+    - Export CSV.
+    - Report:
+      - A table of planned vs actual start and length, with totals.
+      - Download CSV.
+      - Print / PDF, through a print stylesheet that shows only the report.
+  - **time/stage-core.js v1.3.0:** parseCsv, parseDur, parseHm, csvPlan, calPlan, csvCell, toCsv, report, reportCsv, mmss, TEMPLATES.
+    - The CSV is written `;` separated, with a BOM. Text cells that start with = + - @ get an apostrophe, against formula injection.
+    - normEvent keeps `stop` ("HH:MM", hard stop) and leaves the key out when empty.
+    - schedule() returns `stopAt` and `cut`. A stop earlier than the start means the next day.
+  - **time/stage.js:**
+    - A hard stop field in Event settings. The summary line reads "Hard stop 17:00: cut 12 min".
+    - `OrosStage.addPlan` and `newEvent`.
+    - The deep link `{stage: {ev, it}}` opens the Stage tab on the event and highlights the item.
+    - The event only changes when no clock is running.
+  - **time/search.js (new):** a universal search provider for events and rundown items (title, speaker, event, notes). It is read-only.
+  - **time/today.js v1.1.0:**
+    - On an event's day: "Next: <title>" at the expected start time, which moves later when the day runs behind. It uses this device's run.
+    - Events on the coming days show at their start time.
+    - Read-only. The alarm rows are unchanged.
+  - **time/astro.js:** a deep-link target that is not for astro is kept for stage.js.
+  - The help pages gained Quick add, Import, Export and report, Hard stop, and Search and Today, plus one limits line.
+  - tests/time-stage.test.js has 36 tests. The 10 new ones cover parseDur, csvPlan, calPlan, the toCsv round trip and injection, report, hard stop and merge, templates, the search provider, Today rows and the page wiring.
+  - Not done from the plan: the "Prompter link". The orOS Prompter app is a writing-prompts app, not a teleprompter, so there is nothing to link to.
+  - Not tested: real Calendar data from other devices, printing on phones, Safari.
