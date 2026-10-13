@@ -99,6 +99,17 @@ Help OpenStreetMap by answering small questions about what's around you. You don
 
 Team mapping: to map an area with friends without answering the same things twice, open `Settings`, everyone picks the same `People in the team` and a different letter. Each of you then sees only your share of the quests. No account or server is needed; pick `Just me` to see all of them again.
 
+### Overlays
+
+An overlay colours the streets or buildings around you by one thing, so the gaps stand out (red dashes mean "not known yet"), and a tap changes it. Pick one in `Overlay` at the top of the Quests panel:
+
+- 💡 `Street lights`: lit or not.
+- 🛣️ `Surface`: asphalt, paving stones, gravel, ground and more.
+- 🚶 `Sidewalks`: on both sides, one side, a separate path or none. Arrows on the chosen street show its direction: left and right are as you see them walking that way.
+- 🔢 `Addresses`: which buildings have a house number. Type the number or tap `It has no number`.
+
+Zoom in to street level (buildings need one step closer). Tap a street or building, then the answer. Changes wait with your quest answers until you tap `Upload`, and count for your achievements. While an overlay is on, the quest pins are hidden; pick `None` to bring them back. The overlay you picked stays on this device.
+
 ## My tracks (GPX)
 
 Record where you walk, ride or drive, keep your tracks and follow them again, like OsmAnd does.
@@ -156,7 +167,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 

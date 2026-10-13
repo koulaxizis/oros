@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 1.67.00
+## Version 1.68.00
 - To-Do: import from Todoist. Your projects with open tasks become lists, with due dates, descriptions as notes, labels and priority; import again to bring in what's new. orOS only reads Todoist; connect it in Settings › Connected services, then List settings › Import from Todoist.
+
+## Version 1.67.00
+- Maps: overlays in Quests, as in StreetComplete. Colour the streets by street lights, surface or sidewalks, or the buildings by house number, so the gaps stand out, and tap one to fix it. Arrows show which side is left and right for sidewalks. Changes upload with your quest answers.
 
 ## Version 1.66.00
 - Atelier: import swatches from Illustrator, Photoshop or InDesign (.ase, .aco) into your Brand kit, and save your brand colours as an .ase file for Adobe apps.

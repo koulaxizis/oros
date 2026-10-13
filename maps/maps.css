@@ -1739,3 +1739,14 @@ body.trn-itin .route-alt { opacity: 0.25; }
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 .trn-veh:not(.rt) .trn-veh-in { opacity: 0.85; border-style: dashed; }
+
+/* ---------- maps wave 8B: overlays ---------- */
+.qst-ovl { display: flex; align-items: center; gap: 8px; margin: 8px 0 4px; font-size: 13px; color: var(--text-dim); }
+.qst-ovl .osm-in { margin-top: 0; flex: 1; min-width: 0; }
+.ovl-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0; padding: 0; font-size: 12px; }
+.ovl-legend li { display: flex; align-items: center; gap: 6px; }
+.ovl-legend i { display: inline-block; width: 22px; height: 6px; border-radius: 3px; flex: none; }
+.ovl-legend i.dash { background: transparent !important; border-top: 3px dashed; height: 0; border-radius: 0; }
+.ovl-now { margin: -4px 0 10px; }
+.ovl-arrow { display: flex; align-items: center; justify-content: center; }
+.ovl-arrow > span { display: block; font-size: 16px; line-height: 1; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; }
