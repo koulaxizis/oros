@@ -28,6 +28,8 @@ android {
         versionCode appVersion.code
         versionName appVersion.name
         manifestPlaceholders = [hostName: 'useoros.online']
+        // Diagnostic build: each phone-bridge step shows as a toast.
+        buildConfigField 'boolean', 'DIAG', System.getenv('OROS_DIAG') == '1' ? 'true' : 'false'
     }
 
     signingConfigs {

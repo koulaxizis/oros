@@ -120,6 +120,13 @@ function build(manifest) {
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" android:maxSdkVersion="22" />
 
+    <!-- Lets LauncherActivity see which browsers can run the TWA (Android 11+). -->
+    <queries>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+    </queries>
+
     <application
         android:name=".OrosApp"
         android:allowBackup="false"
@@ -203,6 +210,11 @@ ${aliases}
 
         <!-- Opened by the page from a tap ("intent://contacts#Intent;scheme=oros-permission;…"):
              asks Android for Contacts or Calendar access, then returns to orOS. -->
+        <!-- Diagnostic builds: phone-bridge steps (app-icon shortcut). -->
+        <activity android:name=".DiagActivity" android:exported="false"
+            android:label="Bridge diagnostics"
+            android:theme="@android:style/Theme.Material.Light" />
+
         <activity android:name=".PermissionActivity"
             android:exported="true"
             android:excludeFromRecents="true"

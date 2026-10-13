@@ -55,10 +55,29 @@ public class PhoneBridge {
     @Nullable private KeptTwaLauncher launcher;
     @Nullable private CustomTabsSession session;
     private boolean validated;
+    private int retries;
     private boolean channelReady;
+    private boolean channelAsked;   // a channel was requested for the current page
 
     PhoneBridge(Context context) {
         app = context.getApplicationContext();
+    }
+
+    static final String DIAG_KEY = "diag-trail";
+    private final long started = System.currentTimeMillis();
+
+    /** Diagnostic builds (workflow input "diag") save each bridge step
+     *  with its time since app start; DiagActivity shows them. Toasts
+     *  and notifications proved unreliable for this (Android drops
+     *  queued toasts and cuts them to two lines). */
+    synchronized void diag(String step) {
+        Log.d(TAG, step);
+        if (!BuildConfig.DIAG) return;
+        String line = ((System.currentTimeMillis() - started) / 100) / 10.0 + "s " + step;
+        SharedPreferences sp = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String old = sp.getString(DIAG_KEY, "");
+        if (old.length() > 6000) old = old.substring(old.length() - 6000);
+        sp.edit().putString(DIAG_KEY, old + line + "\n").commit();
     }
 
     CustomTabsCallback callback() {
@@ -73,28 +92,70 @@ public class PhoneBridge {
             session = null;
             validated = false;
             channelReady = false;
+            retries = 0;
+            warmUp();
         });
     }
 
     private void onPageLoaded() {
         CustomTabsSession s = launcher != null ? launcher.session() : null;
+        diag("page loaded, browser " + browser() + ", session " + (s != null));
         if (s == null) return;
+        channelAsked = false;              // a new page needs its own port
         if (s != session) {
             session = s;
             validated = false;
             channelReady = false;
             boolean asked = s.validateRelationship(CustomTabsService.RELATION_USE_AS_ORIGIN, ORIGIN, null);
-            Log.d(TAG, "validateRelationship requested: " + asked);
+            diag("validate requested: " + asked);
+            if (!asked && retries++ < 2) {
+                warmUp();
+                main.postDelayed(this::validate, 2000);
+            }
             return;
         }
         if (validated) requestChannel();   // reload: the page needs a new port
+        else validate();                   // an earlier check failed: ask again
+    }
+
+    /** Chrome answers validateRelationship() with false until the app
+     *  has called warmup() on it (TwaLauncher never does), so warm the
+     *  serving browser up as soon as a launch starts. */
+    private void warmUp() {
+        String p = launcher != null ? launcher.provider() : null;
+        if (p == null) p = androidx.browser.customtabs.CustomTabsClient.getPackageName(app, null);
+        boolean ok = p != null && androidx.browser.customtabs.CustomTabsClient.connectAndInitialize(app, p);
+        diag("warmup " + p + ": " + ok);
+    }
+
+    private void validate() {
+        if (session == null) return;
+        boolean asked = session.validateRelationship(CustomTabsService.RELATION_USE_AS_ORIGIN, ORIGIN, null);
+        diag("validate requested again: " + asked);
+        if (!asked && retries++ < 2) {
+            warmUp();
+            main.postDelayed(this::validate, 2000);
+        }
+    }
+
+    private String browser() {
+        String p = launcher != null ? launcher.provider() : null;
+        if (p == null) p = androidx.browser.customtabs.CustomTabsClient.getPackageName(app, null);
+        if (p == null) return "?";
+        try {
+            return p + " " + app.getPackageManager().getPackageInfo(p, 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            return p;
+        }
     }
 
     private void requestChannel() {
         if (session == null) return;
         channelReady = false;
+        channelAsked = true;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
-        Log.d(TAG, "requestPostMessageChannel: " + ok);
+
+        diag("channel requested: " + ok);
     }
 
     private class Callback extends QualityEnforcer {
@@ -102,22 +163,38 @@ public class PhoneBridge {
         public void onNavigationEvent(int navigationEvent, @Nullable Bundle extras) {
             super.onNavigationEvent(navigationEvent, extras);
             if (navigationEvent == NAVIGATION_FINISHED) main.post(PhoneBridge.this::onPageLoaded);
+            else if (navigationEvent == NAVIGATION_FAILED) diag("navigation failed");
         }
 
         @Override
         public void onRelationshipValidationResult(int relation, @NonNull Uri requestedOrigin,
                 boolean result, @Nullable Bundle extras) {
             super.onRelationshipValidationResult(relation, requestedOrigin, result, extras);
-            Log.d(TAG, "relationship " + requestedOrigin + ": " + result);
+            diag("relationship " + requestedOrigin + ": " + result);
             main.post(() -> {
+                // Chromium checks the origin again for every channel request
+                // and reports it here; answering that with another request
+                // loops (seen on a phone: a new channel every few ms, so the
+                // page's port was always already replaced). One request per
+                // page load.
+                if (channelAsked) return;
                 validated = result;
-                if (result) requestChannel();
+                if (result) {
+                    requestChannel();
+                } else if (retries++ < 2) {
+                    // The browser may still be fetching assetlinks.json.
+                    main.postDelayed(PhoneBridge.this::validate, 4000);
+                } else {
+                    // Some browsers open the channel anyway; harmless if not.
+                    requestChannel();
+                }
             });
         }
 
         @Override
         public void onMessageChannelReady(@Nullable Bundle extras) {
             super.onMessageChannelReady(extras);
+            diag("channel ready");
             main.post(() -> {
                 channelReady = true;
                 // The first message hands the page its port (phone.js).
@@ -128,6 +205,7 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
+            diag("message from page, " + message.length() + " chars");
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
         }
@@ -142,7 +220,7 @@ public class PhoneBridge {
         main.post(() -> {
             if (session == null || !channelReady) return;
             int r = session.postMessage(msg.toString(), null);
-            if (r != CustomTabsService.RESULT_SUCCESS) Log.w(TAG, "postMessage result " + r);
+            diag("postMessage " + msg.optString("t") + ": " + r);
         });
     }
 
@@ -218,6 +296,7 @@ public class PhoneBridge {
             }
         } catch (Exception e) {
             Log.w(TAG, "message " + t + " failed", e);
+            diag(t + " failed: " + e);
             JSONObject err = new JSONObject();
             try {
                 err.put("t", "error");
