@@ -1079,5 +1079,211 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   body.has-route #offline-chip { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 }
 
+/* ---------- 12. OpenStreetMap notes (notes.js, Mapping mode) ---------- */
+.osm-note-ico { display: flex; align-items: center; justify-content: center; }
+.osm-note-ico svg { display: block; filter: drop-shadow(0 1px 3px var(--shadow)); }
+.osm-note-ico circle:first-child { stroke: #fff; stroke-width: 1.5; }
+.osm-note-ico.open circle:first-child { fill: #d9534f; }
+.osm-note-ico.closed circle:first-child { fill: #4a9d5b; }
+.osm-note-ico.draft circle:first-child { fill: var(--accent); stroke-dasharray: 3 2; }
+
+#osm-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  width: min(360px, calc(100vw - 60px));
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 32px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  animation: maneuvers-in 0.22s ease;
+}
+#osm-panel header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 10px 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bar-bg);
+  flex-shrink: 0;
+}
+#osm-panel h3 { flex: 1; font-size: 14px; color: var(--accent); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.osm-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; min-height: 32px;
+  background: transparent; border: none; border-radius: 7px;
+  color: var(--text-dim);
+}
+.osm-iconbtn:hover { color: var(--text); background: var(--accent-soft); }
+.osm-close:hover { color: var(--danger); background: rgba(224, 108, 117, 0.10); }
+.osm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.osm-acc { display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--text-dim); }
+.osm-acc-txt { line-height: 1.45; }
+.osm-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 40px;
+}
+.osm-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.osm-btn.primary { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.osm-mini {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 9px;
+  border-radius: 7px;
+  cursor: pointer;
+  min-height: 32px;
+}
+.osm-mini:hover { border-color: var(--accent); }
+.osm-mini.danger:hover { border-color: var(--danger); color: var(--danger); }
+.osm-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.osm-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 4px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.osm-tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+.osm-hint { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+.osm-small { font-size: 11.5px; color: var(--text-dim); line-height: 1.45; margin: 0 0 10px; }
+.osm-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.osm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.osm-row:hover, .osm-row:focus-visible { background: var(--accent-soft); outline: none; }
+.osm-row.draft { cursor: default; flex-wrap: wrap; justify-content: flex-end; }
+.osm-row.draft .osm-row-body { flex-basis: 100%; }
+.osm-row-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; color: #fff;
+}
+.osm-row-ico.open { background: #d9534f; }
+.osm-row-ico.closed { background: #4a9d5b; }
+.osm-row-body { flex: 1; min-width: 0; }
+.osm-row-t { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+.osm-row-s { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; overflow-wrap: anywhere; }
+.osm-badge {
+  align-self: flex-start;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: #d9534f;
+}
+.osm-badge.closed { background: #4a9d5b; }
+.osm-badge.hidden { background: var(--border); color: var(--text); }
+.osm-thread { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.osm-thread li { border-left: 2px solid var(--border); padding-left: 10px; }
+.osm-who { font-size: 11.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+.osm-who b { color: var(--text); }
+.osm-text { font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 3px; }
+.osm-text a, .osm-ext { color: var(--accent); }
+.osm-ext { font-size: 12.5px; display: inline-block; padding: 8px 0; }
+.osm-ta, .osm-in {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.osm-ta { resize: vertical; min-height: 72px; line-height: 1.45; }
+.osm-in { min-height: 40px; margin-top: 4px; }
+.osm-ta:focus, .osm-in:focus { border-color: var(--accent); }
+.osm-lab { display: block; font-size: 12px; color: var(--text-dim); margin: 10px 0 4px; }
+.osm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.osm-actions .osm-btn { flex: 1; }
+.osm-settings { margin-bottom: 6px; }
+.osm-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  width: min(420px, calc(100vw - 32px));
+  box-shadow: 0 12px 40px var(--shadow);
+}
+.osm-dlg h3 { font-size: 14px; color: var(--accent); margin-bottom: 10px; }
+.osm-dlg .osm-actions { margin-top: 14px; }
+.osm-warn {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 12.5px;
+}
+.osm-warn-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.osm-warn-row span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  /* Bottom sheet on phones: the map stays visible above it */
+  #osm-panel {
+    top: auto;
+    left: 0;
+    width: 100%;
+    max-height: 58vh;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 32px var(--shadow);
+    animation: osm-up 0.22s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  #osm-panel header { padding-top: 10px; border-radius: 14px 14px 0 0; }
+  .osm-ta, .osm-in { font-size: 16px; }   /* ≥16px: no zoom on focus */
+  body.osm-mode #controls,
+  body.osm-mode #offline-chip { bottom: calc(var(--osm-h, 0px) + 12px); }
+}
+@keyframes osm-up {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@media (pointer: coarse) {
+  .osm-iconbtn, .osm-mini, .osm-btn, .osm-tab, .osm-in { min-height: 44px; }
+  .osm-iconbtn { min-width: 44px; }
+}
+
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
