@@ -24,6 +24,7 @@
   var Q = window.OrosMapsQuests;
   var A = window.OrosMapsApi;
   var H = window.__orosMapsHost;
+  var V = window.OrosMapsOverlays;      // maps wave 8B (may be missing: overlays off)
   if (!O || !P || !Q || !A || !H || !H.map) return;
   var map = H.map;
   var LANG = H.lang === "el" ? "el" : "en";
@@ -68,6 +69,15 @@
       "up.offline": "You are offline. Your answers are kept.",
       "leave": "{n} answers are waiting to be uploaded",
       "name.save": "Save", "name.ph": "As written on the sign",
+      "ovl": "Overlay", "ovl.off": "None (show quests)",
+      "ovl.hint.line": "Tap a street to change it.", "ovl.hint.area": "Tap a building to change it.",
+      "ovl.zoom": "Zoom in closer to see the overlay.",
+      "ovl.loading": "Loading the overlay…",
+      "ovl.count": "{n} here, {m} not known yet",
+      "ovl.pins": "Quest pins are hidden while an overlay is on.",
+      "ovl.now": "Now: {v}", "ovl.unknown": "not known yet",
+      "ovl.arrows": "Left and right are seen walking in the direction of the arrows on the map.",
+      "ovl.same": "That is already on the map.",
       "badges": "Achievements", "badges.title": "Your achievements",
       "badge.lv": "Level {l} · {n} answers", "badge.next": "{n} more for the next level", "badge.max": "Top level reached",
       "badge.none": "Answer quests and upload them to earn achievements. Each level unlocks a page to learn more.",
@@ -116,6 +126,15 @@
       "up.offline": "Δεν έχεις σύνδεση. Οι απαντήσεις σου κρατιούνται.",
       "leave": "{n} απαντήσεις περιμένουν αποστολή",
       "name.save": "Αποθήκευση", "name.ph": "Όπως γράφει η πινακίδα",
+      "ovl": "Επικάλυψη", "ovl.off": "Καμία (δείξε τις ερωτήσεις)",
+      "ovl.hint.line": "Πάτα έναν δρόμο για να τον αλλάξεις.", "ovl.hint.area": "Πάτα ένα κτίριο για να το αλλάξεις.",
+      "ovl.zoom": "Πλησίασε περισσότερο για να δεις την επικάλυψη.",
+      "ovl.loading": "Φόρτωση της επικάλυψης…",
+      "ovl.count": "{n} εδώ, {m} άγνωστα ακόμα",
+      "ovl.pins": "Οι καρφίτσες των ερωτήσεων κρύβονται όσο είναι ανοιχτή μια επικάλυψη.",
+      "ovl.now": "Τώρα: {v}", "ovl.unknown": "άγνωστο ακόμα",
+      "ovl.arrows": "Αριστερά και δεξιά όπως τα βλέπεις περπατώντας προς την κατεύθυνση των βελών στον χάρτη.",
+      "ovl.same": "Αυτό υπάρχει ήδη στον χάρτη.",
       "badges": "Επιτεύγματα", "badges.title": "Τα επιτεύγματά σου",
       "badge.lv": "Επίπεδο {l} · {n} απαντήσεις", "badge.next": "Ακόμα {n} για το επόμενο επίπεδο", "badge.max": "Έφτασες στο ανώτερο επίπεδο",
       "badge.none": "Απάντησε σε ερωτήσεις και στείλ' τες για να κερδίσεις επιτεύγματα. Κάθε επίπεδο ξεκλειδώνει μια σελίδα για να μάθεις περισσότερα.",
@@ -261,6 +280,7 @@
 
   function loadEls(force) {
     if (!modeOn) return;
+    if (ovId) { loadOv(force); return; }
     if (map.getZoom() < MIN_ZOOM) { render(); return; }
     var b = map.getBounds(), off = data.set.off.join(",");
     if (!force && box && box.contains(b) && Date.now() - boxAt < FRESH_MS && boxOff === off) return;
@@ -300,7 +320,8 @@
   }
   function paint() {
     layer.clearLayers();
-    if (!modeOn) return;
+    paintOv();
+    if (!modeOn || ovId) return;
     var by = {};
     open().forEach(function (x) {
       var k = x.el.t + x.el.id;
@@ -316,6 +337,205 @@
   function nameOf(e) {
     var tg = e.tags || {};
     return tg.name || tg.brand || (tg["addr:street"] && tg["addr:housenumber"] ? tg["addr:street"] + " " + tg["addr:housenumber"] : "") || "";
+  }
+
+  // ---------- overlays (maps wave 8B, overlays-core.js) ----------
+  // Device-local choice; changes are quest answers (way_lit, way_surface,
+  // housenumber, sidewalk) and upload with them.
+  var OV_KEY = "oros-maps-overlay";
+  var ovId = "", ovEls = {}, ovBox = null, ovAt = 0, ovFor = "", ovBusy = false, ovFailed = false;
+  var ovLayer = L.layerGroup();
+  var ovRenderer = null;
+  function ovRend() {
+    if (!ovRenderer) { try { ovRenderer = L.canvas({ padding: 0.3, tolerance: 8 }); } catch (e) { ovRenderer = null; } }
+    return ovRenderer;
+  }
+  function setOverlay(id) {
+    id = V && V.BY_ID[id] ? id : "";
+    if (id === ovId) return;
+    ovId = id;
+    ovEls = {}; ovBox = null; ovFor = "";
+    try { if (id) localStorage.setItem(OV_KEY, id); else localStorage.removeItem(OV_KEY); } catch (e) {}
+    if (route.v === "ovl") route = { v: "list" };
+    paint();
+    loadEls(false);
+    render();
+  }
+  // Overlay ways as the user sees them: server tags + pending answers.
+  function viewOv() {
+    var out = {}, srv = A.server();
+    Object.keys(ovEls).forEach(function (k) { out[k] = ovEls[k]; });
+    answers().forEach(function (a) {
+      if (a.srv !== srv) return;
+      var k = a.t + a.oid, e = out[k];
+      if (!e) return;
+      out[k] = { t: e.t, id: e.id, lat: e.lat, lon: e.lon, ts: e.ts, geom: e.geom, tags: P.applySet(e.tags, a.set) };
+    });
+    return out;
+  }
+  function loadOv(force) {
+    var ov = V && V.BY_ID[ovId];
+    if (!ov) return;
+    if (map.getZoom() < ov.zoom) { render(); return; }
+    var b = map.getBounds();
+    if (!force && ovFor === ovId && ovBox && ovBox.contains(b) && Date.now() - ovAt < FRESH_MS) return;
+    if (ovBusy || !online()) { render(); return; }
+    var bb = b.pad(0.2), want = ovId;
+    ovBusy = true; ovFailed = false;
+    render();
+    fetch(OVERPASS, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(V.query(want, bb.getSouth(), bb.getWest(), bb.getNorth(), bb.getEast()))
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(function (j) {
+      ovBusy = false;
+      if (want !== ovId) { loadOv(false); return; }
+      ovBox = bb; ovAt = Date.now(); ovFor = want;
+      var next = {};
+      V.parse(j, want).forEach(function (x) { next[x.t + x.id] = x; });
+      ovEls = next;
+      paint();
+      render();
+    }, function () {
+      ovBusy = false; ovFailed = true;
+      render();
+    });
+  }
+  function paintOv() {
+    ovLayer.clearLayers();
+    var ov = V && V.BY_ID[ovId];
+    if (!modeOn || !ov || map.getZoom() < ov.zoom) return;
+    var v = viewOv(), sel = route.v === "ovl" ? route.key : "", rend = ovRend();
+    Object.keys(v).forEach(function (k) {
+      var e = v[k], st = ov.style(e.tags || {}), on = k === sel;
+      var opt = { color: st.c, weight: on ? 9 : (ov.kind === "area" ? 2 : 6), opacity: on ? 1 : 0.9,
+        dashArray: st.dash ? "8 7" : null, lineCap: st.dash ? "butt" : "round", renderer: rend || undefined, interactive: true };
+      var shape;
+      if (ov.kind === "area") {
+        opt.fillColor = st.c; opt.fillOpacity = on ? 0.6 : 0.35;
+        shape = L.polygon(e.geom, opt);
+      } else shape = L.polyline(e.geom, opt);
+      shape.on("click", function (ev) { if (ev && ev.originalEvent) L.DomEvent.stop(ev.originalEvent); showOv(k); });
+      ovLayer.addLayer(shape);
+    });
+    if (sel && v[sel] && ov.arrows) {
+      V.arrows(v[sel].geom, 40).forEach(function (a) {
+        var h = el("span", "", "➤");
+        h.style.transform = "rotate(" + (a.deg - 90) + "deg)";
+        ovLayer.addLayer(L.marker([a.lat, a.lon], { icon: L.divIcon({ className: "ovl-arrow", html: h, iconSize: [22, 22], iconAnchor: [11, 11] }), interactive: false, keyboard: false }));
+      });
+    }
+  }
+  function ovPicker() {
+    var lab = el("label", "qst-ovl");
+    lab.appendChild(el("span", "", t("ovl")));
+    var s = el("select", "osm-in qst-ovl-sel");
+    s.setAttribute("aria-label", t("ovl"));
+    var o0 = el("option", "", t("ovl.off")); o0.value = ""; s.appendChild(o0);
+    V.OVERLAYS.forEach(function (ov) {
+      var op = el("option", "", ov.icon + " " + V.text(ov, "title", LANG)); op.value = ov.id; op.selected = ov.id === ovId; s.appendChild(op);
+    });
+    s.addEventListener("change", function () { setOverlay(s.value); });
+    lab.appendChild(s);
+    return lab;
+  }
+  function ovListBody(body) {
+    var ov = V.BY_ID[ovId];
+    var lg = el("ul", "ovl-legend");
+    ov.legend.forEach(function (x) {
+      var li = el("li", "");
+      var sw = el("i", x[0] === "miss" ? "dash" : "");
+      sw.style.background = V.legendColor(x[0]);
+      if (x[0] === "miss") sw.style.borderColor = V.legendColor(x[0]);
+      sw.setAttribute("aria-hidden", "true");
+      li.appendChild(sw);
+      li.appendChild(el("span", "", LANG === "el" ? x[2] : x[1]));
+      lg.appendChild(li);
+    });
+    body.appendChild(lg);
+    if (map.getZoom() < ov.zoom) {
+      body.appendChild(el("p", "osm-hint", t("ovl.zoom")));
+      var zr = el("div", "osm-actions");
+      zr.appendChild(button(t("zoomgo"), "osm-btn", function () { map.setZoom(ov.zoom); }));
+      body.appendChild(zr);
+      return;
+    }
+    if (ovBusy) body.appendChild(el("p", "osm-hint", t("ovl.loading")));
+    else if (ovFailed) body.appendChild(el("p", "osm-hint", t("loadfail")));
+    else {
+      var v = viewOv(), ks = Object.keys(v), miss = 0;
+      ks.forEach(function (k) { if (!ov.value(v[k].tags || {})) miss++; });
+      body.appendChild(el("p", "osm-hint", t("ovl.count", { n: ks.length, m: miss })));
+    }
+    body.appendChild(el("p", "osm-small", t(ov.kind === "area" ? "ovl.hint.area" : "ovl.hint.line") + " " + t("ovl.pins")));
+  }
+  function showOv(key) {
+    if (!modeOn) setMode(true);
+    go({ v: "ovl", key: key });
+    paintOv();
+  }
+  function renderOvl() {
+    var ov = V && V.BY_ID[ovId], e = viewOv()[route.key];
+    if (!ov || !e) return false;
+    var tg = e.tags || {};
+    panel.textContent = "";
+    panel.appendChild(header(ov.icon + " " + V.text(ov, "title", LANG), function () { go({ v: "list" }); paintOv(); }));
+    var body = el("div", "osm-body qst-body");
+    var nm = nameOf(e);
+    body.appendChild(el("p", "qst-q", V.text(ov, "q", LANG).split("{name}").join(nm || t(ov.kind === "area" ? "unnamed.b" : "unnamed.way"))));
+    var cur = ov.value(tg);
+    // the current value in words when one of the choices matches it
+    var curOp = cur && !ov.text ? ov.options(tg).filter(function (op) { return !V.answer(ov.id, e, op.v); })[0] : null;
+    body.appendChild(el("p", "osm-small ovl-now", t("ovl.now", { v: curOp ? Q.optText(curOp, LANG) : cur || t("ovl.unknown") })));
+    if (ov.text) {
+      var inp = el("input", "osm-in");
+      inp.setAttribute("aria-label", V.text(ov, "title", LANG));
+      inp.maxLength = 20; inp.value = tg["addr:housenumber"] || ""; inp.autocapitalize = "off";
+      body.appendChild(inp);
+      var ri = el("div", "osm-actions");
+      ri.appendChild(button(t("text.save"), "osm-btn primary", function () { ovAnswer(e, ov, inp.value); }));
+      var none = Q.BY_ID[ov.qid] && Q.BY_ID[ov.qid].none;
+      if (none) ri.appendChild(button(Q.optText(none, LANG), "osm-btn", function () { ovAnswer(e, ov, "none"); }));
+      body.appendChild(ri);
+      inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") ovAnswer(e, ov, inp.value); });
+    } else {
+      if (ov.arrows) body.appendChild(el("p", "osm-hint", t("ovl.arrows")));
+      var grid = el("div", "qst-opts");
+      ov.options(tg).forEach(function (op) {
+        var on = !!cur && !V.answer(ov.id, e, op.v);
+        grid.appendChild(button(Q.optText(op, LANG), "osm-btn qst-opt" + (on ? " on" : ""), function () { ovAnswer(e, ov, op.v); }));
+      });
+      body.appendChild(grid);
+    }
+    var rf = el("div", "osm-actions qst-foot");
+    rf.appendChild(button(t("back"), "osm-btn", function () { go({ v: "list" }); paintOv(); }));
+    body.appendChild(rf);
+    panel.appendChild(body);
+    return true;
+  }
+  function ovAnswer(e, ov, value) {
+    var r = V.answer(ov.id, e, value);
+    if (!r) {
+      // the same value again is fine, anything else is a bad answer
+      var ok = ov.text ? String(value || "").trim() !== "" && String(value).trim() === ((e.tags || {})["addr:housenumber"] || "")
+        : ov.options(e.tags || {}).some(function (op) { return op.v === value; });
+      toast(t(ok ? "ovl.same" : "bad"));
+      if (ok) { go({ v: "list" }); paintOv(); }
+      return;
+    }
+    var k = e.t + e.id, base = ovEls[k] || e, was = {};
+    Object.keys(r.set).forEach(function (x) { was[x] = base.tags[x] === undefined ? "" : base.tags[x]; });
+    var a = { id: newId(), m: 0, dev: A.deviceId(), srv: A.server(), q: ov.qid, t: e.t, oid: e.id,
+      lat: e.lat, lon: e.lon, set: r.set, was: was, name: nameOf(e) };
+    stamp(a);
+    data.answers[a.id] = a;
+    if (!saveData()) return;
+    toast(t("saved"));
+    go({ v: "list" });
+    paint();
   }
 
   // ---------- panel ----------
@@ -345,6 +565,7 @@
   function render() {
     if (!panelOpen()) return;
     if (route.v === "quest" && renderQuest()) { setH(); return; }
+    if (route.v === "ovl" && renderOvl()) { setH(); return; }
     if (route.v === "settings") renderSettings();
     else if (route.v === "badges") renderBadges();
     else { route = { v: "list" }; renderList(); }
@@ -364,6 +585,8 @@
     row.appendChild(button(t("settings"), "osm-btn", function () { go({ v: "settings" }); }));
     body.appendChild(row);
     if (stats.team.size > 1) body.appendChild(el("p", "osm-small qst-team-on", t("team.on", { n: stats.team.size, l: letter(stats.team.idx) })));
+    if (V) body.appendChild(ovPicker());
+    if (ovId) ovListBody(body);
     var pend = answers();
     if (pend.length) {
       body.appendChild(el("p", "osm-hint", t("pending", { n: pend.length })));
@@ -384,6 +607,7 @@
       });
       body.appendChild(ul);
     }
+    if (ovId) { panel.appendChild(body); return; }
     if (map.getZoom() < MIN_ZOOM) {
       body.appendChild(el("p", "osm-hint", t("zoomin")));
       var zr = el("div", "osm-actions");
@@ -735,6 +959,7 @@
             items.forEach(function (it) {
               var k = it.type.charAt(0) + it.id;
               if (els[k]) els[k] = { t: els[k].t, id: els[k].id, lat: els[k].lat, lon: els[k].lon, ts: Date.now(), tags: it.tags };
+              if (ovEls[k]) ovEls[k] = { t: "w", id: ovEls[k].id, lat: ovEls[k].lat, lon: ovEls[k].lon, ts: 0, tags: it.tags, geom: ovEls[k].geom };
             });
             used.forEach(function (a) { dropAnswer(a.id); });
             sent += used.length;
@@ -783,6 +1008,7 @@
     if (modeBtn) { modeBtn.classList.toggle("on", modeOn); modeBtn.setAttribute("aria-pressed", modeOn ? "true" : "false"); }
     if (modeOn) {
       layer.addTo(map);
+      ovLayer.addTo(map);
       panel.hidden = false;
       route = { v: "list" };
       paint();
@@ -790,6 +1016,7 @@
       render();
     } else {
       map.removeLayer(layer);
+      map.removeLayer(ovLayer);
       panel.hidden = true;
       var n = mine().length;
       if (was && n) toast(t("leave", { n: n }));
@@ -807,6 +1034,7 @@
   function boot() {
     loadData();
     loadStats();
+    try { var ov0 = localStorage.getItem(OV_KEY) || ""; if (V && V.BY_ID[ov0]) ovId = ov0; } catch (e) {}
     panel = el("aside", "osm-sheet");
     panel.id = "qst-panel";
     panel.hidden = true;
@@ -838,7 +1066,10 @@
     stats: function () { return Q.normStats(stats); },
     els: function () { return els; },
     open: function () { return open().map(function (x) { return { key: x.el.t + x.el.id, q: x.q.id, mode: x.mode }; }); },
-    setMode: setMode, show: show, upload: upload
+    setMode: setMode, show: show, upload: upload,
+    overlay: function (id) { if (id !== undefined) setOverlay(id); return ovId; },
+    ovEls: function () { return ovEls; },
+    showOv: showOv
   };
   boot();
 })();
