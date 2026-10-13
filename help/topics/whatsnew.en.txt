@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.59.02
+- Help: the Privacy page now lists every online service added lately (OpenStreetMap editing, WooCommerce, timologisi.online, MailerLite, Mailchimp, Brevo), and the Open files page includes Maps routes and places (.gpx, .kml, .geojson).
+
 ## Version 1.59.01
 - Maps: OpenStreetMap sign-in is switched on. Sign in under Mapping to send notes, place changes, quest answers and GPS traces with your own OpenStreetMap account.
 
