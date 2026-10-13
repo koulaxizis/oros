@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.78.00
+- Maps: Discover (the compass button). See what's around: restaurants, cafés, pharmacies, ATMs, fuel and more, each with whether it's open now and when it closes, and an `Open now` filter. Wikipedia articles about places near you, and open street-level photos from Panoramax. Long-press › `What's nearby` for any point.
+
 ## Version 1.77.00
 - New app: Email Signature (Business). Make a professional email signature once and use it in Gmail, Outlook, Thunderbird, Apple Mail, your phone or orOS Mail. Fill it in from your business profile in Invoices, a contact or your Atelier brand kit; pick one of six layouts; add a logo, photo, social profiles, a button, a dated banner, a QR code with your contact card and legal text. See it in a light or dark mail app, copy it or save it as .html or .txt, follow the steps for your mail app, or make signatures for a whole team from a CSV table.
 - Mail: `Use in orOS Mail` in Email Signature asks which account gets the signature; nothing changes until you press Use.

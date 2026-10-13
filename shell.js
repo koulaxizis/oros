@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.77.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.78.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4950,6 +4950,12 @@
         { name: "Terrain Tiles (AWS)", url: "https://registry.opendata.aws/terrain-tiles/",
           by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { en: "Open data, attribution per source", el: "Ανοιχτά δεδομένα, αναφορά ανά πηγή" },
           en: "Elevation profile in Plan a track (Maps)", el: "Προφίλ υψομέτρου στη Σχεδίαση διαδρομής (Χάρτες)" },
+        { name: "Wikipedia", url: "https://www.wikipedia.org/",
+          by: "Wikimedia Foundation, Wikipedia contributors", lic: "CC BY-SA 4.0 (text)",
+          en: "Articles near you in Discover (Maps)", el: "Άρθρα κοντά σου στην Ανακάλυψη (Χάρτες)" },
+        { name: "Panoramax", url: "https://panoramax.fr/",
+          by: "Panoramax (IGN, OpenStreetMap France and contributors)", lic: { en: "Each photo's own licence (usually CC BY-SA 4.0)", el: "Η άδεια κάθε φωτογραφίας (συνήθως CC BY-SA 4.0)" },
+          en: "Open street-level photos in Discover (Maps)", el: "Ανοιχτές φωτογραφίες δρόμου στην Ανακάλυψη (Χάρτες)" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
           en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
