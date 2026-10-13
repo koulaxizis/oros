@@ -5925,3 +5925,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-13 — Studio: NULL JSFX 2.1, 14 new effects (#312) — 1.83.00
 - studio/nullfx/fx: synced from koulaxizis/null-jsfx 2.1 by the new sync-nullfx workflow (89 effects, 14 new); sw.js precaches the new effect files so they work offline.
   - Tests: full suite plus Studio effects E2E.
+
+### 2026-10-13 — Fix: phone bridge accepts the browser's port whatever origin it reports (#313) — 1.83.01
+- phone.js: the port the Android app hands over arrives from the browser itself (no source window), but browsers report different origins for it, so a source-less port is now accepted from any origin. Messages from frames or other windows (which always have a source) are still ignored; a port posted by this window to itself must carry this origin. The state reply includes the reported origin for diagnostics.
+- android/: the bridge diagnostics trail is kept across app processes, with clock times.
+  - Tests: full suite; Android build in CI. Real-phone test by Chris after this merge.
