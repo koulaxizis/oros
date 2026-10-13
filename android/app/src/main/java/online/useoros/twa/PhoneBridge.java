@@ -56,45 +56,27 @@ public class PhoneBridge {
     @Nullable private CustomTabsSession session;
     private boolean validated;
     private int retries;
-    // Diagnostics: what happened since the last channel request.
-    private int sent, lastResult = 99, fromPage;
     private boolean channelReady;
 
     PhoneBridge(Context context) {
         app = context.getApplicationContext();
     }
 
-    /** Diagnostic builds (workflow input "diag") collect the bridge
-     *  steps and show them in one notification, so a failing step can
-     *  be seen on a real phone. */
-    private void diag(String step) {
+    static final String DIAG_KEY = "diag-trail";
+    private final long started = System.currentTimeMillis();
+
+    /** Diagnostic builds (workflow input "diag") save each bridge step
+     *  with its time since app start; DiagActivity shows them. Toasts
+     *  and notifications proved unreliable for this (Android drops
+     *  queued toasts and cuts them to two lines). */
+    synchronized void diag(String step) {
         Log.d(TAG, step);
         if (!BuildConfig.DIAG) return;
-        // Android drops toasts beyond a few queued per app, so the steps
-        // go into one notification, updated as each step happens.
-        main.post(() -> {
-            if (trail.length() < 900) trail.append(trail.length() > 0 ? " | " : "").append(step);
-            showSummary();
-        });
-    }
-
-    private final StringBuilder trail = new StringBuilder();
-    private void showSummary() {
-        String text = trail + " | from page " + fromPage;
-        // A notification, not a toast: toasts are cut to two lines.
-        if (android.os.Build.VERSION.SDK_INT < 26) {
-            android.widget.Toast.makeText(app, text, android.widget.Toast.LENGTH_LONG).show();
-            return;
-        }
-        android.app.NotificationManager nm = app.getSystemService(android.app.NotificationManager.class);
-        nm.createNotificationChannel(new android.app.NotificationChannel("oros-diag", "orOS diagnostics",
-                android.app.NotificationManager.IMPORTANCE_DEFAULT));
-        nm.notify(4711, new android.app.Notification.Builder(app, "oros-diag")
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("orOS bridge")
-                .setContentText(text)
-                .setStyle(new android.app.Notification.BigTextStyle().bigText(text))
-                .build());
+        String line = ((System.currentTimeMillis() - started) / 100) / 10.0 + "s " + step;
+        SharedPreferences sp = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String old = sp.getString(DIAG_KEY, "");
+        if (old.length() > 6000) old = old.substring(old.length() - 6000);
+        sp.edit().putString(DIAG_KEY, old + line + "\n").commit();
     }
 
     CustomTabsCallback callback() {
@@ -168,9 +150,6 @@ public class PhoneBridge {
     private void requestChannel() {
         if (session == null) return;
         channelReady = false;
-        sent = 0;
-        fromPage = 0;
-        lastResult = 99;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
 
         diag("channel requested: " + ok);
@@ -217,7 +196,6 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
-            main.post(() -> { fromPage++; if (BuildConfig.DIAG) showSummary(); });
             diag("message from page, " + message.length() + " chars");
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
@@ -233,8 +211,6 @@ public class PhoneBridge {
         main.post(() -> {
             if (session == null || !channelReady) return;
             int r = session.postMessage(msg.toString(), null);
-            sent++;
-            lastResult = r;
             diag("postMessage " + msg.optString("t") + ": " + r);
         });
     }
