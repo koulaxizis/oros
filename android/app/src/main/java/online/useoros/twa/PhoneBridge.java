@@ -64,13 +64,14 @@ public class PhoneBridge {
         app = context.getApplicationContext();
     }
 
-    /** Diagnostic builds (workflow input "diag") show each bridge step
-     *  as a toast, so a failing step can be seen on a real phone. */
+    /** Diagnostic builds (workflow input "diag") collect the bridge
+     *  steps and show them in one notification, so a failing step can
+     *  be seen on a real phone. */
     private void diag(String step) {
         Log.d(TAG, step);
         if (!BuildConfig.DIAG) return;
-        // Android shows at most a few queued toasts per app, so steps
-        // are collected and shown as one summary (see summary()).
+        // Android drops toasts beyond a few queued per app, so the steps
+        // are shown together, 6 s after the last one (showSummary()).
         main.post(() -> {
             if (trail.length() < 900) trail.append(trail.length() > 0 ? " | " : "").append(step);
             main.removeCallbacks(summary);
@@ -79,7 +80,9 @@ public class PhoneBridge {
     }
 
     private final StringBuilder trail = new StringBuilder();
-    private final Runnable summary = () -> {
+    private final Runnable summary = this::showSummary;
+
+    private void showSummary() {
         String text = "orOS bridge: " + trail + " | from page " + fromPage;
         trail.setLength(0);
         // A notification, not a toast: toasts are cut to two lines.
@@ -96,7 +99,7 @@ public class PhoneBridge {
                 .setContentText(text)
                 .setStyle(new android.app.Notification.BigTextStyle().bigText(text))
                 .build());
-    };
+    }
 
     CustomTabsCallback callback() {
         return callback;
