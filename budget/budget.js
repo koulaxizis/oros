@@ -1597,6 +1597,38 @@
     return typeof n === "string" && n && n !== "app." + id ? n : id;
   }
 
+  // Entries from Stripe (budget/payments.js): one write; Undo
+  // deletes them again (tombstones, like a delete).
+  var PAY = window.OrosBudgetPay || null;
+  function addEntries(rows, doneText) {
+    var ids = [];
+    rows.forEach(function (r) {
+      if (findIn(data.tx, r.id)) return;
+      data.tx.push(Object.assign({}, r, { m: stamp(data.tombs["tx:" + r.id] || 0) }));
+      ids.push(r.id);
+    });
+    if (!ids.length) return;
+    commit();
+    renderAll();
+    undoToast(doneText, function () {
+      data.tx = data.tx.filter(function (y) { return ids.indexOf(y.id) < 0; });
+      ids.forEach(function (id) { tombstone("tx", id); });
+      commit();
+      renderAll();
+    });
+  }
+  function initPay() {
+    if (!PAY) return;
+    PAY.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      catSelect: catSelect, accSelect: accSelect, hasAccounts: function () { return data.acc.length > 0; },
+      daysAgo: function (n) { return addDays(today, -n); },
+      data: function () { return { tx: data.tx, tombs: data.tombs, cur: cur() }; },
+      addEntries: addEntries
+    });
+  }
+
   function deleteTx(id) {
     var x = findIn(data.tx, id);
     if (!x) return;
@@ -2579,7 +2611,7 @@
     var onKey = function (e) {
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeMenu(); btn.focus(); return; }
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        var items = [].slice.call(menu.querySelectorAll("button"));
+        var items = [].slice.call(menu.querySelectorAll("button:not([hidden])"));
         var i = items.indexOf(document.activeElement);
         i = (i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length;
         items[i].focus();
@@ -2749,7 +2781,10 @@
       qt = setTimeout(function () { query = $("q").value.trim().toLowerCase(); renderList(); }, 150);
     });
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
-    var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog };
+    var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
+                 stripe: function () { if (PAY) PAY.open(); } };
+    var payBtn = document.querySelector('#menu [data-act="stripe"]');
+    if (payBtn) { payBtn.hidden = !(PAY && PAY.has()); if (PAY) payBtn.textContent = PAY.label(); }
     [].forEach.call(document.querySelectorAll("#menu [data-act]"), function (b) {
       b.addEventListener("click", function () { closeMenu(); acts[b.getAttribute("data-act")](); });
     });
@@ -2842,6 +2877,7 @@
   function boot() {
     load();
     loadPrefs();
+    initPay();
     applyI18n();
     wire();
     registerSync();
