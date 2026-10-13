@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.55.00
+- Maps: smarter routes and sharing. See other routes and pick one, your arrival time, the lanes to take before a turn, and avoid tolls, motorways or ferries by car. Share a place or a route as a link, open it in another maps app, or keep a route in My tracks.
+
 ## Version 1.54.00
 - Time › Stage: other devices. Pair a phone as a remote control, a tablet or TV as the stage screen, or give the moderator the clock and the rundown so they can ask you for more time. Each device joins with a 6-digit code or a QR code, and you allow it on the computer. Paired devices come back by themselves after a reload.
 

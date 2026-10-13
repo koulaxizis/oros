@@ -1419,3 +1419,145 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+/* ---------- OSM upgrade wave 6: route extras, lanes, sharing ---------- */
+.route-alt { cursor: pointer; }
+#route-extras {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#route-extras:empty { display: none; }
+#route-extras-eta { font-size: 13px; font-weight: 700; color: var(--accent); }
+.rx-h {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+.rx-alts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rx-alt {
+  flex: 1 1 90px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rx-alt b { font-size: 13px; }
+.rx-alt span { font-size: 11.5px; color: var(--text-dim); }
+.rx-alt.on { border-color: var(--accent); background: var(--accent-soft); }
+.rx-alt.on b { color: var(--accent); }
+.rx-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rx-avoid { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+.rx-avoid select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 36px;
+}
+.rx-share {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Lanes sit right under the maneuver card (auto margin beats the
+   HUD's space-between). */
+#nav-lanes {
+  pointer-events: none;
+  align-self: flex-start;
+  margin: 6px 12px auto 12px;
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  background: var(--bar-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px var(--shadow);
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+}
+#nav-lanes[hidden] { display: none; }
+#nav-lanes .lane {
+  display: inline-flex;
+  padding: 2px 3px;
+  color: var(--text-dim);
+  opacity: 0.45;
+  border-right: 1px dashed var(--border);
+}
+#nav-lanes .lane:last-child { border-right: 0; }
+#nav-lanes .lane.on { color: var(--accent); opacity: 1; }
+
+.share-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  width: min(320px, calc(100vw - 32px));
+  box-shadow: 0 12px 40px var(--shadow);
+}
+.share-dlg::backdrop { background: rgba(0, 0, 0, 0.35); }
+.share-dlg h3 { font-size: 14px; color: var(--accent); margin: 0 0 4px; }
+.share-name { font-size: 12.5px; color: var(--text-dim); margin-bottom: 10px; overflow-wrap: anywhere; }
+.share-link {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  min-height: 38px;
+  margin-bottom: 10px;
+}
+.share-acts { display: flex; flex-direction: column; gap: 6px; }
+.share-acts > button,
+.share-acts > a,
+.share-close {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.share-acts > button:hover,
+.share-acts > a:hover { border-color: var(--accent); color: var(--accent); }
+.share-close { width: 100%; justify-content: center; margin-top: 10px; color: var(--text-dim); }

@@ -1071,6 +1071,7 @@ var PRECACHE_URLS = [
   "maps/index.html",
   "maps/search.js",
   "maps/maps.css",
+  "maps/route-core.js",
   "maps/maps.js",
   "maps/osm.js",
   "maps/osm-api.js",
