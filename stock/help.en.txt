@@ -88,6 +88,14 @@ If a device was offline and recorded a sale inside the period before it synced, 
 ## Suppliers
 The `Suppliers` tab keeps names, contact person, phone, e-mail, VAT number and delivery time. `From Contacts` copies a person or company from [Contacts](app:contacts) into a new supplier.
 
+## The shop (WooCommerce)
+Connect your WooCommerce shop once in Settings › [Connected services](app:settings), then open `Shop (WooCommerce)` from `New` or from Settings here.
+- `Products`: `Get products from the shop` reads every product and variation. `Import into Stock` adds the new ones and updates name, SKU, sale price and category of those you already have (matched by the shop product, then SKU, then name). Tick the box under it to also set the quantities here to the shop's, as one stock count.
+- `Quantities that differ` lists the products whose stock the shop manages and whose quantity is different here. `Send to shop` sets the shop's quantity to yours; `Take the shop's` counts yours at the shop's.
+- `Orders`: the shop's orders of the last 30 days. For each one: `Record the sale` opens a sale with its lines (it shows `Sale recorded` once saved, so you don't record it twice), `Invoice` opens a new invoice in [Invoices](app:invoices), `Customer in CRM` logs it on the customer in [CRM](app:crm), `Add to Budget` logs the income in [Budget](app:budget), and `Mark completed` completes the order in the shop.
+
+Nothing is sent to the shop without a button, and nothing is saved here or in another app until you save it there.
+
 ## Import and export
 In Settings:
 - `Import products (CSV)` reads your own export, your e-shop's product export (WooCommerce works) or any sheet whose first row names the columns, such as Name, SKU, Price, Stock. Existing products are matched by SKU, then by name. Tick `Set the quantities from the file` to save the file's quantities as one stock count.
@@ -109,4 +117,5 @@ Products, movements, suppliers, categories, units and settings sync between your
 - Lots are counted for the whole business, not per warehouse; the counter always sells the first lot to expire.
 - Camera scanning needs a browser that reads barcodes (Chrome on Android); elsewhere use a scanner that types.
 - A product with movements can't be deleted, only archived.
+- The shop: WooCommerce only for now. Orders are read live (the last 30 days, up to 50), so they need a connection. The shop keeps whole units: a quantity with decimals is rounded when sent.
 - After closing a period, the Movements tab and Reports show only what came after it; the older history is in the archive file.

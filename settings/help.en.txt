@@ -3,7 +3,7 @@ Settings gathers the options of orOS itself in one place: how it looks, notifica
 
 ## Getting started
 1. Open the menu and choose `Settings`, at the bottom under the apps. You'll also find it in the `System` category.
-2. Pick a section on the left: `Appearance`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search`, `Opening files` or `System`.
+2. Pick a section on the left: `Appearance`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search`, `Opening files`, `Connected services` or `System`.
 3. Change what you like. Every change applies at once; there is no save button.
 
 On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
@@ -18,6 +18,7 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 - `Backups`: `Automatic backup`, `Backup folder`, `Back up now`, `Export backup file` and `Import backup file`. See [Backup and restore](help:t/backup).
 - `Language & search`: the `Language` of orOS and which apps the menu search looks in.
 - `Opening files`: which orOS app opens which file type from your device (`Open with`), the choice for types more than one app opens, and how to make orOS the default on Windows, Linux and Mac.
+- `Connected services`: platforms orOS works with, a WooCommerce shop for now. `Connect a service` asks for the shop address and the two REST API keys (WooCommerce › Settings › Advanced › REST API › Add key, Read/Write). Each account shows its `Route` (straight from this browser, or through the orOS relay when the shop doesn't answer browsers), `Check connection`, `Enter the keys`, `Rename`, `Use these keys on all my devices` and `Disconnect`. The shop is used in [Stock](app:stock).
 - `System`: the `orOS version`, `Check for updates`, `Install orOS as an app` (when your browser offers it), `Keyboard shortcuts`, links to [Device info](app:device) and more, and `Factory reset`.
 
 ### Other ways in
@@ -26,6 +27,9 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 
 ## Sync and backup
 Settings stores nothing of its own. Every option is saved by orOS in the same place as before, so your choices sync and back up exactly as they always did. Theme, colour, wallpaper, the apps the menu shows, screen pet, notifications, sync interval, automatic backup and language go to all your devices. The backup folder, your remembered passphrase, the menu search choices and the Dock stay on this device.
+
+### Connected services and your keys
+The keys of a connected service never go into your synced data in clear. Each device keeps them sealed with its own key; a new device asks for them once. With `Use these keys on all my devices` on, they also travel inside your encrypted sync, sealed with your sync passphrase. The account itself (name, address) syncs to all your devices. `Disconnect` removes it and its keys everywhere.
 
 ## Keyboard shortcuts
 - [[Esc]] on a phone-sized screen goes back from a section to the list.
