@@ -5396,3 +5396,16 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Maps › My tracks › a track › `Edit`: two sliders select a range (green / red markers, selection drawn thick over the dashed track); Keep only the selection (trim), Remove the selection (cut, leaves a segment gap), Split at the start (saves both halves after a confirm), Simplify (Douglas-Peucker, 2–50 m, shows the point count first), Join with another track, Undo, Save changes / Cancel (asks). Unsaved edits wait when the panel closes.
 - `Upload to OSM`: GPS traces upload (`/api/0.6/gpx/create`, multipart; `maps/osm-api.js` request() now accepts FormData without forcing a Content-Type), description / tags / visibility (private default, hint per choice), warning when the track was uploaded before, refusal with an explanation when the points have no times. The trace page URL goes into the GPX file (`<metadata><link>`; `tracks-core.js` 1.1.0 TRACE_RE / traceUrl / timedPoints) and the track view shows `View on OpenStreetMap`.
 - Help EN/EL (Edit a track, Upload to OpenStreetMap, privacy line), tests/maps-tracks.test.js +4 tests, E2E /mnt/project-files/maps/e2e/tracks-edit-e2e.js. Not tested: the real OSM GPS traces upload (OAuth client ids still pending), Safari.
+
+### 2026-10-13 — Time › Stage, wave 1: stage timer for conferences (#266) — 1.49.00
+- Time: Stage tab (wave 1 of the plan Chris approved 2026-10-13 08:29, /mnt/project-files/time/stage-timer-plan.md).
+  - time/stage-core.js (UMD, OrosStageCore): data model, merge, live timer (phases idle/ok/warn/red/over/clock), schedule (planned vs expected, delta), run-state transitions. time/stage.js: the tab, the stage view, dialogs, keyboard, slice registration.
+  - Events (name, date, start, yellow/red thresholds, flash) with a rundown of items (title, speaker, countdown / count up / until a clock time / time of day, length, per-item thresholds, auto-start next, private notes). Order by fractional `pos`.
+  - Controls: start/pause/resume, next (starts the next item if the clock was running), previous, ±1 min (long press ±5), restart item, start from any item, reorder, duplicate event.
+  - Overtime counts on in red with a minus sign; optional flash. Schedule line: planned and expected end of the day, minutes behind/ahead; each row shows planned and (coloured) expected start.
+  - Stage view: full screen (the app frame), black background whatever the theme, title, speaker, big clock, progress bar, next item, time of day, black screen, auto-hiding tools.
+  - Keys while the Stage tab or view is on: Space, →/PageDown, ←/PageUp, +/−, B (or "."), F, Esc. Clickers send PageUp/PageDown.
+  - Sounds at yellow, red and zero: device pref, off by default; only while Time is open (also auto-advance).
+  - New sync slice `stage` (key `oros-time-stage`); the `time` slice, BR-TS-POMO and alarms are untouched. Deep link `__orosOpenTime("stage")`.
+  - tests/time-stage.test.js (15 tests incl. a 2000-round merge fuzz: symmetric, associative, idempotent, canonical; two-device round trip through the real engine).
+  - Not tested: real presenter clickers, phones, Safari.
