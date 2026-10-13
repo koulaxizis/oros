@@ -1394,6 +1394,11 @@
   }
   function importText(txt, fileName) {
     var tr = T.parseAny(txt, fileName);
+    // Only waypoints (e.g. OsmAnd favourites): saved places, wave 10C.
+    if (tr && !tr.segs.length && tr.wpts.length && window.__orosMapsFav) {
+      window.__orosMapsFav.importWpts(tr, fileName);
+      return Promise.resolve(null);
+    }
     if (!tr || !tr.segs.length) { toast(t("import.bad")); return Promise.resolve(null); }
     if (!tr.name) tr.name = String(fileName || "").replace(/\.[a-z0-9]+$/i, "").slice(0, T.LIM.name);
     return addTrack(tr, { name: tr.name, src: "import" }).catch(function () { toast(t("savefail")); return null; });

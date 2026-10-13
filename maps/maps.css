@@ -1817,3 +1817,45 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .pl-prof-area { fill: rgba(43, 138, 62, 0.25); stroke: #2b8a3e; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .pl-name { width: 100%; }
 .osm-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* ---------- maps wave 10C: favourite groups (fav.js) ---------- */
+.fav-bar { display: flex; gap: 6px; padding: 8px 8px 2px; flex-shrink: 0; }
+.fav-bar .osm-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; }
+.place .p-grp {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; min-height: 28px; background: transparent; border: none;
+  border-radius: 6px; color: var(--text-dim); flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.place .p-grp:hover { color: var(--accent); background: var(--accent-soft); }
+.fav-head { display: flex; align-items: center; gap: 2px; margin: 8px 0 2px; border-top: 1px solid var(--border); padding-top: 6px; }
+.fav-head:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+.fav-head button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-width: 30px; min-height: 32px; background: transparent; border: none;
+  border-radius: 6px; color: var(--text-dim); font: inherit; cursor: pointer;
+}
+.fav-head button:hover { color: var(--accent); background: var(--accent-soft); }
+.fav-head .fav-fold { flex: 1; min-width: 0; justify-content: flex-start; padding: 0 6px; color: var(--text); font-size: 12.5px; font-weight: 700; }
+.fav-head .fav-fold svg { flex-shrink: 0; transition: transform 0.15s; }
+.fav-head.folded .fav-fold svg { transform: rotate(-90deg); }
+.fav-head-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.fav-head .fav-eye.off { color: var(--danger); }
+.fav-dot { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border); }
+.fav-dot-none { background: transparent; border: 2px dashed var(--text-dim); box-shadow: none; }
+.fav-count { color: var(--text-dim); font-size: 11.5px; font-weight: 600; flex-shrink: 0; margin-left: auto; }
+.fav-head .fav-count { margin-left: 4px; }
+.fav-opts { display: flex; flex-direction: column; gap: 4px; max-height: min(50vh, 360px); overflow-y: auto; }
+.fav-opt {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px;
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: transparent; color: var(--text); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer;
+}
+.fav-opt:hover { border-color: var(--accent); background: var(--accent-soft); }
+.fav-opt.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.fav-opt-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.fav-empty, .fav-found { font-size: 12.5px; color: var(--text-dim); margin: 2px 0 6px; }
+.fav-err, .fav-ask { font-size: 12.5px; color: var(--danger); margin-top: 8px; }
+.osm-btn.armed { border-color: var(--danger); color: var(--danger); }
+.pop-actions .pop-grp[hidden] { display: none; }
+@media (pointer: coarse) { .place .p-grp, .fav-head button { min-width: 40px; min-height: 40px; } }
