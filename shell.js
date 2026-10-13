@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.70.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.72.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1114,6 +1114,7 @@
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
+      tickSafe("parkCheckTick", parkCheckTickThrottled);   // Maps: parking reminder (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
@@ -1947,6 +1948,40 @@
       title: title,
       body: window.t("ts.forgot.body").replace("{d}", C.fmtDur(Date.now() - run.s)),
       deepLink: "system:open:timesheet"
+    });
+  }
+
+  // Maps — the parking reminder (maps/tools.js "I parked here").
+  // Device-local record { lat, lon, at, until, note } in
+  // oros-maps-parking: the car is where this device is. One notice
+  // per parking (key "park-<at>"); it comes with Maps closed too.
+  var parkLastTick = 0;
+  function parkCheckTickThrottled() {
+    var now = Date.now();
+    if (now - parkLastTick < 60000) return;
+    parkLastTick = now;
+    parkCheckTick();
+  }
+  function parkCheckTick() {
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem("oros-maps-parking") || "null"); } catch (e) { p = null; }
+    if (!p || typeof p !== "object") return;
+    var at = +p.at, until = +p.until;
+    if (!(at > 0) || !(until > at) || Date.now() < until) return;
+    var title = window.t("maps.park.title");
+    if (title === "maps.park.title") title = "Parking";
+    var note = typeof p.note === "string" ? p.note.slice(0, 120) : "";
+    var body = window.t("maps.park.body");
+    if (body === "maps.park.body") body = "Time to go back to the car.";
+    N.emit({
+      ns: "maps",
+      key: "park-" + Math.round(at),
+      type: "reminder",
+      title: title,
+      body: note ? body + " " + note : body,
+      deepLink: "maps:park"
     });
   }
 
@@ -4908,6 +4943,9 @@
         { name: "Esri World Imagery", url: "https://www.esri.com/",
           by: "Esri, Maxar, Earthstar Geographics", lic: { en: "Esri terms of use", el: "Όροι χρήσης της Esri" },
           en: "Satellite layer (Maps)", el: "Δορυφορικό στρώμα (Χάρτες)" },
+        { name: "OpenTopoMap", url: "https://opentopomap.org/",
+          by: "OpenTopoMap; data by OpenStreetMap contributors, SRTM", lic: "CC-BY-SA (style), ODbL (data)",
+          en: "Topo layer with contour lines (Maps)", el: "Τοπογραφικό στρώμα με ισοϋψείς (Χάρτες)" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
           en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
@@ -4925,7 +4963,7 @@
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
         { name: "Overpass API", url: "https://overpass-api.de/",
           by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Places and quests around you (Maps)", el: "Μέρη και ερωτήσεις γύρω σου (Χάρτες)" },
+          en: "Places and quests around you, speed limits while driving (Maps)", el: "Μέρη και ερωτήσεις γύρω σου, όρια ταχύτητας στην οδήγηση (Χάρτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
@@ -4998,6 +5036,9 @@
         { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
           by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
           en: "Connected services: import a repository's issues (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban)" },
+        { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
+          by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
+          en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

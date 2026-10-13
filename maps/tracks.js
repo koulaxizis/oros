@@ -1471,7 +1471,10 @@
     recLoad().then(function (saved) { if (saved && !rec) offerResume(saved); });
     var pending = null;
     try { pending = window.parent && window.parent.__orosTakeTarget ? window.parent.__orosTakeTarget("maps") : null; } catch (e) {}
-    if (pending) openTarget(pending);
+    // Not a track or file (e.g. the parking reminder's { park }):
+    // left for the module that knows it (tools.js loads later).
+    if (pending && (pending.openFile || pending.track)) openTarget(pending);
+    else if (pending) H.pendingTarget = pending;
   }
 
   window.__orosMapsTracks = {
