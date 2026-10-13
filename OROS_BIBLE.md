@@ -615,7 +615,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Weather | oros-weatherapp-data | merge-lite | 5/5 VERIFIED |
 | Mood | oros-mood-data | entry field LWW (fm) + cols + tombs | A67 audit 2026-10-07 (MO-1…MO-8) |
 | Time | oros-time-data | entity union + smtime | 5/5 VERIFIED |
-| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo); v1.2.0 at 1.54.00 (wave 3: paired devices: remote, stage display, moderator via remote-link.js) |
+| **Time › Stage** | oros-time-stage (own slice `stage`) | events (optional `stop`, omitted when empty) + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo); v1.2.0 at 1.54.00 (wave 3: paired devices: remote, stage display, moderator via remote-link.js); v1.3.0 at 1.56.00 (wave 4: import/export CSV + Calendar, report, hard stop, search, Today) |
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
 | Habits | oros-habits-data | habits/comps LWW | 5/5 VERIFIED |
@@ -2348,6 +2348,12 @@ Rebuild this in any session where code is delivered.
     - Typed text is capped and drawn as text.
   - **Clock.** The device computes the clock from the PC's start instant plus the measured offset, so a slow link never makes the stage clock jump.
   - **Logo and notes.** The logo stays on the PC (it does not fit a frame). Private notes are never sent.
+- **Wave 4 (1.56.00, plan complete):**
+  - **Import only adds.** An import or a quick add goes to the end of the open event and never replaces items, so a wrong file can be undone by deleting the new items. Every value is parsed as data and drawn as text.
+  - **Calendar gaps become breaks of a fixed length.** They are not "until" breaks, because the plan may land after other items at another hour.
+  - **The report is per device.** The actual times are the device-local run log of the computer that ran the clock. Nothing new is synced for it.
+  - **Prompter link dropped.** orOS has no teleprompter, so this item from the plan has no target.
+  - **Search and Today.** time → time/search.js. It reads oros-time-stage and finds Stage events and rundown items. Opening a hit goes to the Stage tab on that event and item. Today: time → ["stage-core.js", "today.js"]. Shows alarms later today, plus on an event's day the next Stage session at its expected start, and Stage events on the coming days at their start.
 
 ## Part X — Open items, audit queue, lessons
 
