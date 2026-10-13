@@ -201,6 +201,15 @@
             <button id="stg-add" type="button" class="mini" data-i18n-s="stg.add"></button>
           </div>
           <ol id="stg-list"></ol>
+          <div class="st-quick-row">
+            <span class="st-quick-l" data-i18n-t="st.quick"></span>
+            <div id="st-quick" class="quick-chips"></div>
+          </div>
+          <div class="stg-ctl">
+            <button id="st-import" type="button" class="btn" data-i18n-t="st.import"></button>
+            <button id="st-export" type="button" class="btn" data-i18n-t="st.export"></button>
+            <button id="st-report" type="button" class="btn" data-i18n-t="st.report"></button>
+          </div>
           <p class="stg-keys" data-i18n-s="stg.keys"></p>
         </div>
       </div>
@@ -254,6 +263,48 @@
       <button id="sv-close" type="button" class="btn" data-i18n-s="stg.close"></button>
     </div>
   </div>
+
+  <!-- Stage: import a rundown (time/stage-tools.js) -->
+  <dialog id="st-imp-dlg" class="stg-dlg" aria-labelledby="st-imp-h">
+    <h3 id="st-imp-h" data-i18n-t="st.imp.h"></h3>
+    <p class="st-hint" data-i18n-t="st.imp.into"></p>
+    <div class="st-imp-sec">
+      <b data-i18n-t="st.imp.csv"></b>
+      <p class="st-hint" data-i18n-t="st.imp.csvh"></p>
+      <button id="st-imp-file" type="button" class="btn" data-i18n-t="st.imp.pick"></button>
+    </div>
+    <div class="st-imp-sec">
+      <b data-i18n-t="st.imp.cal"></b>
+      <p class="st-hint" data-i18n-t="st.imp.calh"></p>
+      <div class="st-imp-row">
+        <input id="st-imp-day" type="date" data-i18n-t-a="st.imp.cal">
+        <button id="st-imp-cal" type="button" class="btn" data-i18n-t="st.imp.read"></button>
+      </div>
+    </div>
+    <div id="st-imp-plan" class="st-imp-plan" hidden>
+      <p id="st-imp-sum" role="status"></p>
+      <ol id="st-imp-list" class="st-imp-list"></ol>
+      <button id="st-imp-go" type="button" class="btn prim"></button>
+    </div>
+    <p id="st-imp-err" class="stg-note" role="alert" hidden></p>
+    <div class="dlg-row">
+      <button id="st-imp-close" type="button" class="btn" data-i18n-t="st.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: report after the event -->
+  <dialog id="st-rep-dlg" class="stg-dlg st-rep-dlg" aria-labelledby="st-rep-h">
+    <h3 id="st-rep-h"></h3>
+    <p id="st-rep-sum" class="st-hint"></p>
+    <div class="st-rep-wrap"><table id="st-rep-table" class="st-rep"></table></div>
+    <p class="st-hint" data-i18n-t="st.rep.local"></p>
+    <div class="dlg-row">
+      <button id="st-rep-csv" type="button" class="btn" data-i18n-t="st.rep.csv"></button>
+      <button id="st-rep-print" type="button" class="btn" data-i18n-t="st.rep.print"></button>
+      <button id="st-rep-close" type="button" class="btn" data-i18n-t="st.close"></button>
+    </div>
+  </dialog>
+  <div id="st-print" class="st-print" aria-hidden="true"></div>
 
   <!-- Stage: connect a device (time/stage-link.js) -->
   <dialog id="sl-pair-dlg" class="stg-dlg" aria-labelledby="sl-pair-h">
@@ -355,6 +406,8 @@
       <input id="se-date" type="date">
       <label for="se-start" data-i18n-s="stg.f.start"></label>
       <input id="se-start" type="time">
+      <label for="se-stop" data-i18n-s="stg.f.stop"></label>
+      <input id="se-stop" type="time">
       <label for="se-yellow" data-i18n-s="stg.f.yellow"></label>
       <input id="se-yellow" type="number" min="0" max="60" step="0.5" inputmode="decimal">
       <label for="se-red" data-i18n-s="stg.f.red"></label>
@@ -422,6 +475,8 @@
   <script src="../qr/qr-encode.js?v=1.54.00"></script>
   <script src="../remote-link.js?v=1.54.00"></script>
   <script src="stage-link.js?v=1.54.00"></script>
+  <script src="../calendar/occur.js?v=1.54.00"></script>
+  <script src="stage-tools.js?v=1.54.00"></script>
 
 </body>
 </html>
