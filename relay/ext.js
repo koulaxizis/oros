@@ -135,7 +135,11 @@ function okBvRow(x) {
 }
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
-  mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false)
+  mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
+  // Odoo: the fixed filter and fields must be there (without them
+  // search_read reads every field of every record)
+  odco: (b) => "fields" in b,
+  odq: (b) => "domain" in b && "fields" in b && "order" in b
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
@@ -270,9 +274,9 @@ export const PLATFORMS = {
     auth: (b) => ["Authorization", "Bearer " + b.key],
     extraOf: (b) => (b.db ? { "X-Odoo-Database": b.db } : {}),
     allow: [
-      ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }],
-      ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }],
-      ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }]
+      ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }, "odco"],
+      ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"],
+      ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"]
     ]
   }
 };

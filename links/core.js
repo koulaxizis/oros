@@ -406,7 +406,11 @@
     // already left: only new addresses are added that way
     mcbatch: function (b) {
       return Array.isArray(b.members) && !(b.members.some(function (x) { return x.status === "subscribed"; }) && b.update_existing !== false);
-    }
+    },
+    // Odoo: the fixed filter and fields must be there (without them
+    // search_read reads every field of every record)
+    odco: function (b) { return has(b, "fields"); },
+    odq: function (b) { return has(b, "domain") && has(b, "fields") && has(b, "order"); }
   };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
@@ -473,9 +477,9 @@
       ["GET", /^\/payments$/, { per_page: PER, page: NUM }, null]
     ],
     odoo: [
-      ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }],
-      ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }],
-      ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }]
+      ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }, "odco"],
+      ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"],
+      ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
