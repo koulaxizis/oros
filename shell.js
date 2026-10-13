@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.79.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.80.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5045,7 +5045,7 @@
           en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή boards (Kanban)" },
         { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
           by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
-          en: "Connected services: import a repository's issues (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban)" },
+          en: "Connected services: import a repository's issues (Kanban) and the issues assigned to you (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban) και όσων σου έχουν ανατεθεί (To-Do)" },
         { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
           by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
           en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },

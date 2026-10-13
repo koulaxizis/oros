@@ -199,7 +199,7 @@
       host: "api.github.com",
       root: "",
       keys: [{ k: "key", re: /^(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{60,255})$/ }],
-      apps: ["kanban"],
+      apps: ["kanban", "todo"],
       probe: "/user/repos?per_page=1"
     },
     // Wave 6C: Raindrop.io collections and bookmarks into Bookmarks
@@ -560,7 +560,9 @@
     ],
     github: [
       ["GET", /^\/user\/repos$/, { per_page: PER, page: NUM, sort: /^updated$/ }, null],
-      ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null]
+      ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null],
+      // the open issues assigned to the token's owner, across repositories (wave 6G, To-Do)
+      ["GET", /^\/issues$/, { filter: /^assigned$/, state: /^open$/, per_page: PER, page: NUM }, null]
     ],
     raindrop: [
       ["GET", /^\/collections$/, {}, null],

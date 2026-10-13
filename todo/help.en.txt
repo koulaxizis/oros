@@ -40,10 +40,17 @@ The search box looks through every list: task text, notes, extra info and label 
 
 ## Import from Todoist
 - First connect Todoist in [Settings](app:settings) › `Connected services` with your API token (Todoist › Settings › Integrations › Developer).
-- Then `List settings` (the ⋮ button) › `Import from Todoist…` › `Read the account` shows what will come in; `Import` brings it, and `Undo` in the message takes it back.
+- Then `List settings` (the ⋮ button) › `Import from Todoist or GitHub…` › `Read the account` shows what will come in; `Import` brings it, and `Undo` in the message takes it back.
 - Each project with open tasks becomes a list. Tasks keep their due date; the description becomes notes, labels come by name (an existing label of the same name is used), and priority shows as `Priority: P1`–`P3` in the extra info. Subtasks come in as tasks right after their parent. Repeating tasks come with their next date only: set `Repeat` here if you want it. Completed tasks stay in Todoist.
 - Import again whenever you like: new tasks come in, and with `Update what was imported before` the text, notes, due date and priority follow Todoist's. Your ticks, your own labels and extra info here are never changed. A task or list you deleted here stays deleted unless you tick `Bring back what was deleted here`; a new task whose text is already open in its list is skipped.
 - orOS only reads Todoist: nothing there changes.
+
+## Import from GitHub
+- Connect GitHub in [Settings](app:settings) › `Connected services` with a personal access token (read-only access to Issues of the repositories you want).
+- Then `List settings` (the ⋮ button) › `Import from Todoist or GitHub…`, pick the GitHub account, `Read the account` and `Import`.
+- The open issues assigned to you come in: each repository becomes a list (named "owner/repository"), each issue a task "#12 Title" with its text and its link as notes, its labels by name, and its milestone's date as due date. Pull requests stay out.
+- Import again to bring in newly assigned issues; with `Update what was imported before` the title, text and due date follow GitHub's. An issue closed on GitHub stays as it is here: tick it yourself. The same rules for deleted tasks and duplicates apply as for Todoist.
+- orOS only reads GitHub: nothing there changes.
 
 ## Sync and backup
 Your lists, tasks and labels sync between your devices through [orOS sync](help:t/sync). The open tab and `Hide completed` stay on each device, and search and filters reset when you close the app.

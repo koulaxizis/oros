@@ -23,9 +23,9 @@ const GHPAT = ["github", "pat", "11ABCDEFG0" + "x".repeat(72)].join("_");
 const GHP = ["ghp", "A1b2C3d4E5".repeat(3) + "f6G7h8"].join("_");
 const BOARD = "5f0c1a2b3c4d5e6f7a8b9c0d";
 
-test("accounts: Trello needs key and token, GitHub a personal access token; Kanban", () => {
+test("accounts: Trello needs key and token, GitHub a personal access token; Kanban and To-Do", () => {
   assert.deepEqual(L.PLATFORMS.trello.apps, ["kanban"]);
-  assert.deepEqual(L.PLATFORMS.github.apps, ["kanban"]);
+  assert.deepEqual(L.PLATFORMS.github.apps, ["kanban", "todo"]);
   assert.equal(L.checkKeys("trello", { key: TKEY, token: TTOK }).ok, true);
   assert.deepEqual(L.checkKeys("trello", { key: TKEY }).bad, ["token"]);
   assert.deepEqual(L.checkKeys("trello", { key: "nope", token: TTOK }).bad, ["key"]);

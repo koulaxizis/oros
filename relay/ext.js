@@ -23,7 +23,8 @@
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
 //   Todoist https://api.todoist.com/api/v1<path> (Bearer, read-only: projects, open tasks)
 //   Trello https://api.trello.com/1<path> (OAuth header: key + token), GitHub
-//   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues
+//   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues /
+//   the open issues assigned to the token's owner
 //   Raindrop.io https://api.raindrop.io/rest/v1<path> (Bearer, read-only: collections, bookmarks)
 //   Notion https://api.notion.com/v1<path> (Bearer, Notion-Version 2022-06-28, read-only:
 //   search for pages or databases, a block's children, a database's rows)
@@ -324,7 +325,9 @@ export const PLATFORMS = {
     extra: { "X-GitHub-Api-Version": "2022-11-28" },
     allow: [
       ["GET", /^\/user\/repos$/, { per_page: PER, page: NUM, sort: /^updated$/ }, null],
-      ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null]
+      ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null],
+      // the open issues assigned to the token's owner, across repositories (wave 6G, To-Do)
+      ["GET", /^\/issues$/, { filter: /^assigned$/, state: /^open$/, per_page: PER, page: NUM }, null]
     ]
   },
   // Wave 6C, read-only: Raindrop.io collections and bookmarks → Bookmarks

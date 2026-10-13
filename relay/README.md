@@ -312,7 +312,7 @@ Direct first, here only when the browser can't reach Trello. Only GETs.
 | `/members/me/boards` | `filter=open&fields=name` |
 | `/boards/<24 hex>` | `fields=name&lists=open&cards=open&labels=all&checklists=all&card_fields=name,desc,due,idList,idLabels,closed,pos&list_fields=name,closed,pos` (exactly these) |
 
-### GitHub (`p: "github"`, Kanban, read-only)
+### GitHub (`p: "github"`, Kanban and To-Do, read-only)
 
 `POST /v1 { op: "ext", p: "github", key, reqs }`: no `host`, `base` or `env`.
 `https://api.github.com<path>` with `Authorization: Bearer <token>`,
@@ -325,6 +325,7 @@ when the browser can't reach GitHub. Only GETs.
 |---|---|
 | `/user/repos` | `per_page (≤100), page, sort=updated` |
 | `/repos/<owner>/<repo>/issues` | `state=open\|all, per_page (≤100), page` |
+| `/issues` | `filter=assigned, state=open, per_page (≤100), page` (the open issues assigned to the token's owner) |
 
 - `<owner>/<repo>` are GitHub's name characters only; `.` and `..` as a part are refused.
 
