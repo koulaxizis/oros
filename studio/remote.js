@@ -21,6 +21,7 @@
      2. Link: relay room + direct channel
      3. Host (PC): pairing dialog, commands, state and meters
      4. Remote (tablet / phone): join dialog and the console
+     5. Remote: the Effects window of a track (phase 2)
    ============================================================ */
 (function () {
   "use strict";
@@ -35,6 +36,7 @@
   var METER_MS = 66;                   // host: meters while playing (~15/s)
   var SEND_MS = 33;                    // remote: fader moves (~30/s)
   var HOLD_MS = 600;                   // remote: a fader just moved ignores echoes this long
+  var PEEK_DIRECT = 66, PEEK_RELAY = 200;   // host: effect interfaces' live data
 
   // ---------- 1. Codes, keys and frames ----------
   var enc = new TextEncoder(), dec = new TextDecoder();
@@ -117,8 +119,9 @@
     }
     function frame(obj) {
       if (!ws || ws.readyState !== 1 || !keys) return;
+      var w = ws;
       sendQ = sendQ.then(function () { return seal(keys.key, obj); }).then(function (txt) {
-        if (ws && ws.readyState === 1) ws.send(txt);
+        if (w.readyState === 1) w.send(txt);
       }, function () {});
     }
     function heard(direct) {
@@ -155,6 +158,8 @@
         if (first) frame({ k: "hello", role: self.role, v: PROTO, rid: rid });
         if (self.role === "host" && (!dc || dc.readyState !== "open")) startRtc();
         if (o.onPeer) o.onPeer(String(m.dev || "").slice(0, 60));
+      } else if (m.k === "bye") {
+        if (peer) peerGone();
       } else if (m.k === "deny") {
         if (self.role === "remote" && !peer && o.onDeny) o.onDeny();
       } else if (!peer) {
@@ -294,12 +299,18 @@
       frame(m);
       return true;
     };
+    // Ending here tells the other side at once (a closing data channel or
+    // socket can take a while to be noticed there).
     this.close = function () {
+      if (peer) {
+        try { if (dc && dc.readyState === "open") dc.send('{"k":"bye"}'); } catch (e) {}
+        frame({ k: "bye" });
+      }
       closed = true;
       clearTimeout(retryTimer); clearInterval(pingTimer); clearTimeout(rtcTimer);
       dropRtc();
       var w = ws; ws = null;
-      try { if (w) w.close(1000, "bye"); } catch (e) {}
+      sendQ.then(function () { try { if (w) w.close(1000, "bye"); } catch (e) {} });
       setState("closed");
     };
     this.direct = function () { return !!(dc && dc.readyState === "open"); };
@@ -351,13 +362,13 @@
       host.wakeAudio();                       // the click is the gesture the audio needs later
       H.link = new Link({
         role: "host", code: H.code, relay: relayUrl(), dev: deviceName(),
-        onState: function (s) { renderHost(); if (s === "direct" || s === "relay") pushState(true); syncMeters(); },
+        onState: function (s) { renderHost(); if (s === "direct" || s === "relay") pushState(true); syncMeters(); syncPeek(); },
         onPeer: function (dev) {
           H.dev = dev;
           host.showToast(t("rm.joined", { dev: t("rm.dev." + (dev === "phone" || dev === "tablet" ? dev : "computer")) }));
           pushState(true);
         },
-        onGone: function () { renderHost(); syncMeters(); },
+        onGone: function () { HF.key = ""; HF.watch = []; renderHost(); syncMeters(); syncPeek(); },
         admit: askAllow,
         onApp: onCommand
       });
@@ -379,13 +390,14 @@
       if (H.link) H.link.close();
       H.link = null; H.code = ""; H.dev = "";
       clearTimeout(H.stTimer); clearInterval(H.mTimer); H.mTimer = 0;
+      clearInterval(HF.timer); HF.timer = 0; HF.key = ""; HF.watch = [];
       if (!quiet) renderHost();
     }
     function hostLive() { return !!(H.link && (H.link.state === "relay" || H.link.state === "direct")); }
     function openHost() {
       if (!H.link) hostStart();
-      renderHost();
       host.showDlg("remote-dlg");
+      renderHost();                           // after showing: it only fills an open dialog
     }
     function renderHost() {
       var ind = $("remote-ind");
@@ -434,7 +446,7 @@
       return {
         t: "st", v: PROTO, name: s.name, bpm: s.bpm, sig: s.sig, vol: s.vol, loop: s.loop, metro: s.metro,
         playing: s.playing, rec: s.rec, pos: Math.round(s.pos * 1000) / 1000, len: Math.round(s.len * 1000) / 1000,
-        min: C.VOL_MIN, max: C.VOL_MAX, mfx: s.mfx,
+        min: C.VOL_MIN, max: C.VOL_MAX, mfx: s.mfx, fxr: 1,
         tracks: s.tracks.map(function (tr) {
           return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: tr.mute, solo: tr.solo, arm: tr.arm, fx: tr.fx };
         })
@@ -446,10 +458,85 @@
       H.stTimer = setTimeout(function () {
         if (!hostLive()) return;
         var st = snapshot(), txt = JSON.stringify(st);
+        pushChain(now);
         if (txt === H.lastSt && !now) return;
         H.lastSt = txt;
         H.link.send(st);
       }, now ? 0 : STATE_MS);
+    }
+
+    // The chain whose Effects window is open on the tablet: every slider
+    // value, sent again whenever it changes. File sliders show the file's
+    // name only.
+    var HF = { key: "", watch: [], last: "", timer: 0, busy: {}, tick: 0 };
+    function chainMsg() {
+      var key = HF.key, FXA = host.fx;
+      if (!key || !FXA) return null;
+      if (key !== "master" && !C.find(host.data(), "tracks", key)) return { t: "fc", key: key, gone: true };
+      return {
+        t: "fc", key: key, sr: host.srate(),
+        items: FXA.chainOf(key).map(function (x) {
+          var o = { u: x.u, id: x.id, on: !!x.on, s: {} };
+          Object.keys(x.s || {}).forEach(function (k) { if (typeof x.s[k] === "number" && isFinite(x.s[k])) o.s[k] = x.s[k]; });
+          if (x.f) { o.f = {}; Object.keys(x.f).forEach(function (k) { o.f[k] = String(x.f[k]).replace(/^.*\//, "").slice(0, 80); }); }
+          return o;
+        })
+      };
+    }
+    function pushChain(now) {
+      var m = hostLive() ? chainMsg() : null;
+      if (!m) return;
+      var txt = JSON.stringify(m);
+      if (txt === HF.last && !now) return;
+      HF.last = txt;
+      H.link.send(m);
+    }
+    // While playing, the interfaces open on the tablet get what the
+    // effect's @gfx shows (a few numbers; Spread also a scope buffer).
+    function syncPeek() {
+      var want = hostLive() && HF.key && HF.watch.length && host.isPlaying();
+      var ms = H.link && H.link.direct() ? PEEK_DIRECT : PEEK_RELAY;
+      if (HF.timer && (!want || HF.ms !== ms)) { clearInterval(HF.timer); HF.timer = 0; }
+      if (want && !HF.timer) { HF.ms = ms; HF.timer = setInterval(sendPeek, ms); }
+    }
+    function sendPeek() {
+      if (!hostLive() || !HF.key) return;
+      var key = HF.key;
+      HF.watch.forEach(function (u) {
+        if (HF.busy[u]) return;
+        HF.busy[u] = true;
+        host.fx.peek(key, u).then(function (m) {
+          HF.busy[u] = false;
+          if (!m || !hostLive() || HF.key !== key) return;
+          var out = { t: "fl", u: u, l: Array.prototype.map.call(m.live || [], function (v) { return isFinite(v) ? Math.round(v * 1e5) / 1e5 : 0; }) };
+          if (m.mem && m.mem.data && m.mem.data.length <= 8192) {
+            // a scope: one byte per sample is plenty for drawing it
+            var d = m.mem.data, q = new Int8Array(d.length);
+            for (var i = 0; i < d.length; i++) q[i] = Math.max(-127, Math.min(127, Math.round((d[i] || 0) * 127)));
+            out.m = { b: m.mem.base, d: b64(new Uint8Array(q.buffer)) };
+          }
+          H.link.send(out);
+        }, function () { HF.busy[u] = false; });
+      });
+    }
+    function setWatch(key) {
+      HF.key = key; HF.watch = []; HF.last = ""; HF.busy = {};
+      if (key) pushChain(true);
+      syncPeek();
+    }
+    // A slider from the tablet: it must exist, is clamped to its range
+    // and, for a list, rounded to one of its choices.
+    function fxSlider(key, u, i, v) {
+      var FXA = host.fx, x = FXA.chainOf(key).filter(function (it) { return it.u === u; })[0];
+      if (!x || !C.FX_ID_RE.test(x.id)) return;
+      FXA.meta(x.id).then(function (FX) {
+        var sl = (FX.sliders || []).filter(function (q) { return q.i === i; })[0];
+        if (!sl || sl.path) return;
+        var val = num(v, Math.min(sl.min, sl.max), Math.max(sl.min, sl.max));
+        if (val === null) return;
+        if (sl.enums) val = Math.round(val);
+        FXA.setSlider(key, u, i, val);
+      }, function () {});
     }
     function syncMeters() {
       var want = hostLive() && host.isPlaying();
@@ -504,6 +591,31 @@
           if (key) host.toggleFx(key, c.u, c.on);
           break;
         }
+        // the Effects window on the tablet
+        case "fxo": setWatch(c.key === "master" ? "master" : tr ? tr.id : ""); break;
+        case "fxx": setWatch(""); break;
+        default: fxCommand(c, c.key === "master" ? "master" : tr ? tr.id : "");
+      }
+    }
+    function fxCommand(c, key) {
+      var FXA = host.fx;
+      if (!key || !FXA) return;
+      var u = typeof c.u === "string" && FXU_RE.test(c.u) ? c.u : "";
+      switch (c.t) {
+        case "fxw":
+          if (key !== HF.key || !Array.isArray(c.w)) return;
+          HF.watch = c.w.filter(function (w) { return typeof w === "string" && FXU_RE.test(w); }).slice(0, C.MAX_FX);
+          syncPeek();
+          break;
+        case "fs": if (u && Number.isInteger(c.i) && c.i > 0 && c.i <= 64) fxSlider(key, u, c.i, c.v); break;
+        case "fxa": {
+          var cat = FXA.catalog();
+          if (typeof c.fid !== "string" || !C.FX_ID_RE.test(c.fid) || !cat || !cat.some(function (e) { return e.id === c.fid; })) return;
+          FXA.addTo(key, c.fid);
+          break;
+        }
+        case "fxd": if (u) FXA.removeFrom(key, u); break;
+        case "fxm": if (u && (c.d === 1 || c.d === -1)) FXA.moveIn(key, u, c.d); break;
       }
     }
 
@@ -528,7 +640,10 @@
         onState: function (s) {
           $("rj-status").textContent = stateText(s, "remote");
           renderBadge();
-          if (s === "direct" || s === "relay") R.link.send({ t: "hi" });
+          if (s === "direct" || s === "relay") {
+            R.link.send({ t: "hi" });
+            if (RF.key) { send(fxAddr({ t: "fxo" })); RF.watch = ""; sendWatch(); }
+          }
         },
         onApp: onHostMsg,
         onDeny: function () {
@@ -559,7 +674,8 @@
         var p = Array.isArray(m.p) ? m.p : [];
         R.st.tracks.forEach(function (tr, i) { feedMeter(tr.id, num(p[i], 0, 4) || 0); });
         feedMeter("master", num(m.mp, 0, 4) || 0);
-      }
+      } else if (m.t === "fc") onChain(m);
+      else if (m.t === "fl" && typeof m.u === "string") onFxLive(m);
     }
     function send(c) { if (R.link) R.link.send(c); }
 
@@ -570,6 +686,7 @@
       if (!R.raf) R.raf = requestAnimationFrame(animate);
     }
     function leaveConsole() {
+      if (RF.key) host.hideDlg("ruf-dlg");
       document.body.classList.remove("remote-on");
       $("remote-ui").hidden = true;
       $("ru-strips").textContent = "";
@@ -592,6 +709,7 @@
       $("ru-name").textContent = st.none ? t("rm.noProject") : (st.name || t("proj.untitled"));
       $("ru-empty").hidden = !st.none && st.tracks && st.tracks.length > 0;
       tpBtn("ru-play", st.playing && !st.rec, st.playing && !st.rec ? "pause" : "play", st.playing && !st.rec ? t("btn.pause") : t("btn.play"));
+      tpBtn("ruf-play", st.playing && !st.rec, st.playing && !st.rec ? "pause" : "play", st.playing && !st.rec ? t("btn.pause") : t("btn.play"));
       tpBtn("ru-rec", !!st.rec, "rec", st.rec ? t("btn.recStop") : t("btn.rec"));
       tpBtn("ru-loop", !!st.loop, "loop", t("btn.loop"));
       tpBtn("ru-metro", !!st.metro, null, t("btn.metro"));
@@ -600,6 +718,8 @@
       if (sig !== shape) { shape = sig; buildStrips(); }
       (st.tracks || []).forEach(function (tr) { updateStrip(tr.id, tr); });
       updateStrip("master", { vol: st.vol, fx: st.mfx });
+      if (RF.key && RF.key !== "master" && !(st.tracks || []).some(function (x) { return x.id === RF.key; })) host.hideDlg("ruf-dlg");
+      else if (RF.key) $("ruf-title").textContent = t("fx.title", { name: fxTitle() });
     }
     function tpBtn(id, on, icon, label) {
       var b = $(id);
@@ -623,7 +743,14 @@
       var nm = el("div", "ru-sname", tr.name || "");
       nm.title = tr.name || "";
       s.appendChild(nm);
-      // effects: one toggle per effect (bypass)
+      // effects: the Effects window, then one toggle per effect (bypass)
+      if (R.st.fxr) {
+        var fo = el("button", "ru-fxo", t("fx.btn"));
+        fo.type = "button";
+        setLabel(fo, master ? t("fx.openMaster") : t("fx.open") + ": " + (tr.name || ""));
+        fo.addEventListener("click", function () { openFx(id); });
+        s.appendChild(fo);
+      }
       var fxs = el("div", "ru-fx");
       (tr.fx || []).forEach(function (f) {
         var b = el("button", "ru-fxb", f.name || f.id || "FX");
@@ -782,6 +909,7 @@
       R.raf = requestAnimationFrame(animate);
       var st = R.st;
       if (!st) return;
+      if (RF.key) drawFx();
       var pos = R.pos + (st.playing ? (performance.now() - R.posAt) / 1000 : 0);
       var tt = C.fmtTime(pos);
       if ($("ru-clock").textContent !== tt) $("ru-clock").textContent = tt;
@@ -809,7 +937,332 @@
       });
     }
 
+
+    // ---------- 5. Remote: a track's Effects window ----------
+    // The tablet draws the effect interfaces itself (it has the same
+    // effect files as the PC); the PC owns the values, sends them on every
+    // change and, while playing, what the interfaces show (meters, scope).
+    var RF = { key: "", items: null, sr: 48000, open: {}, views: {}, hold: {}, pend: {}, sendT: {}, picking: false, q: "", shape: "", watch: "", adding: null };
+    // fixed icons, built as nodes (no HTML strings)
+    function svgIcon(paths, width) {
+      var NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg");
+      sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("fill", "none"); sv.setAttribute("stroke", "currentColor");
+      sv.setAttribute("stroke-width", width); sv.setAttribute("stroke-linecap", "round"); sv.setAttribute("stroke-linejoin", "round");
+      sv.setAttribute("aria-hidden", "true");
+      paths.forEach(function (d) { var p = document.createElementNS(NS, "path"); p.setAttribute("d", d); sv.appendChild(p); });
+      return sv;
+    }
+
+    function fxAddr(c) { if (RF.key === "master") c.key = "master"; else c.id = RF.key; return c; }
+    function openFx(key) {
+      dropViews();
+      RF.key = key; RF.items = null; RF.open = {}; RF.picking = false; RF.q = ""; RF.shape = ""; RF.watch = ""; RF.adding = null;
+      send(fxAddr({ t: "fxo" }));
+      renderFx();
+      host.showDlg("ruf-dlg");
+      host.fx.loadCatalog().then(function () { if (RF.key === key) renderFx(); }, function () {});
+    }
+    function closeFx() {
+      if (!RF.key) return;
+      send({ t: "fxx" });
+      dropViews();
+      RF.key = ""; RF.items = null;
+    }
+    function dropViews() {
+      Object.keys(RF.views).forEach(function (u) { try { RF.views[u].view.destroy(); } catch (e) {} });
+      RF.views = {};
+    }
+    function fxItem(u) { return (RF.items || []).filter(function (x) { return x.u === u; })[0] || null; }
+    function infoOf(id) { var cat = host.fx.catalog(); return cat ? cat.filter(function (e) { return e.id === id; })[0] || null : null; }
+    function fxName(id) { var e = infoOf(id); return e ? e.name : id; }
+    function slOf(FX, i) { return (FX.sliders || []).filter(function (q) { return q.i === i; })[0] || null; }
+
+    function onChain(m) {
+      if (!RF.key || m.key !== RF.key) return;
+      if (m.gone) { host.hideDlg("ruf-dlg"); return; }
+      if (!Array.isArray(m.items)) return;
+      RF.sr = num(m.sr, 8000, 384000) || 48000;
+      var now = performance.now();
+      var items = m.items.filter(function (x) {
+        return x && typeof x.u === "string" && FXU_RE.test(x.u) && typeof x.id === "string" && C.FX_ID_RE.test(x.id);
+      }).slice(0, C.MAX_FX).map(function (x) {
+        var o = { u: x.u, id: x.id, on: !!x.on, s: {}, f: {} }, old = fxItem(x.u);
+        if (x.s && typeof x.s === "object") Object.keys(x.s).forEach(function (k) {
+          var v = num(x.s[k], -1e9, 1e9);
+          if (v === null || !/^[0-9]{1,2}$/.test(k)) return;
+          // a slider moved here a moment ago keeps its value until the PC has it
+          o.s[k] = old && RF.hold[x.u + "." + k] && now - RF.hold[x.u + "." + k] < HOLD_MS && old.s[k] !== undefined ? old.s[k] : v;
+        });
+        if (x.f && typeof x.f === "object") Object.keys(x.f).forEach(function (k) { if (/^[0-9]{1,2}$/.test(k)) o.f[k] = String(x.f[k]).slice(0, 80); });
+        return o;
+      });
+      if (RF.adding) {
+        items.forEach(function (x) { if (RF.adding.indexOf(x.u) < 0) RF.open[x.u] = true; });
+        RF.adding = null;
+      }
+      RF.items = items;
+      renderFx();
+    }
+    function onFxLive(m) {
+      var vw = RF.views[m.u];
+      if (!vw || !Array.isArray(m.l) || m.l.length > 256) return;
+      var out = { live: Float64Array.from(m.l.map(function (v) { return typeof v === "number" && isFinite(v) ? v : 0; })) };
+      if (m.m && typeof m.m.d === "string" && m.m.d.length <= 12000 && Number.isInteger(m.m.b) && m.m.b >= 0) {
+        try {
+          var q = new Int8Array(unb64(m.m.d).buffer), d = new Float64Array(q.length);
+          for (var i = 0; i < q.length; i++) d[i] = q[i] / 127;
+          out.mem = { base: m.m.b, data: d };
+        } catch (e) {}
+      }
+      try { vw.view.setLive(out); } catch (e) {}
+    }
+
+    function fxTitle() {
+      if (RF.key === "master") return t("f.master");
+      var tr = ((R.st && R.st.tracks) || []).filter(function (x) { return x.id === RF.key; })[0];
+      return tr ? tr.name : "";
+    }
+    // The list is rebuilt when its shape changes; values update in place.
+    function renderFx() {
+      if (!RF.key) return;
+      var FXA = host.fx, items = RF.items, list = $("ruf-list");
+      $("ruf-title").textContent = t("fx.title", { name: fxTitle() });
+      var shape = items ? items.map(function (x) { return [x.u, x.id, x.on ? 1 : 0, RF.open[x.u] ? 1 : 0, FXA.fxMeta(x.id) ? 1 : 0, infoOf(x.id) ? 1 : 0].join(":"); }).join("|") : "-";
+      if (shape !== RF.shape) {
+        RF.shape = shape;
+        var keep = {};
+        Object.keys(RF.views).forEach(function (u) { keep[u] = RF.views[u].canvas; });
+        list.textContent = "";
+        if (!items) list.appendChild(el("li", "hint small", t("clip.loading")));
+        else items.forEach(function (x, k) { list.appendChild(fxSlot(x, k, items.length, keep[x.u])); });
+        Object.keys(RF.views).forEach(function (u) {
+          var x = fxItem(u);
+          if (!x || !RF.open[u] || RF.views[u].id !== x.id) { try { RF.views[u].view.destroy(); } catch (e) {} delete RF.views[u]; }
+        });
+      }
+      if (items) items.forEach(updateSlot);
+      $("ruf-empty").hidden = !items || items.length > 0;
+      var add = $("ruf-add");
+      add.disabled = !items || items.length >= C.MAX_FX || !FXA.catalog();
+      add.setAttribute("aria-expanded", RF.picking ? "true" : "false");
+      $("ruf-status").textContent = items && items.length >= C.MAX_FX ? t("fx.max", { n: C.MAX_FX }) : "";
+      renderPick();
+      sendWatch();
+    }
+    function fxIconBtn(cls, path, label, disabled, fn) {
+      var b = el("button", "icon-btn small " + cls);
+      b.type = "button";
+      b.appendChild(svgIcon([path], "2"));
+      setLabel(b, label);
+      b.disabled = disabled;
+      b.addEventListener("click", fn);
+      return b;
+    }
+    function fxSlot(x, k, n, canvas) {
+      var FXA = host.fx, e = infoOf(x.id), FX = FXA.fxMeta(x.id), isOpen = !!RF.open[x.u], name = fxName(x.id);
+      var li = el("li", "fx-slot" + (x.on ? "" : " off") + (e ? "" : " unknown"));
+      li.setAttribute("data-u", x.u);
+      var head = el("div", "fx-head");
+      var pw = el("button", "fx-pw" + (x.on ? " on" : ""));
+      pw.type = "button";
+      pw.setAttribute("aria-pressed", x.on ? "true" : "false");
+      setLabel(pw, t("fx.on") + ": " + name);
+      pw.appendChild(svgIcon(["M12 3v8", "M6.3 7.5a8 8 0 1 0 11.4 0"], "2.4"));
+      pw.addEventListener("click", function () {
+        var cur = fxItem(x.u);
+        if (!cur) return;
+        cur.on = !cur.on;
+        send(fxAddr({ t: "fx", u: x.u, on: cur.on }));
+        renderFx();
+        focusIn(x.u, ".fx-pw");
+      });
+      head.appendChild(pw);
+      var nm = el("button", "fx-name");
+      nm.type = "button";
+      nm.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      nm.appendChild(el("span", "fx-label", e ? e.name : t("fx.unknown", { id: x.id })));
+      if (e) nm.appendChild(el("span", "fx-cat", FXA.catName(e.category)));
+      nm.addEventListener("click", function () { RF.open[x.u] = !RF.open[x.u]; renderFx(); focusIn(x.u, ".fx-name"); });
+      head.appendChild(nm);
+      head.appendChild(fxIconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + name, k === 0, function () { send(fxAddr({ t: "fxm", u: x.u, d: -1 })); }));
+      head.appendChild(fxIconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + name, k === n - 1, function () { send(fxAddr({ t: "fxm", u: x.u, d: 1 })); }));
+      head.appendChild(fxIconBtn("fx-del", "M6 6l12 12M18 6L6 18", t("fx.remove") + ": " + name, false, function () { send(fxAddr({ t: "fxd", u: x.u })); }));
+      li.appendChild(head);
+      if (!isOpen) return li;
+      var body = el("div", "fx-body");
+      li.appendChild(body);
+      if (!e) { body.appendChild(el("p", "hint small", t("fx.unknownHint"))); return li; }
+      if (!FX) {
+        body.appendChild(el("p", "hint small", t("clip.loading")));
+        FXA.meta(x.id).then(function () { if (RF.key) renderFx(); }, function () {});
+        return li;
+      }
+      if (FX.gfx) {
+        var cv = canvas || el("canvas", "fx-gfx");
+        cv.style.aspectRatio = FX.gfx.w + " / " + FX.gfx.h;
+        cv.setAttribute("role", "img");
+        setLabel(cv, t("fx.gfx", { name: e.name }));
+        body.appendChild(cv);
+        fxView(x, FX, cv);
+      }
+      var ctl = el("details", "fx-ctl");
+      ctl.open = !FX.gfx;
+      ctl.appendChild(el("summary", "", t("fx.controls")));
+      FX.sliders.forEach(function (sl) { ctl.appendChild(fxRow(x, sl)); });
+      body.appendChild(ctl);
+      return li;
+    }
+    function focusIn(u, sel) {
+      var b = document.querySelector('#ruf-list [data-u="' + u + '"] ' + sel);
+      if (b && !b.disabled) b.focus();
+    }
+    function fxRow(x, sl) {
+      var FXA = host.fx, v = C.fxValue(x, sl), id = "ruf-" + x.u + "-" + sl.i, row = el("div", "fx-row");
+      row.setAttribute("data-i", String(sl.i));
+      var lab = el("label", "field");
+      lab.htmlFor = id;
+      lab.appendChild(el("span", "", sl.name || ("Slider " + sl.i)));
+      if (sl.path) {
+        // files live on the PC's disk: chosen there
+        lab.appendChild(el("output", "", x.f[sl.i] || t("fx.noFile")));
+        row.appendChild(lab);
+        var hint = el("p", "hint small", t("rm.fxFile"));
+        hint.id = id;
+        row.appendChild(hint);
+        return row;
+      }
+      lab.appendChild(el("output", "", FXA.valueText(sl, v)));
+      row.appendChild(lab);
+      if (sl.enums) {
+        var sel = el("select", "");
+        sel.id = id;
+        sl.enums.forEach(function (name, k) { var o = el("option", "", name); o.value = String(sl.min + k); sel.appendChild(o); });
+        sel.value = String(Math.round(v));
+        sel.addEventListener("change", function () { fxSet(x.u, sl, parseFloat(sel.value), false); });
+        row.appendChild(sel);
+      } else {
+        var r = el("input", "");
+        r.type = "range"; r.id = id; r.min = "0"; r.max = String(C.POS_STEPS); r.step = "1";
+        r.value = String(Math.round(C.sliderToPos(sl, v) * C.POS_STEPS));
+        r.setAttribute("aria-valuetext", FXA.valueText(sl, v));
+        r.addEventListener("input", function () { fxSet(x.u, sl, C.sliderFromPos(sl, parseInt(r.value, 10) / C.POS_STEPS), false); });
+        r.addEventListener("dblclick", function () { fxSet(x.u, sl, sl.def, false); updateSlot(fxItem(x.u)); });
+        row.appendChild(r);
+      }
+      return row;
+    }
+    // A slider moved here (a control or the interface): shown at once,
+    // sent at most every SEND_MS.
+    function fxSet(u, sl, v, fromView) {
+      var x = fxItem(u);
+      if (!x) return;
+      x.s[String(sl.i)] = v;
+      RF.hold[u + "." + sl.i] = performance.now();
+      var vw = RF.views[u];
+      if (vw && !fromView) { try { vw.view.setSlider(sl.i, v); } catch (e) {} }
+      updateSlot(x, fromView ? -1 : sl.i);
+      var key = u + "." + sl.i;
+      RF.pend[key] = fxAddr({ t: "fs", u: u, i: sl.i, v: v });
+      if (RF.sendT[key]) return;
+      var fire = function () {
+        if (!(key in RF.pend)) { RF.sendT[key] = 0; return; }
+        send(RF.pend[key]);
+        delete RF.pend[key];
+        RF.sendT[key] = setTimeout(fire, SEND_MS);
+      };
+      fire();
+    }
+    // values into the controls and the interface (skip: the control being dragged)
+    function updateSlot(x, skip) {
+      if (!x) return;
+      var FXA = host.fx, FX = FXA.fxMeta(x.id), li = document.querySelector('#ruf-list [data-u="' + x.u + '"]');
+      if (!FX || !li) return;
+      var vw = RF.views[x.u], now = performance.now();
+      FX.sliders.forEach(function (sl) {
+        if (sl.path) return;
+        var v = C.fxValue(x, sl), row = li.querySelector('.fx-row[data-i="' + sl.i + '"]');
+        var held = RF.hold[x.u + "." + sl.i] && now - RF.hold[x.u + "." + sl.i] < HOLD_MS;
+        if (vw && !held) { try { if (vw.view.fx.inst.getSlider(sl.i) !== v) vw.view.setSlider(sl.i, v); } catch (e) {} }
+        if (!row) return;
+        var out = row.querySelector("output"), r = row.querySelector("input[type=range]"), sel = row.querySelector("select");
+        if (out) out.textContent = FXA.valueText(sl, v);
+        if (r) {
+          r.setAttribute("aria-valuetext", FXA.valueText(sl, v));
+          if (skip !== sl.i && document.activeElement !== r) r.value = String(Math.round(C.sliderToPos(sl, v) * C.POS_STEPS));
+        }
+        if (sel && document.activeElement !== sel) sel.value = String(Math.round(v));
+      });
+    }
+    function fxView(x, FX, canvas) {
+      var vw = RF.views[x.u];
+      if (vw && vw.canvas === canvas && vw.id === x.id) return;
+      if (vw) { try { vw.view.destroy(); } catch (e) {} }
+      var init = {};
+      FX.sliders.forEach(function (sl) { init[sl.i] = sl.path ? 0 : C.fxValue(x, sl); });
+      try {
+        var view = new window.NULLGfx.View(FX, canvas, {
+          srate: RF.sr, sliders: init,
+          onSlider: function (i, v) { var sl = slOf(FX, i); if (sl && !sl.path) fxSet(x.u, sl, v, true); }
+        });
+        RF.views[x.u] = { view: view, canvas: canvas, id: x.id };
+      } catch (e) { delete RF.views[x.u]; }
+    }
+    // which interfaces are open: the PC sends live data for those only
+    function sendWatch() {
+      var w = Object.keys(RF.views).sort(), txt = w.join(",");
+      if (txt === RF.watch) return;
+      RF.watch = txt;
+      send(fxAddr({ t: "fxw", w: w }));
+    }
+    function renderPick() {
+      var box = $("ruf-pick"), FXA = host.fx, cat = FXA.catalog();
+      box.hidden = !RF.picking;
+      if (!RF.picking) return;
+      var cats = $("ruf-cats");
+      cats.textContent = "";
+      if (!cat) { cats.appendChild(el("p", "hint small", t("clip.loading"))); return; }
+      var q = RF.q.trim().toLowerCase(), any = false;
+      ["One Slider", "Essentials", "Advanced"].forEach(function (c) {
+        var list = cat.filter(function (e) { return e.category === c && (!q || (e.name + " " + (e.tags || "")).toLowerCase().indexOf(q) >= 0); });
+        if (!list.length) return;
+        any = true;
+        cats.appendChild(el("h3", "", FXA.catName(c)));
+        var ul = el("ul", "fx-picks");
+        list.forEach(function (e) {
+          var li = el("li", ""), b = el("button", "chip", e.name);
+          b.type = "button";
+          if (e.gfx) b.classList.add("has-gfx");
+          setLabel(b, t("fx.add") + ": " + e.name);
+          b.addEventListener("click", function () {
+            RF.picking = false; RF.q = "";
+            RF.adding = (RF.items || []).map(function (x) { return x.u; });
+            send(fxAddr({ t: "fxa", fid: e.id }));
+            renderFx();
+          });
+          li.appendChild(b); ul.appendChild(li);
+        });
+        cats.appendChild(ul);
+      });
+      if (!any) cats.appendChild(el("p", "hint small", t("fx.none")));
+    }
+    function drawFx() {
+      Object.keys(RF.views).forEach(function (u) { try { RF.views[u].view.draw(); } catch (e) {} });
+    }
+    function wireFx() {
+      $("ruf-close").innerHTML = host.ICON.close;
+      $("ruf-close").addEventListener("click", function () { host.hideDlg("ruf-dlg"); });
+      $("ruf-play").addEventListener("click", function () { send({ t: "tp", a: "play" }); });
+      $("ruf-dlg").addEventListener("close", closeFx);
+      $("ruf-add").addEventListener("click", function () {
+        RF.picking = !RF.picking;
+        renderFx();
+        if (RF.picking) { var sr = $("ruf-search"); sr.value = RF.q; sr.focus(); }
+      });
+      $("ruf-search").addEventListener("input", function () { RF.q = $("ruf-search").value; renderPick(); });
+    }
+
     function wire() {
+      wireFx();
       $("rm-start").addEventListener("click", hostStart);
       $("rm-allow").addEventListener("click", function () { if (H.answer) H.answer(true); });
       $("rm-deny").addEventListener("click", function () { if (H.answer) H.answer(false); });
@@ -864,7 +1317,7 @@
     return {
       wire: wire,
       // the PC's state changed (any render): the tablet follows
-      changed: function () { if (H.link) { pushState(false); syncMeters(); renderHost(); } },
+      changed: function () { if (H.link) { pushState(false); syncMeters(); syncPeek(); renderHost(); } },
       hosting: function () { return !!H.link; },
       remoteOn: function () { return !!R.link; },
       _command: onCommand

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.51.00
+- Studio: effects on the tablet. FX on a remote strip opens that track's effects on the tablet or phone, with each effect's own interface and meters, every control, on/off, order, adding and removing.
+
 ## Version 1.50.00
 - Maps: a heatmap of everywhere you've been, from all your tracks, with distance per year and month and the "new ground" you covered. You can also show where other people walk and drive (OpenStreetMap GPS traces).
 
