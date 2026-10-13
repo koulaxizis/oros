@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.58.01
+- Maps: OpenStreetMap sign-in is switched on. Sign in under Mapping to send notes, place changes, quest answers and GPS traces with your own OpenStreetMap account.
+
 ## Version 1.58.00
 - Invoices: send invoices, receipts and credit notes to myDATA (AADE) through your timologisi.online account. Connect it in Settings › Connected services; each sent document shows its ΜΑΡΚ and the official PDF.
 
