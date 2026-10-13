@@ -206,14 +206,16 @@ not possible (a VPN, different networks) they keep talking through the
 room instead.
 
 `GET /rt/<room>` with `Upgrade: websocket`, where `<room>` is 64
-lowercase hex characters (a SHA-256 of the pairing code, so the relay
-never sees the code). Allowed origins and the rate limit apply as for
+lowercase hex characters (a SHA-256 of the pairing code). Allowed origins and the rate limit apply as for
 `/v1`. One Durable Object (`RemoteRoom`, binding `REMOTE`) per room:
 
 - At most two sockets; a third gets 409.
 - Text frames up to 16 KB are passed to the other socket as they are.
-  Both sides encrypt them (AES-GCM, key from the code with PBKDF2), so
-  the room only sees ciphertext. Binary frames close the socket with
+  Both sides encrypt them (AES-GCM, key from the code with PBKDF2).
+  A 6-digit code can be found from a room id by trying all of them, so
+  this keeps out casual eyes, not someone who reads room ids; Studio's
+  real guard is that the PC must press Allow for each new device and
+  then refuses any other. Binary frames close the socket with
   1003, larger ones with 1009, more than 400 frames in 10 s with 1008.
 - A bare `ping` frame is answered `pong` by the runtime itself
   (WebSocket auto-response), so keep-alives on a direct link do not wake

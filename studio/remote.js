@@ -5,8 +5,9 @@
    The PC (host) shows a 6-digit code and a QR code; the tablet
    (remote) joins with it. Both meet in a room on the orOS relay
    (relay/remote.js): the room id is a hash of the code and every frame
-   is AES-GCM encrypted with a key derived from the code, so the relay
-   only forwards ciphertext. Through the room they set up a WebRTC data
+   is AES-GCM encrypted with a key derived from the code (six digits
+   can be tried one by one, so the PC also has to Allow each device,
+   see derive and Link). Through the room they set up a WebRTC data
    channel and talk directly (same Wi-Fi: a few ms). When a direct link
    is not possible (a VPN, different networks) the room itself carries
    the messages.
@@ -57,7 +58,13 @@
     crypto.getRandomValues(a);
     return String(100000 + a[0] % 900000);
   }
-  // The room id and the key both come from the code; the relay sees neither.
+  // The room id and the key both come from the code. The relay only passes
+  // sealed frames on, but six digits can be tried one by one: anyone who
+  // reads room ids could find the code, and anyone could guess their way
+  // into a waiting room. So the encryption keeps out casual eyes, and the
+  // PC itself decides who may control it: every new device needs "Allow"
+  // on the PC, and once one is allowed no other device gets in on that
+  // code (see Link: admit).
   function derive(code) {
     var S = crypto.subtle;
     return Promise.all([
@@ -98,6 +105,10 @@
     var keys = null, ws = null, pc = null, dc = null, closed = false;
     var peer = false, lastHeard = 0, lastDirect = 0, retry = 0, retryTimer = 0, pingTimer = 0, rtcTimer = 0;
     var sendQ = Promise.resolve();
+    // Who is on the other end: the remote picks a random id per pairing;
+    // the host lets in only the id it was told to allow (o.admit).
+    var rid = self.role === "remote" ? hex(crypto.getRandomValues(new Uint8Array(16))) : "";
+    var okRid = "", asking = "";
 
     function setState(s) {
       if (self.state === s) return;
@@ -119,12 +130,35 @@
       heard(direct);
       if (m.k === "hello") {
         if (m.v !== PROTO || (m.role !== "host" && m.role !== "remote") || m.role === self.role) return;
+        if (self.role === "host") {
+          var r = typeof m.rid === "string" && /^[0-9a-f]{32}$/.test(m.rid) ? m.rid : "";
+          if (!r) return;
+          if (okRid && r !== okRid) { frame({ k: "deny" }); return; }   // already paired with another device
+          if (!okRid) {
+            if (asking === r) return;
+            asking = r;
+            var dev = String(m.dev || "").slice(0, 60);
+            var answer = function (yes) {
+              if (closed || asking !== r) return;
+              asking = "";
+              if (!yes) { frame({ k: "deny" }); return; }
+              okRid = r;
+              onFrame(m, direct);
+            };
+            if (o.admit) o.admit(dev, answer); else answer(false);
+            return;
+          }
+        }
         var first = !peer;
         peer = true;
         if (self.state !== "direct") setState("relay");
-        if (first) frame({ k: "hello", role: self.role, v: PROTO });
+        if (first) frame({ k: "hello", role: self.role, v: PROTO, rid: rid });
         if (self.role === "host" && (!dc || dc.readyState !== "open")) startRtc();
         if (o.onPeer) o.onPeer(String(m.dev || "").slice(0, 60));
+      } else if (m.k === "deny") {
+        if (self.role === "remote" && !peer && o.onDeny) o.onDeny();
+      } else if (!peer) {
+        return;                                          // nothing else before the hello is accepted
       } else if (m.k === "sdp" && m.d && typeof m.d.sdp === "string") onSdp(m.d);
       else if (m.k === "ice" && m.d) { if (pc) pc.addIceCandidate(m.d).catch(function () {}); }
       else if (m.k === "app" && m.d && typeof m.d === "object") { if (o.onApp) o.onApp(m.d); }
@@ -143,7 +177,11 @@
           var s = null;
           try { s = JSON.parse(e.data); } catch (err) { return; }
           if (s.sys === "wait") { if (self.state !== "direct") { peer = false; setState("waiting"); } }
-          else if (s.sys === "peer") frame({ k: "hello", role: self.role, v: PROTO, dev: o.dev || "" });
+          else if (s.sys === "peer" && self.role === "remote") {
+            // the remote knocks; the host answers only once it is allowed in
+            if (self.state !== "direct") setState("pending");
+            frame({ k: "hello", role: self.role, v: PROTO, dev: o.dev || "", rid: rid });
+          }
           else if (s.sys === "left") peerGone();
           return;
         }
@@ -165,6 +203,7 @@
     }
     function peerGone() {
       peer = false;
+      asking = "";
       dropRtc();
       if (!closed) setState("waiting");
       if (o.onGone) o.onGone();
@@ -298,6 +337,7 @@
       if (s === "direct") return t("rm.direct");
       if (s === "relay") return t("rm.relay");
       if (s === "waiting") return role === "host" ? t("rm.waitRemote") : t("rm.waitHost");
+      if (s === "pending") return t("rm.waitOk");
       if (s === "closed") return t("rm.closed");
       return t("rm.connecting");
     }
@@ -318,11 +358,24 @@
           pushState(true);
         },
         onGone: function () { renderHost(); syncMeters(); },
+        admit: askAllow,
         onApp: onCommand
       });
       renderHost();
     }
+    // A device found the room: only the person at the PC lets it in.
+    function askAllow(dev, answer) {
+      var name = t("rm.dev." + (dev === "phone" || dev === "tablet" ? dev : "computer"));
+      if (H.answer) H.answer(false);
+      H.answer = function (yes) { H.answer = null; $("rm-ask").hidden = true; answer(yes); renderHost(); };
+      $("rm-ask-text").textContent = t("rm.ask", { dev: name });
+      $("rm-ask").hidden = false;
+      if (!$("remote-dlg").open) host.showDlg("remote-dlg");
+      renderHost();
+      try { $("rm-allow").focus(); } catch (e) {}
+    }
     function hostStop(quiet) {
+      if (H.answer) H.answer(false);
       if (H.link) H.link.close();
       H.link = null; H.code = ""; H.dev = "";
       clearTimeout(H.stTimer); clearInterval(H.mTimer); H.mTimer = 0;
@@ -478,6 +531,11 @@
           if (s === "direct" || s === "relay") R.link.send({ t: "hi" });
         },
         onApp: onHostMsg,
+        onDeny: function () {
+          joinStop(true);
+          $("rj-status").textContent = t("rm.denied");
+          renderBadge();
+        },
         onGone: function () { renderBadge(); }
       });
       $("rj-status").textContent = t("rm.connecting");
@@ -753,6 +811,8 @@
 
     function wire() {
       $("rm-start").addEventListener("click", hostStart);
+      $("rm-allow").addEventListener("click", function () { if (H.answer) H.answer(true); });
+      $("rm-deny").addEventListener("click", function () { if (H.answer) H.answer(false); });
       $("rm-new").addEventListener("click", hostStart);
       $("rm-stop").addEventListener("click", function () { hostStop(); });
       $("rm-close").addEventListener("click", function () { host.hideDlg("remote-dlg"); });

@@ -515,6 +515,8 @@ dialog.wide { width: min(760px, calc(100vw - 32px)); }
 .rm-qr[hidden] { display: none; }
 .rm-url { word-break: break-all; margin-top: 6px; }
 .rm-status { font-weight: 700; margin: 12px 0 4px; min-height: 1.3em; }
+.rm-ask { border: 2px solid var(--accent, #c33); border-radius: 10px; padding: 10px 12px; margin: 12px 0 4px; }
+.rm-ask p { margin: 0 0 8px; font-weight: 700; }
 .rj-code { font: 700 24px ui-monospace, "Cascadia Mono", Menlo, monospace; letter-spacing: 0.15em; width: 9ch; padding: 6px 10px; flex: 1 1 auto; }
 
 body.remote-on > :not(#remote-ui):not(dialog):not(#toast):not(#live) { display: none !important; }

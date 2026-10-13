@@ -45,11 +45,12 @@ A small multitrack studio: put audio clips on tracks, record over a click, loop 
 Control Studio's mixer and transport from a tablet or phone while the sound plays on the PC.
 1. On the PC, open the settings (the three dots at the top) and press `Connect a tablet or phone`, then `Show a code`. Studio shows a 6-digit code and a QR code.
 2. On the tablet or phone, scan the QR code with the camera, or open Studio there, choose `Control Studio on another device` in the settings and type the code.
+3. On the PC, press `Allow`. Once a device is allowed, no other device can join with that code.
 - The remote shows play, stop, record, loop, the click, the tempo and a position bar, and a strip per track with the fader, pan, `M` `S` `R`, effect on/off and a meter, plus the master.
 - Drag a fader to move it from where it is; a double tap puts it back to 0 dB. Every move is a normal edit on the PC, so [[Ctrl+Z]] undoes it there.
-- On the same network the two devices talk directly. Through a VPN or on different networks (for example a phone on 4G) they talk through the orOS relay instead, with a little more delay. Either way the link is encrypted with the code, and the relay sees only scrambled data.
+- On the same network the two devices talk directly. Through a VPN or on different networks (for example a phone on 4G) they talk through the orOS relay instead, with a little more delay. Either way the link is encrypted with the code, and the relay only passes it on.
 - `Disconnect` on the PC ends the link at once. If the link drops, the remote reconnects by itself while Studio stays open on the PC.
->! Anyone with the code can control Studio while the PC waits for a remote. Share it only with the device you are pairing.
+>! Press `Allow` only when it is your own device asking. If you did not just type the code somewhere, press `Deny`.
 
 ## Export
 `Export WAV` (the up arrow) mixes the song into one stereo WAV file: the loop if it is on, else everything from the start to the end of the last clip. Choose 16 or 24 bit and 44.1 or 48 kHz.

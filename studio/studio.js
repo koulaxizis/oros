@@ -133,7 +133,8 @@
       "rm.code": "Code", "rm.go": "Connect", "rm.badCode": "Type the 6 digits shown on the PC.", "rm.exit": "Stop controlling",
       "rm.badge.direct": "Direct", "rm.badge.relay": "Via internet", "rm.badge.lost": "Reconnecting…",
       "rm.noProject": "No project open on the PC", "rm.empty": "The project on the PC has no tracks yet.", "rm.fxOn": "on", "rm.fxOff": "bypassed",
-      "rm.pos": "Position in the song", "rm.privacy": "The link is encrypted end to end with this code. The orOS relay only passes it on.",
+      "rm.pos": "Position in the song", "rm.privacy": "The link is encrypted with this code and the orOS relay only passes it on. Studio asks you here before any device can control it.",
+      "rm.ask": "A {dev} wants to control Studio. Allow it only if it is yours.", "rm.allow": "Allow", "rm.deny": "Deny", "rm.waitOk": "Found Studio. Press Allow on the PC…", "rm.denied": "The PC did not allow this device. Ask for a new code.",
       "fx.n": "{n} effects", "fx.n1": "1 effect",
       "toast.tooBig20": "{name} is larger than 20 MB", "toast.noFx": "This browser cannot run the effects"
     },
@@ -207,7 +208,8 @@
       "rm.code": "Κωδικός", "rm.go": "Σύνδεση", "rm.badCode": "Γράψε τα 6 ψηφία που δείχνει το PC.", "rm.exit": "Τέλος χειρισμού",
       "rm.badge.direct": "Απευθείας", "rm.badge.relay": "Μέσω internet", "rm.badge.lost": "Επανασύνδεση…",
       "rm.noProject": "Κανένα ανοιχτό έργο στο PC", "rm.empty": "Το έργο στο PC δεν έχει ακόμη κανάλια.", "rm.fxOn": "ενεργό", "rm.fxOff": "παρακάμπτεται",
-      "rm.pos": "Θέση στο τραγούδι", "rm.privacy": "Η σύνδεση κρυπτογραφείται από άκρη σε άκρη με αυτόν τον κωδικό. Το relay του orOS απλώς τη μεταφέρει.",
+      "rm.pos": "Θέση στο τραγούδι", "rm.privacy": "Η σύνδεση κρυπτογραφείται με αυτόν τον κωδικό και το relay του orOS απλώς τη μεταφέρει. Το Studio σε ρωτά εδώ πριν το χειριστεί οποιαδήποτε συσκευή.",
+      "rm.ask": "Μια συσκευή ({dev}) θέλει να χειριστεί το Studio. Επίτρεψέ το μόνο αν είναι δική σου.", "rm.allow": "Επιτρέπεται", "rm.deny": "Όχι", "rm.waitOk": "Βρέθηκε το Studio. Πάτα «Επιτρέπεται» στο PC…", "rm.denied": "Το PC δεν επέτρεψε αυτή τη συσκευή. Ζήτα νέο κωδικό.",
       "fx.n": "{n} εφέ", "fx.n1": "1 εφέ",
       "toast.tooBig20": "Το {name} είναι μεγαλύτερο από 20 MB", "toast.noFx": "Αυτός ο browser δεν μπορεί να παίξει τα εφέ"
     }

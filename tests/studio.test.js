@@ -303,5 +303,9 @@ test("remote: wiring, strings and no code sinks", () => {
     const k = m.slice(3, -1);
     assert.equal((studio.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k);
   });
-  ["remote-dlg", "join-dlg", "remote-ui", "ru-strips", "rm-qr", "rj-code", "more-remote", "more-join", "remote-ind"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  ["remote-dlg", "join-dlg", "remote-ui", "ru-strips", "rm-qr", "rj-code", "more-remote", "more-join", "remote-ind", "rm-ask", "rm-allow", "rm-deny"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  // a guessable 6-digit code is not enough: the PC must allow each device, and only one
+  assert.match(js, /admit: askAllow/);
+  assert.match(js, /if \(okRid && r !== okRid\) \{ frame\(\{ k: "deny" \}\); return; \}/);
+  assert.match(js, /\} else if \(!peer\) \{\s*return;/);
 });

@@ -2,8 +2,8 @@
 // Studio find each other here (studio/remote.js). One Durable Object per
 // room; a room holds at most two WebSockets and forwards each text frame
 // to the other one, as is. The clients encrypt everything with a key
-// derived from the pairing code, so the relay only ever sees ciphertext;
-// the room id is a hash of the code. Nothing is stored: rooms live in
+// derived from the pairing code and the room id is a hash of the code
+// (guessable from six digits: the PC confirms each device itself). Nothing is stored: rooms live in
 // memory and close after REMOTE_LIMITS.idleMs without traffic.
 //
 // Used two ways: to exchange the WebRTC offer/answer (after which the
