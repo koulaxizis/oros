@@ -13,7 +13,7 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello", key, token, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
@@ -24,6 +24,7 @@
 //   Todoist https://api.todoist.com/api/v1<path> (Bearer, read-only: projects, open tasks)
 //   Trello https://api.trello.com/1<path> (OAuth header: key + token), GitHub
 //   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues
+//   Raindrop.io https://api.raindrop.io/rest/v1<path> (Bearer, read-only: collections, bookmarks)
 //           POST /v1 { op: "ext", p: "ininja", host, base, key, reqs: [...] }
 //   Invoice Ninja https://<host><base>/api/v1<path> (X-API-TOKEN), read-only
 //           POST /v1 { op: "ext", p: "odoo", host, base, db?, key, reqs: [...] }
@@ -95,7 +96,7 @@ const LIM1000 = /^([1-9][0-9]{0,2}|1000)$/, LIM500 = /^([1-9][0-9]?|[1-4][0-9]{2
 // cursor's "+", "/" and "=" travel as %2B, %2F, %3D (the only escapes
 // checkExtReq lets through, and only where a pattern allows them).
 const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
-      PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/, LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/,
+      PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/, LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/, PER50 = /^([1-9]|[1-4][0-9]|50)$/,
       TR_CARD_F = /^name,desc,due,idList,idLabels,closed,pos$/, TR_LIST_F = /^name,closed,pos$/,
       HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
@@ -316,6 +317,18 @@ export const PLATFORMS = {
     allow: [
       ["GET", /^\/user\/repos$/, { per_page: PER, page: NUM, sort: /^updated$/ }, null],
       ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null]
+    ]
+  },
+  // Wave 6C, read-only: Raindrop.io collections and bookmarks → Bookmarks
+  raindrop: {
+    root: "/rest/v1",
+    host: "api.raindrop.io",
+    keys: { key: /^[A-Za-z0-9-]{30,80}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/collections$/, {}, null],
+      ["GET", /^\/collections\/childrens$/, {}, null],
+      ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
     ]
   }
 };

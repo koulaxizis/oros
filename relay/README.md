@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello and GitHub, all read-only; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub and Raindrop.io, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -327,6 +327,19 @@ when the browser can't reach GitHub. Only GETs.
 | `/repos/<owner>/<repo>/issues` | `state=open\|all, per_page (≤100), page` |
 
 - `<owner>/<repo>` are GitHub's name characters only; `.` and `..` as a part are refused.
+
+### Raindrop.io (`p: "raindrop"`, Bookmarks, read-only)
+
+`POST /v1 { op: "ext", p: "raindrop", key, reqs }`: no `host`, `base` or `env`.
+`https://api.raindrop.io/rest/v1<path>` (`Authorization: Bearer`, the test
+token of the user's own Raindrop app: 30-80 letters, digits and dashes).
+Direct first, here only when the browser can't reach Raindrop. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/collections` | none |
+| `/collections/childrens` | none |
+| `/raindrops/0` | `perpage (≤50), page` (collection 0 = every bookmark outside the trash) |
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 
