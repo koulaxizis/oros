@@ -5916,3 +5916,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - phone.js: one channel request per page load; the page now accepts the browser's port message even with an empty origin and uses the newest port, so "On this phone" in Contacts and Calendar connects.
 - android/: PostMessageService declared so the browser binding keeps the app awake; new Bridge diagnostics screen (DiagActivity) that records each step of the channel set-up for troubleshooting.
   - Tests: full suite; Android build in CI. Real-phone test by Chris after this merge.
+
+### 2026-10-13 — Studio: automatic NULL JSFX effects sync + 2 effects work offline (#311) — 1.82.03
+- .github/workflows/sync-nullfx.yml + .github/scripts/sync-nullfx.js: every Monday (or on "Run workflow") GitHub copies the effects from koulaxizis/null-jsfx into studio/nullfx/fx, runs the tests and opens a PR when something changed. Needs Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+- sw.js: Loudness Meter and Spectrum Analyzer are now precached, so they work offline; tests/studio.test.js checks every effect is precached.
+  - Tests: full suite; sync script tried on null-jsfx main and #7. The workflow itself runs for the first time after this merge.

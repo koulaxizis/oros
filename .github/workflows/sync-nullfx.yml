@@ -1,0 +1,94 @@
+name: Sync NULL JSFX effects
+
+# Keeps Studio's effects (studio/nullfx/) in step with the web version of
+# NULL JSFX (koulaxizis/null-jsfx, web/). Every Monday, or from the Actions
+# tab ("Run workflow"), it takes null-jsfx main, checks that web/fx is
+# generated from the current JSFX, copies it with
+# .github/scripts/sync-nullfx.js (files + sw.js precache), runs the tests and,
+# when anything changed, opens or updates ONE pull request from the branch
+# auto/nullfx-sync. Nothing reaches main without that PR being merged.
+#
+# Needs: Settings > Actions > General > "Allow GitHub Actions to create and
+# approve pull requests". A PR opened with GITHUB_TOKEN does not start other
+# workflows, so the tests run here, before the PR is opened.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-nullfx
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/checkout@v4
+        with:
+          repository: koulaxizis/null-jsfx
+          ref: main
+          path: .nulljsfx
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: null-jsfx web/fx is up to date
+        working-directory: .nulljsfx/web
+        run: node tools/build.js --check
+
+      - name: Copy into studio/nullfx
+        id: sync
+        run: |
+          echo "upstream=$(git -C .nulljsfx rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          node .github/scripts/sync-nullfx.js .nulljsfx | tee "$RUNNER_TEMP/sync.txt"
+          rm -rf .nulljsfx
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Tests
+        if: steps.sync.outputs.changed == 'true'
+        run: node --test tests/*.test.js
+
+      - name: Open or update the pull request
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM: ${{ steps.sync.outputs.upstream }}
+        run: |
+          BRANCH=auto/nullfx-sync
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add -A studio/nullfx sw.js
+          git commit -m "Studio: sync NULL JSFX effects from null-jsfx $UPSTREAM"
+          git push --force origin "$BRANCH"
+          {
+            echo "Before: Studio carried an older copy of the NULL JSFX effects."
+            echo
+            echo "After: Studio has the effects of koulaxizis/null-jsfx main at $UPSTREAM, all of them in the offline cache."
+            echo
+            echo "How: opened by the Sync NULL JSFX effects workflow. It ran \`node tools/build.js --check\` in null-jsfx, copied web/runtime and web/fx into studio/nullfx, rewrote the studio/nullfx block of the sw.js precache and ran \`node --test tests/*.test.js\` (passed). No version, changelog or Bible change: the merge thread stamps it."
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/sync.txt"
+            echo '```'
+          } > "$RUNNER_TEMP/body.md"
+          if [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')" ]; then
+            gh pr edit "$BRANCH" --title "Studio: sync NULL JSFX effects (null-jsfx $UPSTREAM)" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --base main --head "$BRANCH" --title "Studio: sync NULL JSFX effects (null-jsfx $UPSTREAM)" --body-file "$RUNNER_TEMP/body.md"
+          fi

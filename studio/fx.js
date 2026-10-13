@@ -5,6 +5,8 @@
 //   - nullfx/: the web version of NULL JSFX, copied from the null-jsfx
 //     repository (web/runtime + web/fx). Each effect is a static file
 //     translated ahead of time from its JSFX; nothing is evaluated.
+//     .github/workflows/sync-nullfx.yml opens a PR when null-jsfx
+//     changes (weekly or on demand); never edit these files by hand.
 //   - Audio: one AudioWorklet node ("null-fx-chain") per chain; live
 //     chains stay alive between plays so a reorder or a slider move
 //     does not reset them. Export builds its own in the offline context.

@@ -247,6 +247,13 @@ test("effects: runtime files are static and loaded through validated ids", () =>
     .forEach((s) => assert.ok(html.indexOf('src="' + s) >= 0 && html.indexOf('src="' + s) < html.indexOf('src="core.js'), s));
 });
 
+test("effects: every studio/nullfx file is precached for offline use", () => {
+  const sw = read("sw.js"), dir = path.join(__dirname, "..", "studio/nullfx");
+  ["runtime", "fx"].forEach((d) => fs.readdirSync(path.join(dir, d)).forEach((f) => {
+    assert.ok(sw.includes('"studio/nullfx/' + d + "/" + f + '"'), "sw.js PRECACHE_URLS lacks studio/nullfx/" + d + "/" + f);
+  }));
+});
+
 test("remote: codes, keys and frames", async () => {
   globalThis.window = globalThis;
   require(path.join(__dirname, "..", "studio/remote.js"));
