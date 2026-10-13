@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.57.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.58.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4942,6 +4942,9 @@
         { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
           by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
           en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
+        { name: "timologisi.online", url: "https://www.timologisi.online/",
+          by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
+          en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },
         { name: "Dropbox", url: "https://www.dropbox.com/",
           by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
           en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },

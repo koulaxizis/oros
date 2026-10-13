@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, and timologisi.online (myDATA); exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -197,6 +197,24 @@ Rules:
 - Redirects are not followed. Writes run one at a time, in order; reads up to 4 at a time.
 - 16 KB per request body; answers up to 2 MB each and 8 MB per call; 20 s per request, 28 s per call.
 - The keys are used for this call only: never stored, logged or echoed (fetch errors come back only as `network`).
+
+### timologisi.online (`p: "tol"`, Invoices → myDATA)
+
+`POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [{ m, path, body? }] }`
+
+The host is fixed per `env` (`test` → `provider-dev.timologisi.online`,
+`live` → `provider.timologisi.online`), path prefix `/api/v1/Provider`;
+`host` / `base` in the body are refused. Auth: header `API-KEY: <key>`
+(16-200 chars of `A-Za-z0-9._~+/=-`).
+
+| Method | Path | Query / body |
+|---|---|---|
+| GET | `/GetCreditsBalance` | |
+| GET | `/RequestTransmittedDocs` | `issuerVatNumber, issuedFrom, issuedTo, uid, invoiceMark, series, aa, invoiceType, branch` |
+| POST | `/SendInvoices` | `{ invoice: [one document] }` with only the known top-level keys, a known type, a 9-digit issuer ΑΦΜ |
+
+- 64 KB per request body; 65 s per request, 70 s per call (SendInvoices waits for AADE).
+- The app never retries a SendInvoices: a timeout or network error is reported to the person as "may or may not have arrived" and they look it up first.
 
 ## Newsletter: sign-up form and one-click unsubscribe
 

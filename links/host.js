@@ -21,7 +21,12 @@
 // firewall), through the orOS relay's "ext" operation (relay/ext.js),
 // which checks the same list and keeps nothing.
 // Errors are codes ("offline", "auth", "notfound", "keys", "relay",
-// "network", "denied", "server", "bad"), never text from the shop.
+// "network", "denied", "server", "bad", "unknown"), never text from
+// the other side. "unknown" = a write that must not run twice (an
+// invoicing provider's SendInvoices) may or may not have arrived: it is
+// never retried another way; the app looks it up before trying again.
+// Platforms with fixed hosts (timologisi.online) take env + key
+// instead of a site; the relay gets the same env, never a host.
 // ============================================================
 (function (root) {
   "use strict";
@@ -33,6 +38,8 @@
   var DB_NAME = "oros-links";
   var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
   var TIMEOUT = 30000;
+  var TIMEOUT_BY = { tol: 75000 };                // SendInvoices waits for AADE and the PDF
+  function timeoutOf(p) { return TIMEOUT_BY[p] || TIMEOUT; }
   var listeners = [];
 
   // ---------- Slice ----------
@@ -201,7 +208,10 @@
     return (r[0].toString(36) + r[1].toString(36) + "00000000").slice(0, 14);
   }
   function pub(a) {
-    return { id: a.id, p: a.p, name: a.name, site: a.site, ks: a.ks, synced: !!a.s, platform: L.PLATFORMS[a.p].name };
+    var o = { id: a.id, p: a.p, name: a.name, site: a.site, ks: a.ks, synced: !!a.s, platform: L.PLATFORMS[a.p].name };
+    if (a.env) o.env = a.env;
+    if (a.vat) o.vat = a.vat;
+    return o;
   }
   function list(p) {
     return L.live(read()).filter(function (a) { return !p || a.p === p; }).map(pub);
@@ -210,20 +220,26 @@
     var a = L.find(read(), id);
     return a && a.d !== 1 ? pub(a) : null;
   }
-  // add({ p, name, site, keys }) → Promise<id>; rejects with a code:
-  // "p" | "site" | "keys" | "full" | "save"
+  // add({ p, name, site?, env?, vat?, keys }) → Promise<id>; rejects
+  // with a code: "p" | "site" | "env" | "vat" | "keys" | "full" | "save"
   function add(o) {
     o = o || {};
-    if (!L.PLATFORMS[o.p]) return Promise.reject(err("p"));
-    var site = L.PLATFORMS[o.p].site ? L.normSite(o.site) : "";
+    var pl = L.PLATFORMS[o.p];
+    if (!pl) return Promise.reject(err("p"));
+    var site = pl.site ? L.normSite(o.site) : "";
     if (site === null) return Promise.reject(err("site"));
+    if (pl.env && !(typeof o.env === "string" && Object.prototype.hasOwnProperty.call(pl.env, o.env))) return Promise.reject(err("env"));
+    var vat = pl.vat ? String(o.vat == null ? "" : o.vat).replace(/\s+/g, "").replace(/^EL/i, "") : "";
+    if (pl.vat && !L.VAT_RE.test(vat)) return Promise.reject(err("vat"));
     var chk = L.checkKeys(o.p, o.keys);
     if (!chk.ok) return Promise.reject(err("keys", chk.bad));
     if (L.live(read()).length >= L.MAX_ACCTS) return Promise.reject(err("full"));
     var id = newId(), now = Date.now();
     return sealLocal(id, chk.keys, now).then(function () {
-      var row = { id: id, m: now, p: o.p, name: L.cleanText(o.name, L.NAME_LEN) || L.PLATFORMS[o.p].name,
-                  site: site, ks: 0, s: "", sm: 0, d: 0 };
+      var row = { id: id, m: now, p: o.p, name: L.cleanText(o.name, L.NAME_LEN) || pl.name, site: site };
+      if (pl.env) row.env = o.env;
+      if (pl.vat) row.vat = vat;
+      row.ks = 0; row.s = ""; row.sm = 0; row.d = 0;
       if (!putAcct(row)) { dropLocal(id); throw err("save"); }
       return id;
     });
@@ -296,14 +312,15 @@
   // straight from the browser; how = "direct" (Authorization header) or
   // "query" (keys in the address: for servers that drop the header)
   function direct(a, keys, r, how) {
-    var url = L.apiUrl(a.p, a.site, r.path);
+    var url = L.apiUrl(a.p, a, r.path);
     var headers = { Accept: "application/json" };
-    if (how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
+    if (a.p === "tol") headers["API-KEY"] = keys.key;
+    else if (how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
     else headers.Authorization = "Basic " + btoa(keys.ck + ":" + keys.cs);
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
     if (r.body) { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(r.body); }
-    return withTimeout(TIMEOUT, function (signal) {
+    return withTimeout(timeoutOf(a.p), function (signal) {
       init.signal = signal;
       return fetch(url, init).then(function (res) {
         return res.text().then(function (t) { return parse(res.status, t); });
@@ -311,10 +328,14 @@
     });
   }
   function viaRelay(a, keys, reqs) {
-    var parts = L.siteParts(a.site);
-    var body = { op: "ext", p: a.p, host: parts.host, base: parts.base, ck: keys.ck, cs: keys.cs,
-                 reqs: reqs.map(function (r) { var o = { m: r.m, path: r.path }; if (r.body) o.body = JSON.stringify(r.body); return o; }) };
-    return withTimeout(TIMEOUT * 2, function (signal) {
+    var body = { op: "ext", p: a.p };
+    if (a.p === "tol") { body.env = a.env; body.key = keys.key; }
+    else {
+      var parts = L.siteParts(a.site);
+      body.host = parts.host; body.base = parts.base; body.ck = keys.ck; body.cs = keys.cs;
+    }
+    body.reqs = reqs.map(function (r) { var o = { m: r.m, path: r.path }; if (r.body) o.body = JSON.stringify(r.body); return o; });
+    return withTimeout(timeoutOf(a.p) + 30000, function (signal) {
       return fetch(relayUrl() + "/v1", {
         method: "POST", mode: "cors", credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer",
         headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: signal
@@ -333,6 +354,18 @@
     if (!reqs.length || reqs.length > 10) return Promise.reject(err("bad"));
     for (var i = 0; i < reqs.length; i++) if (L.checkReq(a.p, reqs[i])) return Promise.reject(err("denied"));
     if (typeof navigator !== "undefined" && navigator.onLine === false) return Promise.reject(err("offline"));
+    var pl = L.PLATFORMS[a.p];
+    var writes = reqs.some(function (r) { return r.m !== "GET"; });
+    var once = !!(pl.once && writes);
+    // A write that must not happen twice (an invoicing provider issues a
+    // tax document) is never retried another way after it was tried:
+    // when the way is not known yet, a read finds it first.
+    if (once && !prefs().mode[id]) {
+      return call(id, [{ m: "GET", path: pl.probe }]).then(function () {
+        if (!prefs().mode[id]) throw err("network");
+        return call(id, reqs);
+      });
+    }
     return openLocal(id).then(function (local) {
       if (!local) throw err("keys");
       var keys = local.keys, mode = prefs().mode[id] || "direct";
@@ -344,10 +377,13 @@
       function relay() {
         return viaRelay(a, keys, reqs).then(function (res) { setMode(id, "relay"); return res; });
       }
-      if (mode === "relay") return relay();
+      if (mode === "relay") {
+        if (once) return viaRelay(a, keys, reqs).catch(function (e) { throw err(e && e.code === "relay" ? "unknown" : (e && e.code) || "unknown"); });
+        return relay();
+      }
       return all(mode).then(function (res) {
         // 401 with the header: some servers drop it; try the address
-        if (mode === "direct" && res[0] && res[0].status === 401) {
+        if (a.p === "woo" && mode === "direct" && res[0] && res[0].status === 401) {
           return all("query").then(function (r2) {
             if (r2[0] && r2[0].status !== 401) { setMode(id, "query"); return r2; }
             return res;
@@ -356,6 +392,7 @@
         setMode(id, mode);
         return res;
       }, function (e) {
+        if (once) throw err("unknown");            // it may have arrived: the app checks before trying again
         if (e && e.name === "AbortError") throw err("network");
         return relay();                            // the browser could not reach it: CORS or firewall
       });
@@ -373,7 +410,9 @@
   }
   // Is the account reachable with its keys? → Promise<"" | code>
   function test(id) {
-    return call(id, [{ m: "GET", path: "/products?per_page=1" }]).then(function (res) {
+    var a = L.find(read(), id);
+    if (!a || a.d === 1) return Promise.resolve("gone");
+    return call(id, [{ m: "GET", path: L.PLATFORMS[a.p].probe }]).then(function (res) {
       return statusCode(res[0]);
     }, function (e) { return (e && e.code) || "network"; });
   }

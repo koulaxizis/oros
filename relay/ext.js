@@ -12,8 +12,13 @@
 // keys are used for this call only: never stored, logged or echoed.
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
+//           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
 //   req: { m: "GET" | "PUT" | "POST", path, body? (JSON text) }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
+//   timologisi.online (Greek e-invoicing provider, fixed hosts):
+//     https://provider-dev.timologisi.online/api/v1/Provider<path> (test)
+//     https://provider.timologisi.online/api/v1/Provider<path>     (live)
+//     header API-KEY; SendInvoices waits for AADE, so a longer timeout
 // Answer:   { ok: true, data: { res: [ one per request, same order ] } }
 //   { status, body (text ≤ 2 MB) } | { status, err: "too-big" }
 //   | { err: "timeout" | "network" }
@@ -30,12 +35,36 @@ export const EXT_LIMITS = {
   timeout: 20000,                   // ms, per request
   budget: 28000                     // ms, the whole call
 };
+// Per platform where it differs from the above.
+const LIMITS_BY = {
+  tol: { reqBytes: 64 * 1024, timeout: 65000, budget: 70000 }
+};
+function lim(p, k) { return LIMITS_BY[p] && LIMITS_BY[p][k] !== undefined ? LIMITS_BY[p][k] : EXT_LIMITS[k]; }
 
 const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
       WORDS = /^[a-z][a-z,-]{0,80}$/, ORDERBY = /^(date|id|modified|title)$/, ORD = /^(asc|desc)$/;
 function q(extra) { return Object.assign({ page: NUM, per_page: PER, orderby: ORDERBY, order: ORD }, extra || {}); }
 const STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
+const VAT_RE = /^[0-9]{9}$/, DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, UID = /^[A-F0-9]{40}$/, MARK = /^[0-9]{1,20}$/,
+      SERIES = /^[A-Za-z0-9._-]{1,50}$/, AA = /^[0-9]{1,15}$/, ITYPE = /^[0-9]{1,2}\.[0-9]$/;
+const TOL_TYPES = ["1.1", "1.2", "1.3", "2.1", "2.2", "2.3", "5.1", "5.2", "11.1", "11.2", "11.4"];
+const TOL_KEYS = ["issuer", "counterpart", "invoiceHeader", "paymentMethods", "invoiceDetails",
+                  "taxesTotals", "invoiceSummary", "providerAdditionalInvoiceDetails"];
+// Same rule as links/core.js okInvoice: one document, known sections,
+// a type orOS issues, ≤ 64 KB.
+function okInvoice(v) {
+  if (!Array.isArray(v) || v.length !== 1) return false;
+  const d = v[0];
+  if (!d || typeof d !== "object" || Array.isArray(d)) return false;
+  for (const k of Object.keys(d)) if (TOL_KEYS.indexOf(k) < 0) return false;
+  const h = d.invoiceHeader;
+  if (!h || typeof h !== "object" || TOL_TYPES.indexOf(h.invoiceType) < 0) return false;
+  if (!d.issuer || typeof d.issuer !== "object" || !VAT_RE.test(String(d.issuer.vatNumber))) return false;
+  let json;
+  try { json = JSON.stringify(v); } catch (e) { return false; }
+  return json.length <= 64 * 1024;
+}
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
 export const PLATFORMS = {
@@ -55,6 +84,20 @@ export const PLATFORMS = {
       ["PUT", /^\/orders\/[0-9]{1,12}$/, null, { status: "status" }],
       ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }]
     ]
+  },
+  tol: {
+    root: "/api/v1/Provider",
+    env: { test: "provider-dev.timologisi.online", live: "provider.timologisi.online" },
+    keys: { key: /^[A-Za-z0-9._~+\/=-]{16,200}$/ },
+    auth: (b) => ["API-KEY", b.key],
+    allow: [
+      ["GET", /^\/GetCreditsBalance$/, null, null],
+      ["GET", /^\/RequestTransmittedDocs$/, {
+        issuerVatNumber: VAT_RE, issuedFrom: DAY, issuedTo: DAY, uid: UID, invoiceMark: MARK,
+        series: SERIES, aa: AA, invoiceType: ITYPE, branch: NUM
+      }, null],
+      ["POST", /^\/SendInvoices$/, null, { invoice: "tolinv" }]
+    ]
   }
 };
 
@@ -65,6 +108,7 @@ function okVal(kind, v) {
   if (kind === "bool") return v === true || v === false;
   if (kind === "status") return ORDER_ST.indexOf(v) >= 0;
   if (kind === "text") return typeof v === "string" && v.length > 0 && v.length <= 1000;
+  if (kind === "tolinv") return okInvoice(v);
   return false;
 }
 
@@ -105,13 +149,19 @@ export function checkExtReq(p, r) {
 export function validExt(b) {
   const pl = PLATFORMS[b.p];
   if (!pl || !Object.prototype.hasOwnProperty.call(PLATFORMS, b.p)) return "p";
-  if (!validHost(b.host)) return "host";
-  if (typeof b.base !== "string" || !BASE_RE.test(b.base) || /(^|\/)\.\.?(\/|$)/.test(b.base)) return "base";
+  if (pl.env) {
+    // fixed hosts: only the environment is chosen
+    if (typeof b.env !== "string" || !Object.prototype.hasOwnProperty.call(pl.env, b.env)) return "host";
+    if (b.host !== undefined || b.base !== undefined) return "host";
+  } else {
+    if (!validHost(b.host)) return "host";
+    if (typeof b.base !== "string" || !BASE_RE.test(b.base) || /(^|\/)\.\.?(\/|$)/.test(b.base)) return "base";
+  }
   for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
   if (!Array.isArray(b.reqs) || !b.reqs.length || b.reqs.length > EXT_LIMITS.reqs) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
-      if (typeof r.body !== "string" || r.body.length > EXT_LIMITS.reqBytes) return "body";
+      if (typeof r.body !== "string" || r.body.length > lim(b.p, "reqBytes")) return "body";
       let o;
       try { o = JSON.parse(r.body); } catch (e) { return "body"; }
       const bad = checkExtReq(b.p, { m: r.m, path: r.path, body: o });
@@ -126,10 +176,12 @@ export function validExt(b) {
 
 // The address, re-checked after URL parsing (catches any normalisation).
 function target(b, path) {
-  const baseHref = "https://" + b.host.toLowerCase() + b.base + PLATFORMS[b.p].root;
+  const pl = PLATFORMS[b.p];
+  const host = pl.env ? pl.env[b.env] : b.host.toLowerCase();
+  const baseHref = "https://" + host + (pl.env ? "" : b.base) + pl.root;
   const u = new URL(baseHref + path);
   if (u.protocol !== "https:" || u.port !== "" || u.username || u.password) return null;
-  if (u.hostname !== b.host.toLowerCase() || u.href !== baseHref + path) return null;
+  if (u.hostname !== host || u.href !== baseHref + path) return null;
   return u.href;
 }
 
@@ -161,7 +213,7 @@ export async function runExt(b, fetchFn, now) {
   let outBytes = 0, next = 0;
   async function one(i) {
     const r = b.reqs[i];
-    const left = EXT_LIMITS.budget - (now() - start);
+    const left = lim(b.p, "budget") - (now() - start);
     if (left <= 0) { out[i] = { err: "timeout" }; return; }
     const url = target(b, r.path);
     if (!url) { out[i] = { err: "network" }; return; }
@@ -170,7 +222,7 @@ export async function runExt(b, fetchFn, now) {
     let body;
     if (r.body !== undefined) { headers["Content-Type"] = "application/json"; body = r.body; }
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), Math.min(EXT_LIMITS.timeout, left));
+    const timer = setTimeout(() => ctl.abort(), Math.min(lim(b.p, "timeout"), left));
     try {
       const res = await fetchFn(url, { method: r.m, headers, body, redirect: "manual", signal: ctl.signal });
       const room = Math.max(0, Math.min(EXT_LIMITS.bodyOut, EXT_LIMITS.totalOut - outBytes));
