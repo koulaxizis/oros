@@ -9,7 +9,7 @@
 // plain search results the user never named or kept: not searched.
 // Opens through the existing Maps bridge (__orosOpenMaps):
 // target { lat, lon, name }, the map centres on the place.
-// Since 1.46.00 also one hit per GPX track (oros-maps-tracks-data,
+// Since 1.47.00 also one hit per GPX track (oros-maps-tracks-data,
 // slice mapstracks; tombstoned entries are already gone from it):
 // target { track: id } through __orosOpenAt("maps", …).
 // ============================================================

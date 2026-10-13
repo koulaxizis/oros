@@ -2,6 +2,16 @@ name = "oros-mail-relay"
 main = "worker.js"
 compatibility_date = "2025-06-01"
 
+# Studio Remote's meeting rooms (remote.js). In memory only; SQLite-backed
+# class because that is what the free plan offers.
+[[durable_objects.bindings]]
+name = "REMOTE"
+class_name = "RemoteRoom"
+
+[[migrations]]
+tag = "remote-v1"
+new_sqlite_classes = ["RemoteRoom"]
+
 [vars]
 # Comma-separated list of pages allowed to call the relay.
 ALLOWED_ORIGINS = "https://useoros.online"

@@ -607,7 +607,7 @@
     return {
       wire: wire, open: open, render: render, loadCatalog: loadCatalog,
       ensure: ensure, preparePage: preparePage, isReady: isReady, insert: insert, setTime: setTime, disconnect: disconnect, prune: prune,
-      chainLatency: chainLatency, active: active, isOpen: function () { return !!openKey; },
+      chainLatency: chainLatency, active: active, nameOf: nameOf, isOpen: function () { return !!openKey; },
       count: function (items) { return (items || []).filter(function (x) { return x.on; }).length; }
     };
   };
