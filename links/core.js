@@ -213,16 +213,17 @@
       apps: ["bookmarks"],
       probe: "/collections"
     },
-    // Wave 6D: Notion pages into Notes (API 2022-06-28, Bearer token of
-    // the user's own internal integration; only the pages shared with
-    // it). Notion does not answer browsers: always through the relay.
+    // Wave 6D: Notion pages into Notes, wave 6E: databases into
+    // Spreadsheet (API 2022-06-28, Bearer token of the user's own
+    // internal integration; only what is shared with it). Notion does
+    // not answer browsers: always through the relay.
     notion: {
       name: "Notion",
       site: false,
       host: "api.notion.com",
       root: "/v1",
       keys: [{ k: "key", re: /^(secret_|ntn_)[A-Za-z0-9]{30,80}$/ }],
-      apps: ["notes"],
+      apps: ["notes", "spreadsheet"],
       probe: { m: "POST", path: "/search", body: { filter: { property: "object", value: "page" }, page_size: 1 } },
       relayOnly: true
     }
@@ -424,8 +425,9 @@
     ld_dom: [["type", "=", "opportunity"], ["active", "in", [true, false]]],
     ld_f: ["id", "name", "partner_id", "expected_revenue", "probability", "active", "date_deadline", "date_closed", "lost_reason_id", "company_currency"],
     ord: "id",
-    // Notion (wave 6D): search lists pages only
-    nt_flt: { property: "object", value: "page" }
+    // Notion: search lists pages (wave 6D) or databases (wave 6E)
+    nt_flt: { property: "object", value: "page" },
+    nt_dbf: { property: "object", value: "database" }
   };
   var ODOO_J = {};
   Object.keys(ODOO).forEach(function (k) { ODOO_J[k] = JSON.stringify(ODOO[k]); });
@@ -566,8 +568,10 @@
       ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
     ],
     notion: [
-      ["POST", /^\/search$/, null, { filter: "=nt_flt", page_size: "nlim", start_cursor: "ncur" }, "ntq"],
-      ["GET", /^\/blocks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/children$/, { page_size: PER, start_cursor: NT_ID }, null]
+      ["POST", /^\/search$/, null, { filter: "=nt_flt|nt_dbf", page_size: "nlim", start_cursor: "ncur" }, "ntq"],
+      ["GET", /^\/blocks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/children$/, { page_size: PER, start_cursor: NT_ID }, null],
+      // a database's rows (wave 6E): a POST that reads, no filter or sort
+      ["POST", /^\/databases\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/query$/, null, { page_size: "nlim", start_cursor: "ncur" }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -586,7 +590,8 @@
     if (kind === "ooff") return isInt(v) && v >= 0 && v <= 10000000;
     if (kind === "nlim") return isInt(v) && v >= 1 && v <= 100;
     if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
-    if (kind[0] === "=") return has(ODOO_J, kind.slice(1)) && JSON.stringify(v) === ODOO_J[kind.slice(1)];
+    // "=a" or "=a|b": exactly one of the fixed values
+    if (kind[0] === "=") return kind.slice(1).split("|").some(function (k) { return has(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]; });
     return false;
   }
   // "" when the request may go, else the reason.
