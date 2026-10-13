@@ -5044,7 +5044,7 @@
           en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
         { name: "Notion API", url: "https://developers.notion.com/reference/intro",
           by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
-          en: "Connected services: import pages (Notes) and databases (Spreadsheet)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο)" },
+          en: "Connected services: import pages (Notes) and databases (Spreadsheet, Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο, Kanban)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

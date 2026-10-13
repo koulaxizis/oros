@@ -223,7 +223,7 @@
       host: "api.notion.com",
       root: "/v1",
       keys: [{ k: "key", re: /^(secret_|ntn_)[A-Za-z0-9]{30,80}$/ }],
-      apps: ["notes", "spreadsheet"],
+      apps: ["notes", "spreadsheet", "kanban"],
       probe: { m: "POST", path: "/search", body: { filter: { property: "object", value: "page" }, page_size: 1 } },
       relayOnly: true
     }

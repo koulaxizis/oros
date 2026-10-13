@@ -132,12 +132,17 @@
       "import.boards":    "boards",
       "import.labels":    "labels",
       "import.acct":      "From a connected account",
-      "import.acctHint":  "Read a Trello board or a GitHub repository's issues straight from your account. orOS only reads: nothing there changes.",
-      "import.acctNone":  "Connect Trello or GitHub in Settings › Connected services to read a board from your account.",
+      "import.acctHint":  "Read a Trello board, a GitHub repository's issues or a Notion database straight from your account. orOS only reads: nothing there changes.",
+      "import.acctNone":  "Connect Trello, GitHub or Notion in Settings › Connected services to read a board from your account.",
       "import.acctOpen":  "Open Connected services",
       "import.acctSel":   "Account",
       "import.list":      "Show boards",
       "import.listRepo":  "Show repositories",
+      "import.listDb":    "Show databases",
+      "import.db":        "Database",
+      "import.nt.none":   "No status",
+      "import.nt.all":    "Cards",
+      "import.nt.untitled": "Untitled",
       "import.board":     "Board",
       "import.repo":      "Repository",
       "import.read":      "Read",
@@ -242,12 +247,17 @@
       "import.boards":    "boards",
       "import.labels":    "ετικέτες",
       "import.acct":      "Από συνδεδεμένο λογαριασμό",
-      "import.acctHint":  "Διάβασε ένα board του Trello ή τα issues ενός αποθετηρίου του GitHub κατευθείαν από τον λογαριασμό σου. Το orOS μόνο διαβάζει: εκεί δεν αλλάζει τίποτα.",
-      "import.acctNone":  "Σύνδεσε Trello ή GitHub στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να διαβάσεις ένα board από τον λογαριασμό σου.",
+      "import.acctHint":  "Διάβασε ένα board του Trello, τα issues ενός αποθετηρίου του GitHub ή μια βάση δεδομένων του Notion κατευθείαν από τον λογαριασμό σου. Το orOS μόνο διαβάζει: εκεί δεν αλλάζει τίποτα.",
+      "import.acctNone":  "Σύνδεσε Trello, GitHub ή Notion στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να διαβάσεις ένα board από τον λογαριασμό σου.",
       "import.acctOpen":  "Άνοιγμα Συνδεδεμένων υπηρεσιών",
       "import.acctSel":   "Λογαριασμός",
       "import.list":      "Εμφάνιση boards",
       "import.listRepo":  "Εμφάνιση αποθετηρίων",
+      "import.listDb":    "Εμφάνιση βάσεων δεδομένων",
+      "import.db":        "Βάση δεδομένων",
+      "import.nt.none":   "Χωρίς κατάσταση",
+      "import.nt.all":    "Κάρτες",
+      "import.nt.untitled": "Χωρίς τίτλο",
       "import.board":     "Board",
       "import.repo":      "Αποθετήριο",
       "import.read":      "Ανάγνωση",
@@ -3376,7 +3386,7 @@
   //   · Trello: lists→στήλες, cards→κάρτες, desc→notes, due→card.due,
   //     labels→labels, checklists→subtasks. Closed lists/cards → skip.
 
-  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub" };
+  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub", notion: "Notion" };
 
   // Kanri Tailwind color classes → orOS swatch + i18n όνομα
   var KANRI_COLORS = {
@@ -3633,6 +3643,7 @@
     try { var p = window.parent; return p && p !== window && p.orosLinks && typeof p.orosLinks.call === "function" ? p.orosLinks : null; }
     catch (e) { return null; }
   }
+  var PNAME = { trello: "Trello", github: "GitHub", notion: "Notion" };
   function accountSection(onParsed, onMsg) {
     var K = window.OrosLinksKanban, Lk = linksHost();
     if (!K || !Lk) return null;
@@ -3663,14 +3674,14 @@
     hint(t("import.acctHint"));
     var byId = {};
     accts.forEach(function (a) { byId[a.id] = a; });
-    var aSel = sel("kimp.acct", t("import.acctSel"), accts.map(function (a) { var pn = a.p === "trello" ? "Trello" : "GitHub"; return [a.id, a.name === pn ? pn : a.name + " (" + pn + ")"]; }));
+    var aSel = sel("kimp.acct", t("import.acctSel"), accts.map(function (a) { var pn = PNAME[a.p] || a.p; return [a.id, a.name === pn ? pn : a.name + " (" + pn + ")"]; }));
     box.appendChild(aSel.lab);
     var row = document.createElement("div");
     row.className = "imp-row";
     box.appendChild(row);
     var listBtn = btn("", "kimp.list", loadList);
-    var bSel = null, readBtn = null, busy = false;
-    function label() { listBtn.textContent = byId[aSel.s.value] && byId[aSel.s.value].p === "github" ? t("import.listRepo") : t("import.list"); }
+    var bSel = null, readBtn = null, busy = false, listed = {};
+    function label() { var p = byId[aSel.s.value] && byId[aSel.s.value].p; listBtn.textContent = t(p === "github" ? "import.listRepo" : p === "notion" ? "import.listDb" : "import.list"); }
     label();
     row.appendChild(listBtn);
     aSel.s.addEventListener("change", function () {
@@ -3697,19 +3708,21 @@
       busy = true;
       onMsg(t("import.reading"));
       var items = [];
-      (function page(n) {
-        return ask(a.id, K.listReq(a.p, n)).then(function (data) {
+      (function page(n, cursor) {
+        return ask(a.id, K.listReq(a.p, n, cursor)).then(function (data) {
           var r = K.readList(a.p, data);
           items = items.concat(r.items);
-          if (r.more && n < K.MAX_PAGES.list) return page(n + 1);
+          if (r.more && n < K.MAX_PAGES.list) return page(n + 1, r.next);
         });
-      })(1).then(function () {
+      })(1, "").then(function () {
         busy = false;
         if (bSel) bSel.lab.remove();
         if (readBtn) readBtn.remove();
         if (!items.length) { onMsg(t("import.none")); return; }
         onMsg("");
-        bSel = sel("kimp.board", a.p === "github" ? t("import.repo") : t("import.board"), items.map(function (x) { return [x.id, x.name]; }));
+        listed = {};
+        items.forEach(function (x) { listed[x.id] = x; });
+        bSel = sel("kimp.board", t(a.p === "github" ? "import.repo" : a.p === "notion" ? "import.db" : "import.board"), items.map(function (x) { return [x.id, x.name]; }));
         box.appendChild(bSel.lab);
         readBtn = btn(t("import.read"), "kimp.read", function () { readBoard(a, bSel.s.value); });
         box.appendChild(readBtn);
@@ -3722,6 +3735,17 @@
       var got;
       var run = a.p === "trello"
         ? ask(a.id, K.boardReq("trello", id)).then(function (d) { got = d; })
+        : a.p === "notion"
+        ? (function () {                                 // wave 6F: a Notion database's rows, by cursor
+            got = { db: listed[id], rows: [] };
+            return (function page(n, cursor) {
+              return ask(a.id, K.boardReq("notion", id, n, cursor)).then(function (data) {
+                var r = K.readRows(data);
+                got.rows = got.rows.concat(r.items);
+                if (r.more && n < K.MAX_PAGES.issues) return page(n + 1, r.next);
+              });
+            })(1, "");
+          })()
         : (function () {
             got = [];
             return (function page(n) {
@@ -3733,7 +3757,8 @@
           })();
       run.then(function () {
         busy = false;
-        var ex = K.toExport(a.p, id, got, { open: t("import.gh.open"), closed: t("import.gh.closed") });
+        var ex = K.toExport(a.p, id, got, { open: t("import.gh.open"), closed: t("import.gh.closed"),
+                                            none: t("import.nt.none"), all: t("import.nt.all"), untitled: t("import.nt.untitled") });
         var res = ex && trelloAdapter(ex);
         if (!res) { onMsg(t("import.unknown")); return; }
         res.source = a.p;
