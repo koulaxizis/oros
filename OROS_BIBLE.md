@@ -625,7 +625,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Weather | oros-weatherapp-data | merge-lite | 5/5 VERIFIED |
 | Mood | oros-mood-data | entry field LWW (fm) + cols + tombs | A67 audit 2026-10-07 (MO-1…MO-8) |
 | Time | oros-time-data | entity union + smtime | 5/5 VERIFIED |
-| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo); v1.2.0 at 1.54.00 (wave 3: paired devices: remote, stage display, moderator via remote-link.js) |
+| **Time › Stage** | oros-time-stage (own slice `stage`) | events (optional `stop`, omitted when empty) + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo); v1.2.0 at 1.54.00 (wave 3: paired devices: remote, stage display, moderator via remote-link.js); v1.3.0 at 1.56.00 (wave 4: import/export CSV + Calendar, report, hard stop, search, Today) |
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
 | Habits | oros-habits-data | habits/comps LWW | 5/5 VERIFIED |
@@ -1904,7 +1904,7 @@ Where credits live: `CREDITS.md` (repo root, full table with copyright + licence
 - **Libraries (vendor/):** Leaflet 1.9.4 (BSD-2), jsPDF 2.5.2 (MIT), SheetJS CE 0.20.3 (Apache-2.0), hls.js 1.7.3 light (Apache-2.0), PDF.js 5.4.394 legacy build (Apache-2.0, Mozilla Foundation & contributors, `vendor/pdfjs/` with `LICENSE`; Layout PDF import, since 0.65.00). Since 1.32.00 also NULL JSFX (MIT, Christos Koulaxizis; web build in `studio/nullfx/` with `LICENSE.md`, generated from koulaxizis/null-jsfx `web/`) for Studio effects. Since 1.26.00 also ONNX Runtime Web 1.22.0 (MIT, Microsoft, WebAssembly build `vendor/ort/` with `LICENSE`) and the U²-Net u2netp model (Apache-2.0, Xuebin Qin and contributors, ONNX export from rembg, `vendor/u2netp/` with `LICENSE`) for Atelier background removal; both downloaded on first use, not precached. Tests only: jsQR (Apache-2.0), Mediabunny 1.60.0 (MPL-2.0, Vanilagy & contributors; Montage, since 1.10.00).
 - **Fonts/icons:** Nunito (OFL 1.1), Noto Sans (OFL 1.1), Feather Icons path data in a few shell/Weather/Quote SVGs (MIT, Cole Bemis), Tabler Icons 3.49.0 (365 icons in `atelier/library/icons.js`, MIT, Paweł Kuna).
 - **Data:** EFF Diceware (CC BY 3.0 US), SecLists 10k (MIT), SCOWL via wordlist-english (SCOWL licence), Hunspell el_GR 0.9 (MPL 1.1), FrequencyWords 2018 (CC BY-SA 4.0) — the last three also feed Hangman, statutes in `pubdomain/rules.js`. Moon & Sky: Yale Bright Star Catalogue 5th ed. (public domain), d3-celestial constellation figures © 2015 Olaf Frohn (BSD-3-Clause, `sky/LICENSE-d3-celestial.txt`).
-- **Services:** Open-Meteo (data CC BY 4.0, non-commercial; attribution line in the Weather app since this change), OSM tiles + data (ODbL), OSM France/HOT tiles, Esri World Imagery, Photon (komoot), OSRM demo, FOSSGIS routing, Radio Browser, iptv-org (Unlicense), Wikidata (CC0), Atelier via `designkit/media.js`: Openverse, Wikimedia Commons, Iconify, Fontsource, Pixabay + Pexels (user key only); Mail relay on Cloudflare Workers (`relay/`); Dropbox (sync), GitHub Pages (hosting). Since 0.63.00 also Open Library + MusicBrainz (Media Shelf lookup, CC0 data) and the AI providers the user picks with their own key in Assistant (Anthropic, OpenAI, Google Gemini API, Mistral AI, OpenRouter; local Ollama / LM Studio); no code from them is shipped. Since 1.05.00 also Frankfurter (Unit Converter exchange rates; ECB data). Since 1.20.00 also Wiktionary (Library word look-up, opt-in per device, CC BY-SA text). Since 1.38.00 Newsletter can send through the user's own Brevo, Postmark, SendGrid or Mailgun account (SMTP or HTTP API, via the relay's papi op); no code from them is shipped. Since 1.43.00 also the OpenStreetMap API (Maps notes and sign-in, ODbL data, OSMF API usage policy). Since 1.45.00 also the Overpass API (overpass-api.de, Maps place editing) and the iD presets (id-tagging-schema 7.3.0, ISC, generated into `maps/presets-data.js` by /mnt/project-files/maps/tools/build-presets.py). Since 1.50.00 Maps can show OpenStreetMap's public GPS traces tiles (gps.tile.openstreetmap.org, same tile policy as the standard layer). Since 1.46.00 Studio Remote uses Cloudflare's public STUN server (stun.cloudflare.com) to find a direct path; no code from it is shipped. Since Connected services (integrations wave 1) also the WooCommerce REST API of the user's own shop (Stock shop panel, the user's own keys; via the relay's ext op when the browser can't reach the shop); no code from it is shipped.
+- **Services:** Open-Meteo (data CC BY 4.0, non-commercial; attribution line in the Weather app since this change), OSM tiles + data (ODbL), OSM France/HOT tiles, Esri World Imagery, Photon (komoot), OSRM demo, FOSSGIS routing, Radio Browser, iptv-org (Unlicense), Wikidata (CC0), Atelier via `designkit/media.js`: Openverse, Wikimedia Commons, Iconify, Fontsource, Pixabay + Pexels (user key only); Mail relay on Cloudflare Workers (`relay/`); Dropbox (sync), GitHub Pages (hosting). Since 0.63.00 also Open Library + MusicBrainz (Media Shelf lookup, CC0 data) and the AI providers the user picks with their own key in Assistant (Anthropic, OpenAI, Google Gemini API, Mistral AI, OpenRouter; local Ollama / LM Studio); no code from them is shipped. Since 1.05.00 also Frankfurter (Unit Converter exchange rates; ECB data). Since 1.20.00 also Wiktionary (Library word look-up, opt-in per device, CC BY-SA text). Since 1.38.00 Newsletter can send through the user's own Brevo, Postmark, SendGrid or Mailgun account (SMTP or HTTP API, via the relay's papi op); no code from them is shipped. Since 1.43.00 also the OpenStreetMap API (Maps notes and sign-in, ODbL data, OSMF API usage policy). Since 1.45.00 also the Overpass API (overpass-api.de, Maps place editing) and the iD presets (id-tagging-schema 7.3.0, ISC, generated into `maps/presets-data.js` by /mnt/project-files/maps/tools/build-presets.py). Since 1.50.00 Maps can show OpenStreetMap's public GPS traces tiles (gps.tile.openstreetmap.org, same tile policy as the standard layer). Since 1.46.00 Studio Remote uses Cloudflare's public STUN server (stun.cloudflare.com) to find a direct path; no code from it is shipped. Since 1.57.00 also the WooCommerce REST API of the user's own shop (Stock shop panel, the user's own keys; via the relay's ext op when the browser can't reach the shop); no code from it is shipped.
 - **Not third-party (checked):** no recorded audio (all sounds synthesised), no CDN loads, emoji from the device font, app icons/artwork/content drawn or written for orOS.
 - **Still to add when they land:** RSS reader (`web` op in the same relay, feed publishers), Layout/Publisher (shares designkit), any Design studio source beyond the six above. Apps on main but not registered yet (Budget, Chores, QR, Public Domain, Plants, Water, Travel, Meals, Family Tree, Shelf, Workouts, Mail, 21 games, Atelier) are already covered.
 - **Licence:** decided 2026-10-09, MIT (Chris).
@@ -2365,6 +2365,12 @@ Rebuild this in any session where code is delivered.
     - Typed text is capped and drawn as text.
   - **Clock.** The device computes the clock from the PC's start instant plus the measured offset, so a slow link never makes the stage clock jump.
   - **Logo and notes.** The logo stays on the PC (it does not fit a frame). Private notes are never sent.
+- **Wave 4 (1.56.00, plan complete):**
+  - **Import only adds.** An import or a quick add goes to the end of the open event and never replaces items, so a wrong file can be undone by deleting the new items. Every value is parsed as data and drawn as text.
+  - **Calendar gaps become breaks of a fixed length.** They are not "until" breaks, because the plan may land after other items at another hour.
+  - **The report is per device.** The actual times are the device-local run log of the computer that ran the clock. Nothing new is synced for it.
+  - **Prompter link dropped.** orOS has no teleprompter, so this item from the plan has no target.
+  - **Search and Today.** time → time/search.js. It reads oros-time-stage and finds Stage events and rundown items. Opening a hit goes to the Stage tab on that event and item. Today: time → ["stage-core.js", "today.js"]. Shows alarms later today, plus on an event's day the next Stage session at its expected start, and Stage events on the coming days at their start.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -5525,3 +5531,46 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The help pages gained the "Another device" section and a limits line.
   - tests/time-stage.test.js now has 26 tests. The 7 new ones cover link compatibility with Studio, devState, devAdopt, the role matrix of devCommand, clockOffset and the page wiring.
   - Not tested: real phones / tablets / TVs, the live relay path.
+
+### 2026-10-13 — Time › Stage wave 4: import, export, report, hard stop, search, Today (#274) — 1.56.00
+- Time › Stage wave 4: import, export, report (plan /mnt/project-files/time/stage-timer-plan.md). This completes the plan.
+  - **time/stage-tools.js (new):**
+    - Quick add: ready-made items.
+    - Import dialog:
+      - CSV file: a header row in EN/EL in any order, or the columns title, speaker, duration, start. `;`, `,` or tab separated. At most 2 MB and 500 rows.
+      - A Calendar day through calendar/occur.js. The gaps between events become breaks.
+      - It shows a preview, and the items are added to the end of the open event. Nothing is replaced.
+    - Export CSV.
+    - Report:
+      - A table of planned vs actual start and length, with totals.
+      - Download CSV.
+      - Print / PDF, through a print stylesheet that shows only the report.
+  - **time/stage-core.js v1.3.0:** parseCsv, parseDur, parseHm, csvPlan, calPlan, csvCell, toCsv, report, reportCsv, mmss, TEMPLATES.
+    - The CSV is written `;` separated, with a BOM. Text cells that start with = + - @ get an apostrophe, against formula injection.
+    - normEvent keeps `stop` ("HH:MM", hard stop) and leaves the key out when empty.
+    - schedule() returns `stopAt` and `cut`. A stop earlier than the start means the next day.
+  - **time/stage.js:**
+    - A hard stop field in Event settings. The summary line reads "Hard stop 17:00: cut 12 min".
+    - `OrosStage.addPlan` and `newEvent`.
+    - The deep link `{stage: {ev, it}}` opens the Stage tab on the event and highlights the item.
+    - The event only changes when no clock is running.
+  - **time/search.js (new):** a universal search provider for events and rundown items (title, speaker, event, notes). It is read-only.
+  - **time/today.js v1.1.0:**
+    - On an event's day: "Next: <title>" at the expected start time, which moves later when the day runs behind. It uses this device's run.
+    - Events on the coming days show at their start time.
+    - Read-only. The alarm rows are unchanged.
+  - **time/astro.js:** a deep-link target that is not for astro is kept for stage.js.
+  - The help pages gained Quick add, Import, Export and report, Hard stop, and Search and Today, plus one limits line.
+  - tests/time-stage.test.js has 36 tests. The 10 new ones cover parseDur, csvPlan, calPlan, the toCsv round trip and injection, report, hard stop and merge, templates, the search provider, Today rows and the page wiring.
+  - Not done from the plan: the "Prompter link". The orOS Prompter app is a writing-prompts app, not a teleprompter, so there is nothing to link to.
+  - Not tested: real Calendar data from other devices, printing on phones, Safari.
+
+### 2026-10-13 — Connected services wave 1: WooCommerce in Stock, Settings › Connected services (#275) — 1.57.00
+- Wave 1 of the integrations plan (/mnt/project-files/integrations/integrations-plan.md, approved by Chris "Ναι σε όλα"; wave 2 invoicing = timologisi.online).
+  - **links/ (new):** `core.js` (allowlist, merge, ids), `host.js` (`window.orosLinks`, slice `links`, IDB `oros-links`, opt-in key sync), `woo.js` (WooCommerce mapping). Contracts in Part II "Connected services" and Part VI.
+  - **Settings:** new section Connected services (add, test, edit, replace keys, key sync, disconnect, open Stock).
+  - **Stock:** Shop panel `stock/shop.js` (`{view:"shop"}`): import products (deterministic ids + one count move), compare, send / take stock; orders of the last 30 days to sale (BR-ST-OUT `src "woo:<acct>-<order>"`), invoice (BR-CRM-INV), CRM, Budget, mark completed.
+  - **Relay:** op `ext` (`relay/ext.js`), same allowlist, used only when the browser can't reach the shop.
+  - Factory reset deletes `oros-links`. Credits: WooCommerce REST API; Cloudflare Workers row covers the relay ext op. Help: Stock + Settings.
+  - Tests: `tests/links.test.js` (13). Two-device Chromium E2E against a mocked shop (direct + real relay code), 360/390 px.
+  - Not tested: a real WooCommerce shop, real phones, Safari, the deployed relay.

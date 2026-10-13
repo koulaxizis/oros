@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Time — Stage core (v1.2.0, wave 3)
+// orOS Time — Stage core (v1.3.0, wave 4)
 // Pure logic of the Stage tab (a conference / stage timer): the
 // synced data model (events + rundown items + tombstones), its merge
 // (slice "stage", key oros-time-stage), the running timer of the
@@ -10,7 +10,8 @@
 // Synced (oros-time-stage):
 //   { v: 1,
 //     events: [{ id, name, date "YYYY-MM-DD"|"", start "HH:MM"|"",
-//                yellow s, red s, flash bool, mtime }],
+//                yellow s, red s, flash bool, stop "HH:MM" (wave 4,
+//                hard stop; left out when empty), mtime }],
 //     items:  [{ id, ev, pos, title, speaker, kind, dur s,
 //                until "HH:MM"|"", auto bool, yellow s|null,
 //                red s|null, notes, mtime }],
@@ -53,7 +54,7 @@
 
   function normEvent(e) {
     if (!e || typeof e !== "object" || typeof e.id !== "string" || !ID_RE.test(e.id)) return null;
-    return {
+    var out = {
       id: e.id,
       name: line(e.name, 120),
       date: (typeof e.date === "string" && YMD_RE.test(e.date)) ? e.date : "",
@@ -63,6 +64,10 @@
       flash: e.flash !== false,
       mtime: num(e.mtime, 0)
     };
+    // wave 4: hard stop ("the day must end at"); left out when empty, so
+    // an event without one is the same bytes as on a wave-1..3 device
+    if (typeof e.stop === "string" && HM_RE.test(e.stop)) out.stop = e.stop;
+    return out;
   }
   function normItem(it) {
     if (!it || typeof it !== "object" || typeof it.id !== "string" || !ID_RE.test(it.id)) return null;
@@ -316,7 +321,11 @@
     var planEnd = last ? last.planEnd : null;
     var expEnd = cursor;
     var delta = (hasPlan && planEnd !== null && expEnd !== null) ? expEnd - planEnd : 0;
-    return { rows: rows, planEnd: planEnd, expEnd: expEnd, delta: delta, hasPlan: hasPlan };
+    // hard stop: how much the rest of the day must lose to end on time
+    var stopAt = ev && ev.stop ? hmToMs(day, ev.stop) : null;
+    if (stopAt !== null && hasPlan && stopAt < hmToMs(day, ev.start)) stopAt += 86400000;   // past midnight
+    var cut = stopAt !== null && expEnd !== null ? Math.max(0, expEnd - stopAt) : 0;
+    return { rows: rows, planEnd: planEnd, expEnd: expEnd, delta: delta, hasPlan: hasPlan, stopAt: stopAt, cut: cut };
   }
 
   // The item the big clock is about: the live one, else the next one
@@ -430,6 +439,197 @@
     return items.length ? items[step > 0 ? 0 : items.length - 1].id : null;
   }
 
+  // ---------- Import, export, report (wave 4) ----------
+  // CSV: RFC 4180 quotes; the separator is guessed from the first line
+  // (; , or tab). Returns rows of trimmed cells, at most `max` rows.
+  function parseCsv(text, max) {
+    text = String(text || "").replace(/^﻿/, "");
+    max = max || 1000;
+    var first = text.split(/\r?\n/, 1)[0] || "";
+    var cnt = function (c) { return first.split(c).length - 1; };
+    var sep = cnt("\t") > cnt(";") && cnt("\t") > cnt(",") ? "\t" : cnt(";") >= cnt(",") && cnt(";") > 0 ? ";" : ",";
+    var rows = [], row = [], cell = "", q = false;
+    for (var i = 0; i < text.length && rows.length < max; i++) {
+      var ch = text.charAt(i);
+      if (q) {
+        if (ch === '"') { if (text.charAt(i + 1) === '"') { cell += '"'; i++; } else q = false; }
+        else cell += ch;
+      } else if (ch === '"' && cell === "") q = true;
+      else if (ch === sep) { row.push(cell.trim()); cell = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text.charAt(i + 1) === "\n") i++;
+        row.push(cell.trim()); cell = "";
+        if (row.some(function (c) { return c !== ""; })) rows.push(row);
+        row = [];
+      } else cell += ch;
+    }
+    if (rows.length < max) {
+      row.push(cell.trim());
+      if (row.some(function (c) { return c !== ""; })) rows.push(row);
+    }
+    return rows;
+  }
+  // "20" = 20 min, "20.5" = 20 min 30 s, "12:30" = 12 min 30 s,
+  // "1:05:00" = 1 h 5 min; also "20m", "1h", "1h 30m", "90s". Seconds or null.
+  function parseDur(x) {
+    x = String(x || "").trim().toLowerCase().replace(",", ".");
+    if (!x) return null;
+    var m;
+    if ((m = x.match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})$/))) return Math.min(MAX_DUR, +m[1] * 3600 + +m[2] * 60 + +m[3]);
+    if ((m = x.match(/^(\d{1,4}):(\d{1,2})$/))) return Math.min(MAX_DUR, +m[1] * 60 + +m[2]);
+    if ((m = x.match(/^(\d{1,2})\s*(?:h|hr|hrs|ώ|ω|ώρ[αες]*)\s*(\d{1,2})\s*(?:m|min|mins|λ|λεπτ[άα])?$/))) return Math.min(MAX_DUR, +m[1] * 3600 + +m[2] * 60);
+    if ((m = x.match(/^(\d+(?:\.\d+)?)\s*(h|hr|hrs|ώ|ω|ώρ[αες]*)$/))) return Math.min(MAX_DUR, Math.round(+m[1] * 3600));
+    if ((m = x.match(/^(\d+(?:\.\d+)?)\s*(s|sec|δ)$/))) return Math.min(MAX_DUR, Math.round(+m[1]));
+    if ((m = x.match(/^(\d+(?:\.\d+)?)\s*(m|min|mins|λ|λεπτ[άα])?$/))) return Math.min(MAX_DUR, Math.round(+m[1] * 60));
+    return null;
+  }
+  function parseHm(x) {
+    var m = String(x || "").trim().match(/^(\d{1,2})[:.](\d{2})(?::\d{2})?$/);
+    if (!m || +m[1] > 23 || +m[2] > 59) return "";
+    return (+m[1] < 10 ? "0" : "") + (+m[1]) + ":" + m[2];
+  }
+  function hmMin(hm) { return +hm.slice(0, 2) * 60 + +hm.slice(3, 5); }
+  // The columns a header row names (EN / EL, any case), else the
+  // default order title, speaker, duration, start.
+  var COLS = {
+    title: /^(title|item|talk|session|name|τίτλος|τιτλος|θέμα|θεμα|ομιλία|ομιλια)$/,
+    speaker: /^(speaker|speakers|presenter|who|ομιλητής|ομιλητης|ομιλητές|ομιλητες|εισηγητής|εισηγητης)$/,
+    dur: /^(duration|length|minutes|mins|min|time|διάρκεια|διαρκεια|λεπτά|λεπτα)$/,
+    start: /^(start|starts|begin|at|start time|έναρξη|εναρξη|ώρα|ωρα|ώρα έναρξης|ωρα εναρξης)$/,
+    notes: /^(notes|note|σημειώσεις|σημειωσεις)$/
+  };
+  // csvPlan(text) -> { start: "HH:MM"|"", items: [{title, speaker, dur,
+  //   notes}], bad } or null when nothing can be read. Nothing is
+  //   written here; the page turns the plan into items.
+  function csvPlan(text) {
+    var rows = parseCsv(text, 501);
+    if (!rows.length) return null;
+    var head = rows[0].map(function (c) { return c.toLowerCase().replace(/\s+/g, " "); });
+    var idx = { title: -1, speaker: -1, dur: -1, start: -1, notes: -1 }, named = 0;
+    Object.keys(COLS).forEach(function (k) {
+      for (var i = 0; i < head.length; i++) if (idx[k] < 0 && COLS[k].test(head[i])) { idx[k] = i; named++; }
+    });
+    if (named && idx.title >= 0) rows = rows.slice(1);
+    else idx = { title: 0, speaker: 1, dur: 2, start: 3, notes: -1 };
+    rows = rows.slice(0, 500);
+    var cell = function (r, k) { return idx[k] >= 0 && idx[k] < r.length ? r[idx[k]] : ""; };
+    var out = [], bad = 0;
+    rows.forEach(function (r) {
+      var title = line(cell(r, "title"), 200);
+      if (!title) { bad++; return; }
+      out.push({ title: title, speaker: line(cell(r, "speaker"), 120), dur: parseDur(cell(r, "dur")),
+        start: parseHm(cell(r, "start")), notes: str(cell(r, "notes"), 2000) });
+    });
+    if (!out.length) return null;
+    // a missing length comes from the next row's start time
+    out.forEach(function (x, i) {
+      if (x.dur === null && x.start && out[i + 1] && out[i + 1].start) {
+        var d = hmMin(out[i + 1].start) - hmMin(x.start);
+        if (d > 0) x.dur = d * 60;
+      }
+      if (x.dur === null) x.dur = 600;
+    });
+    return {
+      start: out[0].start || "",
+      items: out.map(function (x) { return { title: x.title, speaker: x.speaker, dur: x.dur, notes: x.notes }; }),
+      bad: bad
+    };
+  }
+  // calPlan(events, breakTitle) -> the same plan from a Calendar day
+  // (calendar/occur.js eventsOn): timed events in order, the gaps
+  // between them as breaks of that length (not "until" a clock time:
+  // the plan may be added after other items, at another hour). All-day
+  // events are left out.
+  function calPlan(evs, breakTitle) {
+    var timed = (Array.isArray(evs) ? evs : []).filter(function (e) {
+      return e && typeof e.start === "string" && HM_RE.test(e.start);
+    }).sort(function (a, b) { return a.start < b.start ? -1 : a.start > b.start ? 1 : 0; }).slice(0, 200);
+    if (!timed.length) return null;
+    var items = [], prevEnd = null;
+    timed.forEach(function (e) {
+      var s = hmMin(e.start);
+      var end = typeof e.end === "string" && HM_RE.test(e.end) && hmMin(e.end) > s ? hmMin(e.end) : s + 30;
+      if (prevEnd !== null && s > prevEnd) items.push({ title: line(breakTitle, 200), speaker: "", dur: (s - prevEnd) * 60, notes: "" });
+      items.push({ title: line(e.title, 200) || "—", speaker: "", dur: (end - s) * 60,
+        notes: str(e.location, 2000) });
+      prevEnd = Math.max(prevEnd === null ? 0 : prevEnd, end);
+    });
+    return { start: timed[0].start, items: items, bad: 0 };
+  }
+  // Export: a text cell a spreadsheet could read as a formula gets a
+  // leading apostrophe (CSV injection), then RFC 4180 quoting. Numbers
+  // and times we write ourselves go out as they are.
+  function csvCell(v, raw) {
+    var s = String(v === null || v === undefined ? "" : v);
+    if (!raw && /^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function mmss(sec) {
+    sec = Math.round(sec);
+    var neg = sec < 0;
+    if (neg) sec = -sec;
+    return (neg ? "-" : "") + Math.floor(sec / 60) + ":" + (sec % 60 < 10 ? "0" : "") + (sec % 60);
+  }
+  // The rundown as CSV (; separated, BOM): reads back with csvPlan.
+  function toCsv(ev, items, head) {
+    var sch = schedule(ev, items, normRun({}), Date.now());
+    var lines = [[head.title, head.speaker, head.dur, head.start, head.notes].map(function (h) { return csvCell(h); }).join(";")];
+    items.forEach(function (it, i) {
+      var r = sch.rows[i];
+      var dur = it.kind === "until" && it.until && r.planStart !== null ? (r.planEnd - r.planStart) / 1000 : it.dur;
+      lines.push([csvCell(it.title), csvCell(it.speaker), csvCell(mmss(dur), true),
+        csvCell(r.planStart !== null ? hm(r.planStart) : "", true), csvCell(it.notes)].join(";"));
+    });
+    return "﻿" + lines.join("\r\n") + "\r\n";
+  }
+  // report(ev, items, run) -> planned vs actual per item, from this
+  // device's record of the day (run.log). Seconds; over > 0 = ran long.
+  function report(ev, items, run) {
+    run = normRun(run);
+    var sch = schedule(ev, items, normRun({}), 0);
+    var rows = items.map(function (it, i) {
+      var r = sch.rows[i], a = run.log[it.id];
+      var plan = it.kind === "until" && it.until && r.planStart !== null ? (r.planEnd - r.planStart) / 1000 : it.dur;
+      var ran = a && typeof a.e === "number" && a.e >= a.s ? Math.round((a.e - a.s) / 1000) : null;
+      return {
+        id: it.id, title: it.title, speaker: it.speaker, kind: it.kind, plan: Math.round(plan),
+        planStart: r.planStart, start: a ? a.s : null, end: a && typeof a.e === "number" ? a.e : null,
+        ran: ran, over: ran === null || it.kind === "clock" ? null : ran - Math.round(plan),
+        late: a && r.planStart !== null ? Math.round((a.s - r.planStart) / 1000) : null
+      };
+    });
+    var ran = rows.filter(function (r) { return r.ran !== null; });
+    var first = ran.length ? Math.min.apply(null, ran.map(function (r) { return r.start; })) : null;
+    var last = ran.length ? Math.max.apply(null, ran.map(function (r) { return r.end; })) : null;
+    return {
+      rows: rows,
+      done: ran.length,
+      planTotal: rows.reduce(function (s, r) { return s + r.plan; }, 0),
+      ranTotal: ran.reduce(function (s, r) { return s + r.ran; }, 0),
+      over: ran.reduce(function (s, r) { return s + (r.over || 0); }, 0),
+      first: first, last: last,
+      planEnd: sch.planEnd
+    };
+  }
+  function reportCsv(rep, head) {
+    var lines = [[head.title, head.speaker, head.planStart, head.start, head.plan, head.ran, head.over].map(function (h) { return csvCell(h); }).join(";")];
+    rep.rows.forEach(function (r) {
+      lines.push([csvCell(r.title), csvCell(r.speaker), csvCell(r.planStart !== null ? hm(r.planStart) : "", true),
+        csvCell(r.start !== null ? hm(r.start) : "", true), csvCell(mmss(r.plan), true),
+        csvCell(r.ran !== null ? mmss(r.ran) : "", true), csvCell(r.over !== null ? mmss(r.over) : "", true)].join(";"));
+    });
+    lines.push([csvCell(head.total), "", "", "", csvCell(mmss(rep.planTotal), true), csvCell(mmss(rep.ranTotal), true), csvCell(mmss(rep.over), true)].join(";"));
+    return "﻿" + lines.join("\r\n") + "\r\n";
+  }
+  // Ready-made items for "Quick add" (minutes); the page names them.
+  var TEMPLATES = [
+    { k: "talk", items: [{ k: "talk", m: 20 }] },
+    { k: "keynote", items: [{ k: "keynote", m: 20 }, { k: "qa", m: 10 }] },
+    { k: "panel", items: [{ k: "panel", m: 45 }] },
+    { k: "break", items: [{ k: "break", m: 15 }] },
+    { k: "lunch", items: [{ k: "lunch", m: 60 }] }
+  ];
+
   // ---------- Paired devices (wave 3, time/stage-link.js) ----------
   // The PC running Time (the host) sends each paired device a snapshot
   // of what it may see; the device keeps it in memory only and draws it
@@ -540,6 +740,8 @@
     timer: timer, fmt: fmt, hm: hm, schedule: schedule,
     normRun: normRun, start: start, pause: pause, select: select, finish: finish,
     reset: reset, addTime: addTime, neighbour: neighbour,
+    parseCsv: parseCsv, parseDur: parseDur, parseHm: parseHm, csvPlan: csvPlan, calPlan: calPlan, csvCell: csvCell,
+    toCsv: toCsv, report: report, reportCsv: reportCsv, mmss: mmss, TEMPLATES: TEMPLATES,
     ROLES: ROLES, devState: devState, devAdopt: devAdopt, devCommand: devCommand, clockOffset: clockOffset
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

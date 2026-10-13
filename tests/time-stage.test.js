@@ -515,3 +515,201 @@ test("page: paired devices wired after stage.js, strings in both languages, noth
   assert.match(read("time/help.en.txt"), /another device/i);
   assert.match(read("time/help.el.txt"), /άλλη συσκευή/i);
 });
+
+// ---------------------------------------------------------------
+// Wave 4: import / export, report, hard stop, templates, search, Today
+// ---------------------------------------------------------------
+test("parseDur: minutes, mm:ss, h:mm:ss and units in English and Greek", () => {
+  const cases = { "20": 1200, "20.5": 1230, "20,5": 1230, "12:30": 750, "1:05:00": 3900, "45 min": 2700, "20m": 1200,
+    "1h": 3600, "1h 30m": 5400, "1ω 30λ": 5400, "20 λεπτά": 1200, "90s": 90, "": null, "soon": null, "-5": null };
+  Object.keys(cases).forEach((k) => assert.equal(C.parseDur(k), cases[k], k));
+  assert.equal(C.parseDur("9999:00"), 24 * 3600, "capped at a day");
+});
+
+test("csvPlan: header in English or Greek, any order; default order without one; quotes and separators", () => {
+  const en = C.csvPlan("Speaker,Title,Duration,Start\nAnna,Opening,10,09:00\n\"Bob, Jr.\",\"The \"\"big\"\" talk\",25,\n,,5,\n");
+  assert.deepEqual(en.items.map((x) => [x.title, x.speaker, x.dur]), [["Opening", "Anna", 600], ['The "big" talk', "Bob, Jr.", 1500]]);
+  assert.equal(en.start, "09:00");
+  assert.equal(en.bad, 1, "a row without a title is skipped and counted");
+  const el = C.csvPlan("﻿Τίτλος;Ομιλητής;Διάρκεια\nΚαλωσόρισμα;Μαρία;5\nΠάνελ;;1ω");
+  assert.deepEqual(el.items.map((x) => [x.title, x.speaker, x.dur]), [["Καλωσόρισμα", "Μαρία", 300], ["Πάνελ", "", 3600]]);
+  const tab = C.csvPlan("Keynote\tKim\t20:00\t10:00\nQ&A\t\t\t10:20\nWrap\t\t\t");
+  assert.equal(tab.start, "10:00");
+  assert.deepEqual(tab.items.map((x) => x.dur), [1200, 600, 600], "no length: up to the next start, else 10 min");
+  const gap = C.csvPlan("A,,,09:00\nB,,,09:45\n");
+  assert.equal(gap.items[0].dur, 45 * 60);
+  assert.equal(C.csvPlan(""), null);
+  assert.equal(C.csvPlan(",,\n,,"), null);
+  const many = C.csvPlan(Array.from({ length: 900 }, (_, i) => "T" + i + ",,1").join("\n"));
+  assert.equal(many.items.length, 500, "at most 500 rows");
+  // a file is data: script-looking text stays text
+  const x = C.csvPlan("<img src=x onerror=alert(1)>,=cmd|' /C calc'!A0,5");
+  assert.equal(x.items[0].title, "<img src=x onerror=alert(1)>");
+});
+
+test("calPlan: timed Calendar events in order, gaps become breaks of that length, all-day left out", () => {
+  const p = C.calPlan([
+    { title: "Panel", start: "11:00", end: "11:45", location: "Room B" },
+    { title: "Welcome", start: "09:00", end: "09:30" },
+    { title: "All day", start: "" },
+    { title: "Keynote", start: "09:30", end: "10:30" },
+    { title: "No end", start: "12:00" }
+  ], "Break");
+  assert.equal(p.start, "09:00");
+  assert.deepEqual(p.items.map((x) => [x.title, x.dur, x.kind || "down", x.until || ""]), [
+    ["Welcome", 1800, "down", ""], ["Keynote", 3600, "down", ""], ["Break", 1800, "down", ""],
+    ["Panel", 2700, "down", ""], ["Break", 900, "down", ""], ["No end", 1800, "down", ""]]);
+  assert.equal(p.items[3].notes, "Room B");
+  assert.equal(C.calPlan([{ title: "x" }], "Break"), null);
+  assert.equal(C.calPlan(null, "Break"), null);
+  p.items.forEach((x, i) => assert.ok(C.normItem(Object.assign({ id: "imp" + i + "aa", ev: "evaaaa1", pos: i, mtime: 1 }, x)), "valid item"));
+});
+
+test("toCsv: reads back with csvPlan; formula cells get an apostrophe; quotes and ; are escaped", () => {
+  const items = [it("ita1", 1, { title: "Opening; hello", speaker: "Ann \"A\"", dur: 600 }), it("ita2", 2, { title: "=HYPERLINK(1)", speaker: "+Bob", dur: 1230, notes: "-x" }),
+    it("ita3", 3, { title: "Coffee", kind: "until", until: "09:50", dur: 0 })];
+  const head = { title: "Title", speaker: "Speaker", dur: "Duration", start: "Start", notes: "Notes" };
+  const csv = C.toCsv(ev(), items, head);
+  assert.ok(csv.startsWith("﻿Title;Speaker;Duration;Start;Notes\r\n"));
+  assert.match(csv, /"Opening; hello";"Ann ""A""";10:00;09:00;/);
+  assert.match(csv, /'=HYPERLINK\(1\);'\+Bob;20:30;09:10;'-x/);
+  assert.match(csv, /Coffee;;19:30;09:30;/, "an until-break goes out as its planned length");
+  const back = C.csvPlan(csv);
+  assert.deepEqual(back.items.map((x) => [x.title, x.speaker, x.dur]), [["Opening; hello", 'Ann "A"', 600], ["'=HYPERLINK(1)", "'+Bob", 1230], ["Coffee", "", 1170]]);
+  assert.equal(back.start, "09:00");
+  assert.equal(C.csvCell("-5", true), "-5", "our own numbers are not prefixed");
+  assert.equal(C.csvCell("@x"), "'@x");
+});
+
+test("report: planned vs actual per item from the device's log; totals; CSV", () => {
+  const items = [it("ita1", 1, { dur: 600 }), it("ita2", 2, { dur: 900 }), it("ita3", 3, { dur: 300 })];
+  const run = { ev: "evaaaa1", log: { ita1: { s: at(9, 2), e: at(9, 14) }, ita2: { s: at(9, 14), e: at(9, 26) }, ita3: { s: at(9, 26) } } };
+  const r = C.report(ev(), items, run);
+  assert.deepEqual(r.rows.map((x) => [x.plan, x.ran, x.over, x.late]), [[600, 720, 120, 120], [900, 720, -180, 240], [300, null, null, 60]]);
+  assert.equal(r.done, 2);
+  assert.equal(r.planTotal, 1800);
+  assert.equal(r.ranTotal, 1440);
+  assert.equal(r.over, -60);
+  assert.equal(r.first, at(9, 2));
+  assert.equal(r.last, at(9, 26));
+  const csv = C.reportCsv(r, { title: "T", speaker: "S", planStart: "P", start: "A", plan: "PL", ran: "R", over: "O", total: "Total" });
+  assert.match(csv, /ita1;;09:00;09:02;10:00;12:00;2:00\r\n/);
+  assert.match(csv, /ita2;;09:10;09:14;15:00;12:00;-3:00\r\n/);
+  assert.match(csv, /Total;;;;30:00;24:00;-1:00\r\n$/);
+  const none = C.report(ev(), items, {});
+  assert.equal(none.done, 0);
+  assert.equal(none.first, null);
+});
+
+test("hard stop: kept only when valid, left out when empty; the schedule says how much to cut", () => {
+  assert.equal(C.normEvent(ev({ stop: "17:30" })).stop, "17:30");
+  assert.ok(!("stop" in C.normEvent(ev({ stop: "" }))), "no key when empty");
+  assert.ok(!("stop" in C.normEvent(ev({ stop: "25:00" }))));
+  assert.equal(json(C.normEvent(ev())), json(C.normEvent(ev({ stop: "" }))), "same bytes as a wave-1..3 event");
+  const items = [it("ita1", 1, { dur: 3600 }), it("ita2", 2, { dur: 3600 })];
+  const fits = C.schedule(ev({ stop: "11:00" }), items, C.normRun({}), at(8, 0));
+  assert.equal(fits.stopAt, at(11, 0));
+  assert.equal(fits.cut, 0);
+  const late = C.schedule(ev({ stop: "10:30" }), items, C.normRun({}), at(8, 0));
+  assert.equal(late.cut, 30 * MIN);
+  const behind = C.schedule(ev({ stop: "11:00" }), items, C.normRun({}), at(9, 20));
+  assert.equal(behind.cut, 20 * MIN, "starting late eats into the stop");
+  const night = C.schedule(ev({ start: "22:00", stop: "01:00" }), items, C.normRun({}), at(8, 0));
+  assert.equal(night.stopAt, at(25, 0), "past midnight is the next day");
+  assert.equal(C.schedule(ev(), items, C.normRun({}), at(8, 0)).stopAt, null);
+  // merge keeps the stop and stays canonical
+  const a = model({ events: [ev({ stop: "17:00", mtime: 5 })] }), b = model();
+  assert.equal(json(C.merge(a, b)), json(C.merge(b, a)));
+  assert.equal(C.merge(a, b).events[0].stop, "17:00");
+});
+
+test("templates: ready-made items with names in both languages", () => {
+  const src = read("time/stage-tools.js");
+  assert.ok(C.TEMPLATES.length >= 4);
+  C.TEMPLATES.forEach((tp) => tp.items.forEach((x) => {
+    assert.ok(x.m > 0 && x.m <= 240);
+    assert.match(src, new RegExp('"st\\.q\\.' + x.k + '":[^\\n]*\\n[\\s\\S]*"st\\.q\\.' + x.k + '":'), "EN and EL for " + x.k);
+  }));
+});
+
+test("search provider: events and items, read-only, items of a deleted event skipped; opens the Stage tab", () => {
+  const P = require("../time/search.js");
+  assert.equal(P.id, "time");
+  assert.deepEqual(P.keys, ["oros-time-stage"]);
+  const data = model({ events: [ev({ name: "DevConf" })], items: [it("ita1", 1, { title: "Keynote", speaker: "Kim", notes: "slides" }), it("itb1", 1, { ev: "evgone1", title: "Orphan" })] });
+  const reads = [];
+  const hits = P.search({ readJSON: (k) => { reads.push(k); return JSON.parse(json(data)); } });
+  assert.deepEqual(reads, ["oros-time-stage"]);
+  assert.deepEqual(hits.map((h) => [h.id, h.title]), [["e:evaaaa1", "DevConf"], ["i:ita1", "Keynote"]]);
+  assert.equal(hits[1].text, "Kim · DevConf · slides");
+  assert.deepEqual(hits[1].target, { stage: { ev: "evaaaa1", it: "ita1" } });
+  assert.equal(hits[0].when, at(9, 0));
+  assert.deepEqual(P.search({ readJSON: () => null }), []);
+  assert.deepEqual(P.search({ readJSON: () => ({ events: "x" }) }), []);
+  const src = read("time/search.js");
+  assert.doesNotMatch(src, /setItem|removeItem|innerHTML|markDirty|eval\(/);
+  const apps = JSON.parse(read("apps.json")).apps || JSON.parse(read("apps.json"));
+  const time = (Array.isArray(apps) ? apps : []).find((a) => a.id === "time");
+  if (time && time.search) assert.equal(time.search, "search.js");
+  // the deep link lands in stage.js, astro.js hands it over before Stage loads
+  assert.match(read("time/stage.js"), /if \(target && target\.stage\) openTarget\(target\.stage\);/);
+  assert.match(read("time/astro.js"), /window\.__orosTimePending = pending/);
+});
+
+test("Today: the next session on an event's day (later when behind), events ahead at their start; alarms unchanged", () => {
+  global.window = undefined;
+  global.OrosStageCore = C;
+  delete require.cache[require.resolve("../time/today.js")];
+  const P = require("../time/today.js");
+  assert.deepEqual(P.keys, ["oros-alarms", "oros-time-stage"]);
+  const addDays = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+  const items = [it("ita1", 1, { title: "Welcome", dur: 1800 }), it("ita2", 2, { title: "Panel", speaker: "Ann", dur: 2700 })];
+  const store = {
+    "oros-time-stage": model({ events: [ev(), ev({ id: "evbbbb1", name: "Day 2", date: "2026-10-22", start: "10:00" }), ev({ id: "evcccc1", name: "Old", date: "2026-10-01" })], items: items }),
+    "oros-time-stage-run": null
+  };
+  const ctx = (now) => ({ now, today: "2026-10-20", horizon: 7, lang: "en", addDays, readJSON: (k) => store[k] ? JSON.parse(json(store[k])) : null });
+  globalThis.orosAlarms = { list: () => [] };
+  let rows = P.collect(ctx(at(8, 0)));
+  assert.deepEqual(rows.map((r) => [r.due, r.time, r.title]), [["2026-10-20", "09:00", "Next: Welcome"], ["2026-10-22", "10:00", "Day 2"]]);
+  assert.deepEqual(rows[0].target, { stage: { ev: "evaaaa1", it: "ita1" } });
+  // Welcome ran from 09:05 and is live: Panel is next, expected 09:35 (planned 09:30)
+  store["oros-time-stage-run"] = { ev: "evaaaa1", cur: "ita1", startedAt: at(9, 5), pausedAt: 0, adj: 0, log: { ita1: { s: at(9, 5) } } };
+  rows = P.collect(ctx(at(9, 10)));
+  assert.deepEqual([rows[0].time, rows[0].title, rows[0].text], ["09:35", "Next: Panel", "Ann · Conf"]);
+  // the last item is on: no row for that day
+  store["oros-time-stage-run"] = { ev: "evaaaa1", cur: "ita2", startedAt: at(9, 40), pausedAt: 0, adj: 0, log: { ita1: { s: at(9, 5), e: at(9, 40) }, ita2: { s: at(9, 40) } } };
+  rows = P.collect(ctx(at(9, 50)));
+  assert.deepEqual(rows.map((r) => r.title), ["Day 2"]);
+  assert.equal(P.collect(Object.assign(ctx(at(9, 50)), { lang: "el", readJSON: () => null })).length, 0);
+  delete globalThis.orosAlarms;
+  delete global.OrosStageCore;
+  const src = read("time/today.js");
+  assert.doesNotMatch(src, /setItem|removeItem|innerHTML|markDirty/);
+});
+
+test("page: wave 4 tools wired after the Calendar helper, strings in both languages, nothing unsafe", () => {
+  const html = read("time/index.html");
+  const iSl = html.indexOf('src="stage-link.js?'), iOcc = html.indexOf('src="../calendar/occur.js?'), iT = html.indexOf('src="stage-tools.js?');
+  assert.ok(iSl > 0 && iOcc > iSl && iT > iOcc, "stage-link, occur, stage-tools");
+  ["st-quick", "st-import", "st-export", "st-report", "st-imp-dlg", "st-imp-file", "st-imp-day", "st-imp-cal", "st-imp-plan", "st-imp-go", "st-imp-err",
+    "st-rep-dlg", "st-rep-table", "st-rep-csv", "st-rep-print", "st-print", "se-stop"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  const src = read("time/stage-tools.js");
+  const block = (lang) => {
+    const i = src.indexOf("    " + lang + ": {"), j = src.indexOf("\n    }", i);
+    return new Set([...src.slice(i, j).matchAll(/"(st\.[a-z0-9.]+)":/gi)].map((m) => m[1]));
+  };
+  const en = block("en"), el = block("el");
+  assert.ok(en.size > 40);
+  assert.deepEqual([...en].sort(), [...el].sort(), "same keys in both languages");
+  [...html.matchAll(/data-i18n-t(?:-a)?="([^"]+)"/g)].map((m) => m[1]).concat([...src.matchAll(/t\("(st\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith(".")))
+    .forEach((k) => assert.ok(en.has(k), "missing string " + k));
+  assert.doesNotMatch(src, /innerHTML|\beval\(|new Function|insertAdjacentHTML|setItem/);
+  assert.match(src, /S\.addPlan\(/, "writes only through the page's addPlan");
+  const css = read("time/time.css");
+  assert.match(css, /@media print \{[\s\S]*body\.st-printing > \*:not\(#st-print\)/);
+  const stage = read("time/stage.js");
+  ["stg.f.stop", "stg.sum.cut", "stg.sum.fits"].forEach((k) => assert.equal(stage.split('"' + k + '":').length, 3, k + " in EN and EL"));
+  assert.match(read("time/help.en.txt"), /hard stop/i);
+  assert.match(read("time/help.el.txt"), /αυστηρό τέλος/i);
+});
