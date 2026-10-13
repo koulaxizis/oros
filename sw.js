@@ -1555,7 +1555,8 @@ self.addEventListener("fetch", function (event) {
         // are one-shot URLs — never worth a cache entry; so are
         // "Send to orOS" launches (?share-url=…, one per link) and
         // address-bar searches (?search=…), and "Open with" file
-        // launches (?file-open=…).
+        // launches (?file-open=…), and direct app links handed to the
+        // shell (?app-at=…, DL-1: one URL per link).
         // SWK-4: a REDIRECTED response ("todo" → "todo/") cannot be
         // replayed to a navigation from the cache — the browser
         // rejects it and the page fails offline. Never store one.
@@ -1563,7 +1564,8 @@ self.addEventListener("fetch", function (event) {
           url.search.indexOf("code=") === -1 &&
           url.search.indexOf("share-") === -1 &&
           url.search.indexOf("search=") === -1 &&
-          url.search.indexOf("file-open=") === -1;
+          url.search.indexOf("file-open=") === -1 &&
+          url.search.indexOf("app-at=") === -1;
       },
       function () {
         return caches.match(request).then(function (cached) {

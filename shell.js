@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.43.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.44.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2201,10 +2201,28 @@
   // open what the menu already offers. The parameter is stripped right
   // away (other parameters stay), so a reload or the update broker's
   // reload lands on the desktop instead of reopening the app.
+  // Direct app links (useoros.online/notes/…): every app page that
+  // finds itself outside the shell (top window) replaces itself with
+  // "/?open=<id>&app-at=<its own ?query#hash>" (DL-1, the inline
+  // snippet at the top of each <app>/index.html). app-at is handed
+  // back to the app frame unchanged so links like /maps/?q=… or
+  // /netizen/#c=… still land where they pointed. It may only be a
+  // query and/or fragment of the app's own page (starts with "?" or
+  // "#", no control characters, bounded), so it can never point the
+  // frame at another path or scheme.
+  function launchAppSuffix(v) {
+    v = String(v || "");
+    if (!v || v.length > 8000) return "";
+    if (v.charAt(0) !== "?" && v.charAt(0) !== "#") return "";
+    if (/[\u0000-\u001f\u007f]/.test(v)) return "";
+    return v;
+  }
   function openFromLaunchParam() {
-    var params, id, i;
+    var params, id, i, at;
     try { params = new URLSearchParams(window.location.search); } catch (e) { return; }
     id = params.get("open");
+    at = launchAppSuffix(params.get("app-at"));
+    params.delete("app-at");
     if (!id) return;
     params.delete("open");
     try {
@@ -2213,7 +2231,8 @@
     } catch (e) {}
     for (i = 0; i < state.apps.length; i++) {
       if (state.apps[i].id === id && state.apps[i].type !== "external") {
-        openAppById(id);
+        if (at) openApp(state.apps[i], at);
+        else openAppById(id);
         return;
       }
     }
@@ -7503,7 +7522,7 @@
 
   // ---------- 10. App opening (fullscreen takeover) ----------
 
-  function openApp(app) {
+  function openApp(app, at) {
     closeMenu();
     menuReset();
     if (tourEnd) tourEnd();   // a notification or shortcut opened an app mid-tour
@@ -7513,7 +7532,7 @@
     }
     state.running = app;
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
-    document.getElementById("app-frame").src = app.url;
+    document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
     var mb = document.getElementById("btn-menu");
