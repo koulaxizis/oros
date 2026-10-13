@@ -36,6 +36,7 @@
 - [Συνθέτης ήχων κλήσης](app:ringtones): .rtttl, .rtx
 - [Εργαστήριο εικόνας](app:photolab): .png, .jpg, .webp, .gif, .bmp, .avif, .psd, .ora
 - [Βιβλιοθήκη](app:library): .epub, .pdf
+- [Χάρτες](app:maps): .gpx, .kml, .geojson
 - [Μοντάζ](app:montage): .mp4, .m4v, .webm, .mov
 - [Σημειώσεις](app:notes): .txt, .md, ως επιλογή δίπλα στον Κειμενογράφο
 - [Εργαλεία κειμένου](app:texttools): .txt, .csv, .tsv, ως επιλογή δίπλα στις παραπάνω εφαρμογές
