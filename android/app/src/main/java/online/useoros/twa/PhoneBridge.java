@@ -83,6 +83,7 @@ public class PhoneBridge {
             validated = false;
             channelReady = false;
             retries = 0;
+            warmUp();
         });
     }
 
@@ -96,16 +97,34 @@ public class PhoneBridge {
             channelReady = false;
             boolean asked = s.validateRelationship(CustomTabsService.RELATION_USE_AS_ORIGIN, ORIGIN, null);
             diag("validate requested: " + asked);
+            if (!asked && retries++ < 2) {
+                warmUp();
+                main.postDelayed(this::validate, 2000);
+            }
             return;
         }
         if (validated) requestChannel();   // reload: the page needs a new port
         else validate();                   // an earlier check failed: ask again
     }
 
+    /** Chrome answers validateRelationship() with false until the app
+     *  has called warmup() on it (TwaLauncher never does), so warm the
+     *  serving browser up as soon as a launch starts. */
+    private void warmUp() {
+        String p = launcher != null ? launcher.provider() : null;
+        if (p == null) p = androidx.browser.customtabs.CustomTabsClient.getPackageName(app, null);
+        boolean ok = p != null && androidx.browser.customtabs.CustomTabsClient.connectAndInitialize(app, p);
+        diag("warmup " + p + ": " + ok);
+    }
+
     private void validate() {
         if (session == null) return;
         boolean asked = session.validateRelationship(CustomTabsService.RELATION_USE_AS_ORIGIN, ORIGIN, null);
         diag("validate requested again: " + asked);
+        if (!asked && retries++ < 2) {
+            warmUp();
+            main.postDelayed(this::validate, 2000);
+        }
     }
 
     private String browser() {
