@@ -396,12 +396,17 @@
   function buildPanel() {
     panel = el("aside", "");
     panel.id = "osm-panel";
+    panel.className = "osm-sheet";
     panel.hidden = true;
     panel.setAttribute("aria-label", t("title"));
     document.body.appendChild(panel);
     // Phones: the floating controls sit just above the bottom sheet.
     var setH = function () {
-      document.body.style.setProperty("--osm-h", (panel.hidden ? 0 : panel.offsetHeight) + "px");
+      var h = 0;
+      Array.prototype.forEach.call(document.querySelectorAll(".osm-sheet"), function (p) {
+        if (!p.hidden) h = Math.max(h, p.offsetHeight);
+      });
+      document.body.style.setProperty("--osm-h", h + "px");
     };
     try { new ResizeObserver(setH).observe(panel); } catch (e) {}
     panel.addEventListener("transitionend", setH);
@@ -828,7 +833,15 @@
 
   // ---------- mode ----------
   var modeBtn = null;
+  // One OSM mode at a time (notes / places): opening one closes the other.
+  window.addEventListener("oros-maps-mode", function (e) {
+    if (modeOn && e.detail !== "notes") setMode(false);
+  });
+
   function setMode(on) {
+    if (on && !modeOn) {
+      try { window.dispatchEvent(new CustomEvent("oros-maps-mode", { detail: "notes" })); } catch (e) {}
+    }
     modeOn = !!on;
     document.body.classList.toggle("osm-mode", modeOn);
     if (modeBtn) {

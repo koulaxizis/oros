@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.44.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.45.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4857,7 +4857,10 @@
           en: "Bright stars and their names (Moon & Sky)", el: "Λαμπρά αστέρια και τα ονόματά τους (Σελήνη & Ουρανός)" },
         { name: "d3-celestial (constellation figures)", url: "https://github.com/ofrohn/d3-celestial",
           by: "Olaf Frohn", lic: "BSD-3-Clause",
-          en: "Constellation lines (Moon & Sky)", el: "Γραμμές αστερισμών (Σελήνη & Ουρανός)" }
+          en: "Constellation lines (Moon & Sky)", el: "Γραμμές αστερισμών (Σελήνη & Ουρανός)" },
+        { name: "id-tagging-schema (iD presets)", url: "https://github.com/openstreetmap/id-tagging-schema",
+          by: "OpenStreetMap iD contributors", lic: "ISC",
+          en: "Place kinds and fields (Maps)", el: "Είδη και πεδία μερών (Χάρτες)" }
       ]
     },
     {
@@ -4887,7 +4890,10 @@
           en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Notes and sign-in (Maps)", el: "Σημειώσεις και σύνδεση (Χάρτες)" },
+          en: "Notes, sign-in and place edits (Maps)", el: "Σημειώσεις, σύνδεση και διορθώσεις μερών (Χάρτες)" },
+        { name: "Overpass API", url: "https://overpass-api.de/",
+          by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
+          en: "Places around you (Maps)", el: "Μέρη γύρω σου (Χάρτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },

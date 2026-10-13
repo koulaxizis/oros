@@ -64,6 +64,7 @@ MIT (notice in the file). The app icons and all other artwork are drawn for orOS
 | Bright stars and names (`sky/stars.js`) | [Yale Bright Star Catalogue](http://tdc-www.harvard.edu/catalogs/bsc5.html), 5th ed., D. Hoffleit and W. H. Warren Jr. | Public domain | Moon & Sky |
 | Constellation figures (`sky/stars.js`) | [d3-celestial](https://github.com/ofrohn/d3-celestial), © 2015 Olaf Frohn | [BSD-3-Clause](sky/LICENSE-d3-celestial.txt) | Moon & Sky |
 | Astronomy formulas (`sky/core.js`) | Jean Meeus, *Astronomical Algorithms* (2nd ed.); E. M. Standish, JPL "Approximate Positions of the Planets" | Methods (no code or data copied beyond published coefficients) | Moon & Sky |
+| Place presets and fields (`maps/presets-data.js`, generated) | [id-tagging-schema](https://github.com/openstreetmap/id-tagging-schema) 7.3.0, © OpenStreetMap iD contributors | ISC (notice kept in the file) | Maps (place editing: kinds, fields, Greek names) |
 
 `passwords/THIRD-PARTY.txt` carries the full MIT notice for SecLists. The
 generators for the word lists are kept outside the repo (project files).
@@ -84,7 +85,8 @@ there are no recorded audio files. Emoji come from the device's own font.
 | [Photon](https://photon.komoot.io/) | komoot | Software Apache-2.0, data ODbL; fair use | Maps (search) |
 | [OSRM](https://project-osrm.org/) demo server | Project OSRM | Software BSD-2-Clause; demo server, fair use | Maps (car routes) |
 | [FOSSGIS routing](https://routing.openstreetmap.de/) | FOSSGIS e.V. | Data ODbL; fair use | Maps (bike and walking routes) |
-| [OpenStreetMap API](https://wiki.openstreetmap.org/wiki/API_v0.6) | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data ODbL; [API usage policy](https://operations.osmfoundation.org/policies/api/) | Maps (notes, sign-in) |
+| [OpenStreetMap API](https://wiki.openstreetmap.org/wiki/API_v0.6) | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data ODbL; [API usage policy](https://operations.osmfoundation.org/policies/api/) | Maps (notes, sign-in, place edits) |
+| [Overpass API](https://overpass-api.de/) (overpass-api.de) | Roland Olbricht and the Overpass community; data by OpenStreetMap contributors | Software AGPL-3.0 (server only), data ODbL; fair use | Maps (places around you, for editing) |
 | [Radio Browser](https://www.radio-browser.info/) | Alex Segler and the community | Free community API | Radio (station directory) |
 | [Apple Podcasts search](https://performance-partners.apple.com/search-api) | Apple Inc. | Public search API, called only when you search | Podcasts (show search) |
 | [fyyd](https://fyyd.de/) | fyyd.de | Public API, called only when you search | Podcasts (show search) |

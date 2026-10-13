@@ -1087,7 +1087,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 .osm-note-ico.closed circle:first-child { fill: #4a9d5b; }
 .osm-note-ico.draft circle:first-child { fill: var(--accent); stroke-dasharray: 3 2; }
 
-#osm-panel {
+.osm-sheet {
   position: absolute;
   top: 0;
   right: 0;
@@ -1101,7 +1101,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   flex-direction: column;
   animation: maneuvers-in 0.22s ease;
 }
-#osm-panel header {
+.osm-sheet header {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1110,7 +1110,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   background: var(--bar-bg);
   flex-shrink: 0;
 }
-#osm-panel h3 { flex: 1; font-size: 14px; color: var(--accent); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.osm-sheet h3 { flex: 1; font-size: 14px; color: var(--accent); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .osm-iconbtn {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 32px; min-height: 32px;
@@ -1257,9 +1257,57 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 .osm-warn-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 .osm-warn-row span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
+/* ---------- 13. OSM places (Every Door style editing, poi.js) ---------- */
+.poi-dot { display: flex; align-items: center; justify-content: center; }
+.poi-dot span {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #fff; box-shadow: 0 1px 4px var(--shadow);
+}
+.poi-dot.pend span { outline: 2px dashed var(--accent); outline-offset: 2px; }
+.poi-dot.gone span { opacity: 0.55; }
+.poi-row-dot {
+  flex: none; width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border);
+}
+.poi-kind { margin-left: 6px; }
+.poi-info { display: grid; grid-template-columns: minmax(80px, auto) 1fr; gap: 4px 10px; font-size: 12.5px; margin: 8px 0 12px; }
+.poi-info dt { color: var(--text-dim); overflow-wrap: anywhere; }
+.poi-info dd { overflow-wrap: anywhere; }
+.poi-kindrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.poi-kindrow > :first-child { flex: 1; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+.poi-field { margin-bottom: 2px; }
+.poi-addr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.poi-addr .osm-in { margin-top: 0; min-width: 0; }
+.poi-checks { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; }
+.poi-check { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
+.poi-all { margin-top: 12px; font-size: 12.5px; }
+.poi-all summary { cursor: pointer; color: var(--text-dim); padding: 6px 0; }
+.poi-raw { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; min-height: 120px; }
+.poi-oh-rows { display: flex; flex-direction: column; gap: 8px; }
+.poi-oh-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+.poi-oh-days { display: flex; flex-wrap: wrap; gap: 3px; }
+.poi-day {
+  min-width: 34px; min-height: 30px; padding: 0 4px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--text-dim); font-size: 11.5px; cursor: pointer;
+}
+.poi-day.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.poi-q { font-size: 13px; line-height: 1.5; margin-bottom: 4px; }
+.poi-cross {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  color: var(--accent); pointer-events: none; z-index: 900;
+  filter: drop-shadow(0 0 2px #000);
+}
+@media (max-width: 480px) {
+  /* The sheet covers the lower part: aim the crosshair at the visible map centre */
+  .poi-cross { top: calc((100% - var(--osm-h, 0px)) / 2); }
+  .poi-addr { grid-template-columns: 1fr; }
+}
+@media (pointer: coarse) { .poi-day { min-height: 40px; min-width: 40px; } }
+
 @media (max-width: 480px) {
   /* Bottom sheet on phones: the map stays visible above it */
-  #osm-panel {
+  .osm-sheet {
     top: auto;
     left: 0;
     width: 100%;
@@ -1271,7 +1319,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
     animation: osm-up 0.22s ease;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  #osm-panel header { padding-top: 10px; border-radius: 14px 14px 0 0; }
+  .osm-sheet header { padding-top: 10px; border-radius: 14px 14px 0 0; }
   .osm-ta, .osm-in { font-size: 16px; }   /* ≥16px: no zoom on focus */
   body.osm-mode #controls,
   body.osm-mode #offline-chip { bottom: calc(var(--osm-h, 0px) + 12px); }
