@@ -22,6 +22,15 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 - `Groups` at the top lists every group with how many places it has; tap one to rename it, change its colour or delete it. Deleting a group keeps its places, without a group.
 - `Import` reads the waypoints of a GPX, KML or GeoJSON file (for example favourites exported from OsmAnd) as saved places, into a new group named after the file, a group you have, or none. A file with only waypoints opened in `My tracks` goes the same way.
 
+## Discover
+
+The compass button opens `Discover`, which looks around the middle of the map. Long-press › `What's nearby` does the same for any point.
+
+- **Places**: pick a kind (restaurants, cafés, bars, fast food, supermarkets, bakeries, pharmacies, ATMs and banks, fuel and charging, toilets, sights and museums, parks). Each place shows whether it's open now and when it closes or opens, read from its OpenStreetMap opening hours; `Open now` keeps only the open ones. Tap one for its hours, address, phone and website, `Go here` and `Save`.
+- **Wikipedia**: articles about places around you, in the language of orOS, with a picture when there is one. The popup links to the article.
+- **Photos**: street-level photos from Panoramax, the open alternative to Street View, once you zoom in close. The dot's arrow shows which way the photo looks; tap a photo to see it larger and open it in Panoramax.
+- After you move the map, `Search this area` looks again. The tab, kind and `Open now` stay as you left them on this device.
+
 ## Plan a route
 
 1. Tap `Plan a route`. A new plan starts `From` `My location`.
@@ -203,6 +212,7 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
 - **Speed limits**: while you navigate by car, the Overpass API gets the next few kilometres of your route (points along it) to read the speed limits of those roads.
 - **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
+- **Discover**: the Overpass API gets the middle of the map and the kind of place you picked; Wikipedia (wikipedia.org) gets the middle of the map; Panoramax (api.panoramax.xyz) gets the map area you're looking at, and its photos load from the servers that host them.
 - **Elevation**: when you plan a track, the elevation comes from AWS Terrain Tiles (Mapzen and others, on Amazon's open data registry); it gets the map tiles around your plan, not the plan itself.
 - **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
@@ -210,7 +220,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the Discover tab, kind and `Open now` choice, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
@@ -234,5 +244,6 @@ Saved places, your track list (names, colours, folders, statistics), notes, plac
 - The routing servers are free public services and can sometimes be slow or down.
 - Public transport needs a connection and shows only what operators publish as open data; times are not checked against the stop's own signs.
 - Place editing needs a connection to load the places; changes made offline wait until you upload them.
+- `Open now` is only as good as the opening hours mapped in OpenStreetMap. Hours it can't read for sure (by month, sunrise, holidays) show as unknown, and holidays are not known.
 - Elevation in `Plan a track` is read from a terrain model about 20 m across, so short ups and downs (a bridge, a few steps) may not show.
 - Recording needs the screen on and Maps open; the browser does not record in the background.

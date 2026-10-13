@@ -24,6 +24,8 @@
 //     attach?: [{ name?, path } | { name, type?, b64 }] } }) opens a
 //     prefilled draft (never sends by itself); path = a file on the
 //     orOS disk (/internal/…), b64 = the file's bytes in base64
+//   - deep link: __orosOpenAt("mail", { signature:{ html, text, name } })
+//     from Email Signature: asks which account gets it (BR-MAIL-SIG)
 
 // Data:
 //   - synced slice "mail" (oros-mail-data): accounts WITHOUT
@@ -165,6 +167,7 @@
       "dlg.oauth": "Outlook.com / Hotmail no longer accept passwords from other apps. Support needs a later update.",
       "dlg.generic": "Most providers (Papaki among them) use mail.{domain}. If the connection fails, check the server name in your provider's panel.",
       "dlg.passDevice": "The password stays sealed on this device and is never synced. Enter it once on each device.",
+      "sigIn.title": "Use this signature?", "sigIn.text": "The signature \"{name}\" from Email Signature replaces the signature of the account you pick, on all your devices.", "sigIn.acct": "Account", "sigIn.ok": "Use", "sigIn.none": "Add a mail account first, then use the signature again.", "sigIn.done": "Signature saved for {email}",
       "dlg.remove": "Remove account", "dlg.removeQ": "Remove {name} from orOS on all your devices? Your mail stays on the server.",
       "dlg.removeOk": "Remove",
       "set.title": "Mail settings", "set.accounts": "Accounts", "set.plain": "Always show plain text", "set.threads": "Group messages by conversation", "uni.title": "All inboxes", "uni.older": "Older messages are in each account's Inbox.", "thr.count": "{n} messages in this conversation",
@@ -327,6 +330,7 @@
       "dlg.oauth": "Το Outlook.com / Hotmail δεν δέχεται πια κωδικούς από άλλες εφαρμογές. Θα υποστηριχτεί σε επόμενη ενημέρωση.",
       "dlg.generic": "Οι περισσότεροι πάροχοι (και το Papaki) χρησιμοποιούν mail.{domain}. Αν η σύνδεση αποτύχει, δες το όνομα του διακομιστή στο panel του παρόχου σου.",
       "dlg.passDevice": "Ο κωδικός μένει σφραγισμένος σε αυτή τη συσκευή και δεν συγχρονίζεται. Τον δίνεις μία φορά σε κάθε συσκευή.",
+      "sigIn.title": "Χρήση αυτής της υπογραφής;", "sigIn.text": "Η υπογραφή «{name}» από την Υπογραφή email αντικαθιστά την υπογραφή του λογαριασμού που θα διαλέξεις, σε όλες τις συσκευές σου.", "sigIn.acct": "Λογαριασμός", "sigIn.ok": "Χρήση", "sigIn.none": "Πρόσθεσε πρώτα έναν λογαριασμό email και μετά χρησιμοποίησε ξανά την υπογραφή.", "sigIn.done": "Η υπογραφή αποθηκεύτηκε για το {email}",
       "dlg.remove": "Αφαίρεση λογαριασμού", "dlg.removeQ": "Να αφαιρεθεί το {name} από το orOS σε όλες τις συσκευές σου; Τα μηνύματα μένουν στον διακομιστή.",
       "dlg.removeOk": "Αφαίρεση",
       "set.title": "Ρυθμίσεις αλληλογραφίας", "set.accounts": "Λογαριασμοί", "set.plain": "Πάντα ως απλό κείμενο", "set.threads": "Ομαδοποίηση μηνυμάτων ανά συζήτηση", "uni.title": "Όλα τα Εισερχόμενα", "uni.older": "Τα παλαιότερα μηνύματα είναι στα Εισερχόμενα κάθε λογαριασμού.", "thr.count": "{n} μηνύματα σε αυτή τη συζήτηση",
@@ -2461,6 +2465,56 @@
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+
+  // A signature handed over by Email Signature (BR-MAIL-SIG): the
+  // person picks the account; Use replaces its signature.
+  function signatureDialog(sg) {
+    if (!data.accounts.length) { showToast(t("sigIn.none")); return; }
+    var html = typeof sg.html === "string" && sg.html.length <= 400000 ? sg.html : "";
+    var cl = RT.clean(html, { cid: false });
+    var text = typeof sg.text === "string" ? sg.text.replace(/\r\n?/g, "\n").slice(0, MAX_SIG) : cl.text.slice(0, MAX_SIG);
+    if (!cl.html && !text) return;
+    var name = typeof sg.name === "string" ? sg.name.replace(/\s+/g, " ").trim().slice(0, 60) : "";
+    var dlg = makeDialog("ml-sig-in");
+    dlg.appendChild(el("div", "dlg-title", t("sigIn.title")));
+    dlg.appendChild(el("p", "dlg-text", t("sigIn.text", { name: name })));
+    var form = el("form");
+    form.method = "dialog";
+    var cur = curAcct();
+    var sel = portSelect(form, "ml-sig-acct", t("sigIn.acct"), data.accounts.map(function (a) {
+      return [a.id, a.name ? a.name + " <" + a.email + ">" : a.email];
+    }), cur ? cur.id : data.accounts[0].id);
+    var pv = el("div", "ml-sig-pv");
+    pv.innerHTML = cl.html || RT.fromText(text);   // cleaned by rich.js
+    form.appendChild(pv);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("sigIn.ok"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var a = acctById(sel.value);
+      if (!a) { dlg.close(); return; }
+      var next = JSON.parse(JSON.stringify(a));
+      next.m = Math.max(Date.now(), a.m + 1);
+      next.sig = text;
+      if (cl.rich && cl.html.length <= MAX_SIG_HTML) next.sigHtml = cl.html; else delete next.sigHtml;
+      var n = normAccount(next);
+      if (!n) { dlg.close(); return; }
+      data.accounts = data.accounts.filter(function (x) { return x.id !== n.id; }).concat([n]);
+      data = mergeMail(data, data);
+      saveData();
+      dlg.close();
+      showToast(t("sigIn.done", { email: n.email }));
+      renderAll();
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    sel.focus();
   }
 
   // Drops this device's password and cache of an account.
@@ -4875,9 +4929,14 @@
   //  - other apps (Reader, Invoices…): { compose:{ to?, subject?, body?,
   //    attach? } } opens a prefilled draft, plain text, with the files
   //    (handedFiles); the person presses Send.
+  //  - Email Signature (BR-MAIL-SIG): { signature:{ html, text, name } }
+  //    asks which account gets it; nothing changes before Use. The
+  //    HTML goes through rich.js clean() like a typed signature.
   // A dialog open (maybe with unsaved edits) → no-op (returns false).
   function openSearchTarget(target) {
     if (!target || typeof target !== "object" || document.querySelector("dialog[open]")) return false;
+    var sg = target.signature;
+    if (sg && typeof sg === "object") { signatureDialog(sg); return true; }
     var c = target.compose;
     if (c && typeof c === "object") {
       var init = {
