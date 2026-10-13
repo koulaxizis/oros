@@ -484,6 +484,11 @@ table.tbl tfoot th, table.tbl tfoot td { font-weight: 900; border-bottom: none; 
 .pay .pay-main { flex: 1 1 auto; min-width: 0; }
 .mini-btn.bud { flex-shrink: 0; }
 .mini-btn.bud.on { color: var(--good); border-color: var(--good); }
+/* Wave 3: EU reverse charge offer in the editor */
+.rc-box { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--accent); background: var(--accent-soft); border-radius: 10px; }
+.rc-box[hidden] { display: none; }
+.rc-txt { font-size: 13px; line-height: 1.4; margin-bottom: 8px; overflow-wrap: anywhere; }
+.rc-box .acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .pay-d { font-variant-numeric: tabular-nums; color: var(--text-dim); }
 .pay-h { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-a { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -497,6 +502,7 @@ table.tbl tfoot th, table.tbl tfoot td { font-weight: 900; border-bottom: none; 
 .ser-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 6px; }
 .ser-pre { width: 110px; flex: 0 0 110px; }
 .ser-dg { width: 70px; flex: 0 0 70px; }
+.ser-prof { flex: 1 1 110px; min-width: 0; max-width: 220px; }
 .ser-sample { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .tpl-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .tpl-row .row-txt { flex: 1 1 auto; }

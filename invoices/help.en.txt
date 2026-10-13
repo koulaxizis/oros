@@ -53,6 +53,13 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 - On `Clients`, `From CRM` brings in customers from [CRM](app:crm); each one stays linked, so CRM can show its invoices.
 - On an issued invoice or receipt whose lines have a product code, `Take out of stock` opens a sale in [Stock](app:stock) with those products and prices; a credit note offers `Back into stock` for a customer return. Nothing changes in Stock until you save there. The button shows only once you use Stock.
 
+## Statements, reminders, EU clients and more businesses
+- `Statement PDF` on a client (tap the client on `Clients`) lists every document that client still owes, with what was paid, the balance and how late each one is, and the open total per currency.
+- On an invoice that is due within a week or already late, `Payment reminder` opens an email with a polite text, or a firm one once it is overdue. In [Mail](app:mail) the PDF is attached; edit the text before you send it.
+- When the client is a business (it has a VAT number) in another EU country, the editor offers the reverse charge: `Services, 0 % VAT` or `Goods, 0 % VAT` set every line to 0 % VAT and add the standard note to the VAT exemption. Check it with your accountant; nothing is applied unless you tap it.
+- A PDF in euros shows a payment QR code (EPC / SEPA, the one banking apps scan) with your first IBAN, the amount still owed and the document number. Turn it off in `Settings` (Defaults).
+- More than one business? In `Settings`, `Add a business profile` keeps another set of details, logo, bank lines, terms and footer. Pick the business on each document (`Business`, shown once there are two). Link a numbering series to a profile (`Profile`, next to each series) so each business keeps its own numbers. Templates and copies keep their business.
+
 ## Settings
 The gear button opens `Settings`: your business details and logo, the defaults for new documents (currency, VAT %, payment days, withholding, PDF language, payment terms, footer), the numbering series, and your templates.
 

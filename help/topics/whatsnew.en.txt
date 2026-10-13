@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.42.00
+- Invoices: client statements as PDF, polite or firm payment reminders, an EU reverse charge helper, a payment QR code on euro PDFs, and more than one business profile.
+
 ## Version 1.41.00
 - Montage: stickers and shapes, and light copies for a smoother preview of big videos.
 - Invoices: an invoice with product codes can take its goods out of Stock in one tap (a credit note puts them back).
