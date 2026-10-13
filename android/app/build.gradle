@@ -30,8 +30,6 @@ android {
         manifestPlaceholders = [hostName: 'useoros.online']
         // Diagnostic build: each phone-bridge step shows as a toast.
         buildConfigField 'boolean', 'DIAG', System.getenv('OROS_DIAG') == '1' ? 'true' : 'false'
-        // Test builds (workflow input "default_browser") skip the Chrome preference.
-        buildConfigField 'boolean', 'PREFER_CHROME', System.getenv('OROS_DEFAULT_BROWSER') == '1' ? 'false' : 'true'
     }
 
     signingConfigs {
