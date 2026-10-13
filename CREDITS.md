@@ -85,6 +85,7 @@ there are no recorded audio files. Emoji come from the device's own font.
 | [Photon](https://photon.komoot.io/) | komoot | Software Apache-2.0, data ODbL; fair use | Maps (search) |
 | [OSRM](https://project-osrm.org/) demo server | Project OSRM | Software BSD-2-Clause; demo server, fair use | Maps (car routes) |
 | [FOSSGIS routing](https://routing.openstreetmap.de/) | FOSSGIS e.V. | Data ODbL; fair use | Maps (bike and walking routes) |
+| [Transitous](https://transitous.org/) ([sources](https://transitous.org/sources/)) | The Transitous community, on [MOTIS](https://github.com/motis-project/motis); timetables by each operator | Free for non-commercial open-source apps; each feed under its own open licence (Athens OASA and STASY, data.gov.gr, CC BY 4.0); map data ODbL | Maps (public transport: connections, departures, stops, live vehicles) |
 | [OpenStreetMap API](https://wiki.openstreetmap.org/wiki/API_v0.6) | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data ODbL; [API usage policy](https://operations.osmfoundation.org/policies/api/) | Maps (notes, sign-in, place edits, GPS trace uploads) |
 | [Overpass API](https://overpass-api.de/) (overpass-api.de) | Roland Olbricht and the Overpass community; data by OpenStreetMap contributors | Software AGPL-3.0 (server only), data ODbL; fair use | Maps (places around you, for editing; quests) |
 | [Radio Browser](https://www.radio-browser.info/) | Alex Segler and the community | Free community API | Radio (station directory) |

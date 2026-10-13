@@ -236,7 +236,7 @@ test("engine: a refused key pauses; a slow-down or a provider outage loses nothi
   };
   const A = await mk();
   wire(A, () => new Response("{\"ErrorCode\":10,\"Message\":\"Bad or missing Server API token.\"}", { status: 401 }));
-  await A.run(4);
+  await A.run(8);
   const xa = A.read().issues[0];
   assert.equal(xa.st, "paused");
   assert.equal(xa.err, "apikey");
@@ -244,7 +244,7 @@ test("engine: a refused key pauses; a slow-down or a provider outage loses nothi
   const B = await mk();
   let down = true;
   const calls = wire(B, (url, init) => (JSON.parse(init.body).To === "b@x.gr" && down ? new Response("busy", { status: 503 }) : ok()));
-  await B.run(4);
+  await B.run(8);
   let sent = B.read().sent["iss-1"] || [];
   assert.equal(sent.length, 2);
   assert.equal(B.read().issues[0].st, "sending");
@@ -255,14 +255,14 @@ test("engine: a refused key pauses; a slow-down or a provider outage loses nothi
   // 429: nothing counted, nothing lost
   const Cc = await mk();
   wire(Cc, () => new Response("{}", { status: 429 }));
-  await Cc.run(4);
+  await Cc.run(8);
   assert.equal(Cc.engine.state().k, "wait");
   assert.equal((Cc.read().sent["iss-1"] || []).length, 0);
   assert.equal(Cc.read().issues[0].st, "sending");
   // no key on this device
   const D = await sandbox(model({ subs: [sub("a@x.gr")], issues: [issue("iss-1", { st: "sending", start: now, lock: { dev: "devaaa1", at: now } })] }));
   wire(D, ok);
-  await D.run(4);
+  await D.run(8);
   assert.equal(D.read().issues[0].err, "nopass");
 });
 
@@ -315,4 +315,13 @@ test("reading events: bounces, complaints and unsubscribes reach the right list;
   assert.equal((await S.engine.checkInbox()).err.code, "apikey");
   await S.E.delPass("chan-1");
   assert.equal((await S.engine.checkInbox()).err, null);
+});
+
+test("presets: MailerSend (MailerLite's sending service) is an SMTP preset, not an API one", () => {
+  assert.equal(C.PRESETS.mailersend.host, "smtp.mailersend.net");
+  assert.equal(C.PRESETS.mailersend.port, 587);
+  const ch = C.normChan({ id: "chan-2", m: 1, kind: "smtp", preset: "mailersend", via: "api", host: "smtp.mailersend.net", user: "MS_x@example.com" });
+  assert.equal(ch.preset, "mailersend");
+  assert.equal(ch.via, "smtp");
+  assert.equal(ch.sec, "starttls");
 });

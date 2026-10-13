@@ -25,7 +25,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var MAX_PTS = 5;                       // start + 3 stops + end
   var MAX_LANES = 16;
   var LABEL_MAX = 120;
@@ -33,6 +33,10 @@
   var INDICATIONS = ["none", "uturn", "sharp right", "right", "slight right",
     "straight", "slight left", "left", "sharp left"];
   var OSM_ENGINE = { car: "fossgis_osrm_car", bike: "fossgis_osrm_bike", foot: "fossgis_osrm_foot" };
+  // Modes an orOS route link may carry: the OSRM ones + public
+  // transport (wave 7, opens the Public transport sheet).
+  var LINK_MODES = ["car", "bike", "foot", "transit"];
+  function linkMode(m) { return LINK_MODES.indexOf(m) >= 0 ? m : "car"; }
 
   function okLat(v) { return typeof v === "number" && isFinite(v) && v >= -90 && v <= 90; }
   function okLon(v) { return typeof v === "number" && isFinite(v) && v >= -180 && v <= 180; }
@@ -144,7 +148,7 @@
     }
     var r = pts.map(function (p) { return fx(p.lat) + "," + fx(p.lon); }).join(";");
     var l = cleanLabel(toName);
-    return base + "?route=" + encodeURIComponent(r) + "&mode=" + (OSM_ENGINE[mode] ? mode : "car") +
+    return base + "?route=" + encodeURIComponent(r) + "&mode=" + linkMode(mode) +
       (l ? "&to=" + encodeURIComponent(l) : "");
   }
 
@@ -179,7 +183,7 @@
       var pts = parseRoute(q.get("route"));
       if (!pts) return null;
       var mode = q.get("mode");
-      return { route: pts, mode: OSM_ENGINE[mode] ? mode : "car", to: cleanLabel(q.get("to")) };
+      return { route: pts, mode: linkMode(mode), to: cleanLabel(q.get("to")) };
     }
     if (q.has("lat") && q.has("lon")) {
       var p = parsePoint(q.get("lat"), q.get("lon"));
@@ -204,7 +208,7 @@
   }
 
   var API = {
-    VER: VER, AVOID: AVOID, INDICATIONS: INDICATIONS, MAX_PTS: MAX_PTS,
+    VER: VER, AVOID: AVOID, LINK_MODES: LINK_MODES, INDICATIONS: INDICATIONS, MAX_PTS: MAX_PTS,
     avoidFor: avoidFor, routeUrl: routeUrl, alternatives: alternatives, clock: clock,
     lanesOf: lanesOf, cleanLanes: cleanLanes, laneShape: laneShape,
     geoUri: geoUri, osmPointUrl: osmPointUrl, osmDirUrl: osmDirUrl,

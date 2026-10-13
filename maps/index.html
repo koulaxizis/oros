@@ -6,8 +6,8 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=maps" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Maps · orOS</title>
-  <link rel="stylesheet" href="../vendor/leaflet.css?v=1.62.00">
-  <link rel="stylesheet" href="maps.css?v=1.62.00">
+  <link rel="stylesheet" href="../vendor/leaflet.css?v=1.63.00">
+  <link rel="stylesheet" href="maps.css?v=1.63.00">
 </head>
 <body>
 
@@ -60,6 +60,9 @@
       </button>
       <button id="rp-foot" class="rp" data-i18n-title="route.foot" title="Walk">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="4" r="1.5"/><path d="M12 21c1-4 1-7-1-9 0 0-3 2-3 5"/><path d="M11 12c-1-1.5-1-3.5 1-4.5l2-1.5c1.5-1 3.5 0 4 1.5L20 12"/><path d="M9 21c-2 0-3-1.5-3-3"/></svg>
+      </button>
+      <button id="rp-transit" class="rp" data-i18n-title="route.transit" title="Public transport">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14"/><path d="M8 21l2-4"/><path d="M16 21l-2-4"/></svg>
       </button>
     </div>
     <button id="steps-btn" aria-label="Directions" data-i18n-title="route.steps" title="Directions">
@@ -171,20 +174,22 @@
   <div id="toast" role="status"></div>
 
   <!-- Leaflet FIRST — maps.js depends on the global L -->
-  <script src="../vendor/leaflet.js?v=1.62.00"></script>
-  <script src="route-core.js?v=1.62.00"></script>
-  <script src="maps.js?v=1.62.00"></script>
+  <script src="../vendor/leaflet.js?v=1.63.00"></script>
+  <script src="route-core.js?v=1.63.00"></script>
+  <script src="maps.js?v=1.63.00"></script>
   <!-- OpenStreetMap: core (pure), sign-in + API, notes (Mapping mode) -->
-  <script src="osm.js?v=1.62.00"></script>
-  <script src="osm-api.js?v=1.62.00"></script>
-  <script src="notes.js?v=1.62.00"></script>
-  <script src="poi-core.js?v=1.62.00"></script>
-  <script src="poi.js?v=1.62.00"></script>
-  <script src="tracks-core.js?v=1.62.00"></script>
-  <script src="tracks.js?v=1.62.00"></script>
-  <script src="heat-core.js?v=1.62.00"></script>
-  <script src="heat.js?v=1.62.00"></script>
-  <script src="quests-core.js?v=1.62.00"></script>
-  <script src="quests.js?v=1.62.00"></script>
+  <script src="osm.js?v=1.63.00"></script>
+  <script src="osm-api.js?v=1.63.00"></script>
+  <script src="notes.js?v=1.63.00"></script>
+  <script src="poi-core.js?v=1.63.00"></script>
+  <script src="poi.js?v=1.63.00"></script>
+  <script src="tracks-core.js?v=1.63.00"></script>
+  <script src="tracks.js?v=1.63.00"></script>
+  <script src="heat-core.js?v=1.63.00"></script>
+  <script src="heat.js?v=1.63.00"></script>
+  <script src="quests-core.js?v=1.63.00"></script>
+  <script src="quests.js?v=1.63.00"></script>
+  <script src="transit-core.js?v=1.63.00"></script>
+  <script src="transit.js?v=1.63.00"></script>
 </body>
 </html>

@@ -102,6 +102,8 @@ test("links coming in: round trip, strict parsing", () => {
   assert.equal(R.parseLink("?route=1,1;2,2,2"), null);
   assert.equal(R.parseLink("?q=athens"), null);
   assert.equal(R.parseLink("?route=1,1;2,2&mode=<x>").mode, "car");
+  assert.equal(R.parseLink("?route=1,1;2,2&mode=transit").mode, "transit");
+  assert.match(R.orosRouteLink("https://x/maps/", [A, B], "transit"), /mode=transit$/);
   assert.equal(R.parseLink("?lat=1&lon=2&label=" + encodeURIComponent("a\u0000b" + "x".repeat(300))).point.label.length, 120);
 });
 
