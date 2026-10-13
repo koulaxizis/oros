@@ -69,8 +69,34 @@ public class PhoneBridge {
     private void diag(String step) {
         Log.d(TAG, step);
         if (!BuildConfig.DIAG) return;
-        main.post(() -> android.widget.Toast.makeText(app, "orOS bridge: " + step, android.widget.Toast.LENGTH_LONG).show());
+        // Android shows at most a few queued toasts per app, so steps
+        // are collected and shown as one summary (see summary()).
+        main.post(() -> {
+            if (trail.length() < 900) trail.append(trail.length() > 0 ? " | " : "").append(step);
+            main.removeCallbacks(summary);
+            main.postDelayed(summary, 6000);
+        });
     }
+
+    private final StringBuilder trail = new StringBuilder();
+    private final Runnable summary = () -> {
+        String text = "orOS bridge: " + trail + " | from page " + fromPage;
+        trail.setLength(0);
+        // A notification, not a toast: toasts are cut to two lines.
+        if (android.os.Build.VERSION.SDK_INT < 26) {
+            android.widget.Toast.makeText(app, text, android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        android.app.NotificationManager nm = app.getSystemService(android.app.NotificationManager.class);
+        nm.createNotificationChannel(new android.app.NotificationChannel("oros-diag", "orOS diagnostics",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT));
+        nm.notify((int) (System.currentTimeMillis() % 100000), new android.app.Notification.Builder(app, "oros-diag")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("orOS bridge")
+                .setContentText(text)
+                .setStyle(new android.app.Notification.BigTextStyle().bigText(text))
+                .build());
+    };
 
     CustomTabsCallback callback() {
         return callback;
@@ -147,9 +173,7 @@ public class PhoneBridge {
         fromPage = 0;
         lastResult = 99;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
-        if (BuildConfig.DIAG) main.postDelayed(() -> diag("SUMMARY request " + ok
-                + ", channel ready " + channelReady + ", sent " + sent + " (last " + lastResult
-                + "), from page " + fromPage), 10000);
+
         diag("channel requested: " + ok);
     }
 
