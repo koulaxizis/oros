@@ -1339,6 +1339,26 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   max-width: calc(100% - 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .trk-chip.paused { border-style: dashed; color: var(--text-dim); border-color: var(--text-dim); }
+/* Quests (wave 5) */
+.qst-pin { display: flex; align-items: center; justify-content: center; }
+.qst-pin > span {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50% 50% 50% 4px; font-size: 16px; line-height: 1;
+  background: var(--panel-bg, #fff); border: 2px solid var(--accent); box-shadow: 0 1px 4px var(--shadow);
+}
+.qst-pin > span i {
+  position: absolute; top: -6px; right: -8px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+  background: var(--accent); color: #111; font: 600 10px/16px system-ui, sans-serif; font-style: normal; text-align: center;
+}
+.qst-ic { flex: none; width: 28px; font-size: 18px; text-align: center; }
+.qst-q { font-size: 15px; font-weight: 600; line-height: 1.4; margin: 0 0 10px; overflow-wrap: anywhere; }
+.qst-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.qst-opt { min-height: 48px; white-space: normal; text-align: center; }
+.qst-opt.on { border-color: var(--accent); }
+.qst-multi { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 10px; }
+.qst-foot { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); }
+.qst-stats { margin-bottom: 6px; }
+
 /* Heatmap (wave 4) */
 .heat-canvas { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 250; }
 .heat-check { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 14px; cursor: pointer; }
