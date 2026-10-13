@@ -71,20 +71,16 @@ public class PhoneBridge {
         Log.d(TAG, step);
         if (!BuildConfig.DIAG) return;
         // Android drops toasts beyond a few queued per app, so the steps
-        // are shown together, 6 s after the last one (showSummary()).
+        // go into one notification, updated as each step happens.
         main.post(() -> {
             if (trail.length() < 900) trail.append(trail.length() > 0 ? " | " : "").append(step);
-            main.removeCallbacks(summary);
-            main.postDelayed(summary, 6000);
+            showSummary();
         });
     }
 
     private final StringBuilder trail = new StringBuilder();
-    private final Runnable summary = this::showSummary;
-
     private void showSummary() {
-        String text = "orOS bridge: " + trail + " | from page " + fromPage;
-        trail.setLength(0);
+        String text = trail + " | from page " + fromPage;
         // A notification, not a toast: toasts are cut to two lines.
         if (android.os.Build.VERSION.SDK_INT < 26) {
             android.widget.Toast.makeText(app, text, android.widget.Toast.LENGTH_LONG).show();
@@ -93,7 +89,7 @@ public class PhoneBridge {
         android.app.NotificationManager nm = app.getSystemService(android.app.NotificationManager.class);
         nm.createNotificationChannel(new android.app.NotificationChannel("oros-diag", "orOS diagnostics",
                 android.app.NotificationManager.IMPORTANCE_DEFAULT));
-        nm.notify((int) (System.currentTimeMillis() % 100000), new android.app.Notification.Builder(app, "oros-diag")
+        nm.notify(4711, new android.app.Notification.Builder(app, "oros-diag")
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("orOS bridge")
                 .setContentText(text)
@@ -221,7 +217,7 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
-            main.post(() -> fromPage++);
+            main.post(() -> { fromPage++; if (BuildConfig.DIAG) showSummary(); });
             diag("message from page, " + message.length() + " chars");
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
