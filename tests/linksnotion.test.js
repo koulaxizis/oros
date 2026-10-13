@@ -21,8 +21,8 @@ const OLD = ["secret", "Z9y8X7w6V5".repeat(4) + "abc"].join("_");
 const P1 = "11111111-2222-4333-8444-555555555555", P2 = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 const CUR = "99999999-8888-4777-8666-555555555555";
 
-test("account: fixed host, one secret, Notes and Spreadsheet, always through the relay", () => {
-  assert.deepEqual(L.PLATFORMS.notion.apps, ["notes", "spreadsheet"]);
+test("account: fixed host, one secret, Notes, Spreadsheet and Kanban, always through the relay", () => {
+  assert.deepEqual(L.PLATFORMS.notion.apps, ["notes", "spreadsheet", "kanban"]);
   assert.equal(L.PLATFORMS.notion.relayOnly, true);
   assert.equal(L.checkKeys("notion", { key: KEY }).ok, true);
   assert.equal(L.checkKeys("notion", { key: OLD }).ok, true);
