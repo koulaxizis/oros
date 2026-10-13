@@ -2,4 +2,5 @@
 # (android-browser-helper keeps it private): keep the field's name.
 -keepclassmembers class com.google.androidbrowserhelper.trusted.TwaLauncher {
     androidx.browser.customtabs.CustomTabsSession mSession;
+    java.lang.String mProviderPackage;
 }
