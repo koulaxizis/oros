@@ -5655,3 +5655,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Guard:** new `tests/conflict-markers.test.js` fails on conflict markers in any shipped text file.
 - **Stock shop:** through the relay, the shop panel asks 2 product pages / 4 variation lists per call (direct: 5 / 10), per the Mail thread's review (Worker CPU limit).
 - **Lesson:** after resolving a merge, grep the whole tree for markers; `git merge | tail` hid the second conflicted file.
+
+### 2026-10-13 — Newsletter: MailerSend SMTP preset (#285) — 1.62.01
+- Newsletter: the provider list gains **MailerSend (MailerLite)**. It fills `smtp.mailersend.net`, port 587 (STARTTLS); the user enters the SMTP user and password made in MailerSend for their domain. MailerLite itself offers no SMTP or send API, so MailerSend is its sending service. Requested by Chris 2026-10-13.
+  - newsletter/core.js preset, newsletter/newsletter.js list, help EN/EL, tests/newsletter-api.test.js.
