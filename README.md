@@ -125,6 +125,10 @@ If orOS helps you, you can
 Ko-fi page supports all of Christos's open-source projects
 ([noxpress](https://noxpress.tech), [NULL JSFX](https://nulljsfx.tech) and orOS).
 
+Need a hand? You can
+[book a service on Ko-fi](https://ko-fi.com/koulaxizis/commissions): orOS set up
+on your own domain with your own sync, your logo and app list, or a custom app.
+
 ## Licence
 
 orOS is released under the [MIT License](LICENSE), © 2026 Christos
