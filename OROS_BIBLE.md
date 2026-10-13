@@ -5885,3 +5885,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Help: To-Do, Settings, Privacy, What's new. Credits: GitHub row. Decision in Part IX.
   - Tests: `tests/linksghtodo.test.js` (4), `tests/linkskanban.test.js` updated. Chromium E2E in the real shell (360 px EL, 1280 px EN) with GitHub mocked behind the real relay code: 131 issues over 2 pages → 2 lists, PRs/closed/odd repositories out, HTML stays text, relay fallback reads the new issue, no key echoed; Todoist (6A) and Kanban (6B) E2Es still pass.
   - Not tested: a real GitHub account, the deployed relay, real phones, Safari.
+
+### 2026-10-13 — Atelier: save as PowerPoint (.pptx) for Canva, integrations wave 5B (#308) — 1.81.00
+- Atelier › `Download` › `PPTX`: one slide per page at the design's size (scaled as a whole past PowerPoint's 1–56 in limits). Text, shapes (exact outlines), photos (crop, mask, flips, transparency), lines and the page background stay editable; icons, curved text, other text effects, filtered photos and videos go out as pictures. Opens in Canva (Upload), PowerPoint, Keynote, LibreOffice. No account, key or relay: replaces the planned Canva Connect upload so every user can use it.
+  - **atelier/pptxout.js** (new, pure); **atelier/zip.js** `write` (stored ZIP); **atelier/io.js** `exportPptx`, `rasterItem`, Download type `PPTX`; sw.js precaches `atelier/pptxout.js`.
+  - Help: Atelier (new section "Take a design to Canva or PowerPoint"), What's new. Decision in Part IX.
+  - Tests: `tests/atelier-pptxout.test.js` (4, read back with Atelier's own .pptx import). LibreOffice renders the file, python-pptx opens it. Chromium E2E in the real shell (360 px EL, 1280 px EN): dialog fits, file saved, toast counts the pictures.
+  - Not tested: real Canva, PowerPoint, Keynote; fonts they lack are substituted.

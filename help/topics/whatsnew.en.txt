@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.81.00
+- Atelier: take a design to Canva. `Download` › `PPTX` saves it as a PowerPoint file that Canva (Create a design › Upload), PowerPoint, Keynote and LibreOffice open with the text still editable. Shapes, photos, lines and the background stay editable too; icons, special text effects and filtered photos come as pictures so they look the same. No account or key needed.
+
 ## Version 1.80.00
 - To-Do: bring in your GitHub issues. List settings › `Import from Todoist or GitHub…` with a connected GitHub account: the open issues assigned to you, from every repository, each repository as a list and each issue as a task "#12 Title" with its text and link, its labels and its milestone date. Pull requests stay out. Read again later to bring in only the new ones. orOS only reads GitHub.
 
