@@ -5921,3 +5921,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - .github/workflows/sync-nullfx.yml + .github/scripts/sync-nullfx.js: every Monday (or on "Run workflow") GitHub copies the effects from koulaxizis/null-jsfx into studio/nullfx/fx, runs the tests and opens a PR when something changed. Needs Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
 - sw.js: Loudness Meter and Spectrum Analyzer are now precached, so they work offline; tests/studio.test.js checks every effect is precached.
   - Tests: full suite; sync script tried on null-jsfx main and #7. The workflow itself runs for the first time after this merge.
+
+### 2026-10-13 — Studio: NULL JSFX 2.1, 14 new effects (#312) — 1.83.00
+- studio/nullfx/fx: synced from koulaxizis/null-jsfx 2.1 by the new sync-nullfx workflow (89 effects, 14 new); sw.js precaches the new effect files so they work offline.
+  - Tests: full suite plus Studio effects E2E.
