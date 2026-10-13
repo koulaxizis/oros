@@ -5700,7 +5700,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Tests: tests/maps-quests.test.js (+6: new quests, name validation, stats merge, achievements, team split). E2E /mnt/project-files/maps/e2e/quests8-e2e.js (2 devices: new quests answered and uploaded to a mock OSM, achievements and team sync) and quests-e2e.js (updated to 36).
 - Not tested: real Overpass and OSM servers with the new quests, real phones, Safari.
 
-<<<<<<< Updated upstream
 ### 2026-10-13 — Connected services wave 5A: Adobe files without an account — 1.66.00
 - Wave 5 of the integrations plan, first part (Adobe has no public API for third-party apps, so its file formats instead).
   - **Atelier:** `atelier/swatches.js` reads .ase and .aco and writes .ase; Brand kit `Import swatches (.ase, .aco)` and `Save as swatches (.ase)`. Contracts in Part II "Connected services".
@@ -5708,10 +5707,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Help: Atelier, Photo Lab, What's new. Decision in Part IX.
   - Tests: `tests/adobefiles.test.js` (6). Chromium E2E in the real shell: swatches in (2 colours), bad file refused, .ase out; a preset added 4 named adjustment layers with the skipped-settings message, one undo removed them, bad .xmp refused, 390 px.
   - Not tested: files saved by real Adobe apps (the tests build them from the published formats), real phones, Safari.
-=======
-### 2026-10-13 — Maps: quest overlays, wave 8B — 1.66.00
+
+### 2026-10-13 — Maps: quest overlays, wave 8B — 1.67.00
 - Maps › Quests › Overlay: street lights, surface, sidewalks (arrows for the drawing direction; left only / right only / both / separate / none) and addresses (house number or "no number"). Colour legend, count of ways not known yet, tap a street or building to change it; the current value is shown in words. Changes are quest answers (way_lit, way_surface, housenumber, new overlay-only `sidewalk`) and upload, sync and count with them.
 - Files: `maps/overlays-core.js` (new, pure: overlays, colours, sidewalk sides and schemes, answers, Overpass query, geometry parser, bearing, arrows), `maps/quests-core.js` 1.2.0 (`OVERLAY_ONLY`), `maps/quests.js` (overlay picker, canvas layer, overlay view), maps.css (wave 8B section), index.html, sw.js precache. Device-local `oros-maps-overlay`. Help EN/EL.
 - Tests: `tests/maps-overlays.test.js` (8). E2E /mnt/project-files/maps/e2e/overlays-e2e.js (2 devices: real tap on a canvas line, all four overlays, sidewalk schemes, upload to a mock OSM, counts, overlay choice stays local, phone 360 px EL); quests-e2e.js and quests8-e2e.js still pass.
 - Not tested: real Overpass (geometry query size in dense cities), real OSM, real phones (tap accuracy on thin lines), Safari.
->>>>>>> Stashed changes
