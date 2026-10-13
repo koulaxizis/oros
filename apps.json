@@ -17,7 +17,8 @@
       "icon": "clock",
       "url": "time/",
       "type": "internal",
-      "today": "today.js"
+      "search": "search.js",
+      "today": ["stage-core.js", "today.js"]
     },
     {
       "id": "sky",

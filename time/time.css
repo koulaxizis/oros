@@ -939,3 +939,44 @@ dialog.stg-dlg h3 { font-size: 14px; color: var(--accent); margin-bottom: 10px; 
    :not([hidden]) guards above = immune to the "face always
    visible" bug class at BOTH levels. */
 [hidden] { display: none !important; }
+/* Stage wave 4: quick add, import, report, print */
+.st-quick-row { display: flex; flex-direction: column; gap: 6px; padding: 10px 0 8px; }
+.st-quick-l { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.st-quick-row .quick-chips { justify-content: flex-start; }
+.st-hint { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; margin-bottom: 8px; }
+.st-imp-sec { border-top: 1px solid var(--border); padding: 10px 0; }
+.st-imp-sec h4 { font-size: 13px; margin-bottom: 4px; }
+.st-imp-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.st-imp-row input[type="date"] {
+  min-height: 38px; background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 9px; font: inherit; font-size: 13.5px; min-width: 0; flex: 1 1 140px;
+}
+.st-imp-plan { border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.st-imp-plan p { font-size: 13px; font-weight: 700; }
+.st-imp-list { padding-left: 20px; font-size: 12.5px; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px; }
+.st-imp-list li { overflow-wrap: anywhere; }
+.st-imp-list .st-more { list-style: none; }
+dialog.st-rep-dlg { width: min(680px, calc(100vw - 32px)); }
+.st-rep-wrap { overflow-x: auto; margin-bottom: 8px; }
+.st-rep { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.st-rep th, .st-rep td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.st-rep th:first-child, .st-rep td:first-child { text-align: left; white-space: normal; min-width: 120px; }
+.st-rep th { font-size: 11.5px; color: var(--text-dim); font-weight: 700; }
+.st-rep td.st-rt span { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.st-rep td.st-rt small { display: block; color: var(--text-dim); font-size: 11.5px; }
+.st-rep tr.st-long td:last-child { color: #ff4d4d; font-weight: 700; }
+.st-rep tr.st-short td:last-child { color: #2ecc71; font-weight: 700; }
+.st-rep tr.st-skip td { opacity: 0.55; }
+.st-rep tfoot td { font-weight: 800; border-bottom: 0; }
+.stg-note.ok { color: var(--accent); }
+.stg-row.stg-hit { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.st-print { display: none; }
+@media print {
+  body.st-printing > *:not(#st-print) { display: none !important; }
+  body.st-printing { background: #fff !important; color: #000 !important; }
+  body.st-printing #st-print { display: block !important; color: #000; font: 12pt/1.4 system-ui, sans-serif; }
+  #st-print h1 { font-size: 16pt; margin-bottom: 6pt; }
+  #st-print p { margin-bottom: 10pt; }
+  #st-print .st-rep th, #st-print .st-rep td { border-bottom: 1px solid #999; color: #000 !important; opacity: 1; }
+  #st-print .st-rep small { color: #444; }
+}

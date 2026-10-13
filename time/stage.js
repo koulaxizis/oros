@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Time — Stage tab (v1.2.0, wave 3)
+// orOS Time — Stage tab (v1.3.0, wave 4)
 // A conference / stage timer: events with a rundown of items, a
 // live countdown with yellow / red warnings and overtime, the day's
 // schedule (planned vs expected, behind / ahead), a full-screen stage
@@ -74,7 +74,9 @@
       "stg.sum.plan": "Planned end {p} · expected {e}", "stg.sum.exp": "Expected end {e}",
       "stg.sum.behind": "{n} min behind", "stg.sum.ahead": "{n} min ahead", "stg.sum.ontime": "On time",
       "stg.st.done": "ran {d}", "stg.st.skipped": "skipped", "stg.st.live": "live",
-      "stg.until": "until {t}", "stg.clock": "clock"
+      "stg.until": "until {t}", "stg.clock": "clock",
+      "stg.f.stop": "Must end by (hard stop)",
+      "stg.sum.cut": "Hard stop {t}: cut {n} min", "stg.sum.fits": "Hard stop {t}: on track"
     },
     el: {
       "stg.out": "Έξοδος σκηνής", "stg.display": "Άνοιγμα οθόνης σκηνής",
@@ -119,7 +121,9 @@
       "stg.sum.plan": "Προγραμματισμένο τέλος {p} · αναμενόμενο {e}", "stg.sum.exp": "Αναμενόμενο τέλος {e}",
       "stg.sum.behind": "{n} λεπτά πίσω", "stg.sum.ahead": "{n} λεπτά μπροστά", "stg.sum.ontime": "Στην ώρα μας",
       "stg.st.done": "κράτησε {d}", "stg.st.skipped": "παραλείφθηκε", "stg.st.live": "τώρα",
-      "stg.until": "μέχρι {t}", "stg.clock": "ώρα"
+      "stg.until": "μέχρι {t}", "stg.clock": "ώρα",
+      "stg.f.stop": "Πρέπει να τελειώσει ως (αυστηρό τέλος)",
+      "stg.sum.cut": "Αυστηρό τέλος {t}: κόψτε {n} λεπτά", "stg.sum.fits": "Αυστηρό τέλος {t}: εντός χρόνου"
     }
   };
   function t(k, vars) {
@@ -451,10 +455,15 @@
   }
   function summary(sch) {
     if (sch.expEnd === null) return "";
-    if (!sch.hasPlan) return t("stg.sum.exp", { e: C.hm(sch.expEnd) });
+    var stop = "";
+    if (sch.stopAt !== null) {
+      var c = Math.ceil(sch.cut / 60000);
+      stop = " · " + (c >= 1 ? t("stg.sum.cut", { t: C.hm(sch.stopAt), n: c }) : t("stg.sum.fits", { t: C.hm(sch.stopAt) }));
+    }
+    if (!sch.hasPlan) return t("stg.sum.exp", { e: C.hm(sch.expEnd) }) + stop;
     var m = Math.round(sch.delta / 60000);
     var d = m >= 1 ? t("stg.sum.behind", { n: m }) : m <= -1 ? t("stg.sum.ahead", { n: -m }) : t("stg.sum.ontime");
-    return t("stg.sum.plan", { p: C.hm(sch.planEnd), e: C.hm(sch.expEnd) }) + " · " + d;
+    return t("stg.sum.plan", { p: C.hm(sch.planEnd), e: C.hm(sch.expEnd) }) + " · " + d + stop;
   }
 
   /* ---------- 6. Stage output: view, display window, message ---------- */
@@ -714,6 +723,30 @@
     setRun(Object.assign({}, r, { ev: this.value }));
   });
 
+  // Import (wave 4): a plan from OrosStageCore.csvPlan / calPlan goes
+  // to the end of the open event's rundown. Nothing is replaced; an
+  // event without a start time takes the plan's.
+  function addPlan(plan) {
+    var ev = curEvent();
+    if (!ev || !plan || !Array.isArray(plan.items) || !plan.items.length) return 0;
+    var list = items(), now = Date.now();
+    var pos = list.length ? list[list.length - 1].pos : null;
+    var added = [];
+    plan.items.slice(0, 500).forEach(function (x) {
+      pos = C.posBetween(pos, null);
+      var it = C.normItem({ id: newId(), ev: ev.id, pos: pos, title: x.title, speaker: x.speaker || "", kind: x.kind || "down",
+        dur: x.dur, until: x.until || "", auto: false, yellow: null, red: null, notes: x.notes || "", mtime: now });
+      if (it) added.push(it);
+    });
+    data.items = data.items.concat(added);
+    if (plan.start && !ev.start && C.HM_RE.test(plan.start)) {
+      data.events = data.events.map(function (e) { return e.id === ev.id ? Object.assign({}, e, { start: plan.start, mtime: now }) : e; });
+    }
+    save();
+    render();
+    return added.length;
+  }
+
   function move(id, step) {
     var list = items();
     var i = -1;
@@ -786,6 +819,7 @@
     $("se-name").value = ev ? ev.name : "";
     $("se-date").value = ev ? ev.date : today();
     $("se-start").value = ev ? ev.start : "";
+    $("se-stop").value = ev && ev.stop ? ev.stop : "";
     $("se-yellow").value = minutes(ev ? ev.yellow : C.DEF_YELLOW);
     $("se-red").value = minutes(ev ? ev.red : C.DEF_RED);
     $("se-flash").checked = ev ? ev.flash : true;
@@ -808,6 +842,7 @@
       yellow: readMinutes($("se-yellow"), C.DEF_YELLOW),
       red: readMinutes($("se-red"), C.DEF_RED),
       flash: $("se-flash").checked,
+      stop: $("se-stop").value,
       mtime: 0
     });
     $("stg-ev-dlg").close();
@@ -985,6 +1020,43 @@
     show: function () { return show; },
     act: act,
     setBlack: setBlack,
-    setMsg: setMsg
+    setMsg: setMsg,
+    // wave 4 (time/stage-tools.js)
+    t: t,
+    ev: function () { return curEvent(); },
+    items: function () { return items(); },
+    addPlan: addPlan,
+    newEvent: function () { openEvent(null); }
   };
+
+  // Deep link from the universal search (time/search.js): the Stage tab
+  // on that event and item. A clock running on another event is never
+  // stopped by it: then only the tab opens.
+  function openTarget(st) {
+    if (!st || typeof st !== "object") return false;
+    var tab = document.querySelector('.tab[data-pane="pane-stage"]');
+    if (tab) tab.click();
+    var ev = typeof st.ev === "string" ? evById(st.ev) : null;
+    if (ev && ev.id !== run.ev && !(run.cur && run.startedAt)) {
+      run = Object.assign({}, C.finish(run, Date.now()), { ev: ev.id });
+      saveRun();
+    }
+    render();
+    var it = typeof st.it === "string" ? itemById(st.it) : null;
+    if (it && it.ev === run.ev) {
+      var li = document.querySelector('#stg-list li[data-id="' + it.id + '"]');
+      if (li) { try { li.scrollIntoView({ block: "center" }); } catch (e) {} li.classList.add("stg-hit"); setTimeout(function () { li.classList.remove("stg-hit"); }, 2500); }
+    }
+    return true;
+  }
+  var prevOpenAt = window.__orosOpenAt;                // astro.js: { astro: "location" }
+  window.__orosOpenAt = function (target) {
+    if (target && target.stage) openTarget(target.stage);
+    else if (typeof prevOpenAt === "function") prevOpenAt(target);
+  };
+  if (window.__orosTimePending && window.__orosTimePending.stage) {
+    var pend = window.__orosTimePending.stage;
+    window.__orosTimePending = null;
+    setTimeout(function () { openTarget(pend); }, 60);
+  }
 })();

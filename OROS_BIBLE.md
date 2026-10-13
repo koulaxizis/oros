@@ -615,7 +615,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Weather | oros-weatherapp-data | merge-lite | 5/5 VERIFIED |
 | Mood | oros-mood-data | entry field LWW (fm) + cols + tombs | A67 audit 2026-10-07 (MO-1…MO-8) |
 | Time | oros-time-data | entity union + smtime | 5/5 VERIFIED |
-| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo); v1.2.0 at 1.54.00 (wave 3: paired devices: remote, stage display, moderator via remote-link.js) |
+| **Time › Stage** | oros-time-stage (own slice `stage`) | events (optional `stop`, omitted when empty) + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo); v1.2.0 at 1.54.00 (wave 3: paired devices: remote, stage display, moderator via remote-link.js); v1.3.0 at 1.56.00 (wave 4: import/export CSV + Calendar, report, hard stop, search, Today) |
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
 | Habits | oros-habits-data | habits/comps LWW | 5/5 VERIFIED |
@@ -2348,6 +2348,12 @@ Rebuild this in any session where code is delivered.
     - Typed text is capped and drawn as text.
   - **Clock.** The device computes the clock from the PC's start instant plus the measured offset, so a slow link never makes the stage clock jump.
   - **Logo and notes.** The logo stays on the PC (it does not fit a frame). Private notes are never sent.
+- **Wave 4 (1.56.00, plan complete):**
+  - **Import only adds.** An import or a quick add goes to the end of the open event and never replaces items, so a wrong file can be undone by deleting the new items. Every value is parsed as data and drawn as text.
+  - **Calendar gaps become breaks of a fixed length.** They are not "until" breaks, because the plan may land after other items at another hour.
+  - **The report is per device.** The actual times are the device-local run log of the computer that ran the clock. Nothing new is synced for it.
+  - **Prompter link dropped.** orOS has no teleprompter, so this item from the plan has no target.
+  - **Search and Today.** time → time/search.js. It reads oros-time-stage and finds Stage events and rundown items. Opening a hit goes to the Stage tab on that event and item. Today: time → ["stage-core.js", "today.js"]. Shows alarms later today, plus on an event's day the next Stage session at its expected start, and Stage events on the coming days at their start.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -5508,3 +5514,36 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The help pages gained the "Another device" section and a limits line.
   - tests/time-stage.test.js now has 26 tests. The 7 new ones cover link compatibility with Studio, devState, devAdopt, the role matrix of devCommand, clockOffset and the page wiring.
   - Not tested: real phones / tablets / TVs, the live relay path.
+
+### 2026-10-13 — Time › Stage wave 4: import, export, report, hard stop, search, Today (#274) — 1.56.00
+- Time › Stage wave 4: import, export, report (plan /mnt/project-files/time/stage-timer-plan.md). This completes the plan.
+  - **time/stage-tools.js (new):**
+    - Quick add: ready-made items.
+    - Import dialog:
+      - CSV file: a header row in EN/EL in any order, or the columns title, speaker, duration, start. `;`, `,` or tab separated. At most 2 MB and 500 rows.
+      - A Calendar day through calendar/occur.js. The gaps between events become breaks.
+      - It shows a preview, and the items are added to the end of the open event. Nothing is replaced.
+    - Export CSV.
+    - Report:
+      - A table of planned vs actual start and length, with totals.
+      - Download CSV.
+      - Print / PDF, through a print stylesheet that shows only the report.
+  - **time/stage-core.js v1.3.0:** parseCsv, parseDur, parseHm, csvPlan, calPlan, csvCell, toCsv, report, reportCsv, mmss, TEMPLATES.
+    - The CSV is written `;` separated, with a BOM. Text cells that start with = + - @ get an apostrophe, against formula injection.
+    - normEvent keeps `stop` ("HH:MM", hard stop) and leaves the key out when empty.
+    - schedule() returns `stopAt` and `cut`. A stop earlier than the start means the next day.
+  - **time/stage.js:**
+    - A hard stop field in Event settings. The summary line reads "Hard stop 17:00: cut 12 min".
+    - `OrosStage.addPlan` and `newEvent`.
+    - The deep link `{stage: {ev, it}}` opens the Stage tab on the event and highlights the item.
+    - The event only changes when no clock is running.
+  - **time/search.js (new):** a universal search provider for events and rundown items (title, speaker, event, notes). It is read-only.
+  - **time/today.js v1.1.0:**
+    - On an event's day: "Next: <title>" at the expected start time, which moves later when the day runs behind. It uses this device's run.
+    - Events on the coming days show at their start time.
+    - Read-only. The alarm rows are unchanged.
+  - **time/astro.js:** a deep-link target that is not for astro is kept for stage.js.
+  - The help pages gained Quick add, Import, Export and report, Hard stop, and Search and Today, plus one limits line.
+  - tests/time-stage.test.js has 36 tests. The 10 new ones cover parseDur, csvPlan, calPlan, the toCsv round trip and injection, report, hard stop and merge, templates, the search provider, Today rows and the page wiring.
+  - Not done from the plan: the "Prompter link". The orOS Prompter app is a writing-prompts app, not a teleprompter, so there is nothing to link to.
+  - Not tested: real Calendar data from other devices, printing on phones, Safari.
