@@ -13,7 +13,7 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello", key, token, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
@@ -25,6 +25,8 @@
 //   Trello https://api.trello.com/1<path> (OAuth header: key + token), GitHub
 //   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues
 //   Raindrop.io https://api.raindrop.io/rest/v1<path> (Bearer, read-only: collections, bookmarks)
+//   Notion https://api.notion.com/v1<path> (Bearer, Notion-Version 2022-06-28, read-only:
+//   search for pages or databases, a block's children, a database's rows)
 //           POST /v1 { op: "ext", p: "ininja", host, base, key, reqs: [...] }
 //   Invoice Ninja https://<host><base>/api/v1<path> (X-API-TOKEN), read-only
 //           POST /v1 { op: "ext", p: "odoo", host, base, db?, key, reqs: [...] }
@@ -112,8 +114,12 @@ const ODOO_J = {
   pt_f: JSON.stringify(["id", "name", "is_company", "parent_id", "type", "email", "phone", "website", "street", "street2", "zip", "city", "country_id", "vat", "function"]),
   ld_dom: JSON.stringify([["type", "=", "opportunity"], ["active", "in", [true, false]]]),
   ld_f: JSON.stringify(["id", "name", "partner_id", "expected_revenue", "probability", "active", "date_deadline", "date_closed", "lost_reason_id", "company_currency"]),
-  ord: JSON.stringify("id")
+  ord: JSON.stringify("id"),
+  // Notion: search lists pages (wave 6D) or databases (wave 6E)
+  nt_flt: JSON.stringify({ property: "object", value: "page" }),
+  nt_dbf: JSON.stringify({ property: "object", value: "database" })
 };
+const NT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
 const okEmail = (v) => typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v);
 const okName = (v) => typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v);
@@ -145,7 +151,9 @@ const WHOLE = {
   // Odoo: the fixed filter and fields must be there (without them
   // search_read reads every field of every record)
   odco: (b) => "fields" in b,
-  odq: (b) => "domain" in b && "fields" in b && "order" in b
+  odq: (b) => "domain" in b && "fields" in b && "order" in b,
+  // Notion: search only with the "pages" filter
+  ntq: (b) => "filter" in b
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
@@ -330,6 +338,21 @@ export const PLATFORMS = {
       ["GET", /^\/collections\/childrens$/, {}, null],
       ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
     ]
+  },
+  // Waves 6D/6E, read-only: Notion pages → Notes, databases → Spreadsheet
+  // (search and a database query are POSTs that read)
+  notion: {
+    root: "/v1",
+    host: "api.notion.com",
+    keys: { key: /^(secret_|ntn_)[A-Za-z0-9]{30,80}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    extra: { "Notion-Version": "2022-06-28" },
+    allow: [
+      ["POST", /^\/search$/, null, { filter: "=nt_flt|nt_dbf", page_size: "nlim", start_cursor: "ncur" }, "ntq"],
+      ["GET", /^\/blocks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/children$/, { page_size: PER, start_cursor: NT_ID }, null],
+      // a database's rows (wave 6E): a POST that reads, no filter or sort
+      ["POST", /^\/databases\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/query$/, null, { page_size: "nlim", start_cursor: "ncur" }, null]
+    ]
   }
 };
 
@@ -348,7 +371,10 @@ function okVal(kind, v) {
   if (kind === "emails") return listOf(v, 1, 150, okEmail);
   if (kind === "olim") return Number.isInteger(v) && v >= 1 && v <= 200;
   if (kind === "ooff") return Number.isInteger(v) && v >= 0 && v <= 10000000;
-  if (kind[0] === "=") return Object.prototype.hasOwnProperty.call(ODOO_J, kind.slice(1)) && JSON.stringify(v) === ODOO_J[kind.slice(1)];
+  if (kind === "nlim") return Number.isInteger(v) && v >= 1 && v <= 100;
+  if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
+  // "=a" or "=a|b": exactly one of the fixed values
+  if (kind[0] === "=") return kind.slice(1).split("|").some((k) => Object.prototype.hasOwnProperty.call(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]);
   return false;
 }
 

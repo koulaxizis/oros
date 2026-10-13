@@ -212,6 +212,20 @@
       keys: [{ k: "key", re: /^[A-Za-z0-9-]{30,80}$/ }],
       apps: ["bookmarks"],
       probe: "/collections"
+    },
+    // Wave 6D: Notion pages into Notes, wave 6E: databases into
+    // Spreadsheet (API 2022-06-28, Bearer token of the user's own
+    // internal integration; only what is shared with it). Notion does
+    // not answer browsers: always through the relay.
+    notion: {
+      name: "Notion",
+      site: false,
+      host: "api.notion.com",
+      root: "/v1",
+      keys: [{ k: "key", re: /^(secret_|ntn_)[A-Za-z0-9]{30,80}$/ }],
+      apps: ["notes", "spreadsheet"],
+      probe: { m: "POST", path: "/search", body: { filter: { property: "object", value: "page" }, page_size: 1 } },
+      relayOnly: true
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -398,6 +412,8 @@
       IN_ACTIVE = /^active$/;
   // Todoist (wave 6A): opaque page cursors (base64; "+", "/", "=" escaped)
   var LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/, PER50 = /^([1-9]|[1-4][0-9]|50)$/;
+  // Notion (wave 6D): ids and page cursors are UUIDs
+  var NT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   // Trello and GitHub (wave 6B): fixed field lists
   var TR_CARD_F = /^name,desc,due,idList,idLabels,closed,pos$/, TR_LIST_F = /^name,closed,pos$/;
   // Odoo (wave 4D): JSON-2 search_read bodies. The filters and field
@@ -408,7 +424,10 @@
     pt_f: ["id", "name", "is_company", "parent_id", "type", "email", "phone", "website", "street", "street2", "zip", "city", "country_id", "vat", "function"],
     ld_dom: [["type", "=", "opportunity"], ["active", "in", [true, false]]],
     ld_f: ["id", "name", "partner_id", "expected_revenue", "probability", "active", "date_deadline", "date_closed", "lost_reason_id", "company_currency"],
-    ord: "id"
+    ord: "id",
+    // Notion: search lists pages (wave 6D) or databases (wave 6E)
+    nt_flt: { property: "object", value: "page" },
+    nt_dbf: { property: "object", value: "database" }
   };
   var ODOO_J = {};
   Object.keys(ODOO).forEach(function (k) { ODOO_J[k] = JSON.stringify(ODOO[k]); });
@@ -457,7 +476,9 @@
     // Odoo: the fixed filter and fields must be there (without them
     // search_read reads every field of every record)
     odco: function (b) { return has(b, "fields"); },
-    odq: function (b) { return has(b, "domain") && has(b, "fields") && has(b, "order"); }
+    odq: function (b) { return has(b, "domain") && has(b, "fields") && has(b, "order"); },
+    // Notion: search only with the "pages" filter
+    ntq: function (b) { return has(b, "filter"); }
   };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
@@ -545,6 +566,12 @@
       ["GET", /^\/collections$/, {}, null],
       ["GET", /^\/collections\/childrens$/, {}, null],
       ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
+    ],
+    notion: [
+      ["POST", /^\/search$/, null, { filter: "=nt_flt|nt_dbf", page_size: "nlim", start_cursor: "ncur" }, "ntq"],
+      ["GET", /^\/blocks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/children$/, { page_size: PER, start_cursor: NT_ID }, null],
+      // a database's rows (wave 6E): a POST that reads, no filter or sort
+      ["POST", /^\/databases\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/query$/, null, { page_size: "nlim", start_cursor: "ncur" }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -561,7 +588,10 @@
     if (kind === "emails") return listOf(v, 1, 150, okEmail);
     if (kind === "olim") return isInt(v) && v >= 1 && v <= 200;
     if (kind === "ooff") return isInt(v) && v >= 0 && v <= 10000000;
-    if (kind[0] === "=") return has(ODOO_J, kind.slice(1)) && JSON.stringify(v) === ODOO_J[kind.slice(1)];
+    if (kind === "nlim") return isInt(v) && v >= 1 && v <= 100;
+    if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
+    // "=a" or "=a|b": exactly one of the fixed values
+    if (kind[0] === "=") return kind.slice(1).split("|").some(function (k) { return has(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]; });
     return false;
   }
   // "" when the request may go, else the reason.
@@ -637,6 +667,7 @@
     if (p === "trello") return ["Authorization", 'OAuth oauth_consumer_key="' + keys.key + '", oauth_token="' + keys.token + '"'];
     if (p === "github") return ["Authorization", "Bearer " + keys.key];
     if (p === "raindrop") return ["Authorization", "Bearer " + keys.key];
+    if (p === "notion") return ["Authorization", "Bearer " + keys.key];
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).
