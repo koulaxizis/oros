@@ -2431,6 +2431,86 @@ function applyImport(entries) {
     : t("import.none"));
 }
 
+/* Import from Raindrop.io (integrations wave 6C, platforms.js).
+   The plan comes from links/bookmarks.js; this is its one write.
+   Undo takes out what came in (tombstoned, like any deletion here)
+   and puts back the fields an update changed. Ids are the plan's
+   (L.extId), so a second import finds them again. */
+function platformApply(pl, doneText) {
+  const now = Date.now();
+  const back = { items: [], folders: [], upd: [] };
+  let pos = nextFolderPos();
+  pl.folders.add.forEach((x) => {
+    if (state.folders[x.id]) return;
+    const f = sanitizeFolder({ id: x.id, name: x.name, pos: pos++, modified: now }, x.id);
+    if (!f) return;
+    state.folders[f.id] = f;
+    delete state.deleted[f.id];
+    back.folders.push(f.id);
+  });
+  pl.items.add.forEach((x) => {
+    if (state.items[x.id]) return;
+    const it = sanitizeItem({ id: x.id, url: x.url, title: x.title, note: x.note, tags: x.tags,
+                              fav: x.fav === true, folderId: x.folderId, added: now, modified: now }, x.id);
+    if (!it) return;
+    state.items[it.id] = it;
+    delete state.deleted[it.id];
+    back.items.push(it.id);
+  });
+  pl.items.upd.forEach((x) => {
+    const it = state.items[x.id];
+    if (!it) return;
+    const old = {};
+    ["title", "note", "tags"].forEach((f) => {
+      if (x.f[f] === undefined) return;
+      old[f] = Array.isArray(it[f]) ? it[f].slice() : it[f];
+      it[f] = f === "tags" ? x.f.tags.slice(0, 12).map((tg) => sanText(tg, 32)).filter(Boolean)
+            : sanText(x.f[f], f === "title" ? 256 : 1024);
+    });
+    it.modified = now;
+    back.upd.push({ id: x.id, old: old });
+  });
+  save();
+  renderAll();
+  showToast(doneText, { action: { label: t("undo"), fn: () => platformUndo(back) } });
+  return true;
+}
+
+function platformUndo(back) {
+  const now = Date.now();
+  back.items.forEach((id) => {
+    if (state.items[id]) delete state.items[id];
+    state.deleted[id] = now;
+  });
+  back.upd.forEach((u) => {
+    const it = state.items[u.id];
+    if (!it) return;
+    Object.keys(u.old).forEach((f) => { it[f] = u.old[f]; });
+    it.modified = now;
+  });
+  /* A folder that came in goes again only while it is empty. */
+  back.folders.forEach((id) => {
+    if (!state.folders[id]) return;
+    if (Object.keys(state.items).some((k) => state.items[k].folderId === id)) return;
+    delete state.folders[id];
+    state.deleted[id] = now;
+    if (uiActiveFolder === id) uiActiveFolder = ROOT_FOLDER;
+  });
+  save();
+  renderAll();
+}
+
+function wirePlatforms() {
+  const P = window.OrosBookmarksPlatforms;
+  const btn = $("#raindrop-btn");
+  if (!P || !btn || !P.has()) return;
+  P.init({ lang: LANG, data: () => state, apply: platformApply, dupe: dupeKey });
+  btn.title = P.label();
+  btn.setAttribute("aria-label", P.label());
+  btn.hidden = false;
+  btn.addEventListener("click", () => P.open());
+}
+
 function exportNetscape() {
   const lines = [
     "<!DOCTYPE NETSCAPE-Bookmark-file-1>",
@@ -2650,6 +2730,9 @@ function wire() {
 
   /* Export */
   $("#export-btn").addEventListener("click", exportNetscape);
+
+  /* Import from Raindrop.io (wave 6C): only inside the orOS shell */
+  wirePlatforms();
 
   /* Folders */
   $("#folder-settings").addEventListener("click", () =>
