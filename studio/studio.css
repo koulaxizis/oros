@@ -500,8 +500,8 @@ dialog.wide { width: min(760px, calc(100vw - 32px)); }
 .fx-row select { width: 100%; margin-top: 4px; }
 .fx-row .chip { margin-top: 6px; }
 .fx-row .field output { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#fx-pick { margin-top: 12px; }
-#fx-search { width: 100%; }
+#fx-pick, #ruf-pick { margin-top: 12px; }
+#fx-search, #ruf-search { width: 100%; }
 .fx-picks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .fx-picks .chip.has-gfx::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 .fx-credit { margin-top: 14px; }
@@ -540,6 +540,8 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
   background: var(--panel-bg); border: 1px solid var(--border); border-top: 4px solid var(--tc, var(--border)); min-height: 0; }
 .ru-strip.master { margin-left: auto; border-top-color: var(--accent); position: sticky; right: 0; box-shadow: -6px 0 12px var(--shadow); }
 .ru-sname { font-size: 13px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ru-fxo { font-size: 12px; font-weight: 700; min-height: 32px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-soft); cursor: pointer; }
+.ru-fxo:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .ru-fx { display: flex; flex-direction: column; gap: 4px; max-height: 96px; overflow-y: auto; }
 .ru-fxb { font-size: 11px; padding: 4px 6px; min-height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: line-through; color: var(--text-dim); }
@@ -614,3 +616,5 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
 }
 
 [hidden] { display: none !important; }
+/* the tablet / phone Effects window: on a phone the name needs the room */
+@media (max-width: 420px) { #ruf-list .fx-cat { display: none; } }
