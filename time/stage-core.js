@@ -14,10 +14,16 @@
 //     items:  [{ id, ev, pos, title, speaker, kind, dur s,
 //                until "HH:MM"|"", auto bool, yellow s|null,
 //                red s|null, notes, mtime }],
+//     msgs:   [{ id, text, mtime }],      (wave 2: saved speaker messages;
+//                                          the key is left out when empty)
 //     tombs:  [{ id, t }] }
 // Device-local (oros-time-stage-run, never synced): which event is
 // open, the live item and its clock, actual start/end per item.
 //   { ev, cur, startedAt, pausedAt, adj s, log: { itemId: {s, e} } }
+// Device-local (oros-time-stage-show, wave 2): what the stage output
+// shows besides the clock; read by the in-app view and display.html.
+//   { black, layout: full|timer|agenda, mirror, logoAt,
+//     msg: { text, on, flash, color: white|yellow|red|green, at } }
 // ============================================================
 (function (root) {
   "use strict";
@@ -77,6 +83,12 @@
       mtime: num(it.mtime, 0)
     };
   }
+  function normMsg(m) {
+    if (!m || typeof m !== "object" || typeof m.id !== "string" || !ID_RE.test(m.id)) return null;
+    var text = line(m.text, 200);
+    if (!text) return null;
+    return { id: m.id, text: text, mtime: num(m.mtime, 0) };
+  }
   function normTomb(d) {
     if (!d || typeof d !== "object" || typeof d.id !== "string" || !ID_RE.test(d.id)) return null;
     return { id: d.id, t: num(d.t, 0) };
@@ -109,6 +121,7 @@
     }
     var evs = pickAll(list(a.events, normEvent).concat(list(b.events, normEvent)));
     var its = pickAll(list(a.items, normItem).concat(list(b.items, normItem)));
+    var mss = pickAll(list(a.msgs, normMsg).concat(list(b.msgs, normMsg)));
     var alive = function (x) { return !(tomb[x.id] && tomb[x.id].t >= x.mtime); };
     var events = [], items = [];
     Object.keys(evs).forEach(function (id) {
@@ -121,9 +134,18 @@
     Object.keys(its).forEach(function (id) {
       if (alive(its[id])) { items.push(its[id]); delete tomb[id]; }
     });
+    var msgs = [];
+    Object.keys(mss).forEach(function (id) {
+      if (alive(mss[id])) { msgs.push(mss[id]); delete tomb[id]; }
+    });
     var tombs = Object.keys(tomb).map(function (id) { return tomb[id]; });
-    events.sort(byId); items.sort(byId); tombs.sort(byId);
-    return { v: 1, events: events, items: items, tombs: tombs };
+    events.sort(byId); items.sort(byId); msgs.sort(byId); tombs.sort(byId);
+    var out = { v: 1, events: events, items: items, tombs: tombs };
+    // "msgs" only when there are some: a wave-1 device (no msgs) and
+    // this one then write the same bytes, so a mixed fleet never
+    // re-uploads in turns over an empty list.
+    if (msgs.length) out = { v: 1, events: events, items: items, msgs: msgs, tombs: tombs };
+    return out;
   }
   function canon(s) { return merge(s, s); }
   function empty() { return { v: 1, events: [], items: [], tombs: [] }; }
@@ -294,6 +316,36 @@
     return { rows: rows, planEnd: planEnd, expEnd: expEnd, delta: delta, hasPlan: hasPlan };
   }
 
+  // The item the big clock is about: the live one, else the next one
+  // to run (the first "todo" row of the schedule), else null.
+  function focus(items, sch, run) {
+    var i;
+    if (run && run.cur) for (i = 0; i < items.length; i++) if (items[i].id === run.cur) return items[i];
+    for (i = 0; i < sch.rows.length; i++) if (sch.rows[i].state === "todo") return items[i];
+    return null;
+  }
+
+  // ---------- Stage output (device-local, wave 2) ----------
+  var LAYOUTS = ["full", "timer", "agenda"];
+  var COLORS = ["white", "yellow", "red", "green"];
+  function normShow(x) {
+    x = (x && typeof x === "object") ? x : {};
+    var m = (x.msg && typeof x.msg === "object") ? x.msg : {};
+    return {
+      black: x.black === true,
+      layout: LAYOUTS.indexOf(x.layout) >= 0 ? x.layout : "full",
+      mirror: x.mirror === true,
+      logoAt: num(x.logoAt, 0),
+      msg: {
+        text: line(m.text, 200),
+        on: m.on === true && !!line(m.text, 200),
+        flash: m.flash === true,
+        color: COLORS.indexOf(m.color) >= 0 ? m.color : "white",
+        at: num(m.at, 0)
+      }
+    };
+  }
+
   // ---------- Run state (device-local) ----------
   function normRun(r) {
     r = (r && typeof r === "object") ? r : {};
@@ -377,6 +429,7 @@
 
   var API = {
     KINDS: KINDS, DEF_YELLOW: DEF_YELLOW, DEF_RED: DEF_RED, ID_RE: ID_RE, HM_RE: HM_RE, YMD_RE: YMD_RE,
+    LAYOUTS: LAYOUTS, COLORS: COLORS, normShow: normShow, focus: focus, normMsg: normMsg,
     normEvent: normEvent, normItem: normItem, merge: merge, canon: canon, empty: empty,
     rundown: rundown, posBetween: posBetween, thresholds: thresholds,
     timer: timer, fmt: fmt, hm: hm, schedule: schedule,
