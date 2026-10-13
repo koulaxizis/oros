@@ -6,6 +6,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.72.00
 - Bookmarks: import from Raindrop.io. Your collections become folders, with titles, notes, tags and favourites; import again to bring in only what's new. orOS only reads Raindrop; connect it in Settings › Connected services, then the cloud button in Bookmarks.
+- Info › Support: new links to become a monthly supporter on Ko-fi and to see the Supporters page.
 
 ## Version 1.71.00
 - Maps: OsmAnd-style tools. A `Topo` map with contour lines for hiking. While you drive, a speed limit sign next to your speed (red when you're over). Long-press › `Measure distance` for distances and areas, and `I parked here` to mark your car, with a reminder that comes as a notification and a walking route back.
