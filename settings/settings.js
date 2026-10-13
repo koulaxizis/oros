@@ -849,6 +849,7 @@
       }
       form.appendChild(el("div", "hint", t("v.keys.hint." + f.p)));
       form.appendChild(labelled(t("v.key"), "v-key", textInput("v-key", f.key, "", function (v) { f.key = v; }, "password")));
+      if (f.p === "trello") form.appendChild(labelled(t("v.token"), "v-token", textInput("v-token", f.token || "", "", function (v) { f.token = v; }, "password")));
     } else {
       form.appendChild(labelled(t("v.site"), "v-site", textInput("v-site", f.site, t("v.site.ph"), function (v) { f.site = v; }, "url")));
       form.appendChild(el("div", "hint", t("v.keys.hint")));
@@ -868,7 +869,7 @@
       f.err = "";
       render();
       var o = f.p === "tol" ? { p: "tol", name: f.name, env: f.env, vat: f.vat, keys: { key: f.key } }
-            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, db: hasDb ? f.db || "" : undefined, keys: { key: f.key } }
+            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, db: hasDb ? f.db || "" : undefined, keys: f.p === "trello" ? { key: f.key, token: f.token || "" } : { key: f.key } }
             : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
       Lk.add(o).then(function (id) {
         svc.add = null;
@@ -937,6 +938,7 @@
       if (a.p !== "woo") {
         kf.appendChild(el("div", "hint", t("v.keys.hint." + a.p)));
         kf.appendChild(labelled(t("v.key"), "v-kck", textInput("v-kck", svc.keyForm.key, "", function (v) { svc.keyForm.key = v; }, "password")));
+        if (a.p === "trello") kf.appendChild(labelled(t("v.token"), "v-ktok", textInput("v-ktok", svc.keyForm.token || "", "", function (v) { svc.keyForm.token = v; }, "password")));
       } else {
         kf.appendChild(el("div", "hint", t("v.keys.hint")));
         kf.appendChild(labelled(t("v.ck"), "v-kck", textInput("v-kck", svc.keyForm.ck, "ck_…", function (v) { svc.keyForm.ck = v; }, "password")));
@@ -945,12 +947,12 @@
       var sk = el("button", "btn primary", t("v.saveKeys"));
       sk.type = "submit";
       sk.setAttribute("data-k", "v.k.ok");
-      kf.appendChild(actions(button(t("v.cancel"), "v.k.cancel", function () { svc.keysFor = null; svc.keyForm = { ck: "", cs: "", key: "" }; render(); }), sk));
+      kf.appendChild(actions(button(t("v.cancel"), "v.k.cancel", function () { svc.keysFor = null; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); }), sk));
       kf.addEventListener("submit", function (e) {
         e.preventDefault();
-        Lk.setKeys(a.id, a.p !== "woo" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
+        Lk.setKeys(a.id, a.p === "trello" ? { key: svc.keyForm.key, token: svc.keyForm.token || "" } : a.p !== "woo" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
           svc.keysFor = null;
-          svc.keyForm = { ck: "", cs: "", key: "" };
+          svc.keyForm = { ck: "", cs: "", key: "", token: "" };
           svc.has[a.id] = true;
           runTest(a.id);
         }, function (er) {
@@ -971,7 +973,7 @@
 
     var acts = actions(
       has !== false ? button(svc.busy[a.id] ? t("v.checking") : t("v.test"), "v.test:" + a.id, function () { if (!svc.busy[a.id]) runTest(a.id); }) : null,
-      button(t("v.newKeys"), "v.keys:" + a.id, function () { svc.keysFor = a.id; svc.keyForm = { ck: "", cs: "", key: "" }; render(); var f = $("f-v-kck"); if (f) f.focus(); }, has === false ? "primary" : ""),
+      button(t("v.newKeys"), "v.keys:" + a.id, function () { svc.keysFor = a.id; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); var f = $("f-v-kck"); if (f) f.focus(); }, has === false ? "primary" : ""),
       button(t("v.rename"), "v.rn:" + a.id, function () { svc.rename = a.id; render(); var f = $("f-v-rn"); if (f) f.focus(); })
     );
     c.appendChild(acts);
