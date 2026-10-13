@@ -79,7 +79,41 @@
       "savefail": "Could not save the GPX file.",
       "nodlg": "Saving files is not available here.",
       "save": "Save", "cancel": "Cancel", "back": "Back", "close": "Close", "yes": "Yes",
-      "km": "{n} km", "m": "{n} m", "kmh": "{n} km/h"
+      "km": "{n} km", "m": "{n} m", "kmh": "{n} km/h",
+      "edit": "Edit",
+      "ed.title": "Edit: {n}",
+      "ed.sel": "Selected: points {a}–{b} of {n} · {d}",
+      "ed.from": "Start of selection", "ed.to": "End of selection",
+      "ed.keep": "Keep only the selection", "ed.cut": "Remove the selection",
+      "ed.split": "Split at the start",
+      "ed.split.ask": "Split “{n}” into two tracks at the start of the selection? Both are saved now.",
+      "ed.split.name": "{n} (2)",
+      "ed.split.ok": "Split into two tracks",
+      "ed.simp": "Simplify", "ed.simp.tol": "Tolerance", "ed.simp.res": "{a} → {b} points",
+      "ed.join": "Join with", "ed.join.pick": "Choose a track", "ed.join.btn": "Join",
+      "ed.join.big": "Together they have too many points (500,000 at most).",
+      "ed.undo": "Undo", "ed.save": "Save changes", "ed.cancel": "Cancel",
+      "ed.drop": "Throw the unsaved changes away?",
+      "ed.saved": "Changes saved",
+      "ed.hint": "Move the two sliders to select part of the track. Nothing is saved until you tap Save changes.",
+      "up": "Upload to OSM",
+      "up.title": "Upload to OpenStreetMap GPS traces",
+      "up.desc": "Description", "up.tags": "Tags (comma separated)",
+      "up.vis": "Visibility",
+      "up.v.private": "Private", "up.v.trackable": "Trackable", "up.v.public": "Public", "up.v.identifiable": "Identifiable",
+      "up.vis.private": "Private: only you see the trace; its points appear anonymously in the GPS layer",
+      "up.vis.trackable": "Trackable: anonymous, but with times, so others can see how fast you went",
+      "up.vis.public": "Public: listed under your name, points without times",
+      "up.vis.identifiable": "Identifiable: listed under your name with the full track and times",
+      "up.again": "This track is already on OpenStreetMap. Uploading again makes a second copy.",
+      "up.notime": "OpenStreetMap needs a time on the points. This track has none (often a planned route or an export without times).",
+      "up.go": "Upload", "up.busy": "Uploading…",
+      "up.ok": "Uploaded to OpenStreetMap",
+      "up.fail": "The upload failed: {e}",
+      "up.offline": "You are offline. Upload when you are online.",
+      "up.signin": "OpenStreetMap sign-in is not set up yet.",
+      "up.denied": "OpenStreetMap signed you out. Sign in again and retry.",
+      "up.view": "View on OpenStreetMap"
     },
     el: {
       "btn": "Οι διαδρομές μου (GPX)",
@@ -126,7 +160,41 @@
       "savefail": "Το αρχείο GPX δεν αποθηκεύτηκε.",
       "nodlg": "Η αποθήκευση αρχείων δεν είναι διαθέσιμη εδώ.",
       "save": "Αποθήκευση", "cancel": "Άκυρο", "back": "Πίσω", "close": "Κλείσιμο", "yes": "Ναι",
-      "km": "{n} χλμ.", "m": "{n} μ.", "kmh": "{n} χλμ./ώ"
+      "km": "{n} χλμ.", "m": "{n} μ.", "kmh": "{n} χλμ./ώ",
+      "edit": "Επεξεργασία",
+      "ed.title": "Επεξεργασία: {n}",
+      "ed.sel": "Επιλογή: σημεία {a}–{b} από {n} · {d}",
+      "ed.from": "Αρχή επιλογής", "ed.to": "Τέλος επιλογής",
+      "ed.keep": "Κράτα μόνο την επιλογή", "ed.cut": "Αφαίρεσε την επιλογή",
+      "ed.split": "Χώρισε στην αρχή",
+      "ed.split.ask": "Να χωριστεί η «{n}» σε δύο διαδρομές στην αρχή της επιλογής; Αποθηκεύονται και οι δύο τώρα.",
+      "ed.split.name": "{n} (2)",
+      "ed.split.ok": "Χωρίστηκε σε δύο διαδρομές",
+      "ed.simp": "Απλοποίηση", "ed.simp.tol": "Ανοχή", "ed.simp.res": "{a} → {b} σημεία",
+      "ed.join": "Ένωση με", "ed.join.pick": "Διάλεξε διαδρομή", "ed.join.btn": "Ένωση",
+      "ed.join.big": "Μαζί έχουν πάρα πολλά σημεία (έως 500.000).",
+      "ed.undo": "Αναίρεση", "ed.save": "Αποθήκευση αλλαγών", "ed.cancel": "Άκυρο",
+      "ed.drop": "Να πεταχτούν οι αλλαγές που δεν αποθηκεύτηκαν;",
+      "ed.saved": "Οι αλλαγές αποθηκεύτηκαν",
+      "ed.hint": "Μετακίνησε τους δύο δρομείς για να επιλέξεις κομμάτι της διαδρομής. Τίποτα δεν αποθηκεύεται πριν πατήσεις Αποθήκευση αλλαγών.",
+      "up": "Ανέβασμα στο OSM",
+      "up.title": "Ανέβασμα στα GPS traces του OpenStreetMap",
+      "up.desc": "Περιγραφή", "up.tags": "Ετικέτες (με κόμμα)",
+      "up.vis": "Ορατότητα",
+      "up.v.private": "Ιδιωτική", "up.v.trackable": "Ανιχνεύσιμη", "up.v.public": "Δημόσια", "up.v.identifiable": "Αναγνωρίσιμη",
+      "up.vis.private": "Ιδιωτική: μόνο εσύ βλέπεις τη διαδρομή· τα σημεία της φαίνονται ανώνυμα στο επίπεδο GPS",
+      "up.vis.trackable": "Ανιχνεύσιμη: ανώνυμη, αλλά με ώρες, ώστε να φαίνεται πόσο γρήγορα κινήθηκες",
+      "up.vis.public": "Δημόσια: με το όνομά σου, σημεία χωρίς ώρες",
+      "up.vis.identifiable": "Αναγνωρίσιμη: με το όνομά σου, όλη η διαδρομή και οι ώρες",
+      "up.again": "Αυτή η διαδρομή υπάρχει ήδη στο OpenStreetMap. Ένα νέο ανέβασμα φτιάχνει δεύτερο αντίγραφο.",
+      "up.notime": "Το OpenStreetMap θέλει ώρα στα σημεία. Αυτή η διαδρομή δεν έχει (συνήθως σχεδιασμένη διαδρομή ή εξαγωγή χωρίς ώρες).",
+      "up.go": "Ανέβασμα", "up.busy": "Ανεβαίνει…",
+      "up.ok": "Ανέβηκε στο OpenStreetMap",
+      "up.fail": "Το ανέβασμα απέτυχε: {e}",
+      "up.offline": "Είσαι εκτός σύνδεσης. Ανέβασέ τη όταν έχεις σύνδεση.",
+      "up.signin": "Η σύνδεση στο OpenStreetMap δεν έχει ρυθμιστεί ακόμα.",
+      "up.denied": "Το OpenStreetMap σε αποσύνδεσε. Συνδέσου ξανά και δοκίμασε πάλι.",
+      "up.view": "Προβολή στο OpenStreetMap"
     }
   };
   function t(k, vars) {
@@ -273,15 +341,17 @@
     layer.clearLayers();
     list().forEach(function (e) {
       if (e.hidden && (!route || route.id !== e.id)) return;
+      if (route && route.v === "edit" && route.id === e.id) return;
       var tr = full[e.id];
       var lines = tr ? tr.segs.map(function (s) { return s.map(function (p) { return [p[0], p[1]]; }); }) : runs(T.decode(e.prev));
       lines.forEach(function (ll) {
         if (ll.length < 2) return;
         var pl = L.polyline(ll, { color: e.color, weight: route && route.id === e.id ? 6 : 4, opacity: 0.85, interactive: true });
-        pl.on("click", function () { open(e.id); });
+        pl.on("click", function () { if (route.v !== "edit") open(e.id); });
         layer.addLayer(pl);
       });
     });
+    editPaint();
   }
 
   // ---------- recording ----------
@@ -583,7 +653,8 @@
   function go(r) { route = r; paint(); render(); }
   function render() {
     if (!panel || !modeOn) return;
-    if (route.v === "track" && data.tracks[route.id]) renderTrack(route.id);
+    if (route.v === "edit" && edit && edit.id === route.id && data.tracks[route.id]) renderEdit(route.id);
+    else if (route.v === "track" && data.tracks[route.id]) renderTrack(route.id);
     else { route = { v: "list" }; renderList(); }
     setH();
   }
@@ -783,6 +854,21 @@
     r2.appendChild(exp);
     r2.appendChild(button(t("details"), "osm-btn", function () { detailsDlg(id); }));
     body.appendChild(r2);
+    var r4 = el("div", "osm-actions");
+    var ed = button(t("edit"), "osm-btn", function () { editStart(id); });
+    ed.disabled = !tr;
+    r4.appendChild(ed);
+    var up = button(t("up"), "osm-btn", function () { uploadDlg(id); });
+    up.disabled = !tr;
+    r4.appendChild(up);
+    body.appendChild(r4);
+    if (tr && tr.trace && T.TRACE_RE.test(tr.trace)) {
+      var lp = el("p", "osm-small trk-trace");
+      var a = el("a", "", t("up.view") + " ↗");
+      a.href = tr.trace; a.target = "_blank"; a.rel = "noopener noreferrer";
+      lp.appendChild(a);
+      body.appendChild(lp);
+    }
     var r3 = el("div", "osm-actions");
     var vis = button(e.hidden ? t("show") : t("hide"), "osm-btn", function () {
       var x = data.tracks[id]; x.hidden = x.hidden ? 0 : 1; stamp(x); saveData(); paint(); render();
@@ -870,6 +956,9 @@
     return box;
   }
 
+  function fileName(e) {
+    return (nameOf(e).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80) || "track") + ".gpx";
+  }
   function exportGpx(id) {
     var e = data.tracks[id];
     readTrack(id).then(function (tr) {
@@ -878,8 +967,7 @@
       var copy = T.clone(tr);
       copy.name = nameOf(e);
       var blob = new Blob([T.writeGpx(copy)], { type: "application/gpx+xml" });
-      var fname = (nameOf(e).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80) || "track") + ".gpx";
-      return dlg.saveFile({ blob: blob, filename: fname, mime: "application/gpx+xml",
+      return dlg.saveFile({ blob: blob, filename: fileName(e), mime: "application/gpx+xml",
         types: [{ description: "GPX", accept: { "application/gpx+xml": [".gpx"] } }] });
     }, function () { toast(t("missing")); });
   }
@@ -935,6 +1023,7 @@
     var e = data.tracks[id];
     if (!e) return;
     if (following && following.id === id) followStop();
+    if (edit && edit.id === id) edit = null;
     delete data.tracks[id];
     data.tombs[id] = Math.max(Date.now(), e.m + 1);
     delete full[id];
@@ -944,6 +1033,318 @@
     paint();
     toast(t("deleted"));
     go({ v: "list" });
+  }
+
+  // ---------- editing (wave 3B): trim, cut, split, simplify, join ----------
+  // Works on a copy; nothing touches the file until Save changes (Split
+  // saves both halves at once, after a confirm). Undo walks back the
+  // copies of this session.
+  var edit = null;               // { id, cur, undo[], from, to, dirty, flat, cum }
+  var editLayer = L.layerGroup().addTo(map);
+  function editIndex() {
+    if (edit.flat) return;
+    var f = [], cum = [], d = 0;
+    edit.cur.segs.forEach(function (s) {
+      s.forEach(function (p, i) {
+        if (i) d += T.distM(s[i - 1][0], s[i - 1][1], p[0], p[1]);
+        f.push(p); cum.push(d);
+      });
+    });
+    edit.flat = f; edit.cum = cum;
+  }
+  function editStart(id) {
+    readTrack(id).then(function (tr) {
+      var n = T.flatLen(tr);
+      if (!n) return;
+      edit = { id: id, cur: T.clone(tr), undo: [], from: 0, to: n - 1, dirty: false, flat: null, cum: null };
+      go({ v: "edit", id: id });
+    }, function () { toast(t("missing")); });
+  }
+  function editApply(next) {
+    if (!edit || !next || !T.flatLen(next)) return;
+    edit.undo.push({ cur: edit.cur, from: edit.from, to: edit.to });
+    var keep = T.flatLen(next) > 100000 ? 3 : 20;   // big tracks: fewer copies in memory
+    while (edit.undo.length > keep) edit.undo.shift();
+    edit.cur = next; edit.flat = null; edit.dirty = true;
+    edit.from = 0; edit.to = T.flatLen(next) - 1;
+    paint(); render();
+  }
+  function editUndo() {
+    var u = edit && edit.undo.pop();
+    if (!u) return;
+    edit.cur = u.cur; edit.from = u.from; edit.to = u.to; edit.flat = null;
+    edit.dirty = edit.undo.length > 0;
+    paint(); render();
+  }
+  function editLeave(then) {
+    if (!edit || !edit.dirty) { edit = null; then(); return; }
+    confirmDlg(t("ed.drop"), function () { edit = null; then(); });
+  }
+  var editRaf = 0;
+  function editPaintSoon() {
+    if (editRaf) return;
+    editRaf = requestAnimationFrame(function () { editRaf = 0; editPaint(); });
+  }
+  function editPaint() {
+    editLayer.clearLayers();
+    if (!edit || route.v !== "edit" || route.id !== edit.id) return;
+    var e = data.tracks[edit.id];
+    if (!e) return;
+    editIndex();
+    var k = 0, sel = [], cur = [];
+    edit.cur.segs.forEach(function (s) {
+      editLayer.addLayer(L.polyline(s.map(function (p) { return [p[0], p[1]]; }), { color: e.color, weight: 4, opacity: 0.55, dashArray: "6 6", interactive: false }));
+      cur = [];
+      s.forEach(function (p) {
+        if (k >= edit.from && k <= edit.to) cur.push([p[0], p[1]]);
+        k++;
+      });
+      if (cur.length > 1) sel.push(cur);
+    });
+    sel.forEach(function (ll) { editLayer.addLayer(L.polyline(ll, { color: e.color, weight: 7, opacity: 0.95, interactive: false })); });
+    var a = edit.flat[edit.from], b = edit.flat[edit.to];
+    if (a) editLayer.addLayer(L.circleMarker([a[0], a[1]], { radius: 8, color: "#fff", weight: 2, fillColor: "#2e9d4f", fillOpacity: 1, interactive: false }));
+    if (b) editLayer.addLayer(L.circleMarker([b[0], b[1]], { radius: 8, color: "#fff", weight: 2, fillColor: "#d64545", fillOpacity: 1, interactive: false }));
+  }
+
+  function renderEdit(id) {
+    var e = data.tracks[id];
+    editIndex();
+    var n = edit.flat.length;
+    if (edit.to > n - 1) edit.to = n - 1;
+    if (edit.from > edit.to) edit.from = edit.to;
+    panel.textContent = "";
+    panel.appendChild(header(t("ed.title", { n: nameOf(e) }), function () { editLeave(function () { go({ v: "track", id: id }); }); }));
+    var body = el("div", "osm-body trk-edit");
+    var st = T.stats(edit.cur);
+    body.appendChild(el("p", "osm-small", fmtDist(st.dist) + " · " + t("st.pts").toLowerCase() + ": " + st.n));
+    body.appendChild(el("p", "osm-hint", t("ed.hint")));
+    var info = el("p", "osm-small trk-edinfo");
+    info.setAttribute("aria-live", "polite");
+    function rng(label, val) {
+      var lab = el("label", "osm-lab trk-range", label);
+      var r = el("input", "");
+      r.type = "range"; r.min = "0"; r.max = String(n - 1); r.step = "1"; r.value = String(val);
+      lab.appendChild(r);
+      body.appendChild(lab);
+      return r;
+    }
+    var rf = rng(t("ed.from"), edit.from), rt = rng(t("ed.to"), edit.to);
+    body.appendChild(info);
+    var r1 = el("div", "osm-actions");
+    var bKeep = button(t("ed.keep"), "osm-btn", function () { editApply(T.trim(edit.cur, edit.from, edit.to)); });
+    var bCut = button(t("ed.cut"), "osm-btn", function () { editApply(T.cut(edit.cur, edit.from, edit.to)); });
+    r1.appendChild(bKeep); r1.appendChild(bCut);
+    body.appendChild(r1);
+    var r2 = el("div", "osm-actions");
+    var bSplit = button(t("ed.split"), "osm-btn", function () { editSplit(id, edit.from); });
+    r2.appendChild(bSplit);
+    body.appendChild(r2);
+    function upd(src) {
+      var a = +rf.value, b = +rt.value;
+      if (a > b) { if (src === rf) { b = a; rt.value = String(b); } else { a = b; rf.value = String(a); } }
+      edit.from = a; edit.to = b;
+      info.textContent = t("ed.sel", { a: a + 1, b: b + 1, n: n, d: fmtDist(edit.cum[b] - edit.cum[a]) });
+      var all = a === 0 && b === n - 1;
+      bKeep.disabled = all;
+      bCut.disabled = all;
+      bSplit.disabled = a <= 0 || a >= n - 1;
+      editPaintSoon();
+    }
+    rf.addEventListener("input", function () { upd(rf); });
+    rt.addEventListener("input", function () { upd(rt); });
+    upd(null);
+
+    // Simplify
+    var sb = el("div", "trk-edrow");
+    var sl = el("label", "osm-lab", t("ed.simp.tol"));
+    var tol = el("select", "osm-in");
+    [2, 5, 10, 20, 50].forEach(function (v) { var o = el("option", "", t("m", { n: v })); o.value = String(v); tol.appendChild(o); });
+    tol.value = "5";
+    sl.appendChild(tol);
+    sb.appendChild(sl);
+    var sres = el("p", "osm-small");
+    var simp = null;
+    function calc() {
+      simp = T.simplify(edit.cur, +tol.value);
+      var after = T.flatLen(simp);
+      sres.textContent = t("ed.simp.res", { a: n, b: after });
+      bSimp.disabled = after >= n;
+    }
+    var bSimp = button(t("ed.simp"), "osm-btn", function () { if (simp) editApply(simp); });
+    sb.appendChild(bSimp);
+    body.appendChild(sb);
+    body.appendChild(sres);
+    tol.addEventListener("change", calc);
+    calc();
+
+    // Join
+    var others = list().filter(function (x) { return x.id !== id; });
+    if (others.length) {
+      var jb = el("div", "trk-edrow");
+      var jl = el("label", "osm-lab", t("ed.join"));
+      var js = el("select", "osm-in");
+      var o0 = el("option", "", t("ed.join.pick")); o0.value = ""; js.appendChild(o0);
+      others.slice(0, 300).forEach(function (x) { var o = el("option", "", nameOf(x)); o.value = x.id; js.appendChild(o); });
+      jl.appendChild(js);
+      jb.appendChild(jl);
+      var bJoin = button(t("ed.join.btn"), "osm-btn", function () {
+        var oid = js.value;
+        if (!oid || !data.tracks[oid]) return;
+        readTrack(oid).then(function (tr2) {
+          if (!edit || edit.id !== id) return;
+          if (T.flatLen(edit.cur) + T.flatLen(tr2) > T.LIM.points) { toast(t("ed.join.big")); return; }
+          editApply(T.join(edit.cur, tr2));
+        }, function () { toast(t("missing")); });
+      });
+      bJoin.disabled = true;
+      js.addEventListener("change", function () { bJoin.disabled = !js.value; });
+      jb.appendChild(bJoin);
+      body.appendChild(jb);
+    }
+
+    var r3 = el("div", "osm-actions");
+    var bUndo = button(t("ed.undo"), "osm-btn", editUndo);
+    bUndo.disabled = !edit.undo.length;
+    r3.appendChild(bUndo);
+    body.appendChild(r3);
+    var r4 = el("div", "osm-actions");
+    var bSave = button(t("ed.save"), "osm-btn primary", editSave);
+    bSave.disabled = !edit.dirty;
+    r4.appendChild(bSave);
+    r4.appendChild(button(t("ed.cancel"), "osm-btn", function () { editLeave(function () { go({ v: "track", id: id }); }); }));
+    body.appendChild(r4);
+    panel.appendChild(body);
+  }
+
+  function editSave() {
+    if (!edit) return;
+    var id = edit.id, cur = edit.cur;
+    if (!data.tracks[id]) { edit = null; go({ v: "list" }); return; }
+    writeTrack(id, cur).then(function () {
+      var base = data.tracks[id];
+      if (base) {
+        var x = T.entryFor(id, cur, base, Math.max(Date.now(), base.m + 1));
+        if (x) { data.tracks[id] = x; saveData(); }
+      }
+      edit = null;
+      toast(t("ed.saved"));
+      go({ v: "track", id: id });
+    }, function () { toast(t("savefail")); });
+  }
+
+  function editSplit(id, idx) {
+    var e = data.tracks[id];
+    if (!edit || !e) return;
+    confirmDlg(t("ed.split.ask", { n: nameOf(e) }), function () {
+      var parts = edit && T.split(edit.cur, idx);
+      if (!parts) return;
+      writeTrack(id, parts[0]).then(function () {
+        var base = data.tracks[id] || e;
+        var x = T.entryFor(id, parts[0], base, Math.max(Date.now(), base.m + 1));
+        if (x) { data.tracks[id] = x; saveData(); }
+        parts[1].name = t("ed.split.name", { n: nameOf(base) }).slice(0, T.LIM.name);
+        return addTrack(parts[1], { name: parts[1].name, folder: base.folder, color: base.color, hidden: base.hidden, src: base.src });
+      }).then(function () {
+        edit = null;
+        toast(t("ed.split.ok"));
+        go({ v: "track", id: id });
+      }, function () { toast(t("savefail")); });
+    });
+  }
+
+  // ---------- upload to OpenStreetMap GPS traces ----------
+  function osmComment(O) {
+    try {
+      var d = window.__orosMapsNotes && window.__orosMapsNotes.data();
+      return O.uploadComment(d);
+    } catch (x) { return O.DEFAULT_COMMENT; }
+  }
+  function uploadDlg(id) {
+    var A = window.OrosMapsApi, O = window.OrosMapsOSM;
+    var e = data.tracks[id];
+    if (!e) return;
+    if (!A || !O) { toast(t("up.signin")); return; }
+    if (navigator.onLine === false) { toast(t("up.offline")); return; }
+    if (!A.account()) {
+      if (!A.configured()) { toast(t("up.signin")); return; }
+      A.signIn().then(function () { if (A.account()) uploadDlg(id); }, function () {});
+      return;
+    }
+    readTrack(id).then(function (tr) {
+      if (!T.timedPoints(tr)) { infoDlg(t("up.notime")); return; }
+      var dlg = el("dialog", "osm-dlg");
+      dlg.appendChild(el("h3", "", t("up.title")));
+      dlg.appendChild(el("p", "osm-small", nameOf(e) + " · " + fmtDist(e.dist)));
+      if (tr.trace) dlg.appendChild(el("p", "osm-warn", t("up.again")));
+      var l1 = el("label", "osm-lab", t("up.desc"));
+      var desc = el("input", "osm-in"); desc.maxLength = 255; desc.value = osmComment(O);
+      l1.appendChild(desc); dlg.appendChild(l1);
+      var l2 = el("label", "osm-lab", t("up.tags"));
+      var tags = el("input", "osm-in"); tags.maxLength = 255;
+      l2.appendChild(tags); dlg.appendChild(l2);
+      var l3 = el("label", "osm-lab", t("up.vis"));
+      var vis = el("select", "osm-in");
+      ["private", "trackable", "public", "identifiable"].forEach(function (v) {
+        var o = el("option", "", t("up.v." + v)); o.value = v; vis.appendChild(o);
+      });
+      vis.value = "private";
+      l3.appendChild(vis); dlg.appendChild(l3);
+      var vh = el("p", "osm-hint", t("up.vis.private"));
+      vis.addEventListener("change", function () { vh.textContent = t("up.vis." + vis.value); });
+      dlg.appendChild(vh);
+      var row = el("div", "osm-actions");
+      var goBtn = button(t("up.go"), "osm-btn primary", function () {
+        goBtn.disabled = true; goBtn.textContent = t("up.busy");
+        var copy = T.clone(tr);
+        delete copy.trace;
+        copy.name = nameOf(e);
+        var fd = new FormData();
+        fd.append("file", new Blob([T.writeGpx(copy)], { type: "application/gpx+xml" }), fileName(e));
+        fd.append("description", desc.value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 255) || O.DEFAULT_COMMENT);
+        fd.append("tags", tags.value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 255));
+        fd.append("visibility", vis.value);
+        var srv = A.server(), acc = A.account();
+        A.request("POST", "/api/0.6/gpx/create", null, srv, { body: fd, text: true }).then(function (txt) {
+          var tid = String(txt || "").trim();
+          if (!/^[1-9][0-9]{0,14}$/.test(tid)) throw { status: 200, text: "?" };
+          close();
+          toast(t("up.ok"));
+          var url = T.traceUrl(O.SERVERS[srv].web, acc && acc.user, tid);
+          if (!url) return;
+          readTrack(id).then(function (cur) {
+            var c2 = T.clone(cur);
+            c2.trace = url;
+            return writeTrack(id, c2);
+          }).then(function () {
+            if (modeOn && route.v === "track" && route.id === id) render();
+          }, function () {});
+        }, function (err) {
+          goBtn.disabled = false; goBtn.textContent = t("up.go");
+          if (err && err.offline) toast(t("up.offline"));
+          else if (err && err.status === 401) toast(t("up.denied"));
+          else toast(t("up.fail", { e: (err && (err.text || err.status)) || "?" }));
+        });
+      });
+      row.appendChild(goBtn);
+      row.appendChild(button(t("cancel"), "osm-btn", close));
+      dlg.appendChild(row);
+      function close() { if (dlg.open) dlg.close(); dlg.remove(); }
+      dlg.addEventListener("cancel", function (ev) { ev.preventDefault(); close(); });
+      document.body.appendChild(dlg);
+      dlg.showModal();
+    }, function () { toast(t("missing")); });
+  }
+  function infoDlg(text) {
+    var dlg = el("dialog", "osm-dlg");
+    dlg.appendChild(el("p", "", text));
+    var row = el("div", "osm-actions");
+    row.appendChild(button(t("close"), "osm-btn primary", close));
+    dlg.appendChild(row);
+    function close() { if (dlg.open) dlg.close(); dlg.remove(); }
+    dlg.addEventListener("cancel", function (ev) { ev.preventDefault(); close(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   // ---------- import ----------
@@ -1013,8 +1414,16 @@
     if (modeBtn) { modeBtn.classList.toggle("on", modeOn); modeBtn.setAttribute("aria-pressed", modeOn ? "true" : "false"); }
     document.body.classList.toggle("osm-mode", modeOn || document.querySelectorAll(".osm-sheet:not([hidden])").length > 1);
     panel.hidden = !modeOn;
-    if (modeOn) { if (route.v !== "track") route = { v: "list" }; render(); }
-    else { route = { v: "list" }; live = null; followBox = null; paint(); }
+    // Unsaved edits survive closing the panel (or another mode opening):
+    // the editor comes back the next time the panel opens.
+    if (modeOn) {
+      if (edit && data.tracks[edit.id]) route = { v: "edit", id: edit.id };
+      else if (route.v !== "track") route = { v: "list" };
+      render();
+    } else {
+      if (edit && !edit.dirty) edit = null;
+      route = { v: "list" }; live = null; followBox = null; paint();
+    }
     chip();
     setH();
   }
@@ -1058,6 +1467,7 @@
     feed: onFix,
     rec: { start: recStart, pause: recPause, finish: recFinish, end: recEnd, state: function () { return rec; } },
     follow: function () { return following; },
+    edit: function () { return edit; },
     full: function (id) { return full[id] || null; }
   };
   boot();

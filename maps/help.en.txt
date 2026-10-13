@@ -72,6 +72,22 @@ Record where you walk, ride or drive, keep your tracks and follow them again, li
 
 > Keep the screen on while you record. With the screen off, or with orOS in the background, the browser stops GPS and the track gets a straight gap. Maps keeps the screen awake while it records. If the tab closes or the device restarts, nothing is lost: next time Maps offers `Continue`, `Save` or `Discard`.
 
+### Edit a track
+
+`Edit` opens the track editor. Move the two sliders to select part of the track (green start, red end on the map):
+
+- `Keep only the selection` trims the rest, for example the drive to the trail.
+- `Remove the selection` cuts out a part, for example a GPS jump, and leaves a gap.
+- `Split at the start` makes two tracks at the start of the selection and saves both.
+- `Simplify` drops points that add nothing to the shape. Pick the tolerance first; the line under it shows how many points stay.
+- `Join with` adds another track to the end of this one.
+
+`Undo` steps back. Nothing is saved until `Save changes`. If you close the panel, the editor waits for you with your changes; `Cancel` throws them away.
+
+### Upload to OpenStreetMap
+
+`Upload to OSM` sends the track to your OpenStreetMap GPS traces, where mappers use it to draw roads and paths. Sign in to OpenStreetMap first (as for notes). Choose the description (it starts as your upload comment), tags and the visibility: `Private` (only you see the trace; its points appear anonymously in the GPS layer, without order), `Trackable`, `Public` or `Identifiable`. OpenStreetMap needs a time on the points, so planned routes and exports without times can't be uploaded. After the upload, the track shows `View on OpenStreetMap`.
+
 Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it up and brings it to your other devices. Until the file arrives, another device shows a simplified line and the statistics.
 
 ## Online services and privacy
@@ -81,6 +97,7 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
+- **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
 Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).
 
