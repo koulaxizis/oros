@@ -1800,3 +1800,20 @@ body.trn-itin .route-alt { opacity: 0.25; }
 #nav-limit.over { background: #d62828; color: #fff; border-color: #fff; animation: tl-blink 1s steps(2) infinite; }
 @keyframes tl-blink { 50% { opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) { #nav-limit.over { animation: none; } }
+
+/* ---------- maps wave 10B: Plan a track (route planner + elevation) ---------- */
+.pl-pt span {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; color: #2b8a3e; border: 2px solid #2b8a3e;
+  font: 800 11px/1 system-ui, sans-serif; box-sizing: border-box;
+  box-shadow: 0 1px 4px var(--shadow);
+}
+.pl-pt.first span { background: #2b8a3e; color: #fff; }
+.pl-pt.last span { background: #c92a2a; border-color: #c92a2a; color: #fff; }
+.pl-ele { display: flex; flex-direction: column; gap: 4px; }
+.pl-climb { font-size: 14px; font-weight: 700; }
+.pl-prof { width: 100%; height: 80px; display: block; border-bottom: 1px solid var(--border); }
+.pl-prof-area { fill: rgba(43, 138, 62, 0.25); stroke: #2b8a3e; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.pl-name { width: 100%; }
+.osm-btn:disabled { opacity: 0.45; cursor: default; }

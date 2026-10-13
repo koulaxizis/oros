@@ -145,6 +145,17 @@ Record where you walk, ride or drive, keep your tracks and follow them again, li
 
 > Keep the screen on while you record. With the screen off, or with orOS in the background, the browser stops GPS and the track gets a straight gap. Maps keeps the screen awake while it records. If the tab closes or the device restarts, nothing is lost: next time Maps offers `Continue`, `Save` or `Discard`.
 
+### Plan a track
+
+Plan a hike, a ride or a drive before you go, like OsmAnd's route planner. Open it with long-press › `Plan a track from here` or `My tracks` › `Plan a track`.
+
+- Pick how the next part goes: `Walk`, `Bike` or `Car` follow the roads and paths (the same free servers as Directions), `Straight line` goes straight, for example across a field or a beach. Each part keeps the choice it was made with.
+- Tap the map to add points. Drag a point to move it; its parts follow the roads again. Tap a point to remove it. `Undo` removes the last one, `Clear` starts over.
+- The sheet shows the length and, when you're online, the elevation profile with the climb, the descent and the lowest and highest point.
+- Give it a name and tap `Save to My tracks`. It becomes a normal GPX track (with elevation and your points as waypoints), so you can follow it, edit it, export it or upload it.
+
+Offline, new parts are straight lines and there is no elevation. The plan stays while Maps is open, even if you switch to another panel, but it is only kept for good when you save it.
+
 ### Edit a track
 
 `Edit` opens the track editor. Move the two sliders to select part of the track (green start, red end on the map):
@@ -185,6 +196,7 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
 - **Speed limits**: while you navigate by car, the Overpass API gets the next few kilometres of your route (points along it) to read the speed limits of those roads.
 - **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
+- **Elevation**: when you plan a track, the elevation comes from AWS Terrain Tiles (Mapzen and others, on Amazon's open data registry); it gets the map tiles around your plan, not the plan itself.
 - **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
 Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).
@@ -215,4 +227,5 @@ Saved places, your track list (names, colours, folders, statistics), notes, plac
 - The routing servers are free public services and can sometimes be slow or down.
 - Public transport needs a connection and shows only what operators publish as open data; times are not checked against the stop's own signs.
 - Place editing needs a connection to load the places; changes made offline wait until you upload them.
+- Elevation in `Plan a track` is read from a terrain model about 20 m across, so short ups and downs (a bridge, a few steps) may not show.
 - Recording needs the screen on and Maps open; the browser does not record in the background.

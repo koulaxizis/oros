@@ -3694,6 +3694,8 @@
     },
     openTransit: null,
     pendingTransit: null,
+    // Wave 10B (planner.js): the OSRM servers per mode.
+    routerBase: ROUTER_BASE,
     // Wave 10A (tools.js): directions to a point (the parked car).
     routeTo: function (place, profile) {
       if (profile && ROUTER_BASE[profile] && profile !== routeProfile) {
