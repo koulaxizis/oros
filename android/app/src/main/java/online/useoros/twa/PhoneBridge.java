@@ -55,6 +55,7 @@ public class PhoneBridge {
     @Nullable private KeptTwaLauncher launcher;
     @Nullable private CustomTabsSession session;
     private boolean validated;
+    private int retries;
     private boolean channelReady;
 
     PhoneBridge(Context context) {
@@ -81,12 +82,13 @@ public class PhoneBridge {
             session = null;
             validated = false;
             channelReady = false;
+            retries = 0;
         });
     }
 
     private void onPageLoaded() {
         CustomTabsSession s = launcher != null ? launcher.session() : null;
-        diag("page loaded, launcher " + (launcher != null) + ", session " + (s != null));
+        diag("page loaded, browser " + browser() + ", session " + (s != null));
         if (s == null) return;
         if (s != session) {
             session = s;
@@ -97,6 +99,24 @@ public class PhoneBridge {
             return;
         }
         if (validated) requestChannel();   // reload: the page needs a new port
+        else validate();                   // an earlier check failed: ask again
+    }
+
+    private void validate() {
+        if (session == null) return;
+        boolean asked = session.validateRelationship(CustomTabsService.RELATION_USE_AS_ORIGIN, ORIGIN, null);
+        diag("validate requested again: " + asked);
+    }
+
+    private String browser() {
+        String p = launcher != null ? launcher.provider() : null;
+        if (p == null) p = androidx.browser.customtabs.CustomTabsClient.getPackageName(app, null);
+        if (p == null) return "?";
+        try {
+            return p + " " + app.getPackageManager().getPackageInfo(p, 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            return p;
+        }
     }
 
     private void requestChannel() {
@@ -121,7 +141,15 @@ public class PhoneBridge {
             diag("relationship " + requestedOrigin + ": " + result);
             main.post(() -> {
                 validated = result;
-                if (result) requestChannel();
+                if (result) {
+                    requestChannel();
+                } else if (retries++ < 2) {
+                    // The browser may still be fetching assetlinks.json.
+                    main.postDelayed(PhoneBridge.this::validate, 4000);
+                } else {
+                    // Some browsers open the channel anyway; harmless if not.
+                    requestChannel();
+                }
             });
         }
 

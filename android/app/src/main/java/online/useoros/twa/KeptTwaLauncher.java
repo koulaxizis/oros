@@ -31,6 +31,18 @@ class KeptTwaLauncher extends TwaLauncher {
         super.destroy();
     }
 
+    /** The browser package serving the TWA (for diagnostics). */
+    @Nullable
+    String provider() {
+        try {
+            Field f = TwaLauncher.class.getDeclaredField("mProviderPackage");
+            f.setAccessible(true);
+            return (String) f.get(this);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            return null;
+        }
+    }
+
     /** The session TwaLauncher created (private there; the field name is
      *  kept by proguard-rules.pro). Null until the service connected. */
     @Nullable
