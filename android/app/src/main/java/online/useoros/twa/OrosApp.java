@@ -17,7 +17,6 @@ public class OrosApp extends Application {
     /** Diagnostic builds: record crashes in the bridge trail and add a
      *  "Bridge diagnostics" shortcut (long-press the app icon). */
     private void diagnostics() {
-        getSharedPreferences(PhoneBridge.PREFS, MODE_PRIVATE).edit().remove(PhoneBridge.DIAG_KEY).apply();
         bridge.diag("app process started");
         Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
