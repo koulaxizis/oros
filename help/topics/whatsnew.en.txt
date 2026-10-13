@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.74.00
+- Notes: import from Notion. The pages you share with your Notion integration come in as a notebook, subpages under their page, with headings, lists, to-dos and code as plain text; import again to bring in new pages. orOS only reads Notion; connect it in Settings › Connected services, then the cloud button under the tree.
+
 ## Version 1.73.00
 - Maps: Plan a track, like OsmAnd. Tap points on the map; each part follows the roads for walking, cycling or driving, or goes in a straight line. See the length, the climb and descent and an elevation profile, then save it to My tracks to follow it later. Long-press › `Plan a track from here`, or My tracks › `Plan a track`.
 
