@@ -5851,6 +5851,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Decisions:** no tracking pixels, no hosted images, no remote icon CDN; web mail apps (Gmail, Outlook web) get only the person's own https picture addresses (they drop embedded pictures). Research of WiseStamp, HubSpot, Newoldstamp, MySignature, Exclaimer, MySigMail: adopted short reply version, dated banner, CTA button, disclaimers, vCard QR, team CSV, client checks, dark preview; rejected click analytics and hosted images (tracking, free-forever rule).
 - **Files:** `signature/{index.html, signature.css, core.js, signature.js, search.js, help.en.txt, help.el.txt}`, `mail/mail.js`, `mail/mail.css`, `tests/signature.test.js`; registration in `apps.json`, `shell.js` ICONS, `translations.js`, `sw.js`, `tests.yml`.
 
+### 2026-10-13 — Studio: NULL JSFX effects refreshed from null-jsfx 2.0 (#303) — 1.77.01
+- studio/nullfx/fx: the 75 NULL JSFX effect windows were rebuilt from koulaxizis/null-jsfx main (d029bab). They now use the 2.0 knob layout and Noto Sans text. The runtime files are unchanged.
+  - Tests: full suite plus effects E2E in Studio.
+
 ### 2026-10-13 — Maps: Discover, wave 11 — 1.78.00
 - Compass button / long-press › `What's nearby`: Discover sheet with Places (12 kinds from Overpass, open now / closes / opens from opening_hours, `Open now` filter, popup with hours, address, phone, website, Go here, Save), Wikipedia (articles near the map middle in the app language, thumbnails, link) and Photos (Panoramax at zoom ≥ 15, direction arrows, popup with the picture, date, author, licence). `Search this area` after moving. Phone: categories in one scrolling row.
 - Files: `maps/discover-core.js` (new, pure: opening_hours parser + status, categories, Overpass query + parsing, Wikipedia and Panoramax URLs + parsing), `maps/discover.js` (new), maps.css (wave 11 section), index.html, sw.js precache, shell.js + CREDITS.md (Wikipedia, Panoramax). Help EN/EL (Discover section, privacy, limits).
