@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe and Invoice Ninja, all read-only; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja and Todoist, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -284,6 +284,20 @@ run side by side), each body exactly one of these (compared as JSON):
 | `/res.company/search_read` | `fields: ["partner_id"]`, `limit` (1–200) |
 | `/res.partner/search_read` | `domain: [["user_ids","=",false]]`, the fixed contact `fields`, `limit` (1–200), `offset`, `order: "id"` |
 | `/crm.lead/search_read` | `domain: [["type","=","opportunity"],["active","in",[true,false]]]`, the fixed opportunity `fields`, `limit`, `offset`, `order: "id"` |
+
+### Todoist (`p: "todoist"`, To-Do, read-only)
+
+`POST /v1 { op: "ext", p: "todoist", key, reqs }`: no `host`, `base` or `env`.
+`https://api.todoist.com/api/v1<path>` (`Authorization: Bearer`, a personal
+API token: 40 hex digits). orOS calls Todoist straight from the browser first
+and comes here only when that fails. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/projects` | `limit (≤200), cursor` |
+| `/tasks` | `limit (≤200), cursor` (open tasks only: Todoist's list of tasks) |
+
+- The cursor travels like Pipedrive's (`%2B`, `%2F`, `%3D` only).
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 

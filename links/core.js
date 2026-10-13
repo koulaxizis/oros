@@ -1,7 +1,7 @@
 // ============================================================
 // orOS Connected services — core.js (pure, v1.0.0)
 // The accounts orOS keeps for other platforms (a WooCommerce shop
-// first; more in later waves) and the rules every app shares. No DOM,
+// first; more in later waves, up to Todoist for To-Do in wave 6A) and the rules every app shares. No DOM,
 // no storage, no network: the shell side (links/host.js), Settings and
 // the node tests all use this file, so they can never disagree.
 //
@@ -169,6 +169,17 @@
       keys: [{ k: "key", re: /^[A-Za-z0-9_-]{20,128}$/ }],
       apps: ["crm"],
       probe: { m: "POST", path: "/res.company/search_read", body: { fields: ["partner_id"], limit: 1 } }
+    },
+    // Productivity (wave 6A): Todoist's projects and open tasks into
+    // To-Do (API v1, Bearer personal token). Read-only.
+    todoist: {
+      name: "Todoist",
+      site: false,
+      host: "api.todoist.com",
+      root: "/api/v1",
+      keys: [{ k: "key", re: /^[A-Fa-f0-9]{40}$/ }],
+      apps: ["todo"],
+      probe: "/projects?limit=1"
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -353,6 +364,8 @@
       PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
       TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/,
       IN_ACTIVE = /^active$/;
+  // Todoist (wave 6A): opaque page cursors (base64; "+", "/", "=" escaped)
+  var LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/;
   // Odoo (wave 4D): JSON-2 search_read bodies. The filters and field
   // lists are fixed: a body must carry exactly these (compared as JSON).
   var ODOO = {
@@ -480,6 +493,10 @@
       ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }, "odco"],
       ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"],
       ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"]
+    ],
+    todoist: [
+      ["GET", /^\/projects$/, { limit: LIM200, cursor: PD_CURSOR }, null],
+      ["GET", /^\/tasks$/, { limit: LIM200, cursor: PD_CURSOR }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -568,6 +585,7 @@
     if (p === "stripe") return ["Authorization", "Bearer " + keys.key];
     if (p === "ininja") return ["X-API-TOKEN", keys.key];
     if (p === "odoo") return ["Authorization", "Bearer " + keys.key];
+    if (p === "todoist") return ["Authorization", "Bearer " + keys.key];
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).

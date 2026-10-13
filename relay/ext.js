@@ -13,13 +13,14 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist", key, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
 //   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key),
 //   HubSpot https://api.hubapi.com<path> (Bearer), Pipedrive
 //   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only;
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
+//   Todoist https://api.todoist.com/api/v1<path> (Bearer, read-only: projects, open tasks)
 //           POST /v1 { op: "ext", p: "ininja", host, base, key, reqs: [...] }
 //   Invoice Ninja https://<host><base>/api/v1<path> (X-API-TOKEN), read-only
 //           POST /v1 { op: "ext", p: "odoo", host, base, db?, key, reqs: [...] }
@@ -91,7 +92,7 @@ const LIM1000 = /^([1-9][0-9]{0,2}|1000)$/, LIM500 = /^([1-9][0-9]?|[1-4][0-9]{2
 // cursor's "+", "/" and "=" travel as %2B, %2F, %3D (the only escapes
 // checkExtReq lets through, and only where a pattern allows them).
 const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
-      PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/,
+      PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/, LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/,
       HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
       HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
@@ -277,6 +278,17 @@ export const PLATFORMS = {
       ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }, "odco"],
       ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"],
       ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"]
+    ]
+  },
+  // Productivity (wave 6A), read-only: Todoist's projects and open tasks
+  todoist: {
+    root: "/api/v1",
+    host: "api.todoist.com",
+    keys: { key: /^[A-Fa-f0-9]{40}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/projects$/, { limit: LIM200, cursor: PD_CURSOR }, null],
+      ["GET", /^\/tasks$/, { limit: LIM200, cursor: PD_CURSOR }, null]
     ]
   }
 };
