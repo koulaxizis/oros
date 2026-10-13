@@ -118,6 +118,8 @@ function build(manifest) {
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" android:maxSdkVersion="22" />
 
     <!-- Lets LauncherActivity see which browsers can run the TWA (Android 11+). -->

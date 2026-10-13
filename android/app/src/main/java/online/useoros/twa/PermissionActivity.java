@@ -52,7 +52,13 @@ public class PermissionActivity extends Activity {
         getSharedPreferences(PhoneBridge.PREFS, Context.MODE_PRIVATE).edit().putBoolean("asked-" + kind, true).apply();
         boolean all = grantResults.length > 0;
         for (int r : grantResults) all &= r == PackageManager.PERMISSION_GRANTED;
-        if (all) OrosAccount.ensure(this);
+        if (all) {
+            try {
+                OrosAccount.ensure(this);
+            } catch (RuntimeException e) {
+                OrosApp.bridge(this).diag("account setup failed: " + e);
+            }
+        }
         OrosApp.bridge(this).permissionsChanged();
         finish();
     }

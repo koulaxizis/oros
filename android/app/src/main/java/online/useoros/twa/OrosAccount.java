@@ -19,25 +19,38 @@ final class OrosAccount {
         return new Account(NAME, c.getString(R.string.account_type));
     }
 
-    /** Creates the account once; makes its contacts visible by default. */
+    /**
+     * Creates the account once, then (every time, so a setup that was
+     * cut short heals itself) marks it syncable and its contacts visible.
+     * Without the visibility row most Contacts apps hide the account.
+     */
     static synchronized Account ensure(Context c) {
         Account acc = get(c);
         AccountManager am = AccountManager.get(c);
+        boolean have = false;
         for (Account a : am.getAccountsByType(acc.type)) {
-            if (a.name.equals(acc.name)) return acc;
+            if (a.name.equals(acc.name)) { have = true; break; }
         }
-        am.addAccountExplicitly(acc, null, null);
-        ContentResolver.setIsSyncable(acc, ContactsContract.AUTHORITY, 1);
-        ContentResolver.setIsSyncable(acc, CalendarContract.AUTHORITY, 1);
-        ContentResolver.setSyncAutomatically(acc, ContactsContract.AUTHORITY, false);
-        ContentResolver.setSyncAutomatically(acc, CalendarContract.AUTHORITY, false);
+        if (!have) am.addAccountExplicitly(acc, null, null);
         try {
+            ContentResolver.setIsSyncable(acc, ContactsContract.AUTHORITY, 1);
+            ContentResolver.setIsSyncable(acc, CalendarContract.AUTHORITY, 1);
+            ContentResolver.setSyncAutomatically(acc, ContactsContract.AUTHORITY, false);
+            ContentResolver.setSyncAutomatically(acc, CalendarContract.AUTHORITY, false);
+        } catch (RuntimeException ignored) {
+            // Sync settings are a nicety; the mirrored rows work without them.
+        }
+        try {
+            Uri uri = asSyncAdapter(ContactsContract.Settings.CONTENT_URI, acc);
             ContentValues v = new ContentValues();
-            v.put(ContactsContract.Settings.ACCOUNT_NAME, acc.name);
-            v.put(ContactsContract.Settings.ACCOUNT_TYPE, acc.type);
             v.put(ContactsContract.Settings.UNGROUPED_VISIBLE, 1);
             v.put(ContactsContract.Settings.SHOULD_SYNC, 0);
-            c.getContentResolver().insert(asSyncAdapter(ContactsContract.Settings.CONTENT_URI, acc), v);
+            String where = ContactsContract.Settings.ACCOUNT_NAME + "=? AND " + ContactsContract.Settings.ACCOUNT_TYPE + "=?";
+            if (c.getContentResolver().update(uri, v, where, new String[]{acc.name, acc.type}) == 0) {
+                v.put(ContactsContract.Settings.ACCOUNT_NAME, acc.name);
+                v.put(ContactsContract.Settings.ACCOUNT_TYPE, acc.type);
+                c.getContentResolver().insert(uri, v);
+            }
         } catch (RuntimeException ignored) {
             // Contacts permission not granted yet: visibility is set on the first write.
         }
