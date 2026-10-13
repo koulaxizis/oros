@@ -21,7 +21,7 @@
 // API (window.OrosMapsApi):
 //   server() → "live"|"dev" · setServer(srv) · account(srv?) → {user,uid}|null
 //   configured(srv?) · signIn() → Promise · finishPending() → Promise
-//   signOut() · request(method, path, params, srv?) → Promise<json>
+//   signOut() · request(method, path, params, srv?, opts?) → Promise<json|text>
 //   deviceId() · onChange(fn)
 // Errors: rejected with { status, offline, text }.
 // ============================================================
@@ -204,23 +204,30 @@
   // ---------- API requests (one at a time) ----------
   var chain = Promise.resolve();
 
-  function request(method, path, params, srv) {
+  // opts: { body (string), type (its Content-Type), text (answer as
+  // text, e.g. changeset ids and diffResult XML) }
+  function request(method, path, params, srv, opts) {
     srv = srv || server();
+    opts = opts || {};
     var run = function () {
       var s = O.SERVERS[srv];
       var url = s.api + path;
       var qs = params ? new URLSearchParams(params).toString() : "";
-      var opts = { method: method, headers: { "Accept": "application/json" } };
+      var init = { method: method, headers: { "Accept": opts.text ? "*/*" : "application/json" } };
       var a = acc(srv);
-      if (a) opts.headers.Authorization = "Bearer " + a.token;
-      if (qs) {
+      if (a) init.headers.Authorization = "Bearer " + a.token;
+      if (opts.body !== undefined) {
+        if (qs) url += (url.indexOf("?") < 0 ? "?" : "&") + qs;
+        init.headers["Content-Type"] = opts.type || "text/xml; charset=utf-8";
+        init.body = opts.body;
+      } else if (qs) {
         if (method === "GET") url += (url.indexOf("?") < 0 ? "?" : "&") + qs;
         else {
-          opts.headers["Content-Type"] = "application/x-www-form-urlencoded";
-          opts.body = qs;
+          init.headers["Content-Type"] = "application/x-www-form-urlencoded";
+          init.body = qs;
         }
       }
-      return fetch(url, opts).then(function (r) {
+      return fetch(url, init).then(function (r) {
         if (r.status === 401 && a) {                 // revoked elsewhere
           var st = store(); delete st.acc[srv]; writeJSON(KEY, st); emit();
         }
@@ -229,7 +236,7 @@
             throw { status: r.status, text: O.cleanText(txt, 200) };
           }, function () { throw { status: r.status, text: "" }; });
         }
-        return r.json();
+        return opts.text ? r.text() : r.json();
       }, function () {
         throw { status: 0, offline: true, text: "" };
       });
