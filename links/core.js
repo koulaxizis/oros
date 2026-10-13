@@ -108,6 +108,28 @@
       keys: [{ k: "key", re: /^xkeysib-[A-Za-z0-9-]{20,200}$/ }],
       apps: ["newsletter"],
       probe: "/account"
+    },
+    // CRMs (wave 4): companies, contacts, deals (and Pipedrive's open
+    // activities) brought into CRM. Read-only: orOS never writes there.
+    // HubSpot does not answer browsers, so it always goes through the relay.
+    hubspot: {
+      name: "HubSpot",
+      site: false,
+      host: "api.hubapi.com",
+      root: "",
+      keys: [{ k: "key", re: /^pat-[a-z0-9]{2,6}-[A-Za-z0-9-]{20,120}$/ }],
+      apps: ["crm"],
+      probe: "/crm/v3/objects/companies?limit=1",
+      relayOnly: true
+    },
+    pdrive: {
+      name: "Pipedrive",
+      site: false,
+      host: "api.pipedrive.com",
+      root: "/api/v2",
+      keys: [{ k: "key", re: /^[a-f0-9]{40}$/ }],
+      apps: ["crm"],
+      probe: "/stages?limit=1"
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -277,6 +299,16 @@
       ML_ST = /^(active|unsubscribed|unconfirmed|bounced|junk)$/, MC_ST = /^(subscribed|unsubscribed|cleaned|pending)$/,
       MC_LISTS_F = /^lists\.id,lists\.name,lists\.stats\.member_count,total_items$/,
       MC_MEMBERS_F = /^members\.email_address,members\.status,members\.merge_fields,members\.language,total_items$/;
+  // CRMs (wave 4): fixed property lists, opaque page markers. A
+  // Pipedrive cursor is base64: "+", "/" and "=" travel as %2B, %2F, %3D
+  // (the only escapes checkReq lets through, and only where a pattern
+  // below allows them).
+  var LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
+      PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/,
+      HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
+      HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
+      HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
+      PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/;
   var EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
   function okEmail(v) { return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v); }
   function okName(v) { return typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v); }
@@ -361,6 +393,19 @@
       ["GET", /^\/contacts\/lists\/[0-9]{1,12}\/contacts$/, { limit: LIM500, offset: NUM, modifiedSince: DTZ }, null],
       ["POST", /^\/contacts\/import$/, null, { jsonBody: "bvrows", listIds: "bvlist", updateExistingContacts: "bool", emptyContactsAttributes: "bool" }],
       ["POST", /^\/contacts\/lists\/[0-9]{1,12}\/contacts\/remove$/, null, { emails: "emails" }]
+    ],
+    hubspot: [
+      ["GET", /^\/crm\/v3\/pipelines\/deals$/, null, null],
+      ["GET", /^\/crm\/v3\/objects\/companies$/, { limit: LIM100, after: AFTER, properties: HS_CO_F }, null],
+      ["GET", /^\/crm\/v3\/objects\/contacts$/, { limit: LIM100, after: AFTER, properties: HS_CT_F, associations: /^companies$/ }, null],
+      ["GET", /^\/crm\/v3\/objects\/deals$/, { limit: LIM100, after: AFTER, properties: HS_DL_F, associations: /^companies,contacts$/ }, null]
+    ],
+    pdrive: [
+      ["GET", /^\/stages$/, { limit: LIM500, cursor: PD_CURSOR }, null],
+      ["GET", /^\/organizations$/, { limit: LIM500, cursor: PD_CURSOR }, null],
+      ["GET", /^\/persons$/, { limit: LIM500, cursor: PD_CURSOR }, null],
+      ["GET", /^\/deals$/, { limit: LIM500, cursor: PD_CURSOR, status: PD_DST }, null],
+      ["GET", /^\/activities$/, { limit: LIM500, cursor: PD_CURSOR, done: BOOL }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -384,7 +429,7 @@
     if (!r || typeof r !== "object") return "req";
     if (r.m !== "GET" && r.m !== "PUT" && r.m !== "POST") return "method";
     if (typeof r.path !== "string" || r.path.length > 400 || r.path[0] !== "/") return "path";
-    if (/[#\\\s@%]/.test(r.path) || r.path.indexOf("//") >= 0 || /(^|\/)\.\.?(\/|$|\?)/.test(r.path)) return "path";
+    if (/[#\\\s@]|%(?!2B|2F|3D)/.test(r.path) || r.path.indexOf("//") >= 0 || /(^|\/)\.\.?(\/|$|\?)/.test(r.path)) return "path";
     var qi = r.path.indexOf("?");
     var path = qi < 0 ? r.path : r.path.slice(0, qi), query = qi < 0 ? "" : r.path.slice(qi + 1);
     var rule = null;
@@ -440,6 +485,8 @@
     if (p === "mlite") return ["Authorization", "Bearer " + keys.key];
     if (p === "mchimp") return ["Authorization", "Basic " + btoa("oros:" + keys.key)];
     if (p === "brevo") return ["api-key", keys.key];
+    if (p === "hubspot") return ["Authorization", "Bearer " + keys.key];
+    if (p === "pdrive") return ["x-api-token", keys.key];
     return null;
   }
 

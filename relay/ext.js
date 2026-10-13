@@ -13,10 +13,12 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive", key, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
-//   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key)
+//   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key),
+//   HubSpot https://api.hubapi.com<path> (Bearer), Pipedrive
+//   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only
 //   req: { m: "GET" | "PUT" | "POST", path, body? (JSON text) }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
@@ -79,6 +81,15 @@ const LIM1000 = /^([1-9][0-9]{0,2}|1000)$/, LIM500 = /^([1-9][0-9]?|[1-4][0-9]{2
       ML_ST = /^(active|unsubscribed|unconfirmed|bounced|junk)$/, MC_ST = /^(subscribed|unsubscribed|cleaned|pending)$/,
       MC_LISTS_F = /^lists\.id,lists\.name,lists\.stats\.member_count,total_items$/,
       MC_MEMBERS_F = /^members\.email_address,members\.status,members\.merge_fields,members\.language,total_items$/;
+// CRMs (wave 4): fixed property lists, opaque page markers; a Pipedrive
+// cursor's "+", "/" and "=" travel as %2B, %2F, %3D (the only escapes
+// checkExtReq lets through, and only where a pattern allows them).
+const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
+      PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/,
+      HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
+      HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
+      HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
+      PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/;
 const EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
 const okEmail = (v) => typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v);
 const okName = (v) => typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v);
@@ -179,6 +190,32 @@ export const PLATFORMS = {
       ["POST", /^\/contacts\/import$/, null, { jsonBody: "bvrows", listIds: "bvlist", updateExistingContacts: "bool", emptyContactsAttributes: "bool" }],
       ["POST", /^\/contacts\/lists\/[0-9]{1,12}\/contacts\/remove$/, null, { emails: "emails" }]
     ]
+  },
+  // CRMs (wave 4), read-only
+  hubspot: {
+    root: "",
+    host: "api.hubapi.com",
+    keys: { key: /^pat-[a-z0-9]{2,6}-[A-Za-z0-9-]{20,120}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/crm\/v3\/pipelines\/deals$/, null, null],
+      ["GET", /^\/crm\/v3\/objects\/companies$/, { limit: LIM100, after: AFTER, properties: HS_CO_F }, null],
+      ["GET", /^\/crm\/v3\/objects\/contacts$/, { limit: LIM100, after: AFTER, properties: HS_CT_F, associations: /^companies$/ }, null],
+      ["GET", /^\/crm\/v3\/objects\/deals$/, { limit: LIM100, after: AFTER, properties: HS_DL_F, associations: /^companies,contacts$/ }, null]
+    ]
+  },
+  pdrive: {
+    root: "/api/v2",
+    host: "api.pipedrive.com",
+    keys: { key: /^[a-f0-9]{40}$/ },
+    auth: (b) => ["x-api-token", b.key],
+    allow: [
+      ["GET", /^\/stages$/, { limit: LIM500, cursor: PD_CURSOR }, null],
+      ["GET", /^\/organizations$/, { limit: LIM500, cursor: PD_CURSOR }, null],
+      ["GET", /^\/persons$/, { limit: LIM500, cursor: PD_CURSOR }, null],
+      ["GET", /^\/deals$/, { limit: LIM500, cursor: PD_CURSOR, status: PD_DST }, null],
+      ["GET", /^\/activities$/, { limit: LIM500, cursor: PD_CURSOR, done: BOOL }, null]
+    ]
   }
 };
 
@@ -206,7 +243,7 @@ export function checkExtReq(p, r) {
   if (!r || typeof r !== "object") return "req";
   if (r.m !== "GET" && r.m !== "PUT" && r.m !== "POST") return "method";
   if (typeof r.path !== "string" || r.path.length > 400 || r.path[0] !== "/") return "path";
-  if (/[#\\\s@%]/.test(r.path) || r.path.indexOf("//") >= 0 || /(^|\/)\.\.?(\/|$|\?)/.test(r.path)) return "path";
+  if (/[#\\\s@]|%(?!2B|2F|3D)/.test(r.path) || r.path.indexOf("//") >= 0 || /(^|\/)\.\.?(\/|$|\?)/.test(r.path)) return "path";
   const qi = r.path.indexOf("?");
   const path = qi < 0 ? r.path : r.path.slice(0, qi), query = qi < 0 ? "" : r.path.slice(qi + 1);
   const rule = pl.allow.find((a) => a[0] === r.m && a[1].test(path));

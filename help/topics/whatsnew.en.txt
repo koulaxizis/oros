@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.60.00
+- CRM: import customers, deals and follow-ups from HubSpot or Pipedrive. orOS only reads them; a second import brings only what changed, and Undo takes it all back. Connect the account in Settings › Connected services.
+
 ## Version 1.59.02
 - Help: the Privacy page now lists every online service added lately (OpenStreetMap editing, WooCommerce, timologisi.online, MailerLite, Mailchimp, Brevo), and the Open files page includes Maps routes and places (.gpx, .kml, .geojson).
 
