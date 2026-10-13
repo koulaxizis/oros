@@ -48,7 +48,7 @@
       "same": "Still the same",
       "recheck": "Last checked {d}: {v}. Is it still right?",
       "hours.ph": "e.g. Mo-Fr 09:00-17:00; Sa 10:00-14:00",
-      "hours.247": "Open 24/7", "hours.none": "No hours posted", "hours.save": "Save",
+      "hours.247": "Open 24/7", "hours.none": "No hours posted", "hours.none.ct": "No times posted", "hours.save": "Save",
       "hours.hint": "Days Mo Tu We Th Fr Sa Su, times 24-hour, groups separated by ;",
       "number.save": "Save", "text.save": "Save", "multi.save": "Save",
       "bad": "That answer doesn't look right. Check it and try again.",
@@ -66,7 +66,17 @@
       "up.gone": "It no longer exists on OpenStreetMap",
       "up.signin": "Sign in with OpenStreetMap to upload",
       "up.offline": "You are offline. Your answers are kept.",
-      "leave": "{n} answers are waiting to be uploaded"
+      "leave": "{n} answers are waiting to be uploaded",
+      "name.save": "Save", "name.ph": "As written on the sign",
+      "badges": "Achievements", "badges.title": "Your achievements",
+      "badge.lv": "Level {l} · {n} answers", "badge.next": "{n} more for the next level", "badge.max": "Top level reached",
+      "badge.none": "Answer quests and upload them to earn achievements. Each level unlocks a page to learn more.",
+      "badge.new": "New achievement: {c}, level {l}",
+      "badge.links": "Unlocked reading",
+      "team": "Team mapping",
+      "team.hint": "Map an area with friends without answering the same things: everyone picks the same team size and a different letter. Each of you then sees only your share of the quests.",
+      "team.size": "People in the team", "team.solo": "Just me", "team.me": "My letter",
+      "team.on": "Team of {n}, you are {l}: you see your share of the quests"
     },
     el: {
       "btn": "Ερωτήσεις", "title": "Ερωτήσεις",
@@ -86,7 +96,7 @@
       "same": "Ισχύει ακόμα",
       "recheck": "Ελέγχθηκε {d}: {v}. Ισχύει ακόμα;",
       "hours.ph": "π.χ. Mo-Fr 09:00-17:00; Sa 10:00-14:00",
-      "hours.247": "Ανοιχτό 24/7", "hours.none": "Δεν αναγράφεται ωράριο", "hours.save": "Αποθήκευση",
+      "hours.247": "Ανοιχτό 24/7", "hours.none": "Δεν αναγράφεται ωράριο", "hours.none.ct": "Δεν αναγράφονται ώρες", "hours.save": "Αποθήκευση",
       "hours.hint": "Μέρες Mo Tu We Th Fr Sa Su (Δευ–Κυρ), ώρες 24ωρες, ομάδες χωρισμένες με ;",
       "number.save": "Αποθήκευση", "text.save": "Αποθήκευση", "multi.save": "Αποθήκευση",
       "bad": "Η απάντηση δεν φαίνεται σωστή. Έλεγξέ τη και δοκίμασε ξανά.",
@@ -104,7 +114,17 @@
       "up.gone": "Δεν υπάρχει πια στο OpenStreetMap",
       "up.signin": "Συνδέσου με OpenStreetMap για αποστολή",
       "up.offline": "Δεν έχεις σύνδεση. Οι απαντήσεις σου κρατιούνται.",
-      "leave": "{n} απαντήσεις περιμένουν αποστολή"
+      "leave": "{n} απαντήσεις περιμένουν αποστολή",
+      "name.save": "Αποθήκευση", "name.ph": "Όπως γράφει η πινακίδα",
+      "badges": "Επιτεύγματα", "badges.title": "Τα επιτεύγματά σου",
+      "badge.lv": "Επίπεδο {l} · {n} απαντήσεις", "badge.next": "Ακόμα {n} για το επόμενο επίπεδο", "badge.max": "Έφτασες στο ανώτερο επίπεδο",
+      "badge.none": "Απάντησε σε ερωτήσεις και στείλ' τες για να κερδίσεις επιτεύγματα. Κάθε επίπεδο ξεκλειδώνει μια σελίδα για να μάθεις περισσότερα.",
+      "badge.new": "Νέο επίτευγμα: {c}, επίπεδο {l}",
+      "badge.links": "Ξεκλείδωτο διάβασμα",
+      "team": "Ομαδική χαρτογράφηση",
+      "team.hint": "Χαρτογραφήστε μια περιοχή με φίλους χωρίς να απαντάτε στα ίδια: όλοι διαλέγετε το ίδιο μέγεθος ομάδας και διαφορετικό γράμμα. Ο καθένας βλέπει μόνο το δικό του μερίδιο ερωτήσεων.",
+      "team.size": "Άτομα στην ομάδα", "team.solo": "Μόνο εγώ", "team.me": "Το γράμμα μου",
+      "team.on": "Ομάδα {n} ατόμων, είσαι το {l}: βλέπεις το δικό σου μερίδιο"
     }
   };
   function t(k, vars) {
@@ -149,6 +169,35 @@
     if (!suppress) { var api = syncApi(); if (api && api.markDirty) api.markDirty(); }
     return true;
   }
+  // ---------- synced slice "mapsqstats" (maps wave 8) ----------
+  var STATS_KEY = "oros-maps-qstats-data";
+  var stats = Q.normStats(null);
+  function loadStats() {
+    var raw = null;
+    try { raw = localStorage.getItem(STATS_KEY); } catch (e) {}
+    if (!raw) return;
+    try { stats = Q.normStats(JSON.parse(raw)); }
+    catch (e) { try { localStorage.setItem("oros-maps-qstats-rescue", raw); } catch (e2) {} }
+  }
+  function saveStats() {
+    stats = Q.normStats(stats);
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
+    catch (e) { toast(H.storeFull || "Storage is full"); return false; }
+    if (!suppress) { var api = syncApi(); if (api && api.markDirty) api.markDirty(); }
+    return true;
+  }
+  function statsGet() { return Q.normStats(stats); }
+  function statsSet(d) {
+    if (!d || typeof d !== "object") return;
+    stats = Q.normStats(JSON.parse(JSON.stringify(d)));
+    suppress = true;
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+    suppress = false;
+    paint();
+    if (panelOpen()) render();
+  }
+  function letter(i) { return String.fromCharCode(65 + i); }
+
   function sliceGet() { return Q.normalize(data); }
   function sliceSet(d) {
     if (!d || typeof d !== "object") return;
@@ -203,7 +252,7 @@
     answers().forEach(function (a) { pend[a.t + a.oid + ":" + a.q] = 1; });
     return all.filter(function (x) {
       var k = x.el.t + x.el.id + ":" + x.q.id;
-      return !skipped[k] && !pend[k];
+      return !skipped[k] && !pend[k] && Q.teamKeeps(x.el, stats.team);
     }).map(function (x) {
       x.d = map.distance(c, [x.el.lat, x.el.lon]);
       return x;
@@ -297,6 +346,7 @@
     if (!panelOpen()) return;
     if (route.v === "quest" && renderQuest()) { setH(); return; }
     if (route.v === "settings") renderSettings();
+    else if (route.v === "badges") renderBadges();
     else { route = { v: "list" }; renderList(); }
     setH();
   }
@@ -310,8 +360,10 @@
     var my = mine();
     var row = el("div", "osm-actions");
     if (my.length) row.appendChild(button(t("upload", { n: my.length }), "osm-btn primary", openUpload));
+    row.appendChild(button(t("badges"), "osm-btn qst-badges-btn", function () { go({ v: "badges" }); }));
     row.appendChild(button(t("settings"), "osm-btn", function () { go({ v: "settings" }); }));
     body.appendChild(row);
+    if (stats.team.size > 1) body.appendChild(el("p", "osm-small qst-team-on", t("team.on", { n: stats.team.size, l: letter(stats.team.idx) })));
     var pend = answers();
     if (pend.length) {
       body.appendChild(el("p", "osm-hint", t("pending", { n: pend.length })));
@@ -432,15 +484,16 @@
       if (q.kind === "hours") { inp.placeholder = t("hours.ph"); inp.maxLength = 255; inp.value = cur || ""; inp.spellcheck = false; inp.autocapitalize = "off"; }
       if (q.kind === "number") { inp.type = "number"; inp.inputMode = "numeric"; inp.min = String(q.min); inp.max = String(q.max); inp.step = "1"; inp.value = cur || ""; }
       if (q.kind === "text") { inp.maxLength = q.maxLen || 20; inp.value = cur || ""; inp.autocapitalize = "off"; }
+      if (q.kind === "name") { inp.maxLength = q.maxLen || 80; inp.value = cur || ""; inp.placeholder = t("name.ph"); inp.autocomplete = "off"; }
       body.appendChild(inp);
       if (q.kind === "hours") body.appendChild(el("p", "osm-small", t("hours.hint")));
       var ri = el("div", "osm-actions");
       ri.appendChild(button(t(q.kind + ".save"), "osm-btn primary", function () { answer(e, q, inp.value); }));
       if (q.kind === "hours") {
-        ri.appendChild(button(t("hours.247"), "osm-btn", function () { answer(e, q, "24/7"); }));
-        ri.appendChild(button(t("hours.none"), "osm-btn", function () { answer(e, q, "unsigned"); }));
+        if (q.key === "opening_hours") ri.appendChild(button(t("hours.247"), "osm-btn", function () { answer(e, q, "24/7"); }));
+        ri.appendChild(button(t(q.key === "opening_hours" ? "hours.none" : "hours.none.ct"), "osm-btn", function () { answer(e, q, "unsigned"); }));
       }
-      if (q.kind === "text" && q.none) ri.appendChild(button(Q.optText(q.none, LANG), "osm-btn", function () { answer(e, q, "none"); }));
+      if ((q.kind === "text" || q.kind === "name") && q.none) ri.appendChild(button(Q.optText(q.none, LANG), "osm-btn", function () { answer(e, q, "none"); }));
       body.appendChild(ri);
       inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") answer(e, q, inp.value); });
     }
@@ -477,10 +530,79 @@
     nextQuest(e.t + e.id);
   }
 
+  function renderBadges() {
+    panel.textContent = "";
+    panel.appendChild(header(t("badges.title"), function () { go({ v: "list" }); }));
+    var body = el("div", "osm-body");
+    var list = Q.achievements(stats);
+    if (!list.some(function (c) { return c.n > 0; })) body.appendChild(el("p", "osm-hint", t("badge.none")));
+    var ul = el("ul", "qst-badges");
+    list.forEach(function (c) {
+      var li = el("li", "qst-badge lv" + c.level);
+      var ic = el("span", "qst-badge-ic", c.icon);
+      ic.setAttribute("aria-hidden", "true");
+      li.appendChild(ic);
+      var b = el("div", "qst-badge-b");
+      b.appendChild(el("div", "osm-row-t", LANG === "el" ? c.el : c.en));
+      b.appendChild(el("div", "osm-row-s", t("badge.lv", { l: c.level, n: c.n }) + " · " + (c.next ? t("badge.next", { n: c.next }) : t("badge.max"))));
+      var bar = el("div", "qst-bar");
+      var fill = el("i", "");
+      var lo = c.level ? Q.LEVELS[c.level - 1] : 0, hi = c.next ? c.n + c.next : c.n || 1;
+      fill.style.width = Math.round(100 * (c.next ? (c.n - lo) / Math.max(1, hi - lo) : 1)) + "%";
+      bar.appendChild(fill);
+      b.appendChild(bar);
+      if (c.links.length) {
+        var lk = el("div", "qst-badge-links");
+        lk.appendChild(el("span", "osm-small", t("badge.links") + ": "));
+        c.links.forEach(function (u) {
+          var a = el("a", "", u.replace(/^https:\/\/(www\.)?/, "").replace(/\/$/, ""));
+          a.href = u; a.target = "_blank"; a.rel = "noopener noreferrer";
+          lk.appendChild(a);
+        });
+        b.appendChild(lk);
+      }
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    panel.appendChild(body);
+  }
+
   function renderSettings() {
     panel.textContent = "";
-    panel.appendChild(header(t("set.title"), function () { go({ v: "list" }); }));
+    panel.appendChild(header(t("settings"), function () { go({ v: "list" }); }));
     var body = el("div", "osm-body");
+    var tb = el("div", "qst-team");
+    tb.appendChild(el("h4", "", t("team")));
+    tb.appendChild(el("p", "osm-small", t("team.hint")));
+    var row = el("div", "qst-team-row");
+    var size = el("select", "osm-in qst-team-size");
+    size.setAttribute("aria-label", t("team.size"));
+    for (var n = 1; n <= 12; n++) {
+      var op = el("option", "", n === 1 ? t("team.solo") : String(n)); op.value = String(n); op.selected = n === stats.team.size; size.appendChild(op);
+    }
+    var me = el("select", "osm-in qst-team-me");
+    me.setAttribute("aria-label", t("team.me"));
+    function fillMe() {
+      me.textContent = "";
+      var sz = parseInt(size.value, 10) || 1;
+      for (var i = 0; i < sz; i++) { var o2 = el("option", "", letter(i)); o2.value = String(i); o2.selected = i === stats.team.idx; me.appendChild(o2); }
+      me.disabled = sz < 2;
+    }
+    fillMe();
+    function saveTeam() {
+      var sz = parseInt(size.value, 10) || 1, ix = Math.min(parseInt(me.value, 10) || 0, sz - 1);
+      stats.team = { m: Math.max(Date.now(), (stats.team.m || 0) + 1), size: sz, idx: sz > 1 ? ix : 0 };
+      saveStats(); paint();
+    }
+    size.addEventListener("change", function () { fillMe(); saveTeam(); });
+    me.addEventListener("change", saveTeam);
+    var l1 = el("label", "qst-team-l"); l1.appendChild(el("span", "", t("team.size"))); l1.appendChild(size);
+    var l2 = el("label", "qst-team-l"); l2.appendChild(el("span", "", t("team.me"))); l2.appendChild(me);
+    row.appendChild(l1); row.appendChild(l2);
+    tb.appendChild(row);
+    body.appendChild(tb);
+    body.appendChild(el("h4", "qst-set-h", t("set.title")));
     Q.QUESTS.forEach(function (q) {
       var lab = el("label", "heat-check qst-set");
       var cb = el("input", "");
@@ -616,7 +738,7 @@
             });
             used.forEach(function (a) { dropAnswer(a.id); });
             sent += used.length;
-            countDone(used.length);
+            countDone(used.length, qid);
           });
       });
     }
@@ -631,8 +753,16 @@
       paint(); render();
     });
   }
-  function countDone(n) {
+  function countDone(n, qid) {
     if (!n) return;
+    if (qid) {
+      var before = stats;
+      stats = Q.addCount(stats, A.deviceId(), qid, n);
+      saveStats();
+      Q.levelUps(before, stats).forEach(function (c, i) {
+        setTimeout(function () { toast(t("badge.new", { c: LANG === "el" ? c.el : c.en, l: c.level })); }, 3000 + i * 1500);
+      });
+    }
     var me = A.deviceId(), day = Q.today();
     var d = data.done[me] || (data.done[me] = {});
     d[day] = (d[day] || 0) + n;
@@ -676,6 +806,7 @@
   var ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><path d="M10 8.2a2.2 2.2 0 1 1 3 2c-.7.3-1 .8-1 1.5"/><path d="M12 14.5h.01"/></svg>';
   function boot() {
     loadData();
+    loadStats();
     panel = el("aside", "osm-sheet");
     panel.id = "qst-panel";
     panel.hidden = true;
@@ -697,12 +828,14 @@
     var api = syncApi();
     if (api && typeof api.registerSlice === "function") {
       api.registerSlice("mapsquests", sliceGet, sliceSet, DATA_KEY, Q.merge);
+      api.registerSlice("mapsqstats", statsGet, statsSet, STATS_KEY, Q.mergeStats);
     }
     A.onChange(function () { if (panelOpen()) render(); });
   }
 
   window.__orosMapsQuests = {
     data: function () { return Q.normalize(data); },
+    stats: function () { return Q.normStats(stats); },
     els: function () { return els; },
     open: function () { return open().map(function (x) { return { key: x.el.t + x.el.id, q: x.q.id, mode: x.mode }; }); },
     setMode: setMode, show: show, upload: upload

@@ -4,7 +4,7 @@
 // Node-tested in tests/maps-quests.test.js. Uses poi-core.js
 // (window.OrosMapsPoi) for tag cleaning.
 //
-//   - QUESTS: 16 questions you can answer at a glance on the spot,
+//   - QUESTS: 36 questions (16 since wave 5, 20 more in maps wave 8) you can answer at a glance on the spot,
 //     each with the elements it applies to (a pure test on the tags),
 //     the Overpass selectors that fetch them, and the answers as tag
 //     sets. No code or text from StreetComplete (GPL): the ideas are
@@ -24,6 +24,15 @@
 //     counter per device and day (max), so two devices never double
 //     count. Only the device in `dev` uploads an answer.
 //
+//   - Maps wave 8: each quest has a category (CATS) for the
+//     achievements; team mapping splits the quests of an area between
+//     2–12 people by the element id (teamKeeps), with no server.
+//   - The synced slice "mapsqstats" (key oros-maps-qstats-data, own
+//     slice since 1.65.00 so older devices never drop it):
+//       { ver, cnt{ dev: { qid: n } }, team{ m, size, idx } }
+//     cnt = answers uploaded per device and quest (max per device:
+//     two devices never double count); team LWW by m.
+//
 // API: window.OrosMapsQuests (module.exports in Node).
 // ============================================================
 (function (root) {
@@ -31,7 +40,7 @@
   var P = root && root.OrosMapsPoi ? root.OrosMapsPoi :
     (typeof require === "function" ? require("./poi-core.js") : null);
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var LIM = { answers: 500, tombs: 2000, hide: 3000, devs: 20, days: 400, els: 3000, name: 120, err: 200, text: 255 };
   var ID_RE = /^[a-z0-9]{6,40}$/;
   var DEV_RE = /^[a-z0-9]{4,40}$/;
@@ -59,10 +68,17 @@
   var SURF_HW = ["residential", "living_street", "pedestrian", "service", "track", "path", "footway", "cycleway", "unclassified", "bridleway"];
   var LEVEL_B = ["house", "detached", "semidetached_house", "terrace", "residential", "apartments", "commercial", "retail", "office", "hotel", "yes"];
   var NUM_B = ["house", "detached", "semidetached_house", "terrace", "apartments", "residential"];
+  // wave 8
+  var SPEED_HW = ["residential", "tertiary", "secondary", "primary", "unclassified", "living_street"];
+  var NAME_HW = ["residential", "tertiary", "secondary", "primary", "unclassified", "living_street", "pedestrian"];
+  var DIET_AMENITY = ["restaurant", "cafe", "fast_food"];
+  var PAY_AMENITY = ["cafe", "restaurant", "fast_food", "bar", "pub", "pharmacy", "fuel", "ice_cream"];
+  var WIFI_AMENITY = ["cafe", "restaurant", "fast_food", "bar", "pub", "library"];
   function shopOpen(t) { return !!t.shop && t.shop !== "vacant" && t.shop !== "no"; }
   function named(t) { return !!(t.name || t.brand); }
   function busStop(t) { return t.highway === "bus_stop" || (t.public_transport === "platform" && t.bus === "yes"); }
   function hasPrefix(t, p) { for (var k in t) if (k.indexOf(p) === 0) return true; return false; }
+  function pub(t) { return t.access !== "private" && t.access !== "no"; }
 
   function o(v, en, el, set) { return { v: v, en: en, el: el, set: set }; }
   function yn(key, yesEn, yesEl, noEn, noEl) {
@@ -178,10 +194,144 @@
       applies: function (t) { return t.amenity === "bank"; },
       title: { en: "ATM at the bank", el: "ΑΤΜ στην τράπεζα" },
       q: { en: "Does {name} have an ATM?", el: "Έχει ΑΤΜ: {name};" },
-      options: yn("atm") }
+      options: yn("atm") },
+
+    // ---------- maps wave 8: 20 more ----------
+    { id: "maxspeed", icon: "🚦", kind: "number", key: "maxspeed", min: 5, max: 130, cat: "streets",
+      sel: ['way["highway"~"' + re(SPEED_HW) + '"][!"maxspeed"]'],
+      applies: function (t, el) { return el.t === "w" && inList(t.highway, SPEED_HW) && !t["maxspeed:type"] && !t["source:maxspeed"]; },
+      title: { en: "Speed limit", el: "Όριο ταχύτητας" },
+      q: { en: "What speed limit is signed on {name} (km/h)? Answer only if you see a sign.", el: "Τι όριο ταχύτητας γράφει η πινακίδα στο {name} (χλμ./ώρα); Απάντησε μόνο αν βλέπεις πινακίδα." } },
+    { id: "road_name", icon: "🏷️", kind: "name", key: "name", maxLen: 80, cat: "streets",
+      sel: ['way["highway"~"' + re(NAME_HW) + '"][!"name"]'],
+      applies: function (t, el) { return el.t === "w" && inList(t.highway, NAME_HW) && t.noname !== "yes" && !t.ref && t.area !== "yes"; },
+      title: { en: "Street name", el: "Όνομα δρόμου" },
+      q: { en: "What is the name of this street, as on the sign?", el: "Πώς λέγεται αυτός ο δρόμος, όπως γράφει η πινακίδα;" },
+      none: o("none", "It has no name", "Δεν έχει όνομα", { noname: "yes" }) },
+    { id: "steps_count", icon: "🪜", kind: "number", key: "step_count", min: 1, max: 500, cat: "streets",
+      sel: ['way["highway"="steps"][!"step_count"]'],
+      applies: function (t, el) { return el.t === "w" && t.highway === "steps" && t.indoor !== "yes"; },
+      title: { en: "Number of steps", el: "Πόσα σκαλιά" },
+      q: { en: "How many steps are there?", el: "Πόσα σκαλιά έχει;" } },
+    { id: "steps_handrail", icon: "🤚", kind: "choice", key: "handrail", recheck: 8, cat: "streets",
+      sel: ['way["highway"="steps"]'],
+      applies: function (t, el) { return el.t === "w" && t.highway === "steps" && !hasPrefix(t, "handrail:"); },
+      title: { en: "Handrail", el: "Κουπαστή" },
+      q: { en: "Do these steps have a handrail?", el: "Έχουν κουπαστή αυτά τα σκαλιά;" },
+      options: yn("handrail") },
+    { id: "tactile_paving", icon: "🦯", kind: "choice", key: "tactile_paving", recheck: 8, cat: "transit",
+      sel: ['node["highway"="crossing"]'],
+      applies: function (t) { return t.highway === "crossing" && t.crossing !== "no" && t.crossing !== "informal"; },
+      title: { en: "Tactile paving at the crossing", el: "Όδευση τυφλών στη διάβαση" },
+      q: { en: "Is there tactile paving (raised bumps) on both sides of this crossing?", el: "Υπάρχει όδευση τυφλών (ανάγλυφες πλάκες) και στις δύο πλευρές της διάβασης;" },
+      options: [o("yes", "Yes", "Ναι", { tactile_paving: "yes" }), o("incorrect", "Only on one side, or wrongly laid", "Μόνο στη μία πλευρά ή λάθος τοποθετημένη", { tactile_paving: "incorrect" }),
+        o("no", "No", "Όχι", { tactile_paving: "no" })] },
+    { id: "stop_name", icon: "🪧", kind: "name", key: "name", maxLen: 80, cat: "transit",
+      sel: ['node["highway"="bus_stop"]', 'node["public_transport"="platform"]["bus"="yes"]'],
+      applies: function (t) { return busStop(t) && t.noname !== "yes" && t["name:signed"] !== "no"; },
+      title: { en: "Stop name", el: "Όνομα στάσης" },
+      q: { en: "What is the name of this stop, as on its sign?", el: "Πώς λέγεται αυτή η στάση, όπως γράφει η πινακίδα;" },
+      none: o("none", "No name on the sign", "Η πινακίδα δεν έχει όνομα", { "name:signed": "no" }) },
+    { id: "level_crossing_barrier", icon: "🚧", kind: "choice", key: "crossing:barrier", recheck: 8, cat: "transit",
+      sel: ['node["railway"="level_crossing"]'],
+      applies: function (t) { return t.railway === "level_crossing"; },
+      title: { en: "Level crossing barrier", el: "Μπάρα στην ισόπεδη διάβαση" },
+      q: { en: "What barrier does this railway crossing have?", el: "Τι μπάρα έχει αυτή η σιδηροδρομική διάβαση;" },
+      options: [o("no", "None", "Καμία", { "crossing:barrier": "no" }), o("half", "Half barriers", "Μισές μπάρες", { "crossing:barrier": "half" }),
+        o("full", "Full barriers", "Μπάρες σε όλο το πλάτος", { "crossing:barrier": "full" }), o("gate", "Gates", "Πύλες", { "crossing:barrier": "gate" })] },
+    { id: "parking_fee", icon: "🅿️", kind: "choice", key: "fee", recheck: 4, cat: "parking",
+      sel: ['nwr["amenity"="parking"]'],
+      applies: function (t) { return t.amenity === "parking" && pub(t) && t.access !== "customers"; },
+      title: { en: "Parking fee", el: "Χρέωση στάθμευσης" },
+      q: { en: "Do you have to pay to park here?", el: "Πληρώνεις για να παρκάρεις εδώ;" },
+      options: yn("fee", "Yes, you pay", "Ναι, πληρώνεις", "No, free", "Όχι, δωρεάν") },
+    { id: "parking_type", icon: "🚗", kind: "choice", key: "parking", cat: "parking",
+      sel: ['nwr["amenity"="parking"][!"parking"]'],
+      applies: function (t) { return t.amenity === "parking"; },
+      title: { en: "Kind of car park", el: "Είδος πάρκινγκ" },
+      q: { en: "What kind of car park is this?", el: "Τι πάρκινγκ είναι αυτό;" },
+      options: [o("surface", "Open-air lot", "Υπαίθριο", { parking: "surface" }), o("multi-storey", "Multi-storey", "Πολυώροφο", { parking: "multi-storey" }),
+        o("underground", "Underground", "Υπόγειο", { parking: "underground" }), o("street_side", "Bays beside the street", "Θέσεις στην άκρη του δρόμου", { parking: "street_side" })] },
+    { id: "bike_parking_capacity", icon: "🚲", kind: "number", key: "capacity", min: 1, max: 1000, cat: "parking",
+      sel: ['nwr["amenity"="bicycle_parking"][!"capacity"]'],
+      applies: function (t) { return t.amenity === "bicycle_parking"; },
+      title: { en: "Bicycle parking spaces", el: "Θέσεις ποδηλάτων" },
+      q: { en: "How many bicycles can be parked here?", el: "Πόσα ποδήλατα χωράνε εδώ;" } },
+    { id: "bike_parking_covered", icon: "☂️", kind: "choice", key: "covered", recheck: 8, cat: "parking",
+      sel: ['nwr["amenity"="bicycle_parking"]'],
+      applies: function (t) { return t.amenity === "bicycle_parking" && t.bicycle_parking !== "building"; },
+      title: { en: "Covered bicycle parking", el: "Στέγαστρο ποδηλάτων" },
+      q: { en: "Is this bicycle parking covered?", el: "Έχει στέγαστρο αυτή η θέση ποδηλάτων;" },
+      options: yn("covered") },
+    { id: "diet_vegetarian", icon: "🥗", kind: "choice", key: "diet:vegetarian", recheck: 2, cat: "places",
+      sel: ['nwr["amenity"~"' + re(DIET_AMENITY) + '"]'],
+      applies: function (t) { return inList(t.amenity, DIET_AMENITY) && named(t) && t["diet:vegan"] !== "only"; },
+      title: { en: "Vegetarian food", el: "Χορτοφαγικό φαγητό" },
+      q: { en: "Does {name} serve vegetarian dishes?", el: "Σερβίρει χορτοφαγικά πιάτα το {name};" },
+      options: [o("only", "Only vegetarian", "Μόνο χορτοφαγικά", { "diet:vegetarian": "only" }), o("yes", "Yes, several", "Ναι, αρκετά", { "diet:vegetarian": "yes" }),
+        o("limited", "A few", "Λίγα", { "diet:vegetarian": "limited" }), o("no", "No", "Όχι", { "diet:vegetarian": "no" })] },
+    { id: "diet_vegan", icon: "🌱", kind: "choice", key: "diet:vegan", recheck: 2, cat: "places",
+      sel: ['nwr["amenity"~"' + re(DIET_AMENITY) + '"]["diet:vegetarian"~"^(yes|only|limited)$"]'],
+      applies: function (t) { return inList(t.amenity, DIET_AMENITY) && named(t) && inList(t["diet:vegetarian"], ["yes", "only", "limited"]); },
+      title: { en: "Vegan food", el: "Vegan φαγητό" },
+      q: { en: "Does {name} serve vegan dishes?", el: "Σερβίρει vegan πιάτα το {name};" },
+      options: [o("only", "Only vegan", "Μόνο vegan", { "diet:vegan": "only" }), o("yes", "Yes, several", "Ναι, αρκετά", { "diet:vegan": "yes" }),
+        o("limited", "A few", "Λίγα", { "diet:vegan": "limited" }), o("no", "No", "Όχι", { "diet:vegan": "no" })] },
+    { id: "payment", icon: "💳", kind: "multi", cat: "places",
+      sel: ['nwr["shop"]', 'nwr["amenity"~"' + re(PAY_AMENITY) + '"]'],
+      applies: function (t) { return (shopOpen(t) || inList(t.amenity, PAY_AMENITY)) && named(t) && !hasPrefix(t, "payment:"); },
+      title: { en: "Ways to pay", el: "Τρόποι πληρωμής" },
+      q: { en: "How can you pay at {name}?", el: "Πώς πληρώνεις στο {name};" },
+      options: [["cash", "Cash", "Μετρητά"], ["debit_cards", "Debit cards", "Χρεωστική κάρτα"], ["credit_cards", "Credit cards", "Πιστωτική κάρτα"],
+        ["contactless", "Contactless (tap)", "Ανέπαφα"]]
+        .map(function (x) { var st = {}; st["payment:" + x[0]] = "yes"; return o(x[0], x[1], x[2], st); }) },
+    { id: "internet_access", icon: "📶", kind: "choice", key: "internet_access", recheck: 2, cat: "places",
+      sel: ['nwr["amenity"~"' + re(WIFI_AMENITY) + '"]', 'nwr["tourism"="hotel"]'],
+      applies: function (t) { return (inList(t.amenity, WIFI_AMENITY) || t.tourism === "hotel") && named(t); },
+      title: { en: "Wi-Fi", el: "Wi-Fi" },
+      q: { en: "Does {name} offer Wi-Fi to customers?", el: "Έχει Wi-Fi για τους πελάτες το {name};" },
+      options: [o("wlan", "Yes", "Ναι", { internet_access: "wlan" }), o("no", "No", "Όχι", { internet_access: "no" })] },
+    { id: "toilets_wheelchair", icon: "🚾", kind: "choice", key: "wheelchair", recheck: 4, cat: "things",
+      sel: ['nwr["amenity"="toilets"]'],
+      applies: function (t) { return t.amenity === "toilets" && pub(t); },
+      title: { en: "Wheelchair toilet", el: "Τουαλέτα για αμαξίδιο" },
+      q: { en: "Can these toilets be used from a wheelchair?", el: "Μπορεί να τις χρησιμοποιήσει κάποιος με αμαξίδιο;" },
+      options: [o("yes", "Yes", "Ναι", { wheelchair: "yes" }), o("limited", "Partly", "Εν μέρει", { wheelchair: "limited" }), o("no", "No", "Όχι", { wheelchair: "no" })] },
+    { id: "aed_indoor", icon: "❤️", kind: "choice", key: "indoor", cat: "things",
+      sel: ['node["emergency"="defibrillator"][!"indoor"]'],
+      applies: function (t) { return t.emergency === "defibrillator"; },
+      title: { en: "Defibrillator", el: "Απινιδωτής" },
+      q: { en: "Is this defibrillator (AED) inside a building?", el: "Αυτός ο απινιδωτής είναι μέσα σε κτίριο;" },
+      options: yn("indoor", "Yes, inside", "Ναι, μέσα", "No, outside", "Όχι, έξω") },
+    { id: "fire_hydrant_type", icon: "🧯", kind: "choice", key: "fire_hydrant:type", cat: "things",
+      sel: ['node["emergency"="fire_hydrant"][!"fire_hydrant:type"]'],
+      applies: function (t) { return t.emergency === "fire_hydrant"; },
+      title: { en: "Fire hydrant", el: "Πυροσβεστικός κρουνός" },
+      q: { en: "What kind of fire hydrant is this?", el: "Τι κρουνός είναι αυτός;" },
+      options: [o("pillar", "Pillar above the ground", "Κολόνα πάνω από το έδαφος", { "fire_hydrant:type": "pillar" }),
+        o("underground", "Underground (a lid in the street)", "Υπόγειος (καπάκι στον δρόμο)", { "fire_hydrant:type": "underground" }),
+        o("wall", "On a wall", "Σε τοίχο", { "fire_hydrant:type": "wall" })] },
+    { id: "postbox_times", icon: "📮", kind: "hours", key: "collection_times", recheck: 2, cat: "things",
+      sel: ['node["amenity"="post_box"]'],
+      applies: function (t) { return t.amenity === "post_box" && t["collection_times:signed"] !== "no"; },
+      title: { en: "Postbox collection times", el: "Ώρες αποκομιδής" },
+      q: { en: "When is this postbox emptied?", el: "Πότε αδειάζει αυτό το γραμματοκιβώτιο;" } },
+    { id: "building_type", icon: "🏠", kind: "choice", key: "building", blank: "yes", cat: "buildings",
+      sel: ['way["building"="yes"]'],
+      applies: function (t, el) { return el.t === "w" && t.building === "yes" && !t["building:part"] && !t.amenity && !t.shop; },
+      title: { en: "Kind of building", el: "Είδος κτιρίου" },
+      q: { en: "What kind of building is this?", el: "Τι κτίριο είναι αυτό;" },
+      options: [["house", "House", "Μονοκατοικία"], ["apartments", "Apartment block", "Πολυκατοικία"], ["commercial", "Offices or shops", "Γραφεία ή καταστήματα"],
+        ["industrial", "Industrial", "Βιομηχανικό"], ["garage", "Garage", "Γκαράζ"], ["shed", "Shed", "Αποθήκη"],
+        ["school", "School", "Σχολείο"], ["church", "Church", "Εκκλησία"], ["ruins", "Ruins", "Ερείπιο"]]
+        .map(function (x) { return o(x[0], x[1], x[2], { building: x[0] }); }) }
   ];
+  var OLD_CAT = { opening_hours: "places", wheelchair: "places", smoking: "places", bank_atm: "places", religion: "places",
+    way_lit: "streets", way_surface: "streets", bus_shelter: "transit", bus_bench: "transit", crossing_type: "transit",
+    building_levels: "buildings", housenumber: "buildings", bench_backrest: "things", toilets_fee: "things",
+    recycling: "things", playground_access: "things" };
   var BY_ID = {};
-  QUESTS.forEach(function (q) { BY_ID[q.id] = q; });
+  QUESTS.forEach(function (q) { BY_ID[q.id] = q; if (!q.cat) q.cat = OLD_CAT[q.id]; });
 
   // ---------- dates ----------
   function today(ms) {
@@ -207,7 +357,7 @@
     var t = el.tags || {};
     if (!q.applies(t, el)) return null;
     if (q.kind === "multi") return "new";
-    var has = t[q.key] !== undefined || (q.none && Object.keys(q.none.set).some(function (k) { return t[k] !== undefined; }));
+    var has = (t[q.key] !== undefined && t[q.key] !== q.blank) || (q.none && Object.keys(q.none.set).some(function (k) { return t[k] !== undefined; }));
     if (!has) return "new";
     if (!q.recheck) return null;
     var last = lastCheck(el, q.key);
@@ -249,12 +399,12 @@
       (q.options || []).forEach(function (x) { if (value.indexOf(x.v) >= 0) { Object.keys(x.set).forEach(function (k) { set[k] = x.set[k]; }); ok++; } });
       if (!ok) return null;
     } else if (q.kind === "hours") {
-      if (value === "24/7") set.opening_hours = "24/7";
-      else if (value === "unsigned") set["opening_hours:signed"] = "no";
+      if (value === "24/7") set[q.key] = "24/7";
+      else if (value === "unsigned") set[q.key + ":signed"] = "no";
       else {
         var s = P.cleanVal(String(value || ""), LIM.text);
         if (!HOURS_RE.test(s)) return null;
-        set.opening_hours = s;
+        set[q.key] = s;
       }
     } else if (q.kind === "number") {
       var n = typeof value === "number" ? value : parseInt(String(value || "").trim(), 10);
@@ -266,6 +416,14 @@
         var v = P.cleanVal(String(value || ""), q.maxLen || 40);
         if (!v || !/^[0-9A-Za-zͰ-Ͽἀ-῿/\-\s,;]+$/.test(v) || !/\d/.test(v)) return null;
         set[q.key] = v;
+      }
+    } else if (q.kind === "name") {
+      if (value === "none" && q.none) Object.keys(q.none.set).forEach(function (k) { set[k] = q.none.set[k]; });
+      else {
+        var nm = P.cleanVal(String(value || ""), q.maxLen || 80);
+        // letters (any script) are required; no tag syntax or links
+        if (!nm || !/\p{L}/u.test(nm) || /[<>{}=|\\]|https?:/i.test(nm)) return null;
+        set[q.key] = nm;
       }
     } else return null;
     if (mode === "recheck" && q.key) set["check_date:" + q.key] = today(now);
@@ -400,6 +558,96 @@
     return { total: total, today: per[td] || 0, streak: streak };
   }
 
+  // ---------- maps wave 8: achievements, team, slice "mapsqstats" ----------
+  var CATS = [
+    { id: "places", icon: "🏪", en: "Shops and cafés", el: "Μαγαζιά και καφέ",
+      links: ["https://wiki.openstreetmap.org/wiki/Key:opening_hours", "https://wiki.openstreetmap.org/wiki/Key:diet", "https://wiki.openstreetmap.org/wiki/Key:payment"] },
+    { id: "streets", icon: "🛣️", en: "Streets and paths", el: "Δρόμοι και μονοπάτια",
+      links: ["https://wiki.openstreetmap.org/wiki/Key:surface", "https://wiki.openstreetmap.org/wiki/Key:maxspeed", "https://wiki.openstreetmap.org/wiki/Key:lit"] },
+    { id: "transit", icon: "🚏", en: "Stops and crossings", el: "Στάσεις και διαβάσεις",
+      links: ["https://wiki.openstreetmap.org/wiki/Public_transport", "https://wiki.openstreetmap.org/wiki/Key:tactile_paving", "https://transitous.org/"] },
+    { id: "parking", icon: "🅿️", en: "Parking", el: "Στάθμευση",
+      links: ["https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking", "https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dbicycle_parking"] },
+    { id: "buildings", icon: "🏢", en: "Buildings and addresses", el: "Κτίρια και διευθύνσεις",
+      links: ["https://wiki.openstreetmap.org/wiki/Addresses", "https://wiki.openstreetmap.org/wiki/Key:building"] },
+    { id: "things", icon: "🪑", en: "Street furniture", el: "Αστικός εξοπλισμός",
+      links: ["https://wiki.openstreetmap.org/wiki/Street_furniture", "https://openaedmap.org/"] }
+  ];
+  var CAT_BY = {};
+  CATS.forEach(function (c) { CAT_BY[c.id] = c; });
+  var LEVELS = [1, 10, 30, 100, 300, 1000];
+  var SLIM = { devs: 20 };
+  function normStats(d) {
+    var out = { ver: 1, cnt: {}, team: { m: 0, size: 1, idx: 0 } };
+    if (!d || typeof d !== "object") return out;
+    var c = d.cnt && typeof d.cnt === "object" ? d.cnt : {};
+    Object.keys(c).filter(function (dev) { return DEV_RE.test(dev) && c[dev] && typeof c[dev] === "object"; }).sort().slice(0, SLIM.devs).forEach(function (dev) {
+      var per = {};
+      Object.keys(c[dev]).sort().forEach(function (qid) {
+        // unknown quest ids are kept (a newer version may have them)
+        if (/^[a-z_]{2,40}$/.test(qid) && okM(c[dev][qid]) && c[dev][qid] > 0 && c[dev][qid] <= 1000000) per[qid] = c[dev][qid];
+      });
+      if (Object.keys(per).length) out.cnt[dev] = per;
+    });
+    var tm = d.team && typeof d.team === "object" ? d.team : {};
+    if (okM(tm.m) && isNum(tm.size) && Math.floor(tm.size) === tm.size && tm.size >= 1 && tm.size <= 12 &&
+        isNum(tm.idx) && Math.floor(tm.idx) === tm.idx && tm.idx >= 0 && tm.idx < tm.size) {
+      out.team = { m: tm.m, size: tm.size, idx: tm.idx };
+    }
+    return out;
+  }
+  function mergeStats(A, B) {
+    var a = normStats(A), b = normStats(B), out = { cnt: {}, team: newer(a.team, b.team) };
+    [a, b].forEach(function (x) {
+      Object.keys(x.cnt).forEach(function (dev) {
+        var dd = out.cnt[dev] || (out.cnt[dev] = {});
+        Object.keys(x.cnt[dev]).forEach(function (q) { dd[q] = Math.max(dd[q] || 0, x.cnt[dev][q]); });
+      });
+    });
+    return normStats(out);
+  }
+  // Add n uploads of quest qid by device dev (returns a new object).
+  function addCount(stats, dev, qid, n) {
+    var s = normStats(stats);
+    if (!DEV_RE.test(dev) || !/^[a-z_]{2,40}$/.test(qid) || !(n > 0)) return s;
+    var d = s.cnt[dev] || (s.cnt[dev] = {});
+    d[qid] = (d[qid] || 0) + Math.floor(n);
+    return normStats(s);
+  }
+  // Achievements: per category, answers summed over devices → level.
+  //   [{ id, icon, en, el, n, level (0…6), next (answers to the next level, 0 at max), links[] (unlocked) }]
+  function achievements(stats) {
+    var s = normStats(stats), per = {};
+    Object.keys(s.cnt).forEach(function (dev) {
+      Object.keys(s.cnt[dev]).forEach(function (qid) {
+        var q = BY_ID[qid];
+        if (q && q.cat) per[q.cat] = (per[q.cat] || 0) + s.cnt[dev][qid];
+      });
+    });
+    return CATS.map(function (c) {
+      var n = per[c.id] || 0, lv = 0;
+      while (lv < LEVELS.length && n >= LEVELS[lv]) lv++;
+      return { id: c.id, icon: c.icon, en: c.en, el: c.el, n: n, level: lv,
+        next: lv < LEVELS.length ? LEVELS[lv] - n : 0, links: c.links.slice(0, Math.min(c.links.length, Math.ceil(lv / 2))) };
+    });
+  }
+  // Levels gained between two stats (for the "new badge" message).
+  function levelUps(before, after) {
+    var a = achievements(before), b = achievements(after);
+    return b.filter(function (x, i) { return x.level > a[i].level; });
+  }
+  // Team mapping: the element goes to one member, the same on every
+  // phone (FNV-1a of "n123"), so a team of `size` never answers twice.
+  function teamOf(key, size) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h % size;
+  }
+  function teamKeeps(el, team) {
+    if (!team || !(team.size > 1)) return true;
+    return teamOf(el.t + el.id, team.size) === team.idx;
+  }
+
   function text(q, field, lang) {
     var x = q[field];
     return (x && (x[lang] || x.en)) || "";
@@ -411,7 +659,9 @@
     today: today, parseDay: parseDay, lastCheck: lastCheck, state: state, openQuests: openQuests,
     answerSet: answerSet, overpassQuery: overpassQuery, parseOverpass: parseOverpass,
     normAnswer: normAnswer, normalize: normalize, merge: merge, doneStats: doneStats,
-    text: text, optText: optText, canon: canon
+    text: text, optText: optText, canon: canon,
+    CATS: CATS, CAT_BY: CAT_BY, LEVELS: LEVELS, normStats: normStats, mergeStats: mergeStats, addCount: addCount,
+    achievements: achievements, levelUps: levelUps, teamOf: teamOf, teamKeeps: teamKeeps
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosMapsQuests = api;

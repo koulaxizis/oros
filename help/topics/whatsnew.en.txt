@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.65.00
+- Maps: 20 more quests (36 in all): speed limit, street name, steps and handrails, tactile paving, stop names, level crossing barriers, parking fee and kind, bicycle parking, vegetarian and vegan food, ways to pay, Wi-Fi, wheelchair toilets, defibrillators, fire hydrants, postbox collection times and kind of building. New achievements with a level for each group of quests, and team mapping: friends split the quests of an area between them, so nobody answers the same thing twice.
+
 ## Version 1.64.00
 - CRM: import from Odoo (19 or Odoo Online). Companies come in with their people and VAT ID, people on their own as customers, opportunities as deals; your own company stays out. orOS only reads Odoo; connect it in Settings › Connected services.
 
