@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=signature" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Email Signature · orOS</title>
+
+  <link rel="stylesheet" href="signature.css?v=1.73.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Email Signature</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <label for="sig-sel" class="sr-only" data-i18n="f.pick">Signature</label>
+    <select id="sig-sel"></select>
+    <button type="button" id="new-btn" class="icon-btn"></button>
+    <button type="button" id="more-btn" class="icon-btn" aria-haspopup="dialog"></button>
+  </header>
+
+  <nav id="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-edit" aria-controls="editor" data-i18n="tab.edit">Edit</button>
+    <button type="button" role="tab" id="tab-use" aria-controls="out" data-i18n="tab.use">Preview and use</button>
+  </nav>
+
+  <main id="main">
+    <div id="layout">
+
+      <!-- ========== Editor ========== -->
+      <section id="editor" role="tabpanel" aria-labelledby="tab-edit">
+
+        <div id="empty-box" class="card" hidden>
+          <p class="hint" data-i18n="empty">No signature yet. Make your first one: fill in your details, pick a look, and copy it into your mail.</p>
+          <button type="button" id="first-btn" class="chip primary" data-i18n="btn.first">Make a signature</button>
+        </div>
+
+        <div id="form" hidden>
+          <div id="fill-row" class="card">
+            <span class="lbl" data-i18n="sec.fill">Fill in from orOS</span>
+            <div class="chips">
+              <button type="button" id="fill-inv" class="chip small" data-i18n="fill.inv">Business profile (Invoices)</button>
+              <button type="button" id="fill-ct" class="chip small" data-i18n="fill.ct">A contact</button>
+              <button type="button" id="fill-brand" class="chip small" data-i18n="fill.brand">Brand kit (Atelier)</button>
+            </div>
+            <p id="fill-none" class="hint small" data-i18n="fill.none" hidden>When you use Invoices, Contacts or Atelier, their details can fill this in with one tap.</p>
+          </div>
+
+          <details class="sec" open>
+            <summary data-i18n="sec.details">Your details</summary>
+            <div class="grid">
+              <label class="fld wide"><span data-i18n="f.nm">Name of this signature</span><input id="f-nm" maxlength="60" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.lang">Language of the signature</span>
+                <select id="f-lang"><option value="en">English</option><option value="el">Ελληνικά</option></select></label>
+              <label class="fld"><span data-i18n="f.name">Full name</span><input id="f-name" maxlength="80" autocomplete="name"></label>
+              <label class="fld"><span data-i18n="f.pron">Pronouns</span><input id="f-pron" maxlength="30" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.title">Job title</span><input id="f-title" maxlength="80" autocomplete="organization-title"></label>
+              <label class="fld"><span data-i18n="f.dept">Department</span><input id="f-dept" maxlength="80" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.company">Company</span><input id="f-company" maxlength="100" autocomplete="organization"></label>
+              <label class="fld"><span data-i18n="f.vat">VAT number</span><input id="f-vat" maxlength="30" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.phone">Phone</span><input id="f-phone" type="tel" maxlength="40" autocomplete="tel"></label>
+              <label class="fld"><span data-i18n="f.mobile">Mobile</span><input id="f-mobile" type="tel" maxlength="40" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.email">Email</span><input id="f-email" type="email" maxlength="120" autocomplete="email"></label>
+              <label class="fld"><span data-i18n="f.web">Website</span><input id="f-web" type="url" maxlength="300" autocomplete="url" inputmode="url"></label>
+              <label class="fld wide"><span data-i18n="f.addr">Address</span><textarea id="f-addr" rows="2" maxlength="200"></textarea></label>
+              <label class="fld wide"><span data-i18n="f.line">Short line (slogan, hours, a quote)</span><input id="f-line" maxlength="160" autocomplete="off"></label>
+            </div>
+          </details>
+
+          <details class="sec" open>
+            <summary data-i18n="sec.look">Look</summary>
+            <span class="lbl" id="tpl-lbl" data-i18n="f.tpl">Layout</span>
+            <div id="tpls" class="tpls" role="radiogroup" aria-labelledby="tpl-lbl"></div>
+            <div class="grid">
+              <label class="fld"><span data-i18n="f.acc">Main colour</span><input id="f-acc" type="color"></label>
+              <label class="fld"><span data-i18n="f.txt">Text colour</span><input id="f-txt" type="color"></label>
+              <label class="fld"><span data-i18n="f.font">Font</span><select id="f-font"></select></label>
+              <label class="fld"><span data-i18n="f.size">Text size</span>
+                <span class="range"><input id="f-size" type="range" min="11" max="16" step="1"><output id="o-size"></output></span></label>
+              <label class="fld"><span data-i18n="f.lab">Before phone and email</span>
+                <select id="f-lab">
+                  <option value="l" data-i18n="lab.l">Letters (T, M, E)</option>
+                  <option value="w" data-i18n="lab.w">Words (Phone, Email)</option>
+                  <option value="n" data-i18n="lab.n">Nothing</option>
+                </select></label>
+              <label class="fld"><span data-i18n="f.shape">Photo shape</span>
+                <select id="f-shape"><option value="square" data-i18n="shape.square">Square</option><option value="round" data-i18n="shape.round">Round</option></select></label>
+            </div>
+            <label class="check"><input type="checkbox" id="f-div"><span data-i18n="f.div">Divider line</span></label>
+            <label class="check"><input type="checkbox" id="f-icons"><span data-i18n="f.icons">Social icons (instead of names)</span></label>
+          </details>
+
+          <details class="sec">
+            <summary data-i18n="sec.pics">Logo and photo</summary>
+            <p class="hint small" data-i18n="pics.hint">Pictures stay on your orOS disk and are put inside the signature. Gmail and Outlook on the web drop pictures put inside a signature: for those, also give the address of the picture on your own website.</p>
+            <div id="pic-logo" class="pic"></div>
+            <div id="pic-photo" class="pic"></div>
+          </details>
+
+          <details class="sec">
+            <summary data-i18n="sec.social">Social profiles and button</summary>
+            <ul id="so-list" class="so-list"></ul>
+            <button type="button" id="so-add" class="chip small" data-i18n="btn.addSocial">Add a profile</button>
+            <div class="grid">
+              <label class="fld"><span data-i18n="f.ctaT">Button text</span><input id="f-ctaT" maxlength="40" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.ctaU">Button link (booking page, shop…)</span><input id="f-ctaU" type="url" maxlength="1000" inputmode="url" autocomplete="off"></label>
+            </div>
+          </details>
+
+          <details class="sec">
+            <summary data-i18n="sec.banner">Banner</summary>
+            <p class="hint small" data-i18n="banner.hint">A picture under the signature for an offer, an event or a new product. It shows only between the two dates (leave them empty for always).</p>
+            <div id="pic-ban" class="pic"></div>
+            <div class="grid">
+              <label class="fld wide"><span data-i18n="f.banLink">Banner link</span><input id="f-banLink" type="url" maxlength="1000" inputmode="url" autocomplete="off"></label>
+              <label class="fld"><span data-i18n="f.banFrom">From</span><input id="f-banFrom" type="date"></label>
+              <label class="fld"><span data-i18n="f.banTo">Until</span><input id="f-banTo" type="date"></label>
+            </div>
+          </details>
+
+          <details class="sec">
+            <summary data-i18n="sec.extra">QR code and legal text</summary>
+            <label class="check"><input type="checkbox" id="f-qr"><span data-i18n="f.qr">A QR code with my contact card (vCard)</span></label>
+            <label class="fld wide"><span data-i18n="f.legal">Legal text or disclaimer</span><textarea id="f-legal" rows="4" maxlength="800"></textarea></label>
+            <span class="lbl" data-i18n="legal.presets">Ready texts</span>
+            <div class="chips">
+              <button type="button" class="chip small" data-legal="conf" data-i18n="legal.conf">Confidential</button>
+              <button type="button" class="chip small" data-legal="gdpr" data-i18n="legal.gdpr">Personal data (GDPR)</button>
+              <button type="button" class="chip small" data-legal="env" data-i18n="legal.env">Think before you print</button>
+              <button type="button" class="chip small" data-legal="hours" data-i18n="legal.hours">Not urgent outside hours</button>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- ========== Preview + use ========== -->
+      <section id="out" role="tabpanel" aria-labelledby="tab-use">
+        <div class="card" id="out-card">
+          <div class="row">
+            <label for="target" class="lbl" data-i18n="f.target">Where will you use it?</label>
+            <select id="target">
+              <option value="gmail">Gmail</option>
+              <option value="outlookweb" data-i18n="tg.outlookweb">Outlook (new, web)</option>
+              <option value="outlook" data-i18n="tg.outlook">Outlook classic (Windows)</option>
+              <option value="thunderbird">Thunderbird</option>
+              <option value="apple" data-i18n="tg.apple">Apple Mail</option>
+              <option value="oros" data-i18n="tg.oros">orOS Mail</option>
+              <option value="other" data-i18n="tg.other">Another app or phone</option>
+            </select>
+          </div>
+          <div class="opts">
+            <label class="check"><input type="checkbox" id="pv-short"><span data-i18n="pv.short">Short version (for replies)</span></label>
+            <label class="check"><input type="checkbox" id="pv-dark"><span data-i18n="pv.dark">Dark mail app</span></label>
+            <label class="check"><input type="checkbox" id="pv-phone"><span data-i18n="pv.phone">Phone width</span></label>
+          </div>
+          <div id="pv-wrap" class="pv-wrap">
+            <div id="pv-mail" class="pv-mail">
+              <div class="pv-head"><span data-i18n="pv.to">To</span>: <span data-i18n="pv.toWho">a client</span></div>
+              <iframe id="pv" title="Preview" sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" id="copy-btn" class="chip primary" data-i18n="btn.copy">Copy signature</button>
+            <button type="button" id="mail-btn" class="chip" data-i18n="btn.mail" hidden>Use in orOS Mail</button>
+            <button type="button" id="code-btn" class="chip" data-i18n="btn.code">Copy HTML code</button>
+            <button type="button" id="html-btn" class="chip" data-i18n="btn.html">Save .html</button>
+            <button type="button" id="txt-btn" class="chip" data-i18n="btn.txt">Save .txt</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="lbl" data-i18n="sec.check">Check</span>
+          <ul id="checks" class="checks"></ul>
+        </div>
+
+        <div class="card">
+          <span class="lbl" id="steps-title" data-i18n="sec.steps">How to add it</span>
+          <ol id="steps" class="steps"></ol>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- More -->
+  <div id="scrim" hidden></div>
+  <div id="more" class="dialog" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="dlg-head">
+      <h2 id="more-title" data-i18n="more.title">Signatures</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div class="menu">
+      <button type="button" id="dup-btn" class="menu-item" data-i18n="btn.dup">Duplicate this signature</button>
+      <button type="button" id="team-btn" class="menu-item" data-i18n="btn.team">Signatures for a team (CSV)…</button>
+      <button type="button" id="del-btn" class="menu-item danger" data-i18n="btn.del">Delete this signature</button>
+    </div>
+    <p class="hint small" data-i18n="more.hint">Your signatures follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>
+  </div>
+
+  <!-- Team -->
+  <div id="team" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="team-title" hidden>
+    <div class="dlg-head">
+      <h2 id="team-title" data-i18n="team.title">Signatures for a team</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <p class="hint small" data-i18n="team.hint">One signature per person, with the look, company details and pictures of the signature open now. Paste a table (CSV) with a header row: name, title, department, email, phone, mobile, pronouns, photo (an https address).</p>
+    <label for="team-csv" class="sr-only" data-i18n="team.csv">Table (CSV)</label>
+    <textarea id="team-csv" rows="7" spellcheck="false"></textarea>
+    <div class="actions">
+      <button type="button" id="team-open" class="chip small" data-i18n="btn.openCsv">Open a CSV file</button>
+      <button type="button" id="team-sample" class="chip small" data-i18n="btn.sample">Save an example</button>
+    </div>
+    <p id="team-info" class="hint" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" id="team-zip" class="chip primary" data-i18n="btn.zip" disabled>Save all as .zip</button>
+    </div>
+  </div>
+
+  <!-- Pick (contacts, profiles, brand logos) -->
+  <div id="pick" class="dialog" role="dialog" aria-modal="true" aria-labelledby="pick-title" hidden>
+    <div class="dlg-head">
+      <h2 id="pick-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <input type="search" id="pick-q" autocomplete="off">
+    <ul id="pick-list" class="pick-list"></ul>
+  </div>
+
+  <!-- Confirm -->
+  <div id="ask" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ask-text" hidden>
+    <p id="ask-text"></p>
+    <div class="actions end">
+      <button type="button" id="ask-no" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="ask-yes" class="chip primary"></button>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+  <input type="file" id="file-in" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" hidden>
+
+  <script src="../designkit/assets.js?v=1.73.00"></script>
+  <script src="../qr/qr-encode.js?v=1.73.00"></script>
+  <script src="core.js?v=1.73.00"></script>
+  <script src="signature.js?v=1.73.00"></script>
+
+</body>
+</html>
