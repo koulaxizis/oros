@@ -809,7 +809,7 @@
     if (!accts.length && !svc.add) c0.appendChild(el("p", "msg msg-dim", t("v.none")));
     if (!svc.add) {
       c0.appendChild(actions(button(t("v.add"), "v.add", function () {
-        svc.add = { p: "woo", name: "", site: "", ck: "", cs: "", key: "", env: "test", vat: "", err: "" };
+        svc.add = { p: "woo", name: "", site: "", ck: "", cs: "", key: "", env: "test", vat: "", db: "", err: "" };
         render();
         var f = $("f-v-name");
         if (f) f.focus();
@@ -836,9 +836,11 @@
     if (pHint !== "v.plat." + f.p + ".hint") form.appendChild(el("div", "hint", pHint));
     var pName = (Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).name;
     form.appendChild(labelled(t("v.name"), "v-name", textInput("v-name", f.name, f.p === "woo" ? t("v.name.ph") : pName, function (v) { f.name = v; })));
-    var isSite = !!(Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).site;
+    var platInfo = Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {};
+    var isSite = !!platInfo.site, hasDb = !!platInfo.db;
     if (f.p !== "woo") {
       if (isSite) form.appendChild(labelled(siteLabel(f.p), "v-site", textInput("v-site", f.site, t("v.site.ph." + f.p) === "v.site.ph." + f.p ? t("v.site.ph") : t("v.site.ph." + f.p), function (v) { f.site = v; }, "url")));
+      if (hasDb) form.appendChild(labelled(t("v.db"), "v-db", textInput("v-db", f.db || "", t("v.db.ph"), function (v) { f.db = v; })));
       if (f.p === "tol") {
         form.appendChild(labelled(t("v.env"), "v-env", select([{ value: "test", label: t("v.env.test") }, { value: "live", label: t("v.env.live") }], f.env, "v-env", function (v) { f.env = v; })));
         var vin = textInput("v-vat", f.vat, t("v.vat.ph"), function (v) { f.vat = v; });
@@ -866,7 +868,7 @@
       f.err = "";
       render();
       var o = f.p === "tol" ? { p: "tol", name: f.name, env: f.env, vat: f.vat, keys: { key: f.key } }
-            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, keys: { key: f.key } }
+            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, db: hasDb ? f.db || "" : undefined, keys: { key: f.key } }
             : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
       Lk.add(o).then(function (id) {
         svc.add = null;
@@ -876,7 +878,7 @@
       }, function (er) {
         f.busy = false;
         var code = er && er.code;
-        f.err = code === "site" ? t("v.err.site") : code === "vat" ? t("v.err.vat")
+        f.err = code === "site" ? t("v.err.site") : code === "vat" ? t("v.err.vat") : code === "db" ? t("v.err.db")
               : code === "keys" ? badKeys(f.p) : svcErr(code || "save", f.p);
         render();
       });
@@ -901,6 +903,10 @@
     if (a.vat) {
       info.appendChild(el("dt", null, t("v.vat")));
       info.appendChild(el("dd", null, a.vat));
+    }
+    if (a.db) {
+      info.appendChild(el("dt", null, t("v.db")));
+      info.appendChild(el("dd", null, a.db));
     }
     var m = Lk.mode(a.id);
     info.appendChild(el("dt", null, t("v.via")));

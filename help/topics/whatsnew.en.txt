@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.64.00
+- CRM: import from Odoo (19 or Odoo Online). Companies come in with their people and VAT ID, people on their own as customers, opportunities as deals; your own company stays out. orOS only reads Odoo; connect it in Settings › Connected services.
+
 ## Version 1.63.00
 - Maps: public transport. Find connections by bus, metro, tram and train (leave now, depart at or arrive by), with the lines in their colours, changes, walking and live delays. Open a trip to see it on the map, share it or save it to My tracks. Departure boards for any stop, stops on the map and live vehicles. Timetables come from Transitous, a free community service built on open data: in Greece, Athens, Thessaloniki and Hellenic Train.
 

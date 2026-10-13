@@ -17,6 +17,7 @@
 //     env   (fixed-host platforms only) "test" | "live": which of the
 //           platform's environments (separate accounts and keys)
 //     vat   (invoicing providers only) the issuer's 9-digit ΑΦΜ
+//     db    (Odoo only) the database name, "" when the address has one
 //   A row of a platform this version doesn't know is dropped by the
 //   merge here (an older device keeps living without it; the device
 //   that added it keeps it, the union restores it on the next pull).
@@ -47,6 +48,7 @@
   var NAME_LEN = 60, SITE_LEN = 200, SEAL_LEN = 4000;
   var MAX_ACCTS = 50;
   var VAT_RE = /^[0-9]{9}$/;
+  var DB_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$/;
 
   // Platforms. fields: what the Add dialog asks for (keys = secrets).
   //   key re: the exact shape of each secret, so a typo shows before a call
@@ -153,6 +155,20 @@
       keys: [{ k: "key", re: /^[A-Za-z0-9]{32,128}$/ }],
       apps: ["crm", "budget"],
       probe: "/clients?per_page=1"
+    },
+    // Odoo (wave 4D): the person's own install or <name>.odoo.com,
+    // Odoo 19's JSON-2 API (POST /json/2/<model>/<method>, Bearer API
+    // key, X-Odoo-Database when the server has several databases).
+    // Contacts and opportunities into CRM. Read-only: only search_read,
+    // with fixed fields and filters.
+    odoo: {
+      name: "Odoo",
+      site: true,
+      db: true,
+      root: "/json/2",
+      keys: [{ k: "key", re: /^[A-Za-z0-9_-]{20,128}$/ }],
+      apps: ["crm"],
+      probe: { m: "POST", path: "/res.company/search_read", body: { fields: ["partner_id"], limit: 1 } }
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -182,7 +198,8 @@
   // → "https://shop.example.gr" / "https://example.gr/shop"; null when
   // it is not a public https address (http:// is refused: the keys
   // would travel in clear).
-  function normSite(input) {
+  // p: the platform, for its own app paths ("/odoo", "/web" for Odoo)
+  function normSite(input, p) {
     var s = typeof input === "string" ? input.trim() : "";
     if (!s || s.length > SITE_LEN) return null;
     if (/^http:\/\//i.test(s)) return null;
@@ -191,7 +208,8 @@
     if (!m) return null;
     var host = m[1].toLowerCase().replace(/\.$/, "");
     if (!validHost(host)) return null;
-    var path = (m[2] || "").replace(/\/+$/, "").replace(/\/wp-json(\/.*)?$/i, "").replace(/\/api\/v1$/i, "");
+    var path = (m[2] || "").replace(/\/+$/, "").replace(/\/wp-json(\/.*)?$/i, "").replace(/\/api\/v1$/i, "").replace(/\/json\/2$/i, "");
+    if (p === "odoo") path = path.replace(/\/(odoo|web)(\/.*)?$/i, "");
     if (!BASE_RE.test(path) || /(^|\/)\.\.?(\/|$)/.test(path)) return null;
     return "https://" + host + path;
   }
@@ -208,7 +226,7 @@
     if (!isInt(x.m) || x.m < 0 || !has(PLATFORMS, x.p)) return null;
     if (x.d === 1) return { id: x.id, m: x.m, p: x.p, d: 1 };
     var pl = PLATFORMS[x.p];
-    var site = pl.site ? normSite(x.site) : "";
+    var site = pl.site ? normSite(x.site, x.p) : "";
     if (site === null) return null;
     if (pl.env && !(typeof x.env === "string" && has(pl.env, x.env))) return null;
     if (pl.vat && !(typeof x.vat === "string" && VAT_RE.test(x.vat))) return null;
@@ -218,6 +236,7 @@
     var out = { id: x.id, m: x.m, p: x.p, name: name, site: site };
     if (pl.env) out.env = x.env;                  // only where the platform has them: a WooCommerce
     if (pl.vat) out.vat = x.vat;                  // row keeps the bytes it had before (R26)
+    if (pl.db) out.db = typeof x.db === "string" && DB_RE.test(x.db) ? x.db : "";
     out.ks = ks;
     out.s = s;
     out.sm = s && isInt(x.sm) && x.sm >= 0 ? x.sm : 0;
@@ -334,6 +353,18 @@
       PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
       TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/,
       IN_ACTIVE = /^active$/;
+  // Odoo (wave 4D): JSON-2 search_read bodies. The filters and field
+  // lists are fixed: a body must carry exactly these (compared as JSON).
+  var ODOO = {
+    co_f: ["partner_id"],
+    pt_dom: [["user_ids", "=", false]],
+    pt_f: ["id", "name", "is_company", "parent_id", "type", "email", "phone", "website", "street", "street2", "zip", "city", "country_id", "vat", "function"],
+    ld_dom: [["type", "=", "opportunity"], ["active", "in", [true, false]]],
+    ld_f: ["id", "name", "partner_id", "expected_revenue", "probability", "active", "date_deadline", "date_closed", "lost_reason_id", "company_currency"],
+    ord: "id"
+  };
+  var ODOO_J = {};
+  Object.keys(ODOO).forEach(function (k) { ODOO_J[k] = JSON.stringify(ODOO[k]); });
   var EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
   function okEmail(v) { return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v); }
   function okName(v) { return typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v); }
@@ -375,7 +406,11 @@
     // already left: only new addresses are added that way
     mcbatch: function (b) {
       return Array.isArray(b.members) && !(b.members.some(function (x) { return x.status === "subscribed"; }) && b.update_existing !== false);
-    }
+    },
+    // Odoo: the fixed filter and fields must be there (without them
+    // search_read reads every field of every record)
+    odco: function (b) { return has(b, "fields"); },
+    odq: function (b) { return has(b, "domain") && has(b, "fields") && has(b, "order"); }
   };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
@@ -440,6 +475,11 @@
       ["GET", /^\/statics$/, null, null],
       ["GET", /^\/clients$/, { per_page: PER, page: NUM, status: IN_ACTIVE }, null],
       ["GET", /^\/payments$/, { per_page: PER, page: NUM }, null]
+    ],
+    odoo: [
+      ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }, "odco"],
+      ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"],
+      ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -454,6 +494,9 @@
     if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);
     if (kind === "bvlist") return listOf(v, 1, 1, function (n) { return isInt(n) && n > 0 && n < 1e12; });
     if (kind === "emails") return listOf(v, 1, 150, okEmail);
+    if (kind === "olim") return isInt(v) && v >= 1 && v <= 200;
+    if (kind === "ooff") return isInt(v) && v >= 0 && v <= 10000000;
+    if (kind[0] === "=") return has(ODOO_J, kind.slice(1)) && JSON.stringify(v) === ODOO_J[kind.slice(1)];
     return false;
   }
   // "" when the request may go, else the reason.
@@ -524,19 +567,28 @@
     if (p === "pdrive") return ["x-api-token", keys.key];
     if (p === "stripe") return ["Authorization", "Bearer " + keys.key];
     if (p === "ininja") return ["X-API-TOKEN", keys.key];
+    if (p === "odoo") return ["Authorization", "Bearer " + keys.key];
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).
-  function extraHeaders(p) {
-    return p === "ininja" ? { "X-Requested-With": "XMLHttpRequest" } : {};
+  function extraHeaders(p, acct) {
+    if (p === "ininja") return { "X-Requested-With": "XMLHttpRequest" };
+    if (p === "odoo" && acct && acct.db) return { "X-Odoo-Database": acct.db };
+    return {};
+  }
+  // The connection check's request (a GET path, or a whole request).
+  function probeReq(p) {
+    var pr = PLATFORMS[p] && PLATFORMS[p].probe;
+    if (typeof pr === "string") return { m: "GET", path: pr };
+    return pr ? JSON.parse(JSON.stringify(pr)) : null;
   }
 
   var api = {
     VER: VER, ID_RE: ID_RE, PLATFORMS: PLATFORMS, PLATFORM_IDS: PLATFORM_IDS, MAX_ACCTS: MAX_ACCTS,
-    ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, TOL_TYPES: TOL_TYPES,
+    ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

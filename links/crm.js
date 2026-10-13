@@ -1,13 +1,15 @@
 // ============================================================
 // orOS Connected services — CRM platforms (links/crm.js, v1.0.0)
-// Pure: the requests that read a HubSpot, Pipedrive or Invoice Ninja
-// (clients only, wave 4C) account, what
+// Pure: the requests that read a HubSpot, Pipedrive, Invoice Ninja
+// (clients only, wave 4C) or Odoo (contacts and opportunities, wave 4D)
+// account, what
 // their answers mean, and the plan that brings them into CRM
 // (integrations wave 4). No DOM, no storage, no network; crm/platforms.js
 // makes the calls through the shell (orosLinks.call) and applies the plan.
 //   KINDS[p]: what is read, in order (stages first: deals need them)
-//   req(p, kind, at) → one GET (at = the page marker, "" for the first)
-//   read(p, kind, data) → { items, next } (next "" = the last page)
+//   req(p, kind, at) → one request (at = the page marker, "" for the first;
+//     a GET everywhere but Odoo, whose search_read is a POST that reads)
+//   read(p, kind, data, at) → { items, next } (next "" = the last page)
 //   plan(C, crm, got, ctx) → what changes in CRM (C = OrosCrmCore)
 // The platform is only read. CRM stays the source of truth: a record
 // deleted here is not brought back unless asked; a customer that is
@@ -22,13 +24,18 @@
 
   var L = typeof module !== "undefined" && module.exports ? require("./core.js") : root.OrosLinksCore;
 
-  var PLATFORMS = ["hubspot", "pdrive", "ininja"];
+  var PLATFORMS = ["hubspot", "pdrive", "ininja", "odoo"];
   var KINDS = {
     hubspot: ["stages", "orgs", "people", "deals"],
     pdrive: ["stages", "orgs", "people", "deals", "acts"],
-    ininja: ["orgs"]                    // clients, with their contacts inside
+    ininja: ["orgs"],                   // clients, with their contacts inside
+    odoo: ["own", "orgs", "deals"]      // own = the companies' own contacts (left out); orgs = every contact
   };
-  var MAX = { stages: 1000, orgs: 5000, people: 10000, deals: 5000, acts: 5000 };
+  var MAX = { own: 200, stages: 1000, orgs: 10000, people: 10000, deals: 5000, acts: 5000 };
+  // A kind the account may not have: "notfound" there reads as none
+  // (an Odoo without the CRM app has no opportunities).
+  var OPTIONAL = { odoo: { deals: 1 } };
+  var OD_PAGE = 200;
   var HS_PAGE = 100, PD_PAGE = 500;
   var HS_PATH = {
     orgs: "/crm/v3/objects/companies?limit=" + HS_PAGE + "&properties=name,domain,phone,address,city,zip,country,industry",
@@ -86,7 +93,16 @@
   }
 
   // ---------- requests ----------
+  function odBody(dom, f, at) {
+    var O = L.ODOO;
+    return { domain: JSON.parse(JSON.stringify(O[dom])), fields: O[f].slice(), limit: OD_PAGE, offset: +at || 0, order: O.ord };
+  }
   function req(p, kind, at) {
+    if (p === "odoo") {
+      if (kind === "own") return { m: "POST", path: "/res.company/search_read", body: { fields: L.ODOO.co_f.slice(), limit: 200 } };
+      if (kind === "deals") return { m: "POST", path: "/crm.lead/search_read", body: odBody("ld_dom", "ld_f", at) };
+      return { m: "POST", path: "/res.partner/search_read", body: odBody("pt_dom", "pt_f", at) };
+    }
     if (p === "ininja") return { m: "GET", path: "/clients?per_page=100&page=" + (at || "1") + "&status=active" };
     if (p === "hubspot") {
       if (kind === "stages") return { m: "GET", path: "/crm/v3/pipelines/deals" };
@@ -164,6 +180,37 @@
       country: "", job: "", afm: txt(o.vat_number, 20).replace(/\s+/g, "").replace(/^EL/i, ""), ppl: ppl
     };
   }
+  // Odoo: many2one fields come as [id, "name"] or false
+  function m2o(v) { return Array.isArray(v) && v.length >= 1 ? xid(v[0]) : ""; }
+  function m2oName(v, max) { return Array.isArray(v) && v.length >= 2 ? txt(v[1], max) : ""; }
+  function odStr(v, max) { return v === false || v === null ? "" : txt(v, max); }
+  function odPartner(o) {
+    if (!o || typeof o !== "object") return null;
+    var name = odStr(o.name, 120);
+    if (!name) return null;
+    var web = odStr(o.website, 300);
+    return {
+      xid: xid(o.id), name: name, co: o.is_company === true, parent: m2o(o.parent_id), type: typeof o.type === "string" ? o.type : "contact",
+      phone: odStr(o.phone, 40), email: email(odStr(o.email, 120)),
+      web: web && !/^https?:\/\//i.test(web) ? "https://" + web : web,
+      addr: [[odStr(o.street, 120), odStr(o.street2, 120)].filter(Boolean).join(" "), [odStr(o.zip, 20), odStr(o.city, 60)].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+      country: m2oName(o.country_id, 60), job: "", role: odStr(o["function"], 60),
+      afm: odStr(o.vat, 20).replace(/\s+/g, "").replace(/^(EL|GR)/i, "")
+    };
+  }
+  function odLead(o) {
+    if (!o || typeof o !== "object") return null;
+    var title = odStr(o.name, 120);
+    if (!title) return null;
+    var pr = prob(o.probability);
+    var st = o.active === false ? "lost" : pr !== null && pr >= 100 ? "won" : "open";
+    var pid = m2o(o.partner_id);
+    return {
+      xid: xid(o.id), title: title, val: cents(o.expected_revenue), cur: cur(m2oName(o.company_currency, 3)), status: st,
+      stage: "", prob: st === "open" ? pr : null, close: ymd(o.date_deadline), cd: st !== "open" ? ymd(o.date_closed) : "",
+      why: st === "lost" ? m2oName(o.lost_reason_id, 200) : "", org: pid, person: pid
+    };
+  }
   var READ = {
     hubspot: {
       orgs: hsOrg, people: hsPerson, deals: hsDeal
@@ -205,7 +252,18 @@
     }
   };
   // → { items, next } ; next "" = no more pages
-  function read(p, kind, data) {
+  function read(p, kind, data, at) {
+    if (p === "odoo") {
+      var list0 = Array.isArray(data) ? data : [], out0 = [];
+      if (kind === "own") {
+        list0.forEach(function (c) { var id = c && m2o(c.partner_id); if (id) out0.push({ xid: id }); });
+        return { items: out0, next: "" };
+      }
+      var fn0 = kind === "deals" ? odLead : odPartner;
+      list0.forEach(function (o) { var x = fn0(o); if (x && x.xid) out0.push(x); });
+      var off = (+at || 0) + list0.length;
+      return { items: out0, next: list0.length >= OD_PAGE && off < 10000000 ? String(off) : "" };
+    }
     if (p === "hubspot" && kind === "stages") return { items: hsStages(data), next: "" };
     if (p === "ininja") {
       var its = [];
@@ -302,8 +360,33 @@
     }
 
     var orgs = got.orgs || [], people = (got.people || []).slice(), deals = got.deals || [];
+    if (p === "odoo") {
+      // one list of contacts: companies, their people, and people on
+      // their own; the account's own companies (and their staff) stay out
+      var own = {}, all = {};
+      (got.own || []).forEach(function (x) { own[x.xid] = 1; });
+      orgs.forEach(function (x) { all[x.xid] = x; });
+      var top = function (x) { return x.parent && all[x.parent] ? x.parent : ""; };
+      var cos = [], ppl0 = [];
+      orgs.forEach(function (x) {
+        if (own[x.xid] || (x.parent && own[x.parent])) return;
+        if (top(x)) {
+          if (x.type === "contact") ppl0.push({ xid: x.xid, name: x.name, email: x.email, phone: x.phone, role: x.role, org: x.parent });
+          return;
+        }
+        if (x.co) cos.push(x);
+        else ppl0.push({ xid: x.xid, name: x.name, email: x.email, phone: x.phone, role: x.role, org: "", web: x.web, addr: x.addr, country: x.country, afm: x.afm });
+      });
+      orgs = cos;
+      people = ppl0;
+      // a deal with a company's contact belongs to the company
+      deals = deals.map(function (d) {
+        var x = d.org && all[d.org];
+        return x && top(x) ? Object.assign({}, d, { org: x.parent }) : d;
+      });
+    }
     orgs.forEach(function (o) { if (o.ppl) people = people.concat(o.ppl); });
-    var custF = CUST_F.concat(p === "ininja" ? ["afm"] : []);
+    var custF = CUST_F.concat(p === "ininja" || p === "odoo" ? ["afm"] : []);
     var stageMap = {};
     (got.stages || []).forEach(function (s) { stageMap[s.xid] = s; });
     function stageOf(d) { return d.stage && has(stageMap, d.stage) ? stageMap[d.stage] : null; }
@@ -412,7 +495,7 @@
   }
 
   var api = {
-    PLATFORMS: PLATFORMS, KINDS: KINDS, MAX: MAX,
+    PLATFORMS: PLATFORMS, KINDS: KINDS, MAX: MAX, OPTIONAL: OPTIONAL,
     req: req, read: read, plan: plan, count: count, bucket: bucket
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -212,6 +212,7 @@
     var o = { id: a.id, p: a.p, name: a.name, site: a.site, ks: a.ks, synced: !!a.s, platform: L.PLATFORMS[a.p].name };
     if (a.env) o.env = a.env;
     if (a.vat) o.vat = a.vat;
+    if (a.db) o.db = a.db;
     return o;
   }
   function list(p) {
@@ -221,14 +222,16 @@
     var a = L.find(read(), id);
     return a && a.d !== 1 ? pub(a) : null;
   }
-  // add({ p, name, site?, env?, vat?, keys }) → Promise<id>; rejects
-  // with a code: "p" | "site" | "env" | "vat" | "keys" | "full" | "save"
+  // add({ p, name, site?, env?, vat?, db?, keys }) → Promise<id>; rejects
+  // with a code: "p" | "site" | "env" | "vat" | "db" | "keys" | "full" | "save"
   function add(o) {
     o = o || {};
     var pl = L.PLATFORMS[o.p];
     if (!pl) return Promise.reject(err("p"));
-    var site = pl.site ? L.normSite(o.site) : "";
+    var site = pl.site ? L.normSite(o.site, o.p) : "";
     if (site === null) return Promise.reject(err("site"));
+    var db = pl.db && typeof o.db === "string" ? o.db.trim() : "";
+    if (db && !L.DB_RE.test(db)) return Promise.reject(err("db"));
     if (pl.env && !(typeof o.env === "string" && Object.prototype.hasOwnProperty.call(pl.env, o.env))) return Promise.reject(err("env"));
     var vat = pl.vat ? String(o.vat == null ? "" : o.vat).replace(/\s+/g, "").replace(/^EL/i, "") : "";
     if (pl.vat && !L.VAT_RE.test(vat)) return Promise.reject(err("vat"));
@@ -240,6 +243,7 @@
       var row = { id: id, m: now, p: o.p, name: L.cleanText(o.name, L.NAME_LEN) || pl.name, site: site };
       if (pl.env) row.env = o.env;
       if (pl.vat) row.vat = vat;
+      if (pl.db) row.db = db;
       row.ks = 0; row.s = ""; row.sm = 0; row.d = 0;
       if (!putAcct(row)) { dropLocal(id); throw err("save"); }
       return id;
@@ -251,7 +255,7 @@
     var row = JSON.parse(JSON.stringify(a));
     if (fields && typeof fields.name === "string") row.name = L.cleanText(fields.name, L.NAME_LEN) || row.name;
     if (fields && typeof fields.site === "string") {
-      var s = L.normSite(fields.site);
+      var s = L.normSite(fields.site, a.p);
       if (!s) return false;
       if (s !== row.site) setMode(id, "");
       row.site = s;
@@ -317,7 +321,7 @@
     var headers = { Accept: "application/json" };
     if (a.p === "woo" && how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
     else { var h = L.authHeader(a.p, keys); headers[h[0]] = h[1]; }
-    var ex = L.extraHeaders(a.p);
+    var ex = L.extraHeaders(a.p, a);
     Object.keys(ex).forEach(function (k) { headers[k] = ex[k]; });
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
@@ -336,6 +340,7 @@
     else if (a.p !== "woo") {                          // the person's own site, one key
       var sp = L.siteParts(a.site);
       body.host = sp.host; body.base = sp.base; body.key = keys.key;
+      if (a.db) body.db = a.db;
     } else {
       var parts = L.siteParts(a.site);
       body.host = parts.host; body.base = parts.base; body.ck = keys.ck; body.cs = keys.cs;
@@ -369,7 +374,7 @@
     // tax document) is never retried another way after it was tried:
     // when the way is not known yet, a read finds it first.
     if (once && !prefs().mode[id]) {
-      return call(id, [{ m: "GET", path: pl.probe }]).then(function () {
+      return call(id, [L.probeReq(a.p)]).then(function () {
         if (!prefs().mode[id]) throw err("network");
         return call(id, reqs);
       });
@@ -420,7 +425,7 @@
   function test(id) {
     var a = L.find(read(), id);
     if (!a || a.d === 1) return Promise.resolve("gone");
-    return call(id, [{ m: "GET", path: L.PLATFORMS[a.p].probe }]).then(function (res) {
+    return call(id, [L.probeReq(a.p)]).then(function (res) {
       return statusCode(res[0]);
     }, function (e) { return (e && e.code) || "network"; });
   }
@@ -434,7 +439,7 @@
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
-    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site }; }); }
+    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db }; }); }
   };
 
   registerSlice();

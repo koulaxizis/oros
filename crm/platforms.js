@@ -1,8 +1,9 @@
 // ============================================================
 // orOS CRM — CRM platforms (crm/platforms.js)
 // Bring companies, contacts, deals and (Pipedrive) open activities
-// from a HubSpot or Pipedrive account, or the clients of an Invoice
-// Ninja account, into CRM (integrations waves 4A and 4C).
+// from a HubSpot or Pipedrive account, the clients of an Invoice
+// Ninja account, or an Odoo's contacts and opportunities, into CRM
+// (integrations waves 4A, 4C and 4D).
 // The account and its key live in the shell (Settings › Connected
 // services, parent.orosLinks); this file never sees a key.
 // links/crm.js builds the requests, reads the answers and makes the
@@ -20,15 +21,15 @@
 
   var S = {
     en: {
-      btn: "Import from HubSpot, Pipedrive or Invoice Ninja", title: "CRM platforms",
-      intro: "Bring companies, contacts and deals here (Pipedrive's open activities as follow-ups, Invoice Ninja's clients with their VAT ID). orOS only reads the platform: nothing there changes.",
-      none: "Connect HubSpot, Pipedrive or Invoice Ninja in Settings › Connected services first.",
+      btn: "Import from HubSpot, Pipedrive, Invoice Ninja or Odoo", title: "CRM platforms",
+      intro: "Bring companies, contacts and deals here (Pipedrive's open activities as follow-ups, Invoice Ninja's clients and Odoo's contacts with their VAT ID, Odoo's opportunities as deals). orOS only reads the platform: nothing there changes.",
+      none: "Connect HubSpot, Pipedrive, Invoice Ninja or Odoo in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open CRM from the orOS desktop to import from a CRM platform.",
       acct: "Account", upd: "Update what was imported before, where it changed there",
-      updHint: "Only the platform's fields: name, phone, e-mail, website, address, people (and VAT ID from Invoice Ninja), deal stage and value. Status, tags, notes, stars and history here are never touched.",
+      updHint: "Only the platform's fields: name, phone, e-mail, website, address, people (and VAT ID from Invoice Ninja and Odoo), deal stage and value. Status, tags, notes, stars and history here are never touched.",
       revive: "Bring back what was deleted here",
       read: "Read the account", reading: "Reading {what}… {n}",
-      "k.stages": "stages", "k.orgs": "companies", "k.people": "contacts", "k.deals": "deals", "k.acts": "activities",
+      "k.own": "your companies", "k.stages": "stages", "k.orgs": "companies", "k.people": "contacts", "k.deals": "deals", "k.acts": "activities",
       plan: "{c} new customers, {d} new deals, {f} new follow-ups · {u} updated · {s} unchanged",
       here: "{n} already here under the same name or e-mail: used as they are.",
       gone: "{n} deleted here earlier: not brought back.",
@@ -44,18 +45,18 @@
       "err.busy": "The platform asks to slow down. Try again in a minute.",
       "err.denied": "The key doesn't allow reading this. Give it read access to contacts, companies and deals.",
       "err.other": "Couldn't reach the platform. Try again later.",
-      close: "Close", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive", "p.ininja": "Invoice Ninja"
+      close: "Close", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive", "p.ininja": "Invoice Ninja", "p.odoo": "Odoo"
     },
     el: {
-      btn: "Εισαγωγή από HubSpot, Pipedrive ή Invoice Ninja", title: "Πλατφόρμες CRM",
-      intro: "Φέρε εδώ εταιρείες, επαφές και deals (τις ανοιχτές δραστηριότητες του Pipedrive ως υπενθυμίσεις, τους πελάτες του Invoice Ninja με το ΑΦΜ τους). Το orOS μόνο διαβάζει την πλατφόρμα: εκεί δεν αλλάζει τίποτα.",
-      none: "Σύνδεσε πρώτα HubSpot, Pipedrive ή Invoice Ninja στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      btn: "Εισαγωγή από HubSpot, Pipedrive, Invoice Ninja ή Odoo", title: "Πλατφόρμες CRM",
+      intro: "Φέρε εδώ εταιρείες, επαφές και deals (τις ανοιχτές δραστηριότητες του Pipedrive ως υπενθυμίσεις, τους πελάτες του Invoice Ninja και τις επαφές του Odoo με το ΑΦΜ τους, τις ευκαιρίες του Odoo ως deals). Το orOS μόνο διαβάζει την πλατφόρμα: εκεί δεν αλλάζει τίποτα.",
+      none: "Σύνδεσε πρώτα HubSpot, Pipedrive, Invoice Ninja ή Odoo στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το CRM από την επιφάνεια εργασίας του orOS για εισαγωγή από πλατφόρμα CRM.",
       acct: "Λογαριασμός", upd: "Ενημέρωση όσων ήρθαν παλιότερα, όπου άλλαξαν εκεί",
-      updHint: "Μόνο τα πεδία της πλατφόρμας: όνομα, τηλέφωνο, e-mail, ιστότοπος, διεύθυνση, άτομα (και ΑΦΜ από το Invoice Ninja), στάδιο και αξία deal. Η κατάσταση, οι ετικέτες, οι σημειώσεις, τα αστέρια και το ιστορικό εδώ δεν αλλάζουν ποτέ.",
+      updHint: "Μόνο τα πεδία της πλατφόρμας: όνομα, τηλέφωνο, e-mail, ιστότοπος, διεύθυνση, άτομα (και ΑΦΜ από το Invoice Ninja και το Odoo), στάδιο και αξία deal. Η κατάσταση, οι ετικέτες, οι σημειώσεις, τα αστέρια και το ιστορικό εδώ δεν αλλάζουν ποτέ.",
       revive: "Επαναφορά όσων διαγράφηκαν εδώ",
       read: "Ανάγνωση λογαριασμού", reading: "Ανάγνωση: {what}… {n}",
-      "k.stages": "στάδια", "k.orgs": "εταιρείες", "k.people": "επαφές", "k.deals": "deals", "k.acts": "δραστηριότητες",
+      "k.own": "οι εταιρείες σου", "k.stages": "στάδια", "k.orgs": "εταιρείες", "k.people": "επαφές", "k.deals": "deals", "k.acts": "δραστηριότητες",
       plan: "{c} νέοι πελάτες, {d} νέα deals, {f} νέες υπενθυμίσεις · {u} ενημερώνονται · {s} χωρίς αλλαγή",
       here: "{n} υπάρχουν ήδη εδώ με το ίδιο όνομα ή e-mail: χρησιμοποιούνται όπως είναι.",
       gone: "{n} διαγράφηκαν εδώ παλιότερα: δεν επανέρχονται.",
@@ -71,7 +72,7 @@
       "err.busy": "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
       "err.denied": "Το κλειδί δεν επιτρέπει αυτή την ανάγνωση. Δώσε του δικαίωμα ανάγνωσης σε επαφές, εταιρείες και deals.",
       "err.other": "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.",
-      close: "Κλείσιμο", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive", "p.ininja": "Invoice Ninja"
+      close: "Κλείσιμο", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive", "p.ininja": "Invoice Ninja", "p.odoo": "Odoo"
     }
   };
   function t(k, params) {
@@ -121,11 +122,15 @@
       got[k] = [];
       return (function page(at) {
         return ask(a.id, M.req(a.p, k, at)).then(function (data) {
-          var r = M.read(a.p, k, data);
+          var r = M.read(a.p, k, data, at);
           got[k] = got[k].concat(r.items);
           onStep(k, got[k].length);
           if (got[k].length >= M.MAX[k]) { got[k] = got[k].slice(0, M.MAX[k]); capped.push(k); return; }
           if (r.next) return page(r.next);
+        }, function (e) {
+          // a part the account doesn't have (Odoo without the CRM app)
+          if (e && e.code === "notfound" && M.OPTIONAL && M.OPTIONAL[a.p] && M.OPTIONAL[a.p][k]) return;
+          throw e;
         });
       })("").then(kind);
     }

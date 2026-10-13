@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive), Stripe and Invoice Ninja, all read-only; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe and Invoice Ninja, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -268,6 +268,22 @@ first and comes here only when that fails. Only GETs.
 | `/statics` | none (currency ids → codes) |
 | `/clients` | `per_page (≤100), page, status=active` |
 | `/payments` | `per_page (≤100), page` |
+
+### Odoo (`p: "odoo"`, CRM, read-only)
+
+`POST /v1 { op: "ext", p: "odoo", host, base, db?, key, reqs }`: the person's
+own Odoo (19+, or `<name>.odoo.com`); `host` and `base` checked like
+WooCommerce's, `db` (optional, only for Odoo: letters, digits, `._-`) goes
+out as `X-Odoo-Database`. `https://<host><base>/json/2<path>` with
+`Authorization: Bearer <key>`. Odoo doesn't answer browsers, so orOS comes
+here after one direct try. Only `search_read`, as POSTs that read (they may
+run side by side), each body exactly one of these (compared as JSON):
+
+| Path | Body |
+|---|---|
+| `/res.company/search_read` | `fields: ["partner_id"]`, `limit` (1–200) |
+| `/res.partner/search_read` | `domain: [["user_ids","=",false]]`, the fixed contact `fields`, `limit` (1–200), `offset`, `order: "id"` |
+| `/crm.lead/search_read` | `domain: [["type","=","opportunity"],["active","in",[true,false]]]`, the fixed opportunity `fields`, `limit`, `offset`, `order: "id"` |
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 

@@ -22,6 +22,9 @@
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
 //           POST /v1 { op: "ext", p: "ininja", host, base, key, reqs: [...] }
 //   Invoice Ninja https://<host><base>/api/v1<path> (X-API-TOKEN), read-only
+//           POST /v1 { op: "ext", p: "odoo", host, base, db?, key, reqs: [...] }
+//   Odoo https://<host><base>/json/2<path> (Bearer, X-Odoo-Database = db),
+//   read-only: search_read with fixed filters and fields (POSTs that read)
 //   req: { m: "GET" | "PUT" | "POST", path, body? (JSON text) }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
@@ -95,6 +98,16 @@ const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
       PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
       TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/,
       IN_ACTIVE = /^active$/;
+// Odoo (wave 4D): same fixed bodies as links/core.js ODOO
+const DB_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$/;
+const ODOO_J = {
+  co_f: JSON.stringify(["partner_id"]),
+  pt_dom: JSON.stringify([["user_ids", "=", false]]),
+  pt_f: JSON.stringify(["id", "name", "is_company", "parent_id", "type", "email", "phone", "website", "street", "street2", "zip", "city", "country_id", "vat", "function"]),
+  ld_dom: JSON.stringify([["type", "=", "opportunity"], ["active", "in", [true, false]]]),
+  ld_f: JSON.stringify(["id", "name", "partner_id", "expected_revenue", "probability", "active", "date_deadline", "date_closed", "lost_reason_id", "company_currency"]),
+  ord: JSON.stringify("id")
+};
 const EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
 const okEmail = (v) => typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v);
 const okName = (v) => typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v);
@@ -122,7 +135,11 @@ function okBvRow(x) {
 }
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
-  mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false)
+  mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
+  // Odoo: the fixed filter and fields must be there (without them
+  // search_read reads every field of every record)
+  odco: (b) => "fields" in b,
+  odq: (b) => "domain" in b && "fields" in b && "order" in b
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
@@ -245,6 +262,22 @@ export const PLATFORMS = {
       ["GET", /^\/clients$/, { per_page: PER, page: NUM, status: IN_ACTIVE }, null],
       ["GET", /^\/payments$/, { per_page: PER, page: NUM }, null]
     ]
+  },
+  // Odoo (wave 4D): the person's own install (or <name>.odoo.com), JSON-2
+  // API; host checked like WooCommerce's. Only search_read, so these
+  // POSTs read and may run side by side.
+  odoo: {
+    root: "/json/2",
+    db: true,
+    reads: true,
+    keys: { key: /^[A-Za-z0-9_-]{20,128}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    extraOf: (b) => (b.db ? { "X-Odoo-Database": b.db } : {}),
+    allow: [
+      ["POST", /^\/res\.company\/search_read$/, null, { fields: "=co_f", limit: "olim" }, "odco"],
+      ["POST", /^\/res\.partner\/search_read$/, null, { domain: "=pt_dom", fields: "=pt_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"],
+      ["POST", /^\/crm\.lead\/search_read$/, null, { domain: "=ld_dom", fields: "=ld_f", limit: "olim", offset: "ooff", order: "=ord" }, "odq"]
+    ]
   }
 };
 
@@ -261,6 +294,9 @@ function okVal(kind, v) {
   if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);
   if (kind === "bvlist") return listOf(v, 1, 1, (n) => Number.isInteger(n) && n > 0 && n < 1e12);
   if (kind === "emails") return listOf(v, 1, 150, okEmail);
+  if (kind === "olim") return Number.isInteger(v) && v >= 1 && v <= 200;
+  if (kind === "ooff") return Number.isInteger(v) && v >= 0 && v <= 10000000;
+  if (kind[0] === "=") return Object.prototype.hasOwnProperty.call(ODOO_J, kind.slice(1)) && JSON.stringify(v) === ODOO_J[kind.slice(1)];
   return false;
 }
 
@@ -313,6 +349,8 @@ export function validExt(b) {
     if (!validHost(b.host)) return "host";
     if (typeof b.base !== "string" || !BASE_RE.test(b.base) || /(^|\/)\.\.?(\/|$)/.test(b.base)) return "base";
   }
+  // a database name only where the platform has one (Odoo)
+  if (b.db !== undefined && !(pl.db && typeof b.db === "string" && DB_RE.test(b.db))) return "db";
   for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
   if (!Array.isArray(b.reqs) || !b.reqs.length || b.reqs.length > EXT_LIMITS.reqs) return "reqs";
   // a write that must happen once (an invoice) travels alone in its call
@@ -380,7 +418,8 @@ export async function runExt(b, fetchFn, now) {
     if (!url) { out[i] = { err: "network" }; return; }
     const headers = { Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" };
     headers[auth[0]] = auth[1];
-    if (pl.extra) Object.keys(pl.extra).forEach((k) => { headers[k] = pl.extra[k]; });
+    const extra = pl.extraOf ? pl.extraOf(b) : pl.extra;
+    if (extra) Object.keys(extra).forEach((k) => { headers[k] = extra[k]; });
     let body;
     if (r.body !== undefined) { headers["Content-Type"] = "application/json"; body = r.body; }
     const ctl = new AbortController();
@@ -401,7 +440,7 @@ export async function runExt(b, fetchFn, now) {
     }
   }
   // writes run one after another, in order; reads may overlap
-  const writes = b.reqs.some((r) => r.m !== "GET");
+  const writes = !pl.reads && b.reqs.some((r) => r.m !== "GET");
   async function worker() {
     while (next < b.reqs.length) {
       const i = next++;
