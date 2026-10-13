@@ -5669,3 +5669,13 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `maps/transit-core.js` (pure: requests, polyline decoder, strict copies of plan / stoptimes / stops / trips, vehicle position, sharing text, track), `maps/transit.js`, maps.js (host hooks `routeEnds`, `locate`, `reverseName`, `transitLink`, `openTransit`, `pendingTransit`; route bar button), `maps/route-core.js` 1.1.0 (links accept `mode=transit`), maps.css (wave 7 section; the control column wraps into a second column on short screens; four mode buttons fit the route bar at 360 px), index.html, sw.js precache. Device-local `oros-maps-transit`. Help EN/EL, credits.
 - Tests: `tests/maps-transit.test.js` (9), maps-route test +2. E2E /mnt/project-files/maps/e2e/transit-e2e.js (mock MOTIS; desktop + phone 360 px EL, v6 404 → v5, text-only rendering).
 - Not tested: the real api.transitous.org (blocked from the test container: CORS headers, real feed shapes, Greek coverage), a real phone, Safari.
+
+### 2026-10-13 — Connected services wave 4D: CRM ← Odoo — 1.64.00
+- Wave 4 of the integrations plan, last part (Odoo).
+  - **links/:** platform `odoo` (site + optional database + API key; JSON-2 search_read only, fixed bodies); `L.probeReq`, `L.extraHeaders(p, acct)`, account field `db`; `links/crm.js` reads contacts and opportunities. Contracts in Part II "Connected services" and Part VI.
+  - **Settings › Connected services:** Odoo (address, Database, API key); the account card shows the database.
+  - **CRM:** Settings › Import from HubSpot, Pipedrive, Invoice Ninja or Odoo.
+  - **Relay:** op `ext` accepts `odoo` (host/base like WooCommerce, `db`, POSTs that read).
+  - Credits: Odoo. Help: CRM, Settings, Privacy, What's new.
+  - Tests: `tests/linksodoo.test.js` (4). Chromium E2E against a mocked Odoo JSON-2 server behind the real relay code: bad database refused, connect (direct fails, relay), import of 3 customers (own company out, a contact as a person line, ΑΦΜ) and 2 deals (won, by probability), HTML in a name stays text, 360 px; CRM (HubSpot, Pipedrive) and Invoice Ninja E2Es re-run green.
+  - Not tested: a real Odoo (Odoo Online or self-hosted 19: field names, error codes, whether it answers browsers), the deployed relay, real phones, Safari.
