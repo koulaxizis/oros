@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.80.00
+- To-Do: bring in your GitHub issues. List settings › `Import from Todoist or GitHub…` with a connected GitHub account: the open issues assigned to you, from every repository, each repository as a list and each issue as a task "#12 Title" with its text and link, its labels and its milestone date. Pull requests stay out. Read again later to bring in only the new ones. orOS only reads GitHub.
+
 ## Version 1.79.00
 - Kanban: read a Notion database as a board. `Import from other apps` › a connected Notion account › `Show databases`: each option of the database's Status becomes a column and each entry a card, with its date as due date, its tags as labels and its other properties in the notes. Read it again later to bring in only the new entries. orOS only reads Notion.
 - Notifications: clicking an orOS notification from your system now opens what it points to.

@@ -5875,3 +5875,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-13 — Fix: a click on the system notification opens its target (#306) — 1.79.01
 - notifications.js: clicking an orOS notification shown by Windows, Android or Linux now opens the app or window it points to and marks the notice read, like the in-tab toast. Before, it only focused the orOS tab.
   - Tests: tests/notif-panel-close.test.js. E2E at 360 px.
+
+### 2026-10-13 — Connected services wave 6G: To-Do ← GitHub issues assigned to me (#307) — 1.80.00
+- Wave 6 of the integrations plan, seventh part. To-Do › List settings › `Import from Todoist or GitHub…` with a connected GitHub account: the open issues assigned to the token's owner across repositories, a list per repository, an issue → task "#n title" with body and link as notes, labels, milestone date as due; pull requests out. Read-only; reading again adds only new issues.
+  - **links/todo.js:** `github` platform (`req`, `read`, `readIssue`, a list per repository in `plan`); **links/core.js + relay/ext.js:** GitHub apps ["kanban", "todo"] and one more read-only rule, GET `/issues` with fixed `filter=assigned`, `state=open` (Mail thread OK at d71b03d); `todo/platforms.js` intro and hint per platform; Settings label and hint.
+  - Help: To-Do, Settings, Privacy, What's new. Credits: GitHub row. Decision in Part IX.
+  - Tests: `tests/linksghtodo.test.js` (4), `tests/linkskanban.test.js` updated. Chromium E2E in the real shell (360 px EL, 1280 px EN) with GitHub mocked behind the real relay code: 131 issues over 2 pages → 2 lists, PRs/closed/odd repositories out, HTML stays text, relay fallback reads the new issue, no key echoed; Todoist (6A) and Kanban (6B) E2Es still pass.
+  - Not tested: a real GitHub account, the deployed relay, real phones, Safari.
