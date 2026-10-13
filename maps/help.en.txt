@@ -87,13 +87,17 @@ Changes made on another device show `From another device` and are uploaded by th
 
 Help OpenStreetMap by answering small questions about what's around you. You don't need to know any tags.
 
-1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank.
+1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank, 🚦 speed limit, 🏷️ street name, 🪜 number of steps, 🤚 handrail, 🦯 tactile paving at the crossing, 🪧 stop name, 🚧 level crossing barrier, 🅿️ parking fee, 🚗 kind of car park, 🚲 bicycle parking spaces, ☂️ covered bicycle parking, 🥗 vegetarian food, 🌱 vegan food, 💳 ways to pay, 📶 Wi-Fi, 🚾 wheelchair toilet, ❤️ defibrillator indoors, 🧯 fire hydrant, 📮 postbox collection times, 🏠 kind of building.
 2. Tap a pin (or a row in the list) and tap the answer. The next question nearby opens by itself.
 3. `Can't say` skips the question for now. `Hide here` hides it for that place on all your devices. `It's not there any more` opens a new note at the spot, so mappers can check.
 4. Some answers get old: Maps asks again after some years (opening hours after one year) and `Still the same` confirms them.
 5. Answers wait until you tap `Upload`. Each kind of question goes in its own changeset, with your upload comment (it starts as "Uploaded using orOS Maps"). If someone changed the same thing meanwhile, their value is kept.
 
 `Settings` in the panel turns kinds of questions on or off. The counter shows your answers in total, today and the days in a row.
+
+`Achievements` shows a level for each group of quests (shops and cafés, streets and paths, stops and crossings, parking, buildings and addresses, street furniture). Levels go up at 1, 10, 30, 100, 300 and 1000 uploaded answers, and each level unlocks a page to read more about that topic.
+
+Team mapping: to map an area with friends without answering the same things twice, open `Settings`, everyone picks the same `People in the team` and a different letter. Each of you then sees only your share of the quests. No account or server is needed; pick `Just me` to see all of them again.
 
 ## My tracks (GPX)
 
@@ -152,7 +156,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings and your answer counter, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 

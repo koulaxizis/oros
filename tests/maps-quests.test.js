@@ -17,8 +17,8 @@ const node = (id, tags, ts) => ({ t: "n", id, lat: 37.98, lon: 23.72, tags, ts: 
 const way = (id, tags, ts) => ({ t: "w", id, lat: 37.98, lon: 23.72, tags, ts: ts || NOW - 86400000 });
 const ids = (els, opts) => Q.openQuests(els, Object.assign({ now: NOW }, opts)).map((x) => x.el.t + x.el.id + ":" + x.q.id + ":" + x.mode);
 
-test("16 quests, unique ids, every text in EN and EL, every option tag valid", () => {
-  assert.equal(Q.QUESTS.length, 16);
+test("36 quests (16 + 20 in wave 8), unique ids, every text in EN and EL, every option tag valid", () => {
+  assert.equal(Q.QUESTS.length, 36);
   const seen = new Set();
   Q.QUESTS.forEach((q) => {
     assert.ok(!seen.has(q.id)); seen.add(q.id);
@@ -30,6 +30,7 @@ test("16 quests, unique ids, every text in EN and EL, every option tag valid", (
       Object.keys(o.set).forEach((k) => assert.match(k, /^[a-z_:]+$/));
     });
     if (q.kind !== "multi") assert.ok(q.key, q.id);
+    assert.ok(Q.CAT_BY[q.cat], q.id + " category");
   });
 });
 
@@ -107,7 +108,7 @@ test("answers → tags: choice, multi, hours, number, text, same", () => {
 });
 
 test("Overpass: one query for the enabled quests, strict parsing with edit time", () => {
-  const q = Q.overpassQuery(37.97, 23.71, 37.99, 23.73, ["building_levels", "housenumber"]);
+  const q = Q.overpassQuery(37.97, 23.71, 37.99, 23.73, ["building_levels", "housenumber", "building_type"]);
   assert.match(q, /^\[out:json\]\[timeout:25\];\(/);
   assert.match(q, /node\["amenity"="bench"\]\(37\.970000,23\.710000,37\.990000,23\.730000\);/);
   assert.ok(!/building/.test(q), "turned-off quests not fetched");
@@ -202,4 +203,113 @@ test("wiring: scripts in order, slice registered, changeset tags, notes prefill,
   assert.match(notes, /function newNote\(lat, lon, text\)/);
   const sw = fs.readFileSync(path.join(__dirname, "..", "sw.js"), "utf8");
   ["maps/quests-core.js", "maps/quests.js"].forEach((f) => assert.ok(sw.includes('"' + f + '"'), f));
+});
+
+// ---------- maps wave 8 ----------
+test("wave 8 quests apply where they should", () => {
+  const els = [
+    way(20, { highway: "residential", name: "Οδός Β" }),
+    way(21, { highway: "residential" }),
+    way(22, { highway: "residential", noname: "yes", maxspeed: "30" }),
+    way(23, { highway: "steps" }),
+    node(24, { highway: "crossing", crossing: "traffic_signals", tactile_paving: "yes" }),
+    node(25, { highway: "bus_stop" }),
+    node(26, { railway: "level_crossing" }),
+    node(27, { amenity: "parking", parking: "surface", access: "private" }),
+    node(28, { amenity: "bicycle_parking" }),
+    node(29, { amenity: "restaurant", name: "Ταβέρνα" }),
+    node(30, { amenity: "restaurant", name: "Χορτοφάγος", "diet:vegetarian": "only" }),
+    node(31, { shop: "kiosk", name: "Περίπτερο", "payment:cash": "yes" }),
+    node(32, { amenity: "toilets" }),
+    node(33, { emergency: "defibrillator" }),
+    node(34, { emergency: "fire_hydrant" }),
+    node(35, { amenity: "post_box" }),
+    way(36, { building: "yes" })
+  ];
+  const got = ids(els);
+  ["w20:maxspeed:new", "w21:road_name:new", "w21:maxspeed:new", "w23:steps_count:new", "w23:steps_handrail:new",
+    "n25:stop_name:new", "n25:bus_shelter:new", "n26:level_crossing_barrier:new",
+    "n28:bike_parking_capacity:new", "n28:bike_parking_covered:new", "n29:diet_vegetarian:new", "n29:payment:new",
+    "n29:internet_access:new", "n30:diet_vegan:new", "n32:toilets_wheelchair:new", "n32:toilets_fee:new",
+    "n33:aed_indoor:new", "n34:fire_hydrant_type:new", "n35:postbox_times:new", "w36:building_type:new"]
+    .forEach((x) => assert.ok(got.includes(x), x));
+  ["w20:road_name", "w22:road_name", "n27:parking_type", "w22:maxspeed", "n24:tactile_paving", "n27:parking_fee", "n29:diet_vegan",
+    "n31:payment", "n30:diet_vegetarian"].forEach((x) => assert.ok(!got.some((g) => g.startsWith(x + ":")), x));
+});
+
+test("wave 8 answers: name, none, collection times, speed, multi payment", () => {
+  const B = Q.BY_ID;
+  const road = way(21, { highway: "residential" });
+  assert.deepEqual(Q.answerSet(B.road_name, road, "  Οδός Ερμού ", NOW).set, { name: "Οδός Ερμού" });
+  assert.deepEqual(Q.answerSet(B.road_name, road, "none", NOW).set, { noname: "yes" });
+  assert.equal(Q.answerSet(B.road_name, road, "1234", NOW), null);              // letters required
+  assert.equal(Q.answerSet(B.road_name, road, "<b>x</b>", NOW), null);
+  assert.equal(Q.answerSet(B.road_name, road, "see https://x.y", NOW), null);
+  assert.deepEqual(Q.answerSet(B.stop_name, node(25, { highway: "bus_stop" }), "none", NOW).set, { "name:signed": "no" });
+  const pb = node(35, { amenity: "post_box" });
+  assert.deepEqual(Q.answerSet(B.postbox_times, pb, "Mo-Fr 18:00; Sa 12:00", NOW).set, { collection_times: "Mo-Fr 18:00; Sa 12:00" });
+  assert.deepEqual(Q.answerSet(B.postbox_times, pb, "unsigned", NOW).set, { "collection_times:signed": "no" });
+  assert.deepEqual(Q.answerSet(B.maxspeed, road, "50", NOW).set, { maxspeed: "50" });
+  assert.equal(Q.answerSet(B.maxspeed, road, "500", NOW), null);
+  assert.deepEqual(Q.answerSet(B.payment, node(29, { amenity: "restaurant", name: "T" }), ["cash", "contactless"], NOW).set,
+    { "payment:cash": "yes", "payment:contactless": "yes" });
+  // opening hours still behave as before
+  assert.deepEqual(Q.answerSet(B.opening_hours, node(1, { shop: "bakery", name: "Φ" }), "24/7", NOW).set, { opening_hours: "24/7" });
+});
+
+test("achievements: categories, levels, unlocked links, level-ups", () => {
+  let s = Q.normStats(null);
+  assert.ok(Q.achievements(s).every((c) => c.level === 0 && c.links.length === 0));
+  s = Q.addCount(s, "dev1", "way_lit", 9);
+  s = Q.addCount(s, "dev1", "maxspeed", 1);
+  s = Q.addCount(s, "dev2", "opening_hours", 1);
+  const a = Q.achievements(s), st = a.find((c) => c.id === "streets");
+  assert.equal(st.n, 10);
+  assert.equal(st.level, 2);
+  assert.equal(st.next, 20);
+  assert.equal(st.links.length, 1);
+  assert.equal(a.find((c) => c.id === "places").level, 1);
+  const ups = Q.levelUps(Q.addCount(s, "dev1", "way_lit", -5), Q.addCount(s, "dev1", "way_surface", 20));
+  assert.deepEqual(ups.map((c) => [c.id, c.level]), [["streets", 3]]);
+  // unknown quest ids (from a newer version) are kept but count nowhere
+  const k = Q.normStats({ cnt: { dev1: { future_quest: 4, "Bad!": 2 } } });
+  assert.deepEqual(k.cnt, { dev1: { future_quest: 4 } });
+});
+
+test("stats slice: normalize, merge max per device, team LWW, fuzz", () => {
+  assert.deepEqual(Q.normStats({ cnt: { "x": { way_lit: 2 }, dev1: { way_lit: -1, way_surface: 1.5 } }, team: { m: 5, size: 13, idx: 0 } }),
+    { ver: 1, cnt: {}, team: { m: 0, size: 1, idx: 0 } });
+  const A = { cnt: { dev1: { way_lit: 5 } }, team: { m: 10, size: 3, idx: 1 } };
+  const B = { cnt: { dev1: { way_lit: 3, maxspeed: 2 }, dev2: { way_lit: 1 } }, team: { m: 20, size: 4, idx: 3 } };
+  const m = Q.mergeStats(A, B);
+  assert.deepEqual(m.cnt, { dev1: { maxspeed: 2, way_lit: 5 }, dev2: { way_lit: 1 } });
+  assert.deepEqual(m.team, { m: 20, size: 4, idx: 3 });
+  const rnd = (i) => ({ cnt: { ["dev" + (i % 3 + 1)]: { way_lit: i % 7 + 1, maxspeed: i % 5 + 1 } }, team: { m: i * 3 % 11, size: i % 4 + 1, idx: 0 } });
+  for (let i = 0; i < 200; i++) {
+    const x = rnd(i), y = rnd(i * 7 + 1), z = rnd(i * 13 + 2);
+    assert.deepEqual(Q.mergeStats(x, y), Q.mergeStats(y, x));
+    assert.deepEqual(Q.mergeStats(x, x), Q.normStats(x));
+    assert.deepEqual(Q.mergeStats(Q.mergeStats(x, y), z), Q.mergeStats(x, Q.mergeStats(y, z)));
+  }
+});
+
+test("team mapping: every element goes to exactly one member, stable", () => {
+  const els = []; for (let i = 1; i <= 300; i++) els.push(node(i, { amenity: "bench" }));
+  const size = 4, per = [0, 0, 0, 0];
+  els.forEach((e) => {
+    const owners = [0, 1, 2, 3].filter((idx) => Q.teamKeeps(e, { size, idx }));
+    assert.equal(owners.length, 1);
+    per[owners[0]]++;
+  });
+  assert.ok(per.every((n) => n > 40), "roughly even: " + per);
+  assert.equal(Q.teamOf("n123", 5), Q.teamOf("n123", 5));
+  assert.ok(Q.teamKeeps(els[0], { size: 1, idx: 0 }) && Q.teamKeeps(els[0], null));
+});
+
+test("wave 8 wiring: stats slice registered, badges and team in the UI", () => {
+  const js = fs.readFileSync(path.join(__dirname, "..", "maps/quests.js"), "utf8");
+  assert.match(js, /registerSlice\("mapsqstats", statsGet, statsSet, STATS_KEY, Q\.mergeStats\)/);
+  assert.match(js, /countDone\(used\.length, qid\)/);
+  assert.match(js, /Q\.teamKeeps\(x\.el, stats\.team\)/);
+  (js.match(/innerHTML\s*=\s*[^;]+;/g) || []).forEach((m) => assert.match(m, /innerHTML = ('<svg[^']*'|ICON);/, "innerHTML only from fixed icons: " + m.slice(0, 60)));
 });
