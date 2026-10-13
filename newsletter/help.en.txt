@@ -2,7 +2,7 @@
 Newsletter writes and sends e-mail newsletters to your own subscriber lists, like Mailerlite or Buttondown, but from your own e-mail account or a sending provider. Subscribers live in orOS, not on someone else's service, and nothing is tracked: there is no open or click counting.
 
 ## Getting started
-1. On `Lists`, choose `Add sending account`. Pick a `Mail account` you already set up in [Mail](app:mail), or `Provider (SMTP)` for a sending provider such as Brevo, Amazon SES, Mailgun, Postmark or SendGrid. `Test login` checks it.
+1. On `Lists`, choose `Add sending account`. Pick a `Mail account` you already set up in [Mail](app:mail), or `Provider (SMTP)` for a sending provider such as Brevo, Amazon SES, Mailgun, Postmark, SendGrid or MailerSend. `Test login` checks it. MailerLite itself offers no SMTP: its sending service is MailerSend.
 2. Make a `New list`: its name, the account it `Sends from`, the `From address`, and `Your name and postal address (footer)`, which the law asks every newsletter to show.
 3. Add subscribers on `Subscribers`, then write your first issue with `New` on `Issues`.
 
