@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.65.00";
+var CACHE_VERSION = "oros-v1.66.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -901,6 +901,7 @@ var PRECACHE_URLS = [
   "photolab/store.js",
   "photolab/psd.js",
   "photolab/ora.js",
+  "photolab/xmp.js",
   "photolab/strings.js",
   "photolab/app.js",
   "photolab/view.js",
@@ -927,6 +928,7 @@ var PRECACHE_URLS = [
   "atelier/sources.js",
   "atelier/fonts.js",
   "atelier/brandkit.js",
+  "atelier/swatches.js",
   "atelier/brand.js",
   "atelier/folders.js",
   "atelier/homefolders.js",

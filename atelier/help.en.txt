@@ -34,6 +34,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - Colours: `Add colour` or `From this design`; tap a colour to apply it to the selection. They also appear first in every colour panel as `Brand colours`.
 - Fonts: select a text and tap `Use selected` next to `Heading`, `Subheading` or `Body text`. The `Text` panel then adds text in these fonts.
 - Logos: `Add logo` keeps a picture; tap it to place it. `Edit` shows `×` to remove colours and logos.
+- Swatches: `Import swatches (.ase, .aco)` adds the colours of a swatch file from Illustrator, Photoshop or InDesign (groups are flattened, CMYK and Lab become screen colours). `Save as swatches (.ase)` saves your brand colours as one group that Adobe apps can load. No Adobe account is needed.
 
 ## Animate and present
 - Select an element and tap or click `Animate` to give it an entrance: `Fade`, `Rise`, `Pop`, `Wipe` or, for text, `Typewriter`. Elements enter one after the other, bottom layer first.

@@ -601,6 +601,24 @@
     if (!needDoc()) return null;
     return PL.addLayer({ k: "adj", name: t("adjk." + id), aj: { id: id, p: p || {} } }, t("step.newAdj"));
   }
+  // Several adjustment layers above the active one as ONE step (a
+  // Lightroom preset). list: [{ id, p }] bottom → top. → how many.
+  function addAdjLayers(list, label, prefix) {
+    if (!needDoc() || !list.length) return 0;
+    if (st.doc.layers.length + list.length > C.MAX_LAYERS) { PL.toast(t("msg.maxLayers")); return 0; }
+    var Ls = list.map(function (a) {
+      var name = t("adjk." + a.id);
+      return C.normLayer({ id: C.newLayerId(), vis: 1, op: 100, bl: "normal", k: "adj", name: prefix ? prefix + " · " + name : name, aj: a });
+    }).filter(Boolean);
+    if (!Ls.length) return 0;
+    PL.docChange(label, function () {
+      var i = C.findLayer(st.doc, st.active);
+      var at = i < 0 ? st.doc.layers.length : i + 1;
+      Array.prototype.splice.apply(st.doc.layers, [at, 0].concat(Ls));
+      st.active = Ls[Ls.length - 1].id;
+    }, []);
+    return Ls.length;
+  }
   function setAdj(L, aj) {
     var n = C.normAdj(aj);
     if (JSON.stringify(n) === JSON.stringify(L.aj)) return;
@@ -697,6 +715,6 @@
     addMask: addMask, deleteMask: deleteMask, applyMask: applyMask, toggleMask: toggleMask, editMask: editMask,
     newGuide: newGuide, mapGuides: mapGuides, clearGuides: clearGuides, setGuides: setGuides,
     saveSelection: saveSelection, loadSelection: loadSelection, deleteSavedSelection: deleteSavedSelection, savedMask: savedMask,
-    newAdjLayer: newAdjLayer, setAdj: setAdj, setFx: setFx, maskable: maskable
+    newAdjLayer: newAdjLayer, addAdjLayers: addAdjLayers, setAdj: setAdj, setFx: setFx, maskable: maskable
   };
 })();

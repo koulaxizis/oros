@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.66.00
+- Atelier: import swatches from Illustrator, Photoshop or InDesign (.ase, .aco) into your Brand kit, and save your brand colours as an .ase file for Adobe apps.
+- Photo Lab: `Adjust` › `Lightroom preset (.xmp)…` adds a Lightroom or Camera Raw preset as editable adjustment layers. No Adobe account needed for either.
+
 ## Version 1.65.00
 - Maps: 20 more quests (36 in all): speed limit, street name, steps and handrails, tactile paving, stop names, level crossing barriers, parking fee and kind, bicycle parking, vegetarian and vegan food, ways to pay, Wi-Fi, wheelchair toilets, defibrillators, fire hydrants, postbox collection times and kind of building. New achievements with a level for each group of quests, and team mapping: friends split the quests of an area between them, so nobody answers the same thing twice.
 

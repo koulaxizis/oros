@@ -36,7 +36,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
 - `Select`: `Select all`, `Invert selection`, `Colour range…` (every pixel near a colour), `Feather…`, `Grow…`, `Shrink…`, `Save selection…` and `Load selection…` (saved selections stay in the project).
 - `View`: `Rulers`, `Guides`, `Grid` and `Snap` turn on and off; `New guide…`, `Clear guides` and `Grid size…`. Drag a guide out of a ruler; with the `Move` or `Hand` tool drag a guide to move it, or back onto the ruler to remove it. With `Snap` on, selections, crops, shapes and moved layers stick to guides, the grid and the canvas edges and centre.
-- `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
+- `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Lightroom preset (.xmp)…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
 - `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
 - `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
@@ -48,6 +48,11 @@ When Atelier sends a picture here to edit, a `Done` button appears at the top. I
 - Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
 - Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.
 - `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text, shapes, masks, styles and adjustment layers go as pixels.
+
+## Lightroom presets
+- `Adjust` › `Lightroom preset (.xmp)…` opens a preset saved from Lightroom (Classic or CC) or Camera Raw and adds it as adjustment layers above the current layer, named after the preset: exposure, whites and blacks as `Levels`, contrast, shadows, highlights and the tone curve as `Curves`, white balance, saturation and vibrance, and black and white.
+- The layers stay editable: lower a layer's opacity to make the preset weaker, or hide one you don't want. One `Undo` removes them all.
+- It is an approximation, because Lightroom works on the raw data. Settings Photo Lab has no layer for (clarity, texture, dehaze, sharpening, noise, grain, vignette, colour mixer, colour grading) are left out, and a message says which.
 
 ## Sync and backup
 - The list of projects follows you through [orOS sync](help:t/sync). The pictures themselves are kept on the orOS disk, in the `Photo Lab` folder, and Vault Drive syncs them file by file, encrypted.
