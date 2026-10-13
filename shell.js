@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.42.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.43.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4885,6 +4885,9 @@
         { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
           by: "FOSSGIS e.V.", lic: "ODbL (data)",
           en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+        { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
+          by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
+          en: "Notes and sign-in (Maps)", el: "Σημειώσεις και σύνδεση (Χάρτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },

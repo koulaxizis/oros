@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.43.00
+- Maps: report problems on the map to OpenStreetMap with notes, and comment on or resolve notes near you.
+
 ## Version 1.42.00
 - Invoices: client statements as PDF, polite or firm payment reminders, an EU reverse charge helper, a payment QR code on euro PDFs, and more than one business profile.
 
