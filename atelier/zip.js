@@ -1,7 +1,9 @@
 // ============================================================
-// orOS Atelier — zip.js: a small, read-only ZIP reader (v1.0.0)
+// orOS Atelier — zip.js: a small ZIP reader and writer (v1.1.0)
 // Enough for Office files (.pptx): stored and deflated entries,
 // read lazily, one entry at a time. No ZIP64, no encryption.
+// write(files) makes a stored (uncompressed) ZIP, enough for the
+// .pptx export (pictures are already compressed).
 // Inflating uses the platform's DecompressionStream("deflate-raw")
 // (browsers, Node 18+), so nothing is vendored.
 // Limits keep a hostile file from eating the device: entry count,
@@ -104,7 +106,61 @@
     };
   }
 
-  var api = { open: open, MAX_ENTRY: MAX_ENTRY };
+  // ---------- writer ----------
+  var CRC = null;
+  function crc32(b) {
+    if (!CRC) {
+      CRC = new Uint32Array(256);
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+        CRC[n] = c >>> 0;
+      }
+    }
+    var x = 0xFFFFFFFF;
+    for (var i = 0; i < b.length; i++) x = CRC[(x ^ b[i]) & 0xFF] ^ (x >>> 8);
+    return (x ^ 0xFFFFFFFF) >>> 0;
+  }
+  // files: [{ name, data: Uint8Array | string }] in order; date: a
+  // Date for every entry (default 1 Jan 2026, so the same input gives
+  // the same bytes). Returns a Uint8Array. Throws Error("zip") past
+  // the format's 4 GB / 65535-entry limits.
+  function write(files, date) {
+    var enc = new TextEncoder(), d = date instanceof Date ? date : new Date(2026, 0, 1);
+    var dosT = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    var dosD = ((Math.max(1980, d.getFullYear()) - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    if (files.length > 65535) throw new Error("zip");
+    var parts = [], central = [], off = 0;
+    function head(sig, len) { var v = new DataView(new ArrayBuffer(len)); v.setUint32(0, sig, true); return v; }
+    files.forEach(function (f) {
+      var name = enc.encode(f.name), data = typeof f.data === "string" ? enc.encode(f.data) : f.data;
+      var crc = crc32(data), size = data.length;
+      if (off + size > 0xFFFFFFF0) throw new Error("zip");
+      var h = head(0x04034b50, 30);
+      h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint16(10, dosT, true); h.setUint16(12, dosD, true);
+      h.setUint32(14, crc, true); h.setUint32(18, size, true); h.setUint32(22, size, true);
+      h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      var c = head(0x02014b50, 46);
+      c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+      c.setUint16(12, dosT, true); c.setUint16(14, dosD, true);
+      c.setUint32(16, crc, true); c.setUint32(20, size, true); c.setUint32(24, size, true);
+      c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), name);
+      off += 30 + name.length + size;
+    });
+    var cdSize = central.reduce(function (n, p) { return n + p.length; }, 0);
+    var e = head(0x06054b50, 22);
+    e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+    e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
+    var all = parts.concat(central, [new Uint8Array(e.buffer)]);
+    var out = new Uint8Array(off + cdSize + 22), o = 0;
+    all.forEach(function (p) { out.set(p, o); o += p.length; });
+    return out;
+  }
+
+  var api = { open: open, write: write, crc32: crc32, MAX_ENTRY: MAX_ENTRY };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierZip = api;
 })(typeof window !== "undefined" ? window : this);

@@ -1,5 +1,5 @@
 # Atelier
-Design posts, stories, flyers, posters, cards and more, from a blank page or a ready template, and download them as PNG, JPG or PDF.
+Design posts, stories, flyers, posters, cards and more, from a blank page or a ready template, and download them as PNG, JPG, PDF or PowerPoint (to keep working on them in Canva).
 
 ## Getting started
 Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also pick one of the designs under `Start from a template`; its texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
@@ -50,7 +50,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - Video and sound files stay on your orOS disk and sync with Vault Drive like your photos, so large files take space on every device.
 
 ## Download and share
-- `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, or a PDF for printing at 150 or 300 dpi.
+- `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, a PDF for printing at 150 or 300 dpi, or a PowerPoint file (see below).
 - `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` makes the design in other sizes, for example a square post as a story and a banner. Tick one or more sizes (or a custom size): the elements are placed again for each one, so things at the edges stay at the edges, bars and photos across the page stretch, and nothing is distorted. With `Keep this design, make a copy in each size` on, each size becomes a new design next to this one (in the same folder); with it off, this design itself changes size (`Undo` brings it back).
 - `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
@@ -72,6 +72,13 @@ A file opens as a new design:
 - A picture (PNG, JPG, WebP or SVG) becomes a design of its size.
 
 >! Some things do not come over from PowerPoint: charts, tables, video, animations and some text effects. A font comes over as the same free font from Fontsource when there is one (it downloads the first time); others, such as Canva Sans or Arial, become the closest of Atelier's own fonts. The message after the import says how many elements were left out.
+
+## Take a design to Canva or PowerPoint
+`Download` › `PowerPoint` saves the design as a .pptx file, one slide per page, at the design's own size. In Canva choose `Create a design` › `Upload` (or drag the file onto Canva's home page); PowerPoint, Keynote, Google Slides and LibreOffice open it directly. No account or key is needed.
+- Texts stay editable text boxes with their font, size, colour, alignment, line height and letter spacing; a shadow stays a shadow.
+- Shapes, lines with their arrow heads, photos with their crop, shape and transparency, and the page background stay editable.
+- Icons, curved text, other text effects (neon, outline, echo and so on), photos with a filter or adjustments, and videos come as pictures, so they look the same but can't be edited there. The message after saving says how many.
+>! The other app uses its own copy of each font: if it doesn't have it, it shows a similar one and a text may wrap a little differently. Animations, page timing and sounds stay in Atelier.
 - `More` › `Credits` lists the work by others your design uses.
 
 ## Sync and backup
