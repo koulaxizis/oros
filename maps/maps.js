@@ -42,6 +42,7 @@
       "route.car":        "Car",
       "route.bike":      "Bike",
       "route.foot":      "Walk",
+      "route.transit":   "Public transport",
       "route.clear":     "Clear route",
       "route.err":       "Could not calculate a route",
       "places.title":    "Saved places",
@@ -198,6 +199,7 @@
       "route.car":        "Αυτοκίνητο",
       "route.bike":       "Ποδήλατο",
       "route.foot":       "Πεζός",
+      "route.transit":    "ΜΜΜ",
       "route.clear":      "Καθαρισμός διαδρομής",
       "route.err":        "Δεν ήταν δυνατός ο υπολογισμός διαδρομής",
       "places.title":     "Αποθηκευμένες τοποθεσίες",
@@ -3300,6 +3302,17 @@
       return;
     }
     if (!sh.route) return;
+    // Wave 7: a public transport link opens the Public transport
+    // sheet (transit.js loads after this file: it picks the request
+    // up from mapsHost.pendingTransit at its boot).
+    if (sh.mode === "transit") {
+      var tTo = sh.route[sh.route.length - 1];
+      var req = { from: { lat: sh.route[0].lat, lon: sh.route[0].lon, name: "" },
+        to: { lat: tTo.lat, lon: tTo.lon, name: sh.to || "" } };
+      if (mapsHost.openTransit) mapsHost.openTransit(req.from, req.to);
+      else mapsHost.pendingTransit = req;
+      return;
+    }
     var pts = sh.route.map(function (q, i) {
       var last = i === sh.route.length - 1;
       return { lat: q.lat, lon: q.lon, name: last && sh.to ? sh.to : t("route.ptmap"), sub: "" };
@@ -3445,6 +3458,10 @@
     $("rp-car").addEventListener("click", function () { setRouteProfile("car"); });
     $("rp-bike").addEventListener("click", function () { setRouteProfile("bike"); });
     $("rp-foot").addEventListener("click", function () { setRouteProfile("foot"); });
+    // Public transport is its own sheet (transit.js): same two points.
+    $("rp-transit").addEventListener("click", function () {
+      if (mapsHost.openTransit) mapsHost.openTransit(routeFrom, routeTo);
+    });
     $("route-clear").addEventListener("click", clearRoute);
 
     // Wave 8: Send to Calendar — appended to the route bar at wire
@@ -3581,7 +3598,21 @@
     toast: showToast,
     localToast: localToast,
     storeFull: t("store.full"),
-    ctxItems: []
+    ctxItems: [],
+    // Wave 7 (transit.js): the planner's points, a location fix, a
+    // place name, and a link that reopens a public transport search.
+    routeEnds: function () { return { from: routeFrom, to: routeTo }; },
+    locate: function (cb) {
+      if (userPosFresh()) { cb(userPos); return; }
+      getUserLocation(function (pos) { cb(pos || userPos || null); }, true);
+    },
+    reverseName: function (place, after) { nameByReverse(place, after); },
+    transitLink: function (f, to) {
+      if (!f || !to || !isFinite(f.lat) || !isFinite(to.lat)) return "";
+      return RC.orosRouteLink(mapsBase(), [f, to], "transit", to.name || "");
+    },
+    openTransit: null,
+    pendingTransit: null
   };
 
   // ---------- Boot ----------
