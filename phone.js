@@ -271,14 +271,18 @@
   // that is either this origin or empty ("" / "null"; Chrome and Brave
   // send none). Frames and other windows always have a source, so they
   // never pass; neither does a message carrying another origin.
+  // A newer port replaces the older one: the app opens a new channel
+  // when it is launched again while this page stays loaded.
   root.addEventListener("message", function (ev) {
-    if (port || !ev.ports || !ev.ports[0]) return;
+    if (!ev.ports || !ev.ports[0]) return;
     var o = ev.origin;
     if (ev.source || (o !== root.location.origin && o !== "" && o !== "null")) {
       console.warn("[phone] port from " + ev.origin + " ignored");
       return;
     }
+    if (port) { try { port.onmessage = null; port.close(); } catch (e) {} }
     port = ev.ports[0];
+    lastSent = {};
     port.onmessage = onAppMessage;
     send({ t: "state" });
     emit();

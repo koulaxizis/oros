@@ -57,6 +57,7 @@ public class PhoneBridge {
     private boolean validated;
     private int retries;
     private boolean channelReady;
+    private boolean channelAsked;   // a channel was requested for the current page
 
     PhoneBridge(Context context) {
         app = context.getApplicationContext();
@@ -100,6 +101,7 @@ public class PhoneBridge {
         CustomTabsSession s = launcher != null ? launcher.session() : null;
         diag("page loaded, browser " + browser() + ", session " + (s != null));
         if (s == null) return;
+        channelAsked = false;              // a new page needs its own port
         if (s != session) {
             session = s;
             validated = false;
@@ -150,6 +152,7 @@ public class PhoneBridge {
     private void requestChannel() {
         if (session == null) return;
         channelReady = false;
+        channelAsked = true;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
 
         diag("channel requested: " + ok);
@@ -169,6 +172,12 @@ public class PhoneBridge {
             super.onRelationshipValidationResult(relation, requestedOrigin, result, extras);
             diag("relationship " + requestedOrigin + ": " + result);
             main.post(() -> {
+                // Chromium checks the origin again for every channel request
+                // and reports it here; answering that with another request
+                // loops (seen on a phone: a new channel every few ms, so the
+                // page's port was always already replaced). One request per
+                // page load.
+                if (channelAsked) return;
                 validated = result;
                 if (result) {
                     requestChannel();
