@@ -195,13 +195,16 @@
     }
 
     // ---------- Products ----------
+    // Through the relay a call stays small (the Worker's CPU limit): 2 pages
+    // or 4 variation lists instead of 5 / 10 when the browser goes direct.
+    function viaRelay() { return typeof Lk.mode === "function" && Lk.mode(cache.acct) === "relay"; }
     function readAll(status) {
-      // pages of 100; then the variations of variable products, 10 per call
+      // pages of 100; then the variations of variable products
       var products = [], page = 1;
       function next() {
         status.textContent = t("getting", { n: products.length });
-        var reqs = [];
-        for (var i = 0; i < 5; i++) reqs.push({ m: "GET", path: "/products?per_page=100&page=" + (page + i) + "&orderby=id&order=asc" });
+        var reqs = [], n = viaRelay() ? 2 : 5;
+        for (var i = 0; i < n; i++) reqs.push({ m: "GET", path: "/products?per_page=100&page=" + (page + i) + "&orderby=id&order=asc" });
         return call(reqs).then(function (pages) {
           var done = false;
           pages.forEach(function (p) {
@@ -210,7 +213,7 @@
             products = products.concat(list);
             if (list.length < 100) done = true;
           });
-          page += 5;
+          page += n;
           if (!done && products.length < 5000) return next();
         });
       }
@@ -219,7 +222,7 @@
         var parents = products.filter(function (p) { return p && p.type === "variable" && typeof p.id === "number"; }).map(function (p) { return p.id; });
         function batch() {
           if (!parents.length) return Promise.resolve();
-          var ids = parents.splice(0, 10);
+          var ids = parents.splice(0, viaRelay() ? 4 : 10);
           return call(ids.map(function (id) { return { m: "GET", path: "/products/" + id + "/variations?per_page=100" }; })).then(function (res) {
             ids.forEach(function (id, i) { vars[id] = Array.isArray(res[i]) ? res[i] : []; });
             status.textContent = t("getting", { n: products.length });
