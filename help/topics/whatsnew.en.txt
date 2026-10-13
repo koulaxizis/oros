@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.41.00
 - Montage: stickers and shapes, and light copies for a smoother preview of big videos.
+- Invoices: an invoice with product codes can take its goods out of Stock in one tap (a credit note puts them back).
 
 ## Version 1.40.00
 - Montage: play clips backwards, colour looks from .cube LUT files, and GIF export.
