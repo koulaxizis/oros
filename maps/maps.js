@@ -159,7 +159,35 @@
       "ctx.end":            "Go here",
       "mvn.via":            "Arrive at stop {n}",
       "nav.fromhere":       "Starting from your location — route recalculated",
-      "nav.recenter":       "Recenter"
+      "nav.recenter":       "Recenter",
+      // OSM upgrade wave 6: alternatives, arrival, lanes, avoid, sharing
+      "route.arrive":       "Arrive {t}",
+      "route.alts":         "Routes",
+      "route.alt.best":     "Fastest",
+      "route.alts.hint":    "{n} other routes: tap a grey line to switch",
+      "route.avoid":        "Avoid",
+      "route.avoid.none":   "Nothing",
+      "route.avoid.toll":   "Tolls",
+      "route.avoid.motorway":"Motorways",
+      "route.avoid.ferry":  "Ferries",
+      "route.avoid.nosrv":  "The route server could not avoid that, so this is the normal route",
+      "nav.lanes":          "Lanes",
+      "share":              "Share",
+      "share.point":        "Share this place",
+      "share.route":        "Share this route",
+      "share.routeto":      "Route to {n}",
+      "share.send":         "Send…",
+      "share.copy":         "Copy link",
+      "share.copied":       "Link copied",
+      "share.nocopy":       "Could not copy. Select the link and copy it.",
+      "share.coords":       "Copy coordinates",
+      "share.coords.ok":    "Coordinates copied",
+      "share.geo":          "Open in another app",
+      "share.osm":          "Open on OpenStreetMap",
+      "share.track":        "Save to My tracks",
+      "share.track.ok":     "Saved to My tracks",
+      "share.track.no":     "Could not save the track",
+      "share.close":        "Close"
     },
     el: {
       "search.ph":        "Αναζήτηση τοποθεσίας…",
@@ -287,7 +315,34 @@
       "ctx.end":            "Πήγαινε εδώ",
       "mvn.via":            "Άφιξη στη στάση {n}",
       "nav.fromhere":       "Ξεκινάς από την τοποθεσία σου — η διαδρομή υπολογίστηκε ξανά",
-      "nav.recenter":       "Επανακέντρωση"
+      "nav.recenter":       "Επανακέντρωση",
+      "route.arrive":       "Άφιξη {t}",
+      "route.alts":         "Διαδρομές",
+      "route.alt.best":     "Ταχύτερη",
+      "route.alts.hint":    "{n} ακόμη διαδρομές: πάτησε μια γκρι γραμμή για αλλαγή",
+      "route.avoid":        "Αποφυγή",
+      "route.avoid.none":   "Τίποτα",
+      "route.avoid.toll":   "Διόδια",
+      "route.avoid.motorway":"Αυτοκινητόδρομοι",
+      "route.avoid.ferry":  "Πλοία",
+      "route.avoid.nosrv":  "Ο διακομιστής διαδρομών δεν μπόρεσε να το αποφύγει, οπότε αυτή είναι η κανονική διαδρομή",
+      "nav.lanes":          "Λωρίδες",
+      "share":              "Μοίρασμα",
+      "share.point":        "Μοίρασμα τοποθεσίας",
+      "share.route":        "Μοίρασμα διαδρομής",
+      "share.routeto":      "Διαδρομή προς {n}",
+      "share.send":         "Αποστολή…",
+      "share.copy":         "Αντιγραφή συνδέσμου",
+      "share.copied":       "Ο σύνδεσμος αντιγράφηκε",
+      "share.nocopy":       "Η αντιγραφή απέτυχε. Επίλεξε τον σύνδεσμο και αντίγραψέ τον.",
+      "share.coords":       "Αντιγραφή συντεταγμένων",
+      "share.coords.ok":    "Οι συντεταγμένες αντιγράφηκαν",
+      "share.geo":          "Άνοιγμα σε άλλη εφαρμογή",
+      "share.osm":          "Άνοιγμα στο OpenStreetMap",
+      "share.track":        "Αποθήκευση στις διαδρομές μου",
+      "share.track.ok":     "Αποθηκεύτηκε στις διαδρομές μου",
+      "share.track.no":     "Η αποθήκευση της διαδρομής απέτυχε",
+      "share.close":        "Κλείσιμο"
     }
   };
 
@@ -574,6 +629,7 @@
   var STAR_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>';
   var ROUTE_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h5a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8h5"/></svg>';
   var PLUS_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  var SHARE_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg>';
   var FROM_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><path d="M10 12h10"/><path d="M16 8l4 4-4 4"/></svg>';
 
   function makeMarkerIcon(color) {
@@ -991,6 +1047,16 @@
     });
     actions.appendChild(from);
 
+    var share = document.createElement("button");
+    share.type = "button";
+    share.innerHTML = SHARE_PATH + "<span></span>";
+    share.querySelector("span").textContent = t("share");
+    share.addEventListener("click", function () {
+      map.closePopup();
+      sharePoint(place);
+    });
+    actions.appendChild(share);
+
     wrap.appendChild(actions);
     marker.unbindPopup();
     marker.bindPopup(wrap, { maxWidth: 280 });
@@ -1008,6 +1074,12 @@
     bike: "https://routing.openstreetmap.de/routed-bike/route/v1/driving/",
     foot: "https://routing.openstreetmap.de/routed-foot/route/v1/driving/"
   };
+  var RC = window.OrosMapsRoute;     // route-core.js (wave 6)
+  var ROUTE_PREFS_KEY = "oros-maps-route-prefs";   // device-local { avoid }
+  var routeAlts = [];           // OSRM routes of the last request (alternatives)
+  var routeAltIdx = 0;          // the one in use
+  var altLines = [];            // grey lines of the others (tap = switch)
+  var altsToldOnce = false;
   var routeSeq = 0;             // token — stale / cancelled responses are dropped
   var routeProfile = "car";
   var routeLine = null;
@@ -1076,6 +1148,7 @@
   function clearRoute() {
     routeSeq++;                 // an in-flight response must not repaint
     if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    routeAlts = []; routeAltIdx = 0; paintAltLines();
     routeFrom = routeTo = null;
     routeVias = [];
     paintRouteMarkers();
@@ -1232,62 +1305,137 @@
     });
   }
 
-  function fetchRoute(my, silent, done) {
+  // The "avoid" choice is the device's own (never synced): what one
+  // phone avoids says nothing about another trip.
+  function readAvoid() {
+    try {
+      var p = JSON.parse(localStorage.getItem(ROUTE_PREFS_KEY) || "{}");
+      return p && RC.AVOID.indexOf(p.avoid) >= 0 ? p.avoid : "";
+    } catch (e) { return ""; }
+  }
+  function writeAvoid(v) {
+    try { localStorage.setItem(ROUTE_PREFS_KEY, JSON.stringify({ avoid: RC.AVOID.indexOf(v) >= 0 ? v : "" })); }
+    catch (e) { /* full storage: a preference, not data */ }
+  }
+
+  //   plain = true → no "avoid" (the server refused it once)
+  function fetchRoute(my, silent, done, plain) {
     // Feedback while the server works (a re-route has its own toast)
-    if (!navActive && !silent) showToast(t("route.calculating"));
+    if (!navActive && !silent && !plain) showToast(t("route.calculating"));
     paintRouteMarkers();
 
-    var url = ROUTER_BASE[routeProfile] +
-      routePoints().map(function (p) { return p.lon + "," + p.lat; }).join(";") +
-      "?overview=full&geometries=geojson&steps=true";
+    var avoid = plain ? "" : RC.avoidFor(routeProfile, readAvoid());
+    var url = RC.routeUrl(ROUTER_BASE[routeProfile], routePoints(),
+      { alternatives: !navActive, avoid: avoid, profile: routeProfile });
 
     fetch(url)
-      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (r) {
+        if (!r.ok) { var er = new Error("http"); er.status = r.status; throw er; }
+        return r.json();
+      })
       .then(function (json) {
         // Stale (a newer request started) or cancelled (route cleared)
         if (my !== routeSeq || !routeFrom || !routeTo) return;
         if (!json || !json.routes || !json.routes.length) throw 0;
-        var r0 = json.routes[0];
-
-        if (routeLine) map.removeLayer(routeLine);
-        routeLine = L.geoJSON(r0.geometry, {
-          style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
-        }).addTo(map);
-        routeLine.getLayers()[0].getElement && routeLine.getLayers()[0].getElement().classList.add("route-line");
-        paintRouteMarkers();
-
-        // A re-route during live navigation must not zoom out to the
-        // whole route — the next GPS tick owns the view.
-        if (!navActive) map.fitBounds(routeLine.getBounds(), { padding: [48, 48] });
-
-        $("route-dist").textContent = fmtDist(r0.distance);
-        $("route-time").textContent = fmtTime(r0.duration);
-        showRouteBar(true);
-
-        // Steps of every leg, for the turn-by-turn panel and the HUD
-        lastSteps = joinLegs(r0.legs);
-        lastDist = r0.distance;
-        lastDur = r0.duration;
-        routeCoords = (r0.geometry && r0.geometry.coordinates) || [];
-        buildRouteIndex();
-
-        // Render maneuvers if panel is open or route just started
-        renderManeuvers();
+        routeAlts = navActive ? [json.routes[0]] :
+          RC.alternatives(json.routes).map(function (a) { return json.routes[a.i]; });
+        if (!routeAlts.length) throw 0;
+        routeAltIdx = 0;
+        applyRoute(routeAlts[0], !navActive);
 
         // Fresh route during live nav → restart step tracking
         if (navActive) resetNavProgress();
         else rememberRoute();
-
-        saveRoute();
+        if (plain) showToast(t("route.avoid.nosrv"));
+        else if (routeAlts.length > 1 && !altsToldOnce && !navActive) {
+          altsToldOnce = true;
+          showToast(t("route.alts.hint").replace("{n}", routeAlts.length - 1));
+        }
         done(true);
       })
-      .catch(function () {
+      .catch(function (err) {
         if (my !== routeSeq) return;      // superseded or cancelled — stay quiet
+        // A server that does not know the "avoid" class answers 400:
+        // ask once more without it, and say so.
+        if (avoid && err && err.status >= 400 && err.status < 500) {
+          fetchRoute(my, true, done, true);
+          return;
+        }
         // Transient OSRM failure: keep the last GOOD route painted and
         // the offline snapshot intact — never wipe data on a fetch error.
         showToast(t("route.err"));
         done(false);
       });
+  }
+
+  // Paint one OSRM route as THE route: line, bar, steps, snapshot.
+  // fit = zoom to it (never during live navigation: the next GPS
+  // tick owns the view).
+  function applyRoute(r0, fit) {
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.geoJSON(r0.geometry, {
+      style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
+    }).addTo(map);
+    routeLine.getLayers()[0].getElement && routeLine.getLayers()[0].getElement().classList.add("route-line");
+    paintAltLines();
+    paintRouteMarkers();
+
+    if (fit) {
+      var b = routeLine.getBounds();
+      altLines.forEach(function (l) { b.extend(l.getBounds()); });
+      map.fitBounds(b, { padding: [48, 48] });
+    }
+
+    lastSteps = joinLegs(r0.legs);
+    lastDist = r0.distance;
+    lastDur = r0.duration;
+    paintRouteSummary();
+    showRouteBar(true);
+
+    routeCoords = (r0.geometry && r0.geometry.coordinates) || [];
+    buildRouteIndex();
+
+    // Render maneuvers if panel is open or route just started
+    renderManeuvers();
+    saveRoute();
+  }
+
+  // The other routes in grey, under the chosen one; a tap switches.
+  function paintAltLines() {
+    altLines.forEach(function (l) { map.removeLayer(l); });
+    altLines = [];
+    if (navActive) return;
+    routeAlts.forEach(function (r, i) {
+      if (i === routeAltIdx) return;
+      var l = L.geoJSON(r.geometry, {
+        style: { color: "#8a8fa0", weight: 6, opacity: 0.75, dashArray: "1 9", lineCap: "round" }
+      }).addTo(map);
+      l.on("click", function (e) {
+        if (e && e.originalEvent) L.DomEvent.stop(e.originalEvent);
+        selectAlt(i);
+      });
+      var el = l.getLayers()[0].getElement && l.getLayers()[0].getElement();
+      if (el) { el.classList.add("route-alt"); el.setAttribute("data-alt", String(i)); }
+      l.bringToBack();
+      altLines.push(l);
+    });
+  }
+
+  function selectAlt(i) {
+    if (!routeAlts[i] || i === routeAltIdx || navActive) return;
+    routeAltIdx = i;
+    applyRoute(routeAlts[i], false);
+  }
+
+  // "1 h 5 min · 14:32": the arrival time moves with the clock, so
+  // the bar is repainted every half minute while a route is shown.
+  function paintRouteSummary() {
+    $("route-dist").textContent = fmtDist(lastDist);
+    var at = RC.clock(Date.now(), lastDur);
+    $("route-time").textContent = fmtTime(lastDur) + " · " + at;
+    $("route-time").title = t("route.arrive").replace("{t}", at);
+    var ex = $("route-extras-eta");
+    if (ex) ex.textContent = t("route.arrive").replace("{t}", at) + " · " + fmtTime(lastDur) + " · " + fmtDist(lastDist);
   }
 
   // ---------- 11b. Recent places (device-local, never synced) ----------
@@ -1688,6 +1836,7 @@
       });
     }
     act(STAR_PATH, t("places.save"), function () { addPlace(place); renderSavedLayer(); });
+    act(SHARE_PATH, t("share"), function () { sharePoint(place); });
     // Extra items from the OSM modules (notes.js: Report to OSM).
     mapsHost.ctxItems.forEach(function (fn) {
       var it = null;
@@ -1703,10 +1852,217 @@
     });
   }
 
+  // ========== ROUTE EXTRAS + SHARING (OSM upgrade wave 6) ==========
+  // Top of the Directions panel: arrival, the alternatives OSRM gave,
+  // "avoid" (car only), share. All DOM-built, text via textContent.
+  function renderRouteExtras() {
+    var host = $("route-extras");
+    if (!host) return;
+    host.textContent = "";
+    var eta = document.createElement("div");
+    eta.id = "route-extras-eta";
+    host.appendChild(eta);
+
+    if (routeAlts.length > 1) {
+      var h = document.createElement("div");
+      h.className = "rx-h";
+      h.textContent = t("route.alts");
+      host.appendChild(h);
+      var list = document.createElement("div");
+      list.className = "rx-alts";
+      RC.alternatives(routeAlts).forEach(function (a) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "rx-alt" + (a.i === routeAltIdx ? " on" : "");
+        b.setAttribute("aria-pressed", a.i === routeAltIdx ? "true" : "false");
+        b.setAttribute("data-alt", String(a.i));
+        var top = document.createElement("b");
+        top.textContent = a.i === 0 ? t("route.alt.best") :
+          (a.dDur >= 60 ? "+" + fmtTime(a.dDur) : fmtTime(a.dur));
+        var sub = document.createElement("span");
+        sub.textContent = fmtTime(a.dur) + " · " + fmtDist(a.dist);
+        b.appendChild(top); b.appendChild(sub);
+        b.addEventListener("click", function () { selectAlt(a.i); });
+        list.appendChild(b);
+      });
+      host.appendChild(list);
+    }
+
+    var row = document.createElement("div");
+    row.className = "rx-row";
+    if (routeProfile === "car") {
+      var lb = document.createElement("label");
+      lb.className = "rx-avoid";
+      var lt = document.createElement("span");
+      lt.textContent = t("route.avoid");
+      var sel = document.createElement("select");
+      sel.id = "route-avoid";
+      [""].concat(RC.AVOID).forEach(function (v) {
+        var o = document.createElement("option");
+        o.value = v;
+        o.textContent = t("route.avoid." + (v || "none"));
+        sel.appendChild(o);
+      });
+      sel.value = readAvoid();
+      sel.addEventListener("change", function () {
+        writeAvoid(sel.value);
+        if (routeFrom && routeTo && !navActive) calcRoute();
+      });
+      lb.appendChild(lt); lb.appendChild(sel);
+      row.appendChild(lb);
+    }
+    var sh = document.createElement("button");
+    sh.type = "button";
+    sh.className = "rx-share";
+    sh.innerHTML = SHARE_PATH + "<span></span>";
+    sh.querySelector("span").textContent = t("share");
+    sh.addEventListener("click", shareRoute);
+    row.appendChild(sh);
+    host.appendChild(row);
+    paintRouteSummary();
+  }
+
+  // Links are made from this page's own folder, so a link copied on
+  // useoros.online opens orOS Maps there (DL-1 direct links).
+  function mapsBase() {
+    try { return new URL("./", location.href).href; } catch (e) { return ""; }
+  }
+
+  function sharePoint(place) {
+    if (!place || !isFinite(place.lat) || !isFinite(place.lon)) return;
+    var name = place.name && place.name !== t("route.ptmap") ? place.name : "";
+    var coords = place.lat.toFixed(5) + ", " + place.lon.toFixed(5);
+    openShare({
+      title: t("share.point"),
+      name: name || coords,
+      link: RC.orosPointLink(mapsBase(), place.lat, place.lon, name),
+      geo: RC.geoUri(place.lat, place.lon, name),
+      osm: RC.osmPointUrl(place.lat, place.lon, Math.max(map.getZoom(), 16)),
+      coords: coords
+    });
+  }
+
+  function shareRoute() {
+    if (!routeFrom || !routeTo || !routeCoords.length) { showToast(t("route.nosteps")); return; }
+    var pts = routePoints().filter(function (p) { return p && isFinite(p.lat) && isFinite(p.lon); });
+    var toName = routeTo.name && !routeTo.me && routeTo.name !== t("route.ptmap") ? routeTo.name : "";
+    var title = t("share.routeto").replace("{n}", toName || t("route.ptmap"));
+    openShare({
+      title: t("share.route"),
+      name: title + " · " + fmtDist(lastDist) + " · " + fmtTime(lastDur),
+      link: RC.orosRouteLink(mapsBase(), pts, routeProfile, toName),
+      geo: RC.geoUri(routeTo.lat, routeTo.lon, toName),
+      osm: RC.osmDirUrl(pts[0], pts[pts.length - 1], routeProfile),
+      track: function () { saveRouteAsTrack(title, pts); }
+    });
+  }
+
+  // "Save to My tracks": the route goes through the tracks module's
+  // own GPX import, so it is stored and synced like any import.
+  function saveRouteAsTrack(name, pts) {
+    var api = window.__orosMapsTracks, T = window.OrosMapsTracks;
+    var tr = RC.routeTrack(routeCoords, name, pts);
+    if (!api || !T || typeof api.importText !== "function" || !tr) { showToast(t("share.track.no")); return; }
+    Promise.resolve(api.importText(T.writeGpx(tr), tr.name + ".gpx")).then(function (e) {
+      showToast(t(e ? "share.track.ok" : "share.track.no"));
+    }, function () { showToast(t("share.track.no")); });
+  }
+
+  function copyText(text, okKey, input) {
+    function fallback() {
+      if (input) { input.focus(); input.select(); }
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      showToast(t(ok ? okKey : "share.nocopy"));
+    }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(function () { showToast(t(okKey)); }, fallback);
+    } else fallback();
+  }
+
+  var shareDlg = null;
+  //   o: { title, name, link, geo, osm, coords?, track? }
+  function openShare(o) {
+    if (shareDlg) { try { shareDlg.close(); } catch (e) {} shareDlg.remove(); }
+    var d = document.createElement("dialog");
+    d.className = "share-dlg";
+    d.id = "share-dlg";
+    var h = document.createElement("h3");
+    h.textContent = o.title;
+    d.appendChild(h);
+    var nm = document.createElement("div");
+    nm.className = "share-name";
+    nm.textContent = o.name;
+    d.appendChild(nm);
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.readOnly = true;
+    inp.className = "share-link";
+    inp.value = o.link;
+    inp.setAttribute("aria-label", t("share.copy"));
+    d.appendChild(inp);
+
+    var list = document.createElement("div");
+    list.className = "share-acts";
+    function btn(id, label, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.id = id;
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      list.appendChild(b);
+    }
+    function link(id, label, href, target) {
+      var a = document.createElement("a");
+      a.id = id;
+      a.href = href;
+      a.target = target;
+      a.rel = "noopener noreferrer";
+      a.textContent = label;
+      a.addEventListener("click", function () { setTimeout(function () { d.close(); }, 0); });
+      list.appendChild(a);
+    }
+    if (navigator.share) {
+      btn("share-send", t("share.send"), function () {
+        navigator.share({ title: o.name, text: o.name, url: o.link }).then(function () { d.close(); }, function () {});
+      });
+    }
+    btn("share-copy", t("share.copy"), function () { copyText(o.link, "share.copied", inp); });
+    if (o.coords) btn("share-coords", t("share.coords"), function () { copyText(o.coords, "share.coords.ok", null); });
+    // geo: is handed to the system (Android offers OsmAnd, Organic
+    // Maps, …); the top window navigates, so the shell frame is not
+    // asked to load it.
+    if (o.geo) link("share-geo", t("share.geo"), o.geo, "_top");
+    if (o.osm) link("share-osm", t("share.osm"), o.osm, "_blank");
+    if (o.track) btn("share-track", t("share.track"), function () { d.close(); o.track(); });
+    d.appendChild(list);
+
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "share-close";
+    close.textContent = t("share.close");
+    close.addEventListener("click", function () { d.close(); });
+    d.appendChild(close);
+    // outside-click close (orOS dialog pattern)
+    d.addEventListener("click", function (e) {
+      if (e.target !== d) return;
+      var r = d.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right ||
+          e.clientY < r.top || e.clientY > r.bottom) d.close();
+    });
+    d.addEventListener("close", function () { if (shareDlg === d) shareDlg = null; d.remove(); });
+    document.body.appendChild(d);
+    shareDlg = d;
+    d.showModal();
+    // Show the start of the link (the focused field would scroll to its end).
+    try { inp.setSelectionRange(0, 0); inp.scrollLeft = 0; } catch (e) { /* noop */ }
+  }
+
   // ========== TURN-BY-TURN PANEL (Wave 3) ==========
   function renderManeuvers() {
     var host = $("maneuvers-list");
     if (!host || !lastSteps.length) return;
+    renderRouteExtras();
 
     host.innerHTML = "";
 
@@ -2026,7 +2382,9 @@
                                                  nxt.maneuver.modifier || "");
       $("nav-dist").textContent = dn !== null ? fmtDist(dn) : "…";
       $("nav-instr").textContent = formatManeuverText(nxt);
+      paintLanes(nxt, dn);
     } else {
+      paintLanes(null, null);
       // Last step: watching for arrival
       $("nav-icon").innerHTML = getManeuverIcon("arrive", "");
       $("nav-dist").textContent = dn !== null ? fmtDist(dn) : "";
@@ -2046,7 +2404,31 @@
     if (cur) rem += (cur.duration || 0) * frac;
     var total = routeCum.length ? routeCum[routeCum.length - 1] : lastDist;
     var remDist = (typeof along === "number") ? Math.max(0, total - along) : lastDist;
-    $("nav-eta").textContent = fmtTime(rem) + " · " + fmtDist(remDist);
+    $("nav-eta").textContent = RC.clock(Date.now(), rem) + " · " + fmtTime(rem) + " · " + fmtDist(remDist);
+    $("nav-eta").title = t("route.arrive").replace("{t}", RC.clock(Date.now(), rem));
+  }
+
+  // Turn lanes of the next maneuver (OSRM intersection lanes), shown
+  // in the last 2 km before it. The arrows come from a fixed set
+  // keyed by checked indications (route-core.js): no server text
+  // reaches the HTML.
+  function paintLanes(step, dn) {
+    var host = $("nav-lanes");
+    if (!host) return;
+    var lanes = step ? RC.lanesOf(step) : null;
+    if (!lanes || (dn !== null && dn > 2000)) { host.hidden = true; host.textContent = ""; return; }
+    host.textContent = "";
+    var mod = (step.maneuver && step.maneuver.modifier) || "";
+    lanes.forEach(function (ln) {
+      var sp = document.createElement("span");
+      sp.className = "lane" + (ln.v ? " on" : "");
+      var shape = RC.laneShape(ln, mod);
+      sp.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' + (MVN_ICON[shape] || MVN_ICON.straight) + "</svg>";
+      sp.setAttribute("data-shape", shape);
+      host.appendChild(sp);
+    });
+    host.hidden = false;
   }
 
   function resetNavProgress() {
@@ -2291,6 +2673,7 @@
   // "Head out" announcement, the route matcher finds where we are.
   function beginNav(resumed) {
     navActive = true;
+    paintAltLines();                       // one route on screen while driving
     navRerouteAt = Date.now();
     document.body.classList.add("nav");
     $("nav-hud").hidden = false;
@@ -2314,6 +2697,7 @@
 
   function stopNavigation() {
     navActive = false;
+    paintAltLines();
     document.body.classList.remove("nav");
     $("nav-hud").hidden = true;
     $("nav-recenter").hidden = true;
@@ -2478,6 +2862,8 @@
       if (mv.location) out.maneuver.location = mv.location;
       if (st.ref) out.ref = st.ref;
       if (st.via) out.via = st.via;
+      var lanes = RC.lanesOf(st);
+      if (lanes) out.lanes = lanes;
       return out;
     });
   }
@@ -2538,8 +2924,8 @@
     restoring = true;
     setRouteProfile(routeProfile);        // paints profile buttons only — no OSRM call
     restoring = false;
-    $("route-dist").textContent = fmtDist(lastDist);
-    $("route-time").textContent = fmtTime(lastDur);
+    routeAlts = []; routeAltIdx = 0; paintAltLines();
+    paintRouteSummary();
     showRouteBar(true);
 
     if (!quiet) {
@@ -2905,6 +3291,33 @@
     openAtLocation(params);
   };
 
+  function openSharedLink(sh) {
+    if (sh.point) {
+      var p = sh.point;
+      var place = { lat: p.lat, lon: p.lon, name: p.label || t("route.ptmap"), sub: "" };
+      placeResult(p.lat, p.lon, place.name, "");
+      if (!p.label) nameByReverse(place, function () { bindPlacePopup(resultMarker, place); });
+      return;
+    }
+    if (!sh.route) return;
+    var pts = sh.route.map(function (q, i) {
+      var last = i === sh.route.length - 1;
+      return { lat: q.lat, lon: q.lon, name: last && sh.to ? sh.to : t("route.ptmap"), sub: "" };
+    });
+    routeFrom = pts[0];
+    routeTo = pts[pts.length - 1];
+    routeVias = pts.slice(1, -1).slice(0, MAX_VIAS);
+    restoring = true;
+    setRouteProfile(sh.mode);              // buttons only; calcRoute below
+    restoring = false;
+    paintRouteMarkers();
+    calcRoute();
+    pts.forEach(function (q, i) {
+      if (i === pts.length - 1 && sh.to) return;
+      nameByReverse(q);
+    });
+  }
+
   function consumePending() {
     try {
       var pending = sessionStorage.getItem("oros-maps-open");
@@ -3048,6 +3461,27 @@
     // (styled by maps.css together with its siblings).
     $("route-bar").insertBefore(calBtn, $("nav-start"));
 
+    // OSM upgrade wave 6: share, the Directions panel extras, lanes.
+    var shareBtn = document.createElement("button");
+    shareBtn.type = "button";
+    shareBtn.id = "route-share";
+    shareBtn.title = t("share.route");
+    shareBtn.setAttribute("aria-label", t("share.route"));
+    shareBtn.innerHTML = SHARE_PATH;
+    shareBtn.addEventListener("click", shareRoute);
+    $("route-bar").insertBefore(shareBtn, $("nav-start"));
+    var extras = document.createElement("div");
+    extras.id = "route-extras";
+    $("maneuvers").insertBefore(extras, $("maneuvers-list"));
+    var lanesRow = document.createElement("div");
+    lanesRow.id = "nav-lanes";
+    lanesRow.hidden = true;
+    lanesRow.setAttribute("aria-label", t("nav.lanes"));
+    $("nav-top").parentNode.insertBefore(lanesRow, $("nav-top").nextSibling);
+    setInterval(function () {
+      if (!$("route-bar").hidden && lastDur > 0) paintRouteSummary();
+    }, 30000);
+
     // Steps button — toggle maneuvers panel
     $("steps-btn").addEventListener("click", function () {
       if (!lastSteps.length) { showToast(t("route.nosteps")); return; }
@@ -3178,6 +3612,11 @@
   try { restoredRoute = restoreRoute(bootedViaBridge); }
   catch (e) { restoredRoute = false; }
   if (urlQ) geocodeAndShow(urlQ, "");
+  // Wave 6: shared links (?lat&lon&label, ?route&mode&to), checked
+  // strictly by route-core.js.
+  var shared = null;
+  try { shared = urlQ ? null : RC.parseLink(location.search); } catch (e) { shared = null; }
+  if (shared) { bootedViaBridge = true; openSharedLink(shared); }
   consumePending();
   initOfflineChip();
 
