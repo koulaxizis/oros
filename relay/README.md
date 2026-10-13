@@ -341,19 +341,20 @@ Direct first, here only when the browser can't reach Raindrop. Only GETs.
 | `/collections/childrens` | none |
 | `/raindrops/0` | `perpage (≤50), page` (collection 0 = every bookmark outside the trash) |
 
-### Notion (`p: "notion"`, Notes, read-only)
+### Notion (`p: "notion"`, Notes and Spreadsheet, read-only)
 
 `POST /v1 { op: "ext", p: "notion", key, reqs }`: no `host`, `base` or `env`.
 `https://api.notion.com/v1<path>` with `Authorization: Bearer <secret>` (an
 internal integration's secret: `ntn_…` or `secret_…`) and
 `Notion-Version: 2022-06-28`. Notion doesn't answer browsers, so orOS always
 comes here, up to 5 requests a call with a pause between calls. Read-only:
-the integration sees only the pages its owner shared with it.
+the integration sees only the pages and databases its owner shared with it.
 
 | Request | Allowed |
 |---|---|
-| `POST /search` | body exactly `filter: {"property":"object","value":"page"}` (required), `page_size` (1-100), `start_cursor` (a UUID); nothing else |
+| `POST /search` | body exactly `filter: {"property":"object","value":"page"}` or `{"property":"object","value":"database"}` (required), `page_size` (1-100), `start_cursor` (a UUID); nothing else |
 | `GET /blocks/<uuid>/children` | `page_size (≤100), start_cursor` (a UUID) |
+| `POST /databases/<uuid>/query` | body only `page_size` (1-100) and `start_cursor` (a UUID): no filter, no sort |
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 

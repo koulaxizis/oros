@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.74.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.75.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5044,7 +5044,7 @@
           en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
         { name: "Notion API", url: "https://developers.notion.com/reference/intro",
           by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
-          en: "Connected services: import pages (Notes)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις)" },
+          en: "Connected services: import pages (Notes) and databases (Spreadsheet)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

@@ -21,8 +21,8 @@ const OLD = ["secret", "Z9y8X7w6V5".repeat(4) + "abc"].join("_");
 const P1 = "11111111-2222-4333-8444-555555555555", P2 = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 const CUR = "99999999-8888-4777-8666-555555555555";
 
-test("account: fixed host, one secret, Notes, always through the relay", () => {
-  assert.deepEqual(L.PLATFORMS.notion.apps, ["notes"]);
+test("account: fixed host, one secret, Notes and Spreadsheet, always through the relay", () => {
+  assert.deepEqual(L.PLATFORMS.notion.apps, ["notes", "spreadsheet"]);
   assert.equal(L.PLATFORMS.notion.relayOnly, true);
   assert.equal(L.checkKeys("notion", { key: KEY }).ok, true);
   assert.equal(L.checkKeys("notion", { key: OLD }).ok, true);
@@ -38,7 +38,7 @@ const CASES = [
   ["notion", M.blocksReq(P1, ""), ""],
   ["notion", M.blocksReq(P1.replace(/-/g, ""), CUR), ""],
   ["notion", { m: "POST", path: "/search", body: { page_size: 100 } }, "body"],                                    // no filter: databases too
-  ["notion", { m: "POST", path: "/search", body: { filter: { property: "object", value: "database" }, page_size: 10 } }, "body"],
+  ["notion", { m: "POST", path: "/search", body: { filter: { property: "object", value: "user" }, page_size: 10 } }, "body"],
   ["notion", { m: "POST", path: "/search", body: { filter: M.SEARCH_FILTER, page_size: 101 } }, "body"],
   ["notion", { m: "POST", path: "/search", body: { filter: M.SEARCH_FILTER, query: "x" } }, "body"],
   ["notion", { m: "POST", path: "/search", body: { filter: M.SEARCH_FILTER, start_cursor: "abc" } }, "body"],
@@ -48,7 +48,7 @@ const CASES = [
   ["notion", { m: "GET", path: "/users" }, "path"],
   ["notion", { m: "POST", path: "/pages", body: { parent: {} } }, "path"],
   ["notion", { m: "PUT", path: "/blocks/" + P1 + "/children", body: { children: [] } }, "path"],
-  ["notion", { m: "POST", path: "/databases/" + P1 + "/query", body: { page_size: 10 } }, "path"]
+  ["notion", { m: "POST", path: "/databases/" + P1 + "/query", body: { page_size: 10, filter: {} } }, "body"]   // rows: wave 6E, tests/linksnotiondb.test.js
 ];
 test("allowlist: one case list, app and relay agree", () => {
   for (const [p, r, want] of CASES) {
