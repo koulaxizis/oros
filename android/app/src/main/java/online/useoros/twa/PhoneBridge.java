@@ -147,7 +147,9 @@ public class PhoneBridge {
         fromPage = 0;
         lastResult = 99;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
-        if (BuildConfig.DIAG && !ok) main.postDelayed(() -> diag("SUMMARY channel request refused"), 3000);
+        if (BuildConfig.DIAG) main.postDelayed(() -> diag("SUMMARY request " + ok
+                + ", channel ready " + channelReady + ", sent " + sent + " (last " + lastResult
+                + "), from page " + fromPage), 10000);
         diag("channel requested: " + ok);
     }
 
@@ -184,9 +186,6 @@ public class PhoneBridge {
             diag("channel ready");
             main.post(() -> {
                 channelReady = true;
-                if (BuildConfig.DIAG) main.postDelayed(() -> diag("SUMMARY validated " + validated
-                        + ", channel " + channelReady + ", sent " + sent + " (last " + lastResult
-                        + "), from page " + fromPage), 8000);
                 // The first message hands the page its port (phone.js).
                 send(state());
             });
