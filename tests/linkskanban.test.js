@@ -3,6 +3,7 @@
 // personal access token), the allowlist (app and relay copies: read-only
 // GETs with fixed field lists), the relay call with Trello's two keys,
 // links/kanban.js turning answers into a Trello-export-shaped board.
+// Wave 6F: a Notion database → a board (lists from its Status/Select).
 // Run: node --test tests/
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -135,4 +136,52 @@ test("GitHub issues → two lists, cards with labels, milestone date and task li
   assert.deepEqual(ex.checklists, [{ idCard: "gh11", checkItems: [
     { id: "gh11-0", name: "reproduce", state: "incomplete" }, { id: "gh11-1", name: "log", state: "complete" }, { id: "gh11-2", name: "trace", state: "complete" }] }]);
   assert.equal(K.toExport("github", "../x", issues, {}), null);
+});
+
+const D1 = "11111111-2222-4333-8444-555555555555", CUR = "99999999-8888-4777-8666-555555555555";
+const rt = (s) => [{ plain_text: s }];
+test("Notion: databases listed by cursor, rows read by cursor; the same read-only requests as Spreadsheet", () => {
+  assert.deepEqual(L.PLATFORMS.notion.apps, ["notes", "spreadsheet", "kanban"]);
+  assert.equal(L.checkReq("notion", K.listReq("notion", 1, "")), "");
+  assert.deepEqual(K.listReq("notion", 2, CUR).body.start_cursor, CUR);
+  assert.equal(L.checkReq("notion", K.boardReq("notion", D1, 2, CUR)), "");
+  assert.equal(K.boardReq("notion", "../x", 1, ""), null);
+  const l = K.readList("notion", { has_more: true, next_cursor: CUR, results: [
+    { object: "database", id: D1, title: rt("Έργα"), properties: { Name: { name: "Name", type: "title" } } },
+    { object: "database", id: "nope", properties: {} }] });
+  assert.deepEqual(l.items.map((x) => [x.id, x.name, Object.keys(x.props)]), [[D1, "Έργα", ["Name"]]]);
+  assert.deepEqual([l.more, l.next], [true, CUR]);
+  const r = K.readRows({ has_more: false, results: [{ object: "page", id: CUR }, { object: "page", id: D1, archived: true }] });
+  assert.deepEqual([r.items.length, r.more], [1, false]);
+});
+
+test("Notion database → board: lists from Status options, labels from Multi-select, due from Date, other properties as notes", () => {
+  const db = { id: D1, name: "Έργα", props: {
+    Name: { name: "Name", type: "title" },
+    Status: { name: "Status", type: "status", status: { options: [{ id: "s1", name: "To do", color: "red" }, { id: "s2", name: "Done", color: "green" }] } },
+    Tags: { name: "Tags", type: "multi_select", multi_select: { options: [{ id: "t1", name: "web", color: "blue" }, { id: "t%2", name: "brown one", color: "brown" }] } },
+    Due: { name: "Due", type: "date" }, Ποσό: { name: "Ποσό", type: "number" }, Done: { name: "Done", type: "checkbox" } } };
+  const page = (n, p) => ({ object: "page", id: "00000000-0000-4000-8000-00000000000" + n, url: "https://www.notion.so/x-" + n, properties: p });
+  const rows = [
+    page(1, { Name: { type: "title", title: rt("Site <b>") }, Status: { type: "status", status: { name: "Done" } }, Tags: { type: "multi_select", multi_select: [{ name: "web" }, { name: "web" }] },
+              Due: { type: "date", date: { start: "2026-11-01T10:00:00.000+02:00" } }, Ποσό: { type: "number", number: 300 }, Done: { type: "checkbox", checkbox: true } }),
+    page(2, { Name: { type: "title", title: [] }, Status: { type: "status", status: null } }),
+    page(3, { Name: { type: "title", title: rt("Νέα") }, Status: { type: "status", status: { name: "Later" } } })
+  ];
+  const ex = K.toExport("notion", D1, { db, rows }, { none: "Χωρίς κατάσταση", untitled: "Χωρίς τίτλο" });
+  const bid = "nt-" + D1.replace(/-/g, "");
+  assert.equal(ex.id, bid);
+  assert.equal(ex.name, "Έργα");
+  assert.deepEqual(ex.lists.map((l) => l.name), ["To do", "Done", "Later", "Χωρίς κατάσταση"]);
+  assert.deepEqual(ex.labels.map((l) => [l.name, l.color]), [["web", "blue"], ["brown one", "orange"]]);
+  assert.ok(ex.labels.every((l) => /^[\w-]+$/.test(l.id)));
+  const [a, b, c] = ex.cards;
+  assert.deepEqual([a.name, a.idList, a.idLabels, a.due], ["Site <b>", bid + "-o-s2", [bid + "-l-t1"], "2026-11-01T10:00:00.000+02:00"]);
+  assert.equal(a.desc, "Ποσό: 300\nDone: TRUE\nhttps://www.notion.so/x-1");
+  assert.deepEqual([b.name, b.idList], ["Χωρίς τίτλο", bid + "-none"]);
+  assert.equal(c.idList, ex.lists[2].id);
+  assert.equal(K.toExport("notion", D1, { db: Object.assign({}, db, { id: CUR }), rows }, {}), null);     // rows of another database
+  // no Status or Select: one list
+  const flat = K.toExport("notion", D1, { db: { id: D1, name: "", props: { T: { name: "T", type: "title" } } }, rows: [page(4, { T: { type: "title", title: rt("x") } })] }, { all: "Κάρτες" });
+  assert.deepEqual([flat.name, flat.lists.map((l) => l.name), flat.cards.length], ["Notion", ["Κάρτες"], 1]);
 });
