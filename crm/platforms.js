@@ -1,7 +1,8 @@
 // ============================================================
 // orOS CRM — CRM platforms (crm/platforms.js)
 // Bring companies, contacts, deals and (Pipedrive) open activities
-// from a HubSpot or Pipedrive account into CRM (integrations wave 4).
+// from a HubSpot or Pipedrive account, or the clients of an Invoice
+// Ninja account, into CRM (integrations waves 4A and 4C).
 // The account and its key live in the shell (Settings › Connected
 // services, parent.orosLinks); this file never sees a key.
 // links/crm.js builds the requests, reads the answers and makes the
@@ -19,12 +20,12 @@
 
   var S = {
     en: {
-      btn: "Import from HubSpot or Pipedrive", title: "HubSpot and Pipedrive",
-      intro: "Bring companies, contacts and deals here (and Pipedrive's open activities as follow-ups). orOS only reads the platform: nothing there changes.",
-      none: "Connect HubSpot or Pipedrive in Settings › Connected services first.",
+      btn: "Import from HubSpot, Pipedrive or Invoice Ninja", title: "CRM platforms",
+      intro: "Bring companies, contacts and deals here (Pipedrive's open activities as follow-ups, Invoice Ninja's clients with their VAT ID). orOS only reads the platform: nothing there changes.",
+      none: "Connect HubSpot, Pipedrive or Invoice Ninja in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open CRM from the orOS desktop to import from a CRM platform.",
       acct: "Account", upd: "Update what was imported before, where it changed there",
-      updHint: "Only the platform's fields: name, phone, e-mail, website, address, people, deal stage and value. Status, tags, notes, stars and history here are never touched.",
+      updHint: "Only the platform's fields: name, phone, e-mail, website, address, people (and VAT ID from Invoice Ninja), deal stage and value. Status, tags, notes, stars and history here are never touched.",
       revive: "Bring back what was deleted here",
       read: "Read the account", reading: "Reading {what}… {n}",
       "k.stages": "stages", "k.orgs": "companies", "k.people": "contacts", "k.deals": "deals", "k.acts": "activities",
@@ -43,15 +44,15 @@
       "err.busy": "The platform asks to slow down. Try again in a minute.",
       "err.denied": "The key doesn't allow reading this. Give it read access to contacts, companies and deals.",
       "err.other": "Couldn't reach the platform. Try again later.",
-      close: "Close", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive"
+      close: "Close", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive", "p.ininja": "Invoice Ninja"
     },
     el: {
-      btn: "Εισαγωγή από HubSpot ή Pipedrive", title: "HubSpot και Pipedrive",
-      intro: "Φέρε εδώ εταιρείες, επαφές και deals (και τις ανοιχτές δραστηριότητες του Pipedrive ως υπενθυμίσεις). Το orOS μόνο διαβάζει την πλατφόρμα: εκεί δεν αλλάζει τίποτα.",
-      none: "Σύνδεσε πρώτα HubSpot ή Pipedrive στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      btn: "Εισαγωγή από HubSpot, Pipedrive ή Invoice Ninja", title: "Πλατφόρμες CRM",
+      intro: "Φέρε εδώ εταιρείες, επαφές και deals (τις ανοιχτές δραστηριότητες του Pipedrive ως υπενθυμίσεις, τους πελάτες του Invoice Ninja με το ΑΦΜ τους). Το orOS μόνο διαβάζει την πλατφόρμα: εκεί δεν αλλάζει τίποτα.",
+      none: "Σύνδεσε πρώτα HubSpot, Pipedrive ή Invoice Ninja στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το CRM από την επιφάνεια εργασίας του orOS για εισαγωγή από πλατφόρμα CRM.",
       acct: "Λογαριασμός", upd: "Ενημέρωση όσων ήρθαν παλιότερα, όπου άλλαξαν εκεί",
-      updHint: "Μόνο τα πεδία της πλατφόρμας: όνομα, τηλέφωνο, e-mail, ιστότοπος, διεύθυνση, άτομα, στάδιο και αξία deal. Η κατάσταση, οι ετικέτες, οι σημειώσεις, τα αστέρια και το ιστορικό εδώ δεν αλλάζουν ποτέ.",
+      updHint: "Μόνο τα πεδία της πλατφόρμας: όνομα, τηλέφωνο, e-mail, ιστότοπος, διεύθυνση, άτομα (και ΑΦΜ από το Invoice Ninja), στάδιο και αξία deal. Η κατάσταση, οι ετικέτες, οι σημειώσεις, τα αστέρια και το ιστορικό εδώ δεν αλλάζουν ποτέ.",
       revive: "Επαναφορά όσων διαγράφηκαν εδώ",
       read: "Ανάγνωση λογαριασμού", reading: "Ανάγνωση: {what}… {n}",
       "k.stages": "στάδια", "k.orgs": "εταιρείες", "k.people": "επαφές", "k.deals": "deals", "k.acts": "δραστηριότητες",
@@ -70,7 +71,7 @@
       "err.busy": "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
       "err.denied": "Το κλειδί δεν επιτρέπει αυτή την ανάγνωση. Δώσε του δικαίωμα ανάγνωσης σε επαφές, εταιρείες και deals.",
       "err.other": "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.",
-      close: "Κλείσιμο", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive"
+      close: "Κλείσιμο", "p.hubspot": "HubSpot", "p.pdrive": "Pipedrive", "p.ininja": "Invoice Ninja"
     }
   };
   function t(k, params) {

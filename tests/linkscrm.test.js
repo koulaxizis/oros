@@ -124,7 +124,7 @@ test("requests: every kind and page passes the allowlist", () => {
   for (const p of M.PLATFORMS) for (const k of M.KINDS[p]) {
     assert.equal(L.checkReq(p, M.req(p, k, "")), "", p + " " + k);
     if (!(p === "hubspot" && k === "stages")) {
-      const at = p === "hubspot" ? "MTAw" : "eyJpZCI6+/x==";
+      const at = p === "hubspot" ? "MTAw" : p === "ininja" ? "2" : "eyJpZCI6+/x==";
       assert.equal(L.checkReq(p, M.req(p, k, at)), "", p + " " + k + " page 2");
     }
   }
