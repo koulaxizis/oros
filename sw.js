@@ -1088,6 +1088,8 @@ var PRECACHE_URLS = [
   "maps/transit-core.js",
   "maps/transit.js",
   "maps/tools.js",
+  "maps/planner-core.js",
+  "maps/planner.js",
   "maps/maps.js",
   "maps/osm.js",
   "maps/osm-api.js",
