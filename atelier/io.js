@@ -1,6 +1,8 @@
 // ============================================================
 // orOS Atelier — files in and out + the editor bar (v1.0.0)
-//   - Download: PNG (optionally transparent), JPG, PDF. Pages are
+//   - Download: PNG (optionally transparent), JPG, PDF, PowerPoint
+//     (.pptx, editable in Canva / PowerPoint: pptxout.js; what it
+//     can't keep editable is drawn here as a picture). Pages are
 //     drawn by draw.js at full resolution (what you see is what you
 //     get, effects and filters included); a PDF holds one image per
 //     page at 150 or 300 dpi (jsPDF, loaded on first use).
@@ -106,6 +108,47 @@
     return cv;
   }
 
+  // PowerPoint: the images as they are stored, and every element that
+  // can't stay editable drawn alone (no rotation: the slide rotates it)
+  var PPTX_SIDE = 3000;
+  function rasterItem(doc, it) {
+    var ax = it.ax;
+    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : 0;
+    var W = it.w + pad * 2, H = it.h + pad * 2;
+    var s = Math.max(0.05, Math.min(3, PPTX_SIDE / Math.max(W, H)));
+    var cv = document.createElement("canvas");
+    cv.width = Math.max(1, Math.round(W * s)); cv.height = Math.max(1, Math.round(H * s));
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(s, 0, 0, s, 0, 0);
+    ctx.translate(pad - it.x, pad - it.y);
+    var c = {};
+    Object.keys(it).forEach(function (k) { c[k] = it[k]; });
+    c.rot = 0;
+    AT.draw.drawItem(ctx, doc, c, { maxSide: 0, clean: true });
+    return toBlob(cv, "image/png").then(function (b) { return b.arrayBuffer(); })
+      .then(function (ab) { return { png: new Uint8Array(ab), pad: pad }; });
+  }
+  function exportPptx(doc, pages) {
+    var O = window.AtelierPPTXOut, need = O.needs(doc), media = {}, out = null;
+    var chain = Promise.resolve();
+    need.assets.forEach(function (id) {
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) { return b ? b.arrayBuffer() : null; })
+        .then(function (ab) { if (ab) media["a:" + id] = new Uint8Array(ab); });
+    });
+    var only = {};
+    pages.forEach(function (p) { only[p.id] = 1; });
+    need.raster.forEach(function (id) {
+      var it = doc.items.filter(function (x) { return x.id === id; })[0];
+      if (!it || !only[it.pg]) return;
+      chain = chain.then(function () { return rasterItem(doc, it); }).then(function (r) { media["r:" + id] = r; });
+    });
+    return chain.then(function () {
+      var r = O.build(doc, media, { pages: pages.map(function (p) { return p.id; }) });
+      out = r.out;
+      return saveBlob(new Blob([r.bytes], { type: O.MIME }), fileName(doc, ".pptx"), O.MIME, "PowerPoint", ".pptx");
+    }).then(function (ok) { return ok ? { pics: out.raster } : false; });
+  }
+
   var exporting = false;
   function doExport(o) {
     var doc = AT.doc;
@@ -130,7 +173,9 @@
     if (o.pages === "cur") pages = pages.filter(function (p) { return p.id === ED.pg; });
     var chain = prepare(doc);
     var mime = o.type === "png" ? "image/png" : "image/jpeg";
-    if (o.type === "pdf") {
+    if (o.type === "pptx") {
+      chain = chain.then(function () { return exportPptx(doc, pages); });
+    } else if (o.type === "pdf") {
       var J;
       chain = chain.then(loadJsPDF).then(function (j) {
         J = j;
@@ -168,7 +213,8 @@
     }
     chain.then(function (ok) {
       exporting = false;
-      if (ok) AT.toast(AX.credits(doc).length ? t("exp.credits") : t("exp.done"));
+      if (ok && ok.pics) AT.toast(t("exp.pptxPics", { n: ok.pics }));
+      else if (ok) AT.toast(AX.credits(doc).length ? t("exp.credits") : t("exp.done"));
     }, function (e) {
       exporting = false;
       try { console.error("[orOS] atelier: export failed", e); } catch (x) {}
@@ -182,7 +228,7 @@
     var print = AT.isPrint(doc), multi = doc.pages.length > 1;
     var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720 };
     var film = { video: 1, gif: 1 };
-    var types = ["png", "jpg", "pdf"].concat(AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
+    var types = ["png", "jpg", "pdf"].concat(window.AtelierPPTXOut ? ["pptx"] : [], AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
     AT.openDialog(t("exp.title"), function (body, close) {
       function render() {
         body.innerHTML = "";
@@ -202,8 +248,8 @@
           secs = Math.ceil(AT.motion.duration(doc, pl));
         }
         body.appendChild(el("p", "hint", t("exp." + st.type + "Hint", { s: secs })));
-        body.appendChild(el("div", "fld-lbl", t("exp.size")));
         var opts = el("div", "pn-col");
+        if (st.type !== "pptx") body.appendChild(el("div", "fld-lbl", t("exp.size")));
         function radio(name, label, on, fn) {
           var l = el("label", "chk");
           var r = el("input"); r.type = "radio"; r.name = name; r.checked = on;
@@ -218,6 +264,8 @@
             var fs = AT.motion.filmSize(doc, d);
             radio("side", fs.w + " × " + fs.h + " px", st.side === d, function () { st.side = d; });
           });
+        } else if (st.type === "pptx") {
+          // one size: the design's own (scaled as a whole only past PowerPoint's limits)
         } else if (print || st.type === "pdf") {
           [150, 300].forEach(function (d) {
             var ps = pixelSize(doc, d / 72);
