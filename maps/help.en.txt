@@ -1,6 +1,6 @@
 # Maps
 
-Find places, plan routes by car, bike or on foot, and follow spoken turn-by-turn directions.
+Find places, plan routes by car, bike or on foot, follow spoken turn-by-turn directions, and help improve OpenStreetMap with notes.
 
 ## Getting started
 
@@ -32,17 +32,32 @@ The route bar shows distance and travel time (an estimate without live traffic),
 - Where the browser allows it, the screen stays on while you navigate.
 - If Maps reopens in the same tab within 30 minutes, navigation picks up again.
 
+## OpenStreetMap notes
+
+A note tells the volunteers who map [OpenStreetMap](https://www.openstreetmap.org) that something is wrong or missing: a shop that closed, a new path, a wrong street name. They read it, fix the map and resolve the note.
+
+1. Tap `Mapping (OpenStreetMap notes)` (the flag). The notes of the area appear on the map and in the panel (zoom in if you see `Zoom in to see the notes of this area.`). Red notes are open, green ones resolved in the last week.
+2. To report something, long-press the map (right-click on a computer) and pick `Report to OpenStreetMap`, or use `New note at the map centre`. Describe it clearly: other people will read it. If an open note is already close by, Maps shows it first.
+3. Tap a note to read it. You can `Comment`, `Resolve` or `Reopen` it.
+
+Writing needs a free OpenStreetMap account: `Sign in with OpenStreetMap` opens the OpenStreetMap page in a small window, and you come back signed in. Reading works without one. `Mine` lists the notes you created or commented on, and Maps tells you when someone replies.
+
+> Without a connection, or when OpenStreetMap doesn't answer, what you write goes to `Waiting` and is sent from this device as soon as it can. If you wrote it on another device, `Send from here` takes it over.
+
+In `Maps settings` › `OpenStreetMap` you sign out, pick the `Test server` (for trying things out, it's not the real map) and set the `Upload comment`. That line, "Uploaded using orOS Maps" unless you change it, goes at the end of your new notes (you can edit it each time in `Ending line`) and will be the comment of your map edits.
+
 ## Online services and privacy
 
 - **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
+- **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 
 Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).
 
 ## Sync and backup
 
-Saved places sync through [orOS sync](help:t/sync). These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, notes waiting to be sent and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). Maps has no file import or export.
 

@@ -7,6 +7,8 @@
 //   - Geocoding:  Photon (photon.komoot.io)
 //   - Routing:    OSRM — car: demo server (router.project-osrm.org);
 //                 bike / walk: FOSSGIS (routing.openstreetmap.de)
+//   - OSM API:    notes (api.openstreetmap.org, OAuth 2.0 sign-in),
+//                 in osm.js / osm-api.js / notes.js
 // Saved places sync through the "maps" slice (oros-maps-data,
 // symmetric merge + tombstones). The last-known route and the
 // tile cache are device-local (never synced).
@@ -507,7 +509,8 @@
 
     L.control.zoom({ position: "topright" }).addTo(map);
 
-    layerStandard = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    // No {s}. subdomains: the OSMF retired a/b/c (tile usage policy).
+    layerStandard = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       crossOrigin: "anonymous",     // CORS tiles: the SW caches only real 200s
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -1685,6 +1688,12 @@
       });
     }
     act(STAR_PATH, t("places.save"), function () { addPlace(place); renderSavedLayer(); });
+    // Extra items from the OSM modules (notes.js: Report to OSM).
+    mapsHost.ctxItems.forEach(function (fn) {
+      var it = null;
+      try { it = fn(place); } catch (e2) { it = null; }
+      if (it) act(it.icon, it.label, it.run);
+    });
     wrap.appendChild(actions);
 
     L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(wrap).openOn(map);
@@ -3128,11 +3137,24 @@
     $("route-forget").addEventListener("click", forgetSavedRoute);
   }
 
+  // ---------- Host hooks for the OSM modules (osm-api.js, notes.js) ----------
+  // They load after this file and plug into the map, the toasts, the
+  // long-press menu and the settings drawer through this object only.
+  var mapsHost = window.__orosMapsHost = {
+    map: null,
+    lang: LANG,
+    toast: showToast,
+    localToast: localToast,
+    storeFull: t("store.full"),
+    ctxItems: []
+  };
+
   // ---------- Boot ----------
   load();
   inheritPalette();
   watchPalette();
   initMap();
+  mapsHost.map = map;
   renderSavedLayer();
   applyI18n();
   wire();
