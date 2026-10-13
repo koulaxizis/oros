@@ -441,7 +441,15 @@
           body: item.body || '',
           tag: item.dedupKey || undefined
         });
-        wn.onclick = function () { window.focus(); try { wn.close(); } catch (e2) {} };
+        // A click on the OS notification lands where the in-tab one
+        // does (it used to only focus the tab, Chris 2026-10-13).
+        wn.onclick = function () {
+          window.focus();
+          try { wn.close(); } catch (e2) {}
+          openTarget(item);
+          markItemRead(item);
+          if (toast.parentNode) toast.remove();
+        };
       } catch (e) { /* in-tab toast stands alone */ }
     }
     

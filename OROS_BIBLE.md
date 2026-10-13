@@ -5871,3 +5871,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Help: Kanban, Settings, Privacy, What's new. Credits: Notion row. Decision in Part IX.
   - Tests: `tests/linkskanban.test.js` (+2). Chromium E2E in the real shell (360 px EL, 1280 px EN) with Notion mocked behind the real relay code: 140 rows over 2 pages → 4 columns, HTML stays text, read again → only the new card; the 6B Trello/GitHub E2E still passes.
   - Not tested: a real Notion workspace, the deployed relay, real phones, Safari.
+
+### 2026-10-13 — Fix: a click on the system notification opens its target (#306) — 1.79.01
+- notifications.js: clicking an orOS notification shown by Windows, Android or Linux now opens the app or window it points to and marks the notice read, like the in-tab toast. Before, it only focused the orOS tab.
+  - Tests: tests/notif-panel-close.test.js. E2E at 360 px.

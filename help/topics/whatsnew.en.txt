@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.79.00
 - Kanban: read a Notion database as a board. `Import from other apps` › a connected Notion account › `Show databases`: each option of the database's Status becomes a column and each entry a card, with its date as due date, its tags as labels and its other properties in the notes. Read it again later to bring in only the new entries. orOS only reads Notion.
+- Notifications: clicking an orOS notification from your system now opens what it points to.
 
 ## Version 1.78.00
 - Maps: Discover (the compass button). See what's around: restaurants, cafés, pharmacies, ATMs, fuel and more, each with whether it's open now and when it closes, and an `Open now` filter. Wikipedia articles about places near you, and open street-level photos from Panoramax. Long-press › `What's nearby` for any point.
