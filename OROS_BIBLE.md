@@ -5302,3 +5302,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-12 — Montage phase 2 wave 3B: stickers, shapes, light copies (#257) — 1.41.00
 - Montage v1.4.0: shapes on the Overlay row (rectangle, rounded, circle, triangle, star, heart, arrow, speech bubble; fill, outline, keyframes) and emoji stickers on the Text row; "Make light copies" in Project settings makes small preview-only copies of big videos on this device (export still uses the originals). New item kind `shape` with `sh` (Part IV, MONTAGE v1). Montage phase 2 complete. Help EN/EL, tests/montage.test.js. Not tested: real phones, Safari.
+
+### 2026-10-13 — Invoices: Take out of stock / Back into stock (#258) — 1.41.01
+- Invoices: an issued invoice or receipt whose lines carry a product code shows `Take out of stock`, and a credit note shows `Back into stock`. Both open a prefilled sale or customer return in Stock through BR-ST-OUT (`invoices/core.js stockOut`: coded lines only, net unit price after line and total discounts, `src` = `invoices:<id>`). Nothing is written until the person saves in Stock. The button appears only once Stock has been used. Help EN/EL, tests/invoices.test.js. Not tested: real phones, Safari.
