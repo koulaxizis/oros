@@ -2070,6 +2070,7 @@
     list.appendChild(button(t("set.stages"), "sheet-btn", stagesEditor));
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
     list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
+    if (PL && PL.has()) list.appendChild(button(PL.label(), "sheet-btn", function () { dlg.close(); PL.open(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
     list.appendChild(button(t("set.restore"), "sheet-btn", function () { dlg.close(); importJson(); }));
@@ -2373,6 +2374,44 @@
     }));
     dlg.appendChild(acts);
     showDialog(dlg);
+  }
+
+  // Rows from a CRM platform (crm/platforms.js): one write. Undo
+  // removes what was added and puts back what was changed.
+  var PL = window.OrosCrmPlatforms || null;
+  function applyRows(adds, upds, doneText) {
+    var added = [], back = [];
+    ["cust", "deals", "fups"].forEach(function (k) {
+      (adds[k] || []).forEach(function (r) {
+        if (C.byId(data[k], r.id)) return;
+        var n = Object.assign({}, r, { m: stamp(null) });
+        if (data.tombs[n.id]) { if (data.tombs[n.id] >= n.m) n.m = stamp({ m: data.tombs[n.id] }); delete data.tombs[n.id]; }
+        data[k].push(n);
+        added.push(n.id);
+      });
+    });
+    upds.forEach(function (u) {
+      var prev = C.byId(data[u.k], u.row.id);
+      if (!prev) return;
+      data[u.k][data[u.k].indexOf(prev)] = Object.assign({}, u.row, { m: stamp(prev) });
+      back.push({ k: u.k, prev: prev });
+    });
+    if (!commit()) return false;
+    undoToast(doneText, function () {
+      added.forEach(function (id) { tomb(id); });
+      back.forEach(function (b) {
+        var cur = C.byId(data[b.k], b.prev.id);
+        var row = Object.assign({}, b.prev, { m: stamp(cur || b.prev) });
+        if (cur) data[b.k][data[b.k].indexOf(cur)] = row; else data[b.k].push(row);
+      });
+      commit();
+    });
+    return true;
+  }
+  function initPlatforms() {
+    if (!PL) return;
+    PL.init({ lang: LANG, el: el, button: button, makeDialog: makeDialog, showDialog: showDialog,
+              field: field, selectEl: selectEl, data: function () { return data; }, apply: applyRows });
   }
 
   // BR-CRM-MAIL: an email from Mail becomes a prefilled "Email" log
@@ -2731,6 +2770,7 @@
     if (!C) { document.body.textContent = "CRM: core.js missing"; return; }
     load();
     loadPrefs();
+    initPlatforms();
     applyI18n();
     wire();
     registerSync();

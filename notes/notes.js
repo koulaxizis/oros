@@ -1177,6 +1177,83 @@
     return nb;
   }
 
+  // ---------- Import from Notion (integrations wave 6D, platforms.js) ----------
+  // The plan comes from links/notes.js; this is its one write: the
+  // "Notion" notebook (once), the new pages, the replaced texts. Undo
+  // takes out what came in (tombstoned, like any deletion here), puts
+  // back the old texts and drops the notebook again while it is empty.
+  function platformApply(pl, doneText) {
+    var now = Date.now(), back = { pages: [], upd: [], nb: null };
+    if (pl.notebook && !state.notebooks.some(function (n) { return n.id === pl.notebook.id; })) {
+      var maxPos = 0;
+      state.notebooks.forEach(function (n) { if (n.pos > maxPos) maxPos = n.pos; });
+      state.notebooks.push({ id: pl.notebook.id, name: pl.notebook.name, mtime: now, pos: maxPos + 1 });
+      delete state.tombs["nb:" + pl.notebook.id];
+      back.nb = pl.notebook.id;
+    }
+    var nbOk = state.notebooks.some(function (n) { return n.id === pl.nb; });
+    pl.pages.add.forEach(function (x) {
+      if (!nbOk || pageById(x.id)) return;
+      var par = x.parent && pageById(x.parent) ? x.parent : null;
+      state.pages.push({ id: x.id, nb: pl.nb, parent: par, title: x.title, text: x.text,
+                         mtime: now, pos: x.pos, labels: [], pinned: false, ct: now, st: now });
+      delete state.tombs[x.id];
+      back.pages.push(x.id);
+    });
+    pl.pages.upd.forEach(function (x) {
+      var pg = pageById(x.id);
+      if (!pg) return;
+      back.upd.push({ id: x.id, title: pg.title, text: pg.text });
+      pg.title = x.title;
+      pg.text = x.text;
+      touchContent(pg);
+    });
+    if (back.pages.length || back.nb) prefs.currentNb = pl.nb;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyUndo(doneText, function () { platformUndo(back); });
+    return true;
+  }
+  function platformUndo(back) {
+    var now = Date.now(), gone = {};
+    back.pages.forEach(function (id) { gone[id] = 1; state.tombs[id] = now; });
+    state.pages = state.pages.filter(function (p) { return !gone[p.id]; });
+    state.pages.forEach(function (p) { if (p.parent && gone[p.parent]) { p.parent = null; touchStruct(p); } });
+    back.upd.forEach(function (u) {
+      var pg = pageById(u.id);
+      if (!pg) return;
+      pg.title = u.title;
+      pg.text = u.text;
+      touchContent(pg);
+    });
+    if (back.nb && state.notebooks.length > 1 && !state.pages.some(function (p) { return p.nb === back.nb; })) {
+      state.notebooks = state.notebooks.filter(function (n) { return n.id !== back.nb; });
+      state.tombs["nb:" + back.nb] = now;
+      if (prefs.currentNb === back.nb) prefs.currentNb = state.notebooks[0].id;
+    }
+    if (prefs.current && gone[prefs.current]) prefs.current = null;
+    savePrefs();
+    saveNow();
+    markSyncDirty();
+    renderAll();
+    notifyTransient(PLAT ? PLAT.undone() : "");
+  }
+  // A notice with an Undo button (the shell's notifications); without
+  // the shell there is no import at all.
+  function notifyUndo(text, fn) {
+    try {
+      var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+      if (N && typeof N.transient === "function") {
+        N.transient({ ns: "notes", title: text, body: "", action: { label: PLAT ? PLAT.undoLabel() : "Undo", fn: fn } });
+        return;
+      }
+    } catch (e) { /* cross-origin guard */ }
+    toast(text);
+  }
+  var PLAT = window.OrosNotesPlatforms || null;
+
   function renameNotebook(id, newName) {
     var nb = state.notebooks.find(function (n) { return n.id === id; });
     if (!nb) return;
@@ -2927,6 +3004,21 @@
           });
       });
       newBtn.parentNode.appendChild(nbBtn);
+
+      // Import from Notion (wave 6D): only inside the orOS shell
+      if (PLAT && PLAT.has()) {
+        PLAT.init({ lang: LANG, data: function () { return state; }, apply: platformApply });
+        var CLOUD_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/><polyline points="9.5 13.5 12 16 14.5 13.5"/><line x1="12" y1="10" x2="12" y2="16"/></svg>';
+        var ntBtn = document.createElement("button");
+        ntBtn.id = "btn-notion";
+        ntBtn.type = "button";
+        ntBtn.className = "icon-btn";
+        ntBtn.title = PLAT.label();
+        ntBtn.setAttribute("aria-label", PLAT.label());
+        ntBtn.innerHTML = CLOUD_SVG;
+        ntBtn.addEventListener("click", function (e) { e.stopPropagation(); closeMenus(); PLAT.open(); });
+        newBtn.parentNode.appendChild(ntBtn);
+      }
     }
 
     var title = document.getElementById("page-title");

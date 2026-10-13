@@ -1,23 +1,62 @@
 // ============================================================
-// orOS Time — Today provider (v1.0.0)
-// Loaded by the shell (today/host.js) through apps.json "today".
+// orOS Time — Today provider (v1.1.0)
+// Loaded by the shell (today/host.js) through apps.json "today",
+// after stage-core.js (window.OrosStageCore).
 // Read-only: lists the shell's alarms (window.orosAlarms.list(), the
 // same list the Time app shows), never adds or removes one. Rows:
 // alarms that ring later today, at their time. A running timer or
 // Pomodoro is a "once" alarm set less than 3 hours ahead: left out
 // (it rings by itself within the hour), like any such short alarm.
 // Opens the Alarms tab of Time (__orosOpenTime("alarms")).
+// Stage (wave 4), read-only from oros-time-stage (+ this device's
+// oros-time-stage-run): on an event's day, the next session and
+// when it is expected to start ("Next: Panel", at 14:30, later if
+// the day runs behind); on the days ahead (the Today horizon), the
+// event itself at its start. Opens the Stage tab on that event.
 // ============================================================
 (function (root) {
   "use strict";
   var W = { en: "Alarm", el: "Ξυπνητήρι" };
   var SHORT_MS = 3 * 3600000;      // shorter than this from now and "once": a timer
+  var NEXT = { en: "Next: {t}", el: "Επόμενο: {t}" };
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function hmOf(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+
+  // Stage rows: today's events → the next item; later days → the event.
+  function stageRows(ctx) {
+    var C = root.OrosStageCore, raw = ctx.readJSON("oros-time-stage");
+    if (!C || !raw || !Array.isArray(raw.events) || !raw.events.length) return [];
+    var data = C.merge(C.empty(), raw), run = C.normRun(ctx.readJSON("oros-time-stage-run"));
+    var last = ctx.addDays(ctx.today, ctx.horizon), out = [], lang = ctx.lang === "el" ? "el" : "en";
+    data.events.forEach(function (ev) {
+      if (!ev.date || ev.date < ctx.today || ev.date > last) return;
+      var target = { stage: { ev: ev.id } };
+      if (ev.date !== ctx.today) {
+        out.push({ id: "stage-" + ev.id, due: ev.date, time: ev.start || null, kind: "event", title: ev.name, target: target });
+        return;
+      }
+      var items = C.rundown(data, ev.id);
+      if (!items.length) {
+        out.push({ id: "stage-" + ev.id, due: ev.date, time: ev.start || null, kind: "event", title: ev.name, target: target });
+        return;
+      }
+      var sc = C.schedule(ev, items, run.ev === ev.id ? run : null, ctx.now), next = -1;
+      for (var i = 0; i < sc.rows.length && next < 0; i++) if (sc.rows[i].state === "todo") next = i;
+      if (next < 0) return;                      // the last item is on now, or the day is done
+      var it = items[next], r = sc.rows[next];
+      target = { stage: { ev: ev.id, it: it.id } };
+      out.push({ id: "stage-" + ev.id, due: ev.date, kind: "event",
+                 time: (ev.start || run.ev === ev.id) && r.expStart !== null && r.expStart >= ctx.now - 60000 ? hmOf(r.expStart) : null,
+                 title: NEXT[lang].replace("{t}", it.title),
+                 text: [it.speaker, ev.name].filter(Boolean).join(" · "), target: target });
+    });
+    return out;
+  }
 
   var PROVIDER = {
     id: "time",
-    keys: ["oros-alarms"],
+    keys: ["oros-alarms", "oros-time-stage"],
     collect: function (ctx) {
       var A = root.orosAlarms, list = [];
       try { list = A && typeof A.list === "function" ? A.list() : []; } catch (e) { list = []; }
@@ -31,9 +70,11 @@
         out.push({ id: String(a.id), due: day, time: pad(d.getHours()) + ":" + pad(d.getMinutes()),
                    kind: "event", title: a.label || (W[ctx.lang] || W.en) });
       });
+      try { out = out.concat(stageRows(ctx)); } catch (e) {}
       return out;
     },
     open: function (target, win) {
+      if (target && target.stage && typeof win.__orosOpenAt === "function") { win.__orosOpenAt("time", target); return; }
       if (typeof win.__orosOpenTime === "function") win.__orosOpenTime("alarms");
     }
   };

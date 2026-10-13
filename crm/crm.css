@@ -364,6 +364,9 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .check-row { display: flex; align-items: center; gap: 10px; min-height: 36px; margin-top: 6px; font-size: 13px; cursor: pointer; }
 .check-row input { width: 22px; height: 22px; min-height: 0; flex-shrink: 0; accent-color: var(--accent); }
 .hint { font-size: 12px; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+#crm-plat .plat-msg { margin-top: 12px; }
+#crm-plat .plat-msg p { margin: 6px 0 0; overflow-wrap: anywhere; }
+#crm-plat .plat-msg > p:not(.hint) { font-size: 14px; font-weight: 600; }
 .hint.warn { color: var(--warn); font-weight: 700; }
 .hint.ok { color: var(--ok); font-weight: 700; }
 .more { margin-top: 12px; }

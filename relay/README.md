@@ -22,6 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io and Notion, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -164,6 +165,215 @@ Rules:
 - Up to 2 MB per request and 4 MB per call. 6 requests at a time, 15 s each, and a 25 s budget per call: requests not done in time come back as `timeout` for the app to retry.
 - Answers are capped at 256 KB per body and 2 MB per call.
 - The key is used for this call only. It never appears in an answer, an error or a log (fetch errors are reported only as `network`).
+
+## The `ext` operation (Connected services: a person's own shop)
+
+orOS calls the shop straight from the browser first. When it can't
+(no CORS, a firewall, a host that drops the Authorization header), the
+app sends the same requests here. Code: `ext.js`; tests:
+`tests/links.test.js` runs one case list against both the app's
+`links/core.js checkReq` and `checkExtReq` here.
+
+`POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [{ m, path, body? }] }` (≤ 10)
+→ `{ res: [{ status, body } | { status, err: "too-big" } | { err: "timeout" | "network" }] }`
+
+WooCommerce: `https://<host><base>/wp-json/wc/v3<path>`, Basic auth
+`ck:cs` (`ck_` / `cs_` + 40 hex, checked).
+
+| Method | Path | Query / body |
+|---|---|---|
+| GET | `/system_status` | |
+| GET | `/products` | `page, per_page (1-100), orderby, order, status, type, modified_after` |
+| GET | `/products/<n>`, `/orders/<n>` | |
+| GET | `/products/<n>/variations` | `page, per_page, orderby, order` |
+| GET | `/orders` | `page, per_page, orderby, order, status, after, modified_after` |
+| PUT | `/products/<n>`, `/products/<n>/variations/<m>` | `{ stock_quantity: int, manage_stock: bool }` only |
+| PUT | `/orders/<n>` | `{ status }` (a WooCommerce order status) only |
+| POST | `/orders/<n>/notes` | `{ note (≤1000), customer_note: bool }` only |
+
+Rules:
+- The host is the person's own, checked like a mail server: a public DNS name, https, default port. `base` is up to 3 plain path segments (a WordPress in a sub-folder).
+- `%`, `#`, `\`, `@`, whitespace, `//` and `.`/`..` segments are refused; the built URL is parsed and checked again.
+- Redirects are not followed. Writes run one at a time, in order; reads up to 4 at a time.
+- 16 KB per request body; answers up to 2 MB each and 8 MB per call; 20 s per request, 28 s per call.
+- The keys are used for this call only: never stored, logged or echoed (fetch errors come back only as `network`).
+
+### Email platforms (`p: "mlite" | "mchimp" | "brevo"`, Newsletter)
+
+`POST /v1 { op: "ext", p, key, reqs }`: no `host`, `base` or `env`.
+MailerLite `https://connect.mailerlite.com/api<path>` (`Authorization: Bearer`),
+Mailchimp `https://<dc>.api.mailchimp.com/3.0<path>` (dc = the key's suffix,
+`-us21`; Basic `oros:<key>`; Mailchimp never answers browsers, so orOS
+always comes here), Brevo `https://api.brevo.com/v3<path>` (`api-key`).
+
+| Platform | Method | Path | Query / body |
+|---|---|---|---|
+| MailerLite | GET | `/groups` | `limit (≤1000), page` |
+| MailerLite | GET | `/groups/<n>/subscribers` | `filter[status]` (active, unsubscribed, unconfirmed, bounced, junk), `limit, cursor` |
+| MailerLite | POST | `/batch` | `{ requests }`: ≤ 50 × `{ method: "POST", path: "api/subscribers", body: { email, fields?: { name }, groups?: [one id], status?: "unsubscribed" } }` |
+| Mailchimp | GET | `/ping`, `/lists` | `count, offset, fields` (one fixed value) |
+| Mailchimp | GET | `/lists/<id>/members` | `count, offset, status, since_last_changed (…Z), fields` (one fixed value) |
+| Mailchimp | POST | `/lists/<id>` | `{ members: ≤ 250 × { email_address, status: subscribed\|unsubscribed, merge_fields?: { FNAME }, language? }, update_existing }`; "subscribed" only with `update_existing: false` |
+| Brevo | GET | `/account`, `/contacts/lists` | `limit (≤50), offset` |
+| Brevo | GET | `/contacts/lists/<n>/contacts` | `limit (≤500), offset, modifiedSince` |
+| Brevo | POST | `/contacts/import` | `{ jsonBody: ≤ 250 × { email, attributes?: { FIRSTNAME } }, listIds: [one], updateExistingContacts, emptyContactsAttributes }` |
+| Brevo | POST | `/contacts/lists/<n>/contacts/remove` | `{ emails: ≤ 150 }` |
+
+- 64 KB per request body. Nothing in these bodies can bring back a person who unsubscribed.
+
+### CRMs (`p: "hubspot" | "pdrive"`, CRM, read-only)
+
+`POST /v1 { op: "ext", p, key, reqs }`: no `host`, `base` or `env`.
+HubSpot `https://api.hubapi.com<path>` (`Authorization: Bearer`, a private
+app's token; HubSpot never answers browsers, so orOS always comes here),
+Pipedrive `https://api.pipedrive.com/api/v2<path>` (`x-api-token`). Only GETs.
+
+| Platform | Path | Query |
+|---|---|---|
+| HubSpot | `/crm/v3/pipelines/deals` | none |
+| HubSpot | `/crm/v3/objects/companies` | `limit (≤100), after, properties` (one fixed list) |
+| HubSpot | `/crm/v3/objects/contacts` | `limit, after, properties` (one fixed list), `associations=companies` |
+| HubSpot | `/crm/v3/objects/deals` | `limit, after, properties` (one fixed list), `associations=companies,contacts` |
+| Pipedrive | `/stages`, `/organizations`, `/persons` | `limit (≤500), cursor` |
+| Pipedrive | `/deals` | `limit, cursor, status` (open, won, lost) |
+| Pipedrive | `/activities` | `limit, cursor, done` (true, false) |
+
+- A Pipedrive cursor is base64: its `+`, `/` and `=` travel as `%2B`, `%2F`,
+  `%3D`. Those three are the only escapes `checkExtReq` lets through, and only
+  where a query pattern allows them (the cursor); any other `%` is refused.
+
+### Stripe (`p: "stripe"`, Budget, read-only)
+
+`POST /v1 { op: "ext", p: "stripe", key, reqs }`: no `host`, `base` or `env`.
+`https://api.stripe.com/v1<path>` (`Authorization: Bearer`). Only a restricted
+key (`rk_live_…` / `rk_test_…`) is accepted, never a secret key (`sk_`); orOS
+always comes here (a key never talks to Stripe from a browser). Only GETs.
+
+| Path | Query |
+|---|---|
+| `/balance` | none (the connection check) |
+| `/balance_transactions` | `limit (≤100), starting_after (txn_…), created[gte], created[lt]` (unix seconds) |
+
+### Invoice Ninja (`p: "ininja"`, CRM and Budget, read-only)
+
+`POST /v1 { op: "ext", p: "ininja", host, base, key, reqs }`: the person's
+own install or `invoicing.co`, so `host` and `base` are checked like
+WooCommerce's (public host only). `https://<host><base>/api/v1<path>` with
+`X-API-TOKEN: <key>` (32–128 letters and digits) and
+`X-Requested-With: XMLHttpRequest`. orOS calls it straight from the browser
+first and comes here only when that fails. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/statics` | none (currency ids → codes) |
+| `/clients` | `per_page (≤100), page, status=active` |
+| `/payments` | `per_page (≤100), page` |
+
+### Odoo (`p: "odoo"`, CRM, read-only)
+
+`POST /v1 { op: "ext", p: "odoo", host, base, db?, key, reqs }`: the person's
+own Odoo (19+, or `<name>.odoo.com`); `host` and `base` checked like
+WooCommerce's, `db` (optional, only for Odoo: letters, digits, `._-`) goes
+out as `X-Odoo-Database`. `https://<host><base>/json/2<path>` with
+`Authorization: Bearer <key>`. Odoo doesn't answer browsers, so orOS comes
+here after one direct try. Only `search_read`, as POSTs that read (they may
+run side by side), each body exactly one of these (compared as JSON):
+
+| Path | Body |
+|---|---|
+| `/res.company/search_read` | `fields: ["partner_id"]`, `limit` (1–200) |
+| `/res.partner/search_read` | `domain: [["user_ids","=",false]]`, the fixed contact `fields`, `limit` (1–200), `offset`, `order: "id"` |
+| `/crm.lead/search_read` | `domain: [["type","=","opportunity"],["active","in",[true,false]]]`, the fixed opportunity `fields`, `limit`, `offset`, `order: "id"` |
+
+### Todoist (`p: "todoist"`, To-Do, read-only)
+
+`POST /v1 { op: "ext", p: "todoist", key, reqs }`: no `host`, `base` or `env`.
+`https://api.todoist.com/api/v1<path>` (`Authorization: Bearer`, a personal
+API token: 40 hex digits). orOS calls Todoist straight from the browser first
+and comes here only when that fails. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/projects` | `limit (≤200), cursor` |
+| `/tasks` | `limit (≤200), cursor` (open tasks only: Todoist's list of tasks) |
+
+- The cursor travels like Pipedrive's (`%2B`, `%2F`, `%3D` only).
+
+### Trello (`p: "trello"`, Kanban, read-only)
+
+`POST /v1 { op: "ext", p: "trello", key, token, reqs }`: no `host`, `base` or `env`.
+`https://api.trello.com/1<path>` with `Authorization: OAuth oauth_consumer_key="<key>", oauth_token="<token>"`
+(API key: 32 hex digits; token: 64-100 letters and digits). Both are needed
+and neither goes in the query (`key=` / `token=` in a path is refused).
+Direct first, here only when the browser can't reach Trello. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/members/me/boards` | `filter=open&fields=name` |
+| `/boards/<24 hex>` | `fields=name&lists=open&cards=open&labels=all&checklists=all&card_fields=name,desc,due,idList,idLabels,closed,pos&list_fields=name,closed,pos` (exactly these) |
+
+### GitHub (`p: "github"`, Kanban, read-only)
+
+`POST /v1 { op: "ext", p: "github", key, reqs }`: no `host`, `base` or `env`.
+`https://api.github.com<path>` with `Authorization: Bearer <token>`,
+`X-GitHub-Api-Version: 2022-11-28` and the relay's `User-Agent` (GitHub
+refuses calls without one). The token is a personal access token
+(`github_pat_…` fine-grained, or classic `ghp_…`). Direct first, here only
+when the browser can't reach GitHub. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/user/repos` | `per_page (≤100), page, sort=updated` |
+| `/repos/<owner>/<repo>/issues` | `state=open\|all, per_page (≤100), page` |
+
+- `<owner>/<repo>` are GitHub's name characters only; `.` and `..` as a part are refused.
+
+### Raindrop.io (`p: "raindrop"`, Bookmarks, read-only)
+
+`POST /v1 { op: "ext", p: "raindrop", key, reqs }`: no `host`, `base` or `env`.
+`https://api.raindrop.io/rest/v1<path>` (`Authorization: Bearer`, the test
+token of the user's own Raindrop app: 30-80 letters, digits and dashes).
+Direct first, here only when the browser can't reach Raindrop. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/collections` | none |
+| `/collections/childrens` | none |
+| `/raindrops/0` | `perpage (≤50), page` (collection 0 = every bookmark outside the trash) |
+
+### Notion (`p: "notion"`, Notes and Spreadsheet, read-only)
+
+`POST /v1 { op: "ext", p: "notion", key, reqs }`: no `host`, `base` or `env`.
+`https://api.notion.com/v1<path>` with `Authorization: Bearer <secret>` (an
+internal integration's secret: `ntn_…` or `secret_…`) and
+`Notion-Version: 2022-06-28`. Notion doesn't answer browsers, so orOS always
+comes here, up to 5 requests a call with a pause between calls. Read-only:
+the integration sees only the pages and databases its owner shared with it.
+
+| Request | Allowed |
+|---|---|
+| `POST /search` | body exactly `filter: {"property":"object","value":"page"}` or `{"property":"object","value":"database"}` (required), `page_size` (1-100), `start_cursor` (a UUID); nothing else |
+| `GET /blocks/<uuid>/children` | `page_size (≤100), start_cursor` (a UUID) |
+| `POST /databases/<uuid>/query` | body only `page_size` (1-100) and `start_cursor` (a UUID): no filter, no sort |
+
+### timologisi.online (`p: "tol"`, Invoices → myDATA)
+
+`POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [{ m, path, body? }] }`
+
+The host is fixed per `env` (`test` → `provider-dev.timologisi.online`,
+`live` → `provider.timologisi.online`), path prefix `/api/v1/Provider`;
+`host` / `base` in the body are refused. Auth: header `API-KEY: <key>`
+(16-200 chars of `A-Za-z0-9._~+/=-`).
+
+| Method | Path | Query / body |
+|---|---|---|
+| GET | `/GetCreditsBalance` | |
+| GET | `/RequestTransmittedDocs` | `issuerVatNumber, issuedFrom, issuedTo, uid, invoiceMark, series, aa, invoiceType, branch` |
+| POST | `/SendInvoices` | `{ invoice: [one document] }` with only the known top-level keys, a known type, a 9-digit issuer ΑΦΜ |
+
+- A SendInvoices travels alone in its call (`reqs` of 1); 64 KB per request body; 65 s per request, 70 s per call (SendInvoices waits for AADE).
+- A request never sent because the call's time ran out comes back as `{ err: "skipped" }` (any platform); `timeout` / `network` mean it may have reached the provider.
+- The app never retries a SendInvoices: a timeout or network error is reported to the person as "may or may not have arrived" and they look it up first.
 
 ## Newsletter: sign-up form and one-click unsubscribe
 

@@ -672,3 +672,10 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 }
 
 [hidden] { display: none !important; }
+
+/* Email platforms (platforms.js) */
+.plat-list { list-style: none; margin: 4px 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.plat-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; }
+.plat-txt { flex: 1 1 180px; min-width: 0; }
+.plat-name { font-weight: 600; overflow-wrap: anywhere; }
+.plat-acts { display: flex; flex-wrap: wrap; gap: 8px; }

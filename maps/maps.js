@@ -42,6 +42,7 @@
       "route.car":        "Car",
       "route.bike":      "Bike",
       "route.foot":      "Walk",
+      "route.transit":   "Public transport",
       "route.clear":     "Clear route",
       "route.err":       "Could not calculate a route",
       "places.title":    "Saved places",
@@ -159,7 +160,35 @@
       "ctx.end":            "Go here",
       "mvn.via":            "Arrive at stop {n}",
       "nav.fromhere":       "Starting from your location — route recalculated",
-      "nav.recenter":       "Recenter"
+      "nav.recenter":       "Recenter",
+      // OSM upgrade wave 6: alternatives, arrival, lanes, avoid, sharing
+      "route.arrive":       "Arrive {t}",
+      "route.alts":         "Routes",
+      "route.alt.best":     "Fastest",
+      "route.alts.hint":    "{n} other routes: tap a grey line to switch",
+      "route.avoid":        "Avoid",
+      "route.avoid.none":   "Nothing",
+      "route.avoid.toll":   "Tolls",
+      "route.avoid.motorway":"Motorways",
+      "route.avoid.ferry":  "Ferries",
+      "route.avoid.nosrv":  "The route server could not avoid that, so this is the normal route",
+      "nav.lanes":          "Lanes",
+      "share":              "Share",
+      "share.point":        "Share this place",
+      "share.route":        "Share this route",
+      "share.routeto":      "Route to {n}",
+      "share.send":         "Send…",
+      "share.copy":         "Copy link",
+      "share.copied":       "Link copied",
+      "share.nocopy":       "Could not copy. Select the link and copy it.",
+      "share.coords":       "Copy coordinates",
+      "share.coords.ok":    "Coordinates copied",
+      "share.geo":          "Open in another app",
+      "share.osm":          "Open on OpenStreetMap",
+      "share.track":        "Save to My tracks",
+      "share.track.ok":     "Saved to My tracks",
+      "share.track.no":     "Could not save the track",
+      "share.close":        "Close"
     },
     el: {
       "search.ph":        "Αναζήτηση τοποθεσίας…",
@@ -170,6 +199,7 @@
       "route.car":        "Αυτοκίνητο",
       "route.bike":       "Ποδήλατο",
       "route.foot":       "Πεζός",
+      "route.transit":    "ΜΜΜ",
       "route.clear":      "Καθαρισμός διαδρομής",
       "route.err":        "Δεν ήταν δυνατός ο υπολογισμός διαδρομής",
       "places.title":     "Αποθηκευμένες τοποθεσίες",
@@ -287,7 +317,34 @@
       "ctx.end":            "Πήγαινε εδώ",
       "mvn.via":            "Άφιξη στη στάση {n}",
       "nav.fromhere":       "Ξεκινάς από την τοποθεσία σου — η διαδρομή υπολογίστηκε ξανά",
-      "nav.recenter":       "Επανακέντρωση"
+      "nav.recenter":       "Επανακέντρωση",
+      "route.arrive":       "Άφιξη {t}",
+      "route.alts":         "Διαδρομές",
+      "route.alt.best":     "Ταχύτερη",
+      "route.alts.hint":    "{n} ακόμη διαδρομές: πάτησε μια γκρι γραμμή για αλλαγή",
+      "route.avoid":        "Αποφυγή",
+      "route.avoid.none":   "Τίποτα",
+      "route.avoid.toll":   "Διόδια",
+      "route.avoid.motorway":"Αυτοκινητόδρομοι",
+      "route.avoid.ferry":  "Πλοία",
+      "route.avoid.nosrv":  "Ο διακομιστής διαδρομών δεν μπόρεσε να το αποφύγει, οπότε αυτή είναι η κανονική διαδρομή",
+      "nav.lanes":          "Λωρίδες",
+      "share":              "Μοίρασμα",
+      "share.point":        "Μοίρασμα τοποθεσίας",
+      "share.route":        "Μοίρασμα διαδρομής",
+      "share.routeto":      "Διαδρομή προς {n}",
+      "share.send":         "Αποστολή…",
+      "share.copy":         "Αντιγραφή συνδέσμου",
+      "share.copied":       "Ο σύνδεσμος αντιγράφηκε",
+      "share.nocopy":       "Η αντιγραφή απέτυχε. Επίλεξε τον σύνδεσμο και αντίγραψέ τον.",
+      "share.coords":       "Αντιγραφή συντεταγμένων",
+      "share.coords.ok":    "Οι συντεταγμένες αντιγράφηκαν",
+      "share.geo":          "Άνοιγμα σε άλλη εφαρμογή",
+      "share.osm":          "Άνοιγμα στο OpenStreetMap",
+      "share.track":        "Αποθήκευση στις διαδρομές μου",
+      "share.track.ok":     "Αποθηκεύτηκε στις διαδρομές μου",
+      "share.track.no":     "Η αποθήκευση της διαδρομής απέτυχε",
+      "share.close":        "Κλείσιμο"
     }
   };
 
@@ -475,7 +532,7 @@
 
   // ---------- 3. Map init + tile layers ----------
   var map = null;
-  var layerStandard, layerHumanitarian, layerSatellite;
+  var layerStandard, layerHumanitarian, layerSatellite, layerTopo;
 
   // Device-local view state (R10: *-prefs, never synced): where the
   // map was last left and which base layer was on.
@@ -526,19 +583,31 @@
       attribution: "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics"
     });
 
+    // Wave 10A: OpenTopoMap (contour lines, hill shading; OsmAnd's
+    // "Topo" style). Its servers stop at zoom 17; Leaflet scales the
+    // last tiles up beyond that.
+    layerTopo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      maxNativeZoom: 17,
+      crossOrigin: "anonymous",
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Style &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'
+    });
+
     var byId = { standard: layerStandard, humanitarian: layerHumanitarian,
-                 satellite: layerSatellite };
+                 satellite: layerSatellite, topo: layerTopo };
     (byId[prefs.layer] || layerStandard).addTo(map);   // last used, else default
 
     var layers = {};
     layers[t("layers.standard") || "Standard"] = layerStandard;
     layers[t("layers.humanitarian") || "Humanitarian"] = layerHumanitarian;
     layers[t("layers.satellite") || "Satellite"] = layerSatellite;
+    layers[t("layers.topo") || "Topo"] = layerTopo;
     L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
 
     map.on("baselayerchange", function (e) {
       var id = e.layer === layerHumanitarian ? "humanitarian"
-             : e.layer === layerSatellite ? "satellite" : "standard";
+             : e.layer === layerSatellite ? "satellite"
+             : e.layer === layerTopo ? "topo" : "standard";
       writePrefs({ layer: id });
     });
     map.on("moveend", function () {
@@ -561,6 +630,14 @@
   STRINGS.el["layers.standard"] = "Τυπικός";
   STRINGS.el["layers.humanitarian"] = "Ανθρωπιστικός";
   STRINGS.el["layers.satellite"] = "Δορυφορικός";
+  STRINGS.en["layers.topo"] = "Topo (contour lines)";
+  STRINGS.el["layers.topo"] = "Τοπογραφικός (ισοϋψείς)";
+  STRINGS.en["nav.limit"] = "Speed limit {v}";
+  STRINGS.el["nav.limit"] = "Όριο ταχύτητας {v}";
+  STRINGS.en["nav.nolimit"] = "No speed limit here";
+  STRINGS.el["nav.nolimit"] = "Χωρίς όριο ταχύτητας εδώ";
+  STRINGS.en["nav.over"] = "Over the speed limit";
+  STRINGS.el["nav.over"] = "Πάνω από το όριο ταχύτητας";
 
   // ---------- 4. Markers + geolocation ----------
   // All icons are inline SVG divIcons — zero PNG assets, so the
@@ -574,6 +651,7 @@
   var STAR_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>';
   var ROUTE_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h5a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8h5"/></svg>';
   var PLUS_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  var SHARE_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg>';
   var FROM_PATH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.5"/><path d="M10 12h10"/><path d="M16 8l4 4-4 4"/></svg>';
 
   function makeMarkerIcon(color) {
@@ -991,6 +1069,33 @@
     });
     actions.appendChild(from);
 
+    var share = document.createElement("button");
+    share.type = "button";
+    share.innerHTML = SHARE_PATH + "<span></span>";
+    share.querySelector("span").textContent = t("share");
+    share.addEventListener("click", function () {
+      map.closePopup();
+      sharePoint(place);
+    });
+    actions.appendChild(share);
+
+    // Wave 10C: put a saved place in a favourite group.
+    var F = favApi();
+    if (F) {
+      var grp = document.createElement("button");
+      grp.type = "button";
+      grp.className = "pop-grp";
+      grp.innerHTML = F.ICON + "<span></span>";
+      grp.querySelector("span").textContent = F.label;
+      grp.hidden = !isSaved(place.lat, place.lon);
+      star.addEventListener("click", function () { grp.hidden = !isSaved(place.lat, place.lon); });
+      grp.addEventListener("click", function () {
+        map.closePopup();
+        F.pick({ id: placeId(place.lat, place.lon), name: place.name });
+      });
+      actions.appendChild(grp);
+    }
+
     wrap.appendChild(actions);
     marker.unbindPopup();
     marker.bindPopup(wrap, { maxWidth: 280 });
@@ -1008,6 +1113,13 @@
     bike: "https://routing.openstreetmap.de/routed-bike/route/v1/driving/",
     foot: "https://routing.openstreetmap.de/routed-foot/route/v1/driving/"
   };
+  var RC = window.OrosMapsRoute;     // route-core.js (wave 6)
+  var TC = window.OrosMapsTools;     // tools-core.js (wave 10A)
+  var ROUTE_PREFS_KEY = "oros-maps-route-prefs";   // device-local { avoid }
+  var routeAlts = [];           // OSRM routes of the last request (alternatives)
+  var routeAltIdx = 0;          // the one in use
+  var altLines = [];            // grey lines of the others (tap = switch)
+  var altsToldOnce = false;
   var routeSeq = 0;             // token — stale / cancelled responses are dropped
   var routeProfile = "car";
   var routeLine = null;
@@ -1076,6 +1188,7 @@
   function clearRoute() {
     routeSeq++;                 // an in-flight response must not repaint
     if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    routeAlts = []; routeAltIdx = 0; paintAltLines();
     routeFrom = routeTo = null;
     routeVias = [];
     paintRouteMarkers();
@@ -1232,62 +1345,138 @@
     });
   }
 
-  function fetchRoute(my, silent, done) {
+  // The "avoid" choice is the device's own (never synced): what one
+  // phone avoids says nothing about another trip.
+  function readAvoid() {
+    try {
+      var p = JSON.parse(localStorage.getItem(ROUTE_PREFS_KEY) || "{}");
+      return p && RC.AVOID.indexOf(p.avoid) >= 0 ? p.avoid : "";
+    } catch (e) { return ""; }
+  }
+  function writeAvoid(v) {
+    try { localStorage.setItem(ROUTE_PREFS_KEY, JSON.stringify({ avoid: RC.AVOID.indexOf(v) >= 0 ? v : "" })); }
+    catch (e) { /* full storage: a preference, not data */ }
+  }
+
+  //   plain = true → no "avoid" (the server refused it once)
+  function fetchRoute(my, silent, done, plain) {
     // Feedback while the server works (a re-route has its own toast)
-    if (!navActive && !silent) showToast(t("route.calculating"));
+    if (!navActive && !silent && !plain) showToast(t("route.calculating"));
     paintRouteMarkers();
 
-    var url = ROUTER_BASE[routeProfile] +
-      routePoints().map(function (p) { return p.lon + "," + p.lat; }).join(";") +
-      "?overview=full&geometries=geojson&steps=true";
+    var avoid = plain ? "" : RC.avoidFor(routeProfile, readAvoid());
+    var url = RC.routeUrl(ROUTER_BASE[routeProfile], routePoints(),
+      { alternatives: !navActive, avoid: avoid, profile: routeProfile });
 
     fetch(url)
-      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (r) {
+        if (!r.ok) { var er = new Error("http"); er.status = r.status; throw er; }
+        return r.json();
+      })
       .then(function (json) {
         // Stale (a newer request started) or cancelled (route cleared)
         if (my !== routeSeq || !routeFrom || !routeTo) return;
         if (!json || !json.routes || !json.routes.length) throw 0;
-        var r0 = json.routes[0];
-
-        if (routeLine) map.removeLayer(routeLine);
-        routeLine = L.geoJSON(r0.geometry, {
-          style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
-        }).addTo(map);
-        routeLine.getLayers()[0].getElement && routeLine.getLayers()[0].getElement().classList.add("route-line");
-        paintRouteMarkers();
-
-        // A re-route during live navigation must not zoom out to the
-        // whole route — the next GPS tick owns the view.
-        if (!navActive) map.fitBounds(routeLine.getBounds(), { padding: [48, 48] });
-
-        $("route-dist").textContent = fmtDist(r0.distance);
-        $("route-time").textContent = fmtTime(r0.duration);
-        showRouteBar(true);
-
-        // Steps of every leg, for the turn-by-turn panel and the HUD
-        lastSteps = joinLegs(r0.legs);
-        lastDist = r0.distance;
-        lastDur = r0.duration;
-        routeCoords = (r0.geometry && r0.geometry.coordinates) || [];
-        buildRouteIndex();
-
-        // Render maneuvers if panel is open or route just started
-        renderManeuvers();
+        routeAlts = navActive ? [json.routes[0]] :
+          RC.alternatives(json.routes).map(function (a) { return json.routes[a.i]; });
+        if (!routeAlts.length) throw 0;
+        routeAltIdx = 0;
+        applyRoute(routeAlts[0], !navActive);
 
         // Fresh route during live nav → restart step tracking
         if (navActive) resetNavProgress();
         else rememberRoute();
-
-        saveRoute();
+        if (plain) showToast(t("route.avoid.nosrv"));
+        else if (routeAlts.length > 1 && !altsToldOnce && !navActive) {
+          altsToldOnce = true;
+          showToast(t("route.alts.hint").replace("{n}", routeAlts.length - 1));
+        }
         done(true);
       })
-      .catch(function () {
+      .catch(function (err) {
         if (my !== routeSeq) return;      // superseded or cancelled — stay quiet
+        // A server that does not know the "avoid" class answers 400:
+        // ask once more without it, and say so.
+        if (avoid && err && err.status >= 400 && err.status < 500) {
+          fetchRoute(my, true, done, true);
+          return;
+        }
         // Transient OSRM failure: keep the last GOOD route painted and
         // the offline snapshot intact — never wipe data on a fetch error.
         showToast(t("route.err"));
         done(false);
       });
+  }
+
+  // Paint one OSRM route as THE route: line, bar, steps, snapshot.
+  // fit = zoom to it (never during live navigation: the next GPS
+  // tick owns the view).
+  function applyRoute(r0, fit) {
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.geoJSON(r0.geometry, {
+      style: { color: "#6d4aff", weight: 5, opacity: 0.9, lineCap: "round" }
+    }).addTo(map);
+    routeLine.getLayers()[0].getElement && routeLine.getLayers()[0].getElement().classList.add("route-line");
+    paintAltLines();
+    paintRouteMarkers();
+
+    if (fit) {
+      var b = routeLine.getBounds();
+      altLines.forEach(function (l) { b.extend(l.getBounds()); });
+      map.fitBounds(b, { padding: [48, 48] });
+    }
+
+    lastSteps = joinLegs(r0.legs);
+    lastDist = r0.distance;
+    lastDur = r0.duration;
+    paintRouteSummary();
+    showRouteBar(true);
+
+    routeCoords = (r0.geometry && r0.geometry.coordinates) || [];
+    buildRouteIndex();
+    limitReset();
+
+    // Render maneuvers if panel is open or route just started
+    renderManeuvers();
+    saveRoute();
+  }
+
+  // The other routes in grey, under the chosen one; a tap switches.
+  function paintAltLines() {
+    altLines.forEach(function (l) { map.removeLayer(l); });
+    altLines = [];
+    if (navActive) return;
+    routeAlts.forEach(function (r, i) {
+      if (i === routeAltIdx) return;
+      var l = L.geoJSON(r.geometry, {
+        style: { color: "#8a8fa0", weight: 6, opacity: 0.75, dashArray: "1 9", lineCap: "round" }
+      }).addTo(map);
+      l.on("click", function (e) {
+        if (e && e.originalEvent) L.DomEvent.stop(e.originalEvent);
+        selectAlt(i);
+      });
+      var el = l.getLayers()[0].getElement && l.getLayers()[0].getElement();
+      if (el) { el.classList.add("route-alt"); el.setAttribute("data-alt", String(i)); }
+      l.bringToBack();
+      altLines.push(l);
+    });
+  }
+
+  function selectAlt(i) {
+    if (!routeAlts[i] || i === routeAltIdx || navActive) return;
+    routeAltIdx = i;
+    applyRoute(routeAlts[i], false);
+  }
+
+  // "1 h 5 min · 14:32": the arrival time moves with the clock, so
+  // the bar is repainted every half minute while a route is shown.
+  function paintRouteSummary() {
+    $("route-dist").textContent = fmtDist(lastDist);
+    var at = RC.clock(Date.now(), lastDur);
+    $("route-time").textContent = fmtTime(lastDur) + " · " + at;
+    $("route-time").title = t("route.arrive").replace("{t}", at);
+    var ex = $("route-extras-eta");
+    if (ex) ex.textContent = t("route.arrive").replace("{t}", at) + " · " + fmtTime(lastDur) + " · " + fmtDist(lastDist);
   }
 
   // ---------- 11b. Recent places (device-local, never synced) ----------
@@ -1688,6 +1877,7 @@
       });
     }
     act(STAR_PATH, t("places.save"), function () { addPlace(place); renderSavedLayer(); });
+    act(SHARE_PATH, t("share"), function () { sharePoint(place); });
     // Extra items from the OSM modules (notes.js: Report to OSM).
     mapsHost.ctxItems.forEach(function (fn) {
       var it = null;
@@ -1703,10 +1893,217 @@
     });
   }
 
+  // ========== ROUTE EXTRAS + SHARING (OSM upgrade wave 6) ==========
+  // Top of the Directions panel: arrival, the alternatives OSRM gave,
+  // "avoid" (car only), share. All DOM-built, text via textContent.
+  function renderRouteExtras() {
+    var host = $("route-extras");
+    if (!host) return;
+    host.textContent = "";
+    var eta = document.createElement("div");
+    eta.id = "route-extras-eta";
+    host.appendChild(eta);
+
+    if (routeAlts.length > 1) {
+      var h = document.createElement("div");
+      h.className = "rx-h";
+      h.textContent = t("route.alts");
+      host.appendChild(h);
+      var list = document.createElement("div");
+      list.className = "rx-alts";
+      RC.alternatives(routeAlts).forEach(function (a) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "rx-alt" + (a.i === routeAltIdx ? " on" : "");
+        b.setAttribute("aria-pressed", a.i === routeAltIdx ? "true" : "false");
+        b.setAttribute("data-alt", String(a.i));
+        var top = document.createElement("b");
+        top.textContent = a.i === 0 ? t("route.alt.best") :
+          (a.dDur >= 60 ? "+" + fmtTime(a.dDur) : fmtTime(a.dur));
+        var sub = document.createElement("span");
+        sub.textContent = fmtTime(a.dur) + " · " + fmtDist(a.dist);
+        b.appendChild(top); b.appendChild(sub);
+        b.addEventListener("click", function () { selectAlt(a.i); });
+        list.appendChild(b);
+      });
+      host.appendChild(list);
+    }
+
+    var row = document.createElement("div");
+    row.className = "rx-row";
+    if (routeProfile === "car") {
+      var lb = document.createElement("label");
+      lb.className = "rx-avoid";
+      var lt = document.createElement("span");
+      lt.textContent = t("route.avoid");
+      var sel = document.createElement("select");
+      sel.id = "route-avoid";
+      [""].concat(RC.AVOID).forEach(function (v) {
+        var o = document.createElement("option");
+        o.value = v;
+        o.textContent = t("route.avoid." + (v || "none"));
+        sel.appendChild(o);
+      });
+      sel.value = readAvoid();
+      sel.addEventListener("change", function () {
+        writeAvoid(sel.value);
+        if (routeFrom && routeTo && !navActive) calcRoute();
+      });
+      lb.appendChild(lt); lb.appendChild(sel);
+      row.appendChild(lb);
+    }
+    var sh = document.createElement("button");
+    sh.type = "button";
+    sh.className = "rx-share";
+    sh.innerHTML = SHARE_PATH + "<span></span>";
+    sh.querySelector("span").textContent = t("share");
+    sh.addEventListener("click", shareRoute);
+    row.appendChild(sh);
+    host.appendChild(row);
+    paintRouteSummary();
+  }
+
+  // Links are made from this page's own folder, so a link copied on
+  // useoros.online opens orOS Maps there (DL-1 direct links).
+  function mapsBase() {
+    try { return new URL("./", location.href).href; } catch (e) { return ""; }
+  }
+
+  function sharePoint(place) {
+    if (!place || !isFinite(place.lat) || !isFinite(place.lon)) return;
+    var name = place.name && place.name !== t("route.ptmap") ? place.name : "";
+    var coords = place.lat.toFixed(5) + ", " + place.lon.toFixed(5);
+    openShare({
+      title: t("share.point"),
+      name: name || coords,
+      link: RC.orosPointLink(mapsBase(), place.lat, place.lon, name),
+      geo: RC.geoUri(place.lat, place.lon, name),
+      osm: RC.osmPointUrl(place.lat, place.lon, Math.max(map.getZoom(), 16)),
+      coords: coords
+    });
+  }
+
+  function shareRoute() {
+    if (!routeFrom || !routeTo || !routeCoords.length) { showToast(t("route.nosteps")); return; }
+    var pts = routePoints().filter(function (p) { return p && isFinite(p.lat) && isFinite(p.lon); });
+    var toName = routeTo.name && !routeTo.me && routeTo.name !== t("route.ptmap") ? routeTo.name : "";
+    var title = t("share.routeto").replace("{n}", toName || t("route.ptmap"));
+    openShare({
+      title: t("share.route"),
+      name: title + " · " + fmtDist(lastDist) + " · " + fmtTime(lastDur),
+      link: RC.orosRouteLink(mapsBase(), pts, routeProfile, toName),
+      geo: RC.geoUri(routeTo.lat, routeTo.lon, toName),
+      osm: RC.osmDirUrl(pts[0], pts[pts.length - 1], routeProfile),
+      track: function () { saveRouteAsTrack(title, pts); }
+    });
+  }
+
+  // "Save to My tracks": the route goes through the tracks module's
+  // own GPX import, so it is stored and synced like any import.
+  function saveRouteAsTrack(name, pts) {
+    var api = window.__orosMapsTracks, T = window.OrosMapsTracks;
+    var tr = RC.routeTrack(routeCoords, name, pts);
+    if (!api || !T || typeof api.importText !== "function" || !tr) { showToast(t("share.track.no")); return; }
+    Promise.resolve(api.importText(T.writeGpx(tr), tr.name + ".gpx")).then(function (e) {
+      showToast(t(e ? "share.track.ok" : "share.track.no"));
+    }, function () { showToast(t("share.track.no")); });
+  }
+
+  function copyText(text, okKey, input) {
+    function fallback() {
+      if (input) { input.focus(); input.select(); }
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      showToast(t(ok ? okKey : "share.nocopy"));
+    }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(text).then(function () { showToast(t(okKey)); }, fallback);
+    } else fallback();
+  }
+
+  var shareDlg = null;
+  //   o: { title, name, link, geo, osm, coords?, track? }
+  function openShare(o) {
+    if (shareDlg) { try { shareDlg.close(); } catch (e) {} shareDlg.remove(); }
+    var d = document.createElement("dialog");
+    d.className = "share-dlg";
+    d.id = "share-dlg";
+    var h = document.createElement("h3");
+    h.textContent = o.title;
+    d.appendChild(h);
+    var nm = document.createElement("div");
+    nm.className = "share-name";
+    nm.textContent = o.name;
+    d.appendChild(nm);
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.readOnly = true;
+    inp.className = "share-link";
+    inp.value = o.link;
+    inp.setAttribute("aria-label", t("share.copy"));
+    d.appendChild(inp);
+
+    var list = document.createElement("div");
+    list.className = "share-acts";
+    function btn(id, label, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.id = id;
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      list.appendChild(b);
+    }
+    function link(id, label, href, target) {
+      var a = document.createElement("a");
+      a.id = id;
+      a.href = href;
+      a.target = target;
+      a.rel = "noopener noreferrer";
+      a.textContent = label;
+      a.addEventListener("click", function () { setTimeout(function () { d.close(); }, 0); });
+      list.appendChild(a);
+    }
+    if (navigator.share) {
+      btn("share-send", t("share.send"), function () {
+        navigator.share({ title: o.name, text: o.name, url: o.link }).then(function () { d.close(); }, function () {});
+      });
+    }
+    btn("share-copy", t("share.copy"), function () { copyText(o.link, "share.copied", inp); });
+    if (o.coords) btn("share-coords", t("share.coords"), function () { copyText(o.coords, "share.coords.ok", null); });
+    // geo: is handed to the system (Android offers OsmAnd, Organic
+    // Maps, …); the top window navigates, so the shell frame is not
+    // asked to load it.
+    if (o.geo) link("share-geo", t("share.geo"), o.geo, "_top");
+    if (o.osm) link("share-osm", t("share.osm"), o.osm, "_blank");
+    if (o.track) btn("share-track", t("share.track"), function () { d.close(); o.track(); });
+    d.appendChild(list);
+
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "share-close";
+    close.textContent = t("share.close");
+    close.addEventListener("click", function () { d.close(); });
+    d.appendChild(close);
+    // outside-click close (orOS dialog pattern)
+    d.addEventListener("click", function (e) {
+      if (e.target !== d) return;
+      var r = d.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right ||
+          e.clientY < r.top || e.clientY > r.bottom) d.close();
+    });
+    d.addEventListener("close", function () { if (shareDlg === d) shareDlg = null; d.remove(); });
+    document.body.appendChild(d);
+    shareDlg = d;
+    d.showModal();
+    // Show the start of the link (the focused field would scroll to its end).
+    try { inp.setSelectionRange(0, 0); inp.scrollLeft = 0; } catch (e) { /* noop */ }
+  }
+
   // ========== TURN-BY-TURN PANEL (Wave 3) ==========
   function renderManeuvers() {
     var host = $("maneuvers-list");
     if (!host || !lastSteps.length) return;
+    renderRouteExtras();
 
     host.innerHTML = "";
 
@@ -2026,7 +2423,9 @@
                                                  nxt.maneuver.modifier || "");
       $("nav-dist").textContent = dn !== null ? fmtDist(dn) : "…";
       $("nav-instr").textContent = formatManeuverText(nxt);
+      paintLanes(nxt, dn);
     } else {
+      paintLanes(null, null);
       // Last step: watching for arrival
       $("nav-icon").innerHTML = getManeuverIcon("arrive", "");
       $("nav-dist").textContent = dn !== null ? fmtDist(dn) : "";
@@ -2046,7 +2445,88 @@
     if (cur) rem += (cur.duration || 0) * frac;
     var total = routeCum.length ? routeCum[routeCum.length - 1] : lastDist;
     var remDist = (typeof along === "number") ? Math.max(0, total - along) : lastDist;
-    $("nav-eta").textContent = fmtTime(rem) + " · " + fmtDist(remDist);
+    $("nav-eta").textContent = RC.clock(Date.now(), rem) + " · " + fmtTime(rem) + " · " + fmtDist(remDist);
+    $("nav-eta").title = t("route.arrive").replace("{t}", RC.clock(Date.now(), rem));
+  }
+
+  // Turn lanes of the next maneuver (OSRM intersection lanes), shown
+  // in the last 2 km before it. The arrows come from a fixed set
+  // keyed by checked indications (route-core.js): no server text
+  // reaches the HTML.
+  function paintLanes(step, dn) {
+    var host = $("nav-lanes");
+    if (!host) return;
+    var lanes = step ? RC.lanesOf(step) : null;
+    if (!lanes || (dn !== null && dn > 2000)) { host.hidden = true; host.textContent = ""; return; }
+    host.textContent = "";
+    var mod = (step.maneuver && step.maneuver.modifier) || "";
+    lanes.forEach(function (ln) {
+      var sp = document.createElement("span");
+      sp.className = "lane" + (ln.v ? " on" : "");
+      var shape = RC.laneShape(ln, mod);
+      sp.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' + (MVN_ICON[shape] || MVN_ICON.straight) + "</svg>";
+      sp.setAttribute("data-shape", shape);
+      host.appendChild(sp);
+    });
+    host.hidden = false;
+  }
+
+  // ---------- Speed limit (wave 10A, OsmAnd style) ----------
+  // The car's road ahead: one Overpass request for the roads with a
+  // maxspeed tag along the next 4 km of the route, again when fewer
+  // than 1.5 km of it are left. The sign shows the limit of the way
+  // the user is on, as written on the road (km/h or mph); red when
+  // more than 5 km/h faster. No tag known → no sign. Ways stay in
+  // memory only.
+  var LIM_OVERPASS = "https://overpass-api.de/api/interpreter";
+  var limWays = [], limUpTo = -1, limBusy = false, limTryAt = 0;
+  function limitReset() { limUpTo = -1; }
+  function limitFetch(along) {
+    if (!TC || limBusy || !navigator.onLine || Date.now() - limTryAt < 20000) return;
+    var pts = TC.corridor(routeCoords, routeCum, along - 100, along + 4000, 150);
+    if (pts.length < 2) return;
+    limBusy = true; limTryAt = Date.now();
+    var upTo = along + 4000;
+    fetch(LIM_OVERPASS, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(TC.limitQuery(pts, 20))
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(function (j) {
+      limBusy = false;
+      limWays = TC.mergeLimits(limWays, TC.parseLimits(j));
+      limUpTo = upTo;
+    }, function () { limBusy = false; });
+  }
+  function limitTick(lat, lon, along, speedMs) {
+    var sign = $("nav-limit");
+    if (!sign) return;
+    if (!TC || routeProfile !== "car" || typeof along !== "number") { sign.hidden = true; return; }
+    var total = routeCum.length ? routeCum[routeCum.length - 1] : 0;
+    if (along + 1500 > limUpTo && limUpTo < total) limitFetch(along);
+    // The route's direction here, from 20 m behind to 20 m ahead.
+    var a = TC.corridor(routeCoords, routeCum, along - 20, along + 20, 40);
+    var brg = a.length > 1 ? TC.bearing(a[0], a[a.length - 1]) : null;
+    var w = TC.limitAt(limWays, lat, lon, brg, 25);
+    if (!w) { sign.hidden = true; return; }
+    var ms = w.ms;
+    sign.hidden = false;
+    if (ms.none) {
+      sign.textContent = "";
+      sign.className = "none";
+      sign.title = t("nav.nolimit");
+    } else {
+      var kmh = typeof speedMs === "number" && speedMs >= 0 ? speedMs * 3.6 : -1;
+      var isOver = TC.over(kmh, ms, 5);
+      sign.textContent = String(ms.v);
+      sign.className = (ms.mph ? "mph" : "") + (isOver ? " over" : "");
+      sign.title = t("nav.limit").replace("{v}", ms.v + " " + (ms.mph ? "mph" : t("u.kmh"))) +
+        (isOver ? " · " + t("nav.over") : "");
+    }
+    sign.setAttribute("aria-label", sign.title);
   }
 
   function resetNavProgress() {
@@ -2147,6 +2627,7 @@
       if (said || navMuted) navSpokenFar = true;
     }
     navPaintHUD(nxt, dn, pos.coords.speed, p.along);
+    limitTick(lat, lon, p.along, pos.coords.speed);
   }
 
   function navFinish() {
@@ -2291,6 +2772,7 @@
   // "Head out" announcement, the route matcher finds where we are.
   function beginNav(resumed) {
     navActive = true;
+    paintAltLines();                       // one route on screen while driving
     navRerouteAt = Date.now();
     document.body.classList.add("nav");
     $("nav-hud").hidden = false;
@@ -2314,9 +2796,11 @@
 
   function stopNavigation() {
     navActive = false;
+    paintAltLines();
     document.body.classList.remove("nav");
     $("nav-hud").hidden = true;
     $("nav-recenter").hidden = true;
+    $("nav-limit").hidden = true;
     if (userMarker) userMarker.setIcon(makeMarkerIcon(COLOR_USER));
     if (navWatchId !== null) {
       navigator.geolocation.clearWatch(navWatchId);
@@ -2478,6 +2962,8 @@
       if (mv.location) out.maneuver.location = mv.location;
       if (st.ref) out.ref = st.ref;
       if (st.via) out.via = st.via;
+      var lanes = RC.lanesOf(st);
+      if (lanes) out.lanes = lanes;
       return out;
     });
   }
@@ -2538,8 +3024,8 @@
     restoring = true;
     setRouteProfile(routeProfile);        // paints profile buttons only — no OSRM call
     restoring = false;
-    $("route-dist").textContent = fmtDist(lastDist);
-    $("route-time").textContent = fmtTime(lastDur);
+    routeAlts = []; routeAltIdx = 0; paintAltLines();
+    paintRouteSummary();
     showRouteBar(true);
 
     if (!quiet) {
@@ -2711,11 +3197,17 @@
 
   // Saved pins live on their own layerGroup — rebuilt on every
   // save() (cheap: handful of markers).
+  // Wave 10C (fav.js): favourite groups colour the pins, hide a group
+  // from the map and group the list. Without fav.js nothing changes.
+  function favApi() { return window.__orosMapsFav || null; }
+
   function renderSavedLayer() {
     if (!savedLayer) return;
     savedLayer.clearLayers();
+    var F = favApi();
     state.places.forEach(function (p) {
-      var m = L.marker([p.lat, p.lon], { icon: makeMarkerIcon(COLOR_SAVED) });
+      if (F && F.hidden(p.id)) return;
+      var m = L.marker([p.lat, p.lon], { icon: makeMarkerIcon((F && F.colorOf(p.id)) || COLOR_SAVED) });
       bindPlacePopup(m, p);
       savedLayer.addLayer(m);
     });
@@ -2730,73 +3222,88 @@
     ul.hidden = !hasAny;
 
     // Storage order is canonical (by id); the LIST keeps the familiar
-    // order — oldest first.
-    state.places.slice().sort(function (x, y) {
+    // order — oldest first (inside each favourite group, wave 10C).
+    var F = favApi();
+    var sections = F ? F.sections(state.places) : [{ g: null, places: state.places.slice().sort(function (x, y) {
       return (x.mtime - y.mtime) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
-    }).forEach(function (p) {
-      var li = document.createElement("li");
-      li.className = "place";
-
-      var pin = document.createElement("span");
-      pin.className = "p-pin";
-      pin.innerHTML =
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
-      li.appendChild(pin);
-
-      var body = document.createElement("div");
-      body.className = "p-body";
-      var name = document.createElement("div");
-      name.className = "p-name";
-      name.textContent = p.name;
-      body.appendChild(name);
-      if (p.sub) {
-        var sub = document.createElement("div");
-        sub.className = "p-sub";
-        sub.textContent = p.sub;
-        body.appendChild(sub);
+    }) }];
+    sections.forEach(function (sec) {
+      if (F && sec.g !== null) {
+        var head = F.header(sec.g, sec.places);
+        if (head) ul.appendChild(head);
+        if (F.collapsed(sec.g)) return;
       }
-      li.appendChild(body);
-
-      li.addEventListener("click", function () {
-        $("places").hidden = true;
-        map.flyTo([p.lat, p.lon], 15);
-        // open the saved pin's popup for star/route actions
-        savedLayer.eachLayer(function (mk) {
-          if (mk.getLatLng().lat === p.lat && mk.getLatLng().lng === p.lon) {
-            mk.openPopup();
-          }
-        });
-      });
-
-      var ren = document.createElement("button");
-      ren.type = "button";
-      ren.className = "p-ren";
-      ren.title = t("places.rename");
-      ren.setAttribute("aria-label", t("places.rename"));
-      ren.innerHTML =
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
-      ren.addEventListener("click", function (e) {
-        e.stopPropagation();
-        var orig = p.name;
-        askText(t("places.rename"), orig, function (v) { renamePlace(p.id, v, orig); });
-      });
-      li.appendChild(ren);
-
-      var del = document.createElement("button");
-      del.type = "button";
-      del.className = "p-del";
-      del.title = t("places.del");
-      del.setAttribute("aria-label", t("places.del"));
-      del.innerHTML =
-        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-      del.addEventListener("click", function (e) {
-        e.stopPropagation();
-        removePlaceById(p.id);
-      });
-      li.appendChild(del);
-
-      ul.appendChild(li);
+      sec.places.forEach(function (p) { ul.appendChild(placeRow(p, F)); });
     });
+  }
+
+  function placeRow(p, F) {
+    var li = document.createElement("li");
+    li.className = "place";
+
+    var pin = document.createElement("span");
+    pin.className = "p-pin";
+    var pinColor = F && F.colorOf(p.id);
+    if (pinColor) pin.style.color = pinColor;
+    pin.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+    li.appendChild(pin);
+
+    var body = document.createElement("div");
+    body.className = "p-body";
+    var name = document.createElement("div");
+    name.className = "p-name";
+    name.textContent = p.name;
+    body.appendChild(name);
+    if (p.sub) {
+      var sub = document.createElement("div");
+      sub.className = "p-sub";
+      sub.textContent = p.sub;
+      body.appendChild(sub);
+    }
+    li.appendChild(body);
+
+    li.addEventListener("click", function () {
+      $("places").hidden = true;
+      map.flyTo([p.lat, p.lon], 15);
+      // open the saved pin's popup for star/route actions
+      savedLayer.eachLayer(function (mk) {
+        if (mk.getLatLng().lat === p.lat && mk.getLatLng().lng === p.lon) {
+          mk.openPopup();
+        }
+      });
+    });
+
+    if (F) li.appendChild(F.groupButton(p));
+
+    var ren = document.createElement("button");
+    ren.type = "button";
+    ren.className = "p-ren";
+    ren.title = t("places.rename");
+    ren.setAttribute("aria-label", t("places.rename"));
+    ren.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+    ren.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var orig = p.name;
+      askText(t("places.rename"), orig, function (v) { renamePlace(p.id, v, orig); });
+    });
+    li.appendChild(ren);
+
+    var del = document.createElement("button");
+    del.type = "button";
+    del.className = "p-del";
+    del.title = t("places.del");
+    del.setAttribute("aria-label", t("places.del"));
+    del.innerHTML =
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    del.addEventListener("click", function (e) {
+      e.stopPropagation();
+      removePlaceById(p.id);
+    });
+    li.appendChild(del);
+
+    return li;
   }
 
   // ---------- 13. Palette + shell shortcut contract ----------
@@ -2904,6 +3411,44 @@
     if (typeof params !== "object" || !params) return;
     openAtLocation(params);
   };
+
+  function openSharedLink(sh) {
+    if (sh.point) {
+      var p = sh.point;
+      var place = { lat: p.lat, lon: p.lon, name: p.label || t("route.ptmap"), sub: "" };
+      placeResult(p.lat, p.lon, place.name, "");
+      if (!p.label) nameByReverse(place, function () { bindPlacePopup(resultMarker, place); });
+      return;
+    }
+    if (!sh.route) return;
+    // Wave 7: a public transport link opens the Public transport
+    // sheet (transit.js loads after this file: it picks the request
+    // up from mapsHost.pendingTransit at its boot).
+    if (sh.mode === "transit") {
+      var tTo = sh.route[sh.route.length - 1];
+      var req = { from: { lat: sh.route[0].lat, lon: sh.route[0].lon, name: "" },
+        to: { lat: tTo.lat, lon: tTo.lon, name: sh.to || "" } };
+      if (mapsHost.openTransit) mapsHost.openTransit(req.from, req.to);
+      else mapsHost.pendingTransit = req;
+      return;
+    }
+    var pts = sh.route.map(function (q, i) {
+      var last = i === sh.route.length - 1;
+      return { lat: q.lat, lon: q.lon, name: last && sh.to ? sh.to : t("route.ptmap"), sub: "" };
+    });
+    routeFrom = pts[0];
+    routeTo = pts[pts.length - 1];
+    routeVias = pts.slice(1, -1).slice(0, MAX_VIAS);
+    restoring = true;
+    setRouteProfile(sh.mode);              // buttons only; calcRoute below
+    restoring = false;
+    paintRouteMarkers();
+    calcRoute();
+    pts.forEach(function (q, i) {
+      if (i === pts.length - 1 && sh.to) return;
+      nameByReverse(q);
+    });
+  }
 
   function consumePending() {
     try {
@@ -3032,6 +3577,10 @@
     $("rp-car").addEventListener("click", function () { setRouteProfile("car"); });
     $("rp-bike").addEventListener("click", function () { setRouteProfile("bike"); });
     $("rp-foot").addEventListener("click", function () { setRouteProfile("foot"); });
+    // Public transport is its own sheet (transit.js): same two points.
+    $("rp-transit").addEventListener("click", function () {
+      if (mapsHost.openTransit) mapsHost.openTransit(routeFrom, routeTo);
+    });
     $("route-clear").addEventListener("click", clearRoute);
 
     // Wave 8: Send to Calendar — appended to the route bar at wire
@@ -3047,6 +3596,27 @@
     // Sits with the other route actions, before Start / Clear
     // (styled by maps.css together with its siblings).
     $("route-bar").insertBefore(calBtn, $("nav-start"));
+
+    // OSM upgrade wave 6: share, the Directions panel extras, lanes.
+    var shareBtn = document.createElement("button");
+    shareBtn.type = "button";
+    shareBtn.id = "route-share";
+    shareBtn.title = t("share.route");
+    shareBtn.setAttribute("aria-label", t("share.route"));
+    shareBtn.innerHTML = SHARE_PATH;
+    shareBtn.addEventListener("click", shareRoute);
+    $("route-bar").insertBefore(shareBtn, $("nav-start"));
+    var extras = document.createElement("div");
+    extras.id = "route-extras";
+    $("maneuvers").insertBefore(extras, $("maneuvers-list"));
+    var lanesRow = document.createElement("div");
+    lanesRow.id = "nav-lanes";
+    lanesRow.hidden = true;
+    lanesRow.setAttribute("aria-label", t("nav.lanes"));
+    $("nav-top").parentNode.insertBefore(lanesRow, $("nav-top").nextSibling);
+    setInterval(function () {
+      if (!$("route-bar").hidden && lastDur > 0) paintRouteSummary();
+    }, 30000);
 
     // Steps button — toggle maneuvers panel
     $("steps-btn").addEventListener("click", function () {
@@ -3147,7 +3717,50 @@
     toast: showToast,
     localToast: localToast,
     storeFull: t("store.full"),
-    ctxItems: []
+    ctxItems: [],
+    // Wave 7 (transit.js): the planner's points, a location fix, a
+    // place name, and a link that reopens a public transport search.
+    routeEnds: function () { return { from: routeFrom, to: routeTo }; },
+    locate: function (cb) {
+      if (userPosFresh()) { cb(userPos); return; }
+      getUserLocation(function (pos) { cb(pos || userPos || null); }, true);
+    },
+    reverseName: function (place, after) { nameByReverse(place, after); },
+    transitLink: function (f, to) {
+      if (!f || !to || !isFinite(f.lat) || !isFinite(to.lat)) return "";
+      return RC.orosRouteLink(mapsBase(), [f, to], "transit", to.name || "");
+    },
+    openTransit: null,
+    pendingTransit: null,
+    // Wave 10B (planner.js): the OSRM servers per mode.
+    routerBase: ROUTER_BASE,
+    // Wave 10C (fav.js): saved places, adding many (GPX import), and
+    // repainting the pins and the list after a group change.
+    places: function () { return normalize(state).places; },
+    placeId: placeId,
+    addPlaces: function (list) {
+      var now = Date.now(), n = 0;
+      (list || []).forEach(function (pl) {
+        if (!pl || !isFinite(pl.lat) || !isFinite(pl.lon)) return;
+        var id = placeId(pl.lat, pl.lon);
+        state.places = state.places.filter(function (x) { return x.id !== id; });
+        state.places.push({ id: id, name: String(pl.name || "?").slice(0, 120), sub: String(pl.sub || "").slice(0, 200),
+                            lat: pl.lat, lon: pl.lon, mtime: now + n });
+        n++;
+      });
+      return n && save() ? n : 0;
+    },
+    refreshPlaces: function () { renderSavedLayer(); renderPlacesList(); },
+    // Wave 10A (tools.js): directions to a point (the parked car).
+    routeTo: function (place, profile) {
+      if (profile && ROUTER_BASE[profile] && profile !== routeProfile) {
+        routeProfile = profile;
+        ["car", "bike", "foot"].forEach(function (k) {
+          $("rp-" + k).classList.toggle("active", k === profile);
+        });
+      }
+      startRouteTo(place);
+    }
   };
 
   // ---------- Boot ----------
@@ -3178,6 +3791,11 @@
   try { restoredRoute = restoreRoute(bootedViaBridge); }
   catch (e) { restoredRoute = false; }
   if (urlQ) geocodeAndShow(urlQ, "");
+  // Wave 6: shared links (?lat&lon&label, ?route&mode&to), checked
+  // strictly by route-core.js.
+  var shared = null;
+  try { shared = urlQ ? null : RC.parseLink(location.search); } catch (e) { shared = null; }
+  if (shared) { bootedViaBridge = true; openSharedLink(shared); }
   consumePending();
   initOfflineChip();
 

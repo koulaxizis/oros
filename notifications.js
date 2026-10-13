@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -577,6 +577,10 @@
     // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
     // with that note in front (its editor on a phone).
     stickies: function (id) { if (typeof window.__orosOpenStickies === 'function') window.__orosOpenStickies(String(id)); },
+    // Maps — "maps:park": the parking reminder shows the parked car.
+    maps:     function (what) {
+      if (what === 'park' && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('maps', { park: true });
+    },
     mail:     function (p) {
       var m = /^([a-z0-9]{6,40})\.(\d{1,10})$/.exec(String(p));
       if (m && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('mail', { acct: m[1], folder: 'INBOX', uid: +m[2] });
@@ -584,18 +588,18 @@
   };
 
   function openTarget(item) {
-    if (!item || typeof item.deepLink !== 'string') return;
+    if (!item || typeof item.deepLink !== 'string') return false;
     var parts = item.deepLink.split(':');   // "cycle:entry:e_123"
     // Own keys only: a synced or imported item whose namespace is
     // "constructor" / "__proto__" must not reach Object.prototype.
     var bridge = Object.prototype.hasOwnProperty.call(DL_BRIDGES, parts[0]) ? DL_BRIDGES[parts[0]] : null;
-    if (typeof bridge !== 'function') return;
+    if (typeof bridge !== 'function') return false;
     // Wave 1B — calendar carries a two-part payload: the event id
     // AND the occurrence date ("calendar:<evId>:<ymd>"). All other
     // namespaces keep the single-id contract (parts[2]).
     if (parts[0] === 'calendar' && parts.length >= 3) {
       bridge(parts[1], parts[2]);
-      return;
+      return true;
     }
     // Two shapes reach the single-payload bridges: "ns:type:id"
     // (parts[2] — the type is context, the id is the target) and
@@ -606,7 +610,9 @@
     var payload = parts.length >= 3 ? parts[2]
                 : parts.length === 2 ? parts[1]
                 : null;
-    if (payload) bridge(payload);
+    if (!payload) return false;
+    bridge(payload);
+    return true;   // a window or app is opening: callers close their popup
   }
 
 
@@ -833,7 +839,8 @@
       `;
       
       el.addEventListener('click', () => {
-        openTarget(item);        // real per-app bridges (A7 router)
+        // real per-app bridges (A7 router)
+        const opened = openTarget(item);
         if (!item.readAt) {
           item.readAt = Date.now();
           noteChange();        // read state must travel
@@ -841,6 +848,11 @@
           renderPanelItems(container);
           updateBadge();
         }
+        // A notice that opens a window or an app (the update notice
+        // opens "What's new", Chris 2026-10-13) closes the panel: it
+        // would otherwise stay on top of what just opened. A notice
+        // with no target only marks itself read, the panel stays.
+        if (opened) closeNotificationPanel();
       });
       
       container.appendChild(el);

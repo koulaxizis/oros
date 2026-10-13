@@ -1,6 +1,94 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.76.00
+- Spreadsheet: import from Notion. The databases you share with your Notion integration come in as sheets, one per database, with the property names in row 1 and one row per entry as plain values; import again to bring in new databases. orOS only reads Notion; connect it in Settings › Connected services, then the Notion button at the bottom right.
+
+## Version 1.75.00
+- Maps: favourite groups, like OsmAnd. Put saved places in groups with a name and a colour (the folder button next to a place, or `Group` in its popup); the pins take the group colour. Saved places lists each group, which you can fold, hide from the map or export as GPX. `Import` brings in the waypoints of a GPX, KML or GeoJSON file, for example favourites from OsmAnd.
+
+## Version 1.74.00
+- Notes: import from Notion. The pages you share with your Notion integration come in as a notebook, subpages under their page, with headings, lists, to-dos and code as plain text; import again to bring in new pages. orOS only reads Notion; connect it in Settings › Connected services, then the cloud button under the tree.
+- Notifications: the panel now closes when a notice opens an app or window, such as What's new.
+
+## Version 1.73.00
+- Maps: Plan a track, like OsmAnd. Tap points on the map; each part follows the roads for walking, cycling or driving, or goes in a straight line. See the length, the climb and descent and an elevation profile, then save it to My tracks to follow it later. Long-press › `Plan a track from here`, or My tracks › `Plan a track`.
+
+## Version 1.72.00
+- Bookmarks: import from Raindrop.io. Your collections become folders, with titles, notes, tags and favourites; import again to bring in only what's new. orOS only reads Raindrop; connect it in Settings › Connected services, then the cloud button in Bookmarks.
+- Info › Support: new links to become a monthly supporter on Ko-fi and to see the Supporters page.
+
+## Version 1.71.00
+- Maps: OsmAnd-style tools. A `Topo` map with contour lines for hiking. While you drive, a speed limit sign next to your speed (red when you're over). Long-press › `Measure distance` for distances and areas, and `I parked here` to mark your car, with a reminder that comes as a notification and a walking route back.
+
+## Version 1.70.00
+- Kanban: read a board straight from your Trello account, or a GitHub repository's issues as a board with Open and Closed columns (labels, milestone dates and task lists come along). Read it again later to bring in only what's new. orOS only reads Trello and GitHub; connect them in Settings › Connected services, then Import from other apps.
+
+## Version 1.69.00
+- Maps: Every Door tools. Places missing their name or opening hours get an orange ring. `Add place` has one-tap street furniture (bench, bin, bollard, street lamp, hydrant, tree and more). New `Entrances and flats`: tap a building's outline to add an entrance with its letter and flat numbers, ideal for apartment blocks. New `Buildings` overlay in Quests for floors and kind of building.
+
+## Version 1.68.00
+- To-Do: import from Todoist. Your projects with open tasks become lists, with due dates, descriptions as notes, labels and priority; import again to bring in what's new. orOS only reads Todoist; connect it in Settings › Connected services, then List settings › Import from Todoist.
+
+## Version 1.67.00
+- Maps: overlays in Quests, as in StreetComplete. Colour the streets by street lights, surface or sidewalks, or the buildings by house number, so the gaps stand out, and tap one to fix it. Arrows show which side is left and right for sidewalks. Changes upload with your quest answers.
+
+## Version 1.66.00
+- Atelier: import swatches from Illustrator, Photoshop or InDesign (.ase, .aco) into your Brand kit, and save your brand colours as an .ase file for Adobe apps.
+- Photo Lab: `Adjust` › `Lightroom preset (.xmp)…` adds a Lightroom or Camera Raw preset as editable adjustment layers. No Adobe account needed for either.
+
+## Version 1.65.00
+- Maps: 20 more quests (36 in all): speed limit, street name, steps and handrails, tactile paving, stop names, level crossing barriers, parking fee and kind, bicycle parking, vegetarian and vegan food, ways to pay, Wi-Fi, wheelchair toilets, defibrillators, fire hydrants, postbox collection times and kind of building. New achievements with a level for each group of quests, and team mapping: friends split the quests of an area between them, so nobody answers the same thing twice.
+
+## Version 1.64.00
+- CRM: import from Odoo (19 or Odoo Online). Companies come in with their people and VAT ID, people on their own as customers, opportunities as deals; your own company stays out. orOS only reads Odoo; connect it in Settings › Connected services.
+
+## Version 1.63.00
+- Maps: public transport. Find connections by bus, metro, tram and train (leave now, depart at or arrive by), with the lines in their colours, changes, walking and live delays. Open a trip to see it on the map, share it or save it to My tracks. Departure boards for any stop, stops on the map and live vehicles. Timetables come from Transitous, a free community service built on open data: in Greece, Athens, Thessaloniki and Hellenic Train.
+
+## Version 1.62.00
+- CRM and Budget: import from Invoice Ninja (invoicing.co or your own install). CRM brings in its active clients with their contacts and VAT ID; Budget its payments received, net of refunds. orOS only reads Invoice Ninja; connect it in Settings › Connected services.
+- Newsletter: MailerSend (MailerLite's sending service) is now in the provider list.
+
+## Version 1.61.00
+- Budget: import your Stripe payments. Charges come in as income, Stripe's fees and refunds as expenses; payouts to your bank are left out. orOS only reads Stripe, with a restricted key you connect in Settings › Connected services.
+
+## Version 1.60.00
+- CRM: import customers, deals and follow-ups from HubSpot or Pipedrive. orOS only reads them; a second import brings only what changed, and Undo takes it all back. Connect the account in Settings › Connected services.
+
+## Version 1.59.02
+- Help: the Privacy page now lists every online service added lately (OpenStreetMap editing, WooCommerce, timologisi.online, MailerLite, Mailchimp, Brevo), and the Open files page includes Maps routes and places (.gpx, .kml, .geojson).
+
+## Version 1.59.01
+- Maps: OpenStreetMap sign-in is switched on. Sign in under Mapping to send notes, place changes, quest answers and GPS traces with your own OpenStreetMap account.
+
+## Version 1.59.00
+- Newsletter: link a list to MailerLite, Mailchimp or Brevo. Sync brings their subscribers here, sends yours there, and every unsubscribe travels both ways. Connect the account in Settings › Connected services.
+
+## Version 1.58.00
+- Invoices: send invoices, receipts and credit notes to myDATA (AADE) through your timologisi.online account. Connect it in Settings › Connected services; each sent document shows its ΜΑΡΚ and the official PDF.
+
+## Version 1.57.01
+- Fix: the 1.57.00 update loaded part of orOS twice. This update puts it right.
+
+## Version 1.57.00
+- Connected services: link your WooCommerce shop in Settings › Connected services and see its products, stock and orders in Stock. Your keys stay sealed on your device.
+
+## Version 1.56.00
+- Time › Stage: import a rundown from a CSV file or a Calendar day, export it as CSV, and after the event get a report of planned vs actual times (CSV or print / PDF). Also new: a hard stop that tells you how many minutes to cut, quick-add items (talk, keynote + Q&A, panel, breaks), Stage events in the orOS search, and the next session on the Today page.
+
+## Version 1.55.00
+- Maps: smarter routes and sharing. See other routes and pick one, your arrival time, the lanes to take before a turn, and avoid tolls, motorways or ferries by car. Share a place or a route as a link, open it in another maps app, or keep a route in My tracks.
+
+## Version 1.54.00
+- Time › Stage: other devices. Pair a phone as a remote control, a tablet or TV as the stage screen, or give the moderator the clock and the rundown so they can ask you for more time. Each device joins with a 6-digit code or a QR code, and you allow it on the computer. Paired devices come back by themselves after a reload.
+
+## Version 1.53.00
+- Maps: quests, StreetComplete style. Small questions about the things around you (is this bench backed, is the street lit, when is this shop open…) appear as pins. Answer with one tap and upload your answers to OpenStreetMap.
+
+## Version 1.52.00
+- Time › Stage: a second screen and messages. Open the stage display in its own window (on Chrome and Edge it moves to the other monitor by itself). Send the speaker a message, ready-made or your own, in colour and flashing if needed. Choose clock only or clock with the rundown, mirror the picture, add your logo.
+
 ## Version 1.51.00
 - Studio: effects on the tablet. FX on a remote strip opens that track's effects on the tablet or phone, with each effect's own interface and meters, every control, on/off, order, adding and removing.
 

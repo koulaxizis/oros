@@ -91,7 +91,7 @@
       "subs.crm": "From CRM", "imp.crm": "From CRM", "imp.crmNone": "No CRM customers with an e-mail address.",
       "imp.crmHint": "Pick the customers who should get the newsletter. If you pick only customers (now or past) they count as \"Existing customer\"; with leads among them, everyone confirms by e-mail.",
       "imp.crmTags": "Their CRM status and tags become tags", "crm.lead": "lead", "crm.active": "customer", "crm.past": "past customer",
-      "src.crm": "CRM", "pv.lang": "Language", "ts.lang": "Version",
+      "src.crm": "CRM", "src.platform": "Email platform", "pv.lang": "Language", "ts.lang": "Version",
       "st.draft": "Draft", "st.sending": "Sending", "st.paused": "Paused", "st.sent": "Sent",
       "sst.on": "Active", "sst.pend": "Waiting to confirm", "sst.off": "Unsubscribed", "sst.bounce": "Bounced", "sst.spam": "Complained",
       "basis.consent": "Gave consent", "basis.customer": "Existing customer", "basis.optin": "Confirms by e-mail",
@@ -188,7 +188,7 @@
       "ch.test": "Test login", "ch.testOk": "Login works", "ch.delete": "Remove account",
       "ch.inUse": "Lists use this account: choose another account for them first.",
       "p.other": "Other", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (US)", "p.mailgun-eu": "Mailgun (EU)",
-      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.gmail": "Gmail",
+      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
       "s.title": "Subscriber", "s.email": "E-mail", "s.name": "Name", "s.tags": "Tags", "s.tagsHint": "Separate with commas.",
       "s.lang": "Language", "s.langAny": "Like the list", "s.basis": "On what basis", "s.status": "Status",
       "s.since": "Subscribed {t}", "s.conf": "Confirmed {t}", "s.left": "Left {t}", "s.inv": "Confirmation request sent {t}",
@@ -281,7 +281,7 @@
       "subs.crm": "Από το CRM", "imp.crm": "Από το CRM", "imp.crmNone": "Κανένας πελάτης του CRM με email.",
       "imp.crmHint": "Διάλεξε τους πελάτες που θα παίρνουν το δελτίο. Αν διαλέξεις μόνο πελάτες (τωρινούς ή πρώην) μετράνε ως «Υπάρχων πελάτης»· αν υπάρχουν και υποψήφιοι, όλοι επιβεβαιώνουν με email.",
       "imp.crmTags": "Η κατάσταση και οι ετικέτες τους στο CRM γίνονται ετικέτες", "crm.lead": "υποψήφιος", "crm.active": "πελάτης", "crm.past": "πρώην πελάτης",
-      "src.crm": "CRM", "pv.lang": "Γλώσσα", "ts.lang": "Έκδοση",
+      "src.crm": "CRM", "src.platform": "Πλατφόρμα email", "pv.lang": "Γλώσσα", "ts.lang": "Έκδοση",
       "st.draft": "Πρόχειρο", "st.sending": "Αποστέλλεται", "st.paused": "Σε παύση", "st.sent": "Στάλθηκε",
       "sst.on": "Ενεργός", "sst.pend": "Περιμένει επιβεβαίωση", "sst.off": "Διαγράφηκε", "sst.bounce": "Επιστροφή (bounce)", "sst.spam": "Παράπονο",
       "basis.consent": "Έδωσε συναίνεση", "basis.customer": "Υπάρχων πελάτης", "basis.optin": "Επιβεβαιώνει με email",
@@ -378,7 +378,7 @@
       "ch.test": "Δοκιμή σύνδεσης", "ch.testOk": "Η σύνδεση δουλεύει", "ch.delete": "Αφαίρεση λογαριασμού",
       "ch.inUse": "Τον χρησιμοποιούν λίστες: διάλεξε πρώτα άλλον λογαριασμό για αυτές.",
       "p.other": "Άλλος", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (ΗΠΑ)", "p.mailgun-eu": "Mailgun (ΕΕ)",
-      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.gmail": "Gmail",
+      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
       "s.title": "Συνδρομητής", "s.email": "Email", "s.name": "Όνομα", "s.tags": "Ετικέτες", "s.tagsHint": "Χώρισέ τες με κόμμα.",
       "s.lang": "Γλώσσα", "s.langAny": "Όπως η λίστα", "s.basis": "Με ποια βάση", "s.status": "Κατάσταση",
       "s.since": "Εγγραφή {t}", "s.conf": "Επιβεβαίωση {t}", "s.left": "Αποχώρηση {t}", "s.inv": "Αίτημα επιβεβαίωσης στάλθηκε {t}",
@@ -688,6 +688,7 @@
     acts.appendChild(mini(t("subs.csv"), importCsv));
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
     if (crmPeople()) acts.appendChild(mini(t("subs.crm"), crmDialog));
+    if (P && P.has()) acts.appendChild(mini(P.label(), P.open));
     acts.appendChild(mini(t("subs.export"), exportCsv));
     var ch = C.chan(data, l.chan), inbox = inboxAccount(ch);
     if (inbox) acts.appendChild(mini(t("subs.inbox"), inboxNow));
@@ -2947,9 +2948,23 @@
     wireKeyboard();
   }
 
+  // Email platforms (newsletter/platforms.js): the app's helpers
+  var P = window.OrosNewsletterPlatforms || null;
+  function initPlatforms() {
+    if (!P) return;
+    P.init({
+      get lang() { return LANG; },
+      data: function () { return data; },
+      save: function () { saveNow(); },
+      curList: curList, el: el, makeDialog: makeDialog, openDialog: openDialog, field: field, sel: sel,
+      btn: btn, actionsRow: actionsRow, replaceIn: replaceIn, when: when, confirm: confirmDialog,
+      renderAll: function () { renderAll(); }
+    });
+  }
   function boot() {
     findRunner();
     load();
+    initPlatforms();
     loadPrefs();
     applyI18n();
     wire();

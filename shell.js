@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.51.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.76.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1114,6 +1114,7 @@
       tickSafe("babyCheckTick", babyCheckTickThrottled); // Baby: feed gap + daily medicine reminders (60s throttle)
       tickSafe("choresCheckTick", choresCheckTickThrottled); // Chore Wheel: daily "your chores" reminder (60s throttle)
       tickSafe("timesheetCheckTick", timesheetCheckTickThrottled); // Timesheet: forgotten timer (60s throttle)
+      tickSafe("parkCheckTick", parkCheckTickThrottled);   // Maps: parking reminder (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
@@ -1947,6 +1948,40 @@
       title: title,
       body: window.t("ts.forgot.body").replace("{d}", C.fmtDur(Date.now() - run.s)),
       deepLink: "system:open:timesheet"
+    });
+  }
+
+  // Maps — the parking reminder (maps/tools.js "I parked here").
+  // Device-local record { lat, lon, at, until, note } in
+  // oros-maps-parking: the car is where this device is. One notice
+  // per parking (key "park-<at>"); it comes with Maps closed too.
+  var parkLastTick = 0;
+  function parkCheckTickThrottled() {
+    var now = Date.now();
+    if (now - parkLastTick < 60000) return;
+    parkLastTick = now;
+    parkCheckTick();
+  }
+  function parkCheckTick() {
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem("oros-maps-parking") || "null"); } catch (e) { p = null; }
+    if (!p || typeof p !== "object") return;
+    var at = +p.at, until = +p.until;
+    if (!(at > 0) || !(until > at) || Date.now() < until) return;
+    var title = window.t("maps.park.title");
+    if (title === "maps.park.title") title = "Parking";
+    var note = typeof p.note === "string" ? p.note.slice(0, 120) : "";
+    var body = window.t("maps.park.body");
+    if (body === "maps.park.body") body = "Time to go back to the car.";
+    N.emit({
+      ns: "maps",
+      key: "park-" + Math.round(at),
+      type: "reminder",
+      title: title,
+      body: note ? body + " " + note : body,
+      deepLink: "maps:park"
     });
   }
 
@@ -4713,6 +4748,20 @@
       el:   "Κέρασέ με έναν καφέ!"
     }
   ];
+  // Extra plain links shown under the Ko-fi card (same rules: fixed
+  // URLs, new tab, rel=noopener, no fetch/embed/widget).
+  var SUPPORT_LINKS = [
+    {
+      url: "https://ko-fi.com/koulaxizis/tiers",
+      en:  "Become a monthly supporter",
+      el:  "Γίνε μηνιαίος υποστηρικτής"
+    },
+    {
+      url: "https://nulljsfx.tech/supporters/",
+      en:  "Supporters",
+      el:  "Υποστηρικτές"
+    }
+  ];
 
   function supT(en, el) {
     return state.lang === "el" ? el : en;
@@ -4764,6 +4813,21 @@
       cards.appendChild(a);
     });
     sec.appendChild(cards);
+
+    var links = document.createElement("div");
+    links.id = "sc-support-links";
+    links.style.cssText =
+      "display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 8px;";
+    SUPPORT_LINKS.forEach(function (l) {
+      var a = document.createElement("a");
+      a.href = l.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.style.cssText = "color:var(--accent);";
+      a.textContent = supT(l.en, l.el);
+      links.appendChild(a);
+    });
+    sec.appendChild(links);
 
     if (resetWrap) box.insertBefore(sec, resetWrap);
     else box.appendChild(sec);
@@ -4879,6 +4943,12 @@
         { name: "Esri World Imagery", url: "https://www.esri.com/",
           by: "Esri, Maxar, Earthstar Geographics", lic: { en: "Esri terms of use", el: "Όροι χρήσης της Esri" },
           en: "Satellite layer (Maps)", el: "Δορυφορικό στρώμα (Χάρτες)" },
+        { name: "OpenTopoMap", url: "https://opentopomap.org/",
+          by: "OpenTopoMap; data by OpenStreetMap contributors, SRTM", lic: "CC-BY-SA (style), ODbL (data)",
+          en: "Topo layer with contour lines (Maps)", el: "Τοπογραφικό στρώμα με ισοϋψείς (Χάρτες)" },
+        { name: "Terrain Tiles (AWS)", url: "https://registry.opendata.aws/terrain-tiles/",
+          by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { en: "Open data, attribution per source", el: "Ανοιχτά δεδομένα, αναφορά ανά πηγή" },
+          en: "Elevation profile in Plan a track (Maps)", el: "Προφίλ υψομέτρου στη Σχεδίαση διαδρομής (Χάρτες)" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
           en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
@@ -4888,12 +4958,15 @@
         { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
           by: "FOSSGIS e.V.", lic: "ODbL (data)",
           en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+        { name: "Transitous", url: "https://transitous.org/sources/",
+          by: "The Transitous community (MOTIS); timetables by each operator", lic: { en: "Each feed's open licence; ODbL (map data)", el: "Η ανοιχτή άδεια κάθε πηγής· ODbL (δεδομένα χάρτη)" },
+          en: "Public transport: connections, departures, live vehicles (Maps)", el: "Μέσα μαζικής μεταφοράς: δρομολόγια, αναχωρήσεις, οχήματα (Χάρτες)" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
         { name: "Overpass API", url: "https://overpass-api.de/",
           by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Places around you (Maps)", el: "Μέρη γύρω σου (Χάρτες)" },
+          en: "Places and quests around you, speed limits while driving (Maps)", el: "Μέρη και ερωτήσεις γύρω σου, όρια ταχύτητας στην οδήγηση (Χάρτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },
@@ -4939,6 +5012,42 @@
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
           en: "Mail: IMAP over HTTPS, nothing stored", el: "Αλληλογραφία: IMAP μέσω HTTPS, δεν αποθηκεύεται τίποτα" },
+        { name: "WooCommerce REST API", url: "https://woocommerce.github.io/woocommerce-rest-api-docs/",
+          by: "Automattic; your own shop", lic: { en: "Your own shop and keys", el: "Το δικό σου κατάστημα και κλειδιά" },
+          en: "Connected services: shop stock and orders (Stock)", el: "Συνδεδεμένες υπηρεσίες: απόθεμα και παραγγελίες καταστήματος (Απόθεμα)" },
+        { name: "MailerLite, Mailchimp, Brevo", url: "https://www.mailerlite.com/",
+          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
+          en: "Connected services: sync subscribers (Newsletter)", el: "Συνδεδεμένες υπηρεσίες: συγχρονισμός συνδρομητών (Newsletter)" },
+        { name: "HubSpot, Pipedrive", url: "https://developers.hubspot.com/",
+          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
+          en: "Connected services: import customers and deals (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών και deals (CRM)" },
+        { name: "Stripe API", url: "https://docs.stripe.com/api",
+          by: "Stripe, Inc.; your own account", lic: { en: "Their terms, your own restricted key", el: "Οι όροι τους, με δικό σου restricted key" },
+          en: "Connected services: import payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πληρωμών (Έσοδα & Έξοδα)" },
+        { name: "Invoice Ninja API", url: "https://api-docs.invoicing.co/",
+          by: "Invoice Ninja LLC; your own account or install", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
+          en: "Connected services: import clients (CRM) and payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών (CRM) και πληρωμών (Έσοδα & Έξοδα)" },
+        { name: "Odoo API", url: "https://www.odoo.com/documentation/19.0/developer/reference/external_api.html",
+          by: "Odoo S.A.; your own database", lic: { en: "Their terms, your own API key", el: "Οι όροι τους, με δικό σου κλειδί API" },
+          en: "Connected services: import contacts and opportunities (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή επαφών και ευκαιριών (CRM)" },
+        { name: "Todoist API", url: "https://developer.todoist.com/api/v1/",
+          by: "Doist Inc.; your own account", lic: { en: "Their terms, your own API token", el: "Οι όροι τους, με δικό σου API token" },
+          en: "Connected services: import projects and tasks (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή projects και εργασιών (To-Do)" },
+        { name: "Trello API", url: "https://developer.atlassian.com/cloud/trello/rest/",
+          by: "Atlassian; your own account", lic: { en: "Their terms, your own key and token", el: "Οι όροι τους, με δικό σου κλειδί και token" },
+          en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή boards (Kanban)" },
+        { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
+          by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
+          en: "Connected services: import a repository's issues (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban)" },
+        { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
+          by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
+          en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
+        { name: "Notion API", url: "https://developers.notion.com/reference/intro",
+          by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
+          en: "Connected services: import pages (Notes) and databases (Spreadsheet)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο)" },
+        { name: "timologisi.online", url: "https://www.timologisi.online/",
+          by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
+          en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },
         { name: "Dropbox", url: "https://www.dropbox.com/",
           by: "Dropbox, Inc.", lic: { en: "Your own account", el: "Ο δικός σου λογαριασμός" },
           en: "Optional encrypted sync", el: "Προαιρετικός κρυπτογραφημένος συγχρονισμός" },
@@ -5254,7 +5363,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-time-stage", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };

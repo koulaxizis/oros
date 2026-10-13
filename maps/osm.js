@@ -40,12 +40,13 @@
   // client: the OAuth 2.0 client id registered on that server by the
   // owner (Register new application → "Confidential application?"
   // UNCHECKED, redirect https://useoros.online/maps/osm-callback.html).
-  // Empty = sign-in not set up yet; the UI says so instead of failing.
+  // Empty = sign-in not set up yet; the UI says so instead of failing
+  // (dev: no client registered yet).
   var SERVERS = {
     live: {
       web: "https://www.openstreetmap.org",
       api: "https://api.openstreetmap.org",
-      client: ""
+      client: "jzN7Vg3ipAflZ-zkwey4ozTfBFnoB_Qhv13KsvXkhIE"   // Chris, 2026-10-13
     },
     dev: {
       web: "https://master.apis.dev.openstreetmap.org",

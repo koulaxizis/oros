@@ -1,18 +1,26 @@
 # Maps
 
-Find places, plan routes by car, bike or on foot, follow spoken turn-by-turn directions, record and follow GPX tracks, and help improve OpenStreetMap with notes and place edits.
+Find places, plan routes by car, bike, on foot or by public transport, follow spoken turn-by-turn directions, record and follow GPX tracks, and help improve OpenStreetMap with notes and place edits.
 
 ## Getting started
 
 Type a place or address in `Search a place…`. Suggestions appear from the third letter, and places near the part of the map you're looking at come first. Tap or click one to drop a pin. You can also type coordinates, such as `37.9755, 23.7348` or `37°58'32"N 23°44'05"E`.
 
-`Use my location` shows where you are (your browser asks for permission the first time). The layers button at the top right switches between `Standard`, `Humanitarian` and `Satellite` maps.
+`Use my location` shows where you are (your browser asks for permission the first time). The layers button at the top right switches between `Standard`, `Humanitarian`, `Satellite` and `Topo (contour lines)` maps. `Topo` shows contour lines and hill shading, useful for hiking; its images stop at a medium zoom and are enlarged beyond that.
 
 ## Places
 
 - A pin's popup has `Save` (star), `Route` (from your location to there) and `From here`.
 - Right-click the map, or long-press on a phone, to use any point: `Go here`, `Start here`, `Add as stop` (once a route is set) and `Save`.
+- A long-press also offers `Measure distance` and `I parked here` (see Measure and parking below).
 - `Saved places` lists everything you starred. Tap a place to fly there. The pencil renames it (`Rename place`) and the × deletes it, with `Undo`.
+
+### Favourite groups
+
+- Put saved places in groups, as in OsmAnd: the folder button next to a place, or `Group` in a saved place's popup, picks a group or makes a `New group` with a name and a colour. The pin on the map takes the group's colour.
+- The list shows each group with its places, then `No group`. Next to a group: the arrow folds it, the eye hides its pins from the map, the pencil edits it and the arrow down exports it as a GPX file.
+- `Groups` at the top lists every group with how many places it has; tap one to rename it, change its colour or delete it. Deleting a group keeps its places, without a group.
+- `Import` reads the waypoints of a GPX, KML or GeoJSON file (for example favourites exported from OsmAnd) as saved places, into a new group named after the file, a group you have, or none. A file with only waypoints opened in `My tracks` goes the same way.
 
 ## Plan a route
 
@@ -22,15 +30,45 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 
 The route bar shows distance and travel time (an estimate without live traffic), plus `Car`, `Bike`, `Walk`, `Directions` (the step list), `Edit route`, `Send to Calendar`, `Start navigation` and `Clear route`. `Send to Calendar` asks for a `Day` and adds a "Route to …" event to [Calendar](app:calendar) with the distance, time and mode.
 
+## Route choices and sharing
+
+- The time in the route bar is followed by the arrival time, if you leave now.
+- When the server finds other good routes, they appear as grey dotted lines. Tap one to use it, or pick it under `Routes` at the top of `Directions` (with how much longer it takes). Routes with stops have no alternatives.
+- By car, `Avoid` in `Directions` skips `Tolls`, `Motorways` or `Ferries`, one at a time. If the server can't, you get the normal route and a message. The choice stays on this device.
+- `Share` (in the route bar, in `Directions`, on a place, or on a long-press) gives you a link that opens the place or the route in orOS Maps, `Open in another app` (a `geo:` link: on Android it offers OsmAnd, Organic Maps and others), `Open on OpenStreetMap`, `Copy coordinates` for a place, and `Send…` where the device can share.
+- `Save to My tracks` keeps the route as a track (with the start, stops and destination as waypoints), so you can export it as GPX or follow it later.
+
+## Public transport
+
+Buses, metro, tram, trains and ferries, with live times where the operator publishes them. The timetables come from [Transitous](https://transitous.org), a free community service built on open data.
+
+- Open it with the bus button on the left, with the bus button in the route bar (same start and destination), or with a long press › `Public transport to here`.
+- `From` and `To`: the target button sets `My location`, the pin button lets you tap a point on the map. The arrows swap them. `Use the route's points` takes the start and destination of the route you planned.
+- Pick `Leave now`, `Depart at` or `Arrive by` and a time, then `Find connections`. `Earlier` and `Later` page through the times.
+- Each connection shows its times, the lines in their colours, the changes and how far you walk. A delay shows as "+3 min", and a cancelled trip is marked.
+- Open a connection to see it step by step and drawn on the map (walking dotted). Tap a step to zoom to it. `Share` sends it as text with a link, and `Save to My tracks` keeps it as a track.
+- Tap a stop name in a trip, a stop on the map, or long press › `Departures nearby` for the departures board. It refreshes every minute while it is open.
+- `Show stops on the map` shows stops when you zoom in. `Show live vehicles` moves trains, metro and buses on the map by their timetable and live data.
+
+Coverage depends on open timetables. In Greece it includes Athens (buses, trolleys, metro, tram, suburban railway), Thessaloniki, Hellenic Train with live data, and bike sharing in some areas. Intercity buses (KTEL) and ferries are not included yet.
+
 ## Navigation
 
 `Start navigation` follows your GPS position and speaks each turn in the orOS language. If you're more than about 150 m from the start, the route is recalculated from where you are. Leave the route and it's recalculated automatically (when you're online).
 
 - Move the map and it stops following you. `Recenter` brings it back.
 - `Mute voice` silences the instructions.
+- By car, a speed limit sign appears next to your speed when OpenStreetMap knows the limit of the road you're on. It shows the number as written on the road (a square sign for mph) and turns red when you go more than 5 km/h over it. No sign means the limit isn't known; always follow the real road signs.
+- The bottom bar shows the arrival time, the time left and the distance left. Before a turn, the lanes appear under the instruction: the bright arrows are the lanes to take.
 - `Exit navigation` needs a second tap within 3 seconds.
 - Where the browser allows it, the screen stays on while you navigate.
 - If Maps reopens in the same tab within 30 minutes, navigation picks up again.
+
+## Measure and parking
+
+**Measure**: long-press a point › `Measure distance`. Each tap on the map adds a point, and you can drag a point to move it. The sheet shows the distance, the last part and the number of points. `Close the shape` joins the last point to the first and shows the area (m², ha or km²) and the perimeter. `Undo` removes the last point, `Clear` starts over. Nothing is saved; closing the sheet or opening another mode clears it.
+
+**Parking**: long-press where you left the car › `I parked here`. Pick a reminder (`No reminder`, `In 30 min`, `In 1 hour`, `In 2 hours` or `At a time`) and, if you like, a note such as "level -2, spot 14". A blue P marks the car. Tap it for when you parked, the reminder, the note, `Walk there` (a walking route from where you are), `Change` and `I left` (removes it). Long-press anywhere › `Show my parked car` takes you back to it. The reminder is an orOS notification, so it comes even with Maps closed, as long as orOS is open; tapping it opens Maps on the car.
 
 ## OpenStreetMap notes
 
@@ -60,6 +98,48 @@ Fix shops, cafés and other places on the real map, the way the Every Door app d
 
 Changes made on another device show `From another device` and are uploaded by that device. `Upload from here` takes them over.
 
+An orange ring on a dot means the place is missing something important (its name, or opening hours for a shop or café); the place shows what is missing.
+
+`Add place` also has `Small things (one tap)`: a bench, litter bin, bollard, street lamp, post box, drinking water, fire hydrant, defibrillator, tree and more. Put the cross on the spot and tap one.
+
+### Entrances and flats
+
+`Entrances and flats` in the Places panel shows the buildings around you (zoom in to street level) with their entrances: green when they have flat numbers or a letter, orange when not.
+
+1. Tap on a building's outline where the door is. A tap next to a corner uses that corner.
+2. Pick the kind (main entrance, staircase, other, service, garage, emergency exit), type the letter on the door (for example Β), the flat numbers (for example 5-8, or 5;6;7) and whether there are steps.
+3. Tap an existing entrance to change it.
+
+Changes wait in the panel until you tap `Upload`; they go in one changeset with your upload comment. A new entrance becomes part of the building's outline. If the building changed on OpenStreetMap meanwhile, the entrance stays in the list with a message; remove it and put it again.
+
+## Quests (StreetComplete style)
+
+Help OpenStreetMap by answering small questions about what's around you. You don't need to know any tags.
+
+1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank, 🚦 speed limit, 🏷️ street name, 🪜 number of steps, 🤚 handrail, 🦯 tactile paving at the crossing, 🪧 stop name, 🚧 level crossing barrier, 🅿️ parking fee, 🚗 kind of car park, 🚲 bicycle parking spaces, ☂️ covered bicycle parking, 🥗 vegetarian food, 🌱 vegan food, 💳 ways to pay, 📶 Wi-Fi, 🚾 wheelchair toilet, ❤️ defibrillator indoors, 🧯 fire hydrant, 📮 postbox collection times, 🏠 kind of building.
+2. Tap a pin (or a row in the list) and tap the answer. The next question nearby opens by itself.
+3. `Can't say` skips the question for now. `Hide here` hides it for that place on all your devices. `It's not there any more` opens a new note at the spot, so mappers can check.
+4. Some answers get old: Maps asks again after some years (opening hours after one year) and `Still the same` confirms them.
+5. Answers wait until you tap `Upload`. Each kind of question goes in its own changeset, with your upload comment (it starts as "Uploaded using orOS Maps"). If someone changed the same thing meanwhile, their value is kept.
+
+`Settings` in the panel turns kinds of questions on or off. The counter shows your answers in total, today and the days in a row.
+
+`Achievements` shows a level for each group of quests (shops and cafés, streets and paths, stops and crossings, parking, buildings and addresses, street furniture). Levels go up at 1, 10, 30, 100, 300 and 1000 uploaded answers, and each level unlocks a page to read more about that topic.
+
+Team mapping: to map an area with friends without answering the same things twice, open `Settings`, everyone picks the same `People in the team` and a different letter. Each of you then sees only your share of the quests. No account or server is needed; pick `Just me` to see all of them again.
+
+### Overlays
+
+An overlay colours the streets or buildings around you by one thing, so the gaps stand out (red dashes mean "not known yet"), and a tap changes it. Pick one in `Overlay` at the top of the Quests panel:
+
+- 💡 `Street lights`: lit or not.
+- 🛣️ `Surface`: asphalt, paving stones, gravel, ground and more.
+- 🚶 `Sidewalks`: on both sides, one side, a separate path or none. Arrows on the chosen street show its direction: left and right are as you see them walking that way.
+- 🔢 `Addresses`: which buildings have a house number. Type the number or tap `It has no number`.
+- 🏢 `Buildings`: floors and kind of building in one form (empty fields stay as they are).
+
+Zoom in to street level (buildings need one step closer). Tap a street or building, then the answer. Changes wait with your quest answers until you tap `Upload`, and count for your achievements. While an overlay is on, the quest pins are hidden; pick `None` to bring them back. The overlay you picked stays on this device.
+
 ## My tracks (GPX)
 
 Record where you walk, ride or drive, keep your tracks and follow them again, like OsmAnd does.
@@ -71,6 +151,17 @@ Record where you walk, ride or drive, keep your tracks and follow them again, li
 5. `Import file` brings in GPX, KML or GeoJSON files. On a computer with orOS installed, `Open with` › orOS works for .gpx, .kml and .geojson files too.
 
 > Keep the screen on while you record. With the screen off, or with orOS in the background, the browser stops GPS and the track gets a straight gap. Maps keeps the screen awake while it records. If the tab closes or the device restarts, nothing is lost: next time Maps offers `Continue`, `Save` or `Discard`.
+
+### Plan a track
+
+Plan a hike, a ride or a drive before you go, like OsmAnd's route planner. Open it with long-press › `Plan a track from here` or `My tracks` › `Plan a track`.
+
+- Pick how the next part goes: `Walk`, `Bike` or `Car` follow the roads and paths (the same free servers as Directions), `Straight line` goes straight, for example across a field or a beach. Each part keeps the choice it was made with.
+- Tap the map to add points. Drag a point to move it; its parts follow the roads again. Tap a point to remove it. `Undo` removes the last one, `Clear` starts over.
+- The sheet shows the length and, when you're online, the elevation profile with the climb, the descent and the lowest and highest point.
+- Give it a name and tap `Save to My tracks`. It becomes a normal GPX track (with elevation and your points as waypoints), so you can follow it, edit it, export it or upload it.
+
+Offline, new parts are straight lines and there is no elevation. The plan stays while Maps is open, even if you switch to another panel, but it is only kept for good when you save it.
 
 ### Edit a track
 
@@ -103,19 +194,23 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 
 ## Online services and privacy
 
-- **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
+- **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`), Esri (`Satellite`) and OpenTopoMap (`Topo`).
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
+- **Public transport**: Transitous (api.transitous.org). It gets the start and destination of your search, the time, the stop whose departures you open, and the map area when stops or live vehicles are on.
+- **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
-- **Places**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
+- **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
+- **Speed limits**: while you navigate by car, the Overpass API gets the next few kilometres of your route (points along it) to read the speed limits of those roads.
 - **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
+- **Elevation**: when you plan a track, the elevation comes from AWS Terrain Tiles (Mapzen and others, on Amazon's open data registry); it gets the map tiles around your plan, not the plan itself.
 - **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
 Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes and place changes waiting to be sent, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
@@ -134,6 +229,10 @@ Saved places, your track list (names, colours, folders, statistics), notes and p
 
 - Search and new routes need a connection. Offline you get cached areas, saved places and your last route.
 - Navigation needs GPS, and Maps has to stay open.
+- Speed limits come only from OpenStreetMap tags (no limits by zone, like "urban"), and are read online; offline or on an untagged road there is no sign.
+- The parking reminder comes only while orOS is open in the browser.
 - The routing servers are free public services and can sometimes be slow or down.
+- Public transport needs a connection and shows only what operators publish as open data; times are not checked against the stop's own signs.
 - Place editing needs a connection to load the places; changes made offline wait until you upload them.
+- Elevation in `Plan a track` is read from a terrain model about 20 m across, so short ups and downs (a bridge, a few steps) may not show.
 - Recording needs the screen on and Maps open; the browser does not record in the background.

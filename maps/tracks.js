@@ -711,6 +711,9 @@
       r0.appendChild(button(t("rec.start"), "osm-btn primary", function () { recStart(false); }));
       var imp = button(t("import"), "osm-btn", function () { fileIn.click(); });
       r0.appendChild(imp);
+      // Wave 10B: "Plan a track" (planner.js loads after this file).
+      var PL = window.__orosMapsPlanner;
+      if (PL) r0.appendChild(button(PL.label(), "osm-btn trk-plan", function () { PL.setMode(true); }));
       card.appendChild(r0);
     }
     body.appendChild(card);
@@ -1391,6 +1394,11 @@
   }
   function importText(txt, fileName) {
     var tr = T.parseAny(txt, fileName);
+    // Only waypoints (e.g. OsmAnd favourites): saved places, wave 10C.
+    if (tr && !tr.segs.length && tr.wpts.length && window.__orosMapsFav) {
+      window.__orosMapsFav.importWpts(tr, fileName);
+      return Promise.resolve(null);
+    }
     if (!tr || !tr.segs.length) { toast(t("import.bad")); return Promise.resolve(null); }
     if (!tr.name) tr.name = String(fileName || "").replace(/\.[a-z0-9]+$/i, "").slice(0, T.LIM.name);
     return addTrack(tr, { name: tr.name, src: "import" }).catch(function () { toast(t("savefail")); return null; });
@@ -1471,7 +1479,10 @@
     recLoad().then(function (saved) { if (saved && !rec) offerResume(saved); });
     var pending = null;
     try { pending = window.parent && window.parent.__orosTakeTarget ? window.parent.__orosTakeTarget("maps") : null; } catch (e) {}
-    if (pending) openTarget(pending);
+    // Not a track or file (e.g. the parking reminder's { park }):
+    // left for the module that knows it (tools.js loads later).
+    if (pending && (pending.openFile || pending.track)) openTarget(pending);
+    else if (pending) H.pendingTarget = pending;
   }
 
   window.__orosMapsTracks = {

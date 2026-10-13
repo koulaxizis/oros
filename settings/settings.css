@@ -441,6 +441,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 }
 .keys dt { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; color: var(--accent); white-space: nowrap; }
 .keys dd { color: var(--text); min-width: 0; }
+.keys.info dt { font-family: inherit; color: var(--text-dim); white-space: normal; }
+.keys.info dd { overflow-wrap: anywhere; }
 
 /* ---------- 8. Narrow screens + reduced motion ---------- */
 @media (max-width: 719px) {

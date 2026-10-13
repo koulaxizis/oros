@@ -453,6 +453,7 @@
                    typeof window.parent.__orosTakeTarget === "function")
       ? window.parent.__orosTakeTarget("time") : null;
     if (pending && pending.astro === "location") setTimeout(focusLocation, 50);
+    else if (pending) window.__orosTimePending = pending;   // another part of Time (stage.js) takes it
   } catch (e) {}
   setInterval(render, 30000);
   // #5: version derives from the cache-bust query (?v=…) — never
