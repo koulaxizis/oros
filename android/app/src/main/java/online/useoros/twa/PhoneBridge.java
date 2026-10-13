@@ -64,16 +64,16 @@ public class PhoneBridge {
     }
 
     static final String DIAG_KEY = "diag-trail";
-    private final long started = System.currentTimeMillis();
 
     /** Diagnostic builds (workflow input "diag") save each bridge step
-     *  with its time since app start; DiagActivity shows them. Toasts
+     *  with its clock time; DiagActivity shows them. Toasts
      *  and notifications proved unreliable for this (Android drops
      *  queued toasts and cuts them to two lines). */
     synchronized void diag(String step) {
         Log.d(TAG, step);
         if (!BuildConfig.DIAG) return;
-        String line = ((System.currentTimeMillis() - started) / 100) / 10.0 + "s " + step;
+        String line = new java.text.SimpleDateFormat("HH:mm:ss.S", java.util.Locale.ROOT)
+                .format(new java.util.Date()) + " " + step;
         SharedPreferences sp = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String old = sp.getString(DIAG_KEY, "");
         if (old.length() > 6000) old = old.substring(old.length() - 6000);
@@ -86,6 +86,7 @@ public class PhoneBridge {
 
     /** A new launch: the newest launcher owns the session from now on. */
     void attach(KeptTwaLauncher l) {
+        diag("--- launch ---");
         main.post(() -> {
             if (launcher != null && launcher != l) launcher.reallyDestroy();
             launcher = l;
@@ -205,7 +206,8 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
-            diag("message from page, " + message.length() + " chars");
+            diag("message from page, " + message.length() + " chars: "
+                    + message.substring(0, Math.min(120, message.length())));
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
         }

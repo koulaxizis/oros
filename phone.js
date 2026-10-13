@@ -267,24 +267,27 @@
   }
 
   // The app's first message carries the port. Chromium posts it to the
-  // main frame from the browser itself: no source window, and an origin
-  // that is either this origin or empty ("" / "null"; Chrome and Brave
-  // send none). Frames and other windows always have a source, so they
-  // never pass; neither does a message carrying another origin.
+  // main frame from the browser itself, with no source window; what it
+  // puts in ev.origin differs between browsers and versions (seen: the
+  // relationship check passes, the port arrives, but not with this
+  // origin), so a source-less port is accepted from any origin. Frames
+  // and other windows always have a source, so they never pass; a port
+  // posted by this window to itself must carry this origin.
   // A newer port replaces the older one: the app opens a new channel
   // when it is launched again while this page stays loaded.
   root.addEventListener("message", function (ev) {
     if (!ev.ports || !ev.ports[0]) return;
     var o = ev.origin;
-    if (ev.source || (o !== root.location.origin && o !== "" && o !== "null")) {
-      console.warn("[phone] port from " + ev.origin + " ignored");
+    if (ev.source ? (ev.source !== root || o !== root.location.origin) : false) {
+      console.warn("[phone] port from " + o + " ignored");
       return;
     }
     if (port) { try { port.onmessage = null; port.close(); } catch (e) {} }
     port = ev.ports[0];
     lastSent = {};
     port.onmessage = onAppMessage;
-    send({ t: "state" });
+    // "o" is diagnostics only: what this browser reports as the origin.
+    send({ t: "state", o: String(o).slice(0, 80) });
     emit();
     if (!timer) {
       timer = setInterval(function () { if (!document.hidden) pushAll(false); }, 15000);
