@@ -602,3 +602,11 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 [hidden] { display: none !important; }
+
+/* Import from Stripe (budget/payments.js) */
+#menu button[hidden] { display: none; }
+#bd-pay .pay-msg { margin-top: 10px; }
+#bd-pay .pay-msg p { margin: 6px 0 0; overflow-wrap: anywhere; }
+#bd-pay .pay-plan { font-weight: 600; }
+#bd-pay .pay-hint { font-size: 13px; color: var(--text-dim, inherit); line-height: 1.4; margin: 0 0 10px; }
+#bd-pay .pay-plan { font-size: 14px; }

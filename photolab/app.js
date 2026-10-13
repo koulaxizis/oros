@@ -28,7 +28,7 @@
   var NS = window.PhotoLab;
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
-    R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora,
+    R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora, XMP: NS.xmp,
     G: NS.guides,
     FX: window.orosDK && window.orosDK.fx
   };

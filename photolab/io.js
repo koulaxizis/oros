@@ -90,6 +90,26 @@
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
+  // A Lightroom / Camera Raw preset (.xmp) → adjustment layers
+  // (xmp.js), above the active layer, as one undo step.
+  function openLrPreset() {
+    if (!st.doc) return Promise.resolve();
+    var dlg = dialogHost();
+    if (!dlg || typeof dlg.openFile !== "function") { PL.toast(t("msg.noDialogs")); return Promise.resolve(); }
+    return dlg.openFile(".xmp,application/rdf+xml").then(function (f) {
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { PL.toast(t("msg.xmpBad")); return; }
+      return f.text().then(function (text) {
+        var res;
+        try { res = PL.XMP.parse(text); } catch (e) { PL.toast(t("msg.xmpBad")); return; }
+        var name = res.name || baseName(f.name);
+        if (!res.layers.length) { PL.toast(t("msg.xmpEmpty", { name: name })); return; }
+        var n = PL.ops.addAdjLayers(res.layers, t("step.lrPreset"), name);
+        if (!n) return;
+        PL.toast(t("msg.xmpDone", { name: name, n: n }) + (res.skipped.length ? " " + t("msg.xmpSkipped", { n: res.skipped.length }) : ""));
+      });
+    }).catch(function () { PL.toast(t("msg.xmpBad")); });
+  }
   // A picture already on the orOS disk (e.g. Montage's frame grab).
   // back: { app, key } (C.normBack) = the app that asked for the edit;
   // "Done" sends the picture back there (sendBack).
@@ -456,6 +476,6 @@
     PICTURES: PICTURES, decode: decode, openPicture: openPicture, openPictureFile: openPictureFile,
     openDiskPath: openDiskPath, setClipboard: setClipboard, pasteFromMenu: pasteFromMenu,
     exportImage: exportImage, setWallpaper: setWallpaper, canWallpaper: function () { return !!wallApi(); },
-    saveThumb: saveThumb, wire: wire, sendBack: sendBack
+    saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset
   };
 })();

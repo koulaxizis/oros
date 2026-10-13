@@ -123,6 +123,18 @@
       "fx.cat1": "One Slider", "fx.cat2": "Essentials", "fx.cat3": "Advanced",
       "fx.noFile": "No file", "fx.chooseFile": "Choose file", "fx.failed": "{name} stopped: it is bypassed",
       "fx.noCatalog": "The effects could not be loaded.", "fx.credit": "Effects: NULL JSFX (nulljsfx.tech), MIT License.",
+      "rm.title": "Remote control", "rm.sec": "Remote control", "rm.host": "Connect a tablet or phone", "rm.join": "Control Studio on another device",
+      "rm.hint": "On the tablet or phone, open Studio › Settings › Control Studio on another device and type this code, or scan the QR code with the camera.",
+      "rm.start": "Show a code", "rm.newCode": "New code", "rm.stop": "Disconnect", "rm.off": "Not connected.",
+      "rm.connecting": "Connecting…", "rm.waitRemote": "Waiting for the tablet or phone…", "rm.waitHost": "Looking for Studio on the PC with this code…",
+      "rm.direct": "Connected directly (same network).", "rm.relay": "Connected through the internet (orOS relay).", "rm.closed": "Disconnected.",
+      "rm.joined": "A {dev} is now controlling Studio", "rm.dev.tablet": "tablet", "rm.dev.phone": "phone", "rm.dev.computer": "computer",
+      "rm.joinTitle": "Control Studio on another device", "rm.joinHint": "On the PC, open Studio › Settings › Connect a tablet or phone, then type the 6-digit code here.",
+      "rm.code": "Code", "rm.go": "Connect", "rm.badCode": "Type the 6 digits shown on the PC.", "rm.exit": "Stop controlling",
+      "rm.badge.direct": "Direct", "rm.badge.relay": "Via internet", "rm.badge.lost": "Reconnecting…",
+      "rm.noProject": "No project open on the PC", "rm.empty": "The project on the PC has no tracks yet.", "rm.fxOn": "on", "rm.fxOff": "bypassed",
+      "rm.pos": "Position in the song", "rm.privacy": "The link is encrypted with this code and the orOS relay only passes it on. Studio asks you here before any device can control it.",
+      "rm.fxFile": "Files for effects are chosen on the PC.", "rm.ask": "A {dev} wants to control Studio. Allow it only if it is yours.", "rm.allow": "Allow", "rm.deny": "Deny", "rm.waitOk": "Found Studio. Press Allow on the PC…", "rm.denied": "The PC did not allow this device. Ask for a new code.",
       "fx.n": "{n} effects", "fx.n1": "1 effect",
       "toast.tooBig20": "{name} is larger than 20 MB", "toast.noFx": "This browser cannot run the effects"
     },
@@ -186,6 +198,18 @@
       "fx.cat1": "Ένα ρυθμιστικό", "fx.cat2": "Βασικά", "fx.cat3": "Προχωρημένα",
       "fx.noFile": "Κανένα αρχείο", "fx.chooseFile": "Επιλογή αρχείου", "fx.failed": "Το {name} σταμάτησε: παρακάμπτεται",
       "fx.noCatalog": "Τα εφέ δεν φόρτωσαν.", "fx.credit": "Εφέ: NULL JSFX (nulljsfx.tech), άδεια MIT.",
+      "rm.title": "Τηλεχειρισμός", "rm.sec": "Τηλεχειρισμός", "rm.host": "Σύνδεση tablet ή κινητού", "rm.join": "Χειρισμός του Studio άλλης συσκευής",
+      "rm.hint": "Στο tablet ή στο κινητό άνοιξε Studio › Ρυθμίσεις › Χειρισμός του Studio άλλης συσκευής και γράψε αυτόν τον κωδικό, ή σκάναρε το QR με την κάμερα.",
+      "rm.start": "Εμφάνιση κωδικού", "rm.newCode": "Νέος κωδικός", "rm.stop": "Αποσύνδεση", "rm.off": "Χωρίς σύνδεση.",
+      "rm.connecting": "Σύνδεση…", "rm.waitRemote": "Αναμονή για το tablet ή το κινητό…", "rm.waitHost": "Αναζήτηση του Studio στο PC με αυτόν τον κωδικό…",
+      "rm.direct": "Απευθείας σύνδεση (ίδιο δίκτυο).", "rm.relay": "Σύνδεση μέσω internet (relay του orOS).", "rm.closed": "Αποσυνδέθηκε.",
+      "rm.joined": "Συνδέθηκε {dev} και χειρίζεται το Studio", "rm.dev.tablet": "tablet", "rm.dev.phone": "κινητό", "rm.dev.computer": "υπολογιστής",
+      "rm.joinTitle": "Χειρισμός του Studio άλλης συσκευής", "rm.joinHint": "Στο PC άνοιξε Studio › Ρυθμίσεις › Σύνδεση tablet ή κινητού και γράψε εδώ τον 6ψήφιο κωδικό.",
+      "rm.code": "Κωδικός", "rm.go": "Σύνδεση", "rm.badCode": "Γράψε τα 6 ψηφία που δείχνει το PC.", "rm.exit": "Τέλος χειρισμού",
+      "rm.badge.direct": "Απευθείας", "rm.badge.relay": "Μέσω internet", "rm.badge.lost": "Επανασύνδεση…",
+      "rm.noProject": "Κανένα ανοιχτό έργο στο PC", "rm.empty": "Το έργο στο PC δεν έχει ακόμη κανάλια.", "rm.fxOn": "ενεργό", "rm.fxOff": "παρακάμπτεται",
+      "rm.pos": "Θέση στο τραγούδι", "rm.privacy": "Η σύνδεση κρυπτογραφείται με αυτόν τον κωδικό και το relay του orOS απλώς τη μεταφέρει. Το Studio σε ρωτά εδώ πριν το χειριστεί οποιαδήποτε συσκευή.",
+      "rm.fxFile": "Τα αρχεία των εφέ επιλέγονται στο PC.", "rm.ask": "Μια συσκευή ({dev}) θέλει να χειριστεί το Studio. Επίτρεψέ το μόνο αν είναι δική σου.", "rm.allow": "Επιτρέπεται", "rm.deny": "Όχι", "rm.waitOk": "Βρέθηκε το Studio. Πάτα «Επιτρέπεται» στο PC…", "rm.denied": "Το PC δεν επέτρεψε αυτή τη συσκευή. Ζήτα νέο κωδικό.",
       "fx.n": "{n} εφέ", "fx.n1": "1 εφέ",
       "toast.tooBig20": "Το {name} είναι μεγαλύτερο από 20 MB", "toast.noFx": "Αυτός ο browser δεν μπορεί να παίξει τα εφέ"
     }
@@ -650,6 +674,7 @@
     setLabel(rb, recording ? t("btn.recStop") : t("btn.rec"));
     rb.setAttribute("aria-pressed", recording ? "true" : "false");
     document.body.classList.toggle("is-rec", recording);
+    if (Remote) Remote.changed();
   }
   function dbTxt(db) { return db <= C.VOL_MIN ? t("db.off") : t("db", { n: (db > 0 ? "+" : "") + numTxt(db, 1) }); }
   function panTxt(p) { return p === 0 ? t("pan.c") : p < 0 ? t("pan.l", { n: -p }) : t("pan.r", { n: p }); }
@@ -810,6 +835,7 @@
     $("clock-time").textContent = C.fmtTime(pos);
     var bb = C.barBeat(pos, proj ? proj.bpm : 120, proj ? proj.sig : 4);
     $("clock-bar").textContent = bb.bar + "." + bb.beat;
+    if (!playing && Remote) Remote.changed();
   }
   // Keep the playhead in view while playing.
   function followPlayhead(pos) {
@@ -838,6 +864,7 @@
   function renderAll() {
     renderTransport();
     renderRows();
+    if (Remote) Remote.changed();
   }
 
   // ---------- 6. Pointer: clips, ruler, lanes ----------
@@ -944,6 +971,7 @@
   // ---------- 7. Engine ----------
   var actx = null, masterGain = null, analyser = null, trackNodes = {};
   var FX = null;                 // effects (fx.js)
+  var Remote = null;             // Studio Remote (remote.js)
   var fxLat = 0;                 // seconds the effects delay what is heard
   var fxFail = false;
   var playing = null;            // { t0, from, loop, passes, ... } while playing
@@ -982,9 +1010,13 @@
       var g = a.createGain(), pn = a.createStereoPanner ? a.createStereoPanner() : null;
       g.gain.value = C.trackGain(tr, solo);
       if (pn) { pn.pan.value = tr.pan / 100; g.connect(pn); pn.connect(out); } else g.connect(out);
-      var input = FX.insert(a, tr.id, tr.fx, g, offline) || g;
+      var input = FX.insert(a, tr.id, tr.fx, g, offline) || g, meter = null;
+      if (!offline && a.createAnalyser) {             // the track's level, for Studio Remote
+        meter = a.createAnalyser(); meter.fftSize = 512;
+        (pn || g).connect(meter);
+      }
       // not a DelayNode: Chromium drops a DelayNode's tail once its source has ended
-      nodes[tr.id] = { gain: g, pan: pn, input: input, shift: (max - lat[tr.id]) / sr };
+      nodes[tr.id] = { gain: g, pan: pn, input: input, meter: meter, shift: (max - lat[tr.id]) / sr };
     });
     return max;
   }
@@ -1203,6 +1235,7 @@
   function armTrack(tid) {
     prefs.arm = prefs.arm === tid ? "" : tid; savePrefs();
     renderRows();
+    if (Remote) Remote.changed();
     var tr = C.find(data, "tracks", prefs.arm);
     if (tr) live(t("toast.armed", { name: tr.name }));
   }
@@ -1989,12 +2022,72 @@
     });
   }
 
+  // what remote.js needs from here: the console, nothing else
+  var RELAY = "https://oros-mail-relay.koulaxizis-25b.workers.dev";   // = mail.js
+  var peakBuf = null;
+  function peakOf(an) {
+    if (!an) return 0;
+    if (!peakBuf || peakBuf.length !== an.fftSize) peakBuf = new Float32Array(an.fftSize);
+    an.getFloatTimeDomainData(peakBuf);
+    var pk = 0;
+    for (var i = 0; i < peakBuf.length; i++) { var v = Math.abs(peakBuf[i]); if (v > pk) pk = v; }
+    return pk;
+  }
+  function fxList(items) {
+    return (items || []).map(function (x) { return { u: x.u, id: x.id, on: x.on, name: FX.nameOf(x.id) }; });
+  }
+  function makeRemote() {
+    Remote = window.StudioRemote({
+      C: C, t: t, el: el, setLabel: setLabel, ICON: ICON, relay: RELAY,
+      showToast: showToast, showDlg: showDlg, hideDlg: hideDlg, dbTxt: dbTxt, panTxt: panTxt,
+      wakeAudio: function () { if (audio()) resume(); },
+      fx: FX, data: function () { return data; }, numTxt: numTxt,
+      srate: function () { return actx ? actx.sampleRate : 48000; },
+      isPlaying: function () { return !!playing; },
+      snapshot: function () {
+        if (!proj) return null;
+        return {
+          name: proj.name || t("proj.untitled"), bpm: proj.bpm, sig: proj.sig, vol: proj.vol, loop: !!proj.loop.on,
+          metro: !!prefs.metro, playing: !!playing, rec: recording, pos: playing ? position() : playhead, len: songLen(),
+          mfx: fxList(proj.fx),
+          tracks: tracks().map(function (tr) {
+            return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: !!tr.mute, solo: !!tr.solo,
+                     arm: prefs.arm === tr.id, fx: fxList(tr.fx) };
+          })
+        };
+      },
+      meters: function () {
+        return {
+          pos: playing ? position() : playhead,
+          tracks: tracks().map(function (tr) { var n = trackNodes[tr.id]; return playing && n ? peakOf(n.meter) : 0; }),
+          master: playing ? peakOf(analyser) : 0
+        };
+      },
+      togglePlay: togglePlay, stop: stopBtn, record: startRecording, toggleLoop: toggleLoop, toggleMetro: toggleMetro,
+      seek: function (sec) { seek(sec); Remote.changed(); },
+      setBpm: function (v) { setProject({ bpm: v }); },
+      setMaster: function (v) { setProject({ vol: v }, burst("master", { live: true })); },
+      setTrack: function (id, f) { setTrack(id, f, burst("r" + Object.keys(f).join("") + id, { live: true })); },
+      arm: armTrack,
+      toggleFx: function (key, u, on) {
+        var tr = key === "master" ? null : C.find(data, "tracks", key);
+        var items = key === "master" ? (proj ? proj.fx : []) : (tr ? tr.fx : []);
+        if (!items.some(function (x) { return x.u === u && x.on !== on; })) return;
+        items = items.map(function (x) { return x.u === u ? Object.assign({}, x, { on: on }) : x; });
+        if (key === "master") setProject({ fx: items }); else setTrack(key, { fx: items });
+        FX.render();
+      }
+    });
+  }
+
   function boot() {
     load();
     loadPrefs();
     makeFx();
+    makeRemote();
     applyI18n();
     wire();
+    Remote.wire();
     registerSync();
     inheritPalette();
     watchPalette();

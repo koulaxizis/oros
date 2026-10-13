@@ -27,6 +27,7 @@
 //   7. Section: Backups
 //   8. Section: Language & search
 //  8b. Section: Opening files
+//  8c. Section: Connected services (window.parent.orosLinks)
 //   9. Section: System
 //  10. Navigation + render
 //  11. Keyboard (Contract Β) + palette
@@ -76,6 +77,7 @@
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
+    services: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
     eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
@@ -712,6 +714,284 @@
     host.appendChild(c4);
   }
 
+  // ---------- 8c. Section: Connected services ----------
+  // Everything goes through the shell's orosLinks (links/host.js): the
+  // keys are typed here once, handed over and sealed there; this page
+  // never stores them and never reads them back.
+  function links() {
+    var p = parentWin();
+    try { return p && p.orosLinks && typeof p.orosLinks.list === "function" ? p.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  // page state (session only): the add form, per-account messages and
+  // whether this device holds each account's keys
+  var svc = { add: null, keysFor: null, keyForm: { ck: "", cs: "", key: "" }, msg: {}, has: {}, busy: {}, rename: null, off: null };
+  // the platform's own wording first ("v.err.auth.tol"), else the shop's
+  function svcErr(code, p) {
+    var k = "v.err." + (code === "keys" ? "keys" : code);
+    if (p && p !== "woo") {
+      var own = t(k + "." + p);
+      if (own !== k + "." + p) return own;
+      var gen = t(k + ".svc", { name: pName(p) });       // any other platform, by name
+      if (gen !== k + ".svc") return gen;
+    }
+    var txt = t(k);
+    return txt === k ? t("v.err.server") : txt;
+  }
+  function pName(p) {
+    var Lk = links(), x = Lk ? Lk.platforms().filter(function (y) { return y.id === p; })[0] : null;
+    return x ? x.name : p;
+  }
+  function badKeys(p) {
+    var own = t("v.err.badkeys." + p);
+    return own !== "v.err.badkeys." + p ? own : t("v.err.badkeys");
+  }
+  function pOf(id) { var Lk = links(), a = Lk && Lk.get(id); return a ? a.p : ""; }
+  function textInput(key, value, ph, onInput, type) {
+    var inp = el("input");
+    inp.id = "f-" + key;
+    inp.type = type || "text";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    if (ph) inp.placeholder = ph;
+    inp.value = value || "";
+    inp.setAttribute("data-k", key);
+    inp.addEventListener("input", function () { onInput(inp.value); });
+    var w = el("div", "pass-row");
+    w.appendChild(inp);
+    return w;
+  }
+  function labelled(label, key, control) {
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-" + key;
+    var box = el("div", "pass");
+    box.appendChild(lab);
+    box.appendChild(control);
+    return box;
+  }
+  function refreshKeys(id) {
+    var Lk = links();
+    if (!Lk) return;
+    Lk.hasKeys(id).then(function (h) {
+      if (svc.has[id] === h) return;
+      svc.has[id] = h;
+      render();
+    }, function () {});
+  }
+  function runTest(id) {
+    var Lk = links();
+    if (!Lk) return;
+    svc.busy[id] = true;
+    svc.msg[id] = { cls: "msg-dim", text: t("v.checking") };
+    render();
+    var p = pOf(id);
+    Lk.test(id).then(function (code) {
+      if (!code && p === "tol") {
+        // the probe is the credits balance: show it
+        return Lk.call(id, [{ m: "GET", path: "/GetCreditsBalance" }]).then(function (res) {
+          var n = res[0] && res[0].data && typeof res[0].data.creditsBalance === "number" ? res[0].data.creditsBalance : null;
+          svc.busy[id] = false;
+          svc.msg[id] = { cls: "msg-ok", text: t("v.ok.tol", { n: n === null ? "—" : n.toLocaleString(LANG === "el" ? "el-GR" : "en-GB") }) };
+          render();
+        }, function () { svc.busy[id] = false; svc.msg[id] = { cls: "msg-ok", text: t("v.ok.tol", { n: "—" }) }; render(); });
+      }
+      svc.busy[id] = false;
+      svc.msg[id] = code ? { cls: "msg-err", text: svcErr(code, p) } : { cls: "msg-ok", text: p === "woo" ? t("v.ok") : t("v.ok.svc", { name: pName(p) }) };
+      render();
+    });
+  }
+  function secServices(host) {
+    var Lk = links();
+    if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
+    var c0 = card(null);
+    c0.appendChild(el("p", "hint", t("v.intro")));
+    var accts = Lk.list();
+    if (!accts.length && !svc.add) c0.appendChild(el("p", "msg msg-dim", t("v.none")));
+    if (!svc.add) {
+      c0.appendChild(actions(button(t("v.add"), "v.add", function () {
+        svc.add = { p: "woo", name: "", site: "", ck: "", cs: "", key: "", env: "test", vat: "", db: "", err: "" };
+        render();
+        var f = $("f-v-name");
+        if (f) f.focus();
+      }, "primary")));
+    }
+    host.appendChild(c0);
+    if (svc.add) host.appendChild(addCard(Lk));
+    var plats = {};
+    Lk.platforms().forEach(function (p) { plats[p.id] = p; });
+    accts.forEach(function (a) {
+      if (!(a.id in svc.has)) { svc.has[a.id] = null; refreshKeys(a.id); }
+      host.appendChild(acctCard(Lk, a, plats[a.p]));
+    });
+  }
+  function addCard(Lk) {
+    var f = svc.add;
+    var c = card(t("v.add"));
+    var form = el("form", "pass");
+    form.setAttribute("autocomplete", "off");
+    form.noValidate = true;                       // "shop.example.gr" is fine: core normalises it
+    var plats = Lk.platforms().map(function (p) { return { value: p.id, label: t("v.plat." + p.id) === "v.plat." + p.id ? p.name : t("v.plat." + p.id) }; });
+    form.appendChild(labelled(t("v.platform"), "v-p", select(plats, f.p, "v-p", function (v) { f.p = v; f.err = ""; render(); })));
+    var pHint = t("v.plat." + f.p + ".hint");
+    if (pHint !== "v.plat." + f.p + ".hint") form.appendChild(el("div", "hint", pHint));
+    var pName = (Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).name;
+    form.appendChild(labelled(t("v.name"), "v-name", textInput("v-name", f.name, f.p === "woo" ? t("v.name.ph") : pName, function (v) { f.name = v; })));
+    var platInfo = Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {};
+    var isSite = !!platInfo.site, hasDb = !!platInfo.db;
+    if (f.p !== "woo") {
+      if (isSite) form.appendChild(labelled(siteLabel(f.p), "v-site", textInput("v-site", f.site, t("v.site.ph." + f.p) === "v.site.ph." + f.p ? t("v.site.ph") : t("v.site.ph." + f.p), function (v) { f.site = v; }, "url")));
+      if (hasDb) form.appendChild(labelled(t("v.db"), "v-db", textInput("v-db", f.db || "", t("v.db.ph"), function (v) { f.db = v; })));
+      if (f.p === "tol") {
+        form.appendChild(labelled(t("v.env"), "v-env", select([{ value: "test", label: t("v.env.test") }, { value: "live", label: t("v.env.live") }], f.env, "v-env", function (v) { f.env = v; })));
+        var vin = textInput("v-vat", f.vat, t("v.vat.ph"), function (v) { f.vat = v; });
+        vin.inputMode = "numeric";
+        form.appendChild(labelled(t("v.vat"), "v-vat", vin));
+      }
+      form.appendChild(el("div", "hint", t("v.keys.hint." + f.p)));
+      form.appendChild(labelled(t("v.key"), "v-key", textInput("v-key", f.key, "", function (v) { f.key = v; }, "password")));
+      if (f.p === "trello") form.appendChild(labelled(t("v.token"), "v-token", textInput("v-token", f.token || "", "", function (v) { f.token = v; }, "password")));
+    } else {
+      form.appendChild(labelled(t("v.site"), "v-site", textInput("v-site", f.site, t("v.site.ph"), function (v) { f.site = v; }, "url")));
+      form.appendChild(el("div", "hint", t("v.keys.hint")));
+      form.appendChild(labelled(t("v.ck"), "v-ck", textInput("v-ck", f.ck, "ck_…", function (v) { f.ck = v; }, "password")));
+      form.appendChild(labelled(t("v.cs"), "v-cs", textInput("v-cs", f.cs, "cs_…", function (v) { f.cs = v; }, "password")));
+    }
+    if (f.err) form.appendChild(el("p", "msg msg-err", f.err));
+    var go = el("button", "btn primary", f.busy ? t("v.checking") : t("v.save"));
+    go.type = "submit";
+    go.disabled = !!f.busy;
+    go.setAttribute("data-k", "v.save");
+    form.appendChild(actions(button(t("v.cancel"), "v.cancel", function () { svc.add = null; render(); }), go));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (f.busy) return;
+      f.busy = true;
+      f.err = "";
+      render();
+      var o = f.p === "tol" ? { p: "tol", name: f.name, env: f.env, vat: f.vat, keys: { key: f.key } }
+            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, db: hasDb ? f.db || "" : undefined, keys: f.p === "trello" ? { key: f.key, token: f.token || "" } : { key: f.key } }
+            : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
+      Lk.add(o).then(function (id) {
+        svc.add = null;
+        svc.has[id] = true;
+        render();
+        runTest(id);
+      }, function (er) {
+        f.busy = false;
+        var code = er && er.code;
+        f.err = code === "site" ? t("v.err.site") : code === "vat" ? t("v.err.vat") : code === "db" ? t("v.err.db")
+              : code === "keys" ? badKeys(f.p) : svcErr(code || "save", f.p);
+        render();
+      });
+    });
+    c.appendChild(form);
+    return c;
+  }
+  function siteLabel(p) { var k = "v.site." + p; return t(k) === k ? t("v.site") : t(k); }
+  function acctCard(Lk, a, plat) {
+    var c = card(a.name);
+    var info = el("dl", "keys info");
+    info.appendChild(el("dt", null, t("v.platform")));
+    info.appendChild(el("dd", null, a.platform));
+    if (a.site) {
+      info.appendChild(el("dt", null, siteLabel(a.p)));
+      info.appendChild(el("dd", null, a.site.replace(/^https:\/\//, "")));
+    }
+    if (a.env) {
+      info.appendChild(el("dt", null, t("v.env")));
+      info.appendChild(el("dd", null, t("v.env." + a.env)));
+    }
+    if (a.vat) {
+      info.appendChild(el("dt", null, t("v.vat")));
+      info.appendChild(el("dd", null, a.vat));
+    }
+    if (a.db) {
+      info.appendChild(el("dt", null, t("v.db")));
+      info.appendChild(el("dd", null, a.db));
+    }
+    var m = Lk.mode(a.id);
+    info.appendChild(el("dt", null, t("v.via")));
+    info.appendChild(el("dd", null, t(m ? "v.via." + m : "v.via.none")));
+    if (plat && plat.apps.length) {
+      info.appendChild(el("dt", null, t("v.used")));
+      info.appendChild(el("dd", null, plat.apps.map(appName).join(", ")));
+    }
+    c.appendChild(info);
+    var has = svc.has[a.id];
+    if (has === false) c.appendChild(el("p", "msg msg-dim", t("v.keysMissing")));
+    if (svc.msg[a.id]) c.appendChild(el("p", "msg " + svc.msg[a.id].cls, svc.msg[a.id].text));
+
+    if (svc.rename === a.id) {
+      var rf = el("form", "pass");
+      var val = { v: a.name };
+      rf.appendChild(labelled(t("v.name"), "v-rn", textInput("v-rn", a.name, "", function (v) { val.v = v; })));
+      var ok = el("button", "btn primary", t("v.rename"));
+      ok.type = "submit";
+      ok.setAttribute("data-k", "v.rn.ok");
+      rf.appendChild(actions(button(t("v.cancel"), "v.rn.cancel", function () { svc.rename = null; render(); }), ok));
+      rf.addEventListener("submit", function (e) { e.preventDefault(); Lk.edit(a.id, { name: val.v }); svc.rename = null; render(); });
+      c.appendChild(rf);
+    }
+    if (svc.keysFor === a.id) {
+      var kf = el("form", "pass");
+      kf.setAttribute("autocomplete", "off");
+      if (a.p !== "woo") {
+        kf.appendChild(el("div", "hint", t("v.keys.hint." + a.p)));
+        kf.appendChild(labelled(t("v.key"), "v-kck", textInput("v-kck", svc.keyForm.key, "", function (v) { svc.keyForm.key = v; }, "password")));
+        if (a.p === "trello") kf.appendChild(labelled(t("v.token"), "v-ktok", textInput("v-ktok", svc.keyForm.token || "", "", function (v) { svc.keyForm.token = v; }, "password")));
+      } else {
+        kf.appendChild(el("div", "hint", t("v.keys.hint")));
+        kf.appendChild(labelled(t("v.ck"), "v-kck", textInput("v-kck", svc.keyForm.ck, "ck_…", function (v) { svc.keyForm.ck = v; }, "password")));
+        kf.appendChild(labelled(t("v.cs"), "v-kcs", textInput("v-kcs", svc.keyForm.cs, "cs_…", function (v) { svc.keyForm.cs = v; }, "password")));
+      }
+      var sk = el("button", "btn primary", t("v.saveKeys"));
+      sk.type = "submit";
+      sk.setAttribute("data-k", "v.k.ok");
+      kf.appendChild(actions(button(t("v.cancel"), "v.k.cancel", function () { svc.keysFor = null; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); }), sk));
+      kf.addEventListener("submit", function (e) {
+        e.preventDefault();
+        Lk.setKeys(a.id, a.p === "trello" ? { key: svc.keyForm.key, token: svc.keyForm.token || "" } : a.p !== "woo" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
+          svc.keysFor = null;
+          svc.keyForm = { ck: "", cs: "", key: "", token: "" };
+          svc.has[a.id] = true;
+          runTest(a.id);
+        }, function (er) {
+          svc.msg[a.id] = { cls: "msg-err", text: er && er.code === "keys" ? badKeys(a.p) : svcErr(er && er.code, a.p) };
+          render();
+        });
+      });
+      c.appendChild(kf);
+    }
+
+    var can = Lk.canKeySync();
+    var ksRow = row(t("v.ks"), switchBtn(a.ks === 1, "v.ks:" + a.id, function (on) {
+      if (on && !can) { svc.msg[a.id] = { cls: "msg-dim", text: t("v.ks.needSync") }; render(); return; }
+      Lk.setKeySync(a.id, on);
+      render();
+    }, t("v.ks")), { hint: t("v.ks.hint") });
+    c.appendChild(ksRow);
+
+    var acts = actions(
+      has !== false ? button(svc.busy[a.id] ? t("v.checking") : t("v.test"), "v.test:" + a.id, function () { if (!svc.busy[a.id]) runTest(a.id); }) : null,
+      button(t("v.newKeys"), "v.keys:" + a.id, function () { svc.keysFor = a.id; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); var f = $("f-v-kck"); if (f) f.focus(); }, has === false ? "primary" : ""),
+      button(t("v.rename"), "v.rn:" + a.id, function () { svc.rename = a.id; render(); var f = $("f-v-rn"); if (f) f.focus(); })
+    );
+    c.appendChild(acts);
+    if (plat) plat.apps.forEach(function (id) {
+      c.appendChild(linkRow(t("v.open", { app: appName(id) }), "v.open:" + id, function () {
+        // Stock opens straight on its shop panel
+        var p = parentWin();
+        try { if (id === "stock" && p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt("stock", { view: "shop" }); return; } } catch (e) {}
+        act("openApp", id);
+      }));
+    });
+    c.appendChild(el("p", "hint", t("v.remove.hint")));
+    c.appendChild(actions(confirmBtn(t("v.remove"), t("v.remove.confirm"), "v.rm:" + a.id, function () {
+      Lk.remove(a.id).then(function () { delete svc.has[a.id]; delete svc.msg[a.id]; render(); });
+    }, "danger")));
+    return c;
+  }
+
   // ---------- 9. Section: System ----------
   function linkRow(label, key, onClick) {
     var b = el("button", "link-row");
@@ -801,7 +1081,7 @@
 
   var SECTION_FN = {
     appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync,
-    backup: secBackup, language: secLanguage, files: secFiles, system: secSystem
+    backup: secBackup, language: secLanguage, files: secFiles, services: secServices, system: secSystem
   };
 
   function renderNav(s) {
@@ -955,8 +1235,11 @@
 
     var S = shell();
     if (S) unsubscribe = S.onChange(render);
+    var Lk = links(), unLinks = null;
+    if (Lk && typeof Lk.onChange === "function") unLinks = Lk.onChange(function () { render(); });
     window.addEventListener("pagehide", function () {
       if (unsubscribe) { try { unsubscribe(); } catch (e) {} unsubscribe = null; }
+      if (unLinks) { try { unLinks(); } catch (e) {} unLinks = null; }
     });
     var mq = window.matchMedia(NARROW);
     var onMq = function () { render(); };

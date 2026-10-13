@@ -96,6 +96,10 @@
       "text/plain": [".txt"],
       "text/csv": [".csv"],
       "text/tab-separated-values": [".tsv"] } },
+    { app: "maps", accept: {
+      "application/gpx+xml": [".gpx"],
+      "application/vnd.google-earth.kml+xml": [".kml"],
+      "application/geo+json": [".geojson"] } },
     // BR-FILE-IMPORT (owned by Calendar / Contacts): these two take the
     // file's text, not a token: __orosOpenAt(app, { <key>: { name, text } }).
     { app: "calendar", text: "importIcs", accept: {

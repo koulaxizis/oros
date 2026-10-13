@@ -124,7 +124,7 @@ test("media providers: read-only, template shape", () => {
     assert.doesNotMatch(src, /setItem|removeItem|registerSlice|innerHTML/, id);
     const p = P(id);
     assert.equal(p.id, id);
-    assert.ok(Array.isArray(p.keys) && p.keys.length === 1 && p.keys[0] === "oros-" + id + "-data", id);
+    assert.ok(Array.isArray(p.keys) && (p.keys.length === 1 || (id === "maps" && p.keys.length === 2 && p.keys[1] === "oros-maps-tracks-data")) && p.keys[0] === "oros-" + id + "-data", id);
     assert.equal(typeof p.search, "function");
   }
 });

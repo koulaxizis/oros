@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=todo" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>To-Do · orOS</title>
-  <link rel="stylesheet" href="todo.css?v=1.45.00">
+  <link rel="stylesheet" href="todo.css?v=1.72.01">
 </head>
 <body>
 
@@ -166,6 +166,9 @@
         <p class="hint" id="l-next-reset"></p>
       </fieldset>
 
+      <!-- Import from a task platform (todo/platforms.js; shown inside the shell) -->
+      <button type="button" id="l-import" class="ghost import-btn" hidden></button>
+
       <menu>
         <button type="button" id="l-delete" class="danger" data-i18n="list.delete">Delete list</button>
         <span class="spacer"></span>
@@ -177,6 +180,9 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="todo.js?v=1.45.00"></script>
+  <script src="../links/core.js?v=1.72.01"></script>
+  <script src="../links/todo.js?v=1.72.01"></script>
+  <script src="platforms.js?v=1.72.01"></script>
+  <script src="todo.js?v=1.72.01"></script>
 </body>
 </html>

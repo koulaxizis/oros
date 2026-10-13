@@ -1,0 +1,74 @@
+/* ============================================================
+   orOS Time — Stage view picture (time/stage-view.js)
+   Shared by the full-screen view inside Time and the stage
+   display window (display.html). Always black, whatever the orOS
+   theme: it is for a projector or a monitor on stage.
+   ============================================================ */
+.sv {
+  position: absolute; inset: 0; background: #000; color: #fff;
+  display: flex; flex-direction: column; justify-content: center; align-items: stretch;
+  padding: 3vh 4vw; gap: 2vh; user-select: none; overflow: hidden;
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+.sv.mirror { transform: scaleX(-1); }
+.sv [hidden] { display: none !important; }
+.sv-top { text-align: center; }
+.sv-title { font-size: clamp(18px, 4.5vw, 56px); font-weight: 800; overflow-wrap: anywhere; }
+.sv-spk { font-size: clamp(14px, 3vw, 36px); color: #bbb; overflow-wrap: anywhere; }
+.sv-time {
+  text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+  font-size: min(27vw, 52vh); color: #fff;
+}
+.sv-time.long { font-size: min(19vw, 46vh); }
+.sv-time.ph-warn { color: #ffd000; }
+.sv-time.ph-red, .sv-time.ph-over { color: #ff3b30; }
+.sv-time.paused { opacity: 0.55; }
+.sv.flash { animation: svflash 1s steps(2, start) infinite; }
+@keyframes svflash { to { background: #5a0000; } }
+.sv-prog { height: max(8px, 1.4vh); border-radius: 4px; background: #333; overflow: hidden; flex: none; }
+.sv-prog span { display: block; height: 100%; width: 0; background: #2ecc71; }
+.sv-prog span.ph-warn { background: #ffd000; }
+.sv-prog span.ph-red, .sv-prog span.ph-over { background: #ff3b30; }
+.sv-msg {
+  text-align: center; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere;
+  font-size: clamp(22px, 6vw, 96px); padding: 1vh 2vw; border-radius: 12px; background: #111;
+}
+.sv-msg.c-yellow { color: #ffd000; }
+.sv-msg.c-red { color: #ff3b30; }
+.sv-msg.c-green { color: #2ecc71; }
+.sv-msg.blink { animation: svblink 1s steps(2, start) infinite; }
+@keyframes svblink { to { opacity: 0.25; } }
+.sv-bottom { display: flex; justify-content: space-between; gap: 16px; font-size: clamp(13px, 2.6vw, 32px); color: #bbb; }
+.sv-next { overflow-wrap: anywhere; min-width: 0; }
+.sv-clock { font-variant-numeric: tabular-nums; flex: none; }
+.sv-logo {
+  position: absolute; left: 2vw; top: 2vh; max-width: 18vw; max-height: 12vh; object-fit: contain;
+}
+.sv-blackout { position: absolute; inset: 0; background: #000; z-index: 4; }
+
+/* layout "timer": only the clock (and a message when one is shown) */
+.sv.layout-timer .sv-top, .sv.layout-timer .sv-bottom, .sv.layout-timer .sv-prog { display: none; }
+.sv.layout-timer .sv-time { font-size: min(30vw, 70vh); }
+.sv.layout-timer .sv-time.long { font-size: min(21vw, 60vh); }
+/* with a message on, the clock gives it room */
+.sv:has(.sv-msg:not([hidden])) .sv-time { font-size: min(22vw, 38vh); }
+.sv:has(.sv-msg:not([hidden])) .sv-time.long { font-size: min(16vw, 34vh); }
+
+/* layout "agenda": the rundown with times, the clock smaller */
+.sv-agenda { list-style: none; overflow: hidden; flex: 1 1 auto; min-height: 0; font-size: clamp(14px, 2.6vw, 34px); }
+.sv-agenda li { display: flex; gap: 2vw; padding: 0.6vh 1vw; border-radius: 8px; color: #ccc; }
+.sv-agenda li.cur { background: #222; color: #fff; font-weight: 800; }
+.sv-agenda li.st-done, .sv-agenda li.st-skipped { color: #666; }
+.sv-a-at { font-variant-numeric: tabular-nums; flex: none; min-width: 4.5ch; }
+.sv-a-t { overflow-wrap: anywhere; min-width: 0; }
+.sv.layout-agenda { justify-content: flex-start; }
+.sv.layout-agenda .sv-top, .sv.layout-agenda .sv-next { display: none; }
+.sv.layout-agenda .sv-time, .sv.layout-agenda:has(.sv-msg:not([hidden])) .sv-time { font-size: min(14vw, 24vh); }
+.sv.layout-agenda .sv-time.long, .sv.layout-agenda:has(.sv-msg:not([hidden])) .sv-time.long { font-size: min(10vw, 20vh); }
+.sv.layout-agenda .sv-msg { font-size: clamp(18px, 4vw, 64px); }
+.sv.layout-agenda .sv-bottom { justify-content: flex-end; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sv.flash { animation: none; background: #5a0000; }
+  .sv-msg.blink { animation: none; outline: 4px solid currentColor; }
+}

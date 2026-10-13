@@ -669,6 +669,7 @@
       { id: "adjLooks", run: function () { adjustDialog("looks"); }, on: has },
       { id: "adjHsl", k: "Ctrl+U", run: function () { adjustDialog("hsl"); }, on: has },
       { id: "adjLevels", k: "Ctrl+L", run: function () { adjustDialog("levels"); }, on: has },
+      { id: "adjLr", run: function () { PL.io.openLrPreset(); }, on: has },
       "-",
       { id: "adjInvert", k: "Ctrl+I", run: function () { ops().quickAdjust("invert", {}, t("menu.adjInvert")); }, on: has },
       { id: "adjGray", k: "Ctrl+Shift+U", run: function () { ops().quickAdjust("gray", {}, t("menu.adjGray")); }, on: has },

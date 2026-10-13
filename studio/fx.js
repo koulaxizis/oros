@@ -254,29 +254,40 @@
         return n;
       }), opts);
     }
-    function addFx(id) {
-      var items = chainOf(openKey);
-      if (items.length >= C.MAX_FX) { host.showToast(t("fx.max", { n: C.MAX_FX })); return; }
+    // key: a track id or "master"; also used by the remote (remote.js)
+    function addTo(key, id) {
+      var items = chainOf(key);
+      if (items.length >= C.MAX_FX) { host.showToast(t("fx.max", { n: C.MAX_FX })); return ""; }
       var u = C.newId("f", Math.random);
-      picking = false; query = "";
-      expanded = {}; expanded[u] = true;
-      setChain(openKey, items.concat([{ u: u, id: id, on: true, s: {} }]));
-      render();
+      setChain(key, items.concat([{ u: u, id: id, on: true, s: {} }]));
+      return u;
     }
-    function removeFx(u) {
-      setChain(openKey, chainOf(openKey).filter(function (x) { return x.u !== u; }));
+    function removeFrom(key, u) {
+      if (!chainOf(key).some(function (x) { return x.u === u; })) return;
+      setChain(key, chainOf(key).filter(function (x) { return x.u !== u; }));
       dropView(u);
       host.undoToast(t("fx.removed"));
       render();
     }
-    function moveFx(u, d) {
-      var items = chainOf(openKey).slice(), i = -1;
+    function moveIn(key, u, d) {
+      var items = chainOf(key).slice(), i = -1;
       items.forEach(function (x, k) { if (x.u === u) i = k; });
       var j = i + d;
-      if (i < 0 || j < 0 || j >= items.length) return;
+      if (i < 0 || j < 0 || j >= items.length) return false;
       var tmp = items[i]; items[i] = items[j]; items[j] = tmp;
-      setChain(openKey, items);
+      setChain(key, items);
       render();
+      return true;
+    }
+    function addFx(id) {
+      picking = false; query = "";
+      var u = addTo(openKey, id);
+      if (u) { expanded = {}; expanded[u] = true; }
+      render();
+    }
+    function removeFx(u) { removeFrom(openKey, u); }
+    function moveFx(u, d) {
+      if (!moveIn(openKey, u, d)) return;
       var b = document.querySelector('#fx-list [data-u="' + u + '"] .fx-' + (d < 0 ? "up" : "down"));
       if (b && !b.disabled) b.focus();
     }
@@ -287,6 +298,7 @@
       if (b) b.focus();
     }
     function setSlider(key, u, i, v, fromView) {
+      if (!chainOf(key).some(function (x) { return x.u === u; })) return;
       update(key, u, function (n) { n.s[String(i)] = v; }, host.burst("fx" + u + "." + i, { live: true }));
       liveSlider(key, u, i, v);
       var vw = views[u];
@@ -498,6 +510,7 @@
     }
     // the text next to a control (the control itself is moving)
     function refreshValue(u, i) {
+      if (!openKey) return;
       var row = rowOf(u, i), sl = slOf(u, i), x = itemOf(u);
       if (!row || !sl || !x) return;
       var v = C.fxValue(x, sl), out = row.querySelector("output"), r = row.querySelector("input[type=range]");
@@ -506,6 +519,7 @@
     }
     // the interface moved a slider: move its control too
     function refreshControl(u, i) {
+      if (!openKey) return;
       var row = rowOf(u, i), sl = slOf(u, i), x = itemOf(u);
       if (!row || !sl || !x) return;
       var v = C.fxValue(x, sl), r = row.querySelector("input[type=range]"), s = row.querySelector("select");
@@ -607,7 +621,12 @@
     return {
       wire: wire, open: open, render: render, loadCatalog: loadCatalog,
       ensure: ensure, preparePage: preparePage, isReady: isReady, insert: insert, setTime: setTime, disconnect: disconnect, prune: prune,
-      chainLatency: chainLatency, active: active, isOpen: function () { return !!openKey; },
+      chainLatency: chainLatency, active: active, nameOf: nameOf, isOpen: function () { return !!openKey; },
+      // for the remote (remote.js): the same edits the dialog makes, by chain key
+      catalog: function () { return catalog; }, meta: needPage, fxMeta: fxMeta, chainOf: chainOf, catName: catName, valueText: valueText,
+      setSlider: function (key, u, i, v) { setSlider(key, u, i, v, false); }, addTo: function (key, id) { var u = addTo(key, id); render(); return u; },
+      removeFrom: removeFrom, moveIn: moveIn,
+      peek: function (key, u) { var rec = live[key]; return rec && host.isPlaying() ? rec.chain.peek(u) : Promise.resolve(null); },
       count: function (items) { return (items || []).filter(function (x) { return x.on; }).length; }
     };
   };

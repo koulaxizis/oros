@@ -114,6 +114,27 @@
       AT.toast(n ? t("br.added", { n: n }) : t("br.nothingNew"));
     }));
     s1.appendChild(row);
+    // Adobe swatch files (Illustrator, Photoshop, InDesign): in and out
+    var row2 = el("div", "pn-row");
+    row2.appendChild(btn("btn small", t("br.swIn"), function () {
+      AT.io.pickFile(".ase,.aco").then(function (f) {
+        if (!f) return;
+        if (f.size > 4 * 1024 * 1024) { AT.toast(t("br.swBad")); return; }
+        return f.arrayBuffer().then(function (buf) {
+          var list;
+          try { list = window.AtelierSwatches.read(new Uint8Array(buf)); } catch (e) { AT.toast(t("br.swBad")); return; }
+          var nb = B, n = 0;
+          list.forEach(function (x) { var before = nb.colors.length; nb = BK.addColor(nb, x.c, AT.now()); if (nb.colors.length > before) n++; });
+          change(nb);
+          AT.toast(n ? t("br.added", { n: n }) + (nb.colors.length >= BK.MAX_COLORS && n < list.length ? " " + t("br.swFull", { n: BK.MAX_COLORS }) : "") : t("br.swNothing"));
+        });
+      }).catch(function () { AT.toast(t("br.swBad")); });
+    }));
+    if (B.colors.length) row2.appendChild(btn("btn small", t("br.swOut"), function () {
+      var bytes = window.AtelierSwatches.writeAse(B.colors.map(function (x) { return { c: x.c }; }), t("br.swGroup"));
+      AT.io.saveBlob(new Blob([bytes], { type: "application/octet-stream" }), t("br.swFile") + ".ase", "application/octet-stream", "Adobe Swatch Exchange", ".ase");
+    }));
+    s1.appendChild(row2);
     body.appendChild(s1);
 
     // fonts

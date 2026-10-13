@@ -704,3 +704,15 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 }
 
 [hidden] { display: none !important; }
+
+/* ---------- myDATA through timologisi.online (mydata-ui.js) ---------- */
+.md-card .md-head { font-weight: 700; margin-bottom: 6px; }
+.md-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0 0 10px; font-size: 13px; }
+.md-dl dt { color: var(--text-dim); }
+.md-dl dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.md-card a.dlg-btn { display: inline-flex; align-items: center; text-decoration: none; }
+.msg-warn { color: var(--warn); font-size: 13px; margin: 0 0 8px; }
+.msg-err { color: var(--danger); font-size: 13px; font-weight: 600; margin: 4px 0; }
+.md-errs:empty { display: none; }
+.md-err-list { margin: 4px 0 8px; padding-left: 18px; font-size: 13px; color: var(--danger); overflow-wrap: anywhere; }
+.md-err-list li { margin: 2px 0; }

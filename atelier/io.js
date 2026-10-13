@@ -628,6 +628,6 @@
 
   AT.io = {
     exportPackage: exportPackage, importAny: importAny, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
-    placePhoto: placePhoto, pickFile: pickFile, exportDialog: exportDialog, resizeTo: resizeTo
+    placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo
   };
 })();
