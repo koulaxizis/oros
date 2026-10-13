@@ -317,7 +317,7 @@
     // adding someone as "subscribed" must never overwrite a person who
     // already left: only new addresses are added that way
     mcbatch: function (b) {
-      return !(b.members.some(function (x) { return x.status === "subscribed"; }) && b.update_existing !== false);
+      return Array.isArray(b.members) && !(b.members.some(function (x) { return x.status === "subscribed"; }) && b.update_existing !== false);
     }
   };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };

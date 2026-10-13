@@ -106,7 +106,7 @@ function okBvRow(x) {
 }
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
-  mcbatch: (b) => !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false)
+  mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false)
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 

@@ -72,6 +72,7 @@ const CASES = [
   ["mchimp", { m: "POST", path: "/lists/abc", body: { members: [{ email_address: "a@b.gr", status: "pending" }], update_existing: false } }, "body"],
   ["mchimp", { m: "POST", path: "/lists/abc", body: { members: [{ email_address: "not an email", status: "unsubscribed" }], update_existing: true } }, "body"],
   ["mchimp", { m: "PUT", path: "/lists/abc/members/0123", body: { status: "subscribed" } }, "path"],
+  ["mchimp", { m: "POST", path: "/lists/abc", body: { update_existing: true } }, "body"],
   // Brevo
   ["brevo", { m: "GET", path: "/account" }, ""],
   ["brevo", { m: "GET", path: "/contacts/lists?limit=50&offset=0" }, ""],
@@ -122,6 +123,14 @@ test("relay validation: no host from the caller, key shapes", () => {
   // a big subscriber batch fits; 64 KB is the cap per request
   const big = { members: Array.from({ length: 250 }, (_, i) => ({ email_address: "person" + i + "@example.gr", status: "unsubscribed", merge_fields: { FNAME: "Όνομα Επώνυμο " + i } })), update_existing: true };
   assert.equal(X.validExt(b("mchimp", MC_KEY, { reqs: [{ m: "POST", path: "/lists/abc", body: JSON.stringify(big) }] })), "");
+});
+
+test("relay: a Mailchimp batch without members is a 400, never a crash", async () => {
+  const f = mock();
+  const r = await relay({ op: "ext", p: "mchimp", key: MC_KEY, reqs: [{ m: "POST", path: "/lists/abc", body: JSON.stringify({ update_existing: true }) }] }, f);
+  assert.equal(r.status, 400);
+  assert.equal(r.json.ok, false);
+  assert.equal(f.calls.length, 0);
 });
 
 test("relay call: each platform's host, path and auth; key never echoed", async () => {
