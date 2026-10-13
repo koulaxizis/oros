@@ -23,12 +23,11 @@ public class LauncherActivity extends com.google.androidbrowserhelper.trusted.La
 
     @Override
     protected TwaLauncher createTwaLauncher() {
-        LauncherActivityMetadata md = getMetadata();
-        KeptTwaLauncher launcher = new KeptTwaLauncher(this,
-                md == null ? null : md.launchingBrowser,
-                SessionStore.makeSessionId(getTaskId()),
-                new SharedPreferencesTokenStore(this),
-                md == null ? null : md.launchingBrowserToken);
+        // Same arguments as the base class (2.7.4 keeps its metadata
+        // private, so it is parsed again; cheap, manifest only).
+        LauncherActivityMetadata md = LauncherActivityMetadata.parse(this);
+        KeptTwaLauncher launcher = new KeptTwaLauncher(this, md.launchingBrowser,
+                SessionStore.makeSessionId(getTaskId()), new SharedPreferencesTokenStore(this));
         OrosApp.bridge(this).attach(launcher);
         return launcher;
     }

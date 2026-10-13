@@ -4,7 +4,6 @@ import android.content.Context;
 
 import androidx.annotation.Nullable;
 import androidx.browser.customtabs.CustomTabsSession;
-import androidx.browser.trusted.Token;
 import androidx.browser.trusted.TokenStore;
 
 import com.google.androidbrowserhelper.trusted.TwaLauncher;
@@ -19,8 +18,8 @@ import java.lang.reflect.Field;
  */
 class KeptTwaLauncher extends TwaLauncher {
     KeptTwaLauncher(Context context, @Nullable String providerPackage, @Nullable Integer sessionId,
-            TokenStore tokenStore, @Nullable Token expectedToken) {
-        super(context, providerPackage, sessionId, tokenStore, expectedToken);
+            TokenStore tokenStore) {
+        super(context, providerPackage, sessionId, tokenStore);
     }
 
     @Override
