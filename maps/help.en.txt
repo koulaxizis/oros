@@ -88,6 +88,17 @@ Record where you walk, ride or drive, keep your tracks and follow them again, li
 
 `Upload to OSM` sends the track to your OpenStreetMap GPS traces, where mappers use it to draw roads and paths. Sign in to OpenStreetMap first (as for notes). Choose the description (it starts as your upload comment), tags and the visibility: `Private` (only you see the trace; its points appear anonymously in the GPS layer, without order), `Trackable`, `Public` or `Identifiable`. OpenStreetMap needs a time on the points, so planned routes and exports without times can't be uploaded. After the upload, the track shows `View on OpenStreetMap`.
 
+### Heatmap and statistics
+
+`Heatmap and statistics` (in My tracks) shows where you've been:
+
+- `Show my heatmap on the map` paints every track you have on the map. The colour goes from blue to red with the number of different tracks that passed there, so your daily paths stand out. It stays on when you close the panel.
+- Choose a `Year` or a `Folder` to see only those tracks.
+- The totals show distance, time and tracks, a chart per month and a table per year. `New ground` is the path through squares of about 40 m that you had not crossed in an earlier track: walk somewhere new and it grows, repeat your usual route and it doesn't.
+- `OpenStreetMap GPS traces (everyone's)` adds the lines of GPS traces people uploaded to OpenStreetMap. It helps when you map paths and roads.
+
+The heatmap is drawn on your device from your GPX files. A track whose file hasn't arrived yet counts with its simplified line.
+
 Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it up and brings it to your other devices. Until the file arrives, another device shows a simplified line and the statistics.
 
 ## Online services and privacy
@@ -97,6 +108,7 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
+- **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
 - **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
 Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).

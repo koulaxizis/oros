@@ -79,13 +79,13 @@ there are no recorded audio files. Emoji come from the device's own font.
 | Service | Operator | Terms / data licence | Used by |
 |---|---|---|---|
 | [Open-Meteo](https://open-meteo.com/) (forecast, geocoding, air quality) | Open-Meteo.com | Data [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), free for non-commercial use; attribution shown in the Weather app | Weather app, taskbar weather |
-| [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data [ODbL](https://opendatacommons.org/licenses/odbl/); [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) | Maps (standard layer) |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data [ODbL](https://opendatacommons.org/licenses/odbl/); [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) | Maps (standard layer; public GPS traces layer from gps.tile.openstreetmap.org) |
 | OSM France humanitarian tiles | OpenStreetMap France, [Humanitarian OpenStreetMap Team](https://www.hotosm.org/) | Data ODbL | Maps (humanitarian layer) |
 | Esri World Imagery | Esri; imagery Maxar, Earthstar Geographics | Esri terms of use; attribution shown on the map | Maps (satellite layer) |
 | [Photon](https://photon.komoot.io/) | komoot | Software Apache-2.0, data ODbL; fair use | Maps (search) |
 | [OSRM](https://project-osrm.org/) demo server | Project OSRM | Software BSD-2-Clause; demo server, fair use | Maps (car routes) |
 | [FOSSGIS routing](https://routing.openstreetmap.de/) | FOSSGIS e.V. | Data ODbL; fair use | Maps (bike and walking routes) |
-| [OpenStreetMap API](https://wiki.openstreetmap.org/wiki/API_v0.6) | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data ODbL; [API usage policy](https://operations.osmfoundation.org/policies/api/) | Maps (notes, sign-in, place edits) |
+| [OpenStreetMap API](https://wiki.openstreetmap.org/wiki/API_v0.6) | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data ODbL; [API usage policy](https://operations.osmfoundation.org/policies/api/) | Maps (notes, sign-in, place edits, GPS trace uploads) |
 | [Overpass API](https://overpass-api.de/) (overpass-api.de) | Roland Olbricht and the Overpass community; data by OpenStreetMap contributors | Software AGPL-3.0 (server only), data ODbL; fair use | Maps (places around you, for editing) |
 | [Radio Browser](https://www.radio-browser.info/) | Alex Segler and the community | Free community API | Radio (station directory) |
 | [Apple Podcasts search](https://performance-partners.apple.com/search-api) | Apple Inc. | Public search API, called only when you search | Podcasts (show search) |
