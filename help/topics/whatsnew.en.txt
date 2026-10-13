@@ -4,6 +4,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 1.82.01
 - Help: the Privacy page lists every online service by app, including the new Maps services and the accounts you can connect (HubSpot, Pipedrive, Stripe, Invoice Ninja, Odoo, Todoist, Trello, GitHub, Raindrop.io, Notion). Contacts and Calendar explain `On this phone` in the Android app.
 - Contacts and Calendar: "On this phone" now connects in the orOS Android app.
+- Studio: the Loudness Meter and Spectrum Analyzer effects now work offline, and new NULL JSFX effects arrive automatically.
 
 ## Version 1.82.00
 - Contacts and Calendar: in the orOS Android app, a new "On this phone" switch shows your orOS contacts and events in the phone's own Contacts and Calendar.
