@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.59.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.60.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4945,6 +4945,9 @@
         { name: "MailerLite, Mailchimp, Brevo", url: "https://www.mailerlite.com/",
           by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
           en: "Connected services: sync subscribers (Newsletter)", el: "Συνδεδεμένες υπηρεσίες: συγχρονισμός συνδρομητών (Newsletter)" },
+        { name: "HubSpot, Pipedrive", url: "https://developers.hubspot.com/",
+          by: "Each provider; your own account", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
+          en: "Connected services: import customers and deals (CRM)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών και deals (CRM)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

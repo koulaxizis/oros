@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA) and the email platforms (MailerLite, Mailchimp, Brevo); exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) and the CRMs (HubSpot, Pipedrive, read-only); exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -220,6 +220,27 @@ always comes here), Brevo `https://api.brevo.com/v3<path>` (`api-key`).
 | Brevo | POST | `/contacts/lists/<n>/contacts/remove` | `{ emails: ≤ 150 }` |
 
 - 64 KB per request body. Nothing in these bodies can bring back a person who unsubscribed.
+
+### CRMs (`p: "hubspot" | "pdrive"`, CRM, read-only)
+
+`POST /v1 { op: "ext", p, key, reqs }`: no `host`, `base` or `env`.
+HubSpot `https://api.hubapi.com<path>` (`Authorization: Bearer`, a private
+app's token; HubSpot never answers browsers, so orOS always comes here),
+Pipedrive `https://api.pipedrive.com/api/v2<path>` (`x-api-token`). Only GETs.
+
+| Platform | Path | Query |
+|---|---|---|
+| HubSpot | `/crm/v3/pipelines/deals` | none |
+| HubSpot | `/crm/v3/objects/companies` | `limit (≤100), after, properties` (one fixed list) |
+| HubSpot | `/crm/v3/objects/contacts` | `limit, after, properties` (one fixed list), `associations=companies` |
+| HubSpot | `/crm/v3/objects/deals` | `limit, after, properties` (one fixed list), `associations=companies,contacts` |
+| Pipedrive | `/stages`, `/organizations`, `/persons` | `limit (≤500), cursor` |
+| Pipedrive | `/deals` | `limit, cursor, status` (open, won, lost) |
+| Pipedrive | `/activities` | `limit, cursor, done` (true, false) |
+
+- A Pipedrive cursor is base64: its `+`, `/` and `=` travel as `%2B`, `%2F`,
+  `%3D`. Those three are the only escapes `checkExtReq` lets through, and only
+  where a query pattern allows them (the cursor); any other `%` is refused.
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 
