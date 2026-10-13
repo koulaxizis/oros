@@ -140,17 +140,6 @@ function build(manifest) {
         <meta-data android:name="web_manifest_url" android:value="https://${HOST}/manifest.webmanifest" />
         <meta-data android:name="twa_generator" android:value="oros android/tools/gen.js" />
 
-        <!-- Phone bridge: the browser binds to this service when it opens the
-             postMessage channel. The binding keeps the app's process out of
-             Android's cached-app freezer while the TWA is open; without it the
-             process is frozen seconds after launch and no message gets through. -->
-        <service android:name="androidx.browser.customtabs.PostMessageService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.support.customtabs.action.PostMessageService" />
-            </intent-filter>
-        </service>
-
         <activity android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
             android:exported="false"
             android:excludeFromRecents="true">
