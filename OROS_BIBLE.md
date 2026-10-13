@@ -615,7 +615,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Weather | oros-weatherapp-data | merge-lite | 5/5 VERIFIED |
 | Mood | oros-mood-data | entry field LWW (fm) + cols + tombs | A67 audit 2026-10-07 (MO-1…MO-8) |
 | Time | oros-time-data | entity union + smtime | 5/5 VERIFIED |
-| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items: symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge (deleting an event tombstones its items in the page) | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys) |
+| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo) |
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
 | Habits | oros-habits-data | habits/comps LWW | 5/5 VERIFIED |
@@ -816,7 +816,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Reader:** IndexedDB `oros-feeds` (stores `heads`, `bodies`: fetched items and article bodies, device-local, never synced).
 - **One-Minute Museum:** oros-museum-prefs (duration, hall, Wikipedia language, recent history), IndexedDB `oros-museum` (thumbnails of kept exhibits, so the collection works offline; device-local, never synced).
 - **Typewriter:** oros-typewriter-prefs (typewriter mode on/off, key sound, paper tint, open page `cur`, side panel open on desktop).
-- **Time › Stage:** `oros-time-stage-run` (`{ev, cur, startedAt, pausedAt, adj, log: {itemId: {s, e}}}`: the open event, the live item and its clock, actual start/end per item) and `oros-time-stage-prefs` (`{sound}`). Never synced: a phone at home never moves the clock on stage.
+- **Time › Stage:** `oros-time-stage-run` (`{ev, cur, startedAt, pausedAt, adj, log: {itemId: {s, e}}}`: the open event, the live item and its clock, actual start/end per item) and `oros-time-stage-prefs` (`{sound}`). Never synced: a phone at home never moves the clock on stage. Since 1.52.00 also `oros-time-stage-show` (`{black, layout: full|timer|agenda, mirror, logoAt, msg: {text, on, flash, color, at}}`): what the stage output shows. It is read by the in-app view and by display.html. IndexedDB `oros-time-stage` (store `files`, key `logo`): the logo picture, on this device only.
 - **Moon & Sky:** oros-sky-prefs (`{tab, night, lines}`: open tab, red night view, constellation lines). Location comes from Time's chain (oros-time-data `astro` → oros-weather → orosWeatherTray.location() → session-only geolocation, never stored).
 - **Score Keeper:** oros-scores-prefs (`{tab, cur, draft:{g, v[]}, timer:{on, len}, game}`: home tab, open match, unsent round entry, round timer on/length, stats filter), oros-scores-data-broken.
 - **Podcasts:** oros-podcasts-prefs (`{tab, filter, sortOld}`: tab now | new | lib | dl | find, episode filter, per-show oldest-first flags), oros-podcasts-local (`{pos{epId: [pos, dur, ts]}, meta{epId: episode}, cur, last{p, at}, spd}`: exact positions, ≤ 400, and the details of what plays and of the queue, written by the shell host; since 0.57.00 also `stats` listening seconds per day/show (device only, never synced), `nt{showId: stamp}` new-episode marks and `bg` last background check), oros-podcasts-top (Apple charts cache, 12 h), IndexedDB `oros-podcasts` v1 (stores `feeds` showId → `{id, at, etag, mod, show, eps[]}` parsed feed cache, `files` epId → `{id, s, blob, type, size, at}` downloaded episodes).
@@ -2319,6 +2319,10 @@ Rebuild this in any session where code is delivered.
 - The merge does not cascade an event's deletion to its items (that broke associativity in the fuzz). The page tombstones every item when it deletes an event; an item edited on another device after that is kept as data and not shown.
 - The live clock is device-local and computed from timestamps, so closing Time and opening it again resumes at the right time.
 - Waves 2-4 (second window + messages, paired devices via the Studio Remote rooms, imports/reports/templates) follow per the plan.
+- **Wave 2 (1.52.00):**
+  - The display window reads storage instead of receiving messages, so it survives Time being closed, a reload, or another app being opened. Auto-advance and sounds still need Time open.
+  - A message the operator is typing never reaches the stage. While one is shown, the button shows the new text rather than hiding.
+  - A wave-1 device that pulls saved messages drops them on its copy until it updates. That is accepted (same as Studio fx). With no saved messages both versions write the same bytes.
 
 ## Part X — Open items, audit queue, lessons
 
