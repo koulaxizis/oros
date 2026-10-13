@@ -24,6 +24,11 @@
 //     rss:    [{ id, m, list, url, name, every: "day"|"week"|"month", wd, hour,
 //                mode: "draft"|"send", max, seg, last (newest item used), ran, dev, on }],
 //   issues may carry imp: 1 (imported from an archive: sent elsewhere).
+//     plinks: [{ id, m, list, acct, p: "mlite"|"mchimp"|"brevo", grp, gname, last }]
+//              a list linked to a group / audience on an email platform
+//              (Connected services account acct; 1.59.00). The key is left
+//              out while empty, so older data keeps its bytes; an older
+//              device drops it in its own copy and the union restores it.
 //     sent:   { issueId: [subId, …] },     grow-only while an issue is out
 //     supp:   [hash, …] }                   grow-only suppression list
 //   Every record may instead be a tombstone { id, m, del: 1 }.
@@ -44,7 +49,8 @@
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform"];
+  var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols"];
@@ -321,6 +327,16 @@
              last: nat(x.last), ran: nat(x.ran),
              dev: typeof x.dev === "string" && /^[a-z0-9]{6,20}$/.test(x.dev) ? x.dev : "", on: x.on === 0 ? 0 : 1 };
   }
+  // A list ↔ a group on an email platform. id = "pl" + hash of the
+  // three, so linking the same pair on two devices gives one record.
+  function normPlink(x) {
+    if (!validId(x.list) || PLINK_PS.indexOf(x.p) < 0) return null;
+    if (typeof x.acct !== "string" || !/^[a-z0-9]{8,24}$/.test(x.acct)) return null;
+    if (typeof x.grp !== "string" || !/^[A-Za-z0-9]{1,20}$/.test(x.grp)) return null;
+    return { id: x.id, m: nat(x.m), list: x.list, acct: x.acct, p: x.p, grp: x.grp,
+             gname: oneLine(x.gname, LIM.name), last: nat(x.last) };
+  }
+  function plinkId(list, acct, grp) { return "pl" + hash53("plink|" + list + "|" + acct + "|" + grp); }
   function clampInt(v, lo, hi, def) {
     v = Math.round(Number(v));
     return isFinite(v) && v >= lo && v <= hi ? v : def;
@@ -352,6 +368,8 @@
     o.segs = normColl(d.segs, normSeg, 400).filter(function (x) { return x.del || liveLists[x.list]; });
     o.tpls = normColl(d.tpls, normTpl, 400);
     o.rss = normColl(d.rss, normRss, 200).filter(function (x) { return x.del || liveLists[x.list]; });
+    var pl = normColl(d.plinks, normPlink, 200).filter(function (x) { return x.del || liveLists[x.list]; });
+    if (pl.length) o.plinks = pl;
     var open = {};
     o.issues.forEach(function (x) { if (!x.del && (x.st === "sending" || x.st === "paused")) open[x.id] = 1; });
     var sent = d.sent && typeof d.sent === "object" ? d.sent : {};
@@ -421,6 +439,7 @@
       segs: mergeColl(A.segs, B.segs),
       tpls: mergeColl(A.tpls, B.tpls),
       rss: mergeColl(A.rss, B.rss),
+      plinks: mergeColl(A.plinks, B.plinks),
       sent: {},
       supp: A.supp.concat(B.supp)
     };
@@ -965,7 +984,7 @@
     normForm: normForm, formPub: formPub, unsubPath: unsubPath, formHtml: formHtml,
     API_PROVS: API_PROVS, API_BATCH: API_BATCH, isApi: isApi, nextSubs: nextSubs,
     apiCheckReq: apiCheckReq, apiEventReqs: apiEventReqs, apiEvents: apiEvents, apiOutcome: apiOutcome,
-    normRss: normRss, rssNext: rssNext, rssDue: rssDue, rssPick: rssPick, digestMd: digestMd, digestIssue: digestIssue
+    normRss: normRss, normPlink: normPlink, plinkId: plinkId, PLINK_PS: PLINK_PS, rssNext: rssNext, rssDue: rssDue, rssPick: rssPick, digestMd: digestMd, digestIssue: digestIssue
   };
   root.OrosNewsletterCore = api;
   if (typeof module === "object" && module.exports) module.exports = api;

@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, and timologisi.online (myDATA); exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA) and the email platforms (MailerLite, Mailchimp, Brevo); exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -197,6 +197,29 @@ Rules:
 - Redirects are not followed. Writes run one at a time, in order; reads up to 4 at a time.
 - 16 KB per request body; answers up to 2 MB each and 8 MB per call; 20 s per request, 28 s per call.
 - The keys are used for this call only: never stored, logged or echoed (fetch errors come back only as `network`).
+
+### Email platforms (`p: "mlite" | "mchimp" | "brevo"`, Newsletter)
+
+`POST /v1 { op: "ext", p, key, reqs }`: no `host`, `base` or `env`.
+MailerLite `https://connect.mailerlite.com/api<path>` (`Authorization: Bearer`),
+Mailchimp `https://<dc>.api.mailchimp.com/3.0<path>` (dc = the key's suffix,
+`-us21`; Basic `oros:<key>`; Mailchimp never answers browsers, so orOS
+always comes here), Brevo `https://api.brevo.com/v3<path>` (`api-key`).
+
+| Platform | Method | Path | Query / body |
+|---|---|---|---|
+| MailerLite | GET | `/groups` | `limit (≤1000), page` |
+| MailerLite | GET | `/groups/<n>/subscribers` | `filter[status]` (active, unsubscribed, unconfirmed, bounced, junk), `limit, cursor` |
+| MailerLite | POST | `/batch` | `{ requests }`: ≤ 50 × `{ method: "POST", path: "api/subscribers", body: { email, fields?: { name }, groups?: [one id], status?: "unsubscribed" } }` |
+| Mailchimp | GET | `/ping`, `/lists` | `count, offset, fields` (one fixed value) |
+| Mailchimp | GET | `/lists/<id>/members` | `count, offset, status, since_last_changed (…Z), fields` (one fixed value) |
+| Mailchimp | POST | `/lists/<id>` | `{ members: ≤ 250 × { email_address, status: subscribed\|unsubscribed, merge_fields?: { FNAME }, language? }, update_existing }`; "subscribed" only with `update_existing: false` |
+| Brevo | GET | `/account`, `/contacts/lists` | `limit (≤50), offset` |
+| Brevo | GET | `/contacts/lists/<n>/contacts` | `limit (≤500), offset, modifiedSince` |
+| Brevo | POST | `/contacts/import` | `{ jsonBody: ≤ 250 × { email, attributes?: { FIRSTNAME } }, listIds: [one], updateExistingContacts, emptyContactsAttributes }` |
+| Brevo | POST | `/contacts/lists/<n>/contacts/remove` | `{ emails: ≤ 150 }` |
+
+- 64 KB per request body. Nothing in these bodies can bring back a person who unsubscribed.
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 

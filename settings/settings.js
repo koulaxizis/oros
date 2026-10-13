@@ -729,9 +729,22 @@
   // the platform's own wording first ("v.err.auth.tol"), else the shop's
   function svcErr(code, p) {
     var k = "v.err." + (code === "keys" ? "keys" : code);
-    if (p && p !== "woo") { var own = t(k + "." + p); if (own !== k + "." + p) return own; }
+    if (p && p !== "woo") {
+      var own = t(k + "." + p);
+      if (own !== k + "." + p) return own;
+      var gen = t(k + ".svc", { name: pName(p) });       // any other platform, by name
+      if (gen !== k + ".svc") return gen;
+    }
     var txt = t(k);
     return txt === k ? t("v.err.server") : txt;
+  }
+  function pName(p) {
+    var Lk = links(), x = Lk ? Lk.platforms().filter(function (y) { return y.id === p; })[0] : null;
+    return x ? x.name : p;
+  }
+  function badKeys(p) {
+    var own = t("v.err.badkeys." + p);
+    return own !== "v.err.badkeys." + p ? own : t("v.err.badkeys");
   }
   function pOf(id) { var Lk = links(), a = Lk && Lk.get(id); return a ? a.p : ""; }
   function textInput(key, value, ph, onInput, type) {
@@ -783,7 +796,7 @@
         }, function () { svc.busy[id] = false; svc.msg[id] = { cls: "msg-ok", text: t("v.ok.tol", { n: "—" }) }; render(); });
       }
       svc.busy[id] = false;
-      svc.msg[id] = code ? { cls: "msg-err", text: svcErr(code, p) } : { cls: "msg-ok", text: t("v.ok") };
+      svc.msg[id] = code ? { cls: "msg-err", text: svcErr(code, p) } : { cls: "msg-ok", text: p === "woo" ? t("v.ok") : t("v.ok.svc", { name: pName(p) }) };
       render();
     });
   }
@@ -819,14 +832,18 @@
     form.noValidate = true;                       // "shop.example.gr" is fine: core normalises it
     var plats = Lk.platforms().map(function (p) { return { value: p.id, label: t("v.plat." + p.id) === "v.plat." + p.id ? p.name : t("v.plat." + p.id) }; });
     form.appendChild(labelled(t("v.platform"), "v-p", select(plats, f.p, "v-p", function (v) { f.p = v; f.err = ""; render(); })));
-    if (f.p === "tol") form.appendChild(el("div", "hint", t("v.plat.tol.hint")));
-    form.appendChild(labelled(t("v.name"), "v-name", textInput("v-name", f.name, f.p === "tol" ? "timologisi.online" : t("v.name.ph"), function (v) { f.name = v; })));
-    if (f.p === "tol") {
-      form.appendChild(labelled(t("v.env"), "v-env", select([{ value: "test", label: t("v.env.test") }, { value: "live", label: t("v.env.live") }], f.env, "v-env", function (v) { f.env = v; })));
-      var vin = textInput("v-vat", f.vat, t("v.vat.ph"), function (v) { f.vat = v; });
-      vin.inputMode = "numeric";
-      form.appendChild(labelled(t("v.vat"), "v-vat", vin));
-      form.appendChild(el("div", "hint", t("v.keys.hint.tol")));
+    var pHint = t("v.plat." + f.p + ".hint");
+    if (pHint !== "v.plat." + f.p + ".hint") form.appendChild(el("div", "hint", pHint));
+    var pName = (Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).name;
+    form.appendChild(labelled(t("v.name"), "v-name", textInput("v-name", f.name, f.p === "woo" ? t("v.name.ph") : pName, function (v) { f.name = v; })));
+    if (f.p !== "woo") {
+      if (f.p === "tol") {
+        form.appendChild(labelled(t("v.env"), "v-env", select([{ value: "test", label: t("v.env.test") }, { value: "live", label: t("v.env.live") }], f.env, "v-env", function (v) { f.env = v; })));
+        var vin = textInput("v-vat", f.vat, t("v.vat.ph"), function (v) { f.vat = v; });
+        vin.inputMode = "numeric";
+        form.appendChild(labelled(t("v.vat"), "v-vat", vin));
+      }
+      form.appendChild(el("div", "hint", t("v.keys.hint." + f.p)));
       form.appendChild(labelled(t("v.key"), "v-key", textInput("v-key", f.key, "", function (v) { f.key = v; }, "password")));
     } else {
       form.appendChild(labelled(t("v.site"), "v-site", textInput("v-site", f.site, t("v.site.ph"), function (v) { f.site = v; }, "url")));
@@ -847,7 +864,8 @@
       f.err = "";
       render();
       var o = f.p === "tol" ? { p: "tol", name: f.name, env: f.env, vat: f.vat, keys: { key: f.key } }
-                            : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
+            : f.p !== "woo" ? { p: f.p, name: f.name, keys: { key: f.key } }
+            : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
       Lk.add(o).then(function (id) {
         svc.add = null;
         svc.has[id] = true;
@@ -857,7 +875,7 @@
         f.busy = false;
         var code = er && er.code;
         f.err = code === "site" ? t("v.err.site") : code === "vat" ? t("v.err.vat")
-              : code === "keys" ? (f.p === "tol" ? t("v.err.badkeys.tol") : t("v.err.badkeys")) : svcErr(code || "save", f.p);
+              : code === "keys" ? badKeys(f.p) : svcErr(code || "save", f.p);
         render();
       });
     });
@@ -907,8 +925,8 @@
     if (svc.keysFor === a.id) {
       var kf = el("form", "pass");
       kf.setAttribute("autocomplete", "off");
-      if (a.p === "tol") {
-        kf.appendChild(el("div", "hint", t("v.keys.hint.tol")));
+      if (a.p !== "woo") {
+        kf.appendChild(el("div", "hint", t("v.keys.hint." + a.p)));
         kf.appendChild(labelled(t("v.key"), "v-kck", textInput("v-kck", svc.keyForm.key, "", function (v) { svc.keyForm.key = v; }, "password")));
       } else {
         kf.appendChild(el("div", "hint", t("v.keys.hint")));
@@ -921,13 +939,13 @@
       kf.appendChild(actions(button(t("v.cancel"), "v.k.cancel", function () { svc.keysFor = null; svc.keyForm = { ck: "", cs: "", key: "" }; render(); }), sk));
       kf.addEventListener("submit", function (e) {
         e.preventDefault();
-        Lk.setKeys(a.id, a.p === "tol" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
+        Lk.setKeys(a.id, a.p !== "woo" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
           svc.keysFor = null;
           svc.keyForm = { ck: "", cs: "", key: "" };
           svc.has[a.id] = true;
           runTest(a.id);
         }, function (er) {
-          svc.msg[a.id] = { cls: "msg-err", text: er && er.code === "keys" ? t(a.p === "tol" ? "v.err.badkeys.tol" : "v.err.badkeys") : svcErr(er && er.code, a.p) };
+          svc.msg[a.id] = { cls: "msg-err", text: er && er.code === "keys" ? badKeys(a.p) : svcErr(er && er.code, a.p) };
           render();
         });
       });

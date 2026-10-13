@@ -349,7 +349,7 @@ test("app: EN and EL strings have the same keys and every used key exists", () =
   const dyn = [].concat(
     Object.keys(C.PRESETS).map((k) => "p." + k), C.THEMES.map((k) => "th." + k),
     C.BASES.map((k) => "basis." + k), C.BASES.map((k) => "basis." + k + "Hint"),
-    ["manual", "paste", "csv", "contacts", "mail", "crm"].map((k) => "src." + k),
+    ["manual", "paste", "csv", "contacts", "mail", "crm", "platform"].map((k) => "src." + k),
     ["h", "p", "img", "btn", "hr", "cols"].map((k) => "bk." + k),
     ["draft", "sched", "sending", "paused", "sent"].map((k) => "st." + k),
     ["lead", "active", "past"].map((k) => "crm." + k), ["en", "el"].map((k) => "lang." + k),
