@@ -5420,5 +5420,5 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - tests/time-stage.test.js (15 tests incl. a 2000-round merge fuzz: symmetric, associative, idempotent, canonical; two-device round trip through the real engine).
   - Not tested: real presenter clickers, phones, Safari.
 
-### 2026-10-13 — Maps: heatmap and statistics, OSM upgrade wave 4 (#PRNUM) — 1.50.00
+### 2026-10-13 — Maps: heatmap and statistics, OSM upgrade wave 4 (#269) — 1.50.00
 - Maps › My tracks › `Heatmap and statistics`: a sheet with the heatmap switch (canvas layer over the map, stays on with the sheet closed, follows new / deleted tracks), year and folder filters, totals (distance, time, tracks, new ground), a bar chart per month and a table per year. "New ground" counts path through ~40 m squares crossed for the first time. Engine `maps/heat-core.js` (pure, tests/maps-heat.test.js) in the Web Worker `maps/heat-worker.js`, page fallback without workers. OSM public GPS traces overlay (gps.tile.openstreetmap.org, cached like the other tiles). Device-local prefs `oros-maps-heat`; nothing new is synced. tracks.js fires `oros-maps-tracks-changed`. Credits rows updated (GPS traces layer, GPS trace uploads). Help EN/EL, E2E /mnt/project-files/maps/e2e/heat-e2e.js (3 devices incl. one without Worker). Not tested: very large libraries on a real phone, Safari.
