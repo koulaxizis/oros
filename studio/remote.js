@@ -138,7 +138,7 @@
       var me = ws;
       ws.onopen = function () { retry = 0; };
       ws.onmessage = function (e) {
-        if (me !== ws || typeof e.data !== "string") return;
+        if (me !== ws || typeof e.data !== "string" || e.data === "pong") return;
         if (e.data.charAt(0) === "{") {                  // the relay's own notes
           var s = null;
           try { s = JSON.parse(e.data); } catch (err) { return; }
@@ -228,6 +228,9 @@
 
     // Keep-alive: a ping on the direct channel every 2 s (a silent one is
     // dropped after 7 s) and through the room every 20 s (keeps it open).
+    // While direct, the room ping is a bare "ping" the relay answers by
+    // itself (it does not wake the room); otherwise it is a sealed frame,
+    // so the other side knows we are still there.
     var tick = 0;
     function ping() {
       tick++;
@@ -236,7 +239,10 @@
         try { dc.send('{"k":"ping"}'); } catch (e) {}
         if (now - lastDirect > 7000) dropRtc();
       }
-      if (tick % 10 === 0) frame({ k: "ping" });
+      if (tick % 10 === 0) {
+        if (dc && dc.readyState === "open") { try { if (ws && ws.readyState === 1) ws.send("ping"); } catch (e) {} }
+        else frame({ k: "ping" });
+      }
       if (peer && now - lastHeard > 50000) peerGone();
     }
 

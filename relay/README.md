@@ -213,20 +213,22 @@ never sees the code). Allowed origins and the rate limit apply as for
 - At most two sockets; a third gets 409.
 - Text frames up to 16 KB are passed to the other socket as they are.
   Both sides encrypt them (AES-GCM, key from the code with PBKDF2), so
-  the room only sees ciphertext. Binary or larger frames close the
-  socket; more than 400 frames in 10 s close it too.
+  the room only sees ciphertext. Binary frames close the socket with
+  1003, larger ones with 1009, more than 400 frames in 10 s with 1008.
+- A bare `ping` frame is answered `pong` by the runtime itself
+  (WebSocket auto-response), so keep-alives on a direct link do not wake
+  the room.
 - The room tells each side `{"sys":"wait"}`, `{"sys":"peer"}` or
   `{"sys":"left"}`.
 - Nothing is stored. An alarm closes the room after 120 s without a frame.
 
 Answers: 404 (bad room), 403 (origin), 429 (rate), 426 (not a
-WebSocket), 503 (no `REMOTE` binding). Tests: `tests/remote-relay.test.js`.
+WebSocket), 503 (no `REMOTE` binding), 502 (the room could not be reached). Tests: `tests/remote-relay.test.js`.
 
-The Durable Object is declared in `wrangler.toml` (binding plus a
-`new_sqlite_classes` migration, free plan), so the normal deploy
-creates it. Cloudflare cannot build preview versions of a bundle that
-adds a Durable Object class, so the "Workers Builds" check on the PR
-that adds it is expected to fail; the deploy from `main` is not affected.
+The Durable Object is declared at the top level of `wrangler.toml`
+(binding plus a `new_sqlite_classes` migration, free plan), so the
+normal deploy from `main` creates it. The room reads no env and no
+secrets, and never logs frames.
 
 ## Rules it enforces
 

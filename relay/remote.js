@@ -26,8 +26,12 @@ export async function handleRemote(request, env, room) {
     return new Response("expected a WebSocket", { status: 426 });
   }
   if (!env || !env.REMOTE) return new Response("remote not available", { status: 503 });
-  const stub = env.REMOTE.get(env.REMOTE.idFromName(room));
-  return stub.fetch(request);
+  try {
+    const stub = env.REMOTE.get(env.REMOTE.idFromName(room));
+    return await stub.fetch(request);
+  } catch (e) {
+    return new Response("remote unavailable", { status: 502 });
+  }
 }
 
 // The other socket of the room, or null.
@@ -38,10 +42,15 @@ function sys(ws, what) {
   try { ws.send(JSON.stringify({ sys: what })); } catch (e) {}
 }
 
+// A bare "ping" text frame is answered "pong" by the runtime itself, so
+// keep-alives on an otherwise direct link neither wake the room nor
+// count as requests. The room needs no env (no secrets).
 export class RemoteRoom {
-  constructor(state, env) {
+  constructor(state) {
     this.state = state;
-    this.env = env;
+    if (typeof state.setWebSocketAutoResponse === "function" && typeof WebSocketRequestResponsePair === "function") {
+      state.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+    }
   }
 
   async fetch(request) {
@@ -62,15 +71,14 @@ export class RemoteRoom {
   }
 
   async webSocketMessage(ws, msg) {
-    if (typeof msg !== "string" || msg.length > REMOTE_LIMITS.frameBytes) {
-      ws.close(1009, "frame not allowed");
-      return;
-    }
+    if (typeof msg !== "string") { ws.close(1003, "text frames only"); return; }
+    if (msg.length > REMOTE_LIMITS.frameBytes) { ws.close(1009, "frame too large"); return; }
     const now = Date.now(), a = ws.deserializeAttachment() || { w: now, n: 0 };
     if (now - a.w > REMOTE_LIMITS.windowMs) { a.w = now; a.n = 0; }
     if (++a.n > REMOTE_LIMITS.burst) { ws.close(1008, "too many frames"); return; }
     a.at = now;
     ws.serializeAttachment(a);
+    if (msg === "ping") { try { ws.send("pong"); } catch (e) {} return; }   // where auto-response is missing
     for (const o of others(this.state, ws)) {
       try { o.send(msg); } catch (e) {}
     }
@@ -85,12 +93,18 @@ export class RemoteRoom {
     await this.webSocketClose(ws);
   }
 
-  // Closes the room once nobody has sent anything for idleMs.
+  // Closes the room once nobody has sent anything (a keep-alive counts)
+  // for idleMs.
   async alarm() {
     const now = Date.now(), socks = this.state.getWebSockets();
     if (!socks.length) return;
     let last = 0;
-    for (const s of socks) { const a = s.deserializeAttachment(); if (a && a.at > last) last = a.at; }
+    for (const s of socks) {
+      const a = s.deserializeAttachment();
+      if (a && a.at > last) last = a.at;
+      const t = typeof this.state.getWebSocketAutoResponseTimestamp === "function" && this.state.getWebSocketAutoResponseTimestamp(s);
+      if (t && +t > last) last = +t;
+    }
     if (now - last >= REMOTE_LIMITS.idleMs) {
       for (const s of socks) { try { s.close(1001, "idle"); } catch (e) {} }
       return;

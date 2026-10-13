@@ -24,7 +24,9 @@ class FakeWS {
 function fakeState() {
   const socks = [];
   return {
-    socks, alarm: 0,
+    socks, alarm: 0, auto: null, autoAt: new Map(),
+    setWebSocketAutoResponse(p) { this.auto = p; },
+    getWebSocketAutoResponseTimestamp(ws) { return this.autoAt.get(ws) || null; },
     getWebSockets() { return socks.filter((s) => !s.closed); },
     acceptWebSocket(ws) { socks.push(ws); },
     storage: { setAlarm(t) { this._t = t; }, get t() { return this._t; } }
@@ -33,9 +35,11 @@ function fakeState() {
 // Node's Response refuses status 101; the Workers runtime needs it.
 function withWorkerGlobals(fn) {
   const saved = { Pair: globalThis.WebSocketPair, Resp: globalThis.Response };
+  saved.Auto = globalThis.WebSocketRequestResponsePair;
+  globalThis.WebSocketRequestResponsePair = function (req, res) { this.request = req; this.response = res; };
   globalThis.WebSocketPair = function () { const a = new FakeWS(), b = new FakeWS(); return { 0: a, 1: b }; };
   globalThis.Response = class { constructor(body, init) { this.body = body; this.status = init.status; this.webSocket = init.webSocket; } };
-  return Promise.resolve().then(fn).finally(() => { globalThis.WebSocketPair = saved.Pair; globalThis.Response = saved.Resp; });
+  return Promise.resolve().then(fn).finally(() => { globalThis.WebSocketPair = saved.Pair; globalThis.Response = saved.Resp; globalThis.WebSocketRequestResponsePair = saved.Auto; });
 }
 function upgrade(path, origin, extra) {
   const h = new Headers(Object.assign({ Upgrade: "websocket" }, origin ? { Origin: origin } : {}, extra || {}));
@@ -55,6 +59,8 @@ test("route: only orOS, only a 64-hex room, only a WebSocket", async () => {
   const r = await handle(upgrade("/rt/" + ROOM, ORIGIN, { "CF-Connecting-IP": "203.0.113.9" }), env(ns), null, Date.now());
   assert.equal(r.status, 200);
   assert.equal(asked, "id:" + ROOM);
+  const broken = { idFromName: (n) => n, get: () => ({ fetch: () => { throw new Error("down"); } }) };
+  assert.equal((await handle(upgrade("/rt/" + ROOM, ORIGIN), env(broken), null, Date.now())).status, 502);
 });
 
 test("room: two sockets meet, frames go across as is, a third is refused", () => withWorkerGlobals(async () => {
@@ -68,11 +74,15 @@ test("room: two sockets meet, frames go across as is, a third is refused", () =>
   assert.deepEqual(JSON.parse(a.sent[1]), { sys: "peer" });
   assert.deepEqual(JSON.parse(b.sent[0]), { sys: "peer" });
   assert.equal((await room.fetch(upgrade("/rt/" + ROOM, ORIGIN))).status, 409);
+  await room.webSocketMessage(a, "ping");
+  assert.equal(a.sent[a.sent.length - 1], "pong");
+  assert.equal(b.sent.length, 1, "pings are not forwarded");
+  a.sent.pop();
   await room.webSocketMessage(a, "Zm9vYmFy.ciphertext");
   assert.equal(b.sent[b.sent.length - 1], "Zm9vYmFy.ciphertext");
   assert.equal(a.sent.length, 2, "not echoed back");
   await room.webSocketMessage(b, new ArrayBuffer(4));
-  assert.equal(b.closed.code, 1009, "binary frames close the socket");
+  assert.equal(b.closed.code, 1003, "binary frames close the socket");
   await room.webSocketClose(b);
   assert.deepEqual(JSON.parse(a.sent[a.sent.length - 1]), { sys: "left" });
   assert.ok(st.storage.t > Date.now(), "idle alarm armed");
@@ -93,7 +103,12 @@ test("room: oversize frames, bursts and idle rooms are closed", () => withWorker
   const c = st2.socks[0];
   await room2.alarm();
   assert.equal(c.closed, null, "fresh room stays");
+  assert.equal(st2.auto.request, "ping", "keep-alives answered without waking the room");
   c.att.at = Date.now() - R.REMOTE_LIMITS.idleMs - 1;
+  st2.autoAt.set(c, new Date());
+  await room2.alarm();
+  assert.equal(c.closed, null, "a recent auto-answered ping keeps it open");
+  st2.autoAt.delete(c);
   await room2.alarm();
   assert.equal(c.closed.code, 1001);
 }));
