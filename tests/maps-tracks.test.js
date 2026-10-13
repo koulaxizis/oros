@@ -273,3 +273,77 @@ test("wiring: scripts in order, slice registered, recording database wiped on re
   const shell = fs.readFileSync(path.join(__dirname, "..", "shell.js"), "utf8");
   assert.match(shell, /"oros-maps-rec"/);
 });
+
+test("OSM trace link: kept in the GPX metadata, only exact openstreetmap.org trace URLs", () => {
+  const url = T.traceUrl("https://www.openstreetmap.org", "Chris K", 12345);
+  assert.equal(url, "https://www.openstreetmap.org/user/Chris%20K/traces/12345");
+  assert.equal(T.traceUrl("https://master.apis.dev.openstreetmap.org", "Χρήστος", "7"),
+    "https://master.apis.dev.openstreetmap.org/user/" + encodeURIComponent("Χρήστος") + "/traces/7");
+  assert.equal(T.traceUrl("https://evil.example", "a", 1), null);
+  assert.equal(T.traceUrl("https://www.openstreetmap.org", "a", "0"), null);
+  assert.equal(T.traceUrl("https://www.openstreetmap.org", "", 5), null);
+
+  const tr = { name: "Walk", segs: [line(5, { dt: 1000 })], wpts: [], trace: url };
+  const gpx = T.writeGpx(tr);
+  assert.match(gpx, /<metadata><name>Walk<\/name><link href="https:\/\/www\.openstreetmap\.org\/user\/Chris%20K\/traces\/12345"><text>OpenStreetMap<\/text><\/link><time>/);
+  assert.equal(T.parseGpx(gpx).trace, url);
+  assert.equal(T.parseAny(gpx, "x.gpx").trace, url);
+  // No link → no field (old files read exactly as before)
+  assert.ok(!("trace" in T.parseGpx(T.writeGpx({ name: "", segs: [line(3)], wpts: [] }))));
+  // Hostile or foreign links are ignored on read and never written
+  const bad = ["javascript:alert(1)", "https://www.openstreetmap.org.evil.com/user/a/traces/1",
+    "https://www.openstreetmap.org/user/a/traces/1?x=\"><script>", "http://www.openstreetmap.org/user/a/traces/1",
+    "https://www.openstreetmap.org/user/a/b/traces/1", "https://www.openstreetmap.org/user/a/traces/1/data"];
+  bad.forEach((h) => {
+    const x = '<gpx><metadata><link href="' + h.replace(/"/g, "&quot;") + '"/></metadata><trk><trkseg><trkpt lat="1" lon="2"/><trkpt lat="1.1" lon="2"/></trkseg></trk></gpx>';
+    assert.ok(!("trace" in T.parseGpx(x)), h);
+    assert.ok(!/<link/.test(T.writeGpx({ name: "", segs: [line(2)], wpts: [], trace: h })), h);
+  });
+  // Edits keep the link; the second half of a split is a new track without it
+  assert.equal(T.clone(tr).trace, url);
+  assert.equal(T.simplify(tr, 5).trace, url);
+  assert.equal(T.trim(tr, 1, 3).trace, url);
+  assert.equal(T.cut(tr, 1, 2).trace, url);
+  const parts = T.split(tr, 2);
+  assert.equal(parts[0].trace, url);
+  assert.ok(!("trace" in parts[1]));
+  assert.equal(tr.trace, url, "split leaves the source alone");
+});
+
+test("timedPoints counts points with a time (OSM traces need them)", () => {
+  assert.equal(T.timedPoints({ segs: [line(4, { dt: 1000 }), line(3)] }), 4);
+  assert.equal(T.timedPoints({ segs: [line(4)] }), 0);
+  assert.equal(T.timedPoints({ segs: [] }), 0);
+});
+
+test("editing chain: trim, cut, split, join, simplify keep point order and counts", () => {
+  const tr = { name: "A", segs: [line(10, { dt: 1000 }), line(6, { dt: 1000, dLon: 1 })], wpts: [{ lat: 1, lon: 2, ele: null, t: null, name: "w" }] };
+  assert.equal(T.flatLen(tr), 16);
+  const k = T.trim(tr, 3, 12);
+  assert.equal(T.flatLen(k), 10);
+  assert.deepEqual(k.segs.map((s) => s.length), [7, 3]);
+  const c = T.cut(tr, 2, 4);
+  assert.equal(T.flatLen(c), 13);
+  assert.deepEqual(c.segs.map((s) => s.length), [2, 5, 6]);
+  const j = T.join(k, c);
+  assert.equal(T.flatLen(j), 23);
+  assert.equal(j.wpts.length, 2);
+  assert.equal(T.split(tr, 0), null);
+  assert.equal(T.split(tr, 15), null);
+  const sp = T.split(tr, 10);
+  assert.equal(T.flatLen(sp[0]) + T.flatLen(sp[1]), 17, "split point in both halves");
+  // the inputs are never changed
+  assert.equal(T.flatLen(tr), 16);
+  // straight line: simplify keeps the two ends of each segment
+  assert.deepEqual(T.simplify(tr, 5).segs.map((s) => s.length), [2, 2]);
+});
+
+test("wiring 3B: GPX upload uses FormData without a forced Content-Type, link opened safely", () => {
+  const api = fs.readFileSync(path.join(__dirname, "..", "maps/osm-api.js"), "utf8");
+  assert.match(api, /opts\.body instanceof FormData/);
+  const ui = fs.readFileSync(path.join(__dirname, "..", "maps/tracks.js"), "utf8");
+  assert.match(ui, /"\/api\/0\.6\/gpx\/create"/);
+  assert.match(ui, /vis\.value = "private"/);
+  assert.match(ui, /T\.TRACE_RE\.test\(tr\.trace\)/);
+  assert.match(ui, /rel = "noopener noreferrer"/);
+});
