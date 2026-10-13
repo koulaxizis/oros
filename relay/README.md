@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja and Todoist, all read-only; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello and GitHub, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -298,6 +298,35 @@ and comes here only when that fails. Only GETs.
 | `/tasks` | `limit (≤200), cursor` (open tasks only: Todoist's list of tasks) |
 
 - The cursor travels like Pipedrive's (`%2B`, `%2F`, `%3D` only).
+
+### Trello (`p: "trello"`, Kanban, read-only)
+
+`POST /v1 { op: "ext", p: "trello", key, token, reqs }`: no `host`, `base` or `env`.
+`https://api.trello.com/1<path>` with `Authorization: OAuth oauth_consumer_key="<key>", oauth_token="<token>"`
+(API key: 32 hex digits; token: 64-100 letters and digits). Both are needed
+and neither goes in the query (`key=` / `token=` in a path is refused).
+Direct first, here only when the browser can't reach Trello. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/members/me/boards` | `filter=open&fields=name` |
+| `/boards/<24 hex>` | `fields=name&lists=open&cards=open&labels=all&checklists=all&card_fields=name,desc,due,idList,idLabels,closed,pos&list_fields=name,closed,pos` (exactly these) |
+
+### GitHub (`p: "github"`, Kanban, read-only)
+
+`POST /v1 { op: "ext", p: "github", key, reqs }`: no `host`, `base` or `env`.
+`https://api.github.com<path>` with `Authorization: Bearer <token>`,
+`X-GitHub-Api-Version: 2022-11-28` and the relay's `User-Agent` (GitHub
+refuses calls without one). The token is a personal access token
+(`github_pat_…` fine-grained, or classic `ghp_…`). Direct first, here only
+when the browser can't reach GitHub. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/user/repos` | `per_page (≤100), page, sort=updated` |
+| `/repos/<owner>/<repo>/issues` | `state=open\|all, per_page (≤100), page` |
+
+- `<owner>/<repo>` are GitHub's name characters only; `.` and `..` as a part are refused.
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 

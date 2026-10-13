@@ -131,6 +131,25 @@
       "toast.imported":   "Import completed",
       "import.boards":    "boards",
       "import.labels":    "labels",
+      "import.acct":      "From a connected account",
+      "import.acctHint":  "Read a Trello board or a GitHub repository's issues straight from your account. orOS only reads: nothing there changes.",
+      "import.acctNone":  "Connect Trello or GitHub in Settings › Connected services to read a board from your account.",
+      "import.acctOpen":  "Open Connected services",
+      "import.acctSel":   "Account",
+      "import.list":      "Show boards",
+      "import.listRepo":  "Show repositories",
+      "import.board":     "Board",
+      "import.repo":      "Repository",
+      "import.read":      "Read",
+      "import.reading":   "Reading…",
+      "import.none":      "No boards here.",
+      "import.gh.open":   "Open",
+      "import.gh.closed": "Closed",
+      "import.e.auth":    "The platform refused the key. Check it in Settings › Connected services.",
+      "import.e.keys":    "This device doesn't have the account's key yet. Enter it in Settings › Connected services.",
+      "import.e.offline": "You're offline.",
+      "import.e.busy":    "The platform asks to slow down. Try again in a minute.",
+      "import.e.other":   "Couldn't reach the platform. Try again later.",
       "color.blue":       "Blue",
       "color.green":      "Green",
       "color.red":        "Red",
@@ -222,6 +241,25 @@
       "toast.imported":   "Η εισαγωγή ολοκληρώθηκε",
       "import.boards":    "boards",
       "import.labels":    "ετικέτες",
+      "import.acct":      "Από συνδεδεμένο λογαριασμό",
+      "import.acctHint":  "Διάβασε ένα board του Trello ή τα issues ενός αποθετηρίου του GitHub κατευθείαν από τον λογαριασμό σου. Το orOS μόνο διαβάζει: εκεί δεν αλλάζει τίποτα.",
+      "import.acctNone":  "Σύνδεσε Trello ή GitHub στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να διαβάσεις ένα board από τον λογαριασμό σου.",
+      "import.acctOpen":  "Άνοιγμα Συνδεδεμένων υπηρεσιών",
+      "import.acctSel":   "Λογαριασμός",
+      "import.list":      "Εμφάνιση boards",
+      "import.listRepo":  "Εμφάνιση αποθετηρίων",
+      "import.board":     "Board",
+      "import.repo":      "Αποθετήριο",
+      "import.read":      "Ανάγνωση",
+      "import.reading":   "Ανάγνωση…",
+      "import.none":      "Δεν υπάρχουν boards εδώ.",
+      "import.gh.open":   "Ανοιχτά",
+      "import.gh.closed": "Κλειστά",
+      "import.e.auth":    "Η πλατφόρμα απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "import.e.keys":    "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "import.e.offline": "Είσαι εκτός σύνδεσης.",
+      "import.e.busy":    "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "import.e.other":   "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.",
       "color.blue":       "Μπλε",
       "color.green":      "Πράσινο",
       "color.red":        "Κόκκινο",
@@ -3338,7 +3376,7 @@
   //   · Trello: lists→στήλες, cards→κάρτες, desc→notes, due→card.due,
   //     labels→labels, checklists→subtasks. Closed lists/cards → skip.
 
-  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello" };
+  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub" };
 
   // Kanri Tailwind color classes → orOS swatch + i18n όνομα
   var KANRI_COLORS = {
@@ -3586,6 +3624,125 @@
   }
 
   // --- Import dialog (dynamic construction, ίδιο pattern με manage-dialog) ---
+  // ---------- Wave 6B: a board from a connected Trello or GitHub account ----------
+  // The account and its key live in the shell (Settings › Connected
+  // services, parent.orosLinks); links/kanban.js builds the requests and
+  // turns the answer into a Trello-export-shaped board, so it lands
+  // through trelloAdapter and the same idempotent merge as a file.
+  function linksHost() {
+    try { var p = window.parent; return p && p !== window && p.orosLinks && typeof p.orosLinks.call === "function" ? p.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  function accountSection(onParsed, onMsg) {
+    var K = window.OrosLinksKanban, Lk = linksHost();
+    if (!K || !Lk) return null;
+    var box = document.createElement("div");
+    box.className = "imp-acct";
+    var h = document.createElement("h4");
+    h.textContent = t("import.acct");
+    box.appendChild(h);
+    var accts = Lk.list().filter(function (a) { return K.PLATFORMS.indexOf(a.p) >= 0; });
+    function hint(text) { var d = document.createElement("div"); d.className = "imp-hint"; d.textContent = text; box.appendChild(d); return d; }
+    function btn(text, k, fn) { var b = document.createElement("button"); b.type = "button"; b.textContent = text; b.setAttribute("data-k", k); b.addEventListener("click", fn); return b; }
+    function sel(k, label, opts) {
+      var lab = document.createElement("label");
+      lab.textContent = label;
+      var s = document.createElement("select");
+      s.setAttribute("data-k", k);
+      opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; s.appendChild(op); });
+      lab.appendChild(s);
+      return { lab: lab, s: s };
+    }
+    if (!accts.length) {
+      hint(t("import.acctNone"));
+      box.appendChild(btn(t("import.acctOpen"), "kimp.settings", function () {
+        try { window.parent.__orosOpenAt("settings", { section: "services" }); } catch (e) {}
+      }));
+      return box;
+    }
+    hint(t("import.acctHint"));
+    var byId = {};
+    accts.forEach(function (a) { byId[a.id] = a; });
+    var aSel = sel("kimp.acct", t("import.acctSel"), accts.map(function (a) { var pn = a.p === "trello" ? "Trello" : "GitHub"; return [a.id, a.name === pn ? pn : a.name + " (" + pn + ")"]; }));
+    box.appendChild(aSel.lab);
+    var row = document.createElement("div");
+    row.className = "imp-row";
+    box.appendChild(row);
+    var listBtn = btn("", "kimp.list", loadList);
+    var bSel = null, readBtn = null, busy = false;
+    function label() { listBtn.textContent = byId[aSel.s.value] && byId[aSel.s.value].p === "github" ? t("import.listRepo") : t("import.list"); }
+    label();
+    row.appendChild(listBtn);
+    aSel.s.addEventListener("change", function () {
+      label();
+      if (bSel) { bSel.lab.remove(); bSel = null; }
+      if (readBtn) { readBtn.remove(); readBtn = null; }
+      onMsg("");
+    });
+    function fail(e) {
+      var c = e && e.code;
+      busy = false;
+      onMsg(t(c === "auth" || c === "keys" || c === "offline" || c === "busy" ? "import.e." + c : "import.e.other"));
+    }
+    function ask(id, req) {
+      return Lk.call(id, [req]).then(function (res) {
+        var code = Lk.statusCode(res && res[0]);
+        if (code) { var e = new Error(code); e.code = code; throw e; }
+        return res[0].data;
+      });
+    }
+    function loadList() {
+      var a = byId[aSel.s.value];
+      if (!a || busy) return;
+      busy = true;
+      onMsg(t("import.reading"));
+      var items = [];
+      (function page(n) {
+        return ask(a.id, K.listReq(a.p, n)).then(function (data) {
+          var r = K.readList(a.p, data);
+          items = items.concat(r.items);
+          if (r.more && n < K.MAX_PAGES.list) return page(n + 1);
+        });
+      })(1).then(function () {
+        busy = false;
+        if (bSel) bSel.lab.remove();
+        if (readBtn) readBtn.remove();
+        if (!items.length) { onMsg(t("import.none")); return; }
+        onMsg("");
+        bSel = sel("kimp.board", a.p === "github" ? t("import.repo") : t("import.board"), items.map(function (x) { return [x.id, x.name]; }));
+        box.appendChild(bSel.lab);
+        readBtn = btn(t("import.read"), "kimp.read", function () { readBoard(a, bSel.s.value); });
+        box.appendChild(readBtn);
+      }, fail);
+    }
+    function readBoard(a, id) {
+      if (busy || !id) return;
+      busy = true;
+      onMsg(t("import.reading"));
+      var got;
+      var run = a.p === "trello"
+        ? ask(a.id, K.boardReq("trello", id)).then(function (d) { got = d; })
+        : (function () {
+            got = [];
+            return (function page(n) {
+              return ask(a.id, K.boardReq("github", id, n)).then(function (data) {
+                got = got.concat(Array.isArray(data) ? data : []);
+                if (Array.isArray(data) && data.length >= K.PAGE && n < K.MAX_PAGES.issues) return page(n + 1);
+              });
+            })(1);
+          })();
+      run.then(function () {
+        busy = false;
+        var ex = K.toExport(a.p, id, got, { open: t("import.gh.open"), closed: t("import.gh.closed") });
+        var res = ex && trelloAdapter(ex);
+        if (!res) { onMsg(t("import.unknown")); return; }
+        res.source = a.p;
+        onParsed(res);
+      }, fail);
+    }
+    return box;
+  }
+
   function openImportDlg() {
     if ($("import-dlg") && $("import-dlg").open) return;
 
@@ -3626,9 +3783,30 @@
     dlg.appendChild(h3);
     dlg.appendChild(hint);
     dlg.appendChild(file);
+    var acct = accountSection(function (res) {          // wave 6B: from a connected account
+      parsed = res;
+      go.disabled = !res;
+      preview.hidden = false;
+      showParsed(res);
+    }, function (text) {
+      parsed = null;
+      go.disabled = true;
+      preview.hidden = false;
+      preview.classList.toggle("imp-error", !!text);
+      preview.textContent = text || "";
+    });
+    if (acct) dlg.appendChild(acct);
     dlg.appendChild(preview);
     dlg.appendChild(foot);
     document.body.appendChild(dlg);
+    function showParsed(res) {
+      preview.classList.remove("imp-error");
+      preview.textContent = t("import.detected") + " " +
+        IMPORT_SOURCE_NAMES[res.source] + " — " +
+        String(res.stats.boards) + " " + t("import.boards") + ", " +
+        String(res.stats.cards) + " " + t("meta.cards") + ", " +
+        String(res.stats.labels) + " " + t("import.labels");
+    }
 
     dlg.addEventListener("close", function () { dlg.remove(); });
     dlg.addEventListener("click", function (e) {

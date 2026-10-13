@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 1.70.00
+## Version 1.71.00
 - Maps: OsmAnd-style tools. A `Topo` map with contour lines for hiking. While you drive, a speed limit sign next to your speed (red when you're over). Long-press › `Measure distance` for distances and areas, and `I parked here` to mark your car, with a reminder that comes as a notification and a walking route back.
+
+## Version 1.70.00
+- Kanban: read a board straight from your Trello account, or a GitHub repository's issues as a board with Open and Closed columns (labels, milestone dates and task lists come along). Read it again later to bring in only what's new. orOS only reads Trello and GitHub; connect them in Settings › Connected services, then Import from other apps.
 
 ## Version 1.69.00
 - Maps: Every Door tools. Places missing their name or opening hours get an orange ring. `Add place` has one-tap street furniture (bench, bin, bollard, street lamp, hydrant, tree and more). New `Entrances and flats`: tap a building's outline to add an entrance with its letter and flat numbers, ideal for apartment blocks. New `Buildings` overlay in Quests for floors and kind of building.
