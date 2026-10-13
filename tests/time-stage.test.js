@@ -314,3 +314,57 @@ test("page: Stage tab, pane and scripts in order; deep link 'stage'; EN/EL strin
   assert.deepEqual([...src.matchAll(/innerHTML\s*=\s*([^;]+);/g)].map((m) => m[1].trim()).filter((v) => v !== '""'), [], "innerHTML only ever cleared");
   assert.match(src, /registerSlice\(\s*"stage",[\s\S]*?DATA_KEY,\s*C\.merge\s*\)/, "five-argument registration");
 });
+
+// ---------------------------------------------------------------
+// Wave 2: saved messages, stage output state, display window
+// ---------------------------------------------------------------
+
+test("msgs: saved speaker messages merge like items; the key is left out when empty", () => {
+  assert.equal("msgs" in C.canon(model()), false, "a wave-1 device writes the same bytes");
+  const a = model({ msgs: [{ id: "msaaaa1", text: " Wrap up\n", mtime: 2 }, { id: "msbbbb2", text: "", mtime: 2 }] });
+  assert.deepEqual(a.msgs, [{ id: "msaaaa1", text: "Wrap up", mtime: 2 }], "trimmed, empty dropped");
+  const b = { v: 1, events: [ev()], items: [], tombs: [{ id: "msaaaa1", t: 2 }] };
+  const m = C.merge(a, b);
+  assert.equal("msgs" in m, false, "deleted (delete wins ties)");
+  assert.equal(json(m), json(C.merge(b, a)));
+  const c = model({ msgs: [{ id: "msaaaa1", text: "Wrap up now", mtime: 3 }] });
+  assert.equal(C.merge(m, c).msgs[0].text, "Wrap up now", "a later edit comes back");
+});
+
+test("normShow: layouts, colours and the message are cleaned; an empty message is never on", () => {
+  assert.deepEqual(C.normShow(null), { black: false, layout: "full", mirror: false, logoAt: 0,
+    msg: { text: "", on: false, flash: false, color: "white", at: 0 } });
+  const s = C.normShow({ black: true, layout: "agenda", mirror: 1, msg: { text: " Louder\tplease ", on: true, color: "pink", flash: true } });
+  assert.equal(s.layout, "agenda");
+  assert.equal(s.mirror, false, "only true is true");
+  assert.equal(s.msg.text, "Louder please");
+  assert.equal(s.msg.color, "white");
+  assert.equal(C.normShow({ layout: "huge", msg: { text: "  ", on: true } }).msg.on, false);
+  assert.equal(C.normShow({ layout: "huge" }).layout, "full");
+});
+
+test("focus: the live item, else the next one to run, else none", () => {
+  const list = [it("itaaaa1", 1), it("itaaaa2", 2)];
+  let run = C.normRun({});
+  assert.equal(C.focus(list, C.schedule(ev(), list, run, at(9)), run).id, "itaaaa1");
+  run = C.select(run, "itaaaa2", at(9), true);
+  assert.equal(C.focus(list, C.schedule(ev(), list, run, at(9)), run).id, "itaaaa2");
+  run = C.finish(C.select(run, "itaaaa1", at(9, 1), true), at(9, 2));
+  run = C.finish(C.select(run, "itaaaa2", at(9, 2), true), at(9, 3));
+  assert.equal(C.focus(list, C.schedule(ev(), list, run, at(9, 4)), run), null);
+});
+
+test("display window: own page with the shared renderer, writes nothing, no DL-1 redirect", () => {
+  const html = read("time/display.html");
+  const i1 = html.indexOf("stage-core.js"), i2 = html.indexOf("stage-view.js"), i3 = html.indexOf("display.js");
+  assert.ok(i1 > 0 && i2 > i1 && i3 > i2);
+  assert.match(html, /stage-view\.css/);
+  assert.doesNotMatch(html, /window\.top === window\.self/, "a popup window, not an app page");
+  const js = read("time/display.js") + read("time/stage-view.js");
+  assert.doesNotMatch(js, /localStorage\.setItem|markDirty|registerSlice/, "reads storage only");
+  assert.doesNotMatch(js, /innerHTML/);
+  const tindex = read("time/index.html");
+  const v = tindex.indexOf("stage-view.js?");
+  assert.ok(v > tindex.indexOf("stage-core.js?") && v < tindex.indexOf("stage.js?"), "core, view, then stage.js");
+  assert.match(read("time/stage.js"), /window\.open\("display\.html\?standalone"/);
+});

@@ -718,21 +718,52 @@ dialog#astro-dlg h3 {
   font-size: clamp(48px, 16vw, 84px); font-weight: 800; line-height: 1.1;
   font-variant-numeric: tabular-nums; padding: 4px 0;
 }
-.ph-warn { color: #e6b800; }
-.ph-red, .ph-over { color: #ff4d4d; }
-.stg-time.paused, .sv-time.paused { opacity: 0.55; }
+.stg-time.ph-warn { color: #e6b800; }
+.stg-time.ph-red, .stg-time.ph-over { color: #ff4d4d; }
+.stg-time.paused { opacity: 0.55; }
 .stg-time.flash { animation: stgflash 1s steps(2, start) infinite; }
 @keyframes stgflash { to { opacity: 0.35; } }
-.stg-prog, .sv-prog { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
-.stg-prog span, .sv-prog span { display: block; height: 100%; width: 0; background: #2ecc71; }
-.stg-prog span.ph-warn, .sv-prog span.ph-warn { background: #e6b800; }
-.stg-prog span.ph-red, .stg-prog span.ph-over, .sv-prog span.ph-red, .sv-prog span.ph-over { background: #ff4d4d; }
+.stg-prog { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.stg-prog span { display: block; height: 100%; width: 0; background: #2ecc71; }
+.stg-prog span.ph-warn { background: #e6b800; }
+.stg-prog span.ph-red, .stg-prog span.ph-over { background: #ff4d4d; }
 #stg-next { color: var(--text-dim); font-size: 12.5px; margin-top: 8px; min-height: 16px; overflow-wrap: anywhere; }
 .stg-ctl { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; padding-bottom: 8px; }
 .stg-ctl .btn { flex: 1 1 90px; max-width: 180px; padding: 8px 8px; }
 .stg-ctl .btn:disabled { opacity: 0.4; cursor: default; }
 .stg-opts { display: flex; justify-content: center; font-size: 12.5px; color: var(--text-dim); padding-bottom: 6px; }
 .stg-head { margin-top: 8px; }
+.stg-live-msg {
+  margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: #000; color: #fff;
+  font-weight: 800; font-size: 14px; overflow-wrap: anywhere;
+}
+.stg-live-msg.c-yellow { color: #ffd000; }
+.stg-live-msg.c-red { color: #ff3b30; }
+.stg-live-msg.c-green { color: #2ecc71; }
+.stg-live-black { margin-top: 8px; font-size: 12px; font-weight: 800; color: var(--danger, #e06c75); }
+.stg-msg { display: flex; flex-direction: column; gap: 8px; padding-bottom: 6px; }
+.stg-msg input[type="text"], .stg-out select, .stg-msg select {
+  min-height: 38px; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 7px;
+  padding: 7px 10px; font: inherit; font-size: 13.5px; outline: none; min-width: 0;
+}
+.stg-msg input[type="text"]:focus, .stg-out select:focus, .stg-msg select:focus { border-color: var(--accent); }
+.stg-msg-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--text-dim); }
+.stg-msg-row .btn { min-width: 96px; }
+#stg-msg-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.stg-chip { display: inline-flex; align-items: stretch; }
+.stg-chip .qchip { min-height: 36px; }
+.stg-chip-x {
+  min-width: 32px; border: 1px dashed var(--border); border-left: 0; border-radius: 0 999px 999px 0;
+  background: transparent; color: var(--text-dim); cursor: pointer; font: inherit;
+}
+.stg-chip:has(.stg-chip-x) .qchip { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.stg-chip-x:hover { color: var(--danger, #e06c75); }
+.stg-out { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: var(--text-dim); padding-bottom: 6px; }
+.stg-out label[for] { font-weight: 700; }
+.stg-logo-row { display: inline-flex; gap: 6px; }
+.stg-note { font-size: 12.5px; color: var(--danger, #e06c75); text-align: center; padding-bottom: 6px; }
+
 #stg-list { list-style: none; }
 .stg-none { color: var(--text-dim); font-size: 13px; text-align: center; padding: 12px 0; }
 .stg-row {
@@ -764,39 +795,19 @@ dialog#astro-dlg h3 {
 .stg-keys { color: var(--text-dim); font-size: 11.5px; text-align: center; margin-top: 12px; }
 @media (pointer: coarse) { .stg-keys { display: none; } }
 
-/* Stage view: always black, whatever the orOS theme (a projector) */
-#stg-view {
-  position: fixed; inset: 0; z-index: 90; background: #000; color: #fff;
-  display: flex; flex-direction: column; justify-content: center; align-items: stretch;
-  padding: 3vh 4vw; gap: 2vh; user-select: none; cursor: default;
-}
+/* Stage view inside Time: a full-screen layer; the picture itself is
+   time/stage-view.css (shared with the display window, display.html) */
+#stg-view { position: fixed; inset: 0; z-index: 90; background: #000; }
 #stg-view[hidden] { display: none !important; }
-.sv-top { text-align: center; }
-#sv-title { font-size: clamp(18px, 4.5vw, 56px); font-weight: 800; overflow-wrap: anywhere; }
-#sv-spk { font-size: clamp(14px, 3vw, 36px); color: #bbb; overflow-wrap: anywhere; }
-.sv-time {
-  text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
-  font-size: min(27vw, 52vh); color: #fff;
-}
-.sv-time.long { font-size: min(19vw, 46vh); }
-.sv-time.ph-warn { color: #ffd000; }
-.sv-time.ph-red, .sv-time.ph-over { color: #ff3b30; }
-#stg-view.flash { animation: svflash 1s steps(2, start) infinite; }
-@keyframes svflash { to { background: #5a0000; } }
-.sv-prog { height: max(8px, 1.4vh); background: #333; }
-.sv-bottom { display: flex; justify-content: space-between; gap: 16px; font-size: clamp(13px, 2.6vw, 32px); color: #bbb; }
-#sv-next { overflow-wrap: anywhere; min-width: 0; }
-#sv-clock { font-variant-numeric: tabular-nums; flex: none; }
-#sv-black { position: absolute; inset: 0; background: #000; z-index: 2; }
+#sv-root { position: absolute; inset: 0; }
 .sv-tools {
-  position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; gap: 6px; flex-wrap: wrap;
+  position: absolute; top: 10px; right: 10px; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap;
   justify-content: flex-end; opacity: 0; transition: opacity .25s; pointer-events: none;
 }
 .sv-tools.on { opacity: 1; pointer-events: auto; }
 .sv-tools .btn { background: rgba(0, 0, 0, 0.6); color: #fff; border-color: #555; }
 @media (prefers-reduced-motion: reduce) {
-  .stg-time.flash, #stg-view.flash { animation: none; }
-  #stg-view.flash { background: #5a0000; }
+  .stg-time.flash { animation: none; }
 }
 
 dialog.stg-dlg {

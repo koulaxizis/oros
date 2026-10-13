@@ -7,7 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Time · orOS</title>
 
-  <link rel="stylesheet" href="time.css?v=1.51.00">
+  <link rel="stylesheet" href="time.css?v=1.52.00">
+  <link rel="stylesheet" href="stage-view.css?v=1.52.00">
 
 </head>
 <body>
@@ -141,6 +142,8 @@
             <div id="stg-time" class="stg-time">00:00</div>
             <div class="stg-prog"><span id="stg-prog-bar"></span></div>
             <div id="stg-next"></div>
+            <div id="stg-live-msg" class="stg-live-msg" hidden></div>
+            <div id="stg-live-black" class="stg-live-black" data-i18n-s="stg.live.black" hidden></div>
           </div>
           <div class="stg-ctl">
             <button id="stg-prev" type="button" class="btn" data-i18n-s="stg.prev"></button>
@@ -158,6 +161,32 @@
               <input id="stg-sound" type="checkbox">
               <span data-i18n-s="stg.sound"></span>
             </label>
+          </div>
+          <div class="sec-head stg-head"><span data-i18n-s="stg.msg"></span></div>
+          <div class="stg-msg">
+            <input id="stg-msg" type="text" maxlength="200" data-i18n-s-ph="stg.msg.ph" data-i18n-s-a="stg.msg">
+            <div class="stg-msg-row">
+              <select id="stg-msg-color" data-i18n-s-a="stg.msg.color"></select>
+              <label class="chk"><input id="stg-msg-flash" type="checkbox"><span data-i18n-s="stg.msg.flash"></span></label>
+              <button id="stg-msg-show" type="button" class="btn prim"></button>
+              <button id="stg-msg-save" type="button" class="mini" data-i18n-s="stg.msg.save"></button>
+            </div>
+            <div id="stg-msg-presets" class="quick-chips"></div>
+          </div>
+          <div class="sec-head stg-head"><span data-i18n-s="stg.out"></span></div>
+          <div class="stg-ctl">
+            <button id="stg-display" type="button" class="btn" data-i18n-s="stg.display"></button>
+            <button id="stg-black" type="button" class="btn"></button>
+          </div>
+          <p id="stg-out-note" class="stg-note" role="alert" hidden></p>
+          <div class="stg-out">
+            <label for="stg-layout" data-i18n-s="stg.layout"></label>
+            <select id="stg-layout"></select>
+            <label class="chk"><input id="stg-mirror" type="checkbox"><span data-i18n-s="stg.mirror"></span></label>
+            <span class="stg-logo-row">
+              <button id="stg-logo" type="button" class="mini" data-i18n-s="stg.logo"></button>
+              <button id="stg-logo-x" type="button" class="mini" data-i18n-s="stg.logo.x" hidden></button>
+            </span>
           </div>
           <div class="sec-head stg-head">
             <span data-i18n-s="stg.rundown"></span>
@@ -208,19 +237,9 @@
     </div>
   </dialog>
 
-  <!-- Stage view: what the speaker sees (full screen) -->
+  <!-- Stage view: what the speaker sees (full screen); drawn by time/stage-view.js -->
   <div id="stg-view" hidden role="dialog" aria-modal="true" data-i18n-s-a="stg.view">
-    <div class="sv-top">
-      <div id="sv-title"></div>
-      <div id="sv-spk"></div>
-    </div>
-    <div id="sv-time" class="sv-time">00:00</div>
-    <div class="sv-prog"><span id="sv-bar"></span></div>
-    <div class="sv-bottom">
-      <div id="sv-next"></div>
-      <div id="sv-clock"></div>
-    </div>
-    <div id="sv-black" hidden></div>
+    <div id="sv-root"></div>
     <div class="sv-tools" id="sv-tools">
       <button id="sv-black-btn" type="button" class="btn" data-i18n-s="stg.black"></button>
       <button id="sv-fs" type="button" class="btn" data-i18n-s="stg.fs"></button>
@@ -296,11 +315,12 @@
   </dialog>
 
 
-  <script src="../timesheet/core.js?v=1.51.00"></script>
-  <script src="time.js?v=1.51.00"></script>
-  <script src="astro.js?v=1.51.00"></script>
-  <script src="stage-core.js?v=1.51.00"></script>
-  <script src="stage.js?v=1.51.00"></script>
+  <script src="../timesheet/core.js?v=1.52.00"></script>
+  <script src="time.js?v=1.52.00"></script>
+  <script src="astro.js?v=1.52.00"></script>
+  <script src="stage-core.js?v=1.52.00"></script>
+  <script src="stage-view.js?v=1.52.00"></script>
+  <script src="stage.js?v=1.52.00"></script>
 
 </body>
 </html>
