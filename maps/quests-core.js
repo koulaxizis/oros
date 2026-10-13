@@ -40,7 +40,7 @@
   var P = root && root.OrosMapsPoi ? root.OrosMapsPoi :
     (typeof require === "function" ? require("./poi-core.js") : null);
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var LIM = { answers: 500, tombs: 2000, hide: 3000, devs: 20, days: 400, els: 3000, name: 120, err: 200, text: 255 };
   var ID_RE = /^[a-z0-9]{6,40}$/;
   var DEV_RE = /^[a-z0-9]{4,40}$/;
@@ -330,8 +330,16 @@
     way_lit: "streets", way_surface: "streets", bus_shelter: "transit", bus_bench: "transit", crossing_type: "transit",
     building_levels: "buildings", housenumber: "buildings", bench_backrest: "things", toilets_fee: "things",
     recycling: "things", playground_access: "things" };
+  // Answers made from an overlay (overlays-core.js, maps wave 8B) that no
+  // pin asks: valid in the slice and counted, never in QUESTS.
+  var OVERLAY_ONLY = [
+    { id: "sidewalk", icon: "🚶", kind: "overlay", key: "sidewalk", cat: "streets", sel: [],
+      applies: function () { return false; },
+      title: { en: "Sidewalks", el: "Πεζοδρόμια" } }
+  ];
   var BY_ID = {};
   QUESTS.forEach(function (q) { BY_ID[q.id] = q; if (!q.cat) q.cat = OLD_CAT[q.id]; });
+  OVERLAY_ONLY.forEach(function (q) { BY_ID[q.id] = q; });
 
   // ---------- dates ----------
   function today(ms) {
@@ -655,7 +663,7 @@
   function optText(opt, lang) { return (lang === "el" ? opt.el : opt.en) || opt.en; }
 
   var api = {
-    VER: VER, LIM: LIM, QUESTS: QUESTS, BY_ID: BY_ID, ID_RE: ID_RE,
+    VER: VER, LIM: LIM, QUESTS: QUESTS, OVERLAY_ONLY: OVERLAY_ONLY, BY_ID: BY_ID, ID_RE: ID_RE,
     today: today, parseDay: parseDay, lastCheck: lastCheck, state: state, openQuests: openQuests,
     answerSet: answerSet, overpassQuery: overpassQuery, parseOverpass: parseOverpass,
     normAnswer: normAnswer, normalize: normalize, merge: merge, doneStats: doneStats,
