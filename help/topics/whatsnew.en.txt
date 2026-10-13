@@ -1,9 +1,6 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 1.63.00
-- CRM: import from Odoo (19 or Odoo Online). Companies come in with their people and VAT ID, people on their own as customers, opportunities as deals; your own company stays out. orOS only reads Odoo; connect it in Settings › Connected services.
-
 ## Version 1.62.00
 - CRM and Budget: import from Invoice Ninja (invoicing.co or your own install). CRM brings in its active clients with their contacts and VAT ID; Budget its payments received, net of refunds. orOS only reads Invoice Ninja; connect it in Settings › Connected services.
 
