@@ -5574,3 +5574,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Factory reset deletes `oros-links`. Credits: WooCommerce REST API; Cloudflare Workers row covers the relay ext op. Help: Stock + Settings.
   - Tests: `tests/links.test.js` (13). Two-device Chromium E2E against a mocked shop (direct + real relay code), 360/390 px.
   - Not tested: a real WooCommerce shop, real phones, Safari, the deployed relay.
+
+### 2026-10-13 — Hotfix: shell index.html conflict markers (#276) — 1.57.01
+- **Fix:** the main merge for #275 left `<<<<<<<` / `=======` / `>>>>>>>` lines in the shell `index.html`, so 1.57.00 loaded every shell script twice and showed the marker text. Kept one script list, with `links/core.js` + `links/host.js` after `stickies/host.js`.
+- **Guard:** new `tests/conflict-markers.test.js` fails on conflict markers in any shipped text file.
+- **Stock shop:** through the relay, the shop panel asks 2 product pages / 4 variation lists per call (direct: 5 / 10), per the Mail thread's review (Worker CPU limit).
+- **Lesson:** after resolving a merge, grep the whole tree for markers; `git merge | tail` hid the second conflicted file.

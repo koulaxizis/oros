@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.57.01
+- Fix: the 1.57.00 update loaded part of orOS twice. This update puts it right.
+
 ## Version 1.57.00
 - Connected services: link your WooCommerce shop in Settings › Connected services and see its products, stock and orders in Stock. Your keys stay sealed on your device.
 
