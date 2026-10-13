@@ -294,6 +294,37 @@ test("remote: the PC checks every command from the tablet", () => {
   ]);
 });
 
+test("remote: the PC checks effect edits from the tablet", async () => {
+  const calls = [];
+  const chain = [{ u: "fabc1234", id: "tilt", on: true, s: { 1: 3 } }];
+  const meta = { sliders: [{ i: 1, min: -6, max: 6, def: 0 }, { i: 2, min: 0, max: 2, def: 0, enums: ["a", "b", "c"] }, { i: 3, path: "x", min: 0, max: 1, def: 0 }] };
+  const H = {
+    C, t: (k) => k, el: () => ({}), setLabel: () => {}, ICON: {}, relay: "https://r.example",
+    snapshot: () => ({ tracks: [{ id: "ttrack001", fx: [] }] }), isPlaying: () => false, srate: () => 48000,
+    data: () => ({ tracks: [{ id: "ttrack001" }] }),
+    fx: {
+      chainOf: (k) => (k === "master" ? [] : chain), meta: () => Promise.resolve(meta), catalog: () => [{ id: "tilt" }, { id: "louder" }],
+      setSlider: (k, u, i, v) => calls.push(["s", k, u, i, v]), addTo: (k, id) => calls.push(["add", k, id]),
+      removeFrom: (k, u) => calls.push(["del", k, u]), moveIn: (k, u, d) => calls.push(["move", k, u, d]), peek: () => Promise.resolve(null)
+    }
+  };
+  const cmd = globalThis.StudioRemote(H)._command, T = { id: "ttrack001", u: "fabc1234" };
+  cmd({ t: "fs", ...T, i: 1, v: 99 });                       // clamped to the slider's range
+  cmd({ t: "fs", ...T, i: 2, v: 1.6 });                      // a list: one of its choices
+  cmd({ t: "fs", ...T, i: 3, v: 1 });                        // file sliders are chosen on the PC
+  cmd({ t: "fs", ...T, i: 9, v: 1 }); cmd({ t: "fs", ...T, i: 1, v: "3" }); cmd({ t: "fs", ...T, i: 1.5, v: 1 });
+  cmd({ t: "fs", id: "ttrack001", u: "<x>", i: 1, v: 1 }); cmd({ t: "fs", id: "tother001", u: "fabc1234", i: 1, v: 1 });
+  cmd({ t: "fxa", key: "master", fid: "louder" }); cmd({ t: "fxa", key: "master", fid: "evil" }); cmd({ t: "fxa", key: "master", fid: "../x" });
+  cmd({ t: "fxd", ...T }); cmd({ t: "fxd", id: "ttrack001", u: "x y" });
+  cmd({ t: "fxm", ...T, d: 1 }); cmd({ t: "fxm", ...T, d: 2 });
+  cmd({ t: "fxw", ...T, w: ["fabc1234"] }); cmd({ t: "fxo", key: "master" }); cmd({ t: "nope", key: "master" });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(calls, [
+    ["add", "master", "louder"], ["del", "ttrack001", "fabc1234"], ["move", "ttrack001", "fabc1234", 1],
+    ["s", "ttrack001", "fabc1234", 1, 6], ["s", "ttrack001", "fabc1234", 2, 2]
+  ]);
+});
+
 test("remote: wiring, strings and no code sinks", () => {
   const js = read("studio/remote.js"), html = read("studio/index.html"), studio = read("studio/studio.js");
   assert.doesNotMatch(js, /\beval\(|new Function|insertAdjacentHTML|outerHTML\s*=|document\.write/);
@@ -303,7 +334,7 @@ test("remote: wiring, strings and no code sinks", () => {
     const k = m.slice(3, -1);
     assert.equal((studio.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k);
   });
-  ["remote-dlg", "join-dlg", "remote-ui", "ru-strips", "rm-qr", "rj-code", "more-remote", "more-join", "remote-ind", "rm-ask", "rm-allow", "rm-deny"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  ["remote-dlg", "join-dlg", "remote-ui", "ru-strips", "rm-qr", "rj-code", "more-remote", "more-join", "remote-ind", "rm-ask", "rm-allow", "rm-deny", "ruf-dlg", "ruf-list", "ruf-add", "ruf-search", "ruf-play"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
   // a guessable 6-digit code is not enough: the PC must allow each device, and only one
   assert.match(js, /admit: askAllow/);
   assert.match(js, /if \(okRid && r !== okRid\) \{ frame\(\{ k: "deny" \}\); return; \}/);
