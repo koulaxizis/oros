@@ -5849,3 +5849,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Schema:** SIGNATURE v1 (Part III row). New sync slice `signature`.
 - **Decisions:** no tracking pixels, no hosted images, no remote icon CDN; web mail apps (Gmail, Outlook web) get only the person's own https picture addresses (they drop embedded pictures). Research of WiseStamp, HubSpot, Newoldstamp, MySignature, Exclaimer, MySigMail: adopted short reply version, dated banner, CTA button, disclaimers, vCard QR, team CSV, client checks, dark preview; rejected click analytics and hosted images (tracking, free-forever rule).
 - **Files:** `signature/{index.html, signature.css, core.js, signature.js, search.js, help.en.txt, help.el.txt}`, `mail/mail.js`, `mail/mail.css`, `tests/signature.test.js`; registration in `apps.json`, `shell.js` ICONS, `translations.js`, `sw.js`, `tests.yml`.
+
+### 2026-10-13 — Studio: NULL JSFX effects refreshed from null-jsfx 2.0 (#303) — 1.77.01
+- studio/nullfx/fx: the 75 NULL JSFX effect windows were rebuilt from koulaxizis/null-jsfx main (d029bab). They now use the 2.0 knob layout and Noto Sans text. The runtime files are unchanged.
+  - Tests: full suite plus effects E2E in Studio.
