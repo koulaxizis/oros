@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Maps — overlays-core.js (StreetComplete-style overlays, maps
-// wave 8B, v1.0.0)
+// wave 8B, v1.1.0: + buildings in maps wave 9)
 // An overlay colours the streets or buildings around you by one
 // property, so the gaps stand out at a glance, and a tap changes it:
 //   - lit:       street lights (lit)
@@ -23,7 +23,7 @@
   var P = root && root.OrosMapsPoi ? root.OrosMapsPoi :
     (typeof require === "function" ? require("./poi-core.js") : null);
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var LIM = { els: 2000, pts: 600 };
   // colours (fixed: they sit on the map, not on the page)
   var C = { yes: "#f2c200", no: "#5c6bc0", miss: "#e53935", paved: "#78909c", stones: "#a1887f",
@@ -163,6 +163,27 @@
         return { c: C.miss, dash: true };
       },
       value: function (t) { return t["addr:housenumber"] || (t.nohousenumber === "yes" ? "-" : t["addr:housename"] || ""); },
+      options: function () { return []; } },
+    // maps wave 9 (Every Door "Buildings"): floors and kind in one form
+    { id: "building", icon: "🏢", qid: "building_levels", kind: "area", zoom: 17, form: true,
+      sel: 'way["building"]',
+      applies: function (t) { return !!t.building && t.building !== "no" && !t["building:part"]; },
+      title: { en: "Buildings", el: "Κτίρια" },
+      q: { en: "Floors and kind of this building", el: "Όροφοι και είδος του κτιρίου" },
+      legend: [["num", "Floors and kind known", "Γνωστοί όροφοι και είδος"], ["yes", "One of them known", "Γνωστό το ένα από τα δύο"],
+        ["miss", "Not known yet", "Άγνωστο ακόμα"]],
+      style: function (t) {
+        var lv = !!t["building:levels"], kd = !!t.building && t.building !== "yes";
+        if (lv && kd) return { c: C.num };
+        if (lv || kd) return { c: C.yes };
+        return { c: C.miss, dash: true };
+      },
+      value: function (t) {
+        var a = [];
+        if (t["building:levels"]) a.push(t["building:levels"]);
+        if (t.building && t.building !== "yes") a.push(t.building);
+        return a.join(" · ");
+      },
       options: function () { return []; } }
   ];
   var BY_ID = {};
@@ -249,6 +270,7 @@
     if (!ov || !el) return null;
     var t = el.tags || {}, set = null;
     if (ov.id === "sidewalk") set = sidewalkSet(t, v);
+    else if (ov.form) set = buildingSet(t, v);
     else if (ov.text) {
       var r = Q.answerSet(Q.BY_ID[ov.qid], { t: el.t, id: el.id, tags: t, ts: el.ts }, v);
       return r;
@@ -265,11 +287,30 @@
     if (!Object.keys(set).length) return null;
     return { set: set, was: was };
   }
+  // Buildings form { levels, type }: blank fields stay as they are.
+  function buildingKinds() {
+    return Q && Q.BY_ID.building_type ? Q.BY_ID.building_type.options : [];
+  }
+  function buildingSet(t, v) {
+    if (!v || typeof v !== "object") return null;
+    var set = {};
+    var lv = String(v.levels === undefined || v.levels === null ? "" : v.levels).trim();
+    if (lv) {
+      if (!/^\d{1,3}$/.test(lv) || +lv < 1 || +lv > 200) return null;
+      set["building:levels"] = String(+lv);
+    }
+    if (v.type) {
+      var op = buildingKinds().filter(function (x) { return x.v === v.type; })[0];
+      if (!op) return null;
+      set.building = op.set.building;
+    }
+    return Object.keys(set).length ? set : null;
+  }
   function text(ov, f, lang) { var x = ov && ov[f]; return x ? (x[lang] || x.en) : ""; }
 
   var api = {
     VER: VER, LIM: LIM, OVERLAYS: OVERLAYS, BY_ID: BY_ID, SW_OPTS: SW_OPTS,
-    sides: sides, sidewalkSet: sidewalkSet, query: query, parse: parse, middle: middle,
+    sides: sides, sidewalkSet: sidewalkSet, buildingSet: buildingSet, buildingKinds: buildingKinds, query: query, parse: parse, middle: middle,
     bearing: bearing, arrows: arrows, answer: answer, legendColor: legendColor, text: text
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

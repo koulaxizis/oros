@@ -14,8 +14,8 @@ const Q = require(path.join(__dirname, "..", "maps", "quests-core.js"));
 
 const way = (id, tags, geom) => ({ t: "w", id, lat: 38, lon: 23.7, ts: 0, tags, geom: geom || [[38, 23.7], [38.001, 23.7]] });
 
-test("4 overlays, texts in EN and EL, each answer goes to a known quest", () => {
-  assert.deepEqual(V.OVERLAYS.map(o => o.id), ["lit", "surface", "sidewalk", "address"]);
+test("5 overlays, texts in EN and EL, each answer goes to a known quest", () => {
+  assert.deepEqual(V.OVERLAYS.map(o => o.id), ["lit", "surface", "sidewalk", "address", "building"]);
   V.OVERLAYS.forEach(o => {
     ["title", "q"].forEach(f => { assert.ok(o[f].en && o[f].el, o.id + " " + f); });
     assert.ok(Q.BY_ID[o.qid], o.id + " → " + o.qid);

@@ -83,6 +83,20 @@ Fix shops, cafés and other places on the real map, the way the Every Door app d
 
 Changes made on another device show `From another device` and are uploaded by that device. `Upload from here` takes them over.
 
+An orange ring on a dot means the place is missing something important (its name, or opening hours for a shop or café); the place shows what is missing.
+
+`Add place` also has `Small things (one tap)`: a bench, litter bin, bollard, street lamp, post box, drinking water, fire hydrant, defibrillator, tree and more. Put the cross on the spot and tap one.
+
+### Entrances and flats
+
+`Entrances and flats` in the Places panel shows the buildings around you (zoom in to street level) with their entrances: green when they have flat numbers or a letter, orange when not.
+
+1. Tap on a building's outline where the door is. A tap next to a corner uses that corner.
+2. Pick the kind (main entrance, staircase, other, service, garage, emergency exit), type the letter on the door (for example Β), the flat numbers (for example 5-8, or 5;6;7) and whether there are steps.
+3. Tap an existing entrance to change it.
+
+Changes wait in the panel until you tap `Upload`; they go in one changeset with your upload comment. A new entrance becomes part of the building's outline. If the building changed on OpenStreetMap meanwhile, the entrance stays in the list with a message; remove it and put it again.
+
 ## Quests (StreetComplete style)
 
 Help OpenStreetMap by answering small questions about what's around you. You don't need to know any tags.
@@ -107,6 +121,7 @@ An overlay colours the streets or buildings around you by one thing, so the gaps
 - 🛣️ `Surface`: asphalt, paving stones, gravel, ground and more.
 - 🚶 `Sidewalks`: on both sides, one side, a separate path or none. Arrows on the chosen street show its direction: left and right are as you see them walking that way.
 - 🔢 `Addresses`: which buildings have a house number. Type the number or tap `It has no number`.
+- 🏢 `Buildings`: floors and kind of building in one form (empty fields stay as they are).
 
 Zoom in to street level (buildings need one step closer). Tap a street or building, then the answer. Changes wait with your quest answers until you tap `Upload`, and count for your achievements. While an overlay is on, the quest pins are hidden; pick `None` to bring them back. The overlay you picked stays on this device.
 
@@ -167,7 +182,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
