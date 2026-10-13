@@ -368,3 +368,150 @@ test("display window: own page with the shared renderer, writes nothing, no DL-1
   assert.ok(v > tindex.indexOf("stage-core.js?") && v < tindex.indexOf("stage.js?"), "core, view, then stage.js");
   assert.match(read("time/stage.js"), /window\.open\("display\.html\?standalone"/);
 });
+
+// ---------------------------------------------------------------
+// Wave 3: paired devices (remote-link.js, time/stage-link.js)
+// ---------------------------------------------------------------
+const snapData = () => model({
+  items: [it("itaaaa1", 1, { title: "Keynote", speaker: "Maria", notes: "private: bring water" }), it("itaaaa2", 2), it("itaaaa3", 3, { ev: "evother1" })],
+  msgs: [{ id: "msaaaa1", text: "Wrap up now", mtime: 5 }]
+});
+const liveRun = () => C.select(C.normRun({ ev: "evaaaa1" }), "itaaaa1", at(9), true);
+
+test("remote link: the shared module speaks Studio's protocol; another namespace is another room and key", async () => {
+  globalThis.window = globalThis;
+  require("../remote-link.js");
+  require("../studio/remote.js");
+  const L = globalThis.OrosRemoteLink, S = globalThis.StudioRemote._test;
+  const a = await L.derive("123456"), s = await S.derive("123456"), t = await L.derive("123456", "oros-time-stage");
+  assert.equal(a.room, s.room, "default namespace = Studio's rooms");
+  assert.notEqual(t.room, a.room);
+  const box = await S.seal(s.key, { k: "app", d: { t: "hi" } });
+  assert.deepEqual(await L.unseal(a.key, box), { k: "app", d: { t: "hi" } }, "and Studio's key");
+  assert.equal(await L.unseal(t.key, box), null, "Time's key opens nothing of Studio's");
+  assert.equal((await L.derive("123456", "Bad NS!")).room, a.room, "a bad namespace falls back");
+  assert.match(L.newCode(), /^[1-9][0-9]{5}$/);
+  const src = read("remote-link.js");
+  assert.match(src, /if \(okRid && r !== okRid\) \{ frame\(\{ k: "deny" \}\); return; \}/, "one device per code");
+  assert.match(src, /var okRid = self\.role === "host" && RID_RE\.test\(o\.allow \|\| ""\) \? o\.allow : ""/, "only a well-formed id comes back after a reload");
+  assert.doesNotMatch(src, /\beval\(|new Function|innerHTML|document\.write/);
+});
+
+test("devState: only the open event, no private notes, the logo stays home, messages only for the remote", () => {
+  const st = C.devState(snapData(), liveRun(), { black: true, logoAt: 99, layout: "agenda" }, "display", 1234);
+  assert.equal(st.t, "st");
+  assert.equal(st.role, "display");
+  assert.equal(st.now, 1234);
+  assert.deepEqual(st.items.map((x) => x.id), ["itaaaa1", "itaaaa2"]);
+  assert.ok(!json(st).includes("private"), "notes are never sent");
+  assert.ok(!("notes" in st.items[0]) && !("mtime" in st.items[0]));
+  assert.equal(st.show.logoAt, 0);
+  assert.equal(st.show.black, true);
+  assert.deepEqual(st.msgs, []);
+  assert.deepEqual(C.devState(snapData(), liveRun(), {}, "remote", 0).msgs, ["Wrap up now"]);
+  assert.equal(C.devState(snapData(), liveRun(), {}, "admin", 0), null);
+  assert.equal(C.devState(snapData(), C.normRun({}), {}, "moderator", 0).ev, null, "no open event: nothing to show");
+});
+
+test("devState: a very long rundown is cut around the live item and fits the link", () => {
+  const items = [];
+  for (let i = 0; i < 300; i++) items.push(it("itlong" + String(i).padStart(3, "0"), i, { title: "A long talk title number " + i + " ".repeat(5) + "x".repeat(150), speaker: "Speaker with a long name " + "y".repeat(90) }));
+  const data = model({ items });
+  const run = C.select(C.normRun({ ev: "evaaaa1" }), "itlong150", at(9), true);
+  const st = C.devState(data, run, {}, "moderator", 0);
+  assert.ok(json(st).length <= 11000, "fits: " + json(st).length);
+  assert.equal(st.cut, true);
+  assert.ok(st.items.some((x) => x.id === "itlong150"), "the live item is in it");
+  assert.ok(st.items[0].id <= "itlong150" && st.items.length > 3);
+  const short = C.devState(snapData(), liveRun(), {}, "moderator", 0);
+  assert.equal(short.cut, undefined);
+});
+
+test("devAdopt: what a device receives is checked field by field and draws like the PC", () => {
+  const st = C.devState(snapData(), liveRun(), { msg: { text: "Hi", on: true } }, "display", at(9, 1));
+  const a = C.devAdopt(JSON.parse(json(st)));
+  assert.equal(a.role, "display");
+  assert.equal(a.data.events.length, 1);
+  assert.deepEqual(a.data.items.map((x) => x.id), ["itaaaa1", "itaaaa2"]);
+  const host = C.timer(C.rundown(snapData(), "evaaaa1")[0], snapData().events[0], liveRun(), at(9, 3));
+  const dev = C.timer(a.data.items[0], a.data.events[0], a.run, at(9, 3));
+  assert.deepEqual(dev, host, "same clock from the same instant");
+  assert.equal(a.show.msg.text, "Hi");
+  // junk and forgeries
+  assert.equal(C.devAdopt(null), null);
+  assert.equal(C.devAdopt({ t: "st", v: 2, role: "display" }), null);
+  assert.equal(C.devAdopt({ t: "st", v: 1, role: "root" }), null);
+  const bad = C.devAdopt({
+    t: "st", v: 1, role: "remote", ev: { id: "evaaaa1", name: "<img src=x onerror=alert(1)>\n" + "z".repeat(500) },
+    items: [it("itaaaa1", 1, { notes: "smuggled" }), it("itbbbb1", 2, { ev: "evzzzz9" }), { id: "../x", ev: "evaaaa1" }],
+    run: { cur: "itaaaa1", startedAt: "soon", adj: 1e12 }, show: { layout: "evil", msg: { text: 5 } }, msgs: ["ok", 7, "", "x".repeat(400)]
+  });
+  assert.equal(bad.data.events[0].name.length, 120, "capped, kept as text");
+  assert.ok(!bad.data.events[0].name.includes("\n"));
+  assert.deepEqual(bad.data.items.map((x) => x.id), ["itaaaa1"], "other events and bad ids dropped");
+  assert.equal(bad.data.items[0].notes, "");
+  assert.equal(bad.run.startedAt, 0);
+  assert.equal(bad.run.adj, 24 * 3600);
+  assert.equal(bad.show.layout, "full");
+  assert.deepEqual(bad.msgs.map((m) => m.length), [2, 200]);
+});
+
+test("devCommand: each role may only do its own things", () => {
+  const ok = (role, c) => C.devCommand(role, c);
+  assert.deepEqual(ok("remote", { t: "a", a: "go" }), { t: "a", a: "go" });
+  assert.deepEqual(ok("remote", { t: "add", s: -300 }), { t: "add", s: -300 });
+  assert.equal(ok("remote", { t: "add", s: 3600 }), null, "only ±1 and ±5 minutes");
+  assert.equal(ok("remote", { t: "a", a: "jump" }), null);
+  assert.deepEqual(ok("remote", { t: "black", on: true }), { t: "black", on: true });
+  assert.equal(ok("remote", { t: "black", on: "yes" }), null);
+  assert.deepEqual(ok("remote", { t: "msg", text: "  Wrap\nup ", color: "pink", flash: 1 }), { t: "msg", text: "Wrap up", color: "white", flash: false });
+  assert.equal(ok("remote", { t: "msg", text: "   " }), null);
+  assert.deepEqual(ok("remote", { t: "msgoff" }), { t: "msgoff" });
+  // the moderator asks, nothing else; the display only listens
+  ["moderator", "display"].forEach((r) => {
+    [{ t: "a", a: "go" }, { t: "add", s: 60 }, { t: "black", on: true }, { t: "msg", text: "x" }, { t: "msgoff" }].forEach((c) => assert.equal(ok(r, c), null, r + " " + c.t));
+  });
+  assert.deepEqual(ok("moderator", { t: "ask", text: "1 more minute please", id: "abc12345" }), { t: "ask", text: "1 more minute please", id: "abc12345" });
+  assert.equal(ok("moderator", { t: "ask", text: "x", id: "<b>" }).id, "");
+  assert.equal(ok("remote", { t: "ask", text: "x" }), null);
+  assert.equal(ok("display", { t: "ask", text: "x" }), null);
+  ["remote", "display", "moderator"].forEach((r) => {
+    assert.deepEqual(ok(r, { t: "hi" }), { t: "hi" });
+    assert.deepEqual(ok(r, { t: "leave" }), { t: "leave" });
+    assert.deepEqual(ok(r, { t: "tk", c: 5 }), { t: "tk", c: 5 });
+    assert.equal(ok(r, { t: "tk", c: "5" }), null);
+  });
+  [null, 5, "go", {}, { t: 1 }, { t: "__proto__" }].forEach((c) => assert.equal(ok("remote", c), null));
+});
+
+test("clockOffset: the shortest round trip wins; junk is ignored", () => {
+  assert.equal(C.clockOffset([]), 0);
+  assert.equal(C.clockOffset([{ c: 1000, h: 5050, r: 1100 }]), 4000);
+  assert.equal(C.clockOffset([{ c: 1000, h: 9000, r: 3000 }, { c: 4000, h: 8010, r: 4020 }, { c: 0, h: 0, r: -5 }, { c: NaN, h: 1, r: 2 }]), 4000);
+});
+
+test("page: paired devices wired after stage.js, strings in both languages, nothing written to the PC's data", () => {
+  const html = read("time/index.html");
+  const iStage = html.indexOf('src="stage.js?'), iQr = html.indexOf('src="../qr/qr-encode.js?'), iL = html.indexOf('src="../remote-link.js?'), iSl = html.indexOf('src="stage-link.js?');
+  assert.ok(iStage > 0 && iQr > iStage && iL > iQr && iSl > iL, "stage.js, qr, remote-link, stage-link");
+  ["stg-join", "sl-add", "sl-list", "sl-asks", "sl-pair-dlg", "sl-qr", "sl-code", "sl-allow", "sl-deny", "sl-join-dlg", "sl-join-code", "sl-dev", "sd-root", "sd-ctl", "sd-askp", "sd-go", "sd-leave"]
+    .forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  const src = read("time/stage-link.js");
+  const block = (lang) => {
+    const i = src.indexOf("    " + lang + ": {"), j = src.indexOf("\n    }", i);
+    return new Set([...src.slice(i, j).matchAll(/"(sl\.[a-z0-9.]+)":/g)].map((m) => m[1]));
+  };
+  const en = block("en"), el = block("el");
+  assert.ok(en.size > 60);
+  assert.deepEqual([...en].sort(), [...el].sort(), "same keys in both languages");
+  [...html.matchAll(/data-i18n-l(?:-ph|-a)?="([^"]+)"/g)].map((m) => m[1]).concat([...src.matchAll(/t\("(sl\.[a-z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith(".")))
+    .forEach((k) => assert.ok(en.has(k), "missing string " + k));
+  assert.doesNotMatch(src, /innerHTML|\beval\(|new Function|insertAdjacentHTML/);
+  assert.doesNotMatch(src, /markDirty|registerSlice|"oros-time-stage"\s*,/, "devices never touch the synced data");
+  assert.match(src, /var c = C\.devCommand\(d\.role, m\);\s*if \(!c\) return;/, "every command is checked first");
+  assert.match(src, /var a = C\.devAdopt\(m\);\s*if \(!a\) return;/, "every snapshot is checked first");
+  assert.match(src, /ns: NS/);
+  assert.match(read("time/stage.js"), /window\.OrosStage = \{/);
+  assert.match(read("time/help.en.txt"), /another device/i);
+  assert.match(read("time/help.el.txt"), /άλλη συσκευή/i);
+});

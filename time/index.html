@@ -129,6 +129,7 @@
           <select id="stg-ev" data-i18n-s="stg.ev"></select>
           <button id="stg-ev-new" type="button" class="mini" data-i18n-s="stg.ev.new"></button>
           <button id="stg-ev-edit" type="button" class="mini" data-i18n-s="stg.ev.edit"></button>
+          <button id="stg-join" type="button" class="mini" data-i18n-l="sl.join"></button>
         </div>
         <div id="stg-empty" hidden>
           <p data-i18n-s="stg.empty"></p>
@@ -145,6 +146,7 @@
             <div id="stg-live-msg" class="stg-live-msg" hidden></div>
             <div id="stg-live-black" class="stg-live-black" data-i18n-s="stg.live.black" hidden></div>
           </div>
+          <div id="sl-asks" class="sl-asks" role="alert" hidden></div>
           <div class="stg-ctl">
             <button id="stg-prev" type="button" class="btn" data-i18n-s="stg.prev"></button>
             <button id="stg-go" type="button" class="btn prim"></button>
@@ -188,6 +190,12 @@
               <button id="stg-logo-x" type="button" class="mini" data-i18n-s="stg.logo.x" hidden></button>
             </span>
           </div>
+          <div class="sec-head stg-head">
+            <span data-i18n-l="sl.devs"></span>
+            <button id="sl-add" type="button" class="mini" data-i18n-l="sl.add"></button>
+          </div>
+          <ul id="sl-list" class="sl-list"></ul>
+          <p class="sl-hint" data-i18n-l="sl.hint"></p>
           <div class="sec-head stg-head">
             <span data-i18n-s="stg.rundown"></span>
             <button id="stg-add" type="button" class="mini" data-i18n-s="stg.add"></button>
@@ -245,6 +253,96 @@
       <button id="sv-fs" type="button" class="btn" data-i18n-s="stg.fs"></button>
       <button id="sv-close" type="button" class="btn" data-i18n-s="stg.close"></button>
     </div>
+  </div>
+
+  <!-- Stage: connect a device (time/stage-link.js) -->
+  <dialog id="sl-pair-dlg" class="stg-dlg" aria-labelledby="sl-pair-h">
+    <h3 id="sl-pair-h" data-i18n-l="sl.pair.h"></h3>
+    <fieldset id="sl-pick" class="sl-pick">
+      <legend data-i18n-l="sl.pair.role"></legend>
+      <label class="sl-opt"><input type="radio" name="sl-role" value="remote" checked><span><b data-i18n-l="sl.r.remote"></b><small data-i18n-l="sl.rd.remote"></small></span></label>
+      <label class="sl-opt"><input type="radio" name="sl-role" value="display"><span><b data-i18n-l="sl.r.display"></b><small data-i18n-l="sl.rd.display"></small></span></label>
+      <label class="sl-opt"><input type="radio" name="sl-role" value="moderator"><span><b data-i18n-l="sl.r.moderator"></b><small data-i18n-l="sl.rd.moderator"></small></span></label>
+    </fieldset>
+    <p id="sl-full" class="stg-note" data-i18n-l="sl.pair.full" hidden></p>
+    <div id="sl-code-box" class="sl-code-box" hidden>
+      <p class="sl-how" data-i18n-l="sl.pair.how"></p>
+      <p id="sl-code" class="sl-code" aria-live="polite"></p>
+      <canvas id="sl-qr" class="sl-qr" width="232" height="232" aria-hidden="true"></canvas>
+      <p id="sl-url" class="sl-url"></p>
+    </div>
+    <div id="sl-ask-box" class="sl-ask-box" hidden>
+      <p id="sl-ask-text" role="alert"></p>
+      <div class="dlg-row">
+        <button id="sl-deny" type="button" class="btn" data-i18n-l="sl.deny"></button>
+        <button id="sl-allow" type="button" class="btn prim" data-i18n-l="sl.allow"></button>
+      </div>
+    </div>
+    <p id="sl-pair-st" class="sl-st" role="status"></p>
+    <div class="dlg-row">
+      <button id="sl-pair-go" type="button" class="btn prim" data-i18n-l="sl.pair.go"></button>
+      <button id="sl-pair-close" type="button" class="btn" data-i18n-l="sl.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: join Time on another device -->
+  <dialog id="sl-join-dlg" class="stg-dlg" aria-labelledby="sl-join-h">
+    <h3 id="sl-join-h" data-i18n-l="sl.join.h"></h3>
+    <label for="sl-join-code" class="sl-lbl" data-i18n-l="sl.code"></label>
+    <div class="sl-join-row">
+      <input id="sl-join-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7" pattern="[0-9 ]*">
+      <button id="sl-join-go" type="button" class="btn prim" data-i18n-l="sl.connect"></button>
+    </div>
+    <p id="sl-join-st" class="sl-st" role="status"></p>
+    <div class="dlg-row">
+      <button id="sl-join-close" type="button" class="btn" data-i18n-l="sl.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Stage: this device is paired with Time on another one -->
+  <div id="sl-dev" hidden role="dialog" aria-modal="true" aria-labelledby="sd-role">
+    <div id="sd-bar" class="sd-bar on">
+      <span id="sd-role" class="sd-role"></span>
+      <span id="sd-link" class="sd-link"></span>
+      <button id="sd-fs" type="button" class="btn" data-i18n-l="sl.fs"></button>
+      <button id="sd-leave" type="button" class="btn" data-i18n-l="sl.leave"></button>
+    </div>
+    <div id="sd-view" class="sd-view"><div id="sd-root"></div></div>
+    <div id="sd-black-note" class="sd-note" data-i18n-l="sl.isblack" hidden></div>
+    <div id="sd-ctl" class="sd-ctl" hidden>
+      <div class="sd-row">
+        <button id="sd-prev" type="button" class="btn" data-i18n-l="sl.prev"></button>
+        <button id="sd-go" type="button" class="btn prim"></button>
+        <button id="sd-next" type="button" class="btn" data-i18n-l="sl.next"></button>
+      </div>
+      <div class="sd-row">
+        <button id="sd-minus" type="button" class="btn" data-i18n-l="sl.minus"></button>
+        <button id="sd-plus" type="button" class="btn" data-i18n-l="sl.plus"></button>
+        <button id="sd-reset" type="button" class="btn" data-i18n-l="sl.reset"></button>
+        <button id="sd-black" type="button" class="btn"></button>
+      </div>
+      <div class="sd-msg">
+        <span class="sd-h" data-i18n-l="sl.msg"></span>
+        <input id="sd-msg" type="text" maxlength="200" data-i18n-l-ph="sl.msg.ph" data-i18n-l-a="sl.msg">
+        <div class="sd-row sd-row-l">
+          <select id="sd-msg-color" data-i18n-l-a="sl.msg.color"></select>
+          <label class="chk"><input id="sd-msg-flash" type="checkbox"><span data-i18n-l="sl.msg.flash"></span></label>
+          <button id="sd-msg-send" type="button" class="btn prim" data-i18n-l="sl.msg.send"></button>
+          <button id="sd-msg-hide" type="button" class="btn" data-i18n-l="sl.msg.hide" hidden></button>
+        </div>
+        <div id="sd-presets" class="quick-chips sd-chips"></div>
+      </div>
+    </div>
+    <div id="sd-askp" class="sd-ctl" hidden>
+      <span class="sd-h" data-i18n-l="sl.ask.h"></span>
+      <div id="sd-asks" class="quick-chips sd-chips"></div>
+      <div class="sd-row sd-row-l">
+        <input id="sd-ask" type="text" maxlength="120" data-i18n-l-ph="sl.ask.ph" data-i18n-l-a="sl.ask.h">
+        <button id="sd-ask-send" type="button" class="btn prim" data-i18n-l="sl.ask.send"></button>
+      </div>
+      <p id="sd-ask-st" class="sd-ask-st" role="status"></p>
+    </div>
+    <p id="sd-cut" class="sd-cut" data-i18n-l="sl.cut" hidden></p>
   </div>
 
   <!-- Stage: event settings -->
@@ -321,6 +419,9 @@
   <script src="stage-core.js?v=1.52.00"></script>
   <script src="stage-view.js?v=1.52.00"></script>
   <script src="stage.js?v=1.52.00"></script>
+  <script src="../qr/qr-encode.js?v=1.52.00"></script>
+  <script src="../remote-link.js?v=1.52.00"></script>
+  <script src="stage-link.js?v=1.52.00"></script>
 
 </body>
 </html>
