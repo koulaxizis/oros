@@ -2954,6 +2954,7 @@ function wire() {
   });
 
   injectXlButtons();   /* #9: XLSX/ODS import + export buttons */
+  injectNotionButton();   /* wave 6E: Import from Notion */
 
   window.addEventListener("beforeunload", function () {
     if (editing) commitEdit(0, 0);
@@ -2969,6 +2970,139 @@ document.addEventListener("keydown", function (e) {
       typeof p.orosShortcuts.handle === "function")) return;
   if (p.orosShortcuts.handle(e)) e.stopPropagation();
 }, true);
+
+/* ===== Import from Notion (integrations wave 6E, platforms.js) =====
+   The plan comes from links/sheets.js; this is its one write: a new
+   sheet per database (row 1 in bold) and, when asked, the values of a
+   sheet imported before (its formats stay). Undo deletes the new
+   sheets (tombstoned, like any deletion here) and puts back the old
+   values. Only inside the orOS shell.                              */
+var PLAT = window.OrosSheetPlatforms || null;
+function platformData() {
+  var sheets = {}, k;
+  state.sheets.forEach(function (sh) { sheets[sh.id] = []; });
+  for (k in state.cells) {
+    var pk = k.split("|"), g = sheets[pk[0]];
+    if (!g) continue;
+    var r = +pk[1], c = +pk[2];
+    while (g.length <= r) g.push([]);
+    while (g[r].length <= c) g[r].push("");
+    g[r][c] = state.cells[k].v;
+  }
+  return { sheets: sheets, deleted: state.deleted };
+}
+function platformApply(pl, doneText) {
+  var ts = now(), back = { sheets: [], cells: [] }, first = null;
+  pl.add.forEach(function (a) {
+    if (getSheetById(a.id)) return;
+    var rows = a.rows.slice(0, XL_ROWS_CAP), maxCols = 0, r, c;
+    for (r = 0; r < rows.length; r++) if (rows[r].length > maxCols) maxCols = rows[r].length;
+    state.sheets.push({
+      id: a.id, name: a.name, bi: undefined,
+      rows: Math.min(Math.max(ROWS, rows.length + 5), XL_ROWS_CAP),
+      cols: Math.min(Math.max(COLS, maxCols), XL_COLS_CAP),
+      cw: {}, pos: maxPos() + 1, mtime: ts
+    });
+    delete state.deleted[a.id];
+    for (r = 0; r < rows.length; r++)
+      for (c = 0; c < rows[r].length && c < XL_COLS_CAP; c++) {
+        if (rows[r][c] === "") continue;
+        var rec = { v: rows[r][c], mtime: ts };
+        if (r === 0) rec.f = { b: 1 };
+        state.cells[cellKey(a.id, r, c)] = rec;
+      }
+    back.sheets.push(a.id);
+    if (!first) first = a.id;
+  });
+  pl.upd.forEach(function (u) {
+    var sh = getSheetById(u.id);
+    if (!sh) return;
+    var rows = u.rows.slice(0, XL_ROWS_CAP), want = {}, r, c, k, maxCols = 0;
+    for (r = 0; r < rows.length; r++)
+      for (c = 0; c < rows[r].length && c < XL_COLS_CAP; c++) {
+        if (rows[r][c] !== "") want[cellKey(u.id, r, c)] = rows[r][c];
+        if (c + 1 > maxCols) maxCols = c + 1;
+      }
+    var keys = {};
+    for (k in state.cells) if (k.indexOf(u.id + "|") === 0) keys[k] = 1;
+    for (k in want) keys[k] = 1;
+    for (k in keys) {
+      var cur = state.cells[k], pk = k.split("|");
+      if (Object.prototype.hasOwnProperty.call(want, k)) {
+        if (cur && cur.v === want[k]) continue;
+        back.cells.push({ key: k, before: snapCell(u.id, +pk[1], +pk[2]) });
+        rawSet(u.id, +pk[1], +pk[2], want[k], cur && cur.f);
+      } else if (cur && cur.v !== "") {
+        back.cells.push({ key: k, before: snapCell(u.id, +pk[1], +pk[2]) });
+        if (cur.f) rawSet(u.id, +pk[1], +pk[2], "", cur.f);
+        else rawDel(u.id, +pk[1], +pk[2]);
+      }
+    }
+    var nr = Math.min(Math.max(sh.rows, rows.length + 5), XL_ROWS_CAP), nc = Math.min(Math.max(sh.cols, maxCols), XL_COLS_CAP);
+    if (nr !== sh.rows || nc !== sh.cols) { sh.rows = nr; sh.cols = nc; sh.mtime = ts; }
+    if (!first) first = u.id;
+  });
+  if (!back.sheets.length && !back.cells.length) return true;
+  platformDone(first);
+  notifyUndo(doneText, function () { platformUndo(back); });
+  return true;
+}
+function platformUndo(back) {
+  back.cells.slice().reverse().forEach(function (e) {
+    var pk = e.key.split("|");
+    if (!getSheetById(pk[0])) return;
+    if (e.before === null) rawDel(pk[0], +pk[1], +pk[2]);
+    else rawSet(pk[0], +pk[1], +pk[2], e.before.v, e.before.f);
+  });
+  var ts = now();
+  back.sheets.forEach(function (id) {
+    if (!getSheetById(id) || state.sheets.length <= 1) return;
+    state.sheets = state.sheets.filter(function (sh) { return sh.id !== id; });
+    state.deleted[id] = ts;
+    for (var k in state.cells) if (k.indexOf(id + "|") === 0) delete state.cells[k];
+  });
+  if (!getSheetById(actSID)) { actSID = state.sheets[0].id; saveActive(); }
+  platformDone(null);
+  notifyTransient(PLAT ? PLAT.undone() : "");
+}
+function platformDone(id) {
+  invalidateEval();
+  markDirty();
+  saveNow();
+  if (id && id !== actSID) { switchTo(id); return; }
+  DISP = {};
+  collapseSel(0, 0);
+  buildGrid();
+  renderTabs();
+  renderGrid();
+  renderSelection();
+}
+/* a notice with an Undo button (the shell's notifications) */
+function notifyUndo(text, fn) {
+  try {
+    var N = (window.parent && window.parent.orosNotifs) || window.orosNotifs || null;
+    if (N && typeof N.transient === "function") {
+      N.transient({ ns: "spreadsheet", title: text, body: "", action: { label: PLAT ? PLAT.undoLabel() : "Undo", fn: fn } });
+      return;
+    }
+  } catch (e) { /* cross-origin guard */ }
+  toast(text);
+}
+/* the cloud button next to CSV / XL (only when the shell can call Notion) */
+function injectNotionButton() {
+  var host = $("btn-xl-exp") || $("btn-csv-exp");
+  if (!PLAT || !PLAT.has() || !host || $("btn-notion")) return;
+  PLAT.init({ lang: LANG, data: platformData, apply: platformApply });
+  var b = document.createElement("button");
+  b.type = "button";
+  b.id = "btn-notion";
+  b.className = host.className;
+  b.title = PLAT.label();
+  b.setAttribute("aria-label", PLAT.label());
+  b.innerHTML = svg('<path d="M14.5 15.5H7a5 5 0 1 1 4.6-7h1.4a3.5 3.5 0 1 1 0 7z"/><path d="M10 9.5v4"/><path d="m8.3 11.8 1.7 1.7 1.7-1.7"/>') + "Notion";
+  b.addEventListener("click", function () { if (editing) commitEdit(0, 0); PLAT.open(); });
+  host.parentElement.insertBefore(b, host.nextSibling);
+}
 
 /* ===== "Open in Spreadsheet" from another app (Bible BR-S1) =====
    target = { newSheet: { name, rows: [[cell, …], …], sum: [col, …] } }

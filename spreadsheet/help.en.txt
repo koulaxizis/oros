@@ -41,6 +41,16 @@ Import and export (buttons at the bottom right):
 - `Import Excel / Calc (.xlsx, .ods, .xls)` adds every sheet of the file as a new sheet.
 - `Export Excel / Calc` saves all sheets as `Excel (.xlsx)` or `LibreOffice Calc (.ods)`.
 
+## Import from Notion
+The `Notion` button (cloud) next to them brings in the Notion databases you shared with your Notion integration, one sheet per database. Connect Notion first in [Settings](app:settings) › `Connected services`, then in Notion open each database, ••• › `Connections`, and add your integration.
+- `Read the account` lists what would come: new sheets, updated, unchanged. Then `Import`.
+- Row 1 holds the property names in bold (the title first), then one row per entry: text, numbers, dates (`2026-10-13 09:30`, a range with →), checkboxes as `TRUE`/`FALSE`, tags joined with commas, a relation as the number of linked entries.
+- Every value is plain text: one that starts with = + - or @ gets an apostrophe, so it never runs as a formula.
+- Import again to bring in new databases. A sheet that came before is left as it is, unless you tick `Replace the values of sheets imported before`: then its values become the database's (your edits in it are replaced; its name and formats stay).
+- A sheet you deleted here doesn't come back, unless you tick `Bring back what was deleted here`.
+- `Undo` in the notice takes the import back.
+- orOS only reads Notion: nothing changes there. Notion doesn't answer browsers, so the reading goes through the orOS relay (which keeps nothing). Up to 20 databases and 499 rows each; pages, comments and files stay in Notion ([Notes](app:notes) brings in pages).
+
 See also [Backup](help:t/backup).
 
 ## Keyboard shortcuts
