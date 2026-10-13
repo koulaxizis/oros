@@ -67,6 +67,7 @@
     postmark:   { host: "smtp.postmarkapp.com", port: 587, rate: 1, cap: 100, hdr: ["X-PM-Message-Stream", "broadcast"] },
     sendgrid:   { host: "smtp.sendgrid.net", port: 587, rate: 1, cap: 100, user: "apikey" },
     smtp2go:    { host: "mail.smtp2go.com", port: 587, rate: 1, cap: 200 },
+    mailersend: { host: "smtp.mailersend.net", port: 587, rate: 1, cap: 100 },   // MailerLite's sending service
     gmail:      { host: "smtp.gmail.com", port: 465, rate: 6, cap: 450 },
     other:      { host: "", port: 587, rate: 6, cap: 450 }
   };

@@ -6,6 +6,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 1.62.00
 - CRM and Budget: import from Invoice Ninja (invoicing.co or your own install). CRM brings in its active clients with their contacts and VAT ID; Budget its payments received, net of refunds. orOS only reads Invoice Ninja; connect it in Settings › Connected services.
+- Newsletter: MailerSend (MailerLite's sending service) is now in the provider list.
 
 ## Version 1.61.00
 - Budget: import your Stripe payments. Charges come in as income, Stripe's fees and refunds as expenses; payouts to your bank are left out. orOS only reads Stripe, with a restricted key you connect in Settings › Connected services.
