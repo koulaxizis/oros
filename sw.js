@@ -1092,6 +1092,8 @@ var PRECACHE_URLS = [
   "maps/planner.js",
   "maps/fav-core.js",
   "maps/fav.js",
+  "maps/discover-core.js",
+  "maps/discover.js",
   "maps/maps.js",
   "maps/osm.js",
   "maps/osm-api.js",
