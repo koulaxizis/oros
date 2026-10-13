@@ -44,3 +44,11 @@ test("panel item click closes the panel when the notice opened something", () =>
   assert.match(body, /const opened = openTarget\(item\);/);
   assert.match(body, /if \(opened\) closeNotificationPanel\(\);/);
 });
+
+test("an OS notification click follows the deep link like the in-tab toast", () => {
+  const start = src.indexOf("wn.onclick = function () {");
+  assert.ok(start > 0);
+  const body = src.slice(start, src.indexOf("};", start));
+  assert.match(body, /openTarget\(item\);/);
+  assert.match(body, /markItemRead\(item\);/);
+});
