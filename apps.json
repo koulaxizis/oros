@@ -312,6 +312,15 @@
       "today": ["core.js", "today.js"]
     },
     {
+      "id": "signature",
+      "name": "Email Signature",
+      "category": "Business",
+      "icon": "signature",
+      "url": "signature/",
+      "type": "internal",
+      "search": "search.js"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",

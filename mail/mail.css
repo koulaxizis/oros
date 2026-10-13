@@ -488,6 +488,8 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-hint:empty { display: none; }
 .dlg-hint.dim { opacity: 0.8; }
 .dlg-text { font-size: 14px; line-height: 1.5; }
+.ml-sig-pv { margin: 12px 0 4px; padding: 10px 12px; max-height: 40vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.ml-sig-pv img { max-width: 100%; height: auto; }
 .dlg-err { font-size: 13px; color: var(--danger); margin-top: 10px; line-height: 1.4; }
 .dlg-err:empty { display: none; }
 .srv { margin-top: 14px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 12px; }
