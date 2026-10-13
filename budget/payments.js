@@ -2,7 +2,7 @@
 // orOS Budget — payments (budget/payments.js)
 // Bring a Stripe account's balance history into Budget (integrations
 // wave 4B): charges as income, Stripe's fees, refunds and disputes as
-// expenses. The account and its restricted key live in the shell
+// expenses; or an Invoice Ninja account's payments as income (4C). The account and its restricted key live in the shell
 // (Settings › Connected services, parent.orosLinks); this file never
 // sees a key. links/pay.js builds the requests, reads the answers and
 // makes the plan; here are the dialog and the one write (with Undo).
@@ -16,12 +16,12 @@
 
   var S = {
     en: {
-      btn: "Import from Stripe", title: "Stripe",
-      intro: "Bring your Stripe payments here: charges as income, Stripe's fees, refunds and disputes as expenses. Payouts to your bank are left out (they are your own money moving). orOS only reads Stripe.",
-      none: "Connect Stripe in Settings › Connected services first.",
-      openSettings: "Open Connected services", noShell: "Open Budget from the orOS desktop to import from Stripe.",
-      acct: "Stripe account", from: "From", catIn: "Income category", catOut: "Expense category", ac: "Budget account",
-      read: "Read Stripe", reading: "Reading Stripe… {n}",
+      btn: "Import from Stripe or Invoice Ninja", title: "Payments",
+      intro: "Bring your payments here. Stripe: charges as income, Stripe's fees, refunds and disputes as expenses; payouts to your bank are left out (they are your own money moving). Invoice Ninja: payments received, net of refunds, as income. orOS only reads them.",
+      none: "Connect Stripe or Invoice Ninja in Settings › Connected services first.",
+      openSettings: "Open Connected services", noShell: "Open Budget from the orOS desktop to import payments.",
+      acct: "Account", from: "From", catIn: "Income category", catOut: "Expense category", ac: "Budget account",
+      read: "Read the account", reading: "Reading… {n}",
       plan: "{i} income and {o} expense entries to add · {s} already here",
       gone: "{n} deleted here earlier: not brought back.",
       otherCur: "{n} in another currency than Budget's ({cur}): left out.",
@@ -29,19 +29,20 @@
       capped: "More than {n} transactions; only the first {n} were read. Pick a later start date.",
       nothing: "Nothing new: Budget already has everything.",
       go: "Import", done: "Imported: {n} entries", fee: "Stripe fee",
-      "err.auth": "Stripe refused the key. Check it in Settings › Connected services.",
-      "err.denied": "The key can't read the balance. Give the restricted key read access to Balance.",
+      "err.auth": "The platform refused the key. Check it in Settings › Connected services.",
+      "err.denied": "The key can't read the payments. For Stripe, give the restricted key read access to Balance.",
       "err.keys": "This device doesn't have the account's key yet. Enter it in Settings › Connected services.",
-      "err.offline": "You're offline.", "err.busy": "Stripe asks to slow down. Try again in a minute.",
-      "err.other": "Couldn't reach Stripe. Try again later.", close: "Close"
+      "err.offline": "You're offline.", "err.busy": "The platform asks to slow down. Try again in a minute.",
+      "err.other": "Couldn't reach the platform. Try again later.", close: "Close",
+      "p.stripe": "Stripe", "p.ininja": "Invoice Ninja"
     },
     el: {
-      btn: "Εισαγωγή από Stripe", title: "Stripe",
-      intro: "Φέρε εδώ τις πληρωμές σου από το Stripe: οι χρεώσεις ως έσοδα, οι προμήθειες του Stripe, οι επιστροφές και οι αμφισβητήσεις ως έξοδα. Οι μεταφορές στην τράπεζά σου μένουν έξω (είναι δικά σου χρήματα που μετακινούνται). Το orOS μόνο διαβάζει το Stripe.",
-      none: "Σύνδεσε πρώτα το Stripe στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
-      openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε τα Έσοδα & Έξοδα από την επιφάνεια εργασίας του orOS για εισαγωγή από Stripe.",
-      acct: "Λογαριασμός Stripe", from: "Από", catIn: "Κατηγορία εσόδων", catOut: "Κατηγορία εξόδων", ac: "Λογαριασμός εδώ",
-      read: "Ανάγνωση Stripe", reading: "Ανάγνωση Stripe… {n}",
+      btn: "Εισαγωγή από Stripe ή Invoice Ninja", title: "Πληρωμές",
+      intro: "Φέρε εδώ τις πληρωμές σου. Stripe: οι χρεώσεις ως έσοδα, οι προμήθειες του Stripe, οι επιστροφές και οι αμφισβητήσεις ως έξοδα· οι μεταφορές στην τράπεζά σου μένουν έξω (είναι δικά σου χρήματα που μετακινούνται). Invoice Ninja: οι πληρωμές που εισπράχθηκαν, μείον τις επιστροφές, ως έσοδα. Το orOS μόνο τα διαβάζει.",
+      none: "Σύνδεσε πρώτα Stripe ή Invoice Ninja στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε τα Έσοδα & Έξοδα από την επιφάνεια εργασίας του orOS για εισαγωγή πληρωμών.",
+      acct: "Λογαριασμός", from: "Από", catIn: "Κατηγορία εσόδων", catOut: "Κατηγορία εξόδων", ac: "Λογαριασμός εδώ",
+      read: "Ανάγνωση λογαριασμού", reading: "Ανάγνωση… {n}",
       plan: "{i} έσοδα και {o} έξοδα για προσθήκη · {s} υπάρχουν ήδη",
       gone: "{n} διαγράφηκαν εδώ παλιότερα: δεν επανέρχονται.",
       otherCur: "{n} σε άλλο νόμισμα από αυτό της εφαρμογής ({cur}): μένουν έξω.",
@@ -49,11 +50,12 @@
       capped: "Πάνω από {n} συναλλαγές· διαβάστηκαν μόνο οι πρώτες {n}. Διάλεξε μεταγενέστερη ημερομηνία.",
       nothing: "Τίποτα νέο: όλα υπάρχουν ήδη εδώ.",
       go: "Εισαγωγή", done: "Εισαγωγή: {n} κινήσεις", fee: "Προμήθεια Stripe",
-      "err.auth": "Το Stripe απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
-      "err.denied": "Το κλειδί δεν μπορεί να διαβάσει το υπόλοιπο. Δώσε στο restricted key δικαίωμα ανάγνωσης (Read) στο Balance.",
+      "err.auth": "Η πλατφόρμα απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "err.denied": "Το κλειδί δεν μπορεί να διαβάσει τις πληρωμές. Για το Stripe, δώσε στο restricted key δικαίωμα ανάγνωσης (Read) στο Balance.",
       "err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
-      "err.offline": "Είσαι εκτός σύνδεσης.", "err.busy": "Το Stripe ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
-      "err.other": "Δεν ήταν δυνατή η σύνδεση με το Stripe. Δοκίμασε αργότερα.", close: "Κλείσιμο"
+      "err.offline": "Είσαι εκτός σύνδεσης.", "err.busy": "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "err.other": "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.", close: "Κλείσιμο",
+      "p.stripe": "Stripe", "p.ininja": "Invoice Ninja"
     }
   };
   function t(k, params) {
@@ -67,7 +69,7 @@
   }
   function accounts() {
     var Lk = links();
-    return Lk ? Lk.list().filter(function (a) { return a.p === "stripe"; }) : [];
+    return Lk ? Lk.list().filter(function (a) { return a.p === "stripe" || a.p === "ininja"; }) : [];
   }
   function errText(e) {
     var c = e && e.code;
@@ -102,7 +104,8 @@
       return;
     }
     var sel = el("select");
-    accts.forEach(function (a) { var o = el("option", "", a.name); o.value = a.id; sel.appendChild(o); });
+    var byId = {};
+    accts.forEach(function (a) { byId[a.id] = a; var o = el("option", "", a.name + " (" + t("p." + a.p) + ")"); o.value = a.id; sel.appendChild(o); });
     sel.setAttribute("data-k", "pay.acct");
     dlg.appendChild(A.field(t("acct"), sel, "bd-pay-acct"));
     var from = el("input");
@@ -137,7 +140,8 @@
     [cIn, cOut].concat(acSel ? [acSel] : []).forEach(function (x) { x.addEventListener("change", function () { if (items && !busy) compute(); }); });
     function line(text, cls) { msg.appendChild(el("p", cls || "pay-hint", text)); }
     function compute() {
-      plan = P.plan(A.data(), items, { acct: sel.value, src: "Stripe", feeNote: t("fee"), catIn: cIn.value, catOut: cOut.value, ac: acSel ? acSel.value : "" });
+      var a = byId[sel.value];
+      plan = P.plan(A.data(), items, { p: a.p, acct: a.id, src: t("p." + a.p), feeNote: t("fee"), catIn: cIn.value, catOut: cOut.value, ac: acSel ? acSel.value : "" });
       msg.textContent = "";
       if (capped) line(t("capped", { n: P.MAX }));
       var ni = plan.add.filter(function (x) { return x.k === "i"; }).length;
@@ -150,14 +154,27 @@
       go.disabled = !plan.add.length;
     }
     function readNow() {
-      var a = sel.value, d = from.value;
-      var sec = /^\d{4}-\d{2}-\d{2}$/.test(d) ? Math.floor(new Date(d + "T00:00:00").getTime() / 1000) : 0;
+      var a = sel.value, d = from.value, acct = byId[a];
+      var day = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "";
+      var sec = day ? Math.floor(new Date(d + "T00:00:00").getTime() / 1000) : 0;
       busy = true;
       go.disabled = true;
       msg.textContent = t("reading", { n: 0 });
       var got = [];
       capped = false;
-      (function page(after) {
+      var run = acct && acct.p === "ininja" ? ask(a, P.inReq("statics")).then(function (st) {
+        var curs = P.inCurrencies(st), seen = 0;
+        return (function page(n) {
+          return ask(a, P.inReq("payments", n)).then(function (data) {
+            var r = P.inRead(data, curs, day);
+            got = got.concat(r.items);
+            seen += data && Array.isArray(data.data) ? data.data.length : 0;
+            msg.textContent = t("reading", { n: seen });
+            if (seen >= P.MAX) { capped = true; return; }
+            if (r.next) return page(r.next);
+          });
+        })(1);
+      }) : (function page(after) {
         return ask(a, P.req(sec, after)).then(function (data) {
           var r = P.read(data);
           got = got.concat(r.items);
@@ -165,7 +182,8 @@
           if (got.length >= P.MAX) { got = got.slice(0, P.MAX); capped = true; return; }
           if (r.next) return page(r.next);
         });
-      })("").then(function () {
+      })("");
+      run.then(function () {
         busy = false;
         items = got;
         compute();

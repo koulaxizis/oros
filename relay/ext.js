@@ -20,6 +20,8 @@
 //   HubSpot https://api.hubapi.com<path> (Bearer), Pipedrive
 //   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only;
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
+//           POST /v1 { op: "ext", p: "ininja", host, base, key, reqs: [...] }
+//   Invoice Ninja https://<host><base>/api/v1<path> (X-API-TOKEN), read-only
 //   req: { m: "GET" | "PUT" | "POST", path, body? (JSON text) }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
@@ -91,7 +93,8 @@ const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
       HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
       PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
-      TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/;
+      TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/,
+      IN_ACTIVE = /^active$/;
 const EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
 const okEmail = (v) => typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v);
 const okName = (v) => typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v);
@@ -229,6 +232,19 @@ export const PLATFORMS = {
       ["GET", /^\/balance$/, null, null],
       ["GET", /^\/balance_transactions$/, { limit: LIM100, starting_after: TXN, "created[gte]": UNIX, "created[lt]": UNIX }, null]
     ]
+  },
+  // Invoice Ninja (wave 4C): the person's own install (or invoicing.co),
+  // read-only; host checked like WooCommerce's
+  ininja: {
+    root: "/api/v1",
+    keys: { key: /^[A-Za-z0-9]{32,128}$/ },
+    auth: (b) => ["X-API-TOKEN", b.key],
+    extra: { "X-Requested-With": "XMLHttpRequest" },
+    allow: [
+      ["GET", /^\/statics$/, null, null],
+      ["GET", /^\/clients$/, { per_page: PER, page: NUM, status: IN_ACTIVE }, null],
+      ["GET", /^\/payments$/, { per_page: PER, page: NUM }, null]
+    ]
   }
 };
 
@@ -364,6 +380,7 @@ export async function runExt(b, fetchFn, now) {
     if (!url) { out[i] = { err: "network" }; return; }
     const headers = { Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" };
     headers[auth[0]] = auth[1];
+    if (pl.extra) Object.keys(pl.extra).forEach((k) => { headers[k] = pl.extra[k]; });
     let body;
     if (r.body !== undefined) { headers["Content-Type"] = "application/json"; body = r.body; }
     const ctl = new AbortController();

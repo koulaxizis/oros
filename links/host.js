@@ -317,6 +317,8 @@
     var headers = { Accept: "application/json" };
     if (a.p === "woo" && how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
     else { var h = L.authHeader(a.p, keys); headers[h[0]] = h[1]; }
+    var ex = L.extraHeaders(a.p);
+    Object.keys(ex).forEach(function (k) { headers[k] = ex[k]; });
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
     if (r.body) { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(r.body); }
@@ -330,8 +332,11 @@
   function viaRelay(a, keys, reqs) {
     var body = { op: "ext", p: a.p };
     if (a.p === "tol") { body.env = a.env; body.key = keys.key; }
-    else if (a.p !== "woo") body.key = keys.key;     // fixed hosts: the relay knows them
-    else {
+    else if (a.p !== "woo" && !L.PLATFORMS[a.p].site) body.key = keys.key;     // fixed hosts: the relay knows them
+    else if (a.p !== "woo") {                          // the person's own site, one key
+      var sp = L.siteParts(a.site);
+      body.host = sp.host; body.base = sp.base; body.key = keys.key;
+    } else {
       var parts = L.siteParts(a.site);
       body.host = parts.host; body.base = parts.base; body.ck = keys.ck; body.cs = keys.cs;
     }
@@ -429,7 +434,7 @@
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
-    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice() }; }); }
+    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site }; }); }
   };
 
   registerSlice();
