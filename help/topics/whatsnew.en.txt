@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.46.00
+- Studio: remote control. Run the mixer and the transport from a tablet or phone while Studio plays on the PC: pair with a 6-digit code or QR, works on the same Wi-Fi and through a VPN.
+
 ## Version 1.45.00
 - Maps: fix shops, cafés and other places on OpenStreetMap: opening hours, phone, website, "checked today", closed places and new ones.
 

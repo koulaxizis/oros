@@ -979,6 +979,7 @@ var PRECACHE_URLS = [
   "studio/studio.js",
   "studio/rec.worklet.js",
   "studio/fx.js",
+  "studio/remote.js",
   "studio/nullfx/runtime/eel-rt.js",
   "studio/nullfx/runtime/null-fx.js",
   "studio/nullfx/runtime/null-gfx.js",
