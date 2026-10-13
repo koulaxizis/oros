@@ -27,6 +27,14 @@ The key needs permission to send and to read bounces or suppressions. Brevo's AP
 
 An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
 
+## Email platforms (MailerLite, Mailchimp, Brevo)
+If you also keep subscribers on MailerLite, Mailchimp or Brevo, connect the account first in [Settings](app:settings) › `Connected services`. Then, on `Subscribers`, `Email platforms` links the list to a group (MailerLite), an audience (Mailchimp) or a contact list (Brevo). `Sync` reads everyone there and shows what would change before anything does; `Apply` makes the changes.
+- `Bring their subscribers here`: people on the platform who aren't on this list are added, with the tag of the platform and the basis `Gave consent`.
+- `Send our confirmed subscribers there`: only `Active` people go; people still waiting to confirm don't.
+- Unsubscribes always travel both ways: someone who left on the platform leaves here too, and someone who left here (or was deleted for good) is unsubscribed there. Nobody who left on one side is ever brought back on the other.
+- `Unlink` only removes the link: nobody is deleted here or there.
+- Mailchimp only talks to servers, so it always goes through the orOS relay; the relay keeps nothing. Your keys stay in Connected services and never come into Newsletter.
+
 ## Writing an issue
 Write in `Blocks` (heading, text, picture, button, line, two columns) or in `Markdown`. `{first}` and `{name}` put in the subscriber's name; `{first|friend}` uses "friend" when there is no name. Under `Goes to` you send to everyone active, to subscribers with some tags, or to a saved segment. `Segments…` makes segments: subscribers with some tags (any or all of them), a language, or both. Pictures are shrunk and sent inside the e-mail.
 

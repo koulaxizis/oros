@@ -76,6 +76,38 @@
       apps: ["invoices"],
       probe: "/GetCreditsBalance",
       once: true                    // a POST issues a tax document: never sent twice by a fallback
+    },
+    // Email marketing (wave 3): subscribers and unsubscribes with a
+    // Newsletter list. Fixed hosts, one key each.
+    mlite: {
+      name: "MailerLite",
+      site: false,
+      host: "connect.mailerlite.com",
+      root: "/api",
+      keys: [{ k: "key", re: /^[A-Za-z0-9._-]{20,2000}$/ }],
+      apps: ["newsletter"],
+      probe: "/groups?limit=1"
+    },
+    // Mailchimp: the host comes from the key's data centre ("…-us21");
+    // it does not answer browsers, so it always goes through the relay.
+    mchimp: {
+      name: "Mailchimp",
+      site: false,
+      hostOf: function (keys) { var m = /-([a-z]{2,4}[0-9]{1,3})$/.exec(keys && keys.key || ""); return m ? m[1] + ".api.mailchimp.com" : ""; },
+      root: "/3.0",
+      keys: [{ k: "key", re: /^[a-f0-9]{32}-[a-z]{2,4}[0-9]{1,3}$/ }],
+      apps: ["newsletter"],
+      probe: "/ping",
+      relayOnly: true
+    },
+    brevo: {
+      name: "Brevo",
+      site: false,
+      host: "api.brevo.com",
+      root: "/v3",
+      keys: [{ k: "key", re: /^xkeysib-[A-Za-z0-9-]{20,200}$/ }],
+      apps: ["newsletter"],
+      probe: "/account"
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -239,6 +271,55 @@
     try { json = JSON.stringify(v); } catch (e) { return false; }
     return json.length <= TOL_BYTES;
   }
+  // Email marketing (wave 3)
+  var LIM1000 = /^([1-9][0-9]{0,2}|1000)$/, LIM500 = /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/, LIM50 = /^([1-9]|[1-4][0-9]|50)$/,
+      CURSOR = /^[A-Za-z0-9._=-]{1,600}$/, DTZ = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{3})?Z$/,
+      ML_ST = /^(active|unsubscribed|unconfirmed|bounced|junk)$/, MC_ST = /^(subscribed|unsubscribed|cleaned|pending)$/,
+      MC_LISTS_F = /^lists\.id,lists\.name,lists\.stats\.member_count,total_items$/,
+      MC_MEMBERS_F = /^members\.email_address,members\.status,members\.merge_fields,members\.language,total_items$/;
+  var EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
+  function okEmail(v) { return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v); }
+  function okName(v) { return typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v); }
+  function onlyKeys(o, ks) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) return false;
+    var k = Object.keys(o);
+    for (var i = 0; i < k.length; i++) if (ks.indexOf(k[i]) < 0) return false;
+    return true;
+  }
+  function listOf(v, min, max, fn) {
+    if (!Array.isArray(v) || v.length < min || v.length > max) return false;
+    for (var i = 0; i < v.length; i++) if (!fn(v[i])) return false;
+    return true;
+  }
+  // MailerLite batch: only subscriber upserts, never "resubscribe" and
+  // never a status other than "unsubscribed" (a new address starts
+  // active; one that left can't be brought back from here).
+  function okMlItem(x) {
+    if (!onlyKeys(x, ["method", "path", "body"]) || x.method !== "POST" || x.path !== "api/subscribers") return false;
+    var b = x.body;
+    if (!onlyKeys(b, ["email", "fields", "groups", "status"]) || !okEmail(b.email)) return false;
+    if (b.fields !== undefined && !(onlyKeys(b.fields, ["name"]) && (b.fields.name === undefined || okName(b.fields.name)))) return false;
+    if (b.groups !== undefined && !listOf(b.groups, 1, 1, function (g) { return typeof g === "string" && /^[0-9]{1,20}$/.test(g); })) return false;
+    return b.status === undefined || b.status === "unsubscribed";
+  }
+  function okMcMember(x) {
+    if (!onlyKeys(x, ["email_address", "status", "merge_fields", "language"]) || !okEmail(x.email_address)) return false;
+    if (x.status !== "subscribed" && x.status !== "unsubscribed") return false;
+    if (x.merge_fields !== undefined && !(onlyKeys(x.merge_fields, ["FNAME"]) && (x.merge_fields.FNAME === undefined || okName(x.merge_fields.FNAME)))) return false;
+    return x.language === undefined || x.language === "en" || x.language === "el";
+  }
+  function okBvRow(x) {
+    if (!onlyKeys(x, ["email", "attributes"]) || !okEmail(x.email)) return false;
+    return x.attributes === undefined || (onlyKeys(x.attributes, ["FIRSTNAME"]) && (x.attributes.FIRSTNAME === undefined || okName(x.attributes.FIRSTNAME)));
+  }
+  // Rules across a whole body (after the per-key checks).
+  var WHOLE = {
+    // adding someone as "subscribed" must never overwrite a person who
+    // already left: only new addresses are added that way
+    mcbatch: function (b) {
+      return Array.isArray(b.members) && !(b.members.some(function (x) { return x.status === "subscribed"; }) && b.update_existing !== false);
+    }
+  };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
   var STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
@@ -262,6 +343,24 @@
         series: SERIES, aa: AA, invoiceType: ITYPE, branch: NUM
       }, null],
       ["POST", /^\/SendInvoices$/, null, { invoice: "tolinv" }]
+    ],
+    mlite: [
+      ["GET", /^\/groups$/, { limit: LIM1000, page: NUM }, null],
+      ["GET", /^\/groups\/[0-9]{1,20}\/subscribers$/, { "filter[status]": ML_ST, limit: LIM1000, cursor: CURSOR }, null],
+      ["POST", /^\/batch$/, null, { requests: "mlbatch" }]
+    ],
+    mchimp: [
+      ["GET", /^\/ping$/, null, null],
+      ["GET", /^\/lists$/, { count: LIM1000, offset: NUM, fields: MC_LISTS_F }, null],
+      ["GET", /^\/lists\/[a-z0-9]{1,20}\/members$/, { count: LIM1000, offset: NUM, status: MC_ST, since_last_changed: DTZ, fields: MC_MEMBERS_F }, null],
+      ["POST", /^\/lists\/[a-z0-9]{1,20}$/, null, { members: "mcmembers", update_existing: "bool" }, "mcbatch"]
+    ],
+    brevo: [
+      ["GET", /^\/account$/, null, null],
+      ["GET", /^\/contacts\/lists$/, { limit: LIM50, offset: NUM }, null],
+      ["GET", /^\/contacts\/lists\/[0-9]{1,12}\/contacts$/, { limit: LIM500, offset: NUM, modifiedSince: DTZ }, null],
+      ["POST", /^\/contacts\/import$/, null, { jsonBody: "bvrows", listIds: "bvlist", updateExistingContacts: "bool", emptyContactsAttributes: "bool" }],
+      ["POST", /^\/contacts\/lists\/[0-9]{1,12}\/contacts\/remove$/, null, { emails: "emails" }]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -271,6 +370,11 @@
     if (kind === "status") return ORDER_ST.indexOf(v) >= 0;
     if (kind === "text") return typeof v === "string" && v.length > 0 && v.length <= 1000;
     if (kind === "tolinv") return okInvoice(v);
+    if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
+    if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);
+    if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);
+    if (kind === "bvlist") return listOf(v, 1, 1, function (n) { return isInt(n) && n > 0 && n < 1e12; });
+    if (kind === "emails") return listOf(v, 1, 150, okEmail);
     return false;
   }
   // "" when the request may go, else the reason.
@@ -304,6 +408,7 @@
     for (var n = 0; n < keys.length; n++) {
       if (!has(rule[3], keys[n]) || !okVal(rule[3][keys[n]], b[keys[n]])) return "body";
     }
+    if (rule[4] && !WHOLE[rule[4]](b)) return "body";
     return "";
   }
   // Query string from an object, in key order. Values are plain words,
@@ -318,10 +423,23 @@
   }
   // The full URL of a request for direct calls from the browser.
   // acct = the account row (or, for WooCommerce, its site string).
-  function apiUrl(p, acct, path) {
+  // keys: needed only where the host comes from the key (Mailchimp).
+  function apiUrl(p, acct, path, keys) {
     if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + "/wp-json/wc/v3" + path;
     var pl = PLATFORMS[p];
-    if (pl && pl.env && acct && has(pl.env, acct.env)) return "https://" + pl.env[acct.env] + pl.root + path;
+    if (!pl) return null;
+    if (pl.env && acct && has(pl.env, acct.env)) return "https://" + pl.env[acct.env] + pl.root + path;
+    if (pl.host) return "https://" + pl.host + pl.root + path;
+    if (pl.hostOf) { var h = pl.hostOf(keys); return h ? "https://" + h + pl.root + path : null; }
+    return null;
+  }
+  // The auth header of a direct call → [name, value].
+  function authHeader(p, keys) {
+    if (p === "woo") return ["Authorization", "Basic " + btoa(keys.ck + ":" + keys.cs)];
+    if (p === "tol") return ["API-KEY", keys.key];
+    if (p === "mlite") return ["Authorization", "Bearer " + keys.key];
+    if (p === "mchimp") return ["Authorization", "Basic " + btoa("oros:" + keys.key)];
+    if (p === "brevo") return ["api-key", keys.key];
     return null;
   }
 
@@ -330,7 +448,8 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, TOL_TYPES: TOL_TYPES,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, cleanText: cleanText
+    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, authHeader: authHeader, cleanText: cleanText,
+    okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosLinksCore = api;
