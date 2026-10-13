@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 1.75.00
+## Version 1.76.00
 - Spreadsheet: import from Notion. The databases you share with your Notion integration come in as sheets, one per database, with the property names in row 1 and one row per entry as plain values; import again to bring in new databases. orOS only reads Notion; connect it in Settings › Connected services, then the Notion button at the bottom right.
+
+## Version 1.75.00
+- Maps: favourite groups, like OsmAnd. Put saved places in groups with a name and a colour (the folder button next to a place, or `Group` in its popup); the pins take the group colour. Saved places lists each group, which you can fold, hide from the map or export as GPX. `Import` brings in the waypoints of a GPX, KML or GeoJSON file, for example favourites from OsmAnd.
 
 ## Version 1.74.00
 - Notes: import from Notion. The pages you share with your Notion integration come in as a notebook, subpages under their page, with headings, lists, to-dos and code as plain text; import again to bring in new pages. orOS only reads Notion; connect it in Settings › Connected services, then the cloud button under the tree.

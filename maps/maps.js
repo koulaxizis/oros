@@ -1079,6 +1079,23 @@
     });
     actions.appendChild(share);
 
+    // Wave 10C: put a saved place in a favourite group.
+    var F = favApi();
+    if (F) {
+      var grp = document.createElement("button");
+      grp.type = "button";
+      grp.className = "pop-grp";
+      grp.innerHTML = F.ICON + "<span></span>";
+      grp.querySelector("span").textContent = F.label;
+      grp.hidden = !isSaved(place.lat, place.lon);
+      star.addEventListener("click", function () { grp.hidden = !isSaved(place.lat, place.lon); });
+      grp.addEventListener("click", function () {
+        map.closePopup();
+        F.pick({ id: placeId(place.lat, place.lon), name: place.name });
+      });
+      actions.appendChild(grp);
+    }
+
     wrap.appendChild(actions);
     marker.unbindPopup();
     marker.bindPopup(wrap, { maxWidth: 280 });
@@ -3180,11 +3197,17 @@
 
   // Saved pins live on their own layerGroup — rebuilt on every
   // save() (cheap: handful of markers).
+  // Wave 10C (fav.js): favourite groups colour the pins, hide a group
+  // from the map and group the list. Without fav.js nothing changes.
+  function favApi() { return window.__orosMapsFav || null; }
+
   function renderSavedLayer() {
     if (!savedLayer) return;
     savedLayer.clearLayers();
+    var F = favApi();
     state.places.forEach(function (p) {
-      var m = L.marker([p.lat, p.lon], { icon: makeMarkerIcon(COLOR_SAVED) });
+      if (F && F.hidden(p.id)) return;
+      var m = L.marker([p.lat, p.lon], { icon: makeMarkerIcon((F && F.colorOf(p.id)) || COLOR_SAVED) });
       bindPlacePopup(m, p);
       savedLayer.addLayer(m);
     });
@@ -3199,73 +3222,88 @@
     ul.hidden = !hasAny;
 
     // Storage order is canonical (by id); the LIST keeps the familiar
-    // order — oldest first.
-    state.places.slice().sort(function (x, y) {
+    // order — oldest first (inside each favourite group, wave 10C).
+    var F = favApi();
+    var sections = F ? F.sections(state.places) : [{ g: null, places: state.places.slice().sort(function (x, y) {
       return (x.mtime - y.mtime) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
-    }).forEach(function (p) {
-      var li = document.createElement("li");
-      li.className = "place";
-
-      var pin = document.createElement("span");
-      pin.className = "p-pin";
-      pin.innerHTML =
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
-      li.appendChild(pin);
-
-      var body = document.createElement("div");
-      body.className = "p-body";
-      var name = document.createElement("div");
-      name.className = "p-name";
-      name.textContent = p.name;
-      body.appendChild(name);
-      if (p.sub) {
-        var sub = document.createElement("div");
-        sub.className = "p-sub";
-        sub.textContent = p.sub;
-        body.appendChild(sub);
+    }) }];
+    sections.forEach(function (sec) {
+      if (F && sec.g !== null) {
+        var head = F.header(sec.g, sec.places);
+        if (head) ul.appendChild(head);
+        if (F.collapsed(sec.g)) return;
       }
-      li.appendChild(body);
-
-      li.addEventListener("click", function () {
-        $("places").hidden = true;
-        map.flyTo([p.lat, p.lon], 15);
-        // open the saved pin's popup for star/route actions
-        savedLayer.eachLayer(function (mk) {
-          if (mk.getLatLng().lat === p.lat && mk.getLatLng().lng === p.lon) {
-            mk.openPopup();
-          }
-        });
-      });
-
-      var ren = document.createElement("button");
-      ren.type = "button";
-      ren.className = "p-ren";
-      ren.title = t("places.rename");
-      ren.setAttribute("aria-label", t("places.rename"));
-      ren.innerHTML =
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
-      ren.addEventListener("click", function (e) {
-        e.stopPropagation();
-        var orig = p.name;
-        askText(t("places.rename"), orig, function (v) { renamePlace(p.id, v, orig); });
-      });
-      li.appendChild(ren);
-
-      var del = document.createElement("button");
-      del.type = "button";
-      del.className = "p-del";
-      del.title = t("places.del");
-      del.setAttribute("aria-label", t("places.del"));
-      del.innerHTML =
-        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-      del.addEventListener("click", function (e) {
-        e.stopPropagation();
-        removePlaceById(p.id);
-      });
-      li.appendChild(del);
-
-      ul.appendChild(li);
+      sec.places.forEach(function (p) { ul.appendChild(placeRow(p, F)); });
     });
+  }
+
+  function placeRow(p, F) {
+    var li = document.createElement("li");
+    li.className = "place";
+
+    var pin = document.createElement("span");
+    pin.className = "p-pin";
+    var pinColor = F && F.colorOf(p.id);
+    if (pinColor) pin.style.color = pinColor;
+    pin.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+    li.appendChild(pin);
+
+    var body = document.createElement("div");
+    body.className = "p-body";
+    var name = document.createElement("div");
+    name.className = "p-name";
+    name.textContent = p.name;
+    body.appendChild(name);
+    if (p.sub) {
+      var sub = document.createElement("div");
+      sub.className = "p-sub";
+      sub.textContent = p.sub;
+      body.appendChild(sub);
+    }
+    li.appendChild(body);
+
+    li.addEventListener("click", function () {
+      $("places").hidden = true;
+      map.flyTo([p.lat, p.lon], 15);
+      // open the saved pin's popup for star/route actions
+      savedLayer.eachLayer(function (mk) {
+        if (mk.getLatLng().lat === p.lat && mk.getLatLng().lng === p.lon) {
+          mk.openPopup();
+        }
+      });
+    });
+
+    if (F) li.appendChild(F.groupButton(p));
+
+    var ren = document.createElement("button");
+    ren.type = "button";
+    ren.className = "p-ren";
+    ren.title = t("places.rename");
+    ren.setAttribute("aria-label", t("places.rename"));
+    ren.innerHTML =
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+    ren.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var orig = p.name;
+      askText(t("places.rename"), orig, function (v) { renamePlace(p.id, v, orig); });
+    });
+    li.appendChild(ren);
+
+    var del = document.createElement("button");
+    del.type = "button";
+    del.className = "p-del";
+    del.title = t("places.del");
+    del.setAttribute("aria-label", t("places.del"));
+    del.innerHTML =
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    del.addEventListener("click", function (e) {
+      e.stopPropagation();
+      removePlaceById(p.id);
+    });
+    li.appendChild(del);
+
+    return li;
   }
 
   // ---------- 13. Palette + shell shortcut contract ----------
@@ -3696,6 +3734,23 @@
     pendingTransit: null,
     // Wave 10B (planner.js): the OSRM servers per mode.
     routerBase: ROUTER_BASE,
+    // Wave 10C (fav.js): saved places, adding many (GPX import), and
+    // repainting the pins and the list after a group change.
+    places: function () { return normalize(state).places; },
+    placeId: placeId,
+    addPlaces: function (list) {
+      var now = Date.now(), n = 0;
+      (list || []).forEach(function (pl) {
+        if (!pl || !isFinite(pl.lat) || !isFinite(pl.lon)) return;
+        var id = placeId(pl.lat, pl.lon);
+        state.places = state.places.filter(function (x) { return x.id !== id; });
+        state.places.push({ id: id, name: String(pl.name || "?").slice(0, 120), sub: String(pl.sub || "").slice(0, 200),
+                            lat: pl.lat, lon: pl.lon, mtime: now + n });
+        n++;
+      });
+      return n && save() ? n : 0;
+    },
+    refreshPlaces: function () { renderSavedLayer(); renderPlacesList(); },
     // Wave 10A (tools.js): directions to a point (the parked car).
     routeTo: function (place, profile) {
       if (profile && ROUTER_BASE[profile] && profile !== routeProfile) {
