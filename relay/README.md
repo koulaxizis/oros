@@ -22,6 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -164,6 +165,38 @@ Rules:
 - Up to 2 MB per request and 4 MB per call. 6 requests at a time, 15 s each, and a 25 s budget per call: requests not done in time come back as `timeout` for the app to retry.
 - Answers are capped at 256 KB per body and 2 MB per call.
 - The key is used for this call only. It never appears in an answer, an error or a log (fetch errors are reported only as `network`).
+
+## The `ext` operation (Connected services: a person's own shop)
+
+orOS calls the shop straight from the browser first. When it can't
+(no CORS, a firewall, a host that drops the Authorization header), the
+app sends the same requests here. Code: `ext.js`; tests:
+`tests/links.test.js` runs one case list against both the app's
+`links/core.js checkReq` and `checkExtReq` here.
+
+`POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [{ m, path, body? }] }` (≤ 10)
+→ `{ res: [{ status, body } | { status, err: "too-big" } | { err: "timeout" | "network" }] }`
+
+WooCommerce: `https://<host><base>/wp-json/wc/v3<path>`, Basic auth
+`ck:cs` (`ck_` / `cs_` + 40 hex, checked).
+
+| Method | Path | Query / body |
+|---|---|---|
+| GET | `/system_status` | |
+| GET | `/products` | `page, per_page (1-100), orderby, order, status, type, modified_after` |
+| GET | `/products/<n>`, `/orders/<n>` | |
+| GET | `/products/<n>/variations` | `page, per_page, orderby, order` |
+| GET | `/orders` | `page, per_page, orderby, order, status, after, modified_after` |
+| PUT | `/products/<n>`, `/products/<n>/variations/<m>` | `{ stock_quantity: int, manage_stock: bool }` only |
+| PUT | `/orders/<n>` | `{ status }` (a WooCommerce order status) only |
+| POST | `/orders/<n>/notes` | `{ note (≤1000), customer_note: bool }` only |
+
+Rules:
+- The host is the person's own, checked like a mail server: a public DNS name, https, default port. `base` is up to 3 plain path segments (a WordPress in a sub-folder).
+- `%`, `#`, `\`, `@`, whitespace, `//` and `.`/`..` segments are refused; the built URL is parsed and checked again.
+- Redirects are not followed. Writes run one at a time, in order; reads up to 4 at a time.
+- 16 KB per request body; answers up to 2 MB each and 8 MB per call; 20 s per request, 28 s per call.
+- The keys are used for this call only: never stored, logged or echoed (fetch errors come back only as `network`).
 
 ## Newsletter: sign-up form and one-click unsubscribe
 

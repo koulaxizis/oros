@@ -496,3 +496,12 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 
 [hidden] { display: none !important; }
 
+
+/* The shop (stock/shop.js) */
+.shop-tabs { display: flex; gap: 6px; margin: 4px 0 10px; }
+.shop-tabs .dlg-btn { flex: 1 1 0; }
+.shop-list { margin-top: 8px; }
+.shop-row { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.shop-name { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+.shop-row .dlg-actions { margin-top: 6px; }
+.shop-row .dlg-btn { flex: 1 1 120px; }

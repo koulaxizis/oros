@@ -27,6 +27,7 @@
 //   7. Section: Backups
 //   8. Section: Language & search
 //  8b. Section: Opening files
+//  8c. Section: Connected services (window.parent.orosLinks)
 //   9. Section: System
 //  10. Navigation + render
 //  11. Keyboard (Contract Β) + palette
@@ -76,6 +77,7 @@
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
+    services: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
     eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
@@ -712,6 +714,215 @@
     host.appendChild(c4);
   }
 
+  // ---------- 8c. Section: Connected services ----------
+  // Everything goes through the shell's orosLinks (links/host.js): the
+  // keys are typed here once, handed over and sealed there; this page
+  // never stores them and never reads them back.
+  function links() {
+    var p = parentWin();
+    try { return p && p.orosLinks && typeof p.orosLinks.list === "function" ? p.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  // page state (session only): the add form, per-account messages and
+  // whether this device holds each account's keys
+  var svc = { add: null, keysFor: null, keyForm: { ck: "", cs: "" }, msg: {}, has: {}, busy: {}, rename: null, off: null };
+  function svcErr(code) {
+    var k = "v.err." + (code === "keys" ? "keys" : code);
+    var txt = t(k);
+    return txt === k ? t("v.err.server") : txt;
+  }
+  function textInput(key, value, ph, onInput, type) {
+    var inp = el("input");
+    inp.id = "f-" + key;
+    inp.type = type || "text";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    if (ph) inp.placeholder = ph;
+    inp.value = value || "";
+    inp.setAttribute("data-k", key);
+    inp.addEventListener("input", function () { onInput(inp.value); });
+    var w = el("div", "pass-row");
+    w.appendChild(inp);
+    return w;
+  }
+  function labelled(label, key, control) {
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-" + key;
+    var box = el("div", "pass");
+    box.appendChild(lab);
+    box.appendChild(control);
+    return box;
+  }
+  function refreshKeys(id) {
+    var Lk = links();
+    if (!Lk) return;
+    Lk.hasKeys(id).then(function (h) {
+      if (svc.has[id] === h) return;
+      svc.has[id] = h;
+      render();
+    }, function () {});
+  }
+  function runTest(id) {
+    var Lk = links();
+    if (!Lk) return;
+    svc.busy[id] = true;
+    svc.msg[id] = { cls: "msg-dim", text: t("v.checking") };
+    render();
+    Lk.test(id).then(function (code) {
+      svc.busy[id] = false;
+      svc.msg[id] = code ? { cls: "msg-err", text: svcErr(code) } : { cls: "msg-ok", text: t("v.ok") };
+      render();
+    });
+  }
+  function secServices(host) {
+    var Lk = links();
+    if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
+    var c0 = card(null);
+    c0.appendChild(el("p", "hint", t("v.intro")));
+    var accts = Lk.list();
+    if (!accts.length && !svc.add) c0.appendChild(el("p", "msg msg-dim", t("v.none")));
+    if (!svc.add) {
+      c0.appendChild(actions(button(t("v.add"), "v.add", function () {
+        svc.add = { p: "woo", name: "", site: "", ck: "", cs: "", err: "" };
+        render();
+        var f = $("f-v-name");
+        if (f) f.focus();
+      }, "primary")));
+    }
+    host.appendChild(c0);
+    if (svc.add) host.appendChild(addCard(Lk));
+    var plats = {};
+    Lk.platforms().forEach(function (p) { plats[p.id] = p; });
+    accts.forEach(function (a) {
+      if (!(a.id in svc.has)) { svc.has[a.id] = null; refreshKeys(a.id); }
+      host.appendChild(acctCard(Lk, a, plats[a.p]));
+    });
+  }
+  function addCard(Lk) {
+    var f = svc.add;
+    var c = card(t("v.add"));
+    var form = el("form", "pass");
+    form.setAttribute("autocomplete", "off");
+    form.noValidate = true;                       // "shop.example.gr" is fine: core normalises it
+    form.appendChild(row(t("v.platform"), el("div", "version", "WooCommerce")));
+    form.appendChild(labelled(t("v.name"), "v-name", textInput("v-name", f.name, t("v.name.ph"), function (v) { f.name = v; })));
+    form.appendChild(labelled(t("v.site"), "v-site", textInput("v-site", f.site, t("v.site.ph"), function (v) { f.site = v; }, "url")));
+    form.appendChild(el("div", "hint", t("v.keys.hint")));
+    form.appendChild(labelled(t("v.ck"), "v-ck", textInput("v-ck", f.ck, "ck_…", function (v) { f.ck = v; }, "password")));
+    form.appendChild(labelled(t("v.cs"), "v-cs", textInput("v-cs", f.cs, "cs_…", function (v) { f.cs = v; }, "password")));
+    if (f.err) form.appendChild(el("p", "msg msg-err", f.err));
+    var go = el("button", "btn primary", f.busy ? t("v.checking") : t("v.save"));
+    go.type = "submit";
+    go.disabled = !!f.busy;
+    go.setAttribute("data-k", "v.save");
+    form.appendChild(actions(button(t("v.cancel"), "v.cancel", function () { svc.add = null; render(); }), go));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (f.busy) return;
+      f.busy = true;
+      f.err = "";
+      render();
+      Lk.add({ p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } }).then(function (id) {
+        svc.add = null;
+        svc.has[id] = true;
+        render();
+        runTest(id);
+      }, function (er) {
+        f.busy = false;
+        var code = er && er.code;
+        f.err = code === "site" ? t("v.err.site") : code === "keys" ? t("v.err.badkeys") : svcErr(code || "save");
+        render();
+      });
+    });
+    c.appendChild(form);
+    return c;
+  }
+  function acctCard(Lk, a, plat) {
+    var c = card(a.name);
+    var info = el("dl", "keys info");
+    info.appendChild(el("dt", null, t("v.platform")));
+    info.appendChild(el("dd", null, a.platform));
+    if (a.site) {
+      info.appendChild(el("dt", null, t("v.site")));
+      info.appendChild(el("dd", null, a.site.replace(/^https:\/\//, "")));
+    }
+    var m = Lk.mode(a.id);
+    info.appendChild(el("dt", null, t("v.via")));
+    info.appendChild(el("dd", null, t(m ? "v.via." + m : "v.via.none")));
+    if (plat && plat.apps.length) {
+      info.appendChild(el("dt", null, t("v.used")));
+      info.appendChild(el("dd", null, plat.apps.map(appName).join(", ")));
+    }
+    c.appendChild(info);
+    var has = svc.has[a.id];
+    if (has === false) c.appendChild(el("p", "msg msg-dim", t("v.keysMissing")));
+    if (svc.msg[a.id]) c.appendChild(el("p", "msg " + svc.msg[a.id].cls, svc.msg[a.id].text));
+
+    if (svc.rename === a.id) {
+      var rf = el("form", "pass");
+      var val = { v: a.name };
+      rf.appendChild(labelled(t("v.name"), "v-rn", textInput("v-rn", a.name, "", function (v) { val.v = v; })));
+      var ok = el("button", "btn primary", t("v.rename"));
+      ok.type = "submit";
+      ok.setAttribute("data-k", "v.rn.ok");
+      rf.appendChild(actions(button(t("v.cancel"), "v.rn.cancel", function () { svc.rename = null; render(); }), ok));
+      rf.addEventListener("submit", function (e) { e.preventDefault(); Lk.edit(a.id, { name: val.v }); svc.rename = null; render(); });
+      c.appendChild(rf);
+    }
+    if (svc.keysFor === a.id) {
+      var kf = el("form", "pass");
+      kf.setAttribute("autocomplete", "off");
+      kf.appendChild(el("div", "hint", t("v.keys.hint")));
+      kf.appendChild(labelled(t("v.ck"), "v-kck", textInput("v-kck", svc.keyForm.ck, "ck_…", function (v) { svc.keyForm.ck = v; }, "password")));
+      kf.appendChild(labelled(t("v.cs"), "v-kcs", textInput("v-kcs", svc.keyForm.cs, "cs_…", function (v) { svc.keyForm.cs = v; }, "password")));
+      var sk = el("button", "btn primary", t("v.saveKeys"));
+      sk.type = "submit";
+      sk.setAttribute("data-k", "v.k.ok");
+      kf.appendChild(actions(button(t("v.cancel"), "v.k.cancel", function () { svc.keysFor = null; svc.keyForm = { ck: "", cs: "" }; render(); }), sk));
+      kf.addEventListener("submit", function (e) {
+        e.preventDefault();
+        Lk.setKeys(a.id, { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
+          svc.keysFor = null;
+          svc.keyForm = { ck: "", cs: "" };
+          svc.has[a.id] = true;
+          runTest(a.id);
+        }, function (er) {
+          svc.msg[a.id] = { cls: "msg-err", text: er && er.code === "keys" ? t("v.err.badkeys") : svcErr(er && er.code) };
+          render();
+        });
+      });
+      c.appendChild(kf);
+    }
+
+    var can = Lk.canKeySync();
+    var ksRow = row(t("v.ks"), switchBtn(a.ks === 1, "v.ks:" + a.id, function (on) {
+      if (on && !can) { svc.msg[a.id] = { cls: "msg-dim", text: t("v.ks.needSync") }; render(); return; }
+      Lk.setKeySync(a.id, on);
+      render();
+    }, t("v.ks")), { hint: t("v.ks.hint") });
+    c.appendChild(ksRow);
+
+    var acts = actions(
+      has !== false ? button(svc.busy[a.id] ? t("v.checking") : t("v.test"), "v.test:" + a.id, function () { if (!svc.busy[a.id]) runTest(a.id); }) : null,
+      button(t("v.newKeys"), "v.keys:" + a.id, function () { svc.keysFor = a.id; svc.keyForm = { ck: "", cs: "" }; render(); var f = $("f-v-kck"); if (f) f.focus(); }, has === false ? "primary" : ""),
+      button(t("v.rename"), "v.rn:" + a.id, function () { svc.rename = a.id; render(); var f = $("f-v-rn"); if (f) f.focus(); })
+    );
+    c.appendChild(acts);
+    if (plat) plat.apps.forEach(function (id) {
+      c.appendChild(linkRow(t("v.open", { app: appName(id) }), "v.open:" + id, function () {
+        // Stock opens straight on its shop panel
+        var p = parentWin();
+        try { if (id === "stock" && p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt("stock", { view: "shop" }); return; } } catch (e) {}
+        act("openApp", id);
+      }));
+    });
+    c.appendChild(el("p", "hint", t("v.remove.hint")));
+    c.appendChild(actions(confirmBtn(t("v.remove"), t("v.remove.confirm"), "v.rm:" + a.id, function () {
+      Lk.remove(a.id).then(function () { delete svc.has[a.id]; delete svc.msg[a.id]; render(); });
+    }, "danger")));
+    return c;
+  }
+
   // ---------- 9. Section: System ----------
   function linkRow(label, key, onClick) {
     var b = el("button", "link-row");
@@ -801,7 +1012,7 @@
 
   var SECTION_FN = {
     appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync,
-    backup: secBackup, language: secLanguage, files: secFiles, system: secSystem
+    backup: secBackup, language: secLanguage, files: secFiles, services: secServices, system: secSystem
   };
 
   function renderNav(s) {
@@ -955,8 +1166,11 @@
 
     var S = shell();
     if (S) unsubscribe = S.onChange(render);
+    var Lk = links(), unLinks = null;
+    if (Lk && typeof Lk.onChange === "function") unLinks = Lk.onChange(function () { render(); });
     window.addEventListener("pagehide", function () {
       if (unsubscribe) { try { unsubscribe(); } catch (e) {} unsubscribe = null; }
+      if (unLinks) { try { unLinks(); } catch (e) {} unLinks = null; }
     });
     var mq = window.matchMedia(NARROW);
     var onMq = function () { render(); };

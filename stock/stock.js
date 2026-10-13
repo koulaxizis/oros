@@ -23,6 +23,9 @@
 //     movements, JSON export / import (a merge)
 //   - bridges (all prefills): To-Do, Mail, Budget, Quote, Spreadsheet,
 //     Today (today.js); receiver BR-ST-OUT for Invoices (1.3)
+//   - the shop (stock/shop.js): a WooCommerce shop connected in
+//     Settings › Connected services: products in, quantities both
+//     ways, orders to a sale / Invoices / CRM / Budget
 //   - the low-stock notice comes from the shell (stockCheckTick, which
 //     uses core.js too)
 // Data:
@@ -206,7 +209,8 @@
       "cl.locked": "The books are closed through {d}: choose a later date.", "cl.reopen": "Reopen",
       "cl.reopenQ": "Reopen the period? The archived movements come back from the file and the opening balance goes.",
       "cl.noFile": "The archive file isn't on this device yet.", "cl.reopened": "Period reopened.",
-      "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app",
+      "out.from": "From {a}. Check the lines and press Save.", "out.invoices": "Invoices", "out.other": "another app", "out.woo": "your shop (WooCommerce)",
+      "add.shop": "Shop (WooCommerce)",
       "out.used1": "This document was already taken out of stock once.",
       "out.used": "This document was already taken out of stock {n} times.",
       "out.miss": "Not found in Stock, left out ({n}):",
@@ -362,7 +366,8 @@
       "cl.locked": "Η χρήση είναι κλεισμένη έως {d}: διάλεξε μεταγενέστερη ημερομηνία.", "cl.reopen": "Επανάνοιγμα",
       "cl.reopenQ": "Επανάνοιγμα της περιόδου; Οι αρχειοθετημένες κινήσεις επιστρέφουν από το αρχείο και το υπόλοιπο έναρξης φεύγει.",
       "cl.noFile": "Το αρχείο δεν έχει έρθει ακόμη σε αυτή τη συσκευή.", "cl.reopened": "Η περίοδος άνοιξε ξανά.",
-      "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή",
+      "out.from": "Ήρθε από: {a}. Έλεγξε τις γραμμές και πάτα Αποθήκευση.", "out.invoices": "Τιμολόγια", "out.other": "άλλη εφαρμογή", "out.woo": "το κατάστημά σου (WooCommerce)",
+      "add.shop": "Κατάστημα (WooCommerce)",
       "out.used1": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα μία φορά.",
       "out.used": "Αυτό το παραστατικό έχει ήδη αφαιρεθεί από το απόθεμα {n} φορές.",
       "out.miss": "Δεν βρέθηκαν στο Απόθεμα και παραλείφθηκαν ({n}):",
@@ -3196,7 +3201,7 @@
      ["🛒", t("add.counter"), counter],
      ["🧾", t("add.po"), function () { poEditor(null, null); }],
      ["🏷️", t("add.labels"), function () { labelsDialog(null); }],
-     ["🏭", t("add.sup"), function () { supEditor(null); }]]).concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
+     ["🏭", t("add.sup"), function () { supEditor(null); }]]).concat(shopReady() ? [["🛍️", t("add.shop"), openShop]] : []).concat(quoteReady() ? [["💬", t("add.quote"), function () { quoteDialog(null); }]] : []).forEach(function (a) {
       var b = button(a[0] + "  " + a[1], "sheet-btn", function () { dlg.close(); a[2](); });
       box.appendChild(b);
     });
@@ -3244,6 +3249,7 @@
     dlg.appendChild(la);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight wrap");
+    if (shopReady()) io.appendChild(button("🛍️ " + t("add.shop"), "", function () { dlg.close(); openShop(); }));
     io.appendChild(button(t("set.impCsv"), "", function () { dlg.close(); importCsv(); }));
     io.appendChild(button(t("set.expCsv"), "", exportProducts));
     io.appendChild(button(t("set.expMoves"), "", exportMoves));
@@ -3408,6 +3414,24 @@
     });
     if (p.move) { p.move.m = now; data.moves.push(p.move); }
     save();
+  }
+
+  // The shop (stock/shop.js, WooCommerce through the shell's orosLinks).
+  // It reads this app's data and writes only through applyPlan and the
+  // movement editor, like the CSV import and BR-ST-OUT.
+  function shopReady() { return !!(window.OrosStockShop && window.OrosStockShop.available()); }
+  function openShop() {
+    if (!shopReady()) return;
+    window.OrosStockShop.open({
+      lang: LANG, core: C, el: el, button: button, makeDialog: makeDialog, showDialog: showDialog,
+      field: field, selectInput: selectInput, checkRow: checkRow, confirm: confirmDialog,
+      toast: showToast, fmtQ: fmtQ, todayYmd: todayYmd, newId: newId,
+      data: function () { return data; },
+      byItem: function (id) { return byId("items", id); },
+      srcUses: function (src) { return C.srcUses(data, src); },
+      applyPlan: function (p) { applyPlan(p); render(); },
+      openOut: openOut
+    });
   }
 
   // ---------- 9b. Camera scanning ----------
@@ -3618,6 +3642,7 @@
   //   { view: "reports" } → the Reports tab
   //   { po: id }    → that purchase order (Today: expected deliveries)
   //   { out: req }  → a prefilled sale / return (BR-ST-OUT, core outRequest)
+  //   { view: "shop" } → the shop (Settings › Connected services)
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
@@ -3625,6 +3650,7 @@
     if (target.out && typeof target.out === "object") { openOut(target.out); return; }
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
+    if (target.view === "shop") { openShop(); return; }
     if (typeof target.po === "string" && byId("pos", target.po)) {
       setTab("order");
       poSheet(target.po);
@@ -3656,7 +3682,7 @@
     });
   }
   // the asking app's name: Invoices is known, anything else is "another app"
-  function appName(id) { return id === "invoices" ? t("out.invoices") : t("out.other"); }
+  function appName(id) { return id === "invoices" ? t("out.invoices") : (id === "woo" ? t("out.woo") : t("out.other")); }
   window.__orosOpenAt = openTarget;
   function takeStaged() {
     try {

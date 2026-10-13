@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.57.00
+- Connected services: link your WooCommerce shop in Settings › Connected services and see its products, stock and orders in Stock. Your keys stay sealed on your device.
+
 ## Version 1.56.00
 - Time › Stage: import a rundown from a CSV file or a Calendar day, export it as CSV, and after the event get a report of planned vs actual times (CSV or print / PDF). Also new: a hard stop that tells you how many minutes to cut, quick-add items (talk, keynote + Q&A, panel, breaks), Stage events in the orOS search, and the next session on the Today page.
 
