@@ -22,6 +22,7 @@ import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 import { validNl, runNl, handleNl, page as nlPage, NlError } from "./newsletter.js";
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
+import { handleRemote, ROOM_RE } from "./remote.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -187,6 +188,15 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (url.pathname.startsWith("/nl/")) {
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return nlPage(429, "en", "busy");
     return handleNl(request, env, url, now || Date.now());
+  }
+
+  // Studio Remote's meeting rooms (relay/remote.js): WebSockets from orOS only.
+  if (url.pathname.startsWith("/rt/")) {
+    const m = ROOM_RE.exec(url.pathname);
+    if (!m || request.method !== "GET") return new Response("unknown route", { status: 404 });
+    if (!okOrigin) return new Response("origin not allowed", { status: 403 });
+    if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return new Response("too many requests", { status: 429 });
+    return handleRemote(request, env, m[1]);
   }
 
   if (request.method === "OPTIONS") {
