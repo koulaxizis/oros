@@ -9,19 +9,38 @@
 // plain search results the user never named or kept: not searched.
 // Opens through the existing Maps bridge (__orosOpenMaps):
 // target { lat, lon, name }, the map centres on the place.
+// Since 1.46.00 also one hit per GPX track (oros-maps-tracks-data,
+// slice mapstracks; tombstoned entries are already gone from it):
+// target { track: id } through __orosOpenAt("maps", …).
 // ============================================================
 (function (root) {
   "use strict";
   var KEY = "oros-maps-data";
+  var TKEY = "oros-maps-tracks-data";
+  var TID = /^[a-z0-9]{6,40}$/;
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function num(v) { return typeof v === "number" && isFinite(v); }
 
   var PROVIDER = {
     id: "maps",
-    keys: [KEY],
+    keys: [KEY, TKEY],
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [];
+      var td = ctx.readJSON(TKEY);
+      if (td && td.tracks && typeof td.tracks === "object") {
+        Object.keys(td.tracks).forEach(function (k) {
+          var e = td.tracks[k];
+          if (!e || e.id !== k || !TID.test(k)) return;
+          var km = num(e.dist) ? (e.dist / 1000).toFixed(1) : "";
+          out.push({
+            id: "t" + k,
+            title: str(e.name) || (ctx.lang === "el" ? "Διαδρομή" : "Track"),
+            text: (ctx.lang === "el" ? "Διαδρομή GPX" : "GPX track") + (km ? " · " + km + (ctx.lang === "el" ? " χλμ." : " km") : "") + (str(e.folder) ? " · " + str(e.folder) : ""),
+            target: { track: k }
+          });
+        });
+      }
       if (!d || !Array.isArray(d.places)) return out;
       var del = d.deleted && typeof d.deleted === "object" ? d.deleted : {};
       d.places.forEach(function (p) {
@@ -41,6 +60,10 @@
       return out;
     },
     open: function (target, win) {
+      if (target && typeof target.track === "string" && TID.test(target.track) && win && typeof win.__orosOpenAt === "function") {
+        win.__orosOpenAt("maps", { track: target.track });
+        return;
+      }
       if (target && num(target.lat) && num(target.lon) && win && typeof win.__orosOpenMaps === "function") {
         win.__orosOpenMaps(target.lat, target.lon, typeof target.name === "string" ? target.name : "");
       } else if (win && typeof win.__orosOpenAt === "function") {

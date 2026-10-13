@@ -1,6 +1,6 @@
 # Maps
 
-Find places, plan routes by car, bike or on foot, follow spoken turn-by-turn directions, and help improve OpenStreetMap with notes and place edits.
+Find places, plan routes by car, bike or on foot, follow spoken turn-by-turn directions, record and follow GPX tracks, and help improve OpenStreetMap with notes and place edits.
 
 ## Getting started
 
@@ -60,6 +60,20 @@ Fix shops, cafés and other places on the real map, the way the Every Door app d
 
 Changes made on another device show `From another device` and are uploaded by that device. `Upload from here` takes them over.
 
+## My tracks (GPX)
+
+Record where you walk, ride or drive, keep your tracks and follow them again, like OsmAnd does.
+
+1. Tap `My tracks (GPX)` (the path button) and `Start recording`. You see distance, time, speed and elevation as you go. `Pause` stops adding points; `Resume` goes on with a gap in the line.
+2. You can close the panel: a red chip at the top shows the recording, tap it to come back.
+3. `Stop` asks for a name and saves the track. `Keep recording` goes back, `Discard` throws it away.
+4. Tap a track for its statistics and a chart of elevation or speed. `Show all` fits it on the map. `Follow` draws it thick and tells you how far you are from it and how much is left. `Export GPX` saves a copy anywhere. `Name, colour, folder` organises it, and the eye button shows or hides it on the map.
+5. `Import file` brings in GPX, KML or GeoJSON files. On a computer with orOS installed, `Open with` › orOS works for .gpx, .kml and .geojson files too.
+
+> Keep the screen on while you record. With the screen off, or with orOS in the background, the browser stops GPS and the track gets a straight gap. Maps keeps the screen awake while it records. If the tab closes or the device restarts, nothing is lost: next time Maps offers `Continue`, `Save` or `Discard`.
+
+Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it up and brings it to your other devices. Until the file arrives, another device shows a simplified line and the statistics.
+
 ## Online services and privacy
 
 - **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
@@ -72,9 +86,9 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, notes and place changes waiting to be sent, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes and place changes waiting to be sent, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
-`Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). Maps has no file import or export.
+`Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
 ## Keyboard shortcuts
 
@@ -93,3 +107,4 @@ Saved places, notes and place changes waiting to be sent, and the upload comment
 - Navigation needs GPS, and Maps has to stay open.
 - The routing servers are free public services and can sometimes be slow or down.
 - Place editing needs a connection to load the places; changes made offline wait until you upload them.
+- Recording needs the screen on and Maps open; the browser does not record in the background.
