@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Time — Stage tab (v1.0.0, wave 1)
+// orOS Time — Stage tab (v1.2.0, wave 3)
 // A conference / stage timer: events with a rundown of items, a
 // live countdown with yellow / red warnings and overtime, the day's
 // schedule (planned vs expected, behind / ahead), a full-screen stage
@@ -975,4 +975,16 @@
     tabs[i].addEventListener("click", function () { if (this.getAttribute("data-pane") === "pane-stage") render(); });
   }
   setInterval(function () { paint(false); }, 250);
+
+  // For time/stage-link.js (paired devices, wave 3): what the stage
+  // shows, and the same actions the buttons here take.
+  window.OrosStage = {
+    lang: LANG,
+    data: function () { return data; },
+    run: function () { curEvent(); return run; },
+    show: function () { return show; },
+    act: act,
+    setBlack: setBlack,
+    setMsg: setMsg
+  };
 })();

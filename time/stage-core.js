@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Time — Stage core (v1.0.0, wave 1)
+// orOS Time — Stage core (v1.2.0, wave 3)
 // Pure logic of the Stage tab (a conference / stage timer): the
 // synced data model (events + rundown items + tombstones), its merge
 // (slice "stage", key oros-time-stage), the running timer of the
@@ -24,6 +24,9 @@
 // shows besides the clock; read by the in-app view and display.html.
 //   { black, layout: full|timer|agenda, mirror, logoAt,
 //     msg: { text, on, flash, color: white|yellow|red|green, at } }
+// Paired devices (wave 3): devState / devAdopt / devCommand /
+// clockOffset, the messages between Time on the PC and a phone,
+// tablet or TV (time/stage-link.js). Nothing of them is stored.
 // ============================================================
 (function (root) {
   "use strict";
@@ -427,6 +430,108 @@
     return items.length ? items[step > 0 ? 0 : items.length - 1].id : null;
   }
 
+  // ---------- Paired devices (wave 3, time/stage-link.js) ----------
+  // The PC running Time (the host) sends each paired device a snapshot
+  // of what it may see; the device keeps it in memory only and draws it
+  // with the stage view. Times in it are the host's: the device adds the
+  // measured clock offset (clockOffset) so a slow link never makes the
+  // clock on stage jump.
+  var ROLES = ["remote", "display", "moderator"];
+  var DEV_MAX = 11000;                  // characters of one snapshot (the link takes 12000)
+  function devItem(it) {
+    return { id: it.id, ev: it.ev, pos: it.pos, title: it.title, speaker: it.speaker, kind: it.kind,
+      dur: it.dur, until: it.until, auto: it.auto, yellow: it.yellow, red: it.red };
+  }
+  function devState(data, run, show, role, now) {
+    data = canon(data); run = normRun(run); show = normShow(show);
+    if (ROLES.indexOf(role) < 0) return null;
+    var ev = null;
+    data.events.forEach(function (e) { if (e.id === run.ev) ev = e; });
+    var items = ev ? rundown(data, ev.id) : [];
+    var out = {
+      t: "st", v: 1, role: role, now: num(now, 0),
+      ev: ev ? { id: ev.id, name: ev.name, date: ev.date, start: ev.start, yellow: ev.yellow, red: ev.red, flash: ev.flash } : null,
+      items: items.map(devItem),
+      show: Object.assign({}, show, { logoAt: 0 }),   // the logo stays on the PC
+      msgs: role === "remote" ? (data.msgs || []).slice().sort(function (a, b) { return a.mtime - b.mtime || (a.id < b.id ? -1 : 1); })
+        .slice(0, 20).map(function (m) { return m.text; }) : []
+    };
+    function runFor(list) {
+      var log = {};
+      list.forEach(function (it) { if (run.log[it.id]) log[it.id] = run.log[it.id]; });
+      return { ev: run.ev, cur: run.cur, startedAt: run.startedAt, pausedAt: run.pausedAt, adj: run.adj, log: log };
+    }
+    out.run = runFor(out.items);
+    // a long rundown: what is around the live item fits
+    if (JSON.stringify(out).length > DEV_MAX) {
+      var i = 0;
+      items.forEach(function (it, k) { if (it.id === run.cur) i = k; });
+      var n = 40;
+      do {
+        out.items = items.slice(Math.max(0, i - 3), Math.max(0, i - 3) + n).map(devItem);
+        out.items.forEach(function (it) { it.speaker = it.speaker.slice(0, 60); it.title = it.title.slice(0, 80); });
+        out.run = runFor(out.items);
+        out.cut = true;
+        n = Math.floor(n * 0.7);
+      } while (n > 1 && JSON.stringify(out).length > DEV_MAX);
+    }
+    return out;
+  }
+  // A snapshot as the device received it: checked field by field.
+  function devAdopt(st) {
+    if (!st || typeof st !== "object" || st.t !== "st" || st.v !== 1 || ROLES.indexOf(st.role) < 0) return null;
+    var ev = st.ev ? normEvent(Object.assign({}, st.ev, { mtime: 0 })) : null;
+    var items = ev ? list(Array.isArray(st.items) ? st.items.slice(0, 200) : [], function (it) {
+      var x = normItem(Object.assign({}, it, { notes: "", mtime: 0 }));
+      return x && x.ev === ev.id ? x : null;
+    }) : [];
+    var data = canon({ v: 1, events: ev ? [ev] : [], items: items, tombs: [] });
+    return {
+      role: st.role,
+      now: num(st.now, 0),
+      data: data,
+      run: normRun(st.run),
+      show: normShow(st.show),
+      msgs: (Array.isArray(st.msgs) ? st.msgs.slice(0, 20) : []).map(function (m) { return line(m, 200); }).filter(Boolean),
+      cut: st.cut === true
+    };
+  }
+  // What a device may ask of the host, by role. Anything else: null.
+  var DEV_ACTS = ["go", "next", "prev", "reset"];
+  function devCommand(role, c) {
+    if (!c || typeof c !== "object" || typeof c.t !== "string") return null;
+    if (c.t === "hi" || c.t === "leave") return { t: c.t };
+    if (c.t === "tk") return (typeof c.c === "number" && isFinite(c.c)) ? { t: "tk", c: c.c } : null;
+    if (role === "remote") {
+      if (c.t === "a") return DEV_ACTS.indexOf(c.a) >= 0 ? { t: "a", a: c.a } : null;
+      if (c.t === "add") return [60, -60, 300, -300].indexOf(c.s) >= 0 ? { t: "add", s: c.s } : null;
+      if (c.t === "black") return typeof c.on === "boolean" ? { t: "black", on: c.on } : null;
+      if (c.t === "msgoff") return { t: "msgoff" };
+      if (c.t === "msg") {
+        var text = line(c.text, 200);
+        if (!text) return null;
+        return { t: "msg", text: text, color: COLORS.indexOf(c.color) >= 0 ? c.color : "white", flash: c.flash === true };
+      }
+    }
+    if (role === "moderator" && c.t === "ask") {
+      var q = line(c.text, 120);
+      if (!q) return null;
+      return { t: "ask", text: q, id: (typeof c.id === "string" && /^[a-z0-9]{4,16}$/.test(c.id)) ? c.id : "" };
+    }
+    return null;
+  }
+  // Clock offset of the host from round trips {c: sent here, h: host
+  // time, r: received here}: the one with the shortest trip wins.
+  function clockOffset(samples) {
+    var best = null;
+    (Array.isArray(samples) ? samples : []).forEach(function (x) {
+      if (!x || !isFinite(x.c) || !isFinite(x.h) || !isFinite(x.r) || x.r < x.c) return;
+      var rtt = x.r - x.c;
+      if (!best || rtt < best.rtt) best = { rtt: rtt, off: x.h - (x.c + rtt / 2) };
+    });
+    return best ? Math.round(best.off) : 0;
+  }
+
   var API = {
     KINDS: KINDS, DEF_YELLOW: DEF_YELLOW, DEF_RED: DEF_RED, ID_RE: ID_RE, HM_RE: HM_RE, YMD_RE: YMD_RE,
     LAYOUTS: LAYOUTS, COLORS: COLORS, normShow: normShow, focus: focus, normMsg: normMsg,
@@ -434,7 +539,8 @@
     rundown: rundown, posBetween: posBetween, thresholds: thresholds,
     timer: timer, fmt: fmt, hm: hm, schedule: schedule,
     normRun: normRun, start: start, pause: pause, select: select, finish: finish,
-    reset: reset, addTime: addTime, neighbour: neighbour
+    reset: reset, addTime: addTime, neighbour: neighbour,
+    ROLES: ROLES, devState: devState, devAdopt: devAdopt, devCommand: devCommand, clockOffset: clockOffset
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosStageCore = API;
