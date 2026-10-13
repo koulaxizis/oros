@@ -229,6 +229,8 @@ var PRECACHE_URLS = [
   "time/time.css",
   "time/time.js",
   "time/astro.js",
+  "time/stage-core.js",
+  "time/stage.js",
   "sky/",
   "sky/index.html",
   "sky/sky.css",
