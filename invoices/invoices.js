@@ -568,6 +568,7 @@
   }
 
   function renumber(d) {
+    if (MD && MD.locked(d)) { showToast(MD.lockedText("num")); return; }
     var s = C.series(data, d.ser);
     if (!s) return;
     var old = d.num;
@@ -724,7 +725,8 @@
     box.textContent = "";
     box.hidden = !groups.length;
     groups.forEach(function (g) {
-      var keep = C.clashKeeper(g);
+      // a document already in myDATA keeps its number
+      var keep = g.filter(function (x) { return MD && MD.locked(x); })[0] || C.clashKeeper(g);
       var row = el("div", "clash-row");
       row.appendChild(el("span", "", t("clash.one", { n: keep.num })));
       g.forEach(function (d) {
@@ -1652,6 +1654,7 @@
       var sh = stockShell();
       if (sh) sh.__orosOpenAt("stock", { out: stockReq });
     }));
+    if (MD) MD.actions(d, acts);
     if (d.st === "issued" && d.kind !== "ext") acts.appendChild(btn(t("vw.void"), "danger", function () { voidDoc(d); }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.delete"), "danger", function () { deleteRecord(d.id); }));
     void email;
@@ -1706,8 +1709,16 @@
       pc.appendChild(tb);
       body.appendChild(pc);
     }
+    // myDATA (sent through timologisi.online): ΜΑΡΚ, UID, code, official PDF
+    var mdCard = MD ? MD.card(d) : null;
+    if (mdCard) body.appendChild(mdCard);
     // ΜΑΡΚ + official PDF (records and issued documents)
     var mc = el("div", "card");
+    if (MD && MD.locked(d)) {                      // the ΜΑΡΚ came from myDATA: not typed over
+      if (d.kind !== "ext") mc.appendChild(fileField(d, true));
+      body.appendChild(mc);
+      return;
+    }
     var mIn = input("text", d.mark, C.LIM.mark);
     var mSave = btn(t("dlg.save"), "", function () {
       var x = JSON.parse(JSON.stringify(findDoc(d.id)));
@@ -1867,6 +1878,11 @@
     showToast(t("toast.converted"));
   }
   function voidDoc(d) {
+    if (MD && MD.locked(d)) {                      // in myDATA: corrected by a credit note, never cancelled here
+      if (d.kind === "inv" || d.kind === "rcpt") confirmDialog(t("vw.voidTitle", { n: d.num }), MD.lockedText("void"), t("vw.credit"), function () { creditFor(d); });
+      else showToast(MD.lockedText("void"));
+      return;
+    }
     confirmDialog(t("vw.voidTitle", { n: d.num }), t("vw.voidText"), t("vw.voidGo"), function () {
       var before = JSON.parse(JSON.stringify(d));
       var x = JSON.parse(JSON.stringify(d));
@@ -3634,7 +3650,21 @@
     }, true);
   }
 
+  // Connected services wave 2: myDATA through timologisi.online (mydata-ui.js)
+  var MD = window.OrosInvoicesMyData || null;
+  function initMyData() {
+    if (!MD) return;
+    MD.init({
+      get lang() { return LANG; },
+      core: C, el: el, btn: btn, field: field, input: input, select: select, fillSelect: fillSelect,
+      makeDialog: makeDialog, actions: actions, openDialog: openDialog, toast: showToast,
+      day: day, kindName: kindName, today: todayKey, findDoc: findDoc, putDoc: putDoc,
+      data: function () { return data; }, renderViewer: function () { renderAll(); }
+    });
+  }
+
   function boot() {
+    initMyData();
     load();
     loadPrefs();
     tab = prefs.tab;

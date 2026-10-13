@@ -105,6 +105,7 @@ there are no recorded audio files. Emoji come from the device's own font.
 | [Wiktionary](https://en.wiktionary.org/) | Wiktionary editors, Wikimedia Foundation | Text [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); called only after a one-time opt-in on each device, only the word is sent | Library (word look-up) |
 | [Cloudflare Workers](https://workers.cloudflare.com/) | Cloudflare, Inc. | Runs the orOS relay (`relay/`, stateless, no logs); anyone can deploy their own | Mail; Connected services (only when a shop can't be reached from the browser) |
 | [WooCommerce REST API](https://woocommerce.github.io/woocommerce-rest-api-docs/) | Automattic; the shop is the user's own | The user's own shop and keys; called only from the Stock shop panel and Settings → Connected services | Stock (shop), Settings |
+| [timologisi.online provider API](https://www.timologisi.online/) | Novus Conceptus; the account is the user's own | The user's own account and key; called only from Invoices → myDATA (AADE) and Settings → Connected services | Invoices, Settings |
 | [Dropbox](https://www.dropbox.com/) | Dropbox, Inc. | The user's own account; data end-to-end encrypted by orOS | Optional sync |
 | [GitHub Pages](https://pages.github.com/) | GitHub, Inc. | Hosting | Serves useoros.online |
 

@@ -6,13 +6,20 @@
 // the node tests all use this file, so they can never disagree.
 //
 // Data (synced slice "links", key oros-links-data):
-//   { ver: 1, accts: [ { id, m, p, name, site, ks, s, sm, d } … ] }
+//   { ver: 1, accts: [ { id, m, p, name, site, env?, vat?, ks, s, sm, d } … ] }
 //   sorted by id (R26). One row per account:
 //     id    [a-z0-9]{8,24}, random, made once on the device that adds it
 //     m     ms of the last real change (R27)
 //     p     platform id ("woo")
 //     name  the label the person gave it (≤ 60)
-//     site  the address, normalised: "https://host[/path]" (≤ 200)
+//     site  the address, normalised: "https://host[/path]" (≤ 200);
+//           "" for a platform with fixed hosts
+//     env   (fixed-host platforms only) "test" | "live": which of the
+//           platform's environments (separate accounts and keys)
+//     vat   (invoicing providers only) the issuer's 9-digit ΑΦΜ
+//   A row of a platform this version doesn't know is dropped by the
+//   merge here (an older device keeps living without it; the device
+//   that added it keeps it, the union restores it on the next pull).
 //     ks    1 = "use these keys on all my devices": the keys travel in
 //           s, sealed with the sync passphrase (orosSync.vaultCrypto)
 //     s     that sealed copy ("" when ks is off or not sealed yet)
@@ -39,6 +46,7 @@
   var ID_RE = /^[a-z0-9]{8,24}$/;
   var NAME_LEN = 60, SITE_LEN = 200, SEAL_LEN = 4000;
   var MAX_ACCTS = 50;
+  var VAT_RE = /^[0-9]{9}$/;
 
   // Platforms. fields: what the Add dialog asks for (keys = secrets).
   //   key re: the exact shape of each secret, so a typo shows before a call
@@ -50,7 +58,24 @@
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
         { k: "cs", re: /^cs_[a-f0-9]{40}$/ }
       ],
-      apps: ["stock"]
+      apps: ["stock"],
+      probe: "/products?per_page=1"
+    },
+    // timologisi.online (Novus Conceptus): a Greek e-invoicing provider.
+    // Issues documents and sends them to myDATA (AADE); fixed hosts per
+    // environment, one API key (header API-KEY).
+    tol: {
+      name: "timologisi.online",
+      site: false,
+      env: { test: "provider-dev.timologisi.online", live: "provider.timologisi.online" },
+      root: "/api/v1/Provider",
+      vat: true,
+      keys: [
+        { k: "key", re: /^[A-Za-z0-9._~+\/=-]{16,200}$/ }
+      ],
+      apps: ["invoices"],
+      probe: "/GetCreditsBalance",
+      once: true                    // a POST issues a tax document: never sent twice by a fallback
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -105,15 +130,22 @@
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id)) return null;
     if (!isInt(x.m) || x.m < 0 || !has(PLATFORMS, x.p)) return null;
     if (x.d === 1) return { id: x.id, m: x.m, p: x.p, d: 1 };
-    var site = PLATFORMS[x.p].site ? normSite(x.site) : "";
+    var pl = PLATFORMS[x.p];
+    var site = pl.site ? normSite(x.site) : "";
     if (site === null) return null;
-    var name = cleanText(x.name, NAME_LEN) || PLATFORMS[x.p].name;
+    if (pl.env && !(typeof x.env === "string" && has(pl.env, x.env))) return null;
+    if (pl.vat && !(typeof x.vat === "string" && VAT_RE.test(x.vat))) return null;
+    var name = cleanText(x.name, NAME_LEN) || pl.name;
     var ks = x.ks === 1 ? 1 : 0;
     var s = ks && typeof x.s === "string" && x.s.length <= SEAL_LEN && /^[\x20-\x7e]+$/.test(x.s) ? x.s : "";
-    return {
-      id: x.id, m: x.m, p: x.p, name: name, site: site, ks: ks, s: s,
-      sm: s && isInt(x.sm) && x.sm >= 0 ? x.sm : 0, d: 0
-    };
+    var out = { id: x.id, m: x.m, p: x.p, name: name, site: site };
+    if (pl.env) out.env = x.env;                  // only where the platform has them: a WooCommerce
+    if (pl.vat) out.vat = x.vat;                  // row keeps the bytes it had before (R26)
+    out.ks = ks;
+    out.s = s;
+    out.sm = s && isInt(x.sm) && x.sm >= 0 ? x.sm : 0;
+    out.d = 0;
+    return out;
   }
   function canon(v) { return JSON.stringify(v); }
   function wins(x, cur) {
@@ -185,6 +217,28 @@
   var NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
       WORDS = /^[a-z][a-z,-]{0,80}$/, ORDERBY = /^(date|id|modified|title)$/, ORD = /^(asc|desc)$/;
+  var DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, UID = /^[A-F0-9]{40}$/, MARK = /^[0-9]{1,20}$/,
+      SERIES = /^[A-Za-z0-9._-]{1,50}$/, AA = /^[0-9]{1,15}$/, ITYPE = /^[0-9]{1,2}\.[0-9]$/;
+  // The document types orOS issues through an invoicing provider.
+  var TOL_TYPES = ["1.1", "1.2", "1.3", "2.1", "2.2", "2.3", "5.1", "5.2", "11.1", "11.2", "11.4"];
+  var TOL_KEYS = ["issuer", "counterpart", "invoiceHeader", "paymentMethods", "invoiceDetails",
+                  "taxesTotals", "invoiceSummary", "providerAdditionalInvoiceDetails"];
+  var TOL_BYTES = 64 * 1024;
+  // SendInvoices body: exactly one document, only the sections orOS
+  // fills, one of the types above, at most 64 KB.
+  function okInvoice(v) {
+    if (!Array.isArray(v) || v.length !== 1) return false;
+    var d = v[0];
+    if (!d || typeof d !== "object" || Array.isArray(d)) return false;
+    var ks = Object.keys(d);
+    for (var i = 0; i < ks.length; i++) if (TOL_KEYS.indexOf(ks[i]) < 0) return false;
+    var h = d.invoiceHeader;
+    if (!h || typeof h !== "object" || TOL_TYPES.indexOf(h.invoiceType) < 0) return false;
+    if (!d.issuer || typeof d.issuer !== "object" || !VAT_RE.test(String(d.issuer.vatNumber))) return false;
+    var json;
+    try { json = JSON.stringify(v); } catch (e) { return false; }
+    return json.length <= TOL_BYTES;
+  }
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
   var STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
@@ -200,6 +254,14 @@
       ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
       ["PUT", /^\/orders\/[0-9]{1,12}$/, null, { status: "status" }],
       ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }]
+    ],
+    tol: [
+      ["GET", /^\/GetCreditsBalance$/, null, null],
+      ["GET", /^\/RequestTransmittedDocs$/, {
+        issuerVatNumber: VAT_RE, issuedFrom: DAY, issuedTo: DAY, uid: UID, invoiceMark: MARK,
+        series: SERIES, aa: AA, invoiceType: ITYPE, branch: NUM
+      }, null],
+      ["POST", /^\/SendInvoices$/, null, { invoice: "tolinv" }]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -208,6 +270,7 @@
     if (kind === "bool") return v === true || v === false;
     if (kind === "status") return ORDER_ST.indexOf(v) >= 0;
     if (kind === "text") return typeof v === "string" && v.length > 0 && v.length <= 1000;
+    if (kind === "tolinv") return okInvoice(v);
     return false;
   }
   // "" when the request may go, else the reason.
@@ -254,14 +317,17 @@
     return out.length ? "?" + out.join("&") : "";
   }
   // The full URL of a request for direct calls from the browser.
-  function apiUrl(p, site, path) {
-    if (p === "woo") return site + "/wp-json/wc/v3" + path;
+  // acct = the account row (or, for WooCommerce, its site string).
+  function apiUrl(p, acct, path) {
+    if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + "/wp-json/wc/v3" + path;
+    var pl = PLATFORMS[p];
+    if (pl && pl.env && acct && has(pl.env, acct.env)) return "https://" + pl.env[acct.env] + pl.root + path;
     return null;
   }
 
   var api = {
     VER: VER, ID_RE: ID_RE, PLATFORMS: PLATFORMS, PLATFORM_IDS: PLATFORM_IDS, MAX_ACCTS: MAX_ACCTS,
-    ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN,
+    ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, TOL_TYPES: TOL_TYPES,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
     extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, cleanText: cleanText
