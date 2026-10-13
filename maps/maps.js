@@ -532,7 +532,7 @@
 
   // ---------- 3. Map init + tile layers ----------
   var map = null;
-  var layerStandard, layerHumanitarian, layerSatellite;
+  var layerStandard, layerHumanitarian, layerSatellite, layerTopo;
 
   // Device-local view state (R10: *-prefs, never synced): where the
   // map was last left and which base layer was on.
@@ -583,19 +583,31 @@
       attribution: "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics"
     });
 
+    // Wave 10A: OpenTopoMap (contour lines, hill shading; OsmAnd's
+    // "Topo" style). Its servers stop at zoom 17; Leaflet scales the
+    // last tiles up beyond that.
+    layerTopo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      maxNativeZoom: 17,
+      crossOrigin: "anonymous",
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, SRTM | Style &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)'
+    });
+
     var byId = { standard: layerStandard, humanitarian: layerHumanitarian,
-                 satellite: layerSatellite };
+                 satellite: layerSatellite, topo: layerTopo };
     (byId[prefs.layer] || layerStandard).addTo(map);   // last used, else default
 
     var layers = {};
     layers[t("layers.standard") || "Standard"] = layerStandard;
     layers[t("layers.humanitarian") || "Humanitarian"] = layerHumanitarian;
     layers[t("layers.satellite") || "Satellite"] = layerSatellite;
+    layers[t("layers.topo") || "Topo"] = layerTopo;
     L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
 
     map.on("baselayerchange", function (e) {
       var id = e.layer === layerHumanitarian ? "humanitarian"
-             : e.layer === layerSatellite ? "satellite" : "standard";
+             : e.layer === layerSatellite ? "satellite"
+             : e.layer === layerTopo ? "topo" : "standard";
       writePrefs({ layer: id });
     });
     map.on("moveend", function () {
@@ -618,6 +630,14 @@
   STRINGS.el["layers.standard"] = "Τυπικός";
   STRINGS.el["layers.humanitarian"] = "Ανθρωπιστικός";
   STRINGS.el["layers.satellite"] = "Δορυφορικός";
+  STRINGS.en["layers.topo"] = "Topo (contour lines)";
+  STRINGS.el["layers.topo"] = "Τοπογραφικός (ισοϋψείς)";
+  STRINGS.en["nav.limit"] = "Speed limit {v}";
+  STRINGS.el["nav.limit"] = "Όριο ταχύτητας {v}";
+  STRINGS.en["nav.nolimit"] = "No speed limit here";
+  STRINGS.el["nav.nolimit"] = "Χωρίς όριο ταχύτητας εδώ";
+  STRINGS.en["nav.over"] = "Over the speed limit";
+  STRINGS.el["nav.over"] = "Πάνω από το όριο ταχύτητας";
 
   // ---------- 4. Markers + geolocation ----------
   // All icons are inline SVG divIcons — zero PNG assets, so the
@@ -1077,6 +1097,7 @@
     foot: "https://routing.openstreetmap.de/routed-foot/route/v1/driving/"
   };
   var RC = window.OrosMapsRoute;     // route-core.js (wave 6)
+  var TC = window.OrosMapsTools;     // tools-core.js (wave 10A)
   var ROUTE_PREFS_KEY = "oros-maps-route-prefs";   // device-local { avoid }
   var routeAlts = [];           // OSRM routes of the last request (alternatives)
   var routeAltIdx = 0;          // the one in use
@@ -1396,6 +1417,7 @@
 
     routeCoords = (r0.geometry && r0.geometry.coordinates) || [];
     buildRouteIndex();
+    limitReset();
 
     // Render maneuvers if panel is open or route just started
     renderManeuvers();
@@ -2433,6 +2455,63 @@
     host.hidden = false;
   }
 
+  // ---------- Speed limit (wave 10A, OsmAnd style) ----------
+  // The car's road ahead: one Overpass request for the roads with a
+  // maxspeed tag along the next 4 km of the route, again when fewer
+  // than 1.5 km of it are left. The sign shows the limit of the way
+  // the user is on, as written on the road (km/h or mph); red when
+  // more than 5 km/h faster. No tag known → no sign. Ways stay in
+  // memory only.
+  var LIM_OVERPASS = "https://overpass-api.de/api/interpreter";
+  var limWays = [], limUpTo = -1, limBusy = false, limTryAt = 0;
+  function limitReset() { limUpTo = -1; }
+  function limitFetch(along) {
+    if (!TC || limBusy || !navigator.onLine || Date.now() - limTryAt < 20000) return;
+    var pts = TC.corridor(routeCoords, routeCum, along - 100, along + 4000, 150);
+    if (pts.length < 2) return;
+    limBusy = true; limTryAt = Date.now();
+    var upTo = along + 4000;
+    fetch(LIM_OVERPASS, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(TC.limitQuery(pts, 20))
+    }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    }).then(function (j) {
+      limBusy = false;
+      limWays = TC.mergeLimits(limWays, TC.parseLimits(j));
+      limUpTo = upTo;
+    }, function () { limBusy = false; });
+  }
+  function limitTick(lat, lon, along, speedMs) {
+    var sign = $("nav-limit");
+    if (!sign) return;
+    if (!TC || routeProfile !== "car" || typeof along !== "number") { sign.hidden = true; return; }
+    var total = routeCum.length ? routeCum[routeCum.length - 1] : 0;
+    if (along + 1500 > limUpTo && limUpTo < total) limitFetch(along);
+    // The route's direction here, from 20 m behind to 20 m ahead.
+    var a = TC.corridor(routeCoords, routeCum, along - 20, along + 20, 40);
+    var brg = a.length > 1 ? TC.bearing(a[0], a[a.length - 1]) : null;
+    var w = TC.limitAt(limWays, lat, lon, brg, 25);
+    if (!w) { sign.hidden = true; return; }
+    var ms = w.ms;
+    sign.hidden = false;
+    if (ms.none) {
+      sign.textContent = "";
+      sign.className = "none";
+      sign.title = t("nav.nolimit");
+    } else {
+      var kmh = typeof speedMs === "number" && speedMs >= 0 ? speedMs * 3.6 : -1;
+      var isOver = TC.over(kmh, ms, 5);
+      sign.textContent = String(ms.v);
+      sign.className = (ms.mph ? "mph" : "") + (isOver ? " over" : "");
+      sign.title = t("nav.limit").replace("{v}", ms.v + " " + (ms.mph ? "mph" : t("u.kmh"))) +
+        (isOver ? " · " + t("nav.over") : "");
+    }
+    sign.setAttribute("aria-label", sign.title);
+  }
+
   function resetNavProgress() {
     navCurStepIdx = 0;
     navAlong = 0;
@@ -2531,6 +2610,7 @@
       if (said || navMuted) navSpokenFar = true;
     }
     navPaintHUD(nxt, dn, pos.coords.speed, p.along);
+    limitTick(lat, lon, p.along, pos.coords.speed);
   }
 
   function navFinish() {
@@ -2703,6 +2783,7 @@
     document.body.classList.remove("nav");
     $("nav-hud").hidden = true;
     $("nav-recenter").hidden = true;
+    $("nav-limit").hidden = true;
     if (userMarker) userMarker.setIcon(makeMarkerIcon(COLOR_USER));
     if (navWatchId !== null) {
       navigator.geolocation.clearWatch(navWatchId);
@@ -3612,7 +3693,17 @@
       return RC.orosRouteLink(mapsBase(), [f, to], "transit", to.name || "");
     },
     openTransit: null,
-    pendingTransit: null
+    pendingTransit: null,
+    // Wave 10A (tools.js): directions to a point (the parked car).
+    routeTo: function (place, profile) {
+      if (profile && ROUTER_BASE[profile] && profile !== routeProfile) {
+        routeProfile = profile;
+        ["car", "bike", "foot"].forEach(function (k) {
+          $("rp-" + k).classList.toggle("active", k === profile);
+        });
+      }
+      startRouteTo(place);
+    }
   };
 
   // ---------- Boot ----------

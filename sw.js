@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.71.00";
+var CACHE_VERSION = "oros-v1.72.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -37,7 +37,8 @@ var tilePutCount = 0;
 var TILE_HOSTS = [
   "tile.openstreetmap.org",
   "tile.openstreetmap.fr",
-  "server.arcgisonline.com"
+  "server.arcgisonline.com",
+  "tile.opentopomap.org"
 ];
 function isTileHost(hostname) {
   for (var i = 0; i < TILE_HOSTS.length; i++) {
@@ -1082,8 +1083,10 @@ var PRECACHE_URLS = [
   "maps/search.js",
   "maps/maps.css",
   "maps/route-core.js",
+  "maps/tools-core.js",
   "maps/transit-core.js",
   "maps/transit.js",
+  "maps/tools.js",
   "maps/maps.js",
   "maps/osm.js",
   "maps/osm-api.js",
