@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.49.00
+- Maps: a heatmap of everywhere you've been, from all your tracks, with distance per year and month and the "new ground" you covered. You can also show where other people walk and drive (OpenStreetMap GPS traces).
+
 ## Version 1.48.00
 - Maps: edit your tracks (keep or remove a part, split, join, simplify, with Undo) and upload them to OpenStreetMap GPS traces to help mappers.
 
