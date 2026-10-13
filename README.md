@@ -111,10 +111,23 @@ For full transparency:
 Designed with <3 by [Christos Koulaxizis](https://koulaxizis.gr).
 Assisted by [Lumo](https://lumo.proton.me/). Audited by [Claude](https://claude.ai/).
 
+## Free forever
+
+orOS is free and open source (MIT), and it stays that way: no app or feature
+that has been released for free will ever be moved behind a paywall, and there
+are no license keys, ads or nags inside orOS.
+
 ## Support
 
-orOS is free. If it helps you, you can
-[buy Christos a coffee on Ko-fi](https://ko-fi.com/koulaxizis).
+If orOS helps you, you can
+[buy Christos a coffee on Ko-fi](https://ko-fi.com/koulaxizis), or
+[become a monthly supporter](https://ko-fi.com/koulaxizis/tiers). The same
+Ko-fi page supports all of Christos's open-source projects
+([noxpress](https://noxpress.tech), [NULL JSFX](https://nulljsfx.tech) and orOS).
+
+Need a hand? You can
+[book a service on Ko-fi](https://ko-fi.com/koulaxizis/commissions): orOS set up
+on your own domain with your own sync, your logo and app list, or a custom app.
 
 ## Licence
 
