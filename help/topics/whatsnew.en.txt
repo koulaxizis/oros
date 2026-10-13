@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.54.00
+- Maps: smarter routes and sharing. See other routes and pick one, your arrival time, the lanes to take before a turn, and avoid tolls, motorways or ferries by car. Share a place or a route as a link, open it in another maps app, or keep a route in My tracks.
+
 ## Version 1.53.00
 - Maps: quests, StreetComplete style. Small questions about the things around you (is this bench backed, is the street lit, when is this shop open…) appear as pins. Answer with one tap and upload your answers to OpenStreetMap.
 

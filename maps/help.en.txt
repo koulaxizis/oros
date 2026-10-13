@@ -22,12 +22,21 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 
 The route bar shows distance and travel time (an estimate without live traffic), plus `Car`, `Bike`, `Walk`, `Directions` (the step list), `Edit route`, `Send to Calendar`, `Start navigation` and `Clear route`. `Send to Calendar` asks for a `Day` and adds a "Route to …" event to [Calendar](app:calendar) with the distance, time and mode.
 
+## Route choices and sharing
+
+- The time in the route bar is followed by the arrival time, if you leave now.
+- When the server finds other good routes, they appear as grey dotted lines. Tap one to use it, or pick it under `Routes` at the top of `Directions` (with how much longer it takes). Routes with stops have no alternatives.
+- By car, `Avoid` in `Directions` skips `Tolls`, `Motorways` or `Ferries`, one at a time. If the server can't, you get the normal route and a message. The choice stays on this device.
+- `Share` (in the route bar, in `Directions`, on a place, or on a long-press) gives you a link that opens the place or the route in orOS Maps, `Open in another app` (a `geo:` link: on Android it offers OsmAnd, Organic Maps and others), `Open on OpenStreetMap`, `Copy coordinates` for a place, and `Send…` where the device can share.
+- `Save to My tracks` keeps the route as a track (with the start, stops and destination as waypoints), so you can export it as GPX or follow it later.
+
 ## Navigation
 
 `Start navigation` follows your GPS position and speaks each turn in the orOS language. If you're more than about 150 m from the start, the route is recalculated from where you are. Leave the route and it's recalculated automatically (when you're online).
 
 - Move the map and it stops following you. `Recenter` brings it back.
 - `Mute voice` silences the instructions.
+- The bottom bar shows the arrival time, the time left and the distance left. Before a turn, the lanes appear under the instruction: the bright arrows are the lanes to take.
 - `Exit navigation` needs a second tap within 3 seconds.
 - Where the browser allows it, the screen stays on while you navigate.
 - If Maps reopens in the same tab within 30 minutes, navigation picks up again.
@@ -118,6 +127,7 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
+- **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
 - **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
@@ -127,7 +137,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings and your answer counter, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings and your answer counter, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
