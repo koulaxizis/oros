@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.69.00
+- Kanban: read a board straight from your Trello account, or a GitHub repository's issues as a board with Open and Closed columns (labels, milestone dates and task lists come along). Read it again later to bring in only what's new. orOS only reads Trello and GitHub; connect them in Settings › Connected services, then Import from other apps.
+
 ## Version 1.68.00
 - To-Do: import from Todoist. Your projects with open tasks become lists, with due dates, descriptions as notes, labels and priority; import again to bring in what's new. orOS only reads Todoist; connect it in Settings › Connected services, then List settings › Import from Todoist.
 

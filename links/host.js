@@ -336,7 +336,9 @@
   function viaRelay(a, keys, reqs) {
     var body = { op: "ext", p: a.p };
     if (a.p === "tol") { body.env = a.env; body.key = keys.key; }
-    else if (a.p !== "woo" && !L.PLATFORMS[a.p].site) body.key = keys.key;     // fixed hosts: the relay knows them
+    else if (a.p !== "woo" && !L.PLATFORMS[a.p].site) {                       // fixed hosts: the relay knows them
+      L.PLATFORMS[a.p].keys.forEach(function (f) { body[f.k] = keys[f.k]; });
+    }
     else if (a.p !== "woo") {                          // the person's own site, one key
       var sp = L.siteParts(a.site);
       body.host = sp.host; body.base = sp.base; body.key = keys.key;

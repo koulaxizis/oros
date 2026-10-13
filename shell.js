@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.68.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.69.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4963,6 +4963,12 @@
         { name: "Todoist API", url: "https://developer.todoist.com/api/v1/",
           by: "Doist Inc.; your own account", lic: { en: "Their terms, your own API token", el: "Οι όροι τους, με δικό σου API token" },
           en: "Connected services: import projects and tasks (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή projects και εργασιών (To-Do)" },
+        { name: "Trello API", url: "https://developer.atlassian.com/cloud/trello/rest/",
+          by: "Atlassian; your own account", lic: { en: "Their terms, your own key and token", el: "Οι όροι τους, με δικό σου κλειδί και token" },
+          en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή boards (Kanban)" },
+        { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
+          by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
+          en: "Connected services: import a repository's issues (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

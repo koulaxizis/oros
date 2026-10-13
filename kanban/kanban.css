@@ -533,6 +533,52 @@ input, textarea, select {
 }
 .imp-preview.imp-error { color: var(--danger); }
 
+/* Import from a connected account (wave 6B) */
+.imp-acct {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.imp-acct h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+}
+.imp-acct label {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.imp-acct select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.imp-acct button {
+  margin-top: 8px;
+  min-height: 36px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
 /* Archive button (manage dialog) */
 .manage-archive {
   display: inline-flex;
