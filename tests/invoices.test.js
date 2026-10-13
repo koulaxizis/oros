@@ -445,3 +445,19 @@ test("wave 2: a payment remembers it went to Budget (bud) and merges like any fi
   assert.equal(d.pays[0].bud, 1);
   assert.equal(model({ docs: [inv("doc-1")], pays: [Object.assign(pay("pay-1", "doc-1", 1000), { bud: "yes" })] }).pays[0].bud, 0);
 });
+
+test("BR-ST-OUT: stockOut sends coded lines at the net unit price; credit notes return", () => {
+  const S = require("../stock/core.js");
+  const doc = { id: "abc1", st: "issued", kind: "inv", num: "INV-2026-0001", date: "2026-10-13", gDisc: 10,
+    lines: [{ code: "MUG-1", q: 2, p: 1000, disc: 20 }, { code: "", q: 1, p: 500, disc: 0 }] };
+  const r = C.stockOut(doc);
+  assert.deepEqual(r, { ref: "INV-2026-0001", d: "2026-10-13", t: "out", src: "invoices:abc1", lines: [{ code: "MUG-1", q: 2, p: 720 }] });
+  assert.equal(C.stockOut(Object.assign({}, doc, { kind: "cred" })).t, "ret");
+  assert.equal(C.stockOut(Object.assign({}, doc, { st: "draft" })), null);
+  assert.equal(C.stockOut(Object.assign({}, doc, { kind: "pro" })), null);
+  assert.equal(C.stockOut(Object.assign({}, doc, { lines: [{ code: "", q: 1, p: 1, disc: 0 }] })), null);
+  // Stock's own receiver accepts it as is.
+  assert.ok(typeof S.outRequest === "function");
+  const got = S.outRequest(S.normalize ? S.normalize({}) : {}, r, "2026-10-13");
+  assert.ok(got && got.miss.indexOf("MUG-1") >= 0);
+});

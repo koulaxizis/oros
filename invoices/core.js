@@ -634,6 +634,25 @@
   // The shell reminder: unpaid documents overdue or due within `days`
   // days of `day`. null when there is nothing to say. `key` changes
   // with the day and the counts, so a growing list says it again.
+  // BR-ST-OUT (Stock's receiver, stock/core.js outRequest): the
+  // request that takes an issued invoice or receipt out of stock, or
+  // puts a credit note's goods back. Only lines with a code (SKU or
+  // barcode) go; p = net unit price after the line and global
+  // discounts, in cents. Stock opens a prefilled movement and writes
+  // nothing until the person saves. null = nothing to send.
+  var STOCK_SRC_RE = /^[A-Za-z0-9._-]{1,60}$/;
+  function stockOut(d) {
+    if (!d || d.st !== "issued" || ["inv", "rcpt", "cred"].indexOf(d.kind) < 0) return null;
+    var g = (100 - (d.gDisc || 0)) / 100, lines = [];
+    (d.lines || []).forEach(function (l) {
+      if (!l || !l.code || !(l.q > 0)) return;
+      lines.push({ code: l.code, q: l.q, p: Math.round(l.p * (100 - l.disc) / 100 * g) });
+    });
+    if (!lines.length) return null;
+    var req = { ref: String(d.num || "").slice(0, 60), d: d.date, t: d.kind === "cred" ? "ret" : "out", lines: lines };
+    if (STOCK_SRC_RE.test(d.id)) req.src = "invoices:" + d.id;
+    return req;
+  }
   function reminder(data, day, days) {
     if (!validDay(day)) return null;
     var list = dueList(data, addDays(day, days > 0 ? days : 0));
@@ -943,7 +962,7 @@
     clashes: clashes, clashKeeper: clashKeeper,
     lineNet: lineNet, totals: totals, paysOf: paysOf, paidOf: paidOf, creditsOf: creditsOf,
     owes: owes, balance: balance, status: status, lateDays: lateDays, sign: sign, counts: counts,
-    byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, currencies: currencies, dashboard: dashboard,
+    byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, stockOut: stockOut, currencies: currencies, dashboard: dashboard,
     recurringDue: recurringDue, nextRun: nextRun, draftFrom: draftFrom, stepRep: stepRep,
     normPrefill: normPrefill, matchClient: matchClient, fold: fold,
     parseMoney: parseMoney, parseNum: parseNum, fmtMoney: fmtMoney, fmtNumber: fmtNumber,
