@@ -213,7 +213,8 @@ The host is fixed per `env` (`test` → `provider-dev.timologisi.online`,
 | GET | `/RequestTransmittedDocs` | `issuerVatNumber, issuedFrom, issuedTo, uid, invoiceMark, series, aa, invoiceType, branch` |
 | POST | `/SendInvoices` | `{ invoice: [one document] }` with only the known top-level keys, a known type, a 9-digit issuer ΑΦΜ |
 
-- 64 KB per request body; 65 s per request, 70 s per call (SendInvoices waits for AADE).
+- A SendInvoices travels alone in its call (`reqs` of 1); 64 KB per request body; 65 s per request, 70 s per call (SendInvoices waits for AADE).
+- A request never sent because the call's time ran out comes back as `{ err: "skipped" }` (any platform); `timeout` / `network` mean it may have reached the provider.
 - The app never retries a SendInvoices: a timeout or network error is reported to the person as "may or may not have arrived" and they look it up first.
 
 ## Newsletter: sign-up form and one-click unsubscribe

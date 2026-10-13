@@ -356,6 +356,8 @@
     if (typeof navigator !== "undefined" && navigator.onLine === false) return Promise.reject(err("offline"));
     var pl = L.PLATFORMS[a.p];
     var writes = reqs.some(function (r) { return r.m !== "GET"; });
+    // a write that must happen once travels alone (the relay refuses more)
+    if (pl.once && writes && reqs.length > 1) return Promise.reject(err("bad"));
     var once = !!(pl.once && writes);
     // A write that must not happen twice (an invoicing provider issues a
     // tax document) is never retried another way after it was tried:

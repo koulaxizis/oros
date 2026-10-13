@@ -21,7 +21,7 @@
 //     header API-KEY; SendInvoices waits for AADE, so a longer timeout
 // Answer:   { ok: true, data: { res: [ one per request, same order ] } }
 //   { status, body (text ≤ 2 MB) } | { status, err: "too-big" }
-//   | { err: "timeout" | "network" }
+//   | { err: "timeout" | "network" | "skipped" (never sent: the call's time ran out first) }
 // ============================================================
 
 import { validHost } from "./core.js";
@@ -87,6 +87,7 @@ export const PLATFORMS = {
   },
   tol: {
     root: "/api/v1/Provider",
+    once: true,
     env: { test: "provider-dev.timologisi.online", live: "provider.timologisi.online" },
     keys: { key: /^[A-Za-z0-9._~+\/=-]{16,200}$/ },
     auth: (b) => ["API-KEY", b.key],
@@ -159,6 +160,8 @@ export function validExt(b) {
   }
   for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
   if (!Array.isArray(b.reqs) || !b.reqs.length || b.reqs.length > EXT_LIMITS.reqs) return "reqs";
+  // a write that must happen once (an invoice) travels alone in its call
+  if (pl.once && b.reqs.length > 1 && b.reqs.some(r => r && r.m !== "GET")) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
       if (typeof r.body !== "string" || r.body.length > lim(b.p, "reqBytes")) return "body";
@@ -214,7 +217,8 @@ export async function runExt(b, fetchFn, now) {
   async function one(i) {
     const r = b.reqs[i];
     const left = lim(b.p, "budget") - (now() - start);
-    if (left <= 0) { out[i] = { err: "timeout" }; return; }
+    // never sent: a code of its own, so a caller knows a write did not happen
+    if (left <= 0) { out[i] = { err: "skipped" }; return; }
     const url = target(b, r.path);
     if (!url) { out[i] = { err: "network" }; return; }
     const headers = { Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" };

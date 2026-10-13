@@ -268,6 +268,21 @@ test("relay validation: environment instead of a host, key shape, body size", ()
   assert.equal(X.validExt(tol({ reqs: [{ m: "POST", path: "/SendInvoices", body: body.slice(0, -1) }] })), "body");
 });
 
+test("relay: an invoice travels alone; a request never sent says skipped, not timeout", async () => {
+  const body = JSON.stringify({ invoice: [{ issuer: { vatNumber: "123456789" }, invoiceHeader: { invoiceType: "11.1" } }] });
+  const send = { m: "POST", path: "/SendInvoices", body };
+  const get = { m: "GET", path: "/GetCreditsBalance" };
+  assert.equal(X.validExt(tol({ reqs: [send, send] })), "reqs");
+  assert.equal(X.validExt(tol({ reqs: [get, send] })), "reqs");
+  assert.equal(X.validExt(tol({ reqs: [get, get] })), "");
+  // the call's time is already gone when the requests would start
+  let t = 0;
+  const f = mock();
+  const out = await X.runExt(tol({ reqs: [get, get] }), f, () => { t += 100000; return t; });
+  assert.deepEqual(out.res || out, [{ err: "skipped" }, { err: "skipped" }]);
+  assert.equal(f.calls.length, 0);
+});
+
 test("relay call: fixed host per environment, API-KEY header, key never echoed", async () => {
   const f = mock();
   const r = await relay(tol({ reqs: [{ m: "GET", path: "/GetCreditsBalance" }] }), f);
