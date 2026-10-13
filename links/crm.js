@@ -1,6 +1,7 @@
 // ============================================================
 // orOS Connected services — CRM platforms (links/crm.js, v1.0.0)
-// Pure: the requests that read a HubSpot or Pipedrive account, what
+// Pure: the requests that read a HubSpot, Pipedrive or Invoice Ninja
+// (clients only, wave 4C) account, what
 // their answers mean, and the plan that brings them into CRM
 // (integrations wave 4). No DOM, no storage, no network; crm/platforms.js
 // makes the calls through the shell (orosLinks.call) and applies the plan.
@@ -21,10 +22,11 @@
 
   var L = typeof module !== "undefined" && module.exports ? require("./core.js") : root.OrosLinksCore;
 
-  var PLATFORMS = ["hubspot", "pdrive"];
+  var PLATFORMS = ["hubspot", "pdrive", "ininja"];
   var KINDS = {
     hubspot: ["stages", "orgs", "people", "deals"],
-    pdrive: ["stages", "orgs", "people", "deals", "acts"]
+    pdrive: ["stages", "orgs", "people", "deals", "acts"],
+    ininja: ["orgs"]                    // clients, with their contacts inside
   };
   var MAX = { stages: 1000, orgs: 5000, people: 10000, deals: 5000, acts: 5000 };
   var HS_PAGE = 100, PD_PAGE = 500;
@@ -85,6 +87,7 @@
 
   // ---------- requests ----------
   function req(p, kind, at) {
+    if (p === "ininja") return { m: "GET", path: "/clients?per_page=100&page=" + (at || "1") + "&status=active" };
     if (p === "hubspot") {
       if (kind === "stages") return { m: "GET", path: "/crm/v3/pipelines/deals" };
       return { m: "GET", path: HS_PATH[kind] + (at ? "&after=" + at : "") };
@@ -142,6 +145,25 @@
     if (a && typeof a === "object") return { addr: txt(a.value || a.formatted_address, 200), country: txt(a.country, 60) };
     return { addr: "", country: "" };
   }
+  // Invoice Ninja: a client with its contacts (the first is the main one)
+  function inClient(o) {
+    var name = txt(o && o.name, 120);
+    var cs = o && Array.isArray(o.contacts) ? o.contacts : [];
+    var ppl = [];
+    cs.forEach(function (c, i) {
+      if (!c || typeof c !== "object") return;
+      var n = [txt(c.first_name, 60), txt(c.last_name, 60)].filter(Boolean).join(" ") || txt(c.email, 120);
+      if (!n) return;
+      ppl.push({ xid: xid(c.id) || String(i), name: n, email: email(c.email), phone: txt(c.phone, 40), role: "", org: xid(o.id) });
+    });
+    if (!name && ppl.length) name = ppl[0].name;
+    if (!name || o.is_deleted === true) return null;
+    return {
+      xid: xid(o.id), name: name, phone: txt(o.phone, 40), email: "", web: txt(o.website, 300),
+      addr: [[txt(o.address1, 120), txt(o.address2, 120)].filter(Boolean).join(" "), [txt(o.postal_code, 20), txt(o.city, 60)].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+      country: "", job: "", afm: txt(o.vat_number, 20).replace(/\s+/g, "").replace(/^EL/i, ""), ppl: ppl
+    };
+  }
   var READ = {
     hubspot: {
       orgs: hsOrg, people: hsPerson, deals: hsDeal
@@ -185,6 +207,14 @@
   // → { items, next } ; next "" = no more pages
   function read(p, kind, data) {
     if (p === "hubspot" && kind === "stages") return { items: hsStages(data), next: "" };
+    if (p === "ininja") {
+      var its = [];
+      (data && Array.isArray(data.data) ? data.data : []).forEach(function (o) { var x = inClient(o); if (x && x.xid) its.push(x); });
+      var pg = data && data.meta && data.meta.pagination;
+      var cur = pg && typeof pg.current_page === "number" ? pg.current_page : 0;
+      var tot = pg && typeof pg.total_pages === "number" ? pg.total_pages : 0;
+      return { items: its, next: cur > 0 && cur < tot && cur < 1000 ? String(cur + 1) : "" };
+    }
     var list = p === "hubspot" ? (data && data.results) : (data && data.data);
     var fn = READ[p] && READ[p][kind];
     var items = [];
@@ -243,8 +273,9 @@
     ["cust", "deals", "fups"].forEach(function (k) { rows[k] = {}; crm[k].forEach(function (r) { rows[k][r.id] = r; }); });
     var room = { cust: C.LIMITS.cust - crm.cust.length, deals: C.LIMITS.deals - crm.deals.length, fups: C.LIMITS.fups - crm.fups.length };
     // customers already here that came from elsewhere: by name or e-mail
-    var byName = {}, byMail = {};
+    var byName = {}, byMail = {}, byAfm = {};
     crm.cust.forEach(function (c) {
+      if (c.afm) byAfm[c.afm] = byAfm[c.afm] || c.id;
       byName[fold(c.name)] = byName[fold(c.name)] || c.id;
       if (c.email) byMail[c.email.toLowerCase()] = byMail[c.email.toLowerCase()] || c.id;
     });
@@ -270,7 +301,9 @@
       return row.id;
     }
 
-    var orgs = got.orgs || [], people = got.people || [], deals = got.deals || [];
+    var orgs = got.orgs || [], people = (got.people || []).slice(), deals = got.deals || [];
+    orgs.forEach(function (o) { if (o.ppl) people = people.concat(o.ppl); });
+    var custF = CUST_F.concat(p === "ininja" ? ["afm"] : []);
     var stageMap = {};
     (got.stages || []).forEach(function (s) { stageMap[s.xid] = s; });
     function stageOf(d) { return d.stage && has(stageMap, d.stage) ? stageMap[d.stage] : null; }
@@ -292,7 +325,7 @@
     var custOf = {};                    // "o<xid>" / "p<xid>" → CRM customer id
     function custRow(kind, x, ppl) {
       var c = { id: id(kind === "o" ? "org" : "person", x.xid), name: x.name, kind: kind === "o" ? "co" : "person" };
-      ["phone", "email", "web", "addr", "country", "job"].forEach(function (f) { if (x[f]) c[f] = x[f]; });
+      ["phone", "email", "web", "addr", "country", "job", "afm"].forEach(function (f) { if (x[f]) c[f] = x[f]; });
       if (ppl && ppl.length) c.people = ppl.slice(0, C.LIMITS.people).map(function (q) {
         var line = { c: "", n: q.name };
         if (q.role) line.role = q.role;
@@ -306,13 +339,13 @@
       var c = custRow(kind, x, ppl);
       var key = kind + x.xid;
       if (!rows.cust[c.id] && !(has(tombs, c.id) && !ctx.revive)) {
-        var here = byName[fold(c.name)] || (c.email && byMail[c.email]);
+        var here = (c.afm && byAfm[c.afm]) || byName[fold(c.name)] || (c.email && byMail[c.email]);
         if (here) { out.here++; custOf[key] = here; return; }
       }
       c.st = won[key] ? "active" : "lead";
       c.src = ctx.src;
       c.ct = now;
-      var at = put("cust", c, CUST_F, C.normCust);
+      var at = put("cust", c, custF, C.normCust);
       if (at) custOf[key] = at;
     }
     orgs.forEach(function (o) { custOne("o", o, peopleOf[o.xid]); });

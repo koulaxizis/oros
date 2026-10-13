@@ -836,7 +836,9 @@
     if (pHint !== "v.plat." + f.p + ".hint") form.appendChild(el("div", "hint", pHint));
     var pName = (Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).name;
     form.appendChild(labelled(t("v.name"), "v-name", textInput("v-name", f.name, f.p === "woo" ? t("v.name.ph") : pName, function (v) { f.name = v; })));
+    var isSite = !!(Lk.platforms().filter(function (x) { return x.id === f.p; })[0] || {}).site;
     if (f.p !== "woo") {
+      if (isSite) form.appendChild(labelled(siteLabel(f.p), "v-site", textInput("v-site", f.site, t("v.site.ph." + f.p) === "v.site.ph." + f.p ? t("v.site.ph") : t("v.site.ph." + f.p), function (v) { f.site = v; }, "url")));
       if (f.p === "tol") {
         form.appendChild(labelled(t("v.env"), "v-env", select([{ value: "test", label: t("v.env.test") }, { value: "live", label: t("v.env.live") }], f.env, "v-env", function (v) { f.env = v; })));
         var vin = textInput("v-vat", f.vat, t("v.vat.ph"), function (v) { f.vat = v; });
@@ -864,7 +866,7 @@
       f.err = "";
       render();
       var o = f.p === "tol" ? { p: "tol", name: f.name, env: f.env, vat: f.vat, keys: { key: f.key } }
-            : f.p !== "woo" ? { p: f.p, name: f.name, keys: { key: f.key } }
+            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, keys: { key: f.key } }
             : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
       Lk.add(o).then(function (id) {
         svc.add = null;
@@ -882,13 +884,14 @@
     c.appendChild(form);
     return c;
   }
+  function siteLabel(p) { var k = "v.site." + p; return t(k) === k ? t("v.site") : t(k); }
   function acctCard(Lk, a, plat) {
     var c = card(a.name);
     var info = el("dl", "keys info");
     info.appendChild(el("dt", null, t("v.platform")));
     info.appendChild(el("dd", null, a.platform));
     if (a.site) {
-      info.appendChild(el("dt", null, t("v.site")));
+      info.appendChild(el("dt", null, siteLabel(a.p)));
       info.appendChild(el("dd", null, a.site.replace(/^https:\/\//, "")));
     }
     if (a.env) {
