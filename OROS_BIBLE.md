@@ -5429,3 +5429,25 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The tablet runs the effect's GFX view itself (same nullfx files); the PC validates everything (slider exists, not a file slider, clamped, enums rounded; ids from the catalog) and applies it through fx.js (undo, sync).
   - Fixes: closing a link sends "bye" so the other side updates at once; the PC's Remote dialog shows the current state when reopened.
   - Not tested: real tablets / phones, the live relay path.
+
+### 2026-10-13 — Time › Stage wave 2: display window and speaker messages (#270) — 1.52.00
+- Time › Stage wave 2 (plan /mnt/project-files/time/stage-timer-plan.md).
+  - time/stage-view.js + stage-view.css: one renderer for the speaker's picture. It reads only storage (`oros-time-stage`, `-run`, `-show`, and the logo in IndexedDB `oros-time-stage`/`files`), and the in-app Stage view and the display window both use it.
+  - time/display.html + display.js: the stage display window, opened with `window.open("display.html?standalone", "oros-stage-display")`.
+    - It follows the `storage` event plus a 250 ms tick, so it keeps running when Time is closed. It writes nothing.
+    - Double-click or F toggles full screen. It hides the cursor and tools when idle and uses a wake lock where supported.
+    - On Chrome and Edge, `getScreenDetails()` moves it to the other monitor.
+    - It is not an app page, so it has no DL-1 redirect.
+  - Message to the speaker:
+    - Seven ready-made messages plus your own saved ones. The saved ones are synced as `msgs` in the `stage` slice, LWW + tombstones, and the key is left out when empty.
+    - Colour (white, yellow, red or green) and flash. The M key shows or hides the message.
+    - Typing never reaches the stage. A message shows only on Show or Enter.
+  - Stage output (device-local `oros-time-stage-show`):
+    - Black screen (the B key now blanks the output without opening the in-app view).
+    - Layout: full, timer or agenda.
+    - Mirror.
+    - Logo: an image file, scaled to 600 px or less and stored as PNG in IndexedDB.
+  - The operator pane shows the message and the black state as the stage sees them.
+  - tests/time-stage.test.js: 19 tests (wave 2: msgs merge, normShow, focus, display page wiring).
+  - Factory reset also deletes the IndexedDB `oros-time-stage` (logo).
+  - Not tested: a real second monitor, Firefox / Safari window placement, phones.
