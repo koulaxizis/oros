@@ -1,7 +1,7 @@
 // ============================================================
 // orOS To-Do — task platforms (todo/platforms.js)
-// Bring a Todoist account's projects and open tasks into To-Do
-// (integrations wave 6A).
+// Bring a Todoist account's projects and open tasks (integrations wave
+// 6A), or the open GitHub issues assigned to you (wave 6G), into To-Do.
 // The account and its key live in the shell (Settings › Connected
 // services, parent.orosLinks); this file never sees a key.
 // links/todo.js builds the requests, reads the answers and makes the
@@ -18,12 +18,14 @@
 
   var S = {
     en: {
-      btn: "Import from Todoist…", title: "Import from Todoist",
+      btn: "Import from Todoist or GitHub…", title: "Import tasks",
       intro: "Bring your Todoist projects and open tasks here: each project with open tasks becomes a list, with due dates, descriptions as notes, labels and priority. orOS only reads Todoist: nothing there changes.",
-      none: "Connect Todoist in Settings › Connected services first.",
-      openSettings: "Open Connected services", noShell: "Open To-Do from the orOS desktop to import from Todoist.",
+      "intro.github": "Bring the open GitHub issues assigned to you here: each repository becomes a list, each issue a task \"#12 Title\" with its text and link as notes, its labels, and its milestone's date as due date. Pull requests stay out. orOS only reads GitHub: nothing there changes.",
+      none: "Connect Todoist or GitHub in Settings › Connected services first.",
+      openSettings: "Open Connected services", noShell: "Open To-Do from the orOS desktop to import from Todoist or GitHub.",
       acct: "Account", upd: "Update what was imported before, where it changed there",
       updHint: "Only Todoist's fields: text, notes, due date and priority; labels are only added. Ticks, other labels, extra info and repeats here are never touched.",
+      "updHint.github": "Only GitHub's fields: text, notes and due date; labels are only added. Ticks, other labels, extra info and repeats here are never touched. An issue closed there stays as it is here.",
       revive: "Bring back what was deleted here",
       read: "Read the account", reading: "Reading {what}… {n}",
       "k.projects": "projects", "k.tasks": "tasks",
@@ -34,21 +36,23 @@
       sub: "{n} subtasks come in as tasks, right after their parent.",
       capped: "The account has more than {n} {what}; only the first {n} were read.",
       nothing: "Nothing new: To-Do already has everything.",
-      go: "Import", done: "Imported from Todoist: {a} new, {u} updated", prio: "Priority",
-      "err.auth": "Todoist refused the token. Check it in Settings › Connected services.",
+      go: "Import", done: "Imported from {p}: {a} new, {u} updated", prio: "Priority",
+      "err.auth": "{p} refused the token. Check it in Settings › Connected services.",
       "err.keys": "This device doesn't have the account's token yet. Enter it in Settings › Connected services.",
       "err.offline": "You're offline.",
-      "err.busy": "Todoist asks to slow down. Try again in a minute.",
-      "err.other": "Couldn't reach Todoist. Try again later.",
-      close: "Close", "p.todoist": "Todoist"
+      "err.busy": "{p} asks to slow down. Try again in a minute.",
+      "err.other": "Couldn't reach {p}. Try again later.",
+      close: "Close", "p.todoist": "Todoist", "p.github": "GitHub"
     },
     el: {
-      btn: "Εισαγωγή από Todoist…", title: "Εισαγωγή από Todoist",
+      btn: "Εισαγωγή από Todoist ή GitHub…", title: "Εισαγωγή εργασιών",
       intro: "Φέρε εδώ τα projects και τις ανοιχτές εργασίες σου από το Todoist: κάθε project με ανοιχτές εργασίες γίνεται λίστα, με προθεσμίες, περιγραφές ως σημειώσεις, ετικέτες και προτεραιότητα. Το orOS μόνο διαβάζει το Todoist: εκεί δεν αλλάζει τίποτα.",
-      none: "Σύνδεσε πρώτα το Todoist στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
-      openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το To-Do από την επιφάνεια εργασίας του orOS για εισαγωγή από το Todoist.",
+      "intro.github": "Φέρε εδώ τα ανοιχτά issues του GitHub που σου έχουν ανατεθεί: κάθε αποθετήριο γίνεται λίστα, κάθε issue εργασία «#12 Τίτλος» με το κείμενο και τον σύνδεσμό του ως σημειώσεις, τις ετικέτες του και την ημερομηνία του milestone ως προθεσμία. Τα pull requests μένουν έξω. Το orOS μόνο διαβάζει το GitHub: εκεί δεν αλλάζει τίποτα.",
+      none: "Σύνδεσε πρώτα το Todoist ή το GitHub στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε το To-Do από την επιφάνεια εργασίας του orOS για εισαγωγή από το Todoist ή το GitHub.",
       acct: "Λογαριασμός", upd: "Ενημέρωση όσων ήρθαν παλιότερα, όπου άλλαξαν εκεί",
       updHint: "Μόνο τα πεδία του Todoist: κείμενο, σημειώσεις, προθεσμία και προτεραιότητα· οι ετικέτες μόνο προστίθενται. Τα τικ, οι άλλες ετικέτες, οι επιπλέον πληροφορίες και οι επαναλήψεις εδώ δεν αλλάζουν ποτέ.",
+      "updHint.github": "Μόνο τα πεδία του GitHub: κείμενο, σημειώσεις και προθεσμία· οι ετικέτες μόνο προστίθενται. Τα τικ, οι άλλες ετικέτες, οι επιπλέον πληροφορίες και οι επαναλήψεις εδώ δεν αλλάζουν ποτέ. Ένα issue που έκλεισε εκεί μένει όπως είναι εδώ.",
       revive: "Επαναφορά όσων διαγράφηκαν εδώ",
       read: "Ανάγνωση λογαριασμού", reading: "Ανάγνωση: {what}… {n}",
       "k.projects": "projects", "k.tasks": "εργασίες",
@@ -59,13 +63,13 @@
       sub: "{n} υποεργασίες έρχονται ως εργασίες, αμέσως μετά τη γονική τους.",
       capped: "Ο λογαριασμός έχει πάνω από {n} {what}· διαβάστηκαν μόνο τα πρώτα {n}.",
       nothing: "Τίποτα νέο: το To-Do τα έχει ήδη όλα.",
-      go: "Εισαγωγή", done: "Εισαγωγή από Todoist: {a} νέα, {u} ενημερώθηκαν", prio: "Προτεραιότητα",
-      "err.auth": "Το Todoist απέρριψε το token. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      go: "Εισαγωγή", done: "Εισαγωγή από {p}: {a} νέα, {u} ενημερώθηκαν", prio: "Προτεραιότητα",
+      "err.auth": "Το {p} απέρριψε το token. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "err.keys": "Αυτή η συσκευή δεν έχει ακόμα το token του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "err.offline": "Είσαι εκτός σύνδεσης.",
-      "err.busy": "Το Todoist ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
-      "err.other": "Δεν ήταν δυνατή η σύνδεση με το Todoist. Δοκίμασε αργότερα.",
-      close: "Κλείσιμο", "p.todoist": "Todoist"
+      "err.busy": "Το {p} ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "err.other": "Δεν ήταν δυνατή η σύνδεση με το {p}. Δοκίμασε αργότερα.",
+      close: "Κλείσιμο", "p.todoist": "Todoist", "p.github": "GitHub"
     }
   };
   function t(k, params) {
@@ -82,9 +86,9 @@
     if (!Lk) return [];
     return Lk.list().filter(function (a) { return M.PLATFORMS.indexOf(a.p) >= 0; });
   }
-  function errText(e) {
+  function errText(e, p) {
     var c = e && e.code;
-    return t(c === "auth" || c === "keys" || c === "offline" || c === "busy" ? "err." + c : "err.other");
+    return t(c === "auth" || c === "keys" || c === "offline" || c === "busy" ? "err." + c : "err.other", { p: t("p." + p) });
   }
   function ask(acct, req) {
     return links().call(acct, [req]).then(function (res) {
@@ -145,7 +149,8 @@
     form.autocomplete = "off";
     dlg.appendChild(form);
     form.appendChild(el("h3", "", t("title")));
-    form.appendChild(el("p", "hint", t("intro")));
+    var intro = el("p", "hint", t("intro"));
+    form.appendChild(intro);
     var menu = el("menu");
     var closeBtn = button(t("close"), "", function () { dlg.close(); });
     function show() {
@@ -182,7 +187,14 @@
     form.appendChild(sel);
     var upd = check(t("upd"), true, "tplat.upd"), rev = check(t("revive"), false, "tplat.revive");
     form.appendChild(upd.row);
-    form.appendChild(el("p", "hint", t("updHint")));
+    var updHint = el("p", "hint", t("updHint"));
+    form.appendChild(updHint);
+    function forAcct() {                             // the intro and hint of the chosen account's platform
+      var a = byId[sel.value], gh = a && a.p === "github";
+      intro.textContent = t(gh ? "intro.github" : "intro");
+      updHint.textContent = t(gh ? "updHint.github" : "updHint");
+    }
+    forAcct();
     form.appendChild(rev.row);
     var msg = el("div", "plat-msg");
     msg.setAttribute("aria-live", "polite");
@@ -198,7 +210,7 @@
     menu.appendChild(el("span", "spacer"));
     menu.appendChild(go);
     form.appendChild(menu);
-    sel.addEventListener("change", function () { got = null; plan = null; msg.textContent = ""; go.textContent = t("read"); go.disabled = false; });
+    sel.addEventListener("change", function () { forAcct(); got = null; plan = null; msg.textContent = ""; go.textContent = t("read"); go.disabled = false; });
     [upd.box, rev.box].forEach(function (b) { b.addEventListener("change", function () { if (got && !busy) compute(); }); });
 
     function line(text) { msg.appendChild(el("p", "hint", text)); }
@@ -222,7 +234,7 @@
       busy = true;
       go.disabled = true;
       sel.disabled = true;
-      msg.textContent = t("reading", { what: t("k.projects"), n: 0 });
+      msg.textContent = t("reading", { what: t("k." + M.KINDS[acct.p][0]), n: 0 });
       readAll(acct, function (k, n) { msg.textContent = t("reading", { what: t("k." + k), n: n }); }).then(function (r) {
         busy = false;
         sel.disabled = false;
@@ -233,13 +245,13 @@
         busy = false;
         sel.disabled = false;
         go.disabled = false;
-        msg.textContent = errText(e);
+        msg.textContent = errText(e, acct.p);
       });
     }
     function apply() {
       var n = M.count(plan);
       if (!n.add && !n.upd) return;
-      if (!A.apply(plan, t("done", { a: n.add, u: n.upd }))) return;
+      if (!A.apply(plan, t("done", { p: t("p." + acct.p), a: n.add, u: n.upd }))) return;
       dlg.close();
     }
     show();

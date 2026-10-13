@@ -1,7 +1,8 @@
 // ============================================================
 // orOS Connected services — To-Do platforms (links/todo.js, v1.0.0)
 // Pure: the requests that read a Todoist account (projects and open
-// tasks, integrations wave 6A), what the answers mean, and the plan
+// tasks, integrations wave 6A) or the GitHub issues assigned to the
+// token's owner (wave 6G), what the answers mean, and the plan
 // that brings them into To-Do. No DOM, no storage, no network:
 // todo/platforms.js makes the calls through the shell (orosLinks.call)
 // and todo/todo.js applies the plan.
@@ -22,6 +23,9 @@
 //     priority) and only adds labels; ticks, other labels, extra info
 //     and repeats set here are never touched
 //   - repeating tasks come in with their next date only
+//   - GitHub: one list per repository ("owner/name"), an open issue
+//     assigned to you → "#12 Title" with its text and link as notes, its
+//     labels, its milestone's date as due; pull requests left out
 // Everything from the platform is plain text from here on (textContent).
 // ============================================================
 (function (root) {
@@ -29,8 +33,9 @@
 
   var L = typeof module !== "undefined" && module.exports ? require("./core.js") : root.OrosLinksCore;
 
-  var PLATFORMS = ["todoist"];
-  var KINDS = { todoist: ["projects", "tasks"] };
+  var PLATFORMS = ["todoist", "github"];
+  var KINDS = { todoist: ["projects", "tasks"], github: ["tasks"] };   // GitHub: lists come from the issues' repositories
+  var GH_PAGE = 100, REPO = /^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/;
   var MAX = { projects: 1000, tasks: 5000 };
   var PAGE = 200;
   var TEXT_LEN = 500, NOTE_LEN = 5000, NAME_LEN = 60, LABEL_LEN = 40;
@@ -55,6 +60,7 @@
   function num(v) { return typeof v === "number" && isFinite(v) ? v : 0; }
 
   function req(p, kind, at) {
+    if (p === "github") return { m: "GET", path: "/issues?filter=assigned&state=open&per_page=" + GH_PAGE + "&page=" + (/^[1-9][0-9]{0,8}$/.test(at || "") ? at : "1") };
     var path = kind === "projects" ? "/projects" : "/tasks";
     return { m: "GET", path: path + "?limit=" + PAGE + (at ? "&cursor=" + encodeURIComponent(at) : "") };
   }
@@ -88,8 +94,34 @@
       order: num(x.child_order), parent: xid(x.parent_id)
     };
   }
+  function readIssue(x) {
+    if (!x || typeof x !== "object" || x.pull_request || x.state !== "open" || typeof x.id !== "number") return null;
+    var repo = x.repository && typeof x.repository.full_name === "string" ? x.repository.full_name : "";
+    if (!REPO.test(repo) || /(^|\/)\.\.?($|\/)/.test(repo)) return null;
+    var title = line(x.title, TEXT_LEN - 12), n = num(x.number);
+    if (!title) return null;
+    var labels = [], seen = {};
+    (Array.isArray(x.labels) ? x.labels : []).forEach(function (lb) {
+      var s = line(lb && typeof lb === "object" ? lb.name : lb, LABEL_LEN), k = key(s);
+      if (s && !seen[k] && labels.length < 20) { seen[k] = 1; labels.push(s); }
+    });
+    var due = x.milestone && typeof x.milestone.due_on === "string" ? x.milestone.due_on.slice(0, 10) : "";
+    var url = typeof x.html_url === "string" && /^https:\/\/github\.com\/[^\s]{1,300}$/.test(x.html_url) ? x.html_url : "";
+    var body = block(x.body, NOTE_LEN - 320);
+    return {
+      xid: String(x.id), pid: repo, text: "#" + n + " " + title, notes: (body + (url ? (body ? "\n\n" : "") + url : "")),
+      labels: labels, due: YMD.test(due) ? due : "", rec: false, prio: 1, order: n, parent: ""
+    };
+  }
   // A page: { results, next_cursor } (an array alone is one last page).
+  // GitHub: an array of issues; the next page while a page is full.
   function read(p, kind, data, at) {
+    if (p === "github") {
+      var arr = Array.isArray(data) ? data : [], its = [];
+      arr.forEach(function (x) { var r = readIssue(x); if (r) its.push(r); });
+      var pg = /^[1-9][0-9]{0,8}$/.test(at || "") ? +at : 1;
+      return { items: its, next: arr.length >= GH_PAGE && pg < 50 ? String(pg + 1) : "" };
+    }
     var list = Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []);
     var items = [];
     list.forEach(function (x) {
@@ -156,6 +188,12 @@
     }
 
     var projects = (got && got.projects) || [], tasks = (got && got.tasks) || [];
+    if (p === "github" && !(got && got.projects)) {    // one list per repository, in name order
+      var seenRepo = {};
+      projects = [];
+      tasks.forEach(function (t) { if (!seenRepo[t.pid]) { seenRepo[t.pid] = 1; projects.push({ xid: t.pid, name: line(t.pid, NAME_LEN), inbox: false, order: 0 }); } });
+      projects.sort(function (a, b) { return a.xid.toLowerCase() < b.xid.toLowerCase() ? -1 : a.xid.toLowerCase() > b.xid.toLowerCase() ? 1 : 0; });
+    }
     var byProject = {};
     tasks.forEach(function (t) { (byProject[t.pid] = byProject[t.pid] || []).push(t); });
     var pOrder = projects.slice().sort(function (a, b) { return (b.inbox ? 1 : 0) - (a.inbox ? 1 : 0) || a.order - b.order; });
@@ -169,7 +207,7 @@
       var openText = {};
       if (!list) {
         if (has(deleted, lid) && !ctx.revive) { out.gone += ts.length; return; }
-        out.lists.add.push({ id: lid, name: pr.name || "Todoist" });
+        out.lists.add.push({ id: lid, name: pr.name || (p === "github" ? "GitHub" : "Todoist") });
       } else {
         (list.items || []).forEach(function (it) { if (it && !it.done) openText[key(it.text)] = 1; });
         if (ctx.upd && pr.name && list.name !== pr.name) out.lists.upd.push({ id: lid, name: pr.name });
