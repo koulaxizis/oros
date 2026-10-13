@@ -83,6 +83,7 @@ there are no recorded audio files. Emoji come from the device's own font.
 | OSM France humanitarian tiles | OpenStreetMap France, [Humanitarian OpenStreetMap Team](https://www.hotosm.org/) | Data ODbL | Maps (humanitarian layer) |
 | Esri World Imagery | Esri; imagery Maxar, Earthstar Geographics | Esri terms of use; attribution shown on the map | Maps (satellite layer) |
 | [OpenTopoMap](https://opentopomap.org/) | OpenTopoMap; data by OpenStreetMap contributors, elevation SRTM | Map style [CC-BY-SA](https://creativecommons.org/licenses/by-sa/3.0/), data ODbL; attribution shown on the map | Maps (Topo layer with contour lines) |
+| [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) on AWS (Terrarium) | Mapzen and others; sources include SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM ([attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)) | Open data, attribution per source | Maps (elevation profile in Plan a track) |
 | [Photon](https://photon.komoot.io/) | komoot | Software Apache-2.0, data ODbL; fair use | Maps (search) |
 | [OSRM](https://project-osrm.org/) demo server | Project OSRM | Software BSD-2-Clause; demo server, fair use | Maps (car routes) |
 | [FOSSGIS routing](https://routing.openstreetmap.de/) | FOSSGIS e.V. | Data ODbL; fair use | Maps (bike and walking routes) |

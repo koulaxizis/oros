@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.71.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.72.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4917,6 +4917,9 @@
         { name: "OpenTopoMap", url: "https://opentopomap.org/",
           by: "OpenTopoMap; data by OpenStreetMap contributors, SRTM", lic: "CC-BY-SA (style), ODbL (data)",
           en: "Topo layer with contour lines (Maps)", el: "Τοπογραφικό στρώμα με ισοϋψείς (Χάρτες)" },
+        { name: "Terrain Tiles (AWS)", url: "https://registry.opendata.aws/terrain-tiles/",
+          by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { en: "Open data, attribution per source", el: "Ανοιχτά δεδομένα, αναφορά ανά πηγή" },
+          en: "Elevation profile in Plan a track (Maps)", el: "Προφίλ υψομέτρου στη Σχεδίαση διαδρομής (Χάρτες)" },
         { name: "Photon", url: "https://photon.komoot.io/",
           by: "komoot", lic: "Apache-2.0 (software), ODbL (data)",
           en: "Place search (Maps)", el: "Αναζήτηση τοποθεσιών (Χάρτες)" },
