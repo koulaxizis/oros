@@ -23,6 +23,10 @@ on:
         description: 'Diagnostic build: show each phone-bridge step as a toast'
         type: boolean
         default: false
+      default_browser:
+        description: 'Test build: run in the default browser instead of preferring Chrome'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -32,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OROS_DIAG: ${{ inputs.diag && '1' || '0' }}
+      OROS_DEFAULT_BROWSER: ${{ inputs.default_browser && '1' || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -32,7 +32,7 @@ public class LauncherActivity extends com.google.androidbrowserhelper.trusted.La
         // private, so it is parsed again; cheap, manifest only).
         LauncherActivityMetadata md = LauncherActivityMetadata.parse(this);
         String browser = md.launchingBrowser;
-        if (browser == null) {
+        if (browser == null && BuildConfig.PREFER_CHROME) {
             // The phone bridge needs a browser that validates the
             // "use_as_origin" relation (Chrome does; Brave, for one,
             // does not), so Chrome is preferred when it is installed.
