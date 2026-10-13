@@ -5902,3 +5902,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Help: Atelier (new section "Take a design to Canva or PowerPoint"), What's new. Decision in Part IX.
   - Tests: `tests/atelier-pptxout.test.js` (4, read back with Atelier's own .pptx import). LibreOffice renders the file, python-pptx opens it. Chromium E2E in the real shell (360 px EL, 1280 px EN): dialog fits, file saved, toast counts the pictures.
   - Not tested: real Canva, PowerPoint, Keynote; fonts they lack are substituted.
+
+### 2026-10-13 — Phone bridge: orOS Contacts and Calendar in the phone (BR-PHONE v1, #227) — 1.82.00
+- New android/ Gradle project (same package and key as the PWABuilder app): the orOS Android app can now show orOS contacts as an "orOS" account in the phone's Contacts (so calls show names) and orOS events as an "orOS" calendar with reminders in the phone's Calendar. One way, orOS → phone, read-only on the phone.
+- phone.js (root module before shell.js): builds contact and event rows and talks to the app over the TWA postMessage channel; Contacts and Calendar get an "On this phone / Στο κινητό" switch, hidden outside the Android app. Prefs in localStorage "oros-phone" (covered by factory reset's oros- prefix).
+- .github/workflows/android.yml builds debug + release APK/AAB; signed builds use the OROS_KEYSTORE_* secrets outside PRs.
+  - Tests: tests/phone.test.js, tests/android.test.js. Signed APK installed and opened on Chris's phone; the contacts/calendar sync on a real phone is tested after this merge.
