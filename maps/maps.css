@@ -1339,7 +1339,15 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   max-width: calc(100% - 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .trk-chip.paused { border-style: dashed; color: var(--text-dim); border-color: var(--text-dim); }
-@media (pointer: coarse) { .trk-eye { min-width: 44px; } .trk-color { width: 40px; height: 40px; } }
+/* Track editor (wave 3B) */
+.trk-range { display: block; }
+.trk-range input[type="range"] { display: block; width: 100%; margin: 6px 0 2px; accent-color: var(--accent); }
+.trk-edinfo { margin: 4px 0 8px; }
+.trk-edrow { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.trk-edrow .osm-lab { flex: 1 1 150px; min-width: 0; margin: 0; }
+.trk-edrow .osm-btn { flex: none; }
+.trk-trace a { color: var(--accent); overflow-wrap: anywhere; }
+@media (pointer: coarse) { .trk-eye { min-width: 44px; } .trk-color { width: 40px; height: 40px; } .trk-range input[type="range"] { min-height: 36px; } }
 
 @media (max-width: 480px) {
   /* Bottom sheet on phones: the map stays visible above it */

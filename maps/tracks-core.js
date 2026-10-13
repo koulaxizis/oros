@@ -15,6 +15,10 @@
 //     small preview line kept in the index.
 //   - Editing on the flat point list: trim, split, join, cut a range,
 //     simplify (the UI keeps the previous version for Undo).
+//   - OSM GPS traces: after an upload the trace page URL is kept in the
+//     GPX file itself (<metadata><link>), so it travels with the file
+//     and older index entries stay untouched. Only exact
+//     openstreetmap.org trace URLs are read back (TRACE_RE).
 //   - The synced slice "mapstracks" (key oros-maps-tracks-data):
 //       { ver, tracks{id: entry}, tombs{id: ts} }
 //     entry = { id, m, name, color, folder, hidden, start, dur, moving,
@@ -27,19 +31,21 @@
 //
 // A track: { name, segs: [[pt, ...], ...], wpts: [{lat, lon, ele, t, name}] }
 // pt = [lat, lon, ele | null, t (ms) | null]
+// Optional: trace = "https://www.openstreetmap.org/user/<u>/traces/<n>"
 //
 // API: window.OrosMapsTracks (module.exports in Node).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var LIM = { chars: 20 * 1024 * 1024, points: 500000, wpts: 2000, name: 120, folder: 60,
     tracks: 2000, tombs: 4000, prev: 300, prevChars: 8000, segs: 500 };
   var DIR = "/internal/Maps/Tracks";
   var COLORS = ["#e06c75", "#61afef", "#98c379", "#e5c07b", "#c678dd", "#56b6c2", "#d19a66", "#ff7eb6"];
   var ID_RE = /^[a-z0-9]{6,40}$/;
   var COLOR_RE = /^#[0-9a-f]{6}$/;
+  var TRACE_RE = /^https:\/\/(?:www\.openstreetmap\.org|master\.apis\.dev\.openstreetmap\.org)\/user\/[A-Za-z0-9%._~!$'()*+,;=:@-]{1,800}\/traces\/[1-9][0-9]{0,14}$/;
   var T_MIN = Date.UTC(1990, 0, 1), T_MAX = Date.UTC(2200, 0, 1);
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
@@ -165,7 +171,15 @@
       var x = wptOf(num(attr(w.attrs, "lat")), num(attr(w.attrs, "lon")), num(child(w.inner, "ele")), parseTime(child(w.inner, "time")), child(w.inner, "name"));
       if (x) wpts.push(x);
     });
-    return { name: cleanText(name || "", LIM.name), segs: segs, wpts: wpts };
+    var out = { name: cleanText(name || "", LIM.name), segs: segs, wpts: wpts };
+    if (meta) {
+      var lre = /<(?:[\w-]+:)?link\b([^>]*)>/g, lm;
+      while ((lm = lre.exec(meta.inner))) {
+        var href = decodeXml(attr(lm[1], "href") || "").trim();
+        if (TRACE_RE.test(href)) { out.trace = href; break; }
+      }
+    }
+    return out;
   }
 
   function kmlCoords(s, bud) {
@@ -283,7 +297,8 @@
     var first = firstTime(tr);
     var out = '<?xml version="1.0" encoding="UTF-8"?>\n' +
       '<gpx version="1.1" creator="orOS Maps" xmlns="http://www.topografix.com/GPX/1/1">\n' +
-      "<metadata>" + (name ? "<name>" + esc(name) + "</name>" : "") + (first ? "<time>" + iso(first) + "</time>" : "") + "</metadata>\n";
+      "<metadata>" + (name ? "<name>" + esc(name) + "</name>" : "") +
+      (tr.trace && TRACE_RE.test(tr.trace) ? '<link href="' + esc(tr.trace) + '"><text>OpenStreetMap</text></link>' : "") + (first ? "<time>" + iso(first) + "</time>" : "") + "</metadata>\n";
     (tr.wpts || []).forEach(function (w) { out += ptXml("wpt", [w.lat, w.lon, w.ele, w.t], w.name) + "\n"; });
     out += "<trk>" + (name ? "<name>" + esc(name) + "</name>" : "") + "\n";
     (tr.segs || []).forEach(function (seg) {
@@ -406,7 +421,9 @@
     return seg.filter(function (_, i) { return keep[i]; });
   }
   function simplify(tr, tol) {
-    return { name: tr.name, wpts: (tr.wpts || []).slice(), segs: tr.segs.map(function (s) { return simplifySeg(s, tol); }) };
+    var out = { name: tr.name, wpts: (tr.wpts || []).slice(), segs: tr.segs.map(function (s) { return simplifySeg(s, tol); }) };
+    if (tr.trace) out.trace = tr.trace;
+    return out;
   }
 
   // ---------- preview polyline (Google encoding, precision 5) ----------
@@ -479,8 +496,10 @@
     return null;
   }
   function clone(tr) {
-    return { name: tr.name, wpts: (tr.wpts || []).map(function (w) { return Object.assign({}, w); }),
+    var out = { name: tr.name, wpts: (tr.wpts || []).map(function (w) { return Object.assign({}, w); }),
       segs: tr.segs.map(function (s) { return s.map(function (p) { return p.slice(); }); }) };
+    if (tr.trace) out.trace = tr.trace;
+    return out;
   }
   // Keep only points [from, to] (inclusive).
   function trim(tr, from, to) {
@@ -508,10 +527,24 @@
     return out;
   }
   // Two tracks: points [0, idx] and [idx, end] (the split point in both).
+  // The second part is a new track: it carries no trace link.
   function split(tr, idx) {
     var n = flatLen(tr);
     if (idx <= 0 || idx >= n - 1) return null;
-    return [trim(tr, 0, idx), trim(tr, idx, n - 1)];
+    var b = trim(tr, idx, n - 1);
+    delete b.trace;
+    return [trim(tr, 0, idx), b];
+  }
+  // Points that carry a time (OSM's trace importer needs them).
+  function timedPoints(tr) {
+    var n = 0;
+    (tr.segs || []).forEach(function (s) { s.forEach(function (p) { if (p[3]) n++; }); });
+    return n;
+  }
+  // OSM trace page for an upload; null when any part is invalid.
+  function traceUrl(web, user, id) {
+    var u = String(web || "") + "/user/" + encodeURIComponent(String(user || "")) + "/traces/" + String(id);
+    return TRACE_RE.test(u) ? u : null;
   }
   function join(a, b) {
     var out = clone(a);
@@ -600,6 +633,7 @@
     esc: esc, writeGpx: writeGpx, stats: stats, profile: profile, accept: accept,
     simplifySeg: simplifySeg, simplify: simplify, encode: encode, decode: decode, preview: preview,
     flatLen: flatLen, at: at, clone: clone, trim: trim, cut: cut, split: split, join: join,
+    TRACE_RE: TRACE_RE, timedPoints: timedPoints, traceUrl: traceUrl,
     normEntry: normEntry, normalizeTracks: normalizeTracks, mergeTracks: mergeTracks,
     pathOf: pathOf, entryFor: entryFor, canon: canon
   };

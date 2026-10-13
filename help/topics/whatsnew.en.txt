@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.48.00
+- Maps: edit your tracks (keep or remove a part, split, join, simplify, with Undo) and upload them to OpenStreetMap GPS traces to help mappers.
+
 ## Version 1.47.00
 - Maps: record your walks and rides as GPX tracks, keep them in a library with colours and folders, follow a track, and import or export GPX, KML and GeoJSON files.
 
