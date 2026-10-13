@@ -44,6 +44,7 @@ Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Op
 Bookmarks, folders, tags and favourites sync through [orOS sync](help:t/sync). Your sort choice stays on this device.
 
 - **Import**: `Import bookmarks (Netscape HTML)` reads the bookmarks HTML file that most browsers can export. Folders are matched by name or created, and addresses you already have are skipped.
+- **From Raindrop.io**: connect Raindrop.io in [Settings](app:settings) › `Connected services` with a test token, then the cloud button `Import from Raindrop.io…` › `Read the account` shows what will come in, and `Import` brings it (`Undo` in the message takes it back). Each collection becomes a folder (a folder with the same name is used, nested collections become folders of their own), with titles, notes (or the page excerpt), tags and favourites; links you already have are skipped. Import again whenever you like: only new bookmarks come in, and with `Update what was imported before` the title and note follow Raindrop's and new tags are added. Deleted bookmarks don't come back unless you tick `Bring back what was deleted here`. orOS only reads Raindrop: nothing there changes.
 - **Export**: `Export bookmarks (Netscape HTML)` saves `oros-bookmarks.html` for a browser or for orOS.
 
 For a copy of all your orOS data, see [Backup](help:t/backup).

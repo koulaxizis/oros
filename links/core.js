@@ -201,6 +201,17 @@
       keys: [{ k: "key", re: /^(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{60,255})$/ }],
       apps: ["kanban"],
       probe: "/user/repos?per_page=1"
+    },
+    // Wave 6C: Raindrop.io collections and bookmarks into Bookmarks
+    // (REST v1, Bearer test token of the user's own app). Read-only.
+    raindrop: {
+      name: "Raindrop.io",
+      site: false,
+      host: "api.raindrop.io",
+      root: "/rest/v1",
+      keys: [{ k: "key", re: /^[A-Za-z0-9-]{30,80}$/ }],
+      apps: ["bookmarks"],
+      probe: "/collections"
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -386,7 +397,7 @@
       TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/,
       IN_ACTIVE = /^active$/;
   // Todoist (wave 6A): opaque page cursors (base64; "+", "/", "=" escaped)
-  var LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/;
+  var LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/, PER50 = /^([1-9]|[1-4][0-9]|50)$/;
   // Trello and GitHub (wave 6B): fixed field lists
   var TR_CARD_F = /^name,desc,due,idList,idLabels,closed,pos$/, TR_LIST_F = /^name,closed,pos$/;
   // Odoo (wave 4D): JSON-2 search_read bodies. The filters and field
@@ -529,6 +540,11 @@
     github: [
       ["GET", /^\/user\/repos$/, { per_page: PER, page: NUM, sort: /^updated$/ }, null],
       ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null]
+    ],
+    raindrop: [
+      ["GET", /^\/collections$/, {}, null],
+      ["GET", /^\/collections\/childrens$/, {}, null],
+      ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -620,6 +636,7 @@
     if (p === "todoist") return ["Authorization", "Bearer " + keys.key];
     if (p === "trello") return ["Authorization", 'OAuth oauth_consumer_key="' + keys.key + '", oauth_token="' + keys.token + '"'];
     if (p === "github") return ["Authorization", "Bearer " + keys.key];
+    if (p === "raindrop") return ["Authorization", "Bearer " + keys.key];
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).
