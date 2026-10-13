@@ -61,6 +61,14 @@ public class PhoneBridge {
         app = context.getApplicationContext();
     }
 
+    /** Diagnostic builds (workflow input "diag") show each bridge step
+     *  as a toast, so a failing step can be seen on a real phone. */
+    private void diag(String step) {
+        Log.d(TAG, step);
+        if (!BuildConfig.DIAG) return;
+        main.post(() -> android.widget.Toast.makeText(app, "orOS bridge: " + step, android.widget.Toast.LENGTH_LONG).show());
+    }
+
     CustomTabsCallback callback() {
         return callback;
     }
@@ -78,13 +86,14 @@ public class PhoneBridge {
 
     private void onPageLoaded() {
         CustomTabsSession s = launcher != null ? launcher.session() : null;
+        diag("page loaded, launcher " + (launcher != null) + ", session " + (s != null));
         if (s == null) return;
         if (s != session) {
             session = s;
             validated = false;
             channelReady = false;
             boolean asked = s.validateRelationship(CustomTabsService.RELATION_USE_AS_ORIGIN, ORIGIN, null);
-            Log.d(TAG, "validateRelationship requested: " + asked);
+            diag("validate requested: " + asked);
             return;
         }
         if (validated) requestChannel();   // reload: the page needs a new port
@@ -94,7 +103,7 @@ public class PhoneBridge {
         if (session == null) return;
         channelReady = false;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
-        Log.d(TAG, "requestPostMessageChannel: " + ok);
+        diag("channel requested: " + ok);
     }
 
     private class Callback extends QualityEnforcer {
@@ -102,13 +111,14 @@ public class PhoneBridge {
         public void onNavigationEvent(int navigationEvent, @Nullable Bundle extras) {
             super.onNavigationEvent(navigationEvent, extras);
             if (navigationEvent == NAVIGATION_FINISHED) main.post(PhoneBridge.this::onPageLoaded);
+            else if (navigationEvent == NAVIGATION_FAILED) diag("navigation failed");
         }
 
         @Override
         public void onRelationshipValidationResult(int relation, @NonNull Uri requestedOrigin,
                 boolean result, @Nullable Bundle extras) {
             super.onRelationshipValidationResult(relation, requestedOrigin, result, extras);
-            Log.d(TAG, "relationship " + requestedOrigin + ": " + result);
+            diag("relationship " + requestedOrigin + ": " + result);
             main.post(() -> {
                 validated = result;
                 if (result) requestChannel();
@@ -118,6 +128,7 @@ public class PhoneBridge {
         @Override
         public void onMessageChannelReady(@Nullable Bundle extras) {
             super.onMessageChannelReady(extras);
+            diag("channel ready");
             main.post(() -> {
                 channelReady = true;
                 // The first message hands the page its port (phone.js).
@@ -128,6 +139,7 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
+            diag("message from page, " + message.length() + " chars");
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
         }
@@ -142,7 +154,7 @@ public class PhoneBridge {
         main.post(() -> {
             if (session == null || !channelReady) return;
             int r = session.postMessage(msg.toString(), null);
-            if (r != CustomTabsService.RESULT_SUCCESS) Log.w(TAG, "postMessage result " + r);
+            diag("postMessage " + msg.optString("t") + ": " + r);
         });
     }
 
@@ -218,6 +230,7 @@ public class PhoneBridge {
             }
         } catch (Exception e) {
             Log.w(TAG, "message " + t + " failed", e);
+            diag(t + " failed: " + e);
             JSONObject err = new JSONObject();
             try {
                 err.put("t", "error");
