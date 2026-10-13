@@ -5472,3 +5472,27 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - tests/time-stage.test.js: 19 tests (wave 2: msgs merge, normShow, focus, display page wiring).
   - Factory reset also deletes the IndexedDB `oros-time-stage` (logo).
   - Not tested: a real second monitor, Firefox / Safari window placement, phones.
+
+### 2026-10-13 — Time › Stage wave 3: paired devices (#272) — 1.54.00
+- Time › Stage wave 3: paired devices (plan /mnt/project-files/time/stage-timer-plan.md).
+  - **remote-link.js (new, at the root, shared).**
+    - Studio Remote's link layer as a module of its own (`window.OrosRemoteLink`): 6-digit code, relay room `/rt/<sha256>`, AES-GCM frames, a WebRTC data channel with the room as fallback, and Allow on the host.
+    - Each app passes a namespace. Time uses `oros-time-stage`. The default `oros-studio-remote` is byte-for-byte Studio's protocol (tested).
+    - New options: `rid` (a device keeps its id across a reload), `allow` (the host restores the device it allowed) and `onAllow`.
+    - studio/remote.js is not changed. Moving Studio onto the shared module is the Studio thread's call.
+  - **time/stage-link.js (new).**
+    - The host opens one room and one code per device, up to 6. Each device is a Remote control, a Stage display or a Moderator.
+    - The Remote has big buttons for start/pause, previous/next, ±1 minute (a long press gives ±5), restart, black screen, and messages (the presets plus the saved ones).
+    - The Display shows the speaker's picture, full screen, with a wake lock.
+    - The Moderator sees the clock and the rundown and sends requests. A request shows on the operator's pane with "Show to speaker" and "OK", and the moderator sees "Seen by the operator".
+    - Pairings come back after a reload on either side, without a new Allow.
+    - "Leave" on the device, or × on the PC, ends a pairing. With ×, the device's screen closes too.
+  - **time/stage-core.js:**
+    - `devState` builds the per-role snapshot: only the open event, no private notes, no logo, the saved messages for the remote only, and at most 11,000 characters (a long rundown is cut around the live item).
+    - `devAdopt` checks a received snapshot field by field.
+    - `devCommand` sets what each role may ask.
+    - `clockOffset` keeps the shortest round trip, so the device clock equals the PC's.
+  - time/stage.js exposes `window.OrosStage` (state getters, act, setBlack, setMsg).
+  - The help pages gained the "Another device" section and a limits line.
+  - tests/time-stage.test.js now has 26 tests. The 7 new ones cover link compatibility with Studio, devState, devAdopt, the role matrix of devCommand, clockOffset and the page wiring.
+  - Not tested: real phones / tablets / TVs, the live relay path.
