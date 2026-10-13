@@ -506,7 +506,9 @@
     function col(s) { return '<span style="color:' + st.acc + '">' + s + '</span>'; }
     function a(href, s) { return '<a href="' + esc(href) + '">' + s + '</a>'; }
     var logo = sig.tpl === "plain" || short ? "" : (imgSrc(src.logo) || (sig.im.logo && sig.im.logo.u) || "");
-    if (logo && /^data:/.test(logo) && logo.length > 120 * 1024) logo = sig.im.logo && sig.im.logo.u || "";
+    // Mail keeps a formatted signature only up to 60,000 characters
+    // (MAX_SIG_HTML): a bigger embedded logo gives way to its web address.
+    if (logo && /^data:/.test(logo) && logo.length > 50000) logo = sig.im.logo && sig.im.logo.u || "";
     if (logo) {
       var wh = size(sig.im.logo, Math.min(st.logoW, 300), 0.4);
       out.push('<div><img src="' + esc(logo) + '" alt="' + esc(f.company || f.name) + '" width="' + wh.w + '" height="' + Math.min(600, wh.h) + '"></div>');

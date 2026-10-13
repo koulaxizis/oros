@@ -169,6 +169,8 @@ test("build: short version, plain text, orOS Mail version, .html file", () => {
   const m = C.build(s, { target: "mail", src: { logo: "data:image/png;base64,AAAA" } }).html;
   assert.ok(!/<table|<td/.test(m), "orOS Mail keeps only simple formatting");
   assert.ok(m.includes("<b>Maria Papadopoulou</b>") && m.includes('<a href="mailto:maria@example.gr">'));
+  const huge = "data:image/png;base64," + "A".repeat(60000);
+  assert.ok(!C.build(s, { target: "mail", src: { logo: huge } }).html.includes("<img"), "a logo too big for Mail's 60,000 limit is left out");
   const file = C.htmlFile(s, "<p>x</p>");
   assert.ok(file.startsWith("<!DOCTYPE html>") && file.includes('<meta charset="utf-8">') && file.includes("<title>Work</title>"));
   const tplPlain = C.build(Object.assign({}, s, { tpl: "plain", im: { logo: { u: "https://a.gr/l.png" } } }), { target: "embed" }).html;
