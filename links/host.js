@@ -25,8 +25,9 @@
 // the other side. "unknown" = a write that must not run twice (an
 // invoicing provider's SendInvoices) may or may not have arrived: it is
 // never retried another way; the app looks it up before trying again.
-// Platforms with fixed hosts (timologisi.online) take env + key
-// instead of a site; the relay gets the same env, never a host.
+// Platforms with fixed hosts (timologisi.online, MailerLite, Mailchimp,
+// Brevo) take a key instead of a site; the relay gets the same env or
+// key, never a host. Mailchimp doesn't answer browsers: always relay.
 // ============================================================
 (function (root) {
   "use strict";
@@ -312,11 +313,10 @@
   // straight from the browser; how = "direct" (Authorization header) or
   // "query" (keys in the address: for servers that drop the header)
   function direct(a, keys, r, how) {
-    var url = L.apiUrl(a.p, a, r.path);
+    var url = L.apiUrl(a.p, a, r.path, keys);
     var headers = { Accept: "application/json" };
-    if (a.p === "tol") headers["API-KEY"] = keys.key;
-    else if (how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
-    else headers.Authorization = "Basic " + btoa(keys.ck + ":" + keys.cs);
+    if (a.p === "woo" && how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
+    else { var h = L.authHeader(a.p, keys); headers[h[0]] = h[1]; }
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
     if (r.body) { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(r.body); }
@@ -330,6 +330,7 @@
   function viaRelay(a, keys, reqs) {
     var body = { op: "ext", p: a.p };
     if (a.p === "tol") { body.env = a.env; body.key = keys.key; }
+    else if (a.p !== "woo") body.key = keys.key;     // fixed hosts: the relay knows them
     else {
       var parts = L.siteParts(a.site);
       body.host = parts.host; body.base = parts.base; body.ck = keys.ck; body.cs = keys.cs;
@@ -370,7 +371,7 @@
     }
     return openLocal(id).then(function (local) {
       if (!local) throw err("keys");
-      var keys = local.keys, mode = prefs().mode[id] || "direct";
+      var keys = local.keys, mode = pl.relayOnly ? "relay" : (prefs().mode[id] || "direct");
       function all(how) {
         return reqs.reduce(function (p, r) {
           return p.then(function (out) { return direct(a, keys, r, how).then(function (x) { out.push(x); return out; }); });
