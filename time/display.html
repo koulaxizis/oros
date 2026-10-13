@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Stage · orOS</title>
+  <!-- The stage display window of Time › Stage (opened by time/stage.js).
+       It draws from this device's storage only, so it keeps running when
+       Time is closed. Not an app page: no DL-1 redirect on purpose. -->
+  <link rel="stylesheet" href="stage-view.css?v=1.49.00">
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    body.idle, body.idle * { cursor: none; }
+    #d-tools {
+      position: fixed; top: 10px; right: 10px; z-index: 10; display: flex; gap: 6px;
+      opacity: 0; transition: opacity .25s; pointer-events: none;
+    }
+    #d-tools.on { opacity: 1; pointer-events: auto; }
+    #d-tools button {
+      font: 700 13px "Nunito", system-ui, sans-serif; color: #fff; background: rgba(0, 0, 0, 0.6);
+      border: 1px solid #555; border-radius: 7px; padding: 8px 14px; min-height: 38px; cursor: pointer;
+    }
+    #d-tools button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div id="d-root"></div>
+  <div id="d-tools">
+    <button id="d-fs" type="button"></button>
+    <button id="d-close" type="button"></button>
+  </div>
+  <script src="stage-core.js?v=1.49.00"></script>
+  <script src="stage-view.js?v=1.49.00"></script>
+  <script src="display.js?v=1.49.00"></script>
+</body>
+</html>

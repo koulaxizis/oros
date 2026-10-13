@@ -615,7 +615,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Weather | oros-weatherapp-data | merge-lite | 5/5 VERIFIED |
 | Mood | oros-mood-data | entry field LWW (fm) + cols + tombs | A67 audit 2026-10-07 (MO-1…MO-8) |
 | Time | oros-time-data | entity union + smtime | 5/5 VERIFIED |
-| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items: symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge (deleting an event tombstones its items in the page) | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys) |
+| **Time › Stage** | oros-time-stage (own slice `stage`) | events + items + saved messages (`msgs`, omitted when empty): symmetric LWW by mtime (equal mtime: larger canonical JSON) + tombstones (delete wins ties), canonical (R26), no cascade in the merge | v1.0.0 at 1.49.00 (wave 1: rundown, live timer, overtime, schedule, stage view, keys); v1.1.0 at 1.52.00 (wave 2: display window time/display.html, speaker messages, layouts, mirror, logo) |
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
 | Habits | oros-habits-data | habits/comps LWW | 5/5 VERIFIED |
@@ -816,7 +816,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 - **Reader:** IndexedDB `oros-feeds` (stores `heads`, `bodies`: fetched items and article bodies, device-local, never synced).
 - **One-Minute Museum:** oros-museum-prefs (duration, hall, Wikipedia language, recent history), IndexedDB `oros-museum` (thumbnails of kept exhibits, so the collection works offline; device-local, never synced).
 - **Typewriter:** oros-typewriter-prefs (typewriter mode on/off, key sound, paper tint, open page `cur`, side panel open on desktop).
-- **Time › Stage:** `oros-time-stage-run` (`{ev, cur, startedAt, pausedAt, adj, log: {itemId: {s, e}}}`: the open event, the live item and its clock, actual start/end per item) and `oros-time-stage-prefs` (`{sound}`). Never synced: a phone at home never moves the clock on stage.
+- **Time › Stage:** `oros-time-stage-run` (`{ev, cur, startedAt, pausedAt, adj, log: {itemId: {s, e}}}`: the open event, the live item and its clock, actual start/end per item) and `oros-time-stage-prefs` (`{sound}`). Never synced: a phone at home never moves the clock on stage. Since 1.52.00 also `oros-time-stage-show` (`{black, layout: full|timer|agenda, mirror, logoAt, msg: {text, on, flash, color, at}}`): what the stage output shows. It is read by the in-app view and by display.html. IndexedDB `oros-time-stage` (store `files`, key `logo`): the logo picture, on this device only.
 - **Moon & Sky:** oros-sky-prefs (`{tab, night, lines}`: open tab, red night view, constellation lines). Location comes from Time's chain (oros-time-data `astro` → oros-weather → orosWeatherTray.location() → session-only geolocation, never stored).
 - **Score Keeper:** oros-scores-prefs (`{tab, cur, draft:{g, v[]}, timer:{on, len}, game}`: home tab, open match, unsent round entry, round timer on/length, stats filter), oros-scores-data-broken.
 - **Podcasts:** oros-podcasts-prefs (`{tab, filter, sortOld}`: tab now | new | lib | dl | find, episode filter, per-show oldest-first flags), oros-podcasts-local (`{pos{epId: [pos, dur, ts]}, meta{epId: episode}, cur, last{p, at}, spd}`: exact positions, ≤ 400, and the details of what plays and of the queue, written by the shell host; since 0.57.00 also `stats` listening seconds per day/show (device only, never synced), `nt{showId: stamp}` new-episode marks and `bg` last background check), oros-podcasts-top (Apple charts cache, 12 h), IndexedDB `oros-podcasts` v1 (stores `feeds` showId → `{id, at, etag, mod, show, eps[]}` parsed feed cache, `files` epId → `{id, s, blob, type, size, at}` downloaded episodes).
@@ -2319,6 +2319,10 @@ Rebuild this in any session where code is delivered.
 - The merge does not cascade an event's deletion to its items (that broke associativity in the fuzz). The page tombstones every item when it deletes an event; an item edited on another device after that is kept as data and not shown.
 - The live clock is device-local and computed from timestamps, so closing Time and opening it again resumes at the right time.
 - Waves 2-4 (second window + messages, paired devices via the Studio Remote rooms, imports/reports/templates) follow per the plan.
+- **Wave 2 (1.52.00):**
+  - The display window reads storage instead of receiving messages, so it survives Time being closed, a reload, or another app being opened. Auto-advance and sounds still need Time open.
+  - A message the operator is typing never reaches the stage. While one is shown, the button shows the new text rather than hiding.
+  - A wave-1 device that pulls saved messages drops them on its copy until it updates. That is accepted (same as Studio fx). With no saved messages both versions write the same bytes.
 
 ## Part X — Open items, audit queue, lessons
 
@@ -5429,3 +5433,25 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - The tablet runs the effect's GFX view itself (same nullfx files); the PC validates everything (slider exists, not a file slider, clamped, enums rounded; ids from the catalog) and applies it through fx.js (undo, sync).
   - Fixes: closing a link sends "bye" so the other side updates at once; the PC's Remote dialog shows the current state when reopened.
   - Not tested: real tablets / phones, the live relay path.
+
+### 2026-10-13 — Time › Stage wave 2: display window and speaker messages (#270) — 1.52.00
+- Time › Stage wave 2 (plan /mnt/project-files/time/stage-timer-plan.md).
+  - time/stage-view.js + stage-view.css: one renderer for the speaker's picture. It reads only storage (`oros-time-stage`, `-run`, `-show`, and the logo in IndexedDB `oros-time-stage`/`files`), and the in-app Stage view and the display window both use it.
+  - time/display.html + display.js: the stage display window, opened with `window.open("display.html?standalone", "oros-stage-display")`.
+    - It follows the `storage` event plus a 250 ms tick, so it keeps running when Time is closed. It writes nothing.
+    - Double-click or F toggles full screen. It hides the cursor and tools when idle and uses a wake lock where supported.
+    - On Chrome and Edge, `getScreenDetails()` moves it to the other monitor.
+    - It is not an app page, so it has no DL-1 redirect.
+  - Message to the speaker:
+    - Seven ready-made messages plus your own saved ones. The saved ones are synced as `msgs` in the `stage` slice, LWW + tombstones, and the key is left out when empty.
+    - Colour (white, yellow, red or green) and flash. The M key shows or hides the message.
+    - Typing never reaches the stage. A message shows only on Show or Enter.
+  - Stage output (device-local `oros-time-stage-show`):
+    - Black screen (the B key now blanks the output without opening the in-app view).
+    - Layout: full, timer or agenda.
+    - Mirror.
+    - Logo: an image file, scaled to 600 px or less and stored as PNG in IndexedDB.
+  - The operator pane shows the message and the black state as the stage sees them.
+  - tests/time-stage.test.js: 19 tests (wave 2: msgs merge, normShow, focus, display page wiring).
+  - Factory reset also deletes the IndexedDB `oros-time-stage` (logo).
+  - Not tested: a real second monitor, Firefox / Safari window placement, phones.

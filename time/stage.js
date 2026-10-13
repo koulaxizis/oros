@@ -21,6 +21,7 @@
   var DATA_KEY = "oros-time-stage";
   var RUN_KEY = "oros-time-stage-run";
   var PREF_KEY = "oros-time-stage-prefs";
+  var SHOW_KEY = "oros-time-stage-show";
 
   /* ---------- 1. i18n ---------- */
   var LANG = "en";
@@ -31,6 +32,18 @@
 
   var STR = {
     en: {
+      "stg.out": "Stage output", "stg.display": "Open stage display",
+      "stg.blocked": "The window was blocked. Allow pop-ups for orOS, or use Stage view.",
+      "stg.black.off": "Picture back on", "stg.live.black": "The stage screen is black",
+      "stg.layout": "Layout", "stg.l.full": "Clock, titles and next", "stg.l.timer": "Clock only", "stg.l.agenda": "Clock and rundown",
+      "stg.mirror": "Mirror (for a screen seen in a reflection)",
+      "stg.logo": "Logo…", "stg.logo.x": "Remove logo",
+      "stg.msg": "Message to the speaker", "stg.msg.ph": "Type a message and press Enter",
+      "stg.msg.show": "Show", "stg.msg.hide": "Hide", "stg.msg.save": "Save", "stg.msg.del": "Delete saved message",
+      "stg.msg.flash": "Flash", "stg.msg.color": "Colour",
+      "stg.c.white": "White", "stg.c.yellow": "Yellow", "stg.c.red": "Red", "stg.c.green": "Green",
+      "stg.p.wrap": "Please wrap up", "stg.p.five": "5 minutes left", "stg.p.two": "2 minutes left",
+      "stg.p.up": "Time is up", "stg.p.qa": "Questions now", "stg.p.loud": "Louder please", "stg.p.slow": "Slow down a little",
       "stg.ev": "Event", "stg.ev.new": "New event", "stg.ev.edit": "Event settings",
       "stg.ev.create": "Create an event", "stg.ev.dup": "Duplicate event", "stg.ev.del": "Delete event",
       "stg.ev.delq": "Tap again to delete", "stg.ev.copy": "{name} (copy)", "stg.ev.untitled": "Event",
@@ -41,7 +54,7 @@
       "stg.minus": "−1 min", "stg.plus": "+1 min", "stg.reset": "Restart item", "stg.show": "Stage view",
       "stg.sound": "Sound at yellow, red and zero (this device)",
       "stg.rundown": "Rundown", "stg.add": "Add item",
-      "stg.keys": "Keys: Space start / pause · → or Page Down next · ← or Page Up previous · + / − one minute (hold the button: five) · B black screen · F stage view",
+      "stg.keys": "Keys: Space start / pause · → or Page Down next · ← or Page Up previous · + / − one minute (hold the button: five) · B black screen · M message on / off · F stage view",
       "stg.view": "Stage view", "stg.black": "Black screen", "stg.fs": "Full screen", "stg.close": "Close",
       "stg.save": "Save", "stg.cancel": "Cancel",
       "stg.f.name": "Name", "stg.f.date": "Date", "stg.f.start": "Starts at",
@@ -64,6 +77,18 @@
       "stg.until": "until {t}", "stg.clock": "clock"
     },
     el: {
+      "stg.out": "Έξοδος σκηνής", "stg.display": "Άνοιγμα οθόνης σκηνής",
+      "stg.blocked": "Το παράθυρο μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS ή χρησιμοποίησε την Οθόνη σκηνής.",
+      "stg.black.off": "Επαναφορά εικόνας", "stg.live.black": "Η οθόνη της σκηνής είναι μαύρη",
+      "stg.layout": "Διάταξη", "stg.l.full": "Ρολόι, τίτλοι και επόμενο", "stg.l.timer": "Μόνο ρολόι", "stg.l.agenda": "Ρολόι και πρόγραμμα",
+      "stg.mirror": "Καθρέφτης (για οθόνη που φαίνεται σε αντανάκλαση)",
+      "stg.logo": "Λογότυπο…", "stg.logo.x": "Αφαίρεση λογότυπου",
+      "stg.msg": "Μήνυμα στον ομιλητή", "stg.msg.ph": "Γράψε ένα μήνυμα και πάτα Enter",
+      "stg.msg.show": "Εμφάνιση", "stg.msg.hide": "Απόκρυψη", "stg.msg.save": "Αποθήκευση", "stg.msg.del": "Διαγραφή αποθηκευμένου μηνύματος",
+      "stg.msg.flash": "Αναβοσβήνει", "stg.msg.color": "Χρώμα",
+      "stg.c.white": "Λευκό", "stg.c.yellow": "Κίτρινο", "stg.c.red": "Κόκκινο", "stg.c.green": "Πράσινο",
+      "stg.p.wrap": "Κλείσε παρακαλώ", "stg.p.five": "Μένουν 5 λεπτά", "stg.p.two": "Μένουν 2 λεπτά",
+      "stg.p.up": "Ο χρόνος τελείωσε", "stg.p.qa": "Ώρα για ερωτήσεις", "stg.p.loud": "Πιο δυνατά παρακαλώ", "stg.p.slow": "Λίγο πιο αργά",
       "stg.ev": "Εκδήλωση", "stg.ev.new": "Νέα εκδήλωση", "stg.ev.edit": "Ρυθμίσεις εκδήλωσης",
       "stg.ev.create": "Δημιουργία εκδήλωσης", "stg.ev.dup": "Αντίγραφο εκδήλωσης", "stg.ev.del": "Διαγραφή εκδήλωσης",
       "stg.ev.delq": "Πάτα ξανά για διαγραφή", "stg.ev.copy": "{name} (αντίγραφο)", "stg.ev.untitled": "Εκδήλωση",
@@ -74,7 +99,7 @@
       "stg.minus": "−1 λεπτό", "stg.plus": "+1 λεπτό", "stg.reset": "Από την αρχή", "stg.show": "Οθόνη σκηνής",
       "stg.sound": "Ήχος στο κίτρινο, στο κόκκινο και στο μηδέν (αυτή η συσκευή)",
       "stg.rundown": "Πρόγραμμα", "stg.add": "Προσθήκη",
-      "stg.keys": "Πλήκτρα: Space έναρξη / παύση · → ή Page Down επόμενο · ← ή Page Up προηγούμενο · + / − ένα λεπτό (κράτα πατημένο το κουμπί: πέντε) · B μαύρη οθόνη · F οθόνη σκηνής",
+      "stg.keys": "Πλήκτρα: Space έναρξη / παύση · → ή Page Down επόμενο · ← ή Page Up προηγούμενο · + / − ένα λεπτό (κράτα πατημένο το κουμπί: πέντε) · B μαύρη οθόνη · M μήνυμα on / off · F οθόνη σκηνής",
       "stg.view": "Οθόνη σκηνής", "stg.black": "Μαύρη οθόνη", "stg.fs": "Πλήρης οθόνη", "stg.close": "Κλείσιμο",
       "stg.save": "Αποθήκευση", "stg.cancel": "Άκυρο",
       "stg.f.name": "Όνομα", "stg.f.date": "Ημερομηνία", "stg.f.start": "Ώρα έναρξης",
@@ -111,6 +136,17 @@
     var als = document.querySelectorAll("[data-i18n-s-a]");
     for (var k = 0; k < als.length; k++) als[k].setAttribute("aria-label", t(als[k].getAttribute("data-i18n-s-a")));
     $("stg-ev").setAttribute("aria-label", t("stg.ev"));
+    function fill(id, keys, prefix) {
+      var sel = $(id);
+      sel.textContent = "";
+      keys.forEach(function (k) {
+        var o = document.createElement("option");
+        o.value = k; o.textContent = t(prefix + k);
+        sel.appendChild(o);
+      });
+    }
+    fill("stg-layout", C.LAYOUTS, "stg.l.");
+    fill("stg-msg-color", C.COLORS, "stg.c.");
     var ks = $("si-kind");
     ks.innerHTML = "";
     C.KINDS.forEach(function (k2) {
@@ -186,12 +222,7 @@
     return ev ? C.rundown(data, ev.id) : [];
   }
   // The item the big clock is about: the live one, else the next to run.
-  function focusItem(list, sch) {
-    var cur = run.cur ? itemById(run.cur) : null;
-    if (cur) return cur;
-    for (var i = 0; i < sch.rows.length; i++) if (sch.rows[i].state === "todo") return list[i];
-    return null;
-  }
+  function focusItem(list, sch) { return C.focus(list, sch, run); }
 
   /* ---------- 3. Sounds (device pref, off by default) ---------- */
   var AC = null;
@@ -351,12 +382,12 @@
     });
   }
 
-  var lastPhase = {}, lastSec = -1, viewOpen = false, black = false;
+  var lastPhase = {}, lastSec = -1, viewOpen = false;
   // paint(): the live parts, four times a second while visible.
   function paint(force) {
     var ev = curEvent();
     var paneOn = !$("pane-stage").hidden;
-    if (!ev) { if (viewOpen) paintView(null, null, null, null); return; }
+    if (!ev) { if (viewOpen) paintView(); return; }
     if (!force && !paneOn && !viewOpen && !run.startedAt) return;
     var list = items(), now = Date.now();
     var sch = C.schedule(ev, list, run, now);
@@ -408,7 +439,7 @@
         if (!force && sec % 15 === 0) renderList();
       }
     }
-    if (viewOpen) paintView(it, tv, nextText, now);
+    if (viewOpen) paintView(now);
   }
   function timeText(it, tv, now) {
     if (!it || !tv) return "--:--";
@@ -426,21 +457,25 @@
     return t("stg.sum.plan", { p: C.hm(sch.planEnd), e: C.hm(sch.expEnd) }) + " · " + d;
   }
 
-  /* ---------- 6. Stage view (what the speaker sees) ---------- */
-  function paintView(it, tv, nextText, now) {
-    var ev = curEvent();
-    $("sv-title").textContent = it ? it.title : "";
-    $("sv-spk").textContent = it ? it.speaker : "";
-    var tx = timeText(it, tv, now || Date.now());
-    var tm = $("sv-time");
-    tm.textContent = tx;
-    tm.className = "sv-time ph-" + (tv ? tv.phase : "idle") + (tx.length > 6 ? " long" : "") +
-      (tv && tv.paused ? " paused" : "");
-    $("stg-view").classList.toggle("flash", !!(tv && tv.phase === "over" && ev && ev.flash));
-    $("sv-bar").style.width = tv ? Math.round(tv.progress * 1000) / 10 + "%" : "0%";
-    $("sv-bar").className = tv ? "ph-" + tv.phase : "";
-    $("sv-next").textContent = nextText || "";
-    $("sv-clock").textContent = C.hm(now || Date.now());
+  /* ---------- 6. Stage output: view, display window, message ---------- */
+  // What the stage shows besides the clock lives in a device-local key
+  // (oros-time-stage-show) that both the view inside Time and the
+  // display window (display.html) read; the display follows it through
+  // the storage event, so it keeps going while Time is closed.
+  var V = window.OrosStageView;
+  var view = V ? V.create($("sv-root"), { lang: LANG }) : null;
+  var show = C.normShow(readJSON(SHOW_KEY));
+  function setShow(patch) {
+    show = C.normShow(Object.assign({}, show, patch));
+    try { localStorage.setItem(SHOW_KEY, JSON.stringify(show)); } catch (e) {}
+    paintOut();
+    paint(true);
+  }
+  function setMsg(patch) {
+    setShow({ msg: Object.assign({}, show.msg, patch, { at: Date.now() }) });
+  }
+  function paintView(now) {
+    if (view) view.paint({ data: data, run: run, show: show }, now || Date.now());
   }
   function fsDoc() { try { return window.frameElement ? window.parent.document : document; } catch (e) { return document; } }
   function fsOn() { var d = fsDoc(); return !!(d.fullscreenElement || d.webkitFullscreenElement); }
@@ -458,38 +493,192 @@
       }
     } catch (e) {}
   }
-  var toolsTimer = 0;
+  var toolsTimer = 0, wake = null;
   function pokeTools() {
     $("sv-tools").classList.add("on");
     clearTimeout(toolsTimer);
     toolsTimer = setTimeout(function () { $("sv-tools").classList.remove("on"); }, 3000);
+  }
+  // keep the screen on while the stage view is up (where supported)
+  function wakeLock(on) {
+    try {
+      if (on && navigator.wakeLock && !wake) {
+        navigator.wakeLock.request("screen").then(function (w) { wake = w; }).catch(function () {});
+      } else if (!on && wake) { wake.release().catch(function () {}); wake = null; }
+    } catch (e) {}
   }
   function openView() {
     if (!curEvent()) return;
     viewOpen = true;
     $("stg-view").hidden = false;
     fullscreen(true);
+    wakeLock(true);
     pokeTools();
     paint(true);
   }
   function closeView() {
     viewOpen = false;
-    setBlack(false);
     $("stg-view").hidden = true;
     fullscreen(false);
+    wakeLock(false);
     try { $("stg-show").focus(); } catch (e) {}
   }
-  function setBlack(on) {
-    black = on;
-    $("sv-black").hidden = !on;
-  }
+  function setBlack(on) { setShow({ black: !!on }); }
   $("stg-show").addEventListener("click", openView);
   $("sv-close").addEventListener("click", closeView);
   $("sv-fs").addEventListener("click", function () { fullscreen(!fsOn()); });
-  $("sv-black-btn").addEventListener("click", function () { setBlack(!black); });
-  $("sv-black").addEventListener("click", function () { setBlack(false); });
+  $("sv-black-btn").addEventListener("click", function () { setBlack(!show.black); });
   $("stg-view").addEventListener("pointermove", pokeTools);
-  $("stg-view").addEventListener("pointerdown", pokeTools);
+  $("stg-view").addEventListener("pointerdown", function (e) {
+    pokeTools();
+    // a tap on the black screen brings the picture back
+    if (show.black && !$("sv-tools").contains(e.target)) setBlack(false);
+  });
+
+  // The display window: a page of its own (display.html), so it runs
+  // on another monitor and keeps going when Time is closed.
+  function openDisplay() {
+    var w = null;
+    try { w = window.open("display.html?standalone", "oros-stage-display", "popup=yes,width=960,height=540"); } catch (e) { w = null; }
+    $("stg-out-note").textContent = w ? "" : t("stg.blocked");
+    $("stg-out-note").hidden = !!w;
+    if (!w) return;
+    // Chrome / Edge with two monitors: move it to the other screen
+    // (Window Management API; asks once). Elsewhere the user drags it.
+    try {
+      if (typeof window.getScreenDetails === "function") {
+        window.getScreenDetails().then(function (sd) {
+          var other = sd.screens.filter(function (x) { return x !== sd.currentScreen; })[0];
+          if (!other) return;
+          try { w.moveTo(other.availLeft, other.availTop); w.resizeTo(other.availWidth, other.availHeight); } catch (e) {}
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  $("stg-display").addEventListener("click", openDisplay);
+  $("stg-black").addEventListener("click", function () { setBlack(!show.black); });
+  $("stg-layout").addEventListener("change", function () { setShow({ layout: this.value }); });
+  $("stg-mirror").addEventListener("change", function () { setShow({ mirror: this.checked }); });
+
+  // Logo: a picture kept on this device only (IndexedDB), scaled down.
+  $("stg-logo").addEventListener("click", function () {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "image/png,image/jpeg,image/webp,image/gif";
+    inp.addEventListener("change", function () {
+      var f = inp.files && inp.files[0];
+      if (!f || !/^image\/(png|jpeg|webp|gif)$/.test(f.type) || f.size > 20 * 1024 * 1024) return;
+      var url = URL.createObjectURL(f), img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, 600 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(img.naturalWidth * k));
+        cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+        cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (blob) {
+          if (!blob || !V) return;
+          V.logo.set(blob).then(function () { setShow({ logoAt: Date.now() }); });
+        }, "image/png");
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); };
+      img.src = url;
+    });
+    inp.click();
+  });
+  $("stg-logo-x").addEventListener("click", function () {
+    if (V) V.logo.set(null).then(function () { setShow({ logoAt: 0 }); });
+  });
+
+  // Message to the speaker
+  var BUILTIN = ["stg.p.wrap", "stg.p.five", "stg.p.two", "stg.p.up", "stg.p.qa", "stg.p.loud", "stg.p.slow"];
+  // Typing never reaches the stage by itself: the speaker sees a
+  // message only when it is shown (a half-typed line would distract).
+  // While one is up and the field holds other text, the button shows
+  // the new text instead of hiding.
+  function msgBtn() {
+    var text = $("stg-msg").value.trim();
+    var hide = show.msg.on && (!text || text === show.msg.text);
+    $("stg-msg-show").textContent = t(hide ? "stg.msg.hide" : "stg.msg.show");
+  }
+  $("stg-msg").addEventListener("input", msgBtn);
+  $("stg-msg").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); toggleMsg(true); }
+  });
+  function toggleMsg(forceOn) {
+    var text = $("stg-msg").value.trim();
+    if (show.msg.on && !forceOn && (!text || text === show.msg.text)) setMsg({ on: false });
+    else if (text) setMsg({ text: text, on: true });
+  }
+  $("stg-msg-show").addEventListener("click", function () { toggleMsg(false); });
+  $("stg-msg-flash").addEventListener("change", function () { setMsg({ flash: this.checked }); });
+  $("stg-msg-color").addEventListener("change", function () { setMsg({ color: this.value }); });
+  $("stg-msg-save").addEventListener("click", function () {
+    var text = $("stg-msg").value.trim().slice(0, 200);
+    if (!text) return;
+    var msgs = data.msgs || [];
+    if (msgs.some(function (m) { return m.text === text; })) return;
+    data.msgs = msgs.concat([{ id: newId(), text: text, mtime: Date.now() }]);
+    save();
+    renderPresets();
+  });
+  function chip(text, onPick, onDel) {
+    var wrapc = document.createElement("span");
+    wrapc.className = "stg-chip";
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "qchip"; b.textContent = text;
+    b.addEventListener("click", onPick);
+    wrapc.appendChild(b);
+    if (onDel) {
+      var x = document.createElement("button");
+      x.type = "button"; x.className = "stg-chip-x"; x.textContent = "×";
+      x.setAttribute("aria-label", t("stg.msg.del"));
+      x.addEventListener("click", onDel);
+      wrapc.appendChild(x);
+    }
+    return wrapc;
+  }
+  function pick(text) {
+    $("stg-msg").value = text;
+    setMsg({ text: text, on: true });
+  }
+  function renderPresets() {
+    var host = $("stg-msg-presets");
+    host.textContent = "";
+    BUILTIN.forEach(function (k) { host.appendChild(chip(t(k), function () { pick(t(k)); })); });
+    (data.msgs || []).slice().sort(function (a, b) { return a.mtime - b.mtime || (a.id < b.id ? -1 : 1); })
+      .forEach(function (m) {
+        host.appendChild(chip(m.text, function () { pick(m.text); }, function () {
+          var now = Date.now();
+          data.msgs = (data.msgs || []).filter(function (x) { return x.id !== m.id; });
+          data.tombs = data.tombs.filter(function (d) { return d.id !== m.id; }).concat([{ id: m.id, t: now }]);
+          save();
+          renderPresets();
+        }));
+      });
+  }
+  // the operator's own copy of the output state (pane controls)
+  function paintOut() {
+    $("stg-black").textContent = t(show.black ? "stg.black.off" : "stg.black");
+    $("stg-black").classList.toggle("prim", show.black);
+    $("stg-black").setAttribute("aria-pressed", show.black ? "true" : "false");
+    $("stg-layout").value = show.layout;
+    $("stg-mirror").checked = show.mirror;
+    $("stg-logo-x").hidden = !show.logoAt;
+
+    $("stg-msg-flash").checked = show.msg.flash;
+    $("stg-msg-color").value = show.msg.color;
+    if (document.activeElement !== $("stg-msg") && show.msg.text) $("stg-msg").value = show.msg.text;
+    msgBtn();
+    $("stg-live-msg").textContent = show.msg.on ? show.msg.text : "";
+    $("stg-live-msg").hidden = !show.msg.on;
+    $("stg-live-msg").className = "stg-live-msg c-" + show.msg.color;
+    $("stg-live-black").hidden = !show.black;
+  }
+  // another window of this device (the display, a second Time) changed it
+  window.addEventListener("storage", function (e) {
+    if (e.key === SHOW_KEY) { show = C.normShow(readJSON(SHOW_KEY)); paintOut(); }
+  });
 
   /* ---------- 7. Controls ---------- */
   $("stg-go").addEventListener("click", function () { act("go"); });
@@ -563,9 +752,10 @@
     else if (k === "ArrowLeft" || k === "PageUp") act("prev");
     else if (k === "+" || k === "=") act("add", 60);
     else if (k === "-" || k === "_") act("add", -60);
-    else if (k === "b" || k === "B" || k === ".") { if (!viewOpen) openView(); setBlack(!black); }
+    else if (k === "b" || k === "B" || k === ".") setBlack(!show.black);
+    else if (k === "m" || k === "M") { if (show.msg.on) setMsg({ on: false }); else toggleMsg(true); }
     else if (k === "f" || k === "F") { if (viewOpen) fullscreen(!fsOn()); else openView(); }
-    else if (k === "Escape" && viewOpen) { if (black) setBlack(false); else closeView(); }
+    else if (k === "Escape" && viewOpen) { if (show.black) setBlack(false); else closeView(); }
     else done = false;
     if (done) { e.preventDefault(); if (viewOpen) pokeTools(); }
   });
@@ -758,6 +948,7 @@
     if ($("stg-ev-dlg").open && editEv && !evById(editEv)) $("stg-ev-dlg").close();
     if (run.cur && !itemById(run.cur)) { run = Object.assign({}, run, { cur: "", startedAt: 0, pausedAt: 0, adj: 0 }); saveRun(); }
     render();
+    renderPresets();
   }
   try {
     var api = window.parent && window.parent.orosSync;
@@ -776,6 +967,8 @@
   applyI18n();
   $("stg-sound").checked = sound;
   render();
+  renderPresets();
+  paintOut();
   // the tab buttons of time.js switch panes; repaint when Stage shows
   var tabs = document.querySelectorAll(".tab");
   for (var i = 0; i < tabs.length; i++) {

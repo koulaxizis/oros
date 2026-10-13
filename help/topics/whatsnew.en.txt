@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.52.00
+- Time › Stage: a second screen and messages. Open the stage display in its own window (on Chrome and Edge it moves to the other monitor by itself). Send the speaker a message, ready-made or your own, in colour and flashing if needed. Choose clock only or clock with the rundown, mirror the picture, add your logo.
+
 ## Version 1.51.00
 - Studio: effects on the tablet. FX on a remote strip opens that track's effects on the tablet or phone, with each effect's own interface and meters, every control, on/off, order, adding and removing.
 
