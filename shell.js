@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.52.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.53.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4893,7 +4893,7 @@
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
         { name: "Overpass API", url: "https://overpass-api.de/",
           by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Places around you (Maps)", el: "Μέρη γύρω σου (Χάρτες)" },
+          en: "Places and quests around you (Maps)", el: "Μέρη και ερωτήσεις γύρω σου (Χάρτες)" },
         { name: "Radio Browser", url: "https://www.radio-browser.info/",
           by: "Alex Segler & the community", lic: { en: "Free community API", el: "Δωρεάν κοινοτικό API" },
           en: "Station directory (Radio)", el: "Κατάλογος σταθμών (Ραδιόφωνο)" },

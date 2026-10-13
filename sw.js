@@ -1083,6 +1083,8 @@ var PRECACHE_URLS = [
   "maps/heat-core.js",
   "maps/heat.js",
   "maps/heat-worker.js",
+  "maps/quests-core.js",
+  "maps/quests.js",
   "feeds/",
   "feeds/index.html",
   "feeds/search.js",

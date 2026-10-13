@@ -741,7 +741,8 @@
   }
   function closeDlg(dlg) { if (dlg.open) dlg.close(); dlg.remove(); }
 
-  function newNote(lat, lon) {
+  // text: optional starting text (e.g. from a quest: "It's not there any more").
+  function newNote(lat, lon, text) {
     if (!modeOn) setMode(true);
     var dlg = dialogBase(t("new.title"));
     var near = O.nearNotes(Object.keys(notes).map(function (k) { return notes[k]; }), lat, lon, 50);
@@ -763,6 +764,7 @@
     ta.placeholder = t("new.ph");
     ta.rows = 5;
     ta.maxLength = O.LIM.noteText - 120;
+    if (typeof text === "string") ta.value = text.slice(0, ta.maxLength);
     ta.setAttribute("aria-label", t("new.title"));
     dlg.appendChild(ta);
     var lab = el("label", "osm-lab", t("new.sig"));
