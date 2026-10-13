@@ -15,6 +15,13 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 - A long-press also offers `Measure distance` and `I parked here` (see Measure and parking below).
 - `Saved places` lists everything you starred. Tap a place to fly there. The pencil renames it (`Rename place`) and the × deletes it, with `Undo`.
 
+### Favourite groups
+
+- Put saved places in groups, as in OsmAnd: the folder button next to a place, or `Group` in a saved place's popup, picks a group or makes a `New group` with a name and a colour. The pin on the map takes the group's colour.
+- The list shows each group with its places, then `No group`. Next to a group: the arrow folds it, the eye hides its pins from the map, the pencil edits it and the arrow down exports it as a GPX file.
+- `Groups` at the top lists every group with how many places it has; tap one to rename it, change its colour or delete it. Deleting a group keeps its places, without a group.
+- `Import` reads the waypoints of a GPX, KML or GeoJSON file (for example favourites exported from OsmAnd) as saved places, into a new group named after the file, a group you have, or none. A file with only waypoints opened in `My tracks` goes the same way.
+
 ## Plan a route
 
 1. Tap `Plan a route`. A new plan starts `From` `My location`.
@@ -203,7 +210,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
