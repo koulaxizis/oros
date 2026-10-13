@@ -5911,3 +5911,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-13 — Help: guide catch-up for 1.60–1.82 (#309) — 1.82.01
 - Privacy help (EN + EL): the Maps line names every online service (Transitous, OpenTopoMap, AWS Terrain Tiles, Wikipedia, Panoramax); Connected services get their own list, one line per app (WooCommerce, timologisi.online, MailerLite/Mailchimp/Brevo, HubSpot/Pipedrive/Invoice Ninja/Odoo, Stripe, Todoist, Trello/GitHub, Raindrop.io, Notion), with which ones always use the relay; a paragraph on the Android `On this phone` mirror. Contacts and Calendar help gain "On this phone (Android app)". Notifications help covers clicks on system notifications and the inbox closing. Bilingual check clean (122 app pages, all topics, What's new 136/136). Text only.
+
+### 2026-10-13 — Fix: phone bridge connects in the orOS Android app (#310) — 1.82.02
+- phone.js: one channel request per page load; the page now accepts the browser's port message even with an empty origin and uses the newest port, so "On this phone" in Contacts and Calendar connects.
+- android/: PostMessageService declared so the browser binding keeps the app awake; new Bridge diagnostics screen (DiagActivity) that records each step of the channel set-up for troubleshooting.
+  - Tests: full suite; Android build in CI. Real-phone test by Chris after this merge.
