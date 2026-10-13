@@ -26,6 +26,9 @@ Above the list, `All` and `★ Favorites` switch between everyone and your favou
 ## Duplicates
 `Duplicates` looks for contacts that are probably the same person: `Same phone` or `Same email` (listed as `Definitive matches`) and `Similar name` (`Possible matches`). Tap or click a contact in a group to open `Merge duplicates`: it shows the combined contact. Use `Flip primary` to pick which one to keep as the base, then `Merge now`. You can `Undo` straight afterwards.
 
+## On this phone (Android app)
+In the orOS Android app, `On this phone` puts your orOS contacts in the phone's own Contacts, so the dialer and incoming calls show their names. Turn on `Show on this phone` and tap `Allow access` (Android asks once). Contacts arrive in an "orOS" account and follow every change you make here. They are read-only on the phone: edit them in orOS. Turning the switch off removes them from the phone again. The button doesn't appear in a browser, only in the Android app, and the choice is kept on this phone only.
+
 ## Sync and backup
 Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved.
 
