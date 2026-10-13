@@ -123,7 +123,7 @@
       "iss.go": "Issue",
       "vw.pdf": "PDF", "vw.share": "Share PDF", "vw.email": "Email", "vw.pay": "Add payment", "vw.paid": "Mark as paid",
       "vw.sent": "Mark as sent", "vw.unsent": "Not sent", "vw.dup": "Duplicate", "vw.credit": "Credit note",
-      "vw.convert": "Make invoice", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
+      "vw.convert": "Make invoice", "vw.stockOut": "Take out of stock", "vw.stockRet": "Back into stock", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
       "vw.sentOn": "Sent {d}", "vw.converted": "Turned into {n}", "vw.from": "From", "vw.to": "Bill to",
       "vw.dates": "Date {d} · due {u}", "vw.date": "Date {d}", "vw.corrects": "Corrects {n}", "vw.credits": "Credit notes",
       "vw.pays": "Payments", "vw.noPays": "No payments yet.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Edit ΜΑΡΚ",
@@ -254,7 +254,7 @@
       "iss.go": "Έκδοση",
       "vw.pdf": "PDF", "vw.share": "Κοινοποίηση PDF", "vw.email": "Email", "vw.pay": "Νέα πληρωμή", "vw.paid": "Εξόφληση",
       "vw.sent": "Σημείωση ως σταλμένο", "vw.unsent": "Δεν στάλθηκε", "vw.dup": "Αντίγραφο", "vw.credit": "Πιστωτικό",
-      "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
+      "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.stockOut": "Έξοδος από απόθεμα", "vw.stockRet": "Επιστροφή στο απόθεμα", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
       "vw.sentOn": "Στάλθηκε {d}", "vw.converted": "Έγινε {n}", "vw.from": "Εκδότης", "vw.to": "Πελάτης",
       "vw.dates": "Ημερομηνία {d} · λήξη {u}", "vw.date": "Ημερομηνία {d}", "vw.corrects": "Διορθώνει το {n}", "vw.credits": "Πιστωτικά",
       "vw.pays": "Πληρωμές", "vw.noPays": "Καμία πληρωμή ακόμη.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Αλλαγή ΜΑΡΚ",
@@ -1534,6 +1534,11 @@
     if (d.kind !== "ext") acts.appendChild(btn(t("vw.dup"), "", function () { duplicate(d); }));
     if (d.st === "issued" && (d.kind === "inv" || d.kind === "rcpt")) acts.appendChild(btn(t("vw.credit"), "", function () { creditFor(d); }));
     if (d.st === "issued" && d.kind === "pro") acts.appendChild(btn(t("vw.convert"), "", function () { convertPro(d); }));
+    var stockReq = stockShell() ? C.stockOut(d) : null;
+    if (stockReq) acts.appendChild(btn(t(stockReq.t === "ret" ? "vw.stockRet" : "vw.stockOut"), "", function () {
+      var sh = stockShell();
+      if (sh) sh.__orosOpenAt("stock", { out: stockReq });
+    }));
     if (d.st === "issued" && d.kind !== "ext") acts.appendChild(btn(t("vw.void"), "danger", function () { voidDoc(d); }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.delete"), "danger", function () { deleteRecord(d.id); }));
     void email;
@@ -2898,6 +2903,13 @@
       var path = "/internal/Invoices/" + pdfName(d);
       Promise.resolve(write.call(fs, path, blob)).then(function () { done(path); }, function () { done(null); });
     });
+  }
+  // Stock (BR-ST-OUT): offered only when Stock is in use on this device.
+  function stockShell() {
+    try {
+      if (window.parent === window || typeof window.parent.__orosOpenAt !== "function") return null;
+      return localStorage.getItem("oros-stock-data") ? window.parent : null;
+    } catch (e) { return null; }
   }
   function sendEmail(d) {
     var lang = d.plang || data.prof.plang || LANG;

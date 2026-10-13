@@ -51,6 +51,7 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 - Next to each payment, `Add to Budget` opens [Budget](app:budget) with the payment filled in as freelance income; check it and save it there. It shows when the payment is in Budget's currency, and remembers that you sent it.
 - `Make invoice` on an accepted [Quote](app:quote), and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
 - On `Clients`, `From CRM` brings in customers from [CRM](app:crm); each one stays linked, so CRM can show its invoices.
+- On an issued invoice or receipt whose lines have a product code, `Take out of stock` opens a sale in [Stock](app:stock) with those products and prices; a credit note offers `Back into stock` for a customer return. Nothing changes in Stock until you save there. The button shows only once you use Stock.
 
 ## Settings
 The gear button opens `Settings`: your business details and logo, the defaults for new documents (currency, VAT %, payment days, withholding, PDF language, payment terms, footer), the numbering series, and your templates.
