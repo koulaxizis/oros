@@ -56,6 +56,8 @@ public class PhoneBridge {
     @Nullable private CustomTabsSession session;
     private boolean validated;
     private int retries;
+    // Diagnostics: what happened since the last channel request.
+    private int sent, lastResult = 99, fromPage;
     private boolean channelReady;
 
     PhoneBridge(Context context) {
@@ -141,7 +143,11 @@ public class PhoneBridge {
     private void requestChannel() {
         if (session == null) return;
         channelReady = false;
+        sent = 0;
+        fromPage = 0;
+        lastResult = 99;
         boolean ok = session.requestPostMessageChannel(ORIGIN, ORIGIN, new Bundle());
+        if (BuildConfig.DIAG && !ok) main.postDelayed(() -> diag("SUMMARY channel request refused"), 3000);
         diag("channel requested: " + ok);
     }
 
@@ -178,6 +184,9 @@ public class PhoneBridge {
             diag("channel ready");
             main.post(() -> {
                 channelReady = true;
+                if (BuildConfig.DIAG) main.postDelayed(() -> diag("SUMMARY validated " + validated
+                        + ", channel " + channelReady + ", sent " + sent + " (last " + lastResult
+                        + "), from page " + fromPage), 8000);
                 // The first message hands the page its port (phone.js).
                 send(state());
             });
@@ -186,6 +195,7 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
+            main.post(() -> fromPage++);
             diag("message from page, " + message.length() + " chars");
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
@@ -201,6 +211,8 @@ public class PhoneBridge {
         main.post(() -> {
             if (session == null || !channelReady) return;
             int r = session.postMessage(msg.toString(), null);
+            sent++;
+            lastResult = r;
             diag("postMessage " + msg.optString("t") + ": " + r);
         });
     }
