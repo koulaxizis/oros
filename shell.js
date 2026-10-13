@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.61.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.62.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4951,6 +4951,9 @@
         { name: "Stripe API", url: "https://docs.stripe.com/api",
           by: "Stripe, Inc.; your own account", lic: { en: "Their terms, your own restricted key", el: "Οι όροι τους, με δικό σου restricted key" },
           en: "Connected services: import payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πληρωμών (Έσοδα & Έξοδα)" },
+        { name: "Invoice Ninja API", url: "https://api-docs.invoicing.co/",
+          by: "Invoice Ninja LLC; your own account or install", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
+          en: "Connected services: import clients (CRM) and payments (Budget)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πελατών (CRM) και πληρωμών (Έσοδα & Έξοδα)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

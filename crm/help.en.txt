@@ -38,16 +38,17 @@ In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON
 
 `Import customers (CSV)` reads a list from Excel, HubSpot, another program or CRM's own export. The first row must name the columns (for example Name or Company, VAT ID, Email, Phone, Address, City, Status, Tags). You see how many customers are new before anything is added; customers you already have (same VAT ID or name) are skipped, and `Undo` removes the whole import.
 
-## HubSpot and Pipedrive
-`Settings` › `Import from HubSpot or Pipedrive` brings in an account you connected in [Settings](app:settings) › `Connected services`. Pick the account and `Read the account`: you see how many customers, deals and follow-ups are new and how many changed there since the last time, before anything is added.
+## HubSpot, Pipedrive and Invoice Ninja
+`Settings` › `Import from HubSpot, Pipedrive or Invoice Ninja` brings in an account you connected in [Settings](app:settings) › `Connected services`. Pick the account and `Read the account`: you see how many customers, deals and follow-ups are new and how many changed there since the last time, before anything is added.
 
 - Companies become customers, with their contacts as people. A contact without a company becomes a person customer.
 - Deals keep their stage: won and lost stay won and lost; an open deal goes to the stage nearest its probability (New, Contacted, Proposal or Negotiation). A deal in another currency than CRM's comes in without a value, with the amount in its note.
+- Invoice Ninja's active clients become customers, with their contacts as people and their VAT ID; a customer with the same VAT ID here is matched first.
 - Pipedrive's open activities become follow-ups. One you mark done here stays done.
 - A customer you already have (same name or e-mail) is used as it is, never changed.
 - `Update what was imported before` refreshes only the platform's fields (name, phone, e-mail, website, address, people, deal stage and value). Status, tags, notes, stars and history stay yours.
 - What you delete here doesn't come back on the next import, unless you tick `Bring back what was deleted here`.
-- `Undo` takes back the whole import. orOS only reads HubSpot and Pipedrive: nothing changes there.
+- `Undo` takes back the whole import. orOS only reads HubSpot, Pipedrive and Invoice Ninja: nothing changes there.
 
 ## Tips
 - Follow-up reminders reach the [notifications](help:t/notifications) inbox even when CRM is closed: on the day, or at the time you set.

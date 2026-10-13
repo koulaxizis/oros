@@ -1597,7 +1597,7 @@
     return typeof n === "string" && n && n !== "app." + id ? n : id;
   }
 
-  // Entries from Stripe (budget/payments.js): one write; Undo
+  // Entries from Stripe / Invoice Ninja (budget/payments.js): one write; Undo
   // deletes them again (tombstones, like a delete).
   var PAY = window.OrosBudgetPay || null;
   function addEntries(rows, doneText) {

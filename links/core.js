@@ -143,6 +143,16 @@
       apps: ["budget"],
       probe: "/balance",
       relayOnly: true
+    },
+    // Invoice Ninja (wave 4C): the person's own install or invoicing.co.
+    // Clients into CRM, payments into Budget. Read-only.
+    ininja: {
+      name: "Invoice Ninja",
+      site: true,
+      root: "/api/v1",
+      keys: [{ k: "key", re: /^[A-Za-z0-9]{32,128}$/ }],
+      apps: ["crm", "budget"],
+      probe: "/clients?per_page=1"
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -181,7 +191,7 @@
     if (!m) return null;
     var host = m[1].toLowerCase().replace(/\.$/, "");
     if (!validHost(host)) return null;
-    var path = (m[2] || "").replace(/\/+$/, "").replace(/\/wp-json(\/.*)?$/i, "");
+    var path = (m[2] || "").replace(/\/+$/, "").replace(/\/wp-json(\/.*)?$/i, "").replace(/\/api\/v1$/i, "");
     if (!BASE_RE.test(path) || /(^|\/)\.\.?(\/|$)/.test(path)) return null;
     return "https://" + host + path;
   }
@@ -322,7 +332,8 @@
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
       HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
       PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
-      TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/;
+      TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/,
+      IN_ACTIVE = /^active$/;
   var EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
   function okEmail(v) { return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v); }
   function okName(v) { return typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v); }
@@ -424,6 +435,11 @@
     stripe: [
       ["GET", /^\/balance$/, null, null],
       ["GET", /^\/balance_transactions$/, { limit: LIM100, starting_after: TXN, "created[gte]": UNIX, "created[lt]": UNIX }, null]
+    ],
+    ininja: [
+      ["GET", /^\/statics$/, null, null],
+      ["GET", /^\/clients$/, { per_page: PER, page: NUM, status: IN_ACTIVE }, null],
+      ["GET", /^\/payments$/, { per_page: PER, page: NUM }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -491,6 +507,7 @@
     if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + "/wp-json/wc/v3" + path;
     var pl = PLATFORMS[p];
     if (!pl) return null;
+    if (pl.site) { var s = typeof acct === "string" ? acct : acct && acct.site; return s ? s + pl.root + path : null; }
     if (pl.env && acct && has(pl.env, acct.env)) return "https://" + pl.env[acct.env] + pl.root + path;
     if (pl.host) return "https://" + pl.host + pl.root + path;
     if (pl.hostOf) { var h = pl.hostOf(keys); return h ? "https://" + h + pl.root + path : null; }
@@ -506,7 +523,12 @@
     if (p === "hubspot") return ["Authorization", "Bearer " + keys.key];
     if (p === "pdrive") return ["x-api-token", keys.key];
     if (p === "stripe") return ["Authorization", "Bearer " + keys.key];
+    if (p === "ininja") return ["X-API-TOKEN", keys.key];
     return null;
+  }
+  // Headers a platform needs besides the key (no secrets here).
+  function extraHeaders(p) {
+    return p === "ininja" ? { "X-Requested-With": "XMLHttpRequest" } : {};
   }
 
   var api = {
@@ -514,7 +536,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, TOL_TYPES: TOL_TYPES,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, authHeader: authHeader, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

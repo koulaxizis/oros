@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive) and Stripe, both read-only; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive), Stripe and Invoice Ninja, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
@@ -253,6 +253,21 @@ always comes here (a key never talks to Stripe from a browser). Only GETs.
 |---|---|
 | `/balance` | none (the connection check) |
 | `/balance_transactions` | `limit (≤100), starting_after (txn_…), created[gte], created[lt]` (unix seconds) |
+
+### Invoice Ninja (`p: "ininja"`, CRM and Budget, read-only)
+
+`POST /v1 { op: "ext", p: "ininja", host, base, key, reqs }`: the person's
+own install or `invoicing.co`, so `host` and `base` are checked like
+WooCommerce's (public host only). `https://<host><base>/api/v1<path>` with
+`X-API-TOKEN: <key>` (32–128 letters and digits) and
+`X-Requested-With: XMLHttpRequest`. orOS calls it straight from the browser
+first and comes here only when that fails. Only GETs.
+
+| Path | Query |
+|---|---|
+| `/statics` | none (currency ids → codes) |
+| `/clients` | `per_page (≤100), page, status=active` |
+| `/payments` | `per_page (≤100), page` |
 
 ### timologisi.online (`p: "tol"`, Invoices → myDATA)
 
