@@ -5802,3 +5802,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Credits: Notion. Help: Notes, Settings, Privacy, What's new. Decision in Part IX.
   - Tests: `tests/linksnotion.test.js` (7). Chromium E2E in the real shell (EL, 360 px) with Notion mocked behind the real relay code: bad secret refused, connect (relay), no key in the synced slice, 4 pages over 2 search pages (database row out), block pages (130 items), nested to-do child, code, untitled page, HTML stays text, subpage under its page, Undo through the notice, again (deleted → not back, then brought back), a change there replaced only when asked; 0 direct calls, at most 3 requests a relay call, no key echoed.
   - Not tested: a real Notion workspace (rate limits, very large pages, block types not listed), the deployed relay, real phones, Safari.
+
+### 2026-10-13 — Fix: notifications panel closes when a notice opens a window or app (#299) — 1.74.01
+- notifications.js: clicking a notice that opens an app or window (for example the update notice opening What's new) now closes the notifications panel first, so the opened window is not hidden behind it.
+  - Tests: tests/notif-panel-close.test.js. E2E at 360 px, EN and EL.
