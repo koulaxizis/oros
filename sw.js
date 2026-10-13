@@ -1071,6 +1071,8 @@ var PRECACHE_URLS = [
   "maps/poi-core.js",
   "maps/poi.js",
   "maps/presets-data.js",
+  "maps/tracks-core.js",
+  "maps/tracks.js",
   "feeds/",
   "feeds/index.html",
   "feeds/search.js",

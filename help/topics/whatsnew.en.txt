@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.46.00
+- Maps: record your walks and rides as GPX tracks, keep them in a library with colours and folders, follow a track, and import or export GPX, KML and GeoJSON files.
+
 ## Version 1.45.00
 - Maps: fix shops, cafés and other places on OpenStreetMap: opening hours, phone, website, "checked today", closed places and new ones.
 
