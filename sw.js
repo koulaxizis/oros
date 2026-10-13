@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v1.82.03";
+var CACHE_VERSION = "oros-v1.83.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -1016,8 +1016,10 @@ var PRECACHE_URLS = [
   "studio/nullfx/runtime/null-gfx.js",
   "studio/nullfx/runtime/null-node.js",
   "studio/nullfx/runtime/null-worklet.js",
+  "studio/nullfx/fx/amp_simulator.js",
   "studio/nullfx/fx/auto_leveler.js",
   "studio/nullfx/fx/auto_pan.js",
+  "studio/nullfx/fx/band_splitter.js",
   "studio/nullfx/fx/breath_control.js",
   "studio/nullfx/fx/brighter.js",
   "studio/nullfx/fx/cabinet_simulator.js",
@@ -1028,8 +1030,11 @@ var PRECACHE_URLS = [
   "studio/nullfx/fx/comb_filter.js",
   "studio/nullfx/fx/convolution.js",
   "studio/nullfx/fx/crunch.js",
+  "studio/nullfx/fx/de_hum.js",
   "studio/nullfx/fx/deesser.js",
   "studio/nullfx/fx/delay.js",
+  "studio/nullfx/fx/disperser.js",
+  "studio/nullfx/fx/dj_filter.js",
   "studio/nullfx/fx/doubler.js",
   "studio/nullfx/fx/driver.js",
   "studio/nullfx/fx/dynamic_eq.js",
@@ -1056,13 +1061,19 @@ var PRECACHE_URLS = [
   "studio/nullfx/fx/mono_maker.js",
   "studio/nullfx/fx/multiband_compressor.js",
   "studio/nullfx/fx/noise_generator.js",
+  "studio/nullfx/fx/noise_reduction.js",
+  "studio/nullfx/fx/octaver.js",
   "studio/nullfx/fx/ott.js",
+  "studio/nullfx/fx/panner.js",
   "studio/nullfx/fx/parametric_eq.js",
   "studio/nullfx/fx/phaser.js",
   "studio/nullfx/fx/phatter.js",
+  "studio/nullfx/fx/pitch_correction.js",
   "studio/nullfx/fx/pitch_shifter.js",
   "studio/nullfx/fx/pressure.js",
   "studio/nullfx/fx/pumper.js",
+  "studio/nullfx/fx/resonance_suppressor.js",
+  "studio/nullfx/fx/resonator.js",
   "studio/nullfx/fx/reverb.js",
   "studio/nullfx/fx/reverser.js",
   "studio/nullfx/fx/ring_mod.js",
@@ -1077,10 +1088,12 @@ var PRECACHE_URLS = [
   "studio/nullfx/fx/spectrum_analyzer.js",
   "studio/nullfx/fx/spread.js",
   "studio/nullfx/fx/spring_reverb.js",
+  "studio/nullfx/fx/stereo_scope.js",
   "studio/nullfx/fx/stereo_width.js",
   "studio/nullfx/fx/stretch.js",
   "studio/nullfx/fx/sub_bloom.js",
   "studio/nullfx/fx/sweeper.js",
+  "studio/nullfx/fx/tape.js",
   "studio/nullfx/fx/tape_stop.js",
   "studio/nullfx/fx/tilt.js",
   "studio/nullfx/fx/trance_gate.js",
@@ -1089,6 +1102,7 @@ var PRECACHE_URLS = [
   "studio/nullfx/fx/vibrato.js",
   "studio/nullfx/fx/vinyl_age.js",
   "studio/nullfx/fx/vocoder.js",
+  "studio/nullfx/fx/volume_shaper.js",
   "studio/nullfx/fx/warped_delay.js",
   "studio/nullfx/fx/wetter.js",
   "studio/nullfx/fx/index.json",
