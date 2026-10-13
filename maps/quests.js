@@ -78,6 +78,7 @@
       "ovl.now": "Now: {v}", "ovl.unknown": "not known yet",
       "ovl.arrows": "Left and right are seen walking in the direction of the arrows on the map.",
       "ovl.same": "That is already on the map.",
+      "ovl.levels": "Floors above ground", "ovl.kind": "Kind of building", "ovl.kind.keep": "Keep as it is",
       "badges": "Achievements", "badges.title": "Your achievements",
       "badge.lv": "Level {l} · {n} answers", "badge.next": "{n} more for the next level", "badge.max": "Top level reached",
       "badge.none": "Answer quests and upload them to earn achievements. Each level unlocks a page to learn more.",
@@ -135,6 +136,7 @@
       "ovl.now": "Τώρα: {v}", "ovl.unknown": "άγνωστο ακόμα",
       "ovl.arrows": "Αριστερά και δεξιά όπως τα βλέπεις περπατώντας προς την κατεύθυνση των βελών στον χάρτη.",
       "ovl.same": "Αυτό υπάρχει ήδη στον χάρτη.",
+      "ovl.levels": "Όροφοι πάνω από το έδαφος", "ovl.kind": "Είδος κτιρίου", "ovl.kind.keep": "Να μείνει όπως είναι",
       "badges": "Επιτεύγματα", "badges.title": "Τα επιτεύγματά σου",
       "badge.lv": "Επίπεδο {l} · {n} απαντήσεις", "badge.next": "Ακόμα {n} για το επόμενο επίπεδο", "badge.max": "Έφτασες στο ανώτερο επίπεδο",
       "badge.none": "Απάντησε σε ερωτήσεις και στείλ' τες για να κερδίσεις επιτεύγματα. Κάθε επίπεδο ξεκλειδώνει μια σελίδα για να μάθεις περισσότερα.",
@@ -490,7 +492,24 @@
     // the current value in words when one of the choices matches it
     var curOp = cur && !ov.text ? ov.options(tg).filter(function (op) { return !V.answer(ov.id, e, op.v); })[0] : null;
     body.appendChild(el("p", "osm-small ovl-now", t("ovl.now", { v: curOp ? Q.optText(curOp, LANG) : cur || t("ovl.unknown") })));
-    if (ov.text) {
+    if (ov.form) {
+      var fl = el("label", "osm-lab", t("ovl.levels"));
+      var lv = el("input", "osm-in ovl-levels");
+      lv.type = "number"; lv.inputMode = "numeric"; lv.min = "1"; lv.max = "200"; lv.step = "1"; lv.value = tg["building:levels"] || "";
+      fl.appendChild(lv);
+      body.appendChild(fl);
+      var kl = el("label", "osm-lab", t("ovl.kind"));
+      var kd = el("select", "osm-in ovl-kind");
+      var k0 = el("option", "", t("ovl.kind.keep")); k0.value = ""; kd.appendChild(k0);
+      V.buildingKinds().forEach(function (op) {
+        var o2 = el("option", "", Q.optText(op, LANG)); o2.value = op.v; o2.selected = tg.building === op.set.building; kd.appendChild(o2);
+      });
+      kl.appendChild(kd);
+      body.appendChild(kl);
+      var fr = el("div", "osm-actions");
+      fr.appendChild(button(t("text.save"), "osm-btn primary", function () { ovAnswer(e, ov, { levels: lv.value, type: kd.value }); }));
+      body.appendChild(fr);
+    } else if (ov.text) {
       var inp = el("input", "osm-in");
       inp.setAttribute("aria-label", V.text(ov, "title", LANG));
       inp.maxLength = 20; inp.value = tg["addr:housenumber"] || ""; inp.autocapitalize = "off";
@@ -520,7 +539,8 @@
     var r = V.answer(ov.id, e, value);
     if (!r) {
       // the same value again is fine, anything else is a bad answer
-      var ok = ov.text ? String(value || "").trim() !== "" && String(value).trim() === ((e.tags || {})["addr:housenumber"] || "")
+      var ok = ov.form ? !!V.buildingSet({}, value)
+        : ov.text ? String(value || "").trim() !== "" && String(value).trim() === ((e.tags || {})["addr:housenumber"] || "")
         : ov.options(e.tags || {}).some(function (op) { return op.v === value; });
       toast(t(ok ? "ovl.same" : "bad"));
       if (ok) { go({ v: "list" }); paintOv(); }

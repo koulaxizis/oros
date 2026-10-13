@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.69.00
+- Maps: Every Door tools. Places missing their name or opening hours get an orange ring. `Add place` has one-tap street furniture (bench, bin, bollard, street lamp, hydrant, tree and more). New `Entrances and flats`: tap a building's outline to add an entrance with its letter and flat numbers, ideal for apartment blocks. New `Buildings` overlay in Quests for floors and kind of building.
+
 ## Version 1.68.00
 - To-Do: import from Todoist. Your projects with open tasks become lists, with due dates, descriptions as notes, labels and priority; import again to bring in what's new. orOS only reads Todoist; connect it in Settings › Connected services, then List settings › Import from Todoist.
 

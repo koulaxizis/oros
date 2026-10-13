@@ -26,6 +26,7 @@
   var P = window.OrosMapsPoi;
   var A = window.OrosMapsApi;
   var H = window.__orosMapsHost;
+  var ED = window.OrosMapsEveryDoor;    // maps wave 9 (optional)
   if (!O || !P || !A || !H || !H.map) return;
   var map = H.map;
   var LANG = H.lang === "el" ? "el" : "en";
@@ -41,6 +42,9 @@
       "none": "No shops or services mapped here yet. Use Add place to put one on the map.",
       "add": "Add place",
       "add.hint": "Move the map so the cross is on the spot, then pick what it is.",
+      "micro": "Small things (one tap)",
+      "miss": "Missing: {k}", "miss.name": "name", "miss.opening_hours": "opening hours",
+      "ent.btn": "Entrances and flats",
       "upload": "Upload ({n})",
       "pending": "Changes waiting: {n}",
       "edit": "Edit details",
@@ -95,6 +99,9 @@
       "none": "Δεν έχουν χαρτογραφηθεί μαγαζιά ή υπηρεσίες εδώ. Πάτα Προσθήκη μέρους για να βάλεις ένα.",
       "add": "Προσθήκη μέρους",
       "add.hint": "Μετακίνησε τον χάρτη ώστε ο σταυρός να είναι στο σημείο και διάλεξε τι είναι.",
+      "micro": "Μικρά πράγματα (ένα πάτημα)",
+      "miss": "Λείπει: {k}", "miss.name": "όνομα", "miss.opening_hours": "ωράριο",
+      "ent.btn": "Είσοδοι και διαμερίσματα",
       "upload": "Αποστολή ({n})",
       "pending": "Αλλαγές σε αναμονή: {n}",
       "edit": "Επεξεργασία",
@@ -306,7 +313,8 @@
   function dotIcon(v) {
     var m = P.mainTag(v.tags);
     var col = v.deleted ? "#777" : (m && COLORS[m.k]) || "#d4af37";
-    var cls = "poi-dot" + (v.edit ? " pend" : "") + (v.deleted ? " gone" : "");
+    var cls = "poi-dot" + (v.edit ? " pend" : "") + (v.deleted ? " gone" : "") +
+      (!v.deleted && ED && ED.missing(v.tags).length ? " miss" : "");
     return L.divIcon({
       className: cls,
       html: '<span style="background:' + col + '"></span>',
@@ -387,6 +395,7 @@
     body.appendChild(el("p", "osm-hint", a ? t("pending", { n: editList().length }) : t("up.signin")));
     var row = el("div", "osm-actions");
     row.appendChild(button(t("add"), "osm-btn", startAdd));
+    if (window.__orosMapsEntrances) row.appendChild(button(t("ent.btn"), "osm-btn poi-ent-btn", function () { window.__orosMapsEntrances.setMode(true); }));
     var mine = mineHere();
     if (mine.length) row.appendChild(button(t("upload", { n: mine.length }), "osm-btn primary", openUpload));
     body.appendChild(row);
@@ -473,6 +482,8 @@
     var kn = kindName(p.tags);
     if (kn) body.appendChild(el("span", "osm-badge poi-kind", kn));
     if (p.deleted) body.appendChild(el("p", "osm-hint", t("op.delete")));
+    var miss = !p.deleted && ED ? ED.missing(p.tags) : [];
+    if (miss.length) body.appendChild(el("p", "osm-small poi-miss", t("miss", { k: miss.map(function (k) { return t("miss." + k); }).join(", ") })));
     var dl = el("dl", "poi-info");
     INFO_KEYS.forEach(function (k) {
       var val = p.tags[k];
@@ -554,7 +565,7 @@
     }
     e.dev = me;
     delete e.err;
-    e.name = tags.name || tags.brand || (p.tags && (p.tags.name || p.tags.brand)) || kindName(tags) || "";
+    e.name = tags.name || tags.brand || (p.tags && (p.tags.name || p.tags.brand)) || p.label || kindName(tags) || "";
     var pre = idx ? P.matchPreset(idx, tags) : null;
     e.pre = pre ? pre.id : "";
     stamp(e);
@@ -635,6 +646,24 @@
     }));
     var body = el("div", "osm-body");
     if (adding) body.appendChild(el("p", "osm-hint", t("add.hint")));
+    if (adding && ED) {
+      body.appendChild(el("h4", "poi-micro-h", t("micro")));
+      var grid = el("div", "poi-micro");
+      ED.MICRO.forEach(function (x) {
+        var b = button("", "osm-btn poi-micro-b", function () {
+          var c = aim();
+          showCross(false);
+          commit({ lat: c.lat, lon: c.lng, tags: {}, edit: null, label: LANG === "el" ? x.el : x.en }, ED.microTags(x.id), null);
+        });
+        var ic = el("span", "poi-micro-ic", x.icon);
+        ic.setAttribute("aria-hidden", "true");
+        b.appendChild(ic);
+        b.appendChild(el("span", "", LANG === "el" ? x.el : x.en));
+        b.setAttribute("data-micro", x.id);
+        grid.appendChild(b);
+      });
+      body.appendChild(grid);
+    }
     var inp = el("input", "osm-in");
     inp.type = "search";
     inp.placeholder = t("search.ph");

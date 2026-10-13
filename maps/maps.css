@@ -1750,3 +1750,17 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .ovl-now { margin: -4px 0 10px; }
 .ovl-arrow { display: flex; align-items: center; justify-content: center; }
 .ovl-arrow > span { display: block; font-size: 16px; line-height: 1; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; }
+
+/* ---------- maps wave 9: Every Door tools ---------- */
+.poi-dot.miss span { box-shadow: 0 0 0 3px #fb8c00; }
+.poi-miss { color: #fb8c00; margin: 4px 0 8px; }
+.poi-micro-h { font-size: 13px; margin: 6px 0; color: var(--accent); }
+.poi-micro { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-bottom: 12px; }
+.poi-micro-b { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 64px; padding: 6px 4px; white-space: normal; text-align: center; font-size: 12px; line-height: 1.2; }
+.poi-micro-ic { font-size: 22px; line-height: 1; }
+.ent-h { font-size: 13px; margin: 10px 0 6px; color: var(--accent); }
+.ent-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ent-chip { min-height: 40px; white-space: normal; }
+.ent-chip.on { border-color: var(--accent); background: var(--accent-soft, rgba(212, 175, 55, 0.18)); }
+.ent-form .osm-lab { margin-top: 10px; }
+.ent-miss { color: #fb8c00; }
