@@ -23,6 +23,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
+| `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
 Tests: `tests/mail.test.js` (Node, runs in CI) drives `core.js` +
@@ -195,6 +196,37 @@ App operation `POST /v1 { op: "nl", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 
 Errors: `nostore` (503), `auth` (403, wrong `sec`), `gone` (404,
 unknown `k`), `full`, `bad-request`.
+
+## Studio Remote: meeting rooms (`/rt/`)
+
+Studio's remote control (`studio/remote.js`) lets a tablet or phone
+drive Studio on a PC. The two devices find each other here, swap their
+WebRTC offer and answer, and then talk directly. When a direct link is
+not possible (a VPN, different networks) they keep talking through the
+room instead.
+
+`GET /rt/<room>` with `Upgrade: websocket`, where `<room>` is 64
+lowercase hex characters (a SHA-256 of the pairing code, so the relay
+never sees the code). Allowed origins and the rate limit apply as for
+`/v1`. One Durable Object (`RemoteRoom`, binding `REMOTE`) per room:
+
+- At most two sockets; a third gets 409.
+- Text frames up to 16 KB are passed to the other socket as they are.
+  Both sides encrypt them (AES-GCM, key from the code with PBKDF2), so
+  the room only sees ciphertext. Binary or larger frames close the
+  socket; more than 400 frames in 10 s close it too.
+- The room tells each side `{"sys":"wait"}`, `{"sys":"peer"}` or
+  `{"sys":"left"}`.
+- Nothing is stored. An alarm closes the room after 120 s without a frame.
+
+Answers: 404 (bad room), 403 (origin), 429 (rate), 426 (not a
+WebSocket), 503 (no `REMOTE` binding). Tests: `tests/remote-relay.test.js`.
+
+The Durable Object is declared in `wrangler.toml` (binding plus a
+`new_sqlite_classes` migration, free plan), so the normal deploy
+creates it. Cloudflare cannot build preview versions of a bundle that
+adds a Durable Object class, so the "Workers Builds" check on the PR
+that adds it is expected to fail; the deploy from `main` is not affected.
 
 ## Rules it enforces
 

@@ -1,6 +1,7 @@
 // orOS Mail relay — Cloudflare Worker entry. See relay/README.md.
 import { connect } from "cloudflare:sockets";
 import { handle } from "./core.js";
+export { RemoteRoom } from "./remote.js";
 
 function connectFn(host, port, mode) {
   return connect({ hostname: host, port: port },
