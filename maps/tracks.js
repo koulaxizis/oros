@@ -80,6 +80,7 @@
       "nodlg": "Saving files is not available here.",
       "save": "Save", "cancel": "Cancel", "back": "Back", "close": "Close", "yes": "Yes",
       "km": "{n} km", "m": "{n} m", "kmh": "{n} km/h",
+      "heat": "Heatmap and statistics",
       "edit": "Edit",
       "ed.title": "Edit: {n}",
       "ed.sel": "Selected: points {a}–{b} of {n} · {d}",
@@ -161,6 +162,7 @@
       "nodlg": "Η αποθήκευση αρχείων δεν είναι διαθέσιμη εδώ.",
       "save": "Αποθήκευση", "cancel": "Άκυρο", "back": "Πίσω", "close": "Κλείσιμο", "yes": "Ναι",
       "km": "{n} χλμ.", "m": "{n} μ.", "kmh": "{n} χλμ./ώ",
+      "heat": "Heatmap και στατιστικά",
       "edit": "Επεξεργασία",
       "ed.title": "Επεξεργασία: {n}",
       "ed.sel": "Επιλογή: σημεία {a}–{b} από {n} · {d}",
@@ -274,7 +276,12 @@
     try { localStorage.setItem(DATA_KEY, JSON.stringify(data)); }
     catch (e) { toast(H.storeFull || "Storage is full"); return false; }
     if (!suppress) { var api = syncApi(); if (api && api.markDirty) api.markDirty(); }
+    changed();
     return true;
+  }
+  // Tells the heatmap (heat.js) that the track list changed.
+  function changed() {
+    try { window.dispatchEvent(new CustomEvent("oros-maps-tracks-changed")); } catch (e) {}
   }
   function sliceGet() { return T.normalizeTracks(data); }
   function sliceSet(d) {
@@ -286,6 +293,7 @@
     full = {};
     paint();
     if (panelOpen()) render();
+    changed();
   }
   function stamp(e) { e.m = Math.max(Date.now(), (e.m || 0) + 1); }
   function list() {
@@ -713,6 +721,11 @@
       body.appendChild(el("p", "osm-hint", t("none")));
       panel.appendChild(body);
       return;
+    }
+    if (window.__orosMapsHeat) {
+      var rh = el("div", "osm-actions");
+      rh.appendChild(button(t("heat"), "osm-btn", function () { window.__orosMapsHeat.open(); }));
+      body.appendChild(rh);
     }
     var bar = el("div", "trk-bar");
     var q = el("input", "osm-in");
