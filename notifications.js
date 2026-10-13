@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -577,6 +577,10 @@
     // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
     // with that note in front (its editor on a phone).
     stickies: function (id) { if (typeof window.__orosOpenStickies === 'function') window.__orosOpenStickies(String(id)); },
+    // Maps — "maps:park": the parking reminder shows the parked car.
+    maps:     function (what) {
+      if (what === 'park' && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('maps', { park: true });
+    },
     mail:     function (p) {
       var m = /^([a-z0-9]{6,40})\.(\d{1,10})$/.exec(String(p));
       if (m && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('mail', { acct: m[1], folder: 'INBOX', uid: +m[2] });

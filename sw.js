@@ -37,7 +37,8 @@ var tilePutCount = 0;
 var TILE_HOSTS = [
   "tile.openstreetmap.org",
   "tile.openstreetmap.fr",
-  "server.arcgisonline.com"
+  "server.arcgisonline.com",
+  "tile.opentopomap.org"
 ];
 function isTileHost(hostname) {
   for (var i = 0; i < TILE_HOSTS.length; i++) {
@@ -1081,8 +1082,10 @@ var PRECACHE_URLS = [
   "maps/search.js",
   "maps/maps.css",
   "maps/route-core.js",
+  "maps/tools-core.js",
   "maps/transit-core.js",
   "maps/transit.js",
+  "maps/tools.js",
   "maps/maps.js",
   "maps/osm.js",
   "maps/osm-api.js",

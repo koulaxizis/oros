@@ -6,12 +6,13 @@ Find places, plan routes by car, bike, on foot or by public transport, follow sp
 
 Type a place or address in `Search a place…`. Suggestions appear from the third letter, and places near the part of the map you're looking at come first. Tap or click one to drop a pin. You can also type coordinates, such as `37.9755, 23.7348` or `37°58'32"N 23°44'05"E`.
 
-`Use my location` shows where you are (your browser asks for permission the first time). The layers button at the top right switches between `Standard`, `Humanitarian` and `Satellite` maps.
+`Use my location` shows where you are (your browser asks for permission the first time). The layers button at the top right switches between `Standard`, `Humanitarian`, `Satellite` and `Topo (contour lines)` maps. `Topo` shows contour lines and hill shading, useful for hiking; its images stop at a medium zoom and are enlarged beyond that.
 
 ## Places
 
 - A pin's popup has `Save` (star), `Route` (from your location to there) and `From here`.
 - Right-click the map, or long-press on a phone, to use any point: `Go here`, `Start here`, `Add as stop` (once a route is set) and `Save`.
+- A long-press also offers `Measure distance` and `I parked here` (see Measure and parking below).
 - `Saved places` lists everything you starred. Tap a place to fly there. The pencil renames it (`Rename place`) and the × deletes it, with `Undo`.
 
 ## Plan a route
@@ -50,10 +51,17 @@ Coverage depends on open timetables. In Greece it includes Athens (buses, trolle
 
 - Move the map and it stops following you. `Recenter` brings it back.
 - `Mute voice` silences the instructions.
+- By car, a speed limit sign appears next to your speed when OpenStreetMap knows the limit of the road you're on. It shows the number as written on the road (a square sign for mph) and turns red when you go more than 5 km/h over it. No sign means the limit isn't known; always follow the real road signs.
 - The bottom bar shows the arrival time, the time left and the distance left. Before a turn, the lanes appear under the instruction: the bright arrows are the lanes to take.
 - `Exit navigation` needs a second tap within 3 seconds.
 - Where the browser allows it, the screen stays on while you navigate.
 - If Maps reopens in the same tab within 30 minutes, navigation picks up again.
+
+## Measure and parking
+
+**Measure**: long-press a point › `Measure distance`. Each tap on the map adds a point, and you can drag a point to move it. The sheet shows the distance, the last part and the number of points. `Close the shape` joins the last point to the first and shows the area (m², ha or km²) and the perimeter. `Undo` removes the last point, `Clear` starts over. Nothing is saved; closing the sheet or opening another mode clears it.
+
+**Parking**: long-press where you left the car › `I parked here`. Pick a reminder (`No reminder`, `In 30 min`, `In 1 hour`, `In 2 hours` or `At a time`) and, if you like, a note such as "level -2, spot 14". A blue P marks the car. Tap it for when you parked, the reminder, the note, `Walk there` (a walking route from where you are), `Change` and `I left` (removes it). Long-press anywhere › `Show my parked car` takes you back to it. The reminder is an orOS notification, so it comes even with Maps closed, as long as orOS is open; tapping it opens Maps on the car.
 
 ## OpenStreetMap notes
 
@@ -168,13 +176,14 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 
 ## Online services and privacy
 
-- **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
+- **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`), Esri (`Satellite`) and OpenTopoMap (`Topo`).
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
 - **Public transport**: Transitous (api.transitous.org). It gets the start and destination of your search, the time, the stop whose departures you open, and the map area when stops or live vehicles are on.
 - **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
+- **Speed limits**: while you navigate by car, the Overpass API gets the next few kilometres of your route (points along it) to read the speed limits of those roads.
 - **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
 - **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
@@ -182,7 +191,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
@@ -201,6 +210,8 @@ Saved places, your track list (names, colours, folders, statistics), notes, plac
 
 - Search and new routes need a connection. Offline you get cached areas, saved places and your last route.
 - Navigation needs GPS, and Maps has to stay open.
+- Speed limits come only from OpenStreetMap tags (no limits by zone, like "urban"), and are read online; offline or on an untagged road there is no sign.
+- The parking reminder comes only while orOS is open in the browser.
 - The routing servers are free public services and can sometimes be slow or down.
 - Public transport needs a connection and shows only what operators publish as open data; times are not checked against the stop's own signs.
 - Place editing needs a connection to load the places; changes made offline wait until you upload them.
