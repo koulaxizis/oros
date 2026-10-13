@@ -1,6 +1,18 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.50.00
+- Maps: a heatmap of everywhere you've been, from all your tracks, with distance per year and month and the "new ground" you covered. You can also show where other people walk and drive (OpenStreetMap GPS traces).
+
+## Version 1.49.00
+- Time: a stage timer for conferences. The new Stage tab runs a rundown of talks and breaks with a big countdown that turns yellow and red, counts overtime, shows how far behind or ahead the day is, and fills the screen for the speaker. Works with the keyboard and presenter clickers.
+
+## Version 1.48.00
+- Maps: edit your tracks (keep or remove a part, split, join, simplify, with Undo) and upload them to OpenStreetMap GPS traces to help mappers.
+
+## Version 1.47.00
+- Maps: record your walks and rides as GPX tracks, keep them in a library with colours and folders, follow a track, and import or export GPX, KML and GeoJSON files.
+
 ## Version 1.46.00
 - Studio: remote control. Run the mixer and the transport from a tablet or phone while Studio plays on the PC: pair with a 6-digit code or QR, works on the same Wi-Fi and through a VPN.
 

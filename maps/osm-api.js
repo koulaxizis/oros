@@ -204,7 +204,7 @@
   // ---------- API requests (one at a time) ----------
   var chain = Promise.resolve();
 
-  // opts: { body (string), type (its Content-Type), text (answer as
+  // opts: { body (string or FormData), type (its Content-Type), text (answer as
   // text, e.g. changeset ids and diffResult XML) }
   function request(method, path, params, srv, opts) {
     srv = srv || server();
@@ -218,7 +218,10 @@
       if (a) init.headers.Authorization = "Bearer " + a.token;
       if (opts.body !== undefined) {
         if (qs) url += (url.indexOf("?") < 0 ? "?" : "&") + qs;
-        init.headers["Content-Type"] = opts.type || "text/xml; charset=utf-8";
+        // FormData (GPX upload): the browser sets the multipart boundary.
+        if (!(typeof FormData !== "undefined" && opts.body instanceof FormData)) {
+          init.headers["Content-Type"] = opts.type || "text/xml; charset=utf-8";
+        }
         init.body = opts.body;
       } else if (qs) {
         if (method === "GET") url += (url.indexOf("?") < 0 ? "?" : "&") + qs;

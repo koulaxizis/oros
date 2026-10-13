@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.46.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.50.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4872,7 +4872,7 @@
           en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
         { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
           by: "OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Map data and standard tiles (Maps)", el: "Δεδομένα και πλακίδια χάρτη (Χάρτες)" },
+          en: "Map data, standard tiles and the public GPS traces layer (Maps)", el: "Δεδομένα και πλακίδια χάρτη, επίπεδο δημόσιων GPS traces (Χάρτες)" },
         { name: "OpenStreetMap France / HOT", url: "https://www.hotosm.org/",
           by: "OSM France, Humanitarian OpenStreetMap Team", lic: "ODbL (data)",
           en: "Humanitarian map layer (Maps)", el: "Ανθρωπιστικό στρώμα χάρτη (Χάρτες)" },
@@ -4890,7 +4890,7 @@
           en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
-          en: "Notes, sign-in and place edits (Maps)", el: "Σημειώσεις, σύνδεση και διορθώσεις μερών (Χάρτες)" },
+          en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },
         { name: "Overpass API", url: "https://overpass-api.de/",
           by: "Roland Olbricht & the Overpass community; data by OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Places around you (Maps)", el: "Μέρη γύρω σου (Χάρτες)" },
@@ -5254,7 +5254,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
