@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.73.00
+- Maps: Plan a track, like OsmAnd. Tap points on the map; each part follows the roads for walking, cycling or driving, or goes in a straight line. See the length, the climb and descent and an elevation profile, then save it to My tracks to follow it later. Long-press › `Plan a track from here`, or My tracks › `Plan a track`.
+
 ## Version 1.72.00
 - Bookmarks: import from Raindrop.io. Your collections become folders, with titles, notes, tags and favourites; import again to bring in only what's new. orOS only reads Raindrop; connect it in Settings › Connected services, then the cloud button in Bookmarks.
 - Info › Support: new links to become a monthly supporter on Ko-fi and to see the Supporters page.

@@ -711,6 +711,9 @@
       r0.appendChild(button(t("rec.start"), "osm-btn primary", function () { recStart(false); }));
       var imp = button(t("import"), "osm-btn", function () { fileIn.click(); });
       r0.appendChild(imp);
+      // Wave 10B: "Plan a track" (planner.js loads after this file).
+      var PL = window.__orosMapsPlanner;
+      if (PL) r0.appendChild(button(PL.label(), "osm-btn trk-plan", function () { PL.setMode(true); }));
       card.appendChild(r0);
     }
     body.appendChild(card);
