@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.72.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.72.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4748,6 +4748,20 @@
       el:   "Κέρασέ με έναν καφέ!"
     }
   ];
+  // Extra plain links shown under the Ko-fi card (same rules: fixed
+  // URLs, new tab, rel=noopener, no fetch/embed/widget).
+  var SUPPORT_LINKS = [
+    {
+      url: "https://ko-fi.com/koulaxizis/tiers",
+      en:  "Become a monthly supporter",
+      el:  "Γίνε μηνιαίος υποστηρικτής"
+    },
+    {
+      url: "https://nulljsfx.tech/supporters/",
+      en:  "Supporters",
+      el:  "Υποστηρικτές"
+    }
+  ];
 
   function supT(en, el) {
     return state.lang === "el" ? el : en;
@@ -4799,6 +4813,21 @@
       cards.appendChild(a);
     });
     sec.appendChild(cards);
+
+    var links = document.createElement("div");
+    links.id = "sc-support-links";
+    links.style.cssText =
+      "display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 8px;";
+    SUPPORT_LINKS.forEach(function (l) {
+      var a = document.createElement("a");
+      a.href = l.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.style.cssText = "color:var(--accent);";
+      a.textContent = supT(l.en, l.el);
+      links.appendChild(a);
+    });
+    sec.appendChild(links);
 
     if (resetWrap) box.insertBefore(sec, resetWrap);
     else box.appendChild(sec);
