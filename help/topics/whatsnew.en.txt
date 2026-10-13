@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.45.00
+- Maps: fix shops, cafés and other places on OpenStreetMap: opening hours, phone, website, "checked today", closed places and new ones.
+
 ## Version 1.44.00
 - A link straight to an app (for example useoros.online/notes/) now opens orOS with that app inside, instead of the bare page.
 

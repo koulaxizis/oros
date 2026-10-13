@@ -3143,6 +3143,7 @@
   var mapsHost = window.__orosMapsHost = {
     map: null,
     lang: LANG,
+    ver: SCRIPT_V,
     toast: showToast,
     localToast: localToast,
     storeFull: t("store.full"),
