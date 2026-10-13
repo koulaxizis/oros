@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.62.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.63.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4888,6 +4888,9 @@
         { name: "FOSSGIS routing", url: "https://routing.openstreetmap.de/",
           by: "FOSSGIS e.V.", lic: "ODbL (data)",
           en: "Bike and walking routes (Maps)", el: "Διαδρομές με ποδήλατο και με τα πόδια (Χάρτες)" },
+        { name: "Transitous", url: "https://transitous.org/sources/",
+          by: "The Transitous community (MOTIS); timetables by each operator", lic: { en: "Each feed's open licence; ODbL (map data)", el: "Η ανοιχτή άδεια κάθε πηγής· ODbL (δεδομένα χάρτη)" },
+          en: "Public transport: connections, departures, live vehicles (Maps)", el: "Μέσα μαζικής μεταφοράς: δρομολόγια, αναχωρήσεις, οχήματα (Χάρτες)" },
         { name: "OpenStreetMap API", url: "https://operations.osmfoundation.org/policies/api/",
           by: "OpenStreetMap Foundation; data by OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Notes, sign-in, place edits and GPS trace uploads (Maps)", el: "Σημειώσεις, σύνδεση, διορθώσεις μερών και ανέβασμα GPS traces (Χάρτες)" },

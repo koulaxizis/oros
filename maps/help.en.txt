@@ -1,6 +1,6 @@
 # Maps
 
-Find places, plan routes by car, bike or on foot, follow spoken turn-by-turn directions, record and follow GPX tracks, and help improve OpenStreetMap with notes and place edits.
+Find places, plan routes by car, bike, on foot or by public transport, follow spoken turn-by-turn directions, record and follow GPX tracks, and help improve OpenStreetMap with notes and place edits.
 
 ## Getting started
 
@@ -29,6 +29,20 @@ The route bar shows distance and travel time (an estimate without live traffic),
 - By car, `Avoid` in `Directions` skips `Tolls`, `Motorways` or `Ferries`, one at a time. If the server can't, you get the normal route and a message. The choice stays on this device.
 - `Share` (in the route bar, in `Directions`, on a place, or on a long-press) gives you a link that opens the place or the route in orOS Maps, `Open in another app` (a `geo:` link: on Android it offers OsmAnd, Organic Maps and others), `Open on OpenStreetMap`, `Copy coordinates` for a place, and `Send…` where the device can share.
 - `Save to My tracks` keeps the route as a track (with the start, stops and destination as waypoints), so you can export it as GPX or follow it later.
+
+## Public transport
+
+Buses, metro, tram, trains and ferries, with live times where the operator publishes them. The timetables come from [Transitous](https://transitous.org), a free community service built on open data.
+
+- Open it with the bus button on the left, with the bus button in the route bar (same start and destination), or with a long press › `Public transport to here`.
+- `From` and `To`: the target button sets `My location`, the pin button lets you tap a point on the map. The arrows swap them. `Use the route's points` takes the start and destination of the route you planned.
+- Pick `Leave now`, `Depart at` or `Arrive by` and a time, then `Find connections`. `Earlier` and `Later` page through the times.
+- Each connection shows its times, the lines in their colours, the changes and how far you walk. A delay shows as "+3 min", and a cancelled trip is marked.
+- Open a connection to see it step by step and drawn on the map (walking dotted). Tap a step to zoom to it. `Share` sends it as text with a link, and `Save to My tracks` keeps it as a track.
+- Tap a stop name in a trip, a stop on the map, or long press › `Departures nearby` for the departures board. It refreshes every minute while it is open.
+- `Show stops on the map` shows stops when you zoom in. `Show live vehicles` moves trains, metro and buses on the map by their timetable and live data.
+
+Coverage depends on open timetables. In Greece it includes Athens (buses, trolleys, metro, tram, suburban railway), Thessaloniki, Hellenic Train with live data, and bike sharing in some areas. Intercity buses (KTEL) and ferries are not included yet.
 
 ## Navigation
 
@@ -127,6 +141,7 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`) and Esri (`Satellite`).
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
+- **Public transport**: Transitous (api.transitous.org). It gets the start and destination of your search, the time, the stop whose departures you open, and the map area when stops or live vehicles are on.
 - **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.
@@ -137,7 +152,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings and your answer counter, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes and quest answers waiting to be sent, hidden quests, quest settings and your answer counter, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
@@ -157,5 +172,6 @@ Saved places, your track list (names, colours, folders, statistics), notes, plac
 - Search and new routes need a connection. Offline you get cached areas, saved places and your last route.
 - Navigation needs GPS, and Maps has to stay open.
 - The routing servers are free public services and can sometimes be slow or down.
+- Public transport needs a connection and shows only what operators publish as open data; times are not checked against the stop's own signs.
 - Place editing needs a connection to load the places; changes made offline wait until you upload them.
 - Recording needs the screen on and Maps open; the browser does not record in the background.
