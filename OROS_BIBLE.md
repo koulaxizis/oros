@@ -1802,6 +1802,16 @@ Owner: To-Do (`todo/`, section 13 of `todo.js`). First sender: Meal Planner (Sho
 - **Contacts.** Same vCard path as the Import button (`importParsed`: match by phone or email → fill empty fields only, else create; nothing deleted).
 - **Contacts "From phone"** (Contact Picker API, Chrome on Android only; the button stays hidden elsewhere): the person picks contacts in the system sheet, only those reach the page (name, phones, emails, addresses when offered), then the same `importParsed` path.
 
+### Phone bridge: orOS Contacts and Calendar in the phone (BR-PHONE v1)
+
+- **Where.** Only inside the orOS Android app built from `android/` (TWA + native code, same package `online.useoros.twa` and signing key as the store package). Everywhere else `window.orosPhone.available()` is false and the "On this phone" buttons stay hidden.
+- **Channel.** TWA postMessage (Chrome 115+): the app validates `use_as_origin` (in `.well-known/assetlinks.json`), opens a channel after each page load and posts a `MessagePort`; `phone.js` (shell, loads before `shell.js`) keeps the first port that comes from this origin and not from a frame. Messages are JSON strings. Page → app: `{t:"state"}`, `{t:"contacts"|"calendar", seq, items}`, `{t:"clear", what}`. App → page: `{t:"state", contacts, calendar: "granted"|"ask"|"denied", app}`, `{t:"done", what, seq, added, updated, removed, kept}`, `{t:"error", what, seq, msg}`.
+- **One way, read-only.** orOS → phone only. The app writes an "orOS" account as its sync adapter: one read-only raw contact per contact (`SOURCE_ID` = orOS id, `SYNC1` = row hash) and one read-only "orOS" calendar (`_SYNC_ID` = id, `SYNC_DATA1` = hash, reminders as alerts). Unchanged rows are skipped, changed rows rebuilt, rows that left orOS deleted. Edits made in the phone apps are impossible (read-only); editing stays in orOS. Data leaves orOS only into this phone's own providers, never to a server; the page sends plain rows because the native side never decrypts anything.
+- **Rows.** Pure `contactRows(blob)` / `eventRows(blob, tz)` in `phone.js`, Node-tested in `tests/phone.test.js`: tombstones respected, phones/emails deduped, photo only as JPEG/PNG ≤ 70 000 base64 chars; all-day events in UTC, timed in the device zone; series as RRULE + DURATION with EXDATE at instance starts; month-end and Feb 29 series use `BYMONTHDAY=…;BYSETPOS=-1` so Android clamps like the Calendar.
+- **Switches.** Contacts and Calendar each have "On this phone" (switch + Allow + last send). Prefs in localStorage `oros-phone` (this device only, never synced). On → sends now and whenever the slice changes (checked every 15 s while visible and on return); Off → `{t:"clear"}` removes that kind from the phone.
+- **Permissions.** Android asks only from a native screen: `orosPhone.askPermission(kind)` (inside a tap) navigates to `intent://<kind>#Intent;scheme=oros-permission;package=online.useoros.twa;end`, which opens `PermissionActivity`; after "Don't ask again" it opens the app's settings.
+- **Build.** `android/tools/gen.js` writes the manifest, `web_manifest.xml` and `shortcuts.xml` from `manifest.webmanifest` (not committed); `.github/workflows/android.yml` builds debug + release APK and, with the signing secrets, the signed APK and AAB. `tests/android.test.js` checks the generated manifest. Version name/code follow `APP_VERSION`.
+
 ### `LABEL_COLORS` (shared, 8)
 
 `#e06c75 #ecc75f #87cf3e #4fc4cf #6d4aff #e09ecf #f28c5a #9aa4b0`
@@ -5892,3 +5902,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Help: Atelier (new section "Take a design to Canva or PowerPoint"), What's new. Decision in Part IX.
   - Tests: `tests/atelier-pptxout.test.js` (4, read back with Atelier's own .pptx import). LibreOffice renders the file, python-pptx opens it. Chromium E2E in the real shell (360 px EL, 1280 px EN): dialog fits, file saved, toast counts the pictures.
   - Not tested: real Canva, PowerPoint, Keynote; fonts they lack are substituted.
+
+### 2026-10-13 — Phone bridge: orOS Contacts and Calendar in the phone (BR-PHONE v1, #227) — 1.82.00
+- New android/ Gradle project (same package and key as the PWABuilder app): the orOS Android app can now show orOS contacts as an "orOS" account in the phone's Contacts (so calls show names) and orOS events as an "orOS" calendar with reminders in the phone's Calendar. One way, orOS → phone, read-only on the phone.
+- phone.js (root module before shell.js): builds contact and event rows and talks to the app over the TWA postMessage channel; Contacts and Calendar get an "On this phone / Στο κινητό" switch, hidden outside the Android app. Prefs in localStorage "oros-phone" (covered by factory reset's oros- prefix).
+- .github/workflows/android.yml builds debug + release APK/AAB; signed builds use the OROS_KEYSTORE_* secrets outside PRs.
+  - Tests: tests/phone.test.js, tests/android.test.js. Signed APK installed and opened on Chris's phone; the contacts/calendar sync on a real phone is tested after this merge.

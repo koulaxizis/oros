@@ -16,6 +16,7 @@
       <button id="ct-import" type="button" class="nav-mini" data-i18n="ct.import"></button>
       <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
       <button id="ct-phone" type="button" class="nav-mini" data-i18n="ct.phone" hidden></button>
+      <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
@@ -155,6 +156,18 @@
     <div class="dlg-row">
       <button id="vcf-go" type="button" class="btn prim" data-i18n="ct.vcf.go"></button>
       <button id="vcf-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- On this phone (BR-PHONE, Android app only) -->
+  <dialog id="ph-dlg" aria-labelledby="ph-dlg-title">
+    <h3 id="ph-dlg-title" data-i18n="ph.title"></h3>
+    <p class="del-text" data-i18n="ph.text"></p>
+    <label class="ph-row"><input id="ph-on" type="checkbox"> <span data-i18n="ph.on"></span></label>
+    <p id="ph-stat" class="del-text" aria-live="polite"></p>
+    <div class="dlg-row">
+      <button id="ph-allow" type="button" class="btn prim" data-i18n="ph.allow"></button>
+      <button id="ph-close" type="button" class="btn" data-i18n="ph.close"></button>
     </div>
   </dialog>
 

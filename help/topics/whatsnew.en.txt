@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.82.00
+- Contacts and Calendar: in the orOS Android app, a new "On this phone" switch shows your orOS contacts and events in the phone's own Contacts and Calendar.
+
 ## Version 1.81.00
 - Atelier: take a design to Canva. `Download` › `PPTX` saves it as a PowerPoint file that Canva (Create a design › Upload), PowerPoint, Keynote and LibreOffice open with the text still editable. Shapes, photos, lines and the background stay editable too; icons, special text effects and filtered photos come as pictures so they look the same. No account or key needed.
 

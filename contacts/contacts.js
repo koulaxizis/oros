@@ -125,6 +125,19 @@
       "ct.import.done": "{n} contact(s) imported",
       "ct.phone": "From phone",
       "ct.phone.bad": "Could not read the phone's contacts",
+      "ph.btn": "On this phone",
+      "ph.title": "orOS contacts on this phone",
+      "ph.text": "Adds your orOS contacts to the phone's Contacts, so the dialer and incoming calls show their names. They are read-only there: edit them here.",
+      "ph.on": "Show on this phone",
+      "ph.what": "contacts",
+      "ph.allow": "Allow access",
+      "ph.ask": "Android asks for permission once.",
+      "ph.denied": "Android access is off. Allow it from the app's settings.",
+      "ph.off": "Not shown on this phone.",
+      "ph.wait": "Sending…",
+      "ph.last": "Sent {t}: {n} {what}.",
+      "ph.err": "Last attempt failed: {e}",
+      "ph.close": "Close",
       "ct.vcf.title": "Import contacts",
       "ct.vcf.sum": "{n} contact(s) in this file. A contact with the same phone or email is completed, never overwritten; nothing is deleted.",
       "ct.vcf.go": "Import",
@@ -254,6 +267,19 @@
       "ct.import.done": "{n} επαφή/ές εισήχθησαν",
       "ct.phone": "Από το κινητό",
       "ct.phone.bad": "Οι επαφές του κινητού δεν μπόρεσαν να διαβαστούν",
+      "ph.btn": "Στο κινητό",
+      "ph.title": "Οι επαφές του orOS στο κινητό",
+      "ph.text": "Βάζει τις επαφές του orOS στις Επαφές του κινητού, ώστε οι κλήσεις να δείχνουν ονόματα. Εκεί είναι μόνο για ανάγνωση: τις αλλάζεις εδώ.",
+      "ph.on": "Εμφάνιση στο κινητό",
+      "ph.what": "επαφές",
+      "ph.allow": "Να επιτραπεί",
+      "ph.ask": "Το Android ζητά άδεια μία φορά.",
+      "ph.denied": "Η πρόσβαση στο Android είναι κλειστή. Άνοιξέ την από τις ρυθμίσεις της εφαρμογής.",
+      "ph.off": "Δεν εμφανίζονται στο κινητό.",
+      "ph.wait": "Αποστολή…",
+      "ph.last": "Στάλθηκαν {t}: {n} {what}.",
+      "ph.err": "Η τελευταία προσπάθεια απέτυχε: {e}",
+      "ph.close": "Κλείσιμο",
       "ct.vcf.title": "Εισαγωγή επαφών",
       "ct.vcf.sum": "{n} επαφή/ές σε αυτό το αρχείο. Μια επαφή με το ίδιο τηλέφωνο ή email συμπληρώνεται, δεν αντικαθίσταται· τίποτα δεν διαγράφεται.",
       "ct.vcf.go": "Εισαγωγή",
@@ -3511,6 +3537,50 @@ document.addEventListener("keydown", function (e) {
     }
     return pc;
   }
+  // On this phone (BR-PHONE): only inside the orOS Android app, which
+  // mirrors this app's data into the phone's own Contacts. The shell
+  // (phone.js) owns the channel; this is just the switch and status.
+  var orosPhone = null;
+  try { if (window.parent && window.parent !== window) orosPhone = window.parent.orosPhone || null; } catch (e) {}
+  function phoneRender() {
+    if (!orosPhone || !$("ct-mirror")) return;
+    $("ct-mirror").hidden = !orosPhone.available();
+    if (!$("ph-dlg").open) return;
+    var st = orosPhone.state() || {}, perm = st.contacts || "ask";
+    var on = orosPhone.enabled("contacts"), last = orosPhone.lastSync("contacts");
+    $("ph-on").checked = on;
+    $("ph-allow").hidden = perm === "granted";
+    var msg;
+    if (perm === "denied") msg = t("ph.denied");
+    else if (perm !== "granted") msg = t("ph.ask");
+    else if (!on) msg = t("ph.off");
+    else if (last.err) msg = t("ph.err").replace("{e}", last.err);
+    else if (!last.at) msg = t("ph.wait");
+    else msg = t("ph.last").replace("{t}", new Date(last.at).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+      { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))
+      .replace("{n}", String(last.n)).replace("{what}", t("ph.what"));
+    $("ph-stat").textContent = msg;
+  }
+  if (orosPhone && $("ct-mirror") && $("ph-dlg")) {
+    var phoneOff = orosPhone.onChange(phoneRender);
+    window.addEventListener("pagehide", function () { phoneOff(); });
+    $("ct-mirror").addEventListener("click", function () {
+      $("ph-dlg").showModal();
+      orosPhone.refresh();
+      phoneRender();
+    });
+    $("ph-on").addEventListener("change", function () {
+      var st = orosPhone.state() || {};
+      orosPhone.setEnabled("contacts", $("ph-on").checked);
+      // Switching on before Android allowed it: ask in the same tap.
+      if ($("ph-on").checked && st.contacts !== "granted") orosPhone.askPermission("contacts");
+      phoneRender();
+    });
+    $("ph-allow").addEventListener("click", function () { orosPhone.askPermission("contacts"); });
+    $("ph-close").addEventListener("click", function () { $("ph-dlg").close(); });
+    phoneRender();
+  }
+
   var phonePicker = null;
   try {
     if (navigator.contacts && typeof navigator.contacts.select === "function" &&

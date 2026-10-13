@@ -177,6 +177,7 @@ var PRECACHE_URLS = [
   "./pet.js",
   "./launcher.js",
   "./fileopen.js",
+  "./phone.js",
   "./vault.js",
   "./remote-link.js",
   "./translations.js",

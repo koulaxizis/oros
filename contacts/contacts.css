@@ -337,6 +337,11 @@ dialog h3 {
 .dlg-row.show { display: flex; }
 #ct-del-row { justify-content: flex-start; }
 
+/* On this phone (BR-PHONE) */
+#ph-dlg { width: min(380px, calc(100vw - 32px)); }
+#ph-dlg .del-text { margin-bottom: 8px; }
+.ph-row { display: flex; gap: 8px; align-items: center; margin: 4px 0 10px; }
+
 .chg-row {
   display: flex;
   gap: 8px;
