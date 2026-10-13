@@ -5422,3 +5422,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-13 — Maps: heatmap and statistics, OSM upgrade wave 4 (#269) — 1.50.00
 - Maps › My tracks › `Heatmap and statistics`: a sheet with the heatmap switch (canvas layer over the map, stays on with the sheet closed, follows new / deleted tracks), year and folder filters, totals (distance, time, tracks, new ground), a bar chart per month and a table per year. "New ground" counts path through ~40 m squares crossed for the first time. Engine `maps/heat-core.js` (pure, tests/maps-heat.test.js) in the Web Worker `maps/heat-worker.js`, page fallback without workers. OSM public GPS traces overlay (gps.tile.openstreetmap.org, cached like the other tiles). Device-local prefs `oros-maps-heat`; nothing new is synced. tracks.js fires `oros-maps-tracks-changed`. Credits rows updated (GPS traces layer, GPS trace uploads). Help EN/EL, E2E /mnt/project-files/maps/e2e/heat-e2e.js (3 devices incl. one without Worker). Not tested: very large libraries on a real phone, Safari.
+
+### 2026-10-13 — Studio Remote phase 2: effects on the tablet (#268) — 1.51.00
+- Studio v1.3.0: Remote phase 2 (Chris go 2026-10-13 08:40).
+  - New remote messages (protocol stays v1; the PC announces `fxr: 1` in its state, an older PC simply shows no FX button): tablet → PC `fxo`/`fxx` (open/close a chain), `fxw` (interfaces open), `fs` (slider), `fxa` (add by catalog id), `fxd`, `fxm`; PC → tablet `fc` (the chain with every slider value, on each change) and `fl` (live @gfx variables; Spread's scope as 1 byte per sample) at ~15/s direct, 5/s over the relay.
+  - The tablet runs the effect's GFX view itself (same nullfx files); the PC validates everything (slider exists, not a file slider, clamped, enums rounded; ids from the catalog) and applies it through fx.js (undo, sync).
+  - Fixes: closing a link sends "bye" so the other side updates at once; the PC's Remote dialog shows the current state when reopened.
+  - Not tested: real tablets / phones, the live relay path.
