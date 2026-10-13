@@ -130,6 +130,19 @@
       keys: [{ k: "key", re: /^[a-f0-9]{40}$/ }],
       apps: ["crm"],
       probe: "/stages?limit=1"
+    },
+    // Payments (wave 4B): Stripe's balance history into Budget. A
+    // restricted key (rk_) only, read-only; always through the relay
+    // (a secret key never talks to Stripe from a browser).
+    stripe: {
+      name: "Stripe",
+      site: false,
+      host: "api.stripe.com",
+      root: "/v1",
+      keys: [{ k: "key", re: /^rk_(live|test)_[A-Za-z0-9]{20,250}$/ }],
+      apps: ["budget"],
+      probe: "/balance",
+      relayOnly: true
     }
   };
   var PLATFORM_IDS = Object.keys(PLATFORMS);
@@ -308,7 +321,8 @@
       HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
       HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
-      PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/;
+      PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
+      TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/;
   var EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
   function okEmail(v) { return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v); }
   function okName(v) { return typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v); }
@@ -406,6 +420,10 @@
       ["GET", /^\/persons$/, { limit: LIM500, cursor: PD_CURSOR }, null],
       ["GET", /^\/deals$/, { limit: LIM500, cursor: PD_CURSOR, status: PD_DST }, null],
       ["GET", /^\/activities$/, { limit: LIM500, cursor: PD_CURSOR, done: BOOL }, null]
+    ],
+    stripe: [
+      ["GET", /^\/balance$/, null, null],
+      ["GET", /^\/balance_transactions$/, { limit: LIM100, starting_after: TXN, "created[gte]": UNIX, "created[lt]": UNIX }, null]
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
@@ -487,6 +505,7 @@
     if (p === "brevo") return ["api-key", keys.key];
     if (p === "hubspot") return ["Authorization", "Bearer " + keys.key];
     if (p === "pdrive") return ["x-api-token", keys.key];
+    if (p === "stripe") return ["Authorization", "Bearer " + keys.key];
     return null;
   }
 

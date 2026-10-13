@@ -13,12 +13,13 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe", key, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
 //   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key),
 //   HubSpot https://api.hubapi.com<path> (Bearer), Pipedrive
-//   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only
+//   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only;
+//   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
 //   req: { m: "GET" | "PUT" | "POST", path, body? (JSON text) }
 //   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
@@ -89,7 +90,8 @@ const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
       HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
       HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
-      PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/;
+      PD_DST = /^(open|won|lost)(,(open|won|lost)){0,2}$/, BOOL = /^(true|false)$/,
+      TXN = /^txn_[A-Za-z0-9]{1,250}$/, UNIX = /^[0-9]{9,11}$/;
 const EMAIL_RE = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
 const okEmail = (v) => typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v);
 const okName = (v) => typeof v === "string" && v.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v);
@@ -215,6 +217,17 @@ export const PLATFORMS = {
       ["GET", /^\/persons$/, { limit: LIM500, cursor: PD_CURSOR }, null],
       ["GET", /^\/deals$/, { limit: LIM500, cursor: PD_CURSOR, status: PD_DST }, null],
       ["GET", /^\/activities$/, { limit: LIM500, cursor: PD_CURSOR, done: BOOL }, null]
+    ]
+  },
+  // Payments (wave 4B), read-only: a restricted key (rk_) only
+  stripe: {
+    root: "/v1",
+    host: "api.stripe.com",
+    keys: { key: /^rk_(live|test)_[A-Za-z0-9]{20,250}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/balance$/, null, null],
+      ["GET", /^\/balance_transactions$/, { limit: LIM100, starting_after: TXN, "created[gte]": UNIX, "created[lt]": UNIX }, null]
     ]
   }
 };
