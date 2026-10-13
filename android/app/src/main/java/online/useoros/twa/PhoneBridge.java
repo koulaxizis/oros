@@ -206,7 +206,8 @@ public class PhoneBridge {
         @Override
         public void onPostMessage(@NonNull String message, @Nullable Bundle extras) {
             super.onPostMessage(message, extras);
-            diag("message from page, " + message.length() + " chars");
+            diag("message from page, " + message.length() + " chars: "
+                    + message.substring(0, Math.min(120, message.length())));
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
         }
