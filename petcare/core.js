@@ -29,6 +29,8 @@
 //   foodOut(pet) → ymd | null      costYear(data, petId, year)
 //   readPrefs(raw) → { remind, lead, doses } (device-local prefs, R10)
 //   dosesDue(data, today, nowMin, fired) → per-dose medicine reminders
+//   asNewPrefill(x, today) → { pet, kind, pre } | null (Assistant
+//     "asNew" entry card: prefill of a new health record) · matchPet
 // Data (synced slice "petcare", key oros-petcare-data):
 //   { ver: 1, pets: [pet…] by id, recs: [rec…] by id,
 //     tombs: { id: deletedAt } }
@@ -647,6 +649,59 @@
     };
   }
 
+  // ---------- Assistant prefill (asNew, BR-W8-6: prefill, not data) ----------
+  // x = { pet?, type?, date?, title?, nextDue?, note?, vet?, cost?,
+  // dose?, until?, weightKg?, deworm? }. type: one of the record kinds
+  // the health book adds by hand (vacc, deworm, visit, med, weight),
+  // or a plain word for one; anything else → "visit". Every field is
+  // cleaned to normRec's limits; unknown fields and fields the kind
+  // has no place for are ignored. pre = the editor's prefill object
+  // (record field names). Returns null when nothing usable is left.
+  var AS_NEW_KINDS = {
+    vacc: "vacc", vaccine: "vacc", vaccination: "vacc", deworm: "deworm", deworming: "deworm",
+    visit: "visit", vet: "visit", checkup: "visit", med: "med", medication: "med",
+    medicine: "med", weight: "weight"
+  };
+  function asNewPrefill(x, today) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var k = typeof x.type === "string" ? x.type.trim().toLowerCase() : "";
+    var kind = has(AS_NEW_KINDS, k) ? AS_NEW_KINDS[k] : "visit";
+    var d = isYmd(x.date) ? x.date : "";
+    var base = d || today;
+    var pre = {}, used = false;
+    if (d) { pre.d = d; used = true; }
+    function put(key, v) { if (v) { pre[key] = v; used = true; } }
+    if (kind !== "weight") {
+      put("n", cleanText(x.title, TEXT_LEN, false));
+      put("nt", cleanText(x.note, REC_NOTES, true));
+    }
+    if (kind === "vacc" || kind === "deworm" || kind === "visit") {
+      put("nx", isYmd(x.nextDue) && (!base || x.nextDue > base) ? x.nextDue : "");
+    }
+    if (kind === "vacc" || kind === "visit") put("v", cleanText(x.vet, TEXT_LEN, false));
+    if (kind === "deworm" && DEWORM_TYPES.indexOf(x.deworm) >= 0) put("t", x.deworm);
+    if (kind === "visit" && typeof x.cost === "number" && isFinite(x.cost) && x.cost > 0 && x.cost <= 1000000) {
+      put("c", Math.round(x.cost * 100));
+    }
+    if (kind === "med") {
+      put("ds", cleanText(x.dose, TEXT_LEN, false));
+      put("u", isYmd(x.until) && (!base || x.until >= base) ? x.until : "");
+    }
+    if (kind === "weight" && typeof x.weightKg === "number" && isFinite(x.weightKg)) {
+      var g = Math.round(x.weightKg * 1000);
+      put("g", g >= 1 && g <= 2000000 ? g : 0);
+    }
+    if (!used) return null;
+    return { pet: cleanText(x.pet, NAME_LEN, false), kind: kind, pre: pre };
+  }
+  // The one pet named q (case-insensitive, trimmed), else null.
+  function matchPet(pets, q) {
+    q = typeof q === "string" ? q.trim().toLowerCase() : "";
+    if (!q) return null;
+    var hits = (pets || []).filter(function (p) { return String(p.name || "").trim().toLowerCase() === q; });
+    return hits.length === 1 ? hits[0] : null;
+  }
+
   var api = {
     DATA_VER: DATA_VER, NAME_LEN: NAME_LEN, TEXT_LEN: TEXT_LEN, LONG_LEN: LONG_LEN,
     NOTES_LEN: NOTES_LEN, REC_NOTES: REC_NOTES, PHONE_LEN: PHONE_LEN,
@@ -662,7 +717,8 @@
     AT_DIR: AT_DIR, AT_RE: AT_RE, MAX_AT: MAX_AT, AT_KINDS: AT_KINDS,
     normAt: normAt, atName: atName, atPath: atPath, attachmentsOf: attachmentsOf,
     MAX_TIMES: MAX_TIMES, DOSE_WINDOW: DOSE_WINDOW, cleanTimes: cleanTimes, dosesDue: dosesDue,
-    weights: weights, weightDelta: weightDelta, foodOut: foodOut, costYear: costYear, readPrefs: readPrefs
+    weights: weights, weightDelta: weightDelta, foodOut: foodOut, costYear: costYear, readPrefs: readPrefs,
+    asNewPrefill: asNewPrefill, matchPet: matchPet
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosPetcareCore = api;

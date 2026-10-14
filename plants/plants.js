@@ -794,8 +794,10 @@
     return v;
   }
 
-  function editor(id) {
+  // pre (new plants only): an asNew prefill (core asNewPrefill).
+  function editor(id, pre) {
     var p = id ? plantById(id) : null;
+    if (p) pre = null;
     if (!p && data.plants.length >= C.MAX_PLANTS) { showToast(t("toast.max", { n: C.MAX_PLANTS })); return; }
     var dlg = makeDialog("pc-edit");
     dlg.classList.add("wide");
@@ -960,6 +962,17 @@
     paintTip();
     paintEm();
     paintSeg();
+    if (pre) {
+      // the ready species first (it suggests the care values), then the
+      // prefilled fields win over its suggestions
+      var preSp = pre.sp || (pre.sci && ID ? ID.presetFor(pre.sci, C.PRESETS) : "");
+      if (preSp) { sp.value = preSp; sp.dispatchEvent(new Event("change")); }
+      name.value = pre.name;
+      if (pre.sci) sci.value = pre.sci;
+      if (pre.room) room.value = pre.room;
+      if (pre.w !== null) w.value = String(pre.w);
+      if (pre.notes) notes.value = pre.notes;
+    }
 
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
@@ -1009,7 +1022,7 @@
     dlg.appendChild(form);
     document.body.appendChild(dlg);
     dlg.showModal();
-    if (!p) sp.focus(); else name.focus();
+    if (!p && !pre) sp.focus(); else name.focus();
   }
 
   // ---------- 6b. Identify from a photo (Pl@ntNet, the person's own key) ----------
@@ -1404,8 +1417,16 @@
   //     that task with the same logTask the Today tab's own button
   //     uses (Undo in the toast). A task that is not open any more
   //     (logged on another device, plant gone) only shows a toast.
+  //   { asNew: { name, species?, room?, waterDays?, note? } } → the
+  //     Assistant's entry card: the new-plant editor prefilled; nothing
+  //     is saved until Save (BR-W8-6). No name → no-op.
   function openAt(tg) {
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (tg.asNew) {
+      var pre = C.asNewPrefill(tg.asNew);
+      if (pre) { setTab("plants"); editor(null, pre); }
+      return;
+    }
     if (tg.done && typeof tg.done === "object") {
       var id = tg.done.plant, kind = tg.done.kind;
       var p = typeof id === "string" ? plantById(id) : null;

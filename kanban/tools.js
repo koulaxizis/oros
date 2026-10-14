@@ -420,6 +420,32 @@
     return { name: L.name, labels: labels, columns: columns };
   }
 
+  // Assistant entry card (BR-W8-6, prefill only): the shell's
+  // { asNew: { board?, column?, title, note? (or description?), due?,
+  // from? } } → the values the quick-add field is filled with, or null
+  // without a title. One-line strings lose control characters and runs of
+  // space; the note keeps its line breaks. due must be a real date.
+  // Unknown fields are ignored; nothing here writes anything.
+  function oneLine(v, n) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, n) : "";
+  }
+  function asNew(x) {
+    if (!x || typeof x !== "object") return null;
+    var title = oneLine(x.title, MAX.text);
+    if (!title) return null;
+    var nt = typeof x.note === "string" ? x.note : x.description;
+    var notes = typeof nt === "string"
+      ? nt.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim().slice(0, MAX.notes) : "";
+    var d = parseYmd(x.due);
+    return {
+      board: oneLine(x.board, MAX.name),
+      column: oneLine(x.column, MAX.name),
+      title: title,
+      notes: notes,
+      due: d && ymdOf(d) === x.due ? x.due : ""
+    };
+  }
+
   // Every attachment file name any card of the state still points at.
   function usedFiles(state) {
     var used = {};
@@ -438,7 +464,7 @@
     laneKey: laneKey, lanes: lanes, setLane: setLane, sortRows: sortRows, timelineRange: timelineRange,
     rebuild: rebuild, counter: counter, exportBoard: exportBoard, isExport: isExport, parseExport: parseExport,
     boardCsv: boardCsv, csvCell: csvCell, templateFromBoard: templateFromBoard, boardFromTemplate: boardFromTemplate,
-    builtinList: builtinList, builtinBoard: builtinBoard, usedFiles: usedFiles
+    builtinList: builtinList, builtinBoard: builtinBoard, usedFiles: usedFiles, asNew: asNew
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosKanbanTools = api;

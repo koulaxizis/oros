@@ -2928,6 +2928,26 @@ document.addEventListener("keydown", function (e) {
       askImportVcf(fi.text, typeof fi.name === "string" ? fi.name : "");
       return;
     }
+    // Assistant entry card: { asNew: { given?, family?, name?, org?,
+    // phones?, emails?, address?, birthday?, note?, from? } } → the
+    // NEW contact dialog prefilled (OrosContactsCard.fromAsNew clamps
+    // it; saved only on Save). An address someone already has → their
+    // card, like "add".
+    var nw = target && typeof target === "object" ? target.asNew : null;
+    if (nw && typeof nw === "object") {
+      var CC = window.OrosContactsCard;
+      var pc = CC && typeof CC.fromAsNew === "function" ? CC.fromAsNew(nw) : null;
+      if (!pc) return;
+      for (var k = 0; k < pc.emails.length; k++) {
+        var lowK = pc.emails[k].v.toLowerCase();
+        for (var j = 0; j < state.contacts.length; j++) {
+          var known = state.contacts[j].emails.some(function (x) { return String(x.v).toLowerCase() === lowK; });
+          if (known) { window.__orosContactsOpen(state.contacts[j].id); return; }
+        }
+      }
+      openDlgPrefilled(pc);
+      return;
+    }
     var a = target && typeof target === "object" ? target.add : null;
     if (!a || typeof a !== "object" || typeof a.email !== "string") return;
     var email = a.email.trim().slice(0, 120);
@@ -4689,6 +4709,7 @@ document.addEventListener("keydown", function (e) {
     fillHolder($("ct-emails"), pc.emails || [], function (h, r) { buildValRow(h, r && r.v, r && r.type, EMAIL_TYPES, "name@example.com", 120, "em"); });
     fillHolder($("ct-websites"), pc.websites || [], function (h, r) { buildValRow(h, r && r.v, r && r.type, WEB_TYPES, "https://…", 300, "wb"); });
     fillHolder($("ct-addresses"), pc.addresses || [], buildAddrRow);
+    fillHolder($("ct-events"), pc.events || [], buildEvtRow);
   }
   if ($("scan-dlg")) {
     $("ct-scan").addEventListener("click", function () {

@@ -132,7 +132,7 @@
       "ed.web": "Website", "ed.src": "Source", "ed.srcPh": "Referral, website, fair…", "ed.notes": "Notes",
       "ed.billing": "Billing details", "ed.contact": "Contact details",
       "ed.dupAfm": "Another customer has this VAT ID: {name}.", "ed.dupName": "Another customer has this name.",
-      "ed.nameReq": "Give a name first.",
+      "ed.nameReq": "Give a name first.", "ed.asNewWho": "Contact person: {name}",
       "ed.personNew": "Add a person", "ed.personEdit": "Person", "ed.fromContacts": "From Contacts", "ed.byName": "Or by name",
       "ed.role": "Role", "ed.rolePh": "Accounts, decides, …", "ed.toContacts": "Add to Contacts",
       "ed.toContactsHint": "Opens Contacts with this person filled in; it is saved there only when you press Save.",
@@ -245,7 +245,7 @@
       "ed.web": "Ιστότοπος", "ed.src": "Πηγή", "ed.srcPh": "Σύσταση, site, έκθεση…", "ed.notes": "Σημειώσεις",
       "ed.billing": "Στοιχεία τιμολόγησης", "ed.contact": "Στοιχεία επικοινωνίας",
       "ed.dupAfm": "Υπάρχει ήδη πελάτης με αυτό το ΑΦΜ: {name}.", "ed.dupName": "Υπάρχει ήδη πελάτης με αυτό το όνομα.",
-      "ed.nameReq": "Γράψε πρώτα ένα όνομα.",
+      "ed.nameReq": "Γράψε πρώτα ένα όνομα.", "ed.asNewWho": "Υπεύθυνος επικοινωνίας: {name}",
       "ed.personNew": "Προσθήκη ανθρώπου", "ed.personEdit": "Άνθρωπος", "ed.fromContacts": "Από τις Επαφές", "ed.byName": "Ή με όνομα",
       "ed.role": "Ρόλος", "ed.rolePh": "Λογιστήριο, αποφασίζει, …", "ed.toContacts": "Προσθήκη στις Επαφές",
       "ed.toContactsHint": "Ανοίγει τις Επαφές με τα στοιχεία συμπληρωμένα· αποθηκεύεται εκεί μόνο όταν πατήσεις Αποθήκευση.",
@@ -2439,6 +2439,25 @@
     return true;
   }
 
+  // Assistant entry card (BR-W8-6): the New customer form prefilled
+  // (C.asNewCust clamps it); nothing is saved before Save. An email a
+  // customer already has → that customer instead.
+  function asNewCust(raw) {
+    var n = C.asNewCust(raw);
+    if (!n) return false;
+    var c = n.email ? C.custByEmail(data, n.email, function (p) { return personView(p).email; }) : null;
+    if (c) {
+      prefs.sel = c.id; prefs.sub = "hist"; savePrefs();
+      setTab("cust");
+      return true;
+    }
+    if (n.who) n.note = (t("ed.asNewWho", { name: n.who }) + (n.note ? "\n" + n.note : "")).slice(0, 2000);
+    delete n.who;
+    setTab("cust");
+    custEditor(null, { fill: n });
+    return true;
+  }
+
   // ---------- 12. Dialogs + toasts ----------
   function button(label, cls, fn) {
     var b = el("button", "dlg-btn" + (cls ? " " + cls : ""), label);
@@ -2558,6 +2577,7 @@
       return true;
     }
     if (x.log) return mailToLog(x.log);
+    if (x.asNew) return asNewCust(x.asNew);
     var c = id(x.cust) ? C.byId(data.cust, x.cust) : null;
     var d = id(x.deal) ? C.byId(data.deals, x.deal) : null;
     var f = id(x.fup) ? C.byId(data.fups, x.fup) : null;

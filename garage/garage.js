@@ -2011,16 +2011,18 @@
   }
 
   // ----- Service -----
-  function serviceEditor(x, vid, preset) {
+  // pre (new rows only): { d, km, c, shop, n } from an asNew prefill.
+  function serviceEditor(x, vid, preset, pre) {
     var v = byId("vehicles", vid);
     if (!v) return;
+    var pf = !x && pre ? pre : {};
     var dlg = makeDialog("gr-svc", true);
     dlg.appendChild(el("div", "dlg-title", Q_ICON.service + " " + t("ed.service") + " · " + v.name));
     var form = el("form");
     form.noValidate = true;
     var r1 = el("div", "fld-row");
-    var date = dateInput(x ? x.d : todayYmd(), todayYmd());
-    var km = numInput(x && x.km !== null ? x.km : "", 0);
+    var date = dateInput(x ? x.d : (pf.d || todayYmd()), todayYmd());
+    var km = numInput(x && x.km !== null ? x.km : (pf.km !== null && pf.km !== undefined ? pf.km : ""), 0);
     var cur = C.currentKm(data, vid);
     if (!x && cur !== null) km.placeholder = fmtKm(cur);
     r1.appendChild(field(t("f.date"), date, "gr-s-date"));
@@ -2057,15 +2059,15 @@
     iw.appendChild(chips);
     form.appendChild(iw);
     var r2 = el("div", "fld-row");
-    var cost = numInput(x && x.c ? x.c / 100 : "", 2);
-    var shop = textInput(x ? x.shop : "", C.SHORT_LEN);
+    var cost = numInput(x && x.c ? x.c / 100 : (pf.c ? pf.c / 100 : ""), 2);
+    var shop = textInput(x ? x.shop : pf.shop, C.SHORT_LEN);
     shop.setAttribute("list", "gr-shops");
     r2.appendChild(field(t("f.cost", { c: curSym() }), cost, "gr-s-c"));
     var shopF = field(t("f.shop"), shop, "gr-s-shop");
     shopF.appendChild(datalist("gr-shops", recent("service", "shop")));
     r2.appendChild(shopF);
     form.appendChild(r2);
-    var notes = textarea(x ? x.n : "");
+    var notes = textarea(x ? x.n : pf.n);
     form.appendChild(field(t("f.notes"), notes, "gr-s-n"));
     var rid = x ? x.id : newId();
     var rc = receiptBox(dlg, x, rid, date);
@@ -2233,9 +2235,11 @@
   }
 
   // ----- Renewal -----
-  function renewalEditor(r, vid) {
+  // pre (new renewals only): { kind, label, exp, c, n } from an asNew prefill.
+  function renewalEditor(r, vid, pre) {
     var v = byId("vehicles", vid);
     if (!v) return;
+    var pf = !r && pre ? pre : {};
     var dlg = makeDialog("gr-ren");
     dlg.appendChild(el("div", "dlg-title", t(r ? "ed.renEdit" : "ed.renNew") + " · " + v.name));
     var form = el("form");
@@ -2244,12 +2248,12 @@
     rowsOf("renewals", vid).forEach(function (x) { used[x.kind] = true; });
     var firstFree = C.RENEWAL_IDS.filter(function (k) { return !used[k]; })[0] || "other";
     if (!r && !C.TYPES[v.type].motor && firstFree === "kteo") firstFree = "ins";
-    var kind = selectInput(C.RENEWAL_IDS.map(function (k) { return [k, t("ren." + k)]; }), r ? r.kind : firstFree);
+    var kind = selectInput(C.RENEWAL_IDS.map(function (k) { return [k, t("ren." + k)]; }), r ? r.kind : (pf.kind || firstFree));
     form.appendChild(field(t("ed.kind"), kind, "gr-r-kind"));
-    var label = textInput(r ? r.label : "", C.SHORT_LEN);
+    var label = textInput(r ? r.label : pf.label, C.SHORT_LEN);
     form.appendChild(field(t("ed.label"), label, "gr-r-label"));
     var r1 = el("div", "fld-row");
-    var exp = dateInput(r ? r.exp : C.addMonths(todayYmd(), 1));
+    var exp = dateInput(r ? r.exp : (pf.exp || C.addMonths(todayYmd(), 1)));
     var every = numInput(r ? r.every : C.RENEWALS[kind.value].every, 0);
     r1.appendChild(field(t("ed.exp"), exp, "gr-r-exp"));
     r1.appendChild(field(t("ed.every"), every, "gr-r-every"));
@@ -2258,7 +2262,7 @@
     every.addEventListener("input", function () { everyTouched = true; });
     kind.addEventListener("change", function () { if (!everyTouched) every.value = String(C.RENEWALS[kind.value].every); });
     var r2 = el("div", "fld-row three");
-    var cost = numInput(r && r.c ? r.c / 100 : "", 2);
+    var cost = numInput(r && r.c ? r.c / 100 : (pf.c ? pf.c / 100 : ""), 2);
     var prov = textInput(r ? r.prov : "", C.SHORT_LEN);
     var ref = textInput(r ? r.ref : "", C.SHORT_LEN);
     r2.appendChild(field(t("ed.expected", { c: curSym() }), cost, "gr-r-c"));
@@ -2292,7 +2296,7 @@
     paintW();
     ww.appendChild(chips);
     form.appendChild(ww);
-    var notes = textarea(r ? r.n : "");
+    var notes = textarea(r ? r.n : pf.n);
     form.appendChild(field(t("f.notes"), notes, "gr-r-n"));
     form.appendChild(actions(dlg, r ? function () { dlg.close(); removeRow("renewals", byId("renewals", r.id) || r); } : null, todoButton(dlg, "renewal", r)));
     form.addEventListener("submit", function (ev) {
@@ -2780,6 +2784,35 @@
       if (row) { prefs.vid = row.v; setTab("home"); map[i][1](row, row.v); return; }
     }
   };
+  // Assistant entry card (shell __orosOpenAt / __orosTakeTarget):
+  //   { asNew: { type?, vehicle?, date?, title?, items?, km?, cost?,
+  //   shop?, note?, due?, kind? } } opens the new service row
+  //   (type "service") or the new renewal (type "reminder") prefilled;
+  //   nothing is saved until Save (BR-W8-6). The vehicle is matched by
+  //   name or plate; no single match → the selected vehicle, as the +
+  //   button does; no vehicle yet → the new-vehicle editor. An open
+  //   dialog or nothing usable → no-op.
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (!tg.asNew) return;
+    var pf = C.asNewPrefill(tg.asNew, todayYmd());
+    if (!pf) return;
+    var v = C.matchVehicle(data.vehicles, pf.vehicle) || curVehicle();
+    if (!v) { vehicleEditor(null); return; }
+    if (prefs.vid !== v.id) { prefs.vid = v.id; savePrefs(); render(); }
+    if (pf.type === "reminder") renewalEditor(null, v.id, pf);
+    else serviceEditor(null, v.id, pf.items, pf);
+  }
+  function takeTarget() {
+    window.__orosOpenAt = openTarget;
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("garage");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
+  }
   function takeStaged() {
     var v = null;
     try {
@@ -2930,6 +2963,7 @@
     watchPalette();
     render();
     takeStaged();
+    takeTarget();
   }
 
   boot();

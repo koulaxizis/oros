@@ -2341,7 +2341,11 @@
   // target { pet, rec }. Opens the pet's health book and the record's
   // editor, as a record row click does. Unknown record → no-op; an
   // open dialog (unsaved edits) wins → no-op.
+  //   { asNew: {…} } (core asNewPrefill) → the Assistant's entry card:
+  //   that pet's new-record editor prefilled, nothing saved until Save
+  //   (BR-W8-6).
   function openSearchTarget(t) {
+    if (t && t.asNew) { if (!document.querySelector("dialog[open]")) newRecFrom(t.asNew); return; }
     var r = t && typeof t.rec === "string" ? recById(t.rec) : null;
     var p = r ? petById(r.p) : null;
     if (!p || document.querySelector("dialog[open]")) return;
@@ -2350,6 +2354,28 @@
     savePrefs();
     render();
     recEditor(p, r.k, r.id, null);
+  }
+  // The pet: the one named, else the open pet, else the only pet; with
+  // several pets and no match → the Pets tab (the user picks the pet,
+  // as with the Add buttons, which live on a pet's page); no pet yet →
+  // the new-pet editor of the empty state.
+  function newRecFrom(x) {
+    var a = C.asNewPrefill(x, todayYmd());
+    if (!a) return;
+    var p = C.matchPet(data.pets, a.pet) || petById(prefs.pet) || (data.pets.length === 1 ? data.pets[0] : null);
+    if (!p) {
+      if (!data.pets.length) petEditor(null);
+      else closePet();
+      return;
+    }
+    var pre = a.pre;
+    if (!pre.d) pre.d = todayYmd();
+    if ((a.kind === "vacc" || a.kind === "visit") && !pre.v) pre.v = p.vet.n;
+    openPet(p.id);
+    prefs.sub = a.kind === "weight" ? "weight" : "health";
+    savePrefs();
+    render();
+    recEditor(p, a.kind, null, pre);
   }
   window.__orosOpenAt = openSearchTarget;
   function takeSearchTarget() {

@@ -93,6 +93,7 @@
       "wo.finishQ": "Finish the workout?", "wo.finishOpen": "{n} sets are not ticked; they will be left out.",
       "wo.noSets": "Tick at least one set to finish.",
       "wo.editTitle": "Edit workout", "wo.date": "Date", "wo.startTime": "Start", "wo.minutes": "Minutes",
+      "log.title": "Log a workout", "log.ex": "Activity",
       "col.set": "Set", "col.kg": "kg", "col.lb": "lb", "col.reps": "Reps", "col.time": "Time",
       "col.km": "km", "col.mi": "mi",
       "sum.title": "Workout done", "sum.duration": "Duration", "sum.volume": "Volume",
@@ -217,6 +218,7 @@
       "wo.finishQ": "Τέλος της προπόνησης;", "wo.finishOpen": "{n} σετ δεν είναι τσεκαρισμένα· θα μείνουν έξω.",
       "wo.noSets": "Τσέκαρε τουλάχιστον ένα σετ για να τελειώσεις.",
       "wo.editTitle": "Επεξεργασία προπόνησης", "wo.date": "Ημερομηνία", "wo.startTime": "Έναρξη", "wo.minutes": "Λεπτά",
+      "log.title": "Καταγραφή προπόνησης", "log.ex": "Δραστηριότητα",
       "col.set": "Σετ", "col.kg": "kg", "col.lb": "lb", "col.reps": "Επαν.", "col.time": "Χρόνος",
       "col.km": "km", "col.mi": "mi",
       "sum.title": "Η προπόνηση τελείωσε", "sum.duration": "Διάρκεια", "sum.volume": "Όγκος",
@@ -968,6 +970,46 @@
     return "﻿" + rows.map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
     }).join("\r\n") + "\r\n";
+  }
+
+  // Assistant entry card (BR-W8-6, prefill only): the shell's
+  // { asNew: { date?, start?, type?, minutes?, distanceKm?, note?,
+  // from? } } → the values the "Log a workout" dialog opens with, or
+  // null when there is no type, minutes, distance or note. date must
+  // be a real day, not after today (else today); start is "HH:MM".
+  // type names a timed or distance exercise (Running, Plank, an own
+  // one: name in either language, any case, exactly one) or a GPS
+  // word (run, walk, ride, bike, swim, row); it is also the title.
+  // distanceKm (alias distance) is in km. Unknown fields are ignored.
+  var LOG_ALIAS = { run: "x-run", running: "x-run", walk: "x-walk", walking: "x-walk", ride: "x-bike",
+                    bike: "x-bike", cycling: "x-bike", swim: "x-swim", swimming: "x-swim", row: "x-rowerg" };
+  function logExercises(d) {
+    return allExercises(d).filter(function (i) { return i.k === "t" || i.k === "dt"; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+  function normAsNew(d, x, today) {
+    if (!x || typeof x !== "object") return null;
+    var type = normStr(x.type, NAME_LEN), want = type.toLowerCase(), ex = "", n = 0;
+    if (want) {
+      logExercises(d).forEach(function (i) {
+        var sd = SEED_MAP[i.id];
+        if (i.name.toLowerCase() === want || (sd && (sd.en.toLowerCase() === want || sd.el.toLowerCase() === want))) { ex = i.id; n++; }
+      });
+      if (n !== 1) ex = n ? "" : (LOG_ALIAS[want] || "");
+    }
+    var mins = typeof x.minutes === "number" && isFinite(x.minutes) ? Math.round(x.minutes) : 0;
+    if (!(mins >= 1 && mins <= 1440)) mins = 0;
+    var km = typeof x.distanceKm === "number" ? x.distanceKm : x.distance;
+    var dist = typeof km === "number" && isFinite(km) && km > 0 ? Math.round(km * 1000) : 0;
+    if (dist > MAX_D) dist = 0;
+    var note = typeof x.note === "string" ? normNote(x.note.replace(/\r\n?/g, "\n").trim()) : "";
+    if (!type && !mins && !dist && !note) return null;
+    var day = parseYmd(x.date), tm = typeof x.start === "string" && /^(\d{1,2}):(\d{2})$/.exec(x.start.trim());
+    return {
+      ex: ex, ti: type, mins: mins, dist: dist, n: note,
+      d: day && ymd(day) === x.date && x.date <= today ? x.date : today,
+      st: tm && +tm[1] < 24 && +tm[2] < 60 ? pad2(+tm[1]) + ":" + tm[2] : ""
+    };
   }
 
   // ---------- 4b. Import from Strong / Hevy (CSV) ----------
@@ -3099,6 +3141,80 @@
     openDialog(dlg);
   }
 
+  // A finished workout logged after the fact, from the Assistant's
+  // entry card (normAsNew values; openSearchTarget asNew). Nothing is
+  // written until Save: then one finished workout (title, date, start,
+  // minutes, note) and, with an activity, one done set of it (time,
+  // and distance for a distance exercise), as the History editor
+  // would keep it. Cancel / Esc / backdrop leave no trace.
+  function logDialog(pre) {
+    var set = settings(), now = new Date();
+    var dlg = makeDialog("fit-log", t("log.title"));
+    var form = el("form");
+    form.method = "dialog";
+    var exs = logExercises(data);
+    var sel = el("select");
+    sel.appendChild(el("option", "", "—")).value = "";
+    exs.forEach(function (i) { sel.appendChild(el("option", "", i.name)).value = i.id; });
+    sel.value = pre.ex;
+    form.appendChild(field(t("log.ex"), sel));
+    var ti = input("text", pre.ti || (pre.ex ? exInfo(data, pre.ex).name : ""));
+    ti.maxLength = NAME_LEN;
+    form.appendChild(field(t("wo.title"), ti));
+    var di = input("date", pre.d);
+    di.max = ymd(now);
+    form.appendChild(field(t("wo.date"), di));
+    var back = new Date(now.getTime() - (pre.mins || 0) * 60000);
+    var si = input("time", pre.st || pad2(back.getHours()) + ":" + pad2(back.getMinutes()));
+    form.appendChild(field(t("wo.startTime"), si));
+    var mi = input("number", pre.mins ? String(pre.mins) : "", "numeric");
+    mi.min = "1"; mi.max = "1440";
+    form.appendChild(field(t("wo.minutes"), mi));
+    var dsi = input("text", pre.dist ? fmtDist(pre.dist, set.du) : "", "decimal");
+    var dsf = field(t("gps.dist") + " (" + (set.du === "mi" ? t("col.mi") : t("col.km")) + ")", dsi);
+    form.appendChild(dsf);
+    var ta = el("textarea", "note");
+    ta.value = pre.n;
+    ta.maxLength = NOTE_LEN;
+    ta.rows = 3;
+    form.appendChild(field(t("wo.note"), ta));
+    var syncKind = function () { dsf.hidden = !sel.value || exInfo(data, sel.value).k !== "dt"; };
+    sel.addEventListener("change", function () {
+      if (!ti.value.trim() && sel.value) ti.value = exInfo(data, sel.value).name;
+      syncKind();
+    });
+    syncKind();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var d = parseYmd(di.value), tm = /^(\d{2}):(\d{2})$/.exec(si.value), mins = parseInt(mi.value, 10);
+      var dt = sel.value && !dsf.hidden && dsi.value.trim() ? parseDist(dsi.value, set.du) : 0;
+      di.classList.toggle("bad", !d || di.value > ymd(new Date()));
+      si.classList.toggle("bad", !tm);
+      mi.classList.toggle("bad", !(mins >= 1 && mins <= 1440));
+      dsi.classList.toggle("bad", isNaN(dt));
+      if (!d || di.value > ymd(new Date()) || !tm || !(mins >= 1 && mins <= 1440) || isNaN(dt)) return;
+      d.setHours(+tm[1], +tm[2], 0, 0);
+      var w = { id: newId(), m: Date.now(), d: ymd(d), st: d.getTime(), en: d.getTime() + mins * 60000,
+                ti: ti.value, p: "", pd: "", n: ta.value, x: [] };
+      if (sel.value) w.x.push({ e: sel.value, tr: 0, tr2: 0, rest: 0, s: [[0, 0, mins * 60, dt, F_DONE]] });
+      w = normWo(w);
+      if (!w) return;
+      putRow("wo", w);
+      saveNow(false);
+      dlg.close();
+      setTab("history");
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    sel.focus();
+  }
+
   // ---------- 9. Progress: charts ----------
   // Hand-made SVG, one series per chart in the shell's accent colour,
   // so no legend: the chart title names the series. Every chart has
@@ -4031,7 +4147,16 @@
   // program already in the editor (unsaved edits) wins → no-op.
   // Today summary: { train: true } → the Train tab, where today's
   // program days wait with their Start button.
+  // BR-W8-6 (Assistant entry card): { asNew: { date?, start?, type?,
+  // minutes?, distanceKm?, note? } } → the "Log a workout" dialog
+  // prefilled (normAsNew); nothing usable, an open dialog or a program
+  // in the editor → no-op.
   function openSearchTarget(t) {
+    if (t && t.asNew) {
+      var pre = normAsNew(data, t.asNew, ymd(new Date()));
+      if (pre && !pgDraft && !document.querySelector("dialog[open]")) logDialog(pre);
+      return;
+    }
     if (t && t.train === true) {
       if (!pgDraft && !document.querySelector("dialog[open]") && prefs.tab !== "train") setTab("train");
       return;
