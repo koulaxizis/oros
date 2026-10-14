@@ -16,6 +16,15 @@
 //     client's name equals name (case and accents ignored). Deleted
 //     quotes never count. Newest date first (ties by num, then id).
 //     → [{ id, num, date, due, status, cur, total }]
+// Currencies (1.2, wave 46): any ISO 4217 code.
+//   curOk(c)                  → c is three capital letters.
+//   currencyList()            → common codes first, then the rest the
+//     browser knows (Intl.supportedValuesOf), no duplicates.
+//   fmtMoney(n, cur, lang, codeOnly) → the amount in that currency with
+//     its own decimals (codeOnly: the ISO code instead of a symbol).
+//   curDigits(cur)            → the currency's minor digits (JPY 0).
+//   convert(amount, rate, to) → amount × rate rounded to the digits of
+//     to (display only; the quote keeps its own currency).
 // Exposes window.OrosQuoteCore and, under Node, module.exports.
 // ============================================================
 (function (root) {
