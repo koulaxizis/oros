@@ -22,10 +22,10 @@
   var KEY = "oros-travel-data";
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
   var KIND = {
-    en: { flight: "Flight", train: "Train", bus: "Bus", ferry: "Ferry", car: "Car",
+    en: { flight: "Flight", train: "Train", bus: "Bus", ferry: "Ferry", car: "Car", rental: "Car hire", ticket: "Ticket",
           stay: "Stay", activity: "Activity", food: "Food", other: "Other" },
-    el: { flight: "Πτήση", train: "Τρένο", bus: "Λεωφορείο", ferry: "Πλοίο", car: "Αυτοκίνητο",
-          stay: "Διαμονή", activity: "Δραστηριότητα", food: "Φαγητό", other: "Άλλο" }
+    el: { flight: "Πτήση", train: "Τρένο", bus: "Λεωφορείο", ferry: "Πλοίο", car: "Αυτοκίνητο", rental: "Ενοικίαση αυτοκινήτου",
+          ticket: "Εισιτήριο", stay: "Διαμονή", activity: "Δραστηριότητα", food: "Φαγητό", other: "Άλλο" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
@@ -70,7 +70,7 @@
           out.push({
             id: p.id,
             title: str(p.title) || kind,
-            text: [str(p.title) ? kind : "", str(p.place), route, str(p.ref), str(p.note), tname]
+            text: [str(p.title) ? kind : "", str(p.place), route, str(p.prov), str(p.num), str(p.ref), str(p.note), tname]
               .filter(Boolean).join(" · "),
             when: dayMs(p.day),
             target: { trip: tr.id, tab: "plan", item: p.id }

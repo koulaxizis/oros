@@ -2702,12 +2702,17 @@
     return wrap;
   }
 
-  function groupDialog(gid) {
+  // pre (BR-SPLIT-NEW, a new group only): { name, cur, people[] } from
+  // another app's deep link, copied into the draft; nothing is written
+  // until Save, exactly as if typed.
+  function groupDialog(gid, pre) {
     var g = gid ? groupById(data, gid) : null;
     if (gid && !g) return;
     if (!g && data.groups.length >= MAX_GROUPS) { showToast(t("err.groups", { n: MAX_GROUPS })); return; }
+    if (g) pre = null;
     var draft = {
-      people: g ? sortedPeople(g.id).map(function (p) { return { id: p.id, key: p.id, n: p.n }; }) : [],
+      people: g ? sortedPeople(g.id).map(function (p) { return { id: p.id, key: p.id, n: p.n }; })
+        : (pre ? pre.people.map(function (n) { return { id: "", key: "new" + newId(), n: n }; }) : []),
       me: g ? meOf(data, g.id) : "",
       col: g ? g.col : (data.groups.length % 8)
     };
@@ -2718,7 +2723,7 @@
     name.maxLength = NAME_LEN;
     name.autocomplete = "off";
     name.placeholder = t("gd.name.ph");
-    name.value = g ? g.n : "";
+    name.value = g ? g.n : (pre ? pre.name : "");
     var cur = el("select");
     CURRENCIES.forEach(function (c) {
       var label = c;
@@ -2729,7 +2734,7 @@
       } catch (e) {}
       var o = el("option", "", label); o.value = c; cur.appendChild(o);
     });
-    cur.value = g ? g.cur : ((data.groups[data.groups.length - 1] || {}).cur || "EUR");
+    cur.value = g ? g.cur : (pre && pre.cur ? pre.cur : ((data.groups[data.groups.length - 1] || {}).cur || "EUR"));
     var cols = el("div", "cols");
     cols.setAttribute("role", "radiogroup");
     cols.setAttribute("aria-label", t("gd.col"));
@@ -3576,13 +3581,25 @@
   // target { group, exp? }. Opens the group (Expenses tab when an
   // expense is named) and then that expense's dialog. Unknown ids or
   // an open dialog → no-op.
+  //   BR-SPLIT-NEW: { newGroup: { name, cur, people[], from } } (Travel's
+  //   "Share with Split") opens the new-group dialog prefilled.
   function openSearchTarget(tg) {
+    if (tg && tg.newGroup && !document.querySelector("dialog[open]")) { newGroupFrom(tg.newGroup); return; }
     if (!tg || typeof tg.group !== "string" || document.querySelector("dialog[open]")) return;
     if (!groupById(data, tg.group)) return;
     var x = typeof tg.exp === "string" && groupOf(tg.exp) === tg.group ? findIn(data.exp, tg.exp) : null;
     if (x) prefs.tab = "exp";
     openGroup(tg.group);
     if (x) expDialog(x.id);
+  }
+  function newGroupFrom(x) {
+    if (!x || typeof x !== "object") return;
+    var seen = {}, people = [];
+    (Array.isArray(x.people) ? x.people : []).forEach(function (p) {
+      var n = normText(p, PERSON_LEN);
+      if (n && !seen[n.toLowerCase()] && people.length < MAX_PEOPLE) { seen[n.toLowerCase()] = 1; people.push(n); }
+    });
+    groupDialog(null, { name: normText(x.name, NAME_LEN), cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "", people: people });
   }
   window.__orosOpenAt = openSearchTarget;
   try {

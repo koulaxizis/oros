@@ -38,6 +38,9 @@
       <nav id="tabs" role="tablist">
         <button type="button" role="tab" id="tab-pack" data-i18n="tab.pack">Packing</button>
         <button type="button" role="tab" id="tab-plan" data-i18n="tab.plan">Itinerary</button>
+        <button type="button" role="tab" id="tab-map" data-i18n="tab.map">Map</button>
+        <button type="button" role="tab" id="tab-budget" data-i18n="tab.budget">Budget</button>
+        <button type="button" role="tab" id="tab-journal" data-i18n="tab.journal">Journal</button>
         <button type="button" role="tab" id="tab-notes" data-i18n="tab.notes">Notes</button>
       </nav>
       <div id="panes">
@@ -65,10 +68,35 @@
         <section id="p-plan" class="pane">
           <div class="tools">
             <button type="button" class="txt-btn small" id="plan-add"></button>
+            <button type="button" class="txt-btn small" id="plan-imp"></button>
           </div>
           <p id="plan-gap" class="warn" hidden></p>
           <p id="plan-msg" class="hint center" data-i18n="plan.empty" hidden>Nothing planned yet.</p>
           <div id="plan-days"></div>
+        </section>
+
+        <section id="p-map" class="pane">
+          <div id="map-days" class="tools chips" role="group"></div>
+          <div class="tools">
+            <button type="button" class="txt-btn small primary" id="map-find"></button>
+            <span class="spacer"></span>
+            <button type="button" class="link-btn" id="map-open"></button>
+            <button type="button" class="link-btn" id="map-gpx"></button>
+          </div>
+          <div id="map-box"></div>
+          <p id="map-msg" class="hint" aria-live="polite"></p>
+          <ol id="map-list"></ol>
+        </section>
+
+        <section id="p-budget" class="pane">
+          <div id="bud-box"></div>
+        </section>
+
+        <section id="p-journal" class="pane">
+          <div class="tools">
+            <button type="button" class="chip" id="jr-empty" aria-pressed="false" data-i18n="jr.hideEmpty">Only days with entries</button>
+          </div>
+          <div id="jr-list"></div>
         </section>
 
         <section id="p-notes" class="pane">
@@ -96,6 +124,7 @@
   <div id="print" aria-hidden="true"></div>
   <div id="toast" role="status"></div>
 
+  <script src="booking.js?v=1.98.00"></script>
   <script src="travel.js?v=1.98.00"></script>
   <script src="../garage/core.js?v=1.98.00"></script>
 

@@ -29,7 +29,7 @@
   var ID_RE  = /^[a-z0-9][a-z0-9-]{3,40}$/;
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var HM_RE  = /^([01]\d|2[0-3]):[0-5]\d$/;
-  var KINDS  = ["flight", "train", "bus", "ferry", "car", "stay", "activity", "food", "other"];
+  var KINDS  = ["flight", "train", "bus", "ferry", "car", "rental", "stay", "ticket", "activity", "food", "other"];
   var MOVES  = { flight: 1, train: 1, bus: 1, ferry: 1, car: 1 };
   var LEAD_MIN = { flight: 180, train: 60, bus: 60, ferry: 60 };   // minutes before a timed departure
   var EVE_HOUR = 18;                     // the "tomorrow you leave" reminder, from this hour on
@@ -39,7 +39,7 @@
 
   var STR = {
     en: {
-      flight: "Flight", train: "Train", bus: "Bus", ferry: "Ferry", car: "Car",
+      flight: "Flight", train: "Train", bus: "Bus", ferry: "Ferry", car: "Car", rental: "Car hire", ticket: "Ticket",
       stay: "Stay", activity: "Activity", food: "Food", other: "Other",
       trip: "Trip", tomorrow: "{trip} tomorrow", pack: "{n} items to pack", pack1: "1 item to pack",
       before: "{n} things to do before you leave", before1: "1 thing to do before you leave",
@@ -47,7 +47,7 @@
     },
     el: {
       flight: "Πτήση", train: "Τρένο", bus: "Λεωφορείο", ferry: "Πλοίο", car: "Αυτοκίνητο",
-      stay: "Διαμονή", activity: "Δραστηριότητα", food: "Φαγητό", other: "Άλλο",
+      rental: "Ενοικίαση αυτοκινήτου", ticket: "Εισιτήριο", stay: "Διαμονή", activity: "Δραστηριότητα", food: "Φαγητό", other: "Άλλο",
       trip: "Ταξίδι", tomorrow: "{trip} αύριο", pack: "{n} είδη για τη βαλίτσα", pack1: "1 είδος για τη βαλίτσα",
       before: "{n} πράγματα πριν φύγεις", before1: "1 πράγμα πριν φύγεις",
       packed: "η βαλίτσα είναι έτοιμη", at: "{what} στις {time}", ref: "κράτηση {ref}"
@@ -98,7 +98,7 @@
         if (!p || typeof p !== "object" || typeof p.id !== "string" || !ID_RE.test(p.id) || dead(p.id)) return;
         t.plan.push({
           id: p.id, kind: KINDS.indexOf(p.kind) >= 0 ? p.kind : "other",
-          title: str(p.title, 100), from: str(p.from, 60), to: str(p.to, 60), ref: str(p.ref, 60),
+          title: str(p.title, 100), from: str(p.from, 60), to: str(p.to, 60), ref: str(p.ref, 60), num: str(p.num, 20),
           day: isYmd(p.day) ? p.day : "", t1: hm(p.t1), day2: isYmd(p.day2) ? p.day2 : "", t2: hm(p.t2)
         });
       });
@@ -177,7 +177,7 @@
         if (p.day < today || p.day > tomorrow) return;            // only today's and tonight's departures
         var at = parseLocal(p.day, p.t1);
         if (!(nowMs < at && nowMs >= at - LEAD_MIN[p.kind] * 60000)) return;
-        var body = s(lang, "at", { what: entryTitle(p, lang), time: p.t1 });
+        var body = s(lang, "at", { what: entryTitle(p, lang) + (p.num ? " (" + p.num + ")" : ""), time: p.t1 });
         if (p.ref) body += " · " + s(lang, "ref", { ref: p.ref });
         out.push({ key: "dep-" + p.id + "-" + p.day + "-" + p.t1.replace(":", ""), trip: t.id, tab: "plan",
                    title: name, body: body });

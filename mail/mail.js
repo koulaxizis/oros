@@ -220,6 +220,7 @@
       "to.todo": "A To-Do task", "to.todoHint": "The subject as the task, the message as its note.",
       "to.note": "A note", "to.noteHint": "Saves the message's text as a new page in Notes.",
       "to.link": "A bookmark", "to.linkHint": "Pick one of its {n} links.", "to.nolinks": "This message has no links.", "to.pick": "Pick a link",
+      "to.travel": "Booking to Travel", "to.travelHint": "Flights, hotels, trains, car hire or tickets found in this e-mail.",
       "to.contact": "Sender to Contacts", "to.crm": "Log in CRM", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
       "to.aiHint": "Opens the Assistant with the question ready (long messages are cut); you send it.",
       "ai.sum": "Summarise this e-mail in a few sentences, in the language it is written in.",
@@ -383,6 +384,7 @@
       "to.todo": "Εργασία στο To-Do", "to.todoHint": "Το θέμα γίνεται εργασία, το μήνυμα σημείωσή της.",
       "to.note": "Σημείωση", "to.noteHint": "Αποθηκεύει το κείμενο του μηνύματος ως νέα σελίδα στις Σημειώσεις.",
       "to.link": "Σελιδοδείκτης", "to.linkHint": "Διάλεξε έναν από τους {n} συνδέσμους του.", "to.nolinks": "Το μήνυμα δεν έχει συνδέσμους.", "to.pick": "Διάλεξε σύνδεσμο",
+      "to.travel": "Κράτηση στα Ταξίδια", "to.travelHint": "Πτήσεις, ξενοδοχεία, τρένα, ενοικιάσεις ή εισιτήρια που βρέθηκαν στο μήνυμα.",
       "to.contact": "Αποστολέας στις Επαφές", "to.crm": "Καταγραφή στους Πελάτες", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
       "to.aiHint": "Ανοίγει τον Βοηθό με την ερώτηση έτοιμη (τα μεγάλα μηνύματα κόβονται)· τη στέλνεις εσύ.",
       "ai.sum": "Κάνε περίληψη αυτού του email σε λίγες προτάσεις, στη γλώσσα που είναι γραμμένο.",
@@ -3880,6 +3882,16 @@
       if (links.length === 1) { go("bookmarks", { add: { url: links[0].url, title: links[0].title || subj.slice(0, 200) } }); return; }
       linksDialog(links, function (x) { sh.__orosOpenAt("bookmarks", { add: { url: x.url, title: x.title || subj.slice(0, 200) } }); });
     });
+    // BR-TRAVEL-MAIL (owner Travel, wave 31): a message carrying schema.org
+    // booking data goes to Travel, which parses it in an inert document
+    // and asks before adding anything. Only the message's own HTML / text
+    // travels (≤ 1 MB); nothing is written here.
+    if (travelBooking(p) && appThere("travel")) {
+      item(t("to.travel"), t("to.travelHint"), function () {
+        go("travel", { importMail: { subject: subj.slice(0, 200), html: String(p.html || "").slice(0, 1000000),
+                                     text: p.html ? "" : String(p.text || "").slice(0, 1000000) } });
+      });
+    }
     var from = m.from || {};
     var acct = curAcct();
     if (from.addr && !(acct && lowerAddr(acct.email) === lowerAddr(from.addr))) {
@@ -3912,6 +3924,10 @@
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+  function travelBooking(p) {
+    var s = String(p.html !== null && p.html !== undefined ? p.html : (p.text || ""));
+    return s.length <= 4000000 && /schema\.org/i.test(s) && /Reservation/.test(s);
   }
   function linksDialog(links, done) {
     var dlg = makeDialog("ml-links");
