@@ -108,16 +108,56 @@
       base: "", local: true, model: "", att: { img: 1 },
       defaultBase: "http://localhost:11434/v1"
     },
+    // An open model that runs in this browser on the graphics card
+    // (WebLLM, phase 5 wave 4). Downloaded once from huggingface.co,
+    // then it works offline; nothing leaves the device. Chat only.
+    webllm: {
+      name: "In-browser model (WebLLM)", kind: "webllm", key: "no",
+      base: "", device: true, model: "Llama-3.2-3B-Instruct-q4f16_1-MLC"
+    },
     // The browser's own on-device model (Chrome's Prompt API,
     // window.LanguageModel). No key, no address, no network; chat
     // only (no tools). A device without it says so in the settings.
     browser: {
       name: "Built-in browser model", kind: "browser", key: "no",
-      base: "", builtin: true, model: "built-in"
+      base: "", builtin: true, device: true, model: "built-in"
     }
   };
   var PROV_IDS = ["anthropic", "openai", "gemini", "mistral", "openrouter", "groq", "cerebras", "github",
-                  "cohere", "huggingface", "sambanova", "pollinations", "local", "browser"];
+                  "cohere", "huggingface", "sambanova", "pollinations", "local", "webllm", "browser"];
+  // Models offered for WebLLM (all in its prebuilt list for 0.2.86;
+  // mb = graphics memory it needs, about the download size). No
+  // Google (Gemma) models, per the project's no-Google rule.
+  var WEBLLM_MODELS = [
+    { id: "Llama-3.2-1B-Instruct-q4f16_1-MLC", name: "Llama 3.2 1B", mb: 879 },
+    { id: "Qwen3.5-0.8B-q4f16_1-MLC", name: "Qwen 3.5 0.8B", mb: 1629 },
+    { id: "SmolLM2-1.7B-Instruct-q4f16_1-MLC", name: "SmolLM2 1.7B", mb: 1774 },
+    { id: "Qwen3.5-2B-q4f16_1-MLC", name: "Qwen 3.5 2B", mb: 2245 },
+    { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", name: "Llama 3.2 3B", mb: 2264 },
+    { id: "Ministral-3-3B-Instruct-2512-BF16-q4f16_1-MLC", name: "Ministral 3 3B", mb: 2864 },
+    { id: "Phi-4-mini-instruct-q4f16_1-MLC", name: "Phi-4 mini", mb: 3438 },
+    { id: "Qwen3.5-4B-q4f16_1-MLC", name: "Qwen 3.5 4B", mb: 3868 },
+    { id: "Mistral-7B-Instruct-v0.3-q4f16_1-MLC", name: "Mistral 7B v0.3", mb: 4573 },
+    { id: "Hermes-3-Llama-3.1-8B-q4f16_1-MLC", name: "Hermes 3 (Llama 3.1 8B)", mb: 4876 },
+    { id: "Qwen3.5-9B-q4f16_1-MLC", name: "Qwen 3.5 9B", mb: 6433 }
+  ];
+  function webllmModel(id) {
+    for (var i = 0; i < WEBLLM_MODELS.length; i++) if (WEBLLM_MODELS[i].id === id) return WEBLLM_MODELS[i];
+    return null;
+  }
+  // Ready-made settings for servers on the user's computer (wave 4):
+  // the address each one listens on by default. How to let this site
+  // call it (CORS) is in the Assistant's strings, kit.<id>.
+  var LOCAL_KITS = {
+    ollama: "http://localhost:11434/v1",
+    lmstudio: "http://localhost:1234/v1",
+    llamacpp: "http://localhost:8080/v1",
+    jan: "http://localhost:1337/v1",
+    localai: "http://localhost:8080/v1",
+    vllm: "http://localhost:8000/v1",
+    koboldcpp: "http://localhost:5001/v1"
+  };
+  var KIT_IDS = ["ollama", "lmstudio", "llamacpp", "jan", "localai", "vllm", "koboldcpp"];
   // Web search services that take a key of their own (section 3e).
   var KEY_EXTRA = ["tavily"];
   var KEY_IDS = PROV_IDS.concat(KEY_EXTRA);
@@ -164,7 +204,8 @@
   }
   function normProv(x) {
     if (!isObj(x)) return null;
-    return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0 };
+    return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0,
+             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "" };
   }
   function normPerm(x) {
     if (!isObj(x) || (x.v !== "ask" && x.v !== "always" && x.v !== "never")) return null;
@@ -436,7 +477,7 @@
   // user's data to an address of its choosing.
   var SEARCH_N = 5, SNIP = 600, PAGE_MAX = 8000;
   // Can this provider search at all? (the built-in model calls no tools)
-  function webAny(pid) { return !!PROVIDERS[pid] && !PROVIDERS[pid].builtin; }
+  function webAny(pid) { return !!PROVIDERS[pid] && !PROVIDERS[pid].device; }
   // → "native" | "wiki" | "tavily" | "searx" | ""
   function webSrc(set, pid) {
     if (!webAny(pid)) return "";
@@ -654,6 +695,32 @@
     });
     if (initial.length && initial[initial.length - 1].role === "user") prompt = initial.pop().content;
     return { initial: initial, prompt: prompt };
+  }
+  // WebLLM: OpenAI-style messages that fit the model's small window
+  // (4,096 tokens). Oldest turns go first; the newest user message
+  // always stays (cut from the front if it alone is too long).
+  var WEBLLM_CHARS = 7000;
+  function webllmMessages(msgs, system, max) {
+    max = max > 0 ? max : WEBLLM_CHARS;
+    var hist = prepHistory(msgs, "webllm"), turns = [];
+    hist.forEach(function (h) {
+      if (h.r === "user") turns.push({ role: "user", content: String(h.text || "") });
+      else if (h.r === "asst" && h.text) turns.push({ role: "assistant", content: String(h.text) });
+    });
+    while (turns.length && turns[0].role !== "user") turns.shift();
+    var sys = system ? String(system) : "", left = max - sys.length, out = [];
+    for (var i = turns.length - 1; i >= 0; i--) {
+      var c = turns[i].content;
+      if (!out.length) {
+        if (turns[i].role !== "user") continue;
+        if (c.length > Math.max(left, 500)) c = "[…]" + c.slice(c.length - Math.max(left, 500));
+      } else if (c.length > left) break;
+      left -= c.length;
+      out.unshift({ role: turns[i].role, content: c });
+    }
+    while (out.length && out[0].role !== "user") out.shift();
+    if (sys) out.unshift({ role: "system", content: sys });
+    return out;
   }
   // Files first, then the words (what Anthropic recommends).
   function anthropicUser(h) {
@@ -2029,7 +2096,9 @@
   function monthKey(ms) { return ymd(ms).slice(0, 7); }
 
   var api = {
-    DATA_VER: DATA_VER, PROVIDERS: PROVIDERS, PROV_IDS: PROV_IDS, TOOLS: TOOLS,
+    DATA_VER: DATA_VER, PROVIDERS: PROVIDERS, PROV_IDS: PROV_IDS,
+    WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
+    LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
     TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, NEVER_APPS: NEVER_APPS,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,

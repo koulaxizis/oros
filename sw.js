@@ -23,6 +23,10 @@
 var CACHE_VERSION = "oros-v2.18.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
+// WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
+// Assistant's in-browser model is used): one copy kept across
+// releases, so a downloaded model keeps working offline after an update.
+var WEBLLM_CACHE = "oros-webllm";
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
 // Deliberately OUTSIDE CACHE_VERSION — tiles must survive SW
 // updates (browsing history is expensive to rebuild). Growth is
@@ -1841,6 +1845,10 @@ self.addEventListener("activate", function (event) {
   // continues but doesn't block activation indefinitely.
   var cleanup = caches.keys().then(function (names) {
     return Promise.all(names.map(function (name) {
+      // The Assistant's in-browser models ("webllm/model", "webllm/wasm",
+      // "webllm/config", gigabytes the user downloaded on purpose) and
+      // the WebLLM library cache outlive every release.
+      if (name.indexOf("webllm/") === 0 || name === WEBLLM_CACHE) return;
       if (keep.indexOf(name) === -1) return caches.delete(name);
     }));
   }).then(function () {
@@ -2056,6 +2064,26 @@ self.addEventListener("fetch", function (event) {
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files
   // (tesseract, libarchive, libraw, rnnoise) use the runtime cache.
   if (/\/vendor\/(ort|u2netp|hunspell)\//.test(url.pathname)) return;
+  // WebLLM: cache-first in its own cache, matched without ?v=. The
+  // file name carries the library version (web-llm-<version>.js), so
+  // a new version is a cache miss; storing it drops the old copy.
+  if (/\/vendor\/webllm\//.test(url.pathname)) {
+    event.respondWith(caches.open(WEBLLM_CACHE).then(function (cache) {
+      return cache.match(request, { ignoreSearch: true }).then(function (hit) {
+        if (hit) return hit;
+        return fetch(request).then(function (response) {
+          if (response && response.status === 200) {
+            var copy = response.clone();
+            event.waitUntil(cache.keys().then(function (old) {
+              return Promise.all(old.map(function (r) { return cache.delete(r); }));
+            }).then(function () { return cache.put(request, copy); }));
+          }
+          return response;
+        });
+      });
+    }));
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then(function (cached) {
