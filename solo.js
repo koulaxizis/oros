@@ -337,10 +337,87 @@
   }
 
   // ---------- Host: the installed page (/<id>/solo.html) ----------
+  // Settings › Single apps › Install: the address that opens the
+  // single app's page where it can be installed. On Android an https
+  // link on this origin is captured by the orOS app (TWA or the
+  // installed orOS), which then shows the single app inside orOS with
+  // no way to install it; an intent addressed to Chrome opens it in a
+  // Chrome tab instead (browser_fallback_url: other browsers).
+  // "?install" makes the page offer its Install bar at once.
+  function installUrl(id, ua, origin) {
+    if (!has(id)) return "";
+    var page = "/" + id + "/solo.html?install";
+    var m = /^https:\/\/([^\/?#]+)$/.exec(String(origin || ""));
+    if (!/Android/i.test(String(ua || "")) || !m) return page;
+    return "intent://" + m[1] + page + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+      encodeURIComponent(origin + page) + ";end";
+  }
+
+  // The Install bar of the single app's page in a browser tab: Chrome
+  // and Edge hand over their install prompt (beforeinstallprompt), the
+  // bar's button shows it. Without one (another browser, or not yet
+  // offered) a page opened with "?install" says where the browser keeps
+  // its Install item. Gone in the installed app (display-mode not
+  // "browser") and once installed.
+  var BAR_TEXT = {
+    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close" },
+    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο" }
+  };
+  function installBar(win, id, asked) {
+    var doc = win.document, bar = null, deferred = null, lng = "en";
+    try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
+    try { if (!win.matchMedia("(display-mode: browser)").matches) return; } catch (e) { return; }
+    var T = BAR_TEXT[lng], name = nameOf(id, lng);
+    function close() { if (bar) { bar.remove(); bar = null; } }
+    function show(withButton) {
+      close();
+      bar = doc.createElement("div");
+      bar.id = "solo-install";
+      bar.setAttribute("role", "status");
+      bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:10;display:flex;gap:8px;align-items:center;" +
+        "padding:10px 12px;border-radius:12px;background:#2a2721;color:#f2ead8;font:14px/1.35 system-ui,sans-serif;" +
+        "box-shadow:0 4px 18px rgba(0,0,0,.45)";
+      var txt = doc.createElement("span");
+      txt.style.flex = "1";
+      txt.textContent = (withButton ? T.ask : T.how).replace("{n}", name);
+      bar.appendChild(txt);
+      if (withButton) {
+        var b = doc.createElement("button");
+        b.type = "button";
+        b.textContent = T.btn;
+        b.style.cssText = "border:0;border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font:inherit;font-weight:600";
+        b.addEventListener("click", function () {
+          var d = deferred;
+          deferred = null;
+          if (!d) { show(false); return; }
+          try { d.prompt(); } catch (e) { show(false); return; }
+          if (d.userChoice) d.userChoice.then(function (r) { if (r && r.outcome === "accepted") close(); }, function () {});
+        });
+        bar.appendChild(b);
+      }
+      var x = doc.createElement("button");
+      x.type = "button";
+      x.textContent = "×";
+      x.setAttribute("aria-label", T.close);
+      x.style.cssText = "border:0;background:none;color:inherit;font-size:22px;line-height:1;padding:2px 6px";
+      x.addEventListener("click", close);
+      bar.appendChild(x);
+      doc.body.appendChild(bar);
+    }
+    win.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      show(true);
+    });
+    win.addEventListener("appinstalled", close);
+    if (asked) setTimeout(function () { if (!deferred && !bar) show(false); }, 4000);
+  }
+
   function host(win) {
     var doc = win.document;
     var id = idFromPath(win.location.pathname);
     if (!id) { win.location.replace("/"); return; }
+    var asked = /(^|[?&])install(=|&|$)/.test(win.location.search);
     var src = frameSrc(id, win.location.search);
     // The launch parameters are one-shots: out of the address bar, so
     // a reload of this window is a plain start.
@@ -352,6 +429,7 @@
     frame.setAttribute("allow", "fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; screen-wake-lock");
     frame.src = src;
     doc.body.appendChild(frame);
+    installBar(win, id, asked);
     // Keyboard focus into the app, unless the app already took it
     // (a shortcut that focuses an input): focusing the frame again
     // would blur that input.
@@ -429,6 +507,7 @@
     manifestFor: manifestFor,
     pageFor: pageFor,
     hostBoot: host,
+    installUrl: installUrl,
     id: "",
     share: null,
     word: ""

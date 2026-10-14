@@ -175,3 +175,17 @@ test("wave 2: shares into the office apps open a form or dialog; shortcuts reach
    ["kanban/kanban.js", /tg\.quickAdd === true/], ["mindmap/mindmap.js", /t\.newMap === true \|\| t\.pasteText/],
    ["wiki/wiki.js", /target\.newArt/], ["slides/app.js", /tg\.newDeck === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
 });
+
+test("Install: Android goes through an intent to Chrome (the orOS app would catch the link); the page offers its install bar", () => {
+  const a = S.installUrl("notes", "Mozilla/5.0 (Linux; Android 14; Pixel 8)", "https://useoros.online");
+  assert.equal(a, "intent://useoros.online/notes/solo.html?install#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+    encodeURIComponent("https://useoros.online/notes/solo.html?install") + ";end");
+  assert.equal(S.installUrl("notes", "Mozilla/5.0 (Windows NT 10.0)", "https://useoros.online"), "/notes/solo.html?install");
+  assert.equal(S.installUrl("notes", "Android", "http://127.0.0.1:8080"), "/notes/solo.html?install");
+  assert.equal(S.installUrl("notes", "Android", "https://a.b/c"), "/notes/solo.html?install");
+  assert.equal(S.installUrl("maps", "Android", "https://useoros.online"), "");
+  assert.match(read("settings/settings.js"), /S\.installUrl\(id, navigator\.userAgent, location\.origin\)/);
+  const src = read("solo.js");
+  assert.match(src, /addEventListener\("beforeinstallprompt"/);
+  assert.match(src, /installBar\(win, id, asked\)/);
+});
