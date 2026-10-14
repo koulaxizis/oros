@@ -201,6 +201,21 @@ The heatmap is drawn on your device from your GPX files. A track whose file hasn
 
 Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it up and brings it to your other devices. Until the file arrives, another device shows a simplified line and the statistics.
 
+## Offline maps
+
+Download an area so the map and search work with no connection, as in Organic Maps and OsmAnd.
+
+1. Move and zoom the map to the area you want. Open `Maps settings` › `Offline maps`. The dashed box on the map is what will be saved.
+2. Give it a name and tap `Check size`. Maps reads the map's index and shows the size of each level of detail before anything big is downloaded: `Overview: towns, main roads`, `Roads and villages`, `Streets, shops and places` and `Full detail with buildings`. A larger area offers less detail; zoom in for more.
+3. Tap `Download`. The bar shows the progress. `Pause` stops it and `Resume` goes on from where it stopped, even after you close Maps; if the connection drops it continues by itself when you're back online. `Cancel` stops it and deletes what was downloaded.
+
+Each pack shows its size, its detail, when you downloaded it and the date of the map data. `Show` flies there and turns on the offline map, `Update` downloads the area again from the newest data (the old pack stays until the new one is ready), and `Delete` removes it. The list also shows how much space the packs use and about how much is free on the device.
+
+- `Offline map (downloaded)` in the layers button shows your packs; outside them the map is hatched. When the device goes offline over a pack, Maps switches to it by itself, and back when you're online again. Past the pack's top detail the map is drawn larger, still sharp.
+- Offline, the search finds names from your packs: towns and neighbourhoods, streets, shops and other places, parks and water, and addresses where the map data has them. Accents don't matter, and Latin letters find Greek names (`plaka` finds Πλάκα). The rows say `(offline)`.
+- New routes still need a connection.
+- `Map source (advanced)` takes the address of your own PMTiles file (vector tiles in the Protomaps layout) instead of the default.
+
 ## Online services and privacy
 
 - **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`), Esri (`Satellite`) and OpenTopoMap (`Topo`).
@@ -214,13 +229,14 @@ Each track is a GPX file in Files › Maps › Tracks, so Vault Drive backs it u
 - **GPS traces layer**: when it's on, the map images of public GPS traces come from OpenStreetMap (gps.tile.openstreetmap.org), like the standard map.
 - **Discover**: the Overpass API gets the middle of the map and the kind of place you picked; Wikipedia (wikipedia.org) gets the middle of the map; Panoramax (api.panoramax.xyz) gets the map area you're looking at, and its photos load from the servers that host them.
 - **Elevation**: when you plan a track, the elevation comes from AWS Terrain Tiles (Mapzen and others, on Amazon's open data registry); it gets the map tiles around your plan, not the plan itself.
+- **Offline maps**: only when you check a size or download, the newest list of builds comes from Protomaps (build-metadata.protomaps.dev) and the map data from build.protomaps.com: parts of one big file, which tell the server the area you download. Map data © OpenStreetMap contributors (ODbL), vector tiles by Protomaps. A source you set yourself gets the same requests instead.
 - **GPS traces**: only when you tap `Upload`, the track (points, times, elevation) goes to the OpenStreetMap API under your account, with the visibility you chose.
 
 Your location stays on your device unless it's a route point. More in [Privacy](help:t/privacy).
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the Discover tab, kind and `Open now` choice, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, and the map position and style.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the Discover tab, kind and `Open now` choice, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, your offline maps (download each one on every device that needs it) and the map source you set, and the map position and style.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
@@ -233,11 +249,13 @@ Saved places, your track list (names, colours, folders, statistics), notes, plac
 ## Tips
 
 - [Bookmarks](app:bookmarks) and [Calendar](app:calendar) can open a place in Maps.
-- Before a trip, look around the area while you're online. Those map images then work offline too.
+- Before a trip, download the area in `Offline maps`. Areas you only looked at while online also keep their map images, but only the parts and zoom levels you saw.
 
 ## Limits
 
-- Search and new routes need a connection. Offline you get cached areas, saved places and your last route.
+- New routes need a connection. Offline you get your offline maps (map and search), areas you looked at before, saved places and your last route. Without an offline map, search needs a connection.
+- Offline maps need a browser that can store files for a site (recent Chrome, Edge, Firefox, Safari 26). The browser may remove them when the device runs out of space. The offline map is drawn more simply than the online one: no house numbers or one-way arrows on the map, no hill shading, and names near the edge of a map tile may not show.
+- Offline search finds only names in the map data, not every address; one area pack holds at most 600,000 map tiles, so a whole country comes with less detail.
 - Navigation needs GPS, and Maps has to stay open.
 - Speed limits come only from OpenStreetMap tags (no limits by zone, like "urban"), and are read online; offline or on an untagged road there is no sign.
 - The parking reminder comes only while orOS is open in the browser.

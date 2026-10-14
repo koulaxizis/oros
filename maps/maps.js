@@ -558,6 +558,7 @@
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) { /* view state only */ }
   }
   var savedLayer = null;        // layerGroup for saved-place pins
+  var layerCtl = null, baseById = {};   // the layer switcher and its base layers by id
 
   function initMap() {
     map = L.map("map", {
@@ -611,11 +612,14 @@
     layers[t("layers.satellite") || "Satellite"] = layerSatellite;
     layers[t("layers.topo") || "Topo"] = layerTopo;
     var lc = L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
+    layerCtl = lc;
+    baseById = byId;
     var lt = lc.getContainer().querySelector(".leaflet-control-layers-toggle");
     if (lt) { lt.title = t("layers.title"); lt.setAttribute("aria-label", t("layers.title")); }
 
     map.on("baselayerchange", function (e) {
-      var id = e.layer === layerHumanitarian ? "humanitarian"
+      var id = e.layer && e.layer.orosId ? e.layer.orosId     // wave 51: a layer a module added (offline map)
+             : e.layer === layerHumanitarian ? "humanitarian"
              : e.layer === layerSatellite ? "satellite"
              : e.layer === layerTopo ? "topo" : "standard";
       writePrefs({ layer: id });
@@ -985,10 +989,30 @@
              lat: parseFloat(c[1]), lon: parseFloat(c[0]) };
   }
 
+  // Wave 51: names from the downloaded offline map packs
+  // (offline.js sets mapsHost.offlineSearch). → Promise<hits | null>;
+  // null = no pack to search.
+  function offlineFind(query, limit) {
+    var f = mapsHost.offlineSearch;
+    if (typeof f !== "function") return Promise.resolve(null);
+    var c = map ? map.getCenter() : null;
+    return Promise.resolve().then(function () { return f(query, c ? [c.lat, c.lng] : null, limit || 6); })
+      .catch(function () { return null; });
+  }
+
   //   pickFirst = true → Enter was pressed before any list existed:
   //   the first result is opened as soon as it arrives.
   function acFetch(query, pickFirst) {
-    if (!navigator.onLine) { showToast(t("search.offline")); return; }
+    if (!navigator.onLine) {
+      var myOff = ++acSeq;
+      offlineFind(query, 6).then(function (oh) {
+        if (myOff !== acSeq) return;
+        if (!oh) { acClose(); showToast(t("search.offline")); return; }
+        if (pickFirst && oh.length) { acResults = oh; pickResult(oh[0]); return; }
+        acRender(oh);
+      });
+      return;
+    }
     var my = ++acSeq;
     acRenderLoading();
 
@@ -1002,7 +1026,12 @@
       })
       .catch(function () {
         if (my !== acSeq) return;
-        acRenderError();
+        // Photon unreachable: the offline packs answer if they can
+        offlineFind(query, 6).then(function (oh) {
+          if (my !== acSeq) return;
+          if (oh && oh.length) acRender(oh);
+          else acRenderError();
+        });
       });
   }
 
@@ -1759,7 +1788,17 @@
   //   pickFirst = true → Enter was pressed before any list existed.
   function planFetch(i, q, pickFirst) {
     var local = localHits(q, i);
-    if (!navigator.onLine) { planRender(local, t("search.offline")); return; }
+    if (!navigator.onLine) {
+      var myOff = ++planSeq;
+      offlineFind(q, 6).then(function (oh) {
+        if (myOff !== planSeq || planField !== i) return;
+        if (!oh) { planRender(local, t("search.offline")); return; }
+        var all0 = local.concat(oh);
+        if (pickFirst && all0.length) { planPick(all0[0]); return; }
+        planRender(all0, all0.length ? "" : t("search.empty"));
+      });
+      return;
+    }
     var my = ++planSeq;
     photonGet(q, 6, true)
       .then(function (json) {
@@ -1772,7 +1811,11 @@
       })
       .catch(function () {
         if (my !== planSeq) return;
-        planRender(local, t("search.err"));
+        offlineFind(q, 6).then(function (oh) {
+          if (my !== planSeq || planField !== i) return;
+          if (oh && oh.length) planRender(local.concat(oh), "");
+          else planRender(local, t("search.err"));
+        });
       });
   }
 
@@ -3405,7 +3448,13 @@
   }
 
   function geocodeAndShow(query, label) {
-    if (!navigator.onLine) { showToast(t("search.offline")); return; }
+    function fromPacks(fallback) {
+      offlineFind(query, 1).then(function (oh) {
+        if (oh && oh.length) placeResult(oh[0].lat, oh[0].lon, label || oh[0].name, oh[0].sub);
+        else showToast(fallback);
+      });
+    }
+    if (!navigator.onLine) { fromPacks(t("search.offline")); return; }
     photonGet(query, 1, false)
       .then(function (json) {
         var f = json.features && json.features[0];
@@ -3414,7 +3463,7 @@
         if (!isFinite(h.lat) || !isFinite(h.lon)) { showToast(t("search.empty")); return; }
         placeResult(h.lat, h.lon, label || (h.name !== "?" ? h.name : query), h.sub);
       })
-      .catch(function () { showToast(t("search.err")); });
+      .catch(function () { fromPacks(t("search.err")); });
   }
 
   window.__orosMapsOpen = function (params) {
@@ -3762,6 +3811,29 @@
       return n && save() ? n : 0;
     },
     refreshPlaces: function () { renderSavedLayer(); renderPlacesList(); },
+    // Wave 51 (offline.js): a base layer of its own in the layer
+    // switcher, which base layer is on, switching it, the saved choice,
+    // and the search over the downloaded packs (set by offline.js).
+    addBaseLayer: function (id, layer, label) {
+      if (!layerCtl || baseById[id]) return;
+      layer.orosId = id;
+      baseById[id] = layer;
+      layerCtl.addBaseLayer(layer, label);
+    },
+    currentBase: function () {
+      for (var id in baseById) if (map.hasLayer(baseById[id])) return id;
+      return "";
+    },
+    setBase: function (id) {
+      var lay = baseById[id];
+      if (!lay) return;
+      Object.keys(baseById).forEach(function (k) {
+        if (k !== id && map.hasLayer(baseById[k])) map.removeLayer(baseById[k]);
+      });
+      if (!map.hasLayer(lay)) map.addLayer(lay);
+    },
+    prefLayer: function () { return readPrefs().layer || ""; },
+    offlineSearch: null,
     // Wave 10A (tools.js): directions to a point (the parked car).
     routeTo: function (place, profile) {
       if (profile && ROUTER_BASE[profile] && profile !== routeProfile) {

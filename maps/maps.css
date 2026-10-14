@@ -1911,3 +1911,31 @@ body.trn-itin .route-alt { opacity: 0.25; }
   .dsc-cats { flex-wrap: nowrap; overflow-x: auto; flex-shrink: 0; padding-bottom: 4px; scrollbar-width: thin; }
   .dsc-cats .ent-chip { white-space: nowrap; flex-shrink: 0; }
 }
+
+/* ---------- 20. Offline map packs (offline.js, wave 51) ---------- */
+.off-settings { margin-bottom: 6px; }
+.off-h { font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.4px; margin: 4px 0 0; }
+.off-list { display: flex; flex-direction: column; gap: 8px; }
+.off-pack { border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.off-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.off-name { flex: 1 1 120px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+.off-state { font-size: 11.5px; color: var(--text-dim); }
+.off-state.ok { color: #4a9d5b; }
+.off-state.err { color: var(--danger); flex-basis: 100%; overflow-wrap: anywhere; }
+.off-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.off-bar > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+.off-acts .osm-mini { flex: 1 1 auto; }
+.off-store { margin: 0; }
+.off-new { display: flex; flex-direction: column; gap: 8px; }
+.off-new .osm-small, .off-new .osm-lab { margin: 0; }
+.off-new .osm-warn { margin: 0; }
+.off-levels { display: flex; flex-direction: column; gap: 4px; }
+.off-level { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; min-height: 44px; }
+.off-level:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.off-level input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+.off-level-t { display: flex; flex-direction: column; min-width: 0; font-size: 12.5px; }
+.off-level-t small { color: var(--text-dim); font-size: 11.5px; }
+.off-adv summary { cursor: pointer; font-size: 12.5px; color: var(--text-dim); min-height: 32px; display: flex; align-items: center; }
+.off-adv .osm-in { margin: 0 0 6px; }
+.off-credit { margin: 0; }
+.off-dlg p { font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }

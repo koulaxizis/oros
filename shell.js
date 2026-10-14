@@ -5665,6 +5665,19 @@
     } catch (e) { return Promise.resolve(false); }
   }
 
+  // Maps offline map packs (maps wave 51): OPFS dir "maps-packs",
+  // device-only and outside orosFS, like Montage's media.
+  function wipeMapPacks() {
+    try {
+      if (!navigator.storage || typeof navigator.storage.getDirectory !== "function") return Promise.resolve(false);
+      return Promise.race([
+        navigator.storage.getDirectory().then(function (r) { return r.removeEntry("maps-packs", { recursive: true }); })
+          .then(function () { return true; }, function () { return false; }),
+        new Promise(function (res) { setTimeout(function () { res(false); }, 5000); })
+      ]);
+    } catch (e) { return Promise.resolve(false); }
+  }
+
   function scFactoryReset(btn) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
@@ -5681,7 +5694,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), cloud]).then(function () {
+    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
