@@ -73,7 +73,8 @@
     $("disk-note").textContent = t("msg.noDisk");
     var acts = [["home-new", "btn.new", function () { PL.panels.newDialog(); }],
                 ["home-open", "btn.openPicture", function () { PL.io.openPicture(false); }],
-                ["home-paste", "btn.paste", function () { PL.io.pasteFromMenu(); }]];
+                ["home-paste", "btn.paste", function () { PL.io.pasteFromMenu(); }],
+                ["home-batch", "btn.batch", function () { PL.batch.open(); }]];
     acts.forEach(function (a) {
       var b = $(a[0]); b.textContent = t(a[1]); b.addEventListener("click", a[2]);
     });

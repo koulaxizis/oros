@@ -49,6 +49,7 @@
         return out;
       case "psd": return PL.PSD.read(a.bytes, a.o);
       case "psdWrite": return PL.PSD.write(a.doc);
+      case "stack": return PL.B.applyStack(a.img, a.stack, A, PL.FX);
     }
     throw new Error("op");
   }

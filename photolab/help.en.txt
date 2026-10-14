@@ -2,7 +2,7 @@
 Edit photos and pictures with layers, selections, brushes, retouch tools, filters and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
 
 ## Getting started
-- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (or a Photoshop or OpenRaster file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
+- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop or OpenRaster file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
 - Your pictures are under `Projects`. Tap or click one to open it; the pencil renames it and the bin deletes it (`Undo` in the message brings it back).
 - In the editor, the button at the top left goes back to `Projects`. Your work is saved as you go.
 
@@ -34,12 +34,32 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 
 ## Menus
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`.
-- `Select`: `Select all`, `Invert selection`, `Colour range…` (every pixel near a colour), `Feather…`, `Grow…`, `Shrink…`, `Save selection…` and `Load selection…` (saved selections stay in the project).
+- `Select`: `Select all`, `Invert selection`, `Subject…` (see below), `Colour range…` (every pixel near a colour), `Feather…`, `Grow…`, `Shrink…`, `Save selection…` and `Load selection…` (saved selections stay in the project).
 - `View`: `Rulers`, `Guides`, `Grid` and `Snap` turn on and off; `New guide…`, `Clear guides` and `Grid size…`. Drag a guide out of a ruler; with the `Move` or `Hand` tool drag a guide to move it, or back onto the ruler to remove it. With `Snap` on, selections, crops, shapes and moved layers stick to guides, the grid and the canvas edges and centre.
 - `Adjust`: `Light and colour…`, `Looks…`, `Hue / saturation…`, `Levels…`, `Lightroom preset (.xmp)…`, `Invert`, `Black and white`, `Threshold…`, `Posterize…`. Dialogs show a live preview; with a selection, only the selected area changes.
 - `Filter`: `Gaussian blur…`, `Motion blur…`, `Lens blur…`, `Unsharp mask…` (sharpens), `Add noise…`, `Reduce noise…`, `Pixelate…`, `Emboss…`, `Find edges`, `Vignette…`. Blurs may spread past the layer's pixels; with a selection they stay inside it.
-- `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, and `Use as wallpaper` makes it the wallpaper of this device.
+- `File`: `Export…` saves a PNG, JPG, WebP, PSD or OpenRaster file to your device, `Save to Pictures…` saves it in the Pictures folder of the orOS disk, `Batch process…` works on many photos at once (see below), and `Use as wallpaper` makes it the wallpaper of this device.
 On a phone all menus are under the menu button.
+
+## Select subject and remove background
+- `Select` › `Subject…` finds the main subject of the picture (a person, an animal, an object) and selects it, with a soft edge. Then adjust, copy or mask just that part.
+- `Layer` › `Remove background…` does the same and hides everything else with a layer mask on the current layer. Nothing is erased: paint the mask to fix an edge, or delete the mask to get the background back.
+- Both look at the whole visible picture. Move the `Edge` slider to keep more or less around the subject, then `Apply`. One `Undo` takes it back.
+- They use the same on-device tool as Atelier's background remover. The first time, it needs a download of about 16 MB; after that it works offline, and the picture never leaves your device. If Atelier downloaded it already, there is nothing to download.
+
+## Camera RAW files
+- `Open picture`, drag and drop and `Batch process…` take RAW files from most cameras: DNG, CR2, CR3, CRW, NEF, NRW, ARW, SR2, ORF, RAF, RW2, PEF, SRW, X3F, 3FR, IIQ, ERF and more.
+- Photo Lab develops the RAW data itself (with the camera's white balance), then it opens like any photo. This can take several seconds for a big file. On a phone, RAW files are developed at half size to save memory.
+- Where the browser can't develop RAW data, Photo Lab opens the preview the camera stored inside the file instead (usually full size or close), and a message says so. That preview has the camera's own look.
+
+## Batch processing
+`File` › `Batch process…` (or `Batch process` on the projects screen) does the same work on many photos at once. Your photos are never changed: new files are made.
+- `Photos`: add them `From this device…` or `From the orOS disk…` (tick photos in any folder; `Tick all here` ticks a whole folder). RAW files are fine too.
+- `Adjustments`: nothing, `The adjustment layers of this picture` (the visible adjustment layers of the open picture, with their opacity), or `A Lightroom preset (.xmp)`.
+- `Size`: keep it, or set the `Long side`, `Width`, `Height` or a `Percent`. Smaller photos are not enlarged unless you tick `Also enlarge smaller photos`.
+- `Watermark`: a `Text` (its colour and size) or a `Picture` such as a logo, at one of nine places, with its `Opacity`.
+- `Saving`: JPG, PNG or WebP with a `Quality`, and the `File names`: {name} is the photo's own name, {n} a number, {nnn} a number with zeros (001), {date} today's date, {w} and {h} the new size. Save into a folder of `Pictures` on the orOS disk, or as `One ZIP file`; the end screen has `Save ZIP…`.
+- `Stop` ends the run after the photo it is working on; what is done stays done. Photos that can't be read are listed at the end.
 
 ## Editing a picture from Atelier
 When Atelier sends a picture here to edit, a `Done` button appears at the top. It saves the result as a new picture and sends it back to Atelier; the project also stays in Photo Lab for later changes.
@@ -80,3 +100,6 @@ When Atelier sends a picture here to edit, a `Done` button appears at the top. I
 - A mask stays in place when you flip, rotate or transform only its layer; whole-picture size, rotation and flips move it with the layer.
 - Old undo steps are dropped when they would use too much memory.
 - Photoshop files: RGB, Grayscale and CMYK at 8 or 16 bits (CMYK colours are converted simply, without a colour profile). Large documents (PSB) and other colour modes do not open.
+- RAW files up to 300 MB. Developing RAW data needs a browser that allows it (Chrome, Edge and other Chromium browsers); elsewhere the preview stored in the file opens. Some rare or very new cameras may not be read; then nothing opens.
+- Select subject finds one main subject; with several people or a busy scene the mask may need some painting.
+- Batch processing: up to 2000 photos at a time and a 1 GB ZIP. Masks of the adjustment layers are left out. PSD, OpenRaster and SVG files are not taken; the watermark picture and the list of photos are not kept after the dialog closes.

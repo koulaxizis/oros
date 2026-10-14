@@ -12,6 +12,8 @@
 //   - "Use as wallpaper" (parent.orosWallpaper.setImage, this
 //     device only)
 //   - project thumbnails for the home screen
+//   - camera RAW files (raw.js): developed by LibRaw where the
+//     browser allows it, else the JPEG preview stored in the file
 // ============================================================
 (function () {
   "use strict";
@@ -19,7 +21,9 @@
   var PL = window.PL, C = PL.C, st = PL.st;
   var MAX_FILE = 50 * 1024 * 1024;
   var PICTURES = "/internal/Pictures";
-  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora)$/i;
+  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|ora|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
+  var RAW_ACCEPT = ".dng,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.orf,.raf,.rw2,.rwl,.pef,.srw,.x3f,.3fr,.fff,.iiq,.erf,.kdc,.dcr,.mrw,.mos,.mef";
+  var RAW_MAX = 300 * 1024 * 1024;
   var LAYERED_MAX = 300 * 1024 * 1024;              // a PSD or OpenRaster file
   function t(k, p) { return PL.t(k, p); }
 
@@ -68,10 +72,12 @@
     var n = String(file && file.name || "");
     if (/\.psd$/i.test(n) || /photoshop/i.test(file.type || "")) return "psd";
     if (/\.ora$/i.test(n) || /openraster/i.test(file.type || "")) return "ora";
+    if (PL.RAW.isRaw(n)) return "raw";
     return "";
   }
   function openPictureFile(file, asLayer) {
     var kind = kindOf(file);
+    if (kind === "raw") return openRaw(file, asLayer);
     if (kind) return openLayered(file, kind);
     PL.busy(true);
     return decode(file).then(function (img) {
@@ -86,7 +92,7 @@
   }
   function openPicture(asLayer) {
     var dlg = dialogHost();
-    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora") : Promise.resolve(null);
+    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.ora," + RAW_ACCEPT) : Promise.resolve(null);
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
@@ -125,6 +131,45 @@
     }).then(function () {
       if (back && st.doc) { st.doc.bk = back; PL.emit("doc"); PL.changed(); }
     }).catch(function () { PL.toast(t("msg.openFail")); });
+  }
+
+  // ---------- Camera RAW ----------
+  // raw.js result → { w, h, data, scaled } within this device's limits
+  // (target: an exact size instead, e.g. for a batch).
+  function rawPixels(r, target) {
+    var fit = target ? { w: target.w, h: target.h, scaled: target.w !== r.w || target.h !== r.h } : C.fitSize(r.w, r.h, PL.limits);
+    if (r.img && !fit.scaled) return { w: r.w, h: r.h, data: r.img.data, scaled: false };
+    var src = r.canvas;
+    if (!src) {
+      src = PL.view.canvas(r.w, r.h);
+      src.getContext("2d").putImageData(new ImageData(r.img.data, r.w, r.h), 0, 0);
+    }
+    var c = PL.view.canvas(fit.w, fit.h), g = c.getContext("2d");
+    g.imageSmoothingQuality = "high";
+    g.drawImage(src, 0, 0, fit.w, fit.h);
+    src.width = src.height = 0;
+    var d = g.getImageData(0, 0, fit.w, fit.h);
+    c.width = c.height = 0;
+    return { w: fit.w, h: fit.h, data: d.data, scaled: fit.scaled };
+  }
+  function openRaw(file, asLayer) {
+    if (file.size > RAW_MAX) { PL.toast(t("msg.rawBig")); return Promise.resolve(); }
+    PL.busy(true);
+    PL.toast(t("msg.rawDeveloping"));
+    // Phones develop at half size: a quarter of the memory.
+    return PL.RAW.decode(file, { half: PL.phone }).then(function (r) {
+      var img = rawPixels(r);
+      PL.busy(false);
+      var notes = [];
+      if (r.via === "preview") notes.push(t("msg.rawPreview", { w: r.w, h: r.h }));
+      if (img.scaled) notes.push(t("msg.scaled", { w: img.w, h: img.h }));
+      if (notes.length) PL.toast(notes.join(" "));
+      if (asLayer && st.doc) PL.ops.pasteImage(img, null, null, baseName(file.name));
+      else return PL.closeProject(true).then(function () { PL.newFromImage(img, baseName(file.name)); });
+    }, function () {
+      PL.busy(false);
+      PL.toast(t("msg.rawFail"));
+    });
   }
 
   // ---------- Bridge back (Atelier "Edit picture") ----------
@@ -476,6 +521,8 @@
     PICTURES: PICTURES, decode: decode, openPicture: openPicture, openPictureFile: openPictureFile,
     openDiskPath: openDiskPath, setClipboard: setClipboard, pasteFromMenu: pasteFromMenu,
     exportImage: exportImage, setWallpaper: setWallpaper, canWallpaper: function () { return !!wallApi(); },
-    saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset
+    saveThumb: saveThumb, wire: wire, sendBack: sendBack, openLrPreset: openLrPreset,
+    IMG_EXT: IMG_EXT, RAW_ACCEPT: RAW_ACCEPT, RAW_MAX: RAW_MAX, rawPixels: rawPixels, source: source,
+    dialogHost: dialogHost, saveToPictures: saveToPictures
   };
 })();
