@@ -6033,3 +6033,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - android/: `Reminders`, `ReminderReceiver`, `PermissionActivity` (exact alarms + notification permission), a status-bar icon; PhoneBridge takes `reminders`.
 - Help: Notifications topic (EN/EL).
   - Tests: tests/phone.test.js (reminderRows); Android build in CI. Real-phone check by Chris after this merge.
+
+### 2026-10-14 — Phone bridge v4: home-screen widgets (#329) — 1.94.00
+- android/: two home-screen widgets in the orOS Android app. "orOS Today" shows what is late, today's events and tasks and the next days (tap to open Today), with buttons to add a task, a glass of water or a note; "orOS quick add" has just the buttons. They keep up on their own while orOS is closed (late tasks, finished events leave).
+- phone.js: while a Today widget is placed, the page sends `widgetData(orosToday.build())` (pure, tested; at most 30 rows, Today's own app settings).
+- Deep links for the widget buttons: To-Do `{ quickAdd: true }` focuses the quick-add box, Water `{ sip: "glass" }` adds a glass with Undo, Notes `{ newPage: true }` opens a new page.
+- Help: Today (EN/EL).
+  - Tests: tests/phone.test.js (widgetData); Android build in CI. Real-phone check by Chris after this merge.
