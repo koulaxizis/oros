@@ -88,7 +88,7 @@
       "set.web": "Internet", "set.webOn": "Let the assistant search the internet when an answer needs it",
       "set.webHint0": "Off unless you switch it on. Each answer shows what was searched and its sources. The AI is told never to put your orOS data in search words unless you ask for that search.",
       "set.webHint": "Claude searches on Anthropic's servers, which charge $10 per 1,000 searches on top of tokens (at most {n} per answer). Search words go to Anthropic and its search partner. For a free search, pick Wikipedia, Tavily or SearXNG above.",
-      "set.webBi": "The built-in browser model can't search.",
+      "set.webBi": "Models that run on this device can't search the internet.",
       "set.ws": "Search with", "set.wsKey": "Tavily key", "set.wsBase": "SearXNG address",
       "set.wsBaseBad": "That address doesn't look right. It starts with https://",
       "set.wsTest": "Test the search", "set.wsTesting": "Searching…", "set.wsOk": "It works: found {n}.",
@@ -127,6 +127,12 @@
       "att.localImg": "{name} can't see photos itself: orOS reads the text in them on this device (English and Greek) and sends only that. The first time, the text engine is downloaded once (about 7 MB).",
       "att.localBoth": "{name} can't read files itself: orOS reads their text on this device and sends only that. For photos the text engine is downloaded once the first time (about 7 MB).",
       "set.vis": "This model can see photos",
+      "set.nt": "This model can't use tools",
+      "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
+      "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
+      "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
+      "pre.shared": "Searched your data for \u201c{q}\u201d: {n} shared.",
+      "pre.someHeld": "Searched your data for \u201c{q}\u201d: {n} shared, {held} held back.",
       "set.keyHintFree": "The key is kept on this device, encrypted, and is sent only to {host}. {name} has a free plan: a free account and key are enough, with daily limits. Nothing is charged unless you add a way to pay there.",
       "set.note.github": "The key is a GitHub personal access token (fine-grained) with the \u201cModels\u201d permission set to read. Free with daily limits for every GitHub account.",
       "set.note.cohere": "A free trial key is for personal use and testing, not for business use, and has a monthly limit.",
@@ -231,7 +237,7 @@
       "wl.ok": "Ready on this device. It works without internet.",
       "wl.getHint": "Not on this device yet: it downloads once (about {gb} GB, better over Wi-Fi) and stays here.",
       "wl.none": "This browser can't run it: it needs WebGPU (recent Chrome or Edge on Windows, Linux, a Mac or Android).",
-      "wl.hint": "The model runs on this device's graphics card. It comes once from huggingface.co (its code from raw.githubusercontent.com); after that nothing you write leaves the device. Bigger models answer better but need a stronger graphics card. For now it only chats: it can't search your data or prepare entries.",
+      "wl.hint": "The model runs on this device's graphics card. It comes once from huggingface.co (its code from raw.githubusercontent.com); after that nothing you write leaves the device. Bigger models answer better but need a stronger graphics card. orOS searches your data for it before each message (you choose what to share); it can't prepare entries or change anything.",
       "err.webgpu": "This device can't run the in-browser model (WebGPU is missing or the graphics card refused it). Pick another assistant in Settings.",
       "err.wlget": "The in-browser model is not on this device yet. Download it in Settings first.",
       "err.wlspace": "There is not enough memory or storage for this model. Pick a smaller one in Settings.",
@@ -264,8 +270,8 @@
       "sum.title": "Share this summary of {app} with {name}?",
       "sum.text": "Worked out on this device. Only these lines are sent, not the entries themselves.",
       "btn.copy": "Copy", "toast.copied": "Copied", "toast.copyFail": "Could not copy",
-      "prov.browser": "Built-in browser model", "who.device": "Stays on this device: chat only",
-      "set.bi.ok": "Ready on this device. It works offline; it is smaller than the online assistants and can't search your data or prepare entries.",
+      "prov.browser": "Built-in browser model", "who.device": "Stays on this device",
+      "set.bi.ok": "Ready on this device. It works offline. It is smaller than the online assistants: orOS searches your data for it before each message (you choose what to share), and it can't prepare entries.",
       "set.bi.get": "The browser can download its model (about 2 GB, once).",
       "set.bi.getBtn": "Download the model", "set.bi.busy": "Downloading… {p}%",
       "set.bi.none": "This browser has no built-in model. Recent Chrome on Windows, Linux or a Mac with enough space and memory has one; other browsers don't yet.",
@@ -313,7 +319,7 @@
       "set.web": "Internet", "set.webOn": "Να ψάχνει ο βοηθός στο internet όταν το χρειάζεται μια απάντηση",
       "set.webHint0": "Κλειστό εκτός αν το ανοίξεις. Κάθε απάντηση δείχνει τι αναζητήθηκε και τις πηγές της. Το AI έχει οδηγία να μη βάζει ποτέ δεδομένα σου από το orOS στις λέξεις αναζήτησης, εκτός αν ζητήσεις εσύ αυτή την αναζήτηση.",
       "set.webHint": "Το Claude ψάχνει στους servers της Anthropic, που χρεώνει $10 ανά 1.000 αναζητήσεις πέρα από τα tokens (έως {n} ανά απάντηση). Οι λέξεις της αναζήτησης πηγαίνουν στην Anthropic και στον συνεργάτη της για αναζητήσεις. Για δωρεάν αναζήτηση διάλεξε παραπάνω Wikipedia, Tavily ή SearXNG.",
-      "set.webBi": "Το ενσωματωμένο μοντέλο του browser δεν κάνει αναζητήσεις.",
+      "set.webBi": "Τα μοντέλα που τρέχουν σε αυτή τη συσκευή δεν ψάχνουν στο internet.",
       "set.ws": "Αναζήτηση με", "set.wsKey": "Κλειδί Tavily", "set.wsBase": "Διεύθυνση SearXNG",
       "set.wsBaseBad": "Η διεύθυνση δεν φαίνεται σωστή. Ξεκινά με https://",
       "set.wsTest": "Δοκιμή αναζήτησης", "set.wsTesting": "Αναζήτηση…", "set.wsOk": "Δουλεύει: βρέθηκαν {n}.",
@@ -352,6 +358,12 @@
       "att.localImg": "Το {name} δεν βλέπει μόνο του φωτογραφίες: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή (Αγγλικά και Ελληνικά) και στέλνει μόνο αυτό. Την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
       "att.localBoth": "Το {name} δεν διαβάζει μόνο του αρχεία: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή και στέλνει μόνο αυτό. Για φωτογραφίες, την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
       "set.vis": "Αυτό το μοντέλο βλέπει φωτογραφίες",
+      "set.nt": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία",
+      "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
+      "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
+      "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
+      "pre.shared": "Αναζήτηση στα δεδομένα σου για «{q}»: μοιράστηκαν {n}.",
+      "pre.someHeld": "Αναζήτηση στα δεδομένα σου για «{q}»: μοιράστηκαν {n}, κρατήθηκαν {held}.",
       "set.keyHintFree": "Το κλειδί μένει κρυπτογραφημένο σε αυτή τη συσκευή και στέλνεται μόνο στο {host}. Το {name} έχει δωρεάν πρόγραμμα: αρκεί ένας δωρεάν λογαριασμός και κλειδί, με ημερήσια όρια. Δεν χρεώνεσαι τίποτα αν δεν βάλεις εκεί τρόπο πληρωμής.",
       "set.note.github": "Το κλειδί είναι ένα personal access token του GitHub (fine-grained) με την άδεια «Models» σε ανάγνωση. Δωρεάν με ημερήσια όρια για κάθε λογαριασμό GitHub.",
       "set.note.cohere": "Το δωρεάν δοκιμαστικό κλειδί είναι για προσωπική χρήση και δοκιμές, όχι για επαγγελματική χρήση, και έχει μηνιαίο όριο.",
@@ -456,7 +468,7 @@
       "wl.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει χωρίς internet.",
       "wl.getHint": "Δεν υπάρχει ακόμα σε αυτή τη συσκευή: κατεβαίνει μία φορά (περίπου {gb} GB, καλύτερα με Wi-Fi) και μένει εδώ.",
       "wl.none": "Αυτός ο browser δεν μπορεί να το τρέξει: χρειάζεται WebGPU (πρόσφατος Chrome ή Edge σε Windows, Linux, Mac ή Android).",
-      "wl.hint": "Το μοντέλο τρέχει στην κάρτα γραφικών αυτής της συσκευής. Έρχεται μία φορά από το huggingface.co (ο κώδικάς του από το raw.githubusercontent.com)· μετά τίποτα από όσα γράφεις δεν φεύγει από τη συσκευή. Τα μεγαλύτερα μοντέλα απαντούν καλύτερα αλλά θέλουν πιο δυνατή κάρτα γραφικών. Προς το παρόν μόνο συζητά: δεν ψάχνει στα δεδομένα σου και δεν ετοιμάζει καταχωρήσεις.",
+      "wl.hint": "Το μοντέλο τρέχει στην κάρτα γραφικών αυτής της συσκευής. Έρχεται μία φορά από το huggingface.co (ο κώδικάς του από το raw.githubusercontent.com)· μετά τίποτα από όσα γράφεις δεν φεύγει από τη συσκευή. Τα μεγαλύτερα μοντέλα απαντούν καλύτερα αλλά θέλουν πιο δυνατή κάρτα γραφικών. Το orOS ψάχνει γι' αυτό στα δεδομένα σου πριν από κάθε μήνυμα (εσύ διαλέγεις τι μοιράζεσαι)· δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
       "err.webgpu": "Αυτή η συσκευή δεν μπορεί να τρέξει το μοντέλο μέσα στον browser (λείπει το WebGPU ή η κάρτα γραφικών το αρνήθηκε). Διάλεξε άλλον βοηθό στις Ρυθμίσεις.",
       "err.wlget": "Το μοντέλο μέσα στον browser δεν υπάρχει ακόμα σε αυτή τη συσκευή. Κατέβασέ το πρώτα στις Ρυθμίσεις.",
       "err.wlspace": "Δεν φτάνει η μνήμη ή ο χώρος για αυτό το μοντέλο. Διάλεξε μικρότερο στις Ρυθμίσεις.",
@@ -489,8 +501,8 @@
       "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
       "sum.text": "Υπολογίστηκε σε αυτή τη συσκευή. Στέλνονται μόνο αυτές οι γραμμές, όχι οι ίδιες οι καταχωρήσεις.",
       "btn.copy": "Αντιγραφή", "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν αντιγράφηκε",
-      "prov.browser": "Ενσωματωμένο μοντέλο του browser", "who.device": "Μένει σε αυτή τη συσκευή: μόνο συζήτηση",
-      "set.bi.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει και χωρίς σύνδεση· είναι μικρότερο από τους online βοηθούς και δεν ψάχνει στα δεδομένα σου ούτε ετοιμάζει καταχωρήσεις.",
+      "prov.browser": "Ενσωματωμένο μοντέλο του browser", "who.device": "Μένει σε αυτή τη συσκευή",
+      "set.bi.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει και χωρίς σύνδεση. Είναι μικρότερο από τους online βοηθούς: το orOS ψάχνει γι' αυτό στα δεδομένα σου πριν από κάθε μήνυμα (εσύ διαλέγεις τι μοιράζεσαι) και δεν ετοιμάζει καταχωρήσεις.",
       "set.bi.get": "Ο browser μπορεί να κατεβάσει το μοντέλο του (περίπου 2 GB, μία φορά).",
       "set.bi.getBtn": "Λήψη του μοντέλου", "set.bi.busy": "Λήψη… {p}%",
       "set.bi.none": "Αυτός ο browser δεν έχει ενσωματωμένο μοντέλο. Το έχει ο πρόσφατος Chrome σε Windows, Linux ή Mac με αρκετό χώρο και μνήμη· οι άλλοι browsers όχι ακόμη.",
@@ -621,7 +633,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "" };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -897,7 +909,7 @@
     if (p.kind === "webllm") return webllmCall(modelOf(pid), msgs, opts, signal, onText);
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
-      var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis }, msgs, opts);
+      var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt }, msgs, opts);
       return fetch(req.url, {
         method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
         credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -1118,6 +1130,7 @@
     if (e.code === "nokey") return t("err.noKey", { name: name });
     if (e.code === "builtin") return t("err.builtin");
     if (e.code === "net") return t("err.net", { host: host });
+    if ((e.code === "bad" || e.code === "server") && C.PROVIDERS[pid] && C.PROVIDERS[pid].local && /\btools?\b/i.test(e.msg || "")) return t("err.noTools");
     return t("err." + e.code, { name: name, host: host, model: modelOf(pid), msg: e.msg || ("HTTP " + e.status) });
   }
 
@@ -1639,7 +1652,9 @@
     busy = { abort: ctl, live: "", consent: null, chat: c };
     renderAll();
     scrollEnd();
-    var builtin = !!C.PROVIDERS[pid].device;
+    var builtin = noTools(pid);
+    // A model without tools: orOS searches the user's data for it first.
+    var preApps = builtin && !data.set.chat ? readableApps() : [];
     var apps = builtin ? [] : readableApps();
     var kinds = builtin ? [] : entryKinds();
     var sumIds = summaryIds(apps);
@@ -1648,7 +1663,7 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, web: !!wmode && wmode !== "native" });
     var system = C.systemPrompt({
-      lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin,
+      lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds,
@@ -1691,7 +1706,14 @@
         });
       });
     }
-    next().catch(function (e) {
+    var last = c.msgs[c.msgs.length - 1];
+    var first = preApps.length && last && last.r === "user" && !last.brief && !last.found && last.text
+      ? preSearch(c, last, preApps).then(function () {
+          if (ctl && ctl.signal.aborted) throw new DOMException("Aborted", "AbortError");
+          return next();
+        })
+      : next();
+    first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
         if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
@@ -1704,6 +1726,53 @@
       renderAll();
       scrollEnd();
     });
+  }
+
+  // A model without tools (wave 5): no tools at all, or a local model
+  // the user marked "can't use tools".
+  function noTools(pid) {
+    var P = C.PROVIDERS[pid];
+    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt));
+  }
+  // Search the user's data for the words of their message before it
+  // goes (one search per word, PRE_WORDS at most), with the same rules
+  // as search_data: "Always" apps are shared, "Ask first" ones go on
+  // the consent card, "Never" ones are not read. What the user shares
+  // rides on the message (m.found), and a line says what happened.
+  function preSearch(c, um, apps) {
+    var words = C.searchWords(um.text);
+    var p = shell();
+    if (!words.length || !p || typeof p.orosAssistSearch !== "function") return Promise.resolve();
+    var byId = {};
+    apps.forEach(function (a) { byId[a.id] = a; });
+    var ids = apps.map(function (a) { return a.id; });
+    var q = words.join(", ");
+    return Promise.all(words.map(function (w) {
+      return Promise.resolve().then(function () { return p.orosAssistSearch(w, ids); }).catch(function () { return []; });
+    })).then(function (lists) {
+      var items = C.packHits(C.mergeHits(lists), function (id) { return byId[id] ? byId[id].name : id; });
+      if (!items.length) {
+        um.found = { q: q, text: C.searchResult(q, [], {}) };
+        c.msgs.push({ r: "note", kind: "info", text: t("pre.none", { q: q }) });
+        return;
+      }
+      var free = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "always"; });
+      var ask = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "ask"; });
+      var choice = ask.length ? askConsent(q, ask) : Promise.resolve({ chosen: [], always: [] });
+      return choice.then(function (ch) {
+        if (!ch) ch = { chosen: [], always: [] };
+        ch.always.forEach(function (id) { setPerm(id, "always"); });
+        var shared = free.concat(ch.chosen);
+        shared.forEach(function (it) {
+          c.refN = (c.refN || 0) + 1;
+          it.ref = "r" + c.refN;
+          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q, id: it.id };
+        });
+        var held = ask.length - ch.chosen.length;
+        um.found = { q: q, text: C.searchResult(q, shared, { declined: held }) };
+        c.msgs.push({ r: "note", kind: "info", text: t(held ? "pre.someHeld" : "pre.shared", { q: q, n: shared.length, held: held }) });
+      });
+    }).then(function () { saveChat(c); renderMessages(); });
   }
 
   function stop() {
@@ -2221,7 +2290,7 @@
   // what was shared (C.briefText). "Never" apps are not read at all.
   function briefCan() {
     var pid = curProv();
-    return !!pid && !!C.PROVIDERS[pid] && !C.PROVIDERS[pid].device && !data.set.chat;
+    return !!pid && !!C.PROVIDERS[pid] && !data.set.chat;
   }
   function briefDate() {
     try { return new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" }); }
@@ -3028,6 +3097,12 @@
         });
         vis.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.visHint")));
+        var nt = checkbox(provBox, "as-nt", t("set.nt"), !!provConf(pid).nt, function (on) {
+          setProvConf(pid, { nt: on ? 1 : 0 });
+          renderAll();
+        });
+        nt.parentNode.classList.add("check");
+        provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
       }
       // Key
       label(provBox, "as-key", P.key === "opt" ? t("set.keyOpt") : t("set.key"));

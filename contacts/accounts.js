@@ -72,7 +72,53 @@
   function oneOf(t, allowed, map) {
     t = String(t || "").toLowerCase();
     if (map && map[t]) return map[t];
-    return allowed.indexOf(t) !== -1 ? t : "other";
+    if (allowed.indexOf(t) !== -1) return t;
+    // A custom label ("Κινητό τηλέφωνο", "Cell", "Γραφείο"…) → the
+    // nearest known type; the value itself is kept either way.
+    var f = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    var guess = /fax|φαξ|pager|βομβητ/.test(f) ? ""
+      : /κινητ|mobile|cell/.test(f) ? "mobile"
+      : /σπιτι|οικια|home/.test(f) ? "home"
+      : /εργασ|γραφει|δουλει|work|office|business/.test(f) ? "work"
+      : /κυριο|main/.test(f) ? "main" : "";
+    return guess && allowed.indexOf(guess) !== -1 ? guess : "other";
+  }
+  // Everything Google holds that has no field of its own in orOS
+  // goes into the note as "Label: value" lines, so nothing is lost.
+  function extraLines(p) {
+    var out = [];
+    function add(label, v) { v = s(v, 300); if (v) out.push(label + ": " + v); }
+    function each(arr, fn) { (Array.isArray(arr) ? arr : []).forEach(function (x) { if (x) fn(x); }); }
+    var n = pick(p.names);
+    if (n) {
+      add("Prefix", n.honorificPrefix);
+      add("Suffix", n.honorificSuffix);
+      add("Phonetic name", [n.phoneticGivenName, n.phoneticMiddleName, n.phoneticFamilyName].filter(Boolean).join(" "));
+    }
+    var nk = pick(p.nicknames);
+    each(p.nicknames, function (x) { if (x !== nk) add("Nickname", x.value); });
+    var o = pick(p.organizations);
+    each(p.organizations, function (x) {
+      if (x === o) { add("Department", x.department); return; }
+      add("Organization", [x.name, x.title, x.department].filter(Boolean).join(", "));
+    });
+    var b = pick(p.birthdays);
+    each(p.birthdays, function (x) { if (x !== b) add("Birthday", x.text || (x.date ? [x.date.year, x.date.month, x.date.day].filter(Boolean).join("-") : "")); });
+    if (b && !b.date && b.text) add("Birthday", b.text);
+    var bio = pick(p.biographies);
+    each(p.biographies, function (x) { if (x !== bio) add("Note", x.value); });
+    each(p.relations, function (x) { add("Relation" + (x.formattedType || x.type ? " (" + (x.formattedType || x.type) + ")" : ""), x.person); });
+    each(p.userDefined, function (x) { add(s(x.key, 60) || "Custom", x.value); });
+    each(p.sipAddresses, function (x) { add("SIP", x.value); });
+    each(p.calendarUrls, function (x) { add("Calendar", x.url); });
+    each(p.occupations, function (x) { add("Occupation", x.value); });
+    each(p.interests, function (x) { add("Interest", x.value); });
+    each(p.skills, function (x) { add("Skill", x.value); });
+    each(p.locations, function (x) { add("Location", [x.buildingId, x.floor, x.deskCode, x.value].filter(Boolean).join(" ")); });
+    each(p.genders, function (x) { add("Gender", x.formattedValue || x.value); });
+    each(p.miscKeywords, function (x) { add("Keyword", x.value); });
+    each(p.externalIds, function (x) { add("ID" + (x.formattedType || x.type ? " (" + (x.formattedType || x.type) + ")" : ""), x.value); });
+    return out;
   }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function validDay(m, d) {
@@ -110,17 +156,23 @@
     var o = pick(p.organizations);
     if (o) { c.org = s(o.name, 80); c.jobTitle = s(o.title, 80); }
     (p.phoneNumbers || []).forEach(function (r) {
-      pushUnique(c.phones, r && s(r.value, 40) ? { v: s(r.value, 40), type: oneOf(r.type, ["mobile", "home", "work", "main"]) } : null, vkey);
+      pushUnique(c.phones, r && s(r.value, 40) ? { v: s(r.value, 40), type: oneOf(r.type || r.formattedType, ["mobile", "home", "work", "main"]) } : null, vkey);
     });
     (p.emailAddresses || []).forEach(function (r) {
-      pushUnique(c.emails, r && s(r.value, 120) ? { v: s(r.value, 120), type: oneOf(r.type, ["home", "work"]) } : null, vkey);
+      pushUnique(c.emails, r && s(r.value, 120) ? { v: s(r.value, 120), type: oneOf(r.type || r.formattedType, ["home", "work"]) } : null, vkey);
     });
     (p.addresses || []).forEach(function (r) {
       if (!r) return;
+      var street = [r.streetAddress, r.extendedAddress, r.poBox ? "PO Box " + r.poBox : ""]
+        .map(function (x) { return s(x, 120); }).filter(Boolean).join(", ");
       var a = {
-        street: s(r.streetAddress, 120), city: s(r.city, 60), region: s(r.region, 60),
-        zip: s(r.postalCode, 20), country: s(r.country, 60), type: oneOf(r.type, ["home", "work"])
+        street: street.slice(0, 120), city: s(r.city, 60), region: s(r.region, 60),
+        zip: s(r.postalCode, 20), country: s(r.country, 60), type: oneOf(r.type || r.formattedType, ["home", "work"])
       };
+      // only the free-text address: keep it as the street line
+      if (!(a.street || a.city || a.region || a.zip || a.country) && r.formattedValue) {
+        a.street = s(String(r.formattedValue).replace(/\s*\n\s*/g, ", "), 120);
+      }
       if (a.street || a.city || a.region || a.zip || a.country) c.addresses.push(a);
     });
     (p.urls || []).forEach(function (r) {
@@ -143,7 +195,14 @@
       if (e2) c.events.push(e2);
     });
     var bio = pick(p.biographies);
-    if (bio) c.note = s(bio.value, 500);
+    var extra = extraLines(p);
+    var note = bio ? s(bio.value, 500) : "";
+    if (extra.length) note = (note ? note + "\n\n" : "") + extra.join("\n");
+    c.note = note.slice(0, 500);
+    // the person's own photo (not Google's letter avatar): fetched by
+    // readGoogle, never by this pure mapper
+    var ph = (p.photos || []).filter(function (x) { return x && x.url && !x.default; });
+    if (ph.length) c.photoUrl = String(ph[0].url);
     (p.memberships || []).forEach(function (m) {
       var rn = m && m.contactGroupMembership && m.contactGroupMembership.contactGroupResourceName;
       if (!rn) return;
@@ -292,7 +351,8 @@
       }, function () { /* groups are optional */ })
       .then(function () {
         var out = [], pages = 0;
-        var fields = "names,nicknames,emailAddresses,phoneNumbers,addresses,organizations,birthdays,events,urls,imClients,biographies,memberships";
+        var fields = "names,nicknames,emailAddresses,phoneNumbers,addresses,organizations,birthdays,events,urls,imClients,biographies,memberships," +
+          "photos,relations,userDefined,sipAddresses,calendarUrls,occupations,interests,skills,locations,genders,miscKeywords,externalIds";
         function page(tok) {
           var url = P.api + "people/me/connections?pageSize=1000&personFields=" + fields +
             (tok ? "&pageToken=" + encodeURIComponent(tok) : "");
@@ -304,8 +364,43 @@
             return out;
           });
         }
-        return page("");
+        return page("").then(function (list) { return withPhotos(list, progress); });
       });
+  }
+  // Contact photos: Google serves them from its image host (public
+  // links, no token sent). Each becomes a small JPEG data URL (orOS
+  // keeps photos up to 50,000 characters); one that can't be read is
+  // simply left out, the contact still comes in.
+  var PHOTO_MAX = 50000;
+  function photoData(url) {
+    var u = /=s\d+(-c)?$/.test(url) ? url.replace(/=s\d+(-c)?$/, "=s256") : url + (url.indexOf("=") === -1 ? "=s256" : "");
+    return fetch(u, { cache: "no-store", credentials: "omit" }).then(function (r) {
+      if (!r.ok) throw new Error("photo " + r.status);
+      return r.blob();
+    }).then(function (blob) { return createImageBitmap(blob); }).then(function (bmp) {
+      var side = Math.min(256, Math.max(bmp.width, bmp.height)), k = side / Math.max(bmp.width, bmp.height);
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(bmp.width * k));
+      cv.height = Math.max(1, Math.round(bmp.height * k));
+      cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+      var q = [0.85, 0.7, 0.5], out = "";
+      for (var i = 0; i < q.length; i++) {
+        out = cv.toDataURL("image/jpeg", q[i]);
+        if (out.length <= PHOTO_MAX) return out;
+      }
+      return null;
+    });
+  }
+  function withPhotos(list, progress) {
+    var todo = list.filter(function (c) { return c.photoUrl; }), i = 0;
+    function worker() {
+      if (i >= todo.length) return Promise.resolve();
+      var c = todo[i++];
+      return photoData(c.photoUrl).then(function (d) { if (d) c.photo = d; }, function () {})
+        .then(function () { delete c.photoUrl; return worker(); });
+    }
+    if (!todo.length) return Promise.resolve(list);
+    return Promise.all([worker(), worker(), worker(), worker()]).then(function () { return list; });
   }
   function revokeGoogle(token) {
     return fetch("https://oauth2.googleapis.com/revoke", {

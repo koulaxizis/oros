@@ -179,7 +179,8 @@ test("Google People person → parser shape", () => {
   assert.deepEqual(c.events[0], { day: "12-10", year: null, type: "birthday", label: "" });
   assert.equal(c.events[1].type, "anniversary");
   assert.equal(c.events[1].year, 1985);
-  assert.equal(c.note, "First programmer");
+  // a second birthday has no field of its own: it goes to the note
+  assert.equal(c.note, "First programmer\n\nBirthday: 1-1");
   assert.equal(c.starred, true);
   assert.deepEqual(c.cats, ["Science"]);
 });
@@ -235,4 +236,31 @@ test("re-import after an earlier fold: rows already inside one contact are skipp
   assert.equal(pl.items.length, 3);
   assert.deepEqual(pl.counts, { "new": 0, same: 3, diff: 0 });
   assert.ok(pl.items.every((it) => it.match === "k1"));
+});
+
+test("Google: nothing is dropped — extra fields go to the note, custom labels map, addresses keep PO box", () => {
+  const c = A.fromGoogle({
+    names: [{ givenName: "Βασίλης", familyName: "Σκαρβελάκης", honorificPrefix: "Dr", phoneticGivenName: "Vasilis" }],
+    organizations: [{ name: "APG", title: "CEO", department: "Λογιστήριο", metadata: { primary: true } }, { name: "Side Co", title: "Advisor" }],
+    phoneNumbers: [{ value: "6900000001", type: "Κινητό τηλέφωνο" }, { value: "2100000000", formattedType: "Γραφείο" }, { value: "2100000009", type: "workFax" }],
+    emailAddresses: [{ value: "v@x.gr", type: "Δουλειά" }],
+    addresses: [{ streetAddress: "Ερμού 1", extendedAddress: "3ος όροφος", poBox: "123", city: "Αθήνα" }, { formattedValue: "Κάπου\nΣτην Κρήτη" }],
+    relations: [{ person: "Μαρία", type: "mother", formattedType: "Mother" }],
+    userDefined: [{ key: "ΑΦΜ", value: "123456789" }],
+    biographies: [{ value: "Πελάτης" }],
+    photos: [{ url: "https://lh3.googleusercontent.com/a/x=s100", default: false }]
+  }, {});
+  assert.deepEqual(c.phones.map((p) => p.type), ["mobile", "work", "other"]);
+  assert.equal(c.emails[0].type, "work");
+  assert.equal(c.addresses[0].street, "Ερμού 1, 3ος όροφος, PO Box 123");
+  assert.equal(c.addresses[1].street, "Κάπου, Στην Κρήτη");
+  assert.equal(c.org, "APG");
+  assert.equal(c.jobTitle, "CEO");
+  for (const line of ["Πελάτης", "Prefix: Dr", "Phonetic name: Vasilis", "Department: Λογιστήριο",
+    "Organization: Side Co, Advisor", "Relation (Mother): Μαρία", "ΑΦΜ: 123456789"]) {
+    assert.ok(c.note.includes(line), line);
+  }
+  assert.equal(c.photoUrl, "https://lh3.googleusercontent.com/a/x=s100");
+  // a default (letter) avatar is not a photo
+  assert.equal(A.fromGoogle({ names: [{ givenName: "A" }], photos: [{ url: "u", default: true }] }, {}).photoUrl, undefined);
 });
