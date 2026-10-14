@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=wiki" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Wiki · orOS</title>
+
+  <link rel="stylesheet" href="wiki.css?v=1.97.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="side-btn" class="icon-btn" aria-controls="side"></button>
+    <button type="button" id="back-btn" class="icon-btn" hidden></button>
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Wiki</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <div id="search-box" class="search-box">
+      <label for="q" class="sr-only" data-i18n="search.label">Search the wiki</label>
+      <input type="search" id="q" autocomplete="off" spellcheck="false" enterkeyhint="search"
+             role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sugg">
+      <ul id="sugg" class="sugg" role="listbox" hidden></ul>
+    </div>
+    <button type="button" id="new-btn" class="icon-btn"></button>
+  </header>
+
+  <div id="body">
+    <nav id="side" aria-labelledby="side-title">
+      <h2 id="side-title" class="sr-only" data-i18n="side.title">Wiki menu</h2>
+      <label for="wiki-sel" class="lbl" data-i18n="side.wiki">Wiki</label>
+      <select id="wiki-sel"></select>
+      <div class="nav-list">
+        <button type="button" class="nav-item" data-go="main" data-i18n="nav.main">Main page</button>
+        <button type="button" class="nav-item" data-go="recent" data-i18n="nav.recent">Recent changes</button>
+        <button type="button" class="nav-item" data-go="random" data-i18n="nav.random">Random article</button>
+        <button type="button" class="nav-item" data-go="all" data-i18n="nav.all">All articles</button>
+        <button type="button" class="nav-item" data-go="cats" data-i18n="nav.cats">Categories</button>
+        <button type="button" class="nav-item" data-go="wanted" data-i18n="nav.wanted">Wanted articles</button>
+      </div>
+      <div class="nav-list small">
+        <button type="button" class="nav-item" id="wiki-new" data-i18n="nav.newWiki">New wiki…</button>
+        <button type="button" class="nav-item" id="wiki-ren" data-i18n="nav.renWiki">Rename this wiki…</button>
+        <button type="button" class="nav-item danger" id="wiki-del" data-i18n="nav.delWiki">Delete this wiki…</button>
+      </div>
+      <p id="side-stats" class="hint small"></p>
+      <p class="hint small" data-i18n="side.sync">Your wikis follow you to every device through orOS sync, encrypted. The history of each article travels with your orOS disk.</p>
+    </nav>
+    <div id="side-scrim" hidden></div>
+    <main id="main" tabindex="-1">
+      <div id="page"></div>
+    </main>
+  </div>
+
+  <!-- Prompt (one text field) -->
+  <div id="scrim" hidden></div>
+  <div id="prompt" class="dialog" role="dialog" aria-modal="true" aria-labelledby="prompt-title" hidden>
+    <div class="dlg-head">
+      <h2 id="prompt-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <label for="prompt-in" id="prompt-lbl" class="lbl"></label>
+    <input id="prompt-in" maxlength="200" autocomplete="off">
+    <label class="check" id="prompt-chk-row" hidden><input type="checkbox" id="prompt-chk"><span id="prompt-chk-lbl"></span></label>
+    <p id="prompt-err" class="hint err" aria-live="polite"></p>
+    <div class="actions end">
+      <button type="button" id="prompt-no" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="prompt-ok" class="chip primary"></button>
+    </div>
+  </div>
+
+  <!-- Menu (article actions) -->
+  <div id="menu" class="dialog" role="dialog" aria-modal="true" aria-labelledby="menu-title" hidden>
+    <div class="dlg-head">
+      <h2 id="menu-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div class="menu" id="menu-list"></div>
+  </div>
+
+  <!-- Confirm -->
+  <div id="ask" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ask-text" hidden>
+    <p id="ask-text"></p>
+    <div class="actions end">
+      <button type="button" id="ask-no" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="ask-yes" class="chip primary"></button>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script src="core.js?v=1.97.00"></script>
+  <script src="wiki.js?v=1.97.00"></script>
+
+</body>
+</html>
