@@ -6665,3 +6665,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Credits: WebLLM (Apache-2.0), the MLC model weights on Hugging Face (each under its own licence) and the MLC model libraries.
 - Files: `assistant/core.js` (`LOCAL_KITS`, provider `webllm`, `WEBLLM_MODELS`, `webllmMessages`), `assistant/assistant.js` section 6b, `assistant/webllm-worker.js` (new), `vendor/webllm/`, `today/today.js`, help EN/EL.
   - Tests: tests/assistant-local.test.js; real shell at 360 px EN/EL with a mocked Ollama and a fake WebLLM engine by the owner. Not tested: a real WebLLM download and GPU inference, real CORS of each local program, the sw.js cache rules in a live install, Safari, phone.
+
+### 2026-10-14 — Contacts: split Google " ::: " values, no duplicates on re-import (#369) — 2.20.01
+- The Google CSV import splits phones, e-mails and websites that Google joins with " ::: " into separate rows (they were stored as one value and cut at 40 characters). Values stored that way by older imports are split back on every load, with no device-only data, so all devices reach the same result.
+- A re-import skips rows whose details are already inside one contact when the names agree, so earlier combined rows don't come back as duplicates; two people who share a number stay separate (BR-CT-IMPORT). Undo keeps the first earlier version of a contact two rows merged into.
+- Files: `contacts/contacts.js` (`splitMulti` in `sanitizeContact`, CSV reader), `contacts/importplan.js` (`plan()`).
+  - Tests: re-import test added; real-shell E2E by the owner with Chris's own .vcf and Google CSV exports (420 contacts, no " ::: " left; re-import 0 new). Not tested: a real Google account, the phone mirror.
