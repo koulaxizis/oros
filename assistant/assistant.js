@@ -76,6 +76,10 @@
       "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
+      "who.web": "Web search on", "web.searched": "Searched the web: {q}", "web.sources": "Sources",
+      "set.web": "Internet", "set.webOn": "Let Claude search the internet when an answer needs it",
+      "set.webHint": "Off unless you switch it on. Works only with Claude: the search runs on Anthropic's servers, which charge $10 per 1,000 searches on top of tokens (at most {n} searches per answer). Search words go to Anthropic and its search partner; Claude is told never to put your orOS data in them unless you ask for that search. Each answer shows what was searched and its sources.",
+      "set.usageWeb": "{n} web searches",
       "btn.attach": "Attach a photo or PDF", "att.title": "Attach a file",
       "att.what": "A photo (JPEG, PNG, WebP, GIF) or a PDF: a receipt, a business card, a poster, a document. Up to {n} per message.",
       "att.whatImg": "A photo (JPEG, PNG, WebP, GIF): a receipt, a business card, a poster. Up to {n} per message.",
@@ -226,6 +230,10 @@
       "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
+      "who.web": "Αναζήτηση στο internet ανοιχτή", "web.searched": "Αναζήτηση στο internet: {q}", "web.sources": "Πηγές",
+      "set.web": "Internet", "set.webOn": "Να ψάχνει το Claude στο internet όταν το χρειάζεται μια απάντηση",
+      "set.webHint": "Κλειστό εκτός αν το ανοίξεις. Δουλεύει μόνο με το Claude: η αναζήτηση τρέχει στους servers της Anthropic, που χρεώνει $10 ανά 1.000 αναζητήσεις πέρα από τα tokens (έως {n} αναζητήσεις ανά απάντηση). Οι λέξεις της αναζήτησης πηγαίνουν στην Anthropic και στον συνεργάτη της για αναζητήσεις· το Claude έχει οδηγία να μη βάζει ποτέ σε αυτές δεδομένα σου από το orOS, εκτός αν ζητήσεις εσύ αυτή την αναζήτηση. Κάθε απάντηση δείχνει τι αναζητήθηκε και τις πηγές της.",
+      "set.usageWeb": "{n} αναζητήσεις στο internet",
       "btn.attach": "Επισύναψη φωτογραφίας ή PDF", "att.title": "Επισύναψη αρχείου",
       "att.what": "Μια φωτογραφία (JPEG, PNG, WebP, GIF) ή ένα PDF: απόδειξη, κάρτα επαγγελματία, αφίσα, έγγραφο. Έως {n} ανά μήνυμα.",
       "att.whatImg": "Μια φωτογραφία (JPEG, PNG, WebP, GIF): απόδειξη, κάρτα επαγγελματία, αφίσα. Έως {n} ανά μήνυμα.",
@@ -408,6 +416,7 @@
     spark: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     clip: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
     edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
@@ -454,6 +463,7 @@
     var row = month[pid] || (month[pid] = { i: 0, o: 0 });
     row.i += u.i || 0;
     row.o += u.o || 0;
+    if (u.ws) row.ws = (row.ws || 0) + u.ws;
     Object.keys(prefs.usage).sort().slice(0, -3).forEach(function (k) { delete prefs.usage[k]; });
     savePrefs();
   }
@@ -475,7 +485,7 @@
   }
   function setSetting(patch) {
     var cur = data.set;
-    var next = { m: Math.max(Date.now(), cur.m + 1), chat: cur.chat, prov: cur.prov };
+    var next = { m: Math.max(Date.now(), cur.m + 1), chat: cur.chat, prov: cur.prov, web: cur.web ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.set = next;
     saveData();
@@ -1157,6 +1167,9 @@
     runTurn(chat);
   }
 
+  // Web search for this turn: switched on, and a provider that has it.
+  function webOn(pid) { return !!data.set.web && C.webCan(pid); }
+
   function runTurn(c) {
     var pid = curProv();
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
@@ -1176,13 +1189,15 @@
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds,
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
-      files: (function () { var k = C.attCaps(pid); return k.pdf ? "pdf" : k.img ? "img" : ""; })()
+      files: (function () { var k = C.attCaps(pid); return k.pdf ? "pdf" : k.img ? "img" : ""; })(),
+      web: webOn(pid)
     });
+    var web = webOn(pid);
     var round = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
-      return callModel(pid, withFiles(c.msgs), { system: system, tools: tools }, ctl && ctl.signal, function (txt) {
+      return callModel(pid, withFiles(c.msgs), { system: system, tools: tools, web: web }, ctl && ctl.signal, function (txt) {
         busy.live = txt;
         scheduleLive();
       }).then(function (res) {
@@ -1195,6 +1210,12 @@
         busy.live = "";
         saveChat(c);
         renderMessages();
+        // A long web search pauses the turn on Anthropic's side: the same
+        // request goes again and the server carries on (no extra message).
+        if (res.pause && !res.tools.length) {
+          if (++round >= C.TOOL_ROUNDS) { note("info", t("note.rounds")); return null; }
+          return next();
+        }
         if (!res.tools.length) return null;
         return runTools(c, res.tools, apps).then(function (results) {
           c.msgs.push({ r: "tool", results: results });
@@ -1946,6 +1967,7 @@
       var isBi = !!C.PROVIDERS[pid].builtin;
       who.appendChild(el("span", "who-name", isBi ? provName(pid) : t("who", { name: provName(pid), model: modelOf(pid) })));
       who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
+      if (webOn(pid)) who.appendChild(el("span", "who-web", t("who.web")));
       if (!data.set.chat && !isBi) {
         var tip = t("who.to", { host: hostOf(baseOf(pid)) });
         who.title = tip;
@@ -2044,11 +2066,38 @@
       if (m.text) u.appendChild(el("div", "bubble", m.text));
       host.appendChild(u);
     } else if (m.r === "asst") {
+      var web = C.webSources(m.raw);
+      web.queries.forEach(function (q) {
+        var line = el("div", "tool-line");
+        var ico = el("span", "tool-ico");
+        ico.innerHTML = ICON.globe;
+        line.appendChild(ico);
+        line.appendChild(el("span", "", t("web.searched", { q: q })));
+        host.appendChild(line);
+      });
       if (!m.text) return;
       var a = el("div", "msg asst");
       var body = el("div", "md");
       drawMd(body, m.text, c);
       a.appendChild(body);
+      if (web.sources.length) {
+        var src = el("div", "web-src");
+        src.appendChild(el("span", "web-src-h", t("web.sources")));
+        var ol = el("ol");
+        web.sources.forEach(function (x) {
+          var li = el("li");
+          var link = el("a", "web-link", x.title);
+          link.href = x.url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.referrerPolicy = "no-referrer";
+          link.title = x.url;
+          li.appendChild(link);
+          ol.appendChild(li);
+        });
+        src.appendChild(ol);
+        a.appendChild(src);
+      }
       var cp = button(t("btn.copy"), "msg-copy", function () { copyText(m.text); });
       cp.title = t("btn.copy");
       a.appendChild(cp);
@@ -2488,6 +2537,15 @@
     });
     secD.appendChild(list);
 
+    // Web search (off by default; Claude only)
+    var secW = section(body, t("set.web"));
+    var wb = checkbox(secW, "as-web", t("set.webOn"), !!data.set.web, function (on) {
+      setSetting({ web: on ? 1 : 0 });
+      renderAll();
+    });
+    wb.parentNode.classList.add("check");
+    secW.appendChild(el("p", "dlg-hint", t("set.webHint", { n: C.WEB_USES })));
+
     // Key sync
     var secS = section(body, t("set.sync"));
     var can = !!sealer();
@@ -2555,7 +2613,8 @@
     var rows = Object.keys(month);
     if (!rows.length) secV.appendChild(el("p", "dlg-hint", t("set.usageNone")));
     rows.forEach(function (pid) {
-      secV.appendChild(el("p", "dlg-hint", t("set.usageRow", { name: provName(pid), i: fmtNum(month[pid].i), o: fmtNum(month[pid].o) })));
+      secV.appendChild(el("p", "dlg-hint", t("set.usageRow", { name: provName(pid), i: fmtNum(month[pid].i), o: fmtNum(month[pid].o) }) +
+        (month[pid].ws ? " · " + t("set.usageWeb", { n: fmtNum(month[pid].ws) }) : "")));
     });
 
     var acts = el("div", "dlg-actions");
