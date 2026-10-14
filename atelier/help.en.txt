@@ -51,6 +51,12 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - Videos and sounds play in `Play` and in `Download` › `Video` (with their sound). A GIF shows the moving video without sound. The slide show plays the videos and the page sound too, and runs the entrance animations of each page. Pictures, PDF and PowerPoint use the video's first frame.
 - Video and sound files stay on your orOS disk and sync with Vault Drive like your photos, so large files take space on every device.
 
+## Bulk create
+- Write fields in curly brackets in a text box or a table, like {name} or {date}, then choose `More` › `Bulk create…`.
+- Paste a list (a table copied from a spreadsheet, or one name per line) or open a CSV or Excel file. The first row has the column names; a column fills the field with the same name, and you can change which column goes where.
+- Choose a separate design for each row, or one design with a page for each row, ready to save as a single PDF with `Download`.
+- A name too long for its box gets a smaller text size, down to 60%. Up to 200 rows at a time.
+
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, a PDF for printing at 150 or 300 dpi, or a PowerPoint file (see below).
 - In the PDF, texts are real text in the embedded fonts (you can select, search and copy them) and shapes, lines and tables stay sharp at any zoom. Photos, icons, charts, gradients and text effects a PDF can't express (glow, blur) become pictures at the chosen 150 or 300 dpi, element by element; a text with a letter the fonts lack (an emoji, for example) also becomes a picture. Tick `Whole pages as pictures` for the old exact-look PDF.

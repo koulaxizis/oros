@@ -41,6 +41,16 @@ On a phone the preview sits above the form; on a wide screen it is on the right.
 - `Copy the key` and put it on your website or under your emails, so people can see the certificate really comes from you. `Open the check page` shows the page for the person in the preview.
 - The check needs no server and nothing is sent anywhere. In the PDF the code is also a link.
 
+## Attendance
+- `Sign-in sheet (PDF)` under `People` prints the list with a signature column for each day of the seminar (up to 7 days) and a few blank rows for people who come without signing up.
+- Tick the box next to each person who came, or press `Everyone came`. `Clear the ticks` removes them all.
+- Under `Issue`, tick `Only for people ticked as present`: the PDFs, the numbers and the email list then cover only them. `Check` shows how many are ticked.
+
+## Open Badges
+- `Open Badges (ZIP)` makes one Open Badges 3.0 credential for each person, a .jwt file signed with the same key as the check code.
+- People can add it to a badge wallet or a course platform that accepts Open Badges 3.0, and anyone can check the signature without a server of ours.
+- The email is stored only as a hash. If the check code is on, the badge also carries the link to the check page.
+
 ## Save, print and send
 - `PDF with everyone` makes one file with a page per person; `ZIP, one PDF each` one PDF per person, named with the number and name.
 - `Save each in Files` puts the PDFs in Files › Certificates › the name of the set.
