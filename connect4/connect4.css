@@ -79,6 +79,8 @@ button, select {
 #new-btn      { order: 5; }
 #undo-btn     { order: 6; }
 #stats-btn    { order: 7; }
+#net-btn      { order: 7; }
+.rp-badge     { order: 3; }
 #sfx-btn      { order: 8; }
 
 .seg {

@@ -463,6 +463,31 @@ button.mv:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px;
 .lp-ch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .lp-ch span { flex: 1 1 160px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 select.cc-input { appearance: auto; }
+/* Training: the opening's name, the puzzle / opening bar */
+#op-name {
+  flex: 1 0 100%;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#train-bar {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+#tr-info { font-size: 12px; font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
+.tr-rating { display: flex; align-items: baseline; gap: 10px; margin: 4px 0; }
+.tr-r { font-size: 30px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.tr-rl { font-size: 12px; color: var(--text-dim); }
+.tr-field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.tr-field select { width: 100%; }
+.tr-list { margin-top: 8px; max-height: 50vh; }
 #rv-info {
   font-size: 12px;
   color: var(--text-dim);
@@ -496,7 +521,8 @@ select.cc-input { appearance: auto; }
   #moves li { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 4px; }
   #moves-wrap { flex-wrap: nowrap; width: 240px; }
   #moves { flex: 1 1 auto; min-height: 0; }
-  #review-bar, #online-bar { flex: 0 0 auto; padding-top: 10px; border-top: 1px solid var(--border); }
+  #review-bar, #online-bar, #train-bar { flex: 0 0 auto; padding-top: 10px; border-top: 1px solid var(--border); }
+  #op-name { flex: 0 0 auto; white-space: normal; }
   #rv-info { white-space: normal; }
 }
 

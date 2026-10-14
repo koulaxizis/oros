@@ -21,6 +21,15 @@ Keyboard: [[1]] to [[6]] play that card from your hand; with a card focused, [[â
 ## Levels and scoring
 The computer plays at `Easy`, `Medium` or `Hard`; changing the level starts a new match. `Records` shows, for each level, your matches and wins, your xeri and Jack-on-Jack count, and your best deal. `Reset records` clears them.
 
+## Two devices
+Play a friend who has their own phone, tablet or computer. Press `Play on two devices` (the button with two screens): one of you chooses `Show a code`, the other `Enter a code` and types the 6-digit code or scans the QR code, and the first device lets the other in with `Allow`. While you're linked, `Two devices` shows in the toolbar; press it to see the link or to `Leave the game`.
+- The device that showed the code shuffles and deals and keeps the match. Each device shows only its own hand: the other hand and the deck show as the number of cards in them, never which cards they are.
+- `Next deal` and a new match follow the device that showed the code; the other device asks for them.
+- If a device reloads or loses the network, the game waits and goes on where it was when it's back (for up to a day).
+- Moves go straight between the two devices on the same network, or sealed through the orOS relay; nothing is kept online.
+
+Limits: two players only, each on their own device with orOS open in this game. Games on two devices don't count in your records, and the level buttons are hidden meanwhile. `Leave the game` ends it on both devices and brings back the game you had on this device.
+
 ## Sync
 Your records sync between your devices through [orOS sync](help:t/sync), adding up the matches from every device; `Reset records` clears them everywhere. The match in progress, your level and rules, and the sound setting stay on this device.
 

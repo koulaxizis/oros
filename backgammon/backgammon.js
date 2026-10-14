@@ -126,6 +126,7 @@
       "stats.close": "Close",
       "confirm.reset": "Delete the records vs the computer on every device, and this device's 2-player score?",
       "confirm.yes": "Reset",
+      "net.confirmNew": "Start a new game on both devices?", "net.yes": "New game",
       "confirm.no": "Cancel",
       "toast.reset": "Records reset",
       "toast.newgame": "New game started",
@@ -141,6 +142,10 @@
       "toast.noMore": "No more moves: press Done (Enter)",
       "toast.pick": "Pick one of your checkers that can move",
       "toast.wait": "The computer is playing",
+      "game.name": "Backgammon", "btn.net": "Play on two devices",
+      "side.friend": "Opponent", "turn.friend": "Opponent is moving…", "turn.friendRoll": "Opponent rolls…",
+      "res.friend": "Your opponent wins", "toast.friend": "It's your opponent's turn",
+      "net.hostNew": "The device that showed the code starts the next game", "res.seriesNet": "You – opponent",
       "toast.over": "The game is over: start a new one (N)",
       "toast.pass": "{who}: no legal move, the turn passes"
     },
@@ -198,6 +203,7 @@
       "stats.close": "Κλείσιμο",
       "confirm.reset": "Να διαγραφούν τα ρεκόρ με τον υπολογιστή σε όλες τις συσκευές και το σκορ 2 παικτών αυτής της συσκευής;",
       "confirm.yes": "Μηδενισμός",
+      "net.confirmNew": "Νέο παιχνίδι και στις δύο συσκευές;", "net.yes": "Νέο παιχνίδι",
       "confirm.no": "Άκυρο",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν",
       "toast.newgame": "Ξεκίνησε νέο παιχνίδι",
@@ -213,6 +219,10 @@
       "toast.noMore": "Δεν υπάρχουν άλλες κινήσεις: πάτα Τέλος (Enter)",
       "toast.pick": "Διάλεξε ένα δικό σου πούλι που κινείται",
       "toast.wait": "Παίζει ο υπολογιστής",
+      "game.name": "Τάβλι", "btn.net": "Παιχνίδι σε δύο συσκευές",
+      "side.friend": "Αντίπαλος", "turn.friend": "Παίζει ο αντίπαλος…", "turn.friendRoll": "Ο αντίπαλος ρίχνει…",
+      "res.friend": "Κέρδισε ο αντίπαλος", "toast.friend": "Είναι η σειρά του αντιπάλου",
+      "net.hostNew": "Το επόμενο παιχνίδι το ξεκινά η συσκευή που έδειξε τον κωδικό", "res.seriesNet": "Εσύ – αντίπαλος",
       "toast.over": "Το παιχνίδι τελείωσε: ξεκίνα νέο (N)",
       "toast.pass": "{who}: καμία έγκυρη κίνηση, χάνει τη σειρά"
     }
@@ -735,8 +745,8 @@
     return true;
   }
   function validSession(g) {
-    if (!g || typeof g !== "object" || MODES.indexOf(g.mode) < 0 || LEVELS.indexOf(g.lv) < 0 ||
-        (g.ai !== -1 && g.ai !== 1) || !validC(g.c) || PHASES.indexOf(g.phase) < 0 ||
+    if (!g || typeof g !== "object" || (MODES.indexOf(g.mode) < 0 && g.mode !== "net") || LEVELS.indexOf(g.lv) < 0 ||
+        (g.ai !== -1 && g.ai !== 1 && !(g.mode === "net" && g.ai === 0)) || !validC(g.c) || PHASES.indexOf(g.phase) < 0 ||
         (g.turn !== -1 && g.turn !== 0 && g.turn !== 1) ||
         (g.phase === "open") !== (g.turn === -1) ||
         !validDice(g.dice, 2) || !validDice(g.rem, 4) || !Array.isArray(g.hist) || !Array.isArray(g.mv) ||
@@ -760,7 +770,10 @@
     } catch (e) {}
     return null;
   }
+  // A game on two devices lives apart (section 13b): the host keeps it
+  // under its own key and sends it on; the guest keeps nothing.
   function saveSession() {
+    if (game && game.mode === "net") { netSave(); return; }
     try { localStorage.setItem(SESSION_KEY, JSON.stringify(game)); } catch (e) {}
   }
 
@@ -825,6 +838,7 @@
 
   // A game in progress is never lost silently: Undo toast (R14).
   function newGame(announce, keepSeries) {
+    if (game && game.mode === "net") { netNewGame(); return; }
     var prev = inProgress() ? JSON.parse(JSON.stringify(game)) : null;
     var prevPrefs = JSON.parse(JSON.stringify(prefs));
     stopTimers();
@@ -851,6 +865,7 @@
 
   function who(p) {
     if (game.mode === "ai") return t(p === game.ai ? "side.ai" : "side.you");
+    if (game.mode === "net") return t(p === game.ai ? "side.friend" : "side.you");
     return t("player." + p);
   }
 
@@ -860,7 +875,9 @@
     if (game.phase === "done") { showToast(t("toast.over")); return; }
     if (busy()) return;
     if (aiTurn() && game.phase !== "open" && byAi !== true) { showToast(t("toast.wait")); return; }
+    if (netWait() && game.phase !== "open" && byAi !== true) { showToast(t("toast.friend")); return; }
     if (game.phase === "move") { showToast(t("toast.rolled")); return; }
+    if (netGuest()) { netAsk({ t: "roll" }); return; }
     var a = 1 + randInt(6), b = 1 + randInt(6);
     if (game.phase === "open") {
       game.dice = [a, b];                 // White's die, Black's die
@@ -942,6 +959,12 @@
   function moveTo(target) {
     var path = targetsFrom(sel)[target];
     if (!path) { showToast(t("toast.notThere")); return; }
+    if (netGuest()) {                       // the host checks and plays it
+      netAsk({ t: "to", f: sel, to: target });
+      sel = null; cur = null;
+      renderBoard();
+      return;
+    }
     sel = null; cur = null;
     for (var k = 0; k < path.length; k++) if (doStep(path[k])) return;
     saveSession();
@@ -952,7 +975,9 @@
   function undoStep() {
     if (game.phase === "done") { showToast(t("toast.over")); return; }
     if (aiTurn()) { showToast(t("toast.wait")); return; }
+    if (netWait()) { showToast(t("toast.friend")); return; }
     if (game.phase !== "move" || !game.hist.length) { showToast(t("toast.nothing")); return; }   // R28
+    if (netGuest()) { netAsk({ t: "undo" }); return; }
     var h = game.hist.pop();
     game.c = h.c;
     game.rem = h.rem;
@@ -967,7 +992,9 @@
     if (aiTurn()) { showToast(t("toast.wait")); return; }
     if (game.phase !== "move") { showToast(t("toast.rollFirst")); return; }
     if (busy()) return;
+    if (netWait()) { showToast(t("toast.friend")); return; }
     if (!turnComplete()) { showToast(t("toast.notDone")); return; }
+    if (netGuest()) { netAsk({ t: "done" }); return; }
     live(t("live.move", { who: who(game.turn), moves: moveText(game.mv) }));
     endTurn();
   }
@@ -1027,11 +1054,11 @@
     game.last = { p: w, mv: game.mv.slice() };
     game.rem = []; game.hist = []; game.mv = [];
     sel = null; cur = null;
-    if (game.mode === "duo") game.series[w] += game.pts;
+    if (game.mode === "duo" || game.mode === "net") game.series[w] += game.pts;
     else countResult(game.lv, w !== game.ai, game.pts);
     saveSession();
     renderAll();
-    sfx(game.mode === "ai" && w === game.ai ? "end" : "win");
+    sfx((game.mode === "ai" || game.mode === "net") && w === game.ai ? "end" : "win");
     setTimeout(function () { resultDialog(); }, 800);
   }
 
@@ -1040,6 +1067,7 @@
     if (!region) return;
     if (game.phase === "done") { showToast(t("toast.over")); return; }
     if (aiTurn() && !(game.phase === "open" && region.kind === "dice")) { showToast(t("toast.wait")); return; }
+    if (netWait() && !(game.phase === "open" && region.kind === "dice")) { showToast(t("toast.friend")); return; }
     if (busy()) return;
     if (region.kind === "dice") {
       if (game.phase === "open" || game.phase === "roll") roll();
@@ -1099,14 +1127,15 @@
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
     $("level-seg").hidden = mode !== "ai";
+    $("mode-seg").hidden = mode === "net";
     paintSfxBtn();
   }
 
   function renderStatus() {
     if (!game) return;
-    var ai = game.mode === "ai";
-    $("name0").textContent = ai ? t("side.you") : t("player.0");
-    $("name1").textContent = ai ? t("side.ai") : t("player.1");
+    var ai = game.mode === "ai" || game.mode === "net";
+    $("name0").textContent = game.mode === "net" ? who(0) : ai ? t("side.you") : t("player.0");
+    $("name1").textContent = game.mode === "net" ? who(1) : ai ? t("side.ai") : t("player.1");
     $("pips0").textContent = t("pips", { n: pips(game.c[0]) });
     $("pips1").textContent = t("pips", { n: pips(game.c[1]) });
     var p = game.turn, txt;
@@ -1114,8 +1143,10 @@
       txt = ai && game.winner !== game.ai ? t("turn.youwin") : t("turn.win", { who: who(game.winner) });
     } else if (game.phase === "open") {
       txt = game.tie ? t("turn.openTie", { n: game.tie }) : t("turn.open");
-    } else if (passTimer) {
+    } else if (passTimer || (netGuest() && game.phase === "move" && !legalNow().length && !game.hist.length)) {
       txt = t("turn.pass", { who: who(p) });
+    } else if (netWait()) {
+      txt = game.phase === "roll" ? t("turn.friendRoll") : t("turn.friend");
     } else if (aiTurn()) {
       txt = game.phase === "roll" ? t("turn.aiRolls") : t("turn.ai");
     } else if (game.phase === "roll") {
@@ -1133,7 +1164,7 @@
   // Roll · Undo · Done. Never disabled (a refused press explains itself,
   // R28); aria-disabled + dim when it would be refused.
   function renderActions() {
-    var human = game.phase !== "done" && !aiTurn() && !busy();
+    var human = game.phase !== "done" && !aiTurn() && !netWait() && !busy();
     var canRoll = human && (game.phase === "open" || game.phase === "roll") ||
                   (game.phase === "open" && !busy());
     var canUndo = human && game.phase === "move" && game.hist.length > 0;
@@ -1403,7 +1434,7 @@
       var r = regionAt(e.clientX, e.clientY);
       down = { x: e.clientX, y: e.clientY, r: r, drag: false, id: e.pointerId, picked: false, was: sel };
       // press on a movable checker: pick it up at once (drag start)
-      if (r && game.phase === "move" && !aiTurn() && !busy() && (r.kind === "pt" || r.kind === "bar")) {
+      if (r && game.phase === "move" && !aiTurn() && !netWait() && !busy() && (r.kind === "pt" || r.kind === "bar")) {
         var rel = r.kind === "bar" ? 25 : (game.turn === 0 ? r.abs : 25 - r.abs);
         if (sources().indexOf(rel) >= 0 && !(sel !== null && targetsFrom(sel)[rel])) {
           if (sel !== rel) { select(rel); down.picked = true; }
@@ -1499,10 +1530,14 @@
     var dlg = makeDialog("backgammon-result");
     var ai = game.mode === "ai", w = game.winner;
     dlg.appendChild(el("div", "dlg-title", t("res.title") + (ai ? " · " + t("level." + game.lv) : "")));
-    var hero = ai ? t(w === game.ai ? "res.ailose" : "res.youwin") : t("res.pwin", { player: t("player." + w) });
+    var nt = game.mode === "net";
+    var hero = ai ? t(w === game.ai ? "res.ailose" : "res.youwin") : nt ? t(w === game.ai ? "res.friend" : "res.youwin") : t("res.pwin", { player: t("player." + w) });
     dlg.appendChild(el("div", "dlg-hero", hero));
     dlg.appendChild(el("div", "dlg-badge" + (game.pts > 1 ? " big" : ""), t("res.k" + game.pts)));
-    if (ai) {
+    if (nt) {
+      var me = 1 - game.ai;
+      dlg.appendChild(row(t("res.seriesNet"), game.series[me] + " – " + game.series[1 - me]));
+    } else if (ai) {
       var s = totals(game.lv);
       dlg.appendChild(row(t("stats.head"), s[0] + " · " + s[1]));
       dlg.appendChild(row(t("res.series"), s[2] + " – " + s[3]));
@@ -1549,13 +1584,13 @@
     close.focus();
   }
 
-  function confirmDialog(msg, onYes) {
+  function confirmDialog(msg, onYes, yes) {
     var dlg = makeDialog("backgammon-confirm");
     dlg.appendChild(el("div", "dlg-msg", msg));
     var acts = el("div", "dlg-actions");
     var no = button(t("confirm.no"), "", function () { dlg.close(); });
     acts.appendChild(no);
-    acts.appendChild(button(t("confirm.yes"), "danger", function () { dlg.close(); onYes(); }));
+    acts.appendChild(button(yes || t("confirm.yes"), yes ? "primary" : "danger", function () { dlg.close(); onYes(); }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -1656,6 +1691,7 @@
     undo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
     roll:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>',
     done:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    net:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="8" height="14" rx="1.5"/><rect x="14" y="5" width="8" height="14" rx="1.5"/><path d="M10 10h4M10 14h4"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -1809,6 +1845,199 @@
     // no toast on merge (sync feedback = taskbar dot)
   }
 
+  // ---------- 13b. Two devices (remote-play.js) ----------
+  // The device that showed the code (host) keeps the game and plays
+  // White; the other device (guest) plays Black. The host rolls every
+  // die, checks every request of the guest (roll, a checker to a point,
+  // undo, done) with the same rules as its own taps and sends the whole
+  // game back after each change, numbered (ns): a request made on an
+  // older picture is refused and the guest gets the game again. The
+  // guest draws what it gets (netAdopt checks it). Points count on both;
+  // nothing goes to the records vs the computer.
+  // Device-local: oros-backgammon-net (the host's game).
+  var NET_KEY = "oros-backgammon-net";
+  var RP = null;
+  var net = { role: "", ns: 0, pending: false, acting: false };
+
+  function netGuest() { return !!(game && game.mode === "net" && net.role === "guest"); }
+  function netWait() {
+    return !!(game && game.mode === "net" && game.phase !== "done" && !net.acting &&
+      ((game.phase !== "open" && game.turn === game.ai) || net.pending));
+  }
+  // Host: what the guest asks for, checked → an action name, or "".
+  function netCheck(g, m, ns) {
+    if (!g || g.mode !== "net" || !m || m.ns !== ns) return "";
+    if (m.t === "hi" || m.t === "again") return m.t;
+    if (g.phase === "done") return "";
+    if (m.t === "roll") return g.phase === "open" || (g.phase === "roll" && g.turn === g.ai) ? "roll" : "";
+    if (g.phase !== "move" || g.turn !== g.ai) return "";
+    if (m.t === "undo") return g.hist.length ? "undo" : "";
+    if (m.t === "done") return "done";
+    if (m.t === "to" && isInt(m.f) && m.f >= 0 && m.f <= 25 && isInt(m.to) && m.to >= 0 && m.to <= 25) return "to";
+    return "";
+  }
+  function netView(g, ns) {
+    var v = JSON.parse(JSON.stringify(g));
+    v.ai = 1 - g.ai;                        // the guest's opponent is the host
+    return { t: "st", ns: ns, g: v };
+  }
+  // Guest: the host's game, checked like a stored one, or null.
+  function netAdopt(m) {
+    if (!m || m.t !== "st" || !isInt(m.ns) || !m.g || typeof m.g !== "object") return null;
+    var g = m.g;
+    if (g.mode !== "net" || g.ai !== 0 || !validSession(g)) return null;
+    if (g.phase !== "move") { g.rem = []; g.hist = []; g.mv = []; }
+    if (!g.last || !Array.isArray(g.last.mv)) g.last = null;
+    g.tie = isInt(g.tie) ? g.tie : 0;
+    if (!isInt(g.pts) || g.pts < 0 || g.pts > 3) g.pts = 0;
+    if (g.series[0] < 0 || g.series[1] < 0) return null;
+    return g;
+  }
+
+  function netSave() {
+    if (net.role !== "host") return;
+    try { localStorage.setItem(NET_KEY, JSON.stringify(game)); } catch (e) {}
+    net.ns++;
+    if (RP) RP.send(netView(game, net.ns));
+  }
+  function netAsk(m) {
+    m.ns = net.ns;
+    net.pending = true;
+    RP.send(m);
+    renderAll();
+  }
+  function netLoad() {
+    try {
+      var g = JSON.parse(localStorage.getItem(NET_KEY) || "null");
+      if (validSession(g) && g.mode === "net" && g.ai === 1) {
+        if (g.phase !== "move") { g.rem = []; g.hist = []; g.mv = []; }
+        if (!g.last || !Array.isArray(g.last.mv)) g.last = null;
+        g.tie = isInt(g.tie) ? g.tie : 0;
+        return g;
+      }
+    } catch (e) {}
+    return null;
+  }
+  function netFresh(series) {
+    return { mode: "net", lv: "m", ai: 1, c: startPos(), turn: -1, phase: "open", dice: [], rem: [], hist: [], mv: [],
+             last: null, tie: 0, winner: -1, pts: 0, series: series || [0, 0] };
+  }
+  function closeDialogs() {
+    [].forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
+  }
+  function netNewGame(sure) {
+    if (net.role !== "host") {
+      if (game.phase === "done") netAsk({ t: "again" }); else showToast(t("net.hostNew"));
+      return;
+    }
+    if (inProgress() && sure !== true) {        // a game under way is never lost silently
+      confirmDialog(t("net.confirmNew"), function () { netNewGame(true); }, t("net.yes"));
+      return;
+    }
+    stopTimers();
+    closeDialogs();
+    game = netFresh(game.series.slice());
+    sel = null; cur = null;
+    saveSession();
+    renderAll();
+    live(t("toast.newgame"));
+  }
+  function netEnter(g) {
+    stopTimers();
+    game = g;
+    sel = null; cur = null;
+    renderAll();
+  }
+  function netOnPeer(role) {
+    net.role = role;
+    if (role === "host") {
+      if (!game || game.mode !== "net") {
+        saveSession();                       // the game on this device stays as it was
+        netEnter(netLoad() || netFresh([0, 0]));
+      }
+      saveSession();
+      resume();
+      showToast(RP.t("joined"));
+    } else {
+      net.pending = false;
+      RP.send({ t: "hi", ns: net.ns });
+    }
+  }
+  function netOnMsg(m) {
+    if (net.role === "host") {
+      if (!game || game.mode !== "net") return;
+      var a = busy() ? "" : netCheck(game, m, net.ns);
+      net.acting = true;                    // the guest's turn, played here
+      try { netAct(a, m); } finally { net.acting = false; }
+      renderAll();
+      return;
+    }
+    netTake(m);
+  }
+  function netAct(a, m) {
+    if (a) {
+      if (a === "roll") roll(true);
+      else if (a === "again") { if (game.phase === "done") netNewGame(); else saveSession(); }
+      else if (a === "undo") undoStep();
+      else if (a === "done") done();
+      else if (a === "to") {
+        sel = m.f;
+        if (targetsFrom(m.f)[m.to]) moveTo(m.to);
+        else { sel = null; saveSession(); }
+      } else saveSession();
+    } else saveSession();                   // anything else: the game again
+  }
+  function netTake(m) {
+    if (m.t !== "st") return;
+    var g = netAdopt(m);
+    if (!g) return;
+    var was = game && game.mode === "net" ? game : null;
+    if (!was) showToast(RP.t("joined"));
+    if (was && was.phase === "done" && g.phase !== "done") closeDialogs();
+    net.ns = m.ns;
+    net.pending = false;
+    stopTimers();
+    game = g;
+    if (sel !== null && (g.phase !== "move" || g.turn === g.ai || sources().indexOf(sel) < 0)) sel = null;
+    var rolled = was && g.dice.length && (was.dice.join() !== g.dice.join() || was.phase !== g.phase) &&
+                 g.phase === "move" && !g.hist.length;
+    if (was && g.mv.length > was.mv.length) sfx(g.mv[g.mv.length - 1].h ? "hit" : "move");
+    if (rolled) animateRoll(function () { renderAll(); }, was.phase === "open");
+    else renderAll();
+    if (g.phase === "done" && was && was.phase !== "done") {
+      sfx(g.winner === g.ai ? "end" : "win");
+      setTimeout(function () { if (game === g) resultDialog(); }, 800);
+    }
+  }
+  function netOnEnd(why) {
+    net.role = ""; net.pending = false;
+    try { localStorage.removeItem(NET_KEY); } catch (e) {}
+    if (game && game.mode === "net") {
+      stopTimers();
+      game = loadSession() || fresh(null);
+      prefs.mode = game.mode === "net" ? "ai" : game.mode;
+      sel = null; cur = null;
+      renderAll();
+      resume();
+    }
+    if (why === "left") showToast(RP.t("left"));
+    else if (why === "peer") showToast(RP.t("peerLeft"));
+  }
+  function netBoot() {
+    if (!window.OrosRemotePlay || !window.OrosRemoteLink) { $("net-btn").hidden = true; return; }
+    RP = window.OrosRemotePlay.create({
+      app: "backgammon", lang: LANG, game: t("game.name"),
+      dialog: { make: makeDialog, el: el, button: button },
+      onPeer: netOnPeer, onMsg: netOnMsg, onEnd: netOnEnd,
+      onLink: function () { if (game) renderStatus(); }
+    });
+    var tb = $("tb-b");
+    tb.insertBefore(RP.badge(), tb.firstChild);
+    RP.boot();
+    net.role = RP.role();
+    if (net.role === "host") { var g = netLoad(); if (g) { netEnter(g); resume(); } }
+  }
+
   // ---------- 14. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -1818,7 +2047,7 @@
   }
 
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["net-btn", "net", "btn.net"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1851,6 +2080,7 @@
     });
     $("new-btn").addEventListener("click", function () { newGame(true, true); $("new-btn").blur(); });
     $("stats-btn").addEventListener("click", statsDialog);
+    $("net-btn").addEventListener("click", function () { if (RP) RP.open(); });
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
       paintSfxBtn();
@@ -1889,6 +2119,7 @@
     }
     renderAll();
     resume();   // a game left on the computer's turn (or a pass) continues
+    netBoot();
   }
 
   boot();

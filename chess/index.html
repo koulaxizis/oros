@@ -37,6 +37,7 @@
       <button type="button" class="icon-btn" id="flip-btn"></button>
       <button type="button" class="icon-btn" id="stats-btn"></button>
       <button type="button" class="icon-btn" id="pgn-btn"></button>
+      <button type="button" class="icon-btn" id="train-btn"></button>
       <button type="button" class="icon-btn" id="online-btn"></button>
       <button type="button" class="icon-btn" id="sfx-btn" aria-pressed="false"></button>
     </div>
@@ -56,6 +57,18 @@
     <aside id="moves-wrap">
       <div id="moves-head"><span data-i18n="moves.title">Moves</span><span id="unrated" data-i18n="st.unrated" hidden>Unrated</span></div>
       <ol id="moves"></ol>
+      <div id="op-name" hidden></div>
+      <!-- Training: a puzzle or an opening line on the board -->
+      <div id="train-bar" hidden>
+        <div id="tr-info" aria-live="polite"></div>
+        <div class="rv-nav">
+          <button type="button" class="rv-btn" id="tr-hint" data-i18n="tr.hint">Hint</button>
+          <button type="button" class="rv-btn" id="tr-sol" data-i18n="tr.sol">Solution</button>
+          <button type="button" class="rv-btn" id="tr-again" data-i18n="op.again" hidden>Again</button>
+          <button type="button" class="rv-btn primary" id="tr-next" data-i18n="tr.nextShort">Next</button>
+          <button type="button" class="rv-btn" id="tr-menu" data-i18n="tr.menu">Training</button>
+        </div>
+      </div>
       <!-- Review of an opened PGN: step through it, analysis, play on -->
       <div id="review-bar" hidden>
         <div class="rv-nav">
@@ -88,6 +101,7 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
+  <script src="train.js?v=1.98.00"></script>
   <script src="chess.js?v=1.98.00"></script>
 
 </body>

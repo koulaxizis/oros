@@ -16,6 +16,7 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 
+globalThis.OrosChessTrain = require("../chess/train.js");   // mergeChess joins the puzzle history with it
 const SRC = fs.readFileSync(path.join(__dirname, "..", "chess/chess.js"), "utf8");
 
 function cut(from, to) {
