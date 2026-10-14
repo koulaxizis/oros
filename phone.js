@@ -38,8 +38,12 @@
 //               {t:"seen", v}                  (v3: orOS on screen)
 //               {t:"today", seq, data}         (v4: home-screen widget,
 //                 see widgetData; only while the phone has a widget)
+//               {t:"health", seq, since, water, workouts}  (v5: Health
+//                 Connect, see healthOut)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
-//                widgets, app}
+//                widgets, health, app}
+//               {t:"health-in", steps, water, workouts}  (v5: what other
+//                 apps put in Health Connect, see healthIn)
 //               {t:"changes", what, items}   (v2: edits made on the phone)
 //               {t:"done", what, seq, added, updated, removed}
 //               {t:"error", what, seq, msg}
@@ -57,7 +61,9 @@
   var MAX_FEED_ROWS = 5000;
   var PERM_URL = { contacts: "intent://contacts#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end",
-                   reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
+                   reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end",
+                   health: "intent://health#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
+  var HEALTH_KEYS = { water: "oros-water-data", fitness: "oros-fitness-data", health: "oros-health-data" };
   var MAX_PHOTO = 70000;          // base64 characters
 
   /* ---------- pure helpers ---------- */
@@ -583,10 +589,104 @@
     return { day: typeof today === "string" ? today : "", info: info ? str(info.title, 120) : "", rows: rows };
   }
 
+  // Health Connect (v5): orOS Water and Workouts go to the phone's
+  // Health Connect, and steps, water and workouts that other apps put
+  // there come back. HEALTH_DAYS back from now, both ways. Rows that
+  // came from Health Connect (ids "hc…") are never sent back.
+  var HEALTH_DAYS = 30, DAY_MS = 86400000;
+  var HC_WATER_RE = /^hc[0-9a-f]{4,38}$/, HC_ID = /^hc-/;
+  function hcHex(ref, n) { return String(ref || "").toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, n); }
+  function healthOut(water, fit, now) {
+    var since = now - HEALTH_DAYS * DAY_MS, out = { since: since, water: [], workouts: [] };
+    (water && Array.isArray(water.sips) ? water.sips : []).forEach(function (s) {
+      if (!s || s.del || typeof s.id !== "string" || HC_WATER_RE.test(s.id)) return;
+      if (typeof s.ts !== "number" || s.ts < since || s.ts > now + DAY_MS || !(s.ml > 0)) return;
+      out.water.push({ id: s.id, at: s.ts, ml: Math.round(s.ml), v: s.m | 0 });
+    });
+    var tombs = (fit && fit.tombs) || {};
+    (fit && Array.isArray(fit.wo) ? fit.wo : []).forEach(function (w) {
+      if (!w || typeof w.id !== "string" || HC_ID.test(w.id)) return;
+      if (typeof w.st !== "number" || typeof w.en !== "number" || w.en <= w.st || w.st < since) return;
+      if ((tombs["wo:" + w.id] || 0) >= (w.m || 0)) return;
+      out.workouts.push({ id: w.id, st: w.st, en: w.en, ti: str(w.ti, 80), v: w.m | 0 });
+    });
+    return out;
+  }
+  // What came from Health Connect, into the three data blobs. Returns
+  // the blobs that changed (null = unchanged). A row the person deleted
+  // in orOS (tombstone) is not brought back.
+  // Names for a workout from another app that has no title of its
+  // own, by the kind the app sends.
+  var HC_KINDS = {
+    en: { running: "Running", walking: "Walking", cycling: "Cycling", swimming: "Swimming", hiking: "Hiking",
+          yoga: "Yoga", strength: "Strength training", other: "Workout" },
+    el: { running: "Τρέξιμο", walking: "Περπάτημα", cycling: "Ποδήλατο", swimming: "Κολύμβηση", hiking: "Πεζοπορία",
+          yoga: "Γιόγκα", strength: "Ενδυνάμωση", other: "Προπόνηση" }
+  };
+  function healthIn(blobs, inc, now, names) {
+    var res = { water: null, fitness: null, health: null };
+    inc = inc || {};
+    names = names || {};
+    var w = blobs.water && Array.isArray(blobs.water.sips) ? JSON.parse(JSON.stringify(blobs.water)) : null;
+    if (w) {
+      var have = {}, add = 0;
+      w.sips.forEach(function (s) { if (s && s.id) have[s.id] = 1; });
+      (Array.isArray(inc.water) ? inc.water : []).forEach(function (x) {
+        var id = "hc" + hcHex(x && x.ref, 32), ml = Math.round(+(x && x.ml) || 0);
+        if (id.length < 8 || have[id] || typeof x.at !== "number" || ml < 1 || ml > 5000) return;
+        have[id] = 1;
+        w.sips.push({ id: id, ts: x.at, ml: ml, m: now });
+        add++;
+      });
+      if (add) { w.sips.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.water = w; }
+    }
+    var f = blobs.fitness && typeof blobs.fitness === "object" ? JSON.parse(JSON.stringify(blobs.fitness)) : null;
+    if (f || (Array.isArray(inc.workouts) && inc.workouts.length)) {
+      f = f || { ver: 1, ex: [], pg: [], wo: [], bm: [], set: null, tombs: {} };
+      if (!Array.isArray(f.wo)) f.wo = [];
+      var tombs = f.tombs || {}, haveW = {}, addW = 0;
+      f.wo.forEach(function (x) { if (x && x.id) haveW[x.id] = 1; });
+      (Array.isArray(inc.workouts) ? inc.workouts : []).forEach(function (x) {
+        var id = "hc-" + hcHex(x && x.ref, 36);
+        if (id.length < 11 || haveW[id] || ("wo:" + id) in tombs) return;
+        if (typeof x.st !== "number" || typeof x.en !== "number" || x.en <= x.st) return;
+        haveW[id] = 1;
+        f.wo.push({ id: id, m: now, d: ymdLocal(x.st), st: x.st, en: x.en,
+                    ti: str(x.ti, 60) || str(Object.prototype.hasOwnProperty.call(names, x.kind) ? names[x.kind] : "", 60) || str(names.other, 60), p: "", pd: "", n: "", x: [] });
+        addW++;
+      });
+      if (addW) { f.wo.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.fitness = f; }
+    }
+    var steps = Array.isArray(inc.steps) ? inc.steps : [];
+    if (steps.length) {
+      var h = blobs.health && typeof blobs.health === "object" ? JSON.parse(JSON.stringify(blobs.health))
+                                                              : { ver: 1, en: [], ty: [], set: null, tombs: {} };
+      if (!Array.isArray(h.en)) h.en = [];
+      var ht = h.tombs || {}, byId = {}, ch = 0, today = ymdLocal(now);
+      h.en.forEach(function (e, i) { if (e && e.id) byId[e.id] = i; });
+      steps.forEach(function (x) {
+        if (!x || typeof x.d !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(x.d)) return;
+        var n = Math.round(+x.n || 0);
+        if (n < 1 || n > 200000) return;
+        var id = "hc-st-" + x.d.replace(/-/g, "");
+        var i = byId[id], old = i === undefined ? null : h.en[i];
+        if (old && old.v && old.v[0] === n) return;
+        if ((ht["en:" + id] || 0) >= (old ? old.m : 0) && ("en:" + id) in ht) return;
+        var row = { id: id, m: now, t: "st", at: x.d === today ? now : localMs(x.d, "23:59"), v: [n],
+                    c: 0, a: 0, p: 0, n: "", g: [] };
+        if (old) h.en[i] = row; else { byId[id] = h.en.length; h.en.push(row); }
+        ch++;
+      });
+      if (ch) { h.en.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.health = h; }
+    }
+    return res;
+  }
+
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
               applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
               applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey,
-              reminderRows: reminderRows, widgetData: widgetData };
+              reminderRows: reminderRows, widgetData: widgetData,
+              healthOut: healthOut, healthIn: healthIn };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -676,7 +776,73 @@
     }
     if (send({ t: kind, seq: ++seq, items: items })) lastSent[kind] = key;
   }
-  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); }
+  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); pushHealth(force); }
+
+  // Health Connect (v5): the last 30 days of Water and Workouts, sent
+  // when they changed and every 15 minutes while orOS is on screen;
+  // the app answers with what other apps put in Health Connect
+  // ({t:"health-in"}), so steps follow the day.
+  function healthOk() { return appState && (appState.health === "granted" || appState.health === "some"); }
+  function pushHealth(force) {
+    if (!port || !prefs().health || !healthOk()) return;
+    var now = Date.now(), raw = "";
+    try { raw = localStorage.getItem(HEALTH_KEYS.water) + "\n" + localStorage.getItem(HEALTH_KEYS.fitness); } catch (e) { return; }
+    var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 900000);
+    if (!force && lastSent.health === key) return;
+    var water = null, fit = null;
+    try {
+      var W = root.orosWaterCore;
+      water = W && W.parse ? W.parse(localStorage.getItem(HEALTH_KEYS.water)) : JSON.parse(localStorage.getItem(HEALTH_KEYS.water) || "null");
+    } catch (e) {}
+    try { fit = JSON.parse(localStorage.getItem(HEALTH_KEYS.fitness) || "null"); } catch (e) {}
+    var o = healthOut(water, fit, now);
+    if (send({ t: "health", seq: ++seq, since: o.since, water: o.water, workouts: o.workouts })) lastSent.health = key;
+  }
+  // An app that is open holds its data in memory and would write over
+  // ours: what is for it waits until it closes (the next answer).
+  function appOpen(id) {
+    var open = false;
+    Array.prototype.forEach.call(document.querySelectorAll("iframe"), function (f) {
+      if ((f.getAttribute("src") || "").indexOf("/" + id + "/") >= 0) open = true;
+    });
+    return open;
+  }
+  function takeHealth(m) {
+    if (!prefs().health) return;
+    var blobs = {}, now = Date.now(), W = root.orosWaterCore;
+    Object.keys(HEALTH_KEYS).forEach(function (k) {
+      if (appOpen(k)) return;
+      try {
+        var raw = localStorage.getItem(HEALTH_KEYS[k]);
+        blobs[k] = k === "water" && W && W.parse ? W.parse(raw) : JSON.parse(raw || "null");
+      } catch (e) { blobs[k] = null; }
+    });
+    var el = (document.documentElement.lang || "").slice(0, 2) === "el";
+    var res = healthIn(blobs, {
+      water: "water" in blobs ? m.water : [],
+      workouts: "fitness" in blobs ? m.workouts : [],
+      steps: "health" in blobs ? m.steps : []
+    }, now, el ? HC_KINDS.el : HC_KINDS.en);
+    var wrote = false;
+    try {
+      if (res.water) {
+        var W = root.orosWaterCore, w = W && W.parse ? W.parse(JSON.stringify(res.water)) : res.water;
+        localStorage.setItem(HEALTH_KEYS.water, JSON.stringify(w));
+        wrote = true;
+      }
+      if (res.fitness) { localStorage.setItem(HEALTH_KEYS.fitness, JSON.stringify(res.fitness)); wrote = true; }
+      if (res.health) {
+        var H = root.OrosHealthCore, h = H && H.merge ? H.merge(H.emptyData(), res.health) : res.health;
+        localStorage.setItem(HEALTH_KEYS.health, JSON.stringify(h));
+        wrote = true;
+      }
+    } catch (e) { return; }
+    if (wrote) { try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {} }
+    var p = prefs();
+    p.healthIn = { at: now, steps: (m.steps || []).length, water: (m.water || []).length, workouts: (m.workouts || []).length };
+    savePrefs(p);
+    emit();
+  }
 
   // Home-screen widget (v4): only while the phone has one (the app's
   // state says how many), at most once a minute unless forced, and
@@ -760,13 +926,16 @@
         reminders: m.reminders === "granted" ? "granted" : (m.reminders === "denied" ? "denied" : (m.reminders === "ask" ? "ask" : "")),
         exact: m.exact === true,
         widgets: Math.max(0, Math.min(50, m.widgets | 0)),
+        health: ["granted", "some", "ask", "denied", "update", "unavailable"].indexOf(m.health) >= 0 ? m.health : "",
         app: typeof m.app === "string" ? m.app.slice(0, 20) : ""
       };
       emit();
       pushAll(true);
+    } else if (m.t === "health-in") {
+      takeHealth(m);
     } else if (m.t === "changes" && (m.what === "calendar" || m.what === "contacts") && Array.isArray(m.items)) {
       takeChanges(m.what, m.items);
-    } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar" || m.what === "reminders")) {
+    } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar" || m.what === "reminders" || m.what === "health")) {
       var p = prefs();
       p[m.what + "At"] = Date.now();
       p[m.what + "Err"] = m.t === "error" ? String(m.msg || "error").slice(0, 120) : "";
@@ -870,6 +1039,7 @@
     // shell then shows it in orOS only, never as a second OS one.
     handles: function (dedupKey) { return !!prefs().reminders && typeof dedupKey === "string" && dedupKey in handled(); },
     available: function () { return !!port; },
+    healthInfo: function () { return prefs().healthIn || null; },
     state: function () { return appState; },
     enabled: function (kind) { return !!prefs()[kind]; },
     lastSync: function (kind) {
@@ -877,13 +1047,13 @@
       return { at: p[kind + "At"] || 0, n: p[kind + "N"] || 0, err: p[kind + "Err"] || "" };
     },
     setEnabled: function (kind, on) {
-      if (!KEYS[kind] && kind !== "reminders") return;
+      if (!KEYS[kind] && kind !== "reminders" && kind !== "health") return;
       var p = prefs();
       p[kind] = !!on;
       savePrefs(p);
       lastSent[kind] = null;
       if (kind === "reminders" && !on) { try { localStorage.removeItem(HANDLED_KEY); } catch (e) {} }
-      if (on) { if (kind === "reminders") pushReminders(true); else push(kind, true); }
+      if (on) { if (kind === "reminders") pushReminders(true); else if (kind === "health") pushHealth(true); else push(kind, true); }
       else send({ t: "clear", what: kind });
       emit();
     },

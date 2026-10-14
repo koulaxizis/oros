@@ -3,4 +3,7 @@
 // in the phone's own apps (BR-PHONE, see android/README.md).
 plugins {
     id 'com.android.application' version '8.9.1' apply false
+    // Health Connect's client library is Kotlin (suspend functions):
+    // HealthBridge.kt wraps it for the Java side.
+    id 'org.jetbrains.kotlin.android' version '2.1.0' apply false
 }

@@ -52,7 +52,7 @@ test("kinds: built-in rows, own kinds, targets, reminders", () => {
   const d = data({ ty: [own] });
   assert.equal(C.typeRow(d, "bp").r.length, 0, "unedited built-in gets defaults");
   assert.equal(C.typeRow(d, "cnope"), null);
-  assert.deepEqual(C.typeList(d).map((x) => x.id), ["bp", "wt", "gl", "sl", "hr", "tp", "o2", "cabc"]);
+  assert.deepEqual(C.typeList(d).map((x) => x.id), ["bp", "wt", "gl", "sl", "hr", "tp", "o2", "st", "cabc"]);
 });
 
 test("merge: symmetric, idempotent, canonical (R5, R26)", () => {

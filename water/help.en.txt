@@ -31,6 +31,9 @@ Next to the day (or under it on a phone) you see:
 ## Reminders
 Reminders are off at first. Turn them on with the `Reminders` button at the top, or in `Settings`, where you also choose the hours (`From`, `Until`) and `At most every`. You only get a reminder when you're behind: for example, halfway through your hours with less than half your goal. Opening it takes you to Water. See [Notifications](help:t/notifications).
 
+## Health Connect
+In the orOS Android app, switch on `Health Connect` in Settings › `Connected services`. Your drinks of the last 30 days then go to Health Connect, and drinks logged in other health apps come into Water. A drink that came from another app and that you delete here doesn't come back.
+
 ## Sync and backup
 Your drinks, goals and settings sync between your devices through [orOS sync](help:t/sync). Which month the heatmap shows stays on this device. `Export CSV` (in `Settings`) saves every drink with its date, time and amount. For a full copy, see [backup](help:t/backup).
 

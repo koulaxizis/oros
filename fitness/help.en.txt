@@ -36,6 +36,9 @@ Warm-up sets stay warm-up sets, notes come along, and records, charts, Calendar 
 
 > New exercises land in the `Exercise library`, where you can rename them or change their muscle group.
 
+## Health Connect
+In the orOS Android app, switch on `Health Connect` in Settings › `Connected services`. Your finished workouts of the last 30 days then go to Health Connect as strength training, and workouts from your watch or other apps (a run, a ride, a swim) come in with their times and no exercises. A workout that came from another app and that you delete here doesn't come back.
+
 ## Sync and backup
 Your exercises, programs, workouts, body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices and rest timer stay on this device.
 

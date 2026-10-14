@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.94.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.95.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -4866,6 +4866,10 @@
         { name: "Leaflet 1.9.4", url: "https://leafletjs.com/",
           by: "Volodymyr Agafonkin & contributors", lic: "BSD-2-Clause",
           en: "Maps", el: "Χάρτες" },
+        { name: "Health Connect client 1.1.0 + Kotlin", url: "https://developer.android.com/jetpack/androidx/releases/health-connect",
+          by: "The Android Open Source Project; JetBrains & Kotlin contributors", lic: "Apache-2.0",
+          en: "Android app only: Health Connect (Health, Water, Workouts)",
+          el: "Μόνο στην εφαρμογή Android: Health Connect (Υγεία, Νερό, Προπονήσεις)" },
         { name: "jsPDF 2.5.2", url: "https://github.com/parallax/jsPDF",
           by: "James Hall, yWorks & contributors", lic: "MIT",
           en: "PDF export (Mood, Cycle, Quote, Writer, Netizen ID, Spreadsheet, Budget)",

@@ -28,7 +28,8 @@
     sl: { en: "Sleep",              el: "Ύπνος" },
     hr: { en: "Resting heart rate", el: "Σφυγμοί ηρεμίας" },
     tp: { en: "Temperature",        el: "Θερμοκρασία" },
-    o2: { en: "Oxygen (SpO₂)",      el: "Οξυγόνο (SpO₂)" }
+    o2: { en: "Oxygen (SpO₂)",      el: "Οξυγόνο (SpO₂)" },
+    st: { en: "Steps",              el: "Βήματα" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }

@@ -31,6 +31,9 @@ In a measurement's settings, `Add a time` (up to four). A bell on the card shows
 ## Workouts weights
 If you log body weight in [Workouts](app:fitness), those weights appear in Health as hollow dots marked `from Workouts`. Health only reads them: to change one, open Workouts. You can turn this off in `Settings`.
 
+## Steps and Health Connect
+`Steps` holds one reading per day. You can type it, or let the orOS Android app bring it: switch on `Health Connect` in Settings › `Connected services` and allow it. orOS then takes each day's steps from Health Connect, which collects them from your phone, watch or other health apps. Today's count goes up while you use orOS. The same switch sends your [Water](app:water) drinks and [Workouts](app:fitness) to Health Connect, and brings back drinks and workouts from your other apps, for the last 30 days.
+
 ## Sync and backup
 Readings, your own kinds, targets, reminders and settings sync between your devices through [orOS sync](help:t/sync). The open tab, chart choices and report options stay on this device.
 

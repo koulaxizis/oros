@@ -20,4 +20,5 @@
     <string name="widget_no_data">Open orOS once to fill this widget.</string>
     <string name="widget_stale">Open orOS to bring this up to date.</string>
     <string name="widget_more">+%d more</string>
+    <string name="health_missing">Health Connect is not available on this phone.</string>
 </resources>
