@@ -2676,4 +2676,13 @@
   watchPalette();
   renderAll(readPayload());   // instant paint from cache (if any)…
   refresh(false);             // …then fetch if the cache is >30min old
+  // Single app (solo.js) icon shortcut { addCity: true }: the city
+  // dialog (search, or "My location" from its own button).
+  window.__orosOpenAt = function (t) {
+    if (t && t.addCity === true && !document.querySelector("dialog[open]")) openCityDialog();
+  };
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
+      window.__orosOpenAt(window.parent.__orosTakeTarget("weather"));
+  } catch (e) {}
 })();

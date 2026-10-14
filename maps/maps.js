@@ -3503,8 +3503,10 @@
     search.focus();
     acFetch(q);
   }
+  // { locate: true }: the single app's "My location" icon shortcut.
   window.__orosOpenAt = function (target) {
     if (target && target.asNew) asNewPlace(target.asNew);
+    else if (target && target.locate === true && map) getUserLocation(function () {});
   };
 
   window.__orosMapsOpen = function (params) {
@@ -3927,6 +3929,7 @@
   setTimeout(function () {
     var pt = mapsHost.pendingTarget;
     if (pt && pt.asNew) { mapsHost.pendingTarget = null; asNewPlace(pt.asNew); }
+    else if (pt && pt.locate === true && map) { mapsHost.pendingTarget = null; getUserLocation(function () {}); }
   }, 400);
 
   // A navigation that was running when this page was replaced

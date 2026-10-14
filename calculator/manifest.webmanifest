@@ -1,0 +1,70 @@
+{
+  "name": "orOS Calculator",
+  "short_name": "Calculator",
+  "description": "orOS Calculator: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/calculator/solo.html",
+  "start_url": "/calculator/solo.html",
+  "scope": "/calculator/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/calculator.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/calculator-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/calculator-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/calculator-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Scientific",
+      "short_name": "Scientific",
+      "url": "/calculator/solo.html?do=sci",
+      "icons": [
+        {
+          "src": "/icons/solo/calculator-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Graphs",
+      "short_name": "Graphs",
+      "url": "/calculator/solo.html?do=graph",
+      "icons": [
+        {
+          "src": "/icons/solo/calculator-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

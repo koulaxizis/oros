@@ -1568,6 +1568,8 @@
   // waits for a refresh of the shows. Nothing while a dialog is open.
   var waitEp = "";
   function openTarget(x) {
+    // { find: true }: the single app's "Find a podcast" shortcut.
+    if (x && typeof x === "object" && x.find === true) { setTab("find"); return; }
     // { openFile: { token } }: a file from the system's "Open with"
     // (shell fileopen.js), taken once, then the OPML import.
     if (x && typeof x === "object" && x.openFile) {

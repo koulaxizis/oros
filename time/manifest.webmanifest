@@ -1,0 +1,82 @@
+{
+  "name": "orOS Time",
+  "short_name": "Time",
+  "description": "orOS Time: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/time/solo.html",
+  "start_url": "/time/solo.html",
+  "scope": "/time/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/time.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/time-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/time-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/time-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Timer",
+      "short_name": "Timer",
+      "url": "/time/solo.html?do=timer",
+      "icons": [
+        {
+          "src": "/icons/solo/time-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Stopwatch",
+      "short_name": "Stopwatch",
+      "url": "/time/solo.html?do=stopwatch",
+      "icons": [
+        {
+          "src": "/icons/solo/time-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Alarms",
+      "short_name": "Alarms",
+      "url": "/time/solo.html?do=alarms",
+      "icons": [
+        {
+          "src": "/icons/solo/time-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

@@ -140,6 +140,57 @@
     cycle: {
       name: { en: "orOS Cycle", el: "orOS Κύκλος" },
       shortcuts: [{ do: "today", name: { en: "Log today", el: "Καταγραφή σήμερα" }, target: { today: true } }]
+    },
+    // Wave 4: tools and media.
+    calculator: {
+      name: { en: "orOS Calculator", el: "orOS Αριθμομηχανή" },
+      shortcuts: [{ do: "sci", name: { en: "Scientific", el: "Επιστημονική" }, target: { mode: "sci" } },
+                  { do: "graph", name: { en: "Graphs", el: "Γραφήματα" }, target: { mode: "graph" } }]
+    },
+    time: {
+      name: { en: "orOS Time", el: "orOS Ώρα" },
+      shortcuts: [{ do: "timer", name: { en: "Timer", el: "Αντίστροφη μέτρηση" }, target: { pane: "timer" } },
+                  { do: "stopwatch", name: { en: "Stopwatch", el: "Χρονόμετρο" }, target: { pane: "stopwatch" } },
+                  { do: "alarms", name: { en: "Alarms", el: "Ξυπνητήρια" }, target: { pane: "alarms" } }]
+    },
+    weather: {
+      name: { en: "orOS Weather", el: "orOS Καιρός" },
+      shortcuts: [{ do: "city", name: { en: "Add a city", el: "Νέα πόλη" }, target: { addCity: true } }]
+    },
+    maps: {
+      name: { en: "orOS Maps", el: "orOS Χάρτες" },
+      shortcuts: [{ do: "locate", name: { en: "My location", el: "Η θέση μου" }, target: { locate: true } },
+                  { do: "park", name: { en: "Where I parked", el: "Πού πάρκαρα" }, target: { park: true } }],
+      share: "place"
+    },
+    feeds: {
+      name: { en: "orOS Reader", el: "orOS Αναγνώστης" },
+      shortcuts: [{ do: "add", name: { en: "Add a feed", el: "Νέα ροή" }, target: { addBlank: true } }],
+      share: "feed"
+    },
+    mail: {
+      name: { en: "orOS Mail", el: "orOS Αλληλογραφία" },
+      shortcuts: [{ do: "new", name: { en: "New mail", el: "Νέο μήνυμα" }, target: { compose: {} } }],
+      share: "mail"
+    },
+    files: {
+      name: { en: "orOS Files", el: "orOS Αρχεία" },
+      // (no "Add files": a file picker needs a tap inside the page)
+      shortcuts: [{ do: "folder", name: { en: "New folder", el: "Νέος φάκελος" }, target: { newFolder: true } }]
+    },
+    podcasts: {
+      name: { en: "orOS Podcasts", el: "orOS Podcasts" },
+      shortcuts: [{ do: "find", name: { en: "Find a podcast", el: "Εύρεση podcast" }, target: { find: true } }],
+      share: "podcast"
+    },
+    radio: {
+      name: { en: "orOS Radio", el: "orOS Ραδιόφωνο" },
+      shortcuts: [{ do: "last", name: { en: "Play the last station", el: "Ο τελευταίος σταθμός" }, target: { play: "last" } }]
+    },
+    photolab: {
+      name: { en: "orOS Photo Lab", el: "orOS Εργαστήριο εικόνας" },
+      // (no "Open a picture": a file picker needs a tap inside the page)
+      shortcuts: [{ do: "new", name: { en: "New picture", el: "Νέα εικόνα" }, target: { newPic: true } }]
     }
   };
 
@@ -297,6 +348,23 @@
     }
     if (kind === "workout") {
       return bodyText.trim() ? { app: id, target: { asNew: { note: bodyText.slice(0, 2000) } } } : null;
+    }
+    // Wave 4.
+    if (kind === "place") {
+      // geo:lat,lon (the Android share of a place) → a pin; otherwise
+      // the title or first line is searched (never a bare web address).
+      var g = /geo:(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/i.exec(text + " " + s.title);
+      var q = (title || firstLine).replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
+      if (g && Math.abs(+g[1]) <= 90 && Math.abs(+g[2]) <= 180) {
+        return { app: id, target: { asNew: { name: q || g[1] + ", " + g[2], lat: +g[1], lon: +g[2] } } };
+      }
+      return q ? { app: id, target: { asNew: { name: q, query: q } } } : null;
+    }
+    if (kind === "feed" || kind === "podcast") {
+      return url ? { app: id, target: { add: { url: url } } } : null;
+    }
+    if (kind === "mail") {
+      return bodyText.trim() || title ? { app: id, target: { compose: { subject: (title || firstLine).slice(0, 300), body: bodyText.slice(0, 20000) } } } : null;
     }
     if (kind === "outline") {
       // A titled share starts with its title slide ("# title").

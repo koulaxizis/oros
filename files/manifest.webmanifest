@@ -1,0 +1,58 @@
+{
+  "name": "orOS Files",
+  "short_name": "Files",
+  "description": "orOS Files: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/files/solo.html",
+  "start_url": "/files/solo.html",
+  "scope": "/files/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/files.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/files-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/files-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/files-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "New folder",
+      "short_name": "New folder",
+      "url": "/files/solo.html?do=folder",
+      "icons": [
+        {
+          "src": "/icons/solo/files-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
