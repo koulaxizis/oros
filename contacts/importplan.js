@@ -206,7 +206,12 @@
       ["email", "phone", "name"].some(function (want) {
         for (k = 0; k < local.length; k++) {
           var c = local[k];
-          if (!c || claimed[c.id]) continue;
+          if (!c) continue;
+          // A contact an earlier row of this import already matched
+          // takes another row only when the names agree (an earlier
+          // import may have folded both into it); two people who share
+          // a number do not end up as one.
+          if (claimed[c.id] && !namesAgree(nameKey(c), nameKey(inc))) continue;
           if (matchHas(c, inc, want)) { match = c; by = want; return true; }
         }
         return false;

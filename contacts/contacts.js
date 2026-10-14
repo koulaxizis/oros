@@ -809,6 +809,29 @@
     var ty = (types.indexOf(row.type) !== -1) ? row.type : "other";
     return { v: v, type: ty };
   }
+  // Google's CSV export joins several values of one field with
+  // " ::: ". Older imports stored them as one value; split them back
+  // into rows (same type), dropping a repeat of a value already there.
+  // Deterministic, so every device reaches the same result.
+  function splitMulti(list, phone) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    function same(a, b) {
+      if (!phone) return a.toLowerCase() === b.toLowerCase();
+      var IPm = window.OrosContactsImport;
+      return IPm ? IPm.samePhone(a, b) : phoneDigits(a) === phoneDigits(b);
+    }
+    list.forEach(function (r) {
+      if (!r || typeof r !== "object" || typeof r.v !== "string" || r.v.indexOf(":::") === -1) { out.push(r); return; }
+      r.v.split(":::").forEach(function (part) {
+        part = part.replace(/:+$/, "").trim();
+        if (!part) return;
+        if (out.some(function (o) { return o && typeof o.v === "string" && same(o.v.trim(), part); })) return;
+        out.push({ v: part, type: r.type });
+      });
+    });
+    return out;
+  }
   function sanAddr(row) {
     if (!row || typeof row !== "object") return null;
     var street = (typeof row.street === "string" ? row.street : "").trim().slice(0, 120);
@@ -863,10 +886,10 @@
       nickname: (typeof c.nickname === "string" ? c.nickname : "").slice(0, 60),
       org:      (typeof c.org === "string" ? c.org : "").slice(0, 80),
       jobTitle: (typeof c.jobTitle === "string" ? c.jobTitle : "").slice(0, 80),
-      phones:    (Array.isArray(c.phones) ? c.phones : []).map(function (r) { return sanVal(r, 40, PHONE_TYPES); }).filter(Boolean),
-      emails:    (Array.isArray(c.emails) ? c.emails : []).map(function (r) { return sanVal(r, 120, EMAIL_TYPES); }).filter(Boolean),
+      phones:    splitMulti(c.phones, true).map(function (r) { return sanVal(r, 40, PHONE_TYPES); }).filter(Boolean),
+      emails:    splitMulti(c.emails, false).map(function (r) { return sanVal(r, 120, EMAIL_TYPES); }).filter(Boolean),
       addresses: (Array.isArray(c.addresses) ? c.addresses : []).map(sanAddr).filter(Boolean),
-      websites:  (Array.isArray(c.websites) ? c.websites : []).map(function (r) { return sanVal(r, 300, WEB_TYPES); }).filter(Boolean),
+      websites:  splitMulti(c.websites, false).map(function (r) { return sanVal(r, 300, WEB_TYPES); }).filter(Boolean),
       im:        (Array.isArray(c.im) ? c.im : []).map(function (r) { return sanVal(r, 120, IM_TYPES); }).filter(Boolean),
       events:    (Array.isArray(c.events) ? c.events : []).map(sanEvent).filter(Boolean)
                    .sort(function (a, b) { return a.type < b.type ? -1 : (a.type > b.type ? 1 : (a.day < b.day ? -1 : 1)); }),
@@ -3915,7 +3938,10 @@ document.addEventListener("keydown", function (e) {
         if (r.changed) {
           r.c.mtime = Date.now();
           var m = sanitizeContact(r.c);
-          undo.before.push(JSON.parse(JSON.stringify(local)));
+          // two rows can merge into one contact: Undo keeps the first
+          if (!undo.before.some(function (b) { return b.id === local.id; })) {
+            undo.before.push(JSON.parse(JSON.stringify(local)));
+          }
           state.contacts[state.contacts.indexOf(local)] = m;
           merged++;
           report.push({ name: displayName(m), kind: "upd" });
@@ -4119,9 +4145,11 @@ document.addEventListener("keydown", function (e) {
     for (n = 1; n <= 15; n++) {
       var pv = csvPair(row, headers, "phone", n, "value");
       if (!pv) continue;
-      pc.phones.push({
-        v: pv.slice(0, 40),
-        type: typeFromVcf(csvPair(row, headers, "phone", n, "type"), PHONE_TYPES, "other")
+      var pty = typeFromVcf(csvPair(row, headers, "phone", n, "type"), PHONE_TYPES, "other");
+      // Google joins several numbers of one row with " ::: "
+      pv.split(":::").forEach(function (one) {
+        one = one.trim();
+        if (one) pc.phones.push({ v: one.slice(0, 40), type: pty });
       });
     }
     // Email spelling check: remember WHICH alias matched ("e-mail"
@@ -4130,9 +4158,10 @@ document.addEventListener("keydown", function (e) {
       var evKey = csvPair(row, headers, "e-mail", n, "value") ? "e-mail"
                 : (csvPair(row, headers, "email", n, "value") ? "email" : null);
       if (!evKey) continue;
-      pc.emails.push({
-        v: csvPair(row, headers, evKey, n, "value").slice(0, 120),
-        type: typeFromVcf(csvPair(row, headers, evKey, n, "type"), EMAIL_TYPES, "other")
+      var ety = typeFromVcf(csvPair(row, headers, evKey, n, "type"), EMAIL_TYPES, "other");
+      csvPair(row, headers, evKey, n, "value").split(":::").forEach(function (one) {
+        one = one.trim();
+        if (one) pc.emails.push({ v: one.slice(0, 120), type: ety });
       });
     }
     for (n = 1; n <= 10; n++) {
@@ -4154,9 +4183,10 @@ document.addEventListener("keydown", function (e) {
     for (n = 1; n <= 10; n++) {
       var wv = csvPair(row, headers, "website", n, "value");
       if (!wv) continue;
-      pc.websites.push({
-        v: wv.slice(0, 300),
-        type: typeFromVcf(csvPair(row, headers, "website", n, "type"), WEB_TYPES, "other")
+      var wty = typeFromVcf(csvPair(row, headers, "website", n, "type"), WEB_TYPES, "other");
+      wv.split(":::").forEach(function (one) {
+        one = one.trim();
+        if (one) pc.websites.push({ v: one.slice(0, 300), type: wty });
       });
     }
     var bd = parseCsvBirthday(pick(CSV_H.bday));
