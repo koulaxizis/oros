@@ -6,7 +6,7 @@ Look for the send button in these apps:
 - [To-Do](app:todo): the paper-plane button above the list sends the open list.
 - [Notes](app:notes): the paper-plane button next to the page title, or `Send to someone…` in the page menu.
 - [Contacts](app:contacts): `Share` on a contact's card.
-- [Calendar](app:calendar): `Send…` in a saved event.
+- [Calendar](app:calendar): `Send…` in a saved event, and `More` › `Share free times…` for a link where someone picks one of your free times and emails you back.
 - [Meal Planner](app:meals): `Share` on an open recipe.
 - [Bookmarks](app:bookmarks): `Send to someone…` in a bookmark's menu, or select several and tap `Send…`.
 

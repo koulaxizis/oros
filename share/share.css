@@ -71,6 +71,20 @@ dl.fields dd { margin: 0; }
 }
 .acts button.prim { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
 .acts button:hover { border-color: var(--accent); }
+.acts a.btn {
+  padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+  font-size: 14px; text-decoration: none; display: inline-block;
+}
+.acts a.btn.prim { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
+.slots h2 { font-size: 15px; margin: 16px 0 8px; }
+.slot-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.slot-row button.slot {
+  min-width: 72px; min-height: 40px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: transparent; color: var(--text); font: inherit; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.slot-row button.slot:hover, .slot-row button.slot:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.slot-done { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 12px; }
+.slot-done h2 { margin-top: 0; }
 .hint { margin: 10px 0 0; font-size: 12.5px; color: var(--text-dim); }
 form.pass { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 form.pass input {
@@ -86,7 +100,7 @@ form.pass input {
 @media (max-width: 420px) {
   #card { padding: 14px; }
   h1 { font-size: 20px; }
-  .acts button { flex: 1 1 100%; }
+  .acts button, .acts a.btn { flex: 1 1 100%; text-align: center; }
   dl.fields { grid-template-columns: 1fr; gap: 0 0; }
   dl.fields dd { margin-bottom: 8px; }
 }

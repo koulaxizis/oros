@@ -10,6 +10,16 @@ Switch between `Day`, `Week`, `Month`, `Year` and `Agenda` with the buttons unde
 - `Year` shows the 12 months small, with a dot under days that have events. Tap a day to open it in `Day`, or a month's name to open that month.
 - `Agenda` lists what's coming in the next 30 days; `Show more` adds more days.
 
+## Quick add
+`Quick add`, next to `Add`, takes one line written the way you'd say it, in English or Greek, and opens the event window filled in, so you can check it before you save. For example:
+- "Coffee with Nikos Thursday 6pm at Syntagma"
+- "Καφές με Νίκο Πέμπτη 6μμ στο Σύνταγμα"
+- "dentist 15/11 9:30"
+- "every Monday gym 7am"
+- "αύριο 10-12 σύσκεψη"
+
+It understands days ("today", "tomorrow", "Friday", "next Friday", "in 3 days", "15/11", "15 Nov", «αύριο», «την άλλη Τρίτη», «3 Μαΐου»), times and ranges ("6pm", "18:30", "10-12", "at 7", «στις 9 το βράδυ», «6μμ»), repeats ("every Monday", "every weekday", "every 2 weeks", "monthly", «κάθε Δευτέρα», «τις Τρίτες», «καθημερινά»), and a place after "at", "@" or «στο / στη / στην». What is left becomes the title. While you type, a short preview shows what it understood. Dates are day first (15/11 is 15 November). A bare hour from 1 to 6 counts as the afternoon ("at 3" is 15:00); write "3am" or «3 το πρωί» for the morning.
+
 ## Add and edit events
 The event window has:
 - `Title`. It's the only field you must fill in.
@@ -51,6 +61,19 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 
 Tapping a feed row opens the app it comes from. To change it, edit it there.
 
+## Subscribe to a calendar
+`More` › `Subscribe to a calendar…` adds a calendar that someone publishes as a .ics address (it starts with webcal:// or https://), such as a team calendar, school holidays, sports fixtures, or a Google or Outlook calendar's "secret address in iCal format". Paste the address, give it a name and a colour if you like, and press `Subscribe`. Its events show read-only, with their own chip, like the other feeds. Tap one to see it in full; `Copy to my calendar` opens it as a new event of your own.
+
+The Calendar reads a subscribed calendar when you open it (if it's been more than half an hour) and every 3 hours while it stays open; `Refresh` reads it at once. Offline, you see the last copy. Many servers let the browser read the calendar directly. Those that don't are read through the orOS relay that [Reader](app:feeds) uses, with its address from Reader's `Settings` or from [Mail](app:mail); without one, the window tells you so. In the same window you can rename a subscription, tap its dot to change its colour, or `Remove` it (`Undo` brings it back).
+
+## Share free times
+`More` › `Share free times…` makes a link with the times you're free, so someone can pick one, like a booking page. Choose what it's for, the length (15 minutes to 2 hours), how many days ahead (3 to 30), the hours of the day, and whether Saturday and Sunday count. Your name and email come from your [Mail](app:mail) account when there is one. The window says how many free times it found, and `Make the link…` opens [Send to someone](help:t/share), where you copy, share or email the link.
+
+Free times are worked out on this device from your own events with a time and from the subscribed calendars you show; all-day events (birthdays, holidays) don't block time, and times already past are left out. The other person opens the link in any browser, sees the times in their own time zone, picks one, and gets `Add to calendar (.ics)`, `Add to my orOS`, and an email back to you, written for them, with the time they chose. Nothing is booked by itself: the time is yours to confirm when the email arrives. Like every shared link, the times travel inside the link; no server keeps them.
+
+## Print
+`More` › `Print…` prints the view you're looking at, `Day`, `Week`, `Month`, `Year` or `Agenda`, on a clean white page: the month as a table with times and titles, the week and agenda as lists per day, the year as 12 small months with days that have events in bold. To make a PDF, pick "Save as PDF" as the printer.
+
 ## Search and statistics
 The search box looks through the title, note and location of your own events and lists every match by date. `Stats` shows how many events you have, how many fall in the next 30 days, how many repeat, and a breakdown by label.
 
@@ -58,9 +81,9 @@ The search box looks through the title, note and location of your own events and
 In the orOS Android app, `On this phone` puts your events, with their reminders and label colours, in the phone's own Calendar as an "orOS" calendar, so other calendar apps and widgets show them too. Turn on `Show on this phone` and tap `Allow access` (Android asks once). Repeating events stay repeating, and every change you make here follows. It works both ways: events you add, change or delete in the phone's "orOS" calendar come into orOS the next time you open orOS (the newest change wins when both sides changed). Changing or cancelling one occurrence of a repeating event on the phone skips that day in the series and, for a change, adds it as a single event. Feed rows go to a separate, read-only "orOS feeds" calendar (holidays, name days and the other apps' dates, from two weeks back to six months ahead), except labels you have hidden here; they follow each time you open the Calendar. "Add to calendar" in other apps and .ics links can also open orOS (pick orOS when Android asks): a new event opens filled in, or the import asks first. Turning the switch off removes the orOS calendar from the phone again. The button appears only in the Android app, and the choice is kept on this phone only.
 
 ## Sync and backup
-Your events and labels sync between your devices through [orOS sync](help:t/sync). Which of your own labels you've hidden is not saved: they all show again next time. The `Holidays`, `Name days`, `World days`, `Work time`, `Moon & Sky` and `Medicines` chips remember whether they are on or off, on this device only. Feed rows are never stored in Calendar; they come from the other apps' own data.
+Your events, labels and subscriptions (address, name, colour) sync between your devices through [orOS sync](help:t/sync). The events of a subscribed calendar are not synced: each device reads them from the address itself and keeps its own copy (on this device only). Which of your own labels you've hidden is not saved: they all show again next time. The `Holidays`, `Name days`, `World days`, `Work time`, `Moon & Sky` and `Medicines` chips remember whether they are on or off, on this device only. Feed rows are never stored in Calendar; they come from the other apps' own data.
 
-`Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows aren't included.
+`Export` saves your own events as a .ics file that other calendar apps can open, with repeats, labels and reminders. Feed rows and subscribed calendars aren't included.
 
 `Import`, next to `Export`, reads a .ics file from Google Calendar, Outlook, your phone or another orOS Calendar. Before anything is saved you see how many events are new, updated or already in the Calendar, and you choose `Import` or `Cancel`. Importing the same file again updates those events instead of adding copies. A category in the file is matched to one of your labels with the same name; no new labels are made. Cancelled events are skipped. With orOS installed on a computer you can also open a .ics file straight from your device with `Open with`; see [opening files](help:t/install).
 
@@ -77,6 +100,9 @@ For a full copy, see [backup](help:t/backup).
 
 ## Limits
 - Reminders can't fire when the browser or the orOS tab is closed.
+- Subscribed calendars are read while the Calendar is open (when it opens and every 3 hours), not in the background. A server that blocks browsers needs the orOS relay. A subscription keeps up to 3000 events; one-off events that ended more than a year ago are left out, and its events have no reminders.
+- Quick add reads English and Greek, with dates day first. When it gets something wrong, fix it in the event window before saving.
+- Free times come from this device's calendar only and don't know about other calendars you haven't subscribed to here. The person who picks a time answers you by email; nothing updates by itself, and the link keeps the times it had when you made it.
 - Dragging works with a mouse only, not by touch. On a phone, open the event and change its days instead.
 - On a phone the days in `Year` are small; tap the month's name to open it larger.
 - When importing, a repeating event whose rule the Calendar can't hold (for example "the 1st and 3rd Monday", several days of the month, or by week number) comes in with only its first date, and an hourly rule likewise. The preview tells you how many.

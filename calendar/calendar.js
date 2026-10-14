@@ -453,6 +453,148 @@
       "stat.perMonth": "{n} συμβάντα αποθηκευμένα"
     }
   };
+
+  // Wave 8 strings (quick add, subscriptions, free times, print).
+  (function (more) {
+    ["en", "el"].forEach(function (l) {
+      Object.keys(more[l]).forEach(function (k) { STR[l][k] = more[l][k]; });
+    });
+  })({
+    en: {
+      "cal.more": "More",
+      "mm.subs": "Subscribe to a calendar…",
+      "mm.free": "Share free times…",
+      "mm.print": "Print…",
+      "qa.btn": "Quick add",
+      "qa.title": "Quick add",
+      "qa.ph": "e.g. Coffee with Nikos Thursday 6pm at Syntagma",
+      "qa.hint": "Write it the way you'd say it: what, when, and \"at\" where. You check it in the event window before saving.",
+      "qa.go": "Continue",
+      "qa.what": "What", "qa.when": "When", "qa.rep": "Repeats", "qa.where": "Where",
+      "qa.allday": "all day",
+      "subs.title": "Subscribed calendars",
+      "subs.text": "Paste the address of a calendar that is published as .ics (webcal:// or https://): a team calendar, school holidays, fixtures. Its events show read-only with their own chip and refresh by themselves.",
+      "subs.url": "Calendar address",
+      "subs.url.ph": "webcal://… or https://….ics",
+      "subs.name": "Name (optional)",
+      "subs.name.ph": "Its own name",
+      "subs.add": "Subscribe",
+      "subs.none": "No subscriptions yet.",
+      "subs.refresh": "Refresh",
+      "subs.remove": "Remove",
+      "subs.removed": "Subscription removed",
+      "subs.color": "Change colour",
+      "subs.bad": "That doesn't look like a calendar address (webcal:// or https://).",
+      "subs.dup": "You're already subscribed to that calendar.",
+      "subs.wait": "Reading the calendar…",
+      "subs.ok": "{n} events · updated {t}",
+      "subs.never": "Not read yet",
+      "subs.more": "{n} more left out (oldest first)",
+      "subs.err.offline": "You're offline. The last copy is shown.",
+      "subs.err.norelay": "This calendar's server doesn't let a browser read it directly. It needs the orOS relay: set its address in Mail or in the Reader's Settings.",
+      "subs.err.http": "The server answered with an error ({n}).",
+      "subs.err.notics": "That address didn't return a calendar (.ics).",
+      "subs.err.big": "That calendar is too big to read (5 MB at most).",
+      "subs.err.timeout": "The server took too long to answer.",
+      "subs.err.other": "Couldn't read the calendar ({e}).",
+      "subs.lasterr": "Last try failed: {e}",
+      "sv.copy": "Copy to my calendar",
+      "sv.from": "From {name}",
+      "fr.title": "Share free times",
+      "fr.text": "Makes a link with the times you're free, worked out from your calendar on this device. The other person picks one and emails you back. No server keeps anything, and nothing is booked by itself.",
+      "fr.what": "What for",
+      "fr.what.ph": "Meeting",
+      "fr.len": "Length",
+      "fr.days": "Over the next",
+      "fr.from": "From",
+      "fr.to": "Until",
+      "fr.wknd": "Include Saturday and Sunday",
+      "fr.name": "Your name",
+      "fr.mail": "Your email (answers come here)",
+      "fr.mail.ph": "you@example.com",
+      "fr.loc.ph": "Optional: a place or a call link",
+      "fr.go": "Make the link…",
+      "fr.min": "{n} min",
+      "fr.hours": "{n} h",
+      "fr.dayN": "{n} days",
+      "fr.sum": "{n} free times on {d} days.",
+      "fr.sum1": "1 free time.",
+      "fr.none": "No free time in those hours. Try more days or longer hours.",
+      "fr.nomail": "Without an email the other person can still add the time to their calendar, but can't answer you from the page.",
+      "fr.noshare": "Open the Calendar inside orOS to send the link.",
+      "pr.week": "Week of {d}",
+      "pr.agenda": "Agenda from {d}",
+      "pr.more": "+{n} more",
+      "pr.none": "Nothing scheduled"
+    },
+    el: {
+      "cal.more": "Περισσότερα",
+      "mm.subs": "Συνδρομή σε ημερολόγιο…",
+      "mm.free": "Κοινοποίηση ελεύθερων ωρών…",
+      "mm.print": "Εκτύπωση…",
+      "qa.btn": "Γρήγορη προσθήκη",
+      "qa.title": "Γρήγορη προσθήκη",
+      "qa.ph": "π.χ. Καφές με Νίκο Πέμπτη 6μμ στο Σύνταγμα",
+      "qa.hint": "Γράψ' το όπως θα το έλεγες: τι, πότε και «στο» πού. Το ελέγχεις στο παράθυρο του συμβάντος πριν το αποθηκεύσεις.",
+      "qa.go": "Συνέχεια",
+      "qa.what": "Τι", "qa.when": "Πότε", "qa.rep": "Επανάληψη", "qa.where": "Πού",
+      "qa.allday": "όλη μέρα",
+      "subs.title": "Ημερολόγια συνδρομής",
+      "subs.text": "Επικόλλησε τη διεύθυνση ενός ημερολογίου που δημοσιεύεται ως .ics (webcal:// ή https://): ημερολόγιο ομάδας, σχολικές αργίες, αγώνες. Τα συμβάντα του φαίνονται μόνο για ανάγνωση, με δικό τους chip, και ανανεώνονται μόνα τους.",
+      "subs.url": "Διεύθυνση ημερολογίου",
+      "subs.url.ph": "webcal://… ή https://….ics",
+      "subs.name": "Όνομα (προαιρετικό)",
+      "subs.name.ph": "Το δικό του όνομα",
+      "subs.add": "Συνδρομή",
+      "subs.none": "Καμία συνδρομή ακόμα.",
+      "subs.refresh": "Ανανέωση",
+      "subs.remove": "Αφαίρεση",
+      "subs.removed": "Η συνδρομή αφαιρέθηκε",
+      "subs.color": "Αλλαγή χρώματος",
+      "subs.bad": "Αυτό δεν μοιάζει με διεύθυνση ημερολογίου (webcal:// ή https://).",
+      "subs.dup": "Έχεις ήδη συνδρομή σε αυτό το ημερολόγιο.",
+      "subs.wait": "Διαβάζω το ημερολόγιο…",
+      "subs.ok": "{n} συμβάντα · ενημέρωση {t}",
+      "subs.never": "Δεν έχει διαβαστεί ακόμα",
+      "subs.more": "Άλλα {n} έμειναν έξω (πρώτα τα παλαιότερα)",
+      "subs.err.offline": "Είσαι εκτός σύνδεσης. Φαίνεται το τελευταίο αντίγραφο.",
+      "subs.err.norelay": "Ο server αυτού του ημερολογίου δεν αφήνει έναν browser να το διαβάσει απευθείας. Χρειάζεται το relay του orOS: βάλε τη διεύθυνσή του στην Αλληλογραφία ή στις Ρυθμίσεις του Αναγνώστη.",
+      "subs.err.http": "Ο server απάντησε με σφάλμα ({n}).",
+      "subs.err.notics": "Αυτή η διεύθυνση δεν έδωσε ημερολόγιο (.ics).",
+      "subs.err.big": "Το ημερολόγιο είναι πολύ μεγάλο (έως 5 MB).",
+      "subs.err.timeout": "Ο server άργησε πολύ να απαντήσει.",
+      "subs.err.other": "Δεν ήταν δυνατό να διαβαστεί το ημερολόγιο ({e}).",
+      "subs.lasterr": "Η τελευταία προσπάθεια απέτυχε: {e}",
+      "sv.copy": "Αντιγραφή στο ημερολόγιό μου",
+      "sv.from": "Από: {name}",
+      "fr.title": "Κοινοποίηση ελεύθερων ωρών",
+      "fr.text": "Φτιάχνει έναν σύνδεσμο με τις ώρες που είσαι ελεύθερος/η, από το ημερολόγιό σου σε αυτή τη συσκευή. Ο άλλος διαλέγει μία και σου απαντά με email. Κανένας server δεν κρατά τίποτα και τίποτα δεν κλείνεται μόνο του.",
+      "fr.what": "Για ποιο λόγο",
+      "fr.what.ph": "Συνάντηση",
+      "fr.len": "Διάρκεια",
+      "fr.days": "Τις επόμενες",
+      "fr.from": "Από",
+      "fr.to": "Έως",
+      "fr.wknd": "Μαζί με Σάββατο και Κυριακή",
+      "fr.name": "Το όνομά σου",
+      "fr.mail": "Το email σου (εκεί έρχονται οι απαντήσεις)",
+      "fr.mail.ph": "esy@example.com",
+      "fr.loc.ph": "Προαιρετικά: ένα μέρος ή σύνδεσμος κλήσης",
+      "fr.go": "Φτιάξε τον σύνδεσμο…",
+      "fr.min": "{n}′",
+      "fr.hours": "{n} ώρ.",
+      "fr.dayN": "{n} μέρες",
+      "fr.sum": "{n} ελεύθερες ώρες σε {d} μέρες.",
+      "fr.sum1": "1 ελεύθερη ώρα.",
+      "fr.none": "Καμία ελεύθερη ώρα σε αυτό το ωράριο. Δοκίμασε περισσότερες μέρες ή μεγαλύτερο ωράριο.",
+      "fr.nomail": "Χωρίς email ο άλλος μπορεί να βάλει την ώρα στο ημερολόγιό του, αλλά όχι να σου απαντήσει από τη σελίδα.",
+      "fr.noshare": "Άνοιξε το Ημερολόγιο μέσα στο orOS για να στείλεις τον σύνδεσμο.",
+      "pr.week": "Εβδομάδα από {d}",
+      "pr.agenda": "Ατζέντα από {d}",
+      "pr.more": "+{n} ακόμα",
+      "pr.none": "Τίποτα προγραμματισμένο"
+    }
+  });
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -532,7 +674,7 @@ function transientNote(title, body) {
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
   var RESCUE_KEY = "oros-calendar-data-broken";   // CA-12: αντίγραφο μη αναγνώσιμων δεδομένων
-  var state = { ver: 1, labels: [], events: [], deleted: [] };
+  var state = { ver: 1, labels: [], events: [], deleted: [], subs: [] };
 
   // Whitelist — the sync-sanitizer contract (deterministic).
   // Declared HERE (moved up from §3b in v0.3): sanitizeEvent runs
@@ -678,6 +820,7 @@ function transientNote(title, body) {
     for (var f = 0; f < FEED_LABELS.length; f++) {
       if (FEED_LABELS[f].id === id) return FEED_LABELS[f];
     }
+    if (typeof id === "string" && id.indexOf("sub-") === 0) return subLabel(id.slice(4));
     return null;
   }
   function labelColor(labelId) {
@@ -732,6 +875,11 @@ function transientNote(title, body) {
     if (start && validTzName(e.tz)) out.tz = e.tz;
     return out;
   }
+  // Wave 8: a subscribed calendar { id, url, name, color, mtime }
+  // (calendar/subs.js). Same colour list as the labels.
+  function sanitizeSub(s) { return window.OrosCalSubs ? window.OrosCalSubs.sanitizeSub(s, VALID_COLORS, false) : null; }
+  function mergeSanitizeSub(s) { return window.OrosCalSubs ? window.OrosCalSubs.sanitizeSub(s, VALID_COLORS, true) : null; }
+
   // Deterministic on every device (no Intl): a name, not a lookup.
   function validTzName(tz) {
     return typeof tz === "string" && /^[A-Za-z][A-Za-z0-9_+\-\/]{0,63}$/.test(tz);
@@ -760,6 +908,10 @@ function transientNote(title, body) {
       // Pre-sync blobs have no "deleted" → empty list, zero migration
       if (d && Array.isArray(d.deleted)) {
         state.deleted = d.deleted.map(sanitizeTomb).filter(Boolean);
+      }
+      // Wave 8: subscribed calendars (absent in older blobs = none)
+      if (d && Array.isArray(d.subs)) {
+        state.subs = d.subs.map(sanitizeSub).filter(Boolean);
       }
       // Seed ΜΟΝΟ όταν λείπει το κλειδί "labels" (φρέσκια
       // εγκατάσταση / v0.1 blob). Άδειο-but-παρόν array = ο χρήστης
@@ -2310,13 +2462,16 @@ function transientNote(title, body) {
     var v = null;
     try { v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}"); } catch (e) {}
     STICKY_FEEDS.forEach(function (id) { if (v && v[id] === false) labelVis[id] = false; });
+    // Wave 8: subscribed calendars remember "hidden" on this device too.
+    if (v && typeof v === "object") Object.keys(v).forEach(function (id) { if (id.indexOf("sub-") === 0 && v[id] === false) labelVis[id] = false; });
     OPT_IN_FEEDS.forEach(function (id) { labelVis[id] = !!(v && v[id] === true); });
   }
   function saveFeedVis(id) {
-    if (STICKY_FEEDS.indexOf(id) === -1 && OPT_IN_FEEDS.indexOf(id) === -1) return;
+    if (STICKY_FEEDS.indexOf(id) === -1 && OPT_IN_FEEDS.indexOf(id) === -1 && String(id).indexOf("sub-") !== 0) return;
     var v = {};
     STICKY_FEEDS.forEach(function (k) { if (!labelVisible(k)) v[k] = false; });
     OPT_IN_FEEDS.forEach(function (k) { if (labelVisible(k)) v[k] = true; });
+    state.subs.forEach(function (x) { if (!labelVisible("sub-" + x.id)) v["sub-" + x.id] = false; });
     try { localStorage.setItem(FEEDVIS_KEY, JSON.stringify(v)); } catch (e) {}
   }
 
@@ -2424,7 +2579,8 @@ function transientNote(title, body) {
     .concat(familyTreeFeedOn(dateStr))
     .concat(crmFeedOn(dateStr))
     .concat(medsFeedOn(dateStr))
-    .concat(skyFeedOn(dateStr));
+    .concat(skyFeedOn(dateStr))
+    .concat(subsFeedOn(dateStr));
   }
 
   // Wave 4 — click-through: any feed row → its owning app. The shell
@@ -2435,6 +2591,7 @@ function transientNote(title, body) {
   // away in that mode anyway.
   function openFeedRow(ev) {
     if (!ev || !ev._feed) return;
+    if (ev._sub) { openSubEvent(ev); return; }      // wave 8: subscribed calendar
     try {
       var p = window.parent;
       if (!p) return;
@@ -3254,10 +3411,11 @@ function transientNote(title, body) {
   function renderChipsToggle() {
     var btn = $("lbl-toggle");
     if (!btn) return;
-    var all = state.labels.length + FEED_LABELS.length;
+    var all = state.labels.length + FEED_LABELS.length + state.subs.length;
     var on = 0;
     state.labels.forEach(function (l) { if (labelVisible(l.id)) on++; });
     FEED_LABELS.forEach(function (fl) { if (labelVisible(fl.id)) on++; });
+    state.subs.forEach(function (x) { if (labelVisible("sub-" + x.id)) on++; });
     btn.textContent = "";
     var name = document.createElement("span");
     name.className = "lbl-tg-name";
@@ -3314,6 +3472,28 @@ function transientNote(title, body) {
         renderDay();
       });
       row.appendChild(fc);
+    });
+    // Wave 8: one chip per subscribed calendar (its own colour).
+    state.subs.forEach(function (x) {
+      var lid = "sub-" + x.id, sl = subLabel(x.id);
+      var sc = document.createElement("button");
+      sc.type = "button";
+      sc.className = "chip chip-sub" + (labelVisible(lid) ? "" : " off");
+      var sdot = document.createElement("span");
+      sdot.className = "chip-dot";
+      sdot.style.background = x.color;
+      sc.appendChild(sdot);
+      sc.appendChild(document.createTextNode(sl.name));
+      var se = subCache[x.id];
+      if (se && se.err) sc.title = subErrText(se);
+      sc.addEventListener("click", function () {
+        labelVis[lid] = !labelVisible(lid);
+        saveFeedVis(lid);
+        renderChips();
+        renderAll();
+        renderDay();
+      });
+      row.appendChild(sc);
     });
     var mg = document.createElement("button");
     mg.type = "button";
@@ -5184,10 +5364,728 @@ function transientNote(title, body) {
         $("ev-date-end").value = p.dateEnd;
         $("ev-date-end").dispatchEvent(new Event("change"));
       }
+      // Wave 8 (quick add): no time said = all day; a repeat,
+      // normalised like any stored one.
+      if (p.allDay === true && !p.start) {
+        $("ev-allday").checked = true;
+        $("ev-allday").dispatchEvent(new Event("change"));
+      }
+      if (p.recur && validRecur(p.recur) && $("ev-repeat") && $("ev-rep-unit")) {
+        var rr = OCC.normRecur(p.recur, p.date);
+        if (rr) setRepeatUi(rr, p.date);
+      }
     }, 60);
   }
   window.__calNewEvent = __orosCalendarNew;
 
+
+  /* ---------- 7h. Wave 8: subscribed calendars (ICS by address) ----------
+     A subscription { id, url, name, color, mtime } is synced in the
+     slice (`subs`, union by id + the shared tombstones). Its events
+     are read from the address on THIS device and kept in the
+     device-local cache "oros-cal-subs-cache" (a feed can hold
+     thousands of events; every device fetches its own copy, so the
+     slice stays small). Reading: straight from the browser when the
+     server allows it, else through the Mail relay's "web" op, the
+     same way the Reader reads feeds (feeds/fetch.js, loaded on first
+     use). Re-read when the Calendar opens (after 30 min) and every
+     3 hours while it stays open; offline the last copy is shown. */
+  var SUBS = window.OrosCalSubs || null;
+  var SUBS_CACHE_KEY = "oros-cal-subs-cache";
+  var SUB_OPEN_AGE = 30 * 60000;
+  var SUB_EVERY = 3 * 3600000;
+  var subCache = {};                 // id → cache entry (device-local)
+  var subIdx = {};                   // id → day index (memory only)
+  var subBusy = {};                  // id → true while it is being read
+  var subNewColor = null;
+
+  function subById(id) {
+    for (var i = 0; i < state.subs.length; i++) if (state.subs[i].id === id) return state.subs[i];
+    return null;
+  }
+  // The chip / row label of a subscription (never stored).
+  function subLabel(id) {
+    var x = subById(id);
+    if (!x) return null;
+    var c = subCache[id];
+    return { id: "sub-" + id, color: x.color,
+             name: x.name || (c && c.name) || (SUBS && SUBS.hostName(x.url)) || "ICS" };
+  }
+  function fixRecur(e) { if (e.recur) e.recur = OCC.normRecur(e.recur, e.date) || null; }
+  function loadSubsCache() {
+    if (!SUBS) return;
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(SUBS_CACHE_KEY) || "null"); } catch (e) { raw = null; }
+    subCache = {};
+    subIdx = {};
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      Object.keys(raw).forEach(function (id) {
+        var c = SUBS.cleanCache(raw[id]);
+        if (!c) return;
+        c.events.forEach(fixRecur);
+        subCache[id] = c;
+      });
+    }
+  }
+  function saveSubsCache() {
+    var keep = {};
+    state.subs.forEach(function (x) { if (subCache[x.id]) keep[x.id] = subCache[x.id]; });
+    Object.keys(subCache).forEach(function (id) { if (!keep[id]) { delete subCache[id]; delete subIdx[id]; } });
+    try { localStorage.setItem(SUBS_CACHE_KEY, JSON.stringify(keep)); }
+    catch (e) { if (!quotaWarned) { quotaWarned = true; transientNote(t("toast.quota")); } }
+  }
+
+  function subsFeedOn(dateStr) {
+    if (!SUBS || !state.subs.length) return [];
+    var out = [];
+    state.subs.forEach(function (x) {
+      var lid = "sub-" + x.id, c = subCache[x.id];
+      if (!c || !c.events.length || !labelVisible(lid)) return;
+      var idx = subIdx[x.id] || (subIdx[x.id] = SUBS.index(c.events, OCC));
+      SUBS.rowsOn(c.events, idx, dateStr, OCC).forEach(function (r) {
+        out.push({ id: lid + "-" + r.ev.id + "-" + r.inst.occ, title: r.ev.title, location: r.ev.location, note: "",
+                   date: r.inst.date, dateEnd: r.inst.dateEnd || null, start: r.inst.start, end: r.inst.end,
+                   labelId: lid, _feed: true, _sub: { sub: x.id, ev: r.ev, inst: r.inst } });
+      });
+    });
+    return out;
+  }
+
+  // The Reader's network layer, loaded on first use.
+  var feedsLibP = null;
+  function feedsLib() {
+    if (window.orosFeedsFetch) return Promise.resolve(window.orosFeedsFetch);
+    if (feedsLibP) return feedsLibP;
+    var q = SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "";
+    function load(src) {
+      return new Promise(function (res) {
+        var sc = document.createElement("script");
+        sc.src = src + q;
+        sc.onload = function () { res(true); };
+        sc.onerror = function () { res(false); };
+        document.head.appendChild(sc);
+      });
+    }
+    feedsLibP = (window.orosFeedsCore ? Promise.resolve(true) : load("../feeds/core.js"))
+      .then(function () { return window.orosFeedsFetch ? true : load("../feeds/fetch.js"); })
+      .then(function () {
+        if (!window.orosFeedsFetch) feedsLibP = null;
+        return window.orosFeedsFetch || null;
+      });
+    return feedsLibP;
+  }
+
+  // The relay: the Reader's own address when it has one, else Mail's
+  // (feeds/fetch.js falls back to Mail's by itself).
+  function readerRelay() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-feeds-data") || "null");
+      var e = d && d.set && d.set.relay;
+      return e && typeof e.v === "string" ? e.v : "";
+    } catch (err) { return ""; }
+  }
+  function refreshSub(x) {
+    if (!SUBS || !x || subBusy[x.id]) return Promise.resolve();
+    var id = x.id, url = x.url, now = Date.now();
+    var prev = subCache[id] && subCache[id].url === url ? subCache[id] : null;
+    subBusy[id] = true;
+    renderSubsList();
+    return feedsLib().then(function (F) {
+      if (!F) throw { code: "lib" };
+      return F.fetchOne(url, { accept: "text/calendar, text/plain;q=0.9, */*;q=0.5", timeout: 20000, relay: readerRelay });
+    }).then(function (r) {
+      if (r.status < 200 || r.status > 299) throw { code: "http", n: r.status };
+      var text = r.text || "";
+      if (text.length > ICS_MAX_CHARS) throw { code: "too-big" };
+      if (!/BEGIN:VCALENDAR/i.test(text.slice(0, 4096))) throw { code: "notics" };
+      var res = SUBS.fromIcs(text, todayYMD(), window.OrosIcs);
+      res.events.forEach(fixRecur);
+      return { url: url, at: now, ok: now, err: "", n: 0, name: res.name, total: res.total,
+               dropped: res.dropped, events: res.events };
+    }).catch(function (e) {
+      var keep = prev || { url: url, at: 0, ok: 0, err: "", n: 0, name: "", total: 0, dropped: 0, events: [] };
+      keep.at = now;
+      keep.err = (e && e.code) ? String(e.code).slice(0, 40) : "other";
+      keep.n = e && typeof e.n === "number" ? e.n : 0;
+      return keep;
+    }).then(function (entry) {
+      delete subBusy[id];
+      if (!subById(id)) { renderSubsList(); return; }       // removed meanwhile
+      subCache[id] = entry;
+      subIdx[id] = SUBS.index(entry.events, OCC);
+      saveSubsCache();
+      renderChips();
+      renderAll();
+      renderDay();
+      renderSubsList();
+    });
+  }
+  function subErrText(c) {
+    var e = c.err;
+    if (e === "offline") return t("subs.err.offline");
+    if (e === "norelay" || e === "cors") return t("subs.err.norelay");
+    if (e === "http") return t("subs.err.http").replace("{n}", String(c.n || "?"));
+    if (e === "notics" || e === "type") return t("subs.err.notics");
+    if (e === "too-big") return t("subs.err.big");
+    if (e === "timeout") return t("subs.err.timeout");
+    return t("subs.err.other").replace("{e}", e);
+  }
+  // Read the subscriptions whose copy is older than maxAge (or that
+  // have none, or whose address changed), one after the other.
+  function subsDue(maxAge, onlyErr) {
+    if (!SUBS || !state.subs.length) return;
+    var now = Date.now();
+    var list = state.subs.filter(function (x) {
+      var c = subCache[x.id];
+      if (subBusy[x.id]) return false;
+      if (!c || c.url !== x.url) return true;
+      if (onlyErr) return !!c.err;
+      return SUBS.due(c, now, maxAge);
+    });
+    list.reduce(function (p, x) {
+      return p.then(function () { return refreshSub(x); });
+    }, Promise.resolve());
+  }
+  // After a pull: new subscriptions are read now, removed ones drop
+  // their copy.
+  function subsAfterChange() {
+    if (!SUBS) return;
+    saveSubsCache();
+    renderChips();
+    subsDue(SUB_EVERY);
+    renderSubsList();
+  }
+  function subsBoot() {
+    if (!SUBS) return;
+    loadSubsCache();
+    setTimeout(function () { subsDue(SUB_OPEN_AGE); }, 1200);
+    setInterval(function () { subsDue(SUB_EVERY); }, 10 * 60000);
+    window.addEventListener("online", function () { subsDue(SUB_EVERY, true); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") subsDue(SUB_EVERY);
+    });
+  }
+
+  // ----- The subscriptions window -----
+  function nextSubColor() {
+    var used = {};
+    state.labels.forEach(function (l) { used[l.color] = 1; });
+    state.subs.forEach(function (x) { used[x.color] = 1; });
+    for (var i = 0; i < LABEL_PALETTE.length; i++) if (!used[LABEL_PALETTE[i]]) return LABEL_PALETTE[i];
+    return LABEL_PALETTE[state.subs.length % LABEL_PALETTE.length];
+  }
+  function renderSubColors() {
+    var wrap = $("sub-colors");
+    if (!wrap) return;
+    wrap.textContent = "";
+    LABEL_PALETTE.forEach(function (c) {
+      var sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "lbl-swatch" + (subNewColor === c ? " active" : "");
+      sw.style.background = c;
+      sw.setAttribute("aria-label", c);
+      sw.setAttribute("aria-pressed", subNewColor === c ? "true" : "false");
+      sw.addEventListener("click", function () { subNewColor = c; renderSubColors(); });
+      wrap.appendChild(sw);
+    });
+  }
+  function subMsg(text, err) {
+    var p = $("sub-msg");
+    if (!p) return;
+    p.textContent = text || "";
+    p.hidden = !text;
+    p.classList.toggle("err", !!err);
+  }
+  function fmtStamp(ms) {
+    try {
+      return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+    } catch (e) { return ""; }
+  }
+  function subStatus(x) {
+    if (subBusy[x.id]) return t("subs.wait");
+    var c = subCache[x.id];
+    if (!c || (!c.ok && !c.err)) return t("subs.never");
+    if (!c.ok) return subErrText(c);
+    var s = t("subs.ok").replace("{n}", String(c.events.length)).replace("{t}", fmtStamp(c.ok));
+    if (c.dropped) s += " · " + t("subs.more").replace("{n}", String(c.dropped));
+    if (c.err) s += " · " + t("subs.lasterr").replace("{e}", subErrText(c));
+    return s;
+  }
+  function stampSub(x) {
+    x.mtime = Date.now();
+    saveState();
+    renderChips();
+    renderAll();
+    renderDay();
+  }
+  function removeSub(x) {
+    var cached = subCache[x.id];
+    state.subs = state.subs.filter(function (y) { return y.id !== x.id; });
+    state.deleted = state.deleted.filter(function (d) { return d.id !== x.id; });
+    state.deleted.push({ id: x.id, mtime: Date.now() });
+    saveState();
+    saveSubsCache();
+    renderChips();
+    renderAll();
+    renderDay();
+    renderSubsList();
+    toast(t("subs.removed"), t("undo"), function () {
+      if (subById(x.id)) return;
+      state.deleted = state.deleted.filter(function (d) { return d.id !== x.id; });
+      state.subs.push({ id: x.id, url: x.url, name: x.name, color: x.color, mtime: Date.now() });
+      if (cached) { subCache[x.id] = cached; delete subIdx[x.id]; }
+      saveState();
+      saveSubsCache();
+      renderChips();
+      renderAll();
+      renderDay();
+      renderSubsList();
+    });
+  }
+  function renderSubsList() {
+    var ul = $("subs-list"), dlg = $("subs-dlg");
+    if (!ul || !dlg || !dlg.open) return;
+    ul.textContent = "";
+    if (!state.subs.length) {
+      var li0 = document.createElement("li");
+      li0.className = "empty";
+      li0.textContent = t("subs.none");
+      ul.appendChild(li0);
+      return;
+    }
+    state.subs.slice().sort(function (a, b) { return a.mtime - b.mtime || (a.id < b.id ? -1 : 1); }).forEach(function (x) {
+      var li = document.createElement("li");
+      li.className = "sub-row";
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "sub-dot";
+      dot.style.background = x.color;
+      dot.title = t("subs.color");
+      dot.setAttribute("aria-label", t("subs.color"));
+      dot.addEventListener("click", function () {
+        var i = LABEL_PALETTE.indexOf(x.color);
+        x.color = LABEL_PALETTE[(i + 1) % LABEL_PALETTE.length];
+        stampSub(x);
+        renderSubsList();
+      });
+      var main = document.createElement("div");
+      main.className = "sub-main";
+      var nm = document.createElement("input");
+      nm.type = "text";
+      nm.className = "sub-name";
+      nm.maxLength = 40;
+      nm.value = x.name;
+      nm.placeholder = subLabel(x.id).name;
+      nm.setAttribute("aria-label", t("subs.name"));
+      nm.addEventListener("change", function () {
+        var v = nm.value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40);
+        if (v === x.name) return;
+        x.name = v;
+        stampSub(x);
+      });
+      var url = document.createElement("div");
+      url.className = "sub-url";
+      url.textContent = x.url;
+      var st = document.createElement("div");
+      st.className = "sub-stat" + (subCache[x.id] && subCache[x.id].err && !subBusy[x.id] ? " err" : "");
+      st.textContent = subStatus(x);
+      main.appendChild(nm);
+      main.appendChild(url);
+      main.appendChild(st);
+      var acts = document.createElement("div");
+      acts.className = "sub-acts";
+      var rf = document.createElement("button");
+      rf.type = "button";
+      rf.className = "btn";
+      rf.textContent = t("subs.refresh");
+      rf.disabled = !!subBusy[x.id];
+      rf.addEventListener("click", function () { refreshSub(x); });
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "btn danger";
+      rm.textContent = t("subs.remove");
+      rm.addEventListener("click", function () { removeSub(x); });
+      acts.appendChild(rf);
+      acts.appendChild(rm);
+      li.appendChild(dot);
+      li.appendChild(main);
+      li.appendChild(acts);
+      ul.appendChild(li);
+    });
+  }
+  function openSubsDlg() {
+    if (!SUBS) return;
+    $("sub-url").value = "";
+    $("sub-name").value = "";
+    subNewColor = nextSubColor();
+    renderSubColors();
+    subMsg("");
+    $("subs-dlg").showModal();
+    renderSubsList();
+  }
+  function addSub() {
+    var url = SUBS.normUrl($("sub-url").value);
+    if (!url) { subMsg(t("subs.bad"), true); $("sub-url").focus(); return; }
+    for (var i = 0; i < state.subs.length; i++) {
+      if (state.subs[i].url === url) { subMsg(t("subs.dup"), true); return; }
+    }
+    var x = { id: "sub" + uid(), url: url,
+              name: $("sub-name").value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40),
+              color: subNewColor || nextSubColor(), mtime: Date.now() };
+    state.subs.push(x);
+    saveState();
+    renderChips();
+    $("sub-url").value = "";
+    $("sub-name").value = "";
+    subNewColor = nextSubColor();
+    renderSubColors();
+    subMsg("");
+    renderSubsList();
+    refreshSub(x);
+  }
+  if ($("sub-add")) {
+    $("sub-add").addEventListener("click", addSub);
+    $("sub-url").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addSub(); } });
+    $("sub-done").addEventListener("click", function () { $("subs-dlg").close(); });
+  }
+
+  // ----- A subscribed event (read-only) -----
+  var svCur = null;
+  function instWhen(inst, recur, recurDate) {
+    var w = longDate(inst.date);
+    if (inst.dateEnd && inst.dateEnd > inst.date) w += " – " + longDate(inst.dateEnd);
+    w += ", " + (inst.start ? inst.start + (inst.end ? "–" + inst.end : "") : t("ev.alltime"));
+    if (recur) w += " · " + recurText(recur, recurDate);
+    return w;
+  }
+  function openSubEvent(row) {
+    var s = row._sub, ev = s.ev, inst = s.inst, lb = subLabel(s.sub);
+    svCur = { ev: ev, inst: inst };
+    $("sv-title").textContent = ev.title || t("ev.untitled");
+    $("sv-when").textContent = instWhen(inst, ev.recur, ev.date);
+    $("sv-where").textContent = ev.location ? "▸ " + ev.location : "";
+    $("sv-where").hidden = !ev.location;
+    $("sv-note").textContent = ev.note || "";
+    $("sv-note").hidden = !ev.note;
+    $("sv-src").textContent = t("sv.from").replace("{name}", lb ? lb.name : "");
+    $("sv-dlg").showModal();
+  }
+  if ($("sv-dlg")) {
+    $("sv-close").addEventListener("click", function () { $("sv-dlg").close(); });
+    $("sv-copy").addEventListener("click", function () {
+      var c = svCur;
+      $("sv-dlg").close();
+      if (!c) return;
+      __orosCalendarNew({ date: c.inst.date, title: c.ev.title, location: c.ev.location, note: c.ev.note,
+                          start: c.inst.start || undefined, end: c.inst.end || undefined,
+                          dateEnd: c.inst.dateEnd || undefined, allDay: !c.inst.start });
+    });
+  }
+
+  /* ---------- 7i. Wave 8: quick add ----------
+     One line of words (calendar/quickadd.js, EN + EL) → the New event
+     window, filled in. Nothing is saved until Save there. */
+  var QA = window.OrosCalQuick || null;
+  function quickParse() { return QA.parse($("qa-in").value, { today: todayYMD() }); }
+  function renderQuickPrev() {
+    var dl = $("qa-prev");
+    dl.textContent = "";
+    if (!$("qa-in").value.trim()) { dl.hidden = true; return; }
+    dl.hidden = false;
+    var r = quickParse();
+    function row(k, v) {
+      var dt = document.createElement("dt");
+      dt.textContent = k;
+      var dd = document.createElement("dd");
+      dd.textContent = v;
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    }
+    row(t("qa.what"), r.title || t("ev.untitled"));
+    var when = longDate(r.date);
+    if (r.dateEnd) when += " – " + longDate(r.dateEnd);
+    when += ", " + (r.start ? r.start + (r.end ? "–" + r.end : "") : t("qa.allday"));
+    row(t("qa.when"), when);
+    if (r.recur) {
+      var rr = OCC.normRecur(r.recur, r.date);
+      if (rr) row(t("qa.rep"), recurText(rr, r.date));
+    }
+    if (r.location) row(t("qa.where"), r.location);
+  }
+  function openQuick() {
+    if (!QA) { openDlg(null); return; }
+    $("qa-in").value = "";
+    renderQuickPrev();
+    $("qa-dlg").showModal();
+    setTimeout(function () { $("qa-in").focus(); }, 30);
+  }
+  if ($("qa-dlg")) {
+    $("ev-quick").addEventListener("click", openQuick);
+    $("qa-in").addEventListener("input", renderQuickPrev);
+    $("qa-no").addEventListener("click", function () { $("qa-dlg").close(); });
+    $("qa-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!$("qa-in").value.trim()) { $("qa-in").focus(); return; }
+      var r = quickParse();
+      $("qa-dlg").close();
+      __orosCalendarNew({ date: r.date, title: r.title, location: r.location,
+                          start: r.start || undefined, end: r.end || undefined,
+                          dateEnd: r.dateEnd || undefined, allDay: !r.start, recur: r.recur || undefined });
+    });
+  }
+
+  /* ---------- 7j. Wave 8: share free times (booking link) ----------
+     Free slots of a chosen length over the next N days within the
+     hours set here, worked out on this device (calendar/free.js) from
+     your own timed events and the visible subscribed calendars. The
+     link is the shell's "Send to someone" (kind "slots",
+     share/kinds.js): the times travel inside the link, the receiver
+     picks one and gets an .ics plus a prefilled email back. */
+  var FREE = window.OrosCalFree || null;
+  var FREE_PREFS_KEY = "oros-cal-free-prefs";
+  var FREE_LENS = [15, 30, 45, 60, 90, 120];
+  var FREE_DAYS = [3, 5, 7, 14, 21, 30];
+  function freePrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(FREE_PREFS_KEY) || "null"); } catch (e) {}
+    return p && typeof p === "object" ? p : {};
+  }
+  function mailIdentity() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      var a = d && Array.isArray(d.accounts) ? d.accounts.filter(function (x) { return x && x.email; })[0] : null;
+      return a ? { name: typeof a.name === "string" ? a.name : "", email: String(a.email) } : null;
+    } catch (e) { return null; }
+  }
+  function fillSel(sel, list, val) {
+    sel.textContent = "";
+    list.forEach(function (o) {
+      var op = document.createElement("option");
+      op.value = String(o.v);
+      op.textContent = o.l;
+      sel.appendChild(op);
+    });
+    sel.value = String(val);
+    if (sel.selectedIndex < 0) sel.selectedIndex = 0;
+  }
+  function halfHours(a, b) {
+    var out = [];
+    for (var m = a; m <= b; m += 30) {
+      var v = pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+      out.push({ v: v, l: v });
+    }
+    return out;
+  }
+  function freeOpts() {
+    var now = new Date();
+    return { from: todayYMD(), days: +$("fr-days").value, len: +$("fr-len").value,
+             dayStart: $("fr-from").value, dayEnd: $("fr-to").value,
+             wdays: $("fr-wknd").checked ? [0, 1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5],
+             nowMin: now.getHours() * 60 + now.getMinutes() + 15, max: 400 };
+  }
+  function freeEvents() {
+    var list = state.events.slice();
+    state.subs.forEach(function (x) {
+      var c = subCache[x.id];
+      if (!c || !labelVisible("sub-" + x.id)) return;
+      c.events.forEach(function (e) { if (e.start) list.push(e); });
+    });
+    return list;
+  }
+  function freeCompute() { return FREE.slots(freeEvents(), freeOpts(), OCC); }
+  function renderFreeSum() {
+    var s = freeCompute(), n = 0;
+    s.forEach(function (x) { n += x.m.length; });
+    var txt = !n ? t("fr.none") : (n === 1 ? t("fr.sum1") : t("fr.sum").replace("{n}", String(n)).replace("{d}", String(s.length)));
+    if (n && !$("fr-mail").value.trim()) txt += " " + t("fr.nomail");
+    $("fr-sum").textContent = txt;
+    $("fr-go").disabled = !n;
+    return s;
+  }
+  function openFree() {
+    if (!FREE) return;
+    if (!shareApi()) { toast(t("fr.noshare")); return; }
+    var p = freePrefs(), me = mailIdentity();
+    fillSel($("fr-len"), FREE_LENS.map(function (n) {
+      return { v: n, l: n < 60 || n % 60 ? t("fr.min").replace("{n}", n) : t("fr.hours").replace("{n}", n / 60) };
+    }), FREE_LENS.indexOf(p.len) >= 0 ? p.len : 30);
+    fillSel($("fr-days"), FREE_DAYS.map(function (n) { return { v: n, l: t("fr.dayN").replace("{n}", n) }; }),
+            FREE_DAYS.indexOf(p.days) >= 0 ? p.days : 7);
+    fillSel($("fr-from"), halfHours(5 * 60, 23 * 60), /^\d{2}:\d{2}$/.test(p.from || "") ? p.from : "09:00");
+    fillSel($("fr-to"), halfHours(6 * 60, 24 * 60), /^\d{2}:\d{2}$/.test(p.to || "") ? p.to : "17:00");
+    $("fr-wknd").checked = p.wknd === true;
+    $("fr-what").value = typeof p.what === "string" ? p.what : "";
+    $("fr-name").value = typeof p.name === "string" && p.name ? p.name : (me ? me.name : "");
+    $("fr-mail").value = typeof p.mail === "string" && p.mail ? p.mail : (me ? me.email : "");
+    $("fr-loc").value = typeof p.loc === "string" ? p.loc : "";
+    renderFreeSum();
+    $("free-dlg").showModal();
+  }
+  if ($("free-dlg")) {
+    ["fr-len", "fr-days", "fr-from", "fr-to", "fr-wknd"].forEach(function (id) {
+      $(id).addEventListener("change", renderFreeSum);
+    });
+    $("fr-mail").addEventListener("input", renderFreeSum);
+    $("fr-no").addEventListener("click", function () { $("free-dlg").close(); });
+    $("fr-go").addEventListener("click", function () {
+      var s = renderFreeSum(), api = shareApi();
+      if (!s.length || !api) return;
+      var prefs = { len: +$("fr-len").value, days: +$("fr-days").value, from: $("fr-from").value, to: $("fr-to").value,
+                    wknd: $("fr-wknd").checked, what: $("fr-what").value.trim().slice(0, 120),
+                    name: $("fr-name").value.trim().slice(0, 80), mail: $("fr-mail").value.trim().slice(0, 120),
+                    loc: $("fr-loc").value.trim().slice(0, 150) };
+      try { localStorage.setItem(FREE_PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+      var data = { t: prefs.what || t("fr.what.ph"), n: prefs.name, m: prefs.mail, len: prefs.len, s: s };
+      var z = OCC.deviceZone();
+      if (z) data.tz = z;
+      if (prefs.loc) data.l = prefs.loc;
+      $("free-dlg").close();
+      api.open({ kind: "slots", data: data });
+    });
+  }
+
+  /* ---------- 7k. Wave 8: print (browser print → PDF) ----------
+     A plain, ink-friendly copy of the current view is built into
+     #print-area just before printing; the print stylesheet hides
+     everything else. Day, Week, Month, Year and Agenda. */
+  function prEl(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt !== undefined && txt !== null) e.textContent = txt;
+    return e;
+  }
+  function prLine(e, day) {
+    var li = prEl("li", "pr-ev");
+    var dot = prEl("span", "pr-dot");
+    dot.style.background = labelColor(e.labelId);
+    li.appendChild(dot);
+    li.appendChild(prEl("span", "pr-time", e.start ? timeSpan(e, day) : t("ev.alltime")));
+    var main = prEl("span", "pr-main");
+    main.appendChild(prEl("b", "", e.title || t("ev.untitled")));
+    if (e.location) main.appendChild(document.createTextNode(" · " + e.location));
+    if (e.note && !e._feed) main.appendChild(prEl("span", "pr-note", e.note));
+    li.appendChild(main);
+    return li;
+  }
+  function prDay(box, day, head) {
+    var sec = prEl("section", "pr-day");
+    if (head !== null) sec.appendChild(prEl("h2", "", head || longDate(day)));
+    var list = eventsOn(day), ul = prEl("ul", "pr-list");
+    if (!list.length) ul.appendChild(prEl("li", "pr-empty", t("ev.none")));
+    list.forEach(function (e) { ul.appendChild(prLine(e, day)); });
+    sec.appendChild(ul);
+    box.appendChild(sec);
+  }
+  function prMonth(box, y, m, compact) {
+    var tbl = prEl("table", "pr-month" + (compact ? " pr-mini" : ""));
+    if (compact) {
+      var cap = prEl("caption", "", t("months")[m]);
+      tbl.appendChild(cap);
+    }
+    var hr = prEl("tr");
+    t("wd").forEach(function (w) { hr.appendChild(prEl("th", "", compact ? w.charAt(0) : w)); });
+    var thead = prEl("thead");
+    thead.appendChild(hr);
+    tbl.appendChild(thead);
+    var tb = prEl("tbody");
+    var first = new Date(y, m, 1), lead = (first.getDay() + 6) % 7;
+    var dim = new Date(y, m + 1, 0).getDate();
+    var cells = Math.ceil((lead + dim) / 7) * 7, tr = null;
+    for (var i = 0; i < cells; i++) {
+      if (i % 7 === 0) { tr = prEl("tr"); tb.appendChild(tr); }
+      var dn = i - lead + 1;
+      var td = prEl("td");
+      if (dn < 1 || dn > dim) { td.className = "out"; tr.appendChild(td); continue; }
+      var day = ymd(y, m, dn), evs = eventsOn(day);
+      td.appendChild(prEl("span", "pr-num", String(dn)));
+      if (compact) {
+        if (evs.length) td.className = "has";
+      } else {
+        var MAX = 5;
+        evs.slice(0, MAX).forEach(function (e) {
+          td.appendChild(prEl("div", "pr-cell-ev", (e.start ? e.start + " " : "") + (e.title || t("ev.untitled"))));
+        });
+        if (evs.length > MAX) td.appendChild(prEl("div", "pr-more", t("pr.more").replace("{n}", String(evs.length - MAX))));
+      }
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tb);
+    box.appendChild(tbl);
+  }
+  function buildPrint() {
+    var box = $("print-area");
+    if (!box) { box = prEl("div"); box.id = "print-area"; document.body.appendChild(box); }
+    box.textContent = "";
+    var title = prEl("h1", "pr-title");
+    box.appendChild(title);
+    var day = selDate || todayYMD();
+    if (curView === "day") {
+      title.textContent = longDate(day);
+      prDay(box, day, null);
+    } else if (curView === "week") {
+      var mon = weekAnchor || mondayOf(day);
+      title.textContent = t("pr.week").replace("{d}", longDate(mon));
+      for (var i = 0; i < 7; i++) prDay(box, dAdd(mon, i));
+    } else if (curView === "agenda") {
+      var st = agendaStart || todayYMD(), any = false;
+      title.textContent = t("pr.agenda").replace("{d}", longDate(st));
+      for (var k = 0; k < agendaLimitDays; k++) {
+        var d = dAdd(st, k);
+        if (eventsOn(d).length) { prDay(box, d); any = true; }
+      }
+      if (!any) box.appendChild(prEl("p", "pr-empty", t("pr.none")));
+    } else if (curView === "year") {
+      title.textContent = String(viewYear);
+      var grid = prEl("div", "pr-year");
+      for (var mm = 0; mm < 12; mm++) prMonth(grid, viewYear, mm, true);
+      box.appendChild(grid);
+    } else {
+      title.textContent = t("months")[viewMonth] + " " + viewYear;
+      prMonth(box, viewYear, viewMonth, false);
+    }
+    return box;
+  }
+  function doPrint() {
+    buildPrint();
+    try { window.focus(); window.print(); } catch (e) {}
+  }
+  window.addEventListener("afterprint", function () {
+    var box = $("print-area");
+    if (box) box.textContent = "";
+  });
+
+  /* ---------- 7l. Wave 8: the "More" menu ---------- */
+  function setMore(open) {
+    var m = $("more-menu"), b = $("cal-more");
+    if (!m || !b) return;
+    m.hidden = !open;
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!open) return;
+    // Keep it on screen: anchored to the button, shifted left when needed.
+    m.style.left = "0px";
+    var r = m.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+    if (r.right > vw - 8) m.style.left = Math.round(vw - 8 - r.right) + "px";
+  }
+  if ($("cal-more")) {
+    $("cal-more").textContent = t("cal.more") + " ▾";
+    $("cal-more").addEventListener("click", function (e) {
+      e.stopPropagation();
+      setMore($("more-menu").hidden);
+    });
+    document.addEventListener("click", function (e) {
+      var m = $("more-menu");
+      if (m && !m.hidden && !m.contains(e.target)) setMore(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !$("more-menu").hidden) { setMore(false); $("cal-more").focus(); }
+    });
+    $("mm-subs").hidden = !SUBS;
+    $("mm-free").hidden = !FREE;
+    $("mm-subs").addEventListener("click", function () { setMore(false); openSubsDlg(); });
+    $("mm-free").addEventListener("click", function () { setMore(false); openFree(); });
+    $("mm-print").addEventListener("click", function () { setMore(false); doPrint(); });
+  }
 
   /* ---------- 8. Boot ---------- */
   loadState();
@@ -5202,6 +6100,7 @@ function transientNote(title, body) {
   viewMonth = boot.getMonth();
   loadFeedVis();
   loadDays();
+  subsBoot();          // wave 8: subscribed calendars (cache, then re-read)
   renderChips();
   setView("month");
   selectDay(todayYMD());
@@ -5470,6 +6369,14 @@ function transientNote(title, body) {
         byId[e.id] = e;
       }
     }
+    var subById = {};
+    function takeSub(x) {
+      var cur = subById[x.id];
+      if (!cur || x.mtime > cur.mtime ||
+          (x.mtime === cur.mtime && JSON.stringify(x) < JSON.stringify(cur))) {
+        subById[x.id] = x;
+      }
+    }
     var lblById = {};
     function takeLbl(l) {
       var cur = lblById[l.id];
@@ -5487,6 +6394,8 @@ function transientNote(title, body) {
         .map(mergeSanitizeLabel).filter(Boolean).forEach(takeLbl);
       (Array.isArray(side.events) ? side.events : [])
         .map(mergeSanitizeEv).filter(Boolean).forEach(takeEv);
+      (Array.isArray(side.subs) ? side.subs : [])
+        .map(mergeSanitizeSub).filter(Boolean).forEach(takeSub);
     });
 
     var events = [], deleted = [], labels = [];
@@ -5504,13 +6413,27 @@ function transientNote(title, body) {
       labels.push(lblById[id]);                         // survived (or renamed)
       delete tomb[id];
     });
+    // Wave 8: subscriptions share the same tombstone list (ids are
+    // unique across events, labels and subscriptions).
+    var subs = [];
+    Object.keys(subById).forEach(function (id) {
+      var tb = tomb[id];
+      if (tb && tb.mtime >= subById[id].mtime) return;
+      subs.push(subById[id]);
+      delete tomb[id];
+    });
     Object.keys(tomb).forEach(function (id) { deleted.push(tomb[id]); });
 
     // Sorted by id → identical byte output on every device
     events.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     labels.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     deleted.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
-    return { ver: 1, labels: labels, events: events, deleted: deleted };
+    subs.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    var out = { ver: 1, labels: labels, events: events, deleted: deleted };
+    // Left out when there are none: blobs without subscriptions keep
+    // their exact bytes (no upload just for upgrading).
+    if (subs.length) out.subs = subs;
+    return out;
   }
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
@@ -5554,12 +6477,14 @@ function transientNote(title, body) {
     var lbls = Array.isArray(data.labels)
       ? data.labels.map(sanitizeLabel).filter(Boolean)
       : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
-    state = { ver: 1, labels: lbls, events: evs, deleted: dels };
+    state = { ver: 1, labels: lbls, events: evs, deleted: dels,
+              subs: Array.isArray(data.subs) ? data.subs.map(sanitizeSub).filter(Boolean) : [] };
     // CA-10: Undo data survives a pull (R28) — undoDelete/undoMove/
     // undoExdate all work by id on the live state.
     reseedSeedNames();
     refreshOpenDlg();
     writeStore();         // no markDirty: this IS the sync result
+    subsAfterChange();    // wave 8: a new / moved subscription is read now
     // INVALIDATE ALL FEED CACHES — sync may have just pulled fresh
     // data for Contacts/Cycle/Mood/Habits/Kanban; the 1s micro-cache
     // would otherwise serve stale reads on the immediate renderAll()
