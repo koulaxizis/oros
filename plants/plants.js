@@ -31,6 +31,7 @@
   "use strict";
 
   var C = window.OrosPlantsCore;
+  var ID = window.OrosPlantsIdentify;
   var STORAGE_KEY = "oros-plants-data";
   var PREFS_KEY   = "oros-plants-prefs";
   var OPEN_KEY    = "oros-plants-open";
@@ -92,6 +93,25 @@
       "set.hemi": "Hemisphere (for the winter interval)", "set.north": "Northern (winter Nov–Feb)",
       "set.south": "Southern (winter May–Aug)", "set.data": "Your plants", "set.export": "Export",
       "set.import": "Import", "set.close": "Close",
+      "set.pn": "Identify plants (Pl@ntNet)", "set.pnKey": "Your Pl@ntNet API key",
+      "set.pnHint": "To identify a plant from a photo, make your own free key at my.plantnet.org (up to 500 identifications a day). In your account there, tick “expose my API key” and add this site's address under “Authorized domains”. The key stays on this device only. Leave it empty to turn identification off.",
+      "set.pnSite": "Open my.plantnet.org", "set.pnBad": "This does not look like a Pl@ntNet key", "set.pnSaved": "Key saved on this device",
+      "set.pnCleared": "Key removed",
+      "id.btn": "Identify from a photo", "id.title": "Identify from a photo",
+      "id.text": "Take or choose a clear photo of one leaf, flower or fruit. The photo (made smaller, without its location data) is sent to Pl@ntNet with your key and is not kept by orOS.",
+      "id.noKey": "To identify plants, add your own free Pl@ntNet key in Settings.", "id.toSettings": "Settings",
+      "id.photo": "Take a photo", "id.pick": "Choose a picture", "id.go": "Identify",
+      "id.wait": "Asking Pl@ntNet…", "id.results": "Best matches", "id.pickOne": "Tap the right one to fill in the species.",
+      "id.score": "{p}% match", "id.left": "{n} identifications left today",
+      "id.err.key": "Pl@ntNet refused the key. Check it in Settings, and that this site is under “Authorized domains” in your Pl@ntNet account.",
+      "id.err.none": "Pl@ntNet found no plant in this photo. Try a closer, sharper photo of one leaf or flower.",
+      "id.err.quota": "Your Pl@ntNet key has used today's identifications. Try again tomorrow.",
+      "id.err.photo": "Pl@ntNet could not use this photo. Try another one.",
+      "id.err.server": "Pl@ntNet did not answer ({e}). Try again later.",
+      "id.err.net": "Could not reach Pl@ntNet. Check the connection, and that this site is under “Authorized domains” in your Pl@ntNet account.",
+      "id.err.img": "This picture could not be read",
+      "id.filled": "Filled in: {name}. Check the care values.", "id.attr": "Identification: Pl@ntNet",
+      "ed.sci": "Scientific name", "ed.sciPh": "e.g. Epipremnum aureum",
       "toast.done": "{kind}: {name}", "toast.doneAll": "Watered {n} plants", "toast.undo": "Undo",
       "toast.notDue": "Nothing to log for {name} right now",
       "toast.skip": "Skipped: {name}", "toast.skipAll": "Skipped {n} outdoor plants",
@@ -145,6 +165,25 @@
       "set.hemi": "Ημισφαίριο (για το χειμερινό διάστημα)", "set.north": "Βόρειο (χειμώνας Νοέ–Φεβ)",
       "set.south": "Νότιο (χειμώνας Μάι–Αύγ)", "set.data": "Τα φυτά σου", "set.export": "Εξαγωγή",
       "set.import": "Εισαγωγή", "set.close": "Κλείσιμο",
+      "set.pn": "Αναγνώριση φυτών (Pl@ntNet)", "set.pnKey": "Το κλειδί σου για το Pl@ntNet API",
+      "set.pnHint": "Για να αναγνωρίζεις φυτά από φωτογραφία, φτιάξε το δικό σου δωρεάν κλειδί στο my.plantnet.org (έως 500 αναγνωρίσεις τη μέρα). Στον λογαριασμό σου εκεί, τσέκαρε το «expose my API key» και πρόσθεσε τη διεύθυνση αυτού του ιστότοπου στα «Authorized domains». Το κλειδί μένει μόνο σε αυτή τη συσκευή. Άφησέ το κενό για να κλείσει η αναγνώριση.",
+      "set.pnSite": "Άνοιγμα του my.plantnet.org", "set.pnBad": "Αυτό δεν μοιάζει με κλειδί του Pl@ntNet", "set.pnSaved": "Το κλειδί αποθηκεύτηκε σε αυτή τη συσκευή",
+      "set.pnCleared": "Το κλειδί αφαιρέθηκε",
+      "id.btn": "Αναγνώριση από φωτογραφία", "id.title": "Αναγνώριση από φωτογραφία",
+      "id.text": "Τράβηξε ή διάλεξε μια καθαρή φωτογραφία από ένα φύλλο, λουλούδι ή καρπό. Η φωτογραφία (μικρότερη, χωρίς στοιχεία τοποθεσίας) στέλνεται στο Pl@ntNet με το κλειδί σου και δεν κρατιέται από το orOS.",
+      "id.noKey": "Για αναγνώριση φυτών, πρόσθεσε το δικό σου δωρεάν κλειδί Pl@ntNet στις Ρυθμίσεις.", "id.toSettings": "Ρυθμίσεις",
+      "id.photo": "Λήψη φωτογραφίας", "id.pick": "Επιλογή εικόνας", "id.go": "Αναγνώριση",
+      "id.wait": "Ρωτάω το Pl@ntNet…", "id.results": "Καλύτερες αντιστοιχίες", "id.pickOne": "Πάτα το σωστό για να συμπληρωθεί το είδος.",
+      "id.score": "{p}% ταίριασμα", "id.left": "Απομένουν {n} αναγνωρίσεις για σήμερα",
+      "id.err.key": "Το Pl@ntNet δεν δέχτηκε το κλειδί. Έλεγξέ το στις Ρυθμίσεις, και ότι αυτός ο ιστότοπος είναι στα «Authorized domains» του λογαριασμού σου στο Pl@ntNet.",
+      "id.err.none": "Το Pl@ntNet δεν βρήκε φυτό σε αυτή τη φωτογραφία. Δοκίμασε πιο κοντινή και καθαρή φωτογραφία ενός φύλλου ή λουλουδιού.",
+      "id.err.quota": "Το κλειδί σου στο Pl@ntNet εξάντλησε τις σημερινές αναγνωρίσεις. Δοκίμασε ξανά αύριο.",
+      "id.err.photo": "Το Pl@ntNet δεν μπόρεσε να χρησιμοποιήσει αυτή τη φωτογραφία. Δοκίμασε άλλη.",
+      "id.err.server": "Το Pl@ntNet δεν απάντησε ({e}). Δοκίμασε αργότερα.",
+      "id.err.net": "Δεν υπήρξε σύνδεση με το Pl@ntNet. Έλεγξε τη σύνδεση, και ότι αυτός ο ιστότοπος είναι στα «Authorized domains» του λογαριασμού σου στο Pl@ntNet.",
+      "id.err.img": "Αυτή η εικόνα δεν διαβάστηκε",
+      "id.filled": "Συμπληρώθηκε: {name}. Έλεγξε τις τιμές φροντίδας.", "id.attr": "Αναγνώριση: Pl@ntNet",
+      "ed.sci": "Επιστημονικό όνομα", "ed.sciPh": "π.χ. Epipremnum aureum",
       "toast.done": "{kind}: {name}", "toast.doneAll": "Ποτίστηκαν {n} φυτά", "toast.undo": "Αναίρεση",
       "toast.notDue": "Τίποτα να σημειωθεί τώρα για: {name}",
       "toast.skip": "Παράλειψη: {name}", "toast.skipAll": "Παράλειψη για {n} εξωτερικά φυτά",
@@ -268,7 +307,9 @@
       remind: base.remind,
       hemi: base.hemi,
       tab: p.tab === "plants" ? "plants" : "today",
-      room: typeof p.room === "string" ? p.room.slice(0, C.ROOM_LEN) : null
+      room: typeof p.room === "string" ? p.room.slice(0, C.ROOM_LEN) : null,
+      // wave 34: the person's own Pl@ntNet key — device-local, never synced
+      pnKey: typeof p.pnKey === "string" && ID.keyOk(p.pnKey) ? p.pnKey.trim() : ""
     };
   }
   var prefsTimer = null;
@@ -614,6 +655,7 @@
     head.appendChild(el("span", "p-ico big", plantIcon(p)));
     var hb = el("div", "det-hb");
     hb.appendChild(el("div", "det-name", p.name));
+    if (p.sci) hb.appendChild(el("div", "det-sci", p.sci));
     hb.appendChild(el("div", "c-sub", [presetName(p.sp), p.room, p.out ? t("card.out") : t("card.in")].filter(Boolean).join(" · ")));
     head.appendChild(hb);
     var x = el("button", "icon-btn");
@@ -776,6 +818,30 @@
     form.appendChild(field(t("ed.species"), sp, "pc-sp"));
     var tip = el("p", "tip");
     form.appendChild(tip);
+    var sci = el("input");
+    sci.maxLength = C.SCI_LEN;
+    sci.autocomplete = "off";
+    sci.spellcheck = false;
+    sci.placeholder = t("ed.sciPh");
+    sci.value = p && p.sci ? p.sci : "";
+    var sciRow = el("div", "sci-row");
+    sciRow.appendChild(field(t("ed.sci"), sci, "pc-sci"));
+    var idb = button("📷 " + t("id.btn"), "id-btn", function () {
+      identifyDialog(function (r) {
+        sci.value = r.sci;
+        var label = C.cleanText(r.common[0] || r.sci, C.NAME_LEN, false);
+        var nmNow = name.value.trim();
+        var pid = ID.presetFor(r.sci, C.PRESETS);
+        if (pid && !sp.value) {
+          sp.value = pid;
+          sp.dispatchEvent(new Event("change"));
+          if (!nmNow || nmNow === lastPresetName) name.value = label;
+        } else if (!nmNow || nmNow === lastPresetName) name.value = label;
+        showToast(t("id.filled", { name: r.sci }));
+      });
+    });
+    sciRow.appendChild(idb);
+    form.appendChild(sciRow);
 
     var name = el("input");
     name.maxLength = C.NAME_LEN;
@@ -909,7 +975,8 @@
       var vw = readNum(w, 1, C.KIND_MAX.w);
       if (vw === null) { showToast(t("toast.needWater")); w.focus(); return; }
       var vals = {
-        name: nm, sp: sp.value, room: C.cleanText(room.value, C.ROOM_LEN, false), out: out ? 1 : 0,
+        name: nm, sp: sp.value, room: C.cleanText(room.value, C.ROOM_LEN, false),
+        sci: C.cleanText(sci.value, C.SCI_LEN, false), out: out ? 1 : 0,
         em: curEm, w: vw,
         ww: readNum(ww, 0, C.KIND_MAX.ww) || 0,
         f: readNum(f, 0, C.KIND_MAX.f) || 0,
@@ -920,9 +987,10 @@
       if (p) {
         var cur = plantById(p.id);
         if (!cur) { dlg.close(); return; }
-        var changed = Object.keys(vals).some(function (k) { return cur[k] !== vals[k]; });
+        var changed = Object.keys(vals).some(function (k) { return k === "sci" ? (cur.sci || "") !== vals.sci : cur[k] !== vals[k]; });
         if (changed) {                       // R27: no stamp without a real change
           Object.keys(vals).forEach(function (k) { cur[k] = vals[k]; });
+          if (!cur.sci) delete cur.sci;      // absent when empty (canonical form)
           stamp(cur);
           save();
           showToast(t("toast.saved"));
@@ -930,6 +998,7 @@
       } else {
         var st = last && C.isYmd(last.value) && last.value <= todayYmd() ? last.value : todayYmd();
         var np = Object.assign({ id: newId(), m: Date.now(), st: st, sn: {} }, vals);
+        if (!np.sci) delete np.sci;
         data.plants.push(np);
         save();
         showToast(t("toast.added", { name: nm }));
@@ -942,6 +1011,151 @@
     dlg.showModal();
     if (!p) sp.focus(); else name.focus();
   }
+
+  // ---------- 6b. Identify from a photo (Pl@ntNet, the person's own key) ----------
+  // Photo → canvas (long side ≤ 1280 px, JPEG: no EXIF / location) →
+  // POST to Pl@ntNet only when the person presses Identify → the
+  // best matches; a pick calls onPick(result). Nothing else leaves
+  // the device; nothing is stored but what the person saves.
+  function shrinkPhoto(file) {
+    return new Promise(function (resolve) {
+      if (!file || !/^image\//.test(file.type || "image/") || file.size > 40 * 1024 * 1024) { resolve(null); return; }
+      var u = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(img.naturalWidth * k));
+        cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+        var x = cv.getContext("2d");
+        x.fillStyle = "#fff";
+        x.fillRect(0, 0, cv.width, cv.height);
+        x.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(u);
+        cv.toBlob(function (b) { resolve(b && b.size ? { blob: b, url: cv.toDataURL("image/jpeg", 0.6) } : null); }, "image/jpeg", 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(u); resolve(null); };
+      img.src = u;
+    });
+  }
+  function identifyDialog(onPick) {
+    var dlg = makeDialog("pc-id");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", "📷 " + t("id.title")));
+    if (!prefs.pnKey) {
+      dlg.appendChild(el("p", "dlg-sub", t("id.noKey")));
+      var a0 = el("div", "dlg-actions");
+      a0.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+      a0.appendChild(button(t("id.toSettings"), "primary", function () { dlg.close(); settings(); }));
+      dlg.appendChild(a0);
+      document.body.appendChild(dlg);
+      dlg.showModal();
+      return;
+    }
+    dlg.appendChild(el("p", "dlg-sub", t("id.text")));
+    var photo = null, busy = false;
+    var prev = el("img", "id-prev");
+    prev.alt = "";
+    prev.hidden = true;
+    dlg.appendChild(prev);
+    var stat = el("p", "id-stat");
+    stat.setAttribute("role", "status");
+    dlg.appendChild(stat);
+    var list = el("div", "id-list");
+    dlg.appendChild(list);
+    var attr = el("p", "id-attr", ID.ATTRIBUTION);
+    attr.hidden = true;
+    dlg.appendChild(attr);
+    var cam = el("input");
+    cam.type = "file";
+    cam.accept = "image/*";
+    cam.setAttribute("capture", "environment");
+    cam.hidden = true;
+    dlg.appendChild(cam);
+    function take(file) {
+      shrinkPhoto(file).then(function (ph) {
+        if (!ph) { stat.textContent = t("id.err.img"); return; }
+        photo = ph;
+        prev.src = ph.url;
+        prev.hidden = false;
+        list.textContent = "";
+        attr.hidden = true;
+        stat.textContent = "";
+        go.disabled = false;
+        go.focus();
+      });
+    }
+    cam.addEventListener("change", function () { var f = cam.files && cam.files[0]; cam.value = ""; if (f) take(f); });
+    var pickRow = el("div", "dlg-actions tight");
+    pickRow.style.flexWrap = "wrap";
+    pickRow.appendChild(button(t("id.photo"), "", function () { cam.click(); }));
+    pickRow.appendChild(button(t("id.pick"), "", function () {
+      var host = dialogHost();
+      var pk = host && typeof host.openFile === "function" ? host.openFile("image/*") : localPickFile("image/*");
+      Promise.resolve(pk).then(function (f) { if (f) take(f); }).catch(function () {});
+    }));
+    dlg.appendChild(pickRow);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("id.go"), "primary", function () { ask(LANG); });
+    go.disabled = true;
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    function fail(kind, e) { stat.textContent = t("id.err." + kind, { e: e || "" }); }
+    function ask(lang) {
+      if (!photo || busy) return;
+      busy = true;
+      go.disabled = true;
+      stat.textContent = t("id.wait");
+      list.textContent = "";
+      var fd = new FormData();
+      fd.append("organs", "auto");
+      fd.append("images", photo.blob, "plant.jpg");
+      fetch(ID.url(prefs.pnKey, lang), { method: "POST", body: fd, credentials: "omit", referrerPolicy: "origin", cache: "no-store" })
+        .then(function (res) {
+          if (!res.ok) {
+            busy = false;
+            // a language Pl@ntNet does not know → once more in English
+            if (res.status === 400 && lang !== "en") { ask("en"); return null; }
+            go.disabled = false;
+            fail(ID.errorKind(res.status), String(res.status));
+            return null;
+          }
+          return res.json().then(function (json) {
+            busy = false;
+            go.disabled = false;
+            show(json);
+          });
+        })
+        .catch(function () { busy = false; go.disabled = false; fail("net"); });
+    }
+    function show(json) {
+      var rs = ID.results(json, 5);
+      if (!rs.length) { fail("none"); return; }
+      var left = ID.remaining(json);
+      stat.textContent = t("id.results") + " · " + t("id.pickOne") + (left !== null ? " " + t("id.left", { n: left }) : "");
+      rs.forEach(function (r) {
+        var b = el("button", "id-row");
+        b.type = "button";
+        var tx = el("span", "id-tx");
+        tx.appendChild(el("span", "id-sci", r.sci));
+        var sub = [r.common.join(", "), r.family].filter(Boolean).join(" · ");
+        if (sub) tx.appendChild(el("span", "id-sub", sub));
+        b.appendChild(tx);
+        var pc = Math.round(r.score * 100);
+        var sc = el("span", "id-score", t("id.score", { p: pc }));
+        sc.style.setProperty("--p", Math.max(4, pc) + "%");
+        b.appendChild(sc);
+        b.addEventListener("click", function () { dlg.close(); onPick(r); });
+        list.appendChild(b);
+      });
+      attr.hidden = false;
+      var f = list.querySelector("button");
+      if (f) f.focus();
+    }
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
 
   // ---------- 7. Settings, export / import ----------
   function settings() {
@@ -975,6 +1189,30 @@
     hemi.value = prefs.hemi;
     hemi.addEventListener("change", function () { prefs.hemi = hemi.value === "s" ? "s" : "n"; savePrefsNow(); render(); });
     dlg.appendChild(field(t("set.hemi"), hemi, "pc-hemi"));
+    // Pl@ntNet: the person's own key (device-local)
+    dlg.appendChild(el("div", "dlg-lbl", t("set.pn")));
+    var key = el("input");
+    key.type = "password";
+    key.autocomplete = "off";
+    key.spellcheck = false;
+    key.maxLength = 80;
+    key.value = prefs.pnKey;
+    key.addEventListener("change", function () {
+      var v = key.value.trim();
+      if (v && !ID.keyOk(v)) { showToast(t("set.pnBad")); return; }
+      if (v === prefs.pnKey) return;
+      prefs.pnKey = v;
+      savePrefsNow();
+      showToast(t(v ? "set.pnSaved" : "set.pnCleared"));
+    });
+    dlg.appendChild(field(t("set.pnKey"), key, "pc-pnkey"));
+    var hint = el("p", "dlg-sub", t("set.pnHint") + " ");
+    var lnk = el("a", "", t("set.pnSite"));
+    lnk.href = ID.SITE;
+    lnk.target = "_blank";
+    lnk.rel = "noopener noreferrer";
+    hint.appendChild(lnk);
+    dlg.appendChild(hint);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight");
     io.appendChild(button(t("set.export"), "", exportData));
