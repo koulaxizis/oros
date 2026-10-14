@@ -19,6 +19,8 @@ Keyboard:
 ## Levels and scoring
 `Daily` is one medium crossword a day, the same on every device. `Statistics` shows the days solved, your streak, best streak and best daily time, plus how many free-play puzzles you've solved and your best time for each size. Revealing a letter means no record for that puzzle; checking is free. `Reset statistics` clears them.
 
+After the daily, `Share` sends your result without spoilers: your time and one square per word, green for a word you found alone and yellow for a word with a revealed letter. On a phone it opens the share sheet; elsewhere it copies the text. `All games` opens the [Game Center](help:a/gamecenter), when it's installed.
+
 ## Sync
 Your daily results and free-play records sync between your devices through [orOS sync](help:t/sync). If you've already solved today's crossword on another device, you'll see its time. The puzzles in progress and your settings stay on this device.
 

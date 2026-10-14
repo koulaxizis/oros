@@ -89,6 +89,7 @@ button, select {
 #hint-btn     { order: 5; }
 #restart-btn  { order: 6; }
 #new-btn      { order: 7; }
+#daily-btn    { order: 7; }
 #stats-btn    { order: 8; }
 #sfx-btn      { order: 9; }
 
@@ -138,6 +139,19 @@ button, select {
 .icon-btn:disabled { opacity: 0.4; cursor: default; }
 .icon-btn:disabled:hover { color: var(--text-dim); border-color: var(--border); background: var(--panel-bg); }
 .icon-btn svg { width: 18px; height: 18px; display: block; }
+/* Daily: a dot while today's puzzle is not done; lit while playing it */
+#daily-btn { position: relative; }
+#daily-btn.due::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#daily-btn.on { color: var(--accent); border-color: var(--accent); }
 
 .seg-btn:focus-visible, .icon-btn:focus-visible,
 .dlg-btn:focus-visible {
@@ -337,6 +351,8 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 .dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
 .dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
+.dlg-center { text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 10px; }
+.dlg-btn.dlg-link { display: block; width: 100%; margin-top: 8px; border-style: dashed; }
 .dlg-btn {
   flex: 1;
   min-height: 40px;

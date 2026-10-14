@@ -27,8 +27,13 @@ On big boards, the zoom button switches between `Fit the board` and `Bigger cell
 
 Changing the level starts a new game. `Records` shows your best winning time, games won and games played for each level.
 
+### Daily board
+The calendar button opens the `Daily board`: everyone gets the same Intermediate board (16×16, 40 mines) on the same date, with the same safe area already open to start from. It is made on your device from the date, so it works offline, and a new one comes at midnight, your local time. A dot on the button means today's board is still waiting. The clock starts with your first move.
+
+The daily board has one try: the first result counts, win or lose. Win on days in a row to build a streak; `Records` shows the dailies played and won, your streak and your best streak. `Share` sends your result without spoilers: your time, the mines you found and one square per mine (green for found, black for not found, and a blast where it went off). On a phone it opens the share sheet; elsewhere it copies the text. `All games` opens the [Game Center](help:a/gamecenter), when it's installed.
+
 ## Sync
-Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, the zoom, the game in progress and the sound button stay on this device.
+Your records and daily results sync between your devices through [orOS sync](help:t/sync). `Reset records` in `Records` deletes them on every device, after you confirm. The level, the zoom, the game in progress and the sound button stay on this device.
 
 ## Tips
 - A 1 next to a single closed cell means that cell is a mine: flag it.

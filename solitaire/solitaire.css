@@ -304,7 +304,11 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
 .dlg-note { font-size: 12px; color: var(--text-dim); margin-top: 10px; line-height: 1.4; }
 .opt-row .seg { width: max-content; max-width: 100%; margin-top: 6px; }
-.stats-seg { width: max-content; max-width: 100%; margin-bottom: 4px; }
+.stats-seg { width: max-content; max-width: 100%; margin-bottom: 4px; overflow-x: auto; scrollbar-width: none; }
+.stats-seg .seg-btn { flex-shrink: 0; }
+.dlg-btn.dlg-link { display: block; width: 100%; margin-top: 8px; border-style: dashed; }
+/* Pyramid: a covered card is a little dimmer than an open one */
+#board .ock-card.covered { filter: brightness(0.8) saturate(0.85); }
 .deal-line { display: flex; gap: 8px; margin-top: 6px; }
 .deal-input {
   flex: 1;

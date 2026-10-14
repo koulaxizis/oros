@@ -33,16 +33,16 @@ const F = (() => {
   ["cmpStr", "adjacent", "neighbours", "hamiltonPath", "touches", "joins", "joined", "growPaths",
    "flowSolver", "endsOf", "countSolutions", "wiring", "divergence", "splitAt", "genJob", "genStep",
    "generate", "dotMap", "ownerOf", "isDone", "filled", "isWon", "startAt", "stepTo", "retract",
-   "route", "hintPaths", "validPuzzle", "validPaths", "normCell", "normRow", "joinRows",
+   "route", "hintPaths", "validPuzzle", "validPaths", "normDay", "dayKeyOk", "dayBetter", "normCell", "normRow", "joinRows",
    "mergeFlow"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function("crypto", parts.join("\n") +
-    "\nreturn { SIZES, COLOURS, randInt, adjacent, neighbours, hamiltonPath, touches, growPaths," +
+  return new Function("crypto", "window", parts.join("\n") +
+    "\nreturn { SIZES, COLOURS, DAILY_LEVEL, DK, randInt, adjacent, neighbours, hamiltonPath, touches, growPaths," +
     " countSolutions, divergence, generate, dotMap, ownerOf, isDone, filled, isWon, startAt, stepTo," +
-    " retract, route, hintPaths, validPuzzle, validPaths, mergeFlow };")(webcrypto);
+    " retract, route, hintPaths, validPuzzle, validPaths, mergeFlow };")(webcrypto, { orosDaily: require("../gamekit/daily.js") });
 })();
 
 const J = JSON.stringify;
@@ -286,4 +286,45 @@ test("flow: records merge is a join and a reset drops older rows", () => {
   }
   assert.equal(J(M({ rows: { d: { b: 0, s: { 4: { g: 1, t: 1 } } } } }, null).rows), "{}", "unknown size");
   assert.equal(J(M({ rows: { d: { b: -1, s: { 5: { g: 1, t: 1 } } } } }, null).rows), "{}", "bad epoch");
+});
+
+// ---------- Daily puzzle (Wave 49) ----------
+test("flow daily: the same date makes the same unique 7×7 puzzle", () => {
+  const D = F.DK, n = +F.DAILY_LEVEL;
+  assert.ok(D, "gamekit loaded");
+  for (const day of [0, 286, 287, 1500]) {
+    const t0 = Date.now();
+    const a = F.generate(n, D.randInt(D.seedOf("flow", day)), 0);
+    assert.ok(Date.now() - t0 < 5000, "time");
+    const b = F.generate(n, D.randInt(D.seedOf("flow", day)), 0);
+    assert.equal(J(a), J(b));
+    assert.ok(F.validPuzzle(a));
+    assert.equal(F.countSolutions(a.n, a.dots), 1, "unique");
+    const c = F.generate(n, D.randInt(D.seedOf("flow", day + 1)), 0);
+    assert.notEqual(J(a.dots), J(c.dots));
+  }
+});
+
+test("flow daily: day results merge as a join; reset and bad entries drop", () => {
+  const M = F.mergeFlow;
+  const day = () => { const k = 4 + rnd(3), m = rnd(1 << k); let h = 0; for (let i = 0; i < k; i++) if (m & (1 << i)) h++; return { b: rnd(3) * 100, t: 1 + rnd(3) * 1000, h, m, k }; };
+  const st = () => {
+    const days = {};
+    for (let i = 0; i < rnd(4); i++) days[String(rnd(5))] = day();
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows: {}, days };
+  };
+  for (let i = 0; i < 4000; i++) {
+    const a = st(), b = st(), c = st();
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+  }
+  const x = { days: { 3: { b: 0, t: 900, h: 0, m: 0, k: 6 } } };
+  assert.equal(M(x, { days: { 3: { b: 0, t: 100, h: 1, m: 1, k: 6 } } }).days[3].t, 900);   // no hint first
+  assert.equal(J(M(x, { br: 1, rows: {} }).days), "{}");
+  for (const bad of [{ b: 0, t: 1, h: 0, m: 64, k: 6 }, { b: 0, t: 1, h: 7, m: 0, k: 6 }, { b: 0, t: 0, h: 0, m: 0, k: 6 }, { b: 0, t: 1, h: 0, m: 0, k: 0 }]) {
+    assert.equal(J(M({ days: { 3: bad } }, null).days), "{}", J(bad));
+  }
+  assert.equal(J(M(null, null)), J({ ver: 1, br: 0, rows: {}, days: {} }));
 });

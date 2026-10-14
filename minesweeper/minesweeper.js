@@ -53,6 +53,9 @@
     e: { rows: 16, cols: 30, mines: 99 }
   };
   var MAX_MS = 360000000;                    // 100 h: anything above is junk
+  var DAILY_LV = "i";                        // the daily board: Intermediate 16×16, 40 mines
+  var MAX_DAY = 100000;
+  var DK = (typeof window !== "undefined" && window.orosDaily) || null;         // gamekit/daily.js (Daily board)
   var LONG_MS = 420;                         // long-press = flag
   var MOVE_PX = 10;                          // a touch that moves more is a pan
   // Cell states: 0 closed, 1 open, 2 flagged.
@@ -70,6 +73,27 @@
   var STRINGS = {
     en: {
       "lv.b": "Beginner", "lv.i": "Intermediate", "lv.e": "Expert",
+      "app.name": "Minesweeper",
+      "lv.d": "Daily",
+      "btn.daily": "Daily board",
+      "btn.games": "All games",
+      "turn.daily": "Daily #{n}: {k} mines left",
+      "res.titleD": "Daily #{n}",
+      "res.streak": "Streak",
+      "res.bestStreak": "Best streak",
+      "res.flags": "Mines found",
+      "res.share": "Share",
+      "res.next": "A new daily board tomorrow",
+      "res.free": "Play a free game",
+      "res.oneTry": "The daily board has one try.",
+      "stats.daily": "Daily",
+      "stats.dailyRow": "Played · won · streak · best",
+      "share.won": "cleared",
+      "share.lost": "boom",
+      "toast.copied": "Result copied: paste it anywhere",
+      "toast.shared": "Result shared",
+      "toast.copyFail": "Could not copy the result",
+      "toast.dailyGone": "The daily board needs the gamekit file: reload orOS",
       "lv.label": "Level",
       "btn.new": "New game (N)",
       "btn.flagOn": "Flag mode on: a tap flags", "btn.flagOff": "Flag mode off: a tap opens",
@@ -118,6 +142,27 @@
     },
     el: {
       "lv.b": "Αρχάριος", "lv.i": "Μέτριος", "lv.e": "Έμπειρος",
+      "app.name": "Ναρκαλιευτής",
+      "lv.d": "Ημέρας",
+      "btn.daily": "Ναρκοπέδιο της ημέρας",
+      "btn.games": "Όλα τα παιχνίδια",
+      "turn.daily": "Ημέρας #{n}: μένουν {k} νάρκες",
+      "res.titleD": "Ημέρας #{n}",
+      "res.streak": "Σερί",
+      "res.bestStreak": "Καλύτερο σερί",
+      "res.flags": "Νάρκες που βρέθηκαν",
+      "res.share": "Κοινοποίηση",
+      "res.next": "Νέο ναρκοπέδιο της ημέρας αύριο",
+      "res.free": "Παίξε ελεύθερα",
+      "res.oneTry": "Το ναρκοπέδιο της ημέρας έχει μία προσπάθεια.",
+      "stats.daily": "Ημέρας",
+      "stats.dailyRow": "Παιχνίδια · νίκες · σερί · καλύτερο",
+      "share.won": "καθάρισε",
+      "share.lost": "μπουμ",
+      "toast.copied": "Το αποτέλεσμα αντιγράφηκε: επικόλλησέ το όπου θες",
+      "toast.shared": "Το αποτέλεσμα κοινοποιήθηκε",
+      "toast.copyFail": "Δεν έγινε αντιγραφή του αποτελέσματος",
+      "toast.dailyGone": "Το ναρκοπέδιο της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "lv.label": "Επίπεδο",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.flagOn": "Σημαίες ανοιχτές: το άγγιγμα βάζει σημαία", "btn.flagOff": "Σημαίες κλειστές: το άγγιγμα ανοίγει",
@@ -318,7 +363,26 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  // days (Wave 49; older data has none): { "<day>": { b: <epoch>, w: 1 won
+  //   | 0 lost, t: ms, f: mines found (flagged right; all on a win) } },
+  // one daily board per calendar day (day 0 = 1 Jan 2026,
+  // gamekit/daily.js), one try. The newer epoch wins; equal epochs keep
+  // the better result (a win first, then the shorter time, then more
+  // mines found: a total order, so a join).
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.t) || v.t < 1 || v.t > MAX_MS || !isInt(v.f) || v.f < 0 || v.f > LV[DAILY_LV].mines) return null;
+    return { b: v.b, w: v.w, t: v.t, f: v.f };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  // a better than c (equal epochs)
+  function dayBetter(a, c) {
+    if (a.w !== c.w) return a.w > c.w;
+    if (a.t !== c.t) return a.t < c.t;
+    return a.f > c.f;
+  }
 
   function normCell(c) {
     if (!c || typeof c !== "object" || !isInt(c.t) || !isInt(c.ts) || !isInt(c.w) || !isInt(c.g) ||
@@ -360,7 +424,16 @@
   function mergeMinesweeper(A, B) {
     var a = A || {}, b = B || {};
     var br = Math.max(isInt(a.br) && a.br > 0 ? a.br : 0, isInt(b.br) && b.br > 0 ? b.br : 0);
-    var rows = {};
+    var rows = {}, days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object") return;
+      Object.keys(m).forEach(function (k) {
+        var v = dayKeyOk(k) ? normDay(m[k]) : null;
+        if (!v || v.b < br) return;
+        var o = days[k];
+        if (!o || v.b > o.b || (v.b === o.b && dayBetter(v, o))) days[k] = v;
+      });
+    });
     [a.rows || {}, b.rows || {}].forEach(function (m) {
       if (typeof m !== "object") return;
       Object.keys(m).forEach(function (id) {
@@ -375,7 +448,9 @@
       LEVELS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k]; });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var sd = {};
+    Object.keys(days).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
   }
 
   // Best time, wins and games for a level, across every device.
@@ -444,6 +519,25 @@
     return won && (!before.t || ms < before.t);
   }
 
+  // Daily results: boards played and won, the current and best streak
+  // of won days.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0;
+    Object.keys(data.days).forEach(function (k) {
+      n++;
+      if (data.days[k].w) { on[k] = true; w++; }
+    });
+    var st = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: st.cur, best: st.best };
+  }
+  // One try a day: the first result counts.
+  function countDaily(day, won, ms, found) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    data.days[day] = { b: data.br, w: won ? 1 : 0, t: Math.max(1, Math.min(MAX_MS, ms)), f: found };
+    data = mergeMinesweeper(data, data);
+    save();
+  }
+
   // ---------- 4. Device-local prefs + session ----------
   var prefs = { lv: "b", zoom: false };
 
@@ -462,7 +556,9 @@
 
   // game = { lv, mines: "0101…" | "" (not laid yet), st: [cell states],
   //          ms, over: "" | "w" | "l", hit: the mine that went off or -1,
-  //          sel: cursor cell, flag: flag mode }
+  //          sel: cursor cell, flag: flag mode,
+  //          day?: the daily board's day number (mines laid and the start
+  //          area opened at once), go?: the first move on it was made }
   var game = null;
   var MINES = null, NUMS = null;
 
@@ -480,12 +576,13 @@
       if (!g.mines && g.st[i] === 1) return false;
     }
     if (g.mines && count !== L.mines) return false;
+    if (g.day !== undefined && (!isInt(g.day) || g.day < 0 || g.day > MAX_DAY || g.lv !== DAILY_LV || !g.mines)) return false;
     return !g.over || !!g.mines;
   }
   function loadSession() {
     try {
       var g = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-      if (validSession(g)) { g.flag = g.flag === true; return g; }
+      if (validSession(g)) { g.flag = g.flag === true; g.go = g.go === true; return g; }
     } catch (e) {}
     return null;
   }
@@ -501,7 +598,8 @@
 
   function elapsed() { return game.ms + (runFrom ? Math.round(nowMs() - runFrom) : 0); }
   function clockRuns() {
-    return !!(game && game.mines && !game.over && document.visibilityState !== "hidden");
+    return !!(game && game.mines && !game.over && (game.day === undefined || game.go) &&
+              document.visibilityState !== "hidden");
   }
   function syncClock() {
     if (runFrom) { game.ms = Math.min(MAX_MS, elapsed()); runFrom = 0; }
@@ -521,29 +619,53 @@
     } else { MINES = null; NUMS = null; }
   }
 
-  function fresh(lv) {
+  function fresh(lv, day) {
+    if (day !== undefined) return freshDaily(day);
     var L = LV[lv], st = [];
     for (var i = 0; i < L.rows * L.cols; i++) st.push(0);
     return { lv: lv, mines: "", st: st, ms: 0, over: "", hit: -1,
              sel: Math.floor(L.rows / 2) * L.cols + Math.floor(L.cols / 2), flag: game ? game.flag : false };
   }
+
+  // The daily board: the start cell and the mines come from the date's
+  // seed, so every device gets the same board, and the start area is
+  // already open (no first-click luck). The clock waits for a move.
+  function dailyBoard(day) {
+    var L = LV[DAILY_LV], rnd = DK.random(DK.seedOf("minesweeper", day));
+    var r = 2 + Math.floor(rnd() * (L.rows - 4)), c = 2 + Math.floor(rnd() * (L.cols - 4));
+    var start = r * L.cols + c;
+    return { start: start, mines: layMines(L.rows, L.cols, L.mines, start, rnd) };
+  }
+  function freshDaily(day) {
+    var L = LV[DAILY_LV], b = dailyBoard(day), st = [];
+    for (var i = 0; i < L.rows * L.cols; i++) st.push(0);
+    openFrom(st, b.mines, numbersOf(b.mines, L.rows, L.cols), L.rows, L.cols, b.start);
+    return { lv: DAILY_LV, mines: b.mines.join(""), st: st, ms: 0, over: "", hit: -1, sel: b.start,
+             flag: game ? game.flag : false, day: day, go: false };
+  }
+  // The first move on a daily board starts its clock.
+  function firstMove() {
+    if (game.day === undefined || game.go) return;
+    game.go = true;
+    syncClock();
+  }
   function inProgress() { return !!(game && game.mines && !game.over); }
   function copy(g) { return JSON.parse(JSON.stringify(g)); }
 
   // A game in progress is never lost silently: Undo toast (R14).
-  function newGame(lv) {
+  function newGame(lv, day) {
     closeDialogs();
     var prev = inProgress() ? (saveSession(), copy(game)) : null;
-    prefs.lv = lv; savePrefs();
+    if (day === undefined) { prefs.lv = lv; savePrefs(); }
     runFrom = 0;
-    setGame(fresh(lv));
+    setGame(fresh(lv, day));
     saveSession();
     syncClock();
     renderAll(true);
     if (prev) {
       undoToast(t("toast.newgame"), function () {
         runFrom = 0;
-        prefs.lv = prev.lv; savePrefs();
+        if (prev.day === undefined) { prefs.lv = prev.lv; savePrefs(); }
         setGame(prev);
         saveSession();
         syncClock();
@@ -565,6 +687,7 @@
     var L = LV[game.lv];
     if (game.st[i] === 2) { showToast(t("toast.flagged")); shake(i); return; }   // R28
     if (game.st[i] === 1) { chord(i); return; }
+    firstMove();
     if (!game.mines) {
       MINES = layMines(L.rows, L.cols, L.mines, i, rand);
       NUMS = numbersOf(MINES, L.rows, L.cols);
@@ -582,6 +705,7 @@
     var L = LV[game.lv];
     var res = chordAt(game.st, MINES, NUMS, L.rows, L.cols, i);
     if (!res.ok) { shake(i); return; }                    // visible refusal (R28)
+    firstMove();
     if (res.boom >= 0) { lose(res.boom); return; }
     sfx("flood");
     after(res.opened);
@@ -590,6 +714,7 @@
   function toggleFlag(i) {
     if (refuseOver()) return;
     if (game.st[i] === 1) { if (NUMS && NUMS[i]) chord(i); else shake(i); return; }
+    firstMove();
     game.st[i] = game.st[i] === 2 ? 0 : 2;
     sfx(game.st[i] === 2 ? "flag" : "unflag");
     saveSession();
@@ -612,6 +737,7 @@
     syncClock();
     for (var i = 0; i < game.st.length; i++) if (MINES[i]) game.st[i] = 2;   // flag the rest
     var rec = countGame(game.lv, true, game.ms);
+    if (game.day !== undefined) countDaily(game.day, true, game.ms, LV[game.lv].mines);
     saveSession();
     renderAll(false);
     live(t("live.won", { t: fmtTime(game.ms) }));
@@ -627,6 +753,7 @@
     game.hit = i;
     syncClock();
     countGame(game.lv, false, game.ms);
+    if (game.day !== undefined) countDaily(game.day, false, game.ms, minesFound());
     saveSession();
     renderAll(false);
     live(t("live.lost"));
@@ -634,6 +761,12 @@
     var b = $("board");
     if (!reduced) { b.classList.remove("boom"); void b.offsetWidth; b.classList.add("boom"); }
     setTimeout(function () { resultDialog(false); }, reduced ? 50 : 900);
+  }
+
+  function minesFound() {
+    var n = 0;
+    for (var i = 0; i < game.st.length; i++) if (game.st[i] === 2 && MINES && MINES[i]) n++;
+    return n;
   }
 
   function toggleFlagMode() {
@@ -659,9 +792,13 @@
   }
 
   function renderToolbar() {
+    var daily = !!(game && game.day !== undefined);
     var cur = game ? game.lv : prefs.lv;
+    var db = $("daily-btn");
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", daily);
     [].forEach.call(document.querySelectorAll("#lv-seg .seg-btn"), function (b) {
-      var on = b.getAttribute("data-lv") === cur;
+      var on = !daily && b.getAttribute("data-lv") === cur;
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
@@ -698,6 +835,7 @@
     if (game.over === "w") { msg = t("turn.won"); cls = "done"; }
     else if (game.over === "l") { msg = t("turn.lost"); cls = "warn"; }
     else if (game.flag) { msg = t("turn.flag"); cls = "done"; }
+    else if (game.day !== undefined) msg = t("turn.daily", { n: game.day + 1, k: L.mines - flags });
     else if (!game.mines) msg = t(coarse() ? "turn.startTouch" : "turn.start");
     else msg = best ? t("turn.play", { t: fmtTime(best) }) : t("turn.playNone", { n: closed - L.mines });
     $("turn").textContent = msg;
@@ -872,6 +1010,7 @@
 
   function resultDialog(rec) {
     if (!game || !game.over) return;            // replaced meanwhile
+    if (game.day !== undefined && data.days[game.day]) { dailyDialog(game.day, rec); return; }
     closeDialogs();
     var s = totals(game.lv), won = game.over === "w";
     var dlg = makeDialog("minesweeper-result");
@@ -892,6 +1031,73 @@
     again.focus();
   }
 
+  // ---------- Daily board ----------
+  function today() { return DK ? DK.today() : 0; }
+
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's board (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d, false); return; }
+    closeDialogs();
+    if (game && game.day === d && !game.over) return;
+    newGame(DAILY_LV, d);
+  }
+
+  function dailyDialog(day, rec) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    closeDialogs();
+    var st = dailyStats(today());
+    var dlg = makeDialog("minesweeper-daily");
+    dlg.appendChild(el("div", "dlg-title", t("res.titleD", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), r.w ? fmtTime(r.t) : t("turn.lost")));
+    if (rec) dlg.appendChild(el("div", "dlg-badge", t("res.rec")));
+    if (!r.w) dlg.appendChild(row(t("res.time"), fmtTime(r.t)));
+    dlg.appendChild(row(t("res.flags"), r.f + " / " + LV[DAILY_LV].mines));
+    dlg.appendChild(row(t("res.streak"), String(st.cur)));
+    dlg.appendChild(row(t("res.bestStreak"), String(st.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-center", t("res.oneTry") + " " + t("res.next")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("res.share"), "", function () { shareDaily(day); }));
+    var free = button(t("res.free"), "primary", function () {
+      dlg.close();
+      if (game && game.day !== undefined) newGame(prefs.lv);
+    });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    hubLink(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    free.focus();
+  }
+
+  // Spoiler-free: won or not, the time, and one square per mine
+  // (green: found), ten to a line. Never where they were.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var all = LV[DAILY_LV].mines, grid = [], line = "";
+    for (var k = 0; k < all; k++) {
+      line += k < r.f ? "🟩" : (!r.w && k === r.f ? "💥" : "⬛");
+      if (k % 10 === 9) { grid.push(line); line = ""; }
+    }
+    var text = DK.shareText({ game: t("app.name"), label: t("lv.d"), day: day, grid: grid,
+      line: (r.w ? "✅ " + t("share.won") : "💥 " + t("share.lost")) + " · ⏱ " + fmtTime(r.t) + " · 💣 " + r.f + "/" + all });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(dlg) {
+    if (!DK || !DK.hasHub()) return;
+    dlg.appendChild(button(t("btn.games"), "dlg-link", function () { dlg.close(); DK.openHub("minesweeper"); }));
+  }
+
   function statsDialog() {
     var dlg = makeDialog("minesweeper-stats");
     dlg.appendChild(el("div", "dlg-title", t("stats.title")));
@@ -903,6 +1109,10 @@
       dlg.appendChild(row(t("lv." + k),
         s.g ? (s.t ? fmtTime(s.t) : "–") + " · " + s.w + " · " + s.g : "–"));
     });
+    var ds = dailyStats(today());
+    if (ds.n) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("lv.d"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
@@ -913,6 +1123,7 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
@@ -1021,6 +1232,7 @@
 
   // ---------- Toolbar icons (R9: injected by JS) ----------
   var UI_ICONS = {
+    daily:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
     new:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     flag:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>',
     zoomIn:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>',
@@ -1179,7 +1391,7 @@
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (game) renderStatus();
+    if (game) { renderStatus(); renderToolbar(); }
     // no toast on merge (sync feedback = taskbar dot)
   }
 
@@ -1192,7 +1404,8 @@
   }
 
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"],
+     ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1206,7 +1419,7 @@
     [].forEach.call(document.querySelectorAll("#lv-seg .seg-btn"), function (b) {
       b.addEventListener("click", function () {
         var lv = b.getAttribute("data-lv");
-        if (game && lv === game.lv && !game.over) return;   // visible active state
+        if (game && lv === game.lv && game.day === undefined && !game.over) return;   // visible active state
         newGame(lv);
       });
     });
@@ -1219,7 +1432,13 @@
       if (prefs.zoom && !$("board-wrap").classList.contains("zoomed")) showToast(t("toast.noZoom"));
       else scrollToSel();
     });
-    $("new-btn").addEventListener("click", function () { newGame(game ? game.lv : prefs.lv); $("new-btn").blur(); });
+    $("new-btn").addEventListener("click", function () {
+      newGame(game && game.day === undefined ? game.lv : prefs.lv);
+      $("new-btn").blur();
+    });
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's board.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("stats-btn").addEventListener("click", statsDialog);
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
@@ -1233,6 +1452,7 @@
 
     document.addEventListener("visibilitychange", function () {
       if (!game) return;
+      renderToolbar();                           // the Daily dot after midnight
       syncClock();
       saveSession();
     });
@@ -1251,16 +1471,21 @@
     registerSync();
     inheritPalette();
     watchPalette();
-    var g = loadSession();
+    var g = loadSession(), tg = DK ? DK.takeTarget("minesweeper") : null;
     if (g) {
-      prefs.lv = g.lv;                           // the resumed game decides the toolbar
+      if (g.day === undefined) prefs.lv = g.lv;   // the resumed game decides the toolbar
       setGame(g);
+    } else if (tg && tg.daily && DK && !data.days[today()]) {
+      setGame(fresh(DAILY_LV, today()));
+      saveSession();
+      tg = null;
     } else {
       setGame(fresh(prefs.lv));
       saveSession();
     }
     syncClock();
     renderAll(true);
+    if (tg && tg.daily) openDaily();
   }
 
   boot();

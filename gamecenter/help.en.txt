@@ -1,0 +1,21 @@
+# Game Center
+All your games in one place: today's daily puzzles, your achievements and the statistics of every game you've played.
+
+## How to use
+- `Today's dailies` shows the six games with a daily puzzle: Wordle, Crossword, Sudoku, Nonogram, Flow Free and Minesweeper. Each card says whether today's puzzle is solved, not solved or still open, and your streak in that game. `Play` opens the game straight on today's puzzle; once it's done, `See` shows your result.
+- The line under the title shows your daily streak: the days in a row on which you solved at least one daily puzzle.
+- `Achievements` lists goals such as a first win, a 7-day daily streak or solving all six dailies on one day. A trophy marks the ones you've reached; the others show how far you are.
+- `Statistics` lists every game you've played, most played first: games played, won or solved, dailies solved, streak, best time and best score, where the game has them. Tap a game's name to open it. Games you haven't played yet are listed at the bottom.
+
+Each game's `All games` button (in its statistics, and after a daily puzzle) brings you here, to that game's row.
+
+## Sync
+The Game Center keeps no data of its own. It reads the records each game already keeps, and those sync between your devices through [orOS sync](help:t/sync) with each game. Achievements are worked out from those records every time, so they follow you to every device and come back if a game's records come back.
+
+>! Resetting a game's records also takes away the achievements that came from them.
+
+## Limits
+- Only games installed on this device can be opened from here.
+- Games played before a game's records were reset don't count.
+- Chess and the other games against the computer count games against the computer only, the same as their own statistics.
+- Memory keeps only its last 50 games, so it shows at most 50 played.

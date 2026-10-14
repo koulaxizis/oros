@@ -35,4 +35,5 @@ Under `Options`:
 Your daily results and `Free` counts sync between your devices through [orOS sync](help:t/sync), so your streak follows you. If you already played today's word on another device, Wordle tells you and suggests `Free`. `Reset statistics` in `Statistics` deletes everything on every device, after you confirm. Your options, word language, sound button and the words in progress stay on this device.
 
 ## Tips
-- After a word, `Copy` copies the coloured squares without the word, ready to share without spoilers.
+- After a word, `Share` sends the coloured squares without the word, so nothing is spoiled: on a phone it opens the share sheet, elsewhere it copies the text.
+- `All games` (after a word and in `Statistics`) opens the [Game Center](help:a/gamecenter), when it's installed: every game's stats, your achievements and today's daily puzzles in one place.

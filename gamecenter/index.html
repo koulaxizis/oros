@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=gamecenter" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Game Center · orOS</title>
+
+  <link rel="stylesheet" href="gamecenter.css?v=1.98.00">
+
+</head>
+<body>
+
+  <main id="page">
+    <header id="head">
+      <h1 id="title" data-i18n="app.name">Game Center</h1>
+      <p id="sub"></p>
+    </header>
+
+    <!-- Today: the six Daily challenges -->
+    <section class="block" id="today-block" aria-labelledby="today-h">
+      <div class="block-head">
+        <h2 id="today-h" data-i18n="today.title">Today's dailies</h2>
+        <span class="block-note" id="today-note"></span>
+      </div>
+      <div id="today-grid"></div>
+    </section>
+
+    <!-- Achievements, computed from the games' own data -->
+    <section class="block" id="ach-block" aria-labelledby="ach-h">
+      <div class="block-head">
+        <h2 id="ach-h" data-i18n="ach.title">Achievements</h2>
+        <span class="block-note" id="ach-note"></span>
+      </div>
+      <ul id="ach-list"></ul>
+    </section>
+
+    <!-- Per-game statistics -->
+    <section class="block" id="stats-block" aria-labelledby="stats-h">
+      <div class="block-head">
+        <h2 id="stats-h" data-i18n="stats.title">Statistics</h2>
+        <span class="block-note" id="stats-note"></span>
+      </div>
+      <ul id="stats-list"></ul>
+      <details id="unplayed">
+        <summary id="unplayed-sum"></summary>
+        <p id="unplayed-list"></p>
+      </details>
+    </section>
+
+    <p id="foot" data-i18n="foot.note">Everything here is read from the games' own data on this device, which syncs with each game. Nothing extra is stored.</p>
+  </main>
+
+  <div id="toast" role="status"></div>
+
+  <script src="../gamekit/daily.js?v=1.98.00"></script>
+  <script src="core.js?v=1.98.00"></script>
+  <script src="gamecenter.js?v=1.98.00"></script>
+
+</body>
+</html>
