@@ -21,7 +21,7 @@
     var out = [];
     if (!data || typeof data !== "object" || !Array.isArray(data.boards)) return out;
     data.boards.forEach(function (bd) {
-      if (!bd || typeof bd !== "object" || bd.archived) return;
+      if (!bd || typeof bd !== "object" || bd.archived || /^tpl-/.test(bd.id || "")) return;   // templates: archived "tpl-" boards
       var cols = Array.isArray(bd.columns) ? bd.columns : [];
       cols.forEach(function (col, ci) {
         if (!col || typeof col !== "object") return;

@@ -28,7 +28,7 @@
       if (!d || !Array.isArray(d.boards)) return out;
       var gone = d.boardDeleted && typeof d.boardDeleted === "object" ? d.boardDeleted : {};
       d.boards.forEach(function (b) {
-        if (!b || typeof b.id !== "string" || b.archived || gone[b.id]) return;
+        if (!b || typeof b.id !== "string" || b.archived || gone[b.id] || b.id.indexOf("tpl-") === 0) return;
         arr(b.columns).forEach(function (c) {
           if (!c || typeof c.id !== "string") return;
           arr(c.cards).forEach(function (k) {
@@ -40,7 +40,7 @@
             out.push({
               id: k.id,
               title: str(k.text),
-              text: [str(k.notes)].concat(sub, info, [str(b.name) + " › " + str(c.name)])
+              text: [str(k.notes)].concat(sub, info, [str(k.lane), str(b.name) + " › " + str(c.name)])
                 .filter(Boolean).join(" · "),
               when: dueMs(k.due),
               target: { board: b.id, col: c.id, card: k.id }
