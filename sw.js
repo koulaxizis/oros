@@ -1330,6 +1330,8 @@ var PRECACHE_URLS = [
   "chess/index.html",
   "chess/chess.css",
   "chess/chess.js",
+  "chess/lichess-callback.html",
+  "chess/lichess-callback.js",
   "familytree/",
   "familytree/index.html",
   "familytree/search.js",
