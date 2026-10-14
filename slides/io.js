@@ -8,6 +8,9 @@
 //   - .orosslides package: the deck + its pictures (base64) in one
 //     JSON file; opened as a NEW deck (fresh ids), every picture
 //     checked against its hash and decoded as an image first
+//   - PowerPoint (.pptx): written and read by pptx.js (ZIP by
+//     atelier/zip.js); an opened file is a NEW deck, its pictures
+//     stored on the orOS disk like any picture added here
 //   - pictures: designkit/assets.js (one file per picture, R30)
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -253,13 +256,22 @@
   SL.readPackage = readPackage;
 
   function importPackage() {
-    pickFile(".orosslides,application/json,.json").then(openFile, function () { SL.toast(t("imp.bad")); });
+    pickFile(".orosslides,.pptx,application/json,.json," + X().MIME).then(openFile, function () { SL.toast(t("imp.bad")); });
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  // A .pptx (a ZIP) goes to openPptx, anything else is read as a package.
   function openFile(f) {
     return Promise.resolve(f).then(function (f) {
       if (!f) return;
       if (f.size > PKG_MAX) { SL.toast(t("imp.bad")); return; }
+      return f.slice(0, 4).arrayBuffer().then(function (head) {
+        if (X().isZip(new Uint8Array(head)) || /\.pptx$/i.test(f.name || "")) return openPptx(f);
+        return openPackageFile(f);
+      });
+    }).then(null, function () { SL.toast(t("imp.bad")); });
+  }
+  function openPackageFile(f) {
+    return Promise.resolve(f).then(function (f) {
       return f.text().then(function (txt) {
         var pkg = null;
         try { pkg = JSON.parse(txt); } catch (e) {}
@@ -292,6 +304,90 @@
         });
       });
     }).then(null, function () { SL.toast(t("imp.bad")); });
+  }
+
+  // ---------- PowerPoint (.pptx) ----------
+  // slides/pptx.js writes and reads; atelier/zip.js packs and unpacks.
+  function X() { return window.OrosSlidesPPTX; }
+  function promptTexts() {
+    var o = {};
+    C.ROLES.forEach(function (r) { o[r] = t("ph." + r); });
+    return o;
+  }
+  var pptxBusy = false;
+  function exportPptx(deckId) {
+    if (pptxBusy) return;
+    if (SL.deck === deckId) SL.emit("flush");
+    var data = SL.data(), d = data.decks[deckId];
+    if (!d) return;
+    pptxBusy = true;
+    var media = {}, chain = Promise.resolve();
+    X().needs(data, deckId).forEach(function (id) {
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) {
+        if (b) return b.arrayBuffer().then(function (ab) { media[id] = new Uint8Array(ab); });
+      }).then(null, function () {});
+    });
+    var res = null;
+    chain.then(function () {
+      res = X().write(SL.data(), deckId, media, { prompts: promptTexts() });
+      var blob = new Blob([res.bytes], { type: X().MIME });
+      return saveBlob(blob, deckName(d) + ".pptx", X().MIME, "PowerPoint", ".pptx");
+    }).then(function (ok) {
+      pptxBusy = false;
+      if (ok) SL.toast(res.out.missing ? t("exp.pptxMissing", { n: res.out.missing }) : t("exp.pptxDone"));
+    }, function (e) {
+      pptxBusy = false;
+      try { console.error("[orOS] slides: .pptx export failed", e); } catch (x) {}
+      SL.toast(t("exp.fail"));
+    });
+  }
+
+  // A .pptx as a NEW presentation: its pictures are stored on the orOS
+  // disk like any picture added in Slides.
+  function openPptx(f) {
+    if (pptxBusy) return Promise.resolve();
+    pptxBusy = true;
+    SL.toast(t("imp.pptxWorking"));
+    return f.arrayBuffer().then(function (ab) {
+      var zip = window.AtelierZip.open(new Uint8Array(ab));
+      return X().read(zip, { labels: {
+        chart: t("note.chart"), table: t("note.table"), diagram: t("note.diagram"), media: t("note.media"), object: t("note.object")
+      } }).then(function (plan) {
+        if (!plan.title) plan.title = String(f.name || "").replace(/\.pptx$/i, "");
+        var assets = {}, failed = 0, nofs = false, chain = Promise.resolve();
+        Object.keys(plan.media).forEach(function (p) {
+          chain = chain.then(function () {
+            if (nofs) { failed++; return; }
+            return zip.bytes(p, X().MAX_MEDIA).then(function (b) {
+              if (!b) { failed++; return; }
+              var file = new File([b], p.split("/").pop(), { type: X().mediaType(p) || "application/octet-stream" });
+              return A.importFile(file).then(function (r) { assets[p] = r; });
+            }).then(null, function (e) { if (e && e.message === "nofs") nofs = true; failed++; });
+          });
+        });
+        return chain.then(function () {
+          var lost = 0;
+          var id = SL.addDeckData(function (dt, nw, newId) {
+            var r = X().build(plan, assets, nw, newId);
+            if (!r.deck || !r.slides.length) return null;
+            dt.decks[r.deck.id] = r.deck;
+            r.slides.forEach(function (s) { dt.slides[s.id] = s; });
+            r.items.forEach(function (it) { dt.items[it.id] = it; });
+            lost = plan.count.skipped + plan.count.unknown + r.missing + Math.max(0, plan.count.slides - r.slides.length);
+            return r.deck.id;
+          });
+          pptxBusy = false;
+          if (!id) { SL.toast(t("imp.bad")); return; }
+          SL.openDeck(id);
+          if (nofs) SL.toast(t("img.nofs"));
+          else SL.toast(lost ? t("imp.pptxPartial", { n: lost }) : t("imp.done"));
+        });
+      });
+    }).then(null, function (e) {
+      pptxBusy = false;
+      try { console.error("[orOS] slides: .pptx import failed", e); } catch (x) {}
+      SL.toast(t("imp.bad"));
+    });
   }
 
   // ---------- Pictures ----------
@@ -331,6 +427,7 @@
 
   SL.io = {
     present: present, exportPdf: exportPdf, exportPng: exportPng,
-    exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage
+    exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage,
+    exportPptx: exportPptx
   };
 })();

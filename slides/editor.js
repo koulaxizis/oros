@@ -1006,6 +1006,7 @@
       { label: t("more.handout"), fn: function () { SL.io.exportPdf(true); } },
       { label: t("more.png"), disabled: !ED.cur, fn: function () { SL.io.exportPng(ED.cur); } },
       { label: t("more.pkg"), fn: function () { SL.io.exportPackage(SL.deck); } },
+      { label: t("more.pptx"), fn: function () { SL.io.exportPptx(SL.deck); } },
       rec ? { sep: true } : null,
       rec ? { label: t("more.rec", { n: rec }), fn: SL.dlg.recovered } : null,
       { sep: true },
