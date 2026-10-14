@@ -133,6 +133,13 @@
       "btn.copyFp": "Copy the key", "btn.openCheck": "Open the check page",
       "qr.copyText": "Our certificates carry a QR code signed with the orOS key {fp}.",
       "toast.copied": "Copied.", "toast.noCrypto": "This browser cannot make the check code.",
+      "btn.atAll": "Everyone came", "btn.atNone": "Clear the ticks", "btn.sheet": "Sign-in sheet (PDF)", "ppl.at": "Came: {n}",
+      "f.onlyAt": "Only for people ticked as present", "btn.badges": "Open Badges (ZIP)",
+      "chk.at": "{a} of {n} people are ticked as present; only they get a certificate.", "chk.at0": "No one is ticked as present yet.",
+      "toast.at": "Ticked: {n}.", "work.badges": "Open Badges {i} of {n}…", "toast.badges": "Open Badges need a browser that can sign.",
+      "sheet.title": "SIGN-IN SHEET", "sheet.no": "#", "sheet.name": "Full name", "sheet.sign": "Signature", "sheet.page": "Page {i} of {n}",
+      "badge.check": "Check this certificate",
+      "wd": "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
       "toast.added0": "No one new was added.", "toast.added": "{n} added to the list.", "toast.added1": "1 added to the list.",
       "toast.dup": "{n} were already on the list.", "toast.over": "The list is full: {n} were left out.",
       "toast.numbered1": "1 number given.", "toast.numbered": "{n} numbers given.", "toast.numbered0": "Everyone already has a number.",
@@ -233,6 +240,13 @@
       "btn.copyFp": "Αντιγραφή του κλειδιού", "btn.openCheck": "Άνοιγμα της σελίδας ελέγχου",
       "qr.copyText": "Τα πιστοποιητικά μας φέρουν κωδικό QR υπογεγραμμένο με το κλειδί orOS {fp}.",
       "toast.copied": "Αντιγράφηκε.", "toast.noCrypto": "Αυτός ο browser δεν μπορεί να φτιάξει τον κωδικό ελέγχου.",
+      "btn.atAll": "Ήρθαν όλοι", "btn.atNone": "Καθάρισμα των σημαδιών", "btn.sheet": "Παρουσιολόγιο (PDF)", "ppl.at": "Ήρθε: {n}",
+      "f.onlyAt": "Μόνο για όσους σημειώθηκαν παρόντες", "btn.badges": "Open Badges (ZIP)",
+      "chk.at": "{a} από {n} άτομα σημειώθηκαν παρόντες· μόνο αυτά παίρνουν πιστοποιητικό.", "chk.at0": "Κανείς δεν έχει σημειωθεί παρών ακόμα.",
+      "toast.at": "Σημειώθηκαν: {n}.", "work.badges": "Open Badges {i} από {n}…", "toast.badges": "Τα Open Badges χρειάζονται browser που μπορεί να υπογράψει.",
+      "sheet.title": "ΠΑΡΟΥΣΙΟΛΟΓΙΟ", "sheet.no": "#", "sheet.name": "Ονοματεπώνυμο", "sheet.sign": "Υπογραφή", "sheet.page": "Σελίδα {i} από {n}",
+      "badge.check": "Έλεγχος του πιστοποιητικού",
+      "wd": "Κυρ,Δευ,Τρί,Τετ,Πέμ,Παρ,Σάβ",
       "toast.added0": "Δεν προστέθηκε κανείς καινούριος.", "toast.added": "Προστέθηκαν {n} στη λίστα.", "toast.added1": "Προστέθηκε 1 στη λίστα.",
       "toast.dup": "{n} υπήρχαν ήδη στη λίστα.", "toast.over": "Η λίστα γέμισε: {n} έμειναν εκτός.",
       "toast.numbered1": "Δόθηκε 1 αριθμός.", "toast.numbered": "Δόθηκαν {n} αριθμοί.", "toast.numbered0": "Όλοι έχουν ήδη αριθμό.",
@@ -991,8 +1005,16 @@
     var q = C.fold($("ppl-q").value);
     var list = all.filter(function (p) { return !q || C.fold([p.n, p.n2, p.em, p.g, C.serial(ev, p.no)].join(" ")).indexOf(q) >= 0; });
     if (n && !list.length) host.appendChild(el("li", "hint", t("ppl.none")));
+    $("at-bar").hidden = n === 0;
     list.slice(0, pplShown).forEach(function (p) {
-      var li = el("li"), b = el("button", "ppl-item" + (p.rv ? " rv" : ""));
+      var li = el("li", "ppl-row"), b = el("button", "ppl-item" + (p.rv ? " rv" : ""));
+      var lab = el("label", "at"), cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = !!p.at;
+      cb.setAttribute("aria-label", t("ppl.at", { n: p.n }));
+      cb.addEventListener("change", function () { markAt([p.id], cb.checked); });
+      lab.appendChild(cb);
+      li.appendChild(lab);
       b.type = "button";
       b.appendChild(el("span", "ppl-no" + (p.no ? "" : " none"), p.no ? C.serial(ev, p.no) : "—"));
       b.appendChild(el("span", "ppl-name", p.n));
@@ -1007,6 +1029,67 @@
     $("ppl-more").textContent = t("ppl.more", { n: Math.min(PAGE, Math.max(0, more)) });
     $("ct-btn").hidden = !C.contactsPeople(readJSON("oros-contacts-data"), "").length;
     $("crm-btn").hidden = !C.crmPeople(readJSON("oros-crm-data"), "").length;
+  }
+  // Attendance: tick who came (wave 3).
+  function markAt(ids, on) {
+    if (!ev) return;
+    if (saveTimer) saveNow();
+    var r = C.setAttended(data, ev.id, ids, on, now());
+    if (!r.n) return;
+    data = r.data;
+    storeData();
+    if (!ids) toast(t("toast.at", { n: C.countAttended(data, ev.id) }));
+    if (prefs.tab === "issue") renderChecks();
+    if (!ids) renderPeople();
+  }
+  function dayLabel(lang, d) {
+    var dt = new Date(d + "T12:00:00Z");
+    return tIn(lang, "wd").split(",")[dt.getUTCDay()] + " " + dt.getUTCDate() + "/" + (dt.getUTCMonth() + 1);
+  }
+  function sheetPdf() {
+    if (!ev || busy) return;
+    if (saveTimer) saveNow();
+    var e = ev, lang = e.lang, ppl = people().filter(function (p) { return !p.rv; });
+    var sub = [e.issuer, C.fmtRange(e.d1, e.d2, lang), e.place, e.hours ? tIn(lang, "tok.hours") + ": " + e.hours : ""].filter(Boolean).join(" · ");
+    work(t("work.pdf"));
+    runBusy(loadJsPDF().then(function (J) {
+      var b = D.buildSheet(e, ppl, {
+        title: evTitle(e), sub: sub, sheet: tIn(lang, "sheet.title"), no: tIn(lang, "sheet.no"), name: tIn(lang, "sheet.name"),
+        sign: tIn(lang, "sheet.sign"), page: tIn(lang, "sheet.page"), day: function (d) { return dayLabel(lang, d); }
+      });
+      var pdf = P.build(b.doc, { title: evTitle(e) }, { jsPDF: J, layout: R.computeLayout(b.doc) });
+      return saveFile(pdf.output("blob"), C.fileStem(evTitle(e) + " " + tIn(lang, "btn.sheet").replace(/\s*\(PDF\)$/, ""), "sheet") + ".pdf", "application/pdf", "pdf");
+    }));
+  }
+  // Open Badges 3.0: one signed credential (VC-JWT) per person, in a ZIP.
+  function badgesZip() {
+    if (busy || !ev) return;
+    var Bd = window.CertBadges;
+    if (!subtle || !Bd || !S) { toast(t("toast.badges")); return; }
+    withNumbers(function (list) {
+      var e = ev, files = [], names = C.uniqueNames(list.map(function (p) { return pdfName(e, p).replace(/\.pdf$/, ".jwt"); }));
+      var chain = ensureKey().then(function (k) {
+        var c2 = e.qr ? prepareQr(e, list) : Promise.resolve();
+        return c2.then(function () { return k; });
+      }).then(function (k) {
+        var inner = Promise.resolve();
+        list.forEach(function (p, i) {
+          inner = inner.then(function () { work(t("work.badges", { i: i + 1, n: list.length })); return wait(0); }).then(function () {
+            var map = C.fields(e, p);
+            return Bd.make(subtle, k, {
+              kind: e.kind, title: evTitle(e), name: p.n, email: p.em || "", issuer: e.issuer,
+              description: C.fill(e.txt.body || "", map).trim(), idate: p.iss || e.idate, d1: e.d1, d2: e.d2,
+              checkUrl: e.qr ? checkUrl(e, p) : "", checkName: tIn(e.lang, "badge.check")
+            }, { evId: e.id, pId: p.id, now: now() });
+          }).then(function (r) { files.push({ name: names[i], data: new TextEncoder().encode(r.jwt) }); });
+        });
+        return inner;
+      });
+      runBusy(chain.then(function () {
+        var bytes = window.AtelierZip.write(files, new Date());
+        return saveFile(new Blob([bytes], { type: "application/zip" }), stem() + "-open-badges.zip", "application/zip", "zip");
+      }));
+    });
   }
   function afterPeople() {
     renderPeople();
@@ -1167,7 +1250,7 @@
   // ---------- 8. Issue: checks, numbers ----------
   function renderChecks() {
     if (!ev) return;
-    var host = $("checks"), ppl = people(), list = ppl.filter(function (p) { return !p.rv; });
+    var host = $("checks"), ppl = people(), list = ppl.filter(function (p) { return !p.rv && (!ev.onlyAt || p.at); });
     host.textContent = "";
     function item(cls, text, btnLabel, fn) {
       var li = el("li", cls, text);
@@ -1180,7 +1263,7 @@
       host.appendChild(li);
     }
     if (!ppl.length) item("warn", t("chk.none"), t("chk.toPeople"), function () { showTab("people"); $("add-n").focus(); });
-    else {
+    else if (list.length) {
       var a = list.filter(function (p) { return p.no; }).length;
       if (a === list.length) item("ok", t("chk.allNo", { n: list.length }));
       else item(ev.showNo ? "warn" : "info", t("chk.count", { n: list.length, a: a, b: list.length - a }));
@@ -1201,15 +1284,22 @@
     C.dupNumbers(data, ev.id).forEach(function (no) {
       item("warn", t("chk.dup", { s: C.serial(ev, no) }), t("chk.fix"), function () { fixDup(no); });
     });
-    var rv = ppl.length - list.length;
+    var rv = ppl.filter(function (p) { return p.rv; }).length;
     if (rv) item("info", rv === 1 ? t("chk.rv1") : t("chk.rv", { n: rv }));
+    if (ev.onlyAt && ppl.length) {
+      var live = ppl.length - rv;
+      if (!list.length) item("warn", t("chk.at0"), t("chk.toPeople"), function () { showTab("people"); });
+      else item("info", t("chk.at", { a: list.length, n: live }));
+    }
     if (ppl.length && !miss.filter(function (f) { return f !== "serial"; }).length) item("ok", t("chk.ok"));
-    $("num-btn").disabled = !ppl.some(function (p) { return !p.no; });
+    $("num-btn").disabled = !ppl.some(function (p) { return !p.no && (!ev.onlyAt || p.at); });
+    $("f-onlyAt").checked = !!ev.onlyAt;
   }
   function giveNumbers(silent) {
     if (!ev) return 0;
     if (saveTimer) saveNow();
-    var r = C.issue(data, ev.id, null, now(), todayKey());
+    var ids = ev.onlyAt ? people().filter(function (p) { return p.at; }).map(function (p) { return p.id; }) : null;
+    var r = C.issue(data, ev.id, ids, now(), todayKey());
     data = r.data;
     if (r.n) {
       storeData();
@@ -1310,8 +1400,8 @@
   }
   // Who goes out: everyone (revoked left out when ticked).
   function outList() {
-    var skip = $("skip-rv").checked;
-    return people().filter(function (p) { return !(skip && p.rv); });
+    var skip = $("skip-rv").checked, only = ev && ev.onlyAt;
+    return people().filter(function (p) { return !(skip && p.rv) && (!only || p.at); });
   }
   var busy = false;
   // Before a batch: offer numbers to those without, when the design shows them.
@@ -1459,7 +1549,7 @@
     return m && Array.isArray(m.accounts) && m.accounts.length ? s : null;
   }
   function openMailList() {
-    var withMail = people().filter(function (p) { return p.em && !p.rv; });
+    var withMail = people().filter(function (p) { return p.em && !p.rv && (!ev.onlyAt || p.at); });
     if (!withMail.length) { toast(t("pick.noMail")); return; }
     openPick(t("pick.mail"), withMail.map(function (p) {
       return { label: p.n, sub: [p.em, p.no ? C.serial(ev, p.no) : ""].filter(Boolean).join(" · "), keep: true, run: function () { sendMail(p.id); } };
@@ -1783,6 +1873,15 @@
     $("png-one").addEventListener("click", pngOne);
     $("mail-btn").addEventListener("click", openMailList);
     $("reg-btn").addEventListener("click", saveRegister);
+    $("ob-btn").addEventListener("click", badgesZip);
+    $("sheet-btn").addEventListener("click", sheetPdf);
+    $("at-all").addEventListener("click", function () { markAt(null, true); });
+    $("at-none").addEventListener("click", function () { markAt(null, false); });
+    $("f-onlyAt").addEventListener("change", function () {
+      var on = $("f-onlyAt").checked;
+      change(function (e) { e.onlyAt = on ? 1 : 0; }, { quiet: true });
+      renderChecks();
+    });
     $("pv-prev").addEventListener("click", function () { stepPreview(-1); });
     $("pv-next").addEventListener("click", function () { stepPreview(1); });
     $("pv-sel").addEventListener("change", function () { pvId = $("pv-sel").value; renderPreview(); });
