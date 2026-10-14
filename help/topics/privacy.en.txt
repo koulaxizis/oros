@@ -60,7 +60,7 @@ Some apps can also work with accounts you already have elsewhere, but only after
 
 orOS talks to them straight from your browser, or through the orOS relay when the service doesn't answer browsers. Mailchimp, HubSpot, Stripe and Notion always go through the relay, which keeps nothing. Your keys stay in Connected services.
 
-[Contacts](app:contacts) › `From an account` is different: you sign in to Google or Microsoft once, your browser reads your contacts straight from them, and the access ends right after the reading (Google's is withdrawn, Microsoft's is forgotten and runs out within the hour). Nothing is kept and no server of orOS is involved.
+[Contacts](app:contacts) › `From an account` is different: you sign in to Google or Microsoft once, your browser reads your contacts straight from them, and the access ends right after the reading (Google's is withdrawn, Microsoft's is forgotten and runs out within the hour). Nothing is kept and no server of orOS is involved. `Find photos` in Contacts sends only a coded fingerprint (SHA-256) of each e-mail address to Gravatar and Libravatar, and only when you tap `Search`.
 
 `Use device location` and other location buttons ask your browser for permission first. The full list, with credits and licences, is in [Settings](app:settings) under `About orOS, credits and licences`.
 

@@ -693,6 +693,14 @@ dialog h3 {
   .nav-mini { min-height: 44px; }
 }
 
+/* Find photos online */
+.pf-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; margin: 8px 0; }
+.pf-row { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.pf-txt { display: flex; flex-direction: column; min-width: 0; }
+.pf-txt b, .pf-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-txt small { opacity: .75; }
+#pf-dlg .dlg-row { flex-wrap: wrap; }
+
 /* CT-6: [hidden] must ALWAYS win — last rule of the file (Part II).
    It was missing: an element with a display rule ignored `hidden`. */
 [hidden] { display: none !important; }

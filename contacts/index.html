@@ -19,6 +19,7 @@
       <button id="ct-acct" type="button" class="nav-mini" data-i18n="ac.btn"></button>
       <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
+      <button id="ct-pf" type="button" class="nav-mini" data-i18n="pf.btn"></button>
       <button id="ct-scan" type="button" class="nav-mini" data-i18n="sc.btn"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
@@ -214,6 +215,19 @@
     </details>
     <div class="dlg-row">
       <button id="ac-close" type="button" class="btn" data-i18n="ph.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Find photos online (Gravatar / Libravatar by e-mail) -->
+  <dialog id="pf-dlg" aria-labelledby="pf-dlg-title">
+    <h3 id="pf-dlg-title" data-i18n="pf.title"></h3>
+    <p class="del-text" data-i18n="pf.text"></p>
+    <p id="pf-stat" class="del-text" aria-live="polite"></p>
+    <div id="pf-list" class="pf-list"></div>
+    <div class="dlg-row">
+      <button id="pf-go" type="button" class="btn prim" data-i18n="pf.go"></button>
+      <button id="pf-apply" type="button" class="btn prim" data-i18n="pf.apply" hidden></button>
+      <button id="pf-close" type="button" class="btn" data-i18n="ph.close"></button>
     </div>
   </dialog>
 
