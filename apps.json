@@ -321,6 +321,15 @@
       "search": "search.js"
     },
     {
+      "id": "certificates",
+      "name": "Certificates",
+      "category": "Business",
+      "icon": "certificates",
+      "url": "certificates/",
+      "type": "internal",
+      "search": "search.js"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",

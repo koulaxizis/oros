@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.98.00
+- New app: Certificates (in Business). Design one certificate of attendance, completion or merit, a diploma or a kids' award, add a list of people, and get a numbered PDF for each, to print, save or send by email.
+
 ## Version 1.97.00
 - Files can copy or move files and folders from your Dropbox into the encrypted orOS disk. A move removes the Dropbox original only after its encrypted copy is confirmed in orOS sync.
 
