@@ -5335,6 +5335,8 @@ function sheetFromTable(p) {
    { sheet, r?, c? } = universal search.                            */
 function openTarget(tg) {
   if (!tg || typeof tg !== "object") return;
+  // { newBlank: true }: the single app's "New sheet" icon shortcut.
+  if (tg.newBlank === true) { if (editing) commitEdit(0, 0); addSheet(); return; }
   if (tg.openFile) openSharedFile(tg.openFile);
   else if (tg.newSheet) sheetFromTable(tg.newSheet);
   else openSearchTarget(tg);

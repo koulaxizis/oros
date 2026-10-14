@@ -5243,9 +5243,23 @@
     q.focus();
     try { q.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
   }
+  // Single app "New card" shortcut ({ quickAdd: true }): the quick-add
+  // field of the open board's first column.
+  function quickAddFirst() {
+    var board = currentBoard();
+    if (!board || !board.columns.length || document.querySelector("dialog[open]")) return;
+    var vw = viewOf(board.id);
+    if (vw.v !== "board") setView(board.id, { v: "board" });
+    renderAll();
+    var q = findQuickInput(board.columns[0].id + (vw.lanes ? "|" : ""));
+    if (!q) return;
+    q.focus();
+    try { q.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
+  }
   function openSearchTarget(tg) {
     if (!tg || typeof tg !== "object" || !state) return;
     if (tg.asNew) { newCardFrom(tg.asNew); return; }
+    if (tg.quickAdd === true) { quickAddFirst(); return; }
     if (typeof tg.board === "string" && typeof tg.col === "string" && typeof tg.card === "string") {
       window.__orosKanbanOpen(tg);
     }

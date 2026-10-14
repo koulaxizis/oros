@@ -1127,6 +1127,14 @@
       SL.io.openFile(f);
       return;
     }
+    // { newDeck: true }: the single app's "New presentation" shortcut.
+    if (tg && typeof tg === "object" && tg.newDeck === true) {
+      if (!searchReady) { searchLater = tg; return; }
+      if (document.querySelector("dialog[open]")) return;
+      if (SL.deck) goHome();
+      SL.dlg.newDeck();
+      return;
+    }
     if (tg && typeof tg === "object" && typeof tg.outline === "string") {
       if (!searchReady) { searchLater = tg; return; }
       openOutline(tg);

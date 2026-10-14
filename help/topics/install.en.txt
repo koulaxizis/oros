@@ -53,17 +53,17 @@ On Android, with orOS installed from Chrome, use `Share` › orOS in Files, Gmai
 > Firefox, Safari and iPhone can't hand files to orOS yet. There, open the app and use its `Import` or `Open` button.
 
 ## Single apps
-Some orOS apps can also be installed on their own: **orOS Notes**, **orOS Calendar**, **orOS Bookmarks** and **orOS To-Do**. A single app gets its own icon and window, opens straight into the app and works offline, like orOS itself.
+Some orOS apps can also be installed on their own: **orOS Notes**, **orOS Calendar**, **orOS Bookmarks**, **orOS To-Do**, **orOS Contacts**, **orOS Writer**, **orOS Spreadsheet**, **orOS Kanban**, **orOS Mind Map**, **orOS Wiki** and **orOS Slides**. A single app gets its own icon and window, opens straight into the app and works offline, like orOS itself.
 1. Open [Settings](app:settings) and choose `Single apps`.
-2. Press `Install` next to the app. Its page opens in a new tab.
-3. Install it there: `Install` in the address bar of Chrome or Edge, or `Add to Home screen` in Chrome's menu on Android, or Share › `Add to Home Screen` in Safari.
+2. Press `Install` next to the app. Its page opens in a new tab. On Android it opens in Chrome, also when you press Install inside the orOS app.
+3. Install it there: the `Install` button on the bar at the bottom of the page, `Install` in the address bar of Chrome or Edge, `Add to Home screen` in Chrome's menu on Android, or Share › `Add to Home Screen` in Safari.
 
 Inside a single app, the button at the top left carries the app's name. It opens a small menu: `Sync and cloud`, `Settings`, `Help` and `Open the whole orOS`. An app opened from there shows `Back`, which returns you to the single app.
 
 - **Your data:** on a device that also has orOS, the single app and orOS share the same data at once. On a device with only the single app, the data stays on the device until you turn on sync in `Sync and cloud`, with the same Dropbox and passphrase as orOS. Then it joins your encrypted orOS cloud, both ways.
-- **Icon shortcuts:** long-press the icon (Android) or right-click it (Windows) for `New page`, `New event`, `Add a bookmark` or `New task`.
-- **Open with:** on Windows and Linux, orOS Notes is in `Open with` for .txt and .md files and orOS Calendar for .ics files.
-- **Share:** on Android, `Share` › orOS Notes makes a new page, › orOS To-Do a new task, › orOS Calendar a new event and › orOS Bookmarks a new bookmark. Nothing is saved until you confirm.
+- **Icon shortcuts:** long-press the icon (Android) or right-click it (Windows) for the app's quick action: `New page`, `New event`, `Add a bookmark`, `New task`, `New contact`, `New document`, `New sheet`, `New card`, `New map`, `New article` or `New presentation`.
+- **Open with:** on Windows and Linux, each single app is in `Open with` for the files its app opens: orOS Notes for .txt and .md, orOS Calendar for .ics, orOS Contacts for .vcf, orOS Writer for .docx, .odt, .rtf, .md and .txt, orOS Spreadsheet for .xlsx, .xls, .ods and .csv, orOS Mind Map for .mm, .xmind, .opml, .md and .txt, and orOS Slides for .pptx.
+- **Share:** on Android, `Share` › orOS Notes makes a new page, › orOS To-Do a new task, › orOS Calendar a new event, › orOS Bookmarks a new bookmark, › orOS Contacts a new contact read from the text, › orOS Writer a new document, › orOS Kanban a new card, › orOS Mind Map a new map, › orOS Wiki a new article and › orOS Slides a new presentation. Nothing is saved until you confirm, except orOS Spreadsheet, which turns the shared lines straight into a new sheet.
 - **Badge:** orOS To-Do shows on its icon how many tasks are due today or overdue, where the system supports badges.
 - **Notifications:** each single app shows only its own reminders. orOS keeps showing all of them.
 

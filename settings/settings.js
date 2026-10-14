@@ -753,7 +753,10 @@
     c1.appendChild(el("p", "hint", t("so.intro")));
     S.ids().forEach(function (id) {
       var b = button(t("so.open"), "solo:" + id, function () {
-        window.open("/" + id + "/solo.html", "_blank", "noopener");
+        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin) : "/" + id + "/solo.html";
+        // Android: an intent to Chrome, so the orOS app does not catch the link.
+        if (u.indexOf("intent:") === 0) { try { window.top.location.href = u; } catch (e) { location.href = u; } }
+        else window.open(u, "_blank", "noopener");
       });
       b.title = t("so.open.title");
       c1.appendChild(row(S.nameOf(id, LANG), b));

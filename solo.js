@@ -60,6 +60,42 @@
       shortcuts: [{ do: "new", name: { en: "New task", el: "Νέα εργασία" }, target: { quickAdd: true } }],
       share: "task",
       badge: "due"
+    },
+    // Wave 2: office apps.
+    contacts: {
+      name: { en: "orOS Contacts", el: "orOS Επαφές" },
+      shortcuts: [{ do: "new", name: { en: "New contact", el: "Νέα επαφή" }, target: { newContact: true } }],
+      share: "contact"
+    },
+    writer: {
+      name: { en: "orOS Writer", el: "orOS Κειμενογράφος" },
+      shortcuts: [{ do: "new", name: { en: "New document", el: "Νέο έγγραφο" }, target: { newBlank: true } }],
+      share: "doc"
+    },
+    spreadsheet: {
+      name: { en: "orOS Spreadsheet", el: "orOS Υπολογιστικά φύλλα" },
+      shortcuts: [{ do: "new", name: { en: "New sheet", el: "Νέο φύλλο" }, target: { newBlank: true } }],
+      share: "sheet"
+    },
+    kanban: {
+      name: { en: "orOS Kanban", el: "orOS Πίνακες Kanban" },
+      shortcuts: [{ do: "new", name: { en: "New card", el: "Νέα κάρτα" }, target: { quickAdd: true } }],
+      share: "card"
+    },
+    mindmap: {
+      name: { en: "orOS Mind Map", el: "orOS Νοητικός χάρτης" },
+      shortcuts: [{ do: "new", name: { en: "New map", el: "Νέος χάρτης" }, target: { newMap: true } }],
+      share: "map"
+    },
+    wiki: {
+      name: { en: "orOS Wiki", el: "orOS Wiki" },
+      shortcuts: [{ do: "new", name: { en: "New article", el: "Νέο άρθρο" }, target: { newArt: {} } }],
+      share: "article"
+    },
+    slides: {
+      name: { en: "orOS Slides", el: "orOS Παρουσιάσεις" },
+      shortcuts: [{ do: "new", name: { en: "New presentation", el: "Νέα παρουσίαση" }, target: { newDeck: true } }],
+      share: "outline"
     }
   };
 
@@ -173,6 +209,43 @@
       var date = ymd(now instanceof Date ? now : new Date());
       return { calNew: { date: date, title: firstLine.slice(0, 80), note: bodyText.replace(firstLine, "").trim().slice(0, 500) } };
     }
+    // Wave 2. Each one only opens a form, dialog or new item the
+    // person then keeps or drops.
+    var rest = bodyText.replace(firstLine, "").trim();
+    if (kind === "contact") {
+      // Contacts' card reader (cardtext.js) places the lines.
+      var card = ((title ? title + "\n" : "") + bodyText).trim();
+      return card ? { app: id, target: { cardText: { text: card.slice(0, 4000) } } } : null;
+    }
+    if (kind === "doc") {
+      return bodyText.trim() ? { app: id, target: { newDoc: { title: firstLine.slice(0, 120), text: bodyText } } } : null;
+    }
+    if (kind === "sheet") {
+      // One row per line, cells split on tabs (a copied table) or else
+      // on commas.
+      var rows = bodyText.split(/\r?\n/).filter(function (l) { return l.trim(); }).slice(0, 1000).map(function (l) {
+        return l.split(l.indexOf("\t") !== -1 ? "\t" : ",").slice(0, 100).map(function (c) { return c.trim().slice(0, 500); });
+      });
+      return rows.length ? { app: id, target: { newSheet: { name: title.slice(0, 31), rows: rows } } } : null;
+    }
+    if (kind === "card") {
+      if (!firstLine) return null;
+      return { app: id, target: { asNew: { title: firstLine.slice(0, 500), note: rest.slice(0, 5000) } } };
+    }
+    if (kind === "map") {
+      // Lines become branches (Mind map's paste dialog, filled in).
+      var lines = (title && bodyText.indexOf(title) !== 0 ? title + "\n" : "") + bodyText;
+      return lines.trim() ? { app: id, target: { pasteText: { text: lines.slice(0, 20000) } } } : null;
+    }
+    if (kind === "article") {
+      if (!firstLine) return null;
+      return { app: id, target: { newArt: { title: firstLine.slice(0, 200), text: (title ? bodyText : rest).slice(0, 20000) } } };
+    }
+    if (kind === "outline") {
+      // A titled share starts with its title slide ("# title").
+      var outline = (title ? "# " + title + "\n" : "") + bodyText;
+      return outline.trim() ? { app: id, target: { outline: outline.slice(0, 20000), title: firstLine.slice(0, 120) } } : null;
+    }
     return null;
   }
 
@@ -264,10 +337,87 @@
   }
 
   // ---------- Host: the installed page (/<id>/solo.html) ----------
+  // Settings › Single apps › Install: the address that opens the
+  // single app's page where it can be installed. On Android an https
+  // link on this origin is captured by the orOS app (TWA or the
+  // installed orOS), which then shows the single app inside orOS with
+  // no way to install it; an intent addressed to Chrome opens it in a
+  // Chrome tab instead (browser_fallback_url: other browsers).
+  // "?install" makes the page offer its Install bar at once.
+  function installUrl(id, ua, origin) {
+    if (!has(id)) return "";
+    var page = "/" + id + "/solo.html?install";
+    var m = /^https:\/\/([^\/?#]+)$/.exec(String(origin || ""));
+    if (!/Android/i.test(String(ua || "")) || !m) return page;
+    return "intent://" + m[1] + page + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+      encodeURIComponent(origin + page) + ";end";
+  }
+
+  // The Install bar of the single app's page in a browser tab: Chrome
+  // and Edge hand over their install prompt (beforeinstallprompt), the
+  // bar's button shows it. Without one (another browser, or not yet
+  // offered) a page opened with "?install" says where the browser keeps
+  // its Install item. Gone in the installed app (display-mode not
+  // "browser") and once installed.
+  var BAR_TEXT = {
+    en: { ask: "Install {n} on this device", btn: "Install", how: "To install {n}: open the browser menu (⋮) and choose Install app or Add to Home screen.", close: "Close" },
+    el: { ask: "Εγκατάσταση του {n} σε αυτή τη συσκευή", btn: "Εγκατάσταση", how: "Για να εγκαταστήσεις το {n}: άνοιξε το μενού του browser (⋮) και πάτησε Εγκατάσταση εφαρμογής ή Προσθήκη στην αρχική οθόνη.", close: "Κλείσιμο" }
+  };
+  function installBar(win, id, asked) {
+    var doc = win.document, bar = null, deferred = null, lng = "en";
+    try { lng = lang(win.localStorage.getItem("oros-lang")); } catch (e) {}
+    try { if (!win.matchMedia("(display-mode: browser)").matches) return; } catch (e) { return; }
+    var T = BAR_TEXT[lng], name = nameOf(id, lng);
+    function close() { if (bar) { bar.remove(); bar = null; } }
+    function show(withButton) {
+      close();
+      bar = doc.createElement("div");
+      bar.id = "solo-install";
+      bar.setAttribute("role", "status");
+      bar.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:10;display:flex;gap:8px;align-items:center;" +
+        "padding:10px 12px;border-radius:12px;background:#2a2721;color:#f2ead8;font:14px/1.35 system-ui,sans-serif;" +
+        "box-shadow:0 4px 18px rgba(0,0,0,.45)";
+      var txt = doc.createElement("span");
+      txt.style.flex = "1";
+      txt.textContent = (withButton ? T.ask : T.how).replace("{n}", name);
+      bar.appendChild(txt);
+      if (withButton) {
+        var b = doc.createElement("button");
+        b.type = "button";
+        b.textContent = T.btn;
+        b.style.cssText = "border:0;border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font:inherit;font-weight:600";
+        b.addEventListener("click", function () {
+          var d = deferred;
+          deferred = null;
+          if (!d) { show(false); return; }
+          try { d.prompt(); } catch (e) { show(false); return; }
+          if (d.userChoice) d.userChoice.then(function (r) { if (r && r.outcome === "accepted") close(); }, function () {});
+        });
+        bar.appendChild(b);
+      }
+      var x = doc.createElement("button");
+      x.type = "button";
+      x.textContent = "×";
+      x.setAttribute("aria-label", T.close);
+      x.style.cssText = "border:0;background:none;color:inherit;font-size:22px;line-height:1;padding:2px 6px";
+      x.addEventListener("click", close);
+      bar.appendChild(x);
+      doc.body.appendChild(bar);
+    }
+    win.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      show(true);
+    });
+    win.addEventListener("appinstalled", close);
+    if (asked) setTimeout(function () { if (!deferred && !bar) show(false); }, 4000);
+  }
+
   function host(win) {
     var doc = win.document;
     var id = idFromPath(win.location.pathname);
     if (!id) { win.location.replace("/"); return; }
+    var asked = /(^|[?&])install(=|&|$)/.test(win.location.search);
     var src = frameSrc(id, win.location.search);
     // The launch parameters are one-shots: out of the address bar, so
     // a reload of this window is a plain start.
@@ -279,6 +429,7 @@
     frame.setAttribute("allow", "fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; screen-wake-lock");
     frame.src = src;
     doc.body.appendChild(frame);
+    installBar(win, id, asked);
     // Keyboard focus into the app, unless the app already took it
     // (a shortcut that focuses an input): focusing the frame again
     // would blur that input.
@@ -356,6 +507,7 @@
     manifestFor: manifestFor,
     pageFor: pageFor,
     hostBoot: host,
+    installUrl: installUrl,
     id: "",
     share: null,
     word: ""

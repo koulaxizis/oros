@@ -1,0 +1,114 @@
+{
+  "name": "orOS Writer",
+  "short_name": "Writer",
+  "description": "orOS Writer: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/writer/solo.html",
+  "start_url": "/writer/solo.html",
+  "scope": "/writer/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/writer.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/writer-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/writer-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/writer-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "New document",
+      "short_name": "New document",
+      "url": "/writer/solo.html?do=new",
+      "icons": [
+        {
+          "src": "/icons/solo/writer-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/writer/solo.html?file-open=writer",
+      "accept": {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+          ".docx"
+        ],
+        "application/vnd.oasis.opendocument.text": [
+          ".odt"
+        ],
+        "application/rtf": [
+          ".rtf"
+        ],
+        "text/markdown": [
+          ".md",
+          ".markdown"
+        ],
+        "text/plain": [
+          ".txt"
+        ],
+        "application/x-oros-doc": [
+          ".orosdoc"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/writer/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".docx",
+            "application/vnd.oasis.opendocument.text",
+            ".odt",
+            "application/rtf",
+            ".rtf",
+            "text/markdown",
+            ".md",
+            ".markdown",
+            "text/plain",
+            ".txt",
+            "application/x-oros-doc",
+            ".orosdoc"
+          ]
+        }
+      ]
+    }
+  }
+}
