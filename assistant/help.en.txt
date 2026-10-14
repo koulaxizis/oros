@@ -59,6 +59,13 @@ What it can change:
 
 Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, bookmarks with a saved copy, Kanban cards with files on the orOS disk or on an archived board, habits that count an amount, and deleting a habit or a plant (that removes its whole history). Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
+## Photos and PDFs
+Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP, GIF) or a PDF, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 3 files go with one message.
+- Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.
+- Above the message box you see each file and its size, and where it goes. The file goes only to that service, only when you press `Send`. Large photos are made smaller first.
+- Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs. Mistral and a local model read photos only (a local model only if it can see images). The built-in browser model reads no files.
+- Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
+
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
@@ -70,6 +77,7 @@ Some changes stay in the app, and the assistant says so: ticking a repeating tas
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Passwords are never offered.
 - `Chat only` turns off every search: the assistant then sees only what you type.
 - With `Built-in browser model` nothing leaves the device at all.
+- A photo or PDF goes out only when you attach it and press `Send`, and only to that service.
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.

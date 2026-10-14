@@ -5,7 +5,7 @@
 // Every import path (vCard / CSV file, "From phone", a .vcf handed
 // over by the shell, "From an account") goes through one review:
 //
-//   plan(local, incoming, labels) → { items[], counts }
+//   plan(local, incoming, labels) → { items[], counts, folded }
 //     Each incoming contact is matched against this device's
 //     contacts: a shared e-mail, else a shared phone number (the
 //     same number with or without the country code), else the same
@@ -19,7 +19,8 @@
 //     A name-only match where both sides have phones or e-mails and
 //     none is shared is probably another person with the same name:
 //     flagged `nameOnly` and defaulted to "add".
-//     Duplicates inside the import itself are folded first.
+//     Sure duplicates inside the import itself (same name and a
+//     shared e-mail or phone) are folded first; `folded` counts them.
 //
 //   apply(local, inc, prefer, labelIds) → { c, changed }
 //     The merged copy of `local`: empty fields filled, missing list
@@ -82,14 +83,32 @@
   }
 
   // Fold duplicates inside the import itself (a provider can hold
-  // the same person twice): the first one wins on conflicts.
+  // the same person twice): the first one wins on conflicts. This
+  // happens before the review, so it only folds sure duplicates: a
+  // shared e-mail or phone AND agreeing names, or the same name with
+  // no phones / e-mails on one side. Two people who share a landline
+  // or a first name stay two contacts.
+  function sameEntry(a, b) {
+    var by = matchBy(a, b);
+    if (!by) return false;
+    if (by === "name") return !contradicts(a, b);
+    return namesAgree(nameKey(a), nameKey(b));
+  }
+  // "ann" and "ann lee" agree (one name holds all words of the other);
+  // "nikos" and "allos" do not.
+  function namesAgree(x, y) {
+    if (x === y) return true;
+    var a = x.split(" "), b = y.split(" ");
+    var s = a.length <= b.length ? a : b, l = s === a ? b : a;
+    return s.every(function (w) { return w && l.indexOf(w) !== -1; });
+  }
   function collapse(incoming) {
     var out = [];
     (incoming || []).forEach(function (inc) {
       if (!inc || typeof inc !== "object") return;
       var hit = null;
       for (var i = 0; i < out.length && !hit; i++) {
-        if (matchBy(out[i], inc)) hit = out[i];
+        if (sameEntry(out[i], inc)) hit = out[i];
       }
       if (!hit) { out.push(copy(inc)); return; }
       var m = apply(hit, inc, "mine", null).c;
@@ -179,6 +198,7 @@
     local = Array.isArray(local) ? local : [];
     var items = [], counts = { "new": 0, same: 0, diff: 0 };
     var batch = collapse(incoming);
+    var folded = (incoming || []).filter(function (x) { return x && typeof x === "object"; }).length - batch.length;
     var claimed = {};
     batch.forEach(function (inc, i) {
       var match = null, by = null, k;
@@ -207,7 +227,7 @@
       counts[it.kind]++;
       items.push(it);
     });
-    return { items: items, counts: counts };
+    return { items: items, counts: counts, folded: folded };
   }
   // Does `a` match `b` by this one criterion?
   function matchHas(a, b, want) {
