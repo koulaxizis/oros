@@ -5994,3 +5994,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - fileopen.js + manifest.webmanifest: .pgn opens in Chess from the system's "Open with" and the share target; deep link `__orosOpenAt("chess", { pgn })`.
 - No network and no new synced data; games from a position are not recorded. Help (EN/EL) and the install topic updated.
   - Tests: tests/chess.test.js (PGN parse/write, illegal moves, tags), tests/fileopen.test.js.
+
+### 2026-10-14 — Chess: Chess.com ratings, games and daily puzzle (games online, wave 2) (#324) — 1.90.00
+- chess/: "Online accounts" takes a Chess.com username (no password): ratings (Rapid, Blitz, Bullet, Daily, Puzzles) with best and win/loss/draw, "My games" month by month (tap to review with Analysis and Play from here), and Chess.com's daily puzzle (works without a username).
+- Read only, straight from the browser, one request at a time, no relay; the username stays on this device (`Forget` removes it). Chess.com has no API for playing; online play comes with Lichess (wave 4).
+- Credits: Chess.com Published-Data API (CREDITS.md, Info credits, Bible Part VIII). Help (EN/EL) and the privacy topic updated.
+  - Tests: tests/chess.test.js (archive URLs, profile/stats parsing, cleaning).
