@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.03.00
+- Files can send copies of files and folders from the orOS disk to a Dropbox folder, so you can share them. Nothing in Dropbox is overwritten, and the files stay as they are in orOS.
+
 ## Version 2.02.00
 - Privacy: orOS no longer sends anything to Google's speech services. Voice input in the Assistant and dictation in Writer are gone, and Library's read aloud and Maps' spoken directions use only voices installed on your device. If there is none for the language, they tell you how to add one.
 - Chess puzzles: about 3,000 real puzzles from the Lichess puzzle database, from beginner to master and across every theme, now work offline next to the orOS set.
