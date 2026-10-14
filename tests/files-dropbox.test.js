@@ -138,3 +138,69 @@ test("content_hash matches Dropbox's algorithm (4 MB blocks)", async () => {
   for (let i = 0; i < big.length; i += 4096) big[i] = i & 255;
   assert.equal(await C.contentHash(big, digest), ref(Buffer.from(big)));
 });
+
+// ---------- Wave 2: copy / move into the orOS disk ----------
+
+test("disk-safe names", () => {
+  assert.equal(C.localName("a:b?.txt"), "a_b_.txt");
+  assert.equal(C.localName('x<y>z|"*\\'), "x_y_z____");
+  assert.equal(C.localName(".."), "_");
+  assert.equal(C.localName(""), "_");
+  assert.equal(C.localName("Έγγραφο.pdf"), "Έγγραφο.pdf");
+});
+
+const row = (path, o) => Object.assign({ name: path.split("/").pop(), path, lower: path.toLowerCase(), dir: false, size: 10, rev: "0123456789a", hash: "a".repeat(64), dl: true }, o || {});
+
+test("plan: files, folders with their subfolders, never sync's folder", () => {
+  const photos = row("/Photos", { dir: true });
+  const listings = {
+    "/Photos": [
+      row("/Photos", { dir: true }),
+      row("/Photos/2024", { dir: true }),
+      row("/Photos/2024/b.jpg"),
+      row("/Photos/a:1.jpg"),
+      row("/Photos/doc", { dl: false })
+    ]
+  };
+  const p = C.planItems([row("/note.txt"), photos, row("/Apps/orOS/orOS-data.json")], listings, ["/apps/oros"]);
+  assert.deepEqual(p.items.map((i) => i.rel), ["note.txt", "Photos/2024/b.jpg", "Photos/a_1.jpg"]);
+  assert.deepEqual(p.items[1], { src: "/Photos/2024/b.jpg", rev: "0123456789a", hash: "a".repeat(64), size: 10, rel: "Photos/2024/b.jpg" });
+  assert.equal(p.bytes, 30);
+  assert.deepEqual(p.skipped.map((s) => s.why).sort(), ["nodl", "sync"]);
+  // a selected sync folder (or one inside it) brings nothing
+  assert.equal(C.planItems([row("/Apps/orOS", { dir: true })], { "/Apps/orOS": [row("/Apps/orOS/x")] }, ["/apps/oros"]).items.length, 0);
+  // the same file twice (selected and inside a selected folder) goes once
+  assert.equal(C.planItems([row("/Photos/a:1.jpg"), photos], listings, []).items.length, 2);
+});
+
+test("plan: limits per file, per count and per size", () => {
+  const big = C.planItems([row("/big", { size: C.MAX_FILE + 1 })], {}, []);
+  assert.equal(big.items.length, 0);
+  assert.equal(big.skipped[0].why, "big");
+  const many = [];
+  for (let i = 0; i < C.MAX_FILES + 2; i++) many.push(row("/f" + i, { size: 1 }));
+  const m = C.planItems(many, {}, []);
+  assert.equal(m.items.length, C.MAX_FILES);
+  assert.equal(m.skipped.length, 2);
+  const heavy = [];
+  for (let i = 0; i < 5; i++) heavy.push(row("/h" + i, { size: 250 * 1024 * 1024 }));
+  const h = C.planItems(heavy, {}, []);
+  assert.equal(h.items.length, 4);
+  assert.equal(h.skipped[0].why, "total");
+});
+
+test("an original is removed only for a confirmed encrypted copy", () => {
+  const it = { src: "/a", rev: "0123456789a", dst: "/internal/a", h: "f".repeat(64) };
+  assert.equal(C.confirmedCopy(it, { h: "f".repeat(64), s: 1 }, false), true);
+  assert.equal(C.confirmedCopy(it, { h: "f".repeat(64) }, true), false);      // still queued
+  assert.equal(C.confirmedCopy(it, { h: "e".repeat(64) }, false), false);     // other content
+  assert.equal(C.confirmedCopy(it, null, false), false);                      // not in the manifest
+  assert.equal(C.confirmedCopy({ src: "/a", dst: "/internal/a" }, { h: undefined }, false), false);
+  assert.equal(C.confirmedCopy(Object.assign({}, it, { dst: "" }), { h: it.h }, false), false);
+});
+
+test("unique names never overwrite", () => {
+  assert.equal(C.uniqueName("a.txt", []), "a.txt");
+  assert.equal(C.uniqueName("a.txt", ["a.txt", "a (1).txt"]), "a (2).txt");
+  assert.equal(C.uniqueName("noext", ["noext"]), "noext (1)");
+});
