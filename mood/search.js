@@ -5,7 +5,9 @@
 // Sensitive data: the app ships with "searchOff": true (opt-in).
 // One hit per entry: the feelings as title, and as text the
 // reflection note, the trigger, the location and the person
-// (column labels in the active language for the seed values).
+// (column labels in the active language for the seed values), and
+// the user's own activities; renamed and custom feelings show the
+// user's names (wave 30, d.vocab).
 // The date shown is the entry's time. Entries with a tombstone at
 // least as new as the entry (deleted{}) are skipped.
 // Opens through the existing Mood bridge (__orosOpenMood).
@@ -52,17 +54,27 @@
         }
         return "";
       }
+      // Wave 30: the user's own names (vocab.emo / vocab.act defs)
+      var own = { emo: {}, act: {} };
+      var vo = d.vocab && typeof d.vocab === "object" ? d.vocab : {};
+      ["emo", "act"].forEach(function (k) {
+        (Array.isArray(vo[k]) ? vo[k] : []).forEach(function (x) {
+          if (x && typeof x.id === "string" && str(x.lab)) own[k][x.id] = str(x.lab);
+        });
+      });
       d.entries.forEach(function (e) {
         if (!e || typeof e.id !== "string" || !alive(e, tomb)) return;
         var feel = (Array.isArray(e.emotions) ? e.emotions : []).map(function (m) {
-          return m && EMO[m.k] ? EMO[m.k][lang] : "";
+          if (!m) return "";
+          return own.emo[m.k] || (EMO[m.k] ? EMO[m.k][lang] : "");
         }).filter(Boolean);
+        var acts = (Array.isArray(e.acts) ? e.acts : []).map(function (id) { return own.act[id] || ""; }).filter(Boolean);
         var title = feel.join(", ") || (lang === "el" ? "Καταγραφή διάθεσης" : "Mood entry");
         out.push({
           id: e.id,
           title: title,
           text: [str(e.note), label("trig", e.trig), label("loc", e.loc), label("person", e.person)]
-            .filter(Boolean).join(" · "),
+            .concat(acts).filter(Boolean).join(" · "),
           when: typeof e.ts === "number" ? e.ts : 0,
           target: e.id
         });
