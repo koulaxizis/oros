@@ -201,7 +201,7 @@ test("i18n: every key the app uses exists in English and Greek", () => {
   const en = Object.keys(STRINGS.en).sort(), el = Object.keys(STRINGS.el).sort();
   assert.deepEqual(el, en, "same keys in both languages");
   const used = new Set();
-  ["app.js", "editor.js", "text.js", "panels.js", "io.js", "index.html"].forEach((f) => {
+  ["app.js", "editor.js", "text.js", "panels.js", "objects.js", "io.js", "remote.js", "index.html"].forEach((f) => {
     const s = fs.readFileSync(path.join(ROOT, "slides", f), "utf8");
     for (const m of s.matchAll(/\bt\("([a-zA-Z0-9.]+)"/g)) used.add(m[1]);
     for (const m of s.matchAll(/data-i18n="([a-zA-Z0-9.]+)"/g)) used.add(m[1]);
@@ -214,6 +214,13 @@ test("i18n: every key the app uses exists in English and Greek", () => {
   ["l", "c", "r", "j"].forEach((x) => used.add("al." + x));
   ["t", "m", "b"].forEach((x) => used.add("va." + x));
   ["al", "ac", "ar", "at", "am", "ab"].forEach((x) => used.add("pn." + x));
+  C.EFFECTS.forEach((x) => used.add("an.e." + x));
+  C.FLY_DIRS.forEach((x) => used.add("an.d." + x));
+  C.STARTS.forEach((x) => used.add("an.w." + x));
+  C.CHART_TYPES.forEach((x) => used.add("ch.t." + x));
+  C.TABLE_LINES.forEach((x) => used.add("tb.ln." + x));
+  ["phone", "tablet", "computer"].forEach((x) => used.add("rm.dev." + x));
+  ["text", "image", "shape", "line", "table", "chart"].forEach((x) => used.add("pn." + x));
   const missing = [...used].filter((x) => !x.endsWith(".") && !(x in STRINGS.en));
   assert.deepEqual(missing, []);
 });

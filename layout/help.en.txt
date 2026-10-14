@@ -35,6 +35,15 @@ The `Preflight` badge in the status bar turns green, orange or red. Click it for
 
 `Image (PNG / JPG)` exports one page as a picture at 72, 150 or 300 dpi (up to 16 megapixels).
 
+## Data merge
+Make many name cards, labels, badges or certificates from one design and a CSV file (from Spreadsheet, Excel or any address book export; separated by commas, semicolons or tabs, with the field names in the first row).
+- In a text frame, type `{{Name}}` where a value goes, using the column names of the file (capitals and accents don't matter). Formatting stays: a bold `{{Title}}` gives a bold title. A line that only holds empty fields is left out, so labels have no blank lines.
+- For a picture per card, select an image frame and type the column name in `Data field (merge)`; that column holds file names such as `anna.jpg`.
+- `More` › `Data merge (CSV)…` (or `Export` › `Data merge`) opens the dialog: `Choose CSV file…`, check that every field says `found`, and step through the rows in the preview.
+- Pictures are found by file name in a folder on the orOS disk (`/internal/Pictures` and its subfolders unless you type another) or with `Add pictures from this device…`. They are only read for the PDF: nothing is copied into the document.
+- `One per page` repeats the current page (or `All pages`, for a front and a back) once per row. `Several per sheet` places as many cards as fit on A4, A3 or Letter (portrait or landscape, whichever holds more) with the `Gap` you choose and cut marks around them.
+- `Create PDF` saves one PDF with real, selectable text.
+
 ## Bring work from other programs
 `Open file` on the home screen also opens, as a new document:
 - Scribus `.sla` files: pages, masters, styles, colours, threaded text, shapes and embedded images.
@@ -61,3 +70,5 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 ## Limits
 - A PDF opens up to 300 pages; its text keeps its place and look, not its original styles or threads.
 - A document can have up to 999 pages and 5,000 objects.
+- Data merge reads up to 1,000 rows (5 MB) and makes a PDF only: the merged cards are not kept as a document, and the CSV file is not saved with it. A text frame does not grow to fit a long value: the preview and the final message say when text does not fit.
+- `Several per sheet` uses one page per card (no backs) and cuts each card at its edge, so bleed is not printed.

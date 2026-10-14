@@ -24,16 +24,24 @@
     </button>
   </header>
 
+  <nav class="calc-modes" id="calc-modes" role="tablist" aria-label="Mode" data-i18n-aria="calc.modes">
+    <button type="button" role="tab" data-mode="std" aria-selected="true"><span class="m-long" data-i18n="calc.mode.std">Standard</span><span class="m-short" data-i18n="calc.mode.std.s">Basic</span></button>
+    <button type="button" role="tab" data-mode="sci" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.sci">Scientific</span><span class="m-short" data-i18n="calc.mode.sci.s">Sci</span></button>
+    <button type="button" role="tab" data-mode="graph" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.graph">Graphing</span><span class="m-short" data-i18n="calc.mode.graph.s">Graph</span></button>
+    <button type="button" role="tab" data-mode="prog" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.prog">Programmer</span><span class="m-short" data-i18n="calc.mode.prog.s">Prog</span></button>
+    <button type="button" role="tab" data-mode="fin" aria-selected="false" tabindex="-1"><span class="m-long" data-i18n="calc.mode.fin">Finance</span><span class="m-short" data-i18n="calc.mode.fin.s">Money</span></button>
+  </nav>
+
   <main class="calc-main">
 
-    <!-- Display -->
-    <section class="calc-display" aria-live="polite">
+    <!-- Standard: display -->
+    <section class="calc-display std-only" aria-live="polite">
       <div id="calc-expr"></div>
       <div id="calc-res" title="Click to copy">0</div>
     </section>
 
     <!-- Keypad -->
-    <section class="calc-pad" id="calc-pad">
+    <section class="calc-pad std-only" id="calc-pad">
       <button type="button" class="key fn fnrow" data-k="mc">MC</button>
       <button type="button" class="key fn fnrow" data-k="mr">MR</button>
       <button type="button" class="key fn fnrow" data-k="mplus">M+</button>
@@ -70,6 +78,134 @@
       <button type="button" class="key eq" data-k="eq">=</button>
     </section>
 
+    <!-- Scientific: expression line, live result, keypad (built in JS) -->
+    <section class="mode-pane sci-pane" id="sci" hidden>
+      <div class="sci-display">
+        <div class="sci-row">
+          <div id="sci-prev" class="sci-prev"></div>
+          <button type="button" id="sci-kbd" class="mini-btn" aria-pressed="false" data-i18n-title="calc.kbd" title="Keyboard">&#9000;</button>
+        </div>
+        <input id="sci-in" class="sci-in" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" data-i18n-aria="calc.sci.input" aria-label="Expression">
+        <div id="sci-res" class="sci-res" aria-live="polite">0</div>
+      </div>
+      <div class="sci-pad" id="sci-pad"></div>
+    </section>
+
+    <!-- Graphing -->
+    <section class="mode-pane graph-pane" id="graph" hidden>
+      <div class="graph-side">
+        <div class="graph-fns" id="graph-fns"></div>
+        <div class="graph-tools">
+          <button type="button" class="mini-btn" id="g-zin" data-i18n-title="calc.g.zin" title="Zoom in">+</button>
+          <button type="button" class="mini-btn" id="g-zout" data-i18n-title="calc.g.zout" title="Zoom out">&minus;</button>
+          <button type="button" class="mini-btn" id="g-home" data-i18n-title="calc.g.home" title="Reset view">&#8962;</button>
+          <button type="button" class="mini-btn angle-btn" id="g-angle">RAD</button>
+        </div>
+        <ul class="graph-poi" id="graph-poi"></ul>
+      </div>
+      <div class="graph-wrap" id="graph-wrap">
+        <canvas id="graph-cv" tabindex="0" data-i18n-aria="calc.g.canvas" aria-label="Graph"></canvas>
+        <div class="graph-trace" id="graph-trace" hidden></div>
+        <div class="graph-hint" id="graph-hint" data-i18n="calc.g.hint">Drag to move, pinch or scroll to zoom, tap a curve to trace it.</div>
+      </div>
+    </section>
+
+    <!-- Programmer -->
+    <section class="mode-pane prog-pane" id="prog" hidden>
+      <div class="prog-display">
+        <input id="prog-in" class="sci-in prog-in" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="none" data-i18n-aria="calc.sci.input" aria-label="Expression">
+        <div id="prog-res" class="sci-res prog-res" aria-live="polite">0</div>
+      </div>
+      <div class="prog-bases" id="prog-bases" role="radiogroup">
+        <button type="button" class="prog-base" data-base="16" role="radio"><span class="pb-n">HEX</span><span class="pb-v"></span></button>
+        <button type="button" class="prog-base" data-base="10" role="radio"><span class="pb-n">DEC</span><span class="pb-v"></span></button>
+        <button type="button" class="prog-base" data-base="8" role="radio"><span class="pb-n">OCT</span><span class="pb-v"></span></button>
+        <button type="button" class="prog-base" data-base="2" role="radio"><span class="pb-n">BIN</span><span class="pb-v"></span></button>
+      </div>
+      <div class="prog-opts">
+        <button type="button" class="mini-btn" id="prog-word">QWORD</button>
+        <button type="button" class="mini-btn" id="prog-kbd" aria-pressed="false" data-i18n-title="calc.kbd" title="Keyboard">&#9000;</button>
+        <button type="button" class="mini-btn" id="prog-view" aria-pressed="false">Bits</button>
+      </div>
+      <div class="prog-pad" id="prog-pad"></div>
+      <div class="prog-bits" id="prog-bits" hidden></div>
+    </section>
+
+    <!-- Finance -->
+    <section class="mode-pane fin-pane" id="fin" hidden>
+      <div class="fin-tabs" id="fin-tabs" role="tablist">
+        <button type="button" role="tab" data-tool="vat" data-i18n="calc.f.vat">VAT</button>
+        <button type="button" role="tab" data-tool="pct" data-i18n="calc.f.pct">Percent</button>
+        <button type="button" role="tab" data-tool="loan" data-i18n="calc.f.loan">Loan</button>
+        <button type="button" role="tab" data-tool="save" data-i18n="calc.f.save">Savings</button>
+      </div>
+
+      <div class="fin-card" data-tool="vat">
+        <label class="fin-field"><span data-i18n="calc.f.amount">Amount</span><input id="vat-amt" type="text" inputmode="decimal" autocomplete="off"></label>
+        <div class="fin-field"><span data-i18n="calc.f.rate">VAT rate</span>
+          <div class="fin-chips" id="vat-chips">
+            <button type="button" data-rate="24">24%</button>
+            <button type="button" data-rate="13">13%</button>
+            <button type="button" data-rate="6">6%</button>
+            <span class="fin-custom"><input id="vat-rate" type="text" inputmode="decimal" autocomplete="off" value="24" data-i18n-aria="calc.f.rate" aria-label="VAT rate"><span class="fin-unit">%</span></span>
+          </div>
+        </div>
+        <div class="fin-seg" id="vat-mode" role="radiogroup">
+          <button type="button" data-vmode="add" role="radio" data-i18n="calc.f.vat.add">Add VAT</button>
+          <button type="button" data-vmode="remove" role="radio" data-i18n="calc.f.vat.remove">Remove VAT</button>
+        </div>
+        <dl class="fin-out" id="vat-out"></dl>
+      </div>
+
+      <div class="fin-card" data-tool="pct">
+        <h3 data-i18n="calc.f.pct.change">Percentage change</h3>
+        <div class="fin-pair">
+          <label class="fin-field"><span data-i18n="calc.f.from">From</span><input id="pc-from" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="fin-field"><span data-i18n="calc.f.to">To</span><input id="pc-to" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <dl class="fin-out" id="pc-out"></dl>
+        <h3 data-i18n="calc.f.pct.of">Percent of a number</h3>
+        <div class="fin-pair">
+          <label class="fin-field"><span>%</span><input id="po-p" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="fin-field"><span data-i18n="calc.f.of">of</span><input id="po-of" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <dl class="fin-out" id="po-out"></dl>
+        <h3 data-i18n="calc.f.pct.what">What percent is it?</h3>
+        <div class="fin-pair">
+          <label class="fin-field"><span data-i18n="calc.f.part">Part</span><input id="pw-part" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="fin-field"><span data-i18n="calc.f.whole">Whole</span><input id="pw-whole" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <dl class="fin-out" id="pw-out"></dl>
+      </div>
+
+      <div class="fin-card" data-tool="loan">
+        <label class="fin-field"><span data-i18n="calc.f.principal">Loan amount</span><input id="ln-amt" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="fin-field"><span data-i18n="calc.f.apr">Annual interest rate (%)</span><input id="ln-rate" type="text" inputmode="decimal" autocomplete="off"></label>
+        <div class="fin-pair">
+          <label class="fin-field"><span data-i18n="calc.f.term">Term</span><input id="ln-term" type="text" inputmode="numeric" autocomplete="off"></label>
+          <label class="fin-field"><span data-i18n="calc.f.unit">Unit</span>
+            <select id="ln-unit"><option value="y" data-i18n="calc.f.years">Years</option><option value="m" data-i18n="calc.f.months">Months</option></select></label>
+        </div>
+        <dl class="fin-out" id="ln-out"></dl>
+        <div class="fin-actions"><button type="button" class="mini-btn wide" id="ln-csv" data-i18n="calc.f.csv">Export CSV</button></div>
+        <div class="fin-table-wrap"><table class="fin-table" id="ln-table"></table></div>
+      </div>
+
+      <div class="fin-card" data-tool="save">
+        <label class="fin-field"><span data-i18n="calc.f.start">Starting amount</span><input id="sv-start" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="fin-field"><span data-i18n="calc.f.monthly">Monthly deposit</span><input id="sv-month" type="text" inputmode="decimal" autocomplete="off"></label>
+        <div class="fin-pair">
+          <label class="fin-field"><span data-i18n="calc.f.apr">Annual interest rate (%)</span><input id="sv-rate" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="fin-field"><span data-i18n="calc.f.years">Years</span><input id="sv-years" type="text" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <label class="fin-field"><span data-i18n="calc.f.comp">Compounding</span>
+          <select id="sv-freq"><option value="m" data-i18n="calc.f.comp.m">Monthly</option><option value="y" data-i18n="calc.f.comp.y">Yearly</option></select></label>
+        <dl class="fin-out" id="sv-out"></dl>
+        <div class="fin-actions"><button type="button" class="mini-btn wide" id="sv-csv" data-i18n="calc.f.csv">Export CSV</button></div>
+        <div class="fin-table-wrap"><table class="fin-table" id="sv-table"></table></div>
+      </div>
+    </section>
+
     <!-- History -->
     <aside class="calc-history">
       <div class="calc-history-head">
@@ -88,6 +224,8 @@
   </main>
 </div>
 
+<script src="../units/core.js?v=1.98.00"></script>
+<script src="core.js?v=1.98.00"></script>
 <script src="calculator.js?v=1.98.00"></script>
 
 </body>

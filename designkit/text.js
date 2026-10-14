@@ -290,6 +290,26 @@
     return f.b64;
   }
 
+  // The files of a loaded face (a Fontsource face can be several
+  // subset files): [{ map: { codepoint: glyph }, b64() }]. A PDF
+  // embeds each file as its own font (Atelier's vector PDF).
+  function faceParts(key) {
+    var f = fonts[key];
+    if (!f) return [];
+    return f.parts.map(function (p) {
+      return {
+        map: p.m ? p.m.map : f.m.map,
+        b64: function () {
+          if (p.b64) return p.b64;
+          var bytes = new Uint8Array(p.buf), s = "", CH = 0x8000;
+          for (var i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+          p.b64 = typeof btoa === "function" ? btoa(s) : Buffer.from(p.buf).toString("base64");
+          return p.b64;
+        }
+      };
+    });
+  }
+
   // Metrics of a key; an unloaded face borrows the regular one of
   // its family, then sans-r, so layout never crashes on a font that
   // is still on its way (the caller re-lays out when it lands).
@@ -741,7 +761,7 @@
     fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, cssStack: cssStack, allKeys: allKeys,
     registerFamily: registerFamily, setFetcher: setFetcher, generation: generation, unicodeRange: unicodeRange,
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
-    fontBase64: fontBase64, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
+    fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
     layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText
   };

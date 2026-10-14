@@ -15,6 +15,8 @@ The `Add` button, or the quick buttons on `Overview`, offer:
 
 Fuel, service and expense entries can keep up to 6 receipt photos: use `Add a receipt photo` under `Receipts`. The log marks them with 📎 and the number of photos. They are kept in [Files](app:files), in the folder Garage/Receipts.
 
+In `Fuel` or `Charging`, `Read a receipt` takes the text of a receipt (paste it, or type what it says) and fills in the date, quantity, price per litre or kWh, total and station, from Greek or English receipts. It all happens on this device; check the values, then `Save`.
+
 From the same menu you can add a renewal, a service plan item, a tyre set or another vehicle.
 
 ## Overview
@@ -29,6 +31,9 @@ From the same menu you can add a renewal, a service plan item, a tyre set or ano
 `Log` lists every entry month by month, with filters by kind and the consumption of each full fill. Tap an entry to edit or delete it.
 
 `Stats` covers `12 months`, `This year` or `All time`: total cost, km driven, cost per km, average consumption and price, and charts of costs per month, consumption, fuel price and `Where the money goes`. `Show as table` turns a chart into a table.
+
+## Logbook report
+`Logbook` on the vehicle card (or `Logbook report` in `Settings`) puts the whole history of the vehicle on one page: the vehicle, a summary, every service, renewals and tyres. Tick `Fuel and charging fills` or `Other costs` to add them, and untick `Show the amounts paid` to leave out the prices, for example when you sell the car. `Print or save as PDF` opens the print window (pick "Save as PDF" as the printer for a PDF); `Save as HTML` saves one file you can open in any browser.
 
 ## Sync and backup
 Vehicles, entries, renewals, plans, tyres and your currency sync between your devices through [orOS sync](help:t/sync). Receipt photos travel separately, with Vault Drive sync; until they arrive, a photo shows `Not on this device`. The reminder hour, consumption unit, tyre limits and open tab stay on each device.
@@ -47,3 +52,4 @@ In `Settings`: `Export CSV`, `Export backup` (JSON) and `Import backup`. An impo
 ## Limits
 - Reminders appear while orOS is open, even with this app closed. With orOS closed they wait until you open it again.
 - Service intervals are only typical ones. Your vehicle's manual comes first.
+- `Read a receipt` works with the receipt's text, not a photo, in this version. Receipts with an unusual layout may be read only in part: check the values before you save.

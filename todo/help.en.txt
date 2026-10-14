@@ -1,33 +1,66 @@
 # To-Do
-To-Do keeps your tasks in lists, each list on its own tab. Give tasks due dates, labels and notes, make them repeat, and search across every list at once.
+To-Do keeps your tasks in lists, each list on its own tab. Give tasks due dates, priorities, labels, notes and a checklist of subtasks, make them repeat, move them between lists, and see what matters across every list in smart lists and your own saved filters.
 
 ## Getting started
 You start with two lists, `General` and `Groceries`. Type in the box at the top (`Add a task… (try “tomorrow”, “friday”)`) and press [[Enter]], or tap or click the **+** button. New tasks go to the top of the open list.
 
-Tick the checkbox next to a task to mark it done. Tap or click the task's text to open its details.
+Tick the round checkbox next to a task to mark it done. Tap or click the task's text to open its details.
 
 ## Add and edit tasks
-### Quick dates while typing
-The add box understands a few date words and removes them from the task text:
+### Quick dates and priority while typing
+The add box understands a few words and removes them from the task text:
 - `today` / `tomorrow` (in Greek too: `σήμερα`, `αύριο`).
 - A weekday, full or short, such as `friday` or `fri`. It means the next one; typing `friday` on a Friday gives next week's Friday.
+- `p1`, `p2`, `p3` or `p4` sets the priority, as in Todoist.
 
 ### Task details
-The `Task` window has `Text`, `Due date`, `Notes`, `Labels` and `Extra info`. With `Add field` you can add your own pairs of `Field` and `Value`, such as a phone number or a price. Changes are saved when you close the window or press `Save`. `Delete` removes the task after you confirm.
+The `Task` window has `Text`, `Due date`, `Priority`, `List`, `Subtasks`, `Notes`, `Labels` and `Extra info`. With `Add field` you can add your own pairs of `Field` and `Value`, such as a phone number or a price. Changes are saved when you close the window or press `Save`. `Delete` removes the task after you confirm.
 
 Due dates show on each task as `Today`, `Tomorrow` or a short date, highlighted when the task is due today or overdue. A tab shows a small count of overdue tasks.
 
-### Repeating tasks
-Under `Repeat`, choose `Every` and set a number of `days`, `weeks` or `months`; for weeks you can also pick a weekday. When you tick a repeating task, it doesn't stay done: it reopens with its next due date.
+### Priorities
+There are four: `P1` (urgent, red), `P2` (high, orange), `P3` (medium, blue) and `P4` (none). The checkbox of a task takes its priority's colour and a small flag shows `P1`–`P3`. Set it in the `Task` window, with `p1`–`p4` in the add box, or from the quick menu.
 
-### Reorder
+### Subtasks
+Under `Subtasks` in the `Task` window, type a step in `New subtask…` and press [[Enter]] or `Add`. Tick steps, change their text, move them with the up and down arrows, or delete them with ×. Steps are saved straight away.
+
+A task with subtasks shows how many are done, such as `2/5`. Tap that count to open the checklist right on the task and tick steps there; tap it again to close it.
+
+### Repeating tasks
+Under `Repeat`, choose `Every` and set a number of `days`, `weeks` or `months`, then how the next date counts:
+- `on a fixed schedule`: from the due date (for weeks you can also pick a weekday). Finishing early skips to the next date after the current one.
+- `after it's done`: from the day you tick it. "Every 30 days after it's done" ticked on 14 October comes back due on 13 November, whatever its date was.
+
+When you tick a repeating task, it doesn't stay done: it reopens with its next due date, and its subtasks are unticked.
+
+### Reorder and sort
 Drag a task by its handle (the dotted grip on the right) to move it within the list.
+
+The sort button (lines with an arrow) orders the view `By priority`, `By due date` or back in `Manual order`. Each list and smart list remembers its own choice on this device. Ticked tasks go last when sorted, and the drag handles only show in `Manual order`.
+
+## Move tasks to another list
+- In the `Task` window, pick another `List`; the task moves with its subtasks when you close the window.
+- Or right-click a task (on a phone, press and hold it) for the quick menu: the priority flags, `Move to…`, `Open` and `Select`.
+- To move several at once, choose `Select` in the quick menu, tap the other tasks, then `Priority / Move…` in the bar at the bottom. `Cancel` or [[Esc]] ends the selection.
+
+A moved task goes to the top of its new list. `Undo` in the message puts it back.
+
+## Smart lists and saved filters
+The first tabs show tasks from all your lists at once (on a phone, only their icons):
+- `Today`: due today or overdue.
+- `Next 7 days`: due in the next seven days, overdue included.
+- `No date`: tasks without a due date.
+- `Priority 1`: everything marked `P1`.
+
+Only open tasks show there; a task you tick stays in sight, ticked, until you leave the view, so you can take the tick back. The source list shows on each task, and everything else works as in a list: open, tick, the quick menu, sort. A task you add in a smart list goes to the last list you had open, with what makes it show up there (for example, due today in `Today`).
+
+Your own views: open the funnel button and choose `New saved filter…`. Give it a name and pick any of `Labels (any of them)`, `Priority`, `Due date` (`Overdue`, `Today or overdue`, `Next 7 days`, `Next 30 days`, `No date` or `Between dates`) and `Text contains`. It starts from the search and labels you had picked. The filter gets its own tab after the smart lists; its pencil, or the ⋮ button while it is open, edits or deletes it.
 
 ## Lists
 - Tap or click the **+** next to the tabs to add a list. It opens straight into `List settings` so you can name it.
 - To rename a list, double-click its tab, tap the pencil on the tab, or use the ⋮ button on the right.
 - Drag tabs sideways to change their order.
-- `List cycle` clears all ticks in the list automatically every few days, weeks or months. It's handy for checklists you redo, like a weekly shopping list. The window shows the next reset date.
+- `List cycle` clears all ticks in the list automatically every few days, weeks or months, subtasks included. It's handy for checklists you redo, like a weekly shopping list. The window shows the next reset date.
 - `Delete list` removes the list and all its tasks.
 - The paper-plane button above the list sends the open list to someone as a link (`Send to someone…`). They can open it in any browser, and add it to their own orOS.
 
@@ -36,12 +69,13 @@ Drag a task by its handle (the dotted grip on the right) to move it within the l
 ## Labels, search and filter
 In a task, open `Add / manage labels` to create labels with a name and colour, and tap a label to attach it. Tap a label chip in the task to remove it.
 
-The search box looks through every list: task text, notes, extra info and label names. The funnel button filters by label; a task shows if it has any of the labels you pick. Results from all lists appear together, each with its list name. You can also delete a label from the filter menu; it's removed from all tasks.
+The search box looks through every list: task text, notes, extra info, subtasks and label names. The funnel button filters by label; a task shows if it has any of the labels you pick. Results from all lists appear together, each with its list name. You can also delete a label from the filter menu; it's removed from all tasks.
 
 ## Import from Todoist
 - First connect Todoist in [Settings](app:settings) › `Connected services` with your API token (Todoist › Settings › Integrations › Developer).
 - Then `List settings` (the ⋮ button) › `Import from Todoist or GitHub…` › `Read the account` shows what will come in; `Import` brings it, and `Undo` in the message takes it back.
-- Each project with open tasks becomes a list. Tasks keep their due date; the description becomes notes, labels come by name (an existing label of the same name is used), and priority shows as `Priority: P1`–`P3` in the extra info. Subtasks come in as tasks right after their parent. Repeating tasks come with their next date only: set `Repeat` here if you want it. Completed tasks stay in Todoist.
+- Each project with open tasks becomes a list. Tasks keep their due date and their priority (Todoist's P1–P4 become the same here); the description becomes notes, and labels come by name (an existing label of the same name is used). Subtasks come in as tasks right after their parent. Repeating tasks come with their next date only: set `Repeat` here if you want it. Completed tasks stay in Todoist.
+- Tasks imported before priorities existed here carry `Priority: P1`–`P3` in their extra info. That field is left as it is; the next import with `Update what was imported before` also sets their priority.
 - Import again whenever you like: new tasks come in, and with `Update what was imported before` the text, notes, due date and priority follow Todoist's. Your ticks, your own labels and extra info here are never changed. A task or list you deleted here stays deleted unless you tick `Bring back what was deleted here`; a new task whose text is already open in its list is skipped.
 - orOS only reads Todoist: nothing there changes.
 
@@ -53,19 +87,21 @@ The search box looks through every list: task text, notes, extra info and label 
 - orOS only reads GitHub: nothing there changes.
 
 ## Sync and backup
-Your lists, tasks and labels sync between your devices through [orOS sync](help:t/sync). The open tab and `Hide completed` stay on each device, and search and filters reset when you close the app.
+Your lists, tasks (with priorities and subtasks), labels and saved filters sync between your devices through [orOS sync](help:t/sync). Two devices ticking different subtasks of one task both keep their ticks, and a task moved on one device ends up in its new list on all of them. The open tab, the sort of each view and `Hide completed` stay on each device, and search, filters, the open subtask checklists and a selection reset when you close the app.
 
 To-Do has no import or export of its own; use the orOS [backup](help:t/backup) to keep a copy.
 
 ## Keyboard shortcuts
-- [[Enter]] in the add box adds the task.
-- [[Esc]] closes the label filter menu or the open window.
+- [[Enter]] in the add box adds the task; in `New subtask…` it adds the step.
+- [[Esc]] closes the quick menu, the sort or label filter menu, the open window, or ends a selection.
 
 ## Tips
-- Tasks with a due date that aren't done show up in [Calendar](app:calendar) on their day, and the Calendar entry opens the list here.
+- Tasks with a due date that aren't done show up in [Calendar](app:calendar) on their day, and the Calendar entry opens the list here. They also show in Today, with a button that ticks them here.
 - Other apps can send items here, such as the shopping list from [Meal Planner](app:meals). An `Add to To-Do` window shows them with a `List` picker; items already on that list start unticked, and nothing is saved until you press `Add`.
 - orOS can remind you when tasks are due or overdue; see [Notifications](help:t/notifications).
 
 ## Limits
 - Quick dates know only today, tomorrow and weekdays. For other dates, set `Due date` in the task.
-- Tasks can't be moved between lists, and you can't drag tasks while searching or filtering.
+- You can't drag tasks while searching, in a smart list or saved filter, or while a list is sorted by priority or date. Subtasks are reordered with the arrows, not by dragging.
+- Subtasks have no due dates, priorities or subtasks of their own, and don't show in Calendar or Today. A task holds up to 100.
+- A device still on an older orOS version shows a task moved elsewhere in both lists until it updates.

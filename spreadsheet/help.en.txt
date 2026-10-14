@@ -2,7 +2,7 @@
 Spreadsheet is a simple grid for lists, budgets and sums, with formulas, several sheets per workbook and CSV, Excel and LibreOffice files.
 
 ## Getting started
-Each sheet has 100 rows and columns A to Z.
+A new sheet has 100 rows and columns A to Z. A sheet can grow to 10,000 rows and 104 columns (A to CZ): see Rows, columns and frozen panes.
 
 - Tap or click a cell to select it and start typing. [[Enter]] saves and moves down, [[Tab]] moves right, [[Esc]] cancels.
 - To change a cell, double-click it or press [[Enter]] or [[F2]]. On a touch screen, tap a cell to select it and tap it again to edit.
@@ -11,17 +11,91 @@ Each sheet has 100 rows and columns A to Z.
 ## Formulas
 Start a cell with = to make a formula, for example =A1*2 or =SUM(B2:B10).
 
-- Operators: + - * / ^, & to join text, and = <> < > <= >= to compare (the result is 1 or 0).
-- References: A1, ranges like A1:C5, and cells on another sheet like Sheet2!A1 (or 'My sheet'!A1 when the name has spaces).
-- Functions: SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, ROUND, ABS, IF, AND, OR, NOT, CONCAT. Separate arguments with a comma or a semicolon.
-- Errors show in the cell, for example #DIV/0! (division by zero), #REF! (a reference that doesn't exist) or #NAME? (an unknown function).
-- When you copy and paste a formula, its references move with it, as in other spreadsheets.
+- Operators: + - * / ^, & to join text, % for percent, a minus sign in front (=-A1), and = <> < > <= >= to compare (the result is TRUE or FALSE).
+- References: A1, ranges like A1:C5, whole columns like A:A, fixed references like $A$1, and cells on another sheet like Sheet2!A1 (or 'My sheet'!A1 when the name has spaces).
+- Separate arguments with a comma or a semicolon. Text goes in double quotes; write "" for a quote inside text.
+- Errors show in the cell, for example #DIV/0! (division by zero), #REF! (a reference that doesn't exist), #N/A (nothing found) or #NAME? (an unknown function).
+- When you copy and paste a formula, its references move with it, as in other spreadsheets ($ parts stay).
+
+## Functions
+Over 100 functions work as in Excel and Google Sheets. Tap ƒx next to the formula bar for the full list with a line on each; while you type =SU… a short list appears: use the arrow keys and [[Tab]], or tap a name.
+
+- Totals and conditions: SUM, AVERAGE, COUNT, COUNTA, COUNTBLANK, SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, MAXIFS, MINIFS, SUMPRODUCT.
+- Conditions are written like ">5", "<>paid", "a*" (* any text, ? one character) or a cell.
+- Lookups: VLOOKUP, HLOOKUP, XLOOKUP, INDEX, MATCH, CHOOSE.
+- Logic and errors: IF, IFS, SWITCH, AND, OR, NOT, IFERROR, IFNA, ISBLANK, ISNUMBER, ISTEXT, ISERROR.
+- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, SUBSTITUTE, FIND, SEARCH, TEXT, VALUE, TEXTJOIN, CONCAT, REPT.
+- Maths and statistics: ROUND, ROUNDUP, ROUNDDOWN, INT, MOD, POWER, SQRT, PRODUCT, MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, PI, RAND, RANDBETWEEN.
+- Money: PMT, FV, PV, NPER, NPV.
+- TEXT(value; "0.00") writes a number as text in a pattern: 0, 0.00, #,##0, 0%, dd/mm/yyyy and so on.
+
+## Dates
+Dates are day numbers, as in Excel: 1 is 31 December 1899, so subtracting two dates gives the days between them.
+
+- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DATEDIF, EDATE, EOMONTH, NETWORKDAYS and WORKDAY work with them.
+- A cell with =TODAY(), =DATE(…) and similar shows a date by itself. For other cells pick `date` in `Number format`: 2026-10-14 in English, 14/10/2026 in Greek.
+- A date you type, like 2026-10-14 or 14/10/2026, stays as you typed it (text). Date functions still read it (day first: 14/10/2026 is 14 October), and DATEVALUE turns it into a day number.
 
 ## Format and edit
-- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys.
-- The toolbar has Undo, Redo, Copy, Cut, Paste, bold, italic, underline, alignment, `Number format` (`auto`, 123, 123.00, %, €), `Text color` and `Clear formatting`.
+- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys. On a touch screen, touch and hold a cell for a moment, then drag; or choose `Select a range…` in the sheet menu and tap the last cell.
+- The toolbar has Undo, Redo, Copy, Cut, Paste, bold, italic, underline, alignment, `Number format` (`auto`, 123, 123.00, %, €, `date`), `Text color`, `Clear formatting` and the cell format button (see Fill, borders and merged cells).
+- Tap a column letter or a row number to select the whole column or row.
 - [[Delete]] or [[Backspace]] empties the selected cells.
-- Drag the right edge of a column header to make the column wider or narrower.
+- Drag the right edge of a column header to make the column wider or narrower, and the bottom edge of a row number to make the row taller. This works with a finger too.
+
+## Fill, borders and merged cells
+The cell format button next to `Clear formatting` has:
+
+- `Fill colour` (a background for the cells) and `No fill`.
+- `Outline border`, `All borders`, `Bottom border` and `No borders`.
+- `Wrap text`: long text breaks into lines and the row grows to fit.
+- `Align top`, `Align middle` and `Align bottom`.
+- `Merge cells`, `Merge horizontally` (each row on its own), `Merge vertically` (each column on its own) and `Unmerge`. Only the top-left value is kept. A merge can span at most 500 rows.
+- `Conditional formatting…` (see below).
+
+## Fill handle
+The small square at the bottom right of the selection is the fill handle. Drag it down, up, left or right, with the mouse or a finger:
+
+- Numbers in a pattern (1, 2 or 10, 20) continue; one number is copied (hold [[Ctrl]] while dragging to count up instead).
+- Dates continue by day, or by the step between them. Weekdays and months continue in English and Greek (Monday, Tuesday… or Ιαν, Φεβ…), and so does text ending in a number, like Item 1, Item 2.
+- Formulas are copied with their references moved, as with copy and paste.
+- Anything else is repeated. [[Ctrl+Z]] undoes the fill.
+
+## Conditional formatting
+`Conditional formatting…` in the cell format menu lists the rules of this sheet. `Add rule` makes a new one for the selected cells (or type a range like B2:B20):
+
+- `Greater than`, `Less than`, `Between`, `Equal to`, `Text contains`, `Top` / `Bottom` N values and `Duplicate values` colour the matching cells with a fill, a text colour or bold.
+- `Colour scale` shades every number from the lowest to the highest with two or three colours.
+- `Data bars` draws a bar in each cell, as long as its value.
+- When rules overlap, the one higher in the list wins. The arrow moves a rule up.
+- Rules follow the values as they change, and reach your other devices with sync.
+
+## Charts
+Select the data with its headings, for example A1:C5, and press the chart button.
+
+- Pick `Column`, `Bar`, `Line`, `Pie`, `Donut` or `Scatter`, and give it a title, axis titles and colours. A first row or column of text gives the names of the series and of the categories; `Series in` chooses columns or rows.
+- The chart floats over the sheet. Drag it to move it; drag its corner to resize it. Tap it to show its buttons: edit (or double-click it), `PNG`, `SVG` and delete. [[Delete]] deletes the selected chart and [[Ctrl+Z]] brings it back.
+- A chart follows its cells: change a number and the chart changes with it. Rows hidden by a filter are left out. It uses the colours of your theme, light or dark.
+- Charts reach your other devices with sync.
+
+## Copy and paste with other apps
+- [[Ctrl+C]] or the Copy button puts the selected cells on the clipboard as text with tabs and as a table, so they paste into Excel, Google Sheets, LibreOffice, Word or an email.
+- [[Ctrl+V]] pastes cells copied in Excel, Google Sheets or LibreOffice, with bold, italic, colours, fills and merged cells where the other app sends them. Plain text with tabs or lines also pastes into cells.
+- Something copied here and pasted here keeps its formulas (their references move) and all its formats.
+- The Paste button asks the browser to read the clipboard. If the browser refuses, press [[Ctrl+V]] instead.
+
+## Sort and filter
+- `Sort A to Z` and `Sort Z to A` sort the selected cells by the column of the cursor. With one cell selected they sort the table around it; a first row of headings (text above numbers, or bold) stays on top. Blank cells go last. [[Ctrl+Z]] undoes it.
+- `Filter` puts a button on each heading of the table. Tap it to keep only some values, or rows whose text contains a word. The status bar shows how many rows are hidden; tap ✕ there or `Filter` again to show them all.
+- Filters are a view of this device only: they don't reach your other devices, and nothing is deleted.
+
+## Rows, columns and frozen panes
+The `Rows, columns, freeze` button (or a right-click on the grid) has:
+
+- `Freeze top row`, `Freeze rows 1–N` (up to the cursor), `Freeze column A` / `Freeze columns A–X`, and `Unfreeze`. Frozen rows and columns stay in view while you scroll, also on a phone. They reach your other devices with sync.
+- `Insert row above` / `below`, `Insert column left` / `right`, and `Delete row` / `Delete column` for the selected rows or columns. Formulas that point at moved cells follow them; a formula that pointed at a deleted cell shows #REF!. [[Ctrl+Z]] undoes it.
+- `Add 100 rows at the end`, `Add 1,000 rows at the end` and `Add 10 columns`.
+- Charts and conditional formatting rules move with their cells when you insert or delete rows and columns, and their ranges grow or shrink with them.
 
 ## Sheets
 The tabs at the bottom are your sheets.
@@ -31,15 +105,15 @@ The tabs at the bottom are your sheets.
 - Tap ✕ on a tab, then ✕ again within 3 seconds, to delete the sheet. The last sheet can't be deleted.
 
 ## Sync and backup
-With [orOS sync](help:t/sync), your sheets, cells, formatting and column widths reach your other devices. Text and formatting in the same cell are merged separately, so a value typed on one device and bold set on another both survive.
+With [orOS sync](help:t/sync), your sheets, cells, formatting (with fills, borders and merged cells), column widths, row heights, frozen panes, charts and conditional formatting rules reach your other devices. Text and formatting in the same cell are merged separately, so a value typed on one device and bold set on another both survive. Each chart and each rule syncs on its own: a chart added on one device and a rule added on another both stay.
 
-These stay on this device: which sheet is open, the copy clipboard and the Undo history.
+These stay on this device: which sheet is open, filters, the copy clipboard and the Undo history.
 
 Import and export (buttons at the bottom right):
 - `Import CSV` adds the file as a new sheet. Commas, semicolons and tabs are detected by themselves.
 - `Export CSV` saves the open sheet, with each cell as you typed it (formulas stay formulas).
 - `Import Excel / Calc (.xlsx, .ods, .xls)` adds every sheet of the file as a new sheet.
-- `Export Excel / Calc` saves all sheets as `Excel (.xlsx)` or `LibreOffice Calc (.ods)`.
+- `Export Excel / Calc` saves all sheets as `Excel (.xlsx)` or `LibreOffice Calc (.ods)`, with column widths, row heights and merged cells.
 
 ## Import from Notion
 The `Notion` button (cloud) next to them brings in the Notion databases you shared with your Notion integration, one sheet per database. Connect Notion first in [Settings](app:settings) › `Connected services`, then in Notion open each database, ••• › `Connections`, and add your integration.
@@ -54,20 +128,27 @@ The `Notion` button (cloud) next to them brings in the Notion databases you shar
 See also [Backup](help:t/backup).
 
 ## Keyboard shortcuts
-- Arrow keys move; [[Shift]] + arrows select a range.
+- Arrow keys move; [[Shift]] + arrows select a range; [[PageUp]] and [[PageDown]] move a screen.
 - [[Enter]] or [[F2]] edits the cell; [[Tab]] moves right; [[Esc]] cancels editing.
 - [[Ctrl+Z]] undo, [[Ctrl+Y]] or [[Ctrl+Shift+Z]] redo.
-- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] copy, cut and paste.
+- [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] copy, cut and paste, also with other apps.
+- [[Delete]] on a selected chart deletes it.
 - [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]] bold, italic, underline.
 - On a Mac use Cmd instead of Ctrl.
 
 ## Tips
 - Start typing on a selected cell to replace its content straight away.
 - Use another sheet for raw data and refer to it with Sheet2!A1.
+- On a phone, touching and holding a cell without moving opens the sheet menu.
 
 ## Limits
-- Copy and paste work inside Spreadsheet only, not with other apps.
-- On touch screens you can select only one cell at a time, and column widths change only with a mouse.
-- Imports are capped at 500 rows × 64 columns per sheet.
+- A sheet holds at most 10,000 rows × 104 columns (A to CZ); imports are capped there.
+- A chart shows up to 8 series and 1,000 points; a pie or donut puts slices after the 8th into Other.
+- Charts, fills, borders, wrapping and conditional formatting are not saved in Excel, Calc or CSV files (merged cells, column widths and row heights are). From Excel, Sheets and LibreOffice, a paste brings fills, colours and bold, but not borders or rules.
+- Merged cells don't grow when you insert rows or columns inside them; the merge keeps its size.
+- Wrapped rows grow to fit when you turn wrapping on; a row whose text you change later keeps its height until you wrap it again or drag its edge.
+- While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.
+- Array formulas, {1,2} constants, named ranges and pivot tables are not supported. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
+- Inserting or deleting rows moves cells: if another device edits the same cells before sync, its edit stays at the old place.
 - Undo history is cleared when sync brings in changes, and deleting a sheet has no Undo.
 - Excel and Calc files need a helper library; if it hasn't loaded yet, you may need an internet connection.

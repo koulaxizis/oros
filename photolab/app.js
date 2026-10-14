@@ -29,7 +29,7 @@
   var PL = window.PL = {
     C: NS.core, T: NS.tiles, H: NS.history, S: NS.select, P: NS.paint,
     R: NS.resample, A: NS.adjust, F: NS.filters, ST: NS.store, PSD: NS.psd, ORA: NS.ora, XMP: NS.xmp,
-    G: NS.guides,
+    G: NS.guides, B: NS.batch, RAW: NS.raw,
     FX: window.orosDK && window.orosDK.fx
   };
   var C = PL.C, T = PL.T, H = PL.H;
@@ -131,7 +131,8 @@
       shape: { id: "rect", noFill: false, stroke: false, sw: 8 },
       rulers: false, guides: true, grid: false, gridSize: 50, snap: true,
       selMode: "replace", feather: 0, marqueeEllipse: false, lassoPoly: false, cropRatio: "free",
-      exportFmt: "png", exportQ: 90, recent: []
+      exportFmt: "png", exportQ: 90, recent: [],
+      batch: NS.batch.norm(null)
     };
   }
   function mergePrefs(base, p) {
@@ -160,6 +161,7 @@
     if (!/^#[0-9a-f]{6}$/i.test(P.fg)) P.fg = "#000000";
     if (!/^#[0-9a-f]{6}$/i.test(P.bg)) P.bg = "#ffffff";
     if (["replace", "add", "sub", "and"].indexOf(P.selMode) < 0) P.selMode = "replace";
+    P.batch = NS.batch.norm(P.batch);
     st.fg = P.fg; st.bg = P.bg;
     st.tool = PL.tools.ORDER.indexOf(P.tool) >= 0 ? P.tool : "brush";
   }

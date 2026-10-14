@@ -2,7 +2,7 @@
 Radio plays thousands of internet radio stations from around the world. Browse by country or genre, search by name, and keep your favourites. Music keeps playing even after you close the app.
 
 ## Getting started
-Radio opens on `Discover` with the top stations worldwide. Tap or click a station to play it. A player bar appears at the bottom with play/pause, the station's name, the sleep timer (☾), stop (■) and a heart for favourites.
+Radio opens on `Discover` with the top stations worldwide. Tap or click a station to play it. A player bar appears at the bottom with play/pause, the station's name, the sleep timer (☾), the station tools (⋯), stop (■) and a heart for favourites.
 
 The tile `Surprise me` plays a random top station.
 
@@ -20,10 +20,24 @@ While a station plays, tap the heart in the player bar to add it to `Favorites`;
 Playback runs in orOS itself, so it keeps going when you close the app. A chip in the taskbar shows the station; tap or click it for play/pause, stop, favourite, volume and `Open Radio`. Your device's media controls (lock screen, headset buttons) can also play and pause.
 
 ### Sleep timer
-Tap ☾ and choose 15, 30, 60 or 90 minutes. The time left shows in the player bar and playback stops when it runs out. `Turn off` cancels the timer.
+Tap ☾ and choose 15, 30, 60 or 90 minutes. The time left shows in the player bar; the sound fades out during the last minute and playback stops when it runs out. `Turn off` cancels the timer.
+
+## Station tools
+The ⋯ button in the player bar opens the tools for the station that's playing.
+
+### Now playing and song history
+When a station announces its songs, the title shows under `Now playing` and in the player bar (♪). `Song history` lists what was playing and when, newest first; `Clear history` empties it. The history stays on this device.
+
+### Record
+`Record` saves the stream to your orOS disk, in Files › Radio, named after the date, time and station. The player bar shows a red dot and the time recorded; `Stop recording` saves the file. A recording also stops and is saved after 4 hours or 200 MB.
+
+Recordings are for your own personal use only. Radio programmes are protected by copyright: don't share, publish or sell them.
+
+### Wake up to a station
+Under `Wake up to this station`, choose a `Time` and whether it repeats (`Once` or `Every day`), then `Set alarm`. The alarm appears in [Time](app:time), and when it rings the station starts playing, softly at first. You can also pick an existing alarm from Time and press `Use`. `Remove` takes a station off an alarm.
 
 ## Sync and backup
-Your favourites sync between your devices through [orOS sync](help:t/sync). Recent stations and the temporarily kept station lists stay on this device. There's no import or export; favourites are part of the orOS [backup](help:t/backup).
+Your favourites and wake-up stations sync between your devices through [orOS sync](help:t/sync). Song history, recent stations and the temporarily kept station lists stay on this device. There's no import or export; favourites are part of the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - In the search box: [[Enter]] searches or plays the highlighted suggestion, [[↑]] / [[↓]] move through suggestions, [[Esc]] closes them.
@@ -35,3 +49,6 @@ Your favourites sync between your devices through [orOS sync](help:t/sync). Rece
 ## Limits
 - Stations come from the free community directory radio-browser.info, so names, logos and genres are only as good as that directory. If it can't be reached (no connection, or a content blocker), the lists stay empty.
 - Favourites can only be added from the player bar or the taskbar chip, not from the station list.
+- Song titles and recording need a station that lets web pages read its stream (CORS). Many don't: then `This station does not say what it plays.` shows, or recording explains it isn't allowed. The station directory itself has no song information.
+- Recording downloads the stream a second time while it runs, so it uses double the data. Playlist-style streams (HLS) can't be recorded.
+- A wake-up station only plays if orOS is open when the alarm rings, and the browser may keep the sound muted until you touch the page.

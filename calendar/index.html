@@ -23,15 +23,25 @@
         <button id="cal-export" type="button" class="nav-mini" data-i18n="cal.export"></button>
         <button id="cal-stats" type="button" class="nav-mini" data-i18n="cal.stats"></button>
         <button id="cal-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
+        <div class="more-wrap">
+          <button id="cal-more" type="button" class="nav-mini" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu"></button>
+          <div id="more-menu" class="more-menu" hidden>
+            <button id="mm-subs" type="button" data-i18n="mm.subs"></button>
+            <button id="mm-free" type="button" data-i18n="mm.free"></button>
+            <button id="mm-print" type="button" data-i18n="mm.print"></button>
+          </div>
+        </div>
       </div>
       <h2 id="cal-title"></h2>
     </header>
 
     <!-- ===== View switcher + search ===== -->
     <div id="view-bar">
-      <div class="view-switch">
-        <button id="vw-month" type="button" class="view-btn active" data-i18n="vw.month"></button>
+      <div class="view-switch" role="group">
+        <button id="vw-day" type="button" class="view-btn" data-i18n="vw.day"></button>
         <button id="vw-week" type="button" class="view-btn" data-i18n="vw.week"></button>
+        <button id="vw-month" type="button" class="view-btn active" data-i18n="vw.month"></button>
+        <button id="vw-year" type="button" class="view-btn" data-i18n="vw.year"></button>
         <button id="vw-agenda" type="button" class="view-btn" data-i18n="vw.agenda"></button>
       </div>
       <input id="search-in" type="search" autocomplete="off"
@@ -54,6 +64,12 @@
     <!-- ===== Week view ===== -->
     <div id="week-grid" hidden></div>
 
+    <!-- ===== Day view (hour grid) ===== -->
+    <div id="day-view" hidden></div>
+
+    <!-- ===== Year view (12 small months) ===== -->
+    <div id="year-grid" hidden></div>
+
     <!-- ===== Agenda view ===== -->
     <ul id="agenda-list" hidden></ul>
 
@@ -64,7 +80,10 @@
     <section class="sec">
       <div class="sec-head">
         <span id="day-title"></span>
-        <button id="ev-add" type="button" class="mini" data-i18n="ev.add"></button>
+        <span class="sec-btns">
+          <button id="ev-quick" type="button" class="mini" data-i18n="qa.btn"></button>
+          <button id="ev-add" type="button" class="mini" data-i18n="ev.add"></button>
+        </span>
       </div>
       <div id="nd-line" class="nd-line" hidden></div>
       <ul id="ev-list"></ul>
@@ -77,6 +96,17 @@
     <div class="ev-form">
       <label for="ev-title" data-i18n="ev.field.title"></label>
       <input id="ev-title" type="text" maxlength="80" data-i18n-ph="ev.ph.title">
+
+      <div class="date-pair">
+        <div>
+          <label for="ev-date" data-i18n="ev.field.date"></label>
+          <input type="date" id="ev-date">
+        </div>
+        <div>
+          <label for="ev-date-end" data-i18n="ev.field.dateend"></label>
+          <input type="date" id="ev-date-end">
+        </div>
+      </div>
 
       <label class="chk">
         <input id="ev-allday" type="checkbox">
@@ -96,26 +126,32 @@
         </div>
       </div>
 
+      <div id="ev-tz-row" class="tz-row">
+        <label for="ev-tz" data-i18n="ev.field.tz"></label>
+        <select id="ev-tz"></select>
+      </div>
+
       <label for="ev-repeat" data-i18n="ev.field.repeat"></label>
-      <select id="ev-repeat">
-        <option value="" data-i18n="rep.none"></option>
-        <option value="D-1" data-i18n="rep.daily"></option>
-        <option value="W-1" data-i18n="rep.weekly"></option>
-        <option value="W-2" data-i18n="rep.biweekly"></option>
-        <option value="M-1" data-i18n="rep.monthly"></option>
-        <option value="Y-1" data-i18n="rep.yearly"></option>
-      </select>
+      <select id="ev-repeat"></select>
+
+      <div id="ev-rep-custom" class="rep-box" hidden>
+        <div class="rep-line">
+          <label for="ev-rep-n" data-i18n="rep.every"></label>
+          <input type="number" id="ev-rep-n" min="1" max="999" step="1" inputmode="numeric">
+          <select id="ev-rep-unit" data-i18n-aria="ev.field.repeat"></select>
+        </div>
+        <div id="ev-rep-days" class="rep-days" role="group"></div>
+        <select id="ev-rep-mode" data-i18n-aria="ev.field.repeat"></select>
+      </div>
 
       <div class="dlg-row" id="ev-until-row">
-        <label for="ev-until" data-i18n="ev.field.until"></label>
-        <input type="date" id="ev-until">
+        <label for="ev-ends" data-i18n="rep.ends"></label>
+        <select id="ev-ends"></select>
+        <input type="date" id="ev-until" data-i18n-aria="rep.ends.on" hidden>
+        <input type="number" id="ev-count" min="1" max="999" step="1" inputmode="numeric" data-i18n-aria="rep.ends.n" hidden>
+        <span id="ev-count-lab" class="rep-times" data-i18n="rep.times" hidden></span>
       </div>
-
-      <div class="dlg-row" id="ev-dateend-row">
-        <label for="ev-date-end" data-i18n="ev.field.dateend"></label>
-        <input type="date" id="ev-date-end">
-      </div>
-      <div id="ev-spanhint" class="span-hint" hidden></div>
+      <div id="ev-rep-sum" class="span-hint" aria-live="polite" hidden></div>
 
       <label for="ev-remind" data-i18n="ev.field.remind"></label>
       <select id="ev-remind"></select>
@@ -200,6 +236,95 @@
     </div>
   </dialog>
 
+  <!-- Quick add (wave 8): one line of words -> the event window -->
+  <dialog id="qa-dlg" aria-labelledby="qa-dlg-title">
+    <h3 id="qa-dlg-title" data-i18n="qa.title"></h3>
+    <form id="qa-form" method="dialog">
+      <input id="qa-in" type="text" maxlength="300" autocomplete="off" enterkeyhint="go" data-i18n-ph="qa.ph" data-i18n-aria="qa.title">
+      <p class="del-text qa-hint" data-i18n="qa.hint"></p>
+      <dl id="qa-prev" class="qa-prev" aria-live="polite"></dl>
+      <div class="dlg-row">
+        <button id="qa-go" type="submit" class="btn prim" data-i18n="qa.go"></button>
+        <button id="qa-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Subscribed calendars (wave 8) -->
+  <dialog id="subs-dlg" aria-labelledby="subs-dlg-title">
+    <h3 id="subs-dlg-title" data-i18n="subs.title"></h3>
+    <p class="del-text" data-i18n="subs.text"></p>
+    <ul id="subs-list" class="subs-list"></ul>
+    <label for="sub-url" data-i18n="subs.url"></label>
+    <input id="sub-url" type="url" inputmode="url" autocomplete="off" maxlength="2000" data-i18n-ph="subs.url.ph">
+    <label for="sub-name" data-i18n="subs.name"></label>
+    <input id="sub-name" type="text" maxlength="40" data-i18n-ph="subs.name.ph">
+    <div id="sub-colors" class="lbl-palette lbl-add-palette" role="group" data-i18n-aria="lbl.color"></div>
+    <p id="sub-msg" class="del-text sub-msg" aria-live="polite" hidden></p>
+    <div class="dlg-row">
+      <button id="sub-add" type="button" class="btn prim" data-i18n="subs.add"></button>
+      <button id="sub-done" type="button" class="btn" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- A subscribed calendar's event (read-only) -->
+  <dialog id="sv-dlg" aria-labelledby="sv-title">
+    <h3 id="sv-title"></h3>
+    <p id="sv-when" class="del-text"></p>
+    <p id="sv-where" class="del-text" hidden></p>
+    <p id="sv-note" class="del-text sv-note" hidden></p>
+    <p id="sv-src" class="del-text sv-src"></p>
+    <div class="dlg-row">
+      <button id="sv-copy" type="button" class="btn" data-i18n="sv.copy"></button>
+      <button id="sv-close" type="button" class="btn prim" data-i18n="ph.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Share free times (wave 8): a booking link, no server -->
+  <dialog id="free-dlg" aria-labelledby="free-dlg-title">
+    <h3 id="free-dlg-title" data-i18n="fr.title"></h3>
+    <p class="del-text" data-i18n="fr.text"></p>
+    <div class="ev-form">
+      <label for="fr-what" data-i18n="fr.what"></label>
+      <input id="fr-what" type="text" maxlength="120" data-i18n-ph="fr.what.ph">
+      <div class="date-pair">
+        <div>
+          <label for="fr-len" data-i18n="fr.len"></label>
+          <select id="fr-len"></select>
+        </div>
+        <div>
+          <label for="fr-days" data-i18n="fr.days"></label>
+          <select id="fr-days"></select>
+        </div>
+      </div>
+      <div class="date-pair">
+        <div>
+          <label for="fr-from" data-i18n="fr.from"></label>
+          <select id="fr-from"></select>
+        </div>
+        <div>
+          <label for="fr-to" data-i18n="fr.to"></label>
+          <select id="fr-to"></select>
+        </div>
+      </div>
+      <label class="chk"><input id="fr-wknd" type="checkbox"> <span data-i18n="fr.wknd"></span></label>
+      <label for="fr-name" data-i18n="fr.name"></label>
+      <input id="fr-name" type="text" maxlength="80" autocomplete="name">
+      <label for="fr-mail" data-i18n="fr.mail"></label>
+      <input id="fr-mail" type="email" maxlength="120" autocomplete="email" data-i18n-ph="fr.mail.ph">
+      <label for="fr-loc" data-i18n="ev.field.loc"></label>
+      <input id="fr-loc" type="text" maxlength="150" data-i18n-ph="fr.loc.ph">
+    </div>
+    <p id="fr-sum" class="span-hint" aria-live="polite"></p>
+    <div class="dlg-row">
+      <button id="fr-go" type="button" class="btn prim" data-i18n="fr.go"></button>
+      <button id="fr-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- Print copy of the current view (wave 8): built just before printing -->
+  <div id="print-area" aria-hidden="true"></div>
+
   <dialog id="stat-dlg" aria-labelledby="stat-dlg-title">
     <h3 id="stat-dlg-title" data-i18n="stat.title"></h3>
     <div id="stat-body"></div>
@@ -226,9 +351,13 @@
   <script src="../contacts/dates.js?v=1.98.00"></script>
   <script src="../habits/core.js?v=1.98.00"></script>
   <script src="../crm/core.js?v=1.98.00"></script>
+  <script src="../health/core.js?v=1.98.00"></script>
   <script src="occur.js?v=1.98.00"></script>
   <script src="namedays.js?v=1.98.00"></script>
   <script src="ics.js?v=1.98.00"></script>
+  <script src="quickadd.js?v=1.98.00"></script>
+  <script src="subs.js?v=1.98.00"></script>
+  <script src="free.js?v=1.98.00"></script>
   <script src="calendar.js?v=1.98.00"></script>
 
 </body>

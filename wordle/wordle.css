@@ -340,6 +340,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 .dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
 .dlg-actions { display: flex; gap: 8px; margin-top: 16px; }
+.dlg-btn.dlg-link { display: block; width: 100%; margin-top: 8px; border-style: dashed; }
 .dlg-btn {
   flex: 1;
   min-height: 40px;

@@ -1,10 +1,11 @@
 # Solitaire
-Three classic one-player card games: Klondike, FreeCell and Spider. Pick one at the top; each keeps its own game in progress.
+Four classic one-player card games: Klondike, FreeCell, Spider and Pyramid. Pick one at the top; each keeps its own game in progress.
 
 ## How to play
 - `Klondike`: build four foundations from Ace to King, one per suit. On the columns, stack cards downwards in alternating colours. Tap the stock to draw cards, and turn the waste over when the stock runs out.
 - `FreeCell`: every card is face up. Use the four free cells to park cards while you build the foundations. You can move several cards at once, as many as your free cells and empty columns allow.
-- `Spider`: build runs from King down to Ace in the same suit on the columns; a full run clears by itself. Tap the stock to deal a new row, once every column has a card.
+- `Spider`: build runs from King down to Ace in the same suit on the columns; a full run clears by itself. Tap the stock to deal a new row, once every column has a card. Spider comes with 1, 2 or 4 suits.
+- `Pyramid`: 28 cards lie in a pyramid of seven rows. Remove pairs of open cards that add up to 13 (Jack 11, Queen 12; a King is 13 and goes alone); a card is open when no card covers it. Turn the stock one card at a time; the top waste card pairs too. You get three passes through the stock. Clear the pyramid to win.
 
 ## Controls
 Drag a card (with a mouse, finger or pen) to move it, or tap or click it and it goes to the best place it can, a foundation first. On the toolbar:
@@ -17,7 +18,7 @@ Once every card is face up in Klondike or FreeCell, the game finishes by itself.
 Keyboard: [[Ctrl+Z]] undo, [[H]] hint, [[N]] new deal; [[Enter]] or [[Space]] on a focused pile works like a tap.
 
 ## Levels and scoring
-`Records` shows, for each game and setting, the games played and won, your best time, fewest moves, best score (Klondike with `Classic score`) and your streak. `Reset records` clears them for every game. FreeCell deal numbers are the same everywhere.
+`Records` shows, for each game and setting, the games played and won, your best time, fewest moves, best score (Klondike with `Classic score`) and your streak. `Reset records` clears them for every game. `All games` opens the [Game Center](help:a/gamecenter), when it's installed. FreeCell deal numbers are the same everywhere.
 
 ## Sync
 Your records sync between your devices through [orOS sync](help:t/sync), adding up the games from every device; `Reset records` clears them everywhere. The games in progress (one per game), your current streaks and your options stay on this device.

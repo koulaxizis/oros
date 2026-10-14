@@ -8,6 +8,10 @@
 // for the localStorage 5MB quota)
 // Wave 2: stream picker, volume/mute persistence, player
 // keyboard shortcuts, cleanup (dead code removed)
+// Wave 43: own M3U playlists (by address or file; the addresses
+// sync, the contents stay on the device) and XMLTV programme
+// guides (now/next on every channel, a timeline for today, cached
+// per day in Cache Storage). Pure logic: core.js (orosTvCore).
 // ============================================================
 
 var SCRIPT_V = "";
@@ -29,6 +33,10 @@ var API_TTL_MS   = 24 * 60 * 60 * 1000;        // directory refreshes daily
 var CACHE_STORE  = "oros-television-api";      // Cache Storage bucket
 var PAGE_SIZE    = 120;                         // cards per "Load more"
 var MIN_SEARCH   = 3;
+var FILES_KEY    = "oros-television-files";     // device-local list of opened files
+var GUIDE_ROWS   = 150;                         // timeline rows drawn at most
+var HOUR_MS      = 3600000;
+var C = window.orosTvCore;
 
 /* ===== I18N (inline STRINGS — Bible Part VI, radio pattern) ===== */
 
@@ -69,7 +77,52 @@ var STRINGS = {
     "catalog.err":    "Couldn't reach the TV directory — check your connection or blockers.",
     "stream.alt":     "Alternate streams",
     "notifs.streamfail.title": "Stream failed",
-    "notifs.streamfail.body":  "Couldn't play on this device"
+    "notifs.streamfail.body":  "Couldn't play on this device",
+    "tab.lists":      "My lists",
+    "tab.guide":      "Guide",
+    "manage":         "Lists & guides",
+    "filter.group":   "Group",
+    "filter.allGroups": "All groups",
+    "src.title":      "Playlists and programme guides",
+    "src.pl.h":       "Playlists (M3U)",
+    "src.pl.hint":    "Add your own playlist by address or open a file. Addresses sync between your devices; files stay on this device.",
+    "src.epg.h":      "Programme guides (XMLTV)",
+    "src.epg.hint":   "Add an XMLTV guide (.xml or .xml.gz). Channels match by tvg-id or by name. The guide is kept on this device for the day.",
+    "src.url.ph":     "https://… address",
+    "src.add":        "Add",
+    "src.file":       "Open file…",
+    "src.refresh":    "Refresh",
+    "src.refreshAll": "Refresh all",
+    "src.remove":     "Remove",
+    "src.none":       "Nothing added yet.",
+    "src.local":      "File on this device",
+    "src.loading":    "Loading…",
+    "src.channels":   "{n} channels",
+    "src.progs":      "{n} channels with programmes",
+    "src.stale":      "showing the last copy",
+    "src.added":      "Added",
+    "src.removed":    "Removed",
+    "src.exists":     "Already in the list",
+    "src.badurl":     "Enter an http or https address",
+    "src.epgAuto":    "The playlist's guide was added too",
+    "src.err.offline": "Offline",
+    "src.err.cors":   "This site doesn't let the browser read it. Set up the Mail relay, or download the file and open it.",
+    "src.err.http":   "The server answered {n}",
+    "src.err.empty":  "No channels or programmes found in it",
+    "src.err.big":    "Too big or unreadable",
+    "src.err.gone":   "The file is no longer on this device — open it again",
+    "src.err.net":    "Couldn't download it",
+    "lists.empty":    "No playlists yet — add one by address or file.",
+    "lists.loading":  "Loading your playlists…",
+    "lists.failed":   "Your playlists couldn't be loaded. Open Lists & guides to see why.",
+    "guide.empty":    "No programme guide yet. Add an XMLTV guide in Lists & guides.",
+    "guide.nomatch":  "The guide has no programmes today for your channels.",
+    "guide.loading":  "Loading the programme guide…",
+    "guide.today":    "Today",
+    "guide.capped":   "Showing the first {n} channels — search to narrow.",
+    "epg.now":        "Now",
+    "epg.next":       "Next",
+    "prog.watch":     "Watch"
   },
   el: {
     "tab.browse":     "Περιήγηση",
@@ -107,7 +160,52 @@ var STRINGS = {
     "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο καναλιών — έλεγξε τη σύνδεση ή τυχόν blockers.",
     "stream.alt":     "Εναλλακτικές ροές",
     "notifs.streamfail.title": "Αποτυχία ροής",
-    "notifs.streamfail.body":  "Αδυναμία αναπαραγωγής σε αυτή τη συσκευή"
+    "notifs.streamfail.body":  "Αδυναμία αναπαραγωγής σε αυτή τη συσκευή",
+    "tab.lists":      "Οι λίστες μου",
+    "tab.guide":      "Οδηγός",
+    "manage":         "Λίστες & οδηγοί",
+    "filter.group":   "Ομάδα",
+    "filter.allGroups": "Όλες οι ομάδες",
+    "src.title":      "Λίστες καναλιών και οδηγοί προγράμματος",
+    "src.pl.h":       "Λίστες καναλιών (M3U)",
+    "src.pl.hint":    "Πρόσθεσε τη δική σου λίστα με διεύθυνση ή άνοιξε ένα αρχείο. Οι διευθύνσεις συγχρονίζονται στις συσκευές σου· τα αρχεία μένουν σε αυτή τη συσκευή.",
+    "src.epg.h":      "Οδηγοί προγράμματος (XMLTV)",
+    "src.epg.hint":   "Πρόσθεσε έναν οδηγό XMLTV (.xml ή .xml.gz). Τα κανάλια ταιριάζουν με το tvg-id ή με το όνομα. Ο οδηγός κρατιέται σε αυτή τη συσκευή για τη μέρα.",
+    "src.url.ph":     "Διεύθυνση https://…",
+    "src.add":        "Προσθήκη",
+    "src.file":       "Άνοιγμα αρχείου…",
+    "src.refresh":    "Ανανέωση",
+    "src.refreshAll": "Ανανέωση όλων",
+    "src.remove":     "Αφαίρεση",
+    "src.none":       "Δεν έχει προστεθεί τίποτα ακόμα.",
+    "src.local":      "Αρχείο σε αυτή τη συσκευή",
+    "src.loading":    "Φόρτωση…",
+    "src.channels":   "{n} κανάλια",
+    "src.progs":      "{n} κανάλια με πρόγραμμα",
+    "src.stale":      "εμφανίζεται το τελευταίο αντίγραφο",
+    "src.added":      "Προστέθηκε",
+    "src.removed":    "Αφαιρέθηκε",
+    "src.exists":     "Υπάρχει ήδη στη λίστα",
+    "src.badurl":     "Γράψε μια διεύθυνση http ή https",
+    "src.epgAuto":    "Προστέθηκε και ο οδηγός της λίστας",
+    "src.err.offline": "Εκτός σύνδεσης",
+    "src.err.cors":   "Αυτός ο ιστότοπος δεν επιτρέπει την ανάγνωση από τον περιηγητή. Ρύθμισε το relay του Mail ή κατέβασε το αρχείο και άνοιξέ το.",
+    "src.err.http":   "Ο διακομιστής απάντησε {n}",
+    "src.err.empty":  "Δεν βρέθηκαν κανάλια ή προγράμματα",
+    "src.err.big":    "Πολύ μεγάλο ή μη αναγνώσιμο",
+    "src.err.gone":   "Το αρχείο δεν υπάρχει πια σε αυτή τη συσκευή — άνοιξέ το ξανά",
+    "src.err.net":    "Δεν ήταν δυνατή η λήψη",
+    "lists.empty":    "Δεν υπάρχουν λίστες ακόμα — πρόσθεσε μία με διεύθυνση ή αρχείο.",
+    "lists.loading":  "Φόρτωση των λιστών σου…",
+    "lists.failed":   "Οι λίστες σου δεν φορτώθηκαν. Άνοιξε τις Λίστες & οδηγούς για να δεις γιατί.",
+    "guide.empty":    "Δεν υπάρχει ακόμα οδηγός προγράμματος. Πρόσθεσε έναν οδηγό XMLTV στις Λίστες & οδηγούς.",
+    "guide.nomatch":  "Ο οδηγός δεν έχει σημερινό πρόγραμμα για τα κανάλια σου.",
+    "guide.loading":  "Φόρτωση του οδηγού προγράμματος…",
+    "guide.today":    "Σήμερα",
+    "guide.capped":   "Εμφανίζονται τα πρώτα {n} κανάλια — ψάξε για να περιορίσεις.",
+    "epg.now":        "Τώρα",
+    "epg.next":       "Μετά",
+    "prog.watch":     "Παρακολούθηση"
   }
 };
 
@@ -183,7 +281,20 @@ var state = {
   streamIdx: 0,              // index into playerCh.streams[]
   hls: null,                 // live Hls instance (destroyed on switch)
   persistedVol: 1,           // loaded from localStorage
-  persistedMuted: false      // loaded from localStorage
+  persistedMuted: false,     // loaded from localStorage
+  // Wave 43 — own playlists + programme guides (device memory only):
+  files: [],                 // device-local opened files [{id, kind, name, mtime, file:true}]
+  playlists: {},             // srcId -> parsed M3U
+  guides: {},                // srcId -> parsed XMLTV (today's window)
+  srcStatus: {},             // srcId -> { busy, n, stale, err }
+  plChannels: [],            // channels of every playlist, in list order
+  plById: {},
+  plGroups: [],
+  filterGroup: "",
+  guideIdx: null,            // orosTvCore.buildIndex(...)
+  guideDay: "",              // ymd the guides were loaded for
+  srcSig: "",                // which sources are loaded (sync pull reload)
+  cards: []                  // [card, channel] of the rendered grid (now/next refresh)
 };
 
 var __orosSyncApi = null;
@@ -218,6 +329,7 @@ function normalizeState(obj){
     if(typeof obj.deleted[k] === "number") del[k] = obj.deleted[k];
   });
   obj.deleted = del;
+  C.normSources(obj);        // Wave 43: sources[] / srcDel{} only when non-empty
 }
 
 function sortFavorites(arr){
@@ -241,6 +353,7 @@ function sliceSet(payload){
     if(__orosSyncApi) __orosSyncApi._suppress = prev;
   }
   renderMain();
+  reloadSourcesIfChanged();
 }
 
 function commitLocal(){
@@ -278,6 +391,10 @@ function mergeTelevisionStates(remote, local){
   Object.keys(map).forEach(function(u){
     if(map[u].mtime > (dec[u] || 0)) merged.favorites.push(map[u]); // alive
   });
+  // Wave 43: the synced list of playlist / guide addresses
+  var ms = C.mergeSources(remote, local);
+  if(ms.sources) merged.sources = ms.sources;
+  if(ms.srcDel) merged.srcDel = ms.srcDel;
   normalizeState(merged);   // TV-8: same canonical shape as the getter
   return merged;
 }
@@ -303,6 +420,7 @@ function registerSync(){
 // device-local and are never a deep-link target by design.
 function resolveChannelById(id){
   if(state.catalog && state.catalog.byId[id]) return state.catalog.byId[id];
+  if(state.plById[id]) return state.plById[id];
   var fav = state.data && state.data.favorites.find(function(f){
     return f.id === id;
   });
@@ -690,6 +808,733 @@ function saveVolumePrefs(){
   }catch(e){}
 }
 
+/* ===== OWN PLAYLISTS + PROGRAMME GUIDES (Wave 43) ===== */
+
+// Sources: the synced addresses (slice sources[], kind m3u | xmltv)
+// plus the files opened on this device (FILES_KEY, never synced).
+// Contents live in Cache Storage (CACHE_STORE), never in the slice:
+//   pl-<id>.json            parsed playlist (address: refreshed daily)
+//   epg-<id>-<ymd>.json     parsed guide, today's window (one per day)
+//   epgf-<id>.json          parsed guide from a file
+// iptv-org publishes no guide files (its epg repository only ships
+// the grabber), so guides are the user's own XMLTV addresses / files.
+
+function loadFiles(){
+  try{
+    var a = JSON.parse(localStorage.getItem(FILES_KEY) || "[]");
+    state.files = (Array.isArray(a) ? a : []).filter(function(f){
+      return f && /^f[0-9a-f]{16}$/.test(f.id) && (f.kind === "m3u" || f.kind === "xmltv");
+    }).map(function(f){
+      return { id: f.id, kind: f.kind, name: String(f.name || "").slice(0, 120), mtime: +f.mtime || 0, file: true };
+    });
+  }catch(e){ state.files = []; }
+}
+
+function saveFiles(){
+  try{
+    localStorage.setItem(FILES_KEY, JSON.stringify(state.files.map(function(f){
+      return { id: f.id, kind: f.kind, name: f.name, mtime: f.mtime };
+    })));
+  }catch(e){}
+}
+
+function allSources(kind){
+  var synced = C.liveSources(state.data || {});
+  return synced.concat(state.files).filter(function(s){ return !kind || s.kind === kind; });
+}
+
+/* --- Cache Storage, with an in-memory stand-in when it is missing --- */
+
+var memStore = {};
+
+function csGet(name){
+  if(!HAS_CS) return Promise.resolve(memStore[name] || null);
+  var read = caches.open(CACHE_STORE).then(function(cs){ return cs.match(name); })
+    .then(function(res){ return res ? res.json() : null; })
+    .then(function(w){ return (w && w.ts) ? w : null; });
+  var guard = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 8000); });
+  return Promise.race([read, guard]).catch(function(){ return null; });
+}
+
+function csPut(name, data){
+  var w = { ts: Date.now(), data: data };
+  if(!HAS_CS){ memStore[name] = w; return Promise.resolve(); }
+  return caches.open(CACHE_STORE).then(function(cs){
+    return cs.put(name, new Response(JSON.stringify(w)));
+  }).catch(function(){ memStore[name] = w; });
+}
+
+// Delete every cached entry whose name starts with prefix (but keep).
+function csDrop(prefix, keep){
+  Object.keys(memStore).forEach(function(k){ if(k.indexOf(prefix) === 0 && k !== keep) delete memStore[k]; });
+  if(!HAS_CS) return Promise.resolve();
+  return caches.open(CACHE_STORE).then(function(cs){
+    return cs.keys().then(function(reqs){
+      return Promise.all(reqs.map(function(r){
+        var name = String(r.url).split("/").pop();
+        if(name.indexOf(prefix) === 0 && name !== keep) return cs.delete(r);
+      }));
+    });
+  }).catch(function(){});
+}
+
+/* --- network: straight from the browser, then the Mail relay (feeds/fetch.js) --- */
+
+function SrcError(code, n){ this.code = code; this.n = n || 0; }
+
+function fetchBytes(url){
+  if(state.offline) return Promise.reject(new SrcError("offline"));
+  var F = window.orosFeedsFetch;
+  var p;
+  if(F && typeof F.fetchOne === "function"){
+    p = F.fetchOne(url, { timeout: 60000 }).then(function(r){
+      if(r.status < 200 || r.status >= 300) throw new SrcError("http", r.status);
+      return r.bytes || new Uint8Array(0);
+    }, function(e){
+      var c = e && e.code;
+      if(c === "cors" || c === "norelay") throw new SrcError("cors");
+      if(c === "offline") throw new SrcError("offline");
+      if(c === "too-big" || c === "budget") throw new SrcError("big");
+      throw new SrcError("net");
+    });
+  }else{
+    p = fetch(url, { credentials: "omit", cache: "no-cache", referrerPolicy: "no-referrer" }).then(function(r){
+      if(!r.ok) throw new SrcError("http", r.status);
+      return r.arrayBuffer();
+    }, function(){ throw new SrcError("cors"); }).then(function(b){ return new Uint8Array(b); });
+  }
+  return p.then(function(b){
+    return C.gunzipIfNeeded(b).catch(function(){ throw new SrcError("big"); });
+  });
+}
+
+function bytesToText(b){
+  if(b.length > 150 * 1024 * 1024) throw new SrcError("big");
+  var FC = window.orosFeedsCore;
+  try{
+    return (FC && typeof FC.decodeBytes === "function") ? FC.decodeBytes(b, "") : new TextDecoder("utf-8").decode(b);
+  }catch(e){ throw new SrcError("big"); }
+}
+
+function srcErrText(e){
+  var code = (e && e.code) || "net";
+  if(code === "http") return t("src.err.http").replace("{n}", String(e.n || "?"));
+  var k = "src.err." + code;
+  return STRINGS.en[k] !== undefined ? t(k) : t("src.err.net");
+}
+
+function guideWindow(){
+  var r = C.dayRange(Date.now());
+  return { from: r.start - 3 * HOUR_MS, to: r.end + 6 * HOUR_MS };
+}
+
+/* --- loading one source --- */
+
+function loadPlaylist(src, force){
+  var key = "pl-" + src.id + ".json";
+  state.srcStatus[src.id] = { busy: true };
+  return csGet(key).then(function(hit){
+    if(hit && (src.file || (!force && Date.now() - hit.ts < API_TTL_MS))) return { r: hit.data };
+    if(src.file) throw new SrcError("gone");
+    return fetchBytes(src.url).then(bytesToText).then(function(txt){
+      var r = C.parseM3U(txt);
+      if(!r.channels.length) throw new SrcError("empty");
+      csPut(key, r);
+      return { r: r, fresh: true };
+    }).catch(function(e){
+      if(hit) return { r: hit.data, stale: e };
+      throw e;
+    });
+  }).then(function(o){
+    state.playlists[src.id] = o.r;
+    state.srcStatus[src.id] = { n: o.r.channels.length, stale: o.stale || null };
+    return o;
+  }, function(e){
+    delete state.playlists[src.id];
+    state.srcStatus[src.id] = { err: e };
+    return null;
+  });
+}
+
+function loadGuide(src, force){
+  var day = C.ymd(Date.now()), w = guideWindow();
+  var key = src.file ? "epgf-" + src.id + ".json" : "epg-" + src.id + "-" + day + ".json";
+  state.srcStatus[src.id] = { busy: true };
+  return csGet(key).then(function(hit){
+    if(hit && (src.file || !force)) return { g: hit.data };
+    if(src.file) throw new SrcError("gone");
+    return fetchBytes(src.url).then(bytesToText).then(function(txt){
+      var g = C.parseXMLTV(txt, { from: w.from, to: w.to, lang: activeLang() });
+      if(!g.count) throw new SrcError("empty");
+      csPut(key, g);
+      csDrop("epg-" + src.id + "-", key);      // yesterday's copy goes
+      return { g: g };
+    }).catch(function(e){
+      if(hit) return { g: hit.data, stale: e };
+      throw e;
+    });
+  }).then(function(o){
+    state.guides[src.id] = o.g;
+    state.srcStatus[src.id] = { n: Object.keys(o.g.progs || {}).length, stale: o.stale || null };
+    return o;
+  }, function(e){
+    delete state.guides[src.id];
+    state.srcStatus[src.id] = { err: e };
+    return null;
+  });
+}
+
+function loadSource(src, force){
+  return src.kind === "xmltv" ? loadGuide(src, force) : loadPlaylist(src, force);
+}
+
+/* --- derived lists --- */
+
+function rebuildPlaylistChannels(){
+  var list = [], byId = {}, groups = [], gseen = {};
+  allSources("m3u").forEach(function(src){
+    var r = state.playlists[src.id];
+    if(!r || !Array.isArray(r.channels)) return;
+    r.channels.forEach(function(c){
+      if(!c || !c.id || byId[c.id]) return;
+      var ch = {
+        id: c.id, name: c.name || c.url, logo: C.safeLogo(c.logo), country: "",
+        categories: c.group ? [c.group] : [], languages: [], website: "",
+        group: c.group || "", tvgId: c.tvgId || "", tvgName: c.tvgName || "", src: src.id,
+        streams: [{ url: c.url, quality: "" }]
+      };
+      byId[ch.id] = ch;
+      list.push(ch);
+      if(ch.group && !gseen[ch.group]){ gseen[ch.group] = 1; groups.push(ch.group); }
+    });
+  });
+  state.plChannels = list;
+  state.plById = byId;
+  state.plGroups = groups;
+  if(state.filterGroup && !gseen[state.filterGroup]) state.filterGroup = "";
+}
+
+function rebuildGuideIndex(){
+  var gs = allSources("xmltv").map(function(s){ return state.guides[s.id]; }).filter(Boolean);
+  state.guideIdx = gs.length ? C.buildIndex(gs) : null;
+}
+
+function sourcesSig(){
+  return allSources().map(function(s){ return s.id; }).sort().join(",");
+}
+
+// Load every source (cached copies first); force re-downloads addresses.
+function loadAllSources(force){
+  var list = allSources();
+  state.srcSig = sourcesSig();
+  state.guideDay = C.ymd(Date.now());
+  if(!list.length){
+    rebuildPlaylistChannels(); rebuildGuideIndex(); refreshViews();
+    return Promise.resolve();
+  }
+  renderSourcesDialog();
+  // one at a time: guides can be large, memory stays flat
+  return list.reduce(function(p, src){
+    return p.then(function(){ return loadSource(src, force); }).then(function(){
+      renderSourcesDialog();
+    });
+  }, Promise.resolve()).then(function(){
+    rebuildPlaylistChannels();
+    rebuildGuideIndex();
+    refreshViews();
+    renderSourcesDialog();
+  });
+}
+
+// Sync pull brought another device's list: load what is new.
+function reloadSourcesIfChanged(){
+  if(state.srcHold || sourcesSig() === state.srcSig) return;
+  loadAllSources(false);
+}
+
+function refreshViews(){
+  renderGroupFilter();
+  renderMain();
+  updatePlayerEpg();
+}
+
+/* --- adding / removing --- */
+
+function addSourceUrl(kind, raw){
+  var url = C.httpUrl(raw);
+  if(!url){ transientNote(t("src.badurl")); return false; }
+  var id = C.sourceId(kind, url);
+  if(allSources().some(function(s){ return s.id === id; })){ transientNote(t("src.exists")); return false; }
+  var payload = sliceGet();
+  payload.sources = (payload.sources || []).filter(function(s){ return s.id !== id; });
+  payload.sources.push({ id: id, kind: kind, url: url, name: C.nameFromUrl(url), mtime: Date.now() });
+  state.srcHold = true;                  // sliceSet must not load it a second time
+  sliceSet(payload);
+  commitLocal();
+  state.srcHold = false;
+  transientNote(t("src.added"));
+  state.srcSig = sourcesSig();
+  var src = allSources().filter(function(s){ return s.id === id; })[0];
+  if(!src) return true;
+  renderSourcesDialog();
+  loadSource(src, true).then(function(o){
+    // TiviMate-style: a playlist that names its guide (url-tvg / x-tvg-url)
+    // brings it along, unless the user removed that guide before.
+    var r = kind === "m3u" && o && o.r;
+    var added = false;
+    if(r && r.epgUrls && r.epgUrls.length){
+      var pl = sliceGet();
+      r.epgUrls.slice(0, 2).forEach(function(u){
+        var gid = C.sourceId("xmltv", u);
+        if((pl.srcDel && pl.srcDel[gid]) || allSources().some(function(s){ return s.id === gid; })) return;
+        if((pl.sources || []).some(function(s){ return s.id === gid; })) return;
+        pl.sources = (pl.sources || []).concat({ id: gid, kind: "xmltv", url: u, name: C.nameFromUrl(u), mtime: Date.now() });
+        added = true;
+      });
+      if(added){
+        state.srcHold = true;
+        sliceSet(pl);
+        commitLocal();
+        state.srcHold = false;
+        transientNote(t("src.epgAuto"));
+      }
+    }
+    return added ? loadAllSources(false) : finishSourceChange();
+  });
+  return true;
+}
+
+function finishSourceChange(){
+  state.srcSig = sourcesSig();
+  rebuildPlaylistChannels();
+  rebuildGuideIndex();
+  refreshViews();
+  renderSourcesDialog();
+}
+
+function addSourceFile(kind, file){
+  if(!file) return;
+  var id = "f" + C.hash(file.name + "|" + file.size + "|" + Date.now() + "|" + Math.random());
+  var src = { id: id, kind: kind, name: String(file.name || "").slice(0, 120), mtime: Date.now(), file: true };
+  state.srcStatus[id] = { busy: true };
+  file.arrayBuffer().then(function(b){
+    return C.gunzipIfNeeded(new Uint8Array(b)).catch(function(){ throw new SrcError("big"); });
+  }).then(bytesToText).then(function(txt){
+    if(kind === "m3u"){
+      var r = C.parseM3U(txt);
+      if(!r.channels.length) throw new SrcError("empty");
+      return csPut("pl-" + id + ".json", r);
+    }
+    // a file is kept for a week: yesterday … +7 days
+    var r0 = C.dayRange(Date.now());
+    var g = C.parseXMLTV(txt, { from: r0.start - 24 * HOUR_MS, to: r0.end + 7 * 24 * HOUR_MS, lang: activeLang() });
+    if(!g.count) throw new SrcError("empty");
+    return csPut("epgf-" + id + ".json", g);
+  }).then(function(){
+    state.files.push(src);
+    saveFiles();
+    transientNote(t("src.added"));
+    return loadSource(src, false);
+  }).then(finishSourceChange, function(e){
+    delete state.srcStatus[id];
+    transientNote(srcErrText(e));
+  });
+}
+
+function removeSource(src){
+  if(src.file){
+    state.files = state.files.filter(function(f){ return f.id !== src.id; });
+    saveFiles();
+  }else{
+    var payload = sliceGet();
+    payload.sources = (payload.sources || []).filter(function(s){ return s.id !== src.id; });
+    payload.srcDel = payload.srcDel || {};
+    payload.srcDel[src.id] = Date.now();
+    state.srcHold = true;
+    sliceSet(payload);
+    commitLocal();
+    state.srcHold = false;
+  }
+  delete state.playlists[src.id];
+  delete state.guides[src.id];
+  delete state.srcStatus[src.id];
+  csDrop((src.kind === "xmltv" ? (src.file ? "epgf-" : "epg-") : "pl-") + src.id, null);
+  transientNote(t("src.removed"));
+  finishSourceChange();
+}
+
+/* --- the Lists & guides dialog --- */
+
+function openSourcesDialog(){
+  var dlg = $("#tv-src");
+  if(!dlg) return;
+  if(!dlg.open) dlg.showModal();
+  renderSourcesDialog();
+}
+
+function srcStatusText(src){
+  var st = state.srcStatus[src.id];
+  if(!st || st.busy) return { text: t("src.loading"), err: false };
+  if(st.err) return { text: srcErrText(st.err), err: true };
+  var text = t(src.kind === "xmltv" ? "src.progs" : "src.channels").replace("{n}", String(st.n || 0));
+  if(st.stale) text += " · " + t("src.stale") + " (" + srcErrText(st.stale) + ")";
+  return { text: text, err: false };
+}
+
+function renderSourcesDialog(){
+  var dlg = $("#tv-src");
+  if(!dlg || !dlg.open) return;
+  [["m3u", "#tvs-pl-list"], ["xmltv", "#tvs-epg-list"]].forEach(function(p){
+    var box = $(p[1]);
+    if(!box) return;
+    box.innerHTML = "";
+    var list = allSources(p[0]);
+    if(!list.length){
+      var none = document.createElement("p");
+      none.className = "tvs-none";
+      none.textContent = t("src.none");
+      box.appendChild(none);
+      return;
+    }
+    list.forEach(function(src){
+      var row = document.createElement("div");
+      row.className = "tvs-row";
+      var info = document.createElement("div");
+      info.className = "tvs-info";
+      var nm = document.createElement("div");
+      nm.className = "tvs-name";
+      nm.textContent = src.name || src.url || "";
+      var sub = document.createElement("div");
+      sub.className = "tvs-url";
+      sub.textContent = src.file ? t("src.local") : src.url;
+      var stx = srcStatusText(src);
+      var st = document.createElement("div");
+      st.className = "tvs-st" + (stx.err ? " err" : "");
+      st.textContent = stx.text;
+      info.appendChild(nm); info.appendChild(sub); info.appendChild(st);
+      row.appendChild(info);
+      if(!src.file){
+        var rb = iconButton("refresh", t("src.refresh"));
+        rb.addEventListener("click", function(){
+          loadSource(src, true).then(finishSourceChange);
+          renderSourcesDialog();
+        });
+        row.appendChild(rb);
+      }
+      var del = iconButton("remove", t("src.remove"));
+      del.addEventListener("click", function(){ removeSource(src); });
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  });
+}
+
+var SRC_ICONS = {
+  refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+  remove:  '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+};
+
+function iconButton(kind, label){
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "tv-icon";
+  b.title = label;
+  b.setAttribute("aria-label", label);
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + SRC_ICONS[kind] + '</svg>';
+  return b;
+}
+
+function setupSourcesDialog(){
+  var dlg = $("#tv-src");
+  if(!dlg) return;
+  var manage = $("#tv-manage");
+  if(manage) manage.addEventListener("click", openSourcesDialog);
+  var close = $("#tvs-close");
+  if(close) close.addEventListener("click", function(){ dlg.close(); });
+  dlg.addEventListener("click", function(e){ if(e.target === dlg) dlg.close(); });
+  [["m3u", "pl"], ["xmltv", "epg"]].forEach(function(p){
+    var form = $("#tvs-" + p[1] + "-form"), input = $("#tvs-" + p[1] + "-url");
+    if(form) form.addEventListener("submit", function(e){
+      e.preventDefault();
+      if(addSourceUrl(p[0], input.value)) input.value = "";
+    });
+    var fileBtn = $("#tvs-" + p[1] + "-file"), fileIn = $("#tvs-" + p[1] + "-input");
+    if(fileBtn && fileIn){
+      fileBtn.addEventListener("click", function(){ fileIn.click(); });
+      fileIn.addEventListener("change", function(){
+        var f = fileIn.files && fileIn.files[0];
+        fileIn.value = "";
+        addSourceFile(p[0], f);
+      });
+    }
+  });
+  var all = $("#tvs-refresh");
+  if(all) all.addEventListener("click", function(){ loadAllSources(true); });
+}
+
+/* --- now / next --- */
+
+function epgOf(ch){
+  if(!state.guideIdx || !ch) return null;
+  return C.lookup(state.guideIdx, ch);
+}
+
+function nowNextHtml(ch){
+  var progs = epgOf(ch);
+  if(!progs) return "";
+  var nn = C.nowNext(progs, Date.now());
+  if(!nn.now && !nn.next) return "";
+  var h = "";
+  if(nn.now){
+    h += '<span class="tv-now-t" title="' + esc(C.hhmm(nn.now.s) + "–" + C.hhmm(nn.now.e) + " " + nn.now.t) + '">' +
+         esc(nn.now.t) + '</span>' +
+         '<span class="tv-prog" aria-hidden="true"><i style="width:' + (nn.pct | 0) + '%"></i></span>';
+  }
+  if(nn.next){
+    h += '<span class="tv-next">' + esc(t("epg.next") + " " + C.hhmm(nn.next.s) + " · " + nn.next.t) + '</span>';
+  }
+  return h;
+}
+
+function refreshNowLines(){
+  state.cards.forEach(function(pair){
+    var box = pair[0].querySelector(".tv-now");
+    var h = nowNextHtml(pair[1]);
+    if(box){
+      if(h) box.innerHTML = h; else box.remove();
+    }else if(h){
+      var d = document.createElement("div");
+      d.className = "tv-now";
+      d.innerHTML = h;
+      pair[0].appendChild(d);
+    }
+  });
+}
+
+function updatePlayerEpg(){
+  var el = $("#tvp-epg");
+  if(!el) return;
+  var ch = state.playerCh;
+  var nn = ch ? C.nowNext(epgOf(ch), Date.now()) : null;
+  if(!nn || (!nn.now && !nn.next)){ el.setAttribute("hidden", ""); el.textContent = ""; return; }
+  var parts = [];
+  if(nn.now) parts.push(t("epg.now") + " " + C.hhmm(nn.now.s) + "–" + C.hhmm(nn.now.e) + " · " + nn.now.t);
+  if(nn.next) parts.push(t("epg.next") + " " + C.hhmm(nn.next.s) + " · " + nn.next.t);
+  el.textContent = parts.join("   ");
+  if(nn.now && nn.now.d) el.title = nn.now.d; else el.removeAttribute("title");
+  el.removeAttribute("hidden");
+}
+
+/* --- the timeline (Guide tab) --- */
+
+function guideChannels(){
+  var idx = state.guideIdx;
+  if(!idx) return [];
+  var day = C.dayRange(Date.now());
+  var seen = {}, rows = [];
+  var q = (state.searchQuery || "").toLowerCase();
+  function add(ch){
+    if(!ch || !ch.id || seen[ch.id]) return;
+    seen[ch.id] = 1;
+    if(q && String(ch.name || "").toLowerCase().indexOf(q) < 0) return;
+    if(state.filterGroup && ch.group !== state.filterGroup) return;
+    var progs = C.lookup(idx, ch);
+    if(!progs) return;
+    var lay = C.layoutRow(progs, day.start, day.end, 1);
+    if(!lay.length) return;
+    rows.push({ ch: ch, progs: progs });
+  }
+  (state.data ? state.data.favorites : []).forEach(function(f){ add(resolveChannelById(f.id)); });
+  state.plChannels.forEach(add);
+  if(state.catalog && !state.filterGroup) state.catalog.channels.forEach(add);
+  return rows;
+}
+
+function guidePx(){ return window.innerWidth < 600 ? 2.5 : 4; }  // px per minute
+
+function renderGuide(box){
+  var prev = box.querySelector(".tvg-scroll");
+  var keep = prev ? { x: prev.scrollLeft, y: prev.scrollTop } : null;
+  box.innerHTML = "";
+  var busy = allSources("xmltv").some(function(s){ return state.srcStatus[s.id] && state.srcStatus[s.id].busy; });
+  if(!state.guideIdx){
+    guideMessage(box, busy ? t("guide.loading") : t("guide.empty"), !busy);
+    return;
+  }
+  var rows = guideChannels();
+  if(!rows.length){
+    guideMessage(box, busy ? t("guide.loading") : (state.searchQuery || state.filterGroup ? t("noresults") : t("guide.nomatch")), !busy);
+    return;
+  }
+  var now = Date.now(), day = C.dayRange(now), ppm = guidePx();
+  var dayW = Math.round((day.end - day.start) / 60000 * ppm);
+  var chW = window.innerWidth < 600 ? 96 : 140;
+  var capped = rows.length > GUIDE_ROWS;
+  rows = rows.slice(0, GUIDE_ROWS);
+
+  var bar = document.createElement("div");
+  bar.className = "tvg-bar";
+  var lbl = document.createElement("strong");
+  var dateTxt = "";
+  try{ dateTxt = new Date(now).toLocaleDateString(activeLang() === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" }); }catch(e){ dateTxt = C.ymd(now); }
+  lbl.textContent = t("guide.today") + " · " + dateTxt;
+  bar.appendChild(lbl);
+  var nowBtn = document.createElement("button");
+  nowBtn.type = "button";
+  nowBtn.className = "tv-btn ghost";
+  nowBtn.textContent = t("epg.now");
+  bar.appendChild(nowBtn);
+  box.appendChild(bar);
+  if(capped){
+    var cap = document.createElement("p");
+    cap.className = "tvg-cap";
+    cap.textContent = t("guide.capped").replace("{n}", String(GUIDE_ROWS));
+    box.appendChild(cap);
+  }
+
+  var scroll = document.createElement("div");
+  scroll.className = "tvg-scroll";
+  var inner = document.createElement("div");
+  inner.className = "tvg-inner";
+  inner.style.width = (chW + dayW) + "px";
+  inner.style.setProperty("--tvg-ch", chW + "px");
+
+  var hours = '<div class="tvg-hours"><div class="tvg-corner"></div><div class="tvg-hrs" style="width:' + dayW + 'px">';
+  for(var h = 0; h < 24; h++){
+    var ts = new Date(new Date(day.start).setHours(h)).getTime();
+    if(ts >= day.end) break;
+    hours += '<span style="left:' + Math.round((ts - day.start) / 60000 * ppm) + 'px">' + esc(C.hhmm(ts)) + '</span>';
+  }
+  hours += '</div></div>';
+  inner.innerHTML = hours;
+
+  rows.forEach(function(row){
+    var r = document.createElement("div");
+    r.className = "tvg-row";
+    var chBtn = document.createElement("button");
+    chBtn.type = "button";
+    chBtn.className = "tvg-ch";
+    chBtn.title = row.ch.name || "";
+    var logo = C.safeLogo(row.ch.logo);
+    chBtn.innerHTML = (logo ? '<img src="' + esc(logo) + '" alt="" loading="lazy" onerror="this.remove()">' : "") +
+      '<span>' + esc(row.ch.name || "") + '</span>';
+    chBtn.addEventListener("click", function(){ playChannel(row.ch); });
+    r.appendChild(chBtn);
+    var track = document.createElement("div");
+    track.className = "tvg-track";
+    track.style.width = dayW + "px";
+    C.layoutRow(row.progs, day.start, day.end, ppm).forEach(function(cell){
+      var p = cell.p;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tvg-p" + (p.s <= now && p.e > now ? " on" : (p.e <= now ? " past" : ""));
+      b.style.left = cell.left + "px";
+      b.style.width = Math.max(2, cell.width - 2) + "px";
+      b.title = C.hhmm(p.s) + "–" + C.hhmm(p.e) + " " + (p.t || "");
+      b.innerHTML = '<span class="tvg-pt">' + esc(p.t || "") + '</span><span class="tvg-ps">' + esc(C.hhmm(p.s)) + '</span>';
+      b.addEventListener("click", function(){ openProg(row.ch, p); });
+      track.appendChild(b);
+    });
+    r.appendChild(track);
+    inner.appendChild(r);
+  });
+
+  if(now >= day.start && now < day.end){
+    var line = document.createElement("div");
+    line.className = "tvg-nowline";
+    line.style.left = (chW + Math.round((now - day.start) / 60000 * ppm)) + "px";
+    inner.appendChild(line);
+  }
+  scroll.appendChild(inner);
+  box.appendChild(scroll);
+
+  var toNow = function(){ scroll.scrollLeft = Math.max(0, Math.round((now - day.start) / 60000 * ppm) - 60); };
+  nowBtn.addEventListener("click", toNow);
+  if(keep){ scroll.scrollLeft = keep.x; scroll.scrollTop = keep.y; } else toNow();
+}
+
+function guideMessage(box, text, withAction){
+  var p = document.createElement("div");
+  p.className = "tvg-msg";
+  var m = document.createElement("p");
+  m.textContent = text;
+  p.appendChild(m);
+  if(withAction){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "tv-btn";
+    b.textContent = t("manage");
+    b.addEventListener("click", openSourcesDialog);
+    p.appendChild(b);
+  }
+  box.appendChild(p);
+}
+
+/* --- programme details --- */
+
+var progCh = null;
+
+function openProg(ch, p){
+  var dlg = $("#tv-prog");
+  if(!dlg) return;
+  progCh = ch;
+  $("#tvpg-title").textContent = p.t || "";
+  var when = C.hhmm(p.s) + "–" + C.hhmm(p.e) + " · " + (ch.name || "");
+  $("#tvpg-when").textContent = when;
+  var sub = [p.st, p.c].filter(Boolean).join(" · ");
+  var subEl = $("#tvpg-sub");
+  subEl.textContent = sub;
+  subEl.hidden = !sub;
+  var d = $("#tvpg-desc");
+  d.textContent = p.d || "";
+  d.hidden = !p.d;
+  if(!dlg.open) dlg.showModal();
+}
+
+function setupProgDialog(){
+  var dlg = $("#tv-prog");
+  if(!dlg) return;
+  $("#tvpg-close").addEventListener("click", function(){ dlg.close(); });
+  dlg.addEventListener("click", function(e){ if(e.target === dlg) dlg.close(); });
+  $("#tvpg-watch").addEventListener("click", function(){
+    dlg.close();
+    if(progCh) playChannel(progCh);
+  });
+}
+
+/* --- groups filter --- */
+
+function renderGroupFilter(){
+  var sel = $("#tv-group");
+  if(!sel) return;
+  var cur = state.filterGroup;
+  sel.innerHTML = "";
+  var all = document.createElement("option");
+  all.value = "";
+  all.textContent = t("filter.allGroups");
+  sel.appendChild(all);
+  state.plGroups.forEach(function(g){
+    var o = document.createElement("option");
+    o.value = g;
+    o.textContent = g;
+    sel.appendChild(o);
+  });
+  sel.value = cur;
+}
+
+/* --- minute tick: now/next, the now line, a new day --- */
+
+function minuteTick(){
+  if(state.guideDay && C.ymd(Date.now()) !== state.guideDay){
+    loadAllSources(false);
+    return;
+  }
+  if(!state.guideIdx) return;
+  if(state.viewMode === "guide") renderMain();
+  else refreshNowLines();
+  updatePlayerEpg();
+}
+
 /* ===== DOM RENDERERS ===== */
 
 function renderMain(){
@@ -709,8 +1554,22 @@ function renderMain(){
 
   // Clear view
   grid.innerHTML = "";
+  state.cards = [];
   empty.setAttribute("hidden", "");
   if(moreBtn) moreBtn.setAttribute("hidden", "");
+  var emptyAct = $("#tv-empty-act");
+  if(emptyAct) emptyAct.setAttribute("hidden", "");
+  updateToolbar();
+
+  // Wave 43: the Guide tab swaps the card grid for the timeline
+  var guideBox = $("#tv-guide");
+  var main = $("#tv-main");
+  var isGuide = state.viewMode === "guide";
+  if(main) main.classList.toggle("guide-mode", isGuide);
+  if(guideBox){
+    if(isGuide){ guideBox.removeAttribute("hidden"); renderGuide(guideBox); }
+    else { guideBox.setAttribute("hidden", ""); guideBox.innerHTML = ""; }
+  }
 
   // Loading indicator: visible only while the catalog is being
   // fetched for the first time in browse view.
@@ -744,6 +1603,53 @@ function renderMain(){
         empty.removeAttribute("hidden");
       }
       break;
+
+    case "lists":
+      renderLists(grid);
+      break;
+  }
+}
+
+// Country / category / language filter only the directory; the group
+// filter only your playlists (and the guide rows that come from them).
+function updateToolbar(){
+  var browse = state.viewMode === "browse";
+  ["country", "category", "lang"].forEach(function(k){
+    var sel = $("#tv-" + k);
+    var wrap = sel && sel.closest(".tv-filter");
+    if(wrap) wrap.hidden = !browse;
+  });
+  var gw = $("#tv-group-wrap");
+  if(gw) gw.hidden = !((state.viewMode === "lists" || state.viewMode === "guide") && state.plGroups.length);
+}
+
+function renderLists(container){
+  var msg = $("#tv-empty-msg"), empty = $("#tv-empty"), act = $("#tv-empty-act");
+  var srcs = allSources("m3u");
+  function say(text, withAction){
+    msg.textContent = text;
+    empty.removeAttribute("hidden");
+    if(withAction && act) act.removeAttribute("hidden");
+  }
+  if(!srcs.length){ say(t("lists.empty"), true); return; }
+  if(!state.plChannels.length){
+    var busy = srcs.some(function(s){ return !state.srcStatus[s.id] || state.srcStatus[s.id].busy; });
+    say(busy ? t("lists.loading") : t("lists.failed"), !busy);
+    return;
+  }
+  var q = (state.searchQuery || "").toLowerCase();
+  var filtered = state.plChannels.filter(function(ch){
+    if(state.filterGroup && ch.group !== state.filterGroup) return false;
+    if(q && ch.name.toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  if(!filtered.length){ say(t("noresults"), false); return; }
+  filtered.slice(0, state.rendered).forEach(function(ch){
+    container.appendChild(createChannelCard(ch));
+  });
+  if(state.rendered < filtered.length){
+    var btn = $("#tv-more");
+    if(btn) btn.removeAttribute("hidden");
   }
 }
 
@@ -811,7 +1717,7 @@ function renderFavorites(container){
   if(!state.data || !state.data.favorites.length) return;
 
   state.data.favorites.forEach(function(fav){
-    var ch = (state.catalog && state.catalog.byId[fav.id]) || null;
+    var ch = (state.catalog && state.catalog.byId[fav.id]) || state.plById[fav.id] || null;
     if(!ch){
       // Channel not in current catalog (removed/renamed?) — show minimal card
       ch = {
@@ -832,7 +1738,7 @@ function renderRecents(container){
   if(!state.recents.length) return;
 
   state.recents.forEach(function(rec){
-    var ch = (state.catalog && state.catalog.byId[rec.id]) || null;
+    var ch = (state.catalog && state.catalog.byId[rec.id]) || state.plById[rec.id] || null;
     if(!ch){
       // Recent entry still valid with its own stream
       ch = {
@@ -858,8 +1764,9 @@ function createChannelCard(channel){
   // top, self-remove on error — no inline-JS string gymnastics.
   var initials = (channel.name || "?").substring(0, 2).toUpperCase();
   var logoHtml = '<div class="tv-logo"><span class="tv-nologo">' + esc(initials) + '</span>';
-  if(channel.logo){
-    logoHtml += '<img src="' + esc(channel.logo) +
+  var logo = C.safeLogo(channel.logo);            // Wave 43: https logos only
+  if(logo){
+    logoHtml += '<img src="' + esc(logo) +
       '" alt="" loading="lazy" onerror="this.remove()">';
   }
   logoHtml += '</div>';
@@ -870,9 +1777,10 @@ function createChannelCard(channel){
     metaParts.push(esc(state.catalog.countryNames[channel.country]));
   }
   if(channel.categories && channel.categories.length){
-    var cn = state.catalog && state.catalog.categoryNames[channel.categories[0]];
+    var cn = !channel.src && state.catalog && state.catalog.categoryNames[channel.categories[0]];
     metaParts.push(esc(cn || channel.categories[0]));
   }
+  var nowHtml = nowNextHtml(channel);
 
   // Favorite star (absolute position, NOT a button-inside-button)
   var isFav = isFavorite(channel.id);
@@ -886,7 +1794,9 @@ function createChannelCard(channel){
     '<div class="tv-name">' + esc(channel.name) + '</div>' +
     '<div class="tv-meta">' +
     metaParts.join(' · ') +
-    '</div>';
+    '</div>' +
+    (nowHtml ? '<div class="tv-now">' + nowHtml + '</div>' : '');
+  state.cards.push([card, channel]);
 
   // Click handler (play)
   card.addEventListener("click", function(e){
@@ -1047,9 +1957,10 @@ function setupSearch(){
           // search and blurred): the list reopened and stayed open over
           // the grid, eating taps
           if(self.value.trim() !== val || document.activeElement !== self) return;
-          // Search in-memory (fast, cached)
+          // Search in-memory (fast, cached); My lists searches your playlists
           var q = val.toLowerCase();
-          var results = cat.channels.filter(function(ch){
+          var pool = state.viewMode === "lists" ? state.plChannels : cat.channels;
+          var results = pool.filter(function(ch){
             return ch.name.toLowerCase().indexOf(q) >= 0;
           }).slice(0, 8);
 
@@ -1148,7 +2059,7 @@ function selectAcItem(channel){
     input.value = channel.name;
     input.blur();
   }
-  state.viewMode = "browse";
+  if(state.viewMode !== "lists") state.viewMode = "browse";
   state.searchQuery = channel.name;
   state.rendered = PAGE_SIZE;
   renderMain();               // grid reflects the selected query
@@ -1169,8 +2080,11 @@ function setupTabs(){
       state.filterCountry = "";
       state.filterCategory = "";
       state.filterLang = "";
+      state.filterGroup = "";
       state.searchQuery = "";
       state.rendered = PAGE_SIZE;
+      var groupSelect = $("#tv-group");
+      if(groupSelect) groupSelect.value = "";
 
       var countrySelect = $("#tv-country");
       var catSelect = $("#tv-category");
@@ -1206,7 +2120,7 @@ function openPlayer(channel){
 
   // Title & meta
   $("tvp-title").textContent = channel.name;
-  $("tvp-meta").textContent = (channel.country && state.catalog && state.catalog.countryNames[channel.country]) || "";
+  $("tvp-meta").textContent = (channel.country && state.catalog && state.catalog.countryNames[channel.country]) || channel.group || "";
   $("tvp-labels").textContent = (channel.categories && channel.categories.join(", ")) || "";
 
   // Restore volume/mute preferences for this session
@@ -1219,6 +2133,7 @@ function openPlayer(channel){
   tryStream();
 
   dlg.showModal();
+  updatePlayerEpg();
 }
 
 function tryStream(){
@@ -1736,6 +2651,33 @@ function applyI18n(){
 
   var streamPick = $("#tvp-streampick");
   if(streamPick) streamPick.setAttribute("title", t("stream.alt"));
+
+  // Wave 43: lists & guides
+  var txt = {
+    "#tv-manage-txt": "manage", "#tv-group-cap": "filter.group", "#tv-empty-act": "manage",
+    "#tvs-title": "src.title", "#tvs-pl-h": "src.pl.h", "#tvs-pl-hint": "src.pl.hint",
+    "#tvs-epg-h": "src.epg.h", "#tvs-epg-hint": "src.epg.hint",
+    "#tvs-pl-add": "src.add", "#tvs-epg-add": "src.add",
+    "#tvs-pl-file": "src.file", "#tvs-epg-file": "src.file",
+    "#tvs-refresh": "src.refreshAll", "#tvpg-watch": "prog.watch"
+  };
+  Object.keys(txt).forEach(function(sel){ var el = $(sel); if(el) el.textContent = t(txt[sel]); });
+  ["#tvs-pl-url", "#tvs-epg-url"].forEach(function(sel){
+    var el = $(sel);
+    if(el){ el.placeholder = t("src.url.ph"); }
+  });
+  var pu = $("#tvs-pl-url"); if(pu) pu.setAttribute("aria-label", t("src.pl.h"));
+  var eu = $("#tvs-epg-url"); if(eu) eu.setAttribute("aria-label", t("src.epg.h"));
+  var mg = $("#tv-manage"); if(mg){ mg.title = t("manage"); mg.setAttribute("aria-label", t("manage")); }
+  var gs = $("#tv-group"); if(gs) gs.setAttribute("aria-label", t("filter.group"));
+  ["#tvs-close", "#tvpg-close"].forEach(function(sel){
+    var b = $(sel);
+    if(b){
+      if(!b.firstChild) b.innerHTML = SVG_A + '<path d="M6 6l12 12M18 6L6 18"/></svg>';
+      b.title = t("close"); b.setAttribute("aria-label", t("close"));
+    }
+  });
+  renderGroupFilter();
 }
 
 /* ===== WIRING ===== */
@@ -1744,6 +2686,24 @@ function wire(){
   setupFilters();
   setupSearch();
   setupPlayerControls();
+  setupSourcesDialog();
+  setupProgDialog();
+
+  var groupSelect = $("#tv-group");
+  if(groupSelect){
+    groupSelect.addEventListener("change", function(){
+      state.filterGroup = this.value;
+      state.rendered = PAGE_SIZE;
+      renderMain();
+    });
+  }
+  var emptyAct = $("#tv-empty-act");
+  if(emptyAct) emptyAct.addEventListener("click", openSourcesDialog);
+
+  // Wave 43: own playlists + guides (cached copies first, then the network)
+  loadFiles();
+  loadAllSources(false);
+  setInterval(minuteTick, 60000);
 
   // Load catalog immediately (background fetch)
   console.log("[tv-dbg] wire: calling loadCatalog");

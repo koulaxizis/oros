@@ -3,7 +3,7 @@
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: reads oros-todo-data, never writes.
 // One hit per list (its name) and one per task (text, with notes,
-// extra info and the list name as text). The date shown is the due
+// extra info, subtasks and the list name as text). The date shown is the due
 // date. Deleted lists/tasks are not in the arrays (deleted{} map).
 // Opens through the generic deep link: target { list, item? }.
 // ============================================================
@@ -33,10 +33,11 @@
           var info = (Array.isArray(it.info) ? it.info : []).map(function (x) {
             return x ? [str(x.label), str(x.value)].filter(Boolean).join(": ") : "";
           }).filter(Boolean);
+          var subs = (Array.isArray(it.subs) ? it.subs : []).map(function (x) { return x ? str(x.text) : ""; }).filter(Boolean);
           out.push({
             id: it.id,
             title: str(it.text),
-            text: [str(it.notes)].concat(info).concat([lname]).filter(Boolean).join(" · "),
+            text: [str(it.notes)].concat(info).concat(subs).concat([lname]).filter(Boolean).join(" · "),
             when: dueMs(it.due),
             target: { list: l.id, item: it.id }
           });

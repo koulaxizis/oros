@@ -32,13 +32,23 @@
 //     frees it for the next check; any other error keeps it in the
 //     Outbox with the reason. A check is scheduled for the next due
 //     time when that is sooner than 3 minutes
+//   - snoozed messages (snooze.js, data.snoozes): with Mail closed, a
+//     snooze whose time has come is woken here: its message in the
+//     account's Snoozed folder is marked unread and moved back where it
+//     came from (the Inbox if that folder is gone), before the Inbox
+//     check, which then announces it like new mail. The snooze record
+//     is tombstoned by Mail the next time it runs (this file never
+//     writes the synced slice); meanwhile the device-local list
+//     "oros-mail-snooze-woken" { id: until } keeps it from being woken
+//     twice. Mail open → Mail wakes them itself
 // Reads: oros-mail-data (accounts, relay), IndexedDB "oros-mail"
 // stores "keys" + "creds" (the sealed password, decrypted with the
 // device key exactly as mail.js does; the key never leaves
 // IndexedDB). The database is opened WITHOUT a version and closed
 // after each check, so Mail's own upgrades are never blocked.
 // Writes only the device-local marks "oros-mail-notify"
-// { acctId: { v: uidvalidity, m: highest uid seen } }, never synced.
+// { acctId: { v: uidvalidity, m: highest uid seen } } and
+// "oros-mail-snooze-woken", never synced.
 // An auth failure silences that account until its password changes
 // on this device. orOS closed = no check (honest limit).
 // ============================================================
@@ -146,7 +156,7 @@
     } catch (e) {}
     return "mail/" + file;
   }
-  var MIME_SRC = srcOf("mime.js"), RULES_SRC = srcOf("rules.js"), OUTBOX_SRC = srcOf("outbox.js");
+  var MIME_SRC = srcOf("mime.js"), RULES_SRC = srcOf("rules.js"), OUTBOX_SRC = srcOf("outbox.js"), SNOOZE_SRC = srcOf("snooze.js");
   var loading = {};
   function load(src, name, fn) {
     var X = root[name];
@@ -170,6 +180,7 @@
   function mime() { return load(MIME_SRC, "orosMailMime", "summary"); }
   function rulesLib() { return load(RULES_SRC, "orosMailRules", "plan"); }
   function outboxLib() { return load(OUTBOX_SRC, "orosMailOutbox", "claim"); }
+  function snoozeLib() { return load(SNOOZE_SRC, "orosMailSnooze", "plan"); }
 
   // ---------- relay ----------
   function relay(url, acct, pass, body, ms) {
@@ -323,6 +334,66 @@
     });
   }
 
+  // ---------- snoozed messages ----------
+  var WOKEN_KEY = "oros-mail-snooze-woken";
+  var snzAt = 0;                   // the next snooze due (0: none)
+  function snoozesOf(data, SN) {
+    var tombs = data.tombs || {};
+    return (Array.isArray(data.snoozes) ? data.snoozes : []).map(SN.norm)
+      .filter(function (r) { return r && !(tombs[r.id] >= r.m); });
+  }
+  function wakeDue(d, url, accts, data, SN, M) {
+    if (!SN || !M) return Promise.resolve();
+    var recs = snoozesOf(data, SN), now = Date.now();
+    snzAt = SN.next(recs, now);
+    if (mailOpen()) return Promise.resolve();
+    var woken = {};
+    try { woken = JSON.parse(root.localStorage.getItem(WOKEN_KEY) || "{}") || {}; } catch (e) {}
+    var live = {};
+    recs.forEach(function (r) { live[r.id] = 1; });
+    Object.keys(woken).forEach(function (id) { if (!live[id]) delete woken[id]; });
+    var due = SN.due(recs, now).filter(function (r) { return woken[r.id] !== r.until; });
+    function keep() { try { root.localStorage.setItem(WOKEN_KEY, JSON.stringify(woken)); } catch (e) {} }
+    if (!due.length) { keep(); return Promise.resolve(); }
+    var left = recs.filter(function (r) { return woken[r.id] !== r.until; });
+    return accts.reduce(function (p, acct) {
+      if (!SN.due(SN.forAcct(left, acct.id), now).length) return p;
+      return p.then(function () {
+        return Promise.all([password(d, acct.id), get(d, "folders", acct.id)]).then(function (r) {
+          var pw = r[0], fl = r[1] && Array.isArray(r[1].list) ? r[1].list : null;
+          if (!pw || !fl) return;
+          var f = fl.filter(SN.isFolder)[0];
+          if (!f) { SN.due(SN.forAcct(left, acct.id), now).forEach(function (x) { woken[x.id] = x.until; }); return; }
+          return relay(url, acct, pw, { op: "list", folder: f.name, limit: 200 }).then(function (res) {
+            var msgs = (res.msgs || []).map(function (x) {
+              var s = {};
+              try { s = M.summary(M.b64ToBin(x.hdr || "")); } catch (e) {}
+              return { uid: x.uid, key: SN.keyOf({ mid: s.messageId, date: s.date || M.parseDate(x.date), from: s.from }) };
+            });
+            var plan = SN.plan(left, acct.id, msgs, now, !res.more);
+            plan.gone.forEach(function (x) { woken[x.id] = x.until; });
+            if (!plan.wake.length) return;
+            var byDest = {};
+            plan.wake.forEach(function (w) { (byDest[w.rec.from] = byDest[w.rec.from] || []).push(w); });
+            return relay(url, acct, pw, { op: "flag", folder: f.name, uids: plan.wake.map(function (w) { return w.uid; }).slice(0, 500), add: [], remove: ["\\Seen"] })
+              .catch(function () {}).then(function () {
+                return Object.keys(byDest).reduce(function (q, dest) {
+                  return q.then(function () {
+                    var ws = byDest[dest], us = ws.map(function (w) { return w.uid; }).slice(0, 500);
+                    function ok() { ws.forEach(function (w) { woken[w.rec.id] = w.rec.until; }); }
+                    return relay(url, acct, pw, { op: "move", folder: f.name, uids: us, to: dest }).then(ok, function () {
+                      if (dest === "INBOX") return;
+                      return relay(url, acct, pw, { op: "move", folder: f.name, uids: us, to: "INBOX" }).then(ok, function () {});
+                    });
+                  });
+                }, Promise.resolve());
+              });
+          }, function () {});
+        });
+      });
+    }, Promise.resolve()).then(keep, keep);
+  }
+
   function check() {
     if (busy) return Promise.resolve();
     function later() { wait = EVERY_MS; schedule(); return Promise.resolve(); }
@@ -338,13 +409,18 @@
     var url = (data.relay && typeof data.relay.url === "string" && data.relay.url) || DEFAULT_RELAY;
     busy = true;
     lastAt = Date.now();
+    hintAt = 0;
     var failed = false;
     var rules = Array.isArray(data.rules) ? data.rules : [];
-    return Promise.all([openDb(), mime(), rules.length ? rulesLib() : null, outboxLib()]).then(function (r) {
-      var d = r[0], M = r[1], Rl = r[2], OB = r[3];
+    var snoozes = Array.isArray(data.snoozes) && data.snoozes.length;
+    return Promise.all([openDb(), mime(), rules.length ? rulesLib() : null, outboxLib(), snoozes ? snoozeLib() : null]).then(function (r) {
+      var d = r[0], M = r[1], Rl = r[2], OB = r[3], SN = r[4];
       if (!d) return;
       var marks = loadMarks();
+      if (!snoozes) snzAt = 0;
       return sendDue(d, url, accts, OB).catch(function () {}).then(function () {
+        return wakeDue(d, url, accts, data, SN, M).catch(function () {});
+      }).then(function () {
         return accts.reduce(function (p, acct) {
           return p.then(function () {
             return password(d, acct.id).then(function (pw) {
@@ -381,8 +457,10 @@
   function schedule() {
     clearTimeout(timer);
     var ms = wait;
-    // a timed send due sooner: check then (not before 15 s)
+    // a timed send or a snooze due sooner: check then (not before 15 s)
     if (nextAt > Date.now()) ms = Math.min(ms, Math.max(15000, nextAt - Date.now() + 1000));
+    if (snzAt > Date.now()) ms = Math.min(ms, Math.max(15000, snzAt - Date.now() + 1000));
+    if (hintAt > Date.now()) ms = Math.min(ms, Math.max(15000, hintAt - Date.now() + 1000));
     timer = setTimeout(check, ms);
   }
   function soon() {
@@ -390,10 +468,13 @@
     if (Date.now() - lastAt > 60000) { wait = EVERY_MS; check(); }
   }
 
-  // Mail queued a timed send due at ms: be ready to send it should Mail close
+  // Mail queued a timed send (or snoozed a message) due at ms: be ready
+  // to act should Mail close
+  var hintAt = 0;                  // Mail's latest "due at" (until the next check)
   function due(ms) {
-    if (!(ms > 0) || (nextAt > Date.now() && nextAt <= ms)) return;
-    nextAt = ms;
+    var now = Date.now();
+    if (!(ms > 0) || [nextAt, snzAt, hintAt].some(function (x) { return x > now && x <= ms; })) return;
+    hintAt = ms;
     if (!busy) schedule();
   }
 

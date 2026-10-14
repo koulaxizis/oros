@@ -76,6 +76,12 @@
                 rest.push(ps.join(" "));
               } else if (it.k === "image" && it.img && str(it.img.alt)) {
                 rest.push(str(it.img.alt));
+              } else if (it.k === "table" && it.tb && Array.isArray(it.tb.rows)) {
+                var cells = [];
+                it.tb.rows.forEach(function (r) { if (Array.isArray(r)) r.forEach(function (c) { if (str(c)) cells.push(str(c).replace(/\s+/g, " ")); }); });
+                if (cells.length) rest.push(cells.join(" "));
+              } else if (it.k === "chart" && it.ch && str(it.ch.ttl)) {
+                rest.push(str(it.ch.ttl));
               }
             });
             if (!title) {

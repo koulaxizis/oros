@@ -598,6 +598,7 @@
       { id: "rename", run: renameDialog, on: has },
       { id: "export", k: "Ctrl+Shift+S", run: function () { exportDialog(false); }, on: has },
       { id: "toPictures", run: function () { exportDialog(true); }, on: has },
+      { id: "batch", run: function () { PL.batch.open(); } },
       { id: "wallpaper", run: function () { PL.io.setWallpaper(); }, on: function () { return has() && PL.io.canWallpaper(); } }
     ] },
     { id: "edit", items: [
@@ -641,6 +642,7 @@
       "-",
       { id: "newAdj", run: function () { adjLayerDialog(null); }, on: has },
       { id: "layerStyle", run: function () { var L = PL.layer(); if (L) fxDialog(L); }, on: has },
+      { id: "removeBg", run: function () { PL.subject.run("remove"); }, on: has },
       { id: "addMask", run: function () { ops().addMask(false); }, on: has },
       { id: "maskSel", run: function () { ops().addMask(true); }, on: hasSel },
       { id: "editMask", k: "Ctrl+\\", run: function () { ops().editMask(); }, on: hasMask },
@@ -655,6 +657,7 @@
       { id: "selectAll", k: "Ctrl+A", run: function () { ops().selectAll(); }, on: has },
       { id: "deselect", k: "Ctrl+D", run: function () { ops().deselect(); }, on: hasSel },
       { id: "invertSel", k: "Ctrl+Shift+I", run: function () { ops().invertSel(); }, on: hasSel },
+      { id: "selSubject", run: function () { PL.subject.run("select"); }, on: has },
       { id: "selLayer", run: function () { ops().selectLayerPixels(); }, on: has },
       { id: "colorRange", run: colorRangeDialog, on: has },
       { id: "saveSel", run: saveSelDialog, on: hasSel },

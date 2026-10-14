@@ -8,11 +8,23 @@ Three buttons at the top switch between `Timeline`, `Days` and `Insights`.
 
 ## Log a day
 Open a day with `+ Log today`, pick any date in the date box next to it, or tap a period bar or a day dot on the timeline. The editor has three parts:
-- `Period`: `Start period` begins a period on that day. Inside a period you can set the `Flow` (`Light`, `Normal`, `Heavy`) for the whole period, `End period here` on an earlier day of an ongoing period, `Extend one day` on its last day, or `Remove this period`. A period that would overlap another one isn't saved.
+- `Period`: `Start period` begins a period on that day. Inside a period, `Flow of this day` (`Light`, `Normal`, `Heavy`) is saved for that day at once; a day you haven't set shows the period's flow (periods logged before per-day flow keep the flow they had). You can also tap `End period here` on an earlier day of an ongoing period, `Extend one day` on its last day, or `Remove this period`. A period that would overlap another one isn't saved.
 - `Symptoms`: tap the chips that apply. Type in `New symptom…` and press `Add…` to make your own.
 - `Pain relief`: tapping a chip logs that you took it now, with the time, under `Taken today`. Add your own with `New medication…`.
 
 Add a note under `Notes (optional)` and press `Save day`.
+
+## Temperature and mucus (optional)
+For the symptothermal method, press `Turn on temperature and mucus` in `Insights`. The day editor then has `Temperature and mucus`:
+- `Basal body temperature (°C)`: take it right after waking, before you get up, at about the same time every day. Type it with a comma or a dot (`36,45`); a value in °F is converted. It's saved when you leave the box.
+- `Cervical mucus`: `Dry`, `Moist`, `Creamy` or `Egg white`, the best you noticed that day. Tap it again to clear it.
+
+`Insights` then shows `Fertile window (estimate)` for the current cycle, with a chart of this cycle's temperatures:
+- The temperature rise counts when a reading is higher than each of the 6 before it (the coverline is the highest of those 6), and 3 higher readings follow on consecutive days, the third at least 0.20 °C over the coverline (else a fourth higher one is needed).
+- The mucus peak is the last day of the best mucus before it gets worse; it's confirmed 3 days later.
+- The window ends with the later of the two. Until then it says you may be fertile. It starts on cycle day 6, or earlier on the first day with mucus; after 12 cycles with a temperature rise, on your earliest rise minus 8 days.
+
+This is an estimate from what you log, not contraception. Don't rely on it to avoid or plan a pregnancy; for that, learn the method with a qualified teacher or ask your doctor. `Turn off (your entries stay)` hides it again.
 
 ### Rename or delete chips
 Long-press or right-click a symptom or medication chip, or tap `Manage…` and then a chip, to `Rename` or `Delete` it. A delete can be undone for a few seconds.
@@ -30,7 +42,7 @@ The prediction comes from your own averages. It's an estimate, not medical advic
 `Doctor report` saves a PDF of the selected range: overview, period log, cycle variability, pain relief and notes.
 
 ## Sync and backup
-Periods, day logs, your symptoms and medications, and the reminder setting sync between your devices through [orOS sync](help:t/sync). Cycle makes no other network calls. Your periods also appear in [Calendar](app:calendar) under the `Cycle` label; tapping one opens it here.
+Periods, day logs (with flow, temperature and mucus), your symptoms and medications, and the reminder and temperature settings sync between your devices through [orOS sync](help:t/sync). Cycle makes no other network calls. Your periods also appear in [Calendar](app:calendar) under the `Cycle` label; tapping one opens it here.
 
 There's no import or export apart from the PDF report; use the orOS [backup](help:t/backup) to keep a copy.
 
@@ -44,4 +56,5 @@ There's no import or export apart from the PDF report; use the orOS [backup](hel
 
 ## Limits
 - `Factory reset`, at the bottom of `Insights`, erases all cycle data on every synced device. It asks twice and can't be undone.
-- Flow is set for the whole period, not per day.
+- The fertile window is an estimate for body literacy, not contraception and not medical advice. Illness, alcohol, a short night or a different waking time can raise a temperature; such a reading can move the estimate.
+- Temperatures are in °C (°F is converted when you type it). The doctor report doesn't include temperatures or mucus yet.

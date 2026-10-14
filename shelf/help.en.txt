@@ -23,10 +23,20 @@ Books you add from [Library](app:library) with `Add to Media Shelf` are linked: 
 Rate with five stars in half steps: tap the left or right half of a star. Mark a `Favourite` with the heart and write a `Review / notes`.
 
 ## Statistics and goals
-Pick a year with the arrows. `Statistics` shows what you finished per type, `Pages read` (print and e-books), `Average rating`, a chart `By month`, `Top creators` and `Top tags`. With `Set goals` you set a target per type for the year, and the app tells you if you're ahead of or behind schedule.
+Pick a year with the arrows. `Statistics` shows what you finished per type, `Pages read` (print and e-books), `Average rating`, a chart `By month`, `Top creators` and `Top tags`. With `Set goals` you set a target per type for the year, and the app tells you if you're ahead of or behind schedule. Under each goal you also see how many are left and how many days remain, the pace you need (about so many a week and a month, and for books about so many pages a day, based on the length of the books you read), and where you'll end up at your current pace.
+
+`Reading in` (the year) adds up the pages you logged in your books: `Pages read`, `Pages a day`, `Days you read`, `Days in a row`, your `Best day` and a small chart of `The last 30 days`. It counts what you log with `Update`, so log your page now and then.
+
+When you have a book goal for this year, it also shows at the top of `Now` (`Reading goal`… with a bar); tap it to open `Statistics`.
 
 ## Find details online and the Calendar
-For books and albums, `Find details online` in the form looks up the title you typed (and the creator, if any) on Open Library (books) or MusicBrainz (music). It runs only when you tap it, and the first time it tells you what is sent: just that text. Pick a match to fill in the title, creator, year, pages or tracks and, for albums, the release date; check it and press `Save`. Films, series, podcasts and games are filled in by hand.
+For books and albums, `Find details online` in the form looks up the title you typed (and the creator, if any) on Open Library (books) or MusicBrainz (music). It runs only when you tap it, and the first time it tells you what is sent: just that text. Pick a match to fill in the title, creator, year, pages or tracks and, for albums, the release date; check it and press `Save`.
+
+Films and series are looked up on Wikidata, with no account and no key. Pick a match to fill in the title (in your language when Wikidata has it), the director or creator, the year, the runtime or the number of episodes, and a cover picture from Wikimedia Commons when there is one. The details are CC0; every picture keeps its own free licence, and the title's page shows who made it, the licence and a link to its Commons page (`Cover:` … · `Wikimedia Commons`). `Remove cover` in the form goes back to the generated cover.
+
+If you have a free TMDB account, you can also search TMDB, which has more posters: `More` → `Film and series details (TMDB key)`, paste your own API key (v3) or read access token and press `Save`. A `Search on` switch (`Wikidata` / `TMDB`) then appears above the results. The key stays on this device: it doesn't sync and is sent only to TMDB, only when you search. Titles filled in from TMDB show "This product uses the TMDB API but is not endorsed or certified by TMDB."
+
+Podcasts and games are filled in by hand.
 
 In [Calendar](app:calendar), the `Media Shelf` chip shows the day you finished each title (rewatches and rereads too) and the release date of titles on your wishlist. Tap a row to open that title here.
 
@@ -43,7 +53,7 @@ Before anything is added, a preview shows how many titles were found per type an
 What comes in: Goodreads shelves become the status (`read`, `currently-reading`, `to-read`; a shelf such as `did-not-finish` becomes dropped), with your rating, review, pages, format, the date you finished, and your other shelves as tags. From Letterboxd you get the watchlist, every logged watch with its date (rewatches count), your rating, review and tags. Right after an import, `Undo` takes it all back.
 
 ## Sync and backup
-Your titles, progress, ratings, reviews and goals sync between your devices through [orOS sync](help:t/sync). The open tab, type filter and sort stay on each device.
+Your titles, progress, ratings, reviews and goals sync between your devices through [orOS sync](help:t/sync). Covers and their credits sync with the title. The open tab, type filter, sort and your TMDB key stay on each device.
 
 In the `More` menu, `Export (JSON)` saves your shelf to a file and `Import (JSON)` merges a file in, without replacing anything.
 
@@ -58,4 +68,7 @@ In the `More` menu, `Export (JSON)` saves your shelf to a file and `Import (JSON
 
 ## Limits
 - The reading reminder needs orOS open; there is no push server.
-- Covers are generated, never downloaded, and the online lookup has no source for films, series, podcasts or games.
+- Cover pictures come only for films and series you look up online (Wikimedia Commons or TMDB) and load from those sites when shown; offline, or for books, music, podcasts and games, you see the generated cover.
+- The online lookup has no source for podcasts or games.
+- TMDB works only with your own key; orOS has none to share.
+- Pages per day count the pages you log in books, plus the rest of a book when you mark it done; audiobooks don't add to them.

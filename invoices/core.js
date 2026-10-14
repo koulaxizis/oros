@@ -732,6 +732,44 @@
     return ["BCD", "002", "1", "SCT", "", nm, iban, "EUR" + eur, "", "", cleanText(ref, 140)].join("\n");
   }
 
+  // Wave 46 — "Pay online": the user's OWN payment link (a Stripe
+  // Payment Link such as https://buy.stripe.com/…, or any https page of
+  // their payment provider), kept on the profile as the extra field
+  // `paylink` (withExtras: older versions keep it untouched). orOS
+  // never holds a payment key: the link is the user's, the payment
+  // happens on the provider's page.
+  //   payLinkOk(s)       → the cleaned link, or "" (https only, no
+  //                        user:password, no spaces, ≤ 500 chars)
+  //   payLinkFor(link, d) → the link for one document: on a Stripe host
+  //                        it gets client_reference_id = the document
+  //                        number (letters, digits, - and _ only) and
+  //                        prefilled_email = the client's email; any
+  //                        other host is left exactly as typed.
+  function payLinkOk(s) {
+    s = typeof s === "string" ? s.trim() : "";
+    if (!s || s.length > 500 || /[\s<>"'`\\]/.test(s)) return "";
+    var m = /^https:\/\/([a-z0-9.-]+)(?::\d{1,5})?(?:[\/?#].*)?$/i.exec(s);
+    if (!m || m[1].indexOf(".") < 1 || /\.\.|^\.|\.$/.test(m[1])) return "";
+    return s;
+  }
+  function payLinkFor(link, d) {
+    var url = payLinkOk(link);
+    if (!url) return "";
+    var host = /^https:\/\/([^\/?#:]+)/i.exec(url)[1].toLowerCase();
+    if (!/(^|\.)stripe\.com$/.test(host)) return url;
+    var hash = "", hi = url.indexOf("#");
+    if (hi >= 0) { hash = url.slice(hi); url = url.slice(0, hi); }
+    var add = [];
+    var ref = String((d && d.num) || "").replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 200);
+    if (ref && !/[?&]client_reference_id=/.test(url)) add.push("client_reference_id=" + encodeURIComponent(ref));
+    var em = d && d.c && typeof d.c.email === "string" ? d.c.email.trim() : "";
+    if (em && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em) && em.length <= 120 && !/[?&]prefilled_email=/.test(url)) {
+      add.push("prefilled_email=" + encodeURIComponent(em));
+    }
+    if (!add.length) return url + hash;
+    return url + (url.indexOf("?") >= 0 ? (/[?&]$/.test(url) ? "" : "&") : "?") + add.join("&") + hash;
+  }
+
   // Wave 3 — business profiles. "" (or an unknown / deleted id) = the
   // main profile, prof.
   function profiles(data) {
@@ -1115,7 +1153,7 @@
     owes: owes, balance: balance, status: status, lateDays: lateDays, sign: sign, counts: counts,
     byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, stockOut: stockOut, statement: statement,
     EU: EU, euCountry: euCountry, vatPrefix: vatPrefix, reverseCharge: reverseCharge,
-    ibanOf: ibanOf, ibanOk: ibanOk, epcPayload: epcPayload,
+    ibanOf: ibanOf, ibanOk: ibanOk, epcPayload: epcPayload, payLinkOk: payLinkOk, payLinkFor: payLinkFor,
     normBiz: normBiz, profiles: profiles, profileOf: profileOf, sellerOf: sellerOf, seriesForProfile: seriesForProfile,
     currencies: currencies, dashboard: dashboard,
     recurringDue: recurringDue, nextRun: nextRun, draftFrom: draftFrom, stepRep: stepRep,

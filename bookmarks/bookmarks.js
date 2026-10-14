@@ -9,12 +9,20 @@
  *      ver:     1,
  *      items:   { [id]: { id, url, title, note, folderId,
  *                          tags[], status, visits, lastVisit,
- *                          added, modified } },
- *      folders: { [id]: { id, name, pos, modified } },
+ *                          added, modified, fav?, pos,
+ *                          chk?:  { s, at, code?, to? }   link check,
+ *                          arch?: { at, f, n?, img? } } }  saved copy
+ *      folders: { [id]: { id, name, pos, parent?, modified } },
  *      deleted: { [id]: epochMs },        // tombstones, 30d prune
  *      settings: {}
  *    }
  *  - "unsorted" is the permanent root folder (undeletable).
+ *  - Wave 35: folders nest through "parent" (absent = top level; the
+ *    effective tree and its cycle guard live in core.js). "chk" and
+ *    "arch" are side records: they never move "modified" and merge
+ *    on their own by their "at" (core.sideMerge). The saved copy
+ *    itself is a file on the orOS disk (/internal/Bookmarks/Archive),
+ *    never in the sync slice.
  *  - Merge: entity-union by id, newest "modified"/tombstone wins,
  *    deterministic tie-break on canonical JSON (no Date.now()
  *    inside the merge — both devices must compute identically).
@@ -33,6 +41,9 @@ const SCRIPT_V = (document.currentScript &&
 const DATA_KEY = "oros-bookmarks-data";
 const ROOT_FOLDER = "unsorted";
 const DELETED_PRUNE_DAYS = 30;
+
+const K = window.OrosBookmarksCore;
+const ARCHIVE_DIR = "/internal/Bookmarks/Archive";
 
 const $  = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -104,7 +115,7 @@ const STR = {
     "quick.add": "Paste a link — or link | title",
     "search.ph": "Search…",
     "search.clear": "Clear search",
-    "import.title": "Import bookmarks (Netscape HTML)",
+    "import.title": "Import bookmarks (browsers, Pocket, Raindrop: HTML or CSV)",
     "export.title": "Export bookmarks (Netscape HTML)",
     "folder.settings": "Folder options",
     "folder.settings.dlg": "Folder settings",
@@ -113,7 +124,7 @@ const STR = {
     "folder.unsorted": "Unsorted",
     "view.all": "All",
     "folder.count": "{n} bookmark(s) in this folder",
-    "folder.confirm.delete": "Delete this folder? Its bookmarks move to Unsorted.",
+    "folder.confirm.delete": "Delete this folder? What's inside moves up one level (to Unsorted from a top folder).",
     "folder.empty.title": "This folder is empty",
     "folder.empty.hint": "Links you add land in the open folder.",
     "empty.title": "Nothing here yet",
@@ -140,6 +151,7 @@ const STR = {
     "undo": "Undo",
     "import.picked": "Imported {n} bookmark(s), {f} folder(s)",
     "import.none": "No bookmarks found in this file",
+    "import.have": "Nothing new: you already have the {n} bookmark(s) in this file",
     "exported": "Exported {n} bookmark(s)",
     "ctx.open": "Open",
   "ctx.open_maps": "Open in Maps",
@@ -178,9 +190,9 @@ const STR = {
     "tab.mover": "Move right",
     "dupe.title": "Duplicate bookmarks",
     "dupe.none": "No duplicates found — each address exists only once.",
-    "dupe.keep": "Keep oldest, delete {n}",
-    "dupe.deleted": "Deleted {n} duplicate(s)",
-    "dupe.keeper": "oldest — kept",
+    "dupe.keep": "Merge into oldest, remove {n}",
+    "dupe.deleted": "Merged {n} duplicate(s)",
+    "dupe.keeper": "oldest — kept, gets the tags and notes",
     "dupe.apply.all": "Apply all ({n} groups)",
     "dupe.apply.sel": "Apply selected",
     "dupe.none.sel": "Select at least one group",
@@ -201,7 +213,62 @@ const STR = {
     "send.drag": "Drag this button to your bookmarks bar",
     "send.android": "Android:",
     "send.android.hint": "Install orOS (browser menu → Install app). Then, in any app, choose Share → orOS.",
-    "send.safe": "Nothing is saved until you press Save in orOS."
+    "send.safe": "Nothing is saved until you press Save in orOS.",
+    "folder.parent": "Inside",
+    "folder.top": "Top level (a tab)",
+    "folder.sub.add": "New subfolder",
+    "folder.subs": "{n} subfolder(s)",
+    "folder.moved": "“{f}” moved",
+    "folder.path": "Folder path",
+    "tab.into": "Move into…",
+    "tab.sub": "New subfolder",
+    "pick.item": "Move to folder",
+    "pick.folder": "Move “{f}” into",
+    "pick.top": "Top level (a tab)",
+    "tools.title": "Tidy up",
+    "chk.folder": "Check links in this folder",
+    "chk.all": "Check all links",
+    "chk.one": "Check link",
+    "chk.running": "Checking links… {i} of {n}",
+    "chk.stop": "Stop",
+    "chk.done": "Checked {n}: {d} broken, {m} moved, {e} couldn't be checked",
+    "chk.stopped": "Stopped after {n} link(s)",
+    "chk.offline": "You're offline. Links can't be checked now.",
+    "chk.norelay": "Without a relay (Reader or Mail settings) most sites can't be checked from the browser.",
+    "chk.none": "No links to check here",
+    "chk.busy": "A link check is already running",
+    "chk.s.dead": "Broken",
+    "chk.s.moved": "Moved",
+    "chk.s.err": "Couldn't check",
+    "chk.s.ok": "Works",
+    "chk.s.skip": "Can't be checked",
+    "chk.line": "Link check: {s} · {when}",
+    "chk.to": "Now at {u}",
+    "chk.use": "Use new address",
+    "chk.used": "Address updated",
+    "chk.filter": "Broken and moved links",
+    "chk.show": "Show broken and moved links",
+    "arc.save": "Save a readable copy",
+    "arc.read": "Read saved copy",
+    "arc.again": "Save again",
+    "arc.remove": "Remove copy",
+    "arc.open": "Original page",
+    "arc.back": "Back",
+    "arc.saving": "Saving a readable copy…",
+    "arc.saved": "Readable copy saved",
+    "arc.none": "No article text found on this page",
+    "arc.err": "Couldn't save the page ({why})",
+    "arc.nodisk": "Saved copies need the orOS disk: open Bookmarks inside orOS.",
+    "arc.missing": "The saved copy isn't on this device yet. It arrives with Vault Drive, or save it again here.",
+    "arc.removed": "Saved copy removed",
+    "arc.img": "Keep pictures",
+    "arc.when": "Saved {d}",
+    "arc.badge": "Saved copy",
+    "why.offline": "offline",
+    "why.norelay": "no relay",
+    "why.timeout": "no answer in time",
+    "why.http": "the site answered {c}",
+    "why.disk": "disk error"
   },
   "el": {
     "aria.folders": "Φάκελοι",
@@ -210,7 +277,7 @@ const STR = {
     "quick.add": "Κόλλησε σύνδεσμο — ή σύνδεσμος | τίτλος",
     "search.ph": "Αναζήτηση…",
     "search.clear": "Καθαρισμός",
-    "import.title": "Εισαγωγή σελιδοδεικτών (Netscape HTML)",
+    "import.title": "Εισαγωγή σελιδοδεικτών (browsers, Pocket, Raindrop: HTML ή CSV)",
     "export.title": "Εξαγωγή σελιδοδεικτών (Netscape HTML)",
     "folder.settings": "Επιλογές φακέλου",
     "folder.settings.dlg": "Ρυθμίσεις φακέλου",
@@ -219,7 +286,7 @@ const STR = {
     "folder.unsorted": "Αταξινόμητα",
     "view.all": "Όλα",
     "folder.count": "{n} συντόμευση(εις) σε αυτόν τον φάκελο",
-    "folder.confirm.delete": "Διαγραφή φακέλου; Οι συντομεύσεις του μεταφέρονται στα Αταξινόμητα.",
+    "folder.confirm.delete": "Διαγραφή φακέλου; Το περιεχόμενό του ανεβαίνει ένα επίπεδο (στα Αταξινόμητα από φάκελο πρώτου επιπέδου).",
     "folder.empty.title": "Ο φάκελος είναι κενός",
     "folder.empty.hint": "Οι σύνδεσμοι που προσθέτεις πέφτουν στον ανοιχτό φάκελο.",
     "empty.title": "Δεν υπάρχει τίποτα ακόμα",
@@ -246,6 +313,7 @@ const STR = {
     "undo": "Αναίρεση",
     "import.picked": "Εισήχθησαν {n} συντόμευση(εις), {f} φάκελος(οι)",
     "import.none": "Δεν βρέθηκαν συντομεύσεις σε αυτό το αρχείο",
+    "import.have": "Τίποτα καινούργιο: έχεις ήδη τους {n} σελιδοδείκτες αυτού του αρχείου",
     "exported": "Εξήχθησαν {n} συντόμευση(εις)",
     "ctx.open": "Άνοιγμα",
     "ctx.open_maps": "Άνοιγμα στον χάρτη",
@@ -284,9 +352,9 @@ const STR = {
     "tab.mover": "Κίνηση δεξιά",
     "dupe.title": "Διπλότυπες εγγραφές",
     "dupe.none": "Δεν βρέθηκαν διπλότυπα — κάθε διεύθυνση υπάρχει μόνο μία φορά.",
-    "dupe.keep": "Διατήρηση παλαιότερης, διαγραφή {n}",
-    "dupe.deleted": "Διεγράφησαν {n} διπλότυπες",
-    "dupe.keeper": "παλαιότερη — διατηρήθηκε",
+    "dupe.keep": "Συγχώνευση στην παλαιότερη, αφαίρεση {n}",
+    "dupe.deleted": "Συγχωνεύτηκαν {n} διπλότυπες",
+    "dupe.keeper": "παλαιότερη — μένει και παίρνει ετικέτες και σημειώσεις",
     "dupe.apply.all": "Εφαρμογή όλων ({n} ομάδες)",
     "dupe.apply.sel": "Εφαρμογή επιλεγμένων",
     "dupe.none.sel": "Επίλεξε τουλάχιστον μία ομάδα",
@@ -307,7 +375,62 @@ const STR = {
     "send.drag": "Σύρε αυτό το κουμπί στη γραμμή σελιδοδεικτών",
     "send.android": "Android:",
     "send.android.hint": "Εγκατέστησε το orOS (μενού του browser → Εγκατάσταση εφαρμογής). Μετά, από οποιαδήποτε εφαρμογή, Κοινοποίηση → orOS.",
-    "send.safe": "Τίποτα δεν αποθηκεύεται πριν πατήσεις Αποθήκευση στο orOS."
+    "send.safe": "Τίποτα δεν αποθηκεύεται πριν πατήσεις Αποθήκευση στο orOS.",
+    "folder.parent": "Μέσα σε",
+    "folder.top": "Πρώτο επίπεδο (καρτέλα)",
+    "folder.sub.add": "Νέος υποφάκελος",
+    "folder.subs": "{n} υποφάκελος(οι)",
+    "folder.moved": "Ο φάκελος «{f}» μετακινήθηκε",
+    "folder.path": "Διαδρομή φακέλου",
+    "tab.into": "Μετακίνηση μέσα σε…",
+    "tab.sub": "Νέος υποφάκελος",
+    "pick.item": "Μετακίνηση σε φάκελο",
+    "pick.folder": "Μετακίνηση του «{f}» μέσα σε",
+    "pick.top": "Πρώτο επίπεδο (καρτέλα)",
+    "tools.title": "Τακτοποίηση",
+    "chk.folder": "Έλεγχος συνδέσμων του φακέλου",
+    "chk.all": "Έλεγχος όλων των συνδέσμων",
+    "chk.one": "Έλεγχος συνδέσμου",
+    "chk.running": "Έλεγχος συνδέσμων… {i} από {n}",
+    "chk.stop": "Διακοπή",
+    "chk.done": "Ελέγχθηκαν {n}: {d} χαλασμένοι, {m} μετακινήθηκαν, {e} δεν ελέγχθηκαν",
+    "chk.stopped": "Διακόπηκε μετά από {n} σύνδεσμο(ους)",
+    "chk.offline": "Είσαι εκτός σύνδεσης. Οι σύνδεσμοι δεν μπορούν να ελεγχθούν τώρα.",
+    "chk.norelay": "Χωρίς διακομιστή αναμετάδοσης (ρυθμίσεις Αναγνώστη ή Mail) οι περισσότεροι ιστότοποι δεν ελέγχονται από τον browser.",
+    "chk.none": "Δεν υπάρχουν σύνδεσμοι για έλεγχο εδώ",
+    "chk.busy": "Ένας έλεγχος συνδέσμων τρέχει ήδη",
+    "chk.s.dead": "Χαλασμένος",
+    "chk.s.moved": "Μετακινήθηκε",
+    "chk.s.err": "Δεν ελέγχθηκε",
+    "chk.s.ok": "Λειτουργεί",
+    "chk.s.skip": "Δεν ελέγχεται",
+    "chk.line": "Έλεγχος συνδέσμου: {s} · {when}",
+    "chk.to": "Τώρα στο {u}",
+    "chk.use": "Χρήση της νέας διεύθυνσης",
+    "chk.used": "Η διεύθυνση ενημερώθηκε",
+    "chk.filter": "Χαλασμένοι και μετακινημένοι σύνδεσμοι",
+    "chk.show": "Εμφάνιση χαλασμένων και μετακινημένων",
+    "arc.save": "Αποθήκευση αντιγράφου για ανάγνωση",
+    "arc.read": "Ανάγνωση αποθηκευμένου αντιγράφου",
+    "arc.again": "Νέα αποθήκευση",
+    "arc.remove": "Αφαίρεση αντιγράφου",
+    "arc.open": "Αρχική σελίδα",
+    "arc.back": "Πίσω",
+    "arc.saving": "Αποθήκευση αντιγράφου για ανάγνωση…",
+    "arc.saved": "Το αντίγραφο αποθηκεύτηκε",
+    "arc.none": "Δεν βρέθηκε κείμενο άρθρου σε αυτή τη σελίδα",
+    "arc.err": "Η σελίδα δεν αποθηκεύτηκε ({why})",
+    "arc.nodisk": "Τα αντίγραφα χρειάζονται τον δίσκο του orOS: άνοιξε τους Σελιδοδείκτες μέσα στο orOS.",
+    "arc.missing": "Το αντίγραφο δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Έρχεται με το Vault Drive, ή αποθήκευσέ το ξανά εδώ.",
+    "arc.removed": "Το αντίγραφο αφαιρέθηκε",
+    "arc.img": "Με τις εικόνες",
+    "arc.when": "Αποθηκεύτηκε {d}",
+    "arc.badge": "Αποθηκευμένο αντίγραφο",
+    "why.offline": "εκτός σύνδεσης",
+    "why.norelay": "χωρίς διακομιστή αναμετάδοσης",
+    "why.timeout": "καμία απάντηση εγκαίρως",
+    "why.http": "ο ιστότοπος απάντησε {c}",
+    "why.disk": "σφάλμα δίσκου"
   }
 };
 
@@ -379,7 +502,7 @@ function sanitizeItem(raw, idHint) {
   const tags = Array.isArray(raw.tags)
     ? raw.tags.slice(0, 12).map((tg) => sanText(tg, 32)).filter(Boolean)
     : [];
-  return {
+  const out = {
     id: id,
     url: url,
     title: sanText(raw.title, 256) || url,
@@ -397,6 +520,12 @@ function sanitizeItem(raw, idHint) {
     modified: RE_TS.test(String(raw.modified)) ? Number(raw.modified)
             : (Date.now())
   };
+  /* Wave 35 side records: present only when set, so old data keeps
+     its exact bytes. */
+  const chk = K.sanChk(raw.chk), arch = K.sanArch(raw.arch);
+  if (chk) out.chk = chk;
+  if (arch) out.arch = arch;
+  return out;
 }
 
 function sanitizeFolder(raw, idHint) {
@@ -404,13 +533,21 @@ function sanitizeFolder(raw, idHint) {
   const name = sanText(raw.name, 64);
   if (!name) return null;
   const id = RE_ID.test(raw.id || "") ? raw.id : (idHint || uid());
-  return {
+  const out = {
     id: id,
     name: name,
     pos: Number.isFinite(raw.pos) ? raw.pos : 1000,
     modified: RE_TS.test(String(raw.modified)) ? Number(raw.modified)
             : (Date.now())
   };
+  /* Wave 35: nesting. Absent = top level (old folders stay byte-equal);
+     a parent that is missing now is kept (it may come back with a
+     merge) and simply reads as top level (core.parentOf). */
+  if (typeof raw.parent === "string" && RE_ID.test(raw.parent) &&
+      raw.parent !== id && raw.parent !== ROOT_FOLDER && id !== ROOT_FOLDER) {
+    out.parent = raw.parent;
+  }
+  return out;
 }
 
 function sanitizeState(raw) {
@@ -514,6 +651,9 @@ function save(dirty) {
   try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); }
   catch (e) { /* storage full — app still works in memory */ }
   if (dirty !== false) markDirty();
+  /* Wave 35: saved copies of bookmarks deleted here leave the disk
+     after the Undo window (sweepArchive, section 9b). */
+  if (typeof scheduleSweep === "function" && Object.keys(state.deleted).length) scheduleSweep();
 }
 
 /* The sync engine lives in the PARENT window (the app iframe never
@@ -578,8 +718,15 @@ function undoFromSnapshot() {
   const snap = lastUndoSnapshot;
   lastUndoSnapshot = null;
   Object.keys(snap.folders).forEach((id) => {
-    if (state.folders[id]) return;                  // still there
-    state.folders[id] = Object.assign(snap.folders[id], { modified: now });
+    const cur = state.folders[id], old = snap.folders[id];
+    if (cur) {                                      // still there: put back where it was
+      if ((cur.parent || "") !== (old.parent || "")) {
+        if (old.parent) cur.parent = old.parent; else delete cur.parent;
+        cur.modified = now;
+      }
+      return;
+    }
+    state.folders[id] = Object.assign(old, { modified: now });
     delete state.deleted[id];
   });
   Object.keys(snap.items).forEach((id) => {
@@ -592,6 +739,11 @@ function undoFromSnapshot() {
     /* Moved (or a purge keeper): put back only what the action
        changed on a bookmark that is still there. */
     if (cur.folderId !== old.folderId) { cur.folderId = old.folderId; cur.modified = now; }
+    /* A duplicate merge gave the keeper tags, notes and the star. */
+    ["note", "fav", "url"].forEach((k) => {
+      if (cur[k] !== old[k]) { cur[k] = old[k]; cur.modified = now; }
+    });
+    if (JSON.stringify(cur.tags) !== JSON.stringify(old.tags)) { cur.tags = old.tags; cur.modified = now; }
     cur.visits = old.visits;
     cur.lastVisit = old.lastVisit;
   });
@@ -626,8 +778,28 @@ function folderList() {
     .sort((a, b) => (a.pos - b.pos) || (a.id < b.id ? -1 : 1));
 }
 
+/* Wave 35: the tabs are the top-level folders; the rest of the tree
+   shows in the path strip under the controls (renderCrumbs). */
+function topFolders() {
+  return K.childrenOf(state.folders, "").map((id) => state.folders[id]);
+}
+
 function folderName(f) {
   return f.id === ROOT_FOLDER ? t("folder.unsorted") : f.name;
+}
+
+/* "Work › Docs": the folder's whole path, for chips and menus. */
+function folderPathName(id) {
+  return K.pathIds(state.folders, id).map((x) => folderName(state.folders[x])).join(" › ");
+}
+
+/* Tree order with depth, for pickers and selects. */
+function folderTree(skip) {
+  return K.treeList(state.folders, skip).map((x) => ({ f: state.folders[x.id], depth: x.depth }));
+}
+
+function subfolderIds(id) {
+  return Object.keys(state.folders).filter((x) => x !== id && K.isInside(state.folders, x, id));
 }
 
 function renderTabs() {
@@ -651,9 +823,11 @@ function renderTabs() {
   });
   wireTabDrop(allBtn, true);       // allow drop ON "All" (moves to Unsorted)
   tabs.appendChild(allBtn);
-  folderList().forEach((f) => {
+  const activeTop = uiActiveFolder === "ALL_VIEW" ? "" :
+    (K.pathIds(state.folders, uiActiveFolder)[0] || "");
+  topFolders().forEach((f) => {
     const b = document.createElement("button");
-    b.className = "tab" + (f.id === uiActiveFolder ? " active" : "");
+    b.className = "tab" + (f.id === activeTop ? " active" : "");
     b.setAttribute("role", "tab");
     b.textContent = folderName(f);
     b.dataset.folder = f.id;
@@ -670,8 +844,183 @@ function renderTabs() {
     });
     wireTabDrop(b);
     wireTabLongPress(b, f.id);
+    if (f.id !== ROOT_FOLDER) {
+      b.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        showTabContextMenu(f.id, e.clientX, e.clientY);
+      });
+    }
     tabs.appendChild(b);
   });
+}
+
+/* ---- Nested folders (wave 35): path strip, subfolder chips, moves ---- */
+
+let draggingFolderId = null;         // a folder chip or tab being dragged
+
+/* Under the controls while a folder (not All / Unsorted) is open:
+   the path (each part opens it; the first part is the tab), the
+   subfolders as chips and "New subfolder". Hidden while searching
+   or filtering, when the list mixes folders. */
+function renderCrumbs(filterMode) {
+  const nav = $("#crumbs");
+  if (!nav) return;
+  nav.textContent = "";
+  const fid = uiActiveFolder;
+  const show = !filterMode && fid !== "ALL_VIEW" && fid !== ROOT_FOLDER && !!state.folders[fid];
+  nav.hidden = !show;
+  if (!show) return;
+  const path = K.pathIds(state.folders, fid);
+  if (path.length > 1) {
+    const trail = document.createElement("span");
+    trail.className = "crumb-trail";
+    path.forEach((id, i) => {
+      if (i) {
+        const sep = document.createElement("span");
+        sep.className = "crumb-sep";
+        sep.textContent = "›";
+        sep.setAttribute("aria-hidden", "true");
+        trail.appendChild(sep);
+      }
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "crumb" + (id === fid ? " here" : "");
+      b.textContent = folderName(state.folders[id]);
+      if (id === fid) b.setAttribute("aria-current", "page");
+      b.addEventListener("click", () => openFolder(id));
+      wireFolderDrop(b, id);
+      trail.appendChild(b);
+    });
+    nav.appendChild(trail);
+  }
+  K.childrenOf(state.folders, fid).forEach((id) => {
+    const f = state.folders[id];
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "sub-chip";
+    b.draggable = true;
+    b.dataset.folder = id;
+    const ic = document.createElement("span");
+    ic.className = "sub-ic";
+    ic.setAttribute("aria-hidden", "true");
+    ic.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+    const nm = document.createElement("span");
+    nm.textContent = folderName(f);
+    const n = itemsInFolder(id).length;
+    const cnt = document.createElement("span");
+    cnt.className = "sub-cnt";
+    cnt.textContent = n ? String(n) : "";
+    b.append(ic, nm, cnt);
+    b.addEventListener("click", () => openFolder(id));
+    b.addEventListener("contextmenu", (e) => { e.preventDefault(); showTabContextMenu(id, e.clientX, e.clientY); });
+    b.addEventListener("dragstart", (e) => {
+      draggingFolderId = id;
+      b.classList.add("dragging");
+      e.dataTransfer.setData("text/plain", "folder:" + id);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    b.addEventListener("dragend", () => { draggingFolderId = null; b.classList.remove("dragging"); clearDropTargets(); });
+    wireFolderDrop(b, id);
+    wireTabLongPress(b, id);
+    nav.appendChild(b);
+  });
+  const add = document.createElement("button");
+  add.type = "button";
+  add.className = "sub-add";
+  add.title = t("folder.sub.add");
+  add.setAttribute("aria-label", t("folder.sub.add"));
+  add.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  const al = document.createElement("span");
+  al.textContent = t("folder.sub.add");
+  add.appendChild(al);
+  add.addEventListener("click", () => openFolderDialog("create", null, fid));
+  nav.appendChild(add);
+}
+
+function openFolder(id) {
+  if (!state.folders[id]) return;
+  if (selectionMode) exitSelectionMode();
+  uiActiveFolder = id;
+  uiQuery = "";
+  $("#search").value = "";
+  $("#search-clear").hidden = true;
+  uiBadFilter = false;
+  clearTagFilters();
+  renderTagFilter();
+  renderAll();
+}
+
+/* A crumb or chip takes a dragged bookmark (move it there) or a
+   dragged folder (nest it there). */
+function wireFolderDrop(el, fid) {
+  el.addEventListener("dragover", (e) => {
+    if (draggingId || (draggingFolderId && K.canMoveFolder(state.folders, draggingFolderId, fid))) {
+      e.preventDefault();
+      el.classList.add("drop-target");
+    }
+  });
+  el.addEventListener("dragleave", () => el.classList.remove("drop-target"));
+  el.addEventListener("drop", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.classList.remove("drop-target");
+    if (draggingId && state.items[draggingId]) { moveItem(draggingId, fid); return; }
+    if (draggingFolderId) moveFolder(draggingFolderId, fid);
+  });
+}
+
+/* Nest a folder (np = "" → top level, a tab). Siblings order by pos,
+   so it goes last among its new siblings. Undo puts it back. */
+function moveFolder(id, np) {
+  const f = state.folders[id];
+  if (!f || !K.canMoveFolder(state.folders, id, np)) return false;
+  if (K.parentOf(state.folders, id) === (np || "")) return false;
+  snapshotForUndo([], [id]);
+  if (np) f.parent = np; else delete f.parent;
+  f.pos = nextFolderPos();
+  f.modified = Date.now();
+  /* the name stays unique among its new siblings */
+  const nm = uniquifyFolderName(f.name, np || "", id);
+  if (nm !== f.name) f.name = nm;
+  save();
+  renderAll();
+  showToast(t("folder.moved", { f: folderName(f) }), {
+    action: { label: t("undo"), fn: undoFromSnapshot }
+  });
+  return true;
+}
+
+/* One picker for every "Move to…": the folder tree as indented rows.
+   mode "item": any folder; mode "folder": top level + every folder
+   the folder may go into (not itself, not below itself, not Unsorted). */
+function openPicker(mode, title, current, onPick, movingId) {
+  const dlg = $("#dlg-pick");
+  const list = $("#pick-list");
+  $("#pick-title").textContent = title;
+  list.textContent = "";
+  const row = (label, id, depth, disabled) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pick-row" + (id === current ? " here" : "");
+    b.style.paddingLeft = (12 + Math.min(depth, 8) * 16) + "px";
+    b.textContent = label;
+    b.disabled = !!disabled || id === current;
+    b.addEventListener("click", () => { dlg.close(); onPick(id); });
+    list.appendChild(b);
+  };
+  if (mode === "folder") row(t("pick.top"), "", 0, false);
+  folderTree(mode === "folder" ? movingId : null).forEach((x) => {
+    const off = mode === "folder" && !K.canMoveFolder(state.folders, movingId, x.f.id);
+    row(folderName(x.f), x.f.id, x.depth + (mode === "folder" ? 1 : 0), off);
+  });
+  dlg.showModal();
+}
+
+function pickFolderFor(id) {
+  const f = state.folders[id];
+  if (!f || id === ROOT_FOLDER) return;
+  openPicker("folder", t("pick.folder", { f: folderName(f) }),
+    K.parentOf(state.folders, id), (np) => moveFolder(id, np), id);
 }
 
 /* ---- Items ---- */
@@ -697,8 +1046,9 @@ function searchItems(q) {
       const fld = state.folders[it.folderId];
       return it.title.toLowerCase().includes(q) ||
              it.url.toLowerCase().includes(q) ||
+             (it.note || "").toLowerCase().includes(q) ||
              it.tags.some((tg) => tg.toLowerCase().includes(q)) ||
-             (fld ? folderName(fld).toLowerCase().includes(q) : false);
+             (fld ? folderPathName(fld.id).toLowerCase().includes(q) : false);
     })
     .sort((a, b) => (b.added - a.added) || (a.id < b.id ? -1 : 1));
 }
@@ -729,18 +1079,20 @@ function renderList() {
   const ul = $("#items");
   ul.textContent = "";
   const searchMode = uiQuery.trim().length > 0;
-  const filterMode = searchMode || uiTagFilters.size > 0;
+  const filterMode = searchMode || uiTagFilters.size > 0 || uiBadFilter;
+  renderCrumbs(filterMode);
 
   /* Base pool: search → everywhere; tag filters → everywhere
      (cross-folder); neither → active folder only. */
   let list;
   if (searchMode)      list = searchItems(uiQuery.trim());
-  else if (uiTagFilters.size) list =
+  else if (uiTagFilters.size || uiBadFilter) list =
       Object.keys(state.items)
         .map((id) => state.items[id])
         .sort((a, b) => (b.added - a.added) || (a.id < b.id ? -1 : 1));
   else                 list = itemsInFolder(uiActiveFolder);
   list = list.filter(itemMatchesTags);
+  if (uiBadFilter) list = list.filter(isBad);
   renderFavorites(filterMode);
 
   const total = Object.keys(state.items).length;
@@ -799,10 +1151,30 @@ function buildRow(it, searchMode) {
   const info = document.createElement("div");
   info.className = "info";
   const ttl = document.createElement("div");
-  ttl.className = "title" + (it.status === "dead" ? " dead" : "");
+  const chkS = it.chk ? it.chk.s : "";
+  ttl.className = "title" + (it.status === "dead" || chkS === "dead" ? " dead" : "");
   ttl.textContent = it.title;
   const meta = document.createElement("div");
   meta.className = "meta" + (it.tags.length ? " with-tags" : "");
+
+  /* Wave 35 marks: a broken / moved link, a saved readable copy. */
+  if (chkS === "dead" || chkS === "moved") {
+    const bd = document.createElement("span");
+    bd.className = "chk-badge " + chkS;
+    bd.textContent = t("chk.s." + chkS);
+    bd.title = chkS === "moved" && it.chk.to ? t("chk.to", { u: it.chk.to }) : t("chk.s." + chkS);
+    meta.appendChild(bd);
+  }
+  if (it.arch && it.arch.f) {
+    const ab = document.createElement("button");
+    ab.type = "button";
+    ab.className = "arc-badge";
+    ab.title = t("arc.read");
+    ab.setAttribute("aria-label", t("arc.read"));
+    ab.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg>';
+    ab.addEventListener("click", (e) => { e.stopPropagation(); if (!selectionMode) openReader(it.id); });
+    meta.appendChild(ab);
+  }
 
   const hostText = document.createElement("span");
   hostText.className = "host-text";
@@ -843,7 +1215,8 @@ function buildRow(it, searchMode) {
     const chip = document.createElement("span");
     chip.className = "src-chip";
     const fld = state.folders[it.folderId];
-    chip.textContent = fld ? folderName(fld) : "";
+    chip.textContent = fld ? folderPathName(fld.id) : "";
+    chip.title = chip.textContent;
     li.appendChild(chip);
   }
 
@@ -904,6 +1277,11 @@ function buildRow(it, searchMode) {
   if (!selectionMode) {
     wireRowDrag(li, it.id);
     wireLongPress(li, it.id);
+    /* Right-click = the same menu as a long-press (help promised it). */
+    li.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      showCtxMenu(it.id, e.clientX, e.clientY);
+    });
   }
 
   return li;
@@ -1111,8 +1489,19 @@ function toggleTagFilter(tg) {
 }
 
 function clearTagFilters() {
-  if (!uiTagFilters.size) return;
+  if (!uiTagFilters.size && !uiBadFilter) return;
   uiTagFilters.clear();
+  uiBadFilter = false;
+  renderTagFilter();
+  renderList();
+}
+
+/* Wave 35: broken / moved links (the last check said so). */
+let uiBadFilter = false;
+function isBad(it) { return !!it.chk && (it.chk.s === "dead" || it.chk.s === "moved"); }
+function setBadFilter(on) {
+  uiBadFilter = !!on;
+  if (selectionMode) exitSelectionMode();
   renderTagFilter();
   renderList();
 }
@@ -1226,34 +1615,9 @@ function addManyTarget(p) {
 function bulkMoveMenu() {
   if (!selectedIds.size) return;
   closeCtxMenu();
-  const others = folderList().filter((f) => {
-    /* only folders where at least one selected item isn't there */
-    return Array.from(selectedIds).some(
-      (id) => state.items[id] && state.items[id].folderId !== f.id);
-  });
-  if (!others.length) { transientNote(t("sel.none")); return; }
-
-  const m = document.createElement("div");
-  m.id = "ctx-menu";
-  others.forEach((f) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = folderName(f);
-    b.addEventListener("click", () => {
-      closeCtxMenu();
-      bulkMove(f.id);
-    });
-    m.appendChild(b);
-  });
-  document.body.appendChild(m);
-  const btn = $("#sel-move").getBoundingClientRect();
-  const r = m.getBoundingClientRect();
-  m.style.left = Math.max(8,
-    Math.min(btn.left, innerWidth - r.width - 8)) + "px";
-  m.style.top = Math.max(8, btn.top - r.height - 8) + "px";
-  setTimeout(() => {
-    document.addEventListener("click", closeCtxMenu, true);
-  }, 0);
+  /* Wave 35: the folder tree picker (nested folders). */
+  const cur = uiActiveFolder === "ALL_VIEW" ? null : uiActiveFolder;
+  openPicker("item", t("pick.item"), cur, (fid) => bulkMove(fid));
 }
 
 function bulkMove(folderId) {
@@ -1272,8 +1636,7 @@ function bulkMove(folderId) {
   save();
   exitSelectionMode();
   renderAll();
-  const fld = state.folders[folderId];
-  showToast(t("sel.moved", { n: n }) + " — " + folderName(fld), {
+  showToast(t("sel.moved", { n: n }) + " — " + folderPathName(folderId), {
     action: { label: t("undo"), fn: undoFromSnapshot }
   });
 }
@@ -1365,7 +1728,8 @@ function showTabContextMenu(id, x, y) {
   const f = state.folders[id];
   if (!f || f.id === ROOT_FOLDER) return;
 
-  const ordered = folderList();
+  const ordered = K.childrenOf(state.folders, K.parentOf(state.folders, id))
+    .map((x) => state.folders[x]);
   const idx = ordered.findIndex((fd) => fd.id === id);
 
   const m = document.createElement("div");
@@ -1386,6 +1750,8 @@ function showTabContextMenu(id, x, y) {
   if (idx < ordered.length - 1) {
     row(t("tab.mover"), () => swapFolders(id, ordered[idx + 1].id));
   }
+  row(t("tab.into"), () => pickFolderFor(id));
+  row(t("tab.sub"), () => openFolderDialog("create", null, id));
 
   document.body.appendChild(m);
   const r = m.getBoundingClientRect();
@@ -1409,6 +1775,7 @@ function swapFolders(aId, bId) {
   b.modified = Date.now();
   save();
   renderTabs();
+  renderList();
 }
 
 function loadSortPreference() {
@@ -1443,8 +1810,24 @@ function sortItems(list) {
 function renderTagFilter() {
   const row = $("#tag-filter");
   row.textContent = "";
-  row.hidden = uiTagFilters.size === 0;
-  if (uiTagFilters.size === 0) return;
+  row.hidden = uiTagFilters.size === 0 && !uiBadFilter;
+  if (row.hidden) return;
+
+  /* Wave 35: "Broken and moved links" is a filter like a tag. */
+  if (uiBadFilter) {
+    const chip = document.createElement("span");
+    chip.className = "ftag bad";
+    const label = document.createElement("span");
+    label.textContent = t("chk.filter");
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "x";
+    x.setAttribute("aria-label", t("search.clear"));
+    x.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    x.addEventListener("click", () => setBadFilter(false));
+    chip.append(label, x);
+    row.appendChild(chip);
+  }
 
   uiTagFilters.forEach((tg) => {
     const chip = document.createElement("span");
@@ -1528,18 +1911,9 @@ function showTagsPanel() {
    quick-add would have blocked as a duplicate IS found here too.
    Each group is sorted oldest-first, so g[0] is the original. */
 function findDupeGroups() {
-  const byNorm = {};
-  Object.keys(state.items).forEach((id) => {
-    const it = state.items[id];
-    const key = dupeKey(it.url);
-    (byNorm[key] = byNorm[key] || []).push(it);
-  });
-  return Object.keys(byNorm)
-    .filter((k) => byNorm[k].length > 1)
-    .map((k) => byNorm[k].sort((a, b) =>
-      (a.added - b.added) || (a.id < b.id ? -1 : 1)))
-    .sort((g1, g2) => (g2.length - g1.length) ||
-      (g1[0].id < g2[0].id ? -1 : 1));
+  /* Wave 35: core.dupeKey also ignores tracking parameters, the
+     default port and the order of the query. */
+  return K.dupeGroups(state.items);
 }
 
 function closeDupesPanel() {
@@ -1622,7 +1996,7 @@ function showDupesPanel() {
         const sub = document.createElement("span");
         sub.className = "dupe-sub";
         const fld = state.folders[it.folderId];
-        sub.textContent = (fld ? folderName(fld) : "?") +
+        sub.textContent = (fld ? folderPathName(fld.id) : "?") +
           " · " + relTime(it.added);
         row.append(lbl, sub);
         blk.appendChild(row);
@@ -1653,19 +2027,28 @@ function showDupesPanel() {
    so single and bulk purges share one source of truth. */
 function purgeGroupCore(g) {
   if (!g || g.length < 2) return 0;
-  const keep = g[0];                   // oldest — the original
+  const keep = state.items[g[0].id];   // oldest — the original
+  if (!keep) return 0;
   const now = Date.now();
-  let n = 0;
-  g.forEach((it) => {
-    if (it.id === keep.id) return;
-    keep.visits += it.visits;
-    keep.lastVisit = Math.max(keep.lastVisit || 0, it.lastVisit || 0);
+  const others = g.slice(1).map((it) => state.items[it.id]).filter(Boolean);
+  if (!others.length) return 0;
+  /* Wave 35 merge: the keeper gains every tag, every other
+     description, the star, the visits, the newest check and a saved
+     copy it lacked (core.mergeInto). */
+  const m = K.mergeInto(keep, others);
+  keep.tags = m.tags;
+  keep.note = m.note;
+  keep.fav = m.fav;
+  keep.visits = m.visits;
+  keep.lastVisit = m.lastVisit;
+  if (m.chk) keep.chk = m.chk;
+  if (m.arch) keep.arch = m.arch;
+  others.forEach((it) => {
     delete state.items[it.id];
     state.deleted[it.id] = now;         // tombstones — sync-safe
-    n++;
   });
-  if (n) keep.modified = now;
-  return n;
+  keep.modified = now;
+  return others.length;
 }
 
 /* Single-group purge (per-group button path). */
@@ -1720,34 +2103,19 @@ function wireSearch() {
 }
 
 /* Normalize: trim, drop scheme-less input onto https, strip
-   trailing slash so http(s)/site.tld match the stored twin. */
-function normalizeUrl(raw) {
-  let u = String(raw || "").trim();
-  if (!u) return null;
-  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u.replace(/^\/+/, "");
-  try {
-    const url = new URL(u);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-    return url.href.replace(/\/$/, "");
-  } catch (e) { return null; }
-}
+   trailing slash so http(s)/site.tld match the stored twin.
+   (Shared with the imports: core.normUrl.) */
+function normalizeUrl(raw) { return K.normUrl(raw); }
 
 /* Canonical equality key — one rule for BOTH the quick-add/edit
    duplicate guard AND the duplicate finder, so the two can never
-   disagree again:
-   - scheme-insensitive (http ≡ https)
+   disagree again (core.dupeKey):
+   - scheme-insensitive (http ≡ https), default port ignored
    - host lowercased, "www." dropped
    - fragment (#…) ignored, trailing slashes stripped
-   - query string KEPT (different query = different page) */
-function dupeKey(raw) {
-  let u = String(raw || "").trim();
-  u = u.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");   // scheme
-  u = u.replace(/#.*$/, "");                        // fragment
-  u = u.replace(/\/+$/, "");                        // trailing slashes
-  const m = u.match(/^([^\/?#]*)([\/?#].*)?$/);
-  const host = (m[1] || "").toLowerCase().replace(/^www\./, "");
-  return host + (m[2] || "");
-}
+   - tracking parameters (utm_*, fbclid, gclid…) dropped, the rest
+     of the query KEPT in sorted order (different query = different page) */
+function dupeKey(raw) { return K.dupeKey(raw); }
 
 function findByUrl(normalized) {
   const target = dupeKey(normalized);
@@ -1773,7 +2141,7 @@ function quickAdd() {
   if (existing) {
     flashDuplicate();
     const fld = state.folders[existing.folderId];
-    transientNote(t("added.dup", { f: folderName(fld) }));
+    transientNote(t("added.dup", { f: fld ? folderPathName(fld.id) : "" }));
     return;
   }
 
@@ -1813,7 +2181,7 @@ function moveItem(id, folderId) {
   save();
   renderAll();
   const fld = state.folders[folderId];
-  showToast(t("moved", { f: folderName(fld) }), {
+  showToast(t("moved", { f: folderPathName(folderId) }), {
     action: { label: t("undo"), fn: undoFromSnapshot }
   });
 }
@@ -1834,12 +2202,23 @@ function wireRowDrag(li, id) {
 
 function wireTabDrop(tab, isAllView = false) {
   /* Item drop — moves bookmark to folder. */
+  /* A subfolder chip dropped on a tab nests there (on All: back to
+     the top level). Tab onto tab stays a reorder (document handler). */
+  const chipDrag = () => draggingFolderId && !document.querySelector(".tab.dragging");
+  const chipTarget = () => isAllView ? "" : tab.dataset.folder;
   tab.addEventListener("dragover", (e) => {
-    if (draggingId) { e.preventDefault(); tab.classList.add("drop-target"); }
+    if (draggingId || (chipDrag() && K.canMoveFolder(state.folders, draggingFolderId, chipTarget()))) {
+      e.preventDefault(); tab.classList.add("drop-target");
+    }
   });
   tab.addEventListener("dragleave", () => tab.classList.remove("drop-target"));
   tab.addEventListener("drop", (e) => {
     e.preventDefault();
+    if (chipDrag()) {
+      tab.classList.remove("drop-target");
+      moveFolder(draggingFolderId, chipTarget());
+      return;
+    }
     const id = draggingId || e.dataTransfer.getData("text/plain");
     tab.classList.remove("drop-target");
     if (!id) return;
@@ -1858,11 +2237,13 @@ function wireTabDrop(tab, isAllView = false) {
   tab.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("tab") && !e.target.classList.contains("dragging")) {
       e.target.classList.add("dragging");
+      if (tab.dataset.folder && tab.dataset.folder !== "ALL") draggingFolderId = tab.dataset.folder;
       e.dataTransfer.setData("text/plain", "tab-reorder:" + tab.dataset.folder);
       e.dataTransfer.effectAllowed = "move";
     }
   });
   tab.addEventListener("dragend", () => {
+    draggingFolderId = null;
     $$(".tab.dragging").forEach((t) => t.classList.remove("dragging"));
     clearDropTargets();
   });
@@ -1924,14 +2305,15 @@ function showCtxMenu(id, x, y) {
   row(t("ctx.edit"), () => openItemDialog(id));
   if (shareApi()) row(t("ctx.share"), () => shareItems([id]));
   row(it.fav ? t("fav.remove") : t("fav.add"), () => toggleFav(id));
-  const others = folderList().filter((f) => f.id !== it.folderId);
-  if (others.length) {
-    const sep = document.createElement("div");
-    sep.className = "sep";
-    m.appendChild(sep);
-    others.forEach((f) =>
-      row(t("ctx.move") + " " + folderName(f), () => moveItem(id, f.id)));
-  }
+  const sep = document.createElement("div");
+  sep.className = "sep";
+  m.appendChild(sep);
+  /* Wave 35: saved readable copy, link check, the folder picker. */
+  if (it.arch && it.arch.f) row(t("arc.read"), () => openReader(id));
+  else row(t("arc.save"), () => openReader(id, true));
+  row(t("chk.one"), () => runCheck([id]));
+  if (it.chk && it.chk.s === "moved" && it.chk.to) row(t("chk.use"), () => useNewAddress(id));
+  row(t("ctx.move"), () => openPicker("item", t("pick.item"), it.folderId, (fid) => moveItem(id, fid)));
   const sep2 = document.createElement("div");
   sep2.className = "sep";
   m.appendChild(sep2);
@@ -2121,7 +2503,49 @@ function openItemDialog(id) {
   $("#f-tags-ac").hidden = true;
   fillFolderSelect(it.folderId);
   $("#f-qr").hidden = !shellOpenAt();
+  renderDlgExtras(it);
   $("#dlg-item").showModal();
+}
+
+/* Wave 35: the last link check and the saved copy, under the form. */
+function renderDlgExtras(it) {
+  const box = $("#f-extras");
+  if (!box) return;
+  box.textContent = "";
+  box.hidden = !it;
+  if (!it) return;
+  const line = document.createElement("div");
+  line.className = "x-line";
+  if (it.chk) {
+    const s = document.createElement("span");
+    s.className = "x-chk " + it.chk.s;
+    s.textContent = t("chk.line", {
+      s: t("chk.s." + it.chk.s) + (it.chk.code ? " (" + it.chk.code + ")" : ""),
+      when: relTime(it.chk.at)
+    });
+    line.appendChild(s);
+    if (it.chk.s === "moved" && it.chk.to) {
+      const to = document.createElement("span");
+      to.className = "x-to";
+      to.textContent = t("chk.to", { u: it.chk.to });
+      line.appendChild(to);
+    }
+  }
+  box.appendChild(line);
+  const acts = document.createElement("div");
+  acts.className = "x-acts";
+  const btn = (label, fn) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.addEventListener("click", () => { editingItemId = null; $("#dlg-item").close(); fn(); });
+    acts.appendChild(b);
+  };
+  if (it.chk && it.chk.s === "moved" && it.chk.to) btn(t("chk.use"), () => useNewAddress(it.id));
+  btn(t("chk.one"), () => runCheck([it.id]));
+  if (it.arch && it.arch.f) btn(t("arc.read"), () => openReader(it.id));
+  else btn(t("arc.save"), () => openReader(it.id, true));
+  box.appendChild(acts);
 }
 
 /* "Send to orOS": the shell hands over { url, title } from a
@@ -2134,7 +2558,7 @@ function openAddDialog(a) {
   if (existing) {
     openItemDialog(existing.id);
     const fld = state.folders[existing.folderId];
-    transientNote(t("added.dup", { f: folderName(fld) }));
+    transientNote(t("added.dup", { f: fld ? folderPathName(fld.id) : "" }));
     return;
   }
   const folderId = uiActiveFolder === "ALL_VIEW" || !state.folders[uiActiveFolder]
@@ -2152,6 +2576,7 @@ function openAddDialog(a) {
   $("#f-tags-input").value = "";
   $("#f-tags-ac").hidden = true;
   fillFolderSelect(folderId);
+  renderDlgExtras(null);
   $("#dlg-item h3").textContent = t("item.new");
   $("#f-delete").hidden = true;
   $("#dlg-item").showModal();
@@ -2160,11 +2585,12 @@ function openAddDialog(a) {
 function fillFolderSelect(selectedId) {
   const sel = $("#f-folder");
   sel.textContent = "";
-  folderList().forEach((f) => {
+  /* Wave 35: the whole tree in tree order, each with its path. */
+  folderTree().forEach((x) => {
     const o = document.createElement("option");
-    o.value = f.id;
-    o.textContent = folderName(f);
-    if (f.id === selectedId) o.selected = true;
+    o.value = x.f.id;
+    o.textContent = folderPathName(x.f.id);
+    if (x.f.id === selectedId) o.selected = true;
     sel.appendChild(o);
   });
 }
@@ -2261,13 +2687,14 @@ function wireSendDialog() {
   });
 }
 
-/* ===== 8. FOLDER DIALOG (create / rename / delete) ===== */
+/* ===== 8. FOLDER DIALOG (create / rename / move / delete) ===== */
 
 let folderDlgMode = "edit";
 let folderDlgId = null;
 let folderArmDelete = false;
 
-function openFolderDialog(mode, folderId) {
+/* parentId: where a new folder goes ("" or absent = a tab). */
+function openFolderDialog(mode, folderId, parentId) {
   folderDlgMode = mode;
   folderDlgId = folderId || null;
   folderArmDelete = false;
@@ -2282,8 +2709,31 @@ function openFolderDialog(mode, folderId) {
                              : state.folders[folderId].name;
   }
   $("#l-delete").hidden = mode !== "edit" || isRoot;
+  /* Wave 35: "Inside" — top level or any folder it may go into. */
+  const sel = $("#l-parent");
+  sel.textContent = "";
+  const cur = mode === "create" ? (state.folders[parentId] && parentId !== ROOT_FOLDER ? parentId : "")
+                                : K.parentOf(state.folders, folderId);
+  const opt = (v, label) => {
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = label;
+    if (v === cur) o.selected = true;
+    sel.appendChild(o);
+  };
+  opt("", t("folder.top"));
+  folderTree(mode === "edit" ? folderId : null).forEach((x) => {
+    if (x.f.id === ROOT_FOLDER) return;
+    if (mode === "edit" && !K.canMoveFolder(state.folders, folderId, x.f.id)) return;
+    opt(x.f.id, "   ".repeat(Math.min(x.depth + 1, 8)) + folderName(x.f));
+  });
+  $("#l-parent-wrap").hidden = isRoot;
   const n = mode === "edit" ? itemsInFolder(folderId).length : 0;
-  $("#l-count").textContent = t("folder.count", { n: n });
+  const subs = mode === "edit" ? K.childrenOf(state.folders, folderId).length : 0;
+  $("#l-count").textContent = t("folder.count", { n: n }) +
+    (subs ? " · " + t("folder.subs", { n: subs }) : "");
+  $("#dlg-folder h3").textContent = mode === "create"
+    ? (cur ? t("folder.sub.add") : t("tab.add")) : t("folder.settings.dlg");
   updateFolderDeleteLabel();
   $("#dlg-folder").showModal();
 }
@@ -2294,8 +2744,12 @@ function updateFolderDeleteLabel() {
     : t("folder.delete");
 }
 
-function uniquifyFolderName(name) {
-  const names = folderList().map((f) => f.name.toLowerCase());
+/* Names are unique among siblings (wave 35: nested folders may share
+   a name in different places). self = the folder being renamed. */
+function uniquifyFolderName(name, parent, self) {
+  const names = K.childrenOf(state.folders, parent || "")
+    .filter((id) => id !== self)
+    .map((id) => folderName(state.folders[id]).toLowerCase());
   if (!names.includes(name.toLowerCase())) return name;
   let i = 2;
   while (names.includes((name + " " + i).toLowerCase())) i++;
@@ -2307,10 +2761,13 @@ function nextFolderPos() {
 }
 
 function submitFolderDialog(name) {
+  const np = $("#l-parent").value || "";
   if (folderDlgMode === "create") {
+    const parent = state.folders[np] && np !== ROOT_FOLDER ? np : "";
     const f = sanitizeFolder({
-      name: uniquifyFolderName(name),
+      name: uniquifyFolderName(name, parent),
       pos: nextFolderPos(),
+      parent: parent || undefined,
       modified: Date.now()
     });
     if (!f) return;
@@ -2318,7 +2775,16 @@ function submitFolderDialog(name) {
     uiActiveFolder = f.id;
   } else if (folderDlgId && folderDlgId !== ROOT_FOLDER) {
     const f = state.folders[folderDlgId];
-    const newName = uniquifyFolderName(name);
+    if (!f) return;
+    const oldParent = K.parentOf(state.folders, folderDlgId);
+    const parent = np !== oldParent && K.canMoveFolder(state.folders, folderDlgId, np) ? np : oldParent;
+    if (parent !== oldParent) {
+      snapshotForUndo([], [folderDlgId]);
+      if (parent) f.parent = parent; else delete f.parent;
+      f.pos = nextFolderPos();
+      f.modified = Date.now();
+    }
+    const newName = uniquifyFolderName(name, parent, folderDlgId);
     if (f.name !== newName) {
       f.name = newName;
       f.modified = Date.now();
@@ -2328,21 +2794,32 @@ function submitFolderDialog(name) {
   renderAll();
 }
 
+/* What was inside moves up one level: subfolders to the deleted
+   folder's parent (a tab when it was one), bookmarks to the parent
+   folder, or to Unsorted from a top folder — never lost. Undo puts
+   the folder, its bookmarks and its subfolders back. */
 function deleteFolderNow() {
-  if (!folderDlgId || folderDlgId === ROOT_FOLDER) return;
+  if (!folderDlgId || folderDlgId === ROOT_FOLDER || !state.folders[folderDlgId]) return;
+  const up = K.parentOf(state.folders, folderDlgId);
+  const kids = K.childrenOf(state.folders, folderDlgId);
   snapshotForUndo(
     Object.keys(state.items).filter((id) => state.items[id].folderId === folderDlgId),
-    [folderDlgId]);
-  /* Orphans fall back to Unsorted — never lost. */
+    [folderDlgId].concat(kids));
+  const now = Date.now();
   Object.keys(state.items).forEach((id) => {
     if (state.items[id].folderId === folderDlgId) {
-      state.items[id].folderId = ROOT_FOLDER;
-      state.items[id].modified = Date.now();
+      state.items[id].folderId = up || ROOT_FOLDER;
+      state.items[id].modified = now;
     }
   });
+  kids.forEach((id) => {
+    const c = state.folders[id];
+    if (up) c.parent = up; else delete c.parent;
+    c.modified = now;
+  });
   delete state.folders[folderDlgId];
-  state.deleted[folderDlgId] = Date.now();
-  uiActiveFolder = ROOT_FOLDER;
+  state.deleted[folderDlgId] = now;
+  uiActiveFolder = up || ROOT_FOLDER;
   $("#dlg-folder").close();
   save();
   renderAll();
@@ -2351,90 +2828,78 @@ function deleteFolderNow() {
   });
 }
 
-/* ===== 9. NETSCAPE IMPORT / EXPORT ===== */
+/* ===== 9. IMPORT / EXPORT (Netscape HTML, Pocket, Raindrop) ===== */
 
-function parseNetscape(htmlText) {
-  /* Token-level scan of the RAW text, not a DOM walk:
-     DOMParser mangles the <DT><H3>…<DL> soup (browsers keep
-     DLs nested inside earlier DTs), which made the old walker
-     skip every subtree after the first folder. The text itself
-     from Chrome/Firefox exports is structurally clean, so a
-     tag scan with depth tracking is exact. */
-  const out = [];
-  const stack = [];               // enclosing folder names (outer → inner)
-  let pendingFolder = null;       // last <H3>, adopted by the next <DL>
-
-  /* Entity decoding via detached textarea (DOM-native, no deps). */
-  const dec = document.createElement("textarea");
-  function decodeText(s) {
-    dec.innerHTML = String(s == null ? "" : s);
-    return dec.value;
-  }
-  const stripTags = (s) => s.replace(/<[^>]+>/g, "").trim();
-
-  const RE = /<dl\b[^>]*>|<\/dl\s*>|<h3\b[^>]*>([\s\S]*?)<\/h3\s*>|<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi;
-  let m;
-  while ((m = RE.exec(htmlText))) {
-    const tok = m[0];
-    if (/^<dl\b/i.test(tok)) {
-      stack.push(pendingFolder);      // null at root depth
-      pendingFolder = null;
-    } else if (/^<\/dl/i.test(tok)) {
-      stack.pop();
-    } else if (m[1] !== undefined) {              // <H3>…</H3>
-      const name = stripTags(decodeText(m[1]));
-      pendingFolder = name || null;
-    } else {                                      // <A …>…</A>
-      const attrs = m[2] || "";
-      const hm = attrs.match(/href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
-      const href = hm ? (hm[1] || hm[2] || hm[3]) : "";
-      if (href) {
-        out.push({
-          url: href,
-          title: stripTags(decodeText(m[3])),
-          path: stack.filter(Boolean)
-        });
-      }
-    }
-  }
-  return out;
+/* Wave 35: the parsers live in core.js (Node-tested). One button
+   reads a browser / Linkding / Pinboard / Raindrop bookmarks HTML,
+   Pocket's HTML or CSV export, Raindrop's CSV or any CSV with a url
+   column. Folders nest by path; tags, descriptions, favourites and
+   the created date come along; links already here are skipped. */
+function importNames() {
+  return { pocket: "Pocket", archive: LANG === "el" ? "Αρχείο" : "Archive" };
 }
 
-function applyImport(entries) {
-  let newItems = 0, newFolders = 0;
-  const nameToId = {};
-  folderList().forEach((f) => { nameToId[f.name.toLowerCase()] = f.id; });
-  let nextPos = nextFolderPos();
+/* The folder at path [a, b, …] under the top level: an existing
+   folder of that name among the siblings (any case), else a new one.
+   A first part named Unsorted is the Unsorted folder itself. */
+function importFolder(path, made, back, now) {
+  let parent = "", fid = ROOT_FOLDER;
+  const parts = (path || []).map((p) => sanText(p, 64)).filter(Boolean);
+  parts.forEach((name, i) => {
+    const low = name.toLowerCase();
+    if (i === 0 && (low === "unsorted" || low === t("folder.unsorted").toLowerCase())) return;
+    const key = parent + "\n" + low;
+    let id = made[key];
+    if (!id) {
+      id = K.childrenOf(state.folders, parent).find((x) =>
+        x !== ROOT_FOLDER && state.folders[x].name.toLowerCase() === low) || "";
+    }
+    if (!id) {
+      const f = sanitizeFolder({ name: name, pos: nextFolderPos(), parent: parent || undefined, modified: now });
+      if (!f) return;
+      state.folders[f.id] = f;
+      back.folders.push(f.id);
+      id = f.id;
+    }
+    made[key] = id;
+    parent = id;
+    fid = id;
+  });
+  return fid;
+}
 
+function applyImport(res) {
+  const entries = (res && res.entries) || [];
+  const now = Date.now();
+  const back = { items: [], folders: [], upd: [] };
+  const have = new Set(Object.keys(state.items).map((id) => dupeKey(state.items[id].url)));
+  const made = {};
   entries.forEach((entry) => {
-    let fid = ROOT_FOLDER;
-    (entry.path || []).forEach((pn) => {
-      const key = pn.toLowerCase();
-      if (!nameToId[key]) {
-        const f = sanitizeFolder({ name: pn, pos: nextPos++, modified: Date.now() });
-        if (f) {
-          state.folders[f.id] = f;
-          nameToId[key] = f.id;
-          newFolders++;
-        }
-      }
-      if (nameToId[key]) fid = nameToId[key];
-    });
-
     const norm = normalizeUrl(entry.url);
-    if (!norm || findByUrl(norm)) return;   // dedup against existing
-    const it = sanitizeItem({ url: norm, title: entry.title, folderId: fid });
+    if (!norm) return;
+    const key = dupeKey(norm);
+    if (have.has(key)) return;                 // dedup against existing (and the file itself)
+    const fid = importFolder(entry.path, made, back, now);
+    const it = sanitizeItem({
+      url: norm, title: entry.title, note: entry.note, tags: entry.tags, fav: entry.fav === true,
+      folderId: fid, added: entry.added || now, modified: now
+    });
     if (!it) return;
     state.items[it.id] = it;
-    newItems++;
+    have.add(key);
+    back.items.push(it.id);
   });
-
+  if (!back.items.length) {
+    transientNote(entries.length ? t("import.have", { n: entries.length }) : t("import.none"));
+    return;
+  }
   save();
   renderAll();
-  transientNote(newItems || newFolders
-    ? t("import.picked", { n: newItems, f: newFolders })
-    : t("import.none"));
+  showToast(t("import.picked", { n: back.items.length, f: back.folders.length }), {
+    action: { label: t("undo"), fn: () => platformUndo(back) }
+  });
 }
+
 
 /* Import from Raindrop.io (integrations wave 6C, platforms.js).
    The plan comes from links/bookmarks.js; this is its one write.
@@ -2493,10 +2958,13 @@ function platformUndo(back) {
     Object.keys(u.old).forEach((f) => { it[f] = u.old[f]; });
     it.modified = now;
   });
-  /* A folder that came in goes again only while it is empty. */
-  back.folders.forEach((id) => {
+  /* A folder that came in goes again only while it is empty (no
+     bookmark, no subfolder); the newest first, so a nested import
+     empties its inner folders before their parents. */
+  back.folders.slice().reverse().forEach((id) => {
     if (!state.folders[id]) return;
     if (Object.keys(state.items).some((k) => state.items[k].folderId === id)) return;
+    if (K.childrenOf(state.folders, id).length) return;
     delete state.folders[id];
     state.deleted[id] = now;
     if (uiActiveFolder === id) uiActiveFolder = ROOT_FOLDER;
@@ -2517,32 +2985,24 @@ function wirePlatforms() {
 }
 
 function exportNetscape() {
-  const lines = [
-    "<!DOCTYPE NETSCAPE-Bookmark-file-1>",
-    "<!-- This is an automatically generated file. It will be read and overwritten. DO NOT EDIT! -->",
-    '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">',
-    "<TITLE>Bookmarks</TITLE>",
-    "<H1>Bookmarks</H1>",
-    "<DL><p>"
-  ];
-
-  folderList().forEach((f) => {
-    const items = itemsInFolder(f.id);
-    if (!items.length) return;
-    lines.push("    <DT><H3>" + esc(folderName(f)) + "</H3>");
-    lines.push("    <DL><p>");
-    items.forEach((it) => {
-      lines.push("        <DT><A HREF=\"" + esc(it.url) +
-        "\" ADD_DATE=\"" + Math.floor(it.added / 1000) + "\">" +
-        esc(it.title) + "</A>");
-    });
-    lines.push("    </DL><p>");
-  });
-  lines.push("</DL><p>");
-
-  const blob = new Blob([lines.join("\n")], { type: "text/html" });
+  /* Wave 35: the whole tree as nested <H3>/<DL>, tags in TAGS, the
+     description in <DD>, ADD_DATE / LAST_MODIFIED (core.buildNetscape).
+     Unsorted bookmarks sit at the top of the file, so an import puts
+     them back in Unsorted. Branches without a bookmark are left out. */
+  const node = (fid) => {
+    const kids = K.childrenOf(state.folders, fid).filter((x) => x !== ROOT_FOLDER).map(node).filter(Boolean);
+    const items = itemsInFolder(fid);
+    if (!kids.length && !items.length) return null;
+    return { name: folderName(state.folders[fid]), items: items, folders: kids };
+  };
+  const tree = {
+    items: itemsInFolder(ROOT_FOLDER),
+    folders: K.childrenOf(state.folders, "").filter((x) => x !== ROOT_FOLDER).map(node).filter(Boolean)
+  };
+  const built = K.buildNetscape(tree);
+  const blob = new Blob([built.text], { type: "text/html" });
   const done = () =>
-    transientNote(t("exported", { n: Object.keys(state.items).length }));
+    transientNote(t("exported", { n: built.count }));
   const dlg = dialogHost();
 
   if (dlg && typeof dlg.saveFile === "function") {
@@ -2566,6 +3026,443 @@ function exportNetscape() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
   done();
+}
+
+/* ===== 9b. SAVED COPY, LINK CHECK, TIDY-UP MENU (wave 35) ===== */
+
+/* The Reader's network and article pipeline, loaded on first use
+   (relay/ is not touched): feeds/fetch.js (straight from the browser,
+   else the relay's "web" op), feeds/extract.js (the main text of a
+   page, parsed inert), feeds/sanitize.js (allow-list rebuild). */
+const READER_LIBS = ["../feeds/core.js", "../feeds/fetch.js", "../feeds/extract.js", "../feeds/sanitize.js"];
+let readerLibsP = null;
+function loadReaderLibs() {
+  if (window.orosFeedsCore && window.orosFeedsFetch && window.orosFeedsExtract && window.orosFeedsSanitize) {
+    return Promise.resolve();
+  }
+  if (readerLibsP) return readerLibsP;
+  readerLibsP = READER_LIBS.reduce((p, src) => p.then(() => new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src + "?v=" + SCRIPT_V;
+    s.onload = () => res();
+    s.onerror = () => rej(new Error("load"));
+    document.head.appendChild(s);
+  })), Promise.resolve()).catch((e) => { readerLibsP = null; throw e; });
+  return readerLibsP;
+}
+
+/* The Reader's own relay setting (read only), else Mail's relay
+   (fetch.js falls back to it by itself). */
+function relayOpt() {
+  try {
+    const d = JSON.parse(localStorage.getItem("oros-feeds-data") || "null");
+    const v = d && d.set && d.set.relay && d.set.relay.v;
+    if (typeof v === "string" && v) return v;
+  } catch (e) {}
+  return "";
+}
+
+function diskApi() {
+  try {
+    const p = window.parent && window.parent !== window ? window.parent.orosFS : null;
+    return p && typeof p.writeText === "function" && typeof p.readText === "function" ? p : null;
+  } catch (e) { return null; }
+}
+
+function whyText(e) {
+  const c = e && (e.code || e.message) || "";
+  if (c === "http") return t("why.http", { c: e.extra || "?" });
+  const k = "why." + c;
+  return STR.en[k] ? t(k) : String(c || "?");
+}
+
+function arcImagesPref() {
+  try { return localStorage.getItem("oros-bookmarks-arcimg") === "1"; } catch (e) { return false; }
+}
+function setArcImagesPref(on) {
+  try { localStorage.setItem("oros-bookmarks-arcimg", on ? "1" : "0"); } catch (e) {}
+}
+
+function bytesToB64(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
+}
+/* Only real raster pictures become data: URLs (the type comes from
+   the bytes, not from the server). */
+function sniffImage(b) {
+  if (!b || b.length < 12) return "";
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+      b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  return "";
+}
+
+/* "Keep pictures": each picture the site lets the browser read
+   (CORS) goes inside the copy, so it reads offline; at most 30
+   pictures, 1.5 MB each, 8 MB in all. The others stay links that
+   show only online. The relay never carries pictures. */
+function inlineImages(html) {
+  const F = window.orosFeedsFetch;
+  const doc = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html");
+  const imgs = Array.from(doc.querySelectorAll("img[src]"))
+    .filter((im) => /^https?:/i.test(im.getAttribute("src"))).slice(0, 30);
+  let total = 0;
+  return imgs.reduce((p, im) => p.then(() => {
+    if (total > 8e6) return;
+    return F.direct(im.getAttribute("src"), { timeout: 15000 }).then((r) => {
+      const b = r && r.status >= 200 && r.status < 300 ? r.bytes : null;
+      const type = sniffImage(b);
+      if (!type || b.length > 1.5e6 || total + b.length > 8e6) return;
+      total += b.length;
+      im.setAttribute("src", "data:" + type + ";base64," + bytesToB64(b));
+    }, () => {});
+  }), Promise.resolve()).then(() => doc.body.firstChild.innerHTML);
+}
+
+/* Fetch the page (Reader pipeline), keep the article, sanitise it,
+   write one HTML file to the orOS disk. The slice only learns the
+   file name and when (item.arch, a side record). */
+function saveCopy(id, withImages) {
+  const it = state.items[id];
+  const fs = diskApi();
+  if (!it) return Promise.reject({ code: "gone" });
+  if (!fs) return Promise.reject({ code: "nodisk" });
+  if (!navigator.onLine) return Promise.reject({ code: "offline" });
+  const url = it.url;
+  let ex = null;
+  return loadReaderLibs().then(() =>
+    window.orosFeedsFetch.fetchOne(url, { relay: relayOpt, timeout: 20000 })
+  ).then((r) => {
+    if (r.status < 200 || r.status >= 300 || !r.text) throw { code: "http", extra: r.status };
+    ex = window.orosFeedsExtract(r.text, r.finalUrl || url);
+    if (!ex) throw { code: "nofull" };
+    const clean = window.orosFeedsSanitize(ex.html, { base: ex.base || r.finalUrl || url, images: withImages });
+    return withImages ? inlineImages(clean.html) : clean.html;
+  }).then((html) => {
+    const cur = state.items[id];
+    if (!cur) throw { code: "gone" };
+    const at = Date.now();
+    const name = K.archiveName(cur);
+    const doc = K.archiveDoc({ id: id, url: cur.url, title: cur.title || ex.title, at: at, html: html, img: withImages ? 1 : 0 });
+    const old = cur.arch && cur.arch.f && cur.arch.f !== name ? cur.arch.f : "";
+    return fs.writeText(ARCHIVE_DIR + "/" + name, doc).catch(() => { throw { code: "disk" }; }).then(() => {
+      if (old) return fs.rm(ARCHIVE_DIR + "/" + old).catch(() => {});
+    }).then(() => {
+      const it2 = state.items[id];
+      if (!it2) return;
+      it2.arch = K.sanArch({ at: at, f: name, n: ex.chars, img: withImages ? 1 : 0 });
+      save();
+      renderList();
+    });
+  });
+}
+
+function removeCopy(id) {
+  const it = state.items[id];
+  const fs = diskApi();
+  if (!it || !it.arch || !it.arch.f) return;
+  const f = it.arch.f;
+  it.arch = { at: Math.max(Date.now(), it.arch.at + 1), f: "" };
+  save();
+  closeReader();
+  renderList();
+  if (fs) fs.rm(ARCHIVE_DIR + "/" + f).catch(() => {});
+  transientNote(t("arc.removed"));
+}
+
+/* Files of bookmarks that are deleted here (tombstone, no live
+   bookmark points at the file) go too. Only tombstoned ids: a file
+   whose bookmark merely has not synced to this device yet stays. */
+let sweepTimer = null;
+function scheduleSweep(ms) {
+  clearTimeout(sweepTimer);
+  sweepTimer = setTimeout(sweepArchive, ms || 12000);
+}
+function sweepArchive() {
+  const fs = diskApi();
+  if (!fs || typeof fs.ls !== "function") return;
+  const used = new Set();
+  Object.keys(state.items).forEach((id) => {
+    const a = state.items[id].arch;
+    if (a && a.f) used.add(a.f);
+  });
+  fs.ls(ARCHIVE_DIR).then((list) => {
+    (list || []).forEach((en) => {
+      if (!en || en.dir || used.has(en.name)) return;
+      const id = K.archiveId(en.name);
+      if (id && state.deleted[id] && !state.items[id]) fs.rm(ARCHIVE_DIR + "/" + en.name).catch(() => {});
+    });
+  }, () => {});
+}
+
+/* ---- Reader view (full screen inside the app) ---- */
+
+let readerId = null;
+let readerBusy = false;
+
+function closeReader() {
+  const box = $("#reader");
+  if (!box || box.hidden) return;
+  box.hidden = true;
+  $("#rd-body").textContent = "";
+  readerId = null;
+}
+
+function readerMsg(text) {
+  const body = $("#rd-body");
+  body.textContent = "";
+  const p = document.createElement("p");
+  p.className = "rd-msg";
+  p.textContent = text;
+  body.appendChild(p);
+}
+
+function cssVar(name, fb) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+  const s = (v || "").trim();
+  return /^[#a-zA-Z0-9(),.\s%-]{1,60}$/.test(s) ? s : fb;
+}
+
+function openReader(id, saveFirst) {
+  const it = state.items[id];
+  if (!it) return;
+  if (!diskApi()) { transientNote(t("arc.nodisk")); return; }
+  closeCtxMenu();
+  readerId = id;
+  $("#rd-title").textContent = it.title;
+  $("#rd-meta").textContent = hostOf(it.url);
+  $("#rd-img").checked = arcImagesPref();
+  $("#reader").hidden = false;
+  updateReaderTools();
+  $("#rd-back").focus();
+  if (saveFirst || !it.arch || !it.arch.f) readerSave();
+  else showCopy();
+}
+
+function updateReaderTools() {
+  const it = state.items[readerId];
+  const has = !!(it && it.arch && it.arch.f);
+  $("#rd-again").textContent = has ? t("arc.again") : t("arc.save");
+  $("#rd-remove").hidden = !has;
+  $("#rd-again").disabled = readerBusy;
+}
+
+function readerSave() {
+  const id = readerId;
+  if (!id || readerBusy) return;
+  readerBusy = true;
+  updateReaderTools();
+  readerMsg(t("arc.saving"));
+  const imgs = $("#rd-img").checked;
+  setArcImagesPref(imgs);
+  saveCopy(id, imgs).then(() => {
+    readerBusy = false;
+    if (readerId !== id) { transientNote(t("arc.saved")); return; }
+    updateReaderTools();
+    showCopy();
+  }, (e) => {
+    readerBusy = false;
+    if (readerId !== id) return;
+    updateReaderTools();
+    readerMsg(e && e.code === "nofull" ? t("arc.none")
+      : e && e.code === "nodisk" ? t("arc.nodisk")
+      : t("arc.err", { why: whyText(e) }));
+  });
+}
+
+/* The stored file is read back and sanitised AGAIN before it is
+   shown (it lives on a disk that syncs), then framed like the
+   Reader does: sandbox without scripts, opaque origin, CSP. */
+function showCopy() {
+  const id = readerId;
+  const it = state.items[id];
+  const fs = diskApi();
+  if (!it || !fs || !it.arch || !it.arch.f) return;
+  const arch = it.arch;
+  readerMsg("…");
+  Promise.all([loadReaderLibs(), fs.readText(ARCHIVE_DIR + "/" + arch.f)]).then((r) => {
+    if (readerId !== id) return;
+    const rec = K.readArchive(r[1]);
+    if (!rec) { readerMsg(t("arc.missing")); return; }
+    const clean = window.orosFeedsSanitize(rec.html, { base: rec.url || it.url, images: arch.img === 1 });
+    $("#rd-meta").textContent = hostOf(it.url) + " · " +
+      t("arc.when", { d: new Date(arch.at).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "short", year: "numeric" }) });
+    const body = $("#rd-body");
+    body.textContent = "";
+    body.appendChild(readerFrame(rec.title || it.title, it.url, clean.html, arch.img === 1));
+  }, () => { if (readerId === id) readerMsg(t("arc.missing")); });
+}
+
+function readerFrame(title, url, html, images) {
+  const E = esc;
+  const bg = cssVar("--bg", "#1a1a1a"), fg = cssVar("--text", "#eee"), dim = cssVar("--text-dim", "#999"),
+        acc = cssVar("--accent", "#4a9eff"), border = cssVar("--border", "#333"), panel = cssVar("--panel-bg", "#222");
+  const light = document.documentElement.getAttribute("data-theme") === "light";
+  const csp = "default-src 'none'; style-src 'unsafe-inline'; img-src data:" + (images ? " https: http:" : "") +
+              "; media-src https: http:; form-action 'none'; frame-src 'none'; font-src 'none'";
+  const css = "html{background:" + bg + ";color-scheme:" + (light ? "light" : "dark") + "}" +
+    "body{margin:0 auto;max-width:720px;padding:16px 18px 48px;font:17px/1.65 Georgia,'Noto Serif','Times New Roman',serif;" +
+    "color:" + fg + ";overflow-wrap:anywhere}" +
+    "h1{font:700 1.4em/1.25 'Nunito','Segoe UI',system-ui,sans-serif;margin:0 0 4px}h1 a{color:inherit;text-decoration:none}" +
+    ".src{font:13px/1.4 'Nunito','Segoe UI',system-ui,sans-serif;color:" + dim + ";margin:0 0 18px}" +
+    "h2,h3,h4{line-height:1.3}a{color:" + acc + "}" +
+    "img,video{max-width:100%;height:auto;border-radius:6px}figure{margin:1em 0}figcaption{font-size:.85em;color:" + dim + "}" +
+    "blockquote{margin:1em 0;padding-left:14px;border-left:3px solid " + acc + ";color:" + dim + "}" +
+    "pre{white-space:pre-wrap;background:" + panel + ";padding:10px;border-radius:6px;font-size:.85em}" +
+    "table{max-width:100%;border-collapse:collapse;display:block;overflow-x:auto}" +
+    "td,th{border:1px solid " + border + ";padding:4px 8px}hr{border:0;border-top:1px solid " + border + "}" +
+    ".embed{padding:10px 12px;border:1px solid " + border + ";border-radius:8px}";
+  const doc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\">" +
+    "<meta http-equiv=\"Content-Security-Policy\" content=\"" + csp + "\">" +
+    "<meta name=\"referrer\" content=\"no-referrer\"><base target=\"_blank\">" +
+    "<style>" + css + "</style></head><body dir=\"auto\"><h1><a href=\"" + E(url) + "\" target=\"_blank\" rel=\"noopener noreferrer\">" +
+    E(title) + "</a></h1><p class=\"src\">" + E(hostOf(url)) + "</p>" + html + "</body></html>";
+  const fr = document.createElement("iframe");
+  fr.className = "rd-frame";
+  fr.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
+  fr.setAttribute("referrerpolicy", "no-referrer");
+  fr.setAttribute("title", title);
+  fr.srcdoc = doc;
+  return fr;
+}
+
+function wireReader() {
+  $("#rd-back").addEventListener("click", closeReader);
+  $("#rd-open").addEventListener("click", () => { if (readerId) openItem(readerId); });
+  $("#rd-again").addEventListener("click", readerSave);
+  $("#rd-remove").addEventListener("click", () => { if (readerId) removeCopy(readerId); });
+  $("#rd-img").addEventListener("change", (e) => setArcImagesPref(e.target.checked));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("#reader").hidden && !document.querySelector("dialog[open]")) {
+      e.preventDefault();
+      closeReader();
+    }
+  });
+}
+
+/* ---- Link check: on request, 10 links per call, a pause between ---- */
+
+let chkRun = null;
+
+function runCheck(ids) {
+  if (chkRun) { transientNote(t("chk.busy")); return; }
+  ids = (ids || []).filter((id) => state.items[id]).slice(0, 500);
+  if (!ids.length) { transientNote(t("chk.none")); return; }
+  if (!navigator.onLine) { transientNote(t("chk.offline")); return; }
+  const run = chkRun = { stop: false };
+  const tally = { n: 0, dead: 0, moved: 0, err: 0 };
+  const stopBtn = { label: t("chk.stop"), fn: () => { run.stop = true; } };
+  let i = 0;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const finish = () => {
+    chkRun = null;
+    save();
+    renderList();
+    if (ids.length === 1) {
+      const it = state.items[ids[0]];
+      if (it && it.chk) transientNote(t("chk.line", { s: t("chk.s." + it.chk.s) + (it.chk.code ? " (" + it.chk.code + ")" : ""), when: relTime(it.chk.at) }));
+      else hideToast();
+      return;
+    }
+    const msg = run.stop && i < ids.length ? t("chk.stopped", { n: tally.n })
+      : t("chk.done", { n: tally.n, d: tally.dead, m: tally.moved, e: tally.err });
+    showToast(msg, tally.dead + tally.moved ? { action: { label: t("chk.show"), fn: () => setBadFilter(true) } } : undefined);
+  };
+  const step = () => {
+    if (run.stop || i >= ids.length) return finish();
+    const chunk = ids.slice(i, i + 10).filter((id) => state.items[id]);
+    i += 10;
+    if (ids.length > 1) showToast(t("chk.running", { i: Math.min(i, ids.length), n: ids.length }), { action: stopBtn });
+    const F = window.orosFeedsFetch;
+    return F.fetchFeeds(chunk.map((id) => ({ url: state.items[id].url })), { relay: relayOpt, timeout: 15000 }).then((res) => {
+      const now = Date.now();
+      res.forEach((a, k) => {
+        const it = state.items[chunk[k]];
+        if (!it || !a) return;
+        if (a.err === "offline") { run.stop = true; return; }
+        if (a.err === "norelay") { tally.n++; tally.err++; return; }   // not known: nothing stored
+        const c = K.sanChk(Object.assign({ at: now }, K.classify(it.url, a)));
+        if (!c) return;
+        it.chk = c;                          // side record: "modified" stays
+        tally.n++;
+        if (c.s === "dead") tally.dead++;
+        else if (c.s === "moved") tally.moved++;
+        else if (c.s === "err" || c.s === "skip") tally.err++;
+      });
+      save();
+      renderList();
+      if (i < ids.length && !run.stop) return wait(2000).then(step);
+      return finish();
+    });
+  };
+  loadReaderLibs().then(() => {
+    if (ids.length > 1 && !window.orosFeedsFetch.relayAvailable({ relay: relayOpt })) transientNote(t("chk.norelay"));
+    return step();
+  }).catch(() => { chkRun = null; transientNote(t("chk.offline")); });
+}
+
+function useNewAddress(id) {
+  const it = state.items[id];
+  if (!it || !it.chk || it.chk.s !== "moved" || !it.chk.to) return;
+  const norm = normalizeUrl(it.chk.to);
+  if (!norm) return;
+  const dup = findByUrl(norm);
+  if (dup && dup.id !== id) {
+    transientNote(t("added.dup", { f: folderPathName(dup.folderId) }));
+    return;
+  }
+  snapshotForUndo([id]);
+  it.url = norm;
+  it.modified = Date.now();
+  it.chk = K.sanChk({ s: "ok", at: Date.now(), code: it.chk.code });
+  save();
+  renderAll();
+  showToast(t("chk.used"), { action: { label: t("undo"), fn: undoFromSnapshot } });
+}
+
+/* All bookmarks of a folder and its subfolders. */
+function idsUnder(fid) {
+  const set = new Set([fid].concat(subfolderIds(fid)));
+  return Object.keys(state.items).filter((id) => set.has(state.items[id].folderId));
+}
+
+/* The tidy-up button: link check, the broken-links filter, duplicates. */
+function showToolsMenu() {
+  closeCtxMenu();
+  const btn = $("#dupes-btn");
+  const m = document.createElement("div");
+  m.id = "ctx-menu";
+  const row = (label, fn) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.addEventListener("click", () => { closeCtxMenu(); fn(); });
+    m.appendChild(b);
+  };
+  if (uiActiveFolder !== "ALL_VIEW" && state.folders[uiActiveFolder]) {
+    row(t("chk.folder"), () => runCheck(idsUnder(uiActiveFolder)));
+  }
+  row(t("chk.all"), () => runCheck(Object.keys(state.items)));
+  const bad = Object.keys(state.items).filter((id) => isBad(state.items[id])).length;
+  row(t("chk.show") + (bad ? " (" + bad + ")" : ""), () => setBadFilter(true));
+  const sep = document.createElement("div");
+  sep.className = "sep";
+  m.appendChild(sep);
+  row(t("dupe.title"), showDupesPanel);
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), mr = m.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - mr.width - 8)) + "px";
+  m.style.top = Math.max(8, Math.min(r.bottom + 4, innerHeight - mr.height - 8)) + "px";
+  setTimeout(() => {
+    document.addEventListener("click", closeCtxMenu, true);
+    window.addEventListener("scroll", closeCtxMenu, true);
+  }, 0);
 }
 
 /* ===== 10. MERGE ENGINE (deterministic, clock-free) ===== */
@@ -2618,6 +3515,13 @@ function mergeBookmarks(aRaw, bRaw) {
           visits: Math.max(parseInt(a.visits, 10) || 0, parseInt(b.visits, 10) || 0),
           lastVisit: Math.max(Number(a.lastVisit) || 0, Number(b.lastVisit) || 0)
         });
+        /* Wave 35: link check and saved copy merge on their own by
+           "at", whichever side won (an older app drops them, the
+           newer side keeps them). */
+        const chk = K.sideMerge(K.sanChk(a.chk), K.sanChk(b.chk));
+        const arch = K.sideMerge(K.sanArch(a.arch), K.sanArch(b.arch));
+        if (chk) ent.chk = chk; else delete ent.chk;
+        if (arch) ent.arch = arch; else delete ent.arch;
       }
       const death = out.deleted[id] || 0;
       if (death && (ent.modified || 0) <= death) return;  // stays dead
@@ -2695,8 +3599,11 @@ function wire() {
   wireTagEditor();
   $("#tags-btn").addEventListener("click", showTagsPanel);
   /* Duplicate finder — button is optional in HTML (guarded). */
+  /* Wave 35: it opens the tidy-up menu (link check, broken links,
+     duplicates). */
   const dupesBtn = $("#dupes-btn");
-  if (dupesBtn) dupesBtn.addEventListener("click", showDupesPanel);
+  if (dupesBtn) dupesBtn.addEventListener("click", showToolsMenu);
+  wireReader();
 
   /* Selection mode */
   $("#select-btn").addEventListener("click", () => {
@@ -2720,14 +3627,17 @@ function wire() {
   $("#import-btn").addEventListener("click", async () => {
     const dlg = dialogHost();
     let file = null;
+    const accept = ".html,.htm,.csv,text/html,text/csv";
     if (dlg && typeof dlg.openFile === "function") {
-      file = await dlg.openFile(".html,.htm,text/html");
+      file = await dlg.openFile(accept);
     } else {
-      file = await localPickFile(".html,.htm,text/html");
+      file = await localPickFile(accept);
     }
     if (!file) return;                // cancel — silent exit
     try {
-      applyImport(parseNetscape(await file.text()));
+      /* Wave 35: browsers, Linkding, Pinboard, Pocket (HTML / CSV),
+         Raindrop (HTML / CSV): core.parseImport tells them apart. */
+      applyImport(K.parseImport(await file.text(), file.name || "", importNames()));
     } catch (err) {
       transientNote(t("import.none"));
     }
@@ -2756,7 +3666,7 @@ function wire() {
     if (dup && dup.id !== editingItemId) {
       e.preventDefault();             // keep the dialog open for a fix
       const fld = state.folders[dup.folderId];
-      transientNote(t("added.dup", { f: folderName(fld) }));
+      transientNote(t("added.dup", { f: fld ? folderPathName(fld.id) : "" }));
       $("#f-url").focus();
       return;
     }
@@ -2825,7 +3735,7 @@ function wire() {
   wireSendDialog();
 
   /* Close dialogs on backdrop click (orOS convention) */
-  ["#dlg-item", "#dlg-folder", "#dlg-send"].forEach((sel) => {
+  ["#dlg-item", "#dlg-folder", "#dlg-send", "#dlg-pick"].forEach((sel) => {
     $(sel).addEventListener("click", (e) => {
       if (e.target === $(sel)) $(sel).close();
     });
@@ -2838,6 +3748,7 @@ function boot() {
   wire();
   mountFavStrip();
   registerSync(0);
+  scheduleSweep(6000);
   renderAll();
   inheritPalette();
   watchPalette();
@@ -2856,6 +3767,7 @@ function boot() {
    to its row and opens its dialog. Unknown id, or a dialog already
    open (maybe with unsaved edits) → no-op. */
 function openSearchTarget(t) {
+  if (t && !document.querySelector("dialog[open]")) closeReader();
   if (t && t.addMany && typeof t.addMany === "object") {
     addManyTarget(t.addMany);
     return;

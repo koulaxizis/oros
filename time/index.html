@@ -44,6 +44,35 @@
       <ul id="zones"></ul>
     </section>
 
+    <!-- ===== Meeting planner (wave 5) ===== -->
+    <section class="sec" id="plan-sec">
+      <div class="sec-head">
+        <span data-i18n="pl.title"></span>
+        <button id="pl-toggle" type="button" class="mini" aria-controls="pl-body" aria-expanded="false"></button>
+      </div>
+      <div id="pl-body" hidden>
+        <div class="pl-ctl">
+          <label class="pl-f"><span data-i18n="pl.date"></span><input id="pl-date" type="date"></label>
+          <label class="pl-f"><span data-i18n="pl.len"></span><select id="pl-len"></select></label>
+          <label class="pl-f"><span data-i18n="pl.wf"></span><input id="pl-wf" type="time" value="09:00"></label>
+          <label class="pl-f"><span data-i18n="pl.wt"></span><input id="pl-wt" type="time" value="17:00"></label>
+        </div>
+        <div id="pl-grid" class="pl-grid" role="grid"></div>
+        <div class="pl-foot">
+          <button id="pl-add" type="button" class="mini" data-i18n="pl.add"></button>
+          <span class="pl-legend"><i class="pl-sw work"></i><span data-i18n="pl.lg.work"></span><i class="pl-sw awake"></i><span data-i18n="pl.lg.awake"></span><i class="pl-sw night"></i><span data-i18n="pl.lg.night"></span><b class="pl-star">★</b><span data-i18n="pl.lg.all"></span></span>
+        </div>
+        <p id="pl-hint" class="pl-hint" data-i18n="pl.hint"></p>
+        <div id="pl-pick" class="pl-pick" hidden>
+          <ul id="pl-pick-list" class="pl-pick-list" aria-live="polite"></ul>
+          <div class="pl-pick-row">
+            <button id="pl-cal" type="button" class="btn prim" data-i18n="pl.cal"></button>
+            <button id="pl-copy" type="button" class="btn" data-i18n="pl.copy"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== Sun & Moon ===== -->
     <section class="sec">
       <div class="sec-head"><span data-i18n-a="astro.title"></span></div>
@@ -82,22 +111,38 @@
 
       <!-- Timer -->
       <div class="pane" id="pane-timer" hidden>
-        <div id="tm-display">00:00</div>
-        <div id="tm-overlay" class="countdown-overlay" hidden>00:00</div>
-        <div class="frm">
-          <input id="tm-min" type="number" min="0" max="999" inputmode="numeric" value="5">
-          <input id="tm-sec" type="number" min="0" max="59" inputmode="numeric" value="0">
-          <button id="tm-start" type="button" class="btn prim" data-i18n="tm.start"></button>
-          <button id="tm-reset" type="button" class="btn" data-i18n="tm.reset"></button>
+        <ul id="tmr-list" class="tmr-list"></ul>
+        <div id="tm-overlay" class="countdown-overlay" hidden><span id="tm-ov-name" class="ov-name"></span><span id="tm-ov-time">00:00</span></div>
+        <div class="tmr-new">
+          <div class="frm">
+            <input id="tm-name" type="text" maxlength="40" data-i18n-ph="tm.ph.name" data-i18n-al="tm.name">
+          </div>
+          <div class="frm">
+            <input id="tm-hr" type="number" min="0" max="99" inputmode="numeric" value="0" data-i18n-al="tm.hr">
+            <span class="tm-sep">:</span>
+            <input id="tm-min" type="number" min="0" max="59" inputmode="numeric" value="5" data-i18n-al="tm.min">
+            <span class="tm-sep">:</span>
+            <input id="tm-sec" type="number" min="0" max="59" inputmode="numeric" value="0" data-i18n-al="tm.sec">
+            <select id="tm-sound" data-i18n-al="tm.sound"></select>
+            <button id="tm-start" type="button" class="btn prim" data-i18n="tm.add"></button>
+          </div>
+          <div id="tm-presets" class="quick-chips tm-presets"></div>
         </div>
       </div>
 
       <!-- Stopwatch -->
       <div class="pane" id="pane-stop" hidden>
-        <div id="st-display">00:00.0</div>
+        <div id="st-display">00:00.00</div>
+        <div id="st-lapnow" class="st-lapnow" hidden></div>
         <div class="frm">
           <button id="st-go" type="button" class="btn prim" data-i18n="st.start"></button>
+          <button id="st-lap" type="button" class="btn" data-i18n="st.lap"></button>
           <button id="st-reset" type="button" class="btn" data-i18n="st.reset"></button>
+        </div>
+        <ol id="st-laps" class="st-laps" reversed></ol>
+        <div class="frm" id="st-exp" hidden>
+          <button id="st-copy" type="button" class="mini" data-i18n="st.copy"></button>
+          <button id="st-csv" type="button" class="mini" data-i18n="st.csv"></button>
         </div>
       </div>
 
@@ -226,11 +271,12 @@
   </main>
 
   <!-- Zone picker dialog -->
-  <dialog id="zone-dlg">
-    <h3 data-i18n="zones.dlg"></h3>
-    <select id="zone-sel"></select>
+  <dialog id="zone-dlg" aria-labelledby="zone-dlg-h">
+    <h3 id="zone-dlg-h"></h3>
+    <input id="zone-q" type="search" autocomplete="off" spellcheck="false" data-i18n-ph="zones.ph" data-i18n-al="zones.ph" aria-controls="zone-res">
+    <ul id="zone-res" class="zone-res" role="listbox" data-i18n-al="zones.res"></ul>
+    <p id="zone-none" class="zone-none" hidden></p>
     <div class="dlg-row">
-      <button id="zone-ok" type="button" class="btn prim" data-i18n="zones.ok"></button>
       <button id="zone-cancel" type="button" class="btn" data-i18n="zones.cancel"></button>
     </div>
   </dialog>
@@ -467,6 +513,8 @@
 
 
   <script src="../timesheet/core.js?v=1.98.00"></script>
+  <script src="cities.js?v=1.98.00"></script>
+  <script src="clock-core.js?v=1.98.00"></script>
   <script src="time.js?v=1.98.00"></script>
   <script src="astro.js?v=1.98.00"></script>
   <script src="stage-core.js?v=1.98.00"></script>

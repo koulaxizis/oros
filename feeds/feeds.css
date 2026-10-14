@@ -450,6 +450,21 @@ button:disabled { cursor: default; opacity: 0.4; }
   color: var(--text-dim);
 }
 .bar-acts { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+/* Summary (Assistant): plain text, scrolls inside on long answers */
+.sum-box {
+  padding: 8px 12px 6px;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+.sum-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; }
+.sum-title { font-size: 12px; font-weight: 800; color: var(--text-dim); }
+.sum-text { margin-top: 6px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 38vh; overflow-y: auto; }
+.sum-err { margin-top: 6px; font-size: 13px; color: var(--danger); }
+.sum-note { margin-top: 6px; font-size: 11px; color: var(--text-dim); }
+.add-other { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; }
+.add-other .link-btn { min-height: 40px; }
 .art-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .art-frame { flex: 1 1 auto; width: 100%; min-height: 0; border: none; background: var(--bg); }
 

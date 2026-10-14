@@ -1,0 +1,234 @@
+/* ============================================================
+   orOS Game Center — App stylesheet
+   Inherits the shell palette (inheritPalette + watchPalette).
+   Sections:
+     1. Palette fallback + reset
+     2. Page + blocks
+     3. Today (Daily cards)
+     4. Achievements
+     5. Statistics
+     6. Toast
+     7. Phone
+     8. Reduced motion
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --bg-desktop:   #1a1712;
+  --bar-bg:       rgba(20, 18, 13, 0.93);
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --shadow:       rgba(0, 0, 0, 0.50);
+  --danger:       #e06c75;
+  --gc-ok:        #5fb36a;
+}
+html[data-theme="light"] { --gc-ok: #2f8a3c; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font-family: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.5; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- 2. Page + blocks ---------- */
+#page {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 20px 20px 32px;
+}
+#head { margin-bottom: 18px; }
+#title { font-size: 1.5rem; font-weight: 800; }
+#sub { color: var(--text-dim); margin-top: 4px; font-size: 0.95rem; }
+
+.block {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.block-head h2 { font-size: 1.1rem; font-weight: 800; }
+.block-note { color: var(--text-dim); font-size: 0.9rem; }
+#foot { color: var(--text-dim); font-size: 0.85rem; text-align: center; padding: 4px 8px; }
+
+/* ---------- 3. Today ---------- */
+#today-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.day-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  background: var(--bg);
+}
+.day-card.solved { border-color: var(--gc-ok); }
+.day-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.day-name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+.day-ok { color: var(--gc-ok); display: inline-flex; flex: none; }
+.day-status { color: var(--text-dim); font-size: 0.88rem; }
+.day-card.solved .day-status { color: var(--gc-ok); font-weight: 700; }
+.day-card.lost .day-status { color: var(--danger); }
+.day-foot { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+.day-streak { color: var(--accent); font-size: 0.85rem; font-weight: 700; min-width: 0; }
+.day-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 800;
+  flex: none;
+}
+.day-btn:not(:disabled):hover { background: var(--accent-hover); }
+.day-card.solved .day-btn { background: transparent; color: var(--accent); }
+
+/* ---------- 4. Achievements ---------- */
+#ach-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ach {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+.ach-ico {
+  flex: none;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent-soft);
+  color: var(--text-dim);
+}
+.ach.done .ach-ico { background: var(--accent); color: var(--bg); }
+.ach:not(.done) .ach-name { color: var(--text-dim); }
+.ach-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.ach-name { font-weight: 800; }
+.ach-desc { color: var(--text-dim); font-size: 0.85rem; }
+.ach-bar {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  margin-top: 4px;
+  overflow: hidden;
+}
+.ach-fill { display: block; height: 100%; background: var(--accent); }
+.ach-state { flex: none; color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; }
+.ach.done .ach-state { color: var(--accent); font-weight: 700; }
+
+/* ---------- 5. Statistics ---------- */
+#stats-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.game {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 0 10px;
+}
+.game:last-child { border-bottom: 0; }
+.game.focus { background: var(--accent-soft); border-radius: 8px; padding: 6px 8px 10px; }
+.game-name {
+  background: none;
+  border: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  text-align: left;
+}
+.game-name:hover { color: var(--accent); }
+.game-go { color: var(--text-dim); display: inline-flex; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  max-width: 100%;
+}
+.chip-l { color: var(--text-dim); }
+.chip-v { font-weight: 800; }
+.empty { color: var(--text-dim); padding: 8px 0; }
+#unplayed { margin-top: 12px; color: var(--text-dim); }
+#unplayed summary { cursor: pointer; min-height: 36px; display: list-item; padding-top: 8px; }
+#unplayed-list { padding: 6px 0 0; line-height: 1.6; font-size: 0.9rem; }
+
+/* ---------- 6. Toast ---------- */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 20px);
+  max-width: calc(100% - 32px);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 24px var(--shadow);
+  border-radius: 10px;
+  padding: 10px 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 7. Phone ---------- */
+@media (max-width: 700px) {
+  #today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #ach-list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  #page { padding: 14px 12px 24px; }
+  .block { padding: 12px; }
+  #title { font-size: 1.3rem; }
+  .day-card { padding: 10px; }
+  .day-foot { flex-direction: column; align-items: stretch; }
+  .day-btn { width: 100%; }
+}
+
+/* ---------- 8. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #toast { transition: none; }
+}

@@ -1,7 +1,7 @@
 // ============================================================
 // orOS "Send to someone" — share/kinds.js (pure core, v1.0.0)
-// One item (a To-Do list, a note, a contact, an event, a recipe or
-// a few bookmarks) travels INSIDE a link:
+// One item (a To-Do list, a note, a contact, an event, a recipe,
+// a few bookmarks or a Calendar's free times) travels INSIDE a link:
 //   https://useoros.online/share/#1.<base64url of deflate-raw JSON>
 //   https://useoros.online/share/#p1.<base64url of salt|iv|AES-GCM>
 // The part after "#" never reaches a server. No server, no account,
@@ -31,12 +31,16 @@
 //   file(env, lang)                → { name, mime, text } (.vcf, .ics, .html, .txt)
 //   target(env, lang)              → { app, target } for __orosOpenAt
 //   vcard(d) / ics(d) / netscape(d) (the file builders)
+//   slotWhen(d, day, min)          → a free time ("slots") as the
+//                                    receiver's own local day + times
+//   slotEvent(d, day, min, lang)   → that time as "event" data (.ics, Calendar)
+//   slotMail(d, day, min, lang)    → mailto: link back to the sender, or ""
 // ============================================================
 (function (root) {
   "use strict";
 
   var VER = 1;
-  var KINDS = ["list", "note", "contact", "event", "recipe", "links"];
+  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots"];
   var MAX_LINK = 32768;          // characters of the code after "#"
   var MAX_JSON = 262144;         // bytes after decompression (bomb guard)
   var ITER = 600000;             // PBKDF2 rounds for password links
@@ -55,7 +59,11 @@
       prep: "Prep {n} min", cook: "Cook {n} min", from: "an orOS link",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
       org: "Organisation", job: "Job title", nick: "Nickname", birthday: "Birthday", anniversary: "Anniversary",
-      where: "Where", noteL: "Note", sharedLinks: "Links you got"
+      where: "Where", noteL: "Note", sharedLinks: "Links you got",
+      slots: "Free times", slotsT: "Free times", slotsN: "{n} times to pick from", slots1: "1 time to pick from",
+      slotLen: "{n} min", slotWith: "With {n}", slotSubj: "Booking: {t}, {w}",
+      slotBody: "Hello{n},\n\nI'd like to take this time:\n{t}\n{w}\n\nThanks!",
+      slotZone: "{w} ({z} time)"
     },
     el: {
       list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι",
@@ -66,7 +74,11 @@
       prep: "Προετοιμασία {n}′", cook: "Μαγείρεμα {n}′", from: "σύνδεσμο orOS",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
       org: "Οργανισμός", job: "Θέση", nick: "Ψευδώνυμο", birthday: "Γενέθλια", anniversary: "Επέτειος",
-      where: "Πού", noteL: "Σημείωση", sharedLinks: "Σύνδεσμοι που έλαβες"
+      where: "Πού", noteL: "Σημείωση", sharedLinks: "Σύνδεσμοι που έλαβες",
+      slots: "Ελεύθερες ώρες", slotsT: "Ελεύθερες ώρες", slotsN: "{n} ώρες για να διαλέξεις", slots1: "1 ώρα για να διαλέξεις",
+      slotLen: "{n}′", slotWith: "Με: {n}", slotSubj: "Κράτηση: {t}, {w}",
+      slotBody: "Γεια σου{n},\n\nΘα ήθελα να κλείσω αυτή την ώρα:\n{t}\n{w}\n\nΕυχαριστώ!",
+      slotZone: "{w} (ώρα {z})"
     }
   };
   function L(lang) { return S[lang] || S.en; }
@@ -184,6 +196,11 @@
     if (d.r && typeof d.r === "object" && /^[DWMY]$/.test(d.r.f)) {
       e.r = { f: d.r.f, i: d.r.i === 2 ? 2 : 1 };
       if (validYmd(d.r.u) && d.r.u >= d.d) e.r.u = d.r.u;
+      // A rule the short form cannot say (Calendar wave 5: every N, weekdays,
+      // Nth / last weekday, COUNT) rides along as plain RRULE text.
+      if (typeof d.r.x === "string" && d.r.x.length <= 200 &&
+          /^FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)(;[A-Z]{2,10}=[A-Z0-9,+-]{1,40}){0,8}$/.test(d.r.x) &&
+          d.r.x.indexOf("FREQ=" + { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" }[d.r.f]) === 0) e.r.x = d.r.x;
     }
     if (typeof d.id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(d.id)) e.id = d.id;
     return e;
@@ -228,7 +245,36 @@
     if (!items.length) return null;
     return { t: line(d.t, 60), i: items };
   }
-  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks };
+  // Free times from the Calendar ("Share free times"): the sender's
+  // wall-clock times in its zone `tz`, as minutes after midnight per day.
+  var TZ_RE = /^[A-Za-z][A-Za-z0-9_+\-\/]{0,63}$/;
+  function normSlots(d) {
+    var len = num(d.len, 5, 480);
+    if (len === null || len % 1) return null;
+    var seen = {}, days = [], total = 0;
+    arr(d.s, 62).forEach(function (x) {
+      if (!x || typeof x !== "object" || !validYmd(x.d) || seen[x.d]) return;
+      var mins = [];
+      arr(x.m, 96).forEach(function (v) {
+        if (typeof v === "number" && v % 1 === 0 && v >= 0 && v < 1440 && mins.indexOf(v) < 0 && total < 1500) { mins.push(v); total++; }
+      });
+      if (!mins.length) return;
+      seen[x.d] = 1;
+      mins.sort(function (a, b) { return a - b; });
+      days.push({ d: x.d, m: mins });
+    });
+    if (!days.length) return null;
+    days.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    var o = { t: line(d.t, 120), n: line(d.n, 80), len: len, s: days };
+    var m = line(d.m, 120);
+    if (/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(m)) o.m = m;
+    if (typeof d.tz === "string" && TZ_RE.test(d.tz)) o.tz = d.tz;
+    var l = line(d.l, 200), x2 = block(d.x, 500);
+    if (l) o.l = l;
+    if (x2) o.x = x2;
+    return o;
+  }
+  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots };
   function norm(kind, data) {
     if (!NORM[kind] || !data || typeof data !== "object" || Array.isArray(data)) return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -373,7 +419,7 @@
   function titleOf(env, lang) {
     var d = env.d, s = L(lang);
     var t = env.k === "contact" ? contactName(d) : d.t;
-    return t || (env.k === "links" ? s.sharedLinks : s.untitled);
+    return t || (env.k === "links" ? s.sharedLinks : env.k === "slots" ? s.slotsT : s.untitled);
   }
   function fmtDate(ymd, lang) {
     var m = YMD_RE.exec(ymd);
@@ -408,6 +454,11 @@
     if (env.k === "list") return s.list + " \u00ab" + name + "\u00bb \u00b7 " + (d.i.length === 1 ? s.item1 : fill(s.items, { n: d.i.length }));
     if (env.k === "links") return s.links + " \u00b7 " + (d.i.length === 1 ? s.links1 : fill(s.linksN, { n: d.i.length }));
     if (env.k === "event") return s.event + " \u00ab" + name + "\u00bb \u00b7 " + fmtDate(d.d, lang);
+    if (env.k === "slots") {
+      var cnt = 0;
+      d.s.forEach(function (x) { cnt += x.m.length; });
+      return s.slots + " \u00ab" + name + "\u00bb \u00b7 " + (cnt === 1 ? s.slots1 : fill(s.slotsN, { n: cnt }));
+    }
     return s[env.k] + " \u00ab" + name + "\u00bb";
   }
 
@@ -458,6 +509,16 @@
       }
       if (d.no) out.push("", d.no);
       if (d.src) out.push("", s.source + ": " + d.src);
+    } else if (env.k === "slots") {
+      out.push([d.n ? fill(s.slotWith, { n: d.n }) : "", fill(s.slotLen, { n: d.len })].filter(Boolean).join(" \u00b7 "));
+      if (d.l) out.push(s.where + ": " + d.l);
+      if (d.x) out.push("", d.x);
+      out.push("");
+      d.s.forEach(function (x) {
+        out.push(fmtDate(x.d, lang) + ": " + x.m.map(hmOf).join(", "));
+      });
+      if (d.tz) out.push("(" + d.tz + ")");
+      if (d.m) out.push("", s.email + ": " + d.m);
     } else if (env.k === "links") {
       out.push("");
       d.i.forEach(function (it) {
@@ -521,7 +582,7 @@
     if (d.l) out.push("LOCATION:" + vEsc(d.l));
     if (d.r) {
       var F = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
-      out.push("RRULE:FREQ=" + F[d.r.f] + (d.r.i === 2 ? ";INTERVAL=2" : "") + (d.r.u ? ";UNTIL=" + icsDt(d.r.u) : ""));
+      out.push("RRULE:" + (d.r.x || ("FREQ=" + F[d.r.f] + (d.r.i === 2 ? ";INTERVAL=2" : "") + (d.r.u ? ";UNTIL=" + icsDt(d.r.u) : ""))));
     }
     out.push("END:VEVENT", "END:VCALENDAR");
     return out.join("\r\n") + "\r\n";
@@ -571,8 +632,72 @@
     if (env.k === "contact") return { app: "contacts", target: { importVcf: { name: fileName(contactName(d), ".vcf"), text: vcard(d) } } };
     if (env.k === "event") return { app: "calendar", target: { importIcs: { name: fileName(d.t, ".ics"), text: ics(d) } } };
     if (env.k === "recipe") return { app: "meals", target: { addRecipe: d } };
+    if (env.k === "slots") return null;          // a time is picked on the page first (slotEvent)
     if (d.i.length === 1) return { app: "bookmarks", target: { add: { url: d.i[0].u, title: d.i[0].t } } };
     return { app: "bookmarks", target: { addMany: { folder: d.t || s.sharedLinks, items: d.i.map(function (it) { return { url: it.u, title: it.t }; }) } } };
+  }
+
+  // ---------- 10. Free times: zones, the picked time ----------
+  function hmOf(min) { return ("0" + Math.floor(min / 60)).slice(-2) + ":" + ("0" + (min % 60)).slice(-2); }
+  function zoneOff(tz, ms) {
+    var f = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit",
+      day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    var p = {};
+    f.formatToParts(new Date(ms)).forEach(function (x) { p[x.type] = x.value; });
+    return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000) / 60000;
+  }
+  // Sender's wall time (day, minutes, its zone) → ms, or null.
+  function slotMs(d, day, min) {
+    var m = YMD_RE.exec(day);
+    if (!m || !d.tz) return null;
+    var wall = Date.UTC(+m[1], +m[2] - 1, +m[3]) + min * 60000;
+    try {
+      var g = wall - zoneOff(d.tz, wall) * 60000;
+      return wall - zoneOff(d.tz, g) * 60000;
+    } catch (e) { return null; }
+  }
+  function ymdLocal(dt) {
+    return dt.getFullYear() + "-" + ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + ("0" + dt.getDate()).slice(-2);
+  }
+  // { d, s, e, de?, shifted } in the receiver's own zone (the sender's
+  // times as they are when there is no zone or Intl fails).
+  function slotWhen(d, day, min) {
+    var ms = slotMs(d, day, min);
+    if (ms === null) {
+      var endM = min + d.len, o = { d: day, s: hmOf(min), e: hmOf(endM % 1440), shifted: false };
+      if (endM >= 1440) o.de = addDay(day);
+      return o;
+    }
+    var a = new Date(ms), b = new Date(ms + d.len * 60000);
+    var r = { d: ymdLocal(a), s: ("0" + a.getHours()).slice(-2) + ":" + ("0" + a.getMinutes()).slice(-2),
+              e: ("0" + b.getHours()).slice(-2) + ":" + ("0" + b.getMinutes()).slice(-2), shifted: false };
+    if (ymdLocal(b) !== r.d) r.de = ymdLocal(b);
+    r.shifted = r.d !== day || r.s !== hmOf(min);
+    return r;
+  }
+  function slotEvent(d, day, min, lang) {
+    var w = slotWhen(d, day, min), s = L(lang);
+    var e = { t: d.t || s.slotsT, d: w.d, s: w.s, e: w.e };
+    if (w.de) e.de = w.de;
+    if (d.l) e.l = d.l;
+    var note = [d.n ? fill(s.slotWith, { n: d.n }) : "", d.m || "", d.x || ""].filter(Boolean).join("\n");
+    if (note) e.x = note.slice(0, 500);
+    e.id = "slot" + hashHex(JSON.stringify([d.t, day, min, d.m || ""]));
+    return normEvent(e);
+  }
+  function slotMail(d, day, min, lang) {
+    if (!d.m) return "";
+    var s = L(lang), ev = slotEvent(d, day, min, lang);
+    var when = whenText(ev, lang);
+    // The sender's own wall time too, when the zones differ.
+    var w = slotWhen(d, day, min);
+    if (w.shifted && d.tz) {
+      when += "\n" + fill(s.slotZone, { w: whenText({ d: day, s: hmOf(min), e: hmOf((min + d.len) % 1440) }, lang), z: d.tz });
+    }
+    var subj = fill(s.slotSubj, { t: d.t || s.slotsT, w: whenText(ev, lang) });
+    var body = fill(s.slotBody, { n: d.n ? " " + d.n.split(" ")[0] : "", t: d.t || s.slotsT, w: when });
+    return "mailto:" + encodeURIComponent(d.m).replace(/%40/g, "@") +
+      "?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(body);
   }
 
   var api = {
@@ -580,7 +705,8 @@
     norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash,
     summary: summary, title: titleOf, text: text, file: file, target: target,
     whenText: whenText, repeatText: repeatText, addrText: addrText, contactName: contactName,
-    vcard: vcard, ics: ics, netscape: netscape, strings: L
+    vcard: vcard, ics: ics, netscape: netscape, strings: L,
+    slotWhen: slotWhen, slotEvent: slotEvent, slotMail: slotMail, hm: hmOf
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosShareKinds = api;

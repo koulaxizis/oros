@@ -20,7 +20,25 @@
 // project: [{ u, id, on, s: { slider: value }, f: { slider: path } }],
 // u = the slot's own id, id = the effect (nullfx/fx/<id>.js), on =
 // false when bypassed, f = audio files on the disk for file sliders
-// (Convolution's IR). At most 8 per chain.
+// (Convolution's IR). At most 8 per chain. sc (optional) = the track
+// whose sound is the effect's key input (Sidechain Ducker).
+// auto (optional, on tracks): automation lanes, [{ k, on?, p: [[t, v]] }]:
+// k = "vol" (dB), "pan" (-100..100) or "fx.<u>.<slider>" (that slider's
+// own units), p = points (seconds, value) in time order, on = false when
+// the lane is switched off. Between points the value moves in a straight
+// line; before the first and after the last it holds. At most 16 lanes,
+// 256 points each. A lane needs at least one point.
+// inst (optional, on tracks): the instrument of an instrument (MIDI)
+// track, an id of midi.js (piano, epiano, organ, strings, lead, bass,
+// drums); ids this version does not know are kept.
+// MIDI clips (wave 40) are clips with no `s` and a list of notes:
+//   { id, m, p, t, at, off, len, gain, fi, fo, name?, n: [[pitch, start, len, vel]] }
+// pitch 0..127, start and len in seconds from the clip's content start
+// (`off` is where the clip's window begins, as for audio), vel 1..127;
+// at most 2000 notes, in time order. A note plays when its start is
+// inside the window; it is cut at the clip's end.
+// New fields (sc, auto, inst, MIDI clips) are written only when set, so
+// projects made before them keep the very same bytes.
 // The audio itself is never in this slice: it lives on the disk and
 // travels with Vault Drive.
 // ============================================================
@@ -49,6 +67,13 @@
   var FX_ID_RE     = /^[a-z0-9_]{1,40}$/;
   var FXU_RE       = /^f[a-z0-9]{6,20}$/;
   var SLIDER_RE    = /^[1-9][0-9]?$/;  // slider1 .. slider64
+  var TRACK_RE     = /^t[a-z0-9]{6,20}$/;
+  var MAX_LANES    = 16;           // automation lanes on a track
+  var MAX_PTS      = 256;          // points in one lane
+  var LANE_RE      = /^(vol|pan|fx\.f[a-z0-9]{6,20}\.[1-9][0-9]?)$/;
+  var INST_RE      = /^[a-z0-9_]{1,20}$/;
+  var MAX_NOTES    = 2000;         // notes in one MIDI clip
+  var MIN_NOTE     = 0.005;        // shortest note (seconds)
 
   function isNum(n) { return typeof n === "number" && isFinite(n); }
   function isInt(n) { return isNum(n) && Math.floor(n) === n; }
@@ -86,10 +111,135 @@
       }
       var o = { u: x.u, id: x.id, on: x.on !== false, s: s };
       if (hasF) o.f = f;
+      if (typeof x.sc === "string" && TRACK_RE.test(x.sc)) o.sc = x.sc;
       out.push(o);
     });
     return out;
   }
+  // ---------- Automation ----------
+  function laneRange(k) {
+    if (k === "vol") return { min: VOL_MIN, max: VOL_MAX, d: 2 };
+    if (k === "pan") return { min: -100, max: 100, d: 1 };
+    return { min: -1e9, max: 1e9, d: 6 };
+  }
+  function fxLaneKey(u, i) { return "fx." + u + "." + i; }
+  // "fx.<u>.<i>" -> { u, i }, else null
+  function laneFx(k) {
+    var m = /^fx\.(f[a-z0-9]{6,20})\.([1-9][0-9]?)$/.exec(String(k));
+    return m && +m[2] <= 64 ? { u: m[1], i: +m[2] } : null;
+  }
+  // Points in time order; at most two at the same time (a step).
+  function normPoints(list, k) {
+    var r = laneRange(k), pts = [];
+    if (!Array.isArray(list)) return pts;
+    list.forEach(function (p, n) {
+      if (!Array.isArray(p) || !isNum(p[0]) || !isNum(p[1])) return;
+      pts.push({ t: round(clamp(p[0], 0, MAX_SEC), 4), v: round(clamp(p[1], r.min, r.max), r.d), n: n });
+    });
+    pts.sort(function (a, b) { return a.t - b.t || a.n - b.n; });
+    var out = [];
+    pts.forEach(function (p, i) {
+      if (i > 0 && i < pts.length - 1 && pts[i - 1].t === p.t && pts[i + 1].t === p.t) return;
+      out.push([p.t, p.v]);
+    });
+    return out.slice(0, MAX_PTS);
+  }
+  // A track's lanes; `fx` is its chain: lanes of effects no longer on it go.
+  function normAuto(list, fx) {
+    var out = [], seen = {}, slots = {};
+    (fx || []).forEach(function (x) { slots[x.u] = true; });
+    if (!Array.isArray(list)) return out;
+    list.forEach(function (x) {
+      if (out.length >= MAX_LANES || !x || typeof x !== "object") return;
+      if (typeof x.k !== "string" || !LANE_RE.test(x.k) || seen[x.k]) return;
+      var f = laneFx(x.k);
+      if (x.k.indexOf("fx.") === 0 && (!f || !slots[f.u])) return;
+      var p = normPoints(x.p, x.k);
+      if (!p.length) return;
+      seen[x.k] = true;
+      var o = { k: x.k };
+      if (x.on === false) o.on = false;
+      o.p = p;
+      out.push(o);
+    });
+    return out;
+  }
+  // The value of a lane at time t (seconds).
+  function autoValueAt(p, t) {
+    if (!p || !p.length) return NaN;
+    if (t < p[0][0]) return p[0][1];
+    var lo = 0, hi = p.length - 1;
+    while (lo < hi) {                              // the last point at or before t
+      var mid = (lo + hi + 1) >> 1;
+      if (p[mid][0] <= t) lo = mid; else hi = mid - 1;
+    }
+    if (lo === p.length - 1) return p[lo][1];
+    var a = p[lo], b = p[lo + 1];
+    return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]);
+  }
+  // What to schedule on an AudioParam for project time `from`..`to`:
+  // [{ at (seconds after `from`), v, ramp }]: a set at 0, a ramp to each
+  // point inside, a ramp to the value at `to`. A second point at the same
+  // time is a jump (ramp false).
+  function autoEvents(p, from, to) {
+    if (!p || !p.length || !(to >= from)) return [];
+    var ev = [{ at: 0, v: autoValueAt(p, from), ramp: false }], last = from;
+    p.forEach(function (q) {
+      if (q[0] <= from || q[0] >= to) return;
+      ev.push({ at: round(q[0] - from, 6), v: q[1], ramp: q[0] !== last });
+      last = q[0];
+    });
+    if (to > from && last < to) ev.push({ at: round(to - from, 6), v: autoValueAt(p, to), ramp: true });
+    return ev;
+  }
+  // The lane of a track for key k when it plays (on, with points).
+  function activeLane(track, k) {
+    var l = (track && track.auto || []).filter(function (x) { return x.k === k; })[0];
+    return l && l.on !== false && l.p.length ? l : null;
+  }
+  // Change one lane: points (empty = remove the lane), on/off.
+  function setLane(track, k, fields) {
+    var list = (track.auto || []).map(function (x) { return x.k === k ? Object.assign({}, x, fields) : x; });
+    if (!list.some(function (x) { return x.k === k; })) list.push(Object.assign({ k: k, p: [] }, fields));
+    return normAuto(list, track.fx);
+  }
+
+  // ---------- Sidechain keys ----------
+  // The tracks a track's effects listen to (their key inputs).
+  function keysOf(track) {
+    var out = [];
+    (track && track.fx || []).forEach(function (x) { if (x.on && x.sc && out.indexOf(x.sc) < 0) out.push(x.sc); });
+    return out;
+  }
+  // Would `tid` listening to `key` close a loop (key already hears tid)?
+  function keyLoops(tracks, tid, key) {
+    var by = {}, seen = {}, stack = [key];
+    tracks.forEach(function (t) { by[t.id] = t; });
+    while (stack.length) {
+      var x = stack.pop();
+      if (x === tid) return true;
+      if (seen[x]) continue;
+      seen[x] = true;
+      keysOf(by[x]).forEach(function (k) { stack.push(k); });
+    }
+    return false;
+  }
+  // Key connections that can be made: { tid: { key: true } }; a loop that came
+  // in through sync is broken by leaving out the edge that closes it.
+  function keyPlan(tracks) {
+    var ok = {}, have = tracks.map(function (t) { return Object.assign({}, t, { fx: [] }); }), ids = {};
+    tracks.forEach(function (t) { ids[t.id] = true; });
+    tracks.slice().sort(function (a, b) { return cmpStr(a.id, b.id); }).forEach(function (t) {
+      keysOf(t).sort(cmpStr).forEach(function (k) {
+        if (!ids[k] || keyLoops(have, t.id, k)) return;
+        (ok[t.id] = ok[t.id] || {})[k] = true;
+        var h = have.filter(function (x) { return x.id === t.id; })[0];
+        h.fx = h.fx.concat([{ on: true, sc: k }]);
+      });
+    });
+    return ok;
+  }
+
   function normProject(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "p") || !okM(x.m)) return null;
     var lp = x.loop && typeof x.loop === "object" ? x.loop : {};
@@ -107,7 +257,7 @@
   }
   function normTrack(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "t") || !okM(x.m) || !okId(x.p, "p")) return null;
-    return {
+    var t = {
       id: x.id, m: x.m, p: x.p,
       name: clipLine(x.name, MAX_NAME),
       color: COLORS.indexOf(x.color) >= 0 ? x.color : COLORS[0],
@@ -118,6 +268,10 @@
       ord: isNum(x.ord) ? round(clamp(x.ord, -1e6, 1e6), 4) : 0,
       fx: normFx(x.fx)
     };
+    if (typeof x.inst === "string" && INST_RE.test(x.inst)) t.inst = x.inst;
+    var auto = normAuto(x.auto, t.fx);
+    if (auto.length) t.auto = auto;
+    return t;
   }
   function normSource(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "s") || !okM(x.m) || !okId(x.p, "p")) return null;
@@ -130,28 +284,83 @@
       ch: x.ch === 1 ? 1 : 2
     };
   }
+  // Notes of a MIDI clip: [pitch, start, len, vel], in time order.
+  function cmpNote(a, b) { return a[1] - b[1] || a[0] - b[0] || a[2] - b[2] || a[3] - b[3]; }
+  function normNotes(list) {
+    var out = [];
+    if (!Array.isArray(list)) return out;
+    for (var i = 0; i < list.length && out.length < MAX_NOTES * 2; i++) {
+      var x = list[i];
+      if (!Array.isArray(x) || !isNum(x[0]) || !isNum(x[1]) || !isNum(x[2]) || x[2] <= 0) continue;
+      out.push([Math.round(clamp(x[0], 0, 127)), round(clamp(x[1], 0, MAX_SEC), 4),
+                round(clamp(x[2], MIN_NOTE, MAX_SEC), 4), isNum(x[3]) ? Math.round(clamp(x[3], 1, 127)) : 100]);
+    }
+    return out.sort(cmpNote).slice(0, MAX_NOTES);
+  }
+  function isMidi(c) { return !!c && Array.isArray(c.n); }
   function normClip(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "c") || !okM(x.m) ||
-        !okId(x.p, "p") || !okId(x.t, "t") || !okId(x.s, "s")) return null;
+        !okId(x.p, "p") || !okId(x.t, "t")) return null;
+    var midi = x.s === undefined && Array.isArray(x.n);
+    if (!midi && !okId(x.s, "s")) return null;
     if (!isNum(x.len) || x.len <= 0) return null;
     var len = num(x.len, MIN_LEN, MAX_SEC, 0, 6);
     var fi = num(x.fi, 0, len, 0, 4), fo = num(x.fo, 0, len, 0, 4);
     if (fi + fo > len) { var k = len / (fi + fo); fi = round(fi * k, 4); fo = round(fo * k, 4); }
-    return {
-      id: x.id, m: x.m, p: x.p, t: x.t, s: x.s,
-      at: num(x.at, 0, MAX_SEC, 0, 6),
-      off: num(x.off, 0, MAX_SEC, 0, 6),
-      len: len,
-      gain: num(x.gain, GAIN_MIN, GAIN_MAX, 0, 1),
-      fi: fi, fo: fo
-    };
+    var o = { id: x.id, m: x.m, p: x.p, t: x.t };
+    if (!midi) o.s = x.s;
+    o.at = num(x.at, 0, MAX_SEC, 0, 6);
+    o.off = num(x.off, 0, MAX_SEC, 0, 6);
+    o.len = len;
+    o.gain = num(x.gain, GAIN_MIN, GAIN_MAX, 0, 1);
+    o.fi = fi; o.fo = fo;
+    if (midi) {
+      var nm = clipLine(x.name, MAX_NAME);
+      if (nm) o.name = nm;
+      o.n = normNotes(x.n);
+    }
+    return o;
   }
+  // A MIDI clip at another tempo: everything scaled by r (old bpm / new bpm),
+  // so the notes stay on the same bars and beats.
+  function retimeClip(c, r) {
+    if (!isMidi(c) || !(r > 0) || r === 1) return c;
+    var n = Object.assign({}, c, {
+      at: c.at * r, off: c.off * r, len: c.len * r, fi: c.fi * r, fo: c.fo * r,
+      n: c.n.map(function (q) { return [q[0], q[1] * r, q[2] * r, q[3]]; })
+    });
+    return normClip(n) || c;
+  }
+  // The notes of a MIDI clip that play, in project time, within from..to:
+  // [{ at, end, p, v, g }] (g = the clip's gain and fades at the note's start).
+  function clipNotes(c, from, to) {
+    var out = [];
+    if (!isMidi(c)) return out;
+    var o = c.at - c.off, end = Math.min(clipEnd(c), to), cg = dbToGain(c.gain);
+    c.n.forEach(function (q) {
+      if (q[1] < c.off - 1e-9) return;
+      var s = o + q[1];
+      if (s >= end) return;
+      var e = Math.min(end, s + q[2]), a = Math.max(s, from);
+      if (e - a <= 1e-4) return;
+      out.push({ at: a, end: e, p: q[0], v: q[3], g: cg * fadeGainAt(c, a - c.at) });
+    });
+    return out;
+  }
+
   var NORM = { projects: normProject, tracks: normTrack, sources: normSource, clips: normClip };
   var LISTS = ["projects", "tracks", "sources", "clips"];
 
   function emptyData() { return { ver: DATA_VER, projects: [], tracks: [], sources: [], clips: [], tombs: {} }; }
 
   // ---------- Merge: symmetric, idempotent, canonical ----------
+  // Same stamp, different content: the copy with more data wins (an older
+  // Studio's copy lacks the fields it does not know, such as track.inst),
+  // then the larger JSON text, so both sides pick the same one.
+  function tieWins(x, cur) {
+    var sx = JSON.stringify(x), sc = JSON.stringify(cur);
+    return sx.length !== sc.length ? sx.length > sc.length : sx > sc;
+  }
   function mergeStudio(A, B) {
     var a = A || {}, b = B || {};
     var tombs = {};
@@ -171,7 +380,7 @@
           var x = NORM[key](raw);
           if (!x) return;
           var cur = best[x.id];
-          if (!cur || x.m > cur.m || (x.m === cur.m && JSON.stringify(x) > JSON.stringify(cur))) best[x.id] = x;
+          if (!cur || x.m > cur.m || (x.m === cur.m && tieWins(x, cur))) best[x.id] = x;
         });
       });
       Object.keys(best).sort(cmpStr).forEach(function (id) {
@@ -287,6 +496,11 @@
     var right = Object.assign({}, c, { id: newId, at: round(at, 6), off: round(c.off + d, 6), len: round(c.len - d, 6), fi: 0 });
     left.fi = Math.min(left.fi, left.len);
     right.fo = Math.min(right.fo, right.len);
+    if (isMidi(c)) {                                             // each half keeps the notes that start in it
+      var cut = c.off + d;
+      left.n = c.n.filter(function (q) { return q[1] < cut; });
+      right.n = c.n.filter(function (q) { return q[1] >= cut; });
+    }
     return [left, right];
   }
   // Gain of a clip at time `x` seconds into it (fades are linear in gain).
@@ -413,7 +627,12 @@
     peaks: peaks, wavBytes: wavBytes, fileName: fileName, sourcePath: sourcePath, extOf: extOf,
     clipLine: clipLine,
     MAX_FX: MAX_FX, FX_ID_RE: FX_ID_RE, normFx: normFx, POS_STEPS: POS_STEPS,
-    sliderFromPos: sliderFromPos, sliderToPos: sliderToPos, sliderStep: sliderStep, fxValue: fxValue, fxFilePath: fxFilePath
+    sliderFromPos: sliderFromPos, sliderToPos: sliderToPos, sliderStep: sliderStep, fxValue: fxValue, fxFilePath: fxFilePath,
+    MAX_LANES: MAX_LANES, MAX_PTS: MAX_PTS, laneRange: laneRange, fxLaneKey: fxLaneKey, laneFx: laneFx,
+    normAuto: normAuto, autoValueAt: autoValueAt, autoEvents: autoEvents, activeLane: activeLane, setLane: setLane,
+    keysOf: keysOf, keyLoops: keyLoops, keyPlan: keyPlan,
+    MAX_NOTES: MAX_NOTES, MIN_NOTE: MIN_NOTE, INST_RE: INST_RE, cmpNote: cmpNote, normNotes: normNotes,
+    isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioCore = api;

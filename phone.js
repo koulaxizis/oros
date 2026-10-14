@@ -144,7 +144,12 @@
   }
 
   // Calendar → Android CalendarContract fields. Times are computed in
-  // the page's local zone, which is the phone's zone (same device).
+  // the page's local zone, which is the phone's zone (same device),
+  // or in the event's own zone when it carries one (`tz`, Calendar
+  // wave 5): then EVENT_TIMEZONE is that zone, so Android repeats it
+  // at that zone's wall time. Rules come from calendar/occur.js.
+  var OCC = (root && root.OrosCalOccur) ||
+    (typeof module !== "undefined" && typeof require === "function" ? require("./calendar/occur.js") : null);
   var FREQ = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
   var REMIND = [5, 15, 30, 60, 1440, 4320, 7200];
   function parts(ymd) { var p = ymd.split("-"); return [+p[0], +p[1] - 1, +p[2]]; }
@@ -153,6 +158,8 @@
     var d = parts(ymd), t = hm(time);
     return new Date(d[0], d[1], d[2], t[0], t[1]).getTime();
   }
+  // Wall time in zone z (null: the page's own zone) → ms.
+  function zonedMs(ymd, time, z) { return z && OCC ? OCC.wallToMs(ymd, time, z) : localMs(ymd, time); }
   function utcMidnight(ymd, addDays) {
     var d = parts(ymd);
     return Date.UTC(d[0], d[1], d[2] + (addDays || 0));
@@ -160,22 +167,27 @@
   function utcStamp(ms) {
     return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
   }
+  function eventZone(e) {
+    var timed = typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start);
+    return timed && e.tz && OCC && OCC.tzValid(e.tz) ? e.tz : null;
+  }
   // The Calendar's monthly / yearly rule clamps to the month's last
   // day (Jan 31 → Feb 28 → Mar 31). RFC 5545 skips such months
   // instead, so days 29-31 become "the last of 28…day" (BYSETPOS=-1).
+  // Every N, weekdays, Nth / last weekday and COUNT pass as RFC 5545.
   function rrule(e) {
     var r = e.recur;
     if (!r || !FREQ[r.freq]) return null;
+    var z = eventZone(e);
+    if (OCC) {
+      return OCC.toRrule(e, {
+        until: function (u) {
+          return e.start ? utcStamp(zonedMs(u, "23:59", z) + 59000) : utcStamp(utcMidnight(u));
+        }
+      });
+    }
     var s = "FREQ=" + FREQ[r.freq];
     if (r.freq === "W" && r.interval === 2) s += ";INTERVAL=2";
-    var p = parts(e.date), day = p[2];
-    if (r.freq === "M" && day > 28) {
-      var ds = [];
-      for (var d = 28; d <= day; d++) ds.push(d);
-      s += ";BYMONTHDAY=" + ds.join(",") + ";BYSETPOS=-1";
-    } else if (r.freq === "Y" && p[1] === 1 && day === 29) {
-      s += ";BYMONTH=2;BYMONTHDAY=28,29;BYSETPOS=-1";
-    }
     if (typeof r.until === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.until)) {
       s += ";UNTIL=" + (e.start ? utcStamp(localMs(r.until, "23:59") + 59000)
                                 : utcStamp(utcMidnight(r.until)));
@@ -196,35 +208,40 @@
       var timed = typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start);
       var end = timed && typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end) ? e.end : null;
       var dateEnd = typeof e.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.dateEnd) && e.dateEnd >= e.date ? e.dateEnd : null;
+      var z = eventZone(e);
       var rule = rrule(e);
       var row = {
         id: e.id.slice(0, 64),
         title: str(e.title, 80), desc: str(e.note, 500), loc: str(e.location, 150),
         allDay: !timed,
-        dtstart: timed ? localMs(e.date, e.start) : utcMidnight(e.date),
+        dtstart: timed ? zonedMs(e.date, e.start, z) : utcMidnight(e.date),
         dtend: null, duration: null,
-        tz: timed ? (tz || "UTC") : "UTC",
+        tz: timed ? (z || tz || "UTC") : "UTC",
         rrule: rule, exdate: null,
         remind: typeof e.remindMin === "number" && REMIND.indexOf(e.remindMin) !== -1 ? e.remindMin : null,
         color: colors[e.labelId] || null
       };
       if (rule) {
-        // Series: Android wants DURATION, never DTEND.
+        // Series: Android wants DURATION, never DTEND. A series may
+        // span days (Calendar wave 5): the duration covers them.
+        var span = dateEnd && dateEnd > e.date && OCC ? OCC.dayNum(dateEnd) - OCC.dayNum(e.date) : 0;
         var mins = 0;
-        if (timed && end && end > e.start) {
-          var a = hm(e.start), b = hm(end);
-          mins = (b[0] * 60 + b[1]) - (a[0] * 60 + a[1]);
+        if (timed) {
+          var a = hm(e.start), b = hm(end || e.start);
+          mins = span * 1440 + (b[0] * 60 + b[1]) - (a[0] * 60 + a[1]);
+          if (!span && !(end && end > e.start)) mins = 0;
+          if (mins < 0) mins = 0;
         }
-        row.duration = timed ? "P" + (mins * 60) + "S" : "P1D";
+        row.duration = timed ? "P" + (mins * 60) + "S" : "P" + (span + 1) + "D";
         var ex = (e.recur.exdates || []).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }).sort();
         if (ex.length) {
           row.exdate = ex.map(function (d) {
-            return utcStamp(timed ? localMs(d, e.start) : utcMidnight(d));
+            return utcStamp(timed ? zonedMs(d, e.start, z) : utcMidnight(d));
           }).join(",");
         }
       } else if (timed) {
         var endDay = dateEnd || e.date;
-        var endMs = localMs(endDay, end || (dateEnd ? "00:00" : e.start));
+        var endMs = zonedMs(endDay, end || (dateEnd ? "00:00" : e.start), z);
         row.dtend = Math.max(endMs, row.dtstart);
       } else {
         row.dtend = utcMidnight(dateEnd || e.date, 1);
@@ -271,37 +288,53 @@
   //   title, desc, loc, allDay, dtstart, dtend, duration, rrule, exdate,
   //   remind, orig: { id, at } (an edited / cancelled occurrence of a
   //   series), cancelled }. Times are ms; all-day rows are UTC midnights.
+  // A timed event orOS keeps in its own zone (`tz`) comes back as wall
+  // times in that zone (z below); everything else in the page's zone.
   function ymdLocal(ms) { var d = new Date(ms); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function ymdUtc(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
   function hmLocal(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function wallIn(ms, z) {
+    if (z && OCC) return OCC.msToWall(ms, z);
+    return { date: ymdLocal(ms), time: hmLocal(ms) };
+  }
   function isoSecs(s) {          // "P3600S", "PT1H30M", "P1D", "P1W" → seconds
     var m = /^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(String(s || "").replace(/^\+/, ""));
     if (!m) { var n = /^P(\d+)S$/.exec(String(s || "")); return n ? +n[1] : 0; }
     return (+m[1] || 0) * 604800 + (+m[2] || 0) * 86400 + (+m[3] || 0) * 3600 + (+m[4] || 0) * 60 + (+m[5] || 0);
   }
   var FREQ_IN = { DAILY: "D", WEEKLY: "W", MONTHLY: "M", YEARLY: "Y" };
-  function stampDay(s, allDay) {  // "20261014" / "20261014T183000Z" → local YMD
+  function stampDay(s, allDay, z) {  // "20261014" / "20261014T183000Z" → local (or zone z) YMD
     var m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z?))?$/.exec(String(s || "").trim());
     if (!m) return null;
     if (!m[4] || allDay) return m[1] + "-" + m[2] + "-" + m[3];
     var ms = m[7] ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
                   : new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
-    return ymdLocal(ms);
+    return wallIn(ms, z).date;
   }
-  // Android RRULE → the Calendar's recur (FREQ, INTERVAL 2 only weekly,
-  // UNTIL). What orOS cannot express (BYDAY lists, COUNT) is dropped.
-  function recurIn(rule, exdate, allDay) {
+  // Android RRULE → the Calendar's recur through occur.js fromRrule
+  // (every N, weekdays, Nth / last weekday, COUNT, UNTIL). A rule orOS
+  // cannot hold keeps its FREQ (and weekly INTERVAL 2) only.
+  function recurIn(rule, exdate, allDay, start, z) {
     if (!rule) return null;
-    var p = {};
-    String(rule).split(";").forEach(function (kv) { var i = kv.indexOf("="); if (i > 0) p[kv.slice(0, i).toUpperCase()] = kv.slice(i + 1); });
-    var f = FREQ_IN[p.FREQ];
-    if (!f) return null;
-    var r = { freq: f, interval: f === "W" && p.INTERVAL === "2" ? 2 : 1, until: p.UNTIL ? stampDay(p.UNTIL, allDay) : null, exdates: [] };
+    var r = null;
+    if (OCC && typeof start === "string") {
+      var got = OCC.fromRrule(rule, start, { until: function (v) { return stampDay(v, allDay, z); } });
+      if (got.single) return null;
+      if (got.recur) r = got.recur;
+    }
+    if (!r) {
+      var p = {};
+      String(rule).split(";").forEach(function (kv) { var i = kv.indexOf("="); if (i > 0) p[kv.slice(0, i).toUpperCase()] = kv.slice(i + 1); });
+      var f = FREQ_IN[p.FREQ];
+      if (!f) return null;
+      r = { freq: f, interval: f === "W" && p.INTERVAL === "2" ? 2 : 1, until: p.UNTIL ? stampDay(p.UNTIL, allDay, z) : null, exdates: [] };
+    }
+    var ex = [];
     String(exdate || "").split(/[,\n]/).forEach(function (x) {
-      var d = stampDay(x.replace(/^.*:/, ""), allDay);
-      if (d && r.exdates.indexOf(d) === -1) r.exdates.push(d);
+      var d = stampDay(x.replace(/^.*:/, ""), allDay, z);
+      if (d && ex.indexOf(d) === -1) ex.push(d);
     });
-    r.exdates.sort();
+    r.exdates = ex.sort();
     return r;
   }
   var REMIND_IN = [5, 15, 30, 60, 1440, 4320, 7200];
@@ -312,22 +345,26 @@
     return best;
   }
   // One phone row → the Calendar's event fields (no id, label, mtime).
-  function eventIn(c) {
+  // z: the zone the stored event keeps (its times come back in it).
+  function eventIn(c, z) {
     var allDay = !!c.allDay, start = +c.dtstart;
     if (!isFinite(start)) return null;
     var endMs = isFinite(+c.dtend) && +c.dtend > 0 ? +c.dtend : start + isoSecs(c.duration) * 1000;
+    var zz = allDay ? null : (z || null);
+    var s = wallIn(start, zz);
+    var date = allDay ? ymdUtc(start) : s.date;
     var e = { title: str(c.title, 80), note: str(c.desc, 500), location: str(c.loc, 150),
-              date: allDay ? ymdUtc(start) : ymdLocal(start), dateEnd: null, start: null, end: null,
-              recur: recurIn(c.rrule, c.exdate, allDay), remindMin: remindIn(c.remind) };
+              date: date, dateEnd: null, start: null, end: null,
+              recur: recurIn(c.rrule, c.exdate, allDay, date, zz), remindMin: remindIn(c.remind) };
     if (allDay) {
       var last = endMs > start ? ymdUtc(endMs - 86400000) : e.date;
-      if (!e.recur && last > e.date) e.dateEnd = last;
+      if (last > e.date) e.dateEnd = last;
     } else {
-      e.start = hmLocal(start);
+      e.start = s.time;
       if (endMs > start) {
-        var endDay = ymdLocal(endMs);
-        if (endDay === e.date) e.end = hmLocal(endMs);
-        else if (!e.recur) { e.dateEnd = endDay; e.end = hmLocal(endMs); }
+        var en = wallIn(endMs, zz);
+        if (en.date === e.date) e.end = en.time;
+        else { e.dateEnd = en.date; e.end = en.time; }
       }
     }
     return e;
@@ -357,16 +394,18 @@
         // the series skips that day; a changed one becomes its own event.
         var si = find(orig.id);
         if (si !== -1 && b.events[si].recur) {
-          var s = b.events[si], day = s.start ? ymdLocal(+orig.at) : ymdUtc(+orig.at);
+          var s = b.events[si], sz = eventZone(s);
+          var day = s.start ? wallIn(+orig.at, sz).date : ymdUtc(+orig.at);
           var ex = (s.recur.exdates || []).slice();
           if (ex.indexOf(day) === -1) ex.push(day);
           ex.sort();
           s.recur = Object.assign({}, s.recur, { exdates: ex });
           s.mtime = now;
           if (c.op !== "delete" && !c.cancelled) {
-            var one = eventIn(c);
+            var one = eventIn(c, sz);
             if (one) {
               one.recur = null;
+              if (sz && one.start) one.tz = sz;
               b.events.push(Object.assign(one, { id: newEventId(now), labelId: s.labelId || null, mtime: now }));
             }
           }
@@ -380,10 +419,14 @@
         refs.push(c.ref);
         return;
       }
-      var e = eventIn(c);
+      var z = i !== -1 ? eventZone(b.events[i]) : null;
+      var e = eventIn(c, z);
       if (!e) { refs.push(c.ref); return; }
-      if (i !== -1) b.events[i] = Object.assign({}, b.events[i], e, { mtime: now });
-      else b.events.push(Object.assign(e, { id: newEventId(now), labelId: null, mtime: now }));
+      if (i !== -1) {
+        var merged = Object.assign({}, b.events[i], e, { mtime: now });
+        if (!merged.start || !z) delete merged.tz;
+        b.events[i] = merged;
+      } else b.events.push(Object.assign(e, { id: newEventId(now), labelId: null, mtime: now }));
       refs.push(c.ref);
     });
     return { blob: b, refs: refs };
@@ -517,7 +560,12 @@
   //   alarms: oros-alarms list ({id, at, label, repeat, state})
   //   water:  { data, core }  (water/core.js parse + reminderDue)
   //   todo:   { data, core }  (todo/core.js dueSummary)
-  //   lang: "en" | "el"; alarmTitle / todoTitle: the shell's words
+  //   habits: { data, core }  (habits/core.js needsReminder: each
+  //           habit's reminder time on the days it still needs)
+  //   health: { data, core } (health/core.js alarmsBetween: medicine
+  //           doses, doctor's appointments, vaccinations)
+  //   lang: "en" | "el"; alarmTitle / todoTitle / habitsTitle /
+  //   healthTitle: the shell's words
   var REM_HOURS = 48, TODO_HOUR = 9;
   function reminderRows(src, now) {
     src = src || {};
@@ -532,7 +580,8 @@
       }
       for (var n = 0; n < 3 && t <= end; n++) {
         if (t > now) rows.push({ id: "time:alarm-" + a.id + "-" + ymdLocal(t), at: t, kind: "alarm", ns: "time",
-                                 title: alarmTitle, body: str(a.label, 60) || alarmTitle, link: "time:alarms" });
+                                 title: alarmTitle, body: str(a.label, 60) || alarmTitle,
+                                 link: a.id.indexOf("tmr-") === 0 ? "time:timer" : "time:alarms" });   // Time wave 5: kitchen timers
         if (a.repeat !== "daily") break;
         var nx = new Date(t); nx.setDate(nx.getDate() + 1); t = nx.getTime();
       }
@@ -563,6 +612,55 @@
                              : sum.count + (sum.count === 1 ? " task is due or overdue" : " tasks are due or overdue"),
                     link: sum.earliestList ? "todo:" + sum.earliestList : "" });
       }
+    }
+    var HB = src.habits;
+    if (HB && HB.core && HB.data && typeof HB.core.needsReminder === "function") {
+      var hix = null;
+      try { hix = HB.core.index(HB.data); } catch (e) { hix = null; }
+      (hix ? HB.core.living(HB.data) : []).forEach(function (h) {
+        if (typeof h.rem !== "number") return;
+        for (var hd = 0; hd < 3; hd++) {
+          var hDay = new Date(dayAt(now, hd, 0));
+          hDay.setHours(Math.floor(h.rem / 60), h.rem % 60, 0, 0);
+          var hAt = hDay.getTime();
+          if (hAt <= now || hAt > end) continue;
+          var hy = ymdLocal(hAt);
+          if (!HB.core.needsReminder(hix, h, hy)) continue;
+          rows.push({ id: "habits:" + HB.core.remKey(h.id, hy), at: hAt, kind: "note", ns: "habits",
+                      title: str(src.habitsTitle, 60) || (el ? "Συνήθειες" : "Habits"),
+                      body: (el ? "Ώρα για: " : "Time for: ") + str(h.name, 120), link: "habits:0" });
+        }
+      });
+    }
+    // Health: medicine doses (a snoozed one at the end of its snooze),
+    // doctor's appointments and vaccinations, from the same rules and
+    // with the same keys as the shell engine (healthCheckTick), so the
+    // inbox notice and the phone's alarm are one.
+    var HL = src.health;
+    if (HL && HL.core && HL.data && typeof HL.core.alarmsBetween === "function") {
+      var hd = null;
+      try { hd = HL.core.merge(HL.data, HL.data); } catch (e) { hd = null; }
+      var hTitle = str(src.healthTitle, 60) || (el ? "Υγεία" : "Health");
+      var hm2 = function (ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); };
+      var dm2 = function (ms) { var x = new Date(ms); return x.getDate() + "/" + (x.getMonth() + 1); };
+      (hd ? HL.core.alarmsBetween(hd, now, end) : []).forEach(function (r) {
+        var body = "", link = "health:meds";
+        if (r.k === "dose") {
+          var tm = (r.tm < 600 ? "0" : "") + Math.floor(r.tm / 60) + ":" + (r.tm % 60 < 10 ? "0" : "") + (r.tm % 60);
+          body = (el ? "Ώρα για το φάρμακο: " : "Time for your medicine: ") + r.med.n + (r.med.s ? " " + r.med.s : "") + " (" + tm + ")";
+        } else if (r.k === "appt") {
+          var a = r.ap, who = a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp);
+          body = (el ? "Ραντεβού με γιατρό: " : "Doctor's appointment: ") + who + ", " + dm2(a.at) + " " + hm2(a.at);
+          link = "health:appts";
+        } else if (r.k === "vax") {
+          var p = r.vx.nx.split("-");
+          body = (r.st === "w" ? (el ? "Επόμενη δόση εμβολίου σε μία εβδομάδα: " : "Next vaccine dose in a week: ")
+                               : (el ? "Επόμενη δόση εμβολίου: " : "Next vaccine dose due: ")) + r.vx.n + " (" + (+p[2]) + "/" + (+p[1]) + ")";
+          link = "health:vax";
+        } else return;
+        rows.push({ id: "health:" + r.key, at: r.at, kind: "note", ns: "health",
+                    title: hTitle, body: str(body, 200), link: link });
+      });
     }
     rows.sort(function (a, b) { return a.at - b.at || (a.id < b.id ? -1 : 1); });
     return rows.slice(0, 100);
@@ -623,6 +721,28 @@
     el: { running: "Τρέξιμο", walking: "Περπάτημα", cycling: "Ποδήλατο", swimming: "Κολύμβηση", hiking: "Πεζοπορία",
           yoga: "Γιόγκα", strength: "Ενδυνάμωση", other: "Προπόνηση" }
   };
+  // A reading from Health Connect in Health's storage units, or null:
+  //   wt grams · hr bpm · sl minutes asleep (at = bedtime) · bp
+  //   systolic, diastolic (a 1 left / 2 right arm, p 1 sitting /
+  //   2 standing / 3 lying) · gl tenths of mg/dL (c 1 fasting / 2 before
+  //   a meal / 3 after) · o2 %. The ranges are Health's (core SPEC).
+  var HC_VITALS_MAX = 3000;
+  var HC_RANGE = { wt: [[500, 500000]], hr: [[20, 250]], sl: [[1, 1440]], bp: [[50, 300], [20, 200]],
+                   gl: [[100, 10000]], o2: [[50, 100]] };
+  function vitalRow(x) {
+    if (!x || typeof x !== "object" || !Object.prototype.hasOwnProperty.call(HC_RANGE, x.k)) return null;
+    if (typeof x.at !== "number" || !isFinite(x.at) || x.at < 0 || x.at > 4102444800000 || !Array.isArray(x.v)) return null;
+    var r = HC_RANGE[x.k], v = [];
+    for (var i = 0; i < r.length; i++) {
+      var n = Math.round(+x.v[i]);
+      if (!(n >= r[i][0] && n <= r[i][1])) return null;
+      v.push(n);
+    }
+    if (x.k === "bp") { if (v[1] >= v[0]) return null; v.push(0); }
+    if (x.k === "sl") v.push(0);
+    function pick(n, max) { return n === Math.round(n) && n >= 0 && n <= max ? n : 0; }
+    return { v: v, c: x.k === "gl" ? pick(x.c, 3) : 0, a: x.k === "bp" ? pick(x.a, 2) : 0, p: x.k === "bp" ? pick(x.p, 3) : 0 };
+  }
   function healthIn(blobs, inc, now, names) {
     var res = { water: null, fitness: null, health: null };
     inc = inc || {};
@@ -658,7 +778,8 @@
       if (addW) { f.wo.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.fitness = f; }
     }
     var steps = Array.isArray(inc.steps) ? inc.steps : [];
-    if (steps.length) {
+    var vitals = Array.isArray(inc.vitals) ? inc.vitals.slice(0, HC_VITALS_MAX) : [];
+    if (steps.length || vitals.length) {
       var h = blobs.health && typeof blobs.health === "object" ? JSON.parse(JSON.stringify(blobs.health))
                                                               : { ver: 1, en: [], ty: [], set: null, tombs: {} };
       if (!Array.isArray(h.en)) h.en = [];
@@ -675,6 +796,18 @@
         var row = { id: id, m: now, t: "st", at: x.d === today ? now : localMs(x.d, "23:59"), v: [n],
                     c: 0, a: 0, p: 0, n: "", g: [] };
         if (old) h.en[i] = row; else { byId[id] = h.en.length; h.en.push(row); }
+        ch++;
+      });
+      // Readings other apps put in Health Connect (v6): one Health
+      // reading each, id "hc-<kind>-<hex of its Health Connect id>",
+      // added once (an edit in orOS stays), never over a deletion.
+      vitals.forEach(function (x) {
+        var v = vitalRow(x);
+        if (!v) return;
+        var id = "hc-" + x.k + "-" + hcHex(x.ref, 32);
+        if (id.length < 3 + x.k.length + 1 + 16 || id in byId || ("en:" + id) in ht) return;
+        byId[id] = h.en.length;
+        h.en.push({ id: id, m: now, t: x.k, at: Math.round(x.at), v: v.v, c: v.c, a: v.a, p: v.p, n: "", g: [] });
         ch++;
       });
       if (ch) { h.en.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.health = h; }
@@ -821,7 +954,8 @@
     var res = healthIn(blobs, {
       water: "water" in blobs ? m.water : [],
       workouts: "fitness" in blobs ? m.workouts : [],
-      steps: "health" in blobs ? m.steps : []
+      steps: "health" in blobs ? m.steps : [],
+      vitals: "health" in blobs ? m.vitals : []
     }, now, el ? HC_KINDS.el : HC_KINDS.en);
     var wrote = false;
     try {
@@ -839,7 +973,8 @@
     } catch (e) { return; }
     if (wrote) { try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {} }
     var p = prefs();
-    p.healthIn = { at: now, steps: (m.steps || []).length, water: (m.water || []).length, workouts: (m.workouts || []).length };
+    p.healthIn = { at: now, steps: (m.steps || []).length, water: (m.water || []).length, workouts: (m.workouts || []).length,
+                   vitals: Array.isArray(m.vitals) ? m.vitals.length : 0 };
     savePrefs(p);
     emit();
   }
@@ -879,10 +1014,20 @@
     try {
       if (root.OrosTodoCore) todo = { core: root.OrosTodoCore, data: JSON.parse(localStorage.getItem("oros-todo-data") || "null") };
     } catch (e) {}
+    var habits = null;
+    try {
+      if (root.OrosHabitsCore) habits = { core: root.OrosHabitsCore, data: JSON.parse(localStorage.getItem("oros-habits-data") || "null") };
+    } catch (e) {}
+    var health = null;
+    try {
+      if (root.OrosHealthCore) health = { core: root.OrosHealthCore, data: JSON.parse(localStorage.getItem("oros-health-data") || "null") };
+    } catch (e) {}
     function tr(k, d) { var v = typeof T === "function" ? T(k) : ""; return v && v !== k ? v : d; }
     var lang = (document.documentElement.lang || "en").slice(0, 2);
-    return { alarms: alarms, water: water, todo: todo, lang: lang,
-             alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do") };
+    return { alarms: alarms, water: water, todo: todo, habits: habits, health: health, lang: lang,
+             alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do"),
+             habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits"),
+             healthTitle: tr("app.health", lang === "el" ? "Υγεία" : "Health") };
   }
   function pushReminders(force) {
     var p = prefs();
@@ -890,7 +1035,8 @@
     var now = Date.now(), raw = "";
     try {
       raw = [localStorage.getItem("oros-alarms"), localStorage.getItem("oros-water-data"),
-             localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs")].join("\n");
+             localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs"),
+             localStorage.getItem("oros-habits-data"), localStorage.getItem("oros-health-data")].join("\n");
     } catch (e) { return; }
     // Water rows depend on the hour too: recheck every 5 minutes.
     var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone();
@@ -1022,7 +1168,9 @@
       document.addEventListener("visibilitychange", function () {
         send({ t: "seen", v: !document.hidden });
         if (!document.hidden) { pushAll(false); send({ t: "state" }); }
-        else { todayAt = 0; pushToday(false); }   // leaving: the widget gets the latest
+        // leaving: the widget gets the latest, and so do the reminders
+        // (a timer or alarm set in the last 15 s must reach the app)
+        else { todayAt = 0; pushToday(false); pushReminders(false); }
       });
     }
   });

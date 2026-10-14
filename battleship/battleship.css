@@ -101,6 +101,8 @@ button, select {
 #new-btn      { order: 5; }
 #stats-btn    { order: 6; }
 #sfx-btn      { order: 7; }
+#net-btn      { order: 8; }
+#tb-b .rp-badge { order: 2; }
 
 .seg {
   display: flex;

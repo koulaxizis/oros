@@ -19,9 +19,21 @@
 //   bpSplit(entries), glucoseByCtx(entries), timeInTarget(d, entries)
 //   fitnessWeights(raw), dueReminders(d, nowMs), slotKey(t, ymd, min)
 //   timesOn(d, nowMs) (today's reminder times + done, for Today)
+//   Medicines and symptoms (wave 2, block near the end): normMed,
+//   normDose, normRefill, normSym, normSymKind, doseKey, slotsOn,
+//   dosesOn, doseState, adherence, prnTaken, stockOf, daysLeft,
+//   runOutDay, lowStock, dueDoses, symKindRow, symKindList
+//   Medical record (wave 3, block before the API): normAllergy,
+//   normCond, normContact, normVax, normAppt, normDoc, normProfile,
+//   medicalId, idText (QR text), vaxOpen, dueVax, dueAppts, recordOn,
+//   upcomingAppts, alarmsBetween (the phone's alarms), atName / atPath
 // Data (synced slice "health", key oros-health-data):
 //   { ver: 1,
-//     en: [entry…] by id, ty: [type…] by id, set: settings | null,
+//     en: [entry…] by id, ty: [type…] by id,
+//     md: [medicine…], dl: [dose log…], rf: [refill…],
+//     sy: [symptom…], sk: [symptom kind…] (all by id; see the
+//     medicines block), al, cn, ec, vx, ap, dc (medical record, see
+//     its block), set: settings | null, pf: Medical ID | null,
 //     tombs: { "<coll>:<id>": deletedAt } }
 //   entry = { id, m, t, at, v: [int…], c, a, p, n, g: [tag…] }
 //     t  type id ("bp", "wt", … or a custom "c…" id)
@@ -46,7 +58,7 @@
   var DATA_VER = 1;
   var ID_RE = /^[a-z0-9-]{1,40}$/;
   var YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
-  var COLLS = ["en", "ty"];
+  var COLLS = ["en", "ty", "md", "dl", "rf", "sy", "sk", "al", "cn", "ec", "vx", "ap", "dc"];
   var NOTE_LEN = 500, NAME_LEN = 40, UNIT_LEN = 12, TAG_LEN = 24, MAX_TAGS = 6, MAX_REM = 4;
   var MAX_AT = 4102444800000;        // 2100-01-01
   var CUSTOM_MAX = 1e12;
@@ -164,7 +176,8 @@
       fw: x.fw === 0 ? 0 : 1
     };
   }
-  var NORM = { en: normEntry, ty: normType };
+  var NORM = { en: normEntry, ty: normType, md: normMed, dl: normDose, rf: normRefill, sy: normSym, sk: normSymKind,
+               al: normAllergy, cn: normCond, ec: normContact, vx: normVax, ap: normAppt, dc: normDoc };
 
   function canonPick(cur, x) {
     return !cur || x.m > cur.m || (x.m === cur.m && JSON.stringify(x) > JSON.stringify(cur));
@@ -201,12 +214,17 @@
     });
     var sa = normSettings(a.set), sb = normSettings(b.set);
     out.set = sa && sb ? (canonPick(sa, sb) ? sb : sa) : (sa || sb || null);
+    var pa = normProfile(a.pf), pb = normProfile(b.pf);
+    out.pf = pa && pb ? (canonPick(pa, pb) ? pb : pa) : (pa || pb || null);
     var sorted = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (k) { sorted[k] = tombs[k]; });
     out.tombs = sorted;
     return out;
   }
-  function emptyData() { return { ver: DATA_VER, en: [], ty: [], set: null, tombs: {} }; }
+  function emptyData() {
+    return { ver: DATA_VER, en: [], ty: [], md: [], dl: [], rf: [], sy: [], sk: [],
+             al: [], cn: [], ec: [], vx: [], ap: [], dc: [], set: null, pf: null, tombs: {} };
+  }
   function settingsOf(d) { return (d && d.set) || DEF_SET; }
 
   // The effective row of a type: the stored one, or the defaults of a
@@ -439,6 +457,663 @@
     return out.sort(function (a, b) { return a.min - b.min || cmpStr(a.t, b.t); });
   }
 
+  // ---------- Medicines and symptoms (wave 2) ----------
+  // Medicines ("md"), one row per medicine:
+  //   { id, m, n name, s strength ("500 mg", free text), f form (FORMS),
+  //     q dose in hundredths of the form's unit (100 = 1 tablet),
+  //     k schedule: "d" every day | "w" weekdays (wd bit 0 = Monday) |
+  //       "n" every ev days from sd | "p" as needed (no times),
+  //     tm dose times (minutes, ≤ 8, sorted), wd, ev, sd start, ed end
+  //     ("" = no end), rm remind 0|1, sk stock in hundredths at sa (ms;
+  //     -1 = stock not tracked), pk pack size (hundredths, "Refilled"),
+  //     rw warn days before running out, ar stopped 0|1, ca created
+  //     (ms; unlogged doses before it are never reminded or counted),
+  //     nt note, ps earlier schedules [{ u last day, k, tm, wd, ev }]
+  //     (≤ 12, sorted by u): a changed schedule applies from the day
+  //     of the change, so past days keep the times they had }
+  // Dose log ("dl"), one row per dose marked:
+  //   { id, m, md, d day, tm slot minute (-1 = as needed), s "t" taken |
+  //     "s" skipped | "z" snoozed, ta when (ms; editable for taken),
+  //     q amount taken (hundredths), zu snoozed until (ms) }
+  //   A scheduled dose's id IS its slot: doseKey(md, d, tm) =
+  //   "<md>-YYYYMMDD-HHMM", so two devices marking the same dose write
+  //   the same row and the merge keeps the newer mark. As-needed doses
+  //   get "<md>-YYYYMMDD-p<random>".
+  // Refills ("rf"): { id, m, md, at, a (hundredths) }: separate rows, so
+  //   refills on two devices add up. Stock = sk + refills since sa −
+  //   doses taken since sa (stockOf).
+  // Symptoms ("sy"): { id, m, k kind, at, i intensity 1–10, n, g }.
+  // Symptom kinds ("sk"): { id, m, n, h }: built-in rows (SYM_BUILTIN)
+  //   exist only once hidden; own kinds "s…" carry a name.
+  var FORMS = ["tab", "cap", "liq", "drop", "inh", "spray", "inj", "cream", "patch", "supp", "sach", "other"];
+  var SCHED = ["d", "w", "n", "p"];
+  var MED_ID_RE = /^[a-z0-9]{1,20}$/;
+  var MAX_TIMES = 8, MED_NAME = 60, STRENGTH_LEN = 30;
+  var QTY_MAX = 100000, STOCK_MAX = 10000000;
+  var LATE_AFTER = 30 * 60000;
+  var SYM_BUILTIN = ["ha", "na", "dz", "ft", "pn", "cg", "br", "pl"];
+
+  function validYmd(s) {
+    if (typeof s !== "string" || !YMD_RE.test(s)) return false;
+    var p = s.split("-"), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return d.getFullYear() === +p[0] && d.getMonth() === +p[1] - 1 && d.getDate() === +p[2] && +p[0] >= 1900 && +p[0] < 2100;
+  }
+  function ymdDate(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function ymdAdd(s, n) { var d = ymdDate(s); return ymdOf(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime()); }
+  function dayNum(s) { var p = s.split("-"); return Math.round(Date.UTC(+p[0], +p[1] - 1, +p[2]) / DAY); }
+  function slotAt(s, min) { var d = ymdDate(s); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(min / 60), min % 60).getTime(); }
+  function okMs(v) { return isInt(v) && v >= 0 && v <= MAX_AT; }
+  function bits(n) { var c = 0; while (n) { c += n & 1; n >>= 1; } return c; }
+
+  function normTimes(list) {
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function (r) {
+      if (isInt(r) && r >= 0 && r < 1440 && !seen[r] && out.length < MAX_TIMES) { seen[r] = 1; out.push(r); }
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+  function normSched(x, sd) {
+    if (!x || typeof x !== "object" || !validYmd(x.u) || x.u < sd) return null;
+    var k = SCHED.indexOf(x.k) >= 0 ? x.k : "p";
+    var tm = k === "p" ? [] : normTimes(x.tm);
+    if (!tm.length) k = "p";
+    return { u: x.u, k: k, tm: tm,
+             wd: k === "w" && isInt(x.wd) && x.wd >= 1 && x.wd <= 127 ? x.wd : 127,
+             ev: k === "n" ? (isInt(x.ev) && x.ev >= 2 && x.ev <= 90 ? x.ev : 2) : 1 };
+  }
+  function normPs(list, sd) {
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function (x) {
+      var n = normSched(x, sd);
+      if (n && !seen[n.u]) { seen[n.u] = 1; out.push(n); }
+    });
+    out.sort(function (a, b) { return cmpStr(a.u, b.u); });
+    return out.slice(-12);
+  }
+  function normMed(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !MED_ID_RE.test(x.id) || !stamp(x)) return null;
+    var n = normStr(x.n, MED_NAME);
+    if (!n || !validYmd(x.sd)) return null;
+    var k = SCHED.indexOf(x.k) >= 0 ? x.k : "d";
+    var tm = k === "p" ? [] : normTimes(x.tm);
+    if (!tm.length) k = "p";
+    var ed = validYmd(x.ed) && x.ed >= x.sd ? x.ed : "";
+    var sk = isInt(x.sk) && x.sk >= 0 && x.sk <= STOCK_MAX ? x.sk : -1;
+    return {
+      id: x.id, m: x.m, n: n, s: normStr(x.s, STRENGTH_LEN),
+      f: FORMS.indexOf(x.f) >= 0 ? x.f : "tab",
+      q: isInt(x.q) && x.q >= 1 && x.q <= QTY_MAX ? x.q : 100,
+      k: k, tm: tm,
+      wd: k === "w" && isInt(x.wd) && x.wd >= 1 && x.wd <= 127 ? x.wd : 127,
+      ev: k === "n" ? (isInt(x.ev) && x.ev >= 2 && x.ev <= 90 ? x.ev : 2) : 1,
+      sd: x.sd, ed: ed,
+      rm: x.rm === 0 ? 0 : 1,
+      sk: sk, sa: sk >= 0 && okMs(x.sa) ? x.sa : 0,
+      pk: isInt(x.pk) && x.pk >= 1 && x.pk <= STOCK_MAX ? x.pk : 3000,
+      rw: isInt(x.rw) && x.rw >= 0 && x.rw <= 60 ? x.rw : 7,
+      ar: x.ar ? 1 : 0,
+      ca: okMs(x.ca) ? x.ca : 0,
+      nt: normNote(x.nt),
+      ps: normPs(x.ps, x.sd)
+    };
+  }
+  function sameSched(a, b) {
+    return a.k === b.k && a.wd === b.wd && a.ev === b.ev && a.tm.join(",") === b.tm.join(",");
+  }
+  // A medicine edited on day `today`: when its schedule changed and it
+  // had started before today, the old schedule is kept for the days up
+  // to yesterday (once per day: a second change on the same day keeps
+  // the first entry). Returns the new ps list.
+  function withHistory(oldMed, newMed, today) {
+    var ps = (oldMed && oldMed.ps ? oldMed.ps : []).slice();
+    if (!oldMed || sameSched(oldMed, newMed)) return ps;
+    var y = ymdAdd(today, -1);
+    if (y < oldMed.sd || ps.some(function (p) { return p.u >= y; })) return ps;
+    ps.push({ u: y, k: oldMed.k, tm: oldMed.tm.slice(), wd: oldMed.wd, ev: oldMed.ev });
+    return normPs(ps, oldMed.sd);
+  }
+  function doseKey(md, ymd, min) {
+    return md + "-" + ymd.replace(/-/g, "") + "-" + pad2(Math.floor(min / 60)) + pad2(min % 60);
+  }
+  var PRN_RE = /^p[a-z0-9]{1,8}$/;
+  function normDose(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    if (typeof x.md !== "string" || !MED_ID_RE.test(x.md) || !validYmd(x.d)) return null;
+    if (!isInt(x.tm) || x.tm < -1 || x.tm >= 1440) return null;
+    var head = x.md + "-" + x.d.replace(/-/g, "") + "-";
+    if (x.tm >= 0 ? x.id !== doseKey(x.md, x.d, x.tm) : (x.id.indexOf(head) !== 0 || !PRN_RE.test(x.id.slice(head.length)))) return null;
+    var s = x.s === "t" || x.s === "s" || x.s === "z" ? x.s : "";
+    if (!s || (x.tm < 0 && s !== "t") || !okMs(x.ta)) return null;
+    return {
+      id: x.id, m: x.m, md: x.md, d: x.d, tm: x.tm, s: s, ta: x.ta,
+      q: s === "t" ? (isInt(x.q) && x.q >= 1 && x.q <= QTY_MAX ? x.q : 100) : 0,
+      zu: s === "z" && okMs(x.zu) ? x.zu : 0
+    };
+  }
+  function normRefill(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    if (typeof x.md !== "string" || !MED_ID_RE.test(x.md) || !okMs(x.at)) return null;
+    if (!isInt(x.a) || x.a < 1 || x.a > STOCK_MAX) return null;
+    return { id: x.id, m: x.m, md: x.md, at: x.at, a: x.a };
+  }
+  function isSymBuiltin(k) { return SYM_BUILTIN.indexOf(k) >= 0; }
+  function normSym(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    if (typeof x.k !== "string" || !ID_RE.test(x.k) || !okMs(x.at)) return null;
+    if (!isInt(x.i) || x.i < 1 || x.i > 10) return null;
+    return { id: x.id, m: x.m, k: x.k, at: x.at, i: x.i, n: normNote(x.n), g: normTags(x.g) };
+  }
+  function normSymKind(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var built = isSymBuiltin(x.id);
+    if (!built && (x.id.charAt(0) !== "s" || x.id.length < 4)) return null;
+    var n = built ? "" : normStr(x.n, NAME_LEN);
+    if (!built && !n) return null;
+    return { id: x.id, m: x.m, n: n, h: x.h ? 1 : 0 };
+  }
+  function symKindRow(d, k) {
+    var list = (d && d.sk) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === k) return list[i];
+    return isSymBuiltin(k) ? { id: k, m: 0, n: "", h: 0 } : null;
+  }
+  // Built-ins first in their fixed order, then own kinds by name.
+  function symKindList(d) {
+    var own = ((d && d.sk) || []).filter(function (x) { return !isSymBuiltin(x.id); });
+    own.sort(function (x, y) { return cmpStr(x.n.toLowerCase(), y.n.toLowerCase()) || cmpStr(x.id, y.id); });
+    return SYM_BUILTIN.map(function (k) { return symKindRow(d, k); }).concat(own);
+  }
+
+  function medById(d, id) {
+    var list = (d && d.md) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+  // { id → log } plus, per medicine and day, its scheduled marks
+  // ("@<md>@<day>" → [log]).
+  function logIndex(d) {
+    var idx = {};
+    ((d && d.dl) || []).forEach(function (l) {
+      idx[l.id] = l;
+      if (l.tm >= 0) (idx["@" + l.md + "@" + l.d] = idx["@" + l.md + "@" + l.d] || []).push(l);
+    });
+    return idx;
+  }
+  // The schedule in force on a day: the first earlier schedule whose
+  // last day is on or after it, else the current one.
+  function schedOn(med, ymd) {
+    var ps = med.ps || [];
+    for (var i = 0; i < ps.length; i++) if (ymd <= ps[i].u) return ps[i];
+    return med;
+  }
+  // Scheduled dose times of one medicine on one day ([] when none).
+  function slotsOn(med, ymd) {
+    if (!med || ymd < med.sd || (med.ed && ymd > med.ed)) return [];
+    var sc = schedOn(med, ymd);
+    if (sc.k === "p") return [];
+    if (sc.k === "w" && !(sc.wd & (1 << ((ymdDate(ymd).getDay() + 6) % 7)))) return [];
+    if (sc.k === "n" && (dayNum(ymd) - dayNum(med.sd)) % sc.ev !== 0) return [];
+    return sc.tm.slice();
+  }
+  // The state of one scheduled dose at nowMs:
+  //   taken | skipped | snoozed | upcoming | due | late | missed
+  // late = 30 minutes past the time, still today; missed = an earlier
+  // day with no mark. Before the medicine was added: "due" at most.
+  function doseState(row, nowMs) {
+    var l = row.log;
+    if (l && l.s === "t") return "taken";
+    if (l && l.s === "s") return "skipped";
+    if (nowMs < row.at) return "upcoming";
+    if (l && l.s === "z" && l.zu > nowMs) return "snoozed";
+    if (row.pre || nowMs - row.at < LATE_AFTER) return "due";
+    return ymdOf(nowMs) === row.d ? "late" : "missed";
+  }
+  // Every scheduled dose of one day, all medicines (stopped ones too,
+  // for the history), sorted by time then name:
+  //   [{ key, md, med, d, tm, at, log, pre, state, extra }]
+  // A dose taken or skipped at a time that is no longer in the
+  // schedule (changed the same day) still shows, marked extra.
+  function dosesOn(d, ymd, nowMs, idx) {
+    idx = idx || logIndex(d);
+    var out = [];
+    ((d && d.md) || []).forEach(function (med) {
+      var slots = slotsOn(med, ymd), seen = {};
+      slots.forEach(function (min) {
+        var key = doseKey(med.id, ymd, min), at = slotAt(ymd, min);
+        seen[min] = 1;
+        var row = { key: key, md: med.id, med: med, d: ymd, tm: min, at: at, log: idx[key] || null, pre: !!(med.ca && at < med.ca), extra: false };
+        row.state = doseState(row, nowMs);
+        out.push(row);
+      });
+      (idx["@" + med.id + "@" + ymd] || []).forEach(function (l) {
+        if (seen[l.tm] || l.s === "z") return;
+        var row = { key: l.id, md: med.id, med: med, d: ymd, tm: l.tm, at: slotAt(ymd, l.tm), log: l, pre: false, extra: true };
+        row.state = doseState(row, nowMs);
+        out.push(row);
+      });
+    });
+    return out.sort(function (a, b) { return a.at - b.at || cmpStr(a.med.n.toLowerCase(), b.med.n.toLowerCase()) || cmpStr(a.md, b.md); });
+  }
+  // As-needed doses taken (log rows with tm -1) of one medicine (or
+  // all, md = "") between two instants, oldest first.
+  function prnTaken(d, md, from, to) {
+    return ((d && d.dl) || []).filter(function (l) {
+      return l.tm < 0 && l.s === "t" && (!md || l.md === md) && l.ta >= from && l.ta < to;
+    }).sort(function (a, b) { return a.ta - b.ta || cmpStr(a.id, b.id); });
+  }
+  // Adherence over the days fromYmd..toYmd (inclusive) of one medicine
+  // (md) or all (md = ""). Counted: doses at least 30 minutes past
+  // their time, or already marked. Doses from before the medicine was
+  // added count only when marked. pct = taken / counted (null if none).
+  function adherence(d, md, fromYmd, toYmd, nowMs) {
+    var res = { n: 0, taken: 0, skipped: 0, missed: 0, pct: null };
+    if (!d || !Array.isArray(d.md) || !validYmd(fromYmd) || !validYmd(toYmd) || fromYmd > toYmd) return res;
+    var meds = d.md.filter(function (x) { return !md || x.id === md; });
+    if (!meds.length) return res;
+    var start = fromYmd, today = ymdOf(nowMs);
+    var first = meds.reduce(function (a, x) { return x.sd < a ? x.sd : a; }, "9999-12-31");
+    if (first > start) start = first;
+    var end = toYmd < today ? toYmd : today;
+    var idx = logIndex(d), sub = { dl: d.dl, md: meds }, guard = 0;
+    for (var day = start; day <= end && guard++ < 4000; day = ymdAdd(day, 1)) {
+      dosesOn(sub, day, nowMs, idx).forEach(function (r) {
+        if (r.state === "taken") { res.n++; res.taken++; }
+        else if (r.state === "skipped") { res.n++; res.skipped++; }
+        else if ((r.state === "late" || r.state === "missed") && !r.pre) { res.n++; res.missed++; }
+      });
+    }
+    if (res.n) res.pct = res.taken / res.n;
+    return res;
+  }
+
+  // ---------- Stock ----------
+  // Units left (hundredths), or null when not tracked. Can go below 0
+  // when more doses were marked than the count had.
+  function stockOf(d, med) {
+    if (!med || med.sk < 0) return null;
+    var s = med.sk;
+    ((d && d.rf) || []).forEach(function (r) { if (r.md === med.id && r.at >= med.sa) s += r.a; });
+    ((d && d.dl) || []).forEach(function (l) { if (l.md === med.id && l.s === "t" && l.ta >= med.sa) s -= l.q; });
+    return s;
+  }
+  // Average use per day in hundredths (0 for as needed).
+  function perDay(med) {
+    if (!med || med.k === "p" || !med.tm.length) return 0;
+    var per = med.tm.length * med.q;
+    if (med.k === "w") per = per * bits(med.wd) / 7;
+    if (med.k === "n") per = per / med.ev;
+    return per;
+  }
+  // Whole days the stock still covers (null: not tracked or as needed).
+  function daysLeft(d, med) {
+    var s = stockOf(d, med), p = perDay(med);
+    if (s === null || !p) return null;
+    return Math.max(0, Math.floor(s / p));
+  }
+  // The day the stock runs out ("" when unknown or after the course).
+  function runOutDay(d, med, nowMs) {
+    var n = daysLeft(d, med);
+    if (n === null) return "";
+    var day = ymdAdd(ymdOf(nowMs), n);
+    return med.ed && day > med.ed ? "" : day;
+  }
+  // The latest change to a medicine's count: a new count or a refill.
+  function stockEpoch(d, med) {
+    var e = med.sa;
+    ((d && d.rf) || []).forEach(function (r) { if (r.md === med.id && r.at > e) e = r.at; });
+    return e;
+  }
+  // Medicines running low: count tracked, taken now (not stopped, not
+  // ended) and either at most rw days left (scheduled) or less than one
+  // dose left (as needed). key = once per count / refill, so a warning
+  // is announced once until the next refill.
+  function lowStock(d, nowMs) {
+    var out = [], today = ymdOf(nowMs);
+    ((d && d.md) || []).forEach(function (med) {
+      if (med.ar || med.sk < 0 || (med.ed && med.ed < today) || med.sd > today) return;
+      var s = stockOf(d, med), days = daysLeft(d, med);
+      var low = med.k === "p" ? s < med.q : (days !== null && days <= med.rw);
+      if (!low) return;
+      out.push({ md: med.id, med: med, left: Math.max(0, s), days: days,
+                 key: "low-" + med.id + "-" + stockEpoch(d, med).toString(36) });
+    });
+    return out;
+  }
+
+  // ---------- Calendar feed (calendar/calendar.js, opt-in) ----------
+  // On one day: a course's first and last day, and the day a counted
+  // medicine runs out (today or later, medicines still taken).
+  //   → [{ k: "start" | "end" | "out", med }] by name
+  function calendarOn(d, day, nowMs) {
+    var out = [], today = ymdOf(nowMs);
+    if (!validYmd(day)) return out;
+    ((d && d.md) || []).forEach(function (med) {
+      if (med.sd === day) out.push({ k: "start", med: med });
+      if (med.ed === day) out.push({ k: "end", med: med });
+      if (!med.ar && day >= today && runOutDay(d, med, nowMs) === day) out.push({ k: "out", med: med });
+    });
+    return out.sort(function (a, b) { return cmpStr(a.med.n.toLowerCase(), b.med.n.toLowerCase()) || cmpStr(a.k, b.k); });
+  }
+
+  // ---------- Dose reminders ----------
+  // A dose reminds from its time for 4 hours (as a measurement does),
+  // unless it was marked, the medicine is stopped or its reminder is
+  // off, or it is snoozed (it reminds again when the snooze ends, with
+  // its own key). Yesterday's late-evening doses still count.
+  function dueDoses(d, nowMs) {
+    var out = [];
+    if (!d || !Array.isArray(d.md) || !d.md.length) return out;
+    var today = ymdOf(nowMs), idx = logIndex(d);
+    var live = { dl: d.dl, md: d.md.filter(function (x) { return !x.ar && x.rm; }) };
+    [ymdAdd(today, -1), today].forEach(function (day) {
+      dosesOn(live, day, nowMs, idx).forEach(function (r) {
+        if (r.pre || nowMs < r.at || nowMs - r.at >= REM_WINDOW) return;
+        var l = r.log;
+        if (l && (l.s === "t" || l.s === "s")) return;
+        if (l && l.s === "z" && l.zu > nowMs) return;
+        out.push({ key: "d-" + r.key + (l && l.s === "z" ? "-z" + l.zu.toString(36) : ""), md: r.md, med: r.med, d: r.d, tm: r.tm, at: r.at });
+      });
+    });
+    return out;
+  }
+
+  // ---------- Medical record, appointments, documents (wave 3) ----------
+  // Six more collections, same LWW + tombstones ("al:" … "dc:"), and the
+  // Medical ID profile pf (LWW as a whole, like set):
+  //   al allergy    { id, m, n ≤ 60, sv 0 not given | 1 mild | 2 moderate
+  //                   | 3 severe, r reaction ≤ 120, nt }
+  //   cn condition  { id, m, n ≤ 60, sd since ("" | YYYY-MM-DD), nt }
+  //   ec emergency contact { id, m, n ≤ 60, rl relation ≤ 30, ph phone
+  //                   ≤ 40 (digits, + and spaces), ci Contacts id or "" }
+  //   vx vaccination { id, m, n ≤ 60, d given, nx next due ("" = none),
+  //                   rm remind 0|1, lt batch ≤ 30, nt }
+  //   ap appointment { id, m, dr doctor ≤ 60, sp specialty ≤ 40, pl place
+  //                   ≤ 120, at ms, du minutes 0–720, rm reminder lead in
+  //                   minutes (-1 off, 0 at the time … 10080), nt }
+  //   dc document   { id ([a-z0-9]{6,40}), m, k lab|rx|img|ltr|oth,
+  //                   n ≤ 80, d YYYY-MM-DD, nt, sc [file names] ≤ 6 }
+  //     Files live on the orOS disk at /internal/Health/<name> (Vault
+  //     Drive syncs them), never in the slice: names
+  //     "YYYYMMDD-<docId>-<random>.jpg|pdf" (AT_RE), as Pet Health Book.
+  //   pf Medical ID { m, nm ≤ 60, bd birth ("" | YYYY-MM-DD), bt blood
+  //                   type ("" | BLOOD), od organ donor 0 not given | 1 yes
+  //                   | 2 no, nt ≤ 500, sm medicines on the card 0|1 }
+  var BLOOD = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  var DOC_KINDS = ["lab", "rx", "img", "ltr", "oth"];
+  var DOC_ID_RE = /^[a-z0-9]{6,40}$/;
+  var AT_DIR = "/internal/Health";
+  var AT_RE = /^\d{8}-[a-z0-9]{6,40}-[a-z0-9]{4,12}\.(jpg|pdf)$/;
+  var MAX_AT_FILES = 6;
+  var REC_NAME = 60, REACTION_LEN = 120, REL_LEN = 30, PHONE_LEN = 40, LOT_LEN = 30;
+  var DR_LEN = 60, SPEC_LEN = 40, PLACE_LEN = 120, DOC_NAME = 80;
+  var LEAD_MAX = 10080, DUR_MAX = 720;
+  var VAX_HOUR = 9, VAX_EARLY = 7, VAX_LATE = 2;
+
+  function head(x) { return !!x && typeof x === "object" && typeof x.id === "string" && ID_RE.test(x.id) && stamp(x); }
+  function optYmd(s) { return validYmd(s) ? s : ""; }
+  function normPhone(s) { return normStr(s, PHONE_LEN).replace(/[^0-9+()\-. \/]/g, "").replace(/\s+/g, " ").trim(); }
+  function normAllergy(x) {
+    if (!head(x)) return null;
+    var n = normStr(x.n, REC_NAME);
+    if (!n) return null;
+    return { id: x.id, m: x.m, n: n, sv: isInt(x.sv) && x.sv >= 0 && x.sv <= 3 ? x.sv : 0,
+             r: normStr(x.r, REACTION_LEN), nt: normNote(x.nt) };
+  }
+  function normCond(x) {
+    if (!head(x)) return null;
+    var n = normStr(x.n, REC_NAME);
+    if (!n) return null;
+    return { id: x.id, m: x.m, n: n, sd: optYmd(x.sd), nt: normNote(x.nt) };
+  }
+  function normContact(x) {
+    if (!head(x)) return null;
+    var n = normStr(x.n, REC_NAME), ph = normPhone(x.ph);
+    if (!n || !/\d/.test(ph)) return null;
+    return { id: x.id, m: x.m, n: n, rl: normStr(x.rl, REL_LEN), ph: ph,
+             ci: typeof x.ci === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(x.ci) ? x.ci : "" };
+  }
+  function normVax(x) {
+    if (!head(x) || !validYmd(x.d)) return null;
+    var n = normStr(x.n, REC_NAME);
+    if (!n) return null;
+    var nx = validYmd(x.nx) && x.nx > x.d ? x.nx : "";
+    return { id: x.id, m: x.m, n: n, d: x.d, nx: nx, rm: nx && x.rm !== 0 ? 1 : 0,
+             lt: normStr(x.lt, LOT_LEN), nt: normNote(x.nt) };
+  }
+  function normAppt(x) {
+    if (!head(x) || !okMs(x.at)) return null;
+    var dr = normStr(x.dr, DR_LEN), sp = normStr(x.sp, SPEC_LEN);
+    if (!dr && !sp) return null;
+    return { id: x.id, m: x.m, dr: dr, sp: sp, pl: normStr(x.pl, PLACE_LEN), at: x.at,
+             du: isInt(x.du) && x.du >= 0 && x.du <= DUR_MAX ? x.du : 0,
+             rm: isInt(x.rm) && x.rm >= -1 && x.rm <= LEAD_MAX ? x.rm : -1,
+             nt: normNote(x.nt) };
+  }
+  function normAtList(list) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (n) { if (typeof n === "string" && AT_RE.test(n) && out.indexOf(n) < 0) out.push(n); });
+    out.sort(cmpStr);
+    return out.slice(0, MAX_AT_FILES);
+  }
+  function normDoc(x) {
+    if (!head(x) || !DOC_ID_RE.test(x.id) || !validYmd(x.d)) return null;
+    var n = normStr(x.n, DOC_NAME);
+    if (!n) return null;
+    var out = { id: x.id, m: x.m, k: DOC_KINDS.indexOf(x.k) >= 0 ? x.k : "oth", n: n, d: x.d, nt: normNote(x.nt) };
+    var sc = normAtList(x.sc);
+    if (sc.length) out.sc = sc;               // absent when none (canonical form)
+    return out;
+  }
+  function normProfile(x) {
+    if (!x || typeof x !== "object" || !stamp(x)) return null;
+    return { m: x.m, nm: normStr(x.nm, REC_NAME), bd: optYmd(x.bd),
+             bt: BLOOD.indexOf(x.bt) >= 0 ? x.bt : "",
+             od: isInt(x.od) && x.od >= 0 && x.od <= 2 ? x.od : 0,
+             nt: normNote(x.nt), sm: x.sm === 0 ? 0 : 1 };
+  }
+  var DEF_PF = { m: 0, nm: "", bd: "", bt: "", od: 0, nt: "", sm: 1 };
+  function profileOf(d) { return (d && d.pf) || DEF_PF; }
+
+  // ----- Attachments of documents -----
+  function atName(ymd, docId, rnd, ext) {
+    var r = typeof rnd === "string" ? rnd.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) : "";
+    if (!validYmd(ymd) || typeof docId !== "string" || !DOC_ID_RE.test(docId) || r.length < 4 || (ext !== "jpg" && ext !== "pdf")) return null;
+    var n = ymd.replace(/-/g, "") + "-" + docId + "-" + r + "." + ext;
+    return AT_RE.test(n) ? n : null;
+  }
+  function atPath(name) { return typeof name === "string" && AT_RE.test(name) ? AT_DIR + "/" + name : null; }
+  function attachmentsOf(d) {
+    var all = [];
+    ((d && d.dc) || []).forEach(function (x) { (x.sc || []).forEach(function (n) { all.push(n); }); });
+    return all;
+  }
+
+  // ----- Age, current medicines, the Medical ID summary -----
+  function ageOn(bd, nowMs) {
+    if (!validYmd(bd)) return null;
+    var p = bd.split("-"), now = new Date(nowMs);
+    var a = now.getFullYear() - +p[0];
+    if (now.getMonth() + 1 < +p[1] || (now.getMonth() + 1 === +p[1] && now.getDate() < +p[2])) a--;
+    return a >= 0 && a < 150 ? a : null;
+  }
+  // Medicines taken now: not stopped, started, not ended.
+  function currentMeds(d, nowMs) {
+    var today = ymdOf(nowMs);
+    return ((d && d.md) || []).filter(function (m) { return !m.ar && m.sd <= today && (!m.ed || m.ed >= today); })
+      .sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); });
+  }
+  function byName(a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); }
+  // Everything the Medical ID shows: allergies by severity (severe
+  // first), then by name; conditions, contacts by name; the medicines
+  // taken now (unless the profile turns them off).
+  function medicalId(d, nowMs) {
+    var pf = profileOf(d);
+    return {
+      pf: pf,
+      age: ageOn(pf.bd, nowMs),
+      al: ((d && d.al) || []).slice().sort(function (a, b) { return b.sv - a.sv || byName(a, b); }),
+      cn: ((d && d.cn) || []).slice().sort(byName),
+      ec: ((d && d.ec) || []).slice().sort(byName),
+      md: pf.sm ? currentMeds(d, nowMs) : []
+    };
+  }
+  function utf8Len(s) {
+    var n = 0;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c < 0x80) n += 1;
+      else if (c < 0x800) n += 2;
+      else if (c >= 0xD800 && c <= 0xDBFF) { n += 4; i++; }
+      else n += 3;
+    }
+    return n;
+  }
+  // The text of the Medical ID QR code: plain lines, no link, in the
+  // language of the labels L = { head, name, born, blood, donor, yes,
+  // no, al, cn, md, ec, nt, sev: [4 words], more: "+{n}" }. At most
+  // `max` UTF-8 bytes (a QR code a phone camera reads at a glance):
+  // when it is too long, notes go first, then the last medicines,
+  // conditions, contacts and allergies (one of each stays), each list
+  // saying how many more.
+  function idText(s, L, max) {
+    max = max || 700;
+    var pf = s.pf, lim = { nt: 1, md: s.md.length, cn: s.cn.length, ec: s.ec.length, al: s.al.length };
+    function list(label, items, n, fmt) {
+      if (!items.length) return "";
+      var shown = items.slice(0, n).map(fmt);
+      if (n < items.length) shown.push(String(L.more || "+{n}").replace("{n}", items.length - n));
+      return label + ": " + shown.join("; ");
+    }
+    function build() {
+      var out = [L.head];
+      if (pf.nm) out.push(L.name + ": " + pf.nm);
+      if (pf.bd) out.push(L.born + ": " + pf.bd + (s.age !== null ? " (" + s.age + ")" : ""));
+      if (pf.bt) out.push(L.blood + ": " + pf.bt);
+      if (pf.od) out.push(L.donor + ": " + (pf.od === 1 ? L.yes : L.no));
+      out.push(list(L.al, s.al, lim.al, function (a) { return a.n + (a.sv ? " (" + L.sev[a.sv] + ")" : ""); }));
+      out.push(list(L.cn, s.cn, lim.cn, function (c) { return c.n; }));
+      out.push(list(L.md, s.md, lim.md, function (m) { return m.n + (m.s ? " " + m.s : ""); }));
+      out.push(list(L.ec, s.ec, lim.ec, function (c) { return c.n + (c.rl ? " (" + c.rl + ")" : "") + " " + c.ph; }));
+      if (lim.nt && pf.nt) out.push(L.nt + ": " + pf.nt.replace(/\s+/g, " "));
+      return out.filter(Boolean).join("\n");
+    }
+    var order = ["nt", "md", "cn", "ec", "al"], txt = build(), guard = 0;
+    while (utf8Len(txt) > max && guard++ < 400) {
+      var cut = false;
+      for (var i = 0; i < order.length && !cut; i++) {
+        var k = order[i], floor = k === "al" || k === "ec" ? 1 : 0;
+        if (k === "nt" ? (lim.nt && pf.nt) : lim[k] > floor) { lim[k]--; cut = true; }
+      }
+      if (!cut) break;
+      txt = build();
+    }
+    while (utf8Len(txt) > max) txt = txt.slice(0, -1);
+    return txt;
+  }
+
+  // ----- Vaccinations: the newest of each name is the one that counts -----
+  // Rows that still wait for their next dose: the newest row of each
+  // name (no later vaccination of the same name since) with a next
+  // due date, soonest first.
+  function vaxOpen(d) {
+    var newest = {};
+    ((d && d.vx) || []).forEach(function (v) {
+      var k = v.n.toLowerCase(), cur = newest[k];
+      if (!cur || v.d > cur.d || (v.d === cur.d && v.id > cur.id)) newest[k] = v;
+    });
+    return Object.keys(newest).map(function (k) { return newest[k]; }).filter(function (v) { return !!v.nx; })
+      .sort(function (a, b) { return cmpStr(a.nx, b.nx) || byName(a, b); });
+  }
+  // Two notices per due vaccination (reminder on): a week before (from
+  // 09:00 of that day until the day before) and on the day (from 09:00
+  // for three days). One key per row, due day and stage.
+  function vaxStages(v) {
+    return [
+      { st: "w", at: slotAt(ymdAdd(v.nx, -VAX_EARLY), VAX_HOUR * 60), until: ymdDate(v.nx).getTime() },
+      { st: "d", at: slotAt(v.nx, VAX_HOUR * 60), until: ymdDate(ymdAdd(v.nx, VAX_LATE + 1)).getTime() }
+    ];
+  }
+  function vaxNoticeKey(v, st) { return "v-" + v.id + "-" + v.nx.replace(/-/g, "") + "-" + st; }
+  function dueVax(d, nowMs) {
+    var out = [];
+    vaxOpen(d).forEach(function (v) {
+      if (!v.rm) return;
+      vaxStages(v).forEach(function (s) {
+        if (nowMs >= s.at && nowMs < s.until) out.push({ key: vaxNoticeKey(v, s.st), vx: v, st: s.st, at: s.at });
+      });
+    });
+    return out;
+  }
+
+  // ----- Appointments -----
+  function apptAlarmAt(a) { return a.rm < 0 ? null : a.at - a.rm * 60000; }
+  function apptKey(a) { return "a-" + a.id + "-" + a.at.toString(36) + "-" + a.rm; }
+  // Due from its alarm (the lead before) until the appointment starts;
+  // one at the time itself is due for an hour.
+  function dueAppts(d, nowMs) {
+    var out = [];
+    ((d && d.ap) || []).forEach(function (a) {
+      var t0 = apptAlarmAt(a);
+      if (t0 === null) return;
+      var until = a.rm === 0 ? a.at + HOUR : a.at;
+      if (nowMs >= t0 && nowMs < until) out.push({ key: apptKey(a), ap: a, at: t0 });
+    });
+    return out;
+  }
+  // Appointments on one day by time, then vaccinations due that day.
+  //   → [{ k: "ap", ap, at } | { k: "vx", vx, at: null }]
+  function recordOn(d, day) {
+    var out = [];
+    if (!validYmd(day)) return out;
+    ((d && d.ap) || []).forEach(function (a) { if (ymdOf(a.at) === day) out.push({ k: "ap", ap: a, at: a.at }); });
+    out.sort(function (x, y) { return x.at - y.at || cmpStr(x.ap.id, y.ap.id); });
+    vaxOpen(d).forEach(function (v) { if (v.nx === day) out.push({ k: "vx", vx: v, at: null }); });
+    return out;
+  }
+  // Appointments of today (earlier ones too) and later, soonest first.
+  function upcomingAppts(d, nowMs) {
+    var start = ymdDate(ymdOf(nowMs)).getTime();
+    return ((d && d.ap) || []).filter(function (a) { return a.at >= start; })
+      .sort(function (x, y) { return x.at - y.at || cmpStr(x.id, y.id); });
+  }
+
+  // ----- Every alarm in (from, to]: for the phone (orOS closed) -----
+  // The same keys as the shell engine, so the inbox notice and the
+  // phone's alarm are one: doses "d-<doseKey>" (a snoozed one
+  // "…-z<until>" at its end), appointments apptKey, vaccinations
+  // vaxNoticeKey. Same rules: stopped medicines, reminders off, doses
+  // from before a medicine was added and marked doses never ring.
+  //   → [{ key, at, k: "dose" | "appt" | "vax", med?, tm?, ap?, vx?, st? }]
+  function alarmsBetween(d, fromMs, toMs) {
+    var out = [];
+    if (!d || !(toMs > fromMs)) return out;
+    var meds = (d.md || []).filter(function (x) { return !x.ar && x.rm; });
+    if (meds.length) {
+      var live = { dl: d.dl, md: meds }, idx = logIndex(d), guard = 0;
+      for (var day = ymdAdd(ymdOf(fromMs), -1), last = ymdOf(toMs); day <= last && guard++ < 10; day = ymdAdd(day, 1)) {
+        dosesOn(live, day, fromMs, idx).forEach(function (r) {
+          var l = r.log;
+          if (r.pre || r.extra || (l && (l.s === "t" || l.s === "s"))) return;
+          if (l && l.s === "z" && l.zu > fromMs) {
+            if (l.zu <= toMs) out.push({ key: "d-" + r.key + "-z" + l.zu.toString(36), at: l.zu, k: "dose", med: r.med, tm: r.tm });
+            return;
+          }
+          if (r.at > fromMs && r.at <= toMs) out.push({ key: "d-" + r.key, at: r.at, k: "dose", med: r.med, tm: r.tm });
+        });
+      }
+    }
+    (d.ap || []).forEach(function (a) {
+      var t0 = apptAlarmAt(a);
+      if (t0 !== null && t0 > fromMs && t0 <= toMs) out.push({ key: apptKey(a), at: t0, k: "appt", ap: a });
+    });
+    vaxOpen(d).forEach(function (v) {
+      if (!v.rm) return;
+      vaxStages(v).forEach(function (s) {
+        if (s.at > fromMs && s.at <= toMs) out.push({ key: vaxNoticeKey(v, s.st), at: s.at, k: "vax", vx: v, st: s.st });
+      });
+    });
+    return out.sort(function (a, b) { return a.at - b.at || cmpStr(a.key, b.key); });
+  }
+
   var API = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, BUILTIN: BUILTIN, SPEC: SPEC, CTX: CTX, DEF_SET: DEF_SET,
     G_PER_LB: G_PER_LB, MGDL_PER_MMOL: MGDL_PER_MMOL, NOTE_LEN: NOTE_LEN, NAME_LEN: NAME_LEN,
@@ -448,7 +1123,23 @@
     toUnit: toUnit, fromUnit: fromUnit, bmi: bmi, classify: classify, sleepEnd: sleepEnd,
     inRange: inRange, stats: stats, movingAvg: movingAvg, bpSplit: bpSplit, glucoseByCtx: glucoseByCtx,
     timeInTarget: timeInTarget, fitnessWeights: fitnessWeights, dueReminders: dueReminders,
-    slotKey: slotKey, ymdOf: ymdOf, timesOn: timesOn
+    slotKey: slotKey, ymdOf: ymdOf, timesOn: timesOn,
+    FORMS: FORMS, SCHED: SCHED, MED_ID_RE: MED_ID_RE, MAX_TIMES: MAX_TIMES, MED_NAME: MED_NAME,
+    STRENGTH_LEN: STRENGTH_LEN, QTY_MAX: QTY_MAX, STOCK_MAX: STOCK_MAX, LATE_AFTER: LATE_AFTER,
+    SYM_BUILTIN: SYM_BUILTIN, validYmd: validYmd, ymdAdd: ymdAdd, slotAt: slotAt,
+    normMed: normMed, normDose: normDose, normRefill: normRefill, normSym: normSym, normSymKind: normSymKind,
+    isSymBuiltin: isSymBuiltin, symKindRow: symKindRow, symKindList: symKindList,
+    medById: medById, logIndex: logIndex, schedOn: schedOn, withHistory: withHistory, doseKey: doseKey, slotsOn: slotsOn, doseState: doseState,
+    dosesOn: dosesOn, prnTaken: prnTaken, adherence: adherence, stockOf: stockOf, perDay: perDay,
+    daysLeft: daysLeft, runOutDay: runOutDay, lowStock: lowStock, dueDoses: dueDoses, calendarOn: calendarOn,
+    BLOOD: BLOOD, DOC_KINDS: DOC_KINDS, DOC_ID_RE: DOC_ID_RE, AT_DIR: AT_DIR, AT_RE: AT_RE, MAX_AT_FILES: MAX_AT_FILES,
+    REC_NAME: REC_NAME, REACTION_LEN: REACTION_LEN, REL_LEN: REL_LEN, PHONE_LEN: PHONE_LEN, LOT_LEN: LOT_LEN,
+    DR_LEN: DR_LEN, SPEC_LEN: SPEC_LEN, PLACE_LEN: PLACE_LEN, DOC_NAME: DOC_NAME, LEAD_MAX: LEAD_MAX, DUR_MAX: DUR_MAX,
+    normAllergy: normAllergy, normCond: normCond, normContact: normContact, normVax: normVax, normAppt: normAppt,
+    normDoc: normDoc, normProfile: normProfile, profileOf: profileOf, atName: atName, atPath: atPath,
+    attachmentsOf: attachmentsOf, ageOn: ageOn, currentMeds: currentMeds, medicalId: medicalId, utf8Len: utf8Len,
+    idText: idText, vaxOpen: vaxOpen, dueVax: dueVax, apptKey: apptKey, dueAppts: dueAppts, recordOn: recordOn,
+    upcomingAppts: upcomingAppts, alarmsBetween: alarmsBetween
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosHealthCore = API;

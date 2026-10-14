@@ -1,7 +1,7 @@
 # Health
-Health keeps your home measurements in one place: blood pressure, weight, blood sugar, sleep, resting heart rate, temperature, oxygen and any kind you add yourself. It shows trends and makes a tidy report for your doctor.
+Health keeps your home measurements in one place: blood pressure, weight, blood sugar, sleep, resting heart rate, temperature, oxygen and any kind you add yourself. It also keeps a list of the medicines you take, reminds you of each dose, counts what's left and lets you log symptoms. Its `Record` keeps your Medical ID for emergencies, your doctor's appointments, vaccinations and documents such as lab results. It shows trends and makes a tidy report for your doctor.
 
->! Health records, it does not diagnose. For anything that worries you, talk to your doctor.
+>! Health records, it does not diagnose and it is not medical advice. The Medical ID shows only what you typed: it does not replace your doctor's records. It does not check doses or interactions between medicines. Take your medicines as your doctor or pharmacist told you, and for anything that worries you, talk to them.
 
 ## Getting started
 The `Measurements` tab has one card per measurement. Tap or click **+** on a card to add a reading: the date and time are filled in with now, so you only type the value. Tap or click the card itself to see its chart.
@@ -23,31 +23,90 @@ Tap or click `Add your own kind` for anything else, such as cholesterol or waist
 ### Reminders
 In a measurement's settings, `Add a time` (up to four). A bell on the card shows it has reminders. The reminder appears in your orOS notifications from that time on for four hours; a reading taken up to an hour before the time counts, so you aren't reminded twice. Tap the notification to open a new reading. See [notifications](help:t/notifications).
 
+## Medicines
+The `Medicines` tab has three views: `Today`, `My medicines` and `History`.
+
+### Adding a medicine
+Tap or click `Add a medicine` and fill in:
+- `Name` and, if you like, the `Strength` (e.g. 500 mg) and the `Form` (tablet, capsule, liquid in ml, drops, inhaler, injection, cream, patch and more).
+- `Dose`: how much you take each time, e.g. 1 or 0.5 tablets.
+- `How often`: `Every day`, `On certain days` (pick the weekdays), `Every few days` (every 2 days, every 3 days…) or `As needed`. For the first three, add the `Times` you take it (up to eight).
+- `Start` and an optional `End` for a course, such as an antibiotic for 7 days.
+- `Remind me at these times` and a `Note` (e.g. with food).
+
+Tap or click a medicine in `My medicines` to change it. When you change its times or days, the days before keep the old schedule, so your history stays right. `Stop taking` ends the course today and keeps its history; `Taking it again` brings it back. Deleting a medicine also deletes its dose history on every synced device; `Undo` brings it back.
+
+### Today
+`Today` lists every dose of the day by time. For each one choose `Taken`, `Skip` or `Snooze` (10 minutes, 30 minutes or 1 hour). A dose more than 30 minutes past its time is marked `Late` in red. After you mark a dose, `Change` lets you fix the time you took it or the amount, and `Undo` takes the mark back. Medicines you take `As needed` have their own list with `Take a dose` and today's count.
+
+### Stock and refills
+Tick `Count what's left` in a medicine and type how many you have now. Each dose marked `Taken` takes its amount off, and the list shows how many are left and for about how many days. When a medicine will run out within the days you chose in `Warn me this many days before it runs out` (7 by default), a warning appears at the top of `Today` and in your orOS notifications. `Refilled +30` (your pack size) adds a new pack. If the count drifts, type the right number in the medicine again.
+
+### History and adherence
+`History` shows, for the last 7, 30 or 90 days, how many doses you took out of those that were due, per medicine and in total, and every dose by day: `Taken at` a time, `Skipped` or `Missed`. A dose counts once it is 30 minutes past its time or marked. Tap or click a dose to mark it later or to change it.
+
+### Medicine reminders
+At each dose time you get an orOS notification for four hours, unless you have already marked it; after `Snooze` it comes back when the snooze ends. Tap it to open `Today`. In the orOS Android app with phone reminders allowed (Settings › `Connected services`), doses ring on the phone even when orOS is closed. Doses of a medicine you just added that were due before you added it are not reminded or counted as missed. Today's open doses and medicines running low also appear in [Today](app:today).
+
+## Symptoms
+The `Symptoms` card on `Measurements` keeps how you feel: tap or click **+**, pick the symptom, set the `Intensity` from 1 to 10 and add a note or tags if you like. Headache, nausea, dizziness, tiredness, pain, cough, shortness of breath and palpitations are ready; pick `Your own symptom…` to add any other. In `Settings` you can hide symptoms you don't need, and rename or delete your own (with their entries; `Undo` brings them back).
+
+Symptoms appear in `History`, have their own chart in `Charts` (pick the symptom in the list) and can go in the report.
+
 ## History, charts and report
-- `History` lists every reading by day, newest first, with a filter per measurement. Tap or click a reading to edit or delete it.
-- `Charts` shows 7, 30, 90 days, 1 year or all, with the target range shaded. Blood pressure splits mornings and evenings, blood sugar can be shown per context, weight adds a 7-day average. Below the chart you get averages, lowest, highest and `Numbers as a table`.
-- `Report` builds a sheet for your doctor: pick the period, the measurements and whether to include notes. `Print or save as PDF` opens your browser's print window; `Spreadsheet (CSV)` saves the same readings as a file.
+- `History` lists every reading and symptom by day, newest first, with a filter per measurement and one for `Symptoms`. Tap or click a row to edit or delete it.
+- `Charts` shows 7, 30, 90 days, 1 year or all, with the target range shaded. Blood pressure splits mornings and evenings, blood sugar can be shown per context, weight adds a 7-day average. Below the chart you get averages, lowest, highest and `Numbers as a table`. Tick `Show symptoms and doses` to see small marks under a measurement's chart: dots for symptoms (blue mild, amber moderate, red strong) and ticks for doses taken; hover over a mark to see what it is.
+- `Report` builds a sheet for your doctor: pick the period, the measurements, `Medicines (list and doses taken)`, `Symptoms` and whether to include notes. `Print or save as PDF` opens your browser's print window; `Spreadsheet (CSV)` saves the same readings, symptoms and doses as a file.
+
+## Record
+The `Record` tab has four views: `Medical ID`, `Appointments`, `Vaccines` and `Documents`.
+
+### Medical ID
+Like the Medical ID on a phone: what someone helping you in an emergency should know. Tap or click `Edit` for your name, date of birth, `Blood type`, `Organ donor` and `Medical notes` (e.g. pacemaker, contact lenses). Then add your `Allergies` (with `Severity` and the reaction), your `Conditions` and your `Emergency contacts`. `From Contacts` picks a person and a phone number from [Contacts](app:contacts); you can also type them. The medicines you take now are shown too, unless you untick `Show the medicines I take now`.
+
+- `Show Medical ID` fills the screen with big, clear text to show to a doctor or a first aider, with a `Call` button for each emergency contact. The screen stays on while it is open, where the browser allows it.
+- `Show a QR code` adds a QR code with the essentials as plain text: a phone camera reads it without going online. When there is a lot, the notes and the last medicines are left out of the code (the screen above still shows everything).
+- `Emergency card` prints a wallet-size card, front and back side by side, to cut out and fold; it carries the QR code when you have it switched on. In the print window you can also save it as a PDF.
+
+### Appointments
+`Add an appointment` with the `Doctor`, `Specialty`, date and time, an optional `Duration`, the `Place` and a note. `Remind me` from the time itself up to two days before. `Show on the map` opens the place in [Maps](app:maps). Appointments appear in [Today](app:today) and, if you turn it on, in Calendar.
+
+### Vaccines
+Add each vaccination with the day it was given and, if there is one, when the `Next dose` is due. You get a reminder a week before and on the day. When you get the next dose, tap or click `Given again`: it adds a new entry with the same name and the old one stops reminding. A vaccine due soon also appears in Today.
+
+### Documents
+Keep lab results, prescriptions, imaging, letters and other papers: a `Title`, the `Kind`, the date, a note and up to six photos or PDFs. Photos are made smaller and lose their location data; PDFs can be up to 10 MB. The files are kept in [Files](app:files), folder `Health`, not in the sync of your readings: they reach your other devices through Vault Drive. A file that is not on a device yet shows `Not on this device`. Deleting a document removes its files once the `Undo` time has passed.
+
+## Calendar
+In [Calendar](app:calendar), the `Medicines` chip shows the first and last day of a course and the day a medicine you count runs out. The `Doctor visits` chip shows your appointments at their time and the day a vaccine's next dose is due. Both start off: tap or click a chip to turn it on.
 
 ## Workouts weights
 If you log body weight in [Workouts](app:fitness), those weights appear in Health as hollow dots marked `from Workouts`. Health only reads them: to change one, open Workouts. You can turn this off in `Settings`.
 
 ## Steps and Health Connect
-`Steps` holds one reading per day. You can type it, or let the orOS Android app bring it: switch on `Health Connect` in Settings › `Connected services` and allow it. orOS then takes each day's steps from Health Connect, which collects them from your phone, watch or other health apps. Today's count goes up while you use orOS. The same switch sends your [Water](app:water) drinks and [Workouts](app:fitness) to Health Connect, and brings back drinks and workouts from your other apps, for the last 30 days.
+`Steps` holds one reading per day. You can type it, or let the orOS Android app bring it: switch on `Health Connect` in Settings › `Connected services` and allow it. orOS then takes each day's steps from Health Connect, which collects them from your phone, watch or other health apps. Today's count goes up while you use orOS.
+
+The same switch also brings readings that other apps and devices put in Health Connect: weight, resting heart rate, sleep, blood pressure, blood sugar and oxygen. Each one becomes a normal reading here, once; if you change or delete it in Health, it stays that way. orOS only reads these from Health Connect and never writes them there. If you allowed Health Connect before, open the switch once more to allow the new kinds. The same switch sends your [Water](app:water) drinks and [Workouts](app:fitness) to Health Connect, and brings back drinks and workouts from your other apps, for the last 30 days.
 
 ## Sync and backup
-Readings, your own kinds, targets, reminders and settings sync between your devices through [orOS sync](help:t/sync). The open tab, chart choices and report options stay on this device.
+Readings, your own kinds, targets, reminders, medicines, doses, refills, symptoms, your Medical ID, appointments, vaccinations, documents (without their files) and settings sync between your devices through [orOS sync](help:t/sync). Each dose is one entry, so if you mark the same dose on two devices, they agree on the later mark; refills from two devices both count. The open tab, chart choices, report options and whether the QR code is shown stay on this device.
 
-In `Settings` → `Export` you can save `All readings (CSV)` or a `Backup (JSON)`. `Restore from backup (merge)` merges a backup's readings with what you already have. For a full copy of orOS, see [backup](help:t/backup).
+In `Settings` → `Export` you can save `All readings (CSV)` or a `Backup (JSON)` (with medicines and symptoms too). `Restore from backup (merge)` merges a backup with what you already have. For a full copy of orOS, see [backup](help:t/backup).
 
 ## Keyboard shortcuts
-- [[1]] to [[4]] switch between the four tabs (not while typing).
+- [[1]] to [[6]] switch between the six tabs (not while typing).
 - [[Esc]] closes a dialog.
 
 ## Tips
 - A note like "after coffee" or a tag like "with medicine" makes odd readings easier to explain at the doctor's.
 - Hide measurements you never use in `Settings`; hidden kinds don't remind you.
+- Bring the report with `Medicines` ticked to your appointment: it lists what you take and how regularly you took it.
+- Print the `Emergency card` again after you change a medicine or an allergy: the paper does not update itself.
 
 ## Limits
-- Reminders only appear while orOS is open; a time missed by more than four hours is skipped.
-- No import from devices or other apps: readings are typed in by hand.
-- Medicines are not tracked.
+- Measurement reminders only appear while orOS is open; a time missed by more than four hours is skipped. Medicine doses, appointments and vaccines also ring through the orOS Android app with orOS closed, for the next two days from the last time orOS was opened; in a browser they too need orOS open.
+- The Medical ID lives in orOS: it is not on your phone's lock screen, so whoever helps you needs your phone unlocked, or the printed card.
+- Health has no medicine database: it does not know doses, interactions or side effects, and it does not check what you type.
+- The count of what's left is only as right as the doses you mark; check it against the box now and then.
+- Apart from what comes through Health Connect in the orOS Android app, readings are typed in by hand: no import from devices.
+- The `Backup (JSON)` keeps the names of document files, not the files: copy the `Health` folder in Files, or use Vault Drive, to keep them.

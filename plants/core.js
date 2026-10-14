@@ -26,7 +26,8 @@
 // Data (synced slice "plants", key oros-plants-data):
 //   { ver: 1, plants: [plant…] by id, log: [entry…] by id,
 //     tombs: { id: deletedAt } }
-//   plant = { id, m, name, sp, room, out, em, w, ww, f, mi, r, st, sn, notes }
+//   plant = { id, m, name, sp, room, sci?, out, em, w, ww, f, mi, r, st, sn, notes }
+//     sci scientific name (optional, ≤ 80; wave 34, Pl@ntNet pick)
 //     w  water every n days (1–60)      ww winter interval (0 = same)
 //     f  fertilize (0 = off)  mi mist (0 = off)  r repot (0 = off)
 //     st schedule start (the day it was last watered when added)
@@ -45,6 +46,7 @@
   var NAME_LEN  = 40;
   var ROOM_LEN  = 30;
   var NOTES_LEN = 500;
+  var SCI_LEN   = 80;
   var EM_LEN    = 8;
   var MAX_PLANTS = 300;
   var LOG_DAYS  = 730;          // entries older than two years are pruned…
@@ -101,10 +103,20 @@
     if (x.sn && typeof x.sn === "object") {
       KINDS.forEach(function (k) { if (isYmd(x.sn[k])) sn[k] = x.sn[k]; });
     }
-    return {
+    var o = {
       id: x.id, m: x.m, name: name,
       sp: typeof x.sp === "string" && Object.prototype.hasOwnProperty.call(PRESETS, x.sp) ? x.sp : "",
-      room: cleanText(x.room, ROOM_LEN, false),
+      room: cleanText(x.room, ROOM_LEN, false)
+    };
+    // sci (wave 34, optional): the scientific name, e.g. from a photo
+    // identification. Absent when empty, so older plants keep their
+    // canonical bytes. Placed before "out" on purpose: at equal m the
+    // larger canonical JSON wins, and ',"sci"' > ',"out"', so a copy
+    // that went through an older build (which drops the key) never
+    // beats the one that has it.
+    var sci = cleanText(x.sci, SCI_LEN, false);
+    if (sci) o.sci = sci;
+    var rest = {
       out: x.out === 1 ? 1 : 0,
       em: typeof x.em === "string" ? cleanText(x.em, EM_LEN, false) : "",
       w: w,
@@ -116,6 +128,8 @@
       sn: sn,
       notes: cleanText(x.notes, NOTES_LEN, true)
     };
+    Object.keys(rest).forEach(function (k) { o[k] = rest[k]; });
+    return o;
   }
 
   function normLog(x) {
@@ -349,7 +363,7 @@
 
   var api = {
     DATA_VER: DATA_VER, KINDS: KINDS, KIND_KEY: KIND_KEY, KIND_MAX: KIND_MAX,
-    NAME_LEN: NAME_LEN, ROOM_LEN: ROOM_LEN, NOTES_LEN: NOTES_LEN, EM_LEN: EM_LEN,
+    NAME_LEN: NAME_LEN, ROOM_LEN: ROOM_LEN, SCI_LEN: SCI_LEN, NOTES_LEN: NOTES_LEN, EM_LEN: EM_LEN,
     MAX_PLANTS: MAX_PLANTS, LOG_DAYS: LOG_DAYS, TOMB_DAYS: TOMB_DAYS,
     ID_RE: ID_RE, PRESETS: PRESETS, PRESET_IDS: PRESET_IDS,
     ymdOf: ymdOf, isYmd: isYmd, dayNum: dayNum, ymdFromDay: ymdFromDay, addDays: addDays,

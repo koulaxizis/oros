@@ -370,7 +370,7 @@ test("entries: anything the receiving bridge would reject never becomes a card",
     { kind: "event", date: "2026-10-10", start: "25:00" }, { kind: "expense", amount: 0 },
     { kind: "expense", amount: -5 }, { kind: "expense", amount: 2e9 }, { kind: "expense", amount: 5, date: "tomorrow" },
     { kind: "quote", lines: [] }, { kind: "quote", lines: [{ text: "x", qty: 0, price: 1 }] },
-    { kind: "quote", currency: "GBP", lines: [{ text: "x", qty: 1, price: 1 }] },
+    { kind: "quote", currency: "eur", lines: [{ text: "x", qty: 1, price: 1 }] },
     { kind: "sheet", rows: [] }, { kind: "slides", outline: "  " },
     { kind: "bookmark", url: "javascript:alert(1)" }, { kind: "bookmark", url: "data:text/html,x" },
     { kind: "note" }, null, "todo"
@@ -572,7 +572,8 @@ test("entries: an invoice card becomes Invoices' own prefill, and Invoices accep
   assert.equal(A.normEntry({ kind: "invoice", currency: "XYZ", lines: [{ text: "a", qty: 1, price: 1 }] }, {}).ok, false);
   assert.equal(A.normEntry({ kind: "invoice", lines: [] }, {}).ok, false);
   assert.equal(A.normEntry({ kind: "invoice", lines: [{ text: "", qty: 1, price: 1 }] }, {}).ok, false);
-  assert.equal(A.normEntry({ kind: "quote", currency: "GBP", lines: [{ text: "a", qty: 1, price: 1 }] }, {}).ok, false);
+  assert.equal(A.normEntry({ kind: "quote", currency: "EURO", lines: [{ text: "a", qty: 1, price: 1 }] }, {}).ok, false);
+  assert.equal(A.normEntry({ kind: "quote", currency: "GBP", lines: [{ text: "a", qty: 1, price: 1 }] }, {}).ok, true);
   assert.ok(A.entryKinds((id) => id === "invoices").includes("invoice"));
 });
 

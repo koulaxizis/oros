@@ -89,7 +89,7 @@
   function refresh() {
     var P = LIB.prefs;
     var kinds = {};
-    LIB.data.books.forEach(function (b) { if (b.kind) kinds[b.kind] = 1; });
+    LIB.data.books.forEach(function (b) { if (b.kind) kinds[b.kind === "cbr" ? "cbz" : b.kind] = 1; });   // "Comics": CBZ and CBR
     if (RARE[P.filter] && !kinds[P.filter]) P.filter = "all";
     [].forEach.call($("filters").children, function (b) {
       var f = b.getAttribute("data-f"), on = f === P.filter;
@@ -268,7 +268,8 @@
   function addMenu(anchor) {
     menu(anchor, [
       { label: t("add.device"), icon: UI.device, fn: pickDevice },
-      { label: t("add.disk"), icon: UI.disk, fn: pickDisk }
+      { label: t("add.disk"), icon: UI.disk, fn: pickDisk },
+      { label: t("add.cat"), icon: UI.globe, fn: function () { LIB.catalog.open(); } }
     ]);
   }
   function moreMenu(anchor) {
@@ -282,7 +283,7 @@
   function pickDevice() {
     var p = LIB.parentWin();
     var dlg = p && p.orosDialog;
-    var accept = ".epub,.pdf,.fb2,.cbz,.zip,application/epub+zip,application/pdf,application/x-fictionbook+xml,application/vnd.comicbook+zip";
+    var accept = ".epub,.pdf,.fb2,.cbz,.cbr,.zip,application/epub+zip,application/pdf,application/x-fictionbook+xml,application/vnd.comicbook+zip,application/vnd.comicbook-rar,application/x-cbr";
     var pr = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) :
       dlg && typeof dlg.openFile === "function" ? dlg.openFile(accept).then(function (f) { return f ? [f] : null; }) :
       standalonePick(accept);
@@ -550,7 +551,7 @@
   function exportNotes(id) {
     var b = LIB.book(id);
     if (!b) return;
-    var md = C.exportMarkdown(b, LIB.data.marks, LIB.LANG);
+    var md = C.exportMarkdown(b, LIB.data.marks, LIB.LANG, null, { date: C.ymdOf(new Date()) });
     var name = b.title + " - " + t("export.suffix") + ".md";
     var dlg = LIB.dialog("lb-export", t("export.title"), "small");
     dlg.appendChild(el("p", "dlg-text", t("export.text")));
@@ -577,8 +578,9 @@
       dlg.close();
       copyText(md);
     }));
-    // Notes: a new page, plain text (BR: __orosOpenAt("notes", { add }))
-    var plain = C.notesPlain(b, LIB.data.marks, LIB.LANG);
+    // Notes: a new page with the same Markdown (Notes keeps it as plain
+    // text; BR: __orosOpenAt("notes", { add }), at most 20,000 characters)
+    var plain = C.notesMarkdown(b, LIB.data.marks, LIB.LANG, { date: C.ymdOf(new Date()), max: 20000 });
     var hasHl = LIB.data.marks.some(function (k) { return k.b === id && (k.k === "hl" || k.n); });
     if (hasHl && LIB.parentWin()) acts.appendChild(LIB.textBtn("btn", t("export.notes"), function () {
       dlg.close();

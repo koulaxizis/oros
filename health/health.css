@@ -331,6 +331,111 @@ button.h-row:hover { background: var(--accent-soft); }
 .h-mid small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
 .h-mid small.h-note { color: var(--text); }
 
+/* ---------- 5b. Medicines + symptoms ---------- */
+.dose {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  background: var(--panel-bg);
+  margin-bottom: 8px;
+}
+.dose > .k-ic { margin: 2px auto 0; }
+.dose.st-taken, .dose.st-skipped { opacity: 0.75; }
+.dose.st-taken { border-left-color: #3fae6b; }
+.dose.st-late { border-left-color: var(--danger); background: rgba(224, 108, 117, 0.08); }
+.dose.st-due, .dose.st-snoozed { border-left-color: var(--accent); }
+.dose-time { font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.dose.st-late .dose-time { color: var(--danger); }
+.dose-mid { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dose-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.dose-top b { font-size: 15px; overflow-wrap: anywhere; }
+.dose-mid small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.dose-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.sm-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.sm-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.sm-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.sm-btn.primary:hover { background: var(--accent-hover); }
+.ds-badge { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.ds-taken { color: #3fae6b; }
+.ds-skipped, .ds-snoozed, .ds-due, .ds-upcoming { color: var(--text-dim); }
+.ds-due { color: var(--accent); }
+.ds-late, .ds-missed { color: var(--danger); }
+html[data-theme="light"] .ds-taken { color: #23824b; }
+.low-ban {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 1px solid #d99a1e;
+  background: rgba(217, 154, 30, 0.12);
+  font-size: 14px;
+  font-weight: 700;
+}
+.low-ban > span { min-width: 0; overflow-wrap: anywhere; }
+.med-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 4px 8px 4px 4px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+.med-card.off { opacity: 0.7; }
+.med-main {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+}
+.med-main:hover { background: var(--accent-soft); }
+.med-main b { font-size: 15px; overflow-wrap: anywhere; }
+.med-main small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.med-main small.h-note { color: var(--text); }
+.med-main small.med-stock { color: var(--text); font-weight: 700; }
+.med-main small.med-stock.low { color: #d99a1e; }
+.wd-chips { margin: 0; }
+.wd-chips .chip { min-width: 44px; padding: 0 8px; }
+.stock-box { align-items: end; }
+input.int-range { padding: 0; min-height: 36px; border: none; background: transparent; box-shadow: none; accent-color: var(--accent); }
+.sy-lv.sy-l1 { color: #4a90d9; background: rgba(74, 144, 217, 0.15); }
+.sy-lv.sy-l2 { color: #d99a1e; background: rgba(217, 154, 30, 0.15); }
+.sy-lv.sy-l3 { color: #e0564f; background: rgba(224, 86, 79, 0.14); }
+.chart .mk-sy { fill: #d99a1e; stroke: var(--panel-bg); stroke-width: 1.5; }
+.chart .mk-sy.l1 { fill: #4a90d9; }
+.chart .mk-sy.l3 { fill: #e0564f; }
+.chart .mk-dose { fill: var(--text-dim); }
+
 /* ---------- 6. Charts + stats ---------- */
 .ch-head { display: flex; align-items: center; gap: 8px; }
 .kind-pick { flex: 1 1 auto; font-weight: 800; }
@@ -448,6 +553,78 @@ dialog.hl-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .kind-n { flex: 1 1 auto; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
 .kind-row.off .kind-n { color: var(--text-dim); }
 
+/* ---------- 7b. Record: Medical ID, appointments, vaccines, documents ---------- */
+.rec-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rec-top b { min-width: 0; }
+.rec-row .sm-btn, .rec-row a.sm-btn { margin: 0 4px 6px auto; }
+a.sm-btn { text-decoration: none; }
+.sev { font-weight: 700; }
+.med-main small.sev-1, .sev-1 { color: #d99a1e; }
+.med-main small.sev-2, .sev-2 { color: #e07b39; }
+.med-main small.sev-3, .sev-3 { color: var(--danger); }
+.med-main small.vx-due { color: var(--text); font-weight: 700; }
+.med-main small.vx-due.late { color: var(--danger); }
+.mid-box { border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg); padding: 12px; }
+.mid-head { display: flex; align-items: center; gap: 8px; font-size: 17px; margin-bottom: 8px; }
+.mid-head .k-ic { color: var(--danger); }
+.mid-head b { min-width: 0; overflow-wrap: anywhere; }
+.mid-box .stats { margin: 4px 0 8px; }
+.mid-note { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; margin: 6px 0; }
+.pick-list { display: flex; flex-direction: column; gap: 4px; max-height: 50vh; overflow-y: auto; margin-top: 8px; }
+.pick-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  padding: 8px 10px; min-height: 44px; border-radius: 8px; border: 1px solid var(--border); background: transparent;
+}
+.pick-btn:hover { background: var(--accent-soft); }
+.pick-btn small { color: var(--text-dim); }
+.at-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.at-th {
+  width: 64px; height: 64px; padding: 0; overflow: hidden; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.at-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.at-th:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.at-add { border-style: dashed; font-size: 28px; line-height: 1; color: var(--accent); }
+.at-miss { font-size: 11px; line-height: 1.2; padding: 4px; text-align: center; }
+.at-pdf { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: var(--danger); }
+.at-pdf.big { font-size: 40px; padding: 24px 0; }
+.at-view { display: flex; justify-content: center; margin: 4px 0 8px; }
+.at-view img { max-width: 100%; max-height: 62vh; border-radius: 8px; display: block; background: #fff; }
+#hl-at-view .dlg-actions { flex-wrap: wrap; }
+#hl-at-view .dlg-actions .dlg-btn { flex: 1 1 40%; }
+/* The Medical ID on the whole screen, big text, to show to someone */
+dialog.hl-dlg.mid-full {
+  width: 100vw; max-width: 100vw; height: 100vh; height: 100dvh; max-height: none;
+  margin: 0; padding: 0; border: none; border-radius: 0;
+  background: var(--bg); display: flex; flex-direction: column;
+}
+dialog.hl-dlg.mid-full:not([open]) { display: none; }
+.mid-bar {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  padding: 12px 14px; padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  background: #c62828; color: #fff; font-size: 20px; font-weight: 800; letter-spacing: 0.3px;
+}
+.mid-bar > span:not(.k-ic) { flex: 1 1 auto; min-width: 0; }
+.mid-bar .k-ic { color: #fff; }
+.mid-bar .k-ic svg { width: 26px; height: 26px; }
+.mid-bar .mid-x { color: #fff; background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.4); width: 44px; height: 44px; }
+.mid-body { flex: 1 1 auto; overflow-y: auto; padding: 16px 18px calc(24px + env(safe-area-inset-bottom, 0px)); max-width: 760px; width: 100%; margin: 0 auto; }
+.mid-name { font-size: 30px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; margin-bottom: 10px; }
+.mid-facts { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-bottom: 8px; }
+.mid-fact { display: flex; flex-direction: column; }
+.mid-lbl { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+.mid-val { font-size: 22px; line-height: 1.3; overflow-wrap: anywhere; }
+.mid-fact .mid-val { font-weight: 800; }
+.mid-block { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); }
+.mid-block.warn .mid-lbl { color: var(--danger); }
+.mid-val.dim, .mid-val .dim { color: var(--text-dim); }
+.mid-ec { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 4px; }
+.mid-ec .sm-btn { font-size: 15px; min-height: 44px; }
+.mid-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 8px; }
+.mid-qr svg { max-width: 70vw; height: auto; border-radius: 6px; }
+
 /* ---------- 8. Toast + screen reader ---------- */
 #toast {
   position: fixed;
@@ -513,6 +690,19 @@ dialog.hl-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #print tr { break-inside: avoid; }
   #print td.st-high, #print td.st-vhigh { font-weight: 800; color: #000; }
   #print .pr-foot { margin-top: 14pt; font-size: 9pt; color: #444; }
+  /* Emergency card: wallet size, front and back side by side */
+  #print .ec-wrap { display: flex; width: 171.2mm; border: 1px dashed #777; }
+  #print .ec-card { width: 85.6mm; height: 54mm; padding: 2.5mm 3mm; overflow: hidden; font-size: 6.6pt; line-height: 1.25; color: #000; }
+  #print .ec-card + .ec-card { border-left: 1px dotted #aaa; }
+  #print .ec-head { background: #c62828; color: #fff; font-weight: 800; font-size: 8pt; letter-spacing: 0.6pt; padding: 1mm 2mm; margin: -1mm -1mm 1.5mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #print .ec-name { font-size: 10pt; font-weight: 800; margin-bottom: 1mm; }
+  #print .ec-line { margin-bottom: 0.8mm; overflow-wrap: anywhere; }
+  #print .ec-ice { font-weight: 800; margin-top: 1.2mm; }
+  #print .ec-back { display: flex; gap: 2mm; height: 100%; }
+  #print .ec-col { flex: 1 1 auto; min-width: 0; }
+  #print .ec-qr { flex: 0 0 auto; }
+  #print .ec-qr svg { width: 26mm; height: 26mm; }
+  #print .ec-foot { color: #555; font-size: 5.5pt; margin-top: 1mm; }
 }
 
 /* ---------- 10. Mobile + touch ---------- */
@@ -533,7 +723,7 @@ dialog.hl-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .cards { grid-template-columns: 1fr; }
 }
 @media (pointer: coarse) {
-  .icon-btn, .dlg-btn, input, select, .chip { min-height: 44px; }
+  .icon-btn, .dlg-btn, input, select, .chip, .sm-btn { min-height: 44px; }
   .icon-btn { width: 44px; }
   .mini { width: 44px; height: 44px; }
   .card-add { width: 44px; height: 44px; }

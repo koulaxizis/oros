@@ -38,13 +38,18 @@
         for (var e = 0; e <= ctx.horizon; e++) {
           var on = ctx.addDays(ctx.today, e);
           OCC.eventsOn(cal, on).forEach(function (ev) {
-            var span = !OCC.validRecur(ev.recur) && typeof ev.dateEnd === "string" && ev.dateEnd > ev.date;
-            if (span && on !== ev.date && on !== ctx.today) return;     // a running span: once
+            // This occurrence as seen here (its own time zone converted,
+            // a repeating span included).
+            var inst = typeof OCC.instanceOn === "function" ? OCC.instanceOn(ev, on) : null;
+            var first = inst ? inst.date : ev.date, last = inst ? inst.dateEnd : ev.dateEnd;
+            var span = typeof last === "string" && last > first;
+            if (span && on !== first && on !== ctx.today) return;     // a running span: once
+            var occ = inst && OCC.validRecur(ev.recur) ? inst.occ : on;
             out.push({ id: "ev:" + ev.id + ":" + on, due: on, kind: "event",
-                       time: typeof ev.start === "string" ? ev.start : null,
+                       time: inst ? inst.start : (typeof ev.start === "string" ? ev.start : null),
                        title: typeof ev.title === "string" && ev.title ? ev.title : w.untitled,
                        text: typeof ev.location === "string" ? ev.location : "",
-                       target: { ev: ev.id, date: on } });
+                       target: { ev: ev.id, date: occ } });
           });
         }
       }

@@ -53,7 +53,30 @@
     return out;
   }
 
-  var api = { v: 1, group: group, base: base, isReply: isReply };
+  // "All inboxes": every account's rows in one list.
+  // perAcct: [{ acct, msgs (newest first), threads: bool }]
+  // → [{ key: acct + ":" + group key, acct, msgs }] at most max, by
+  //   each row's newest message: date, then account order, then UID
+  //   (a message without a date sorts as its account's neighbours do)
+  function unify(perAcct, max) {
+    var out = [];
+    (perAcct || []).forEach(function (a, ai) {
+      if (!a || !Array.isArray(a.msgs)) return;
+      var gs = a.threads ? group(a.msgs) : a.msgs.map(function (m) { return { key: "t" + m.uid, msgs: [m] }; });
+      var last = Infinity;
+      gs.forEach(function (g, gi) {
+        var d = g.msgs[0] && g.msgs[0].date > 0 ? g.msgs[0].date : 0;
+        // no date: just under the row above it in its own account
+        var sortAt = d || (last === Infinity ? 0 : last);
+        last = sortAt;
+        out.push({ key: a.acct + ":" + g.key, acct: a.acct, msgs: g.msgs, at: sortAt, ai: ai, gi: gi });
+      });
+    });
+    out.sort(function (x, y) { return (y.at - x.at) || (x.ai - y.ai) || (x.gi - y.gi); });
+    return out.slice(0, max > 0 ? max : out.length).map(function (g) { return { key: g.key, acct: g.acct, msgs: g.msgs }; });
+  }
+
+  var api = { v: 1, group: group, base: base, isReply: isReply, unify: unify };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.orosMailThreads = api;
 })(typeof window !== "undefined" ? window : globalThis);

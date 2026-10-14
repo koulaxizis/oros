@@ -40,6 +40,19 @@ When you sell, a product with lots offers a `Lot` choice; leave it on `First to 
 ### Counter
 `New` › `Counter (quick sale)` is made for a shop with a scanner: scan products (each scan adds one), change quantities with − and +, and press `Complete sale`. It saves one sale at the products' sale prices, and you can `Undo` it right away. A sale you leave open stays in the counter until you complete or clear it.
 
+### Point of sale
+`New` › `Point of sale (till)` is a full-screen till for a shop. On the left: a search box (a scanner or the 📷 camera adds the product straight away), category chips and a grid of products with their price and what is left. On the right: the sale, with − and + or a typed quantity per line, the net, the VAT per rate and the total.
+
+1. Pick a `Price list` at the top. `Retail` uses each product's sale price. Under `Price lists` you can add others, such as `Wholesale`: a percentage on the sale price (−10 means 10% off) and, with `Prices…`, a price of its own for any product.
+2. Choose `Cash`, `Card` or `Other`. For cash you can type `Cash given` to see the change.
+3. Press `Charge`. The products come off stock (from the warehouse shown at the top, when you have several), and the receipt opens: print it on 58 mm or 80 mm roll paper. `Undo` in the message voids the sale right away.
+
+`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. These settings stay on each device.
+
+`Z report` shows a day's sales: how many, net, VAT per rate, by payment method and price list, the best sellers and every receipt (reprint or `Void` from there; a voided sale's products go back into stock). `Close the day` keeps the day's totals as a numbered Z; sales made after it show apart. `Print Z report` prints it on the roll.
+
+Every sale is also an ordinary `Sale` movement, so stock, reports and sync work as with any sale. Two tills selling at the same time never lose a sale.
+
 ### Stock count
 In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
 
@@ -108,7 +121,7 @@ Products, movements, suppliers, categories, units and settings sync between your
 ## Tips
 - Set a `Location` such as "Shelf B3": it shows in the list and in search.
 - Archive products you no longer sell: their history stays.
-- From a product: `New quote` starts a quote in [Quote](app:quote) with that product and its sale price (Quote works in EUR or USD). `Quote from products` in `New` takes several.
+- From a product: `New quote` starts a quote in [Quote](app:quote) with that product and its sale price (in Stock's currency). `Quote from products` in `New` takes several.
 - Open a receipt or a sale and choose `Add to Budget` to log its total in [Budget](app:budget).
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 
@@ -119,3 +132,4 @@ Products, movements, suppliers, categories, units and settings sync between your
 - A product with movements can't be deleted, only archived.
 - The shop: WooCommerce only for now. Orders are read live (the last 30 days, up to 50), so they need a connection. The shop keeps whole units: a quantity with decimals is rounded when sent.
 - After closing a period, the Movements tab and Reports show only what came after it; the older history is in the archive file.
+- The point of sale prints its own simple receipts and Z reports: they are not tax receipts and aren't sent to any tax authority (in Greece, use a certified cash register or e-invoicing provider for that). It doesn't take card payments itself: use your card terminal and choose `Card`.

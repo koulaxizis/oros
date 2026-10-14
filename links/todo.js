@@ -13,8 +13,11 @@
 //   count(plan) → { add, upd }
 // The platform is only read; To-Do stays the source of truth:
 //   - a project with open tasks → a list; a task → a task (due date,
-//     description as notes, labels by name, priority as an extra-info
-//     field); subtasks follow their parent, flat
+//     description as notes, labels by name, priority as the task's own
+//     priority: Todoist 4/3/2/1 → To-Do P1/P2/P3/P4); subtasks follow
+//     their parent, flat
+//   - tasks imported before priorities existed carry it as an extra-info
+//     field (id PRIO_ID): that field is left as it is, never rewritten
 //   - ids from L.extId: the same task imported on two devices lands on
 //     the same row (R16), and a second import finds it again
 //   - a list or task deleted here is not brought back unless asked;
@@ -154,13 +157,15 @@
     return out;
   }
   function sameList(a, b) { return JSON.stringify(a || []) === JSON.stringify(b || []); }
-  function prioInfo(t, label) { return t.prio > 1 ? { id: PRIO_ID, label: label, value: "P" + (5 - t.prio) } : null; }
+  // Todoist's priority (4 = urgent … 1 = none) → To-Do's P1…P4 (it.prio 1..3; 4 = none)
+  function prioOf(t) { return t.prio >= 2 && t.prio <= 4 ? 5 - t.prio : 4; }
+  function prioHere(it) { return it && (it.prio === 1 || it.prio === 2 || it.prio === 3) ? it.prio : 4; }
 
   // st: To-Do's state { lists, labels, deleted }
   // got: { projects, tasks } from read
-  // ctx: { p, acct, upd, revive, prio (the extra-info label for priority) }
+  // ctx: { p, acct, upd, revive }
   function plan(st, got, ctx) {
-    var p = ctx.p, acct = ctx.acct, prioLabel = line(ctx.prio, 40) || "Priority";
+    var p = ctx.p, acct = ctx.acct;
     var lists = (st && Array.isArray(st.lists)) ? st.lists : [];
     var labels = (st && Array.isArray(st.labels)) ? st.labels : [];
     var deleted = (st && st.deleted && typeof st.deleted === "object") ? st.deleted : {};
@@ -214,7 +219,7 @@
       }
       ordered(ts).forEach(function (t) {
         var id = L.extId(p, acct, "task", t.xid);
-        var pi = prioInfo(t, prioLabel);
+        var pr = prioOf(t);
         var cur = itemById[id];
         if (cur) {
           if (!ctx.upd) { out.same++; return; }
@@ -225,10 +230,7 @@
           var have = Array.isArray(it.labels) ? it.labels.slice() : [];
           t.labels.forEach(function (n) { var lid2 = labelId(n); if (lid2 && have.indexOf(lid2) < 0) have.push(lid2); });
           if (!sameList(have, it.labels)) f.labels = have;
-          var info = (Array.isArray(it.info) ? it.info : []).filter(function (x) { return !(x && x.id === PRIO_ID); });
-          var old = (Array.isArray(it.info) ? it.info : []).filter(function (x) { return x && x.id === PRIO_ID; })[0];
-          if (pi) info.push(old && old.label ? { id: PRIO_ID, label: old.label, value: pi.value } : pi);
-          if (!sameList(info, it.info)) f.info = info;
+          if (p === "todoist" && prioHere(it) !== pr) f.prio = pr;
           if (Object.keys(f).length) { out.items.upd.push({ id: id, list: cur.list.id, f: f }); if (t.rec) out.rec++; }
           else out.same++;
           return;
@@ -239,7 +241,7 @@
         openText[k] = 1;
         var ids = [];
         t.labels.forEach(function (n) { var lid3 = labelId(n); if (lid3 && ids.indexOf(lid3) < 0) ids.push(lid3); });
-        out.items.add.push({ list: lid, id: id, text: t.text, notes: t.notes, due: t.due || null, labels: ids, info: pi ? [pi] : [] });
+        out.items.add.push({ list: lid, id: id, text: t.text, notes: t.notes, due: t.due || null, labels: ids, info: [], prio: pr });
         if (t.rec) out.rec++;
         if (t.parent && ts.some(function (o) { return o.xid === t.parent; })) out.sub++;
       });

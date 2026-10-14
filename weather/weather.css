@@ -12,6 +12,7 @@
      5. Hourly strip
      6. Daily list
      7. City dialog
+     7b. Warnings, rain now, air & pollen, models (wave 38)
      8. Mobile-first
      X. [hidden] authority guard
    Icons: inline SVG only — no unicode glyphs (tofu-proof).
@@ -731,6 +732,142 @@ button.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
   margin-top: 8px;
 }
 .hint.err { color: var(--danger); }
+
+/* ---------- 7b. Wave 38: warnings, rain now, air & pollen, models ----------
+   The warning colours are the official awareness levels (yellow,
+   orange, red): they carry meaning, so they stay fixed in every skin;
+   text stays on the palette. */
+#warn-host { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.warn-box { display: flex; flex-direction: column; gap: 6px; }
+.warn-card {
+  --lv: #e8c33a;
+  border: 1px solid color-mix(in srgb, var(--lv) 55%, var(--border));
+  border-left: 5px solid var(--lv);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--lv) 12%, var(--panel-bg));
+  overflow: hidden;
+}
+.warn-card[data-level="3"] { --lv: #ef8a2c; }
+.warn-card[data-level="4"] { --lv: #e0453a; }
+.warn-row { display: flex; align-items: center; gap: 6px; padding-right: 8px; }
+.warn-head {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 8px 10px;
+  background: none; border: 0; text-align: left;
+}
+.warn-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--lv); flex-shrink: 0;
+}
+.warn-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.warn-title { font-size: 14px; font-weight: 700; }
+.warn-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.warn-body { padding: 0 12px 12px 32px; font-size: 13px; line-height: 1.5; }
+.warn-body p { margin-top: 6px; white-space: pre-line; overflow-wrap: anywhere; }
+.warn-hl { font-weight: 700; }
+.warn-link { display: inline-block; margin-top: 8px; color: var(--accent); }
+button.btn-secondary.warn-mine { min-height: 34px; padding: 4px 10px; font-size: 12px; flex-shrink: 0; }
+.warn-others {
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--panel-bg); padding: 0 8px;
+}
+.warn-others summary {
+  cursor: pointer; min-height: 40px; display: flex; align-items: center;
+  font-size: 13px; color: var(--text-dim); list-style-position: inside;
+}
+.warn-others summary::-webkit-details-marker { margin-right: 6px; }
+.warn-others[open] { padding-bottom: 8px; }
+.warn-others .warn-card { margin-top: 6px; }
+.warn-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 12px; }
+.link-btn {
+  background: none; border: 0; padding: 6px 2px; min-height: 32px;
+  color: var(--accent); font-size: 12px; text-decoration: underline;
+}
+.warn-attrib { font-size: 11px; line-height: 1.45; }
+.warn-attrib a { color: inherit; }
+#warn-set-host { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+#warn-set-host h4 { font-size: 13px; color: var(--accent); margin-bottom: 8px; }
+.warn-notify { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; font-size: 13.5px; flex-wrap: wrap; }
+.warn-notify select, #model-sel, .cmp-sel {
+  min-height: 36px; padding: 4px 8px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border); font-size: 13px; max-width: 100%;
+}
+
+/* Rain in the next 2 hours */
+#nowcast {
+  background: var(--panel-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+}
+#now-text { font-size: 14px; font-weight: 700; }
+#now-text[data-state="dry"] { font-weight: 600; color: var(--text-dim); }
+#now-bars { display: flex; gap: 4px; margin-top: 10px; height: 64px; align-items: stretch; }
+.nc-col { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.nc-barwrap { flex: 1; display: flex; align-items: flex-end; border-bottom: 1px solid var(--border); }
+.nc-bar { width: 100%; background: var(--accent); border-radius: 3px 3px 0 0; }
+.nc-bar.dry { background: var(--border); }
+.nc-bar.snow { background: color-mix(in srgb, var(--text) 70%, var(--accent)); }
+.nc-lbl { font-size: 10px; color: var(--text-dim); text-align: center; height: 12px; white-space: nowrap; }
+
+/* Air & pollen */
+#air-days { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.air-day {
+  display: flex; flex-direction: column; gap: 3px; padding: 8px;
+  background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; min-width: 0;
+}
+.air-dname { font-size: 12px; font-weight: 700; }
+.air-day .meta-v { font-size: 13px; text-align: left; }
+.air-dsub { font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
+#air-strip { display: flex; gap: 2px; height: 74px; margin-top: 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.air-col {
+  flex: 1 0 32px; min-width: 32px; display: flex; flex-direction: column; gap: 2px;
+  background: none; border: 0; padding: 0 2px; border-radius: 4px;
+}
+.air-col.sel { background: var(--accent-soft); }
+.air-barwrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+.air-bar { width: 100%; border-radius: 2px 2px 0 0; background: var(--ok); }
+.air-bar[data-level="fair"], .air-bar[data-level="moderate"] { background: var(--warn); }
+.air-bar[data-level="poor"], .air-bar[data-level="vpoor"], .air-bar[data-level="epoor"] { background: var(--danger); }
+.air-lbl { font-size: 9.5px; color: var(--text-dim); height: 11px; }
+#air-detail {
+  margin-top: 8px; padding: 10px; background: var(--panel-bg);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.air-dhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 13px; }
+.air-dhead .meta-v { font-size: 13px; }
+.air-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.air-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.air-cv { font-size: 12.5px; }
+.air-pol { font-size: 12px; margin-top: 8px; line-height: 1.45; }
+
+/* Forecast model + comparison */
+.model-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#model-sel { flex: 1; min-width: 0; }
+#cmp-panel { margin-top: 10px; }
+#cmp-pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.cmp-sel { width: 100%; border-left-width: 4px; }
+.cmp-bd0 { border-left-color: var(--accent); }
+.cmp-bd1 { border-left-color: var(--warn); }
+.cmp-bd2 { border-left-color: var(--ok); }
+.cmp-chart { display: block; width: 100%; height: auto; margin-top: 10px; }
+.cmp-grid { stroke: var(--border); stroke-width: 1; }
+.cmp-ax { fill: var(--text-dim); font-size: 10px; font-family: inherit; }
+.cmp-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.cmp-s0 { stroke: var(--accent); }
+.cmp-s1 { stroke: var(--warn); }
+.cmp-s2 { stroke: var(--ok); }
+.cmp-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; margin-top: 4px; }
+.cmp-key { display: inline-flex; align-items: center; gap: 6px; }
+.cmp-sw { display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+.cmp-b0 { background: var(--accent); }
+.cmp-b1 { background: var(--warn); }
+.cmp-b2 { background: var(--ok); }
+.cmp-tablewrap { overflow-x: auto; margin-top: 8px; }
+.cmp-rain { width: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.cmp-rain th, .cmp-rain td { padding: 4px 3px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.cmp-rain tbody th { text-align: left; font-weight: 600; max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+.cmp-rain thead th { color: var(--text-dim); font-weight: 600; }
+.cmp-rain thead th:first-child { text-align: left; }
 
 /* ---------- 8. Mobile-first ---------- */
 @media (max-width: 480px) {

@@ -60,6 +60,9 @@
   var GEN_MS = 2500;                         // after this, take any unique puzzle
   var MAX_MS = 360000000;                    // 100 h: anything above is junk
   var MAX_HIST = 200;                        // undo steps kept
+  var DAILY_LEVEL = "7";                     // the daily puzzle: 7×7
+  var MAX_DAY = 100000;
+  var DK = (typeof window !== "undefined" && window.orosDaily) || null;         // gamekit/daily.js (Daily puzzle)
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -74,6 +77,26 @@
   var STRINGS = {
     en: {
       "level.label": "Grid size",
+      "app.name": "Flow Free",
+      "lv.d": "Daily",
+      "btn.daily": "Daily puzzle",
+      "btn.games": "All games",
+      "turn.daily": "Daily #{n}: {p}% filled",
+      "res.titleD": "Daily #{n}",
+      "res.hints": "Hints",
+      "res.streak": "Streak",
+      "res.bestStreak": "Best streak",
+      "res.share": "Share",
+      "res.next": "A new daily puzzle tomorrow",
+      "res.free": "Play a free puzzle",
+      "stats.daily": "Daily",
+      "stats.dailyRow": "Solved · streak · best",
+      "share.clean": "no hints",
+      "share.hints": "{n} hints",
+      "toast.copied": "Result copied: paste it anywhere",
+      "toast.shared": "Result shared",
+      "toast.copyFail": "Could not copy the result",
+      "toast.dailyGone": "Daily puzzles need the gamekit file: reload orOS",
       "btn.undo": "Undo (U)",
       "btn.hint": "Hint (H)",
       "btn.restart": "Clear the board (R)",
@@ -129,6 +152,26 @@
     },
     el: {
       "level.label": "Μέγεθος",
+      "app.name": "Flow Free",
+      "lv.d": "Ημέρας",
+      "btn.daily": "Γρίφος της ημέρας",
+      "btn.games": "Όλα τα παιχνίδια",
+      "turn.daily": "Ημέρας #{n}: γεμάτο {p}%",
+      "res.titleD": "Ημέρας #{n}",
+      "res.hints": "Βοήθειες",
+      "res.streak": "Σερί",
+      "res.bestStreak": "Καλύτερο σερί",
+      "res.share": "Κοινοποίηση",
+      "res.next": "Νέος γρίφος της ημέρας αύριο",
+      "res.free": "Παίξε ελεύθερα",
+      "stats.daily": "Ημέρας",
+      "stats.dailyRow": "Λυμένοι · σερί · καλύτερο",
+      "share.clean": "χωρίς βοήθεια",
+      "share.hints": "{n} βοήθειες",
+      "toast.copied": "Το αποτέλεσμα αντιγράφηκε: επικόλλησέ το όπου θες",
+      "toast.shared": "Το αποτέλεσμα κοινοποιήθηκε",
+      "toast.copyFail": "Δεν έγινε αντιγραφή του αποτελέσματος",
+      "toast.dailyGone": "Ο γρίφος της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "btn.undo": "Αναίρεση (U)",
       "btn.hint": "Υπόδειξη (H)",
       "btn.restart": "Καθαρισμός πίνακα (R)",
@@ -719,7 +762,29 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  // days (Wave 49; older data has none): { "<day>": { b: <epoch>, t: ms,
+  //   h: lines a hint drew, m: their mask, k: lines in the puzzle } },
+  // one daily result per calendar day (day 0 = 1 Jan 2026,
+  // gamekit/daily.js); the newer epoch wins, equal epochs keep the
+  // better result (no hint first, then the shorter time, then fewer
+  // hints, the smaller m, the smaller k: a total order, so a join).
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || !isInt(v.t) || v.t < 1 || v.t > MAX_MS ||
+        !isInt(v.k) || v.k < 1 || v.k > COLOURS || !isInt(v.h) || v.h < 0 || v.h > v.k ||
+        !isInt(v.m) || v.m < 0 || v.m >= (1 << v.k)) return null;
+    return { b: v.b, t: v.t, h: v.h, m: v.m, k: v.k };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  // a better than c (equal epochs)
+  function dayBetter(a, c) {
+    if ((a.h > 0) !== (c.h > 0)) return a.h === 0;
+    if (a.t !== c.t) return a.t < c.t;
+    if (a.h !== c.h) return a.h < c.h;
+    if (a.m !== c.m) return a.m < c.m;
+    return a.k < c.k;
+  }
 
   function normCell(v) {
     if (!v || typeof v !== "object" || !isInt(v.g) || !isInt(v.t) ||
@@ -754,7 +819,16 @@
   function mergeFlow(A, B) {
     var a = A || {}, b = B || {};
     var br = Math.max(isInt(a.br) ? a.br : 0, isInt(b.br) ? b.br : 0);
-    var rows = {};
+    var rows = {}, days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object") return;
+      Object.keys(m).forEach(function (k) {
+        var v = dayKeyOk(k) ? normDay(m[k]) : null;
+        if (!v || v.b < br) return;
+        var o = days[k];
+        if (!o || v.b > o.b || (v.b === o.b && dayBetter(v, o))) days[k] = v;
+      });
+    });
     [a.rows || {}, b.rows || {}].forEach(function (m) {
       if (typeof m !== "object") return;
       Object.keys(m).forEach(function (id) {
@@ -769,7 +843,9 @@
       LEVELS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k]; });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var sd = {};
+    Object.keys(days).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
   }
 
   // Puzzles solved and the best time (0 = none), all devices.
@@ -836,6 +912,24 @@
     return !!timed && (!before.t || ms < before.t);
   }
 
+  // Daily results: solved days, the current and best streak.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0;
+    Object.keys(data.days).forEach(function (k) { on[k] = true; n++; });
+    var st = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, cur: st.cur, best: st.best };
+  }
+  // The first solve of a day counts (a cleared board solved again does
+  // not change it).
+  function countDaily(day, ms, mask, k) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    var h = 0;
+    for (var i = 0; i < k; i++) if (mask & (1 << i)) h++;
+    data.days[day] = { b: data.br, t: Math.max(1, Math.min(MAX_MS, ms)), h: h, m: mask, k: k };
+    data = mergeFlow(data, data);
+    save();
+  }
+
   // ---------- 4. Device-local prefs + session ----------
   var prefs = { level: "5" };
 
@@ -854,6 +948,7 @@
   var game = null;
 
   function validSession(g) {
+    if (g && g.day !== undefined && (!isInt(g.day) || g.day < 0 || g.day > MAX_DAY || g.level !== DAILY_LEVEL)) return false;
     if (!g || typeof g !== "object" || LEVELS.indexOf(g.level) < 0 || !validPuzzle(g.pz) ||
         String(g.pz.n) !== g.level || !validPaths(g.pz, g.paths) ||
         !isInt(g.moves) || g.moves < 0 || !isInt(g.ms) || g.ms < 0 || g.ms > MAX_MS ||
@@ -866,6 +961,7 @@
       var g = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (validSession(g)) {
         g.hint = g.hint === true;
+        g.hl = isInt(g.hl) && g.hl >= 0 && g.hl < (1 << g.pz.dots.length) ? g.hl : 0;
         g.done = isWon(g.pz, g.paths);
         return g;
       }
@@ -903,8 +999,11 @@
   function copy(g) { return JSON.parse(JSON.stringify(g)); }
 
   // Run the generator in slices of ~25 ms, then call done(puzzle).
-  function makePuzzle(level, done) {
-    var job = genJob(+level, randInt, Date.now() + GEN_MS);
+  // A daily puzzle (day given): the day's seed and no deadline, so every
+  // device makes the same one.
+  function makePuzzle(level, done, day) {
+    var job = day !== undefined ? genJob(+level, DK.randInt(DK.seedOf("flow", day)), 0)
+                                : genJob(+level, randInt, Date.now() + GEN_MS);
     making = job;
     (function slice() {
       if (making !== job) return;                // replaced by a newer request
@@ -935,17 +1034,19 @@
   }
 
   // A puzzle in progress is never lost silently: Undo toast (R14).
-  function newGame(announce) {
+  function newGame(announce, day) {
     if (game) syncClock();
     var prev = inProgress() ? copy(game) : null;
-    var level = prefs.level;
+    var level = day !== undefined ? DAILY_LEVEL : prefs.level;
     sel = -1;
     makePuzzle(level, function (pz) {
-      setGame({ level: level, pz: pz, paths: pz.dots.map(function () { return []; }),
-                moves: 0, ms: 0, hint: false, hist: [], done: false });
+      var g = { level: level, pz: pz, paths: pz.dots.map(function () { return []; }),
+                moves: 0, ms: 0, hint: false, hist: [], done: false, hl: 0 };
+      if (day !== undefined) g.day = day;
+      setGame(g);
       if (prev) undoToast(t("toast.newgame"), function () { restore(prev); });
       else if (announce) live(t("toast.newgame"));
-    });
+    }, day);
     renderAll(false);
   }
 
@@ -1079,6 +1180,7 @@
     }
     var before = copyPaths(game.paths);
     game.paths = h.paths;
+    game.hl = (game.hl || 0) | (1 << h.k);
     changed(before);
     sfx("join");
     live(t("live.joined", { l: LETTERS[h.k] }));
@@ -1091,6 +1193,7 @@
     game.done = true;
     syncClock();                               // stops the clock at the solve
     var recT = countSolve(game.level, game.ms, !game.hint);
+    if (game.day !== undefined) countDaily(game.day, game.ms, game.hl || 0, game.pz.dots.length);
     saveSession();
     renderAll(false);
     live(t("live.done", { t: fmtTime(game.ms) }));
@@ -1109,9 +1212,13 @@
   }
 
   function renderToolbar() {
+    var daily = !making && !!game && game.day !== undefined;
     var lv = making ? prefs.level : (game ? game.level : prefs.level);
+    var db = $("daily-btn");
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", daily);
     [].forEach.call(document.querySelectorAll("#level-seg .seg-btn"), function (b) {
-      var on = b.getAttribute("data-level") === lv;
+      var on = !daily && b.getAttribute("data-level") === lv;
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
@@ -1135,8 +1242,8 @@
     for (var k = 0; k < K; k++) if (isDone(game.pz, game.paths, k)) j++;
     $("flows").textContent = j + "/" + K;
     var pct = Math.floor(100 * filled(game.pz, game.paths) / (game.pz.n * game.pz.n));
-    var msg = game.done ? t("turn.done") : (!game.moves && sel < 0 ? t("turn.start") :
-      (j === K ? t("turn.full") : t("turn.fill", { p: pct })));
+    var msg = game.done ? t("turn.done") : (!game.moves && sel < 0 && game.day === undefined ? t("turn.start") :
+      (j === K ? t("turn.full") : t(game.day !== undefined ? "turn.daily" : "turn.fill", { p: pct, n: (game.day || 0) + 1 })));
     $("turn").textContent = msg;
     $("turn").className = game.done ? "done" : "";
   }
@@ -1274,6 +1381,7 @@
 
   function resultDialog(recT) {
     if (!game || !game.done) return;           // replaced meanwhile
+    if (game.day !== undefined && data.days[game.day]) { dailyDialog(game.day, recT); return; }
     var s = totals(game.level);
     var dlg = makeDialog("flow-result");
     dlg.appendChild(el("div", "dlg-title", t("res.title") + " · " + levelName(game.level)));
@@ -1294,6 +1402,74 @@
     again.focus();
   }
 
+  // ---------- Daily puzzle ----------
+  function today() { return DK ? DK.today() : 0; }
+
+  // The Daily button: today's result when it is solved (here or on
+  // another device), else today's puzzle (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    if (making) { showToast(t("toast.making")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d, false); return; }
+    closeDialogs();
+    if (game && game.day === d && !game.done) return;
+    newGame(true, d);
+  }
+
+  function closeDialogs() {
+    [].forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
+  }
+
+  function dailyDialog(day, rec) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    closeDialogs();
+    var st = dailyStats(today());
+    var dlg = makeDialog("flow-daily");
+    dlg.appendChild(el("div", "dlg-title", t("res.titleD", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero", fmtTime(r.t)));
+    if (rec) dlg.appendChild(el("div", "dlg-badge", t("res.recT")));
+    dlg.appendChild(row(t("res.hints"), String(r.h)));
+    dlg.appendChild(row(t("res.streak"), String(st.cur)));
+    dlg.appendChild(row(t("res.bestStreak"), String(st.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-center", t("res.next")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("res.share"), "", function () { shareDaily(day); }));
+    var free = button(t("res.free"), "primary", function () {
+      dlg.close();
+      if (game && game.day !== undefined) newGame(true);
+    });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    hubLink(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    free.focus();
+  }
+
+  // Spoiler-free: the time, the hints and one square per line (yellow:
+  // a hint drew it), in the order of the dot letters.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var line = "";
+    for (var k = 0; k < r.k; k++) line += (r.m & (1 << k)) ? "🟨" : "🟩";
+    var text = DK.shareText({ game: t("app.name"), label: t("lv.d"), day: day, grid: [line],
+      line: "⏱ " + fmtTime(r.t) + " · " + (r.h ? t("share.hints", { n: r.h }) : t("share.clean")) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(dlg) {
+    if (!DK || !DK.hasHub()) return;
+    dlg.appendChild(button(t("btn.games"), "dlg-link", function () { dlg.close(); DK.openHub("flow"); }));
+  }
+
   function statsDialog() {
     var dlg = makeDialog("flow-stats");
     dlg.appendChild(el("div", "dlg-title", t("stats.title")));
@@ -1304,6 +1480,10 @@
       if (s.g) empty = false;
       dlg.appendChild(row(levelName(k), s.g ? (s.t ? fmtTime(s.t) : "–") + " · " + s.g : "–"));
     });
+    var ds = dailyStats(today());
+    if (ds.n) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("lv.d"), ds.n ? ds.n + " · " + ds.cur + " · " + ds.best : "–"));
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
@@ -1314,6 +1494,7 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
@@ -1418,6 +1599,7 @@
 
   // ---------- Toolbar icons (R9: injected by JS) ----------
   var UI_ICONS = {
+    daily:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
     undo:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
     hint:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
     restart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
@@ -1614,6 +1796,7 @@
     } finally {
       window.__orosSyncApi._suppress = false;
     }
+    if (game && !making) renderToolbar();
     // no toast on merge (sync feedback = taskbar dot)
   }
 
@@ -1628,7 +1811,7 @@
   function paintStatic() {
     [["undo-btn", "undo", "btn.undo"], ["hint-btn", "hint", "btn.hint"],
      ["restart-btn", "restart", "btn.restart"], ["new-btn", "new", "btn.new"],
-     ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+     ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1641,7 +1824,7 @@
     [].forEach.call(document.querySelectorAll("#level-seg .seg-btn"), function (b) {
       b.addEventListener("click", function () {
         var lv = b.getAttribute("data-level");
-        if (!making && game && lv === game.level && !game.done) return;   // visible active state
+        if (!making && game && lv === game.level && game.day === undefined && !game.done) return;   // visible active state
         prefs.level = lv; savePrefs(); newGame(true);
       });
     });
@@ -1649,6 +1832,9 @@
     $("hint-btn").addEventListener("click", hint);
     $("restart-btn").addEventListener("click", restart);
     $("new-btn").addEventListener("click", function () { newGame(true); $("new-btn").blur(); });
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's puzzle.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("stats-btn").addEventListener("click", statsDialog);
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
@@ -1663,6 +1849,7 @@
     // The clock runs only while the app is visible; the time is saved.
     document.addEventListener("visibilitychange", function () {
       if (!game) return;
+      if (!making) renderToolbar();            // the Daily dot after midnight
       syncClock();
       saveSession();
     });
@@ -1685,10 +1872,14 @@
     registerSync();
     inheritPalette();
     watchPalette();
-    var g = loadSession();
+    var g = loadSession(), tg = DK ? DK.takeTarget("flow") : null;
     if (g) {
-      prefs.level = g.level;                   // the resumed puzzle decides the toolbar
+      if (g.day === undefined) prefs.level = g.level;   // the resumed puzzle decides the toolbar
       setGame(g);
+      if (tg && tg.daily) openDaily();
+    } else if (tg && tg.daily && DK && !data.days[today()]) {
+      renderAll(false);
+      newGame(false, today());
     } else {
       renderAll(false);
       newGame(false);

@@ -70,8 +70,22 @@ A game on Lichess is played on the orOS board, with both clocks next to the name
 
 While a timed game runs, Chess keeps it on the board: finish it or resign before starting something else. Correspondence games wait on Lichess: `My games in progress` lists them, marks the ones where it is your move, and opens them again. When you open Chess, it tells you if it is your move in one of them. These games don't count in your records against the computer.
 
+## Puzzles
+`Training` (the target button in the toolbar) opens your puzzles and the openings trainer.
+- `Next puzzle` picks a puzzle near your puzzle rating, ones you haven't tried first. `Theme` keeps to one kind: mate in 1, mate in 2, fork, back rank mate, win material and more.
+- The opponent's move comes first; then find the best move for your side. A wrong move is refused and the puzzle counts as failed, but you can keep trying. `Hint` picks up the piece to move; `Solution` plays the rest, and the puzzle counts as failed.
+- Your first try at each puzzle sets your `Puzzle rating`. It starts at 1500 and moves like a Lichess rating (Glicko): a lot at first, while it says `provisional`, less once it settles.
+- `Retry failed` brings back the puzzles you missed; solving one later marks it as solved later but doesn't change your rating. `History` lists each puzzle with its result and your rating after it; tap one to try it again. `Reset puzzles` clears the history and the rating on every device, after you confirm.
+
+The puzzles come with orOS and work offline. For now it's a small set (about 200), made by the orOS engine from its own games in the layout of the Lichess puzzle database, and their ratings are estimates.
+
+## Openings
+While you play or review a game, the name of the opening shows under the moves, for example `C60 · Ruy Lopez`. It comes from the Lichess list of openings with their ECO codes and is found by position, so moves played in another order still get the right name. During a game on Lichess the name appears only after the game ends.
+
+`Openings trainer` lists the openings by family. Search by name or ECO code, pick a line, then the side you play. The app plays the other side's moves from the book. A move that isn't in the line is refused and counted, and the piece to move is picked up for you; miss the same move twice and the book move is named. At the end choose `Again`, `Play on vs computer` from that position, or `Other line`. Training games don't count in your records.
+
 ## Sync
-Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.
+Your records against the computer and your puzzle history (so your puzzle rating) sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.
 
 ## Tips
 - Start on `Easy` to warm up; the computer still never misses a mate in one.

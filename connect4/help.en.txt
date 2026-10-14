@@ -18,6 +18,15 @@ The computer has three levels: `Easy` takes a win when it sees one but otherwise
 
 `Records` shows your wins, losses and draws against the computer for each level (`Won · lost · drawn`), and the 2-player series. `Reset records` clears them after you confirm.
 
+## Two devices
+Play a friend who has their own phone, tablet or computer. Press `Play on two devices` (the button with two screens): one of you chooses `Show a code`, the other `Enter a code` and types the 6-digit code or scans the QR code, and the first device lets the other in with `Allow`. While you're linked, `Two devices` shows in the toolbar; press it to see the link or to `Leave the game`.
+- The device that showed the code plays first in the first game; after that the first move alternates, and the series score shows on both devices.
+- Each device plays only on its own turn. `New game` on the device that showed the code starts the next game (it asks first if a game is under way); on the other device it asks for one when a game is over.
+- If a device reloads or loses the network, the game waits and goes on where it was when it's back (for up to a day).
+- Moves go straight between the two devices on the same network, or sealed through the orOS relay; nothing is kept online.
+
+Limits: two players only, each on their own device with orOS open in this game. Games on two devices don't count in your records, and the level buttons are hidden meanwhile. `Leave the game` ends it on both devices and brings back the game you had on this device.
+
 ## Sync
 Your records against the computer sync between your devices through [orOS sync](help:t/sync), and a reset clears them everywhere. The game in progress, the 2-player series, your settings and the sound setting stay on this device. A game you leave half-way is still there when you come back.
 

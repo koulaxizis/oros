@@ -1,10 +1,17 @@
 # Library
-Library is your e-book reader. Open EPUB, PDF and FB2 books and CBZ comics from the orOS disk, keep your place on every device, and highlight, bookmark and take notes as you read.
+Library is your e-book reader. Open EPUB, PDF and FB2 books and CBZ and CBR comics from the orOS disk or free online catalogues, keep your place on every device, and highlight, bookmark and take notes as you read.
 
 ## Getting started
-Books already on the orOS disk show up by themselves: the library looks for EPUB, PDF, FB2 (also `.fb2.zip`) and CBZ files each time it opens. To add more, tap or click `Add` and pick `From this device…` or `From the orOS disk…`. Books you add from this device are copied to the `Books` folder of the disk. You can also drag files onto the window, or open a book from Files with Library.
+Books already on the orOS disk show up by themselves: the library looks for EPUB, PDF, FB2 (also `.fb2.zip`), CBZ and CBR files each time it opens. To add more, tap or click `Add` and pick `From this device…`, `From the orOS disk…` or `From online catalogues…`. Books you add from this device are copied to the `Books` folder of the disk. You can also drag files onto the window, or open a book from Files with Library.
 
 Tap a cover to read. The `Continue reading` row at the top takes you back to where you stopped.
+
+## Online catalogues
+`Add` → `From online catalogues…` opens free e-book catalogues (OPDS). Two are built in: Project Gutenberg, with a search box, and the newest releases of Standard Ebooks. Open a catalogue, browse its sections or use `Search this catalogue`, open a book and press the format you want (EPUB, PDF, CBZ…). The book is saved in the `Books` folder of the disk and added to your library; `Read` in the message opens it.
+
+To add another catalogue, type its OPDS address (OPDS 1 or 2) under `Add a catalogue`, with a name if you like. Your own catalogues follow you to your other devices; the bin button next to one removes it.
+
+The first time, Library tells you what goes online: only the pages you open and the words you search for, sent to that catalogue's website. Some sites don't let a browser read them directly; Library then reads them through the orOS relay, if you've set one up in [Mail](app:mail). Without a relay, those catalogues say so and can't be read.
 
 ## Find and organise
 The chips filter by `Reading`, `Not started`, `Finished`, `EPUB` or `PDF` (and `FB2` and `Comics` once you have such books). `Search title, author, tag…` ignores accents. Sort by `Recently read`, `Title`, `Author` or `Progress`, and switch between covers and a list.
@@ -37,7 +44,7 @@ Time counts while a book is open and you turn pages, select or listen; after fiv
 ## Highlights, notes and bookmarks
 Select some text and pick one of four colours to highlight it. From the same bar you can `Add a note`, `Copy` or `Find in the book`. Tap a highlight to change its colour, edit the note or delete it. The bookmark button at the top marks the page.
 
-`Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard. From the same window, `Send to Notes` makes a page of your highlights and notes in [Notes](app:notes).
+`Notes and highlights` lists them all, with filters, and `Export notes` saves them as Markdown text to the disk, as a download or to the clipboard. The file starts with the title, the author, how many highlights and notes there are and the date, then lists each highlight as a quote under its chapter, with its place in the book and your note below it, ready for Obsidian or any Markdown app. From the same window, `Send to Notes` makes a page of your highlights and notes in [Notes](app:notes), in the same Markdown.
 
 ## Sync and backup
 With orOS sync on, your library list, reading place, highlights, notes, bookmarks and reading time follow you to every device. The book files travel through the orOS disk sync. If a book was added elsewhere and its file hasn't arrived yet, it shows as not on this device; adding the same file here keeps your place, because the library knows a book by its content. Reading settings and the reading-aloud speed stay on each device.
@@ -53,7 +60,8 @@ With orOS sync on, your library list, reading place, highlights, notes, bookmark
 
 ## Limits
 - Copy-protected (DRM) books can't be opened.
-- Books larger than 50 MB can't be added; comics (CBZ) can be up to 200 MB.
-- CBR comics (RAR) can't be opened: save them as CBZ first.
+- Books larger than 50 MB can't be added; comics (CBZ, CBR) can be up to 200 MB.
+- Password-protected CBR comics can't be opened. The first CBR you open loads a reader for RAR files of about 1 MB, so it needs a connection that first time.
+- Catalogues that ask for a login (such as the full Standard Ebooks catalogue, for its patrons) can't be read. Through the relay, a download can be up to 5 MB.
 - A comic shows one page at a time; it has no text to search, highlight or read aloud.
 - PDFs without a text layer (scans) can be read but not searched or highlighted.

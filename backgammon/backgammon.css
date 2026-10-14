@@ -95,6 +95,8 @@ button, select {
 #tb-b .spacer { order: 3; }
 #new-btn      { order: 4; }
 #stats-btn    { order: 5; }
+#net-btn      { order: 5; }
+.rp-badge     { order: 2; }
 #sfx-btn      { order: 6; }
 
 .seg {

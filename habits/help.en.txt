@@ -1,44 +1,74 @@
 # Habits
-Habits helps you build routines by ticking them off day by day. You see your week at a glance, a month calendar and stats with streaks.
+Habits helps you build routines by ticking them off day by day, or by counting how much you did. You see your week at a glance, a month calendar, a strength score for each habit and stats with streaks.
 
 ## Getting started
 Tap or click `Create Habit` (or the **+** button at the top), type a `Name` and press `Save`. Your habit appears in the `List` with one dot for each day of the week. Tap a dot to mark that day done; tap it again to undo.
 
 ## Habits and schedules
-In the `Add habit` window you pick a `Name`, an `Icon`, a `Color` and a `Schedule`:
-- Pick all seven days for `Every day`, a few days for a set number of days a week, or none for `Any day` (shown as `Flexible`).
-- On a scheduled habit you can only tick the days it's scheduled for. A flexible habit can be ticked on any day.
-- You can't tick days in the future.
+In the `Add habit` window you pick a `Name`, a `Type`, an `Icon`, a `Color`, a `Frequency` and a `Reminder`.
+
+`Type`:
+- **`Yes / No`**: the day is done or not, with one tap.
+- **`Amount`**: a number with a unit and a `Daily target`, for example *at least 10 pages*, *at least 8000 steps* or *at most 2 coffees*. Pick `At least` or `At most`, type the target and the unit, and the `Step for − / +` (how much one tap adds). A day is done when its value meets the target. For `At most`, log the day (even 0) for it to count.
+
+`Frequency`:
+- **`Days`**: pick all seven days for `Every day`, a few days for those weekdays only, or none for `Any day` (shown as `Flexible`). A habit with weekdays can only be ticked on its days.
+- **`Per week`** or **`Per month`**: the habit is done X times a week (Monday to Sunday) or X times a calendar month, on any days. The badge shows how many are done in the current week or month, for example `3×/wk · 2/3`.
+
+You can't tick days in the future.
 
 The pencil on a habit opens `Edit habit`. The bin, or `Delete` in the edit window, removes the habit and its full history after you confirm.
 
-The flame next to a habit shows your current streak. Today doesn't break a streak until the day is over.
+## Amounts
+For an `Amount` habit the row shows today's value with **−** and **+** buttons. Tap a dot to open the day: type the value or use **−** / **+**. A dot shows the day's value, filled in the habit's colour when the target is met and lightly tinted when you did part of it.
+
+When you add to the same day on two devices, both amounts count after sync. A typed value sets the day's total.
+
+## Skip a day and notes
+Right-click a dot, or press and hold it on a touch screen, to open the day. There you can:
+- `Skip this day` when you're sick or on holiday. A skipped day is striped, doesn't break a streak and doesn't lower the strength score. In a `Per week` or `Per month` habit it counts toward the target.
+- Add a short `Note` (up to 200 characters). A dot with a note has a small mark in its corner.
+
+## Streaks and strength
+The flame shows your current streak: days in a row, or weeks or months in a row for a `Per week` or `Per month` habit. Today doesn't break a streak until the day is over; skipped days and days off the schedule are left out.
+
+The ring with a percentage is the habit's **strength**, a score from 0 to 100% in the style of Loop Habit Tracker. It grows a little every time you keep the habit and falls slowly when you miss it, so a single missed day costs only a few points. A day where you reached part of an amount counts in part. A flexible habit is scored as once a week.
+
+## Habit details
+Tap a habit's icon or name to open its details: strength, current and longest streak, check-offs, a chart of strength over the last year, a year of days like a GitHub chart (use the arrows for other years, tap a day to open it) and your latest notes. `Edit` opens the habit's settings.
+
+## Reminders
+Set a `Reminder` time on a habit to get an orOS notification at that time on the days the habit still needs doing: not on days it's already done or skipped, only on its weekdays, and for a `Per week` or `Per month` habit only while the target isn't met yet. `No reminder` turns it off. A bell next to the habit shows that it has one.
+
+Reminders come from orOS itself, so orOS has to be open. With the orOS Android app and its reminders turned on, the phone rings them even when orOS is closed. A reminder more than 4 hours late is dropped.
 
 ## Views
 - **`List`**: one week, Monday first. The arrows move a week back or forward; the middle button returns to this week.
-- **`Calendar`**: a whole month, one row per habit. Tap a day to tick it, and tap a habit's name to edit it. The arrows move by month.
-- **`Stats`**: pick `30d`, `90d` or `All` to see `Check-offs`, `Active habits`, `Avg / week` and `Perfect days`, then each habit's current and longest streak and completion rate under `By habit`, and a few `Insights`.
+- **`Calendar`**: a whole month, one row per habit. Tap a day to tick it (or open it for an amount), and tap a habit's name to see its details. The arrows move by month.
+- **`Stats`**: pick `30d`, `90d` or `All` to see `Check-offs`, `Active habits`, `Avg / week` and `Perfect days`, then under `By habit` each habit's strength, current and longest streak, its completion rate (for `Per week` and `Per month` habits, the share of weeks or months that met the target), the average of an amount, and a small strength chart for the period, and a few `Insights`. Skipped days are left out of the rates.
 
 ## Rows from other apps
 Some apps can add an automatic row, marked `Auto`, that ticks itself:
 - [Water](app:water): days you reached your water goal. You can turn it off with `Show in Habits` in Water's settings.
 - [Workouts](app:fitness): days with a finished workout. You can turn it off in Workouts' settings.
 - [Micro-Zen](app:zen): days with a finished breathing session. You can turn it off with `Show in Habits` in Micro-Zen.
+- **Steps** from [Health](app:health): your daily steps as kept by Health (typed there, or from Health Connect with the orOS Android app), done on days that reach your steps goal. Use the gear button at the top to turn `Show steps from Health` on or off and set the `Daily steps goal` (8000 at first).
 
 These rows are read-only and aren't counted in `Stats`. Tap one to open its app.
 
 ## Sync and backup
-Your habits and check-offs sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. Habits has no import or export; use the orOS [backup](help:t/backup).
+Your habits, check-offs, amounts, skipped days, notes and the steps setting sync between your devices through [orOS sync](help:t/sync). The open view and period stay on this device. Habits has no import or export; use the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[N]] opens `Add habit` (when you're not typing in a field).
-- [[Enter]] in the `Name` field saves the habit.
+- [[Enter]] in the `Name` field saves the habit; in a day's value it saves the day.
 - [[Esc]] closes the open window.
 
 ## Tips
 - Ticked habits show as dots in [Calendar](app:calendar) on their day.
-- Use `Any day` for things you want to do often but not on fixed days.
+- Use `Any day` for things you want to do often but not on fixed days, and `Per week` when you have a number in mind, like the gym three times a week.
 
 ## Limits
-- Habits are done or not done each day; there are no counts or amounts.
 - Deleting a habit can't be undone.
+- Changing a habit between `Yes / No` and `Amount` keeps the old days, but they count only for the type they were made with.
+- A device still on an older version of orOS shows amount, per-week and per-month habits as plain ones and doesn't show skipped days, notes or reminders until it updates; your other devices keep them. Editing such a habit on the older device turns it back into a plain one.

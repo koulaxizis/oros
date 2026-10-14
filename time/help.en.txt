@@ -1,6 +1,6 @@
 # Time
 
-A big clock in five styles, a world clock, sunrise, sunset and the moon phase, plus alarms, a timer, a stopwatch, a Pomodoro timer and a stage timer for conferences. Tap the clock in the orOS top bar to open it.
+A big clock in five styles, a world clock with a meeting planner, sunrise, sunset and the moon phase, plus alarms, kitchen timers, a stopwatch with laps, a Pomodoro timer and a stage timer for conferences. Tap the clock in the orOS top bar to open it.
 
 ## Getting started
 
@@ -8,8 +8,19 @@ Pick a clock style under the big clock: `Digital`, `Analog`, `Binary`, `Flip` or
 
 ## World clock
 
-- Tap a quick chip (`+ Athens`, `+ London`, `+ New York`, `+ Tokyo`), or `Add` to choose from the list of time zones.
-- Double-click a zone's name to change it (`Change zone`). The × deletes it (`Delete zone`).
+- Tap a quick chip (`+ Athens`, `+ London`, `+ New York`, `+ Tokyo`), or `Add` and type a city or a time zone, in English or Greek (accents don't matter). More than 500 cities are built in, plus every time zone your browser knows. Tap a result to add it.
+- Each row shows the time there and how it compares with yours, for example "Today, +3 h" or "Tomorrow, −7 h".
+- Double-click a name to change it (`Change zone`). The × deletes it (`Delete zone`). A row is one time zone: picking another city in the same zone renames the row.
+
+## Meeting planner
+
+Find an hour that suits people in different places.
+
+- Tap `Show` next to `Meeting planner`. It starts with your own time zone and the first places of your world clock. `Add place` adds more (up to 6), and the × removes one (at least 2 stay).
+- Each place gets a 24-hour strip for the `Date` you pick, lined up so that a column is the same moment everywhere. Green is working hours (`Work from` … `until`, Monday to Friday), plain is awake (07:00–22:00), grey is night. A ★ above a column means everyone is at work.
+- Tap an hour, or use [[←]] and [[→]], to pick the start, and choose the `Length`. The box below shows the slot in every place.
+- `Add to Calendar` opens a new event in [Calendar](app:calendar) with the start and end in your time and the times of every place in its note. Nothing is saved until you save the event there. `Copy` copies the same lines for an email or a chat.
+- The places, the working hours and the length stay on this device.
 
 ## Sun & Moon
 
@@ -20,11 +31,11 @@ It uses the top-bar weather city: the city pinned in [Weather](help:a/weather), 
 ## Alarms and timers
 
 - **`Alarm`**: set a time, add a `Label…` if you like, tick `Daily` for every day, then `Add alarm`. A time that has already passed today is set for tomorrow. The × deletes an alarm.
-- **`Timer`**: enter minutes and seconds and tap `Start`. The same button becomes `Stop`, and `Reset` clears it. In the last 60 seconds the countdown fills the screen. Tap it or press [[Esc]] to hide it (the timer keeps going).
-- **`Stopwatch`**: `Start`, `Stop` and `Reset`.
+- **`Timer`**: give it a name if you like (for example "Pasta"), set hours, minutes and seconds, pick a sound (`Beep`, `Chime`, `Bell`, `Digital` or `Gentle`) and tap `Start`. A chip such as `+ 5 min` starts one at once. Several timers can run together, each in its own card with a progress bar: `Pause` and `Resume`, `+1 min`, `Reset`, and the × deletes it. Tap the name to rename it, or change its sound in the card. When a timer ends it rings with its own sound and its card counts how long ago that was; `Restart` runs it again. Timers keep running when you close Time or orOS. In the last minute of a timer of 2 minutes or more, the countdown fills the screen. Tap it or press [[Esc]] to hide it (the timer keeps going).
+- **`Stopwatch`**: `Start` and `Stop`, `Lap` while it runs, `Reset` when it's stopped. Laps are listed newest first with the lap time and the total, and the fastest and slowest are marked. `Copy laps` copies them as text and `Save CSV` saves them for a spreadsheet. The stopwatch keeps counting when you close Time or orOS, and its laps stay.
 - **`Pomodoro`**: set `Work` and `Break` minutes and tap `Start`. When a `Focus` leg ends, a `Break` is ready to start, and so on. The counter shows how many sessions you've finished. `Reset` goes back to `Focus`. With `Log focus in Timesheet` set to a project (or `No project`), each `Focus` leg is added to [Timesheet](app:timesheet) as the task "Pomodoro", even if you close Time; stopping early logs the minutes you focused. The choice stays on this device.
 
-When an alarm, the timer or a Pomodoro leg ends, orOS shows a box with `Snooze 9m` and `Dismiss` and plays a beep. It stops by itself after 30 seconds and also lands in your [notifications](help:t/notifications). It rings in any app, not only in Time.
+When an alarm, a timer or a Pomodoro leg ends, orOS shows a box with `Snooze 9m` and `Dismiss` and plays a sound (a timer plays its own). It stops by itself after 30 seconds and also lands in your [notifications](help:t/notifications). It rings in any app, not only in Time. In the orOS app for Android, with reminders through the app turned on, alarms and timers also ring while orOS is closed (see [notifications](help:t/notifications)).
 
 ## Stage timer for conferences
 
@@ -49,18 +60,21 @@ The `Stage` tab is a timer for talks, panels and shows, with a rundown and a big
 
 ## Sync and backup
 
-These sync through [orOS sync](help:t/sync): the clock style, world clock zones, Pomodoro lengths and session count, the manual Sun & Moon location, and your alarms (they travel with the orOS settings). Stage events and their rundowns sync too; the item that is running, its clock and the sound choice and what the stage screen shows (message, black screen, layout, logo) stay on this device, so a phone at home never moves the clock on stage. The stopwatch and a Pomodoro leg in progress stay on this device. Only the Stage rundown has an import and an export (CSV); the rest of Time has none.
+These sync through [orOS sync](help:t/sync): the clock style, world clock zones, Pomodoro lengths and session count, the manual Sun & Moon location, and your alarms (they travel with the orOS settings). Stage events and their rundowns sync too; the item that is running, its clock and the sound choice and what the stage screen shows (message, black screen, layout, logo) stay on this device, so a phone at home never moves the clock on stage. Timers, the stopwatch and its laps, the meeting planner's places and a Pomodoro leg in progress stay on this device; a timer rings only on the device where you started it. Only the Stage rundown has an import and an export (CSV), and the stopwatch laps a CSV export; the rest of Time has none.
 
 ## Tips
 
 - A Pomodoro leg that ends while Time is closed still counts when you open it again.
 - Daily alarms are good for routines like medicine or a stretch break.
+- In the kitchen, name each timer after the dish and give it its own sound, so you know which one is ringing.
+- In the meeting planner, the columns with a ★ are the easy choices.
 
 ## Limits
 
-- Alarms ring only while orOS is open (in a browser tab or as an installed app). If orOS was closed at the alarm time, it rings as soon as you open it again.
-- The stopwatch resets when you close the app.
-- The world clock offers a fixed list of 21 time zones.
+- In a browser, alarms and timers ring only while orOS is open (in a browser tab or as an installed app). If orOS was closed at that time, they ring as soon as you open it again. The orOS app for Android, with reminders through the app turned on, rings them with orOS closed, using the phone's alarm sound instead of the timer's own sound.
+- The city list is built in (about 550 cities). Any other place is found by its time zone, for example "Jujuy" or "America/Jujuy". The list of time zones comes from your browser.
+- The meeting planner counts Monday to Friday as working days everywhere and uses the same working hours for every place.
+- Up to 20 timers and 999 laps.
 - The Stage clock runs while Time is open. If you close Time, the clock goes on from the right time when you open it again, but sounds and "start the next item by itself" only happen while it is open.
 - The stage display window needs pop-ups allowed for orOS. It shows what this device stores, so it belongs on a screen connected to the same computer.
 - Paired devices need Time open on the computer and an internet connection for the first contact (the orOS relay). On the same Wi-Fi they then talk directly; otherwise the relay carries everything, encrypted with a key from the code. The logo is not sent to other devices.

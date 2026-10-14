@@ -13,6 +13,25 @@ Tap or click a group's title to fold it. Tap or click a row to open it in its ap
 
 Tasks from [To-Do](app:todo) and [Plant Care](app:plants) also have a tick button, `Done (opens the app)`. It opens that app, which marks the task done itself: To-Do ticks it (untick it there to take it back) and Plant Care logs it, with `Undo` in its message.
 
+## Widgets
+Make Today your own screen, like the widgets on a phone's home screen. Press the `Customise` button (the four squares) at the top:
+- Drag a widget by its handle (the six dots) to move it, with the mouse or a finger. The up and down arrows move it one place too, handy on a touch screen or with the keyboard.
+- `Small` / `Wide` changes its size. Two small cards such as the clock and the water share a row even on a phone; small lists sit side by side on a wide screen.
+- The cross removes a widget. `Add a widget` lists the ones that are not on the screen.
+- `Back to the standard layout` brings back the four sections Today always had.
+Press the tick to finish.
+
+The widgets:
+- `At a glance`: the short lines at the top (weather, name days, a running timer, meals and more).
+- `Overdue`, `Today`, `Coming up`: the three groups described above.
+- `Clock`: the time and the date; the wide one adds the seconds and the full date.
+- `Weather` and `Water`: the line of [Weather](app:weather) or [Water](app:water), larger, in a card of its own. Tap it to open the app.
+- `Habits`: the habits still to tick today.
+- `Upcoming events`: [Calendar](app:calendar) events of today and the next three days.
+- `To-dos`: [To-Do](app:todo) tasks that are late, due today or due in the next three days.
+
+A row shows in one place only: with the `To-dos` widget on the screen, To-Do tasks leave `Overdue`, `Today` and `Coming up` and appear there; the same goes for Habits, Calendar events, Weather and Water. Remove the widget and they go back. The widgets show what the apps switched on in `Settings` give; an app you switched off there stays empty.
+
 ## What each app adds
 - [Health](app:health): today's reminder times that have no reading yet. A reading taken up to an hour early, or later, ticks its time.
 - [Workouts](app:fitness): the program days planned for today, until you finish a workout of that day.
@@ -43,7 +62,7 @@ Open them with the gear button:
 - `Apps in the summary`: choose which apps take part. Apps marked `sensitive` show only when you want them: Health, Baby and Budget are on, Cycle and Mood are off until you switch them on.
 
 ## Sync and backup
-Your Today settings sync between your devices through [orOS sync](help:t/sync). Today stores nothing else: every row is read from the app it belongs to, at the moment you look. Which groups you folded stays in this tab only.
+Your Today settings sync between your devices through [orOS sync](help:t/sync). Today stores nothing else: every row is read from the app it belongs to, at the moment you look. Which groups you folded stays in this tab only. Your widget layout stays on this device only, so a phone and a computer can each have their own; it is not synced.
 
 ## On the Android home screen
 In the orOS app for Android, long-press the home screen, choose `Widgets` and add `orOS Today`. It shows what is late, today's events and tasks and the next days, as Today does. Tap it to open Today. Its buttons add a task, a glass of water or a note. There is also a small `orOS quick add` widget with just the buttons.

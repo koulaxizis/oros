@@ -127,6 +127,8 @@
       "set.profsHint": "Another business? Each profile has its own details, logo, bank lines, terms and footer; pick it on each document. Give it its own numbering series below (Profile) to keep separate numbers.",
       "set.delBiz": "Delete this profile", "set.main": "Main", "set.serProf": "Profile", "set.serAny": "Any", "set.editing": "Editing", "toast.bizDel": "Profile deleted",
       "set.qr": "Payment QR code on EUR PDFs (from the first IBAN)",
+      "set.paylink": "Pay online link", "set.paylinkHint": "Your own Stripe Payment Link (https://buy.stripe.com/…) or another https payment page. It goes on the PDF as a link and a QR code. orOS never needs a payment key.",
+      "set.paylinkBad": "The pay online link must be a full https:// address.",
       "rc.fits": "Business client in another EU country ({c}): reverse charge?", "rc.services": "Services, 0 % VAT", "rc.goods": "Goods, 0 % VAT",
       "toast.rcDone": "VAT set to 0 % with the reverse charge note",
       "c.statement": "Statement PDF", "toast.noOpen": "Nothing is owed by this client",
@@ -194,7 +196,7 @@
       "mail.softLate": "Hello,\n\nThis is a friendly reminder that {k} {n} of {d} was due on {u}, and {a} is still open. If you have already paid it, please ignore this message.\n\nThank you.",
       "mail.firmSubject": "Overdue: {k} {n}",
       "mail.firm": "Hello,\n\n{k} {n} of {d} is {l} days overdue: {a} was due on {u} and is still unpaid. Please arrange payment within 7 days, or let us know when to expect it.\n\nThank you.",
-      "pdf.draft": "DRAFT", "live.saved": "Saved"
+      "pdf.draft": "DRAFT", "live.saved": "Saved", "mail.payOnline": "Pay online"
     },
     el: {
       "app": "Τιμολόγια", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
@@ -271,6 +273,8 @@
       "set.profsHint": "Κι άλλη επιχείρηση; Κάθε προφίλ έχει δικά του στοιχεία, λογότυπο, τράπεζες, όρους και υποσέλιδο· το διαλέγεις σε κάθε παραστατικό. Δώσε του δική του σειρά αρίθμησης πιο κάτω (Προφίλ) για χωριστή αρίθμηση.",
       "set.delBiz": "Διαγραφή προφίλ", "set.main": "Κύριο", "set.serProf": "Προφίλ", "set.serAny": "Όλα", "set.editing": "Επεξεργασία", "toast.bizDel": "Το προφίλ διαγράφηκε",
       "set.qr": "QR πληρωμής στα PDF σε ευρώ (από το πρώτο IBAN)",
+      "set.paylink": "Σύνδεσμος online πληρωμής", "set.paylinkHint": "Το δικό σου Stripe Payment Link (https://buy.stripe.com/…) ή άλλη σελίδα πληρωμής https. Μπαίνει στο PDF ως σύνδεσμος και QR. Το orOS δεν χρειάζεται ποτέ κλειδί πληρωμών.",
+      "set.paylinkBad": "Ο σύνδεσμος online πληρωμής πρέπει να είναι πλήρης διεύθυνση https://.",
       "rc.fits": "Επιχείρηση-πελάτης σε άλλη χώρα της ΕΕ ({c}): αντίστροφη επιβάρυνση;", "rc.services": "Υπηρεσίες, ΦΠΑ 0 %", "rc.goods": "Αγαθά, ΦΠΑ 0 %",
       "toast.rcDone": "ΦΠΑ 0 % με τη σημείωση αντίστροφης επιβάρυνσης",
       "c.statement": "Καρτέλα σε PDF", "toast.noOpen": "Ο πελάτης δεν οφείλει τίποτα",
@@ -338,7 +342,7 @@
       "mail.softLate": "Καλησπέρα σας,\n\nμια φιλική υπενθύμιση ότι το {k} {n} της {d} έληξε στις {u} και παραμένουν ανοιχτά {a}. Αν το έχετε ήδη εξοφλήσει, αγνοήστε αυτό το μήνυμα.\n\nΕυχαριστούμε.",
       "mail.firmSubject": "Ληξιπρόθεσμο: {k} {n}",
       "mail.firm": "Καλησπέρα σας,\n\nτο {k} {n} της {d} είναι ληξιπρόθεσμο εδώ και {l} ημέρες: τα {a} έληγαν στις {u} και παραμένουν απλήρωτα. Παρακαλούμε τακτοποιήστε την πληρωμή μέσα σε 7 ημέρες ή ενημερώστε μας πότε να την περιμένουμε.\n\nΕυχαριστούμε.",
-      "pdf.draft": "ΠΡΟΧΕΙΡΟ", "live.saved": "Αποθηκεύτηκε"
+      "pdf.draft": "ΠΡΟΧΕΙΡΟ", "live.saved": "Αποθηκεύτηκε", "mail.payOnline": "Πληρωμή online"
     }
   };
 
@@ -355,6 +359,7 @@
       "bank": "Bank account", "notes": "Notes", "page": "Page {a} of {b}",
       "proNote": "This is a proforma invoice, not a tax document.", "draft": "DRAFT",
       "qr": "Scan with your banking app to pay", "qrAmt": "{a} to {n}",
+      "payOnline": "Pay online", "payOnlineHint": "Scan the code or open the link to pay by card.",
       "t.stmt": "STATEMENT OF ACCOUNT", "asOf": "As of {d}", "doc": "Document", "paid": "Paid", "bal": "Balance",
       "open": "Open balance", "late": "{n} days late"
     },
@@ -368,6 +373,7 @@
       "bank": "Τραπεζικός λογαριασμός", "notes": "Σημειώσεις", "page": "Σελίδα {a} από {b}",
       "proNote": "Προτιμολόγιο: δεν είναι φορολογικό στοιχείο.", "draft": "ΠΡΟΧΕΙΡΟ",
       "qr": "Σκανάρετε με την εφαρμογή της τράπεζάς σας για πληρωμή", "qrAmt": "{a} προς {n}",
+      "payOnline": "Πληρωμή online", "payOnlineHint": "Σκανάρετε τον κωδικό ή ανοίξτε τον σύνδεσμο για πληρωμή με κάρτα.",
       "t.stmt": "ΚΑΤΑΣΤΑΣΗ ΛΟΓΑΡΙΑΣΜΟΥ", "asOf": "Στις {d}", "doc": "Παραστατικό", "paid": "Πληρωμένο", "bal": "Υπόλοιπο",
       "open": "Ανοιχτό υπόλοιπο", "late": "{n} ημέρες καθυστέρηση"
     }
@@ -2389,6 +2395,11 @@
     card.appendChild(row(txt("email", t("set.email"), 120, "email"), txt("web", t("set.web"), 120)));
     f.iban = area(p.iban, 2, C.LIM.iban);
     card.appendChild(field(t("set.iban"), f.iban, t("set.ibanHint")));
+    // Wave 46: the user's own payment link (extra field, see core.payLinkOk)
+    f.paylink = input("url", typeof p.paylink === "string" ? p.paylink : "", 500);
+    f.paylink.placeholder = "https://buy.stripe.com/…";
+    f.paylink.id = "set-paylink";
+    card.appendChild(field(t("set.paylink"), f.paylink, t("set.paylinkHint")));
     // Logo
     var logo = p.logo;
     var lw = el("div", "logo-row");
@@ -2447,11 +2458,14 @@
     card.appendChild(sa);
     card.addEventListener("submit", function (e) {
       e.preventDefault();
+      var plRaw = f.paylink.value.trim(), pl = C.payLinkOk(plRaw);
+      if (plRaw && !pl) { showToast(t("set.paylinkBad")); f.paylink.focus(); return; }
       if (biz) {
         var b = JSON.parse(JSON.stringify(biz));
         ["name", "trade", "job", "afm", "doy", "country", "phone", "email", "web"].forEach(function (k) { b[k] = f[k].value; });
         b.addr = f.addr.value; b.iban = f.iban.value; b.logo = logo;
         b.terms = f.terms.value; b.footer = f.footer.value;
+        if (pl) b.paylink = pl; else delete b.paylink;
         if (!C.cleanText(b.name, C.LIM.name)) { showToast(t("toast.needName")); f.name.focus(); return; }
         b.m = stamp(b.m);
         var nb = C.normBiz(b);
@@ -2473,6 +2487,7 @@
       x.vat = C.round(vat, 2); x.wht = C.round(wht, 2); x.days = days; x.plang = f.plang.value;
       x.terms = f.terms.value; x.footer = f.footer.value;
       if (f.qr.checked) delete x.qr; else x.qr = 0;
+      if (pl) x.paylink = pl; else delete x.paylink;
       x.m = stamp(x.m);
       data.prof = C.normProf(x);
       saveNow();
@@ -2752,6 +2767,14 @@
     var amt = d.st === "issued" && C.owes(d) ? C.balance(data, d) : tt.pay;
     return amt > 0 ? C.epcPayload(s.name, s.iban, amt, d.num || "") : "";
   }
+  // Wave 46: the profile's own pay-online link for a document that has
+  // something to pay (an invoice or proforma; issued → while it owes).
+  function payLinkText(d, tt) {
+    if (d.kind !== "inv" && d.kind !== "pro") return "";
+    if (d.st === "issued" ? !C.owes(d) : !(tt && tt.pay > 0)) return "";
+    var prof = C.profileOf(data, d.pid) || {};
+    return C.payLinkFor(prof.paylink || (data.prof && data.prof.paylink) || "", d);
+  }
   function drawQr(doc, txt, x, y, size) {
     var q = window.orosQR.encode(txt, { ecl: "M" });
     var cell = size / (q.size + 2);
@@ -2996,6 +3019,30 @@
         wrap(pt("qrAmt", { a: pm(qa), n: s.name }), R - M - qs - 6).forEach(function (ln, k) { text(ln, M + qs + 3, y + 14 + k * 4.2); });
         text(C.ibanOf(s.iban).replace(/(.{4})/g, "$1 ").trim(), M + qs + 3, y + 23);
         y += qs + 2;
+      } catch (e) {}
+    }
+    // Wave 46: "Pay online" with the user's own payment link (QR + link)
+    var plUrl = payLinkText(d, tt);
+    if (plUrl) {
+      try {
+        var ps = 26;
+        need(ps + 4);
+        if (window.orosQR) drawQr(doc, plUrl, M - 1, y - 3, ps);
+        var px = window.orosQR ? M + ps + 3 : M;
+        font(true, 8.5);
+        gray(0);
+        text(pt("payOnline"), px, y + 7);
+        font(false, 8.5);
+        gray(50);
+        text(pt("payOnlineHint"), px, y + 12);
+        doc.setTextColor(20, 70, 170);
+        var plShown = wrap(plUrl, R - px).slice(0, 2);
+        plShown.forEach(function (ln, k) {
+          if (typeof doc.textWithLink === "function") doc.textWithLink(ln, px, y + 17 + k * 4.2, { url: plUrl });
+          else text(ln, px, y + 17 + k * 4.2);
+        });
+        gray(50);
+        y += (window.orosQR ? ps : 17 + plShown.length * 4.2) + 2;
       } catch (e) {}
     }
     block(pt("notes"), d.notes);
@@ -3382,6 +3429,8 @@
       body = t(tone === "firm" ? "mail.firm" : (late ? "mail.softLate" : "mail.soft"), pr);
     }
     if (sel.iban) body += "\n\n" + sel.iban;
+    var plMail = payLinkText(d, tt);
+    if (plMail) body += "\n\n" + t("mail.payOnline") + ": " + plMail;
     if (sel.name) body += "\n\n" + sel.name;
     LANG = saved;
     var to = (d.c && d.c.email) || "";

@@ -288,7 +288,7 @@ test("merge: settings LWW as a whole, defaults when absent", () => {
 test("merge: never throws on garbage, never returns undefined parts", () => {
   [null, undefined, 5, "x", [], { rc: "x", pl: 5, ck: [], mn: {}, tombs: [] }].forEach((g) => {
     const m = j(C.mergeMeals(g, g));
-    assert.deepEqual(Object.keys(m), ["ver", "rc", "pl", "ck", "mn", "ai", "pn", "set", "tombs"]);
+    assert.deepEqual(Object.keys(m), ["ver", "rc", "pl", "ck", "mn", "ai", "pn", "pa", "nu", "set", "tombs"]);
   });
 });
 

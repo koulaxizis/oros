@@ -61,12 +61,13 @@
   }
 
   // ---------- applying ----------
-  function textSel() { return ED.selItems().filter(function (it) { return it.ax.k === "text" && !it.lock; }); }
+  function textSel() { return ED.selItems().filter(function (it) { return (it.ax.k === "text" || it.ax.k === "table") && !it.lock; }); }
   function keysFor(id, items) {
     var keys = {};
     items.forEach(function (it) {
       var k = T.fontKey(id, it.ax.b, it.ax.i);
       keys[k] = 1; keys["sans-" + k.split("-")[1]] = 1;
+      if (it.ax.k === "table") { var kb = T.fontKey(id, 1, 0); keys[kb] = 1; keys["sans-b"] = 1; }   // header cells are bold
     });
     return Object.keys(keys);
   }
@@ -146,7 +147,7 @@
 
     // in this design + built in + yours
     var used = {};
-    (AT.doc ? AT.doc.items : []).forEach(function (it) { if (it.ax && it.ax.k === "text" && AX.isExtraFont(it.ax.font)) used[it.ax.font] = 1; });
+    (AT.doc ? AT.doc.items : []).forEach(function (it) { if (it.ax && (it.ax.k === "text" || it.ax.k === "table") && AX.isExtraFont(it.ax.font)) used[it.ax.font] = 1; });
     var s1 = sec(t("fn.mine"));
     var shown = {};
     BUILTIN.forEach(function (id) { shown[id] = 1; s1.appendChild(row(id, T.FAMILIES[id].name, cur, t("fn.offlineOk"))); });

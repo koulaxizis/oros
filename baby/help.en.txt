@@ -11,9 +11,19 @@ The tabs at the bottom are `Today`, `History`, `Growth` and `Milestones`.
 - `Breastfeed` starts a feed timer on the side you pick; the other side from last time is marked `suggested`. While it runs you can switch side, `Pause` and `Resume`, and `Done` when you finish.
 - `Sleep` starts a sleep timer; tap `Wake up` when the baby wakes.
 - `Bottle` (`Breast milk` or `Formula`, with amount), `Nappy` (`Wet`, `Dirty`, `Wet + dirty`), `Solids` and `Pump`.
-- `More` has `Medicine`, `Temperature`, `Bath`, `Tummy time`, `Note`, and `Log a past sleep` or `Log a past feed` for things you forgot.
+- `More` has `Medicine`, `Temperature`, `Bath`, `Tummy time`, `Note`, `Milk stash`, and `Log a past sleep` or `Log a past feed` for things you forgot.
 
 Cards show how long ago the last feed and nappy were, and how long the baby has been awake or asleep. Below come today's totals and the `Log`.
+
+### Pumping and the milk stash
+`Pump` logs a session: the amount, the side (`Left`, `Right` or `Both`) and, if you like, `Duration (min, optional)`. Tick `Add to the milk stash` and pick `Fridge` or `Freezer` to store that milk as a bag at once.
+
+Once you pump or store milk, a `Milk stash` card on `Today` shows how many bags and how much milk are in the fridge and the freezer, which bag to use next, and any bag past its use-by date. Tap it (or `More` → `Milk stash`) to see every bag:
+- The bag to use first is on top, marked `Use first`: fridge bags before freezer bags, then the earliest use-by date, so the oldest milk goes first.
+- `Use` marks a bag as used, with `Log a bottle` to log it as a breast-milk bottle and `Undo`. `Thaw` moves a freezer bag to the fridge, to use within a day. A bag past its date offers `Throw away`.
+- `Add a bag` adds one by hand. Tap a bag to change its amount, `Pumped` day, place or `Use by` date, or to delete it.
+
+The use-by date is filled in from usual times: fridge 4 days, freezer 6 months (up to 12), thawed milk within 24 hours and never refrozen. You can change it. Used and thrown-away bags are kept under `Used and thrown away`.
 
 ### Edit or delete
 Tap any entry to change its start, end or values, or to `Delete` it. After a delete, `Undo` appears for a few seconds.
@@ -36,7 +46,7 @@ Reminders come from orOS on this device only, and only while orOS is open; the B
 [Calendar](app:calendar) can show milestones, vaccines, doctor visits and your child's age each month (up to 2 years, then birthdays) under the `Baby` chip. Tapping one opens Baby.
 
 ## Sync and backup
-Children, every entry, growth, milestones and units sync between your devices through [orOS sync](help:t/sync). A running timer syncs too, so one parent can stop a timer the other started. Night view and the open tab stay on each device.
+Children, every entry, growth, milestones, the milk stash and units sync between your devices through [orOS sync](help:t/sync). A running timer syncs too, so one parent can stop a timer the other started. Night view and the open tab stay on each device.
 
 In `Settings` you'll find `Export log (CSV)`, `Export growth (CSV)`, `Back up (JSON)` and `Restore from backup`. A restore merges: it adds and updates, and never removes what's already there.
 
@@ -53,3 +63,5 @@ In `Settings` you'll find `Export log (CSV)`, `Export growth (CSV)`, `Back up (J
 ## Limits
 - Baby keeps a log; it's not medical advice. If you're worried about your baby, call your paediatrician.
 - Reminders only show while orOS is open on that device.
+- Milk storage times are general guidance, not rules for your milk or your freezer. When unsure, throw it away, and follow your paediatrician or lactation consultant.
+- The CSV exports don't include the milk stash; the JSON backup does.

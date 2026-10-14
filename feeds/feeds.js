@@ -15,6 +15,10 @@
 //   - phase 2: full article from the page (extract.js), search (Greek
 //     without accents), rules and watched words, tags, one copy of a
 //     story two feeds carry, list / cards / magazine, statistics
+//   - wave 36: a Mail folder as a feed (newsletters; Mail's read-only
+//     bridge mail/feed.js), "Summarise" with the Assistant's AI
+//     (ai.js), import from FreshRSS / Miniflux and of a starred-articles
+//     file (sources.js)
 // Network: the page first asks the site itself; most sites send no
 // CORS headers, so the rest goes through the orOS relay (relay/,
 // op "web", the same Worker as Mail), in batches. Each feed
@@ -49,6 +53,11 @@
 
   var C = window.orosFeedsCore;
   var F = window.orosFeedsFetch;
+  var S = window.orosFeedsSources;
+  // "?v=…" of this script, for files loaded later (same precache entry)
+  var SCRIPT_V = (function () {
+    try { var m = /[?](v=[^#&]*)/.exec(document.currentScript.src); return m ? "?" + m[1] : ""; } catch (e) { return ""; }
+  })();
   var STORAGE_KEY   = "oros-feeds-data";
   var PREFS_KEY     = "oros-feeds-prefs";
   var STATE_KEY     = "oros-feeds-state";
@@ -169,7 +178,41 @@
       "stats.title": "Statistics", "stats.feed": "Feed", "stats.week": "A week", "stats.last": "Latest", "stats.state": "State",
       "stats.ok": "OK", "stats.quiet": "Quiet", "stats.broken": "Failing",
       "stats.sum": "{feeds} feeds · about {week} articles a week · {unread} unread",
-      "when.now": "just now", "when.min": "{n} min ago", "when.hour": "{n} h ago", "when.yday": "yesterday"
+      "when.now": "just now", "when.min": "{n} min ago", "when.hour": "{n} h ago", "when.yday": "yesterday",
+      "mailf.btn": "Newsletters from Mail", "mailf.title": "Newsletters from Mail",
+      "mailf.hint": "Pick a folder of the Mail app, for example one where a rule puts your newsletters. Its messages show here as articles, with pictures off. Reader reads only what Mail keeps on this device and sends nothing anywhere.",
+      "mailf.loading": "Looking at Mail's folders…", "mailf.pick": "Mail folders on this device",
+      "mailf.none": "No Mail folders on this device yet. Add your account in Mail and open the folder there once.",
+      "mailf.openMail": "Open Mail", "mailf.folder": "Mail folder", "mailf.noSubject": "(no subject)",
+      "mailf.nobody": "This message is not on this device yet. Open it in Mail once and it shows here too.",
+      "mailf.open": "Open in Mail", "mailf.note": "Reader shows the messages Mail has on this device. Open the folder in Mail to bring new ones.",
+      "err.nomail": "Mail has no copy of this folder on this device. Open the folder in Mail once.",
+      "ai.sum": "Summarise", "ai.sumTitle": "Summary", "ai.asking": "Asking {name}…", "ai.stop": "Stop",
+      "ai.again": "Try again", "ai.copy": "Copy", "ai.copied": "Summary copied.", "ai.hide": "Hide the summary", "ai.empty": "The answer was empty. Try again.",
+      "ai.sent": "Only this article went to {name}, straight from this device.",
+      "ai.nothing": "There is no text to summarise yet.",
+      "ai.none": "Summaries use the AI you set up in the Assistant app: your own key (Claude, ChatGPT, Gemini…), a server on your computer, or the browser's built-in model. Nothing is set up on this device yet.",
+      "ai.noneBtn": "Set up in the Assistant", "ai.noAssistant": "The Assistant app is needed for this.",
+      "ai.noKey": "There is no key for {name} on this device. Add it in the Assistant.",
+      "ai.err": "{name} did not answer: {why}", "ai.whyNet": "no connection", "ai.whyBuiltin": "the browser's model is not available",
+      "imp.btn": "From FreshRSS or Miniflux…", "imp.title": "Import from FreshRSS or Miniflux",
+      "imp.service": "Your reader", "imp.server": "Server address", "imp.serverPh": "e.g. rss.example.com",
+      "imp.user": "User name", "imp.pass": "API password", "imp.passHint": "FreshRSS: set it in Settings › Profile › API management.",
+      "imp.token": "API key", "imp.tokenHint": "Miniflux: make one in Settings › API Keys.",
+      "imp.what": "Bring over", "imp.subs": "Subscriptions and folders", "imp.starred": "Starred articles", "imp.read": "What I have read",
+      "imp.privacy": "Your password or key is used only for this import and is not kept. The requests go straight from this device to your server.",
+      "imp.go": "Import", "imp.connecting": "Connecting to your server…", "imp.loading": "Loading the feeds…",
+      "imp.done": "{feeds} new subscriptions, {starred} starred articles, {read} articles marked as read.",
+      "imp.partial": "There were too many unread articles to bring over what you read; that part was skipped.",
+      "imp.readLater": "Feeds that could not be loaded now keep their articles unread.",
+      "imp.cors": "Your server does not let a browser page connect to it (CORS), or it is not on https. Export your subscriptions (OPML) and starred articles (JSON) from your reader and import those files here instead.",
+      "imp.auth": "The server did not accept the user name, password or key.",
+      "imp.notfound": "No FreshRSS or Miniflux API at this address.", "imp.bad": "Check the address and the details.",
+      "imp.http": "The server answered with an error ({code}).", "imp.timeout": "The server took too long to answer.",
+      "imp.offline": "You are offline.",
+      "imp.file": "Import starred articles (JSON)", "imp.badFile": "This is not a starred-articles file (Google Reader JSON or Miniflux).",
+      "imp.fileDone": "{n} starred articles imported.", "imp.fileNone": "No new starred articles in this file.",
+      "wel.mail": "Newsletters from Mail", "wel.server": "Import from FreshRSS or Miniflux"
     },
     el: {
       "app": "Αναγνώστης", "nav.side": "Συνδρομές", "nav.back": "Πίσω", "btn.refresh": "Ανανέωση",
@@ -264,7 +307,41 @@
       "stats.title": "Στατιστικά", "stats.feed": "Feed", "stats.week": "Την εβδομάδα", "stats.last": "Τελευταίο", "stats.state": "Κατάσταση",
       "stats.ok": "Εντάξει", "stats.quiet": "Σιωπηλό", "stats.broken": "Σφάλμα",
       "stats.sum": "{feeds} feeds · περίπου {week} άρθρα την εβδομάδα · {unread} αδιάβαστα",
-      "when.now": "μόλις τώρα", "when.min": "πριν {n} λεπ.", "when.hour": "πριν {n} ώρ.", "when.yday": "χθες"
+      "when.now": "μόλις τώρα", "when.min": "πριν {n} λεπ.", "when.hour": "πριν {n} ώρ.", "when.yday": "χθες",
+      "mailf.btn": "Ενημερωτικά από την Αλληλογραφία", "mailf.title": "Ενημερωτικά από την Αλληλογραφία",
+      "mailf.hint": "Διάλεξε έναν φάκελο της Αλληλογραφίας, για παράδειγμα εκείνον όπου ένας κανόνας βάζει τα ενημερωτικά σου. Τα μηνύματά του εμφανίζονται εδώ ως άρθρα, χωρίς εικόνες. Ο Αναγνώστης διαβάζει μόνο ό,τι κρατά η Αλληλογραφία σε αυτή τη συσκευή και δεν στέλνει τίποτα πουθενά.",
+      "mailf.loading": "Κοιτάζω τους φακέλους της Αλληλογραφίας…", "mailf.pick": "Φάκελοι της Αλληλογραφίας σε αυτή τη συσκευή",
+      "mailf.none": "Δεν υπάρχουν ακόμη φάκελοι της Αλληλογραφίας σε αυτή τη συσκευή. Πρόσθεσε τον λογαριασμό σου στην Αλληλογραφία και άνοιξε εκεί τον φάκελο μία φορά.",
+      "mailf.openMail": "Άνοιγμα Αλληλογραφίας", "mailf.folder": "Φάκελος αλληλογραφίας", "mailf.noSubject": "(χωρίς θέμα)",
+      "mailf.nobody": "Αυτό το μήνυμα δεν υπάρχει ακόμη σε αυτή τη συσκευή. Άνοιξέ το μία φορά στην Αλληλογραφία και θα φαίνεται κι εδώ.",
+      "mailf.open": "Άνοιγμα στην Αλληλογραφία", "mailf.note": "Ο Αναγνώστης δείχνει τα μηνύματα που έχει η Αλληλογραφία σε αυτή τη συσκευή. Άνοιξε τον φάκελο στην Αλληλογραφία για να έρθουν τα νέα.",
+      "err.nomail": "Η Αλληλογραφία δεν έχει αντίγραφο αυτού του φακέλου σε αυτή τη συσκευή. Άνοιξε τον φάκελο εκεί μία φορά.",
+      "ai.sum": "Περίληψη", "ai.sumTitle": "Περίληψη", "ai.asking": "Ρωτάω το {name}…", "ai.stop": "Διακοπή",
+      "ai.again": "Ξανά", "ai.copy": "Αντιγραφή", "ai.copied": "Η περίληψη αντιγράφηκε.", "ai.hide": "Απόκρυψη της περίληψης", "ai.empty": "Η απάντηση ήταν κενή. Δοκίμασε ξανά.",
+      "ai.sent": "Μόνο αυτό το άρθρο πήγε στο {name}, απευθείας από αυτή τη συσκευή.",
+      "ai.nothing": "Δεν υπάρχει ακόμη κείμενο για περίληψη.",
+      "ai.none": "Οι περιλήψεις χρησιμοποιούν το AI που έχεις ρυθμίσει στον Βοηθό: δικό σου κλειδί (Claude, ChatGPT, Gemini…), διακομιστή στον υπολογιστή σου ή το μοντέλο του browser. Δεν έχει ρυθμιστεί ακόμη τίποτα σε αυτή τη συσκευή.",
+      "ai.noneBtn": "Ρύθμιση στον Βοηθό", "ai.noAssistant": "Χρειάζεται η εφαρμογή Βοηθός.",
+      "ai.noKey": "Δεν υπάρχει κλειδί για το {name} σε αυτή τη συσκευή. Πρόσθεσέ το στον Βοηθό.",
+      "ai.err": "Το {name} δεν απάντησε: {why}", "ai.whyNet": "δεν υπάρχει σύνδεση", "ai.whyBuiltin": "το μοντέλο του browser δεν είναι διαθέσιμο",
+      "imp.btn": "Από FreshRSS ή Miniflux…", "imp.title": "Εισαγωγή από FreshRSS ή Miniflux",
+      "imp.service": "Το πρόγραμμά σου", "imp.server": "Διεύθυνση διακομιστή", "imp.serverPh": "π.χ. rss.example.com",
+      "imp.user": "Όνομα χρήστη", "imp.pass": "Κωδικός API", "imp.passHint": "FreshRSS: ορίζεται στις Ρυθμίσεις › Προφίλ › Διαχείριση API.",
+      "imp.token": "Κλειδί API", "imp.tokenHint": "Miniflux: φτιάξε ένα στις Ρυθμίσεις › Κλειδιά API.",
+      "imp.what": "Μεταφορά", "imp.subs": "Συνδρομές και φάκελοι", "imp.starred": "Άρθρα με αστέρι", "imp.read": "Τι έχω διαβάσει",
+      "imp.privacy": "Ο κωδικός ή το κλειδί σου χρησιμοποιείται μόνο για αυτή την εισαγωγή και δεν κρατιέται. Τα αιτήματα πηγαίνουν απευθείας από αυτή τη συσκευή στον διακομιστή σου.",
+      "imp.go": "Εισαγωγή", "imp.connecting": "Σύνδεση με τον διακομιστή σου…", "imp.loading": "Φόρτωση των feeds…",
+      "imp.done": "{feeds} νέες συνδρομές, {starred} άρθρα με αστέρι, {read} άρθρα σημειώθηκαν ως διαβασμένα.",
+      "imp.partial": "Τα αδιάβαστα ήταν πάρα πολλά για να μεταφερθεί τι έχεις διαβάσει· αυτό το κομμάτι παραλείφθηκε.",
+      "imp.readLater": "Όσα feeds δεν φορτώθηκαν τώρα κρατούν τα άρθρα τους αδιάβαστα.",
+      "imp.cors": "Ο διακομιστής σου δεν επιτρέπει σε σελίδα του browser να συνδεθεί (CORS) ή δεν είναι σε https. Κάνε εξαγωγή των συνδρομών (OPML) και των άρθρων με αστέρι (JSON) από το πρόγραμμά σου και φέρε εδώ αυτά τα αρχεία.",
+      "imp.auth": "Ο διακομιστής δεν δέχτηκε το όνομα χρήστη, τον κωδικό ή το κλειδί.",
+      "imp.notfound": "Δεν υπάρχει API του FreshRSS ή του Miniflux σε αυτή τη διεύθυνση.", "imp.bad": "Έλεγξε τη διεύθυνση και τα στοιχεία.",
+      "imp.http": "Ο διακομιστής απάντησε με σφάλμα ({code}).", "imp.timeout": "Ο διακομιστής άργησε πολύ να απαντήσει.",
+      "imp.offline": "Δεν υπάρχει σύνδεση.",
+      "imp.file": "Εισαγωγή άρθρων με αστέρι (JSON)", "imp.badFile": "Δεν είναι αρχείο άρθρων με αστέρι (Google Reader JSON ή Miniflux).",
+      "imp.fileDone": "Εισήχθησαν {n} άρθρα με αστέρι.", "imp.fileNone": "Δεν υπάρχουν νέα άρθρα με αστέρι σε αυτό το αρχείο.",
+      "wel.mail": "Ενημερωτικά από την Αλληλογραφία", "wel.server": "Εισαγωγή από FreshRSS ή Miniflux"
     }
   };
 
@@ -296,6 +373,8 @@
     vlist: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
     vcards: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
     vmag: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="8" height="7" rx="1"/><line x1="14" y1="5" x2="21" y2="5"/><line x1="14" y1="9" x2="21" y2="9"/><rect x="3" y="14" width="8" height="7" rx="1"/><line x1="14" y1="15" x2="21" y2="15"/><line x1="14" y1="19" x2="21" y2="19"/></svg>',
+    spark: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
+    mail: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></svg>',
     send: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>',
     big: '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.5" fill="currentColor"/></svg>'
   };
@@ -434,6 +513,7 @@
   function relayUrl() { return F.relayUrl({ relay: C.setting(data, "relay") || DEFAULT_RELAY }); }
   function imagesFor(feed) {
     if (feed && (feed.img === 0 || feed.img === 1)) return feed.img === 1;
+    if (C.isMailFeed(feed)) return false;      // a newsletter's pictures tell the sender you read it
     return C.setting(data, "img") === 1;
   }
 
@@ -509,19 +589,24 @@
     var present = {}, puts = [], bodies = [], ruled = false, notes = [];
     var first = !Object.keys(heads).some(function (id) { return heads[id].feed === feed.id; });
     var wantNote = feed.notify === 1 || data.rules.some(function (r) { return r.notify; });
+    var mailFeed = C.isMailFeed(feed);
     parsed.items.forEach(function (it) {
       var id = C.itemId(feed.id, it.key);
       present[id] = 1;
       var old = heads[id];
+      // A newsletter whose body Mail no longer keeps: the copy stored here stays.
+      if (it.nobody && old && !old.nobody) return;
       var h = {
         id: id, feed: feed.id, title: it.title, link: it.link,
         date: it.date || (old ? old.date : t0), seen: old ? old.seen : t0,
         author: it.author, snip: it.snip, img: it.img || "", enc: it.enc || null
       };
+      if (it.mt) h.mt = it.mt;            // where it lives in Mail (device-local, like the head)
+      if (it.nobody) h.nobody = 1;
       var same = old && old.title === h.title && old.snip === h.snip && old.link === h.link && old.img === h.img &&
-                 old.date === h.date && JSON.stringify(old.enc) === JSON.stringify(h.enc);
+                 old.date === h.date && JSON.stringify(old.enc) === JSON.stringify(h.enc) && !old.nobody === !h.nobody;
       heads[id] = h;
-      if (!same) { puts.push(h); bodies.push({ id: id, html: it.html, base: it.link || feed.site || feed.url }); }
+      if (!same) { puts.push(h); bodies.push({ id: id, html: it.html, base: it.link || feed.site || (mailFeed ? "" : feed.url) }); }
       if (!old && (data.rules.length || wantNote)) {          // rules + notifications: new articles only
         var text = C.textOf(it.html);
         if (data.rules.length && applyRules(h, text)) ruled = true;
@@ -646,7 +731,66 @@
   }
 
   function refresh(ids, manual) {
-    return loadHeads().then(function () { return refreshNow(ids, manual); });
+    return loadHeads().then(function () {
+      return refreshMail(ids, manual || !!ids).then(function (n) {
+        return refreshNow(ids, manual).then(function (m) { return n + m; });
+      });
+    });
+  }
+
+  // ---------- 5b. Mail folders as feeds ----------
+  // Articles of a Mail folder come from Mail's own cache on this
+  // device through its read-only bridge (mail/feed.js, loaded on first
+  // use with mail/mime.js); no network, so offline too.
+  var mailLoading = null;
+  function mailBridge() {
+    if (window.orosMailFeed) return Promise.resolve(window.orosMailFeed);
+    if (!mailLoading) {
+      mailLoading = new Promise(function (resolve) {
+        var s = document.createElement("script");
+        s.src = "../mail/feed.js" + SCRIPT_V;
+        s.async = true;
+        s.onload = s.onerror = function () { resolve(); };
+        document.head.appendChild(s);
+      }).then(function () {
+        if (!window.orosMailFeed) mailLoading = null;
+        return window.orosMailFeed || null;
+      });
+    }
+    return mailLoading;
+  }
+  var mailBusy = null, mailAt = 0;
+  var MAIL_EVERY = 5 * 60000;   // the timer's pace; coming back to the app reads at once
+  function refreshMail(ids, force) {
+    var list = data.feeds.filter(function (f) { return C.isMailFeed(f) && (!ids || ids.indexOf(f.id) >= 0); });
+    if (!list.length) return Promise.resolve(0);
+    if (mailBusy) return mailBusy;
+    if (force === false && now() - mailAt < MAIL_EVERY) return Promise.resolve(0);
+    mailAt = now();
+    mailBusy = mailBridge().then(function (B) {
+      return list.reduce(function (p, f) {
+        return p.then(function (n) {
+          var mu = C.parseMailUrl(f.url);
+          var got = B && mu ? B.messages(mu.acct, mu.folder).catch(function () { return null; }) : Promise.resolve(null);
+          return got.then(function (res) {
+            var feed = C.feedById(data, f.id);
+            if (!feed) return n;
+            if (!res) { settle(feed, false, new FeedError("nomail")); return n; }
+            settle(feed, true, null, {});
+            return storeItems(feed, S.mailParsed(res, { noSubject: t("mailf.noSubject") })).then(function (k) { return n + k; });
+          });
+        });
+      }, Promise.resolve(0));
+    }).then(function (n) {
+      mailBusy = null;
+      if (n) {
+        var oh = openItem && openItem.head, nh = openItem && heads[openItem.id];
+        if (oh && oh.nobody && nh && !nh.nobody) openArticle(openItem.id);   // its body came from Mail
+        else renderAll();
+      }
+      return n;
+    }, function () { mailBusy = null; return 0; });
+    return mailBusy;
   }
   function refreshNow(ids, manual) {
     if (!navigator.onLine) {
@@ -657,6 +801,7 @@
     var t0 = now();
     var list = data.feeds.filter(function (f) {
       if (ids && ids.indexOf(f.id) < 0) return false;
+      if (C.isMailFeed(f)) return false;    // refreshMail()
       if (manual) return true;
       return due(f, t0);
     });
@@ -1427,7 +1572,19 @@
       bFull.addEventListener("click", toggleFull);
       acts.appendChild(bFull);
     }
+    var sm = sums[openItem.id];
+    var bSum = svgBtn("icon-btn" + (sm && !sm.hidden ? " on" : ""), UI.spark, sm && !sm.hidden && sm.state === "done" ? t("ai.hide") : t("ai.sum"));
+    bSum.id = "sum-btn";
+    bSum.addEventListener("click", function () { summarise(openItem.id); });
+    acts.appendChild(bSum);
     acts.appendChild(el("span", "spacer"));
+    var mt = openItem.head && openItem.head.mt;
+    if (mt && shellOpenAt()) {
+      var bMail = svgBtn("icon-btn", UI.mail, t("mailf.open"));
+      bMail.id = "mail-open-btn";
+      bMail.addEventListener("click", function () { openInMail(mt); });
+      acts.appendChild(bMail);
+    }
     if (it.link) {
       var bSend = svgBtn("icon-btn", UI.send, t("read.send"));
       bSend.id = "send-btn";
@@ -1443,10 +1600,24 @@
     var bars = $("art-bars"), box = $("art-body");
     bars.innerHTML = "";
     box.innerHTML = "";
+    renderSumBox();
     if (openItem.loading) { box.appendChild(el("p", "hint pad", t("list.loading"))); return; }
     var html = openItem.body ? openItem.body.html : "";
-    var base = openItem.body ? openItem.body.base : (it.link || (feed && feed.url) || "");
+    var base = openItem.body ? openItem.body.base : (it.link || (feed && !C.isMailFeed(feed) ? feed.url : ""));
     fullBars(bars, feed);
+    if (openItem.head && openItem.head.nobody) {
+      var nb = el("div", "bar");
+      nb.appendChild(el("span", "", t("mailf.nobody")));
+      if (mt && shellOpenAt()) {
+        var nba = el("span", "bar-acts");
+        var nbb = el("button", "link-btn", t("mailf.open"));
+        nbb.type = "button";
+        nbb.addEventListener("click", function () { openInMail(mt); });
+        nba.appendChild(nbb);
+        nb.appendChild(nba);
+      }
+      bars.appendChild(nb);
+    }
     if (openItem.mode === "full" && openItem.full) {
       html = openItem.full.html;
       base = openItem.full.base || it.link;
@@ -1594,8 +1765,9 @@
     }
   }
 
-  function copyLink(u) {
-    var done = function () { showToast(t("toast.copied")); };
+  function copyText(s) { copyLink(s, t("ai.copied")); }
+  function copyLink(u, msg) {
+    var done = function () { showToast(msg || t("toast.copied")); };
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(u).then(done, fallback); return; }
     } catch (e) {}
@@ -1611,6 +1783,109 @@
       try { document.execCommand("copy"); done(); } catch (e) {}
       ta.remove();
     }
+  }
+
+  // ---------- 9c. Summarise (Assistant) + Open in Mail ----------
+  // ai.js: the AI the user set up in the Assistant (their own key /
+  // local server / the browser's model). Summaries live in memory on
+  // this device only (never stored, never synced) and are drawn as
+  // plain text (textContent).
+  var sums = {};             // itemId -> { state "busy"|"done"|"err", text, err, ctl, name, hidden }
+  var sumOrder = [];
+  function articlePlain() {
+    if (!openItem) return "";
+    var it = openItem.head || openItem.saved || itemOf(openItem.id) || {};
+    var html = openItem.mode === "full" && openItem.full ? openItem.full.html
+      : (openItem.body && openItem.body.html) || C.escHtml(it.sum || it.snip || "");
+    return C.textOf(html);
+  }
+  function summarise(id) {
+    if (!openItem || openItem.id !== id) return;
+    var s = sums[id];
+    if (s && s.state === "busy") return;
+    if (s && s.state === "done") { s.hidden = !s.hidden; renderReader(); return; }
+    var it = itemOf(id) || {};
+    var text = articlePlain();
+    if (!text) { showToast(t("ai.nothing")); return; }
+    var AI = window.orosFeedsAI;
+    if (!AI) { aiSetupDialog(); return; }
+    AI.ready().then(function (cf) {
+      if (!cf) { aiSetupDialog(); return; }
+      if (!openItem || openItem.id !== id) return;
+      var q = S.summaryPrompt(it.title || "", text, LANG);
+      var my = { state: "busy", text: "", err: "", ctl: new AbortController(), name: cf.name, hidden: false };
+      if (sums[id] && sums[id].ctl) try { sums[id].ctl.abort(); } catch (e) {}
+      sums[id] = my;
+      sumOrder = sumOrder.filter(function (k) { return k !== id; }).concat(id);
+      while (sumOrder.length > 30) delete sums[sumOrder.shift()];
+      renderReader();
+      AI.ask(cf, q, my.ctl.signal, function (txt) {
+        if (sums[id] !== my) return;
+        my.text = txt;
+        var node = document.getElementById("sum-text");
+        if (node && openItem && openItem.id === id) node.textContent = txt;
+      }).then(function (txt) {
+        if (sums[id] !== my) return;
+        my.text = String(txt || "").trim();
+        my.state = my.text ? "done" : "err";
+        if (!my.text) my.err = t("ai.empty");
+      }, function (e) {
+        if (sums[id] !== my) return;
+        if (my.ctl.signal.aborted) { delete sums[id]; return; }
+        my.state = "err";
+        my.err = AI.errorText(e, cf, t);
+      }).then(function () {
+        my.ctl = null;
+        if (openItem && openItem.id === id) renderReader();
+      });
+    });
+  }
+  function renderSumBox() {
+    var s = openItem && sums[openItem.id];
+    if (!s || s.hidden) return;
+    var id = openItem.id;
+    var box = el("div", "sum-box");
+    box.id = "sum-box";
+    var head = el("div", "sum-head");
+    head.appendChild(el("span", "sum-title", t("ai.sumTitle") + " · " + s.name));
+    var acts = el("span", "bar-acts");
+    function act(label, fn) {
+      var b = el("button", "link-btn", label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      acts.appendChild(b);
+    }
+    if (s.state === "busy") act(t("ai.stop"), function () { if (s.ctl) s.ctl.abort(); });
+    if (s.state === "done") act(t("ai.copy"), function () { copyText(s.text); });
+    if (s.state === "err") act(t("ai.again"), function () { delete sums[id]; summarise(id); });
+    if (s.state !== "busy") act(t("dlg.close"), function () { if (s.state === "done") s.hidden = true; else delete sums[id]; renderReader(); });
+    head.appendChild(acts);
+    box.appendChild(head);
+    var txt = el("div", "sum-text", s.text || (s.state === "busy" ? t("ai.asking", { name: s.name }) : ""));
+    txt.id = "sum-text";
+    txt.setAttribute("aria-live", "polite");
+    box.appendChild(txt);
+    if (s.state === "err") box.appendChild(el("p", "sum-err", s.err));
+    box.appendChild(el("p", "sum-note", t("ai.sent", { name: s.name })));
+    $("art-bars").appendChild(box);
+  }
+  function aiSetupDialog() {
+    var dlg = makeDialog("ai-dlg");
+    dlg.appendChild(el("h2", "dlg-title", t("ai.sum")));
+    var open = shellOpenAt();
+    dlg.appendChild(el("p", "dlg-text", t("ai.none")));
+    if (!open) dlg.appendChild(el("p", "dlg-hint", t("ai.noAssistant")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    if (open) acts.appendChild(button(t("ai.noneBtn"), "primary", function () { dlg.close(); open("assistant", {}); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function openInMail(mt) {
+    var open = shellOpenAt();
+    if (!open || !mt) return;
+    open("mail", { acct: mt.acct, folder: mt.folder, uid: mt.uid });
   }
 
   // ---------- 10. Actions: read, star, later, mark all ----------
@@ -1786,6 +2061,18 @@
     dlg.appendChild(form);
     var res = el("div", "found");
     dlg.appendChild(res);
+    var other = el("div", "add-other");
+    var bm = el("button", "link-btn", t("mailf.btn"));
+    bm.type = "button";
+    bm.id = "add-mail";
+    bm.addEventListener("click", function () { dlg.close(); mailDialog(); });
+    other.appendChild(bm);
+    var bi = el("button", "link-btn", t("imp.btn"));
+    bi.type = "button";
+    bi.id = "add-import";
+    bi.addEventListener("click", function () { dlg.close(); importDialog(); });
+    other.appendChild(bi);
+    dlg.appendChild(other);
     var acts = el("div", "dlg-actions");
     var go = button(t("add.go"), "primary");
     go.hidden = true;
@@ -1907,7 +2194,8 @@
     full.checked = feed.full === 1;
     fl2.appendChild(full);
     fl2.appendChild(el("span", "", t("feed.full")));
-    dlg.appendChild(fl2);
+    var isMail = C.isMailFeed(feed);
+    if (!isMail) dlg.appendChild(fl2);
     var fl3 = el("label", "check");
     var notify = el("input");
     notify.type = "checkbox";
@@ -1916,8 +2204,21 @@
     fl3.appendChild(notify);
     fl3.appendChild(el("span", "", t("feed.notify")));
     dlg.appendChild(fl3);
-    dlg.appendChild(el("div", "dlg-lbl", t("feed.addr")));
-    dlg.appendChild(el("p", "mono", feed.url));
+    if (isMail) {
+      var mu = C.parseMailUrl(feed.url);
+      dlg.appendChild(el("div", "dlg-lbl", t("mailf.folder")));
+      dlg.appendChild(el("p", "mono", mu ? mu.folder : ""));
+      dlg.appendChild(el("p", "dlg-hint", t("mailf.note")));
+      if (mu && shellOpenAt()) {
+        var om = el("button", "link-btn", t("mailf.openMail"));
+        om.type = "button";
+        om.addEventListener("click", function () { dlg.close(); shellOpenAt()("mail", { acct: mu.acct, folder: mu.folder }); });
+        dlg.appendChild(om);
+      }
+    } else {
+      dlg.appendChild(el("div", "dlg-lbl", t("feed.addr")));
+      dlg.appendChild(el("p", "mono", feed.url));
+    }
     if (feed.site) {
       dlg.appendChild(el("div", "dlg-lbl", t("feed.site")));
       var a = el("a", "mono", feed.site);
@@ -2078,6 +2379,11 @@
     var ex = button(t("set.export"), "small", function () { exportOpml(); });
     ex.disabled = !data.feeds.length;
     io.appendChild(ex);
+    var si = button(t("imp.btn"), "small", function () { dlg.close(); importDialog(); });
+    si.id = "set-server";
+    io.appendChild(si);
+    io.appendChild(button(t("imp.file"), "small", function () { dlg.close(); importStarred(); }));
+    io.appendChild(button(t("mailf.btn"), "small", function () { dlg.close(); mailDialog(); }));
     dlg.appendChild(io);
     dlg.appendChild(el("p", "dlg-hint", t("set.keep")));
     var acts = el("div", "dlg-actions");
@@ -2506,6 +2812,277 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
   }
 
+  // ---------- 11d. Newsletters from Mail ----------
+  function mailDialog() {
+    var dlg = makeDialog("mail-dlg");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("h2", "dlg-title", t("mailf.title")));
+    dlg.appendChild(el("p", "dlg-hint", t("mailf.hint")));
+    var status = el("p", "dlg-hint", t("mailf.loading"));
+    status.setAttribute("aria-live", "polite");
+    dlg.appendChild(status);
+    var res = el("div", "found");
+    dlg.appendChild(res);
+    var acts = el("div", "dlg-actions");
+    var go = button(t("add.go"), "primary");
+    go.hidden = true;
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    mailBridge().then(function (B) { return B ? B.folders() : []; }).catch(function () { return []; }).then(function (rows) {
+      if (!dlg.open) return;
+      if (!rows.length) {
+        status.textContent = t("mailf.none");
+        var open = shellOpenAt();
+        if (open) {
+          var om = button(t("mailf.openMail"), "small", function () { dlg.close(); open("mail", {}); });
+          res.appendChild(om);
+        }
+        return;
+      }
+      status.textContent = "";
+      var accts = {};
+      rows.forEach(function (r) { accts[r.acct] = 1; });
+      var many = Object.keys(accts).length > 1;
+      res.appendChild(el("div", "dlg-lbl", t("mailf.pick")));
+      var ul = el("ul", "found-list");
+      var first = true;
+      rows.forEach(function (r, i) {
+        var url = C.mailUrl(r.acct, r.folder);
+        var id = C.feedId(url);
+        if (!id) return;
+        var have = !!C.feedById(data, id);
+        var li = el("li");
+        var lab = el("label", "found-row");
+        var rb = el("input");
+        rb.type = "radio";
+        rb.name = "mail-folder";
+        rb.value = String(i);
+        rb.disabled = have;
+        if (!have && first && r.role !== "inbox") { rb.checked = true; first = false; }
+        lab.appendChild(rb);
+        var tx = el("span", "found-tx");
+        tx.appendChild(el("span", "found-name", r.label));
+        var bits = [have ? t("add.have") : "", many || r.email ? (r.acctName || r.email) : ""].filter(Boolean);
+        if (bits.length) tx.appendChild(el("span", "found-meta", bits.join(" · ")));
+        lab.appendChild(tx);
+        li.appendChild(lab);
+        ul.appendChild(li);
+      });
+      res.appendChild(ul);
+      var fl = el("label", "dlg-lbl", t("add.folder"));
+      fl.htmlFor = "folder-sel";
+      res.appendChild(fl);
+      var sel = folderSelect(selKind() === "folder" ? selId() : "");
+      res.appendChild(sel);
+      var folderOf = wireNewFolder(sel, res);
+      go.hidden = false;
+      go.onclick = function () {
+        var pick = res.querySelector("input[name=mail-folder]:checked");
+        if (!pick) return;
+        var r = rows[+pick.value];
+        var url = C.mailUrl(r.acct, r.folder);
+        var cand = { id: C.feedId(url), url: url, title: S.mailFeedTitle(r, many), parsed: null, via: "" };
+        var folder = folderOf();
+        go.disabled = true;
+        subscribe(cand, folder).then(function (feed) {
+          saveData();
+          dlg.close();
+          if (!feed) return;
+          showToast(t("add.done", { name: feed.title }));
+          select("f:" + feed.id);
+          refresh([feed.id], false);
+        });
+      };
+    });
+  }
+
+  // ---------- 11e. Import from FreshRSS / Miniflux ----------
+  // sources.js talks to the user's own server straight from this
+  // page (the relay cannot carry credentials, by design). Nothing typed
+  // here is stored. When the server refuses browsers (CORS), the files
+  // way is offered: OPML + starred articles (JSON).
+  function importDialog() {
+    var dlg = makeDialog("imp-dlg");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("h2", "dlg-title", t("imp.title")));
+    var form = el("form");
+    form.autocomplete = "off";
+    function field(box, id, label, type, ph) {
+      var l = el("label", "dlg-lbl", label);
+      l.htmlFor = id;
+      box.appendChild(l);
+      var i = el("input");
+      i.type = type;
+      i.id = id;
+      i.autocomplete = type === "password" ? "new-password" : "off";
+      i.setAttribute("autocapitalize", "off");
+      i.spellcheck = false;
+      if (ph) i.placeholder = ph;
+      box.appendChild(i);
+      return i;
+    }
+    var sl = el("label", "dlg-lbl", t("imp.service"));
+    sl.htmlFor = "imp-service";
+    form.appendChild(sl);
+    var svc = el("select");
+    svc.id = "imp-service";
+    [["freshrss", "FreshRSS"], ["miniflux", "Miniflux"]].forEach(function (o) {
+      var op = el("option", "", o[1]);
+      op.value = o[0];
+      svc.appendChild(op);
+    });
+    form.appendChild(svc);
+    var server = field(form, "imp-server", t("imp.server"), "text", t("imp.serverPh"));
+    server.inputMode = "url";
+    var fr = el("div");
+    var user = field(fr, "imp-user", t("imp.user"), "text");
+    var pass = field(fr, "imp-pass", t("imp.pass"), "password");
+    fr.appendChild(el("p", "dlg-hint", t("imp.passHint")));
+    form.appendChild(fr);
+    var mf = el("div");
+    mf.hidden = true;
+    var token = field(mf, "imp-token", t("imp.token"), "password");
+    mf.appendChild(el("p", "dlg-hint", t("imp.tokenHint")));
+    form.appendChild(mf);
+    svc.addEventListener("change", function () { fr.hidden = svc.value !== "freshrss"; mf.hidden = svc.value === "freshrss"; });
+    form.appendChild(el("div", "dlg-lbl", t("imp.what")));
+    function check(id, label, on, dis) {
+      var l = el("label", "check");
+      var c = el("input");
+      c.type = "checkbox";
+      c.id = id;
+      c.checked = on;
+      c.disabled = !!dis;
+      l.appendChild(c);
+      l.appendChild(el("span", "", label));
+      form.appendChild(l);
+      return c;
+    }
+    check("imp-subs", t("imp.subs"), true, true);
+    var cStar = check("imp-star", t("imp.starred"), true);
+    var cRead = check("imp-read", t("imp.read"), true);
+    form.appendChild(el("p", "dlg-hint", t("imp.privacy")));
+    var status = el("p", "dlg-hint");
+    status.setAttribute("aria-live", "polite");
+    form.appendChild(status);
+    var alt = el("div", "inline");
+    alt.hidden = true;
+    alt.appendChild(button(t("set.import"), "small", function () { dlg.close(); importOpml(); }));
+    alt.appendChild(button(t("imp.file"), "small", function () { dlg.close(); importStarred(); }));
+    form.appendChild(alt);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("imp.go"), "primary");
+    go.type = "submit";
+    acts.appendChild(go);
+    form.appendChild(acts);
+    dlg.appendChild(form);
+    var running = false;
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (running) return;
+      var fresh = svc.value === "freshrss";
+      if (!S.normServer(server.value) || (fresh ? !user.value.trim() || !pass.value : !token.value.trim())) {
+        status.className = "dlg-err";
+        status.textContent = t("imp.bad");
+        return;
+      }
+      running = true;
+      go.disabled = true;
+      alt.hidden = true;
+      status.className = "dlg-hint";
+      status.textContent = t("imp.connecting");
+      var opts = { server: server.value, starred: cStar.checked, read: cRead.checked };
+      if (fresh) { opts.user = user.value.trim(); opts.pass = pass.value; }
+      else opts.token = token.value.trim();
+      var f = function (u, init) { return window.fetch(u, init); };
+      (fresh ? S.fromFreshRss(opts, f) : S.fromMiniflux(opts, f)).then(function (r) {
+        pass.value = "";
+        token.value = "";
+        status.textContent = t("imp.loading");
+        return applyImport(r);
+      }).then(function (sum) {
+        running = false;
+        go.disabled = false;
+        status.className = "dlg-hint";
+        status.textContent = [t("imp.done", { feeds: sum.feeds, starred: sum.starred, read: sum.read }),
+                              sum.partial ? t("imp.partial") : "", sum.failed ? t("imp.readLater") : ""].filter(Boolean).join(" ");
+        renderAll();
+      }, function (err) {
+        running = false;
+        go.disabled = false;
+        var code = err && err.code ? err.code : "cors";
+        status.className = "dlg-err";
+        status.textContent = t("imp." + code, { code: err && err.extra || "" });
+        if (status.textContent === "imp." + code) status.textContent = t("imp.cors");
+        alt.hidden = code !== "cors" && code !== "notfound";
+      });
+    });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    server.focus();
+  }
+
+  // r: { feeds, starred, unread, unreadComplete } (sources.js)
+  // → Promise<{ feeds, starred, read, partial, failed }>
+  function applyImport(r) {
+    var add = S.newFeeds(data, r.feeds);
+    var room = Math.max(0, C.MAX_FEEDS - data.feeds.length);
+    add = add.slice(0, room);
+    var t0 = now();
+    add.forEach(function (x) {
+      data.feeds.push({ id: x.id, url: x.url, title: x.title, site: x.site, folder: x.folder ? folderByName(x.folder, true) : "",
+                        img: -1, m: Math.max(t0, (data.tombs["f:" + x.id] || 0) + 1) });
+    });
+    if (add.length) saveData();
+    renderAll();
+    var ids = r.feeds.map(function (f) { return C.feedId(f.url); }).filter(function (id) { return id && C.feedById(data, id); });
+    // the articles first, so stars and read marks land on the same ids
+    return (ids.length ? refresh(ids, false) : Promise.resolve(0)).then(function () {
+      var hl = Object.keys(heads).map(function (id) { return heads[id]; });
+      var starred = applyStars(r.starred, hl);
+      var read = 0, failed = false;
+      if (r.unread && r.unreadComplete) {
+        var marks = S.readMarks(data, hl, S.unreadByFeed(r.unread, r.feeds.map(function (f) { return f.url; })));
+        read = C.markItems(data, marks, 1, now());
+        failed = ids.some(function (id) { var s = fstate[id]; return s && s.fails > 0; });
+      }
+      if (starred || read) saveData();
+      return { feeds: add.length, starred: starred, read: read, partial: !!r.unread && !r.unreadComplete, failed: failed };
+    });
+  }
+  function applyStars(items, hl) {
+    if (!items || !items.length) return 0;
+    var recs = S.starredRecords(data, items, hl, now());
+    recs.forEach(function (rec) {
+      var i = data.items.findIndex(function (x) { return x.id === rec.id; });
+      if (i >= 0) data.items[i] = rec; else data.items.push(rec);
+    });
+    return recs.length;
+  }
+  function importStarred() {
+    var host = dialogHost();
+    var pick = host ? host.openFile(".json,application/json") : localOpen(".json,application/json");
+    pick.then(function (file) {
+      if (!file) return;
+      if (file.size > 30 * 1024 * 1024) { showToast(t("imp.badFile")); return; }
+      return file.text().then(function (text) {
+        var items = S.parseStarredFile(text);
+        if (!items) { showToast(t("imp.badFile")); return; }
+        return loadHeads().then(function () {
+          var n = applyStars(items, Object.keys(heads).map(function (id) { return heads[id]; }));
+          if (!n) { showToast(t("imp.fileNone")); return; }
+          saveData();
+          showToast(t("imp.fileDone", { n: n }));
+          select("star");
+        });
+      });
+    }).catch(function () {});
+  }
+
   // ---------- 11c. Send to other apps (phase 3) ----------
   // Through the shell's generic deep link __orosOpenAt(app, target):
   // the other app opens and takes the article (Bookmarks shows its add
@@ -2854,6 +3431,8 @@
     $("side-add").addEventListener("click", function () { addDialog(""); });
     $("wel-add").addEventListener("click", function () { addDialog(""); });
     $("wel-import").addEventListener("click", importOpml);
+    $("wel-server").addEventListener("click", function () { importDialog(); });
+    $("wel-mail").addEventListener("click", function () { mailDialog(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     window.addEventListener("online", function () { renderBar(); refresh(null, false); });
     window.addEventListener("offline", renderBar);
@@ -2863,8 +3442,12 @@
       renderBar();
     });
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "visible" && C.setting(data, "refresh") > 0 && !busy) refresh(null, false);
+      if (document.visibilityState !== "visible") return;
+      loadHeads().then(function () { refreshMail(null, true); });   // Mail may have new messages
+      if (C.setting(data, "refresh") > 0 && !busy) refresh(null, false);
     });
+    // Back from Mail (an "Open in Mail" or a folder opened there): read its cache again.
+    window.addEventListener("focus", function () { loadHeads().then(function () { refreshMail(null, true); }); });
     wireKeyboard();
   }
 
@@ -2890,6 +3473,7 @@
       renderAll();
       if (pending) openTarget(pending);
       if (data.feeds.length && C.setting(data, "refresh") > 0) refresh(null, false);
+      else refreshMail(null, true);    // Mail folders: local, always
       scheduleTick();
     });
   }

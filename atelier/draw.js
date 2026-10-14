@@ -221,7 +221,9 @@
     };
   }
 
-  function drawText(ctx, it) {
+  // opts.passFilter(pass) → false leaves that paint pass out (the
+  // PDF draws the blurred passes as a picture, the rest as text).
+  function drawText(ctx, it, opts) {
     var ax = it.ax || {};
     var lay = textLines(it);
     if (it.tw !== undefined) lay = firstChars(lay, it.tw);
@@ -234,6 +236,7 @@
     try { ctx.fontKerning = "none"; } catch (e) {}
     var k = scaleOf(ctx);
     passes.forEach(function (p) {
+      if (opts && opts.passFilter && !opts.passFilter(p)) return;
       ctx.save();
       ctx.globalAlpha *= p.alpha;
       ctx.fillStyle = p.color; ctx.strokeStyle = p.color;
@@ -291,6 +294,44 @@
     if (ax.ae) head(ctx, it.w, it.h, ang, ax.ae, sw);
   }
 
+  // ---------- Tables + charts ----------
+  // A table: cell fills, cell texts (one shrink factor, ax.js
+  // tableLayout), then the lines on top.
+  function drawTable(ctx, it) {
+    var ax = it.ax, OB = AX.OB, L = AX.tableLayout(it);
+    L.cells.forEach(function (c) {
+      if (c.fill) { ctx.fillStyle = c.fill; ctx.fillRect(c.x, c.y, c.w, c.h); }
+    });
+    ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+    try { ctx.fontKerning = "none"; } catch (e) {}
+    L.cells.forEach(function (c) {
+      if (!c.lines.length) return;
+      ctx.fillStyle = c.ink;
+      c.lines.forEach(function (ln) { ln.runs.forEach(function (r) { if (r.t) paintRun(ctx, r, "fill", c.tx, c.ty); }); });
+    });
+    if (it.sw > 0) {
+      ctx.strokeStyle = ax.sc || OB.RULE; ctx.lineWidth = it.sw; ctx.lineCap = "square";
+      ctx.setLineDash(it.dash ? [it.sw * 3, it.sw * 2] : []);
+      ctx.beginPath();
+      OB.tableRules(it).forEach(function (l) { ctx.moveTo(l[0], l[1]); ctx.lineTo(l[2], l[3]); });
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  // A chart: its picture from the Spreadsheet's chart engine
+  // (objui.js keeps them, drawn at the resolution asked for). Until
+  // it is ready the editor shows a placeholder; exports wait for it.
+  function drawChart(ctx, doc, it, opts) {
+    var pic = AT.charts ? AT.charts.picture(doc, it, scaleOf(ctx)) : null;
+    if (pic) { ctx.drawImage(pic, 0, 0, it.w, it.h); return; }
+    if (opts.clean) return;
+    ctx.fillStyle = "rgba(128,128,128,0.15)";
+    ctx.fillRect(0, 0, it.w, it.h);
+    var bw = it.w / 7, gap = bw / 2, x = (it.w - (3 * bw + 2 * gap)) / 2;
+    ctx.fillStyle = "rgba(128,128,128,0.45)";
+    [0.45, 0.75, 0.6].forEach(function (f, i) { ctx.fillRect(x + i * (bw + gap), it.h * (0.85 - 0.7 * f), bw, it.h * 0.7 * f); });
+  }
+
   // ---------- One item ----------
   // opts: { maxSide (photo work size, 0 = full), clean (no
   // placeholders: exports, thumbnails), media (it → playing <video>
@@ -332,7 +373,9 @@
       if (ax.fc) { ctx.fillStyle = ax.fc; }
       if (ps) ps.forEach(function (p) { if (ax.fc) ctx.fill(p); ctx.stroke(p); });
       else { ctx.strokeRect(2, 2, 20, 20); }
-    } else if (ax.k === "text") drawText(ctx, it);
+    } else if (ax.k === "text") drawText(ctx, it, opts);
+    else if (ax.k === "table") drawTable(ctx, it);
+    else if (ax.k === "chart") drawChart(ctx, doc, it, opts);
     ctx.restore();
   }
 
@@ -407,18 +450,23 @@
   // Fonts a design uses (loaded before drawing / export).
   function fontKeys(doc) {
     var keys = { "sans-r": 1 };
-    doc.items.forEach(function (it) {
-      if (!it.ax || it.ax.k !== "text") return;
-      var k = AX.fontKeyOf(it.ax), m = k.split("-");
+    function add(k) {
+      var m = k.split("-");
       keys[k] = 1;
       if (AX.isExtraFont(m[0])) keys["sans-" + m[1]] = 1;     // what it falls back to
+    }
+    doc.items.forEach(function (it) {
+      if (!it.ax) return;
+      if (it.ax.k === "text") add(AX.fontKeyOf(it.ax));
+      else if (it.ax.k === "table") { add(AX.fontKeyOf({ font: it.ax.font })); add(AX.fontKeyOf({ font: it.ax.font, b: 1 })); }
     });
     return Object.keys(keys);
   }
 
   AT.draw = {
     drawItem: drawItem, drawPage: drawPage, renderPage: renderPage, itemShape: itemShape,
-    iconPaths: iconPaths, textLines: textLines, fontKeys: fontKeys, lookOf: lookOf,
+    iconPaths: iconPaths, textLines: textLines, fontKeys: fontKeys, lookOf: lookOf, paintRun: paintRun,
+    photoSource: photoSource, itemsOf: itemsOf,
     clearCaches: function () { photoCache.clear(); }
   };
 })();

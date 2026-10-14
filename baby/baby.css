@@ -643,4 +643,37 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.55); }
   .b-fill, .q-btn, .icon-btn { transition: none; }
 }
 
+/* ---------- wave 34: pump to stash, milk stash ---------- */
+.check-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; min-height: 36px; cursor: pointer; }
+.check-row input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+.stash { margin-top: 12px; }
+.stash-card {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; min-height: 48px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg); text-align: left;
+  font: inherit; color: var(--text); cursor: pointer;
+}
+.stash-card:hover { border-color: var(--accent); }
+.stash-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.stash-card .ev-i { color: var(--c-feed); background: color-mix(in srgb, var(--c-feed) 15%, transparent); }
+.stash-b { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.stash-t { font-weight: 800; font-size: 14px; }
+.stash-s { font-size: 12px; color: var(--text-dim); line-height: 1.35; overflow-wrap: anywhere; }
+.stash-s.warn { color: var(--c-diaper); font-weight: 700; }
+.stash-s.bad { color: var(--danger); font-weight: 700; }
+.stash-list { margin-top: 8px; }
+.stash-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.stash-row:last-child { border-bottom: 0; }
+.stash-main {
+  flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 6px 4px; min-height: 44px; background: none; border: 0; text-align: left; font: inherit; color: var(--text); cursor: pointer; border-radius: 8px;
+}
+.stash-main:hover { background: var(--accent-soft); }
+.stash-v { font-weight: 800; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 8px; }
+.stash-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: var(--bg); }
+.stash-acts { display: flex; gap: 6px; flex: 0 0 auto; margin-left: auto; }
+.stash-acts .dlg-btn.small { min-height: 36px; padding: 4px 12px; font-size: 13px; }
+.stash-done { margin-top: 10px; font-size: 13px; }
+.stash-done summary { cursor: pointer; color: var(--text-dim); font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+@media (pointer: coarse) { .stash-acts .dlg-btn.small { min-height: 44px; } }
+
 [hidden] { display: none !important; }

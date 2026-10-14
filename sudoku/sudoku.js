@@ -46,7 +46,15 @@
   var SFX_KEY     = "oros-sudoku-sfx";
   var DATA_VER    = 1;
 
-  var LEVELS = ["e", "m", "h", "x"];
+  var LEVELS = ["e", "m", "h", "x", "k"];      // k = Killer (cages with sums)
+  var CLASSIC = ["e", "m", "h", "x"];          // the graded levels (the maker of generate())
+  var DAILY_LV = "m";                          // the daily puzzle: a Medium one
+  var DAILY_TRIES = 40;                        // maker attempts for it (no clock)
+  var MAX_DAY = 100000;
+  var KILLER_GIVENS = 6;                       // a cut needing more givens is cut again
+  var KNODES = 20000;                          // Killer: solver steps before a cut gets a given
+  var KSIZES = [2, 2, 2, 3, 3, 3, 3, 4, 4, 5];  // Killer: the size a new cage aims for
+  var KSUB = null, KMEMO = null;               // Killer: sum tables (killerTables)
   // min: the fewest givens the maker may leave; tier: the hardest
   // technique the puzzle should need (1 singles, 2 locked candidates,
   // 3 pairs / triples, 4 X-Wing / XY-Wing, 5 beyond the solver).
@@ -87,6 +95,8 @@
     }
   })();
 
+  var DK = (typeof window !== "undefined" && window.orosDaily) || null;           // gamekit/daily.js (Daily puzzle)
+
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
     try {
@@ -99,7 +109,30 @@
 
   var STRINGS = {
     en: {
-      "lv.e": "Easy", "lv.m": "Medium", "lv.h": "Hard", "lv.x": "Expert",
+      "lv.e": "Easy", "lv.m": "Medium", "lv.h": "Hard", "lv.x": "Expert", "lv.k": "Killer",
+      "lv.d": "Daily",
+      "app.name": "Sudoku",
+      "btn.daily": "Daily puzzle",
+      "btn.games": "All games",
+      "turn.daily": "Daily #{n}: {k} cells to go",
+      "turn.killer": "Killer: {n} cells to go",
+      "cell.cage": "cage of {n} cells, sum {s}",
+      "board.killer": "Killer sudoku grid: each dashed cage holds different digits that add up to its sum. Arrows move, 1 to 9 fill, Backspace erases",
+      "res.titleD": "Daily #{n}",
+      "res.streak": "Streak",
+      "res.bestStreak": "Best streak",
+      "res.share": "Share",
+      "res.next": "A new daily puzzle tomorrow",
+      "res.dailyDone": "Today's puzzle is solved",
+      "res.free": "Play a free puzzle",
+      "stats.daily": "Daily",
+      "stats.dailyRow": "Solved · streak · best",
+      "share.clean": "no hints",
+      "share.hints": "{n} hints",
+      "toast.copied": "Result copied: paste it anywhere",
+      "toast.shared": "Result shared",
+      "toast.copyFail": "Could not copy the result",
+      "toast.dailyGone": "Daily puzzles need the gamekit file: reload orOS",
       "btn.new": "New puzzle",
       "btn.stats": "Records",
       "btn.opts": "Options",
@@ -160,7 +193,30 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
-      "lv.e": "Εύκολο", "lv.m": "Μέτριο", "lv.h": "Δύσκολο", "lv.x": "Πολύ δύσκολο",
+      "lv.e": "Εύκολο", "lv.m": "Μέτριο", "lv.h": "Δύσκολο", "lv.x": "Πολύ δύσκολο", "lv.k": "Κίλερ",
+      "lv.d": "Ημέρας",
+      "app.name": "Σουντόκου",
+      "btn.daily": "Σουντόκου της ημέρας",
+      "btn.games": "Όλα τα παιχνίδια",
+      "turn.daily": "Ημέρας #{n}: μένουν {k} κελιά",
+      "turn.killer": "Κίλερ: μένουν {n} κελιά",
+      "cell.cage": "ομάδα {n} κελιών, άθροισμα {s}",
+      "board.killer": "Πλέγμα σουντόκου κίλερ: κάθε διακεκομμένη ομάδα έχει διαφορετικά ψηφία με το άθροισμα που γράφει. Βελάκια για κίνηση, 1 έως 9 για ψηφία, Backspace για σβήσιμο",
+      "res.titleD": "Ημέρας #{n}",
+      "res.streak": "Σερί",
+      "res.bestStreak": "Καλύτερο σερί",
+      "res.share": "Κοινοποίηση",
+      "res.next": "Νέο σουντόκου της ημέρας αύριο",
+      "res.dailyDone": "Το σημερινό σουντόκου λύθηκε",
+      "res.free": "Παίξε ελεύθερα",
+      "stats.daily": "Ημέρας",
+      "stats.dailyRow": "Λυμένα · σερί · καλύτερο",
+      "share.clean": "χωρίς βοήθεια",
+      "share.hints": "{n} βοήθειες",
+      "toast.copied": "Το αποτέλεσμα αντιγράφηκε: επικόλλησέ το όπου θες",
+      "toast.shared": "Το αποτέλεσμα κοινοποιήθηκε",
+      "toast.copyFail": "Δεν έγινε αντιγραφή του αποτελέσματος",
+      "toast.dailyGone": "Το σουντόκου της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "btn.new": "Νέο σουντόκου",
       "btn.stats": "Ρεκόρ",
       "btn.opts": "Ρυθμίσεις",
@@ -571,14 +627,194 @@
     return firstOpen;
   }
 
+  // ---------- Killer Sudoku ----------
+  // Cages: cg = cage number of every cell (81), cs = the sum of every
+  // cage. A cage holds distinct digits that add up to its sum; the usual
+  // row / column / box rules still hold. The maker cuts a random full
+  // grid into cages of 1–5 cells, then proves the puzzle has ONE
+  // solution with a solver that knows the cage sums; while it has two,
+  // a cell where they differ becomes a given (few puzzles need any).
+  // KSUB[k * 46 + s] = digit masks of k distinct digits adding up to s.
+  function killerTables() {
+    if (KSUB) return;
+    KSUB = [];
+    for (var i = 0; i < 10 * 46; i++) KSUB.push([]);
+    for (var m = 0; m < 512; m++) {
+      var k = 0, s = 0;
+      for (var d = 0; d < 9; d++) if (m & (1 << d)) { k++; s += d + 1; }
+      KSUB[k * 46 + s].push(m);
+    }
+    KMEMO = new Int16Array(10 * 46 * 512);
+    for (i = 0; i < KMEMO.length; i++) KMEMO[i] = -1;
+  }
+  // Digits that can still go into a cage with k empty cells, sum s left
+  // and the digits of avail free: the union of every fitting combination.
+  function cageAllowed(k, s, avail) {
+    if (k < 1 || k > 9 || s < 1 || s > 45) return 0;
+    var key = (k * 46 + s) * 512 + avail, v = KMEMO[key];
+    if (v >= 0) return v;
+    var list = KSUB[k * 46 + s], u = 0;
+    for (var i = 0; i < list.length; i++) if (!(list[i] & ~avail)) u |= list[i];
+    KMEMO[key] = u;
+    return u;
+  }
+
+  // Count solutions up to limit of a killer puzzle (grid = givens);
+  // returns { n, sols: the first `limit` solutions }; n = -1 when the
+  // search took more than maxNodes steps (0 = no cap).
+  function solveKiller(grid, cg, cs, limit, maxNodes) {
+    killerTables();
+    var g = grid.slice(), rm = [], cm = [], bm = [], i, n = 0, sols = [], nodes = 0, over = false;
+    var nc = cs.length, cu = [], cl = [], cr = [];
+    for (i = 0; i < 9; i++) { rm.push(0); cm.push(0); bm.push(0); }
+    for (i = 0; i < nc; i++) { cu.push(0); cl.push(0); cr.push(cs[i]); }
+    for (i = 0; i < 81; i++) cl[cg[i]]++;
+    for (i = 0; i < 81; i++) {
+      var v = g[i];
+      if (!v) continue;
+      var bit = 1 << (v - 1), c = cg[i];
+      if ((rm[ROW[i]] | cm[COL[i]] | bm[BOX[i]] | cu[c]) & bit) return { n: 0, sols: [] };
+      rm[ROW[i]] |= bit; cm[COL[i]] |= bit; bm[BOX[i]] |= bit;
+      cu[c] |= bit; cl[c]--; cr[c] -= v;
+    }
+    for (i = 0; i < nc; i++) {
+      if (cl[i] === 0 ? cr[i] !== 0 : !cageAllowed(cl[i], cr[i], 511 & ~cu[i])) return { n: 0, sols: [] };
+    }
+    function rec() {
+      if (maxNodes && ++nodes > maxNodes) { over = true; return true; }
+      var best = -1, bestMask = 0, bestN = 10;
+      for (var k = 0; k < 81; k++) {
+        if (g[k]) continue;
+        var c = cg[k];
+        var m = ~(rm[ROW[k]] | cm[COL[k]] | bm[BOX[k]]) & cageAllowed(cl[c], cr[c], 511 & ~cu[c]) & 511;
+        var cnt = POP[m];
+        if (cnt < bestN) { best = k; bestMask = m; bestN = cnt; if (cnt <= 1) break; }
+      }
+      if (best < 0) {
+        n++;
+        sols.push(g.slice());
+        return n >= limit;
+      }
+      if (!bestN) return false;
+      var cc = cg[best];
+      for (var d = 0; d < 9; d++) {
+        var b = 1 << d;
+        if (!(bestMask & b)) continue;
+        g[best] = d + 1;
+        rm[ROW[best]] |= b; cm[COL[best]] |= b; bm[BOX[best]] |= b;
+        cu[cc] |= b; cl[cc]--; cr[cc] -= d + 1;
+        var stop = rec();
+        cu[cc] &= ~b; cl[cc]++; cr[cc] += d + 1;
+        rm[ROW[best]] &= ~b; cm[COL[best]] &= ~b; bm[BOX[best]] &= ~b;
+        g[best] = 0;
+        if (stop) return true;
+      }
+      return false;
+    }
+    rec();
+    return { n: over ? -1 : n, sols: sols };
+  }
+
+
+  // Cut a full grid into cages of distinct digits. Returns cg (cage
+  // numbers in reading order of each cage's first cell) and cs.
+  function makeCages(sol, rnd) {
+    var cg = [], i, order = [];
+    for (i = 0; i < 81; i++) { cg.push(-1); order.push(i); }
+    order = shuffled(order, rnd);
+    var cages = [];
+    function nbrs(x) {
+      var out = [], r = ROW[x], c = COL[x];
+      if (r > 0) out.push(x - 9);
+      if (r < 8) out.push(x + 9);
+      if (c > 0) out.push(x - 1);
+      if (c < 8) out.push(x + 1);
+      return out;
+    }
+    order.forEach(function (start) {
+      if (cg[start] >= 0) return;
+      var id = cages.length, cells = [start], used = 1 << (sol[start] - 1);
+      var want = KSIZES[Math.floor(rnd() * KSIZES.length)];
+      cg[start] = id;
+      while (cells.length < want) {
+        var opts = [];
+        cells.forEach(function (x) {
+          nbrs(x).forEach(function (y) {
+            if (cg[y] < 0 && !(used & (1 << (sol[y] - 1))) && opts.indexOf(y) < 0) opts.push(y);
+          });
+        });
+        if (!opts.length) break;
+        var y = opts[Math.floor(rnd() * opts.length)];
+        cg[y] = id; cells.push(y); used |= 1 << (sol[y] - 1);
+      }
+      cages.push(cells);
+    });
+    // a lone cell joins a neighbouring cage when its digit fits there
+    cages.forEach(function (cells, id) {
+      if (cells.length !== 1) return;
+      var x = cells[0], r = ROW[x], c = COL[x];
+      var cand = [];
+      if (r > 0) cand.push(x - 9);
+      if (r < 8) cand.push(x + 9);
+      if (c > 0) cand.push(x - 1);
+      if (c < 8) cand.push(x + 1);
+      for (var j = 0; j < cand.length; j++) {
+        var o = cg[cand[j]], other = cages[o];
+        if (o === id || other.length >= 5) continue;
+        var clash = other.some(function (z) { return sol[z] === sol[x]; });
+        if (clash) continue;
+        other.push(x); cg[x] = o; cells.length = 0;
+        return;
+      }
+    });
+    // renumber in reading order of each cage's first cell
+    var map = {}, next = 0, out = [], sums = [];
+    for (i = 0; i < 81; i++) {
+      if (map[cg[i]] === undefined) { map[cg[i]] = next++; sums.push(0); }
+      out.push(map[cg[i]]);
+      sums[map[cg[i]]] += sol[i];
+    }
+    return { cg: out, cs: sums };
+  }
+
+  // A killer puzzle: { puz (givens, mostly none), sol, cg, cs }. Tries
+  // new cuts while a cut needs more than maxGivens givens.
+  function makeKiller(rnd, maxGivens) {
+    for (var tries = 0; ; tries++) {
+      var sol = fullGrid(rnd), k = makeCages(sol, rnd), puz = emptyGrid(), ok = true;
+      for (;;) {
+        var r = solveKiller(puz, k.cg, k.cs, 2, KNODES);
+        if (r.n === 1) break;
+        var diff = [], i;
+        if (r.n === 2) {
+          for (i = 0; i < 81; i++) if (r.sols[0][i] !== r.sols[1][i]) diff.push(i);
+        } else {
+          for (i = 0; i < 81; i++) if (!puz[i]) diff.push(i);   // too slow to prove: one more given
+        }
+        var at = diff[Math.floor(rnd() * diff.length)];
+        puz[at] = sol[at];
+        var given = 0;
+        for (i = 0; i < 81; i++) if (puz[i]) given++;
+        if (given > maxGivens && tries < 20) { ok = false; break; }
+      }
+      if (ok) return { puz: puz, sol: sol, cg: k.cg, cs: k.cs };
+    }
+  }
+
   // ---------- 3. Synced data ----------
   // data = {
   //   ver: 1,
   //   br: <reset stamp>,                                       // max-merged
   //   rows: { <deviceId>: { b: <epoch>,
-  //                         s: { e|m|h|x: { t: best ms (0 = none), ts: when,
-  //                                         n: solved, c: solved without hints } } } }
+  //                         s: { e|m|h|x|k: { t: best ms (0 = none), ts: when,
+  //                                           n: solved, c: solved without hints } } } },
+  //   days: { "<day>": { b: <epoch>, t: ms, h: hints, m: boxes with a hint (9 bits) } }
   // }
+  // days (since 1.0 of Wave 49; older data has none): one daily result
+  // per calendar day (day 0 = 1 Jan 2026, gamekit/daily.js). A daily
+  // puzzle is solved once overall: the newer epoch wins; equal epochs
+  // keep the better result (no hint first, then the shorter time, then
+  // fewer hints, then the smaller mask: a total order, so a join).
   // Each device only ever writes ITS OWN row; a row counts from epoch b.
   // Merge per row: the newer epoch wins; equal epochs take, per level,
   // the better time (lower t > 0, then the earlier ts) and the higher n
@@ -587,7 +823,21 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || !isInt(v.t) || v.t < 1 || v.t > MAX_MS ||
+        !isInt(v.h) || v.h < 0 || v.h > 81 || !isInt(v.m) || v.m < 0 || v.m > 511) return null;
+    return { b: v.b, t: v.t, h: v.h, m: v.m };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  // a better than c (equal epochs)
+  function dayBetter(a, c) {
+    if ((a.h > 0) !== (c.h > 0)) return a.h === 0;
+    if (a.t !== c.t) return a.t < c.t;
+    if (a.h !== c.h) return a.h < c.h;
+    return a.m < c.m;
+  }
 
   function normCell(c) {
     if (!c || typeof c !== "object" || !isInt(c.t) || !isInt(c.ts) || !isInt(c.n) || !isInt(c.c) ||
@@ -629,7 +879,16 @@
   function mergeSudoku(A, B) {
     var a = A || {}, b = B || {};
     var br = Math.max(isInt(a.br) && a.br > 0 ? a.br : 0, isInt(b.br) && b.br > 0 ? b.br : 0);
-    var rows = {};
+    var rows = {}, days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object") return;
+      Object.keys(m).forEach(function (k) {
+        var v = dayKeyOk(k) ? normDay(m[k]) : null;
+        if (!v || v.b < br) return;
+        var o = days[k];
+        if (!o || v.b > o.b || (v.b === o.b && dayBetter(v, o))) days[k] = v;
+      });
+    });
     [a.rows || {}, b.rows || {}].forEach(function (m) {
       if (typeof m !== "object") return;
       Object.keys(m).forEach(function (id) {
@@ -644,7 +903,9 @@
       LEVELS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k]; });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var sd = {};
+    Object.keys(days).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
   }
 
   // Best time, solved and clean solves for a level, across every device.
@@ -714,6 +975,22 @@
     return !hinted && (!before.t || ms < before.t);
   }
 
+  // Daily results: solved days, the current and best streak.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0;
+    Object.keys(data.days).forEach(function (k) { on[k] = true; n++; });
+    var st = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, cur: st.cur, best: st.best };
+  }
+  function countDaily(day, ms, hints, mask) {
+    var v = { b: data.br, t: Math.max(1, Math.min(MAX_MS, ms)), h: Math.min(81, hints), m: mask & 511 };
+    var o = data.days[day];
+    if (o && o.b >= v.b && !dayBetter(v, o)) return;
+    data.days[day] = v;
+    data = mergeSudoku(data, data);
+    save();
+  }
+
   // ---------- 4. Device-local prefs + session ----------
   var prefs = { lv: "e", mist: true, auto: true };
 
@@ -733,7 +1010,9 @@
 
   // game = { lv, puz: "81 digits", sol: "81 digits", v: [81 entries],
   //          nt: [81 note masks], ms, hints, done, sel, notes (mode),
-  //          hist: [[change…]…], fut: [[change…]…] }
+  //          hist: [[change…]…], fut: [[change…]…],
+  //          day?: the daily puzzle's day number, hb?: boxes a hint filled
+  //          (9 bits, for the shared result), cg?, cs?: Killer cages }
   // change = [cell, old digit, old notes, new digit, new notes]
   var game = null;
 
@@ -770,7 +1049,26 @@
       if (!isInt(g.nt[i]) || g.nt[i] < 0 || g.nt[i] > 511) return false;
     }
     var check = solveGrid(sol, 1, null);
-    return check.n === 1;
+    if (check.n !== 1) return false;
+    if (g.day !== undefined && (!isInt(g.day) || g.day < 0 || g.day > MAX_DAY || g.lv !== DAILY_LV)) return false;
+    if (g.lv === "k") return validCages(g.cg, g.cs, sol);
+    return true;
+  }
+  // Cages cover the grid, each holds distinct digits of the solution
+  // that add up to its sum.
+  function validCages(cg, cs, sol) {
+    if (!Array.isArray(cg) || cg.length !== 81 || !Array.isArray(cs) || !cs.length || cs.length > 81) return false;
+    var used = [], sum = [], i;
+    for (i = 0; i < cs.length; i++) { used.push(0); sum.push(0); }
+    for (i = 0; i < 81; i++) {
+      var c = cg[i];
+      if (!isInt(c) || c < 0 || c >= cs.length) return false;
+      var bit = 1 << (sol[i] - 1);
+      if (used[c] & bit) return false;
+      used[c] |= bit; sum[c] += sol[i];
+    }
+    for (i = 0; i < cs.length; i++) if (!used[i] || sum[i] !== cs[i]) return false;
+    return true;
   }
   function loadSession() {
     try {
@@ -779,6 +1077,7 @@
         if (!validChanges(g.hist)) g.hist = [];
         if (!validChanges(g.fut)) g.fut = [];
         g.notes = g.notes === true;
+        g.hb = isInt(g.hb) && g.hb >= 0 && g.hb <= 511 ? g.hb : 0;
         return g;
       }
     } catch (e) {}
@@ -813,14 +1112,48 @@
     game = g;
     PUZ = digitsOf(g.puz);
     SOL = digitsOf(g.sol);
+    cageMarks();
   }
 
-  function fresh(lv) {
-    var p = generate(lv, rand, GEN_MS, nowMs);
+  // Killer: per cell the cage border classes and, on the first cell of
+  // each cage, its sum.
+  var KCLS = [], KSUM = [];
+  function cageMarks() {
+    KCLS = []; KSUM = [];
+    var cg = game && game.cg, seen = {};
+    for (var i = 0; i < 81; i++) {
+      if (!cg) { KCLS.push(""); KSUM.push(0); continue; }
+      var c = cg[i], r = ROW[i], col = COL[i], k = " kc";
+      if (r === 0 || cg[i - 9] !== c) k += " kt";
+      if (col === 8 || cg[i + 1] !== c) k += " kr";
+      if (r === 8 || cg[i + 9] !== c) k += " kb";
+      if (col === 0 || cg[i - 1] !== c) k += " kl";
+      KCLS.push(k);
+      KSUM.push(seen[c] ? 0 : game.cs[c]);
+      seen[c] = true;
+    }
+  }
+  function cageSize(c) {
+    var n = 0;
+    for (var i = 0; i < 81; i++) if (game.cg[i] === c) n++;
+    return n;
+  }
+
+  // A new puzzle: a level, Killer, or the daily one of a day (a Medium
+  // puzzle from the date's seed; the maker counts attempts instead of
+  // time, so every device makes the same one).
+  function fresh(lv, day) {
+    var p;
+    if (day !== undefined) p = generate(DAILY_LV, DK.random(DK.seedOf("sudoku", day)), DAILY_TRIES, DK.counter());
+    else if (lv === "k") p = makeKiller(rand, KILLER_GIVENS);
+    else p = generate(lv, rand, GEN_MS, nowMs);
     var v = [], nt = [];
     for (var i = 0; i < 81; i++) { v.push(0); nt.push(0); }
-    return { lv: lv, puz: p.puz.join(""), sol: p.sol.join(""), v: v, nt: nt, ms: 0, hints: 0,
-             done: false, sel: -1, notes: false, hist: [], fut: [] };
+    var g = { lv: day !== undefined ? DAILY_LV : lv, puz: p.puz.join(""), sol: p.sol.join(""), v: v, nt: nt, ms: 0,
+              hints: 0, done: false, sel: -1, notes: false, hist: [], fut: [], hb: 0 };
+    if (day !== undefined) g.day = day;
+    if (p.cg) { g.cg = p.cg; g.cs = p.cs; }
+    return g;
   }
   function filledCount() {
     var n = 0;
@@ -837,16 +1170,16 @@
 
   // A puzzle in progress is never lost silently: Undo toast (R14). The
   // new puzzle is made after a paint, so "Making a puzzle…" shows.
-  function newGame(lv) {
+  function newGame(lv, day) {
     if (making) { showToast(t("toast.making")); return; }
     closeDialogs();
     var prev = inProgress() ? (saveSession(), copy(game)) : null;
-    prefs.lv = lv; savePrefs();
+    if (day === undefined) { prefs.lv = lv; savePrefs(); }
     making = true;
     syncClock();
     renderAll();
     setTimeout(function () {
-      setGame(fresh(lv));
+      setGame(fresh(lv, day));
       making = false;
       saveSession();
       syncClock();
@@ -854,7 +1187,7 @@
       if (prev) {
         undoToast(t("toast.newgame"), function () {
           runFrom = 0;
-          prefs.lv = prev.lv; savePrefs();
+          if (prev.day === undefined) { prefs.lv = prev.lv; savePrefs(); }
           setGame(prev);
           saveSession();
           syncClock();
@@ -957,6 +1290,7 @@
     }
     if (!game.hints) showToast(t("toast.hint"));
     game.hints++;
+    game.hb = (game.hb || 0) | (1 << BOX[i]);
     game.sel = i;
     commit(changes);
     live(t("live.hint", { d: d, r: ROW[i] + 1, c: COL[i] + 1 }));
@@ -989,6 +1323,7 @@
     game.notes = false;
     syncClock();
     var rec = countSolve(game.lv, game.ms, game.hints > 0);
+    if (game.day !== undefined) countDaily(game.day, game.ms, game.hints, game.hb || 0);
     saveSession();
     renderAll();
     live(t("live.done", { t: fmtTime(game.ms) }));
@@ -1024,7 +1359,13 @@
   }
 
   function renderToolbar() {
-    var cur = game && !making ? game.lv : prefs.lv;
+    var cur = game && !making ? (game.day !== undefined ? "" : game.lv) : prefs.lv;
+    var db = $("daily-btn");
+    if (db) {
+      var due = !!DK && !data.days[today()];
+      db.classList.toggle("due", due);
+      db.classList.toggle("on", !!(game && !making && game.day !== undefined));
+    }
     [].forEach.call(document.querySelectorAll("#lv-seg .seg-btn"), function (b) {
       var on = b.getAttribute("data-lv") === cur;
       b.classList.toggle("active", on);
@@ -1047,7 +1388,8 @@
     else if (game.done) { msg = t("turn.done"); cls = "done"; }
     else if (game.notes) { msg = t("turn.notes"); cls = "done"; }
     else if (game.hints) { msg = t("turn.hinted"); cls = "warn"; }
-    else if (filledCount() === countGivens()) msg = t("turn.start");
+    else if (filledCount() === countGivens()) msg = game.day !== undefined ? t("res.titleD", { n: game.day + 1 }) : t("turn.start");
+    else if (game.day !== undefined) msg = t("turn.daily", { n: game.day + 1, k: 81 - filledCount() });
     else msg = t("turn.play", { l: t("lv." + game.lv), n: 81 - filledCount() });
     $("turn").textContent = msg;
     $("turn").className = cls;
@@ -1087,6 +1429,7 @@
 
   function cellLabel(i) {
     var s = t("cell.at", { r: ROW[i] + 1, c: COL[i] + 1 }) + ": ";
+    if (game.cg) s += t("cell.cage", { n: cageSize(game.cg[i]), s: game.cs[game.cg[i]] }) + ", ";
     if (PUZ[i]) return s + t("cell.given", { d: PUZ[i] });
     if (game.v[i]) return s + game.v[i];
     if (game.nt[i]) {
@@ -1103,19 +1446,22 @@
     b.classList.toggle("making", making);
     b.classList.toggle("solved", !!(game && game.done && !making));
     if (!game || making) {
-      cellEls.forEach(function (c) { c.className = "cell"; c.textContent = ""; });
+      cellEls.forEach(function (c) { c.className = "cell"; c.textContent = ""; c.__k = ""; });
       return;
     }
+    b.classList.toggle("killer", !!game.cg);
+    var lab = t(game.cg ? "board.killer" : "board.label");
+    if (b.getAttribute("aria-label") !== lab) b.setAttribute("aria-label", lab);
     var sel = game.sel, sd = sel >= 0 ? (PUZ[sel] || game.v[sel]) : 0;
     for (var i = 0; i < 81; i++) {
-      var c = cellEls[i], v = PUZ[i] || game.v[i], cls = "cell";
+      var c = cellEls[i], v = PUZ[i] || game.v[i], cls = "cell" + (KCLS[i] || "");
       if (PUZ[i]) cls += " given";
       else if (v) cls += " user";
       if (v && prefs.mist && !PUZ[i] && v !== SOL[i]) cls += " bad";
       if (i === sel) cls += " sel";
       else if (sel >= 0 && IS_PEER[sel * 81 + i]) cls += " peer";
       if (sd && v === sd && i !== sel) cls += " same";
-      var key = cls + "|" + v + "|" + game.nt[i] + "|" + (sd || 0);
+      var key = cls + "|" + v + "|" + game.nt[i] + "|" + (sd || 0) + "|" + (KSUM[i] || 0);
       if (c.__k === key) continue;
       c.__k = key;
       c.className = cls;
@@ -1134,6 +1480,12 @@
         }
         c.appendChild(g);
       } else c.textContent = "";
+      if (KSUM[i]) {
+        var ks = document.createElement("span");
+        ks.className = "ksum";
+        ks.textContent = String(KSUM[i]);
+        c.appendChild(ks);
+      }
     }
   }
 
@@ -1269,6 +1621,7 @@
 
   function resultDialog(rec) {
     if (!game || !game.done) return;            // replaced meanwhile
+    if (game.day !== undefined && data.days[game.day]) { dailyDialog(game.day, rec); return; }
     closeDialogs();
     var s = totals(game.lv);
     var dlg = makeDialog("sudoku-result");
@@ -1289,6 +1642,75 @@
     again.focus();
   }
 
+  // ---------- Daily puzzle ----------
+  function today() { return DK ? DK.today() : 0; }
+
+  // The Daily button: today's result when it is solved (here or on
+  // another device), else today's puzzle (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    if (making) { showToast(t("toast.making")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d, false); return; }
+    closeDialogs();
+    if (game && game.day === d && !game.done) return;
+    newGame(DAILY_LV, d);
+  }
+
+  function dailyDialog(day, rec) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    closeDialogs();
+    var st = dailyStats(today());
+    var dlg = makeDialog("sudoku-daily");
+    dlg.appendChild(el("div", "dlg-title", t("res.titleD", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero", fmtTime(r.t)));
+    if (rec) dlg.appendChild(el("div", "dlg-badge", t("res.rec")));
+    dlg.appendChild(row(t("res.hints"), String(r.h)));
+    dlg.appendChild(row(t("res.streak"), String(st.cur)));
+    dlg.appendChild(row(t("res.bestStreak"), String(st.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-msg dlg-center", t("res.next")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("res.share"), "", function () { shareDaily(day); }));
+    var free = button(t("res.free"), "primary", function () {
+      dlg.close();
+      if (game && game.day !== undefined) newGame(prefs.lv);
+    });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    hubLink(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    free.focus();
+  }
+
+  // Spoiler-free: the time, the hints and the 3×3 boxes (a yellow box
+  // got a hint).
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var grid = [];
+    for (var y = 0; y < 3; y++) {
+      var line = "";
+      for (var x = 0; x < 3; x++) line += (r.m & (1 << (y * 3 + x))) ? "🟨" : "🟩";
+      grid.push(line);
+    }
+    var text = DK.shareText({ game: t("app.name"), label: t("lv.d"), day: day, grid: grid,
+      line: "⏱ " + fmtTime(r.t) + " · " + (r.h ? t("share.hints", { n: r.h }) : t("share.clean")) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(dlg) {
+    if (!DK || !DK.hasHub()) return;
+    var b = button(t("btn.games"), "dlg-link", function () { dlg.close(); DK.openHub("sudoku"); });
+    dlg.appendChild(b);
+  }
+
   function statsDialog() {
     var dlg = makeDialog("sudoku-stats");
     dlg.appendChild(el("div", "dlg-title", t("stats.title")));
@@ -1300,6 +1722,10 @@
       dlg.appendChild(row(t("lv." + k),
         s.n ? (s.t ? fmtTime(s.t) : "–") + " · " + s.n + " · " + s.c : "–"));
     });
+    var ds = dailyStats(today());
+    if (ds.n) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("lv.d"), ds.n ? ds.n + " · " + ds.cur + " · " + ds.best : "–"));
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
@@ -1310,6 +1736,7 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
@@ -1453,6 +1880,7 @@
     notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     hint:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
+    daily: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
     opts:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
     sfxOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -1575,7 +2003,7 @@
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (game) renderStatus();
+    if (game) { renderStatus(); renderToolbar(); }
     // no toast on merge (sync feedback = taskbar dot)
   }
 
@@ -1589,7 +2017,7 @@
 
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"],
-     ["opts-btn", "opts", "btn.opts"]].forEach(function (x) {
+     ["opts-btn", "opts", "btn.opts"], ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1602,11 +2030,17 @@
     [].forEach.call(document.querySelectorAll("#lv-seg .seg-btn"), function (b) {
       b.addEventListener("click", function () {
         var lv = b.getAttribute("data-lv");
-        if (game && lv === game.lv && !game.done && !making) return;   // visible active state
+        if (game && lv === game.lv && game.day === undefined && !game.done && !making) return;   // visible active state
         newGame(lv);
       });
     });
-    $("new-btn").addEventListener("click", function () { newGame(game && !making ? game.lv : prefs.lv); $("new-btn").blur(); });
+    $("new-btn").addEventListener("click", function () {
+      newGame(game && !making && game.day === undefined ? game.lv : prefs.lv);
+      $("new-btn").blur();
+    });
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's puzzle.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("stats-btn").addEventListener("click", statsDialog);
     $("opts-btn").addEventListener("click", optsDialog);
     $("sfx-btn").addEventListener("click", function () {
@@ -1621,6 +2055,7 @@
 
     document.addEventListener("visibilitychange", function () {
       if (!game) return;
+      renderToolbar();                            // the Daily dot after midnight
       syncClock();
       saveSession();
     });
@@ -1640,14 +2075,18 @@
     inheritPalette();
     watchPalette();
     layout();
-    var g = loadSession();
+    var g = loadSession(), tg = DK ? DK.takeTarget("sudoku") : null;
     if (g) {
       setGame(g);
-      prefs.lv = g.lv;                            // the resumed puzzle decides the toolbar
+      if (g.day === undefined) prefs.lv = g.lv;   // the resumed puzzle decides the toolbar
       syncClock();
       renderAll();
+      if (tg && tg.daily) openDaily();
+    } else if (tg && tg.daily && DK && !data.days[today()]) {
+      newGame(DAILY_LV, today());
     } else {
       newGame(prefs.lv);
+      if (tg && tg.daily) setTimeout(openDaily, 80);
     }
   }
 

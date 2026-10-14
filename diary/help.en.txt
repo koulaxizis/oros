@@ -12,6 +12,37 @@ Open the app and type. The line saves itself as you type (`Saved` appears under 
 - The arrows next to the date go to the day before or after; `Back to today` returns. You can write or fix any past day, but not a day that has not come yet.
 - The star button at the top opens `A random memory` from your diary.
 
+## More about a day
+Under the line, `✎ Write more about this day` opens a longer entry for the same day. The sentence stays the heart of the diary; the longer entry is optional.
+- It saves itself as you type. `Preview` shows it formatted, `Write` goes back to the text.
+- Simple formatting: `**bold**`, `*italic*`, `# heading`, `- list`, `1. list`, `> quote`, `---` for a line and `[text](https://…)` for a link. Only web and e-mail links become links; anything else (HTML, scripts) stays plain text and is never run.
+- `Clear the longer entry` removes the text, photos, place and weather of that day; `Undo` brings them back.
+- In `My days` and `Year` a ✎ marks the days with a longer entry. Search finds words in it too.
+
+## Questions and templates
+- `Question of the day` offers one question each day (the same on every device), in English or Greek with the language of orOS. `Answer it` puts the question as a heading in the longer entry; `Another question` shows the next one.
+- `Templates` add a ready outline: gratitude, a daily review, a morning page.
+- Your own questions: in `Diary settings` › `Your questions` add any question you like. They join the question of the day and sync with your days.
+
+## Photos
+- Up to four photos a day. `+` picks an image; it is drawn again at most 1600 pixels wide and saved as JPEG, so the camera data inside it (EXIF, the location where it was taken) is not kept.
+- Photos are files on the orOS disk, in Files › `Diary` › `Photos`. The entry keeps only their names. Sync does not carry the images themselves: run Vault Drive to bring them to your other devices; until then those devices show `Not on this device`.
+- Tap a photo to see it large; `Remove this photo` takes it off the entry (with `Undo`), and the file leaves the disk a few seconds later.
+
+## Place and weather
+- `📍 Add a place`: type a place name, or tap `Use my position` once. The position is asked only when you tap it, and is kept rounded to about 1 km.
+- `⛅ Add the day's weather` fetches the weather of that day from Open-Meteo (the same free service as the Weather app): the sky and the highest and lowest temperature. It needs a place (a typed name is looked up first); with no place it uses the city of the Weather app. Nothing is fetched unless you tap it.
+- The temperatures follow the units of the Weather app.
+
+## PDF book
+In `Diary settings` › `PDF book` choose a year (or all years) and tap `Make the PDF book`: one PDF with each day's date, line, longer entry, place, weather and photos. It is made on this device, with fonts that ship with orOS.
+
+## PIN lock
+- In `Diary settings` › `PIN lock` set a PIN of 4 to 8 digits. The diary then asks for it when it opens and again after a minute in the background. `Lock now` locks at once.
+- Only a salted hash of the PIN is kept (PBKDF2), on this device only; other devices have their own PIN, or none.
+- After five wrong tries you wait a little longer before each new try.
+- It is a privacy screen, not encryption. Your days stay readable in this browser's storage, sync to your other devices as usual, and the diary is left out of the menu's search while a PIN is set. Forgot the PIN? Clearing orOS's site data in the browser removes it (with every other local setting); with sync on, your days come back from the cloud.
+
 ## On this day
 Under the line, `On this day` shows what you wrote on the same date in earlier years, newest first. A line from 29 February also shows on 28 February in the years without one. Tap a line to open that day.
 
@@ -34,14 +65,22 @@ In `Diary settings` (the button at the top right) tick `Remind me when I have no
 - `Choose a file` reads a CSV, JSON or text file with a date and a line per day, like the exports. Dates can be 2026-10-11 or 11/10/2026. Days that already have a line keep it.
 
 ## Sync and privacy
-- Your lines follow you to all your devices through orOS sync, encrypted like the rest of your data.
+- Your lines follow you to all your devices through orOS sync, encrypted like the rest of your data. So do the longer entries, places, weather and your own questions; each part of a day syncs on its own, so writing the text on one device and adding a place on another keeps both.
+- The PIN and the reminder stay on each device.
 - The diary is personal, so it is not in the menu's search at first. To find your lines from the menu, tick it in [Settings](app:settings) › `Language & search`. The search choices stay on each device.
 - When the same day is changed on two devices before they sync, the most recent change wins.
 
 ## Keyboard shortcuts
 - [[←]] and [[→]]: the day before or after. While typing in the line, [[Alt+←]] and [[Alt+→]].
 - [[Enter]] in the line: save; on a past day it also moves to the next day.
-- [[Esc]]: close `Diary settings`.
+- [[Esc]]: close `Diary settings` or the photo.
+
+## Limits
+- The longer entry knows only the simple formatting above: no tables, no pictures inside the text, no colours. Up to 20,000 characters a day.
+- Photos sync only through Vault Drive (they are files on the disk), and only four fit in a day. Very large images (over 40 MB) are refused.
+- The weather comes from Open-Meteo and needs the internet. For days long ago it comes from their archive and may be missing.
+- The PIN lock is a screen, not encryption; anyone who can open the browser's storage or your other devices can read the diary.
+- The PDF book of many years with many photos can take a while and use much memory on a phone.
 
 ## Tips
 > Write the first thing that comes to mind. One honest sentence is worth more than a long page you never write.

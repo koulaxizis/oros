@@ -25,6 +25,16 @@ Then fire at `Enemy waters`: you shoot first. Hits, misses and sunk ships are ma
 
 In `Options`, turn on `Ships may not touch` to keep ships apart, even at a corner, for both fleets. During a battle the change applies from the next game. `Records` shows wins, losses and your fewest shots in a win, per level.
 
+## Two devices
+Play a friend who has their own phone, tablet or computer. Press `Play on two devices` (the button with two screens): one of you chooses `Show a code`, the other `Enter a code` and types the 6-digit code or scans the QR code, and the first device lets the other in with `Allow`. While you're linked, `Two devices` shows in the toolbar; press it to see the link or to `Leave the game`.
+- Each of you places your own fleet and presses `Start`; the battle begins when both fleets are ready, and who fires first alternates from game to game. The device that showed the code sets `Ships may not touch`.
+- Your fleet never leaves your device while the game lasts: each shot is answered by the other device, which shows a ship only once it's sunk. At the end the two fleets are shown to each other and checked against every answer; if they don't match, the result says so.
+- `New game` on the device that showed the code starts the next game; on the other device it asks for one when a game is over.
+- If a device reloads or loses the network, the game waits and goes on where it was when it's back (for up to a day).
+- Moves go straight between the two devices on the same network, or sealed through the orOS relay; nothing is kept online.
+
+Limits: two players only, each on their own device with orOS open in this game. Games on two devices don't count in your records, and the level buttons are hidden meanwhile. `Leave the game` ends it on both devices and brings back the game you had on this device.
+
 ## Sync
 Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The game in progress, the level, `Options` and the sound setting stay on this device.
 

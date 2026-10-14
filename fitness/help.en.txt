@@ -25,6 +25,27 @@ On `Programs`, copy one of the `Ready programs` (`Full Body 3×`, `Upper / Lower
 
 On `Body`, `Add measurement` logs `Body weight`, `Waist`, `Chest` or `Arm`.
 
+## Supersets and circuits
+Tap the link button on an exercise (`Superset with the next exercise`) to join it to the one below. Two linked exercises are a `Superset`, three or more a `Circuit`. You can link them in a program day or during a workout.
+
+During the workout the linked exercises share one box with `Round 1 of 3`. Tick a set and the next exercise of the same round is marked; the rest timer starts only when the round is over (`Rest after the round`, the rest of the last exercise in the group). History shows the group, and records count every set as usual.
+
+## Progression programs
+On `Programs`, `New progression program` sets up a program that works out every session's sets and weights for you:
+- `5/3/1 (Wendler)`: press, deadlift, bench and squat days; weeks of 5s, 3s and 5/3/1, then a deload week. Enter a `Training max` for each lift (about 90% of your 1RM). After each 4-week cycle the training max goes up one step; if a `+` set missed its reps during the cycle, that lift goes down 10% instead. `Boring But Big` adds 5 × 10 at 50%.
+- `GZCLP`: four days in three tiers. Enter your `5-rep max`: T1 starts at 85%, T2 at 65%. A missed T1 session goes from 5×3+ to 6×2+ to 10×1+ at the same weight, then starts again at 85%; T2 goes from 3×10 to 3×8 to 3×6. T3 goes up when the last set reaches 25 reps.
+- `Linear 5×5`: days A and B. Every session with all sets at 5 reps adds weight; three misses in a row take 10% off.
+
+`+` sets mean as many reps as you can: type the reps you did. The steps are your `Step, upper body` and `Step, lower body` from Settings, and every weight is rounded to the plate step you choose (`Round weights to`). The next session shows on `Train`; `Start` it, and `Finish` moves the program on, with a summary of what changes next time. A program counts each session once. `Change numbers` edits the training maxes or weights; `Skip this session` moves on without it.
+
+## Outdoor walks, runs and rides
+On `Train`, under `Outdoor activity`, choose `Walk`, `Run` or `Ride`. Workouts records your route with this device's location and shows `Distance`, `Time`, `Pace` (or `Speed` on a ride), the current kilometre or mile, a route preview and your `Splits`. `Pause` and `Resume` leave the pause out of the time and the distance. `Finish` saves it as a workout of `Running`, `Walking` or `Cycling`, so records and progress charts include it. Open it in `History` to see the route and splits, or `Export GPX` to use it in Maps or another app.
+
+> Keep the screen on and Workouts open. Most browsers stop the location when the screen turns off or the app goes to the background; the route then jumps in a straight line from where it stopped to where it starts again.
+
+## Exercise pictures
+`Show picture` (the picture button on an exercise, also in the `Exercise library`) looks for a picture of the exercise on [wger.de](https://wger.de), a free exercise database. It is fetched only when you ask, then kept on this device. The author and licence (CC BY-SA) show next to the picture with a link to the source. The match is by name, so the picture may show a variation; `Remove from this device` forgets it.
+
 ## Import from Strong or Hevy
 Bring your history over from another training app.
 1. Export your workouts as CSV: in Strong, `Settings` › `Export Strong Data`; in Hevy, `Settings` › `Export & Import Data` › `Export Workouts`.
@@ -40,7 +61,7 @@ Warm-up sets stay warm-up sets, notes come along, and records, charts, Calendar 
 In the orOS Android app, switch on `Health Connect` in Settings › `Connected services`. Your finished workouts of the last 30 days then go to Health Connect as strength training, and workouts from your watch or other apps (a run, a ride, a swim) come in with their times and no exercises. A workout that came from another app and that you delete here doesn't come back.
 
 ## Sync and backup
-Your exercises, programs, workouts, body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices and rest timer stay on this device.
+Your exercises, programs, progression programs, workouts (with their routes), body measurements and settings sync through [orOS sync](help:t/sync). A running workout reaches sync every few minutes, so you can finish it on another device. The open tab, chart choices, rest timer and exercise pictures stay on this device.
 
 In `Settings` › `Export`, save `All sets (CSV)` or a `Backup (JSON)`. `Restore from backup` merges a backup into what you already have.
 
@@ -55,3 +76,7 @@ In `Settings` › `Export`, save `All sets (CSV)` or a `Backup (JSON)`. `Restore
 ## Limits
 - The rest timer only runs on the device you're training on.
 - The weight suggestion is a hint for `Weight × reps` exercises only.
+- Outdoor sessions record only while Workouts is open on screen; the browser may stop the location when the screen is off. The route preview is a line without a map underneath.
+- Progression programs follow the fixed exercises of their template; add other exercises during the workout as you like.
+- Pictures need an internet connection the first time, and wger.de may not have one for every exercise.
+- Older orOS versions on your other devices don't know supersets, progression programs or routes; update every device so they keep them.

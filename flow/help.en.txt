@@ -23,8 +23,13 @@ Pick a grid size from `5×5` to `9×9`; bigger grids have more colours. The stat
 
 A solved puzzle shows your time, moves and best time for that size. A puzzle solved with a hint counts as solved but doesn't set a best time. `Records` shows the best time and puzzles solved for each size.
 
+### Daily puzzle
+The calendar button opens the `Daily puzzle`: everyone gets the same 7×7 puzzle on the same date, with exactly one solution. It is made on your device from the date, so it works offline, and a new one comes at midnight, your local time. A dot on the button means today's puzzle is still waiting. The first solve of the day is the one that counts.
+
+Solve it on days in a row to build a streak; `Records` shows the dailies solved, your streak and your best streak. `Share` sends your result without spoilers: your time and one square per colour, green for a line you drew alone and yellow for a line a hint drew. On a phone it opens the share sheet; elsewhere it copies the text. `All games` opens the [Game Center](help:a/gamecenter), when it's installed.
+
 ## Sync
-Your records sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The puzzle in progress, the grid size and the sound setting stay on this device.
+Your records and daily results sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device after you confirm. The puzzle in progress, the grid size and the sound setting stay on this device.
 
 ## Tips
 - A puzzle in progress is kept, undo history included.

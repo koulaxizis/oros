@@ -149,7 +149,7 @@ ul { list-style: none; }
 }
 .q-ic { position: absolute; left: 10px; color: var(--text-dim); display: inline-flex; pointer-events: none; }
 .q-ic svg { width: 16px; height: 16px; }
-#q, #sort, .ps-form input, .form input, .note-text {
+#q, #sort, .ps-form input, .form input, .cat-search input, .note-text {
   min-height: 40px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -159,7 +159,7 @@ ul { list-style: none; }
 }
 #q { width: 100%; padding-left: 32px; }
 #sort { max-width: 46%; }
-#q:focus, #sort:focus, .ps-form input:focus, .form input:focus, .note-text:focus { outline: none; border-color: var(--accent); }
+#q:focus, #sort:focus, .ps-form input:focus, .form input:focus, .cat-search input:focus, .note-text:focus { outline: none; border-color: var(--accent); }
 #home-main { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 14px 12px 40px; }
 .scan-note { margin: 0 2px 12px; }
 .sec-h { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin: 0 2px 10px; }
@@ -590,3 +590,39 @@ dialog.lb-dlg::backdrop { background: rgba(0, 0, 0, 0.55); }
 }
 
 [hidden] { display: none !important; }
+
+/* ---------- Online catalogues (OPDS, wave 33) ---------- */
+.cat-body { padding-bottom: 4px; }
+.cat-list { display: flex; flex-direction: column; gap: 4px; }
+.cat-row { display: flex; align-items: center; gap: 4px; }
+.cat-open, .cat-item { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-width: 0; min-height: 44px; padding: 8px; background: none; border: none; border-radius: 8px; text-align: left; color: inherit; }
+button.cat-open:hover, button.cat-item:hover { background: var(--accent-soft); }
+.cat-open > svg { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+.cat-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.cat-name { font-weight: 700; overflow-wrap: anywhere; }
+.cat-host { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.cat-sum { font-size: 12px; color: var(--text-dim); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.cat-h { font-size: 15px; font-weight: 800; margin: 0; }
+.cat-add { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.cat-add .dlg-actions { margin-top: 4px; }
+.cat-foot { margin-top: 12px; }
+.cat-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.cat-where { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-search { display: flex; gap: 6px; margin-bottom: 10px; }
+.cat-search input { flex: 1 1 auto; min-width: 0; }
+.cat-entries { display: flex; flex-direction: column; gap: 2px; }
+.cat-entry + .cat-entry { border-top: 1px solid var(--border); }
+.cat-entry.head { display: flex; align-items: center; gap: 8px; padding: 12px 8px 4px; }
+.cat-gh { flex: 1 1 auto; font-size: 14px; font-weight: 800; }
+.small-btn { min-height: 32px; padding: 0 10px; font-size: 13px; }
+.cat-thumb { width: 48px; height: 72px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--border); }
+.cat-ic { display: flex; width: 20px; flex-shrink: 0; margin-top: 2px; color: var(--text-dim); }
+.cat-ic svg { width: 20px; height: 20px; }
+.cat-dl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.cat-dl .btn { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.cat-dl .btn svg { width: 16px; height: 16px; }
+.cat-msg { margin: 12px 4px; }
+.cat-more { margin-top: 10px; width: 100%; }
+@media (max-width: 480px) {
+  .cat-thumb { width: 40px; height: 60px; }
+}

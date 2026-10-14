@@ -26,14 +26,15 @@ function cut(from, to) {
 const M = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
   ["cmpStr", "neighbors", "layMines", "numbersOf", "openFrom", "chordAt", "isWon", "viewToCell",
-   "normCell", "normRow", "joinCell", "joinRows", "mergeMinesweeper"].forEach((name) => {
+   "dailyBoard", "normDay", "dayKeyOk", "dayBetter", "normCell", "normRow", "joinCell", "joinRows",
+   "mergeMinesweeper"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") +
-    "\nreturn { LEVELS, LV, neighbors, layMines, numbersOf, openFrom, chordAt, isWon, viewToCell," +
-    " mergeMinesweeper };")();
+  return new Function("window", parts.join("\n") +
+    "\nreturn { LEVELS, LV, DAILY_LV, neighbors, layMines, numbersOf, openFrom, chordAt, isWon, viewToCell," +
+    " dailyBoard, mergeMinesweeper };")({ orosDaily: require("../gamekit/daily.js") });
 })();
 
 const J = JSON.stringify;
@@ -204,4 +205,45 @@ test("minesweeper: records merge is a join and a reset drops older rows", () => 
   for (const bad of [{ t: 1, ts: 1, w: 0, g: 1 }, { t: 0, ts: 1, w: 1, g: 1 }, { t: 1, ts: 1, w: 2, g: 1 }, { t: 1, ts: 1, w: 1, g: 0 }, { t: 1, ts: 1, w: 1 }]) {
     assert.equal(J(Mg({ rows: { d: { b: 0, s: { b: bad } } } }, null).rows), "{}", J(bad));
   }
+});
+
+// ---------- Daily board (Wave 49) ----------
+test("minesweeper daily: the same date lays the same mines; the start area is safe and opens", () => {
+  const L = M.LV[M.DAILY_LV];
+  for (const day of [0, 286, 287, 4000]) {
+    const a = M.dailyBoard(day), b = M.dailyBoard(day), c = M.dailyBoard(day + 1);
+    assert.equal(J(a), J(b));
+    assert.notEqual(J(a.mines), J(c.mines));
+    assert.equal(a.mines.reduce((x, y) => x + y, 0), L.mines);
+    assert.equal(a.mines[a.start], 0);
+    M.neighbors(L.rows, L.cols, a.start).forEach((j) => assert.equal(a.mines[j], 0));
+    const st = a.mines.map(() => 0), nums = M.numbersOf(a.mines, L.rows, L.cols);
+    const opened = M.openFrom(st, a.mines, nums, L.rows, L.cols, a.start);
+    assert.ok(opened.length >= 9, "an area opens");
+    opened.forEach((i) => assert.equal(a.mines[i], 0));
+  }
+});
+
+test("minesweeper daily: day results merge as a join; a win beats a loss", () => {
+  const Mg = M.mergeMinesweeper;
+  const day = () => ({ b: rnd(3) * 100, w: rnd(2), t: 1 + rnd(3) * 1000, f: rnd(41) });
+  const st = () => {
+    const days = {};
+    for (let i = 0; i < rnd(4); i++) days[String(rnd(5))] = day();
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows: {}, days };
+  };
+  for (let i = 0; i < 4000; i++) {
+    const a = st(), b = st(), c = st();
+    assert.equal(J(Mg(a, b)), J(Mg(b, a)));
+    const m = Mg(a, b);
+    assert.equal(J(Mg(m, m)), J(m));
+    assert.equal(J(Mg(Mg(a, b), c)), J(Mg(a, Mg(b, c))));
+  }
+  const lost = { days: { 9: { b: 0, w: 0, t: 50, f: 12 } } }, won = { days: { 9: { b: 0, w: 1, t: 90000, f: 40 } } };
+  assert.equal(Mg(lost, won).days[9].w, 1);
+  assert.equal(J(Mg(won, { br: 3, rows: {} }).days), "{}");
+  for (const bad of [{ b: 0, w: 2, t: 1, f: 0 }, { b: 0, w: 1, t: 1, f: 41 }, { b: 0, w: 1, t: 0, f: 0 }]) {
+    assert.equal(J(Mg({ days: { 9: bad } }, null).days), "{}", J(bad));
+  }
+  assert.equal(J(Mg(null, null)), J({ ver: 1, br: 0, rows: {}, days: {} }));
 });

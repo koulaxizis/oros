@@ -1,0 +1,30 @@
+/* orOS Quote — the client's acceptance page (accept.html).
+   Builds on share/share.css (palette, card, buttons). */
+.qa-table-wrap { overflow-x: auto; margin: 14px 0 6px; -webkit-overflow-scrolling: touch; }
+.qa-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.qa-table th, .qa-table td { padding: 6px 6px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.qa-table th { color: var(--text-dim); font-weight: 700; font-size: 12px; white-space: nowrap; }
+.qa-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.qa-table td.desc { min-width: 120px; overflow-wrap: anywhere; }
+.qa-totals { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin: 8px 0 10px auto; max-width: 320px; }
+.qa-totals dt { color: var(--text-dim); text-align: right; }
+.qa-totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.qa-totals .grand { font-weight: 800; font-size: 16px; color: var(--text); border-top: 1px solid var(--border); padding-top: 6px; }
+.hint.warn { color: var(--accent); }
+.qa-accept { margin-top: 18px; padding: 14px; border: 1px solid var(--accent); border-radius: 12px; }
+.qa-accept h2 { margin-top: 0; }
+.qa-field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; font-size: 13.5px; color: var(--text-dim); }
+.qa-field input, .qa-field textarea {
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+  color: var(--text); font: inherit; font-size: 16px; width: 100%;
+}
+.qa-field input:focus, .qa-field textarea:focus { outline: none; border-color: var(--accent); }
+.qa-answer { font-family: ui-monospace, monospace; font-size: 12.5px !important; word-break: break-all; resize: vertical; }
+.qa-check { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; cursor: pointer; }
+.qa-check input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--accent); }
+.qa-done { border-color: var(--accent); background: var(--accent-soft); }
+.acts button:disabled { opacity: .55; cursor: default; }
+@media print {
+  .qa-accept { display: none; }
+}
+[hidden] { display: none !important; }

@@ -35,6 +35,16 @@
       <div id="filter-pop" hidden></div>
     </div>
 
+    <!-- K1: view (Board / Table / Timeline), swimlanes, automations,
+         export, templates — popover built by kanban.js renderMorePop() -->
+    <div id="more-slot">
+      <button type="button" id="more-btn" aria-label="View and board options"
+              data-i18n-title="more.title" title="View and board options" aria-haspopup="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></svg>
+      </button>
+      <div id="more-pop" hidden></div>
+    </div>
+
     <button id="col-add" aria-label="Add column" title="Add column"
             data-i18n-title="col.add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   </header>
@@ -42,6 +52,7 @@
   <!-- Columns (horizontal scroll, one quick-add at the end of each) -->
   <main id="board-scroll">
     <div id="columns"></div>
+    <div id="alt-view" hidden></div>
     <div id="empty" hidden>
       <span data-i18n="empty.title">No columns yet</span>
       <small data-i18n="empty.hint">Add your first column with the button above.</small>
@@ -56,12 +67,22 @@
       <label for="c-text" data-i18n="card.text">Text</label>
       <input id="c-text" type="text" required>
 
+      <!-- K1: move the card to another column (runs that column's rules) -->
+      <label for="c-col" data-i18n="card.col">Column</label>
+      <select id="c-col"></select>
+
       <label for="c-notes" data-i18n="card.notes">Notes</label>
       <textarea id="c-notes" rows="4"></textarea>
 
       <!-- Due date (Kanban → Calendar integration): live-save, all-day event -->
       <label for="c-due" data-i18n="card.due">Due</label>
       <input id="c-due" type="date" autocomplete="off">
+
+      <!-- K1: swimlane field -->
+      <label for="c-lane" data-i18n="card.lane">Lane</label>
+      <input id="c-lane" type="text" list="c-lane-list" maxlength="60" autocomplete="off"
+             placeholder="e.g. Team A" data-i18n-ph="card.laneph">
+      <datalist id="c-lane-list"></datalist>
 
       <!-- Labels (feature 9): chips + picker, all inside the dialog -->
       <label data-i18n="card.labels">Labels</label>
@@ -89,6 +110,17 @@
                 title="Add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       </div>
 
+      <!-- K1: attachments (files on the orOS disk) + cover -->
+      <label data-i18n="card.att">Attachments</label>
+      <div id="c-att-list"></div>
+      <button type="button" id="c-att-add" class="ghost">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        <span data-i18n="att.add">Add file</span>
+      </button>
+
+      <label data-i18n="card.cover">Cover</label>
+      <div id="c-cover"></div>
+
       <!-- Extra info (feature 11, adapted): free key-value fields -->
       <label data-i18n="card.info">Extra info</label>
       <div id="c-info-list"></div>
@@ -113,6 +145,19 @@
 
       <label for="col-name" data-i18n="col.name">Name</label>
       <input id="col-name" type="text" required>
+
+      <!-- K1: WIP limit + arrival rules (synced with the column) -->
+      <label for="col-wip" data-i18n="col.wip">WIP limit</label>
+      <input id="col-wip" type="number" min="0" max="999" step="1" inputmode="numeric" placeholder="—">
+      <div class="dlg-hint" data-i18n="col.wip.hint">Empty = no limit. The column turns orange when it holds more cards than this.</div>
+
+      <label data-i18n="col.auto">When a card arrives here</label>
+      <div class="auto-box">
+        <label class="chk"><input type="checkbox" id="col-a-done"> <span data-i18n="auto.done">Tick all subtasks</span></label>
+        <label class="chk"><input type="checkbox" id="col-a-today"> <span data-i18n="auto.today">Set the due date to today</span></label>
+        <label class="chk"><input type="checkbox" id="col-a-top"> <span data-i18n="auto.top">Move it to the top</span></label>
+        <label class="chk sel"><span data-i18n="auto.label">Add a label</span> <select id="col-a-label"></select></label>
+      </div>
 
       <menu>
         <button type="button" id="col-delete" class="danger" data-i18n="col.delete">Delete column</button>
@@ -143,6 +188,8 @@
   <script src="../links/core.js?v=1.98.00"></script>
   <script src="../links/sheets.js?v=1.98.00"></script>
   <script src="../links/kanban.js?v=1.98.00"></script>
+  <script src="model.js?v=1.98.00"></script>
+  <script src="tools.js?v=1.98.00"></script>
   <script src="kanban.js?v=1.98.00"></script>
 </body>
 </html>

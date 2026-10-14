@@ -36,6 +36,8 @@
       <button type="button" id="stop-btn" class="tbtn"></button>
       <button type="button" id="rec-btn" class="tbtn rec"></button>
       <button type="button" id="loop-btn" class="tbtn" aria-pressed="false"></button>
+      <button type="button" id="keys-btn" class="tbtn" aria-pressed="false" aria-controls="keys"></button>
+      <button type="button" id="loops-btn" class="tbtn" aria-pressed="false" aria-controls="loops"></button>
     </div>
     <div id="clock" class="clock" aria-live="off">
       <span id="clock-time">0:00.000</span>
@@ -80,14 +82,48 @@
     <button type="button" id="split-btn" class="chip" data-i18n="btn.split">Split</button>
     <button type="button" id="dupclip-btn" class="chip" data-i18n="btn.dupClip">Duplicate</button>
     <button type="button" id="delclip-btn" class="chip danger" data-i18n="btn.delClip">Delete</button>
+    <button type="button" id="notes-btn" class="chip primary" aria-haspopup="dialog" data-i18n="mi.editNotes" hidden>Edit notes</button>
     <label class="cb-field"><span data-i18n="f.gain">Gain</span>
       <input type="range" id="gain-in" min="-24" max="12" step="0.5"><output id="gain-out"></output></label>
-    <label class="cb-field"><span data-i18n="f.fadeIn">Fade in</span>
+    <label class="cb-field" id="fi-field"><span data-i18n="f.fadeIn">Fade in</span>
       <input type="range" id="fi-in" min="0" max="1" step="0.01"><output id="fi-out"></output></label>
-    <label class="cb-field"><span data-i18n="f.fadeOut">Fade out</span>
+    <label class="cb-field" id="fo-field"><span data-i18n="f.fadeOut">Fade out</span>
       <input type="range" id="fo-in" min="0" max="1" step="0.01"><output id="fo-out"></output></label>
     <button type="button" id="clip-close" class="icon-btn small"></button>
   </div>
+
+  <!-- Keyboard: MIDI and the built-in synth (midi.js) -->
+  <section id="keys" hidden aria-labelledby="keys-btn">
+    <div class="kb-bar">
+      <button type="button" id="kb-connect" class="chip" data-i18n="kb.connect">Connect MIDI keyboard</button>
+      <span id="kb-status" class="hint small" role="status"></span>
+      <span id="kb-target" class="kb-target" hidden></span>
+      <label class="kb-field"><span data-i18n="kb.sound">Sound</span><select id="kb-snd"></select></label>
+      <label class="kb-field"><span class="sr-only" data-i18n="kb.vol">Synth volume</span><input type="range" id="kb-vol" min="0" max="100" step="1"></label>
+      <span class="kb-oct">
+        <button type="button" id="kb-oct-dn" class="icon-btn small"></button>
+        <span id="kb-oct" class="hint small"></span>
+        <button type="button" id="kb-oct-up" class="icon-btn small"></button>
+      </span>
+      <button type="button" id="kb-close" class="icon-btn small"></button>
+    </div>
+    <p class="hint small kb-note" data-i18n="kb.rec"></p>
+    <div id="kb-keys" class="kb-keys" role="group" data-i18n-aria="kb.keys"></div>
+  </section>
+
+  <!-- Loop library (loops.js, roll.js) -->
+  <section id="loops" hidden aria-labelledby="loops-title">
+    <div class="lp-bar">
+      <h2 id="loops-title" class="lp-title" data-i18n="lp.title">Loops</h2>
+      <label class="kb-field"><span class="sr-only" data-i18n="lp.genre">Style</span><select id="lp-genre"></select></label>
+      <label class="kb-field"><span class="sr-only" data-i18n="lp.tempo">Tempo</span><select id="lp-tempo"></select></label>
+      <div id="lp-kind" class="chips lp-kind" role="radiogroup" data-i18n-aria="lp.kind"></div>
+      <button type="button" id="lp-close" class="icon-btn small"></button>
+    </div>
+    <p class="hint small lp-hint" data-i18n="lp.hint"></p>
+    <ul id="lp-list" class="lp-list"></ul>
+    <p id="lp-none" class="hint small" data-i18n="lp.none" hidden></p>
+  </section>
 
   <!-- Projects -->
   <dialog id="proj-dlg" aria-labelledby="proj-title">
@@ -124,6 +160,15 @@
     <div class="dlg-actions spread">
       <button type="button" id="track-rename" class="chip" data-i18n="btn.rename">Rename</button>
       <button type="button" id="track-fx" class="chip" aria-haspopup="dialog" data-i18n="fx.open">Effects</button>
+      <button type="button" id="track-auto" class="chip" data-i18n="au.show">Automation</button>
+    </div>
+    <div id="track-inst-sec" hidden>
+      <label class="field" for="track-inst" data-i18n="mi.inst">Instrument</label>
+      <select id="track-inst"></select>
+    </div>
+    <div id="track-midi-row" class="dlg-actions spread" hidden>
+      <button type="button" id="track-newclip" class="chip" data-i18n="mi.newClip">New clip</button>
+      <button type="button" id="track-midi" class="chip" data-i18n="mi.exportMidi">Export MIDI</button>
     </div>
     <h3 data-i18n="sec.color">Colour</h3>
     <div id="track-colors" class="colors" role="radiogroup" data-i18n-aria="sec.color"></div>
@@ -138,18 +183,94 @@
     </div>
   </dialog>
 
+  <!-- Add a track -->
+  <dialog id="add-dlg" aria-labelledby="add-title">
+    <div class="dlg-head">
+      <h2 id="add-title" data-i18n="tk.title">Add a track</h2>
+      <span class="spacer"></span>
+      <button type="button" id="add-close" class="icon-btn"></button>
+    </div>
+    <h3 data-i18n="tk.audio">Audio track</h3>
+    <p class="hint small" data-i18n="tk.audioHint"></p>
+    <div class="chips"><button type="button" id="add-audio" class="chip" data-i18n="tk.audio">Audio track</button></div>
+    <h3 data-i18n="tk.inst">Instrument track</h3>
+    <p class="hint small" data-i18n="tk.instHint"></p>
+    <div id="add-insts" class="chips"></div>
+    <div class="dlg-actions spread">
+      <button type="button" id="add-loops" class="link-btn" data-i18n="tk.loops">Browse loops</button>
+    </div>
+  </dialog>
+
+  <!-- Piano roll: the notes of a MIDI clip (roll.js) -->
+  <dialog id="pr-dlg" class="full" aria-labelledby="pr-title">
+    <div class="dlg-head">
+      <button type="button" id="pr-play" class="tbtn small"></button>
+      <h2 id="pr-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="pr-close" class="icon-btn"></button>
+    </div>
+    <div class="pr-tools" role="toolbar" data-i18n-aria="pr.tool">
+      <div id="pr-mode" class="chips pr-mode" role="radiogroup" data-i18n-aria="pr.tool"></div>
+      <label class="kb-field"><span data-i18n="pr.grid">Grid</span><select id="pr-grid-sel"></select></label>
+      <button type="button" id="pr-quant" class="chip" data-i18n="pr.quant">Quantize</button>
+      <label class="kb-field pr-velf"><span data-i18n="pr.vel">Velocity</span><input type="range" id="pr-vel" min="1" max="127" step="1"><output id="pr-vel-out"></output></label>
+      <span class="pr-icons">
+        <button type="button" id="pr-undo" class="icon-btn small"></button>
+        <button type="button" id="pr-redo" class="icon-btn small"></button>
+        <button type="button" id="pr-copy" class="icon-btn small"></button>
+        <button type="button" id="pr-paste" class="icon-btn small"></button>
+        <button type="button" id="pr-del" class="icon-btn small"></button>
+        <button type="button" id="pr-all" class="icon-btn small"></button>
+        <button type="button" id="pr-zout" class="icon-btn small"></button>
+        <button type="button" id="pr-zin" class="icon-btn small"></button>
+      </span>
+      <button type="button" id="pr-import" class="chip" data-i18n="pr.import">Import MIDI</button>
+      <button type="button" id="pr-export" class="chip" data-i18n="pr.export">Export MIDI</button>
+    </div>
+    <div id="pr-scroll" class="pr-scroll" tabindex="0" data-i18n-aria="pr.area">
+      <div id="pr-inner" class="pr-inner">
+        <div class="pr-corner"></div>
+        <div id="pr-ruler" class="pr-ruler"></div>
+        <div id="pr-keys" class="pr-keys" role="group" data-i18n-aria="pr.keys"></div>
+        <div id="pr-grid" class="pr-grid">
+          <div id="pr-out" class="pr-out" aria-hidden="true"></div>
+          <div id="pr-ph" class="pr-ph" aria-hidden="true"></div>
+          <div id="pr-marq" class="pr-marq" aria-hidden="true" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div id="pr-vscroll" class="pr-vscroll">
+      <div class="pr-vrow">
+        <span id="pr-vlabel" class="pr-vlabel" data-i18n="pr.velLane">Velocity</span>
+        <div id="pr-vstems" class="pr-vstems" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="pr-foot"><span id="pr-status" class="hint small" role="status"></span> <span class="hint small pr-hint" data-i18n="pr.hint"></span></p>
+  </dialog>
+
   <!-- Export -->
   <dialog id="export-dlg" aria-labelledby="export-title">
     <div class="dlg-head">
-      <h2 id="export-title" data-i18n="export.title">Export WAV</h2>
+      <h2 id="export-title" data-i18n="export.title">Export</h2>
       <span class="spacer"></span>
       <button type="button" id="export-close" class="icon-btn"></button>
     </div>
     <p id="export-range" class="hint"></p>
-    <h3 data-i18n="sec.bits">Bit depth</h3>
-    <div id="export-bits" class="chips" role="radiogroup" data-i18n-aria="sec.bits"></div>
-    <h3 data-i18n="sec.rate">Sample rate</h3>
-    <div id="export-rate" class="chips" role="radiogroup" data-i18n-aria="sec.rate"></div>
+    <h3 data-i18n="sec.format">Format</h3>
+    <div id="export-fmt" class="chips" role="radiogroup" data-i18n-aria="sec.format"></div>
+    <div id="export-bits-sec">
+      <h3 data-i18n="sec.bits">Bit depth</h3>
+      <div id="export-bits" class="chips" role="radiogroup" data-i18n-aria="sec.bits"></div>
+    </div>
+    <div id="export-kbps-sec" hidden>
+      <h3 data-i18n="sec.kbps">Bitrate</h3>
+      <div id="export-kbps" class="chips" role="radiogroup" data-i18n-aria="sec.kbps"></div>
+    </div>
+    <div id="export-rate-sec">
+      <h3 data-i18n="sec.rate">Sample rate</h3>
+      <div id="export-rate" class="chips" role="radiogroup" data-i18n-aria="sec.rate"></div>
+    </div>
+    <p id="export-note" class="hint small"></p>
     <p id="export-status" class="hint" aria-live="polite"></p>
     <div class="dlg-actions">
       <button type="button" id="export-go" class="chip primary" data-i18n="btn.export">Export</button>
@@ -308,6 +429,11 @@
   <script src="../qr/qr-encode.js?v=1.98.00"></script>
   <script src="remote.js?v=1.98.00"></script>
   <script src="fx.js?v=1.98.00"></script>
+  <script src="encode.js?v=1.98.00"></script>
+  <script src="midi.js?v=1.98.00"></script>
+  <script src="notes.js?v=1.98.00"></script>
+  <script src="loops.js?v=1.98.00"></script>
+  <script src="roll.js?v=1.98.00"></script>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>

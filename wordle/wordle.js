@@ -47,6 +47,7 @@
   var LANGS = ["en", "el"];
   var MODES = ["d", "f"];
   var EPOCH_UTC = Date.UTC(2026, 0, 1);     // day 0 of the daily words
+  var DK = (typeof window !== "undefined" && window.orosDaily) || null;        // gamekit/daily.js (share, Game Center)
   var MAX_DAY = 100000;
   var LETTERS = { en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ", el: "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ" };
   var KB_ROWS = {
@@ -103,7 +104,9 @@
       "res.best": "Best streak",
       "res.dist": "Guesses",
       "res.next": "A new daily word tomorrow",
-      "res.copy": "Copy",
+      "res.copy": "Share",
+      "btn.games": "All games",
+      "toast.shared": "Result shared",
       "res.newWord": "New word",
       "res.toFree": "Free play",
       "res.close": "Close",
@@ -171,7 +174,9 @@
       "res.best": "Καλύτερο σερί",
       "res.dist": "Προσπάθειες",
       "res.next": "Νέα λέξη ημέρας αύριο",
-      "res.copy": "Αντιγραφή",
+      "res.copy": "Κοινοποίηση",
+      "btn.games": "Όλα τα παιχνίδια",
+      "toast.shared": "Το αποτέλεσμα κοινοποιήθηκε",
       "res.newWord": "Νέα λέξη",
       "res.toFree": "Ελεύθερο",
       "res.close": "Κλείσιμο",
@@ -943,6 +948,7 @@
       : button(t("res.newWord"), "primary", function () { dlg.close(); newWord(); });
     acts.appendChild(main);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     main.focus();
@@ -953,6 +959,15 @@
     var title = game.mode === "d" ? "#" + (game.day + 1) + " " + game.lang.toUpperCase() : game.lang.toUpperCase();
     var text = shareText(title, game.guesses, game.answer, wonGame(game), game.hard, prefs.contrast);
     var ok = function () { showToast(t("toast.copied")); }, fail = function () { showToast(t("toast.copyFail")); };
+    // gamekit/daily.js: the share sheet on a phone, the clipboard elsewhere
+    if (DK) {
+      DK.share(text, "orOS Wordle").then(function (how) {
+        if (how === "copied") ok();
+        else if (how === "shared") showToast(t("toast.shared"));
+        else if (how === "failed") fail();
+      });
+      return;
+    }
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(ok, fail); return; }
     } catch (e) {}
@@ -982,9 +997,16 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
+  }
+
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(dlg) {
+    if (!DK || !DK.hasHub()) return;
+    dlg.appendChild(button(t("btn.games"), "dlg-link", function () { dlg.close(); DK.openHub("wordle"); }));
   }
 
   function optsDialog() {
@@ -1301,6 +1323,8 @@
       b.addEventListener("click", function () { setLangMode(prefs.lang, b.getAttribute("data-mode")); b.blur(); });
     });
     $("new-btn").addEventListener("click", function () { newWord(); $("new-btn").blur(); });
+    // Deep link from the Game Center: { daily: true } opens today's word.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) setLangMode(prefs.lang, "d"); };
     $("opts-btn").addEventListener("click", optsDialog);
     $("stats-btn").addEventListener("click", statsDialog);
     $("sfx-btn").addEventListener("click", function () {
@@ -1331,6 +1355,8 @@
     inheritPalette();
     watchPalette();
     loadSessions();
+    var tg = DK ? DK.takeTarget("wordle") : null;
+    if (tg && tg.daily) { prefs.mode = "d"; savePrefs(); }
     pickGame();
     renderAll();
     if (!game) showToast(t("toast.noWords"));

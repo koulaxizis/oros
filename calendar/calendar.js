@@ -103,7 +103,6 @@
       "cal.maps": "Show on map",
       "ev.err.time": "End time must be after start time",
       "ev.err.dateend": "End date must be on or after the start date",
-      "ev.spanHint": "Multi-day event: {b} days total. Saving here moves the start to the selected day.",
       "ev.del.yes": "Delete",
       "del.done": "Event deleted",
       "undo": "Undo",
@@ -189,6 +188,10 @@
       "lbl.feed.sky": "Moon & Sky",
       "lbl.feed.famtree": "Death anniversaries",
       "lbl.feed.crm": "Customers",
+      "lbl.feed.meds": "Medicines",
+      "lbl.feed.appts": "Doctor visits",
+      "feed.ap.vx": "{name}: vaccine dose due",
+      "feed.md.start": "{name}: first day", "feed.md.end": "{name}: last day", "feed.md.out": "{name}: runs out",
       "feed.crm.late": "Late",
       "feed.crm.close": "Expected close",
       "feed.famtree.one": "{name} · 1 year since death",
@@ -211,13 +214,28 @@
       "lbl.none": "No label",
       "lbl.empty": "No labels yet",
       "ev.field.repeat": "Repeat",
-      "rep.none": "None",
-      "rep.daily": "Daily",
-      "rep.weekly": "Weekly",
-      "rep.biweekly": "Every 2 weeks",
-      "rep.monthly": "Monthly",
-      "rep.yearly": "Yearly",
-      "ev.field.until": "Until",
+      "rep.none": "Does not repeat",
+      "rep.custom": "Custom…",
+      "rep.weeklyOn": "Weekly on {d}",
+      "rep.weekdays": "Every weekday (Mon–Fri)",
+      "rep.every": "Every",
+      "rep.u.D": "days",
+      "rep.u.W": "weeks",
+      "rep.u.M": "months",
+      "rep.u.Y": "years",
+      "rep.onDay": "On day {n}",
+      "rep.ends": "Repeat ends",
+      "rep.ends.never": "Never",
+      "rep.ends.on": "On a date",
+      "rep.ends.n": "After",
+      "rep.times": "times",
+      "ev.field.date": "Starts on (day)",
+      "ev.field.tz": "Time zone",
+      "tz.device": "This device ({z})",
+      "ev.err.date": "Pick the day it starts",
+      "ser.move.q": "Move this occurrence or the whole series?",
+      "vw.day": "Day",
+      "vw.year": "Year",
       "ev.field.dateend": "Ends on (day)",
       "ev.cont": "Day {a} of {b}",
       "ev.field.remind": "Reminder",
@@ -283,7 +301,6 @@
       "cal.maps": "Εμφάνιση στον χάρτη",
       "ev.err.time": "Η ώρα λήξης πρέπει να είναι μετά την έναρξη",
       "ev.err.dateend": "Η ημερομηνία λήξης πρέπει να είναι ίδια ή μετά την έναρξη",
-      "ev.spanHint": "Πολυήμερο συμβάν: {b} μέρες συνολικά. Η αποθήκευση εδώ μεταφέρει την έναρξη στην επιλεγμένη μέρα.",
       "ev.del.yes": "Διαγραφή",
       "del.done": "Το συμβάν διαγράφηκε",
       "undo": "Αναίρεση",
@@ -369,6 +386,10 @@
       "lbl.feed.sky": "Σελήνη & Ουρανός",
       "lbl.feed.famtree": "Επέτειοι θανάτου",
       "lbl.feed.crm": "Πελάτες",
+      "lbl.feed.meds": "Φάρμακα",
+      "lbl.feed.appts": "Ιατρικά ραντεβού",
+      "feed.ap.vx": "{name}: δόση εμβολίου",
+      "feed.md.start": "{name}: πρώτη μέρα", "feed.md.end": "{name}: τελευταία μέρα", "feed.md.out": "{name}: τελειώνει",
       "feed.crm.late": "Καθυστερεί",
       "feed.crm.close": "Αναμένεται κλείσιμο",
       "feed.famtree.one": "{name} · 1 χρόνος από τον θάνατο",
@@ -391,13 +412,28 @@
       "lbl.none": "Χωρίς ετικέτα",
       "lbl.empty": "Δεν υπάρχουν ετικέτες ακόμα",
       "ev.field.repeat": "Επανάληψη",
-      "rep.none": "Καμία",
-      "rep.daily": "Καθημερινά",
-      "rep.weekly": "Εβδομαδιαία",
-      "rep.biweekly": "Κάθε 2 εβδομάδες",
-      "rep.monthly": "Μηνιαία",
-      "rep.yearly": "Ετήσια",
-      "ev.field.until": "Έως",
+      "rep.none": "Χωρίς επανάληψη",
+      "rep.custom": "Προσαρμογή…",
+      "rep.weeklyOn": "Κάθε εβδομάδα, {d}",
+      "rep.weekdays": "Κάθε εργάσιμη (Δευ–Παρ)",
+      "rep.every": "Κάθε",
+      "rep.u.D": "ημέρες",
+      "rep.u.W": "εβδομάδες",
+      "rep.u.M": "μήνες",
+      "rep.u.Y": "χρόνια",
+      "rep.onDay": "Στις {n} του μήνα",
+      "rep.ends": "Τέλος επανάληψης",
+      "rep.ends.never": "Ποτέ",
+      "rep.ends.on": "Σε ημερομηνία",
+      "rep.ends.n": "Μετά από",
+      "rep.times": "φορές",
+      "ev.field.date": "Έναρξη (ημέρα)",
+      "ev.field.tz": "Ζώνη ώρας",
+      "tz.device": "Αυτή η συσκευή ({z})",
+      "ev.err.date": "Διάλεξε τη μέρα έναρξης",
+      "ser.move.q": "Να μετακινηθεί αυτή η εμφάνιση ή όλη η σειρά;",
+      "vw.day": "Ημέρα",
+      "vw.year": "Έτος",
       "ev.field.dateend": "Λήξη (ημέρα)",
       "ev.cont": "Ημέρα {a} από {b}",
       "ev.field.remind": "Υπενθύμιση",
@@ -421,6 +457,148 @@
       "stat.perMonth": "{n} συμβάντα αποθηκευμένα"
     }
   };
+
+  // Wave 8 strings (quick add, subscriptions, free times, print).
+  (function (more) {
+    ["en", "el"].forEach(function (l) {
+      Object.keys(more[l]).forEach(function (k) { STR[l][k] = more[l][k]; });
+    });
+  })({
+    en: {
+      "cal.more": "More",
+      "mm.subs": "Subscribe to a calendar…",
+      "mm.free": "Share free times…",
+      "mm.print": "Print…",
+      "qa.btn": "Quick add",
+      "qa.title": "Quick add",
+      "qa.ph": "e.g. Coffee with Nikos Thursday 6pm at Syntagma",
+      "qa.hint": "Write it the way you'd say it: what, when, and \"at\" where. You check it in the event window before saving.",
+      "qa.go": "Continue",
+      "qa.what": "What", "qa.when": "When", "qa.rep": "Repeats", "qa.where": "Where",
+      "qa.allday": "all day",
+      "subs.title": "Subscribed calendars",
+      "subs.text": "Paste the address of a calendar that is published as .ics (webcal:// or https://): a team calendar, school holidays, fixtures. Its events show read-only with their own chip and refresh by themselves.",
+      "subs.url": "Calendar address",
+      "subs.url.ph": "webcal://… or https://….ics",
+      "subs.name": "Name (optional)",
+      "subs.name.ph": "Its own name",
+      "subs.add": "Subscribe",
+      "subs.none": "No subscriptions yet.",
+      "subs.refresh": "Refresh",
+      "subs.remove": "Remove",
+      "subs.removed": "Subscription removed",
+      "subs.color": "Change colour",
+      "subs.bad": "That doesn't look like a calendar address (webcal:// or https://).",
+      "subs.dup": "You're already subscribed to that calendar.",
+      "subs.wait": "Reading the calendar…",
+      "subs.ok": "{n} events · updated {t}",
+      "subs.never": "Not read yet",
+      "subs.more": "{n} more left out (oldest first)",
+      "subs.err.offline": "You're offline. The last copy is shown.",
+      "subs.err.norelay": "This calendar's server doesn't let a browser read it directly. It needs the orOS relay: set its address in Mail or in the Reader's Settings.",
+      "subs.err.http": "The server answered with an error ({n}).",
+      "subs.err.notics": "That address didn't return a calendar (.ics).",
+      "subs.err.big": "That calendar is too big to read (5 MB at most).",
+      "subs.err.timeout": "The server took too long to answer.",
+      "subs.err.other": "Couldn't read the calendar ({e}).",
+      "subs.lasterr": "Last try failed: {e}",
+      "sv.copy": "Copy to my calendar",
+      "sv.from": "From {name}",
+      "fr.title": "Share free times",
+      "fr.text": "Makes a link with the times you're free, worked out from your calendar on this device. The other person picks one and emails you back. No server keeps anything, and nothing is booked by itself.",
+      "fr.what": "What for",
+      "fr.what.ph": "Meeting",
+      "fr.len": "Length",
+      "fr.days": "Over the next",
+      "fr.from": "From",
+      "fr.to": "Until",
+      "fr.wknd": "Include Saturday and Sunday",
+      "fr.name": "Your name",
+      "fr.mail": "Your email (answers come here)",
+      "fr.mail.ph": "you@example.com",
+      "fr.loc.ph": "Optional: a place or a call link",
+      "fr.go": "Make the link…",
+      "fr.min": "{n} min",
+      "fr.hours": "{n} h",
+      "fr.dayN": "{n} days",
+      "fr.sum": "{n} free times on {d} days.",
+      "fr.sum1": "1 free time.",
+      "fr.none": "No free time in those hours. Try more days or longer hours.",
+      "fr.nomail": "Without an email the other person can still add the time to their calendar, but can't answer you from the page.",
+      "fr.noshare": "Open the Calendar inside orOS to send the link.",
+      "pr.week": "Week of {d}",
+      "pr.agenda": "Agenda from {d}",
+      "pr.more": "+{n} more",
+      "pr.none": "Nothing scheduled"
+    },
+    el: {
+      "cal.more": "Περισσότερα",
+      "mm.subs": "Συνδρομή σε ημερολόγιο…",
+      "mm.free": "Κοινοποίηση ελεύθερων ωρών…",
+      "mm.print": "Εκτύπωση…",
+      "qa.btn": "Γρήγορη προσθήκη",
+      "qa.title": "Γρήγορη προσθήκη",
+      "qa.ph": "π.χ. Καφές με Νίκο Πέμπτη 6μμ στο Σύνταγμα",
+      "qa.hint": "Γράψ' το όπως θα το έλεγες: τι, πότε και «στο» πού. Το ελέγχεις στο παράθυρο του συμβάντος πριν το αποθηκεύσεις.",
+      "qa.go": "Συνέχεια",
+      "qa.what": "Τι", "qa.when": "Πότε", "qa.rep": "Επανάληψη", "qa.where": "Πού",
+      "qa.allday": "όλη μέρα",
+      "subs.title": "Ημερολόγια συνδρομής",
+      "subs.text": "Επικόλλησε τη διεύθυνση ενός ημερολογίου που δημοσιεύεται ως .ics (webcal:// ή https://): ημερολόγιο ομάδας, σχολικές αργίες, αγώνες. Τα συμβάντα του φαίνονται μόνο για ανάγνωση, με δικό τους chip, και ανανεώνονται μόνα τους.",
+      "subs.url": "Διεύθυνση ημερολογίου",
+      "subs.url.ph": "webcal://… ή https://….ics",
+      "subs.name": "Όνομα (προαιρετικό)",
+      "subs.name.ph": "Το δικό του όνομα",
+      "subs.add": "Συνδρομή",
+      "subs.none": "Καμία συνδρομή ακόμα.",
+      "subs.refresh": "Ανανέωση",
+      "subs.remove": "Αφαίρεση",
+      "subs.removed": "Η συνδρομή αφαιρέθηκε",
+      "subs.color": "Αλλαγή χρώματος",
+      "subs.bad": "Αυτό δεν μοιάζει με διεύθυνση ημερολογίου (webcal:// ή https://).",
+      "subs.dup": "Έχεις ήδη συνδρομή σε αυτό το ημερολόγιο.",
+      "subs.wait": "Διαβάζω το ημερολόγιο…",
+      "subs.ok": "{n} συμβάντα · ενημέρωση {t}",
+      "subs.never": "Δεν έχει διαβαστεί ακόμα",
+      "subs.more": "Άλλα {n} έμειναν έξω (πρώτα τα παλαιότερα)",
+      "subs.err.offline": "Είσαι εκτός σύνδεσης. Φαίνεται το τελευταίο αντίγραφο.",
+      "subs.err.norelay": "Ο server αυτού του ημερολογίου δεν αφήνει έναν browser να το διαβάσει απευθείας. Χρειάζεται το relay του orOS: βάλε τη διεύθυνσή του στην Αλληλογραφία ή στις Ρυθμίσεις του Αναγνώστη.",
+      "subs.err.http": "Ο server απάντησε με σφάλμα ({n}).",
+      "subs.err.notics": "Αυτή η διεύθυνση δεν έδωσε ημερολόγιο (.ics).",
+      "subs.err.big": "Το ημερολόγιο είναι πολύ μεγάλο (έως 5 MB).",
+      "subs.err.timeout": "Ο server άργησε πολύ να απαντήσει.",
+      "subs.err.other": "Δεν ήταν δυνατό να διαβαστεί το ημερολόγιο ({e}).",
+      "subs.lasterr": "Η τελευταία προσπάθεια απέτυχε: {e}",
+      "sv.copy": "Αντιγραφή στο ημερολόγιό μου",
+      "sv.from": "Από: {name}",
+      "fr.title": "Κοινοποίηση ελεύθερων ωρών",
+      "fr.text": "Φτιάχνει έναν σύνδεσμο με τις ώρες που είσαι ελεύθερος/η, από το ημερολόγιό σου σε αυτή τη συσκευή. Ο άλλος διαλέγει μία και σου απαντά με email. Κανένας server δεν κρατά τίποτα και τίποτα δεν κλείνεται μόνο του.",
+      "fr.what": "Για ποιο λόγο",
+      "fr.what.ph": "Συνάντηση",
+      "fr.len": "Διάρκεια",
+      "fr.days": "Τις επόμενες",
+      "fr.from": "Από",
+      "fr.to": "Έως",
+      "fr.wknd": "Μαζί με Σάββατο και Κυριακή",
+      "fr.name": "Το όνομά σου",
+      "fr.mail": "Το email σου (εκεί έρχονται οι απαντήσεις)",
+      "fr.mail.ph": "esy@example.com",
+      "fr.loc.ph": "Προαιρετικά: ένα μέρος ή σύνδεσμος κλήσης",
+      "fr.go": "Φτιάξε τον σύνδεσμο…",
+      "fr.min": "{n}′",
+      "fr.hours": "{n} ώρ.",
+      "fr.dayN": "{n} μέρες",
+      "fr.sum": "{n} ελεύθερες ώρες σε {d} μέρες.",
+      "fr.sum1": "1 ελεύθερη ώρα.",
+      "fr.none": "Καμία ελεύθερη ώρα σε αυτό το ωράριο. Δοκίμασε περισσότερες μέρες ή μεγαλύτερο ωράριο.",
+      "fr.nomail": "Χωρίς email ο άλλος μπορεί να βάλει την ώρα στο ημερολόγιό του, αλλά όχι να σου απαντήσει από τη σελίδα.",
+      "fr.noshare": "Άνοιξε το Ημερολόγιο μέσα στο orOS για να στείλεις τον σύνδεσμο.",
+      "pr.week": "Εβδομάδα από {d}",
+      "pr.agenda": "Ατζέντα από {d}",
+      "pr.more": "+{n} ακόμα",
+      "pr.none": "Τίποτα προγραμματισμένο"
+    }
+  });
   function t(k) {
     return (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k]
          : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -500,7 +678,7 @@ function transientNote(title, body) {
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
   var RESCUE_KEY = "oros-calendar-data-broken";   // CA-12: αντίγραφο μη αναγνώσιμων δεδομένων
-  var state = { ver: 1, labels: [], events: [], deleted: [] };
+  var state = { ver: 1, labels: [], events: [], deleted: [], subs: [] };
 
   // Whitelist — the sync-sanitizer contract (deterministic).
   // Declared HERE (moved up from §3b in v0.3): sanitizeEvent runs
@@ -554,6 +732,8 @@ function transientNote(title, body) {
     { id: "lbl-feed-time",    color: "#56b6c2" },   // cyan — Timesheet work time per project
     { id: "lbl-feed-famtree", color: "#9aa4b0" },   // slate grey — Family Tree death anniversaries
     { id: "lbl-feed-crm",     color: "#8c9eff" },   // periwinkle — CRM follow-ups + expected deal closes
+    { id: "lbl-feed-meds",    color: "#e57373" },   // soft red — Health medicines (opt-in: sensitive)
+    { id: "lbl-feed-appts",   color: "#f06292" },   // pink — Health doctor's appointments + vaccines due (opt-in)
     { id: "lbl-feed-sky",     color: "#e9dfb4" }    // moonlight cream — Moon & Sky (opt-in)
   ];
   function feedLabelName(l) {
@@ -582,6 +762,8 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-time") return t("lbl.feed.time");
     if (l.id === "lbl-feed-famtree") return t("lbl.feed.famtree");
     if (l.id === "lbl-feed-crm") return t("lbl.feed.crm");
+    if (l.id === "lbl-feed-meds") return t("lbl.feed.meds");
+    if (l.id === "lbl-feed-appts") return t("lbl.feed.appts");
     if (l.id === "lbl-feed-sky") return t("lbl.feed.sky");
     return t("lbl.feed.custom");
   }
@@ -644,6 +826,7 @@ function transientNote(title, body) {
     for (var f = 0; f < FEED_LABELS.length; f++) {
       if (FEED_LABELS[f].id === id) return FEED_LABELS[f];
     }
+    if (typeof id === "string" && id.indexOf("sub-") === 0) return subLabel(id.slice(4));
     return null;
   }
   function labelColor(labelId) {
@@ -666,21 +849,20 @@ function transientNote(title, body) {
     if (typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start)) start = e.start;
     else if (typeof e.time === "string" && /^\d{2}:\d{2}$/.test(e.time)) start = e.time;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
-    // Audit #2 fix: this range guard existed TWICE — one dead no-op
-    // removed. Corrupted range → no end.
-    if (start && end && end < start) end = null;
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
     var remindMin = (typeof e.remindMin === "number" &&
                      REMIND_PRESETS.indexOf(e.remindMin) !== -1)
       ? e.remindMin : null;
-    // v0.3 multi-day: dateEnd is legal ONLY on plain (non-recurring)
-    // events, and only when it lands on/after the anchor. A stray
-    // value on a series or before the anchor is dropped, never fatal.
+    // Multi-day: dateEnd on/after the anchor (a series may span days
+    // too since wave 5: every occurrence lasts dateEnd − date days).
     var dateEnd = null;
     if (typeof e.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.dateEnd)) {
-      if (!validRecur(e.recur) && e.dateEnd >= e.date) dateEnd = e.dateEnd;
+      if (e.dateEnd >= e.date) dateEnd = e.dateEnd;
     }
-    return {
+    // Corrupted range → no end. An end before the start is fine only
+    // when the event runs into a later day (Fri 22:00 → Sun 09:00).
+    if (start && end && end < start && !(dateEnd && dateEnd > e.date)) end = null;
+    var out = {
       id: e.id,
       date: e.date,
       dateEnd: dateEnd,
@@ -690,10 +872,23 @@ function transientNote(title, body) {
       note: (typeof e.note === "string" ? e.note : "").slice(0, 500),
       location: (typeof e.location === "string" ? e.location : "").slice(0, 150),
       labelId: labelId,
-      recur: sanitizeRecur(e.recur),
+      recur: sanitizeRecur(e.recur, e.date),
       remindMin: remindMin,
       mtime: (typeof e.mtime === "number" && isFinite(e.mtime)) ? e.mtime : Date.now()
     };
+    // Time zone (wave 5): only on timed events, LAST key and left out
+    // when unset, so older events keep their exact bytes.
+    if (start && validTzName(e.tz)) out.tz = e.tz;
+    return out;
+  }
+  // Wave 8: a subscribed calendar { id, url, name, color, mtime }
+  // (calendar/subs.js). Same colour list as the labels.
+  function sanitizeSub(s) { return window.OrosCalSubs ? window.OrosCalSubs.sanitizeSub(s, VALID_COLORS, false) : null; }
+  function mergeSanitizeSub(s) { return window.OrosCalSubs ? window.OrosCalSubs.sanitizeSub(s, VALID_COLORS, true) : null; }
+
+  // Deterministic on every device (no Intl): a name, not a lookup.
+  function validTzName(tz) {
+    return typeof tz === "string" && /^[A-Za-z][A-Za-z0-9_+\-\/]{0,63}$/.test(tz);
   }
 
   // Tombstones: deletion markers — { id, mtime }. They travel in the
@@ -719,6 +914,10 @@ function transientNote(title, body) {
       // Pre-sync blobs have no "deleted" → empty list, zero migration
       if (d && Array.isArray(d.deleted)) {
         state.deleted = d.deleted.map(sanitizeTomb).filter(Boolean);
+      }
+      // Wave 8: subscribed calendars (absent in older blobs = none)
+      if (d && Array.isArray(d.subs)) {
+        state.subs = d.subs.map(sanitizeSub).filter(Boolean);
       }
       // Seed ΜΟΝΟ όταν λείπει το κλειδί "labels" (φρέσκια
       // εγκατάσταση / v0.1 blob). Άδειο-but-παρόν array = ο χρήστης
@@ -936,84 +1135,138 @@ function transientNote(title, body) {
 
   // Label visibility: id -> true/false. Absent = visible. Chips row
   // toggles these; nothing is ever deleted by filtering.
-  var labelVis = { "lbl-feed-sky": false };   // opt-in feeds start hidden (loadFeedVis)
+  var labelVis = { "lbl-feed-sky": false, "lbl-feed-meds": false, "lbl-feed-appts": false };   // opt-in feeds start hidden (loadFeedVis)
   function labelVisible(labelId) {
     if (!labelId) return true;
     return labelVis[labelId] !== false;
   }
 
-  /* ---------- 3b. Recurrence + multi-day engine ----------
+  /* ---------- 3b. Recurrence + multi-day + time zone engine ----------
      Masters stored in state.events with "recur". Occurrences are
      COMPUTED — never stored — by calendar/occur.js, shared with the
-     shell's reminder engine and the Today summary (sticky-clamp
-     contract: Jan 31 → Feb 28 → Mar 31; D/W step days; interval 2 =
-     bi-weekly; exdates skipped; "until" stops the walk).
-     MULTI-DAY (v0.3): plain events may span date → dateEnd. Spans
-     and recurrence are mutually exclusive BY SANITIZER (see §2) —
-     one engine per shape keeps occurrencesOn provable. */
+     shell's reminder engine, the Today summary, search, .ics and the
+     phone bridge. Rules (wave 5): every N days/weeks/months/years,
+     weekly on several weekdays, monthly / yearly by day (sticky clamp
+     Jan 31 → Feb 28 → Mar 31) or "Nth / last weekday", end after N
+     times or on a date, exdates skipped. A series may span several
+     days (dateEnd − date per occurrence). A timed event may carry
+     `tz`: its times are wall-clock times there, shown converted to
+     this device's zone (OCC.instance). */
 
-  function validRecur(r) {
-    return !!(r && typeof r === "object" &&
-              /^[DWMY]$/.test(r.freq || ""));
-  }
-
+  var OCC = window.OrosCalOccur;
+  function validRecur(r) { return OCC.validRecur(r); }
   function dimOfMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 
-  // Normalizer: interval 2 is legal ONLY on weekly (bi-weekly).
-  // exdates deduped + SORTED → identical JSON.stringify on every
-  // device → the merge tie-break stays deterministic.
-  function sanitizeRecur(r) {
-    if (!validRecur(r)) return null;
-    var interval = (r.freq === "W" && r.interval === 2) ? 2 : 1;
-    var until = (typeof r.until === "string" &&
-                 /^\d{4}-\d{2}-\d{2}$/.test(r.until)) ? r.until : null;
-    var exSet = {};
-    if (Array.isArray(r.exdates)) {
-      r.exdates.forEach(function (d) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) exSet[d] = true;
-      });
-    }
-    return {
-      freq: r.freq,
-      interval: interval,
-      until: until,
-      exdates: Object.keys(exSet).sort()
-    };
-  }
+  // Canonical recur (occur.js normRecur): exdates deduped + SORTED,
+  // new keys only when they say something → identical JSON on every
+  // device and old series byte-for-byte unchanged.
+  function sanitizeRecur(r, date) { return OCC.normRecur(r, date); }
 
-  // Occurrences live in calendar/occur.js (window.OrosCalOccur), the
-  // one copy the shell's reminder engine and the Today summary use
-  // too. cb(occYmd) — return false to stop; exdates skipped.
-  var OCC = window.OrosCalOccur;
   function eachOccurrence(e, cb) { OCC.eachOccurrence(e, cb); }
-
-  // The single truth of "does e occupy dateStr":
-  //   - series: computed occurrences (exdates respected)
-  //   - plain:  anchor day, or the whole date → dateEnd span
   function occursOn(e, dateStr) { return OCC.occursOn(e, dateStr); }
 
-  // Multi-day span info: null on single-day events, otherwise
+  // A stored event as drawn on one device day: a copy whose date,
+  // dateEnd, start and end are that occurrence's, in this device's
+  // zone. _src = the stored event, _occ = the occurrence's own start
+  // date (what "This occurrence" and exdates use).
+  function viewOf(e, inst) {
+    var v = {};
+    for (var k in e) if (Object.prototype.hasOwnProperty.call(e, k)) v[k] = e[k];
+    v.date = inst.date;
+    v.dateEnd = inst.dateEnd;
+    v.start = inst.start;
+    v.end = inst.end;
+    v._src = e;
+    v._occ = inst.occ;
+    v._zoned = inst.zoned;
+    return v;
+  }
+  function srcOf(e) { return (e && e._src) || e; }
+  function occOf(e, dayYmd) { return (e && e._occ) || dayYmd; }
+
+  // Multi-day span info: null on single-day rows, otherwise
   // { days: total, idx: 1-based position of dateStr inside }.
   // Guards against span-crossing corruption (idx < 1 / > days).
   function spanInfo(e, dateStr) {
-    if (validRecur(e.recur) || !e.dateEnd || e.dateEnd === e.date) return null;
+    if (!e.dateEnd || e.dateEnd === e.date) return null;
     var days = Math.round((dparse(e.dateEnd) - dparse(e.date)) / 86400000) + 1;
     var idx = Math.round((dparse(dateStr) - dparse(e.date)) / 86400000) + 1;
     if (days < 1 || idx < 1 || idx > days) return null;
     return { days: days, idx: idx };
   }
 
-  function recurDesc(e) {
-    if (!validRecur(e.recur)) return "";
-    var map = {
-      "D-1":  ["Daily",         "Καθημερινά"],
-      "W-1":  ["Weekly",        "Εβδομαδιαία"],
-      "W-2":  ["Every 2 weeks", "Κάθε 2 εβδομάδες"],
-      "M-1":  ["Monthly",       "Μηνιαία"],
-      "Y-1":  ["Yearly",        "Ετήσια"]
-    };
-    var key = e.recur.freq + "-" + (e.recur.interval === 2 ? 2 : 1);
-    return map[key] ? map[key][LANG === "el" ? 1 : 0] : "";
+  // Human text of a rule ("Every 2 weeks on Mon, Wed, 10 times").
+  var WD_FULL = {
+    en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    el: ["Κυριακή", "Δευτέρα", "Τρίτη", "Τετάρτη", "Πέμπτη", "Παρασκευή", "Σάββατο"]
+  };
+  var WD_SHORT = {
+    en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    el: ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"]
+  };
+  var MONTH_GEN_EL = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου",
+    "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
+  var ORD = {
+    en: { 1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", "-1": "last" },
+    elF: { 1: "την πρώτη", 2: "τη δεύτερη", 3: "την τρίτη", 4: "την τέταρτη", 5: "την πέμπτη", "-1": "την τελευταία" },
+    elN: { 1: "το πρώτο", 2: "το δεύτερο", 3: "το τρίτο", 4: "το τέταρτο", 5: "το πέμπτο", "-1": "το τελευταίο" }
+  };
+  // "the last Friday" / «την τελευταία Παρασκευή»
+  function nthText(pos, wday) {
+    if (LANG === "el") return (wday === 6 ? ORD.elN : ORD.elF)[pos] + " " + WD_FULL.el[wday];
+    return "the " + ORD.en[pos] + " " + WD_FULL.en[wday];
+  }
+  function shortDate(s) {
+    var p = s.split("-");
+    return (+p[2]) + " " + t("months")[+p[1] - 1].slice(0, 3) + " " + p[0];
+  }
+  function recurText(r, date) {
+    if (!validRecur(r)) return "";
+    var el = LANG === "el", L = el ? "el" : "en";
+    var N = OCC.everyOf(r);
+    var base = {
+      en: { D: ["Daily", "Every {n} days"], W: ["Weekly", "Every {n} weeks"],
+            M: ["Monthly", "Every {n} months"], Y: ["Yearly", "Every {n} years"] },
+      el: { D: ["Καθημερινά", "Κάθε {n} ημέρες"], W: ["Εβδομαδιαία", "Κάθε {n} εβδομάδες"],
+            M: ["Μηνιαία", "Κάθε {n} μήνες"], Y: ["Ετήσια", "Κάθε {n} χρόνια"] }
+    }[L][r.freq];
+    var s = (N > 1 ? base[1] : base[0]).replace("{n}", String(N));
+    var p = (date || "").split("-");
+    var nth = (r.pos === -1 || (r.pos >= 1 && r.pos <= 5)) && r.wday >= 0 && r.wday <= 6;
+    var wdays = (r.freq === "W" && Array.isArray(r.byday) && r.byday.length) ? r.byday
+      : (r.freq === "W" && p.length === 3 ? [OCC.wdOf(date)] : null);
+    if (wdays) {
+      var ds = wdays.slice().sort(function (a, b) { return ((a + 6) % 7) - ((b + 6) % 7); });
+      s += (el ? ": " : " on ") + ds.map(function (x) { return WD_SHORT[L][x]; }).join(", ");
+    } else if (r.freq === "M" && nth) {
+      s += el ? ", " + nthText(r.pos, r.wday) : " on " + nthText(r.pos, r.wday);
+    } else if (r.freq === "M" && p.length === 3) {
+      s += el ? ", στις " + (+p[2]) : " on day " + (+p[2]);
+    } else if (r.freq === "Y" && p.length === 3) {
+      var mi = +p[1] - 1;
+      if (nth) s += el ? ", " + nthText(r.pos, r.wday) + " του " + MONTH_GEN_EL[mi]
+                       : " on " + nthText(r.pos, r.wday) + " of " + t("months")[mi];
+      else s += el ? ", στις " + (+p[2]) + " " + MONTH_GEN_EL[mi] : " on " + (+p[2]) + " " + t("months")[mi];
+    }
+    if (typeof r.count === "number" && r.count > 0) {
+      s += el ? ", " + r.count + (r.count === 1 ? " φορά" : " φορές") : ", " + r.count + (r.count === 1 ? " time" : " times");
+    } else if (r.until) {
+      s += (el ? ", έως " : ", until ") + shortDate(r.until);
+    }
+    return s;
+  }
+  function recurDesc(e) { return recurText(e.recur, (srcOf(e) || e).date); }
+
+  // Time zone label: "London" from "Europe/London".
+  function tzCity(tz) {
+    var s = String(tz || "").split("/");
+    return s[s.length - 1].replace(/_/g, " ");
+  }
+  // "09:00–10:00 London" — the event's own times, for zoned rows.
+  function tzNote(e) {
+    var s = srcOf(e);
+    if (!e._zoned || !s || !s.start) return "";
+    return s.start + (s.end ? "–" + s.end : "") + " " + tzCity(s.tz);
   }
 
   // Wave 2.1 — Contacts read-only feed. Same-origin iframe → shared
@@ -1470,6 +1723,81 @@ function transientNote(title, body) {
         end: null,
         _feed: true,
         _openAt: { app: "crm", target: r.fup ? { fup: x.id } : { deal: x.id } }
+      };
+    });
+  }
+
+  // Health medicines read-only feed (health/core.js, loaded by
+  // index.html; OrosHealthCore.calendarOn): a course's first and last
+  // day and the day a counted medicine runs out. Opt-in (health data
+  // is sensitive): the chip starts off (OPT_IN_FEEDS). Click → Health
+  // with that medicine open (__orosOpenAt("health", {med})). Never
+  // stored; parsed at most once a second.
+  var medsCache = { when: 0, data: null };
+  function medsData() {
+    var now = Date.now(), C = window.OrosHealthCore;
+    if (!C || typeof C.calendarOn !== "function") return null;
+    if (now - medsCache.when > 1000) {
+      medsCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem("oros-health-data"));
+        if (d && typeof d === "object" && Array.isArray(d.md) && d.md.length) medsCache.data = C.merge(d, d);
+      } catch (e) { medsCache.data = null; }
+      medsCache.when = now;
+    }
+    return medsCache.data;
+  }
+  function medsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-meds")) return [];
+    var data = medsData();
+    if (!data) return [];
+    return window.OrosHealthCore.calendarOn(data, dateStr, Date.now()).map(function (r) {
+      return {
+        id: "md-" + r.k + "-" + r.med.id + "-" + dateStr,   // per-render key, never stored
+        title: t("feed.md." + r.k).replace("{name}", r.med.n + (r.med.s ? " " + r.med.s : "")),
+        labelId: "lbl-feed-meds",
+        start: null,
+        end: null,
+        _feed: true,
+        _openAt: { app: "health", target: { med: r.med.id } }
+      };
+    });
+  }
+
+  // Health doctor's appointments read-only feed (Health wave 3,
+  // OrosHealthCore.recordOn): each appointment at its time (and end
+  // when it has a duration), and the day a vaccination's next dose is
+  // due. Opt-in like Medicines (sensitive). Click → Health with that
+  // appointment / vaccination open. Never stored.
+  var apptsCache = { when: 0, data: null };
+  function apptsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-appts")) return [];
+    var C = window.OrosHealthCore, now = Date.now();
+    if (!C || typeof C.recordOn !== "function") return [];
+    if (now - apptsCache.when > 1000) {
+      apptsCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem("oros-health-data"));
+        if (d && typeof d === "object" && ((Array.isArray(d.ap) && d.ap.length) || (Array.isArray(d.vx) && d.vx.length))) apptsCache.data = C.merge(d, d);
+      } catch (e) { apptsCache.data = null; }
+      apptsCache.when = now;
+    }
+    if (!apptsCache.data) return [];
+    function hm(ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); }
+    return C.recordOn(apptsCache.data, dateStr).map(function (r) {
+      if (r.k === "vx") {
+        return { id: "vx-" + r.vx.id + "-" + dateStr, title: t("feed.ap.vx").replace("{name}", r.vx.n), labelId: "lbl-feed-appts",
+                 start: null, end: null, _feed: true, _openAt: { app: "health", target: { vax: r.vx.id } } };
+      }
+      var a = r.ap;
+      return {
+        id: "ap-" + a.id + "-" + dateStr,                 // per-render key, never stored
+        title: (a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp)) + (a.pl ? " · " + a.pl : ""),
+        labelId: "lbl-feed-appts",
+        start: hm(a.at),
+        end: a.du && new Date(a.at + a.du * 60000).getDate() === new Date(a.at).getDate() ? hm(a.at + a.du * 60000) : null,
+        _feed: true,
+        _openAt: { app: "health", target: { appt: a.id } }
       };
     });
   }
@@ -2173,18 +2501,21 @@ function transientNote(title, body) {
   var daysData = null;
 
   // Opt-in feeds start hidden; turning one on is remembered (true).
-  var OPT_IN_FEEDS = ["lbl-feed-sky"];
+  var OPT_IN_FEEDS = ["lbl-feed-sky", "lbl-feed-meds", "lbl-feed-appts"];
   function loadFeedVis() {
     var v = null;
     try { v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}"); } catch (e) {}
     STICKY_FEEDS.forEach(function (id) { if (v && v[id] === false) labelVis[id] = false; });
+    // Wave 8: subscribed calendars remember "hidden" on this device too.
+    if (v && typeof v === "object") Object.keys(v).forEach(function (id) { if (id.indexOf("sub-") === 0 && v[id] === false) labelVis[id] = false; });
     OPT_IN_FEEDS.forEach(function (id) { labelVis[id] = !!(v && v[id] === true); });
   }
   function saveFeedVis(id) {
-    if (STICKY_FEEDS.indexOf(id) === -1 && OPT_IN_FEEDS.indexOf(id) === -1) return;
+    if (STICKY_FEEDS.indexOf(id) === -1 && OPT_IN_FEEDS.indexOf(id) === -1 && String(id).indexOf("sub-") !== 0) return;
     var v = {};
     STICKY_FEEDS.forEach(function (k) { if (!labelVisible(k)) v[k] = false; });
     OPT_IN_FEEDS.forEach(function (k) { if (labelVisible(k)) v[k] = true; });
+    state.subs.forEach(function (x) { if (!labelVisible("sub-" + x.id)) v["sub-" + x.id] = false; });
     try { localStorage.setItem(FEEDVIS_KEY, JSON.stringify(v)); } catch (e) {}
   }
 
@@ -2245,11 +2576,29 @@ function transientNote(title, body) {
     return out;
   }
 
-    function eventsOn(dateStr) {
-    return state.events.filter(function (e) {
-      return occursOn(e, dateStr) && labelVisible(e.labelId);
-    })
-    .concat(contactsFeedOn(dateStr))
+  // Own events as drawn on that day (viewOf copies: the occurrence's
+  // dates and times in this device's zone).
+  function ownOn(dateStr) {
+    var out = [];
+    state.events.forEach(function (e) {
+      if (!labelVisible(e.labelId)) return;
+      var inst = OCC.instanceOn(e, dateStr);
+      if (inst) out.push(viewOf(e, inst));
+    });
+    return out;
+  }
+  function eventsOn(dateStr) {
+    return ownOn(dateStr).concat(feedsOn(dateStr))
+    .sort(function (a, b) {
+      if (a.start === b.start) return 0;
+      if (a.start === null) return 1;
+      if (b.start === null) return -1;
+      return a.start < b.start ? -1 : 1;
+    });
+  }
+  // The other apps' read-only rows on that day (unsorted).
+  function feedsOn(dateStr) {
+    return contactsFeedOn(dateStr)
     .concat(habitsFeedOn(dateStr))
     .concat(cycleFeedOn(dateStr))
     .concat(moodFeedOn(dateStr))
@@ -2273,13 +2622,10 @@ function transientNote(title, body) {
     .concat(timesheetFeedOn(dateStr))
     .concat(familyTreeFeedOn(dateStr))
     .concat(crmFeedOn(dateStr))
+    .concat(medsFeedOn(dateStr))
+    .concat(apptsFeedOn(dateStr))
     .concat(skyFeedOn(dateStr))
-    .sort(function (a, b) {
-      if (a.start === b.start) return 0;
-      if (a.start === null) return 1;
-      if (b.start === null) return -1;
-      return a.start < b.start ? -1 : 1;
-    });
+    .concat(subsFeedOn(dateStr));
   }
 
   // Wave 4 — click-through: any feed row → its owning app. The shell
@@ -2290,6 +2636,7 @@ function transientNote(title, body) {
   // away in that mode anyway.
   function openFeedRow(ev) {
     if (!ev || !ev._feed) return;
+    if (ev._sub) { openSubEvent(ev); return; }      // wave 8: subscribed calendar
     try {
       var p = window.parent;
       if (!p) return;
@@ -2391,9 +2738,18 @@ function transientNote(title, body) {
     return ymd(dt.getFullYear(), dt.getMonth(), dt.getDate());
   }
 
+  function longDate(s) {
+    var p = s.split("-"), L = LANG === "el" ? "el" : "en";
+    var wd = new Date(+p[0], +p[1] - 1, +p[2]).getDay();
+    var mon = L === "el" ? MONTH_GEN_EL[+p[1] - 1] : t("months")[+p[1] - 1];
+    return WD_FULL[L][wd] + " " + (+p[2]) + " " + mon + " " + p[0];
+  }
+
   function renderTitle() {
     var el = $("cal-title");
     if (curView === "agenda") { el.textContent = t("vw.agenda"); return; }
+    if (curView === "year") { el.textContent = String(viewYear); return; }
+    if (curView === "day") { el.textContent = longDate(selDate || todayYMD()); return; }
     if (curView === "week") {
       var m = t("months");
       var a = weekAnchor.split("-");
@@ -2404,6 +2760,51 @@ function transientNote(title, body) {
       return;
     }
     el.textContent = t("months")[viewMonth] + " " + viewYear;
+  }
+
+  // Drag & drop (desktop, Month and Week): any own event. The payload
+  // names the event, the day it was picked up on and its occurrence.
+  function dragSource(node, ev, dayYmd) {
+    if (!ev || ev._feed) return;
+    node.draggable = true;
+    node.addEventListener("dragstart", function (de) {
+      de.stopPropagation();
+      try {
+        de.dataTransfer.setData("text/plain", "cal-ev:" + srcOf(ev).id + "|" + dayYmd + "|" + occOf(ev, dayYmd));
+        de.dataTransfer.effectAllowed = "move";
+      } catch (e2) {}
+      node.classList.add("dragging");
+    });
+    node.addEventListener("dragend", function () { node.classList.remove("dragging"); });
+  }
+  // Drop target — accepts only calendar-event payloads ("cal-ev:").
+  function dropTarget(node, dayYmd) {
+    node.addEventListener("dragover", function (de) {
+      var types = de.dataTransfer.types;
+      if (types && Array.prototype.indexOf.call(types, "text/plain") !== -1) {
+        de.preventDefault();               // required: makes the drop legal
+        de.dataTransfer.dropEffect = "move";
+        node.classList.add("drop-target");
+      }
+    });
+    node.addEventListener("dragleave", function () { node.classList.remove("drop-target"); });
+    node.addEventListener("drop", function (de) {
+      de.preventDefault();
+      de.stopPropagation();
+      node.classList.remove("drop-target");
+      var raw = "";
+      try { raw = de.dataTransfer.getData("text/plain") || ""; } catch (e2) {}
+      if (raw.indexOf("cal-ev:") !== 0) return;
+      dropEvent(raw.slice(7), dayYmd);
+    });
+  }
+  // Click on an own row: series → chooser (this occurrence / all),
+  // plain → editor; feed rows open their app.
+  function openRow(ev, dayYmd) {
+    if (ev._feed) { openFeedRow(ev); return; }
+    var src = srcOf(ev);
+    if (validRecur(src.recur)) showSerChooser(src, occOf(ev, dayYmd));
+    else openDlg(src);
   }
 
   function renderGrid() {
@@ -2465,27 +2866,7 @@ function transientNote(title, body) {
 
       (function (cd) {
         btn.addEventListener("click", function () { selectDay(cd); });
-        // Wave 3: drop target — accepts only calendar-event payloads
-        // (the "cal-ev:" prefix check happens in the drop handler).
-        btn.addEventListener("dragover", function (de) {
-          var types = de.dataTransfer.types;
-          if (types && Array.prototype.indexOf.call(types, "text/plain") !== -1) {
-            de.preventDefault();               // required: makes the drop legal
-            de.dataTransfer.dropEffect = "move";
-            btn.classList.add("drop-target");
-          }
-        });
-        btn.addEventListener("dragleave", function () {
-          btn.classList.remove("drop-target");
-        });
-        btn.addEventListener("drop", function (de) {
-          de.preventDefault();
-          btn.classList.remove("drop-target");
-          var raw = "";
-          try { raw = de.dataTransfer.getData("text/plain") || ""; } catch (e2) {}
-          if (raw.indexOf("cal-ev:") !== 0) return;
-          moveEventToDate(raw.slice(7), cd);
-        });
+        dropTarget(btn, cd);
       })(cellDate);
 
       grid.appendChild(btn);
@@ -2535,10 +2916,17 @@ function transientNote(title, body) {
         ev.type = "button";
         ev.className = "wk-ev";
         ev.style.borderLeftColor = labelColor(e.labelId);
-        if (e.start) {
+        if (e.start && !(sp && sp.idx > 1)) {
           var tm = document.createElement("span");
           tm.className = "wk-ev-time";
           tm.textContent = e.start;
+          if (e._zoned) {
+            var tzm = document.createElement("span");
+            tzm.className = "tz-mark";
+            tzm.textContent = " ◷";
+            tzm.title = tzNote(e);
+            tm.appendChild(tzm);
+          }
           ev.appendChild(tm);
         }
         ev.appendChild(document.createTextNode(
@@ -2559,14 +2947,13 @@ function transientNote(title, body) {
           })(e.location, e.title || "");
           ev.appendChild(wloc);
         }
-        (function (ee) {
+        (function (ee, dy) {
           ev.addEventListener("click", function (evt) {
             evt.stopPropagation();
-            if (ee._feed) { openFeedRow(ee); return; }
-            if (validRecur(ee.recur)) showSerChooser(ee, dayYmd);
-            else openDlg(ee);
+            openRow(ee, dy);
           });
-        })(e);
+          dragSource(ev, ee, dy);
+        })(e, dayYmd);
         body.appendChild(ev);
       });
       col.appendChild(body);
@@ -2579,9 +2966,263 @@ function transientNote(title, body) {
             selectDay(cd);
           }
         });
+        dropTarget(col, cd);
       })(dayYmd);
 
       grid.appendChild(col);
+    }
+  }
+
+  /* ---------- 4b2. Day view (wave 5): hour grid ----------
+     All-day rows (and whole days inside a multi-day event) in a strip
+     on top; timed rows as blocks on a 24-hour grid, side by side when
+     they overlap; a line at the current time on today. A tap on an
+     empty hour starts a new event there. */
+  var DV_HOUR = 48;                 // px per hour
+  var dvScrolledFor = null;         // the day the grid was last scrolled for
+  function hmMin(s) { var p = String(s).split(":"); return (+p[0]) * 60 + (+p[1]); }
+  function fmtMin(m) { return pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60); }
+
+  function dayLayout(day) {
+    var allDay = [], timed = [];
+    eventsOn(day).forEach(function (e) {
+      if (!e.start) { allDay.push(e); return; }
+      var first = !e.date || e.date >= day;
+      var last = !e.dateEnd || e.dateEnd <= day;
+      var s = first ? hmMin(e.start) : 0;
+      var en = last ? (e.end ? hmMin(e.end) : s + 60) : 1440;
+      if (!first && !last) { allDay.push(e); return; }     // a whole day inside a span
+      if (en <= s) en = Math.min(1440, s + 30);
+      timed.push({ e: e, s: s, en: Math.max(en, s + 20) });
+    });
+    // Overlaps: clusters of rows that touch; each takes a column.
+    timed.sort(function (a, b) { return a.s - b.s || b.en - a.en; });
+    var cluster = [], colsEnd = [], clusterEnd = -1;
+    function close() {
+      cluster.forEach(function (x) { x.cols = colsEnd.length; });
+      cluster = []; colsEnd = [];
+    }
+    timed.forEach(function (x) {
+      if (x.s >= clusterEnd) { close(); clusterEnd = -1; }
+      var c = 0;
+      while (c < colsEnd.length && colsEnd[c] > x.s) c++;
+      colsEnd[c] = x.en;
+      x.col = c;
+      cluster.push(x);
+      clusterEnd = Math.max(clusterEnd, x.en);
+    });
+    close();
+    return { allDay: allDay, timed: timed };
+  }
+
+  function renderDayView() {
+    var box = $("day-view");
+    box.textContent = "";
+    var day = selDate || todayYMD();
+    var lay = dayLayout(day);
+
+    var strip = document.createElement("div");
+    strip.className = "dv-allday";
+    var sl = document.createElement("span");
+    sl.className = "dv-allday-lab";
+    sl.textContent = t("ev.alltime");
+    strip.appendChild(sl);
+    var chips = document.createElement("div");
+    chips.className = "dv-allday-list";
+    if (!lay.allDay.length) {
+      var none = document.createElement("span");
+      none.className = "wk-empty";
+      none.textContent = "—";
+      chips.appendChild(none);
+    }
+    lay.allDay.forEach(function (e) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "dv-chip";
+      b.style.borderLeftColor = labelColor(e.labelId);
+      var sp = spanInfo(e, day);
+      b.textContent = (e.title || t("ev.untitled")) + (sp ? " (" + sp.idx + "/" + sp.days + ")" : "") +
+        (validRecur(e.recur) ? " ↻" : "");
+      b.addEventListener("click", function () { openRow(e, day); });
+      chips.appendChild(b);
+    });
+    strip.appendChild(chips);
+    box.appendChild(strip);
+
+    var scroll = document.createElement("div");
+    scroll.className = "dv-scroll";
+    var grid = document.createElement("div");
+    grid.className = "dv-grid";
+    grid.style.height = (24 * DV_HOUR) + "px";
+    for (var h = 0; h < 24; h++) {
+      var line = document.createElement("div");
+      line.className = "dv-hour";
+      line.style.top = (h * DV_HOUR) + "px";
+      var lab = document.createElement("span");
+      lab.className = "dv-hlab";
+      lab.textContent = pad(h) + ":00";
+      line.appendChild(lab);
+      grid.appendChild(line);
+    }
+    var lane = document.createElement("div");
+    lane.className = "dv-lane";
+    lay.timed.forEach(function (x) {
+      var e = x.e;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "dv-ev";
+      b.style.top = (x.s * DV_HOUR / 60) + "px";
+      b.style.height = Math.max(18, (x.en - x.s) * DV_HOUR / 60 - 2) + "px";
+      b.style.left = (100 * x.col / x.cols) + "%";
+      b.style.width = "calc(" + (100 / x.cols) + "% - 3px)";
+      b.style.borderLeftColor = labelColor(e.labelId);
+      var tm = document.createElement("span");
+      tm.className = "dv-ev-time";
+      tm.textContent = fmtMin(x.s) + (x.en < 1440 ? "–" + fmtMin(x.en) : "");
+      if (e._zoned) {
+        var tzm = document.createElement("span");
+        tzm.className = "tz-mark";
+        tzm.textContent = " ◷ " + tzNote(e);
+        tm.appendChild(tzm);
+      }
+      b.appendChild(tm);
+      var ti = document.createElement("span");
+      ti.className = "dv-ev-title";
+      ti.textContent = (e.title || t("ev.untitled")) + (validRecur(e.recur) ? " ↻" : "");
+      b.appendChild(ti);
+      if (e.location) {
+        var lo = document.createElement("span");
+        lo.className = "dv-ev-loc";
+        lo.textContent = e.location;
+        b.appendChild(lo);
+      }
+      b.title = (e.title || "") + " " + tm.textContent;
+      b.addEventListener("click", function (evt) { evt.stopPropagation(); openRow(e, day); });
+      lane.appendChild(b);
+    });
+    grid.appendChild(lane);
+    if (day === todayYMD()) {
+      var now = document.createElement("div");
+      now.className = "dv-now";
+      now.id = "dv-now";
+      grid.appendChild(now);
+      placeNowLine();
+    }
+    // A tap on an empty spot: a new event at that hour.
+    lane.addEventListener("click", function (evt) {
+      if (evt.target !== lane) return;
+      var r = lane.getBoundingClientRect();
+      var hr = Math.max(0, Math.min(23, Math.floor((evt.clientY - r.top) / DV_HOUR)));
+      newEventAt(day, pad(hr) + ":00");
+    });
+    scroll.appendChild(grid);
+    box.appendChild(scroll);
+    if (dvScrolledFor !== day) {
+      dvScrolledFor = day;
+      var first = lay.timed.length ? lay.timed[0].s : 8 * 60;
+      if (day === todayYMD()) { var n = new Date(); first = Math.min(first, n.getHours() * 60 + n.getMinutes()); }
+      scroll.scrollTop = Math.max(0, (first / 60 - 1) * DV_HOUR);
+    }
+  }
+  function placeNowLine() {
+    var el = document.getElementById("dv-now");
+    if (!el) return;
+    var n = new Date();
+    el.style.top = ((n.getHours() * 60 + n.getMinutes()) * DV_HOUR / 60) + "px";
+  }
+  setInterval(function () { if (curView === "day") placeNowLine(); }, 60000);
+
+  function newEventAt(day, hm) {
+    selDate = day;
+    renderDay();
+    openDlg(null);
+    $("ev-allday").checked = false;
+    $("ev-allday").dispatchEvent(new Event("change"));
+    $("ev-start").value = hm;
+    $("ev-end").value = fmtMin(hmMin(hm) + 60);
+  }
+
+  /* ---------- 4b3. Year view (wave 5): 12 small months ----------
+     A dot under each day that has something; a tap opens that day in
+     the Day view, a month's name opens it in the Month view. */
+  function renderYear() {
+    var box = $("year-grid");
+    box.textContent = "";
+    var today = todayYMD();
+    // Own events: one walk per event over the whole year.
+    var busy = {};
+    var from = ymd(viewYear, 0, 1), to = ymd(viewYear, 11, 31);
+    state.events.forEach(function (e) {
+      if (!labelVisible(e.labelId)) return;
+      OCC.instancesBetween(e, from, to, function (inst) {
+        var d = inst.date < from ? from : inst.date, last = inst.dateEnd || inst.date;
+        for (var k = 0; k < 400 && d <= last && d <= to; k++) {
+          (busy[d] = busy[d] || []).push(labelColor(e.labelId));
+          d = dAdd(d, 1);
+        }
+      });
+    });
+    for (var m = 0; m < 12; m++) {
+      var mb = document.createElement("div");
+      mb.className = "yr-month";
+      var mh = document.createElement("button");
+      mh.type = "button";
+      mh.className = "yr-mname";
+      mh.textContent = t("months")[m];
+      (function (mm) {
+        mh.addEventListener("click", function () {
+          viewMonth = mm;
+          selDate = ymd(viewYear, mm, 1);
+          setView("month");
+          renderDay();
+        });
+      })(m);
+      mb.appendChild(mh);
+      var g = document.createElement("div");
+      g.className = "yr-days";
+      for (var w = 0; w < 7; w++) {
+        var wd = document.createElement("span");
+        wd.className = "yr-wd";
+        wd.textContent = t("wd")[w].charAt(0);
+        g.appendChild(wd);
+      }
+      var lead = (new Date(viewYear, m, 1).getDay() + 6) % 7;
+      var dim = new Date(viewYear, m + 1, 0).getDate();
+      for (var b = 0; b < lead; b++) g.appendChild(document.createElement("span"));
+      for (var d = 1; d <= dim; d++) {
+        var day = ymd(viewYear, m, d);
+        var c = document.createElement("button");
+        c.type = "button";
+        c.className = "yr-day" + (day === today ? " today" : "") + (day === selDate ? " sel" : "") +
+          (isHoliday(day) ? " hol" : "");
+        c.textContent = String(d);
+        var colors = (busy[day] || []).slice(0);
+        if (colors.length < 3) {
+          feedsOn(day).forEach(function (x) { if (colors.length < 3) colors.push(labelColor(x.labelId)); });
+        }
+        if (colors.length) {
+          var dots = document.createElement("span");
+          dots.className = "yr-dots";
+          colors.slice(0, 3).forEach(function (col) {
+            var dt = document.createElement("span");
+            dt.className = "yr-dot";
+            dt.style.background = col;
+            dots.appendChild(dt);
+          });
+          c.appendChild(dots);
+          c.setAttribute("aria-label", d + " " + t("months")[m] + " •");
+        }
+        (function (dd) {
+          c.addEventListener("click", function () {
+            selDate = dd;
+            setView("day");
+            renderDay();
+          });
+        })(day);
+        g.appendChild(c);
+      }
+      mb.appendChild(g);
+      box.appendChild(mb);
     }
   }
 
@@ -2731,18 +3372,32 @@ function transientNote(title, body) {
     $("cal-wd").hidden = !month;
     $("cal-grid").hidden = !month;
     $("week-grid").hidden = !week;
+    if ($("day-view")) $("day-view").hidden = !(curView === "day" && !searching);
+    if ($("year-grid")) $("year-grid").hidden = !(curView === "year" && !searching);
     $("agenda-list").hidden = !agenda;
     $("search-results").hidden = !searching;
   }
 
+  var VIEWS = ["day", "week", "month", "year", "agenda"];
   function setView(v) {
+    if (VIEWS.indexOf(v) === -1) v = "month";
     curView = v;
-    ["month", "week", "agenda"].forEach(function (k) {
+    VIEWS.forEach(function (k) {
       var b = $("vw-" + k);
-      if (b) b.classList.toggle("active", k === v);
+      if (b) {
+        b.classList.toggle("active", k === v);
+        b.setAttribute("aria-pressed", k === v ? "true" : "false");
+      }
     });
+    var base = selDate || todayYMD();
     if (v === "week") {
-      weekAnchor = mondayOf(selDate || todayYMD());
+      weekAnchor = mondayOf(base);
+    }
+    if (v === "day") { if (!selDate) selDate = base; }
+    if (v === "month" || v === "year") {
+      var p = base.split("-");
+      viewYear = +p[0];
+      if (v === "month") viewMonth = +p[1] - 1;
     }
     if (v === "agenda") { agendaStart = todayYMD(); agendaLimitDays = AGENDA_STEP; }
     renderAll();
@@ -2755,12 +3410,14 @@ function transientNote(title, body) {
     if (searching) { renderSearch(); return; }
     if (curView === "month") { renderWeekdays(); renderGrid(); }
     else if (curView === "week") { renderWeek(); }
+    else if (curView === "day") { renderDayView(); }
+    else if (curView === "year") { renderYear(); }
     else if (curView === "agenda") { renderAgenda(); }
     phonePublish();
   }
 
   // View switcher + search wiring (guarded — stale HTML cannot crash)
-  ["month", "week", "agenda"].forEach(function (k) {
+  VIEWS.forEach(function (k) {
     var b = $("vw-" + k);
     if (b) b.addEventListener("click", function () { setSearch(""); setView(k); });
   });
@@ -2799,10 +3456,11 @@ function transientNote(title, body) {
   function renderChipsToggle() {
     var btn = $("lbl-toggle");
     if (!btn) return;
-    var all = state.labels.length + FEED_LABELS.length;
+    var all = state.labels.length + FEED_LABELS.length + state.subs.length;
     var on = 0;
     state.labels.forEach(function (l) { if (labelVisible(l.id)) on++; });
     FEED_LABELS.forEach(function (fl) { if (labelVisible(fl.id)) on++; });
+    state.subs.forEach(function (x) { if (labelVisible("sub-" + x.id)) on++; });
     btn.textContent = "";
     var name = document.createElement("span");
     name.className = "lbl-tg-name";
@@ -2860,6 +3518,28 @@ function transientNote(title, body) {
       });
       row.appendChild(fc);
     });
+    // Wave 8: one chip per subscribed calendar (its own colour).
+    state.subs.forEach(function (x) {
+      var lid = "sub-" + x.id, sl = subLabel(x.id);
+      var sc = document.createElement("button");
+      sc.type = "button";
+      sc.className = "chip chip-sub" + (labelVisible(lid) ? "" : " off");
+      var sdot = document.createElement("span");
+      sdot.className = "chip-dot";
+      sdot.style.background = x.color;
+      sc.appendChild(sdot);
+      sc.appendChild(document.createTextNode(sl.name));
+      var se = subCache[x.id];
+      if (se && se.err) sc.title = subErrText(se);
+      sc.addEventListener("click", function () {
+        labelVis[lid] = !labelVisible(lid);
+        saveFeedVis(lid);
+        renderChips();
+        renderAll();
+        renderDay();
+      });
+      row.appendChild(sc);
+    });
     var mg = document.createElement("button");
     mg.type = "button";
     mg.className = "chip chip-manage";
@@ -2879,8 +3559,15 @@ function transientNote(title, body) {
     renderDay();
   }
 
-  function timeSpan(e) {
-    if (e.start === null) return t("ev.alltime");
+  function timeSpan(e, day) {
+    if (!e.start) return t("ev.alltime");
+    // A timed event over several days: its start on the first day,
+    // its end on the last, "all day" in between.
+    if (day && e.dateEnd && e.dateEnd > e.date) {
+      if (day === e.date) return e.start + " →";
+      if (day < e.dateEnd) return t("ev.alltime");
+      return "→ " + (e.end || e.start);
+    }
     return e.start + (e.end ? " – " + e.end : "");
   }
 
@@ -2893,7 +3580,7 @@ function transientNote(title, body) {
 
     var time = document.createElement("span");
     time.className = "ev-time";
-    time.textContent = timeSpan(e);
+    time.textContent = timeSpan(e, dayYmd);
 
     var main = document.createElement("div");
     main.className = "ev-main";
@@ -2930,6 +3617,13 @@ function transientNote(title, body) {
         .replace("{b}", String(sp.days));
       main.appendChild(cont);
     }
+    var tzn = tzNote(e);
+    if (tzn) {
+      var tzl = document.createElement("div");
+      tzl.className = "ev-cont ev-tz";
+      tzl.textContent = "◷ " + tzn;
+      main.appendChild(tzl);
+    }
     if (e.location) {
       var loc = document.createElement("div");
       loc.className = "ev-note ev-loc map-link";
@@ -2953,35 +3647,11 @@ function transientNote(title, body) {
     }
     li.appendChild(time);
     li.appendChild(main);
-    (function (ev) {
-      li.addEventListener("click", function () {
-        // Wave 4: feed rows are read-only — one click deep-links
-        // to the owning app (Contacts/Cycle/Mood), never the
-        // event dialog.
-        if (ev._feed) { openFeedRow(ev); return; }
-        // Series occurrence → chooser first (this occurrence vs
-        // the whole series). Saved overrides are plain events.
-        if (validRecur(ev.recur)) showSerChooser(ev, dayYmd);
-        else openDlg(ev);
-      });
-      // Wave 3 drag & drop (desktop): plain, SINGLE-day events +
-      // overrides only. Series anchors and multi-day spans are
-      // NOT draggable — moving a span by a mouse gesture would
-      // silently redefine its duration.
-      if (!ev._feed && !validRecur(ev.recur) && !ev.dateEnd) {
-        li.draggable = true;
-        li.addEventListener("dragstart", function (de) {
-          try {
-            de.dataTransfer.setData("text/plain", "cal-ev:" + ev.id);
-            de.dataTransfer.effectAllowed = "move";
-          } catch (e2) {}
-          li.classList.add("dragging");
-        });
-        li.addEventListener("dragend", function () {
-          li.classList.remove("dragging");
-        });
-      }
-    })(e);
+    // Feed rows open their app; a series asks "this occurrence or the
+    // whole series" first. Drag & drop (desktop) moves any own event
+    // onto a day of the Month or Week view (series ask first too).
+    li.addEventListener("click", function () { openRow(e, dayYmd); });
+    dragSource(li, e, dayYmd);
     return li;
   }
 
@@ -3048,6 +3718,21 @@ function transientNote(title, body) {
   // Selection follows the viewed month: the day panel always shows
   // a date that is actually on screen (Add targets the visible day).
   function navStep(dir) {
+    if (curView === "day") {
+      var nd = dAdd(selDate || todayYMD(), dir);
+      var np = nd.split("-");
+      viewYear = +np[0];
+      viewMonth = +np[1] - 1;
+      selectDay(nd);
+      return;
+    }
+    if (curView === "year") {
+      viewYear += dir;
+      var sp0 = (selDate || todayYMD()).split("-");
+      var sm = +sp0[1] - 1;
+      selectDay(ymd(viewYear, sm, Math.min(+sp0[2], dimOfMonth(viewYear, sm))));
+      return;
+    }
     if (curView === "week") {
       weekAnchor = dAdd(weekAnchor, dir * 7);
       // Η επιλογή ταξιδεύει στην ΙΔΙΑ μέρα της εβδομάδας (shift 7
@@ -3114,26 +3799,187 @@ function transientNote(title, body) {
   var dlgMode = null;
   var pendingOverride = null;
 
-  function dlgReadRecur() {
-    var sel = $("ev-repeat");
-    if (!sel) return null;
-    var v = sel.value;                  // "" | "D-1" | "W-1" | "W-2" | "M-1" | "Y-1"
-    if (!v) return null;
-    var p = v.split("-");
-    var r = { freq: p[0], interval: p[1] === "2" ? 2 : 1 };
-    var untilRaw = $("ev-until") ? $("ev-until").value : "";
-    if (/^\d{4}-\d{2}-\d{2}$/.test(untilRaw)) r.until = untilRaw;
-    return sanitizeRecur(r);
+  // The dialog's start day (the event's own date; new: the selected day).
+  function dlgDate() {
+    var v = $("ev-date") ? $("ev-date").value : "";
+    return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : (selDate || todayYMD());
   }
 
-  // Multi-day end date: valid only when Repeat = None. An empty
-  // or equal-to-anchor value = plain single-day event.
+  /* Repeat (wave 5). The select offers presets built from the start
+     day (e.g. "Monthly on the last Friday"); "Custom…" opens every N
+     days / weeks / months / years, weekdays, and day-of-month or
+     Nth-weekday. "Ends": never, on a date, or after N times. */
+  function repPresets(date) {
+    var wd = OCC.wdOf(date), L = LANG === "el" ? "el" : "en";
+    var nth = OCC.posOf(date, false), last = OCC.posOf(date, true) === -1;
+    var list = [
+      { k: "D", r: { freq: "D" } },
+      { k: "W", r: { freq: "W" }, txt: t("rep.weeklyOn").replace("{d}", WD_FULL[L][wd]) },
+      { k: "WD", r: { freq: "W", byday: [1, 2, 3, 4, 5] }, txt: t("rep.weekdays") },
+      { k: "W2", r: { freq: "W", interval: 2 } },
+      { k: "M", r: { freq: "M" } }
+    ];
+    if (nth >= 1 && nth <= 4) list.push({ k: "MN", r: { freq: "M", pos: nth, wday: wd } });
+    if (last) list.push({ k: "ML", r: { freq: "M", pos: -1, wday: wd } });
+    list.push({ k: "Y", r: { freq: "Y" } });
+    list.forEach(function (p) { if (!p.txt) p.txt = recurText(sanitizeRecur(p.r, date), date); });
+    return list;
+  }
+  function ruleKey(r, date) {
+    var n = sanitizeRecur(r, date);
+    if (!n) return "";
+    n.until = null; n.exdates = []; delete n.count;
+    return JSON.stringify(n);
+  }
+  function presetOf(r, date) {
+    if (!validRecur(r)) return "";
+    var key = ruleKey(r, date), list = repPresets(date);
+    for (var i = 0; i < list.length; i++) if (ruleKey(list[i].r, date) === key) return list[i].k;
+    return "C";
+  }
+  function fillRepeatSelect(keep) {
+    var sel = $("ev-repeat");
+    if (!sel) return;
+    var date = dlgDate();
+    sel.textContent = "";
+    var add = function (k, txt) {
+      var o = document.createElement("option");
+      o.value = k;
+      o.textContent = txt;
+      sel.appendChild(o);
+    };
+    add("", t("rep.none"));
+    repPresets(date).forEach(function (p) { add(p.k, p.txt); });
+    add("C", t("rep.custom"));
+    var ok = false;
+    for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === keep) ok = true;
+    sel.value = ok ? keep : (keep ? "C" : "");
+  }
+  // Day-of-month / Nth weekday choice for monthly and yearly rules.
+  function fillMonthMode(keep) {
+    var sel = $("ev-rep-mode");
+    if (!sel) return;
+    var date = dlgDate(), wd = OCC.wdOf(date), p = date.split("-");
+    var unit = $("ev-rep-unit").value, L = LANG === "el";
+    var nth = OCC.posOf(date, false), last = OCC.posOf(date, true) === -1;
+    var mon = unit === "Y" ? (L ? " του " + MONTH_GEN_EL[+p[1] - 1] : " of " + t("months")[+p[1] - 1]) : "";
+    sel.textContent = "";
+    var add = function (k, txt) {
+      var o = document.createElement("option");
+      o.value = k;
+      o.textContent = txt;
+      sel.appendChild(o);
+    };
+    add("day", unit === "Y"
+      ? (L ? "Στις " + (+p[2]) + " " + MONTH_GEN_EL[+p[1] - 1] : "On " + (+p[2]) + " " + t("months")[+p[1] - 1])
+      : t("rep.onDay").replace("{n}", String(+p[2])));
+    var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+    if (nth >= 1 && nth <= 5) add("nth", (L ? cap(nthText(nth, wd)) : "On " + nthText(nth, wd)) + mon);
+    if (last) add("last", (L ? cap(nthText(-1, wd)) : "On " + nthText(-1, wd)) + mon);
+    sel.value = keep;
+    if (sel.value !== keep) sel.value = "day";
+  }
+  var repDays = [];
+  function renderRepDays() {
+    var row = $("ev-rep-days");
+    if (!row) return;
+    row.textContent = "";
+    var L = LANG === "el" ? "el" : "en";
+    [1, 2, 3, 4, 5, 6, 0].forEach(function (d) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "rep-day" + (repDays.indexOf(d) !== -1 ? " on" : "");
+      b.textContent = WD_SHORT[L][d];
+      b.title = WD_FULL[L][d];
+      b.setAttribute("aria-pressed", repDays.indexOf(d) !== -1 ? "true" : "false");
+      b.addEventListener("click", function () {
+        var i = repDays.indexOf(d);
+        if (i === -1) repDays.push(d);
+        else if (repDays.length > 1) repDays.splice(i, 1);    // at least one day
+        renderRepDays();
+        repSummary();
+      });
+      row.appendChild(b);
+    });
+  }
+  // Show / hide the parts of the repeat block that apply.
+  function syncRepeatUi() {
+    var k = $("ev-repeat") ? $("ev-repeat").value : "";
+    var box = $("ev-rep-custom");
+    if (box) box.hidden = k !== "C";
+    var unit = $("ev-rep-unit") ? $("ev-rep-unit").value : "D";
+    if ($("ev-rep-days")) $("ev-rep-days").hidden = !(k === "C" && unit === "W");
+    if ($("ev-rep-mode")) $("ev-rep-mode").hidden = !(k === "C" && (unit === "M" || unit === "Y"));
+    var uRow = $("ev-until-row");
+    if (uRow) uRow.className = "dlg-row" + (k ? " show" : "");
+    var ends = $("ev-ends") ? $("ev-ends").value : "";
+    if ($("ev-until")) $("ev-until").hidden = ends !== "on";
+    if ($("ev-count")) $("ev-count").hidden = ends !== "n";
+    if ($("ev-count-lab")) $("ev-count-lab").hidden = ends !== "n";
+    repSummary();
+  }
+  function repSummary() {
+    var el = $("ev-rep-sum");
+    if (!el) return;
+    var r = dlgReadRecur();
+    el.textContent = r ? recurText(r, dlgDate()) : "";
+    el.hidden = !r;
+  }
+  // Puts a rule into the dialog (null = does not repeat).
+  function setRepeatUi(r, date) {
+    var k = presetOf(r, date);
+    fillRepeatSelect(k);
+    dlgRepPrev = k;
+    var n = validRecur(r) ? OCC.everyOf(r) : 1;
+    $("ev-rep-n").value = String(n);
+    $("ev-rep-unit").value = validRecur(r) ? r.freq : "W";
+    repDays = (validRecur(r) && r.freq === "W" && Array.isArray(r.byday) && r.byday.length)
+      ? r.byday.slice() : [OCC.wdOf(date)];
+    renderRepDays();
+    fillMonthMode(validRecur(r) && r.pos ? (r.pos === -1 ? "last" : "nth") : "day");
+    var ends = !validRecur(r) ? "" : (r.count ? "n" : (r.until ? "on" : ""));
+    $("ev-ends").value = ends;
+    $("ev-until").value = validRecur(r) && r.until && !r.count ? r.until : "";
+    $("ev-count").value = validRecur(r) && r.count ? String(r.count) : "10";
+    syncRepeatUi();
+  }
+
+  function dlgReadRecur() {
+    var sel = $("ev-repeat");
+    if (!sel || !sel.value) return null;
+    var date = dlgDate(), k = sel.value, base = null;
+    if (k === "C") {
+      var n = parseInt($("ev-rep-n").value, 10);
+      if (!(n >= 1 && n <= 999)) n = 1;
+      var u = $("ev-rep-unit").value;
+      if (!/^[DWMY]$/.test(u)) u = "D";
+      base = { freq: u, interval: (u === "W" && n === 2) ? 2 : 1, every: n };
+      if (u === "W") base.byday = repDays.length ? repDays.slice() : [OCC.wdOf(date)];
+      if (u === "M" || u === "Y") {
+        var mode = $("ev-rep-mode").value;
+        if (mode === "nth") { base.pos = OCC.posOf(date, false); base.wday = OCC.wdOf(date); }
+        else if (mode === "last") { base.pos = -1; base.wday = OCC.wdOf(date); }
+      }
+    } else {
+      var list = repPresets(date);
+      for (var i = 0; i < list.length; i++) if (list[i].k === k) base = JSON.parse(JSON.stringify(list[i].r));
+      if (!base) return null;
+    }
+    var ends = $("ev-ends") ? $("ev-ends").value : "";
+    var untilRaw = $("ev-until") ? $("ev-until").value : "";
+    if (ends === "on" && /^\d{4}-\d{2}-\d{2}$/.test(untilRaw)) base.until = untilRaw;
+    if (ends === "n") {
+      var c = parseInt($("ev-count").value, 10);
+      if (c >= 1 && c <= 999) base.count = c;
+    }
+    return sanitizeRecur(base, date);
+  }
+
+  // Multi-day end date: an empty or equal-to-start value = one day.
   function dlgReadDateEnd() {
-    var row = $("ev-dateend-row");
     var inp = $("ev-date-end");
-    if (!row || !inp || !inp.value) return null;
+    if (!inp || !inp.value) return null;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(inp.value)) return null;
-    if (row.className.indexOf("show") === -1) return null;   // hidden → stale
     return inp.value;
   }
 
@@ -3169,14 +4015,14 @@ function transientNote(title, body) {
     return false;
   }
 
-  // Chooser: recurring event clicked in the day panel → ask which
-  // scope before opening the dialog. Override clones (already
-  // split off) are plain events and skip this entirely.
-  function showSerChooser(master, occYmd) {
+  // Chooser: recurring event clicked (or dropped) → ask which scope
+  // first. Override clones (already split off) are plain events and
+  // skip this entirely. cb (optional) gets "this" | "all".
+  function showSerChooser(master, occYmd, question, cb) {
     var dlg = $("ser-dlg");
-    if (!dlg) { openDlg(master, "master"); return; }   // stale HTML — safe fallback
-    $("ser-q").textContent = t("ser.edit.q");
-    serCb = function (which) {
+    if (!dlg) { if (cb) cb("all"); else openDlg(master, "master"); return; }   // stale HTML — safe fallback
+    $("ser-q").textContent = question || t("ser.edit.q");
+    serCb = cb ? function (which) { if (which) cb(which); } : function (which) {
       if (which === "this") openDlgOccurrence(master, occYmd);
       else if (which === "all") openDlg(master, "master");
       // which === null → backdrop dismissal: pure cancel, nothing opens
@@ -3190,19 +4036,21 @@ function transientNote(title, body) {
     openDlg(master, "occ");
   }
 
-  // Series chooser wiring + reminder select options + until-row
-  // toggle — all guarded so a stale index.html cannot crash the app.
+  // Series chooser wiring + reminder select options + repeat block
+  // wiring — all guarded so a stale index.html cannot crash the app.
   if ($("ser-this") && $("ser-all")) {
     $("ser-this").addEventListener("click", function () {
       $("ser-dlg").close();
-      if (serCb) serCb("this");
+      var cb = serCb; serCb = null;
+      if (cb) cb("this");
     });
     $("ser-all").addEventListener("click", function () {
       $("ser-dlg").close();
-      if (serCb) serCb("all");
+      var cb = serCb; serCb = null;
+      if (cb) cb("all");
     });
     $("ser-dlg").addEventListener("click", function (ev) {
-      if (ev.target === this) { this.close(); if (serCb) serCb(null); }
+      if (ev.target === this) { this.close(); var cb = serCb; serCb = null; if (cb) cb(null); }
     });
     $("ser-dlg").addEventListener("cancel", function () {
       serCb = null;   // Esc: dismissed — never act on the stale callback
@@ -3221,19 +4069,98 @@ function transientNote(title, body) {
       remSel.appendChild(o);
     });
   }
-  if ($("ev-repeat")) {
-    $("ev-repeat").addEventListener("change", function () {
-      var uRow = $("ev-until-row");
-      if (uRow) uRow.className = "dlg-row" + (this.value ? " show" : "");
-      // Multi-day end is the OPPOSITE face: visible only on
-      // Repeat = None (a series defines its own boundary via Until).
-      var deRow = $("ev-dateend-row");
-      if (deRow) deRow.className = "dlg-row" + (this.value ? "" : " show");
-      var sh = $("ev-spanhint");
-      // Series → κρυφό. Επιστροφή σε None → ξαναδείχνεται, αλλά
-      // ΜΟΝΟ αν το openDlg γέμισε πραγματικά το κείμενο.
-      if (sh) sh.hidden = !!this.value || !sh.textContent;
+  if ($("ev-repeat") && $("ev-rep-unit")) {
+    ["D", "W", "M", "Y"].forEach(function (u) {
+      var o = document.createElement("option");
+      o.value = u;
+      o.textContent = t("rep.u." + u);
+      $("ev-rep-unit").appendChild(o);
     });
+    [["", "rep.ends.never"], ["on", "rep.ends.on"], ["n", "rep.ends.n"]].forEach(function (x) {
+      var o = document.createElement("option");
+      o.value = x[0];
+      o.textContent = t(x[1]);
+      $("ev-ends").appendChild(o);
+    });
+    $("ev-repeat").addEventListener("change", function () {
+      if (this.value === "C") {
+        // Custom starts from what the preset said (or weekly).
+        var r = sanitizeRecur(JSON.parse(JSON.stringify(
+          (repPresets(dlgDate()).filter(function (p) { return p.k === dlgRepPrev; })[0] || { r: { freq: "W" } }).r)), dlgDate());
+        $("ev-rep-n").value = String(OCC.everyOf(r));
+        $("ev-rep-unit").value = r.freq;
+        repDays = r.freq === "W" && r.byday ? r.byday.slice() : [OCC.wdOf(dlgDate())];
+        renderRepDays();
+        fillMonthMode(r.pos ? (r.pos === -1 ? "last" : "nth") : "day");
+      }
+      dlgRepPrev = this.value;
+      syncRepeatUi();
+    });
+    $("ev-rep-unit").addEventListener("change", function () { fillMonthMode($("ev-rep-mode").value); syncRepeatUi(); });
+    ["ev-rep-n", "ev-rep-mode", "ev-until", "ev-count"].forEach(function (id) {
+      $(id).addEventListener("input", repSummary);
+      $(id).addEventListener("change", repSummary);
+    });
+    $("ev-ends").addEventListener("change", function () {
+      if (this.value === "on" && !$("ev-until").value) $("ev-until").value = dAdd(dlgDate(), 30);
+      syncRepeatUi();
+    });
+  }
+  var dlgRepPrev = "";
+  // A new start day re-labels the presets ("Monthly on the 2nd Tuesday").
+  if ($("ev-date")) {
+    $("ev-date").addEventListener("change", function () {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(this.value)) return;
+      var keep = $("ev-repeat").value;
+      fillRepeatSelect(keep);
+      if ($("ev-rep-unit").value === "W" && repDays.length === 1) repDays = [OCC.wdOf(this.value)];
+      renderRepDays();
+      fillMonthMode($("ev-rep-mode").value);
+      syncRepeatUi();
+    });
+  }
+
+  /* Time zone (wave 5): "" = this device's zone (the default). The
+     list is the browser's IANA zones when it can tell them. */
+  var TZ_FALLBACK = ["UTC", "Europe/London", "Europe/Lisbon", "Europe/Paris", "Europe/Berlin", "Europe/Rome",
+    "Europe/Madrid", "Europe/Amsterdam", "Europe/Athens", "Europe/Istanbul", "Europe/Kiev", "Europe/Moscow",
+    "Africa/Cairo", "Africa/Johannesburg", "Asia/Dubai", "Asia/Kolkata", "Asia/Bangkok", "Asia/Shanghai",
+    "Asia/Singapore", "Asia/Tokyo", "Asia/Seoul", "Australia/Sydney", "Pacific/Auckland", "America/St_Johns",
+    "America/Halifax", "America/New_York", "America/Chicago", "America/Denver", "America/Phoenix",
+    "America/Los_Angeles", "America/Anchorage", "Pacific/Honolulu", "America/Mexico_City", "America/Bogota",
+    "America/Sao_Paulo", "America/Argentina/Buenos_Aires"];
+  var tzFilled = false;
+  function fillTzSelect(keep) {
+    var sel = $("ev-tz");
+    if (!sel) return;
+    if (!tzFilled) {
+      tzFilled = true;
+      var list = null;
+      try { if (typeof Intl.supportedValuesOf === "function") list = Intl.supportedValuesOf("timeZone"); } catch (e) { list = null; }
+      if (!list || !list.length) list = TZ_FALLBACK.slice();
+      var o0 = document.createElement("option");
+      o0.value = "";
+      o0.textContent = t("tz.device").replace("{z}", OCC.deviceZone() || "?");
+      sel.appendChild(o0);
+      list.forEach(function (z) {
+        if (typeof z !== "string" || !validTzName(z)) return;
+        var o = document.createElement("option");
+        o.value = z;
+        o.textContent = z.replace(/_/g, " ");
+        sel.appendChild(o);
+      });
+    }
+    if (keep && validTzName(keep)) {
+      var has = false;
+      for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === keep) has = true;
+      if (!has) {
+        var ox = document.createElement("option");
+        ox.value = keep;
+        ox.textContent = keep.replace(/_/g, " ");
+        sel.appendChild(ox);
+      }
+      sel.value = keep;
+    } else sel.value = "";
   }
 
   function renderDlgLabels() {
@@ -3305,13 +4232,23 @@ function transientNote(title, body) {
     try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; }
     catch (e) { return null; }
   }
+  // An event as seen here on one occurrence (local times), for the
+  // Mail / Send texts.
+  function localView(ev, occYmd) {
+    return viewOf(ev, OCC.instance(ev, occYmd || ev.date));
+  }
   function sharePayload(ev, occYmd) {
-    var d = { id: ev.id, t: ev.title || t("ev.untitled"), d: occYmd || ev.date, l: ev.location, x: ev.note };
-    if (ev.start) { d.s = ev.start; if (ev.end) d.e = ev.end; }
-    if (!occYmd && ev.dateEnd) d.de = ev.dateEnd;
+    var v = localView(ev, occYmd);
+    var d = { id: ev.id, t: ev.title || t("ev.untitled"), d: v.date, l: ev.location, x: ev.note };
+    if (v.start) { d.s = v.start; if (v.end) d.e = v.end; }
+    if (v.dateEnd && v.dateEnd > v.date && (!occYmd || !v.start || v.end)) d.de = v.dateEnd;
     if (!occYmd && validRecur(ev.recur)) {
-      d.r = { f: ev.recur.freq, i: ev.recur.interval === 2 ? 2 : 1 };
+      d.r = { f: ev.recur.freq, i: OCC.everyOf(ev.recur) === 2 && ev.recur.freq === "W" ? 2 : 1 };
       if (ev.recur.until) d.r.u = ev.recur.until;
+      // A rule the short form cannot say travels as RRULE text too.
+      var rr = OCC.toRrule(ev);
+      var simple = OCC.toRrule({ date: ev.date, recur: { freq: ev.recur.freq, interval: d.r.i, until: ev.recur.until, exdates: [] } });
+      if (rr && rr !== simple) d.r.x = rr;
     }
     if (occYmd) d.id = ev.id + "-" + occYmd.replace(/-/g, "");
     return d;
@@ -3338,47 +4275,26 @@ function transientNote(title, body) {
     dlgMode = mode || null;
     if (mode !== "occ") pendingOverride = null;   // kept by openDlgOccurrence
     editingId = (mode === "occ") ? null : (existing ? existing.id : null);
+    var occ = (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : null;
     $("ev-dlg-title").textContent = t(existing ? "ev.dlg.edit" : "ev.dlg.new");
     $("ev-title").value = existing ? existing.title : "";
+    // Days: the event's own (an occurrence: its own day; new: the
+    // selected day). A span keeps its length.
+    var dDate = existing ? (occ || existing.date) : (selDate || todayYMD());
+    var span = existing ? OCC.spanOf(existing) : 0;
+    if ($("ev-date")) $("ev-date").value = dDate;
+    if ($("ev-date-end")) $("ev-date-end").value = span ? dAdd(dDate, span) : "";
     $("ev-start").value = existing && existing.start ? existing.start : "09:00";
     $("ev-end").value = existing && existing.end ? existing.end : "";
     $("ev-allday").checked = existing ? existing.start === null : false;
+    fillTzSelect(existing && existing.start ? existing.tz : "");
     $("ev-allday").dispatchEvent(new Event("change"));
     $("ev-location").value = existing ? existing.location : "";
     $("ev-note").value = existing ? existing.note : "";
 
     // Repeat: masters carry it; an occurrence override starts plain.
     var r = (mode === "occ") ? null : (existing ? existing.recur : null);
-    var rv = validRecur(r) ? (r.freq + "-" + (r.interval === 2 ? 2 : 1)) : "";
-    var repSel = $("ev-repeat");
-    if (repSel) {
-      repSel.value = rv;
-      var uIn = $("ev-until");
-      if (uIn) uIn.value = (rv && r.until) ? r.until : "";
-      var uRow = $("ev-until-row");
-      if (uRow) uRow.className = "dlg-row" + (rv ? " show" : "");
-      var deRow = $("ev-dateend-row");
-      var deIn = $("ev-date-end");
-      if (deRow && deIn) {
-        // Multi-day: prefilled from the event, offered only on
-        // plain events (a series never carries a dateEnd).
-        var hasEnd = (existing && existing.dateEnd && !rv) ? existing.dateEnd : "";
-        deIn.value = hasEnd;
-        deRow.className = "dlg-row" + (rv ? "" : " show");
-      }
-    }
-    // Span hint (v0.3.1): editing an EXISTING multi-day event →
-    // warn that Save re-anchors the start to the selected day.
-    var sh = $("ev-spanhint");
-    if (sh) {
-      var bDays = (existing && existing.dateEnd && !rv)
-        ? Math.round((dparse(existing.dateEnd) - dparse(existing.date)) / 86400000) + 1
-        : 0;
-      sh.textContent = bDays
-        ? t("ev.spanHint").replace("{b}", String(bDays))
-        : "";
-      sh.hidden = !bDays;
-    }
+    if ($("ev-repeat") && $("ev-rep-unit")) setRepeatUi(validRecur(r) ? r : null, dDate);
     // Reminder: prefilled from the event (occurrence inherits master's).
     var remSel = $("ev-remind");
     if (remSel) {
@@ -3394,13 +4310,12 @@ function transientNote(title, body) {
     // QR app: a new event code from the SAVED event (shell deep link;
     // an occurrence of a series passes its own date).
     dlgQr = existing ? { from: "calendar", id: existing.id } : null;
-    if (dlgQr && mode === "occ" && pendingOverride) dlgQr.date = pendingOverride.occYmd;
+    if (dlgQr && occ) dlgQr.date = occ;
     var qrBtn = $("ev-qr");
     if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
     dlgMail = existing && shellOpenAt() && mailReady()
-      ? mailFromEvent(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : existing.date) : null;
-    dlgShare = existing && shareApi()
-      ? sharePayload(existing, (mode === "occ" && pendingOverride) ? pendingOverride.occYmd : null) : null;
+      ? mailFromEvent(localView(existing, occ), occ ? OCC.instance(existing, occ).date : OCC.instance(existing, existing.date).date) : null;
+    dlgShare = existing && shareApi() ? sharePayload(existing, occ) : null;
     var shareBtn = $("ev-share");
     if (shareBtn) shareBtn.hidden = !dlgShare;
     var mailBtn = $("ev-mail");
@@ -3421,6 +4336,7 @@ function transientNote(title, body) {
     var off = $("ev-allday").checked;
     $("ev-start").disabled = off;
     $("ev-end").disabled = off;
+    if ($("ev-tz-row")) $("ev-tz-row").hidden = off;
   });
 
   $("ev-add").addEventListener("click", function () {
@@ -3428,81 +4344,61 @@ function transientNote(title, body) {
     openDlg(null);
   });
 
+  function fieldError(id, key) {
+    var el = $(id);
+    el.classList.add("invalid");
+    el.focus();
+    transientNote(t(key));
+    setTimeout(function () { el.classList.remove("invalid"); }, 1600);
+  }
+
   $("ev-save").addEventListener("click", function () {
     var title = $("ev-title").value.trim();
-    if (!title) {
-      var ti = $("ev-title");
-      ti.classList.add("invalid");
-      ti.focus();
-      transientNote(t("ev.err.title"));
-      setTimeout(function () { ti.classList.remove("invalid"); }, 1600);
-      return;
+    if (!title) { fieldError("ev-title", "ev.err.title"); return; }
+    var date = $("ev-date") ? $("ev-date").value : (selDate || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      if ($("ev-date")) { fieldError("ev-date", "ev.err.date"); return; }
+      date = selDate || todayYMD();
     }
-    if (!selDate) { $("ev-dlg").close(); return; }
 
     var start = tpStart ? tpStart.value() : null;
     var end = tpEnd ? tpEnd.value() : null;
     if ($("ev-allday").checked) { start = null; end = null; }
-    if (start && end && end <= start) {
-      $("ev-end").classList.add("invalid");
-      $("ev-end").focus();
-      transientNote(t("ev.err.time"));
-      setTimeout(function () { $("ev-end").classList.remove("invalid"); }, 1600);
-      return;
-    }
+
+    // Multi-day: the end day must be on/after the start day. A repeat
+    // may span days too (every occurrence lasts as long).
+    var dateEnd = dlgReadDateEnd();
+    if (dateEnd && dateEnd < date) { fieldError("ev-date-end", "ev.err.dateend"); return; }
+    if (dateEnd === date) dateEnd = null;
+    if (start && end && end <= start && !dateEnd) { fieldError("ev-end", "ev.err.time"); return; }
+    var tz = (start && $("ev-tz") && validTzName($("ev-tz").value)) ? $("ev-tz").value : null;
 
     var recur = dlgReadRecur();
-    var dateEnd = null;
-    if (!recur) {
-      dateEnd = dlgReadDateEnd();
-      // Validation: end day must be on/after the anchor. The anchor
-      // for edits of plain events is the SELECTED day (date follows
-      // selDate below); for new events it IS selDate — same thing.
-      if (dateEnd && dateEnd < selDate) {
-        var deIn = $("ev-date-end");
-        deIn.classList.add("invalid");
-        deIn.focus();
-        transientNote(t("ev.err.dateend"));
-        setTimeout(function () { deIn.classList.remove("invalid"); }, 1600);
-        return;
-      }
-    }
+    // "until" before the start would kill every occurrence — drop it
+    // instead (the series stays open).
+    if (recur && recur.until && recur.until < date && !recur.count) recur.until = null;
 
     var location = $("ev-location").value.trim().slice(0, 150);
     var note = $("ev-note").value.trim().slice(0, 500);
     var remindMin = dlgReadRemind();
-
-    // "until" sanity: an end date at/before the anchor date would
-    // kill every occurrence — drop it instead (series stays open).
-    var anchorDate = selDate;
-    if (editingId) {
-      for (var ad = 0; ad < state.events.length; ad++) {
-        if (state.events[ad].id === editingId) {
-          anchorDate = state.events[ad].date;
-          break;
-        }
-      }
+    function build(id, rec, day) {
+      var span = dateEnd ? OCC.dayNum(dateEnd) - OCC.dayNum(date) : 0;
+      var o = {
+        id: id, date: day, dateEnd: span ? dAdd(day, span) : null, start: start, end: end,
+        title: title, note: note, location: location, labelId: dlgLabelId,
+        recur: rec, remindMin: remindMin, mtime: Date.now()
+      };
+      if (tz) o.tz = tz;
+      return sanitizeEvent(o);
     }
-    if (recur && recur.until && recur.until <= anchorDate) recur.until = null;
 
     // "This occurrence" save → OVERRIDE: exdate on the master, then
-    // a standalone copy here. The rest of the series is untouched.
+    // a standalone copy on its (possibly new) day. The rest of the
+    // series is untouched.
     if (dlgMode === "occ" && pendingOverride) {
       exdateMaster(pendingOverride.masterId, pendingOverride.occYmd);
-      state.events.push({
-        id: uid(),
-        date: pendingOverride.occYmd,
-        dateEnd: dateEnd,
-        start: start,
-        end: end,
-        title: title,
-        note: note,
-        location: location,
-        labelId: dlgLabelId,
-        recur: null,          // a single instance — never a series
-        remindMin: remindMin,
-        mtime: Date.now()
-      });
+      var one = build(uid(), null, date);             // a single instance — never a series
+      state.events.push(one);
       pendingOverride = null;
       dlgMode = null;
       saveState();
@@ -3512,71 +4408,36 @@ function transientNote(title, body) {
       return;
     }
 
+    var savedId = editingId || uid();
     if (editingId) {
       var found = false;
       for (var i = 0; i < state.events.length; i++) {
         if (state.events[i].id === editingId) {
-          // A series keeps its anchor date — the recurrence math
-          // depends on it. A plain event follows the selected day.
-          var isSeries = validRecur(state.events[i].recur);
-          state.events[i].title = title;
-          state.events[i].start = start;
-          state.events[i].end = end;
-          state.events[i].location = location;
-          state.events[i].note = note;
-          state.events[i].labelId = dlgLabelId;
+          var live = state.events[i];
           // CA-8: the user did not change the day but another device
           // moved the event → keep the live date.
-          var keepLiveDate = dlgBase && selDate === dlgBase.selDate &&
-                             state.events[i].date !== dlgBase.date;
-          if (!isSeries && !keepLiveDate) state.events[i].date = selDate;
-          // Plain edit: a cleared dateEnd = single-day again;
-          // series edit can never set one (recur dominates).
-          state.events[i].dateEnd = isSeries ? null : dateEnd;
-          state.events[i].recur = recur;
-          state.events[i].remindMin = remindMin;
-          state.events[i].mtime = Date.now();
+          var day = date;
+          if (dlgBase && date === dlgBase.date && live.date !== dlgBase.date) day = live.date;
+          // Excluded days ("This occurrence" edits and deletes) stay
+          // with the series when it is edited as a whole.
+          if (recur && validRecur(live.recur) && live.recur.exdates.length) {
+            recur.exdates = live.recur.exdates.slice();
+            recur = sanitizeRecur(recur, day);
+          }
+          state.events[i] = build(editingId, recur, day);
           found = true;
           break;
         }
       }
       // Edited while another device deleted it → resurrect with fresh input
       // (fresh mtime beats the tombstone, same contract as mood/time).
-      if (!found) {
-        state.events.push({
-          id: editingId,
-          date: selDate,
-          dateEnd: dateEnd,
-          start: start,
-          end: end,
-          title: title,
-          note: note,
-          location: location,
-          labelId: dlgLabelId,
-          recur: recur,
-          remindMin: remindMin,
-          mtime: Date.now()
-        });
-      }
+      if (!found) state.events.push(build(editingId, recur, date));
       // Any edit outranks a stale tombstone (no phantom deletes survive).
       state.deleted = state.deleted.filter(function (d) {
         return d.id !== editingId;
       });
     } else {
-      state.events.push({
-        id: uid(),
-        date: selDate,
-        dateEnd: dateEnd,
-        start: start,
-        end: end,
-        title: title,
-        note: note,
-        location: location,
-        labelId: dlgLabelId,
-        recur: recur,
-        remindMin: remindMin,
-        mtime: Date.now()
-      });
+      state.events.push(build(savedId, recur, date));
     }
     // Web-notification permission: Save is a legal user gesture —
     // the ONLY moment we may ask. Fire-and-forget, no-op if already
@@ -3585,10 +4446,22 @@ function transientNote(title, body) {
         Notification.permission === "default") {
       try { Notification.requestPermission(); } catch (e) {}
     }
+    // The day panel follows the event to its (new) day.
+    var shown = OCC.instance({ date: date, start: start, tz: tz }, date).date;
     saveState();
     $("ev-dlg").close();
-    renderAll();
-    renderDay();
+    var stillHere = false;
+    state.events.forEach(function (e) { if (e.id === savedId && selDate && OCC.occursOn(e, selDate)) stillHere = true; });
+    if (!stillHere && shown !== selDate) {
+      var sp2 = shown.split("-");
+      viewYear = +sp2[0];
+      viewMonth = +sp2[1] - 1;
+      if (curView === "week") weekAnchor = mondayOf(shown);
+      selectDay(shown);
+    } else {
+      renderAll();
+      renderDay();
+    }
   });
 
   $("ev-cancel").addEventListener("click", function () { $("ev-dlg").close(); });
@@ -3711,24 +4584,84 @@ function transientNote(title, body) {
     renderDay();
   }
 
-  /* ---------- 7d. Drag & drop move + undo (Wave 3) ---------- */
-  // Plain SINGLE-DAY events + overrides only (see buildEvRow note).
-  // A move = date change + fresh mtime → travels via sync merge.
-  // Undo restores the old date with ANOTHER fresh mtime (beats
-  // everything, same resurrection contract as undoDelete).
-  var lastMoved = null;   // { id, fromYmd }
+  /* ---------- 7d. Drag & drop move + undo ----------
+     Any own event (wave 5). A plain event moves with its whole span.
+     A series asks first: "This occurrence" (it becomes its own event
+     on the new day, the series skips the old one) or "Entire series"
+     (the series starts that many days earlier / later; its weekdays,
+     "Nth weekday", exdates and end date follow). The move = fresh
+     mtime → travels via the sync merge. Undo puts the earlier copies
+     back with ANOTHER fresh mtime (same resurrection contract as
+     undoDelete) and removes a split-off occurrence. */
+  var lastMoved = null;   // { before: [copies], added: id | null, backTo }
 
-  function moveEventToDate(id, targetYmd) {
-    var ev = null;
-    for (var i = 0; i < state.events.length; i++) {
-      if (state.events[i].id === id) { ev = state.events[i]; break; }
+  function findEvent(id) {
+    for (var i = 0; i < state.events.length; i++) if (state.events[i].id === id) return state.events[i];
+    return null;
+  }
+  function cloneEv(e) { return JSON.parse(JSON.stringify(e)); }
+  function shiftedEvent(ev, delta) {
+    var n = cloneEv(ev);
+    n.date = dAdd(ev.date, delta);
+    if (n.dateEnd) n.dateEnd = dAdd(ev.dateEnd, delta);
+    if (validRecur(n.recur)) {
+      var r = n.recur;
+      r.exdates = r.exdates.map(function (d) { return dAdd(d, delta); });
+      if (r.until && !r.count) r.until = dAdd(r.until, delta);
+      if (Array.isArray(r.byday)) r.byday = r.byday.map(function (x) { return ((x + delta) % 7 + 7) % 7; });
+      if (r.pos) {
+        r.wday = OCC.wdOf(n.date);
+        r.pos = (r.pos === -1 && OCC.posOf(n.date, true) === -1) ? -1 : OCC.posOf(n.date, false);
+      }
+      n.recur = sanitizeRecur(r, n.date);
     }
-    if (!ev || validRecur(ev.recur) || ev.dateEnd) return;   // defensive: spans/series never move by drag
-    if (ev.date === targetYmd) { selectDay(targetYmd); return; }   // no-op drop on self
+    n.mtime = Date.now();
+    return sanitizeEvent(n);
+  }
+  function replaceEvent(n) {
+    for (var i = 0; i < state.events.length; i++) {
+      if (state.events[i].id === n.id) { state.events[i] = n; return; }
+    }
+    state.events.push(n);
+  }
 
-    lastMoved = { id: id, fromYmd: ev.date };
-    ev.date = targetYmd;
-    ev.mtime = Date.now();
+  // payload = "<id>|<day it was picked up on>|<its occurrence>"
+  // (an older single "<id>" still works).
+  function dropEvent(payload, targetYmd) {
+    var parts = String(payload).split("|");
+    var ev = findEvent(parts[0]);
+    if (!ev) return;
+    var from = /^\d{4}-\d{2}-\d{2}$/.test(parts[1] || "") ? parts[1] : ev.date;
+    var occ = /^\d{4}-\d{2}-\d{2}$/.test(parts[2] || "") ? parts[2] : ev.date;
+    var delta = OCC.dayNum(targetYmd) - OCC.dayNum(from);
+    if (!delta) { selectDay(targetYmd); return; }                 // no-op drop on self
+    if (!validRecur(ev.recur)) {
+      lastMoved = { before: [cloneEv(ev)], added: null, backTo: from };
+      replaceEvent(shiftedEvent(ev, delta));
+      afterMove(targetYmd);
+      return;
+    }
+    showSerChooser(ev, occ, t("ser.move.q"), function (which) {
+      var live = findEvent(ev.id);
+      if (!live || !validRecur(live.recur)) return;
+      lastMoved = { before: [cloneEv(live)], added: null, backTo: from };
+      if (which === "this") {
+        var one = cloneEv(live);
+        one.id = uid();
+        one.recur = null;
+        one.date = occ;
+        one.dateEnd = live.dateEnd ? dAdd(occ, OCC.spanOf(live)) : null;
+        one = shiftedEvent(one, delta);
+        exdateMaster(live.id, occ);
+        state.events.push(one);
+        lastMoved.added = one.id;
+      } else {
+        replaceEvent(shiftedEvent(live, delta));
+      }
+      afterMove(targetYmd);
+    });
+  }
+  function afterMove(targetYmd) {
     saveState();
     selectDay(targetYmd);   // day panel follows — selectDay paints once
     toast(t("ev.moved"), t("undo"), undoMove);
@@ -3736,17 +4669,16 @@ function transientNote(title, body) {
 
   function undoMove() {
     if (!lastMoved) return;
-    var backTo = lastMoved.fromYmd;   // capture BEFORE nulling —
-    for (var i = 0; i < state.events.length; i++) {
-      if (state.events[i].id === lastMoved.id) {
-        state.events[i].date = backTo;
-        state.events[i].mtime = Date.now();
-        break;
-      }
-    }
+    var m = lastMoved;
     lastMoved = null;
+    var now = Date.now();
+    m.before.forEach(function (b) { b.mtime = now; replaceEvent(b); });
+    if (m.added) {
+      state.events = state.events.filter(function (e) { return e.id !== m.added; });
+      state.deleted.push({ id: m.added, mtime: now });
+    }
     saveState();
-    selectDay(backTo);   // day panel returns — selectDay paints once
+    selectDay(m.backTo);   // day panel returns — selectDay paints once
   }
 
   /* ---------- 7a. Label management dialog ---------- */
@@ -3952,11 +4884,14 @@ function transientNote(title, body) {
     if (p.orosShortcuts.handle(e)) e.stopPropagation();
   }, true);
 
-  /* ---------- 7e. ICS export (v0.3.0) ----------
+  /* ---------- 7e. ICS export ----------
      RFC 5545 subset: VEVENT with UID/DTSTART/DTEND/SUMMARY/
-     DESCRIPTION/LOCATION/RRULE/EXDATE. All-day → VALUE=DATE;
-     timed → floating local datetimes (no TZID — portable and
-     faithful for personal calendars). Text escaping per spec. */
+     DESCRIPTION/LOCATION/RRULE/EXDATE/CATEGORIES/VALARM. All-day →
+     VALUE=DATE; timed → floating local datetimes, or TZID=<IANA> for
+     an event with its own time zone (no VTIMEZONE block: calendar
+     apps know the IANA names). RRULE from occur.js toRrule (every N,
+     weekdays, Nth / last weekday, COUNT or UNTIL, month-end clamp as
+     BYMONTHDAY=28…31;BYSETPOS=-1). Text escaping per spec. */
   function icsEsc(s) {
     return String(s == null ? "" : s)
       .replace(/\\/g, "\\\\")
@@ -3969,54 +4904,67 @@ function transientNote(title, body) {
     if (!hm) return d;                       // VALUE=DATE form
     return d + "T" + hm.replace(":", "") + "00";
   }
+  function icsUtc(ms) {
+    return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  }
+  // Pure: one stored event → its VEVENT lines.
+  function icsEventLines(e) {
+    var L = [];
+    L.push("BEGIN:VEVENT");
+    L.push("UID:" + icsEsc(e.id) + "@oros.calendar");
+    // 2000-01-01 fallback mtime as a stable STAMP source
+    L.push("DTSTAMP:" + icsUtc(e.mtime || 946684800000));
+    var tz = e.start && e.tz && OCC.tzValid(e.tz) ? e.tz : "";
+    var tzp = tz ? ";TZID=" + tz : "";
+    if (e.start === null) {
+      // all-day: DTEND is exclusive in RFC 5545 → +1 day
+      var endDate = e.dateEnd ? dAdd(e.dateEnd, 1) : dAdd(e.date, 1);
+      L.push("DTSTART;VALUE=DATE:" + icsDt(e.date));
+      L.push("DTEND;VALUE=DATE:" + icsDt(endDate));
+    } else {
+      L.push("DTSTART" + tzp + ":" + icsDt(e.date, e.start));
+      L.push("DTEND" + tzp + ":" + icsDt(e.dateEnd || e.date, e.end || e.start));
+    }
+    L.push("SUMMARY:" + icsEsc(e.title || t("ev.untitled")));
+    if (e.note) L.push("DESCRIPTION:" + icsEsc(e.note));
+    if (e.location) L.push("LOCATION:" + icsEsc(e.location));
+    if (validRecur(e.recur)) {
+      L.push("RRULE:" + OCC.toRrule(e, {
+        until: function (u) {
+          if (!e.start) return u.replace(/-/g, "");
+          // UNTIL matches DTSTART: UTC with a zone, local otherwise.
+          return tz ? icsUtc(OCC.wallToMs(u, "23:59", tz) + 59000) : u.replace(/-/g, "") + "T235959";
+        }
+      }));
+      if (e.recur.exdates.length) {
+        if (e.start) {
+          L.push("EXDATE" + tzp + ":" +
+            e.recur.exdates.map(function (d) { return icsDt(d, e.start); }).join(","));
+        } else {
+          L.push("EXDATE;VALUE=DATE:" +
+            e.recur.exdates.map(function (d) { return icsDt(d); }).join(","));
+        }
+      }
+    }
+    var lb = e.labelId ? labelById(e.labelId) : null;
+    if (lb) L.push("CATEGORIES:" + icsEsc(lb.name));
+    if (typeof e.remindMin === "number" && e.remindMin > 0) {
+      L.push("BEGIN:VALARM");
+      L.push("ACTION:DISPLAY");
+      L.push("TRIGGER:-PT" + e.remindMin + "M");
+      L.push("DESCRIPTION:" + icsEsc(e.title || t("ev.untitled")));
+      L.push("END:VALARM");
+    }
+    L.push("END:VEVENT");
+    return L;
+  }
   function exportICS() {
     var L = [];
     L.push("BEGIN:VCALENDAR");
     L.push("VERSION:2.0");
     L.push("PRODID:-//orOS//Calendar//EN");
     L.push("CALSCALE:GREGORIAN");
-
-    state.events.forEach(function (e) {
-      L.push("BEGIN:VEVENT");
-      L.push("UID:" + icsEsc(e.id) + "@oros.calendar");
-      // 2000-01-01 fallback mtime as a stable STAMP source
-      L.push("DTSTAMP:" + new Date(e.mtime || 946684800000).toISOString()
-        .replace(/[-:]/g, "").replace(/\.\d+/, ""));
-      if (e.start === null) {
-        // all-day: DTEND is exclusive in RFC 5545 → +1 day
-        var endDate = e.dateEnd ? dAdd(e.dateEnd, 1) : dAdd(e.date, 1);
-        L.push("DTSTART;VALUE=DATE:" + icsDt(e.date));
-        L.push("DTEND;VALUE=DATE:" + icsDt(endDate));
-      } else {
-        L.push("DTSTART:" + icsDt(e.date, e.start));
-        L.push("DTEND:" + icsDt(e.dateEnd || e.date, e.end || e.start));
-      }
-      L.push("SUMMARY:" + icsEsc(e.title || t("ev.untitled")));
-      if (e.note) L.push("DESCRIPTION:" + icsEsc(e.note));
-      if (e.location) L.push("LOCATION:" + icsEsc(e.location));
-      if (validRecur(e.recur)) {
-        var FREQ_MAP = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
-        var rr = "RRULE:FREQ=" + FREQ_MAP[e.recur.freq];
-        if (e.recur.interval === 2) rr += ";INTERVAL=2";
-        if (e.recur.until) rr += ";UNTIL=" + icsDt(e.recur.until);
-        L.push(rr);
-        if (e.recur.exdates.length) {
-          L.push("EXDATE;VALUE=DATE:" +
-            e.recur.exdates.map(function (d) { return icsDt(d); }).join(","));
-        }
-      }
-      var lb = e.labelId ? labelById(e.labelId) : null;
-      if (lb) L.push("CATEGORIES:" + icsEsc(lb.name));
-      if (typeof e.remindMin === "number" && e.remindMin > 0) {
-        L.push("BEGIN:VALARM");
-        L.push("ACTION:DISPLAY");
-        L.push("TRIGGER:-PT" + e.remindMin + "M");
-        L.push("DESCRIPTION:" + icsEsc(e.title || t("ev.untitled")));
-        L.push("END:VALARM");
-      }
-      L.push("END:VEVENT");
-    });
-
+    state.events.forEach(function (e) { L = L.concat(icsEventLines(e)); });
     L.push("END:VCALENDAR");
 
     var blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" });
@@ -4061,7 +5009,7 @@ function transientNote(title, body) {
   var ICS_MAX_CHARS = 5 * 1024 * 1024;
   var impPending = null;
   function sameEvent(a, b) {
-    var ka = ["date", "dateEnd", "start", "end", "title", "note", "location", "labelId", "remindMin"];
+    var ka = ["date", "dateEnd", "start", "end", "title", "note", "location", "labelId", "remindMin", "tz"];
     for (var i = 0; i < ka.length; i++) if (a[ka[i]] !== b[ka[i]]) return false;
     return JSON.stringify(a.recur) === JSON.stringify(b.recur);
   }
@@ -4086,7 +5034,7 @@ function transientNote(title, body) {
       var ev = sanitizeEvent({
         id: pe.id, date: pe.date, dateEnd: pe.dateEnd, start: pe.start, end: pe.end,
         title: pe.title, note: pe.note, location: pe.location, labelId: lid,
-        recur: pe.recur, remindMin: pe.remindMin, mtime: 0
+        recur: pe.recur, remindMin: pe.remindMin, tz: pe.tz || null, mtime: 0
       });
       if (!ev) return;
       var cur = byId[ev.id];
@@ -4395,7 +5343,8 @@ function transientNote(title, body) {
     var p = ymd.split("-");
     viewYear = +p[0];
     viewMonth = +p[1] - 1;
-    if (curView !== "month") setView("month");
+    selDate = ymd; if (curView === "agenda" || curView === "year") setView("month");
+    if (curView === "week") weekAnchor = mondayOf(ymd);
     var si = $("search-in");
     if (si) si.value = "";
     setSearch("");
@@ -4432,7 +5381,8 @@ function transientNote(title, body) {
     var pd = p.date.split("-");
     viewYear = +pd[0];
     viewMonth = +pd[1] - 1;
-    if (curView !== "month") setView("month");
+    selDate = p.date; if (curView === "agenda" || curView === "year") setView("month");
+    if (curView === "week") weekAnchor = mondayOf(p.date);
     var si = $("search-in");
     if (si) si.value = "";
     setSearch("");
@@ -4459,10 +5409,728 @@ function transientNote(title, body) {
         $("ev-date-end").value = p.dateEnd;
         $("ev-date-end").dispatchEvent(new Event("change"));
       }
+      // Wave 8 (quick add): no time said = all day; a repeat,
+      // normalised like any stored one.
+      if (p.allDay === true && !p.start) {
+        $("ev-allday").checked = true;
+        $("ev-allday").dispatchEvent(new Event("change"));
+      }
+      if (p.recur && validRecur(p.recur) && $("ev-repeat") && $("ev-rep-unit")) {
+        var rr = OCC.normRecur(p.recur, p.date);
+        if (rr) setRepeatUi(rr, p.date);
+      }
     }, 60);
   }
   window.__calNewEvent = __orosCalendarNew;
 
+
+  /* ---------- 7h. Wave 8: subscribed calendars (ICS by address) ----------
+     A subscription { id, url, name, color, mtime } is synced in the
+     slice (`subs`, union by id + the shared tombstones). Its events
+     are read from the address on THIS device and kept in the
+     device-local cache "oros-cal-subs-cache" (a feed can hold
+     thousands of events; every device fetches its own copy, so the
+     slice stays small). Reading: straight from the browser when the
+     server allows it, else through the Mail relay's "web" op, the
+     same way the Reader reads feeds (feeds/fetch.js, loaded on first
+     use). Re-read when the Calendar opens (after 30 min) and every
+     3 hours while it stays open; offline the last copy is shown. */
+  var SUBS = window.OrosCalSubs || null;
+  var SUBS_CACHE_KEY = "oros-cal-subs-cache";
+  var SUB_OPEN_AGE = 30 * 60000;
+  var SUB_EVERY = 3 * 3600000;
+  var subCache = {};                 // id → cache entry (device-local)
+  var subIdx = {};                   // id → day index (memory only)
+  var subBusy = {};                  // id → true while it is being read
+  var subNewColor = null;
+
+  function subById(id) {
+    for (var i = 0; i < state.subs.length; i++) if (state.subs[i].id === id) return state.subs[i];
+    return null;
+  }
+  // The chip / row label of a subscription (never stored).
+  function subLabel(id) {
+    var x = subById(id);
+    if (!x) return null;
+    var c = subCache[id];
+    return { id: "sub-" + id, color: x.color,
+             name: x.name || (c && c.name) || (SUBS && SUBS.hostName(x.url)) || "ICS" };
+  }
+  function fixRecur(e) { if (e.recur) e.recur = OCC.normRecur(e.recur, e.date) || null; }
+  function loadSubsCache() {
+    if (!SUBS) return;
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(SUBS_CACHE_KEY) || "null"); } catch (e) { raw = null; }
+    subCache = {};
+    subIdx = {};
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      Object.keys(raw).forEach(function (id) {
+        var c = SUBS.cleanCache(raw[id]);
+        if (!c) return;
+        c.events.forEach(fixRecur);
+        subCache[id] = c;
+      });
+    }
+  }
+  function saveSubsCache() {
+    var keep = {};
+    state.subs.forEach(function (x) { if (subCache[x.id]) keep[x.id] = subCache[x.id]; });
+    Object.keys(subCache).forEach(function (id) { if (!keep[id]) { delete subCache[id]; delete subIdx[id]; } });
+    try { localStorage.setItem(SUBS_CACHE_KEY, JSON.stringify(keep)); }
+    catch (e) { if (!quotaWarned) { quotaWarned = true; transientNote(t("toast.quota")); } }
+  }
+
+  function subsFeedOn(dateStr) {
+    if (!SUBS || !state.subs.length) return [];
+    var out = [];
+    state.subs.forEach(function (x) {
+      var lid = "sub-" + x.id, c = subCache[x.id];
+      if (!c || !c.events.length || !labelVisible(lid)) return;
+      var idx = subIdx[x.id] || (subIdx[x.id] = SUBS.index(c.events, OCC));
+      SUBS.rowsOn(c.events, idx, dateStr, OCC).forEach(function (r) {
+        out.push({ id: lid + "-" + r.ev.id + "-" + r.inst.occ, title: r.ev.title, location: r.ev.location, note: "",
+                   date: r.inst.date, dateEnd: r.inst.dateEnd || null, start: r.inst.start, end: r.inst.end,
+                   labelId: lid, _feed: true, _sub: { sub: x.id, ev: r.ev, inst: r.inst } });
+      });
+    });
+    return out;
+  }
+
+  // The Reader's network layer, loaded on first use.
+  var feedsLibP = null;
+  function feedsLib() {
+    if (window.orosFeedsFetch) return Promise.resolve(window.orosFeedsFetch);
+    if (feedsLibP) return feedsLibP;
+    var q = SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "";
+    function load(src) {
+      return new Promise(function (res) {
+        var sc = document.createElement("script");
+        sc.src = src + q;
+        sc.onload = function () { res(true); };
+        sc.onerror = function () { res(false); };
+        document.head.appendChild(sc);
+      });
+    }
+    feedsLibP = (window.orosFeedsCore ? Promise.resolve(true) : load("../feeds/core.js"))
+      .then(function () { return window.orosFeedsFetch ? true : load("../feeds/fetch.js"); })
+      .then(function () {
+        if (!window.orosFeedsFetch) feedsLibP = null;
+        return window.orosFeedsFetch || null;
+      });
+    return feedsLibP;
+  }
+
+  // The relay: the Reader's own address when it has one, else Mail's
+  // (feeds/fetch.js falls back to Mail's by itself).
+  function readerRelay() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-feeds-data") || "null");
+      var e = d && d.set && d.set.relay;
+      return e && typeof e.v === "string" ? e.v : "";
+    } catch (err) { return ""; }
+  }
+  function refreshSub(x) {
+    if (!SUBS || !x || subBusy[x.id]) return Promise.resolve();
+    var id = x.id, url = x.url, now = Date.now();
+    var prev = subCache[id] && subCache[id].url === url ? subCache[id] : null;
+    subBusy[id] = true;
+    renderSubsList();
+    return feedsLib().then(function (F) {
+      if (!F) throw { code: "lib" };
+      return F.fetchOne(url, { accept: "text/calendar, text/plain;q=0.9, */*;q=0.5", timeout: 20000, relay: readerRelay });
+    }).then(function (r) {
+      if (r.status < 200 || r.status > 299) throw { code: "http", n: r.status };
+      var text = r.text || "";
+      if (text.length > ICS_MAX_CHARS) throw { code: "too-big" };
+      if (!/BEGIN:VCALENDAR/i.test(text.slice(0, 4096))) throw { code: "notics" };
+      var res = SUBS.fromIcs(text, todayYMD(), window.OrosIcs);
+      res.events.forEach(fixRecur);
+      return { url: url, at: now, ok: now, err: "", n: 0, name: res.name, total: res.total,
+               dropped: res.dropped, events: res.events };
+    }).catch(function (e) {
+      var keep = prev || { url: url, at: 0, ok: 0, err: "", n: 0, name: "", total: 0, dropped: 0, events: [] };
+      keep.at = now;
+      keep.err = (e && e.code) ? String(e.code).slice(0, 40) : "other";
+      keep.n = e && typeof e.n === "number" ? e.n : 0;
+      return keep;
+    }).then(function (entry) {
+      delete subBusy[id];
+      if (!subById(id)) { renderSubsList(); return; }       // removed meanwhile
+      subCache[id] = entry;
+      subIdx[id] = SUBS.index(entry.events, OCC);
+      saveSubsCache();
+      renderChips();
+      renderAll();
+      renderDay();
+      renderSubsList();
+    });
+  }
+  function subErrText(c) {
+    var e = c.err;
+    if (e === "offline") return t("subs.err.offline");
+    if (e === "norelay" || e === "cors") return t("subs.err.norelay");
+    if (e === "http") return t("subs.err.http").replace("{n}", String(c.n || "?"));
+    if (e === "notics" || e === "type") return t("subs.err.notics");
+    if (e === "too-big") return t("subs.err.big");
+    if (e === "timeout") return t("subs.err.timeout");
+    return t("subs.err.other").replace("{e}", e);
+  }
+  // Read the subscriptions whose copy is older than maxAge (or that
+  // have none, or whose address changed), one after the other.
+  function subsDue(maxAge, onlyErr) {
+    if (!SUBS || !state.subs.length) return;
+    var now = Date.now();
+    var list = state.subs.filter(function (x) {
+      var c = subCache[x.id];
+      if (subBusy[x.id]) return false;
+      if (!c || c.url !== x.url) return true;
+      if (onlyErr) return !!c.err;
+      return SUBS.due(c, now, maxAge);
+    });
+    list.reduce(function (p, x) {
+      return p.then(function () { return refreshSub(x); });
+    }, Promise.resolve());
+  }
+  // After a pull: new subscriptions are read now, removed ones drop
+  // their copy.
+  function subsAfterChange() {
+    if (!SUBS) return;
+    saveSubsCache();
+    renderChips();
+    subsDue(SUB_EVERY);
+    renderSubsList();
+  }
+  function subsBoot() {
+    if (!SUBS) return;
+    loadSubsCache();
+    setTimeout(function () { subsDue(SUB_OPEN_AGE); }, 1200);
+    setInterval(function () { subsDue(SUB_EVERY); }, 10 * 60000);
+    window.addEventListener("online", function () { subsDue(SUB_EVERY, true); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") subsDue(SUB_EVERY);
+    });
+  }
+
+  // ----- The subscriptions window -----
+  function nextSubColor() {
+    var used = {};
+    state.labels.forEach(function (l) { used[l.color] = 1; });
+    state.subs.forEach(function (x) { used[x.color] = 1; });
+    for (var i = 0; i < LABEL_PALETTE.length; i++) if (!used[LABEL_PALETTE[i]]) return LABEL_PALETTE[i];
+    return LABEL_PALETTE[state.subs.length % LABEL_PALETTE.length];
+  }
+  function renderSubColors() {
+    var wrap = $("sub-colors");
+    if (!wrap) return;
+    wrap.textContent = "";
+    LABEL_PALETTE.forEach(function (c) {
+      var sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "lbl-swatch" + (subNewColor === c ? " active" : "");
+      sw.style.background = c;
+      sw.setAttribute("aria-label", c);
+      sw.setAttribute("aria-pressed", subNewColor === c ? "true" : "false");
+      sw.addEventListener("click", function () { subNewColor = c; renderSubColors(); });
+      wrap.appendChild(sw);
+    });
+  }
+  function subMsg(text, err) {
+    var p = $("sub-msg");
+    if (!p) return;
+    p.textContent = text || "";
+    p.hidden = !text;
+    p.classList.toggle("err", !!err);
+  }
+  function fmtStamp(ms) {
+    try {
+      return new Date(ms).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+        { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+    } catch (e) { return ""; }
+  }
+  function subStatus(x) {
+    if (subBusy[x.id]) return t("subs.wait");
+    var c = subCache[x.id];
+    if (!c || (!c.ok && !c.err)) return t("subs.never");
+    if (!c.ok) return subErrText(c);
+    var s = t("subs.ok").replace("{n}", String(c.events.length)).replace("{t}", fmtStamp(c.ok));
+    if (c.dropped) s += " · " + t("subs.more").replace("{n}", String(c.dropped));
+    if (c.err) s += " · " + t("subs.lasterr").replace("{e}", subErrText(c));
+    return s;
+  }
+  function stampSub(x) {
+    x.mtime = Date.now();
+    saveState();
+    renderChips();
+    renderAll();
+    renderDay();
+  }
+  function removeSub(x) {
+    var cached = subCache[x.id];
+    state.subs = state.subs.filter(function (y) { return y.id !== x.id; });
+    state.deleted = state.deleted.filter(function (d) { return d.id !== x.id; });
+    state.deleted.push({ id: x.id, mtime: Date.now() });
+    saveState();
+    saveSubsCache();
+    renderChips();
+    renderAll();
+    renderDay();
+    renderSubsList();
+    toast(t("subs.removed"), t("undo"), function () {
+      if (subById(x.id)) return;
+      state.deleted = state.deleted.filter(function (d) { return d.id !== x.id; });
+      state.subs.push({ id: x.id, url: x.url, name: x.name, color: x.color, mtime: Date.now() });
+      if (cached) { subCache[x.id] = cached; delete subIdx[x.id]; }
+      saveState();
+      saveSubsCache();
+      renderChips();
+      renderAll();
+      renderDay();
+      renderSubsList();
+    });
+  }
+  function renderSubsList() {
+    var ul = $("subs-list"), dlg = $("subs-dlg");
+    if (!ul || !dlg || !dlg.open) return;
+    ul.textContent = "";
+    if (!state.subs.length) {
+      var li0 = document.createElement("li");
+      li0.className = "empty";
+      li0.textContent = t("subs.none");
+      ul.appendChild(li0);
+      return;
+    }
+    state.subs.slice().sort(function (a, b) { return a.mtime - b.mtime || (a.id < b.id ? -1 : 1); }).forEach(function (x) {
+      var li = document.createElement("li");
+      li.className = "sub-row";
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "sub-dot";
+      dot.style.background = x.color;
+      dot.title = t("subs.color");
+      dot.setAttribute("aria-label", t("subs.color"));
+      dot.addEventListener("click", function () {
+        var i = LABEL_PALETTE.indexOf(x.color);
+        x.color = LABEL_PALETTE[(i + 1) % LABEL_PALETTE.length];
+        stampSub(x);
+        renderSubsList();
+      });
+      var main = document.createElement("div");
+      main.className = "sub-main";
+      var nm = document.createElement("input");
+      nm.type = "text";
+      nm.className = "sub-name";
+      nm.maxLength = 40;
+      nm.value = x.name;
+      nm.placeholder = subLabel(x.id).name;
+      nm.setAttribute("aria-label", t("subs.name"));
+      nm.addEventListener("change", function () {
+        var v = nm.value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40);
+        if (v === x.name) return;
+        x.name = v;
+        stampSub(x);
+      });
+      var url = document.createElement("div");
+      url.className = "sub-url";
+      url.textContent = x.url;
+      var st = document.createElement("div");
+      st.className = "sub-stat" + (subCache[x.id] && subCache[x.id].err && !subBusy[x.id] ? " err" : "");
+      st.textContent = subStatus(x);
+      main.appendChild(nm);
+      main.appendChild(url);
+      main.appendChild(st);
+      var acts = document.createElement("div");
+      acts.className = "sub-acts";
+      var rf = document.createElement("button");
+      rf.type = "button";
+      rf.className = "btn";
+      rf.textContent = t("subs.refresh");
+      rf.disabled = !!subBusy[x.id];
+      rf.addEventListener("click", function () { refreshSub(x); });
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "btn danger";
+      rm.textContent = t("subs.remove");
+      rm.addEventListener("click", function () { removeSub(x); });
+      acts.appendChild(rf);
+      acts.appendChild(rm);
+      li.appendChild(dot);
+      li.appendChild(main);
+      li.appendChild(acts);
+      ul.appendChild(li);
+    });
+  }
+  function openSubsDlg() {
+    if (!SUBS) return;
+    $("sub-url").value = "";
+    $("sub-name").value = "";
+    subNewColor = nextSubColor();
+    renderSubColors();
+    subMsg("");
+    $("subs-dlg").showModal();
+    renderSubsList();
+  }
+  function addSub() {
+    var url = SUBS.normUrl($("sub-url").value);
+    if (!url) { subMsg(t("subs.bad"), true); $("sub-url").focus(); return; }
+    for (var i = 0; i < state.subs.length; i++) {
+      if (state.subs[i].url === url) { subMsg(t("subs.dup"), true); return; }
+    }
+    var x = { id: "sub" + uid(), url: url,
+              name: $("sub-name").value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40),
+              color: subNewColor || nextSubColor(), mtime: Date.now() };
+    state.subs.push(x);
+    saveState();
+    renderChips();
+    $("sub-url").value = "";
+    $("sub-name").value = "";
+    subNewColor = nextSubColor();
+    renderSubColors();
+    subMsg("");
+    renderSubsList();
+    refreshSub(x);
+  }
+  if ($("sub-add")) {
+    $("sub-add").addEventListener("click", addSub);
+    $("sub-url").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addSub(); } });
+    $("sub-done").addEventListener("click", function () { $("subs-dlg").close(); });
+  }
+
+  // ----- A subscribed event (read-only) -----
+  var svCur = null;
+  function instWhen(inst, recur, recurDate) {
+    var w = longDate(inst.date);
+    if (inst.dateEnd && inst.dateEnd > inst.date) w += " – " + longDate(inst.dateEnd);
+    w += ", " + (inst.start ? inst.start + (inst.end ? "–" + inst.end : "") : t("ev.alltime"));
+    if (recur) w += " · " + recurText(recur, recurDate);
+    return w;
+  }
+  function openSubEvent(row) {
+    var s = row._sub, ev = s.ev, inst = s.inst, lb = subLabel(s.sub);
+    svCur = { ev: ev, inst: inst };
+    $("sv-title").textContent = ev.title || t("ev.untitled");
+    $("sv-when").textContent = instWhen(inst, ev.recur, ev.date);
+    $("sv-where").textContent = ev.location ? "▸ " + ev.location : "";
+    $("sv-where").hidden = !ev.location;
+    $("sv-note").textContent = ev.note || "";
+    $("sv-note").hidden = !ev.note;
+    $("sv-src").textContent = t("sv.from").replace("{name}", lb ? lb.name : "");
+    $("sv-dlg").showModal();
+  }
+  if ($("sv-dlg")) {
+    $("sv-close").addEventListener("click", function () { $("sv-dlg").close(); });
+    $("sv-copy").addEventListener("click", function () {
+      var c = svCur;
+      $("sv-dlg").close();
+      if (!c) return;
+      __orosCalendarNew({ date: c.inst.date, title: c.ev.title, location: c.ev.location, note: c.ev.note,
+                          start: c.inst.start || undefined, end: c.inst.end || undefined,
+                          dateEnd: c.inst.dateEnd || undefined, allDay: !c.inst.start });
+    });
+  }
+
+  /* ---------- 7i. Wave 8: quick add ----------
+     One line of words (calendar/quickadd.js, EN + EL) → the New event
+     window, filled in. Nothing is saved until Save there. */
+  var QA = window.OrosCalQuick || null;
+  function quickParse() { return QA.parse($("qa-in").value, { today: todayYMD() }); }
+  function renderQuickPrev() {
+    var dl = $("qa-prev");
+    dl.textContent = "";
+    if (!$("qa-in").value.trim()) { dl.hidden = true; return; }
+    dl.hidden = false;
+    var r = quickParse();
+    function row(k, v) {
+      var dt = document.createElement("dt");
+      dt.textContent = k;
+      var dd = document.createElement("dd");
+      dd.textContent = v;
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    }
+    row(t("qa.what"), r.title || t("ev.untitled"));
+    var when = longDate(r.date);
+    if (r.dateEnd) when += " – " + longDate(r.dateEnd);
+    when += ", " + (r.start ? r.start + (r.end ? "–" + r.end : "") : t("qa.allday"));
+    row(t("qa.when"), when);
+    if (r.recur) {
+      var rr = OCC.normRecur(r.recur, r.date);
+      if (rr) row(t("qa.rep"), recurText(rr, r.date));
+    }
+    if (r.location) row(t("qa.where"), r.location);
+  }
+  function openQuick() {
+    if (!QA) { openDlg(null); return; }
+    $("qa-in").value = "";
+    renderQuickPrev();
+    $("qa-dlg").showModal();
+    setTimeout(function () { $("qa-in").focus(); }, 30);
+  }
+  if ($("qa-dlg")) {
+    $("ev-quick").addEventListener("click", openQuick);
+    $("qa-in").addEventListener("input", renderQuickPrev);
+    $("qa-no").addEventListener("click", function () { $("qa-dlg").close(); });
+    $("qa-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!$("qa-in").value.trim()) { $("qa-in").focus(); return; }
+      var r = quickParse();
+      $("qa-dlg").close();
+      __orosCalendarNew({ date: r.date, title: r.title, location: r.location,
+                          start: r.start || undefined, end: r.end || undefined,
+                          dateEnd: r.dateEnd || undefined, allDay: !r.start, recur: r.recur || undefined });
+    });
+  }
+
+  /* ---------- 7j. Wave 8: share free times (booking link) ----------
+     Free slots of a chosen length over the next N days within the
+     hours set here, worked out on this device (calendar/free.js) from
+     your own timed events and the visible subscribed calendars. The
+     link is the shell's "Send to someone" (kind "slots",
+     share/kinds.js): the times travel inside the link, the receiver
+     picks one and gets an .ics plus a prefilled email back. */
+  var FREE = window.OrosCalFree || null;
+  var FREE_PREFS_KEY = "oros-cal-free-prefs";
+  var FREE_LENS = [15, 30, 45, 60, 90, 120];
+  var FREE_DAYS = [3, 5, 7, 14, 21, 30];
+  function freePrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(FREE_PREFS_KEY) || "null"); } catch (e) {}
+    return p && typeof p === "object" ? p : {};
+  }
+  function mailIdentity() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      var a = d && Array.isArray(d.accounts) ? d.accounts.filter(function (x) { return x && x.email; })[0] : null;
+      return a ? { name: typeof a.name === "string" ? a.name : "", email: String(a.email) } : null;
+    } catch (e) { return null; }
+  }
+  function fillSel(sel, list, val) {
+    sel.textContent = "";
+    list.forEach(function (o) {
+      var op = document.createElement("option");
+      op.value = String(o.v);
+      op.textContent = o.l;
+      sel.appendChild(op);
+    });
+    sel.value = String(val);
+    if (sel.selectedIndex < 0) sel.selectedIndex = 0;
+  }
+  function halfHours(a, b) {
+    var out = [];
+    for (var m = a; m <= b; m += 30) {
+      var v = pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+      out.push({ v: v, l: v });
+    }
+    return out;
+  }
+  function freeOpts() {
+    var now = new Date();
+    return { from: todayYMD(), days: +$("fr-days").value, len: +$("fr-len").value,
+             dayStart: $("fr-from").value, dayEnd: $("fr-to").value,
+             wdays: $("fr-wknd").checked ? [0, 1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5],
+             nowMin: now.getHours() * 60 + now.getMinutes() + 15, max: 400 };
+  }
+  function freeEvents() {
+    var list = state.events.slice();
+    state.subs.forEach(function (x) {
+      var c = subCache[x.id];
+      if (!c || !labelVisible("sub-" + x.id)) return;
+      c.events.forEach(function (e) { if (e.start) list.push(e); });
+    });
+    return list;
+  }
+  function freeCompute() { return FREE.slots(freeEvents(), freeOpts(), OCC); }
+  function renderFreeSum() {
+    var s = freeCompute(), n = 0;
+    s.forEach(function (x) { n += x.m.length; });
+    var txt = !n ? t("fr.none") : (n === 1 ? t("fr.sum1") : t("fr.sum").replace("{n}", String(n)).replace("{d}", String(s.length)));
+    if (n && !$("fr-mail").value.trim()) txt += " " + t("fr.nomail");
+    $("fr-sum").textContent = txt;
+    $("fr-go").disabled = !n;
+    return s;
+  }
+  function openFree() {
+    if (!FREE) return;
+    if (!shareApi()) { toast(t("fr.noshare")); return; }
+    var p = freePrefs(), me = mailIdentity();
+    fillSel($("fr-len"), FREE_LENS.map(function (n) {
+      return { v: n, l: n < 60 || n % 60 ? t("fr.min").replace("{n}", n) : t("fr.hours").replace("{n}", n / 60) };
+    }), FREE_LENS.indexOf(p.len) >= 0 ? p.len : 30);
+    fillSel($("fr-days"), FREE_DAYS.map(function (n) { return { v: n, l: t("fr.dayN").replace("{n}", n) }; }),
+            FREE_DAYS.indexOf(p.days) >= 0 ? p.days : 7);
+    fillSel($("fr-from"), halfHours(5 * 60, 23 * 60), /^\d{2}:\d{2}$/.test(p.from || "") ? p.from : "09:00");
+    fillSel($("fr-to"), halfHours(6 * 60, 24 * 60), /^\d{2}:\d{2}$/.test(p.to || "") ? p.to : "17:00");
+    $("fr-wknd").checked = p.wknd === true;
+    $("fr-what").value = typeof p.what === "string" ? p.what : "";
+    $("fr-name").value = typeof p.name === "string" && p.name ? p.name : (me ? me.name : "");
+    $("fr-mail").value = typeof p.mail === "string" && p.mail ? p.mail : (me ? me.email : "");
+    $("fr-loc").value = typeof p.loc === "string" ? p.loc : "";
+    renderFreeSum();
+    $("free-dlg").showModal();
+  }
+  if ($("free-dlg")) {
+    ["fr-len", "fr-days", "fr-from", "fr-to", "fr-wknd"].forEach(function (id) {
+      $(id).addEventListener("change", renderFreeSum);
+    });
+    $("fr-mail").addEventListener("input", renderFreeSum);
+    $("fr-no").addEventListener("click", function () { $("free-dlg").close(); });
+    $("fr-go").addEventListener("click", function () {
+      var s = renderFreeSum(), api = shareApi();
+      if (!s.length || !api) return;
+      var prefs = { len: +$("fr-len").value, days: +$("fr-days").value, from: $("fr-from").value, to: $("fr-to").value,
+                    wknd: $("fr-wknd").checked, what: $("fr-what").value.trim().slice(0, 120),
+                    name: $("fr-name").value.trim().slice(0, 80), mail: $("fr-mail").value.trim().slice(0, 120),
+                    loc: $("fr-loc").value.trim().slice(0, 150) };
+      try { localStorage.setItem(FREE_PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+      var data = { t: prefs.what || t("fr.what.ph"), n: prefs.name, m: prefs.mail, len: prefs.len, s: s };
+      var z = OCC.deviceZone();
+      if (z) data.tz = z;
+      if (prefs.loc) data.l = prefs.loc;
+      $("free-dlg").close();
+      api.open({ kind: "slots", data: data });
+    });
+  }
+
+  /* ---------- 7k. Wave 8: print (browser print → PDF) ----------
+     A plain, ink-friendly copy of the current view is built into
+     #print-area just before printing; the print stylesheet hides
+     everything else. Day, Week, Month, Year and Agenda. */
+  function prEl(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt !== undefined && txt !== null) e.textContent = txt;
+    return e;
+  }
+  function prLine(e, day) {
+    var li = prEl("li", "pr-ev");
+    var dot = prEl("span", "pr-dot");
+    dot.style.background = labelColor(e.labelId);
+    li.appendChild(dot);
+    li.appendChild(prEl("span", "pr-time", e.start ? timeSpan(e, day) : t("ev.alltime")));
+    var main = prEl("span", "pr-main");
+    main.appendChild(prEl("b", "", e.title || t("ev.untitled")));
+    if (e.location) main.appendChild(document.createTextNode(" · " + e.location));
+    if (e.note && !e._feed) main.appendChild(prEl("span", "pr-note", e.note));
+    li.appendChild(main);
+    return li;
+  }
+  function prDay(box, day, head) {
+    var sec = prEl("section", "pr-day");
+    if (head !== null) sec.appendChild(prEl("h2", "", head || longDate(day)));
+    var list = eventsOn(day), ul = prEl("ul", "pr-list");
+    if (!list.length) ul.appendChild(prEl("li", "pr-empty", t("ev.none")));
+    list.forEach(function (e) { ul.appendChild(prLine(e, day)); });
+    sec.appendChild(ul);
+    box.appendChild(sec);
+  }
+  function prMonth(box, y, m, compact) {
+    var tbl = prEl("table", "pr-month" + (compact ? " pr-mini" : ""));
+    if (compact) {
+      var cap = prEl("caption", "", t("months")[m]);
+      tbl.appendChild(cap);
+    }
+    var hr = prEl("tr");
+    t("wd").forEach(function (w) { hr.appendChild(prEl("th", "", compact ? w.charAt(0) : w)); });
+    var thead = prEl("thead");
+    thead.appendChild(hr);
+    tbl.appendChild(thead);
+    var tb = prEl("tbody");
+    var first = new Date(y, m, 1), lead = (first.getDay() + 6) % 7;
+    var dim = new Date(y, m + 1, 0).getDate();
+    var cells = Math.ceil((lead + dim) / 7) * 7, tr = null;
+    for (var i = 0; i < cells; i++) {
+      if (i % 7 === 0) { tr = prEl("tr"); tb.appendChild(tr); }
+      var dn = i - lead + 1;
+      var td = prEl("td");
+      if (dn < 1 || dn > dim) { td.className = "out"; tr.appendChild(td); continue; }
+      var day = ymd(y, m, dn), evs = eventsOn(day);
+      td.appendChild(prEl("span", "pr-num", String(dn)));
+      if (compact) {
+        if (evs.length) td.className = "has";
+      } else {
+        var MAX = 5;
+        evs.slice(0, MAX).forEach(function (e) {
+          td.appendChild(prEl("div", "pr-cell-ev", (e.start ? e.start + " " : "") + (e.title || t("ev.untitled"))));
+        });
+        if (evs.length > MAX) td.appendChild(prEl("div", "pr-more", t("pr.more").replace("{n}", String(evs.length - MAX))));
+      }
+      tr.appendChild(td);
+    }
+    tbl.appendChild(tb);
+    box.appendChild(tbl);
+  }
+  function buildPrint() {
+    var box = $("print-area");
+    if (!box) { box = prEl("div"); box.id = "print-area"; document.body.appendChild(box); }
+    box.textContent = "";
+    var title = prEl("h1", "pr-title");
+    box.appendChild(title);
+    var day = selDate || todayYMD();
+    if (curView === "day") {
+      title.textContent = longDate(day);
+      prDay(box, day, null);
+    } else if (curView === "week") {
+      var mon = weekAnchor || mondayOf(day);
+      title.textContent = t("pr.week").replace("{d}", longDate(mon));
+      for (var i = 0; i < 7; i++) prDay(box, dAdd(mon, i));
+    } else if (curView === "agenda") {
+      var st = agendaStart || todayYMD(), any = false;
+      title.textContent = t("pr.agenda").replace("{d}", longDate(st));
+      for (var k = 0; k < agendaLimitDays; k++) {
+        var d = dAdd(st, k);
+        if (eventsOn(d).length) { prDay(box, d); any = true; }
+      }
+      if (!any) box.appendChild(prEl("p", "pr-empty", t("pr.none")));
+    } else if (curView === "year") {
+      title.textContent = String(viewYear);
+      var grid = prEl("div", "pr-year");
+      for (var mm = 0; mm < 12; mm++) prMonth(grid, viewYear, mm, true);
+      box.appendChild(grid);
+    } else {
+      title.textContent = t("months")[viewMonth] + " " + viewYear;
+      prMonth(box, viewYear, viewMonth, false);
+    }
+    return box;
+  }
+  function doPrint() {
+    buildPrint();
+    try { window.focus(); window.print(); } catch (e) {}
+  }
+  window.addEventListener("afterprint", function () {
+    var box = $("print-area");
+    if (box) box.textContent = "";
+  });
+
+  /* ---------- 7l. Wave 8: the "More" menu ---------- */
+  function setMore(open) {
+    var m = $("more-menu"), b = $("cal-more");
+    if (!m || !b) return;
+    m.hidden = !open;
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!open) return;
+    // Keep it on screen: anchored to the button, shifted left when needed.
+    m.style.left = "0px";
+    var r = m.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+    if (r.right > vw - 8) m.style.left = Math.round(vw - 8 - r.right) + "px";
+  }
+  if ($("cal-more")) {
+    $("cal-more").textContent = t("cal.more") + " ▾";
+    $("cal-more").addEventListener("click", function (e) {
+      e.stopPropagation();
+      setMore($("more-menu").hidden);
+    });
+    document.addEventListener("click", function (e) {
+      var m = $("more-menu");
+      if (m && !m.hidden && !m.contains(e.target)) setMore(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !$("more-menu").hidden) { setMore(false); $("cal-more").focus(); }
+    });
+    $("mm-subs").hidden = !SUBS;
+    $("mm-free").hidden = !FREE;
+    $("mm-subs").addEventListener("click", function () { setMore(false); openSubsDlg(); });
+    $("mm-free").addEventListener("click", function () { setMore(false); openFree(); });
+    $("mm-print").addEventListener("click", function () { setMore(false); doPrint(); });
+  }
 
   /* ---------- 8. Boot ---------- */
   loadState();
@@ -4477,6 +6145,7 @@ function transientNote(title, body) {
   viewMonth = boot.getMonth();
   loadFeedVis();
   loadDays();
+  subsBoot();          // wave 8: subscribed calendars (cache, then re-read)
   renderChips();
   setView("month");
   selectDay(todayYMD());
@@ -4573,14 +6242,8 @@ function transientNote(title, body) {
 
   var REM_FIRED_KEY = "oros-cal-reminders-fired";
 
-  function remOccTs(e, occYmd) {
-    var p = occYmd.split("-");
-    var ts = new Date(+p[0], +p[1] - 1, +p[2], 0, 0, 0).getTime();
-    if (e.start && /^\d{2}:\d{2}$/.test(e.start)) {
-      ts += (+e.start.slice(0, 2)) * 3600000 + (+e.start.slice(3)) * 60000;
-    }
-    return ts;
-  }
+  // Start of one occurrence (occur.js: its own time zone respected).
+  function remOccTs(e, occYmd) { return OCC.startTs(e, occYmd); }
 
   function checkReminders() {
     var now = Date.now();
@@ -4680,19 +6343,19 @@ function transientNote(title, body) {
     if (typeof e.mtime !== "number" || !isFinite(e.mtime)) return null;
     var start = (typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start)) ? e.start : null;
     var end = (typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end)) ? e.end : null;
-    if (start && end && end < start) end = null;   // deterministic normalization
-    // v0.3 multi-day: same contract as sanitizeEvent — plain events
-    // only, dateEnd >= date. Identical rule on EVERY device, so the
-    // JSON tie-break stays byte-deterministic.
+    // Multi-day: same contract as sanitizeEvent (series may span too).
+    // Identical rule on EVERY device, so the JSON tie-break stays
+    // byte-deterministic.
     var dateEnd = null;
     if (typeof e.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.dateEnd)) {
-      if (!validRecur(e.recur) && e.dateEnd >= e.date) dateEnd = e.dateEnd;
+      if (e.dateEnd >= e.date) dateEnd = e.dateEnd;
     }
+    if (start && end && end < start && !(dateEnd && dateEnd > e.date)) end = null;   // deterministic normalization
     var labelId = (typeof e.labelId === "string" && e.labelId) ? e.labelId : null;
     var remindMin = (typeof e.remindMin === "number" &&
                      REMIND_PRESETS.indexOf(e.remindMin) !== -1)
       ? e.remindMin : null;
-    return {
+    var out = {
       id: e.id,
       date: e.date,
       dateEnd: dateEnd,
@@ -4702,10 +6365,12 @@ function transientNote(title, body) {
       note: (typeof e.note === "string" ? e.note : "").slice(0, 500),
       location: (typeof e.location === "string" ? e.location : "").slice(0, 150),
       labelId: labelId,
-      recur: sanitizeRecur(e.recur),
+      recur: sanitizeRecur(e.recur, e.date),
       remindMin: remindMin,
       mtime: e.mtime
     };
+    if (start && validTzName(e.tz)) out.tz = e.tz;   // last key, only when set
+    return out;
   }
   function mergeSanitizeTomb(d) {
     if (!d || typeof d !== "object") return null;
@@ -4749,6 +6414,14 @@ function transientNote(title, body) {
         byId[e.id] = e;
       }
     }
+    var subById = {};
+    function takeSub(x) {
+      var cur = subById[x.id];
+      if (!cur || x.mtime > cur.mtime ||
+          (x.mtime === cur.mtime && JSON.stringify(x) < JSON.stringify(cur))) {
+        subById[x.id] = x;
+      }
+    }
     var lblById = {};
     function takeLbl(l) {
       var cur = lblById[l.id];
@@ -4766,6 +6439,8 @@ function transientNote(title, body) {
         .map(mergeSanitizeLabel).filter(Boolean).forEach(takeLbl);
       (Array.isArray(side.events) ? side.events : [])
         .map(mergeSanitizeEv).filter(Boolean).forEach(takeEv);
+      (Array.isArray(side.subs) ? side.subs : [])
+        .map(mergeSanitizeSub).filter(Boolean).forEach(takeSub);
     });
 
     var events = [], deleted = [], labels = [];
@@ -4783,13 +6458,27 @@ function transientNote(title, body) {
       labels.push(lblById[id]);                         // survived (or renamed)
       delete tomb[id];
     });
+    // Wave 8: subscriptions share the same tombstone list (ids are
+    // unique across events, labels and subscriptions).
+    var subs = [];
+    Object.keys(subById).forEach(function (id) {
+      var tb = tomb[id];
+      if (tb && tb.mtime >= subById[id].mtime) return;
+      subs.push(subById[id]);
+      delete tomb[id];
+    });
     Object.keys(tomb).forEach(function (id) { deleted.push(tomb[id]); });
 
     // Sorted by id → identical byte output on every device
     events.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     labels.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
     deleted.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
-    return { ver: 1, labels: labels, events: events, deleted: deleted };
+    subs.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    var out = { ver: 1, labels: labels, events: events, deleted: deleted };
+    // Left out when there are none: blobs without subscriptions keep
+    // their exact bytes (no upload just for upgrading).
+    if (subs.length) out.subs = subs;
+    return out;
   }
 
   // Pull-fed setter: validates, adopts, repaints. NEVER markDirty
@@ -4813,6 +6502,7 @@ function transientNote(title, body) {
         dlgBase[key] = val;
       }
     };
+    follow("ev-date", "date", live.date);
     follow("ev-title", "title", live.title);
     follow("ev-note", "note", live.note);
     follow("ev-location", "location", live.location);
@@ -4832,12 +6522,14 @@ function transientNote(title, body) {
     var lbls = Array.isArray(data.labels)
       ? data.labels.map(sanitizeLabel).filter(Boolean)
       : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
-    state = { ver: 1, labels: lbls, events: evs, deleted: dels };
+    state = { ver: 1, labels: lbls, events: evs, deleted: dels,
+              subs: Array.isArray(data.subs) ? data.subs.map(sanitizeSub).filter(Boolean) : [] };
     // CA-10: Undo data survives a pull (R28) — undoDelete/undoMove/
     // undoExdate all work by id on the live state.
     reseedSeedNames();
     refreshOpenDlg();
     writeStore();         // no markDirty: this IS the sync result
+    subsAfterChange();    // wave 8: a new / moved subscription is read now
     // INVALIDATE ALL FEED CACHES — sync may have just pulled fresh
     // data for Contacts/Cycle/Mood/Habits/Kanban; the 1s micro-cache
     // would otherwise serve stale reads on the immediate renderAll()

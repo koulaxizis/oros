@@ -24,7 +24,7 @@ A deal has a title, a value, a stage (`New`, `Contacted`, `Proposal`, `Negotiati
 Under `Settings` › `Pipeline stages` you can rename a stage, change its default chance, move it up or down, add your own (up to 8 open stages) or hide the ones you do not use. A stage that still has deals cannot be hidden or deleted. `Won` and `Lost` stay as they are.
 
 ## Invoices and quotes
-`Invoice` on a customer's page opens [Invoices](app:invoices) with a new invoice for that customer: name, VAT ID, tax office, profession, address and contact details are filled in. `Quote` does the same in [Quote](app:quote). Open a deal to find `Invoice this deal` (won deals) and `Quote for this deal`: they add the deal as one line with its value. Nothing is saved until you press Save in that app. Quote works in EUR or USD only.
+`Invoice` on a customer's page opens [Invoices](app:invoices) with a new invoice for that customer: name, VAT ID, tax office, profession, address and contact details are filled in. `Quote` does the same in [Quote](app:quote). Open a deal to find `Invoice this deal` (won deals) and `Quote for this deal`: they add the deal as one line with its value. Nothing is saved until you press Save in that app. The quote takes the CRM's currency, whatever it is.
 
 The `Documents` tab of a customer lists their invoices with what was invoiced, paid and is still unpaid, and the quotes made for a client with the same name or VAT ID. Tap one to open it. CRM only reads them; you change them in their own app.
 

@@ -56,9 +56,9 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
     </button>
 
-    <!-- Duplicate finder (same-address bookmarks) -->
+    <!-- Tidy up (wave 35): link check, broken links, duplicate finder -->
     <button type="button" class="ctrl-btn icon" id="dupes-btn"
-            data-i18n-title="dupe.title" title="Duplicate bookmarks">
+            data-i18n-title="tools.title" title="Tidy up">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
     </button>
 
@@ -94,6 +94,10 @@
     <button class="ctrl-btn icon" id="folder-settings"
             data-i18n-title="folder.settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
   </div>
+
+  <!-- Nested folders (wave 35): path of the open folder, its
+       subfolders as chips, "New subfolder". Filled at runtime. -->
+  <nav id="crumbs" hidden data-i18n-aria="folder.path" aria-label="Folder path"></nav>
 
   <!-- Active tag filters (populated at runtime, hidden when empty) -->
   <div id="tag-filter" hidden></div>
@@ -152,6 +156,9 @@
       <label data-i18n="item.folder">Folder</label>
       <select id="f-folder"></select>
 
+      <!-- Wave 35: last link check + saved readable copy -->
+      <div id="f-extras" hidden></div>
+
       <menu>
         <button type="button" id="f-delete" class="danger" data-i18n="item.delete">Delete</button>
         <span class="spacer"></span>
@@ -170,6 +177,11 @@
 
       <label data-i18n="folder.name">Name</label>
       <input id="l-name" type="text" required>
+
+      <div id="l-parent-wrap">
+        <label for="l-parent" data-i18n="folder.parent">Inside</label>
+        <select id="l-parent"></select>
+      </div>
 
       <p class="hint" id="l-count"></p>
 
@@ -204,12 +216,48 @@
     </form>
   </dialog>
 
+  <!-- Folder picker (wave 35): every "Move to…" of a bookmark, the
+       selection or a folder. Rows are filled at runtime. -->
+  <dialog id="dlg-pick">
+    <form method="dialog" autocomplete="off">
+      <h3 id="pick-title">Move to folder</h3>
+      <div id="pick-list" role="list"></div>
+      <menu>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="cancel">Cancel</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Saved readable copy (wave 35): the article from the orOS disk,
+       sanitised again and shown in a sandboxed frame. -->
+  <section id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="rd-title">
+    <header class="rd-bar">
+      <button type="button" id="rd-back" class="rd-icon" data-i18n-title="arc.back" data-i18n-aria="arc.back" title="Back" aria-label="Back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="rd-head">
+        <div id="rd-title"></div>
+        <div id="rd-meta"></div>
+      </div>
+    </header>
+    <div class="rd-tools">
+      <button type="button" id="rd-open" data-i18n="arc.open">Original page</button>
+      <button type="button" id="rd-again" data-i18n="arc.again">Save again</button>
+      <label class="rd-img"><input type="checkbox" id="rd-img"> <span data-i18n="arc.img">Keep pictures</span></label>
+      <span class="spacer"></span>
+      <button type="button" id="rd-remove" class="danger" data-i18n="arc.remove">Remove copy</button>
+    </div>
+    <div id="rd-body"></div>
+  </section>
+
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
   <script src="../links/core.js?v=1.98.00"></script>
   <script src="../links/bookmarks.js?v=1.98.00"></script>
   <script src="platforms.js?v=1.98.00"></script>
+  <script src="core.js?v=1.98.00"></script>
   <script src="bookmarks.js?v=1.98.00"></script>
 </body>
 </html>

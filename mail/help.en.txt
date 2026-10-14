@@ -11,7 +11,7 @@ Gmail, iCloud and Yahoo need an app password: create one in your account's secur
 - Messages are listed newest first; unread ones have a dot. `Load older messages` at the bottom fetches more.
 - Tap or click a message to read it. Opening it marks it as read on the server too.
 - Replies are grouped with the message they answer into one conversation row, with the number of messages next to the sender. Click it to read the newest and see the rest under it; click again to fold it. While it is folded, selecting it selects the whole conversation. Turn grouping off with `Group messages by conversation` in the settings.
-- With two or more accounts, `All inboxes` at the top of the side panel lists the Inbox of every account together, newest first; the coloured stripe on the left of each message shows its account. Selecting, swiping, search and older messages work in each account's own Inbox.
+- With two or more accounts, `All inboxes` at the top of the side panel lists the Inbox of every account together, newest first; the coloured stripe on the left and the account's name next to the date show whose each message is. Selecting, swiping, the buttons and the keyboard work across accounts there, and each change goes to the right account; `Move to…` works on messages of one account at a time. Search and older messages work in each account's own Inbox.
 - Mail checks for new messages every couple of minutes while it's open; the refresh button (`Check for new mail`) checks now.
 - While orOS is open, a new message in an Inbox also shows a notification, even with Mail closed (checked every 3 minutes). Click it to open the message. Turn it off under Settings › Notifications › Mail.
 
@@ -33,6 +33,14 @@ Pictures from the internet are hidden at first, so the sender can't tell you ope
 ### Attachments and invitations
 Attachments are listed under the message. Tap one to open it: pictures and PDFs show a preview (PDFs up to 20 pages), and every file has `Save to device` and `Save to Files` (into the Mail folder of [Files](app:files)). An invitation shows a card with `Add to Calendar`, which opens a new event in [Calendar](app:calendar) already filled in, and `Show on the map`, which opens its place in [Maps](app:maps).
 
+### Unsubscribe
+A newsletter or mailing list that says how to leave it shows a `Mailing list` box with `Unsubscribe`:
+- If the list takes an unsubscribe e-mail, Mail shows where it goes and from which of your addresses, and `Send the unsubscribe e-mail` sends it (it is kept in `Sent`).
+- If the list has an unsubscribe page, Mail shows its address, and `Open the page` opens it in a new tab, where you may have to confirm.
+- Unsubscribe only from lists you signed up for: with spam, it just tells the sender that your address works. Use `Spam` or `Block sender` instead.
+
+>! Some lists offer a true one-click unsubscribe (RFC 8058), which the mail app sends to the list's server in the background. A web page cannot send that request to another site, and the orOS relay does not carry it, so Mail opens the page instead.
+
 ## Organise your mail
 - Under an open message, the buttons `Archive`, `Delete`, `Spam` (`Not spam` inside Spam), `Star`, `Mark as unread` and `Move to…` act on it. `Archive` uses the account's Archive folder and creates one if there is none.
 - `Delete` moves a message to Trash. Inside Trash or Spam, or on an account without a Trash folder, it becomes `Delete for good` and asks first.
@@ -41,6 +49,13 @@ Attachments are listed under the message. Tap one to open it: pictures and PDFs 
 - On a phone, swipe a message right to archive it or left to delete it.
 - `Block sender` under a message sends it to Spam and adds a rule that sends the sender's next messages there too (the Spam folder is created when missing). To unblock, delete that rule.
 - Marking a message as spam also teaches your provider's spam filter.
+
+### Snooze
+`Snooze` ([[B]]) under a message, or on selected messages, hides them until a time you pick: `Later today`, `Tomorrow`, `Next Monday` (each with its time) or any `Date and time` up to a year ahead.
+- The messages move to a `Snoozed` folder on the server (created if there is none), so they leave the Inbox on all your devices and in webmail too. `Snoozed` lists them with the time each comes back.
+- At that time they return to the folder they came from, unread. This happens while orOS is open on any of your devices, even with Mail closed; if orOS is closed everywhere, they come back as soon as it opens.
+- Inside `Snoozed`, `Unsnooze` brings a message back now and `Snooze until another time` changes its time.
+- The times are synced between your devices, so any of them can bring the messages back.
 
 ### Folders
 The folder button next to an account in the side panel opens `Folders`. `New folder` creates one at the top level or `Inside` another folder. The pencil renames a folder (its subfolders move with it) and the bin deletes it together with the messages in it, after a question; a folder with subfolders is deleted after them. Inbox, Sent, Drafts, Trash, Spam and Archive stay as they are. Rules that move mail into a renamed folder follow it; those for a deleted folder are switched off.
@@ -90,6 +105,17 @@ After `Send`, the message waits a few seconds with an `Undo` button at the botto
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
 
+## Encryption (OpenPGP)
+Mail can sign and encrypt messages with OpenPGP, the standard used by Thunderbird, Proton Mail, GnuPG and others, so only the people you write to can read them and they can tell the message really comes from you.
+- Open the gear button and press `Keys` under `Encryption (OpenPGP)`. `Create my key` makes a key for one of your accounts, locked with a `Passphrase` you choose (at least 8 characters). Nobody can recover the passphrase for you: write it down somewhere safe.
+- `Import a key` takes a key block you paste or an .asc file: the public keys of the people you write to, or your own private key from another program (one without a passphrase gets one before it is kept). A message that carries a key offers `Add to my keys`.
+- Next to each key, `Save public key` gives the file to send to others or publish, `Back up private key` saves your private key (still locked with your passphrase), and `Delete key` removes it.
+- In a new message, tick `Sign`, `Encrypt` or both. Encrypting needs the public key of every recipient; Mail names those it lacks. You are asked for your passphrase once, and the unlocked key is kept for 10 minutes while Mail is open. A reply to an encrypted message starts with `Encrypt` ticked.
+- Messages go as PGP/MIME (RFC 3156). Encrypted ones are also encrypted to you, so you can read them in `Sent`, and signed inside.
+- An encrypted message you receive shows `Decrypt`. It is decrypted on this device and only for viewing: it stays encrypted on the server and on this device. Signatures are checked by themselves when the sender's key is here (`Check signature` otherwise), and a box says whether the signature is valid, does not match, or is by a key you don't have. Both PGP/MIME and older inline messages (-----BEGIN PGP MESSAGE-----) are read.
+
+>! Your keys stay on this device: they are never synced or exported with your backup. Use `Back up private key` and import it on your other devices. If you lose the private key and its backup, encrypted mail can never be opened again.
+
 ## Use a message in other apps
 `Other apps` under an open message sends it on inside orOS:
 - `A To-Do task`: the subject becomes a task in [To-Do](app:todo), with the sender, date and text as its note; you choose the list and press `Add`.
@@ -104,7 +130,7 @@ From the other side, an email address on a contact's card in Contacts and `Email
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.
 
 ## Sync and backup
-Your accounts (without passwords), your rules, your templates, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, the open folder and `Always show plain text` stay on this device.
+Your accounts (without passwords), your rules, your templates, your snoozed messages' times, the relay address and the senders whose pictures you allow sync between your devices through [orOS sync](help:t/sync). Passwords stay sealed on each device and are never synced or exported, so a new device shows `Password needed on this device`: press `Enter password` once there. Downloaded messages, OpenPGP keys, the open folder and `Always show plain text` stay on this device.
 
 >! Removing an account removes it from orOS on all your devices.
 
@@ -113,7 +139,7 @@ Your accounts (without passwords), your rules, your templates, the relay address
 - [[Esc]] goes back to the list on a narrow screen.
 - [[/]] searches the open folder.
 - [[C]] writes a new message; with a message open, [[R]] replies, [[A]] replies to all and [[F]] forwards.
-- On the open message, or on the selected ones: [[E]] archives, [[Delete]] or [[#]] deletes, [[!]] marks as spam (or not spam), [[S]] stars, [[U]] marks as read or unread and [[V]] moves to a folder.
+- On the open message, or on the selected ones: [[E]] archives, [[Delete]] or [[#]] deletes, [[!]] marks as spam (or not spam), [[S]] stars, [[U]] marks as read or unread, [[B]] snoozes and [[V]] moves to a folder.
 
 ## Tips
 - Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing.
@@ -124,3 +150,8 @@ Your accounts (without passwords), your rules, your templates, the relay address
 - The Outbox stays on the device where it was written, and so do scheduled messages: they go out only from that device. Use `Save draft` to continue on another device.
 - Outlook.com and Hotmail accounts don't work yet; they no longer accept passwords from other apps.
 - Up to 10 accounts. Only the most recent messages are kept for offline reading.
+- Snoozed messages come back only while orOS is open on one of your devices; up to 200 can be snoozed at once. A snooze set in another mail app is not seen here.
+- In `All inboxes`, `Move to…` works on one account's messages at a time; search and older messages are per account.
+- OpenPGP encrypts the text and the files, not the subject or the addresses. Drafts saved to the server while writing an encrypted message are not encrypted.
+- OpenPGP keys stay on the device where they were made or imported. There is no key server lookup: get people's public keys from them, as a file or pasted text.
+- Unsubscribe can send the list's e-mail or open its page, not the one-click request (RFC 8058) that some lists prefer.

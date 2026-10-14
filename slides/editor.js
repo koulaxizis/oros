@@ -57,11 +57,20 @@
     return -1;
   }
   ED.indexOf = indexOf;
+  // A selection always holds whole groups.
   ED.select = function (ids) {
-    ED.sel = ids.filter(function (id) { var it = item(id); return it && it.s === ED.cur; });
+    ED.sel = C.withGroups(SL.data(), ids).filter(function (id) { var it = item(id); return it && it.s === ED.cur; });
     drawOverlay();
     SL.panels.render();
   };
+  // The selection is exactly one group (it moves, resizes and turns as one).
+  function groupSel() {
+    var sel = ED.sel.map(item).filter(Boolean);
+    if (sel.length < 2 || !sel[0].g) return null;
+    if (!sel.every(function (x) { return x.g === sel[0].g; })) return null;
+    return C.groupMembers(SL.data(), sel[0]).length === sel.length ? sel : null;
+  }
+  ED.groupSel = groupSel;
 
   function setView(v) {
     SL.text.stop(); flushNotes(); flushOutline();
@@ -165,16 +174,29 @@
       if (it.lk) n.classList.add("locked");
       ov.appendChild(n);
     });
+    badges(ov);
     // selection
-    var sel = ED.sel.map(item).filter(Boolean);
-    if (sel.length === 1 && sel[0].id !== editing) {
+    var sel = ED.sel.map(item).filter(Boolean), grp = groupSel();
+    if (grp) {
+      grp.forEach(function (x) { var b0 = el("div", "selbox multi"); place(b0, x); ov.appendChild(b0); });
+      var gb = bounds(grp), glk = grp.some(function (x) { return x.lk; });
+      var box0 = el("div", "selbox group" + (glk ? " locked" : ""));
+      place(box0, { x: gb.x, y: gb.y, w: gb.w, h: gb.h, r: 0 });
+      if (!glk) {
+        ["nw", "n", "ne", "e", "se", "s", "sw", "w"].forEach(function (h) {
+          var hd0 = el("div", "hd hd-" + h); hd0.setAttribute("data-h", h); box0.appendChild(hd0);
+        });
+        var rot0 = el("div", "hd hd-rot"); rot0.setAttribute("data-h", "rot"); box0.appendChild(rot0);
+      }
+      ov.appendChild(box0);
+    } else if (sel.length === 1 && sel[0].id !== editing) {
       var it = sel[0], box = el("div", "selbox" + (it.lk ? " locked" : ""));
       place(box, it);
       if (!it.lk) {
         ["nw", "n", "ne", "e", "se", "s", "sw", "w"].forEach(function (h) {
           var hd = el("div", "hd hd-" + h); hd.setAttribute("data-h", h); box.appendChild(hd);
         });
-        var rot = el("div", "hd hd-rot"); rot.setAttribute("data-h", "rot"); box.appendChild(rot);
+        if (it.k !== "table" && it.k !== "chart") { var rot = el("div", "hd hd-rot"); rot.setAttribute("data-h", "rot"); box.appendChild(rot); }
       }
       ov.appendChild(box);
     } else if (sel.length > 1) {
@@ -188,6 +210,22 @@
     if (editing) SL.text.place();
   }
   ED.drawOverlay = drawOverlay;
+
+  // Build animation order numbers on the objects (0: starts by itself).
+  function badges(ov) {
+    var pl = SL.Anim.plan(SL.data(), ED.cur), seen = {};
+    pl.steps.forEach(function (list, k) {
+      list.forEach(function (e) {
+        var id = e.ids[0], it = item(id);
+        if (!it || seen[id]) return;
+        seen[id] = 1;
+        var b = el("span", "anim-badge", String(k));
+        b.style.left = px(it.x); b.style.top = px(it.y);
+        b.setAttribute("aria-hidden", "true");
+        ov.appendChild(b);
+      });
+    });
+  }
 
   // ---------- 3. Pointer ----------
   var drag = null;
@@ -237,10 +275,21 @@
 
   var longTimer = null;
   function onDown(e) {
+    if (preview) { stopPreview(); return; }
     if (e.button > 0 && e.pointerType === "mouse") return;
     var hd = e.target.closest(".hd"), hit = e.target.closest(".hit");
     var p = unitsAt(e);
     if (SL.text.active() && !(hit && hit.getAttribute("data-id") === SL.text.active())) SL.text.stop();
+    var grp = hd ? groupSel() : null;
+    if (hd && grp) {
+      if (grp.some(function (x) { return x.lk; })) return;
+      e.preventDefault();
+      $("ov").setPointerCapture(e.pointerId);
+      SL.beginGesture();
+      drag = { kind: hd.getAttribute("data-h") === "rot" ? "grot" : "gsize", h: hd.getAttribute("data-h"), start: p, b: bounds(grp),
+        o: grp.map(function (x) { return JSON.parse(JSON.stringify(x)); }) };
+      return;
+    }
     if (hd) {
       var it = item(ED.sel[0]);
       if (!it || it.lk) return;
@@ -256,7 +305,8 @@
     }
     var id = hit.getAttribute("data-id"), was = ED.sel.indexOf(id) >= 0;
     if (e.shiftKey || e.ctrlKey || e.metaKey) {
-      ED.select(was ? ED.sel.filter(function (x) { return x !== id; }) : ED.sel.concat([id]));
+      var unit = C.withGroups(SL.data(), [id]);
+      ED.select(was ? ED.sel.filter(function (x) { return unit.indexOf(x) < 0; }) : ED.sel.concat(unit));
       return;
     }
     if (!was) ED.select([id]);
@@ -294,6 +344,23 @@
           if (!it) return;
           it.x = Math.round(o.x + dx + sn.dx); it.y = Math.round(o.y + dy + sn.dy);
           it.m = nw; C.touchSlide(dt, it.s, nw);
+        });
+      });
+    } else if (drag.kind === "gsize") {
+      groupResize(drag, dx, dy, e.shiftKey);
+    } else if (drag.kind === "grot") {
+      var gc = { x: drag.b.x + drag.b.w / 2, y: drag.b.y + drag.b.h / 2 };
+      var a0 = Math.atan2(drag.start.y - gc.y, drag.start.x - gc.x), a1 = Math.atan2(p.y - gc.y, p.x - gc.x);
+      var da = (a1 - a0) * 180 / Math.PI;
+      if (e.shiftKey) da = Math.round(da / 15) * 15;
+      SL.live2(function (dt, nw) {
+        drag.o.forEach(function (o) {
+          var x = dt.items[o.id];
+          if (!x) return;
+          var c = rotP(o.x + o.w / 2 - gc.x, o.y + o.h / 2 - gc.y, da);
+          x.x = Math.round(gc.x + c.x - o.w / 2); x.y = Math.round(gc.y + c.y - o.h / 2);
+          if (x.k !== "table" && x.k !== "chart") x.r = ((Math.round((o.r || 0) + da) % 360) + 540) % 360 - 180;
+          x.m = nw; C.touchSlide(dt, x.s, nw);
         });
       });
     } else if (drag.kind === "size") {
@@ -339,6 +406,29 @@
       it.m = nw; C.touchSlide(dt, it.s, nw);
     });
   }
+  // A group scales as one: every member keeps its place in the group's box.
+  function groupResize(d, dx, dy, shift) {
+    var B = d.b, h = d.h;
+    var sx = h.indexOf("e") >= 0 ? 1 : h.indexOf("w") >= 0 ? -1 : 0;
+    var sy = h.indexOf("s") >= 0 ? 1 : h.indexOf("n") === 0 ? -1 : 0;
+    var w = Math.max(10, B.w + sx * dx), hh = Math.max(10, B.h + sy * dy);
+    if (shift && sx && sy) { var k = Math.max(w / B.w, hh / B.h); w = B.w * k; hh = B.h * k; }
+    if (!sx) w = B.w;
+    if (!sy) hh = B.h;
+    var x0 = sx < 0 ? B.x + B.w - w : B.x, y0 = sy < 0 ? B.y + B.h - hh : B.y;
+    var kx = w / Math.max(1, B.w), ky = hh / Math.max(1, B.h);
+    SL.live2(function (dt, nw) {
+      d.o.forEach(function (o) {
+        var x = dt.items[o.id];
+        if (!x) return;
+        var cx = x0 + (o.x + o.w / 2 - B.x) * kx, cy = y0 + (o.y + o.h / 2 - B.y) * ky;
+        x.w = Math.max(1, Math.round(o.w * kx)); x.h = Math.max(1, Math.round(o.h * ky));
+        x.x = Math.round(cx - x.w / 2); x.y = Math.round(cy - x.h / 2);
+        x.m = nw; C.touchSlide(dt, x.s, nw);
+      });
+    });
+  }
+
   function onUp(e) {
     clearTimeout(longTimer);
     if (!drag) return;
@@ -351,6 +441,8 @@
       // a tap on a selected text box (or an empty placeholder) edits it
       if (it.k === "text" && !it.lk && (d.was || C.isEmptyPlaceholder(it))) SL.text.start(it.id);
       else if (it.k === "image" && !it.img) SL.io.placeImage(it.id);
+      else if (it.k === "table" && d.was && !it.lk) SL.dlg.table(it.id);
+      else if (it.k === "chart" && d.was && !it.lk) SL.dlg.chart(it.id);
       else drawOverlay();
       return;
     }
@@ -364,6 +456,8 @@
     if (!it) return;
     if (it.k === "text") SL.text.start(it.id);
     else if (it.k === "image") SL.io.placeImage(it.id);
+    else if (it.k === "table") SL.dlg.table(it.id);
+    else if (it.k === "chart") SL.dlg.chart(it.id);
   }
 
   // ---------- 4. Item edits, insert tools, clipboard ----------
@@ -443,8 +537,26 @@
       ED.addItem({ k: "shape", sh: kind === "ell" ? "ellipse" : "rect", x: Math.round(w / 2 - 200), y: 375, w: 400, h: 250, fill: "t:a1" });
     } else if (kind === "line") {
       ED.addItem({ k: "line", x: Math.round(w / 2 - 300), y: 499, w: 600, h: 2, st: "t:fg", sw: 6 });
-    }
+    } else if (kind === "table") SL.newTable();
+    else if (kind === "chart") SL.newChart();
   };
+
+  // Group / ungroup the selection (one undo step each).
+  ED.group = function () {
+    var ids = ED.sel.slice();
+    if (ids.length < 2 || groupSel()) return;
+    SL.op(function (dt, nw, newId) { return C.groupItems(dt, ids, nw, newId) ? undefined : false; });
+    ED.select(ids);
+  };
+  ED.ungroup = function () {
+    var ids = ED.sel.slice();
+    if (!ED.canUngroup()) return;
+    SL.op(function (dt, nw) { return C.ungroupItems(dt, ids, nw) ? undefined : false; });
+    ED.sel = ids.filter(function (id) { return !!item(id); });
+    drawOverlay(); SL.panels.render();
+  };
+  ED.canGroup = function () { return ED.sel.length > 1 && !groupSel(); };
+  ED.canUngroup = function () { return ED.sel.some(function (id) { var x = item(id); return x && x.g && C.groupMembers(SL.data(), x).length > 1; }); };
 
   ED.deleteSel = function () {
     var ids = ED.sel.slice();
@@ -481,6 +593,17 @@
         if (x.k === "text") x.b = 0;
         x = C.normItem(x);
         if (x) { dt.items[x.id] = x; made.push(x.id); }
+      });
+      // a copy is a group of its own, and its animations come last
+      C.freshGroups(made.map(function (id) { return dt.items[id]; }), newId);
+      var last = "", keys = {};
+      C.animItems(dt, ED.cur).forEach(function (x) { if (made.indexOf(x.id) < 0 && x.an.o > last) last = x.an.o; });
+      made.forEach(function (id) {
+        var x = dt.items[id];
+        if (!x.an) return;
+        var k = (x.g || x.id) + "|" + x.an.o;
+        if (!keys[k]) { last = C.posBetween(last, null); keys[k] = last; }
+        x.an.o = keys[k];
       });
       if (!made.length) return false;
       C.touchSlide(dt, ED.cur, nw);
@@ -527,21 +650,62 @@
   };
 
   // Align to the slide (one object) or to the selection (several).
+  // A group lines up as one block.
   ED.align = function (how) {
     var list = ED.sel.map(item).filter(function (x) { return x && !x.lk; });
     if (!list.length) return;
-    var ref = list.length > 1 ? bounds(list) : { x: 0, y: 0, w: W(), h: C.H };
-    ED.editItems(list.map(function (x) { return x.id; }), function (it) {
-      var b = bounds([it]), dx = 0, dy = 0;
+    var units = {}, keys = [];
+    list.forEach(function (x) { var k = x.g || x.id; if (!units[k]) { units[k] = []; keys.push(k); } units[k].push(x); });
+    var ref = keys.length > 1 ? bounds(list) : { x: 0, y: 0, w: W(), h: C.H };
+    var move = {};
+    keys.forEach(function (k) {
+      var b = bounds(units[k]), dx = 0, dy = 0;
       if (how === "al") dx = ref.x - b.x;
       if (how === "ac") dx = ref.x + ref.w / 2 - (b.x + b.w / 2);
       if (how === "ar") dx = ref.x + ref.w - (b.x + b.w);
       if (how === "at") dy = ref.y - b.y;
       if (how === "am") dy = ref.y + ref.h / 2 - (b.y + b.h / 2);
       if (how === "ab") dy = ref.y + ref.h - (b.y + b.h);
-      it.x = Math.round(it.x + dx); it.y = Math.round(it.y + dy);
+      units[k].forEach(function (x) { move[x.id] = { dx: dx, dy: dy }; });
+    });
+    ED.editItems(list.map(function (x) { return x.id; }), function (it) {
+      var m = move[it.id];
+      it.x = Math.round(it.x + m.dx); it.y = Math.round(it.y + m.dy);
     });
   };
+
+  // Plays the slide's build animations on the editor canvas, click
+  // after click; any tap or key stops it.
+  var preview = null;
+  ED.previewAnim = function () {
+    var pl = SL.Anim.plan(SL.data(), ED.cur);
+    if (!pl.clicks && !pl.steps[0].length) { SL.toast(t("an.none")); return; }
+    stopPreview();
+    SL.text.stop();
+    var sid = ED.cur, step = 0, t0 = performance.now(), cv = $("cv");
+    var dpr = window.devicePixelRatio || 1, still = SL.reducedMotion();
+    preview = { raf: 0, sid: sid };
+    $("ov").classList.add("previewing");
+    function frame(now) {
+      if (!preview || ED.cur !== sid || view !== "slide") { stopPreview(); return; }
+      var tt = now - t0, end = SL.Anim.stepEnd(pl, step);
+      try { SL.renderFrame(sid, cv, Math.round(W() * scale * dpr), { step: step, t: still ? undefined : Math.min(tt, end + 1) }); } catch (e) { stopPreview(); return; }
+      if (still || tt > end + 450) {
+        if (step >= pl.clicks) { preview.raf = setTimeout(function () { stopPreview(); }, 700); return; }
+        step++; t0 = now;
+      }
+      preview.raf = requestAnimationFrame(frame);
+    }
+    preview.raf = requestAnimationFrame(frame);
+  };
+  function stopPreview() {
+    if (!preview) return;
+    cancelAnimationFrame(preview.raf); clearTimeout(preview.raf);
+    preview = null;
+    $("ov").classList.remove("previewing");
+    draw();
+  }
+  ED.stopPreview = stopPreview;
 
   function nudge(dx, dy) {
     var ids = ED.sel.filter(function (id) { var it = item(id); return it && !it.lk; });
@@ -557,6 +721,8 @@
       has ? { label: t("it.copy"), fn: ED.copy } : null,
       { label: t("it.paste"), disabled: !clip, fn: ED.paste },
       has ? { sep: true } : null,
+      ED.canGroup() ? { label: t("gr.group"), fn: ED.group } : null,
+      ED.canUngroup() ? { label: t("gr.ungroup"), fn: ED.ungroup } : null,
       has ? { label: t("pn.front"), fn: function () { ED.arrange("front"); } } : null,
       has ? { label: t("pn.back"), fn: function () { ED.arrange("back"); } } : null,
       has ? { sep: true } : null,
@@ -844,6 +1010,7 @@
   }
   function onKey(e) {
     if ($("editor").hidden || $("dlg").open) return;
+    if (preview) { stopPreview(); if (e.key === "Escape") return; }
     var k = e.key, mod = e.ctrlKey || e.metaKey;
     if (mod && !e.altKey && (k === "z" || k === "Z") && !SL.text.active() && !(typing(e) && e.target.tagName === "TEXTAREA")) {
       e.preventDefault(); if (e.shiftKey) SL.redo(); else SL.undo(); return;
@@ -863,6 +1030,7 @@
     if (mod && (k === "v" || k === "V")) { if (clip) { e.preventDefault(); ED.paste(); } return; }
     if (mod && (k === "d" || k === "D")) { e.preventDefault(); ED.duplicate(); return; }
     if (mod && (k === "a" || k === "A")) { e.preventDefault(); ED.select(curItems().map(function (x) { return x.id; })); return; }
+    if (mod && e.code === "KeyG") { e.preventDefault(); if (e.shiftKey) ED.ungroup(); else ED.group(); return; }
     if (k === "Delete" || k === "Backspace") { if (ED.sel.length) { e.preventDefault(); ED.deleteSel(); } return; }
     if (k === "Escape") { if (ED.sel.length) { e.preventDefault(); ED.select([]); } return; }
     if (k === "Enter" && ED.sel.length === 1) {
@@ -894,6 +1062,8 @@
     tb("rect", t("tool.rect"), function () { ED.insert("rect"); });
     tb("ell", t("tool.ell"), function () { ED.insert("ell"); });
     tb("line", t("tool.line"), function () { ED.insert("line"); });
+    tb("table", t("tool.table"), function () { ED.insert("table"); });
+    tb("chart", t("tool.chart"), function () { ED.insert("chart"); });
     host.appendChild(el("span", "spacer"));
     var fmt = tb("format", t("tool.format"), function () { SL.panels.toggle(); }, "tool-format");
     fmt.id = "tool-format";
@@ -1006,6 +1176,7 @@
       { label: t("more.handout"), fn: function () { SL.io.exportPdf(true); } },
       { label: t("more.png"), disabled: !ED.cur, fn: function () { SL.io.exportPng(ED.cur); } },
       { label: t("more.pkg"), fn: function () { SL.io.exportPackage(SL.deck); } },
+      { label: t("more.pptx"), fn: function () { SL.io.exportPptx(SL.deck); } },
       rec ? { sep: true } : null,
       rec ? { label: t("more.rec", { n: rec }), fn: SL.dlg.recovered } : null,
       { sep: true },

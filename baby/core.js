@@ -20,6 +20,11 @@
 //       t "ms" milestone | "vac" vaccine | "doc" doctor visit
 //       a seed milestone has key and id = kid id + "x" + key, so
 //       two devices that tick the same milestone merge into one
+//     st:   [ { id, ml, d, w, u, s?, sd?, th?, tx?, m } ]  milk stash
+//       (wave 34; the key is absent while the list is empty) · ml ·
+//       d day pumped · w "f" fridge | "z" freezer · u use-by day ·
+//       s "u" used | "x" thrown away (absent = in stock) · sd the day
+//       it was used / thrown away · th the day it was thawed
 //     prefs: { wu, tu, vu }, pm }                     units + stamp
 //   - every record: per id, newer m wins, a tombstone { id, m,
 //     del: 1 } wins ties (R5, R17); prefs travel as one record,
@@ -35,6 +40,9 @@
 //   6. Export: CSV, summary
 //   7. Reminders (rule shared with the shell engine)
 //   8. Calendar feed rows
+//   9. Milk stash (wave 34)
+// A pump session's length (wave 34) is its end e − ts (1–180 min):
+// older builds already keep e on a pump, so nothing is lost.
 // ============================================================
 (function (root) {
   "use strict";
@@ -59,6 +67,8 @@
     span:  DAY_MS,                // longest event (ts → e)
     ml:    [1, 500],              // bottle
     pump:  [1, 1000],
+    pumpMin: [1, 180],            // pump session length (minutes, kept as e − ts)
+    bag:   [1, 1000],             // one stash bag (ml)
     temp:  [340, 430],            // tenths of °C
     tummy: [1, 180],              // minutes
     g:     [300, 30000],          // grams
@@ -233,6 +243,23 @@
     return o;
   }
 
+  // wave 34: one bag of the milk stash (shared by the family, no kid)
+  function normSt(x) {
+    if (!stampOk(x)) return null;
+    if (x.del) return tomb(x);
+    if (!inRange(x.ml, LIM.bag) || !validDay(x.d) || !validDay(x.u) || (x.w !== "f" && x.w !== "z")) return null;
+    var o = { id: x.id, ml: x.ml, d: x.d, w: x.w, u: x.u };
+    if (x.s === "u" || x.s === "x") {
+      o.s = x.s;
+      if (validDay(x.sd)) o.sd = x.sd;
+    }
+    if (validDay(x.th)) o.th = x.th;
+    var tx = cleanText(x.tx, LIM.text);
+    if (tx) o.tx = tx;
+    o.m = x.m;
+    return o;
+  }
+
   function normPrefs(p) {
     p = (p && typeof p === "object") ? p : {};
     return {
@@ -262,7 +289,8 @@
     return Object.keys(best).sort(cmpStr).map(function (id) { return best[id]; });
   }
 
-  function mergeBaby(A, B) {
+  function mergeBaby(A, B) { return dropEmptySt(mergeBaby0(A, B)); }
+  function mergeBaby0(A, B) {
     var a = (A && typeof A === "object") ? A : {};
     var b = (B && typeof B === "object") ? B : {};
     var pa = isInt(a.pm) && a.pm > 0 ? a.pm : 0;
@@ -282,11 +310,15 @@
       ev: mergeList(a.ev, b.ev, normEv),
       gr: mergeList(a.gr, b.gr, normGr),
       mk: mergeList(a.mk, b.mk, normMk),
+      st: mergeList(a.st, b.st, normSt),
       prefs: prefs,
       pm: pm
     };
   }
   function normalize(x) { return mergeBaby(x, x); }
+  // wave 34: the stash list is left out while empty, so the bytes of a
+  // slice that never had a bag stay what they were (no upload at update)
+  function dropEmptySt(o) { if (o && Array.isArray(o.st) && !o.st.length) delete o.st; return o; }
   function empty() { return normalize(null); }
 
   function looksLikeData(o) {
@@ -792,7 +824,65 @@
     return out.sort(function (x, y) { return order[x.kind] - order[y.kind] || cmpStr(x.id, y.id); });
   }
 
+  // ---------- 9. Milk stash (wave 34) ----------
+  // Usual storage times for expressed breast milk (CDC guidance):
+  // fridge 4 days, freezer 6 months (best; up to 12 is acceptable),
+  // thawed in the fridge: use within 24 hours, never refreeze.
+  var STASH = { fridgeDays: 4, freezerMonths: 6, thawDays: 1 };
+  function addMonths(key, n) {
+    var d = keyDate(key), day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + n);
+    var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, last));
+    return dayKey(d);
+  }
+  function useBy(pumped, where) {
+    return where === "z" ? addMonths(pumped, STASH.freezerMonths) : addDays(pumped, STASH.fridgeDays);
+  }
+  // Thawing a freezer bag: it moves to the fridge, use within a day.
+  function thaw(bag, today) {
+    var o = JSON.parse(JSON.stringify(bag));
+    o.w = "f";
+    o.th = today;
+    o.u = addDays(today, STASH.thawDays);
+    if (bag.u < o.u) o.u = bag.u;                 // never later than it was
+    return o;
+  }
+  // Bags in stock, the one to use first on top: fridge before freezer
+  // (fridge milk keeps for days, frozen for months), then the earliest
+  // use-by, then the oldest pumped ("use oldest first").
+  function stashBags(data, today) {
+    var list = ((data && data.st) || []).filter(function (b) { return !b.del && !b.s; });
+    return list.map(function (b) {
+      return { bag: b, expired: b.u < today, soon: b.u >= today && b.u <= addDays(today, 1) };
+    }).sort(function (x, y) {
+      return (x.bag.w === y.bag.w ? 0 : (x.bag.w === "f" ? -1 : 1)) ||
+        cmpStr(x.bag.u, y.bag.u) || cmpStr(x.bag.d, y.bag.d) || cmpStr(x.bag.id, y.bag.id);
+    });
+  }
+  function stashTotals(data, today) {
+    var o = { f: { n: 0, ml: 0 }, z: { n: 0, ml: 0 }, expired: 0 };
+    stashBags(data, today).forEach(function (x) {
+      if (x.expired) { o.expired++; return; }
+      o[x.bag.w].n++;
+      o[x.bag.w].ml += x.bag.ml;
+    });
+    return o;
+  }
+  function nextBag(data, today) {
+    var list = stashBags(data, today).filter(function (x) { return !x.expired; });
+    return list.length ? list[0].bag : null;
+  }
+  // Used or thrown-away bags, newest first (the history under the list).
+  function stashDone(data) {
+    return ((data && data.st) || []).filter(function (b) { return !b.del && b.s; })
+      .sort(function (x, y) { return cmpStr(y.sd || y.d, x.sd || x.d) || cmpStr(y.id, x.id); });
+  }
+
   var API = {
+    STASH: STASH, normSt: normSt, useBy: useBy, thaw: thaw, stashBags: stashBags, stashTotals: stashTotals,
+    nextBag: nextBag, stashDone: stashDone, addMonths: addMonths,
     VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, DATA_VER: DATA_VER,
     TYPES: TYPES, TIMED: TIMED, SUBS: SUBS, LIM: LIM, DEFAULT_PREFS: DEFAULT_PREFS,
     MILESTONES: MILESTONES, MS_KEYS: MS_KEYS, ID_RE: ID_RE,

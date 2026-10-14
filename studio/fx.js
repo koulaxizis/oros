@@ -7,9 +7,14 @@
 //     translated ahead of time from its JSFX; nothing is evaluated.
 //     .github/workflows/sync-nullfx.yml opens a PR when null-jsfx
 //     changes (weekly or on demand); never edit these files by hand.
-//   - Audio: one AudioWorklet node ("null-fx-chain") per chain; live
-//     chains stay alive between plays so a reorder or a slider move
-//     does not reset them. Export builds its own in the offline context.
+//   - Audio: one AudioWorklet node per chain, Studio's own processor
+//     "studio-fx-chain" (fxchain.worklet.js: the same messages as NULL
+//     JSFX's null-fx-chain, plus key inputs for sidechain effects and
+//     AudioParams that carry automation); live chains stay alive between
+//     plays so a reorder or a slider move does not reset them. Export
+//     builds its own in the offline context.
+//   - Sidechain: an effect with key pins (Sidechain Ducker) can listen to
+//     another track (item.sc); studio.js connects that track's sound.
 //   - Latency: effects that look ahead (limiters, convolution) delay
 //     their track; the other tracks are delayed by the difference, and
 //     the playhead, takes and export allow for the total.
@@ -43,8 +48,8 @@
           if (!r.ok) throw new Error("index");
           return r.json();
         }).then(function (j) {
-          // effects with an extra input (Sidechain Ducker's key) need routing Studio does not have yet
-          catalog = (j.effects || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && e.ins <= 2 && e.outs === 2; });
+          // stereo effects, and those with a stereo key input (Sidechain Ducker)
+          catalog = (j.effects || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && (e.ins <= 2 || e.ins === 4) && e.outs === 2; });
           return catalog;
         }, function (e) { catalogP = null; throw e; });
       }
@@ -72,6 +77,8 @@
       return pageP[id];
     }
     function known(item) { return !!info(item.id); }
+    // an effect with a key input (its extra pins)
+    function hasKey(id) { var e = info(id); return !!(e && e.ins > 2); }
     function active(items) { return (items || []).filter(function (x) { return x.on && known(x); }); }
 
     // An audio file of a file slider (Convolution's IR), decoded once.
@@ -106,9 +113,19 @@
       if (!list.length) return Promise.resolve();
       var NN = window.NULLFXNode;
       if (!NN || !ctx.audioWorklet) return Promise.reject(new Error("noworklet"));
-      return Promise.all([NN.load(ctx, BASE, list)]
+      return Promise.all([NN.load(ctx, BASE, list).then(function () { return ownProc(ctx); })]
         .concat(list.map(needPage))
         .concat(Object.keys(paths).map(fileBuf)));
+    }
+    // Studio's chain processor, once per context (after the runtime)
+    var procs = typeof WeakMap !== "undefined" ? new WeakMap() : null;
+    function ownProc(ctx) {
+      var p = procs && procs.get(ctx);
+      if (!p) {
+        p = ctx.audioWorklet.addModule("fxchain.worklet.js?v=" + host.version);
+        if (procs) procs.set(ctx, p);
+      }
+      return p;
     }
     var readyIds = typeof WeakMap !== "undefined" ? new WeakMap() : null;
     function needs(chains) { return chains.some(function (items) { return (items || []).some(function (x) { return x.on; }); }); }
@@ -167,11 +184,55 @@
       });
       return out;
     }
+    // key: the input (1..8) a sidechain effect listens on, 0 for none
     function chainList(items) {
+      var n = 0;
       return active(items).map(function (x) {
-        return { uid: x.u, id: x.id, sliders: sliders(fxMeta(x.id) || { sliders: [] }, x, false), bypass: false };
+        return { uid: x.u, id: x.id, sliders: sliders(fxMeta(x.id) || { sliders: [] }, x, false), bypass: false,
+                 key: x.sc && hasKey(x.id) ? ++n : 0 };
       });
     }
+    // The key inputs of a chain: [{ sc: track id, input }]
+    function keyInputs(items) {
+      return chainList(items).filter(function (x) { return x.key; }).map(function (x) {
+        return { sc: active(items).filter(function (y) { return y.u === x.uid; })[0].sc, input: x.key };
+      });
+    }
+    // Automation lanes of this chain's sliders, each on its own AudioParam:
+    // [{ k (param a<k>), lane, map: { k, uid, i, inc, min, max } }]
+    function autoParams(items, lanes) {
+      var out = [], on = {};
+      active(items).forEach(function (x) { on[x.u] = x; });
+      (lanes || []).forEach(function (l) {
+        var f = C.laneFx(l.k);
+        if (!f || l.on === false || !l.p.length || !on[f.u] || out.length >= 16) return;
+        var FX = fxMeta(on[f.u].id), sl = FX ? FX.sliders.filter(function (q) { return q.i === f.i && !q.path; })[0] : null;
+        if (!sl) return;
+        out.push({ k: out.length, lane: l, sl: sl, map: { k: out.length, uid: f.u, i: f.i, inc: sl.inc || 0, min: sl.min, max: sl.max } });
+      });
+      return out;
+    }
+    // A chain node on Studio's processor; the same object NULLFXNode.Chain makes.
+    function makeChain(ctx, list, auto) {
+      var NN = window.NULLFXNode, ch = Object.create(NN.Chain.prototype);
+      ch.ctx = ctx;
+      ch.node = new AudioWorkletNode(ctx, "studio-fx-chain", {
+        numberOfInputs: 1 + KEY_INPUTS, numberOfOutputs: 1, outputChannelCount: [2],
+        channelCount: 2, channelCountMode: "explicit", channelInterpretation: "speakers",
+        processorOptions: { chain: list, auto: auto }
+      });
+      ch.pdc = 0; ch.waiting = {}; ch.req = 0;
+      ch.onpdc = null; ch.onerror = null; ch.onmissing = null;
+      ch.node.port.onmessage = function (e) {
+        var m = e.data || {};
+        if (m.type === "pdc") { ch.pdc = m.samples; if (ch.onpdc) ch.onpdc(m.samples); }
+        else if (m.type === "live") { var w = ch.waiting[m.req]; if (w) { delete ch.waiting[m.req]; w(m); } }
+        else if (m.type === "error") { if (ch.onerror) ch.onerror(m); }
+        else if (m.type === "missing") { if (ch.onmissing) ch.onmissing(m); }
+      };
+      return ch;
+    }
+    var KEY_INPUTS = 8;
     function sendFiles(chain, items) {
       active(items).forEach(function (x) {
         var FX = fxMeta(x.id);
@@ -195,13 +256,14 @@
     // ---------- Graph ----------
     // Puts the chain of `key` in front of `target`; returns the node to
     // feed, or null when the chain has nothing to do (or is not loaded).
-    function insert(ctx, key, items, target, offline) {
+    // lanes: the track's automation (the chain's sliders follow theirs)
+    function insert(ctx, key, items, target, offline, lanes) {
       if (!active(items).length || !isReady(ctx, [items])) return null;
-      var NN = window.NULLFXNode, rec = offline ? null : live[key];
+      var rec = offline ? null : live[key], ap = autoParams(items, lanes), map = ap.map(function (x) { return x.map; });
       if (rec && rec.ctx !== ctx) { rec.chain.disconnect(); rec = null; }
       if (!rec) {
         var ch;
-        try { ch = new NN.Chain(ctx, { chain: chainList(items) }); } catch (e) { return null; }
+        try { ch = makeChain(ctx, chainList(items), map); } catch (e) { return null; }
         ch.onerror = function (m) { host.showToast(t("fx.failed", { name: nameOf(m.id) })); };
         rec = { chain: ch, ctx: ctx, files: "" };
         if (!offline) live[key] = rec;
@@ -209,6 +271,7 @@
         rec.chain.setChain(chainList(items));
       }
       sendSliders(rec.chain, items);
+      rec.chain.send({ type: "auto", map: map });
       var fk = JSON.stringify(active(items).map(function (x) { return [x.u, x.f || null, x.s]; }));
       if (rec.files !== fk) { rec.files = fk; sendFiles(rec.chain, items); }
       try { rec.chain.node.disconnect(); } catch (e) { /* first use */ }
@@ -252,6 +315,7 @@
         if (x.u !== u) return x;
         var n = { u: x.u, id: x.id, on: x.on, s: Object.assign({}, x.s) };
         if (x.f) n.f = Object.assign({}, x.f);
+        if (x.sc) n.sc = x.sc;
         fn(n);
         return n;
       }), opts);
@@ -428,6 +492,7 @@
         li.appendChild(body);
         return li;
       }
+      if (e.ins > 2) body.appendChild(keyEl(key, x));
       if (FX.gfx) {
         var cv = canvas || el("canvas", "fx-gfx");
         cv.style.aspectRatio = FX.gfx.w + " / " + FX.gfx.h;
@@ -443,6 +508,34 @@
       body.appendChild(ctl);
       li.appendChild(body);
       return li;
+    }
+    // Sidechain: which track this effect listens to. Tracks that already
+    // listen to this one (directly or through others) are left out: a loop.
+    function keyEl(key, x) {
+      var id = "fx-" + x.u + "-key", row = el("div", "fx-row fx-key"), lab = el("label", "field");
+      lab.htmlFor = id;
+      lab.appendChild(el("span", "", t("fx.key")));
+      row.appendChild(lab);
+      var sel = el("select", ""), none = el("option", "", t("fx.keyNone"));
+      sel.id = id; none.value = ""; sel.appendChild(none);
+      var trs = C.tracksOf(host.data(), host.proj() ? host.proj().id : "");
+      trs.forEach(function (tr) {
+        if (key !== "master" && (tr.id === key || C.keyLoops(trs, key, tr.id))) return;
+        var o = el("option", "", tr.name || t("track.default", { n: "" }));
+        o.value = tr.id;
+        sel.appendChild(o);
+      });
+      sel.value = x.sc || "";
+      if (sel.value !== (x.sc || "")) sel.value = "";
+      sel.addEventListener("change", function () {
+        var v = sel.value;
+        update(key, x.u, function (n) { if (v) n.sc = v; else delete n.sc; });
+        render();
+        var f = $(id); if (f) f.focus();
+      });
+      row.appendChild(sel);
+      row.appendChild(el("p", "hint small", t("fx.keyHint")));
+      return row;
     }
     function iconBtn(cls, path, label, disabled, fn) {
       var b = el("button", "icon-btn small " + cls);
@@ -624,6 +717,21 @@
       wire: wire, open: open, render: render, loadCatalog: loadCatalog,
       ensure: ensure, preparePage: preparePage, isReady: isReady, insert: insert, setTime: setTime, disconnect: disconnect, prune: prune,
       chainLatency: chainLatency, active: active, nameOf: nameOf, isOpen: function () { return !!openKey; },
+      keyInputs: keyInputs, autoParams: autoParams, hasKey: hasKey,
+      // automatable sliders of a chain: [{ k: lane key, u, sl, name }] (loads what it needs, then onReady)
+      params: function (items, onReady) {
+        var out = [], wait = [];
+        (items || []).forEach(function (x) {
+          if (!known(x)) return;
+          var FX = fxMeta(x.id);
+          if (!FX) { wait.push(needPage(x.id)); return; }
+          FX.sliders.forEach(function (sl) {
+            if (!sl.path) out.push({ k: C.fxLaneKey(x.u, sl.i), u: x.u, sl: sl, name: nameOf(x.id) + ": " + (sl.name || ("Slider " + sl.i)) });
+          });
+        });
+        if (wait.length && onReady) Promise.all(wait).then(onReady, function () {});
+        return out;
+      },
       // for the remote (remote.js): the same edits the dialog makes, by chain key
       catalog: function () { return catalog; }, meta: needPage, fxMeta: fxMeta, chainOf: chainOf, catName: catName, valueText: valueText,
       setSlider: function (key, u, i, v) { setSlider(key, u, i, v, false); }, addTo: function (key, id) { var u = addTo(key, id); render(); return u; },

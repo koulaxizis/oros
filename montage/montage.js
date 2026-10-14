@@ -15,7 +15,8 @@
 //   - synced slice "montage" (oros-montage): MontageCore.merge
 //   - media: MontageMedia (device store; project "Sync media" copies
 //     them to the orOS disk for Vault Drive)
-//   - device-local (R10): oros-montage-prefs (zoom, export size, keep)
+//   - device-local (R10): oros-montage-prefs (zoom, export size, keep,
+//     speech language)
 // Deep link: __orosOpenAt("montage", { project } | { openFile: path | { token } })
 // Sections:
 //   1. Constants, i18n, helpers
@@ -123,6 +124,16 @@
       "sub.hint": "SRT files (and WebVTT) from YouTube, subtitle sites or other editors come in as text clips you can edit.",
       "sub.none": "No subtitles found in this file.", "sub.added": "{n} subtitles added", "sub.big": "This subtitle file is too big.",
       "sub.empty": "There are no text clips to save yet.",
+      "asr.head": "Subtitles from speech",
+      "asr.hint": "Montage listens to the project's sound and writes what is said as subtitles, on this device: the sound is not sent anywhere. Check the lines afterwards; names and quiet speech can come out wrong.",
+      "asr.need": "The first time, Montage downloads the speech model (Whisper, about {mb} MB, from Hugging Face) and the speech runtime (about {rt} MB, from this site) and keeps them on this device. After that it works offline.",
+      "asr.ready": "The speech model is on this device.", "asr.lang": "Language",
+      "asr.auto": "Find it", "asr.go": "Make subtitles", "asr.forget": "Remove the speech model",
+      "asr.gone": "The speech model was removed from this device.",
+      "asr.mixing": "Reading the sound… {p}%", "asr.download": "Downloading the speech model… {p}%",
+      "asr.working": "Writing subtitles… {p}%", "asr.none": "No speech was found in the sound.",
+      "asr.fail": "Could not make subtitles.", "asr.net": "Could not download the speech model. Check the connection and try again.",
+      "asr.long": "Only the first {m} minutes are listened to.",
       "frz.working": "Freezing the frame…", "frz.fail": "Could not read this frame.",
       "set.duck": "Lower the music when someone speaks",
       "set.duckHint": "While anything plays on the Voice row, the Music row gets quieter, then comes back.",
@@ -155,6 +166,27 @@
       "shape.rect": "Rectangle", "shape.round": "Rounded", "shape.ellipse": "Circle", "shape.triangle": "Triangle",
       "shape.star": "Star", "shape.heart": "Heart", "shape.arrow": "Arrow", "shape.bubble": "Speech bubble",
       "shp.kind": "Shape", "shp.fill": "Fill", "shp.outline": "Outline", "shp.width": "Outline width",
+      "p.curve": "Speed curve", "p.curveShort": "curve", "ramp.none": "None", "ramp.hero": "Hero", "ramp.bullet": "Bullet",
+      "ramp.montage": "Montage", "ramp.jump": "Jump cut", "ramp.flashin": "Flash in", "ramp.flashout": "Flash out", "ramp.custom": "Your own",
+      "ramp.here": "Speed at the playhead", "ramp.len": "The clip now lasts {d}.",
+      "ramp.hint": "Move the playhead along the clip and change the speed there: a point is set at that moment of the video. Between points the speed changes smoothly, in the preview and in the export.",
+      "ramp.graph": "Speed along the clip, from 0.1× at the bottom to 10× at the top",
+      "tool.chroma": "Chroma key", "ck.title": "Chroma key", "ck.on": "Remove a colour (green or blue screen)",
+      "ck.color": "Colour to remove", "ck.green": "Green", "ck.blue": "Blue", "ck.pick": "Pick from the picture",
+      "ck.pickHint": "Tap the colour to remove in the picture. Esc cancels.", "ck.tol": "Tolerance", "ck.soft": "Soft edge", "ck.spill": "Remove colour spill",
+      "ck.hint": "Put the clip on the Overlay row over another video or picture, or on Main over the colour behind the picture (Project settings).",
+      "p.border": "Border", "p.borderCol": "Border colour", "p.corners": "Rounded corners",
+      "tool.reframe": "Reframe", "rf.title": "Reframe",
+      "rf.hint": "When the picture is cropped to the project's shape, this point stays in the middle. Auto reframe follows faces (where this browser can find them) or what moves, and sets keys you can still change here.",
+      "rf.auto": "Auto reframe", "rf.clear": "Remove reframing", "rf.x": "Focus left – right", "rf.y": "Focus top – bottom",
+      "rf.keys": "{n} keys", "rf.none": "Centred (no keys yet)", "rf.working": "Finding the subject… {p}%",
+      "rf.done": "Reframed: {n} keys", "rf.allDone": "{n} clips reframed", "rf.fail": "Could not read this clip.",
+      "rf.faces": "Faces found by the browser are followed.", "rf.motion": "This browser cannot find faces here: Montage follows what moves, near the middle.",
+      "set.reframe": "Reframe all clips", "set.reframeHint": "Auto reframe every video and picture on the Main row, so the subject stays in view in this shape.",
+      "tool.denoise": "Reduce noise", "nr.title": "Reduce noise",
+      "nr.hint": "Takes steady background noise (fans, traffic, hum, wind) out of this clip's sound, on this device. Montage makes a cleaned copy of the sound and keeps it like your other media; the original stays as it is.",
+      "nr.go": "Reduce noise", "nr.on": "Noise is reduced on this clip.", "nr.off": "Back to the original sound",
+      "nr.working": "Cleaning the sound… {p}%", "nr.done": "Noise reduced", "nr.fail": "Could not clean this sound.",
       "rel.today": "today", "rel.yesterday": "yesterday"
     },
     el: {
@@ -230,6 +262,16 @@
       "sub.hint": "Αρχεία SRT (και WebVTT) από το YouTube, σελίδες υποτίτλων ή άλλα προγράμματα μπαίνουν ως κείμενα που μπορείς να αλλάξεις.",
       "sub.none": "Δεν βρέθηκαν υπότιτλοι σε αυτό το αρχείο.", "sub.added": "Προστέθηκαν {n} υπότιτλοι", "sub.big": "Αυτό το αρχείο υποτίτλων είναι πολύ μεγάλο.",
       "sub.empty": "Δεν υπάρχουν ακόμα κείμενα για αποθήκευση.",
+      "asr.head": "Υπότιτλοι από την ομιλία",
+      "asr.hint": "Το Μοντάζ ακούει τον ήχο του έργου και γράφει όσα λέγονται ως υπότιτλους, σε αυτή τη συσκευή: ο ήχος δεν στέλνεται πουθενά. Έλεγξε τις γραμμές μετά· ονόματα και σιγανή ομιλία μπορεί να βγουν λάθος.",
+      "asr.need": "Την πρώτη φορά το Μοντάζ κατεβάζει το μοντέλο ομιλίας (Whisper, περίπου {mb} MB, από το Hugging Face) και το πρόγραμμα που το τρέχει (περίπου {rt} MB, από αυτόν τον ιστότοπο) και τα κρατά σε αυτή τη συσκευή. Μετά δουλεύει και χωρίς σύνδεση.",
+      "asr.ready": "Το μοντέλο ομιλίας είναι σε αυτή τη συσκευή.", "asr.lang": "Γλώσσα",
+      "asr.auto": "Αυτόματα", "asr.go": "Φτιάξε υπότιτλους", "asr.forget": "Αφαίρεση του μοντέλου ομιλίας",
+      "asr.gone": "Το μοντέλο ομιλίας αφαιρέθηκε από αυτή τη συσκευή.",
+      "asr.mixing": "Διαβάζω τον ήχο… {p}%", "asr.download": "Κατεβάζω το μοντέλο ομιλίας… {p}%",
+      "asr.working": "Γράφω υπότιτλους… {p}%", "asr.none": "Δεν βρέθηκε ομιλία στον ήχο.",
+      "asr.fail": "Δεν έγιναν υπότιτλοι.", "asr.net": "Δεν κατέβηκε το μοντέλο ομιλίας. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "asr.long": "Ακούγονται μόνο τα πρώτα {m} λεπτά.",
       "frz.working": "Παγώνω το καρέ…", "frz.fail": "Δεν διαβάστηκε αυτό το καρέ.",
       "set.duck": "Χαμήλωνε τη μουσική όταν μιλάει κάποιος",
       "set.duckHint": "Όσο παίζει κάτι στη γραμμή Φωνή, η γραμμή Μουσική χαμηλώνει και μετά ξαναδυναμώνει.",
@@ -262,6 +304,27 @@
       "shape.rect": "Ορθογώνιο", "shape.round": "Στρογγυλεμένο", "shape.ellipse": "Κύκλος", "shape.triangle": "Τρίγωνο",
       "shape.star": "Αστέρι", "shape.heart": "Καρδιά", "shape.arrow": "Βέλος", "shape.bubble": "Συννεφάκι διαλόγου",
       "shp.kind": "Σχήμα", "shp.fill": "Γέμισμα", "shp.outline": "Περίγραμμα", "shp.width": "Πάχος περιγράμματος",
+      "p.curve": "Καμπύλη ταχύτητας", "p.curveShort": "καμπύλη", "ramp.none": "Καμία", "ramp.hero": "Ήρωας", "ramp.bullet": "Σφαίρα",
+      "ramp.montage": "Μοντάζ", "ramp.jump": "Άλμα", "ramp.flashin": "Γρήγορη είσοδος", "ramp.flashout": "Γρήγορη έξοδος", "ramp.custom": "Δική σου",
+      "ramp.here": "Ταχύτητα στην κεφαλή", "ramp.len": "Το clip κρατά τώρα {d}.",
+      "ramp.hint": "Μετακίνησε την κεφαλή μέσα στο clip και άλλαξε εκεί την ταχύτητα: μπαίνει ένα σημείο σε εκείνη τη στιγμή του βίντεο. Ανάμεσα στα σημεία η ταχύτητα αλλάζει ομαλά, στην προεπισκόπηση και στην εξαγωγή.",
+      "ramp.graph": "Η ταχύτητα κατά μήκος του clip, από 0,1× κάτω έως 10× πάνω",
+      "tool.chroma": "Κλειδί χρώματος", "ck.title": "Κλειδί χρώματος", "ck.on": "Αφαίρεση ενός χρώματος (πράσινο ή μπλε φόντο)",
+      "ck.color": "Χρώμα που φεύγει", "ck.green": "Πράσινο", "ck.blue": "Μπλε", "ck.pick": "Διάλεξε από την εικόνα",
+      "ck.pickHint": "Πάτα στην εικόνα το χρώμα που θα φύγει. Το Esc ακυρώνει.", "ck.tol": "Ανοχή", "ck.soft": "Απαλή άκρη", "ck.spill": "Αφαίρεση ανταύγειας",
+      "ck.hint": "Βάλε το clip στη γραμμή Επικάλυψη πάνω από άλλο βίντεο ή φωτογραφία, ή στο Κύριο πάνω από το χρώμα πίσω από την εικόνα (Ρυθμίσεις έργου).",
+      "p.border": "Περίγραμμα", "p.borderCol": "Χρώμα περιγράμματος", "p.corners": "Στρογγυλεμένες γωνίες",
+      "tool.reframe": "Καδράρισμα", "rf.title": "Καδράρισμα",
+      "rf.hint": "Όταν η εικόνα κόβεται για να χωρέσει στο σχήμα του έργου, αυτό το σημείο μένει στη μέση. Το αυτόματο καδράρισμα ακολουθεί πρόσωπα (όπου ο browser μπορεί να τα βρει) ή ό,τι κινείται και βάζει key που μπορείς ακόμα να αλλάξεις εδώ.",
+      "rf.auto": "Αυτόματο καδράρισμα", "rf.clear": "Αφαίρεση καδραρίσματος", "rf.x": "Εστίαση αριστερά – δεξιά", "rf.y": "Εστίαση πάνω – κάτω",
+      "rf.keys": "{n} key", "rf.none": "Στο κέντρο (κανένα key ακόμα)", "rf.working": "Βρίσκω το θέμα… {p}%",
+      "rf.done": "Καδραρίστηκε: {n} key", "rf.allDone": "Καδραρίστηκαν {n} clip", "rf.fail": "Δεν διαβάστηκε αυτό το clip.",
+      "rf.faces": "Ακολουθούνται τα πρόσωπα που βρίσκει ο browser.", "rf.motion": "Αυτός ο browser δεν βρίσκει πρόσωπα εδώ: το Μοντάζ ακολουθεί ό,τι κινείται, κοντά στη μέση.",
+      "set.reframe": "Καδράρισε όλα τα clip", "set.reframeHint": "Αυτόματο καδράρισμα για κάθε βίντεο και φωτογραφία στη γραμμή Κύριο, ώστε το θέμα να φαίνεται σε αυτό το σχήμα.",
+      "tool.denoise": "Μείωση θορύβου", "nr.title": "Μείωση θορύβου",
+      "nr.hint": "Βγάζει τον σταθερό θόρυβο του φόντου (ανεμιστήρες, κίνηση, βουητό, αέρα) από τον ήχο του clip, σε αυτή τη συσκευή. Το Μοντάζ φτιάχνει ένα καθαρό αντίγραφο του ήχου και το κρατά όπως τα άλλα πολυμέσα σου· το πρωτότυπο μένει όπως είναι.",
+      "nr.go": "Μείωση θορύβου", "nr.on": "Ο θόρυβος έχει μειωθεί σε αυτό το clip.", "nr.off": "Πίσω στον αρχικό ήχο",
+      "nr.working": "Καθαρίζω τον ήχο… {p}%", "nr.done": "Ο θόρυβος μειώθηκε", "nr.fail": "Δεν καθάρισε αυτός ο ήχος.",
       "rel.today": "σήμερα", "rel.yesterday": "χθες"
     }
   };
@@ -306,7 +369,7 @@
 
   // ---------- 2. Storage, prefs, edits + undo ----------
   var data = C.merge(null, null);
-  var prefs = { pps: 40, short: 1080, keep: false, what: "video", gif: 480 };
+  var prefs = { pps: 40, short: 1080, keep: false, what: "video", gif: 480, asr: "auto" };
 
   function load() {
     var raw = null;
@@ -336,6 +399,7 @@
         prefs.keep = p.keep === true;
         prefs.what = p.what === "sound" || p.what === "gif" ? p.what : "video";
         prefs.gif = p.gif === 320 ? 320 : 480;
+        prefs.asr = p.asr === "en" || p.asr === "el" ? p.asr : "auto";
       }
     } catch (e) {}
   }
@@ -389,6 +453,7 @@
     closeDialog();
     if (player) { player.dispose(); player = null; }
     view = "home"; pid = null; sel = null; undoStack = []; redoStack = [];
+    picking = null; $("stage-wrap").classList.remove("picking");
     $("home").hidden = false; $("editor").hidden = true;
     ["back-btn", "undo-btn", "redo-btn", "proj-btn", "export-btn"].forEach(function (k) { $(k).hidden = true; });
     $("title-main").textContent = t("app.name");
@@ -556,7 +621,8 @@
     if (it.k === "shape") return t("shape." + it.sh.k);
     var d = C.fmtTime(C.itemDur(it));
     if (it.k === "audio") return t("kind.audio") + " · " + d;
-    return d + (it.sp !== undefined && it.sp !== 1 ? " · " + it.sp + "×" : "") + (it.mu ? " · 🔇" : "");
+    var spd = C.hasRamp(it) ? " · " + t("p.curveShort") : (it.sp !== undefined && it.sp !== 1 ? " · " + it.sp + "×" : "");
+    return d + spd + (it.mu ? " · 🔇" : "");
   }
   function renderTimeline() {
     var p = preview || cur();
@@ -760,13 +826,15 @@
     if (!it) return base;
     var patch = {}, now = Date.now();
     if (it.k === "video" || it.k === "audio") {
+      // C.trimSrc follows the clip's speed (and its speed curve)
+      var minSrc = C.MIN * (C.hasRamp(it) ? 1 : it.sp);
       if (h === "l") {
-        var ni = Math.max(0, Math.min(it.out - C.MIN * it.sp, it["in"] + dt * it.sp));
-        if (it.tr !== "main") { var shift = (ni - it["in"]) / it.sp; if (it.at + shift < 0) { ni = it["in"] - it.at * it.sp; shift = -it.at; } patch.at = it.at + shift; }
+        var ni = Math.max(0, Math.min(it.out - minSrc, C.trimSrc(it, "l", dt)));
+        if (it.tr !== "main") { var shift = C.fwdLocal(it, ni); if (it.at + shift < 0) { ni = Math.max(0, C.fwdPos(it, -it.at)); shift = C.fwdLocal(it, ni); } patch.at = Math.max(0, it.at + shift); }
         patch["in"] = ni;
       } else {
         var lim = it.len > 0 ? it.len : Infinity;
-        patch.out = Math.max(it["in"] + C.MIN * it.sp, Math.min(lim, it.out + dt * it.sp));
+        patch.out = Math.max(it["in"] + minSrc, Math.min(lim, C.trimSrc(it, "r", dt)));
       }
     } else {
       if (h === "l") {
@@ -845,8 +913,11 @@
     if (it.k === "video" || it.k === "image") {
       bar.appendChild(toolBtn("adjust", t("tool.adjust"), panelAdjust));
       bar.appendChild(toolBtn("frame", t("tool.frame"), panelFrame));
+      bar.appendChild(toolBtn("chroma", t("tool.chroma"), panelChroma));
+      bar.appendChild(toolBtn("reframe", t("tool.reframe"), panelReframe));
     }
     if (it.tr === "ov" || it.tr === "tt") bar.appendChild(toolBtn("move", t("tool.position"), panelPosition));
+    if ((it.k === "video" && !it.mu && !it.rv) || it.k === "audio") bar.appendChild(toolBtn("denoise", t("tool.denoise"), panelNoise));
     if (it.k === "video") {
       bar.appendChild(toolBtn(it.mu ? "volume" : "mute", t(it.mu ? "tool.unmute" : "tool.mute"), function () { edit({ mu: !it.mu }); }));
       if (!it.mu) bar.appendChild(toolBtn("detach", t("tool.detach"), detachSound));
@@ -904,10 +975,69 @@
   function live(patch) { edit(patch, { undo: false }); }
 
   function panelSpeed() {
-    var it = selItem(), body = panel(t("tool.speed"));
-    rangeField(body, t("p.speed"), 0.25, 4, 0.05, it.sp, function (v) { return v.toFixed(2) + "×"; }, function (v) { live({ sp: v }); });
-    chipField(body, "", [[0.5, "0.5×"], [1, "1×"], [1.5, "1.5×"], [2, "2×"], [3, "3×"]], null, function (v) { live({ sp: v }); closeDialog(); });
+    var it = selItem(), p = cur(), body = panel(t("tool.speed"));
+    if (!C.hasRamp(it)) {
+      rangeField(body, t("p.speed"), 0.25, 4, 0.05, it.sp, function (v) { return v.toFixed(2) + "×"; }, function (v) { live({ sp: v }); });
+      chipField(body, "", [[0.5, "0.5×"], [1, "1×"], [1.5, "1.5×"], [2, "2×"], [3, "3×"]], null, function (v) { live({ sp: v }); closeDialog(); });
+    }
+    // speed curve: a preset, then points set at the playhead
+    var name = "none";
+    if (C.hasRamp(it)) {
+      name = "custom";
+      C.RAMPS.forEach(function (r) { if (JSON.stringify(C.rampPreset(it, r)) === JSON.stringify(it.sr)) name = r; });
+    }
+    var opts = [["none", t("ramp.none")]].concat(C.RAMPS.map(function (r) { return [r, t("ramp." + r)]; }));
+    if (name === "custom") opts.push(["custom", t("ramp.custom")]);
+    chipField(body, t("p.curve"), opts, name, function (v) {
+      if (v === "custom") return;
+      live({ sr: v === "none" ? null : C.rampPreset(selItem(), v) });
+      closeDialog();
+      panelSpeed();
+    });
+    if (C.hasRamp(it)) {
+      var pl = C.placeOf(p, it.id);
+      if (tNow < pl.start || tNow > pl.end) setTime(pl.start);
+      var local = Math.min(pl.end - pl.start, Math.max(0, tNow - pl.start)), s = C.srcTime(it, local), near = (it.out - it["in"]) * 0.04;
+      var cv = el("canvas", "ramp-graph");
+      cv.width = 600; cv.height = 150;
+      cv.setAttribute("role", "img"); setLabel(cv, t("ramp.graph"));
+      body.appendChild(cv);
+      var lenP = el("p", "hint small");
+      function redraw() {
+        var cur0 = selItem();
+        if (!cur0 || !C.hasRamp(cur0)) return;
+        drawRamp(cv, cur0, s);
+        lenP.textContent = t("ramp.len", { d: C.fmtTime(C.itemDur(cur0), true, p.fps) });
+      }
+      // log scale: the slider runs -100..100 for 0.1×..10×
+      var v0 = C.srAt(it.sr, s);
+      rangeField(body, t("ramp.here"), -100, 100, 1, Math.round(Math.log(v0) / Math.LN10 * 100), function (x) { return (Math.round(Math.pow(10, x / 100) * 100) / 100) + "×"; },
+        function (x) { live({ sr: C.srSet(selItem(), s, Math.round(Math.pow(10, x / 100) * 100) / 100, near) }); redraw(); });
+      body.appendChild(lenP);
+      body.appendChild(el("p", "hint small", t("ramp.hint")));
+      redraw();
+    }
     body.appendChild(el("p", "hint small", t("p.speedHint")));
+  }
+  // The speed curve of a clip over its in…out (log scale 0.1×..10×), its
+  // points, and a line where the playhead is (s = file seconds).
+  function drawRamp(cv, it, s) {
+    var g = cv.getContext("2d"), W = cv.width, H = cv.height, a = it["in"], b = it.out;
+    var css = getComputedStyle(document.documentElement);
+    var accent = css.getPropertyValue("--accent").trim() || "#f08c3a", dim = css.getPropertyValue("--text-dim").trim() || "#999";
+    var y = function (v) { return H - 8 - (Math.log(v) / Math.LN10 + 1) / 2 * (H - 16); };
+    var x = function (sv) { return (sv - a) / (b - a) * W; };
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = dim; g.globalAlpha = 0.4; g.lineWidth = 1;
+    [0.1, 1, 10].forEach(function (v) { g.beginPath(); g.moveTo(0, y(v)); g.lineTo(W, y(v)); g.stroke(); });
+    g.globalAlpha = 1; g.fillStyle = dim; g.font = "20px sans-serif";
+    g.fillText("1×", 4, y(1) - 4);
+    g.strokeStyle = accent; g.lineWidth = 4; g.beginPath();
+    for (var i = 0; i <= 120; i++) { var sv = a + (b - a) * i / 120, py = y(C.srAt(it.sr, sv)); if (i) g.lineTo(i / 120 * W, py); else g.moveTo(0, py); }
+    g.stroke();
+    g.fillStyle = accent;
+    it.sr.forEach(function (k) { if (k.s >= a && k.s <= b) { g.beginPath(); g.arc(x(k.s), y(k.v), 7, 0, Math.PI * 2); g.fill(); } });
+    g.strokeStyle = dim; g.lineWidth = 2; g.beginPath(); g.moveTo(x(s), 0); g.lineTo(x(s), H); g.stroke();
   }
   function panelVolume() {
     var it = selItem(), body = panel(t("tool.volume"));
@@ -988,6 +1118,198 @@
     rangeField(body, t("p.x"), -50, 150, 1, Math.round((box.x + box.w / 2) * 100), function (v) { return v + "%"; }, function (v) { box.x = v / 100 - box.w / 2; upd(); });
     rangeField(body, t("p.y"), -50, 150, 1, Math.round((box.y + box.h / 2) * 100), function (v) { return v + "%"; }, function (v) { box.y = v / 100 - box.h / 2; upd(); });
     if (it.k !== "title") rangeField(body, t("p.opacity"), 0, 100, 1, it.op, function (v) { return v + "%"; }, function (v) { live({ op: v }); });
+    // picture in picture: a border and rounded corners
+    if (it.k === "video" || it.k === "image") {
+      var bd = it.bd ? JSON.parse(JSON.stringify(it.bd)) : { w: 0, col: "#ffffff", r: 0 };
+      var updBd = function () { live({ bd: JSON.parse(JSON.stringify(bd)) }); };
+      rangeField(body, t("p.border"), 0, 10, 0.5, bd.w, function (v) { return v.toFixed(1) + "%"; }, function (v) { bd.w = v; updBd(); });
+      colorField(body, t("p.borderCol"), bd.col, false, function (v) { bd.col = v; if (!bd.w) bd.w = 1; updBd(); });
+      rangeField(body, t("p.corners"), 0, 50, 1, bd.r, function (v) { return v + "%"; }, function (v) { bd.r = v; updBd(); });
+    }
+  }
+
+  // ---------- 6a. Chroma key (green / blue screen) ----------
+  var CK_GREEN = "#00b140", CK_BLUE = "#0047bb", picking = null;
+  function panelChroma() {
+    var it = selItem(), body = panel(t("ck.title"));
+    var ck = it.ck ? JSON.parse(JSON.stringify(it.ck)) : { col: CK_GREEN, tol: 40, soft: 25, sp: 50 };
+    var box = el("div", "ck-box");
+    function upd() { live({ ck: JSON.parse(JSON.stringify(ck)) }); }
+    checkField(body, t("ck.on"), !!it.ck, function (v) { live({ ck: v ? JSON.parse(JSON.stringify(ck)) : null }); box.hidden = !v; });
+    body.appendChild(box);
+    box.hidden = !it.ck;
+    var f = el("div", "field");
+    f.appendChild(el("span", "lbl", t("ck.color")));
+    var row = el("div", "colors");
+    var sw = el("span", "sw ck-now");
+    sw.style.background = ck.col;
+    row.appendChild(sw);
+    [[CK_GREEN, t("ck.green")], [CK_BLUE, t("ck.blue")]].forEach(function (c) {
+      var b = el("button", "chip", c[1]);
+      b.type = "button";
+      b.addEventListener("click", function () { ck.col = c[0]; sw.style.background = ck.col; pick.value = ck.col; upd(); });
+      row.appendChild(b);
+    });
+    var pick = el("input");
+    pick.type = "color"; pick.value = ck.col; setLabel(pick, t("ck.color"));
+    pick.addEventListener("input", function () { ck.col = pick.value.toLowerCase(); sw.style.background = ck.col; upd(); });
+    row.appendChild(pick);
+    var pb = el("button", "btn", t("ck.pick"));
+    pb.type = "button";
+    pb.addEventListener("click", function () { upd(); closeDialog(); startPick(); });
+    row.appendChild(pb);
+    f.appendChild(row); box.appendChild(f);
+    rangeField(box, t("ck.tol"), 0, 100, 1, ck.tol, function (v) { return v + "%"; }, function (v) { ck.tol = v; upd(); });
+    rangeField(box, t("ck.soft"), 0, 100, 1, ck.soft, function (v) { return v + "%"; }, function (v) { ck.soft = v; upd(); });
+    rangeField(box, t("ck.spill"), 0, 100, 1, ck.sp, function (v) { return v + "%"; }, function (v) { ck.sp = v; upd(); });
+    body.appendChild(el("p", "hint small", t("ck.hint")));
+  }
+  // Pick the key colour: the preview shows the clip without its key
+  // until the user taps the picture.
+  function startPick() {
+    var p = cur(), it = selItem();
+    if (!p || !it || !player) return;
+    if (player.playing()) player.pause();
+    picking = { id: it.id };
+    var shown = JSON.parse(JSON.stringify(p));
+    delete shown.items[it.id].ck;
+    player.setProject(shown);
+    $("stage-wrap").classList.add("picking");
+    showToast(t("ck.pickHint"));
+  }
+  function endPick(rgb) {
+    var id = picking && picking.id;
+    picking = null;
+    $("stage-wrap").classList.remove("picking");
+    if (player && cur()) player.setProject(cur());
+    if (!id || !cur() || !cur().items[id]) return;
+    if (rgb) {
+      sel = id;
+      var ck = cur().items[id].ck ? JSON.parse(JSON.stringify(cur().items[id].ck)) : { tol: 40, soft: 25, sp: 50 };
+      ck.col = "#" + rgb.map(function (v) { return (v < 16 ? "0" : "") + v.toString(16); }).join("");
+      edit({ ck: ck });
+    }
+    select(id);
+    panelChroma();
+  }
+  // Average colour of a 5×5 patch of the preview under the pointer.
+  function pickAt(e) {
+    var cv = $("stage"), r = cv.getBoundingClientRect();
+    var x = Math.round((e.clientX - r.left) / r.width * cv.width), y = Math.round((e.clientY - r.top) / r.height * cv.height);
+    try {
+      var c2 = document.createElement("canvas");
+      c2.width = 5; c2.height = 5;
+      var g = c2.getContext("2d", { willReadFrequently: true });
+      g.drawImage(cv, x - 2, y - 2, 5, 5, 0, 0, 5, 5);
+      var d = g.getImageData(0, 0, 5, 5).data, s = [0, 0, 0];
+      for (var i = 0; i < d.length; i += 4) { s[0] += d[i]; s[1] += d[i + 1]; s[2] += d[i + 2]; }
+      return s.map(function (v) { return Math.round(v / 25); });
+    } catch (x2) { return null; }
+  }
+
+  // ---------- 6b. Reframe: keep the subject in a cropped picture ----------
+  function panelReframe() {
+    var it = selItem(), p = cur();
+    if (!it || !p) return;
+    var pl = C.placeOf(p, it.id);
+    if (tNow < pl.start || tNow > pl.end) setTime(pl.start);
+    var local = Math.min(pl.end - pl.start, Math.max(0, tNow - pl.start)), mt = C.mediaTime(it, local);
+    var body = panel(t("rf.title"));
+    body.appendChild(el("p", "hint small", t("rf.hint")));
+    var info = el("p", "hint");
+    body.appendChild(info);
+    function showInfo() { var n = (selItem().fc || []).length; info.textContent = n ? t("rf.keys", { n: n }) : t("rf.none"); }
+    showInfo();
+    // the sliders work in the picture as shown (after rotate / mirror)
+    var f = C.fcAt(it.fc, mt), shown = C.shownPoint(f.x, f.y, it.rot, it.fl), pt = { x: shown[0], y: shown[1] };
+    function set() {
+      var cur0 = selItem(), uv = C.uvOf(pt.x, pt.y, cur0.rot, cur0.fl);
+      live({ fit: "fill", fc: C.fcSet(cur0.fc, mt, { x: uv[0], y: uv[1] }, 0.25) });
+      showInfo();
+    }
+    var pct = function (v) { return v + "%"; };
+    rangeField(body, t("rf.x"), 0, 100, 1, Math.round(pt.x * 100), pct, function (v) { pt.x = v / 100; set(); });
+    rangeField(body, t("rf.y"), 0, 100, 1, Math.round(pt.y * 100), pct, function (v) { pt.y = v / 100; set(); });
+    body.appendChild(el("p", "hint small", t(window.MontageReframe && MontageReframe.hasFaceDetector() ? "rf.faces" : "rf.motion")));
+    actions(body, [
+      [t("rf.clear"), "", function () { live({ fc: [] }); closeDialog(); }],
+      [t("rf.auto"), "primary", function () { var id = sel; closeDialog(); autoReframe([id]); }]
+    ]);
+  }
+  // Auto reframe some clips, one after the other, as one undo step.
+  function autoReframe(ids) {
+    if (!window.MontageReframe || !ids.length) return;
+    if (player && player.playing()) player.pause();
+    var stop = false, done = 0, lastKeys = 0, cancel = function () { stop = true; };
+    pushUndo();
+    ids.reduce(function (ch, id, i) {
+      return ch.then(function () {
+        var it = cur() && cur().items[id];
+        if (stop || !it || (it.k !== "video" && it.k !== "image")) return;
+        var pre = ids.length > 1 ? (i + 1) + "/" + ids.length + " · " : "";
+        busy(pre + t("rf.working", { p: 0 }), 0, cancel);
+        return MM.get(it.src).then(function (blob) {
+          if (!blob) throw new Error("missing");
+          return MontageReframe.analyse({
+            blob: blob, kind: it.k, "in": it["in"] || 0, out: it.out || 0,
+            progress: function (q) { busy(pre + t("rf.working", { p: Math.round(q * 100) }), q, cancel); },
+            cancelled: function () { return stop; }
+          });
+        }).then(function (keys) {
+          if (stop || !cur() || !cur().items[id]) return;
+          commit(C.setItem(data, pid, id, { fit: "fill", fc: keys }, Date.now()), { undo: false });
+          done++; lastKeys = keys.length;
+        }, function (e) { if (!stop) showToast(t("rf.fail")); });
+      });
+    }, Promise.resolve()).then(function () {
+      busy(null);
+      if (undoStack.length && undoStack[undoStack.length - 1] === snapshot()) undoStack.pop();
+      refreshEditor();
+      if (done) showToast(ids.length > 1 ? t("rf.allDone", { n: done }) : t("rf.done", { n: lastKeys }));
+    });
+  }
+
+  // ---------- 6c. Reduce noise (RNNoise) ----------
+  function panelNoise() {
+    var it = selItem(), body = panel(t("nr.title"));
+    body.appendChild(el("p", "hint small", t("nr.hint")));
+    if (it.na) {
+      body.appendChild(el("p", "hint", t("nr.on")));
+      actions(body, [[t("nr.off"), "", function () { live({ na: null }); closeDialog(); }]]);
+    } else {
+      actions(body, [[t("nr.go"), "primary", function () { var id = sel; closeDialog(); cleanSound(id); }]]);
+    }
+  }
+  function cleanSound(id) {
+    var p = cur(), it = p && p.items[id];
+    if (!it || !window.MontageDenoise) return;
+    if (player && player.playing()) player.pause();
+    // the same file cleaned already (another clip of it)
+    var have = null;
+    Object.keys(p.items).forEach(function (k) { if (p.items[k].src === it.src && p.items[k].na) have = p.items[k].na; });
+    if (have) { sel = id; edit({ na: have }); showToast(t("nr.done")); return; }
+    var stop = false, cancel = function () { stop = true; };
+    busy(t("nr.working", { p: 0 }), 0, cancel);
+    MM.get(it.src).then(function (blob) {
+      if (!blob) throw new Error("missing");
+      return MontageDenoise.clean(blob, {
+        name: p.name, cancelled: function () { return stop; },
+        progress: function (q) { busy(t("nr.working", { p: Math.round(q * 100) }), q, cancel); }
+      });
+    }).then(function (file) {
+      busy(null);
+      pushUndo();
+      importMany([file], function (info) {
+        if (!cur() || !cur().items[id] || !C.isSound(info.id)) return;
+        sel = id;
+        commit(C.setItem(data, pid, id, { na: info.id }, Date.now()), { undo: false });
+        showToast(t("nr.done"));
+      });
+    }, function (e) {
+      busy(null);
+      if (stop) return;
+      showToast(e && e.code === "nosound" ? t("toast.noSound") : t("nr.fail"));
+    });
   }
   // Keyframes: the values at the playhead; changing one sets a key there.
   function panelKeys() {
@@ -1186,6 +1508,70 @@
       [t("sub.export"), "", function () { closeDialog(); exportSubtitles(); }],
       [t("sub.add"), "primary", function () { closeDialog(); addSubtitle(); }]
     ]);
+    if (!window.MontageASR || !MX.speech16k) return;
+    // subtitles from speech (Whisper on the device)
+    var f = el("div", "field");
+    f.appendChild(el("span", "lbl", t("asr.head")));
+    f.appendChild(el("p", "hint small", t("asr.hint")));
+    var need = el("p", "hint small", t("asr.need", { mb: MontageASR.MODEL_MB, rt: MontageASR.RUNTIME_MB }));
+    f.appendChild(need);
+    body.appendChild(f);
+    var lang = ["auto", "en", "el"].indexOf(prefs.asr) >= 0 ? prefs.asr : "auto";
+    chipField(body, t("asr.lang"), [["auto", t("asr.auto")], ["en", "English"], ["el", "Ελληνικά"]], lang, function (v) {
+      lang = v; prefs.asr = v; savePrefs();
+    });
+    var row = el("div", "actions");
+    body.appendChild(row);
+    var go = el("button", "btn primary", t("asr.go"));
+    go.type = "button";
+    go.addEventListener("click", function () { closeDialog(); autoSubtitles(lang); });
+    row.appendChild(go);
+    MontageASR.ready().then(function (yes) {
+      if (!yes) return;
+      need.textContent = t("asr.ready");
+      var rm = el("button", "btn", t("asr.forget"));
+      rm.type = "button";
+      rm.addEventListener("click", function () {
+        MontageASR.forget().then(function () { closeDialog(); showToast(t("asr.gone")); });
+      });
+      row.insertBefore(rm, go);
+    });
+  }
+  function autoSubtitles(lang) {
+    var p = cur();
+    if (!p) return;
+    if (!C.soundPlan(p).length) { showToast(t("asr.none")); return; }
+    if (player && player.playing()) player.pause();
+    var stop = false, ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var cancel = function () { stop = true; if (ctl) ctl.abort(); };
+    var cancelled = function () { return stop; };
+    var long = C.duration(p) > MX.SPEECH_MAX_SEC;
+    busy(t("asr.mixing", { p: 0 }), 0, cancel);
+    MX.speech16k({
+      project: p, file: MM.get, cancelled: cancelled,
+      progress: function (q) { busy(t("asr.mixing", { p: Math.round(q * 100) }), q, cancel); }
+    }).then(function (samples) {
+      return MontageASR.run(samples, {
+        lang: lang, cancelled: cancelled, signal: ctl ? ctl.signal : undefined,
+        progress: function (q, stage) {
+          busy(t(stage === "download" ? "asr.download" : "asr.working", { p: Math.round(q * 100) }), q, cancel);
+        }
+      });
+    }).then(function (r) {
+      busy(null);
+      if (stop || !cur()) return;
+      var cues = r.cues || [];
+      if (!cues.length) { showToast(t("asr.none")); return; }
+      var before = Object.keys(cur().items).length;
+      if (commit(C.addSubtitles(data, pid, cues, Date.now(), cues.map(function () { return uid(); })))) {
+        showToast(t("sub.added", { n: Object.keys(cur().items).length - before }) + (long ? " · " + t("asr.long", { m: Math.round(MX.SPEECH_MAX_SEC / 60) }) : ""));
+        setTime(cues[0].start);
+      }
+    }, function (e) {
+      busy(null);
+      if (stop) return;
+      showToast(e && /^http|fetch|network/i.test(String(e.message || e)) ? t("asr.net") : t("asr.fail"));
+    });
   }
   function addSubtitle() {
     var b = C.SUB_BOX;
@@ -1443,6 +1829,11 @@
     chipField(body, t("set.duck"), [0, 40, 60, 80].map(function (v) { return [v, t("duck." + v)]; }), [0, 40, 60, 80].indexOf(dk) >= 0 ? dk : 60,
       function (v) { commit(C.setProject(data, pid, { dk: v }, Date.now()), { undo: false }); });
     body.appendChild(el("p", "hint small", t("set.duckHint")));
+    var mainPics = C.trackItems(p, "main").filter(function (it) { return it.k === "video" || it.k === "image"; });
+    if (mainPics.length) {
+      body.appendChild(el("p", "hint small", t("set.reframeHint")));
+      actions(body, [[t("set.reframe"), "", function () { closeDialog(); autoReframe(mainPics.map(function (it) { return it.id; })); }]]);
+    }
     checkField(body, t("set.sync"), p.vs, function (v) {
       commit(C.setProject(data, pid, { vs: v }, Date.now()), { undo: false });
       if (v) shareMedia();
@@ -1780,6 +2171,7 @@
     }, true);
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
+        if (picking) { e.preventDefault(); endPick(null); return; }
         if (!$("dlg").hidden) { e.preventDefault(); closeDialog(); return; }
         if (sel) { e.preventDefault(); select(null); return; }
       }
@@ -1927,6 +2319,9 @@
     kf: SV('<path d="M12 3l6 9-6 9-6-9z"/><path d="M2 12h3M19 12h3"/>'),
     reverse: SV('<path d="M20 7H8l3-3M8 7l3 3"/><path d="M4 17h12l-3-3M16 17l-3 3"/>'),
     shapes: SV('<circle cx="8" cy="8" r="5"/><rect x="11" y="11" width="10" height="10" rx="1"/>'),
+    chroma: SV('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="10" r="2.6"/><path d="M7.5 20c.6-3.4 2.4-5.2 4.5-5.2s3.9 1.8 4.5 5.2"/>'),
+    reframe: SV('<path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4"/><rect x="9" y="7" width="6" height="10" rx="1"/>'),
+    denoise: SV('<path d="M2 12h3l2-4 3 9 3-12 3 12 2-5h4"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };
 
@@ -1963,7 +2358,10 @@
     tl.addEventListener("pointercancel", onTlCancel);
     tl.addEventListener("scroll", onTlScroll, { passive: true });
     tl.addEventListener("wheel", onTlWheel, { passive: false });
-    $("stage").addEventListener("click", function () { if (player) player.toggle(); });
+    $("stage").addEventListener("click", function (e) {
+      if (picking) { endPick(pickAt(e)); return; }
+      if (player) player.toggle();
+    });
     window.addEventListener("resize", function () { if (view === "editor") { renderTimeline(); followPlayhead(); } });
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden" && player && player.playing()) player.pause(); });
     wireKeyboard();

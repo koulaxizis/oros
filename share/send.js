@@ -376,6 +376,7 @@
     } catch (e) { env = null; }
     if (!env) { toast(T("inBad")); return; }
     var go = K.target(env, lang());
+    if (!go) { toast(T("inBad")); return; }        // "slots": a time is picked on the page first
     if (!sh || !sh.hasApp(go.app)) {
       var name = typeof window.t === "function" ? window.t("app." + go.app) : go.app;
       toast(T("noApp", { app: name && name !== "app." + go.app ? name : go.app }));

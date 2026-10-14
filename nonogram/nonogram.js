@@ -52,6 +52,10 @@
   var GEN_MS = 600;                          // maker budget before it eases the pictures
   var MAX_MS = 360000000;                    // 100 h: anything above is junk
   var MAX_HIST = 300;
+  var DAILY_N = 10;                          // the daily puzzle: 10×10
+  var DAILY_TRIES = 300;                     // maker attempts before it eases (no clock)
+  var MAX_DAY = 100000;
+  var DK = (typeof window !== "undefined" && window.orosDaily) || null;         // gamekit/daily.js (Daily puzzle)
   // Cell states in a game: 0 open, 1 filled, 2 marked ✕.
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -69,6 +73,25 @@
       "mode.f": "Fill", "mode.x": "Mark",
       "mode.label": "Painting mode (M)",
       "size.label": "Size",
+      "app.name": "Nonogram",
+      "lv.d": "Daily",
+      "btn.daily": "Daily puzzle",
+      "btn.games": "All games",
+      "turn.daily": "Daily #{n}: {d} of {k} lines done",
+      "res.titleD": "Daily #{n}",
+      "res.streak": "Streak",
+      "res.bestStreak": "Best streak",
+      "res.share": "Share",
+      "res.next": "A new daily puzzle tomorrow",
+      "res.free": "Play a free puzzle",
+      "stats.daily": "Daily",
+      "stats.dailyRow": "Solved · streak · best",
+      "share.clean": "no hints",
+      "share.hints": "{n} hints",
+      "toast.copied": "Result copied: paste it anywhere",
+      "toast.shared": "Result shared",
+      "toast.copyFail": "Could not copy the result",
+      "toast.dailyGone": "Daily puzzles need the gamekit file: reload orOS",
       "btn.new": "New puzzle",
       "btn.undo": "Undo (U)",
       "btn.hint": "Hint (H)",
@@ -116,6 +139,25 @@
       "mode.f": "Γέμισμα", "mode.x": "Σημάδι",
       "mode.label": "Τρόπος βαψίματος (M)",
       "size.label": "Μέγεθος",
+      "app.name": "Νονόγραμμα",
+      "lv.d": "Ημέρας",
+      "btn.daily": "Γρίφος της ημέρας",
+      "btn.games": "Όλα τα παιχνίδια",
+      "turn.daily": "Ημέρας #{n}: {d} από {k} γραμμές έτοιμες",
+      "res.titleD": "Ημέρας #{n}",
+      "res.streak": "Σερί",
+      "res.bestStreak": "Καλύτερο σερί",
+      "res.share": "Κοινοποίηση",
+      "res.next": "Νέος γρίφος της ημέρας αύριο",
+      "res.free": "Παίξε ελεύθερα",
+      "stats.daily": "Ημέρας",
+      "stats.dailyRow": "Λυμένοι · σερί · καλύτερο",
+      "share.clean": "χωρίς βοήθεια",
+      "share.hints": "{n} βοήθειες",
+      "toast.copied": "Το αποτέλεσμα αντιγράφηκε: επικόλλησέ το όπου θες",
+      "toast.shared": "Το αποτέλεσμα κοινοποιήθηκε",
+      "toast.copyFail": "Δεν έγινε αντιγραφή του αποτελέσματος",
+      "toast.dailyGone": "Ο γρίφος της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "btn.new": "Νέος γρίφος",
       "btn.undo": "Αναίρεση (U)",
       "btn.hint": "Βοήθεια (H)",
@@ -427,8 +469,13 @@
   //   br: <reset stamp>,                                       // max-merged
   //   rows: { <deviceId>: { b: <epoch>,
   //                         s: { n5|n10|n15: { t: best ms (0 = none), ts: when,
-  //                                            n: solved, c: solved without hints } } } }
+  //                                            n: solved, c: solved without hints } } } },
+  //   days: { "<day>": { b: <epoch>, t: ms, h: hints, m: rows a hint touched (bits) } }
   // }
+  // days (Wave 49; older data has none): one daily result per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js); the newer epoch wins,
+  // equal epochs keep the better result (no hint first, then the shorter
+  // time, fewer hints, the smaller mask: a total order, so a join).
   // Each device only ever writes ITS OWN row; a row counts from epoch b.
   // Merge per row: the newer epoch wins; equal epochs take, per size,
   // the better time (lower t > 0, then the earlier ts) and the higher n
@@ -437,7 +484,21 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || !isInt(v.t) || v.t < 1 || v.t > MAX_MS ||
+        !isInt(v.h) || v.h < 0 || v.h > 225 || !isInt(v.m) || v.m < 0 || v.m > 32767) return null;
+    return { b: v.b, t: v.t, h: v.h, m: v.m };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  // a better than c (equal epochs)
+  function dayBetter(a, c) {
+    if ((a.h > 0) !== (c.h > 0)) return a.h === 0;
+    if (a.t !== c.t) return a.t < c.t;
+    if (a.h !== c.h) return a.h < c.h;
+    return a.m < c.m;
+  }
 
   function normCell(c) {
     if (!c || typeof c !== "object" || !isInt(c.t) || !isInt(c.ts) || !isInt(c.n) || !isInt(c.c) ||
@@ -479,7 +540,16 @@
   function mergeNonogram(A, B) {
     var a = A || {}, b = B || {};
     var br = Math.max(isInt(a.br) && a.br > 0 ? a.br : 0, isInt(b.br) && b.br > 0 ? b.br : 0);
-    var rows = {};
+    var rows = {}, days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object") return;
+      Object.keys(m).forEach(function (k) {
+        var v = dayKeyOk(k) ? normDay(m[k]) : null;
+        if (!v || v.b < br) return;
+        var o = days[k];
+        if (!o || v.b > o.b || (v.b === o.b && dayBetter(v, o))) days[k] = v;
+      });
+    });
     [a.rows || {}, b.rows || {}].forEach(function (m) {
       if (typeof m !== "object") return;
       Object.keys(m).forEach(function (id) {
@@ -494,7 +564,9 @@
       KEYS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k]; });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var sd = {};
+    Object.keys(days).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
   }
 
   // Best time, solved and clean solves for a size, across every device.
@@ -564,6 +636,22 @@
     return !hinted && (!before.t || ms < before.t);
   }
 
+  // Daily results: solved days, the current and best streak.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0;
+    Object.keys(data.days).forEach(function (k) { on[k] = true; n++; });
+    var st = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, cur: st.cur, best: st.best };
+  }
+  function countDaily(day, ms, hints, mask) {
+    var v = { b: data.br, t: Math.max(1, Math.min(MAX_MS, ms)), h: Math.min(225, hints), m: mask & 32767 };
+    var o = data.days[day];
+    if (o && o.b >= v.b && !dayBetter(v, o)) return;
+    data.days[day] = v;
+    data = mergeNonogram(data, data);
+    save();
+  }
+
   // ---------- 4. Device-local prefs + session ----------
   var prefs = { n: 10, zoom: false };
 
@@ -581,7 +669,8 @@
   }
 
   // game = { n, pic: "0101…", c: [cell states], ms, hints, done, sel,
-  //          mode: "f" | "x", hist: [[[cell, old, new]…]…] }
+  //          mode: "f" | "x", hist: [[[cell, old, new]…]…],
+  //          day?: the daily puzzle's day number, hm?: rows a hint touched }
   var game = null;
   var CLUES = null, PIC = null;
 
@@ -592,6 +681,7 @@
         !isInt(g.hints) || g.hints < 0 || typeof g.done !== "boolean" ||
         !isInt(g.sel) || g.sel < 0 || g.sel >= g.n * g.n) return false;
     for (var i = 0; i < g.c.length; i++) if (g.c[i] !== 0 && g.c[i] !== 1 && g.c[i] !== 2) return false;
+    if (g.day !== undefined && (!isInt(g.day) || g.day < 0 || g.day > MAX_DAY || g.n !== DAILY_N)) return false;
     return true;
   }
   function validHist(h, n) {
@@ -612,6 +702,7 @@
       if (validSession(g)) {
         if (!validHist(g.hist, g.n)) g.hist = [];
         if (g.mode !== "x") g.mode = "f";
+        g.hm = isInt(g.hm) && g.hm >= 0 && g.hm <= 32767 ? g.hm : 0;
         return g;
       }
     } catch (e) {}
@@ -646,11 +737,19 @@
     CLUES = cluesOf(PIC, g.n);
   }
 
-  function fresh(n) {
-    var p = makePuzzle(n, rand, GEN_MS, nowMs), c = [];
+  // A new puzzle; with a day, that day's daily puzzle (10×10 from the
+  // date's seed; the maker counts attempts, not time, so every device
+  // makes the same picture).
+  function fresh(n, day) {
+    var daily = day !== undefined;
+    if (daily) n = DAILY_N;
+    var p = daily ? makePuzzle(n, DK.random(DK.seedOf("nonogram", day)), DAILY_TRIES, DK.counter())
+                  : makePuzzle(n, rand, GEN_MS, nowMs), c = [];
     for (var i = 0; i < n * n; i++) c.push(0);
-    return { n: n, pic: p.pic.join(""), c: c, ms: 0, hints: 0, done: false,
-             sel: Math.floor(n / 2) * n + Math.floor(n / 2), mode: game ? game.mode : "f", hist: [] };
+    var g = { n: n, pic: p.pic.join(""), c: c, ms: 0, hints: 0, done: false,
+              sel: Math.floor(n / 2) * n + Math.floor(n / 2), mode: game ? game.mode : "f", hist: [], hm: 0 };
+    if (daily) g.day = day;
+    return g;
   }
   function inProgress() {
     if (!game || game.done) return false;
@@ -661,20 +760,20 @@
   function copy(g) { return JSON.parse(JSON.stringify(g)); }
 
   // A puzzle in progress is never lost silently: Undo toast (R14).
-  function newGame(n) {
+  function newGame(n, day) {
     endStroke(false);
     closeDialogs();
     var prev = inProgress() ? (saveSession(), copy(game)) : null;
-    prefs.n = n; savePrefs();
+    if (day === undefined) { prefs.n = n; savePrefs(); }
     runFrom = 0;
-    setGame(fresh(n));
+    setGame(fresh(n, day));
     saveSession();
     syncClock();
     renderAll(true);
     if (prev) {
       undoToast(t("toast.newgame"), function () {
         runFrom = 0;
-        prefs.n = prev.n; savePrefs();
+        if (prev.day === undefined) { prefs.n = prev.n; savePrefs(); }
         setGame(prev);
         saveSession();
         syncClock();
@@ -774,6 +873,7 @@
     if (!h) return;
     if (!game.hints) showToast(t("toast.hint"));
     game.hints++;
+    game.hm = (game.hm || 0) | (1 << Math.floor(h.i / game.n));
     game.hist.push([[h.i, game.c[h.i], h.s]]);
     game.c[h.i] = h.s;
     game.sel = h.i;
@@ -803,6 +903,7 @@
     game.done = true;
     syncClock();
     var rec = countSolve("n" + game.n, game.ms, game.hints > 0);
+    if (game.day !== undefined) countDaily(game.day, game.ms, game.hints, game.hm || 0);
     saveSession();
     renderAll(false);
     live(t("live.done", { t: fmtTime(game.ms) }));
@@ -835,8 +936,12 @@
   }
 
   function renderToolbar() {
+    var daily = !!(game && game.day !== undefined);
+    var db = $("daily-btn");
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", daily);
     [].forEach.call(document.querySelectorAll("#size-seg .seg-btn"), function (b) {
-      var on = +b.getAttribute("data-size") === (game ? game.n : prefs.n);
+      var on = !daily && +b.getAttribute("data-size") === (game ? game.n : prefs.n);
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
@@ -875,6 +980,7 @@
     var msg, cls = "";
     if (game.done) { msg = t("turn.done"); cls = "done"; }
     else if (game.hints) { msg = t("turn.hinted"); cls = "warn"; }
+    else if (game.day !== undefined) msg = t("turn.daily", { n: game.day + 1, d: linesDone(), k: game.n * 2 });
     else if (!inProgress()) msg = t("turn.start");
     else msg = t("turn.play", { d: linesDone(), n: game.n * 2 });
     $("turn").textContent = msg;
@@ -1051,6 +1157,7 @@
 
   function resultDialog(rec) {
     if (!game || !game.done) return;            // replaced meanwhile
+    if (game.day !== undefined && data.days[game.day]) { dailyDialog(game.day, rec); return; }
     closeDialogs();
     var s = totals("n" + game.n);
     var dlg = makeDialog("nonogram-result");
@@ -1072,6 +1179,74 @@
     again.focus();
   }
 
+  // ---------- Daily puzzle ----------
+  function today() { return DK ? DK.today() : 0; }
+
+  // The Daily button: today's result when it is solved (here or on
+  // another device), else today's puzzle (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    endStroke(true);
+    var d = today();
+    if (data.days[d]) { dailyDialog(d, false); return; }
+    closeDialogs();
+    if (game && game.day === d && !game.done) return;
+    newGame(DAILY_N, d);
+  }
+
+  function dailyDialog(day, rec) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    closeDialogs();
+    var st = dailyStats(today());
+    var dlg = makeDialog("nonogram-daily");
+    dlg.appendChild(el("div", "dlg-title", t("res.titleD", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    if (game && game.day === day && game.done) dlg.appendChild(miniPicture());
+    dlg.appendChild(el("div", "dlg-hero", fmtTime(r.t)));
+    if (rec) dlg.appendChild(el("div", "dlg-badge", t("res.rec")));
+    dlg.appendChild(row(t("res.hints"), String(r.h)));
+    dlg.appendChild(row(t("res.streak"), String(st.cur)));
+    dlg.appendChild(row(t("res.bestStreak"), String(st.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-center", t("res.next")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("res.share"), "", function () { shareDaily(day); }));
+    var free = button(t("res.free"), "primary", function () {
+      dlg.close();
+      if (game && game.day !== undefined) newGame(prefs.n);
+    });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    hubLink(dlg);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    free.focus();
+  }
+
+  // Spoiler-free: the time, the hints and one square per row of the
+  // picture (yellow: a hint landed in that row), five to a line.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var grid = [], line = "";
+    for (var y = 0; y < DAILY_N; y++) {
+      line += (r.m & (1 << y)) ? "🟨" : "🟩";
+      if (y % 5 === 4) { grid.push(line); line = ""; }
+    }
+    var text = DK.shareText({ game: t("app.name"), label: t("lv.d"), day: day, grid: grid,
+      line: "⏱ " + fmtTime(r.t) + " · " + (r.h ? t("share.hints", { n: r.h }) : t("share.clean")) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(dlg) {
+    if (!DK || !DK.hasHub()) return;
+    dlg.appendChild(button(t("btn.games"), "dlg-link", function () { dlg.close(); DK.openHub("nonogram"); }));
+  }
+
   function statsDialog() {
     endStroke(true);
     var dlg = makeDialog("nonogram-stats");
@@ -1084,6 +1259,10 @@
       dlg.appendChild(row(sizeName(n),
         s.n ? (s.t ? fmtTime(s.t) : "–") + " · " + s.n + " · " + s.c : "–"));
     });
+    var ds = dailyStats(today());
+    if (ds.n) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("lv.d"), ds.n ? ds.n + " · " + ds.cur + " · " + ds.best : "–"));
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
@@ -1094,6 +1273,7 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
@@ -1201,6 +1381,7 @@
 
   // ---------- Toolbar icons (R9: injected by JS) ----------
   var UI_ICONS = {
+    daily:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
     new:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     undo:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
     hint:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
@@ -1351,7 +1532,7 @@
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (game) renderStatus();
+    if (game) { renderStatus(); renderToolbar(); }
     // no toast on merge (sync feedback = taskbar dot)
   }
 
@@ -1366,7 +1547,7 @@
 
   function paintStatic() {
     [["undo-btn", "undo", "btn.undo"], ["hint-btn", "hint", "btn.hint"], ["new-btn", "new", "btn.new"],
-     ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+     ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1379,7 +1560,7 @@
     [].forEach.call(document.querySelectorAll("#size-seg .seg-btn"), function (b) {
       b.addEventListener("click", function () {
         var n = +b.getAttribute("data-size");
-        if (game && n === game.n && !game.done) return;   // visible active state
+        if (game && n === game.n && game.day === undefined && !game.done) return;   // visible active state
         newGame(n);
       });
     });
@@ -1396,7 +1577,13 @@
       if (prefs.zoom && !$("board-wrap").classList.contains("zoomed")) showToast(t("toast.noZoom"));
       else scrollToSel();
     });
-    $("new-btn").addEventListener("click", function () { newGame(game ? game.n : prefs.n); $("new-btn").blur(); });
+    $("new-btn").addEventListener("click", function () {
+      newGame(game && game.day === undefined ? game.n : prefs.n);
+      $("new-btn").blur();
+    });
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's puzzle.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("stats-btn").addEventListener("click", statsDialog);
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
@@ -1410,6 +1597,7 @@
 
     document.addEventListener("visibilitychange", function () {
       if (!game) return;
+      renderToolbar();                           // the Daily dot after midnight
       syncClock();
       saveSession();
     });
@@ -1428,17 +1616,22 @@
     registerSync();
     inheritPalette();
     watchPalette();
-    var g = loadSession();
+    var g = loadSession(), tg = DK ? DK.takeTarget("nonogram") : null;
     if (g) {
-      prefs.n = g.n;                             // the resumed puzzle decides the toolbar
+      if (g.day === undefined) prefs.n = g.n;   // the resumed puzzle decides the toolbar
       setGame(g);
       saveSession();
+    } else if (tg && tg.daily && DK && !data.days[today()]) {
+      setGame(fresh(DAILY_N, today()));
+      saveSession();
+      tg = null;
     } else {
       setGame(fresh(prefs.n));
       saveSession();
     }
     syncClock();
     renderAll(true);
+    if (tg && tg.daily) openDaily();
   }
 
   boot();

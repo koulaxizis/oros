@@ -11,10 +11,30 @@ Just start typing; everything saves by itself.
 ## Write and format
 - The toolbar has Undo and Redo, a paragraph style list (`Normal text`, `Heading 1` to `Heading 4`, `Quote`, `Code block`), bold, italic, underline, strikethrough, indent, lists, alignment, `Horizontal rule` and `Page break`.
 - `Special characters` inserts Greek letters, maths, arrows, currency, punctuation, symbols and emoji.
-- On a computer, Alt+right-click in the text opens a quick menu with formatting plus `Insert link`, `Insert image` and `Insert table`.
+- `Insert` (the plus button next to the paragraph style list) adds a link, an image, a table, a horizontal rule, a page break, a footnote or special characters, on phones and tablets too. On a computer, Alt+right-click in the text also opens a quick menu with formatting, `Insert link`, `Insert image` and `Insert table`.
+- With the cursor in a table, a strip of table tools appears under the toolbar: `Row above`, `Row below`, `Column left`, `Column right`, `Delete row`, `Delete column`, `Header row` and `Delete table`.
 - Pasted images, such as screenshots, are shrunk to save space.
-- `Find and replace` (or [[Ctrl+F]]) has `Match case`, `Whole word`, a format filter (for example `Bold only`), `Replace` and `Replace all`.
+- `Find and replace` (or [[Ctrl+F]]) has `Match case`, `Whole word`, a format filter (for example `Bold only`), `Replace` and `Replace all`. Undo takes a replacement back; right after `Replace all`, one Undo takes back all of it.
 - In `Settings`, `Smart typography` turns -- into a dash, ... into an ellipsis and straight quotes into curly ones. `Auto-correction rules` replaces text such as (c) with © when you press space. You can add your own rules.
+
+## Focus, dictation and statistics
+- `View` (the eye button) has `Focus mode`: the tabs and toolbars hide and all the text dims except the paragraph you are in, or the sentence with `Focus on the sentence`. Leave it with the round × button, [[Esc]] or [[Ctrl+Alt+F]].
+- `Typewriter scrolling` keeps the line you are typing in the middle of the screen.
+- `Show word count` puts a small word count in the corner (with a selection, its words too). Tap it, or `Statistics…`, for words, characters with and without spaces, paragraphs, sentences, reading time and speaking time, for the document and the selection.
+- These view choices are kept on each device; they don't sync.
+- The microphone button is `Dictation`: speak and the words go in at the cursor, in English or Greek as orOS is set. Tap it again to stop. It shows only in browsers that can do speech recognition, and the browser may send your voice to its own online speech service to turn it into text (orOS itself sends nothing).
+
+## Spelling, tracked changes and mail merge
+- The `Review` button (AB with a tick) holds spelling, tracked changes and mail merge.
+- `Check spelling` underlines misspelt English and Greek words with a wavy red line. Right-click a word (or tap it on a phone) for suggestions, `Add to my dictionary` or `Ignore`. The underlines are only on screen: they are not saved, printed or exported.
+- `Spelling of this document` offers four choices. `English and Greek (automatic)` checks each word in its own alphabet. The others are `English only`, `Greek only` and `Don’t check this document`. Greek words are checked with their accents: "καλημερα" is marked and "καλημέρα" is offered first. Words in capitals don't need accents.
+- `My dictionary…` lists the words you added; you can add or remove words there. Your dictionary syncs to your other devices.
+- The dictionaries download the first time they are needed (about 0.2 MB for English and 2.1 MB for Greek) and then work offline. Until then, or if spelling is off in `Settings`, the browser uses its own spell check, if it has one.
+- `Track changes` marks what you type as an insertion (underlined) and what you delete as a deletion (struck through). Each change carries your name and the time, in one colour per author. Set your name in `Settings` under `Your name for tracked changes`; otherwise the device's name is used.
+- `Changes…` opens the changes panel. Tap a change to find it in the text. Each change has `Accept` and `Reject`, and the panel has `Accept all` and `Reject all`.
+- Tracked changes are saved and synced with the document. Word (.docx) export keeps them as Word tracked changes, and Word files with tracked changes open with them. The other export formats save the text as if all changes were accepted.
+- `Mail merge…` fills placeholders such as {{Name}} or {{City}} in your document. The data comes from [Contacts](app:contacts) (all contacts, or one label) or from a CSV file. A field shows green when the data has it and red when it doesn't. Use the arrows to preview each record.
+- The result can be `One PDF`, `A PDF for each record (ZIP)` or `One new document`, with a page break between records. From Contacts you can use FullName, FirstName, LastName, Company, JobTitle, Email, Phone, Address, City, PostalCode, Country and Birthday. Greek names such as {{Όνομα}} or {{Πόλη}} also work.
 
 ## Notes, comments and structure
 - `Footnotes`: tap `Add footnote` to place a numbered note at the cursor and type it in the side panel.
@@ -30,26 +50,33 @@ Just start typing; everything saves by itself.
 
 ## Import and export
 - `Export` saves the document as plain text, Markdown, HTML, RTF, Word (.docx), PDF or an orOS Writer file (.orosdoc, which keeps footnotes, comments and metadata). `Database (JSON)` saves all your documents, templates and settings.
+- The PDF keeps headings, bold, italic, underline, strikethrough, links, alignment, lists, quotes, code, tables and images, and uses the paper size, margins, header and footer from `Page settings`, with page numbers.
 - `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT and MD files. You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer.
 - From [Typewriter](app:typewriter), `Send to Writer` opens a page here as a new document.
 - Importing a `Database (JSON)` file merges it. Documents that exist only here are kept, and if a document differs, the older text goes into `Version history`.
 
 ## Sync and backup
-With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versions, goals, page settings), templates, auto-correction rules and settings reach your other devices. Which tabs are open stays on each device. Deleting a document removes it everywhere. See also [Backup](help:t/backup).
+With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versions, goals, page settings, tracked changes, spelling language), templates, auto-correction rules, your spelling dictionary and settings reach your other devices. Which tabs are open stays on each device. Deleting a document removes it everywhere. See also [Backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[Ctrl+S]] saves now (Writer also saves by itself).
 - [[Ctrl+F]] find and replace.
 - [[Ctrl+Alt+T]] new document, [[Ctrl+Alt+W]] close the current tab.
 - [[F2]] rename the current document.
+- [[Ctrl+Alt+F]] focus mode on or off.
+- [[Ctrl+Z]] right after `Replace all` takes back every replacement at once.
 
 ## Tips
 - With the Assistant installed, the sparkle button sends the selected text (or the whole document) to the Assistant to summarize, rephrase or correct it. Nothing is sent until you press `Send` there; copy the answer back with `Copy`.
 - Use heading styles: they build the table of contents. Take a `Snapshot` before big changes.
 
 ## Limits
-- Links, images and tables come from the Alt+right-click menu, so phones and tablets can't add them yet.
 - If two devices change the text of the same document before syncing, the newer text wins.
 - RTF import brings in text only.
-- Find and replace changes can't be undone with Undo.
-- PDF export may not keep bold and italic.
+- Table tools (adding or deleting rows and columns, the header row) can't be undone with Undo.
+- Dictation needs a browser with speech recognition and usually an internet connection.
+- Sentence focus needs a recent browser; older ones light the whole paragraph instead.
+- In a PDF, bold and italic letters outside Latin and Greek (for example Cyrillic) are drawn in the regular font, with bold thickened; merged table cells are drawn as single cells; an image from another website may be shown only as a placeholder.
+- Spelling covers English and Greek only. It skips words with digits, mixed capitals (such as iPhone) and capitals of four letters or fewer (such as NASA). Long compound words that are not in the dictionary are marked. `Ignore` lasts until you close Writer.
+- Track changes records typed and deleted text only. Splitting or joining paragraphs and formatting changes are not tracked, and text pasted while tracking goes in as plain text. While tracking is on, Undo and Redo work in whole steps of typing or deleting.
+- In mail merge, a placeholder must not be split by formatting (for example half of it in bold). PDF outputs stop at 500 records. The new document keeps the text only, without footnotes or comments.

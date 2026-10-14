@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mind Map — App logic (v1.1.0)
+// orOS Mind Map — App logic (v1.2.0)
 // Mind maps: a centre, branches on both sides (or the right
 // only), always laid out neatly. Drag a node onto another to move
 // it, edit in place, fold branches, switch to an outline view,
@@ -23,6 +23,10 @@
 //   3. Mutations + undo / redo (stamp at the mutation site, R27)
 //   4. Map view: render, camera, pointer (select, drag, pinch)
 //  4b. Free placement + cross-links
+// Wave 27 (v1.2.0): node styles (shape, fill, border, text size),
+// quick icons, boundaries / summaries around sibling ideas, layouts
+// (map, org chart, tree, timeline) and a full-screen presentation
+// (sections 8b, 8c).
 //   5. In-place editor
 //   6. Keyboard (map view) + clipboard
 //   7. Outline view
@@ -80,8 +84,8 @@
       "col.violet": "Violet", "col.pink": "Pink", "col.grey": "Grey",
       "menu.new": "New map", "menu.maps": "Your maps…", "menu.paste": "Paste a list…", "menu.export": "Export…",
       "menu.copy": "Copy map as text", "menu.import": "Import (FreeMind, XMind, OPML, Markdown, text, JSON)…",
-      "menu.backup": "Back up all maps (JSON)", "menu.sidesBoth": "Branches on both sides",
-      "menu.sidesRight": "Branches on the right only", "menu.unfoldAll": "Unfold all", "menu.foldAll": "Fold main branches",
+      "menu.backup": "Back up all maps (JSON)", "menu.present": "Present", "menu.layout": "Layout…",
+      "menu.unfoldAll": "Unfold all", "menu.foldAll": "Fold main branches",
       "menu.keys": "Keyboard shortcuts",
       "paste.title": "Paste a list", "paste.hint": "One idea per line. Indent with spaces or tabs (or use Markdown “- ” lists and # headings) to make branches.",
       "paste.under": "It goes under: {name}", "paste.newMap": "It becomes a new map.", "paste.add": "Add",
@@ -99,7 +103,7 @@
       "imp.err.empty": "Nothing to import in this file", "imp.err.read": "The file could not be read",
       "imp.err.zip": "This file is damaged or not an XMind map", "imp.sheets": "Only the first of {n} sheets was imported",
       "keys.title": "Keyboard shortcuts",
-      "keys.list": "Tab|Add a child\nEnter|Add a sibling\nF2 or type|Edit the selected node\nShift+Enter|New line while editing\nDelete|Delete the branch\nSpace|Fold or unfold\nArrows|Move around the map\nAlt+↑ / Alt+↓|Move the node up / down\nCtrl+Z / Ctrl+Y|Undo / redo\nCtrl+C / Ctrl+V|Copy a branch as text / paste a list\nCtrl+F|Find\n+ / − / Home|Zoom in / out / fit",
+      "keys.list": "Tab|Add a child\nEnter|Add a sibling\nF2 or type|Edit the selected node\nShift+Enter|New line while editing\nDelete|Delete the branch\nSpace|Fold or unfold\nArrows|Move around the map\nAlt+↑ / Alt+↓|Move the node up / down\nCtrl+Z / Ctrl+Y|Undo / redo\nCtrl+C / Ctrl+V|Copy a branch as text / paste a list\nCtrl+F|Find\n+ / − / Home|Zoom in / out / fit\n→ / ← (presenting)|Next / back; Esc ends",
       "ol.indent": "Indent", "ol.outdent": "Outdent", "ol.up": "Move up", "ol.down": "Move down", "ol.new": "New line",
       "ol.delete": "Delete", "ol.fold": "Fold or unfold",
       "toast.undo": "Undo", "toast.deleted": "Deleted “{name}”", "toast.deletedN": "Deleted “{name}” and {n} more",
@@ -125,7 +129,29 @@
       "ctx.notes": "Save as a note", "menu.notes": "Save the map as a note",
       "toast.notesBig": "This branch is too long for one note", "toast.notesSent": "Saved “{name}” in Notes",
       "det.pic": "Picture", "det.picAdd": "Choose picture", "det.picDel": "Remove picture",
-      "toast.picBudget": "Picture space is full (about 1 MB for all pictures)", "toast.picBad": "Could not read that image"
+      "toast.picBudget": "Picture space is full (about 1 MB for all pictures)", "toast.picBad": "Could not read that image",
+      "ctx.style": "Style…", "ctx.copyStyle": "Copy style", "ctx.pasteStyle": "Paste style",
+      "ctx.frame": "Add a boundary or summary…", "ctx.present": "Present from here", "nb.style": "Style",
+      "det.icons": "Quick icons",
+      "sty.title": "Node style", "sty.shape": "Shape", "sty.fill": "Fill", "sty.border": "Border", "sty.size": "Text size",
+      "sty.bold": "Bold text", "sty.branch": "Apply to the whole branch", "sty.reset": "Reset style",
+      "shape.auto": "Automatic", "shape.rect": "Rectangle", "shape.round": "Rounded", "shape.pill": "Pill",
+      "shape.ellipse": "Ellipse", "shape.diamond": "Diamond", "shape.hex": "Hexagon", "shape.line": "Underline", "shape.none": "Text only",
+      "fill.auto": "Automatic", "fill.none": "None", "fill.tint": "Light", "fill.solid": "Solid",
+      "border.auto": "Automatic", "border.none": "None", "border.thin": "Thin", "border.thick": "Thick", "border.dashed": "Dashed",
+      "size.s": "Small", "size.m": "Normal", "size.l": "Large",
+      "toast.styleCopied": "Style copied. Choose “Paste style” on another node.",
+      "fr.new": "New boundary or summary", "fr.editT": "Boundary or summary", "fr.edit": "Edit", "fr.delete": "Delete",
+      "fr.kind": "Type", "fr.boundary": "Boundary", "fr.summary": "Summary", "fr.label": "Label (optional)", "fr.ph": "e.g. Phase 1",
+      "fr.color": "Colour", "fr.members": "Ideas inside", "fr.none": "Tick at least one idea", "fr.many": "At most {n} ideas",
+      "live.frame": "Boundary selected", "toast.boundaryDeleted": "Boundary deleted", "toast.summaryDeleted": "Summary deleted",
+      "lay.title": "Layout", "lay.both": "Map", "lay.both.d": "Branches on both sides of the centre",
+      "lay.right": "Map to the right", "lay.right.d": "All branches on the right",
+      "lay.org": "Org chart", "lay.org.d": "From the top down, like a family tree",
+      "lay.tree": "Tree", "lay.tree.d": "An indented list, like folders",
+      "lay.time": "Timeline", "lay.time.d": "Main branches in a row, left to right",
+      "pres.title": "Presentation", "pres.prev": "Back", "pres.next": "Next", "pres.end": "End presentation",
+      "pres.start": "Presentation: arrow keys or a tap go on, Esc ends", "pres.overview": "The whole map"
     },
     el: {
       "view.map": "Χάρτης", "view.outline": "Περίγραμμα",
@@ -152,8 +178,8 @@
       "col.violet": "Μωβ", "col.pink": "Ροζ", "col.grey": "Γκρι",
       "menu.new": "Νέος χάρτης", "menu.maps": "Οι χάρτες σου…", "menu.paste": "Επικόλληση λίστας…", "menu.export": "Εξαγωγή…",
       "menu.copy": "Αντιγραφή χάρτη ως κείμενο", "menu.import": "Εισαγωγή (FreeMind, XMind, OPML, Markdown, κείμενο, JSON)…",
-      "menu.backup": "Αντίγραφο όλων των χαρτών (JSON)", "menu.sidesBoth": "Κλαδιά και στις δύο πλευρές",
-      "menu.sidesRight": "Κλαδιά μόνο δεξιά", "menu.unfoldAll": "Ανάπτυξη όλων", "menu.foldAll": "Σύμπτυξη κύριων κλαδιών",
+      "menu.backup": "Αντίγραφο όλων των χαρτών (JSON)", "menu.present": "Προβολή κλαδί-κλαδί", "menu.layout": "Διάταξη…",
+      "menu.unfoldAll": "Ανάπτυξη όλων", "menu.foldAll": "Σύμπτυξη κύριων κλαδιών",
       "menu.keys": "Συντομεύσεις πληκτρολογίου",
       "paste.title": "Επικόλληση λίστας", "paste.hint": "Μία ιδέα ανά γραμμή. Με εσοχή (κενά ή tab), ή με λίστες Markdown «- » και επικεφαλίδες #, γίνονται κλαδιά.",
       "paste.under": "Θα μπει κάτω από: {name}", "paste.newMap": "Θα γίνει νέος χάρτης.", "paste.add": "Προσθήκη",
@@ -171,7 +197,7 @@
       "imp.err.empty": "Δεν υπάρχει κάτι για εισαγωγή σε αυτό το αρχείο", "imp.err.read": "Το αρχείο δεν διαβάστηκε",
       "imp.err.zip": "Το αρχείο είναι κατεστραμμένο ή δεν είναι χάρτης XMind", "imp.sheets": "Εισήχθη μόνο το πρώτο από {n} φύλλα",
       "keys.title": "Συντομεύσεις πληκτρολογίου",
-      "keys.list": "Tab|Νέο παιδί\nEnter|Νέος αδελφός\nF2 ή πληκτρολόγηση|Επεξεργασία του επιλεγμένου\nShift+Enter|Νέα γραμμή στην επεξεργασία\nDelete|Διαγραφή κλαδιού\nSpace|Σύμπτυξη ή ανάπτυξη\nΒελάκια|Κίνηση στον χάρτη\nAlt+↑ / Alt+↓|Μετακίνηση πάνω / κάτω\nCtrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nCtrl+C / Ctrl+V|Αντιγραφή κλαδιού ως κείμενο / επικόλληση λίστας\nCtrl+F|Εύρεση\n+ / − / Home|Μεγέθυνση / σμίκρυνση / προσαρμογή",
+      "keys.list": "Tab|Νέο παιδί\nEnter|Νέος αδελφός\nF2 ή πληκτρολόγηση|Επεξεργασία του επιλεγμένου\nShift+Enter|Νέα γραμμή στην επεξεργασία\nDelete|Διαγραφή κλαδιού\nSpace|Σύμπτυξη ή ανάπτυξη\nΒελάκια|Κίνηση στον χάρτη\nAlt+↑ / Alt+↓|Μετακίνηση πάνω / κάτω\nCtrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nCtrl+C / Ctrl+V|Αντιγραφή κλαδιού ως κείμενο / επικόλληση λίστας\nCtrl+F|Εύρεση\n+ / − / Home|Μεγέθυνση / σμίκρυνση / προσαρμογή\n→ / ← (στην προβολή)|Επόμενο / πίσω· Esc για τέλος",
       "ol.indent": "Εσοχή", "ol.outdent": "Αφαίρεση εσοχής", "ol.up": "Πάνω", "ol.down": "Κάτω", "ol.new": "Νέα γραμμή",
       "ol.delete": "Διαγραφή", "ol.fold": "Σύμπτυξη ή ανάπτυξη",
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε το «{name}»", "toast.deletedN": "Διαγράφηκε το «{name}» και {n} ακόμα",
@@ -197,7 +223,29 @@
       "ctx.notes": "Αποθήκευση ως σημείωση", "menu.notes": "Αποθήκευση του χάρτη ως σημείωση",
       "toast.notesBig": "Το κλαδί είναι πολύ μεγάλο για μία σημείωση", "toast.notesSent": "Το «{name}» αποθηκεύτηκε στις Σημειώσεις",
       "det.pic": "Εικόνα", "det.picAdd": "Επιλογή εικόνας", "det.picDel": "Αφαίρεση εικόνας",
-      "toast.picBudget": "Ο χώρος για εικόνες γέμισε (περίπου 1 MB για όλες)", "toast.picBad": "Η εικόνα δεν διαβάστηκε"
+      "toast.picBudget": "Ο χώρος για εικόνες γέμισε (περίπου 1 MB για όλες)", "toast.picBad": "Η εικόνα δεν διαβάστηκε",
+      "ctx.style": "Στιλ…", "ctx.copyStyle": "Αντιγραφή στιλ", "ctx.pasteStyle": "Επικόλληση στιλ",
+      "ctx.frame": "Προσθήκη πλαισίου ή σύνοψης…", "ctx.present": "Προβολή από εδώ", "nb.style": "Στιλ",
+      "det.icons": "Γρήγορα εικονίδια",
+      "sty.title": "Στιλ κόμβου", "sty.shape": "Σχήμα", "sty.fill": "Γέμισμα", "sty.border": "Περίγραμμα", "sty.size": "Μέγεθος κειμένου",
+      "sty.bold": "Έντονο κείμενο", "sty.branch": "Εφαρμογή σε όλο το κλαδί", "sty.reset": "Επαναφορά στιλ",
+      "shape.auto": "Αυτόματο", "shape.rect": "Ορθογώνιο", "shape.round": "Στρογγυλεμένο", "shape.pill": "Κάψουλα",
+      "shape.ellipse": "Έλλειψη", "shape.diamond": "Ρόμβος", "shape.hex": "Εξάγωνο", "shape.line": "Υπογράμμιση", "shape.none": "Μόνο κείμενο",
+      "fill.auto": "Αυτόματο", "fill.none": "Χωρίς", "fill.tint": "Απαλό", "fill.solid": "Γεμάτο",
+      "border.auto": "Αυτόματο", "border.none": "Χωρίς", "border.thin": "Λεπτό", "border.thick": "Χοντρό", "border.dashed": "Διακεκομμένο",
+      "size.s": "Μικρό", "size.m": "Κανονικό", "size.l": "Μεγάλο",
+      "toast.styleCopied": "Το στιλ αντιγράφηκε. Διάλεξε «Επικόλληση στιλ» σε άλλον κόμβο.",
+      "fr.new": "Νέο πλαίσιο ή σύνοψη", "fr.editT": "Πλαίσιο ή σύνοψη", "fr.edit": "Επεξεργασία", "fr.delete": "Διαγραφή",
+      "fr.kind": "Είδος", "fr.boundary": "Πλαίσιο", "fr.summary": "Σύνοψη", "fr.label": "Ετικέτα (προαιρετικά)", "fr.ph": "π.χ. Φάση 1",
+      "fr.color": "Χρώμα", "fr.members": "Ιδέες μέσα", "fr.none": "Τσέκαρε τουλάχιστον μία ιδέα", "fr.many": "Έως {n} ιδέες",
+      "live.frame": "Επιλέχθηκε πλαίσιο", "toast.boundaryDeleted": "Το πλαίσιο διαγράφηκε", "toast.summaryDeleted": "Η σύνοψη διαγράφηκε",
+      "lay.title": "Διάταξη", "lay.both": "Χάρτης", "lay.both.d": "Κλαδιά και στις δύο πλευρές του κέντρου",
+      "lay.right": "Χάρτης προς τα δεξιά", "lay.right.d": "Όλα τα κλαδιά δεξιά",
+      "lay.org": "Οργανόγραμμα", "lay.org.d": "Από πάνω προς τα κάτω, σαν γενεαλογικό δέντρο",
+      "lay.tree": "Δέντρο", "lay.tree.d": "Λίστα με εσοχές, σαν φάκελοι",
+      "lay.time": "Χρονολόγιο", "lay.time.d": "Τα κύρια κλαδιά στη σειρά, από αριστερά προς τα δεξιά",
+      "pres.title": "Προβολή", "pres.prev": "Πίσω", "pres.next": "Επόμενο", "pres.end": "Τέλος προβολής",
+      "pres.start": "Προβολή: τα βελάκια ή ένα πάτημα προχωρούν, το Esc τελειώνει", "pres.overview": "Όλος ο χάρτης"
     }
   };
 
@@ -266,6 +314,8 @@
     indent: ic('<path d="M3 6h18M11 12h10M11 18h10M3 10l4 3-4 3"/>'),
     outdent: ic('<path d="M3 6h18M11 12h10M11 18h10M7 10l-4 3 4 3"/>'),
     caretR: ic('<path d="M9 6l6 6-6 6"/>'),
+    caretL: ic('<path d="M15 6l-6 6 6 6"/>'),
+    style:  ic('<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.2-1.7-.5-1.1.2-2.3 1.4-2.3H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.3"/><circle cx="10.5" cy="7" r="1.3"/><circle cx="15.5" cy="7.5" r="1.3"/>'),
     caretD: ic('<path d="M6 9l6 6 6-6"/>'),
     link:   ic('<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>')
   };
@@ -293,11 +343,18 @@
   // node's id (see mm-core.js header).
   var MAPS = Object.create(null), NODES = Object.create(null), TOMBS = Object.create(null);
   var LINKS = Object.create(null), POS = Object.create(null), IMGS = Object.create(null);
+  // Wave 27: STYLES (node styles, id = node id), FRAMES (boundaries /
+  // summaries) and LAYOUTS (layout kind, id = map id).
+  var STYLES = Object.create(null), FRAMES = Object.create(null), LAYOUTS = Object.create(null);
   var prefs = null;
 
   function adopt(d) {
     MAPS = Object.create(null); NODES = Object.create(null); TOMBS = Object.create(null);
     LINKS = Object.create(null); POS = Object.create(null); IMGS = Object.create(null);
+    STYLES = Object.create(null); FRAMES = Object.create(null); LAYOUTS = Object.create(null);
+    (d.styles || []).forEach(function (x) { STYLES[x.id] = x; });
+    (d.frames || []).forEach(function (x) { FRAMES[x.id] = x; });
+    (d.layouts || []).forEach(function (x) { LAYOUTS[x.id] = x; });
     d.maps.forEach(function (x) { MAPS[x.id] = x; });
     d.nodes.forEach(function (x) { NODES[x.id] = x; });
     (d.links || []).forEach(function (x) { LINKS[x.id] = x; });
@@ -308,7 +365,8 @@
   function values(o) { return Object.keys(o).map(function (k) { return o[k]; }); }
   function canonical() {
     return M.merge({ maps: values(MAPS), nodes: values(NODES), links: values(LINKS), pos: values(POS),
-                     imgs: values(IMGS), tombs: TOMBS }, {});
+                     imgs: values(IMGS), styles: values(STYLES), frames: values(FRAMES), layouts: values(LAYOUTS),
+                     tombs: TOMBS }, {});
   }
 
   function load() {
@@ -430,8 +488,10 @@
     var mp = curMap();
     if (!mp) { R = null; sel = null; return; }
     function of(dict) { return values(dict).filter(function (x) { return x.map === mp.id; }); }
-    R = M.resolve({ maps: [mp], nodes: of(NODES), links: of(LINKS), pos: of(POS), imgs: of(IMGS) }, mp.id);
+    R = M.resolve({ maps: [mp], nodes: of(NODES), links: of(LINKS), pos: of(POS), imgs: of(IMGS),
+                    styles: of(STYLES), frames: of(FRAMES), layouts: LAYOUTS[mp.id] ? [LAYOUTS[mp.id]] : [] }, mp.id);
     if (sel && !R.N[sel]) sel = null;
+    if (selFrame && !R.frames.some(function (f) { return f.id === selFrame; })) selFrame = null;
     if (selLink && !R.links.some(function (l) { return l.id === selLink; })) selLink = null;
   }
 
@@ -443,9 +503,11 @@
   var undoStack = [], redoStack = [], tx = null;
 
   function begin(key) { tx = { before: {}, key: key || "", sel: sel }; }
-  // Keys: "m:" map, "n:" node, "l:" link, "p:" position, "i:" picture.
+  // Keys: "m:" map, "n:" node, "l:" link, "p:" position, "i:" picture,
+  // "s:" style, "f:" frame, "v:" layout kind.
   var KIND = { m: function () { return MAPS; }, n: function () { return NODES; }, l: function () { return LINKS; },
-               p: function () { return POS; }, i: function () { return IMGS; } };
+               p: function () { return POS; }, i: function () { return IMGS; }, s: function () { return STYLES; },
+               f: function () { return FRAMES; }, v: function () { return LAYOUTS; } };
   function rowOf(k) { return KIND[k.charAt(0)]()[k.slice(2)]; }
   function touch(k) { if (tx && !own(tx.before, k)) tx.before[k] = clone(rowOf(k)); }
   function putNode(row) {
@@ -478,15 +540,36 @@
     if (x) IMGS[x.id] = x;
     return x;
   }
-  // Positions and pictures are never tombstoned (their id is the
-  // node's): "removing" one writes a zero / empty row instead.
+  function putStyle(row) {
+    touch("s:" + row.id);
+    var x = M.normStyle(row);
+    if (x) STYLES[x.id] = x;
+    return x;
+  }
+  function putFrame(row) {
+    touch("f:" + row.id);
+    var x = M.normFrame(row);
+    if (x) FRAMES[x.id] = x;
+    return x;
+  }
+  function putLayout(row) {
+    touch("v:" + row.id);
+    var x = M.normLayout(row);
+    if (x) LAYOUTS[x.id] = x;
+    return x;
+  }
+  // Positions, pictures, styles and layout kinds are never tombstoned
+  // (their id is the node's or the map's): "removing" one writes a
+  // zero / empty / default row instead.
   function tombRow(k) {
     var c = k.charAt(0), row = rowOf(k), id = k.slice(2);
-    if (c === "p" || c === "i") {
+    if (c === "p" || c === "i" || c === "s" || c === "v") {
       if (!row) return;
       touch(k);
       if (c === "p") putPos({ id: id, m: nextM(id, row), map: row.map, dx: 0, dy: 0 });
-      else putImg({ id: id, m: nextM(id, row), map: row.map, src: "", w: 0, h: 0 });
+      else if (c === "i") putImg({ id: id, m: nextM(id, row), map: row.map, src: "", w: 0, h: 0 });
+      else if (c === "s") putStyle({ id: id, m: nextM(id, row), map: row.map });
+      else putLayout({ id: id, m: nextM(id, row), map: id, kind: "" });
       return;
     }
     touch(k);
@@ -526,7 +609,8 @@
       var row = clone(want), c = k.charAt(0);
       row.m = nextM(id, cur);
       if (c === "m") putMap(row); else if (c === "n") putNode(row); else if (c === "l") putLink(row);
-      else if (c === "p") putPos(row); else putImg(row);
+      else if (c === "p") putPos(row); else if (c === "i") putImg(row); else if (c === "s") putStyle(row);
+      else if (c === "f") putFrame(row); else putLayout(row);
     });
   }
   function undo() {
@@ -655,12 +739,22 @@
     all.forEach(function (x) {
       if (POS[x]) touch("p:" + x);
       if (IMGS[x]) touch("i:" + x);
+      if (STYLES[x]) touch("s:" + x);
       if (NODES[x]) tombRow("n:" + x);
+    });
+    // a boundary / summary whose last living member goes, goes too
+    framesOf(gone).forEach(function (fid) {
+      if (FRAMES[fid].nodes.every(function (x) { return own(gone, x) || !NODES[x]; })) tombRow("f:" + fid);
     });
     sel = sibs[i + 1] || sibs[i - 1] || pid;
     selLink = null;
+    selFrame = null;
     commit();
     undoToast(all.length > 1 ? t("toast.deletedN", { name: name, n: all.length - 1 }) : t("toast.deleted", { name: name }), undo);
+  }
+  // Frames with a member in `set` (a dict).
+  function framesOf(set) {
+    return Object.keys(FRAMES).filter(function (fid) { return FRAMES[fid].nodes.some(function (x) { return own(set, x); }); });
   }
   // Links touching any id in `set` (a dict).
   function linksOf(set) {
@@ -703,12 +797,22 @@
     var idx = kidsRows(gp, id).map(function (n) { return n.id; }).indexOf(pid) + 1;
     return moveNode(id, gp, idx);
   }
-  function setSides(sides) {
+  // Layout of the current map: kind "" (classic map, with `sides`),
+  // "org", "tree" or "time". The kind is its own row (wave 27), so a
+  // device on older code keeps showing the classic map.
+  function curLayout() { var mp = curMap(); return mp && LAYOUTS[mp.id] ? LAYOUTS[mp.id].kind : ""; }
+  function setLayout(kind, sides) {
     var mp = curMap();
-    if (!mp || mp.sides === sides) return;
+    if (!mp) return;
+    var cur = LAYOUTS[mp.id];
+    if ((cur ? cur.kind : "") === kind && (kind || mp.sides === sides)) return;
     begin("");
-    putMap({ id: mp.id, m: nextM(mp.id, mp), sides: sides });
+    ensureRoot();
+    if (!kind && mp.sides !== sides) putMap({ id: mp.id, m: nextM(mp.id, mp), sides: sides });
+    if ((cur ? cur.kind : "") !== kind) putLayout({ id: mp.id, m: nextM(mp.id, cur), map: mp.id, kind: kind });
     commit();
+    camFor = null;
+    refresh();
   }
 
   // ---------- 4. Map view ----------
@@ -719,6 +823,8 @@
   var hits = null, hitList = [], hitAt = -1;
   var drop = null;                         // { id, mode } while dragging
   var selLink = null;                      // selected cross-link id (session)
+  var selFrame = null;                     // selected boundary / summary id (session)
+  var pres = null;                         // presentation: { steps[], i, keep } (session)
   var linking = null;                      // { from } while picking a link's other end
 
   var mctx = null, mcache = new Map();
@@ -761,12 +867,19 @@
     while (vp.firstChild) vp.removeChild(vp.firstChild);
     if (!R) { lay = null; return; }
     lay = M.layout(R, { measure: measure, fold: foldSet(R.root.map), placeholder: t("untitled") });
-    var sc = M.scene(R, lay, { pal: cssPal(), sel: sel, hi: hits, drop: drop, selLink: selLink });
+    var so = { pal: cssPal(), sel: sel, hi: hits, drop: drop, selLink: selLink, selFrame: selFrame };
+    if (pres) so = { pal: so.pal, only: presOnly(), cur: pres.steps[pres.i], keep: presKeep() };
+    var sc = M.scene(R, lay, so);
     var frag = document.createDocumentFragment();
     sc.items.forEach(function (it) {
       var n = domItem(it);
       if (!n) return;
-      var id = it.a && it.a["data-id"], lid = it.a && it.a["data-link"];
+      var id = it.a && it.a["data-id"], lid = it.a && it.a["data-link"], fid = it.a && it.a["data-frame"];
+      if (fid) {
+        var ft = document.createElementNS(SVGNS, "title"), fr = FRAMES[fid];
+        ft.textContent = fr ? (fr.label || t(fr.kind === "brace" ? "fr.summary" : "fr.boundary")) : "";
+        n.insertBefore(ft, n.firstChild);
+      }
       if (lid) {
         var lt = document.createElementNS(SVGNS, "title"), lk = linkRow(lid);
         lt.textContent = lk ? label(R.N[lk.from], 40) + " → " + label(R.N[lk.to], 40) + (lk.label ? "\n" + lk.label : "") : "";
@@ -781,6 +894,7 @@
       frag.appendChild(n);
     });
     vp.appendChild(frag);
+    if (pres) { applyView(); positionEditor(); renderNodebar(); return; }
     if (camFor !== R.root.map) {
       if (camFor) cams[camFor] = { s: view.s, tx: view.tx, ty: view.ty };
       camFor = R.root.map;
@@ -855,12 +969,24 @@
   function selectLink(lid) {
     selLink = lid && linkRow(lid) ? lid : null;
     sel = null;
+    selFrame = null;
     renderMap();
     if (selLink) live(t("live.link"));
   }
+  function selectFrame(fid) {
+    selFrame = fid && FRAMES[fid] ? fid : null;
+    sel = null;
+    selLink = null;
+    renderMap();
+    if (selFrame) live(t("live.frame"));
+  }
   function select(id, quiet) {
     if (id && (!R || !R.N[id])) id = null;
-    if (selLink) { selLink = null; sel = id; renderMap(); if (id && !quiet) live(t("live.sel", { name: label(R.N[id]) })); return; }
+    if (selLink || selFrame) {
+      selLink = null; selFrame = null; sel = id; renderMap();
+      if (id && !quiet) live(t("live.sel", { name: label(R.N[id]) }));
+      return;
+    }
     if (sel === id) { renderNodebar(); return; }
     sel = id;
     [].forEach.call($("vp").querySelectorAll("g.mm-node"), function (g) {
@@ -883,7 +1009,8 @@
     if (!best) return null;
     var mode = "child";
     if (best.depth > 0 && !R.rec[best.id]) {
-      var f = (p.y - best.y) / best.h;
+      // siblings side by side (org chart, timeline): left / right third
+      var f = best.sib === "h" ? (p.x - best.x) / best.w : (p.y - best.y) / best.h;
       if (f < 0.27) mode = "before"; else if (f > 0.73) mode = "after";
     }
     return { id: best.id, mode: mode };
@@ -894,6 +1021,7 @@
       g.classList.toggle("mm-drop-child", !!(on && d.mode === "child"));
       g.classList.toggle("mm-drop-before", !!(on && d.mode === "before"));
       g.classList.toggle("mm-drop-after", !!(on && d.mode === "after"));
+      g.classList.toggle("mm-drop-h", !!(on && lay && lay.nodes[d.id] && lay.nodes[d.id].sib === "h"));
     });
   }
   function doDrop(id, d) {
@@ -929,6 +1057,10 @@
       var g = target && target.closest ? target.closest("g[data-link]") : null;
       return g ? g.getAttribute("data-link") : null;
     }
+    function frameAt(target) {
+      var g = target && target.closest ? target.closest("g[data-frame]") : null;
+      return g ? g.getAttribute("data-frame") : null;
+    }
     // Dropped on a node: new parent / place (doDrop). Dropped on empty
     // space: the branch stays where it was let go (free placement).
     function endDrag(apply, p) {
@@ -952,7 +1084,8 @@
       if (count() === 1) {
         var id = nodeAt(e.target);
         start = { p: local(e), tx: view.tx, ty: view.ty, moved: false, id: id, fold: foldAt(e.target),
-                  link: id ? null : linkAt(e.target), touch: e.pointerType !== "mouse", drag: null };
+                  link: id ? null : linkAt(e.target), frame: id ? null : frameAt(e.target),
+                  touch: e.pointerType !== "mouse", drag: null };
         clearTimeout(press);
         if (id && start.touch) {
           press = setTimeout(function () {
@@ -1034,6 +1167,7 @@
         if (linking) { finishLink(start.id); start = null; return; }
         if (start.fold) { toggleFold(start.fold); start = null; return; }
         if (start.link) { selectLink(start.link); start = null; return; }
+        if (start.frame) { selectFrame(start.frame); start = null; return; }
         var id = start.id, now = Date.now();
         if (id && ((lastTap.id === id && now - lastTap.t < 380) || (start.touch && id === sel))) {
           lastTap = { t: 0, id: null };
@@ -1051,8 +1185,9 @@
     svg.addEventListener("contextmenu", function (e) {
       e.preventDefault();
       if (linking) return;
-      var id = nodeAt(e.target), lid = id ? null : linkAt(e.target);
+      var id = nodeAt(e.target), lid = id ? null : linkAt(e.target), fid = id || lid ? null : frameAt(e.target);
       if (lid) { selectLink(lid); openLinkMenu(lid, e.clientX, e.clientY); return; }
+      if (fid) { selectFrame(fid); openFrameMenu(fid, e.clientX, e.clientY); return; }
       if (!id) return;
       select(id);
       openNodeMenu(id, e.clientX, e.clientY);
@@ -1281,34 +1416,15 @@
   }
 
   // ---------- 6. Keyboard (map view) + clipboard ----------
-  function visibleKids(id) { return (lay && lay.nodes[id]) ? lay.nodes[id].kids : []; }
-  function nearestY(list, y) {
-    var best = null, d = Infinity;
-    list.forEach(function (id) { var c = lay.nodes[id], dd = Math.abs(c.cy - y); if (dd < d) { d = dd; best = id; } });
-    return best;
-  }
+  // Arrow keys: where they go depends on the layout (mm-core navTarget).
   function navigate(dir) {
     if (!lay || !R) return;
-    if (!sel) { select(R.root.id); reveal(R.root.id); return; }
-    var c = lay.nodes[sel];
-    if (!c) { select(R.root.id); return; }
-    var next = null;
-    if (dir === "left" || dir === "right") {
-      var out = (dir === "right") === (c.side !== "l");    // away from the centre
-      if (c.depth === 0) {
-        next = nearestY(visibleKids(sel).filter(function (id) { return lay.nodes[id].side === (dir === "right" ? "r" : "l"); }), c.cy);
-      } else if (out) {
-        if (c.folded) { toggleFold(sel); return; }
-        next = nearestY(visibleKids(sel), c.cy);
-      } else next = R.par[sel];
-    } else {
-      if (c.depth === 0) return;
-      var sibs = visibleKids(R.par[sel]).filter(function (id) { return lay.nodes[id].side === c.side; })
-        .sort(function (a, b) { return lay.nodes[a].cy - lay.nodes[b].cy; });
-      var i = sibs.indexOf(sel) + (dir === "down" ? 1 : -1);
-      next = sibs[i] || null;
-    }
-    if (next) { select(next); reveal(next); }
+    if (!sel || !lay.nodes[sel]) { select(R.root.id); reveal(R.root.id); return; }
+    var r = M.navTarget(R, lay, sel, dir);
+    if (!r) return;
+    if (r.unfold) { toggleFold(r.unfold); return; }
+    select(r.id);
+    reveal(r.id);
   }
 
   function inField(e) {
@@ -1327,6 +1443,7 @@
     }, true);
     document.addEventListener("keydown", function (e) {
       if (document.querySelector("dialog[open]") || $("mm-menu")) return;
+      if (pres) { presKey(e); return; }
       var mod = e.ctrlKey || e.metaKey, k = e.key;
       if (mod && !e.altKey && (k === "z" || k === "Z") && !inField(e)) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (mod && !e.altKey && (k === "y" || k === "Y") && !inField(e)) { e.preventDefault(); redo(); return; }
@@ -1339,6 +1456,11 @@
         return;
       }
       if (linking && k === "Escape") { e.preventDefault(); cancelLink(); return; }
+      if (selFrame) {
+        if (k === "Delete" || k === "Backspace") { e.preventDefault(); deleteFrame(selFrame); return; }
+        if (k === "Escape") { e.preventDefault(); selectFrame(null); return; }
+        if (k === "Enter" || k === "F2") { e.preventDefault(); openFrame(selFrame); return; }
+      }
       if (selLink) {
         if (k === "Delete" || k === "Backspace") { e.preventDefault(); deleteLink(selLink); return; }
         if (k === "Escape") { e.preventDefault(); selectLink(null); return; }
@@ -1591,7 +1713,8 @@
     var inside = null;
     if (id !== R.root.id) { inside = {}; M.subtree(R, id).forEach(function (x) { inside[x] = 1; }); }
     return { map: R.map, root: R.N[id], N: R.N, kids: R.kids, par: R.par, rec: id === R.root.id ? R.rec : {}, count: 0,
-             pos: R.pos, img: R.img,
+             pos: R.pos, img: R.img, sty: R.sty, kind: R.kind,
+             frames: (R.frames || []).filter(function (f) { return !inside || f.nodes.some(function (x) { return own(inside, x); }); }),
              links: (R.links || []).filter(function (l) { return !inside || (own(inside, l.from) && own(inside, l.to)); }) };
   }
 
@@ -1617,6 +1740,22 @@
     var emo = el("input");
     emo.type = "text"; emo.value = n.emoji; emo.maxLength = 32; emo.autocomplete = "off";
     row.appendChild(field(t("det.emoji"), emo));
+    var picks = el("div", "emo-picks");
+    picks.setAttribute("role", "group");
+    picks.setAttribute("aria-label", t("det.icons"));
+    ["⭐", "❗", "❓", "✅", "❌", "💡", "⚠️", "🔥", "📌", "🚩", "❤️", "1️⃣", "2️⃣", "3️⃣"].forEach(function (g) {
+      var b = el("button", "emo-pick", g);
+      b.type = "button";
+      b.setAttribute("aria-pressed", emo.value === g ? "true" : "false");
+      b.addEventListener("click", function () {
+        emo.value = emo.value === g ? "" : g;
+        [].forEach.call(picks.children, function (x) { x.setAttribute("aria-pressed", x.textContent === emo.value ? "true" : "false"); });
+      });
+      picks.appendChild(b);
+    });
+    emo.addEventListener("input", function () {
+      [].forEach.call(picks.children, function (x) { x.setAttribute("aria-pressed", x.textContent === emo.value ? "true" : "false"); });
+    });
     var doneL = el("label", "chk");
     var done = el("input");
     done.type = "checkbox"; done.checked = n.done;
@@ -1624,6 +1763,7 @@
     doneL.appendChild(el("span", "", t("det.done")));
     if (id !== R.root.id) row.appendChild(doneL);
     form.appendChild(row);
+    form.appendChild(picks);
     var color = n.color;
     if (id !== R.root.id) {
       var cf = el("fieldset", "seg-field");
@@ -1779,6 +1919,10 @@
     ];
     if (!root) items.push(["ctx.sibling", function () { addSibling(id); }]);
     items.push(["ctx.details", function () { openDetails(id); }]);
+    items.push(["ctx.style", function () { openStyle(id); }]);
+    items.push(["ctx.copyStyle", function () { copyStyle(id); }]);
+    if (styleClip) items.push(["ctx.pasteStyle", function () { pasteStyle(id); }]);
+    if (!root) items.push(["ctx.frame", function () { openFrame(null, id); }]);
     if (has && !root) items.push([isFolded(id) ? "ctx.unfold" : "ctx.fold", function () { toggleFold(id); }]);
     if (!root) {
       items.push([n.done ? "ctx.undone" : "ctx.done", function () { updateNode(id, { done: !n.done }); }]);
@@ -1796,6 +1940,7 @@
     items.push(["ctx.todo", function () { sendToTodo(id); }]);
     items.push(["ctx.notes", function () { sendToNotes(id); }]);
     if (has) items.push(["ctx.slides", function () { sendToSlides(id); }]);
+    items.push(["ctx.present", function () { startPresent(id); }]);
     if (!root) items.push(["ctx.delete", function () { deleteNode(id); }, "danger"]);
     openMenuAt(items, x, y, null, false, fromPress);
   }
@@ -1803,11 +1948,22 @@
   function renderNodebar() {
     var bar = $("nodebar");
     var lk = prefs.view === "map" && R && selLink && !editing ? linkRow(selLink) : null;
-    var show = !!lk || (prefs.view === "map" && R && sel && R.N[sel] && !editing && !linking);
+    var fr = prefs.view === "map" && R && selFrame && !editing ? FRAMES[selFrame] : null;
+    var show = !pres && (!!lk || !!fr || (prefs.view === "map" && R && sel && R.N[sel] && !editing && !linking));
     bar.hidden = !show;
     $("zoom").classList.toggle("lift", !!show);
     if (!show) return;
     bar.innerHTML = "";
+    if (fr) {
+      [[UI.edit, "fr.edit", function () { openFrame(fr.id); }],
+       [UI.trash, "fr.delete", function () { deleteFrame(fr.id); }]].forEach(function (d, i) {
+        var x = iconBtn("nb-btn", d[0], t(d[1]), d[2]);
+        x.appendChild(el("span", "nb-lbl", t(d[1])));
+        if (i === 1) x.classList.add("danger");
+        bar.appendChild(x);
+      });
+      return;
+    }
     if (lk) {
       [[UI.edit, "link.edit", function () { editLinkLabel(lk.id); }],
        [UI.swap, "link.reverse", function () { reverseLink(lk.id); }],
@@ -1834,12 +1990,418 @@
     if (!root) b(UI.sib, "nb.sibling", function () { addSibling(id); });
     b(UI.edit, "nb.edit", function () { startEdit(id, null, false); });
     b(UI.info, "nb.details", function () { openDetails(id); });
+    b(UI.style, "nb.style", function () { openStyle(id); });
     if (has && !root) b(UI.foldI, isFolded(id) ? "nb.unfold" : "nb.fold", function () { toggleFold(id); });
     if (!root) b(UI.trash, "nb.delete", function () { deleteNode(id); }).classList.add("danger");
     bar.appendChild(iconBtn("nb-btn nb-more", UI.more, t("btn.more"), function (e) {
       var r = e.currentTarget.getBoundingClientRect();
       openNodeMenu(id, r.right, r.top);
     }));
+  }
+
+  // ---------- 8b. Styles, boundaries, layouts (wave 27) ----------
+  // A row of toggle chips (wraps on a phone). opts: [[value, label, iconSvg?]]
+  function chipGroup(legend, opts, val, onPick, iconOnly) {
+    var fs = el("fieldset", "seg-field");
+    fs.appendChild(el("legend", "fld-lbl", legend));
+    var box = el("div", "chips" + (iconOnly ? " icons" : ""));
+    opts.forEach(function (op) {
+      var b = el("button", "chip");
+      b.type = "button";
+      if (op[2]) { b.innerHTML = op[2]; b.setAttribute("aria-label", op[1]); b.title = op[1]; }   // static icon markup only
+      else b.textContent = op[1];
+      b.setAttribute("aria-pressed", op[0] === val ? "true" : "false");
+      b.addEventListener("click", function () {
+        [].forEach.call(box.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        onPick(op[0]);
+      });
+      box.appendChild(b);
+    });
+    fs.appendChild(box);
+    return fs;
+  }
+  function swatchGroup(legend, val, onPick) {
+    var cf = el("fieldset", "seg-field");
+    cf.appendChild(el("legend", "fld-lbl", legend));
+    var chips = el("div", "swatches");
+    [""].concat(M.COLOR_KEYS).forEach(function (k) {
+      var b = el("button", "swatch" + (k ? "" : " auto"));
+      b.type = "button";
+      if (k) b.style.background = M.COLORS[k]; else b.textContent = "A";
+      b.setAttribute("aria-label", k ? t("col." + k) : t("det.auto"));
+      b.title = k ? t("col." + k) : t("det.auto");
+      b.setAttribute("aria-pressed", val === k ? "true" : "false");
+      b.addEventListener("click", function () {
+        onPick(k);
+        [].forEach.call(chips.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      });
+      chips.appendChild(b);
+    });
+    cf.appendChild(chips);
+    return cf;
+  }
+  function sv(body) {
+    return '<svg viewBox="0 0 32 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">' + body + "</svg>";
+  }
+  var SHAPE_ICON = {
+    "":      sv('<rect x="3" y="4" width="26" height="14" rx="4"/><path d="M11 11h10" stroke-dasharray="2 2"/>'),
+    rect:    sv('<rect x="3" y="4" width="26" height="14" rx="0.5"/>'),
+    round:   sv('<rect x="3" y="4" width="26" height="14" rx="5"/>'),
+    pill:    sv('<rect x="3" y="4" width="26" height="14" rx="7"/>'),
+    ellipse: sv('<ellipse cx="16" cy="11" rx="13" ry="8"/>'),
+    diamond: sv('<path d="M16 2L30 11L16 20L2 11Z"/>'),
+    hex:     sv('<path d="M8 3H24L30 11L24 19H8L2 11Z"/>'),
+    line:    sv('<path d="M3 17H29"/><path d="M8 11h16" stroke-width="1.5" opacity=".6"/>'),
+    none:    sv('<path d="M8 11h16" stroke-width="1.5" opacity=".6"/>')
+  };
+  var styleClip = null;                    // copied style (session only)
+  function styleOf(id) {
+    var s = STYLES[id];
+    return { shape: s ? s.shape : "", fill: s ? s.fill : "", border: s ? s.border : "", size: s ? s.size : "", bold: !!(s && s.bold) };
+  }
+  // Writes `st` (shape, fill, border, size, bold) on every id; no row
+  // for a node that already looks like that (R27).
+  function writeStyles(ids, st) {
+    ids.forEach(function (id) {
+      if (!R.N[id] || R.N[id].virtual) return;
+      var cur = STYLES[id], want = M.normStyle(Object.assign({ id: id, m: 1, map: R.root.map }, st));
+      if (!want) return;
+      if (cur ? JSON.stringify(Object.assign({}, cur, { m: 1 })) === JSON.stringify(want) : M.plainStyle(want)) return;
+      want.m = nextM(id, cur || NODES[id]);
+      putStyle(want);
+    });
+  }
+  function openStyle(id) {
+    var n = R && R.N[id];
+    if (!n) return;
+    var st = styleOf(id), color = n.color, root = id === R.root.id;
+    var dlg = makeDialog("mm-style", t("sty.title"));
+    dlg.classList.add("wide");
+    dlg.appendChild(el("p", "dlg-sub", label(n, 60)));
+    dlg.appendChild(chipGroup(t("sty.shape"), M.SHAPES.map(function (k) { return [k, t("shape." + (k || "auto")), SHAPE_ICON[k]]; }),
+      st.shape, function (v) { st.shape = v; }, true));
+    dlg.appendChild(chipGroup(t("sty.fill"), M.FILLS.map(function (k) { return [k, t("fill." + (k || "auto"))]; }),
+      st.fill, function (v) { st.fill = v; }));
+    dlg.appendChild(chipGroup(t("sty.border"), M.BORDERS.map(function (k) { return [k, t("border." + (k || "auto"))]; }),
+      st.border, function (v) { st.border = v; }));
+    dlg.appendChild(chipGroup(t("sty.size"), ["s", "", "l"].map(function (k) { return [k, t("size." + (k || "m"))]; }),
+      st.size, function (v) { st.size = v; }));
+    var bl = el("label", "chk");
+    var bcb = el("input");
+    bcb.type = "checkbox"; bcb.checked = st.bold;
+    bcb.addEventListener("change", function () { st.bold = bcb.checked; });
+    bl.appendChild(bcb);
+    bl.appendChild(el("span", "", t("sty.bold")));
+    dlg.appendChild(bl);
+    if (!root) dlg.appendChild(swatchGroup(t("det.color"), color, function (k) { color = k; }));
+    var has = (R.kids[id] || []).length > 0, all = null;
+    if (has) {
+      var al = el("label", "chk");
+      all = el("input");
+      all.type = "checkbox";
+      al.appendChild(all);
+      al.appendChild(el("span", "", t("sty.branch")));
+      dlg.appendChild(al);
+    }
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(textBtn("dlg-btn", t("sty.reset"), function () {
+      dlg.close();
+      apply({ shape: "", fill: "", border: "", size: "", bold: false }, n.color);
+    }));
+    acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
+    acts.appendChild(textBtn("dlg-btn primary", t("save"), function () { dlg.close(); apply(st, color); }));
+    dlg.appendChild(acts);
+    function apply(s2, col) {
+      if (!R.N[id]) return;
+      begin("");
+      ensureRoot();
+      writeStyles(all && all.checked ? M.subtree(R, id) : [id], s2);
+      if (!root && col !== R.N[id].color) {
+        var next = clone(R.N[id]);
+        next.color = col; next.m = nextM(id, NODES[id]);
+        putNode(next);
+      }
+      commit();
+    }
+    showDialog(dlg);
+  }
+  function copyStyle(id) { styleClip = styleOf(id); showToast(t("toast.styleCopied")); }
+  function pasteStyle(id) {
+    if (!styleClip || !R || !R.N[id]) return;
+    begin("");
+    ensureRoot();
+    writeStyles([id], styleClip);
+    commit();
+  }
+
+  // Boundary (box) or summary (brace) around sibling ideas. New: the
+  // node and the siblings ticked; editing: the same dialog.
+  function openFrame(fid, fromId) {
+    var f = fid ? FRAMES[fid] : null;
+    if (!R || (fid && !f)) return;
+    var members = {}, anchor = fromId;
+    if (f) {
+      f.nodes.forEach(function (x) { members[x] = 1; });
+      anchor = f.nodes.filter(function (x) { return R.N[x] && R.par[x]; })[0];
+    } else if (anchor) members[anchor] = 1;
+    if (!anchor || !R.N[anchor] || anchor === R.root.id) return;
+    var kind = f ? f.kind : "box", color = f ? f.color : "";
+    var dlg = makeDialog("mm-frame", t(f ? "fr.editT" : "fr.new"));
+    dlg.classList.add("wide");
+    var form = el("form");
+    form.method = "dialog";
+    form.appendChild(chipGroup(t("fr.kind"), [["box", t("fr.boundary")], ["brace", t("fr.summary")]], kind, function (v) { kind = v; }));
+    var lf = el("label", "fld");
+    lf.appendChild(el("span", "fld-lbl", t("fr.label")));
+    var inp = el("input");
+    inp.type = "text"; inp.value = f ? f.label : ""; inp.placeholder = t("fr.ph"); inp.maxLength = M.LABEL_LEN; inp.autocomplete = "off";
+    lf.appendChild(inp);
+    form.appendChild(lf);
+    form.appendChild(swatchGroup(t("fr.color"), color, function (k) { color = k; }));
+    // the siblings of the anchor, plus members that live elsewhere
+    var sibs = (R.kids[R.par[anchor]] || []).filter(function (x) { return !R.rec[x]; }).slice(0, 200);
+    Object.keys(members).forEach(function (x) { if (R.N[x] && sibs.indexOf(x) === -1) sibs.push(x); });
+    var mf = el("fieldset", "seg-field");
+    mf.appendChild(el("legend", "fld-lbl", t("fr.members")));
+    var list = el("div", "fr-list"), boxes = [];
+    sibs.forEach(function (x) {
+      var l = el("label", "chk");
+      var cb = el("input");
+      cb.type = "checkbox"; cb.checked = own(members, x); cb.value = x;
+      l.appendChild(cb);
+      l.appendChild(el("span", "", label(R.N[x], 60)));
+      list.appendChild(l);
+      boxes.push(cb);
+    });
+    mf.appendChild(list);
+    form.appendChild(mf);
+    var acts = el("div", "dlg-actions wrap");
+    if (f) acts.appendChild(textBtn("dlg-btn danger", t("fr.delete"), function () { dlg.close(); deleteFrame(fid); }));
+    acts.appendChild(textBtn("dlg-btn", t("cancel"), function () { dlg.close(); }));
+    var ok = textBtn("dlg-btn primary", t("save"));
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var ids = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
+      // members that are gone from this device stay members
+      if (f) f.nodes.forEach(function (x) { if (!R.N[x] && ids.indexOf(x) === -1) ids.push(x); });
+      if (!ids.some(function (x) { return R.N[x]; })) { showToast(t("fr.none")); return; }
+      if (ids.length > M.FRAME_NODES) { showToast(t("fr.many", { n: M.FRAME_NODES })); return; }
+      dlg.close();
+      var row = { id: f ? f.id : newId(), m: 0, map: R.root.map, nodes: ids, kind: kind, label: M.line(inp.value, M.LABEL_LEN), color: color };
+      var want = M.normFrame(Object.assign({}, row, { m: 1 }));
+      if (f && JSON.stringify(Object.assign({}, f, { m: 1 })) === JSON.stringify(want)) return;
+      begin("");
+      ensureRoot();
+      row.m = nextM(row.id, f);
+      var x = putFrame(row);
+      commit();
+      if (x) selectFrame(x.id);
+    });
+    dlg.appendChild(form);
+    showDialog(dlg);
+    if (!f) inp.focus();
+  }
+  function deleteFrame(fid) {
+    if (!FRAMES[fid]) return;
+    var kind = FRAMES[fid].kind;
+    begin("");
+    tombRow("f:" + fid);
+    selFrame = null;
+    commit();
+    undoToast(t(kind === "brace" ? "toast.summaryDeleted" : "toast.boundaryDeleted"), undo);
+  }
+  function openFrameMenu(fid, x, y, fromPress) {
+    if (!FRAMES[fid]) return;
+    openMenuAt([
+      ["fr.edit", function () { openFrame(fid); }],
+      ["fr.delete", function () { deleteFrame(fid); }, "danger"]
+    ], x, y, null, false, fromPress);
+  }
+
+  var LAYOUT_OPTS = [
+    ["", "both", "lay.both", '<circle cx="16" cy="11" r="3.5"/><path d="M12.5 11H8M19.5 11H24M8 5v12M24 5v12M8 5H4M8 17H4M24 5h4M24 17h4"/>'],
+    ["", "right", "lay.right", '<circle cx="7" cy="11" r="3.5"/><path d="M10.5 11H15M15 4v14M15 4h12M15 11h12M15 18h12"/>'],
+    ["org", "", "lay.org", '<rect x="12" y="2" width="8" height="5" rx="1"/><path d="M16 7v4M6 11h20M6 11v4M16 11v4M26 11v4"/><rect x="3" y="15" width="6" height="5" rx="1"/><rect x="13" y="15" width="6" height="5" rx="1"/><rect x="23" y="15" width="6" height="5" rx="1"/>'],
+    ["tree", "", "lay.tree", '<rect x="3" y="2" width="10" height="5" rx="1"/><path d="M6 7v12M6 12h6M6 19h6"/><rect x="13" y="9.5" width="14" height="5" rx="1"/><rect x="13" y="16.5" width="14" height="5" rx="1"/>'],
+    ["time", "", "lay.time", '<path d="M2 6H30"/><circle cx="6" cy="6" r="2.5"/><circle cx="16" cy="6" r="2.5"/><circle cx="26" cy="6" r="2.5"/><path d="M16 9v9M16 12h4M16 17h4M26 9v5M26 13h3"/>']
+  ];
+  function openLayout() {
+    var mp = curMap();
+    if (!mp) return;
+    var kind = curLayout(), dlg = makeDialog("mm-layout", t("lay.title"));
+    var list = el("div", "lay-list");
+    list.setAttribute("role", "radiogroup");
+    LAYOUT_OPTS.forEach(function (o) {
+      var on = o[0] === kind && (kind || o[1] === mp.sides);
+      var b = el("button", "lay-opt");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.innerHTML = sv(o[3]);                  // static icon markup only
+      var txt = el("span", "lay-txt");
+      txt.appendChild(el("span", "lay-name", t(o[2])));
+      txt.appendChild(el("span", "lay-desc", t(o[2] + ".d")));
+      b.appendChild(txt);
+      b.addEventListener("click", function () { dlg.close(); setLayout(o[0], o[1] || mp.sides); });
+      list.appendChild(b);
+    });
+    dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(textBtn("dlg-btn", t("close"), function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    var cur = list.querySelector('[aria-checked="true"]');
+    if (cur) cur.focus();
+  }
+
+  // ---------- 8c. Presentation (wave 27) ----------
+  // Branch by branch, full screen: each step shows one more idea and
+  // the camera frames its main branch; the last step shows the whole
+  // map. Keys: → ↓ Space PageDown next, ← ↑ PageUp back, Home / End,
+  // Esc ends. Tap the right of the screen for next, the left for back,
+  // or swipe. Nothing is written (a view, R10).
+  var presAnim = 0;
+  function presOnly() {
+    var o = {}, n = Math.min(pres.i + 1, pres.steps.length);
+    for (var i = 0; i < n; i++) o[pres.steps[i]] = 1;
+    return o;
+  }
+  function presKeep() {
+    var id = pres.steps[pres.i];
+    if (!id || id === R.root.id) return null;
+    var main = M.branchOf(R, id), o = {};
+    if (!main) return null;
+    o[R.root.id] = 1;
+    M.subtree(R, main).forEach(function (x) { o[x] = 1; });
+    return o;
+  }
+  function startPresent(fromId) {
+    if (!R || pres) return;
+    commitEdit();
+    closeMenu();
+    if (!$("findbar").hidden) closeFind();
+    var steps = M.presentSteps(R, foldSet(R.root.map));
+    var i = fromId ? Math.max(0, steps.indexOf(fromId)) : 0;
+    pres = { steps: steps, i: i, back: { s: view.s, tx: view.tx, ty: view.ty }, sel: sel, fs: false };
+    selLink = null; selFrame = null; sel = null;
+    document.body.classList.add("presenting");
+    buildPresUi();
+    try {
+      var de = document.documentElement, rq = de.requestFullscreen || de.webkitRequestFullscreen;
+      if (rq && !document.fullscreenElement) {
+        var p = rq.call(de);
+        pres.fs = true;
+        if (p && p.catch) p.catch(function () { if (pres) pres.fs = false; });
+      }
+    } catch (e) { pres.fs = false; }
+    renderMap();
+    presGo(i, false);
+    live(t("pres.start"));
+  }
+  function stopPresent() {
+    if (!pres) return;
+    var back = pres.back, s0 = pres.sel;
+    cancelAnimationFrame(presAnim);
+    try {
+      if (pres.fs && (document.fullscreenElement || document.webkitFullscreenElement)) {
+        var ex = document.exitFullscreen || document.webkitExitFullscreen, p = ex && ex.call(document);
+        if (p && p.catch) p.catch(function () {});
+      }
+    } catch (e) {}
+    pres = null;
+    document.body.classList.remove("presenting");
+    var ui = $("pres");
+    if (ui) ui.remove();
+    view.s = back.s; view.tx = back.tx; view.ty = back.ty;
+    sel = s0 && R && R.N[s0] ? s0 : null;
+    refresh();
+    $("svg").focus({ preventScroll: true });
+  }
+  function presGo(i, animate) {
+    if (!pres || !R) return;
+    i = Math.max(0, Math.min(pres.steps.length, i));
+    var changed = i !== pres.i;
+    pres.i = i;
+    renderMap();
+    presAim(animate !== false && changed);
+    var cnt = $("pres-count");
+    if (cnt) cnt.textContent = Math.min(i + 1, pres.steps.length + 1) + " / " + (pres.steps.length + 1);
+    var pv = $("pres-prev"), nx = $("pres-next");
+    if (pv) pv.disabled = i === 0;
+    if (nx) nx.disabled = i >= pres.steps.length;
+    var id = pres.steps[i];
+    live(id && R.N[id] ? label(R.N[id], 120) : t("pres.overview"));
+  }
+  function presAim(animate) {
+    if (!pres || !lay) return;
+    var r = stageRect(), v = M.presentView(R, lay, pres.steps, pres.i);
+    if (!r.width || !v.w) return;
+    var h = Math.max(100, r.height - 64);
+    var s = Math.max(0.1, Math.min(1.6, (r.width - 24) / v.w, (h - 16) / v.h));
+    var to = { s: s, tx: (r.width - v.w * s) / 2 - v.x * s, ty: (h - v.h * s) / 2 - v.y * s };
+    cancelAnimationFrame(presAnim);
+    var reduce = false;
+    try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (!animate || reduce) { view.s = to.s; view.tx = to.tx; view.ty = to.ty; applyView(); return; }
+    var from = { s: view.s, tx: view.tx, ty: view.ty }, t0 = 0;
+    function step(ts) {
+      if (!t0) t0 = ts;
+      var k = Math.min(1, (ts - t0) / 380), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      view.s = from.s + (to.s - from.s) * e;
+      view.tx = from.tx + (to.tx - from.tx) * e;
+      view.ty = from.ty + (to.ty - from.ty) * e;
+      applyView();
+      if (k < 1 && pres) presAnim = requestAnimationFrame(step);
+    }
+    presAnim = requestAnimationFrame(step);
+  }
+  function buildPresUi() {
+    var old = $("pres");
+    if (old) old.remove();
+    var ui = el("div", "pres");
+    ui.id = "pres";
+    var pad = el("div", "pres-pad");
+    pad.setAttribute("aria-hidden", "true");
+    var down = null;
+    pad.addEventListener("pointerdown", function (e) { down = { x: e.clientX, y: e.clientY }; });
+    pad.addEventListener("pointerup", function (e) {
+      if (!down || !pres) return;
+      var dx = e.clientX - down.x, dy = e.clientY - down.y, r = pad.getBoundingClientRect();
+      down = null;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { presGo(pres.i + (dx < 0 ? 1 : -1)); return; }
+      if (Math.hypot(dx, dy) > 12) return;
+      presGo(pres.i + (e.clientX - r.left < r.width / 3 ? -1 : 1));
+    });
+    pad.addEventListener("pointercancel", function () { down = null; });
+    ui.appendChild(pad);
+    var bar = el("div", "pres-bar");
+    bar.setAttribute("role", "toolbar");
+    bar.setAttribute("aria-label", t("pres.title"));
+    var prev = iconBtn("icon-btn", UI.caretL, t("pres.prev"), function () { presGo(pres.i - 1); });
+    prev.id = "pres-prev";
+    var cnt = el("span", "pres-count");
+    cnt.id = "pres-count";
+    var next = iconBtn("icon-btn", UI.caretR, t("pres.next"), function () { presGo(pres.i + 1); });
+    next.id = "pres-next";
+    bar.appendChild(prev);
+    bar.appendChild(cnt);
+    bar.appendChild(next);
+    bar.appendChild(iconBtn("icon-btn", UI.x, t("pres.end"), stopPresent));
+    ui.appendChild(bar);
+    $("stage").appendChild(ui);
+  }
+  function presKey(e) {
+    var k = e.key;
+    if (k === "Escape") { e.preventDefault(); stopPresent(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target && e.target.closest && e.target.closest(".pres-bar") && (k === "Enter" || k === " ")) return;   // the focused button
+    if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown" || k === " " || k === "Enter") { e.preventDefault(); presGo(pres.i + 1); }
+    else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp" || k === "Backspace") { e.preventDefault(); presGo(pres.i - 1); }
+    else if (k === "Home") { e.preventDefault(); presGo(0); }
+    else if (k === "End") { e.preventDefault(); presGo(pres.steps.length); }
   }
 
   // ---------- 9. Maps dialog, new map, paste a list ----------
@@ -1985,6 +2547,15 @@
     values(IMGS).forEach(function (x) {
       if (x.map === mapId && map[x.id] && x.src) putImg({ id: map[x.id], m: now, map: nid, src: x.src, w: x.w, h: x.h });
     });
+    values(STYLES).forEach(function (x) {
+      if (x.map === mapId && map[x.id] && !M.plainStyle(x)) putStyle(Object.assign(clone(x), { id: map[x.id], m: now, map: nid }));
+    });
+    values(FRAMES).forEach(function (f) {
+      if (f.map !== mapId) return;
+      var ids = f.nodes.filter(function (x) { return map[x]; }).map(function (x) { return map[x]; });
+      if (ids.length) putFrame({ id: newId(), m: now, map: nid, nodes: ids, kind: f.kind, label: f.label, color: f.color });
+    });
+    if (LAYOUTS[mapId] && LAYOUTS[mapId].kind) putLayout({ id: nid, m: now, map: nid, kind: LAYOUTS[mapId].kind });
     prefs.map = nid;
     savePrefs();
     sel = null;
@@ -1996,6 +2567,9 @@
     Object.keys(LINKS).forEach(function (id) { if (LINKS[id].map === mapId) tombRow("l:" + id); });
     Object.keys(POS).forEach(function (id) { if (POS[id].map === mapId) touch("p:" + id); });
     Object.keys(IMGS).forEach(function (id) { if (IMGS[id].map === mapId) touch("i:" + id); });
+    Object.keys(STYLES).forEach(function (id) { if (STYLES[id].map === mapId) touch("s:" + id); });
+    Object.keys(FRAMES).forEach(function (id) { if (FRAMES[id].map === mapId) tombRow("f:" + id); });
+    if (LAYOUTS[mapId]) touch("v:" + mapId);
     Object.keys(NODES).forEach(function (id) { if (NODES[id].map === mapId) tombRow("n:" + id); });
     tombRow("m:" + mapId);
     if (prefs.map === mapId) { prefs.map = null; sel = null; }
@@ -2394,6 +2968,9 @@
     (imp.links || []).forEach(function (x) { touch("l:" + x.id); });
     (imp.pos || []).forEach(function (x) { touch("p:" + x.id); });
     (imp.imgs || []).forEach(function (x) { touch("i:" + x.id); });
+    (imp.styles || []).forEach(function (x) { touch("s:" + x.id); });
+    (imp.frames || []).forEach(function (x) { touch("f:" + x.id); });
+    (imp.layouts || []).forEach(function (x) { touch("v:" + x.id); });
     adopt(merged);
     var first = imp.maps.length ? imp.maps[0].id : null;
     if (first && MAPS[first] && !curMap()) prefs.map = first;
@@ -2503,6 +3080,7 @@
   function openMenu() {
     var btn = $("more-btn"), r = btn.getBoundingClientRect(), mp = curMap();
     var items = [
+      ["menu.present", function () { startPresent(null); }, null, !R || prefs.view !== "map"],
       ["menu.new", newMapDialog],
       ["menu.maps", openMaps, null, !Object.keys(MAPS).length],
       ["menu.paste", function () { openPaste(R ? (sel || R.root.id) : null); }],
@@ -2514,8 +3092,7 @@
       ["menu.backup", backupAll, null, !Object.keys(MAPS).length]
     ];
     if (mp) {
-      items.push([mp.sides === "right" ? "menu.sidesBoth" : "menu.sidesRight",
-                  function () { setSides(mp.sides === "right" ? "both" : "right"); }]);
+      items.push(["menu.layout", openLayout]);
       items.push(["menu.tidy", tidyAll, null, !anyMoved()]);
       items.push(["menu.unfoldAll", function () { delete prefs.fold[mp.id]; savePrefs(); refresh(); }]);
       items.push(["menu.foldAll", function () {
@@ -2755,6 +3332,11 @@
     $("empty").hidden = has;
     $("stage").hidden = !has || prefs.view !== "map";
     $("outline").hidden = !has || prefs.view !== "outline";
+    if (pres && (!has || prefs.view !== "map")) stopPresent();
+    if (pres) {
+      pres.steps = M.presentSteps(R, foldSet(R.root.map));
+      pres.i = Math.min(pres.i, pres.steps.length);
+    }
     if (!has) {
       $("nodebar").hidden = true; $("olbar").hidden = true;
       if (editing) { editing = null; $("editor").hidden = true; }
@@ -2831,7 +3413,13 @@
     wireEditor();
     wireOutline();
     wireKeyboard();
-    window.addEventListener("resize", function () { positionEditor(); });
+    window.addEventListener("resize", function () { positionEditor(); if (pres) presAim(false); });
+    // Esc in full screen is taken by the browser: leaving full screen ends the presentation too
+    ["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) {
+      document.addEventListener(ev, function () {
+        if (pres && pres.fs && !(document.fullscreenElement || document.webkitFullscreenElement)) { pres.fs = false; stopPresent(); }
+      });
+    });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") { commitEdit(); flushOutline(); savePrefsNow(); }
     });

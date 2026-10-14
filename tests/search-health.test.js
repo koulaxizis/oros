@@ -141,6 +141,33 @@ test("health: readings with words, own kinds, tombstones + hidden kinds skipped,
   assert.deepEqual(at, ["health", { entry: "r1" }]);
 });
 
+test("health: medicines and symptoms with words; deleted and hidden skipped; their targets", () => {
+  const data = {
+    ver: 1, en: [], ty: [], set: null,
+    md: [{ id: "ma", m: 5, n: "Lisinopril", s: "10 mg", nt: "with breakfast" }, { id: "mb", m: 5, n: "Gone" }],
+    sy: [{ id: "y1", m: 5, k: "ha", at: 1700000000000, i: 6, n: "after screen time", g: ["work"] },
+         { id: "y2", m: 5, k: "ha", at: 1700000000000, i: 6, n: "", g: [] },
+         { id: "y3", m: 5, k: "shid", at: 1700000000000, i: 6, n: "hidden kind", g: [] },
+         { id: "y4", m: 5, k: "sown", at: 1700000000000, i: 6, n: "own kind", g: [] }],
+    sk: [{ id: "shid", m: 1, n: "Hidden", h: 1 }, { id: "sown", m: 1, n: "Back pain", h: 0 }],
+    tombs: { "md:mb": 9 }
+  };
+  const p = P("health");
+  const hits = p.search(ctxFor(store({ "oros-health-data": data }), "x"));
+  assert.deepEqual(hits.map((h) => h.id).sort(), ["md:ma", "sy:y1", "sy:y4"]);
+  assert.equal(byId(hits, "md:ma").title, "Lisinopril 10 mg");
+  assert.equal(byId(hits, "md:ma").text, "with breakfast");
+  assert.equal(byId(hits, "sy:y1").text, "after screen time · work");
+  assert.equal(byId(hits, "sy:y4").title, "Back pain");
+  assert.equal(byId(p.search(ctxFor(store({ "oros-health-data": data }), "x", "el")), "sy:y1").title, "Πονοκέφαλος");
+  let at = null;
+  const win = { __orosOpenAt: (a, t) => { at = [a, t]; } };
+  p.open({ med: "ma" }, win);
+  assert.deepEqual(at, ["health", { med: "ma" }]);
+  p.open({ sym: "y1" }, win);
+  assert.deepEqual(at, ["health", { sym: "y1" }]);
+});
+
 // ---------- Baby ----------
 test("baby: children, events with text, marks; deleted child and tombstones skipped", () => {
   const data = {

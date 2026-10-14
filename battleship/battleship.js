@@ -136,7 +136,18 @@
       "toast.placeFirst": "Place your fleet first",
       "toast.rotatePlace": "Ships turn only while you place them",
       "toast.empty": "No ships placed yet",
-      "toast.save": "Could not save: storage is full"
+      "toast.save": "Could not save: storage is full",
+      "game.name": "Battleship", "btn.net": "Play on two devices",
+      "net.hostNew": "The device that showed the code starts the next game",
+      "net.hostRules": "The device that showed the code sets the rules",
+      "net.waitFleet": "Fleet ready: waiting for your opponent's fleet…",
+      "net.locked": "Your fleet is set: wait for your opponent",
+      "net.cheat": "The other device's answers did not match its fleet",
+      "net.confirmNew": "Start a new game on both devices?",
+      "net.yes": "New game",
+      "turn.ai@net": "Your opponent is aiming…", "turn.lost@net": "Your opponent sank your fleet",
+      "live.ai@net": "Your opponent fires at {c}: {r}", "live.lost@net": "Your opponent won",
+      "res.lost@net": "Your opponent won", "toast.wait@net": "Wait for your opponent's shot"
     },
     el: {
       "btn.new": "Νέο παιχνίδι (N)",
@@ -211,12 +222,24 @@
       "toast.placeFirst": "Τοποθέτησε πρώτα τον στόλο σου",
       "toast.rotatePlace": "Τα πλοία περιστρέφονται μόνο στην τοποθέτηση",
       "toast.empty": "Δεν έχεις βάλει ακόμα πλοία",
-      "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος"
+      "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
+      "game.name": "Ναυμαχία", "btn.net": "Παιχνίδι σε δύο συσκευές",
+      "net.hostNew": "Το επόμενο παιχνίδι το ξεκινά η συσκευή που έδειξε τον κωδικό",
+      "net.hostRules": "Τους κανόνες τους ορίζει η συσκευή που έδειξε τον κωδικό",
+      "net.waitFleet": "Ο στόλος είναι έτοιμος: περιμένουμε τον στόλο του αντιπάλου…",
+      "net.locked": "Ο στόλος σου είναι στη θέση του: περίμενε τον αντίπαλο",
+      "net.cheat": "Οι απαντήσεις της άλλης συσκευής δεν ταιριάζουν με τον στόλο της",
+      "net.confirmNew": "Νέο παιχνίδι και στις δύο συσκευές;",
+      "net.yes": "Νέο παιχνίδι",
+      "turn.ai@net": "Ο αντίπαλος σημαδεύει…", "turn.lost@net": "Ο αντίπαλος βύθισε τον στόλο σου",
+      "live.ai@net": "Ο αντίπαλος ρίχνει στο {c}: {r}", "live.lost@net": "Νίκησε ο αντίπαλος",
+      "res.lost@net": "Νίκησε ο αντίπαλος", "toast.wait@net": "Περίμενε τη βολή του αντιπάλου"
     }
   };
 
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
+    if (game && game.net && STRINGS.en[key + "@net"] !== undefined) key += "@net";
     var str = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
     if (params) {
       Object.keys(params).forEach(function (k) {
@@ -659,6 +682,7 @@
     return null;
   }
   function saveSession() {
+    if (game && game.net) { netSave(); return; }
     try { localStorage.setItem(SESSION_KEY, JSON.stringify(game)); } catch (e) {}
   }
 
@@ -681,7 +705,7 @@
 
   // ----- placing -----
   function placeAt(q) {
-    if (!game || game.phase !== "place") return;
+    if (!game || game.phase !== "place" || locked()) return;
     if (game.sel < 0) {
       var k0 = occupancy(game.mine)[q];
       if (k0 >= 0) { pickUp(k0); return; }
@@ -702,7 +726,7 @@
     renderAll();
   }
   function pickUp(k) {
-    if (!game || game.phase !== "place") return;
+    if (!game || game.phase !== "place" || locked()) return;
     if (game.mine[k]) { game.vert = game.mine[k].v; game.mine[k] = null; }
     game.sel = k;
     saveSession();
@@ -711,12 +735,13 @@
   function rotate() {
     if (!game) return;
     if (game.phase !== "place") { showToast(t(game.phase === "done" ? "toast.over" : "toast.rotatePlace")); return; }
+    if (locked()) return;
     game.vert = !game.vert;
     saveSession();
     renderAll();
   }
   function randomPlace() {
-    if (!game || game.phase !== "place") return;
+    if (!game || game.phase !== "place" || locked()) return;
     var f = randomFleet(randInt, game.noTouch);
     if (!f) return;
     game.mine = f;
@@ -726,7 +751,7 @@
     renderAll();
   }
   function clearFleet() {
-    if (!game || game.phase !== "place") return;
+    if (!game || game.phase !== "place" || locked()) return;
     if (!game.mine.some(function (s) { return !!s; })) { showToast(t("toast.empty")); return; }
     var prev = JSON.parse(JSON.stringify(game));
     game.mine = [null, null, null, null, null];
@@ -738,6 +763,7 @@
   function start() {
     if (!game || game.phase !== "place") return;
     if (!fleetComplete(game.mine)) { showToast(t("toast.notReady")); return; }
+    if (game.net) { netReady(); return; }
     game.theirs = randomFleet(randInt, game.noTouch);
     if (!game.theirs) return;
     game.phase = "play";
@@ -756,6 +782,7 @@
     if (game.phase === "done") { showToast(t("toast.over")); return; }          // R28
     if (game.turn !== "me") { showToast(t("toast.wait")); return; }
     if (game.myShots.indexOf(q) >= 0) { showToast(t("toast.already", { c: coord(q) })); shakeCell("grid-enemy", q); return; }
+    if (game.net) { netFire(q); return; }
     var res = shotResult(game.theirs, game.myShots, q);
     game.myShots.push(q);
     announceShot("live.you", q, res);
@@ -774,7 +801,7 @@
   var lastShot = null;
 
   function maybeAi() {
-    if (!game || game.phase !== "play" || game.turn !== "ai" || aiTimer) return;
+    if (!game || game.net || game.phase !== "play" || game.turn !== "ai" || aiTimer) return;
     aiTimer = setTimeout(function () {
       aiTimer = null;
       if (!game || game.phase !== "play" || game.turn !== "ai") return;
@@ -797,8 +824,9 @@
     game.phase = "done";
     game.winner = winner;
     game.turn = "me";
-    game.rec = countGame(game.level, winner === "me" ? game.myShots.length : 0);
+    game.rec = game.net ? false : countGame(game.level, winner === "me" ? game.myShots.length : 0);
     saveSession();
+    if (game.net) netSendFleet();
     renderAll();
     setTimeout(function () { live(t(winner === "me" ? "live.won" : "live.lost")); }, 600);
     sfx(winner === "me" ? "win" : "lose");
@@ -809,6 +837,7 @@
 
   // A game in progress is never lost silently: Undo toast (R14).
   function newGame(level) {
+    if (game && game.net) { netNewGame(); return; }
     closeDialogs();
     cancelAi();
     clearTimeout(finishTimer);
@@ -834,7 +863,7 @@
   }
 
   function setLevel(level) {
-    if (game && level === game.level) return;
+    if (game && (level === game.level || game.net)) return;
     if (game && game.phase === "place") {        // nothing to lose: keep the fleet being placed
       prefs.level = level; savePrefs();
       game.level = level;
@@ -848,6 +877,7 @@
   function setNoTouch(on) {
     prefs.noTouch = on; savePrefs();
     if (!game) return;
+    if (game.net) { showToast(t(net.role === "host" ? "toast.nextGame" : "net.hostRules")); return; }
     if (game.phase !== "place") { showToast(t("toast.nextGame")); return; }
     game.noTouch = on;
     var dropped = false;
@@ -886,16 +916,17 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
+    $("level-seg").hidden = !!(game && game.net);
     paintSfxBtn();
   }
 
   function renderStatus() {
-    var mv = seaView(game.mine, game.aiShots), tv = game.theirs ? seaView(game.theirs, game.myShots) : null;
+    var mv = seaView(game.mine, game.aiShots), tv = game.net ? netEnemyView(game) : (game.theirs ? seaView(game.theirs, game.myShots) : null);
     $("mine-left").textContent = String(game.phase === "place" ? game.mine.filter(Boolean).length : mv.afloat.length);
     $("theirs-left").textContent = String(tv ? tv.afloat.length : FLEET.length);
     var msg, cls = "";
     if (game.phase === "place") {
-      msg = game.sel >= 0 ? t("turn.place", { s: t("ship." + game.sel), n: FLEET[game.sel] }) : t("turn.ready");
+      msg = game.net && game.ready ? t("net.waitFleet") : game.sel >= 0 ? t("turn.place", { s: t("ship." + game.sel), n: FLEET[game.sel] }) : t("turn.ready");
     } else if (game.phase === "done") {
       if (game.winner === "me") { msg = t("turn.won", { n: game.myShots.length }); cls = "done"; }
       else { msg = t("turn.lost"); cls = "warn"; }
@@ -973,7 +1004,7 @@
     $(enemy ? "panel-enemy" : "panel-mine").hidden = enemy && place;
     if (enemy && place) return;
     var ships = enemy ? game.theirs : game.mine, shots = enemy ? game.myShots : game.aiShots;
-    var sv = seaView(ships, shots), occ = occupancy(ships);
+    var sv = enemy && game.net ? netEnemyView(game) : seaView(ships, shots), occ = occupancy(ships);
     var show = !enemy || game.phase === "done";          // enemy ships show at the end
     var ghost = {}, ghostBad = false;
     if (!enemy && place && game.sel >= 0 && (hover >= 0 || kbd)) {
@@ -982,9 +1013,10 @@
       ghostBad = !!fleetProblem(tmp, game.noTouch);
       shipCells(s, FLEET[game.sel]).forEach(function (q) { ghost[q] = true; });
     }
-    var active = enemy ? (game.phase === "play" && game.turn === "me") : place;
+    var wait = game.phase === "play" && (game.turn !== "me" || (game.net && game.pend >= 0));
+    var active = enemy ? (game.phase === "play" && !wait) : place && !(game.net && game.ready);
     grid.classList.toggle("active", active);
-    grid.classList.toggle("wait", enemy && game.phase === "play" && game.turn !== "me");
+    grid.classList.toggle("wait", enemy && wait);
     var sqs = grid.querySelectorAll(".sq");
     for (var q = 0; q < CELLS; q++) {
       var b = sqs[q], v = sv.view[q], cls = "sq";
@@ -1035,8 +1067,9 @@
     });
     $("rotate-btn").querySelector("span").textContent = t(game.vert ? "act.vertical" : "act.horizontal");
     $("rotate-btn").classList.toggle("vert", game.vert);
-    $("start-btn").setAttribute("aria-disabled", fleetComplete(game.mine) ? "false" : "true");
-    $("clear-btn").setAttribute("aria-disabled", game.mine.some(Boolean) ? "false" : "true");
+    var lock = !!(game.net && game.ready);
+    $("start-btn").setAttribute("aria-disabled", fleetComplete(game.mine) && !lock ? "false" : "true");
+    $("clear-btn").setAttribute("aria-disabled", game.mine.some(Boolean) && !lock ? "false" : "true");
   }
 
   function shakeGrid(id) {
@@ -1103,15 +1136,18 @@
     if (!game || game.phase !== "done") return;
     closeDialogs();
     var won = game.winner === "me", s = totals(data, game.level);
-    var hits = seaView(game.theirs, game.myShots).view.filter(function (v) { return v >= 2; }).length;
+    var hits = (game.net ? netEnemyView(game) : seaView(game.theirs, game.myShots)).view.filter(function (v) { return v >= 2; }).length;
     var dlg = makeDialog("battleship-result");
-    dlg.appendChild(el("div", "dlg-title", t("level." + game.level)));
+    dlg.appendChild(el("div", "dlg-title", t(game.net ? "game.name" : "level." + game.level)));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), t(won ? "res.won" : "res.lost")));
     if (won && game.rec) dlg.appendChild(el("div", "dlg-badge", t("res.rec")));
+    if (game.net && game.cheat) dlg.appendChild(el("div", "dlg-sub", t("net.cheat")));
     dlg.appendChild(row(t("res.shots"), String(game.myShots.length)));
     dlg.appendChild(row(t("res.acc"), (game.myShots.length ? Math.round(100 * hits / game.myShots.length) : 0) + "%"));
-    dlg.appendChild(row(t("res.record"), s.w + " · " + s.l));
-    dlg.appendChild(row(t("res.best"), s.bs ? String(s.bs) : "–"));
+    if (!game.net) {
+      dlg.appendChild(row(t("res.record"), s.w + " · " + s.l));
+      dlg.appendChild(row(t("res.best"), s.bs ? String(s.bs) : "–"));
+    }
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
     var again = button(t("res.again"), "primary", function () { dlg.close(); newGame(); });
@@ -1169,13 +1205,13 @@
     close.focus();
   }
 
-  function confirmDialog(msg, onYes) {
+  function confirmDialog(msg, onYes, yes) {
     var dlg = makeDialog("battleship-confirm");
     dlg.appendChild(el("div", "dlg-msg", msg));
     var acts = el("div", "dlg-actions");
     var no = button(t("confirm.no"), "", function () { dlg.close(); });
     acts.appendChild(no);
-    acts.appendChild(button(t("confirm.yes"), "danger", function () { dlg.close(); onYes(); }));
+    acts.appendChild(button(yes || t("confirm.yes"), yes ? "primary" : "danger", function () { dlg.close(); onYes(); }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -1276,6 +1312,7 @@
   var UI_ICONS = {
     new:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     opts:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+    net:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="8" height="14" rx="1.5"/><rect x="14" y="5" width="8" height="14" rx="1.5"/><path d="M10 10h4M10 14h4"/></svg>',
     stats:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
     rotate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
     random: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
@@ -1448,6 +1485,316 @@
     // no toast on merge (sync feedback = taskbar dot)
   }
 
+  // ---------- 12b. Two devices (remote-play.js) ----------
+  // Each device keeps its own fleet and never sends it while the game
+  // lasts: a shot goes out as { t: "shot", gid, n, q } and the device
+  // that was shot at answers from its own sea ({ t: "res", hit, sunk,
+  // ship (only the ship just sunk), win }). The shooter checks every
+  // answer against what it already knows (netResIn). At the end both
+  // fleets cross ({ t: "fleet" }) and each device checks the other's
+  // answers against it (netFleetCheck); a mismatch is shown, not hidden.
+  // The device that showed the code (host) numbers the games (gid) and
+  // sets the rule "ships may not touch"; who fires first alternates.
+  // Records vs the computer are left alone. Device-local, on both
+  // devices: oros-battleship-net (the game on two devices).
+  var NET_KEY = "oros-battleship-net";
+  var RP = null;
+  var net = { role: "", early: null };
+
+  function netFresh(gid, nt, host) {
+    var g = fresh();
+    g.level = "m"; g.noTouch = nt; g.net = true; g.gid = gid;
+    g.first = (gid % 2 === 1) === host ? "me" : "ai";
+    g.turn = g.first;
+    g.theirs = [null, null, null, null, null];
+    g.myRes = []; g.ready = false; g.peerReady = false; g.pend = -1; g.cheat = false;
+    return g;
+  }
+  function netValid(g) {
+    if (!g || typeof g !== "object" || g.net !== true || !isInt(g.gid) || g.gid < 1 || typeof g.noTouch !== "boolean" ||
+        ["place", "play", "done"].indexOf(g.phase) < 0 || !Array.isArray(g.mine) || g.mine.length !== FLEET.length ||
+        fleetProblem(g.mine, g.noTouch) || !validShots(g.myShots) || !validShots(g.aiShots) ||
+        !Array.isArray(g.myRes) || g.myRes.length !== g.myShots.length ||
+        !Array.isArray(g.theirs) || g.theirs.length !== FLEET.length || fleetProblem(g.theirs, g.noTouch) ||
+        ["me", "ai"].indexOf(g.turn) < 0 || ["me", "ai"].indexOf(g.first) < 0 || ["", "me", "ai"].indexOf(g.winner) < 0 ||
+        typeof g.ready !== "boolean" || typeof g.peerReady !== "boolean" || typeof g.cheat !== "boolean" ||
+        typeof g.vert !== "boolean" || !isInt(g.sel) || g.sel < -1 || g.sel >= FLEET.length ||
+        !isInt(g.pend) || g.pend < -1 || g.pend >= CELLS || g.level !== "m" || g.rec !== false) return false;
+    if (!g.myRes.every(function (x) { return !!x && typeof x.h === "boolean" && isInt(x.s) && x.s >= -1 && x.s < FLEET.length; })) return false;
+    return g.phase === "place" ? !g.myShots.length && !g.aiShots.length : fleetComplete(g.mine);
+  }
+  // What this device knows of the other sea: the answers it got and the
+  // ships sunk so far (the whole fleet once the game is over).
+  function netEnemyView(g) {
+    var view = [], afloat = [], sunk = [], i;
+    for (i = 0; i < CELLS; i++) view.push(0);
+    g.myShots.forEach(function (q, j) {
+      view[q] = g.myRes[j].h ? 2 : 1;
+      if (g.myRes[j].s >= 0) sunk.push(g.myRes[j].s);
+    });
+    FLEET.forEach(function (len, k) {
+      if (sunk.indexOf(k) < 0) { afloat.push(len); return; }
+      if (g.theirs[k]) shipCells(g.theirs[k], len).forEach(function (q) { view[q] = 3; });
+    });
+    return { view: view, afloat: afloat, sunk: sunk };
+  }
+  // A shot from the other device → { dup, r } (r as shotResult) or null.
+  function netShotIn(g, m) {
+    if (!g || !g.net || g.phase === "place" || !m || m.gid !== g.gid || !isInt(m.n) || m.n < 0 ||
+        !isInt(m.q) || m.q < 0 || m.q >= CELLS) return null;
+    if (m.n < g.aiShots.length) {             // answered before: the same answer again
+      if (g.aiShots[m.n] !== m.q) return null;
+      return { dup: true, r: shotResult(g.mine, g.aiShots.slice(0, m.n), m.q) };
+    }
+    if (m.n !== g.aiShots.length || g.phase !== "play" || g.turn !== "ai") return null;
+    return { dup: false, r: shotResult(g.mine, g.aiShots, m.q) };
+  }
+  function netResMsg(g, n, q, r) {
+    var m = { t: "res", gid: g.gid, n: n, q: q, hit: r.hit, sunk: r.sunk, win: r.win };
+    if (r.sunk >= 0) { var s = g.mine[r.sunk]; m.ship = { r: s.r, c: s.c, v: s.v }; }
+    return m;
+  }
+  // The answer to this device's shot → { h, s, ship, win } or null when it
+  // cannot be true (a sunk ship that was not hit all along, a win with
+  // ships left…).
+  function netResIn(g, m) {
+    if (!g || !g.net || g.phase !== "play" || g.turn !== "me" || g.pend < 0 || !m || m.gid !== g.gid ||
+        m.n !== g.myShots.length || m.q !== g.pend || typeof m.hit !== "boolean" || typeof m.win !== "boolean" ||
+        !isInt(m.sunk) || m.sunk < -1 || m.sunk >= FLEET.length) return null;
+    if (!m.hit && (m.sunk >= 0 || m.win)) return null;
+    var done = {}, n = 0, ship = null;
+    g.myRes.forEach(function (x) { if (x.s >= 0 && !done[x.s]) { done[x.s] = true; n++; } });
+    if (m.sunk >= 0) {
+      var s = m.ship;
+      if (done[m.sunk] || !s || typeof s !== "object") return null;
+      ship = { r: s.r, c: s.c, v: s.v };
+      if (!inBounds(ship, FLEET[m.sunk])) return null;
+      var hits = {};
+      g.myShots.forEach(function (x, j) { if (g.myRes[j].h) hits[x] = true; });
+      hits[m.q] = true;
+      var cells = shipCells(ship, FLEET[m.sunk]);
+      if (cells.indexOf(m.q) < 0 || !cells.every(function (x) { return hits[x]; })) return null;
+      var tmp = g.theirs.slice();
+      tmp[m.sunk] = ship;
+      if (fleetProblem(tmp, g.noTouch)) return null;
+      n++;
+    }
+    if (m.win !== (n === FLEET.length)) return null;
+    return { h: m.hit, s: m.sunk, ship: ship, win: m.win };
+  }
+  // The other fleet at the end → { ships, ok } (ok: every answer matches
+  // it) or null when it is no fleet at all.
+  function netFleetCheck(g, ships) {
+    if (!Array.isArray(ships) || ships.length !== FLEET.length) return null;
+    var out = [];
+    for (var k = 0; k < FLEET.length; k++) {
+      var s = ships[k];
+      if (!s || typeof s !== "object") return null;
+      var c = { r: s.r, c: s.c, v: s.v };
+      if (!inBounds(c, FLEET[k])) return null;
+      out.push(c);
+    }
+    var ok = !fleetProblem(out, g.noTouch);
+    for (var j = 0; ok && j < g.myShots.length; j++) {
+      var r = shotResult(out, g.myShots.slice(0, j), g.myShots[j]);
+      if (r.hit !== g.myRes[j].h || r.sunk !== g.myRes[j].s) ok = false;
+    }
+    g.theirs.forEach(function (x, i) {
+      if (x && (x.r !== out[i].r || x.c !== out[i].c || x.v !== out[i].v)) ok = false;
+    });
+    return { ships: out, ok: ok };
+  }
+
+  function locked() {
+    if (!game || !game.net || !game.ready) return false;
+    showToast(t("net.locked"));
+    return true;
+  }
+  function netSave() {
+    try { localStorage.setItem(NET_KEY, JSON.stringify(game)); } catch (e) {}
+  }
+  function netLoad() {
+    try {
+      var g = JSON.parse(localStorage.getItem(NET_KEY) || "null");
+      if (netValid(g)) return g;
+    } catch (e) {}
+    return null;
+  }
+  function netSend(m) { if (RP) RP.send(m); }
+  function netHello() {
+    if (!game || !game.net) return;
+    netSend({ t: "sy", gid: game.gid, nt: game.noTouch, rd: game.ready });
+    if (game.phase === "play" && game.pend >= 0) netSend({ t: "shot", gid: game.gid, n: game.myShots.length, q: game.pend });
+    netSendFleet();
+  }
+  function netSendFleet() {
+    if (game && game.net && game.phase === "done") {
+      netSend({ t: "fleet", gid: game.gid, ships: game.mine.map(function (s) { return { r: s.r, c: s.c, v: s.v }; }) });
+    }
+  }
+  function netEnter(g) {
+    cancelAi();
+    clearTimeout(finishTimer);
+    closeDialogs();
+    game = g;
+    cursor = 44;
+    lastShot = null;
+    net.early = null;
+    renderAll(true);
+  }
+  function netReady() {
+    if (game.ready) return;
+    game.ready = true;
+    game.sel = -1;
+    saveSession();
+    netSend({ t: "sy", gid: game.gid, nt: game.noTouch, rd: true });
+    renderAll();
+    netMaybeStart();
+  }
+  function netMaybeStart() {
+    if (game.phase !== "place" || !game.ready || !game.peerReady) return;
+    game.phase = "play";
+    game.turn = game.first;
+    game.sel = -1;
+    cursor = 44;
+    saveSession();
+    renderAll(true);
+    live(t(game.turn === "me" ? "turn.you" : "turn.ai"));
+  }
+  function netFire(q) {
+    if (game.pend >= 0) { showToast(t("toast.wait")); return; }
+    game.pend = q;
+    saveSession();
+    netSend({ t: "shot", gid: game.gid, n: game.myShots.length, q: q });
+    renderAll();
+  }
+  function netShot(m) {
+    // its shot came before the answer to ours (after a reconnect): later
+    if (game.phase === "play" && game.turn === "me" && game.pend >= 0 && m.n === game.aiShots.length) { net.early = m; return; }
+    var a = netShotIn(game, m);
+    if (!a) return;
+    netSend(netResMsg(game, m.n, m.q, a.r));
+    if (a.dup) return;
+    game.aiShots.push(m.q);
+    announceShot("live.ai", m.q, a.r);
+    sfx(a.r.sunk >= 0 ? "sunk" : (a.r.hit ? "hit" : "miss"));
+    if (a.r.win) { finish("ai"); return; }
+    game.turn = "me";
+    saveSession();
+    renderAll();
+  }
+  function netRes(m) {
+    var r = netResIn(game, m);
+    if (!r) return;
+    var q = game.pend;
+    game.pend = -1;
+    game.myShots.push(q);
+    game.myRes.push({ h: r.h, s: r.s });
+    if (r.ship) game.theirs[r.s] = r.ship;
+    announceShot("live.you", q, { hit: r.h, sunk: r.s });
+    sfx(r.s >= 0 ? "sunk" : (r.h ? "hit" : "miss"));
+    if (r.win) { finish("me"); return; }
+    game.turn = "ai";
+    saveSession();
+    renderAll();
+    if (net.early) { var e = net.early; net.early = null; netShot(e); }
+  }
+  function netFleet(m) {
+    if (game.phase !== "done" || game.theirs.every(Boolean)) return;
+    var f = netFleetCheck(game, m.ships);
+    if (!f) return;
+    game.theirs = f.ships;
+    game.cheat = !f.ok;
+    saveSession();
+    renderAll();
+    if (game.cheat) showToast(t("net.cheat"));
+  }
+  function netNewGame() {
+    if (net.role !== "host") {
+      if (game.phase === "done") { closeDialogs(); netSend({ t: "again", gid: game.gid }); }
+      else showToast(t("net.hostNew"));
+      return;
+    }
+    var go = function () {
+      netEnter(netFresh(game.gid + 1, prefs.noTouch, true));
+      saveSession();
+      netHello();
+      live(t("toast.newgame"));
+    };
+    if (game.phase === "play" && (game.myShots.length || game.aiShots.length)) confirmDialog(t("net.confirmNew"), go, t("net.yes"));
+    else go();
+  }
+  function netOnPeer(role) {
+    net.role = role;
+    net.early = null;
+    if (!game || !game.net) {
+      var g = netLoad();
+      if (role === "host") {
+        saveSession();                       // the game vs the computer stays as it was
+        netEnter(g || netFresh(1 + randInt(900000), prefs.noTouch, true));
+        saveSession();
+      } else if (g) netEnter(g);             // else the host's "sy" brings the game
+    }
+    if (role === "host") showToast(RP.t("joined"));
+    netHello();
+  }
+  function netOnMsg(m) {
+    if (!game) return;
+    if (m.t === "sy") {
+      if (!isInt(m.gid) || m.gid < 1 || typeof m.rd !== "boolean" || typeof m.nt !== "boolean") return;
+      if (net.role === "guest" && (!game.net || game.gid !== m.gid)) {
+        var was = !!game.net;
+        if (!was) saveSession();
+        netEnter(netFresh(m.gid, m.nt, false));
+        saveSession();
+        if (!was) showToast(RP.t("joined")); else live(t("toast.newgame"));
+        if (game.ready === false && m.rd === false) return;
+      } else if (!game.net || game.gid !== m.gid) { netHello(); return; }
+      if (game.phase === "place" && game.peerReady !== m.rd) {
+        game.peerReady = m.rd;
+        saveSession();
+        renderStatus();
+        netMaybeStart();
+      }
+      return;
+    }
+    if (!game.net || m.gid !== game.gid) return;
+    if (m.t === "shot") netShot(m);
+    else if (m.t === "res") netRes(m);
+    else if (m.t === "fleet") netFleet(m);
+    else if (m.t === "again" && net.role === "host" && game.phase === "done") netNewGame();
+  }
+  function netOnEnd(why) {
+    net.role = ""; net.early = null;
+    try { localStorage.removeItem(NET_KEY); } catch (e) {}
+    if (game && game.net) {
+      closeDialogs();
+      clearTimeout(finishTimer);
+      game = null;
+      game = loadSession() || fresh();
+      cursor = 44;
+      lastShot = null;
+      renderAll(true);
+      maybeAi();
+    }
+    if (why === "left") showToast(RP.t("left"));
+    else if (why === "peer") showToast(RP.t("peerLeft"));
+  }
+  function netBoot() {
+    if (!window.OrosRemotePlay || !window.OrosRemoteLink) { $("net-btn").hidden = true; return; }
+    RP = window.OrosRemotePlay.create({
+      app: "battleship", lang: LANG, game: STRINGS[LANG]["game.name"],
+      dialog: { make: makeDialog, el: el, button: button },
+      onPeer: netOnPeer, onMsg: netOnMsg, onEnd: netOnEnd,
+      onLink: function () { if (game) renderStatus(); }
+    });
+    var tb = $("tb-b");
+    tb.insertBefore(RP.badge(), tb.firstChild);
+    RP.boot();
+    net.role = RP.role();
+    if (net.role) { var g = netLoad(); if (g) netEnter(g); }
+  }
+
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -1460,7 +1807,7 @@
 
   function paintStatic() {
     [["opts-btn", "opts", "btn.opts"], ["new-btn", "new", "btn.new"],
-     ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+     ["stats-btn", "stats", "btn.stats"], ["net-btn", "net", "btn.net"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1483,6 +1830,7 @@
     // blurred first, so a closed dialog does not hand Enter back to them
     $("opts-btn").addEventListener("click", function () { $("opts-btn").blur(); optsDialog(); });
     $("stats-btn").addEventListener("click", function () { $("stats-btn").blur(); statsDialog(); });
+    $("net-btn").addEventListener("click", function () { $("net-btn").blur(); if (RP) RP.open(); });
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
       paintSfxBtn();
@@ -1511,6 +1859,7 @@
     saveSession();
     renderAll(true);
     maybeAi();
+    netBoot();
   }
 
   boot();

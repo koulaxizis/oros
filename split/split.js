@@ -15,6 +15,10 @@
 //     import is the sync merge, so files sent back and forth
 //     join up and never double an expense
 //   - export: CSV, PDF summary, JSON backup (restore = merge)
+//   - wave 28: expenses paid in another currency (ECB rates through
+//     units/core.js, converted once and stored with the rate),
+//     itemised receipts with tax / tip, repeating expenses, a
+//     receipt photo on the orOS disk (Split/Receipts)
 // Data:
 //   - synced slice "split" (oros-split-data): groups, people,
 //     expenses, payments LWW per id + tombstones; a deleted group
@@ -158,7 +162,35 @@
       "im.bad": "This is not an orOS Split group file or backup", "im.big": "The file is too big",
       "im.backup": "Backup merged: {n} new or newer items", "im.bsame": "Backup merged: nothing new",
       "live.saved": "Saved", "live.group": "{g}", "live.home": "All groups",
-      "bud.btn": "Add my share to Budget ({a})", "bud.note": "Split: {g} · {t}", "bud.fail": "Budget did not take it"
+      "bud.btn": "Add my share to Budget ({a})", "bud.note": "Split: {g} · {t}", "bud.fail": "Budget did not take it",
+      "e.cur": "Currency paid in", "e.m.it": "Items", "e.rest": "Share the rest equally",
+      "fx.rate": "Exchange rate", "fx.one": "1 {c} =", "fx.useEcb": "Use the ECB rate", "fx.update": "Update rates",
+      "fx.loading": "Getting the exchange rates…", "fx.ecb": "ECB rate of {d}", "fx.off": "offline",
+      "fx.fail": "Could not get the exchange rates", "fx.man": "Rate typed by hand.",
+      "fx.none": "No exchange rates on this device yet: type the rate, or connect to the internet.",
+      "fx.keep": "It is saved with the expense, so later rates never change it.",
+      "err.rate": "Type the exchange rate, for example 0,92",
+      "it.add": "Add an item", "it.tax": "Tax", "it.tip": "Tip", "it.name": "Item", "it.name.ph": "e.g. Pizza",
+      "it.price": "Price", "it.del": "Remove the item", "it.who": "Who had it", "it.n": "Item {n}",
+      "it.hint": "Tap who had each item. Tax and tip are shared in proportion to what each person had.",
+      "it.total": "Receipt: {a}", "it.use": "Use {a} as the amount",
+      "err.itWho": "Pick who had “{i}”", "err.itNone": "Add at least one item with a price",
+      "err.itSum": "The receipt comes to {a}: it must match the amount",
+      "rp.label": "Repeat", "rp.none": "Doesn't repeat", "rp.w": "Every week", "rp.m": "Every month", "rp.y": "Every year",
+      "rp.lw": "every week", "rp.lm": "every month", "rp.ly": "every year",
+      "rp.until": "Until (optional)", "rp.hint": "It is added again on its date, with the same split, until you stop it.",
+      "rp.editHint": "Changes count from the next time; the ones already added stay as they are.",
+      "rp.title": "Repeating expense", "rp.first": "First date", "rp.of": "Repeats {f}, {n}.",
+      "rp.next": "next on {d}", "rp.ended": "ended", "rp.edit": "Edit the series", "rp.stop": "Stop repeating",
+      "rp.saved": "Repeats {f}", "rp.stopped": "It won't repeat any more. The ones already added stay.",
+      "rp.box": "Repeating ({n})", "err.until": "“Until” must be on or after the first date",
+      "err.rules": "Up to {n} repeating expenses per group",
+      "ph.label": "Receipt photo", "ph.open": "Open the receipt photo", "ph.add": "Add a photo", "ph.remove": "Remove the photo",
+      "ph.missing": "Not on this device", "ph.bad": "This picture could not be read", "ph.noDisk": "Could not save the photo",
+      "ph.missingLong": "This photo is not on this device. It arrives with Vault Drive sync on your own devices; friends you send the group file to don't get it.",
+      "ph.where": "Kept in Files, folder Split/Receipts, without location data.",
+      "row.rep": "repeats", "row.items": "itemised", "row.photo": "receipt photo",
+      "col.orig": "Original amount", "col.ocur": "Original currency", "col.rate": "Rate"
     },
     el: {
       "app": "Μοιρασιά",
@@ -234,7 +266,35 @@
       "im.bad": "Αυτό δεν είναι αρχείο ομάδας ή αντίγραφο της Μοιρασιάς του orOS", "im.big": "Το αρχείο είναι πολύ μεγάλο",
       "im.backup": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία", "im.bsame": "Το αντίγραφο ενώθηκε: τίποτα καινούργιο",
       "live.saved": "Αποθηκεύτηκε", "live.group": "{g}", "live.home": "Όλες οι ομάδες",
-      "bud.btn": "Το μερίδιό μου στα Έσοδα & Έξοδα ({a})", "bud.note": "Μοιρασιά: {g} · {t}", "bud.fail": "Τα Έσοδα & Έξοδα δεν το δέχτηκαν"
+      "bud.btn": "Το μερίδιό μου στα Έσοδα & Έξοδα ({a})", "bud.note": "Μοιρασιά: {g} · {t}", "bud.fail": "Τα Έσοδα & Έξοδα δεν το δέχτηκαν",
+      "e.cur": "Νόμισμα πληρωμής", "e.m.it": "Είδη", "e.rest": "Μοίρασε ίσα τα υπόλοιπα",
+      "fx.rate": "Ισοτιμία", "fx.one": "1 {c} =", "fx.useEcb": "Ισοτιμία ΕΚΤ", "fx.update": "Ενημέρωση ισοτιμιών",
+      "fx.loading": "Λήψη ισοτιμιών…", "fx.ecb": "Ισοτιμία ΕΚΤ της {d}", "fx.off": "εκτός σύνδεσης",
+      "fx.fail": "Δεν ήρθαν οι ισοτιμίες", "fx.man": "Ισοτιμία γραμμένη με το χέρι.",
+      "fx.none": "Δεν υπάρχουν ακόμα ισοτιμίες σε αυτή τη συσκευή: γράψε την ισοτιμία ή συνδέσου στο διαδίκτυο.",
+      "fx.keep": "Αποθηκεύεται μαζί με το έξοδο, οπότε μεταγενέστερες ισοτιμίες δεν το αλλάζουν ποτέ.",
+      "err.rate": "Γράψε την ισοτιμία, π.χ. 0,92",
+      "it.add": "Προσθήκη είδους", "it.tax": "Φόρος", "it.tip": "Φιλοδώρημα", "it.name": "Είδος", "it.name.ph": "π.χ. Πίτσα",
+      "it.price": "Τιμή", "it.del": "Αφαίρεση του είδους", "it.who": "Ποιος το πήρε", "it.n": "Είδος {n}",
+      "it.hint": "Πάτα ποιος πήρε κάθε είδος. Ο φόρος και το φιλοδώρημα μοιράζονται ανάλογα με όσα πήρε ο καθένας.",
+      "it.total": "Απόδειξη: {a}", "it.use": "Βάλε {a} ως ποσό",
+      "err.itWho": "Διάλεξε ποιος πήρε «{i}»", "err.itNone": "Βάλε τουλάχιστον ένα είδος με τιμή",
+      "err.itSum": "Η απόδειξη βγάζει {a}: πρέπει να συμφωνεί με το ποσό",
+      "rp.label": "Επανάληψη", "rp.none": "Χωρίς επανάληψη", "rp.w": "Κάθε εβδομάδα", "rp.m": "Κάθε μήνα", "rp.y": "Κάθε χρόνο",
+      "rp.lw": "κάθε εβδομάδα", "rp.lm": "κάθε μήνα", "rp.ly": "κάθε χρόνο",
+      "rp.until": "Μέχρι (προαιρετικά)", "rp.hint": "Μπαίνει ξανά στην ημερομηνία του, με την ίδια μοιρασιά, μέχρι να το σταματήσεις.",
+      "rp.editHint": "Οι αλλαγές ισχύουν από την επόμενη φορά· όσα έχουν ήδη μπει μένουν όπως είναι.",
+      "rp.title": "Επαναλαμβανόμενο έξοδο", "rp.first": "Πρώτη ημερομηνία", "rp.of": "Επαναλαμβάνεται {f}, {n}.",
+      "rp.next": "επόμενο στις {d}", "rp.ended": "έληξε", "rp.edit": "Αλλαγή της σειράς", "rp.stop": "Τέλος επανάληψης",
+      "rp.saved": "Επαναλαμβάνεται {f}", "rp.stopped": "Δεν θα επαναλαμβάνεται πια. Όσα έχουν ήδη μπει μένουν.",
+      "rp.box": "Επαναλαμβανόμενα ({n})", "err.until": "Το «Μέχρι» πρέπει να είναι στην πρώτη ημερομηνία ή μετά",
+      "err.rules": "Έως {n} επαναλαμβανόμενα έξοδα ανά ομάδα",
+      "ph.label": "Φωτογραφία απόδειξης", "ph.open": "Άνοιγμα της φωτογραφίας", "ph.add": "Προσθήκη φωτογραφίας", "ph.remove": "Αφαίρεση φωτογραφίας",
+      "ph.missing": "Όχι σε αυτή τη συσκευή", "ph.bad": "Η εικόνα δεν διαβάστηκε", "ph.noDisk": "Η φωτογραφία δεν αποθηκεύτηκε",
+      "ph.missingLong": "Η φωτογραφία δεν είναι σε αυτή τη συσκευή. Έρχεται με τον συγχρονισμό του Vault Drive στις δικές σου συσκευές· οι φίλοι στους οποίους στέλνεις το αρχείο της ομάδας δεν τη λαμβάνουν.",
+      "ph.where": "Φυλάσσεται στα Αρχεία, φάκελος Split/Receipts, χωρίς στοιχεία τοποθεσίας.",
+      "row.rep": "επαναλαμβάνεται", "row.items": "ανά είδος", "row.photo": "φωτογραφία απόδειξης",
+      "col.orig": "Αρχικό ποσό", "col.ocur": "Αρχικό νόμισμα", "col.rate": "Ισοτιμία"
     }
   };
 
@@ -352,6 +412,62 @@
   // Hundredths of a percent → "33,33" / "33.33" / "50".
   function pctText(h, lang) { return centsToInput(h, lang); }
 
+  // An exchange rate typed by hand: "0,9234", "0.9234", "1.08", "160".
+  // One separator, either one, is the decimal point. null if not a
+  // positive number below a million.
+  function parseRate(s) {
+    if (typeof s !== "string") return null;
+    var v = s.replace(/[\s  ]/g, "").replace(",", ".");
+    if (!/^[0-9]{0,7}(\.[0-9]{1,12})?$/.test(v) || !/[0-9]/.test(v)) return null;
+    var n = Number(v);
+    return isFinite(n) && n > 0 && n < 1000000 ? roundRate(n) : null;
+  }
+  // Rates keep 6 significant digits, so what is stored is what is shown.
+  function roundRate(r) { return Number(Number(r).toPrecision(6)); }
+  // A rate as input text: 0.9234 → "0.9234" (EL "0,9234").
+  function rateText(r, lang) {
+    var s = String(roundRate(r));
+    if (/e/i.test(s)) s = Number(r).toFixed(10).replace(/0+$/, "").replace(/\.$/, "");
+    return lang === "el" ? s.replace(".", ",") : s;
+  }
+  // Cents of the expense's own currency → cents of the group's.
+  function convertCents(oa, r) { return Math.round(oa * r); }
+
+  // Share `total` cents out in proportion to the positive weights of
+  // `w` ({ key: weight }): floor(total × w / W) each, and the cents
+  // left over one each to the largest remainders; ties go by key
+  // order, starting `rot` places in (so the items of a receipt do not
+  // all give the odd cent to the same person). Always sums to `total`,
+  // the same on every device, exact past 2^53 (BigInt then).
+  function allot(w, total, rot) {
+    var out = {};
+    var ids = Object.keys(w).filter(function (k) { return w[k] > 0; }).sort(cmpStr);
+    if (!ids.length) return out;
+    var W = 0, maxw = 0;
+    ids.forEach(function (k) { W += w[k]; if (w[k] > maxw) maxw = w[k]; });
+    var n = ids.length, r0 = isInt(rot) ? ((rot % n) + n) % n : 0;
+    var big = total * maxw > 9007199254740991 || W > 9007199254740991;
+    var given = 0, rems = [];
+    ids.forEach(function (k, i) {
+      var q, r;
+      if (big) {
+        var p = BigInt(total) * BigInt(w[k]), bw = BigInt(W);
+        q = Number(p / bw);
+        r = Number(p % bw);
+      } else {
+        var pp = total * w[k];
+        q = Math.floor(pp / W);
+        r = pp % W;
+      }
+      out[k] = q;
+      given += q;
+      rems.push({ k: k, r: r, o: (i - r0 + n) % n });
+    });
+    rems.sort(function (p, q) { return q.r - p.r || p.o - q.o; });
+    for (var i = 0; given < total; i++, given++) out[rems[i % rems.length].k]++;
+    return out;
+  }
+
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   function daysIn(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }   // m: 1–12
   function parseYmd(s) {
@@ -373,12 +489,37 @@
   //             mode "eq" | "ex" | "sh" | "pc",
   //             w { person: weight } (eq: 1 each; sh: shares; pc: hundredths
   //               of a percent, sum 10000; ex: cents, sum a), n (note) }
+  //   optional (wave 28, each written only when set, so older expenses
+  //   keep their exact canonical form; older versions drop them and
+  //   still read a, by, mode, w correctly):
+  //   fx { c (currency the money was paid in), a (cents in c), r (rate:
+  //        1 c = r group currency, 6 significant digits), s "ecb"|"man",
+  //        d? (date of the ECB rates), by? { person: cents in c } (several
+  //        payers), w? { person: cents in c } (exact amounts) }:
+  //        a = round(fx.a × r); by and w are allot(fx.by / fx.w, a), so
+  //        the stored group amounts never change when rates move
+  //   it { l [{ n, a (cents in the expense currency), p [person …] }],
+  //        x (tax), tp (tip) }: an itemised receipt, mode "ex" only; w is
+  //        exactly itemShares(it) (converted when fx), else `it` is dropped
+  //   ph  receipt photo file name (Split/Receipts on the orOS disk)
+  //   r   the repeating expense that made it
   // payment = { id "<group>.<own>", m, f (from), to, a, d }
+  // rule    = an expense without ph / r, plus f "w"|"m"|"y" (every week,
+  //           month, year) and u? (last date): a repeating expense; its
+  //           occurrences are ordinary expenses with deterministic ids
   // mine    = { id (group id), m, v (person id | "") } — who I am there
-  // tombs   = { "grp:<id>" | "per:<id>" | "exp:<id>" | "pay:<id>": stamp }
+  // tombs   = { "grp:<id>" | "per:<id>" | "exp:<id>" | "pay:<id>" | "rec:<id>": stamp }
   var GID_RE   = /^[a-z0-9]{1,24}$/;
   var CHILD_RE = /^[a-z0-9]{1,24}\.[a-z0-9]{1,24}$/;
-  var TOMB_RE  = /^(grp:[a-z0-9]{1,24}|(per|exp|pay):[a-z0-9]{1,24}\.[a-z0-9]{1,24})$/;
+  var TOMB_RE  = /^(grp:[a-z0-9]{1,24}|(per|exp|pay|rec):[a-z0-9]{1,24}\.[a-z0-9]{1,24})$/;
+  var CUR_RE   = /^[A-Z]{3}$/;
+  var PH_RE    = /^\d{8}-[a-z0-9]{1,24}-[a-z0-9]{1,24}-[a-z0-9]{4,12}\.jpg$/;
+  var PH_DIR   = "/internal/Split/Receipts";
+  var MAX_ITEMS = 60;
+  var ITEM_LEN  = 40;
+  var MAX_RULES = 50;          // repeating expenses per group
+  var MAX_OCC   = 400;         // occurrences made in one pass, per rule
+  var EVERY     = { w: 1, m: 1, y: 1 };
 
   function groupOf(id) { var i = id.indexOf("."); return i < 0 ? id : id.slice(0, i); }
   function normText(s, max) {
@@ -433,8 +574,79 @@
     if (!w) return null;
     if (x.mode === "pc" && w[1] !== PCT_FULL) return null;
     if (x.mode === "ex" && w[1] !== x.a) return null;
-    return { id: x.id, m: x.m, t: normText(x.t, TITLE_LEN), a: x.a, d: x.d,
-             c: CAT_BY_ID[x.c] ? x.c : "other", by: by[0], mode: x.mode, w: w[0], n: normText(x.n, NOTE_LEN) };
+    var out = { id: x.id, m: x.m, t: normText(x.t, TITLE_LEN), a: x.a, d: x.d,
+                c: CAT_BY_ID[x.c] ? x.c : "other", by: by[0], mode: x.mode, w: w[0], n: normText(x.n, NOTE_LEN) };
+    var fx = normFx(x.fx, out);
+    if (fx) out.fx = fx;
+    if (out.mode === "ex") {
+      var it = normIt(x.it, out);
+      if (it) out.it = it;
+    }
+    if (typeof x.ph === "string" && PH_RE.test(x.ph)) out.ph = x.ph;
+    if (isChildOf(x.r, g) && x.r !== x.id) out.r = x.r;
+    return out;
+  }
+  function sameMap(p, q) {
+    var a = Object.keys(p), b = Object.keys(q);
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (p[a[i]] !== q[a[i]]) return false;
+    return true;
+  }
+  // The foreign-currency part of an expense `e` (already normalised),
+  // or null when absent or not consistent with e.a / e.by / e.w (then
+  // the expense simply stays in the group currency).
+  function normFx(f, e) {
+    if (!f || typeof f !== "object" || !CUR_RE.test(f.c) || !okCents(f.a)) return null;
+    if (typeof f.r !== "number" || !isFinite(f.r) || f.r <= 0 || f.r >= 1000000 || roundRate(f.r) !== f.r) return null;
+    if (convertCents(f.a, f.r) !== e.a) return null;
+    var g = groupOf(e.id);
+    var out = { c: f.c, a: f.a, r: f.r, s: f.s === "ecb" ? "ecb" : "man" };
+    if (out.s === "ecb" && parseYmd(f.d)) out.d = f.d;
+    if (f.by !== undefined) {
+      var by = normMap(f.by, g, okCents);
+      if (!by || by[1] !== f.a || !sameMap(dropZero(allot(by[0], e.a, 0)), e.by)) return null;
+      out.by = by[0];
+    }
+    if (f.w !== undefined) {
+      var w = normMap(f.w, g, okCents);
+      if (e.mode !== "ex" || !w || w[1] !== f.a || !sameMap(dropZero(allot(w[0], e.a, 0)), e.w)) return null;
+      out.w = w[0];
+    }
+    return out;
+  }
+  // An itemised receipt of an "ex" expense `e`, or null.
+  function normIt(x, e) {
+    if (!x || typeof x !== "object" || !Array.isArray(x.l) || !x.l.length || x.l.length > MAX_ITEMS) return null;
+    var g = groupOf(e.id), l = [], sum = 0;
+    for (var i = 0; i < x.l.length; i++) {
+      var r = x.l[i];
+      if (!r || typeof r !== "object" || !okCents(r.a) || !Array.isArray(r.p) || !r.p.length || r.p.length > MAX_PEOPLE) return null;
+      var p = r.p.slice().sort(cmpStr);
+      for (var j = 0; j < p.length; j++) if (!isChildOf(p[j], g) || p[j] === p[j - 1]) return null;
+      l.push({ n: normText(r.n, ITEM_LEN), a: r.a, p: p });
+      sum += r.a;
+    }
+    var tax = x.x === undefined ? 0 : x.x, tip = x.tp === undefined ? 0 : x.tp;
+    if (!isInt(tax) || tax < 0 || tax > MAX_CENTS || !isInt(tip) || tip < 0 || tip > MAX_CENTS) return null;
+    var out = { l: l, x: tax, tp: tip };
+    if (sum + tax + tip !== (e.fx ? e.fx.a : e.a)) return null;
+    var sh = itemShares(out);
+    if (e.fx) sh = allot(sh, e.a, 0);
+    return sameMap(dropZero(sh), e.w) ? out : null;
+  }
+  function dropZero(m) {
+    var o = {};
+    Object.keys(m).sort(cmpStr).forEach(function (k) { if (m[k] > 0) o[k] = m[k]; });
+    return o;
+  }
+  // A repeating expense: the expense fields, then f and u.
+  function normRec(x) {
+    if (!x || typeof x !== "object" || !EVERY[x.f]) return null;
+    var e = normExp(Object.assign({}, x, { ph: undefined, r: undefined }));
+    if (!e) return null;
+    e.f = x.f;
+    if (parseYmd(x.u) && x.u >= e.d) e.u = x.u;
+    return e;
   }
   function normPay(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !CHILD_RE.test(x.id) ||
@@ -453,7 +665,11 @@
     { key: "people", tomb: "per", norm: normPerson, child: true },
     { key: "exp",    tomb: "exp", norm: normExp, child: true },
     { key: "pay",    tomb: "pay", norm: normPay, child: true },
-    { key: "mine",   tomb: null,  norm: normMine, child: true }
+    { key: "mine",   tomb: null,  norm: normMine, child: true },
+    // Repeating expenses (wave 28): the key is written only when there
+    // is one, so a slice without them stays byte-identical to what
+    // older versions write (no endless re-uploads between versions).
+    { key: "rec",    tomb: "rec", norm: normRec, child: true, opt: true }
   ];
 
   function emptyData() { return { ver: DATA_VER, groups: [], people: [], exp: [], pay: [], mine: [], tombs: {} }; }
@@ -462,6 +678,12 @@
     if (!a) return b;
     if (!b) return a;
     if (b.m !== a.m) return b.m > a.m ? b : a;
+    // Equal m: the record with more fields first (wave 28). An older
+    // version strips the new optional fields without changing m; its
+    // copy must never win over the full one. Records of one version
+    // have the same fields, so for them this is the old rule.
+    var ka = Object.keys(a).length, kb = Object.keys(b).length;
+    if (ka !== kb) return kb > ka ? b : a;
     return JSON.stringify(b) > JSON.stringify(a) ? b : a;
   }
 
@@ -506,7 +728,7 @@
         }
         arr.push(best[id]);
       });
-      out[C.key] = arr;
+      if (arr.length || !C.opt) out[C.key] = arr;
     });
     var st = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (k) { st[k] = tombs[k]; });
@@ -522,21 +744,133 @@
   // every device.
   function sharesOf(x) {
     var out = {};
-    var ids = Object.keys(x.w).sort(cmpStr);
-    if (x.mode === "ex") { ids.forEach(function (k) { out[k] = x.w[k]; }); return out; }
-    var W = 0;
-    ids.forEach(function (k) { W += x.w[k]; });
-    var given = 0, rems = [];
-    ids.forEach(function (k) {
-      var p = x.a * x.w[k];
-      out[k] = Math.floor(p / W);
-      given += out[k];
-      rems.push({ k: k, r: p % W });
+    if (x.mode === "ex") { Object.keys(x.w).sort(cmpStr).forEach(function (k) { out[k] = x.w[k]; }); return out; }
+    return allot(x.w, x.a, 0);
+  }
+
+  // An itemised receipt → { person: cents } in the receipt's currency,
+  // summing to items + tax + tip. Each item is shared equally by its
+  // people (the odd cents rotate from item to item); tax and tip are
+  // spread in proportion to what each person's items came to.
+  function itemShares(it) {
+    var sub = {};
+    it.l.forEach(function (r, i) {
+      var one = {};
+      r.p.forEach(function (k) { one[k] = 1; });
+      var s = allot(one, r.a, i);
+      Object.keys(s).forEach(function (k) { sub[k] = (sub[k] || 0) + s[k]; });
     });
-    rems.sort(function (p, q) { return q.r - p.r || cmpStr(p.k, q.k); });
-    for (var i = 0; given < x.a; i++, given++) out[rems[i % rems.length].k]++;
+    var extra = (it.x || 0) + (it.tp || 0);
+    if (extra) {
+      var e = allot(sub, extra, 0);
+      Object.keys(e).forEach(function (k) { sub[k] = (sub[k] || 0) + e[k]; });
+    }
+    var out = {};
+    Object.keys(sub).sort(cmpStr).forEach(function (k) { out[k] = sub[k]; });
     return out;
   }
+
+  // What the expense dialog saves, before normExp: everything typed in
+  // the expense's own currency `cur` (amount, payers, exact amounts,
+  // items), converted once into the group's currency `gcur` with
+  // `rate`. o = { id, m, t, a, cur, gcur, rate, rs ("ecb"|"man"), rd,
+  // d, c, by, mode ("eq"|"ex"|"sh"|"pc"|"it"), w, it, n, ph, r }.
+  // Weights (eq, sh, pc) need no conversion.
+  function composeExp(o) {
+    var foreign = !!o.cur && o.cur !== o.gcur;
+    var A = foreign ? convertCents(o.a, o.rate) : o.a;
+    var mode = o.mode === "it" ? "ex" : o.mode;
+    var wOrig = o.mode === "it" ? dropZero(itemShares(o.it)) : o.w;
+    var w = mode === "ex" && foreign ? dropZero(allot(wOrig, A, 0)) : wOrig;
+    var by = foreign ? dropZero(allot(o.by, A, 0)) : o.by;
+    var x = { id: o.id, m: o.m, t: o.t, a: A, d: o.d, c: o.c, by: by, mode: mode, w: w, n: o.n };
+    if (foreign) {
+      x.fx = { c: o.cur, a: o.a, r: o.rate, s: o.rs === "ecb" ? "ecb" : "man" };
+      if (o.rs === "ecb" && o.rd) x.fx.d = o.rd;
+      if (Object.keys(o.by).length > 1) x.fx.by = o.by;
+      if (o.mode === "ex") x.fx.w = o.w;
+    }
+    if (o.mode === "it") x.it = o.it;
+    if (o.ph) x.ph = o.ph;
+    if (o.r) x.r = o.r;
+    return x;
+  }
+
+  // ---- Repeating expenses ----
+  function addDaysYmd(ymd, n) {
+    var p = parseYmd(ymd), dt = new Date(Date.UTC(p.y, p.m - 1, p.d + n));
+    return ymdOf(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+  }
+  // The i-th date of a rule (i = 0 is its first date). Monthly and
+  // yearly keep the first date's day, clamped to the month's end
+  // (31 Jan → 28/29 Feb → 31 Mar), like Budget.
+  function nthDate(rule, i) {
+    if (rule.f === "w") return addDaysYmd(rule.d, 7 * i);
+    var p = parseYmd(rule.d);
+    var mm = p.m - 1 + (rule.f === "m" ? i : 12 * i);
+    var y = p.y + Math.floor(mm / 12), m = (mm % 12) + 1;
+    if (y > 2200) return "";
+    return ymdOf(y, m, Math.min(p.d, daysIn(y, m)));
+  }
+  // The rule's dates up to `upto` (and its last date u), at most `max`.
+  function recDates(rule, upto, max) {
+    var out = [];
+    for (var i = 0; out.length < max; i++) {
+      var d = nthDate(rule, i);
+      if (!d || d > upto || (rule.u && d > rule.u)) break;
+      out.push(d);
+    }
+    return out;
+  }
+  // The next date after `today`, or "" when the rule has ended.
+  function nextDate(rule, today) {
+    for (var i = 0; i < 20000; i++) {
+      var d = nthDate(rule, i);
+      if (!d || (rule.u && d > rule.u)) return "";
+      if (d > today) return d;
+    }
+    return "";
+  }
+  // Occurrence id: "<group>.<first 15 of the rule's own id><yyyymmdd>",
+  // the same on every device, so two devices (or two friends) making
+  // the same month's rent end up with one expense.
+  function occId(rule, ymd) {
+    var own = rule.id.slice(rule.id.indexOf(".") + 1).slice(0, 15);
+    return groupOf(rule.id) + "." + own + ymd.replace(/-/g, "");
+  }
+  function occOf(rule, ymd) {
+    var x = {};
+    Object.keys(rule).forEach(function (k) { if (k !== "f" && k !== "u") x[k] = rule[k]; });
+    x.id = occId(rule, ymd);
+    x.d = ymd;
+    x.r = rule.id;
+    return normExp(x);    // m = the rule's m: identical on every device
+  }
+  // The occurrences due by `today` that are not there yet: never one
+  // that exists, and never one that was deleted (any tombstone), even
+  // when the rule was edited later. Live, not archived groups only.
+  function dueOccurrences(d, today) {
+    var out = [];
+    if (!d.rec || !d.rec.length) return out;
+    var have = {}, count = {};
+    d.exp.forEach(function (x) { have[x.id] = 1; var g = groupOf(x.id); count[g] = (count[g] || 0) + 1; });
+    d.pay.forEach(function (x) { var g = groupOf(x.id); count[g] = (count[g] || 0) + 1; });
+    d.rec.forEach(function (rule) {
+      var g = groupById(d, groupOf(rule.id));
+      if (!g || g.arch) return;
+      recDates(rule, today, MAX_OCC).forEach(function (ymd) {
+        var id = occId(rule, ymd);
+        if (have[id] || ("exp:" + id) in d.tombs || (count[g.id] || 0) >= MAX_EXP) return;
+        var x = occOf(rule, ymd);
+        if (!x) return;
+        have[id] = 1;
+        count[g.id] = (count[g.id] || 0) + 1;
+        out.push(x);
+      });
+    });
+    return out;
+  }
+  function recOf(d, gid) { return (d.rec || []).filter(function (x) { return groupOf(x.id) === gid; }); }
 
   function liveGroups(d) { return d.groups; }
   function groupById(d, gid) {
@@ -675,7 +1009,7 @@
     });
     return { app: GROUP_APP, ver: DATA_VER,
              data: mergeSplit({ groups: [groupById(d, gid)], people: peopleOf(d, gid), exp: expOf(d, gid),
-                                pay: payOf(d, gid), mine: [], tombs: tombs }, null) };
+                                pay: payOf(d, gid), rec: recOf(d, gid), mine: [], tombs: tombs }, null) };
   }
   // A group file → { gid, data } with ONLY that group (one live group,
   // children with its prefix, their tombstones); null if it is not a
@@ -698,7 +1032,7 @@
         if (k.slice(4, 4 + pre.length) === pre) tombs[k] = src.tombs[k];
       });
     }
-    var clean = mergeSplit({ groups: gs, people: only(src.people), exp: only(src.exp), pay: only(src.pay),
+    var clean = mergeSplit({ groups: gs, people: only(src.people), exp: only(src.exp), pay: only(src.pay), rec: only(src.rec),
                              mine: [], tombs: tombs }, null);
     if (clean.groups.length !== 1) return null;
     return { gid: gid, data: clean };
@@ -709,8 +1043,8 @@
     var n = 0;
     COLLS.forEach(function (C) {
       var idx = {};
-      a[C.key].forEach(function (x) { idx[x.id] = JSON.stringify(x); });
-      b[C.key].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });
+      (a[C.key] || []).forEach(function (x) { idx[x.id] = JSON.stringify(x); });
+      (b[C.key] || []).forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });
     });
     return n;
   }
@@ -803,6 +1137,17 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
+  // Repeating expenses whose date has come: added as ordinary expenses
+  // (boot, a new day, after a pull, after saving a series). Ids and
+  // stamps are deterministic, so two devices doing it at once converge.
+  function runRecurring() {
+    var add = dueOccurrences(data, today);
+    if (!add.length) return false;
+    data.exp = data.exp.concat(add);
+    commit();
+    return true;
+  }
+
   function loadPrefs() {
     var p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
@@ -877,7 +1222,10 @@
     more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
-    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+    repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>',
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>'
   };
 
   function el(tag, cls, text) {
@@ -1033,7 +1381,49 @@
     return true;
   }
 
+  // Repeating expenses of the group, soonest next date first (only on
+  // the unfiltered list). Folded; the open state is per session.
+  var recsOpen = false;
+  function renderRecs(g) {
+    var box = $("recs");
+    box.innerHTML = "";
+    var list = recOf(data, g.id);
+    if (!list.length || query || filter !== "all") return;
+    list = list.map(function (r) { return { r: r, nd: nextDate(r, today) }; }).sort(function (p, q) {
+      return cmpStr(p.nd || "9999", q.nd || "9999") || cmpStr(p.r.id, q.r.id);
+    });
+    var det = el("details", "rec-box");
+    det.open = recsOpen;
+    det.addEventListener("toggle", function () { recsOpen = det.open; });
+    var sm = el("summary");
+    var ic = el("span", "bdg");
+    ic.innerHTML = UI.repeat;
+    ic.setAttribute("aria-hidden", "true");
+    sm.appendChild(ic);
+    sm.appendChild(el("span", "", t("rp.box", { n: list.length })));
+    det.appendChild(sm);
+    var ul = el("ul", "day-list");
+    list.forEach(function (o) {
+      var r = o.r, li = el("li"), b = el("button", "tx");
+      b.type = "button";
+      b.appendChild(swatch(catCol(r.c)));
+      var mid = el("span", "tx-mid");
+      mid.appendChild(el("span", "tx-cat", r.t || catName(r.c)));
+      var sub = t("rp." + r.f) + " · " + (o.nd ? t("rp.next", { d: dateLong(o.nd) }) : t("rp.ended"));
+      mid.appendChild(el("span", "tx-note", sub));
+      b.appendChild(mid);
+      b.appendChild(el("span", "tx-amt", money(r.a)));
+      b.setAttribute("aria-label", (r.t || catName(r.c)) + ", " + money(r.a) + ", " + sub);
+      b.addEventListener("click", function () { expDialog(null, { rule: r.id }); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    det.appendChild(ul);
+    box.appendChild(det);
+  }
+
   function renderList(g) {
+    renderRecs(g);
     var box = $("list");
     box.innerHTML = "";
     var rows = entriesOf(g.id).filter(entryMatches);
@@ -1060,8 +1450,20 @@
     b.type = "button";
     b.appendChild(swatch(catCol(x.c)));
     var mid = el("span", "tx-mid");
-    mid.appendChild(el("span", "tx-cat", x.t || catName(x.c)));
-    var sub = t("row.paid", { p: namesList(Object.keys(x.by)) });
+    var top = el("span", "tx-top");
+    top.appendChild(el("span", "tx-cat", x.t || catName(x.c)));
+    var marks = [];
+    [["r", "repeat", "row.rep"], ["it", "list", "row.items"], ["ph", "camera", "row.photo"]].forEach(function (k) {
+      if (!x[k[0]]) return;
+      var ic = el("span", "bdg");
+      ic.innerHTML = UI[k[1]];
+      ic.title = t(k[2]);
+      ic.setAttribute("aria-hidden", "true");
+      top.appendChild(ic);
+      marks.push(t(k[2]));
+    });
+    mid.appendChild(top);
+    var sub = (x.fx ? moneyIn(x.fx.a, x.fx.c) + " · " : "") + t("row.paid", { p: namesList(Object.keys(x.by)) });
     if (me) {
       var sh = sharesOf(x)[me];
       sub += " · " + (sh ? t("row.you", { a: money(sh) }) : t("row.notYou"));
@@ -1069,7 +1471,8 @@
     mid.appendChild(el("span", "tx-note", sub));
     b.appendChild(mid);
     b.appendChild(el("span", "tx-amt", money(x.a)));
-    b.setAttribute("aria-label", (x.t || catName(x.c)) + ", " + money(x.a) + ", " + sub + ", " + dateShort(x.d));
+    b.setAttribute("aria-label", (x.t || catName(x.c)) + ", " + money(x.a) + ", " + sub + ", " + dateShort(x.d) +
+                                 (marks.length ? ", " + marks.join(", ") : ""));
     b.addEventListener("click", function () { expDialog(x.id); });
     li.appendChild(b);
     return li;
@@ -1215,23 +1618,250 @@
   }
   function entriesCount(gid) { return expOf(data, gid).length + payOf(data, gid).length; }
 
-  // New / edit expense. The split preview is the real sharesOf() of
-  // what is on the form, so what you see is what is saved.
-  function expDialog(id) {
+  // ---------- 8b. Exchange rates (shared with Units) ----------
+  // The ECB reference rates Units keeps on this device (device-local
+  // oros-units-rates, R10), fetched with the one shared helper in
+  // units/core.js, and only when a foreign currency is picked and they
+  // are older than 6 hours (or on "Update rates"). Offline: the last
+  // rates here, or a rate typed by hand.
+  var UC = window.UnitsCore || null;
+  var fxRates = null, fxFetching = false, fxFailed = false;
+  function readFxRates() {
+    if (!UC) return null;
+    try { fxRates = UC.storedRates(JSON.parse(localStorage.getItem(UC.RATES_KEY) || "null")); } catch (e) { fxRates = null; }
+    return fxRates;
+  }
+  function fetchFx(force, done) {
+    if (!UC || fxFetching || typeof fetch !== "function") return false;
+    if (!force && (!UC.ratesStale(fxRates, Date.now()) || navigator.onLine === false)) return false;
+    fxFetching = true;
+    fxFailed = false;
+    UC.fetchLatest(function (u, o) { return fetch(u, o); }).then(function (r) {
+      fxFetching = false;
+      fxRates = r;
+      try { localStorage.setItem(UC.RATES_KEY, JSON.stringify(r)); } catch (e) {}
+      if (done) done(true);
+    }, function () {
+      fxFetching = false;
+      fxFailed = true;
+      if (done) done(false);
+    });
+    return true;
+  }
+  function ecbRate(from, to) {
+    var r = UC && fxRates ? UC.crossRate(fxRates, from, to) : null;
+    return r ? roundRate(r) : null;
+  }
+  // Group currency first, then the ECB list, then any other code.
+  function fxCodes(gcur, extra) {
+    var list = [gcur];
+    var add = function (c) { if (CUR_RE.test(c) && list.indexOf(c) < 0) list.push(c); };
+    (UC && UC.CURRENCY_ORDER ? UC.CURRENCY_ORDER : []).forEach(add);
+    CURRENCIES.forEach(add);
+    if (fxRates) Object.keys(fxRates.rates).forEach(add);
+    if (extra) add(extra);
+    return list;
+  }
+  function dateLong(ymd) {
+    var p = parseYmd(ymd);
+    return p ? p.d + " " + MONTHS_GEN[LANG][p.m - 1] + " " + p.y : "";
+  }
+
+  // ---------- 8c. Receipt photos (files on the orOS disk) ----------
+  // The expense keeps only the file NAME (ph); the JPEG lives in Files
+  // under Split/Receipts and travels between your devices with Vault
+  // Drive. Photos are re-drawn on a canvas (≤ 1600 px, JPEG), so the
+  // kept file has no EXIF / location and no foreign bytes. A group file
+  // carries the name only: friends see "Not on this device".
+  var PH_MAX_IN = 40 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function phRandom() {
+    var a = new Uint8Array(6), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 6; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function phPath(name) { return typeof name === "string" && PH_RE.test(name) ? PH_DIR + "/" + name : null; }
+  function phName(ymd, expId) {
+    return (parseYmd(ymd) ? ymd : today).replace(/-/g, "") + "-" + expId.replace(".", "-") + "-" + phRandom() + ".jpg";
+  }
+  function encodePhoto(file) {
+    return new Promise(function (resolve) {
+      if (!file || file.size > PH_MAX_IN) { resolve(null); return; }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 1600 / Math.max(w, h || 1));
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? b : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function rmPhoto(name) {
+    var fs = fsApi(), path = phPath(name);
+    if (!fs || !path) return;
+    Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  // Names no expense points at any more leave the disk, after `ms`
+  // (the Undo window of a delete).
+  function dropPhotosLater(names, ms) {
+    names = (names || []).filter(Boolean);
+    if (!names.length || !fsApi()) return;
+    setTimeout(function () {
+      var used = {};
+      data.exp.forEach(function (x) { if (x.ph) used[x.ph] = 1; });
+      names.forEach(function (n) { if (!used[n]) rmPhoto(n); });
+    }, ms || 0);
+  }
+  // The photo field of the expense dialog. A photo picked while it is
+  // open is written at once and removed again if the dialog is left
+  // without saving; a photo taken off an expense leaves on save.
+  function photoBox(dlg, x, expId, dateIn) {
+    var fs = fsApi();
+    var cur = x && x.ph ? x.ph : "", orig = cur, added = [], url = null, done = false;
+    if (!fs && !cur) return null;
+    var wrap = el("div", "fld");
+    wrap.appendChild(el("div", "dlg-lbl", t("ph.label")));
+    var row = el("div", "ph-row");
+    wrap.appendChild(row);
+    function free() { if (url) { URL.revokeObjectURL(url); url = null; } }
+    function paint() {
+      free();
+      row.innerHTML = "";
+      if (cur) {
+        var name = cur;
+        var b = el("button", "ph-th");
+        b.type = "button";
+        b.setAttribute("aria-label", t("ph.open"));
+        b.addEventListener("click", function () { viewer(name); });
+        row.appendChild(b);
+        if (!fs) b.appendChild(el("span", "ph-miss", t("ph.missing")));
+        else Promise.resolve(fs.readBlob(phPath(name))).then(function (blob) {
+          if (!blob) throw new Error("ENOENT");
+          if (name !== cur) return;
+          free();
+          url = URL.createObjectURL(blob);
+          var im = el("img");
+          im.alt = "";
+          im.src = url;
+          b.appendChild(im);
+        }).catch(function () { b.appendChild(el("span", "ph-miss", t("ph.missing"))); });
+        var rm = el("button", "link-btn", t("ph.remove"));
+        rm.type = "button";
+        rm.addEventListener("click", remove);
+        row.appendChild(rm);
+      } else if (fs) {
+        var add = el("button", "txt-btn ph-add", t("ph.add"));
+        add.type = "button";
+        add.addEventListener("click", pick);
+        row.appendChild(add);
+      }
+    }
+    function forget(name) {
+      if (added.indexOf(name) >= 0) { added = added.filter(function (n) { return n !== name; }); rmPhoto(name); }
+    }
+    function remove() { forget(cur); cur = ""; paint(); }
+    function pick() {
+      var host = dialogHost();
+      var p = host && typeof host.openFile === "function" ? host.openFile("image/*") : localPick("image/*");
+      Promise.resolve(p).then(function (file) {
+        if (!file) return;
+        return encodePhoto(file).then(function (blob) {
+          if (!blob) { showToast(t("ph.bad")); return; }
+          var name = phName(dateIn.value, expId);
+          return Promise.resolve(fs.writeBlob(phPath(name), blob)).then(function () {
+            if (done) { rmPhoto(name); return; }
+            forget(cur);
+            added.push(name);
+            cur = name;
+            paint();
+          });
+        });
+      }).catch(function () { showToast(t("ph.noDisk")); });
+    }
+    function viewer(name) {
+      var v = makeDialog("sp-ph-view", t("ph.label"));
+      var box = el("div", "ph-view");
+      v.appendChild(box);
+      var u = null;
+      if (fs) Promise.resolve(fs.readBlob(phPath(name))).then(function (blob) {
+        if (!blob) throw new Error("ENOENT");
+        u = URL.createObjectURL(blob);
+        var im = el("img");
+        im.alt = t("ph.label");
+        im.src = u;
+        box.appendChild(im);
+      }).catch(function () { box.appendChild(el("p", "hint", t("ph.missingLong"))); });
+      else box.appendChild(el("p", "hint", t("ph.missingLong")));
+      v.appendChild(el("p", "hint", t("ph.where")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("ph.remove"), "danger", function () { v.close(); remove(); }));
+      acts.appendChild(button(t("dlg.close"), "primary", function () { v.close(); }));
+      v.appendChild(acts);
+      v.addEventListener("close", function () { if (u) URL.revokeObjectURL(u); });
+      document.body.appendChild(v);
+      v.showModal();
+    }
+    dlg.addEventListener("close", function () {
+      free();
+      if (!done) { done = true; added.forEach(rmPhoto); }
+    });
+    paint();
+    return {
+      wrap: wrap,
+      name: function () { return cur; },
+      // After a save that kept `saved`: every other new photo goes, and
+      // the old one too unless an expense still points at it.
+      commit: function (saved) {
+        done = true;
+        added.forEach(function (n) { if (n !== saved) rmPhoto(n); });
+        if (orig && orig !== saved) dropPhotosLater([orig], 0);
+      }
+    };
+  }
+
+  // New / edit expense, or (opts.rule) a repeating expense. Everything
+  // is typed in the expense's own currency; the preview is the real
+  // sharesOf() of composeExp() of the form, in the group's currency, so
+  // what you see is what is saved.
+  function expDialog(id, opts) {
+    opts = opts || {};
     var g = curGroup();
     if (!g) return;
-    var x = id ? findIn(data.exp, id) : null;
-    if (id && !x) return;
+    var isRule = !!opts.rule;
+    var x = isRule ? findIn(data.rec || [], opts.rule) : (id ? findIn(data.exp, id) : null);
+    if ((id || isRule) && !x) return;
     if (!x && entriesCount(g.id) >= MAX_EXP) { showToast(t("err.full", { n: MAX_EXP })); return; }
+    readFxRates();
     var people = sortedPeople(g.id);
     // People named in the expense but removed on another device stay on the form.
     if (x) {
-      Object.keys(x.by).concat(Object.keys(x.w)).forEach(function (k) {
+      var named = Object.keys(x.by).concat(Object.keys(x.w));
+      if (x.it) x.it.l.forEach(function (r) { named = named.concat(r.p); });
+      named.forEach(function (k) {
         if (!findIn(people, k)) people.push({ id: k, n: t("unknown") });
       });
     }
     var me = meOf(data, g.id);
-    var dlg = makeDialog("sp-exp", t(x ? "e.edit" : "e.new"));
+    var fx0 = x && x.fx ? x.fx : null;
+    var rule0 = !isRule && x && x.r ? findIn(data.rec || [], x.r) : null;
+    var nid = x ? x.id : g.id + "." + newId();
+    var dlg = makeDialog("sp-exp", t(isRule ? "rp.title" : x ? "e.edit" : "e.new"));
     dlg.classList.add("wide");
     var form = el("form");
     var title = el("input");
@@ -1239,8 +1869,49 @@
     title.autocomplete = "off";
     title.placeholder = t("e.title.ph");
     title.value = x ? x.t : "";
-    var amt = amountInput(x ? x.a : 0);
+
+    // Amount, in the currency it was paid in.
+    var amt = amountInput(x ? (fx0 ? fx0.a : x.a) : 0);
     amt.className = "amt-in";
+    var curSel = el("select", "cur-sel");
+    fxCodes(g.cur, fx0 ? fx0.c : "").forEach(function (c) { var o = el("option", "", c); o.value = c; curSel.appendChild(o); });
+    curSel.value = fx0 ? fx0.c : g.cur;
+    curSel.setAttribute("aria-label", t("e.cur"));
+    curSel.title = t("e.cur");
+    var amtRow = el("div", "amt-row");
+    amtRow.appendChild(amt);
+    amtRow.appendChild(curSel);
+
+    // Exchange rate: 1 <currency> = <rate> <group currency>.
+    var rs = fx0 ? fx0.s : "man", rd = fx0 && fx0.d ? fx0.d : "", autoRate = false;
+    var rateBox = el("div", "fx-box");
+    var rateLine = el("div", "fx-line");
+    var rateLbl = el("label", "fx-one");
+    rateLbl.setAttribute("for", "sp-rate");
+    var rateIn = el("input", "fx-in");
+    rateIn.id = "sp-rate";
+    rateIn.inputMode = "decimal";
+    rateIn.autocomplete = "off";
+    rateIn.value = fx0 ? rateText(fx0.r, LANG) : "";
+    var rateCur = el("span", "fx-cur");
+    rateLine.appendChild(rateLbl);
+    rateLine.appendChild(rateIn);
+    rateLine.appendChild(rateCur);
+    var conv = el("span", "fx-conv");
+    rateLine.appendChild(conv);
+    var rateInfo = el("p", "hint fx-info");
+    var rateActs = el("div", "fx-acts");
+    var ecbBtn = el("button", "link-btn", t("fx.useEcb"));
+    ecbBtn.type = "button";
+    var updBtn = el("button", "link-btn", t("fx.update"));
+    updBtn.type = "button";
+    rateActs.appendChild(ecbBtn);
+    rateActs.appendChild(updBtn);
+    rateBox.appendChild(el("div", "dlg-lbl", t("fx.rate")));
+    rateBox.appendChild(rateLine);
+    rateBox.appendChild(rateInfo);
+    rateBox.appendChild(rateActs);
+
     var date = el("input");
     date.type = "date";
     date.value = x ? x.d : today;
@@ -1250,6 +1921,7 @@
 
     // Paid by: one person, or several with their amounts.
     var payerIds = x ? Object.keys(x.by) : [];
+    var byVals = fx0 && fx0.by ? fx0.by : (x ? x.by : {});
     var by = el("select");
     people.forEach(function (p) { var o = el("option", "", whoName(p.id)); o.value = p.id; by.appendChild(o); });
     var om = el("option", "", t("e.byMany")); om.value = "*"; by.appendChild(om);
@@ -1259,7 +1931,7 @@
     people.forEach(function (p) {
       var row = el("div", "prow");
       row.appendChild(el("span", "p-name", whoName(p.id)));
-      var inp = amountInput(x && payerIds.length > 1 && x.by[p.id] ? x.by[p.id] : 0);
+      var inp = amountInput(x && payerIds.length > 1 && byVals[p.id] ? byVals[p.id] : 0);
       inp.className = "p-in";
       inp.setAttribute("aria-label", t("e.by") + ": " + whoName(p.id));
       inp.addEventListener("input", preview);
@@ -1270,12 +1942,12 @@
     var byLeft = el("p", "left");
 
     // Split mode + one row per person.
-    var mode = x ? x.mode : "eq";
-    var seg = el("div", "seg seg4");
+    var mode = x ? (x.it ? "it" : x.mode) : "eq";
+    var seg = el("div", "seg seg5");
     seg.setAttribute("role", "radiogroup");
     seg.setAttribute("aria-label", t("e.split"));
     var segB = {};
-    ["eq", "ex", "sh", "pc"].forEach(function (m) {
+    ["eq", "ex", "sh", "pc", "it"].forEach(function (m) {
       var b = el("button", "seg-btn", t("e.m." + m));
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -1307,11 +1979,13 @@
       rowsBox.appendChild(row);
       rowIn[p.id] = { chk: chk, inp: inp, out: out, row: row };
     });
-    // Starting values of the inputs per mode (an edit keeps its own).
+    // Starting values of the inputs per mode (an edit keeps its own;
+    // exact amounts in the currency they were typed in).
+    var exVals = x && x.mode === "ex" && !x.it ? (fx0 && fx0.w ? fx0.w : x.w) : null;
     var valsFor = function (m) {
       people.forEach(function (p) {
-        var r = rowIn[p.id], w = x && x.mode === m ? x.w[p.id] : undefined;
-        if (m === "ex") r.inp.value = w ? centsToInput(w, LANG) : "";
+        var r = rowIn[p.id], w = x && x.mode === m && !x.it ? x.w[p.id] : undefined;
+        if (m === "ex") r.inp.value = exVals && exVals[p.id] ? centsToInput(exVals[p.id], LANG) : "";
         else if (m === "pc") r.inp.value = w ? pctText(w, LANG) : "";
         else if (m === "sh") r.inp.value = w ? String(w) : (r.chk.checked ? "1" : "");
         r.inp.inputMode = m === "sh" ? "numeric" : "decimal";
@@ -1319,11 +1993,131 @@
       });
     };
     var left = el("p", "left");
+    var restBtn = el("button", "link-btn", t("e.rest"));
+    restBtn.type = "button";
     allBtn.addEventListener("click", function () {
       var all = people.every(function (p) { return rowIn[p.id].chk.checked; });
       people.forEach(function (p) { rowIn[p.id].chk.checked = !all; });
       preview();
     });
+    // Exact amounts: what is left goes equally (fair cents) to everyone
+    // whose field is still empty (type 0 for anyone left out).
+    restBtn.addEventListener("click", function () {
+      var a = parseAmount(amt.value), ws = 0, empty = {};
+      if (a === null) return;
+      people.forEach(function (p) {
+        var v = rowIn[p.id].inp.value.trim();
+        if (!v) empty[p.id] = 1; else ws += parsePart(v) || 0;
+      });
+      if (ws >= a || !Object.keys(empty).length) return;
+      var parts = allot(empty, a - ws, 0);
+      Object.keys(parts).forEach(function (k) { if (parts[k]) rowIn[k].inp.value = centsToInput(parts[k], LANG); });
+      preview();
+    });
+
+    // Itemised receipt: items, who had each, tax and tip.
+    var itBox = el("div", "it-box");
+    var itList = el("div", "it-list");
+    var items = [];
+    var itAdd = el("button", "txt-btn it-add", t("it.add"));
+    itAdd.type = "button";
+    var taxIn = amountInput(x && x.it ? x.it.x : 0);
+    var tipIn = amountInput(x && x.it ? x.it.tp : 0);
+    taxIn.addEventListener("input", preview);
+    tipIn.addEventListener("input", preview);
+    var itExtra = el("div", "fld-row it-extra");
+    itExtra.appendChild(field(t("it.tax"), taxIn, "sp-tax"));
+    itExtra.appendChild(field(t("it.tip"), tipIn, "sp-tip"));
+    var itLeft = el("p", "left");
+    var itUse = el("button", "link-btn");
+    itUse.type = "button";
+    itBox.appendChild(itList);
+    itBox.appendChild(itAdd);
+    itBox.appendChild(itExtra);
+    itBox.appendChild(el("p", "hint tight", t("it.hint")));
+    itBox.appendChild(itLeft);
+    itBox.appendChild(itUse);
+    function addItem(r) {
+      if (items.length >= MAX_ITEMS) return null;
+      var it = { wrap: el("div", "it-row"), chips: {} };
+      var top = el("div", "it-top");
+      it.name = el("input", "it-name");
+      it.name.maxLength = ITEM_LEN;
+      it.name.autocomplete = "off";
+      it.name.placeholder = t("it.name.ph");
+      it.name.value = r ? r.n : "";
+      it.name.setAttribute("aria-label", t("it.name"));
+      it.price = amountInput(r ? r.a : 0);
+      it.price.className = "it-price";
+      it.price.setAttribute("aria-label", t("it.price"));
+      var del = el("button", "icon-btn it-del");
+      del.type = "button";
+      del.innerHTML = UI.trash;
+      del.setAttribute("aria-label", t("it.del"));
+      del.title = t("it.del");
+      top.appendChild(it.name);
+      top.appendChild(it.price);
+      top.appendChild(del);
+      var chips = el("div", "it-chips");
+      chips.setAttribute("role", "group");
+      chips.setAttribute("aria-label", t("it.who"));
+      var setChip = function (c, on) { c.setAttribute("aria-pressed", on ? "true" : "false"); };
+      people.forEach(function (p) {
+        var c = el("button", "chip", personName(p.id));
+        c.type = "button";
+        setChip(c, r ? r.p.indexOf(p.id) >= 0 : false);
+        c.addEventListener("click", function () { setChip(c, c.getAttribute("aria-pressed") !== "true"); preview(); });
+        it.chips[p.id] = c;
+        chips.appendChild(c);
+      });
+      var allc = el("button", "chip chip-all", t("e.all"));
+      allc.type = "button";
+      allc.addEventListener("click", function () {
+        var all = people.every(function (p) { return it.chips[p.id].getAttribute("aria-pressed") === "true"; });
+        people.forEach(function (p) { setChip(it.chips[p.id], !all); });
+        preview();
+      });
+      chips.appendChild(allc);
+      del.addEventListener("click", function () {
+        items = items.filter(function (y) { return y !== it; });
+        it.wrap.remove();
+        if (!items.length) addItem(null);
+        preview();
+      });
+      it.name.addEventListener("input", preview);
+      it.price.addEventListener("input", preview);
+      it.wrap.appendChild(top);
+      it.wrap.appendChild(chips);
+      itList.appendChild(it.wrap);
+      items.push(it);
+      itAdd.hidden = items.length >= MAX_ITEMS;
+      return it;
+    }
+    (x && x.it ? x.it.l : [null]).forEach(addItem);
+    itAdd.addEventListener("click", function () { var it = addItem(null); if (it) it.name.focus(); preview(); });
+    itUse.addEventListener("click", function () {
+      var f = readForm();
+      if (f.total) { amt.value = centsToInput(f.total, LANG); preview(); }
+    });
+
+    // Repeat: for a new expense (it becomes the first of a series) and
+    // in the dialog of a series itself.
+    var rpSel = null, untilIn = null, rpWrap = null, untilFld = null, rpHint = null;
+    if (isRule || !x) {
+      rpSel = el("select");
+      (isRule ? [] : [["", t("rp.none")]]).concat([["w", t("rp.w")], ["m", t("rp.m")], ["y", t("rp.y")]]).forEach(function (o) {
+        var op = el("option", "", o[1]); op.value = o[0]; rpSel.appendChild(op);
+      });
+      rpSel.value = isRule ? x.f : "";
+      untilIn = el("input");
+      untilIn.type = "date";
+      untilIn.value = isRule && x.u ? x.u : "";
+      rpWrap = el("div", "fld-row");
+      rpWrap.appendChild(field(t("rp.label"), rpSel, "sp-rp"));
+      untilFld = field(t("rp.until"), untilIn, "sp-until");
+      rpWrap.appendChild(untilFld);
+      rpHint = el("p", "hint tight", t(isRule ? "rp.editHint" : "rp.hint"));
+    }
 
     var note = el("input");
     note.maxLength = NOTE_LEN;
@@ -1331,13 +2125,38 @@
     note.placeholder = t("e.note.ph");
     note.value = x ? x.n : "";
     var err = errLine();
+    var photo = isRule ? null : photoBox(dlg, x, nid, date);
 
     form.appendChild(field(t("e.title"), title, "sp-title"));
-    form.appendChild(field(t("e.amount") + " (" + g.cur + ")", amt, "sp-amt"));
+    var amtFld = el("div", "fld");
+    var amtLab = el("label", "dlg-lbl", t("e.amount"));
+    amt.id = "sp-amt";
+    amtLab.setAttribute("for", "sp-amt");
+    amtFld.appendChild(amtLab);
+    amtFld.appendChild(amtRow);
+    form.appendChild(amtFld);
+    form.appendChild(rateBox);
     var r1 = el("div", "fld-row");
-    r1.appendChild(field(t("e.date"), date, "sp-date"));
+    r1.appendChild(field(t(isRule ? "rp.first" : "e.date"), date, "sp-date"));
     r1.appendChild(field(t("e.cat"), cat, "sp-cat"));
     form.appendChild(r1);
+    if (rpWrap) { form.appendChild(rpWrap); form.appendChild(rpHint); }
+    if (rule0) {
+      var nd = nextDate(rule0, today);
+      var ri = el("div", "rp-info");
+      ri.appendChild(el("p", "hint", t("rp.of", { f: t("rp.l" + rule0.f), n: nd ? t("rp.next", { d: dateLong(nd) }) : t("rp.ended") })));
+      var ra = el("div", "rp-acts");
+      var reb = el("button", "link-btn", t("rp.edit"));
+      reb.type = "button";
+      reb.addEventListener("click", function () { dlg.close(); setTimeout(function () { expDialog(null, { rule: rule0.id }); }, 0); });
+      var rsb = el("button", "link-btn", t("rp.stop"));
+      rsb.type = "button";
+      rsb.addEventListener("click", function () { dlg.close(); stopRule(rule0.id); });
+      ra.appendChild(reb);
+      ra.appendChild(rsb);
+      ri.appendChild(ra);
+      form.appendChild(ri);
+    }
     form.appendChild(field(t("e.by"), by, "sp-by"));
     form.appendChild(byBox);
     form.appendChild(byLeft);
@@ -1346,11 +2165,14 @@
     sh.appendChild(allBtn);
     form.appendChild(sh);
     form.appendChild(seg);
+    form.appendChild(itBox);
     form.appendChild(rowsBox);
     form.appendChild(left);
+    form.appendChild(restBtn);
     form.appendChild(field(t("e.note"), note, "sp-note"));
+    if (photo) form.appendChild(photo.wrap);
     form.appendChild(err);
-    var bp = x ? budgetPayload(x, me, g.n, t("bud.note", { g: g.n, t: x.t || catName(x.c) })) : null;
+    var bp = x && !isRule ? budgetPayload(x, me, g.n, t("bud.note", { g: g.n, t: x.t || catName(x.c) })) : null;
     if (bp && budgetBridge()) {
       var bb = button(t("bud.btn", { a: money(bp.a) }), "wide-btn", function () {
         var ok = false;
@@ -1360,27 +2182,111 @@
       form.appendChild(bb);
     }
     var acts = el("div", "dlg-actions");
-    if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteExp(x.id); }));
+    if (isRule) acts.appendChild(button(t("rp.stop"), "danger", function () { dlg.close(); stopRule(x.id); }));
+    else if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteExp(x.id); }));
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
     var ok = button(t("dlg.save"), "primary", null);
     ok.type = "submit";
     acts.appendChild(ok);
     form.appendChild(acts);
 
+    function foreign() { return curSel.value !== g.cur; }
+    function moneyE(c) { return moneyIn(c, curSel.value); }
+    function fillEcb() {
+      var r = ecbRate(curSel.value, g.cur);
+      if (!r) return false;
+      rateIn.value = rateText(r, LANG);
+      rs = "ecb";
+      rd = fxRates.date;
+      autoRate = true;
+      return true;
+    }
+    function paintRate() {
+      rateBox.hidden = !foreign();
+      if (!foreign()) return;
+      rateLbl.textContent = t("fx.one", { c: curSel.value });
+      rateCur.textContent = g.cur;
+      var ecb = ecbRate(curSel.value, g.cur), info;
+      if (fxFetching) info = t("fx.loading");
+      else if (rs === "ecb" && rd) info = t("fx.ecb", { d: dateLong(rd) }) + (navigator.onLine === false ? " · " + t("fx.off") : "");
+      else if (!ecb) info = (fxFailed ? t("fx.fail") + ". " : "") + t("fx.none");
+      else info = t("fx.man");
+      rateInfo.textContent = info + " " + t("fx.keep");
+      ecbBtn.hidden = !ecb || (rs === "ecb" && parseRate(rateIn.value) === ecb);
+      updBtn.hidden = !UC || fxFetching || navigator.onLine === false;
+    }
+    function onRates(okFetch) {
+      if (!dlg.open) return;
+      if (foreign() && (autoRate || !rateIn.value.trim())) fillEcb();
+      paintRate();
+      preview();
+      if (okFetch === false && !ecbRate(curSel.value, g.cur)) rateIn.focus();
+    }
+    curSel.addEventListener("change", function () {
+      if (fx0 && curSel.value === fx0.c) {
+        rateIn.value = rateText(fx0.r, LANG); rs = fx0.s; rd = fx0.d || ""; autoRate = false;
+      } else if (foreign()) {
+        rateIn.value = ""; rs = "man"; rd = ""; autoRate = false;
+        fillEcb();
+        fetchFx(false, onRates);
+      }
+      paintRate();
+      preview();
+    });
+    rateIn.addEventListener("input", function () { rs = "man"; rd = ""; autoRate = false; paintRate(); preview(); });
+    ecbBtn.addEventListener("click", function () { fillEcb(); paintRate(); preview(); });
+    updBtn.addEventListener("click", function () {
+      if (fetchFx(true, function (okFetch) { if (!okFetch) showToast(t("fx.fail")); else autoRate = autoRate || rs === "ecb"; onRates(okFetch); })) paintRate();
+    });
+    if (rpSel) rpSel.addEventListener("change", function () { paintRepeat(); });
+    function paintRepeat() {
+      if (!rpSel) return;
+      var on = !!rpSel.value;
+      untilFld.hidden = !on;
+      rpHint.hidden = !on;
+      if (photo) photo.wrap.hidden = on;
+    }
+
     function setMode(m) {
       mode = m;
       Object.keys(segB).forEach(function (k) { segB[k].setAttribute("aria-checked", k === m ? "true" : "false"); });
       rowsBox.className = "rows split-" + m;
       allBtn.hidden = m !== "eq";
-      valsFor(m);
+      itBox.hidden = m !== "it";
+      valsFor(m === "it" ? "eq" : m);
       preview();
     }
-    // Reads the form → { a, by, w, wsum, err?, focus? }: every part it
-    // can read, plus the first problem (the preview shows what it can).
+    // The receipt on the form → { l, x, tp, total } plus the first problem.
+    function readItems(fail) {
+      var l = [], total = 0;
+      items.forEach(function (it, i) {
+        var a = parsePart(it.price.value), n = normText(it.name.value, ITEM_LEN);
+        var label = n || t("it.n", { n: i + 1 });
+        if (a === null) { fail(t("err.value", { p: label }), it.price); return; }
+        if (!a) return;
+        var p = people.filter(function (pp) { return it.chips[pp.id].getAttribute("aria-pressed") === "true"; })
+          .map(function (pp) { return pp.id; }).sort(cmpStr);
+        if (!p.length) { fail(t("err.itWho", { i: label }), it.chips[people[0].id] || null); return; }
+        l.push({ n: n, a: a, p: p });
+        total += a;
+      });
+      var tax = parsePart(taxIn.value), tip = parsePart(tipIn.value);
+      if (tax === null) { fail(t("err.value", { p: t("it.tax") }), taxIn); tax = 0; }
+      if (tip === null) { fail(t("err.value", { p: t("it.tip") }), tipIn); tip = 0; }
+      if (!l.length) fail(t("err.itNone"), items[0] ? items[0].price : null);
+      return { it: { l: l, x: tax, tp: tip }, total: l.length ? total + tax + tip : 0 };
+    }
+    // Reads the form → { a, rate, by, w, wsum, it, total, err?, focus? }:
+    // every part it can read, plus the first problem.
     function readForm() {
-      var r = { a: parseAmount(amt.value), by: {}, w: {}, wsum: 0, err: "", focus: null };
+      var r = { a: parseAmount(amt.value), rate: 1, by: {}, w: {}, wsum: 0, it: null, total: 0, err: "", focus: null };
       var fail = function (msg, f) { if (!r.err) { r.err = msg; r.focus = f || null; } };
       if (r.a === null) { r.a = 0; fail(t("err.amount"), amt); }
+      if (foreign()) {
+        r.rate = parseRate(rateIn.value);
+        if (r.rate === null) fail(t("err.rate"), rateIn);
+        else if (r.a && convertCents(r.a, r.rate) < 1) fail(t("err.amount"), amt);
+      }
       if (by.value === "*") {
         var sum = 0;
         people.forEach(function (p) {
@@ -1393,6 +2299,13 @@
       } else if (by.value) {
         if (r.a) r.by[by.value] = r.a;
       } else fail(t("err.payer"), by);
+      if (mode === "it") {
+        var ri = readItems(fail);
+        r.it = ri.it;
+        r.total = ri.total;
+        if (r.total && r.a && r.total !== r.a) fail(t("err.itSum", { a: moneyE(r.total) }), null);
+        return r;
+      }
       people.forEach(function (p) {
         var row = rowIn[p.id], val;
         if (mode === "eq") val = row.chk.checked ? 1 : 0;
@@ -1406,36 +2319,59 @@
       else if (mode === "pc" && r.wsum !== PCT_FULL) fail(t("err.pct"), null);
       return r;
     }
-    // Live: payer remainder, split remainder and each person's share.
+    function draft(f, extra) {
+      return Object.assign({ id: nid, m: 1, t: title.value, a: f.a, cur: curSel.value, gcur: g.cur,
+                             rate: foreign() ? f.rate : 1, rs: rs, rd: rd, d: date.value, c: cat.value,
+                             by: f.by, mode: mode, w: f.w, it: f.it, n: note.value, ph: "", r: "" }, extra || {});
+    }
+    // Live: converted amount, payer remainder, split remainder and
+    // each person's share (in the group's currency).
     function preview() {
       var f = readForm();
+      var A = foreign() ? (f.rate ? convertCents(f.a, f.rate) : 0) : f.a;
+      conv.textContent = foreign() && A ? "= " + money(A) : "";
       byBox.hidden = by.value !== "*";
       byLeft.hidden = by.value !== "*" || !f.a;
       if (!byLeft.hidden) {
         var bs = 0;
         people.forEach(function (p) { bs += parsePart(byIn[p.id].value) || 0; });
-        byLeft.textContent = bs === f.a ? t("e.ok") : bs < f.a ? t("e.byLeft", { a: money(f.a - bs) }) : t("e.byOver", { a: money(bs - f.a) });
+        byLeft.textContent = bs === f.a ? t("e.ok") : bs < f.a ? t("e.byLeft", { a: moneyE(f.a - bs) }) : t("e.byOver", { a: moneyE(bs - f.a) });
         byLeft.className = "left " + (bs === f.a ? "good" : "bad");
       }
       var shares = null;
-      if (f.a && f.w && f.wsum && !(mode === "ex" && f.wsum !== f.a) && !(mode === "pc" && f.wsum !== PCT_FULL)) {
-        shares = sharesOf({ a: f.a, mode: mode, w: f.w });
+      var okW = mode === "it" ? (f.it && f.it.l.length && f.total === f.a)
+                              : (f.wsum && !(mode === "ex" && f.wsum !== f.a) && !(mode === "pc" && f.wsum !== PCT_FULL));
+      if (A > 0 && okW) {
+        var d0 = composeExp(draft(f, { by: { z: f.a } }));
+        if (d0.a > 0) shares = sharesOf(d0);
       }
       people.forEach(function (p) {
         var r = rowIn[p.id];
         r.out.textContent = shares && shares[p.id] ? money(shares[p.id]) : "";
-        r.row.classList.toggle("off", mode === "eq" ? !r.chk.checked : !(f.w && f.w[p.id]));
+        r.row.classList.toggle("off", mode === "eq" ? !r.chk.checked : mode === "it" ? !(shares && shares[p.id]) : !(f.w && f.w[p.id]));
       });
-      left.hidden = mode === "eq" || mode === "sh" || !f.a;
+      left.hidden = mode === "eq" || mode === "sh" || mode === "it" || !f.a;
+      var ws = 0;
       if (!left.hidden) {
-        var ws = 0;
         people.forEach(function (p) { ws += parsePart(rowIn[p.id].inp.value) || 0; });
         var full = mode === "pc" ? PCT_FULL : f.a;
-        var fmt = mode === "pc" ? function (v) { return pctText(v, LANG); } : money;
+        var fmt = mode === "pc" ? function (v) { return pctText(v, LANG); } : moneyE;
         left.textContent = ws === full ? t("e.ok")
           : ws < full ? t(mode === "pc" ? "e.leftPct" : "e.left", { a: fmt(full - ws), p: fmt(full - ws) })
                       : t(mode === "pc" ? "e.overPct" : "e.over", { a: fmt(ws - full), p: fmt(ws - full) });
         left.className = "left " + (ws === full ? "good" : "bad");
+      }
+      restBtn.hidden = mode !== "ex" || !f.a || ws >= f.a ||
+        !people.some(function (p) { return !rowIn[p.id].inp.value.trim(); });
+      if (mode === "it") {
+        itLeft.hidden = !f.total;
+        if (f.total) {
+          var same = f.total === f.a;
+          itLeft.textContent = t("it.total", { a: moneyE(f.total) }) + (same ? " · " + t("e.ok") : "");
+          itLeft.className = "left " + (same ? "good" : "bad");
+        }
+        itUse.hidden = !f.total || f.total === f.a;
+        if (!itUse.hidden) itUse.textContent = t("it.use", { a: moneyE(f.total) });
       }
     }
     amt.addEventListener("input", preview);
@@ -1446,10 +2382,34 @@
       var f = readForm();
       if (f.err) { showErr(err, f.err, f.focus || null); return; }
       if (!parseYmd(date.value)) { showErr(err, t("err.date"), date); return; }
+      var rep = rpSel ? rpSel.value : "";
+      if (rep && untilIn.value && (!parseYmd(untilIn.value) || untilIn.value < date.value)) { showErr(err, t("err.until"), untilIn); return; }
+      if (rep) {
+        // A series: saved as a rule; its dates up to today appear at once.
+        if (!isRule && recOf(data, g.id).length >= MAX_RULES) { showErr(err, t("err.rules", { n: MAX_RULES }), rpSel); return; }
+        var obj = composeExp(draft(f, { id: isRule ? x.id : g.id + "." + newId() }));
+        obj.f = rep;
+        if (untilIn.value) obj.u = untilIn.value;
+        var nr = normRec(obj);
+        if (!nr) { showErr(err, t("err.sum"), amt); return; }
+        var cur1 = isRule ? findIn(data.rec || [], x.id) : null;
+        if (!cur1 || JSON.stringify(Object.assign({}, cur1, { m: 1 })) !== JSON.stringify(nr)) {
+          nr.m = stamp(cur1 ? cur1.m : (isRule ? Math.max(x.m, data.tombs["rec:" + x.id] || 0) : 0));
+          if (isRule) untomb("rec", x.id);
+          data.rec = (data.rec || []).filter(function (y) { return y.id !== nr.id; }).concat([nr]);
+          commit();
+          if (!isRule) showToast(t("rp.saved", { f: t("rp.l" + rep) }));
+        }
+        if (photo) photo.commit("");
+        runRecurring();
+        dlg.close();
+        live(t("live.saved"));
+        renderAll();
+        return;
+      }
       var cur0 = x ? findIn(data.exp, x.id) : null;   // may have changed by a pull meanwhile
-      var nid = x ? x.id : g.id + "." + newId();
-      var next = normExp({ id: nid, m: 1, t: title.value, a: f.a, d: date.value, c: cat.value,
-                           by: f.by, mode: mode, w: f.w, n: note.value });
+      var next = normExp(composeExp(draft(f, { ph: photo ? photo.name() : (x && x.ph) || "",
+                                               r: x && x.r ? x.r : "" })));
       if (!next) { showErr(err, t("err.sum"), amt); return; }
       if (cur0) {
         var same = JSON.stringify(Object.assign({}, cur0, { m: 1 })) === JSON.stringify(next);
@@ -1465,16 +2425,38 @@
         data.exp.push(next);
         commit();
       }
+      if (photo) photo.commit(next.ph || "");
       dlg.close();
       live(t("live.saved"));
       renderAll();
     });
 
     setMode(mode);
+    paintRate();
+    paintRepeat();
+    if (foreign() && !fx0) fetchFx(false, onRates);
     dlg.appendChild(form);
     document.body.appendChild(dlg);
     dlg.showModal();
     if (!x) amt.focus();
+  }
+
+  // Stop a series: the rule goes (tombstone), its past expenses stay.
+  function stopRule(id) {
+    var r = findIn(data.rec || [], id);
+    if (!r) return;
+    var copy = JSON.parse(JSON.stringify(r));
+    data.rec = data.rec.filter(function (y) { return y.id !== id; });
+    tombstone("rec", id);
+    commit();
+    renderAll();
+    undoToast(t("rp.stopped"), function () {
+      untomb("rec", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["rec:" + id] || 0));
+      if (!findIn(data.rec || [], id)) data.rec = (data.rec || []).concat([copy]);
+      commit();
+      renderAll();
+    });
   }
 
   // The shell's Budget bridge, when this orOS has it (older shell: null).
@@ -1500,6 +2482,7 @@
       commit();
       renderAll();
     });
+    if (x.ph) dropPhotosLater([x.ph], 12000);   // after the 8 s Undo
   }
 
   // "Paid" on a suggested payment: recorded at once, with Undo.
@@ -1719,12 +2702,17 @@
     return wrap;
   }
 
-  function groupDialog(gid) {
+  // pre (BR-SPLIT-NEW, a new group only): { name, cur, people[] } from
+  // another app's deep link, copied into the draft; nothing is written
+  // until Save, exactly as if typed.
+  function groupDialog(gid, pre) {
     var g = gid ? groupById(data, gid) : null;
     if (gid && !g) return;
     if (!g && data.groups.length >= MAX_GROUPS) { showToast(t("err.groups", { n: MAX_GROUPS })); return; }
+    if (g) pre = null;
     var draft = {
-      people: g ? sortedPeople(g.id).map(function (p) { return { id: p.id, key: p.id, n: p.n }; }) : [],
+      people: g ? sortedPeople(g.id).map(function (p) { return { id: p.id, key: p.id, n: p.n }; })
+        : (pre ? pre.people.map(function (n) { return { id: "", key: "new" + newId(), n: n }; }) : []),
       me: g ? meOf(data, g.id) : "",
       col: g ? g.col : (data.groups.length % 8)
     };
@@ -1735,7 +2723,7 @@
     name.maxLength = NAME_LEN;
     name.autocomplete = "off";
     name.placeholder = t("gd.name.ph");
-    name.value = g ? g.n : "";
+    name.value = g ? g.n : (pre ? pre.name : "");
     var cur = el("select");
     CURRENCIES.forEach(function (c) {
       var label = c;
@@ -1746,7 +2734,7 @@
       } catch (e) {}
       var o = el("option", "", label); o.value = c; cur.appendChild(o);
     });
-    cur.value = g ? g.cur : ((data.groups[data.groups.length - 1] || {}).cur || "EUR");
+    cur.value = g ? g.cur : (pre && pre.cur ? pre.cur : ((data.groups[data.groups.length - 1] || {}).cur || "EUR"));
     var cols = el("div", "cols");
     cols.setAttribute("role", "radiogroup");
     cols.setAttribute("aria-label", t("gd.col"));
@@ -1777,7 +2765,10 @@
     var err = errLine();
     var used = {};
     if (g) {
-      expOf(data, g.id).forEach(function (x) { Object.keys(x.by).concat(Object.keys(x.w)).forEach(function (k) { used[k] = 1; }); });
+      expOf(data, g.id).concat(recOf(data, g.id)).forEach(function (x) {
+        Object.keys(x.by).concat(Object.keys(x.w)).forEach(function (k) { used[k] = 1; });
+        if (x.it) x.it.l.forEach(function (r) { r.p.forEach(function (k) { used[k] = 1; }); });
+      });
       payOf(data, g.id).forEach(function (x) { used[x.f] = 1; used[x.to] = 1; });
     }
     function drawPeople() {
@@ -1941,7 +2932,8 @@
       people: JSON.parse(JSON.stringify(peopleOf(data, gid))),
       exp: JSON.parse(JSON.stringify(expOf(data, gid))),
       pay: JSON.parse(JSON.stringify(payOf(data, gid))),
-      mine: JSON.parse(JSON.stringify(data.mine.filter(function (x) { return x.id === gid; })))
+      mine: JSON.parse(JSON.stringify(data.mine.filter(function (x) { return x.id === gid; }))),
+      rec: JSON.parse(JSON.stringify(recOf(data, gid)))
     };
     data.groups = data.groups.filter(function (x) { return x.id !== gid; });
     tombstone("grp", gid);
@@ -1951,12 +2943,14 @@
       untomb("grp", gid);
       snap.g.m = stamp(Math.max(snap.g.m, data.tombs["grp:" + gid] || 0));
       if (!groupById(data, gid)) data.groups.push(snap.g);
-      ["people", "exp", "pay", "mine"].forEach(function (k) {
+      ["people", "exp", "pay", "mine", "rec"].forEach(function (k) {
+        if (!data[k]) data[k] = [];
         snap[k].forEach(function (x) { if (!findIn(data[k], x.id)) data[k].push(x); });
       });
       commit();
       openGroup(gid);
     });
+    dropPhotosLater(snap.exp.map(function (x) { return x.ph; }), 12000);
   }
 
   // ---------- 9. Export, share, import, backup ----------
@@ -2157,17 +3151,20 @@
   function exportCsv(g) {
     var people = sortedPeople(g.id);
     var head = [t("col.date"), t("col.type"), t("col.title"), t("col.cat"), t("col.amount"), t("col.cur"), t("col.by")]
-      .concat(people.map(function (p) { return t("col.share", { p: p.n }); })).concat([t("col.note")]);
+      .concat(people.map(function (p) { return t("col.share", { p: p.n }); }))
+      .concat([t("col.note"), t("col.orig"), t("col.ocur"), t("col.rate")]);
+    var rateCell = function (r) { var s = String(r); return prefs.csv === "excel" ? s.replace(".", ",") : s; };
     var rows = entriesOf(g.id).reverse().map(function (en) {
       var x = en.x;
       if (en.kind === "p") {
         return [x.d, t("k.pay"), personName(x.f) + " → " + personName(x.to), "", x.a, g.cur, personName(x.f)]
-          .concat(people.map(function () { return ""; })).concat([""]);
+          .concat(people.map(function () { return ""; })).concat(["", "", "", ""]);
       }
       var sh = sharesOf(x);
       return [x.d, t("k.exp"), x.t, catName(x.c), x.a, g.cur,
               Object.keys(x.by).map(function (k) { return personName(k) + (Object.keys(x.by).length > 1 ? " " + centsToInput(x.by[k], LANG) : ""); }).join(", ")]
-        .concat(people.map(function (p) { return sh[p.id] ? sh[p.id] : ""; })).concat([x.n]);
+        .concat(people.map(function (p) { return sh[p.id] ? sh[p.id] : ""; }))
+        .concat([x.n].concat(x.fx ? [x.fx.a, x.fx.c, rateCell(x.fx.r)] : ["", "", ""]));
     });
     var text = buildCsv(head, rows, prefs.csv);
     saveBlob(new Blob([text], { type: "text/csv;charset=utf-8" }), "oros-split-" + slug(g.n) + ".csv",
@@ -2280,7 +3277,8 @@
     entriesOf(g.id).reverse().forEach(function (en) {
       var x = en.x;
       var what = en.kind === "p" ? personName(x.f) + " → " + personName(x.to) + " (" + t("k.pay") + ")"
-                                 : (x.t || catName(x.c)) + " · " + t("row.paid", { p: Object.keys(x.by).map(personName).join(", ") });
+                                 : (x.t || catName(x.c)) + (x.fx ? " (" + moneyIn(x.fx.a, x.fx.c) + ")" : "") + " · " +
+                                   t("row.paid", { p: Object.keys(x.by).map(personName).join(", ") });
       var lines = doc.splitTextToSize(what.normalize("NFC"), W - 2 * M - 150);
       var h = lines.length * 12 + 3;
       need(h);
@@ -2516,6 +3514,7 @@
       window.__orosSyncApi._suppress = false;
     }
     if (JSON.stringify(data) === before) return;
+    runRecurring();   // a series that just arrived: its due dates (deterministic ids)
     renderAll();
   }
 
@@ -2556,6 +3555,7 @@
       var now = ymdLocal(new Date());
       if (now === today) return;
       today = now;
+      runRecurring();
       renderAll();
     };
     setInterval(tick, 60000);
@@ -2569,6 +3569,7 @@
     applyI18n();
     wire();
     registerSync();
+    runRecurring();
     inheritPalette();
     watchPalette();
     renderAll();
@@ -2580,13 +3581,25 @@
   // target { group, exp? }. Opens the group (Expenses tab when an
   // expense is named) and then that expense's dialog. Unknown ids or
   // an open dialog → no-op.
+  //   BR-SPLIT-NEW: { newGroup: { name, cur, people[], from } } (Travel's
+  //   "Share with Split") opens the new-group dialog prefilled.
   function openSearchTarget(tg) {
+    if (tg && tg.newGroup && !document.querySelector("dialog[open]")) { newGroupFrom(tg.newGroup); return; }
     if (!tg || typeof tg.group !== "string" || document.querySelector("dialog[open]")) return;
     if (!groupById(data, tg.group)) return;
     var x = typeof tg.exp === "string" && groupOf(tg.exp) === tg.group ? findIn(data.exp, tg.exp) : null;
     if (x) prefs.tab = "exp";
     openGroup(tg.group);
     if (x) expDialog(x.id);
+  }
+  function newGroupFrom(x) {
+    if (!x || typeof x !== "object") return;
+    var seen = {}, people = [];
+    (Array.isArray(x.people) ? x.people : []).forEach(function (p) {
+      var n = normText(p, PERSON_LEN);
+      if (n && !seen[n.toLowerCase()] && people.length < MAX_PEOPLE) { seen[n.toLowerCase()] = 1; people.push(n); }
+    });
+    groupDialog(null, { name: normText(x.name, NAME_LEN), cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "", people: people });
   }
   window.__orosOpenAt = openSearchTarget;
   try {

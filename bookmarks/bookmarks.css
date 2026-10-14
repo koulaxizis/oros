@@ -1072,5 +1072,185 @@ dialog menu button.danger:hover {
 #bm-plat menu button.primary:hover { background: var(--accent-hover); }
 #bm-plat menu button:disabled { opacity: 0.5; cursor: default; }
 
+/* ---------- 20. Wave 35: nested folders strip ---------- */
+#crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 12px 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#crumbs::-webkit-scrollbar { display: none; }
+#crumbs .crumb-trail { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+#crumbs .crumb {
+  padding: 4px 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+#crumbs .crumb:hover { color: var(--accent); }
+#crumbs .crumb.here { color: var(--text); }
+#crumbs .crumb-sep { color: var(--text-dim); font-size: 12px; }
+#crumbs .sub-chip, #crumbs .sub-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+#crumbs .sub-chip:hover, #crumbs .sub-add:hover { border-color: var(--accent); color: var(--accent); }
+#crumbs .sub-chip .sub-ic { display: inline-flex; color: var(--accent); }
+#crumbs .sub-chip .sub-cnt { font-size: 11px; color: var(--text-dim); }
+#crumbs .sub-chip .sub-cnt:empty { display: none; }
+#crumbs .sub-chip.dragging { opacity: .45; }
+#crumbs .sub-add { color: var(--text-dim); border-style: dashed; }
+#crumbs .drop-target { border-color: var(--accent); background: var(--accent-soft); }
+
+/* Folder picker */
+#pick-list {
+  display: flex;
+  flex-direction: column;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  margin: 4px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+#pick-list .pick-row {
+  text-align: left;
+  padding: 10px 12px;
+  min-height: 40px;
+  font-size: 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+#pick-list .pick-row:last-child { border-bottom: 0; }
+#pick-list .pick-row:hover:not(:disabled) { background: var(--accent-soft); }
+#pick-list .pick-row:disabled { color: var(--text-dim); cursor: default; }
+#pick-list .pick-row.here { font-weight: 700; }
+
+/* Link-check and saved-copy marks on a row */
+.item .meta .chk-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 16px;
+  border-radius: 999px;
+  vertical-align: 1px;
+}
+.chk-badge.dead { color: var(--danger); border: 1px solid var(--danger); }
+.chk-badge.moved { color: var(--accent); border: 1px solid var(--accent); }
+.item .meta .arc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 16px;
+  margin-right: 4px;
+  padding: 0;
+  color: var(--accent);
+  vertical-align: -3px;
+  border-radius: 4px;
+}
+.item .meta .arc-badge:hover { background: var(--accent-soft); }
+#tag-filter .ftag.bad { color: var(--danger); border-color: var(--danger); background: transparent; }
+
+/* Item dialog: last check + saved copy */
+#f-extras {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+#f-extras .x-line { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--text-dim); }
+#f-extras .x-line:empty { display: none; }
+#f-extras .x-chk.dead { color: var(--danger); }
+#f-extras .x-chk.moved { color: var(--accent); }
+#f-extras .x-to { overflow-wrap: anywhere; }
+#f-extras .x-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+#f-extras .x-acts button {
+  padding: 7px 10px;
+  min-height: 36px;
+  font-size: 12.5px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+#f-extras .x-acts button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Reader view (saved copy) */
+#reader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+#reader .rd-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+#reader .rd-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  border-radius: 10px;
+}
+#reader .rd-icon:hover { background: var(--accent-soft); color: var(--accent); }
+#reader .rd-head { min-width: 0; flex: 1; }
+#rd-title { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#rd-meta { font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#reader .rd-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+#reader .rd-tools button {
+  padding: 6px 10px;
+  min-height: 36px;
+  font-size: 12.5px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+#reader .rd-tools button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+#reader .rd-tools button:disabled { opacity: .5; cursor: default; }
+#reader .rd-tools button.danger { color: var(--danger); }
+#reader .rd-img { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); cursor: pointer; min-height: 36px; }
+#reader .rd-img input { width: auto; accent-color: var(--accent); }
+#rd-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#rd-body .rd-frame { flex: 1; width: 100%; border: 0; background: var(--bg); }
+#rd-body .rd-msg { margin: 32px auto; padding: 0 16px; max-width: 520px; text-align: center; color: var(--text-dim); font-size: 14px; }
+@media (pointer: coarse) {
+  #crumbs .crumb, #crumbs .sub-chip, #crumbs .sub-add { min-height: 40px; }
+  #reader .rd-tools button, #reader .rd-img { min-height: 44px; }
+  #f-extras .x-acts button { min-height: 44px; }
+  #pick-list .pick-row { min-height: 44px; }
+}
+
 /* ---------- X. [hidden] must ALWAYS win (last rule) ---------- */
 [hidden] { display: none !important; }

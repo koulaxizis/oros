@@ -166,7 +166,53 @@
       "exp.row.days":    "Days logged",
       "exp.font.err":   "Greek font not found (vendor/NotoSans-Regular.ttf) — Greek text may not render in the PDF.",
       "ent.empty":      "No entries yet — they'll appear here after your first check-in.",
-      "ent.noRes":      "No entries match \u201C{q}\u201D."
+      "ent.noRes":      "No entries match \u201C{q}\u201D.",
+      "grp.own":        "Your activities",
+      "vc.open":        "Moods, activities & goals…",
+      "vc.title":       "Moods, activities & goals",
+      "vc.close":       "Close",
+      "vc.tab.emo":     "Feelings",
+      "vc.tab.act":     "Activities",
+      "vc.tab.goal":    "Goals",
+      "vc.hint.emo":    "Rename, give an emoji, reorder or hide any feeling, or add your own. Hidden feelings leave Capture; your old entries keep them.",
+      "vc.hint.act":    "Rename both sides of a pair, give an emoji, reorder or hide, or add your own activities (tap once in Capture to mark them).",
+      "vc.hint.goal":   "A goal counts the days you mark an activity, per week (Monday to Sunday) or per month.",
+      "vc.up":          "Move up",
+      "vc.down":        "Move down",
+      "vc.icon":        "Emoji",
+      "vc.name":        "Name",
+      "vc.yes":         "Name (yes)",
+      "vc.no":          "Name (no)",
+      "vc.hide":        "Hide",
+      "vc.show":        "Show",
+      "vc.color":       "Colour",
+      "vc.pos":         "Positive",
+      "vc.add.emo":     "Add a feeling",
+      "vc.add.act":     "Add an activity",
+      "vc.added":       "Added",
+      "gl.title":       "Goals",
+      "gl.none":        "No goals yet. Example: “Moved / exercised” 3 times a week.",
+      "gl.add":         "Add a goal",
+      "gl.manage":      "Edit goals",
+      "gl.del":         "Delete goal",
+      "gl.act":         "Activity",
+      "gl.times":       "Times",
+      "gl.timesPer":    "× per",
+      "gl.period":      "Period",
+      "gl.week":        "week",
+      "gl.month":       "month",
+      "gl.per.w":       "{n}× a week",
+      "gl.per.m":       "{n}× a month",
+      "gl.prog":        "{d} of {n}",
+      "gl.prog.w":      "{d} of {n} this week",
+      "gl.prog.m":      "{d} of {n} this month",
+      "gl.done":        "Reached",
+      "gl.hist.w":      "Reached in {m} of the last {k} weeks",
+      "gl.hist.m":      "Reached in {m} of the last {k} months",
+      "px.title":       "Year in pixels",
+      "px.prev":        "Previous year",
+      "px.next":        "Next year",
+      "px.empty":       "No entries in this year."
     },
     el: {
       "app.title":     "Διάθεση",
@@ -302,7 +348,53 @@
       "exp.row.days":    "Ημέρες με καταγραφή",
       "exp.font.err":   "Δεν βρέθηκε η ελληνική γραμματοσειρά (vendor/NotoSans-Regular.ttf) — τα ελληνικά μπορεί να μη φανούν στο PDF.",
       "ent.empty":      "Καμία καταχώρηση ακόμα — θα εμφανιστούν εδώ μετά την πρώτη καταγραφή.",
-      "ent.noRes":      "Καμία καταχώρηση δεν ταιριάζει με «{q}»."
+      "ent.noRes":      "Καμία καταχώρηση δεν ταιριάζει με «{q}».",
+      "grp.own":        "Οι δραστηριότητές σου",
+      "vc.open":        "Διαθέσεις, δραστηριότητες & στόχοι…",
+      "vc.title":       "Διαθέσεις, δραστηριότητες & στόχοι",
+      "vc.close":       "Κλείσιμο",
+      "vc.tab.emo":     "Συναισθήματα",
+      "vc.tab.act":     "Δραστηριότητες",
+      "vc.tab.goal":    "Στόχοι",
+      "vc.hint.emo":    "Μετονόμασε, δώσε emoji, άλλαξε σειρά ή κρύψε όποιο συναίσθημα θέλεις, ή πρόσθεσε δικά σου. Όσα κρύβεις φεύγουν από την Καταγραφή· οι παλιές καταχωρήσεις τα κρατούν.",
+      "vc.hint.act":    "Μετονόμασε και τις δύο πλευρές ενός ζεύγους, δώσε emoji, άλλαξε σειρά ή κρύψε, ή πρόσθεσε δικές σου δραστηριότητες (ένα πάτημα στην Καταγραφή τις σημειώνει).",
+      "vc.hint.goal":   "Ένας στόχος μετρά τις μέρες που σημειώνεις μια δραστηριότητα, ανά εβδομάδα (Δευτέρα έως Κυριακή) ή ανά μήνα.",
+      "vc.up":          "Πιο πάνω",
+      "vc.down":        "Πιο κάτω",
+      "vc.icon":        "Emoji",
+      "vc.name":        "Όνομα",
+      "vc.yes":         "Όνομα (ναι)",
+      "vc.no":          "Όνομα (όχι)",
+      "vc.hide":        "Απόκρυψη",
+      "vc.show":        "Εμφάνιση",
+      "vc.color":       "Χρώμα",
+      "vc.pos":         "Θετικό",
+      "vc.add.emo":     "Νέο συναίσθημα",
+      "vc.add.act":     "Νέα δραστηριότητα",
+      "vc.added":       "Προστέθηκε",
+      "gl.title":       "Στόχοι",
+      "gl.none":        "Κανένας στόχος ακόμα. Παράδειγμα: «Κινήθηκα» 3 φορές την εβδομάδα.",
+      "gl.add":         "Νέος στόχος",
+      "gl.manage":      "Επεξεργασία στόχων",
+      "gl.del":         "Διαγραφή στόχου",
+      "gl.act":         "Δραστηριότητα",
+      "gl.times":       "Φορές",
+      "gl.timesPer":    "φορές ανά",
+      "gl.period":      "Περίοδος",
+      "gl.week":        "εβδομάδα",
+      "gl.month":       "μήνα",
+      "gl.per.w":       "{n} φορές την εβδομάδα",
+      "gl.per.m":       "{n} φορές τον μήνα",
+      "gl.prog":        "{d} από {n}",
+      "gl.prog.w":      "{d} από {n} αυτή την εβδομάδα",
+      "gl.prog.m":      "{d} από {n} αυτόν τον μήνα",
+      "gl.done":        "Επιτεύχθηκε",
+      "gl.hist.w":      "Επιτεύχθηκε σε {m} από τις τελευταίες {k} εβδομάδες",
+      "gl.hist.m":      "Επιτεύχθηκε σε {m} από τους τελευταίους {k} μήνες",
+      "px.title":       "Η χρονιά σε pixel",
+      "px.prev":        "Προηγούμενο έτος",
+      "px.next":        "Επόμενο έτος",
+      "px.empty":       "Καμία καταχώρηση σε αυτό το έτος."
     }
   };
 
@@ -314,7 +406,7 @@
 
   // Fixed emotion vocabulary — 9, immutable (statistics need a
   // stable dictionary). Colors are SYSTEM hues only.
-  var EMOTIONS = [
+  var BUILTIN_EMOS = [
     { k: "happy",    i18n: "emo.happy",    col: "#87cf3e" },
     { k: "calm",     i18n: "emo.calm",     col: "#51a2da" },
     { k: "excited",  i18n: "emo.excited",  col: "#8c5ec7" },
@@ -346,7 +438,7 @@
 
   // Triadic habits — shared by the capture L3 AND the insights
   // adherence view (one vocabulary, two consumers).
-  var HABITS = [
+  var BUILTIN_HABITS = [
     // grp "hab" — the basics: health & physiology
     { f: "water",    grp: "hab", yes: "wat.yes",      no: "wat.no"      },
     { f: "food",     grp: "hab", yes: "food.yes",     no: "food.no"     },
@@ -402,11 +494,62 @@
     { en: "Late screens",   el: "Οθόνες αργά" }
   ];
 
-  function emoByK(k) {
-    for (var i = 0; i < EMOTIONS.length; i++) {
-      if (EMOTIONS[i].k === k) return EMOTIONS[i];
-    }
-    return null;
+  // ---- Wave 30: custom feelings and activities (mood/vocab.js) ----
+  // EMOTIONS / HABITS are now DERIVED from the built-ins plus the
+  // user's vocabulary (state.vocab), rebuilt by refreshVocab() after
+  // every load, pull and edit. Built-in keys never change, so old
+  // entries keep their meaning; a hidden item only leaves Capture.
+  //   EMOTIONS: [{k, label, col, ic, hid, builtin, pos}] in display order
+  //   HABITS:   [{f, grp, yes, no, ic, hid}] built-in pairs, display order
+  //   CUST_ACTS: [{id, label, ic, hid}] the user's own activities
+  var V = window.OrosMoodVocab;
+  var EMOTIONS = [], HABITS = [], CUST_ACTS = [];
+  var POS_BUILTIN = ["happy", "calm", "excited"];
+  var POS_EMOS = POS_BUILTIN.slice();
+  var EMO_IDX = {}, ACT_IDX = {};
+  function vocabOf() { return (state && state.vocab) || {}; }
+  function refreshVocab() {
+    var vo = vocabOf(), em = V.defMap(vo.emo), am = V.defMap(vo.act);
+    var bE = {}, bH = {};
+    BUILTIN_EMOS.forEach(function (x) { bE[x.k] = x; });
+    BUILTIN_HABITS.forEach(function (x) { bH[x.f] = x; });
+    EMOTIONS = V.orderIds(BUILTIN_EMOS.map(function (x) { return x.k; }), vo.emo, vo.eo).map(function (id) {
+      var b = bE[id], d = em[id] || {};
+      return {
+        k: id, builtin: !!b,
+        label: d.lab || (b ? t(b.i18n) : id),
+        col: d.col || (b ? b.col : "#9aa0ae"),
+        ic: d.ic || "", hid: !!d.hid,
+        pos: b ? POS_BUILTIN.indexOf(id) >= 0 : !!d.pos
+      };
+    });
+    POS_EMOS = EMOTIONS.filter(function (x) { return x.pos; }).map(function (x) { return x.k; });
+    HABITS = []; CUST_ACTS = [];
+    V.orderIds(BUILTIN_HABITS.map(function (x) { return x.f; }), vo.act, vo.ao).forEach(function (id) {
+      var b = bH[id], d = am[id] || {};
+      if (b) HABITS.push({ f: id, grp: b.grp, yes: b.yes, no: b.no,
+                           labYes: d.lab || "", labNo: d.no || "", ic: d.ic || "", hid: !!d.hid });
+      else CUST_ACTS.push({ id: id, label: d.lab || "?", ic: d.ic || "", hid: !!d.hid });
+    });
+    EMO_IDX = {}; ACT_IDX = {};
+    EMOTIONS.forEach(function (x) { EMO_IDX[x.k] = x; });
+    CUST_ACTS.forEach(function (x) { ACT_IDX[x.id] = x; });
+  }
+  function emoByK(k) { return EMO_IDX[k] || null; }
+  function emoLabel(k) { var e = emoByK(k); return e ? e.label : String(k); }
+  // A habit side's text: the user's own label, else the translation.
+  function habLbl(h, side) {
+    var own = side === "yes" ? h.labYes : h.labNo;
+    return own || t(h[side]);
+  }
+  function habText(h, side) { return (h.ic && side === "yes" ? h.ic + " " : "") + habLbl(h, side); }
+  function actById(id) { return ACT_IDX[id] || null; }
+  function actText(a) { return (a.ic ? a.ic + " " : "") + a.label; }
+  // Any activity a goal can count: built-in habit field or custom id.
+  function anyActText(id) {
+    if (V.isCustomId(id)) { var a = actById(id); return a ? actText(a) : "?"; }
+    for (var i = 0; i < HABITS.length; i++) if (HABITS[i].f === id) return habText(HABITS[i], "yes");
+    return id;
   }
 
   // Emotion face SVGs — one geometric family: circle face +
@@ -424,6 +567,10 @@
   var FACE_NUMB    = '<svg ' + FA + '><circle cx="12" cy="12" r="9"/><path d="M9 12h6"/><path d="M9 9h.01M15 9h.01" stroke-width="2.4"/></svg>';
 
   function faceFor(k) {
+    var ex = emoByK(k);
+    if (ex && (ex.ic || !ex.builtin)) {
+      return '<span class="emo-ic" aria-hidden="true">' + esc(ex.ic || "\u2022") + "</span>";
+    }
     switch (k) {
       case "happy":    return FACE_HAPPY;
       case "calm":     return FACE_CALM;
@@ -549,7 +696,7 @@ function migrate(data) {
     // DATA_VER 2: triadic habits. Wave-1 booleans migrate as:
     // true → "yes", false → null. The old unchecked state was
     // never a conscious "no" — honesty over retro-fitting.
-    HABITS.forEach(function (h) { var f = h.f;
+    BUILTIN_HABITS.forEach(function (h) { var f = h.f;
       if (e[f] === true)          e[f] = "yes";
       else if (e[f] === false || e[f] === "yes" || e[f] === "no") {
         // false → null handled below; explicit values stay
@@ -559,7 +706,20 @@ function migrate(data) {
     if (typeof e.ts !== "number") e.ts = Date.now();
     if (typeof e.mtime !== "number") e.mtime = e.ts;
     e.loc = e.loc || null; e.person = e.person || null;
+    // Wave 30: custom activities (optional; absent = none)
+    if (e.acts !== undefined) {
+      var na = V.normActs(e.acts);
+      if (na) e.acts = na;
+      else if (e.fm && typeof e.fm === "object" && typeof e.fm.acts === "number") e.acts = null;
+      else delete e.acts;
+    }
   });
+  // Wave 30: vocabulary + goals — normalised, and only kept when there
+  // is something in them (an untouched install keeps the old shape).
+  var nv = V.mergeVocab(data.vocab, null);
+  if (nv) data.vocab = nv; else delete data.vocab;
+  var ng = V.mergeGoals(data.goals, null);
+  if (ng) data.goals = ng; else delete data.goals;
   data.cols.loc.concat(data.cols.trig, data.cols.person).forEach(function (v) {
     if (typeof v.mtime !== "number") v.mtime = 0;
     if (typeof v.pos !== "number") v.pos = 0;
@@ -611,6 +771,7 @@ function load() {
     try { data = migrate(JSON.parse(raw)); } catch (e) { data = null; err = e; }
     if (data) {
       state = data;
+      refreshVocab();
       if (!state.cols.trig.length && !state.trigSeeded) seedTriggers();
       return;
     }
@@ -618,6 +779,7 @@ function load() {
     try { console.error("[orOS] mood: unreadable data, raw copy kept in " + BROKEN_KEY, err || ""); } catch (e3) {}
   }
   state = newState();
+  refreshVocab();
   save();
 }
 
@@ -687,7 +849,19 @@ function colLabel(v) {
 // "every field changed at mtime", which is what that edit meant.
 
 var ENTRY_FIELDS = ["emotions", "loc", "person", "trig", "note"]
-  .concat(HABITS.map(function (h) { return h.f; }));
+  .concat(BUILTIN_HABITS.map(function (h) { return h.f; }), ["acts"]);
+// Wave 30: OPTIONAL fields carry a stamp in fm only once an entry has
+// them (field or stamp present). Entries that never used custom
+// activities keep their exact old canonical shape — a device still on
+// the previous mood.js would otherwise drop the extra stamp on every
+// merge and both devices would upload forever.
+var OPT_FIELDS = { acts: true };
+function hasOpt(e, f) {
+  return !!e && (e[f] !== undefined || (hasFm(e) && typeof e.fm[f] === "number"));
+}
+function fmFields(e) {
+  return ENTRY_FIELDS.filter(function (f) { return !OPT_FIELDS[f] || hasOpt(e, f); });
+}
 var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
 function hasFm(e) { return !!(e && e.fm && typeof e.fm === "object"); }
@@ -705,8 +879,8 @@ function fieldStamp(e, f) {
   return (typeof e.fm[f] === "number") ? e.fm[f] : 0;
 }
 function ensureFm(e) {
-  var fm = {};
-  for (var i = 0; i < ENTRY_FIELDS.length; i++) fm[ENTRY_FIELDS[i]] = fieldStamp(e, ENTRY_FIELDS[i]);
+  var fm = {}, fs = fmFields(e);
+  for (var i = 0; i < fs.length; i++) fm[fs[i]] = fieldStamp(e, fs[i]);
   e.fm = fm;
 }
 function touchField(e, f, now) {
@@ -717,8 +891,8 @@ function touchField(e, f, now) {
 // Restore after a delete (Undo): the whole entry is new again.
 function stampEntryNewest(e, now) {
   if (hasFm(e)) {
-    var fm = {};
-    for (var i = 0; i < ENTRY_FIELDS.length; i++) fm[ENTRY_FIELDS[i]] = now;
+    var fm = {}, fs = fmFields(e);
+    for (var i = 0; i < fs.length; i++) fm[fs[i]] = now;
     e.fm = fm;
   }
   e.mtime = now;
@@ -739,6 +913,7 @@ function mergeEntry(x, y) {
   Object.keys(base).forEach(function (k) { out[k] = base[k]; });
   var fm = {};
   ENTRY_FIELDS.forEach(function (f) {
+    if (OPT_FIELDS[f] && !hasOpt(x, f) && !hasOpt(y, f)) return;   // never used on either side
     var sx = fieldStamp(x, f), sy = fieldStamp(y, f), w;
     if (sx !== sy) w = (sx > sy) ? x : y;
     else {
@@ -889,8 +1064,8 @@ function canonEntry(src) {
   var e = {};
   Object.keys(src).forEach(function (k) { e[k] = src[k]; });
   if (hasFm(src)) {                       // field stamps always spelled out
-    var fm = {};
-    for (var i = 0; i < ENTRY_FIELDS.length; i++) fm[ENTRY_FIELDS[i]] = fieldStamp(src, ENTRY_FIELDS[i]);
+    var fm = {}, fs = fmFields(src);
+    for (var i = 0; i < fs.length; i++) fm[fs[i]] = fieldStamp(src, fs[i]);
     e.fm = fm;
   }
   return e;
@@ -899,7 +1074,7 @@ function byTsDesc(x, y) {
   if (x.ts !== y.ts) return y.ts - x.ts;
   return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
 }
-var TOP_KEYS = ["ver", "trigSeeded", "sm", "om", "entries", "cols", "deleted"];
+var TOP_KEYS = ["ver", "trigSeeded", "sm", "om", "entries", "cols", "deleted", "vocab", "goals"];
 function canonState(st) {
   var s = JSON.parse(JSON.stringify(st || {})), out = {};
   out.ver = s.ver;
@@ -917,6 +1092,11 @@ function canonState(st) {
     });
   });
   out.deleted = canonDeleted(s);
+  // Wave 30: present only when non-empty (see mood/vocab.js)
+  var cv = V.mergeVocab(s.vocab, null);
+  if (cv) out.vocab = cv;
+  var cg = V.mergeGoals(s.goals, null);
+  if (cg) out.goals = cg;
   Object.keys(s).sort().forEach(function (k) {
     if (TOP_KEYS.indexOf(k) === -1) out[k] = s[k];
   });
@@ -954,7 +1134,9 @@ function mergeMoodStates(A, B) {
     om: Math.max(a.om || 0, b.om || 0),
     entries: entries,
     cols: cols,
-    deleted: tomb
+    deleted: tomb,
+    vocab: V.mergeVocab(a.vocab, b.vocab),
+    goals: V.mergeGoals(a.goals, b.goals)
   });
 }
 
@@ -1107,6 +1289,14 @@ function mergeMoodStates(A, B) {
       (state.cols[c] || []).forEach(function (v) { tomb[v.id] = now; });
     });
     var fresh = newState();           // fresh uids — no collisions
+    // Wave 30: own feelings / activities / orders go on every device
+    // (vocab.rs), goals are deleted (soft delete, x).
+    if (state.vocab) fresh.vocab = { rs: now };
+    if (state.goals) {
+      fresh.goals = JSON.parse(JSON.stringify(state.goals)).map(function (g) {
+        g.x = 1; g.mtime = Math.max(now, (g.mtime || 0) + 1); return g;
+      });
+    }
     // Newborn seeds share ids with their own predecessors' tombstones
     // (deterministic ids) — a fresh mtime beats the tombstone, same
     // resurrection contract as undo-delete. Renamed seeds on other
@@ -1122,6 +1312,8 @@ function mergeMoodStates(A, B) {
     fresh.sm = now; fresh.om = now;
     state = fresh;
     save();
+    refreshVocab();
+    pxYear = null;
     // #16: view ghosts die with the data they pointed at
     insFilter = { loc: null, person: null, hab: null };
     insFiltersOpen = false;
@@ -1143,13 +1335,15 @@ function mergeMoodStates(A, B) {
   var selPerson = null;
   var selTrig   = null;   // trigger preset id | null
   var hab       = {};                     // TRIADIC null|"yes"|"no", keys = HABITS
-  HABITS.forEach(function (h) { hab[h.f] = null; });
+  BUILTIN_HABITS.forEach(function (h) { hab[h.f] = null; });
+  var selActs   = {};                     // wave 30: custom activity id → true
 
   function resetCapture() {
     editing = null;
     editBase = null;
     pendingNote = null;   // #3: stale edit-notes never leak
     picked = {};
+    selActs = {};
     // Smart preselection (changelog contract): most-used value in
     // the CURRENT time-of-day bucket → most recent → pos 0.
     // FACTS ONLY (loc/person) — feelings and triggers are never
@@ -1217,15 +1411,17 @@ function mergeMoodStates(A, B) {
     var grid = document.createElement("div");
     grid.id = "emogrid";
     EMOTIONS.forEach(function (em) {
+      // wave 30: a hidden feeling stays visible only while picked
+      if (em.hid && picked[em.k] === undefined) return;
       var b = document.createElement("button");
       b.type = "button";
       b.className = "emotile" + (picked[em.k] !== undefined ? " on" : "");
       b.style.color = em.col;                  // the TILE carries the hue
-      b.title = t(em.i18n);
-      b.setAttribute("aria-label", t(em.i18n));
+      b.title = em.label;
+      b.setAttribute("aria-label", em.label);
       b.setAttribute("aria-pressed", picked[em.k] !== undefined ? "true" : "false");
       b.innerHTML = faceFor(em.k) +
-        '<span class="emo-name">' + esc(t(em.i18n)) + "</span>";
+        '<span class="emo-name">' + esc(em.label) + "</span>";
       b.addEventListener("click", function () {
         if (picked[em.k] !== undefined) delete picked[em.k];
         else picked[em.k] = 3;                  // default intensity: mid
@@ -1250,20 +1446,20 @@ function mergeMoodStates(A, B) {
       sub.textContent = t("l1.multi");
       ints.appendChild(sub);
       pickedKeys.forEach(function (k) {
-        var em = emoByK(k);
+        var em = emoByK(k) || { k: k, label: k, col: "var(--text-dim)" };
         var row = document.createElement("div");
         row.className = "int-row";
         row.style.color = em.col;
         var lab = document.createElement("span");
         lab.className = "int-lab";
-        lab.textContent = t(em.i18n);
+        lab.textContent = em.label;
         row.appendChild(lab);
         var sl = document.createElement("input");
         sl.type = "range";
         sl.id = "sl-" + k;
         sl.min = "1"; sl.max = "5"; sl.step = "1";
         sl.value = String(picked[k]);
-        sl.setAttribute("aria-label", t(em.i18n));
+        sl.setAttribute("aria-label", em.label);
         var num = document.createElement("span");
         num.className = "int-num";
         num.textContent = String(picked[k]);
@@ -1379,6 +1575,7 @@ function mergeMoodStates(A, B) {
       panel.id = panelId;
       HABITS.forEach(function (hh) {
         if (hh.grp !== grp) return;
+        if (hh.hid && !hab[hh.f]) return;     // wave 30: hidden unless marked
         var row = document.createElement("div");
         row.className = "habrow";
         ["yes", "no"].forEach(function (side) {
@@ -1386,7 +1583,7 @@ function mergeMoodStates(A, B) {
           hc.type = "button";
           hc.className = "chip hab" + (hab[hh.f] === side ? " on" : "") +
             (side === "no" ? " neg" : "");
-          hc.textContent = t(hh[side]);
+          hc.textContent = habText(hh, side);
           hc.setAttribute("aria-pressed", hab[hh.f] === side ? "true" : "false");
           hc.addEventListener("click", function () {
             hab[hh.f] = (hab[hh.f] === side) ? null : side;   // re-tap = unknown
@@ -1400,6 +1597,31 @@ function mergeMoodStates(A, B) {
     };
     mkHabBlock("hab", "ins.basics", "habits");
     mkHabBlock("rit", "grp.rit", "rituals");
+
+    // ---- L3a (wave 30): the user's own activities — tap = done ----
+    var shownActs = CUST_ACTS.filter(function (a) { return !a.hid || selActs[a.id]; });
+    if (shownActs.length) {
+      var ha = document.createElement("h2");
+      ha.className = "sec-title";
+      ha.textContent = t("grp.own");
+      host.appendChild(ha);
+      var ap = document.createElement("div");
+      ap.className = "chips own-acts";
+      ap.id = "own-acts";
+      shownActs.forEach(function (a) {
+        var c = document.createElement("button");
+        c.type = "button";
+        c.className = "chip" + (selActs[a.id] ? " on" : "");
+        c.textContent = actText(a);
+        c.setAttribute("aria-pressed", selActs[a.id] ? "true" : "false");
+        c.addEventListener("click", function () {
+          if (selActs[a.id]) delete selActs[a.id]; else selActs[a.id] = true;
+          buildCapture();
+        });
+        ap.appendChild(c);
+      });
+      host.appendChild(ap);
+    }
 
     // ---- L3b: trigger presets (closed list, like Location) ----
     // Chips + None + Manage + inline Add — same vocabulary model
@@ -1520,6 +1742,14 @@ function mergeMoodStates(A, B) {
       acts.appendChild(disc);
     }
     host.appendChild(acts);
+    // wave 30: customise feelings, activities and goals
+    var cz = document.createElement("button");
+    cz.type = "button";
+    cz.className = "rst-link cz-link";
+    cz.id = "cz-open";
+    cz.textContent = t("vc.open");
+    cz.addEventListener("click", function () { openVocab("emo"); });
+    host.appendChild(cz);
     if (mm) mm.scrollTop = keepScroll;
     if (keepFocus) {
       var fe = document.getElementById(keepFocus.id);
@@ -1717,11 +1947,14 @@ function mergeMoodStates(A, B) {
     return (list || []).map(function (m) { return [m.k, m.i]; })
       .sort(function (x, y) { return x[0] < y[0] ? -1 : (x[0] > y[0] ? 1 : 0); });
   }
+  function actsOfForm() {
+    return V.normActs(Object.keys(selActs).filter(function (k) { return selActs[k]; }));
+  }
   function entryValues(e) {
     var v = {
       emotions: normEmos(e.emotions),
       loc: e.loc || null, person: e.person || null, trig: e.trig || null,
-      note: e.note || ""
+      note: e.note || "", acts: V.normActs(e.acts)
     };
     HABITS.forEach(function (h) {
       v[h.f] = (e[h.f] === "yes" || e[h.f] === "no") ? e[h.f] : null;
@@ -1737,9 +1970,9 @@ function mergeMoodStates(A, B) {
     var v = {
       emotions: normEmos(Object.keys(picked).map(function (k) { return { k: k, i: picked[k] }; })),
       loc: selLoc || null, person: selPerson || null, trig: selTrig || null,
-      note: noteValue()
+      note: noteValue(), acts: actsOfForm()
     };
-    HABITS.forEach(function (h) { v[h.f] = hab[h.f] || null; });
+    BUILTIN_HABITS.forEach(function (h) { v[h.f] = hab[h.f] || null; });
     return v;
   }
   function sameVal(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
@@ -1750,7 +1983,10 @@ function mergeMoodStates(A, B) {
     } else if (f === "loc") selLoc = val;
     else if (f === "person") selPerson = val;
     else if (f === "trig") selTrig = val;
-    else if (f === "note") {
+    else if (f === "acts") {
+      selActs = {};
+      (val || []).forEach(function (id) { selActs[id] = true; });
+    } else if (f === "note") {
       var nb = $("fld-note");
       if (nb) nb.value = val; else pendingNote = val;
     } else hab[f] = val;
@@ -1818,10 +2054,11 @@ function mergeMoodStates(A, B) {
       // previous entry's habit marks. Fresh picks always win.
       selLoc = selLoc || last.loc || null;
       selPerson = selPerson || last.person || null;
-      HABITS.forEach(function (h) {
+      BUILTIN_HABITS.forEach(function (h) {
         if (hab[h.f] === null &&
             (last[h.f] === "yes" || last[h.f] === "no")) hab[h.f] = last[h.f];
       });
+      (V.normActs(last.acts) || []).forEach(function (id) { selActs[id] = true; });   // marks are additive
       commitEntry(emos);
     }));
     g.appendChild(mk(t("recent.new"), "ghost", function () {
@@ -1842,9 +2079,11 @@ function mergeMoodStates(A, B) {
     picked = {};
     (e.emotions || []).forEach(function (m) { picked[m.k] = m.i; });
     selLoc = e.loc; selPerson = e.person; selTrig = e.trig || null;
-    HABITS.forEach(function (h) {
+    BUILTIN_HABITS.forEach(function (h) {
       hab[h.f] = (e[h.f] === "yes" || e[h.f] === "no") ? e[h.f] : null;
     });
+    selActs = {};
+    (V.normActs(e.acts) || []).forEach(function (id) { selActs[id] = true; });
   }
 
   function commitEntry(emos) {
@@ -1857,14 +2096,17 @@ function mergeMoodStates(A, B) {
       var now = Date.now();
       var vals = {
         emotions: emos, loc: selLoc || null, person: selPerson || null,
-        trig: selTrig || null, note: note
+        trig: selTrig || null, note: note, acts: actsOfForm()
       };
-      HABITS.forEach(function (h) { vals[h.f] = hab[h.f] || null; });
+      BUILTIN_HABITS.forEach(function (h) { vals[h.f] = hab[h.f] || null; });
       var fv = formValues();
       e = entryById(editing);
       if (!e) {                                   // resurrection safety
         e = { id: editing, ts: (editBase && editBase.ts) || now, trigger: "" };
-        ENTRY_FIELDS.forEach(function (f) { e[f] = vals[f]; });
+        ENTRY_FIELDS.forEach(function (f) {
+          if (OPT_FIELDS[f] && vals[f] === null) return;          // optional: absent = none
+          e[f] = vals[f];
+        });
         stampEntryNewest(e, now);
         state.entries.push(e);
       } else {
@@ -1886,7 +2128,9 @@ function mergeMoodStates(A, B) {
         emotions: emos, loc: selLoc, person: selPerson,
         note: note, trig: selTrig, trigger: ""
       };
-      HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
+      BUILTIN_HABITS.forEach(function (h) { e[h.f] = hab[h.f]; });
+      var na = actsOfForm();
+      if (na) e.acts = na;                // wave 30: only when used
       state.entries.push(e);
     }
     if (wrote) {                          // an edit that changed nothing writes nothing
@@ -1983,7 +2227,7 @@ function mergeMoodStates(A, B) {
       if (day.entry) {
         var em = emoByK(day.entry.k);
         dot.style.background = em ? em.col : "var(--text-dim)";
-        dot.title = t("emo." + day.entry.k) || "";
+        dot.title = emoLabel(day.entry.k) || "";
       } else {
         dot.className = "tdot hollow";    // no entry that day
       }
@@ -2008,13 +2252,14 @@ function mergeMoodStates(A, B) {
       { weekday: "short", day: "numeric", month: "short" }));
     (e.emotions || []).forEach(function (m) {
       var em = emoByK(m.k);
-      if (em) bits.push(t(em.i18n));
+      if (em) bits.push(em.label);
     });
     if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(L.label, colLabel(L)); }
     if (e.person) { var P = colValById("person", e.person); if (P) bits.push(P.label, colLabel(P)); }
     HABITS.forEach(function (h) {
-      if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
+      if (e[h.f] === "yes" || e[h.f] === "no") bits.push(habLbl(h, e[h.f]));
     });
+    (e.acts || []).forEach(function (id) { var A = actById(id); if (A) bits.push(A.label); });
     if (e.trig) { var TV = colValById("trig", e.trig); if (TV) bits.push(TV.label, colLabel(TV)); }
     bits.push(e.note || "");
     return bits.join(" ").toLowerCase();
@@ -2052,7 +2297,7 @@ function mergeMoodStates(A, B) {
         f.className = "e-face";
         f.style.color = em.col;
         f.innerHTML = faceFor(m.k);
-        f.title = t(em.i18n) + " · " + m.i + "/5";
+        f.title = em.label + " · " + m.i + "/5";
         faces.appendChild(f);
       });
       li.appendChild(faces);
@@ -2063,8 +2308,9 @@ function mergeMoodStates(A, B) {
       if (e.loc) { var L = colValById("loc", e.loc); if (L) bits.push(colLabel(L)); }
       if (e.person) { var P = colValById("person", e.person); if (P) bits.push(colLabel(P)); }
       HABITS.forEach(function (h) {
-        if (e[h.f] === "yes" || e[h.f] === "no") bits.push(t(h[e[h.f]]));
+        if (e[h.f] === "yes" || e[h.f] === "no") bits.push(habLbl(h, e[h.f]));
       });
+      (e.acts || []).forEach(function (id) { var A = actById(id); if (A) bits.push(actText(A)); });
       ctx.textContent = bits.join(" · ");
       li.appendChild(ctx);
 
@@ -2187,6 +2433,7 @@ function mergeMoodStates(A, B) {
     return es.filter(function (e) {
       if (f.loc && e.loc !== f.loc) return false;
       if (f.person && e.person !== f.person) return false;
+      if (hf && hf[0] === "@") return V.marks(e, hf[1]);   // wave 30: "@:<custom id>"
       if (hf && e[hf[0]] !== hf[1]) return false;
       return true;
     });
@@ -2259,7 +2506,7 @@ function mergeMoodStates(A, B) {
       row.style.color = r.em.col;
       var lab = document.createElement("span");
       lab.className = "dist-lab";
-      lab.textContent = t(r.em.i18n);
+      lab.textContent = r.em.label;
       row.appendChild(lab);
       var bar = document.createElement("div");
       bar.className = "dist-bar";
@@ -2337,7 +2584,7 @@ function mergeMoodStates(A, B) {
     HABITS.forEach(function (h) {
       if (h.grp === "rit") return;          // basics group only
       ["yes", "no"].forEach(function (side) {
-        hc.appendChild(mkFChip(t(h[side]),
+        hc.appendChild(mkFChip(habLbl(h, side),
           insFilter.hab === h.f + ":" + side, function () {
             insFilter.hab = insFilter.hab === h.f + ":" + side ?
               null : h.f + ":" + side;
@@ -2350,7 +2597,7 @@ function mergeMoodStates(A, B) {
     HABITS.forEach(function (h) {
       if (h.grp !== "rit") return;
       ["yes", "no"].forEach(function (side) {
-        rc.appendChild(mkFChip(t(h[side]),
+        rc.appendChild(mkFChip(habLbl(h, side),
           insFilter.hab === h.f + ":" + side, function () {
             insFilter.hab = insFilter.hab === h.f + ":" + side ?
               null : h.f + ":" + side;
@@ -2358,6 +2605,17 @@ function mergeMoodStates(A, B) {
       });
     });
     panel.appendChild(rc);
+
+    if (CUST_ACTS.length) {                 // wave 30: own activities
+      var oc = mkGroup("grp.own");
+      CUST_ACTS.forEach(function (a) {
+        var key = "@:" + a.id;
+        oc.appendChild(mkFChip(actText(a), insFilter.hab === key, function () {
+          insFilter.hab = insFilter.hab === key ? null : key;
+        }));
+      });
+      panel.appendChild(oc);
+    }
 
     if (filtersActive()) {
       var cb = document.createElement("button");
@@ -2469,7 +2727,7 @@ function mergeMoodStates(A, B) {
       if (days[dk]) {
         var em = emoByK(days[dk].k);
         dot.style.background = em ? em.col : "var(--text-dim)";
-        dot.title = t("emo." + days[dk].k);
+        dot.title = emoLabel(days[dk].k);
       } else {
         dot.className = "tdot hollow";     // absence ≠ neutral
       }
@@ -2496,8 +2754,8 @@ function mergeMoodStates(A, B) {
     host.appendChild(dl);
   }
 
-  function renderDayList(dayK) {
-    var dl = $("day-list");
+  function renderDayList(dayK, hostId) {
+    var dl = $(hostId || "day-list");
     if (!dl) return;
     dl.hidden = false;
     dl.innerHTML = "";
@@ -2528,7 +2786,7 @@ function mergeMoodStates(A, B) {
         f.className = "e-face";
         f.style.color = em.col;
         f.innerHTML = faceFor(m.k);
-        f.title = t(em.i18n) + " · " + m.i + "/5";
+        f.title = em.label + " · " + m.i + "/5";
         faces.appendChild(f);
       });
       li.appendChild(faces);
@@ -2573,6 +2831,7 @@ function mergeMoodStates(A, B) {
     var daySet = {};
     es.forEach(function (e) { daySet[dayKey(e.ts)] = 1; });
     if (!Object.keys(daySet).length) return;
+    if (grp === "own") { renderOwnActs(host, es, daySet); return; }
 
     HABITS.forEach(function (h) {
       if (h.grp !== grp) return;
@@ -2594,7 +2853,7 @@ function mergeMoodStates(A, B) {
       row.className = "dist-row";
       var lab = document.createElement("span");
       lab.className = "dist-lab";
-      lab.textContent = t(h.yes);
+      lab.textContent = habLbl(h, "yes");
       row.appendChild(lab);
       var bar = document.createElement("div");
       bar.className = "dist-bar";
@@ -2609,6 +2868,40 @@ function mergeMoodStates(A, B) {
       val.className = "dist-val";
       val.textContent = t("ins.hab.days")
         .replace("{y}", yesDays).replace("{n}", yesDays + noDays);
+      row.appendChild(val);
+      host.appendChild(row);
+    });
+  }
+
+  // -- wave 30: the user's own activities — days marked over the
+  //    logged days (they have no "no" side) --
+  function ownActDays(es, id) {
+    var d = {};
+    es.forEach(function (e) { if (V.marks(e, id)) d[dayKey(e.ts)] = 1; });
+    return Object.keys(d).length;
+  }
+  function renderOwnActs(host, es, daySet) {
+    var nDays = Object.keys(daySet).length;
+    CUST_ACTS.forEach(function (a) {
+      var yesDays = ownActDays(es, a.id);
+      if (!yesDays) return;
+      var row = document.createElement("div");
+      row.className = "dist-row";
+      var lab = document.createElement("span");
+      lab.className = "dist-lab";
+      lab.textContent = actText(a);
+      row.appendChild(lab);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width = Math.max(4, Math.round(yesDays / nDays * 100)) + "%";
+      fill.style.background = "var(--accent)";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+      var val = document.createElement("span");
+      val.className = "dist-val";
+      val.textContent = t("ins.hab.days").replace("{y}", yesDays).replace("{n}", nDays);
       row.appendChild(val);
       host.appendChild(row);
     });
@@ -2702,30 +2995,37 @@ function mergeMoodStates(A, B) {
       consider(sub.filter(function (e) { return e.loc === v.id; }),
         function (b) { return t("tr.loc")
           .replace("{x}", colLabel(v))
-          .replace("{e}", t("emo." + b.k))
+          .replace("{e}", emoLabel(b.k))
           .replace("{d}", b.d); });
     });
     (state.cols.person || []).forEach(function (v) {
       consider(sub.filter(function (e) { return e.person === v.id; }),
         function (b) { return t("tr.person")
           .replace("{x}", colLabel(v))
-          .replace("{e}", t("emo." + b.k))
+          .replace("{e}", emoLabel(b.k))
           .replace("{d}", b.d); });
     });
     HABITS.forEach(function (h) {
       ["yes", "no"].forEach(function (side) {
         var cond = sub.filter(function (e) { return e[h.f] === side; });
         consider(cond, function (b) { return t("tr.hab")
-          .replace("{h}", t(h[side]))
-          .replace("{e}", t("emo." + b.k))
+          .replace("{h}", habLbl(h, side))
+          .replace("{e}", emoLabel(b.k))
           .replace("{d}", b.d); });
         // tendency: a "no" habit marked ≥35% of logged days
         if (side === "no" && cond.length >= TR_MIN_N) {
           var p = Math.round(cond.length / sub.length * 100);
           if (p >= 35) out.push({ d: p, fn: t("tr.freq")
-            .replace("{h}", t(h.no)).replace("{p}", p) });
+            .replace("{h}", habLbl(h, "no")).replace("{p}", p) });
         }
       });
+    });
+    CUST_ACTS.forEach(function (a) {         // wave 30: own activities
+      consider(sub.filter(function (e) { return V.marks(e, a.id); }),
+        function (b) { return t("tr.hab")
+          .replace("{h}", a.label)
+          .replace("{e}", emoLabel(b.k))
+          .replace("{d}", b.d); });
     });
     // -- co-occurrence pairs: "when you feel X, you also mark Y" --
     // Guarded: ≥40% co-occurrence AND ≥20pt above that emotion's
@@ -2746,8 +3046,8 @@ function mergeMoodStates(A, B) {
         var basePct = Math.round((bSt.n[eb.k] || 0) / sub.length * 100);
         if (coPct - basePct >= 20 && coPct >= 40) {
           out.push({ d: coPct - basePct, fn: t("tr.pair")
-            .replace("{a}", t("emo." + ea.k))
-            .replace("{b}", t("emo." + eb.k))
+            .replace("{a}", emoLabel(ea.k))
+            .replace("{b}", emoLabel(eb.k))
             .replace("{p}", coPct) });
         }
       });
@@ -2776,7 +3076,7 @@ function mergeMoodStates(A, B) {
       });
       consider(cond, function (b) { return t("tr.trig")
         .replace("{x}", trigOrig[tk])
-        .replace("{e}", t("emo." + b.k))
+        .replace("{e}", emoLabel(b.k))
         .replace("{d}", b.d); });
     });
 
@@ -2804,7 +3104,7 @@ function mergeMoodStates(A, B) {
           });
           var pcond = sub.filter(function (e) { return cycDays[dayKey(e.ts)]; });
           consider(pcond, function (b) { return t("tr.per")
-            .replace("{e}", t("emo." + b.k))
+            .replace("{e}", emoLabel(b.k))
             .replace("{d}", b.d); });
         }
       }
@@ -2853,7 +3153,7 @@ function mergeMoodStates(A, B) {
       var em = emoByK(r.k);
       var sp = document.createElement("span");
       sp.style.color = em ? em.col : "";
-      sp.textContent = t("emo." + r.k);
+      sp.textContent = emoLabel(r.k);
       li.appendChild(sp);
       var dv = document.createElement("span");
       dv.className = "dist-delta up";
@@ -2966,7 +3266,7 @@ function mergeMoodStates(A, B) {
       var c = st.n[em.k] || 0;
       if (c > topN) { topN = c; top = em; }
     });
-    if (top) mkKpi(t("rec.top"), t(top.i18n), topN + "×", "up");
+    if (top) mkKpi(t("rec.top"), top.label, topN + "×", "up");
 
     var posShare = function (set) {
       var n = set.filter(function (e) {
@@ -3029,7 +3329,7 @@ function mergeMoodStates(A, B) {
       row.style.color = em ? em.col : "";
       var lab = document.createElement("span");
       lab.className = "dist-lab";
-      lab.textContent = em ? t(em.i18n) : r.k;
+      lab.textContent = em ? em.label : r.k;
       row.appendChild(lab);
       var bar = document.createElement("div");
       bar.className = "dist-bar";
@@ -3053,6 +3353,592 @@ function mergeMoodStates(A, B) {
     hint.className = "hint";
     hint.textContent = t("ins.int.hint");
     host.appendChild(hint);
+  }
+
+  // ---------- Wave 30: goals, year in pixels, customisation ----------
+  function goalTitle(g, plain) {
+    var name;
+    if (plain) {
+      if (V.isCustomId(g.act)) { var a = actById(g.act); name = a ? a.label : "?"; }
+      else {
+        name = g.act;
+        HABITS.forEach(function (h) { if (h.f === g.act) name = habLbl(h, "yes"); });
+      }
+    } else name = anyActText(g.act);
+    return name + " · " + t(g.per === "m" ? "gl.per.m" : "gl.per.w").replace("{n}", g.n);
+  }
+
+  function renderGoals(host) {
+    var goals = V.liveGoals(state.goals);
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t("gl.title");
+    host.appendChild(h);
+    var box = document.createElement("div");
+    box.className = "goal-list";
+    box.id = "goal-list";
+    if (!goals.length) {
+      var em = document.createElement("div");
+      em.className = "hint";
+      em.textContent = t("gl.none");
+      box.appendChild(em);
+    }
+    var now = Date.now();
+    goals.forEach(function (g) {
+      var p = V.goalProgress(state.entries, g, now, g.per === "m" ? 6 : 8);
+      var card = document.createElement("div");
+      card.className = "goal-card" + (p.ok ? " ok" : "");
+      var top = document.createElement("div");
+      top.className = "goal-top";
+      var nm = document.createElement("span");
+      nm.className = "goal-name";
+      nm.textContent = goalTitle(g);
+      top.appendChild(nm);
+      var val = document.createElement("span");
+      val.className = "goal-val";
+      val.textContent = t(g.per === "m" ? "gl.prog.m" : "gl.prog.w")
+        .replace("{d}", p.done).replace("{n}", p.n);
+      top.appendChild(val);
+      card.appendChild(top);
+      var bar = document.createElement("div");
+      bar.className = "dist-bar";
+      bar.setAttribute("role", "progressbar");
+      bar.setAttribute("aria-valuemin", "0");
+      bar.setAttribute("aria-valuemax", String(p.n));
+      bar.setAttribute("aria-valuenow", String(Math.min(p.done, p.n)));
+      bar.setAttribute("aria-label", goalTitle(g));
+      var fill = document.createElement("div");
+      fill.className = "dist-fill";
+      fill.style.width = Math.max(p.done ? 4 : 0, p.pct) + "%";
+      fill.style.background = p.ok ? "#87cf3e" : "var(--accent)";
+      bar.appendChild(fill);
+      card.appendChild(bar);
+      var hist = document.createElement("div");
+      hist.className = "hint goal-hist";
+      hist.textContent = (p.ok ? t("gl.done") + " · " : "") +
+        t(g.per === "m" ? "gl.hist.m" : "gl.hist.w")
+          .replace("{m}", p.met).replace("{k}", p.past.length);
+      card.appendChild(hist);
+      box.appendChild(card);
+    });
+    host.appendChild(box);
+    var mg = document.createElement("button");
+    mg.type = "button";
+    mg.className = "chip ghost";
+    mg.id = "goal-manage";
+    mg.textContent = goals.length ? t("gl.manage") : t("gl.add");
+    mg.addEventListener("click", function () { openVocab("goal"); });
+    host.appendChild(mg);
+  }
+
+  var pxYear = null;                       // view state: year shown (null = this year)
+  function renderPixels(host) {
+    var thisYear = new Date().getFullYear();
+    var years = V.yearsWithData(state.entries, thisYear);
+    var y = pxYear || thisYear;
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t("px.title");
+    host.appendChild(h);
+    var head = document.createElement("div");
+    head.className = "cal-head";
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "cal-nav";
+    prev.textContent = "‹";
+    prev.setAttribute("aria-label", t("px.prev"));
+    prev.disabled = y <= years[0];
+    prev.addEventListener("click", function () { pxYear = y - 1; renderInsights(); });
+    head.appendChild(prev);
+    var yt = document.createElement("span");
+    yt.className = "cal-month";
+    yt.textContent = String(y);
+    head.appendChild(yt);
+    var next = document.createElement("button");
+    next.type = "button";
+    next.className = "cal-nav";
+    next.textContent = "›";
+    next.setAttribute("aria-label", t("px.next"));
+    next.disabled = y >= thisYear;
+    next.addEventListener("click", function () { pxYear = y + 1 >= thisYear ? null : y + 1; renderInsights(); });
+    head.appendChild(next);
+    host.appendChild(head);
+
+    var px = V.yearPixels(state.entries, y);
+    var grid = document.createElement("div");
+    grid.className = "px-grid";
+    grid.id = "px-grid";
+    var corner = document.createElement("span");
+    corner.className = "px-h";
+    grid.appendChild(corner);
+    for (var m = 1; m <= 12; m++) {
+      var mh = document.createElement("span");
+      mh.className = "px-h";
+      mh.textContent = new Date(2024, m - 1, 1).toLocaleDateString(
+        LANG === "el" ? "el-GR" : "en-GB", { month: "narrow" });
+      grid.appendChild(mh);
+    }
+    var todayK = dayKey(Date.now()), used = {};
+    for (var d = 1; d <= 31; d++) {
+      var dn = document.createElement("span");
+      dn.className = "px-d";
+      dn.textContent = (d === 1 || d % 5 === 0) ? String(d) : "";
+      grid.appendChild(dn);
+      for (var mm = 1; mm <= 12; mm++) {
+        if (d > V.daysIn(y, mm)) {
+          var no = document.createElement("span");
+          no.className = "px-cell none";
+          grid.appendChild(no);
+          continue;
+        }
+        var dk = y + "-" + pad(mm) + "-" + pad(d);
+        var cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "px-cell" + (dk === todayK ? " today" : "");
+        var dl = new Date(y, mm - 1, d).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+          { day: "numeric", month: "long" });
+        if (px[dk]) {
+          var em = emoByK(px[dk].k);
+          cell.style.background = em ? em.col : "var(--text-dim)";
+          used[px[dk].k] = 1;
+          cell.setAttribute("aria-label", dl + ": " + emoLabel(px[dk].k));
+          cell.title = dl + " · " + emoLabel(px[dk].k);
+          (function (kk) {
+            cell.addEventListener("click", function () {
+              var prevOn = grid.querySelector(".px-cell.sel");
+              if (prevOn) prevOn.classList.remove("sel");
+              this.classList.add("sel");
+              renderDayList(kk, "px-day-list");
+            });
+          })(dk);
+        } else {
+          cell.disabled = true;
+          cell.setAttribute("aria-label", dl);
+        }
+        grid.appendChild(cell);
+      }
+    }
+    host.appendChild(grid);
+    var keys = Object.keys(used);
+    if (keys.length) {
+      var lg = document.createElement("div");
+      lg.className = "px-legend";
+      EMOTIONS.forEach(function (em) {
+        if (!used[em.k]) return;
+        var it = document.createElement("span");
+        it.className = "px-lg";
+        var sw = document.createElement("span");
+        sw.className = "px-sw";
+        sw.style.background = em.col;
+        it.appendChild(sw);
+        it.appendChild(document.createTextNode(em.label));
+        lg.appendChild(it);
+      });
+      host.appendChild(lg);
+    } else {
+      var ne = document.createElement("div");
+      ne.className = "hint";
+      ne.textContent = t("px.empty");
+      host.appendChild(ne);
+    }
+    var pl = document.createElement("div");
+    pl.id = "px-day-list";
+    pl.className = "day-list";
+    pl.hidden = true;
+    host.appendChild(pl);
+  }
+
+  // ---- customisation: data writes ----
+  function vocabWrite(fn) {
+    var vo = state.vocab ? JSON.parse(JSON.stringify(state.vocab)) : {};
+    fn(vo);
+    state.vocab = V.mergeVocab(vo, null) || undefined;
+    if (!state.vocab) delete state.vocab;
+    state.sm = Date.now();
+    save();
+    refreshVocab();
+    renderAll();
+    if (viewMode === "insights") renderInsights();
+  }
+  // Patch one definition (creates it); empty fields are dropped.
+  function setDef(list, id, patch) {
+    vocabWrite(function (vo) {
+      var arr = vo[list] = Array.isArray(vo[list]) ? vo[list] : [];
+      var d = null;
+      arr.forEach(function (x) { if (x && x.id === id) d = x; });
+      if (!d) { d = { id: id }; arr.push(d); }
+      Object.keys(patch).forEach(function (k) {
+        if (patch[k] === null || patch[k] === "" || patch[k] === false) delete d[k];
+        else d[k] = patch[k];
+      });
+      d.mtime = Math.max(Date.now(), (d.mtime || 0) + 1);
+    });
+  }
+  function moveDef(list, id, dir) {
+    var ids = list === "emo" ? EMOTIONS.map(function (x) { return x.k; })
+      : HABITS.map(function (x) { return x.f; }).concat(CUST_ACTS.map(function (x) { return x.id; }));
+    var next = V.moveId(ids, id, dir);
+    vocabWrite(function (vo) {
+      var key = list === "emo" ? "eo" : "ao";
+      var old = vo[key] && vo[key].m ? vo[key].m : 0;
+      vo[key] = { ids: next, m: Math.max(Date.now(), old + 1) };
+    });
+  }
+  function labelTaken(list, label, exceptId) {
+    var n = normLabel(label);
+    if (list === "emo") {
+      return EMOTIONS.some(function (x) { return x.k !== exceptId && normLabel(x.label) === n; });
+    }
+    return HABITS.some(function (h) {
+      return h.f !== exceptId && (normLabel(habLbl(h, "yes")) === n || normLabel(habLbl(h, "no")) === n);
+    }) || CUST_ACTS.some(function (a) { return a.id !== exceptId && normLabel(a.label) === n; });
+  }
+  function goalsWrite(fn) {
+    var gs = state.goals ? JSON.parse(JSON.stringify(state.goals)) : [];
+    gs = fn(gs) || gs;
+    var mg = V.mergeGoals(gs, null);
+    if (mg) state.goals = mg; else delete state.goals;
+    state.sm = Date.now();
+    save();
+    if (viewMode === "insights") renderInsights();
+  }
+
+  // ---- customisation dialog: Feelings · Activities · Goals ----
+  var vcDlg = null, vcTab = "emo";
+  function openVocab(tab) {
+    vcTab = tab || "emo";
+    if (vcDlg) { try { vcDlg.close(); } catch (e) {} vcDlg.remove(); }
+    var d = document.createElement("dialog");
+    d.className = "rst-dlg vc-dlg";
+    d.id = "vc-dlg";
+    d.setAttribute("aria-label", t("vc.title"));
+    d.addEventListener("close", function () { d.remove(); if (vcDlg === d) vcDlg = null; });
+    document.body.appendChild(d);
+    vcDlg = d;
+    d.showModal();
+    paintVocab();
+  }
+  function paintVocab() {
+    var d = vcDlg;
+    if (!d) return;
+    var keepScroll = d.querySelector(".vc-body") ? d.querySelector(".vc-body").scrollTop : 0;
+    d.innerHTML = "";
+    var head = document.createElement("div");
+    head.className = "vc-head";
+    var h = document.createElement("h3");
+    h.textContent = t("vc.title");
+    head.appendChild(h);
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "e-act vc-x";
+    x.setAttribute("aria-label", t("vc.close"));
+    x.title = t("vc.close");
+    x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    x.addEventListener("click", function () { d.close(); });
+    head.appendChild(x);
+    d.appendChild(head);
+    var tabs = document.createElement("div");
+    tabs.className = "chips vc-tabs";
+    tabs.setAttribute("role", "tablist");
+    [["emo", "vc.tab.emo"], ["act", "vc.tab.act"], ["goal", "vc.tab.goal"]].forEach(function (p) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (vcTab === p[0] ? " on" : "");
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", vcTab === p[0] ? "true" : "false");
+      b.textContent = t(p[1]);
+      b.addEventListener("click", function () { vcTab = p[0]; paintVocab(); });
+      tabs.appendChild(b);
+    });
+    d.appendChild(tabs);
+    var body = document.createElement("div");
+    body.className = "vc-body";
+    d.appendChild(body);
+    if (vcTab === "goal") paintGoalTab(body);
+    else paintListTab(body, vcTab);
+    body.scrollTop = keepScroll;
+  }
+
+  var EYE_ON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a9.9 9.9 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+  function mkIconIn(val, label) {
+    var ic = document.createElement("input");
+    ic.type = "text";
+    ic.className = "vc-ic";
+    ic.maxLength = 8;
+    ic.value = val || "";
+    ic.placeholder = "🙂";
+    ic.setAttribute("aria-label", label);
+    ic.title = label;
+    return ic;
+  }
+  function mkLabIn(val, ph, label) {
+    var li = document.createElement("input");
+    li.type = "text";
+    li.className = "vc-lab";
+    li.maxLength = V.LAB_MAX;
+    li.value = val || "";
+    li.placeholder = ph || "";
+    li.setAttribute("aria-label", label);
+    return li;
+  }
+  function mkSmallBtn(txt, label, fn, cls) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "vc-btn" + (cls ? " " + cls : "");
+    b.textContent = txt;
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.addEventListener("click", fn);
+    return b;
+  }
+
+  function paintListTab(body, list) {
+    var hint = document.createElement("p");
+    hint.className = "hint vc-hint";
+    hint.textContent = t(list === "emo" ? "vc.hint.emo" : "vc.hint.act");
+    body.appendChild(hint);
+    var rows = list === "emo" ? EMOTIONS.map(function (x) { return { id: x.k, emo: x }; })
+      : HABITS.map(function (x) { return { id: x.f, hab: x }; })
+          .concat(CUST_ACTS.map(function (x) { return { id: x.id, act: x }; }));
+    var ul = document.createElement("ul");
+    ul.className = "vc-list";
+    rows.forEach(function (r, idx) {
+      var li = document.createElement("li");
+      li.className = "vc-row";
+      var hidden = r.emo ? r.emo.hid : (r.hab ? r.hab.hid : r.act.hid);
+      if (hidden) li.classList.add("off");
+      var mv = document.createElement("span");
+      mv.className = "vc-mv";
+      var up = mkSmallBtn("↑", t("vc.up"), function () { moveDef(list, r.id, -1); paintVocab(); });
+      up.disabled = idx === 0;
+      var dn = mkSmallBtn("↓", t("vc.down"), function () { moveDef(list, r.id, 1); paintVocab(); });
+      dn.disabled = idx === rows.length - 1;
+      mv.appendChild(up); mv.appendChild(dn);
+      li.appendChild(mv);
+      var curIc = r.emo ? r.emo.ic : (r.hab ? r.hab.ic : r.act.ic);
+      if (r.emo) {                           // what the tile shows now, in its colour
+        var pv = document.createElement("span");
+        pv.className = "vc-face";
+        pv.style.color = r.emo.col;
+        pv.innerHTML = faceFor(r.id);
+        li.appendChild(pv);
+      }
+      var ic = mkIconIn(curIc, t("vc.icon"));
+      if (r.emo && r.emo.builtin && !r.emo.ic) ic.placeholder = "";
+      ic.addEventListener("change", function () {
+        var v = V.cleanIcon(ic.value);
+        if (!v && r.act) { ic.value = curIc; return; }       // a custom activity keeps an icon
+        setDef(list, r.id, { ic: v || null });
+        paintVocab();
+      });
+      li.appendChild(ic);
+      var labs = document.createElement("span");
+      labs.className = "vc-labs";
+      if (r.emo) {
+        var b0 = null;
+        BUILTIN_EMOS.forEach(function (x) { if (x.k === r.id) b0 = x; });
+        var defLab = b0 ? t(b0.i18n) : "";
+        var li1 = mkLabIn(r.emo.label, defLab, t("vc.name"));
+        li1.addEventListener("change", function () { commitLabel(list, r.id, li1, defLab, "lab"); });
+        labs.appendChild(li1);
+        if (!r.emo.builtin) {
+          var opts = document.createElement("span");
+          opts.className = "vc-opts";
+          V.CUSTOM_COLORS.forEach(function (c) {
+            var sw = document.createElement("button");
+            sw.type = "button";
+            sw.className = "vc-sw" + (c === r.emo.col ? " on" : "");
+            sw.style.background = c;
+            sw.setAttribute("aria-label", t("vc.color") + " " + c);
+            sw.setAttribute("aria-pressed", c === r.emo.col ? "true" : "false");
+            sw.addEventListener("click", function () { setDef(list, r.id, { col: c }); paintVocab(); });
+            opts.appendChild(sw);
+          });
+          var pl = document.createElement("label");
+          pl.className = "vc-pos";
+          var pc = document.createElement("input");
+          pc.type = "checkbox";
+          pc.checked = !!r.emo.pos;
+          pc.addEventListener("change", function () { setDef(list, r.id, { pos: pc.checked }); });
+          pl.appendChild(pc);
+          pl.appendChild(document.createTextNode(" " + t("vc.pos")));
+          opts.appendChild(pl);
+          labs.appendChild(opts);
+        }
+      } else if (r.hab) {
+        var ly = mkLabIn(habLbl(r.hab, "yes"), t(r.hab.yes), t("vc.yes"));
+        ly.addEventListener("change", function () { commitLabel(list, r.id, ly, t(r.hab.yes), "lab"); });
+        var ln = mkLabIn(habLbl(r.hab, "no"), t(r.hab.no), t("vc.no"));
+        ln.classList.add("neg");
+        ln.addEventListener("change", function () { commitLabel(list, r.id, ln, t(r.hab.no), "no"); });
+        labs.appendChild(ly); labs.appendChild(ln);
+      } else {
+        var la = mkLabIn(r.act.label, "", t("vc.name"));
+        la.addEventListener("change", function () { commitLabel(list, r.id, la, "", "lab"); });
+        labs.appendChild(la);
+      }
+      li.appendChild(labs);
+      var hb = mkSmallBtn("", (hidden ? t("vc.show") : t("vc.hide")), function () {
+          setDef(list, r.id, { hid: !hidden });
+          paintVocab();
+        }, "vc-hide");
+      hb.innerHTML = hidden ? EYE_OFF : EYE_ON;
+      hb.setAttribute("aria-pressed", hidden ? "true" : "false");
+      li.appendChild(hb);
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    // add a custom one
+    var add = document.createElement("div");
+    add.className = "vc-add";
+    var al = document.createElement("div");
+    al.className = "col-lab";
+    al.textContent = t(list === "emo" ? "vc.add.emo" : "vc.add.act");
+    add.appendChild(al);
+    var row = document.createElement("div");
+    row.className = "addrow";
+    var nic = mkIconIn("", t("vc.icon"));
+    nic.id = "vc-new-ic-" + list;
+    var nlab = mkLabIn("", t("l2.add.ph"), t("vc.name"));
+    nlab.id = "vc-new-lab-" + list;
+    var ab = document.createElement("button");
+    ab.type = "button";
+    ab.className = "prim";
+    ab.id = "vc-new-add-" + list;
+    ab.textContent = t("l2.add");
+    var doAdd = function () {
+      var label = V.str(nlab.value, V.LAB_MAX);
+      if (!label) { nlab.focus(); return; }
+      if (labelTaken(list, label, null)) { transientNote(t("col.dup")); return; }
+      var id = "c-" + uid();
+      var patch = { lab: label, ic: V.cleanIcon(nic.value) || (list === "emo" ? "🙂" : "⭐") };
+      if (list === "emo") {
+        var nCustom = EMOTIONS.filter(function (x) { return !x.builtin; }).length;
+        patch.col = V.CUSTOM_COLORS[nCustom % V.CUSTOM_COLORS.length];
+      }
+      setDef(list, id, patch);
+      paintVocab();
+      var b2 = vcDlg && vcDlg.querySelector(".vc-body");
+      if (b2) b2.scrollTop = b2.scrollHeight;
+      transientNote(t("vc.added"));
+    };
+    ab.addEventListener("click", doAdd);
+    nlab.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); doAdd(); } });
+    row.appendChild(nic); row.appendChild(nlab); row.appendChild(ab);
+    add.appendChild(row);
+    body.appendChild(add);
+  }
+
+  // A label typed in the dialog: empty or the default text = back to
+  // the translation (so a language switch keeps working).
+  function commitLabel(list, id, input, defText, field) {
+    var v = V.str(input.value, V.LAB_MAX);
+    var patch = {};
+    if (!v || v === defText) {
+      if (!defText) { paintVocab(); return; }               // a custom item needs a name
+      patch[field] = null;
+    } else {
+      if (labelTaken(list, v, id)) { transientNote(t("col.dup")); paintVocab(); return; }
+      patch[field] = v;
+    }
+    setDef(list, id, patch);
+  }
+
+  function paintGoalTab(body) {
+    var hint = document.createElement("p");
+    hint.className = "hint vc-hint";
+    hint.textContent = t("vc.hint.goal");
+    body.appendChild(hint);
+    var goals = V.liveGoals(state.goals);
+    var ul = document.createElement("ul");
+    ul.className = "vc-list";
+    goals.forEach(function (g) {
+      var li = document.createElement("li");
+      li.className = "vc-row";
+      var nm = document.createElement("span");
+      nm.className = "vc-gname";
+      nm.textContent = goalTitle(g);
+      li.appendChild(nm);
+      li.appendChild(mkSmallBtn(t("col.menu.del"), t("gl.del"), function () {
+        goalsWrite(function (gs) {
+          gs.forEach(function (x) { if (x.id === g.id) { x.x = 1; x.mtime = Math.max(Date.now(), (x.mtime || 0) + 1); } });
+        });
+        paintVocab();
+        showToast(t("col.del.done"), t("col.del.undo"), function () {
+          goalsWrite(function (gs) {
+            gs.forEach(function (x) { if (x.id === g.id) { delete x.x; x.mtime = Math.max(Date.now(), (x.mtime || 0) + 1); } });
+          });
+          paintVocab();
+        });
+      }, "danger"));
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+    if (goals.length >= V.GOALS_MAX) return;
+    var add = document.createElement("div");
+    add.className = "vc-add vc-goal-add";
+    var al = document.createElement("div");
+    al.className = "col-lab";
+    al.textContent = t("gl.add");
+    add.appendChild(al);
+    var sel = document.createElement("select");
+    sel.id = "gl-act";
+    sel.setAttribute("aria-label", t("gl.act"));
+    var mkGroup = function (label, items) {
+      if (!items.length) return;
+      var og = document.createElement("optgroup");
+      og.label = label;
+      items.forEach(function (it) {
+        var o = document.createElement("option");
+        o.value = it[0];
+        o.textContent = it[1];
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    };
+    mkGroup(t("grp.own"), CUST_ACTS.filter(function (a) { return !a.hid; })
+      .map(function (a) { return [a.id, actText(a)]; }));
+    mkGroup(t("ins.basics"), HABITS.filter(function (h) { return h.grp === "hab" && !h.hid; })
+      .map(function (h) { return [h.f, habText(h, "yes")]; }));
+    mkGroup(t("grp.rit"), HABITS.filter(function (h) { return h.grp === "rit" && !h.hid; })
+      .map(function (h) { return [h.f, habText(h, "yes")]; }));
+    add.appendChild(sel);
+    var row = document.createElement("div");
+    row.className = "addrow vc-goal-row";
+    var n = document.createElement("input");
+    n.type = "number";
+    n.id = "gl-n";
+    n.min = "1"; n.max = "31"; n.value = "3";
+    n.setAttribute("aria-label", t("gl.times"));
+    var per = document.createElement("select");
+    per.id = "gl-per";
+    per.setAttribute("aria-label", t("gl.period"));
+    [["w", "gl.week"], ["m", "gl.month"]].forEach(function (p) {
+      var o = document.createElement("option");
+      o.value = p[0]; o.textContent = t(p[1]);
+      per.appendChild(o);
+    });
+    var times = document.createElement("span");
+    times.className = "hint";
+    times.textContent = t("gl.timesPer");
+    var ab = document.createElement("button");
+    ab.type = "button";
+    ab.className = "prim";
+    ab.id = "gl-add";
+    ab.textContent = t("l2.add");
+    ab.addEventListener("click", function () {
+      var g = V.normGoal({ id: "g-" + uid(), act: sel.value, n: parseInt(n.value, 10) || 1,
+                           per: per.value, mtime: Date.now() });
+      if (!g) return;
+      goalsWrite(function (gs) { gs.push(g); });
+      paintVocab();
+      transientNote(t("vc.added"));
+    });
+    row.appendChild(n); row.appendChild(times); row.appendChild(per); row.appendChild(ab);
+    add.appendChild(row);
+    body.appendChild(add);
   }
 
   // ---------- PDF export ----------
@@ -3224,7 +4110,7 @@ function mergeMoodStates(A, B) {
           doc.setFontSize(10); doc.setTextColor(20);
           doc.setFont(FONT, "bold");
           need(15);
-          doc.text(t(r.em.i18n), M + 8, y);
+          doc.text(r.em.label, M + 8, y);
           doc.setFont(FONT, "normal");
           doc.setTextColor(115);
           doc.text(r.c + "  ·  " + pct + "%  ·  " +
@@ -3236,7 +4122,7 @@ function mergeMoodStates(A, B) {
       } else line(t("ins.ctx.none"));
 
       // 4. habits + rituals adherence (two grouped sections)
-      var habGrpTitle = { hab: t("ins.habits.title"), rit: t("grp.rit") };
+      var habGrpTitle = { hab: t("ins.habits.title"), rit: t("grp.rit"), own: t("grp.own") };
       ["hab", "rit"].forEach(function (grp) {
         var anyIn = false;
         HABITS.forEach(function (h) {
@@ -3256,12 +4142,33 @@ function mergeMoodStates(A, B) {
           if (!yy && !nn) return;
           if (!anyIn) { section(habGrpTitle[grp]); anyIn = true; }
           var tot = yy + nn;
-          kv(t(h.yes), t("ins.hab.days")
+          kv(habLbl(h, "yes"), t("ins.hab.days")
             .replace("{y}", yy).replace("{n}", tot) +
             "  ·  " + Math.round(yy / tot * 100) + "%");
         });
         if (!anyIn) line(t("ins.ctx.none"));   // #4: same fallback, both groups
       });
+      // wave 30: own activities (days marked over logged days)
+      var ownDays = {};
+      fes.forEach(function (e) { ownDays[dayKey(e.ts)] = 1; });
+      var ownN = Object.keys(ownDays).length, ownAny = false;
+      CUST_ACTS.forEach(function (a) {
+        var yy = ownActDays(fes, a.id);
+        if (!yy || !ownN) return;
+        if (!ownAny) { section(habGrpTitle.own); ownAny = true; }
+        kv(a.label, t("ins.hab.days").replace("{y}", yy).replace("{n}", ownN) +
+          "  ·  " + Math.round(yy / ownN * 100) + "%");
+      });
+      // wave 30: goals
+      var pdfGoals = V.liveGoals(state.goals);
+      if (pdfGoals.length) {
+        section(t("gl.title"));
+        pdfGoals.forEach(function (g) {
+          var gp = V.goalProgress(state.entries, g, Date.now(), 0);
+          kv(goalTitle(g, true),
+            t("gl.prog").replace("{d}", gp.done).replace("{n}", gp.n));
+        });
+      }
       y += 4;
       y += 4;
 
@@ -3314,7 +4221,7 @@ function mergeMoodStates(A, B) {
             var wdName = new Date(2024, 0, 1 + ((r.wd + 6) % 7))
               .toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
                 { weekday: "long" });
-            kv(wdName, t("emo." + r.k) + "  ·  +" + r.d + "pt");
+            kv(wdName, emoLabel(r.k) + "  ·  +" + r.d + "pt");
           });
           y += 4;
         }
@@ -3438,6 +4345,7 @@ function mergeMoodStates(A, B) {
     }
 
     renderRecap(host, es);
+    renderGoals(host);                       // wave 30 (time-based, unfiltered)
 
     // ---- TRENDS: auto-generated observations ----
     // Computed on the filtered set against the range baseline —
@@ -3506,12 +4414,27 @@ function mergeMoodStates(A, B) {
     if (!rb.childNodes.length) rb.textContent = t("ins.ctx.none");
     host.appendChild(rb);
 
+    // ---- own activities (wave 30, filtered) ----
+    if (CUST_ACTS.length) {
+      var d5 = document.createElement("h2");
+      d5.className = "sec-title";
+      d5.textContent = t("grp.own");
+      host.appendChild(d5);
+      var ob = document.createElement("div");
+      if (fes.length) renderHabits(ob, fes, "own");
+      if (!ob.childNodes.length) ob.textContent = t("ins.ctx.none");
+      host.appendChild(ob);
+    }
+
     // ---- calendar (ignores range AND filters) ----
     var d3 = document.createElement("h2");
     d3.className = "sec-title";
     d3.textContent = t("ins.cal.title");
     host.appendChild(d3);
     renderCalendar(host, state.entries);
+
+    // ---- year in pixels (wave 30; ignores range AND filters) ----
+    renderPixels(host);
 
     // ---- breakdowns (filtered) ----
     renderBreakdown(host, fes, "loc", "ins.loc.title");
@@ -3568,7 +4491,7 @@ function mergeMoodStates(A, B) {
   // What the capture form shows, apart from what the user types:
   // a pull that changes none of it leaves the form alone (MO-5).
   function captureSig() {
-    return JSON.stringify([state.cols, state.entries.length > 0, editing, formValues()]);
+    return JSON.stringify([state.cols, state.vocab || null, state.entries.length > 0, editing, formValues()]);
   }
 
   function sliceSet(data, info) {
@@ -3591,6 +4514,11 @@ function mergeMoodStates(A, B) {
     state.cols.loc.forEach(function (v, i) { v.pos = i; });
     state.cols.trig.forEach(function (v, i) { v.pos = i; });
     state.cols.person.forEach(function (v, i) { v.pos = i; });
+    refreshVocab();
+    // wave 30: an open customisation dialog follows, unless the user
+    // is typing in it (their text stays; the next change repaints)
+    if (vcDlg && !(document.activeElement && vcDlg.contains(document.activeElement) &&
+        /^(INPUT|SELECT)$/.test(document.activeElement.tagName))) paintVocab();
 
     renderThread();
     renderRecent();

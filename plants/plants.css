@@ -488,6 +488,31 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .p-ico { width: 44px; height: 44px; }
 }
 
+/* ---------- 8b. Scientific name + identify from a photo (wave 34) ---------- */
+.sci-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.sci-row .fld { flex: 1 1 180px; min-width: 0; }
+.sci-row .fld input { width: 100%; box-sizing: border-box; }
+.sci-row .id-btn { flex: 0 0 auto; }
+.det-sci { font-size: 13px; font-style: italic; color: var(--text-dim); overflow-wrap: anywhere; }
+.id-prev { display: block; max-width: 100%; max-height: 220px; margin: 4px auto 8px; border-radius: 8px; object-fit: contain; }
+.id-stat { font-size: 13px; color: var(--text-dim); margin: 6px 0; line-height: 1.45; min-height: 1em; }
+.id-list { display: flex; flex-direction: column; gap: 6px; }
+.id-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 8px 10px; min-height: 44px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg, transparent); color: var(--text); font: inherit; cursor: pointer;
+}
+.id-row:hover, .id-row:focus-visible { border-color: var(--accent); outline: none; }
+.id-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.id-sci { font-weight: 700; font-style: italic; overflow-wrap: anywhere; }
+.id-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.id-score {
+  flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 35%, transparent) var(--p, 0%), transparent var(--p, 0%));
+  border: 1px solid var(--border); white-space: nowrap;
+}
+.id-attr { font-size: 11px; color: var(--text-dim); margin: 10px 0 0; line-height: 1.4; overflow-wrap: anywhere; }
+
 /* ---------- 9. Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .icon-btn, #toast, #toast.show { transition: none; }

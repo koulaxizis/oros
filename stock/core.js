@@ -1,5 +1,6 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.6.0)
+// orOS Stock — core.js (shared logic, v1.7.0; 1.7 adds the point of
+// sale lists sales / pls / zs, see "Point of sale" below)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -359,6 +360,90 @@
     return { id: x.id, m: x.m, name: name, arch: x.arch === 1 && x.id !== WH_MAIN ? 1 : 0 };
   }
 
+  // ---------- Point of sale (1.7, wave 46) ----------
+  // Three more top-level lists, written only when they have rows (so
+  // data without a sale stays byte-identical, and a 1.6 device drops
+  // them on its own merge without ever marking dirty, like pos/pics):
+  //   sales  one row per receipt, never deleted (void wins, like a
+  //          movement): { id, m, d, at, no, pay, pl?, given?, mv?, w?,
+  //          v?, lines: [{ i, q, p, vat, n }] } — q thousandths, p net
+  //          unit price in cents, vat %, n the name as printed. The
+  //          stock comes off through its own "out" movement (id mv,
+  //          src "pos:<sale id>"), so quantities keep their one rule.
+  //   pls    price lists (LWW + tombs): { id, m, name, pct, p: { itemId:
+  //          net cents } } — p overrides; else the sale price ± pct %.
+  //          Retail (the products' own sale price) is built in.
+  //   zs     closed days (Z reports, LWW): { id "z"+YYYYMMDD, m, d, at,
+  //          no, n, g, net, vat, cash, card, other } — the totals as
+  //          they were when the day was closed.
+  var PAYS = ["cash", "card", "other"];
+  var SALE_NO_LEN = 24, MAX_SALES = 50000, MAX_PLS = 50, MAX_ZS = 4000;
+  var Z_RE = /^z\d{8}$/;
+  function normSale(x) {
+    if (!base(x) || !isYmd(x.d) || !Array.isArray(x.lines)) return null;
+    var lines = [];
+    for (var i = 0; i < x.lines.length && lines.length < MAX_LINES; i++) {
+      var l = x.lines[i];
+      if (!l || typeof l !== "object" || typeof l.i !== "string" || !ID_RE.test(l.i)) continue;
+      var q = clampInt(l.q, 1, Q_MAX), p = clampInt(l.p, 0, C_MAX);
+      if (q === null || p === null) continue;
+      var vat = clampInt(l.vat, 0, 100);
+      lines.push({ i: l.i, q: q, p: p, vat: vat === null ? 0 : vat, n: cleanText(l.n, NAME_LEN, false) });
+    }
+    if (!lines.length) return null;
+    var out = {
+      id: x.id, m: x.m, d: x.d, at: clampInt(x.at, 0, 4102444800000) || 0,
+      no: cleanText(x.no, SALE_NO_LEN, false), pay: PAYS.indexOf(x.pay) >= 0 ? x.pay : "cash", lines: lines
+    };
+    if (ref(x.pl)) out.pl = x.pl;
+    var given = clampInt(x.given, 1, C_MAX);
+    if (given !== null) out.given = given;
+    if (ref(x.mv)) out.mv = x.mv;
+    var w = whRef(x.w);
+    if (w) out.w = w;
+    if (x.v === 1) out.v = 1;
+    return out;
+  }
+  function normPl(x) {
+    if (!base(x)) return null;
+    var name = cleanText(x.name, NAME_LEN, false);
+    if (!name) return null;
+    var p = {}, src = x.p && typeof x.p === "object" && !Array.isArray(x.p) ? x.p : {};
+    Object.keys(src).filter(function (k) { return ID_RE.test(k); }).sort(cmpStr).slice(0, MAX_ITEMS).forEach(function (k) {
+      var c = clampInt(src[k], 0, C_MAX);
+      if (c !== null) p[k] = c;
+    });
+    var pct = clampInt(x.pct, -90, 500);
+    return { id: x.id, m: x.m, name: name, pct: pct === null ? 0 : pct, p: p };
+  }
+  function normZ(x) {
+    if (!base(x) || !Z_RE.test(x.id) || !isYmd(x.d) || x.id !== "z" + x.d.replace(/-/g, "")) return null;
+    function c(v) { var n = clampInt(v, -C_MAX, C_MAX); return n === null ? 0 : n; }
+    return {
+      id: x.id, m: x.m, d: x.d, at: clampInt(x.at, 0, 4102444800000) || 0, no: clampInt(x.no, 1, 1000000) || 1,
+      n: clampInt(x.n, 0, MAX_SALES) || 0, g: c(x.g), net: c(x.net), vat: c(x.vat),
+      cash: c(x.cash), card: c(x.card), other: c(x.other)
+    };
+  }
+  // union by id; a void is final (the voided copy wins whatever its m)
+  function mergeSales(la, lb) {
+    var best = dict();
+    [la, lb].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (raw) {
+        var x = normSale(raw);
+        if (!x) return;
+        var cur = best[x.id];
+        if (!cur) { best[x.id] = x; return; }
+        if ((x.v === 1) !== (cur.v === 1)) { if (x.v === 1) best[x.id] = x; return; }
+        lww(best, x);
+      });
+    });
+    var ids = Object.keys(best).sort(cmpStr);
+    if (ids.length > MAX_SALES) ids = ids.slice(ids.length - MAX_SALES);   // the newest stay
+    return ids.map(function (id) { return best[id]; });
+  }
+
   var LISTS = { items: normItem, cats: normCat, units: normUnit, sups: normSup, pos: normPo, pics: normPic, whs: normWh };
   var LIST_KEYS = ["items", "cats", "units", "sups", "pos", "pics", "whs"];
 
@@ -456,6 +541,13 @@
     LIST_KEYS.forEach(function (k) { out[k] = pick(k, LISTS[k], k === "items" ? MAX_ITEMS : MAX_LIST); });
     out.moves = moves;
     if (close) out.close = close;
+    // point of sale (1.7): only when there is something
+    var sales = mergeSales(a.sales, b.sales);
+    if (sales.length) out.sales = sales;
+    var pls = pick("pls", normPl, MAX_PLS);
+    if (pls.length) out.pls = pls;
+    var zs = pick("zs", normZ, MAX_ZS);
+    if (zs.length) out.zs = zs;
     var sa = normSettings(a.settings), sb = normSettings(b.settings);
     out.settings = sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa;
     var sortedTombs = {};
@@ -1402,7 +1494,8 @@
     WH_MAIN: WH_MAIN, normWh: normWh, whName: whName, whQty: whQty, qtyIn: qtyIn,
     LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
     OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
-    ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath
+    ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath,
+    PAYS: PAYS, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;

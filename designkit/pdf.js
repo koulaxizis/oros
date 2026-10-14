@@ -131,11 +131,21 @@
   // opts: { pages: [pageId] (default all), spreads, bleed, marks,
   //         title, lang }
   // deps: { jsPDF, layout (computeLayout result, optional),
-  //         images: { itemId: { data, fmt, rect, alias } } }
+  //         images: { itemId: { data, fmt, rect, alias } },
+  //         clip: { itemId: { x, y, w, h } } (page coordinates: the
+  //           item is cut to that box — N-up cards, optional),
+  //         pdf: a jsPDF document made by an earlier build() to add
+  //           these pages to (optional; long data merges in parts) }
   // Returns the jsPDF document (caller: .output("blob")).
   function build(doc, opts, deps) {
     opts = opts || {}; deps = deps || {};
-    var JsPDF = deps.jsPDF;
+    var JsPDF = deps.jsPDF, clip = deps.clip || null;
+    function draw(pdf, it, ox, oy, lines, gstates) {
+      var c = clip && clip[it.id];
+      if (c) { pdf.saveGraphicsState(); pdf.rect(ox + c.x, oy + c.y, c.w, c.h, null); pdf.clip(); pdf.discardPath(); }
+      drawItem(pdf, doc, it, ox, oy, lines, deps.images || {}, gstates);
+      if (c) pdf.restoreGraphicsState();
+    }
     var L = deps.layout || R.computeLayout(doc);
     var s = doc.setup;
     var all = M.pagesInOrder(doc), want = {};
@@ -155,19 +165,27 @@
     groups.forEach(function (g) { used = used.concat(g); });
     var fonts = fontsUsed(doc, L, used);
 
-    var pdf = null, gstates = {};
+    var pdf = deps.pdf || null, gstates = pdf ? (pdf.orosGstates = pdf.orosGstates || {}) : {};
+    function addFonts() {
+      var have = pdf.orosFonts = pdf.orosFonts || {};
+      fonts.forEach(function (k) {
+        if (have[k]) return;
+        var b64 = T.fontBase64(k);
+        if (!b64) return;
+        have[k] = 1;
+        var file = T.fontFile(k).replace(".ttf", "-" + k + ".ttf");
+        pdf.addFileToVFS(file, b64);
+        pdf.addFont(file, k, "normal", "Identity-H");
+      });
+    }
+    if (pdf) addFonts();
     groups.forEach(function (g) {
       var W = s.w * g.length + 2 * (b + slug), H = s.h + 2 * (b + slug);
       var orient = W > H ? "l" : "p";
       if (!pdf) {
         pdf = new JsPDF({ unit: "pt", format: [W, H], orientation: orient, compress: true });
-        fonts.forEach(function (k) {
-          var b64 = T.fontBase64(k);
-          if (!b64) return;
-          var file = T.fontFile(k).replace(".ttf", "-" + k + ".ttf");
-          pdf.addFileToVFS(file, b64);
-          pdf.addFont(file, k, "normal", "Identity-H");
-        });
+        pdf.orosGstates = gstates;
+        addFonts();
         pdf.setProperties({ title: opts.title || doc.name, creator: "orOS Layout" });
       } else pdf.addPage([W, H], orient);
       var info = pdf.internal.getCurrentPageInfo().pageContext;
@@ -185,11 +203,11 @@
         if (page.ms) {
           var mf = L.master[page.id] || {};
           M.masterItems(doc, page, side).forEach(function (it) {
-            drawItem(pdf, doc, it, ox, oy, mf[it.id] && mf[it.id].lines, deps.images || {}, gstates);
+            draw(pdf, it, ox, oy, mf[it.id] && mf[it.id].lines, gstates);
           });
         }
         M.itemsOn(doc, page.id).forEach(function (it) {
-          drawItem(pdf, doc, it, ox, oy, L.frames[it.id] && L.frames[it.id].lines, deps.images || {}, gstates);
+          draw(pdf, it, ox, oy, L.frames[it.id] && L.frames[it.id].lines, gstates);
         });
         pdf.restoreGraphicsState();
       });

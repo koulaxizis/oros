@@ -27,14 +27,14 @@ const N = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
   ["cmpStr", "runsOf", "rowOf", "colOf", "cluesOf", "sameRuns", "solveLine", "lineSolve",
    "solvedByLines", "picture", "fillShare", "makePuzzle", "hintCell", "isSolved",
-   "normCell", "normRow", "joinCell", "joinRows", "mergeNonogram"].forEach((name) => {
+   "normDay", "dayKeyOk", "dayBetter", "normCell", "normRow", "joinCell", "joinRows", "mergeNonogram"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") +
-    "\nreturn { SIZES, KEYS, GEN_MS, runsOf, cluesOf, solveLine, lineSolve, solvedByLines, picture," +
-    " makePuzzle, hintCell, isSolved, mergeNonogram };")();
+  return new Function("window", parts.join("\n") +
+    "\nreturn { SIZES, KEYS, GEN_MS, DAILY_N, DAILY_TRIES, DK, runsOf, cluesOf, solveLine, lineSolve, solvedByLines, picture," +
+    " makePuzzle, hintCell, isSolved, mergeNonogram };")({ orosDaily: require("../gamekit/daily.js") });
 })();
 
 const J = JSON.stringify;
@@ -171,4 +171,44 @@ test("nonogram: records merge is a join and a reset drops older rows", () => {
     assert.equal(J(M({ rows: { d: { b: 0, s: { n5: bad } } } }, null).rows), "{}", J(bad));
   }
   assert.equal(J(M({ rows: { d: { b: 0, s: { n7: { t: 1, ts: 1, n: 1, c: 1 } } } } }, null).rows), "{}");
+});
+
+// ---------- Daily puzzle (Wave 49) ----------
+test("nonogram daily: the same date makes the same fair 10×10 picture", () => {
+  const D = N.DK;
+  assert.ok(D, "gamekit loaded");
+  for (const day of [0, 286, 287, 999]) {
+    const t0 = clock();
+    const a = N.makePuzzle(N.DAILY_N, D.random(D.seedOf("nonogram", day)), N.DAILY_TRIES, D.counter());
+    assert.ok(clock() - t0 < 3000, "time");
+    const b = N.makePuzzle(N.DAILY_N, D.random(D.seedOf("nonogram", day)), N.DAILY_TRIES, D.counter());
+    assert.equal(J(a), J(b));
+    assert.equal(a.pic.length, 100);
+    assert.ok(N.solvedByLines(a.pic, 10), "fair");
+    const c = N.makePuzzle(N.DAILY_N, D.random(D.seedOf("nonogram", day + 1)), N.DAILY_TRIES, D.counter());
+    assert.notEqual(J(a.pic), J(c.pic));
+  }
+});
+
+test("nonogram daily: day results merge as a join; reset and bad entries drop", () => {
+  const M = N.mergeNonogram;
+  const day = () => ({ b: rnd(3) * 100, t: 1 + rnd(3) * 1000, h: rnd(3), m: rnd(4) });
+  const st = () => {
+    const days = {};
+    for (let i = 0; i < rnd(4); i++) days[String(rnd(5))] = day();
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows: {}, days };
+  };
+  for (let i = 0; i < 4000; i++) {
+    const a = st(), b = st(), c = st();
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+  }
+  const x = { days: { 3: { b: 0, t: 900, h: 0, m: 0 } } };
+  assert.equal(J(M(x, { days: { 3: { b: 0, t: 100, h: 1, m: 1 } } }).days[3].t), "900");   // no hint first
+  assert.equal(J(M(x, { days: { 3: { b: 5, t: 9999, h: 4, m: 1 } } }).days[3].b), "5");    // newer epoch
+  assert.equal(J(M(x, { br: 1, rows: {} }).days), "{}");
+  assert.equal(J(M({ days: { 3: { b: 0, t: 1, h: 0, m: 40000 } } }, null).days), "{}");
+  assert.equal(J(M(null, null)), J({ ver: 1, br: 0, rows: {}, days: {} }));
 });

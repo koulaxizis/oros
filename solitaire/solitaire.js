@@ -1,10 +1,13 @@
 // ============================================================
 // orOS Solitaire — App logic (v1.0.0)
-// Three one-player card games on one table, drawn by cardkit/:
+// Four one-player card games on one table, drawn by cardkit/:
 //   - Klondike: draw 1 or 3, classic (Windows) score or no score
 //   - FreeCell: Microsoft numbered deals 1–32000 (same deal everywhere),
 //     multi-card moves as far as free cells and empty columns allow
 //   - Spider: 1, 2 or 4 suits
+//   - Pyramid (Wave 49): 28 cards in a pyramid, the rest in the stock;
+//     take away two open cards that add up to 13 (J 11, Q 12, K 13 on
+//     its own); three passes through the stock; cleared pyramid = won
 // Play: drag (mouse, touch, pen) or tap a card: it goes to the best
 // place (foundation first). A double tap never moves twice. Unlimited
 // undo, hint, auto-complete once every card is open (Klondike,
@@ -44,9 +47,23 @@
   var STREAK_KEY  = "oros-solitaire-streak";
   var DATA_VER    = 1;
 
-  var VARIANTS = ["k", "f", "s"];
-  var KEYS = ["k1c", "k1n", "k3c", "k3n", "f", "s1", "s2", "s4"];   // variant + setting
-  var COLS = { k: 7, f: 8, s: 10 };
+  var VARIANTS = ["k", "f", "s", "p"];
+  var KEYS = ["k1c", "k1n", "k3c", "k3n", "f", "s1", "s2", "s4", "p"];   // variant + setting
+  var COLS = { k: 7, f: 8, s: 10, p: 28 };   // Pyramid: one "column" per place in the pyramid
+  var PYR_PASSES = 3;                      // Pyramid: passes through the stock
+  // Pyramid places: row r (0 = top, 6 = base), place k in the row;
+  // index r (r + 1) / 2 + k. A place is covered by the two below it.
+  var PYR_ROW = [], PYR_POS = [], PYR_KIDS = [];
+  (function () {
+    for (var r = 0; r < 7; r++) {
+      for (var k = 0; k <= r; k++) {
+        PYR_ROW.push(r);
+        PYR_POS.push(k);
+        var below = (r + 1) * (r + 2) / 2 + k;
+        PYR_KIDS.push(r < 6 ? [below, below + 1] : []);
+      }
+    }
+  })();
   var FC_MAX_DEAL = 32000;
   var MAX_MS = 360000000;                  // 100 h
   var MAX_MOVES = 100000;
@@ -68,7 +85,15 @@
 
   var STRINGS = {
     en: {
-      "v.k": "Klondike", "v.f": "FreeCell", "v.s": "Spider",
+      "v.k": "Klondike", "v.f": "FreeCell", "v.s": "Spider", "v.p": "Pyramid",
+      "pile.pyr": "Pyramid row {r}, card {k}",
+      "pile.discard": "Removed cards",
+      "turn.passes": "Pairs of 13 · passes left: {n}",
+      "live.pair": "{a} and {b} removed",
+      "live.king": "{c} removed",
+      "live.covered": "That card is covered: free the two cards below it first",
+      "toast.passes": "No passes left through the stock",
+      "btn.games": "All games",
       "opt.draw1": "Draw 1", "opt.draw3": "Draw 3",
       "opt.scoreC": "Classic score", "opt.scoreN": "No score",
       "opt.suits1": "1 suit", "opt.suits2": "2 suits", "opt.suits4": "4 suits",
@@ -151,7 +176,15 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
-      "v.k": "Κλοντάικ", "v.f": "FreeCell", "v.s": "Αράχνη",
+      "v.k": "Κλοντάικ", "v.f": "FreeCell", "v.s": "Αράχνη", "v.p": "Πυραμίδα",
+      "pile.pyr": "Πυραμίδα, σειρά {r}, φύλλο {k}",
+      "pile.discard": "Φύλλα που βγήκαν",
+      "turn.passes": "Ζευγάρια του 13 · περάσματα που μένουν: {n}",
+      "live.pair": "Βγήκαν {a} και {b}",
+      "live.king": "Βγήκε {c}",
+      "live.covered": "Το φύλλο είναι σκεπασμένο: ελευθέρωσε πρώτα τα δύο φύλλα από κάτω του",
+      "toast.passes": "Δεν μένουν άλλα περάσματα της τράπουλας",
+      "btn.games": "Όλα τα παιχνίδια",
       "opt.draw1": "Ανά 1", "opt.draw3": "Ανά 3",
       "opt.scoreC": "Κλασικό σκορ", "opt.scoreN": "Χωρίς σκορ",
       "opt.suits1": "1 χρώμα", "opt.suits2": "2 χρώματα", "opt.suits4": "4 χρώματα",
@@ -345,6 +378,36 @@
     return g;
   }
 
+  // Pyramid: the first 28 cards fill the pyramid (all face up), the
+  // rest is the stock; fd[0] holds the removed cards.
+  function dealPyramid(deck) {
+    var g = blank("p", "", 0);
+    for (var i = 0; i < 28; i++) { g.tab.push([deck[i]]); g.down.push(0); }
+    g.st = deck.slice(28);
+    g.fd = [[]];
+    return g;
+  }
+  // A pyramid place with a card and nothing on it.
+  function pyrOpen(g, i) {
+    if (!g.tab[i] || !g.tab[i].length) return false;
+    var kids = PYR_KIDS[i];
+    return !kids.length || (!g.tab[kids[0]].length && !g.tab[kids[1]].length);
+  }
+  // The open card of a Pyramid ref ("tN" or "w0"), or -1.
+  function pyrCard(g, ref) {
+    if (ref === "w0") return g.wa.length ? g.wa[g.wa.length - 1] : -1;
+    if (ref.charAt(0) !== "t") return -1;
+    var i = +ref.slice(1);
+    return pyrOpen(g, i) ? g.tab[i][0] : -1;
+  }
+  // Every open card: [ref, card].
+  function pyrOpenCards(g) {
+    var out = [];
+    for (var i = 0; i < 28; i++) if (pyrOpen(g, i)) out.push(["t" + i, g.tab[i][0]]);
+    if (g.wa.length) out.push(["w0", g.wa[g.wa.length - 1]]);
+    return out;
+  }
+
   function pileOf(g, ref) {
     var k = ref.charAt(0), n = +ref.slice(1);
     if (k === "t") return g.tab[n] || null;
@@ -372,6 +435,7 @@
   function runFrom(g, ref, i) {
     var p = pileOf(g, ref), k = ref.charAt(0);
     if (!p || !isInt(i) || i < 0 || i >= p.length) return null;
+    if (g.v === "p") return i === p.length - 1 && pyrCard(g, ref) >= 0 ? [p[i]] : null;
     if (k === "t") {
       if (i < g.down[+ref.slice(1)]) return null;
       for (var j = i + 1; j < p.length; j++) if (!linked(g.v, p[j - 1], p[j])) return null;
@@ -394,6 +458,12 @@
   // "" when the cards may go onto pile dst; else why not: "rule" | "cells".
   function canPlace(g, src, cards, dst) {
     if (!cards || !cards.length || src === dst) return "rule";
+    if (g.v === "p") {
+      if (cards.length !== 1) return "rule";
+      if (dst === "f0") return CK.rank(cards[0]) === 13 ? "" : "rule";
+      var other = pyrCard(g, dst);
+      return other >= 0 && CK.rank(other) + CK.rank(cards[0]) === 13 ? "" : "rule";
+    }
     var k = dst.charAt(0), p = pileOf(g, dst), c0 = cards[0];
     if (!p) return "rule";
     if (k === "t") {
@@ -439,6 +509,13 @@
   // Classic Klondike score: waste → column +5, to a foundation +10,
   // foundation → column −15, a card turned +5. Spider: −1 a move.
   function applyMove(g, src, i, dst) {
+    if (g.v === "p") {
+      var m = cloneG(g), card = pileOf(m, src).splice(i)[0];
+      m.fd[0].push(card);
+      if (dst !== "f0") m.fd[0].push(pileOf(m, dst).pop());
+      m.mv++;
+      return m;
+    }
     var n = cloneG(g), cards = pileOf(n, src).splice(i), sk = src.charAt(0), dk = dst.charAt(0);
     var to = pileOf(n, dst);
     to.push.apply(to, cards);
@@ -459,6 +536,14 @@
   // Klondike stock: draw 1 or 3 onto the waste; an empty stock takes the
   // waste back (classic score −100 when drawing 1, −20 when drawing 3).
   function drawStock(g) {
+    if (g.v === "p") {
+      var m = cloneG(g);
+      if (m.st.length) m.wa.push(m.st.pop());
+      else if (m.wa.length && m.ps < PYR_PASSES - 1) { m.st = m.wa.reverse(); m.wa = []; m.ps++; }
+      else return null;
+      m.mv++;
+      return m;
+    }
     var n = cloneG(g), draw = +g.o.charAt(0);
     if (n.st.length) {
       for (var k = 0; k < draw && n.st.length; k++) n.wa.push(n.st.pop());
@@ -490,6 +575,7 @@
   }
 
   function isWon(g) {
+    if (g.v === "p") return g.tab.every(function (p) { return !p.length; });
     if (g.v === "s") return g.fd.length === 8;
     var n = 0;
     g.fd.forEach(function (p) { n += p.length; });
@@ -500,7 +586,7 @@
   // in rank toward its top: the lowest card left is then always free and
   // fits its foundation (Klondike also needs stock and waste empty).
   function canAuto(g) {
-    if (g.v === "s" || isWon(g)) return false;
+    if (g.v === "s" || g.v === "p" || isWon(g)) return false;
     if (g.st.length || g.wa.length) return false;
     for (var c = 0; c < g.tab.length; c++) {
       if (g.down[c]) return false;
@@ -512,7 +598,7 @@
 
   // The foundation a card can go to, or -1.
   function foundFor(g, card) {
-    if (g.v === "s") return -1;
+    if (g.v === "s" || g.v === "p") return -1;
     var empty = -1;
     for (var f = 0; f < 4; f++) {
       var p = g.fd[f];
@@ -544,6 +630,16 @@
   function bestTarget(g, src, i) {
     var cards = runFrom(g, src, i);
     if (!cards) return { dst: "", why: "stuck" };
+    if (g.v === "p") {
+      // a King leaves alone; else the first open partner (pyramid places
+      // from the top, then the waste)
+      if (CK.rank(cards[0]) === 13) return { dst: "f0", why: "" };
+      var open = pyrOpenCards(g);
+      for (var q = 0; q < open.length; q++) {
+        if (open[q][0] !== src && !canPlace(g, src, cards, open[q][0])) return { dst: open[q][0], why: "" };
+      }
+      return { dst: "", why: "stuck" };
+    }
     var sk = src.charAt(0), why = "stuck", k, c;
     if (cards.length === 1 && sk !== "f") {
       var f = foundFor(g, cards[0]);
@@ -579,6 +675,16 @@
   // foundation are left out: they are never a hint).
   function allMoves(g) {
     var srcs = [], dsts = [], out = [];
+    if (g.v === "p") {
+      var open = pyrOpenCards(g);
+      open.forEach(function (a) {
+        if (CK.rank(a[1]) === 13) { out.push({ src: a[0], i: pileOf(g, a[0]).length - 1, dst: "f0" }); return; }
+        open.forEach(function (b) {
+          if (a[0] !== b[0] && CK.rank(a[1]) + CK.rank(b[1]) === 13) out.push({ src: a[0], i: pileOf(g, a[0]).length - 1, dst: b[0] });
+        });
+      });
+      return out;
+    }
     g.tab.forEach(function (p, c) { for (var i = g.down[c]; i < p.length; i++) srcs.push(["t" + c, i]); });
     if (g.wa.length) srcs.push(["w0", g.wa.length - 1]);
     g.fc.forEach(function (p, c) { if (p.length) srcs.push(["c" + c, 0]); });
@@ -598,6 +704,11 @@
   // How useful a move is for a hint (0 = pointless: it only shuffles a
   // card between equal places).
   function moveValue(g, m) {
+    if (g.v === "p") {
+      // clear the pyramid first, the deepest places first
+      var deep = function (ref) { return ref.charAt(0) === "t" ? 10 + PYR_ROW[+ref.slice(1)] : 0; };
+      return 50 + deep(m.src) + deep(m.dst) + (m.src.charAt(0) === "t" ? 1 : 0);
+    }
     var sk = m.src.charAt(0), dk = m.dst.charAt(0), p = pileOf(g, m.src), card = p[m.i];
     var col = sk === "t" ? +m.src.slice(1) : -1;
     var reveals = sk === "t" && m.i > 0 && m.i === g.down[col];
@@ -629,6 +740,7 @@
     });
     if (best) return best;
     if (g.v === "k" && (g.st.length || g.wa.length)) return { src: "s0", i: -1, dst: "" };
+    if (g.v === "p" && (g.st.length || (g.wa.length && g.ps < PYR_PASSES - 1))) return { src: "s0", i: -1, dst: "" };
     if (g.v === "s" && !dealWhy(g)) return { src: "s0", i: -1, dst: "" };
     return null;
   }
@@ -653,6 +765,7 @@
   function validGame(g) {
     if (!g || typeof g !== "object" || VARIANTS.indexOf(g.v) < 0 || typeof g.o !== "string") return false;
     var v = g.v, c, j;
+    if (v === "p") return validPyramid(g);
     if (!(v === "k" ? /^[13][cn]$/.test(g.o) : (v === "f" ? g.o === "" : /^[124]$/.test(g.o)))) return false;
     if (v === "f" ? !(isInt(g.deal) && g.deal >= 1 && g.deal <= FC_MAX_DEAL) : g.deal !== 0) return false;
     if (!isInt(g.mv) || g.mv < 0 || g.mv > MAX_MOVES || !isInt(g.sc) || g.sc < 0 || g.sc > MAX_SCORE ||
@@ -684,6 +797,36 @@
     all.sort(numCmp);
     want.sort(numCmp);
     for (c = 0; c < all.length; c++) if (all[c] !== want[c]) return false;
+    return true;
+  }
+
+  // A stored Pyramid position: 28 places of 0 or 1 card, a place only
+  // empty when the two below it are, removed cards in pairs of 13 or a
+  // King, and exactly the 52 cards.
+  function validPyramid(g) {
+    if (g.o !== "" || g.deal !== 0 || !isInt(g.mv) || g.mv < 0 || g.mv > MAX_MOVES || g.sc !== 0 ||
+        !isInt(g.ps) || g.ps < 0 || g.ps >= PYR_PASSES) return false;
+    if (!Array.isArray(g.tab) || g.tab.length !== 28 || !Array.isArray(g.down) || g.down.length !== 28) return false;
+    if (!Array.isArray(g.fc) || g.fc.length || !Array.isArray(g.fd) || g.fd.length !== 1 || !intCards(g.fd[0]) ||
+        !intCards(g.st) || !intCards(g.wa)) return false;
+    var all = g.st.concat(g.wa, g.fd[0]), i;
+    for (i = 0; i < 28; i++) {
+      var p = g.tab[i];
+      if (!intCards(p) || p.length > 1 || g.down[i] !== 0) return false;
+      if (!p.length && PYR_KIDS[i].length && (g.tab[PYR_KIDS[i][0]].length || g.tab[PYR_KIDS[i][1]].length)) return false;
+      all = all.concat(p);
+    }
+    var rem = g.fd[0];
+    for (i = 0; i < rem.length; i++) {
+      if (CK.rank(rem[i]) === 13) continue;
+      if (i + 1 >= rem.length || CK.rank(rem[i]) + CK.rank(rem[i + 1]) !== 13) return false;
+      i++;
+    }
+    var want = CK.newDeck();
+    if (all.length !== 52) return false;
+    all.sort(numCmp);
+    want.sort(numCmp);
+    for (i = 0; i < 52; i++) if (all[i] !== want[i]) return false;
     return true;
   }
 
@@ -957,6 +1100,7 @@
 
   function freshGame(v, dealNo) {
     if (v === "k") return dealKlondike(CK.shuffle(CK.newDeck()), prefs.draw, prefs.score === "c");
+    if (v === "p") return dealPyramid(CK.shuffle(CK.newDeck()));
     if (v === "f") return dealFreeCell(dealNo || CK.randInt(FC_MAX_DEAL) + 1);
     return dealSpider(CK.shuffle(spiderDeck(prefs.suits)), prefs.suits);
   }
@@ -1036,6 +1180,12 @@
 
   function moveCards(src, i, dst) {
     var card = pileOf(game, src)[i], runs = game.fd.length;
+    if (game.v === "p") {
+      var other = dst === "f0" ? -1 : pyrCard(game, dst);
+      commit(applyMove(game, src, i, dst), other < 0 ? t("live.king", { c: CK.cardName(card, LANG) })
+        : t("live.pair", { a: CK.cardName(card, LANG), b: CK.cardName(other, LANG) }));
+      return;
+    }
     var next = applyMove(game, src, i, dst);
     var msg = t("live.move", { c: CK.cardName(card, LANG), p: pileName(dst) });
     if (next.v === "s" && next.fd.length > runs) msg += ". " + t("live.run", { s: CK.suitName(CK.suit(next.fd[next.fd.length - 1][0]), LANG) });
@@ -1043,9 +1193,9 @@
   }
 
   function stockAction() {
-    if (game.v === "k") {
+    if (game.v === "k" || game.v === "p") {
       var n = drawStock(game);
-      if (!n) { showToast(t("toast.stockEmpty")); return; }
+      if (!n) { showToast(t(game.v === "p" && game.wa.length ? "toast.passes" : "toast.stockEmpty")); return; }
       commit(n, n.wa.length ? t("live.draw", { c: CK.cardName(n.wa[n.wa.length - 1], LANG) }) : t("live.recycle"));
     } else if (game.v === "s") {
       var why = dealWhy(game);
@@ -1141,6 +1291,7 @@
 
   function modeName(key) {
     var v = key.charAt(0), parts = [t("v." + v)];
+    if (v === "p") return parts.join(" · ");
     if (v === "k") {
       parts.push(t("opt.draw" + key.charAt(1)));
       parts.push(t(key.charAt(2) === "c" ? "opt.scoreC" : "opt.scoreN"));
@@ -1159,6 +1310,7 @@
     var msg;
     if (won) msg = t("turn.won");
     else if (game.v === "f") msg = t("turn.deal", { n: game.deal });
+    else if (game.v === "p") msg = t("turn.passes", { n: PYR_PASSES - 1 - game.ps });
     else msg = modeName(keyOf(game)).split(" · ").slice(1).join(" · ");
     $("turn").textContent = msg;
     $("turn").className = won ? "done" : "";
@@ -1167,9 +1319,34 @@
   var geo = null;           // last layout: { cw, ch, piles: { ref: { x, y, w, h } } }
   var cardEls = {};         // ref → rendered card elements by index
 
+  // Pyramid: stock, waste and the removed cards on top; the pyramid
+  // under them, each row half a card lower than the one above.
+  function pyramidLayout(W, H) {
+    var pad = W < 480 ? 6 : 12, gap = Math.max(3, Math.min(10, Math.round(W * 0.012)));
+    var cw = Math.floor((W - 2 * pad - 6 * gap) / 7);
+    cw = Math.max(26, Math.min(cw, 96, Math.floor((H - 2 * pad - 12) / (1.4 * 4.6))));
+    var ch = Math.round(cw * 1.4), step = Math.round(ch * 0.5);
+    var mid = W / 2, topY = pad, pyrY = pad + ch + Math.max(10, gap * 2);
+    var out = { cw: cw, ch: ch, topY: topY, tabY: pyrY, piles: {}, cols: [], bottom: H };
+    var X = function (i) { return Math.round(mid - (7 * cw + 6 * gap) / 2) + i * (cw + gap); };
+    out.X = X;
+    out.piles.s0 = { x: X(0), y: topY, w: cw, h: ch };
+    out.piles.w0 = { x: X(1), y: topY, w: cw, h: ch };
+    out.piles.f0 = { x: X(6), y: topY, w: cw, h: ch };
+    for (var i = 0; i < 28; i++) {
+      var r = PYR_ROW[i], k = PYR_POS[i];
+      var x = Math.round(mid - ((r + 1) * cw + r * gap) / 2 + k * (cw + gap)), y = pyrY + r * step;
+      out.piles["t" + i] = { x: x, y: y, w: cw, h: ch };
+      out.cols.push([y]);
+    }
+    out.bottom = Math.max(H, pyrY + 6 * step + ch + pad);
+    return out;
+  }
+
   function computeLayout() {
     var wrap = $("board-wrap"), W = wrap.clientWidth, H = wrap.clientHeight, cols = COLS[game.v];
     if (W <= 0 || H <= 0) return null;
+    if (game.v === "p") return pyramidLayout(W, H);
     var pad = W < 480 ? 4 : 10, gap = Math.max(2, Math.min(12, Math.round(W * (cols > 8 && W < 480 ? 0.006 : 0.012))));
     var cw = Math.floor((W - 2 * pad - gap * (cols - 1)) / cols);
     cw = Math.max(24, Math.min(cw, 104, Math.floor(H / 4.4)));
@@ -1211,6 +1388,11 @@
 
   function pileName(ref) {
     var k = ref.charAt(0);
+    if (k === "t" && game && game.v === "p") {
+      var i = +ref.slice(1);
+      return t("pile.pyr", { r: PYR_ROW[i] + 1, k: PYR_POS[i] + 1 });
+    }
+    if (k === "f" && game && game.v === "p") return t("pile.discard");
     if (k === "t") return t("pile.t", { n: +ref.slice(1) + 1 });
     if (k === "f") return t(game && game.v === "s" ? "pile.done" : "pile.f");
     return t("pile." + k);
@@ -1285,14 +1467,15 @@
         sn.appendChild(badge);
         focusStop(sn, "s0", g.v === "s" ? t("pile.stockSpider", { n: g.st.length / 10 }) : t("pile.stock", { n: g.st.length }));
       } else {
-        sn = add(slotEl("s0", sr, "", g.v === "k" && g.wa.length ? "recycle" : ""));
-        focusStop(sn, "s0", g.v === "k" && g.wa.length ? t("pile.recycle") : t("pile.empty", { p: pileName("s0") }));
+        var canTurn = g.wa.length && (g.v === "k" || (g.v === "p" && g.ps < PYR_PASSES - 1));
+        sn = add(slotEl("s0", sr, "", canTurn ? "recycle" : ""));
+        focusStop(sn, "s0", canTurn ? t("pile.recycle") : t("pile.empty", { p: pileName("s0") }));
       }
     }
     // Waste
-    if (g.v === "k") {
+    if (g.v === "k" || g.v === "p") {
       var wr = L.piles.w0, wn = add(slotEl("w0", wr, "", ""));
-      var fan = +g.o.charAt(0) === 3 ? 3 : 1, from = Math.max(0, g.wa.length - Math.max(fan, 2));
+      var fan = g.v === "k" && +g.o.charAt(0) === 3 ? 3 : 1, from = Math.max(0, g.wa.length - Math.max(fan, 2));
       var dx = Math.round(L.cw * 0.3);
       for (var w = from; w < g.wa.length; w++) {
         var pos = fan === 3 ? Math.max(0, w - (g.wa.length - 3)) : 0;
@@ -1307,14 +1490,23 @@
       focusStop(n, "c" + c, topLabel("c" + c, p));
     });
     // Foundations
-    var nf = g.v === "s" ? 8 : 4;
+    var nf = g.v === "s" ? 8 : (g.v === "p" ? 1 : 4);
     for (var f = 0; f < nf; f++) {
-      var fr = L.piles["f" + f], fp = g.fd[f] || [], fn = add(slotEl("f" + f, fr, g.v === "s" ? "" : "A", g.v === "s" ? "run" : ""));
+      var fr = L.piles["f" + f], fp = g.fd[f] || [], fn = add(slotEl("f" + f, fr, g.v === "k" || g.v === "f" ? "A" : "", g.v === "s" ? "run" : ""));
       for (var j = Math.max(0, fp.length - 2); j < fp.length; j++) fn = add(cardNode("f" + f, j, fp[j], true, fr.x, fr.y, z++));
       if (g.v !== "s") focusStop(fn, "f" + f, topLabel("f" + f, fp));
     }
+    // Pyramid: the cards on their places; only the open ones are focus stops
+    if (g.v === "p") {
+      g.tab.forEach(function (p, c) {
+        if (!p.length) return;
+        var r = L.piles["t" + c], n = add(cardNode("t" + c, 0, p[0], true, r.x, r.y, z++));
+        if (pyrOpen(g, c)) focusStop(n, "t" + c, topLabel("t" + c, p));
+        else n.classList.add("covered");
+      });
+    }
     // Columns
-    g.tab.forEach(function (p, c) {
+    if (g.v !== "p") g.tab.forEach(function (p, c) {
       var r = L.piles["t" + c], ys = L.cols[c];
       var n = add(slotEl("t" + c, { x: r.x, y: r.y, w: L.cw, h: L.ch }, g.v === "k" ? "K" : "", ""));
       for (var i = 0; i < p.length; i++) n = add(cardNode("t" + c, i, p[i], i >= g.down[c], r.x, ys[i], z++));
@@ -1465,7 +1657,7 @@
       dlg.appendChild(el("div", "dlg-note", t("opts.current", { n: game.deal })));
       focus = inp;
     }
-    if (v !== "f") dlg.appendChild(el("div", "dlg-note", t("opts.note")));
+    if (v !== "f" && v !== "p") dlg.appendChild(el("div", "dlg-note", t("opts.note")));
     dlg.appendChild(segRow(t("opts.table"), [["felt", t("opt.felt")], ["plain", t("opt.plain")]], prefs.bg, function (x) {
       prefs.bg = x;
       savePrefs();
@@ -1543,6 +1735,9 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    if (window.orosDaily && window.orosDaily.hasHub()) {
+      dlg.appendChild(button(t("btn.games"), "dlg-link", function () { dlg.close(); window.orosDaily.openHub("solitaire"); }));
+    }
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
@@ -1715,6 +1910,7 @@
     if (ref === "s0") { stockAction(); return; }
     if (i < 0) return;                                              // an empty place
     if (ref.charAt(0) === "t" && i < game.down[+ref.slice(1)]) { live(t("live.down")); shake(ref, i); return; }
+    if (game.v === "p" && ref.charAt(0) === "t" && !pyrOpen(game, +ref.slice(1))) { live(t("live.covered")); shake(ref, i); return; }
     var bt = bestTarget(game, ref, i);
     if (bt.dst) { lastTapMove = Date.now(); moveCards(ref, i, bt.dst); return; }
     shake(ref, i);
@@ -1742,7 +1938,7 @@
     if (!cards || !geo) return res;
     var x = rect.left - b.left, y = rect.top - b.top;
     Object.keys(geo.piles).forEach(function (ref) {
-      if (ref === d.p || ref === "s0" || ref === "w0") return;
+      if (ref === d.p || ref === "s0" || (ref === "w0" && game.v !== "p")) return;
       var p = geo.piles[ref];
       var ox = Math.min(x + rect.width, p.x + p.w) - Math.max(x, p.x);
       var oy = Math.min(y + rect.height, p.y + p.h) - Math.max(y, p.y);

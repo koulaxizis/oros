@@ -8,6 +8,9 @@
 //   - .orosslides package: the deck + its pictures (base64) in one
 //     JSON file; opened as a NEW deck (fresh ids), every picture
 //     checked against its hash and decoded as an image first
+//   - PowerPoint (.pptx): written and read by pptx.js (ZIP by
+//     atelier/zip.js); an opened file is a NEW deck, its pictures
+//     stored on the orOS disk like any picture added here
 //   - pictures: designkit/assets.js (one file per picture, R30)
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -79,20 +82,39 @@
     if (!list.length) return;
     if (list.every(function (s) { return s.hid; })) { SL.toast(t("show.allHidden")); return; }
     var d = SL.curDeck(), S = window.orosDK.show;
-    var data = SL.data();
-    S.start({
+    var data = SL.data(), still = SL.reducedMotion();
+    var plans = list.map(function (s) { return SL.animPlan(s.id); });
+    function trDur(i) { return list[i] && list[i].td || 450; }
+    // Effects that start by themselves wait for the transition to end.
+    function since(i, t, step) {
+      var ms = t * 1000;
+      if (!step && list[i].tr && list[i].tr !== "none" && !still) ms -= trDur(i);
+      return ms;
+    }
+    if (SL.showCtl && !SL.showCtl.state().closed) SL.showCtl.close();
+    SL.showCtl = S.start({
       count: list.length,
       aspect: C.widthOf(d.as) / C.H,
       hidden: list.map(function (s) { return s.hid; }),
       startAt: Math.max(0, Math.min(list.length - 1, opts.from || 0)),
       lang: SL.LANG,
       presenter: !!opts.presenter,
-      renderSlide: function (i, canvas) {
-        SL.renderSlide(list[i].id, canvas.width, { canvas: canvas });
+      renderSlide: function (i, canvas, w, h, t, step) {
+        if (t === undefined) SL.renderFrame(list[i].id, canvas, canvas.width, { step: step || 0 });
+        else SL.renderFrame(list[i].id, canvas, canvas.width, { step: step || 0, t: since(i, t, step), still: still });
+      },
+      steps: function (i) { return plans[i] ? plans[i].clicks : 0; },
+      live: function (i, t, step) {
+        var pl = plans[i];
+        if (!pl || still || !pl.steps[step || 0] || !pl.steps[step || 0].length) return false;
+        return since(i, t, step) <= SL.Anim.stepEnd(pl, step || 0) + 40;
       },
       notes: function (i) { return list[i] ? data.slides[list[i].id] && data.slides[list[i].id].n || "" : ""; },
       title: function (i) { return list[i] ? C.slideTitle(data, list[i].id) || t("slide.n", { n: i + 1 }) : ""; },
       transition: function (i) { return list[i] ? list[i].tr : "none"; },
+      duration: trDur,
+      tools: SL.remote ? [{ text: t("rm.short"), label: t("rm.control"), fn: function () { SL.remote.host(); } }] : [],
+      onChange: function (st) { if (SL.remote) SL.remote.showChanged(st, list, data); },
       onEnd: function (sum) {
         if (sum && sum.total > 5000) SL.toast(t("show.summary", { t: S.fmtElapsed(sum.total) }));
       }
@@ -118,7 +140,7 @@
   function cropImage(it, ppi) {
     var crop = P.imageCrop(it);
     if (!crop) return Promise.resolve(null);
-    return A.load(it.a).then(function (img) {
+    return (SL.loadImage || A.load)(it.a).then(function (img) {
       if (!img) return null;
       var k = (img.naturalWidth || img.width) / (it.iw || 1);
       var src = { x: crop.src.x * k, y: crop.src.y * k, w: crop.src.w * k, h: crop.src.h * k };
@@ -144,7 +166,8 @@
     if (!shown.length) return;
     exporting = true;
     SL.toast(t("exp.working"));
-    var built = D.build(SL.data(), SL.deck, shown.map(function (s) { return s.id; }), { date: today(), handout: !!handout });
+    var built = D.build(SL.data(), SL.deck, shown.map(function (s) { return s.id; }), { date: today(), handout: !!handout, lang: SL.LANG });
+    if (SL.charts) SL.charts.register(built);
     var doc = built.doc, images = {}, JsPDF;
     loadJsPDF().then(function (J) {
       JsPDF = J;
@@ -174,7 +197,11 @@
     if (!s) return;
     var ids = [];
     C.slideItems(SL.data(), slideId).forEach(function (it) { if (it.k === "image" && it.img) ids.push(it.img.a); });
-    Promise.all(ids.map(function (id) { return A.load(id); })).then(function () {
+    var waits = ids.map(function (id) { return A.load(id); });
+    var b = SL.D.slideDoc(SL.data(), slideId, { lang: SL.LANG });
+    SL.charts.register(b);
+    Object.keys(b.charts || {}).forEach(function (k) { waits.push(SL.charts.load(k)); });
+    Promise.all(waits).then(function () {
       var cv = SL.renderSlide(slideId, 1920);
       return toBlob(cv, "image/png");
     }).then(function (blob) {
@@ -253,13 +280,22 @@
   SL.readPackage = readPackage;
 
   function importPackage() {
-    pickFile(".orosslides,application/json,.json").then(openFile, function () { SL.toast(t("imp.bad")); });
+    pickFile(".orosslides,.pptx,application/json,.json," + X().MIME).then(openFile, function () { SL.toast(t("imp.bad")); });
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
+  // A .pptx (a ZIP) goes to openPptx, anything else is read as a package.
   function openFile(f) {
     return Promise.resolve(f).then(function (f) {
       if (!f) return;
       if (f.size > PKG_MAX) { SL.toast(t("imp.bad")); return; }
+      return f.slice(0, 4).arrayBuffer().then(function (head) {
+        if (X().isZip(new Uint8Array(head)) || /\.pptx$/i.test(f.name || "")) return openPptx(f);
+        return openPackageFile(f);
+      });
+    }).then(null, function () { SL.toast(t("imp.bad")); });
+  }
+  function openPackageFile(f) {
+    return Promise.resolve(f).then(function (f) {
       return f.text().then(function (txt) {
         var pkg = null;
         try { pkg = JSON.parse(txt); } catch (e) {}
@@ -292,6 +328,101 @@
         });
       });
     }).then(null, function () { SL.toast(t("imp.bad")); });
+  }
+
+  // ---------- PowerPoint (.pptx) ----------
+  // slides/pptx.js writes and reads; atelier/zip.js packs and unpacks.
+  function X() { return window.OrosSlidesPPTX; }
+  function promptTexts() {
+    var o = {};
+    C.ROLES.forEach(function (r) { o[r] = t("ph." + r); });
+    return o;
+  }
+  var pptxBusy = false;
+  function exportPptx(deckId) {
+    if (pptxBusy) return;
+    if (SL.deck === deckId) SL.emit("flush");
+    var data = SL.data(), d = data.decks[deckId];
+    if (!d) return;
+    pptxBusy = true;
+    var media = {}, chain = Promise.resolve();
+    X().needs(data, deckId).forEach(function (id) {
+      chain = chain.then(function () { return A.blob(id); }).then(function (b) {
+        if (b) return b.arrayBuffer().then(function (ab) { media[id] = new Uint8Array(ab); });
+      }).then(null, function () {});
+    });
+    // charts: their pictures, drawn by the Spreadsheet's chart engine
+    var specs = X().charts(data, deckId, SL.LANG);
+    Object.keys(specs).forEach(function (key) {
+      chain = chain.then(function () {
+        SL.charts.want(key, specs[key]);
+        return SL.charts.load(key);
+      }).then(function (cv) {
+        if (!cv) return;
+        return toBlob(cv, "image/png").then(function (b) { return b.arrayBuffer(); }).then(function (ab) { media[key] = new Uint8Array(ab); });
+      }).then(null, function () {});
+    });
+    var res = null;
+    chain.then(function () {
+      res = X().write(SL.data(), deckId, media, { prompts: promptTexts(), lang: SL.LANG });
+      var blob = new Blob([res.bytes], { type: X().MIME });
+      return saveBlob(blob, deckName(d) + ".pptx", X().MIME, "PowerPoint", ".pptx");
+    }).then(function (ok) {
+      pptxBusy = false;
+      if (ok) SL.toast(res.out.missing ? t("exp.pptxMissing", { n: res.out.missing }) : t("exp.pptxDone"));
+    }, function (e) {
+      pptxBusy = false;
+      try { console.error("[orOS] slides: .pptx export failed", e); } catch (x) {}
+      SL.toast(t("exp.fail"));
+    });
+  }
+
+  // A .pptx as a NEW presentation: its pictures are stored on the orOS
+  // disk like any picture added in Slides.
+  function openPptx(f) {
+    if (pptxBusy) return Promise.resolve();
+    pptxBusy = true;
+    SL.toast(t("imp.pptxWorking"));
+    return f.arrayBuffer().then(function (ab) {
+      var zip = window.AtelierZip.open(new Uint8Array(ab));
+      return X().read(zip, { labels: {
+        chart: t("note.chart"), table: t("note.table"), diagram: t("note.diagram"), media: t("note.media"), object: t("note.object")
+      } }).then(function (plan) {
+        if (!plan.title) plan.title = String(f.name || "").replace(/\.pptx$/i, "");
+        var assets = {}, failed = 0, nofs = false, chain = Promise.resolve();
+        Object.keys(plan.media).forEach(function (p) {
+          chain = chain.then(function () {
+            if (nofs) { failed++; return; }
+            return zip.bytes(p, X().MAX_MEDIA).then(function (b) {
+              if (!b) { failed++; return; }
+              var file = new File([b], p.split("/").pop(), { type: X().mediaType(p) || "application/octet-stream" });
+              return A.importFile(file).then(function (r) { assets[p] = r; });
+            }).then(null, function (e) { if (e && e.message === "nofs") nofs = true; failed++; });
+          });
+        });
+        return chain.then(function () {
+          var lost = 0;
+          var id = SL.addDeckData(function (dt, nw, newId) {
+            var r = X().build(plan, assets, nw, newId);
+            if (!r.deck || !r.slides.length) return null;
+            dt.decks[r.deck.id] = r.deck;
+            r.slides.forEach(function (s) { dt.slides[s.id] = s; });
+            r.items.forEach(function (it) { dt.items[it.id] = it; });
+            lost = plan.count.skipped + plan.count.unknown + r.missing + Math.max(0, plan.count.slides - r.slides.length);
+            return r.deck.id;
+          });
+          pptxBusy = false;
+          if (!id) { SL.toast(t("imp.bad")); return; }
+          SL.openDeck(id);
+          if (nofs) SL.toast(t("img.nofs"));
+          else SL.toast(lost ? t("imp.pptxPartial", { n: lost }) : t("imp.done"));
+        });
+      });
+    }).then(null, function (e) {
+      pptxBusy = false;
+      try { console.error("[orOS] slides: .pptx import failed", e); } catch (x) {}
+      SL.toast(t("imp.bad"));
+    });
   }
 
   // ---------- Pictures ----------
@@ -331,6 +462,7 @@
 
   SL.io = {
     present: present, exportPdf: exportPdf, exportPng: exportPng,
-    exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage
+    exportPackage: exportPackage, importPackage: importPackage, openFile: openFile, placeImage: placeImage,
+    exportPptx: exportPptx
   };
 })();

@@ -1,5 +1,5 @@
 # Travel
-Travel keeps each trip in one place: dates and travellers, a packing list that adjusts to the length of the trip, a day-by-day itinerary and your notes.
+Travel keeps each trip in one place: dates and travellers, a packing list that adjusts to the length of the trip, a day-by-day itinerary with your bookings and tickets, a map of the places, a budget, a journal and your notes.
 
 ## Getting started
 Tap or click `New trip`. Fill in `Name`, `Destination`, the dates (`From`, `To`) and `Travellers (comma-separated)`. Under `Start the packing list from`, tick the templates you want; `Essentials` and `Before I leave` are ticked for you. Press `Create`.
@@ -17,9 +17,38 @@ Quantities can follow the trip: choose `Per day` or `One every N days` instead o
 - `Uncheck all` clears every tick, handy for the trip home.
 
 ## Itinerary
-`Add to the itinerary` adds a `Flight`, `Train`, `Bus`, `Ferry`, `Car`, `Stay`, `Activity`, `Food` or `Other`, with its day, times, places and `Booking code`. Entries are grouped by day. A `Stay` shows on every night it covers, and nights with no stay are flagged. Places have `Open in Maps`, which opens them in [Maps](app:maps).
+`Add to the itinerary` adds a `Flight`, `Train`, `Bus`, `Ferry`, `Car`, `Car hire`, `Stay`, `Activity`, `Ticket`, `Food` or `Other`, with its day, times, places and `Booking code`. Entries are grouped by day. A `Stay` shows on every night it covers, and nights with no stay are flagged. Places have `Open in Maps`, which opens them in [Maps](app:maps).
 
 `Notes` is free text for addresses, phone numbers or the Wi-Fi password. On a wide screen, packing and itinerary show side by side.
+
+## Bookings and tickets
+An entry can also hold the `Company`, the `Flight or train number`, the `Price` with its `Currency`, and the booking itself. A `Car hire` has `Pick-up` and `Return` days, times and the `Pick-up place`.
+
+Under `Tickets and documents`, `Attach a PDF or photo` keeps a boarding pass, a hotel voucher or a ticket's QR code with the entry, up to 10 per entry. Files go on the orOS disk, in [Files](app:files) folder `Travel`. Only real PDF files and photos are accepted (20 MB at most); photos are re-saved without their hidden details such as location. Tap a thumbnail to `Open` it or `Save a copy`. The itinerary shows a clip with the number of files, and the `.ics` export lists them.
+
+## Import a booking from e-mail
+Booking e-mails from airlines, hotels, rail, car hire and ticket sites usually carry the booking in a form apps can read (schema.org). There are two ways in:
+
+- In [Mail](app:mail), open the e-mail, then `Other apps` › `Booking to Travel`. This shows only when the e-mail has booking data.
+- In the itinerary, `Import a booking`: `Open an e-mail file` (.eml or .html) or paste the e-mail under `Or paste the e-mail (HTML)`, then `Read`.
+
+Travel lists what it found: flights (one row per leg), stays, trains, buses, ferries, car hire, tickets and restaurant bookings, with times, places, booking code and price. Pick the trip under `Add to the trip` (or `A new trip`), untick what you don't want and press `Add`. Rows marked `Already in the itinerary` are unticked, and so are `Cancelled` ones; `outside the trip's dates` is a warning only. The e-mail is only read: nothing in it runs, and nothing is added until you press `Add`.
+
+## Map
+`Map` shows the trip's places on a map, one colour per day, with numbered stops joined in the order of the day. Pick `All days` or one day.
+
+`Find on the map` looks up the places that have no point yet (titles, addresses, airports and stations) on OpenStreetMap, the same search [Maps](app:maps) uses. It only runs when you press it, needs a connection, and the points are saved with the trip, so the map then works offline (apart from the map tiles). An entry's dialog shows `On the map` with its point; change the place, or `Remove the point`, to look it up again.
+
+- `Save to Maps as a track` sends the day (or the whole trip) to Maps, which adds it to `My tracks`.
+- `Export GPX` saves the places as a GPX file for any map app. The trip's `More` menu also has `Export the itinerary (GPX)`.
+
+## Budget and Split
+`Budget` compares what you planned with what you spent, per category (`Transport`, `Accommodation`, `Food & drinks`, `Activities & tickets`, `Shopping`, `Other`), with the trip's currency. `Set the budget` enters the planned amounts. `Add expense` records what you spend, with category, day and who paid. Bookings with a price count too, under their category. You see what's left (or over), the total and the amount per traveller.
+
+`Share with Split` (also in the trip's `More` menu) opens [Split](app:split) with a new group named after the trip, with its currency and travellers. Nothing is saved in Split until you press `Save` there.
+
+## Journal
+`Journal` is a timeline of the trip, one card per day, with what was planned for that day. `Write` adds the day's text, `Photos` (up to 24) and a `Track from Maps`, which shows as a small sketch with `Show in Maps`. `Only days with entries` hides the empty days. `Clear the day` empties it.
 
 ## Templates
 `Templates` lists 10 ready ones (`Essentials`, `Beach`, `City break`, `Business`, `Hiking & camping`, `Ski`, `With a baby`, `Carry-on only`, `Road trip`, `Before I leave`) and `My templates`. You can edit or hide a ready template; `Restore ready templates` brings them back as they were. `New template` makes your own, or use `Save as template` from a trip.
@@ -31,14 +60,14 @@ Quantities can follow the trip: choose `Per day` or `One every N days` instead o
 - Trips also show in [Calendar](app:calendar) under the `Travel` chip: each trip day and every itinerary entry with a time. Tapping one opens the trip here.
 
 ## Share and export
-A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone), `Export for a calendar (.ics)`, `Fuel cost by car`, `Print`, `Copy trip` (with new dates, nothing packed) and `Delete trip`.
+A trip's `More` menu has `Edit trip`, `Copy as text` (`Share as text` on a phone), `Export for a calendar (.ics)`, `Export the itinerary (GPX)`, `Share with Split`, `Fuel cost by car`, `Print`, `Copy trip` (with new dates, nothing packed) and `Delete trip`. The `.ics` export and the text include company, number, booking code and price.
 
 The same menu can send `Send “Before I leave” to To-Do` or `Send “Still to pack” to To-Do`: the open items become a new list in [To-Do](app:todo), which shows them before anything is added. It's a copy, so ticking in To-Do doesn't change the trip.
 
 On the trip list, `More` has `Export all (JSON)` and `Import (JSON)`. An import merges with your trips and overwrites nothing.
 
 ## Sync and backup
-Trips, packing lists, itineraries and your templates sync between your devices through [orOS sync](help:t/sync). A tick on your phone and a change on your computer both survive. The open trip, tab and filters stay on each device. Besides the JSON export, the orOS [backup](help:t/backup) keeps a copy.
+Trips, packing lists, itineraries, map points, budgets, expenses, journal texts and your templates sync between your devices through [orOS sync](help:t/sync). A tick on your phone and a change on your computer both survive. Attached files and journal photos are on the orOS disk and reach your other devices through Vault Drive; until then they show `Not on this device yet`. The open trip, tab, map day and filters stay on each device. Besides the JSON export, the orOS [backup](help:t/backup) keeps a copy.
 
 ## Keyboard shortcuts
 - [[Enter]] in `Add an item…`: add the item.
@@ -49,6 +78,9 @@ Trips, packing lists, itineraries and your templates sync between your devices t
 - Save your own favourite packing list as a template once, and start every trip from it.
 
 ## Limits
-- Up to 200 trips and 60 templates.
+- Up to 200 trips and 60 templates; per trip, up to 300 attached files (10 per entry, 24 photos per journal day) and 1,000 expenses.
 - Reminders show only while orOS is open on that device. Use the `.ics` export to add a trip to another calendar app.
 - The forecast needs a connection and a destination Open-Meteo can find.
+- Import reads only e-mails that carry booking data (schema.org). Plain-text confirmations, PDFs and the e-mail's own attachments are not read; add those by hand and attach the PDF.
+- Finding places on the map needs a connection and may miss a place OpenStreetMap does not know; the lines on the map are straight lines between stops, not road routes.
+- The budget does not convert currencies: amounts in other currencies are shown apart.

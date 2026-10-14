@@ -281,3 +281,8 @@ ul { list-style: none; }
 .stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
 .stickers .sticker { font-size: 24px; line-height: 1; padding: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
 .stickers .sticker:hover, .stickers .sticker:focus-visible { background: var(--accent-soft); }
+
+/* Speed curve, chroma key picking */
+.ramp-graph { width: 100%; height: auto; aspect-ratio: 4 / 1; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+#stage-wrap.picking #stage { cursor: crosshair; outline: 2px dashed var(--accent); outline-offset: -2px; }
+.sw.ck-now { display: inline-block; flex-shrink: 0; }

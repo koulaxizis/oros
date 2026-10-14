@@ -27,7 +27,9 @@ function build(lang) {
     "\nreturn { TRIP_F, PACK_F, PLAN_F, SEEDS, SEED_IDS, DEFAULT_TPLS, GROUPS, KINDS, TOMB_TTL, DAY_MS, NO_DATE_DAYS," +
     " mergeTravel, normEnt, NORM, tplList, seedTpl, ruleQty, tripDays, tripNights, combineTpls, missingFrom," +
     " tripDayList, stayGaps, sortEntries, planSections, packGroups, tripPhase, countdown, tripText, tripIcs, icsFold," +
-    " addDays, dayDiff, isYmd, newId, normGrp, fuelCost, parseDec };")(webcrypto);
+    " addDays, dayDiff, isYmd, newId, normGrp, fuelCost, parseDec," +
+    " DOC_F, SPEND_F, JRNL_F, budget, parseCents, dayPoints, needsGeo, geoQuery, tripGpx, decodePoly, sketchPath," +
+    " jrnlId, splitTarget, normGeo, fmtMoney };")(webcrypto);
 }
 const T = build("en");
 const TEL = build("el");
@@ -56,8 +58,8 @@ test("normalize: invalid fields fall back, unknown keys drop, every stamp spelle
     people: ["Ann", "ann", " ", "Bob", 7], notes: "a\u0000b\nc", evil: "<script>", f: { name: 9, start: -1 } };
   const x = T.normEnt(raw, T.TRIP_F, T.NORM.trip);
   assert.deepEqual(x, { id: "abcd1234", name: "A trip", dest: "", start: "", end: "2026-03-01",
-    people: ["Ann", "Bob"], notes: "ab\nc",
-    f: { name: 9, dest: 0, start: 0, end: 0, people: 0, notes: 0 } });
+    people: ["Ann", "Bob"], notes: "ab\nc", cur: "", bplan: {}, geo: null,     // wave 31 fields: defaults
+    f: { name: 9, dest: 0, start: 0, end: 0, people: 0, notes: 0, cur: 0, bplan: 0, geo: 0 } });
   assert.equal(T.normEnt({ id: "BAD ID" }, T.TRIP_F, T.NORM.trip), null);
   const p = T.normEnt({ id: "item0001", name: "x", qty: 500, rule: { m: "every", n: 1 }, grp: "@nope", done: "yes" },
     T.PACK_F, T.NORM.pack);
@@ -83,7 +85,8 @@ test("merge: symmetric, idempotent, canonical (R5, R26)", () => {
   assert.equal(J(M(ab, {})), J(ab));
   assert.deepEqual(ab.trips.map((x) => x.id), ["trip0001", "trip0002"]);
   assert.equal(ab.trips[0].pack.length, 2);
-  assert.deepEqual(Object.keys(ab.trips[0]), ["id", "name", "dest", "start", "end", "people", "notes", "f", "pack", "plan"]);
+  assert.deepEqual(Object.keys(ab.trips[0]), ["id", "name", "dest", "start", "end", "people", "notes", "cur", "bplan", "geo", "f",
+    "pack", "plan", "docs", "spend", "jrnl"]);
   assert.deepEqual(Object.keys(ab), ["ver", "trips", "tpls", "tombs"]);
   // order of items in the input never matters
   const c = data([trip({ id: "trip0001", pack: [p2, p1] })]);
@@ -301,4 +304,164 @@ test("fuel cost by car: round trip, per person, bad input", () => {
   assert.equal(T.parseDec("1,859"), 1.859);
   assert.equal(T.parseDec(" 7.4 "), 7.4);
   assert.ok(isNaN(T.parseDec("abc")));
+});
+
+// ---------- wave 31: bookings, map, budget, journal ----------
+function doc(o, s) { return Object.assign({ id: id("d"), of: "", file: "", name: "" }, o, { f: Object.assign(stamps(T.DOC_F, s || 1000), (o && o.f) || {}) }); }
+function exp(o, s) { return Object.assign({ id: id("s"), cat: "food", amt: 1000, cur: "", day: "", what: "", who: "" }, o, { f: Object.assign(stamps(T.SPEND_F, s || 1000), (o && o.f) || {}) }); }
+function jr(o, s) { return Object.assign({ id: id("j"), day: "2026-10-13", text: "", trk: "" }, o, { f: Object.assign(stamps(T.JRNL_F, s || 1000), (o && o.f) || {}) }); }
+
+test("old trips load unchanged: new fields get defaults, new lists are empty", () => {
+  const old = { id: "trip0old", name: "Rome", dest: "Rome", start: "2026-10-12", end: "2026-10-14", people: ["A"], notes: "n",
+    f: { name: 5, dest: 5, start: 5, end: 5, people: 5, notes: 5 },
+    pack: [{ id: "item0old", name: "Socks", qty: 2, rule: null, grp: "@clothes", who: "", note: "", done: true,
+             f: { name: 5, qty: 5, rule: 5, grp: 5, who: 5, note: 5, done: 5 } }],
+    plan: [{ id: "entr0old", kind: "flight", title: "", day: "2026-10-12", t1: "08:00", day2: "", t2: "", place: "",
+             from: "ATH", to: "FCO", ref: "X", note: "", pos: 0, f: { kind: 5, title: 5, day: 5, t1: 5, day2: 5, t2: 5,
+             place: 5, from: 5, to: 5, ref: 5, note: 5, pos: 5 } }] };
+  const m = M(data([old]), data([]));
+  const tr = m.trips[0];
+  assert.equal(tr.name, "Rome");
+  assert.equal(tr.pack[0].done, true);
+  assert.equal(tr.plan[0].from, "ATH");
+  assert.deepEqual([tr.cur, tr.bplan, tr.geo, tr.docs, tr.spend, tr.jrnl], ["", {}, null, [], [], []]);
+  assert.deepEqual([tr.plan[0].num, tr.plan[0].cost, tr.plan[0].geo, tr.plan[0].geo0], ["", 0, null, null]);
+  assert.equal(J(M(m, m)), J(m));
+  // an old copy of the same trip (no new fields) never wipes the new ones
+  const neu = JSON.parse(J(m));
+  neu.trips[0].cur = "USD"; neu.trips[0].f.cur = 9000;
+  neu.trips[0].plan[0].num = "A3 650"; neu.trips[0].plan[0].f.num = 9000;
+  neu.trips[0].spend = [exp({ id: "sp000001", amt: 500 })];
+  const back = M(data([old]), neu);
+  assert.equal(back.trips[0].cur, "USD");
+  assert.equal(back.trips[0].plan[0].num, "A3 650");
+  assert.equal(back.trips[0].spend.length, 1);
+  assert.equal(J(M(neu, data([old]))), J(back));
+});
+
+test("attachments, expenses and journal days: unioned per trip, tombstones win ties, a newer edit resurrects", () => {
+  const d1 = doc({ id: "doc00001", of: "entr0001", file: "doc00001.pdf", name: "ticket.pdf" });
+  const d2 = doc({ id: "doc00002", of: "entr0001", file: "doc00002.jpg", name: "qr.jpg" });
+  const e1 = exp({ id: "sp000001", amt: 1250, cat: "food" }), e2 = exp({ id: "sp000002", amt: 300, cat: "shop" });
+  const a = data([trip({ id: "trip0001", docs: [d1], spend: [e1] })]);
+  const b = data([trip({ id: "trip0001", docs: [d2], spend: [e2], jrnl: [jr({ id: "j20261013-trip0001", text: "Pantheon" })] })]);
+  const ab = M(a, b);
+  assert.equal(J(ab), J(M(b, a)));
+  assert.deepEqual(ab.trips[0].docs.map((x) => x.id), ["doc00001", "doc00002"]);
+  assert.equal(ab.trips[0].spend.length, 2);
+  assert.equal(ab.trips[0].jrnl[0].text, "Pantheon");
+  const del = M(ab, data([], [], { doc00001: 1000, sp000002: 1000 }));
+  assert.deepEqual(del.trips[0].docs.map((x) => x.id), ["doc00002"]);
+  assert.deepEqual(del.trips[0].spend.map((x) => x.id), ["sp000001"]);
+  const revived = M(del, data([trip({ id: "trip0001", spend: [exp({ id: "sp000002", amt: 300, cat: "shop" }, 1001)] })]));
+  assert.equal(revived.trips[0].spend.length, 2);
+  // bad file names, owners and amounts are cleaned
+  const x = M(data([trip({ id: "trip0002", docs: [doc({ id: "doc00009", of: "BAD ID", file: "../../etc/passwd", name: "x" })],
+    spend: [exp({ id: "sp000009", amt: -5, cat: "nope", cur: "XXX" })] })]), {});
+  assert.deepEqual([x.trips[0].docs[0].of, x.trips[0].docs[0].file], ["", ""]);
+  assert.deepEqual([x.trips[0].spend[0].amt, x.trips[0].spend[0].cat, x.trips[0].spend[0].cur], [0, "other", ""]);
+});
+
+test("journal ids are fixed per trip and day, so two devices write into one entry", () => {
+  assert.equal(T.jrnlId("trip0001", "2026-10-13"), "j20261013-trip0001");
+  assert.ok(/^[a-z0-9][a-z0-9-]{3,40}$/.test(T.jrnlId("a".repeat(41), "2026-10-13")));
+  const phone = jr({ id: "j20261013-trip0001", text: "Phone text", trk: "", f: { text: 2000 } });
+  const desk = jr({ id: "j20261013-trip0001", text: "", trk: "abc123track", f: { trk: 2100 } });
+  const m = M(data([trip({ id: "trip0001", jrnl: [phone] })]), data([trip({ id: "trip0001", jrnl: [desk] })]));
+  assert.equal(m.trips[0].jrnl.length, 1);
+  assert.deepEqual([m.trips[0].jrnl[0].text, m.trips[0].jrnl[0].trk], ["Phone text", "abc123track"]);
+});
+
+test("budget: planned vs spent per category, bookings count, other currencies apart", () => {
+  const raw = data([trip({ id: "trip0001", cur: "EUR", bplan: { transport: 50000, food: 20000, bogus: 5 },
+    plan: [entry({ id: "entr0001", kind: "flight", cost: 28950, ccur: "" }), entry({ id: "entr0002", kind: "stay", cost: 40000, ccur: "EUR" }),
+           entry({ id: "entr0003", kind: "ticket", cost: 9000, ccur: "USD" })],
+    spend: [exp({ id: "sp000001", cat: "food", amt: 2500 }), exp({ id: "sp000002", cat: "food", amt: 1000, cur: "GBP" })] })]);
+  const tr = M(raw, {}).trips[0];
+  assert.deepEqual(tr.bplan, { transport: 50000, food: 20000 });
+  const b = T.budget(tr);
+  const row = (c) => b.rows.find((r) => r.cat === c);
+  assert.equal(b.cur, "EUR");
+  assert.deepEqual([row("transport").plan, row("transport").spent], [50000, 28950]);
+  assert.deepEqual([row("stay").plan, row("stay").spent], [0, 40000]);
+  assert.deepEqual([row("food").plan, row("food").spent], [20000, 2500]);
+  assert.deepEqual(b.total, { plan: 70000, spent: 71450 });
+  assert.deepEqual(b.other, [{ cur: "GBP", amt: 1000 }, { cur: "USD", amt: 9000 }]);
+  assert.equal(T.budget(Object.assign({}, tr, { cur: "" })).cur, "EUR");
+});
+
+test("amounts typed by hand", () => {
+  assert.equal(T.parseCents("12,50"), 1250);
+  assert.equal(T.parseCents("1.234,5"), 123450);
+  assert.equal(T.parseCents("1,234.50"), 123450);
+  assert.equal(T.parseCents(" 7 "), 700);
+  assert.equal(T.parseCents(""), 0);
+  assert.equal(T.parseCents("-3"), -1);
+  assert.equal(T.parseCents("1.2.3"), -1);
+  assert.equal(T.parseCents("abc"), -1);
+});
+
+test("map points in itinerary order, what still needs a point, GPX", () => {
+  const tr = M(data([trip({ id: "trip0001", name: "Rome & <Co>", plan: [
+    entry({ id: "entr0001", kind: "flight", day: "2026-10-12", t1: "08:00", from: "ATH", to: "FCO",
+            geo0: { lat: 37.9364, lon: 23.9445 }, geo: { lat: 41.8003, lon: 12.2389 } }),
+    entry({ id: "entr0002", kind: "stay", title: "Hotel", place: "Via Nazionale 1", day: "2026-10-12", t1: "15:00",
+            geo: { lat: 41.9, lon: 12.49 } }),
+    entry({ id: "entr0003", kind: "activity", title: "Colosseum", day: "2026-10-13" }),
+    entry({ id: "entr0004", kind: "train", title: "", from: "Roma", to: "Firenze", day: "2026-10-14", geo: { lat: 999, lon: 0 } })
+  ] })]), {}).trips[0];
+  const pts = T.dayPoints(tr, "");
+  assert.deepEqual(pts.map((p) => [p.name, p.day]), [["ATH", "2026-10-12"], ["FCO", "2026-10-12"], ["Hotel", "2026-10-12"]]);
+  assert.equal(T.dayPoints(tr, "2026-10-13").length, 0);
+  assert.deepEqual(T.needsGeo(tr).map((n) => [n.id, n.which, n.q]),
+    [["entr0003", "geo", "Colosseum"], ["entr0004", "geo0", "Roma"], ["entr0004", "geo", "Firenze"]]);
+  assert.equal(T.geoQuery("fco", "flight"), "FCO airport");
+  assert.equal(T.geoQuery("Rome", "flight"), "Rome");
+  const gpx = T.tripGpx(tr, "");
+  assert.match(gpx, /^<\?xml version="1.0" encoding="UTF-8"\?>\n<gpx version="1.1"/);
+  assert.equal((gpx.match(/<wpt /g) || []).length, 3);
+  assert.equal((gpx.match(/<trkseg>/g) || []).length, 1);
+  assert.match(gpx, /Rome &amp; &lt;Co&gt;/);
+  assert.ok(!/<Co>/.test(gpx));
+  assert.equal(T.tripGpx(tr, "2026-10-13"), "");
+  // Maps' own reader takes it (what "Save to Maps as a track" hands over)
+  const MT = require(path.join(__dirname, "..", "maps/tracks-core.js"));
+  const back = MT.parseGpx(gpx);
+  assert.equal(back.wpts.length, 3);
+  assert.equal(back.segs[0].length, 3);
+});
+
+test("Maps' preview line decodes and sketches", () => {
+  // Google's own example: (38.5, -120.2), (40.7, -120.95), (43.252, -126.453)
+  const pts = T.decodePoly("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
+  assert.deepEqual(pts, [[38.5, -120.2], [40.7, -120.95], [43.252, -126.453]]);
+  assert.deepEqual(T.decodePoly(""), []);
+  assert.deepEqual(T.decodePoly(null), []);
+  T.decodePoly("~~~~");                                    // truncated: no throw
+  const d = T.sketchPath(pts, 96, 64);
+  assert.match(d, /^M\d+ \d+L\d+ \d+L\d+ \d+$/);
+  d.match(/\d+ \d+/g).forEach((xy) => { const [x, y] = xy.split(" ").map(Number); assert.ok(x >= 0 && x <= 96 && y >= 0 && y <= 64); });
+  assert.equal(T.sketchPath([[1, 1]], 96, 64), "");
+});
+
+test("Split hand-over: name, currency and travellers only", () => {
+  const tr = M(data([trip({ id: "trip0001", name: "Rome", cur: "USD", people: ["Ann", "Bob"] })]), {}).trips[0];
+  assert.deepEqual(T.splitTarget(tr), { newGroup: { name: "Rome", cur: "USD", people: ["Ann", "Bob"], from: "Travel" } });
+  assert.equal(T.normGeo({ lat: 91, lon: 0 }), null);
+  assert.deepEqual(T.normGeo({ lat: 41.123456789, lon: 12.5 }), { lat: 41.123457, lon: 12.5 });
+});
+
+test("bookings in the text and the .ics export: number, company, price, attachments", () => {
+  const tr = M(data([trip({ id: "trip0001", cur: "EUR", plan: [
+    entry({ id: "entr0001", kind: "flight", title: "", day: "2026-10-12", t1: "08:15", from: "ATH", to: "FCO", ref: "RXJ34P",
+            num: "A3 650", prov: "Aegean", cost: 28950 }),
+    entry({ id: "entr0002", kind: "rental", title: "Hertz", place: "FCO T3", day: "2026-10-12", t1: "10:00", day2: "2026-10-14", t2: "09:00" })
+  ], docs: [doc({ id: "doc00001", of: "entr0001", file: "doc00001.pdf", name: "boarding.pdf" })] })]), {}).trips[0];
+  const txt = T.tripText(tr);
+  assert.match(txt, /Aegean A3 650/);
+  assert.match(txt, /289\.50/);
+  assert.match(txt, /Return .*14\/10 09:00/);
+  const ics = T.tripIcs(tr, Date.UTC(2026, 0, 1)).replace(/\r\n /g, "");
+  assert.match(ics, /DESCRIPTION:Aegean A3 650\\nBooking code: RXJ34P\\nPrice: [^\\]*289\.50[^\\]*\\nAttached: boarding\.pdf/);
+  assert.match(ics, /DTSTART:20261012T100000\r\nDTEND:20261014T090000/);
 });

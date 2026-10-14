@@ -1,6 +1,6 @@
 # Bookmarks
 
-Save web links in folders, tag them and find them again quickly.
+Save web links in folders, tag them, keep a readable copy and find them again quickly.
 
 ## Getting started
 
@@ -12,49 +12,64 @@ Tap or click a row to open the link in a new tab.
 
 ## Folders
 
-- Tap the + next to the folder tabs to make a `New folder`.
-- `All` shows every bookmark. `Unsorted` is the default folder and can't be deleted.
-- To rename or delete the open folder, use the ⋮ button (`Folder options`) or double-click its tab.
-- On a phone, long-press a tab for `Rename`, `Move left` and `Move right`. On a computer, drag one tab onto another to swap them.
-- `Delete folder` asks for a second tap. The folder's bookmarks move to `Unsorted`, and you get `Undo`.
+- Tap the + next to the folder tabs to make a `New folder`. The tabs are your top folders.
+- Folders can sit inside folders, as deep as you like. When a folder is open, the strip under the search box shows its path (tap a part to go back up), its subfolders as chips, and `New subfolder`.
+- `All` shows every bookmark. `Unsorted` is the default folder and can't be deleted or put inside another folder.
+- To rename, move or delete the open folder, use the ⋮ button (`Folder options`) or double-click its tab. `Inside` chooses where the folder lives: `Top level (a tab)` or any other folder. A folder can't go inside itself or one of its own subfolders.
+- Right-click a tab or subfolder chip (long-press on a phone) for `Rename`, `Move left`, `Move right`, `Move into…` and `New subfolder`. On a computer, drag one tab onto another to swap them, drag a tab or chip onto a subfolder chip or a part of the path to put it inside, and drag a chip onto a tab to put it there (onto `All` to make it a tab).
+- `Delete folder` asks for a second tap. What was inside moves up one level: subfolders go to the parent, bookmarks go to the parent folder (to `Unsorted` from a top folder). You get `Undo`.
 
 ## Edit, move and favourites
 
-Each row has a star (favourites), a pencil (`Edit`) and an open button. In the edit window you can change `Title`, `Address`, `Description`, `Tags` and `Folder`, or `Delete` the bookmark. `Follow in Reader` opens [Reader](app:feeds) to follow that site's news. `QR code` opens [QR Generator](app:qr) with a code for the saved address.
+Each row has a star (favourites), a pencil (`Edit`) and an open button. In the edit window you can change `Title`, `Address`, `Description`, `Tags` and `Folder`, or `Delete` the bookmark. Under the form you see the last link check and buttons for `Check link` and the saved copy. `Follow in Reader` opens [Reader](app:feeds) to follow that site's news. `QR code` opens [QR Generator](app:qr) with a code for the saved address.
 
-Right-click a row (long-press on a phone) for a menu with `Open`, `Open in Maps`, `Edit`, `Add to favorites`, `Send to someone…` (the bookmark as a link that opens in any browser), `Move to…` any other folder and `Delete`. On a computer you can also drag a row onto a folder tab. Dropping it on `All` moves it to `Unsorted`.
+Right-click a row (long-press on a phone) for a menu with `Open`, `Open in Maps`, `Edit`, `Add to favorites`, `Send to someone…` (the bookmark as a link that opens in any browser), `Save a readable copy` or `Read saved copy`, `Check link`, `Move to…` (a list of all your folders) and `Delete`. On a computer you can also drag a row onto a folder tab, a subfolder chip or a part of the path. Dropping it on `All` moves it to `Unsorted`.
 
 Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Open in Maps` searches for the bookmark's title and description in [Maps](app:maps).
 
+## Readable copy
+
+`Save a readable copy` keeps the article of a page for reading later, even offline, the way [Reader](app:feeds) shows a full article: the page's main text, without menus, ads, scripts or forms. A book icon on the row opens it.
+
+- The copy is a file on the orOS disk, in [Files](app:files) › `Bookmarks` › `Archive`. It isn't part of the bookmarks' sync data: it reaches your other devices with Vault Drive, like any other file.
+- `Keep pictures` puts the pictures inside the copy, so they show offline too. Pictures a site doesn't let the browser read stay links that only show online. Without it, the copy is text only.
+- In the reader: `Original page`, `Save again` (for a page that changed) and `Remove copy`. Deleting a bookmark removes its copy too, after the moment for `Undo` has passed.
+- Pages that need the relay: many sites can only be read through the relay set in [Reader](app:feeds) or [Mail](app:mail). Without one, those pages can't be saved.
+
 ## Search, tags and sorting
 
-- The search box looks in every folder: titles, addresses, tags and folder names.
+- The search box looks in every folder: titles, addresses, descriptions, tags and folder names.
 - Add tags in the edit window: type one and press [[Enter]] or a comma. [[Backspace]] in an empty field removes the last tag.
 - Tap a tag on a row to show only bookmarks with that tag. Tap more tags to narrow it down. The tag button (`All tags`) lists every tag with a count, and `Clear filters` resets the filter.
 - The sort menu offers `Recent`, `Title A–Z` and `Most visited`.
 
 ## Tidy up
 
+- The `Tidy up` button (two squares) has `Check links in this folder` (with its subfolders), `Check all links`, `Show broken and moved links` and `Duplicate bookmarks`.
+- The link check runs only when you ask, ten links at a time with a short pause between, at most 500 per run; `Stop` ends it. A page that's gone (404, 410) or a site that doesn't answer is marked `Broken`; a page that now sends you somewhere else is marked `Moved`, and `Use new address` (row menu or edit window) updates the bookmark. A site that refuses robots or is down for a while is `Couldn't check` and is not counted as broken.
+- `Duplicate bookmarks` finds addresses saved more than once. http and https, `www.`, a trailing slash, the order of the query and tracking parts such as `utm_source` or `fbclid` count as the same address. `Merge into oldest, remove …` keeps the oldest copy and gives it every tag, every description and the star; or use `Apply selected` / `Apply all`.
 - `Select bookmarks` (the checkbox button) lets you tick several rows and use `Move to…`, `Send…` (all of them in one link) or `Delete` on all of them. `Done` ends selection. It's off while you search or filter.
-- `Duplicate bookmarks` finds addresses saved more than once (http/https and `www.` count as the same). Use `Keep oldest, delete …` on one group, or `Apply selected` / `Apply all`.
-- Deleting or moving shows a message with `Undo` for a few seconds.
+- Deleting, moving, merging and importing show a message with `Undo` for a few seconds.
 
 ## Sync and backup
 
-Bookmarks, folders, tags and favourites sync through [orOS sync](help:t/sync). Your sort choice stays on this device.
+Bookmarks, folders and their nesting, tags, favourites, link checks and which bookmarks have a saved copy sync through [orOS sync](help:t/sync). A link check never overwrites an edit made on another device. The copies themselves are files (see `Readable copy`). Your sort choice and the `Keep pictures` choice stay on this device.
 
-- **Import**: `Import bookmarks (Netscape HTML)` reads the bookmarks HTML file that most browsers can export. Folders are matched by name or created, and addresses you already have are skipped.
+- **Import**: `Import bookmarks` reads the bookmarks HTML file of a browser, Raindrop, Pinboard or Linkding, Pocket's export (the HTML file or the CSV) and Raindrop's CSV. Folders keep their nesting and are matched by name or created; tags, descriptions, favourites and the date each link was saved come along. Pocket links go to a `Pocket` folder, archived ones to `Pocket` › `Archive`. Addresses you already have are skipped. `Undo` in the message takes the whole import back.
 - **From Raindrop.io**: connect Raindrop.io in [Settings](app:settings) › `Connected services` with a test token, then the cloud button `Import from Raindrop.io…` › `Read the account` shows what will come in, and `Import` brings it (`Undo` in the message takes it back). Each collection becomes a folder (a folder with the same name is used, nested collections become folders of their own), with titles, notes (or the page excerpt), tags and favourites; links you already have are skipped. Import again whenever you like: only new bookmarks come in, and with `Update what was imported before` the title and note follow Raindrop's and new tags are added. Deleted bookmarks don't come back unless you tick `Bring back what was deleted here`. orOS only reads Raindrop: nothing there changes.
-- **Export**: `Export bookmarks (Netscape HTML)` saves `oros-bookmarks.html` for a browser or for orOS.
+- **Export**: `Export bookmarks (Netscape HTML)` saves `oros-bookmarks.html` with the whole folder tree, tags, descriptions and dates, for a browser, Raindrop, Pinboard, Linkding or orOS.
 
 For a copy of all your orOS data, see [Backup](help:t/backup).
 
 ## Tips
 
-- The coloured letter on each row is made on your device. orOS doesn't download site icons, so opening the list contacts no websites.
+- The coloured letter on each row is made on your device. orOS doesn't download site icons, so opening the list contacts no websites. Only `Check link`, the link checks and `Save a readable copy` contact the sites, when you ask.
 
 ## Limits
 
 - Only http and https links can be saved.
-- The export file has the title, address and folder only. Tags, descriptions and favourites aren't in it.
-- Folders are one level deep. Nested folders from an import become separate folders.
+- Favourites, visits, link checks and saved copies aren't in the export file.
+- Saved copies need orOS (they're on the orOS disk): Bookmarks opened on its own outside orOS can't make or show them.
+- A readable copy keeps the article text, not the whole page: pages built by scripts, behind a login or a paywall may have no text to keep.
+- The Raindrop CSV gives nested collections as `Parent / Child`; a collection whose own name has a `/` becomes two folders.
+- A link check sees what a robot sees: some sites answer "forbidden" to it even though the page works in a browser (shown as `Couldn't check`).

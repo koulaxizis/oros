@@ -111,10 +111,14 @@ test("plan: projects with open tasks become lists, subtasks after their parent, 
   const offer = tasks[1];
   assert.equal(offer.notes, "Με ΦΠΑ\n\nκαι μεταφορικά");
   assert.equal(offer.due, "2026-10-20");
-  assert.deepEqual(offer.info, [{ id: M.PRIO_ID, label: "Priority", value: "P1" }]);
+  // priority → the task's own field (Todoist 4 = P1 … 1 = P4), no extra info any more
+  assert.equal(offer.prio, 1);
+  assert.deepEqual(offer.info, []);
   assert.equal(tasks[0].due, "2026-10-14");
+  assert.equal(tasks[0].prio, 4);
   assert.deepEqual(tasks[0].info, []);
-  assert.deepEqual(tasks[2].info, [{ id: M.PRIO_ID, label: "Priority", value: "P3" }]);
+  assert.equal(tasks[2].prio, 3);
+  assert.deepEqual(tasks[2].info, []);
   // "urgent" is the label already here (any case); "Πελάτες" is new, made once
   assert.deepEqual(pl.labels.add.map((l) => l.name), ["Πελάτες"]);
   assert.deepEqual(offer.labels, [pl.labels.add[0].id, "lb1"]);
@@ -133,10 +137,11 @@ test("plan again: updates only Todoist's fields, keeps what To-Do added, respect
   const st = empty();
   first.labels.add.forEach((l) => st.labels.push({ id: l.id, name: l.name }));
   first.lists.add.forEach((l) => st.lists.push({ id: l.id, name: l.name, items: [] }));
-  first.items.add.forEach((a) => st.lists.find((l) => l.id === a.list).items.push({ id: a.id, text: a.text, done: false, due: a.due, notes: a.notes, labels: a.labels.slice(), info: a.info.slice() }));
+  first.items.add.forEach((a) => st.lists.find((l) => l.id === a.list).items.push(Object.assign({ id: a.id, text: a.text, done: false, due: a.due, notes: a.notes, labels: a.labels.slice(), info: a.info.slice() }, a.prio < 4 ? { prio: a.prio } : {})));
   assert.deepEqual(M.count(M.plan(st, got, CTX)), { add: 0, upd: 0 });
   assert.equal(M.plan(st, got, CTX).same, 4);
-  // here: ticked, a label and a note field of its own, the priority label renamed
+  // here: ticked, a label and a note field of its own, and the priority
+  // extra-info field an earlier import left (it stays as it is)
   const work = st.lists[2];
   const offer = work.items.find((i) => i.text.startsWith("Προσφορά"));
   offer.done = true;
@@ -152,11 +157,21 @@ test("plan again: updates only Todoist's fields, keeps what To-Do added, respect
   assert.equal(pl.items.upd.length, 1);
   const u = pl.items.upd[0];
   assert.equal(u.id, offer.id);
-  assert.deepEqual(Object.keys(u.f).sort(), ["due", "info", "notes", "text"]);
+  assert.deepEqual(Object.keys(u.f).sort(), ["due", "notes", "prio", "text"]);
   assert.equal(u.f.text, "Προσφορά Άλφα v2");
   assert.equal(u.f.due, null);
-  assert.deepEqual(u.f.info, [{ id: "x1", label: "Πελάτης", value: "Άλφα" }, { id: M.PRIO_ID, label: "Προτ.", value: "P2" }]);
+  assert.equal(u.f.prio, 2);
+  assert.equal("info" in u.f, false);         // the old priority field is never rewritten
   assert.equal("done" in u.f, false);
+  // a task imported before priorities existed (extra info only, no prio):
+  // an update fills the priority and leaves the extra info alone
+  const legacy = JSON.parse(JSON.stringify(st));
+  const lo = legacy.lists[2].items.find((i) => i.text.startsWith("Προσφορά"));
+  delete lo.prio;
+  lo.info = [{ id: M.PRIO_ID, label: "Priority", value: "P1" }];
+  const ul = M.plan(legacy, got, CTX).items.upd;
+  assert.equal(ul.length, 1);
+  assert.deepEqual(ul[0].f, { prio: 1 });
   // without "update": nothing changes
   assert.deepEqual(M.count(M.plan(st, got2, Object.assign({}, CTX, { upd: false }))), { add: 0, upd: 0 });
   // deleted here: the task and the list stay out unless asked

@@ -26,6 +26,17 @@
     if (!r || typeof r !== "object" || ["D", "W", "M", "Y"].indexOf(r.freq) === -1) {
       return e.date;
     }
+    // The shell loads calendar/occur.js (every rule of wave 5);
+    // the walk below is the fallback for the simple rules.
+    var OCC = root && root.OrosCalOccur;
+    if (OCC && typeof OCC.eachOccurrence === "function") {
+      var hit = null, lastOcc = e.date;
+      OCC.eachOccurrence(e, function (o) {
+        if (o >= today) { hit = o; return false; }
+        lastOcc = o;
+      });
+      return hit || lastOcc;
+    }
     var p = e.date.split("-"), y = +p[0], m = +p[1] - 1, origDay = +p[2], d = origDay;
     var interval = r.interval === 2 ? 2 : 1;
     var until = typeof r.until === "string" && YMD.test(r.until) ? r.until : null;

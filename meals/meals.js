@@ -9,11 +9,25 @@
 //     fill the gaps, clear (Undo)
 //   - Shopping: computed from the week, quantities added up, by aisle,
 //     pantry items left out; ticks and own items are synced
-// The pure logic lives in core.js (OrosMealsCore).
+//   - Wave 2: import from a web address (JSON-LD, through the Reader's
+//     network layer and the orOS relay), pasted page source / JSON, or
+//     Paprika / Mealie / Tandoor files (import.js, loaded on demand);
+//     servings and units (as written / metric / US, per device) in the
+//     recipe and in cooking mode; a Household section
+//   - Wave 3: a Pantry tab (what is at home: amount, fridge / freezer /
+//     cupboard, best-before; add by text, from ticked shopping lines or
+//     by barcode via Open Food Facts), "What can I cook?", "Cooked"
+//     takes a recipe's ingredients from the pantry (preview first), the
+//     shopping list sets aside what the pantry covers, nutrition per
+//     serving and per day (built-in USDA table + Open Food Facts)
+// The pure logic lives in core.js (OrosMealsCore), import.js
+// (OrosMealsImport), nutrition.js (OrosMealsNutrition) and pantry.js
+// (OrosMealsPantry).
 // Data:
 //   - synced slice "meals" (oros-meals-data): see core.js §9–10
 //   - device-local (R10): oros-meals-prefs (tab, "fits us" filter,
-//     "from today" switch)
+//     "from today" switch, units shown, nutrition shown, best-before
+//     reminder hour (read by the shell), pantry filter)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage, prefs
@@ -25,6 +39,7 @@
 //   8. Recipe editor + paste
 //   9. Plan dialogs (picker, item, add to plan)
 //  10. Cooking mode + timers
+//  10b. Pantry, barcode, what can I cook, cooked, nutrition
 //  11. Settings + backup
 //  12. Dialog helpers + toasts
 //  13. Keyboard (Contract Β)
@@ -35,8 +50,11 @@
   "use strict";
 
   var C = window.OrosMealsCore;
+  var N = window.OrosMealsNutrition;
+  var P = window.OrosMealsPantry;
   var STORAGE_KEY = "oros-meals-data";
   var PREFS_KEY   = "oros-meals-prefs";
+  var TABS = ["rc", "wk", "sh", "pa"];
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -52,7 +70,7 @@
   var STRINGS = {
     en: {
       "app.name": "Meal Planner", "tab.rc": "Recipes", "tab.wk": "Week", "tab.sh": "Shopping", "btn.settings": "Settings",
-      "rc.search": "Search recipes, or ingredients with commas…", "rc.new": "New recipe", "rc.paste": "Paste",
+      "rc.search": "Search recipes, or ingredients with commas…", "rc.new": "New recipe", "rc.paste": "Import",
       "rc.empty": "No recipes match.", "rc.none": "No recipes yet. Add one, or paste one from anywhere.",
       "rc.ingmode": "Recipes with: {list}", "f.fav": "★ Favourites", "f.fits": "Fits our diet",
       "rc.min": "{n} min", "rc.serv": "{n} serv.", "fav.add": "Add to favourites", "fav.del": "Remove from favourites",
@@ -70,7 +88,7 @@
       "sh.pantry": "I always have it", "sh.remove": "Remove", "sh.from.recipes": "for {list}",
       "aisle.produce": "Fruit & vegetables", "aisle.meat": "Meat", "aisle.fish": "Fish & seafood", "aisle.dairy": "Dairy & eggs",
       "aisle.bakery": "Bakery", "aisle.pantry": "Cupboard", "aisle.spices": "Spices & herbs", "aisle.frozen": "Frozen",
-      "aisle.drinks": "Drinks", "aisle.other": "Other",
+      "aisle.drinks": "Drinks", "aisle.household": "Household", "aisle.other": "Other",
       "course.": "No course", "course.breakfast": "Breakfast", "course.main": "Main", "course.side": "Side",
       "course.salad": "Salad", "course.soup": "Soup", "course.dessert": "Dessert", "course.snack": "Snack", "course.drink": "Drink",
       "diet.vegan": "Vegan", "diet.veg": "Vegetarian", "diet.pesc": "Pescatarian", "diet.raw": "Raw food",
@@ -93,8 +111,24 @@
       "e.discard": "Discard your changes to this recipe?", "e.discardOk": "Discard", "e.keep": "Keep editing",
       "e.max": "Up to {n} recipes", "e.suggested": "Ticked what the ingredients allow. Check keto, low-carb and raw yourself.",
       "e.suggestNone": "Add ingredients first",
-      "p.title": "Paste a recipe", "p.hint": "Paste a recipe from anywhere (a site, a message, a note). Ingredients and steps are found for you, then you check them before saving.",
-      "p.go": "Continue", "p.empty": "Paste some text first",
+      "p.title": "Import a recipe", "p.hint": "Or paste a recipe from anywhere: text from a site, a message or a note, or a page's source (HTML) or JSON. Ingredients and steps are found for you, then you check them before saving.",
+      "p.go": "Continue", "p.empty": "Type a web address, or paste some text first", "p.paste": "Paste the recipe",
+      "im.url": "Web address of a recipe", "im.fetch": "Fetch",
+      "im.urlHint": "Works with most recipe sites. Sites that don't let apps read them go through the orOS relay set up in Mail or Reader.",
+      "im.file": "Open a file…", "im.fileHint": "Paprika (.paprikarecipes), Mealie or Tandoor exports, a saved page (.html) or JSON.",
+      "im.loading": "Fetching the page…", "im.reading": "Reading the file…",
+      "im.none": "No recipe found there. Copy the recipe's text and paste it below.",
+      "im.noneFile": "No recipes found in this file.", "im.badUrl": "Type a web address (https://…)",
+      "im.err.offline": "You are offline.",
+      "im.err.norelay": "This site doesn't let apps read it. Set up the orOS relay in Mail, or open the page, copy the recipe and paste it below.",
+      "im.err.status": "The site answered with an error ({n}).",
+      "im.err.other": "Could not read the page ({code}). Copy the recipe and paste it below.",
+      "im.err.file": "Could not read this file.",
+      "im.many": "{n} recipes found", "im.manyHint": "Tick the ones to add. Ones you already have (same title) start unticked.",
+      "im.have": "already in your recipes", "im.add": "Add {n}", "im.all": "All", "im.noneSel": "None",
+      "v.photo": "Photo (opens the site)",
+      "un.label": "Units", "un.": "As written", "un.metric": "Metric", "un.us": "US",
+      "s.units": "Units on this device", "s.unitsHint": "Recipes, cooking mode and the shopping list show quantities and oven temperatures in these units.",
       "pk.title": "{slot}, {day}", "pk.search": "Search recipes…", "pk.text": "Or write something (“Out”, “Leftovers”)",
       "pk.addText": "Add", "pk.fitsFirst": "Fit our diet first",
       "it.open": "Open recipe", "it.move": "Move to", "it.moveBtn": "Move", "it.remove": "Remove", "it.servings": "Servings",
@@ -111,11 +145,51 @@
       "toast.saved": "Recipe saved", "toast.deleted": "“{t}” deleted", "toast.copied": "Copied",
       "toast.save": "Could not save: storage is full", "toast.imported": "Imported: {n} recipes", "toast.importBad": "That file is not a Meal Planner backup",
       "toast.exported": "Backup saved", "toast.nothing": "Nothing to share", "toast.removedItem": "Removed",
-      "copy.suffix": "{t} (copy)", "share.serv": "{n} servings"
+      "copy.suffix": "{t} (copy)", "share.serv": "{n} servings",
+      "tab.pa": "Pantry", "loc.fridge": "Fridge", "loc.freezer": "Freezer", "loc.cupboard": "Cupboard", "loc.all": "All",
+      "pa.add": "Add: “1 l milk”, “6 eggs”…", "pa.addBtn": "Add to the pantry", "pa.scan": "Barcode", "pa.cook": "What can I cook?",
+      "pa.empty": "Nothing in the pantry yet. Add what you have at home, scan a barcode, or tick items in Shopping.",
+      "pa.emptyLoc": "Nothing here.", "pa.soon": "Use soon", "pa.bbIn": "best before {d}", "pa.today": "best before today",
+      "pa.tomorrow": "best before tomorrow", "pa.days": "{n} days left", "pa.expired": "past its date ({d})",
+      "pa.some": "some", "pa.edit": "Edit {name}", "pa.added": "Added to the pantry: {name}", "pa.more": "Added {name}: now {q}",
+      "pa.removed": "Removed from the pantry", "pa.max": "Up to {n} items in the pantry",
+      "pe.new": "Add to the pantry", "pe.edit": "Pantry item", "pe.name": "Name", "pe.qty": "Quantity", "pe.unit": "Unit",
+      "pe.loc": "Kept in", "pe.bb": "Best before", "pe.bc": "Barcode", "pe.save": "Save", "pe.del": "Remove",
+      "pe.needName": "Give it a name",
+      "u.pc": "pieces", "u.": "—",
+      "bc.title": "Add by barcode", "bc.code": "Barcode number", "bc.look": "Look up", "bc.cam": "Point the camera at the barcode",
+      "bc.camOff": "The camera can't be used here. Type the number under the barcode.", "bc.bad": "That number doesn't look like a barcode (8, 12, 13 or 14 digits).",
+      "bc.looking": "Looking it up on Open Food Facts…", "bc.notFound": "Not on Open Food Facts. You can still add it by name.",
+      "bc.known": "You already have this: {name}", "bc.add": "Add to the pantry", "bc.addName": "Add it by name",
+      "bc.per100": "per 100 g: {k} kcal · protein {p} g · carbs {c} g · fat {f} g", "bc.page": "See it on Open Food Facts",
+      "net.offline": "You are offline.", "net.err": "Open Food Facts could not be reached ({code}). Try again later.",
+      "ck.title": "What can I cook?", "ck.hint": "Recipes by how much of them is already at home. Things you always have count as there.",
+      "ck.none": "No recipe uses what is in the pantry yet.", "ck.have": "{h} of {n} at home", "ck.all": "Everything is at home",
+      "ck.missing": "Missing: {list}", "ck.low": "Not enough: {list}", "ck.soonUse": "uses something to eat soon",
+      "ck.addMissing": "Add missing to the list", "ck.addedMissing": "{n} added to this week's shopping list", "ck.open": "Open",
+      "co.btn": "Cooked", "co.title": "Cooked: take from the pantry", "co.hint": "Untick what you didn't use. Nothing changes until you press Take from the pantry.",
+      "co.line": "{take} of {have} → {left} left", "co.gone": "{take}: used up", "co.usedUp": "Used up (remove {name})",
+      "co.short": "{n} more than the pantry had", "co.notIn": "Not in the pantry", "co.ok": "Take from the pantry",
+      "co.done": "Pantry updated", "co.nothing": "Nothing of this recipe is in the pantry.",
+      "sh.home": "At home already (pantry):", "sh.homeHint": "In the pantry in enough quantity: not counted, copied or sent.",
+      "sh.have": "at home: {q}", "sh.toPantry": "To pantry", "sh.bought": "Ticked: {name}", "sh.tickedToPantry": "Ticked to pantry",
+      "sh.allIn": "{n} added to the pantry", "sh.noneTicked": "Tick what you bought first",
+      "nu.title": "Per serving", "nu.est": "≈ {k} kcal · protein {p} g · carbs {c} g · fat {f} g",
+      "nu.kcal": "≈ {k} kcal", "nu.counted": "An estimate from {n} of {m} ingredients.", "nu.none": "No estimate yet: no ingredient has a match.",
+      "nu.check": "Check the ingredients", "nu.dlg": "Nutrition estimate", "nu.dlgHint": "Each ingredient's amount in grams × its values per 100 g. Pick a better match where needed; your choice is remembered for that ingredient in every recipe.",
+      "nu.st.ok": "≈ {g} g · {src}", "nu.st.noqty": "no amount, not counted", "nu.st.nomatch": "no match", "nu.st.nogram": "weight unknown: set grams per piece",
+      "nu.st.x": "left out", "nu.src.tbl": "built-in table", "nu.src.off": "Open Food Facts",
+      "nu.change": "Change", "nu.match": "Match for “{name}”", "nu.search": "Search Open Food Facts", "nu.searching": "Searching…",
+      "nu.noRes": "Nothing found. Try other words (English often finds more).", "nu.useTbl": "Built-in table:", "nu.leaveOut": "Leave it out",
+      "nu.auto": "Automatic", "nu.pieceG": "Grams in one piece", "nu.saved": "Remembered for “{name}”",
+      "nu.day": "≈ {k} kcal per person", "nu.dayPart": "≈ {k} kcal per person (some meals have no estimate)",
+      "nu.credit": "Nutrition: our table from USDA FoodData Central (public domain) and Open Food Facts (ODbL, openfoodfacts.org). An estimate only, not dietary advice.",
+      "s.nu": "Show nutrition estimates", "s.nt": "Best-before reminder", "s.ntHint": "An orOS notification the day before something in the pantry reaches its best-before date, and on the day. On this device.",
+      "s.ntOff": "Off", "s.ntAt": "at {h}:00", "s.credits": "Data sources"
     },
     el: {
       "app.name": "Συνταγές & Μενού", "tab.rc": "Συνταγές", "tab.wk": "Εβδομάδα", "tab.sh": "Ψώνια", "btn.settings": "Ρυθμίσεις",
-      "rc.search": "Αναζήτηση συνταγών, ή υλικά με κόμμα…", "rc.new": "Νέα συνταγή", "rc.paste": "Επικόλληση",
+      "rc.search": "Αναζήτηση συνταγών, ή υλικά με κόμμα…", "rc.new": "Νέα συνταγή", "rc.paste": "Εισαγωγή",
       "rc.empty": "Καμία συνταγή δεν ταιριάζει.", "rc.none": "Καμία συνταγή ακόμα. Πρόσθεσε μία, ή επικόλλησε από οπουδήποτε.",
       "rc.ingmode": "Συνταγές με: {list}", "f.fav": "★ Αγαπημένες", "f.fits": "Για τη διατροφή μας",
       "rc.min": "{n}′", "rc.serv": "{n} μερ.", "fav.add": "Στις αγαπημένες", "fav.del": "Αφαίρεση από τις αγαπημένες",
@@ -133,7 +207,7 @@
       "sh.pantry": "Το έχω πάντα", "sh.remove": "Αφαίρεση", "sh.from.recipes": "για {list}",
       "aisle.produce": "Φρούτα & λαχανικά", "aisle.meat": "Κρέας", "aisle.fish": "Ψάρια & θαλασσινά", "aisle.dairy": "Γαλακτοκομικά & αυγά",
       "aisle.bakery": "Φούρνος", "aisle.pantry": "Ντουλάπι", "aisle.spices": "Μπαχαρικά & μυρωδικά", "aisle.frozen": "Κατεψυγμένα",
-      "aisle.drinks": "Ποτά", "aisle.other": "Άλλα",
+      "aisle.drinks": "Ποτά", "aisle.household": "Είδη σπιτιού", "aisle.other": "Άλλα",
       "course.": "Χωρίς είδος", "course.breakfast": "Πρωινό", "course.main": "Κυρίως", "course.side": "Συνοδευτικό",
       "course.salad": "Σαλάτα", "course.soup": "Σούπα", "course.dessert": "Γλυκό", "course.snack": "Σνακ", "course.drink": "Ρόφημα",
       "diet.vegan": "Vegan", "diet.veg": "Χορτοφαγική", "diet.pesc": "Pescatarian (με ψάρι)", "diet.raw": "Ωμοφαγική",
@@ -156,8 +230,24 @@
       "e.discard": "Να χαθούν οι αλλαγές σου σε αυτή τη συνταγή;", "e.discardOk": "Να χαθούν", "e.keep": "Συνέχεια",
       "e.max": "Έως {n} συνταγές", "e.suggested": "Τσεκαρίστηκαν όσες επιτρέπουν τα υλικά. Το keto, τους λίγους υδατάνθρακες και την ωμοφαγία έλεγξέ τα εσύ.",
       "e.suggestNone": "Γράψε πρώτα τα υλικά",
-      "p.title": "Επικόλληση συνταγής", "p.hint": "Επικόλλησε μια συνταγή από οπουδήποτε (site, μήνυμα, σημείωση). Τα υλικά και τα βήματα βρίσκονται μόνα τους και τα ελέγχεις πριν την αποθήκευση.",
-      "p.go": "Συνέχεια", "p.empty": "Επικόλλησε πρώτα κείμενο",
+      "p.title": "Εισαγωγή συνταγής", "p.hint": "Ή επικόλλησε μια συνταγή από οπουδήποτε: κείμενο από site, μήνυμα ή σημείωση, ή τον κώδικα μιας σελίδας (HTML) ή JSON. Τα υλικά και τα βήματα βρίσκονται μόνα τους και τα ελέγχεις πριν την αποθήκευση.",
+      "p.go": "Συνέχεια", "p.empty": "Γράψε μια διεύθυνση ή επικόλλησε πρώτα κείμενο", "p.paste": "Επικόλληση συνταγής",
+      "im.url": "Διεύθυνση (link) μιας συνταγής", "im.fetch": "Φέρε τη",
+      "im.urlHint": "Δουλεύει με τα περισσότερα sites συνταγών. Όσα δεν αφήνουν τις εφαρμογές να τα διαβάσουν περνούν από το relay του orOS που έχεις ορίσει στην Αλληλογραφία ή στον Αναγνώστη.",
+      "im.file": "Άνοιγμα αρχείου…", "im.fileHint": "Εξαγωγές από Paprika (.paprikarecipes), Mealie ή Tandoor, μια αποθηκευμένη σελίδα (.html) ή JSON.",
+      "im.loading": "Φέρνω τη σελίδα…", "im.reading": "Διαβάζω το αρχείο…",
+      "im.none": "Δεν βρέθηκε συνταγή εκεί. Αντέγραψε το κείμενο της συνταγής και επικόλλησέ το παρακάτω.",
+      "im.noneFile": "Δεν βρέθηκαν συνταγές σε αυτό το αρχείο.", "im.badUrl": "Γράψε μια διεύθυνση (https://…)",
+      "im.err.offline": "Δεν υπάρχει σύνδεση.",
+      "im.err.norelay": "Αυτό το site δεν αφήνει τις εφαρμογές να το διαβάσουν. Όρισε το relay του orOS στην Αλληλογραφία, ή άνοιξε τη σελίδα, αντέγραψε τη συνταγή και επικόλλησέ τη παρακάτω.",
+      "im.err.status": "Το site απάντησε με σφάλμα ({n}).",
+      "im.err.other": "Η σελίδα δεν διαβάστηκε ({code}). Αντέγραψε τη συνταγή και επικόλλησέ τη παρακάτω.",
+      "im.err.file": "Το αρχείο δεν διαβάστηκε.",
+      "im.many": "Βρέθηκαν {n} συνταγές", "im.manyHint": "Τσέκαρε όσες θέλεις να μπουν. Όσες έχεις ήδη (ίδιος τίτλος) ξεκινούν ατσεκάριστες.",
+      "im.have": "την έχεις ήδη", "im.add": "Προσθήκη {n}", "im.all": "Όλες", "im.noneSel": "Καμία",
+      "v.photo": "Φωτογραφία (ανοίγει το site)",
+      "un.label": "Μονάδες", "un.": "Όπως γράφτηκαν", "un.metric": "Μετρικές", "un.us": "ΗΠΑ",
+      "s.units": "Μονάδες σε αυτή τη συσκευή", "s.unitsHint": "Οι συνταγές, το μαγείρεμα και η λίστα για ψώνια δείχνουν ποσότητες και θερμοκρασίες φούρνου σε αυτές τις μονάδες.",
       "pk.title": "{slot}, {day}", "pk.search": "Αναζήτηση συνταγών…", "pk.text": "Ή γράψε κάτι («Έξω», «Περισσεύματα»)",
       "pk.addText": "Προσθήκη", "pk.fitsFirst": "Πρώτα όσα ταιριάζουν στη διατροφή μας",
       "it.open": "Άνοιγμα συνταγής", "it.move": "Μετακίνηση σε", "it.moveBtn": "Μετακίνηση", "it.remove": "Αφαίρεση", "it.servings": "Μερίδες",
@@ -174,7 +264,47 @@
       "toast.saved": "Η συνταγή αποθηκεύτηκε", "toast.deleted": "Διαγράφηκε: «{t}»", "toast.copied": "Αντιγράφηκε",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.imported": "Εισήχθησαν: {n} συνταγές", "toast.importBad": "Αυτό το αρχείο δεν είναι αντίγραφο του Meal Planner",
       "toast.exported": "Το αντίγραφο αποθηκεύτηκε", "toast.nothing": "Τίποτα για μοίρασμα", "toast.removedItem": "Αφαιρέθηκε",
-      "copy.suffix": "{t} (αντίγραφο)", "share.serv": "{n} μερίδες"
+      "copy.suffix": "{t} (αντίγραφο)", "share.serv": "{n} μερίδες",
+      "tab.pa": "Κελάρι", "loc.fridge": "Ψυγείο", "loc.freezer": "Καταψύκτης", "loc.cupboard": "Ντουλάπι", "loc.all": "Όλα",
+      "pa.add": "Πρόσθεσε: «1 λίτρο γάλα», «6 αυγά»…", "pa.addBtn": "Προσθήκη στο κελάρι", "pa.scan": "Barcode", "pa.cook": "Τι να μαγειρέψω;",
+      "pa.empty": "Το κελάρι είναι άδειο. Πρόσθεσε ό,τι έχεις στο σπίτι, σάρωσε ένα barcode ή τσέκαρε είδη στα Ψώνια.",
+      "pa.emptyLoc": "Τίποτα εδώ.", "pa.soon": "Να φαγωθούν σύντομα", "pa.bbIn": "λήγει {d}", "pa.today": "λήγει σήμερα",
+      "pa.tomorrow": "λήγει αύριο", "pa.days": "μένουν {n} μέρες", "pa.expired": "έληξε ({d})",
+      "pa.some": "υπάρχει", "pa.edit": "Επεξεργασία: {name}", "pa.added": "Μπήκε στο κελάρι: {name}", "pa.more": "Προστέθηκε {name}: τώρα {q}",
+      "pa.removed": "Βγήκε από το κελάρι", "pa.max": "Έως {n} είδη στο κελάρι",
+      "pe.new": "Προσθήκη στο κελάρι", "pe.edit": "Είδος στο κελάρι", "pe.name": "Όνομα", "pe.qty": "Ποσότητα", "pe.unit": "Μονάδα",
+      "pe.loc": "Φυλάσσεται", "pe.bb": "Ανάλωση έως", "pe.bc": "Barcode", "pe.save": "Αποθήκευση", "pe.del": "Αφαίρεση",
+      "pe.needName": "Δώσε ένα όνομα",
+      "u.pc": "τεμάχια", "u.": "—",
+      "bc.title": "Προσθήκη με barcode", "bc.code": "Αριθμός barcode", "bc.look": "Αναζήτηση", "bc.cam": "Στόχευσε το barcode με την κάμερα",
+      "bc.camOff": "Η κάμερα δεν μπορεί να χρησιμοποιηθεί εδώ. Γράψε τον αριθμό κάτω από το barcode.", "bc.bad": "Αυτός ο αριθμός δεν μοιάζει με barcode (8, 12, 13 ή 14 ψηφία).",
+      "bc.looking": "Αναζήτηση στο Open Food Facts…", "bc.notFound": "Δεν υπάρχει στο Open Food Facts. Μπορείς να το προσθέσεις με το όνομά του.",
+      "bc.known": "Το έχεις ήδη: {name}", "bc.add": "Προσθήκη στο κελάρι", "bc.addName": "Προσθήκη με όνομα",
+      "bc.per100": "ανά 100 γρ.: {k} kcal · πρωτεΐνη {p} γρ. · υδατάνθρακες {c} γρ. · λιπαρά {f} γρ.", "bc.page": "Δες το στο Open Food Facts",
+      "net.offline": "Δεν υπάρχει σύνδεση.", "net.err": "Το Open Food Facts δεν απάντησε ({code}). Δοκίμασε ξανά αργότερα.",
+      "ck.title": "Τι να μαγειρέψω;", "ck.hint": "Οι συνταγές με βάση το πόσα από τα υλικά τους υπάρχουν ήδη στο σπίτι. Όσα έχεις πάντα μετράνε ως διαθέσιμα.",
+      "ck.none": "Καμία συνταγή δεν χρησιμοποιεί ακόμα κάτι από το κελάρι.", "ck.have": "{h} από {n} στο σπίτι", "ck.all": "Υπάρχουν όλα στο σπίτι",
+      "ck.missing": "Λείπουν: {list}", "ck.low": "Δεν φτάνουν: {list}", "ck.soonUse": "χρησιμοποιεί κάτι που πρέπει να φαγωθεί σύντομα",
+      "ck.addMissing": "Όσα λείπουν στη λίστα", "ck.addedMissing": "Μπήκαν {n} στη λίστα για ψώνια της εβδομάδας", "ck.open": "Άνοιγμα",
+      "co.btn": "Το μαγείρεψα", "co.title": "Μαγειρεύτηκε: αφαίρεση από το κελάρι", "co.hint": "Ξετσέκαρε όσα δεν χρησιμοποίησες. Τίποτα δεν αλλάζει πριν πατήσεις «Αφαίρεση από το κελάρι».",
+      "co.line": "{take} από {have} → μένουν {left}", "co.gone": "{take}: τελείωσε", "co.usedUp": "Τελείωσε (βγαίνει: {name})",
+      "co.short": "{n} παραπάνω από όσα είχε το κελάρι", "co.notIn": "Δεν υπάρχει στο κελάρι", "co.ok": "Αφαίρεση από το κελάρι",
+      "co.done": "Το κελάρι ενημερώθηκε", "co.nothing": "Κανένα υλικό αυτής της συνταγής δεν είναι στο κελάρι.",
+      "sh.home": "Υπάρχουν ήδη στο σπίτι (κελάρι):", "sh.homeHint": "Υπάρχουν στο κελάρι σε αρκετή ποσότητα: δεν μετράνε, δεν αντιγράφονται, δεν στέλνονται.",
+      "sh.have": "στο σπίτι: {q}", "sh.toPantry": "Στο κελάρι", "sh.bought": "Τσεκαρίστηκε: {name}", "sh.tickedToPantry": "Τσεκαρισμένα στο κελάρι",
+      "sh.allIn": "Μπήκαν {n} στο κελάρι", "sh.noneTicked": "Τσέκαρε πρώτα όσα αγόρασες",
+      "nu.title": "Ανά μερίδα", "nu.est": "≈ {k} kcal · πρωτεΐνη {p} γρ. · υδατάνθρακες {c} γρ. · λιπαρά {f} γρ.",
+      "nu.kcal": "≈ {k} kcal", "nu.counted": "Εκτίμηση από {n} από τα {m} υλικά.", "nu.none": "Καμία εκτίμηση ακόμα: κανένα υλικό δεν έχει αντιστοίχιση.",
+      "nu.check": "Έλεγχος υλικών", "nu.dlg": "Εκτίμηση θρεπτικών", "nu.dlgHint": "Η ποσότητα κάθε υλικού σε γραμμάρια × οι τιμές του ανά 100 γρ. Διάλεξε καλύτερη αντιστοίχιση όπου χρειάζεται· η επιλογή σου μένει για αυτό το υλικό σε όλες τις συνταγές.",
+      "nu.st.ok": "≈ {g} γρ. · {src}", "nu.st.noqty": "χωρίς ποσότητα, δεν μετράει", "nu.st.nomatch": "χωρίς αντιστοίχιση", "nu.st.nogram": "άγνωστο βάρος: όρισε γραμμάρια ανά τεμάχιο",
+      "nu.st.x": "εκτός εκτίμησης", "nu.src.tbl": "ενσωματωμένος πίνακας", "nu.src.off": "Open Food Facts",
+      "nu.change": "Αλλαγή", "nu.match": "Αντιστοίχιση για «{name}»", "nu.search": "Αναζήτηση στο Open Food Facts", "nu.searching": "Αναζήτηση…",
+      "nu.noRes": "Δεν βρέθηκε τίποτα. Δοκίμασε άλλες λέξεις (στα αγγλικά βρίσκονται συχνά περισσότερα).", "nu.useTbl": "Ενσωματωμένος πίνακας:", "nu.leaveOut": "Να μη μετράει",
+      "nu.auto": "Αυτόματα", "nu.pieceG": "Γραμμάρια ανά τεμάχιο", "nu.saved": "Θα το θυμάμαι για «{name}»",
+      "nu.day": "≈ {k} kcal ανά άτομο", "nu.dayPart": "≈ {k} kcal ανά άτομο (κάποια γεύματα χωρίς εκτίμηση)",
+      "nu.credit": "Θρεπτικά: ο πίνακάς μας από το USDA FoodData Central (κοινό κτήμα) και το Open Food Facts (ODbL, openfoodfacts.org). Μόνο εκτίμηση, όχι διατροφική συμβουλή.",
+      "s.nu": "Εμφάνιση εκτίμησης θρεπτικών", "s.nt": "Υπενθύμιση λήξης", "s.ntHint": "Μια ειδοποίηση του orOS την προηγούμενη μέρα πριν λήξει κάτι από το κελάρι, και την ίδια μέρα. Σε αυτή τη συσκευή.",
+      "s.ntOff": "Όχι", "s.ntAt": "στις {h}:00", "s.credits": "Πηγές δεδομένων"
     }
   };
 
@@ -215,7 +345,8 @@
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>',
-    paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>',
+    paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>',
+    barcode: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6v12M8 6v12M11 6v12M15 6v12M18 6v12M21 6v12"/></svg>',
     timer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4"/></svg>'
   };
 
@@ -257,9 +388,13 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = (p && typeof p === "object") ? p : {};
     prefs = {
-      tab: ["rc", "wk", "sh"].indexOf(p.tab) >= 0 ? p.tab : "wk",
+      tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "wk",
       fits: p.fits === 0 ? 0 : 1,
-      from: p.from === 1 ? 1 : 0
+      from: p.from === 1 ? 1 : 0,
+      un: p.un === "metric" || p.un === "us" ? p.un : "",     // units shown (wave 2): "" as written
+      nu: p.nu === 0 ? 0 : 1,                                 // nutrition estimates shown (wave 3)
+      nt: P.notifyHour(p),                                    // best-before reminder hour, -1 off (wave 3; read by the shell)
+      loc: C.LOCS.indexOf(p.loc) >= 0 ? p.loc : ""            // pantry filter (wave 3)
     };
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
@@ -423,7 +558,24 @@
   }
 
   // ---------- 5. Shopping ----------
-  function shopList() { return C.buildShop(data, getRecipe, view.wk, prefs.from ? today() : null, LANG); }
+  // The week's list against the pantry (wave 3): lines the pantry
+  // covers go to `home` (not counted, copied or sent); a line partly
+  // there says how much is at home.
+  function shopList() {
+    var l = C.buildShop(data, getRecipe, view.wk, prefs.from ? today() : null, LANG, prefs.un);
+    l.home = [];
+    if (data.pa.length) {
+      l.items = l.items.filter(function (it) {
+        if (it.manual) return true;
+        var c = P.coverShop(data.pa, it);
+        if (c.st === "none") return true;
+        it.have = P.haveText(c.items, LANG);
+        if (c.st === "full") { l.home.push(it); return false; }
+        return true;
+      });
+    }
+    return l;
+  }
   function setTick(item, on) {
     if (item.manual) {
       var x = null;
@@ -486,7 +638,7 @@
   function setTab(tab) {
     prefs.tab = tab;
     savePrefs();
-    ["rc", "wk", "sh"].forEach(function (x) {
+    TABS.forEach(function (x) {
       var b = $("tab-" + x), on = x === tab;
       b.setAttribute("aria-selected", on ? "true" : "false");
       b.tabIndex = on ? 0 : -1;
@@ -616,10 +768,19 @@
     var scroll = box.scrollTop, scrollX = box.scrollLeft;
     box.innerHTML = "";
     box.style.setProperty("--slots", data.set.sl.length);
+    var nuCache = {};
     C.weekDays(view.wk).forEach(function (d) {
       var day = el("section", "day" + (d === td ? " today" : ""));
       day.setAttribute("aria-label", fmtDay(d, true));
-      day.appendChild(el("h3", "day-h", fmtDay(d)));
+      var dh = el("h3", "day-h", fmtDay(d));
+      var kc = dayKcal(d, nuCache);
+      if (kc) {
+        var ks = el("span", "day-kcal", kc.txt);
+        ks.title = kc.title;
+        ks.setAttribute("aria-label", kc.title);
+        dh.appendChild(ks);
+      }
+      day.appendChild(dh);
       data.set.sl.forEach(function (s) {
         var k = cellKey(d, s);
         var slot = el("div", "slot");
@@ -702,13 +863,7 @@
     var scroll = $("view-sh").scrollTop;
     box.innerHTML = "";
     var aisle = null, ul = null;
-    list.items.forEach(function (it) {
-      if (it.aisle !== aisle) {
-        aisle = it.aisle;
-        box.appendChild(el("h3", "aisle-h", aisleName(aisle)));
-        ul = el("ul", "shop");
-        box.appendChild(ul);
-      }
+    function shopRow(it) {
       var li = el("li", "sh-item" + (it.done ? " done" : ""));
       var lab = el("label", "sh-lab");
       var cb = el("input");
@@ -716,13 +871,17 @@
       cb.checked = it.done;
       cb.addEventListener("change", function () {
         setTick(it, cb.checked);
+        it.done = cb.checked;
         li.classList.toggle("done", cb.checked);
         renderShopCount(shopList());
+        // Bought: offer to put it in the pantry (wave 3).
+        if (cb.checked && !it.pa) actionToast(t("sh.bought", { name: it.name }), t("sh.toPantry"), function () { shopToPantry([it]); });
       });
       lab.appendChild(cb);
       var txt = el("span", "sh-txt");
       if (it.qty) txt.appendChild(el("b", "sh-qty", it.qty));
       txt.appendChild(el("span", "sh-name", it.name));
+      if (it.have) txt.appendChild(el("span", "sh-have", "🏠 " + t("sh.have", { q: it.have })));
       if (it.from.length) txt.appendChild(el("span", "sh-from", t("sh.from.recipes", { list: it.from.join(", ") })));
       lab.appendChild(txt);
       li.appendChild(lab);
@@ -732,9 +891,28 @@
       more.setAttribute("aria-label", t("sh.more", { name: it.name }));
       more.addEventListener("click", function () { openShopItem(it); });
       li.appendChild(more);
-      ul.appendChild(li);
+      return li;
+    }
+    list.items.forEach(function (it) {
+      if (it.aisle !== aisle) {
+        aisle = it.aisle;
+        box.appendChild(el("h3", "aisle-h", aisleName(aisle)));
+        ul = el("ul", "shop");
+        box.appendChild(ul);
+      }
+      ul.appendChild(shopRow(it));
     });
-    $("sh-empty").hidden = list.items.length > 0;
+    var hb = $("sh-home");
+    hb.innerHTML = "";
+    hb.hidden = !list.home.length;
+    if (list.home.length) {
+      hb.appendChild(el("h3", "aisle-h", "🏠 " + t("sh.home")));
+      hb.appendChild(el("p", "hint", t("sh.homeHint")));
+      var hu = el("ul", "shop");
+      list.home.forEach(function (it) { hu.appendChild(shopRow(it)); });
+      hb.appendChild(hu);
+    }
+    $("sh-empty").hidden = list.items.length + list.home.length > 0;
     $("sh-empty").textContent = t("sh.empty");
     renderShopCount(list);
     var ex = $("sh-excluded");
@@ -789,6 +967,7 @@
     renderRecipes();
     renderWeek();
     renderShop();
+    renderPantry();
   }
 
   // ---------- 7. Recipe view ----------
@@ -829,6 +1008,7 @@
     svRow.appendChild(el("span", "dlg-lbl inline", t("v.servings")));
     var svBox = stepper(sv, 1, C.LIM.servings, t("v.less"), t("v.more"), function (v) { sv = v; drawIngs(); });
     svRow.appendChild(svBox);
+    svRow.appendChild(unitsSeg(function () { drawIngs(); drawSteps(); }));
     dlg.appendChild(svRow);
 
     var cols = el("div", "v-cols");
@@ -852,7 +1032,7 @@
         var cb = el("input");
         cb.type = "checkbox";
         lab.appendChild(cb);
-        var q = C.fmtIngQty(ing, LANG, sv / r.sv);
+        var q = C.fmtIngQty(ing, LANG, sv / r.sv, prefs.un);
         var sp = el("span", "");
         if (q) sp.appendChild(el("b", "", q + " "));
         sp.appendChild(document.createTextNode(ing.n + (ing.x ? ", " + ing.x : "")));
@@ -862,27 +1042,40 @@
       });
     }
     drawIngs();
+    if (prefs.nu) left.appendChild(nutritionBox(r));
     cols.appendChild(left);
     var right = el("div", "v-col");
     right.appendChild(el("h3", "sec-h", t("v.steps")));
-    if (r.st.length) {
+    var stepBox = el("div", "");
+    right.appendChild(stepBox);
+    function drawSteps() {
+      stepBox.innerHTML = "";
+      if (!r.st.length) { stepBox.appendChild(el("p", "hint", t("v.nosteps"))); return; }
       var ol = el("ol", "steps");
-      r.st.forEach(function (s) { ol.appendChild(el("li", "", s)); });
-      right.appendChild(ol);
-    } else right.appendChild(el("p", "hint", t("v.nosteps")));
+      r.st.forEach(function (s) { ol.appendChild(el("li", "", C.convertTemps(s, prefs.un))); });
+      stepBox.appendChild(ol);
+    }
+    drawSteps();
     if (r.no) {
       right.appendChild(el("h3", "sec-h", t("v.notes")));
       right.appendChild(el("p", "notes", r.no));
     }
-    if (r.src) {
+    if (r.src || r.img) {
       right.appendChild(el("h3", "sec-h", t("v.source")));
-      right.appendChild(sourceNode(r.src));
+      if (r.src) right.appendChild(sourceNode(r.src));
+      if (r.img) {
+        // The picture stays on its site: a link, never loaded here.
+        var ph = sourceNode(r.img);
+        if (ph.tagName === "A") { ph.textContent = "🖼 " + t("v.photo"); ph.className = "src-link photo-link"; }
+        right.appendChild(ph);
+      }
     }
     cols.appendChild(right);
     dlg.appendChild(cols);
 
     var acts = el("div", "dlg-actions wrap");
     acts.appendChild(button(t("v.cookmode"), "primary", function () { dlg.close(); openCook(id, sv); }));
+    acts.appendChild(button(t("co.btn"), "", function () { dlg.close(); openCooked(id, sv); }));
     acts.appendChild(button(t("v.toplan"), "", function () { dlg.close(); openAddToPlan(id, sv); }));
     acts.appendChild(button(t("v.edit"), "", function () { dlg.close(); openEditor(r); }));
     acts.appendChild(button(t("v.share"), "", function () {
@@ -912,16 +1105,17 @@
     return a;
   }
   function recipeText(r, sv) {
+    var un = prefs.un;
     var out = [(r.e ? r.e + " " : "") + r.t, t("share.serv", { n: sv }), ""];
     out.push(t("v.ings") + ":");
     var g = "";
     r.ig.forEach(function (ing) {
       if (ing.g && ing.g !== g) { g = ing.g; out.push(g + ":"); }
-      out.push("- " + C.ingToLine(ing, LANG, sv / r.sv));
+      out.push("- " + C.ingToLine(ing, LANG, sv / r.sv, un));
     });
     if (r.st.length) {
       out.push("", t("v.steps") + ":");
-      r.st.forEach(function (s, i) { out.push((i + 1) + ". " + s); });
+      r.st.forEach(function (s, i) { out.push((i + 1) + ". " + C.convertTemps(s, un)); });
     }
     if (r.no) out.push("", r.no);
     if (r.src) out.push("", t("v.source") + ": " + r.src);
@@ -934,8 +1128,10 @@
     catch (e) { return null; }
   }
   function sharePayload(r) {
-    return { t: r.t, e: r.e, c: r.c, sv: r.sv, pt: r.pt, ct: r.ct, dt: r.dt, tg: r.tg,
+    var o = { t: r.t, e: r.e, c: r.c, sv: r.sv, pt: r.pt, ct: r.ct, dt: r.dt, tg: r.tg,
       ig: r.ig, st: r.st, no: r.no, src: r.src };
+    if (r.img) o.img = r.img;
+    return o;
   }
   function shareText(title, text) {
     if (!text) { showToast(t("toast.nothing")); return; }
@@ -979,11 +1175,11 @@
     box.appendChild(el("p", "", t("share.serv", { n: sv }) + (r.pt + r.ct ? " · ⏱ " + t("rc.min", { n: r.pt + r.ct }) : "")));
     box.appendChild(el("h2", "", t("v.ings")));
     var ul = el("ul");
-    r.ig.forEach(function (ing) { ul.appendChild(el("li", "", C.ingToLine(ing, LANG, sv / r.sv))); });
+    r.ig.forEach(function (ing) { ul.appendChild(el("li", "", C.ingToLine(ing, LANG, sv / r.sv, prefs.un))); });
     box.appendChild(ul);
     box.appendChild(el("h2", "", t("v.steps")));
     var ol = el("ol");
-    r.st.forEach(function (s) { ol.appendChild(el("li", "", s)); });
+    r.st.forEach(function (s) { ol.appendChild(el("li", "", C.convertTemps(s, prefs.un))); });
     box.appendChild(ol);
     if (r.no) { box.appendChild(el("h2", "", t("v.notes"))); box.appendChild(el("p", "", r.no)); }
     document.body.classList.add("printing");
@@ -1114,6 +1310,7 @@
         ig: C.textToIngs(fIngs.value),
         st: C.textToSteps(fSteps.value),
         no: fNotes.value, src: fSrc.value,
+        img: src.img || "",
         fv: src.fv === 1 ? 1 : 0
       };
     }
@@ -1164,26 +1361,237 @@
     return function () { clearTimeout(tm); tm = setTimeout(fn, ms); };
   }
 
+  // Import: a web address, pasted text (plain, a page's source or
+  // JSON) or a file (Paprika, Mealie, Tandoor, HTML, JSON). Pages and
+  // files are read as data by import.js; one recipe opens in the
+  // editor, several in a list to tick. Nothing is saved without Save /
+  // Add. The Reader's network layer (../feeds/fetch.js: direct, else
+  // the orOS relay's "web" op) and the ZIP reader (../atelier/zip.js)
+  // load only when needed.
+  var APP_V = (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "").match(/[?&]v=([^&#]+)/);
+    return m ? m[1] : "";
+  })();
+  var loaded = {};
+  function loadScript(src) {
+    if (loaded[src]) return loaded[src];
+    loaded[src] = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src + (APP_V ? "?v=" + encodeURIComponent(APP_V) : "");
+      s.onload = function () { resolve(); };
+      s.onerror = function () { delete loaded[src]; reject(new Error("load")); };
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  function needImport() { return window.OrosMealsImport ? Promise.resolve(window.OrosMealsImport) : loadScript("import.js").then(function () { return window.OrosMealsImport; }); }
+  function needFetch() {
+    return loadScript("../feeds/core.js").then(function () { return loadScript("../feeds/fetch.js"); })
+      .then(function () { return window.orosFeedsFetch; });
+  }
+  function needZip() { return window.AtelierZip ? Promise.resolve(window.AtelierZip) : loadScript("../atelier/zip.js").then(function () { return window.AtelierZip; }); }
+  // The relay the Reader uses (its own setting, else Mail's), read only.
+  function readerRelay() {
+    try {
+      var fc = window.orosFeedsCore, raw = JSON.parse(localStorage.getItem("oros-feeds-data") || "null");
+      if (fc && raw && raw.set && typeof fc.setting === "function") return fc.setting(raw, "relay") || "";
+    } catch (e) {}
+    return "";
+  }
+  function normUrl(s) {
+    s = String(s || "").trim();
+    if (!s || /\s/.test(s)) return "";
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = "https://" + s;
+    try {
+      var u = new URL(s);
+      if ((u.protocol !== "https:" && u.protocol !== "http:") || !/\./.test(u.hostname)) return "";
+      return u.href;
+    } catch (e) { return ""; }
+  }
+
   function openPaste() {
-    var dlg = makeDialog("ml-paste");
+    var dlg = makeDialog("ml-paste", "wide");
     dlg.appendChild(el("div", "dlg-title", t("p.title")));
-    dlg.appendChild(el("p", "hint", t("p.hint")));
+    var busy = false;
+    // Web address
+    var urow = el("div", "add-row");
+    var uin = el("input");
+    uin.type = "url";
+    uin.inputMode = "url";
+    uin.maxLength = 2000;
+    uin.autocomplete = "off";
+    uin.placeholder = "https://…";
+    var ulab = el("label", "dlg-lbl", t("im.url"));
+    uin.id = "ml-im-url";
+    ulab.setAttribute("for", uin.id);
+    var fetchBtn = button(t("im.fetch"), "primary", function () { goUrl(uin.value); });
+    uin.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); goUrl(uin.value); } });
+    urow.appendChild(uin); urow.appendChild(fetchBtn);
+    dlg.appendChild(ulab);
+    dlg.appendChild(urow);
+    dlg.appendChild(el("p", "hint", t("im.urlHint")));
+    var status = el("p", "im-status");
+    status.setAttribute("role", "status");
+    status.hidden = true;
+    dlg.appendChild(status);
+    // Paste
+    var plab = el("label", "dlg-lbl", t("p.paste"));
     var ta = el("textarea", "paste-in");
-    ta.rows = 12;
-    ta.maxLength = 30000;
-    ta.setAttribute("aria-label", t("p.title"));
+    ta.id = "ml-im-text";
+    plab.setAttribute("for", ta.id);
+    ta.rows = 9;
+    ta.maxLength = 3000000;
+    dlg.appendChild(plab);
+    dlg.appendChild(el("p", "hint", t("p.hint")));
     dlg.appendChild(ta);
+    // File
+    var frow = el("div", "im-file");
+    frow.appendChild(button(t("im.file"), "small", pickFile));
+    frow.appendChild(el("span", "hint", t("im.fileHint")));
+    dlg.appendChild(frow);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
-    acts.appendChild(button(t("p.go"), "primary", function () {
-      if (!ta.value.trim()) { showToast(t("p.empty")); ta.focus(); return; }
-      var d = C.parseRecipeText(ta.value);
-      dlg.close();
-      openEditor({ t: d.t, sv: d.sv || 4, pt: d.pt || 0, ct: d.ct || 0, ig: d.ig, st: d.st, no: d.no, dt: [], tg: [] });
-    }));
+    acts.appendChild(button(t("p.go"), "primary", goText));
     dlg.appendChild(acts);
     showDialog(dlg);
-    ta.focus();
+    if (!coarse()) uin.focus();
+
+    function say(msg, bad) {
+      status.hidden = !msg;
+      status.textContent = msg || "";
+      status.classList.toggle("bad", !!bad);
+    }
+    function lock(on) {
+      busy = on;
+      fetchBtn.disabled = on;
+      uin.disabled = on;
+    }
+    function done(list, emptyMsg) {
+      lock(false);
+      if (!dlg.open) return;
+      if (!list.length) { say(emptyMsg, true); return; }
+      dlg.close();
+      if (list.length === 1) openEditor(list[0]);
+      else openImportList(list);
+    }
+    function goUrl(raw) {
+      if (busy) return;
+      var url = normUrl(raw);
+      if (!url) { say(t("im.badUrl"), true); uin.focus(); return; }
+      uin.value = url;
+      lock(true);
+      say(t("im.loading"));
+      Promise.all([needImport(), needFetch()]).then(function (mods) {
+        var I = mods[0], F = mods[1];
+        return F.fetchOne(url, { relay: readerRelay, timeout: 20000,
+                                 accept: "text/html,application/xhtml+xml,application/ld+json;q=0.9,application/json;q=0.8,*/*;q=0.5" })
+          .then(function (r) {
+            if (r.status < 200 || r.status >= 300) { lock(false); say(t("im.err.status", { n: r.status }), true); return; }
+            var list = I.fromText(r.text || "", r.finalUrl || url);
+            list.forEach(function (d) { if (!d.src) d.src = r.finalUrl || url; });
+            done(list, t("im.none"));
+          });
+      }).catch(function (e) {
+        lock(false);
+        var code = (e && e.code) || "load";
+        if (code === "offline") say(t("im.err.offline"), true);
+        else if (code === "norelay" || code === "cors") say(t("im.err.norelay"), true);
+        else say(t("im.err.other", { code: code }), true);
+      });
+    }
+    function goText() {
+      if (busy) return;
+      var v = ta.value;
+      if (!v.trim()) {
+        if (uin.value.trim()) { goUrl(uin.value); return; }
+        say(t("p.empty"), true); ta.focus(); return;
+      }
+      if (/^\s*https?:\/\/\S+\s*$/i.test(v)) { goUrl(v); return; }
+      needImport().then(function (I) {
+        if (I.looksLikeData(v)) { done(I.fromText(v, ""), t("im.none")); return; }
+        var d = C.parseRecipeText(v);
+        dlg.close();
+        openEditor({ t: d.t, sv: d.sv || 4, pt: d.pt || 0, ct: d.ct || 0, ig: d.ig, st: d.st, no: d.no, dt: [], tg: [] });
+      }, function () { say(t("im.err.other", { code: "load" }), true); });
+    }
+    function pickFile() {
+      if (busy) return;
+      var accept = ".paprikarecipes,.paprikarecipe,.zip,.json,.html,.htm,application/json,application/zip,text/html";
+      var host = dialogHost();
+      var pick = host && typeof host.openFile === "function" ? host.openFile(accept) : localPickFile(accept);
+      Promise.resolve(pick).then(function (file) {
+        if (!file) return;
+        lock(true);
+        say(t("im.reading"));
+        return Promise.all([needImport(), file.arrayBuffer()]).then(function (res) {
+          var I = res[0], bytes = new Uint8Array(res[1]);
+          var zip = bytes.length > 3 && bytes[0] === 0x50 && bytes[1] === 0x4b;
+          return (zip ? needZip() : Promise.resolve(null)).then(function (Z) {
+            return I.fromBytes(bytes, file.name || "", Z);
+          });
+        }).then(function (list) { done(list, t("im.noneFile")); });
+      }).catch(function () { lock(false); say(t("im.err.file"), true); });
+    }
+  }
+
+  // Several recipes (a Paprika or Mealie export, a page with many):
+  // tick the ones to add; titles you already have start unticked.
+  function openImportList(list) {
+    var dlg = makeDialog("ml-implist", "wide");
+    dlg.appendChild(el("div", "dlg-title", t("im.many", { n: list.length })));
+    dlg.appendChild(el("p", "hint", t("im.manyHint")));
+    var have = {};
+    recipes().forEach(function (r) { have[C.fold(r.t)] = 1; });
+    var boxes = [];
+    var sel = el("div", "chips");
+    var ul = el("ul", "im-list");
+    list.forEach(function (d) {
+      var li = el("li", "");
+      var lab = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox";
+      var dup = !!have[C.fold(d.t)];
+      cb.checked = !dup;
+      cb.addEventListener("change", count);
+      lab.appendChild(cb);
+      var sp = el("span", "", d.t);
+      if (dup) sp.appendChild(el("span", "hint", " · " + t("im.have")));
+      lab.appendChild(sp);
+      li.appendChild(lab);
+      ul.appendChild(li);
+      boxes.push(cb);
+    });
+    var all = el("button", "chip small", t("im.all"));
+    all.type = "button";
+    all.addEventListener("click", function () { boxes.forEach(function (b) { b.checked = true; }); count(); });
+    var none = el("button", "chip small", t("im.noneSel"));
+    none.type = "button";
+    none.addEventListener("click", function () { boxes.forEach(function (b) { b.checked = false; }); count(); });
+    sel.appendChild(all); sel.appendChild(none);
+    dlg.appendChild(sel);
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
+    var ok = button("", "primary", function () {
+      var added = 0;
+      for (var i = 0; i < list.length; i++) {
+        if (!boxes[i].checked) continue;
+        if (data.rc.length >= C.LIM.recipes) { showToast(t("e.max", { n: C.LIM.recipes })); break; }
+        if (putRecipe(Object.assign({ id: newId("r"), fv: 0 }, list[i]))) added++;
+      }
+      dlg.close();
+      renderAll();
+      showToast(t("toast.imported", { n: added }));
+    });
+    acts.appendChild(ok);
+    dlg.appendChild(acts);
+    function count() {
+      var n = boxes.filter(function (b) { return b.checked; }).length;
+      ok.textContent = t("im.add", { n: n });
+      ok.disabled = !n;
+    }
+    count();
+    showDialog(dlg);
   }
 
   // ---------- 9. Plan dialogs ----------
@@ -1386,6 +1794,31 @@
     showDialog(dlg);
   }
 
+  // "As written / Metric / US": a per-device choice (prefs.un).
+  function unitsSeg(onChange) {
+    var box = el("span", "seg");
+    box.setAttribute("role", "group");
+    box.setAttribute("aria-label", t("un.label"));
+    var btns = [];
+    ["", "metric", "us"].forEach(function (u) {
+      var b = el("button", "chip small", t("un." + u));
+      b.type = "button";
+      b.addEventListener("click", function () {
+        if (prefs.un === u) return;
+        prefs.un = u;
+        savePrefs();
+        btns.forEach(function (x) { x.b.setAttribute("aria-pressed", x.u === u ? "true" : "false"); x.b.classList.toggle("on", x.u === u); });
+        onChange(u);
+        renderShop();
+      });
+      b.setAttribute("aria-pressed", prefs.un === u ? "true" : "false");
+      b.classList.toggle("on", prefs.un === u);
+      btns.push({ u: u, b: b });
+      box.appendChild(b);
+    });
+    return box;
+  }
+
   function stepper(value, lo, hi, lessLbl, moreLbl, onChange) {
     var box = el("span", "stepper");
     var v = value;
@@ -1432,18 +1865,34 @@
     head.appendChild(el("h2", "v-title", r.t));
     head.appendChild(closeBtn(dlg));
     dlg.appendChild(head);
+    sv = sv || r.sv;
+    // Servings and units here too: the list follows, ticks stay.
+    var svRow = el("div", "sv-row");
+    svRow.appendChild(el("span", "dlg-lbl inline", t("v.servings")));
+    svRow.appendChild(stepper(sv, 1, C.LIM.servings, t("v.less"), t("v.more"), function (v) { sv = v; drawIngs(); }));
+    svRow.appendChild(unitsSeg(function () { drawIngs(); draw(); }));
+    dlg.appendChild(svRow);
     var ingT = el("details", "ck-ings");
-    ingT.appendChild(el("summary", "", t("ck.ings") + " · " + t("share.serv", { n: sv })));
+    var sum = el("summary", "");
+    ingT.appendChild(sum);
     var ul = el("ul", "ings");
+    var spans = [];
     r.ig.forEach(function (ing) {
       var li = el("li", "");
       var lab = el("label", "ing-lab");
       var cb = el("input"); cb.type = "checkbox";
       lab.appendChild(cb);
-      lab.appendChild(el("span", "", C.ingToLine(ing, LANG, sv / r.sv)));
+      var sp = el("span", "");
+      spans.push(sp);
+      lab.appendChild(sp);
       li.appendChild(lab);
       ul.appendChild(li);
     });
+    function drawIngs() {
+      sum.textContent = t("ck.ings") + " · " + t("share.serv", { n: sv });
+      r.ig.forEach(function (ing, k) { spans[k].textContent = C.ingToLine(ing, LANG, sv / r.sv, prefs.un); });
+    }
+    drawIngs();
     ingT.appendChild(ul);
     dlg.appendChild(ingT);
     var count = el("div", "ck-count");
@@ -1462,11 +1911,12 @@
     dlg.appendChild(el("p", "hint center", t("ck.awake")));
     function draw() {
       count.textContent = t("ck.step", { n: i + 1, m: steps.length });
-      text.textContent = steps[i];
+      text.textContent = C.convertTemps(steps[i], prefs.un);
       prev.disabled = i === 0;
       if (i >= steps.length - 1) { next.textContent = t("ck.done"); next.removeAttribute("aria-label"); }
       else { next.innerHTML = UI.right; next.setAttribute("aria-label", t("ck.next")); }
       tbox.innerHTML = "";
+      if (i >= steps.length - 1 && data.pa.length) tbox.appendChild(button(t("co.btn"), "small", function () { dlg.close(); openCooked(id, sv); }));
       C.stepTimers(steps[i]).forEach(function (mins) {
         var b = button("", "small", function () { startTimer(mins, r.t); });
         b.innerHTML = UI.timer + "<span></span>";
@@ -1549,6 +1999,788 @@
         o.start(actx.currentTime + at); o.stop(actx.currentTime + at + 0.4);
       });
     } catch (e) {}
+  }
+
+  // ---------- 10b. Pantry (wave 3) ----------
+  // What is at home: data.pa (synced, per-item LWW + tombs, see core.js).
+  // Pure rules in pantry.js (OrosMealsPantry) and nutrition.js.
+  function pantryItem(id) {
+    for (var i = 0; i < data.pa.length; i++) if (data.pa[i].id === id) return data.pa[i];
+    return null;
+  }
+  function newPantryId() { return "pa-" + newId("").slice(0, 30); }
+  // Write one item (new: no id). R27: no change, no stamp. No commit.
+  function putPantryRaw(x) {
+    var cur = x.id ? pantryItem(x.id) : null;
+    if (!cur && data.pa.length >= C.LIM.pantry) { showToast(t("pa.max", { n: C.LIM.pantry })); return null; }
+    var id = cur ? cur.id : newPantryId();
+    var nx = C.normPantryItem(Object.assign({}, x, { id: id, m: 1 }));
+    if (!nx) return null;
+    if (cur) { var a = clone(cur); a.m = 1; if (JSON.stringify(a) === JSON.stringify(nx)) return cur; }
+    nx.m = bump(cur ? cur.m : 0);
+    if (id in data.tombs) nx.m = Math.max(nx.m, data.tombs[id] + 1);
+    data.pa = data.pa.filter(function (i) { return i.id !== id; });
+    data.pa.push(nx);
+    return nx;
+  }
+  function dropPantryRaw(id) {
+    var cur = pantryItem(id);
+    if (!cur) return;
+    data.tombs[id] = Math.max(data.tombs[id] || 0, now(), cur.m);
+    data.pa = data.pa.filter(function (i) { return i.id !== id; });
+  }
+  // Undo for pantry changes: snap = { id: copy before | null (was new) }.
+  function snapPantry(ids, snap) {
+    snap = snap || {};
+    ids.forEach(function (id) { if (!(id in snap)) snap[id] = pantryItem(id) ? clone(pantryItem(id)) : null; });
+    return snap;
+  }
+  function restorePantry(snap) {
+    Object.keys(snap).forEach(function (id) {
+      var prev = snap[id], cur = pantryItem(id);
+      if (prev) {
+        var x = clone(prev);
+        x.m = Math.max(bump(cur ? cur.m : prev.m), (data.tombs[id] || 0) + 1);   // newer than any tomb (R17)
+        data.pa = data.pa.filter(function (i) { return i.id !== id; });
+        data.pa.push(x);
+      } else if (cur) dropPantryRaw(id);
+    });
+    commit();
+    renderPantryViews();
+  }
+  function renderPantryViews() { renderPantry(); renderShop(); }
+  // A draft { n, q, u, l?, bb?, bc? } into the pantry. merge: an item
+  // with the same name, no best-before and a unit that adds up takes
+  // the amount instead. → { id, prev } or null. No commit.
+  function addDraftRaw(d, merge) {
+    if (merge && d.q !== null && d.q !== undefined && !d.bb) {
+      var k = C.keyOf(d.n);
+      for (var i = 0; i < data.pa.length; i++) {
+        var it = data.pa[i];
+        if (it.bb || C.keyOf(it.n) !== k) continue;
+        var nq = P.addInto(it, d.q, d.u || "pc");
+        if (nq === null) continue;
+        var prev = clone(it), x = clone(it);
+        x.q = nq;
+        var w = putPantryRaw(x);
+        return w ? { id: w.id, prev: prev, item: w, merged: true } : null;
+      }
+    }
+    var r = putPantryRaw({ n: d.n, q: d.q === undefined ? null : d.q, u: d.u || "", l: d.l || P.guessLoc(d.n), bb: d.bb || "", bc: d.bc || "" });
+    return r ? { id: r.id, prev: null, item: r } : null;
+  }
+  function addedToast(res) {
+    var snap = {};
+    snap[res.id] = res.prev;
+    var msg = res.merged ? t("pa.more", { name: res.item.n, q: fmtPaQty(res.item) }) : t("pa.added", { name: res.item.n });
+    undoToast(msg, function () { restorePantry(snap); });
+  }
+  function quickAdd(text) {
+    var ing = C.parseIngLine(text, "");
+    if (!ing) return false;
+    var res = addDraftRaw({ n: ing.n, q: ing.q, u: ing.u || (ing.q !== null ? "pc" : "") }, true);
+    if (!res) return false;
+    commit();
+    renderPantryViews();
+    addedToast(res);
+    return true;
+  }
+
+  // Shopping → pantry: a ticked line (or all of them). The tick (or the
+  // manual item) remembers it went in (p: 1), so "Ticked to pantry"
+  // never adds a line twice.
+  function markShopPa(it) {
+    if (it.manual) {
+      data.mn.forEach(function (m) { if (m.id === it.key && m.p !== 1) { m.p = 1; m.m = bump(m.m); } });
+    } else {
+      var k = view.wk + "|" + it.key, cur = data.ck[k];
+      if (cur && cur.p === 1) return;
+      data.ck[k] = { v: cur ? cur.v : 1, m: bump(cur ? cur.m : 0), p: 1 };
+    }
+  }
+  function shopDraft(it) {
+    if (it.manual) {
+      var ing = C.parseIngLine(it.name, "");
+      return ing ? { n: ing.n, q: ing.q, u: ing.u || (ing.q !== null ? "pc" : "") } : { n: it.name, q: null, u: "" };
+    }
+    return P.fromShop(it);
+  }
+  function shopToPantry(list) {
+    var snap = {}, n = 0, last = null;
+    list.forEach(function (it) {
+      var res = addDraftRaw(shopDraft(it), true);
+      if (!res) return;
+      if (!(res.id in snap)) snap[res.id] = res.prev;
+      markShopPa(it);
+      n++; last = res;
+    });
+    if (!n) return;
+    commit();
+    renderPantryViews();
+    if (n === 1) addedToast(last);
+    else undoToast(t("sh.allIn", { n: n }), function () { restorePantry(snap); });
+  }
+  function tickedToPantry() {
+    var l = shopList();
+    var list = l.items.concat(l.home).filter(function (it) { return it.done && !it.pa; });
+    if (!list.length) { showToast(t("sh.noneTicked")); return; }
+    shopToPantry(list);
+  }
+
+  // Render ------------------------------------------------------------
+  function fmtPaQty(it) { return fmtAmt(it.q, it.u); }
+  function fmtAmt(q, u) { return q === null ? "" : C.fmtIngQty(P.niceAmount(q, u), LANG, 1, prefs.un); }
+  function fmtDate(ymd) {
+    var d = new Date(ymd + "T12:00:00"), o = { day: "numeric", month: "short" };
+    if (ymd.slice(0, 4) !== today().slice(0, 4)) o.year = "numeric";
+    try { return new Intl.DateTimeFormat(LOCALE, o).format(d); } catch (e) { return ymd; }
+  }
+  function bbInfo(it) {
+    if (!it.bb) return null;
+    var d = P.daysLeft(it.bb, today());
+    if (d < 0) return { txt: t("pa.expired", { d: fmtDate(it.bb) }), cls: "bad" };
+    if (d === 0) return { txt: t("pa.today"), cls: "bad" };
+    if (d === 1) return { txt: t("pa.tomorrow"), cls: "soon" };
+    if (d <= 3) return { txt: t("pa.days", { n: d }), cls: "soon" };
+    return { txt: t("pa.bbIn", { d: fmtDate(it.bb) }), cls: "" };
+  }
+  function paRow(it, showLoc) {
+    var li = el("li", "pa-item");
+    var b = el("button", "pa-open");
+    b.type = "button";
+    var main = el("span", "pa-main");
+    main.appendChild(el("span", "pa-name", it.n));
+    var q = fmtPaQty(it);
+    if (q) main.appendChild(el("b", "pa-qty", q));
+    b.appendChild(main);
+    var sub = [];
+    if (showLoc) sub.push(t("loc." + it.l));
+    var bb = bbInfo(it);
+    var meta = el("span", "pa-meta");
+    if (sub.length) meta.appendChild(el("span", "", sub.join(" · ")));
+    if (bb) meta.appendChild(el("span", "pa-bb " + bb.cls, bb.txt));
+    if (meta.childNodes.length) b.appendChild(meta);
+    b.setAttribute("aria-label", t("pa.edit", { name: it.n }) + (q ? ", " + q : "") + (bb ? ", " + bb.txt : ""));
+    b.addEventListener("click", function () { openPantryEditor(it); });
+    li.appendChild(b);
+    return li;
+  }
+  function sortByName(list) {
+    return list.slice().sort(function (a, b) { return C.fold(a.n).localeCompare(C.fold(b.n), LANG) || (a.id < b.id ? -1 : 1); });
+  }
+  function renderPantry() {
+    var box = $("pa-list"), fl = $("pa-filters");
+    var scroll = $("view-pa").scrollTop;
+    fl.innerHTML = "";
+    fl.setAttribute("aria-label", t("pe.loc"));
+    [""].concat(C.LOCS).forEach(function (l) {
+      var n = l ? data.pa.filter(function (i) { return i.l === l; }).length : data.pa.length;
+      var b = el("button", "chip small" + (prefs.loc === l ? " on" : ""), (l ? t("loc." + l) : t("loc.all")) + " " + n);
+      b.type = "button";
+      b.setAttribute("aria-pressed", prefs.loc === l ? "true" : "false");
+      b.addEventListener("click", function () { prefs.loc = l; savePrefs(); renderPantry(); });
+      fl.appendChild(b);
+    });
+    // Use soon: past or within 3 days, whatever the filter.
+    var soon = P.expiring(data.pa, today(), 3), sb = $("pa-soon");
+    sb.innerHTML = "";
+    sb.hidden = !soon.length;
+    if (soon.length) {
+      sb.appendChild(el("h3", "aisle-h warn-h", "⏳ " + t("pa.soon")));
+      var su = el("ul", "pa-ul");
+      soon.forEach(function (it) { su.appendChild(paRow(it, true)); });
+      sb.appendChild(su);
+    }
+    box.innerHTML = "";
+    var shown = 0;
+    C.LOCS.forEach(function (l) {
+      if (prefs.loc && prefs.loc !== l) return;
+      var list = sortByName(data.pa.filter(function (i) { return i.l === l; }));
+      if (!list.length) return;
+      box.appendChild(el("h3", "aisle-h", t("loc." + l)));
+      var ul = el("ul", "pa-ul");
+      list.forEach(function (it) { ul.appendChild(paRow(it, false)); });
+      box.appendChild(ul);
+      shown += list.length;
+    });
+    $("pa-empty").hidden = shown > 0;
+    $("pa-empty").textContent = data.pa.length ? t("pa.emptyLoc") : t("pa.empty");
+    $("view-pa").scrollTop = scroll;
+  }
+
+  // Editor -------------------------------------------------------------
+  var PA_UNITS = ["pc", "g", "kg", "ml", "l", "pack", "can", "bunch", "slice", "oz", "lb"];
+  function unitName(u) { return u === "pc" ? t("u.pc") : C.unitLabel(u, 2, LANG); }
+  // it: a stored item, or a draft (no id). opts.off: an Open Food Facts
+  // product the draft came from (its values are remembered for that
+  // ingredient when nothing is yet).
+  function openPantryEditor(it, opts) {
+    opts = opts || {};
+    var stored = it && it.id ? pantryItem(it.id) : null;
+    var src = Object.assign({}, stored || it || {});
+    if (src.q !== null && src.q !== undefined) { var na = P.niceAmount(src.q, src.u); src.q = na.q; src.u = na.u; }
+    var dlg = makeDialog("ml-pe");
+    dlg.appendChild(el("div", "dlg-title", t(stored ? "pe.edit" : "pe.new")));
+    var form = el("form", "edit-form");
+    form.method = "dialog";
+    var fName = el("input");
+    fName.maxLength = C.LIM.ingName; fName.autocomplete = "off"; fName.value = src.n || "";
+    form.appendChild(labeled(t("pe.name"), fName));
+    var row = el("div", "fld-row");
+    var fQ = el("input");
+    fQ.type = "number"; fQ.min = "0"; fQ.step = "any"; fQ.inputMode = "decimal";
+    fQ.value = src.q === null || src.q === undefined ? "" : String(src.q);
+    var fU = el("select");
+    var units = PA_UNITS.slice();
+    if (src.u && units.indexOf(src.u) < 0) units.push(src.u);
+    units.forEach(function (u) {
+      var o = el("option", "", unitName(u));
+      o.value = u;
+      if ((src.u || "pc") === u) o.selected = true;
+      fU.appendChild(o);
+    });
+    var initQU = fQ.value + "|" + fU.value;
+    var wq = labeled(t("pe.qty"), fQ); wq.classList.add("narrow");
+    row.appendChild(wq);
+    row.appendChild(labeled(t("pe.unit"), fU));
+    form.appendChild(row);
+    var locSet = el("fieldset", "");
+    locSet.appendChild(el("legend", "dlg-lbl", t("pe.loc")));
+    var locRow = el("div", "seg");
+    var loc = src.l || P.guessLoc(src.n || "");
+    var locBtns = [];
+    C.LOCS.forEach(function (l) {
+      var b = el("button", "chip small" + (loc === l ? " on" : ""), t("loc." + l));
+      b.type = "button";
+      b.setAttribute("aria-pressed", loc === l ? "true" : "false");
+      b.addEventListener("click", function () {
+        loc = l;
+        locBtns.forEach(function (x) { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      });
+      locBtns.push(b);
+      locRow.appendChild(b);
+    });
+    locSet.appendChild(locRow);
+    form.appendChild(locSet);
+    var row2 = el("div", "fld-row");
+    var fBb = el("input");
+    fBb.type = "date"; fBb.value = src.bb || "";
+    row2.appendChild(labeled(t("pe.bb"), fBb));
+    var fBc = el("input");
+    fBc.inputMode = "numeric"; fBc.maxLength = 14; fBc.autocomplete = "off"; fBc.value = src.bc || "";
+    row2.appendChild(labeled(t("pe.bc"), fBc));
+    form.appendChild(row2);
+    var acts = el("div", "dlg-actions wrap");
+    if (stored) acts.appendChild(button(t("pe.del"), "danger", function () {
+      var snap = snapPantry([stored.id]);
+      dropPantryRaw(stored.id);
+      commit();
+      dlg.close();
+      renderPantryViews();
+      undoToast(t("pa.removed"), function () { restorePantry(snap); });
+    }));
+    acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("pe.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var n = C.clean(fName.value, C.LIM.ingName);
+      if (!n) { showToast(t("pe.needName")); fName.focus(); return; }
+      var q = Number(String(fQ.value).replace(",", "."));
+      var bc = fBc.value.replace(/\D/g, "");
+      var x = { n: n, q: fQ.value !== "" && q > 0 ? q : null, u: fU.value, l: loc, bb: C.validYmd(fBb.value) ? fBb.value : "", bc: C.BC_RE.test(bc) ? bc : "" };
+      if (stored) {
+        x.id = stored.id;
+        if (fQ.value + "|" + fU.value === initQU) { x.q = stored.q; x.u = stored.u; }   // shown as 970 ml, kept as 0.97 l (R27)
+      }
+      var snap = stored ? snapPantry([stored.id]) : {};
+      var w = putPantryRaw(x);
+      if (!w) return;
+      if (!stored) snap[w.id] = null;
+      var off = opts.off, k = C.keyOf(n);
+      if (off && off.v && k && !data.nu[k]) setNuRaw(k, { s: "off", c: off.code, nm: off.name, k: off.v.k, p: off.v.p, cb: off.v.cb, f: off.v.f });
+      commit();
+      dlg.close();
+      renderPantryViews();
+      if (!stored) undoToast(t("pa.added", { name: w.n }), function () { restorePantry(snap); });
+    });
+    dlg.appendChild(form);
+    showDialog(dlg);
+    if (!stored && !coarse()) fName.focus();
+  }
+
+  // Barcode --------------------------------------------------------------
+  // The camera reads like Stock's (stock/stock.js §9b): BarcodeDetector
+  // where the browser has it (Chrome on Android), else the number is
+  // typed. The product is looked up on Open Food Facts only on a read
+  // or on "Look up"; a code already in the pantry needs no network.
+  var CAM_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
+  function camOk() {
+    return typeof window.BarcodeDetector === "function" &&
+      !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
+  }
+  function fetchJSON(url) {
+    if (navigator.onLine === false) return Promise.reject({ code: "offline" });
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var tm = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
+    return fetch(url, { signal: ctl ? ctl.signal : undefined, credentials: "omit", referrerPolicy: "no-referrer" })
+      .then(function (r) {
+        clearTimeout(tm);
+        if (r.status === 404) return r.json().catch(function () { return null; });
+        if (!r.ok) throw { code: "http " + r.status };
+        return r.json();
+      }, function (e) {
+        clearTimeout(tm);
+        throw { code: e && e.name === "AbortError" ? "timeout" : (navigator.onLine === false ? "offline" : "net") };
+      });
+  }
+  function netMsg(e) { return e && e.code === "offline" ? t("net.offline") : t("net.err", { code: (e && e.code) || "net" }); }
+  function per100(v) {
+    var r = function (x) { return fmtNum(x, x < 10 ? 1 : 0); };
+    return t("bc.per100", { k: r(v.k), p: r(v.p), c: r(v.cb), f: r(v.f) });
+  }
+  function fmtNum(v, dec) {
+    try { return new Intl.NumberFormat(LOCALE, { maximumFractionDigits: dec || 0 }).format(v); } catch (e) { return String(Math.round(v)); }
+  }
+  function offLink(code) {
+    var a = el("a", "src-link", t("bc.page"));
+    a.href = N.offPageUrl(code);
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    return a;
+  }
+  function openBarcode() {
+    var dlg = makeDialog("ml-bc");
+    dlg.appendChild(el("div", "dlg-title", t("bc.title")));
+    var video = null, stream = null, timer = 0, stopped = false, det = null;
+    var camMsg = el("p", "hint cam-msg");
+    camMsg.setAttribute("aria-live", "polite");
+    if (camOk()) {
+      video = el("video", "cam-video");
+      video.muted = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("aria-hidden", "true");
+      dlg.appendChild(video);
+      dlg.appendChild(camMsg);
+    }
+    var row = el("div", "add-row");
+    var inp = el("input");
+    inp.inputMode = "numeric"; inp.maxLength = 20; inp.autocomplete = "off";
+    inp.placeholder = t("bc.code");
+    inp.setAttribute("aria-label", t("bc.code"));
+    inp.setAttribute("enterkeyhint", "search");
+    row.appendChild(inp);
+    var look = button(t("bc.look"), "primary", function () { lookUp(inp.value); });
+    row.appendChild(look);
+    dlg.appendChild(row);
+    var status = el("p", "im-status");
+    status.setAttribute("role", "status");
+    status.hidden = true;
+    dlg.appendChild(status);
+    var res = el("div", "bc-res");
+    dlg.appendChild(res);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("v.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); lookUp(inp.value); } });
+    dlg.addEventListener("close", stopCam);
+    var asked = 0;
+    function say(msg, bad) { status.hidden = !msg; status.textContent = msg || ""; status.classList.toggle("bad", !!bad); }
+    function stopCam() {
+      stopped = true;
+      clearTimeout(timer);
+      if (stream) stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+      stream = null;
+      if (video) { try { video.srcObject = null; } catch (e) {} video.hidden = true; camMsg.hidden = true; }
+    }
+    function lookUp(raw) {
+      var code = String(raw || "").replace(/\D/g, "");
+      inp.value = code;
+      res.innerHTML = "";
+      if (!N.validBarcode(code)) { say(t("bc.bad"), true); return; }
+      stopCam();
+      var known = P.findByCode(data.pa, code);
+      if (known) {
+        say("");
+        res.appendChild(el("p", "item-name", t("bc.known", { name: known.n })));
+        var kr = el("div", "dlg-actions wrap");
+        kr.appendChild(button(t("bc.add"), "primary", function () {
+          dlg.close();
+          openPantryEditor({ n: known.n, q: known.q, u: known.u, l: known.l, bb: "", bc: code });
+        }));
+        res.appendChild(kr);
+        return;
+      }
+      var my = ++asked;
+      say(t("bc.looking"));
+      look.disabled = true;
+      fetchJSON(N.offProductUrl(code)).then(function (json) {
+        if (my !== asked || !dlg.open) return;
+        look.disabled = false;
+        var p = N.parseOffProduct(json, LANG);
+        say("");
+        if (!p) {
+          res.appendChild(el("p", "hint", t("bc.notFound")));
+          var nr = el("div", "dlg-actions wrap");
+          nr.appendChild(button(t("bc.addName"), "primary", function () { dlg.close(); openPantryEditor({ n: "", bc: code }); }));
+          res.appendChild(nr);
+          return;
+        }
+        res.appendChild(el("p", "item-name", p.name + (p.brand ? " · " + p.brand : "") + (p.qty ? " · " + p.qty : "")));
+        if (p.v) res.appendChild(el("p", "hint", per100(p.v)));
+        res.appendChild(offLink(p.code || code));
+        var ar = el("div", "dlg-actions wrap");
+        ar.appendChild(button(t("bc.add"), "primary", function () {
+          var pq = N.parseQuantity(p.qty);
+          dlg.close();
+          openPantryEditor({ n: C.clean(p.name, C.LIM.ingName), q: pq ? pq.q : null, u: pq ? pq.u : "", l: P.guessLoc(p.name), bc: code }, { off: p });
+        }));
+        res.appendChild(ar);
+      }, function (e) {
+        if (my !== asked || !dlg.open) return;
+        look.disabled = false;
+        say(netMsg(e), true);
+      });
+    }
+    showDialog(dlg);
+    if (!video) { camMsg.hidden = true; if (!coarse()) inp.focus(); return; }
+    try { det = new window.BarcodeDetector({ formats: CAM_FORMATS }); }
+    catch (e) { try { det = new window.BarcodeDetector(); } catch (e2) { det = null; } }
+    function camFail() { camMsg.textContent = t("bc.camOff"); if (video) video.hidden = true; }
+    if (!det) { camFail(); return; }
+    camMsg.textContent = t("bc.cam");
+    function loop() {
+      if (stopped) return;
+      if (video.readyState < 2) { timer = setTimeout(loop, 200); return; }
+      det.detect(video).then(function (list) {
+        if (stopped) return;
+        var raw = list && list[0] && typeof list[0].rawValue === "string" ? list[0].rawValue.replace(/\D/g, "") : "";
+        if (raw && N.validBarcode(raw)) {
+          try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+          lookUp(raw);
+          return;
+        }
+        timer = setTimeout(loop, 150);
+      }, function () { timer = setTimeout(loop, 400); });
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
+      if (stopped) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+      stream = st;
+      video.srcObject = st;
+      return video.play().then(loop);
+    }).catch(function () { if (!stopped) camFail(); });
+  }
+
+  // What can I cook ------------------------------------------------------
+  function openCookable() {
+    var dlg = makeDialog("ml-cookable", "wide");
+    var head = el("div", "v-head");
+    head.appendChild(el("h2", "v-title", t("ck.title")));
+    head.appendChild(closeBtn(dlg));
+    dlg.appendChild(head);
+    dlg.appendChild(el("p", "hint", t("ck.hint")));
+    var list = P.cookable(recipes(), data.pa, function (k) { return C.inPantry(data, k); }, today()).slice(0, 40);
+    if (!list.length) dlg.appendChild(el("p", "empty", t("ck.none")));
+    var ul = el("ul", "ck-list");
+    list.forEach(function (e) {
+      var r = e.r;
+      var li = el("li", "ck-card");
+      var top = el("div", "ck-top");
+      top.appendChild(el("span", "rc-emoji small", r.e || "🍽️"));
+      var body = el("div", "rc-body");
+      body.appendChild(el("span", "rc-title", r.t));
+      body.appendChild(el("span", "rc-meta" + (e.missing.length ? "" : " ok"),
+        e.missing.length ? t("ck.have", { h: e.have, n: e.total }) : "✓ " + t("ck.all")));
+      if (e.missing.length) body.appendChild(el("span", "ck-miss", t("ck.missing", { list: e.missing.map(function (i) { return i.n; }).join(", ") })));
+      if (e.low.length) body.appendChild(el("span", "ck-low", t("ck.low", { list: e.low.map(function (i) { return i.n; }).join(", ") })));
+      if (e.soon !== null && e.soon <= 3) body.appendChild(el("span", "pa-bb soon", "⏳ " + t("ck.soonUse")));
+      top.appendChild(body);
+      li.appendChild(top);
+      var acts = el("div", "ck-acts");
+      acts.appendChild(button(t("ck.open"), "small", function () { dlg.close(); openRecipe(r.id); }));
+      if (e.missing.length) {
+        var add = button(t("ck.addMissing"), "small", function () {
+          var n = addManualMany(e.missing.map(function (i) { return C.ingToLine(i, LANG, 1, prefs.un).replace(/, .*$/, ""); }), thisWeek());
+          add.disabled = true;
+          showToast(t("ck.addedMissing", { n: n }));
+        });
+        acts.appendChild(add);
+      }
+      li.appendChild(acts);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    showDialog(dlg);
+  }
+  // Several extras at once (one commit); one already on that week's list is skipped.
+  function addManualMany(texts, wk) {
+    var have = {}, n = 0;
+    data.mn.forEach(function (m) { if (m.w === wk) have[C.fold(m.t)] = 1; });
+    texts.forEach(function (text) {
+      var tx = C.clean(text, C.LIM.manual);
+      if (!tx || have[C.fold(tx)]) return;
+      have[C.fold(tx)] = 1;
+      var r = new Uint32Array(1);
+      crypto.getRandomValues(r);
+      data.mn.push({ id: "n" + C.compactYmd(wk) + "-" + now().toString(36) + r[0].toString(36).slice(0, 4) + n, m: now(), w: wk, t: tx, d: 0 });
+      n++;
+    });
+    if (n) { commit(); renderShop(); }
+    return n;
+  }
+
+  // Cooked: take from the pantry --------------------------------------
+  function openCooked(id, sv) {
+    var r = getRecipe(id);
+    if (!r) return;
+    sv = sv || r.sv;
+    var plan = P.cookPlan(r, sv / r.sv, data.pa, today());
+    if (!plan.some(function (p) { return p.st !== "none"; })) { showToast(t("co.nothing")); return; }
+    var dlg = makeDialog("ml-cooked", "wide");
+    dlg.appendChild(el("div", "dlg-title", t("co.title")));
+    dlg.appendChild(el("p", "item-name", (r.e || "🍽️") + " " + r.t + " · " + t("share.serv", { n: sv })));
+    dlg.appendChild(el("p", "hint", t("co.hint")));
+    var ul = el("ul", "co-list"), boxes = [];
+    plan.forEach(function (p) {
+      var li = el("li", "co-item" + (p.st === "none" ? " off" : ""));
+      if (p.st === "none") {
+        li.appendChild(el("span", "co-name", p.ing.n));
+        li.appendChild(el("span", "hint", t("co.notIn")));
+        ul.appendChild(li);
+        return;
+      }
+      var lab = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = p.st === "take";
+      lab.appendChild(cb);
+      var txt = el("span", "co-txt");
+      txt.appendChild(el("span", "co-name", p.ing.n));
+      if (p.st === "take") {
+        p.takes.forEach(function (tk) {
+          var it = pantryItem(tk.id);
+          // One item: the recipe's own amount ("2 tbsp"); several: each item's share.
+          var take = p.takes.length === 1 && !p.short ? C.fmtIngQty({ q: p.ing.q * sv / r.sv, u: p.ing.u }, LANG, 1, prefs.un) : fmtAmt(tk.take, it.u);
+          var line = tk.left > 0.0005
+            ? t("co.line", { take: take, have: fmtPaQty(it), left: fmtAmt(tk.left, it.u) })
+            : t("co.gone", { take: take });
+          txt.appendChild(el("span", "hint", (C.fold(it.n) === C.fold(p.ing.n) ? "" : it.n + ": ") + line));
+        });
+        if (p.short) txt.appendChild(el("span", "warn", t("co.short", { n: fmtAmt(p.short, p.ing.u) })));
+      } else {
+        var it0 = pantryItem(p.takes[0].id);
+        txt.appendChild(el("span", "hint", t("co.usedUp", { name: it0.n + (fmtPaQty(it0) ? " " + fmtPaQty(it0) : "") })));
+      }
+      lab.appendChild(txt);
+      li.appendChild(lab);
+      ul.appendChild(li);
+      boxes.push({ cb: cb, p: p });
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("e.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("co.ok"), "primary", function () {
+      var snap = {}, changed = 0;
+      boxes.forEach(function (b) {
+        if (!b.cb.checked) return;
+        b.p.takes.forEach(function (tk) {
+          var cur = pantryItem(tk.id);
+          if (!cur) return;
+          snapPantry([tk.id], snap);
+          if (tk.take === null || cur.q === null) { dropPantryRaw(tk.id); changed++; return; }
+          var left = Math.round((cur.q - tk.take) * 1000) / 1000;
+          if (left <= 0.0005) dropPantryRaw(tk.id);
+          else { var x = clone(cur); x.q = left; putPantryRaw(x); }
+          changed++;
+        });
+      });
+      dlg.close();
+      if (!changed) return;
+      commit();
+      renderPantryViews();
+      undoToast(t("co.done"), function () { restorePantry(snap); });
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
+  // Nutrition ----------------------------------------------------------
+  function setNuRaw(k, entry) {
+    var cur = data.nu[k];
+    var x = C.normNu(Object.assign({}, entry, { m: 1 }));
+    if (!x) return false;
+    if (cur) { var a = clone(cur); a.m = 1; if (JSON.stringify(a) === JSON.stringify(x)) return false; }
+    x.m = bump(cur ? cur.m : 0);
+    data.nu[k] = x;
+    return true;
+  }
+  function estText(per) {
+    var r = function (x) { return fmtNum(x, 0); };
+    return t("nu.est", { k: r(per.k), p: r(per.p), c: r(per.cb), f: r(per.f) });
+  }
+  // The box in the recipe view; redraws itself after a match changes.
+  function nutritionBox(r) {
+    var box = el("div", "nu-box");
+    function draw() {
+      box.innerHTML = "";
+      var e = N.recipeNutrition(r, data.nu);
+      box.appendChild(el("h3", "sec-h", t("nu.title")));
+      if (e.any) {
+        box.appendChild(el("p", "nu-est", estText(e.per)));
+        var total = e.rows.filter(function (x) { return x.st !== "x"; }).length;
+        box.appendChild(el("p", "hint", t("nu.counted", { n: e.counted, m: total })));
+      } else box.appendChild(el("p", "hint", t("nu.none")));
+      box.appendChild(button(t("nu.check"), "small", function () { openNutrition(r, draw); }));
+    }
+    draw();
+    return box;
+  }
+  function nuStatus(row) {
+    if (row.st === "ok") {
+      var src = row.src === "off" ? t("nu.src.off") + (row.name ? ": " + row.name : "") : t("nu.src.tbl") + ": " + tblName(N.rowById(row.name));
+      return t("nu.st.ok", { g: fmtNum(row.g, 0), src: src });
+    }
+    return t("nu.st." + row.st);
+  }
+  function tblName(row) { return row ? (LANG === "el" ? row.el : row.en) : ""; }
+  function openNutrition(r, onChange) {
+    var dlg = makeDialog("ml-nu", "wide");
+    var head = el("div", "v-head");
+    head.appendChild(el("h2", "v-title", t("nu.dlg")));
+    head.appendChild(closeBtn(dlg));
+    dlg.appendChild(head);
+    dlg.appendChild(el("p", "item-name", (r.e || "🍽️") + " " + r.t));
+    var sum = el("p", "nu-est");
+    dlg.appendChild(sum);
+    dlg.appendChild(el("p", "hint", t("nu.dlgHint")));
+    var ul = el("ul", "nu-list");
+    dlg.appendChild(ul);
+    function draw() {
+      var e = N.recipeNutrition(r, data.nu);
+      sum.textContent = e.any ? t("nu.title") + ": " + estText(e.per) : t("nu.none");
+      ul.innerHTML = "";
+      e.rows.forEach(function (row) {
+        var li = el("li", "nu-row" + (row.st === "ok" ? "" : " gap"));
+        var txt = el("span", "nu-txt");
+        txt.appendChild(el("span", "", C.ingToLine(row.ing, LANG, 1, prefs.un)));
+        txt.appendChild(el("span", "hint", nuStatus(row)));
+        li.appendChild(txt);
+        var b = button(t("nu.change"), "small", function () {
+          openMatch(row.ing, function () { draw(); if (onChange) onChange(); renderWeek(); });
+        });
+        b.setAttribute("aria-label", t("nu.match", { name: row.ing.n }));
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+    }
+    draw();
+    dlg.appendChild(el("p", "hint nu-credit", t("nu.credit")));
+    showDialog(dlg);
+  }
+  function openMatch(ing, onDone) {
+    var k = C.keyOf(ing.n);
+    if (!k) return;
+    var cur = data.nu[k] || null, auto = N.findBuiltIn(ing.n);
+    var dlg = makeDialog("ml-match", "wide");
+    dlg.appendChild(el("div", "dlg-title", t("nu.match", { name: ing.n })));
+    function save(entry) {
+      var gv = Number(String(fG.value).replace(",", "."));
+      if (entry.s !== "x" && gv > 0) entry.g = gv;
+      if (setNuRaw(k, entry)) commit();
+      dlg.close();
+      showToast(t("nu.saved", { name: ing.n }));
+      onDone();
+    }
+    // Grams in one piece (for "2 onions", "1 pack").
+    var fG = el("input");
+    fG.type = "number"; fG.min = "0"; fG.step = "any"; fG.inputMode = "decimal";
+    fG.value = cur && cur.g ? String(cur.g) : "";
+    var gw = labeled(t("nu.pieceG"), fG);
+    gw.classList.add("narrow");
+    var pieceUnit = !ing.u || ing.u === "pc" || ing.u === "pack" || ing.u === "slice";
+    if (pieceUnit) dlg.appendChild(gw);
+    // Built-in table
+    var tr = el("div", "add-row");
+    var sel = el("select");
+    sel.setAttribute("aria-label", t("nu.useTbl"));
+    var rowsAll = N.rows().sort(function (a, b) { return C.fold(tblName(a)).localeCompare(C.fold(tblName(b)), LANG); });
+    var selId = cur && cur.s === "tbl" ? cur.t : (auto ? auto.id : "");
+    rowsAll.forEach(function (row) {
+      var o = el("option", "", tblName(row) + " · " + fmtNum(row.k, 0) + " kcal");
+      o.value = row.id;
+      if (row.id === selId) o.selected = true;
+      sel.appendChild(o);
+    });
+    tr.appendChild(sel);
+    tr.appendChild(button(t("pk.addText"), "", function () { save({ s: "tbl", t: sel.value }); }));
+    dlg.appendChild(el("p", "dlg-lbl", t("nu.useTbl")));
+    dlg.appendChild(tr);
+    // Open Food Facts
+    dlg.appendChild(el("p", "dlg-lbl", t("nu.search")));
+    var sr = el("div", "add-row");
+    var q = el("input");
+    q.type = "search"; q.maxLength = 80; q.autocomplete = "off"; q.value = ing.n;
+    q.setAttribute("aria-label", t("nu.search"));
+    var go = button(t("bc.look"), "primary", search);
+    q.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); search(); } });
+    sr.appendChild(q); sr.appendChild(go);
+    dlg.appendChild(sr);
+    var status = el("p", "im-status");
+    status.setAttribute("role", "status");
+    status.hidden = true;
+    dlg.appendChild(status);
+    var res = el("div", "pick-list off-res");
+    dlg.appendChild(res);
+    var asked = 0;
+    function say(msg, bad) { status.hidden = !msg; status.textContent = msg || ""; status.classList.toggle("bad", !!bad); }
+    function search() {
+      var term = C.clean(q.value, 80);
+      if (!term) { q.focus(); return; }
+      var my = ++asked;
+      res.innerHTML = "";
+      say(t("nu.searching"));
+      go.disabled = true;
+      fetchJSON(N.offSearchUrl(term, LANG)).then(function (json) {
+        if (my !== asked || !dlg.open) return;
+        go.disabled = false;
+        var list = N.parseOffSearch(json, LANG);
+        say(list.length ? "" : t("nu.noRes"), !list.length);
+        list.forEach(function (p) {
+          var b = el("button", "pick-row");
+          b.type = "button";
+          var body = el("span", "rc-body");
+          body.appendChild(el("span", "rc-title", p.name + (p.brand ? " · " + p.brand : "")));
+          body.appendChild(el("span", "rc-meta", per100(p.v)));
+          b.appendChild(body);
+          b.addEventListener("click", function () {
+            save({ s: "off", c: p.code, nm: C.clean(p.name + (p.brand ? " · " + p.brand : ""), C.LIM.offName), k: p.v.k, p: p.v.p, cb: p.v.cb, f: p.v.f });
+          });
+          res.appendChild(b);
+        });
+      }, function (e) {
+        if (my !== asked || !dlg.open) return;
+        go.disabled = false;
+        say(netMsg(e), true);
+      });
+    }
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("nu.leaveOut"), "", function () { save({ s: "x" }); }));
+    acts.appendChild(button(t("v.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    dlg.appendChild(el("p", "hint nu-credit", t("nu.credit")));
+    showDialog(dlg);
+  }
+  // The week: one serving of each planned recipe, per person per day.
+  function dayKcal(d, cache) {
+    if (!prefs.nu) return null;
+    var cells = data.set.sl.map(function (s) { return data.pl[cellKey(d, s)]; }).filter(Boolean);
+    if (!cells.length) return null;
+    var e = N.dayNutrition(cells, getRecipe, data.nu, cache);
+    if (!e.n) return null;
+    var k = fmtNum(e.sum.k, 0);
+    return { txt: t("nu.kcal", { k: k }), title: t(e.partial ? "nu.dayPart" : "nu.day", { k: k }) + " · " + estText(e.sum) };
   }
 
   // ---------- 11. Settings + backup ----------
@@ -1645,6 +2877,12 @@
     ws.appendChild(wsRow);
     dlg.appendChild(ws);
 
+    var un = el("fieldset", "");
+    un.appendChild(el("legend", "dlg-lbl", t("s.units")));
+    un.appendChild(el("p", "hint", t("s.unitsHint")));
+    un.appendChild(unitsSeg(function () {}));
+    dlg.appendChild(un);
+
     var pan = el("fieldset", "");
     pan.appendChild(el("legend", "dlg-lbl", t("s.pantry")));
     var chips = el("div", "chips");
@@ -1680,6 +2918,32 @@
     prow.appendChild(pin); prow.appendChild(pb);
     pan.appendChild(prow);
     dlg.appendChild(pan);
+
+    // Pantry reminder + nutrition (wave 3): device-local prefs.
+    var ntSet = el("fieldset", "");
+    ntSet.appendChild(el("legend", "dlg-lbl", t("s.nt")));
+    ntSet.appendChild(el("p", "hint", t("s.ntHint")));
+    var ntSel = el("select");
+    ntSel.setAttribute("aria-label", t("s.nt"));
+    [-1, 7, 8, 9, 12, 18, 20].forEach(function (h) {
+      var o = el("option", "", h < 0 ? t("s.ntOff") : t("s.ntAt", { h: ("0" + h).slice(-2) }));
+      o.value = String(h);
+      if (prefs.nt === h) o.selected = true;
+      ntSel.appendChild(o);
+    });
+    if (ntSel.selectedIndex < 0) ntSel.value = "-1";
+    ntSel.addEventListener("change", function () { prefs.nt = Number(ntSel.value); savePrefs(); });
+    ntSet.appendChild(ntSel);
+    dlg.appendChild(ntSet);
+    var nuSet = el("fieldset", "");
+    nuSet.appendChild(el("legend", "dlg-lbl", t("s.credits")));
+    var nuL = el("label", "check");
+    var nuCb = el("input"); nuCb.type = "checkbox"; nuCb.checked = !!prefs.nu;
+    nuCb.addEventListener("change", function () { prefs.nu = nuCb.checked ? 1 : 0; savePrefs(); renderWeek(); });
+    nuL.appendChild(nuCb); nuL.appendChild(el("span", "", t("s.nu")));
+    nuSet.appendChild(nuL);
+    nuSet.appendChild(el("p", "hint", t("nu.credit")));
+    dlg.appendChild(nuSet);
 
     var bk = el("fieldset", "");
     bk.appendChild(el("legend", "dlg-lbl", t("s.backup")));
@@ -1819,8 +3083,10 @@
   }
   // Undo toasts stay local (the closure never leaves the frame), 8 s.
   function undoToast(text, onUndo) { localToast(text, onUndo); }
+  // Same, with another action than Undo ("To pantry").
+  function actionToast(text, label, fn) { localToast(text, fn, label); }
   var toastTimer = null;
-  function localToast(text, onUndo) {
+  function localToast(text, onUndo, label) {
     var box = $("toast");
     if (!box) return;
     hostToast();
@@ -1828,7 +3094,7 @@
     box.classList.remove("show");
     box.appendChild(el("span", "", text));
     if (onUndo) {
-      var b = el("button", "", t("toast.undo"));
+      var b = el("button", "", label || t("toast.undo"));
       b.type = "button";
       b.addEventListener("click", function () {
         box.classList.remove("show");
@@ -1881,9 +3147,10 @@
       if (e.code === "Digit1") setTab("rc");
       else if (e.code === "Digit2") setTab("wk");
       else if (e.code === "Digit3") setTab("sh");
+      else if (e.code === "Digit4") setTab("pa");
       else if (e.code === "KeyN") { e.preventDefault(); openEditor(null); }
       else if (e.code === "Slash") { e.preventDefault(); setTab("rc"); $("rc-search").focus(); }
-      else if ((e.code === "ArrowLeft" || e.code === "ArrowRight") && prefs.tab !== "rc" && tag !== "BUTTON") {
+      else if ((e.code === "ArrowLeft" || e.code === "ArrowRight") && (prefs.tab === "wk" || prefs.tab === "sh") && tag !== "BUTTON") {
         e.preventDefault(); shiftWeek(e.code === "ArrowLeft" ? -1 : 1);
       } else return;
     });
@@ -1892,8 +3159,8 @@
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       e.preventDefault();
       e.stopPropagation();
-      var order = ["rc", "wk", "sh"], i = order.indexOf(prefs.tab);
-      i = (i + (e.key === "ArrowRight" ? 1 : 2)) % 3;
+      var order = TABS, i = order.indexOf(prefs.tab);
+      i = (i + (e.key === "ArrowRight" ? 1 : order.length - 1)) % order.length;
       setTab(order[i]);
       $("tab-" + order[i]).focus();
     });
@@ -1967,7 +3234,7 @@
   // ---------- 15. Wiring & boot ----------
   function applyI18n() {
     document.title = (LANG === "el" ? "Συνταγές & Μενού" : "Meal Planner") + " · orOS";
-    ["rc", "wk", "sh"].forEach(function (x) { $("tab-" + x).textContent = t("tab." + x); });
+    TABS.forEach(function (x) { $("tab-" + x).textContent = t("tab." + x); });
     var sb = $("set-btn");
     sb.innerHTML = UI.gear;
     sb.setAttribute("aria-label", t("btn.settings"));
@@ -1992,6 +3259,16 @@
     $("sh-share").textContent = t("sh.share");
     $("sh-todo").textContent = t("sh.todo");
     $("sh-uncheck").textContent = t("sh.uncheck");
+    $("sh-pantry").textContent = t("sh.tickedToPantry");
+    $("pa-add-in").placeholder = t("pa.add");
+    $("pa-add-in").setAttribute("aria-label", t("pa.add"));
+    $("pa-add-btn").innerHTML = UI.plus;
+    $("pa-add-btn").setAttribute("aria-label", t("pa.addBtn"));
+    $("pa-scan").innerHTML = UI.barcode + "<span></span>";
+    $("pa-scan").lastChild.textContent = t("pa.scan");
+    $("pa-scan").setAttribute("aria-label", t("bc.title"));
+    $("pa-scan").title = t("bc.title");
+    $("pa-cook").textContent = t("pa.cook");
     $("sh-add-in").placeholder = t("sh.add");
     $("sh-add-in").setAttribute("aria-label", t("sh.add"));
     $("sh-add-btn").innerHTML = UI.plus;
@@ -1999,13 +3276,13 @@
   }
 
   function wire() {
-    ["rc", "wk", "sh"].forEach(function (x) {
+    TABS.forEach(function (x) {
       $("tab-" + x).addEventListener("click", function () { setTab(x); });
     });
     $("set-btn").addEventListener("click", openSettings);
     $("rc-search").addEventListener("input", function () { view.q = $("rc-search").value; renderRecipes(); });
     $("rc-new").addEventListener("click", function () { openEditor(null); });
-    $("rc-paste").addEventListener("click", openPaste);
+    $("rc-paste").addEventListener("click", function () { openPaste(); });
     [].forEach.call(document.querySelectorAll(".wk-prev"), function (b) { b.addEventListener("click", function () { shiftWeek(-1); }); });
     [].forEach.call(document.querySelectorAll(".wk-next"), function (b) { b.addEventListener("click", function () { shiftWeek(1); }); });
     [].forEach.call(document.querySelectorAll(".wk-today"), function (b) { b.addEventListener("click", function () { shiftWeek(0); }); });
@@ -2018,9 +3295,21 @@
     $("sh-todo").hidden = !shellOpenAt();
     $("sh-todo").addEventListener("click", sendToTodo);
     $("sh-uncheck").addEventListener("click", function () {
-      shopList().items.forEach(function (it) { if (it.done) setTick(it, false); });
+      var l = shopList();
+      l.items.concat(l.home).forEach(function (it) { if (it.done) setTick(it, false); });
       renderShop();
     });
+    $("sh-pantry").addEventListener("click", tickedToPantry);
+    var paIn = $("pa-add-in");
+    var paAdd = function () {
+      if (!C.clean(paIn.value, 80)) { paIn.focus(); return; }
+      if (quickAdd(paIn.value)) paIn.value = "";
+      paIn.focus();
+    };
+    $("pa-add-btn").addEventListener("click", paAdd);
+    paIn.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); paAdd(); } });
+    $("pa-scan").addEventListener("click", openBarcode);
+    $("pa-cook").addEventListener("click", openCookable);
     var addIn = $("sh-add-in");
     var add = function () { addManual(addIn.value); addIn.value = ""; addIn.focus(); };
     $("sh-add-btn").addEventListener("click", add);
@@ -2033,7 +3322,7 @@
       var wasThis = view.wk === C.weekStartOf(lastDay, data.set.ws);
       lastDay = d;
       if (wasThis) view.wk = thisWeek();
-      renderWeek(); renderShop();
+      renderWeek(); renderShop(); renderPantry();
     }, 60000);
     window.addEventListener("pagehide", function () {
       keepAwake(false);
@@ -2079,6 +3368,7 @@
       openEditor(rx);
       return;
     }
+    if (t.pantry === true) { setTab("pa"); return; }
     if (typeof t.recipe === "string") {
       if (!getRecipe(t.recipe)) return;
       setTab("rc");

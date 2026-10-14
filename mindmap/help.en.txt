@@ -1,19 +1,36 @@
 # Mind Map
-Mind Map helps you sort out ideas: one idea in the centre, branches around it. The layout is always tidy, so you only think about the ideas. You can keep as many maps as you like.
+Mind Map helps you sort out ideas: one idea in the centre, branches around it. The layout is always tidy (as a map, an org chart, a tree or a timeline), so you only think about the ideas. You can keep as many maps as you like, style them and present them branch by branch.
 
 ## Getting started
 - Tap `New map`, type the `Central idea` and press `OK`. Or tap `Show an example` to look around first.
-- Tap or click a node to select it. The bar at the bottom has `Child`, `Sibling`, `Edit`, `Details`, `Fold` and `Delete`.
+- Tap or click a node to select it. The bar at the bottom has `Child`, `Sibling`, `Edit`, `Details`, `Style`, `Fold` and `Delete`.
 - To change the text, double-tap or double-click the node, or tap it again once it is selected. [[Shift+Enter]] starts a new line.
 - The text of the centre is the map's title.
 
 ## Build the map
 - Drag a node onto another node to move it there. Drop it on the middle of a node to make it a child, or just above or below it to put it before or after. The whole branch moves with it.
 - Drag a node to an empty spot and it stays there, with its whole branch. `Back to its place` in its menu undoes that, and `Tidy up (all back in place)` in the `More` menu puts every node back.
-- Long-press a node (or right-click it) for more: `Mark as done`, `Move up`, `Move down`, `Copy as text`, `Paste a list here…`, `Export this branch…` and `Delete branch`.
-- `Details…` holds an `Emoji or symbol`, a `Branch colour`, a `Note`, a `Link (web address)` and a `Picture`.
+- Long-press a node (or right-click it) for more: `Mark as done`, `Move up`, `Move down`, `Copy style`, `Paste style`, `Add a boundary or summary…`, `Copy as text`, `Paste a list here…`, `Export this branch…`, `Present from here` and `Delete branch`.
+- `Details…` holds an `Emoji or symbol` (with quick icons such as a star, a question mark or priority 1 to 3), a `Branch colour`, a `Note`, a `Link (web address)` and a `Picture`.
 - `Paste a list…` turns a list into branches: one idea per line, with indents (or Markdown `- ` lists and `#` headings) for the levels.
 - Drag the empty space to move around, pinch or use the zoom buttons, and tap `Fit to screen` to see the whole map.
+
+## Style and layout
+- `Style` in the bottom bar (or `Style…` in a node's menu) sets the `Shape` (rectangle, rounded, pill, ellipse, diamond, hexagon, underline or text only), the `Fill` (none, light or solid), the `Border` (none, thin, thick or dashed), the `Text size` and `Bold text`. `Apply to the whole branch` gives everything under the node the same look, and `Reset style` brings back the automatic one.
+- `Copy style` in a node's menu, then `Paste style` on another node, gives it the same look.
+- `Layout…` in the `More` menu arranges the whole map as a `Map` (branches on both sides), a `Map to the right`, an `Org chart` (from the top down), a `Tree` (an indented list) or a `Timeline` (main branches in a row, their ideas below). Every layout stays tidy and the arrow keys follow it.
+- In the org chart and on the timeline, drop a dragged node on the left or right part of another one to put it before or after it.
+
+## Boundaries and summaries
+- `Add a boundary or summary…` in a node's menu groups ideas that sit side by side. Tick the ideas that belong in it, and give it a label (such as "Phase 1") and a colour if you like.
+- A `Boundary` draws a box around the ideas and everything under them. A `Summary` draws a brace beside them with its label.
+- Tap the line or the label of a boundary to select it. The bar at the bottom then has `Edit` and `Delete`.
+
+## Present
+- `Present` in the `More` menu (or `Present from here` in a node's menu) shows the map full screen, one idea at a time: the centre first, then each branch from top to bottom. The last step shows the whole map.
+- Tap the right side of the screen or swipe left to go on, tap the left side or swipe right to go back. The buttons at the bottom do the same, and the X ends it.
+- With a keyboard: [[→]], [[↓]] or [[Space]] go on, [[←]] or [[↑]] go back, [[Home]] and [[End]] jump to the start or the end, [[Esc]] ends it.
+- A folded branch shows as one step. Unfold it first if you want to present what is inside.
 
 ## Links and pictures
 - To join two ideas on different branches, choose `Link to another node…` in a node's menu and then tap the other node. You can give the link a label, such as "depends on".
@@ -30,10 +47,10 @@ Mind Map helps you sort out ideas: one idea in the centre, branches around it. T
 - `Find` searches the text and notes of the open map. The arrows step through the matches and open folded branches on the way.
 
 ## Your maps
-Tap the map name at the top left for `Your maps`. There you can open, rename, duplicate or delete a map. The `More` menu also has `Branches on both sides` or `Branches on the right only`, `Unfold all` and `Fold main branches`.
+Tap the map name at the top left for `Your maps`. There you can open, rename, duplicate or delete a map. The `More` menu also has `Layout…`, `Unfold all` and `Fold main branches`.
 
 ## Sync and backup
-With [orOS sync](help:t/sync), your maps and every node reach your other devices. Which map is open, the view and which branches are folded stay on this device.
+With [orOS sync](help:t/sync), your maps and every node reach your other devices, with their styles, boundaries, summaries and layout. Which map is open, the view and which branches are folded stay on this device.
 
 - `Export…` makes a picture (PNG or SVG), Markdown, OPML or JSON of the whole map or one branch. You can save it, save it to [Files](app:files), print it or copy it as text.
 - `Import (FreeMind, XMind, OPML, Markdown, text, JSON)…` brings in maps from FreeMind, Freeplane and XMind (only the first sheet), and outlines from other apps, as a new map. Their arrows become links. A JSON backup is merged into your maps: newer changes are kept and nothing you deleted comes back.
@@ -44,14 +61,19 @@ With [orOS sync](help:t/sync), your maps and every node reach your other devices
 - [[Delete]] deletes the branch, [[Space]] folds or unfolds it, the arrow keys move around the map.
 - [[Alt+↑]] and [[Alt+↓]] move a node up or down among its siblings.
 - [[Ctrl+Z]] and [[Ctrl+Y]] undo and redo, [[Ctrl+F]] finds, [[Ctrl+C]] and [[Ctrl+V]] copy a branch as text or paste a list.
+- While presenting: [[→]] and [[←]] go on and back, [[Esc]] ends.
 
 ## Tips
 - Start fast in `Outline`, then switch to `Map` to see the shape.
 - Use one colour per main branch; its children follow it.
+- A diamond or a solid fill makes the key ideas stand out; a summary brace is a quick way to say what a group of ideas adds up to.
 - Deleted something by mistake? The message has an `Undo` button, and [[Ctrl+Z]] works too.
 
 ## Limits
 - Nodes you place yourself can overlap other nodes; `Tidy up (all back in place)` sorts that out.
-- Links and pictures don't show in the `Outline` view, and Markdown and OPML exports leave them out (JSON keeps everything).
+- Links, pictures, styles, boundaries and summaries don't show in the `Outline` view, and Markdown and OPML exports leave them out (JSON keeps everything; PNG and SVG show them).
+- A boundary covers everything between the first and the last idea you ticked, even an idea in between that you left out.
+- Shapes, boundaries and summaries in FreeMind and XMind files are not imported (the ideas, notes, links and colours are).
+- A device still on an older version of orOS shows these maps in the classic look until it updates; nothing is lost.
 - If two devices move nodes at the same time in a way that conflicts, a node may come back under the centre with a dashed line. Drag it where it belongs, or choose `Keep it here`.
 - A very large map may be too big for PNG; export SVG instead.

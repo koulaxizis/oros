@@ -14,7 +14,7 @@
     <div id="doc-title" data-i18n="title">Spreadsheet</div>
     <div id="fx-wrap">
       <span id="fx-ref" aria-live="polite">A1</span>
-      <span id="fx-mark" aria-hidden="true">ƒx</span>
+      <button id="fx-mark" type="button" title="Functions">ƒx</button>
       <input id="fx-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
     </div>
   </header>
@@ -40,9 +40,17 @@
       <option value="2">123.00</option>
       <option value="%">%</option>
       <option value="€">€</option>
+      <option value="d">date</option>
     </select>
     <button id="tb-col" class="tbtn" type="button" title="Text color"></button>
     <button id="tb-clr" class="tbtn" type="button" title="Clear formatting"></button>
+    <button id="tb-fmt" class="tbtn" type="button" title="Cell format" aria-haspopup="menu"></button>
+    <span class="tsep"></span>
+    <button id="tb-sort-a" class="tbtn" type="button" title="Sort A to Z"></button>
+    <button id="tb-sort-z" class="tbtn" type="button" title="Sort Z to A"></button>
+    <button id="tb-filter" class="tbtn tgl" type="button" title="Filter"></button>
+    <button id="tb-chart" class="tbtn" type="button" title="Insert chart"></button>
+    <button id="tb-more" class="tbtn" type="button" title="Rows, columns, freeze" aria-haspopup="menu"></button>
   </div>
   <div id="swatches" hidden></div>
   <main id="grid-wrap" tabindex="-1">
@@ -52,6 +60,7 @@
   <footer id="sstat">
     <span id="st-sel">A1</span>
     <span id="st-note"></span>
+    <span id="st-flt" hidden><span id="st-flt-t"></span><button id="st-flt-x" type="button" title="Remove filter"></button></span>
     <span id="sstat-actions">
       <button id="btn-csv-imp" class="sbtn" type="button" title="Import CSV" aria-label="Import CSV"></button>
       <button id="btn-csv-exp" class="sbtn" type="button" title="Export CSV" aria-label="Export CSV"></button>
@@ -61,6 +70,8 @@
 <script src="../links/core.js?v=1.98.00"></script>
 <script src="../links/sheets.js?v=1.98.00"></script>
 <script src="platforms.js?v=1.98.00"></script>
+<script src="functions.js?v=1.98.00"></script>
+<script src="sheetkit.js?v=1.98.00"></script>
 <script src="spreadsheet.js?v=1.98.00"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Library — disk, files and book details (v1.0.0)
-//   - finds every .epub / .pdf / .fb2 / .cbz on the orOS disk (window.parent.orosFS)
+//   - finds every .epub / .pdf / .fb2 / .cbz / .cbr on the orOS disk (window.parent.orosFS)
 //     and knows which file is which book on THIS device:
 //     oros-library-paths { ver, map: { path: { s: size, t: mtime, id } } }
 //     (device-local, never synced: two devices may keep one book in
@@ -10,7 +10,7 @@
 //     a file already in the library is never copied twice
 //   - reads a book's details: EPUB package (title, author, language,
 //     year, cover) or PDF info (title, author, pages, first page);
-//     FB2 and CBZ are built into an EPUB in memory first (openEpub)
+//     FB2, CBZ and CBR are built into an EPUB in memory first (openEpub)
 //   - covers: small JPEG data URLs in IndexedDB "oros-library-cache"
 //     (this device only; rebuilt whenever missing)
 //   - PDF.js (vendor/pdfjs, Apache-2.0) is loaded only when needed,
@@ -226,11 +226,11 @@
 
   // ---------- Book details ----------
   var MIME_OF = { epub: "application/epub+zip", pdf: "application/pdf", fb2: "application/x-fictionbook+xml",
-                  cbz: "application/vnd.comicbook+zip" };
+                  cbz: "application/vnd.comicbook+zip", cbr: "application/vnd.comicbook-rar" };
   function describe(buf, path) {
     var fmt = C.formatOf(path), kind = C.kindOf(path);
     var p = fmt === "pdf" ? describePdf(buf) : describeEpub(buf, kind, path);
-    var withKind = function (info) { info.fmt = fmt; if (kind === "fb2" || kind === "cbz") info.kind = kind; return info; };
+    var withKind = function (info) { info.fmt = fmt; if (kind === "fb2" || C.isComic(kind)) info.kind = kind; return info; };
     return p.then(withKind, function () { return withKind({ title: C.titleFromName(path) }); });
   }
   function openZip(buf) {
@@ -243,6 +243,7 @@
     var zp;
     if (kind === "fb2") zp = fb2Zip(bytes);
     else if (kind === "cbz") zp = cbzZip(bytes, name);
+    else if (kind === "cbr") zp = cbrZip(bytes, name);
     else zp = new Promise(function (res) { res(openZip(bytes)); });
     return zp.then(readPackage);
   }
@@ -322,6 +323,67 @@
       });
     });
   }
+  // CBR (a RAR of pictures): libarchive.js (vendor/libarchive, MIT;
+  // libarchive itself BSD-2-Clause, its own RAR 4 / RAR 5 reader) is
+  // loaded only for a .cbr, and works in a module worker. The pictures
+  // are read out once and kept in memory while the book is open;
+  // nothing in the archive is ever run. A password-protected archive
+  // is refused like a DRM book.
+  var LA_DIR = "../vendor/libarchive/";
+  var laP = null;
+  function libarchive() {
+    if (laP) return laP;
+    var base = new URL(LA_DIR, location.href).href;
+    laP = import(base + "libarchive.js").then(function (m) {
+      if (!m || !m.Archive) throw new Error("cbr");
+      m.Archive.init({ workerUrl: base + "worker-bundle.js" });
+      return m.Archive;
+    });
+    laP.catch(function () { laP = null; });
+    return laP;
+  }
+  function cbrZip(bytes, name) {
+    var u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    if (!(u8[0] === 0x52 && u8[1] === 0x61 && u8[2] === 0x72 && u8[3] === 0x21)) {
+      // some ".cbr" files are really ZIPs: read them as a CBZ
+      if (u8[0] === 0x50 && u8[1] === 0x4b) return cbzZip(u8, name);
+      return Promise.reject(new Error("cbr"));
+    }
+    return libarchive().then(function (Archive) {
+      var file = new File([u8], "comic.cbr", { type: "application/vnd.comicbook-rar" });
+      return Archive.open(file).then(function (arc) {
+        return arc.hasEncryptedData().then(function (locked) {
+          if (locked) { arc.close(); throw new Error("drm"); }
+          return arc.extractFiles();
+        }).then(function (tree) {
+          var files = {}, count = 0;
+          (function walk(o, pre, depth) {
+            if (!o || typeof o !== "object" || depth > 20) return;
+            Object.keys(o).forEach(function (k) {
+              var v = o[k];
+              if (count > 20000) return;
+              if (v instanceof Blob) { files[pre + k] = v; count++; }
+              else walk(v, pre + k + "/", depth + 1);
+            });
+          })(tree, "", 0);
+          try { arc.close(); } catch (e) {}
+          var names = Object.keys(files);
+          var ci = names.filter(function (x) { return /(^|\/)comicinfo\.xml$/i.test(x); })[0];
+          var info = ci && files[ci].size < 1024 * 1024 ? files[ci].text().then(C.comicInfo, function () { return {}; }) : Promise.resolve({});
+          return info.then(function (meta) {
+            var book = C.cbzBook(names, meta, C.titleFromName(name || ""));
+            if (!book) throw new Error("cbr");
+            var images = book.images.map(function (im) {
+              var f = files[im.src];
+              return { file: im.file, type: im.type, cover: im.cover,
+                       data: { size: f.size, read: function () { return f.arrayBuffer().then(function (b) { return new Uint8Array(b); }); } } };
+            });
+            return memZip(C.packBook(book.meta, book.chapters, images, book.css));
+          });
+        });
+      });
+    });
+  }
   function readPackage(zip) {
     var getText = function (name) { return zip.has(name) ? zip.text(name, 8 * 1024 * 1024) : Promise.reject(new Error("missing " + name)); };
     return getText("META-INF/container.xml").then(function (xml) {
@@ -338,7 +400,7 @@
       var info = { title: m.title, by: m.by, lang: m.lang, year: m.year, publisher: m.publisher, desc: m.desc };
       var bytes = 0;
       e.pkg.spine.forEach(function (s) { bytes += e.zip.size(s.path) || 0; });
-      if (kind === "cbz") info.pages = e.pkg.spine.length;        // a picture is a page
+      if (C.isComic(kind)) info.pages = e.pkg.spine.length;       // a picture is a page
       else if (bytes) info.pages = C.estPagesBytes(bytes);
       var cp = e.pkg.coverPath;
       if (!cp || !e.zip.has(cp)) return info;

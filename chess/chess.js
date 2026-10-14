@@ -303,6 +303,49 @@
       "lp.end.outoftime": "Time ran out", "lp.end.cheat": "Ended by Lichess", "lp.end.noStart": "The game never started",
       "lp.end.unknownFinish": "Game over", "lp.end.insufficientMaterialClaim": "Draw: not enough pieces to mate",
       "lp.end.variantEnd": "Game over",
+      "btn.train": "Training: puzzles and openings",
+      "tr.title": "Training", "tr.pz": "Puzzles", "tr.op": "Openings",
+      "tr.rating": "Puzzle rating", "tr.prov": "provisional",
+      "tr.count": "{n} tried · {w} solved at the first try",
+      "tr.none": "No puzzle tried yet. You start at 1500.",
+      "tr.theme": "Theme", "tr.any": "Any theme",
+      "tr.next": "Next puzzle", "tr.retry": "Retry failed ({n})", "tr.history": "History",
+      "tr.opTrain": "Openings trainer", "tr.opHere": "This game: {name}",
+      "tr.loading": "Loading…", "tr.loadFail": "Couldn't load the puzzles on this device.",
+      "tr.packNote": "{n} puzzles on this device, offline. Their ratings are estimates.",
+      "tr.find": "Find the best move for {side}", "tr.findNext": "Good. Now the next move",
+      "tr.wait": "Wait for the reply",
+      "tr.wrong": "Not the move. Try again",
+      "tr.failedNote": "Puzzle failed. You can still find the moves.",
+      "tr.solved": "Solved!", "tr.solvedLate": "Solved (not at the first try)", "tr.shown": "Solution shown",
+      "tr.delta": "Rating {r} ({d})",
+      "tr.hint": "Hint", "tr.sol": "Solution", "tr.menu": "Training", "tr.nextShort": "Next",
+      "tr.info": "Puzzle {r} · {themes}",
+      "tr.opened": "Puzzle on the board",
+      "tr.noMore": "No puzzle for this theme", "tr.noRetry": "No failed puzzle to retry",
+      "tr.histTitle": "Puzzle history", "tr.histEmpty": "Nothing yet.",
+      "tr.ok": "solved", "tr.fail": "failed", "tr.fixed": "failed, solved later",
+      "tr.reset": "Reset puzzles", "tr.resetQ": "Clear the puzzle history and rating on every device?",
+      "tr.resetDone": "Puzzle history cleared",
+      "op.title": "Openings trainer", "op.search": "Search openings", "op.lines": "{n} lines",
+      "op.side": "Play this line as", "op.moves": "{n} moves",
+      "op.find": "Play the book move for {side}", "op.wrong": "Not the book move. Try again",
+      "op.book": "The book move is {san}",
+      "op.done": "Line complete · {n} mistakes", "op.done1": "Line complete · 1 mistake", "op.done0": "Line complete, no mistakes",
+      "op.again": "Again", "op.playOn": "Play on vs computer", "op.other": "Other line",
+      "op.none": "No opening matches", "op.opened": "Opening on the board",
+      "op.note": "Opening names: the Lichess chess-openings list (CC0).",
+      "th.mate": "Checkmate", "th.mateIn1": "Mate in 1", "th.mateIn2": "Mate in 2", "th.mateIn3": "Mate in 3",
+      "th.mateIn4": "Mate in 4", "th.mateIn5": "Mate in 5+",
+      "th.fork": "Fork", "th.hangingPiece": "Hanging piece", "th.promotion": "Promotion", "th.endgame": "Endgame",
+      "th.middlegame": "Middlegame", "th.opening": "Opening", "th.backRankMate": "Back rank mate",
+      "th.advantage": "Win material", "th.crushing": "Crushing", "th.oneMove": "One move", "th.short": "Short",
+      "th.long": "Long", "th.veryLong": "Very long", "th.pin": "Pin", "th.skewer": "Skewer",
+      "th.discoveredAttack": "Discovered attack", "th.sacrifice": "Sacrifice", "th.deflection": "Deflection",
+      "th.attraction": "Attraction", "th.kingsideAttack": "Kingside attack", "th.queensideAttack": "Queenside attack",
+      "th.defensiveMove": "Defensive move", "th.quietMove": "Quiet move", "th.trappedPiece": "Trapped piece",
+      "th.doubleCheck": "Double check", "th.smotheredMate": "Smothered mate", "th.zugzwang": "Zugzwang",
+      "th.rookEndgame": "Rook endgame", "th.pawnEndgame": "Pawn endgame", "th.equality": "Equality",
       "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear."
     },
     el: {
@@ -528,6 +571,49 @@
       "lp.end.outoftime": "Τελείωσε ο χρόνος", "lp.end.cheat": "Τερματίστηκε από το Lichess", "lp.end.noStart": "Η παρτίδα δεν ξεκίνησε ποτέ",
       "lp.end.unknownFinish": "Τέλος παρτίδας", "lp.end.insufficientMaterialClaim": "Ισοπαλία: δεν φτάνουν τα κομμάτια για ματ",
       "lp.end.variantEnd": "Τέλος παρτίδας",
+      "btn.train": "Εξάσκηση: γρίφοι και ανοίγματα",
+      "tr.title": "Εξάσκηση", "tr.pz": "Γρίφοι", "tr.op": "Ανοίγματα",
+      "tr.rating": "Βαθμός στους γρίφους", "tr.prov": "προσωρινός",
+      "tr.count": "{n} δοκιμές · {w} λυμένοι με την πρώτη",
+      "tr.none": "Δεν έχεις δοκιμάσει γρίφο ακόμη. Ξεκινάς από 1500.",
+      "tr.theme": "Θέμα", "tr.any": "Όλα τα θέματα",
+      "tr.next": "Επόμενος γρίφος", "tr.retry": "Ξανά όσοι απέτυχαν ({n})", "tr.history": "Ιστορικό",
+      "tr.opTrain": "Εξάσκηση στα ανοίγματα", "tr.opHere": "Αυτή η παρτίδα: {name}",
+      "tr.loading": "Φόρτωση…", "tr.loadFail": "Δεν φορτώθηκαν οι γρίφοι σε αυτή τη συσκευή.",
+      "tr.packNote": "{n} γρίφοι σε αυτή τη συσκευή, χωρίς σύνδεση. Οι βαθμοί τους είναι εκτιμήσεις.",
+      "tr.find": "Βρες την καλύτερη κίνηση για τα {side}", "tr.findNext": "Σωστά. Τώρα η επόμενη κίνηση",
+      "tr.wait": "Περίμενε την απάντηση",
+      "tr.wrong": "Όχι αυτή. Δοκίμασε ξανά",
+      "tr.failedNote": "Ο γρίφος χάθηκε. Μπορείς ακόμη να βρεις τις κινήσεις.",
+      "tr.solved": "Λύθηκε!", "tr.solvedLate": "Λύθηκε (όχι με την πρώτη)", "tr.shown": "Δείχτηκε η λύση",
+      "tr.delta": "Βαθμός {r} ({d})",
+      "tr.hint": "Βοήθεια", "tr.sol": "Λύση", "tr.menu": "Εξάσκηση", "tr.nextShort": "Επόμενος",
+      "tr.info": "Γρίφος {r} · {themes}",
+      "tr.opened": "Γρίφος στη σκακιέρα",
+      "tr.noMore": "Δεν υπάρχει γρίφος για αυτό το θέμα", "tr.noRetry": "Δεν υπάρχει αποτυχημένος γρίφος για επανάληψη",
+      "tr.histTitle": "Ιστορικό γρίφων", "tr.histEmpty": "Τίποτα ακόμη.",
+      "tr.ok": "λύθηκε", "tr.fail": "απέτυχε", "tr.fixed": "απέτυχε, λύθηκε αργότερα",
+      "tr.reset": "Μηδενισμός γρίφων", "tr.resetQ": "Να σβηστεί το ιστορικό και ο βαθμός των γρίφων σε όλες τις συσκευές;",
+      "tr.resetDone": "Το ιστορικό γρίφων σβήστηκε",
+      "op.title": "Εξάσκηση στα ανοίγματα", "op.search": "Αναζήτηση ανοίγματος", "op.lines": "{n} γραμμές",
+      "op.side": "Παίξε τη γραμμή με τα", "op.moves": "{n} κινήσεις",
+      "op.find": "Παίξε την κίνηση του βιβλίου για τα {side}", "op.wrong": "Δεν είναι η κίνηση του βιβλίου. Δοκίμασε ξανά",
+      "op.book": "Η κίνηση του βιβλίου είναι {san}",
+      "op.done": "Η γραμμή ολοκληρώθηκε · {n} λάθη", "op.done1": "Η γραμμή ολοκληρώθηκε · 1 λάθος", "op.done0": "Η γραμμή ολοκληρώθηκε χωρίς λάθος",
+      "op.again": "Ξανά", "op.playOn": "Συνέχισε με τον υπολογιστή", "op.other": "Άλλη γραμμή",
+      "op.none": "Κανένα άνοιγμα δεν ταιριάζει", "op.opened": "Άνοιγμα στη σκακιέρα",
+      "op.note": "Ονόματα ανοιγμάτων: ο κατάλογος chess-openings του Lichess (CC0). Τα ονόματα μένουν στα αγγλικά, όπως στη διεθνή βιβλιογραφία.",
+      "th.mate": "Ματ", "th.mateIn1": "Ματ σε 1", "th.mateIn2": "Ματ σε 2", "th.mateIn3": "Ματ σε 3",
+      "th.mateIn4": "Ματ σε 4", "th.mateIn5": "Ματ σε 5+",
+      "th.fork": "Διπλή επίθεση", "th.hangingPiece": "Αφύλαχτο κομμάτι", "th.promotion": "Προαγωγή", "th.endgame": "Φινάλε",
+      "th.middlegame": "Μέση παρτίδα", "th.opening": "Άνοιγμα", "th.backRankMate": "Ματ στην τελευταία γραμμή",
+      "th.advantage": "Κέρδος υλικού", "th.crushing": "Συντριπτικό", "th.oneMove": "Μία κίνηση", "th.short": "Σύντομος",
+      "th.long": "Μεγάλος", "th.veryLong": "Πολύ μεγάλος", "th.pin": "Κάρφωμα", "th.skewer": "Σούβλα",
+      "th.discoveredAttack": "Αποκαλυπτόμενη επίθεση", "th.sacrifice": "Θυσία", "th.deflection": "Εκτροπή",
+      "th.attraction": "Έλξη", "th.kingsideAttack": "Επίθεση στην πτέρυγα του βασιλιά", "th.queensideAttack": "Επίθεση στην πτέρυγα της βασίλισσας",
+      "th.defensiveMove": "Αμυντική κίνηση", "th.quietMove": "Ήσυχη κίνηση", "th.trappedPiece": "Παγιδευμένο κομμάτι",
+      "th.doubleCheck": "Διπλό σαχ", "th.smotheredMate": "Πνιγμένο ματ", "th.zugzwang": "Τσουγκτσβάνγκ",
+      "th.rookEndgame": "Φινάλε πύργων", "th.pawnEndgame": "Φινάλε πιονιών", "th.equality": "Εξίσωση",
       "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί."
     }
   };
@@ -1665,7 +1751,9 @@
   // data = {
   //   ver: 1,
   //   br: <reset stamp>,                               // max-merged
-  //   rows: { <deviceId>: { b: <epoch>, s: { e:[w,d,l], m:[…], h:[…] } } }
+  //   rows: { <deviceId>: { b: <epoch>, s: { e:[w,d,l], m:[…], h:[…] } } },
+  //   pz?: { <puzzleId>: [at, ok, fix] },             // train.js history
+  //   pbr?: <puzzle reset stamp>                       // max-merged
   // }
   // Each device only ever increments ITS OWN row; a row counts from
   // epoch b. Merge per row: the newer epoch wins, equal epochs take the
@@ -1722,7 +1810,15 @@
       LEVELS.forEach(function (lv) { if (r.s[lv]) s[lv] = r.s[lv].slice(); });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var out = { ver: DATA_VER, br: br, rows: sorted };
+    // Puzzles (train.js): first attempts per puzzle id, joined; pbr is
+    // their own reset stamp. Both only appear once used, so data from
+    // before them reads and writes exactly as it did.
+    var pbr = Math.max(isInt(a.pbr) ? a.pbr : 0, isInt(b.pbr) ? b.pbr : 0);
+    var pz = OrosChessTrain.mergeHistory(a.pz, b.pz, pbr);
+    if (pbr) out.pbr = pbr;
+    if (Object.keys(pz).length) out.pz = pz;
+    return out;
   }
 
   // Totals per level across every device: [won, drawn, lost].
@@ -1785,7 +1881,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "", li: "", lr: false };
+  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "", li: "", lr: false, pt: "" };
 
   function loadPrefs() {
     try {
@@ -1799,6 +1895,7 @@
         prefs.cc = CC.okUser(p.cc);
         prefs.li = LI.okUser(p.li);
         prefs.lr = p.lr === true;
+        prefs.pt = typeof p.pt === "string" && /^[A-Za-z0-9]{2,30}$/.test(p.pt) ? p.pt : "";
       }
     } catch (e) {}
   }
@@ -1828,7 +1925,7 @@
   var pos = null, sans = [], legal = [], st = null;
 
   function validSession(g) {
-    if (!g || typeof g !== "object" || (MODES.indexOf(g.mode) < 0 && g.mode !== "review" && g.mode !== "online") ||
+    if (!g || typeof g !== "object" || (MODES.indexOf(g.mode) < 0 && ["review", "online", "puzzle", "drill"].indexOf(g.mode) < 0) ||
         LEVELS.indexOf(g.lv) < 0 || (g.human !== "w" && g.human !== "b") ||
         !Array.isArray(g.moves) || g.moves.length > MAX_PLIES) return false;
     for (var i = 0; i < g.moves.length; i++) {
@@ -1837,7 +1934,18 @@
     if (g.fen !== undefined && (typeof g.fen !== "string" || g.fen.length > 100 || !E.parseFen(g.fen))) return false;
     if (g.base !== undefined && (!isInt(g.base) || g.base < 0 || g.base > g.moves.length)) return false;
     if (g.mode === "online" && (!g.online || typeof g.online !== "object" || !LI.okId(g.online.id) || g.fen)) return false;
+    if (g.mode === "puzzle" && !validLine(g.pz && g.pz.sol, g.moves, 40)) return false;
+    if (g.mode === "drill" && (!validLine(g.dr && g.dr.line, g.moves, 60) || g.fen)) return false;
     return !!E.replay(g.moves, g.fen);
+  }
+  // Training (section 7f): the moves played are the start of the line.
+  function validLine(line, moves, max) {
+    if (!Array.isArray(line) || !line.length || line.length > max || moves.length > line.length) return false;
+    for (var i = 0; i < line.length; i++) {
+      if (typeof line[i] !== "string" || !/^[a-h][1-8][a-h][1-8][nbrq]?$/.test(line[i])) return false;
+      if (i < moves.length && moves[i] !== line[i] && i !== line.length - 1) return false;   // a last move may be another mate
+    }
+    return true;
   }
   function cleanTags(x) {
     var out = {};
@@ -1873,6 +1981,19 @@
           out.at = isInt(g.at) && g.at >= 0 && g.at <= g.moves.length ? g.at : g.moves.length;
         }
         if (g.mode === "online") out.online = cleanOnline(g.online);
+        if (g.mode === "puzzle") {
+          var z = g.pz;
+          out.pz = { id: OrosChessTrain.ID_RE.test(z.id) ? z.id : "?", sol: z.sol.slice(), r: isInt(z.r) ? z.r : 1500,
+                     th: Array.isArray(z.th) ? z.th.filter(function (x) { return typeof x === "string" && /^[A-Za-z0-9]{2,30}$/.test(x); }).slice(0, 12) : [],
+                     fail: z.fail === true, shown: z.shown === true, rec: z.rec === true, d: isInt(z.d) ? z.d : 0 };
+          out.unrated = true;
+        }
+        if (g.mode === "drill") {
+          var dr = g.dr;
+          out.dr = { eco: /^[A-E][0-9]{2}$/.test(dr.eco) ? dr.eco : "", name: PGN.clean(dr.name), line: dr.line.slice(),
+                     miss: isInt(dr.miss) && dr.miss >= 0 ? dr.miss : 0, wrong: isInt(dr.wrong) ? dr.wrong : -1 };
+          out.unrated = true;
+        }
         return out;
       }
     } catch (e) {}
@@ -1897,6 +2018,10 @@
   function colorOf(p) { return p > 0 ? "w" : "b"; }
   function toMove() { return pos.t > 0 ? "w" : "b"; }
   function aiTurn() { return !!(game && game.mode === "ai" && !game.done && toMove() !== game.human); }
+  // Training (section 7f): a puzzle or an opening line, where the app
+  // plays the other side's moves of the line.
+  function trMode() { return !!(game && (game.mode === "puzzle" || game.mode === "drill")); }
+  function trWait() { return trMode() && !game.done && toMove() !== game.human; }
 
   // Rebuild the position, the SAN list and the legal moves from game.moves.
   var revSans = { key: "", sans: [] };       // the reviewed game's SAN, once
@@ -1965,6 +2090,7 @@
       return nm + (elo && /^\d{3,4}$/.test(elo) ? " (" + elo + ")" : "");
     }
     if (game && game.mode === "ai") return t(c === game.human ? "name.you" : "name.ai");
+    if (trMode()) return c === game.human ? t("name.you") : t("name." + c);
     if (game && game.mode === "online") return lpName(c);
     return t("name." + c);
   }
@@ -1979,6 +2105,7 @@
     if (game.mode === "review") { showToast(t("toast.review")); return; }
     if (game.done) { showToast(t("toast.over")); return; }            // R28
     if (aiTurn()) { showToast(t("toast.wait")); return; }
+    if (trWait()) { if (sel >= 0) select(-1); showToast(t("tr.wait")); return; }
     if (game.mode === "online" && toMove() !== game.human) {
       if (sel >= 0) select(-1);
       showToast(t("lp.wait"));
@@ -2026,6 +2153,7 @@
   }
 
   function applyMove(m, noSlide) {
+    if (trMode() && toMove() === game.human && !trAccept(m)) return;
     var mover = toMove(), san = E.san(pos, m), cap = (E.mFlags(m) & 1) !== 0;
     E.makeMove(pos, m);
     game.moves.push(E.toUci(m));
@@ -2040,6 +2168,11 @@
       saveSession();
       renderAll(false);
       lpMove(E.toUci(m));
+      return;
+    }
+    if (trMode()) {                        // the line decides the end
+      sfx(E.inCheck(pos) ? "check" : (cap ? "capture" : "move"));
+      trAfter();
       return;
     }
     if (st.over) { finish(); return; }
@@ -2081,6 +2214,7 @@
   }
 
   function cancelAi() {
+    trCancel();
     aiJob++;
     thinking = false;
     aiDone = null;
@@ -2124,7 +2258,7 @@
   // its answer (the game then counts for no record).
   function canUndo() {
     var base = game ? game.base || 0 : 0;
-    if (!game || game.done || game.mode === "review" || game.mode === "online" || game.moves.length <= base) return false;
+    if (!game || game.done || game.mode === "review" || game.mode === "online" || trMode() || game.moves.length <= base) return false;
     if (game.mode === "duo") return true;
     var first = base + (sideAt(base) === game.human ? 0 : 1);   // index of your first move
     return game.moves.length > first;
@@ -2199,6 +2333,7 @@
     paintSfxBtn();
     renderReviewBar();
     renderOnlineBar();
+    renderTrainBar();
   }
 
   // "12. Nf3" / "12… Nf6": the move that led to the position after n plies.
@@ -2220,6 +2355,7 @@
       else if (st.over && st.reason === "mate") txt += " · " + t("res.mate");
       return txt;
     }
+    if (trMode()) return trStatus();
     if (st.over && game.mode !== "online") {
       var w = winnerOf(st);
       if (st.reason === "mate") {
@@ -2270,7 +2406,7 @@
 
   // White at the bottom unless you play black, or the board is flipped.
   function whiteBottom() {
-    var base = !(game && (game.mode === "ai" || game.mode === "online") && game.human === "b");
+    var base = !(game && (game.mode === "ai" || game.mode === "online" || trMode()) && game.human === "b");
     return prefs.flip ? !base : base;
   }
   // The square shown at visual cell i (row-major from the top left).
@@ -4087,6 +4223,482 @@
     });
   }
 
+  // ---------- 7f. Training: puzzles and openings (train.js) ----------
+  // Puzzles come from a pack in the Lichess puzzle layout (chess/
+  // puzzles-pack.js: window.OrosChessPacks, loaded on first use,
+  // offline from the service worker). Your first try at each puzzle goes to the synced history
+  // (data.pz); the rating is computed from it (Glicko-1). Opening names
+  // come from the Lichess chess-openings list (chess/openings-data.js),
+  // looked up by position; the trainer plays one of its lines with you.
+  var TR = { packs: null, byId: {}, op: null, opIx: null, timer: null, loading: {} };
+  var TRAIN = OrosChessTrain;
+  var TR_REPLY_MS = 450;
+
+  function trLoad(file, done) {
+    if (TR.loading[file]) { TR.loading[file].push(done); return; }
+    TR.loading[file] = [done];
+    var s = document.createElement("script");
+    s.src = file + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+    s.onload = s.onerror = function (e) {
+      var cbs = TR.loading[file];
+      TR.loading[file] = null;
+      cbs.forEach(function (cb) { cb(e.type === "load"); });
+    };
+    document.head.appendChild(s);
+  }
+  function trPacks(done) {
+    if (TR.packs) { done(true); return; }
+    trLoad("puzzles-pack.js", function () {
+      var packs = window.OrosChessPacks;
+      if (!Array.isArray(packs)) { done(false); return; }
+      var list = [];
+      packs.forEach(function (pk) {
+        if (!pk || typeof pk.csv !== "string") return;
+        TRAIN.parsePack(pk.csv).forEach(function (p) {
+          if (TR.byId[p.id] || !TRAIN.checkPuzzle(E, p)) return;
+          TR.byId[p.id] = p;
+          list.push(p);
+        });
+      });
+      TR.packs = list;
+      done(list.length > 0);
+    });
+  }
+  function trOpenings(done) {
+    if (TR.op) { done(true); return; }
+    trLoad("openings-data.js", function () {
+      var list = typeof window.OrosChessOpenings === "string" ? TRAIN.parseOpenings(window.OrosChessOpenings) : null;
+      if (!list) { done(false); return; }
+      TR.op = list;
+      TR.opIx = TRAIN.indexOpenings(E, list);
+      done(true);
+    });
+  }
+  // The opening names arrive a moment after the board.
+  function trOpeningsLater() {
+    setTimeout(function () { trOpenings(function (ok) { if (ok) renderOpening(); }); }, 300);
+  }
+  function openingNow() {
+    if (!TR.op || !game || game.fen || game.mode === "puzzle") return null;
+    if (game.mode === "online" && !game.done) return null;       // fair play: nothing extra during a game
+    var mv = game.mode === "review" ? game.moves.slice(0, game.at) : game.moves;
+    return mv.length ? TRAIN.nameOf(E, TR.op, TR.opIx, mv) : null;
+  }
+  function renderOpening() {
+    var box = $("op-name");
+    if (!box) return;
+    var o = game && game.mode === "drill" ? { eco: game.dr.eco, name: game.dr.name } : openingNow();
+    box.hidden = !o;
+    box.textContent = o ? o.eco + " · " + o.name : "";
+    box.title = box.textContent;
+  }
+
+  function themeName(k) {
+    var s = t("th." + k);
+    return s !== "th." + k ? s : k.replace(/([a-z])([A-Z0-9])/g, "$1 $2").toLowerCase();
+  }
+  function hist() { return data.pz || {}; }
+  function myRating() { return TRAIN.rating(hist(), TR.byId); }
+  function signed(d) { return (d > 0 ? "+" : d < 0 ? "−" : "±") + Math.abs(d); }
+
+  function trCancel() { if (TR.timer) { clearTimeout(TR.timer); TR.timer = null; } }
+
+  // A puzzle on the board: the opponent's move first (it slides in).
+  function startPuzzle(p) {
+    var next = { mode: "puzzle", lv: prefs.lv, human: "w", moves: [], done: false, unrated: true, fen: p.fen,
+                 pz: { id: p.id, sol: p.moves.slice(), r: p.r, th: p.th.slice(), fail: false, shown: false, rec: false, d: 0 } };
+    next.human = E.parseFen(p.fen).t > 0 ? "b" : "w";        // the FEN side moves first: you are the other
+    replaceGame(next, t("tr.opened"), true);
+    trResume();
+  }
+  function startDrill(i, side) {
+    var o = TR.op[i];
+    var next = { mode: "drill", lv: prefs.lv, human: side, moves: [], done: false, unrated: true,
+                 dr: { eco: o.eco, name: o.name, line: o.moves.slice(), miss: 0, wrong: -1 } };
+    replaceGame(next, t("op.opened"), true);
+    trResume();
+  }
+  function trLine() { return game.mode === "puzzle" ? game.pz.sol : game.dr.line; }
+
+  // The app's move of the line, after a short pause.
+  function trResume() {
+    trCancel();
+    if (!trMode() || game.done) return;
+    var line = trLine(), k = game.moves.length;
+    if (k >= line.length) { trEnd(); return; }
+    if (toMove() === game.human) return;
+    TR.timer = setTimeout(function () {
+      TR.timer = null;
+      if (!trMode() || game.done || toMove() === game.human || game.moves.length !== k) return;
+      var m = E.fromUci(pos, line[k]);
+      if (m) applyMove(m, false);
+    }, TR_REPLY_MS);
+  }
+  // Your move: the line's move (or, as the last move of a puzzle, any
+  // mate) goes on; anything else is refused and counts as a miss.
+  function trAccept(m) {
+    var uci = E.toUci(m), k = game.moves.length, line = trLine();
+    if (game.mode === "puzzle") {
+      var p = { moves: line };
+      if (TRAIN.rightMove(E, pos, p, k, uci)) return true;
+      sel = -1;
+      refuse(E.mTo(m), t("tr.wrong"));
+      if (!game.pz.fail) {
+        game.pz.fail = true;
+        trRecord(false);
+      }
+      saveSession();
+      renderAll(false);
+      return false;
+    }
+    if (uci === line[k]) return true;
+    sel = -1;
+    var again = game.dr.wrong === k;
+    game.dr.miss++;
+    game.dr.wrong = k;
+    var bm = E.fromUci(pos, line[k]);
+    refuse(E.mTo(m), again && bm ? t("op.book", { san: E.san(pos, bm) }) : t("op.wrong"));
+    saveSession();
+    renderAll(false);
+    if (bm) select(E.mFrom(bm));                // the piece to move, as a hint
+    return false;
+  }
+  function trAfter() {
+    sel = -1;
+    var line = trLine();
+    if (game.moves.length >= line.length || st.over) { trEnd(); return; }
+    saveSession();
+    renderAll(false);
+    if (toMove() !== game.human) trResume();
+    else if (game.mode === "puzzle") live(t("tr.findNext"));
+  }
+  function trEnd() {
+    trCancel();
+    game.done = true;
+    if (game.mode === "puzzle" && !game.pz.fail && !game.pz.shown) trRecord(true);
+    saveSession();
+    renderAll(false);
+    sfx(game.mode === "puzzle" && (game.pz.fail || game.pz.shown) ? "end" : "win");
+    live(trStatus());
+    if (game.mode === "drill") setTimeout(drillDoneDialog, 700);
+  }
+  // A result goes to the synced history once per puzzle on the board
+  // (a later solve of a failed one only marks it solved).
+  function trRecord(ok) {
+    var z = game.pz;
+    if (z.rec) return;
+    z.rec = true;
+    var before = TR.packs ? myRating().r : 0;
+    data.pz = TRAIN.record(hist(), z.id, ok, Date.now());
+    data = mergeChess(data, data);
+    save();
+    if (TR.packs) z.d = myRating().r - before;
+  }
+  function trStatus() {
+    var side = t("sidel." + game.human);
+    if (game.mode === "drill") {
+      if (game.done) { var n = game.dr.miss; return n === 0 ? t("op.done0") : n === 1 ? t("op.done1") : t("op.done", { n: n }); }
+      return toMove() === game.human ? t("op.find", { side: side }) : t("tr.wait");
+    }
+    var z = game.pz;
+    if (game.done) return z.shown ? t("tr.shown") : z.fail ? t("tr.solvedLate") : t("tr.solved");
+    if (toMove() !== game.human) return t("tr.wait");
+    return z.fail ? t("tr.failedNote") : t("tr.find", { side: side });
+  }
+
+  // The bar under the move list.
+  function renderTrainBar() {
+    var bar = $("train-bar");
+    if (!bar) return;
+    var on = trMode();
+    bar.hidden = !on;
+    renderOpening();
+    if (!on) return;
+    var info = $("tr-info"), pz = game.mode === "puzzle";
+    if (pz) {
+      var z = game.pz, txt = t("tr.info", { r: z.r, themes: z.th.filter(function (x) { return !/^(short|long|veryLong|oneMove|advantage|crushing|mate|middlegame|opening|endgame|equality)$/.test(x); }).map(themeName).join(", ") || themeName(z.th[0] || "mate") });
+      if (z.rec && TR.packs) txt += " · " + t("tr.delta", { r: myRating().r, d: signed(z.d) });
+      info.textContent = txt;
+    } else {
+      info.textContent = game.dr.eco + " · " + game.dr.name;
+    }
+    $("tr-hint").hidden = game.done;
+    $("tr-sol").hidden = game.done || !pz;
+    $("tr-again").hidden = pz || !game.done;
+    $("tr-next").textContent = pz ? t("tr.nextShort") : t("op.other");
+  }
+  function trHint() {
+    if (!trMode() || game.done || toMove() !== game.human) return;
+    var m = E.fromUci(pos, trLine()[game.moves.length]);
+    if (m) select(E.mFrom(m));
+  }
+  // Show the rest of the solution (the puzzle counts as failed).
+  function trSolution() {
+    if (game.mode !== "puzzle" || game.done) return;
+    if (!game.pz.fail) { game.pz.fail = true; trRecord(false); }
+    game.pz.shown = true;
+    trCancel();
+    (function step() {
+      if (game.mode !== "puzzle" || game.done) return;
+      var k = game.moves.length, line = game.pz.sol;
+      if (k >= line.length) { trEnd(); return; }
+      var m = E.fromUci(pos, line[k]);
+      if (!m) return;
+      var mover = toMove(), san = E.san(pos, m);
+      E.makeMove(pos, m);
+      game.moves.push(line[k]);
+      sans.push(san);
+      lastFrom = E.mFrom(m); lastTo = E.mTo(m);
+      anim = { from: lastFrom, to: lastTo };
+      afterMove();
+      sfx("move");
+      live(t("live.move", { who: sideName(mover), san: san }));
+      saveSession();
+      renderAll(false);
+      TR.timer = setTimeout(step, 650);
+    })();
+  }
+  function trNext() {
+    if (game.mode === "drill") { openingsDialog(); return; }
+    trPacks(function (ok) {
+      if (!ok) { showToast(t("tr.loadFail")); return; }
+      var p = TRAIN.pick(TR.packs, hist(), { theme: prefs.pt, r: myRating().r, rnd: rand, not: game.pz && game.pz.id });
+      if (!p) { showToast(t("tr.noMore")); return; }
+      startPuzzle(p);
+    });
+  }
+
+  function trainDialog() {
+    closeDialogs();
+    var dlg = makeDialog("chess-train");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("tr.title")));
+    var body = el("div", "tr-body");
+    body.appendChild(el("div", "dlg-msg dlg-center", t("tr.loading")));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cc.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    trPacks(function (ok) {
+      if (!dlg.open) return;
+      body.textContent = "";
+      body.appendChild(el("div", "lp-sec", t("tr.pz")));
+      if (!ok) body.appendChild(el("div", "dlg-msg", t("tr.loadFail")));
+      else {
+        var R = myRating();
+        var head = el("div", "tr-rating");
+        head.appendChild(el("span", "tr-r", String(R.r)));
+        head.appendChild(el("span", "tr-rl", t("tr.rating") + (R.rd > 110 ? " · " + t("tr.prov") : "")));
+        body.appendChild(head);
+        body.appendChild(el("div", "dlg-msg", R.n ? t("tr.count", { n: R.n, w: R.won }) : t("tr.none")));
+        var lab = el("label", "tr-field");
+        lab.appendChild(el("span", "", t("tr.theme")));
+        var selEl = el("select", "cc-input");
+        var any = el("option", "", t("tr.any"));
+        any.value = "";
+        selEl.appendChild(any);
+        TRAIN.themeCounts(TR.packs).forEach(function (x) {
+          var o = el("option", "", themeName(x.theme) + " (" + x.n + ")");
+          o.value = x.theme;
+          selEl.appendChild(o);
+        });
+        selEl.value = prefs.pt || "";
+        if (selEl.value !== (prefs.pt || "")) { prefs.pt = ""; selEl.value = ""; }
+        selEl.addEventListener("change", function () { prefs.pt = selEl.value; savePrefs(); });
+        lab.appendChild(selEl);
+        body.appendChild(lab);
+        var row1 = el("div", "lp-row");
+        var go = button(t("tr.next"), "primary", function () { dlg.close(); trNext(); });
+        row1.appendChild(go);
+        var retry = TRAIN.toRetry(TR.packs, hist());
+        var rb = button(t("tr.retry", { n: retry.length }), "", function () {
+          dlg.close();
+          if (retry.length) startPuzzle(retry[0]); else showToast(t("tr.noRetry"));
+        });
+        rb.disabled = !retry.length;
+        row1.appendChild(rb);
+        row1.appendChild(button(t("tr.history"), "", historyDialog));
+        body.appendChild(row1);
+        body.appendChild(el("div", "dlg-foot", t("tr.packNote", { n: TR.packs.length })));
+        setTimeout(function () { try { go.focus(); } catch (e) {} }, 0);
+      }
+      body.appendChild(el("div", "lp-sec", t("tr.op")));
+      var row2 = el("div", "lp-row");
+      row2.appendChild(button(t("tr.opTrain"), "", openingsDialog));
+      body.appendChild(row2);
+      var o = openingNow();
+      if (o) body.appendChild(el("div", "dlg-msg", t("tr.opHere", { name: o.eco + " · " + o.name })));
+    });
+  }
+
+  function historyDialog() {
+    closeDialogs();
+    var dlg = makeDialog("chess-train-hist");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("tr.histTitle")));
+    var R = myRating(), steps = R.steps.slice().reverse().slice(0, 200);
+    if (!steps.length) dlg.appendChild(el("div", "dlg-msg", t("tr.histEmpty")));
+    var list = el("div", "pick-list");
+    steps.forEach(function (s) {
+      var p = TR.byId[s.id];
+      if (!p) return;                          // a puzzle of a pack not on this device
+      var b = el("button", "pick-btn");
+      b.type = "button";
+      var res = s.ok ? t("tr.ok") : s.fix ? t("tr.fixed") : t("tr.fail");
+      var named = p.th.filter(function (x) { return /^(mateIn\d|fork|hangingPiece|promotion|pin|skewer|backRankMate|discoveredAttack|sacrifice)$/.test(x); });
+      b.appendChild(el("span", "pick-names", (s.ok ? "✓ " : "✗ ") + (named.length ? named : [p.th[0] || "mate"]).map(themeName).join(", ") + " · " + p.r));
+      b.appendChild(el("span", "pick-meta", res + " · " + t("tr.delta", { r: s.r, d: signed(s.d) }) + " · " + new Date(s.at).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB")));
+      b.addEventListener("click", function () { dlg.close(); startPuzzle(p); });
+      list.appendChild(b);
+    });
+    dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    var reset = button(t("tr.reset"), "danger", function () {
+      dlg.close();
+      confirmDialog(t("tr.resetQ"), function () {
+        data.pbr = Math.max(Date.now(), (data.pbr || 0) + 1);
+        data = mergeChess(data, data);
+        save();
+        showToast(t("tr.resetDone"));
+        renderTrainBar();
+      });
+    });
+    reset.disabled = !steps.length;
+    acts.appendChild(reset);
+    acts.appendChild(button(t("cc.back"), "", trainDialog));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // The openings trainer: a family, one of its lines, your side.
+  function openingsDialog() {
+    closeDialogs();
+    var dlg = makeDialog("chess-openings");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("op.title")));
+    var inp = el("input", "cc-input");
+    inp.type = "search";
+    inp.placeholder = t("op.search");
+    inp.setAttribute("aria-label", t("op.search"));
+    inp.autocomplete = "off";
+    dlg.appendChild(inp);
+    var list = el("div", "pick-list tr-list");
+    list.appendChild(el("div", "dlg-msg dlg-center", t("tr.loading")));
+    dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cc.back"), "", trainDialog));
+    dlg.appendChild(acts);
+    dlg.appendChild(el("div", "dlg-foot", t("op.note")));
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    trOpenings(function (ok) {
+      if (!dlg.open) return;
+      if (!ok) { list.textContent = t("tr.loadFail"); return; }
+      var fams = TRAIN.families(TR.op);
+      var fam = null;
+      function item(name, meta, fn) {
+        var b = el("button", "pick-btn");
+        b.type = "button";
+        b.appendChild(el("span", "pick-names", name));
+        b.appendChild(el("span", "pick-meta", meta));
+        b.addEventListener("click", fn);
+        list.appendChild(b);
+      }
+      function sanLine(o) {
+        var P = E.parseFen(E.START), out = [];
+        o.moves.forEach(function (u, k) {
+          var m = E.fromUci(P, u);
+          out.push((k % 2 ? "" : (k / 2 + 1) + ". ") + E.san(P, m));
+          E.makeMove(P, m);
+        });
+        return out.join(" ");
+      }
+      function draw() {
+        list.textContent = "";
+        var q = inp.value.trim().toLowerCase(), n = 0;
+        if (fam) {
+          item("← " + fam.name, t("op.lines", { n: fam.lines.length }), function () { fam = null; draw(); });
+          fam.lines.forEach(function (i) {
+            var o = TR.op[i];
+            if (q && (o.name + " " + o.eco).toLowerCase().indexOf(q) < 0) return;
+            n++;
+            item(o.variation ? o.variation : o.name, o.eco + " · " + sanLine(o), function () { sideDialog(i); });
+          });
+        } else {
+          fams.forEach(function (f) {
+            var hit = !q || f.name.toLowerCase().indexOf(q) >= 0 ||
+              f.lines.some(function (i) { return (TR.op[i].name + " " + TR.op[i].eco).toLowerCase().indexOf(q) >= 0; });
+            if (!hit || n >= 400) return;
+            n++;
+            item(f.name, TR.op[f.lines[0]].eco + " · " + t("op.lines", { n: f.lines.length }), function () { fam = f; draw(); list.scrollTop = 0; });
+          });
+        }
+        if (!n) list.appendChild(el("div", "dlg-msg", t("op.none")));
+      }
+      inp.addEventListener("input", draw);
+      draw();
+      try { inp.focus(); } catch (e) {}
+    });
+  }
+  function sideDialog(i) {
+    closeDialogs();
+    var o = TR.op[i];
+    var dlg = makeDialog("chess-op-side");
+    dlg.appendChild(el("div", "dlg-title", o.eco + " · " + o.name));
+    dlg.appendChild(el("div", "dlg-msg", t("op.side") + " · " + t("op.moves", { n: Math.ceil(o.moves.length / 2) })));
+    var acts = el("div", "dlg-col");
+    var def = TRAIN.defaultSide(o), first = null;
+    ["w", "b"].forEach(function (c) {
+      var lab = t("sidel." + c);
+      var b = button(lab.charAt(0).toUpperCase() + lab.slice(1), c === def ? "primary" : "", function () { dlg.close(); startDrill(i, c); });
+      acts.appendChild(b);
+      if (c === def) first = b;
+    });
+    acts.appendChild(button(t("cc.back"), "", openingsDialog));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    if (first) first.focus();
+  }
+  function drillDoneDialog() {
+    if (game.mode !== "drill" || !game.done) return;
+    closeDialogs();
+    var dlg = makeDialog("chess-op-done");
+    dlg.appendChild(el("div", "dlg-title", game.dr.eco + " · " + game.dr.name));
+    dlg.appendChild(el("div", "dlg-hero", trStatus()));
+    var acts = el("div", "dlg-col");
+    var dr = game.dr, side = game.human;
+    var again = button(t("op.again"), "primary", function () {
+      dlg.close();
+      replaceGame({ mode: "drill", lv: prefs.lv, human: side, moves: [], done: false, unrated: true,
+                    dr: { eco: dr.eco, name: dr.name, line: dr.line.slice(), miss: 0, wrong: -1 } }, t("op.opened"), true, true);
+      trResume();
+    });
+    acts.appendChild(again);
+    acts.appendChild(button(t("op.playOn"), "", function () {
+      dlg.close();
+      prefs.mode = "ai"; prefs.side = side; savePrefs();
+      replaceGame({ mode: "ai", lv: prefs.lv, human: side, moves: game.moves.slice(), done: false,
+                    unrated: true, base: game.moves.length }, t("toast.fromHere"), true, true);
+    }));
+    acts.appendChild(button(t("op.other"), "", openingsDialog));
+    acts.appendChild(button(t("cc.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    again.focus();
+  }
+  function wireTrain() {
+    $("tr-hint").addEventListener("click", trHint);
+    $("tr-sol").addEventListener("click", trSolution);
+    $("tr-next").addEventListener("click", trNext);
+    $("tr-again").addEventListener("click", drillDoneDialog);
+    $("tr-menu").addEventListener("click", trainDialog);
+  }
+
   // ---------- 8. Toasts ----------
   function showToast(text) {
     try {
@@ -4169,6 +4781,7 @@
     undo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
     flip:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 4 3 8M7 4l4 4"/><path d="M17 20V4M17 20l-4-4M17 20l4-4"/></svg>',
     pgn:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+    train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>',
     online:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     first: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 6l-7 6 7 6z"/></svg>',
     prev:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
@@ -4192,7 +4805,7 @@
   var drag = null, ghost = null, suppressClickUntil = 0;
 
   function canPickUp(sq) {
-    if (!game || game.done || aiTurn() || document.querySelector("dialog[open]")) return false;
+    if (!game || game.done || aiTurn() || trWait() || document.querySelector("dialog[open]")) return false;
     var p = pos.b[sq];
     return !!p && colorOf(p) === toMove() && movesFrom(sq).length > 0;
   }
@@ -4406,7 +5019,7 @@
 
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"],
-     ["flip-btn", "flip", "btn.flip"], ["stats-btn", "stats", "btn.stats"], ["pgn-btn", "pgn", "btn.pgn"], ["online-btn", "online", "btn.online"],
+     ["flip-btn", "flip", "btn.flip"], ["stats-btn", "stats", "btn.stats"], ["pgn-btn", "pgn", "btn.pgn"], ["online-btn", "online", "btn.online"], ["train-btn", "train", "btn.train"],
      ["rv-first", "first", "rv.first"], ["rv-prev", "prev", "rv.prev"],
      ["rv-next", "next", "rv.next"], ["rv-last", "last", "rv.last"]].forEach(function (x) {
       var b = $(x[0]);
@@ -4444,6 +5057,8 @@
     $("stats-btn").addEventListener("click", statsDialog);
     $("pgn-btn").addEventListener("click", function () { pgnDialog(); });
     $("online-btn").addEventListener("click", function () { onlineDialog(); });
+    $("train-btn").addEventListener("click", function () { trainDialog(); });
+    wireTrain();
     $("rv-first").addEventListener("click", function () { goTo(0); });
     $("rv-prev").addEventListener("click", function () { goTo(game.at - 1); });
     $("rv-next").addEventListener("click", function () { goTo(game.at + 1); });
@@ -4491,7 +5106,7 @@
     game = loadSession();
     if (game) {
       // The resumed game decides what the toolbar shows.
-      if (game.mode !== "review") prefs.mode = game.mode;
+      if (MODES.indexOf(game.mode) >= 0) prefs.mode = game.mode;
       prefs.lv = game.lv;
     } else {
       game = fresh();
@@ -4502,7 +5117,9 @@
     if (!whiteBottom()) focusIdx = 63 - focusIdx;
     renderAll(true);
     maybeAi();   // a game left on the computer's turn continues
+    trResume();  // or a puzzle / opening line on the app's move
     runAnalysis();
+    trOpeningsLater();
     window.__orosOpenAt = openTarget;
     try {
       var p = window.parent;

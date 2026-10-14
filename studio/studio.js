@@ -9,9 +9,18 @@
 //   - transport: play / stop, back to start, loop region (drag on the
 //     ruler), tempo and beats in a bar, click (metronome), master
 //   - recording on the armed track, with a latency offset
-//   - export of the whole song or the loop to WAV (16 or 24 bit)
+//   - export of the whole song or the loop to WAV (16 or 24 bit), MP3
+//     or Ogg Opus (encode.js)
 //   - undo / redo, several projects
-//   - effects: NULL JSFX chains on every track and the master (fx.js)
+//   - effects: NULL JSFX chains on every track and the master (fx.js),
+//     with sidechain keys from other tracks
+//   - automation lanes per track: volume, pan and any effect slider
+//   - MIDI keyboard (Web MIDI) and on-screen keys playing a built-in
+//     synth (midi.js); recorded as audio on an audio track
+//   - instrument (MIDI) tracks: MIDI clips of notes played by a built-in
+//     instrument through the track's effects and automation, recorded
+//     from the keyboard, edited in the piano roll (roll.js, notes.js),
+//     imported and exported as .mid files; a loop library (loops.js)
 // Data:
 //   - synced slice "studio" (oros-studio-data): projects, tracks,
 //     audio sources and clips, one entity at a time (core.js); the
@@ -20,7 +29,9 @@
 //   - audio files on the orOS disk, /internal/Studio/audio/, which
 //     Vault Drive carries to the other devices (never in localStorage)
 //   - device-local (R10): oros-studio-prefs (open project, zoom, snap,
-//     click, devices, recording offset, armed track, export format)
+//     click, devices, recording offset, armed track, export format,
+//     shown automation lanes, MIDI and synth choices, piano roll
+//     grid, zoom, tool and velocity, loop browser filters)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage + prefs
@@ -41,6 +52,7 @@
   "use strict";
 
   var C           = window.StudioCore;
+  var N           = window.StudioNotes;
   var STORAGE_KEY = "oros-studio-data";
   var PREFS_KEY   = "oros-studio-prefs";
   var SAVE_MS     = 400;
@@ -73,7 +85,7 @@
       "btn.rec": "Record", "btn.recStop": "Stop recording", "btn.loop": "Loop",
       "btn.zoomIn": "Zoom in", "btn.zoomOut": "Zoom out",
       "btn.projects": "Projects", "btn.undo": "Undo", "btn.redo": "Redo", "btn.import": "Import audio",
-      "btn.exportOpen": "Export WAV", "btn.more": "Studio settings", "btn.close": "Close",
+      "btn.exportOpen": "Export", "btn.more": "Studio settings", "btn.close": "Close",
       "btn.addTrack": "+ Track", "btn.split": "Split", "btn.dupClip": "Duplicate", "btn.delClip": "Delete",
       "btn.newProject": "New project", "btn.cancel": "Cancel", "btn.ok": "OK", "btn.rename": "Rename",
       "btn.up": "Move up", "btn.down": "Move down", "btn.delTrack": "Delete track", "btn.export": "Export",
@@ -86,7 +98,7 @@
       "pan.c": "Centre", "pan.l": "{n} L", "pan.r": "{n} R", "db": "{n} dB", "db.off": "Off", "sec": "{n} s", "ms": "{n} ms",
       "proj.title": "Projects", "proj.empty": "No projects yet.", "proj.desc": "{n} tracks · {t}",
       "name.project": "Name of the project", "name.track": "Name of the track",
-      "export.title": "Export WAV", "sec.bits": "Bit depth", "sec.rate": "Sample rate",
+      "export.title": "Export", "sec.bits": "Bit depth", "sec.rate": "Sample rate",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44.1 kHz", "rate.48000": "48 kHz",
       "export.loop": "The loop: {a} to {b}.", "export.all": "The whole song: {a} to {b}.",
       "export.busy": "Mixing…", "export.empty": "There is nothing to export yet.",
@@ -136,7 +148,51 @@
       "rm.pos": "Position in the song", "rm.privacy": "The link is encrypted with this code and the orOS relay only passes it on. Studio asks you here before any device can control it.",
       "rm.fxFile": "Files for effects are chosen on the PC.", "rm.ask": "A {dev} wants to control Studio. Allow it only if it is yours.", "rm.allow": "Allow", "rm.deny": "Deny", "rm.waitOk": "Found Studio. Press Allow on the PC…", "rm.denied": "The PC did not allow this device. Ask for a new code.",
       "fx.n": "{n} effects", "fx.n1": "1 effect",
-      "toast.tooBig20": "{name} is larger than 20 MB", "toast.noFx": "This browser cannot run the effects"
+      "toast.tooBig20": "{name} is larger than 20 MB", "toast.noFx": "This browser cannot run the effects",
+      "fx.key": "Key input (sidechain)", "fx.keyNone": "None",
+      "fx.keyHint": "The effect listens to that track, after its effects and before its fader, so a muted track still works as the key.",
+      "sec.format": "Format", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Bitrate", "kbps": "{n} kbit/s",
+      "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
+      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV.",
+      "toast.exportFail": "The export did not finish",
+      "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
+      "au.vol": "Volume", "au.pan": "Pan", "au.on": "Lane on", "au.delPt": "Delete point", "au.clear": "Clear lane",
+      "au.hint": "Tap or click to add a point", "au.pt": "Point at {t}: {v}", "au.lane": "Automation of {name}",
+      "au.cleared": "Lane cleared", "au.max": "A track has up to {n} lanes", "au.maxPts": "A lane has up to {n} points",
+      "au.auto": "automated", "au.used": "{name} (has points)",
+      "btn.keys": "Keyboard", "kb.connect": "Connect MIDI keyboard", "kb.none": "No MIDI keyboard is connected. Plug one in, or play the keys below.",
+      "kb.inputs": "MIDI: {names}", "kb.noMidi": "This browser has no Web MIDI (Chrome and Edge do). The keys below still play.",
+      "kb.denied": "MIDI was not allowed. The keys below still play.", "kb.sound": "Sound", "kb.vol": "Synth volume",
+      "kb.octDown": "Octave down", "kb.octUp": "Octave up", "kb.keys": "Piano keys", "kb.oct": "Octave {n}",
+      "kb.rec": "On an instrument track, Record records the notes you play into a MIDI clip. On an audio track, while this panel is open, it records the synth as audio.",
+      "snd.piano": "Piano", "snd.epiano": "Electric piano", "snd.organ": "Organ", "snd.strings": "Strings", "snd.lead": "Lead synth", "snd.bass": "Bass",
+      "snd.drums": "Drum kit",
+      "toast.recSynth": "Recording the synth on {name}",
+      "tk.title": "Add a track", "tk.audio": "Audio track", "tk.audioHint": "For recordings and audio files.",
+      "tk.inst": "Instrument track", "tk.instHint": "Notes you can edit, played by a built-in instrument.", "tk.loops": "Browse loops",
+      "mi.inst": "Instrument", "mi.track": "Instrument track: {inst}", "mi.newClip": "New clip", "mi.editNotes": "Edit notes",
+      "mi.exportMidi": "Export MIDI", "mi.importMidi": "Import MIDI", "mi.clip": "MIDI clip", "mi.target": "Plays {name}",
+      "mi.recMidi": "Recording notes on {name}", "mi.recSaved": "{n} notes recorded on {name}",
+      "mi.imported": "Imported {n} notes from {name}", "mi.badMidi": "{name} is not a MIDI file Studio can read",
+      "mi.noNotes": "{name} has no notes", "mi.notesN": "{n} notes", "mi.dbl": "Double-click or double-tap an empty spot to add a clip",
+      "pr.title": "Notes: {name}", "pr.draw": "Draw", "pr.select": "Select", "pr.tool": "Tool", "pr.grid": "Grid",
+      "pr.g4": "1/4", "pr.g8": "1/8", "pr.g16": "1/16", "pr.g32": "1/32", "pr.g8t": "1/8 triplet", "pr.g16t": "1/16 triplet", "pr.goff": "Free",
+      "pr.quant": "Quantize", "pr.vel": "Velocity", "pr.copy": "Copy", "pr.paste": "Paste", "pr.del": "Delete notes", "pr.all": "Select all",
+      "pr.import": "Import MIDI", "pr.export": "Export MIDI", "pr.keys": "Pitches", "pr.area": "Notes", "pr.velLane": "Velocity",
+      "pr.note": "{name}, bar {bar} beat {beat}, {len} beats, velocity {v}", "pr.nSel": "{n} selected", "pr.nNotes": "{n} notes",
+      "pr.deleted": "{n} notes deleted", "pr.copied": "{n} notes copied", "pr.noSel": "Select notes first", "pr.nothing": "Copy notes first",
+      "pr.max": "A clip has up to {n} notes", "pr.quantized": "{n} notes quantized", "pr.play": "Play from the clip",
+      "pr.hint": "Draw: tap or click to add a note, drag its right end to make it longer. Select: drag a box, or tap notes. Drag notes to move them; double-click one to delete it.",
+      "lp.btn": "Loops", "lp.title": "Loops", "lp.genre": "Style", "lp.allGenres": "All styles", "lp.tempo": "Tempo", "lp.anyTempo": "Any tempo",
+      "lp.slow": "Slow (under 90)", "lp.mid": "Medium (90–119)", "lp.fast": "Fast (120 and up)", "lp.all": "All", "lp.kind": "Kind",
+      "lp.kdrums": "Drums", "lp.kbass": "Bass", "lp.kkeys": "Keys",
+      "lp.gpop": "Pop", "lp.grock": "Rock", "lp.ghiphop": "Hip hop", "lp.ghouse": "House", "lp.gfunk": "Funk", "lp.glofi": "Lo-fi", "lp.glatin": "Latin", "lp.gballad": "Ballad",
+      "lp.name": "{genre} {kind} {n}", "lp.meta": "{n} bars · {bpm} BPM · {inst}", "lp.meta1": "1 bar · {bpm} BPM · {inst}",
+      "lp.play": "Listen", "lp.stop": "Stop", "lp.add": "Add at the playhead", "lp.drag": "Drag onto a track",
+      "lp.hint": "Drag a loop onto a track, or press + to add it at the playhead. Loops play at the project's tempo.",
+      "lp.none": "No loop matches.", "lp.added": "{name} added to {track}",
+      "dr.kick": "Kick", "dr.snare": "Snare", "dr.rim": "Rim", "dr.clap": "Clap", "dr.hat": "Hi-hat", "dr.pedal": "Pedal hi-hat", "dr.ohat": "Open hi-hat",
+      "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Cowbell", "dr.tom1": "Low tom", "dr.tom2": "Mid tom", "dr.tom3": "High tom"
     },
     el: {
       "app.name": "Studio", "proj.untitled": "Έργο χωρίς όνομα", "proj.default": "Έργο {n}",
@@ -148,7 +204,7 @@
       "btn.rec": "Ηχογράφηση", "btn.recStop": "Τέλος ηχογράφησης", "btn.loop": "Loop",
       "btn.zoomIn": "Μεγέθυνση", "btn.zoomOut": "Σμίκρυνση",
       "btn.projects": "Έργα", "btn.undo": "Αναίρεση", "btn.redo": "Επανάληψη", "btn.import": "Εισαγωγή ήχου",
-      "btn.exportOpen": "Εξαγωγή WAV", "btn.more": "Ρυθμίσεις Studio", "btn.close": "Κλείσιμο",
+      "btn.exportOpen": "Εξαγωγή", "btn.more": "Ρυθμίσεις Studio", "btn.close": "Κλείσιμο",
       "btn.addTrack": "+ Κανάλι", "btn.split": "Κόψιμο", "btn.dupClip": "Αντίγραφο", "btn.delClip": "Διαγραφή",
       "btn.newProject": "Νέο έργο", "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.rename": "Μετονομασία",
       "btn.up": "Πάνω", "btn.down": "Κάτω", "btn.delTrack": "Διαγραφή καναλιού", "btn.export": "Εξαγωγή",
@@ -161,7 +217,7 @@
       "pan.c": "Κέντρο", "pan.l": "{n} Α", "pan.r": "{n} Δ", "db": "{n} dB", "db.off": "Κλειστό", "sec": "{n} δ", "ms": "{n} ms",
       "proj.title": "Έργα", "proj.empty": "Κανένα έργο ακόμη.", "proj.desc": "{n} κανάλια · {t}",
       "name.project": "Όνομα του έργου", "name.track": "Όνομα του καναλιού",
-      "export.title": "Εξαγωγή WAV", "sec.bits": "Βάθος bit", "sec.rate": "Συχνότητα δειγματοληψίας",
+      "export.title": "Εξαγωγή", "sec.bits": "Βάθος bit", "sec.rate": "Συχνότητα δειγματοληψίας",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44,1 kHz", "rate.48000": "48 kHz",
       "export.loop": "Το loop: από {a} έως {b}.", "export.all": "Όλο το τραγούδι: από {a} έως {b}.",
       "export.busy": "Γίνεται η μίξη…", "export.empty": "Δεν υπάρχει ακόμη κάτι για εξαγωγή.",
@@ -211,7 +267,51 @@
       "rm.pos": "Θέση στο τραγούδι", "rm.privacy": "Η σύνδεση κρυπτογραφείται με αυτόν τον κωδικό και το relay του orOS απλώς τη μεταφέρει. Το Studio σε ρωτά εδώ πριν το χειριστεί οποιαδήποτε συσκευή.",
       "rm.fxFile": "Τα αρχεία των εφέ επιλέγονται στο PC.", "rm.ask": "Μια συσκευή ({dev}) θέλει να χειριστεί το Studio. Επίτρεψέ το μόνο αν είναι δική σου.", "rm.allow": "Επιτρέπεται", "rm.deny": "Όχι", "rm.waitOk": "Βρέθηκε το Studio. Πάτα «Επιτρέπεται» στο PC…", "rm.denied": "Το PC δεν επέτρεψε αυτή τη συσκευή. Ζήτα νέο κωδικό.",
       "fx.n": "{n} εφέ", "fx.n1": "1 εφέ",
-      "toast.tooBig20": "Το {name} είναι μεγαλύτερο από 20 MB", "toast.noFx": "Αυτός ο browser δεν μπορεί να παίξει τα εφέ"
+      "toast.tooBig20": "Το {name} είναι μεγαλύτερο από 20 MB", "toast.noFx": "Αυτός ο browser δεν μπορεί να παίξει τα εφέ",
+      "fx.key": "Είσοδος κλειδιού (sidechain)", "fx.keyNone": "Καμία",
+      "fx.keyHint": "Το εφέ ακούει εκείνο το κανάλι, μετά τα εφέ του και πριν από τον fader του, οπότε και ένα κανάλι σε σίγαση κάνει για κλειδί.",
+      "sec.format": "Μορφή", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Ρυθμός bit", "kbps": "{n} kbit/s",
+      "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
+      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV.",
+      "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
+      "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
+      "au.vol": "Ένταση", "au.pan": "Pan", "au.on": "Λωρίδα ενεργή", "au.delPt": "Διαγραφή σημείου", "au.clear": "Καθαρισμός λωρίδας",
+      "au.hint": "Πάτα ή κάνε κλικ για να προσθέσεις σημείο", "au.pt": "Σημείο στο {t}: {v}", "au.lane": "Αυτοματισμός: {name}",
+      "au.cleared": "Η λωρίδα καθαρίστηκε", "au.max": "Ένα κανάλι έχει έως {n} λωρίδες", "au.maxPts": "Μια λωρίδα έχει έως {n} σημεία",
+      "au.auto": "με αυτοματισμό", "au.used": "{name} (έχει σημεία)",
+      "btn.keys": "Πληκτρολόγιο", "kb.connect": "Σύνδεση πληκτρολογίου MIDI", "kb.none": "Δεν είναι συνδεδεμένο πληκτρολόγιο MIDI. Σύνδεσε ένα ή παίξε τα πλήκτρα παρακάτω.",
+      "kb.inputs": "MIDI: {names}", "kb.noMidi": "Αυτός ο browser δεν έχει Web MIDI (το Chrome και το Edge έχουν). Τα πλήκτρα παρακάτω παίζουν κανονικά.",
+      "kb.denied": "Το MIDI δεν επιτράπηκε. Τα πλήκτρα παρακάτω παίζουν κανονικά.", "kb.sound": "Ήχος", "kb.vol": "Ένταση συνθεσάιζερ",
+      "kb.octDown": "Μία οκτάβα κάτω", "kb.octUp": "Μία οκτάβα πάνω", "kb.keys": "Πλήκτρα πιάνου", "kb.oct": "Οκτάβα {n}",
+      "kb.rec": "Σε κανάλι οργάνου, η ηχογράφηση γράφει τις νότες που παίζεις σε ένα κλιπ MIDI. Σε κανάλι ήχου, όσο είναι ανοιχτό αυτό το πάνελ, γράφει το συνθεσάιζερ ως ήχο.",
+      "snd.piano": "Πιάνο", "snd.epiano": "Ηλεκτρικό πιάνο", "snd.organ": "Όργανο", "snd.strings": "Έγχορδα", "snd.lead": "Συνθεσάιζερ lead", "snd.bass": "Μπάσο",
+      "snd.drums": "Ντραμς",
+      "toast.recSynth": "Ηχογραφείται το συνθεσάιζερ στο {name}",
+      "tk.title": "Προσθήκη καναλιού", "tk.audio": "Κανάλι ήχου", "tk.audioHint": "Για ηχογραφήσεις και αρχεία ήχου.",
+      "tk.inst": "Κανάλι οργάνου", "tk.instHint": "Νότες που διορθώνεις, παιγμένες από ένα ενσωματωμένο όργανο.", "tk.loops": "Περιήγηση στα loops",
+      "mi.inst": "Όργανο", "mi.track": "Κανάλι οργάνου: {inst}", "mi.newClip": "Νέο κλιπ", "mi.editNotes": "Επεξεργασία νοτών",
+      "mi.exportMidi": "Εξαγωγή MIDI", "mi.importMidi": "Εισαγωγή MIDI", "mi.clip": "Κλιπ MIDI", "mi.target": "Παίζει το {name}",
+      "mi.recMidi": "Ηχογραφούνται νότες στο {name}", "mi.recSaved": "Γράφτηκαν {n} νότες στο {name}",
+      "mi.imported": "Εισήχθησαν {n} νότες από το {name}", "mi.badMidi": "Το {name} δεν είναι αρχείο MIDI που διαβάζει το Studio",
+      "mi.noNotes": "Το {name} δεν έχει νότες", "mi.notesN": "{n} νότες", "mi.dbl": "Διπλό κλικ ή διπλό πάτημα σε κενό σημείο για νέο κλιπ",
+      "pr.title": "Νότες: {name}", "pr.draw": "Σχεδίαση", "pr.select": "Επιλογή", "pr.tool": "Εργαλείο", "pr.grid": "Πλέγμα",
+      "pr.g4": "1/4", "pr.g8": "1/8", "pr.g16": "1/16", "pr.g32": "1/32", "pr.g8t": "1/8 τρίηχο", "pr.g16t": "1/16 τρίηχο", "pr.goff": "Ελεύθερα",
+      "pr.quant": "Κβαντισμός", "pr.vel": "Δυναμική", "pr.copy": "Αντιγραφή", "pr.paste": "Επικόλληση", "pr.del": "Διαγραφή νοτών", "pr.all": "Επιλογή όλων",
+      "pr.import": "Εισαγωγή MIDI", "pr.export": "Εξαγωγή MIDI", "pr.keys": "Τονικά ύψη", "pr.area": "Νότες", "pr.velLane": "Δυναμική",
+      "pr.note": "{name}, μέτρο {bar} χτύπος {beat}, {len} χτύποι, δυναμική {v}", "pr.nSel": "{n} επιλεγμένες", "pr.nNotes": "{n} νότες",
+      "pr.deleted": "Διαγράφηκαν {n} νότες", "pr.copied": "Αντιγράφηκαν {n} νότες", "pr.noSel": "Επίλεξε πρώτα νότες", "pr.nothing": "Αντίγραψε πρώτα νότες",
+      "pr.max": "Ένα κλιπ έχει έως {n} νότες", "pr.quantized": "Κβαντίστηκαν {n} νότες", "pr.play": "Αναπαραγωγή από το κλιπ",
+      "pr.hint": "Σχεδίαση: πάτα ή κάνε κλικ για νέα νότα, σύρε το δεξί της άκρο για να τη μακρύνεις. Επιλογή: σύρε ένα πλαίσιο ή πάτα νότες. Σύρε νότες για να τις μετακινήσεις· διπλό κλικ σε μία τη διαγράφει.",
+      "lp.btn": "Loops", "lp.title": "Loops", "lp.genre": "Στιλ", "lp.allGenres": "Όλα τα στιλ", "lp.tempo": "Τέμπο", "lp.anyTempo": "Οποιοδήποτε τέμπο",
+      "lp.slow": "Αργό (κάτω από 90)", "lp.mid": "Μέτριο (90–119)", "lp.fast": "Γρήγορο (120 και πάνω)", "lp.all": "Όλα", "lp.kind": "Είδος",
+      "lp.kdrums": "Ντραμς", "lp.kbass": "Μπάσο", "lp.kkeys": "Πλήκτρα",
+      "lp.gpop": "Pop", "lp.grock": "Rock", "lp.ghiphop": "Hip hop", "lp.ghouse": "House", "lp.gfunk": "Funk", "lp.glofi": "Lo-fi", "lp.glatin": "Latin", "lp.gballad": "Μπαλάντα",
+      "lp.name": "{kind} {genre} {n}", "lp.meta": "{n} μέτρα · {bpm} BPM · {inst}", "lp.meta1": "1 μέτρο · {bpm} BPM · {inst}",
+      "lp.play": "Ακρόαση", "lp.stop": "Διακοπή", "lp.add": "Προσθήκη στη θέση αναπαραγωγής", "lp.drag": "Σύρε το σε ένα κανάλι",
+      "lp.hint": "Σύρε ένα loop σε ένα κανάλι ή πάτα + για να μπει στη θέση αναπαραγωγής. Τα loops παίζουν στο τέμπο του έργου.",
+      "lp.none": "Κανένα loop δεν ταιριάζει.", "lp.added": "Το {name} μπήκε στο {track}",
+      "dr.kick": "Μπότα", "dr.snare": "Ταμπούρο", "dr.rim": "Στεφάνι", "dr.clap": "Παλαμάκια", "dr.hat": "Hi-hat", "dr.pedal": "Hi-hat πεντάλ", "dr.ohat": "Ανοιχτό hi-hat",
+      "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Κουδούνα", "dr.tom1": "Χαμηλό tom", "dr.tom2": "Μεσαίο tom", "dr.tom3": "Ψηλό tom"
     }
   };
 
@@ -256,7 +356,20 @@
     zin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6M11 8v6"/></svg>',
     zout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-    dots: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'
+    dots: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
+    power: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+    piano: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M12 4v16M16 4v16"/><path d="M6.5 4h3v8h-3zM14.5 4h3v8h-3z" fill="currentColor"/></svg>',
+    minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg>',
+    cursor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 8-6 2-3 6z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
+    paste: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2M9 11h6M9 15h4"/></svg>',
+    selall: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2" stroke-dasharray="3 2.4"/><path d="M8 10h8M8 14h5" stroke-linecap="round"/></svg>',
+    grip: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+    loops: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+    notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h7M9 12h9M6 17h6"/></svg>'
   };
 
   // BOOT MARKER
@@ -322,8 +435,31 @@
       lat: int(p.lat, 0, 300, 0),
       arm: typeof p.arm === "string" ? p.arm : "",
       bits: p.bits === 16 ? 16 : 24,
-      rate: p.rate === 44100 ? 44100 : 48000
+      rate: p.rate === 44100 ? 44100 : 48000,
+      fmt: p.fmt === "mp3" || p.fmt === "opus" ? p.fmt : "wav",
+      kbps: [128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
+      okbps: [96, 128, 160, 256].indexOf(p.okbps) >= 0 ? p.okbps : 160,
+      auto: idMap(p.auto, function (v) { return v === true; }),
+      autoSel: idMap(p.autoSel, function (v) { return typeof v === "string" && v.length <= 40; }),
+      midi: p.midi === true,
+      snd: window.StudioMidi && window.StudioMidi.PRESETS[p.snd] ? p.snd : "piano",
+      svol: int(p.svol, 0, 100, 80),
+      oct: int(p.oct, -2, 2, 0),
+      prGrid: window.StudioNotes && window.StudioNotes.GRIDS[p.prGrid] !== undefined ? p.prGrid : "1/16",
+      prZoom: [12, 18, 24, 36, 48, 72, 96, 144, 192].indexOf(p.prZoom) >= 0 ? p.prZoom : 48,
+      prMode: p.prMode === "select" ? "select" : "draw",
+      prVel: int(p.prVel, 1, 127, 100),
+      lpG: typeof p.lpG === "string" && /^[a-z]{0,12}$/.test(p.lpG) ? p.lpG : "",
+      lpK: p.lpK === "drums" || p.lpK === "bass" || p.lpK === "keys" ? p.lpK : "",
+      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : ""
     };
+  }
+  // { trackId: value } kept for at most 64 tracks
+  function idMap(o, ok) {
+    var out = {};
+    if (!o || typeof o !== "object") return out;
+    Object.keys(o).slice(0, 64).forEach(function (k) { if (/^t[a-z0-9]{6,20}$/.test(k) && ok(o[k])) out[k] = o[k]; });
+    return out;
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
@@ -473,15 +609,17 @@
     if (prefs.arm && !trs.some(function (x) { return x.id === prefs.arm; })) { prefs.arm = ""; savePrefs(); }
   }
 
-  function addTrack(name) {
+  // inst: an instrument (midi.js) for an instrument track; none = audio
+  function addTrack(name, inst) {
     if (!ensureProject()) return null;
     var trs = tracks();
     if (trs.length >= C.MAX_TRACKS) { showToast(t("toast.maxTracks", { n: C.MAX_TRACKS })); return null; }
     var tr = C.normTrack({
       id: C.newId("t", Math.random), m: 0, p: proj.id,
-      name: name || t("track.default", { n: trs.length + 1 }),
+      name: name || (inst ? t("snd." + inst) : t("track.default", { n: trs.length + 1 })),
       color: C.nextColor(trs),
-      ord: trs.length ? trs[trs.length - 1].ord + 1 : 0
+      ord: trs.length ? trs[trs.length - 1].ord + 1 : 0,
+      inst: inst || undefined
     });
     put("tracks", tr);
     selTrack = tr.id;
@@ -514,10 +652,23 @@
     if (!tr) return;
     edit(function () { put("tracks", Object.assign({}, tr, fields)); }, opts);
   }
+  // A new tempo moves the MIDI clips with it (same bars and beats);
+  // audio clips stay where they are in time.
   function setProject(fields, opts) {
     if (!ensureProject()) return;
-    edit(function () { put("projects", Object.assign({}, proj, fields)); }, opts);
+    edit(function () {
+      var old = proj.bpm;
+      put("projects", Object.assign({}, proj, fields));
+      if (fields.bpm && proj.bpm !== old) retimeMidi(old / proj.bpm);
+    }, opts);
   }
+  function retimeMidi(r) {
+    projClips().forEach(function (c) { if (C.isMidi(c)) put("clips", C.retimeClip(c, r)); });
+  }
+  // an instrument track, or one that holds MIDI clips (an older Studio may have dropped its instrument)
+  function isInst(tr) { return !!tr && (!!tr.inst || clipsOf(tr.id).some(C.isMidi)); }
+  function instOf(tr) { return (tr && tr.inst) || "piano"; }
+  function instName(tr) { var i = instOf(tr); return window.StudioMidi.PRESETS[i] ? t("snd." + i) : i; }
 
   // ---------- 4. Audio files: disk, decoding, peaks ----------
   var buffers = {};      // source id → AudioBuffer
@@ -670,6 +821,9 @@
     var fp = $("fx-play");
     fp.innerHTML = playing && !recording ? ICON.pause : ICON.play;
     setLabel(fp, playing && !recording ? t("btn.pause") : t("btn.play"));
+    var pp = $("pr-play");
+    pp.innerHTML = playing && !recording ? ICON.pause : ICON.play;
+    setLabel(pp, playing && !recording ? t("btn.pause") : t("pr.play"));
     rb.classList.toggle("on", recording);
     setLabel(rb, recording ? t("btn.recStop") : t("btn.rec"));
     rb.setAttribute("aria-pressed", recording ? "true" : "false");
@@ -687,13 +841,15 @@
       var row = el("div", "row track" + (tr.id === selTrack ? " sel" : ""));
       row.setAttribute("data-t", tr.id);
       row.style.setProperty("--tc", tr.color);
+      var inst = isInst(tr);
+      if (inst) row.classList.add("inst");
       var head = el("div", "head");
       var top = el("div", "h-top");
       var name = el("button", "h-name");
       name.type = "button";
       name.appendChild(el("span", "dot"));
       name.appendChild(el("span", "h-label", tr.name || t("track.default", { n: "" })));
-      setLabel(name, tr.name);
+      setLabel(name, inst ? tr.name + " · " + t("mi.track", { inst: instName(tr) }) : tr.name);
       name.addEventListener("click", function () { selTrack = tr.id; renderRows(); });
       top.appendChild(name);
       var more = el("button", "icon-btn small h-more");
@@ -707,10 +863,13 @@
       btns.appendChild(toggleBtn("ms s", "S", tr.solo, t("track.solo"), function () { setTrack(tr.id, { solo: !tr.solo }, { live: true }); }));
       btns.appendChild(toggleBtn("ms r", "R", prefs.arm === tr.id, t("track.arm"), function () { armTrack(tr.id); }));
       btns.appendChild(fxBtn("ms fx", tr.fx, t("fx.open") + ": " + tr.name, function () { FX.open(tr.id); }));
+      var au = toggleBtn("ms au" + ((tr.auto || []).length ? " has" : ""), t("au.btn"), !!prefs.auto[tr.id], t("au.show") + ": " + tr.name, function () { toggleAuto(tr.id); });
+      btns.appendChild(au);
       head.appendChild(btns);
-      var vol = el("input", "h-vol");
+      var vol = el("input", "h-vol"), volAuto = !!C.activeLane(tr, "vol");
       vol.type = "range"; vol.min = String(C.VOL_MIN); vol.max = String(C.VOL_MAX); vol.step = "0.5"; vol.value = String(tr.vol);
-      setLabel(vol, t("track.vol") + ": " + dbTxt(tr.vol));
+      if (volAuto) vol.classList.add("auto");
+      setLabel(vol, t("track.vol") + ": " + dbTxt(tr.vol) + (volAuto ? " (" + t("au.auto") + ")" : ""));
       vol.addEventListener("input", function () {
         var v = parseFloat(vol.value);
         setLabel(vol, t("track.vol") + ": " + dbTxt(v));
@@ -723,10 +882,12 @@
       lane.setAttribute("data-t", tr.id);
       row.appendChild(lane);
       host.appendChild(row);
+      if (prefs.auto[tr.id]) host.appendChild(autoRow(tr));
     });
     $("empty").hidden = trs.length > 0;
     $("add-track").disabled = trs.length >= C.MAX_TRACKS;
     renderLanes();
+    syncKb();
   }
   // opens the Effects dialog; lit when the chain has effects that play
   function fxBtn(cls, items, label, fn) {
@@ -752,16 +913,19 @@
     $("sheet").style.setProperty("--beat-w", (C.beatSec(proj ? proj.bpm : 120) * zoom()) + "px");
     $("sheet").style.setProperty("--bar-w", (C.barSec(proj ? proj.bpm : 120, proj ? proj.sig : 4) * zoom()) + "px");
     [].forEach.call(document.querySelectorAll("#rows .lane"), function (lane) {
-      var tid = lane.getAttribute("data-t");
+      var tid = lane.getAttribute("data-t"), list = clipsOf(tid);
       lane.innerHTML = "";
-      clipsOf(tid).forEach(function (c) { lane.appendChild(clipEl(c)); });
+      list.forEach(function (c) { lane.appendChild(clipEl(c)); });
+      if (!list.length && isInst(C.find(data, "tracks", tid))) lane.appendChild(el("span", "lane-hint", t("mi.dbl")));
     });
+    [].forEach.call(document.querySelectorAll("#rows .a-lane"), drawAuto);
     renderRuler();
     renderPlayhead();
     renderClipbar();
     renderHead();
   }
   function clipEl(c) {
+    if (C.isMidi(c)) return midiClipEl(c);
     var src = sourceOf(c.s), st = state[c.s] || "loading";
     var d = el("div", "clip" + (c.id === selClip ? " sel" : "") + (st !== "ok" ? " " + st : ""));
     d.setAttribute("data-c", c.id);
@@ -784,6 +948,48 @@
     d.appendChild(el("span", "c-edge l"));
     d.appendChild(el("span", "c-edge r"));
     return d;
+  }
+  function clipName(c) {
+    if (!C.isMidi(c)) { var src = sourceOf(c.s); return src ? src.name : ""; }
+    var tr = C.find(data, "tracks", c.t);
+    return c.name || (tr ? tr.name : "") || t("mi.clip");
+  }
+  // a MIDI clip: its notes as small bars
+  function midiClipEl(c) {
+    var d = el("div", "clip midi" + (c.id === selClip ? " sel" : ""));
+    d.setAttribute("data-c", c.id);
+    d.style.left = (c.at * zoom()) + "px";
+    d.style.width = Math.max(4, c.len * zoom()) + "px";
+    d.tabIndex = 0;
+    d.setAttribute("role", "button");
+    var name = clipName(c);
+    d.setAttribute("aria-label", t("mi.clip") + ": " + name + ", " + C.fmtTime(c.at) + " – " + C.fmtTime(C.clipEnd(c)) + ", " + t("mi.notesN", { n: c.n.length }));
+    d.appendChild(el("span", "c-name", name));
+    var cv = el("canvas", "c-wave");
+    d.appendChild(cv);
+    drawNotes(cv, c);
+    d.appendChild(el("span", "c-edge l"));
+    d.appendChild(el("span", "c-edge r"));
+    return d;
+  }
+  function drawNotes(cv, c) {
+    var w = Math.max(1, Math.min(4096, Math.round(c.len * zoom()))), h = 48;
+    cv.width = w; cv.height = h;
+    var g = cv.getContext("2d");
+    if (!g) return;
+    var vis = c.n.filter(function (q) { return q[1] >= c.off && q[1] < c.off + c.len; });
+    if (!vis.length) return;
+    var lo = 127, hi = 0;
+    vis.forEach(function (q) { lo = Math.min(lo, q[0]); hi = Math.max(hi, q[0]); });
+    if (hi - lo < 12) { var mid = (hi + lo) / 2; lo = Math.floor(mid - 6); hi = Math.ceil(mid + 6); }
+    var rows = hi - lo + 1, rh = Math.max(1, Math.min(4, (h - 4) / rows)), k = w / c.len;
+    g.fillStyle = "rgba(255,255,255,0.9)";
+    vis.forEach(function (q) {
+      var x = (q[1] - c.off) * k, y = 2 + (hi - q[0]) * (h - 4 - rh) / Math.max(1, rows - 1);
+      g.globalAlpha = 0.45 + 0.55 * q[3] / 127;
+      g.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(Math.min(q[2], c.off + c.len - q[1]) * k) - 1), Math.max(1, Math.round(rh)));
+    });
+    g.globalAlpha = 1;
   }
   function drawWave(cv, c) {
     var pk = peakCache[c.s];
@@ -848,8 +1054,11 @@
     bar.hidden = !c;
     document.body.classList.toggle("has-clip", !!c);
     if (!c) return;
-    var src = sourceOf(c.s);
-    $("clip-name").textContent = src ? src.name : "";
+    var midi = C.isMidi(c);
+    $("clip-name").textContent = clipName(c);
+    $("notes-btn").hidden = !midi;
+    $("fi-field").hidden = midi;
+    $("fo-field").hidden = midi;
     var gi = $("gain-in"), fi = $("fi-in"), fo = $("fo-in");
     var maxF = Math.max(0.01, Math.min(10, c.len));
     fi.max = String(maxF); fo.max = String(maxF);
@@ -864,7 +1073,259 @@
   function renderAll() {
     renderTransport();
     renderRows();
+    if (Roll && Roll.isOpen()) Roll.render();
     if (Remote) Remote.changed();
+  }
+
+  // ---------- 5b. Automation lanes ----------
+  // Under a track (its "A" button, or Automation in its settings on a
+  // phone): one lane at a time, picked in the list (volume, pan or an
+  // effect slider); lanes with points play whichever is shown. Tap an
+  // empty spot to add a point, drag a point to move it, double-click it
+  // or press Delete to remove it. The line between points is what plays.
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var A_PAD = 6;                   // px above the top and below the bottom value
+  var aSel = null;                 // { tid, k, i }: the selected point
+  var adrag = null;
+  function toggleAuto(tid) {
+    if (prefs.auto[tid]) delete prefs.auto[tid]; else prefs.auto[tid] = true;
+    savePrefs();
+    renderRows();
+  }
+  // What a lane can follow on this track: [{ k, name, min, max, sl? }]
+  function laneOptions(tr) {
+    var out = [{ k: "vol", name: t("au.vol"), min: C.VOL_MIN, max: C.VOL_MAX }, { k: "pan", name: t("au.pan"), min: -100, max: 100 }];
+    FX.params(tr.fx, renderLanesFast).forEach(function (p) { out.push({ k: p.k, name: p.name, min: p.sl.min, max: p.sl.max, sl: p.sl }); });
+    return out;
+  }
+  function laneOpt(tr, k) {
+    var list = laneOptions(tr);
+    return list.filter(function (o) { return o.k === k; })[0] || list[0];
+  }
+  function laneOf(tr, k) { return (tr.auto || []).filter(function (x) { return x.k === k; })[0] || null; }
+  function laneKey(tr) { return laneOpt(tr, prefs.autoSel[tr.id] || "vol").k; }
+  function laneText(o, v) {
+    if (o.k === "vol") return dbTxt(v);
+    if (o.k === "pan") return panTxt(Math.round(v));
+    return FX.valueText(o.sl, v);
+  }
+  function lanePos(o, v) { return o.max === o.min ? 0 : clamp((v - o.min) / (o.max - o.min), 0, 1); }
+  function laneVal(o, pos) {
+    var v = o.min + clamp(pos, 0, 1) * (o.max - o.min);
+    if (o.k === "vol") return Math.round(v * 10) / 10;
+    if (o.k === "pan") return Math.round(v);
+    return C.sliderStep(o.sl, v);
+  }
+  // the value the parameter has without automation
+  function staticVal(tr, o) {
+    if (o.k === "vol") return tr.vol;
+    if (o.k === "pan") return tr.pan;
+    var f = C.laneFx(o.k), x = (tr.fx || []).filter(function (y) { return y.u === f.u; })[0];
+    return C.fxValue(x, o.sl);
+  }
+  function autoRow(tr) {
+    var k = laneKey(tr), o = laneOpt(tr, k), lane = laneOf(tr, k);
+    var row = el("div", "row auto"), head = el("div", "head a-head");
+    row.setAttribute("data-t", tr.id);
+    row.style.setProperty("--tc", tr.color);
+    var sel = el("select", "a-sel");
+    setLabel(sel, t("au.param") + ": " + tr.name);
+    laneOptions(tr).forEach(function (x) {
+      var has = !!laneOf(tr, x.k), op = el("option", "", has ? "● " + x.name : x.name);
+      op.value = x.k;
+      if (has) op.setAttribute("aria-label", t("au.used", { name: x.name }));
+      sel.appendChild(op);
+    });
+    sel.value = k;
+    sel.addEventListener("change", function () { prefs.autoSel[tr.id] = sel.value; savePrefs(); aSel = null; renderRows(); });
+    head.appendChild(sel);
+    var btns = el("div", "a-btns");
+    var on = el("button", "ms a-on" + (lane && lane.on !== false ? " on" : ""));
+    on.type = "button"; on.innerHTML = ICON.power;
+    on.setAttribute("aria-pressed", lane && lane.on !== false ? "true" : "false");
+    on.disabled = !lane;
+    setLabel(on, t("au.on") + ": " + o.name);
+    on.addEventListener("click", function () { setLaneOf(tr.id, k, { on: lane.on === false }); });
+    btns.appendChild(on);
+    var del = el("button", "ms a-del");
+    del.type = "button"; del.innerHTML = ICON.close;
+    del.disabled = !(lane && aSel && aSel.tid === tr.id && aSel.k === k && lane.p[aSel.i]);
+    setLabel(del, t("au.delPt"));
+    del.addEventListener("click", function () { if (aSel) delPoint(aSel.tid, aSel.k, aSel.i); });
+    btns.appendChild(del);
+    var clr = el("button", "ms a-clr");
+    clr.type = "button"; clr.innerHTML = ICON.trash;
+    clr.disabled = !lane;
+    setLabel(clr, t("au.clear") + ": " + o.name);
+    clr.addEventListener("click", function () {
+      aSel = null;
+      setLaneOf(tr.id, k, { p: [] });
+      undoToast(t("au.cleared"), undo);
+    });
+    btns.appendChild(clr);
+    head.appendChild(btns);
+    row.appendChild(head);
+    var area = el("div", "a-lane" + (lane && lane.on === false ? " off" : ""));
+    area.setAttribute("data-t", tr.id);
+    area.setAttribute("data-k", k);
+    area.setAttribute("role", "group");
+    setLabel(area, t("au.lane", { name: o.name }));
+    row.appendChild(area);
+    return row;
+  }
+  function svgEl(tag, cls) { var n = document.createElementNS(SVGNS, tag); if (cls) n.setAttribute("class", cls); return n; }
+  // the line, its points and the hint, for one lane element
+  function drawAuto(area) {
+    var tr = C.find(data, "tracks", area.getAttribute("data-t"));
+    if (!tr) return;
+    var k = area.getAttribute("data-k"), o = laneOpt(tr, k), lane = laneOf(tr, k), z = zoom();
+    var w = Math.ceil(timelineSec() * z), h = area.clientHeight || 60;
+    var y = function (v) { return Math.round((A_PAD + (1 - lanePos(o, v)) * (h - 2 * A_PAD)) * 10) / 10; };
+    area.innerHTML = "";
+    var svg = svgEl("svg", "a-svg");
+    svg.setAttribute("width", String(w)); svg.setAttribute("height", String(h));
+    svg.setAttribute("aria-hidden", "true");
+    var pts = lane ? lane.p : [], d;
+    if (!pts.length) d = "M0," + y(staticVal(tr, o)) + "H" + w;
+    else {
+      d = "M0," + y(pts[0][1]);
+      pts.forEach(function (q) { d += "L" + Math.round(q[0] * z * 10) / 10 + "," + y(q[1]); });
+      d += "H" + w;
+      var fill = svgEl("path", "a-fill");
+      fill.setAttribute("d", d + "V" + h + "H0Z");
+      svg.appendChild(fill);
+    }
+    var line = svgEl("path", "a-line" + (pts.length ? "" : " static"));
+    line.setAttribute("d", d);
+    svg.appendChild(line);
+    area.appendChild(svg);
+    pts.forEach(function (q, i) {
+      var b = el("span", "a-pt" + (aSel && aSel.tid === tr.id && aSel.k === k && aSel.i === i ? " sel" : ""));
+      b.style.left = (q[0] * z) + "px";
+      b.style.top = y(q[1]) + "px";
+      b.tabIndex = 0;
+      b.setAttribute("role", "slider");
+      b.setAttribute("data-i", String(i));
+      b.setAttribute("aria-valuemin", String(Math.min(o.min, o.max)));
+      b.setAttribute("aria-valuemax", String(Math.max(o.min, o.max)));
+      b.setAttribute("aria-valuenow", String(q[1]));
+      b.setAttribute("aria-valuetext", laneText(o, q[1]));
+      setLabel(b, t("au.pt", { t: C.fmtTime(q[0]), v: laneText(o, q[1]) }));
+      area.appendChild(b);
+    });
+    if (aSel && aSel.tid === tr.id && aSel.k === k && pts[aSel.i]) {
+      var tip = el("span", "a-tip", laneText(o, pts[aSel.i][1]));
+      tip.style.left = (pts[aSel.i][0] * z) + "px";
+      tip.style.top = Math.max(0, y(pts[aSel.i][1]) - 26) + "px";
+      tip.setAttribute("aria-hidden", "true");
+      area.appendChild(tip);
+    }
+    if (!pts.length) area.appendChild(el("span", "a-hint", t("au.hint")));
+  }
+  function setLaneOf(tid, k, fields, opts) {
+    var tr = C.find(data, "tracks", tid);
+    if (!tr) return;
+    if (!laneOf(tr, k) && (tr.auto || []).length >= C.MAX_LANES) { showToast(t("au.max", { n: C.MAX_LANES })); return; }
+    edit(function () { put("tracks", Object.assign({}, tr, { auto: C.setLane(tr, k, fields) })); }, opts);
+  }
+  function delPoint(tid, k, i) {
+    var tr = C.find(data, "tracks", tid), lane = tr && laneOf(tr, k);
+    if (!lane || !lane.p[i]) return;
+    var p = lane.p.slice(); p.splice(i, 1);
+    aSel = p.length ? { tid: tid, k: k, i: Math.max(0, i - 1) } : null;
+    setLaneOf(tid, k, { p: p });
+    focusPoint();
+  }
+  function focusPoint() {
+    if (!aSel) return;
+    var n = document.querySelector('#rows .a-lane[data-t="' + aSel.tid + '"] .a-pt[data-i="' + aSel.i + '"]');
+    if (n) n.focus();
+  }
+  // a pointer position in a lane -> [time, value]
+  function lanePoint(area, o, clientX, clientY) {
+    var r = area.getBoundingClientRect(), h = area.clientHeight || 60;
+    var sec = Math.max(0, (clientX - r.left) / zoom());
+    sec = C.snap(sec, proj.bpm, proj.sig, prefs.snap);
+    var pos = 1 - (clientY - r.top - A_PAD) / Math.max(1, h - 2 * A_PAD);
+    return [Math.min(C.MAX_SEC, Math.round(sec * 1e4) / 1e4), laneVal(o, pos)];
+  }
+  function autoDown(e, area) {
+    var tid = area.getAttribute("data-t"), k = area.getAttribute("data-k"), tr = C.find(data, "tracks", tid);
+    if (!tr || !proj) return;
+    var pt = e.target.closest && e.target.closest(".a-pt");
+    if (pt) {
+      e.preventDefault();
+      aSel = { tid: tid, k: k, i: +pt.getAttribute("data-i") };
+      adrag = { mode: "pt", tid: tid, k: k, i: aSel.i, x0: e.clientX, y0: e.clientY, moved: false, pid: e.pointerId, before: snapshot(), area: area };
+      try { $("rows").setPointerCapture(e.pointerId); } catch (err) {}
+      renderRows();
+      focusPoint();
+      return;
+    }
+    // an empty spot: a point is added on release, unless the finger scrolled
+    adrag = { mode: "add", tid: tid, k: k, x0: e.clientX, y0: e.clientY, moved: false, pid: e.pointerId, area: area };
+  }
+  function autoMove(e) {
+    var d = adrag;
+    if (!d || e.pointerId !== d.pid) return;
+    if (!d.moved && Math.abs(e.clientX - d.x0) < 4 && Math.abs(e.clientY - d.y0) < 4) return;
+    d.moved = true;
+    if (d.mode !== "pt") return;
+    var tr = C.find(data, "tracks", d.tid), lane = tr && laneOf(tr, d.k);
+    if (!lane || !lane.p[d.i]) return;
+    var area = document.querySelector('#rows .a-lane[data-t="' + d.tid + '"]') || d.area;
+    var o = laneOpt(tr, d.k), q = lanePoint(area, o, e.clientX, e.clientY), p = lane.p.slice();
+    var lo = d.i > 0 ? p[d.i - 1][0] : 0, hi = d.i < p.length - 1 ? p[d.i + 1][0] : C.MAX_SEC;
+    p[d.i] = [clamp(q[0], lo, hi), q[1]];
+    put("tracks", Object.assign({}, tr, { auto: C.setLane(tr, d.k, { p: p }) }));
+    renderLanesFast();
+  }
+  function autoUp(e) {
+    var d = adrag;
+    if (!d || e.pointerId !== d.pid) return;
+    adrag = null;
+    if (d.mode === "add") {
+      if (d.moved || e.type === "pointercancel") return;
+      var tr = C.find(data, "tracks", d.tid), lane = tr && laneOf(tr, d.k), o = tr && laneOpt(tr, d.k);
+      if (!tr) return;
+      var p = lane ? lane.p.slice() : [];
+      if (p.length >= C.MAX_PTS) { showToast(t("au.maxPts", { n: C.MAX_PTS })); return; }
+      var q = lanePoint(d.area, o, e.clientX, e.clientY), i = 0;
+      while (i < p.length && p[i][0] <= q[0]) i++;
+      p.splice(i, 0, q);
+      aSel = { tid: d.tid, k: d.k, i: i };
+      setLaneOf(d.tid, d.k, { p: p });
+      focusPoint();
+      return;
+    }
+    if (d.moved && snapshot() !== d.before) {
+      undoStack.push(d.before);
+      if (undoStack.length > MAX_UNDO) undoStack.shift();
+      redoStack = [];
+      changed();
+    } else renderRows();
+    focusPoint();
+  }
+  // keys on a focused point: arrows move it, Delete removes it
+  function autoKey(e, pt) {
+    var area = pt.closest(".a-lane"), tid = area.getAttribute("data-t"), k = area.getAttribute("data-k");
+    var tr = C.find(data, "tracks", tid), lane = tr && laneOf(tr, k), i = +pt.getAttribute("data-i");
+    if (!lane || !lane.p[i]) return;
+    var o = laneOpt(tr, k), p = lane.p.slice(), q = p[i].slice(), key = e.key;
+    if (key === "Delete" || key === "Backspace") { e.preventDefault(); e.stopPropagation(); delPoint(tid, k, i); return; }
+    var dv = key === "ArrowUp" ? 1 : key === "ArrowDown" ? -1 : 0, dt = key === "ArrowRight" ? 1 : key === "ArrowLeft" ? -1 : 0;
+    if (!dv && !dt) return;
+    e.preventDefault(); e.stopPropagation();
+    if (dv) q[1] = laneVal(o, lanePos(o, q[1]) + dv * (e.shiftKey ? 0.1 : 0.02));
+    if (dt) {
+      var step = e.shiftKey ? C.barSec(proj.bpm, proj.sig) : C.beatSec(proj.bpm) / 4;
+      var lo = i > 0 ? p[i - 1][0] : 0, hi = i < p.length - 1 ? p[i + 1][0] : C.MAX_SEC;
+      q[0] = clamp(Math.round((q[0] + dt * step) * 1e4) / 1e4, lo, hi);
+    }
+    p[i] = q;
+    aSel = { tid: tid, k: k, i: i };
+    setLaneOf(tid, k, { p: p }, burst("au" + tid + k + i));
+    focusPoint();
   }
 
   // ---------- 6. Pointer: clips, ruler, lanes ----------
@@ -878,14 +1339,25 @@
     return row ? row.getAttribute("data-t") : "";
   }
   var drag = null;
+  // a second tap or click on the same spot soon after the first (the rows
+  // are drawn anew in between, so the browser's dblclick does not reach them)
+  var lastTap = { at: 0, key: "", x: 0 };
+  function twice(key, x) {
+    var now = Date.now(), hit = lastTap.key === key && now - lastTap.at < 450 && Math.abs(x - lastTap.x) < 24;
+    lastTap = hit ? { at: 0, key: "", x: 0 } : { at: now, key: key, x: x };
+    return hit;
+  }
   function onRowsDown(e) {
     if (e.button !== 0 || recording) return;
+    var aEl = e.target.closest && e.target.closest(".a-lane");
+    if (aEl) { autoDown(e, aEl); return; }
     var cEl = e.target.closest && e.target.closest(".clip");
     var lane = e.target.closest && e.target.closest(".lane");
     if (!lane) return;
     if (!cEl) {                                            // empty lane: select the track, move the playhead
       selTrack = lane.getAttribute("data-t");
       selClip = "";
+      if (twice("l" + selTrack, e.clientX) && isInst(C.find(data, "tracks", selTrack))) { newMidiClip(selTrack, secAt(e.clientX)); return; }
       seek(C.snap(secAt(e.clientX), proj.bpm, proj.sig, prefs.snap));
       renderRows();
       return;
@@ -901,16 +1373,17 @@
     renderRows();
   }
   function onRowsMove(e) {
+    if (adrag) { autoMove(e); return; }
     if (!drag || e.pointerId !== drag.pid) return;
     var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
     if (!drag.moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
     drag.moved = true;
-    var o = drag.orig, src = sourceOf(o.s), dur = src ? src.dur : 0, n, ds = dx / zoom();
+    var o = drag.orig, src = C.isMidi(o) ? null : sourceOf(o.s), dur = src ? src.dur : 0, n, ds = dx / zoom();
     if (drag.mode === "move") {
       var at = C.snap(o.at + ds, proj.bpm, proj.sig, prefs.snap);
       n = C.moveClip(o, at);
       var tid = laneAt(e.clientX, e.clientY);
-      if (tid) n.t = tid;
+      if (tid && isInst(C.find(data, "tracks", tid)) === C.isMidi(o)) n.t = tid;   // MIDI clips stay on instrument tracks, audio on audio tracks
     } else if (drag.mode === "l") {
       n = C.trimStart(o, C.snap(o.at + ds, proj.bpm, proj.sig, prefs.snap), dur);
     } else {
@@ -921,9 +1394,14 @@
     renderLanesFast();
   }
   function onRowsUp(e) {
+    if (adrag) { autoUp(e); return; }
     if (!drag || e.pointerId !== drag.pid) return;
     var d = drag; drag = null;
-    if (!d.moved) { renderClipbar(); return; }
+    if (!d.moved) {
+      if (twice("c" + d.id, e.clientX) && C.isMidi(C.find(data, "clips", d.id))) { openRoll(d.id); return; }
+      renderClipbar();
+      return;
+    }
     if (snapshot() !== d.before) {
       undoStack.push(d.before);
       if (undoStack.length > MAX_UNDO) undoStack.shift();
@@ -996,10 +1474,13 @@
   }
   function resume() { try { if (actx && actx.state === "suspended") return actx.resume(); } catch (e) {} return Promise.resolve(); }
 
-  // Track nodes: clip sources → effects → track gain → pan → master.
+  // Track nodes: clip sources → effects → tap → (automation gain) → track
+  // gain → pan → master. The tap is the track after its effects and
+  // before its fader: what a sidechain key hears.
   // A track whose effects delay it less than the slowest track's has its
   // clips started later by the difference (nodes[id].shift, seconds), so
-  // all tracks stay in time. Returns the largest delay (samples).
+  // all tracks stay in time; the faders all hear their audio `late`
+  // seconds after it was scheduled. Returns the largest delay (samples).
   function buildTracks(a, out, nodes, offline) {
     var trs = tracks(), solo = C.anySolo(trs), sr = a.sampleRate, lat = {}, max = 0;
     trs.forEach(function (tr) {
@@ -1007,25 +1488,79 @@
       max = Math.max(max, lat[tr.id]);
     });
     trs.forEach(function (tr) {
-      var g = a.createGain(), pn = a.createStereoPanner ? a.createStereoPanner() : null;
-      g.gain.value = C.trackGain(tr, solo);
+      var g = a.createGain(), pn = a.createStereoPanner ? a.createStereoPanner() : null, tap = a.createGain(), ag = null;
+      g.gain.value = staticGain(tr, solo);
+      if (C.activeLane(tr, "vol")) { ag = a.createGain(); tap.connect(ag); ag.connect(g); } else tap.connect(g);
       if (pn) { pn.pan.value = tr.pan / 100; g.connect(pn); pn.connect(out); } else g.connect(out);
-      var input = FX.insert(a, tr.id, tr.fx, g, offline) || g, meter = null;
+      var chain = FX.insert(a, tr.id, tr.fx, tap, offline, tr.auto), meter = null;
       if (!offline && a.createAnalyser) {             // the track's level, for Studio Remote
         meter = a.createAnalyser(); meter.fftSize = 512;
         (pn || g).connect(meter);
       }
       // not a DelayNode: Chromium drops a DelayNode's tail once its source has ended
-      nodes[tr.id] = { gain: g, pan: pn, input: input, meter: meter, shift: (max - lat[tr.id]) / sr };
+      nodes[tr.id] = { gain: g, pan: pn, tap: tap, ag: ag, chain: chain, input: chain || tap, meter: meter,
+                       shift: (max - lat[tr.id]) / sr, late: max / sr, inst: instOf(tr) };
     });
+    wireKeys(trs, nodes);
     return max;
   }
+  // Sidechain: each key input gets its track's tap (no loops, see C.keyPlan)
+  function wireKeys(trs, nodes) {
+    var plan = C.keyPlan(trs);
+    trs.forEach(function (tr) {
+      var n = nodes[tr.id];
+      if (!n || !n.chain) return;
+      FX.keyInputs(tr.fx).forEach(function (k) {
+        if (plan[tr.id] && plan[tr.id][k.sc] && nodes[k.sc]) { try { nodes[k.sc].tap.connect(n.chain, 0, k.input); } catch (e) {} }
+      });
+    });
+  }
+  // With a volume lane the fader's own value gives way to the lane (mute and solo still count).
+  function staticGain(tr, solo) {
+    if (C.activeLane(tr, "vol")) return tr.mute || (solo && !tr.solo) ? 0 : 1;
+    return C.trackGain(tr, solo);
+  }
   // master → its effects → `to`; returns the effects' delay (samples)
-  function routeMaster(a, from, to, offline) {
+  function routeMaster(a, from, to, offline, nodes) {
     try { from.disconnect(); } catch (e) {}
     var n = FX.insert(a, "master", proj.fx, to, offline);
     from.connect(n || to);
+    if (n && nodes) FX.keyInputs(proj.fx).forEach(function (k) {
+      if (nodes[k.sc]) { try { nodes[k.sc].tap.connect(n, 0, k.input); } catch (e) {} }
+    });
     return n ? FX.chainLatency(proj.fx, a.sampleRate) : 0;
+  }
+  // Automation of project time from..to, which plays from context time
+  // `start`: volume and pan where the faders hear it, effect sliders
+  // where their chain does. `first`: drop what an earlier play left.
+  function schedAuto(a, nodes, from, to, start, first) {
+    tracks().forEach(function (tr) {
+      var n = nodes[tr.id];
+      if (!n) return;
+      var vl = C.activeLane(tr, "vol"), pl = C.activeLane(tr, "pan");
+      if (vl && n.ag) rampParam(a, n.ag.gain, C.autoEvents(vl.p, from, to), start + n.late, function (v) { return C.dbToGain(v); }, first, true);
+      if (pl && n.pan) rampParam(a, n.pan.pan, C.autoEvents(pl.p, from, to), start + n.late, function (v) { return v / 100; }, first, false);
+      if (n.chain && n.chain.parameters) FX.autoParams(tr.fx, tr.auto).forEach(function (x) {
+        var prm = n.chain.parameters.get("a" + x.k);
+        if (prm) rampParam(a, prm, C.autoEvents(x.lane.p, from, to), start + n.shift, function (v) { return v; }, first, false);
+      });
+    });
+  }
+  function rampParam(a, prm, ev, t0, conv, first, expo) {
+    if (!ev.length) return;
+    try {
+      if (first) { prm.cancelScheduledValues(0); prm.setValueAtTime(conv(ev[0].v), a.currentTime); }
+      // Volume (expo): even in dB. The lane's floor (-60 dB) is silence, which an
+      // exponential ramp cannot reach, so ramps run to or from -60 dB and the
+      // value drops to 0 where the lane rests at the floor.
+      ev.forEach(function (x, i) {
+        var v = conv(x.v), at = t0 + x.at, nx = ev[i + 1], q = expo ? Math.max(v, 1e-3) : v;
+        if (!x.ramp || i === 0) prm.setValueAtTime(q, at);
+        else if (expo) prm.exponentialRampToValueAtTime(q, at);
+        else prm.linearRampToValueAtTime(v, at);
+        if (expo && v === 0 && !(nx && nx.ramp && conv(nx.v) > 0)) prm.setValueAtTime(0, at);
+      });
+    } catch (e) { /* a value the param refuses: the lane is skipped */ }
   }
   function fxChains() { return tracks().map(function (tr) { return tr.fx; }).concat(proj ? [proj.fx] : []); }
   function updateMix() {
@@ -1035,8 +1570,8 @@
     trs.forEach(function (tr) {
       var n = trackNodes[tr.id];
       if (!n) return;
-      n.gain.gain.setTargetAtTime(C.trackGain(tr, solo), actx.currentTime, 0.01);
-      if (n.pan) n.pan.pan.setTargetAtTime(tr.pan / 100, actx.currentTime, 0.01);
+      n.gain.gain.setTargetAtTime(staticGain(tr, solo), actx.currentTime, 0.01);
+      if (n.pan && !C.activeLane(tr, "pan")) n.pan.pan.setTargetAtTime(tr.pan / 100, actx.currentTime, 0.01);
     });
   }
 
@@ -1074,10 +1609,28 @@
   // Passes: one straight run from `from` (to the loop end or the song
   // end), then one per loop round. Each pass maps project time to the
   // context clock; clips and clicks are scheduled LOOKAHEAD ahead.
+  // MIDI clips become one list of notes (scheduled one by one, like the clicks).
   function newPass(from, to, ctxStart) {
-    var pending = projClips().filter(function (c) { return C.clipEnd(c) > from && c.at < to; })
+    var pending = projClips().filter(function (c) { return !C.isMidi(c) && C.clipEnd(c) > from && c.at < to; })
       .sort(function (x, y) { return x.at - y.at; });
-    return { from: from, to: to, start: ctxStart, end: ctxStart + (to - from), pending: pending, beat: Math.ceil(from / C.beatSec(proj.bpm) - 1e-9) };
+    return { from: from, to: to, start: ctxStart, end: ctxStart + (to - from), pending: pending, notes: passNotes(from, to),
+             beat: Math.ceil(from / C.beatSec(proj.bpm) - 1e-9) };
+  }
+  function passNotes(from, to) {
+    var out = [];
+    projClips().forEach(function (c) {
+      if (!C.isMidi(c) || C.clipEnd(c) <= from || c.at >= to) return;
+      C.clipNotes(c, from, to).forEach(function (q) { q.t = c.t; out.push(q); });
+    });
+    return out.sort(function (x, y) { return x.at - y.at || x.p - y.p; });
+  }
+  // one note on its track's instrument; `when` = context time of project time `from`
+  function scheduleNote(a, q, from, when, n, list) {
+    var at = when + (q.at - from), dur = q.end - q.at, now = a.currentTime;
+    if (at < now) { dur -= now - at; at = now; }
+    if (dur <= 0.002) return;
+    var h = M.playNote(a, n.input, n.inst, q.p, q.v, at, dur, q.g);
+    if (list) list.push(h);
   }
   function play(fromSec, opts) {
     opts = opts || {};
@@ -1096,7 +1649,7 @@
       }, function () { fxFail = true; showToast(t("toast.noFx")); });
     }
     var lat = buildTracks(a, masterGain, trackNodes, false);
-    lat += routeMaster(a, masterGain, analyser, false);
+    lat += routeMaster(a, masterGain, analyser, false, trackNodes);
     fxLat = lat / a.sampleRate;
     FX.prune(tracks().map(function (tr) { return tr.id; }).concat(["master"]));
     FX.setTime({ playing: true, tempo: proj.bpm, num: proj.sig, denom: 4, position: fromSec });
@@ -1105,7 +1658,8 @@
     if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
     var t0 = a.currentTime + 0.06;
     playing = { t0: t0, loop: loop, passes: [newPass(fromSec, end, t0)], sources: [], clicks: [] };
-    if (projClips().some(function (c) { return state[c.s] !== "ok"; })) showToast(t("toast.missing"));
+    schedAuto(a, trackNodes, fromSec, end, t0, true);
+    if (projClips().some(function (c) { return !C.isMidi(c) && state[c.s] !== "ok"; })) showToast(t("toast.missing"));
     tick();
     tickTimer = setInterval(tick, TICK_MS);
     rafId = requestAnimationFrame(frame);
@@ -1117,11 +1671,18 @@
     var p = playing, a = actx;
     if (!p || !a) return;
     var horizon = a.currentTime + LOOKAHEAD, last = p.passes[p.passes.length - 1];
-    if (p.loop && last.end < horizon) p.passes.push(newPass(p.loop.a, p.loop.b, last.end));
+    if (p.loop && last.end < horizon) {
+      p.passes.push(newPass(p.loop.a, p.loop.b, last.end));
+      schedAuto(a, trackNodes, p.loop.a, p.loop.b, last.end, false);
+    }
     p.passes.forEach(function (ps) {
       while (ps.pending.length && ps.start + (Math.max(ps.from, ps.pending[0].at) - ps.from) < horizon) {
         var c = ps.pending.shift(), n = trackNodes[c.t];
         if (n) scheduleClip(a, c, ps.from, ps.to, ps.start + n.shift, n.input, p.sources);
+      }
+      while (ps.notes.length && ps.start + (ps.notes[0].at - ps.from) < horizon) {
+        var q = ps.notes.shift(), qn = trackNodes[q.t];
+        if (qn) scheduleNote(a, q, ps.from, ps.start + qn.shift, qn, p.sources);
       }
       if (prefs.metro) {
         var bs = C.beatSec(proj.bpm);
@@ -1133,7 +1694,7 @@
       }
     });
     p.passes = p.passes.filter(function (ps) { return ps.end > a.currentTime - 0.5 || ps === p.passes[p.passes.length - 1]; });
-    if (p.sources.length > 200) p.sources = p.sources.slice(-200);
+    if (p.sources.length > 200) p.sources = p.sources.filter(function (s) { return !(s.end < a.currentTime - 0.2); }).slice(-600);
     if (p.clicks.length > 64) p.clicks = p.clicks.slice(-64);
     if (!p.loop && !recording && a.currentTime > last.end + 0.1) { playhead = last.to; stopAll(); renderPlayhead(); }
     if (recording && recMeta && a.currentTime - recMeta.ctx0 > MAX_REC_SEC) { showToast(t("toast.recMax")); stopRecording(); }
@@ -1155,6 +1716,7 @@
     renderPlayhead();
     followPlayhead(pos);
     drawMeter();
+    if (Roll) Roll.tick(pos);
     rafId = requestAnimationFrame(frame);
   }
   var meterBuf = null;
@@ -1182,8 +1744,8 @@
       playing.sources.concat(playing.clicks).forEach(function (s) { try { s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} });
     }
     Object.keys(trackNodes).forEach(function (k) {
-      try { trackNodes[k].gain.disconnect(); } catch (e) {}
-      try { if (trackNodes[k].pan) trackNodes[k].pan.disconnect(); } catch (e) {}
+      var n = trackNodes[k];
+      [n.gain, n.pan, n.tap, n.ag].forEach(function (x) { try { if (x) x.disconnect(); } catch (e) {} });
     });
     trackNodes = {};
     if (FX) { FX.setTime({ playing: false }); FX.disconnect(); }
@@ -1241,8 +1803,10 @@
   }
   function startRecording() {
     if (recording) { stopRecording(); return; }
-    var a = audio();
-    if (!a || !a.audioWorklet || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast(t("toast.noRec")); return; }
+    var target = proj && (C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack));
+    if (target && target.p === proj.id && isInst(target)) { startMidiRec(target); return; }
+    var a = audio(), fromSynth = keysOpen();
+    if (!a || !a.audioWorklet || (!fromSynth && !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia))) { showToast(t("toast.noRec")); return; }
     if (!ensureProject()) return;
     var tr = C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack);
     if (!tr || tr.p !== proj.id) { edit(function () { tr = addTrack(); }); }
@@ -1253,19 +1817,21 @@
     var cons = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } };
     if (prefs.inDev) cons.deviceId = { exact: prefs.inDev };
     var stream = null;
-    navigator.mediaDevices.getUserMedia({ audio: cons }).catch(function () {
+    // the keyboard panel is open: the synth is the input, no microphone is asked for
+    (fromSynth ? Promise.resolve(null) : navigator.mediaDevices.getUserMedia({ audio: cons }).catch(function () {
       if (!prefs.inDev) throw new Error("nomic");
       return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-    }).then(function (s) {
+    })).then(function (s) {
       stream = s;
       recWorklet = recWorklet || a.audioWorklet.addModule("rec.worklet.js");
       return recWorklet;
     }).then(function () {
-      var srcNode = a.createMediaStreamSource(stream);
+      var srcNode = fromSynth ? synthBus(a) : a.createMediaStreamSource(stream);
       var node = new AudioWorkletNode(a, "studio-recorder", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
       var mute = a.createGain(); mute.gain.value = 0;
       srcNode.connect(node); node.connect(mute); mute.connect(a.destination);
-      recMeta = { stream: stream, node: node, srcNode: srcNode, mute: mute, chunks: [], ch: 1, ctx0: 0, tid: tr.id, from: playhead, frames: 0, done: null };
+      recMeta = { stream: stream, node: node, srcNode: srcNode, mute: mute, chunks: [], ch: 1, ctx0: 0, tid: tr.id, from: playhead, frames: 0, done: null, synth: fromSynth };
+      if (fromSynth) live(t("toast.recSynth", { name: tr.name }));
       node.port.onmessage = function (e) {
         var m = e.data || {};
         if (typeof m.start === "number") { recMeta.ctx0 = m.start; recMeta.ch = m.ch; }
@@ -1279,19 +1845,21 @@
     }).catch(function () {
       if (stream) stream.getTracks().forEach(function (k) { k.stop(); });
       recording = false; recMeta = null; recWorklet = null;
-      showToast(t("toast.noMic"));
+      showToast(fromSynth ? t("toast.noRec") : t("toast.noMic"));
       renderPlayState();
     });
   }
   function stopRecording() {
+    if (recording && midiRec) { stopMidiRec(); return; }
     if (!recording || !recMeta) return;
     var r = recMeta, a = actx, t0 = playing ? playing.t0 : 0, from = r.from;
     recording = false;
     stopNodes();
     renderPlayState();
     var finish = function () {
-      try { r.srcNode.disconnect(); r.node.disconnect(); r.mute.disconnect(); } catch (e) {}
-      r.stream.getTracks().forEach(function (k) { k.stop(); });
+      try { if (r.synth) r.srcNode.disconnect(r.node); else r.srcNode.disconnect(); } catch (e) {}
+      try { r.node.disconnect(); r.mute.disconnect(); } catch (e) {}
+      if (r.stream) r.stream.getTracks().forEach(function (k) { k.stop(); });
       recMeta = null;
       saveTake(r, a, t0, from);
     };
@@ -1310,7 +1878,8 @@
     });
     // Where the first frame belongs on the timeline: the audio clock of
     // the first frame, minus the output delay and the user's offset.
-    var lat = (a.outputLatency || 0) + (a.baseLatency || 0) + prefs.lat / 1000 + fxLat;
+    // (the synth has no input delay: no recording offset for it)
+    var lat = (a.outputLatency || 0) + (a.baseLatency || 0) + (r.synth ? 0 : prefs.lat / 1000) + fxLat;
     var at = from + (r.ctx0 - t0) - lat, skip = 0;
     if (at < 0) { skip = Math.min(r.frames - 1, Math.round(-at * rate)); at = 0; }
     if (skip) chans = chans.map(function (d) { return d.subarray(skip); });
@@ -1337,6 +1906,436 @@
     });
   }
 
+  // ---------- 8b. Keyboard: MIDI and the built-in synth ----------
+  // Notes from a MIDI keyboard (Web MIDI) or from the keys on screen play
+  // a small synth (midi.js) that is heard at once. With an instrument
+  // track armed or selected, the keys play its instrument and Record
+  // takes the notes into a MIDI clip; on an audio track, with the panel
+  // open, Record takes the synth as audio.
+  var M = window.StudioMidi;
+  var synth = null, synthOut = null, midiAcc = null, held = {};
+  function synthBus(a) {
+    if (!synthOut) {
+      synthOut = a.createGain();
+      synthOut.gain.value = Math.pow(prefs.svol / 100, 2);
+      synthOut.connect(analyser || a.destination);          // heard straight away, like the click
+      synth = new M.Synth(a, synthOut);
+      synth.setPreset(kbSound());
+    }
+    return synthOut;
+  }
+  // the instrument track the keys play: the armed one, else the selected one
+  function kbTarget() {
+    if (!proj) return null;
+    var a = C.find(data, "tracks", prefs.arm), s = C.find(data, "tracks", selTrack);
+    if (a && a.p === proj.id) return isInst(a) ? a : null;   // the same track Record would use
+    return s && s.p === proj.id && isInst(s) ? s : null;
+  }
+  function kbSound() { var tr = kbTarget(); return tr ? instOf(tr) : prefs.snd; }
+  // keep the panel and the synth in step with the target track
+  function syncKb() {
+    var tr = kbTarget(), snd = kbSound(), sel = $("kb-snd");
+    if (synth && synth.preset !== M.PRESETS[snd] && M.PRESETS[snd]) { synth.allOff(); held = {}; synth.setPreset(snd); }
+    if (sel && document.activeElement !== sel) sel.value = M.PRESETS[snd] ? snd : "piano";
+    var tl = $("kb-target");
+    if (tl) { tl.hidden = !tr; tl.textContent = tr ? t("mi.target", { name: tr.name }) : ""; }
+  }
+
+  // ---------- 8c. Recording notes into a MIDI clip ----------
+  var midiRec = null;            // { tid, from, t0, lat, open: { note: [ctxTime, vel] }, sus, susHeld: {}, notes: [] }
+  function startMidiRec(tr) {
+    var a = audio();
+    if (!a) { showToast(t("toast.noAudio")); return; }
+    if (!keysOpen()) toggleKeys();
+    prefs.arm = tr.id; savePrefs();
+    if (playing) { playhead = position(); stopNodes(); }
+    resume();
+    getSynth();
+    syncKb();
+    midiRec = { tid: tr.id, from: playhead, t0: 0, lat: (a.outputLatency || 0) + (a.baseLatency || 0), open: {}, sus: false, susHeld: {}, notes: [] };
+    recording = true;
+    play(playhead, { noLoop: true, open: true });
+    if (!playing) { recording = false; midiRec = null; renderPlayState(); return; }
+    midiRec.t0 = playing.t0;
+    renderAll();
+    live(t("mi.recMidi", { name: tr.name }));
+  }
+  // project time (seconds from the take's start) of context time `ct`
+  function recAt(ct) { return ct - midiRec.t0 - midiRec.lat; }
+  function recEvent(type, note, vel, ct) {
+    var r = midiRec;
+    if (!r || !recording) return;
+    if (ct == null) ct = actx.currentTime;
+    if (type === "on") {
+      if (r.open[note]) recEnd(note, ct);
+      delete r.susHeld[note];
+      r.open[note] = [ct, vel];
+    } else if (type === "off") {
+      if (!r.open[note]) return;
+      if (r.sus) r.susHeld[note] = ct; else recEnd(note, ct);
+    } else if (type === "sus") {
+      r.sus = vel;
+      if (!vel) Object.keys(r.susHeld).forEach(function (n) { recEnd(+n, ct); });
+    }
+  }
+  function recEnd(note, ct) {
+    var r = midiRec, o = r.open[note];
+    delete r.open[note]; delete r.susHeld[note];
+    if (!o || r.notes.length >= C.MAX_NOTES) return;
+    var s = Math.max(0, recAt(o[0])), e = Math.max(s + C.MIN_NOTE, recAt(ct));
+    r.notes.push([note, s, e - s, o[1]]);
+  }
+  function stopMidiRec() {
+    var r = midiRec, a = actx, end = a ? recAt(a.currentTime) : 0;
+    Object.keys(r.open).forEach(function (n) { recEnd(+n, a.currentTime); });
+    midiRec = null;
+    recording = false;
+    stopNodes();
+    if (synth) { synth.allOff(); held = {}; renderKeys(); }
+    renderPlayState();
+    var tr = C.find(data, "tracks", r.tid);
+    if (!r.notes.length) { showToast(t("toast.recEmpty")); renderAll(); return; }
+    if (!tr || !proj || tr.p !== proj.id) { showToast(t("toast.recFail")); renderAll(); return; }
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); renderAll(); return; }
+    var len = Math.max(end, N.notesEnd(r.notes), C.MIN_LEN);
+    edit(function () {
+      put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, at: r.from, off: 0, len: len, n: r.notes }));
+    });
+    playhead = r.from;
+    renderPlayhead();
+    showToast(t("mi.recSaved", { n: r.notes.length, name: tr.name }));
+  }
+  function getSynth() { var a = audio(); if (!a) return null; resume(); synthBus(a); return synth; }
+  function keysOpen() { return !$("keys").hidden; }
+  function toggleKeys() {
+    var k = $("keys"), open = k.hidden;
+    k.hidden = !open;
+    $("keys-btn").classList.toggle("on", open);
+    $("keys-btn").setAttribute("aria-pressed", open ? "true" : "false");
+    if (open) { renderKeys(); getSynth(); syncKb(); }
+    else if (synth) { synth.allOff(); held = {}; }
+    renderLanes();
+  }
+  function renderKeys() {
+    var host = $("kb-keys"), base = 48 + 12 * prefs.oct, whites = 0, n;
+    host.innerHTML = "";
+    for (n = base; n <= base + 24; n++) if (!M.isBlack(n)) whites++;
+    var wi = 0;
+    for (n = base; n <= base + 24; n++) {
+      var black = M.isBlack(n), b = el("button", "kb-key " + (black ? "b" : "w") + (held[n] ? " on" : ""));
+      b.type = "button";
+      b.setAttribute("data-n", String(n));
+      setLabel(b, M.noteName(n));
+      if (black) { b.style.left = "calc(" + (wi / whites * 100) + "% - " + (50 / whites * 0.62) + "%)"; b.style.width = (100 / whites * 0.62) + "%"; }
+      else { b.style.left = (wi / whites * 100) + "%"; b.style.width = (100 / whites) + "%"; wi++; }
+      if (!black && n % 12 === 0) b.appendChild(el("span", "kb-c", M.noteName(n)));
+      host.appendChild(b);
+    }
+    $("kb-oct").textContent = t("kb.oct", { n: prefs.oct > 0 ? "+" + prefs.oct : String(prefs.oct) });
+    $("kb-oct-dn").disabled = prefs.oct <= -2;
+    $("kb-oct-up").disabled = prefs.oct >= 2;
+  }
+  function lightKey(n, on) {
+    if (on) held[n] = true; else delete held[n];
+    var b = document.querySelector('#kb-keys [data-n="' + n + '"]');
+    if (b) b.classList.toggle("on", !!on);
+  }
+  function play1(n, vel) { var sy = getSynth(); if (!sy) return; sy.noteOn(n, vel); lightKey(n, true); recEvent("on", n, vel); }
+  function stop1(n) { if (synth) synth.noteOff(n); lightKey(n, false); recEvent("off", n, 0); }
+  function onMidi(e) {
+    var m = M.parse(e.data), sy = m && getSynth();
+    if (!sy) return;
+    sy.midi(m);
+    if (m.type === "on") lightKey(m.note, true);
+    else if (m.type === "off") lightKey(m.note, false);
+    if (midiRec) {
+      // the event's own time (performance clock) on the audio clock
+      var ct = actx.currentTime - (typeof e.timeStamp === "number" && e.timeStamp > 0 ? Math.max(0, Math.min(0.5, (performance.now() - e.timeStamp) / 1000)) : 0);
+      if (m.type === "on" || m.type === "off") recEvent(m.type, m.note, m.vel, ct);
+      else if (m.type === "cc" && m.cc === 64) recEvent("sus", 0, m.val >= 64, ct);
+    }
+  }
+  function bindMidi() {
+    if (!midiAcc) return;
+    var names = [];
+    midiAcc.inputs.forEach(function (inp) { inp.onmidimessage = onMidi; names.push(C.clipLine(inp.name || "MIDI", 40)); });
+    $("kb-status").textContent = names.length ? t("kb.inputs", { names: names.join(", ") }) : t("kb.none");
+    $("kb-connect").hidden = true;
+  }
+  // `ask`: from the button (this may show the browser's question)
+  function midiConnect(ask) {
+    if (!M.supported()) { if (ask) $("kb-status").textContent = t("kb.noMidi"); return; }
+    M.access().then(function (acc) {
+      midiAcc = acc;
+      if (!prefs.midi) { prefs.midi = true; savePrefs(); }
+      acc.onstatechange = bindMidi;
+      bindMidi();
+    }, function () {
+      if (prefs.midi) { prefs.midi = false; savePrefs(); }
+      if (ask) $("kb-status").textContent = t("kb.denied");
+    });
+  }
+  function wireKeys2() {
+    $("keys-btn").innerHTML = ICON.piano;
+    setLabel($("keys-btn"), t("btn.keys"));
+    $("keys-btn").addEventListener("click", toggleKeys);
+    $("kb-close").innerHTML = ICON.close; setLabel($("kb-close"), t("btn.close"));
+    $("kb-close").addEventListener("click", toggleKeys);
+    $("kb-oct-dn").innerHTML = ICON.minus; setLabel($("kb-oct-dn"), t("kb.octDown"));
+    $("kb-oct-up").innerHTML = ICON.plus; setLabel($("kb-oct-up"), t("kb.octUp"));
+    $("kb-oct-dn").addEventListener("click", function () { if (synth) synth.allOff(); held = {}; prefs.oct = Math.max(-2, prefs.oct - 1); savePrefs(); renderKeys(); });
+    $("kb-oct-up").addEventListener("click", function () { if (synth) synth.allOff(); held = {}; prefs.oct = Math.min(2, prefs.oct + 1); savePrefs(); renderKeys(); });
+    var snd = $("kb-snd");
+    M.ORDER.forEach(function (id) { var o = el("option", "", t("snd." + id)); o.value = id; snd.appendChild(o); });
+    snd.value = prefs.snd;
+    snd.addEventListener("change", function () {
+      var tr = kbTarget();
+      if (tr) { setTrack(tr.id, { inst: snd.value }); renderTrackDlgIfOpen(); }   // the sound of an instrument track is its instrument
+      else { prefs.snd = snd.value; savePrefs(); }
+      if (synth) { synth.allOff(); held = {}; synth.setPreset(snd.value); }
+    });
+    var sv = $("kb-vol");
+    sv.value = String(prefs.svol);
+    sv.addEventListener("input", function () {
+      prefs.svol = parseInt(sv.value, 10) || 0; savePrefs();
+      if (synthOut) synthOut.gain.setTargetAtTime(Math.pow(prefs.svol / 100, 2), actx.currentTime, 0.02);
+    });
+    $("kb-connect").addEventListener("click", function () { midiConnect(true); });
+    $("kb-status").textContent = M.supported() ? "" : t("kb.noMidi");
+    $("kb-connect").hidden = !M.supported();
+    // keys on screen: press, slide across with the mouse held, release
+    var keys = $("kb-keys"), downs = {};
+    function keyOf(e) { var b = e.target.closest && e.target.closest(".kb-key"); return b ? +b.getAttribute("data-n") : -1; }
+    function velOf(e, b) { var r = b.getBoundingClientRect(); return Math.round(40 + 87 * clamp((e.clientY - r.top) / Math.max(1, r.height), 0, 1)); }
+    keys.addEventListener("pointerdown", function (e) {
+      var n = keyOf(e);
+      if (n < 0) return;
+      e.preventDefault();
+      try { e.target.closest(".kb-key").releasePointerCapture(e.pointerId); } catch (err) {}
+      downs[e.pointerId] = n;
+      play1(n, velOf(e, e.target.closest(".kb-key")));
+    });
+    keys.addEventListener("pointerover", function (e) {
+      if (!(e.pointerId in downs)) return;
+      var n = keyOf(e);
+      if (n < 0 || n === downs[e.pointerId]) return;
+      stop1(downs[e.pointerId]);
+      downs[e.pointerId] = n;
+      play1(n, velOf(e, e.target.closest(".kb-key")));
+    });
+    var up = function (e) { if (e.pointerId in downs) { stop1(downs[e.pointerId]); delete downs[e.pointerId]; } };
+    keys.addEventListener("pointerup", up);
+    keys.addEventListener("pointercancel", up);
+    keys.addEventListener("pointerleave", up);
+    keys.addEventListener("keydown", function (e) {
+      var n = keyOf(e);
+      if (n < 0 || (e.key !== "Enter" && e.key !== " ")) return;
+      e.preventDefault(); e.stopPropagation();
+      if (!e.repeat) play1(n, 100);
+    });
+    keys.addEventListener("keyup", function (e) {
+      var n = keyOf(e);
+      if (n >= 0 && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); stop1(n); }
+    });
+    // allowed before: reconnect without asking
+    if (prefs.midi) M.known().then(function (ok) { if (ok) midiConnect(false); });
+  }
+
+  // ---------- 8d. MIDI clips: piano roll, .mid files, loops ----------
+  var Roll = null;               // piano roll and loop browser (roll.js)
+  var L = window.StudioLoops;
+  // project time -> the bar it is in starts at / the next bar line
+  function barFloor(sec) { var b = C.barSec(proj.bpm, proj.sig); return Math.max(0, Math.floor(sec / b + 1e-6) * b); }
+  function barCeil(sec) { var b = C.barSec(proj.bpm, proj.sig); return Math.ceil(sec / b - 1e-6) * b; }
+  function newMidiClip(tid, at) {
+    var tr = C.find(data, "tracks", tid);
+    if (!tr || !proj) return;
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+    var c = C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tid, at: barFloor(at), off: 0, len: C.barSec(proj.bpm, proj.sig) * 2, n: [] });
+    edit(function () { put("clips", c); selClip = c.id; selTrack = tid; });
+    openRoll(c.id);
+  }
+  function openRoll(id) {
+    var c = C.find(data, "clips", id);
+    if (!c || !C.isMidi(c)) return;
+    selClip = id; selTrack = c.t;
+    renderRows();
+    Roll.open(id);
+  }
+  // notes of a clip changed: grow the clip to the next bar line when notes reach past its end
+  function withNotes(c, notes) {
+    var n = Object.assign({}, c, { n: notes }), end = N.notesEnd(notes.filter(function (q) { return q[1] >= c.off; }));
+    if (end > c.off + c.len + 1e-6) n.len = Math.min(C.MAX_SEC, barCeil(c.at - c.off + end) - c.at);
+    return C.normClip(n) || c;
+  }
+  function setNotes(cid, notes, opts) {
+    var c = C.find(data, "clips", cid);
+    if (!c) return;
+    edit(function () { put("clips", withNotes(c, notes)); }, opts);
+  }
+  function liveNotes(cid, notes) {
+    var c = C.find(data, "clips", cid);
+    if (!c) return;
+    put("clips", withNotes(c, notes));
+    renderLanesFast();
+  }
+  // the end of a gesture made of live changes: one undo step
+  function commit(before) {
+    if (snapshot() === before) { renderAll(); return; }
+    undoStack.push(before);
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+    redoStack = [];
+    changed();
+  }
+  // a short note on an instrument (piano roll keys, a note drawn)
+  function audition(p, v, inst) {
+    var a = audio();
+    if (!a) return;
+    resume();
+    M.playNote(a, synthBus(a), inst, p, v, a.currentTime + 0.005, 0.28, 1);
+  }
+
+  // .mid files
+  function readBytes(f) { return f.arrayBuffer().then(function (b) { return new Uint8Array(b); }); }
+  function isMidiFile(f) { return /\.(mid|midi|smf|kar|rmi)$/i.test(f.name || "") || /midi/.test(f.type || ""); }
+  // one or more parts of a .mid file onto tracks: the selected instrument
+  // track for a single part, else new instrument tracks
+  function importMidi(f) {
+    return readBytes(f).then(function (bytes) {
+      var song;
+      try { song = N.readSmf(bytes); } catch (e) { showToast(t("mi.badMidi", { name: f.name })); return false; }
+      var parts = song.tracks.filter(function (p) { return p.notes.length; });
+      if (!parts.length) { showToast(t("mi.noNotes", { name: f.name })); return false; }
+      if (!projClips().length && Math.abs(song.bpm - proj.bpm) > 0.01) {             // an empty project takes the file's tempo
+        put("projects", Object.assign({}, proj, { bpm: Math.round(song.bpm), sig: song.sig && C.SIGS.indexOf(song.sig[0]) >= 0 && song.sig[1] === 4 ? song.sig[0] : proj.sig }));
+      }
+      var base = C.clipLine(f.name.replace(/\.[^.]+$/, ""), C.MAX_NAME), count = 0, sel = C.find(data, "tracks", selTrack);
+      parts.forEach(function (p, i) {
+        if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+        var inst = N.instFor(p.prog, p.ch), tr = parts.length === 1 && sel && sel.p === proj.id && isInst(sel) ? sel : null;
+        if (!tr) tr = addTrack(C.clipLine(p.name || (parts.length > 1 ? base + " " + (i + 1) : base), C.MAX_NAME) || null, inst);
+        if (!tr) return;
+        var notes = N.toSec(p.notes, proj.bpm), end = N.notesEnd(notes);
+        put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, at: playhead, off: 0,
+                                  len: Math.max(C.MIN_LEN, barCeil(playhead + end) - playhead), name: p.name || base, n: notes }));
+        count += notes.length;
+      });
+      if (count) showToast(t("mi.imported", { n: count, name: f.name }));
+      return count > 0;
+    });
+  }
+  // replace the notes of a clip with a file's (all its parts)
+  function importMidiInto(cid) {
+    pickFilesP(".mid,.midi,audio/midi,audio/x-midi").then(function (files) {
+      var f = files && files[0], c = C.find(data, "clips", cid);
+      if (!f || !c) return;
+      readBytes(f).then(function (bytes) {
+        var song;
+        try { song = N.readSmf(bytes); } catch (e) { showToast(t("mi.badMidi", { name: f.name })); return; }
+        var all = [];
+        song.tracks.forEach(function (p) { all = all.concat(p.notes); });
+        if (!all.length) { showToast(t("mi.noNotes", { name: f.name })); return; }
+        var notes = N.toSec(all, proj.bpm).slice(0, C.MAX_NOTES).map(function (q) { return [q[0], q[1] + c.off, q[2], q[3]]; });
+        setNotes(cid, notes);
+        showToast(t("mi.imported", { n: notes.length, name: f.name }));
+      });
+    });
+  }
+  function midiPart(tr, notes) {
+    var inst = instOf(tr);
+    return { name: tr ? tr.name : "", ch: inst === "drums" ? 9 : 0, prog: inst === "drums" ? null : N.programFor(inst), notes: N.toBeats(notes, proj.bpm) };
+  }
+  function saveMidi(bytes, name) { saveBlob(new Blob([bytes], { type: "audio/midi" }), C.fileName(name, "mid"), "audio/midi", "MIDI", ".mid"); }
+  // a clip: its window's notes from 0 (type 0)
+  function exportClipMidi(cid) {
+    var c = C.find(data, "clips", cid);
+    if (!c || !C.isMidi(c)) return;
+    var notes = C.clipNotes(c, c.at, C.clipEnd(c)).map(function (q) { return [q.p, q.at - c.at, q.end - q.at, q.v]; });
+    if (!notes.length) { showToast(t("mi.noNotes", { name: clipName(c) })); return; }
+    var tr = C.find(data, "tracks", c.t);
+    saveMidi(N.writeSmf({ bpm: proj.bpm, sig: proj.sig, name: clipName(c), tracks: [midiPart(tr, notes)] }, 0), clipName(c));
+  }
+  // a track: all its MIDI clips, in project time (type 1)
+  function exportTrackMidi(tid) {
+    var tr = C.find(data, "tracks", tid);
+    if (!tr) return;
+    var notes = [];
+    clipsOf(tid).forEach(function (c) { C.clipNotes(c, 0, C.MAX_SEC).forEach(function (q) { notes.push([q.p, q.at, q.end - q.at, q.v]); }); });
+    if (!notes.length) { showToast(t("mi.noNotes", { name: tr.name })); return; }
+    saveMidi(N.writeSmf({ bpm: proj.bpm, sig: proj.sig, name: proj.name || tr.name, tracks: [midiPart(tr, notes)] }, 1), tr.name);
+  }
+  function pickFilesP(accept) {
+    var dlg = dialogHost();
+    return Promise.resolve(dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept));
+  }
+
+  // Loops: onto an instrument track for the same kind of sound, else a new one
+  function sameKind(a, b) { return (a === "drums") === (b === "drums"); }
+  function addLoop(loop, tid, at) {
+    if (!ensureProject()) return;
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+    var name = Roll.loopName(loop), placed = null;
+    edit(function () {
+      var tr = tid ? C.find(data, "tracks", tid) : null;
+      if (!tr) { var s = C.find(data, "tracks", selTrack); if (s && s.p === proj.id && isInst(s) && sameKind(instOf(s), loop.inst)) tr = s; }
+      if (tr && !(isInst(tr) && sameKind(instOf(tr), loop.inst))) tr = null;
+      if (!tr) tr = addTrack(t("snd." + loop.inst), loop.inst);
+      if (!tr) return;
+      var start = at == null ? barFloor(playhead) : Math.max(0, at);
+      var c = C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, at: start, off: 0,
+                           len: L.beatsOf(loop) * C.beatSec(proj.bpm), name: name, n: N.toSec(L.notesOf(loop), proj.bpm) });
+      put("clips", c);
+      selClip = c.id; selTrack = tr.id;
+      placed = tr;
+    });
+    if (placed) live(t("lp.added", { name: name, track: placed.name }));
+  }
+  function dropLoop(loop, x, y) {
+    var view = $("view").getBoundingClientRect();
+    if (x < view.left || x > view.right || y < view.top || y > view.bottom) return;
+    var tid = laneAt(x, y);
+    addLoop(loop, tid || null, C.snap(secAt(x), proj ? proj.bpm : 120, proj ? proj.sig : 4, "bar"));
+  }
+  function dropHint(x, y) {
+    [].forEach.call(document.querySelectorAll("#rows .row.track.drop"), function (r) { r.classList.remove("drop"); });
+    if (x == null) return;
+    var tid = laneAt(x, y), row = tid && document.querySelector('#rows .row.track[data-t="' + tid + '"]');
+    if (row) row.classList.add("drop");
+  }
+  function makeRoll() {
+    Roll = window.StudioRoll({
+      C: C, N: N, M: M, L: L, t: t, el: el, setLabel: setLabel, ICON: ICON, numTxt: numTxt,
+      data: function () { return data; }, proj: function () { return proj; },
+      pref: function (k, v) { if (v === undefined) return prefs[k]; prefs[k] = v; savePrefs(); return v; },
+      setNotes: setNotes, liveNotes: liveNotes, snapshot: snapshot, commit: commit, burst: burst,
+      undo: undo, redo: redo, canUndo: function () { return undoStack.length > 0 && !recording; }, canRedo: function () { return redoStack.length > 0 && !recording; },
+      position: function () { return playing ? position() : playhead; }, isPlaying: function () { return !!playing; },
+      seek: seek, togglePlay: function () { if (proj) togglePlay(); },
+      audition: audition, audio: function () { var a = audio(); if (a) resume(); return a; },
+      previewOut: function () { return actx ? synthBus(actx) : null; },
+      showToast: showToast, live: live, showDlg: showDlg, hideDlg: hideDlg,
+      importMidiInto: importMidiInto, exportClipMidi: exportClipMidi,
+      addLoop: addLoop, dropLoop: dropLoop, dropHint: dropHint,
+      layout: function () { renderLanes(); },
+      closed: function () { renderAll(); }
+    });
+  }
+
+  // Add a track: audio, or an instrument track with one of the instruments
+  function openAddTrack() {
+    if (proj && tracks().length >= C.MAX_TRACKS) { showToast(t("toast.maxTracks", { n: C.MAX_TRACKS })); return; }
+    var host = $("add-insts");
+    host.innerHTML = "";
+    M.ORDER.forEach(function (id) {
+      var b = el("button", "chip", t("snd." + id));
+      b.type = "button";
+      b.addEventListener("click", function () { hideDlg("add-dlg"); edit(function () { addTrack(null, id); }); });
+      host.appendChild(b);
+    });
+    showDlg("add-dlg");
+  }
+  function renderTrackDlgIfOpen() { if ($("track-dlg").open) renderTrackDlg(); }
+
   // ---------- 9. Import, export ----------
   function dialogHost() {
     try { return window.orosDialog || (window.parent && window.parent.orosDialog) || null; }
@@ -1353,22 +2352,24 @@
     });
   }
   function pickAudio() {
-    if (!fsApi()) { showToast(t("toast.noDisk")); return; }
-    var dlg = dialogHost(), accept = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.aac,.webm";
+    var dlg = dialogHost(), accept = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.aac,.webm,.mid,.midi";
     var p = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : localPickFiles(accept);
     Promise.resolve(p).then(function (files) { if (files && files.length) importFiles(files); });
   }
+  // audio files become clips on audio tracks, .mid files on instrument tracks (importMidi)
   function importFiles(files) {
-    if (!fsApi()) { showToast(t("toast.noDisk")); return; }
+    if (!fsApi() && files.some(function (f) { return !isMidiFile(f); })) { showToast(t("toast.noDisk")); return; }
     if (!ensureProject()) return;
     var before = snapshot(), any = false;
     files.reduce(function (p, f) {
       return p.then(function () {
         if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); return; }
         if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+        if (isMidiFile(f)) return importMidi(f).then(function (ok) { if (ok) any = true; });
         busy(t("busy.import", { name: f.name }));
         return f.arrayBuffer().then(decode).then(function (buf) {
           var tr = C.find(data, "tracks", selTrack);
+          if (tr && isInst(tr)) tr = null;                       // audio goes on an audio track
           if (!tr || tr.p !== proj.id || (files.length > 1 && clipsOf(tr.id).length)) {
             tr = tracks().length < C.MAX_TRACKS ? addTrack(C.clipLine(f.name.replace(/\.[^.]+$/, ""), C.MAX_NAME)) : tr;
           }
@@ -1389,6 +2390,8 @@
     });
   }
 
+  var E = window.StudioEncode;
+  var opusOk = null;               // null: not asked yet
   function openExport() {
     if (!proj || !projClips().length) { showToast(t("export.empty")); return; }
     var r = C.exportRange(proj, projClips());
@@ -1397,18 +2400,33 @@
     $("export-go").disabled = false;
     renderExportChips();
     showDlg("export-dlg");
+    if (opusOk === null) E.opusSupported().then(function (ok) { opusOk = ok; if ($("export-dlg").open) renderExportChips(); });
   }
   function renderExportChips() {
+    var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
+    radioChips($("export-fmt"), ["wav", "mp3", "opus"], fmt, function (v) { return t("fmt." + v); }, function (v) { prefs.fmt = v; savePrefs(); renderExportChips(); });
+    var opusChip = $("export-fmt").querySelectorAll("button")[2];
+    if (opusChip && opusOk === false) { opusChip.disabled = true; opusChip.setAttribute("aria-disabled", "true"); }
     radioChips($("export-bits"), [16, 24], prefs.bits, function (v) { return t("bits." + v); }, function (v) { prefs.bits = v; savePrefs(); renderExportChips(); });
     radioChips($("export-rate"), [44100, 48000], prefs.rate, function (v) { return t("rate." + v); }, function (v) { prefs.rate = v; savePrefs(); renderExportChips(); });
+    var kb = fmt === "opus" ? [96, 128, 160, 256] : [128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
+    radioChips($("export-kbps"), kb, cur, function (v) { return t("kbps", { n: v }); }, function (v) {
+      if (fmt === "opus") prefs.okbps = v; else prefs.kbps = v;
+      savePrefs(); renderExportChips();
+    });
+    $("export-bits-sec").hidden = fmt !== "wav";
+    $("export-kbps-sec").hidden = fmt === "wav";
+    $("export-rate-sec").hidden = fmt === "opus";
+    $("export-note").textContent = opusOk === false && prefs.fmt === "opus" ? t("export.noOpus") : fmt === "opus" ? t("export.opusRate") : fmt === "mp3" ? t("export.mp3Hint") : "";
   }
   function doExport() {
     var clips = projClips(), r = C.exportRange(proj, clips);
     if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
-    if (clips.some(function (c) { return C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OAC) { showToast(t("toast.noAudio")); return; }
-    var rate = prefs.rate, oc, chains = fxChains(), skip = 0, len = Math.ceil((r.b - r.a) * rate);
+    var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
+    var rate = fmt === "opus" ? 48000 : prefs.rate, oc, chains = fxChains(), skip = 0, len = Math.ceil((r.b - r.a) * rate);
     var fail = function () { $("export-go").disabled = false; $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
     $("export-status").textContent = t("export.busy");
     $("export-go").disabled = true;
@@ -1422,8 +2440,10 @@
       var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol);
       var nodes = {};
       buildTracks(oc, master, nodes, true);
-      routeMaster(oc, master, oc.destination, true);
-      clips.forEach(function (c) { var n = nodes[c.t]; if (n) scheduleClip(oc, c, r.a, r.b, n.shift, n.input, null); });
+      routeMaster(oc, master, oc.destination, true, nodes);
+      schedAuto(oc, nodes, r.a, r.b, 0, true);
+      clips.forEach(function (c) { var n = nodes[c.t]; if (n && !C.isMidi(c)) scheduleClip(oc, c, r.a, r.b, n.shift, n.input, null); });
+      passNotes(r.a, r.b).forEach(function (q) { var n = nodes[q.t]; if (n) scheduleNote(oc, q, r.a, n.shift, n, null); });
       var p = oc.startRendering();
       if (p && typeof p.then === "function") return p;
       return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
@@ -1431,11 +2451,31 @@
     var title = proj.name || t("proj.untitled");
     var done = function (out) {
       var chans = [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)];
-      var blob = new Blob([C.wavBytes(chans, rate, prefs.bits)], { type: "audio/wav" });
-      $("export-go").disabled = false;
-      $("export-status").textContent = "";
-      hideDlg("export-dlg");
-      saveBlob(blob, C.fileName(title, "wav"), "audio/wav", "WAV", ".wav");
+      var finish = function (bytes, mime, ext, desc) {
+        $("export-go").disabled = false;
+        $("export-status").textContent = "";
+        hideDlg("export-dlg");
+        saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
+      };
+      var broke = function () { $("export-go").disabled = false; $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
+      var pct = function (x) { $("export-status").textContent = t("export.encoding", { n: Math.floor(x * 100) }); };
+      if (fmt === "mp3") {
+        var enc;
+        try { enc = new E.Mp3Encoder(chans, rate, prefs.kbps, { title: title }); } catch (e) { broke(); return; }
+        var step = function () {                   // a slice at a time, so the page stays responsive
+          try {
+            if (enc.step(60)) { finish(enc.bytes(), "audio/mpeg", "mp3", "MP3"); return; }
+          } catch (e) { broke(); return; }
+          pct(enc.progress());
+          setTimeout(step, 0);
+        };
+        pct(0);
+        setTimeout(step, 0);
+      } else if (fmt === "opus") {
+        pct(0);
+        E.encodeOpus([new Float32Array(chans[0]), new Float32Array(chans[1])], prefs.okbps, { title: title, onProgress: pct })
+          .then(function (bytes) { finish(bytes, "audio/ogg", "opus", "Opus"); }, broke);
+      } else finish(C.wavBytes(chans, rate, prefs.bits), "audio/wav", "wav", "WAV");
     };
   }
   function saveBlob(blob, name, mime, desc, ext) {
@@ -1612,6 +2652,15 @@
     $("tpan-out").textContent = panTxt(tr.pan);
     var n = FX.count(tr.fx);
     $("track-fx").textContent = t("fx.open") + (n ? " · " + n : "");
+    $("track-auto").textContent = t("au.show") + ((tr.auto || []).length ? " · " + tr.auto.length : "");
+    var inst = isInst(tr), is = $("track-inst");
+    $("track-inst-sec").hidden = !inst;
+    $("track-midi-row").hidden = !inst;
+    if (inst) {
+      if (!is.options.length) M.ORDER.forEach(function (id) { var o = el("option", "", t("snd." + id)); o.value = id; is.appendChild(o); });
+      is.value = M.PRESETS[instOf(tr)] ? instOf(tr) : "piano";
+      $("track-midi").disabled = !clipsOf(tr.id).some(C.isMidi);
+    }
     var trs = tracks();
     $("track-up").disabled = trs[0] && trs[0].id === tr.id;
     $("track-down").disabled = trs.length && trs[trs.length - 1].id === tr.id;
@@ -1763,6 +2812,7 @@
       else if (lk === "s" && selClip) { e.preventDefault(); splitSel(); }
       else if (lk === "d" && selClip) { e.preventDefault(); dupSel(); }
       else if ((k === "Delete" || k === "Backspace") && selClip) { e.preventDefault(); delSel(); }
+      else if (lk === "e" && selClip) { e.preventDefault(); openRoll(selClip); }
       else if (k === "+" || k === "=") { e.preventDefault(); setZoom(1); }
       else if (k === "-") { e.preventDefault(); setZoom(-1); }
       else if (k === "Escape" && selClip) { selClip = ""; renderRows(); }
@@ -1829,7 +2879,7 @@
       window.__orosSyncApi._suppress = false;
     }
     if (JSON.stringify(data) === before) return;   // no toast on merge
-    if (drag || rdrag || recording) return;        // the gesture finishes on the local copy; the next edit merges
+    if (drag || rdrag || adrag || recording || (Roll && Roll.busy())) return;   // the gesture finishes on the local copy; the next edit merges
     if (proj) {
       var fresh = C.find(data, "projects", proj.id);
       if (!fresh) { openProject(null); return; }   // deleted elsewhere
@@ -1864,7 +2914,8 @@
                  ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
                  ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
                  ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
-                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"]];
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"],
+                 ["add-close", "close", "btn.close"], ["pr-play", "play", "pr.play"]];
     icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
     var sig = $("sig-in");
     C.SIGS.forEach(function (n) { var o = el("option", "", t("sig.n", { n: n })); o.value = String(n); sig.appendChild(o); });
@@ -1901,14 +2952,21 @@
       setLabel($("master-in"), t("f.master") + ": " + dbTxt(v));
       setProject({ vol: v }, burst("master", { live: true }));
     });
-    $("add-track").addEventListener("click", function () { edit(function () { addTrack(); }); });
+    $("add-track").addEventListener("click", openAddTrack);
     var rows = $("rows");
     rows.addEventListener("pointerdown", onRowsDown);
     rows.addEventListener("pointermove", onRowsMove);
     rows.addEventListener("pointerup", onRowsUp);
     rows.addEventListener("pointercancel", onRowsUp);
+    rows.addEventListener("dblclick", function (e) {
+      var pt = e.target.closest && e.target.closest(".a-pt"), area = pt && pt.closest(".a-lane");
+      if (pt && area) { delPoint(area.getAttribute("data-t"), area.getAttribute("data-k"), +pt.getAttribute("data-i")); return; }
+    });
     rows.addEventListener("keydown", function (e) {
+      var pt = e.target.closest && e.target.closest(".a-pt");
+      if (pt) { autoKey(e, pt); return; }
       var cEl = e.target.closest && e.target.closest(".clip");
+      if (cEl && e.key === "Enter" && cEl.classList.contains("midi") && selClip === cEl.getAttribute("data-c")) { e.preventDefault(); e.stopPropagation(); openRoll(selClip); return; }
       if (cEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); e.stopPropagation(); selClip = cEl.getAttribute("data-c"); renderRows(); var f = document.querySelector('.clip[data-c="' + selClip + '"]'); if (f) f.focus(); }
     });
     var ruler = $("ruler");
@@ -1977,6 +3035,16 @@
     $("more-fx").addEventListener("click", function () { hideDlg("more-dlg"); if (ensureProject()) FX.open("master"); });
     $("fx-play").addEventListener("click", function () { togglePlay(); });
     FX.wire();
+    wireKeys2();
+    $("track-inst").addEventListener("change", function () { setTrack(dlgTrack, { inst: $("track-inst").value }); renderTrackDlg(); });
+    $("track-newclip").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); newMidiClip(id, playhead); });
+    $("track-midi").addEventListener("click", function () { exportTrackMidi(dlgTrack); });
+    $("notes-btn").addEventListener("click", function () { if (selClip) openRoll(selClip); });
+    $("add-audio").addEventListener("click", function () { hideDlg("add-dlg"); edit(function () { addTrack(); }); });
+    $("add-loops").addEventListener("click", function () { hideDlg("add-dlg"); Roll.toggleLoops(true); });
+    $("add-close").addEventListener("click", function () { hideDlg("add-dlg"); });
+    Roll.wire();
+    $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
     $("export-go").addEventListener("click", doExport);
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
@@ -1996,6 +3064,8 @@
       flush();
       if (recording) stopRecording();
       stopNodes();
+      if (synth) synth.allOff();
+      if (Roll) Roll.stopPreview();
       if (vaultUnsub) { try { vaultUnsub(); } catch (e) {} vaultUnsub = null; }
     });
     document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(); });
@@ -2084,6 +3154,7 @@
     load();
     loadPrefs();
     makeFx();
+    makeRoll();
     makeRemote();
     applyI18n();
     wire();
@@ -2095,7 +3166,7 @@
     var start = (prefs.cur && C.find(data, "projects", prefs.cur)) || C.newestFirst(data.projects)[0] || null;
     openProject(start);
     drawMeter();
-    FX.loadCatalog().catch(function () {});
+    FX.loadCatalog().then(function () { if (proj && Object.keys(prefs.auto).length) renderRows(); }, function () {});
   }
 
   boot();

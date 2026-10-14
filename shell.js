@@ -212,6 +212,7 @@
     g2048: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor"/></svg>',
     wordle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="4" width="6" height="6" rx="1"/><rect x="16" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="2" y="14" width="6" height="6" rx="1"/><rect x="9" y="14" width="6" height="6" rx="1"/><rect x="16" y="14" width="6" height="6" rx="1"/></svg>',
     xeri: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="11" height="16" rx="2"/><path d="M16.5 5.5l2.6.7a2 2 0 0 1 1.4 2.5l-3 11a2 2 0 0 1-2.5 1.4l-1.5-.4"/><path d="M6 8.5h5M6.5 12h4M6 15.5h5"/></svg>',
+    gamecenter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     crossword: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><path d="M15 3h6v6h-6zM3 15h6v6H3z" fill="currentColor"/></svg>',
     jigsaw: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h4a2 2 0 1 1 4 0h4v4a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H4v-4a2 2 0 1 0 0-4z"/></svg>',
     solitaire: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="17" rx="2"/><path d="M5 6.5 4 7a2 2 0 0 0-.9 2.6l4.2 9.7a2 2 0 0 0 2.6 1L12 20"/><path d="M14 8.5c-1.2 1.4-2.5 2.4-2.5 3.6a1.3 1.3 0 0 0 2.5.5 1.3 1.3 0 0 0 2.5-.5c0-1.2-1.3-2.2-2.5-3.6zM14 13v2"/></svg>',
@@ -1116,15 +1117,21 @@
       tickSafe("notifTick", notifTickThrottled);         // Wave 1A: notification sweep (60s throttle)
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
+      tickSafe("wxWarnTick", wxWarnTickThrottled);       // Weather wave 38: official warnings notice (60s throttle, off by default)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
       tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
+      tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
+      tickSafe("budgetCheckTick", budgetCheckTickThrottled); // Budget: subscription charge reminders (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
+      tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
+      tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
+      tickSafe("habitsCheckTick", habitsCheckTickThrottled); // Habits: per-habit reminder time (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
       tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
@@ -1293,15 +1300,61 @@
     if (!Core) return;                                  // stale bundle — silent
     var raw;
     try { raw = JSON.parse(localStorage.getItem(HEALTH_DATA_KEY)); } catch (e) { return; }
-    if (!raw || !Array.isArray(raw.ty) || !raw.ty.length) return;
+    if (!raw || !["ty", "md", "ap", "vx"].some(function (c) { return Array.isArray(raw[c]) && raw[c].length; })) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
-    var d = Core.merge(raw, raw);
-    var due = Core.dueReminders(d, Date.now());
-    if (!due.length) return;
+    var d = Core.merge(raw, raw), now = Date.now();
+    var due = Core.dueReminders(d, now);
+    // Record (Health wave 3): a doctor's appointment from its reminder
+    // lead until it starts, and a vaccination's next dose a week before
+    // and on the day. Same keys as the phone's alarms (alarmsBetween).
+    var appts = typeof Core.dueAppts === "function" ? Core.dueAppts(d, now) : [];
+    var vaxes = typeof Core.dueVax === "function" ? Core.dueVax(d, now) : [];
+    if (appts.length || vaxes.length) {
+      var elR = state.lang === "el", titleR = window.t("app.health");
+      if (titleR === "app.health") titleR = "Health";
+      var dm = function (ms) { var x = new Date(ms); return x.getDate() + "/" + (x.getMonth() + 1); };
+      var hmR = function (ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); };
+      appts.forEach(function (r) {
+        var a = r.ap, who = a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp);
+        N.emit({ ns: "health", key: r.key, type: "reminder", title: titleR,
+                 body: (elR ? "Ραντεβού με γιατρό: " : "Doctor's appointment: ") + who + ", " + dm(a.at) + " " + hmR(a.at),
+                 deepLink: "health:appts" });
+      });
+      vaxes.forEach(function (r) {
+        var p = r.vx.nx.split("-");
+        var when = (+p[2]) + "/" + (+p[1]);
+        N.emit({ ns: "health", key: r.key, type: "reminder", title: titleR,
+                 body: (r.st === "w" ? (elR ? "Επόμενη δόση εμβολίου σε μία εβδομάδα: " : "Next vaccine dose in a week: ")
+                                     : (elR ? "Επόμενη δόση εμβολίου: " : "Next vaccine dose due: ")) + r.vx.n + " (" + when + ")",
+                 deepLink: "health:vax" });
+      });
+    }
+    // Medicines (Health wave 2): each dose from its time for 4 hours
+    // unless marked or snoozed (a snooze rings again with its own key),
+    // and once per count / refill when one runs low. Deep link
+    // "health:meds" → the Medicines tab, Today.
+    var doses = typeof Core.dueDoses === "function" ? Core.dueDoses(d, now) : [];
+    var lows = typeof Core.lowStock === "function" ? Core.lowStock(d, now) : [];
+    if (!due.length && !doses.length && !lows.length) return;
     var el = state.lang === "el";
     var title = window.t("app.health");
     if (title === "app.health") title = "Health";       // missing-key fallback
+    doses.forEach(function (r) {
+      var hm = (r.tm < 600 ? "0" : "") + Math.floor(r.tm / 60) + ":" + (r.tm % 60 < 10 ? "0" : "") + (r.tm % 60);
+      var name = r.med.n + (r.med.s ? " " + r.med.s : "");
+      N.emit({ ns: "health", key: r.key, type: "reminder", title: title,
+               body: (el ? "Ώρα για το φάρμακο: " : "Time for your medicine: ") + name + " (" + hm + ")",
+               deepLink: "health:meds" });
+    });
+    lows.forEach(function (r) {
+      var name = r.med.n + (r.med.s ? " " + r.med.s : "");
+      var body = r.left <= 0 ? (el ? name + ": τελείωσε" : name + ": none left")
+        : r.days === null ? (el ? name + ": τελειώνει" : name + " is running low")
+        : r.days < 2 ? (el ? name + ": φτάνει για περίπου μία μέρα" : name + " runs out in about a day")
+        : (el ? name + ": φτάνει για περίπου " + r.days + " μέρες" : name + " runs out in about " + r.days + " days");
+      N.emit({ ns: "health", key: r.key, type: "reminder", title: title, body: body, deepLink: "health:meds" });
+    });
     due.forEach(function (r) {
       var ty = Core.typeRow(d, r.t);
       var name = HEALTH_NAMES[r.t] ? HEALTH_NAMES[r.t][el ? 1 : 0] : (ty ? ty.n : "");
@@ -1421,6 +1474,114 @@
     });
   }
 
+  // Meal Planner — pantry best-before reminder. Reads "oros-meals-data"
+  // directly (works with the app CLOSED) and asks meals/pantry.js
+  // (loaded by index.html, the SAME file the app runs) which pantry
+  // items reach their best-before day today or tomorrow. Off unless
+  // the user picked an hour (device-local oros-meals-prefs.nt, -1 =
+  // off); from that hour on, one notice per day per set of items (the
+  // key carries the day and the items), so an item added later in the
+  // day still gets its own notice. Nothing due → silent (SH-B7).
+  var MEALS_DATA_KEY = "oros-meals-data";
+  function mealsCheckTick() {
+    var Core = window.OrosMealsPantry;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, hour;
+    try {
+      hour = Core.notifyHour(JSON.parse(localStorage.getItem("oros-meals-prefs")));
+      if (hour < 0 || new Date().getHours() < hour) return;
+      raw = JSON.parse(localStorage.getItem(MEALS_DATA_KEY));
+    } catch (e) { return; }
+    var today = sysYmd();
+    var due = Core.expiryNotice(raw, today);
+    if (!due.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var el = state.lang === "el";
+    function names(list) {
+      var s = list.slice(0, 3).map(function (x) { return x.n; }).join(", ");
+      if (list.length > 3) s += el ? " και " + (list.length - 3) + " ακόμα" : " and " + (list.length - 3) + " more";
+      return s;
+    }
+    var td = due.filter(function (x) { return x.d === 0; }), tm = due.filter(function (x) { return x.d === 1; });
+    var parts = [];
+    if (td.length) parts.push((el ? "Λήγει σήμερα: " : "Best before today: ") + names(td));
+    if (tm.length) parts.push((el ? "Λήγει αύριο: " : "Best before tomorrow: ") + names(tm));
+    var title = window.t("app.meals");
+    if (title === "app.meals") title = "Meal Planner";  // missing-key fallback
+    N.emit({
+      ns: "meals",
+      key: "bb-" + today + "-" + garageHash(due.map(function (x) { return x.id + ":" + x.d; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: parts.join(" · "),
+      deepLink: "meals:pantry"
+    });
+  }
+  var mealsLastTick = 0;
+  function mealsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - mealsLastTick < 60000) return;
+    mealsLastTick = now;
+    mealsCheckTick();
+  }
+
+  // Budget — subscription reminders: "Netflix: 12,99 € tomorrow".
+  // Reads "oros-budget-data" directly (works with the app CLOSED) and
+  // asks budget/plan.js (loaded by index.html, the SAME file the app
+  // runs) which recurring expenses with a reminder ("nd" days before,
+  // synced) charge within their lead. From the device-local hour on
+  // (oros-budget-prefs.nh, default 9, -1 = off on this device); one
+  // notice per charge (the key names the entry and the charge date).
+  // No reminders set → silent (SH-B7).
+  var BUDGET_DATA_KEY = "oros-budget-data";
+  function budgetCheckTick() {
+    var Core = window.OrosBudgetPlan;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs;
+    try {
+      prefs = JSON.parse(localStorage.getItem("oros-budget-prefs")) || {};
+      var hour = typeof prefs.nh === "number" && prefs.nh >= -1 && prefs.nh <= 23 ? Math.floor(prefs.nh) : 9;
+      if (hour < 0 || new Date().getHours() < hour) return;
+      raw = JSON.parse(localStorage.getItem(BUDGET_DATA_KEY));
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.rec) || !raw.rec.length) return;
+    var today = sysYmd();
+    var due = Core.subsDue(raw, today);
+    if (!due.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var el = state.lang === "el";
+    var cur = raw.set && typeof raw.set.cur === "string" && /^[A-Z]{3}$/.test(raw.set.cur) ? raw.set.cur : "EUR";
+    var fmt;
+    try { fmt = new Intl.NumberFormat(el ? "el-GR" : "en-GB", { style: "currency", currency: cur }); }
+    catch (e) { fmt = { format: function (v) { return v.toFixed(2) + " " + cur; } }; }
+    var names = {};
+    (Array.isArray(raw.cats) ? raw.cats : []).forEach(function (c) { if (c && typeof c.name === "string" && c.name) names[c.id] = c.name; });
+    var title = window.t("app.budget");
+    if (title === "app.budget") title = "Budget";       // missing-key fallback
+    due.forEach(function (d) {
+      var name = String(d.n || names[d.c] || (el ? "Πάγιο έξοδο" : "Recurring expense")).slice(0, 80);
+      var when = d.days === 0 ? (el ? "σήμερα" : "today") : d.days === 1 ? (el ? "αύριο" : "tomorrow")
+               : (el ? "στις " : "on ") + d.next.slice(8, 10) + "/" + d.next.slice(5, 7);
+      N.emit({
+        ns: "budget",
+        key: d.key,
+        type: "reminder",
+        title: title,
+        body: name + ": " + fmt.format(d.a / 100) + " " + when,
+        deepLink: "budget:sub:" + d.id
+      });
+    });
+  }
+  var budgetLastTick = 0;
+  function budgetCheckTickThrottled() {
+    var now = Date.now();
+    if (now - budgetLastTick < 60000) return;
+    budgetLastTick = now;
+    budgetCheckTick();
+  }
+
   var stockLastTick = 0;
   function stockCheckTickThrottled() {
     var now = Date.now();
@@ -1473,6 +1634,47 @@
     if (now - crmLastTick < 60000) return;
     crmLastTick = now;
     crmCheckTick();
+  }
+
+  // Contacts — keep in touch. Reads "oros-contacts-data" directly
+  // (works with the app CLOSED) and asks contacts/keep.js (loaded by
+  // index.html, the SAME file the app runs) who is due. Off by
+  // default; switch and hour are device-local ("oros-contacts-keep",
+  // set in Contacts › Reach out). From that hour, one notice per day
+  // when someone is due; the key is the same on every device (inbox
+  // dedup). One person → their card; several → the Reach out list.
+  // Honest limit: orOS closed = nothing fires; the next boot the same
+  // day catches up.
+  function keepCheckTick() {
+    var K = window.OrosContactsKeep;
+    if (!K) return;                                     // stale bundle — silent
+    var pr;
+    try { pr = JSON.parse(localStorage.getItem(K.PREFS_KEY) || "null"); } catch (e) { return; }
+    if (!K.prefs(pr).on) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-contacts-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
+    var r = K.reminder(raw, pr, Date.now());
+    if (!r) return;
+    var txt = K.reminderText(r, state.lang);
+    N.emit({
+      ns: "contacts",
+      key: r.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "contacts:" + (r.count === 1 ? r.ids[0] : "@reachout")
+    });
+  }
+
+  var keepLastTick = 0;
+  function keepCheckTickThrottled() {
+    var now = Date.now();
+    if (now - keepLastTick < 60000) return;
+    keepLastTick = now;
+    keepCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and
@@ -1540,6 +1742,65 @@
     if (now - garageLastTick < 60000) return;
     garageLastTick = now;
     garageCheckTick();
+  }
+
+  // Storage — warranty ends (30 days, 7 days, on the day) and lent
+  // items due back. Reads "oros-storage-data" directly (works with the
+  // app CLOSED) through storage/core.js (loaded by index.html, the SAME
+  // file the app runs). OFF by default: the reminder hour lives in the
+  // device-local "oros-storage-prefs" (remind 0–23, −1 = off). Each
+  // alert is announced once per step: device-local
+  // "oros-storage-notified" = { alertKey: lowest step announced },
+  // pruned to alerts that still exist. One grouped notification at
+  // most per tick. Honest limit (alarms): orOS closed = nothing fires;
+  // the next boot catches up (a warranty end up to 7 days back).
+  var STORAGE_DATA_KEY = "oros-storage-data";
+  var STORAGE_NOTIFIED_KEY = "oros-storage-notified";
+  function storageCheckTick() {
+    var Core = window.OrosStorageCore;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, prefs, notified;
+    try {
+      prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-storage-prefs")));
+      if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
+      raw = JSON.parse(localStorage.getItem(STORAGE_DATA_KEY));
+      notified = JSON.parse(localStorage.getItem(STORAGE_NOTIFIED_KEY)) || {};
+    } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.ents) || !raw.ents.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    if (!notified || typeof notified !== "object") notified = {};
+    var today = sysYmd();
+    var data = Core.mergeData(raw, raw);
+    var all = Core.alerts(data.ents, today);
+    var fresh = Core.toNotify(all, notified);
+    var next = {};
+    all.forEach(function (a) { if (Object.prototype.hasOwnProperty.call(notified, a.key)) next[a.key] = notified[a.key]; });
+    fresh.forEach(function (a) { next[a.key] = a.step; });
+    try { localStorage.setItem(STORAGE_NOTIFIED_KEY, JSON.stringify(next)); } catch (e) {}
+    if (!fresh.length) return;
+    var lang = state.lang === "el" ? "el" : "en";
+    var lines = fresh.slice(0, 3).map(function (a) { return Core.alertLine(a, data.ents, lang); });
+    if (fresh.length > 3) lines.push(lang === "el" ? "και " + (fresh.length - 3) + " ακόμα" : "and " + (fresh.length - 3) + " more");
+    var title = window.t("app.storage");
+    if (title === "app.storage") title = "Storage";    // missing-key fallback
+    var allLent = fresh.every(function (a) { return a.kind === "l"; });
+    N.emit({
+      ns: "storage",
+      key: "alerts-" + today + "-" + garageHash(fresh.map(function (a) { return a.key + ":" + a.step; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: lines.join(" · "),
+      deepLink: "storage:" + (fresh.length > 1 && allLent ? "lent" : fresh[0].id)
+    });
+  }
+
+  var storageLastTick = 0;
+  function storageCheckTickThrottled() {
+    var now = Date.now();
+    if (now - storageLastTick < 60000) return;
+    storageLastTick = now;
+    storageCheckTick();
   }
 
   // Travel — the evening before departure ("Rome tomorrow · 6 items
@@ -1873,6 +2134,48 @@
     });
   }
 
+  // Habits — per-habit reminder time (Habits wave 4). Reads
+  // "oros-habits-data" directly (works with the app CLOSED) and asks
+  // habits/core.js (loaded by index.html, the SAME file the app, the
+  // Calendar feed and Today run) which habits are due: from the time
+  // on for 4 hours, on a day the habit still needs (not done, not
+  // skipped; fixed weekdays only on their days; "X per week / month"
+  // only while the period is not met). One notification per habit and
+  // day; the key ("r-<id>-<ymd>") is the same on every device (inbox
+  // dedup) and in phone.js reminderRows (the Android app rings it with
+  // orOS closed). Honest limit: orOS closed without the Android app =
+  // nothing fires; more than 4 hours late = dropped, not caught up.
+  var habitsLastTick = 0;
+  function habitsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - habitsLastTick < 60000) return;
+    habitsLastTick = now;
+    habitsCheckTick();
+  }
+  function habitsCheckTick() {
+    var HCore = window.OrosHabitsCore, N = window.orosNotifs;
+    if (!HCore || typeof HCore.dueReminders !== "function") return;   // stale bundle — silent
+    if (!(N && typeof N.emit === "function")) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-habits-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.habits) || !Array.isArray(raw.comps)) return;
+    var due = HCore.dueReminders(raw, Date.now());
+    if (!due.length) return;
+    var el = state.lang === "el";
+    var title = window.t("app.habits");
+    if (title === "app.habits") title = el ? "Συνήθειες" : "Habits";   // missing-key fallback
+    due.forEach(function (r) {
+      N.emit({
+        ns: "habits",
+        key: r.key,
+        type: "reminder",
+        title: title,
+        body: (el ? "Ώρα για: " : "Time for: ") + String(r.name).slice(0, 120),
+        deepLink: "habits:0"
+      });
+    });
+  }
+
   // Timesheet (Wave 3) — the shell reads "oros-timesheet-data" with
   // timesheet/core.js (loaded by index.html, the SAME file the app
   // runs) and never writes it. Two things come from that read:
@@ -1915,7 +2218,7 @@
     if (!bar) return;
     var run = timesheetRunning();
     var chip = document.getElementById("ts-tray-chip");
-    if (!run) { if (chip) chip.remove(); return; }
+    if (!run) { if (chip) chip.remove(); tsTrayClosePop(); timesheetIdleTick(null); return; }
     if (!chip) {
       chip = document.createElement("button");
       chip.id = "ts-tray-chip";
@@ -1923,11 +2226,13 @@
       chip.innerHTML = ICONS.timesheet + '<span class="ts-time"></span>';
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
-        openAppById("timesheet");
+        tsTrayTogglePop();            // Wave 46: a small timer menu (Stop, Open)
       });
       bar.insertBefore(chip, document.getElementById("btn-lang"));
     }
     var C = window.orosTimesheetCore;
+    timesheetIdleTick(run);
+    chip.classList.toggle("ts-away", tsIdlePending(run).length > 0);
     var txt = C.fmtDur(Date.now() - run.s);
     var span = chip.lastChild;
     if (span.textContent !== txt) span.textContent = txt;
@@ -2000,6 +2305,203 @@
       body: note ? body + " " + note : body,
       deepLink: "maps:park"
     });
+  }
+
+  // ---- Timesheet Wave 46: the timer menu + time away ----
+  // The chip opens a small menu: what runs, Stop, Open Timesheet, and,
+  // when time away was noticed, Keep / Take it out / Take out and stop.
+  // Every change to the data goes through the app (a live push when
+  // Timesheet is the open app, else a one-shot sessionStorage flag +
+  // open), so the synced slice keeps one writer. Time away is noticed
+  // here because the shell is always running: the Idle Detection API
+  // (Chromium, only after the user allowed it in Timesheet's Settings)
+  // and, on any browser, a gap in this 1 s tick (the device slept or
+  // the browser paused orOS). Periods go to the device-local
+  // C.IDLE_KEY; prefs come from C.IDLE_PREFS_KEY (both never synced).
+  var TS_POP_ID = "ts-tray-pop";
+  var tsIdle = { det: null, ctl: null, starting: false, from: 0, last: 0, perm: "", permAt: 0, prefs: null, prefsAt: 0 };
+  function tsT(en, el) { return state.lang === "el" ? el : en; }
+  function tsIdlePrefs() {
+    var C = window.orosTimesheetCore, now = Date.now();
+    if (!C || typeof C.idlePrefs !== "function") return { on: 0, min: 10 };
+    if (!tsIdle.prefs || now - tsIdle.prefsAt > 5000) {
+      var raw = null;
+      try { raw = localStorage.getItem(C.IDLE_PREFS_KEY); } catch (e) {}
+      tsIdle.prefs = C.idlePrefs(raw);
+      tsIdle.prefsAt = now;
+    }
+    return tsIdle.prefs;
+  }
+  function tsIdleList() {
+    var C = window.orosTimesheetCore, raw = null;
+    try { raw = localStorage.getItem(C.IDLE_KEY); } catch (e) {}
+    return C.idleRead(raw);
+  }
+  function tsIdleSave(list) {
+    var C = window.orosTimesheetCore;
+    try {
+      if (list.length) localStorage.setItem(C.IDLE_KEY, JSON.stringify(list));
+      else localStorage.removeItem(C.IDLE_KEY);
+    } catch (e) {}
+  }
+  // periods of the entry that runs now (the app checks the rest)
+  function tsIdlePending(run) {
+    var C = window.orosTimesheetCore;
+    if (!run || !C || typeof C.idleRead !== "function") return [];
+    return tsIdleList().filter(function (r) { return r.id === run.id && r.from >= run.s; });
+  }
+  function tsIdleNoted(run, from, to) {
+    var C = window.orosTimesheetCore, p = tsIdlePrefs();
+    var rec = C.idleRecord(run, from, to, p.min * 60000);
+    if (!rec) return;
+    tsIdleSave(C.idlePut(tsIdleList(), rec));
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetIdle === "function") {
+          f.contentWindow.__orosTimesheetIdle();
+          return;
+        }
+      } catch (e) {}
+    }
+    if (!tsTrayPop()) tsTrayTogglePop();
+  }
+  function tsIdleStopDetector() {
+    if (tsIdle.ctl) { try { tsIdle.ctl.abort(); } catch (e) {} }
+    tsIdle.det = null; tsIdle.ctl = null; tsIdle.from = 0;
+  }
+  function tsIdleStartDetector() {
+    if (tsIdle.det || tsIdle.starting || typeof window.IdleDetector !== "function") return;
+    var now = Date.now();
+    if (tsIdle.perm !== "granted") {
+      // ask the browser what the user allowed, at most once a minute
+      if (now - tsIdle.permAt < 60000 || !navigator.permissions || typeof navigator.permissions.query !== "function") return;
+      tsIdle.permAt = now;
+      navigator.permissions.query({ name: "idle-detection" }).then(function (s) { tsIdle.perm = s && s.state; }, function () {});
+      return;
+    }
+    tsIdle.starting = true;
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var det;
+    try { det = new window.IdleDetector(); } catch (e) { tsIdle.starting = false; tsIdle.perm = ""; return; }
+    det.addEventListener("change", function () {
+      if (det.userState === "idle") {
+        if (!tsIdle.from) tsIdle.from = Date.now() - 60000;   // idle since the threshold
+      } else if (tsIdle.from) {
+        var from = tsIdle.from;
+        tsIdle.from = 0;
+        tsReadAt = 0;
+        var run = timesheetRunning();
+        if (run) tsIdleNoted(run, from, Date.now());
+      }
+    });
+    det.start({ threshold: 60000, signal: ctl ? ctl.signal : undefined }).then(function () {
+      tsIdle.starting = false;
+      tsIdle.det = det; tsIdle.ctl = ctl;
+    }, function () {
+      tsIdle.starting = false;
+      tsIdle.perm = "";
+    });
+  }
+  function timesheetIdleTick(run) {
+    var C = window.orosTimesheetCore;
+    if (!C || typeof C.idleRecord !== "function") return;
+    var p = tsIdlePrefs(), now = Date.now();
+    if (!run || !p.on) {
+      tsIdle.last = 0;
+      if (tsIdle.det || tsIdle.ctl) tsIdleStopDetector();
+      return;
+    }
+    // a gap in the 1 s clock: the device slept or the browser paused us
+    if (tsIdle.last && now - tsIdle.last >= Math.max(p.min * 60000, 120000)) tsIdleNoted(run, tsIdle.last, now);
+    tsIdle.last = now;
+    tsIdleStartDetector();
+  }
+  // Commands for the app: a live push, else a one-shot flag + open.
+  function tsAppDo(liveFn, args, flagKey, flagVal) {
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow[liveFn] === "function") {
+          f.contentWindow[liveFn].apply(null, args);
+          tsReadAt = 0;
+          return;
+        }
+      } catch (e) {}
+    }
+    if (!flagKey) return;
+    try { sessionStorage.setItem(flagKey, flagVal); } catch (e) {}
+    openAppById("timesheet");
+  }
+  function tsTrayPop() { return document.getElementById(TS_POP_ID); }
+  function tsTrayClosePop() { var p = tsTrayPop(); if (p) p.remove(); }
+  var tsPopWired = false;
+  function tsTrayTogglePop() {
+    if (tsTrayPop()) { tsTrayClosePop(); return; }
+    var run = timesheetRunning(), C = window.orosTimesheetCore;
+    if (!run || !C) { openAppById("timesheet"); return; }
+    if (!tsPopWired) {
+      tsPopWired = true;
+      document.addEventListener("click", function (e) {
+        var pop = tsTrayPop();
+        if (!pop || pop.contains(e.target)) return;
+        var chip = document.getElementById("ts-tray-chip");
+        if (chip && chip.contains(e.target)) return;
+        tsTrayClosePop();
+      });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") tsTrayClosePop(); });
+    }
+    var pop = document.createElement("div");
+    pop.id = TS_POP_ID;
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", tsT("Timer", "Χρονόμετρο"));
+    var head = document.createElement("div");
+    head.className = "ts-pop-head";
+    var since = new Date(run.s);
+    head.textContent = (run.name || window.t("ts.tray.noproj")) + " · " + C.fmtDur(Date.now() - run.s) +
+      " (" + tsT("since ", "από ") + String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0") + ")";
+    pop.appendChild(head);
+    function mk(label, cls, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ts-pop-btn" + (cls ? " " + cls : "");
+      b.textContent = label;
+      b.addEventListener("click", function () { tsTrayClosePop(); fn(); });
+      return b;
+    }
+    var away = tsIdlePending(run)[0] || null;
+    if (away) {
+      var p = document.createElement("p");
+      p.className = "ts-pop-away";
+      p.textContent = tsT("You were away ", "Έλειπες ") + C.hhmm(away.from) + "–" + C.hhmm(away.to) + " (" + C.fmtDur(away.to - away.from) + ")" +
+        tsT(" while the timer ran.", " ενώ έτρεχε το χρονόμετρο.");
+      pop.appendChild(p);
+      var ar = document.createElement("div");
+      ar.className = "ts-pop-row";
+      ar.appendChild(mk(tsT("Keep", "Να μείνει"), "", function () {
+        tsIdleSave(window.orosTimesheetCore.idleDrop(tsIdleList(), away));
+        if (state.running && state.running.id === "timesheet") tsAppDo("__orosTimesheetIdle", [], "", "");
+      }));
+      ar.appendChild(mk(tsT("Take it out", "Αφαίρεση"), "", function () {
+        tsAppDo("__orosTimesheetIdle", ["discard", away], "oros-timesheet-idle-act", JSON.stringify({ mode: "discard", id: away.id, from: away.from, to: away.to }));
+      }));
+      ar.appendChild(mk(tsT("Take out and stop", "Αφαίρεση και διακοπή"), "", function () {
+        tsAppDo("__orosTimesheetIdle", ["stop", away], "oros-timesheet-idle-act", JSON.stringify({ mode: "stop", id: away.id, from: away.from, to: away.to }));
+      }));
+      pop.appendChild(ar);
+    }
+    var row = document.createElement("div");
+    row.className = "ts-pop-row";
+    row.appendChild(mk(tsT("Stop timer", "Διακοπή"), "primary", function () {
+      tsAppDo("__orosTimesheetStop", [run.id], "oros-timesheet-toggle", "stop:" + run.id);
+    }));
+    row.appendChild(mk(tsT("Open Timesheet", "Άνοιγμα"), "", function () {
+      if (!(state.running && state.running.id === "timesheet")) openAppById("timesheet");
+    }));
+    pop.appendChild(row);
+    document.body.appendChild(pop);
+    var first = pop.querySelector("button");
+    if (first) { try { first.focus({ preventScroll: true }); } catch (e) {} }
   }
 
   // Ctrl+Alt+Shift+T: start or stop the Timesheet timer.
@@ -3487,11 +3989,16 @@
   // The alarms that are ALIVE: valid, not deleted (tombstone at or
   // after their mtime), and not a once-alarm whose time has passed.
   // One entry per id (best version), sorted by id.
+  // Time wave 5: "tmr-" ids are the Time app's kitchen timers. They
+  // ring on this device only, so they never enter the slice (getter,
+  // merge) and a pull keeps the local ones (shellSliceSet).
+  function alarmIsTimer(id) { return typeof id === "string" && id.indexOf("tmr-") === 0; }
   function alarmsCanonical(list, tombs, now) {
     var byId = {};
     for (var i = 0; i < list.length; i++) {
       var c = alarmCanon(list[i]);
       if (!c) continue;
+      if (alarmIsTimer(c.id)) continue;
       if (c.repeat === "once" && c.at <= now) continue;
       if (tombs[c.id] && c.mtime <= tombs[c.id].t) continue;
       byId[c.id] = byId[c.id] ? alarmBetter(byId[c.id], c) : c;
@@ -3681,6 +4188,13 @@
             !(tombsNew[lc.id] && lc.mtime <= tombsNew[lc.id].t)) {
           keep.push(lc);
           keepIds[lc.id] = true;
+        }
+      }
+      // Time wave 5: this device's kitchen timers are not in the slice.
+      for (var ti = 0; ti < mine.length; ti++) {
+        if (mine[ti] && alarmIsTimer(mine[ti].id) && !keepIds[mine[ti].id]) {
+          keep.push(mine[ti]);
+          keepIds[mine[ti].id] = true;
         }
       }
       alarmsWrite(keep);
@@ -4956,6 +5470,9 @@
         { name: "Open-Meteo", url: "https://open-meteo.com/",
           by: "Open-Meteo.com", lic: "CC BY 4.0 (data)",
           en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
+        { name: "MeteoAlarm", url: "https://meteoalarm.org/",
+          by: "EUMETNET and the national weather services", lic: { en: "MeteoAlarm terms (attribution)", el: "Όροι MeteoAlarm (αναφορά πηγής)" },
+          en: "Official weather warnings (Weather)", el: "Επίσημες προειδοποιήσεις καιρού (Καιρός)" },
         { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
           by: "OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Map data, standard tiles and the public GPS traces layer (Maps)", el: "Δεδομένα και πλακίδια χάρτη, επίπεδο δημόσιων GPS traces (Χάρτες)" },
@@ -5006,7 +5523,7 @@
           en: "Authors and works (Public Domain)", el: "Δημιουργοί και έργα (Κοινό κτήμα)" },
         { name: "Frankfurter", url: "https://frankfurter.dev/",
           by: "Hakan Ensari; rates: European Central Bank", lic: { en: "MIT (software), ECB reference rates (data)", el: "MIT (λογισμικό), ισοτιμίες αναφοράς ΕΚΤ (δεδομένα)" },
-          en: "Exchange rates (Unit Converter)", el: "Ισοτιμίες (Μετατροπέας μονάδων)" },
+          en: "Exchange rates (Unit Converter, Budget)", el: "Ισοτιμίες (Μετατροπέας μονάδων, Έσοδα & Έξοδα)" },
         { name: "Wiktionary", url: "https://en.wiktionary.org/",
           by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
           en: "Word meanings (Library look-up)", el: "Σημασίες λέξεων (Βιβλιοθήκη)" },
@@ -5203,6 +5720,7 @@
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.radio")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.feeds")) + '</span></div>' +
+        '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.webimport")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.podcasts")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("maps.providers")) + '</span></div>' +
         '<div class="sc-row sc-service"><span>' + escapeHtml(window.t("sc.info.extsvc.television")) + '</span></div>' +
@@ -5347,6 +5865,19 @@
     } catch (e) { return Promise.resolve(false); }
   }
 
+  // Maps offline map packs (maps wave 51): OPFS dir "maps-packs",
+  // device-only and outside orosFS, like Montage's media.
+  function wipeMapPacks() {
+    try {
+      if (!navigator.storage || typeof navigator.storage.getDirectory !== "function") return Promise.resolve(false);
+      return Promise.race([
+        navigator.storage.getDirectory().then(function (r) { return r.removeEntry("maps-packs", { recursive: true }); })
+          .then(function () { return true; }, function () { return false; }),
+        new Promise(function (res) { setTimeout(function () { res(false); }, 5000); })
+      ]);
+    } catch (e) { return Promise.resolve(false); }
+  }
+
   function scFactoryReset(btn) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
@@ -5363,7 +5894,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), cloud]).then(function () {
+    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -5400,7 +5931,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -5933,6 +6464,114 @@
     });
   }
 
+  // Official weather warnings (MeteoAlarm, Weather wave 38). Off by
+  // default: the Weather app's device-local pref
+  // `oros-weatherapp-prefs`.notify = "severe" (orange + red) or "all".
+  // For the taskbar's city (nearest app city within WX_NEAR_DEG, else
+  // the first). Reads the app's device-local warnings cache
+  // `oros-weatherapp-warn`; when it is older than an hour the shell
+  // reads the feed itself, straight from the browser only (the app
+  // can also use the Mail relay). One notice per warning, ever
+  // (`sent` keeps the keys until the warning expires). Parsing and
+  // the city's area: weather/core.js (OrosWeatherCore).
+  var wxWarnLastTick = 0, wxWarnBusy = false, wxWarnTryAt = 0;
+  function wxWarnTickThrottled() {
+    var now = Date.now();
+    if (now - wxWarnLastTick < 60000) return;
+    wxWarnLastTick = now;
+    wxWarnTick();
+  }
+  function wxWarnRead(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  function wxWarnTick() {
+    var C = window.OrosWeatherCore;
+    if (!C || !(window.orosNotifs && typeof window.orosNotifs.emit === "function")) return;
+    var prefs = wxWarnRead("oros-weatherapp-prefs");
+    var mode = prefs && prefs.notify;
+    if (mode !== "severe" && mode !== "all") return;
+    if (prefs.warnOn === false) return;
+    var data = wxWarnRead("oros-weatherapp-data");
+    if (!data || !Array.isArray(data.cities) || !data.cities.length) return;
+    var cities = data.cities.filter(function (c) {
+      return c && typeof c.id === "string" && typeof c.lat === "number" && typeof c.lon === "number";
+    });
+    if (!cities.length) return;
+    var w = wxLoc(), city = null, bestD = Infinity;
+    if (w) cities.forEach(function (c) {
+      var d = Math.abs(c.lat - w.lat) + Math.abs(c.lon - w.lon);
+      if (d < bestD) { bestD = d; city = c; }
+    });
+    if (!city || bestD >= WX_NEAR_DEG) {
+      city = cities.slice().sort(function (a, b) { return (Number(a.pos) || 0) - (Number(b.pos) || 0); })[0];
+    }
+    var cache = wxWarnRead("oros-weatherapp-cache");
+    var p = cache && typeof cache === "object" ? cache[city.id] : null;
+    var slug = C.slugFor(city.cc, p && p.tzn), url = C.feedUrl(slug);
+    if (!url) return;
+    var store = wxWarnRead("oros-weatherapp-warn");
+    if (!store || typeof store !== "object") store = {};
+    if (!store.feeds || typeof store.feeds !== "object") store.feeds = {};
+    if (!store.sent || typeof store.sent !== "object") store.sent = {};
+    var feed = store.feeds[slug], now = Date.now();
+    var okAt = (feed && feed.ok) || 0;
+    if (now - okAt > 3600000 && now - wxWarnTryAt > 3600000 && !wxWarnBusy && navigator.onLine !== false) {
+      wxWarnBusy = true;
+      wxWarnTryAt = now;
+      fetch(url, { credentials: "omit", referrerPolicy: "no-referrer", cache: "no-cache" })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (text) {
+          var list = text ? C.parseAtom(text) : null;
+          if (!list) return;
+          var s2 = wxWarnRead("oros-weatherapp-warn");
+          if (!s2 || typeof s2 !== "object") s2 = {};
+          if (!s2.feeds || typeof s2.feeds !== "object") s2.feeds = {};
+          var t2 = Date.now();
+          s2.feeds[slug] = { at: t2, ok: t2, list: C.activeList(list, t2).slice(0, 300), err: "", via: "direct" };
+          try { localStorage.setItem("oros-weatherapp-warn", JSON.stringify(s2)); } catch (e) {}
+          wxWarnLastTick = 0;               // emit on the next tick
+        })
+        .catch(function () { /* CORS or offline: the app (relay) still can */ })
+        .then(function () { wxWarnBusy = false; });
+    }
+    if (!feed || !Array.isArray(feed.list) || now - okAt > 6 * 3600000) return;
+    var mine = C.forCity(C.activeList(feed.list, now), city).mine;
+    var lang = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+    var changed = false;
+    Object.keys(store.sent).forEach(function (k) {
+      if (!(store.sent[k] > now)) { delete store.sent[k]; changed = true; }
+    });
+    mine.forEach(function (x) {
+      if (mode === "severe" && x.level < 3) return;
+      var key = "warn-" + slug + "-" + String(x.id).slice(-60) + "-" + C.fold(x.area).slice(0, 30);
+      if (store.sent[key]) return;
+      // in the city's clock (the app's cache knows its offset), like the app
+      var tzOff = (p && typeof p.tz === "number") ? p.tz : null;
+      var until = typeof x.exp === "number"
+        ? new Date(x.exp + (tzOff !== null ? tzOff * 1000 : 0)).toLocaleString(lang === "el" ? "el-GR" : "en-GB",
+            tzOff !== null ? { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "UTC" }
+                           : { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        : "";
+      window.orosNotifs.emit({
+        ns: "weather",
+        key: key,
+        type: "reminder",
+        title: C.warnTitle(x, lang),
+        body: [city.label || "", x.area, until ? (lang === "el" ? "έως " : "until ") + until : ""]
+          .filter(Boolean).join(" · "),
+        deepLink: "weather:open"
+      });
+      store.sent[key] = typeof x.exp === "number" ? x.exp : now + 2 * 86400000;
+      changed = true;
+    });
+    if (changed) {
+      var s3 = wxWarnRead("oros-weatherapp-warn");
+      if (!s3 || typeof s3 !== "object") s3 = { feeds: {} };
+      s3.sent = store.sent;
+      try { localStorage.setItem("oros-weatherapp-warn", JSON.stringify(s3)); } catch (e) {}
+    }
+  }
+
   // Weather app → tray bridge (2026-10-09: the menu section is gone;
   // the app owns the tray settings). Same-origin parent API,
   // typeof-guarded on the app side so a stale shell is harmless.
@@ -6100,7 +6739,18 @@
   // Three short pips — WebAudio, zero assets. Gesture-lock aware:
   // a suspended context can't resume without a click — the visual
   // overlay is the primary channel anyway.
-  function alarmPip() {
+  // Time wave 5: a kitchen timer picks one of these voices (stored in
+  // the Time app's device-local oros-time-timers, found by alarm id).
+  // "beep" is the original three pips. Each pattern fits in the 1.5 s
+  // repeat. [frequency Hz, start s]
+  var ALARM_SOUNDS = {
+    beep:    { type: "sine",     len: 0.18, vol: 0.16, notes: [[880, 0], [880, 0.24], [880, 0.48]] },
+    chime:   { type: "sine",     len: 0.45, vol: 0.14, notes: [[1318.5, 0], [1046.5, 0.3], [784, 0.6]] },
+    bell:    { type: "triangle", len: 0.9,  vol: 0.22, notes: [[660, 0], [990, 0.01], [660, 0.6]] },
+    digital: { type: "square",   len: 0.07, vol: 0.05, notes: [[1250, 0], [1250, 0.12], [1250, 0.24], [1250, 0.36], [1250, 0.6], [1250, 0.72], [1250, 0.84], [1250, 0.96]] },
+    gentle:  { type: "sine",     len: 0.55, vol: 0.1,  notes: [[523.25, 0], [659.25, 0.32], [783.99, 0.64]] }
+  };
+  function alarmPip(name) {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
@@ -6110,23 +6760,39 @@
         ctx.resume().catch(function () {});
       }
       // resumed is async — schedule pips anyway; they'll fire when ready
+      var snd = ALARM_SOUNDS[name] || ALARM_SOUNDS.beep;
       var t0 = ctx.currentTime;
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < snd.notes.length; i++) {
         var o = ctx.createOscillator();
         var g = ctx.createGain();
-        o.type = "sine";
-        o.frequency.value = 880;
-        var ts = t0 + i * 0.24;
+        o.type = snd.type;
+        o.frequency.value = snd.notes[i][0];
+        var ts = t0 + snd.notes[i][1];
         g.gain.setValueAtTime(0.0001, ts);
-        g.gain.exponentialRampToValueAtTime(0.16, ts + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ts + 0.18);
+        g.gain.exponentialRampToValueAtTime(snd.vol, ts + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ts + snd.len);
         o.connect(g);
         g.connect(ctx.destination);
         o.start(ts);
-        o.stop(ts + 0.2);
+        o.stop(ts + snd.len + 0.02);
       }
     } catch (e) { /* no audio — visual toast stands alone */ }
   }
+  // The voice of a kitchen timer's alarm; every other alarm beeps.
+  function alarmSoundOf(a) {
+    if (!a || !alarmIsTimer(a.id)) return "beep";
+    try {
+      var list = JSON.parse(localStorage.getItem("oros-time-timers"));
+      for (var i = 0; Array.isArray(list) && i < list.length; i++) {
+        if (list[i] && list[i].aid === a.id && ALARM_SOUNDS[list[i].sound]) return list[i].sound;
+      }
+    } catch (e) {}
+    return "beep";
+  }
+  // Preview for the Time app's sound pickers (same voices).
+  window.orosAlarmSound = function (name) {
+    if (typeof name === "string" && ALARM_SOUNDS[name]) alarmPip(name);
+  };
 
   function alarmStopRing() {
     if (alarmRing.timer) { clearInterval(alarmRing.timer); alarmRing.timer = null; }
@@ -6150,10 +6816,11 @@
         type: "alarm",
         title: window.t("alarm.title"),
         body: (a.label || window.t("alarm.title")),
-        deepLink: "time:alarms"
+        deepLink: alarmIsTimer(a.id) ? "time:timer" : "time:alarms"
       });
     }
     alarmStopRing();
+    var voice = alarmSoundOf(a);
     var el = document.createElement("div");
     el.id = "alarm-toast";
     el.setAttribute("role", "alert");
@@ -6216,8 +6883,8 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmPip();
-    alarmRing.timer = setInterval(alarmPip, 1500);
+    alarmPip(voice);
+    alarmRing.timer = setInterval(function () { alarmPip(voice); }, 1500);
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
@@ -6271,7 +6938,24 @@
     if (window.orosSync && typeof window.orosSync.markDirty === "function") {
       window.orosSync.markDirty();
     }
-    if (!rangOnPhone) alarmNotify(due);
+    if (!rangOnPhone) { alarmNotify(due); alarmRadio(due); }
+  }
+  // W42 — "wake up to a station": Radio keeps { alarmId: { m, st } } in
+  // its slice (oros-radio-data .wake, st null = removed). Radio's engine
+  // (radio/tools.js, in this window once Radio was opened) plays it in
+  // place with a fade-in; otherwise the Radio app opens and plays it
+  // (sessionStorage "oros-radio-wake" asks for the fade-in).
+  function alarmRadio(a) {
+    try {
+      var r = JSON.parse(localStorage.getItem("oros-radio-data") || "null");
+      var w = r && r.wake && typeof r.wake === "object" ? r.wake[a.id] : null;
+      var st = w && w.st;
+      if (!st || typeof st.stationuuid !== "string" || !st.stationuuid) return;
+      var eng = window.__orosRadioEngine;
+      if (eng && typeof eng.wake === "function" && eng.wake(st)) return;
+      try { sessionStorage.setItem("oros-radio-wake", "1"); } catch (e) {}
+      if (typeof window.__orosOpenRadio === "function") window.__orosOpenRadio(st.stationuuid);
+    } catch (e) {}
   }
   function ymdOf(ms) {
     var d = new Date(ms);
@@ -6304,7 +6988,7 @@
       alarmsWrite(out);
       // SH-D1: a deletion must travel as a fact, or the union with a
       // device that still holds the alarm brings it back.
-      if (gone) {
+      if (gone && !alarmIsTimer(id)) {
         var tombs = alarmTombsRead();
         tombs[id] = { t: Math.max(Date.now(), gone.mtime), x: (gone.repeat === "once") ? gone.at : 0 };
         alarmTombsWrite(alarmTombsLive(tombs, Date.now()));
@@ -6382,7 +7066,10 @@
     if (!OCC) return;                                  // stale bundle — silent
     OCC.eachOccurrence(ev, function (occYmd) {
       var p = occYmd.split("-");
-      return cb(calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), occYmd);
+      // occur.js startTs: an event kept in its own time zone fires at
+      // that zone's time (wave 5); everything else as before.
+      return cb(typeof OCC.startTs === "function" ? OCC.startTs(ev, occYmd)
+                                                  : calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), occYmd);
     });
   }
 
@@ -6426,7 +7113,7 @@
       } else {
         var p = String(ev.date || "").split("-");
         if (p.length === 3) {
-          check(ev, remindMin, calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), ev.date);
+          check(ev, remindMin, (window.OrosCalOccur && typeof window.OrosCalOccur.startTs === "function" && /^\d{4}-\d{2}-\d{2}$/.test(ev.date) ? window.OrosCalOccur.startTs(ev, ev.date) : calRemOccTs(ev, +p[0], +p[1] - 1, +p[2])), ev.date);
         }
       }
     }
@@ -8708,7 +9395,7 @@
   // with those lines and the user saves it (a prefill, never data, as
   // BR-W8-6). Strict validation here (false = rejected, nothing opens):
   // 1-50 lines, d text <= 200, q quantity 0 < q <= 100000, p unit price
-  // 0 <= p <= 10000000 (2 decimals each); cur EUR|USD; client <= 80 and
+  // 0 <= p <= 10000000 (2 decimals each); cur any ISO code (AAA); client <= 80 and
   // notes <= 500 chars. Only a fresh plain copy crosses over. Quote
   // running → live push to __orosQuoteNew; otherwise sessionStorage
   // "oros-quote-new" (device-local, one-shot, read and removed by
@@ -8729,7 +9416,7 @@
       items.push({ d: txt(it.d, 200), q: r2(it.q), p: r2(it.p) });
     }
     var q = { items: items };
-    if (p.cur === "EUR" || p.cur === "USD") q.cur = p.cur;
+    if (typeof p.cur === "string" && /^[A-Z]{3}$/.test(p.cur)) q.cur = p.cur;   // any ISO code (Quote wave 46)
     else if (p.cur !== undefined) return false;
     if (typeof p.client === "string") q.client = txt(p.client, 80).trim();
     if (typeof p.notes === "string") q.notes = txt(p.notes, 500);

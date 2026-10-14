@@ -1034,7 +1034,7 @@
     },
     {
       "id": "passwords",
-      "name": "Password Generator",
+      "name": "Passwords",
       "category": "Security",
       "icon": "passwords",
       "url": "passwords/",

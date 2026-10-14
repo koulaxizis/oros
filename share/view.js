@@ -32,7 +32,12 @@
       copied: "Copied", copyFail: "Could not copy",
       tickHint: "Ticks here are only for you and are not saved.",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
-      noFile: "No orOS link in that file."
+      noFile: "No orOS link in that file.",
+      slPick: "Pick a time that suits you.", slNone: "None of these times is still ahead. Ask for new ones.",
+      slZone: "Times are in your time zone ({z}).", slPicked: "You picked",
+      slMail: "Email {n} to confirm", slMailAnon: "Email to confirm", slNoMail: "No email address came with these times: let the sender know another way.",
+      slIcs: "Add to calendar (.ics)", slOros: "Add to my orOS", slOther: "Pick another time",
+      slHint: "Nothing is booked until the sender gets your answer."
     },
     el: {
       "top.sub": "Σου το έστειλαν", "state.loading": "Άνοιγμα…",
@@ -52,7 +57,12 @@
       copied: "Αντιγράφηκε", copyFail: "Η αντιγραφή απέτυχε",
       tickHint: "Τα τικ εδώ είναι μόνο για σένα και δεν αποθηκεύονται.",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
-      noFile: "Δεν βρέθηκε σύνδεσμος orOS σε αυτό το αρχείο."
+      noFile: "Δεν βρέθηκε σύνδεσμος orOS σε αυτό το αρχείο.",
+      slPick: "Διάλεξε μια ώρα που σε βολεύει.", slNone: "Καμία από αυτές τις ώρες δεν είναι πια μπροστά. Ζήτα καινούργιες.",
+      slZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", slPicked: "Διάλεξες",
+      slMail: "Email για επιβεβαίωση ({n})", slMailAnon: "Email για επιβεβαίωση", slNoMail: "Δεν ήρθε διεύθυνση email με τις ώρες: ενημέρωσε τον αποστολέα με άλλον τρόπο.",
+      slIcs: "Προσθήκη σε ημερολόγιο (.ics)", slOros: "Πρόσθεσέ το στο orOS μου", slOther: "Άλλη ώρα",
+      slHint: "Τίποτα δεν κλείνεται μέχρι ο αποστολέας να πάρει την απάντησή σου."
     }
   };
   var LANG = (function () {
@@ -218,6 +228,9 @@
         p.appendChild(/^https?:\/\//i.test(d.src) ? link(d.src, d.src) : document.createTextNode(d.src));
         c.appendChild(p);
       }
+    } else if (env.k === "slots") {
+      renderSlots(c, env);
+      return;
     } else if (env.k === "links") {
       var lu = el("ul", "items links");
       d.i.forEach(function (it) {
@@ -231,6 +244,85 @@
     }
     actions(c, env);
   }
+  // ---------- Free times: pick one, then answer ----------
+  function myZone() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; }
+  }
+  function dayHead(ymd) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+    try {
+      return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+        { weekday: "long", day: "numeric", month: "long" });
+    } catch (e) { return ymd; }
+  }
+  function renderSlots(c, env) {
+    var d = env.d, S = K.strings(LANG);
+    var meta = [d.n ? S.slotWith.replace("{n}", d.n) : "", S.slotLen.replace("{n}", d.len)].filter(Boolean).join(" · ");
+    c.appendChild(el("p", "meta", meta));
+    if (d.l) c.appendChild(el("p", "", S.where + ": " + d.l));
+    if (d.x) c.appendChild(el("p", "pre", d.x));
+    // Every time in the receiver's own zone, grouped by its local day;
+    // times already past are left out.
+    var now = Date.now(), groups = [], byDay = {}, shifted = false;
+    d.s.forEach(function (x) {
+      x.m.forEach(function (min) {
+        var w = K.slotWhen(d, x.d, min);
+        if (w.shifted) shifted = true;
+        var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(w.d), hm = w.s.split(":");
+        if (new Date(+p[1], +p[2] - 1, +p[3], +hm[0], +hm[1]).getTime() < now) return;
+        if (!byDay[w.d]) { byDay[w.d] = []; groups.push(w.d); }
+        byDay[w.d].push({ day: x.d, min: min, w: w });
+      });
+    });
+    groups.sort();
+    var zone = myZone();
+    if (shifted && zone) c.appendChild(el("p", "hint", t("slZone").replace("{z}", zone)));
+    var pick = el("div", "slots");
+    if (!groups.length) {
+      pick.appendChild(el("p", "state", t("slNone")));
+    } else {
+      pick.appendChild(el("p", "", t("slPick")));
+      groups.forEach(function (g) {
+        pick.appendChild(el("h2", "", dayHead(g)));
+        var row = el("div", "slot-row");
+        byDay[g].forEach(function (x) {
+          row.appendChild(btn(x.w.s, "slot", function () { picked(c, env, x, pick); }));
+        });
+        pick.appendChild(row);
+      });
+    }
+    c.appendChild(pick);
+    var acts = el("div", "acts");
+    acts.appendChild(btn(t("copy"), "", function () { copyText(K.text(env, LANG, helpers)); }));
+    c.appendChild(acts);
+  }
+  function picked(c, env, x, pick) {
+    var d = env.d;
+    var old = c.querySelector(".slot-done");
+    if (old) old.remove();
+    var evData = K.slotEvent(d, x.day, x.min, LANG);
+    var ev = { v: 1, k: "event", d: evData };
+    var box = el("div", "slot-done");
+    box.appendChild(el("h2", "", t("slPicked")));
+    box.appendChild(el("p", "meta", K.whenText(evData, LANG)));
+    var acts = el("div", "acts");
+    var mail = K.slotMail(d, x.day, x.min, LANG);
+    if (mail) {
+      var a = link(mail, d.n ? t("slMail").replace("{n}", d.n) : t("slMailAnon"));
+      a.className = "btn prim";
+      acts.appendChild(a);
+    }
+    acts.appendChild(btn(t("slIcs"), mail ? "" : "prim", function () { download(K.file(ev, LANG)); }));
+    acts.appendChild(btn(t("slOros"), "", function () { addToOros(ev); }));
+    acts.appendChild(btn(t("slOther"), "", function () { box.remove(); pick.hidden = false; }));
+    box.appendChild(acts);
+    if (!mail) box.appendChild(el("p", "hint", t("slNoMail")));
+    box.appendChild(el("p", "hint", t("slHint")));
+    pick.hidden = true;
+    c.insertBefore(box, pick);
+    try { box.scrollIntoView({ block: "nearest" }); } catch (e) {}
+  }
+
   function ingLine(ing) {
     if (M && typeof M.ingToLine === "function") {
       try { return M.ingToLine(ing, LANG, 1); } catch (e) {}

@@ -63,7 +63,35 @@
     if (out.length > 2000) return "";
     return out;
   }
-  function feedId(url) { var n = normUrl(url); return n ? "f" + hash(n.replace(/^https?:\/\//, "")) : ""; }
+  function feedId(url) {
+    var mu = normMailUrl(url);
+    if (mu) return "f" + hash(mu);
+    var n = normUrl(url);
+    return n ? "f" + hash(n.replace(/^https?:\/\//, "")) : "";
+  }
+
+  // A Mail folder shown as a feed (newsletters): "oros-mail:<account
+  // id>/<IMAP folder name, URI-encoded>". Its articles come from the
+  // Mail app's cache on this device (mail/feed.js), never from the
+  // network; the id is the hash of the whole address (an http feed
+  // hashes "host/path", which never starts with "oros-mail:").
+  var MAIL_URL = /^oros-mail:([a-z0-9]{6,40})\/(.+)$/;
+  function mailUrl(acct, folder) {
+    acct = String(acct || "");
+    folder = String(folder || "");
+    if (!/^[a-z0-9]{6,40}$/.test(acct) || !folder || folder.length > 300) return "";
+    return "oros-mail:" + acct + "/" + encodeURIComponent(folder);
+  }
+  function parseMailUrl(u) {
+    var m = MAIL_URL.exec(String(u || ""));
+    if (!m) return null;
+    var folder;
+    try { folder = decodeURIComponent(m[2]); } catch (e) { return null; }
+    if (!folder || folder.length > 300 || encodeURIComponent(folder) !== m[2]) return null;
+    return { acct: m[1], folder: folder };
+  }
+  function normMailUrl(u) { var p = parseMailUrl(u); return p ? mailUrl(p.acct, p.folder) : ""; }
+  function isMailFeed(f) { return !!(f && parseMailUrl(f.url)); }
   function itemId(fid, key) { return "i" + hash(fid + "\n" + key); }
 
   function absUrl(href, base) {
@@ -698,7 +726,8 @@
   }
   function buildOpml(data, title, now) {
     var byFolder = {};
-    data.feeds.forEach(function (f) { (byFolder[f.folder] = byFolder[f.folder] || []).push(f); });
+    var feeds = data.feeds.filter(function (f) { return !isMailFeed(f); });   // a Mail folder means nothing elsewhere
+    feeds.forEach(function (f) { (byFolder[f.folder] = byFolder[f.folder] || []).push(f); });
     function line(f, ind) {
       return ind + "<outline type=\"rss\" text=\"" + escHtml(f.title) + "\" title=\"" + escHtml(f.title) +
         "\" xmlUrl=\"" + escHtml(f.url) + "\"" + (f.site ? " htmlUrl=\"" + escHtml(f.site) + "\"" : "") + "/>\n";
@@ -711,7 +740,7 @@
       list.forEach(function (f) { out += line(f, "    "); });
       out += "  </outline>\n";
     });
-    data.feeds.forEach(function (f) { if (!f.folder || !folderById(data, f.folder)) out += line(f, "  "); });
+    feeds.forEach(function (f) { if (!f.folder || !folderById(data, f.folder)) out += line(f, "  "); });
     return out + "</body>\n</opml>\n";
   }
 
@@ -727,6 +756,8 @@
   //   tombs   { "f:id" | "d:id" | "i:id" | "t:id" | "r:id": ts }
   // Phase 2 added full, tags, rules (additive: a phase-1 copy drops them,
   // which only matters during an update; same version number).
+  // Wave 36: a feed's url may also be a Mail folder ("oros-mail:…",
+  // mailUrl above; site ""), read from Mail's cache, never fetched.
   // Read state: an article is read when its date is older than `old`
   // (nothing older than KEEP_DAYS is ever unread), or an explicit mark
   // newer than its feed's cut says so, or it is not newer than the cut.
@@ -759,12 +790,13 @@
 
   function normFeed(f) {
     if (!f || typeof f !== "object" || !okId(f.id, "f") || !okM(f.m)) return null;
-    var url = normUrl(f.url);
+    var mail = parseMailUrl(f.url);
+    var url = mail ? mailUrl(mail.acct, mail.folder) : normUrl(f.url);
     if (!url || feedId(url) !== f.id) return null;
     return {
       id: f.id, url: url,
-      title: clip(oneLine(f.title), 200) || siteOf(url),
-      site: httpUrl(f.site),
+      title: clip(oneLine(f.title), 200) || (mail ? clip(mail.folder, 200) : siteOf(url)),
+      site: mail ? "" : httpUrl(f.site),
       folder: typeof f.folder === "string" && okId(f.folder, "d") ? f.folder : "",
       img: f.img === 0 || f.img === 1 ? f.img : -1,
       full: f.full === 1 ? 1 : 0,
@@ -1190,7 +1222,7 @@
   }
 
   var api = {
-    hash: hash, normUrl: normUrl, feedId: feedId, itemId: itemId, absUrl: absUrl, httpUrl: httpUrl, siteOf: siteOf,
+    hash: hash, normUrl: normUrl, feedId: feedId, mailUrl: mailUrl, parseMailUrl: parseMailUrl, isMailFeed: isMailFeed, itemId: itemId, absUrl: absUrl, httpUrl: httpUrl, siteOf: siteOf,
     decodeEntities: decodeEntities, escHtml: escHtml, textOf: textOf, titleText: titleText, parseDate: parseDate,
     decodeBytes: decodeBytes, b64ToBytes: b64ToBytes,
     parseXml: parseXml, parseFeed: parseFeed, looksLikeFeed: looksLikeFeed,

@@ -38,7 +38,7 @@
         out.push({
           id: p.id,
           title: name,
-          text: [str(p.room), species(p.sp, ctx.lang),
+          text: [str(p.room), species(p.sp, ctx.lang), str(p.sci),
                  p.out === 1 ? (ctx.lang === "el" ? "Εξωτερικό" : "Outdoors") : "",
                  str(p.notes)].filter(Boolean).join(" · "),
           target: p.id

@@ -18,25 +18,52 @@ Other orOS apps can send an outline here. Slides then shows `New presentation fr
 - Rectangles, ellipses and lines take theme colours, so a new theme recolours them too.
 - Drag to move, use the handles to resize or rotate. Guides help you line things up.
 
+## Tables and charts
+- `Table` adds a table and opens `Edit table`: type in the cells, [[Enter]] moves down a row, [[Shift+Enter]] starts a new line in a cell, and `+ Row`, `− Row`, `+ Column`, `− Column` change its size (up to 20 rows and 10 columns). In `Format` you choose `Header row`, `Banded rows`, the header colour, the font, the size, the text colour and the `Lines` (all, rows only or none). The text gets smaller on its own when a cell is too full.
+- `Chart` adds a chart and opens `Edit chart`: columns, bars, line, pie, doughnut or scatter, a title, the legend, and a small grid for the data. The first row holds the series names, the first column the categories; numbers may be written `1.234,5` or `1,234.5`. The chart is drawn by the same engine as the charts in Spreadsheet, in the colours of the theme.
+- Double-click (or tap a selected) table or chart to edit it again.
+
+## Groups
+Select two or more objects (drag a box round them, or [[Shift]]-click) and press `Group` in `Format`, or [[Ctrl+G]]. A group is selected, moved, resized, lined up and animated as one; `Ungroup` or [[Ctrl+Shift+G]] takes it apart. Copies of a group are a new group.
+
+## Animations
+- `Transition` in the slide's panel: none, fade, slide in, push, wipe or zoom, with its `Duration (s)`. `Apply to all slides` copies both.
+- Select an object and choose its `Entrance` in `Format` › `Animation`: `Appear`, `Fade in`, `Fly in` (from the bottom, left, right or top) or `Zoom in`. `Start` is `On click`, `With previous` or `After previous`; you can set the `Duration (s)` and a `Delay (s)`. A text box can come in `Bullets one by one`.
+- The small numbers on the slide are the clicks. `Animation order` in the slide's panel lists every animation; the arrows move one earlier or later, and `Preview` plays them on the slide.
+- In the show a click, an arrow key or the phone brings in the next build; going back shows the previous build, and from a slide's first build the previous slide comes back fully built.
+- If your device asks for less motion (reduced motion), transitions and builds appear without moving.
+
 ## Three views
 - `Slide`: one slide with the strip and your `Speaker notes`.
 - `Sorter`: every slide as a grid, to reorder, hide or delete.
 - `Outline`: the whole presentation as text. A line starting with `#` is a new slide, `- ` is a bullet (two spaces per level), `1. ` is numbered, `--` starts the second column and `> ` is a speaker note.
 
 ## Presenting
-`Present` starts the show full screen. Use the arrow keys, Space, a presentation clicker, or tap the sides of the screen. [[B]] or [[W]] blanks the screen, a number and [[Enter]] jumps to that slide, [[L]] shows a laser pointer, [[N]] shows your notes, [[Esc]] ends the show. `Present with speaker view` opens the slides in a second window for the projector, while you see the next slide, your notes and a timer.
+`Present` starts the show full screen. Use the arrow keys, Space, a presentation clicker, or tap the sides of the screen. [[B]] or [[W]] blanks the screen, a number and [[Enter]] jumps to that slide, [[L]] shows a laser pointer, [[N]] shows your notes, [[Esc]] ends the show. `Present with speaker view` opens the slides in a second window for the projector, while you see the next slide (or the next build), your notes and a timer.
+
+## Control from your phone
+In the show press `Phone` on the bar (or in the speaker view). A code, a QR code and a link appear. On the phone open orOS › Slides and tap the phone button on the home screen (`Phone remote`), or scan the QR code, and enter the code; on the presenting device press `Allow`. The phone then has big `Next` and `Previous` buttons, `Black screen`, `White screen` and `First slide`, the slide number, the builds left, the time and your notes. The two devices talk directly on the same Wi-Fi, or through the orOS relay with end-to-end encryption. The pairing is kept for three days, so a reload reconnects by itself; `Leave` on the phone or `Disconnect the phone` on the presenting device ends it.
 
 ## Sync and backup
-Presentations sync with orOS sync. Pictures are stored once as files on the orOS disk and sync through Vault Drive. If the same text is changed on two devices at once, the newer version stays and the other one is kept in `More` › `Recovered text`. `Save as package (.orosslides)` makes one file with the presentation and its pictures; `Open package` opens it as a new presentation. `Export PDF` and `PDF with speaker notes` make PDFs; `Save this slide as PNG` saves a picture of one slide.
+Presentations sync with orOS sync. Pictures are stored once as files on the orOS disk and sync through Vault Drive. If the same text is changed on two devices at once, the newer version stays and the other one is kept in `More` › `Recovered text`. `Save as package (.orosslides)` makes one file with the presentation and its pictures; `Open file` opens it as a new presentation. `Export PDF` and `PDF with speaker notes` make PDFs; `Save this slide as PNG` saves a picture of one slide.
+
+## PowerPoint files
+- `More` › `Save as PowerPoint (.pptx)`, or `Save as PowerPoint` in a presentation's menu on the home screen, makes a file that opens in PowerPoint, LibreOffice Impress, Google Slides and Keynote. Text stays editable, with its bullets, levels, bold, italic, underline, colours, sizes and alignment; pictures keep their crop and rounded corners; rectangles, ellipses and lines, tables, groups, backgrounds, speaker notes, hidden slides, transitions and build animations come along, and charts go as pictures. Titles and text placeholders stay placeholders, and theme colours stay theme colours.
+- `Open file` on the home screen opens a `.pptx` as a new presentation. Its pictures are stored on the orOS disk like pictures you add yourself. Text keeps its paragraphs and formatting, also when it comes from the slide layout or master; tables stay tables, groups stay groups (one level), entrance animations come along (others become `Fade in`), other shapes become the nearest rectangle or ellipse, and slides of another size fit into 16:9 or 4:3.
+- Charts, SmartArt, video, sound and embedded objects are not brought in: a dashed box with their name marks the spot.
 
 ## Keyboard shortcuts
 - [[Ctrl+Z]] / [[Ctrl+Y]]: undo / redo
 - [[Ctrl+M]]: new slide
 - [[Ctrl+D]]: duplicate, [[Ctrl+C]] / [[Ctrl+V]]: copy / paste objects
+- [[Ctrl+G]] / [[Ctrl+Shift+G]]: group / ungroup
 - [[Page Up]] / [[Page Down]]: previous / next slide
 - [[F5]]: present from the start, [[Shift+F5]]: from this slide
 
 ## Limits
-- PowerPoint files cannot be opened or saved yet.
+- A PowerPoint file keeps one font size per text box, Noto Sans, Serif or Mono in place of its fonts, and no gradients, shadows or 3D effects. The footer (slide number, date, text) is not saved into it. A chart goes into it as a picture, so it cannot be edited there and does not come back as a chart. A transition's length goes as PowerPoint's fast, medium or slow. Exit and emphasis effects and motion paths in a PowerPoint file are left out, and merged table cells come apart.
+- A picture that has not reached this device yet (still syncing) is left out of a saved PowerPoint file; Slides says how many.
 - Full screen is not available for web pages on iPhone; the show fills the app instead.
-- Objects cannot be grouped, and slides have no animations yet.
+- Groups have one level (no groups inside groups). Tables have no merged cells and one text size; charts have no axis settings.
+- Animations are entrances only (no exit, emphasis or motion paths). The phone remote needs Slides open on the presenting device, and it shows your notes, not the slide picture.
+- Recording the presentation to a video with your voice is not available.

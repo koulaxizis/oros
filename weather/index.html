@@ -37,6 +37,9 @@
       <small data-i18n="empty.hint">Tap the city button above to add one.</small>
     </div>
 
+    <!-- Wave 38: official warnings (MeteoAlarm), filled by renderWarnings -->
+    <div id="warn-host" hidden></div>
+
     <section id="current" hidden>
       <div id="cur-main">
         <span id="cur-icon"></span>
@@ -74,17 +77,47 @@
       <div id="cur-updated" class="dim"></div>
     </section>
 
+    <!-- Wave 38: rain in the next 2 hours (Open-Meteo minutely_15) -->
+    <h3 class="sec-title" id="now-title" data-i18n="now.title" hidden>Next 2 hours</h3>
+    <section id="nowcast" hidden>
+      <p id="now-text"></p>
+      <div id="now-bars"></div>
+    </section>
+
     <h3 class="sec-title" data-i18n="hourly.title">Next 48 hours</h3>
     <div id="hourly"></div>
 
     <h3 class="sec-title" data-i18n="daily.title">7-day forecast</h3>
     <ul id="daily"></ul>
 
+    <!-- Wave 38: air quality + pollen, per hour and per day -->
+    <h3 class="sec-title" id="air-title" data-i18n="air.title" hidden>Air &amp; pollen</h3>
+    <section id="air" hidden>
+      <div id="air-days"></div>
+      <div id="air-strip"></div>
+      <div id="air-detail"></div>
+    </section>
+
+    <!-- Wave 38: forecast model + comparison of 2–3 models -->
+    <h3 class="sec-title" id="model-title" data-i18n="model.title" hidden>Forecast model</h3>
+    <section id="model-sec" hidden>
+      <div class="model-row">
+        <select id="model-sel"></select>
+        <button id="cmp-btn" type="button" class="btn-secondary" aria-controls="cmp-panel"></button>
+      </div>
+      <p class="hint" id="model-hint"></p>
+      <div id="cmp-panel" hidden>
+        <div id="cmp-pickers"></div>
+        <div id="cmp-out"></div>
+      </div>
+    </section>
+
     <!-- Open-Meteo data is CC BY 4.0: attribution next to the data -->
     <p id="wx-attrib" class="dim">
       <span data-i18n="attrib">Weather data by</span>
       <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a>
       (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>)
+      <br><span data-i18n="attrib.air">Air quality: Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo.</span>
     </p>
 
   </main>
@@ -103,8 +136,13 @@
     <p class="hint" id="city-hint" hidden></p>
     <!-- Taskbar chip settings (filled by renderTraySection) -->
     <div id="tray-host" hidden></div>
+    <!-- Wave 38: official warnings settings (filled by renderWarnSettings) -->
+    <div id="warn-set-host" hidden></div>
   </dialog>
 
+  <script src="../feeds/core.js?v=1.98.00"></script>
+  <script src="../feeds/fetch.js?v=1.98.00"></script>
+  <script src="core.js?v=1.98.00"></script>
   <script src="weather.js?v=1.98.00"></script>
 </body>
 </html>

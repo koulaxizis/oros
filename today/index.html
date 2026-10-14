@@ -18,6 +18,7 @@
       <div id="date"></div>
     </div>
     <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="edit-btn" aria-pressed="false"></button>
     <button type="button" class="icon-btn" id="refresh-btn"></button>
     <button type="button" class="icon-btn" id="set-btn"></button>
   </header>
@@ -35,8 +36,10 @@
   </dialog>
 
   <div id="toast" role="status" aria-live="polite" hidden></div>
+  <div id="live" class="sr-only" aria-live="assertive"></div>
 
   <script src="../assistant/core.js?v=1.98.00"></script>
+  <script src="layout.js?v=1.98.00"></script>
   <script src="today.js?v=1.98.00"></script>
 </body>
 </html>

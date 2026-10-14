@@ -29,6 +29,9 @@
 //   au/av/ao the page background only: the page's sound (clip id),
 //          its volume and where in it the page starts; see clips.js
 //   cr     credit of a piece from an open source (media.normCredit)
+//   table: tb (objects.js normTable), font, size (text size before
+//          shrink-to-fit, default 24), al l|c|r; fc text, sc lines
+//   chart: ch (objects.js normChart), fc background, size labels
 // Defaults are omitted, keys come in one fixed order: the record is
 // canonical (R26), so equal designs give equal JSON on every device.
 // Pure: no DOM. Exposes window.AtelierAX (browser) or module.exports.
@@ -36,18 +39,19 @@
 (function (root) {
   "use strict";
 
-  var M, T, FX, MEDIA, CL;
+  var M, T, FX, MEDIA, CL, OB;
   if (typeof module !== "undefined" && module.exports) {
     M = require("../designkit/model.js"); T = require("../designkit/text.js");
     FX = require("../designkit/fx.js"); MEDIA = require("../designkit/media.js");
-    CL = require("./clips.js");
+    CL = require("./clips.js"); OB = require("./objects.js");
   } else {
     M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; MEDIA = root.orosDK.media;
-    CL = root.AtelierClips;
+    CL = root.AtelierClips; OB = root.AtelierObjects;
   }
 
-  var KINDS = ["text", "shape", "icon", "photo", "line"];
-  var BASE = { text: "rect", shape: "rect", icon: "rect", photo: "img", line: "line" };
+  var KINDS = ["text", "shape", "icon", "photo", "line", "table", "chart"];
+  var BASE = { text: "rect", shape: "rect", icon: "rect", photo: "img", line: "line", table: "rect", chart: "rect" };
+  var TABLE_SIZE = 24;
   var SHAPE_IDS = FX.SHAPES.map(function (s) { return s.id; });
   var FILTER_IDS = FX.FILTERS.map(function (f) { return f.id; });
   var ALIGNS = ["l", "c", "r", "j"];
@@ -96,7 +100,7 @@
     if ((k === "shape" || k === "photo") && bit(a.bg)) o.bg = 1;
     var fc = col(a.fc), sc = col(a.sc);
     if (k !== "photo" && k !== "line" && fc) o.fc = fc;
-    if ((k === "shape" || k === "icon" || k === "line") && sc) o.sc = sc;
+    if ((k === "shape" || k === "icon" || k === "line" || k === "table") && sc) o.sc = sc;
     if (k === "shape" && a.g && typeof a.g === "object") {
       var ga = col(a.g.a), gb = col(a.g.b);
       if (ga && gb) o.g = { a: ga, b: gb, ang: int(a.g.ang, -360, 360, 90) };
@@ -132,6 +136,20 @@
       }
       var cv = int(a.cv, -100, 100, 0);
       if (cv) o.cv = cv;
+    }
+    if (k === "table") {
+      o.tb = OB.normTable(a.tb) || { rows: [[""]] };
+      var tf = fontId(a.font);
+      if (tf !== TEXT_DEF.font) o.font = tf;
+      ensureFont(tf);
+      var ts = num(a.size, 2, 2000, TABLE_SIZE);
+      if (ts !== TABLE_SIZE) o.size = ts;
+      var tal = oneOf(a.al, ["l", "c", "r"], "l");
+      if (tal !== "l") o.al = tal;
+    }
+    if (k === "chart") {
+      o.ch = OB.normChart(a.ch) || { t: "col", rows: [[""]] };
+      if (isNum(a.size)) o.size = num(a.size, 2, 2000, 12);
     }
     if (k === "photo") {
       if (a.adj && typeof a.adj === "object" && !FX.isIdentity(a.adj)) o.adj = FX.normAdjust(a.adj);
@@ -328,6 +346,52 @@
     return Math.ceil(w + size * 0.1);
   }
 
+  // ---------- 3b. Tables ----------
+  // Every cell laid out by text.js at ONE shrink factor k for the
+  // whole table: the largest (≤ 1) at which every cell's text fits
+  // its cell (height and longest word). Cells are centred vertically.
+  // Returns { k, cells: [{ r, c, x, y, w, h, fill, ink, b, lines,
+  // tx, ty, tw }] } in item-local points (tx / ty = the text's frame).
+  var tblCache = new Map();
+  function cellText(it, r, c, k, look, w) {
+    var ax = it.ax, size = (ax.size || TABLE_SIZE) * k;
+    return { w: Math.max(1, w), ax: { k: "text", tx: ax.tb.rows[r][c], font: ax.font || TEXT_DEF.font, size: size, b: look.b, al: ax.al || "l", lh: 115 } };
+  }
+  function tableLayout(it) {
+    var ax = it.ax, key = T.generation() + "|" + it.w + "|" + it.h + "|" + JSON.stringify(ax);
+    var hit = tblCache.get(key);
+    if (hit) return hit;
+    var g = OB.tableGrid(it), size = ax.size || TABLE_SIZE;
+    function lay(k) {
+      var pad = OB.cellPad(size * k), out = [], ok = true;
+      for (var r = 0; r < g.R; r++) for (var c = 0; c < g.C; c++) {
+        var look = OB.cellLook(it, r, c), w = g.ws[c] - 2 * pad, tx = ax.tb.rows[r][c];
+        var L = tx ? textLayout(cellText(it, r, c, k, look, w)) : { lines: [], h: 0 };
+        if (tx) {
+          if (L.h > g.hs[r] - 2 * pad + 0.01) ok = false;
+          L.lines.forEach(function (ln) { ln.runs.forEach(function (rn) { if (rn.t && rn.t.trim() && rn.x + rn.w > w + 0.5) ok = false; }); });
+        }
+        out.push({ r: r, c: c, x: g.xs[c], y: g.ys[r], w: g.ws[c], h: g.hs[r], fill: look.fill, ink: look.ink, b: look.b,
+          lines: L.lines, tx: g.xs[c] + pad, ty: g.ys[r] + Math.max(pad, (g.hs[r] - L.h) / 2), tw: w });
+      }
+      return { ok: ok, cells: out };
+    }
+    var k = 1, res = lay(1);
+    if (!res.ok) {
+      var lo = 0.2, hi = 1;
+      for (var i = 0; i < 7; i++) {
+        var mid = (lo + hi) / 2;
+        if (lay(mid).ok) lo = mid; else hi = mid;
+      }
+      k = Math.floor(lo * 100) / 100;
+      res = lay(k);
+    }
+    var out = { k: k, cells: res.cells };
+    tblCache.set(key, out);
+    if (tblCache.size > 120) tblCache.delete(tblCache.keys().next().value);
+    return out;
+  }
+
   // ---------- 4. Templates ----------
   // A template is data (templates.js): { id, preset, w, h, unit,
   // en, el, pages: [ { bg, g, items: [spec…] } ] } where text specs
@@ -352,6 +416,12 @@
           s.tx = lang === "el" ? s.tx.el : s.tx.en;
           if (s.tx !== en) fitTranslation(s, en);
         }
+        // tables and charts: rows (and a chart title) as { en, el }
+        [s.tb, s.ch].forEach(function (o) {
+          if (!o) return;
+          if (o.rows && !Array.isArray(o.rows)) o.rows = lang === "el" ? o.rows.el : o.rows.en;
+          if (o.ttl && typeof o.ttl === "object") o.ttl = lang === "el" ? o.ttl.el : o.ttl.en;
+        });
         s.z = zi + 1;
         addItem(d, pg.id, s, now);
       });
@@ -418,7 +488,7 @@
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
-    textWidth: textWidth, fontKeyOf: fontKeyOf, isExtraFont: isExtraFont, ensureFont: ensureFont,
+    textWidth: textWidth, fontKeyOf: fontKeyOf, tableLayout: tableLayout, TABLE_SIZE: TABLE_SIZE, OB: OB, isExtraFont: isExtraFont, ensureFont: ensureFont,
     fontName: fontName, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

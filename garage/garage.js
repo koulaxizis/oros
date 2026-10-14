@@ -118,6 +118,23 @@
       "ed.dot": "DOT (week + year, e.g. 0324)", "ed.tread": "Tread depth (mm)", "ed.kmRun": "Km already run on this set",
       "ed.mountNow": "Mounted now", "ed.mountKm": "Odometer when mounted (km)", "ed.mountTitle": "Mount {name}",
       "ed.odoNow": "Odometer now (km)",
+      "rcpt.btn": "Read a receipt", "rcpt.title": "Read a fuel receipt",
+      "rcpt.text": "Paste or type the text of the receipt. Garage finds the date, quantity, price per unit, total and station on this device and fills them in for you to check.",
+      "rcpt.label": "Receipt text", "rcpt.ph": "e.g. 14/10/2026 · 32,15 LT X 1,879 · TOTAL 60,41",
+      "rcpt.fill": "Fill in", "rcpt.none": "Nothing found. Check the text, or type the values yourself.",
+      "rcpt.done": "Filled in: {what}. Check before you save.",
+      "rcpt.d": "date", "rcpt.q": "quantity", "rcpt.p": "price", "rcpt.c": "total", "rcpt.st": "station",
+      "lb.btn": "Logbook", "lb.set": "Logbook report", "lb.dlg": "Logbook report · {name}",
+      "lb.intro": "The whole history of this vehicle on one page: services, renewals, tyres and, if you like, fuel and other costs. For a buyer, a garage or your own records.",
+      "lb.optFuel": "Fuel and charging fills", "lb.optCosts": "Other costs", "lb.optMoney": "Show the amounts paid",
+      "lb.print": "Print or save as PDF", "lb.html": "Save as HTML", "lb.printHint": "To get a PDF, pick “Save as PDF” as the printer.",
+      "lb.title": "Vehicle logbook", "lb.vehicle": "Vehicle", "lb.kmNow": "Odometer (latest)", "lb.summary": "Summary",
+      "lb.period": "Records", "lb.kmLogged": "Km in the records", "lb.nService": "Services", "lb.nFuel": "Fuel and charging fills",
+      "lb.avg": "Average consumption", "lb.avgE": "Average consumption (electric)", "lb.sumService": "Spent on service",
+      "lb.sumFuel": "Spent on fuel and charging", "lb.sumOther": "Other costs", "lb.service": "Service history", "lb.cost": "Cost",
+      "lb.none": "No service logged yet.", "lb.mounted": "Mounted", "lb.fuel": "Fuel and charging", "lb.qty": "Quantity",
+      "lb.price": "Price per unit", "lb.costs": "Other costs",
+      "lb.made": "Made with orOS Garage on {d}. Entries are as the owner logged them.",
       "set.title": "Settings", "set.vehicles": "Vehicles", "set.addVehicle": "Add a vehicle", "set.cur": "Currency",
       "set.unit": "Consumption", "set.remind": "Daily reminder", "set.off": "Off",
       "set.remindHint": "Reminders for renewals and service appear while orOS is open (also with this app closed). With orOS closed they wait for the next time you open it.",
@@ -206,6 +223,23 @@
       "ed.dot": "DOT (εβδομάδα + έτος, π.χ. 0324)", "ed.tread": "Βάθος πέλματος (mm)", "ed.kmRun": "Km που έχει ήδη κάνει το σετ",
       "ed.mountNow": "Τοποθετημένα τώρα", "ed.mountKm": "Χιλιόμετρα κατά την τοποθέτηση", "ed.mountTitle": "Τοποθέτηση: {name}",
       "ed.odoNow": "Χιλιόμετρα τώρα (km)",
+      "rcpt.btn": "Ανάγνωση απόδειξης", "rcpt.title": "Ανάγνωση απόδειξης καυσίμων",
+      "rcpt.text": "Επικόλλησε ή γράψε το κείμενο της απόδειξης. Το Γκαράζ βρίσκει σε αυτή τη συσκευή την ημερομηνία, την ποσότητα, την τιμή μονάδας, το σύνολο και το πρατήριο, και τα συμπληρώνει για να τα ελέγξεις.",
+      "rcpt.label": "Κείμενο απόδειξης", "rcpt.ph": "π.χ. 14/10/2026 · 32,15 LT X 1,879 · ΣΥΝΟΛΟ 60,41",
+      "rcpt.fill": "Συμπλήρωση", "rcpt.none": "Δεν βρέθηκε κάτι. Έλεγξε το κείμενο ή γράψε τις τιμές μόνος σου.",
+      "rcpt.done": "Συμπληρώθηκαν: {what}. Έλεγξέ τα πριν την αποθήκευση.",
+      "rcpt.d": "ημερομηνία", "rcpt.q": "ποσότητα", "rcpt.p": "τιμή", "rcpt.c": "σύνολο", "rcpt.st": "πρατήριο",
+      "lb.btn": "Βιβλίο", "lb.set": "Βιβλίο οχήματος", "lb.dlg": "Βιβλίο οχήματος · {name}",
+      "lb.intro": "Όλο το ιστορικό του οχήματος σε μία σελίδα: σέρβις, ανανεώσεις, λάστιχα και, αν θέλεις, καύσιμα και άλλα έξοδα. Για έναν αγοραστή, ένα συνεργείο ή το δικό σου αρχείο.",
+      "lb.optFuel": "Γεμίσματα και φορτίσεις", "lb.optCosts": "Άλλα έξοδα", "lb.optMoney": "Να φαίνονται τα ποσά",
+      "lb.print": "Εκτύπωση ή αποθήκευση PDF", "lb.html": "Αποθήκευση HTML", "lb.printHint": "Για PDF, διάλεξε «Αποθήκευση ως PDF» στη θέση του εκτυπωτή.",
+      "lb.title": "Βιβλίο οχήματος", "lb.vehicle": "Όχημα", "lb.kmNow": "Χιλιόμετρα (τελευταία ένδειξη)", "lb.summary": "Σύνοψη",
+      "lb.period": "Καταγραφές", "lb.kmLogged": "Km στις καταγραφές", "lb.nService": "Σέρβις", "lb.nFuel": "Γεμίσματα και φορτίσεις",
+      "lb.avg": "Μέση κατανάλωση", "lb.avgE": "Μέση κατανάλωση (ρεύμα)", "lb.sumService": "Έξοδα σέρβις",
+      "lb.sumFuel": "Έξοδα καυσίμων και φόρτισης", "lb.sumOther": "Άλλα έξοδα", "lb.service": "Ιστορικό σέρβις", "lb.cost": "Κόστος",
+      "lb.none": "Δεν έχει καταγραφεί σέρβις ακόμη.", "lb.mounted": "Τοποθετημένα", "lb.fuel": "Καύσιμα και φόρτιση", "lb.qty": "Ποσότητα",
+      "lb.price": "Τιμή μονάδας", "lb.costs": "Άλλα έξοδα",
+      "lb.made": "Φτιάχτηκε με το Γκαράζ του orOS στις {d}. Οι καταχωρίσεις είναι όπως τις έγραψε ο κάτοχος.",
       "set.title": "Ρυθμίσεις", "set.vehicles": "Οχήματα", "set.addVehicle": "Νέο όχημα", "set.cur": "Νόμισμα",
       "set.unit": "Κατανάλωση", "set.remind": "Καθημερινή υπενθύμιση", "set.off": "Κλειστή",
       "set.remindHint": "Οι υπενθυμίσεις για ανανεώσεις και σέρβις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή αυτή την εφαρμογή). Με κλειστό το orOS περιμένουν το επόμενο άνοιγμα.",
@@ -898,6 +932,11 @@
     eb.type = "button";
     eb.addEventListener("click", function () { vehicleEditor(v); });
     acts.appendChild(eb);
+    var lbb = el("button", "txt-btn", t("lb.btn"));
+    lbb.type = "button";
+    lbb.title = t("lb.set");
+    lbb.addEventListener("click", function () { logbookDialog(v); });
+    acts.appendChild(lbb);
     card.appendChild(acts);
     box.appendChild(card);
 
@@ -1845,6 +1884,21 @@
     form.appendChild(stF);
     var notes = textarea(x ? x.n : "");
     form.appendChild(field(t("f.notes"), notes, "gr-f-n"));
+    // Receipt text → the fields above (nothing saved before Save)
+    var rb = el("div", "dlg-actions tight rcpt-row");
+    rb.appendChild(button("🧾 " + t("rcpt.btn"), "", function () {
+      receiptDialog(function (r) {
+        var what = [];
+        if (r.d && r.d <= todayYmd()) { date.value = r.d; what.push(t("rcpt.d")); date.dispatchEvent(new Event("input")); }
+        if (r.q) { qty.value = fmtN(r.q, 2).replace(/[\s  ]/g, ""); what.push(t("rcpt.q")); }
+        if (r.p) { price.value = fmtN(r.p, 3).replace(/[\s  ]/g, ""); what.push(t("rcpt.p")); }
+        if (r.c) { total.value = fmtN(r.c / 100, 2).replace(/[\s  ]/g, ""); what.push(t("rcpt.c")); }
+        if (r.st) { st.value = C.cleanText(r.st, C.SHORT_LEN, false); what.push(t("rcpt.st")); }
+        edited = ["q", "t"];
+        showToast(what.length ? t("rcpt.done", { what: what.join(", ") }) : t("rcpt.none"));
+      });
+    }));
+    form.insertBefore(rb, form.firstChild);
     var rid = x ? x.id : newId();
     var rc = receiptBox(dlg, x, rid, date);
     if (rc.wrap) form.appendChild(rc.wrap);
@@ -1870,6 +1924,90 @@
     dlg.appendChild(form);
     showDialog(dlg);
     (x ? qty : km).focus();
+  }
+
+  // The text of a fuel / charging receipt → receipt.js → onFill(parsed).
+  // Pasted or typed text only in this version; when orOS ships the
+  // on-device text recognition (vendor/tesseract/), a photo can feed
+  // the same box.
+  function receiptDialog(onFill) {
+    var R = window.OrosGarageReceipt;
+    if (!R) return;
+    var dlg = makeDialog("gr-rcpt");
+    dlg.appendChild(el("div", "dlg-title", "🧾 " + t("rcpt.title")));
+    dlg.appendChild(el("p", "dlg-sub", t("rcpt.text")));
+    var ta = el("textarea");
+    ta.rows = 8;
+    ta.maxLength = 8000;
+    ta.placeholder = t("rcpt.ph");
+    ta.spellcheck = false;
+    dlg.appendChild(field(t("rcpt.label"), ta, "gr-rcpt-t"));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("rcpt.fill"), "primary", function () {
+      var r = R.parse(ta.value, todayYmd());
+      if (!r.found.some(function (k) { return k !== "st"; })) { showToast(t("rcpt.none")); ta.focus(); return; }
+      dlg.close();
+      onFill(r);
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    ta.focus();
+  }
+
+  // ----- Logbook report (print / PDF / HTML) -----
+  function logbookFmt() {
+    return {
+      lang: LANG, t: t, money: money, km: fmtKm,
+      day: function (d) { return fmtDay(d, true); },
+      qty: function (q, e) { return fmtN(q / 1000, 2) + " " + uLabel(curVehicle(), e); },
+      per100: function (v, e) { return consText(curVehicle(), e, v); },
+      item: function (it) { return t("item." + it); },
+      cat: function (c) { return t("cat." + c); },
+      ren: renName,
+      fuel: function (f) { return t("fuel." + f); },
+      type: typeName,
+      season: function (s) { return t("season." + s); }
+    };
+  }
+  function logbookDialog(v) {
+    var L = window.OrosGarageLogbook;
+    if (!v || !L) return;
+    var dlg = makeDialog("gr-lb");
+    dlg.appendChild(el("div", "dlg-title", "📘 " + t("lb.dlg", { name: v.name })));
+    dlg.appendChild(el("p", "dlg-sub", t("lb.intro")));
+    var hasFuel = rowsOf("fuel", v.id).length > 0, hasCosts = rowsOf("costs", v.id).length > 0;
+    var oF = checkRow(t("lb.optFuel"), hasFuel), oC = checkRow(t("lb.optCosts"), false), oM = checkRow(t("lb.optMoney"), true);
+    if (!hasFuel) oF.input.disabled = true;
+    if (!hasCosts) oC.input.disabled = true;
+    dlg.appendChild(oF.wrap);
+    dlg.appendChild(oC.wrap);
+    dlg.appendChild(oM.wrap);
+    function report() {
+      return L.build(data, v.id, { fuel: oF.input.checked, costs: oC.input.checked, money: oM.input.checked, today: todayYmd() });
+    }
+    var acts = el("div", "dlg-actions");
+    acts.style.flexWrap = "wrap";
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("lb.html"), "", function () {
+      var r = report();
+      if (!r) return;
+      var name = ("orOS-logbook-" + v.name).replace(/[\\/:*?"<>|\s]+/g, "-").slice(0, 60) + "-" + todayYmd() + ".html";
+      saveText(L.page(r, logbookFmt()), name, "text/html", "HTML", ".html");
+    }));
+    acts.appendChild(button(t("lb.print"), "primary", function () {
+      var r = report();
+      if (!r) return;
+      dlg.close();
+      var box = $("print-area");
+      box.innerHTML = L.html(r, logbookFmt());      // every data text escaped by logbook.js
+      showToast(t("lb.printHint"));
+      setTimeout(function () {
+        try { window.print(); } catch (e) {}
+      }, 60);
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
   }
 
   // ----- Service -----
@@ -2439,6 +2577,7 @@
     io.appendChild(button(t("set.csv"), "", exportCsv));
     io.appendChild(button(t("set.json"), "", exportData));
     io.appendChild(button(t("set.import"), "", importData));
+    if (curVehicle()) io.appendChild(button(t("lb.set"), "", function () { dlg.close(); logbookDialog(curVehicle()); }));
     dlg.appendChild(io);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("set.close"), "primary", function () { dlg.close(); }));
@@ -2776,6 +2915,7 @@
       if (document.visibilityState !== "hidden" && renderedDay !== todayYmd()) render();
     }, 60000);
     window.addEventListener("pagehide", savePrefsNow);
+    window.addEventListener("afterprint", function () { var pa = $("print-area"); if (pa) pa.innerHTML = ""; });
     wireKeyboard();
   }
 

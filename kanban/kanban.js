@@ -26,9 +26,21 @@
 //  12. Sync slice (merge-registered) + palette
 //  13. Σύνδεση (Wiring) & εκκίνηση (boot)
 // ============================================================
+// Wave K1 (Trello/Planka/Jira-like boards):
+//   - per-field card merge (kanban/model.js, OrosKanbanModel)
+//   - WIP limits + arrival rules on the column (col.wip, col.auto),
+//     overdue rule on its label (label.auto = "overdue")
+//   - swimlanes (by label / by card.lane), Table and Timeline views
+//     (device-local view prefs), attachments on the orOS disk
+//     (/internal/Kanban/Attachments), card cover (colour or image)
+//   - board export (JSON, CSV), import of that JSON, templates
+//     (archived boards with a "tpl-" id; built-ins in tools.js)
+// ============================================================
 (function () {
   "use strict";
 
+  var M = window.OrosKanbanModel;              // kanban/model.js
+  var T = window.OrosKanbanTools;              // kanban/tools.js
   var STORAGE_KEY = "oros-kanban-data";
   var PREFS_KEY   = "oros-kanban-prefs";        // device-local: { activeBoardId }
   var RESCUE_KEY  = "oros-kanban-data-broken";  // device-local: unreadable data kept aside
@@ -123,7 +135,7 @@
       "meta.columns":     "columns",
       "meta.cards":       "cards",
       "import.title":     "Import from other apps",
-      "import.hint":      "Supported: Kanri and Trello JSON exports. New boards are created — existing data is never touched.",
+      "import.hint":      "Supported: a board exported from orOS Kanban (JSON), and Kanri and Trello JSON exports. New boards are created — existing data is never touched.",
       "import.detected":  "Detected source:",
       "import.unknown":   "Unknown file — no Kanban data found.",
       "import.err":       "Could not read the file.",
@@ -155,6 +167,89 @@
       "import.e.offline": "You're offline.",
       "import.e.busy":    "The platform asks to slow down. Try again in a minute.",
       "import.e.other":   "Couldn't reach the platform. Try again later.",
+      "more.title":       "View and board options",
+      "view.title":       "View",
+      "view.board":       "Board",
+      "view.table":       "Table",
+      "view.timeline":    "Timeline",
+      "lanes.title":      "Swimlanes",
+      "lanes.none":       "None",
+      "lanes.label":      "By label",
+      "lanes.lane":       "By lane",
+      "lanes.nolabel":    "No label",
+      "lanes.nolane":     "No lane",
+      "lanes.hint":       "Rows of cards across the columns. Drag a card to another row to change its label or lane.",
+      "card.col":         "Column",
+      "card.lane":        "Lane",
+      "card.laneph":      "e.g. Team A",
+      "card.cover":       "Cover",
+      "card.cover.none":  "No cover",
+      "card.att":         "Attachments",
+      "att.add":          "Add file",
+      "att.bad":          "That file could not be added (photos, or other files up to 10 MB).",
+      "att.noDisk":       "The orOS disk is not available here.",
+      "att.missing":      "Not on this device",
+      "att.missingLong":  "This file is not on this device. It comes with the orOS disk (Files) of the device that added it, through Vault Drive.",
+      "att.open":         "Open",
+      "att.save":         "Save a copy",
+      "att.remove":       "Remove",
+      "att.cover":        "Use as cover",
+      "att.where":        "Kept in Files › Kanban › Attachments. Photos are resized and their location data removed.",
+      "att.max":          "Up to 20 attachments per card.",
+      "att.close":        "Close",
+      "att.count":        "Attachments",
+      "col.wip":          "WIP limit",
+      "col.wip.hint":     "Empty = no limit. The column turns orange when it holds more cards than this.",
+      "col.auto":         "When a card arrives here",
+      "wip.title":        "Cards / WIP limit",
+      "wip.over":         "Over the WIP limit",
+      "auto.done":        "Tick all subtasks",
+      "auto.today":       "Set the due date to today",
+      "auto.top":         "Move it to the top",
+      "auto.label":       "Add a label",
+      "auto.nolabel":     "No label",
+      "auto.title":       "Automations",
+      "auto.menu":        "Automations…",
+      "auto.overdue":     "When a due date passes, add the label “Overdue” (cards in the last column are left alone)",
+      "auto.overdueName": "Overdue",
+      "auto.cols":        "When a card arrives in a column",
+      "auto.none":        "No rules",
+      "auto.edit":        "Edit",
+      "auto.ran":         "Automation ran in “{col}”",
+      "auto.badge":       "This column has automations",
+      "export.json":      "Export board (JSON)",
+      "export.csv":       "Export cards (CSV)",
+      "export.done":      "Exported",
+      "export.skipped":   "Some attachments were too large and are not in the file.",
+      "tpl.save":         "Save as template…",
+      "tpl.new":          "New board from template…",
+      "tpl.title":        "New board from template",
+      "tpl.builtin":      "Built-in",
+      "tpl.mine":         "Your templates",
+      "tpl.none":         "No templates of your own yet. Use “Save as template…” on a board.",
+      "tpl.saved":        "Template saved",
+      "tpl.name":         "Template name",
+      "tpl.saveTitle":    "Save as template",
+      "tpl.saveHint":     "Columns, labels, WIP limits, rules and cards are kept; due dates, attachments and ticks are not.",
+      "tpl.del":          "Delete template",
+      "tpl.created":      "Board created",
+      "confirm.tpldel":   "Delete this template?",
+      "tbl.card":         "Card",
+      "tbl.col":          "Column",
+      "tbl.due":          "Due",
+      "tbl.labels":       "Labels",
+      "tbl.sub":          "Subtasks",
+      "tbl.lane":         "Lane",
+      "tbl.sort":         "Sort by",
+      "tbl.empty":        "No cards to show.",
+      "tl.empty":         "No cards with a due date. Give a card a due date to see it here.",
+      "tl.nodue":         "Cards without a due date: {n}",
+      "tl.today":         "Today",
+      "tl.hint":          "Drag a card along the dates to change its due date.",
+      "csv.board":        "Board",
+      "csv.notes":        "Notes",
+      "csv.info":         "Extra info",
+      "import.oros":      "orOS Kanban",
       "color.blue":       "Blue",
       "color.green":      "Green",
       "color.red":        "Red",
@@ -238,7 +333,7 @@
       "meta.columns":     "στήλες",
       "meta.cards":       "κάρτες",
       "import.title":     "Εισαγωγή από άλλες εφαρμογές",
-      "import.hint":      "Υποστηρίζονται: εξαγωγές JSON από Kanri και Trello. Δημιουργούνται νέοι πίνακες — τα υπάρχοντα δεδομένα δεν αγγίζονται.",
+      "import.hint":      "Υποστηρίζονται: πίνακας που εξήχθη από το orOS Kanban (JSON), και εξαγωγές JSON από Kanri και Trello. Δημιουργούνται νέοι πίνακες — τα υπάρχοντα δεδομένα δεν αγγίζονται.",
       "import.detected":  "Αναγνωρίστηκε προέλευση:",
       "import.unknown":   "Άγνωστο αρχείο — δεν βρέθηκαν δεδομένα Kanban.",
       "import.err":       "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
@@ -270,6 +365,89 @@
       "import.e.offline": "Είσαι εκτός σύνδεσης.",
       "import.e.busy":    "Η πλατφόρμα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
       "import.e.other":   "Δεν ήταν δυνατή η σύνδεση με την πλατφόρμα. Δοκίμασε αργότερα.",
+      "more.title":       "Προβολή και επιλογές πίνακα",
+      "view.title":       "Προβολή",
+      "view.board":       "Στήλες",
+      "view.table":       "Λίστα",
+      "view.timeline":    "Χρονολόγιο",
+      "lanes.title":      "Λωρίδες",
+      "lanes.none":       "Καμία",
+      "lanes.label":      "Ανά ετικέτα",
+      "lanes.lane":       "Ανά λωρίδα",
+      "lanes.nolabel":    "Χωρίς ετικέτα",
+      "lanes.nolane":     "Χωρίς λωρίδα",
+      "lanes.hint":       "Σειρές καρτών κατά μήκος των στηλών. Σύρε μια κάρτα σε άλλη σειρά για να αλλάξεις ετικέτα ή λωρίδα.",
+      "card.col":         "Στήλη",
+      "card.lane":        "Λωρίδα",
+      "card.laneph":      "π.χ. Ομάδα Α",
+      "card.cover":       "Εξώφυλλο",
+      "card.cover.none":  "Χωρίς εξώφυλλο",
+      "card.att":         "Συνημμένα",
+      "att.add":          "Προσθήκη αρχείου",
+      "att.bad":          "Δεν ήταν δυνατή η προσθήκη του αρχείου (φωτογραφίες, ή άλλα αρχεία έως 10 MB).",
+      "att.noDisk":       "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
+      "att.missing":      "Όχι σε αυτή τη συσκευή",
+      "att.missingLong":  "Αυτό το αρχείο δεν υπάρχει σε αυτή τη συσκευή. Έρχεται με τον δίσκο του orOS (Αρχεία) της συσκευής που το πρόσθεσε, μέσω του Vault Drive.",
+      "att.open":         "Άνοιγμα",
+      "att.save":         "Αποθήκευση αντιγράφου",
+      "att.remove":       "Αφαίρεση",
+      "att.cover":        "Ως εξώφυλλο",
+      "att.where":        "Φυλάσσεται στα Αρχεία › Kanban › Attachments. Οι φωτογραφίες μικραίνουν και χάνουν τα στοιχεία τοποθεσίας τους.",
+      "att.max":          "Έως 20 συνημμένα ανά κάρτα.",
+      "att.close":        "Κλείσιμο",
+      "att.count":        "Συνημμένα",
+      "col.wip":          "Όριο εργασιών (WIP)",
+      "col.wip.hint":     "Κενό = χωρίς όριο. Η στήλη γίνεται πορτοκαλί όταν έχει περισσότερες κάρτες από αυτό.",
+      "col.auto":         "Όταν έρχεται μια κάρτα εδώ",
+      "wip.title":        "Κάρτες / όριο WIP",
+      "wip.over":         "Πάνω από το όριο WIP",
+      "auto.done":        "Τσεκάρισμα όλων των υπο-εργασιών",
+      "auto.today":       "Προθεσμία σήμερα",
+      "auto.top":         "Μετακίνηση στην κορυφή",
+      "auto.label":       "Προσθήκη ετικέτας",
+      "auto.nolabel":     "Καμία ετικέτα",
+      "auto.title":       "Αυτοματισμοί",
+      "auto.menu":        "Αυτοματισμοί…",
+      "auto.overdue":     "Όταν περάσει μια προθεσμία, πρόσθεσε την ετικέτα «Καθυστέρηση» (όχι στις κάρτες της τελευταίας στήλης)",
+      "auto.overdueName": "Καθυστέρηση",
+      "auto.cols":        "Όταν έρχεται μια κάρτα σε στήλη",
+      "auto.none":        "Κανένας κανόνας",
+      "auto.edit":        "Αλλαγή",
+      "auto.ran":         "Εκτελέστηκε αυτοματισμός στη στήλη «{col}»",
+      "auto.badge":       "Η στήλη έχει αυτοματισμούς",
+      "export.json":      "Εξαγωγή πίνακα (JSON)",
+      "export.csv":       "Εξαγωγή καρτών (CSV)",
+      "export.done":      "Η εξαγωγή έγινε",
+      "export.skipped":   "Κάποια συνημμένα ήταν πολύ μεγάλα και δεν μπήκαν στο αρχείο.",
+      "tpl.save":         "Αποθήκευση ως πρότυπο…",
+      "tpl.new":          "Νέος πίνακας από πρότυπο…",
+      "tpl.title":        "Νέος πίνακας από πρότυπο",
+      "tpl.builtin":      "Έτοιμα πρότυπα",
+      "tpl.mine":         "Τα πρότυπά σου",
+      "tpl.none":         "Δεν έχεις ακόμα δικά σου πρότυπα. Χρησιμοποίησε το «Αποθήκευση ως πρότυπο…» σε έναν πίνακα.",
+      "tpl.saved":        "Το πρότυπο αποθηκεύτηκε",
+      "tpl.name":         "Όνομα προτύπου",
+      "tpl.saveTitle":    "Αποθήκευση ως πρότυπο",
+      "tpl.saveHint":     "Κρατούνται οι στήλες, οι ετικέτες, τα όρια WIP, οι κανόνες και οι κάρτες· όχι οι προθεσμίες, τα συνημμένα και τα τσεκαρίσματα.",
+      "tpl.del":          "Διαγραφή προτύπου",
+      "tpl.created":      "Ο πίνακας δημιουργήθηκε",
+      "confirm.tpldel":   "Διαγραφή αυτού του προτύπου;",
+      "tbl.card":         "Κάρτα",
+      "tbl.col":          "Στήλη",
+      "tbl.due":          "Προθεσμία",
+      "tbl.labels":       "Ετικέτες",
+      "tbl.sub":          "Υπο-εργασίες",
+      "tbl.lane":         "Λωρίδα",
+      "tbl.sort":         "Ταξινόμηση κατά",
+      "tbl.empty":        "Δεν υπάρχουν κάρτες για εμφάνιση.",
+      "tl.empty":         "Καμία κάρτα με προθεσμία. Δώσε προθεσμία σε μια κάρτα για να τη δεις εδώ.",
+      "tl.nodue":         "Κάρτες χωρίς προθεσμία: {n}",
+      "tl.today":         "Σήμερα",
+      "tl.hint":          "Σύρε μια κάρτα πάνω στις ημερομηνίες για να αλλάξεις την προθεσμία της.",
+      "csv.board":        "Πίνακας",
+      "csv.notes":        "Σημειώσεις",
+      "csv.info":         "Επιπλέον στοιχεία",
+      "import.oros":      "orOS Kanban",
       "color.blue":       "Μπλε",
       "color.green":      "Πράσινο",
       "color.red":        "Κόκκινο",
@@ -280,9 +458,11 @@
     }
   };
 
-  function t(key) {
+  function t(key, vars) {
     var p = STRINGS[LANG] || STRINGS.en;
-    return p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+    var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(String(vars[k])); });
+    return s;
   }
 
   function uid() {
@@ -415,11 +595,11 @@
   }
 
   // --- Entity touch/tombstone (board-scoped) ---
-  function touch(ent)     { if (ent) ent.mtime = Date.now(); }
-  function tombstone(board, id) {
+  function touch(ent)     { if (ent) ent.mtime = Date.now(); }   // columns, labels (cards: stamp())
+  function tombstone(board, id, at) {
     if (!board) return;
     if (!board.deleted) board.deleted = {};
-    board.deleted[id] = Date.now();
+    board.deleted[id] = at || Date.now();
   }
 
   function newBoardObj(name) {
@@ -453,6 +633,7 @@
   }
 
   function newCardObj(text) {
+    var now = Date.now();
     return {
       id: uid(),
       text: text,
@@ -461,8 +642,9 @@
       labels: [],
       subtasks: [],
       info: [],
-      mtime: Date.now(),
-      pos: 0
+      mtime: now,
+      pos: 0,
+      fm: M.freshFm(now)  // K1: one stamp per field group
     };
   }
 
@@ -587,8 +769,8 @@
           // fallback for the first boot on this version.
           var pref = readPrefs().activeBoardId;
           if (pref && boardById(pref)) state.activeBoardId = pref;
-          if (!state.activeBoardId || !boardById(state.activeBoardId)) {
-            state.activeBoardId = state.boards[0].id;
+          if (!state.activeBoardId || !boardById(state.activeBoardId) || isTpl(boardById(state.activeBoardId))) {
+            state.activeBoardId = firstUsable().id;
           }
 
           // Prune tombstones in ALL boards
@@ -678,7 +860,7 @@
     var ok = true;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(canonState(state))); }
     catch (e) { ok = false; }
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ activeBoardId: state.activeBoardId || null })); }
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ activeBoardId: state.activeBoardId || null, views: viewPrefs })); }
     catch (e2) {}
     if (!ok && !quotaWarned) {             // R30: say it once, never swallow
       quotaWarned = true;
@@ -695,6 +877,29 @@
       var p = JSON.parse(localStorage.getItem(PREFS_KEY));
       return (p && typeof p === "object") ? p : {};
     } catch (e) { return {}; }
+  }
+
+  // K1: device-local view of each board (never synced):
+  //   { <boardId>: { v: "board"|"table"|"timeline", lanes: ""|"label"|"lane",
+  //                  sort: "status"|"text"|"due"|"labels"|"sub"|"lane", dir: "asc"|"desc" } }
+  var viewPrefs = (function () {
+    var v = readPrefs().views;
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  })();
+  function viewOf(boardId) {
+    var v = viewPrefs[boardId] || {};
+    return {
+      v: v.v === "table" || v.v === "timeline" ? v.v : "board",
+      lanes: v.lanes === "label" || v.lanes === "lane" ? v.lanes : "",
+      sort: typeof v.sort === "string" ? v.sort : "status",
+      dir: v.dir === "desc" ? "desc" : "asc"
+    };
+  }
+  function setView(boardId, patch) {
+    var v = viewOf(boardId);
+    Object.keys(patch).forEach(function (k) { v[k] = patch[k]; });
+    viewPrefs[boardId] = v;
+    saveLocal();
   }
 
   function save() {
@@ -753,403 +958,27 @@
     return null;
   }
 
-  // ---------- 2b. Cross-device merge engine (v0.6.0 multi-board) ----------
-  // Συμβόλαιο (καταναλώνεται από το sync.js μέσω του 5ου ορίσματος
-  // της registerSlice):
-  //   mergeKanbanStates(local, remote) → merged state | null.
-  //
-  // MULTI-BOARD ARCHITECTURE:
-  //   · Board level — union κατά board.id. Το board NAME κάνει LWW
-  //     στο board.mtime (νεότερο κερδίζει· ισοβαθμία → λεξικογραφικό
-  //     JSON — συμμετρικό). Board tombstone: αν κάποια πλευρά έχει
-  //     διαγράψει το board (deleted[boardId] με ts νεότερο από το
-  //     board.mtime), το board ΠΕΘΑΙΝΕΙ μαζί με ΟΛΑ τα περιεχόμενά
-  //     του (columns, cards, labels) — cascade, κανένα zombie.
-  //   · Ordering boards — η πλευρά με το μεγαλύτερο ROOT om — η πλευρά με το μεγαλύτερο ROOT om
-  //     προσφέρει τη σειρά των boards (ίσος κανόνας με στηλές).
-  //     Η ενεργή επιλογή board (activeBoardId) είναι DEVICE-LOCAL —
-  //     ΔΕΝ ταξιδεύει στο merge: καθε συσκευή κρατά το board που
-  //     έβλεπε (αν υπάρχει ακόμα· αλλιώς fallback στο πρώτο).
-  //   · Per-board — ΚΑΘΕ board mergeάρεται ανεξάρτητα με ΟΛΟΥΣ τους
-  //     κανόνες του v0.5 (tombstones, LWW περιεχομένου, placement,
-  //     ordering με om/pos, orphan rule). Κανένα leak μεταξύ boards:
-  //     card ids που ζουν σε διαφορετικά boards δεν συγκρούονται ποτέ
-  //     (και εξ ορισμού είναι διαφορετικά ids).
-  //
-  // Deterministic + symmetric: merge(A,B) === merge(B,A) — και στις
-  // δύο συσκευές το αποτέλεσμα ταυτίζεται, καμία ταλάντευση.
+  // ---------- 2b. Cross-device merge engine → kanban/model.js ----------
+  // Wave K1: the merge and the canonical form live in model.js
+  // (OrosKanbanModel, Node-tested): boards union by id, per-board
+  // tombstones, column/label LWW, and per-FIELD card merge (text, notes,
+  // due, labels, subtasks per item, extra info, column, attachments per
+  // item, cover, lane), each group with its own stamp in card.fm.
+  // Cards from older versions (no fm) keep the old whole-card rule.
+  function mergeKanbanStates(A, B) { return M.mergeKanbanStates(A, B); }
+  function canonState(src) { return M.canonState(src); }
 
-  // --- Board-level LWW: name/mtime νικητής ---
-  // Board header = ΟΛΑ τα LWW πεδία του board (name, archived, color).
-  // v0.6.1 fix: archived/color πετάγονταν στο merge → αρχειοθετημένα
-  // boards "αναживαν" και τα χρώματα γίνονταν fallback μετά από sync.
-  function newerBoardHeader(a, b) {
-    if ((a.mtime || 0) !== (b.mtime || 0)) {
-      return (a.mtime || 0) > (b.mtime || 0) ? a : b;
-    }
-    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
+  // An edit of some field groups of a card (see model.js GROUPS).
+  function stamp(card, groups) { return M.stampCard(card, groups, Date.now()); }
+  function isTpl(b) { return M.isTpl(b); }
+  // Boards the user works in (templates are archived "tpl-" boards).
+  function workBoards() { return state.boards.filter(function (b) { return !isTpl(b); }); }
+  function firstUsable(boards) {
+    var list = boards || state.boards;
+    for (var i = 0; i < list.length; i++) if (!list[i].archived && !isTpl(list[i])) return list[i];
+    for (var j = 0; j < list.length; j++) if (!isTpl(list[j])) return list[j];
+    return list[0] || null;
   }
-
-    // --- Τοπικά tombstones ΟΛΩΝ των boards (root-level map ---
-  // board διαγραφές ζουν στο ΔΙΚΟ τους state.deleted με το board.id
-  // ως key — ψάχνουμε global κάθε φορά που χρειάζεται)
-
-  // ΠΡΟΣΟΧΗ: το board-level tombstone ΕΧΕΙ νόημα μόνο ως marker
-  // στο ίδιο το board object. Η τυπική ροή: deleteBoard() γράφει
-  // tombstone στο ΕΝΕΡΓΟ board αν είναι το ίδιο, αλλιώς στο δικό
-  // του deleted map ΔΕΝ υπάρχει — το board απομακρύνεται απλώς
-  // από το boards[]. Στο merge, ένα board που λείπει από μία πλευρά
-  // ΔΕΝ σημαίνει διαγραφή (μπορεί να είναι απλώς ακόμα-μη-φτάσιμο
-  // νέο board). Γι' αυτό κρατάμε εξωτερικό root map: βλ.
-  // ROOT_TOMB παρακάτω.
-
-  // Root-level board tombstones: state.boardDeleted = { id: ts }.
-  // ΑΝΩΤΑΤΟ επίπεδο — ένα board θεωρείται νεκρό αν υπάρχει εδώ
-  // entry με ts > board.mtime (edit-after-delete ανασταίνει board,
-  // ΟΜΩΙ ΚΑΝΟΝΙΚΑ δεν μπορεί: όλα τα boards διαγράφονται ως
-  // σύνολο. Απλούστευση: το ts πάντα νικά — κανένα resurrection
-  // επιπέδου board, τα δεδομένα του έχουν φύγει cascade).
-  function boardAlive(board, rootTomb) {
-    var ts = rootTomb[board.id];
-    return ts === undefined || (board.mtime || 0) > ts;
-  }
-  // Σημείωση: επιτρέπουμε πλήρως συμμετρική συνθήκη mtime > ts για
-  // συνέπεια με το entAlive — τοπικά ποτέ δεν την προκαλούμε (η
-  // διαγραφή board είναι μονόδρομη), αλλά δεν βλάπτει.
-
-  // --- Per-BOARD merge: ΟΛΟΙ οι κανόνες v0.5, με κάποιο board ως
-  // εύρος (scope). Πρώην mergeKanbanStates τοπικό σώμα — τώρα
-  // mergeBoardBody(boardA, boardB) → merged board | null. ---
-  function mergeEntityMaps(aDel, bDel) {
-    var out = {};
-    var a = aDel || {}, b = bDel || {};
-    Object.keys(a).forEach(function (id) { out[id] = a[id]; });
-    Object.keys(b).forEach(function (id) {
-      out[id] = Math.max(out[id] || 0, b[id]);
-    });
-    return out;
-  }
-
-  function entAlive(ent, tomb) {
-    var ts = tomb[ent.id];
-    return ts === undefined || (ent.mtime || 0) > ts;
-  }
-
-  function newerEntity(a, b) {
-    if ((a.mtime || 0) !== (b.mtime || 0)) {
-      return (a.mtime || 0) > (b.mtime || 0) ? a : b;
-    }
-    return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
-  }
-
-  function unionEntities(aArr, bArr, tomb) {
-    var map = {};
-    (aArr || []).forEach(function (e) { map[e.id] = e; });
-    (bArr || []).forEach(function (e) {
-      map[e.id] = map[e.id] ? newerEntity(map[e.id], e) : e;
-    });
-    var out = [];
-    Object.keys(map).forEach(function (id) {
-      if (entAlive(map[id], tomb)) out.push(map[id]);
-    });
-    return out;
-  }
-
-  function orderEntities(entities, refArr) {
-    var idx = {};
-    (refArr || []).forEach(function (e, i) { idx[e.id] = i; });
-    entities.sort(function (x, y) {
-      var ix = idx[x.id] !== undefined ? idx[x.id] : Infinity;
-      var iy = idx[y.id] !== undefined ? idx[y.id] : Infinity;
-      if (ix !== iy) return ix - iy;
-      if ((x.mtime || 0) !== (y.mtime || 0)) return (x.mtime || 0) - (y.mtime || 0);
-      return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
-    });
-    entities.forEach(function (e, i) { e.pos = i; });
-    return entities;
-  }
-
-  function pickRef(aArr, bArr, aOm, bOm) {
-    if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
-    var ka = JSON.stringify((aArr || []).map(function (e) { return e.id; }));
-    var kb = JSON.stringify((bArr || []).map(function (e) { return e.id; }));
-    return ka >= kb ? aArr : bArr;
-  }
-
-  function flattenSide(board) {
-    var out = {};
-    ((board && board.columns) || []).forEach(function (col) {
-      (col.cards || []).forEach(function (card) {
-        out[card.id] = { card: card, colId: col.id };
-      });
-    });
-    return out;
-  }
-
-  function newerPlacement(pa, pb) {
-    if ((pa.card.mtime || 0) !== (pb.card.mtime || 0)) {
-      return (pa.card.mtime || 0) > (pb.card.mtime || 0) ? pa : pb;
-    }
-    var ka = JSON.stringify(pa.card) + "|" + pa.colId;
-    var kb = JSON.stringify(pb.card) + "|" + pb.colId;
-    return ka >= kb ? pa : pb;
-  }
-
-  function mergeColHeaders(la, lb) {
-    var strip = function (c) {
-      var h = JSON.parse(JSON.stringify(c));
-      delete h.cards;
-      return h;
-    };
-    var head = newerEntity(strip(la), strip(lb));
-    head.om = Math.max(la.om || 0, lb.om || 0);
-    return head;
-  }
-
-  // PER-BOARD BODY MERGE — τα πάντα scoped στο board αυτό.
-  // Επιστρέφει merged board object (name/id/mtime/om/deleted/
-  // labels/columns) ή null αν δεν μείνει τίποτα ζωντανό.
-  function mergeBoardBody(ba, bb) {
-    var tomb = mergeEntityMaps(ba.deleted, bb.deleted);
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(tomb).forEach(function (id) {
-      if (tomb[id] < cutoff) delete tomb[id];
-    });
-
-    // 1. Ετικέτες: LWW περιεχομένου, σειρά από το board om
-    var labels = unionEntities(ba.labels || [], bb.labels || [], tomb);
-
-    // 2. Headers στηλών: ζεύγη κατά id
-    var colPairs = {};
-    var pairColumns = function (arr) {
-      (arr || []).forEach(function (col) {
-        if (colPairs[col.id]) colPairs[col.id].push(col);
-        else                  colPairs[col.id] = [col];
-      });
-    };
-    pairColumns(ba.columns); pairColumns(bb.columns);
-
-    var mergedCols = {};
-    Object.keys(colPairs).forEach(function (id) {
-      var pair = colPairs[id];
-      var head;
-      if (pair.length === 2) head = mergeColHeaders(pair[0], pair[1]);
-      else {
-        head = (function (c) {
-          var h = JSON.parse(JSON.stringify(c));
-          delete h.cards;
-          return h;
-        })(pair[0]);
-      }
-      if (!entAlive(head, tomb)) return;     // διαγεγραμμένη στήλη
-      mergedCols[id] = {
-        head: head,
-        cards: [],
-        refA: pair.length > 0 ? pair[0] : null,
-        refB: pair.length > 1 ? pair[1] : null
-      };
-    });
-
-    // 3. Κάρτες: flatten και των δύο πλευρών, νικητής ανά id
-    var fa = flattenSide(ba);
-    var fb = flattenSide(bb);
-    var cardIds = {};
-    Object.keys(fa).forEach(function (id) { cardIds[id] = true; });
-    Object.keys(fb).forEach(function (id) { cardIds[id] = true; });
-
-    Object.keys(cardIds).forEach(function (id) {
-      var pa = fa[id], pb = fb[id];
-      var win;
-      if (pa && pb) win = newerPlacement(pa, pb);
-      else          win = pa || pb;
-      if (!win) return;
-      if (!entAlive(win.card, tomb)) return;
-      var mc = mergedCols[win.colId];
-      if (!mc) return;                 // orphan rule
-      mc.cards.push(win.card);
-    });
-
-    // 4. Σειρά καρτών ανά στήλη
-    Object.keys(mergedCols).forEach(function (id) {
-      var mc = mergedCols[id];
-      var refArr =
-        pickRef((mc.refA && mc.refA.cards) || [],
-                (mc.refB && mc.refB.cards) || [],
-                mc.refA ? mc.refA.om || 0 : 0,
-                mc.refB ? mc.refB.om || 0 : 0);
-      orderEntities(mc.cards, refArr);
-    });
-
-    // 5. Σύνθεση merged board
-    var head = newerBoardHeader(
-      { id: ba.id, name: ba.name, archived: !!ba.archived,
-        color: ba.color || null, mtime: ba.mtime },
-      { id: bb.id, name: bb.name, archived: !!bb.archived,
-        color: bb.color || null, mtime: bb.mtime }
-    );
-
-    var cols = [];
-    Object.keys(mergedCols).forEach(function (id) {
-      var mc = mergedCols[id];
-      mc.head.cards = mc.cards;
-      cols.push(mc.head);
-    });
-
-    // Board με μηδεν στήλες μετά το merge: ΔΕΝ πεθαίνει — ένα
-    // board μπορεί νόμιμα να είναι άδειο (ο χρήστης διέγραψε τις
-    // στήλες του). Μόνο ο ROOT board tombstone σκοτώνει board.
-
-    return {
-      id: ba.id,
-      name: head.name,
-      archived: head.archived,       // v0.6.1: survives the merge now
-      color: head.color || undefined, // v0.6.1: survives the merge now
-      mtime: Math.max(ba.mtime || 0, bb.mtime || 0),
-      om: Math.max(ba.om || 0, bb.om || 0),
-      deleted: tomb,
-      labels: orderEntities(labels, pickRef(ba.labels || [], bb.labels || [],
-                                             ba.om || 0, bb.om || 0)),
-      columns: orderEntities(cols, pickRef(ba.columns || [], bb.columns || [],
-                                           ba.om || 0, bb.om || 0))
-    };
-  }
-
-  // ===== ROOT MERGE: multi-board entry point =====
-  function mergeKanbanStates(A, B) {
-    var a = A || {}, b = B || {};
-
-    // Board tombstones: root maps ένωση με max ts. Τα boards
-    // κρατούν το δικό τους board.deleted για τις οντότητες τους·
-    // το state.boardDeleted αφορά ΜΟΝΟ τα boards.
-    var boardTomb = mergeEntityMaps(a.boardDeleted, b.boardDeleted);
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(boardTomb).forEach(function (id) {
-      if (boardTomb[id] < cutoff) delete boardTomb[id];
-    });
-
-    // Ζευγάρωση boards κατά id (και των δύο πλευρών)
-    var boardPairs = {};
-    var pairBoards = function (arr) {
-      (arr || []).forEach(function (bd) {
-        if (boardPairs[bd.id]) boardPairs[bd.id].push(bd);
-        else                  boardPairs[bd.id] = [bd];
-      });
-    };
-    pairBoards(a.boards); pairBoards(b.boards);
-
-    var mergedBoards = [];
-    Object.keys(boardPairs).forEach(function (id) {
-      var pair = boardPairs[id];
-      var bd;
-      if (pair.length === 2) bd = mergeBoardBody(pair[0], pair[1]);
-      else {
-        // Μονόπλευρο board: κλώνος (name/mtime/om/labels/columns)
-        bd = (function (src) {
-          return {
-            id: src.id,
-            name: src.name,
-            archived: src.archived,       // v0.6.1: keep flags/colors
-            color: src.color || undefined,
-            mtime: src.mtime,
-            om: src.om,
-            deleted: JSON.parse(JSON.stringify(src.deleted || {})),
-            labels: JSON.parse(JSON.stringify(src.labels || [])),
-            columns: JSON.parse(JSON.stringify(src.columns || []))
-          };
-        })(pair[0]);
-      }
-
-      // Root tombstone ελέγχεται στο header του board
-      if (!boardAlive(bd, boardTomb)) return;   // νεκρό board — drop
-
-      mergedBoards.push(bd);
-    });
-
-    // Μετα-συνθήκη: εντελώς άδειο αποτέλεσμα (π.χ. διαγράφηκαν όλα)
-    // → null → fallback σε plain apply από το sync.js
-    if (mergedBoards.length === 0) return null;
-
-    // Σειρά boards: ref = πλευρά με μεγαλύτερο ROOT om
-    orderEntities(mergedBoards,
-      pickRef(a.boards || [], b.boards || [], a.om || 0, b.om || 0));
-
-    // KN-7: one canonical form for the merge result and the getter.
-    return canonState({
-      ver: DATA_VER,
-      om: Math.max(a.om || 0, b.om || 0),
-      boardDeleted: boardTomb,
-      // activeBoardId ΔΕΝ θέτουμε εδώ — device-local, το κρατά
-      // το sliceSet (υφιστάμενο αν το board ζει, αλλιώς πρώτο)
-      boards: mergedBoards
-    });
-  }
-
-  // ---------- KN-7: canonical synced form ----------
-  // The engine compares JSON strings (R26). Getter and merge both end
-  // here, so merge(get, get) === get and merge(A, B) === merge(B, A)
-  // byte for byte:
-  //   · no device-local fields (activeBoardId lives in PREFS_KEY);
-  //   · tombstone maps with sorted keys, pruned by the same wall-clock
-  //     rule the merge uses (KN-Q1);
-  //   · known keys in a fixed order, unknown keys kept (sorted) so a
-  //     newer version's fields survive a pass through this one;
-  //   · pos = index everywhere (the merge's orderEntities does the same);
-  //   · board flags normalized (archived boolean, color only when set).
-  function canonOrder(obj, keys) {
-    var out = {};
-    keys.forEach(function (k) {
-      if (obj[k] !== undefined) out[k] = obj[k];
-    });
-    Object.keys(obj).sort().forEach(function (k) {
-      if (keys.indexOf(k) === -1 && obj[k] !== undefined) out[k] = obj[k];
-    });
-    return out;
-  }
-  function canonTombs(map) {
-    var out = {};
-    var cutoff = Date.now() - TOMB_LIFETIME_MS;
-    Object.keys(map || {}).sort().forEach(function (id) {
-      var ts = map[id];
-      if (typeof ts === "number" && ts >= cutoff) out[id] = ts;
-    });
-    return out;
-  }
-  var CARD_KEYS  = ["id", "text", "notes", "due", "labels", "subtasks", "info", "mtime", "pos"];
-  var COL_KEYS   = ["id", "name", "mtime", "om", "pos", "cards"];
-  var LABEL_KEYS = ["id", "name", "color", "mtime", "pos"];
-  var BOARD_KEYS = ["id", "name", "archived", "color", "mtime", "om", "pos",
-                    "deleted", "labels", "columns"];
-  function canonState(src) {
-    var s = JSON.parse(JSON.stringify(src || {}));
-    var boards = (Array.isArray(s.boards) ? s.boards : []).map(function (b, bi) {
-      var labels = (b.labels || []).map(function (lb, i) {
-        lb.pos = i;
-        return canonOrder(lb, LABEL_KEYS);
-      });
-      var columns = (b.columns || []).map(function (col, ci) {
-        col.pos = ci;
-        col.cards = (col.cards || []).map(function (c, ki) {
-          c.pos = ki;
-          return canonOrder(c, CARD_KEYS);
-        });
-        return canonOrder(col, COL_KEYS);
-      });
-      b.archived = !!b.archived;
-      if (!b.color) delete b.color;
-      b.pos = bi;
-      b.deleted = canonTombs(b.deleted);
-      b.labels = labels;
-      b.columns = columns;
-      return canonOrder(b, BOARD_KEYS);
-    });
-    delete s.activeBoardId;
-    s.ver = DATA_VER;
-    s.om = typeof s.om === "number" ? s.om : 0;
-    s.boardDeleted = canonTombs(s.boardDeleted);
-    s.boards = boards;
-    return canonOrder(s, ["ver", "om", "boardDeleted", "boards"]);
-  }
-
 
   // ---------- 10. Sync slice (merge-registered) + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
@@ -1215,9 +1044,9 @@
       // στο πρώτο. Έτσι το sync pull δεν αλλάζει board στον χρήστη.
       var keepActive = state ? state.activeBoardId : null;
       data.activeBoardId =
-        (keepActive && boardByIdIn(data.boards, keepActive))
+        (keepActive && boardByIdIn(data.boards, keepActive) && !isTpl(boardByIdIn(data.boards, keepActive)))
           ? keepActive
-          : data.boards[0].id;
+          : firstUsable(data.boards).id;
       state = data;
       state.boards.forEach(function (board) { pruneTombstones(board); });
       writeStore();
@@ -1227,6 +1056,7 @@
     if (same) return;
 
     scheduleRender();
+    setTimeout(runOverdue, 1000);       // K1: cards that came in late
     // KN-9: an open card dialog follows the merged card instead of
     // writing its stale copy back; the manage list rebinds too.
     refreshOpenCard();
@@ -1256,53 +1086,71 @@
     var headerHost = $("board-header");
     if (headerHost) renderBoardHeader();
 
-    // Empty state
     var empty = $("empty");
-    if (empty) {
-      empty.hidden = !(state && state.boards && state.boards.length === 0);
-    }
-
-    // Columns body
     var host = $("columns");
+    var alt = $("alt-view");
     if (!host) return;
     // KN-8: the rebuild must not eat what the user is typing in a
     // quick-add field (a pull re-renders while the keyboard is up).
     var keep = captureQuick(host);
+    var altScroll = alt && !alt.hidden ? captureAltScroll(alt) : null;
     host.innerHTML = "";
+    if (alt) alt.innerHTML = "";
 
     var board = currentBoard();
+    var vw = board ? viewOf(board.id) : viewOf("");
+    updateMoreBtn(vw);
     if (!board || board.columns.length === 0) {
       if (empty) {
         empty.querySelector("span").textContent = t("board.empty");
         empty.querySelector("small").textContent = t("board.empty.hint");
         empty.hidden = false;
       }
+      host.hidden = false;
+      if (alt) alt.hidden = true;
       return;
     }
-
     if (empty) empty.hidden = true;
 
-    board.columns.forEach(function (col) {
-      host.appendChild(makeColumnEl(col));
-    });
-    restoreQuick(keep);
+    if (vw.v !== "board" && alt) {
+      host.hidden = true;
+      host.classList.remove("lanes");
+      alt.hidden = false;
+      if (vw.v === "table") renderTable(alt, board, vw);
+      else renderTimeline(alt, board, altScroll);
+      if (altScroll && vw.v === "table") restoreAltScroll(alt, altScroll);
+    } else {
+      host.hidden = false;
+      if (alt) alt.hidden = true;
+      host.classList.toggle("lanes", !!vw.lanes);
+      if (vw.lanes) renderLanes(host, board, vw.lanes);
+      else board.columns.forEach(function (col) { host.appendChild(makeColumnEl(col)); });
+      restoreQuick(keep);
+    }
 
     // Filter popover update
     if (!$("filter-pop").hidden) renderFilterPop();
     updateFilterBtn();
   }
 
+  function captureAltScroll(alt) {
+    var w = alt.querySelector(".tbl-wrap, .tl-wrap");
+    return w ? { l: w.scrollLeft, t: w.scrollTop, kind: w.className } : null;
+  }
+  function restoreAltScroll(alt, sc) {
+    var w = alt.querySelector(".tbl-wrap, .tl-wrap");
+    if (w && w.className === sc.kind) { w.scrollLeft = sc.l; w.scrollTop = sc.t; }
+  }
+
+  // Quick-add inputs carry data-quick-key = column id (+ "|" + lane key
+  // in swimlane mode), so a rebuild puts the typed text back in place.
   function captureQuick(host) {
     var out = { vals: {}, focus: null };
-    var cols = host.querySelectorAll(".k-col");
-    for (var i = 0; i < cols.length; i++) {
-      var q = cols[i].querySelector(".col-quick");
-      if (!q) continue;
-      var id = cols[i].dataset.colId;
+    var qs = host.querySelectorAll(".col-quick");
+    for (var i = 0; i < qs.length; i++) {
+      var q = qs[i], id = q.getAttribute("data-quick-key");
       if (q.value) out.vals[id] = q.value;
-      if (document.activeElement === q) {
-        out.focus = { col: id, a: q.selectionStart, b: q.selectionEnd };
-      }
+      if (document.activeElement === q) out.focus = { key: id, a: q.selectionStart, b: q.selectionEnd };
     }
     return out;
   }
@@ -1313,7 +1161,7 @@
       if (q) q.value = keep.vals[id];
     });
     if (keep.focus) {
-      var f = findQuickInput(keep.focus.col);
+      var f = findQuickInput(keep.focus.key);
       if (f) {
         f.focus();
         try { f.setSelectionRange(keep.focus.a, keep.focus.b); } catch (e) {}
@@ -1440,7 +1288,7 @@
     pop.innerHTML = "";
 
     // Ζωντανά boards μόνο — τα αρχειοθετημένα ζουν στο Manage dialog
-    var live = state.boards.filter(function (b) { return !b.archived; });
+    var live = workBoards().filter(function (b) { return !b.archived; });
     live.forEach(function (bd) {
       pop.appendChild(makeBoardDropItem(bd, pop));
     });
@@ -1732,8 +1580,8 @@
     host.innerHTML = "";
 
           // Ζωντανά πρώτα, μετά τα αρχειοθετημένα με τη σειρά τους
-    var live    = state.boards.filter(function (b) { return !b.archived; });
-    var archived = state.boards.filter(function (b) { return !!b.archived; });
+    var live    = workBoards().filter(function (b) { return !b.archived; });
+    var archived = workBoards().filter(function (b) { return !!b.archived; });
 
     if (live.length > 0) host.appendChild(makeManageSection(live, false));
     if (archived.length > 0) host.appendChild(makeManageSection(archived, true));
@@ -1834,7 +1682,7 @@
     });
     actions.appendChild(archBtn);
 
-    if (state.boards.length > 1) {
+    if (workBoards().length > 1) {
       var delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = "manage-delete";
@@ -1952,6 +1800,8 @@
       labels: JSON.parse(JSON.stringify(bd.labels || [])),
       columns: bd.columns.map(function (col) {
         var nc = newColumnObj(col.name);
+        if (col.wip) nc.wip = col.wip;                                   // K1
+        if (col.auto) nc.auto = JSON.parse(JSON.stringify(col.auto));    // label ids are kept
         nc.mtime = Date.now();
         nc.om = Date.now();
         nc.cards = col.cards.map(function (c) {
@@ -1963,7 +1813,8 @@
           ncard.info = JSON.parse(JSON.stringify(c.info || []));
           ncard.subtasks.forEach(function (s) { s.id = uid(); });
           ncard.info.forEach(function (f) { f.id = uid(); });
-          touch(ncard);
+          if (c.lane) ncard.lane = c.lane;
+          if (c.cover && c.cover.charAt(0) === "#") ncard.cover = c.cover;
           ncard.pos = 0;
           return ncard;
         });
@@ -1998,6 +1849,9 @@
     // τα περιεχόμενα πεθαίνουν cascade με την boardAlive ερώτηση).
     if (!state.boardDeleted) state.boardDeleted = {};
     state.boardDeleted[boardId] = Date.now();
+    var gone = [];
+    bd.columns.forEach(function (c) { gone = gone.concat(filesOfCards(c.cards)); });
+    dropFilesLater(gone);
 
     // Remove from boards[]
     state.boards = state.boards.filter(function (b) { return b.id !== boardId; });
@@ -2005,7 +1859,8 @@
 
     // If we deleted the active board, switch to another
     if (state.activeBoardId === boardId) {
-      state.activeBoardId = state.boards.length > 0 ? state.boards[0].id : null;
+      var nx = firstUsable();
+      state.activeBoardId = nx ? nx.id : null;
     }
 
             save(); renderAll();
@@ -2050,13 +1905,12 @@
   }
 
   // ---------- 3b. Render: columns + cards (board-scoped) ----------
-  function makeColumnEl(col) {
-    var el = document.createElement("div");
-    el.className = "k-col";
-    el.dataset.colId = col.id;
+  var SVG_BOLT = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+  var SVG_CLIP = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
 
-    // Head: title (dblclick → rename) + rename pencil + visible count.
-    // Όλο το head είναι η λαβή drag της στήλης.
+  // Column head: title (dblclick → settings), rules badge, pencil,
+  // count — "n/limit" when the column has a WIP limit (orange when over).
+  function makeColHead(col) {
     var head = document.createElement("div");
     head.className = "col-head";
 
@@ -2067,12 +1921,21 @@
     title.addEventListener("dblclick", function () { openColDialog(col.id); });
     head.appendChild(title);
 
+    if (T.hasRules(col)) {
+      var bolt = document.createElement("span");
+      bolt.className = "col-auto";
+      bolt.title = t("auto.badge");
+      bolt.setAttribute("aria-label", t("auto.badge"));
+      bolt.innerHTML = SVG_BOLT;
+      head.appendChild(bolt);
+    }
+
     // Rename pencil (#22) — ίδιο dialog με dblclick, πάντα ορατό
     var rename = document.createElement("button");
     rename.type = "button";
     rename.className = "col-rename";
-    rename.setAttribute("aria-label", t("col.rename"));
-    rename.title = t("col.rename");
+    rename.setAttribute("aria-label", t("col.settings"));
+    rename.title = t("col.settings");
     rename.innerHTML =
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
     rename.addEventListener("click", function (e) {
@@ -2081,17 +1944,31 @@
     });
     head.appendChild(rename);
 
-    var visible = 0;
+    var total = col.cards.length, visible = 0;
     col.cards.forEach(function (c) { if (cardMatchesView(c)) visible++; });
-
     var count = document.createElement("span");
     count.className = "col-count";
-    count.textContent = String(visible);
+    if (col.wip > 0) {
+      count.textContent = total + "/" + col.wip;
+      count.title = t("wip.title") + (total > col.wip ? " · " + t("wip.over") : "");
+      count.classList.add("wip");
+      if (total > col.wip) count.classList.add("over");
+    } else {
+      count.textContent = String(visible);
+    }
     head.appendChild(count);
+    return head;
+  }
+  function wipOver(col) { return col.wip > 0 && col.cards.length > col.wip; }
 
+  function makeColumnEl(col) {
+    var el = document.createElement("div");
+    el.className = "k-col" + (wipOver(col) ? " wip-over" : "");
+    el.dataset.colId = col.id;
+
+    var head = makeColHead(col);
     el.appendChild(head);
 
-    // Body: οι ορατές κάρτες
     var body = document.createElement("div");
     body.className = "col-body";
     col.cards.forEach(function (card) {
@@ -2099,22 +1976,30 @@
       body.appendChild(makeCardEl(col, card));
     });
     el.appendChild(body);
+    el.appendChild(makeQuickFoot(col, null));
 
-    // Foot: quick-add (input + φιλικό προς ποντίκι κουμπί)
+    // Column reorder drag — το head είναι η λαβή (αφού υπάρχει πια)
+    attachColDrag(head, el, col);
+    return el;
+  }
+
+  // Foot: quick-add (input + φιλικό προς ποντίκι κουμπί). laneKey !== null
+  // in swimlane mode: the new card joins that lane (label or lane text).
+  function makeQuickFoot(col, laneKey) {
     var foot = document.createElement("div");
     foot.className = "col-foot";
-
     var quick = document.createElement("input");
     quick.type = "text";
     quick.className = "col-quick";
     quick.setAttribute("placeholder", t("quick.add"));
+    quick.setAttribute("aria-label", t("quick.add"));
+    quick.setAttribute("data-quick-key", col.id + (laneKey !== null ? "|" + laneKey : ""));
     quick.autocomplete = "off";
     quick.spellcheck = false;
     quick.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); quickAdd(col, quick); }
+      if (e.key === "Enter") { e.preventDefault(); quickAdd(col, quick, laneKey); }
     });
     foot.appendChild(quick);
-
     var addBtn = document.createElement("button");
     addBtn.type = "button";
     addBtn.className = "col-add-btn";
@@ -2123,19 +2008,93 @@
     addBtn.innerHTML =
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
     addBtn.addEventListener("click", function () {
-      quickAdd(col, quick);
-      quick.focus();
+      quickAdd(col, quick, laneKey);
+      var fresh = findQuickInput(quick.getAttribute("data-quick-key"));
+      if (fresh) fresh.focus();
     });
     foot.appendChild(addBtn);
-
-    el.appendChild(foot);
-
-    // Column reorder drag — το head είναι η λαβή (αφού υπάρχει πια)
-    attachColDrag(head, el, col);
-
-    return el;
+    return foot;
   }
-  
+
+  // Swimlanes: one sticky row of column heads, then one row per lane
+  // (label or lane text, plus "none"), each with a cell per column.
+  // Cells are .k-col elements (data-col-id + data-lane), so card drag
+  // and drop work the same; a drop in another row changes the lane.
+  function renderLanes(host, board, mode) {
+    var heads = document.createElement("div");
+    heads.className = "lane-heads";
+    var spacer = document.createElement("div");
+    spacer.className = "lane-corner";
+    heads.appendChild(spacer);
+    board.columns.forEach(function (col) {
+      var hc = document.createElement("div");
+      hc.className = "k-col k-colhead" + (wipOver(col) ? " wip-over" : "");
+      hc.dataset.colId = col.id;
+      var head = makeColHead(col);
+      hc.appendChild(head);
+      attachColDrag(head, hc, col);
+      heads.appendChild(hc);
+    });
+    host.appendChild(heads);
+
+    var byLane = {};
+    board.columns.forEach(function (col) {
+      col.cards.forEach(function (card) {
+        if (!cardMatchesView(card)) return;
+        var k = T.laneKey(board, card, mode);
+        if (mode === "lane") k = laneCanon(board, k);
+        (byLane[k] = byLane[k] || {});
+        (byLane[k][col.id] = byLane[k][col.id] || []).push(card);
+      });
+    });
+    T.lanes(board, mode).forEach(function (ln) {
+      var row = document.createElement("section");
+      row.className = "lane";
+      var lt = document.createElement("div");
+      lt.className = "lane-title";
+      if (ln.color) {
+        var dot = document.createElement("span");
+        dot.className = "fl-dot";
+        dot.style.background = ln.color;
+        lt.appendChild(dot);
+      }
+      var nm = document.createElement("span");
+      nm.className = "lane-name";
+      nm.textContent = ln.key ? ln.name : t(mode === "label" ? "lanes.nolabel" : "lanes.nolane");
+      lt.appendChild(nm);
+      var n = 0;
+      Object.keys(byLane[ln.key] || {}).forEach(function (cid) { n += byLane[ln.key][cid].length; });
+      var cnt = document.createElement("span");
+      cnt.className = "col-count";
+      cnt.textContent = String(n);
+      lt.appendChild(cnt);
+      row.appendChild(lt);
+      var cells = document.createElement("div");
+      cells.className = "lane-cells";
+      board.columns.forEach(function (col) {
+        var cell = document.createElement("div");
+        cell.className = "k-col k-cell";
+        cell.dataset.colId = col.id;
+        cell.dataset.lane = ln.key;
+        var body = document.createElement("div");
+        body.className = "col-body";
+        ((byLane[ln.key] || {})[col.id] || []).forEach(function (card) { body.appendChild(makeCardEl(col, card)); });
+        cell.appendChild(body);
+        cell.appendChild(makeQuickFoot(col, ln.key));
+        cells.appendChild(cell);
+      });
+      row.appendChild(cells);
+      host.appendChild(row);
+    });
+  }
+  // Lane texts group without regard to case ("team a" joins "Team A").
+  function laneCanon(board, k) {
+    if (!k) return "";
+    var all = T.lanes(board, "lane");
+    for (var i = 0; i < all.length; i++) if (all[i].key && all[i].key.toLowerCase() === k.toLowerCase()) return all[i].key;
+    return k;
+  }
+
     // --- Due date formatting ---
   // KN-6: τοπικός (όχι UTC) υπολογισμός του "today/tomorrow". Το
   // toISOString() είναι UTC — στη Ελλάδα μεταξύ τοπικής και UTC
@@ -2187,6 +2146,30 @@
     el.className = "card";
     el.dataset.cardId = card.id;
 
+    // K1: cover — a colour band, or an image attachment of the card
+    if (card.cover) {
+      var cov = document.createElement("div");
+      if (card.cover.charAt(0) === "#") {
+        cov.className = "card-cover";
+        cov.style.background = /^#[0-9a-fA-F]{6}$/.test(card.cover) ? card.cover : FALLBACK_COLOR;
+        el.appendChild(cov);
+      } else {
+        var att = attById(card, card.cover.slice(2));
+        if (att && att.kind === "img") {
+          cov.className = "card-cover img";
+          el.appendChild(cov);
+          attUrl(att.file).then(function (u) {
+            if (!u) { cov.remove(); return; }
+            var im = document.createElement("img");
+            im.alt = "";
+            im.src = u;
+            im.draggable = false;
+            cov.appendChild(im);
+          });
+        }
+      }
+    }
+
     var text = document.createElement("div");
     text.className = "text";
     text.textContent = card.text;
@@ -2236,17 +2219,36 @@
       el.appendChild(ind);
     }
 
-    // Due date chip (Kanban → Calendar integration)
+    // Due date chip, lane, attachments (one meta row)
+    var meta = document.createElement("div");
+    meta.className = "card-meta";
     if (card.due) {
       var fmt = formatDateChip(card.due);
       if (fmt) {
-        var dueEl = document.createElement("div");
+        var dueEl = document.createElement("span");
         dueEl.className = "due-chip " + fmt.css;
         dueEl.textContent = fmt.label;
         dueEl.title = card.due;  // full ISO date σε tooltip
-        el.appendChild(dueEl);
+        meta.appendChild(dueEl);
       }
     }
+    var b0 = currentBoard();
+    if (card.lane && !(b0 && viewOf(b0.id).lanes === "lane")) {
+      var ln = document.createElement("span");
+      ln.className = "lane-chip";
+      ln.textContent = card.lane;
+      ln.title = t("card.lane");
+      meta.appendChild(ln);
+    }
+    if (card.att && card.att.length) {
+      var ac = document.createElement("span");
+      ac.className = "att-ind";
+      ac.title = t("att.count");
+      ac.innerHTML = SVG_CLIP;
+      ac.appendChild(document.createTextNode(String(card.att.length)));
+      meta.appendChild(ac);
+    }
+    if (meta.childNodes.length) el.appendChild(meta);
 
     // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"
     var infoParts = [];
@@ -2268,12 +2270,18 @@
   }
 
   // ---------- 4. Quick-add (board-scoped: touch στο board header επίσης) ----------
-  function quickAdd(col, input) {
+  function quickAdd(col, input, laneKey) {
     var board = currentBoard();
     if (!board) return;
     var raw = input.value.trim();
     if (!raw) return;
+    var key = input.getAttribute("data-quick-key");
     var card = newCardObj(raw);          // φρέσκο mtime — νέα οντότητα
+    if (laneKey) {
+      var mode = viewOf(board.id).lanes;
+      if (mode === "lane") card.lane = laneKey;
+      else if (mode === "label" && labelById(laneKey)) card.labels = [laneKey];
+    }
     col.cards.unshift(card);
     col.cards.forEach(function (c, i) { c.pos = i; });
     col.om = Date.now();   // top-insert = ORDERING decision: αυτή η πλευρά
@@ -2281,16 +2289,16 @@
     input.value = "";
     save(); scheduleRender();
     // Επαν-εστίαση στο φρέσκο input (το render αντικατέστησε τον παλιό κόμβο)
-    var fresh = findQuickInput(col.id);
-    if (fresh) fresh.focus();
+    requestAnimationFrame(function () {
+      var fresh = findQuickInput(key);
+      if (fresh) fresh.focus();
+    });
   }
 
-  function findQuickInput(colId) {
-    var cols = document.querySelectorAll(".k-col");
-    for (var i = 0; i < cols.length; i++) {
-      if (cols[i].dataset.colId === colId) {
-        return cols[i].querySelector(".col-quick");
-      }
+  function findQuickInput(key) {
+    var qs = document.querySelectorAll(".col-quick");
+    for (var i = 0; i < qs.length; i++) {
+      if (qs[i].getAttribute("data-quick-key") === key) return qs[i];
     }
     return null;
   }
@@ -2310,11 +2318,13 @@
   function liveSaveCard() {
     var card = editingCard();
     if (!card) return;
-    var tv = $("c-text").value;
+    var tv = $("c-text").value, nv = $("c-notes").value;
     if (tv.trim()) lastGoodText = tv;
-    card.text  = tv;
-    card.notes = $("c-notes").value;
-    touch(card);
+    var groups = [];
+    if (card.text !== tv) { card.text = tv; groups.push("t"); }
+    if ((card.notes || "") !== nv) { card.notes = nv; groups.push("n"); }
+    if (!groups.length) return;
+    stamp(card, groups);
     scheduleCardSave();
   }
   function scheduleCardSave() {
@@ -2382,6 +2392,8 @@
     setInputKeep($("c-text"), card.text || "");
     setInputKeep($("c-notes"), card.notes || "");
     setInputKeep($("c-due"), card.due || "");
+    setInputKeep($("c-lane"), card.lane || "");
+    renderCardCols();
 
     var ae = document.activeElement;
     var row = ae && ae.closest ? ae.closest(".sub-row, .info-row") : null;
@@ -2395,6 +2407,8 @@
     if (!$("c-lbl-picker").hidden) renderLblPicker();
     renderSubtasks(card);
     renderInfo(card);
+    renderAtt(card);
+    renderCover(card);
     if (focusInfo && focusInfo.cls) {
       var rows = dlg.querySelectorAll("." + focusInfo.kind);
       for (var i = 0; i < rows.length; i++) {
@@ -2423,10 +2437,15 @@
     $("c-text").value = card.text;
     $("c-notes").value = card.notes || "";
     $("c-due").value = card.due || "";   // "" = cleared (native date input)
+    $("c-lane").value = card.lane || "";
+    renderLaneList();
+    renderCardCols();
 
     renderCardLabels(card);
     renderSubtasks(card);
     renderInfo(card);
+    renderAtt(card);
+    renderCover(card);
     $("c-lbl-picker").hidden = true;
 
     $("dlg-card").showModal();
@@ -2452,7 +2471,7 @@
         var c = editingCard();             // KN-9: the live card, by id
         if (!c) return;
         c.labels = (c.labels || []).filter(function (id) { return id !== lid; });
-        touch(c);
+        stamp(c, ["l"]);
         save(); scheduleRender();
         renderCardLabels(c);
       });
@@ -2500,7 +2519,7 @@
         var pos = c.labels.indexOf(label.id);
         if (pos === -1) c.labels.push(label.id);
         else            c.labels.splice(pos, 1);
-        touch(c);                     // attach/detach = αλλαγή περιεχομένου
+        stamp(c, ["l"]);              // attach/detach = αλλαγή περιεχομένου
         save(); scheduleRender();
         renderCardLabels(c);
         renderLblPicker();
@@ -2540,7 +2559,7 @@
     board.labels.push(label);
 
     var card = editingCard();
-    if (card) { card.labels.push(label.id); touch(card); }
+    if (card) { card.labels.push(label.id); stamp(card, ["l"]); }
 
     pickedSwatch = FALLBACK_COLOR;
     input.value = "";
@@ -2577,7 +2596,7 @@
       if (!s) return;
       s.completed = cb.checked;
       txt.classList.toggle("completed", cb.checked);
-      touch(c);
+      M.stampItem(c, "s", s, Date.now());
       save();
       scheduleRender();
     });
@@ -2593,7 +2612,8 @@
       var s = c && itemRef(c.subtasks, sub, idx);
       if (!s) return;
       s.text = txt.value;
-      liveSaveCard();
+      M.stampItem(c, "s", s, Date.now());
+      scheduleCardSave();
     });
     row.appendChild(txt);
 
@@ -2602,7 +2622,8 @@
       var s = c && itemRef(c.subtasks, sub, idx);
       if (!s) return;
       c.subtasks = c.subtasks.filter(function (x) { return x !== s; });
-      touch(c);
+      var at = stamp(c, ["s"]);
+      if (s.id) tombstone(currentBoard(), M.itemTomb(c.id, s.id), at);
       save();
       scheduleRender();
       renderSubtasks(c);
@@ -2629,9 +2650,10 @@
     var input = $("c-sub-new");
     var raw = input.value.trim();
     if (!raw) return;
-    card.subtasks.push({ id: uid(), text: raw, completed: false });
+    var ns = { id: uid(), text: raw, completed: false };
+    card.subtasks.push(ns);
     input.value = "";
-    touch(card);
+    M.stampItem(card, "s", ns, Date.now());
     save();
     scheduleRender();
     renderSubtasks(card);
@@ -2663,7 +2685,8 @@
       var x = c && itemRef(c.info, f, idx);
       if (!x) return;
       x.label = lbl.value;
-      liveSaveCard();
+      stamp(c, ["x"]);
+      scheduleCardSave();
     });
     row.appendChild(lbl);
 
@@ -2678,7 +2701,8 @@
       var x = c && itemRef(c.info, f, idx);
       if (!x) return;
       x.value = val.value;
-      liveSaveCard();
+      stamp(c, ["x"]);
+      scheduleCardSave();
     });
     row.appendChild(val);
 
@@ -2687,7 +2711,7 @@
       var x = c && itemRef(c.info, f, idx);
       if (!x) return;
       c.info = c.info.filter(function (y) { return y !== x; });
-      touch(c);
+      stamp(c, ["x"]);
       save();
       scheduleRender();
       renderInfo(c);
@@ -2700,7 +2724,7 @@
     var card = editingCard();
     if (!card) return;
     card.info.push({ id: uid(), label: "", value: "" });
-    touch(card);                       // KN-9: the new row is local state now
+    stamp(card, ["x"]);                // KN-9: the new row is local state now
     scheduleCardSave();
     renderInfo(card);
     var rows = $("c-info-list").querySelectorAll(".info-row");
@@ -2708,6 +2732,377 @@
       var l = rows[rows.length - 1].querySelector(".i-label");
       if (l) l.focus();
     }
+  }
+
+  // ---------- 5b. Card dialog: column, lane, attachments, cover (K1) ----------
+  function todayYmd() { return localDateStr(new Date()); }
+
+  function renderCardCols() {
+    var sel = $("c-col"), board = currentBoard(), card = editingCard();
+    if (!sel || !board || !card) return;
+    sel.innerHTML = "";
+    board.columns.forEach(function (col) {
+      var o = document.createElement("option");
+      o.value = col.id;
+      o.textContent = col.name + (col.wip > 0 ? " (" + col.cards.length + "/" + col.wip + ")" : "");
+      sel.appendChild(o);
+    });
+    sel.value = editingColId;
+  }
+  function renderLaneList() {
+    var dl = $("c-lane-list"), board = currentBoard();
+    if (!dl || !board) return;
+    dl.innerHTML = "";
+    T.lanes(board, "lane").forEach(function (ln) {
+      if (!ln.key) return;
+      var o = document.createElement("option");
+      o.value = ln.key;
+      dl.appendChild(o);
+    });
+  }
+
+  // Move a card to another column (dialog, table): to the end of it,
+  // then that column's arrival rules.
+  function moveCardTo(cardId, destColId) {
+    var board = currentBoard();
+    if (!board) return false;
+    var f = T.findCard(board, cardId);
+    if (!f || f.col.id === destColId || !colById(destColId)) return false;
+    moveCard(f.col, f.card, destColId, null, false);
+    save(); scheduleRender();
+    return true;
+  }
+  // Arrival rules after a move into another column (all move paths).
+  function runArrival(colId, cardId) {
+    var board = currentBoard();
+    var col = colById(colId);
+    if (!board || !col) return;
+    var did = T.applyArrival(board, colId, cardId, todayYmd(), Date.now());
+    if (did.length) notifyTransient(t("auto.ran", { col: col.name }));
+  }
+
+  // --- Attachments: files on the orOS disk (Files › Kanban › Attachments) ---
+  // The card keeps names only (att: [{ id, name, file, kind, size, m }]);
+  // the file travels with the orOS disk (Vault Drive), not with sync.
+  // Photos are re-drawn on a canvas (long side ≤ 1600 px, JPEG): no EXIF
+  // or location kept. PDFs and other files (≤ 10 MB) are kept as they
+  // are and are only ever offered as a download (never rendered here).
+  var ATT_MAX_IN = 40 * 1024 * 1024, ATT_MAX_FILE = 10 * 1024 * 1024, ATT_MAX = 20;
+  var attUrls = {};                       // file → object URL (this session)
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function attById(card, id) {
+    var a = card && card.att || [];
+    for (var i = 0; i < a.length; i++) if (a[i] && a[i].id === id) return a[i];
+    return null;
+  }
+  function attRandom() {
+    var a = new Uint8Array(10), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function readAtt(file) {
+    var fs = fsApi(), path = T.attPath(file);
+    if (!fs || !path) return Promise.resolve(null);
+    return Promise.resolve(fs.readBlob(path)).then(function (b) { return b || null; }, function () { return null; });
+  }
+  function attUrl(file) {
+    if (attUrls[file]) return Promise.resolve(attUrls[file]);
+    return readAtt(file).then(function (b) {
+      if (!b) return null;
+      if (!attUrls[file]) attUrls[file] = URL.createObjectURL(b.slice(0, b.size, "image/jpeg"));
+      return attUrls[file];
+    });
+  }
+  var RASTER = /^image\/(jpeg|png|webp|gif|bmp|avif|heic|heif)$/i;
+  function encodeAtt(file) {
+    return new Promise(function (resolve) {
+      if (!file || !file.size || file.size > ATT_MAX_IN) { resolve(null); return; }
+      var ext = ((file.name || "").match(/\.([a-z0-9]{1,8})$/i) || [, "bin"])[1].toLowerCase();
+      if (RASTER.test(file.type || "") || /^(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/.test(ext)) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+          var k = Math.min(1, 1600 / Math.max(w, h));
+          var cv = document.createElement("canvas");
+          cv.width = Math.max(1, Math.round(w * k));
+          cv.height = Math.max(1, Math.round(h * k));
+          var g = cv.getContext("2d");
+          g.fillStyle = "#fff";
+          g.fillRect(0, 0, cv.width, cv.height);
+          g.drawImage(img, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(url);
+          cv.toBlob(function (b) { resolve(b && b.size ? { blob: b, ext: "jpg", kind: "img" } : null); }, "image/jpeg", 0.82);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+        return;
+      }
+      if (file.size > ATT_MAX_FILE) { resolve(null); return; }
+      var pdf = file.type === "application/pdf" || ext === "pdf";
+      var head = file.slice(0, 5);
+      var rd = typeof head.text === "function" ? head.text() : Promise.resolve("%PDF-");
+      rd.then(function (h) {
+        if (pdf && h !== "%PDF-") { resolve(null); return; }
+        resolve({ blob: file.slice(0, file.size, "application/octet-stream"), ext: pdf ? "pdf" : ext, kind: pdf ? "pdf" : "file" });
+      }, function () { resolve(null); });
+    });
+  }
+  function pickFiles() {
+    var host = dialogHost();
+    if (host && typeof host.openFiles === "function") return Promise.resolve(host.openFiles("")).then(function (l) { return l || []; });
+    if (host && typeof host.openFile === "function") return Promise.resolve(host.openFile("")).then(function (f) { return f ? [f] : []; });
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.multiple = true;
+      inp.style.display = "none";
+      inp.addEventListener("change", function () { resolve(Array.prototype.slice.call(inp.files || [])); inp.remove(); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  function addAttachments() {
+    var fs = fsApi();
+    if (!fs) { notifyTransient(t("att.noDisk")); return; }
+    pickFiles().then(function (files) {
+      var chain = Promise.resolve();
+      files.forEach(function (file) {
+        chain = chain.then(function () {
+          var c0 = editingCard();
+          if (!c0) return;
+          if ((c0.att || []).length >= ATT_MAX) { notifyTransient(t("att.max")); return; }
+          return encodeAtt(file).then(function (enc) {
+            if (!enc) { notifyTransient(t("att.bad")); return; }
+            var name = attRandom() + "." + enc.ext;
+            return Promise.resolve(fs.writeBlob(T.attPath(name), enc.blob)).then(function () {
+              var c = editingCard();                 // KN-9: the live card, by id
+              if (!c) { rmAtt(name); return; }
+              var item = { id: uid(), name: String(file.name || name).slice(0, 120), file: name, kind: enc.kind, size: enc.blob.size };
+              c.att = (c.att || []).concat([item]);
+              M.stampItem(c, "a", item, Date.now());
+              save(); scheduleRender();
+              renderAtt(c);
+              renderCover(c);
+            });
+          });
+        });
+      });
+      return chain;
+    }).catch(function () { notifyTransient(t("att.noDisk")); });
+  }
+  function rmAtt(file) {
+    var fs = fsApi(), path = T.attPath(file);
+    if (!fs || !path) return Promise.resolve();
+    if (attUrls[file]) { URL.revokeObjectURL(attUrls[file]); delete attUrls[file]; }
+    return Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  // Files no card points at any more leave the disk after the Undo
+  // window (a duplicate may share the file; an Undo brings the card back).
+  function dropFilesLater(files) {
+    if (!files || !files.length || !fsApi()) return;
+    var list = files.slice();
+    setTimeout(function () {
+      var used = T.usedFiles(state);
+      list.forEach(function (f) { if (!used[f]) rmAtt(f); });
+    }, 12000);
+  }
+  function filesOfCards(cards) {
+    var out = [];
+    (cards || []).forEach(function (c) { (c.att || []).forEach(function (x) { if (x && x.file) out.push(x.file); }); });
+    return out;
+  }
+  function removeAttachment(attId) {
+    var c = editingCard(), board = currentBoard();
+    var x = attById(c, attId);
+    if (!x || !board) return;
+    c.att = c.att.filter(function (y) { return y !== x; });
+    if (!c.att.length) delete c.att;
+    var at = stamp(c, ["a"]);
+    tombstone(board, M.itemTomb(c.id, attId), at);
+    if (c.cover === "a:" + attId) { delete c.cover; stamp(c, ["c"]); }
+    save(); scheduleRender();
+    renderAtt(c);
+    renderCover(c);
+    dropFilesLater([x.file]);
+  }
+  function fmtSize(n) {
+    if (!(n > 0)) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return Math.round(n / 1024) + " KB";
+    return (n / 1048576).toFixed(1) + " MB";
+  }
+  function renderAtt(card) {
+    var host = $("c-att-list");
+    if (!host) return;
+    host.innerHTML = "";
+    (card.att || []).forEach(function (x) {
+      var row = document.createElement("button");
+      row.type = "button";
+      row.className = "att-row";
+      var th = document.createElement("span");
+      th.className = "att-th";
+      if (x.kind === "img") {
+        attUrl(x.file).then(function (u) {
+          if (!u) { th.textContent = "!"; th.title = t("att.missing"); return; }
+          var im = document.createElement("img");
+          im.alt = "";
+          im.src = u;
+          th.appendChild(im);
+        });
+      } else {
+        th.textContent = x.kind === "pdf" ? "PDF" : ((x.file.split(".").pop() || "").toUpperCase().slice(0, 4));
+      }
+      row.appendChild(th);
+      var nm = document.createElement("span");
+      nm.className = "att-name";
+      nm.textContent = x.name;
+      row.appendChild(nm);
+      var sz = document.createElement("span");
+      sz.className = "att-size";
+      sz.textContent = fmtSize(x.size);
+      row.appendChild(sz);
+      row.addEventListener("click", function () { attViewer(x.id); });
+      host.appendChild(row);
+    });
+    var add = $("c-att-add");
+    if (add) add.hidden = (card.att || []).length >= ATT_MAX;
+  }
+  function attViewer(attId) {
+    var c = editingCard();
+    var x = attById(c, attId);
+    if (!x) return;
+    var stale = $("att-view");
+    if (stale) stale.remove();
+    var v = document.createElement("dialog");
+    v.id = "att-view";
+    var h = document.createElement("h3");
+    h.textContent = x.name;
+    v.appendChild(h);
+    var box = document.createElement("div");
+    box.className = "att-view";
+    v.appendChild(box);
+    var hint = document.createElement("div");
+    hint.className = "imp-hint";
+    hint.textContent = t("att.where");
+    v.appendChild(hint);
+    var foot = document.createElement("div");
+    foot.className = "dlg-foot";
+    var blobNow = null, url = null;
+    function btn(text, cls, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = text;
+      if (cls) b.className = cls;
+      b.addEventListener("click", fn);
+      foot.appendChild(b);
+      return b;
+    }
+    btn(t("att.remove"), "danger", function () { v.close(); removeAttachment(attId); });
+    var openB = x.kind === "pdf" ? btn(t("att.open"), "", function () {
+      if (!url) return;
+      var a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+    }) : null;
+    var coverB = x.kind === "img" ? btn(t("att.cover"), "", function () {
+      var cc = editingCard();
+      if (!cc) return;
+      cc.cover = "a:" + attId;
+      stamp(cc, ["c"]);
+      save(); scheduleRender(); renderCover(cc);
+      v.close();
+    }) : null;
+    var saveB = btn(t("att.save"), "", function () {
+      if (!blobNow) return;
+      var host = dialogHost();
+      var mime = x.kind === "img" ? "image/jpeg" : x.kind === "pdf" ? "application/pdf" : "application/octet-stream";
+      var out = blobNow.slice(0, blobNow.size, mime);
+      if (host && typeof host.saveFile === "function") { host.saveFile({ blob: out, filename: x.name, mime: mime }); return; }
+      var a = document.createElement("a");
+      var u = URL.createObjectURL(out);
+      a.href = u; a.download = x.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(u); }, 40000);
+    });
+    btn(t("att.close"), "", function () { v.close(); });
+    [openB, saveB, coverB].forEach(function (b) { if (b) b.disabled = true; });
+    v.appendChild(foot);
+    readAtt(x.file).then(function (b) {
+      if (!b) { var p = document.createElement("p"); p.className = "imp-hint"; p.textContent = t("att.missingLong"); box.appendChild(p); return; }
+      blobNow = b;
+      if (x.kind === "img") {
+        url = URL.createObjectURL(b.slice(0, b.size, "image/jpeg"));
+        var im = document.createElement("img");
+        im.alt = x.name;
+        im.src = url;
+        box.appendChild(im);
+      } else {
+        if (x.kind === "pdf") url = URL.createObjectURL(b.slice(0, b.size, "application/pdf"));
+        var big = document.createElement("div");
+        big.className = "att-big";
+        big.textContent = (x.kind === "pdf" ? "PDF" : (x.file.split(".").pop() || "").toUpperCase()) + " · " + fmtSize(x.size);
+        box.appendChild(big);
+      }
+      [openB, saveB, coverB].forEach(function (bb) { if (bb) bb.disabled = false; });
+    });
+    v.addEventListener("close", function () {
+      if (url) { var u = url; setTimeout(function () { URL.revokeObjectURL(u); }, 60000); }
+      v.remove();
+    });
+    v.addEventListener("click", function (e) { if (e.target === v) v.close(); });
+    document.body.appendChild(v);
+    v.showModal();
+  }
+
+  // --- Cover: none, a colour, or one of the card's photos ---
+  function renderCover(card) {
+    var host = $("c-cover");
+    if (!host) return;
+    host.innerHTML = "";
+    function opt(val, cls, title, paint) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "cov-opt " + cls + ((card.cover || "") === val ? " sel" : "");
+      b.title = title;
+      b.setAttribute("aria-label", title);
+      b.setAttribute("aria-pressed", (card.cover || "") === val ? "true" : "false");
+      if (paint) paint(b);
+      b.addEventListener("click", function () {
+        var c = editingCard();
+        if (!c || (c.cover || "") === val) return;
+        if (val) c.cover = val; else delete c.cover;
+        stamp(c, ["c"]);
+        save(); scheduleRender();
+        renderCover(c);
+      });
+      host.appendChild(b);
+    }
+    opt("", "none", t("card.cover.none"), function (b) {
+      b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 18.4L18.4 5.6"/></svg>';
+    });
+    SWATCH_COLORS.forEach(function (col) {
+      opt(col, "swatch", t("card.cover"), function (b) { b.style.background = col; });
+    });
+    (card.att || []).forEach(function (x) {
+      if (x.kind !== "img") return;
+      opt("a:" + x.id, "photo", x.name, function (b) {
+        attUrl(x.file).then(function (u) {
+          if (!u) return;
+          var im = document.createElement("img");
+          im.alt = "";
+          im.src = u;
+          b.appendChild(im);
+        });
+      });
+    });
   }
 
   // --- Duplicate card ---
@@ -2724,7 +3119,18 @@
     copy.info = JSON.parse(JSON.stringify(card.info || []));
     copy.subtasks.forEach(function (s) { s.id = uid(); });
     copy.info.forEach(function (f) { f.id = uid(); });
-    touch(copy);                        // φρέσκο mtime — νικά το merge ως ΝΕΑ οντότητα
+    if (card.lane) copy.lane = card.lane;
+    if (card.cover) copy.cover = card.cover;
+    if (card.att && card.att.length) {           // the same files on the disk (removal checks every card)
+      copy.att = JSON.parse(JSON.stringify(card.att));
+      copy.att.forEach(function (x) {
+        var old = x.id;
+        x.id = uid();
+        if (copy.cover === "a:" + old) copy.cover = "a:" + x.id;
+      });
+    }
+    copy.subtasks.forEach(function (s) { delete s.m; });
+    copy.fm = M.freshFm(copy.mtime);              // a new entity: every group stamped now
 
     var idx = col.cards.indexOf(card);
     col.cards.splice(idx + 1, 0, copy);
@@ -2758,10 +3164,11 @@
     var info = (card.info || []).filter(function (f) {
       return (f.label || "").trim() || (f.value || "").trim();
     });
-    if (info.length !== (card.info || []).length) { card.info = info; changed = true; }
+    var groups = [];
+    if (info.length !== (card.info || []).length) { card.info = info; changed = true; groups.push("x"); }
     var tt = $("c-text").value.trim() || (lastGoodText || "").trim() || card.text;
-    if (tt !== card.text) { card.text = tt; changed = true; }
-    if (changed) touch(card);
+    if (tt !== card.text) { card.text = tt; changed = true; groups.push("t"); }
+    if (changed) stamp(card, groups);
     if (changed || pending) { save(); scheduleRender(); }
   });
 
@@ -2774,6 +3181,24 @@
     editingCardId = null;
 
     $("col-name").value = col.name;
+    $("col-wip").value = col.wip > 0 ? String(col.wip) : "";
+    var au = col.auto || {};
+    $("col-a-done").checked = !!au.done;
+    $("col-a-today").checked = !!au.today;
+    $("col-a-top").checked = !!au.top;
+    var ls = $("col-a-label");
+    ls.innerHTML = "";
+    var none = document.createElement("option");
+    none.value = "";
+    none.textContent = t("auto.nolabel");
+    ls.appendChild(none);
+    (currentBoard().labels || []).forEach(function (lb) {
+      var o = document.createElement("option");
+      o.value = lb.id;
+      o.textContent = lb.name;
+      ls.appendChild(o);
+    });
+    ls.value = au.label && labelById(au.label) ? au.label : "";
 
     $("dlg-col").showModal();
     setTimeout(function () { $("col-name").focus(); }, 50);
@@ -2807,6 +3232,10 @@
     if ((card.text || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     if ((card.notes || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     if (card.due && card.due.toLowerCase().indexOf(searchQuery) !== -1) return true;
+    if (card.lane && card.lane.toLowerCase().indexOf(searchQuery) !== -1) return true;
+    for (var a = 0; a < (card.att || []).length; a++) {
+      if (String(card.att[a].name || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
+    }
     for (var i = 0; i < (card.info || []).length; i++) {
       var f = card.info[i];
       if ((f.label || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
@@ -2911,7 +3340,7 @@
       col.cards.forEach(function (card) {
         var had = (card.labels || []).indexOf(labelId) !== -1;
         card.labels = (card.labels || []).filter(function (id) { return id !== labelId; });
-        if (had) touch(card);       // αφαίρεση ετικέτας = αλλαγή περιεχομένου
+        if (had) stamp(card, ["l"]); // αφαίρεση ετικέτας = αλλαγή περιεχομένου
       });
     });
     tombstone(board, labelId);       // merge-safe διαγραφή (board-scoped)
@@ -2935,13 +3364,30 @@
 
       var started = false;
       var sx = e.clientX, sy = e.clientY;
+      var srcCell = el.closest(".k-col");
+      var fromLane = srcCell ? srcCell.dataset.lane : undefined;   // swimlane mode only
+      var lastX = sx, lastY = sy, edgeTimer = null;
 
       function beginDrag() {
         started = true;
         el.classList.add("dragging");
         el.style.pointerEvents = "none";   // elementFromPoint βλέπει ΜΕΣΑ από εμάς
         document.body.classList.add("is-dragging");
+        edgeTimer = setInterval(edgeScroll, 30);
       }
+      // K1: near an edge of the board the board scrolls (columns sideways,
+      // swimlane rows up and down), so far targets can be reached.
+      function edgeScroll() {
+        var sc = $("columns");
+        if (!sc) return;
+        var r = sc.getBoundingClientRect(), E = 36, step = 14, moved = false;
+        if (lastX < r.left + E && sc.scrollLeft > 0) { sc.scrollLeft -= step; moved = true; }
+        else if (lastX > r.right - E) { sc.scrollLeft += step; moved = true; }
+        if (lastY < r.top + E && sc.scrollTop > 0) { sc.scrollTop -= step; moved = true; }
+        else if (lastY > r.bottom - E) { sc.scrollTop += step; moved = true; }
+        if (moved) mark(lastX, lastY);
+      }
+      function stopEdge() { if (edgeTimer) { clearInterval(edgeTimer); edgeTimer = null; } }
 
       function clearMarks() {
         var marked = document.querySelectorAll(
@@ -2965,7 +3411,10 @@
           return;
         }
         var colEl = hit.closest(".k-col");
-        if (colEl && colEl.dataset.colId !== col.id) colEl.classList.add("drag-over");
+        if (colEl && !colEl.classList.contains("k-colhead") &&
+            (colEl.dataset.colId !== col.id || (colEl.dataset.lane !== undefined && colEl.dataset.lane !== fromLane))) {
+          colEl.classList.add("drag-over");
+        }
       }
 
       function onMove(ev) {
@@ -2975,6 +3424,7 @@
           beginDrag();
         }
         ev.preventDefault();
+        lastX = ev.clientX; lastY = ev.clientY;
         mark(ev.clientX, ev.clientY);
       }
 
@@ -2982,6 +3432,7 @@
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("pointercancel", onCancel);
+        stopEdge();
 
         if (!started) return;              // ήταν tap — τίποτα προς αναίρεση
 
@@ -2997,16 +3448,27 @@
         var destColEl = hit.closest(".k-col");
 
         var moved = false;
+        var destCell = null;
         if (destCard && destCard !== el) {
           var r = destCard.getBoundingClientRect();
           var before = ev.clientY < r.top + r.height / 2;
-          moveCard(col, card,
-                   destCard.closest(".k-col").dataset.colId,
-                   destCard.dataset.cardId, before);
+          destCell = destCard.closest(".k-col");
+          moveCard(col, card, destCell.dataset.colId, destCard.dataset.cardId, before);
           moved = true;
-        } else if (destColEl) {
-          moveCard(col, card, destColEl.dataset.colId, null, false);
+        } else if (destColEl && !destColEl.classList.contains("k-colhead")) {
+          destCell = destColEl;
+          if (destCell.dataset.colId !== col.id || destCell.dataset.lane === undefined || destCell.dataset.lane === fromLane) {
+            moveCard(col, card, destCell.dataset.colId, null, false);
+          }
           moved = true;
+        }
+        // K1 swimlanes: a drop in another row changes the card's label or lane
+        var bd = currentBoard();
+        var mode = bd ? viewOf(bd.id).lanes : "";
+        if (moved && mode && destCell && fromLane !== undefined && destCell.dataset.lane !== undefined &&
+            destCell.dataset.lane !== fromLane) {
+          var groups = T.setLane(bd, card, mode, fromLane, destCell.dataset.lane);
+          if (groups.length) stamp(card, groups);
         }
 
         if (moved) { save(); scheduleRender(); }
@@ -3017,6 +3479,7 @@
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("pointercancel", onCancel);
+        stopEdge();
         if (started) {
           el.classList.remove("dragging");
           el.style.pointerEvents = "";
@@ -3055,11 +3518,12 @@
       srcCol.om = nowMs;
       srcCol.cards.forEach(function (c, i) { c.pos = i; });
     } else {
-      touch(card);
+      stamp(card, ["p"]);            // K1: the column is its own field group
       srcCol.om = nowMs;
       dest.om = nowMs;
       srcCol.cards.forEach(function (c, i) { c.pos = i; });
       dest.cards.forEach(function (c, i) { c.pos = i; });
+      runArrival(dest.id, card.id);  // K1: the column's automations
     }
   }
 
@@ -3281,7 +3745,7 @@
         if (!col) col = cur.columns[0];
         if (!col) return;
         var nv = JSON.parse(JSON.stringify(b.v));
-        nv.mtime = now;
+        M.stampCard(nv, null, now);         // K1: every field group
         col.cards.splice(Math.min(b.i, col.cards.length), 0, nv);
         col.om = now;
         if (cur.deleted) delete cur.deleted[id];
@@ -3295,7 +3759,7 @@
       } else if (b && a && (plain(b.v) !== plain(a.v) || b.col !== a.col)) {   // changed by it
         if (!c || c.col !== a.col || plain(c.v) !== plain(a.v)) return;
         var rv = JSON.parse(JSON.stringify(b.v));
-        rv.mtime = now;
+        M.stampCard(rv, null, now);
         var src = null, dst = null;
         cur.columns.forEach(function (x) { if (x.id === c.col) src = x; if (x.id === b.col) dst = x; });
         if (!dst) dst = src;
@@ -3337,7 +3801,7 @@
     revertDiff(before, after, Date.now());
     var back = undoActive ? boardById(undoActive) : null;
     if (back && !back.archived) state.activeBoardId = back.id;
-    else if (!boardById(state.activeBoardId)) state.activeBoardId = state.boards[0].id;
+    else if (!boardById(state.activeBoardId) || isTpl(boardById(state.activeBoardId))) state.activeBoardId = firstUsable().id;
     save(); renderAll();
     notifyTransient(t("toast.undone"));
   }
@@ -3386,7 +3850,7 @@
   //   · Trello: lists→στήλες, cards→κάρτες, desc→notes, due→card.due,
   //     labels→labels, checklists→subtasks. Closed lists/cards → skip.
 
-  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub", notion: "Notion" };
+  var IMPORT_SOURCE_NAMES = { kanri: "Kanri", trello: "Trello", github: "GitHub", notion: "Notion", oros: "orOS Kanban" };
 
   // Kanri Tailwind color classes → orOS swatch + i18n όνομα
   var KANRI_COLORS = {
@@ -3597,6 +4061,15 @@
       columns: columns
     }];
     return { source: "trello", boards: boards, stats: countImport(boards) };
+  }
+
+  // K1: a board exported from orOS Kanban (Export board, JSON). Always
+  // a NEW board with fresh ids (tools.js parseExport checks and caps
+  // every field), so importing it never touches an existing board.
+  function orosAdapter(data) {
+    var r = T.parseExport(data, uid, Date.now());
+    if (!r) return null;
+    return { source: "oros", boards: [r.board], files: r.files, stats: countImport([r.board]) };
   }
 
   function importInto(ex, nb) {
@@ -3851,7 +4324,8 @@
         var json = null;
         try { json = JSON.parse(ev.target.result); } catch (e) { /* not JSON */ }
 
-        parsed = (json && kanriAdapter(json)) ||
+        parsed = (json && orosAdapter(json)) ||
+                 (json && kanriAdapter(json)) ||
                  (json && trelloAdapter(json)) || null;
 
         if (!parsed) {
@@ -3913,6 +4387,7 @@
       });
       state.om = Date.now();
       state.activeBoardId = parsed.boards[0].id;
+      if (parsed.files) writeImportedFiles(parsed.files);   // K1: attachments inside an orOS export
 
       resetSessionView();
       save();
@@ -3922,6 +4397,708 @@
 
     dlg.showModal();
     setTimeout(function () { file.focus(); }, 50);
+  }
+
+  // ---------- 9c. Views, board menu, automations, export, templates (K1) ----------
+  var SVG_VIEW = {
+    board: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></svg>',
+    table: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>',
+    timeline: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><rect x="4" y="5" width="8" height="3" rx="1"/><rect x="9" y="10" width="9" height="3" rx="1"/><rect x="6" y="15" width="6" height="2" rx="1"/></svg>'
+  };
+  function updateMoreBtn(vw) {
+    var b = $("more-btn");
+    if (!b) return;
+    b.innerHTML = SVG_VIEW[vw.v] || SVG_VIEW.board;
+    b.classList.toggle("has-filters", vw.v !== "board" || !!vw.lanes);
+  }
+
+  function closeMorePop() { var p = $("more-pop"); if (p) p.hidden = true; }
+  function renderMorePop() {
+    var pop = $("more-pop"), board = currentBoard();
+    if (!pop || !board) return;
+    pop.innerHTML = "";
+    var vw = viewOf(board.id);
+    function head(text) {
+      var h = document.createElement("div");
+      h.className = "mp-head";
+      h.textContent = text;
+      pop.appendChild(h);
+    }
+    function seg(items, cur, onPick) {
+      var row = document.createElement("div");
+      row.className = "mp-seg";
+      row.setAttribute("role", "group");
+      items.forEach(function (it) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "mp-seg-btn" + (it[0] === cur ? " sel" : "");
+        b.setAttribute("aria-pressed", it[0] === cur ? "true" : "false");
+        b.setAttribute("data-k", "mp." + (it[0] || "none"));
+        if (it[2]) b.innerHTML = it[2];
+        var sp = document.createElement("span");
+        sp.textContent = it[1];
+        b.appendChild(sp);
+        b.addEventListener("click", function () { onPick(it[0]); renderMorePop(); });
+        row.appendChild(b);
+      });
+      pop.appendChild(row);
+    }
+    function item(text, k, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "mp-item";
+      b.setAttribute("data-k", k);
+      b.textContent = text;
+      b.addEventListener("click", function () { closeMorePop(); fn(); });
+      pop.appendChild(b);
+    }
+    head(t("view.title"));
+    seg([["board", t("view.board"), SVG_VIEW.board], ["table", t("view.table"), SVG_VIEW.table], ["timeline", t("view.timeline"), SVG_VIEW.timeline]],
+        vw.v, function (v) { setView(board.id, { v: v }); renderAll(); });
+    if (vw.v === "board") {
+      head(t("lanes.title"));
+      seg([["", t("lanes.none")], ["label", t("lanes.label")], ["lane", t("lanes.lane")]],
+          vw.lanes, function (v) { setView(board.id, { lanes: v }); renderAll(); });
+    }
+    var sep = document.createElement("hr");
+    sep.className = "dropdown-sep";
+    pop.appendChild(sep);
+    item(t("auto.menu"), "mp.auto", openAutoDlg);
+    item(t("export.json"), "mp.json", exportJson);
+    item(t("export.csv"), "mp.csv", exportCsv);
+    item(t("tpl.save"), "mp.tplsave", saveTemplateDlg);
+    item(t("tpl.new"), "mp.tplnew", openTemplatesDlg);
+    item(t("import.title"), "mp.import", openImportDlg);
+  }
+
+  // --- Table view: one sortable row per card, the column as status ---
+  function boardRows(board) {
+    var rows = [];
+    board.columns.forEach(function (col, ci) {
+      col.cards.forEach(function (card, i) {
+        if (cardMatchesView(card)) rows.push({ card: card, col: col, colIdx: ci, idx: i });
+      });
+    });
+    return rows;
+  }
+  function renderTable(host, board, vw) {
+    var rows = T.sortRows(boardRows(board), vw.sort, vw.dir, board);
+    var hasLane = boardRows(board).some(function (r) { return !!r.card.lane; });
+    var wrap = document.createElement("div");
+    wrap.className = "tbl-wrap";
+    var tbl = document.createElement("table");
+    tbl.className = "k-table";
+    var thead = document.createElement("thead"), tr = document.createElement("tr");
+    var cols = [["text", t("tbl.card")], ["status", t("tbl.col")], ["due", t("tbl.due")], ["labels", t("tbl.labels")], ["sub", t("tbl.sub")]];
+    if (hasLane) cols.push(["lane", t("tbl.lane")]);
+    cols.forEach(function (c) {
+      var th = document.createElement("th");
+      th.scope = "col";
+      th.setAttribute("aria-sort", vw.sort === c[0] ? (vw.dir === "desc" ? "descending" : "ascending") : "none");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "th-sort" + (vw.sort === c[0] ? " on" : "");
+      b.title = t("tbl.sort") + " " + c[1];
+      b.textContent = c[1] + (vw.sort === c[0] ? (vw.dir === "desc" ? " ↓" : " ↑") : "");
+      b.addEventListener("click", function () {
+        var dir = vw.sort === c[0] && vw.dir === "asc" ? "desc" : "asc";
+        setView(board.id, { sort: c[0], dir: dir });
+        renderAll();
+      });
+      th.appendChild(b);
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    tbl.appendChild(thead);
+    var tb = document.createElement("tbody");
+    rows.forEach(function (r) {
+      var c = r.card, row = document.createElement("tr");
+      var td1 = document.createElement("td");
+      td1.className = "td-card";
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "tbl-open";
+      if (c.cover && c.cover.charAt(0) === "#") {
+        var dot = document.createElement("span");
+        dot.className = "fl-dot";
+        dot.style.background = c.cover;
+        open.appendChild(dot);
+      }
+      var tx = document.createElement("span");
+      tx.textContent = c.text;
+      open.appendChild(tx);
+      open.addEventListener("click", function () { openCardDialog(r.col.id, c.id); });
+      td1.appendChild(open);
+      row.appendChild(td1);
+      var td2 = document.createElement("td");
+      var sel = document.createElement("select");
+      sel.className = "tbl-col";
+      sel.setAttribute("aria-label", t("tbl.col"));
+      board.columns.forEach(function (col) {
+        var o = document.createElement("option");
+        o.value = col.id;
+        o.textContent = col.name;
+        sel.appendChild(o);
+      });
+      sel.value = r.col.id;
+      sel.addEventListener("change", function () { moveCardTo(c.id, sel.value); });
+      td2.appendChild(sel);
+      row.appendChild(td2);
+      var td3 = document.createElement("td");
+      td3.className = "td-due";
+      if (c.due) {
+        var f = formatDateChip(c.due);
+        var dc = document.createElement("span");
+        dc.className = "due-chip " + f.css;
+        dc.textContent = f.css === "due-future" ? f.label : f.label + " · " + c.due.slice(5).split("-").reverse().join("/");
+        dc.title = c.due;
+        td3.appendChild(dc);
+      }
+      row.appendChild(td3);
+      var td4 = document.createElement("td");
+      var ch = document.createElement("div");
+      ch.className = "chips";
+      (c.labels || []).forEach(function (lid) {
+        var lb = labelById(lid);
+        if (!lb) return;
+        var chip = document.createElement("span");
+        chip.className = "chip";
+        chip.style.background = lb.color || FALLBACK_COLOR;
+        chip.textContent = lb.name;
+        ch.appendChild(chip);
+      });
+      td4.appendChild(ch);
+      row.appendChild(td4);
+      var td5 = document.createElement("td");
+      td5.className = "td-num";
+      if (c.subtasks && c.subtasks.length) {
+        td5.textContent = c.subtasks.filter(function (s) { return s.completed; }).length + "/" + c.subtasks.length;
+      }
+      row.appendChild(td5);
+      if (hasLane) {
+        var td6 = document.createElement("td");
+        td6.textContent = c.lane || "";
+        row.appendChild(td6);
+      }
+      tb.appendChild(row);
+    });
+    tbl.appendChild(tb);
+    wrap.appendChild(tbl);
+    host.appendChild(wrap);
+    if (!rows.length) {
+      var e = document.createElement("div");
+      e.className = "alt-empty";
+      e.textContent = t("tbl.empty");
+      host.appendChild(e);
+    }
+  }
+
+  // --- Timeline view: cards with a due date on a horizontal date axis ---
+  var TL_DAY = 34;                     // px per day
+  function renderTimeline(host, board, keepScroll) {
+    var today = todayYmd();
+    var rows = boardRows(board);
+    var dated = rows.filter(function (r) { return !!r.card.due; });
+    var undated = rows.length - dated.length;
+    dated.sort(function (a, b) { return a.card.due < b.card.due ? -1 : a.card.due > b.card.due ? 1 : (a.colIdx - b.colIdx) || (a.idx - b.idx); });
+    if (!dated.length) {
+      var e = document.createElement("div");
+      e.className = "alt-empty";
+      e.textContent = t("tl.empty");
+      host.appendChild(e);
+      return;
+    }
+    var rg = T.timelineRange(dated.map(function (r) { return r.card.due; }), today);
+    var wrap = document.createElement("div");
+    wrap.className = "tl-wrap";
+    var grid = document.createElement("div");
+    grid.className = "tl-grid";
+    grid.style.setProperty("--tl-day", TL_DAY + "px");
+    grid.style.width = "calc(var(--tl-name) + " + (rg.days * TL_DAY) + "px)";
+    // header: months + day numbers
+    var hd = document.createElement("div");
+    hd.className = "tl-row tl-headrow";
+    var corner = document.createElement("div");
+    corner.className = "tl-name tl-corner";
+    hd.appendChild(corner);
+    var track = document.createElement("div");
+    track.className = "tl-track";
+    var loc = LANG === "el" ? "el" : "en";
+    for (var i = 0; i < rg.days; i++) {
+      var ymd = T.addDays(rg.from, i);
+      var p = ymd.split("-");
+      var d = new Date(+p[0], +p[1] - 1, +p[2]);
+      var cell = document.createElement("div");
+      cell.className = "tl-day" + (ymd === today ? " today" : "") + (d.getDay() === 0 || d.getDay() === 6 ? " we" : "");
+      cell.style.left = (i * TL_DAY) + "px";
+      if (+p[2] === 1 || i === 0) {
+        var mo = document.createElement("span");
+        mo.className = "tl-month";
+        mo.textContent = d.toLocaleString(loc, { month: "short" }).replace(".", "") + (+p[1] === 1 || i === 0 ? " " + p[0] : "");
+        cell.appendChild(mo);
+      }
+      var dn = document.createElement("span");
+      dn.className = "tl-dn";
+      dn.textContent = String(+p[2]);
+      cell.appendChild(dn);
+      if (ymd === today) cell.title = t("tl.today");
+      track.appendChild(cell);
+    }
+    hd.appendChild(track);
+    grid.appendChild(hd);
+    var todayIdx = T.daysBetween(rg.from, today);
+    var lastIdx = board.columns.length - 1;
+    dated.forEach(function (r) {
+      var c = r.card;
+      var row = document.createElement("div");
+      row.className = "tl-row";
+      var nm = document.createElement("button");
+      nm.type = "button";
+      nm.className = "tl-name";
+      var cd = document.createElement("span");
+      cd.className = "fl-dot";
+      cd.style.background = tlColor(c);
+      nm.appendChild(cd);
+      var nt = document.createElement("span");
+      nt.className = "tl-text";
+      nt.textContent = c.text;
+      nm.appendChild(nt);
+      nm.title = c.text + " · " + r.col.name;
+      nm.addEventListener("click", function () { openCardDialog(r.col.id, c.id); });
+      row.appendChild(nm);
+      var tr2 = document.createElement("div");
+      tr2.className = "tl-track";
+      if (todayIdx >= 0 && todayIdx < rg.days) {
+        var tm = document.createElement("div");
+        tm.className = "tl-todayline";
+        tm.style.left = (todayIdx * TL_DAY) + "px";
+        tr2.appendChild(tm);
+      }
+      var idx = T.daysBetween(rg.from, c.due);
+      var pill = document.createElement("button");
+      pill.type = "button";
+      var fmt = formatDateChip(c.due);
+      pill.className = "tl-pill " + fmt.css + (r.colIdx === lastIdx && lastIdx > 0 ? " done" : "");
+      pill.style.left = (idx * TL_DAY + 2) + "px";
+      pill.style.background = tlColor(c);
+      pill.title = c.text + " · " + c.due + " · " + r.col.name;
+      pill.setAttribute("aria-label", c.text + ", " + c.due);
+      pill.textContent = c.text;
+      attachPillDrag(pill, r.col.id, c.id, idx);
+      tr2.appendChild(pill);
+      row.appendChild(tr2);
+      grid.appendChild(row);
+    });
+    wrap.appendChild(grid);
+    host.appendChild(wrap);
+    var foot = document.createElement("div");
+    foot.className = "alt-foot";
+    foot.textContent = t("tl.hint") + (undated ? "  ·  " + t("tl.nodue", { n: undated }) : "");
+    host.appendChild(foot);
+    requestAnimationFrame(function () {
+      if (keepScroll && keepScroll.kind === "tl-wrap") { wrap.scrollLeft = keepScroll.l; wrap.scrollTop = keepScroll.t; }
+      else wrap.scrollLeft = Math.max(0, (todayIdx - 3) * TL_DAY);
+    });
+  }
+  function tlColor(c) {
+    if (c.cover && /^#[0-9a-fA-F]{6}$/.test(c.cover)) return c.cover;
+    var lb = (c.labels || []).map(labelById).filter(Boolean)[0];
+    return lb ? (lb.color || FALLBACK_COLOR) : "var(--accent)";
+  }
+  // Drag a pill along the axis: the due date moves by whole days.
+  function attachPillDrag(pill, colId, cardId, idx0) {
+    pill.addEventListener("pointerdown", function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      var sx = e.clientX, started = false, delta = 0;
+      var left0 = parseFloat(pill.style.left) || 0;
+      function move(ev) {
+        var dx = ev.clientX - sx;
+        if (!started && Math.abs(dx) < DRAG_THRESHOLD) return;
+        if (!started) { started = true; pill.classList.add("dragging"); try { pill.setPointerCapture(e.pointerId); } catch (er) {} }
+        ev.preventDefault();
+        delta = Math.round(dx / TL_DAY);
+        pill.style.left = (left0 + delta * TL_DAY) + "px";
+      }
+      function up() {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", cancel);
+        if (!started) { openCardDialog(colId, cardId); return; }
+        pill.classList.remove("dragging");
+        if (!delta) return;
+        var board = currentBoard();
+        var f = board && T.findCard(board, cardId);
+        if (!f || !f.card.due) return;
+        f.card.due = T.addDays(f.card.due, delta);
+        stamp(f.card, ["d"]);
+        save(); scheduleRender();
+      }
+      function cancel() {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", cancel);
+        pill.classList.remove("dragging");
+        pill.style.left = left0 + "px";
+      }
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", cancel);
+    });
+    pill.addEventListener("click", function (e) { e.preventDefault(); });   // the pointerup decides
+    pill.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCardDialog(colId, cardId); }
+    });
+  }
+
+  // --- Automations dialog: the overdue rule + a summary of column rules ---
+  function openAutoDlg() {
+    if ($("auto-dlg") && $("auto-dlg").open) return;
+    var dlg = document.createElement("dialog");
+    dlg.id = "auto-dlg";
+    var h = document.createElement("h3");
+    h.textContent = t("auto.title");
+    dlg.appendChild(h);
+    var body = document.createElement("div");
+    body.id = "auto-body";
+    dlg.appendChild(body);
+    var foot = document.createElement("div");
+    foot.className = "dlg-foot";
+    var close = document.createElement("button");
+    close.type = "button";
+    close.textContent = t("board.close");
+    close.addEventListener("click", function () { dlg.close(); });
+    foot.appendChild(close);
+    dlg.appendChild(foot);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+    document.body.appendChild(dlg);
+    renderAutoDlg();
+    dlg.showModal();
+  }
+  function renderAutoDlg() {
+    var body = $("auto-body"), board = currentBoard();
+    if (!body || !board) return;
+    body.innerHTML = "";
+    var od = document.createElement("label");
+    od.className = "chk";
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "auto-overdue";
+    cb.checked = !!T.overdueLabel(board);
+    cb.addEventListener("change", function () { setOverdueRule(cb.checked); });
+    od.appendChild(cb);
+    var sp = document.createElement("span");
+    sp.textContent = " " + t("auto.overdue");
+    od.appendChild(sp);
+    body.appendChild(od);
+    var h4 = document.createElement("h4");
+    h4.className = "auto-h";
+    h4.textContent = t("auto.cols");
+    body.appendChild(h4);
+    board.columns.forEach(function (col) {
+      var row = document.createElement("div");
+      row.className = "auto-row";
+      var info = document.createElement("div");
+      info.className = "auto-info";
+      var nm = document.createElement("div");
+      nm.className = "manage-name";
+      nm.textContent = col.name + (col.wip > 0 ? "  ·  WIP " + col.wip : "");
+      info.appendChild(nm);
+      var meta = document.createElement("div");
+      meta.className = "manage-meta";
+      var a = col.auto || {}, parts = [];
+      if (a.done) parts.push(t("auto.done"));
+      if (a.today) parts.push(t("auto.today"));
+      if (a.label && labelById(a.label)) parts.push(t("auto.label") + ": " + labelById(a.label).name);
+      if (a.top) parts.push(t("auto.top"));
+      meta.textContent = parts.length ? parts.join(" · ") : t("auto.none");
+      info.appendChild(meta);
+      row.appendChild(info);
+      var ed = document.createElement("button");
+      ed.type = "button";
+      ed.className = "auto-edit";
+      ed.textContent = t("auto.edit");
+      ed.addEventListener("click", function () { openColDialog(col.id); });
+      row.appendChild(ed);
+      body.appendChild(row);
+    });
+  }
+  // The rule is a flag on its label (label.auto = "overdue"), so it
+  // syncs with the label and older versions keep it.
+  function setOverdueRule(on) {
+    var board = currentBoard();
+    if (!board) return;
+    var cur = T.overdueLabel(board);
+    if (on && !cur) {
+      var name = t("auto.overdueName");
+      var lb = null;
+      board.labels.forEach(function (l) { if (!lb && (l.name || "").trim().toLowerCase() === name.toLowerCase()) lb = l; });
+      if (lb) { lb.auto = "overdue"; touch(lb); }
+      else {
+        board.labels.push({ id: uid(), name: name, color: "#e06c75", mtime: Date.now(), pos: board.labels.length, auto: "overdue" });
+        board.om = Date.now();
+      }
+    } else if (!on && cur) {
+      delete cur.auto;
+      touch(cur);
+    }
+    save();
+    runOverdue();
+    scheduleRender();
+  }
+  // Overdue rule on every board (boot, after a pull, every few minutes).
+  function runOverdue() {
+    if (!state) return;
+    var now = Date.now(), n = 0;
+    state.boards.forEach(function (b) { n += T.applyOverdue(b, now); });
+    if (n) { save(); scheduleRender(); refreshOpenCard(); }
+  }
+
+  // --- Export ---
+  function slug(s) {
+    return String(s || "board").toLowerCase().replace(/[^a-z0-9Ͱ-Ͽ]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "board";
+  }
+  function blobToB64(b) {
+    return new Promise(function (resolve) {
+      var fr = new FileReader();
+      fr.onload = function () { var s = String(fr.result || ""); resolve(s.slice(s.indexOf(",") + 1)); };
+      fr.onerror = function () { resolve(null); };
+      fr.readAsDataURL(b);
+    });
+  }
+  function saveText(text, filename, mime, ext) {
+    var host = dialogHost();
+    if (host && typeof host.saveFile === "function") {
+      var ty = {};
+      ty[mime] = [ext];
+      return Promise.resolve(host.saveFile({ text: text, filename: filename, mime: mime,
+        types: [{ description: ext.slice(1).toUpperCase(), accept: ty }] })).then(function (r) { return !!(r && r.ok); });
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 40000);
+    return Promise.resolve(true);
+  }
+  var EXPORT_FILES_MAX = 25 * 1024 * 1024;
+  function exportJson() {
+    var board = currentBoard();
+    if (!board) return;
+    var snap = canonState({ boards: [board] }).boards[0];
+    var files = {}, total = 0, skipped = false, chain = Promise.resolve();
+    snap.columns.forEach(function (col) {
+      col.cards.forEach(function (c) {
+        (c.att || []).forEach(function (x) {
+          chain = chain.then(function () {
+            if (files[x.file]) return;
+            return readAtt(x.file).then(function (b) {
+              if (!b) return;
+              if (total + b.size > EXPORT_FILES_MAX) { skipped = true; return; }
+              total += b.size;
+              return blobToB64(b).then(function (s) { if (s) files[x.file] = s; });
+            });
+          });
+        });
+      });
+    });
+    chain.then(function () {
+      var text = JSON.stringify(T.exportBoard(snap, files, Date.now()), null, 1);
+      return saveText(text, "orOS-kanban-" + slug(board.name) + "-" + todayYmd() + ".json", "application/json", ".json");
+    }).then(function (ok) {
+      if (ok) notifyTransient(t(skipped ? "export.skipped" : "export.done"));
+    });
+  }
+  function exportCsv() {
+    var board = currentBoard();
+    if (!board) return;
+    var csv = T.boardCsv(board, [t("csv.board"), t("tbl.col"), t("tbl.card"), t("csv.notes"), t("tbl.due"), t("tbl.labels"),
+                                 t("tbl.sub"), t("tbl.lane"), t("csv.info"), t("card.att")]);
+    saveText(csv, "orOS-kanban-" + slug(board.name) + "-" + todayYmd() + ".csv", "text/csv", ".csv").then(function (ok) {
+      if (ok) notifyTransient(t("export.done"));
+    });
+  }
+  // Attachments that came inside an imported board file → the disk.
+  function writeImportedFiles(list) {
+    var fs = fsApi();
+    if (!fs || !list || !list.length) return;
+    list.forEach(function (f) {
+      try {
+        var bin = atob(f.data.replace(/\s+/g, ""));
+        var u8 = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        var path = T.attPath(f.file);
+        if (path) Promise.resolve(fs.writeBlob(path, new Blob([u8], { type: "application/octet-stream" }))).then(function () { scheduleRender(); }, function () {});
+      } catch (e) { /* a broken file is left out */ }
+    });
+  }
+
+  // --- Templates ---
+  function templates() { return state.boards.filter(isTpl); }
+  function smallDialog(id, title, hint, value, onOk) {
+    var stale = $(id);
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = id;
+    var form = document.createElement("form");
+    form.method = "dialog";
+    var h = document.createElement("h3");
+    h.textContent = title;
+    form.appendChild(h);
+    var lab = document.createElement("label");
+    lab.textContent = t("tpl.name");
+    lab.setAttribute("for", id + "-in");
+    form.appendChild(lab);
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.id = id + "-in";
+    inp.maxLength = 120;
+    inp.value = value;
+    form.appendChild(inp);
+    if (hint) {
+      var hn = document.createElement("div");
+      hn.className = "imp-hint";
+      hn.textContent = hint;
+      form.appendChild(hn);
+    }
+    var foot = document.createElement("div");
+    foot.className = "dlg-foot";
+    var no = document.createElement("button");
+    no.type = "button";
+    no.textContent = t("confirm.no");
+    no.addEventListener("click", function () { dlg.close(); });
+    var ok = document.createElement("button");
+    ok.type = "submit";
+    ok.textContent = t("save");
+    foot.appendChild(no);
+    foot.appendChild(ok);
+    form.appendChild(foot);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = inp.value.trim();
+      if (!v) return;
+      dlg.close();
+      onOk(v);
+    });
+    dlg.appendChild(form);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { inp.focus(); inp.select(); }, 50);
+  }
+  function saveTemplateDlg() {
+    var board = currentBoard();
+    if (!board) return;
+    smallDialog("tpl-save", t("tpl.saveTitle"), t("tpl.saveHint"), board.name, function (name) {
+      var tpl = T.templateFromBoard(board, uid, Date.now(), name);
+      state.boards.push(tpl);
+      state.om = Date.now();
+      save();
+      notifyTransient(t("tpl.saved"));
+    });
+  }
+  function boardFrom(src, name) {
+    pushUndo("tpl.created");
+    var nb = T.boardFromTemplate(src, uid, Date.now(), name);
+    state.boards.push(nb);
+    state.om = Date.now();
+    state.activeBoardId = nb.id;
+    resetSessionView();
+    save();
+    renderAll();
+  }
+  function openTemplatesDlg() {
+    var stale = $("tpl-dlg");
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "tpl-dlg";
+    var h = document.createElement("h3");
+    h.textContent = t("tpl.title");
+    dlg.appendChild(h);
+    var list = document.createElement("div");
+    list.className = "tpl-list";
+    dlg.appendChild(list);
+    function sect(text) {
+      var d = document.createElement("div");
+      d.className = "manage-section-hdr";
+      d.textContent = text;
+      list.appendChild(d);
+    }
+    function row(name, desc, onPick, onDel) {
+      var r = document.createElement("div");
+      r.className = "tpl-row";
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tpl-pick";
+      var nm = document.createElement("span");
+      nm.className = "manage-name";
+      nm.textContent = name;
+      b.appendChild(nm);
+      if (desc) {
+        var ds = document.createElement("span");
+        ds.className = "manage-meta";
+        ds.textContent = desc;
+        b.appendChild(ds);
+      }
+      b.addEventListener("click", function () { dlg.close(); onPick(); });
+      r.appendChild(b);
+      if (onDel) {
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "manage-delete";
+        del.title = t("tpl.del");
+        del.setAttribute("aria-label", t("tpl.del"));
+        del.innerHTML = ICNS.trash;
+        del.addEventListener("click", function () { onDel(); });
+        r.appendChild(del);
+      }
+      list.appendChild(r);
+    }
+    function paint() {
+      list.innerHTML = "";
+      sect(t("tpl.builtin"));
+      T.builtinList(LANG).forEach(function (x) {
+        row(x.name, x.desc, function () { boardFrom(T.builtinBoard(x.key, LANG), x.name); });
+      });
+      sect(t("tpl.mine"));
+      var mine = templates();
+      if (!mine.length) {
+        var e = document.createElement("div");
+        e.className = "imp-hint";
+        e.textContent = t("tpl.none");
+        list.appendChild(e);
+      }
+      mine.forEach(function (tp) {
+        var n = tp.columns.length + " " + t("meta.columns") + " · " +
+                tp.columns.reduce(function (a, c) { return a + c.cards.length; }, 0) + " " + t("meta.cards");
+        row(tp.name, n, function () { boardFrom(tp, tp.name); }, function () {
+          confirmDialog("confirm.tpldel", function () {
+            if (!state.boardDeleted) state.boardDeleted = {};
+            state.boardDeleted[tp.id] = Date.now();
+            state.boards = state.boards.filter(function (b) { return b.id !== tp.id; });
+            state.om = Date.now();
+            save();
+            paint();
+          });
+        });
+      });
+    }
+    paint();
+    var foot = document.createElement("div");
+    foot.className = "dlg-foot";
+    var close = document.createElement("button");
+    close.type = "button";
+    close.textContent = t("board.close");
+    close.addEventListener("click", function () { dlg.close(); });
+    foot.appendChild(close);
+    dlg.appendChild(foot);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   // ---------- 10. Undo / toast (closing handlers) ----------
@@ -3934,12 +5111,23 @@
     var col = colById(editingColId);
     editingColId = null;
     if (!col) return;
+    var changed = false;
     var name = $("col-name").value.trim();
-    if (name && name !== col.name) {
-      col.name = name;
-      touch(col);   // header edit = δομικό LWW
-    }
+    if (name && name !== col.name) { col.name = name; changed = true; }
+    // K1: WIP limit + arrival rules — part of the column header (LWW)
+    var w = Math.floor(+$("col-wip").value);
+    w = w > 0 && w < 1000 ? w : 0;
+    if ((col.wip || 0) !== w) { if (w) col.wip = w; else delete col.wip; changed = true; }
+    var na = {};
+    if ($("col-a-done").checked) na.done = true;
+    if ($("col-a-today").checked) na.today = true;
+    if ($("col-a-label").value) na.label = $("col-a-label").value;
+    if ($("col-a-top").checked) na.top = true;
+    var oldA = JSON.stringify(col.auto || {});
+    if (oldA !== JSON.stringify(na)) { if (Object.keys(na).length) col.auto = na; else delete col.auto; changed = true; }
+    if (changed) touch(col);   // header edit = δομικό LWW
     save(); scheduleRender();
+    if ($("auto-dlg") && $("auto-dlg").open) renderAutoDlg();
   });
   
   // ---------- 10b. Calendar deep-link consumer (Kanban ↔ Calendar) ----------
@@ -4044,6 +5232,24 @@
       if (pop && !e.target.closest("#filter-slot")) {
         pop.hidden = true;
       }
+      var mp = $("more-pop");
+      if (mp && !mp.hidden && !e.target.closest("#more-slot")) mp.hidden = true;
+    });
+
+    // --- K1: view / board menu ---
+    var moreBtn = $("more-btn");
+    if (moreBtn) {
+      moreBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var pop = $("more-pop");
+        if (!pop) return;
+        pop.hidden = !pop.hidden;
+        moreBtn.setAttribute("aria-expanded", pop.hidden ? "false" : "true");
+        if (!pop.hidden) renderMorePop();
+      });
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { var mp = $("more-pop"); if (mp && !mp.hidden) { mp.hidden = true; if (moreBtn) moreBtn.focus(); } }
     });
 
     // --- Card dialog ---
@@ -4061,16 +5267,20 @@
       cDueInput.addEventListener("input", function () {
         var card = editingCard();
         if (!card) return;
-        card.due = cDueInput.value || null;   // "" → null (cleared)
-        touch(card);
+        var dv = cDueInput.value || null;     // "" → null (cleared)
+        if (card.due === dv) return;
+        card.due = dv;
+        stamp(card, ["d"]);
         save();
         scheduleRender();       // date chip πίσω από το dialog φρεσκάρει
       });
       cDueInput.addEventListener("change", function () {
         var card = editingCard();
         if (!card) return;
-        card.due = cDueInput.value || null;
-        touch(card);
+        var dv2 = cDueInput.value || null;
+        if (card.due === dv2) return;
+        card.due = dv2;
+        stamp(card, ["d"]);
         save();
         scheduleRender();
       });
@@ -4096,6 +5306,7 @@
             pushUndo("toast.deleted");
             var board = currentBoard();
             tombstone(board, editingCardId);
+            dropFilesLater(filesOfCards(col.cards.filter(function (c) { return c.id === editingCardId; })));
             col.cards = col.cards.filter(function (c) { return c.id !== editingCardId; });
           }
           editingColId = null;
@@ -4148,6 +5359,30 @@
       infoAdd.addEventListener("click", addInfo);
     }
 
+    // K1: column (move), lane, attachments
+    var cCol = $("c-col");
+    if (cCol) cCol.addEventListener("change", function () {
+      var card = editingCard();
+      if (!card) return;
+      moveCardTo(card.id, cCol.value);
+      editingCard();                        // editingColId follows
+      renderCardCols();
+      var c2 = editingCard();
+      if (c2) { setInputKeep($("c-due"), c2.due || ""); renderCardLabels(c2); renderSubtasks(c2); }
+    });
+    var cLane = $("c-lane");
+    if (cLane) cLane.addEventListener("input", function () {
+      var card = editingCard();
+      if (!card) return;
+      var v = cLane.value.trim().slice(0, 60);
+      if ((card.lane || "") === v) return;
+      if (v) card.lane = v; else delete card.lane;
+      stamp(card, ["k"]);
+      scheduleCardSave();
+    });
+    var cAtt = $("c-att-add");
+    if (cAtt) cAtt.addEventListener("click", addAttachments);
+
     // Duplicate card
     var dupBtn = $("c-duplicate");
     if (dupBtn) {
@@ -4168,15 +5403,8 @@
 
         var name = $("col-name").value.trim();
         if (!name) return;
-
-        if (name !== col.name) {
-          col.name = name;
-          touch(col);
-        }
-        editingColId = null;
-        save(); scheduleRender();
         var dlg = $("dlg-col");
-        if (dlg) dlg.close();
+        if (dlg) dlg.close();                 // the close handler commits
       });
     }
 
@@ -4191,6 +5419,7 @@
           if (!board) return;
           tombstone(board, col.id);
           col.cards.forEach(function (c) { tombstone(board, c.id); });
+          dropFilesLater(filesOfCards(col.cards));
           board.columns = board.columns.filter(function (c) { return c.id !== col.id; });
           if (board.columns.length === 0) {
             var fresh = newColumnObj(t("new.col"));
@@ -4258,6 +5487,11 @@
     inheritPalette();
     watchPalette();
     scheduleRender();
+
+    // K1: the overdue rule — at start, every 5 minutes, back on screen
+    setTimeout(runOverdue, 1500);
+    setInterval(runOverdue, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) runOverdue(); });
 
     // Cold path: payload staged από το shell (__orosOpenKanbanCard)
     // στο sessionStorage["oros-kanban-open"]. One-shot: το

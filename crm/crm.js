@@ -1074,7 +1074,7 @@
   // Payloads: C.invoicePrefill / C.quotePrefill.
   function newInvoice(c, d) { openInvoices({ "new": C.invoicePrefill(c, d, data.prefs.cur) }); }
   // BR-Q1: a new unsaved draft in Quote. Quote needs at least one
-  // line and knows only EUR and USD.
+  // line (any ISO currency since Quote wave 46).
   function newQuote(c, d) {
     var s = shell();
     if (!s || typeof s.__orosOpenQuoteNew !== "function") { showToast(t("toast.noQuote")); return; }

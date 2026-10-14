@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Quote — shared read-only core (v1.1.0)
+// orOS Quote — shared read-only core (v1.2.0)
 // Which quotes need a follow-up, one copy for the shell's due
 // reminder (shell.js quoteCheckTick) and the Today summary
 // (quote/today.js). Pure: no DOM, no storage, never writes.
@@ -16,6 +16,15 @@
 //     client's name equals name (case and accents ignored). Deleted
 //     quotes never count. Newest date first (ties by num, then id).
 //     → [{ id, num, date, due, status, cur, total }]
+// Currencies (1.2, wave 46): any ISO 4217 code.
+//   curOk(c)                  → c is three capital letters.
+//   currencyList()            → common codes first, then the rest the
+//     browser knows (Intl.supportedValuesOf), no duplicates.
+//   fmtMoney(n, cur, lang, codeOnly) → the amount in that currency with
+//     its own decimals (codeOnly: the ISO code instead of a symbol).
+//   curDigits(cur)            → the currency's minor digits (JPY 0).
+//   convert(amount, rate, to) → amount × rate rounded to the digits of
+//     to (display only; the quote keeps its own currency).
 // Exposes window.OrosQuoteCore and, under Node, module.exports.
 // ============================================================
 (function (root) {
@@ -74,13 +83,65 @@
     }).map(function (q) {
       return { id: q.id, num: String(q.num || ""), date: YMD_RE.test(q.date || "") ? q.date : "",
                due: YMD_RE.test(q.dueDate || "") ? q.dueDate : "", status: String(q.status || "draft"),
-               cur: q.currency === "USD" ? "USD" : "EUR", total: total(q) };
+               cur: curOk(q.currency) ? q.currency : "EUR", total: total(q) };
     }).sort(function (a, b) {
       return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.num < b.num ? 1 : a.num > b.num ? -1 : (a.id < b.id ? 1 : -1));
     });
   }
 
-  var api = { dueQuotes: dueQuotes, clientName: clientName, total: total, forClient: forClient };
+  // ---------- Currencies (wave 46) ----------
+  // Any ISO 4217 code (three capital letters). The list offered in the
+  // picker comes from the browser (Intl.supportedValuesOf) with a fixed
+  // fallback; amounts are formatted with the currency's own minor
+  // units (JPY 0 decimals, BHD 3) by Intl, with a plain fallback.
+  var CUR_RE = /^[A-Z]{3}$/;
+  var COMMON = ["EUR", "USD", "GBP", "CHF", "JPY", "CAD", "AUD", "SEK", "NOK", "DKK", "PLN", "CZK",
+                "HUF", "RON", "BGN", "TRY", "CNY", "HKD", "SGD", "KRW", "INR", "BRL", "MXN", "ZAR",
+                "ILS", "NZD", "THB", "PHP", "MYR", "IDR", "ISK", "AED", "SAR", "EGP", "RSD", "ALL",
+                "MKD", "UAH", "GEL", "MAD", "NGN", "KES", "ARS", "CLP", "COP", "PEN", "TWD", "VND"];
+  function curOk(c) { return typeof c === "string" && CUR_RE.test(c); }
+  function currencyList() {
+    var all = [];
+    try {
+      if (typeof Intl !== "undefined" && typeof Intl.supportedValuesOf === "function") all = Intl.supportedValuesOf("currency");
+    } catch (e) { all = []; }
+    var seen = {}, out = [];
+    COMMON.concat(all || []).forEach(function (c) {
+      if (curOk(c) && !seen[c]) { seen[c] = true; out.push(c); }
+    });
+    return out;
+  }
+  var NF = {};
+  function fmtMoney(n, cur, lang, codeOnly) {
+    cur = curOk(cur) ? cur : "EUR";
+    n = typeof n === "number" && isFinite(n) ? n : 0;
+    var loc = lang === "el" ? "el-GR" : "en-GB";
+    var k = loc + cur + (codeOnly ? "c" : "");
+    if (!(k in NF)) {
+      try { NF[k] = new Intl.NumberFormat(loc, { style: "currency", currency: cur, currencyDisplay: codeOnly ? "code" : "symbol" }); }
+      catch (e) { NF[k] = null; }
+    }
+    if (NF[k]) return NF[k].format(n);
+    var s = Math.abs(n).toFixed(2);
+    if (lang === "el") s = s.replace(".", ",");
+    return (n < 0 ? "-" : "") + s + " " + cur;
+  }
+  // The currency's decimals (2 when Intl doesn't know it).
+  function curDigits(cur) {
+    try { return new Intl.NumberFormat("en", { style: "currency", currency: cur }).resolvedOptions().maximumFractionDigits; }
+    catch (e) { return 2; }
+  }
+  // A total shown in another currency: amount × rate (rate = how many
+  // `to` one `from` buys, e.g. UnitsCore.crossRate), rounded to the
+  // target's decimals; null without a usable rate.
+  function convert(amount, rate, to) {
+    if (typeof amount !== "number" || !isFinite(amount) || typeof rate !== "number" || !isFinite(rate) || rate <= 0) return null;
+    var d = curDigits(to), f = Math.pow(10, d);
+    return Math.round(amount * rate * f) / f;
+  }
+
+  var api = { dueQuotes: dueQuotes, clientName: clientName, total: total, forClient: forClient,
+              curOk: curOk, currencyList: currencyList, fmtMoney: fmtMoney, curDigits: curDigits, convert: convert };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosQuoteCore = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -27,20 +27,26 @@
     <!-- Drag handle (desktop resize, hidden on mobile) -->
     <div id="pane-splitter" aria-hidden="true"></div>
 
-    <!-- Editor pane (plain text only) -->
+    <!-- Editor pane: the page is Markdown source (plain text in storage);
+         md.js renders the preview -->
     <main id="editor-pane">
       <header id="editor-header">
         <button id="btn-show-tree" class="icon-btn"></button>
         <input id="page-title" type="text" spellcheck="false" data-i18n-ph="notes.title.ph" placeholder="Title">
         <button id="btn-share-page" class="icon-btn" hidden></button>
       </header>
-      <textarea id="page-text" spellcheck="true" data-i18n-ph="notes.text.ph" placeholder="Start typing…"></textarea>
+      <div id="md-toolbar" role="toolbar"></div>
+      <div id="page-body">
+        <textarea id="page-text" spellcheck="true" data-i18n-ph="notes.text.ph" placeholder="Start typing…"></textarea>
+        <div id="page-preview" class="md" hidden></div>
+      </div>
     </main>
 
   </div>
   <script src="../links/core.js?v=1.98.00"></script>
   <script src="../links/notes.js?v=1.98.00"></script>
   <script src="platforms.js?v=1.98.00"></script>
+  <script src="md.js?v=1.98.00"></script>
   <script src="notes.js?v=1.98.00"></script>
 </body>
 </html>

@@ -120,7 +120,7 @@
       "pdf.incat": "Income by category", "pdf.list": "Entries", "pdf.page": "Page {n}",
       "bk.done": "Backup saved", "bk.restored": "Backup merged: {n} new or newer items",
       "bk.same": "Backup merged: nothing new", "bk.bad": "This is not an orOS Budget backup",
-      "cur.title": "Currency", "cur.hint": "One currency for every entry. Changing it does not convert amounts.",
+      "cur.title": "Main currency", "cur.hint": "Every total is in this currency. An entry or an account can be in another one (pick it there); changing this does not convert the amounts already here.",
       "live.month": "{m}", "live.saved": "Saved",
       "menu.accounts": "Accounts", "acc.title": "Accounts", "acc.new": "New account", "acc.edit": "Edit account",
       "acc.name": "Name", "acc.name.ph": "Cash, Card, Bank…", "acc.open": "Starting balance",
@@ -134,7 +134,27 @@
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
-      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet"
+      "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
+      "menu.bank": "Import bank statement", "menu.rules": "Rules",
+      "flt.inbox": "Imported, no category ({n})", "inbox.bar": "{n} imported entries without a category",
+      "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
+      "inbox.run": "Apply rules", "inbox.rule": "Rule…", "inbox.done": "Category set",
+      "inbox.empty": "Every imported entry has a category.", "inbox.cat": "Category for {x}",
+      "tag.bank": "Imported from the bank",
+      "tab.plan": "Plan", "f.cur": "Currency", "f.inMain": "In {c}", "f.inMain.hint": "What it cost in {c}: filled in from the rate, change it to what your bank charged.",
+      "fx.of": "ECB rate of {d}.", "fx.off": "ECB rate of {d}: offline, the last saved.", "fx.none": "No exchange rates on this device yet (offline): type the amount in {c} yourself.",
+      "fx.loading": "Getting the exchange rates…", "fx.rate": "1 {a} = {r} {b}",
+      "err.inMain": "Type the amount in {c} too",
+      "rc.title": "Receipt", "rc.add": "Add a receipt photo or PDF", "rc.open": "Receipt {n}", "rc.pdf": "PDF",
+      "rc.missing": "Not on this device", "rc.missingLong": "This file is not on this device. Vault Drive brings it over from your other devices.",
+      "rc.where": "Kept in Files, folder Budget/Receipts.", "rc.remove": "Remove", "rc.openPdf": "Open", "rc.save": "Save a copy",
+      "rc.bad": "Not a photo or a PDF (up to 10 MB)", "rc.noDisk": "Couldn't save the file to the orOS disk",
+      "rc.text": "Read the total from text", "rc.textDlg": "Total from receipt text",
+      "rc.textHint": "Paste the receipt's text (for example with your phone's “copy text from photo”). Budget looks for the line with the total.",
+      "rc.textGo": "Use this amount", "rc.textNone": "No amount found in this text", "rc.textFound": "Total found: {a}",
+      "rec.remind": "Remind me", "rec.rOff": "No reminder", "rec.r0": "On the day of the charge", "rec.r1": "1 day before", "rec.rN": "{n} days before",
+      "acc.cur": "Currency of the account", "acc.netw": "Net worth", "xf.ta": "Arrived ({c})",
+      "notif.sub": "Upcoming charge", "notif.subBody": "{n}: {a} {w}", "notif.w0": "today", "notif.w1": "tomorrow", "notif.wN": "on {d}"
     },
     el: {
       "app": "Έσοδα & Έξοδα",
@@ -194,7 +214,7 @@
       "pdf.incat": "Έσοδα ανά κατηγορία", "pdf.list": "Κινήσεις", "pdf.page": "Σελίδα {n}",
       "bk.done": "Το αντίγραφο αποθηκεύτηκε", "bk.restored": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία",
       "bk.same": "Το αντίγραφο ενώθηκε: τίποτα καινούργιο", "bk.bad": "Αυτό δεν είναι αντίγραφο των Εσόδων & Εξόδων του orOS",
-      "cur.title": "Νόμισμα", "cur.hint": "Ένα νόμισμα για όλες τις κινήσεις. Η αλλαγή του δεν μετατρέπει τα ποσά.",
+      "cur.title": "Κύριο νόμισμα", "cur.hint": "Όλα τα σύνολα είναι σε αυτό το νόμισμα. Μια κίνηση ή ένας λογαριασμός μπορεί να είναι σε άλλο (το διαλέγεις εκεί)· η αλλαγή του δεν μετατρέπει τα ποσά που υπάρχουν ήδη.",
       "live.month": "{m}", "live.saved": "Αποθηκεύτηκε",
       "menu.accounts": "Λογαριασμοί", "acc.title": "Λογαριασμοί", "acc.new": "Νέος λογαριασμός", "acc.edit": "Επεξεργασία λογαριασμού",
       "acc.name": "Όνομα", "acc.name.ph": "Μετρητά, Κάρτα, Τράπεζα…", "acc.open": "Αρχικό υπόλοιπο",
@@ -208,7 +228,27 @@
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
-      "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο"
+      "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
+      "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.rules": "Κανόνες",
+      "flt.inbox": "Εισαγόμενες χωρίς κατηγορία ({n})", "inbox.bar": "{n} εισαγόμενες κινήσεις χωρίς κατηγορία",
+      "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
+      "inbox.run": "Εφαρμογή κανόνων", "inbox.rule": "Κανόνας…", "inbox.done": "Η κατηγορία μπήκε",
+      "inbox.empty": "Όλες οι εισαγόμενες κινήσεις έχουν κατηγορία.", "inbox.cat": "Κατηγορία για {x}",
+      "tag.bank": "Από την τράπεζα",
+      "tab.plan": "Πλάνο", "f.cur": "Νόμισμα", "f.inMain": "Σε {c}", "f.inMain.hint": "Πόσο κόστισε σε {c}: συμπληρώνεται από την ισοτιμία, άλλαξέ το σε ό,τι χρέωσε η τράπεζά σου.",
+      "fx.of": "Ισοτιμία ΕΚΤ της {d}.", "fx.off": "Ισοτιμία ΕΚΤ της {d}: εκτός σύνδεσης, η τελευταία αποθηκευμένη.", "fx.none": "Δεν υπάρχουν ακόμα ισοτιμίες σε αυτή τη συσκευή (εκτός σύνδεσης): γράψε μόνος σου το ποσό σε {c}.",
+      "fx.loading": "Λήψη ισοτιμιών…", "fx.rate": "1 {a} = {r} {b}",
+      "err.inMain": "Γράψε και το ποσό σε {c}",
+      "rc.title": "Απόδειξη", "rc.add": "Προσθήκη φωτογραφίας ή PDF απόδειξης", "rc.open": "Απόδειξη {n}", "rc.pdf": "PDF",
+      "rc.missing": "Όχι σε αυτή τη συσκευή", "rc.missingLong": "Το αρχείο δεν είναι σε αυτή τη συσκευή. Το Vault Drive το φέρνει από τις άλλες συσκευές σου.",
+      "rc.where": "Φυλάσσεται στα Αρχεία, φάκελος Budget/Receipts.", "rc.remove": "Αφαίρεση", "rc.openPdf": "Άνοιγμα", "rc.save": "Αποθήκευση αντιγράφου",
+      "rc.bad": "Δεν είναι φωτογραφία ή PDF (έως 10 MB)", "rc.noDisk": "Δεν ήταν δυνατή η αποθήκευση στον δίσκο του orOS",
+      "rc.text": "Ανάγνωση συνόλου από κείμενο", "rc.textDlg": "Σύνολο από το κείμενο της απόδειξης",
+      "rc.textHint": "Επικόλλησε το κείμενο της απόδειξης (για παράδειγμα με την «αντιγραφή κειμένου από φωτογραφία» του κινητού σου). Η εφαρμογή ψάχνει τη γραμμή με το σύνολο.",
+      "rc.textGo": "Χρήση αυτού του ποσού", "rc.textNone": "Δεν βρέθηκε ποσό σε αυτό το κείμενο", "rc.textFound": "Βρέθηκε σύνολο: {a}",
+      "rec.remind": "Υπενθύμιση", "rec.rOff": "Χωρίς υπενθύμιση", "rec.r0": "Την ημέρα της χρέωσης", "rec.r1": "1 ημέρα πριν", "rec.rN": "{n} ημέρες πριν",
+      "acc.cur": "Νόμισμα λογαριασμού", "acc.netw": "Καθαρή περιουσία", "xf.ta": "Έφτασαν ({c})",
+      "notif.sub": "Επερχόμενη χρέωση", "notif.subBody": "{n}: {a} {w}", "notif.w0": "σήμερα", "notif.w1": "αύριο", "notif.wN": "στις {d}"
     }
   };
 
@@ -469,7 +509,63 @@
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !okStamp(x.m) || !parseYmd(x.d) || !okCents(x.a) || !KINDS[x.k]) return null;
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return withExtras(withAcc({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x), x, AC_SKIP);
+    return withExtras(withAcc({ id: x.id, m: x.m, d: x.d, a: x.a, k: x.k, c: c, n: normText(x.n, NOTE_LEN) }, x), txBank(x), AC_SKIP);
+  }
+  // Bank import marker on an entry (since 1.98): src "bank", ot (the
+  // bank's own text, what rules match), fit (the bank's transaction id,
+  // OFX FITID / CAMT reference). Checked here, then written in name
+  // order together with any other flat extra (same order an older
+  // version keeps them in, so both write the same canonical JSON).
+  var SRC_TX_RE = /^[a-z0-9]{1,20}$/;
+  function txBank(x) {
+    var y = Object.assign({}, x);
+    if (!(typeof y.src === "string" && SRC_TX_RE.test(y.src))) delete y.src;
+    var ot = normText(y.ot, NOTE_LEN);
+    if (ot) y.ot = ot; else delete y.ot;
+    var fit = normText(y.fit, 80);
+    if (fit) y.fit = fit; else delete y.fit;
+    // Since wave 10: oc + oa = the amount as typed in another currency
+    // (a stays the main-currency amount every total reads); rc = the
+    // receipt file names on the orOS disk, one string, space-separated.
+    if (!(okCur3(y.oc) && okCents(y.oa))) { delete y.oc; delete y.oa; }
+    if (!(typeof y.rc === "string" && RC_STR_RE.test(y.rc))) delete y.rc;
+    return y;
+  }
+  var CUR3_RE = /^[A-Z]{3}$/;
+  function okCur3(c) { return typeof c === "string" && CUR3_RE.test(c); }
+  var RC_STR_RE = /^[a-z0-9.-]+( [a-z0-9.-]+){0,2}$/;
+  // Import rule (since 1.98): "if the bank's text contains q (and/or
+  // the amount is between lo and hi) → category c, kind k (the
+  // category's), rename py, note nt". Keys in name order after id, m:
+  // what an older version's carry-forward of an unknown collection
+  // writes too (canonical JSON).
+  var RULE_Q = 60;
+  function normRule(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
+        !KINDS[x.k] || typeof x.c !== "string" || !ID_RE.test(x.c)) return null;
+    var q = normText(x.q, RULE_Q);
+    var lo = isInt(x.lo) && x.lo > 0 && x.lo <= MAX_CENTS ? x.lo : 0;
+    var hi = isInt(x.hi) && x.hi > 0 && x.hi <= MAX_CENTS ? x.hi : 0;
+    if (lo && hi && hi < lo) hi = 0;
+    if (!q && !lo && !hi) return null;
+    return withExtras({ id: x.id, m: x.m, c: x.c, hi: hi, k: x.k, lo: lo, nt: normText(x.nt, 80), py: normText(x.py, RULE_Q), q: q }, x);
+  }
+  // Bank profile (since 1.98): how a bank's CSV reads, and which Budget
+  // account its statements go to. sig = the folded header row, or
+  // "ofx:<account>" / "camt:<IBAN>". Columns are 0-based, -1 = none.
+  var SEPS = { ";": 1, ",": 1, "\t": 1, "|": 1 };
+  var ENCS = { auto: 1, "utf-8": 1, "windows-1253": 1, "iso-8859-7": 1, "windows-1252": 1 };
+  function colOf(v) { return isInt(v) && v >= -1 && v < 200 ? v : -1; }
+  function normProf(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m)) return null;
+    var n = normText(x.n, NAME_LEN);
+    if (!n) return null;
+    return withExtras({ id: x.id, m: x.m,
+      ac: typeof x.ac === "string" && ID_RE.test(x.ac) ? x.ac : "",
+      ca: colOf(x.ca), ccr: colOf(x.ccr), cd: colOf(x.cd), cdb: colOf(x.cdb), cm: colOf(x.cm), cp: colOf(x.cp), cs: colOf(x.cs),
+      dec: x.dec === "," ? "," : ".", df: x.df === "mdy" || x.df === "ymd" ? x.df : "dmy",
+      enc: ENCS[x.enc] ? x.enc : "auto", inv: x.inv === true, n: n,
+      sep: SEPS[x.sep] ? x.sep : ",", sig: typeof x.sig === "string" ? x.sig.slice(0, 400) : "" }, x);
   }
   // category = { id, m, k, name ("" = the ready name), col (0–8) }
   function normCat(x) {
@@ -494,11 +590,21 @@
         !okStamp(x.m) || !okCents(x.a) || !KINDS[x.k] || !FREQS[x.f] || !parseYmd(x.s)) return null;
     var e = typeof x.e === "string" && parseYmd(x.e) && x.e >= x.s ? x.e : "";
     var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
-    return withExtras(withAcc({ id: x.id, m: x.m, k: x.k, a: x.a, c: c, n: normText(x.n, NOTE_LEN), f: x.f, s: x.s, e: e }, x), x, AC_SKIP);
+    // nd (since wave 10): remind this many days before a charge (0–30, 0 = on the day).
+    var y = Object.assign({}, x);
+    if (!(isInt(y.nd) && y.nd >= 0 && y.nd <= 30)) delete y.nd;
+    return withExtras(withAcc({ id: x.id, m: x.m, k: x.k, a: x.a, c: c, n: normText(x.n, NOTE_LEN), f: x.f, s: x.s, e: e }, x), y, AC_SKIP);
   }
+  // Settings. Since wave 10: env (true = envelope budgeting on) and
+  // envs ("YYYY-MM", the month it started), each written only when set,
+  // in name order among the extras (what an older version keeps).
+  var MK_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
-    return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, x);
+    var y = Object.assign({}, x);
+    if (y.env !== true) delete y.env;
+    if (!(typeof y.envs === "string" && MK_RE.test(y.envs))) delete y.envs;
+    return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
   // account = { id, m, n (name), o (starting balance in cents, may be
@@ -509,15 +615,48 @@
     if (!n) return null;
     var o = isInt(x.o) && Math.abs(x.o) <= MAX_CENTS ? x.o : 0;
     var col = isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : 8;
-    return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, x);
+    // cur (since wave 10): the account's own currency; absent = the main one.
+    // Its starting balance is in that currency.
+    var y = Object.assign({}, x);
+    if (!okCur3(y.cur)) delete y.cur;
+    return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, y);
   }
   // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
   // Not income, not an expense: it only moves money between balances.
+  // ta (since wave 10): what reached the to-account, in its currency,
+  // when the two accounts have different currencies (a = the from one's).
   function normXfer(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
         !okStamp(x.m) || !parseYmd(x.d) || !okCents(x.a) || typeof x.f !== "string" || !ID_RE.test(x.f) ||
         typeof x.t !== "string" || !ID_RE.test(x.t) || x.f === x.t) return null;
-    return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, f: x.f, t: x.t, n: normText(x.n, NOTE_LEN) }, x);
+    var y = Object.assign({}, x);
+    if (!okCents(y.ta)) delete y.ta;
+    return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, f: x.f, t: x.t, n: normText(x.n, NOTE_LEN) }, y);
+  }
+  // Envelope assignment (since wave 10) = { id "<yyyymm>-<category id |
+  // none>", m, a (signed cents), c (category id, "" = uncategorised),
+  // mk "YYYY-MM" }: one per envelope and month (LWW, never summed).
+  function asgId(mk, c) { return mk.replace("-", "") + "-" + (c || "none"); }
+  function normAsg(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
+        typeof x.mk !== "string" || !MK_RE.test(x.mk) || !isInt(x.a) || Math.abs(x.a) > MAX_CENTS) return null;
+    var c = typeof x.c === "string" && ID_RE.test(x.c) ? x.c : "";
+    if (x.id !== asgId(x.mk, c)) return null;
+    return withExtras({ id: x.id, m: x.m, a: x.a, c: c, mk: x.mk }, x);
+  }
+  // Savings goal (since wave 10) = { id, m, ac (account id | ""), col
+  // 0–8, d (target date | ""), n (name), sv (put aside by hand, cents),
+  // t (target, cents > 0) }: keys in name order after id, m.
+  var GOAL_NAME = 40;
+  function normGoal(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) || !okCents(x.t)) return null;
+    var n = normText(x.n, GOAL_NAME);
+    if (!n) return null;
+    return withExtras({ id: x.id, m: x.m,
+      ac: typeof x.ac === "string" && ID_RE.test(x.ac) ? x.ac : "",
+      col: isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : 2,
+      d: parseYmd(x.d) ? x.d : "", n: n,
+      sv: isInt(x.sv) && x.sv >= 0 && x.sv <= MAX_CENTS ? x.sv : 0, t: x.t }, x);
   }
 
   var COLLS = [
@@ -526,15 +665,19 @@
     { key: "bud",  tomb: null,  norm: normBud },
     { key: "rec",  tomb: "rec", norm: normRec },
     { key: "acc",  tomb: "acc", norm: normAcc },
-    { key: "xfer", tomb: "xfer", norm: normXfer }
+    { key: "xfer", tomb: "xfer", norm: normXfer },
+    { key: "asg",  tomb: "asg",  norm: normAsg },    // in name order: where an older
+    { key: "goal", tomb: "goal", norm: normGoal },   // version puts unknown collections
+    { key: "prof", tomb: "prof", norm: normProf },
+    { key: "rule", tomb: "rule", norm: normRule }
   ];
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -727,6 +870,7 @@
 
   // ---------- 6. Storage, prefs ----------
   var data = null, prefs = null;
+  var TABS = ["list", "plan", "charts", "limits", "rec"];
 
   function load() {
     var raw = null;
@@ -763,8 +907,10 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = (p && typeof p === "object") ? p : {};
     prefs = {
-      tab: ["list", "charts", "limits", "rec"].indexOf(p.tab) >= 0 ? p.tab : "list",
-      csv: p.csv === "std" || p.csv === "excel" ? p.csv : (LANG === "el" ? "excel" : "std")
+      tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "list",
+      csv: p.csv === "std" || p.csv === "excel" ? p.csv : (LANG === "el" ? "excel" : "std"),
+      rv: p.rv === "subs" ? "subs" : "all",                                     // Recurring tab: all | subscriptions
+      nh: isInt(p.nh) && p.nh >= -1 && p.nh <= 23 ? p.nh : 9                   // subscription reminders: hour, -1 = off here
     };
   }
   function savePrefs() {
@@ -802,10 +948,21 @@
     return data.acc.slice().sort(function (x, y) { return x.n.localeCompare(y.n) || cmpStr(x.id, y.id); });
   }
   function accName(id) { var a = id ? findIn(data.acc, id) : null; return a ? a.n : ""; }
+  // Planning core (budget/plan.js) and its screens (budget/planui.js).
+  var PLAN = window.OrosBudgetPlan || null;
+  // Balances today, each in its account's own currency.
+  function balNow() { return PLAN ? PLAN.balancesFx(data, today, cur(), fx) : accBalances(data, today); }
+  function accCur(a) { return (a && a.cur) || cur(); }
+  // One account's balance today in the main currency (null: no rate).
+  function accBalanceMain(id) {
+    var a = findIn(data.acc, id);
+    if (!a) return null;
+    return fx(balNow()[id], accCur(a), cur());
+  }
 
   var fmtCache = {};
-  function money(cents) {
-    var key = cur();
+  function money(cents, code) {
+    var key = code || cur();
     if (!fmtCache[key]) {
       try { fmtCache[key] = new Intl.NumberFormat(LOCALE, { style: "currency", currency: key }); }
       catch (e) { fmtCache[key] = { format: function (v) { return v.toFixed(2) + " " + key; } }; }
@@ -819,6 +976,59 @@
       catch (e) { shortFmt = { format: function (v) { return String(Math.round(v)); } }; }
     }
     return shortFmt.format(cents / 100);
+  }
+  // Whole units, no symbol: the year table (its heading names the currency).
+  var plainFmt = null;
+  function moneyPlain(cents) {
+    if (!plainFmt) {
+      try { plainFmt = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 }); }
+      catch (e) { plainFmt = { format: function (v) { return String(Math.round(v)); } }; }
+    }
+    return plainFmt.format(Math.round(cents / 100));
+  }
+
+  // ---------- Exchange rates (since wave 10) ----------
+  // Unit Converter's rates (units/core.js): ONE fetcher and ONE cache
+  // on the device ("oros-units-rates"), ECB reference rates through
+  // Frankfurter. Fetched only when Budget has something in another
+  // currency (an account, an entry, or one being typed), at most every
+  // 6 hours; offline, the last saved rates are used and said so.
+  var UC = window.UnitsCore && typeof window.UnitsCore.fetchLatest === "function" && typeof window.UnitsCore.crossRate === "function" ? window.UnitsCore : null;
+  var rates = null, fxState = "";   // "" | "loading" | "failed"
+  function loadFx() {
+    rates = null;
+    if (!UC) return;
+    try { rates = UC.storedRates(JSON.parse(localStorage.getItem(UC.RATES_KEY) || "null")); } catch (e) { rates = null; }
+  }
+  function fx(cents, from, to) {
+    if (from === to) return cents;
+    var k = UC && rates ? UC.crossRate(rates, from, to) : null;
+    return k === null || k === undefined ? null : Math.round(cents * k);
+  }
+  function usesFx() {
+    var c = cur();
+    return data.acc.some(function (a) { return a.cur && a.cur !== c; }) || data.tx.some(function (x) { return x.oc && x.oc !== c; });
+  }
+  function refreshFx(force, then) {
+    if (!UC || fxState === "loading") return;
+    if (!force && !UC.ratesStale(rates, Date.now())) return;
+    if (navigator.onLine === false) { fxState = "failed"; if (then) then(); return; }
+    fxState = "loading";
+    UC.fetchLatest(function (u, o) { return fetch(u, o); }, Date.now()).then(function (r) {
+      rates = r;
+      fxState = "";
+      try { localStorage.setItem(UC.RATES_KEY, JSON.stringify(r)); } catch (e) {}
+      if (then) then();
+      renderAll();
+    }, function () {
+      fxState = "failed";
+      if (then) then();
+    });
+  }
+  function fxNote() {
+    if (!rates) return fxState === "loading" ? t("fx.loading") : t("fx.none", { c: cur() });
+    var off = fxState === "failed" || (navigator.onLine === false && UC && UC.ratesStale(rates, Date.now()));
+    return t(off ? "fx.off" : "fx.of", { d: dateShort(rates.date) });
   }
   function monthLabel(mk) { return MONTHS[LANG][+mk.slice(5, 7) - 1] + " " + mk.slice(0, 4); }
   function monthShort(mk) { return MONTHS_SHORT[LANG][+mk.slice(5, 7) - 1]; }
@@ -841,7 +1051,10 @@
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
     edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18h.01"/></svg>',
-    over: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>'
+    bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 21h18"/></svg>',
+    over: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>',
+    clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>'
   };
 
   function el(tag, cls, text) {
@@ -863,10 +1076,12 @@
     renderSummary();
     renderFilter();
     if (prefs.tab === "list") renderList();
+    if (prefs.tab === "plan") renderPlanTab();
     if (prefs.tab === "charts") renderCharts();
     if (prefs.tab === "limits") renderLimits();
     if (prefs.tab === "rec") renderRec();
   }
+  function renderPlanTab() { if (PLANUI) PLANUI.renderPlan($("plan")); }
 
   function renderToolbar() {
     $("month").textContent = monthLabel(viewMk);
@@ -874,7 +1089,7 @@
   }
 
   function renderTabs() {
-    ["list", "charts", "limits", "rec"].forEach(function (k) {
+    TABS.forEach(function (k) {
       var b = $("tab-" + k), on = prefs.tab === k;
       b.setAttribute("aria-selected", on ? "true" : "false");
       b.tabIndex = on ? 0 : -1;
@@ -899,7 +1114,7 @@
     var list = accs();
     box.hidden = !list.length || prefs.tab === "rec";
     if (box.hidden) return;
-    var bal = accBalances(data, today);
+    var bal = balNow();
     var btn = el("button", "acc-chips");
     btn.type = "button";
     btn.setAttribute("aria-label", t("acc.open.aria"));
@@ -908,7 +1123,7 @@
       var c = el("span", "acc-chip");
       c.appendChild(swatch(a.col));
       c.appendChild(el("span", "acc-chip-n", a.n));
-      var v = el("span", "acc-chip-v" + (bal[a.id] < 0 ? " neg" : ""), money(bal[a.id]));
+      var v = el("span", "acc-chip-v" + (bal[a.id] < 0 ? " neg" : ""), money(bal[a.id], a.cur));
       c.appendChild(v);
       btn.appendChild(c);
     });
@@ -923,6 +1138,8 @@
     add("all", t("flt.all"));
     add("k:o", t("flt.out"));
     add("k:i", t("flt.in"));
+    var nIn = inboxCount();
+    if (nIn || prev === "inbox") add("inbox", t("flt.inbox", { n: nIn }));
     var g1 = el("optgroup"); g1.label = t("cats.out");
     var g2 = el("optgroup"); g2.label = t("cats.in");
     cats().forEach(function (c) {
@@ -942,7 +1159,11 @@
     if (sel.value !== prev) { filter = "all"; sel.value = "all"; }
   }
 
+  // Imported from a bank and still without a category (the "inbox").
+  function inInbox(x) { return x.src === "bank" && !x.c; }
+  function inboxCount() { var n = 0; data.tx.forEach(function (x) { if (inInbox(x)) n++; }); return n; }
   function matches(x) {
+    if (filter === "inbox" && !inInbox(x)) return false;
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
     if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2)) return false;
     if (filter.indexOf("a:") === 0 && (x.ac || "") !== filter.slice(2)) return false;
@@ -965,9 +1186,11 @@
   function renderList() {
     var box = $("list");
     box.innerHTML = "";
+    var inbox = filter === "inbox";
+    renderInboxBar();
     var rows = data.tx.filter(function (x) {
-      return (query || mkOf(x.d) === viewMk) && matches(x);
-    }).concat(data.xfer.filter(function (x) {
+      return (query || inbox || mkOf(x.d) === viewMk) && matches(x);
+    }).concat(inbox ? [] : data.xfer.filter(function (x) {
       return (query || mkOf(x.d) === viewMk) && xferMatches(x);
     }));
     rows.sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m || cmpStr(b.id, a.id); });
@@ -975,7 +1198,7 @@
     found.hidden = !query;
     if (query) found.textContent = t("list.found", { n: rows.length });
     empty.hidden = rows.length > 0;
-    empty.textContent = (query || filter !== "all") ? t("list.none") : t("list.empty");
+    empty.textContent = inbox && !query ? t("inbox.empty") : (query || filter !== "all") ? t("list.none") : t("list.empty");
     var day = null, group = null, dayIn = 0, dayOut = 0, totEl = null;
     var flushDay = function () {
       if (totEl) totEl.textContent = (dayIn ? "+" + money(dayIn) + "  " : "") + (dayOut ? "−" + money(dayOut) : "");
@@ -985,7 +1208,7 @@
         flushDay();
         day = x.d; dayIn = 0; dayOut = 0;
         var head = el("div", "day-head");
-        head.appendChild(el("span", "day-name", dayLabel(x.d) + (query ? " " + x.d.slice(0, 4) : "")));
+        head.appendChild(el("span", "day-name", dayLabel(x.d) + (query || inbox ? " " + x.d.slice(0, 4) : "")));
         totEl = el("span", "day-tot");
         totEl.title = t("day.total");
         head.appendChild(totEl);
@@ -995,9 +1218,74 @@
       }
       if (!x.k) { group.appendChild(xferRow(x)); return; }   // a transfer: not in the day total
       if (x.k === "i") dayIn += x.a; else dayOut += x.a;
-      group.appendChild(txRow(x));
+      group.appendChild(inbox ? inboxRow(x) : txRow(x));
     });
     flushDay();
+  }
+  // The bar over the list: a way into the inbox, or, inside it, a hint
+  // and the rule buttons.
+  function renderInboxBar() {
+    var bar = $("inbox-bar"), n = inboxCount();
+    bar.innerHTML = "";
+    if (filter === "inbox") {
+      bar.hidden = false;
+      bar.className = "inbox-bar in";
+      bar.appendChild(el("p", "hint", t("inbox.hint")));
+      if (BANKUI) {
+        var acts = el("div", "inbox-acts");
+        if (data.rule.length && n) {
+          var run = el("button", "mini", t("inbox.run"));
+          run.type = "button";
+          run.addEventListener("click", function () { BANKUI.rerun(); });
+          acts.appendChild(run);
+        }
+        var rb = el("button", "mini", t("menu.rules"));
+        rb.type = "button";
+        rb.addEventListener("click", function () { BANKUI.rules(); });
+        acts.appendChild(rb);
+        bar.appendChild(acts);
+      }
+      return;
+    }
+    bar.hidden = !n;
+    bar.className = "inbox-bar";
+    if (!n) return;
+    var b = el("button", "inbox-go");
+    b.type = "button";
+    var ic = el("span", "ic");
+    ic.innerHTML = UI.bank;
+    b.appendChild(ic);
+    b.appendChild(el("span", "", t("inbox.bar", { n: n })));
+    b.addEventListener("click", function () {
+      filter = "inbox";
+      query = "";
+      $("q").value = "";
+      renderFilter();
+      renderList();
+    });
+    bar.appendChild(b);
+  }
+  // An inbox row: the entry, then its category right there.
+  function inboxRow(x) {
+    var li = txRow(x);
+    li.className = "inbox-li";
+    var bot = el("div", "inbox-bot");
+    var cs = catSelect(x.k, "");
+    cs.value = "";
+    cs.setAttribute("aria-label", t("inbox.cat", { x: x.n || money(x.a) }));
+    cs.addEventListener("change", function () {
+      if (!cs.value) return;
+      applyChanges([{ id: x.id, c: cs.value, n: x.n }], t("inbox.done"));
+    });
+    bot.appendChild(cs);
+    if (BANKUI) {
+      var rb = el("button", "mini", t("inbox.rule"));
+      rb.type = "button";
+      rb.addEventListener("click", function () { BANKUI.ruleFor({ k: x.k, c: cs.value, n: x.n, ot: x.ot }); });
+      bot.appendChild(rb);
+    }
+    li.appendChild(bot);
+    return li;
   }
 
   function txRow(x) {
@@ -1008,9 +1296,24 @@
     var mid = el("span", "tx-mid");
     mid.appendChild(el("span", "tx-cat", catName(x.c)));
     var an = accName(x.ac);
-    var sub = [an, x.n].filter(Boolean).join(" · ");
+    var orig = x.oc && x.oc !== cur() ? money(x.oa, x.oc) : "";
+    var sub = [an, orig, x.n].filter(Boolean).join(" · ");
     if (sub) mid.appendChild(el("span", "tx-note", sub));
     b.appendChild(mid);
+    if (x.rc) {
+      var rcI = el("span", "tx-rec");
+      rcI.innerHTML = UI.clip;
+      rcI.title = t("rc.title");
+      rcI.setAttribute("aria-label", t("rc.title"));
+      b.appendChild(rcI);
+    }
+    if (x.src === "bank") {
+      var bk = el("span", "tx-rec");
+      bk.innerHTML = UI.bank;
+      bk.title = t("tag.bank");
+      bk.setAttribute("aria-label", t("tag.bank"));
+      b.appendChild(bk);
+    }
     if (x.id.charAt(0) === "r" && /-\d{8}$/.test(x.id)) {
       var r = el("span", "tx-rec");
       r.innerHTML = UI.repeat;
@@ -1020,7 +1323,7 @@
     }
     b.appendChild(el("span", "tx-amt", (x.k === "i" ? "+" : "−") + money(x.a)));
     b.setAttribute("aria-label", t(x.k === "i" ? "k.in" : "k.out") + ", " + catName(x.c) +
-      (an ? ", " + an : "") + (x.n ? ", " + x.n : "") + ", " + money(x.a) + ", " + dateShort(x.d));
+      (an ? ", " + an : "") + (x.n ? ", " + x.n : "") + ", " + money(x.a) + (orig ? " (" + orig + ")" : "") + ", " + dateShort(x.d));
     b.addEventListener("click", function () { txDialog(x.id); });
     li.appendChild(b);
     return li;
@@ -1035,8 +1338,9 @@
     mid.appendChild(el("span", "tx-cat", f + " → " + to));
     mid.appendChild(el("span", "tx-note", x.n ? t("xf.btn") + " · " + x.n : t("xf.btn")));
     b.appendChild(mid);
-    b.appendChild(el("span", "tx-amt", money(x.a)));
-    b.setAttribute("aria-label", t("xf.aria", { a: money(x.a), f: f, t: to, d: dateShort(x.d) }) + (x.n ? ", " + x.n : ""));
+    var fa = findIn(data.acc, x.f), xa = money(x.a, fa && fa.cur);
+    b.appendChild(el("span", "tx-amt", xa));
+    b.setAttribute("aria-label", t("xf.aria", { a: xa, f: f, t: to, d: dateShort(x.d) }) + (x.n ? ", " + x.n : ""));
     b.addEventListener("click", function () { xferDialog(x.id); });
     li.appendChild(b);
     return li;
@@ -1127,6 +1431,9 @@
     if (r.f === "y") return t("rec.every.y", { d: p.d + " " + MONTHS_GEN[LANG][p.m - 1] });
     return t("rec.every.m", { d: p.d });
   }
+  function remindLabel(nd) {
+    return t("rec.remind") + ": " + (nd === 0 ? t("rec.r0") : nd === 1 ? t("rec.r1") : t("rec.rN", { n: nd }));
+  }
   function recNext(r) {
     var next = occurrences(r, addDays(today, 1), addDays(today, 400))[0];
     return next ? t("rec.next", { d: dateShort(next) }) : t("rec.ended");
@@ -1135,6 +1442,10 @@
   function renderRec() {
     var box = $("rec");
     box.innerHTML = "";
+    var subs = PLANUI && prefs.rv === "subs";
+    if (PLANUI) PLANUI.renderRecHead($("rec-head"), prefs.rv, function (v) { prefs.rv = v; savePrefs(); renderRec(); });
+    $("subs").hidden = !subs;
+    if (subs) { $("rec-empty").hidden = true; PLANUI.renderSubs($("subs")); return; }
     $("rec-empty").hidden = data.rec.length > 0;
     var list = data.rec.slice().sort(function (a, b) {
       return cmpStr(a.k, b.k) || b.a - a.a || cmpStr(a.id, b.id);
@@ -1148,6 +1459,13 @@
       mid.appendChild(el("span", "tx-cat", r.n || catName(r.c)));
       mid.appendChild(el("span", "tx-note", recWhen(r) + " · " + recNext(r)));
       b.appendChild(mid);
+      if (isInt(r.nd)) {
+        var bell = el("span", "tx-rec");
+        bell.innerHTML = UI.bell;
+        bell.title = remindLabel(r.nd);
+        bell.setAttribute("aria-label", remindLabel(r.nd));
+        b.appendChild(bell);
+      }
       b.appendChild(el("span", "tx-amt", (r.k === "i" ? "+" : "−") + money(r.a)));
       b.addEventListener("click", function () { recDialog(r.id); });
       li.appendChild(b);
@@ -1234,6 +1552,12 @@
     renderDonut();
     renderBars();
     renderLine();
+    if (PLANUI) {
+      PLANUI.renderYear($("ch-year"));
+      PLANUI.renderNetWorth($("ch-nw"));
+      if (data.acc.length && usesFx()) refreshFx(false);
+    }
+    $("ch-year").hidden = $("ch-nw").hidden = !PLANUI;
   }
 
   // Expenses of the month by category: top 7 + "Other" folded.
@@ -1513,11 +1837,13 @@
     form.method = "dialog";
     var pre = !x && preset ? preset : null;
     var k0 = x ? x.k : (pre && pre.k) || "o";
+    var main = cur();
+    var foreign0 = x && x.oc && x.oc !== main && x.oa ? x.oc : "";
     var amt = el("input");
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
     amt.className = "amt-in";
-    amt.value = x ? centsToInput(x.a, LANG) : pre && pre.a ? centsToInput(pre.a, LANG) : "";
+    amt.value = x ? centsToInput(foreign0 ? x.oa : x.a, LANG) : pre && pre.a ? centsToInput(pre.a, LANG) : "";
     amt.placeholder = LANG === "el" ? "0,00" : "0.00";
     var date = el("input");
     date.type = "date";
@@ -1534,17 +1860,76 @@
     var err = errLine();
     if (pre && pre.src) dlg.appendChild(el("div", "dlg-sub", t("f.from").replace("{app}", appName(pre.src))));
     form.appendChild(sw);
-    form.appendChild(field(t("f.amount") + " (" + cur() + ")", amt, "bd-amt"));
+    var accSel = null;
+    if (data.acc.length) accSel = accSelect(x ? x.ac : lastAcc);
+    // Amount + its currency. Another currency than the main one keeps
+    // what was typed (oc, oa) and asks for the main amount (a), filled
+    // in from Unit Converter's ECB rates and open to correction.
+    var curSel = el("select");
+    curSel.className = "cur-sel";
+    [main].concat(CURRENCIES.filter(function (c) { return c !== main; })).forEach(function (c) {
+      var o = el("option", "", c); o.value = c; curSel.appendChild(o);
+    });
+    var accA = accSel && accSel.value ? findIn(data.acc, accSel.value) : null;
+    curSel.value = foreign0 || (!x && accA && accA.cur ? accA.cur : main);
+    var curTouched = !!x, mainTouched = !!foreign0;
+    var amtRow = el("div", "amt-row");
+    amtRow.appendChild(field(t("f.amount"), amt, "bd-amt"));
+    var cf = field(t("f.cur"), curSel, "bd-cur");
+    cf.className = "fld cur-fld";
+    amtRow.appendChild(cf);
+    form.appendChild(amtRow);
+    var inMain = el("input");
+    inMain.inputMode = "decimal";
+    inMain.autocomplete = "off";
+    inMain.placeholder = LANG === "el" ? "0,00" : "0.00";
+    inMain.value = foreign0 ? centsToInput(x.a, LANG) : "";
+    inMain.addEventListener("input", function () { mainTouched = true; });
+    var mainF = field(t("f.inMain", { c: main }), inMain, "bd-inmain");
+    var fxLine = el("p", "hint fx-line");
+    mainF.appendChild(fxLine);
+    form.appendChild(mainF);
+    function syncCur() {
+      var c = curSel.value, on = c !== main;
+      mainF.hidden = !on;
+      if (!on) return;
+      var oc = parseAmount(amt.value);
+      var r = oc === null ? null : fx(oc, c, main);
+      if (!mainTouched && r !== null && r > 0) inMain.value = centsToInput(r, LANG);
+      var one = fx(100000, c, main);
+      fxLine.textContent = (one !== null ? t("fx.rate", { a: c, r: (one / 100000).toFixed(4).replace(".", LANG === "el" ? "," : "."), b: main }) + " · " : "") + fxNote();
+    }
+    curSel.addEventListener("change", function () {
+      curTouched = true;
+      mainTouched = false;
+      syncCur();
+      if (curSel.value !== main) refreshFx(false, syncCur);
+    });
+    amt.addEventListener("input", syncCur);
+    if (accSel) accSel.addEventListener("change", function () {
+      if (curTouched || x) return;
+      var a = findIn(data.acc, accSel.value);
+      curSel.value = a && a.cur ? a.cur : main;
+      mainTouched = false;
+      syncCur();
+      if (curSel.value !== main) refreshFx(false, syncCur);
+    });
+    syncCur();
+    if (curSel.value !== main) refreshFx(false, syncCur);
     var row = el("div", "fld-row");
     row.appendChild(field(t("f.date"), date, "bd-date"));
     row.appendChild(field(t("f.cat"), sel, "bd-cat"));
     form.appendChild(row);
-    var accSel = null;
-    if (data.acc.length) {
-      accSel = accSelect(x ? x.ac : lastAcc);
-      form.appendChild(field(t("f.acc"), accSel, "bd-acc"));
-    }
+    if (accSel) form.appendChild(field(t("f.acc"), accSel, "bd-acc"));
     form.appendChild(field(t("f.note"), note, "bd-note"));
+    // Receipt photo / PDF on the orOS disk, and its total from text.
+    var rowId = x ? x.id : newId();
+    var rcb = PLAN ? receiptBox(dlg, x, rowId, date, function (cents) {
+      amt.value = centsToInput(cents, LANG);
+      mainTouched = false;
+      syncCur();
+    }) : null;
+    if (rcb && rcb.wrap) form.appendChild(rcb.wrap);
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteTx(x.id); }));
@@ -1555,28 +1940,42 @@
     form.appendChild(acts);
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var cents = parseAmount(amt.value);
-      if (cents === null) { showErr(err, t("err.amount"), amt); return; }
+      var typed = parseAmount(amt.value);
+      if (typed === null) { showErr(err, t("err.amount"), amt); return; }
+      var oc = curSel.value !== main ? curSel.value : "", cents = typed, oa = 0;
+      if (oc) {
+        cents = parseAmount(inMain.value);
+        if (cents === null) { showErr(err, t("err.inMain", { c: main }), inMain); return; }
+        oa = typed;
+      }
       if (!parseYmd(date.value)) { showErr(err, t("err.date"), date); return; }
       var k = sw.get(), c = sel.value, n = normText(note.value, NOTE_LEN);
+      var rc = rcb ? PLAN.rcJoin(rcb.names()) : "";
       // Without accounts the field is absent and an entry keeps its account.
       var cur0 = x ? findIn(data.tx, x.id) : null;   // may have changed by a pull meanwhile
       var ac = accSel ? accSel.value : (cur0 ? cur0.ac || "" : "");
+      if (!rcb && cur0) rc = cur0.rc || "";
       if (cur0) {
-        if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n || (cur0.ac || "") !== ac) {
+        if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n || (cur0.ac || "") !== ac ||
+            (cur0.oc || "") !== oc || (cur0.oa || 0) !== oa || (cur0.rc || "") !== rc) {
           cur0.d = date.value; cur0.a = cents; cur0.k = k; cur0.c = c; cur0.n = n;
           if (ac) cur0.ac = ac; else delete cur0.ac;
+          if (oc) { cur0.oc = oc; cur0.oa = oa; } else { delete cur0.oc; delete cur0.oa; }
+          if (rc) cur0.rc = rc; else delete cur0.rc;
           cur0.m = stamp(cur0.m);
           commit();
         }
       } else {
-        var nid = x ? x.id : newId();
+        var nid = rowId;
         if (x) untomb("tx", nid);
-        var nx = { id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, k: k, c: c, n: n };
+        var nx = { id: nid, m: stamp(x ? x.m : (data.tombs["tx:" + nid] || 0)), d: date.value, a: cents, k: k, c: c, n: n };
         if (ac) nx.ac = ac;
+        if (oc) { nx.oc = oc; nx.oa = oa; }
+        if (rc) nx.rc = rc;
         data.tx.push(nx);
         commit();
       }
+      if (rcb) rcb.commit();
       lastCat[k] = c;
       if (accSel) lastAcc = ac;
       dlg.close();
@@ -1589,6 +1988,240 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     if (!x) (pre ? ok : amt).focus();
+  }
+
+  // ---------- Receipts on the orOS disk (since wave 10) ----------
+  // The entry keeps file names only (`rc`); each file sits in Files
+  // under Budget/Receipts and travels with Vault Drive when the user
+  // runs it, never through the slice. Photos are re-drawn on a canvas
+  // (long side 1600 px, JPEG 0.8, white background): no EXIF or
+  // location is kept. PDFs (≤ 10 MB) are kept as they are, only when
+  // their first bytes say "%PDF-".
+  var RC_IMG_MAX = 40 * 1024 * 1024, RC_PDF_MAX = 10 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function rcRandom() {
+    var a = new Uint8Array(8), out = "";
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 8; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) out += (a[j] % 36).toString(36);
+    return out;
+  }
+  function looksPdf(file) { return !!file && (file.type === "application/pdf" || /\.pdf$/i.test(file.name || "")); }
+  function encodeReceipt(file) {
+    if (!file) return Promise.resolve(null);
+    if (looksPdf(file)) {
+      if (!file.size || file.size > RC_PDF_MAX) return Promise.resolve(null);
+      return file.slice(0, 5).arrayBuffer().then(function (buf) {
+        return PLAN.isPdfHead(new Uint8Array(buf)) ? { blob: file.slice(0, file.size, "application/pdf"), ext: "pdf" } : null;
+      }).catch(function () { return null; });
+    }
+    if (file.size > RC_IMG_MAX) return Promise.resolve(null);
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var k = Math.min(1, 1600 / Math.max(w, h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? { blob: b, ext: "jpg" } : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function rmReceipt(name) {
+    var fs = fsApi(), path = PLAN ? PLAN.rcPath(name) : null;
+    if (!fs || !path) return Promise.resolve();
+    return Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  // A deleted entry keeps its files through the Undo window; then any
+  // name no entry points at any more leaves the disk.
+  function dropReceiptsLater(names) {
+    if (!PLAN || !names || !names.length || !fsApi()) return;
+    var list = names.slice();
+    setTimeout(function () {
+      var used = PLAN.rcAll(data);
+      list.forEach(function (n) { if (used.indexOf(n) < 0) rmReceipt(n); });
+    }, 12000);
+  }
+  function openBlob(blob) {
+    var u = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = u;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
+  }
+  // Files added while the editor is open are written at once and
+  // removed again if it closes without saving; files taken off leave
+  // the disk on save. onTotal(cents) fills the amount from text.
+  function receiptBox(dlg, x, rowId, dateIn, onTotal) {
+    var fs = fsApi();
+    var cur0 = x ? PLAN.rcList(x.rc) : [], orig = cur0.slice(), added = [], urls = [], done = false;
+    var wrap = el("div", "fld rc-fld");
+    wrap.appendChild(el("div", "dlg-lbl", t("rc.title")));
+    var grid = el("div", "rc-grid");
+    wrap.appendChild(grid);
+    var tb = el("button", "mini rc-text", t("rc.text"));
+    tb.type = "button";
+    tb.addEventListener("click", function () { totalFromText(onTotal); });
+    wrap.appendChild(tb);
+    function paint() {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      urls = [];
+      grid.innerHTML = "";
+      cur0.forEach(function (name, i) {
+        var b = el("button", "rc-th");
+        b.type = "button";
+        b.setAttribute("aria-label", t("rc.open", { n: i + 1 }));
+        b.addEventListener("click", function () { viewer(name); });
+        grid.appendChild(b);
+        if (/\.pdf$/.test(name)) { b.appendChild(el("span", "rc-pdf", t("rc.pdf"))); return; }
+        if (!fs) { b.appendChild(el("span", "rc-miss", t("rc.missing"))); return; }
+        Promise.resolve(fs.readBlob(PLAN.rcPath(name))).then(function (blob) {
+          if (!blob) throw new Error("ENOENT");
+          var u = URL.createObjectURL(blob);
+          urls.push(u);
+          var im = el("img");
+          im.alt = "";
+          im.src = u;
+          b.appendChild(im);
+        }).catch(function () { b.appendChild(el("span", "rc-miss", t("rc.missing"))); });
+      });
+      if (fs && cur0.length < PLAN.RC_MAX) {
+        var add = el("button", "rc-th rc-add", "+");
+        add.type = "button";
+        add.setAttribute("aria-label", t("rc.add"));
+        add.title = t("rc.add");
+        add.addEventListener("click", pick);
+        grid.appendChild(add);
+      }
+    }
+    function pick() {
+      pickFile("image/*,application/pdf,.pdf").then(function (file) {
+        if (!file) return;
+        return encodeReceipt(file).then(function (enc) {
+          if (!enc) { showToast(t("rc.bad")); return; }
+          var name = PLAN.rcName(parseYmd(dateIn.value) ? dateIn.value : today, rowId, rcRandom(), enc.ext);
+          if (!name) return;
+          return Promise.resolve(fs.writeBlob(PLAN.rcPath(name), enc.blob)).then(function () {
+            if (done) { rmReceipt(name); return; }
+            added.push(name);
+            cur0.push(name);
+            cur0.sort(cmpStr);
+            paint();
+          });
+        });
+      }).catch(function () { showToast(t("rc.noDisk")); });
+    }
+    function viewer(name) {
+      var v = makeDialog("bd-rc-view", t("rc.title"));
+      var box = el("div", "rc-view");
+      v.appendChild(box);
+      var blobNow = null, pdf = /\.pdf$/.test(name);
+      var acts = el("div", "dlg-actions");
+      var openB = pdf ? button(t("rc.openPdf"), "", function () { if (blobNow) openBlob(blobNow); }) : null;
+      var saveB = button(t("rc.save"), "", function () {
+        if (blobNow) saveBlob(blobNow, name, pdf ? "application/pdf" : "image/jpeg", pdf ? "PDF" : "JPEG", pdf ? ".pdf" : ".jpg");
+      });
+      if (openB) { openB.disabled = true; acts.appendChild(openB); }
+      saveB.disabled = true;
+      acts.appendChild(saveB);
+      if (fs) Promise.resolve(fs.readBlob(PLAN.rcPath(name))).then(function (blob) {
+        if (!blob) throw new Error("ENOENT");
+        blobNow = pdf ? blob.slice(0, blob.size, "application/pdf") : blob.slice(0, blob.size, "image/jpeg");
+        if (pdf) box.appendChild(el("div", "rc-pdf big", t("rc.pdf")));
+        else {
+          var u = URL.createObjectURL(blobNow), im = el("img");
+          im.alt = t("rc.title");
+          im.src = u;
+          box.appendChild(im);
+          v.addEventListener("close", function () { setTimeout(function () { URL.revokeObjectURL(u); }, 1000); });
+        }
+        if (openB) openB.disabled = false;
+        saveB.disabled = false;
+      }).catch(function () { box.appendChild(el("p", "hint", t("rc.missingLong"))); });
+      else box.appendChild(el("p", "hint", t("rc.missingLong")));
+      v.appendChild(el("p", "hint", t("rc.where")));
+      acts.appendChild(button(t("rc.remove"), "danger", function () {
+        v.close();
+        cur0 = cur0.filter(function (n) { return n !== name; });
+        if (added.indexOf(name) >= 0) { added = added.filter(function (n) { return n !== name; }); rmReceipt(name); }
+        paint();
+      }));
+      acts.appendChild(button(t("dlg.close"), "primary", function () { v.close(); }));
+      v.appendChild(acts);
+      document.body.appendChild(v);
+      v.showModal();
+    }
+    dlg.addEventListener("close", function () {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      if (!done) { done = true; added.forEach(rmReceipt); }
+    });
+    paint();
+    return {
+      wrap: wrap,
+      names: function () { return cur0.slice(); },
+      commit: function () {
+        done = true;
+        var gone = orig.filter(function (n) { return cur0.indexOf(n) < 0; });
+        if (gone.length) setTimeout(function () {
+          var used = PLAN.rcAll(data);
+          gone.forEach(function (n) { if (used.indexOf(n) < 0) rmReceipt(n); });
+        }, 0);
+      }
+    };
+  }
+  // "Read the total from text": paste a receipt's text, Budget finds
+  // the total line (OCR itself is not done here).
+  function totalFromText(onTotal) {
+    var dlg = makeDialog("bd-rc-text", t("rc.textDlg"));
+    var form = el("form");
+    form.appendChild(el("p", "hint", t("rc.textHint")));
+    var ta = el("textarea", "rc-ta");
+    ta.rows = 7;
+    ta.maxLength = 20000;
+    ta.setAttribute("aria-label", t("rc.textDlg"));
+    form.appendChild(ta);
+    var res = el("p", "rc-found");
+    res.setAttribute("aria-live", "polite");
+    form.appendChild(res);
+    var found = null;
+    ta.addEventListener("input", function () {
+      found = PLAN.amountFromText(ta.value);
+      res.textContent = ta.value.trim() ? (found !== null ? t("rc.textFound", { a: centsToInput(found, LANG) }) : t("rc.textNone")) : "";
+      ok.disabled = found === null;
+    });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("rc.textGo"), "primary", null);
+    ok.type = "submit";
+    ok.disabled = true;
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (found === null) return;
+      dlg.close();
+      onTotal(found);
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    ta.focus();
   }
   // Another app's display name, from the shell's strings ("app.<id>").
   function appName(id) {
@@ -1629,6 +2262,125 @@
     });
   }
 
+  // Bank statements + rules (budget/bank.js core, budget/bankui.js
+  // dialogs). Imports go through addEntries (one write, Undo).
+  var BANKUI = window.OrosBudgetBank && window.OrosBudgetBankUI ? window.OrosBudgetBankUI : null;
+  function saveRule(v) {
+    var cur0 = v.id ? findIn(data.rule, v.id) : null;
+    var obj = normRule({ id: cur0 ? cur0.id : newId(), m: stamp(cur0 ? cur0.m : 0),
+                         k: v.k, c: v.c, q: v.q, lo: v.lo || 0, hi: v.hi || 0, py: v.py || "", nt: v.nt || "" });
+    if (!obj) return null;
+    if (cur0) data.rule = data.rule.filter(function (y) { return y.id !== cur0.id; });
+    data.rule.push(obj);
+    commit();
+    renderAll();
+    return obj;
+  }
+  function deleteRule(id, text) {
+    var r = findIn(data.rule, id);
+    if (!r) return;
+    var copy = JSON.parse(JSON.stringify(r));
+    data.rule = data.rule.filter(function (y) { return y.id !== id; });
+    tombstone("rule", id);
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      untomb("rule", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["rule:" + id] || 0));
+      if (!findIn(data.rule, id)) data.rule.push(copy);
+      commit();
+      renderAll();
+    });
+  }
+  // Bank profile: by id, else by name (same name = same profile).
+  function saveProf(v) {
+    var cur0 = v.id ? findIn(data.prof, v.id) : null;
+    if (!cur0) data.prof.forEach(function (p) { if (!cur0 && p.n.toLowerCase() === String(v.n).toLowerCase()) cur0 = p; });
+    var base = cur0 ? Object.assign({}, cur0) : { id: newId(), m: 0 };
+    Object.keys(v).forEach(function (k) { if (k !== "id" && v[k] !== undefined) base[k] = v[k]; });
+    base.m = 0;
+    var obj = normProf(base);
+    if (!obj) return null;
+    var was = cur0 ? JSON.stringify(Object.assign({}, cur0, { m: 0 })) : "";
+    if (was === JSON.stringify(obj)) return cur0;   // nothing changed: no write, no sync
+    obj.m = stamp(cur0 ? cur0.m : 0);
+    if (cur0) data.prof = data.prof.filter(function (y) { return y.id !== cur0.id; });
+    data.prof.push(obj);
+    commit();
+    return obj;
+  }
+  // [{ id, c, n }] → set on the entries in one write; Undo puts back
+  // what they had (unless that entry was changed again since).
+  function applyChanges(list, text) {
+    var before = [];
+    list.forEach(function (ch) {
+      var x = findIn(data.tx, ch.id);
+      var n = normText(ch.n, NOTE_LEN);
+      if (!x || (x.c === ch.c && x.n === n)) return;
+      before.push({ id: x.id, c: x.c, n: x.n, nc: ch.c });
+      x.c = ch.c;
+      x.n = n;
+      x.m = stamp(x.m);
+    });
+    if (!before.length) return;
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      before.forEach(function (b) {
+        var x = findIn(data.tx, b.id);
+        if (!x || x.c !== b.nc) return;
+        x.c = b.c; x.n = b.n; x.m = stamp(x.m);
+      });
+      commit();
+      renderAll();
+    });
+  }
+  function pickFile(accept) {
+    var dh = dialogHost();
+    return dh && typeof dh.openFile === "function" ? dh.openFile(accept) : localPick(accept);
+  }
+  function initBank() {
+    if (!BANKUI) return;
+    BANKUI.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      catSelect: catSelect, fillCatSelect: fillCatSelect, accSelect: accSelect, kindSwitch: kindSwitch,
+      hasAccounts: function () { return data.acc.length > 0; },
+      data: function () { return data; }, cur: cur, catName: catName, catCol: catCol, money: money,
+      dateShort: dateShort, centsToInput: function (c) { return centsToInput(c, LANG); },
+      parseAmount: parseAmount, normText: normText, pickFile: pickFile, showToast: showToast,
+      addEntries: addEntries, saveRule: saveRule, deleteRule: deleteRule, saveProf: saveProf, applyChanges: applyChanges
+    });
+  }
+
+  // Plan tab, subscriptions, reports (budget/planui.js over plan.js).
+  var PLANUI = PLAN && window.OrosBudgetPlanUI ? window.OrosBudgetPlanUI : null;
+  // What the accounts held, in the main currency, at the end of the
+  // month before envelope budgeting started (≥ 0): money to assign.
+  function startCash() {
+    if (!PLAN || !data.acc.length || !data.set.envs) return 0;
+    var r = PLAN.netWorth(data, PLAN.lastDay(mkAdd(data.set.envs, -1)), cur(), fx);
+    return Math.max(0, r.tot);
+  }
+  function initPlan() {
+    if (!PLANUI) return;
+    PLANUI.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch, errLine: errLine, showErr: showErr,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      data: function () { return data; }, cats: cats, catName: catName, catCol: catCol, findIn: findIn, stamp: stamp,
+      commit: commit, renderAll: renderAll, undoToast: undoToast, showToast: showToast, live: live, tt: t,
+      money: money, moneyShort: moneyShort, moneyPlain: moneyPlain, monthLabel: monthLabel, monthShort: monthShort, dateShort: dateShort,
+      viewMk: function () { return viewMk; }, today: function () { return today; }, setMonth: setMonth, mkAdd: mkAdd, cur: cur,
+      centsToInput: function (c) { return centsToInput(c, LANG); }, parseAmount: parseAmount, parseSigned: parseSigned,
+      normText: normText, newId: newId, accs: accs, accName: accName, tombstone: tombstone, untomb: untomb,
+      startCash: startCash, limitOf: budOf, accBalanceMain: accBalanceMain, recDialog: recDialog, recWhen: recWhen,
+      icon: function (k) { return UI[k] || ""; },
+      notifyHour: function () { return prefs.nh; }, setNotifyHour: function (h) { prefs.nh = h; savePrefs(); },
+      chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, tableTwin: tableTwin,
+      fx: fx, fxNote: fxNote
+    });
+  }
+
   function deleteTx(id) {
     var x = findIn(data.tx, id);
     if (!x) return;
@@ -1637,6 +2389,7 @@
     tombstone("tx", id);
     commit();
     renderAll();
+    if (PLAN && x.rc) dropReceiptsLater(PLAN.rcList(x.rc));
     undoToast(t("toast.deleted"), function () {
       untomb("tx", id);
       copy.m = stamp(Math.max(copy.m, data.tombs["tx:" + id] || 0));
@@ -1737,7 +2490,8 @@
     freq.value = r ? r.f : "m";
     var start = el("input"); start.type = "date"; start.value = r ? r.s : today;
     var end = el("input"); end.type = "date"; end.value = r ? r.e : "";
-    var sw = kindSwitch(k0, function (v) { fillCatSelect(sel, v, v === "o" ? "o-home" : "i-salary"); });
+    var syncRem = function () {};
+    var sw = kindSwitch(k0, function (v) { fillCatSelect(sel, v, v === "o" ? "o-home" : "i-salary"); syncRem(); });
     var err = errLine();
     form.appendChild(sw);
     form.appendChild(field(t("f.amount") + " (" + cur() + ")", amt, "bd-r-amt"));
@@ -1755,6 +2509,22 @@
       accSel = accSelect(r ? r.ac : lastAcc);
       form.appendChild(field(t("f.acc"), accSel, "bd-r-acc"));
     }
+    // Reminder before a charge (expenses; the shell rings it at the
+    // device's reminder hour, Recurring › Subscriptions).
+    var rem = el("select");
+    [-1, 0, 1, 2, 3, 5, 7, 14].forEach(function (n) {
+      var o = el("option", "", n < 0 ? t("rec.rOff") : n === 0 ? t("rec.r0") : n === 1 ? t("rec.r1") : t("rec.rN", { n: n }));
+      o.value = String(n);
+      rem.appendChild(o);
+    });
+    rem.value = r && isInt(r.nd) ? String(r.nd) : "-1";
+    if (rem.value === "" && r && isInt(r.nd)) {   // a lead this list doesn't offer (set elsewhere): keep it
+      var ox = el("option", "", t("rec.rN", { n: r.nd })); ox.value = String(r.nd); rem.appendChild(ox); rem.value = String(r.nd);
+    }
+    var remF = field(t("rec.remind"), rem, "bd-r-rem");
+    form.appendChild(remF);
+    syncRem = function () { remF.hidden = sw.get() !== "o"; };
+    syncRem();
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (r) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteRec(r.id); }));
@@ -1773,11 +2543,14 @@
       var vals = { k: sw.get(), a: cents, c: sel.value, n: normText(note.value, NOTE_LEN), f: freq.value, s: start.value, e: e2 };
       var cur0 = r ? findIn(data.rec, r.id) : null;
       var ac = accSel ? accSel.value : (cur0 ? cur0.ac || "" : "");
+      var nd = vals.k === "o" ? +rem.value : -1;
+      var ndWas = cur0 && isInt(cur0.nd) ? cur0.nd : -1;
       if (cur0) {
-        var changed = Object.keys(vals).some(function (kk) { return cur0[kk] !== vals[kk]; }) || (cur0.ac || "") !== ac;
+        var changed = Object.keys(vals).some(function (kk) { return cur0[kk] !== vals[kk]; }) || (cur0.ac || "") !== ac || ndWas !== nd;
         if (changed) {
           Object.keys(vals).forEach(function (kk) { cur0[kk] = vals[kk]; });
           if (ac) cur0.ac = ac; else delete cur0.ac;
+          if (nd >= 0) cur0.nd = nd; else delete cur0.nd;
           cur0.m = stamp(cur0.m);
         }
       } else {
@@ -1786,6 +2559,7 @@
         var obj = { id: nid, m: stamp(r ? r.m : 0) };
         Object.keys(vals).forEach(function (kk) { obj[kk] = vals[kk]; });
         if (ac) obj.ac = ac;
+        if (nd >= 0) obj.nd = nd;
         data.rec.push(obj);
       }
       if (accSel) lastAcc = ac;
@@ -1846,7 +2620,7 @@
     if (!list.length) body.appendChild(el("p", "hint empty", t("acc.empty")));
     else {
       body.appendChild(el("h3", "sub-h", t("acc.bal")));
-      var bal = accBalances(data, today);
+      var bal = balNow();
       var ul = el("ul", "day-list");
       list.forEach(function (a) {
         var li = el("li");
@@ -1856,14 +2630,26 @@
         var mid = el("span", "tx-mid");
         mid.appendChild(el("span", "tx-cat", a.n));
         b.appendChild(mid);
-        var v = el("span", "tx-amt" + (bal[a.id] < 0 ? " neg" : ""), money(bal[a.id]));
+        var v = el("span", "tx-amt" + (bal[a.id] < 0 ? " neg" : ""), money(bal[a.id], a.cur));
         b.appendChild(v);
-        b.setAttribute("aria-label", a.n + ", " + money(bal[a.id]) + ", " + t("acc.edit"));
+        b.setAttribute("aria-label", a.n + ", " + money(bal[a.id], a.cur) + ", " + t("acc.edit"));
         b.addEventListener("click", function () { dlg.close(); accDialog(a.id); });
         li.appendChild(b);
         ul.appendChild(li);
       });
       body.appendChild(ul);
+      // Net worth: every balance in the main currency (ECB rates).
+      if (PLAN) {
+        var nw = PLAN.netWorth(data, today, cur(), fx);
+        var nl = el("div", "acc-nw");
+        nl.appendChild(el("span", "", t("acc.netw")));
+        nl.appendChild(el("span", "acc-nw-v" + (nw.tot < 0 ? " neg" : ""), money(nw.tot)));
+        body.appendChild(nl);
+        if (usesFx()) {
+          body.appendChild(el("p", "hint", fxNote()));
+          refreshFx(false);
+        }
+      }
     }
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -1885,8 +2671,17 @@
     open.placeholder = LANG === "el" ? "0,00" : "0.00";
     open.value = a && a.o ? (a.o < 0 ? "-" : "") + centsToInput(Math.abs(a.o), LANG) : "";
     var err = errLine();
+    var curSel = el("select");
+    [cur()].concat(CURRENCIES.filter(function (c) { return c !== cur(); })).forEach(function (c) {
+      var o = el("option", "", c); o.value = c; curSel.appendChild(o);
+    });
+    curSel.value = a && a.cur ? a.cur : cur();
+    if (!curSel.value) curSel.value = cur();
+    var openF = field(t("acc.open") + " (" + curSel.value + ")", open, "bd-acc-o");
+    curSel.addEventListener("change", function () { openF.querySelector("label").textContent = t("acc.open") + " (" + curSel.value + ")"; });
     form.appendChild(field(t("acc.name"), name, "bd-acc-n"));
-    form.appendChild(field(t("acc.open") + " (" + cur() + ")", open, "bd-acc-o"));
+    form.appendChild(field(t("acc.cur"), curSel, "bd-acc-cur"));
+    form.appendChild(openF);
     form.appendChild(el("p", "hint", t("acc.open.hint")));
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
@@ -1903,8 +2698,14 @@
       var o = parseSigned(open.value);
       if (o === null) { showErr(err, t("err.open"), open); return; }
       var cur0 = a ? findIn(data.acc, a.id) : null;
+      var ccy = curSel.value !== cur() ? curSel.value : "";
       if (cur0) {
-        if (cur0.n !== n || cur0.o !== o) { cur0.n = n; cur0.o = o; cur0.m = stamp(cur0.m); commit(); }
+        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy) {
+          cur0.n = n; cur0.o = o;
+          if (ccy) cur0.cur = ccy; else delete cur0.cur;
+          cur0.m = stamp(cur0.m);
+          commit();
+        }
       } else {
         var used = {};
         data.acc.forEach(function (y) { used[y.col] = 1; });
@@ -1912,7 +2713,9 @@
         while (col < 8 && used[col]) col++;
         var nid = a ? a.id : newId();
         if (a) untomb("acc", nid);
-        data.acc.push({ id: nid, m: stamp(a ? a.m : 0), n: n, o: o, col: col % 8 });
+        var na = { id: nid, m: stamp(a ? a.m : 0), n: n, o: o, col: col % 8 };
+        if (ccy) na.cur = ccy;
+        data.acc.push(na);
         commit();
       }
       dlg.close();
@@ -1977,7 +2780,35 @@
     row.appendChild(field(t("xf.from"), from, "bd-xf-from"));
     row.appendChild(field(t("xf.to"), to, "bd-xf-to"));
     form.appendChild(row);
-    form.appendChild(field(t("f.amount") + " (" + cur() + ")", amt, "bd-xf-amt"));
+    var amtF = field(t("f.amount") + " (" + cur() + ")", amt, "bd-xf-amt");
+    form.appendChild(amtF);
+    // Two accounts in different currencies: what arrived, in the to-account's.
+    var ta = el("input");
+    ta.inputMode = "decimal";
+    ta.autocomplete = "off";
+    ta.placeholder = LANG === "el" ? "0,00" : "0.00";
+    ta.value = x && x.ta ? centsToInput(x.ta, LANG) : "";
+    var taTouched = !!(x && x.ta);
+    ta.addEventListener("input", function () { taTouched = true; });
+    var taF = field(t("xf.ta", { c: cur() }), ta, "bd-xf-ta");
+    var taNote = el("p", "hint fx-line");
+    taF.appendChild(taNote);
+    form.appendChild(taF);
+    function xcur(sel) { var a = findIn(data.acc, sel.value); return accCur(a); }
+    function syncTa() {
+      var fc = xcur(from), tc = xcur(to);
+      amtF.querySelector("label").textContent = t("f.amount") + " (" + fc + ")";
+      taF.hidden = fc === tc;
+      if (fc === tc) return;
+      taF.querySelector("label").textContent = t("xf.ta", { c: tc });
+      var v = parseAmount(amt.value), r = v === null ? null : fx(v, fc, tc);
+      if (!taTouched && r !== null && r > 0) ta.value = centsToInput(r, LANG);
+      taNote.textContent = fxNote();
+    }
+    [from, to].forEach(function (s0) { s0.addEventListener("change", function () { taTouched = false; syncTa(); if (!taF.hidden) refreshFx(false, syncTa); }); });
+    amt.addEventListener("input", syncTa);
+    syncTa();
+    if (!taF.hidden) refreshFx(false, syncTa);
     form.appendChild(field(t("f.date"), date, "bd-xf-date"));
     form.appendChild(field(t("f.note"), note, "bd-xf-note"));
     form.appendChild(err);
@@ -1995,17 +2826,25 @@
       if (cents === null) { showErr(err, t("err.amount"), amt); return; }
       if (!parseYmd(date.value)) { showErr(err, t("err.date"), date); return; }
       var n = normText(note.value, NOTE_LEN);
+      var tac = 0;
+      if (!taF.hidden) {
+        tac = parseAmount(ta.value);
+        if (tac === null) { showErr(err, t("err.amount"), ta); return; }
+      }
       var cur0 = x ? findIn(data.xfer, x.id) : null;
       if (cur0) {
-        if (cur0.f !== from.value || cur0.t !== to.value || cur0.a !== cents || cur0.d !== date.value || cur0.n !== n) {
+        if (cur0.f !== from.value || cur0.t !== to.value || cur0.a !== cents || cur0.d !== date.value || cur0.n !== n || (cur0.ta || 0) !== tac) {
           cur0.f = from.value; cur0.t = to.value; cur0.a = cents; cur0.d = date.value; cur0.n = n;
+          if (tac) cur0.ta = tac; else delete cur0.ta;
           cur0.m = stamp(cur0.m);
           commit();
         }
       } else {
         var nid = x ? x.id : newId();
         if (x) untomb("xfer", nid);
-        data.xfer.push({ id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, f: from.value, t: to.value, n: n });
+        var nx = { id: nid, m: stamp(x ? x.m : 0), d: date.value, a: cents, f: from.value, t: to.value, n: n };
+        if (tac) nx.ta = tac;
+        data.xfer.push(nx);
         commit();
       }
       lastAcc = from.value;
@@ -2530,7 +3369,7 @@
   }
   function changedCount(a, b) {
     var n = 0;
-    ["tx", "cats", "bud", "rec"].forEach(function (k) {
+    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule"].forEach(function (k) {
       var idx = {};
       a[k].forEach(function (x) { idx[x.id] = JSON.stringify(x); });
       b[k].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });
@@ -2655,8 +3494,8 @@
     // Tabs: arrows move between them (ARIA tabs pattern)
     $("tabs").addEventListener("keydown", function (e) {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      var order = ["list", "charts", "limits", "rec"], i = order.indexOf(prefs.tab);
-      i = (i + (e.key === "ArrowRight" ? 1 : 3)) % 4;
+      var order = TABS, i = order.indexOf(prefs.tab);
+      i = (i + (e.key === "ArrowRight" ? 1 : order.length - 1)) % order.length;
       e.preventDefault();
       e.stopPropagation();
       setTab(order[i]);
@@ -2772,7 +3611,7 @@
     $("add-btn").addEventListener("click", function () { txDialog(null); });
     $("rec-add").addEventListener("click", function () { recDialog(null); });
     $("menu-btn").addEventListener("click", openMenu);
-    ["list", "charts", "limits", "rec"].forEach(function (k) {
+    TABS.forEach(function (k) {
       $("tab-" + k).addEventListener("click", function () { setTab(k); });
     });
     var qt = null;
@@ -2782,7 +3621,12 @@
     });
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
-                 stripe: function () { if (PAY) PAY.open(); } };
+                 stripe: function () { if (PAY) PAY.open(); },
+                 bank: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); } };
+    ["bank", "rules"].forEach(function (k) {
+      var mb = document.querySelector('#menu [data-act="' + k + '"]');
+      if (mb) mb.hidden = !BANKUI;
+    });
     var payBtn = document.querySelector('#menu [data-act="stripe"]');
     if (payBtn) { payBtn.hidden = !(PAY && PAY.has()); if (PAY) payBtn.textContent = PAY.label(); }
     [].forEach.call(document.querySelectorAll("#menu [data-act]"), function (b) {
@@ -2831,6 +3675,11 @@
     if (!x || typeof x !== "object" || !data) return;
     var rec = typeof x.rec === "string" && /^[a-z0-9]{1,24}$/.test(x.rec) ? x.rec : "";
     var tx = typeof x.tx === "string" && ID_RE.test(x.tx) ? findIn(data.tx, x.tx) : null;
+    // { sub: id } (a subscription reminder): the Subscriptions view, that entry open.
+    if (!rec && typeof x.sub === "string" && /^[a-z0-9]{1,24}$/.test(x.sub)) {
+      rec = x.sub;
+      if (PLANUI) { prefs.rv = "subs"; savePrefs(); }
+    }
     if (!rec && !tx) return;
     Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
     if (tx) {
@@ -2840,7 +3689,7 @@
       txDialog(tx.id, null);
       return;
     }
-    if (prefs.tab !== "rec") setTab("rec");
+    setTab("rec");
     if (findIn(data.rec, rec)) recDialog(rec);
     else showToast(t("rec.gone"));
   }
@@ -2878,6 +3727,9 @@
     load();
     loadPrefs();
     initPay();
+    initBank();
+    loadFx();
+    initPlan();
     applyI18n();
     wire();
     registerSync();
@@ -2885,6 +3737,7 @@
     watchPalette();
     materialize(true);
     renderAll();
+    if (usesFx()) refreshFx(false);
     takeStagedNew();
     takeTarget();
   }

@@ -132,7 +132,8 @@
     skipFwd: svg("<path d=\"M5 4l10 8-10 8z\"/><path d=\"M19 5v14\"/>"),
     dict: svg("<path d=\"M2 4h6a4 4 0 014 4v13a3 3 0 00-3-3H2zM22 4h-6a4 4 0 00-4 4v13a3 3 0 013-3h7z\"/>"),
     stats: svg("<path d=\"M4 20V10M10 20V4M16 20v-7M22 20H2\"/>"),
-    refresh: svg("<path d=\"M23 4v6h-6M1 20v-6h6\"/><path d=\"M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15\"/>")
+    refresh: svg("<path d=\"M23 4v6h-6M1 20v-6h6\"/><path d=\"M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15\"/>"),
+    globe: svg("<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20\"/>")
   };
 
   // ---------- Toasts ----------
@@ -350,7 +351,7 @@
     view: "grid", sort: "recent", filter: "all",
     size: 100, font: "pub", lh: 1.5, margin: 1, justify: true, hyph: true,
     theme: "auto", mode: "paged", spread: true,
-    pdfZoom: "width", pdfNight: false, panelOpen: null, rate: 1, dict: false
+    pdfZoom: "width", pdfNight: false, panelOpen: null, rate: 1, dict: false, opds: false
   };
   LIB.prefs = Object.assign({}, PREF_DEF);
   function loadPrefs() {
@@ -375,6 +376,7 @@
     if (["toc", "search", "notes"].indexOf(p.panelOpen) >= 0) P.panelOpen = p.panelOpen;
     if ([0.8, 1, 1.2, 1.4, 1.6, 2].indexOf(p.rate) >= 0) P.rate = p.rate;
     if (typeof p.dict === "boolean") P.dict = p.dict;
+    if (typeof p.opds === "boolean") P.opds = p.opds;          // said yes to the catalogues note (wave 33)
   }
   LIB.savePrefs = function () {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(LIB.prefs)); } catch (e) {}

@@ -16,6 +16,13 @@
 //   - Merge engine extends: labels union LWW + tomb
 //     guard, detaches of dead labels pruned at normalize
 //   - DATA_VER 1 → 2 (additive migration)
+//
+// Markdown wave (Obsidian/Joplin parity, no data change): pages stay
+// plain text; md.js renders a sanitised preview (Edit / Preview /
+// Side by side, device-local prefs.view), a formatting toolbar, task
+// checkboxes toggled in the text, [[links]] across notebooks, daily
+// note (fixed ids "dly-<nb>" / "dly-<nb>-<yyyymmdd>"), templates
+// under a "Templates" page, search in all notebooks, .md export.
 // ============================================================
 (function () {
   "use strict";
@@ -47,7 +54,7 @@
     tombs:     {}   // pageId -> ts, "lbl:id" -> ts, "nb:id" -> ts
   };
 
-  var prefs = { open: {}, current: null, currentNb: null, width: 270 };
+  var prefs = { open: {}, current: null, currentNb: null, width: 270, view: "edit" };
   var pendingId      = null;    // page awaiting debounced save
   var pendingTimer   = null;
 
@@ -426,6 +433,90 @@
       "dnd.bad":           "Αδύνατη η μετακίνηση μέσα στην ίδια σελίδα ή τις υποσελίδες της"
     }
   };
+
+  // Markdown wave (view, toolbar, daily note, templates, exports,
+  // search in every notebook).
+  (function (add) {
+    ["en", "el"].forEach(function (lg) {
+      Object.keys(add[lg]).forEach(function (k) { STRINGS[lg][k] = add[lg][k]; });
+    });
+  })({
+    en: {
+      "view.group": "Page view",
+      "view.edit": "Edit",
+      "view.preview": "Preview",
+      "view.split": "Side by side",
+      "fmt.bar": "Formatting",
+      "fmt.bold": "Bold",
+      "fmt.italic": "Italic",
+      "fmt.heading": "Heading",
+      "fmt.list": "List",
+      "fmt.task": "Checkbox",
+      "fmt.link": "Link",
+      "fmt.code": "Code",
+      "preview.empty": "Nothing here yet. Switch to Edit to write.",
+      "daily.btn": "Today",
+      "daily.title": "Today's note",
+      "daily.parent": "Daily",
+      "daily.tpl": "# {{date}}\n\n## Tasks\n- [ ] \n\n## Notes\n",
+      "tpl.parent": "Templates",
+      "tpl.new": "New page from template…",
+      "tpl.pick": "Pick a template",
+      "tpl.none": "No templates yet. Make a page named Templates and put pages under it: each one becomes a template. {{date}}, {{time}} and {{title}} in it are filled in.",
+      "tpl.ask": "Title of the new page",
+      "search.all": "All notebooks",
+      "link.ambiguous": "Several pages have this title: pick one",
+      "menu.exportPage": "Export page (.txt)",
+      "menu.exportPageMd": "Export page (.md)",
+      "menu.exportNotebook": "Export notebook (.txt, .zip)",
+      "menu.exportNotebookMd": "Export notebook (.md, .zip)",
+      "menu.exportCurrent": "Current notebook (.txt, .zip)",
+      "menu.exportCurrentMd": "Current notebook (.md, .zip)",
+      "menu.exportAll": "All notebooks (.txt, .zip)",
+      "menu.exportAllMd": "All notebooks (.md, .zip)",
+      "menu.export": "Export"
+    },
+    el: {
+      "view.group": "Προβολή σελίδας",
+      "view.edit": "Επεξεργασία",
+      "view.preview": "Προβολή",
+      "view.split": "Δίπλα δίπλα",
+      "fmt.bar": "Μορφοποίηση",
+      "fmt.bold": "Έντονα",
+      "fmt.italic": "Πλάγια",
+      "fmt.heading": "Επικεφαλίδα",
+      "fmt.list": "Λίστα",
+      "fmt.task": "Κουτάκι επιλογής",
+      "fmt.link": "Σύνδεσμος",
+      "fmt.code": "Κώδικας",
+      "preview.empty": "Δεν υπάρχει τίποτα ακόμη. Πάτα Επεξεργασία για να γράψεις.",
+      "daily.btn": "Σήμερα",
+      "daily.title": "Η σημερινή σελίδα",
+      "daily.parent": "Ημερήσιες",
+      "daily.tpl": "# {{date}}\n\n## Εργασίες\n- [ ] \n\n## Σημειώσεις\n",
+      "tpl.parent": "Πρότυπα",
+      "tpl.new": "Νέα σελίδα από πρότυπο…",
+      "tpl.pick": "Διάλεξε πρότυπο",
+      "tpl.none": "Δεν υπάρχουν πρότυπα ακόμη. Φτιάξε μια σελίδα με όνομα Πρότυπα και βάλε σελίδες κάτω από αυτήν: η καθεμία γίνεται πρότυπο. Τα {{date}}, {{time}} και {{title}} μέσα τους συμπληρώνονται μόνα τους.",
+      "tpl.ask": "Τίτλος της νέας σελίδας",
+      "search.all": "Όλα τα σημειωματάρια",
+      "link.ambiguous": "Πολλές σελίδες έχουν αυτόν τον τίτλο: διάλεξε μία",
+      "menu.exportPage": "Εξαγωγή σελίδας (.txt)",
+      "menu.exportPageMd": "Εξαγωγή σελίδας (.md)",
+      "menu.exportNotebook": "Εξαγωγή σημειωματαρίου (.txt, .zip)",
+      "menu.exportNotebookMd": "Εξαγωγή σημειωματαρίου (.md, .zip)",
+      "menu.exportCurrent": "Τρέχον σημειωματάριο (.txt, .zip)",
+      "menu.exportCurrentMd": "Τρέχον σημειωματάριο (.md, .zip)",
+      "menu.exportAll": "Όλα τα σημειωματάρια (.txt, .zip)",
+      "menu.exportAllMd": "Όλα τα σημειωματάρια (.md, .zip)",
+      "menu.export": "Εξαγωγή"
+    }
+  });
+  var MD = window.OrosNotesMd;
+  // Device-local names the daily note and templates are found by
+  // (either language: a notebook may be shared by devices in both).
+  var DAILY_NAMES = ["daily", "ημερήσιες"];
+  var TEMPLATE_NAMES = ["templates", "πρότυπα"];
 
   function detectLang() {
     try {
@@ -984,6 +1075,7 @@
       syncField(text, page.text || "");
       renderChips(page);
       renderLinksStrip(page);
+      renderPreview();
       return;
     }
     lastRenderedPage = page ? page.id : null;
@@ -994,8 +1086,11 @@
     if (shareBtn) shareBtn.hidden = !page || !shareApi();
     title.value = page ? page.title : "";
     text.value  = page ? page.text : "";
-	    renderChips(page);
+    renderChips(page);
     renderLinksStrip(page);   // v0.17.0: outgoing [[links]] + backlinks
+    var tb = document.getElementById("md-toolbar");
+    if (tb) tb.classList.toggle("off", !page);
+    renderPreview();
   }
   
     // v0.14.1: visible label chips in the editor header — tags were
@@ -1035,19 +1130,28 @@
 
   // init { title, text }: a page handed over by another app ("Save as
   // note" in Reader); without it, an empty page with its title selected.
-  function newPage(parentId, init) {
+  // One new page in the data (no save, no render). id: optional fixed
+  // id (the daily note), a tomb on it is lifted like any re-creation.
+  function insertPage(nbId, parentId, title, text, id) {
     var maxPos = 0;
-    siblingListByParent(parentId).forEach(function (p) {
-      if (p.pos > maxPos) maxPos = p.pos;
+    state.pages.forEach(function (q) {
+      if (q.nb === nbId && q.parent === (parentId || null) && q.pos > maxPos) maxPos = q.pos;
     });
     var p = {
-      id: uid(), nb: currentNbId(), parent: parentId || null,
-      title: (init && init.title) || t("page.untitled"), text: (init && init.text) || "",
+      id: id || uid(), nb: nbId, parent: parentId || null,
+      title: title, text: text || "",
       mtime: Date.now(), pos: maxPos + 1, labels: [], pinned: false
     };
     p.ct = p.mtime;
     p.st = p.mtime;
+    delete state.tombs[p.id];
     state.pages.push(p);
+    return p;
+  }
+
+  function newPage(parentId, init) {
+    var p = insertPage(currentNbId(), parentId,
+      (init && init.title) || t("page.untitled"), (init && init.text) || "");
     if (parentId) prefs.open[parentId] = true;
     saveNow();
     markSyncDirty();
@@ -1729,7 +1833,21 @@
     );
   }
 
-  function exportNotebookZip(currentOnly) {
+  // Markdown wave: the same page as a .md file ("# Title", the text
+  // as written, the orOS line after a rule). Wiki links stay [[…]].
+  function exportPageMd(page) {
+    downloadBlob(
+      new Blob([MD.pageMarkdown(page.title, page.text)], { type: "text/markdown;charset=utf-8" }),
+      sanitizeFilename(page.title) + ".md",
+      "text/markdown;charset=utf-8",
+      [{ description: "Markdown", accept: { "text/markdown": [".md"] } }]
+    );
+  }
+
+  // md: true → .md files (MD.pageMarkdown), else .txt (pageText).
+  function exportNotebookZip(currentOnly, md) {
+    var ext = md ? ".md" : ".txt";
+    var fileData = md ? function (p) { return MD.pageMarkdown(p.title, p.text); } : pageText;
     // Scope: current notebook only, or everything
     var rootPages = state.pages.filter(function (p) { return !p.parent; });
     if (currentOnly) {
@@ -1758,14 +1876,14 @@
         // Folder-carrying page: its own .txt lives INSIDE its folder
         var sub = dir + sanitizeFolder(page.title) + "/";
         entries.push({
-          path: sub + unique(sub, sanitizeFilename(page.title)) + ".txt",
-          data: pageText(page)
+          path: sub + unique(sub, sanitizeFilename(page.title)) + ext,
+          data: fileData(page)
         });
         for (var i = 0; i < kids.length; i++) { addPage(kids[i], sub, depth + 1); }
       } else {
         entries.push({
-          path: dir + unique(dir, sanitizeFilename(page.title)) + ".txt",
-          data: pageText(page)
+          path: dir + unique(dir, sanitizeFilename(page.title)) + ext,
+          data: fileData(page)
         });
       }
     }
@@ -1776,7 +1894,7 @@
     var stamp = d.getFullYear() + "-" +
       String(d.getMonth() + 1).padStart(2, "0") + "-" +
       String(d.getDate()).padStart(2, "0");
-    downloadBlob(writeZip(entries), "notes-" + stamp + ".zip",
+    downloadBlob(writeZip(entries), "notes-" + stamp + (md ? "-md" : "") + ".zip",
       "application/zip",
       [{ description: "ZIP archive", accept: { "application/zip": [".zip"] } }]);
   }
@@ -1806,6 +1924,9 @@
     return s;
   }
 
+  // "All notebooks" in the search box: remembered for this session
+  // only (like the rest of search), never stored.
+  var searchAll = false;
   function runSearch(q) {
     var out = document.getElementById("search-results");
     if (!out) return;
@@ -1823,7 +1944,7 @@
     var hits = [];
     var nbId = currentNotebook().id;   // #14: no shadowing of currentNbId()
     state.pages.forEach(function (p) {
-      if (p.nb !== nbId) return;
+      if (!searchAll && p.nb !== nbId) return;
       var inTitle = ((p.title || "")).toLowerCase().indexOf(needle) !== -1;
       var inText  = ((p.text  || "")).toLowerCase().indexOf(needle) !== -1;
       if (inTitle || inText) hits.push({ p: p, w: inTitle ? 0 : 1 });
@@ -1854,21 +1975,28 @@
         ti.className = "sr-title";
         ti.textContent = hit.p.title !== "" ? hit.p.title : t("page.untitled");
         row.appendChild(ti);
+        if (searchAll && state.notebooks.length > 1) {
+          var nbt = document.createElement("span");
+          nbt.className = "sr-nb";
+          nbt.textContent = nbNameOf(hit.p.nb);
+          row.appendChild(nbt);
+        }
         var sn = document.createElement("span");
         sn.className = "sr-snippet";
         sn.textContent = snippetAround(hit.p.text, needle);
         row.appendChild(sn);
         row.addEventListener("click", function () {
           closeFloating();
-          selectPage(hit.p.id);
+          revealPage(hit.p);
         });
         out.appendChild(row);
       })(hits[i]);
     }
   }
 
-  function openSearch() {
+  function openSearch(query, all) {
     closeMenus();
+    if (all === true) searchAll = true;
     closeFloating();
     var ov = document.createElement("div");
     ov.id = "search-overlay";
@@ -1882,6 +2010,18 @@
     var res = document.createElement("div");
     res.id = "search-results";
     box.appendChild(inp);
+    var opt = document.createElement("label");
+    opt.className = "sr-opt";
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "search-all";
+    cb.checked = searchAll;
+    cb.addEventListener("change", function () { searchAll = cb.checked; runSearch(inp.value); inp.focus(); });
+    opt.appendChild(cb);
+    var ol = document.createElement("span");
+    ol.textContent = t("search.all");
+    opt.appendChild(ol);
+    if (state.notebooks.length > 1 || searchAll) box.appendChild(opt);
     box.appendChild(res);
     ov.appendChild(box);
     ov.addEventListener("mousedown", function (e) { if (e.target === ov) ov.remove(); });
@@ -1895,8 +2035,9 @@
       e.stopPropagation();
     });
     document.body.appendChild(ov);
+    if (typeof query === "string") inp.value = query;
     inp.focus();
-    runSearch("");
+    runSearch(inp.value);
   }
 
   function toggleTagPanel() {
@@ -2012,37 +2153,51 @@
   
     // ---------- 6e. Wiki-links + backlinks (live, zero storage) ----------
   // Outgoing links: [[Title]] parsed from the page text on the fly.
-  // Backlinks: other pages whose text contains [[current title]].
+  // Backlinks: other pages (any notebook) whose [[links]] resolve here.
   // Resolved chip → open; unresolved chip → CREATE (creation-on-click,
   // new page becomes a CHILD of the current page — wiki-tree semantics).
 
-  function wikiTitles(text) {
-    var out = [], seen = {};
-    var re = /\[\[([^\[\]]+)\]\]/g, m;
-    while ((m = re.exec(text || "")) !== null) {
-      var title = m[1].trim();
-      if (title && !seen[title.toLowerCase()]) {
-        seen[title.toLowerCase()] = true;
-        out.push(title);
-      }
-    }
-    return out;
+  // Markdown wave: links resolve across notebooks (md.js resolve —
+  // the rule is written there and in the help). [[Notebook/Page]]
+  // names the notebook; a plain [[Page]] prefers this notebook, then
+  // the one page of that title anywhere else.
+  function linkIndex() { return MD.buildIndex(state.notebooks, state.pages); }
+
+  function resolveLink(target, fromNb, idx) {
+    return MD.resolve(target, fromNb || currentNbId(), idx || linkIndex());
   }
 
-  function pageByTitle(title) {
-    var low = (title || "").toLowerCase();
-    var nbId = currentNbId();
-    for (var i = 0; i < state.pages.length; i++) {
-      var p = state.pages[i];
-      if (p.nb !== nbId) continue;
-      if ((p.title || "").trim().toLowerCase() === low) return p;
+  // Shows a page wherever it lives: its notebook, its open ancestors.
+  function revealPage(p) {
+    if (!p) return;
+    if (p.nb && p.nb !== prefs.currentNb) prefs.currentNb = p.nb;
+    var up = p.parent, guard = 0;
+    while (up && guard++ < 100) {
+      prefs.open[up] = true;
+      var pp = pageById(up);
+      up = pp ? pp.parent : null;
     }
-    return null;
+    selectPage(p.id);
   }
 
-  function openOrCreateFromLink(title) {
-    var target = pageByTitle(title);
-    if (target) { selectPage(target.id); return; }
+  function openOrCreateFromLink(target) {
+    var from = pageById(prefs.current);
+    var r = resolveLink(target, from ? from.nb : currentNbId());
+    if (r.page) { revealPage(r.page); return; }
+    if (r.ambiguous) {
+      notifyTransient(t("link.ambiguous"));
+      openSearch(r.ambiguous[0].title || target, true);
+      return;
+    }
+    var title = r.title || target;
+    if (r.nb && r.nb !== currentNbId()) {
+      // [[Notebook/Page]] to a page that notebook doesn't have yet:
+      // it is made at the top of that notebook.
+      flushSave();
+      prefs.currentNb = r.nb;
+      newPage(null, { title: title });
+      return;
+    }
     // Creation-on-click: new page as CHILD of current, at end.
     newPage(prefs.current || null);
     var fresh = pageById(prefs.current);
@@ -2065,19 +2220,19 @@
     }
   }
 
-  function backlinkPages(current) {
-    var title = ((current && current.title) || "").trim();
+  // Pages (any notebook) with a [[link]] that resolves to `current`.
+  function backlinkPages(current, idx) {
+    var title = ((current && current.title) || "").trim().toLowerCase();
     if (!title) return [];
-    
-    var needleLower = "[[" + title.toLowerCase() + "]]";
-    var nbId = current.nb || currentNbId();
-    
+    idx = idx || linkIndex();
     return state.pages.filter(function (p) {
-      if (p.id === current.id || p.nb !== nbId) return false;
-      
-      // Case-insensitive match — wiki links should work regardless of capitalization
-      var textLower = (p.text || "").toLowerCase();
-      return textLower.indexOf(needleLower) !== -1;
+      if (p.id === current.id) return false;
+      var low = (p.text || "").toLowerCase();
+      if (low.indexOf("[[") === -1 || low.indexOf(title) === -1) return false;
+      return MD.wikiTargets(p.text).some(function (tg) {
+        var r = resolveLink(tg, p.nb, idx);
+        return !!(r.page && r.page.id === current.id);
+      });
     });
   }
 
@@ -2090,15 +2245,21 @@
     return c;
   }
 
+  function nbNameOf(id) {
+    var nb = state.notebooks.find(function (n) { return n.id === id; });
+    return nb ? nb.name : "";
+  }
+
   function renderLinksStrip(page) {
     var old = document.getElementById("links-strip");
     if (old) old.remove();
 
     var pane = document.getElementById("editor-pane");
-    if (!pane || !page) return;
+    if (!pane || !page || !MD) return;
 
-    var outTitles = wikiTitles(page.text);
-    var backs = backlinkPages(page);
+    var idx = linkIndex();
+    var outTitles = MD.wikiTargets(page.text);
+    var backs = backlinkPages(page, idx);
     if (!outTitles.length && !backs.length) return;
 
     var strip = document.createElement("div");
@@ -2110,8 +2271,8 @@
       so.textContent = t("links.out");
       strip.appendChild(so);
       outTitles.forEach(function (title) {
-        var resolved = !!pageByTitle(title);
-        strip.appendChild(chip(title, resolved ? "ok" : "new", function () {
+        var r = resolveLink(title, page.nb, idx);
+        strip.appendChild(chip(title, r.page ? "ok" : (r.ambiguous ? "amb" : "new"), function () {
           openOrCreateFromLink(title);
         }));
       });
@@ -2123,15 +2284,324 @@
       sb.textContent = t("links.back");
       strip.appendChild(sb);
       backs.forEach(function (src) {
-        strip.appendChild(chip(
-          src.title !== "" ? src.title : t("page.untitled"),
-          "back",
-          function () { selectPage(src.id); }
-        ));
+        var label = src.title !== "" ? src.title : t("page.untitled");
+        if (src.nb !== page.nb) label = nbNameOf(src.nb) + " / " + label;
+        strip.appendChild(chip(label, "back", function () { revealPage(src); }));
       });
     }
 
     pane.appendChild(strip);
+  }
+  var linksTimer = null;
+  function queueLinksStrip() {
+    if (linksTimer) clearTimeout(linksTimer);
+    linksTimer = setTimeout(function () {
+      linksTimer = null;
+      renderLinksStrip(pageById(prefs.current));
+    }, 300);
+  }
+
+  // ---------- 6f. Markdown view: preview, toolbar, Edit / Preview ----------
+  // The page text is never changed by viewing it. View mode is a
+  // device-local pref (prefs.view: edit | preview | split); "split"
+  // needs a wide window and reads as "edit" on a narrow one.
+  var WIDE_MQ = (window.matchMedia ? window.matchMedia("(min-width: 900px)") : null);
+  function effectiveView() {
+    var v = prefs.view || "edit";
+    if (v === "split" && !(WIDE_MQ && WIDE_MQ.matches)) v = "edit";
+    return v;
+  }
+  function applyView() {
+    var app = document.getElementById("notes-app");
+    if (!app) return;
+    var v = effectiveView();
+    app.classList.remove("view-edit", "view-preview", "view-split");
+    app.classList.add("view-" + v);
+    var btns = document.querySelectorAll("#md-toolbar .vw-btn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-pressed", btns[i].dataset.view === v ? "true" : "false");
+    }
+    var pv = document.getElementById("page-preview");
+    if (pv) pv.hidden = (v === "edit");
+    renderPreview();
+  }
+  function setView(v) {
+    flushSave();
+    prefs.view = v;
+    savePrefs();
+    applyView();
+    if (v === "edit" || v === "split") {
+      var ta = document.getElementById("page-text");
+      if (ta && !ta.disabled && !(window.matchMedia && window.matchMedia("(pointer: coarse)").matches)) ta.focus();
+    }
+  }
+
+  function renderPreview() {
+    var pv = document.getElementById("page-preview");
+    if (!pv || effectiveView() === "edit" || !MD) return;
+    var page = pageById(prefs.current);
+    if (!page) { pv.innerHTML = ""; return; }
+    if (!String(page.text || "").trim()) {
+      pv.innerHTML = "";
+      var em = document.createElement("p");
+      em.className = "md-empty";
+      em.textContent = t("preview.empty");
+      pv.appendChild(em);
+      return;
+    }
+    var idx = linkIndex();
+    // MD.render escapes every character of the text and builds only
+    // allow-listed tags (md.js header): the string is safe as markup.
+    pv.innerHTML = MD.render(page.text, {
+      wiki: function (target) {
+        var r = resolveLink(target, page.nb, idx);
+        return r.page ? "ok" : (r.ambiguous ? "amb" : "new");
+      }
+    });
+  }
+  var previewTimer = null;
+  function queuePreview() {
+    if (effectiveView() !== "split") return;
+    if (previewTimer) clearTimeout(previewTimer);
+    previewTimer = setTimeout(function () { previewTimer = null; renderPreview(); }, 150);
+  }
+
+  function wirePreview() {
+    var pv = document.getElementById("page-preview");
+    if (!pv) return;
+    function wikiFrom(e) {
+      var a = e.target && e.target.closest ? e.target.closest("a.md-wiki") : null;
+      return a && pv.contains(a) ? a.getAttribute("data-wiki") : null;
+    }
+    pv.addEventListener("click", function (e) {
+      var w = wikiFrom(e);
+      if (w) { e.preventDefault(); openOrCreateFromLink(w); }
+    });
+    pv.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      var w = wikiFrom(e);
+      if (w) { e.preventDefault(); openOrCreateFromLink(w); }
+    });
+    pv.addEventListener("change", function (e) {
+      var box = e.target;
+      if (!box || box.tagName !== "INPUT" || !box.hasAttribute("data-line")) return;
+      var p = pageById(prefs.current);
+      var next = p ? MD.toggleTask(p.text || "", parseInt(box.getAttribute("data-line"), 10)) : null;
+      if (next === null) { renderPreview(); return; }
+      p.text = next;
+      touchContent(p);
+      queueSave(p.id);
+      var ta = document.getElementById("page-text");
+      if (ta) syncField(ta, next);
+    });
+  }
+
+  var FMT_ICONS = {
+    bold: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h7a4 4 0 0 1 0 8H6z"/><path d="M6 12h8a4 4 0 0 1 0 8H6z"/></svg>',
+    italic: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>',
+    heading: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 4v16M18 4v16M6 12h12"/></svg>',
+    list: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
+    task: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="8 12 11 15 16 9"/></svg>',
+    link: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+    code: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
+  };
+  var VIEW_ICONS = {
+    edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    preview: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20"/></svg>'
+  };
+
+  // Replaces the textarea's text through the editing commands where
+  // the browser has them, so the browser's own Undo still works.
+  function replaceEditorText(ta, next, a, b) {
+    var cur = ta.value;
+    if (cur !== next) {
+      var p = 0, max = Math.min(cur.length, next.length);
+      while (p < max && cur.charAt(p) === next.charAt(p)) p++;
+      var sfx = 0;
+      while (sfx < max - p && cur.charAt(cur.length - 1 - sfx) === next.charAt(next.length - 1 - sfx)) sfx++;
+      var ins = next.slice(p, next.length - sfx);
+      var ok = false;
+      try {
+        ta.focus();
+        ta.setSelectionRange(p, cur.length - sfx);
+        ok = ins ? document.execCommand("insertText", false, ins) : document.execCommand("delete");
+      } catch (e) { ok = false; }
+      if (!ok || ta.value !== next) {
+        ta.value = next;
+        ta.dispatchEvent(new Event("input"));
+      }
+    }
+    try { ta.focus(); ta.setSelectionRange(a, b); } catch (e2) {}
+  }
+
+  function applyFormat(kind) {
+    var ta = document.getElementById("page-text");
+    var page = pageById(prefs.current);
+    if (!ta || ta.disabled || !page || !MD) return;
+    var r = MD.format(ta.value, ta.selectionStart, ta.selectionEnd, kind);
+    replaceEditorText(ta, r.text, r.a, r.b);
+  }
+
+  function buildToolbar() {
+    var bar = document.getElementById("md-toolbar");
+    if (!bar || bar.childNodes.length) return;
+    bar.setAttribute("aria-label", t("fmt.bar"));
+    var fmt = document.createElement("div");
+    fmt.className = "fmt-group";
+    ["bold", "italic", "heading", "list", "task", "link", "code"].forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "fmt-btn";
+      b.dataset.fmt = k;
+      b.title = t("fmt." + k);
+      b.setAttribute("aria-label", t("fmt." + k));
+      b.innerHTML = FMT_ICONS[k];
+      // keep the textarea's focus and selection (no keyboard flicker)
+      b.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      b.addEventListener("click", function () { applyFormat(k); });
+      fmt.appendChild(b);
+    });
+    bar.appendChild(fmt);
+    var vw = document.createElement("div");
+    vw.className = "vw-group";
+    vw.setAttribute("role", "group");
+    vw.setAttribute("aria-label", t("view.group"));
+    ["edit", "preview", "split"].forEach(function (v) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "vw-btn" + (v === "split" ? " only-wide" : "");
+      b.dataset.view = v;
+      b.title = t("view." + v);
+      b.setAttribute("aria-label", t("view." + v));
+      b.innerHTML = VIEW_ICONS[v];
+      var lab = document.createElement("span");
+      lab.className = "vw-label";
+      lab.textContent = t("view." + v);
+      b.appendChild(lab);
+      b.addEventListener("click", function () { setView(v); });
+      vw.appendChild(b);
+    });
+    bar.appendChild(vw);
+    if (WIDE_MQ) {
+      var onMq = function () { applyView(); };
+      if (WIDE_MQ.addEventListener) WIDE_MQ.addEventListener("change", onMq);
+      else if (WIDE_MQ.addListener) WIDE_MQ.addListener(onMq);
+    }
+  }
+
+  // ---------- 6g. Daily note + templates ----------
+  function titleKey(p) { return String((p && p.title) || "").trim().toLowerCase(); }
+
+  // Template pages: everything under a top-level page named Templates
+  // (or Πρότυπα), in any notebook — this notebook's first.
+  function templatePages() {
+    var roots = state.pages.filter(function (p) {
+      return !p.parent && TEMPLATE_NAMES.indexOf(titleKey(p)) !== -1;
+    });
+    var out = [], seen = {};
+    function walk(id, depth) {
+      if (depth > 32) return;
+      childrenSorted(id, null).forEach(function (c) {
+        if (seen[c.id]) return;
+        seen[c.id] = true;
+        out.push(c);
+        walk(c.id, depth + 1);
+      });
+    }
+    roots.forEach(function (r) { seen[r.id] = true; walk(r.id, 0); });
+    var cur = currentNbId();
+    return out.sort(function (a, b) {
+      return ((a.nb === cur ? 0 : 1) - (b.nb === cur ? 0 : 1)) ||
+             titleKey(a).localeCompare(titleKey(b));
+    });
+  }
+
+  function openToday() {
+    if (!MD) return;
+    flushSave();
+    closeMenus();
+    var nbId = currentNbId(), now = new Date(), day = MD.ymd(now);
+    var parent = state.pages.filter(function (p) {
+      return p.nb === nbId && !p.parent && DAILY_NAMES.indexOf(titleKey(p)) !== -1;
+    })[0];
+    if (!parent) {
+      // A fixed id per notebook: two devices that make it before they
+      // sync make the SAME page, not two "Daily" pages.
+      var pid = "dly-" + nbId;
+      parent = insertPage(nbId, null, t("daily.parent"), "", pageById(pid) ? null : pid);
+    }
+    var page = state.pages.filter(function (p) {
+      return p.nb === nbId && p.parent === parent.id && titleKey(p) === day;
+    })[0];
+    if (!page) {
+      var tpl = templatePages().filter(function (p) { return DAILY_NAMES.indexOf(titleKey(p)) !== -1; })[0];
+      var text = MD.fillTemplate(tpl ? tpl.text : t("daily.tpl"), { date: day, time: MD.hm(now), title: day });
+      var id = "dly-" + nbId + "-" + day.replace(/-/g, "");
+      page = insertPage(nbId, parent.id, day, text, pageById(id) ? null : id);
+    }
+    prefs.open[parent.id] = true;
+    saveNow();
+    markSyncDirty();
+    revealPage(page);
+  }
+
+  function newFromTemplate() {
+    closeMenus();
+    var list = templatePages();
+    if (!list.length) {
+      uiDlg(t("tpl.new").replace(/…$/, ""), t("tpl.none"), [{ label: t("dlg.ok"), primary: true }], null);
+      return;
+    }
+    var dlg = document.createElement("dialog");
+    dlg.id = "nt-dlg";
+    dlg.className = "nt-list-dlg";
+    var h = document.createElement("h3");
+    h.textContent = t("tpl.pick");
+    dlg.appendChild(h);
+    var box = document.createElement("div");
+    box.className = "nt-list";
+    var cur = currentNbId();
+    list.forEach(function (tp) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "nt-list-item";
+      var nm = document.createElement("span");
+      nm.textContent = tp.title !== "" ? tp.title : t("page.untitled");
+      b.appendChild(nm);
+      if (tp.nb !== cur) {
+        var nbl = document.createElement("span");
+        nbl.className = "nt-list-sub";
+        nbl.textContent = nbNameOf(tp.nb);
+        b.appendChild(nbl);
+      }
+      b.addEventListener("click", function () {
+        closeUiDlg();
+        var now = new Date();
+        var suggest = MD.fillTemplate(tp.title, { date: MD.ymd(now), time: MD.hm(now), title: "" }).trim();
+        askPrompt(t("tpl.ask"), suggest, t("page.untitled"), t("dlg.ok"), function (val) {
+          var title = String(val || "").replace(/\s+/g, " ").trim() || t("page.untitled");
+          var at = new Date();
+          var text = MD.fillTemplate(tp.text, { date: MD.ymd(at), time: MD.hm(at), title: title });
+          newPage(null, { title: title, text: text });
+        });
+      });
+      box.appendChild(b);
+    });
+    dlg.appendChild(box);
+    var row = document.createElement("div");
+    row.className = "nt-list-actions";
+    var c = document.createElement("button");
+    c.type = "button";
+    c.className = "nt-btn";
+    c.textContent = t("dlg.cancel");
+    c.addEventListener("click", closeUiDlg);
+    row.appendChild(c);
+    dlg.appendChild(row);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   function openNodeMenu(page, x, y) {
@@ -2187,8 +2657,11 @@
       [t("page.moveto"),   function () { askMoveTo(page); }],
       [page.pinned ? t("page.unpin") : t("page.pin"), function () { togglePin(page.id); }],
       [t("labels.title"),  function () { openLabelPicker(page, x, y); }],
+      [t("tpl.new"),               function () { newFromTemplate(); }],
       [t("menu.exportPage"),       function () { exportPageTxt(page); }],
-      [t("menu.exportNotebook"),   function () { exportNotebookZip(); }],
+      [t("menu.exportPageMd"),     function () { exportPageMd(page); }],
+      [t("menu.exportNotebook"),   function () { exportNotebookZip(true); }],
+      [t("menu.exportNotebookMd"), function () { exportNotebookZip(true, true); }],
       [t("page.delete"),   function () { deletePage(page.id); }]
     ];
     if (shareApi()) actions.splice(actions.length - 1, 0, [t("page.share"), function () { sharePage(page); }]);
@@ -2758,6 +3231,7 @@
         prefs.currentNb  = (typeof raw.currentNb === "string") ? raw.currentNb : null;
         prefs.width      = (typeof raw.width === "number" && raw.width >= 200 && raw.width <= 480)
                            ? raw.width : 270;
+        prefs.view       = (raw.view === "preview" || raw.view === "split") ? raw.view : "edit";
       }
     } catch (e) {}
     if (prefs.current && !pageByIdQuick(prefs.current)) prefs.current = null;
@@ -2936,7 +3410,7 @@
       seBtn.title = t("search.placeholder");
       seBtn.setAttribute("aria-label", t("search.placeholder"));
       seBtn.innerHTML = SEARCH_SVG;
-      seBtn.addEventListener("click", openSearch);
+      seBtn.addEventListener("click", function () { openSearch(); });
       newBtn.parentNode.insertBefore(seBtn, newBtn);
 
       // Export → if single notebook, straight to current export (no menu)
@@ -2944,28 +3418,27 @@
       exBtn.id = "btn-export-notebook";
       exBtn.type = "button";
       exBtn.className = "icon-btn";
-      exBtn.title = t("menu.exportNotebook");
-      exBtn.setAttribute("aria-label", t("menu.exportNotebook"));
+      exBtn.title = t("menu.export");
+      exBtn.setAttribute("aria-label", t("menu.export"));
       exBtn.innerHTML = DL_SVG;
       exBtn.addEventListener("click", function (e) {
         e.stopPropagation();
         closeMenus();
-        if (state.notebooks.length <= 1) {
-          // Single notebook: direct export, no menu
-          exportNotebookZip(true);
-          return;
-        }
         var menu = document.createElement("div");
         menu.id = "node-menu";
-        [["menu.exportCurrent", true], ["menu.exportAll", false]]
-        .forEach(function (pair) {
+        var choices = [["menu.exportCurrent", true, false], ["menu.exportCurrentMd", true, true]];
+        if (state.notebooks.length > 1) choices.push(["menu.exportAll", false, false], ["menu.exportAllMd", false, true]);
+        var curPage = pageById(prefs.current);
+        if (curPage) choices.push(["menu.exportPage", null, false], ["menu.exportPageMd", null, true]);
+        choices.forEach(function (pair) {
           var b = document.createElement("button");
           b.className = "node-menu-item";
           b.textContent = t(pair[0]);
           b.addEventListener("click", function (ev) {
             ev.stopPropagation();
             closeMenus();
-            exportNotebookZip(pair[1]);
+            if (pair[1] === null) { if (pair[2]) exportPageMd(curPage); else exportPageTxt(curPage); }
+            else exportNotebookZip(pair[1], pair[2]);
           });
           menu.appendChild(b);
         });
@@ -2974,6 +3447,17 @@
         clampToViewport(menu, r.left, r.bottom + 6);
       });
       newBtn.parentNode.insertBefore(exBtn, newBtn.nextSibling);
+
+      // New page from template (Markdown wave), right after +
+      var tpBtn = document.createElement("button");
+      tpBtn.id = "btn-template";
+      tpBtn.type = "button";
+      tpBtn.className = "icon-btn";
+      tpBtn.title = t("tpl.new");
+      tpBtn.setAttribute("aria-label", t("tpl.new"));
+      tpBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>';
+      tpBtn.addEventListener("click", function (e) { e.stopPropagation(); newFromTemplate(); });
+      newBtn.parentNode.insertBefore(tpBtn, exBtn);
 
       // Tags
       var tgBtn = document.createElement("button");
@@ -3041,9 +3525,34 @@
         p.text  = text.value;
         touchContent(p);
         queueSave(p.id);
-        renderLinksStrip(p);   // live chips while typing
+        queueLinksStrip();     // chips follow the typing (debounced)
+        queuePreview();        // side by side: the preview too
+      });
+      // Ctrl/Cmd+B, Ctrl/Cmd+I: bold and italic (Markdown wave)
+      text.addEventListener("keydown", function (e) {
+        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+        var k = e.key && e.key.toLowerCase();
+        if (k === "b" || k === "i") { e.preventDefault(); applyFormat(k === "b" ? "bold" : "italic"); }
       });
     }
+
+    // Today (daily note) in the editor header, next to the title
+    var header = document.getElementById("editor-header");
+    if (header && !document.getElementById("btn-today")) {
+      var todayBtn = document.createElement("button");
+      todayBtn.id = "btn-today";
+      todayBtn.type = "button";
+      todayBtn.className = "icon-btn";
+      todayBtn.title = t("daily.title");
+      todayBtn.setAttribute("aria-label", t("daily.title"));
+      todayBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="8" y="14" width="3" height="3" rx=".5"/></svg>';
+      todayBtn.addEventListener("click", function (e) { e.stopPropagation(); openToday(); });
+      var shareRef = document.getElementById("btn-share-page");
+      header.insertBefore(todayBtn, shareRef || null);
+    }
+    buildToolbar();
+    wirePreview();
+    applyView();
 
     // Outside-click closes menus (menus stopPropagation internally)
     document.addEventListener("click", function (e) {
@@ -3145,14 +3654,7 @@
     }
     var p = t && typeof t.page === "string" ? pageById(t.page) : null;
     if (!p) return;
-    if (p.nb && p.nb !== prefs.currentNb) prefs.currentNb = p.nb;
-    var up = p.parent, guard = 0;
-    while (up && guard++ < 100) {
-      prefs.open[up] = true;
-      var pp = pageById(up);
-      up = pp ? pp.parent : null;
-    }
-    selectPage(p.id);
+    revealPage(p);
   }
   window.__orosOpenAt = openSearchTarget;
   try {

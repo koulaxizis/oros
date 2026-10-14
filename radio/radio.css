@@ -613,6 +613,72 @@ body {
   cursor: pointer;
 }
 
+/* ===== W42: station tools (record, wake-up, song history) ===== */
+
+.rx-pl-icon.rec { color: var(--danger, #e06c75); border-color: var(--danger, #e06c75); }
+.rx-pl-meta .rec { color: var(--danger, #e06c75); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.rx-dlg {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+.rx-dlg::backdrop { background: rgba(0, 0, 0, .55); }
+
+.rx-more {
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rx-more-head { display: flex; align-items: flex-start; gap: 10px; }
+.rx-more-head h3 { flex: 1; min-width: 0; margin: 10px 0 0; overflow-wrap: anywhere; }
+.rx-x {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px;
+  border: 1px solid var(--line, #2e2c28); background: transparent;
+  color: var(--muted, #9aa4b0); font: inherit; font-size: 16px; cursor: pointer;
+}
+.rx-x:hover { color: var(--fg, #e8e6e3); }
+.rx-sec { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; border-top: 1px solid var(--line, #2e2c28); padding-top: 12px; }
+.rx-sec h4, .rx-sec .rx-note, .rx-sec .rx-now, .rx-sec .rx-wake-list { flex-basis: 100%; }
+.rx-sec h4 { font-size: 13px; margin: 0; }
+.rx-sec h4.rx-sub { color: var(--muted, #9aa4b0); font-size: 12px; margin-top: 4px; }
+.rx-now { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.rx-now.dim { color: var(--muted, #9aa4b0); font-weight: 400; font-size: 13px; }
+.rx-note { font-size: 12px; color: var(--muted, #9aa4b0); line-height: 1.45; margin: 0; overflow-wrap: anywhere; }
+.rx-rec-btn.on { color: var(--danger, #e06c75); border-color: var(--danger, #e06c75); }
+.rx-rec-st { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--danger, #e06c75); }
+.rx-primary { color: var(--accent, #6d4aff); border-color: var(--accent, #6d4aff); }
+.rx-small { min-height: 36px; padding: 6px 12px; }
+.rx-wake-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; flex-basis: 100%; }
+.rx-wake-form select { max-width: 100%; }
+.rx-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted, #9aa4b0); }
+.rx-field input, .rx-field select, .rx-wake-form > select {
+  font: inherit; font-size: 14px; color: var(--fg, #e8e6e3);
+  background: var(--bg, #131820); border: 1px solid var(--line, #2e2c28);
+  border-radius: 10px; padding: 8px 10px; min-height: 44px;
+}
+.rx-wake-form > select { flex: 1 1 160px; min-width: 0; }
+.rx-wake-list, .rx-hist { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.rx-wake-list li { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.rx-wake-txt { min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+.rx-hist { max-height: 55vh; overflow-y: auto; }
+.rx-hist li { display: flex; gap: 10px; align-items: baseline; font-size: 13px; }
+.rx-hist-t { flex: 0 0 auto; color: var(--muted, #9aa4b0); font-variant-numeric: tabular-nums; font-size: 12px; }
+.rx-hist-s { min-width: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.rx-hist-n { color: var(--muted, #9aa4b0); font-size: 12px; }
+
+@media (max-width: 420px) {
+  .rx-player { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .rx-pl-btn { width: 40px; height: 40px; }
+}
+
 /* ===== Scrollbar standard (Bible Part VII) ===== */
 
 .rx-main::-webkit-scrollbar,

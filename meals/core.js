@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Meal Planner — core.js (pure logic, v1.0.0)
+// orOS Meal Planner — core.js (pure logic, v1.2.0: + pantry items and nutrition matches in the slice)
 // Everything that is not the screen: the data model and its merge
 // (sync slice "meals"), quantities and units, the ingredient line
 // parser, the "paste a recipe" parser, the shopping list builder,
@@ -30,17 +30,21 @@
   var DATA_VER = 1;
   var ID_RE = /^[a-z0-9][a-z0-9-]{2,39}$/;
   var MAN_RE = /^n(\d{8})-[a-z0-9]{4,20}$/;          // manual shopping item: n<yyyymmdd of its week>-<rand>
+  var PA_RE = /^pa-[a-z0-9]{4,36}$/;                   // pantry item (wave 3)
+  var BC_RE = /^\d{6,14}$/;                            // a barcode (EAN / UPC / GTIN digits)
+  var PA_TOMB_DAYS = 180;                              // pantry tombs older than this before the newest pantry stamp go
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var KEEP_DAYS = 400;                                 // plan, ticks and manual items older than this go
   var LIM = {
     title: 80, emoji: 8, tag: 24, tags: 10, ings: 80, ingName: 60, ingNote: 80, group: 40,
-    steps: 50, step: 1000, notes: 2000, src: 300, cellItems: 6, cellText: 60, manual: 80,
-    slotName: 24, servings: 50, minutes: 1440, key: 80, recipes: 500
+    steps: 50, step: 1000, notes: 2000, src: 300, img: 500, cellItems: 6, cellText: 60, manual: 80,
+    slotName: 24, servings: 50, minutes: 1440, key: 80, recipes: 500, pantry: 1000, offName: 80
   };
+  var LOCS = ["fridge", "freezer", "cupboard"];      // where a pantry item is kept (wave 3)
   var SLOT_IDS = ["b", "l", "d", "s", "x"];           // breakfast, lunch, dinner, snack, extra
   var COURSES = ["breakfast", "main", "side", "salad", "soup", "dessert", "snack", "drink"];
   var DIETS = ["vegan", "veg", "pesc", "raw", "keto", "lowcarb", "gf", "lf", "nut", "fast"];
-  var AISLES = ["produce", "meat", "fish", "dairy", "bakery", "pantry", "spices", "frozen", "drinks", "other"];
+  var AISLES = ["produce", "meat", "fish", "dairy", "bakery", "pantry", "spices", "frozen", "drinks", "household", "other"];
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
   function cmpStr(x, y) { return x < y ? -1 : (x > y ? 1 : 0); }
@@ -147,8 +151,19 @@
     slice: { fam: null, f: 1, en: ["slice", "slices"], el: ["φέτα", "φέτες"],
              lab: { en: ["slice", "slices"], el: ["φέτα", "φέτες"] } },
     pc:    { fam: null, f: 1, en: ["pc", "pcs", "piece", "pieces"], el: ["τεμ.", "τεμ", "τεμάχιο", "τεμάχια", "τμχ"],
-             lab: { en: ["", ""], el: ["", ""] } }
+             lab: { en: ["", ""], el: ["", ""] } },
+    // US units (since wave 2): they add up with g / ml in the shopping
+    // list and convert both ways (see convertQty).
+    oz:    { fam: "mass",  f: 28.3495, en: ["oz", "oz.", "ounce", "ounces"], el: ["ουγγιά", "ουγγιές", "ουγκιά", "ουγκιές", "oz"],
+             lab: { en: ["oz", "oz"], el: ["oz", "oz"] } },
+    lb:    { fam: "mass",  f: 453.592, en: ["lb", "lb.", "lbs", "lbs.", "pound", "pounds"], el: ["λίβρα", "λίβρες", "lb"],
+             lab: { en: ["lb", "lb"], el: ["lb", "lb"] } },
+    floz:  { fam: "vol",   f: 29.5735, en: ["fl oz", "fl. oz.", "fl. oz", "fl.oz.", "fl.oz", "fluid ounce", "fluid ounces"], el: ["fl oz"],
+             lab: { en: ["fl oz", "fl oz"], el: ["fl oz", "fl oz"] } }
   };
+  // Millilitres in one spoon-family unit, for conversion only (the
+  // metric spoon: 5 ml, 15 ml, a 240 ml cup).
+  var SPOON_ML = 5;
   var UNIT_IDS = Object.keys(UNITS);
   // Every alias, folded, longest first (so "κ.σ." wins over "κ.").
   var ALIASES = [];
@@ -167,19 +182,34 @@
     return (q !== null && q !== undefined && q > 1) ? l[1] : l[0];
   }
 
-  var GLYPHS = { "½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 0.125 };
+  var GLYPHS = { "½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875,
+                 "⅕": 0.2, "⅖": 0.4, "⅗": 0.6, "⅘": 0.8, "⅙": 1 / 6, "⅚": 5 / 6 };
   // "1 1/2", "1½", "½", "0,5", "0.5", "1.000" (Greek thousands), "2-3" (upper end).
   function parseQty(str) {
+    var r = parseRange(str);
+    return r ? r.hi : null;
+  }
+  // { lo, hi } (lo === hi when it is not a range) or null.
+  function parseRange(str) {
     if (typeof str !== "string") return null;
-    var s = str.trim();
+    var s = str.trim().replace(/\u2044/g, "/");
     if (!s) return null;
     var range = s.split(/\s*[-–—]\s*/).filter(Boolean);
     if (range.length > 1) {
-      var best = null;
-      range.forEach(function (r) { var v = parseQty(r); if (v !== null && (best === null || v > best)) best = v; });
-      return best;
+      var lo = null, hi = null;
+      range.forEach(function (r) {
+        var v = parseOne(r);
+        if (v === null) return;
+        if (lo === null || v < lo) lo = v;
+        if (hi === null || v > hi) hi = v;
+      });
+      return hi === null ? null : { lo: lo, hi: hi };
     }
-    s = s.replace(/([0-9])([½¼¾⅓⅔⅛])/g, "$1 $2");
+    var one = parseOne(s);
+    return one === null ? null : { lo: one, hi: one };
+  }
+  function parseOne(s) {
+    s = s.replace(/([0-9])([½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚])/g, "$1 $2");
     var total = 0, any = false, ok = true;
     s.split(/\s+/).forEach(function (tok) {
       if (!ok) return;
@@ -198,7 +228,8 @@
     return Math.round(Math.min(total, 100000) * 1000) / 1000;
   }
 
-  var FRACS = [[0.25, "¼"], [1 / 3, "⅓"], [0.5, "½"], [2 / 3, "⅔"], [0.75, "¾"]];
+  // Eighths only when exact (a converted 1.36 kg is "1.4", not "1⅜").
+  var FRACS = [[0.125, "⅛", 0.006], [0.25, "¼"], [1 / 3, "⅓"], [0.375, "⅜", 0.006], [0.5, "½"], [0.625, "⅝", 0.006], [2 / 3, "⅔"], [0.75, "¾"], [0.875, "⅞", 0.006]];
   // A quantity for people: "1½", "0,3", "250". `metric` (g, ml) rounds,
   // no fractions.
   function fmtQty(q, lang, metric) {
@@ -212,7 +243,7 @@
     if (frac < 0.02) return String(whole);
     if (frac > 0.98) return String(whole + 1);
     for (var i = 0; i < FRACS.length; i++) {
-      if (Math.abs(frac - FRACS[i][0]) < 0.02) return (whole ? String(whole) : "") + FRACS[i][1];
+      if (Math.abs(frac - FRACS[i][0]) < (FRACS[i][2] || 0.02)) return (whole ? String(whole) : "") + FRACS[i][1];
     }
     var v = q >= 10 ? Math.round(q) : Math.round(q * 10) / 10;
     return String(v).replace(".", sep);
@@ -242,12 +273,17 @@
     }
     s = clean(s, 300);
     // Quantity.
-    var m = s.match(/^[\d½¼¾⅓⅔⅛][\d\s.,\/½¼¾⅓⅔⅛–—-]*/);
+    s = s.replace(/\u2044/g, "/").replace(/^([\d½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚][\d.,\/½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚]*)\s+(?:to|έως|εως|ως|or|ή)\s+(?=[\d½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚])/i, "$1-");
+    var m = s.match(/^[\d½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚][\d\s.,\/½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚–—-]*/);
     var rest = s;
     if (m) {
       var qs = m[0].replace(/[\s.,\/–—-]+$/, "");
-      var q = parseQty(qs);
-      if (q !== null) { ing.q = q; rest = s.slice(qs.length).trim(); }
+      var rg = parseRange(qs);
+      if (rg !== null) {
+        ing.q = Math.round(Math.min(rg.hi, 100000) * 1000) / 1000;
+        if (rg.lo < rg.hi) ing.q0 = Math.round(rg.lo * 1000) / 1000;
+        rest = s.slice(qs.length).trim();
+      }
     } else {
       var fw = fold(s).split(" ");
       if (fw.length > 1 && WORD_QTY[fw[0]] !== undefined) {
@@ -275,20 +311,85 @@
       if (ing.q === null && !ing.u) return null;
       ing.n = clean(s, LIM.ingName);
       ing.q = null; ing.u = "";
+      delete ing.q0;
     }
-    return ing;
+    return normIng(ing);
   }
 
-  function fmtIngQty(ing, lang, factor) {
+  // Units to show a quantity in: sys "" (as written), "metric" or "us".
+  // q, q0 (lower end of a range or null), u → { q, q0, u }. Spoons stay
+  // spoons in metric; a cup becomes ml. In US, g/kg become oz or lb
+  // and ml/l become tsp, tbsp or cups.
+  function convertQty(q, q0, u, sys) {
+    var U = UNITS[u], out = { q: q, q0: q0, u: u };
+    if (!U || q === null || (sys !== "metric" && sys !== "us")) return out;
+    var base = null, fam = null;
+    if (sys === "metric") {
+      if (u === "oz" || u === "lb") { fam = "mass"; base = U.f; }
+      else if (u === "floz") { fam = "vol"; base = U.f; }
+      else if (u === "cup") { fam = "vol"; base = U.f * SPOON_ML; }
+      if (base === null) return out;
+      var big = q * base >= 1000;
+      var tu = fam === "mass" ? (big ? "kg" : "g") : (big ? "l" : "ml");
+      var k = base / UNITS[tu].f;
+      return { q: q * k, q0: q0 === null || q0 === undefined ? null : q0 * k, u: tu };
+    }
+    if (U.fam === "mass" && (u === "g" || u === "kg")) {
+      var tm = q * U.f >= UNITS.lb.f ? "lb" : "oz", km = U.f / UNITS[tm].f;
+      return { q: q * km, q0: q0 === null || q0 === undefined ? null : q0 * km, u: tm };
+    }
+    if (U.fam === "vol" && (u === "ml" || u === "l")) {
+      var ml = q * U.f, tv = ml < 15 ? "tsp" : (ml < 60 ? "tbsp" : "cup");
+      var kv = U.f / (UNITS[tv].f * SPOON_ML);
+      return { q: q * kv, q0: q0 === null || q0 === undefined ? null : q0 * kv, u: tv };
+    }
+    return out;
+  }
+  // "2–3 eggs", "1½ cups": scaled by factor, shown in sys.
+  function fmtIngQty(ing, lang, factor, sys) {
     if (ing.q === null) return "";
-    var q = ing.q * (factor || 1);
-    var metric = ing.u === "g" || ing.u === "ml";
-    var txt = fmtQty(q, lang, metric);
-    var lab = unitLabel(ing.u, q, lang);
+    var f = factor || 1;
+    var c = convertQty(ing.q * f, typeof ing.q0 === "number" ? ing.q0 * f : null, ing.u, sys);
+    var metric = c.u === "g" || c.u === "ml";
+    var txt = fmtQty(c.q, lang, metric);
+    if (c.q0 !== null && c.q0 !== undefined) {
+      var lo = fmtQty(c.q0, lang, metric);
+      if (lo && lo !== txt) txt = lo + "–" + txt;
+    }
+    var lab = unitLabel(c.u, (txt === "1" || txt === "0") ? 1 : c.q, lang);   // "1 cup", not "1 cups" for 1.04
     return lab ? txt + " " + lab : txt;
   }
-  function ingToLine(ing, lang, factor) {
-    var qty = fmtIngQty(ing, lang, factor);
+  // Oven temperatures in a step, shown in sys: "180 °C" ↔ "355 °F".
+  // Only numbers with a degree sign or word; a bare "180 βαθμούς" is
+  // Celsius, a bare "350 degrees" (300 or more) Fahrenheit. A step that
+  // already gives both is left alone.
+  var TEMP_RE = /(\d{2,3})\s*(?:°|º|˚|degrees?\b|βαθμούς|βαθμοί|βαθμών)\s*(celsius|fahrenheit|κελσίου|c\b|f\b|κ\b)?/gi;
+  function convertTemps(text, sys) {
+    if ((sys !== "metric" && sys !== "us") || typeof text !== "string") return text;
+    var seen = { c: 0, f: 0 }, list = [];
+    text.replace(TEMP_RE, function (m0, n, unit, off) {
+      var v = Number(n), uu = (unit || "").toLowerCase(), scale;
+      if (/^(c|celsius|κελσίου|κ)$/.test(uu)) scale = "c";
+      else if (/^(f|fahrenheit)$/.test(uu)) scale = "f";
+      else if (/βαθμ/i.test(m0)) scale = "c";
+      else scale = v >= 300 ? "f" : (v <= 260 ? "c" : "");
+      if (scale) seen[scale]++;
+      list.push({ m: m0, off: off, v: v, s: scale });
+      return m0;
+    });
+    if (!list.length || (seen.c && seen.f)) return text;
+    var out = "", at = 0;
+    list.forEach(function (x) {
+      out += text.slice(at, x.off);
+      at = x.off + x.m.length;
+      if (sys === "us" && x.s === "c") out += (Math.round((x.v * 9 / 5 + 32) / 5) * 5) + " °F";
+      else if (sys === "metric" && x.s === "f") out += (Math.round(((x.v - 32) * 5 / 9) / 5) * 5) + " °C";
+      else out += x.m;
+    });
+    return out + text.slice(at);
+  }
+  function ingToLine(ing, lang, factor, sys) {
+    var qty = fmtIngQty(ing, lang, factor, sys);
     return (qty ? qty + " " : "") + ing.n + (ing.x ? ", " + ing.x : "");
   }
   // The editor's text: one ingredient per line, "Group:" lines between.
@@ -309,7 +410,7 @@
     String(text || "").split(/\r?\n/).forEach(function (raw) {
       var line = clean(raw, 300);
       if (!line) return;
-      if (/:$/.test(line) && !/^[\d½¼¾⅓⅔⅛]/.test(line)) { g = clean(line.slice(0, -1), LIM.group); return; }
+      if (/:$/.test(line) && !/^[\d½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚]/.test(line)) { g = clean(line.slice(0, -1), LIM.group); return; }
       var ing = parseIngLine(line, g);
       if (ing && out.length < LIM.ings) out.push(ing);
     });
@@ -365,10 +466,10 @@
       if (m === null && !sawHeader) {
         // No headers at all: short lines that start with a quantity or a
         // bullet are ingredients, the rest are steps.
-        m = (/^[-*•·]|^[\d½¼¾⅓⅔⅛]/.test(line) && line.length <= 80 && !/^\d+[.)]\s/.test(line)) ? "ing" : "step";
+        m = (/^[-*•·]|^[\d½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚]/.test(line) && line.length <= 80 && !/^\d+[.)]\s/.test(line)) ? "ing" : "step";
       }
       if (m === "ing") {
-        if (/:$/.test(line) && !/^[\d½¼¾⅓⅔⅛]/.test(line)) { group = clean(line.slice(0, -1).replace(/^[-*•·]\s*/, ""), LIM.group); return; }
+        if (/:$/.test(line) && !/^[\d½¼¾⅓⅔⅛⅜⅝⅞⅕⅖⅗⅘⅙⅚]/.test(line)) { group = clean(line.slice(0, -1).replace(/^[-*•·]\s*/, ""), LIM.group); return; }
         var ing = parseIngLine(line, group);
         if (ing && d.ig.length < LIM.ings) d.ig.push(ing);
       } else if (m === "note") {
@@ -409,8 +510,17 @@
       "λάδι ελαιόλαδο ελιές ξίδι πελτές ζωμός κύβος ταχίνι μουστάρδα κέτσαπ μαγιά σοκολάτα κακάο σάλτσα σταφίδες"],
     ["spices", "", "salt pepper oregano cumin paprika cinnamon thyme rosemary nutmeg bay chili chilli curry turmeric vanilla cloves allspice " +
       "αλάτι πιπέρι ρίγανη κύμινο πάπρικα κανέλα θυμάρι δεντρολίβανο μοσχοκάρυδο δάφνη μπούκοβο κάρι κουρκουμάς βανίλια γαρίφαλο μπαχάρι"],
-    ["frozen", "", "peas αρακάς"],
-    ["drinks", "", "water wine beer juice νερό κρασί μπύρα χυμός"]
+    ["frozen", "", "peas αρακάς icecream παγωτό"],
+    ["drinks", "", "water wine beer juice soda lemonade coffee tea νερό κρασί μπύρα χυμός αναψυκτικό λεμονάδα καφές τσάι"],
+    ["produce", "", "kale arugula rocket radish asparagus artichoke fennel chard okra apricot plum fig figs watermelon melon kiwi mango pineapple blueberries raspberries herbs coriander cilantro chives sage " +
+      "ρόκα ραπανάκι σπαράγγια αγκινάρα αγκινάρες μάραθος σέσκουλα μπάμιες βερίκοκο δαμάσκηνο σύκο σύκα καρπούζι πεπόνι ακτινίδιο μάνγκο ανανάς μύρτιλα βατόμουρα κόλιανδρος σχοινόπρασο φασκόμηλο αμπελόφυλλα χόρτα βλίτα ραδίκια"],
+    ["dairy", "dairy", "halloumi gouda brie camembert ghee kasseri graviera manouri " +
+      "χαλούμι γκούντα μπρι μανούρι ξινομυζήθρα κεφαλογραβιέρα"],
+    ["bakery", "gluten", "croissant croissants bagel bagels brioche roll rolls cake κρουασάν κουλούρι κουλούρια τσουρέκι κέικ ψωμάκια"],
+    ["pantry", "carb", "cereal muesli granola crackers chips crisps biscuits cookies jam δημητριακά μούσλι κράκερ πατατάκια μπισκότα μαρμελάδα"],
+    ["pantry", "", "cornflour cornstarch starch gelatine gelatin syrup capers mayo pesto άμυλο ζελατίνη σιρόπι κάπαρη πέστο"],
+    ["household", "", "foil detergent soap sponge sponges napkins tissues bleach " +
+      "αλουμινόχαρτο μεμβράνη λαδόκολλα απορρυπαντικό σαπούνι σφουγγάρι σφουγγάρια χαρτοπετσέτες χαρτομάντιλα χλωρίνη"]
   ];
   // Words that make "milk", "cheese", "meat" plant-based ("γάλα καρύδας").
   var PLANT = "coconut soy soya almond oat rice plant vegan vegetable καρύδας σόγιας αμυγδάλου βρώμης ρυζιού φυτικό φυτική φυτικό λαχανικών";
@@ -433,12 +543,34 @@
    ["pantry", "olive oil"], ["spices", "black pepper"], ["spices", "bay leaf"], ["spices", "bay leaves"],
    ["spices", "φύλλα δάφνης"], ["spices", "φύλλο δάφνης"], ["dairy", "κρέμα γάλακτος"],
    ["produce", "green pepper"], ["produce", "red pepper"], ["produce", "yellow pepper"], ["produce", "bell pepper"],
-   ["produce", "green peppers"], ["produce", "red peppers"], ["produce", "bell peppers"]]
+   ["produce", "green peppers"], ["produce", "red peppers"], ["produce", "bell peppers"],
+   ["produce", "green beans"], ["produce", "φασολάκια"], ["produce", "spring onion"], ["produce", "φρέσκο κρεμμυδάκι"],
+   ["pantry", "coconut milk"], ["pantry", "γάλα καρύδας"], ["pantry", "baking powder"], ["pantry", "baking soda"],
+   ["pantry", "soy sauce"], ["pantry", "σάλτσα σόγιας"], ["pantry", "peanut butter"], ["pantry", "φυστικοβούτυρο"],
+   ["frozen", "ice cream"], ["frozen", "φύλλο κρούστας"],
+   ["household", "paper towels"], ["household", "kitchen paper"], ["household", "baking paper"], ["household", "parchment paper"],
+   ["household", "cling film"], ["household", "aluminium foil"], ["household", "aluminum foil"], ["household", "toilet paper"],
+   ["household", "washing up liquid"], ["household", "dish soap"], ["household", "trash bags"], ["household", "bin bags"],
+   ["household", "dishwasher tablets"],
+   ["household", "χαρτί κουζίνας"], ["household", "χαρτί υγείας"], ["household", "υγρό πιάτων"], ["household", "σακούλες σκουπιδιών"],
+   ["household", "σακούλες τροφίμων"], ["household", "ταμπλέτες πλυντηρίου"]]
     .forEach(function (p) { PHRASES[keyOf(p[1])] = p[0]; });
+  // Longest first: "baking paper" inside "1 roll baking paper".
+  var PHRASE_KEYS = Object.keys(PHRASES).sort(function (x, y) { return y.length - x.length || cmpStr(x, y); });
+  // Words that move anything to an aisle: "frozen spinach" is frozen,
+  // "canned tomatoes" the cupboard.
+  var MODIFIERS = {};
+  [["frozen", "frozen κατεψυγμένο κατεψυγμένα κατεψυγμένη κατεψυγμένες κατεψυγμένος κατεψυγμένου"],
+   ["pantry", "canned tinned κονσέρβα κονσέρβας"]]
+    .forEach(function (row) { row[1].split(" ").forEach(function (w) { MODIFIERS[keyOf(w)] = row[0]; }); });
 
   function lookup(name) {
     var k = keyOf(name), ws = k.split(" ");
-    var aisle = PHRASES[k] || null, flags = [];
+    var aisle = null, flags = [], padded = " " + k + " ";
+    ws.forEach(function (w) { if (!aisle && MODIFIERS[w]) aisle = MODIFIERS[w]; });
+    for (var pi = 0; !aisle && pi < PHRASE_KEYS.length; pi++) {
+      if (padded.indexOf(" " + PHRASE_KEYS[pi] + " ") >= 0) aisle = PHRASES[PHRASE_KEYS[pi]];
+    }
     var plant = ws.some(function (w) { return PLANT_KEYS[w]; });
     ws.forEach(function (w) {
       var e = DICT[w];
@@ -528,7 +660,11 @@
     var n = clean(x.n, LIM.ingName);
     if (!n) return null;
     var q = (typeof x.q === "number" && isFinite(x.q) && x.q > 0) ? Math.round(Math.min(x.q, 100000) * 1000) / 1000 : null;
-    return { q: q, u: UNITS[x.u] ? x.u : "", n: n, x: clean(x.x, LIM.ingNote), g: clean(x.g, LIM.group) };
+    var o = { q: q };
+    // q0: the lower end of a range ("2–3"), only when below q (wave 2).
+    if (q !== null && typeof x.q0 === "number" && isFinite(x.q0) && x.q0 > 0 && x.q0 < q) o.q0 = Math.round(x.q0 * 1000) / 1000;
+    o.u = UNITS[x.u] ? x.u : ""; o.n = n; o.x = clean(x.x, LIM.ingNote); o.g = clean(x.g, LIM.group);
+    return o;
   }
   function normTags(list) {
     var out = [], seen = {};
@@ -542,6 +678,12 @@
     s = clean(s, LIM.src);
     return s;
   }
+  // A picture's web address (wave 2, imports): kept as a link only,
+  // never loaded by the app. http(s) only, else "".
+  function normImg(s) {
+    s = clean(s, LIM.img);
+    return /^https?:\/\/[^\s<>"']+$/i.test(s) ? s : "";
+  }
   // The recipe as stored: fixed key order (R26).
   function normRecipe(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !isInt(x.m) || x.m < 0) return null;
@@ -551,7 +693,7 @@
     (Array.isArray(x.ig) ? x.ig : []).forEach(function (i) { var v = normIng(i); if (v && ig.length < LIM.ings) ig.push(v); });
     (Array.isArray(x.st) ? x.st : []).forEach(function (s) { var v = clean(s, LIM.step); if (v && st.length < LIM.steps) st.push(v); });
     var dt = DIETS.filter(function (d) { return Array.isArray(x.dt) && x.dt.indexOf(d) >= 0; });
-    return {
+    var out = {
       id: x.id, m: x.m, t: t,
       e: clean(x.e, LIM.emoji),
       c: COURSES.indexOf(x.c) >= 0 ? x.c : "",
@@ -563,6 +705,9 @@
       src: normSrc(x.src),
       fv: x.fv === 1 ? 1 : 0
     };
+    var img = normImg(x.img);
+    if (img) out.img = img;                // present only when set
+    return out;
   }
   var CELL_RE = /^(\d{4}-\d{2}-\d{2})\|([a-z])$/;
   function normCellKey(k) {
@@ -593,6 +738,12 @@
     return n ? { v: o.v, m: o.m, n: n } : o;
   }
   function isBit(v) { return v === 0 || v === 1; }
+  // A tick; p: 1 once the line was put in the pantry (wave 3, only when set).
+  function normCk(x) {
+    var o = normFlag(x, "v", isBit);
+    if (o && x.p === 1) o.p = 1;
+    return o;
+  }
   function isAisle(v) { return AISLES.indexOf(v) >= 0; }
   var CK_RE = /^(\d{4}-\d{2}-\d{2})\|(.+)$/;
   function normCkKey(k) {
@@ -606,7 +757,9 @@
     if (!mm || !validYmd(x.w) || compactYmd(x.w) !== mm[1]) return null;
     var t = clean(x.t, LIM.manual);
     if (!t) return null;
-    return { id: x.id, m: x.m, w: x.w, t: t, d: x.d === 1 ? 1 : 0 };
+    var o = { id: x.id, m: x.m, w: x.w, t: t, d: x.d === 1 ? 1 : 0 };
+    if (x.p === 1) o.p = 1;                // put in the pantry (wave 3), only when set
+    return o;
   }
   function defaultSet() { return { m: 0, dt: [], sl: ["b", "l", "d"], nm: {}, ws: 1 }; }
   function normSet(x) {
@@ -629,8 +782,49 @@
       sl: sl, nm: nm, ws: x.ws === 0 ? 0 : 1
     };
   }
+  // Pantry item (wave 3): what is at home. q null = "some" (amount
+  // not known); bb = best-before day or ""; bc = barcode or "".
+  function normPantryItem(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !PA_RE.test(x.id) || !isInt(x.m) || x.m < 0) return null;
+    var n = clean(x.n, LIM.ingName);
+    if (!n) return null;
+    var q = (typeof x.q === "number" && isFinite(x.q) && x.q > 0) ? Math.round(Math.min(x.q, 100000) * 1000) / 1000 : null;
+    return {
+      id: x.id, m: x.m, n: n, q: q,
+      u: q !== null && UNITS[x.u] ? x.u : "",
+      l: LOCS.indexOf(x.l) >= 0 ? x.l : "cupboard",
+      bb: validYmd(x.bb) ? x.bb : "",
+      bc: typeof x.bc === "string" && BC_RE.test(x.bc) ? x.bc : ""
+    };
+  }
+  // A nutrition match per ingredient key (wave 3), chosen by the user:
+  // s "tbl" (a row of the built-in table, t = its id), "off" (an Open
+  // Food Facts product: c = code, nm = its name, k/p/cb/f = kcal,
+  // protein, carbs, fat per 100 g) or "x" (left out of the estimate).
+  // g: grams in one piece, when the user gave it.
+  function num1(v, hi) { return typeof v === "number" && isFinite(v) && v >= 0 && v <= hi ? Math.round(v * 10) / 10 : null; }
+  function normNu(x) {
+    if (!x || typeof x !== "object" || !isInt(x.m) || x.m < 0) return null;
+    var o = { m: x.m, s: "" };
+    if (x.s === "tbl") {
+      if (typeof x.t !== "string" || !/^[a-z0-9-]{1,40}$/.test(x.t)) return null;
+      o.s = "tbl"; o.t = x.t;
+    } else if (x.s === "off") {
+      var k = num1(x.k, 1000), p = num1(x.p, 100), cb = num1(x.cb, 100), f = num1(x.f, 100);
+      if (k === null || p === null || cb === null || f === null) return null;
+      o.s = "off";
+      o.c = typeof x.c === "string" && BC_RE.test(x.c) ? x.c : "";
+      o.nm = clean(x.nm, LIM.offName);
+      o.k = k; o.p = p; o.cb = cb; o.f = f;
+    } else if (x.s === "x") {
+      o.s = "x";
+    } else return null;
+    var g = num1(x.g, 5000);
+    if (g && o.s !== "x") o.g = g;
+    return o;
+  }
   function emptyData() {
-    return { ver: DATA_VER, rc: [], pl: {}, ck: {}, mn: [], ai: {}, pn: {}, set: defaultSet(), tombs: {} };
+    return { ver: DATA_VER, rc: [], pl: {}, ck: {}, mn: [], ai: {}, pn: {}, pa: [], nu: {}, set: defaultSet(), tombs: {} };
   }
 
   // ---------- 10. Merge ----------
@@ -660,15 +854,19 @@
         if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
       });
     });
-    var rc = {}, mn = {}, pl = {}, ck = {}, ai = {}, pn = {};
+    var rc = {}, mn = {}, pl = {}, ck = {}, ai = {}, pn = {}, pa = {}, nu = {};
     [a, b].forEach(function (s) {
       if (Array.isArray(s.rc)) s.rc.forEach(function (r) { var x = normRecipe(r); if (x) rc[x.id] = pick(rc[x.id], x); });
+      if (Array.isArray(s.pa)) s.pa.forEach(function (r) { var x = normPantryItem(r); if (x) pa[x.id] = pick(pa[x.id], x); });
+      if (s.nu && typeof s.nu === "object") Object.keys(s.nu).forEach(function (k) {
+        if (!normIngKey(k)) return; var x = normNu(s.nu[k]); if (x) nu[k] = pick(nu[k], x);
+      });
       if (Array.isArray(s.mn)) s.mn.forEach(function (r) { var x = normManual(r); if (x) mn[x.id] = pick(mn[x.id], x); });
       if (s.pl && typeof s.pl === "object") Object.keys(s.pl).forEach(function (k) {
         if (!normCellKey(k)) return; var x = normCell(s.pl[k]); if (x) pl[k] = pick(pl[k], x);
       });
       if (s.ck && typeof s.ck === "object") Object.keys(s.ck).forEach(function (k) {
-        if (!normCkKey(k)) return; var x = normFlag(s.ck[k], "v", isBit); if (x) ck[k] = pick(ck[k], x);
+        if (!normCkKey(k)) return; var x = normCk(s.ck[k]); if (x) ck[k] = pick(ck[k], x);
       });
       if (s.ai && typeof s.ai === "object") Object.keys(s.ai).forEach(function (k) {
         if (!normIngKey(k)) return; var x = normFlag(s.ai[k], "a", isAisle); if (x) ai[k] = pick(ai[k], x);
@@ -701,17 +899,29 @@
       if (old(mn[id].w) || (id in tombs && tombs[id] >= mn[id].m)) return;
       outMn.push(mn[id]);
     });
+    // Pantry: LWW per id, a tomb at or after m wins; pantry tombs more
+    // than PA_TOMB_DAYS before the newest pantry stamp go (R26, R27).
+    var paRef = 0;
+    Object.keys(pa).forEach(function (id) { if (pa[id].m > paRef) paRef = pa[id].m; });
+    Object.keys(tombs).forEach(function (id) { if (PA_RE.test(id) && tombs[id] > paRef) paRef = tombs[id]; });
+    var paCut = paRef - PA_TOMB_DAYS * 86400000;
+    var outPa = [];
+    Object.keys(pa).sort(cmpStr).forEach(function (id) {
+      if (id in tombs && tombs[id] >= pa[id].m) return;
+      if (outPa.length < LIM.pantry) outPa.push(pa[id]);
+    });
     var outPl = {}, outCk = {}, outTombs = {};
     Object.keys(pl).sort(cmpStr).forEach(function (k) { if (!old(k.slice(0, 10))) outPl[k] = pl[k]; });
     Object.keys(ck).sort(cmpStr).forEach(function (k) { if (!old(k.slice(0, 10))) outCk[k] = ck[k]; });
     Object.keys(tombs).sort(cmpStr).forEach(function (id) {
       var mm = id.match(MAN_RE);
       if (mm && old(expandYmd(mm[1]))) return;
+      if (PA_RE.test(id) && tombs[id] < paCut) return;
       outTombs[id] = tombs[id];
     });
     return {
       ver: DATA_VER, rc: outRc, pl: outPl, ck: outCk, mn: outMn,
-      ai: sortedObj(ai), pn: sortedObj(pn), set: set, tombs: outTombs
+      ai: sortedObj(ai), pn: sortedObj(pn), pa: outPa, nu: sortedObj(nu), set: set, tombs: outTombs
     };
   }
 
@@ -753,12 +963,26 @@
     var o = data.ai && data.ai[k];
     return o ? o.a : lookup(name).aisle;
   }
-  function fmtAmounts(am, lang) {
+  // sys: "" (as written: metric, or US when every amount of that kind
+  // was written in US units), "metric" or "us".
+  function fmtAmounts(am, lang, sys) {
     var parts = [];
-    if (am.mass) parts.push(am.mass >= 1000 ? fmtQty(am.mass / 1000, lang) + " " + unitLabel("kg", am.mass / 1000, lang)
-                                            : fmtQty(am.mass, lang, true) + " " + unitLabel("g", am.mass, lang));
-    if (am.vol) parts.push(am.vol >= 1000 ? fmtQty(am.vol / 1000, lang) + " " + unitLabel("l", am.vol / 1000, lang)
-                                          : fmtQty(am.vol, lang, true) + " " + unitLabel("ml", am.vol, lang));
+    function one(q, u) { return fmtIngQty({ q: q, u: u }, lang, 1, ""); }
+    var usMass = sys === "us" || (sys !== "metric" && am.usMass && !am.siMass);
+    var usVol = sys === "us" || (sys !== "metric" && am.usVol && !am.siVol);
+    if (am.mass) {
+      if (usMass) parts.push(am.mass >= UNITS.lb.f ? one(am.mass / UNITS.lb.f, "lb") : one(am.mass / UNITS.oz.f, "oz"));
+      else parts.push(am.mass >= 1000 ? fmtQty(am.mass / 1000, lang) + " " + unitLabel("kg", am.mass / 1000, lang)
+                                      : fmtQty(am.mass, lang, true) + " " + unitLabel("g", am.mass, lang));
+    }
+    if (am.vol) {
+      if (usVol) {
+        var c = convertQty(am.vol, null, "ml", "us");
+        parts.push(sys === "us" ? one(c.q, c.u) : one(am.vol / UNITS.floz.f, "floz"));
+      }
+      else parts.push(am.vol >= 1000 ? fmtQty(am.vol / 1000, lang) + " " + unitLabel("l", am.vol / 1000, lang)
+                                     : fmtQty(am.vol, lang, true) + " " + unitLabel("ml", am.vol, lang));
+    }
     if (am.spoon) {
       var u = am.spoon >= 48 ? "cup" : (am.spoon >= 3 ? "tbsp" : "tsp");
       var q = am.spoon / UNITS[u].f;
@@ -772,7 +996,10 @@
   }
   // getRecipe(id) → recipe or null (seeds included). from: first day to
   // count ("from today on"), or null for the whole week.
-  function buildShop(data, getRecipe, wk, from, lang) {
+  // sys: units to show ("" as written, "metric", "us"). Amounts of the
+  // same kind add up (g + kg + oz + lb; ml + l + fl oz; tsp + tbsp +
+  // cup); a range counts its upper end, so there is enough.
+  function buildShop(data, getRecipe, wk, from, lang, sys) {
     var days = weekDays(wk).filter(function (d) { return !from || d >= from; });
     var map = {}, excluded = {};
     days.forEach(function (d) {
@@ -788,12 +1015,17 @@
             var k = keyOf(ing.n);
             if (!k) return;
             if (inPantry(data, k)) { excluded[k] = excluded[k] || ing.n; return; }
-            var e = map[k] || (map[k] = { key: k, name: ing.n, am: { mass: 0, vol: 0, spoon: 0, u: {} }, any: false, from: [] });
+            var e = map[k] || (map[k] = { key: k, name: ing.n, am: { mass: 0, vol: 0, spoon: 0, u: {}, usMass: 0, siMass: 0, usVol: 0, siVol: 0 }, any: false, from: [] });
             if (e.from.indexOf(rec.t) < 0) e.from.push(rec.t);
             if (ing.q === null) return;
             e.any = true;
             var q = ing.q * factor, U = UNITS[ing.u];
-            if (U && U.fam) e.am[U.fam] += q * U.f;
+            if (U && U.fam) {
+              e.am[U.fam] += q * U.f;
+              var us = ing.u === "oz" || ing.u === "lb" || ing.u === "floz";
+              if (U.fam === "mass") e.am[us ? "usMass" : "siMass"] = 1;
+              if (U.fam === "vol") e.am[us ? "usVol" : "siVol"] = 1;
+            }
             else { var u = ing.u || "pc"; e.am.u[u] = (e.am.u[u] || 0) + q; }
           });
         });
@@ -801,12 +1033,12 @@
     });
     var items = Object.keys(map).map(function (k) {
       var e = map[k], c = data.ck[wk + "|" + k];
-      return { key: k, name: e.name, qty: e.any ? fmtAmounts(e.am, lang) : "", from: e.from,
-               aisle: aisleOf(data, k, e.name), done: !!(c && c.v === 1), manual: false };
+      return { key: k, name: e.name, qty: e.any ? fmtAmounts(e.am, lang, sys) : "", from: e.from,
+               aisle: aisleOf(data, k, e.name), done: !!(c && c.v === 1), manual: false, am: e.any ? e.am : null, pa: !!(c && c.p === 1) };
     });
     (data.mn || []).forEach(function (x) {
       if (x.w !== wk) return;
-      items.push({ key: x.id, name: x.t, qty: "", from: [], aisle: aisleOf(data, keyOf(x.t), x.t), done: x.d === 1, manual: true });
+      items.push({ key: x.id, name: x.t, qty: "", from: [], aisle: aisleOf(data, keyOf(x.t), x.t), done: x.d === 1, manual: true, am: null, pa: x.p === 1 });
     });
     items.sort(function (x, y) {
       return (AISLES.indexOf(x.aisle) - AISLES.indexOf(y.aisle)) ||
@@ -982,11 +1214,13 @@
   }
 
   root.OrosMealsCore = {
-    VER: VER, DATA_VER: DATA_VER, LIM: LIM, ID_RE: ID_RE, MAN_RE: MAN_RE,
+    VER: VER, DATA_VER: DATA_VER, LIM: LIM, ID_RE: ID_RE, MAN_RE: MAN_RE, PA_RE: PA_RE, BC_RE: BC_RE, LOCS: LOCS,
+    normPantryItem: normPantryItem, normNu: normNu, PA_TOMB_DAYS: PA_TOMB_DAYS,
     SLOT_IDS: SLOT_IDS, COURSES: COURSES, DIETS: DIETS, AISLES: AISLES, UNITS: UNITS, UNIT_IDS: UNIT_IDS,
     DIET_FORBIDS: DIET_FORBIDS, SEED_IDS: SEED_IDS, KEEP_DAYS: KEEP_DAYS,
     clean: clean, cleanBlock: cleanBlock, fold: fold, keyOf: keyOf,
-    parseQty: parseQty, fmtQty: fmtQty, unitLabel: unitLabel,
+    parseQty: parseQty, parseRange: parseRange, fmtQty: fmtQty, unitLabel: unitLabel,
+    convertQty: convertQty, convertTemps: convertTemps, normIng: normIng, normImg: normImg, fmtAmounts: fmtAmounts,
     parseIngLine: parseIngLine, ingToLine: ingToLine, fmtIngQty: fmtIngQty, ingsToText: ingsToText,
     textToIngs: textToIngs, textToSteps: textToSteps, parseRecipeText: parseRecipeText,
     lookup: lookup, dietWarnings: dietWarnings, suggestDiets: suggestDiets, fits: fits,

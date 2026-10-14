@@ -2,7 +2,7 @@
 Quote helps you write price quotes for your clients: line items with discounts and VAT, payment terms, instalments, and a PDF you can send.
 
 ## Getting started
-The `Create` tab is a blank quote. It gets a number like OFF-2026-001 automatically; the round arrow next to `Quote #` gives it the next free number again. Fill in `Date`, `Due`, `Status` and `Currency` (EUR or USD), then press `Save`.
+The `Create` tab is a blank quote. It gets a number like OFF-2026-001 automatically; the round arrow next to `Quote #` gives it the next free number again. Fill in `Date`, `Due`, `Status` and `Currency`, then press `Save`. Any currency works: the common ones are at the top of the list, and amounts are shown the way that currency writes them (no decimals for yen, for example).
 
 Until you press `Save`, a new quote is a draft kept only on this device. If you close the app, it's restored next time. After the first save, every change is saved as you type.
 
@@ -15,6 +15,8 @@ Tap or click `Select client` to pick a client, or the **+** next to it to add on
 Press **+** next to `Line Items` to add a row with `Code/SKU`, `Description`, `Qty`, `Unit Price`, `Disc %` and `VAT %`. You can type amounts with a comma or a dot.
 
 Below the items you see `Subtotal`, `VAT` and `Total`. `Discount (%)` takes a discount off the whole quote. Changing `VAT (%)` there sets the same rate on every line, and new lines take it too.
+
+`Show the total in` adds the total in another currency, at the day's European Central Bank rate (the same rates as the [Unit Converter](app:units)). It's only a guide for you: the quote, the PDF and the email stay in the quote's own currency. The choice stays on this device.
 
 ### Instalments
 Under `Instalments`, set a `Count` and press `Generate` to split the total evenly. You can then change each date and `Amount`; a line underneath tells you whether the sum matches the total.
@@ -29,7 +31,17 @@ The `Quotes` tab lists all your quotes. Search by number, client, item, notes or
 
 While a quote is open, the buttons at the top let you:
 - `Export PDF`: save the quote as an A4 PDF.
-- `Send via email`: open your email program with the client's address, the quote number, due date and total filled in. Attach the PDF yourself.
+- `Send via email`: when you have an account in [Mail](app:mail), a new message opens there with the client's address, the quote number, due date and total filled in, and the PDF already attached. Without a Mail account, your own email program opens instead, and you attach the PDF yourself.
+
+## Acceptance by link
+Your client can accept a quote online, without an account and without anything stored on a server.
+
+1. Save the quote and press `Send for acceptance`. Add your name or business and, if you like, your email for the answer, then `Make the link`.
+2. Send the link: `Copy link`, `Share…`, or `Email with PDF` (the message includes both the PDF and the link).
+3. Your client opens the link in any browser, sees the quote, types their name and presses `Accept`. They get an answer link to send back to you.
+4. Open the answer link, or press `Record acceptance` and paste it. orOS checks it against the quote you sent and offers `Mark as accepted`, then `Make invoice`.
+
+The whole quote travels inside the link (after the `#`, which browsers never send to a server). Each link carries a random code and a fingerprint (SHA-256) of the quote; the answer must carry both back. So an answer counts only for the exact version you sent: if someone changed the link's contents, or you changed the quote and made a new link, orOS tells you and doesn't count it.
 
 ## Sync and backup
 Quotes, clients, templates and payment presets sync between your devices through [orOS sync](help:t/sync). An unsaved draft and the quote you had open stay on this device. The orOS [backup](help:t/backup) keeps a copy of everything.
@@ -42,5 +54,6 @@ Quotes, clients, templates and payment presets sync between your devices through
 - Keep the status up to date: change it to `Rejected` or `Expired` and the reminders stop.
 
 ## Limits
-- Only euros and US dollars are available.
-- The email doesn't include the PDF; export it and attach it by hand.
+- The total in another currency is for information only and needs a connection to get the day's rates (the last ones stay for offline use).
+- The PDF is attached automatically only in [Mail](app:mail); with another email program, attach it by hand. Very large quotes may also be too long for an acceptance link: send the PDF instead.
+- Acceptance by link is not a signature: it proves that the answer matches the quote you sent, not who typed the name. Anyone who has the link can see the quote. For a binding agreement, ask for a signed copy.

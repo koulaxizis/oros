@@ -44,15 +44,26 @@
   // A colour is either a fixed #rrggbb or a theme role, so a theme
   // change recolours the whole deck.
   var COLOR_RE = /^(#[0-9a-f]{6}|t:(bg|fg|mu|a1|a2|a3|sf))$/;
-  var KINDS = ["text", "image", "shape", "line"];
+  var KINDS = ["text", "image", "shape", "line", "table", "chart"];
   var SHAPES = ["rect", "ellipse"];   // what designkit/render.js and pdf.js draw
   var ROLES = ["title", "sub", "body", "body2", "cap", "cap2", "img", "quote"];
-  var TRANSITIONS = ["none", "fade", "slide", "push", "zoom"];
+  var TRANSITIONS = ["none", "fade", "slide", "push", "wipe", "zoom"];
+  // Build animations (entrance effects) of an object: how it comes in,
+  // from where (fly in), when (on click / with the previous / after the
+  // previous), and for a text box optionally one paragraph at a time.
+  var EFFECTS = ["appear", "fade", "fly", "zoom"];
+  var FLY_DIRS = ["b", "l", "r", "t"];
+  var STARTS = ["c", "w", "a"];
+  // Tables and charts: sizes of the grids, the chart types (the
+  // Spreadsheet's chart engine, spreadsheet/sheetkit.js), table lines.
+  var CHART_TYPES = ["col", "bar", "line", "pie", "donut", "scatter"];
+  var TABLE_LINES = ["all", "h", "none"];
   var FONTS = ["sans", "serif", "mono"];
   var LIM = {
     title: 120, footer: 80, notes: 5000, paras: 60, runs: 40, run: 1000, itemText: 4000,
     level: 4, coord: 6000, size: 8000, z: 9999, fs: 400, slides: 300, items: 80, stroke: 50, radius: 500,
-    imgPx: 20000, rec: 5000, recovered: 50
+    imgPx: 20000, rec: 5000, recovered: 50,
+    tRows: 20, tCols: 10, cell: 400, chRows: 31, chCols: 9, chCell: 60, dur: 5000, delay: 10000
   };
   var ROLE_FS = { title: 80, sub: 44, body: 44, body2: 44, cap: 36, cap2: 36, quote: 64 };
   var FS = 40;              // a free text box
@@ -266,6 +277,8 @@
     };
     var bg = normColor(x.bg);
     if (bg) o.bg = bg;
+    // transition length in ms; absent = the player's default
+    if (x.td !== undefined && x.td !== null && isFinite(Number(x.td))) o.td = clampInt(x.td, 100, LIM.dur, 450);
     return o;
   }
   function normRun(r) {
@@ -311,6 +324,56 @@
     while (out.length && !out[out.length - 1].r.length) out.pop();
     return out;
   }
+  // An entrance animation: { e effect, d fly direction, w start (c on
+  // click, w with the previous, a after the previous), du length ms,
+  // dl delay ms, p one paragraph at a time (text boxes), o order key }.
+  // Defaults are not stored, so the stored form stays small.
+  function normAnim(a, kind) {
+    if (!a || typeof a !== "object" || EFFECTS.indexOf(a.e) < 0) return null;
+    var o = { e: a.e, o: typeof a.o === "string" && POS_RE.test(a.o) ? a.o : "i" };
+    if (a.e === "fly") o.d = FLY_DIRS.indexOf(a.d) >= 0 ? a.d : "b";
+    if (STARTS.indexOf(a.w) > 0) o.w = a.w;
+    var du = clampInt(a.du, 100, LIM.dur, 500);
+    if (du !== 500 && a.e !== "appear") o.du = du;
+    var dl = clampInt(a.dl, 0, LIM.delay, 0);
+    if (dl) o.dl = dl;
+    if (a.p === true && kind === "text") o.p = true;
+    return o;
+  }
+  // A grid of short texts: rows x cols, every row as long as the
+  // widest (missing cells empty), within the bounds.
+  function normGrid(rows, maxR, maxC, maxLen, multiline) {
+    if (!Array.isArray(rows)) return [[""]];
+    rows = rows.slice(0, maxR).filter(Array.isArray);
+    if (!rows.length) return [[""]];
+    var c = 1;
+    rows.forEach(function (r) { c = Math.max(c, Math.min(maxC, r.length)); });
+    return rows.map(function (r) {
+      var out = [];
+      for (var i = 0; i < c; i++) out.push(multiline ? cleanBlock(r[i], maxLen) : cleanLine(r[i], maxLen));
+      return out;
+    });
+  }
+  function normTable(t) {
+    t = t && typeof t === "object" ? t : {};
+    var o = { rows: normGrid(t.rows, LIM.tRows, LIM.tCols, LIM.cell, true) };
+    if (t.hd !== false) o.hd = true;             // a header row unless switched off
+    if (t.bd === true) o.bd = true;              // banded rows
+    o.ln = TABLE_LINES.indexOf(t.ln) >= 0 ? t.ln : "all";
+    o.ac = normColor(t.ac) || "t:a1";            // the header row's colour
+    o.fs = clampInt(t.fs, 8, 200, 28);
+    return o;
+  }
+  function normChart(c) {
+    c = c && typeof c === "object" ? c : {};
+    var o = { t: CHART_TYPES.indexOf(c.t) >= 0 ? c.t : "col", rows: normGrid(c.rows, LIM.chRows, LIM.chCols, LIM.chCell, false) };
+    var ttl = cleanLine(c.ttl, 100);
+    if (ttl) o.ttl = ttl;
+    if (c.lg === false) o.lg = false;
+    if (c.by === "c" || c.by === "r") o.by = c.by;
+    return o;
+  }
+
   // Degrees in [-180, 180).
   function normAngle(v) {
     v = clampInt(v, -36000, 36000, 0);
@@ -328,6 +391,10 @@
     };
     if (ROLES.indexOf(x.ph) >= 0) o.ph = x.ph;
     if (x.lk === true) o.lk = true;
+    var g = normId(x.g);
+    if (g) o.g = g;                          // group: items of a slide with the same g move as one
+    var an = normAnim(x.an, x.k);
+    if (an) o.an = an;
     var op = clampInt(x.op, 0, 100, 100);
     if (op !== 100) o.op = op;
     var fill = normColor(x.fill), st = normColor(x.st);
@@ -365,6 +432,15 @@
     } else if (x.k === "line") {
       if (!o.st) { o.st = "t:fg"; o.sw = 4; }
       if (x.flip === true) o.flip = true;  // from the bottom-left corner instead of the top-left
+    } else if (x.k === "table") {
+      o.r = 0;                                 // tables and charts do not turn
+      o.tb = normTable(x.tb);
+      o.ff = FONTS.indexOf(x.ff) >= 0 ? x.ff : "";
+      o.fc = normColor(x.fc) || "t:fg";
+      if (!o.st) { o.st = "t:mu"; o.sw = 2; }  // the table's lines
+    } else if (x.k === "chart") {
+      o.r = 0;
+      o.ch = normChart(x.ch);
     }
     return o;
   }
@@ -430,7 +506,7 @@
     return sx >= sy ? x : y;
   }
   var DECK_PART = ["t", "as", "th", "ft", "c"];
-  var SLIDE_PART = ["d", "p", "ly", "tr", "hid", "bg"];
+  var SLIDE_PART = ["d", "p", "ly", "tr", "hid", "bg", "td"];
   var NOTES_PART = ["n", "nb"];
   function joinDeck(x, y) {
     if (!x || !y) return x || y;
@@ -444,6 +520,7 @@
     if (L.n && L.n !== N.n && L.nm > N.nb) addRec({ id: recId(L.id, L.nm), m: L.nm, d: L.d, s: L.id, w: "notes", x: L.n });
     var o = { id: S.id, m: S.m, d: S.d, p: S.p, ly: S.ly, tr: S.tr, hid: S.hid };
     if (S.bg) o.bg = S.bg;
+    if (S.td !== undefined) o.td = S.td;
     o.n = N.n; o.nb = N.nb; o.nm = N.nm; o.tm = Math.max(x.tm, y.tm);
     return o;
   }
@@ -818,6 +895,131 @@
     return true;
   }
 
+  // ---------- 9b. Groups and animation order ----------
+  // A group is the items of ONE slide that share g (one level, no
+  // groups inside groups). A group of one is no group.
+  function groupMembers(data, it) {
+    if (!it || !it.g) return it ? [it] : [];
+    var list = slideItems(data, it.s).filter(function (x) { return x.g === it.g; });
+    return list.length > 1 ? list : [it];
+  }
+  // The ids plus every member of their groups, in stacking order.
+  function withGroups(data, ids) {
+    var want = {}, out = [];
+    ids.forEach(function (id) {
+      var it = data.items[id];
+      if (it) groupMembers(data, it).forEach(function (x) { want[x.id] = x; });
+    });
+    Object.keys(want).map(function (k) { return want[k]; })
+      .sort(function (x, y) { return x.z - y.z || cmpStr(x.id, y.id); })
+      .forEach(function (x) { out.push(x.id); });
+    return out;
+  }
+  // Group the items (all on one slide, two or more): one new g for all,
+  // so grouping two groups makes one. Their animations become one too
+  // (the first one's, if any).
+  function groupItems(data, ids, now, newId) {
+    newId = newId || defaultNewId;
+    var list = withGroups(data, ids).map(function (id) { return data.items[id]; });
+    if (list.length < 2 || list.some(function (x) { return x.s !== list[0].s; })) return null;
+    var g = newId(), lead = null;
+    list.forEach(function (x) { if (!lead && x.an) lead = x.an; });
+    list.forEach(function (x) {
+      x.g = g;
+      if (lead) x.an = JSON.parse(JSON.stringify(lead)); else delete x.an;
+      if (x.an && x.k !== "text") delete x.an.p;
+      x.m = now;
+    });
+    touchSlide(data, list[0].s, now);
+    return g;
+  }
+  function ungroupItems(data, ids, now) {
+    var ch = false;
+    withGroups(data, ids).forEach(function (id) {
+      var x = data.items[id];
+      if (x && x.g) { delete x.g; x.m = now; ch = true; touchSlide(data, x.s, now); }
+    });
+    return ch;
+  }
+  // New ids for the groups of copied items (paste, duplicate), so a
+  // copy never joins the group it was copied from.
+  function freshGroups(items, newId) {
+    newId = newId || defaultNewId;
+    var map = {};
+    items.forEach(function (x) { if (x.g) x.g = map[x.g] || (map[x.g] = newId()); });
+    return items;
+  }
+  // Animated items of a slide in playing order (order key, then id).
+  function animItems(data, slideId) {
+    return slideItems(data, slideId).filter(function (x) { return !!x.an; })
+      .sort(function (x, y) { return cmpStr(x.an.o, y.an.o) || cmpStr(x.g || "", y.g || "") || cmpStr(x.id, y.id); });
+  }
+  // The playing units of a slide: a group animates as one.
+  function animUnits(data, slideId) {
+    var out = [], byKey = {};
+    animItems(data, slideId).forEach(function (x) {
+      var key = x.g && groupMembers(data, x).length > 1 ? "g:" + x.g : "i:" + x.id;
+      if (byKey[key]) { byKey[key].ids.push(x.id); return; }
+      byKey[key] = { key: key, ids: [x.id], an: x.an };
+      out.push(byKey[key]);
+    });
+    return out;
+  }
+  // Set (or clear, an = null) the animation of items and their groups.
+  // A new animation goes to the end of the slide's order.
+  function setAnim(data, ids, an, now) {
+    ids = withGroups(data, ids);
+    if (!ids.length) return false;
+    var first = data.items[ids[0]], o = null;
+    ids.forEach(function (id) { var x = data.items[id]; if (x.an && !o) o = x.an.o; });
+    if (an && !o) {
+      var last = "";
+      animItems(data, first.s).forEach(function (x) { if (ids.indexOf(x.id) < 0 && x.an.o > last) last = x.an.o; });
+      o = posBetween(last, null);
+    }
+    var ch = false;
+    ids.forEach(function (id) {
+      var x = data.items[id], before = JSON.stringify(x.an || null);
+      if (an) {
+        var a = JSON.parse(JSON.stringify(an));
+        a.o = o;
+        x.an = normAnim(a, ids.length > 1 ? "" : x.k) || undefined;
+        if (!x.an) delete x.an;
+      } else delete x.an;
+      if (JSON.stringify(x.an || null) !== before) { x.m = now; ch = true; }
+    });
+    if (ch) touchSlide(data, first.s, now);
+    return ch;
+  }
+  // Move an item's animation (with its group) one place earlier (-1)
+  // or later (+1) in the slide's order: only the moved unit changes.
+  function moveAnim(data, itemId, step, now) {
+    var it = data.items[itemId];
+    if (!it || !it.an) return false;
+    var units = animUnits(data, it.s), k = -1;
+    units.forEach(function (u, i) { if (u.ids.indexOf(itemId) >= 0) k = i; });
+    var j = k + step;
+    if (k < 0 || j < 0 || j >= units.length) return false;
+    var lo, hi;
+    if (step < 0) { lo = j > 0 ? units[j - 1].an.o : ""; hi = units[j].an.o; }
+    else { lo = units[j].an.o; hi = j + 1 < units.length ? units[j + 1].an.o : null; }
+    var o = posBetween(lo, hi);
+    if (hi !== null && !(o > lo && o < hi)) {
+      // equal keys around (two devices picked the same): renumber the slide
+      var tmp = units[k]; units[k] = units[j]; units[j] = tmp;
+      var prev = "";
+      units.forEach(function (u) {
+        prev = posBetween(prev, null);
+        u.ids.forEach(function (id) { var x = data.items[id]; if (x.an.o !== prev) { x.an.o = prev; x.m = now; } });
+      });
+      touchSlide(data, it.s, now);
+      return true;
+    }
+    units[k].ids.forEach(function (id) { var x = data.items[id]; x.an.o = o; x.m = now; });
+    touchSlide(data, it.s, now);
+    return true;
+  }
+
   // ---------- 10. Outline view ----------
   // The whole deck as plain text, one block per slide:
   //   # Slide title
@@ -1013,6 +1215,10 @@
     VER: VER, DATA_VER: DATA_VER, H: H, ASPECTS: ASPECTS, ASPECT_IDS: ASPECT_IDS, LIM: LIM,
     ID_RE: ID_RE, REC_ID_RE: REC_ID_RE, ASSET_RE: ASSET_RE, COLOR_RE: COLOR_RE,
     KINDS: KINDS, SHAPES: SHAPES, ROLES: ROLES, TRANSITIONS: TRANSITIONS, FONTS: FONTS, ROLE_FS: ROLE_FS,
+    EFFECTS: EFFECTS, FLY_DIRS: FLY_DIRS, STARTS: STARTS, CHART_TYPES: CHART_TYPES, TABLE_LINES: TABLE_LINES,
+    normAnim: normAnim, normTable: normTable, normChart: normChart,
+    groupMembers: groupMembers, withGroups: withGroups, groupItems: groupItems, ungroupItems: ungroupItems,
+    freshGroups: freshGroups, animItems: animItems, animUnits: animUnits, setAnim: setAnim, moveAnim: moveAnim,
     THEMES: THEMES, THEME_IDS: THEME_IDS, LAYOUTS: LAYOUTS, LAYOUT_IDS: LAYOUT_IDS, TEMPLATES: TEMPLATES,
     widthOf: widthOf, themeById: themeById, resolveColor: resolveColor, contrast: contrast,
     layoutById: layoutById, phBox: phBox, templateById: templateById,

@@ -27,6 +27,7 @@ var RB_MIRRORS    = [
   "https://fi1.api.radio-browser.info"
 ];
 var SLEEP_PRESETS = [15, 30, 60, 90];
+var RT = window.OrosRadioTools || null;   // radio/tools.js (wave 42)
 var SLEEP_TICK_MS = 15000; // battery rule: purpose-sized, self-clearing
 
 /* ===== I18N (inline STRINGS — Bible Part VI) ===== */
@@ -70,7 +71,46 @@ var STRINGS = {
     "sleep.min":      "{n} min",
     "recents.clear":  "Clear recent stations",
     "recents.cleared":"Recent stations cleared",
-    "undo":           "Undo"
+    "undo":           "Undo",
+    "sleep.fade":     "The sound fades out during the last minute.",
+    "more":           "More: record, wake-up alarm, song history",
+    "more.title":     "Station tools",
+    "now.playing":    "Now playing",
+    "now.none":       "This station does not say what it plays.",
+    "now.wait":       "Looking for the song title…",
+    "hist.open":      "Song history",
+    "hist.title":     "What was playing",
+    "hist.empty":     "No songs yet. Titles appear here while you listen to stations that announce them.",
+    "hist.clear":     "Clear history",
+    "hist.note":      "Kept on this device only.",
+    "rec.start":      "Record",
+    "rec.stop":       "Stop recording",
+    "rec.on":         "Recording",
+    "rec.saved":      "Recording saved in Files: {p}",
+    "rec.failed":     "The recording could not be saved.",
+    "rec.err.cors":   "This station does not allow recording from a browser.",
+    "rec.err.format": "This kind of stream cannot be recorded.",
+    "rec.err.nofs":   "The orOS disk is not available.",
+    "rec.err.http":   "The stream did not answer.",
+    "rec.err.busy":   "A recording is already running.",
+    "rec.note":       "Recordings go to Files › Radio. For your own personal use only: do not share or publish them.",
+    "rec.limit":      "Recording stopped at its limit and was saved.",
+    "wake.title":     "Wake up to this station",
+    "wake.time":      "Time",
+    "wake.repeat":    "Repeat",
+    "wake.once":      "Once",
+    "wake.daily":     "Every day",
+    "wake.set":       "Set alarm",
+    "wake.done":      "Alarm set for {t}: {s}",
+    "wake.label":     "Radio: {s}",
+    "wake.list":      "Wake-up alarms",
+    "wake.remove":    "Remove",
+    "wake.gone":      "(alarm deleted in Time)",
+    "wake.link":      "Or play this station with an alarm from Time:",
+    "wake.linkBtn":   "Use",
+    "wake.note":      "The station plays, softly at first, when the alarm rings while orOS is open. Alarms live in the Time app.",
+    "wake.noalarms":  "Alarms are not available here.",
+    "close":          "Close"
   },
   el: {
     "tab.countries":  "Χώρες",
@@ -110,7 +150,46 @@ var STRINGS = {
     "sleep.min":      "{n} λεπτά",
     "recents.clear":  "Εκκαθάριση πρόσφατων σταθμών",
     "recents.cleared":"Οι πρόσφατοι σταθμοί εκκαθαρίστηκαν",
-    "undo":           "Αναίρεση"
+    "undo":           "Αναίρεση",
+    "sleep.fade":     "Ο ήχος χαμηλώνει σιγά σιγά το τελευταίο λεπτό.",
+    "more":           "Περισσότερα: εγγραφή, ξυπνητήρι, ιστορικό τραγουδιών",
+    "more.title":     "Εργαλεία σταθμού",
+    "now.playing":    "Παίζει τώρα",
+    "now.none":       "Αυτός ο σταθμός δεν λέει τι παίζει.",
+    "now.wait":       "Αναζήτηση του τίτλου…",
+    "hist.open":      "Ιστορικό τραγουδιών",
+    "hist.title":     "Τι έπαιζε",
+    "hist.empty":     "Δεν υπάρχουν τραγούδια ακόμη. Οι τίτλοι εμφανίζονται εδώ όσο ακούς σταθμούς που τους ανακοινώνουν.",
+    "hist.clear":     "Εκκαθάριση ιστορικού",
+    "hist.note":      "Μένει μόνο σε αυτή τη συσκευή.",
+    "rec.start":      "Εγγραφή",
+    "rec.stop":       "Τέλος εγγραφής",
+    "rec.on":         "Εγγραφή",
+    "rec.saved":      "Η εγγραφή αποθηκεύτηκε στα Αρχεία: {p}",
+    "rec.failed":     "Η εγγραφή δεν αποθηκεύτηκε.",
+    "rec.err.cors":   "Αυτός ο σταθμός δεν επιτρέπει εγγραφή από browser.",
+    "rec.err.format": "Αυτό το είδος stream δεν μπορεί να ηχογραφηθεί.",
+    "rec.err.nofs":   "Ο δίσκος του orOS δεν είναι διαθέσιμος.",
+    "rec.err.http":   "Το stream δεν απάντησε.",
+    "rec.err.busy":   "Τρέχει ήδη μια εγγραφή.",
+    "rec.note":       "Οι εγγραφές πάνε στα Αρχεία › Radio. Μόνο για δική σου προσωπική χρήση: μην τις μοιράζεσαι και μην τις δημοσιεύεις.",
+    "rec.limit":      "Η εγγραφή σταμάτησε στο όριό της και αποθηκεύτηκε.",
+    "wake.title":     "Ξύπνα με αυτόν τον σταθμό",
+    "wake.time":      "Ώρα",
+    "wake.repeat":    "Επανάληψη",
+    "wake.once":      "Μία φορά",
+    "wake.daily":     "Κάθε μέρα",
+    "wake.set":       "Ορισμός ξυπνητηριού",
+    "wake.done":      "Ξυπνητήρι στις {t}: {s}",
+    "wake.label":     "Ραδιόφωνο: {s}",
+    "wake.list":      "Ξυπνητήρια με ραδιόφωνο",
+    "wake.remove":    "Αφαίρεση",
+    "wake.gone":      "(το ξυπνητήρι διαγράφηκε στην Ώρα)",
+    "wake.link":      "Ή παίξε αυτόν τον σταθμό με ένα ξυπνητήρι από την Ώρα:",
+    "wake.linkBtn":   "Χρήση",
+    "wake.note":      "Ο σταθμός παίζει, απαλά στην αρχή, όταν χτυπά το ξυπνητήρι ενώ το orOS είναι ανοιχτό. Τα ξυπνητήρια βρίσκονται στην εφαρμογή Ώρα.",
+    "wake.noalarms":  "Τα ξυπνητήρια δεν είναι διαθέσιμα εδώ.",
+    "close":          "Κλείσιμο"
   }
 };
 
@@ -219,6 +298,12 @@ function normalizeState(obj){
     if(typeof obj.deleted[k] === "number") del[k] = obj.deleted[k];
   });
   obj.deleted = del;
+  // W42: wake-up alarms { alarmId: { m, st|null } } (tools.normWake).
+  // Absent when empty, so older blobs keep their exact bytes.
+  if(RT){
+    var wk = RT.normWake(obj.wake);
+    if(Object.keys(wk).length) obj.wake = wk; else delete obj.wake;
+  }
 }
 
 function sortFavorites(arr){
@@ -279,6 +364,8 @@ function mergeRadioStates(remote, local){
   Object.keys(map).forEach(function(u){
     if(map[u].mtime > (dec[u] || 0)) merged.favorites.push(map[u]); // alive
   });
+  if(RT) merged.wake = RT.mergeWake(remote.wake, local.wake);
+  else if(remote.wake || local.wake) merged.wake = local.wake || remote.wake;  // never drop what we cannot read
   normalizeState(merged);   // RX-6: same canonical shape as the getter
   return merged;
 }
@@ -455,21 +542,44 @@ function ensureHost(){
       host.api.cancelSleep(true);
       if(!minutes || minutes <= 0) return;
       host.sleep.until = Date.now() + minutes * 60000;
-      host.sleep.iv = w.setInterval(function(){
-        if(Date.now() >= host.sleep.until){
+      // W42: the last minute fades out (tools.fadeVolume); the volume
+      // the user had comes back after the pause.
+      host.sleep.fade = RT ? RT.fadeLength(minutes * 60000) : 0;
+      host.sleep.vol = null;
+      var tick = function(){
+        var left = host.sleep.until - Date.now();
+        if(left <= 0){
+          var vol = host.sleep.vol;
           host.api.cancelSleep(true);
           audio.pause();
+          if(vol !== null) audio.volume = vol;
           host.lastEvent = "sleep-expired";
           host.notify();
-        }else{
-          host.notify(); // live countdown on chip
+          return;
         }
-      }, SLEEP_TICK_MS);
+        if(host.sleep.fade && left <= host.sleep.fade + SLEEP_TICK_MS && !host.sleep.fine){
+          // Close to the end: a fine tick for a smooth fade.
+          w.clearInterval(host.sleep.iv);
+          host.sleep.fine = true;
+          host.sleep.iv = w.setInterval(tick, 250);
+        }
+        if(host.sleep.fade && left <= host.sleep.fade){
+          if(host.sleep.vol === null) host.sleep.vol = audio.volume;
+          audio.volume = RT.fadeVolume(host.sleep.vol, Date.now(), host.sleep.until, host.sleep.fade);
+          return;
+        }
+        host.notify(); // live countdown on chip
+      };
+      host.sleep.fine = false;
+      host.sleep.iv = w.setInterval(tick, SLEEP_TICK_MS);
+      if(minutes * 60000 <= host.sleep.fade + SLEEP_TICK_MS) tick();
       host.lastEvent = "sleep-set";
       host.notify();
     },
     cancelSleep: function(silent){
       if(host.sleep.iv){ w.clearInterval(host.sleep.iv); host.sleep.iv = null; }
+      if(host.sleep.vol !== null && host.sleep.vol !== undefined){ audio.volume = host.sleep.vol; host.sleep.vol = null; }
+      host.sleep.fine = false;
       host.sleep.until = null;
       if(!silent){
         host.lastEvent = "sleep-cancel";
@@ -880,6 +990,7 @@ function openSleepDialog(){
       '<h3>' + t("sleep.title") + '</h3>' +
       '<div class="rx-sleep-presets" id="rx-sleep-presets"></div>' +
       '<div class="rx-sleep-status" id="rx-sleep-status"></div>' +
+      '<p class="rx-note">' + esc(t("sleep.fade")) + '</p>' +
       '<button type="button" class="rx-sleep-btn" id="rx-sleep-cancel">' + t("sleep.off") + '</button>' +
     '</div>';
     document.body.appendChild(dlg);
@@ -1403,13 +1514,24 @@ function updatePlayerUI(){
   
   // Station info
   if(st.current){
+    // W42: a station started elsewhere (a wake-up alarm) shows the bar too.
+    player.removeAttribute("hidden");
     nameEl.textContent = st.current.name;
     var metaParts = [];
     if(st.current.bitrate) metaParts.push(st.current.bitrate + " kbps");
     if(st.current.codec) metaParts.push(st.current.codec);
+    var eng = engineApi(), now = eng ? eng.now() : null, rec = eng ? eng.recState() : null;
     if(st.flags.buffering) metaEl.innerHTML = '<span class="buf">' + t("buffering") + '</span>';
     else if(st.flags.error) metaEl.innerHTML = '<span class="err">' + t("err.stream") + '</span>';
-    else metaEl.textContent = metaParts.join(" · ");
+    else metaEl.textContent = now ? "♪ " + now.s : metaParts.join(" · ");
+    if(rec && !st.flags.error){
+      var rs = document.createElement("span");
+      rs.className = "rec";
+      rs.textContent = "● " + RT.fmtClock(Date.now() - rec.at) + " ";
+      metaEl.insertBefore(rs, metaEl.firstChild);
+    }
+    var moreBtn = $("rx-pl-more");
+    if(moreBtn) moreBtn.classList.toggle("rec", !!rec);
   }else{
     nameEl.textContent = "";
     metaEl.textContent = "";
@@ -1648,6 +1770,306 @@ function setupSearch(){
   };
 }
 
+/* ===== W42: SHELL ENGINE, RECORDING, WAKE-UP, SONG HISTORY ===== */
+// The engine (radio/tools.js) runs in the SHELL window, next to the
+// audio host, so titles, a recording and a wake-up fade outlive this
+// frame. Loaded here on boot (injected once per shell session).
+
+var engineSub = null, recTicker = null;
+
+function tf(key, vars){
+  var s = t(key);
+  Object.keys(vars || {}).forEach(function(k){ s = s.split("{" + k + "}").join(String(vars[k])); });
+  return s;
+}
+
+function engineApi(){
+  try{
+    var e = hostWin().__orosRadioEngine;
+    return e && e.api ? e.api : null;
+  }catch(err){ return null; }
+}
+
+function ensureEngine(){
+  var w = hostWin();
+  var done = function(){
+    try{
+      if(w.OrosRadioTools && typeof w.OrosRadioTools.engine === "function") w.OrosRadioTools.engine(w);
+      var api = engineApi();
+      if(!api) return;
+      api.hook();
+      if(engineSub) engineSub();
+      engineSub = api.subscribe(function(){ updatePlayerUI(); paintMore(); });
+      window.addEventListener("pagehide", function(){ if(engineSub) engineSub(); });
+      syncRecTicker();
+      updatePlayerUI();
+    }catch(e){}
+  };
+  if(w.OrosRadioTools){ done(); return; }
+  try{
+    var s = w.document.createElement("script");
+    s.src = "radio/tools.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+    s.onload = done;
+    w.document.head.appendChild(s);
+  }catch(e){}
+}
+
+// The recording clock in the player bar ticks only while recording.
+function syncRecTicker(){
+  var api = engineApi(), on = !!(api && api.recState());
+  if(on && !recTicker){
+    recTicker = setInterval(function(){
+      if(document.visibilityState !== "visible") return;
+      updatePlayerUI(); paintMore();
+      syncRecTicker();
+    }, 1000);
+  }else if(!on && recTicker){ clearInterval(recTicker); recTicker = null; }
+}
+
+function recDone(r){
+  if(!r) return;
+  var p = String(r.path || "").replace(/^\/internal\//, "");
+  transientNote(r.ok ? (r.why === "limit" ? t("rec.limit") + " " : "") + tf("rec.saved", { p: p }) : t("rec.failed"));
+}
+
+function toggleRec(){
+  var api = engineApi(), st = getHostState();
+  if(!api || !st.current) return;
+  if(api.recState()){ api.recStop("user"); syncRecTicker(); paintMore(); return; }
+  var btn = $("rx-rec-btn");
+  if(btn) btn.disabled = true;
+  api.recStart(st.current, recDone).then(function(r){
+    if(btn) btn.disabled = false;
+    if(!r || !r.ok) transientNote(t("rec.err." + ((r && r.code) || "http")));
+    syncRecTicker();
+    updatePlayerUI();
+    paintMore();
+  });
+}
+
+function alarmsApi(){
+  try{
+    var a = window.parent && window.parent !== window ? window.parent.orosAlarms : window.orosAlarms;
+    return a && typeof a.add === "function" && typeof a.list === "function" ? a : null;
+  }catch(e){ return null; }
+}
+
+function fmtAlarm(at){
+  var d = new Date(at), loc = activeLang() === "el" ? "el-GR" : "en-GB";
+  var time = d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var days = Math.floor((new Date(at).setHours(0, 0, 0, 0) - today.getTime()) / 86400000);
+  return days > 0 && days < 7 ? d.toLocaleDateString(loc, { weekday: "short" }) + " " + time : time;
+}
+
+function setWake(id, station){
+  var payload = sliceGet();
+  payload.wake = payload.wake || {};
+  payload.wake[id] = { m: Date.now(), st: station ? RT.normWakeStation(station) : null };
+  sliceSet(payload);
+  commitLocal();
+}
+
+function removeWake(id){
+  var A = alarmsApi();
+  if(A && typeof A.remove === "function"){
+    var live = A.list().some(function(a){ return a && a.id === id; });
+    if(live) A.remove(id);
+  }
+  setWake(id, null);
+  buildMore();
+}
+
+function el(tag, cls, text){
+  var n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(text !== undefined && text !== null) n.textContent = text;
+  return n;
+}
+
+function btn(label, cls, fn){
+  var b = el("button", cls, label);
+  b.type = "button";
+  b.addEventListener("click", fn);
+  return b;
+}
+
+function openMoreDialog(){
+  var dlg = $("rx-more-dlg");
+  if(!dlg){
+    dlg = document.createElement("dialog");
+    dlg.id = "rx-more-dlg";
+    dlg.className = "rx-dlg";
+    var box = el("div", "rx-sleep-content rx-more");
+    box.id = "rx-more-box";
+    dlg.appendChild(box);
+    document.body.appendChild(dlg);
+    dlg.addEventListener("click", function(e){ if(e.target === dlg) dlg.close(); });
+  }
+  buildMore();
+  if(!dlg.open) dlg.showModal();
+  paintMore();
+}
+
+function buildMore(){
+  var box = $("rx-more-box");
+  if(!box) return;
+  box.textContent = "";
+  var st = getHostState(), cur = st.current, api = engineApi();
+  var head = el("div", "rx-more-head");
+  head.appendChild(el("h3", "", cur ? cur.name : t("more.title")));
+  head.appendChild(btn("✕", "rx-x", function(){ $("rx-more-dlg").close(); }));
+  head.lastChild.setAttribute("aria-label", t("close"));
+  box.appendChild(head);
+
+  // Now playing + history
+  var sec = el("section", "rx-sec");
+  sec.appendChild(el("h4", "", t("now.playing")));
+  var now = el("p", "rx-now"); now.id = "rx-more-now";
+  sec.appendChild(now);
+  sec.appendChild(btn(t("hist.open"), "rx-sleep-preset", openHistory));
+  box.appendChild(sec);
+
+  // Recording
+  if(cur && api){
+    var rs = el("section", "rx-sec");
+    var rb = btn(t("rec.start"), "rx-sleep-preset rx-rec-btn", toggleRec); rb.id = "rx-rec-btn";
+    rs.appendChild(rb);
+    var rst = el("span", "rx-rec-st"); rst.id = "rx-rec-st";
+    rs.appendChild(rst);
+    rs.appendChild(el("p", "rx-note", t("rec.note")));
+    box.appendChild(rs);
+  }
+
+  // Wake-up alarms
+  var ws = el("section", "rx-sec");
+  ws.appendChild(el("h4", "", t("wake.title")));
+  var A = alarmsApi();
+  if(!A || !RT){
+    ws.appendChild(el("p", "rx-note", t("wake.noalarms")));
+  }else{
+    if(cur){
+      var form = el("div", "rx-wake-form");
+      var tl = el("label", "rx-field"); tl.appendChild(el("span", "", t("wake.time")));
+      var ti = el("input"); ti.type = "time"; ti.value = "07:00"; ti.required = true;
+      tl.appendChild(ti); form.appendChild(tl);
+      var rl = el("label", "rx-field"); rl.appendChild(el("span", "", t("wake.repeat")));
+      var rsel = el("select");
+      [["once", t("wake.once")], ["daily", t("wake.daily")]].forEach(function(o){
+        var op = el("option", "", o[1]); op.value = o[0]; rsel.appendChild(op);
+      });
+      rl.appendChild(rsel); form.appendChild(rl);
+      form.appendChild(btn(t("wake.set"), "rx-sleep-preset rx-primary", function(){
+        var m = /^(\d{1,2}):(\d{2})/.exec(ti.value || "");
+        if(!m) return;
+        var at = RT.nextAt(+m[1], +m[2], Date.now());
+        var id = A.add({ at: at, label: tf("wake.label", { s: cur.name }).slice(0, 60), repeat: rsel.value });
+        if(!id) return;
+        setWake(id, cur);
+        transientNote(tf("wake.done", { t: fmtAlarm(at), s: cur.name }));
+        buildMore();
+      }));
+      ws.appendChild(form);
+    }
+    var alarms = A.list() || [], byId = {};
+    alarms.forEach(function(a){ if(a && a.id) byId[a.id] = a; });
+    var wake = (state.data && state.data.wake) || {};
+    var ids = Object.keys(wake).filter(function(id){ return wake[id] && wake[id].st; })
+      .sort(function(a, b){ return ((byId[a] || {}).at || 9e15) - ((byId[b] || {}).at || 9e15); });
+    if(ids.length){
+      ws.appendChild(el("h4", "rx-sub", t("wake.list")));
+      var ul = el("ul", "rx-wake-list");
+      ids.forEach(function(id){
+        var a = byId[id], li = el("li");
+        var txt = el("span", "rx-wake-txt");
+        txt.appendChild(el("b", "", a ? fmtAlarm(a.at) + (a.repeat === "daily" ? " ↻" : "") : t("wake.gone")));
+        txt.appendChild(el("span", "", " " + wake[id].st.name));
+        li.appendChild(txt);
+        li.appendChild(btn(t("wake.remove"), "rx-sleep-preset rx-small", function(){ removeWake(id); }));
+        ul.appendChild(li);
+      });
+      ws.appendChild(ul);
+    }
+    // An alarm made in Time can play this station too.
+    var free = alarms.filter(function(a){ return a && a.id && !(wake[a.id] && wake[a.id].st); });
+    if(cur && free.length){
+      ws.appendChild(el("p", "rx-note", t("wake.link")));
+      var lf = el("div", "rx-wake-form");
+      var ls = el("select");
+      free.forEach(function(a){ var op = el("option", "", fmtAlarm(a.at) + (a.label ? " · " + a.label : "")); op.value = a.id; ls.appendChild(op); });
+      ls.setAttribute("aria-label", t("wake.link"));
+      lf.appendChild(ls);
+      lf.appendChild(btn(t("wake.linkBtn"), "rx-sleep-preset", function(){
+        if(ls.value){ setWake(ls.value, cur); buildMore(); }
+      }));
+      ws.appendChild(lf);
+    }
+    ws.appendChild(el("p", "rx-note", t("wake.note")));
+  }
+  box.appendChild(ws);
+  paintMore();
+}
+
+function paintMore(){
+  var dlg = $("rx-more-dlg");
+  if(!dlg || !dlg.open) return;
+  var api = engineApi(), st = getHostState();
+  var nowEl = $("rx-more-now");
+  if(nowEl){
+    var now = api ? api.now() : null, m = api && st.current ? api.method(st.current.stationuuid) : "";
+    nowEl.textContent = now ? now.s : (m === "none" || !st.playing) ? t("now.none") : t("now.wait");
+    nowEl.classList.toggle("dim", !now);
+  }
+  var rb = $("rx-rec-btn"), rs = $("rx-rec-st");
+  if(rb && api){
+    var rec = api.recState();
+    rb.textContent = rec ? "■ " + t("rec.stop") : "● " + t("rec.start");
+    rb.classList.toggle("on", !!rec);
+    if(rs) rs.textContent = rec ? RT.fmtClock(Date.now() - rec.at) + " · " + RT.fmtBytes(rec.bytes) : "";
+  }
+}
+
+function openHistory(){
+  var dlg = $("rx-hist-dlg");
+  if(!dlg){
+    dlg = document.createElement("dialog");
+    dlg.id = "rx-hist-dlg";
+    dlg.className = "rx-dlg";
+    var box = el("div", "rx-sleep-content rx-more");
+    box.id = "rx-hist-box";
+    dlg.appendChild(box);
+    document.body.appendChild(dlg);
+    dlg.addEventListener("click", function(e){ if(e.target === dlg) dlg.close(); });
+  }
+  var b = $("rx-hist-box"), api = engineApi();
+  b.textContent = "";
+  var head = el("div", "rx-more-head");
+  head.appendChild(el("h3", "", t("hist.title")));
+  head.appendChild(btn("✕", "rx-x", function(){ dlg.close(); }));
+  head.lastChild.setAttribute("aria-label", t("close"));
+  b.appendChild(head);
+  var list = api ? api.history() : [];
+  if(!list.length) b.appendChild(el("p", "rx-note", t("hist.empty")));
+  else{
+    var ul = el("ul", "rx-hist");
+    var loc = activeLang() === "el" ? "el-GR" : "en-GB", today = new Date().toDateString();
+    list.forEach(function(h){
+      var li = el("li"), d = new Date(h.t);
+      li.appendChild(el("span", "rx-hist-t", (d.toDateString() === today ? "" : d.toLocaleDateString(loc, { day: "numeric", month: "short" }) + " ") +
+        d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" })));
+      var tx = el("span", "rx-hist-s");
+      tx.appendChild(el("b", "", h.s));
+      tx.appendChild(el("span", "rx-hist-n", h.n));
+      li.appendChild(tx);
+      ul.appendChild(li);
+    });
+    b.appendChild(ul);
+    b.appendChild(btn(t("hist.clear"), "rx-sleep-btn", function(){ if(api) api.clearHistory(); openHistory(); }));
+  }
+  b.appendChild(el("p", "rx-note", t("hist.note")));
+  if(!dlg.open) dlg.showModal();
+}
+
 /* ===== PLAYER CONTROLS ===== */
 
 function setupPlayerControls(){
@@ -1659,6 +2081,12 @@ function setupPlayerControls(){
   if(playBtn)  playBtn.addEventListener("click", togglePlayPause);
   if(favBtn){ favBtn.addEventListener("click", toggleFavorite); favBtn.setAttribute("aria-label", t("favorite")); }
   if(sleepBtn) sleepBtn.addEventListener("click", openSleepDialog);
+  var moreBtn = $("rx-pl-more");
+  if(moreBtn){
+    moreBtn.addEventListener("click", openMoreDialog);
+    moreBtn.setAttribute("aria-label", t("more"));
+    moreBtn.title = t("more");
+  }
   if(stopBtn){
     stopBtn.addEventListener("click", function(){
       host.api.stop();
@@ -1768,7 +2196,26 @@ window.__orosRadioOpen = function(stationUuid){
       return f.stationuuid === stationUuid;
     });
   }
-  if(station) playStation(station);
+  // W42: a wake-up alarm's station (maybe neither recent nor favourite).
+  if(!station && state.data && state.data.wake){
+    Object.keys(state.data.wake).forEach(function(id){
+      var r = state.data.wake[id];
+      if(!station && r && r.st && r.st.stationuuid === stationUuid) station = r.st;
+    });
+  }
+  var waking = false;
+  try{ waking = sessionStorage.getItem("oros-radio-wake") === "1"; sessionStorage.removeItem("oros-radio-wake"); }catch(e){}
+  if(!station) return;
+  var eng = engineApi();
+  if(waking && eng){
+    addRecent(station);
+    eng.wake(station);
+    var player = $("rx-player");
+    if(player) player.removeAttribute("hidden");
+    updatePlayerUI();
+    return;
+  }
+  playStation(station);
 };
 
 function consumeDeepLink(){
@@ -1860,6 +2307,7 @@ function start(){
   
   renderMain();
   wire();
+  ensureEngine();       // W42: titles, recording, wake-up (shell side)
   consumeDeepLink();
   console.log("[radio] ready — v0.3 Wave 3 complete");
 }

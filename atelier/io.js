@@ -85,12 +85,14 @@
     return { w: Math.round(doc.setup.w * s), h: Math.round(doc.setup.h * s) };
   }
 
-  // Everything a page needs before drawing at full size.
-  function prepare(doc) {
+  // Everything a page needs before drawing at full size (scale: px
+  // per pt, for the chart pictures).
+  function prepare(doc, scale) {
     return T.load(AT.draw.fontKeys(doc)).then(function () {
       return Promise.all(AX.assetIds(doc).map(function (id) { return A.load(id); }));
-    });
+    }).then(function () { return AT.charts ? AT.charts.prepare(doc, scale || 2) : null; });
   }
+  AT.prepareDoc = prepare;
 
   function renderForExport(doc, pg, scale, transparent) {
     var skip = null;
@@ -113,7 +115,7 @@
   var PPTX_SIDE = 3000;
   function rasterItem(doc, it) {
     var ax = it.ax;
-    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : 0;
+    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : ax.k === "table" ? (it.sw || 0) : 0;
     var W = it.w + pad * 2, H = it.h + pad * 2;
     var s = Math.max(0.05, Math.min(3, PPTX_SIDE / Math.max(W, H)));
     var cv = document.createElement("canvas");
@@ -149,6 +151,44 @@
     }).then(function (ok) { return ok ? { pics: out.raster } : false; });
   }
 
+  // PDF with real text (pdfout.js): every element that the PDF can't
+  // draw itself is drawn here as a picture at `dpi` (no rotation, no
+  // transparency: the PDF applies both), photos cut to their shape
+  // by the PDF's clipping path.
+  function pictureOf(doc, it, p, dpi) {
+    var pad = p.pad, W = Math.max(1, it.w) + 2 * pad, H = Math.max(1, it.h) + 2 * pad;
+    var s = Math.max(0.05, Math.min(dpi / 72, MAX_SIDE / Math.max(W, H), Math.sqrt(MAX_PIXELS / (W * H))));
+    if (it.ax.k === "photo" && it.iw) s = Math.min(s, Math.max(1, it.iw / it.w * 1.2));
+    var cv = document.createElement("canvas");
+    cv.width = Math.max(1, Math.round(W * s)); cv.height = Math.max(1, Math.round(H * s));
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(s, 0, 0, s, 0, 0);
+    ctx.translate(pad - it.x, pad - it.y);
+    var c = JSON.parse(JSON.stringify(it));
+    c.rot = 0; c.op = 100;
+    var o = { maxSide: 0, clean: true };
+    if (p.kind === "photo") delete c.ax.shp;
+    if (p.kind === "textfx") o.passFilter = function (q) { return q.blur > 0; };
+    AT.draw.drawItem(ctx, doc, c, o);
+    var jpeg = p.kind === "photo" ? !/\.png$/.test(it.a || "") : (it.ax.bg && it.ax.k === "shape");
+    return toBlob(cv, jpeg ? "image/jpeg" : "image/png", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+      return { data: new Uint8Array(ab), fmt: jpeg ? "JPEG" : "PNG", x: -pad, y: -pad, w: W, h: H };
+    });
+  }
+  function exportPdf(doc, pages, dpi, J) {
+    var P = window.AtelierPDF, ids = pages.map(function (p) { return p.id; });
+    var plan = P.plan(doc, ids), pics = {}, chain = Promise.resolve();
+    plan.filter(P.needsPicture).forEach(function (p) {
+      var it = M.find(doc.items, p.id);
+      if (!it) return;
+      chain = chain.then(function () { return pictureOf(doc, it, p, dpi); }).then(function (pic) { pics[p.id] = pic; });
+    });
+    return chain.then(function () {
+      var pdf = P.build(doc, { pages: ids, title: doc.name || "" }, { jsPDF: J, pictures: pics, plan: plan });
+      return saveBlob(pdf.output("blob"), fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+    });
+  }
+
   var exporting = false;
   function doExport(o) {
     var doc = AT.doc;
@@ -171,10 +211,12 @@
     }
     var pages = M.pagesInOrder(doc);
     if (o.pages === "cur") pages = pages.filter(function (p) { return p.id === ED.pg; });
-    var chain = prepare(doc);
+    var chain = prepare(doc, o.type === "pdf" ? o.dpi / 72 : o.type === "pptx" ? 3 : safeScale(doc, o.scale || 1));
     var mime = o.type === "png" ? "image/png" : "image/jpeg";
     if (o.type === "pptx") {
       chain = chain.then(function () { return exportPptx(doc, pages); });
+    } else if (o.type === "pdf" && !o.flat && window.AtelierPDF) {
+      chain = chain.then(loadJsPDF).then(function (J) { return exportPdf(doc, pages, o.dpi, J); });
     } else if (o.type === "pdf") {
       var J;
       chain = chain.then(loadJsPDF).then(function (j) {
@@ -226,7 +268,7 @@
     var doc = AT.doc;
     if (!doc) return;
     var print = AT.isPrint(doc), multi = doc.pages.length > 1;
-    var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720 };
+    var st = { type: print ? "pdf" : "png", scale: 1, dpi: 300, transparent: false, pages: "all", side: 720, flat: false };
     var film = { video: 1, gif: 1 };
     var types = ["png", "jpg", "pdf"].concat(window.AtelierPPTXOut ? ["pptx"] : [], AT.motion && AT.motion.canVideo() ? ["video"] : [], AT.motion ? ["gif"] : []);
     AT.openDialog(t("exp.title"), function (body, close) {
@@ -249,7 +291,7 @@
         }
         body.appendChild(el("p", "hint", t("exp." + st.type + "Hint", { s: secs })));
         var opts = el("div", "pn-col");
-        if (st.type !== "pptx") body.appendChild(el("div", "fld-lbl", t("exp.size")));
+        if (st.type !== "pptx") body.appendChild(el("div", "fld-lbl", st.type === "pdf" && window.AtelierPDF ? t("exp.pdfPics") : t("exp.size")));
         function radio(name, label, on, fn) {
           var l = el("label", "chk");
           var r = el("input"); r.type = "radio"; r.name = name; r.checked = on;
@@ -279,6 +321,13 @@
           });
         }
         body.appendChild(opts);
+        if (st.type === "pdf" && window.AtelierPDF) {
+          var fl = el("label", "chk");
+          var fb = el("input"); fb.type = "checkbox"; fb.checked = !!st.flat;
+          fb.addEventListener("change", function () { st.flat = fb.checked; });
+          fl.appendChild(fb); fl.appendChild(el("span", "", t("exp.pdfFlat")));
+          body.appendChild(fl);
+        }
         if (st.type === "png") {
           var c = el("label", "chk");
           var cb = el("input"); cb.type = "checkbox"; cb.checked = st.transparent;

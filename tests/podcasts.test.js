@@ -275,8 +275,11 @@ test("merge: symmetric, canonical, idempotent (R5, R26)", () => {
 test("merge: junk is dropped, ids must match the URL", () => {
   const m = C.mergePodcasts({ shows: [show(S1, "https://other.gr/feed", 1), { id: "x" }, null, show(S2, "javascript:1", 1)],
     eps: [ep("bad", S1, 1, 0, 0, 0, 0), ep(E1, "s0", 1, 0, 0, 0, 0)], tombs: { junk: 5, [S1]: -1 }, floors: { [S1]: "x" },
-    queue: { m: 1, ids: ["bad", E1, E1] }, prefs: { spd: [9, 1], back: [3, 1], search: ["none", 2], zzz: [1, 1] } }, null);
-  assert.equal(J(m), J(Object.assign(C.emptyData(), { queue: { m: 1, ids: [E1], sh: {} }, prefs: { search: ["none", 2] } })));
+    queue: { m: 1, ids: ["bad", E1, E1] }, prefs: { spd: [9, 1], back: [3, 1], search: ["none", 2], zzz: [1, 1],
+      "Bad-Key": [1, 1], obj: [{ a: 1 }, 1], nostamp: [1], sil: [7, 1] } }, null);
+  // A key a newer version wrote (zzz) is kept as it is (forward compatible);
+  // bad names, bad shapes and bad values of known keys are dropped.
+  assert.equal(J(m), J(Object.assign(C.emptyData(), { queue: { m: 1, ids: [E1], sh: {} }, prefs: { search: ["none", 2], zzz: [1, 1] } })));
 });
 
 test("merge: unsubscribe tombstones, delete wins ties, newer resubscribe resurrects (R17)", () => {
@@ -534,7 +537,7 @@ test("listening statistics: wall vs media time, gaps ignored, pruned", () => {
   assert.equal(st.s[sid], 25);
   assert.equal(st.s.junk, undefined);
   const sm = C.statsSummary(st, day);
-  assert.deepEqual(sm.all, { wall: 25, media: 35, saved: 10 });
+  assert.deepEqual(sm.all, { wall: 25, media: 35, saved: 10, silence: 0 });
   assert.deepEqual(sm.top, [{ s: sid, media: 25 }]);
   let big = { d: {}, s: {} };
   for (let i = 0; i < 410; i++) big.d[C.dayKey(day - i * 86400000)] = [1, 1];

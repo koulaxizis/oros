@@ -26,16 +26,19 @@ function cut(from, to) {
 const S = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
   ["cmpStr", "shuffled", "solveGrid", "emptyGrid", "fullGrid", "carve", "candidates", "logicTier",
-   "levelDistance", "generate", "hintCell", "normCell", "normRow", "joinCell", "joinRows",
-   "mergeSudoku"].forEach((name) => {
+   "levelDistance", "generate", "hintCell", "killerTables", "cageAllowed", "solveKiller", "makeCages",
+   "makeKiller", "normDay", "dayKeyOk", "dayBetter", "normCell", "normRow", "joinCell", "joinRows",
+   "mergeSudoku", "validCages"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
   return new Function(parts.join("\n") +
-    "\nreturn { LEVELS, LV_SPEC, GEN_MS, PEERS, solveGrid, fullGrid, carve, candidates, logicTier," +
-    " levelDistance, generate, hintCell, mergeSudoku };")();
+    "\nreturn { LEVELS, CLASSIC, LV_SPEC, GEN_MS, PEERS, DAILY_LV, DAILY_TRIES, KILLER_GIVENS, solveGrid, fullGrid," +
+    " carve, candidates, logicTier, levelDistance, generate, hintCell, solveKiller, makeCages, makeKiller," +
+    " validCages, mergeSudoku };")();
 })();
+const D = require("../gamekit/daily.js");
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -131,7 +134,7 @@ test("sudoku: the logical grader is sound and grades known puzzles", () => {
 });
 
 test("sudoku: every level makes valid unique puzzles of its grade in time", () => {
-  for (const lv of S.LEVELS) {
+  for (const lv of S.CLASSIC) {
     for (let k = 0; k < 6; k++) {
       const t0 = clock();
       const p = S.generate(lv, Math.random, 3000, clock);
@@ -150,14 +153,14 @@ test("sudoku: every level makes valid unique puzzles of its grade in time", () =
     }
   }
   // Easy: singles only; Medium: locked candidates; Hard: subsets; Expert: wings
-  assert.equal(J(S.LEVELS.map((lv) => S.LV_SPEC[lv].tier)), J([1, 2, 3, 4]));
+  assert.equal(J(S.CLASSIC.map((lv) => S.LV_SPEC[lv].tier)), J([1, 2, 3, 4]));
   // a tiny budget still gives a valid unique puzzle (the closest found)
   const p = S.generate("x", Math.random, 0, clock);
   assert.equal(S.solveGrid(p.puz, 2, null).n, 1);
 });
 
 test("sudoku: the default budget stays well under a second", () => {
-  for (const lv of S.LEVELS) {
+  for (const lv of S.CLASSIC) {
     const t0 = clock();
     S.generate(lv, Math.random, S.GEN_MS, clock);
     assert.ok(clock() - t0 < S.GEN_MS + 250, lv);
@@ -227,5 +230,120 @@ test("sudoku: records merge is a join and a reset drops older rows", () => {
     assert.equal(J(M({ rows: { d: { b: 0, s: { e: bad } } } }, null).rows), "{}", J(bad));
   }
   assert.equal(J(M({ rows: { d: { b: 0, s: { q: { t: 1, ts: 1, n: 1, c: 1 } } } } }, null).rows), "{}");
-  assert.equal(J(M(null, undefined)), J({ ver: 1, br: 0, rows: {} }));
+  assert.equal(J(M(null, undefined)), J({ ver: 1, br: 0, rows: {}, days: {} }));
+});
+
+// ---------- Killer Sudoku (Wave 49) ----------
+// Cages: every cell in one cage, cages connected, distinct digits that
+// add up to the sum, 1–5 cells.
+function checkCages(p) {
+  assert.equal(p.cg.length, 81);
+  const cells = p.cs.map(() => []);
+  p.cg.forEach((c, i) => cells[c].push(i));
+  cells.forEach((list, c) => {
+    assert.ok(list.length >= 1 && list.length <= 5, "cage size " + list.length);
+    const digits = list.map((i) => p.sol[i]);
+    assert.equal(new Set(digits).size, digits.length, "distinct digits");
+    assert.equal(digits.reduce((a, b) => a + b, 0), p.cs[c], "sum");
+    // connected (orthogonal neighbours)
+    const seen = new Set([list[0]]), queue = [list[0]];
+    while (queue.length) {
+      const x = queue.shift();
+      for (const y of [x - 9, x + 9, x % 9 ? x - 1 : -1, x % 9 < 8 ? x + 1 : -1]) {
+        if (y >= 0 && y < 81 && p.cg[y] === c && !seen.has(y)) { seen.add(y); queue.push(y); }
+      }
+    }
+    assert.equal(seen.size, list.length, "connected");
+  });
+  // numbered in reading order of each cage's first cell
+  let next = 0;
+  p.cg.forEach((c) => { if (c === next) next++; else assert.ok(c < next); });
+}
+
+test("killer: the maker gives valid cages and a UNIQUE solution, quickly", () => {
+  let total = 0;
+  for (let k = 0; k < 30; k++) {
+    const t0 = clock();
+    const p = S.makeKiller(D.random("killer-test-" + k), S.KILLER_GIVENS);
+    total += clock() - t0;
+    assert.ok(validFull(p.sol));
+    checkCages(p);
+    assert.ok(S.validCages(p.cg, p.cs, p.sol));
+    const givens = p.puz.filter(Boolean).length;
+    assert.ok(givens <= 20, "givens " + givens);
+    for (let i = 0; i < 81; i++) if (p.puz[i]) assert.equal(p.puz[i], p.sol[i]);
+    // an uncapped search finds exactly one solution, the maker's
+    const r = S.solveKiller(p.puz, p.cg, p.cs, 2, 0);
+    assert.equal(r.n, 1, "unique");
+    assert.equal(J(r.sols[0]), J(p.sol));
+  }
+  assert.ok(total / 30 < 1500, "average " + total / 30 + " ms");
+});
+
+test("killer: the solver counts solutions and knows the cage sums", () => {
+  const p = S.makeKiller(D.random("killer-solver"), S.KILLER_GIVENS);
+  // the full solution as givens: one solution
+  assert.equal(S.solveKiller(p.sol, p.cg, p.cs, 2, 0).n, 1);
+  // a wrong sum: no solution
+  const bad = p.cs.slice(); bad[0] += 1;
+  assert.equal(S.solveKiller(p.sol, p.cg, bad, 2, 0).n, 0);
+  // one cage over the whole grid would not be valid; cages of single
+  // cells are plain givens: the classic solver agrees
+  const single = { cg: [...Array(81).keys()], cs: p.sol.slice() };
+  assert.equal(S.solveKiller(S.carve(p.sol, 30, D.random("c")).map(() => 0), single.cg, single.cs, 2, 0).n, 1);
+  // a node cap reports "unknown" (-1) instead of a wrong answer
+  const empty = p.sol.map(() => 0);
+  const lone = { cg: [...Array(81).keys()].map((i) => Math.floor(i / 9)), cs: Array(9).fill(45) };
+  assert.equal(S.solveKiller(empty, lone.cg, lone.cs, 2, 50).n, -1);
+  // validCages refuses broken cages
+  assert.equal(S.validCages(p.cg, bad, p.sol), false);
+  assert.equal(S.validCages(p.cg.slice(0, 80), p.cs, p.sol), false);
+  const dup = p.cg.slice(); dup[0] = (dup[0] + 1) % p.cs.length;   // cell 0 in another cage: sums break
+  assert.equal(S.validCages(dup, p.cs, p.sol), false);
+});
+
+// ---------- Daily puzzle (Wave 49) ----------
+test("daily: the same date makes the same Medium puzzle on any device", () => {
+  for (const day of [0, 286, 287, 1000]) {
+    const t0 = clock();
+    const a = S.generate(S.DAILY_LV, D.random(D.seedOf("sudoku", day)), S.DAILY_TRIES, D.counter());
+    assert.ok(clock() - t0 < 4000, "time");
+    const b = S.generate(S.DAILY_LV, D.random(D.seedOf("sudoku", day)), S.DAILY_TRIES, D.counter());
+    assert.equal(J(a), J(b));
+    assert.equal(S.solveGrid(a.puz, 2, null).n, 1);
+    const c = S.generate(S.DAILY_LV, D.random(D.seedOf("sudoku", day + 1)), S.DAILY_TRIES, D.counter());
+    assert.notEqual(J(a.puz), J(c.puz));
+  }
+  assert.equal(D.seedOf("sudoku", 286), "sudoku:2026-10-14");
+});
+
+test("daily: day results merge as a join; the first epoch rules, then the better result", () => {
+  const M = S.mergeSudoku;
+  const day = () => ({ b: rnd(3) * 100, t: 1 + rnd(3) * 1000, h: rnd(3), m: rnd(3) });
+  const st = () => {
+    const days = {};
+    for (let i = 0; i < rnd(4); i++) days[String(rnd(5))] = day();
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows: {}, days };
+  };
+  for (let i = 0; i < 4000; i++) {
+    const a = st(), b = st(), c = st();
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+  }
+  const x = { days: { 5: { b: 0, t: 900, h: 0, m: 0 } } }, y = { days: { 5: { b: 0, t: 500, h: 2, m: 3 } } };
+  assert.equal(J(M(x, y).days), J({ 5: { b: 0, t: 900, h: 0, m: 0 } }));       // no hint beats faster
+  assert.equal(J(M(x, { days: { 5: { b: 0, t: 800, h: 0, m: 0 } } }).days[5].t), "800");
+  assert.equal(J(M(x, { br: 10, rows: {} }).days), "{}");                      // a reset drops it
+  for (const bad of [{ b: 0, t: 0, h: 0, m: 0 }, { b: 0, t: 1, h: -1, m: 0 }, { b: 0, t: 1, h: 0, m: 512 }, { b: 0, t: 1, h: 0 }]) {
+    assert.equal(J(M({ days: { 1: bad } }, null).days), "{}", J(bad));
+  }
+  assert.equal(J(M({ days: { x: { b: 0, t: 1, h: 0, m: 0 }, "-1": { b: 0, t: 1, h: 0, m: 0 } } }, null).days), "{}");
+  // older data without days still loads, and keeps its rows
+  const old = { ver: 1, br: 0, rows: { d: { b: 0, s: { e: { t: 5, ts: 1, n: 1, c: 1 } } } } };
+  assert.equal(J(M(old, old).rows), J(old.rows));
+  // a Killer record travels like any level
+  const k = { rows: { d: { b: 0, s: { k: { t: 7, ts: 1, n: 1, c: 1 } } } } };
+  assert.equal(J(M(k, null).rows.d.s.k), J({ t: 7, ts: 1, n: 1, c: 1 }));
 });

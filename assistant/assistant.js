@@ -6,9 +6,11 @@
 // between. It can search the user's orOS data through the shell's
 // universal search, and every result the user has not allowed for
 // good is shown to them first ("Share" / "Don't share").
-// The assistant writes no app's data: a suggested entry is a card
-// whose button opens that app's own prefill bridge, where the user
-// saves it (core.js section 10).
+// A suggested entry is a card whose button opens that app's own
+// prefill bridge, where the user saves it (core.js section 10). A
+// change to an existing item (change_item, wave 48, edits.js) is
+// written only after the user presses Apply on its before → after
+// card, with Undo while the Assistant stays open.
 // Data:
 //   - synced slice "assistant" (oros-assistant-data): provider,
 //     model, permissions per app, "chat only", key-sync switch and,
@@ -42,6 +44,7 @@
 
   var C = window.OrosAssistCore;
   var S = window.OrosAssistSummary;
+  var E = window.OrosAssistEdits;
   var STORAGE_KEY = "oros-assistant-data";
   var PREFS_KEY   = "oros-assistant-prefs";
   var DB_NAME     = "oros-assistant";
@@ -161,7 +164,27 @@
       "set.bi.getBtn": "Download the model", "set.bi.busy": "Downloading… {p}%",
       "set.bi.none": "This browser has no built-in model. Recent Chrome on Windows, Linux or a Mac with enough space and memory has one; other browsers don't yet.",
       "set.bi.fail": "The model could not be prepared: {msg}",
-      "err.builtin": "The built-in browser model is not available on this device. Pick another assistant in Settings."
+      "err.builtin": "The built-in browser model is not available on this device. Pick another assistant in Settings.",
+      "chg.ask.update": "Change this in {app}?", "chg.ask.delete": "Delete this from {app}?",
+      "chg.ask.complete": "Mark this done in {app}?", "chg.ask.reopen": "Mark this not done in {app}?",
+      "chg.ask.reschedule": "Move this in {app}?",
+      "chg.text": "{name} asks to change one of your items. Check it: nothing changes until you press Apply.",
+      "chg.yes": "Apply", "chg.no": "Don't change", "chg.yesDel": "Delete",
+      "chg.before": "Before", "chg.after": "After", "chg.gone": "deleted",
+      "chg.done": "Changed in {app}", "chg.deleted": "Deleted from {app}", "chg.declined": "Not changed: you said no",
+      "chg.failed": "Not changed: {msg}", "chg.undone": "Undone", "chg.undo": "Undo",
+      "chg.undoFail": "Could not undo: {msg}", "chg.undoHint": "Undo works until you leave the Assistant.",
+      "chg.err": "Could not prepare a change in {app}",
+      "chg.storage": "it could not be saved (storage full?)",
+      "chg.conflict": "the item changed meanwhile",
+      "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
+      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
+      "mic.start": "Speak your message", "mic.stop": "Stop listening", "mic.listening": "Listening…",
+      "mic.title": "Speak instead of typing?",
+      "mic.text": "Your browser turns your voice into text. Most browsers (Chrome, Edge, Safari) do this by sending the recording to their own speech service on the internet, not to orOS and not to the assistant. The text lands in the message box, and nothing is sent to the assistant until you press Send.",
+      "mic.ok": "Use the microphone", "mic.no": "Not now",
+      "mic.denied": "The microphone is blocked. Allow it in the browser's site settings.",
+      "mic.fail": "Voice input stopped: {msg}", "mic.none": "No speech heard"
     },
     el: {
       "app": "Βοηθός",
@@ -265,7 +288,27 @@
       "set.bi.getBtn": "Λήψη του μοντέλου", "set.bi.busy": "Λήψη… {p}%",
       "set.bi.none": "Αυτός ο browser δεν έχει ενσωματωμένο μοντέλο. Το έχει ο πρόσφατος Chrome σε Windows, Linux ή Mac με αρκετό χώρο και μνήμη· οι άλλοι browsers όχι ακόμη.",
       "set.bi.fail": "Το μοντέλο δεν ετοιμάστηκε: {msg}",
-      "err.builtin": "Το ενσωματωμένο μοντέλο του browser δεν υπάρχει σε αυτή τη συσκευή. Διάλεξε άλλον βοηθό στις Ρυθμίσεις."
+      "err.builtin": "Το ενσωματωμένο μοντέλο του browser δεν υπάρχει σε αυτή τη συσκευή. Διάλεξε άλλον βοηθό στις Ρυθμίσεις.",
+      "chg.ask.update": "Αλλαγή σε αυτό ({app});", "chg.ask.delete": "Διαγραφή από: {app};",
+      "chg.ask.complete": "Να σημειωθεί ως έγινε ({app});", "chg.ask.reopen": "Να σημειωθεί ως εκκρεμές ({app});",
+      "chg.ask.reschedule": "Μετακίνηση ({app});",
+      "chg.text": "Το {name} ζητά να αλλάξει ένα στοιχείο σου. Έλεγξέ το: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
+      "chg.yes": "Εφαρμογή", "chg.no": "Να μην αλλάξει", "chg.yesDel": "Διαγραφή",
+      "chg.before": "Πριν", "chg.after": "Μετά", "chg.gone": "διαγράφεται",
+      "chg.done": "Άλλαξε: {app}", "chg.deleted": "Διαγράφηκε από: {app}", "chg.declined": "Δεν άλλαξε: είπες όχι",
+      "chg.failed": "Δεν άλλαξε: {msg}", "chg.undone": "Αναιρέθηκε", "chg.undo": "Αναίρεση",
+      "chg.undoFail": "Δεν αναιρέθηκε: {msg}", "chg.undoHint": "Η αναίρεση ισχύει μέχρι να βγεις από τον Βοηθό.",
+      "chg.err": "Δεν ετοιμάστηκε αλλαγή ({app})",
+      "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
+      "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
+      "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
+      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
+      "mic.start": "Πες το μήνυμά σου", "mic.stop": "Τέλος ακρόασης", "mic.listening": "Ακούω…",
+      "mic.title": "Να μιλήσεις αντί να γράψεις;",
+      "mic.text": "Ο browser σου μετατρέπει τη φωνή σε κείμενο. Οι περισσότεροι (Chrome, Edge, Safari) το κάνουν στέλνοντας την ηχογράφηση στη δική τους υπηρεσία ομιλίας στο διαδίκτυο, όχι στο orOS ούτε στον βοηθό. Το κείμενο μπαίνει στο πλαίσιο μηνύματος και τίποτα δεν στέλνεται στον βοηθό πριν πατήσεις Αποστολή.",
+      "mic.ok": "Χρήση μικροφώνου", "mic.no": "Όχι τώρα",
+      "mic.denied": "Το μικρόφωνο είναι μπλοκαρισμένο. Επίτρεψέ το στις ρυθμίσεις ιστότοπου του browser.",
+      "mic.fail": "Η φωνητική εισαγωγή σταμάτησε: {msg}", "mic.none": "Δεν ακούστηκε ομιλία"
     }
   };
 
@@ -312,7 +355,9 @@
     stop: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
     spark: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
-    x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+    x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
   };
 
   // ---------- 2. Data + prefs ----------
@@ -343,6 +388,7 @@
         prefs.keep = p.keep === 0 ? 0 : 1;
         if (p.usage && typeof p.usage === "object") prefs.usage = p.usage;
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
+        if (p.voiceOk === 1) prefs.voiceOk = 1;
       }
     } catch (e) {}
   }
@@ -840,12 +886,15 @@
     var apps = builtin ? [] : readableApps();
     var kinds = builtin ? [] : entryKinds();
     var sumIds = summaryIds(apps);
-    var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0 });
+    var chgApps = builtin ? [] : changeApps(apps);
+    var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
+                                            changes: chgApps.length > 0 });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
-      entries: kinds
+      entries: kinds,
+      changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; })
     });
     var round = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
@@ -932,6 +981,7 @@
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
+    if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
     var q = String(call.args && call.args.query || "").replace(/\s+/g, " ").trim().slice(0, 200);
     if (!q) return Promise.resolve({ content: "Error: query is empty.", err: 1 });
@@ -1025,6 +1075,160 @@
       return { content: "Error: the item could not be read.", err: 1, ui: { k: "err" } };
     });
   }
+  // ---------- change_item (assistant/edits.js, wave 48) ----------
+  // A change to ONE item the user already shared in this conversation
+  // (its ref). The card shows before → after; nothing is written until
+  // the user presses Apply, whatever the app's permission says. The
+  // write follows the app's own sync stamps (edits.js) and goes to the
+  // app's stored copy: the app itself is closed while the Assistant is
+  // the running app. Undo is kept in memory only (a stored or synced
+  // conversation never carries a way to write).
+  var undoMem = {};
+  function changeApps(apps) {
+    if (!E || !shell()) return [];
+    var have = installed();
+    return apps.filter(function (a) { return E.editableApps([a.id]).length && have[a.id]; });
+  }
+  function writeStore(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+  }
+  function markAppDirty() {
+    var api = syncApi();
+    try { if (api && typeof api.markDirty === "function") api.markDirty(); } catch (e) {}
+  }
+  function changeItem(c, args, apps) {
+    if (!E) return Promise.resolve({ content: "Error: changes are not available.", err: 1 });
+    var ch = E.normArgs(args);
+    if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
+    var r = c.refs ? c.refs[ch.ref] : null;
+    if (!r) return Promise.resolve({ content: "Error: unknown ref. Find the item with search_data or app_summary first.", err: 1 });
+    var app = null;
+    changeApps(apps).forEach(function (a) { if (a.id === r.app) app = a; });
+    if (!app) {
+      var readable = apps.some(function (a) { return a.id === r.app; });
+      return Promise.resolve({ content: readable
+        ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
+        : "Error: the user does not allow this app to be read any more.", err: 1 });
+    }
+    var key = E.storageKey(app.id);
+    var pl = E.plan(app.id, readStore(key), r.target, ch, Date.now());
+    if (!pl.ok) return Promise.resolve({ content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } });
+    var base = { k: "change", app: app.name, act: ch.action, title: pl.title, rows: pl.rows };
+    return askChange(app.name, pl, ch.action).then(function (ok) {
+      if (!ok) {
+        base.st = "declined";
+        return { content: JSON.stringify({ ref: ch.ref, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
+      }
+      var res = E.apply(app.id, readStore(key), r.target, ch, Date.now(), pl.before);
+      if (!res.ok) {
+        base.st = "failed";
+        base.msg = res.conflict ? t("chg.conflict") : res.err;
+        return { content: "Error: " + res.err, err: 1, ui: base };
+      }
+      if (!writeStore(key, res.data)) {
+        base.st = "failed";
+        base.msg = t("chg.storage");
+        return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
+      }
+      markAppDirty();
+      var uid = newId();
+      undoMem[uid] = { app: app.id, key: key, undo: res.undo };
+      base.st = "done";
+      base.u = uid;
+      base.rows = res.rows;
+      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." }), ui: base };
+    });
+  }
+  function undoChange(c, r) {
+    var ui = r.ui, mem = undoMem[ui.u];
+    if (!mem) return;
+    var res = E.undo(mem.app, readStore(mem.key), mem.undo, Date.now());
+    if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
+    if (!writeStore(mem.key, res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
+    markAppDirty();
+    delete undoMem[ui.u];
+    ui.st = "undone";
+    // The model hears it with the next question (the result is history).
+    r.content = JSON.stringify({ applied: false, note: "The user applied this change, then undid it. Nothing is changed now." });
+    saveChat(c);
+    renderMessages();
+    showToast(t("chg.undone"));
+  }
+  // One value of the diff, as the user reads it.
+  function chgValue(f, v) {
+    if (v === null) return t("chg.gone");
+    if (f === "done") return v ? t("v.done") : t("v.open");
+    if (f === "kind") return t("v." + v);
+    if (v === "" || v === undefined) return t("v.empty");
+    if (f === "category" && /^cat:/.test(v)) return t(v.replace(/^cat:/, "cat."));
+    return String(v);
+  }
+  function chgTable(rows, del) {
+    var wrap = el("div", "chg-table");
+    var tb = el("table");
+    var hr = el("tr");
+    hr.appendChild(el("th", "", ""));
+    hr.appendChild(el("th", "", t("chg.before")));
+    if (!del) hr.appendChild(el("th", "", t("chg.after")));
+    tb.appendChild(hr);
+    rows.forEach(function (row) {
+      var tr = el("tr");
+      tr.appendChild(el("th", "", t("f." + row.f)));
+      tr.appendChild(el("td", "chg-b" + (del ? " gone" : ""), chgValue(row.f, row.b)));
+      if (!del) tr.appendChild(el("td", "chg-a", chgValue(row.f, row.a)));
+      tb.appendChild(tr);
+    });
+    wrap.appendChild(tb);
+    return wrap;
+  }
+  // The confirm card. → Promise<bool>
+  function askChange(appName, pl, action) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(v) {
+        if (done) return;
+        done = true;
+        if (busy) { busy.consent = null; busy.card = null; }
+        renderMessages();
+        resolve(v);
+      }
+      var card = el("section", "consent chg-card");
+      card.setAttribute("role", "group");
+      card.appendChild(el("h3", "", t("chg.ask." + action, { app: appName })));
+      card.appendChild(el("p", "consent-text", t("chg.text", { name: provName(curProv()) })));
+      if (pl.title) card.appendChild(el("p", "entry-title", pl.title));
+      card.appendChild(chgTable(pl.rows, pl.del));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("chg.no"), "", function () { finish(false); }));
+      var yes = button(pl.del ? t("chg.yesDel") : t("chg.yes"), pl.del ? "danger" : "primary", function () { finish(true); });
+      acts.appendChild(yes);
+      card.appendChild(acts);
+      if (busy) { busy.consent = function () { finish(false); }; busy.card = card; }
+      renderMessages();
+      scrollEnd();
+      acts.firstChild.focus();               // the safe answer has the focus
+    });
+  }
+  // The card that stays in the conversation.
+  function drawChange(host, r, c) {
+    var ui = r.ui;
+    var rows = Array.isArray(ui.rows) ? ui.rows.filter(function (x) { return x && typeof x.f === "string" && /^[a-z]{1,12}$/.test(x.f); }) : [];
+    var del = ui.act === "delete";
+    var card = el("section", "entry-card chg-card");
+    var head = ui.st === "done" ? (del ? "chg.deleted" : "chg.done") :
+               ui.st === "undone" ? "chg.undone" : ui.st === "declined" ? "chg.declined" : "chg.failed";
+    card.appendChild(el("h3", "entry-head", t(head, { app: String(ui.app || ""), msg: String(ui.msg || "") })));
+    if (ui.title) card.appendChild(el("p", "entry-title", String(ui.title)));
+    if (rows.length) card.appendChild(chgTable(rows, del));
+    if (ui.st === "done" && ui.u && undoMem[ui.u]) {
+      card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("chg.undo"), "", function () { undoChange(c, r); }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
   // ---------- app_summary (assistant/summary.js) ----------
   // Which readable apps have a summary: Budget, Timesheet and To-Do of
   // their own, any other app through its Today provider.
@@ -1555,6 +1759,7 @@
         var ui = r.ui || {};
         if (ui.k === "entry") { drawEntry(host, r, c); return; }
         if (ui.k === "entryErr") return;
+        if (ui.k === "change") { drawChange(host, r, c); return; }
         var line = el("div", "tool-line");
         var ico = el("span", "tool-ico");
         ico.innerHTML = ICON.search;
@@ -1573,6 +1778,7 @@
         else if (ui.k === "readGone") txt = t("tool.readGone", { title: ui.title || "" });
         else if (ui.k === "sum") txt = t("tool.sum", { app: ui.app || "" });
         else if (ui.k === "sumNo") txt = t("tool.sumNo", { app: ui.app || "" });
+        else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
         else txt = t("tool.err");
         line.appendChild(el("span", "", txt));
         host.appendChild(line);
@@ -2214,6 +2420,90 @@
     if (chatSyncOn()) scheduleReconcile();
   }
 
+  // ---------- 12b. Voice input (Web Speech API, wave 48) ----------
+  // The mic button turns speech into text in the message box, in the
+  // interface language. Hidden where the browser has no speech
+  // recognition. The first use explains, honestly, that the browser
+  // may send the recording to its own speech service; nothing goes to
+  // the assistant until the user presses Send.
+  var SR = null;
+  try { SR = window.SpeechRecognition || window.webkitSpeechRecognition || null; } catch (e) { SR = null; }
+  var rec = null;
+  function paintMic() {
+    var b = $("mic-btn");
+    if (!b) return;
+    b.hidden = typeof SR !== "function";
+    b.innerHTML = ICON.mic;
+    var on = !!rec;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.setAttribute("aria-label", on ? t("mic.stop") : t("mic.start"));
+    b.title = on ? t("mic.stop") : t("mic.start");
+  }
+  function micClick() {
+    if (rec) { try { rec.stop(); } catch (e) {} return; }
+    if (prefs.voiceOk === 1) { startMic(); return; }
+    var dlg = makeDialog("as-mic");
+    dlg.appendChild(el("div", "dlg-title", t("mic.title")));
+    dlg.appendChild(el("p", "dlg-text", t("mic.text")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("mic.no"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("mic.ok"), "primary", function () {
+      dlg.close();
+      prefs.voiceOk = 1;
+      savePrefs();
+      startMic();
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function startMic() {
+    if (typeof SR !== "function" || rec) return;
+    var r;
+    try { r = new SR(); } catch (e) { showToast(t("mic.fail", { msg: String(e && e.message || e) })); return; }
+    r.lang = LANG === "el" ? "el-GR" : "en-US";
+    r.interimResults = true;
+    r.continuous = false;
+    r.maxAlternatives = 1;
+    var box = $("input"), before = box.value.replace(/\s+$/, ""), heard = "";
+    function show(extra) {
+      var said = (heard + extra).replace(/\s+/g, " ").trim();
+      box.value = (before && said ? before + " " : before) + said;
+      autosize();
+    }
+    r.onresult = function (ev) {
+      var interim = "";
+      for (var i = ev.resultIndex; i < ev.results.length; i++) {
+        var res = ev.results[i];
+        if (!res || !res[0]) continue;
+        if (res.isFinal) heard += res[0].transcript + " ";
+        else interim += res[0].transcript;
+      }
+      show(interim);
+    };
+    r.onerror = function (ev) {
+      var code = ev && ev.error || "";
+      if (code === "aborted") return;
+      if (code === "not-allowed" || code === "service-not-allowed") showToast(t("mic.denied"));
+      else if (code === "no-speech") showToast(t("mic.none"));
+      else showToast(t("mic.fail", { msg: String(code || "?") }));
+    };
+    r.onend = function () {
+      if (rec !== r) return;
+      rec = null;
+      show("");
+      paintMic();
+      box.placeholder = ready() ? t("ph.input") : t("ph.noSetup");
+      box.focus();
+    };
+    try { r.start(); } catch (e) { showToast(t("mic.fail", { msg: String(e && e.message || e) })); return; }
+    rec = r;
+    box.placeholder = t("mic.listening");
+    paintMic();
+  }
+  function stopMic() { if (rec) { try { rec.abort(); } catch (e) {} } }
+
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -2241,12 +2531,16 @@
     $("side-new").addEventListener("click", function () { setSide(false); newChat(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
-    $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
+    $("send-btn").addEventListener("click", function () { stopMic(); if (busy) stop(); else send(); });
+    $("mic-btn").addEventListener("click", micClick);
+    paintMic();
+    window.addEventListener("pagehide", stopMic);
     var box = $("input");
     box.addEventListener("input", autosize);
     box.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
+        stopMic();
         if (!busy) send();
       }
     });

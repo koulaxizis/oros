@@ -224,7 +224,7 @@
       "ph.add": "Add photo", "ph.change": "Change photo", "ph.remove": "Remove photo", "ph.missing": "Photo not on this device yet",
       "ph.bad": "That picture can't be read.", "ph.noDisk": "The orOS disk isn't available here.",
       "ph.where": "Kept in Files, folder Stock/Photos.",
-      "add.counter": "Counter (quick sale)", "add.labels": "Barcode labels",
+      "add.counter": "Counter (quick sale)", "add.labels": "Barcode labels", "add.pos": "Point of sale (till)",
       "u.custom": "unit"
     },
     el: {
@@ -381,7 +381,7 @@
       "ph.add": "Προσθήκη φωτογραφίας", "ph.change": "Αλλαγή φωτογραφίας", "ph.remove": "Αφαίρεση φωτογραφίας", "ph.missing": "Η φωτογραφία δεν έχει έρθει ακόμα σε αυτή τη συσκευή",
       "ph.bad": "Αυτή η εικόνα δεν διαβάζεται.", "ph.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
       "ph.where": "Φυλάσσεται στα Αρχεία, φάκελος Stock/Photos.",
-      "add.counter": "Ταμείο (γρήγορη πώληση)", "add.labels": "Ετικέτες barcode",
+      "add.counter": "Ταμείο (γρήγορη πώληση)", "add.labels": "Ετικέτες barcode", "add.pos": "Σημείο πώλησης (POS)",
       "u.custom": "μονάδα"
     }
   };
@@ -554,7 +554,20 @@
       rr: RANGES.indexOf(p.rr) >= 0 ? p.rr : "30",
       poAll: p.poAll === true,
       wh: typeof p.wh === "string" ? p.wh : "",        // this device's warehouse for new movements
-      wf: typeof p.wf === "string" ? p.wf : "*"        // Products: "*" all, else one warehouse
+      wf: typeof p.wf === "string" ? p.wf : "*",       // Products: "*" all, else one warehouse
+      pos: readPos(p.pos)                              // the till on this device (1.7)
+    };
+  }
+  // The point of sale's device-local settings: price list in use,
+  // receipt header / footer, paper width, register code (receipt nos.).
+  function readPos(x) {
+    x = x && typeof x === "object" ? x : {};
+    return {
+      pl: typeof x.pl === "string" ? x.pl.slice(0, 64) : "",
+      head: typeof x.head === "string" ? x.head.slice(0, 300) : "",
+      foot: typeof x.foot === "string" ? x.foot.slice(0, 200) : "",
+      paper: x.paper === 80 ? 80 : 58,
+      dev: typeof x.dev === "string" && /^[A-Z2-9]{2}$/.test(x.dev) ? x.dev : ""
     };
   }
   var prefsTimer = null;
@@ -663,6 +676,11 @@
     if (!cur || cur.v === 1) return;
     cur.v = 1;
     stamp(cur);
+    // a till sale's movement: its sale is voided with it (1.7)
+    if (/^pos:/.test(cur.src || "")) {
+      var s = byId("sales", cur.src.slice(4));
+      if (s && s.v !== 1) { s.v = 1; stamp(s); }
+    }
     save();
     render();
     showToast(t("toast.voided"));
@@ -1644,7 +1662,7 @@
   }
   function quoteDialog(preset) {
     var cur = data.settings.cur;
-    if (cur !== "EUR" && cur !== "USD") { showToast(t("br.quoteCur", { c: cur })); return; }
+    if (!/^[A-Z]{3}$/.test(String(cur || ""))) { showToast(t("br.quoteCur", { c: cur })); return; }
     var dlg = makeDialog("st-quote", true);
     dlg.appendChild(el("div", "dlg-title", t("br.quoteTitle")));
     var lp = linePicker(dlg, { priceLabel: t("mv.price"), priceOf: function (it) { return it.price; }, idp: "st-qt" });
@@ -3198,6 +3216,7 @@
      ["📤", t("add.out"), function () { moveEditor("out", []); }],
      ["📋", t("add.count"), function () { moveEditor("count", []); }],
      ["✏️", t("add.other"), function () { moveEditor("loss", []); }]].concat(multiWh() ? [["🔀", t("t.xfer"), function () { moveEditor("xfer", []); }]] : []).concat([
+     ["🏪", t("add.pos"), openPos],
      ["🛒", t("add.counter"), counter],
      ["🧾", t("add.po"), function () { poEditor(null, null); }],
      ["🏷️", t("add.labels"), function () { labelsDialog(null); }],
@@ -3432,6 +3451,75 @@
       applyPlan: function (p) { applyPlan(p); render(); },
       openOut: openOut
     });
+  }
+
+  // ---------- 9a. Point of sale (1.7, wave 46) ----------
+  // The till lives in pos.js; this hands it the app's helpers and the
+  // only writes it may do: a sale (+ its "out" movement), a void, price
+  // lists and a day's Z close. Device-local settings stay in prefs.pos.
+  function posPrefs() {
+    if (!prefs.pos.dev) { prefs.pos.dev = window.OrosStockPosCore.devCode(); savePrefs(); }
+    return prefs.pos;
+  }
+  function openPos() {
+    if (!window.OrosStockPos || !window.OrosStockPosCore) return;
+    window.OrosStockPos.open({
+      lang: LANG, core: C, el: el, button: button, makeDialog: makeDialog, showDialog: showDialog,
+      field: field, selectInput: selectInput, confirm: confirmDialog, toast: showToast, actionToast: actionToast, live: live,
+      data: function () { return data; },
+      byItem: function (id) { return byId("items", id); },
+      byName: byName, matchItem: matchItem, withCam: withCam,
+      multiWh: multiWh, whSelect: whSelect, defWh: defWh, qtyAt: qtyAt,
+      setWh: function (w) { if (prefs.wh !== w) { prefs.wh = w; savePrefs(); } },
+      decOf: decOf, fmtQ: fmtQ, fmtDay: fmtDay, qtyStr: qtyStr, readQty: readQty, readCents: readCents, centsStr: centsStr,
+      money: money, esc: esc, printHtml: printHtml, todayYmd: todayYmd, newId: newId,
+      posPrefs: posPrefs,
+      setPosPref: function (k, v) { posPrefs()[k] = v; prefs.pos = readPos(prefs.pos); savePrefs(); },
+      addSale: posAddSale, voidSale: posVoidSale,
+      putPl: function (row) {
+        if (!Array.isArray(data.pls)) data.pls = [];
+        if (upsert("pls", row)) { save(); render(); }
+      },
+      delPl: function (id) {
+        var cur = byId("pls", id);
+        if (!cur) return;
+        data.tombs[id] = Math.max(Date.now(), cur.m);
+        data.pls = data.pls.filter(function (x) { return x.id !== id; });
+        if (prefs.pos.pl === id) { prefs.pos.pl = ""; savePrefs(); }
+        save();
+        render();
+      },
+      putZ: function (row) {
+        if (!Array.isArray(data.zs)) data.zs = [];
+        var cur = byId("zs", row.id);
+        if (cur) { Object.keys(row).forEach(function (k) { if (k !== "m") cur[k] = row[k]; }); stamp(cur); }
+        else { row.m = Date.now(); data.zs.push(row); }
+        save();
+        render();
+      }
+    });
+  }
+  // → the sale as stored (normalized), or null
+  function posAddSale(sale, move) {
+    if (data.close && sale.d <= data.close.d) { showToast(t("cl.locked", { d: fmtDay(data.close.d, true) })); return null; }
+    var s = C.normSale(sale);
+    if (!s) return null;
+    if (!Array.isArray(data.sales)) data.sales = [];
+    data.sales.push(s);
+    data.moves.push(move);
+    save();
+    render();
+    return byId("sales", s.id);
+  }
+  function posVoidSale(id) {
+    var s = byId("sales", id);
+    if (!s || s.v === 1) return;
+    s.v = 1;
+    stamp(s);
+    var mv = s.mv ? byId("moves", s.mv) : null;
+    if (mv && mv.v !== 1) { mv.v = 1; stamp(mv); }
+    save();
+    render();
   }
 
   // ---------- 9b. Camera scanning ----------

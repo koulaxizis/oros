@@ -784,6 +784,41 @@
   // Fetch again when there are none or they are older than 6 hours.
   function ratesStale(rates, now) { return !rates || !isInt(rates.at) || now - rates.at > 6 * 3600000 || rates.at > now; }
 
+  // Fetch the latest ECB rates: tries RATES_URLS in order, 10 s each,
+  // and resolves with the readRates() value (not stored: the caller
+  // keeps it under RATES_KEY). Shared by Units and Split, so there is
+  // one fetcher. `fetchFn` is window.fetch (a parameter, for tests).
+  function fetchLatest(fetchFn, now) {
+    var urls = RATES_URLS.slice();
+    function one(url) {
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 10000);
+      return Promise.resolve(fetchFn(url, { cache: "no-store", credentials: "omit", signal: ctl ? ctl.signal : undefined }))
+        .then(function (res) { clearTimeout(timer); if (!res || !res.ok) throw new Error("HTTP"); return res.json(); },
+              function (e) { clearTimeout(timer); throw e; })
+        .then(function (json) {
+          var r = readRates(json, isInt(now) ? now : Date.now(), url);
+          if (!r) throw new Error("bad reply");
+          return r;
+        });
+    }
+    function next() {
+      var url = urls.shift();
+      if (!url) return Promise.reject(new Error("no source"));
+      return one(url).catch(function () { return next(); });
+    }
+    return next();
+  }
+  // How many `to` one `from` buys with these (EUR-based) rates, or
+  // null when a code has no rate.
+  function crossRate(rates, from, to) {
+    if (from === to) return 1;
+    var r = rates && rates.rates ? rates.rates : {};
+    var a = from === "EUR" ? 1 : r[from], b = to === "EUR" ? 1 : r[to];
+    if (!isNum(a) || !isNum(b) || a <= 0 || b <= 0) return null;
+    return b / a;
+  }
+
   // ---------- Formula line ----------
   // "1 mi = 1.609344 km" for linear units; temperature and fuel
   // show their rule instead (the app writes those strings).
@@ -806,7 +841,8 @@
     toggleFav: toggleFav, isFav: isFav, addRecent: addRecent, clearRecent: clearRecent,
     setPrec: setPrec, precOf: precOf, favList: favList, recentList: recentList,
     readPrefs: readPrefs, pairOf: pairOf,
-    readRates: readRates, storedRates: storedRates, ratesStale: ratesStale, factorOf: factorOf
+    readRates: readRates, storedRates: storedRates, ratesStale: ratesStale, factorOf: factorOf,
+    fetchLatest: fetchLatest, crossRate: crossRate, CURRENCY_ORDER: CURRENCY_ORDER
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

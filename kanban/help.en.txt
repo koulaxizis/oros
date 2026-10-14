@@ -15,30 +15,58 @@ The `Card` dialog saves as you type. It has:
 - `Labels`: tap `Add / manage labels` to pick labels or create a new one with a colour.
 - `Subtasks`: a checklist. The card shows how many are done, for example 2/5.
 - `Extra info`: your own fields, each with a `Field` name and a `Value`.
+- `Column`: moves the card to another column, which is handy on a phone.
+- `Lane`: a free name such as "Team A", used by swimlanes (see below).
+- `Attachments` and `Cover`: see below.
 
 `Duplicate` makes a copy of the card. `Delete` asks first, and the message that follows has an `Undo` button for a few seconds.
 
 ## Columns and boards
-- `Add column` (the + at the top) adds a column. To rename or delete one, tap the pencil (`Rename column`) or double-click its title. `Delete column` removes its cards too.
+- `Add column` (the + at the top) adds a column. Tap the pencil (or double-click the title) to open `Column settings`: rename it, set a `WIP limit`, add rules, or `Delete column`, which removes its cards too.
+- With a `WIP limit` the column shows how full it is, for example 3/5, and turns orange when it holds more cards than the limit. It is a warning: you can still add cards.
 - Drag a column by its header to move it.
 - The button at the top left shows the current board. Tap it to switch boards, or drag boards in that list to reorder them. Double-click it to rename the board.
 - Next to it: `New board`, `Import from other apps` and `Manage boards...`.
 - In `Manage boards...` you can change a board's colour, rename it, duplicate it, archive it or delete it. Archived boards leave the board list but keep their data, and you can unarchive them there. At least one board must stay active.
 
+## Views and swimlanes
+The view button next to `Filter by label` opens `View and board options`. The view you pick is kept per board on this device.
+- `Board`: the columns.
+- `Table`: every card in one sortable list. Tap a column heading to sort by it; the `Column` list in each row moves the card.
+- `Timeline`: cards with a due date on a line of days, with today highlighted. Drag a card along the days to change its due date. Cards without a due date are counted below.
+- `Swimlanes` splits the board into rows across the columns: `By label` (one row per label, plus `No label`) or `By lane` (one row per lane name, plus `No lane`). Drag a card to another row to change its label or lane.
+
+## Attachments and cover
+- In a card, `Add file` attaches photos or other files (up to 10 MB each, 20 per card). They are kept on the orOS disk in Files › Kanban › Attachments.
+- Photos are made smaller (at most 1600 pixels on the long side) and saved again, which removes their camera and location data. Other files are kept as they are.
+- Tap an attachment to see it, `Open` it, `Save a copy` or `Remove` it. Only photos and PDFs are shown inside orOS.
+- `Cover`: a colour, or one of the card's photos (`Use as cover`), shown on top of the card.
+
+## Automations
+- In `Column settings`, `When a card arrives here` can tick all its subtasks, set its due date to today, add a label and move it to the top. A small bolt on the column shows it has rules.
+- `Automations…` in the view menu lists the rules of the board and has one more: when a due date passes, add the label "Overdue". Cards in the last column (usually Done) are left alone, and if you take the label off a card it is not added again for the same date.
+- Rules are part of the board, so they sync to your other devices.
+
+## Export, import and templates
+- `Export board (JSON)` saves one file with the whole board: columns, cards, labels, rules and the attachments themselves (up to 25 MB in total). `Import from other apps` reads that file back as a new board, so it also works for moving a board to someone else.
+- `Export cards (CSV)` saves the cards as a table for a spreadsheet, one row per card with its column, labels, due date, lane and subtasks.
+- `Save as template…` keeps the board's columns, labels, WIP limits, rules and cards (without due dates, attachments and ticks).
+- `New board from template…` starts a board from one of your templates or from a built-in one: Personal, Software sprint or Content calendar. You can delete your own templates there.
+
 ## Search and filter
-- `Search…` shows only cards whose text, notes, due date, extra info or label names match.
+- `Search…` shows only cards whose text, notes, due date, extra info, lane, attachment names or label names match.
 - `Filter by label` shows only cards that carry any of the labels you pick. You can also delete a label from there; it is removed from every card.
 
 ## Sync and backup
-With [orOS sync](help:t/sync), all your boards, columns, cards and labels, plus archive state and colours, reach your other devices. Which board is open stays on this device, and your search and filter are not synced.
+With [orOS sync](help:t/sync), all your boards, columns, cards and labels, plus archive state, colours, WIP limits, rules and templates, reach your other devices. Changes to different parts of the same card on two devices are both kept: for example, a move on your phone and a text edit on your laptop. Which board is open, the view and swimlanes stay on this device, and your search and filter are not synced.
 
 - Cards with a due date also appear in [Calendar](app:calendar) as all-day events, shown as "column · card text". Cards on archived boards are left out.
-- `Import from other apps` reads JSON exports from Kanri and Trello. It creates new boards and never changes your existing ones.
+- `Import from other apps` reads a board exported from orOS Kanban (JSON) and JSON exports from Kanri and Trello. It creates new boards and never changes your existing ones.
 - It can also read straight from a connected account: a Trello board, a GitHub repository's issues, or a Notion database. Connect Trello (API key and token), GitHub (a personal access token) or Notion (your integration's secret) in [Settings](app:settings) › `Connected services` first, then in `Import from other apps` pick the account, `Show boards` (or `Show repositories`, `Show databases`), pick one and `Read`.
 - A GitHub repository becomes a board with two columns, `Open` and `Closed`. Each issue is a card "#12 Title" with its text as notes, its labels, its milestone's date as due date and its "- [ ]" lines as subtasks. Pull requests are left out.
 - A Notion database becomes a board with a column for each option of its first `Status` property (or its first `Select`), plus `No status` for entries without one. Each entry is a card named by its title, with its first date as due date, its first multi-select as labels, and its other properties as "Name: value" lines in the notes, ending with its Notion link. In Notion, share the database with your integration first (••• › `Connections`).
 - Read the same board again later: only new cards, columns and labels come in. Cards you already have stay as you left them, and ones you deleted don't come back. orOS only reads Trello, GitHub and Notion: nothing there changes.
-- Kanban has no export of its own; your boards are included in orOS [backups](help:t/backup).
+- Your boards are also included in orOS [backups](help:t/backup). The attachments are files on the orOS disk, so they go with the disk.
 
 ## Keyboard shortcuts
 - [[Alt+B]] creates a new board (not while you are typing in a field or a dialog is open).
@@ -50,4 +78,9 @@ With [orOS sync](help:t/sync), all your boards, columns, cards and labels, plus 
 - Deletes and imports show an `Undo` button for a few seconds. Use it if you change your mind.
 
 ## Limits
-- If the same card is changed on two devices before they sync, the newer version of the whole card wins. For example, a move on one device and a text edit on the other: one of the two is lost.
+- If the same part of a card (for example its text, or its due date) is changed on two devices before they sync, the newer change wins.
+- A card changed on a device that still runs an older orOS counts as changed as a whole, so there the newer whole card can still win.
+- Attachments are not sent by orOS sync: they reach your other devices with the orOS disk through Vault Drive. Until then the card shows "Not on this device".
+- Only photos and PDFs can be viewed inside orOS; other attachments can only be saved.
+- The "Overdue" rule leaves cards in the last column alone, and only runs while Kanban is open.
+- On an older orOS, templates show up as archived boards.

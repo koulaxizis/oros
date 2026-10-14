@@ -157,6 +157,10 @@
       o.fit = oneOf(it.fit, ["fit", "fill", "custom"], "fill");
       o.ix = num(it.ix, -MAX_COORD, MAX_COORD, 0); o.iy = num(it.iy, -MAX_COORD, MAX_COORD, 0);
       o.isc = num(it.isc, 0.001, 1000, 1);
+      // Layout data merge: the CSV column that names this frame's
+      // picture (only when set, so older documents stay as they were)
+      var mf = str(it.mf, 60).replace(/[{}\n\r\t]/g, "").trim();
+      if (mf) o.mf = mf;
     }
     // a page's own copy of a master item ("detached here"): the
     // master item stops showing on that page

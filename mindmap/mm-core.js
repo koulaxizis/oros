@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mind Map — core (v1.1.0: phase 2 links, free placement, pictures)
+// orOS Mind Map — core (v1.2.0: wave 27 styles, layouts, frames, presentation)
 // Everything that does not need a DOM, so the browser app and
 // `node --test` run the very same code:
 //   1. Constants + small helpers
@@ -13,6 +13,7 @@
 //   9. Layout (both sides or right only, never overlapping)
 //  10. Scene + SVG serializer (export) — no user text is markup
 //  11. Example map (deterministic ids, R16)
+//  12. Wave 27: navigation per layout, presentation steps + framing
 // Data MINDMAP v1 (oros-mindmap-data):
 //   { ver: 1,
 //     maps:  [{ id, m, sides }],
@@ -21,7 +22,16 @@
 //     links: [{ id, m, map, from, to, label }],     (phase 2)
 //     pos:   [{ id (= node id), m, map, dx, dy }],  (phase 2)
 //     imgs:  [{ id (= node id), m, map, src, w, h }], (phase 2)
+//     styles: [{ id (= node id), m, map, shape, fill, border,
+//                size, bold }],                       (wave 27)
+//     frames: [{ id, m, map, nodes[], kind, label, color }], (wave 27)
+//     layouts: [{ id (= map id), m, map (= id), kind }],     (wave 27)
 //     tombs: { id: deletedAt } }
+// Wave 27 follows the phase-2 rule: node styles, boundaries /
+// summaries ("frames") and the map's layout kind are rows of NEW
+// collections. styles / layouts share their node's / map's id, so a
+// node or map tombstone removes them too; a reset writes a row of
+// defaults. Frames have their own id and are tombstoned.
 // Phase-2 data lives in NEW collections, never in new node fields:
 // a device still on the old code rebuilds nodes from known fields,
 // and on an equal-m tie its shorter row would win the canonical
@@ -63,6 +73,16 @@
   var IMG_LEN    = 40000;          // chars of one picture's data URI
   var IMG_TOTAL  = 1400000;        // chars of all pictures together
   var IMG_MAX    = 640;            // px, stored picture side
+  var MAX_FRAMES = 2000;
+  var FRAME_NODES = 50;            // members of one boundary / summary
+
+  // Wave 27: node styles, frames, layout kinds ("" = the default).
+  var SHAPES  = ["", "rect", "round", "pill", "ellipse", "diamond", "hex", "line", "none"];
+  var FILLS   = ["", "none", "tint", "solid"];
+  var BORDERS = ["", "none", "thin", "thick", "dashed"];
+  var SIZES   = ["", "s", "l"];
+  var FRAME_KINDS = ["box", "brace"];
+  var LAYOUTS = ["", "org", "tree", "time"];
 
   // Branch colours: the shared LABEL_COLORS (Bible, Part VI).
   var COLORS = {
@@ -215,6 +235,32 @@
     return { id: x.id, m: x.m, map: x.map, src: ok ? x.src : "", w: ok ? x.w : 0, h: ok ? x.h : 0 };
   }
 
+  function pick(list, v) { return list.indexOf(v) !== -1 ? v : ""; }
+  function normStyle(x) {
+    if (!x || typeof x !== "object" || !isId(x.id) || !isTs(x.m) || !isMapId(x.map)) return null;
+    return { id: x.id, m: x.m, map: x.map, shape: pick(SHAPES, x.shape), fill: pick(FILLS, x.fill),
+             border: pick(BORDERS, x.border), size: pick(SIZES, x.size), bold: x.bold === true };
+  }
+  function plainStyle(st) { return !st || (!st.shape && !st.fill && !st.border && !st.size && !st.bold); }
+  // Members: valid ids, never the centre, no repeats, sorted (canonical).
+  function normFrame(x) {
+    if (!x || typeof x !== "object" || !isId(x.id) || !isTs(x.m) || !isMapId(x.map) || !Array.isArray(x.nodes)) return null;
+    var seen = dict(), ids = [], rid = rootId(x.map);
+    x.nodes.forEach(function (id) {
+      if (ids.length >= FRAME_NODES || !isId(id) || id === rid || own(seen, id)) return;
+      seen[id] = 1;
+      ids.push(id);
+    });
+    if (!ids.length) return null;
+    ids.sort(cmpStr);
+    return { id: x.id, m: x.m, map: x.map, nodes: ids, kind: FRAME_KINDS.indexOf(x.kind) !== -1 ? x.kind : "box",
+             label: line(x.label, LABEL_LEN), color: own(COLORS, x.color) ? x.color : "" };
+  }
+  function normLayout(x) {
+    if (!x || typeof x !== "object" || !isMapId(x.id) || x.map !== x.id || !isTs(x.m)) return null;
+    return { id: x.id, m: x.m, map: x.id, kind: pick(LAYOUTS, x.kind) };
+  }
+
   function normTombs(t, into) {
     if (!t || typeof t !== "object" || Array.isArray(t)) return into;
     Object.keys(t).forEach(function (id) {
@@ -224,7 +270,9 @@
     return into;
   }
 
-  function emptyData() { return { ver: VER, maps: [], nodes: [], links: [], pos: [], imgs: [], tombs: {} }; }
+  function emptyData() {
+    return { ver: VER, maps: [], nodes: [], links: [], pos: [], imgs: [], styles: [], frames: [], layouts: [], tombs: {} };
+  }
 
   // ---------- 4. Merge ----------
   // LWW per entity (newer m wins; equal m: the larger canonical
@@ -276,9 +324,23 @@
       .filter(function (x) { return onNode(x.id, x.map); });
     var imgs = alive(lww([a.imgs, b.imgs], normImg), tombs)
       .filter(function (x) { return onNode(x.id, x.map); });
+    // Wave 27: a style hangs off its node like pos / imgs; a layout
+    // row hangs off its map. A frame hangs off its map only: members
+    // that are gone are skipped when it is drawn (filtering on them
+    // here would make the merge depend on the order devices meet,
+    // since a member can come back with a newer edit). The app
+    // tombstones a frame when its last member is deleted.
+    var styles = alive(lww([a.styles, b.styles], normStyle), tombs)
+      .filter(function (x) { return onNode(x.id, x.map); });
+    var frames = alive(lww([a.frames, b.frames], normFrame), tombs)
+      .filter(function (f) { return own(live, f.map); })
+      .slice(0, MAX_FRAMES);
+    var layouts = alive(lww([a.layouts, b.layouts], normLayout), tombs)
+      .filter(function (x) { return own(live, x.id); });
     var sorted = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { sorted[id] = tombs[id]; });
-    return { ver: VER, maps: maps, nodes: nodes, links: links, pos: pos, imgs: imgs, tombs: sorted };
+    return { ver: VER, maps: maps, nodes: nodes, links: links, pos: pos, imgs: imgs,
+             styles: styles, frames: frames, layouts: layouts, tombs: sorted };
   }
 
   // ---------- 5. Resolve ----------
@@ -359,14 +421,17 @@
     kids[rid].forEach(function (id) { (rec[id] ? recov : normal).push(id); });
     Object.keys(rec).sort(cmpStr).forEach(function (id) { if (recov.indexOf(id) === -1) recov.push(id); });
     kids[rid] = normal.concat(recov.sort(cmpStr));
-    var pos = dict(), img = dict(), links = [];
+    var pos = dict(), img = dict(), links = [], sty = dict(), frames = [], kind = "";
+    (data.styles || []).forEach(function (x) { if (x.map === mapId && own(N, x.id) && !plainStyle(x)) sty[x.id] = x; });
+    (data.frames || []).forEach(function (f) { if (f.map === mapId) frames.push(f); });
+    (data.layouts || []).forEach(function (x) { if (x.id === mapId) kind = x.kind; });
     (data.pos || []).forEach(function (x) { if (x.map === mapId && own(N, x.id) && x.id !== rid) pos[x.id] = x; });
     (data.imgs || []).forEach(function (x) { if (x.map === mapId && own(N, x.id) && x.src) img[x.id] = x; });
     (data.links || []).forEach(function (l) {
       if (l.map === mapId && own(N, l.from) && own(N, l.to) && l.from !== l.to) links.push(l);
     });
     return { map: map, root: rootNode, N: N, kids: kids, par: par, rec: rec, count: ids.length + 1,
-             pos: pos, img: img, links: links };
+             pos: pos, img: img, links: links, sty: sty, frames: frames, kind: kind };
   }
   // Ids of `id` and everything under it (iterative, any depth).
   function subtree(R, id) {
@@ -410,9 +475,11 @@
       out.maps = d.maps.filter(function (mp) { return mp.id === mapId; });
       out.nodes = d.nodes.filter(one);
       out.links = d.links.filter(one); out.pos = d.pos.filter(one); out.imgs = d.imgs.filter(one);
+      out.styles = d.styles.filter(one); out.frames = d.frames.filter(one); out.layouts = d.layouts.filter(one);
       out.tombs = {};
     } else {
       out.maps = d.maps; out.nodes = d.nodes; out.links = d.links; out.pos = d.pos; out.imgs = d.imgs;
+      out.styles = d.styles; out.frames = d.frames; out.layouts = d.layouts;
       out.tombs = d.tombs;
     }
     return JSON.stringify(out, null, 1);
@@ -452,7 +519,9 @@
       return out;
     }
     var d = merge({ maps: maps, nodes: nodes, links: rows(raw.links, normLink), pos: rows(raw.pos, normPos),
-                    imgs: rows(raw.imgs, normImg), tombs: normTombs(raw.tombs, dict()) }, {});
+                    imgs: rows(raw.imgs, normImg), styles: rows(raw.styles, normStyle),
+                    frames: rows(raw.frames, normFrame), layouts: rows(raw.layouts, normLayout),
+                    tombs: normTombs(raw.tombs, dict()) }, {});
     st.maps = d.maps.length;
     st.nodes = d.nodes.length;
     return { ok: true, data: d, stats: st };
@@ -737,17 +806,43 @@
     return { x: c.cx + dx * k, y: c.cy + dy * k };
   }
 
+  // Wave 27: a node's own style scales its text and gives it a shape.
+  var SIZE_K = { s: 0.85, l: 1.3 };
+  function textStyle(depth, st) {
+    var b = styleAt(depth);
+    if (!st || (!st.size && !st.bold)) return b;
+    var k = SIZE_K[st.size] || 1;
+    return { font: Math.round(b.font * k), weight: st.bold ? 800 : b.weight, lh: Math.round(b.lh * k),
+             px: Math.round(b.px * k), py: Math.round(b.py * k), max: Math.round(b.max * (k > 1 ? 1.2 : 1)) };
+  }
+  // Room around the text block so it stays inside the shape.
+  function shapePad(shape, w, h) {
+    if (shape === "ellipse") return [Math.round(w * 0.17) + 4, Math.round(h * 0.2) + 2];
+    if (shape === "diamond") return [Math.round(w * 0.5), Math.round(h * 0.5)];
+    if (shape === "hex") return [Math.round(h * 0.35), 0];
+    return [0, 0];
+  }
+  var FPAD = 8, FLBL = 12, FRAME_FONT = 12, FRAME_H = 20, BRACE = 14;
+  var ORG_H = [28, 20, 14], ORG_V = [48, 36, 30];       // org chart: sibling gap, level gap
+  var TREE_IND = 30, TREE_V = [16, 10, 6], TIME_GAP = 44;
+
   // opts: { measure, fold{id:1}, placeholder, margin }
-  // → { nodes{id:{id,x,y,w,h,cx,cy,depth,side,lines,sty,color,folded,
-  //            hidden,rec,ind,img,moved}}, order[], edges[], links[], w, h }
+  // → { kind, nodes{id:{id,x,y,w,h,cx,cy,depth,side,flow,sib,lines,sty,
+  //            color,folded,hidden,rec,ind,img,moved,shape,st,ex,ey}},
+  //     order[], edges[], links[], frames[], w, h }
+  // Kinds (R.kind): "" = the classic map (both sides or right only,
+  // R.map.sides), "org" = org chart (down), "tree" = indented tree,
+  // "time" = timeline (main branches along a line, each with its
+  // ideas as a tree below). None of them lets two boxes overlap.
   // Free placement: a node's stored offset (R.pos) moves it AND its
   // whole branch from the automatic place (offsets add up down the
   // tree), so the automatic layout stays the base.
   function layout(R, opts) {
     opts = opts || {};
     var measure = opts.measure || estimate, fold = opts.fold || {}, M = opts.margin === undefined ? 40 : opts.margin;
-    var rid = R.root.id, L = dict(), order = [];
-    var sides = R.map && R.map.sides === "right" ? "right" : "both";
+    var rid = R.root.id, L = dict(), order = [], STS = R.sty || {};
+    var kind = R.kind && LAYOUTS.indexOf(R.kind) > 0 ? R.kind : "";
+    var sides = kind ? "right" : (R.map && R.map.sides === "right" ? "right" : "both");
     var top = R.kids[rid] || [];
     var rightN = sides === "right" ? top.length : Math.ceil(top.length / 2);
 
@@ -755,9 +850,11 @@
     var stack = [[rid, 0, 0, null]];
     while (stack.length) {
       var e = stack.pop(), id = e[0], depth = e[1], n = R.N[id];
-      var sty = styleAt(depth);
+      var st = own(STS, id) ? STS[id] : null, shape = st ? st.shape : "";
+      var sty = textStyle(depth, st);
+      var wsty = shape === "diamond" || shape === "ellipse" ? { font: sty.font, weight: sty.weight, max: Math.round(sty.max * 0.7) } : sty;
       var txt = (n.emoji ? n.emoji + " " : "") + (n.text || (id === rid ? (opts.placeholder || "") : "…"));
-      var lines = wrap(txt, sty, measure), wmax = 0;
+      var lines = wrap(txt, wsty, measure), wmax = 0;
       lines.forEach(function (l) { wmax = Math.max(wmax, measure(l, sty.font, sty.weight)); });
       var ind = (n.note ? 1 : 0) + (n.url ? 1 : 0);
       var im = R.img && R.img[id] ? imgFit(R.img[id], depth) : null;
@@ -768,10 +865,12 @@
       else if (depth === 1) color = n.color || AUTO[e[2] % AUTO.length];
       else color = n.color || e[3];
       var side = depth === 0 ? "c" : (depth === 1 ? (e[2] < rightN ? "r" : "l") : e[4]);
+      var iw = Math.ceil(Math.max(wmax + ind * 16, 24, im ? im.w : 0) + sty.px * 2);
+      var ih = lines.length * sty.lh + sty.py * 2 + (im ? im.h + IMG_GAP : 0);
+      var pad = shapePad(shape, iw, ih);
       L[id] = {
         id: id, depth: depth, side: side, lines: lines, sty: sty, color: color,
-        w: Math.ceil(Math.max(wmax + ind * 16, 24, im ? im.w : 0) + sty.px * 2),
-        h: lines.length * sty.lh + sty.py * 2 + (im ? im.h + IMG_GAP : 0),
+        w: iw + pad[0] * 2, h: ih + pad[1] * 2, ex: pad[0], ey: pad[1], shape: shape, st: st,
         folded: isFold, hidden: 0, rec: !!R.rec[id], ind: ind, img: im, moved: false, kids: []
       };
       order.push(id);
@@ -787,38 +886,109 @@
     // hidden counts of folded nodes
     order.forEach(function (id) { if (L[id].folded) L[id].hidden = subtree(R, id).length - 1; });
 
-    // 2. block heights, bottom-up
-    var blk = dict();
-    for (var o = order.length - 1; o >= 0; o--) {
-      var nd = L[order[o]];
-      if (nd.depth === 0) continue;
-      var sum = 0, kk = nd.kids, gap = VGAP[Math.min(nd.depth + 1, 2)];
-      for (var q = 0; q < kk.length; q++) sum += blk[kk[q]] + (q ? gap : 0);
-      blk[nd.id] = Math.max(nd.h, sum);
-    }
+    // room for boundaries / summaries: the outer members of a frame
+    // (per parent) get extra space before and after them
+    var fpad = dict();
+    (R.frames || []).forEach(function (f) {
+      var by = dict();
+      f.nodes.forEach(function (id) {
+        if (!own(L, id) || id === rid) return;
+        var key = R.par[id] + "|" + L[id].side;
+        (by[key] = by[key] || []).push(id);
+      });
+      var room = f.kind === "brace" ? 4 : FPAD + (f.label ? FLBL : 0);
+      Object.keys(by).forEach(function (key) {
+        var sibs = L[R.par[by[key][0]]].kids, g = by[key].sort(function (x, y) { return sibs.indexOf(x) - sibs.indexOf(y); });
+        [g[0], g[g.length - 1]].forEach(function (x) { fpad[x] = Math.max(fpad[x] || 0, room); });
+      });
+    });
+    function pd(id) { return fpad[id] || 0; }
 
-    // 3. positions, top-down
+    // 2. block sizes, bottom-up; 3. positions, top-down
     var R0 = L[rid];
     R0.x = -R0.w / 2; R0.y = -R0.h / 2;
-    var right = R0.kids.filter(function (id) { return L[id].side === "r"; });
-    var left = R0.kids.filter(function (id) { return L[id].side === "l"; }).reverse();   // clockwise
-    function place(list, parent) {
-      var gap = VGAP[Math.min(parent.depth + 1, 2)], total = 0;
-      list.forEach(function (id, i) { total += blk[id] + (i ? gap : 0); });
-      var y = parent.y + parent.h / 2 - total / 2;
-      list.forEach(function (id) {
-        var c = L[id], hg = HGAP[Math.min(parent.depth, 2)];
-        c.y = y + blk[id] / 2 - c.h / 2;
-        c.x = c.side === "l" ? parent.x - hg - c.w : parent.x + parent.w + hg;
-        y += blk[id] + gap;
+    var blk = dict(), o, q, nd, kk, sum, gap;
+    if (!kind) {
+      for (o = order.length - 1; o >= 0; o--) {
+        nd = L[order[o]];
+        if (nd.depth === 0) continue;
+        sum = 0; kk = nd.kids; gap = VGAP[Math.min(nd.depth + 1, 2)];
+        for (q = 0; q < kk.length; q++) sum += blk[kk[q]] + (q ? gap : 0);
+        blk[nd.id] = Math.max(nd.h, sum) + 2 * pd(nd.id);
+      }
+      var right = R0.kids.filter(function (id) { return L[id].side === "r"; });
+      var left = R0.kids.filter(function (id) { return L[id].side === "l"; }).reverse();   // clockwise
+      var place = function (list, parent) {
+        var g = VGAP[Math.min(parent.depth + 1, 2)], total = 0;
+        list.forEach(function (id, i) { total += blk[id] + (i ? g : 0); });
+        var y = parent.y + parent.h / 2 - total / 2;
+        list.forEach(function (id) {
+          var c = L[id], hg = HGAP[Math.min(parent.depth, 2)];
+          c.y = y + blk[id] / 2 - c.h / 2;
+          c.x = c.side === "l" ? parent.x - hg - c.w : parent.x + parent.w + hg;
+          y += blk[id] + g;
+        });
+      };
+      place(right, R0);
+      place(left, R0);
+      for (var z = 0; z < order.length; z++) {
+        var pn = L[order[z]];
+        if (pn.depth === 0 || !pn.kids.length) continue;
+        place(pn.kids, pn);
+      }
+    } else if (kind === "org") {
+      for (o = order.length - 1; o >= 0; o--) {
+        nd = L[order[o]];
+        sum = 0; kk = nd.kids; gap = ORG_H[Math.min(nd.depth, 2)];
+        for (q = 0; q < kk.length; q++) sum += blk[kk[q]] + (q ? gap : 0);
+        blk[nd.id] = Math.max(nd.w, sum) + 2 * pd(nd.id);
+      }
+      order.forEach(function (id) {
+        var p = L[id], ks = p.kids, g = ORG_H[Math.min(p.depth, 2)], total = 0;
+        ks.forEach(function (k, i) { total += blk[k] + (i ? g : 0); });
+        var x = p.x + p.w / 2 - total / 2;
+        ks.forEach(function (k) {
+          var c = L[k];
+          c.x = x + blk[k] / 2 - c.w / 2;
+          c.y = p.y + p.h + ORG_V[Math.min(p.depth, 2)];
+          x += blk[k] + g;
+        });
       });
-    }
-    place(right, R0);
-    place(left, R0);
-    for (var z = 0; z < order.length; z++) {
-      var pn = L[order[z]];
-      if (pn.depth === 0 || !pn.kids.length) continue;
-      place(pn.side === "l" ? pn.kids.slice() : pn.kids, pn);
+    } else {
+      // tree rows (tree, and under each main branch of a timeline)
+      var wide = dict();
+      for (o = order.length - 1; o >= 0; o--) {
+        nd = L[order[o]];
+        sum = nd.h; kk = nd.kids; gap = TREE_V[Math.min(nd.depth + 1, 2)];
+        var wv = nd.w + (nd.folded ? 26 : 0);
+        for (q = 0; q < kk.length; q++) { sum += gap + blk[kk[q]]; wv = Math.max(wv, TREE_IND + wide[kk[q]]); }
+        blk[nd.id] = sum + 2 * pd(nd.id);
+        wide[nd.id] = wv;
+      }
+      var treeKids = function (p) {
+        var y = p.y + p.h, g = TREE_V[Math.min(p.depth + 1, 2)];
+        p.kids.forEach(function (k) {
+          var c = L[k];
+          y += g;
+          c.x = p.x + TREE_IND;
+          c.y = y + pd(k);
+          y += blk[k];
+        });
+      };
+      if (kind === "time") {
+        var tx = R0.x + R0.w + TIME_GAP;
+        R0.kids.forEach(function (k) {
+          var c = L[k];
+          tx += pd(k);
+          c.x = tx;
+          c.y = R0.y + R0.h / 2 - c.h / 2;
+          tx += wide[k] + pd(k) + TIME_GAP;
+        });
+      }
+      order.forEach(function (id) {
+        if (kind === "time" && id === rid) return;
+        treeKids(L[id]);
+      });
     }
     // free placement: cumulative offsets, pre-order (parents first)
     var off = dict();
@@ -826,19 +996,23 @@
     order.forEach(function (id) {
       if (id === rid) return;
       var po = off[R.par[id]] || [0, 0], p = R.pos && R.pos[id];
-      var o = p && (p.dx || p.dy) ? [po[0] + p.dx, po[1] + p.dy] : po;
-      off[id] = o;
+      var ov = p && (p.dx || p.dy) ? [po[0] + p.dx, po[1] + p.dy] : po;
+      off[id] = ov;
       if (p && (p.dx || p.dy)) L[id].moved = true;
-      L[id].x += o[0]; L[id].y += o[1];
+      L[id].x += ov[0]; L[id].y += ov[1];
     });
 
     order.forEach(function (id) { var c = L[id]; c.cx = c.x + c.w / 2; c.cy = c.y + c.h / 2; });
-    // A branch moved across its parent flows the other way (edges
-    // and the fold badge follow where it is, not the side it came from).
+    // Which way a node's branch flows (edges and the fold badge
+    // follow it): l / r (map; a branch moved across its parent flows
+    // the other way), d (org chart), t (tree rows). sib: the axis its
+    // siblings are lined up on (h or v), for drops and the keyboard.
     order.forEach(function (id) {
-      if (id === rid) return;
-      var c = L[id], p = L[R.par[id]];
-      c.flow = c.cx < p.cx ? "l" : "r";
+      var c = L[id];
+      c.sib = kind === "org" || (kind === "time" && c.depth === 1) ? "h" : "v";
+      if (id === rid) { c.flow = kind === "org" ? "d" : (kind ? "t" : "c"); return; }
+      var p = L[R.par[id]];
+      c.flow = kind === "org" ? "d" : (kind ? "t" : (c.cx < p.cx ? "l" : "r"));
     });
 
     // cross-links between visible ends (a folded-away end uses its
@@ -868,18 +1042,71 @@
                    label: l.label, lx: lx, ly: ly, lw: lw, lh: l.label ? LINK_H : 0 });
     });
 
+    // boundaries (box) and summaries (brace) around their visible
+    // members and everything shown under them. Members under another
+    // parent, or on the other side of the centre, get a box of their
+    // own (one frame can be drawn in parts; the label goes on the
+    // first), so a frame never swallows the centre.
+    var frames = [];
+    (R.frames || []).forEach(function (f) {
+      var vis = f.nodes.filter(function (id) { return own(L, id) && id !== rid; }), parts = [], at = dict(), set = dict();
+      vis.forEach(function (id) { set[id] = 1; });
+      vis.forEach(function (id) {
+        // a member inside another member's branch is already framed
+        for (var up = R.par[id], g = 0; up && up !== rid && g < MAX_NODES; up = R.par[up], g++) if (own(set, up)) return;
+        var key = R.par[id] + "|" + L[id].flow;
+        if (!own(at, key)) { at[key] = parts.length; parts.push([]); }
+        parts[at[key]].push(id);
+      });
+      parts.forEach(function (mem, pi) { framePart(f, mem, pi); });
+    });
+    function framePart(f, mem, pi) {
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, st = mem.slice(), seen = dict();
+      while (st.length) {
+        var x = st.pop(), c = L[x];
+        if (own(seen, x)) continue;
+        seen[x] = 1;
+        x0 = Math.min(x0, c.x); y0 = Math.min(y0, c.y); x1 = Math.max(x1, c.x + c.w); y1 = Math.max(y1, c.y + c.h);
+        for (var j = 0; j < c.kids.length; j++) st.push(c.kids[j]);
+      }
+      var first = L[mem[0]], lbl = pi ? "" : f.label, lw = lbl ? Math.ceil(measure(lbl, FRAME_FONT, 700) + 16) : 0;
+      var fr = { id: f.id, part: pi, kind: f.kind, label: lbl, color: f.color || first.color || "grey", nodes: mem,
+                 x: x0 - FPAD, y: y0 - FPAD, w: x1 - x0 + 2 * FPAD, h: y1 - y0 + 2 * FPAD, lw: lw, lh: lbl ? FRAME_H : 0 };
+      if (f.kind === "brace") {
+        // the brace stands on the side the branch grows to
+        var side = first.flow === "l" ? "l" : (first.flow === "d" ? "d" : "r");
+        fr.side = side;
+        if (side === "d") {
+          fr.bx0 = x0; fr.bx1 = x1; fr.by0 = fr.by1 = y1 + 4; fr.tx = (x0 + x1) / 2; fr.ty = y1 + 4 + BRACE;
+          fr.lx = fr.tx - lw / 2; fr.ly = fr.ty + 4;
+        } else {
+          var bx = side === "l" ? x0 - 4 : x1 + 4;
+          fr.bx0 = fr.bx1 = bx; fr.by0 = y0; fr.by1 = y1; fr.ty = (y0 + y1) / 2;
+          fr.tx = side === "l" ? bx - BRACE : bx + BRACE;
+          fr.lx = side === "l" ? fr.tx - 6 - lw : fr.tx + 6; fr.ly = fr.ty - FRAME_H / 2;
+        }
+      } else { fr.lx = fr.x + 12; fr.ly = fr.y - FRAME_H / 2; }
+      frames.push(fr);
+    }
+
     // 4. bounds → shift so the drawing starts at (M, M)
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    function grow(x0, y0, x1, y1) {
-      minX = Math.min(minX, x0); minY = Math.min(minY, y0); maxX = Math.max(maxX, x1); maxY = Math.max(maxY, y1);
+    function grow(gx0, gy0, gx1, gy1) {
+      minX = Math.min(minX, gx0); minY = Math.min(minY, gy0); maxX = Math.max(maxX, gx1); maxY = Math.max(maxY, gy1);
     }
     order.forEach(function (id) {
-      var c = L[id], extra = c.folded ? 26 : 0, left = id !== rid && c.flow === "l";
-      grow(c.x - (left ? extra : 0), c.y, c.x + c.w + (left ? 0 : extra), c.y + c.h);
+      var c = L[id], extra = c.folded ? 26 : 0, lf = id !== rid && c.flow === "l";
+      if (c.flow === "d") grow(c.x, c.y, c.x + c.w, c.y + c.h + extra);
+      else grow(c.x - (lf ? extra : 0), c.y, c.x + c.w + (lf ? 0 : extra), c.y + c.h);
     });
     links.forEach(function (k) {
       grow(Math.min(k.qx, k.lx - k.lw / 2), Math.min(k.qy, k.ly - k.lh / 2),
            Math.max(k.qx, k.lx + k.lw / 2), Math.max(k.qy, k.ly + k.lh / 2));
+    });
+    frames.forEach(function (f) {
+      if (f.kind === "brace") grow(Math.min(f.bx0, f.tx), Math.min(f.by0, f.ty), Math.max(f.bx1, f.tx), Math.max(f.by1, f.ty));
+      else grow(f.x, f.y, f.x + f.w, f.y + f.h);
+      if (f.lw) grow(f.lx, f.ly, f.lx + f.lw, f.ly + f.lh);
     });
     var dx = Math.round(M - minX), dy = Math.round(M - minY);
     order.forEach(function (id) {
@@ -890,15 +1117,32 @@
     links.forEach(function (k) {
       k.x1 += dx; k.y1 += dy; k.qx += dx; k.qy += dy; k.x2 += dx; k.y2 += dy; k.lx += dx; k.ly += dy;
     });
+    frames.forEach(function (f) {
+      f.x += dx; f.y += dy; f.lx += dx; f.ly += dy;
+      if (f.kind === "brace") { f.bx0 += dx; f.bx1 += dx; f.by0 += dy; f.by1 += dy; f.tx += dx; f.ty += dy; }
+    });
     var edges = [];
     order.forEach(function (id) {
       if (id === rid) return;
-      var c = L[id], p = L[R.par[id]], left = c.flow === "l";
-      var x1 = left ? p.x : p.x + p.w, x2 = left ? c.x + c.w : c.x;
-      if (p.depth === 0) x1 = p.cx + (left ? -1 : 1) * p.w * 0.3;
-      edges.push({ from: p.id, to: id, x1: x1, y1: p.cy, x2: x2, y2: c.cy, color: c.color, depth: c.depth, rec: c.rec });
+      var c = L[id], p = L[R.par[id]], ed = { from: p.id, to: id, color: c.color, depth: c.depth, rec: c.rec };
+      if (kind === "org") {
+        ed.shape = "v"; ed.x1 = p.cx; ed.y1 = p.y + p.h; ed.x2 = c.cx; ed.y2 = c.y;
+      } else if (kind === "time" && c.depth === 1) {
+        // the time line: from the previous main branch (or the centre)
+        var i = p.kids.indexOf(id), prev = i > 0 ? L[p.kids[i - 1]] : p;
+        ed.shape = "s"; ed.x1 = prev.x + prev.w; ed.y1 = prev.cy; ed.x2 = c.x; ed.y2 = c.cy;
+      } else if (kind) {
+        ed.shape = "e"; ed.x1 = p.x + Math.min(TREE_IND / 2, p.w / 2); ed.y1 = p.y + p.h; ed.x2 = c.x; ed.y2 = c.cy;
+        // a pointed or round shape has no corner there: leave from its left tip
+        if (p.shape === "diamond" || p.shape === "ellipse" || p.shape === "hex") { ed.x1 = p.x; ed.y1 = p.cy; }
+      } else {
+        var lf = c.flow === "l";
+        ed.shape = "c"; ed.x1 = lf ? p.x : p.x + p.w; ed.x2 = lf ? c.x + c.w : c.x; ed.y1 = p.cy; ed.y2 = c.cy;
+        if (p.depth === 0) ed.x1 = p.cx + (lf ? -1 : 1) * p.w * 0.3;
+      }
+      edges.push(ed);
     });
-    return { nodes: L, order: order, edges: edges, links: links,
+    return { kind: kind, nodes: L, order: order, edges: edges, links: links, frames: frames,
              w: Math.ceil(maxX - minX + 2 * M), h: Math.ceil(maxY - minY + 2 * M) };
   }
 
@@ -911,7 +1155,7 @@
                 fill: 1, stroke: 1, "stroke-width": 1, "stroke-dasharray": 1, "fill-opacity": 1,
                 "stroke-opacity": 1, opacity: 1, "font-size": 1, "font-weight": 1, "text-anchor": 1,
                 "text-decoration": 1, "data-id": 1, "data-fold": 1, "stroke-linecap": 1,
-                "data-link": 1, href: 1, preserveAspectRatio: 1, "stroke-linejoin": 1 };
+                "data-link": 1, "data-frame": 1, href: 1, preserveAspectRatio: 1, "stroke-linejoin": 1 };
   var COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+%?\s*)?\)|transparent|none)$/;
   var THEMES = {
     light: { bg: "#ffffff", panel: "#ffffff", text: "#1f2328", dim: "#5f6670", border: "#d0d4da",
@@ -925,39 +1169,153 @@
   }
   function hex(key) { return own(COLORS, key) ? COLORS[key] : COLORS.grey; }
   function curve(e) {
-    var mx = (e.x1 + e.x2) / 2;
-    return "M" + r1(e.x1) + " " + r1(e.y1) + "C" + r1(mx) + " " + r1(e.y1) + " " + r1(mx) + " " + r1(e.y2) +
-      " " + r1(e.x2) + " " + r1(e.y2);
+    var x1 = r1(e.x1), y1 = r1(e.y1), x2 = r1(e.x2), y2 = r1(e.y2);
+    if (e.shape === "s") return "M" + x1 + " " + y1 + "L" + x2 + " " + y2;
+    if (e.shape === "v") {
+      var my = r1((e.y1 + e.y2) / 2);
+      return "M" + x1 + " " + y1 + "C" + x1 + " " + my + " " + x2 + " " + my + " " + x2 + " " + y2;
+    }
+    if (e.shape === "e") {
+      // elbow: down from the parent, then across into the child
+      var rr = Math.min(8, Math.abs(e.y2 - e.y1), Math.abs(e.x2 - e.x1)), sx = e.x2 >= e.x1 ? 1 : -1;
+      return "M" + x1 + " " + y1 + "L" + x1 + " " + r1(e.y2 - rr) + "Q" + x1 + " " + y2 + " " + r1(e.x1 + sx * rr) + " " + y2 +
+        "L" + x2 + " " + y2;
+    }
+    var mx = r1((e.x1 + e.x2) / 2);
+    return "M" + x1 + " " + y1 + "C" + mx + " " + y1 + " " + mx + " " + y2 + " " + x2 + " " + y2;
   }
   function r1(v) { return Math.round(v * 10) / 10; }
 
-  // opts: { pal, sel, hi{id:1}, drop:{id, mode} }
+  // Colours as [r, g, b] (#rgb, #rrggbb, rgb()), null otherwise.
+  function rgbOf(c) {
+    var s = String(c || "").trim(), m;
+    if ((m = /^#([0-9a-f]{3})$/i.exec(s))) return m[1].split("").map(function (h) { return parseInt(h + h, 16); });
+    if ((m = /^#([0-9a-f]{6})([0-9a-f]{2})?$/i.exec(s))) return [0, 2, 4].map(function (i) { return parseInt(m[1].substr(i, 2), 16); });
+    if ((m = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i.exec(s))) return [+m[1], +m[2], +m[3]].map(function (v) { return Math.max(0, Math.min(255, Math.round(v))); });
+    return null;
+  }
+  function hex2(v) { var s = Math.round(v).toString(16); return s.length < 2 ? "0" + s : s; }
+  // `a` blended into `b` (k = share of a); a when b is not a colour.
+  function mix(a, b, k) {
+    var A = rgbOf(a), B = rgbOf(b);
+    if (!A) return a;
+    if (!B) return a;
+    return "#" + [0, 1, 2].map(function (i) { return hex2(A[i] * k + B[i] * (1 - k)); }).join("");
+  }
+  // Text colour that reads on a filled background (WCAG luminance).
+  function onColor(bg) {
+    var c = rgbOf(bg);
+    if (!c) return "#1f2328";
+    var l = c.map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    var lum = 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+    return (lum + 0.05) / 0.05 >= 1.05 / (lum + 0.05) ? "#1f2328" : "#ffffff";
+  }
+  // The outline of a node's shape as a path (ellipse, diamond, hex)
+  // or a rect's corner radius (null = draw a rect).
+  function shapePath(c) {
+    var x = c.x, y = c.y, w = c.w, h = c.h, cx = x + w / 2, cy = y + h / 2;
+    if (c.shape === "ellipse") {
+      return "M" + r1(x) + " " + r1(cy) + "A" + r1(w / 2) + " " + r1(h / 2) + " 0 1 0 " + r1(x + w) + " " + r1(cy) +
+        "A" + r1(w / 2) + " " + r1(h / 2) + " 0 1 0 " + r1(x) + " " + r1(cy) + "Z";
+    }
+    if (c.shape === "diamond") {
+      return "M" + r1(cx) + " " + r1(y) + "L" + r1(x + w) + " " + r1(cy) + "L" + r1(cx) + " " + r1(y + h) + "L" + r1(x) + " " + r1(cy) + "Z";
+    }
+    if (c.shape === "hex") {
+      var s = Math.max(6, c.ex);
+      return "M" + r1(x + s) + " " + r1(y) + "L" + r1(x + w - s) + " " + r1(y) + "L" + r1(x + w) + " " + r1(cy) + "L" + r1(x + w - s) + " " + r1(y + h) +
+        "L" + r1(x + s) + " " + r1(y + h) + "L" + r1(x) + " " + r1(cy) + "Z";
+    }
+    return null;
+  }
+  function radius(c) {
+    if (c.shape === "rect") return 2;
+    if (c.shape === "round") return Math.min(16, c.h / 2);
+    if (c.shape === "pill") return r1(c.h / 2);
+    return c.depth === 0 ? 14 : (c.depth === 1 ? 10 : 7);
+  }
+  // A summary's curly brace from (bx0, by0) to (bx1, by1), tip (tx, ty).
+  function bracePath(f) {
+    if (f.side === "d") {
+      var y = f.by0, xm = f.tx;
+      return "M" + r1(f.bx0) + " " + r1(y) + "C" + r1(f.bx0) + " " + r1(y + 10) + " " + r1(xm) + " " + r1(y + 4) + " " + r1(xm) + " " + r1(f.ty) +
+        "C" + r1(xm) + " " + r1(y + 4) + " " + r1(f.bx1) + " " + r1(y + 10) + " " + r1(f.bx1) + " " + r1(y);
+    }
+    var x = f.bx0, ym = f.ty, k = f.side === "l" ? -1 : 1;
+    return "M" + r1(x) + " " + r1(f.by0) + "C" + r1(x + 10 * k) + " " + r1(f.by0) + " " + r1(x + 4 * k) + " " + r1(ym) + " " + r1(f.tx) + " " + r1(ym) +
+      "C" + r1(x + 4 * k) + " " + r1(ym) + " " + r1(x + 10 * k) + " " + r1(f.by1) + " " + r1(x) + " " + r1(f.by1);
+  }
+
+  // opts: { pal, sel, hi{id:1}, drop:{id, mode}, selLink, selFrame,
+  //         only{id:1} (presentation: the nodes shown so far),
+  //         cur (presentation: the node of this step),
+  //         keep{id:1} (presentation: the rest is dimmed) }
   function scene(R, lay, opts) {
     opts = opts || {};
-    var pal = opts.pal || THEMES.light, items = [];
+    var pal = opts.pal || THEMES.light, items = [], only = opts.only || null, keep = opts.keep || null;
+    function shown(id) { return !only || own(only, id); }
+    // boundaries and summaries go under everything else
+    (lay.frames || []).forEach(function (f) {
+      if (only && !f.nodes.some(shown)) return;
+      var col = hex(f.color), on = f.id === opts.selFrame, g = [];
+      if (f.kind === "brace") {
+        var d = bracePath(f);
+        g.push({ tag: "path", cls: "mm-frame-hit", a: { d: d, fill: "none", stroke: "transparent", "stroke-width": 14 } });
+        g.push({ tag: "path", cls: "mm-fbox", a: { d: d, fill: "none", stroke: col, "stroke-width": on ? 3 : 2, "stroke-linecap": "round" } });
+      } else {
+        g.push({ tag: "rect", cls: "mm-fbox", a: { x: f.x, y: f.y, width: f.w, height: f.h, rx: 12, fill: col, "fill-opacity": 0.07,
+          stroke: col, "stroke-width": on ? 2.6 : 1.5, "stroke-dasharray": on ? "none" : "7 5" } });
+      }
+      if (f.label) {
+        g.push({ tag: "rect", a: { x: r1(f.lx), y: r1(f.ly), width: f.lw, height: f.lh, rx: 10, fill: col, stroke: col, "stroke-width": 1 } });
+        g.push({ tag: "text", a: { x: r1(f.lx + f.lw / 2), y: r1(f.ly + f.lh / 2 + 4), fill: onColor(col), "font-size": FRAME_FONT,
+          "font-weight": 700, "text-anchor": "middle" }, text: f.label });
+      }
+      items.push({ tag: "g", cls: "mm-frame" + (on ? " mm-sel" : ""), a: { "data-frame": f.id }, kids: g });
+    });
     lay.edges.forEach(function (e) {
+      if (!shown(e.to)) return;
       var a = { d: curve(e), fill: "none", stroke: hex(e.color), "stroke-width": e.depth === 1 ? 3 : (e.depth === 2 ? 2 : 1.5),
                 "stroke-linecap": "round" };
       if (e.rec) a["stroke-dasharray"] = "6 5";
-      items.push({ tag: "path", cls: "mm-edge", a: a });
+      items.push({ tag: "path", cls: "mm-edge" + (keep && !own(keep, e.to) ? " mm-dim" : ""), a: a });
     });
     lay.order.forEach(function (id) {
-      var c = lay.nodes[id], n = R.N[id], sty = c.sty;
+      if (!shown(id)) return;
+      var c = lay.nodes[id], n = R.N[id], sty = c.sty, st = c.st || {};
       var kids = [], root = c.depth === 0, col = root ? pc(pal, "accent") : hex(c.color);
-      var box = { x: c.x, y: c.y, width: c.w, height: c.h, rx: root ? 14 : (c.depth === 1 ? 10 : 7) };
-      if (root) { box.fill = col; box.stroke = col; box["stroke-width"] = 2; }
-      else if (c.depth === 1) { box.fill = pc(pal, "panel"); box.stroke = col; box["stroke-width"] = 2.2; }
-      else { box.fill = pc(pal, "panel"); box.stroke = col; box["stroke-width"] = 1.2; box["stroke-opacity"] = 0.85; }
-      if (c.rec) box["stroke-dasharray"] = "5 4";
-      kids.push({ tag: "rect", cls: "mm-box", a: box });
-      var tx = c.x + sty.px, fill = root ? pc(pal, "onAccent") : pc(pal, "text");
-      var empty = !n.text && !n.emoji, ty0 = c.y + sty.py;
+      var bare = c.shape === "line" || c.shape === "none";
+      var fill, ink, stroke = col, sw = root ? 2 : (c.depth === 1 ? 2.2 : 1.2), box = {};
+      // fill: "" = the classic look (centre solid, others the panel)
+      var fk = bare ? "none" : (st.fill || (root ? "solid" : ""));
+      if (fk === "solid") { fill = col; ink = root && !st.fill ? pc(pal, "onAccent") : onColor(col); }
+      else if (fk === "tint") { fill = mix(col, pc(pal, "panel"), 0.22); ink = pc(pal, "text"); }
+      else if (fk === "none") { fill = "transparent"; ink = pc(pal, "text"); }
+      else { fill = pc(pal, "panel"); ink = pc(pal, "text"); }
+      if (st.border === "thin") sw = 1.2;
+      else if (st.border === "thick") sw = 3.5;
+      if (bare || st.border === "none") stroke = "none";
+      box.fill = fill; box.stroke = stroke; box["stroke-width"] = sw;
+      if (!root && !st.border && !st.fill && c.depth > 1) box["stroke-opacity"] = 0.85;
+      if (st.border === "dashed" || c.rec) box["stroke-dasharray"] = c.rec ? "5 4" : "6 4";
+      var dpath = shapePath(c);
+      if (dpath) { box.d = dpath; kids.push({ tag: "path", cls: "mm-box", a: box }); }
+      else {
+        box.x = c.x; box.y = c.y; box.width = c.w; box.height = c.h; box.rx = radius(c);
+        kids.push({ tag: "rect", cls: "mm-box", a: box });
+      }
+      if (c.shape === "line") {
+        kids.push({ tag: "path", a: { d: "M" + c.x + " " + (c.y + c.h - 1) + "L" + (c.x + c.w) + " " + (c.y + c.h - 1),
+          fill: "none", stroke: col, "stroke-width": st.border === "thick" ? 4 : (root || c.depth === 1 ? 3 : 2), "stroke-linecap": "round" } });
+      }
+      var tx = c.x + c.ex + sty.px, ty0 = c.y + c.ey + sty.py;
+      var empty = !n.text && !n.emoji;
       if (c.img && R.img && R.img[id]) {
-        kids.push({ tag: "image", cls: "mm-img", a: { x: Math.round(c.cx - c.img.w / 2), y: c.y + sty.py,
+        kids.push({ tag: "image", cls: "mm-img", a: { x: Math.round(c.cx - c.img.w / 2), y: ty0,
           width: c.img.w, height: c.img.h, href: R.img[id].src, preserveAspectRatio: "xMidYMid meet" } });
         ty0 += c.img.h + IMG_GAP;
       }
-      var ta = { x: tx, y: ty0 + sty.lh * 0.76, fill: empty ? pc(pal, "dim") : fill,
+      var ta = { x: tx, y: ty0 + sty.lh * 0.76, fill: empty ? pc(pal, "dim") : ink,
                  "font-size": sty.font, "font-weight": sty.weight };
       if (n.done) { ta["text-decoration"] = "line-through"; ta.opacity = 0.6; }
       kids.push({ tag: "text", cls: "mm-txt", a: ta, kids: c.lines.map(function (l, i) {
@@ -965,24 +1323,28 @@
       }) });
       if (c.ind) {
         var mark = (n.note ? "≡" : "") + (n.url ? "↗" : "");
-        kids.push({ tag: "text", cls: "mm-ind", a: { x: c.x + c.w - sty.px + 2, y: ty0 + sty.lh * 0.76,
-          fill: root ? fill : pc(pal, "dim"), "font-size": 13, "text-anchor": "end" }, text: mark });
+        kids.push({ tag: "text", cls: "mm-ind", a: { x: c.x + c.w - c.ex - sty.px + 2, y: ty0 + sty.lh * 0.76,
+          fill: fk === "solid" ? ink : pc(pal, "dim"), "font-size": 13, "text-anchor": "end" }, text: mark });
       }
       if (c.folded) {
-        var bx = c.flow === "l" ? c.x - 14 : c.x + c.w + 14, cnt = c.hidden > 99 ? "99+" : String(c.hidden);
+        var down = c.flow === "d";
+        var bx = down ? c.cx : (c.flow === "l" ? c.x - 14 : c.x + c.w + 14), by = down ? c.y + c.h + 14 : c.cy;
+        var cnt = c.hidden > 99 ? "99+" : String(c.hidden);
         kids.push({ tag: "g", cls: "mm-fold", a: { "data-fold": id }, kids: [
-          { tag: "circle", a: { cx: bx, cy: c.cy, r: 11, fill: pc(pal, "panel"), stroke: col, "stroke-width": 1.6 } },
-          { tag: "text", a: { x: bx, y: c.cy + 4, fill: pc(pal, "text"), "font-size": cnt.length > 2 ? 9 : 11,
+          { tag: "circle", a: { cx: bx, cy: by, r: 11, fill: pc(pal, "panel"), stroke: col, "stroke-width": 1.6 } },
+          { tag: "text", a: { x: bx, y: by + 4, fill: pc(pal, "text"), "font-size": cnt.length > 2 ? 9 : 11,
             "font-weight": 700, "text-anchor": "middle" }, text: cnt }
         ] });
       }
       var cls = "mm-node d" + Math.min(c.depth, 2) + (id === opts.sel ? " mm-sel" : "") +
-        (opts.hi && opts.hi[id] ? " mm-hit" : "") + (c.rec ? " mm-rec" : "");
+        (opts.hi && opts.hi[id] ? " mm-hit" : "") + (c.rec ? " mm-rec" : "") + (id === opts.cur ? " mm-cur" : "") +
+        (keep && !own(keep, id) ? " mm-dim" : "");
       if (opts.drop && opts.drop.id === id) cls += " mm-drop-" + opts.drop.mode;
       items.push({ tag: "g", cls: cls, a: { "data-id": id }, kids: kids });
     });
     // cross-links on top: dashed curve, arrowhead, label pill
     (lay.links || []).forEach(function (k) {
+      if (!shown(k.from) || !shown(k.to)) return;
       var col = k.id === opts.selLink ? pc(pal, "accent") : pc(pal, "dim");
       var d = "M" + r1(k.x1) + " " + r1(k.y1) + "Q" + r1(k.qx) + " " + r1(k.qy) + " " + r1(k.x2) + " " + r1(k.y2);
       var ang = Math.atan2(k.y2 - k.qy, k.x2 - k.qx), a1 = ang + 2.7, a2 = ang - 2.7;
@@ -1056,6 +1418,110 @@
     return { map: normMap({ id: EXAMPLE_ID, m: now, sides: "both" }), nodes: nodes.map(normNode) };
   }
 
+  // ---------- 12. Wave 27: keyboard targets, presentation ----------
+  // Where an arrow key goes from node `id` in a laid-out map.
+  // Returns { id } (select it), { unfold: id } (open the folded
+  // branch first) or null (nothing that way). Each layout kind has
+  // its own sense of "out" (towards the children) and of siblings.
+  function navTarget(R, lay, id, dir) {
+    var L = lay.nodes, rid = R.root.id, c = L[id];
+    if (!c) return { id: rid };
+    var kind = lay.kind || "";
+    function kidsOf(x) { return L[x] ? L[x].kids : []; }
+    function nearest(list, key, v) {
+      var best = null, d = Infinity;
+      list.forEach(function (x) { var dd = Math.abs(L[x][key] - v); if (dd < d) { d = dd; best = x; } });
+      return best;
+    }
+    function out(key, v) {
+      if (c.folded) return { unfold: id };
+      var k = kidsOf(id);
+      return k.length ? { id: key ? nearest(k, key, v) : k[0] } : null;
+    }
+    function to(x) { return x ? { id: x } : null; }
+    function sibs(key) {
+      return kidsOf(R.par[id]).slice().sort(function (a, b) { return L[a][key] - L[b][key] || cmpStr(a, b); });
+    }
+    if (!kind) {
+      if (dir === "left" || dir === "right") {
+        if (c.depth === 0) {
+          return to(nearest(kidsOf(id).filter(function (x) { return L[x].side === (dir === "right" ? "r" : "l"); }), "cy", c.cy));
+        }
+        if ((dir === "right") === (c.side !== "l")) return out("cy", c.cy);     // away from the centre
+        return to(R.par[id]);
+      }
+      if (c.depth === 0) return null;
+      var vs = sibs("cy").filter(function (x) { return L[x].side === c.side; });
+      return to(vs[vs.indexOf(id) + (dir === "down" ? 1 : -1)]);
+    }
+    if (kind === "org") {
+      if (dir === "down") return out("cx", c.cx);
+      if (dir === "up") return id === rid ? null : to(R.par[id]);
+      if (id === rid) return null;
+      var hs = sibs("cx");
+      return to(hs[hs.indexOf(id) + (dir === "right" ? 1 : -1)]);
+    }
+    if (kind === "time" && c.depth <= 1) {
+      if (c.depth === 0) return dir === "right" ? to(kidsOf(rid)[0]) : null;
+      var mains = kidsOf(rid), i = mains.indexOf(id);
+      if (dir === "left") return to(i > 0 ? mains[i - 1] : rid);
+      if (dir === "right") return to(mains[i + 1]);
+      if (dir === "down") return out(null);
+      return null;
+    }
+    // rows of a tree (the whole tree, or one main branch of a timeline)
+    if (dir === "right") return out(null);
+    if (dir === "left") return id === rid ? null : to(R.par[id]);
+    var scope = kind === "time" ? branchOf(R, id) : rid, rows = [], st = [scope];
+    while (st.length) {
+      var x = st.pop();
+      rows.push(x);
+      var k = kidsOf(x);
+      for (var j = k.length - 1; j >= 0; j--) st.push(k[j]);
+    }
+    rows.sort(function (a, b) { return L[a].y - L[b].y || cmpStr(a, b); });
+    return to(rows[rows.indexOf(id) + (dir === "down" ? 1 : -1)]);
+  }
+
+  // Presentation: the order the nodes appear in, one per step (the
+  // centre first, then each branch top to bottom, depth first). A
+  // folded branch is one step: its node, not what is folded inside.
+  function presentSteps(R, fold) {
+    fold = fold || {};
+    var out = [], rid = R.root.id, stack = [rid];
+    while (stack.length && out.length <= MAX_NODES) {
+      var id = stack.pop();
+      out.push(id);
+      if (id !== rid && own(fold, id)) continue;
+      var k = R.kids[id] || [];
+      for (var i = k.length - 1; i >= 0; i--) stack.push(k[i]);
+    }
+    return out;
+  }
+  // What the camera shows at step i (i = steps.length: the whole map):
+  // the centre alone at first, then the WHOLE main branch of the step's
+  // node, so the view stays still while that branch unfolds.
+  // → { x, y, w, h } in drawing coordinates.
+  function presentView(R, lay, steps, i) {
+    var P = 24;
+    if (i >= steps.length || !steps.length) return { x: 0, y: 0, w: lay.w, h: lay.h };
+    var id = steps[i], rid = R.root.id, L = lay.nodes;
+    if (id === rid || !L[id]) { var c0 = L[rid]; return { x: c0.x - P * 4, y: c0.y - P * 3, w: c0.w + P * 8, h: c0.h + P * 6 }; }
+    var main = branchOf(R, id) || id, x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, st = [main];
+    while (st.length) {
+      var x = st.pop(), c = L[x];
+      if (!c) continue;
+      x0 = Math.min(x0, c.x); y0 = Math.min(y0, c.y); x1 = Math.max(x1, c.x + c.w); y1 = Math.max(y1, c.y + c.h);
+      for (var j = 0; j < c.kids.length; j++) st.push(c.kids[j]);
+    }
+    (lay.frames || []).forEach(function (f) {
+      if (f.nodes.indexOf(main) === -1) return;
+      x0 = Math.min(x0, f.x, f.lx); y0 = Math.min(y0, f.y, f.ly);
+      x1 = Math.max(x1, f.x + f.w, f.lx + f.lw); y1 = Math.max(y1, f.y + f.h);
+    });
+    return { x: x0 - P, y: y0 - P, w: x1 - x0 + 2 * P, h: y1 - y0 + 2 * P };
+  }
+
   var api = {
     VER: VER, FORMAT: FORMAT, TEXT_LEN: TEXT_LEN, NOTE_LEN: NOTE_LEN, URL_LEN: URL_LEN, MAX_NODES: MAX_NODES,
     IMPORT_MAX: IMPORT_MAX, COLORS: COLORS, COLOR_KEYS: COLOR_KEYS, AUTO: AUTO, SIDES: SIDES, THEMES: THEMES,
@@ -1071,7 +1537,11 @@
     parseOutline: parseOutline, toOutline: toOutline, readXml: readXml, parseOpml: parseOpml, toOpml: toOpml,
     treeToRows: treeToRows, topsOf: topsOf,
     wrap: wrap, estimate: estimate, layout: layout, scene: scene, toSvg: toSvg, escXml: escXml,
-    exampleRows: exampleRows
+    exampleRows: exampleRows,
+    SHAPES: SHAPES, FILLS: FILLS, BORDERS: BORDERS, SIZES: SIZES, FRAME_KINDS: FRAME_KINDS, LAYOUTS: LAYOUTS,
+    MAX_FRAMES: MAX_FRAMES, FRAME_NODES: FRAME_NODES,
+    normStyle: normStyle, normFrame: normFrame, normLayout: normLayout, plainStyle: plainStyle,
+    onColor: onColor, mix: mix, navTarget: navTarget, presentSteps: presentSteps, presentView: presentView
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.MMCore = api;

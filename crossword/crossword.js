@@ -74,6 +74,7 @@
     KeyM: "Μ", KeyW: "Σ" };
   var EMPTY = "-", BLOCK = ".";
   var EPOCH_UTC = Date.UTC(2026, 0, 1);     // day 0 of the daily puzzles
+  var DK = (typeof window !== "undefined" && window.orosDaily) || null;        // gamekit/daily.js (share, Game Center)
   var MAX_DAY = 100000;
   var MAX_SEC = 360000;                     // 100 hours: longer times are capped
   var SOLVE_NODES = 60000;                  // solver budget per count
@@ -139,6 +140,15 @@
       "res.solvedN": "Solved ({s})",
       "res.best": "Best time ({s})",
       "res.next": "A new daily crossword tomorrow",
+      "res.share": "Share",
+      "btn.games": "All games",
+      "share.name": "Crossword",
+      "share.daily": "Daily",
+      "share.clean": "no letters revealed",
+      "share.revealed": "letters revealed",
+      "toast.copied": "Result copied: paste it anywhere",
+      "toast.shared": "Result shared",
+      "toast.copyFail": "Could not copy the result",
       "res.newPuzzle": "New puzzle",
       "res.toFree": "Free play",
       "res.close": "Close",
@@ -233,6 +243,15 @@
       "res.solvedN": "Λυμένα ({s})",
       "res.best": "Καλύτερος χρόνος ({s})",
       "res.next": "Νέο σταυρόλεξο ημέρας αύριο",
+      "res.share": "Κοινοποίηση",
+      "btn.games": "Όλα τα παιχνίδια",
+      "share.name": "Σταυρόλεξο",
+      "share.daily": "Ημέρας",
+      "share.clean": "χωρίς αποκάλυψη γράμματος",
+      "share.revealed": "με αποκάλυψη γράμματος",
+      "toast.copied": "Το αποτέλεσμα αντιγράφηκε: επικόλλησέ το όπου θες",
+      "toast.shared": "Το αποτέλεσμα κοινοποιήθηκε",
+      "toast.copyFail": "Δεν έγινε αντιγραφή του αποτελέσματος",
       "res.newPuzzle": "Νέο σταυρόλεξο",
       "res.toFree": "Ελεύθερο",
       "res.close": "Κλείσιμο",
@@ -1518,15 +1537,51 @@
       dlg.appendChild(row(t("res.best", { s: s }), bestText(fs)));
     }
     var acts = el("div", "dlg-actions");
-    acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
+    if (game.mode === "d" && DK) acts.appendChild(button(t("res.share"), "", shareDaily));
+    else acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
     var main = game.mode === "d"
       ? button(t("res.toFree"), "primary", function () { dlg.close(); setLangMode(game.lang, "f"); })
       : button(t("res.newPuzzle"), "primary", function () { dlg.close(); newPuzzle(null, null); });
     acts.appendChild(main);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     main.focus();
+  }
+
+  // Spoiler-free result of the daily crossword: the time and one square
+  // per word (yellow: a letter of it was revealed), eight to a line. A
+  // daily solved on another device has no board here: no squares.
+  function shareDaily() {
+    if (!game || game.mode !== "d" || !game.done || !DK) return;
+    var r = data.days[game.lang + ":" + game.day];
+    var grid = [], line = "", rev = {};
+    (game.rev || []).forEach(function (ix) { rev[ix] = true; });
+    if (!game.ext) {
+      game.words.forEach(function (w, k) {
+        var hit = cellsOf(w, game.cols).some(function (ix) { return rev[ix]; });
+        line += hit ? "🟨" : "🟩";
+        if (k % 8 === 7) { grid.push(line); line = ""; }
+      });
+      if (line) grid.push(line);
+    }
+    var sec = r ? r.t : Math.max(1, Math.round(elapsed() / 1000));
+    var hinted = r ? r.h === 1 : game.hinted;
+    var text = DK.shareText({ game: t("share.name") + " " + game.lang.toUpperCase(), label: t("share.daily"),
+      day: game.day, grid: grid,
+      line: "⏱ " + fmtTime(sec) + " · " + t(hinted ? "share.revealed" : "share.clean") });
+    DK.share(text, "orOS " + t("share.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") showToast(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(dlg) {
+    if (!DK || !DK.hasHub()) return;
+    dlg.appendChild(button(t("btn.games"), "dlg-link", function () { dlg.close(); DK.openHub("crossword"); }));
   }
 
   function statsDialog() {
@@ -1555,6 +1610,7 @@
     var close = button(t("stats.close"), "primary", function () { dlg.close(); });
     acts.appendChild(close);
     dlg.appendChild(acts);
+    hubLink(dlg);
     document.body.appendChild(dlg);
     dlg.showModal();
     close.focus();
@@ -1879,6 +1935,8 @@
     $("theme-btn").addEventListener("click", function () { themesDialog(); $("theme-btn").blur(); });
     $("check-btn").addEventListener("click", function () { checkDialog(); $("check-btn").blur(); });
     $("new-btn").addEventListener("click", function () { newPuzzle(null, null); $("new-btn").blur(); });
+    // Deep link from the Game Center: { daily: true } opens today's crossword.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) setLangMode(prefs.lang, "d"); };
     $("stats-btn").addEventListener("click", function () { statsDialog(); $("stats-btn").blur(); });
     wirePointer();
     wireScreenKeyboard();
@@ -1903,6 +1961,8 @@
     inheritPalette();
     watchPalette();
     loadSessions();
+    var tg = DK ? DK.takeTarget("crossword") : null;
+    if (tg && tg.daily) { prefs.mode = "d"; savePrefs(); }
     pickGame();
     renderAll();
     if (!game) showToast(t("toast.noWords"));

@@ -8,17 +8,21 @@
 //
 // What maps:
 //   VEVENT → one event. DTSTART/DTEND (or DURATION) as all-day
-//   (VALUE=DATE), UTC (…Z), TZID (converted with Intl) or floating
-//   local time; everything ends up in the device's local time, the
-//   way the Calendar stores it. SUMMARY/DESCRIPTION/LOCATION,
-//   CATEGORIES (first one, matched to a label by name by the app),
-//   the first VALARM that equals a Calendar reminder preset,
-//   STATUS:CANCELLED skipped.
-//   RRULE → the Calendar's recurrence when it fits (DAILY/WEEKLY/
-//   MONTHLY/YEARLY, interval 1, or 2 on WEEKLY, UNTIL or COUNT,
-//   BY* parts that only repeat DTSTART). Anything richer (every
-//   Mon+Wed, "2nd Tuesday", interval 3 …) is imported as its first
-//   occurrence and counted in `simplified`: never extra occurrences.
+//   (VALUE=DATE), UTC (…Z), TZID or floating local time. A timed
+//   event with a known IANA TZID other than this device's zone keeps
+//   it: `tz` plus wall-clock times in that zone (the Calendar shows
+//   them converted). UTC, floating and this device's own zone end up
+//   as plain local times; an unknown zone name is read as floating.
+//   SUMMARY/DESCRIPTION/LOCATION, CATEGORIES (first one, matched to a
+//   label by name by the app), the first VALARM that equals a
+//   Calendar reminder preset, STATUS:CANCELLED skipped.
+//   RRULE → the Calendar's recurrence through OrosCalOccur.fromRrule
+//   (every N days/weeks/months/years, weekly on several days,
+//   monthly / yearly by day or "Nth / last weekday", UNTIL or COUNT).
+//   Anything richer (several month days, "1st and 3rd Monday",
+//   HOURLY …) is imported as its first occurrence and counted in
+//   `simplified`: never extra occurrences. A repeating event may
+//   span several days.
 //   EXDATE → excluded dates. RECURRENCE-ID (a moved/edited single
 //   occurrence) → its own event plus an excluded date on the series.
 //
@@ -29,10 +33,11 @@
 (function (root) {
   "use strict";
 
+  var OCC = (root && root.OrosCalOccur) ||
+    (typeof module !== "undefined" && typeof require === "function" ? require("./occur.js") : null);
+
   var MAX_EVENTS = 5000;
   var REMIND_PRESETS = [5, 15, 30, 60, 1440, 4320, 7200];
-  var FREQ = { DAILY: "D", WEEKLY: "W", MONTHLY: "M", YEARLY: "Y" };
-  var WD = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function ymd(y, m, d) { return y + "-" + pad(m + 1) + "-" + pad(d); }
@@ -124,9 +129,12 @@
   }
 
   // Parsed DATE / DATE-TIME → { date: "YYYY-MM-DD", time: "HH:MM" | null }
-  // in the device's local time. null when unreadable.
-  function localFrom(y, mo, d, h, mi) {
-    var dt = new Date(y, mo, d, h, mi);
+  // in the device's local time, plus for a time: ms (the instant;
+  // floating = read as local), wall (as written) and tz (the zone it
+  // was written in: an IANA name, "UTC", or "" for floating). null
+  // when unreadable.
+  function localFrom(ms) {
+    var dt = new Date(ms);
     return { date: ymd(dt.getFullYear(), dt.getMonth(), dt.getDate()),
              time: pad(dt.getHours()) + ":" + pad(dt.getMinutes()) };
   }
@@ -141,23 +149,34 @@
     }
     var h = +m[4], mi = +m[5];
     if (h > 23 || mi > 59) return null;
+    var wall = { date: ymd(y, mo, d), time: pad(h) + ":" + pad(mi) };
     var tz = params && params.TZID ? String(params.TZID).replace(/^\//, "") : "";
+    var ms = null, zone = "";
     if (m[7] === "Z" || /^(UTC|GMT|Etc\/UTC|Z)$/i.test(tz)) {
-      var u = new Date(Date.UTC(y, mo, d, h, mi));
-      return localFrom(u.getFullYear(), u.getMonth(), u.getDate(), u.getHours(), u.getMinutes());
-    }
-    if (tz) {
+      ms = Date.UTC(y, mo, d, h, mi);
+      zone = "UTC";
+    } else if (tz) {
       var guess = Date.UTC(y, mo, d, h, mi);
       var off = tzOffset(tz, guess);
       if (off !== null) {
-        var utc = guess - off;
-        var off2 = tzOffset(tz, utc);          // DST edge: re-check once
-        if (off2 !== null && off2 !== off) utc = guess - off2;
-        var t = new Date(utc);
-        return localFrom(t.getFullYear(), t.getMonth(), t.getDate(), t.getHours(), t.getMinutes());
+        ms = guess - off;
+        var off2 = tzOffset(tz, ms);          // DST edge: re-check once
+        if (off2 !== null && off2 !== off) ms = guess - off2;
+        zone = tz;
       }
     }
-    return { date: ymd(y, mo, d), time: pad(h) + ":" + pad(mi) };   // floating
+    if (ms === null) {                        // floating (or unknown zone)
+      ms = new Date(y, mo, d, h, mi).getTime();
+      return { date: wall.date, time: wall.time, ms: ms, wall: wall, tz: "" };
+    }
+    var loc = localFrom(ms);
+    return { date: loc.date, time: loc.time, ms: ms, wall: wall, tz: zone };
+  }
+  // A parsed value as wall time in zone Z (Z empty: device local).
+  function inZone(dt, Z) {
+    if (!dt || dt.time === null || !Z) return dt;
+    if (dt.tz === Z) return { date: dt.wall.date, time: dt.wall.time };
+    return OCC.msToWall(dt.ms, Z);
   }
 
   // "P1D", "PT1H30M", "-PT15M", "P1W" → minutes (signed); null if bad.
@@ -194,64 +213,6 @@
       return ("0000000" + h.toString(16)).slice(-8);
     }
     return "ics-" + fnv(2166136261) + fnv(0x9747b28c);
-  }
-
-  // Date of the n-th occurrence (n ≥ 1) under the Calendar's own
-  // stepping rules (sticky month clamp), so COUNT becomes UNTIL.
-  function nthOccurrence(date, freq, interval, n) {
-    var p = date.split("-");
-    var y = +p[0], m = +p[1] - 1, d0 = +p[2];
-    var k = (n - 1) * interval;
-    if (freq === "D") return addDays(date, k);
-    if (freq === "W") return addDays(date, 7 * k);
-    if (freq === "M") {
-      m += k;
-      y += Math.floor(m / 12);
-      m = m % 12;
-      return ymd(y, m, Math.min(d0, dimOfMonth(y, m)));
-    }
-    y += k;
-    return ymd(y, m, Math.min(d0, dimOfMonth(y, m)));
-  }
-
-  // RRULE → { recur } when the Calendar can hold it exactly, else
-  // { simplified: true } (import the first occurrence only).
-  function mapRrule(value, start, params) {
-    var parts = {};
-    String(value || "").split(";").forEach(function (kv) {
-      var eq = kv.indexOf("=");
-      if (eq > 0) parts[kv.slice(0, eq).toUpperCase()] = kv.slice(eq + 1).toUpperCase();
-    });
-    var freq = FREQ[parts.FREQ];
-    if (!freq) return { simplified: true };
-    var interval = parts.INTERVAL ? parseInt(parts.INTERVAL, 10) : 1;
-    if (!(interval === 1 || (interval === 2 && freq === "W"))) return { simplified: true };
-    var sp = start.date.split("-");
-    var sd = new Date(+sp[0], +sp[1] - 1, +sp[2]);
-    for (var key in parts) {
-      if (!Object.prototype.hasOwnProperty.call(parts, key)) continue;
-      var v = parts[key];
-      if (key === "FREQ" || key === "INTERVAL" || key === "UNTIL" || key === "COUNT" || key === "WKST") continue;
-      // BY* parts are fine only when they restate DTSTART.
-      if (key === "BYDAY" && (freq === "W" || freq === "D") && v === WD[sd.getDay()]) continue;
-      if (key === "BYMONTHDAY" && (freq === "M" || freq === "Y") && +v === sd.getDate()) continue;
-      if (key === "BYMONTH" && freq === "Y" && +v === sd.getMonth() + 1) continue;
-      return { simplified: true };
-    }
-    if (parts.BYDAY && freq === "D") return { simplified: true };   // "daily on Mondays" = weekly, keep it honest
-    var until = null;
-    if (parts.UNTIL) {
-      var u = parseDt(parts.UNTIL, parts.UNTIL.length === 8 ? { VALUE: "DATE" } : (params || null));
-      if (!u) return { simplified: true };
-      until = u.date;
-    } else if (parts.COUNT) {
-      var n = parseInt(parts.COUNT, 10);
-      if (!(n >= 1)) return { simplified: true };
-      if (n === 1) return { single: true };
-      until = nthOccurrence(start.date, freq, interval, Math.min(n, 100000));
-    }
-    if (until && until < start.date) return { single: true };
-    return { recur: { freq: freq, interval: interval, until: until, exdates: [] } };
   }
 
   function alarmMinutes(lines) {
@@ -292,14 +253,14 @@
     var overrides = [];
     blocks.forEach(function (b) {
       if (res.events.length >= MAX_EVENTS) { res.more = true; return; }
-      var P = {}, exdates = [], cats = [];
+      var P = {}, exRaw = [], cats = [];
       b.props.forEach(function (ln) {
         var p = prop(ln);
         if (!p) return;
         if (p.name === "EXDATE") {
           p.value.split(",").forEach(function (v) {
             var d = parseDt(v, p.params);
-            if (d) exdates.push(d.date);
+            if (d) exRaw.push(d);
           });
           return;
         }
@@ -314,14 +275,21 @@
       });
 
       if (P.STATUS && /^CANCELLED$/i.test(P.STATUS.value.trim())) { res.skipped++; return; }
-      var start = P.DTSTART ? parseDt(P.DTSTART.value, P.DTSTART.params) : null;
-      if (!start) { res.skipped++; return; }
+      var start0 = P.DTSTART ? parseDt(P.DTSTART.value, P.DTSTART.params) : null;
+      if (!start0) { res.skipped++; return; }
+      // The event's own zone: a real IANA zone that is not this device's.
+      var Z = (start0.time !== null && start0.tz && start0.tz !== "UTC" && OCC &&
+               OCC.tzValid(start0.tz) && start0.tz !== OCC.deviceZone()) ? start0.tz : "";
+      var start = inZone(start0, Z);
 
       var end = null;
-      if (P.DTEND) end = parseDt(P.DTEND.value, P.DTEND.params);
+      if (P.DTEND) end = inZone(parseDt(P.DTEND.value, P.DTEND.params), Z);
       else if (P.DURATION) {
         var dm = durMin(P.DURATION.value);
-        if (dm !== null && dm >= 0) end = addMinutes(start, dm);
+        if (dm !== null && dm >= 0) {
+          if (start0.time === null) end = addMinutes(start, dm);
+          else end = Z ? OCC.msToWall(start0.ms + dm * 60000, Z) : localFrom(start0.ms + dm * 60000);
+        }
       }
 
       var ev = {
@@ -333,6 +301,7 @@
         recur: null,
         remindMin: null
       };
+      if (Z) ev.tz = Z;
       if (start.time === null) {
         // All-day: DTEND is exclusive.
         if (end && end.date > addDays(start.date, 1)) ev.dateEnd = addDays(end.date, -1);
@@ -358,18 +327,23 @@
       if (P["RECURRENCE-ID"]) {
         var rid = parseDt(P["RECURRENCE-ID"].value, P["RECURRENCE-ID"].params);
         ev.id = hashId(uidRaw + "|" + P["RECURRENCE-ID"].value.trim());
-        if (rid) overrides.push({ uid: uidRaw, date: rid.date });
+        if (rid) overrides.push({ uid: uidRaw, rid: rid });
       } else {
         ev.id = own && /^[A-Za-z0-9_-]{1,64}$/.test(own[1]) ? own[1]
           : hashId(uidRaw || (ev.title + "|" + P.DTSTART.value));
-        if (P.RRULE) {
-          var r = mapRrule(P.RRULE.value, start, P.DTSTART.params);
+        if (P.RRULE && OCC) {
+          var r = OCC.fromRrule(P.RRULE.value, start.date, {
+            until: function (v) {
+              var u = parseDt(v, v.length === 8 ? { VALUE: "DATE" } : P.DTSTART.params);
+              return u ? inZone(u, Z).date : null;
+            }
+          });
           if (r.recur) {
-            r.recur.exdates = exdates.filter(function (d, ix, arr) {
+            var exd = exRaw.map(function (d) { return inZone(d, Z).date; });
+            r.recur.exdates = exd.filter(function (d, ix, arr) {
               return d >= start.date && arr.indexOf(d) === ix;
             }).sort();
             ev.recur = r.recur;
-            if (ev.dateEnd) { ev.dateEnd = null; ev.end = null; res.simplified++; }
           } else if (r.simplified) {
             res.simplified++;
           }
@@ -379,11 +353,14 @@
       res.events.push(ev);
     });
 
-    // A moved/edited occurrence: the series skips its original date.
+    // A moved/edited occurrence: the series skips its original date
+    // (as a date in the series' own zone).
     overrides.forEach(function (o) {
       var m = byUid[o.uid];
-      if (m && m.recur && m.recur.exdates.indexOf(o.date) === -1) {
-        m.recur.exdates.push(o.date);
+      if (!m || !m.recur) return;
+      var day = inZone(o.rid, m.tz || "").date;
+      if (m.recur.exdates.indexOf(day) === -1) {
+        m.recur.exdates.push(day);
         m.recur.exdates.sort();
       }
     });

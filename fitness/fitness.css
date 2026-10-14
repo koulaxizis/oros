@@ -13,6 +13,7 @@
      8. Charts
      9. Dialogs (R32: centered, scroll inside)
     10. Toast + screen reader
+   10b. Supersets, progression programs, outdoor GPS, pictures
     11. Mobile + touch
     12. Reduced motion
    ============================================================ */
@@ -591,6 +592,58 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+/* ---------- 10b. Supersets, progression programs, outdoor GPS, pictures (wave 29) ---------- */
+.mini.on { color: var(--accent); background: var(--accent-soft); }
+.grp {
+  margin: 12px 0;
+  padding: 10px 10px 2px;
+  border: 1px solid var(--accent);
+  border-left-width: 4px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+.grp-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 0 2px 2px; }
+.grp-h b { font-size: 12px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+.grp-h small { font-size: 12px; color: var(--text-dim); }
+.grp .ex-card { margin: 8px 0; }
+.set-row.next .set-n { color: var(--accent); border-color: var(--accent); }
+.set-row.next .tick:not(.on) { border-color: var(--accent); }
+.it-row.linked { border-left: 3px solid var(--accent); padding-left: 8px; }
+.it-row.linked-in { border-left: 3px solid var(--accent); padding-left: 8px; }
+.wo-grp { border-left: 3px solid var(--accent); padding-left: 10px; margin: 6px 0; }
+.wo-grp .grp-tag { display: block; font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); padding-top: 6px; }
+.plan-card { align-items: flex-start; }
+.plan-side { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 2px; flex-shrink: 0; max-width: 50%; }
+.plan-notes { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 6px 0; font-size: 13px; line-height: 1.35; }
+.plan-notes li { padding-left: 14px; position: relative; }
+.plan-notes li::before { content: "›"; position: absolute; left: 2px; color: var(--accent); font-weight: 900; }
+.plan-lifts { margin-top: 4px; }
+.gps-starts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.gps-go { flex: 1 1 90px; justify-content: center; min-height: 48px; }
+.gps-go svg { width: 18px; height: 18px; }
+.gps-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.gps-cell { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; min-width: 0; }
+.gps-cell b { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.gps-cell small { font-size: 12px; color: var(--text-dim); }
+.gps-status { margin: 10px 0 6px; font-size: 13px; color: var(--text-dim); }
+.gps-map { margin: 6px 0; }
+.gps-svg { display: block; width: 100%; max-width: 520px; height: auto; }
+.gps-svg .gps-bg { fill: var(--panel-bg); stroke: var(--border); }
+.gps-svg .gps-line { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.gps-svg .gps-start { fill: var(--panel-bg); stroke: var(--accent); stroke-width: 3; }
+.gps-svg .gps-end { fill: var(--accent); stroke: var(--panel-bg); stroke-width: 2; }
+.gps-splits { display: flex; flex-direction: column; max-width: 420px; margin: 4px 0 8px; }
+.gps-split { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: baseline; padding: 6px 2px; border-top: 1px solid var(--border); font-size: 13px; font-variant-numeric: tabular-nums; }
+.gps-split b { font-size: 14px; }
+.gps-split small { text-align: right; color: var(--text-dim); }
+.gps-acts { flex-wrap: wrap; }
+.gps-acts .dlg-btn { flex: 1 1 100px; }
+.pic-fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pic-img { display: block; max-width: 100%; max-height: 50vh; border-radius: 10px; background: #fff; }
+.pic-credit { font-size: 12px; color: var(--text-dim); text-align: center; line-height: 1.5; overflow-wrap: anywhere; }
+.pic-credit a { color: var(--accent); }
+.pic-body .hint { margin-top: 10px; }
+
 /* ---------- 11. Mobile + touch ---------- */
 @media (max-width: 480px) {
   #toolbar { padding-left: 10px; padding-right: 10px; }
@@ -598,6 +651,13 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   input, select, textarea { font-size: 16px; }   /* ≥16px: no iOS zoom */
   dialog.mm-dlg, dialog.mm-dlg.wide { width: calc(100vw - 20px); padding: 14px; }
   .ex-card { padding: 10px; }
+  .ex-top { flex-wrap: wrap; }
+  .ex-name { flex-basis: 150px; }
+  .ex-tools { margin-left: auto; }
+  .grp { padding: 8px 6px 2px; }
+  .gps-cell b { font-size: 22px; }
+  .plan-card { flex-wrap: wrap; }
+  .plan-side { max-width: none; margin-left: auto; }
   .set-row { grid-template-columns: 34px 1fr 1fr 46px; gap: 6px; }
   .k-r .set-row, .k-t .set-row { grid-template-columns: 34px 1fr 46px; }
   .tick { width: 46px; }

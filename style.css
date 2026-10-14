@@ -1412,6 +1412,27 @@ body {
 #ts-tray-chip:hover { background: var(--accent-soft); }
 #ts-tray-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
 #oros-bar.bar-tight #ts-tray-chip { padding: 0 5px; }
+/* Timesheet Wave 46: time away noticed → a dot on the chip; the timer menu */
+#ts-tray-chip.ts-away { position: relative; }
+#ts-tray-chip.ts-away::after {
+  content: ""; position: absolute; top: 9px; right: 3px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--bar-bg, var(--bg));
+}
+#ts-tray-pop {
+  position: fixed; top: calc(48px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 1460;
+  width: min(320px, calc(100vw - 24px)); padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  background: var(--panel-bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow);
+}
+#ts-tray-pop .ts-pop-head { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+#ts-tray-pop .ts-pop-away { margin: 0; font-size: 13px; color: var(--text); overflow-wrap: anywhere; }
+#ts-tray-pop .ts-pop-row { display: flex; flex-wrap: wrap; gap: 6px; }
+#ts-tray-pop .ts-pop-btn {
+  flex: 1 1 auto; min-height: 40px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 9px;
+  background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer;
+}
+#ts-tray-pop .ts-pop-btn:hover { border-color: var(--accent); }
+#ts-tray-pop .ts-pop-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
 
 #wx-chip {
   background: transparent;

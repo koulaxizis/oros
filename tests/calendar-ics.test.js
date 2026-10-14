@@ -20,7 +20,7 @@ const one = (...lines) => {
   return r.events[0];
 };
 
-test("timed event: UTC, TZID and floating times end up in local time", () => {
+test("timed event: UTC and floating times end up in local time, other zones are kept", () => {
   let e = one("UID:a", "DTSTART:20261015T070000Z", "DTEND:20261015T083000Z", "SUMMARY:Standup");
   assert.equal(e.date, "2026-10-15");
   assert.equal(e.start, "10:00");          // Athens is UTC+3 in October
@@ -28,13 +28,18 @@ test("timed event: UTC, TZID and floating times end up in local time", () => {
   assert.equal(e.title, "Standup");
 
   e = one("UID:b", "DTSTART;TZID=Europe/London:20261215T090000", "DTEND;TZID=Europe/London:20261215T100000");
-  assert.equal(e.start, "11:00");          // London UTC+0, Athens UTC+2 in December
-  assert.equal(e.end, "12:00");
+  assert.equal(e.tz, "Europe/London");     // its own zone is kept, times as written
+  assert.equal(e.start, "09:00");
+  assert.equal(e.end, "10:00");
 
   e = one("UID:c", 'DTSTART;TZID="America/New_York":20260701T200000', "DURATION:PT2H");
-  assert.equal(e.date, "2026-07-02");      // 20:00 EDT = 03:00 next day in Athens
-  assert.equal(e.start, "03:00");
-  assert.equal(e.end, "05:00");
+  assert.deepEqual([e.date, e.start, e.end, e.tz], ["2026-07-01", "20:00", "22:00", "America/New_York"]);
+
+  e = one("UID:c2", "DTSTART;TZID=America/New_York:20260701T200000", "DTEND:20260702T020000Z");
+  assert.equal(e.end, "22:00");            // a UTC end shown in the start's zone
+
+  e = one("UID:c3", "DTSTART;TZID=Europe/Athens:20260701T200000", "DTEND;TZID=Europe/Athens:20260701T210000");
+  assert.deepEqual([e.start, e.end, "tz" in e], ["20:00", "21:00", false]);   // this device's zone: plain local
 
   e = one("UID:d", "DTSTART:20261101T093000", "DTEND:20261101T101500");
   assert.equal(e.start, "09:30");          // floating = as written
@@ -98,15 +103,53 @@ test("recurrence: simple rules map, UNTIL and COUNT become an end date", () => {
   assert.equal(e.recur, null);
 });
 
+test("recurrence: richer rules are kept (every N, several weekdays, Nth / last weekday, COUNT)", () => {
+  let e = one("UID:a", "DTSTART;VALUE=DATE:20261005", "RRULE:FREQ=WEEKLY;BYDAY=MO,WE");
+  assert.deepEqual(e.recur, { freq: "W", interval: 1, until: null, exdates: [], byday: [1, 3] });
+
+  e = one("UID:b", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=MONTHLY;BYDAY=2TU");
+  assert.deepEqual(e.recur, { freq: "M", interval: 1, until: null, exdates: [], pos: 2, wday: 2 });
+
+  e = one("UID:c", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=WEEKLY;INTERVAL=3");
+  assert.deepEqual(e.recur, { freq: "W", interval: 1, until: null, exdates: [], every: 3 });
+
+  e = one("UID:d", "DTSTART;VALUE=DATE:20261030", "RRULE:FREQ=MONTHLY;BYDAY=FR;BYSETPOS=-1;COUNT=3");
+  assert.deepEqual(e.recur, { freq: "M", interval: 1, until: "2026-12-25", exdates: [], pos: -1, wday: 5, count: 3 });
+
+  e = one("UID:e", "DTSTART;VALUE=DATE:20260525", "RRULE:FREQ=YEARLY;BYMONTH=5;BYDAY=-1MO");
+  assert.deepEqual([e.recur.pos, e.recur.wday], [-1, 1]);
+
+  e = one("UID:f", "DTSTART:20261012T090000", "RRULE:FREQ=DAILY;BYDAY=MO,TU,WE,TH,FR");
+  assert.deepEqual(e.recur.byday, [1, 2, 3, 4, 5]);        // "every weekday" = weekly on Mon–Fri
+  assert.equal(e.recur.freq, "W");
+
+  e = one("UID:g", "DTSTART;VALUE=DATE:20260131", "RRULE:FREQ=MONTHLY;BYMONTHDAY=28,29,30,31;BYSETPOS=-1");
+  assert.deepEqual(e.recur, { freq: "M", interval: 1, until: null, exdates: [], });   // our own month-end clamp
+
+  e = one("UID:h", "DTSTART;VALUE=DATE:20261013", "DTEND;VALUE=DATE:20261016", "RRULE:FREQ=MONTHLY;INTERVAL=2");
+  assert.deepEqual([e.dateEnd, e.recur.every], ["2026-10-15", 2]);                    // repeats AND spans
+});
+
 test("recurrence the Calendar cannot hold: first occurrence only, counted", () => {
   const r = I.parse(wrap(
-    vev("UID:a", "DTSTART;VALUE=DATE:20261005", "RRULE:FREQ=WEEKLY;BYDAY=MO,WE"),
-    vev("UID:b", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=MONTHLY;BYDAY=2TU"),
-    vev("UID:c", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=WEEKLY;INTERVAL=3"),
+    vev("UID:a", "DTSTART;VALUE=DATE:20261005", "RRULE:FREQ=MONTHLY;BYMONTHDAY=1,15"),
+    vev("UID:b", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=MONTHLY;BYDAY=1MO,3MO"),
+    vev("UID:c", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=YEARLY;BYWEEKNO=20"),
     vev("UID:d", "DTSTART;VALUE=DATE:20261013", "RRULE:FREQ=HOURLY")));
   assert.equal(r.events.length, 4);
   assert.equal(r.simplified, 4);
   r.events.forEach((e) => assert.equal(e.recur, null));
+});
+
+test("time zone series: exdates, overrides and UNTIL in the series' own zone", () => {
+  const r = I.parse(wrap(
+    vev("UID:ny", "DTSTART;TZID=America/New_York:20261005T210000", "DURATION:PT1H",
+      "RRULE:FREQ=WEEKLY;UNTIL=20261027T010000Z", "EXDATE;TZID=America/New_York:20261012T210000"),
+    vev("UID:ny", "RECURRENCE-ID:20261020T010000Z", "DTSTART;TZID=America/New_York:20261019T220000")));
+  const m = r.events[0];
+  assert.equal(m.tz, "America/New_York");
+  assert.equal(m.recur.until, "2026-10-26");          // 01:00 UTC = 21:00 the day before in New York
+  assert.deepEqual(m.recur.exdates, ["2026-10-12", "2026-10-19"]);
 });
 
 test("EXDATE and RECURRENCE-ID: excluded dates and moved occurrences", () => {

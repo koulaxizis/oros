@@ -512,25 +512,50 @@
     if (q.sh && typeof q.sh === "object") ids.forEach(function (id) { if (SHOW_RE.test(q.sh[id])) sh[id] = q.sh[id]; });
     return { m: q.m, ids: ids, sh: sortedObj(sh) };
   }
-  var PREF_DEF = { spd: 1, back: 15, fwd: 30, autoNext: 1, delPlayed: 0, search: "both", ntf: 0 };
+  // sil = skip silence, vb = voice boost (1.3, wave 42).
+  var PREF_DEF = { spd: 1, back: 15, fwd: 30, autoNext: 1, delPlayed: 0, search: "both", ntf: 0, sil: 0, vb: 0 };
   function normPrefVal(k, v) {
     switch (k) {
       case "spd": return normSpd(v) || null;
       case "back": case "fwd": return isInt(v) && v >= 5 && v <= 120 ? v : null;
-      case "autoNext": case "delPlayed": case "ntf": return v === 0 || v === 1 ? v : null;
+      case "autoNext": case "delPlayed": case "ntf": case "sil": case "vb": return v === 0 || v === 1 ? v : null;
       case "search": return v === "both" || v === "apple" || v === "fyyd" || v === "none" ? v : null;
     }
     return null;
   }
-  // Prefs: { key: [value, mtime] }, LWW per field.
+  // Prefs: { key: [value, mtime] }, LWW per field. A key this version
+  // does not know (written by a newer one) is kept as it is, when it
+  // has the same small shape, so an older device never strips it from
+  // the slice (forward compatible, at most 20 such keys).
+  var PREF_KEY_RE = /^[a-z][a-zA-Z0-9]{0,15}$/;
+  function foreignPrefVal(v) {
+    if (typeof v === "number") return isFinite(v) ? v : null;
+    if (typeof v === "string") return v.length <= 100 ? v : null;
+    return typeof v === "boolean" ? v : null;
+  }
   function normPrefs(p) {
     var out = {};
     if (!p || typeof p !== "object") return out;
-    Object.keys(PREF_DEF).forEach(function (k) {
+    Object.keys(p).sort(cmpStr).forEach(function (k) {
       var e = p[k];
       if (!Array.isArray(e) || e.length !== 2 || !isStamp(e[1])) return;
-      var v = normPrefVal(k, e[0]);
-      if (v !== null) out[k] = [v, e[1]];
+      if (PREF_DEF.hasOwnProperty(k)) {
+        var v = normPrefVal(k, e[0]);
+        if (v !== null) out[k] = [v, e[1]];
+      } else if (PREF_KEY_RE.test(k)) {
+        var f = foreignPrefVal(e[0]);
+        if (f !== null) out[k] = [f, e[1]];
+      }
+    });
+    return capPrefs(out);
+  }
+  // The first 20 foreign keys in name order (the same set on every
+  // device, so the merge stays canonical).
+  function capPrefs(p) {
+    var out = {}, extra = 0;
+    Object.keys(p).sort(cmpStr).forEach(function (k) {
+      if (PREF_DEF.hasOwnProperty(k)) out[k] = p[k];
+      else if (extra < 20) { out[k] = p[k]; extra++; }
     });
     return out;
   }
@@ -606,7 +631,7 @@
     Object.keys(tombs).forEach(function (id) { if (tombs[id] > newest) newest = tombs[id]; });
     var outTombs = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { if (tombs[id] >= newest - 365 * DAY) outTombs[id] = tombs[id]; });
-    return { ver: DATA_VER, shows: outShows, eps: outEps, floors: outFloors, queue: q, prefs: sortedObj(prefs), tombs: outTombs };
+    return { ver: DATA_VER, shows: outShows, eps: outEps, floors: outFloors, queue: q, prefs: capPrefs(prefs), tombs: outTombs };
   }
 
   // ---------- 10. Mutations (stamp at the mutation site, R27) ----------
@@ -973,6 +998,7 @@
     if (!(wallSec > 0) || wallSec > 30) return { d: d, s: s };   // gaps (sleep, seek) are not listening
     var k = dayKey(ms), row = Array.isArray(d[k]) ? d[k] : [0, 0];
     d[k] = [Math.round((+row[0] || 0) * 10 + wallSec * 10) / 10, Math.round((+row[1] || 0) * 10 + wallSec * rate * 10) / 10];
+    if (+row[2] > 0) d[k].push(+row[2]);              // seconds saved by skipping silence
     if (SHOW_RE.test(sid)) s[sid] = Math.round(((+s[sid] || 0) + wallSec * rate) * 10) / 10;
     // Keep 400 days and 300 shows.
     var days = Object.keys(d).sort();
@@ -984,9 +1010,9 @@
   function statsSummary(stats, nowMs) {
     var d = (stats && stats.d) || {}, s = (stats && stats.s) || {};
     var sum = function (fromMs) {
-      var from = dayKey(fromMs), w = 0, m = 0;
-      Object.keys(d).forEach(function (k) { if (!fromMs || k >= from) { w += +d[k][0] || 0; m += +d[k][1] || 0; } });
-      return { wall: Math.round(w), media: Math.round(m), saved: Math.max(0, Math.round(m - w)) };
+      var from = dayKey(fromMs), w = 0, m = 0, q = 0;
+      Object.keys(d).forEach(function (k) { if (!fromMs || k >= from) { w += +d[k][0] || 0; m += +d[k][1] || 0; q += +d[k][2] || 0; } });
+      return { wall: Math.round(w), media: Math.round(m), saved: Math.max(0, Math.round(m - w)), silence: Math.round(q) };
     };
     var top = Object.keys(s).sort(function (a, b) { return (s[b] - s[a]) || cmpStr(a, b); }).slice(0, 5)
       .map(function (id) { return { s: id, media: Math.round(s[id]) }; });
@@ -1092,6 +1118,107 @@
     return { title: (o.title + (pos > 0 ? " (" + fmtTime(pos) + ")" : "")).slice(0, 200), text: lines.join("\n") };
   }
 
+  // ---------- 14. Skip silence + voice boost (wave 42) ----------
+  // The host taps the playing element through Web Audio (an
+  // AnalyserNode) and plays quiet stretches faster; voice boost is a
+  // compressor + presence EQ in the same graph. Only media the page may
+  // read can go through Web Audio: a cross-origin file without CORS
+  // comes out as silence. These helpers hold the decisions; the host
+  // owns the nodes.
+  var FX = { thr: 0.012, out: 0.02, minQuietMs: 250, silMin: 2.5, silMax: 4, zeroMs: 10000, corsTtl: 86400000 };
+  // RMS level of one block of samples (Float32Array, -1..1).
+  function rms(buf) {
+    var n = buf ? buf.length : 0;
+    if (!n) return 0;
+    var sum = 0;
+    for (var i = 0; i < n; i++) sum += buf[i] * buf[i];
+    return Math.sqrt(sum / n);
+  }
+  // True when every sample is exactly 0: what Web Audio hands out for
+  // media it may not read (or a muted stream).
+  function allZero(buf) {
+    for (var i = 0; i < (buf ? buf.length : 0); i++) if (buf[i] !== 0) return false;
+    return true;
+  }
+  // One step of the silence detector. st = { q: ms quiet so far,
+  // silent: bool }. Quiet for minQuietMs -> silent; loud again (with a
+  // little hysteresis) -> not silent at once, so speech never runs fast.
+  function silenceStep(st, level, dtMs) {
+    st = st && typeof st === "object" ? st : { q: 0, silent: false };
+    dtMs = +dtMs > 0 ? Math.min(+dtMs, 1000) : 0;
+    level = +level || 0;
+    if (st.silent) return level >= FX.out ? { q: 0, silent: false } : { q: st.q + dtMs, silent: true };
+    if (level < FX.thr) {
+      var q = st.q + dtMs;
+      return { q: q, silent: q >= FX.minQuietMs };
+    }
+    return { q: 0, silent: false };
+  }
+  // Speed over silence: three times the listening speed, 2.5x to 4x
+  // (browsers mute audio above 4x; silence needs no pitch anyway).
+  function silenceRate(base) {
+    base = +base > 0 ? +base : 1;
+    return clamp(Math.round(base * 3 * 100) / 100, FX.silMin, FX.silMax);
+  }
+  // Seconds of listening saved by wallSec of silence played at fast
+  // instead of base: the same media would have taken fast/base longer.
+  function silenceSaved(wallSec, base, fast) {
+    base = +base > 0 ? +base : 1; fast = +fast > 0 ? +fast : base;
+    wallSec = +wallSec > 0 ? +wallSec : 0;
+    return fast > base ? wallSec * (fast / base - 1) : 0;
+  }
+  // Adds saved seconds to today's row of the listening statistics
+  // (third column of stats.d rows; addListen keeps it).
+  function addSaved(stats, ms, sec) {
+    stats = stats && typeof stats === "object" ? stats : {};
+    var d = stats.d && typeof stats.d === "object" ? stats.d : {}, s = stats.s && typeof stats.s === "object" ? stats.s : {};
+    sec = +sec;
+    if (!(sec > 0) || sec > 120) return { d: d, s: s };
+    var k = dayKey(ms), row = Array.isArray(d[k]) ? d[k] : [0, 0];
+    d[k] = [+row[0] || 0, +row[1] || 0, Math.round(((+row[2] || 0) + sec) * 10) / 10];
+    return { d: d, s: s };
+  }
+  // Where an episode's audio comes from, for the CORS decision:
+  // "local" (a download: a blob: address, always readable), "same"
+  // (this site) or the remote origin. "" = not a playable address.
+  function mediaOrigin(src, pageOrigin) {
+    if (typeof src !== "string" || !src) return "";
+    if (/^blob:/i.test(src)) return "local";
+    var x;
+    try { x = new URL(src); } catch (e) { return ""; }
+    if (x.protocol !== "https:" && x.protocol !== "http:") return "";
+    return pageOrigin && x.origin === pageOrigin ? "same" : x.origin;
+  }
+  // Should this source go through Web Audio? cache = { origin: [ok 0|1, at ms] }
+  // from earlier probes (device-local). -> "yes" | "no" | "probe".
+  function fxRoute(origin, cache, now) {
+    if (origin === "local" || origin === "same") return "yes";
+    if (!origin) return "no";
+    var c = cache && cache[origin];
+    if (Array.isArray(c) && now - c[1] < FX.corsTtl && now >= c[1]) return c[0] === 1 ? "yes" : "no";
+    return "probe";
+  }
+  // Remembers a probe, keeps the newest 60 origins.
+  function fxRemember(cache, origin, ok, now) {
+    var out = {};
+    if (cache && typeof cache === "object") Object.keys(cache).forEach(function (k) {
+      var c = cache[k];
+      if (Array.isArray(c) && isStamp(c[1]) && now - c[1] < FX.corsTtl) out[k] = [c[0] === 1 ? 1 : 0, c[1]];
+    });
+    if (origin && origin !== "local" && origin !== "same") out[origin] = [ok ? 1 : 0, now];
+    var keys = Object.keys(out).sort(function (a, b) { return (out[b][1] - out[a][1]) || cmpStr(a, b); });
+    var kept = {};
+    keys.slice(0, 60).forEach(function (k) { kept[k] = out[k]; });
+    return kept;
+  }
+  // Watchdog over the graph: only exact zeros while the media plays on
+  // for zeroMs = the browser hides the audio from Web Audio. st = ms so far.
+  function zeroWatch(st, zero, playing, dtMs) {
+    if (!playing) return st || 0;
+    if (!zero) return 0;
+    return (st || 0) + (+dtMs > 0 ? Math.min(+dtMs, 1000) : 0);
+  }
+
   root.OrosPodcastsCore = {
     DATA_VER: DATA_VER, LIM: LIM, SPEEDS: SPEEDS, PREF_DEF: PREF_DEF, SYNC_EVERY: SYNC_EVERY, SYNC_MIN_MOVE: SYNC_MIN_MOVE,
     clean: clean, fold: fold, plain: plain, decodeEntities: decodeEntities,
@@ -1112,6 +1239,8 @@
     noteChapters: noteChapters, searchEpisodes: searchEpisodes, dayKey: dayKey, addListen: addListen, statsSummary: statsSummary,
     appleTopUrl: appleTopUrl, parseAppleTop: parseAppleTop, appleLookupManyUrl: appleLookupManyUrl, orderByIds: orderByIds,
     topCountry: topCountry, shareText: shareText,
-    freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt
+    freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt,
+    FX: FX, rms: rms, allZero: allZero, silenceStep: silenceStep, silenceRate: silenceRate, silenceSaved: silenceSaved,
+    addSaved: addSaved, mediaOrigin: mediaOrigin, fxRoute: fxRoute, fxRemember: fxRemember, zeroWatch: zeroWatch
   };
 })(typeof window !== "undefined" ? window : this);

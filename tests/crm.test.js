@@ -466,8 +466,9 @@ test("Quote prefill (BR-Q1): a deal line in EUR/USD, a blank line for the custom
   const d = deal("dddddd01", "cccccc01", { title: "Logo", val: 30000 });
   assert.deepEqual(C.quotePrefill(c, d, "USD"), { client: "Acme", items: [{ d: "Logo", q: 1, p: 300 }], cur: "USD" });
   assert.deepEqual(C.quotePrefill(c, null, "EUR"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }], cur: "EUR" });
-  assert.deepEqual(C.quotePrefill(c, null, "GBP"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }] });
-  assert.equal(C.quotePrefill(c, d, "GBP"), null);
+  assert.deepEqual(C.quotePrefill(c, null, "GBP"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }], cur: "GBP" });
+  assert.deepEqual(C.quotePrefill(c, null, "xx"), { client: "Acme", items: [{ d: "", q: 1, p: 0 }] });
+  assert.equal(C.quotePrefill(c, d, "xx"), null);
 });
 
 test("Quote read-out (quote/core.js forClient, total): name or tax id, deleted left out, newest first", () => {

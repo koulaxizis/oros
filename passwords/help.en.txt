@@ -1,10 +1,50 @@
-# Password Generator
-Password Generator makes random passwords, PINs and passphrases and shows how strong they are. It can also check a password you already use. Everything happens on this device.
+# Passwords
+Passwords keeps your logins in an encrypted vault, shows two-factor codes, and makes random passwords, PINs and passphrases. It can also check how strong a password is. The vault is locked with a master password that only you know.
 
 ## Getting started
-Pick a tab at the top: `Password`, `Passphrase` or `Check`. On the first two a new result appears straight away. Press `New` for another one and `Copy` to copy it.
+The first tab, `Vault`, asks you to create your vault: type a master password of at least 12 characters twice and press `Create vault`. A passphrase of five or six random words is a good choice.
 
-Under each result a meter shows its strength, from `Very weak` to `Very strong`, its entropy in bits and roughly how long a fast offline attack would need.
+Next you see your recovery key. Write it down or press `Save as a file`, keep it away from this device, tick `I saved my recovery key` and close the window. It is the only way back in if you forget the master password, and it is shown only once.
+
+The other tabs, `Password`, `Passphrase` and `Check`, work without a vault.
+
+## The vault
+Press `New` to add an entry: a title, a username, a password, websites (one per line), a two-factor secret, notes, tags and `More fields` of your own. Tick `Hidden` on a field to hide it like a password. `Favourite` puts the entry at the top.
+
+Next to the password, `Generate` fills in a `Password` or a `Passphrase` made with the options of the Password and Passphrase tabs. On the Password and Passphrase tabs, `Save to vault` starts a new entry with the shown result.
+
+Press an entry to see it. Passwords and hidden fields show dots until you press `Show`. `Copy` copies a value, and `Open` opens a website in a new tab (only `http` and `https` addresses). `Edit` changes the entry, and a password you replace goes to its `Password history` (the last five). `Delete` removes it on every device; `Undo` in the message brings it back.
+
+Search finds words in titles, usernames, websites, tags, notes and fields that are not hidden. The buttons under the search show `Favourites`, `2FA codes`, `Weak` passwords and passwords `Reused` in more than one entry, and the tag list shows one tag.
+
+## Two-factor codes
+Put the secret a website gives you for an authenticator app into `Two-factor secret or otpauth:// link`: the text code, or the whole otpauth:// link. `Scan QR` reads the QR code with the camera, or from a picture with `Choose a picture`. The entry then shows the current code and the seconds it has left; `Copy` copies it.
+
+Codes from a counter (HOTP) are not supported.
+
+## Import and export
+`⋯` then `Import` brings entries from another manager. Entries that are already in the vault (same title, username, password and first website) are skipped, and you see how many are new before you import them.
+- `Bitwarden (.json, not encrypted)`: in Bitwarden, export as `.json`. Folders become tags; cards, identities and hidden fields become fields.
+- `KeePass / KeePassXC (.kdbx)`: type the file's password and, if it has one, choose its key file. Groups become tags. Attachments and the recycle bin are left out.
+- `CSV`: exports of Bitwarden, Chrome, Edge, Firefox, KeePassXC and 1Password.
+
+Delete an export that is not encrypted as soon as you have imported it.
+
+`⋯` then `Export` saves every entry with your master password as a check.
+- `KeePass (.kdbx 4, encrypted)`: the file opens in KeePass and KeePassXC with the password you choose for it.
+- `Bitwarden (.json, NOT encrypted)`: anyone who gets this file can read every password. You have to tick that you understand.
+
+## Locking and the clipboard
+The vault locks itself after 5 minutes without use and as soon as you leave the app or switch to another tab. Change both in `⋯`, `Lock settings`. The padlock button locks it at once.
+
+Copied passwords, hidden fields and codes are cleared from the clipboard after 30 seconds. If you are in another app at that moment, it happens when you come back.
+
+## Master password and recovery key
+`⋯` then `Change master password` asks for the current one and the new one. `New recovery key` makes a new key; the old one stops working.
+
+Forgot the master password? On the lock screen press `Forgot it? Use the recovery key`, type the key and choose a new master password.
+
+`Delete vault` removes the vault and every password in it on all your devices.
 
 ## Passwords and PINs
 On the `Password` tab choose `Characters` or `PIN`.
@@ -12,7 +52,7 @@ On the `Password` tab choose `Characters` or `PIN`.
 - If a site accepts only a few symbols, type them in `Only these symbols`. Leave it empty for all symbols.
 - `PIN`: only digits, with 4 to 12 `Digits`.
 
-Any change to the options makes a new result.
+Under each result a meter shows its strength, from `Very weak` to `Very strong`, its entropy in bits and roughly how long a fast offline attack would need. Press `New` for another one and `Copy` to copy it.
 
 ## Passphrases
 A passphrase is a few random words from the EFF Diceware lists: easy to remember, hard to guess.
@@ -28,18 +68,26 @@ Choose `Real dice` instead of `This device` if you'd rather trust your own dice.
 On the `Check` tab type or paste a password. You see its strength, the `Time to crack (on average)` for an online attack and for slow and fast offline attacks, and `What makes it weaker`: common passwords, dictionary words, sequences, repeats, keyboard rows, dates and more. `Show` reveals what you typed. The box is wiped when you leave the tab or close the app.
 
 ## Sync and backup
-Nothing is synced and no password is ever saved: generated ones live only while the app is open, and the checked one is wiped. Your options and the open tab are remembered on this device. See [Privacy](help:t/privacy).
+With [orOS sync](help:t/sync) the vault reaches your other devices, where you open it with the same master password. Only the encrypted vault is synced: it is encrypted on this device with a key made from your master password (Argon2id) before anything is stored, and then the whole orOS sync copy is encrypted once more with your sync passphrase. Changes made on two devices at the same time are joined entry by entry when a device opens the vault.
+
+Older cloud backups of your data still open with the master password you had then. Generated and checked passwords are never saved. See [Privacy](help:t/privacy).
 
 ## Keyboard shortcuts
 - [[Enter]] or [[Space]] makes a new password or passphrase (not in a text box).
 - [[Ctrl+C]] with nothing selected copies the shown result.
 - [[←]] and [[→]] move between tabs and between option buttons.
-- [[Enter]] in the dice box adds the word.
+- [[Enter]] in the dice box adds the word; in the master password box it unlocks.
 
 ## Tips
-- `Clear the clipboard 30 seconds after copying` is on by default. It works only if you stay in the app the whole time.
-- A passphrase of six random words is a strong choice for a password you need to remember.
+- A passphrase of six random words is a strong master password that you can remember.
+- Look at `Weak` and `Reused` now and then, and change those passwords first.
+- Export a KeePass file now and then and keep it somewhere safe, with your recovery key apart from it.
 
 ## Limits
-- The checker can't know personal facts such as names or birthdays unless they're in its lists.
+- Nobody can reset your master password. Without it and without the recovery key, the vault cannot be opened.
+- orOS does not fill in passwords on websites: copy them from the vault. Autofill would need the "Send to orOS" browser add-on in the browser stores, which is not there.
+- Attachments are not kept: a KeePass import leaves them out.
+- KeePass files encrypted with Twofish cannot be imported; switch them to AES or ChaCha20 in KeePass first.
+- While the vault is open, anything that controls this browser can read it. Lock it on shared computers.
 - Clearing the clipboard is best effort; some browsers refuse it.
+- The checker can't know personal facts such as names or birthdays unless they're in its lists.

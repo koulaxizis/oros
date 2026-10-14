@@ -658,3 +658,37 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .ai-cut-img { display: block; max-width: 100%; max-height: 46vh; width: auto; height: auto; }
 .ai-edge { margin-bottom: 4px; }
 .ai-forget { margin-top: 6px; }
+
+/* ---------- Template library (home + Templates panel) ---------- */
+.tl-tools { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; min-width: 0; }
+.tl-tools .inp { width: 100%; max-width: 360px; }
+.tl-tools .chips { margin: 2px 0; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.tl-tools .chip-btn { flex: 0 0 auto; white-space: nowrap; }
+.tl-count { font-size: 12px; color: var(--text-dim); }
+.tpl-thumb.wait { background-image: linear-gradient(90deg, transparent, var(--accent-soft), transparent); background-size: 200% 100%; }
+.tpl-cat { font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -4px; }
+.tpls > .hint, .tpl-grid > .hint, .tl-more { grid-column: 1 / -1; }
+.tl-more { justify-self: start; min-height: 40px; }
+
+/* ---------- Tables and charts ---------- */
+.obj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.obj-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 64px; padding: 8px 4px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 12px; font-weight: 700; text-align: center;
+}
+.obj-tile svg { width: 22px; height: 22px; }
+.obj-tile:hover { border-color: var(--accent); color: var(--accent); }
+.grid-ed { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.grid-ed .pn-row { flex-wrap: wrap; }
+.grid-scroll { overflow: auto; max-height: 40vh; border: 1px solid var(--border); border-radius: 8px; }
+.grid-tbl { border-collapse: collapse; }
+.grid-tbl td { padding: 0; border: 1px solid var(--border); }
+.grid-tbl .cell {
+  width: 112px; min-width: 72px; border: none; border-radius: 0; background: transparent;
+  resize: none; min-height: 34px; padding: 6px; line-height: 1.3; display: block;
+}
+.grid-tbl tr:first-child .cell { font-weight: 700; }
+.ch-prev { flex-shrink: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+.ch-prev img { display: block; width: 100%; height: auto; max-height: 30vh; object-fit: contain; }

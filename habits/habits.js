@@ -17,6 +17,14 @@
 // registerSlice 5-arg · strict mergeRow (no volatile defaults
 // inside merge) · sliceSet never marks dirty · rescue backup
 // for corrupt local data · boot marker from cache-busted URL.
+//
+// Wave 4 (v2 data): measurable habits (a number with a unit and a
+// daily target, at least / at most), X times per week / month,
+// habit strength (Loop-style score + chart), per-habit reminder time
+// (shell engine + phone bridge), skipped days, a year heatmap, a
+// note per check-in and the read-only Steps row from Health. Rules
+// in core.js (OrosHabitsCore), data shape / merge / writes in
+// model.js (OrosHabitsModel), the Steps feed in steps.js.
 // ============================================================
 (function () {
   "use strict";
@@ -55,7 +63,6 @@
       "cancel":          "Cancel",
       "save":            "Save",
       "freq.daily":      "Daily",
-      "freq.n":          "{n}×/wk",
       "freq.any":        "Flexible",
       "streak":          "{n} day streak",
       "streaks":         "{n} day streaks",
@@ -101,7 +108,68 @@
       "ins.top": "{n} is your most consistent habit ({p}% completion).",
       "ins.perfect": "You completed every scheduled habit on {n} day(s).",
       "ins.up": "Trending up: {a}% → {b}% completion over the last month.",
-      "ins.down": "Slipping a bit: {a}% → {b}% completion over the last month."
+      "ins.down": "Slipping a bit: {a}% → {b}% completion over the last month.",
+      "settings": "Settings",
+      "type.label": "Type",
+      "type.bool": "Yes / No",
+      "type.num": "Amount",
+      "target.label": "Daily target",
+      "cmp.ge": "At least",
+      "cmp.le": "At most",
+      "unit.label": "Unit",
+      "unit.ph": "pages, steps, cups",
+      "step.label": "Step for − / +",
+      "freq.label": "Frequency",
+      "freq.mode.days": "Days",
+      "freq.mode.w": "Per week",
+      "freq.mode.m": "Per month",
+      "per.w.n": "{n} times a week",
+      "per.m.n": "{n} times a month",
+      "per.times": "Times",
+      "freq.days": "{n} days/wk",
+      "freq.w": "{n}×/wk",
+      "freq.m": "{n}×/mo",
+      "rem.label": "Reminder",
+      "rem.none": "No reminder",
+      "rem.at": "Reminder at {t}",
+      "rem.note": "A notification at this time on days the habit still needs doing (orOS open, or the orOS Android app with reminders on).",
+      "day.done": "Done",
+      "day.skip": "Skip this day",
+      "day.skip.hint": "Sick, on holiday… a skipped day doesn't break the streak.",
+      "day.note": "Note",
+      "day.note.ph": "Optional, a few words",
+      "day.value": "Value",
+      "target.ge": "at least {t}",
+      "target.le": "at most {t}",
+      "skipped": "Skipped",
+      "strength": "Strength",
+      "strength.tip": "Habit strength {n}%: it grows while you keep the habit; one missed day costs only a little.",
+      "detail.chart": "Strength over time",
+      "detail.notes": "Notes",
+      "detail.edit": "Edit",
+      "close": "Close",
+      "year.prev": "Previous year",
+      "year.next": "Next year",
+      "streak.w": "{n} week streak",
+      "streak.m": "{n} month streak",
+      "unit.w": "wk",
+      "unit.m": "mo",
+      "period.w": "{a}/{b} this week",
+      "period.m": "{a}/{b} this month",
+      "stats.periods.w": "{n}% of weeks met",
+      "stats.periods.m": "{n}% of months met",
+      "stats.avg": "avg {v}",
+      "set.steps": "Show steps from Health",
+      "set.steps.goal": "Daily steps goal",
+      "set.steps.hint": "A read-only row filled from the steps the Health app keeps (typed there, or from Health Connect with the orOS Android app).",
+      "set.steps.none": "Health has no steps yet.",
+      "err.target": "Enter a target above 0",
+      "dec": "Less",
+      "inc": "More",
+      "dot.tip": "Click to tick · right-click or long-press for skip and note",
+      "dot.tip.num": "Click to enter the value, skip or add a note",
+      "less": "Less",
+      "more": "More"
     },
     el: {
       "app.name":        "Συνήθειες",
@@ -119,7 +187,6 @@
       "cancel":          "Άκυρο",
       "save":            "Αποθήκευση",
       "freq.daily":      "Καθημερινά",
-      "freq.n":          "{n}×/εβδ.",
       "freq.any":        "Ευέλικτο",
       "streak":          "{n} ημέρες σερί",
       "streaks":         "{n} ημέρες σερί",
@@ -165,7 +232,68 @@
       "ins.top": "Το «{n}» είναι η πιο σταθερή σου συνήθεια ({p}% ολοκλήρωση).",
       "ins.perfect": "Ολοκλήρωσες όλες τις προγραμματισμένες συνήθειες σε {n} μέρες.",
       "ins.up": "Ανοδική τάση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα.",
-      "ins.down": "Μικρή πτώση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα."
+      "ins.down": "Μικρή πτώση: {a}% → {b}% ολοκλήρωση τον τελευταίο μήνα.",
+      "settings": "Ρυθμίσεις",
+      "type.label": "Τύπος",
+      "type.bool": "Ναι / Όχι",
+      "type.num": "Ποσότητα",
+      "target.label": "Ημερήσιος στόχος",
+      "cmp.ge": "Τουλάχιστον",
+      "cmp.le": "Το πολύ",
+      "unit.label": "Μονάδα",
+      "unit.ph": "σελίδες, βήματα, φλιτζάνια",
+      "step.label": "Βήμα για − / +",
+      "freq.label": "Συχνότητα",
+      "freq.mode.days": "Μέρες",
+      "freq.mode.w": "Ανά εβδομάδα",
+      "freq.mode.m": "Ανά μήνα",
+      "per.w.n": "{n} φορές την εβδομάδα",
+      "per.m.n": "{n} φορές τον μήνα",
+      "per.times": "Φορές",
+      "freq.days": "{n} μέρες/εβδ.",
+      "freq.w": "{n}×/εβδ.",
+      "freq.m": "{n}×/μήνα",
+      "rem.label": "Υπενθύμιση",
+      "rem.none": "Χωρίς υπενθύμιση",
+      "rem.at": "Υπενθύμιση στις {t}",
+      "rem.note": "Ειδοποίηση αυτή την ώρα τις μέρες που η συνήθεια μένει να γίνει (με το orOS ανοιχτό ή με την εφαρμογή orOS για Android και τις υπενθυμίσεις ενεργές).",
+      "day.done": "Έγινε",
+      "day.skip": "Παράλειψη μέρας",
+      "day.skip.hint": "Αρρώστια, διακοπές… μια μέρα που παραλείπεις δεν σπάει το σερί.",
+      "day.note": "Σημείωση",
+      "day.note.ph": "Προαιρετικά, λίγες λέξεις",
+      "day.value": "Τιμή",
+      "target.ge": "τουλάχιστον {t}",
+      "target.le": "το πολύ {t}",
+      "skipped": "Παράλειψη",
+      "strength": "Δύναμη",
+      "strength.tip": "Δύναμη συνήθειας {n}%: μεγαλώνει όσο την κρατάς· μια χαμένη μέρα κοστίζει λίγο.",
+      "detail.chart": "Η δύναμη στον χρόνο",
+      "detail.notes": "Σημειώσεις",
+      "detail.edit": "Επεξεργασία",
+      "close": "Κλείσιμο",
+      "year.prev": "Προηγούμενο έτος",
+      "year.next": "Επόμενο έτος",
+      "streak.w": "{n} εβδομάδες σερί",
+      "streak.m": "{n} μήνες σερί",
+      "unit.w": "εβδ",
+      "unit.m": "μήν",
+      "period.w": "{a}/{b} αυτή την εβδομάδα",
+      "period.m": "{a}/{b} αυτόν τον μήνα",
+      "stats.periods.w": "{n}% των εβδομάδων με επιτυχία",
+      "stats.periods.m": "{n}% των μηνών με επιτυχία",
+      "stats.avg": "μ.ό. {v}",
+      "set.steps": "Εμφάνιση βημάτων από την Υγεία",
+      "set.steps.goal": "Ημερήσιος στόχος βημάτων",
+      "set.steps.hint": "Μια γραμμή μόνο για ανάγνωση, με τα βήματα που κρατά η εφαρμογή Υγεία (γραμμένα εκεί ή από το Health Connect με την εφαρμογή orOS για Android).",
+      "set.steps.none": "Η Υγεία δεν έχει ακόμα βήματα.",
+      "err.target": "Βάλε στόχο πάνω από 0",
+      "dec": "Λιγότερο",
+      "inc": "Περισσότερο",
+      "dot.tip": "Πάτα για τσεκάρισμα · δεξί κλικ ή παρατεταμένο πάτημα για παράλειψη και σημείωση",
+      "dot.tip.num": "Πάτα για τιμή, παράλειψη ή σημείωση",
+      "less": "Λιγότερο",
+      "more": "Περισσότερο"
     }
   };
 
@@ -195,11 +323,13 @@
   // ===== CONSTANTS =====
   var DATA_KEY = "oros-habits-data";
   var BROKEN_KEY = "oros-habits-data-broken";   // local rescue copy, never synced
-  var DATA_VER = 1;
+  var DEVICE_KEY = "oros-habits-device";        // this device's id for value shares, never synced
+  var HC = window.OrosHabitsCore;
+  var M = window.OrosHabitsModel;
+  var DATA_VER = M.DATA_VER;
 
   // Shared orOS vocabulary — same 8 colors as Notes/To-Do/Mood
-  var COLORS = ["#e06c75", "#ecc75f", "#87cf3e", "#4fc4cf",
-                "#6d4aff", "#e09ecf", "#f28c5a", "#9aa4b0"];
+  var COLORS = M.COLORS;
 
   // 16 handcrafted inline SVG icons (ForkAwesome exiled)
   var ICONS = {
@@ -228,6 +358,10 @@
   var ICO_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>';
   var ICO_CHEVL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
   var ICO_CHEVR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
+  var ICO_GEAR  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  var ICO_BELL  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>';
+  var ICO_MINUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>';
+  var ICO_SNOW  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.9 6l14.2 12M4.9 18L19.1 6"/></svg>';
   var ICO_TODAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="8.5" opacity="0.35"/></svg>';
 
   // ===== DATE HELPERS (Monday-first, LOCAL calendar day keys) =====
@@ -262,65 +396,19 @@
   }
 
   // ===== DATA LAYER =====
-  var db = null;   // { ver, habits:[], comps:[] }
+  // Shape, normalize, merge and the per-day writes live in model.js
+  // (OrosHabitsModel, tested in Node); this file keeps storage, the
+  // rescue copy and the view.
+  var db = null;   // { ver, habits:[], comps:[], set? }
+  var IX = null;   // OrosHabitsCore.index(db), rebuilt after every change
 
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  }
-
-  // Local-write normalizer (fills defaults for rows WE create)
-  function habitDefaults(raw) {
-    var days = [];
-    if (Array.isArray(raw.days)) {
-      var seen = {};
-      for (var i = 0; i < raw.days.length; i++) {
-        var dy = raw.days[i];
-        if (typeof dy === "number" && dy >= 0 && dy <= 6 && !seen[dy]) {
-          seen[dy] = true;
-          days.push(dy);
-        }
-      }
-      days.sort();
-    }
-    return {
-      id:    (typeof raw.id === "string" && raw.id) ? raw.id : uid(),
-      name:  (typeof raw.name === "string") ? raw.name.slice(0, 200) : "",
-      icon:  (ICONS[raw.icon] ? raw.icon : "check"),
-      color: (COLORS.indexOf(raw.color) !== -1 ? raw.color : COLORS[0]),
-      days:  days,
-      mtime: (typeof raw.mtime === "number" && isFinite(raw.mtime)) ? raw.mtime : Date.now(),
-      del:   !!raw.del
-    };
-  }
-  function compDefaults(raw) {
-    return {
-      id:     (typeof raw.id === "string" && raw.id) ? raw.id : "",
-      habitId: (typeof raw.habitId === "string" && raw.habitId) ? raw.habitId : "",
-      date:   (typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date)) ? raw.date : "",
-      mtime:  (typeof raw.mtime === "number" && isFinite(raw.mtime)) ? raw.mtime : Date.now(),
-      del:    !!raw.del
-    };
-  }
-
-  function normalize(obj) {
-    if (!obj || typeof obj !== "object") return null;
-    if (!Array.isArray(obj.habits) || !Array.isArray(obj.comps)) return null;
-    var seenH = {}, habits = [], seenC = {}, comps = [];
-    for (var i = 0; i < obj.habits.length; i++) {
-      var h = habitDefaults(obj.habits[i]);
-      if (!h.name && !h.del) continue;    // nameless living garbage
-      if (seenH[h.id]) continue;
-      seenH[h.id] = true;
-      habits.push(h);
-    }
-    for (var j = 0; j < obj.comps.length; j++) {
-      var c = compDefaults(obj.comps[j]);
-      if (!c.id || !c.habitId || !c.date) continue;
-      if (seenC[c.id]) continue;
-      seenC[c.id] = true;
-      comps.push(c);
-    }
-    return { ver: DATA_VER, habits: habits, comps: comps };
+  // This device's id: its share of a measurable day's value (two
+  // devices adding on the same day both count). Device-local.
+  var DEVICE = "";
+  try { DEVICE = localStorage.getItem(DEVICE_KEY) || ""; } catch (e) { DEVICE = ""; }
+  if (!M.DEV_RE.test(DEVICE)) {
+    DEVICE = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).replace(/[^a-z0-9]/g, "");
+    try { localStorage.setItem(DEVICE_KEY, DEVICE); } catch (e) {}
   }
 
   // LOAD with rescue backup: corrupt raw data is copied verbatim
@@ -339,7 +427,7 @@
     try { obj = JSON.parse(raw); }
     catch (parseErr) { rescue("parse failed", parseErr); return null; }
 
-    var norm = normalize(obj);
+    var norm = M.normalize(obj);
     if (!norm) { rescue("shape invalid"); return null; }
     return norm;
   }
@@ -357,7 +445,9 @@
   function dbInit() {
     db = dbLoad();
     if (!db) { db = seedDb(); dbPersist(); }
+    IX = null;
   }
+  function ix() { if (!IX) IX = HC.index(db); return IX; }
 
   // ===== QUERY HELPERS =====
   function habitById(id) {
@@ -373,66 +463,64 @@
     }
     return out;
   }
-  // completed = comp entity exists AND not tombstoned
-  function compKey(habitId, dateK) { return habitId + "|" + dateK; }
   // The rules live in habits/core.js (OrosHabitsCore), shared with the
-  // Calendar feed and the Today summary.
-  var HC = window.OrosHabitsCore;
-  function isDone(habitId, dateK) { return HC.isDone(db, habitId, dateK); }
-  // Schedule: empty days = flexible (any day counts), subset = those
-  // weekdays only, Monday = 0 (OrosHabitsCore.schedIdx).
-  // HB-1: flexible habits (days=[] = any day) are interactable
-  // everywhere but excluded from rate-based metrics (perfect days,
-  // consistency ranking). They count toward total completions.
+  // Calendar feed, the Today summary and the shell's reminder engine.
+  // Done: yes / no = ticked; measurable = the day's value meets the
+  // target. Schedule: Monday = 0; empty days = flexible; X per week /
+  // month = any day, judged per period.
+  // HB-1: flexible habits are interactable everywhere but excluded
+  // from rate-based metrics (perfect days, consistency ranking).
+  function isDone(habitId, dateK) { return HC.isDone(ix(), habitId, dateK); }
   function isScheduledOn(habit, d) { return HC.isScheduledOn(habit, dateKey(d)); }
-
-  function isFlexible(habit) { return !habit.days.length; }
+  function isSkipped(habitId, dateK) { return HC.isSkipped(ix(), habitId, dateK); }
+  function noteOn(habitId, dateK) { return HC.noteOn(ix(), habitId, dateK); }
+  function valueOn(habitId, dateK) { return HC.valueOn(ix(), habitId, dateK); }
+  function isFlexible(habit) { return HC.isFlexible(habit); }
+  function isNum(habit) { return HC.isNum(habit); }
   function freqBadge(habit) {
+    var pr = HC.perOf(habit);
+    if (pr) return fmt(pr.p === "w" ? "freq.w" : "freq.m", pr.n);
     if (!habit.days.length) return t("freq.any");
     if (habit.days.length === 7) return t("freq.daily");
-    return fmt("freq.n", habit.days.length);
+    return fmt("freq.days", habit.days.length);
   }
+  function todayKey() { return dateKey(todayStart()); }
 
-  // ===== STREAK ENGINE (schedule-aware — audits #1, #2) =====
-  // Consecutive chain walking backwards: completed day extends,
-  // unscheduled day is SKIPPED (transparent), scheduled-but-missed
-  // day breaks the chain.
-  function currentStreak(habit) {
-    var streak = 0;
-    var d = todayStart();
-    // today not done yet is NOT a break — grace starts from today
-    if (!isDone(habit.id, dateKey(d))) d = addDays(d, -1);
-    var guard = 0;
-    while (guard++ < 3650) {
-      if (isDone(habit.id, dateKey(d))) { streak++; d = addDays(d, -1); }
-      else if (isScheduledOn(habit, d)) break;
-      else d = addDays(d, -1);
-    }
-    return streak;
+  // ===== NUMBERS =====
+  function fmtNum(v) {
+    if (v === null || v === undefined || !isFinite(v)) return "";
+    return new Intl.NumberFormat(LANG === "el" ? "el-GR" : "en-GB", { maximumFractionDigits: 2 }).format(v);
   }
-
-  // Longest: same rule, scanned forward from the first comp.
-  function longestStreak(habit) {
-    var dates = [];
-    for (var i = 0; i < db.comps.length; i++) {
-      var c = db.comps[i];
-      if (c.habitId === habit.id && !c.del) dates.push(c.date);
+  function fmtCompact(v) {
+    if (v === null || !isFinite(v)) return "";
+    var a = Math.abs(v);
+    if (a >= 1000) {
+      var k = a >= 10000 ? Math.round(v / 1000) : Math.round(v / 100) / 10;
+      return fmtNum(k) + "k";
     }
-    if (!dates.length) return 0;
-    dates.sort();
-
-    var longest = 0, current = 0;
-    var d = new Date(dates[0] + "T00:00:00");
-    var today = todayStart();
-    var guard = 0;
-    while (d <= today && guard++ < 3650) {
-      if (isDone(habit.id, dateKey(d))) { current++; if (current > longest) longest = current; }
-      else if (isScheduledOn(habit, d)) { current = 0; }
-      // unscheduled days are skipped — current survives
-      d = addDays(d, 1);
-    }
-    return longest;
+    return fmtNum(a >= 100 ? Math.round(v) : Math.round(v * 10) / 10);
   }
+  function withUnit(v, u) { return fmtNum(v) + (u ? " " + u : ""); }
+  function targetText(h) {
+    return tpl(h.num.c === "le" ? "target.le" : "target.ge", { t: withUnit(h.num.t, h.num.u) });
+  }
+  function hm(min) { return pad(Math.floor(min / 60)) + ":" + pad(min % 60); }
+
+  // ===== STREAKS + STRENGTH (core.js) =====
+  // Days: a skipped or unscheduled day is transparent, a scheduled
+  // missed day breaks, today not done yet is not a break. X per week /
+  // month: whole periods.
+  function streakInfo(habit) { return HC.streaks(ix(), habit, todayKey()); }
+  function currentStreak(habit) { return streakInfo(habit).cur; }
+  function longestStreak(habit) { return streakInfo(habit).best; }
+  function strength(habit) { return HC.score(ix(), habit, todayKey()); }
+  function streakTipOf(st) {
+    if (!st.cur) return t("streak.zero");
+    if (st.unit === "w") return fmt("streak.w", st.cur);
+    if (st.unit === "m") return fmt("streak.m", st.cur);
+    return fmt(st.cur === 1 ? "streak" : "streaks", st.cur);
+  }
+  function streakSuffix(st) { return st.unit === "w" ? " " + t("unit.w") : (st.unit === "m" ? " " + t("unit.m") : ""); }
 
   // ===== APP FEEDS (read-only rows from other apps) =====
   // Generic contract: a provider app ships ONE script that
@@ -442,9 +530,12 @@
   //     icon (static inline SVG from the provider's own code),
   //     keys [localStorage keys it reads — Habits re-renders when
   //           one of them changes, e.g. after a pull],
-  //     read() → null (hide the row) | { days: {"YYYY-MM-DD": true} } }
+  //     unit{en,el} (measurable rows only),
+  //     read() → null (hide the row) | { days: {"YYYY-MM-DD": true},
+  //              vals?: {"YYYY-MM-DD": number}, goal?: number } }
   // Feed rows are daily, never stored, never synced, never counted
-  // in Stats; a tap opens the provider app. First provider: Water.
+  // in Stats; a tap opens the provider app. Providers: Water,
+  // Workouts, Micro-Zen, Steps (habits/steps.js, from Health).
   var FEED_ID_RE = /^[a-z0-9-]{1,30}$/;
   var FEED_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
   function feedText(v) {
@@ -463,14 +554,18 @@
       try { got = f.read(); } catch (e) { got = null; }
       if (!got || !got.days || typeof got.days !== "object") continue;
       seen[f.id] = true;
+      var vals = got.vals && typeof got.vals === "object" ? got.vals : null;
       out.push({
         id: String(f.id),
         app: String(f.app),
         name: feedText(f.name) || String(f.id),
         hint: feedText(f.hint),
+        unit: vals ? feedText(f.unit).slice(0, 16) : "",
         color: FEED_COLOR_RE.test(f.color) ? f.color : COLORS[3],
         icon: (typeof f.icon === "string" && f.icon.indexOf("<svg") === 0) ? f.icon : ICONS.check,
-        days: got.days
+        days: got.days,
+        vals: vals,
+        goal: typeof got.goal === "number" && isFinite(got.goal) && got.goal > 0 ? got.goal : 0
       });
     }
     return out;
@@ -484,6 +579,15 @@
     return out;
   }
   function feedDone(f, dateK) { return f.days[dateK] === true; }
+  function feedVal(f, dateK) {
+    var v = f.vals ? f.vals[dateK] : undefined;
+    return typeof v === "number" && isFinite(v) ? v : null;
+  }
+  function feedTip(f, dateK) {
+    var v = feedVal(f, dateK);
+    if (v === null) return f.hint;
+    return withUnit(v, f.unit) + (f.goal ? " / " + fmtNum(f.goal) : "");
+  }
   // Every day counts (a feed has no schedule); today not done yet is
   // not a break — the same grace as currentStreak().
   function feedStreak(f) {
@@ -503,15 +607,18 @@
   function touch(o) { o.mtime = Date.now(); }
 
   function save() {
+    IX = null;
     dbPersist();
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  function addHabit(name, icon, color, days) {
-    var h = habitDefaults({
-      id: uid(), name: name, icon: icon, color: color,
-      days: days, mtime: Date.now(), del: false
+  function addHabit(fields) {
+    var h = M.normHabit({
+      id: M.uid(), name: fields.name, icon: fields.icon, color: fields.color,
+      days: fields.days, num: fields.num, per: fields.per, rem: fields.rem,
+      mtime: Date.now(), del: false
     });
+    if (!h) return null;
     db.habits.push(h);
     save();
     return h;
@@ -520,145 +627,52 @@
   // HB-9: writes ONLY the fields in `patch` onto the CURRENT row.
   // A field the user did not touch keeps whatever another device
   // wrote meanwhile; an edit newer than a tombstone resurrects (R17).
+  // A null value removes an optional field (num, per, rem).
   function updateHabit(h, patch) {
-    for (var k in patch) if (patch.hasOwnProperty(k)) h[k] = patch[k];
+    for (var k in patch) {
+      if (!patch.hasOwnProperty(k)) continue;
+      if (patch[k] === null) delete h[k]; else h[k] = patch[k];
+    }
+    if (h.per) h.days = [];
     h.del = false;
     touch(h);
     save();
   }
 
   function deleteHabit(h) {
-    // tombstone the habit AND all its comps — merge-propagated,
+    // tombstone the habit AND all its ticks — merge-propagated,
     // but a comp edit with fresher mtime still resurrects (R17)
     h.del = true;
     touch(h);
     var now = Date.now();
     for (var i = 0; i < db.comps.length; i++) {
       if (db.comps[i].habitId === h.id) {
-        if (!db.comps[i].del) { db.comps[i].del = true; db.comps[i].mtime = now; }
+        if (!db.comps[i].del) { db.comps[i].del = true; db.comps[i].mtime = Math.max(now, db.comps[i].mtime + 1); }
       }
     }
     save();
   }
 
-  // Toggle completion for a habit/day. Completion = entity with
-  // !del. Un-complete = tombstone (LWW merge friendly). Re-complete
-  // = resurrect with fresh mtime.
+  // Yes / no tick for a habit/day. Completion = entity with !del.
+  // Un-complete = tombstone (LWW merge friendly). Re-complete =
+  // resurrect with fresh mtime (model.js setTick).
   function toggleComp(habit, d) {
-    var k = compKey(habit.id, dateKey(d));
-    var comp = null;
-    for (var i = 0; i < db.comps.length; i++) {
-      if (db.comps[i].id === k) { comp = db.comps[i]; break; }
-    }
-    if (comp && !comp.del) {
-      comp.del = true;
-      touch(comp);
-    } else if (comp) {
-      comp.del = false;
-      touch(comp);
-    } else {
-      db.comps.push(compDefaults({
-        id: k, habitId: habit.id, date: dateKey(d),
-        mtime: Date.now(), del: false
-      }));
-    }
+    M.setTick(db, habit.id, dateKey(d), undefined, Date.now());
+    save();
+  }
+  function quickAdd(habit, dateK, sign) {
+    if (!isNum(habit)) return;
+    M.addValue(db, habit.id, dateK, DEVICE, sign * (habit.num.s || 1), Date.now());
     save();
   }
 
-  // ===== MERGE ENGINE (deterministic, symmetric) =====
-  // Strict mergeRow variants: NO volatile defaults (no uid(), no
-  // Date.now()) — invalid rows are DROPPED so both devices compute
-  // byte-identical merges (divergence-guard safe).
-  function mergeHabitRow(raw) {
-    if (!raw || typeof raw !== "object") return null;
-    if (typeof raw.id !== "string" || !raw.id) return null;
-    if (typeof raw.name !== "string") return null;
-    if (!raw.name && !raw.del) return null;     // HB-11: same rule as normalize()
-    if (!(typeof raw.mtime === "number" && isFinite(raw.mtime))) return null;
-    var days = [];
-    if (Array.isArray(raw.days)) {
-      var seen = {};
-      for (var i = 0; i < raw.days.length; i++) {
-        var dy = raw.days[i];
-        if (typeof dy === "number" && dy >= 0 && dy <= 6 && !seen[dy]) { seen[dy] = true; days.push(dy); }
-      }
-      days.sort();
-    }
-    return {
-      id: raw.id,
-      name: raw.name.slice(0, 200),
-      icon: ICONS[raw.icon] ? raw.icon : "check",
-      color: COLORS.indexOf(raw.color) !== -1 ? raw.color : COLORS[0],
-      days: days,
-      mtime: raw.mtime,
-      del: !!raw.del
-    };
-  }
-  function mergeCompRow(raw) {
-    if (!raw || typeof raw !== "object") return null;
-    if (typeof raw.id !== "string" || !raw.id) return null;
-    if (typeof raw.habitId !== "string" || !raw.habitId) return null;
-    if (!(typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date))) return null;
-    if (!(typeof raw.mtime === "number" && isFinite(raw.mtime))) return null;
-    return { id: raw.id, habitId: raw.habitId, date: raw.date, mtime: raw.mtime, del: !!raw.del };
-  }
-
-  function mergeBy(key, localArr, remoteArr, rowFn) {
-    var map = {};
-    function put(e) { map[e[key]] = e; }
-    var i, r, l, ex;
-    for (i = 0; i < remoteArr.length; i++) {
-      r = rowFn(remoteArr[i]);
-      if (r) put(r);
-    }
-    for (i = 0; i < localArr.length; i++) {
-      l = rowFn(localArr[i]);
-      if (!l) continue;
-      ex = map[l[key]];
-      if (!ex) { put(l); continue; }
-      if (l.mtime > ex.mtime) put(l);
-      else if (l.mtime < ex.mtime) put(ex);
-      else if (l.del !== ex.del) put(l.del ? l : ex);      // tie → tombstone
-      // HB-10: final tie-break on the whole row (lexical JSON). The
-      // keys are equal here, so the old key compare always kept the
-      // LOCAL row: two devices with equal stamps kept different rows.
-      else put(JSON.stringify(l) >= JSON.stringify(ex) ? l : ex);
-    }
-    var out = [];
-    for (var k in map) if (map.hasOwnProperty(k)) out.push(map[k]);
-    out.sort(function (a, b) { return a[key] < b[key] ? -1 : (a[key] > b[key] ? 1 : 0); });
-    return out;
-  }
-
-  function mergeData(local, remote) {
-    if (!local || !remote) return remote || local || null;
-    // HB-11: the merge returns the SAME canonical form as the getter
-    // (rows sorted by id, completion tombstones pruned by one rule)
-    return canonData({
-      ver: Math.max(local.ver || 1, remote.ver || 1),
-      habits: mergeBy("id", local.habits || [], remote.habits || [], mergeHabitRow),
-      comps: mergeBy("id", local.comps || [], remote.comps || [], mergeCompRow)
-    });
-  }
-
-  // HB-11: ONE canonical form for getter and merge output. HB-3's
-  // pruning rule lives here only: a completion tombstone older than
-  // 30 days before the newest completion stamp in the data stops
-  // travelling. Rows sorted by id; copies only (never live rows).
-  function byId(a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); }
-  function canonData(d) {
-    var hs = (d.habits || []).slice().sort(byId);
-    var cs = (d.comps || []).slice().sort(byId);
-    var maxMtime = 0, i;
-    for (i = 0; i < cs.length; i++) if (cs[i].mtime > maxMtime) maxMtime = cs[i].mtime;
-    var CUTOFF = maxMtime - 30 * 24 * 60 * 60 * 1000;
-    var comps = [];
-    for (i = 0; i < cs.length; i++) {
-      if (cs[i].del && cs[i].mtime < CUTOFF) continue;
-      comps.push(cs[i]);
-    }
-    return JSON.parse(JSON.stringify({ ver: d.ver || DATA_VER, habits: hs, comps: comps }));
-  }
+  // ===== MERGE ENGINE (model.js) =====
+  // Deterministic and symmetric; habits LWW per row, completions
+  // field by field (tick, value shares per device, skip, note), the
+  // Steps setting as one record. HB-11: the merge returns the SAME
+  // canonical form as the getter (rows sorted by id, empty
+  // completion rows pruned by one rule, HB-3).
+  function mergeData(local, remote) { return M.mergeData(local, remote); }
 
   // ===== SYNC REGISTRATION =====
   function registerSync() {
@@ -675,22 +689,21 @@
   }
 
   function sliceGet() {
-    // HB-3: prune tombstones deterministically — cutoff is based on
-    // the newest mtime in the dataset (payload-internal), NOT wall
-    // clock. HB-11: the rule and the sort live in canonData, shared
-    // with the merge. canonData returns a deep copy: live db rows
-    // never leak into the sync layer.
-    return canonData(db);
+    // HB-3 / HB-11: canonical deep copy — live db rows never leak into
+    // the sync layer; pruning is payload-internal, never wall clock.
+    return M.canon(db);
   }
 
   function sliceSet(data, info) {
     if (!data || typeof data !== "object" ||
         !Array.isArray(data.habits) || !Array.isArray(data.comps)) return;
-    var next = normalize(data);
+    var next = M.normalize(data);
     if (!next) return;
     db = next;
+    IX = null;
     dbPersist();
     render();                          // pull-fed path: NEVER dirty
+    refreshOpenDialogs();
     if (info && info.merged) transientNote(t("toast.merged"));
   }
 
@@ -734,6 +747,7 @@
     els.btnVCal  = document.getElementById("btn-vcal");
     els.btnVStats = document.getElementById("btn-vstats");
     els.btnNow   = document.getElementById("btn-now");
+    els.btnSet   = document.getElementById("btn-set");
   }
 
   function shortMonth(d) {
@@ -783,8 +797,14 @@
     els.btnVList.classList.toggle("active", viewMode === "list");
     els.btnVCal.classList.toggle("active", viewMode === "cal");
     els.btnVStats.classList.toggle("active", viewMode === "stats");
+    els.btnSet.innerHTML = ICO_GEAR;
+    els.btnSet.title = t("settings");
+    els.btnSet.setAttribute("aria-label", t("settings"));
     els.btnNow.innerHTML = ICO_TODAY;
     els.btnNow.title = t("today");
+    els.btnNow.setAttribute("aria-label", t("today"));
+    els.btnPrev.setAttribute("aria-label", t(viewMode === "cal" ? "month.prev" : "week.prev"));
+    els.btnNext.setAttribute("aria-label", t(viewMode === "cal" ? "month.next" : "week.next"));
     els.btnPrev.innerHTML = ICO_CHEVL;
     els.btnNext.innerHTML = ICO_CHEVR;
     // stats view has no period navigation → disable the cluster
@@ -796,8 +816,101 @@
     document.title = t("app.name") + " · orOS";
   }
 
+  // ---- day cells: one state vocabulary for list, calendar, heatmap ----
+  function alphaHex(a) {
+    var n = Math.max(0, Math.min(255, Math.round(a * 255)));
+    return (n < 16 ? "0" : "") + n.toString(16);
+  }
+  function cellInfo(h, d, todayK) {
+    var k = dateKey(d);
+    var done = isDone(h.id, k);
+    var skip = !done && isSkipped(h.id, k);
+    var note = noteOn(h.id, k);
+    var val = isNum(h) ? valueOn(h.id, k) : null;
+    var future = k > todayK;
+    var fixedOff = HC.isFixed(h) && !isScheduledOn(h, d);
+    var prog = isNum(h) ? HC.progress(ix(), h, k) : (done ? 1 : 0);
+    return {
+      k: k, d: d, done: done, skip: skip, note: note, val: val, future: future,
+      fixedOff: fixedOff, prog: prog, today: k === todayK,
+      // past/today AND (scheduled OR flexible OR already holds something → undo)
+      locked: future || (fixedOff && !done && !skip && !note && val === null)
+    };
+  }
+  function cellTip(h, c) {
+    var parts = [shortDate(c.d)];
+    if (c.val !== null) parts.push(withUnit(c.val, h.num.u));
+    if (c.skip) parts.push(t("skipped"));
+    if (c.note) parts.push("“" + c.note + "”");
+    if (!c.locked) parts.push(t(isNum(h) ? "dot.tip.num" : "dot.tip"));
+    return parts.join(" · ");
+  }
+  function cellHtml(h, c, base, label, attrs) {
+    var cls = base;
+    if (c.done) cls += " completed";
+    else if (c.skip) cls += " skipped";
+    else if (c.prog > 0) cls += " partial";
+    if (c.note) cls += " noted";
+    if (c.today) cls += " today";
+    if (c.future) cls += " future";
+    if (c.fixedOff && !c.done && !c.skip) cls += " not-scheduled";
+    var style = "";
+    if (c.done) style = "background:" + h.color + ";border-color:" + h.color;
+    else if (c.prog > 0 && !c.skip) style = "background:" + h.color + alphaHex(0.18 + 0.4 * c.prog) + ";border-color:" + h.color;
+    var text = (isNum(h) && c.val !== null) ? fmtCompact(c.val) : label;
+    var tip = cellTip(h, c);
+    return '<button type="button" class="' + cls + '"' + (style ? ' style="' + style + '"' : "") +
+      ' title="' + esc(tip) + '" aria-label="' + esc(h.name + " · " + tip) + '" ' + attrs + ">" + esc(text) + "</button>";
+  }
+  // small strength ring + percent
+  function ringHtml(pct, color) {
+    var r = 6, len = 2 * Math.PI * r, on = len * pct / 100;
+    return '<svg class="ring" viewBox="0 0 16 16" aria-hidden="true">' +
+      '<circle cx="8" cy="8" r="6" class="ring-bg"/>' +
+      '<circle cx="8" cy="8" r="6" class="ring-fg" style="stroke:' + color + '" stroke-dasharray="' +
+      on.toFixed(2) + " " + len.toFixed(2) + '" transform="rotate(-90 8 8)"/></svg>';
+  }
+  function strengthHtml(h, sc) {
+    return '<span class="habit-strength" title="' + esc(tpl("strength.tip", { n: sc })) + '">' +
+      ringHtml(sc, h.color) + "<span>" + sc + "%</span></span>";
+  }
+  function periodBadge(h) {
+    var pr = HC.perOf(h);
+    var txt = freqBadge(h);
+    if (pr) {
+      var pc = HC.periodCount(ix(), h, todayKey());
+      txt += " · " + Math.min(pc.done + pc.skip, pr.n) + "/" + pr.n;
+      return '<span class="habit-freq-badge" title="' + esc(tpl(pr.p === "w" ? "period.w" : "period.m",
+        { a: pc.done + pc.skip, b: pr.n })) + '">' + esc(txt) + "</span>";
+    }
+    return '<span class="habit-freq-badge">' + esc(txt) + "</span>";
+  }
+  function bellHtml(h) {
+    if (typeof h.rem !== "number") return "";
+    var tip = tpl("rem.at", { t: hm(h.rem) });
+    return '<span class="habit-bell" title="' + esc(tip) + '" aria-label="' + esc(tip) + '"><span class="ico">' + ICO_BELL + "</span></span>";
+  }
+  // measurable: today's value with quick − / +
+  function qtyHtml(h) {
+    if (!isNum(h)) return "";
+    var v = valueOn(h.id, todayKey());
+    var txt = fmtNum(v === null ? 0 : v) + " / " + withUnit(h.num.t, h.num.u);
+    return '<span class="qty">' +
+      '<button type="button" class="qbtn" data-act="dec" data-h="' + esc(h.id) + '" title="' + esc(t("dec")) + '" aria-label="' + esc(t("dec")) + '">' + ICO_MINUS + "</button>" +
+      '<span class="qty-val" title="' + esc(t("today") + " · " + targetText(h)) + '">' + (h.num.c === "le" ? "≤ " : "") + esc(txt) + "</span>" +
+      '<button type="button" class="qbtn" data-act="inc" data-h="' + esc(h.id) + '" title="' + esc(t("inc")) + '" aria-label="' + esc(t("inc")) + '">' + ICO_PLUS + "</button>" +
+      "</span>";
+  }
+  function emptyHtml() {
+    return '<div class="empty">' + ICONS.check +
+      '<h2>' + esc(t("empty.title")) + "</h2>" +
+      "<p>" + esc(t("empty.desc")) + "</p>" +
+      '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
+      "</div>";
+  }
+
   // ---- main render (list view, Wave 1) ----
-    function render() {
+  function render() {
     renderStatics();
     renderPeriod();
     if (viewMode === "stats") { renderStats(); return; }
@@ -807,55 +920,44 @@
     var html = "";
 
     if (!hs.length) {
-      html =
-        '<div class="empty">' + ICONS.check +
-        '<h2>' + esc(t("empty.title")) + "</h2>" +
-        "<p>" + esc(t("empty.desc")) + "</p>" +
-        '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
-        "</div>";
+      html = emptyHtml();
     } else {
       var week = weekDays(period);
-      var today = todayStart();
+      var todayK = todayKey();
       html += '<div class="habit-list">';
 
       for (var i = 0; i < hs.length; i++) {
         var h = hs[i];
-        var st = currentStreak(h);
+        var st = streakInfo(h);
+        var sc = strength(h);
 
         // week dots — Monday-first
         var dots = "";
         for (var w = 0; w < 7; w++) {
-          var d = week[w];
-          var done = isDone(h.id, dateKey(d));
-          var sched = isScheduledOn(h, d);
-          var cls = "wdot";
-          if (done) cls += " completed";
-          if (isSameDayLocal(d, today)) cls += " today";
-          if (d > today) cls += " future";
-          if (!sched && !done && !isFlexible(h)) cls += " not-scheduled";
-          var wStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
-          dots += '<button type="button" class="' + cls + '"' + wStyle + ' data-act="dot" data-h="' + esc(h.id) + '" data-i="' + w + '">' +
-                  esc(t("dkey." + w)) + "</button>";
+          var c = cellInfo(h, week[w], todayK);
+          dots += cellHtml(h, c, "wdot", t("dkey." + w), 'data-act="dot" data-h="' + esc(h.id) + '" data-i="' + w + '"');
         }
-
-        var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
 
         html +=
           '<div class="habit-row" data-h="' + esc(h.id) + '">' +
-            '<div class="habit-icon-box" style="background:' + h.color + '33;color:' + h.color + '">' +
+            '<div class="habit-icon-box" data-act="detail" data-h="' + esc(h.id) + '" role="button" tabindex="0" title="' + esc(h.name) +
+              '" style="background:' + h.color + '33;color:' + h.color + '">' +
               '<span class="ico">' + ICONS[h.icon] + "</span></div>" +
             '<div class="habit-info">' +
-              '<div class="habit-name">' + esc(h.name) + "</div>" +
+              '<div class="habit-name" data-act="detail" data-h="' + esc(h.id) + '" role="button" tabindex="0">' + esc(h.name) + "</div>" +
               '<div class="habit-meta">' +
-                '<span class="habit-streak" title="' + esc(streakTip) + '">' +
+                '<span class="habit-streak" title="' + esc(streakTipOf(st)) + '">' +
                   '<span class="ico">' + ICONS.fire + "</span>" +
-                  '<span class="habit-streak-value' + (st ? "" : " zero") + '">' + st + "</span></span>" +
-                '<span class="habit-freq-badge">' + esc(freqBadge(h)) + "</span>" +
+                  '<span class="habit-streak-value' + (st.cur ? "" : " zero") + '">' + st.cur + esc(st.cur ? streakSuffix(st) : "") + "</span></span>" +
+                strengthHtml(h, sc) +
+                periodBadge(h) +
+                bellHtml(h) +
+                qtyHtml(h) +
               "</div></div>" +
             '<div class="week-dots">' + dots + "</div>" +
             '<div class="habit-actions">' +
-              '<button type="button" class="btn ghost" data-act="edit" data-h="' + esc(h.id) + '" title="' + esc(t("rename")) + '">' + ICO_PEN + "</button>" +
-              '<button type="button" class="btn ghost" data-act="del"  data-h="' + esc(h.id) + '" title="' + esc(t("del")) + '">' + ICO_TRASH + "</button>" +
+              '<button type="button" class="btn ghost" data-act="edit" data-h="' + esc(h.id) + '" title="' + esc(t("rename")) + '" aria-label="' + esc(t("rename")) + '">' + ICO_PEN + "</button>" +
+              '<button type="button" class="btn ghost" data-act="del"  data-h="' + esc(h.id) + '" title="' + esc(t("del")) + '" aria-label="' + esc(t("del")) + '">' + ICO_TRASH + "</button>" +
             "</div>" +
           "</div>";
       }
@@ -867,7 +969,21 @@
   }
 
   // App feeds in the list view: same row anatomy, read-only dots
-  // (spans), one action that opens the provider app.
+  // (spans), one action that opens the provider app. A measurable
+  // feed (Steps) shows the value in its dots and today's value.
+  function feedDotHtml(f, d, today, base, label) {
+    var k = dateKey(d);
+    var done = feedDone(f, k);
+    var v = feedVal(f, k);
+    var cls = base + " feed";
+    var style = "";
+    if (done) { cls += " completed"; style = "background:" + f.color + ";border-color:" + f.color; }
+    else if (v !== null && f.goal) { cls += " partial"; style = "background:" + f.color + alphaHex(0.18 + 0.4 * Math.min(1, v / f.goal)) + ";border-color:" + f.color; }
+    if (isSameDayLocal(d, today)) cls += " today";
+    if (d > today) cls += " future";
+    return '<span class="' + cls + '"' + (style ? ' style="' + style + '"' : "") + ' title="' + esc(shortDate(d) + (v !== null ? " · " + feedTip(f, k) : "")) + '">' +
+      esc(v !== null ? fmtCompact(v) : label) + "</span>";
+  }
   function feedListHtml() {
     var feeds = feedRows();
     if (!feeds.length) return "";
@@ -878,18 +994,12 @@
       var f = feeds[i];
       var st = feedStreak(f);
       var dots = "";
-      for (var w = 0; w < 7; w++) {
-        var d = week[w];
-        var done = feedDone(f, dateKey(d));
-        var cls = "wdot feed";
-        if (done) cls += " completed";
-        if (isSameDayLocal(d, today)) cls += " today";
-        if (d > today) cls += " future";
-        var wStyle = done ? ' style="background:' + f.color + ";border-color:" + f.color + '"' : "";
-        dots += '<span class="' + cls + '"' + wStyle + ">" + esc(t("dkey." + w)) + "</span>";
-      }
+      for (var w = 0; w < 7; w++) dots += feedDotHtml(f, week[w], today, "wdot", t("dkey." + w));
       var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
       var open = t("feed.open").replace("{app}", f.name);
+      var tv = feedVal(f, dateKey(today));
+      var valHtml = f.vals ? '<span class="qty-val feed-val">' + esc(fmtNum(tv === null ? 0 : tv) +
+        (f.goal ? " / " + fmtNum(f.goal) : "") + (f.unit ? " " + f.unit : "")) + "</span>" : "";
       html +=
         '<div class="habit-row feed-row" data-feed="' + esc(f.id) + '">' +
           '<div class="habit-icon-box" style="background:' + f.color + '33;color:' + f.color + '">' +
@@ -901,6 +1011,7 @@
                 '<span class="ico">' + ICONS.fire + "</span>" +
                 '<span class="habit-streak-value' + (st ? "" : " zero") + '">' + st + "</span></span>" +
               '<span class="habit-freq-badge" title="' + esc(f.hint) + '">' + esc(t("feed.badge")) + "</span>" +
+              valHtml +
             "</div></div>" +
           '<div class="week-dots" title="' + esc(f.hint) + '">' + dots + "</div>" +
           '<div class="habit-actions">' +
@@ -916,11 +1027,9 @@
 
   // ===== CALENDAR VIEW (Wave 2) =====
   // Rows = living habits (sticky gutter: name + streak), columns =
-  // days of the month, Monday-first nowhere implied here (a month
-  // grid has no week rows). Cells reuse the EXACT state vocabulary
-  // and toggle rules of the list view (.wdot twins): ONE data path,
-  // two presentations. Future days locked; unscheduled+hollow cells
-  // non-interactive unless already completed (undo allowed).
+  // days of the month. Cells reuse the EXACT state vocabulary and
+  // toggle rules of the list view (cellInfo / cellHtml): ONE data
+  // path, two presentations. The gutter opens the habit's details.
   function monthDays(anchor) {
     var x = new Date(anchor);
     x.setDate(1);
@@ -939,16 +1048,10 @@
     var feeds = feedRows();
     var days = monthDays(period);
     var today = todayStart();
+    var todayK = dateKey(today);
     var html = "";
 
-    if (!hs.length) {
-      html =
-        '<div class="empty">' + ICONS.check +
-        '<h2>' + esc(t("empty.title")) + "</h2>" +
-        "<p>" + esc(t("empty.desc")) + "</p>" +
-        '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
-        "</div>";
-    }
+    if (!hs.length) html = emptyHtml();
     if (hs.length || feeds.length) {
       html += '<div class="cal-wrap"><table class="cal-table">';
 
@@ -963,33 +1066,23 @@
 
       for (var r = 0; r < hs.length; r++) {
         var h = hs[r];
-        var st = currentStreak(h);
-        var streakTip = st ? fmt(st === 1 ? "streak" : "streaks", st) : t("streak.zero");
+        var st = streakInfo(h);
 
         html +=
           "<tr>" +
-            '<td class="cal-gutter"><div class="cal-gcell" data-act="gedit" data-h="' + esc(h.id) +
-              '" title="' + esc(t("rename")) + '">' +
+            '<td class="cal-gutter"><div class="cal-gcell" data-act="detail" data-h="' + esc(h.id) +
+              '" role="button" tabindex="0" title="' + esc(h.name) + '">' +
               '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
                 '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
               '<span class="cal-gname">' + esc(h.name) + "</span>" +
-              '<span class="cal-gstreak" title="' + esc(streakTip) + '">' +
+              '<span class="cal-gstreak" title="' + esc(streakTipOf(st)) + '">' +
                 '<span class="ico">' + ICONS.fire + "</span>" +
-                '<span class="cal-gstreak-value' + (st ? "" : " zero") + '">' + st + "</span></span>" +
+                '<span class="cal-gstreak-value' + (st.cur ? "" : " zero") + '">' + st.cur + "</span></span>" +
             "</div></td>";
 
         for (var c = 0; c < days.length; c++) {
-          var d = days[c];
-          var done = isDone(h.id, dateKey(d));
-          var sched = isScheduledOn(h, d);
-          var cls = "cdot";
-          if (done) cls += " completed";
-          if (isSameDayLocal(d, today)) cls += " today";
-          if (d > today) cls += " future";
-          if (!sched && !done && !isFlexible(h)) cls += " not-scheduled";
-          var cStyle = done ? ' style="background:' + h.color + ";border-color:" + h.color + '"' : "";
-          html += '<td><button type="button" class="' + cls + '"' + cStyle + ' data-act="cdot" data-h="' + esc(h.id) +
-                  '" data-c="' + c + '">' + dayNum(d) + "</button></td>";
+          var ci = cellInfo(h, days[c], todayK);
+          html += "<td>" + cellHtml(h, ci, "cdot", dayNum(days[c]), 'data-act="cdot" data-h="' + esc(h.id) + '" data-c="' + c + '"') + "</td>";
         }
         html += "</tr>";
       }
@@ -1011,14 +1104,7 @@
                 '<span class="cal-gstreak-value' + (fst ? "" : " zero") + '">' + fst + "</span></span>" +
             "</div></td>";
         for (var fc = 0; fc < days.length; fc++) {
-          var fd = days[fc];
-          var fDone = feedDone(f, dateKey(fd));
-          var fCls = "cdot feed";
-          if (fDone) fCls += " completed";
-          if (isSameDayLocal(fd, today)) fCls += " today";
-          if (fd > today) fCls += " future";
-          var fStyle = fDone ? ' style="background:' + f.color + ";border-color:" + f.color + '"' : "";
-          html += '<td><span class="' + fCls + '"' + fStyle + ">" + dayNum(fd) + "</span></td>";
+          html += "<td>" + feedDotHtml(f, days[fc], today, "cdot", dayNum(days[fc])) + "</td>";
         }
         html += "</tr>";
       }
@@ -1028,56 +1114,79 @@
   }
 
   // ===== STATS VIEW (Wave 3) =====
-  // Read-only analytics over the SAME data path (isDone/isScheduledOn):
-  // no second source of truth, no writes, nothing enters the sync slice.
-  // Range pref (30/90/all) is device-local, like the view pref.
+  // Read-only analytics over the SAME data path (core.js): no second
+  // source of truth, no writes, nothing enters the sync slice. Range
+  // pref (30/90/all) is device-local, like the view pref. Skipped days
+  // leave the rates; X-per-period habits are rated per period.
   function parseDateKey(s) {
     var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
     return p ? new Date(+p[1], +p[2] - 1, +p[3]) : null;
   }
 
-    function rangeStart() {
-    if (!statRange) {                    // all-time → earliest completion
+  function rangeStart() {
+    if (!statRange) {                    // all-time → earliest day with data
       var out = todayStart();
-      var comps = db.comps;   // H1: rawConps() never existed — tombstones
-                              // are filtered by the .del check below
-      for (var i = 0; i < comps.length; i++) {
-        if (comps[i].del) continue;
-        var cd = parseDateKey(comps[i].date);
+      var first = ix().first;
+      for (var k in first) {
+        if (!first.hasOwnProperty(k)) continue;
+        var cd = parseDateKey(first[k]);
         if (cd && cd < out) out = cd;
       }
       return out;
     }
     return addDays(todayStart(), -(statRange - 1));
   }
+  // X per period: periods met / periods counted (the current one only
+  // once met: it is still running)
+  function periodRate(h, start, today) {
+    var pr = HC.perOf(h), sK = dateKey(start), tK = dateKey(today);
+    var first = ix().first[h.id];
+    if (!pr || !first) return { met: 0, total: 0 };
+    var from = first > sK ? first : sK;
+    var p = HC.periodStart(from, pr.p), cur = HC.periodStart(tK, pr.p), met = 0, total = 0, g = 0;
+    while (p <= cur && g++ < 2000) {
+      var ok = HC.periodMet(ix(), h, p);
+      if (ok) met++;
+      if (ok || p !== cur) total++;
+      p = HC.addDays(HC.periodEnd(p, pr.p), 1);
+    }
+    return { met: met, total: total };
+  }
   function computeStats(hs) {
     var start = rangeStart();
     var today = todayStart();
+    var sK = dateKey(start), tK = dateKey(today);
     var per = [], i, j;
-    for (i = 0; i < hs.length; i++) per.push({ h: hs[i], sched: 0, done: 0 });
+    for (i = 0; i < hs.length; i++) per.push({ h: hs[i], sched: 0, done: 0, sum: 0, logged: 0 });
 
-        var livingIds = {};
-    for (i = 0; i < hs.length; i++) livingIds[hs[i].id] = true;
+    var byId = {};
+    for (i = 0; i < hs.length; i++) byId[hs[i].id] = per[i];
 
     var totalComps = 0;
     var comps = db.comps;
     for (i = 0; i < comps.length; i++) {
-      if (comps[i].del) continue;
+      var p0 = byId[comps[i].habitId];
       // HB-5: skip comps whose habit has been deleted
-      if (!livingIds[comps[i].habitId]) continue;
-      var cd = parseDateKey(comps[i].date);
-      if (cd && cd >= start && cd <= today) totalComps++;
+      if (!p0 || comps[i].date < sK || comps[i].date > tK) continue;
+      if (isDone(comps[i].habitId, comps[i].date)) totalComps++;
+      if (isNum(p0.h)) {
+        var v = HC.compValue(comps[i]);
+        if (v !== null) { p0.sum += v; p0.logged++; }
+      }
     }
 
     var perfect = 0, dayCount = 0;
     for (var d = new Date(start); d <= today; d = addDays(d, 1)) {
       dayCount++;
+      var dk = dateKey(d);
       var any = false, allDone = true;
       for (j = 0; j < hs.length; j++) {
-        if (isScheduledOn(hs[j], d)) {
+        if (isScheduledOn(hs[j], d) && !isSkipped(hs[j].id, dk)) {
+          var dn = isDone(hs[j].id, dk);
+          if (dk === tK && !dn) continue;          // today not done yet is not a miss
           any = true;
           per[j].sched++;
-          if (isDone(hs[j].id, dateKey(d))) per[j].done++;
+          if (dn) per[j].done++;
           else allDone = false;
         }
       }
@@ -1088,16 +1197,17 @@
       totalComps: totalComps,
       perfect: perfect,
       dayCount: dayCount,
-      avgWeek: dayCount > 0 ? (totalComps / (dayCount / 7)).toFixed(1) : "0"
+      avgWeek: dayCount > 0 ? fmtNum(Math.round(totalComps / (dayCount / 7) * 10) / 10) : "0"
     };
   }
   function halfRate(hs, from, to) {
     var sched = 0, done = 0;
     for (var d = new Date(from); d <= to; d = addDays(d, 1)) {
+      var dk = dateKey(d);
       for (var j = 0; j < hs.length; j++) {
-        if (isScheduledOn(hs[j], d)) {
+        if (isScheduledOn(hs[j], d) && !isSkipped(hs[j].id, dk)) {
           sched++;
-          if (isDone(hs[j].id, dateKey(d))) done++;
+          if (isDone(hs[j].id, dk)) done++;
         }
       }
     }
@@ -1134,18 +1244,23 @@
     return '<div class="stat-card"><div class="stat-num">' + num + '</div>' +
       '<div class="stat-lbl">' + esc(lbl) + "</div></div>";
   }
+  // strength sparkline over [fromK..today]
+  function sparkHtml(h, fromK) {
+    var ser = HC.scoreSeries(ix(), h, todayKey()).filter(function (p) { return p.d >= fromK; });
+    if (ser.length < 2) return "";
+    var pts = [], n = ser.length;
+    for (var i = 0; i < n; i++) pts.push((i / (n - 1) * 100).toFixed(2) + "," + (22 - ser[i].s * 20).toFixed(2));
+    return '<svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">' +
+      '<polyline points="' + pts.join(" ") + '" style="stroke:' + h.color + '"/></svg>';
+  }
   function renderStats() {
     var hs = livingHabits();
     if (!hs.length) {
-      els.view.innerHTML =
-        '<div class="empty">' + ICONS.check +
-        '<h2>' + esc(t("empty.title")) + "</h2>" +
-        "<p>" + esc(t("empty.desc")) + "</p>" +
-        '<button class="btn prim" data-act="new">' + esc(t("empty.cta")) + "</button>" +
-        "</div>";
+      els.view.innerHTML = emptyHtml();
       return;
     }
     var sd = computeStats(hs);
+    var start = rangeStart(), today = todayStart(), sK = dateKey(start);
     var html = '<div class="stat-wrap">';
 
     // range chips (reuse .day-chip styling)
@@ -1166,50 +1281,50 @@
       "</div>";
 
     html += '<div class="stat-h">' + esc(t("stats.per.habit")) + "</div>";
-    var ordered = sd.per.slice().sort(function (a, b) {
-      return (b.done / (b.sched || 1)) - (a.done / (a.sched || 1));
-    });
-    for (var i = 0; i < ordered.length; i++) {
-      var p = ordered[i], h = p.h;
-      if (isFlexible(h)) {
+    var rows = sd.per.map(function (p) {
+      var pr = HC.perOf(p.h);
+      if (pr) {
+        var pq = periodRate(p.h, start, today);
+        p.rate = pq.total ? pq.met / pq.total : 0;
+        p.pct = Math.round(p.rate * 100);
+        p.rateTip = tpl(pr.p === "w" ? "stats.periods.w" : "stats.periods.m", { n: p.pct });
+      } else if (!isFlexible(p.h)) {
+        p.rate = p.sched ? p.done / p.sched : 0;
+        p.pct = Math.round(p.rate * 100);
+        p.rateTip = tpl("stats.rate", { n: p.pct });
+      } else {
+        p.rate = -1;
+      }
+      return p;
+    }).sort(function (a, b) { return b.rate - a.rate; });
+    for (var i = 0; i < rows.length; i++) {
+      var p = rows[i], h = p.h, st = streakInfo(h), sc = strength(h);
+      var nums = t("stats.current") + " " + st.cur + streakSuffix(st) + " · " +
+                 t("stats.longest") + " " + st.best + streakSuffix(st);
+      if (p.rate < 0) {
         // HB-1b: flexible → raw count, no %, no bar.
-        // HB-8: per[].done stays 0 for flexible (metrics exemption)
-        // — count comps directly in the active range instead.
-        var cnt = 0, rs = rangeStart(), rt = todayStart();
+        var cnt = 0;
         for (var q = 0; q < db.comps.length; q++) {
           var cq = db.comps[q];
-          if (cq.del || cq.habitId !== h.id) continue;
-          var cdq = parseDateKey(cq.date);
-          if (cdq && cdq >= rs && cdq <= rt) cnt++;
+          if (cq.habitId === h.id && cq.date >= sK && cq.date <= dateKey(today) && isDone(h.id, cq.date)) cnt++;
         }
-        html += '<div class="srow">' +
-          '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
-            '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
-          '<div class="srow-body">' +
-            '<div class="srow-top">' +
-              '<span class="srow-name">' + esc(h.name) + "</span>" +
-              '<span class="srow-nums">' +
-                t("stats.current") + " " + currentStreak(h) + " · " +
-                t("stats.longest") + " " + longestStreak(h) + " · " + cnt + " " + t("stats.total.comps").toLowerCase() +
-              "</span>" +
-            "</div>" +
-          "</div></div>";
+        nums += " · " + cnt + " " + t("stats.total.comps").toLowerCase();
       } else {
-        var pct = p.sched ? Math.round((p.done / p.sched) * 100) : 0;
-        html += '<div class="srow">' +
-          '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
-            '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
-          '<div class="srow-body">' +
-            '<div class="srow-top">' +
-              '<span class="srow-name">' + esc(h.name) + "</span>" +
-              '<span class="srow-nums" title="' + esc(tpl("stats.rate", { n: pct })) + '">' +
-                t("stats.current") + " " + currentStreak(h) + " · " +
-                t("stats.longest") + " " + longestStreak(h) + " · " + pct + "%" +
-              "</span>" +
-            "</div>" +
-            '<div class="sbar"><div class="sbar-fill" style="width:' + pct + "%;background:" + h.color + '"></div></div>' +
-          "</div></div>";
+        nums += " · " + p.pct + "%";
       }
+      if (isNum(h) && p.logged) nums += " · " + tpl("stats.avg", { v: withUnit(Math.round(p.sum / p.logged * 100) / 100, h.num.u) });
+      html += '<div class="srow" data-act="detail" data-h="' + esc(h.id) + '" role="button" tabindex="0">' +
+        '<span class="cal-gicon" style="background:' + h.color + "33;color:" + h.color + '">' +
+          '<span class="ico">' + ICONS[h.icon] + "</span></span>" +
+        '<div class="srow-body">' +
+          '<div class="srow-top">' +
+            '<span class="srow-name">' + esc(h.name) + "</span>" +
+            strengthHtml(h, sc) +
+          "</div>" +
+          '<div class="srow-nums"' + (p.rateTip ? ' title="' + esc(p.rateTip) + '"' : "") + ">" + esc(nums) + "</div>" +
+          (p.rate >= 0 ? '<div class="sbar"><div class="sbar-fill" style="width:' + p.pct + "%;background:" + h.color + '"></div></div>' : "") +
+          sparkHtml(h, sK) +
+        "</div></div>";
     }
 
     html += '<div class="stat-h">' + esc(t("stats.insights")) + "</div>";
@@ -1259,22 +1374,50 @@
   var pickIcon = "check";
   var pickColor = COLORS[0];
   var pickDays = [false,false,false,false,false,false,false];
+  var pickType = "bool";              // "bool" | "num"
+  var pickFreq = "days";              // "days" | "w" | "m"
 
+  function segHtml(id, opts) {
+    var h = '<div class="seg seg-sm" role="group" id="' + id + '">';
+    for (var i = 0; i < opts.length; i++) {
+      h += '<button type="button" class="seg-btn" data-v="' + opts[i] + '"></button>';
+    }
+    return h + "</div>";
+  }
   function ensureHabitDialog() {
     if (dlgHabit) return;
     dlgHabit = document.createElement("dialog");
+    dlgHabit.className = "dlg-habit";
     dlgHabit.innerHTML =
       '<h3 id="hf-title"></h3>' +
       '<div class="dialog-form">' +
-        '<div class="field"><label id="hf-namel"></label>' +
+        '<div class="field"><label id="hf-namel" for="hf-name"></label>' +
           '<input type="text" id="hf-name" maxlength="200" autocomplete="off">' +
           '<div class="dialog-err" id="hf-err"></div></div>' +
+        '<div class="field"><label id="hf-typel"></label>' + segHtml("hf-type", ["bool", "num"]) + "</div>" +
+        '<div class="field" id="hf-numbox">' +
+          '<label id="hf-targetl" for="hf-target"></label>' +
+          '<div class="frow">' +
+            '<select id="hf-cmp"><option value="ge"></option><option value="le"></option></select>' +
+            '<input type="number" id="hf-target" min="0" step="any" inputmode="decimal">' +
+            '<input type="text" id="hf-unit" maxlength="16" autocomplete="off">' +
+          "</div>" +
+          '<div class="frow frow-step"><label id="hf-stepl" for="hf-step"></label>' +
+            '<input type="number" id="hf-step" min="0" step="any" inputmode="decimal"></div>' +
+          '<div class="dialog-err" id="hf-terr"></div></div>' +
         '<div class="field"><label id="hf-iconl"></label>' +
           '<div class="icon-picker" id="hf-icons"></div></div>' +
         '<div class="field"><label id="hf-colorl"></label>' +
           '<div class="color-picker" id="hf-colors"></div></div>' +
-        '<div class="field"><label id="hf-daysl"></label>' +
-          '<div class="days-selector" id="hf-days"></div></div>' +
+        '<div class="field"><label id="hf-freql"></label>' + segHtml("hf-freq", ["days", "w", "m"]) +
+          '<div class="days-selector" id="hf-days"></div>' +
+          '<div class="frow" id="hf-perbox"><input type="number" id="hf-per" min="1" max="31" step="1" inputmode="numeric">' +
+            '<span id="hf-perl" class="frow-lbl"></span></div>' +
+          '<div class="field-hint" id="hf-daysl"></div></div>' +
+        '<div class="field"><label id="hf-reml" for="hf-rem"></label>' +
+          '<div class="frow"><input type="time" id="hf-rem">' +
+            '<button type="button" class="btn ghost" id="hf-remclr"></button></div>' +
+          '<div class="field-hint" id="hf-remhint"></div></div>' +
       "</div>" +
       '<div class="dialog-actions">' +
         '<button type="button" class="btn danger" id="hf-del" hidden></button>' +
@@ -1295,22 +1438,72 @@
     document.getElementById("hf-name").addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); saveHabitDialog(); }
     });
+    document.getElementById("hf-type").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-v]");
+      if (b) { pickType = b.getAttribute("data-v"); syncHabitDialog(); }
+    });
+    document.getElementById("hf-freq").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-v]");
+      if (b) { pickFreq = b.getAttribute("data-v"); syncHabitDialog(); }
+    });
+    document.getElementById("hf-per").addEventListener("input", updateDaysHint);
+    document.getElementById("hf-remclr").addEventListener("click", function () {
+      document.getElementById("hf-rem").value = "";
+    });
+  }
+  // show / hide the parts that depend on type and frequency
+  function syncHabitDialog() {
+    [].forEach.call(document.querySelectorAll("#hf-type .seg-btn"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-v") === pickType);
+      b.setAttribute("aria-pressed", b.getAttribute("data-v") === pickType ? "true" : "false");
+    });
+    [].forEach.call(document.querySelectorAll("#hf-freq .seg-btn"), function (b) {
+      b.classList.toggle("active", b.getAttribute("data-v") === pickFreq);
+      b.setAttribute("aria-pressed", b.getAttribute("data-v") === pickFreq ? "true" : "false");
+    });
+    document.getElementById("hf-numbox").hidden = pickType !== "num";
+    document.getElementById("hf-days").hidden = pickFreq !== "days";
+    document.getElementById("hf-perbox").hidden = pickFreq === "days";
+    var per = document.getElementById("hf-per");
+    per.max = pickFreq === "w" ? "7" : "31";
+    updateDaysHint();
   }
 
   function openHabitDialog(h) {
     ensureHabitDialog();
     editing = h || null;
+    var pr = h ? HC.perOf(h) : null;
     // HB-9: what the dialog showed at open — Save compares against
     // it and writes only what the user changed
     editBase = h ? { id: h.id, name: h.name, icon: h.icon, color: h.color,
-                     days: h.days.slice() } : null;
+                     days: h.days.slice(), num: h.num ? JSON.stringify(h.num) : "",
+                     per: h.per ? JSON.stringify(h.per) : "",
+                     rem: typeof h.rem === "number" ? h.rem : -1 } : null;
 
     // labels refreshed on EVERY open — language-safe without rebuild
     document.getElementById("hf-title").textContent = t(h ? "edit" : "add");
     document.getElementById("hf-namel").textContent = t("name.label");
+    document.getElementById("hf-typel").textContent = t("type.label");
+    document.querySelector('#hf-type [data-v="bool"]').textContent = t("type.bool");
+    document.querySelector('#hf-type [data-v="num"]').textContent = t("type.num");
+    document.getElementById("hf-targetl").textContent = t("target.label");
+    document.querySelector('#hf-cmp [value="ge"]').textContent = t("cmp.ge");
+    document.querySelector('#hf-cmp [value="le"]').textContent = t("cmp.le");
+    document.getElementById("hf-cmp").setAttribute("aria-label", t("target.label"));
+    var unitEl = document.getElementById("hf-unit");
+    unitEl.placeholder = t("unit.ph");
+    unitEl.setAttribute("aria-label", t("unit.label"));
+    document.getElementById("hf-stepl").textContent = t("step.label");
     document.getElementById("hf-iconl").textContent = t("icon.label");
     document.getElementById("hf-colorl").textContent = t("color.label");
-    document.getElementById("hf-daysl").textContent = t("days.label");
+    document.getElementById("hf-freql").textContent = t("freq.label");
+    document.querySelector('#hf-freq [data-v="days"]').textContent = t("freq.mode.days");
+    document.querySelector('#hf-freq [data-v="w"]').textContent = t("freq.mode.w");
+    document.querySelector('#hf-freq [data-v="m"]').textContent = t("freq.mode.m");
+    document.getElementById("hf-per").setAttribute("aria-label", t("per.times"));
+    document.getElementById("hf-reml").textContent = t("rem.label");
+    document.getElementById("hf-remclr").textContent = t("rem.none");
+    document.getElementById("hf-remhint").textContent = t("rem.note");
     document.getElementById("hf-cancel").textContent = t("cancel");
     document.getElementById("hf-save").textContent = t("save");
     var delBtn = document.getElementById("hf-del");
@@ -1318,10 +1511,19 @@
     delBtn.hidden = !editing;
 
     document.getElementById("hf-err").textContent = "";
+    document.getElementById("hf-terr").textContent = "";
     var nameEl = document.getElementById("hf-name");
     nameEl.value = h ? h.name : "";
     pickIcon = h ? (ICONS[h.icon] ? h.icon : "check") : "check";
     pickColor = h ? (COLORS.indexOf(h.color) !== -1 ? h.color : COLORS[0]) : COLORS[0];
+    pickType = h && isNum(h) ? "num" : "bool";
+    pickFreq = pr ? pr.p : "days";
+    document.getElementById("hf-cmp").value = h && isNum(h) ? h.num.c : "ge";
+    document.getElementById("hf-target").value = h && isNum(h) ? String(h.num.t) : "";
+    unitEl.value = h && isNum(h) ? h.num.u : "";
+    document.getElementById("hf-step").value = h && isNum(h) ? String(h.num.s) : "1";
+    document.getElementById("hf-per").value = pr ? String(pr.n) : "3";
+    document.getElementById("hf-rem").value = h && typeof h.rem === "number" ? hm(h.rem) : "";
     var i;
     for (i = 0; i < 7; i++) pickDays[i] = h ? (h.days.indexOf(i) !== -1) : false;
 
@@ -1334,6 +1536,7 @@
         b.type = "button";
         b.className = "icon-option" + (key === pickIcon ? " selected" : "");
         b.title = key;
+        b.setAttribute("aria-label", key);
         b.innerHTML = '<span class="ico">' + ICONS[key] + "</span>";
         b.addEventListener("click", function () {
           pickIcon = key;
@@ -1354,6 +1557,7 @@
         b.className = "color-option" + (col === pickColor ? " selected" : "");
         b.style.background = col;
         b.style.color = col;
+        b.setAttribute("aria-label", col);
         b.addEventListener("click", function () {
           pickColor = col;
           colorGrid.querySelectorAll(".color-option").forEach(function (x) { x.classList.remove("selected"); });
@@ -1363,7 +1567,7 @@
       })(COLORS[i]);
     }
 
-    // day chips — Monday-first, live badge underneath the picker
+    // day chips — Monday-first, live hint underneath the picker
     var daysWrap = document.getElementById("hf-days");
     daysWrap.innerHTML = "";
     for (i = 0; i < 7; i++) {
@@ -1380,23 +1584,35 @@
         daysWrap.appendChild(b);
       })(i);
     }
-    updateDaysHint();
+    syncHabitDialog();
 
     dlgHabit.showModal();
     nameEl.focus();
   }
 
   // plain-language summary of the current schedule selection
+  function perValue() {
+    var n = parseInt(document.getElementById("hf-per").value, 10);
+    var max = pickFreq === "w" ? 7 : 31;
+    return isNaN(n) ? 1 : Math.max(1, Math.min(max, n));
+  }
   function updateDaysHint() {
-    var daysWrap = document.getElementById("hf-days");
-    var n = 0;
-    for (var i = 0; i < 7; i++) if (pickDays[i]) n++;
     var hint;
-    if (n === 0) hint = t("days.any");
-    else if (n === 7) hint = t("days.daily");
-    else hint = fmt("days.n", n);
-    var el = document.getElementById("hf-daysl");
-    el.textContent = t("days.label") + " — " + hint;
+    if (pickFreq === "days") {
+      var n = 0;
+      for (var i = 0; i < 7; i++) if (pickDays[i]) n++;
+      if (n === 0) hint = t("days.any");
+      else if (n === 7) hint = t("days.daily");
+      else hint = fmt("days.n", n);
+    } else {
+      hint = fmt(pickFreq === "w" ? "per.w.n" : "per.m.n", perValue());
+    }
+    document.getElementById("hf-perl").textContent = pickFreq === "m" ? t("freq.mode.m") : t("freq.mode.w");
+    document.getElementById("hf-daysl").textContent = hint;
+  }
+  function parseNum(s) {
+    var v = parseFloat(String(s || "").replace(",", "."));
+    return isFinite(v) ? v : NaN;
   }
 
   function saveHabitDialog() {
@@ -1406,9 +1622,27 @@
       document.getElementById("hf-name").focus();
       return;
     }
+    var num = null;
+    if (pickType === "num") {
+      num = M.normNum({
+        t: parseNum(document.getElementById("hf-target").value),
+        u: document.getElementById("hf-unit").value,
+        c: document.getElementById("hf-cmp").value,
+        s: parseNum(document.getElementById("hf-step").value)
+      });
+      if (!num) {
+        document.getElementById("hf-terr").textContent = t("err.target");
+        document.getElementById("hf-target").focus();
+        return;
+      }
+    }
+    var per = pickFreq === "days" ? null : [pickFreq, perValue()];
     var days = [];
-    for (var i = 0; i < 7; i++) if (pickDays[i]) days.push(i);
+    if (!per) for (var i = 0; i < 7; i++) if (pickDays[i]) days.push(i);
     // days array is already ascending (loop order) — matches normalize
+    var remV = document.getElementById("hf-rem").value, rem = -1;
+    var rm = /^(\d{1,2}):(\d{2})/.exec(remV || "");
+    if (rm && +rm[1] < 24 && +rm[2] < 60) rem = (+rm[1]) * 60 + (+rm[2]);
 
     if (editing) {
       // HB-9: a pull while the dialog was open replaced every row
@@ -1420,22 +1654,379 @@
       if (pickIcon !== base.icon) { patch.icon = pickIcon; any = true; }
       if (pickColor !== base.color) { patch.color = pickColor; any = true; }
       if (days.join(",") !== base.days.join(",")) { patch.days = days; any = true; }
+      if ((num ? JSON.stringify(num) : "") !== base.num) { patch.num = num; any = true; }
+      if ((per ? JSON.stringify(per) : "") !== base.per) { patch.per = per; any = true; }
+      if (rem !== base.rem) { patch.rem = rem >= 0 ? rem : null; any = true; }
       var cur = habitById(base.id);
       if (!any && cur) { dlgHabit.close(); return; }   // zero-edit close stamps nothing
       if (!cur) {                                        // row vanished: keep the user's edit
-        cur = habitDefaults({ id: base.id, name: name, icon: pickIcon, color: pickColor,
-                              days: days, mtime: Date.now(), del: false });
+        cur = M.normHabit({ id: base.id, name: name, icon: pickIcon, color: pickColor,
+                            days: days, num: num, per: per, rem: rem >= 0 ? rem : undefined,
+                            mtime: Date.now(), del: false });
         db.habits.push(cur);
         patch = {};
       }
       updateHabit(cur, patch);
       transientNote(t("toast.updated"));
     } else {
-      addHabit(name, pickIcon, pickColor, days);
+      addHabit({ name: name, icon: pickIcon, color: pickColor, days: days, num: num, per: per,
+                 rem: rem >= 0 ? rem : undefined });
       transientNote(t("toast.created"));
     }
     dlgHabit.close();
     render();
+    refreshOpenDialogs();
+  }
+
+  // ===== DAY DIALOG (value, done, skip, note for one habit/day) =====
+  var dlgDay = null;
+  var dayCtx = null;                  // { id, k, base: { done, skip, note, val } }
+
+  function ensureDayDialog() {
+    if (dlgDay) return;
+    dlgDay = document.createElement("dialog");
+    dlgDay.className = "dlg-day";
+    dlgDay.innerHTML =
+      '<h3 id="df-title"></h3>' +
+      '<div class="df-sub" id="df-sub"></div>' +
+      '<div class="dialog-form">' +
+        '<div class="field" id="df-numbox"><label id="df-vall" for="df-val"></label>' +
+          '<div class="stepper">' +
+            '<button type="button" class="btn" id="df-dec"></button>' +
+            '<input type="number" id="df-val" step="any" min="0" inputmode="decimal">' +
+            '<button type="button" class="btn" id="df-inc"></button>' +
+          "</div>" +
+          '<div class="field-hint" id="df-target"></div></div>' +
+        '<div class="field" id="df-donebox"><label class="check"><input type="checkbox" id="df-done"> <span id="df-donel"></span></label></div>' +
+        '<div class="field"><label class="check"><input type="checkbox" id="df-skip"> <span id="df-skipl"></span></label>' +
+          '<div class="field-hint" id="df-skiphint"></div></div>' +
+        '<div class="field"><label id="df-notel" for="df-note"></label>' +
+          '<textarea id="df-note" rows="2" maxlength="' + M.NOTE_LEN + '"></textarea></div>' +
+      "</div>" +
+      '<div class="dialog-actions">' +
+        '<span style="flex:1"></span>' +
+        '<button type="button" class="btn ghost" id="df-cancel"></button>' +
+        '<button type="button" class="btn prim" id="df-save"></button>' +
+      "</div>";
+    document.body.appendChild(dlgDay);
+    document.getElementById("df-cancel").addEventListener("click", function () { dlgDay.close(); });
+    document.getElementById("df-save").addEventListener("click", saveDayDialog);
+    function stepBy(sign) {
+      var h = dayCtx && habitById(dayCtx.id);
+      if (!h || !isNum(h)) return;
+      var el = document.getElementById("df-val");
+      var v = parseNum(el.value);
+      if (isNaN(v)) v = 0;
+      el.value = String(Math.max(0, Math.round((v + sign * h.num.s) * 100) / 100));
+    }
+    document.getElementById("df-dec").addEventListener("click", function () { stepBy(-1); });
+    document.getElementById("df-inc").addEventListener("click", function () { stepBy(1); });
+    document.getElementById("df-val").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); saveDayDialog(); }
+    });
+    document.getElementById("df-done").addEventListener("change", function () {
+      if (this.checked) document.getElementById("df-skip").checked = false;
+    });
+    document.getElementById("df-skip").addEventListener("change", function () {
+      if (this.checked) document.getElementById("df-done").checked = false;
+    });
+  }
+
+  function openDayDialog(h, k) {
+    if (!h || k > todayKey()) return;
+    ensureDayDialog();
+    if (dlgDay.open) return;
+    var num = isNum(h);
+    var c = HC.index(db).comps[h.id + "|" + k];
+    var base = {
+      done: !num && !!(c && !c.del),
+      skip: isSkipped(h.id, k),
+      note: noteOn(h.id, k),
+      val: num ? valueOn(h.id, k) : null
+    };
+    dayCtx = { id: h.id, k: k, base: base };
+    var d = parseDateKey(k);
+    document.getElementById("df-title").textContent = h.name;
+    document.getElementById("df-sub").textContent = new Intl.DateTimeFormat(LANG === "el" ? "el-GR" : "en-GB",
+      { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
+    document.getElementById("df-numbox").hidden = !num;
+    document.getElementById("df-donebox").hidden = num;
+    document.getElementById("df-vall").textContent = t("day.value") + (num && h.num.u ? " (" + h.num.u + ")" : "");
+    document.getElementById("df-dec").innerHTML = ICO_MINUS;
+    document.getElementById("df-dec").setAttribute("aria-label", t("dec"));
+    document.getElementById("df-inc").innerHTML = ICO_PLUS;
+    document.getElementById("df-inc").setAttribute("aria-label", t("inc"));
+    document.getElementById("df-val").value = num && base.val !== null ? String(base.val) : "";
+    document.getElementById("df-val").placeholder = "0";
+    document.getElementById("df-target").textContent = num ? targetText(h) : "";
+    document.getElementById("df-donel").textContent = t("day.done");
+    document.getElementById("df-done").checked = base.done;
+    document.getElementById("df-skipl").textContent = t("day.skip");
+    document.getElementById("df-skip").checked = base.skip;
+    document.getElementById("df-skiphint").textContent = t("day.skip.hint");
+    document.getElementById("df-notel").textContent = t("day.note");
+    var note = document.getElementById("df-note");
+    note.value = base.note;
+    note.placeholder = t("day.note.ph");
+    document.getElementById("df-cancel").textContent = t("cancel");
+    document.getElementById("df-save").textContent = t("save");
+    dlgDay.showModal();
+    (num ? document.getElementById("df-val") : document.getElementById("df-done")).focus();
+  }
+
+  // Writes only what changed since the dialog opened, on the CURRENT
+  // row (a pull meanwhile keeps the other device's fields, HB-9).
+  function saveDayDialog() {
+    var ctx = dayCtx;
+    var h = ctx && habitById(ctx.id);
+    if (!h || h.del) { dlgDay.close(); return; }
+    var now = Date.now(), changed = false, b = ctx.base;
+    var skip = document.getElementById("df-skip").checked;
+    var note = document.getElementById("df-note").value.trim().slice(0, M.NOTE_LEN);
+    if (isNum(h)) {
+      var raw = document.getElementById("df-val").value.trim();
+      var v = raw === "" ? null : parseNum(raw);
+      if (v !== null && !isNaN(v) && v !== b.val) {
+        M.setValue(db, h.id, ctx.k, DEVICE, Math.max(0, Math.min(M.MAX_NUM, v)), now); changed = true;
+      }
+    } else {
+      var done = document.getElementById("df-done").checked;
+      if (done !== b.done) { M.setTick(db, h.id, ctx.k, done, now); changed = true; }
+    }
+    if (skip !== b.skip) { M.setSkip(db, h.id, ctx.k, skip, now); changed = true; }
+    if (note !== b.note) { M.setNote(db, h.id, ctx.k, note, now); changed = true; }
+    dlgDay.close();
+    if (changed) { save(); render(); refreshOpenDialogs(); }
+  }
+
+  // ===== DETAIL DIALOG (strength, chart, streaks, year heatmap, notes) =====
+  var dlgDetail = null;
+  var detailId = null;
+  var detailYear = 0;
+
+  function ensureDetailDialog() {
+    if (dlgDetail) return;
+    dlgDetail = document.createElement("dialog");
+    dlgDetail.className = "dlg-detail";
+    dlgDetail.innerHTML = '<div id="dt-body"></div>' +
+      '<div class="dialog-actions">' +
+        '<button type="button" class="btn ghost" id="dt-edit"></button>' +
+        '<span style="flex:1"></span>' +
+        '<button type="button" class="btn prim" id="dt-close"></button>' +
+      "</div>";
+    document.body.appendChild(dlgDetail);
+    document.getElementById("dt-close").addEventListener("click", function () { dlgDetail.close(); });
+    document.getElementById("dt-edit").addEventListener("click", function () {
+      var h = habitById(detailId);
+      dlgDetail.close();
+      if (h && !h.del) openHabitDialog(h);
+    });
+    dlgDetail.addEventListener("click", function (e) {
+      var a = e.target.closest("[data-dt]");
+      if (!a) return;
+      var act = a.getAttribute("data-dt");
+      if (act === "yprev") { detailYear--; renderDetail(); }
+      else if (act === "ynext") { detailYear++; renderDetail(); }
+      else if (act === "day") {
+        var h = habitById(detailId);
+        if (h) openDayDialog(h, a.getAttribute("data-k"));
+      }
+    });
+    dlgDetail.addEventListener("keydown", function (e) {
+      if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("data-dt") === "day") {
+        e.preventDefault();
+        var h = habitById(detailId);
+        if (h) openDayDialog(h, e.target.getAttribute("data-k"));
+      }
+    });
+  }
+  function openDetail(h) {
+    ensureDetailDialog();
+    detailId = h.id;
+    detailYear = todayStart().getFullYear();
+    renderDetail();
+    dlgDetail.showModal();
+    var wrap = dlgDetail.querySelector(".hm-wrap");
+    if (wrap) wrap.scrollLeft = wrap.scrollWidth;
+    document.getElementById("dt-close").focus();
+  }
+  function refreshOpenDialogs() {
+    if (dlgDetail && dlgDetail.open) renderDetail();
+  }
+
+  // Strength over time: the last 12 months (or since the first day)
+  function chartHtml(h) {
+    var todayK = todayKey();
+    var ser = HC.scoreSeries(ix(), h, todayK);
+    var from = HC.addDays(todayK, -364);
+    ser = ser.filter(function (p) { return p.d >= from; });
+    if (ser.length < 2) return "";
+    var W = 600, H = 120, n = ser.length, pts = [];
+    for (var i = 0; i < n; i++) pts.push((i / (n - 1) * W).toFixed(1) + "," + (H - 4 - ser[i].s * (H - 8)).toFixed(1));
+    var area = "0," + H + " " + pts.join(" ") + " " + W + "," + H;
+    var grid = "";
+    [0.25, 0.5, 0.75].forEach(function (g) {
+      var y = (H - 4 - g * (H - 8)).toFixed(1);
+      grid += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" class="grid"/>';
+    });
+    var d0 = parseDateKey(ser[0].d);
+    return '<div class="dt-h">' + esc(t("detail.chart")) + "</div>" +
+      '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" role="img" aria-label="' +
+        esc(t("detail.chart")) + '">' + grid +
+        '<polygon points="' + area + '" style="fill:' + h.color + '" class="area"/>' +
+        '<polyline points="' + pts.join(" ") + '" style="stroke:' + h.color + '" class="line"/></svg>' +
+      '<div class="chart-x"><span>' + esc(shortDate(d0) + " " + d0.getFullYear()) + "</span><span>" + esc(t("today")) + "</span></div>";
+  }
+  // GitHub-style year: columns = weeks (Monday first), rows = weekdays
+  function heatmapHtml(h) {
+    var y = detailYear, todayK = todayKey();
+    var jan1 = new Date(y, 0, 1), dec31 = new Date(y, 11, 31);
+    var start = weekStart(jan1), CELL = 11, GAP = 2, TOP = 14, LEFT = 0;
+    var weeks = Math.ceil((Math.round((dec31 - start) / 86400000) + 1) / 7);
+    var W = LEFT + weeks * (CELL + GAP) + 14, H = TOP + 7 * (CELL + GAP);
+    var out = "", months = "", lastM = -1;
+    for (var w = 0; w < weeks; w++) {
+      for (var r = 0; r < 7; r++) {
+        var d = addDays(start, w * 7 + r);
+        if (d.getFullYear() !== y) continue;
+        if (d.getDate() <= 7 && r === 0 || (w === 0 && r === 0)) {
+          if (d.getMonth() !== lastM) {
+            lastM = d.getMonth();
+            months += '<text x="' + (LEFT + w * (CELL + GAP)) + '" y="10" class="hm-m">' + esc(shortMonth(d)) + "</text>";
+          }
+        }
+        var c = cellInfo(h, d, todayK);
+        var x = LEFT + w * (CELL + GAP), yy = TOP + r * (CELL + GAP);
+        var cls = "hm-c", fill = "";
+        if (c.done) { cls += " on"; fill = h.color; }
+        else if (c.skip) cls += " sk";
+        else if (c.prog > 0) { cls += " part"; fill = h.color; }
+        if (c.future) cls += " fu";
+        if (c.fixedOff && !c.done) cls += " off";
+        if (c.note) cls += " nt";
+        var style = fill ? ' style="fill:' + fill + (c.done ? "" : ";fill-opacity:" + (0.25 + 0.5 * c.prog).toFixed(2)) + '"' : "";
+        var act = c.locked ? "" : ' data-dt="day" data-k="' + c.k + '" tabindex="0" role="button"';
+        out += '<rect x="' + x + '" y="' + yy + '" width="' + CELL + '" height="' + CELL + '" rx="2" class="' + cls + '"' + style + act + ">" +
+          "<title>" + esc(cellTip(h, c)) + "</title></rect>";
+      }
+    }
+    var curY = todayStart().getFullYear();
+    var first = ix().first[h.id];
+    var minY = first ? +first.slice(0, 4) : curY;
+    return '<div class="dt-h hm-head">' +
+        '<button type="button" class="btn ghost pbtn" data-dt="yprev" title="' + esc(t("year.prev")) + '" aria-label="' + esc(t("year.prev")) + '"' +
+          (y <= minY ? " disabled" : "") + ">" + ICO_CHEVL + "</button>" +
+        "<span>" + y + "</span>" +
+        '<button type="button" class="btn ghost pbtn" data-dt="ynext" title="' + esc(t("year.next")) + '" aria-label="' + esc(t("year.next")) + '"' +
+          (y >= curY ? " disabled" : "") + ">" + ICO_CHEVR + "</button></div>" +
+      '<div class="hm-wrap"><svg class="hm" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '">' + months + out + "</svg></div>" +
+      '<div class="hm-legend"><span class="hm-key on" style="background:' + h.color + '"></span>' + esc(t("day.done")) +
+        (isNum(h) ? '<span class="hm-key part" style="background:' + h.color + '66"></span>' + esc(t("day.value")) : "") +
+        '<span class="hm-key sk"></span>' + esc(t("skipped")) +
+        '<span class="hm-key nt"></span>' + esc(t("day.note")) + "</div>";
+  }
+  function notesHtml(h) {
+    var list = [];
+    for (var i = 0; i < db.comps.length; i++) {
+      var c = db.comps[i];
+      if (c.habitId === h.id && c.nt && c.nt[0]) list.push(c);
+    }
+    if (!list.length) return "";
+    list.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+    var html = '<div class="dt-h">' + esc(t("detail.notes")) + '</div><div class="dt-notes">';
+    for (var j = 0; j < list.length && j < 12; j++) {
+      var d = parseDateKey(list[j].date);
+      html += '<div class="dt-note" data-dt="day" data-k="' + list[j].date + '" role="button" tabindex="0">' +
+        '<span class="dt-nd">' + esc(shortDate(d) + " " + d.getFullYear()) + "</span>" +
+        "<span>" + esc(list[j].nt[0]) + "</span></div>";
+    }
+    return html + "</div>";
+  }
+  function renderDetail() {
+    var h = habitById(detailId);
+    var body = document.getElementById("dt-body");
+    if (!h || h.del) { if (dlgDetail.open) dlgDetail.close(); return; }
+    var st = streakInfo(h), sc = strength(h);
+    var total = 0;
+    for (var i = 0; i < db.comps.length; i++) {
+      if (db.comps[i].habitId === h.id && isDone(h.id, db.comps[i].date)) total++;
+    }
+    var sub = freqBadge(h) + (isNum(h) ? " · " + targetText(h) : "") +
+      (typeof h.rem === "number" ? " · " + tpl("rem.at", { t: hm(h.rem) }) : "");
+    body.innerHTML =
+      '<div class="dt-top">' +
+        '<span class="habit-icon-box" style="background:' + h.color + "33;color:" + h.color + '"><span class="ico">' + ICONS[h.icon] + "</span></span>" +
+        '<div class="dt-titles"><h3>' + esc(h.name) + '</h3><div class="df-sub">' + esc(sub) + "</div></div>" +
+      "</div>" +
+      '<div class="stat-cards dt-cards">' +
+        statCard('<span class="dt-ring">' + ringHtml(sc, h.color) + "</span>" + sc + "%", t("strength")) +
+        statCard(st.cur + esc(streakSuffix(st)), t("stats.current")) +
+        statCard(st.best + esc(streakSuffix(st)), t("stats.longest")) +
+        statCard(total, t("stats.total.comps")) +
+      "</div>" +
+      chartHtml(h) +
+      heatmapHtml(h) +
+      notesHtml(h);
+    // the current year opens on today (phones scroll the year sideways)
+    var wrap = body.querySelector(".hm-wrap");
+    if (wrap && detailYear === todayStart().getFullYear()) wrap.scrollLeft = wrap.scrollWidth;
+    document.getElementById("dt-edit").textContent = t("detail.edit");
+    document.getElementById("dt-close").textContent = t("close");
+    dlgDetail.setAttribute("aria-label", h.name);
+  }
+
+  // ===== SETTINGS DIALOG (Steps row from Health) =====
+  var dlgSet = null;
+  function openSettings() {
+    if (!dlgSet) {
+      dlgSet = document.createElement("dialog");
+      dlgSet.innerHTML =
+        '<h3 id="sf-title"></h3>' +
+        '<div class="dialog-form">' +
+          '<div class="field"><label class="check"><input type="checkbox" id="sf-steps"> <span id="sf-stepsl"></span></label>' +
+            '<div class="field-hint" id="sf-hint"></div></div>' +
+          '<div class="field"><label id="sf-goall" for="sf-goal"></label>' +
+            '<input type="number" id="sf-goal" min="100" max="200000" step="100" inputmode="numeric"></div>' +
+          '<div class="field-hint" id="sf-none"></div>' +
+        "</div>" +
+        '<div class="dialog-actions"><span style="flex:1"></span>' +
+          '<button type="button" class="btn ghost" id="sf-cancel"></button>' +
+          '<button type="button" class="btn prim" id="sf-save"></button></div>';
+      document.body.appendChild(dlgSet);
+      document.getElementById("sf-cancel").addEventListener("click", function () { dlgSet.close(); });
+      document.getElementById("sf-save").addEventListener("click", function () {
+        var cur = M.settingsOf(db);
+        var on = document.getElementById("sf-steps").checked;
+        var g = parseInt(document.getElementById("sf-goal").value, 10);
+        if (isNaN(g)) g = cur.sg;
+        g = Math.max(100, Math.min(200000, g));
+        var patch = {};
+        if ((on ? 1 : 0) !== cur.st) patch.st = on;
+        if (g !== cur.sg) patch.sg = g;
+        dlgSet.close();
+        if (Object.keys(patch).length) {
+          M.setSettings(db, patch, Date.now());
+          save();
+          render();
+        }
+      });
+    }
+    var s = M.settingsOf(db);
+    document.getElementById("sf-title").textContent = t("settings");
+    document.getElementById("sf-stepsl").textContent = t("set.steps");
+    document.getElementById("sf-hint").textContent = t("set.steps.hint");
+    document.getElementById("sf-goall").textContent = t("set.steps.goal");
+    document.getElementById("sf-steps").checked = !!s.st;
+    document.getElementById("sf-goal").value = String(s.sg);
+    var S = window.OrosHabitsSteps, has = false;
+    try {
+      var hd = JSON.parse(localStorage.getItem("oros-health-data"));
+      has = !!(S && Object.keys(S.stepsByDay(hd)).length);
+    } catch (e) { has = false; }
+    document.getElementById("sf-none").textContent = has ? "" : t("set.steps.none");
+    document.getElementById("sf-cancel").textContent = t("cancel");
+    document.getElementById("sf-save").textContent = t("save");
+    dlgSet.showModal();
   }
 
   // ===== CONFIRM DELETE DIALOG =====
@@ -1472,8 +2063,49 @@
   }
 
   // ===== EVENT WIRING =====
+  // A day cell (list dot / calendar cell) → { h, d } or null
+  function cellTarget(el) {
+    var act = el.getAttribute("data-act");
+    var h = habitById(el.getAttribute("data-h") || "");
+    if (!h || (act !== "dot" && act !== "cdot")) return null;
+    var d = act === "dot" ? weekDays(period)[parseInt(el.getAttribute("data-i"), 10)]
+                          : monthDays(period)[parseInt(el.getAttribute("data-c"), 10)];
+    return d ? { h: h, d: d } : null;
+  }
+  function cellLocked(h, d) { return cellInfo(h, d, todayKey()).locked; }
+  // tap: yes / no toggles; measurable opens the day dialog
+  function cellTap(h, d) {
+    if (cellLocked(h, d)) return;
+    if (isNum(h)) { openDayDialog(h, dateKey(d)); return; }
+    var dk = dateKey(d);
+    if (isSkipped(h.id, dk) && !isDone(h.id, dk)) { openDayDialog(h, dk); return; }
+    if (HC.isFixed(h) && !isScheduledOn(h, d) && !isDone(h.id, dk)) { openDayDialog(h, dk); return; }
+    toggleComp(h, d);
+    render();
+  }
+  // Long-press (touch) or right-click: the day dialog
+  var press = { timer: null, fired: 0, x: 0, y: 0 };
+  function pressStart(e) {
+    var el = e.target.closest && e.target.closest('[data-act="dot"],[data-act="cdot"]');
+    press.fired = 0;
+    clearTimeout(press.timer);
+    if (!el || (e.pointerType === "mouse")) return;
+    press.x = e.clientX; press.y = e.clientY;
+    press.timer = setTimeout(function () {
+      var c = cellTarget(el);
+      if (!c || cellLocked(c.h, c.d)) return;
+      press.fired = Date.now();
+      openDayDialog(c.h, dateKey(c.d));
+    }, 500);
+  }
+  function pressCancel(e) {
+    if (e && e.type === "pointermove" && Math.abs(e.clientX - press.x) < 8 && Math.abs(e.clientY - press.y) < 8) return;
+    clearTimeout(press.timer);
+  }
+
   function wire() {
     els.btnAdd.addEventListener("click", function () { openHabitDialog(null); });
+    els.btnSet.addEventListener("click", openSettings);
     els.btnPrev.addEventListener("click", function () {
       if (viewMode === "stats") return;
       period = viewMode === "cal" ? monthAdd(period, -1) : addDays(period, -7);
@@ -1493,10 +2125,26 @@
     els.btnVCal.addEventListener("click", function () { setView("cal"); });
     els.btnVStats.addEventListener("click", function () { setView("stats"); });
 
-    // delegated clicks inside the list view
+    els.view.addEventListener("pointerdown", pressStart);
+    els.view.addEventListener("pointerup", pressCancel);
+    els.view.addEventListener("pointercancel", pressCancel);
+    els.view.addEventListener("pointermove", pressCancel);
+    els.view.addEventListener("contextmenu", function (e) {
+      var el = e.target.closest('[data-act="dot"],[data-act="cdot"]');
+      if (!el) return;
+      e.preventDefault();
+      clearTimeout(press.timer);
+      if (press.fired && Date.now() - press.fired < 1500) return;   // the long-press already opened it
+      press.fired = Date.now();                // a click that may follow is swallowed
+      var c = cellTarget(el);
+      if (c && !cellLocked(c.h, c.d)) openDayDialog(c.h, dateKey(c.d));
+    });
+
+    // delegated clicks inside the view
     els.view.addEventListener("click", function (e) {
       var actEl = e.target.closest("[data-act]");
       if (!actEl) return;
+      if (press.fired && Date.now() - press.fired < 1500) { press.fired = 0; return; }   // long-press already handled
       var act = actEl.getAttribute("data-act");
       if (act === "rng") {                 // range chip: no habit row
         setStatRange(parseInt(actEl.getAttribute("data-rng"), 10));
@@ -1516,40 +2164,27 @@
         confirmDelete(h);
       } else if (act === "new") {
         openHabitDialog(null);
-      } else if (act === "gedit") {
-        openHabitDialog(h);
-      } else if (act === "dot") {
-        var idx = parseInt(actEl.getAttribute("data-i"), 10);
-        var d = weekDays(period)[idx];
-        var done = isDone(h.id, dateKey(d));
-        var sched = isScheduledOn(h, d);
-        var future = d > todayStart();
-        // allowed: past/today AND (scheduled OR flexible OR completed → undo)
-        // HB-7: flexible exemption is METRICS-ONLY — never locks the toggle.
-        if (future || (!sched && !done && !isFlexible(h))) return;
-        toggleComp(h, d);
+      } else if (act === "detail" || act === "gedit") {
+        openDetail(h);
+      } else if (act === "inc" || act === "dec") {
+        quickAdd(h, todayKey(), act === "inc" ? 1 : -1);
         render();
-      } else if (act === "cdot") {
-        var ci = parseInt(actEl.getAttribute("data-c"), 10);
-        var cd = monthDays(period)[ci];
-        var cDone = isDone(h.id, dateKey(cd));
-        var cSched = isScheduledOn(h, cd);
-        var cFuture = cd > todayStart();
-        if (cFuture || (!cSched && !cDone && !isFlexible(h))) return;
-        toggleComp(h, cd);
-        render();
+      } else if (act === "dot" || act === "cdot") {
+        var c = cellTarget(actEl);
+        if (c) cellTap(c.h, c.d);
       }
     });
   }
 
-  // App feed gutter cells (calendar) are role=button divs: Enter /
-  // Space open the provider like a click.
+  // role=button divs (feed gutter cells, habit names, stats rows):
+  // Enter / Space act like a click.
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") return;
     var tg = e.target;
-    if (!tg || !tg.getAttribute || tg.getAttribute("data-act") !== "feed-open" || tg.tagName === "BUTTON") return;
+    if (!tg || !tg.getAttribute || !tg.getAttribute("data-act") || tg.tagName === "BUTTON") return;
+    if (tg.closest && tg.closest("dialog")) return;
     e.preventDefault();
-    openFeedApp(tg.getAttribute("data-app"));
+    tg.click();
   });
   // A provider's data changed in another document (a pull applied by
   // the shell, the provider app in another tab): redraw the rows.
@@ -1559,8 +2194,8 @@
     render();
   });
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible" && feedKeys().length &&
-        !document.querySelector("dialog[open]")) render();
+    if (document.visibilityState === "visible" &&
+        !document.querySelector("dialog[open]")) render();   // feeds, and a new day
   });
 
   // ===== KEYBOARD (app shortcut + shell forwarding) =====

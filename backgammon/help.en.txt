@@ -22,6 +22,15 @@ Keyboard:
 ## Levels and scoring
 The computer plays at `Easy`, `Medium` or `Hard`. `Records` shows your wins and losses against it for each level, with the points won and lost. With `2 players` the result window keeps a running `Points` score. `Reset records` clears them.
 
+## Two devices
+Play a friend who has their own phone, tablet or computer. Press `Play on two devices` (the button with two screens): one of you chooses `Show a code`, the other `Enter a code` and types the 6-digit code or scans the QR code, and the first device lets the other in with `Allow`. While you're linked, `Two devices` shows in the toolbar; press it to see the link or to `Leave the game`.
+- The device that showed the code plays White. Each of you rolls your own dice and moves on your own turn; the other device sees every move as it's made.
+- `New game` on the device that showed the code starts the next game (it asks first if a game is under way); on the other device it asks for one when a game is over.
+- If a device reloads or loses the network, the game waits and goes on where it was when it's back (for up to a day).
+- Moves go straight between the two devices on the same network, or sealed through the orOS relay; nothing is kept online.
+
+Limits: two players only, each on their own device with orOS open in this game. Games on two devices don't count in your records, and the level buttons are hidden meanwhile. `Leave the game` ends it on both devices and brings back the game you had on this device.
+
 ## Sync
 Your records against the computer sync between your devices through [orOS sync](help:t/sync), adding up the games from every device; `Reset records` clears them everywhere. The game in progress, the 2-player score, your settings and the sound setting stay on this device.
 

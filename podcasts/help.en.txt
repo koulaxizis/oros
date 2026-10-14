@@ -36,6 +36,18 @@ Choose `Download` from an episode's menu. The `Downloads` tab shows how much spa
 ## Settings
 The gear button opens `Settings`: default speed, `Skip back` and `Skip forward` amounts, `Play the next episode in the queue`, `Delete downloads after they are played`, and which catalog `Catalog search` uses (`Apple Podcasts and fyyd`, one of them, or off).
 
+### Skip silence and voice boost
+`Skip silence` plays the quiet stretches between words faster, so episodes take less time; the full player shows how much time it saved, and `Statistics` adds it up. `Voice boost` evens out the volume and makes voices clearer, handy in a noisy room. Turn them on in `Settings` or with the two buttons in the full player.
+
+They work on downloaded episodes and on podcasts whose server lets the browser read the audio. When a server doesn't, the episode plays normally and the full player says so; download the episode to use them.
+
+### Sync with gpodder
+`Sync with gpodder…` in `Settings` keeps your subscriptions and listening progress in step with other podcast apps (AntennaPod, Kasts, gPodder and others) through your own gpodder.net account or your own Nextcloud with the GPodder Sync app. Choose the service, enter the server address, username and password, and press `Save and sync`. After that it syncs when Podcasts opens and every hour while it's open; `Sync now` syncs straight away and `Disconnect` stops it without deleting anything.
+
+The password stays sealed on this device and is never synced, so enter it once on each device; use an app password if your server offers one.
+
+Without a server, move subscriptions with `Export OPML` and `Import OPML`, and listening progress with `Export listening progress` and `Import listening progress` (gpodder episode actions as a JSON file).
+
 ## Sync and backup
 Your podcasts, episode progress, played marks, queue and settings sync between your devices through [orOS sync](help:t/sync). Downloads, cached episode lists and exact positions stay on this device. `Export OPML` and `Import OPML` in `Discover` move your subscriptions to or from other podcast apps. See also [Backup](help:t/backup).
 
@@ -54,3 +66,5 @@ While an episode is loaded:
 - Search terms go to the catalog you choose; turn search off if you prefer to add podcasts by address only.
 - Some hosts don't allow downloads; those episodes can still be streamed.
 - Up to 500 podcasts.
+- Skip silence and voice boost only work when the browser may read the audio (downloads, or servers that allow it). Elsewhere they stay off.
+- gpodder sync connects straight from the browser, so the server must allow web pages to connect (CORS). If it doesn't, you'll see a message saying so; use the files instead. It only syncs while orOS is open.

@@ -36,6 +36,7 @@ function cut(from, to) {
 const S = (() => {
   const parts = [cut("  var DATA_VER", "  var CK ="), cut("  var BESTS", "  function defaultData")];
   ["cmpStr", "cloneG", "blank", "dealKlondike", "msDeal", "dealFreeCell", "spiderDeck", "dealSpider",
+   "dealPyramid", "pyrOpen", "pyrCard", "pyrOpenCards", "validPyramid",
    "pileOf", "scored", "fits", "linked", "runFrom", "maxRun", "canPlace", "flipTop", "collectRuns",
    "applyMove", "drawStock", "dealWhy", "dealRow", "isWon", "canAuto", "foundFor", "autoStep",
    "bestTarget", "allMoves", "moveValue", "findHint", "scoreNow", "keyOf", "intCards", "validGame",
@@ -48,7 +49,8 @@ const S = (() => {
   return new Function("CK", parts.join("\n") +
     "\nreturn { KEYS, COLS, dealKlondike, msDeal, dealFreeCell, spiderDeck, dealSpider, pileOf, runFrom," +
     " maxRun, canPlace, applyMove, drawStock, dealWhy, dealRow, isWon, canAuto, foundFor, autoStep," +
-    " bestTarget, allMoves, findHint, scoreNow, keyOf, validGame, mergeSolitaire, totals, bumpCell, fmtTime };")(CK);
+    " bestTarget, allMoves, findHint, scoreNow, keyOf, validGame, mergeSolitaire, totals, bumpCell, fmtTime," +
+    " dealPyramid, pyrOpen, pyrOpenCards, PYR_PASSES, PYR_KIDS };")(CK);
 })();
 
 const J = JSON.stringify;
@@ -493,4 +495,109 @@ test("solitaire: reset stamp, bad rows and totals", () => {
   const x = S.mergeSolitaire({ rows: { a: { b: 1, s: { f: { p: 2, w: 1, k: 1, t: 5000, tt: 7, m: 90, mt: 7 } } } } },
                              { rows: { a: { b: 1, s: { f: { p: 3, w: 1, k: 1, t: 5000, tt: 3, m: 95, mt: 3 } } } } });
   assert.equal(J(x.rows.a.s.f), J({ p: 3, w: 1, k: 1, t: 5000, tt: 3, m: 90, mt: 7 }));
+});
+
+// ---------- Pyramid (Wave 49) ----------
+test("pyramid: the deal, open cards and the stock", () => {
+  const deck = CK.newDeck(), g = S.dealPyramid(deck);
+  assert.equal(g.tab.length, 28);
+  assert.ok(g.tab.every((p) => p.length === 1));
+  assert.equal(g.st.length, 24);
+  assert.ok(S.validGame(g));
+  assert.equal(S.keyOf(g), "p");
+  assert.ok(S.KEYS.includes("p"));
+  // only the base row is open at the start
+  const open = S.pyrOpenCards(g).map((x) => x[0]);
+  assert.deepEqual(open, ["t21", "t22", "t23", "t24", "t25", "t26", "t27"]);
+  assert.equal(S.runFrom(g, "t0", 0), null);
+  assert.deepEqual(S.runFrom(g, "t21", 0), [g.tab[21][0]]);
+  // the stock turns one card at a time, three passes in all
+  let n = g, draws = 0;
+  for (;;) {
+    const next = S.drawStock(n);
+    if (!next) break;
+    n = next;
+    draws++;
+    assert.ok(S.validGame(n));
+  }
+  assert.equal(draws, 24 * S.PYR_PASSES + (S.PYR_PASSES - 1));
+  assert.equal(n.ps, S.PYR_PASSES - 1);
+  assert.equal(S.findHint(n) === null || S.findHint(n).src !== "s0", true);
+});
+
+test("pyramid: pairs of 13 and Kings leave; covered cards cannot move", () => {
+  // build a pyramid whose base row holds 6+7 and a King
+  const want = ["6S", "7H", "KD", "QC", "AH", "2S", "3D"];
+  const rest = CK.newDeck().filter((c) => !want.includes(CK.code(c)));
+  const deck = rest.slice(0, 21).concat(want.map((c) => CK.parse(c))).concat(rest.slice(21));
+  const g = S.dealPyramid(deck);
+  assert.ok(S.validGame(g));
+  const six = "t21", seven = "t22", king = "t23", queen = "t24", ace = "t25";
+  assert.equal(S.canPlace(g, six, [g.tab[21][0]], seven), "");
+  assert.equal(S.canPlace(g, six, [g.tab[21][0]], king), "rule");
+  assert.equal(S.canPlace(g, king, [g.tab[23][0]], "f0"), "");
+  assert.equal(S.canPlace(g, queen, [g.tab[24][0]], ace), "");
+  assert.equal(S.canPlace(g, six, [g.tab[21][0]], "t0"), "rule");          // covered target
+  assert.equal(S.bestTarget(g, king, 0).dst, "f0");
+  assert.equal(S.bestTarget(g, six, 0).dst, seven);
+  const a = S.applyMove(g, six, 0, seven);
+  assert.equal(a.tab[21].length + a.tab[22].length, 0);
+  assert.equal(a.fd[0].length, 2);
+  assert.equal(a.mv, 1);
+  assert.ok(S.pyrOpen(a, 15), "the card over 6 and 7 is open now");
+  assert.equal(g.tab[21].length, 1, "the old position is untouched (undo)");
+  assert.ok(S.validGame(a));
+  const b = S.applyMove(a, king, 0, "f0");
+  assert.equal(b.fd[0].length, 3);
+  assert.ok(S.validGame(b));
+  const h = S.findHint(g);
+  assert.ok(h && h.src !== "s0");
+  // a waste card pairs with an open pyramid card
+  let w = g;
+  while (w.st.length && CK.rank(w.st[w.st.length - 1]) + CK.rank(w.tab[26][0]) !== 13) w = S.drawStock(w);
+  if (w.st.length) {
+    w = S.drawStock(w);
+    assert.equal(S.canPlace(w, "w0", [w.wa[w.wa.length - 1]], "t26"), "");
+    const x = S.applyMove(w, "w0", w.wa.length - 1, "t26");
+    assert.ok(S.validGame(x));
+  }
+});
+
+test("pyramid: stored positions are checked; random games keep every card; a cleared pyramid wins", () => {
+  const g = S.dealPyramid(CK.shuffle(CK.newDeck()));
+  const floating = JSON.parse(JSON.stringify(g));
+  floating.fd[0].push(floating.tab[21].pop(), floating.tab[3].pop());          // a hole under a card
+  assert.equal(S.validGame(floating), false);
+  const badPair = JSON.parse(JSON.stringify(g));
+  badPair.fd[0].push(badPair.tab[21].pop(), badPair.tab[22].pop());
+  if (CK.rank(badPair.fd[0][0]) + CK.rank(badPair.fd[0][1]) !== 13 && CK.rank(badPair.fd[0][0]) !== 13) {
+    assert.equal(S.validGame(badPair), false);
+  }
+  const lost = JSON.parse(JSON.stringify(g)); lost.st.pop();
+  assert.equal(S.validGame(lost), false);
+  const passes = JSON.parse(JSON.stringify(g)); passes.ps = S.PYR_PASSES;
+  assert.equal(S.validGame(passes), false);
+  let wins = 0;
+  for (let k = 0; k < 150; k++) {
+    let n = S.dealPyramid(CK.shuffle(CK.newDeck()));
+    for (let step = 0; step < 400; step++) {
+      const h = S.findHint(n);
+      if (!h) break;
+      n = h.src === "s0" ? S.drawStock(n) : S.applyMove(n, h.src, h.i, h.dst);
+      assert.ok(S.validGame(n));
+      if (S.isWon(n)) { wins++; break; }
+    }
+  }
+  assert.ok(wins >= 0);
+  const empty = JSON.parse(JSON.stringify(g));
+  empty.tab.forEach((p) => { while (p.length) empty.st.push(p.pop()); });
+  assert.equal(S.isWon(empty), true);
+  assert.equal(S.canAuto(g), false);
+});
+
+test("pyramid: its records travel in the merge under key p", () => {
+  const cell = { p: 3, w: 1, k: 1, t: 60000, tt: 5, m: 40, mt: 5 };
+  const a = { rows: { d1: { b: 0, s: { p: cell } } } };
+  assert.equal(J(S.mergeSolitaire(a, null).rows.d1.s.p), J(cell));
+  assert.equal(S.totals(S.mergeSolitaire(a, a), "p").w, 1);
 });

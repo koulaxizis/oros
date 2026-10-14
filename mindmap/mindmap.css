@@ -625,4 +625,94 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .pic-thumb { width: 72px; height: 54px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
 @media (pointer: coarse) { .hint-x { min-height: 44px; } }
 
+/* Wave 27: styles dialog, quick icons, boundaries, layouts, presentation */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 38px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.chips.icons .chip { display: inline-flex; align-items: center; justify-content: center; min-width: 48px; padding: 4px 6px; }
+.chips.icons .chip svg { width: 32px; height: 22px; }
+.emo-picks { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0 12px; }
+.emo-pick {
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  line-height: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.emo-pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.fr-list { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; padding-right: 4px; }
+.fr-list .chk { margin-bottom: 0; }
+.fr-list .chk span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dlg-btn.danger { color: var(--danger); }
+.dlg-btn.danger:hover { border-color: var(--danger); background: transparent; }
+.lay-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.lay-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  text-align: left;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+}
+.lay-opt svg { width: 48px; height: 33px; flex-shrink: 0; color: var(--text-dim); }
+.lay-opt:hover { border-color: var(--accent); }
+.lay-opt[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.lay-opt[aria-checked="true"] svg { color: var(--accent); }
+.lay-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lay-name { font-weight: 800; font-size: 14px; }
+.lay-desc { font-size: 12px; color: var(--text-dim); }
+
+.mm-frame { cursor: pointer; }
+.mm-frame .mm-fbox { pointer-events: stroke; }
+.mm-frame .mm-frame-hit { pointer-events: stroke; }
+.mm-frame:hover .mm-fbox { stroke-width: 2.6; }
+.mm-frame text { pointer-events: none; }
+.mm-drop-h.mm-drop-before .mm-box { filter: drop-shadow(-4px 0 0 var(--accent)); }
+.mm-drop-h.mm-drop-after .mm-box { filter: drop-shadow(4px 0 0 var(--accent)); }
+
+body.presenting #toolbar, body.presenting #findbar, body.presenting .zoom,
+body.presenting #nodebar, body.presenting #hint, body.presenting #editor { display: none !important; }
+body.presenting #stage { background: var(--bg); }
+.mm-dim { opacity: 0.25; transition: opacity 0.3s; }
+.mm-node.mm-cur .mm-box { stroke: var(--accent-hover); stroke-width: 3.5; filter: drop-shadow(0 0 8px var(--accent-soft)); }
+.pres { position: absolute; inset: 0; z-index: 8; }
+.pres-pad { position: absolute; inset: 0; cursor: pointer; touch-action: none; }
+.pres-bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px var(--shadow);
+}
+.pres-count { min-width: 64px; text-align: center; font-size: 13px; font-weight: 700; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+@media (pointer: coarse) {
+  .chip { min-height: 44px; }
+  .emo-pick { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .mm-dim { transition: none; } }
+
 [hidden] { display: none !important; }
