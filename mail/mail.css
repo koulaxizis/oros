@@ -816,3 +816,21 @@ dialog.mm-dlg.compose { width: min(640px, calc(100vw - 32px)); }
 .ac-addr { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
 .apps-list { max-height: 60vh; overflow-y: auto; }
 .apps-list li { padding: 0; }
+
+/* ---------- 23. All inboxes, snooze, unsubscribe, OpenPGP ---------- */
+.row-badge { flex: 0 1 auto; min-width: 0; max-width: 34%; font-size: 10px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-date.snz { display: inline-flex; align-items: center; gap: 3px; color: var(--accent); }
+.row-date.snz svg { width: 11px; height: 11px; }
+.bar.unsub { justify-content: space-between; }
+.uns-url { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; padding: 8px 10px; margin: 6px 0; border-radius: 8px; background: var(--panel-bg); border: 1px solid var(--border); color: var(--text); }
+.bar.pgp { color: var(--text); }
+.bar.pgp .pgp-lead { display: inline-flex; color: var(--accent); }
+.bar.pgp.ok { background: rgba(63, 174, 100, .12); border-color: rgba(63, 174, 100, .45); }
+.cmp-pgp { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; margin-top: 4px; }
+.cmp-pgp .check { margin-top: 0; }
+.cmp-pgp-lbl { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; color: var(--text-dim); }
+.cmp-pgp .pgp-hint { flex-basis: 100%; margin: 0; }
+.key-list li { flex-wrap: wrap; }
+.key-list .set-acct { flex: 1 1 200px; }
+.key-fpr { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.key-text { width: 100%; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }

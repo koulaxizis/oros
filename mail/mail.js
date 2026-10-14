@@ -86,6 +86,10 @@
   var OB = window.orosMailOutbox;
   var PP = window.orosMailPeople;
   var SV = window.orosMailSieve;
+  var SN = window.orosMailSnooze;
+  var US = window.orosMailUnsub;
+  var PM = window.orosMailPgpMime;
+  var PG = window.orosMailPgp;
   var MAX_SIG_HTML = 60000;           // stored signature HTML (pictures as data:)
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -261,7 +265,53 @@
       "org.select": "Select", "org.all": "Select all", "org.selected": "{n} selected", "org.done": "Done",
       "org.archived": "Archived: {n}", "org.spammed": "Moved to Spam: {n}", "org.notspam": "Back in Inbox: {n}",
       "org.trashed": "Moved to Trash: {n}", "org.moved": "Moved: {n}", "org.undo": "Undo",
-      "org.eraseQ": "Delete {n} message(s) for good? This cannot be undone.", "org.erased": "Deleted: {n}"
+      "org.eraseQ": "Delete {n} message(s) for good? This cannot be undone.", "org.erased": "Deleted: {n}",
+      "f.snoozed": "Snoozed", "snz.btn": "Snooze", "snz.title": "Snooze until…", "snz.again": "Snooze until another time",
+      "snz.later": "Later today ({when})", "snz.tomorrow": "Tomorrow ({when})", "snz.monday": "Next Monday ({when})",
+      "snz.pick": "Date and time", "snz.ok": "Snooze",
+      "snz.hint": "It leaves the Inbox on all your devices and comes back, unread, at that time while orOS is open on one of them (otherwise as soon as orOS opens).",
+      "snz.done": "Snoozed until {when}: {n}", "snz.moved": "New time {when}: {n}", "snz.until": "Until {when}",
+      "snz.back": "Unsnooze", "snz.backDone": "Back from snooze: {n}", "snz.woke": "Back from snooze: {n}",
+      "snz.nokey": "This message cannot be snoozed: it has no Message-ID and no date.",
+      "uni.moveOne": "Moving to a folder works on messages of one account at a time.",
+      "uns.bar": "Mailing list", "uns.btn": "Unsubscribe", "uns.title": "Unsubscribe",
+      "uns.mail": "Mail sends an unsubscribe e-mail to {to} from {from}.", "uns.send": "Send the unsubscribe e-mail",
+      "uns.web": "The sender's unsubscribe page:", "uns.open": "Open the page",
+      "uns.webHint": "It opens in a new tab; you may have to confirm there.", "uns.http": "This page is not secure (http).",
+      "uns.warn": "Unsubscribe only from lists you signed up for: with spam, it just tells the sender that your address works.",
+      "uns.sent": "Unsubscribe e-mail sent to {to}",
+      "pgp.lbl": "Encryption (OpenPGP)", "pgp.hint": "Sign and encrypt mail with OpenPGP keys, as Thunderbird, Proton and GnuPG do. Your keys stay on this device.",
+      "pgp.keys": "Keys", "pgp.keysN": "Yours: {own} · of others: {pub}", "pgp.title": "OpenPGP keys",
+      "pgp.own": "My keys", "pgp.others": "Keys of others", "pgp.none": "No keys yet.",
+      "pgp.new": "Create my key", "pgp.import": "Import a key", "pgp.fpr": "Fingerprint {fpr}",
+      "pgp.exportPub": "Save public key", "pgp.exportSec": "Back up private key", "pgp.del": "Delete key",
+      "pgp.delQ": "Delete the key of {who}?",
+      "pgp.delOwnQ": "Delete your private key {fpr}? Without it, or a backup, mail locked for it can never be opened again.",
+      "pgp.secQ": "The backup is your private key, still locked with your passphrase. Keep it somewhere safe and never send it to anyone.",
+      "pgp.newTitle": "Create my OpenPGP key", "pgp.acct": "For", "pgp.pass": "Passphrase", "pgp.pass2": "Passphrase again",
+      "pgp.passHint": "It locks the key on this device. Nobody can recover it for you: write it down somewhere safe.",
+      "pgp.passShort": "At least 8 characters.", "pgp.passDiff": "The two passphrases are not the same.",
+      "pgp.making": "Creating…", "pgp.made": "Key created for {email}",
+      "pgp.impTitle": "Import an OpenPGP key",
+      "pgp.impHint": "Paste a key block (-----BEGIN PGP …) or pick an .asc file: the public keys of the people you write to, or your own private key.",
+      "pgp.impFile": "Pick a file", "pgp.impText": "Key", "pgp.impDo": "Import", "pgp.impDone": "Keys added: {n}, updated: {u}",
+      "pgp.impBad": "No OpenPGP key could be read from it.", "pgp.impLock": "This private key has no passphrase. Choose one to lock it on this device.",
+      "pgp.unlockText": "The passphrase of your key for {email} ({fpr}).", "pgp.unlock": "Unlock", "pgp.wrong": "Wrong passphrase.",
+      "pgp.loadFail": "OpenPGP could not be loaded. Check the connection and try again.",
+      "pgp.sign": "Sign", "pgp.enc": "Encrypt", "pgp.cmpLbl": "OpenPGP",
+      "pgp.noOwn": "Create or import your own key for {email} first (Settings › Encryption).",
+      "pgp.missing": "No OpenPGP key for: {list}. Import their public key, or send without encryption.",
+      "pgp.working": "Encrypting…", "pgp.subjHint": "The subject and the addresses are not encrypted.",
+      "pgp.failed": "OpenPGP failed: {msg}",
+      "pgp.encMsg": "This message is encrypted with OpenPGP.", "pgp.decrypt": "Decrypt",
+      "pgp.noKeyFor": "None of your keys on this device can open it.", "pgp.decrypted": "Decrypted with your OpenPGP key. It stays encrypted on the server.",
+      "pgp.decFail": "It could not be decrypted: {msg}",
+      "pgp.sigOk": "Signed with OpenPGP by {who}: the signature is valid.",
+      "pgp.sigBad": "The OpenPGP signature does not match: the message may have been changed on the way.",
+      "pgp.sigUnknown": "Signed with OpenPGP by a key that is not on this device ({id}).",
+      "pgp.sigOther": "Signed with OpenPGP by {who}, whose key is not for {addr}.",
+      "pgp.sigCheck": "Check signature", "pgp.sigChecking": "Checking the OpenPGP signature…", "pgp.signed": "Signed with OpenPGP.",
+      "pgp.keyAtt": "This message carries an OpenPGP key.", "pgp.keyAdd": "Add to my keys"
     },
     el: {
       "app": "Αλληλογραφία", "nav.folders": "Φάκελοι", "nav.back": "Πίσω", "btn.refresh": "Έλεγχος για νέα μηνύματα",
@@ -425,7 +475,53 @@
       "org.select": "Επιλογή", "org.all": "Επιλογή όλων", "org.selected": "Επιλεγμένα: {n}", "org.done": "Τέλος",
       "org.archived": "Αρχειοθετήθηκαν: {n}", "org.spammed": "Στα Ανεπιθύμητα: {n}", "org.notspam": "Πίσω στα Εισερχόμενα: {n}",
       "org.trashed": "Στον Κάδο: {n}", "org.moved": "Μετακινήθηκαν: {n}", "org.undo": "Αναίρεση",
-      "org.eraseQ": "Οριστική διαγραφή {n} μηνυμάτων; Δεν αναιρείται.", "org.erased": "Διαγράφηκαν: {n}"
+      "org.eraseQ": "Οριστική διαγραφή {n} μηνυμάτων; Δεν αναιρείται.", "org.erased": "Διαγράφηκαν: {n}",
+      "f.snoozed": "Σε αναβολή", "snz.btn": "Αναβολή", "snz.title": "Αναβολή έως…", "snz.again": "Αναβολή για άλλη ώρα",
+      "snz.later": "Αργότερα σήμερα ({when})", "snz.tomorrow": "Αύριο ({when})", "snz.monday": "Την επόμενη Δευτέρα ({when})",
+      "snz.pick": "Ημερομηνία και ώρα", "snz.ok": "Αναβολή",
+      "snz.hint": "Φεύγει από τα Εισερχόμενα σε όλες τις συσκευές σου και επιστρέφει, αδιάβαστο, εκείνη την ώρα όσο το orOS είναι ανοιχτό σε κάποια από αυτές (αλλιώς μόλις ανοίξει το orOS).",
+      "snz.done": "Σε αναβολή έως {when}: {n}", "snz.moved": "Νέα ώρα {when}: {n}", "snz.until": "Έως {when}",
+      "snz.back": "Κατάργηση αναβολής", "snz.backDone": "Επέστρεψαν από την αναβολή: {n}", "snz.woke": "Επέστρεψαν από την αναβολή: {n}",
+      "snz.nokey": "Αυτό το μήνυμα δεν μπορεί να αναβληθεί: δεν έχει Message-ID ούτε ημερομηνία.",
+      "uni.moveOne": "Η μετακίνηση σε φάκελο γίνεται σε μηνύματα ενός λογαριασμού τη φορά.",
+      "uns.bar": "Λίστα αλληλογραφίας", "uns.btn": "Απεγγραφή", "uns.title": "Απεγγραφή",
+      "uns.mail": "Η Αλληλογραφία θα στείλει email απεγγραφής στο {to} από το {from}.", "uns.send": "Αποστολή email απεγγραφής",
+      "uns.web": "Η σελίδα απεγγραφής του αποστολέα:", "uns.open": "Άνοιγμα της σελίδας",
+      "uns.webHint": "Ανοίγει σε νέα καρτέλα· ίσως χρειαστεί να επιβεβαιώσεις εκεί.", "uns.http": "Η σελίδα δεν είναι ασφαλής (http).",
+      "uns.warn": "Κάνε απεγγραφή μόνο από λίστες που γράφτηκες εσύ: στα ανεπιθύμητα, απλώς δείχνει στον αποστολέα ότι η διεύθυνσή σου υπάρχει.",
+      "uns.sent": "Στάλθηκε email απεγγραφής στο {to}",
+      "pgp.lbl": "Κρυπτογράφηση (OpenPGP)", "pgp.hint": "Υπογραφή και κρυπτογράφηση μηνυμάτων με κλειδιά OpenPGP, όπως στο Thunderbird, το Proton και το GnuPG. Τα κλειδιά σου μένουν σε αυτή τη συσκευή.",
+      "pgp.keys": "Κλειδιά", "pgp.keysN": "Δικά σου: {own} · άλλων: {pub}", "pgp.title": "Κλειδιά OpenPGP",
+      "pgp.own": "Τα κλειδιά μου", "pgp.others": "Κλειδιά άλλων", "pgp.none": "Κανένα κλειδί ακόμα.",
+      "pgp.new": "Δημιουργία κλειδιού", "pgp.import": "Εισαγωγή κλειδιού", "pgp.fpr": "Αποτύπωμα {fpr}",
+      "pgp.exportPub": "Αποθήκευση δημόσιου κλειδιού", "pgp.exportSec": "Αντίγραφο ιδιωτικού κλειδιού", "pgp.del": "Διαγραφή κλειδιού",
+      "pgp.delQ": "Διαγραφή του κλειδιού του/της {who};",
+      "pgp.delOwnQ": "Διαγραφή του ιδιωτικού σου κλειδιού {fpr}; Χωρίς αυτό, ή ένα αντίγραφό του, τα μηνύματα που κλειδώθηκαν γι' αυτό δεν θα ανοίξουν ποτέ ξανά.",
+      "pgp.secQ": "Το αντίγραφο είναι το ιδιωτικό σου κλειδί, κλειδωμένο με τη φράση πρόσβασης. Φύλαξέ το σε ασφαλές μέρος και μην το στείλεις ποτέ σε κανέναν.",
+      "pgp.newTitle": "Δημιουργία κλειδιού OpenPGP", "pgp.acct": "Για", "pgp.pass": "Φράση πρόσβασης", "pgp.pass2": "Ξανά η φράση πρόσβασης",
+      "pgp.passHint": "Κλειδώνει το κλειδί σε αυτή τη συσκευή. Κανείς δεν μπορεί να την ανακτήσει για σένα: γράψ' την κάπου ασφαλές.",
+      "pgp.passShort": "Τουλάχιστον 8 χαρακτήρες.", "pgp.passDiff": "Οι δύο φράσεις δεν είναι ίδιες.",
+      "pgp.making": "Δημιουργία…", "pgp.made": "Το κλειδί δημιουργήθηκε για {email}",
+      "pgp.impTitle": "Εισαγωγή κλειδιού OpenPGP",
+      "pgp.impHint": "Επικόλλησε ένα κλειδί (-----BEGIN PGP …) ή διάλεξε αρχείο .asc: τα δημόσια κλειδιά όσων σου γράφουν, ή το δικό σου ιδιωτικό κλειδί.",
+      "pgp.impFile": "Επιλογή αρχείου", "pgp.impText": "Κλειδί", "pgp.impDo": "Εισαγωγή", "pgp.impDone": "Νέα κλειδιά: {n}, ενημερωμένα: {u}",
+      "pgp.impBad": "Δεν βρέθηκε κλειδί OpenPGP εκεί.", "pgp.impLock": "Αυτό το ιδιωτικό κλειδί δεν έχει φράση πρόσβασης. Διάλεξε μία για να κλειδωθεί σε αυτή τη συσκευή.",
+      "pgp.unlockText": "Η φράση πρόσβασης του κλειδιού σου για {email} ({fpr}).", "pgp.unlock": "Ξεκλείδωμα", "pgp.wrong": "Λάθος φράση πρόσβασης.",
+      "pgp.loadFail": "Το OpenPGP δεν φορτώθηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "pgp.sign": "Υπογραφή", "pgp.enc": "Κρυπτογράφηση", "pgp.cmpLbl": "OpenPGP",
+      "pgp.noOwn": "Δημιούργησε ή εισήγαγε πρώτα το δικό σου κλειδί για {email} (Ρυθμίσεις › Κρυπτογράφηση).",
+      "pgp.missing": "Δεν υπάρχει κλειδί OpenPGP για: {list}. Εισήγαγε το δημόσιο κλειδί τους ή στείλε χωρίς κρυπτογράφηση.",
+      "pgp.working": "Κρυπτογράφηση…", "pgp.subjHint": "Το θέμα και οι διευθύνσεις δεν κρυπτογραφούνται.",
+      "pgp.failed": "Το OpenPGP απέτυχε: {msg}",
+      "pgp.encMsg": "Αυτό το μήνυμα είναι κρυπτογραφημένο με OpenPGP.", "pgp.decrypt": "Αποκρυπτογράφηση",
+      "pgp.noKeyFor": "Κανένα από τα κλειδιά σου σε αυτή τη συσκευή δεν μπορεί να το ανοίξει.", "pgp.decrypted": "Αποκρυπτογραφήθηκε με το κλειδί σου OpenPGP. Στον διακομιστή μένει κρυπτογραφημένο.",
+      "pgp.decFail": "Δεν αποκρυπτογραφήθηκε: {msg}",
+      "pgp.sigOk": "Υπογραφή OpenPGP από {who}: η υπογραφή είναι έγκυρη.",
+      "pgp.sigBad": "Η υπογραφή OpenPGP δεν ταιριάζει: το μήνυμα ίσως άλλαξε στη διαδρομή.",
+      "pgp.sigUnknown": "Υπογραφή OpenPGP από κλειδί που δεν υπάρχει σε αυτή τη συσκευή ({id}).",
+      "pgp.sigOther": "Υπογραφή OpenPGP από {who}, που το κλειδί του/της δεν είναι για το {addr}.",
+      "pgp.sigCheck": "Έλεγχος υπογραφής", "pgp.sigChecking": "Έλεγχος της υπογραφής OpenPGP…", "pgp.signed": "Υπογεγραμμένο με OpenPGP.",
+      "pgp.keyAtt": "Αυτό το μήνυμα έχει μαζί ένα κλειδί OpenPGP.", "pgp.keyAdd": "Προσθήκη στα κλειδιά μου"
     }
   };
 
@@ -470,6 +566,14 @@
     if (d.toDateString() === y.toDateString()) return t("time.yesterday");
     if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString(locale(), { day: "numeric", month: "short" });
     return d.toLocaleDateString(locale(), { day: "numeric", month: "numeric", year: "numeric" });
+  }
+  // a snooze's wake time in a list row: 18:00 · Tue 08:00 · 3 Nov
+  function fmtListWhen(ms) {
+    var d = new Date(ms), now = new Date();
+    var hm = d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
+    if (d.toDateString() === now.toDateString()) return hm;
+    if (ms - now.getTime() < 6 * 86400000) return d.toLocaleDateString(locale(), { weekday: "short" }) + " " + hm;
+    return d.toLocaleDateString(locale(), { day: "numeric", month: "short" });
   }
   function fmtFullDate(ms) {
     if (!ms) return "";
@@ -539,7 +643,9 @@
     folder: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
     search: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
     close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>',
-    key: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>'
+    key: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+    clock: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 14.5 15"/><line x1="5" y1="3" x2="2" y2="6"/><line x1="19" y1="3" x2="22" y2="6"/></svg>',
+    lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
   };
 
   // BOOT MARKER
@@ -614,7 +720,7 @@
     return null;
   }
 
-  function emptyData() { return { ver: DATA_VER, accounts: [], relay: { url: "", m: 0 }, imgOk: {}, tombs: {}, rules: [], templates: [] }; }
+  function emptyData() { return { ver: DATA_VER, accounts: [], relay: { url: "", m: 0 }, imgOk: {}, tombs: {}, rules: [], templates: [], snoozes: [] }; }
   // A message template (synced): { id, m, name ≤ 60, subject ≤ 300,
   // html ≤ MAX_TPL_HTML }. The HTML is cleaned (rich.js) when it is
   // put into a message, never shown raw.
@@ -644,11 +750,11 @@
   // Symmetric merge (R5): accounts LWW by m (tie: JSON order), tombstones
   // max-ts and delete wins ties (R17), relay LWW, allowed-image senders
   // union of the latest stamp, rules LWW by m like accounts (same
-  // tombstones; rules of a removed account go with it). Canonical
-  // output (R26).
+  // tombstones; rules of a removed account go with it); snoozes
+  // (snooze.js) the same way. Canonical output (R26).
   function mergeMail(a, b) {
     var res = emptyData();
-    var tombs = {}, byId = {}, img = {}, rules = {}, tpls = {};
+    var tombs = {}, byId = {}, img = {}, rules = {}, tpls = {}, snz = {};
     [a, b].forEach(function (d) {
       if (!d || typeof d !== "object") return;
       if (d.tombs && typeof d.tombs === "object") {
@@ -668,6 +774,12 @@
         if (!n) return;
         var cur = rules[n.id];
         if (!cur || n.m > cur.m || (n.m === cur.m && cmpStr(JSON.stringify(n), JSON.stringify(cur)) > 0)) rules[n.id] = n;
+      });
+      (Array.isArray(d.snoozes) ? d.snoozes : []).forEach(function (x) {
+        var n = SN.norm(x);
+        if (!n) return;
+        var cur = snz[n.id];
+        if (!cur || n.m > cur.m || (n.m === cur.m && cmpStr(JSON.stringify(n), JSON.stringify(cur)) > 0)) snz[n.id] = n;
       });
       (Array.isArray(d.templates) ? d.templates : []).forEach(function (x) {
         var n = normTpl(x);
@@ -700,6 +812,11 @@
       var x = rules[id];
       return !(tombs[id] >= x.m) && !(tombs[x.acct] && !live[x.acct]);
     }).slice(0, R.MAX_RULES).map(function (id) { return rules[id]; });
+    res.snoozes = Object.keys(snz).filter(function (id) {
+      var x = snz[id];
+      return !(tombs[id] >= x.m) && !(tombs[x.acct] && !live[x.acct]);
+    }).sort(function (x, y) { return (snz[x].until - snz[y].until) || cmpStr(x, y); })
+      .slice(0, SN.MAX).map(function (id) { return snz[id]; });
     res.templates = Object.keys(tpls).filter(function (id) { return !(tombs[id] >= tpls[id].m); })
       .sort(function (x, y) { return cmpStr(tpls[x].name.toLowerCase(), tpls[y].name.toLowerCase()) || cmpStr(x, y); })
       .slice(0, MAX_TPLS).map(function (id) { return tpls[id]; });
@@ -727,7 +844,7 @@
   }
 
   // Special folders: \Sent etc. (RFC 6154), else well-known names.
-  var SPECIAL_ORDER = ["inbox", "drafts", "sent", "archive", "junk", "trash", "all", "flagged"];
+  var SPECIAL_ORDER = ["inbox", "snoozed", "drafts", "sent", "archive", "junk", "trash", "all", "flagged"];
   var SPECIAL_NAMES = {
     sent: /^(sent|sent items|sent messages|sent mail|απεσταλμένα)$/i,
     drafts: /^(drafts?|πρόχειρα)$/i,
@@ -740,6 +857,7 @@
     var fl = (f.flags || []).join(" ").toLowerCase();
     var roles = ["sent", "drafts", "trash", "junk", "archive", "all", "flagged"];
     for (var i = 0; i < roles.length; i++) if (fl.indexOf("\\" + roles[i]) >= 0) return roles[i];
+    if (SN.isFolder(f)) return "snoozed";
     var leaf = folderLeaf(f);
     for (var k in SPECIAL_NAMES) if (SPECIAL_NAMES[k].test(leaf)) return k;
     return "";
@@ -817,10 +935,10 @@
   function db() {
     if (!dbPromise) {
       dbPromise = new Promise(function (resolve, reject) {
-        var req = indexedDB.open(DB_NAME, 2);   // 2: + outbox
+        var req = indexedDB.open(DB_NAME, 3);   // 2: + outbox, 3: + pgp (OpenPGP keys)
         req.onupgradeneeded = function () {
           var d = req.result;
-          ["keys", "creds", "folders", "heads", "bodies", "outbox"].forEach(function (n) {
+          ["keys", "creds", "folders", "heads", "bodies", "outbox", "pgp"].forEach(function (n) {
             if (!d.objectStoreNames.contains(n)) d.createObjectStore(n);
           });
         };
@@ -1267,7 +1385,11 @@
       $("list-title").textContent = t("uni.title");
       var un = uniUnseen();
       $("list-count").textContent = un > 0 ? t("list.count", { n: un }) : "";
-      sel = null;
+      if (sel) {
+        var live = {};
+        uniKeys().forEach(function (k) { live[k] = 1; });
+        Object.keys(sel).forEach(function (k) { if (!live[k]) delete sel[k]; });
+      }
       renderSelBar();
       renderUniList(ul, foot);
       return;
@@ -1303,6 +1425,12 @@
   // its older messages under it while it is open.
   function renderRows(ul, list) {
     var role = folderRole(currentFolder() || {});
+    if (role === "snoozed") {
+      var at = function (m) { var r = cur ? snoozeOf(cur.acct, m) : null; return r ? r.until : Infinity; };
+      list.slice().sort(function (a, b) { return (at(a) - at(b)) || (b.uid - a.uid); })
+        .forEach(function (m) { ul.appendChild(listRow(m, { snz: true })); });
+      return;
+    }
     if (!prefs.threads || !TH || role === "drafts") { list.forEach(function (m) { ul.appendChild(listRow(m)); }); return; }
     TH.group(list).forEach(function (g) {
       if (g.msgs.length === 1) { ul.appendChild(listRow(g.msgs[0])); return; }
@@ -1332,7 +1460,8 @@
     if (isOpen) { b.classList.add("on"); b.setAttribute("aria-current", "true"); }
     var role = folderRole(currentFolder() || {});
     var person = (role === "sent" || role === "drafts") ? (m.to[0] || m.from) : m.from;
-    var gUids = g && !o.open ? g.msgs.map(function (x) { return x.uid; }) : [m.uid];
+    var rowKey = function (x) { return o.acct ? o.acct + ":" + x.uid : x.uid; };
+    var gUids = (g && !o.open ? g.msgs : [m]).map(rowKey);
     var picked = sel && gUids.every(function (u) { return sel[u]; });
     if (sel) {
       var ck = el("span", "row-check" + (picked ? " on" : ""));
@@ -1362,7 +1491,20 @@
       cnt.title = t("thr.count", { n: g.msgs.length });
       top.appendChild(cnt);
     }
-    top.appendChild(el("time", "row-date", fmtListDate(m.date)));
+    if (ua) {
+      var badge = el("span", "row-badge", ua.name && data.accounts.filter(function (x) { return x.name === ua.name; }).length === 1 ? ua.name : ua.email);
+      badge.style.color = "hsl(" + hue(ua.email) + " 60% 50%)";
+      badge.setAttribute("aria-hidden", "true");
+      top.appendChild(badge);
+    }
+    var sz = o.snz && cur ? snoozeOf(cur.acct, m) : null;
+    if (sz) {
+      var when = el("time", "row-date snz");
+      when.innerHTML = UI.clock;
+      when.appendChild(document.createTextNode(fmtListWhen(sz.until)));
+      when.title = t("snz.until", { when: fmtWhen(sz.until) });
+      top.appendChild(when);
+    } else top.appendChild(el("time", "row-date", fmtListDate(m.date)));
     mid.appendChild(top);
     var bot = el("span", "row-bot");
     bot.appendChild(el("span", "row-subj", m.subj || t("read.nosubj")));
@@ -1378,7 +1520,7 @@
           if (!sel) sel = {};
           gUids.forEach(function (u) { if (picked) delete sel[u]; else sel[u] = 1; });
           renderList();
-        } else toggleSel(m.uid);
+        } else toggleSel(rowKey(m));
         return;
       }
       if (g) {
@@ -1388,7 +1530,7 @@
       }
       if (o.acct) uniOpen(o.acct, m.uid); else openMessage(m.uid);
     });
-    if (!o.acct) wireSwipe(b, m);
+    wireSwipe(b, rowKey(m));
     li.appendChild(b);
     return li;
   }
@@ -1437,16 +1579,9 @@
   function uniGroups() {
     if (!uni) return [];
     if (cur && cur.folder === "INBOX" && uni.recs[cur.acct]) uni.recs[cur.acct] = cur;
-    var out = [];
-    data.accounts.forEach(function (a) {
-      var rec = uni.recs[a.id];
-      if (!rec) return;
-      var gs = prefs.threads && TH ? TH.group(rec.msgs) :
-        rec.msgs.map(function (m) { return { key: "t" + m.uid, msgs: [m] }; });
-      gs.forEach(function (g) { out.push({ key: a.id + ":" + g.key, msgs: g.msgs, acct: a.id }); });
-    });
-    out.sort(function (x, y) { return (y.msgs[0].date || 0) - (x.msgs[0].date || 0); });
-    return out.slice(0, UNI_MAX);
+    return TH.unify(data.accounts.filter(function (a) { return uni.recs[a.id]; }).map(function (a) {
+      return { acct: a.id, msgs: uni.recs[a.id].msgs, threads: !!prefs.threads };
+    }), UNI_MAX);
   }
   function renderUniList(ul, foot) {
     var gs = uniGroups();
@@ -1657,11 +1792,14 @@
     renderReader();
     getSource(acct, rec.folder, rec.uidv, uid).then(function (raw) {
       if (!openMsg || openMsg.uid !== uid) return;
-      openMsg.parsed = M.parseMessage(M.b64ToBin(raw));
+      var bin = M.b64ToBin(raw);
+      openMsg.parsed = M.parseMessage(bin);
+      openMsg.pgp = pgpInfo(bin, openMsg.parsed);
       openMsg.loading = false;
       markSeen(acct, rec, m);
       renderList();
       renderReader();
+      pgpAuto();
     }, function (e) {
       if (!openMsg || openMsg.uid !== uid) return;
       openMsg.loading = false;
@@ -1715,6 +1853,8 @@
     }
     var p = openMsg.parsed;
     renderTrust(p, m, sender, bars);
+    renderPgp(m, bars);
+    renderUnsub(p, m, bars);
     acts.hidden = false;
     if (folderRole(currentFolder() || {}) === "drafts") {
       acts.appendChild(button(t("drf.edit"), "small primary", editDraft));
@@ -1871,7 +2011,7 @@
   }
 
   function renderAtts(p, box) {
-    var list = p.attachments.filter(function (a) { return !(a.inline && a.cid && /^image\//.test(a.type)); });
+    var list = p.attachments.filter(function (a) { return !(a.inline && a.cid && /^image\//.test(a.type)) && !pgpPart(a); });
     if (!list.length) return;
     box.hidden = false;
     box.appendChild(el("div", "atts-title", t("att.title")));
@@ -2586,6 +2726,23 @@
       });
       dlg.appendChild(sul);
     }
+    if (PG && data.accounts.length) {
+      dlg.appendChild(el("div", "dlg-lbl", t("pgp.lbl")));
+      var kul = el("ul", "set-accts");
+      var kli = el("li");
+      var ktx = el("div", "set-acct");
+      ktx.appendChild(el("div", "set-acct-name", t("pgp.keys")));
+      var kn = el("div", "set-acct-mail", "");
+      ktx.appendChild(kn);
+      pgpInit().then(function () {
+        var ks = PG.list();
+        kn.textContent = t("pgp.keysN", { own: ks.filter(function (k) { return k.own; }).length, pub: ks.filter(function (k) { return !k.own; }).length });
+      });
+      kli.appendChild(ktx);
+      kli.appendChild(button(t("set.edit"), "small", function () { dlg.close(); keysDialog(); }));
+      kul.appendChild(kli);
+      dlg.appendChild(kul);
+    }
     var form = el("form");
     form.method = "dialog";
     form.noValidate = true;
@@ -2684,10 +2841,11 @@
     var acct = acctById(d.acct);
     if (!acct) throw new MailError("noacct");
     if (!acct.smtp) throw new MailError("nosmtp");
-    var rich = d.html ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
+    var rich = d.html && !d.part ? RT.clean(d.html, { cid: true }) : null;   // data: pictures → inline parts
     var msg = C.build({ from: { name: acct.name, addr: acct.email }, to: d.to, cc: d.cc, bcc: d.bcc,
                         subject: d.subject, text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
-                        attachments: d.atts || [], inReplyTo: d.inReplyTo, references: d.references });
+                        attachments: d.atts || [], inReplyTo: d.inReplyTo, references: d.references,
+                        part: d.part || null });   // OpenPGP: signed / encrypted already (pgpPrepare)
     if (msg.bin.length > MSG_MAX) throw new MailError("big");
     return { acct: acct, msg: msg };
   }
@@ -2768,6 +2926,7 @@
   }
 
   function sendErrText(e) {
+    if (e && e.code === "pgp") return e.msg;
     if (e && (e.code === "too-big" || e.code === "big")) return t("err.big");
     if (e && e.code === "timeout") return t("cmp.timeout");
     return errText(e);
@@ -2869,7 +3028,7 @@
     var d = rec.draft;
     openCompose({ acct: d.acct, to: d.to, cc: d.cc, bcc: d.bcc, subject: d.subject, text: d.text, html: d.html || "",
                   inReplyTo: d.inReplyTo, references: d.references, attachments: d.atts || [],
-                  draft: d.serverDraft || null, noSig: true });
+                  draft: d.serverDraft || null, noSig: true, pgp: d.pgp || null });
   }
   function undoSendToast(rec, secs) {
     localToast(t("snd.sending"), { label: t("org.undo"), fn: function () {
@@ -2973,7 +3132,7 @@
         dlg.close();
         openCompose({ acct: r.draft.acct, to: r.draft.to, cc: r.draft.cc, bcc: r.draft.bcc,
                       subject: r.draft.subject, text: r.draft.text, html: r.draft.html || "", inReplyTo: r.draft.inReplyTo,
-                      references: r.draft.references, attachments: r.draft.atts || [], outId: r.id, noSig: true });
+                      references: r.draft.references, attachments: r.draft.atts || [], outId: r.id, noSig: true, pgp: r.draft.pgp || null });
       }));
       acts.appendChild(button(t("out.del"), "small danger", function () { dropOut(r.id); outboxDialog(); }));
       li.appendChild(acts);
@@ -3111,9 +3270,11 @@
       fwd: t("cmp.fwd"), from: t("cmp.from"), date: t("cmp.date"), subject: t("cmp.subject"), to: t("cmp.to"),
       fmtDate: fmtFullDate
     });
+    var wasEnc = openMsg.pgp && (openMsg.pgp.kind === "encrypted" || openMsg.pgp.kind === "inline-enc") && openMsg.pgp.state === "ok";
     openCompose({ acct: acct.id, to: d.to, cc: d.cc, subject: d.subject, quote: d.text,
                   inReplyTo: d.inReplyTo, references: d.references,
-                  attachments: mode === "forward" ? fileAtts(p) : [] });
+                  attachments: mode === "forward" ? fileAtts(p) : [],
+                  pgp: wasEnc ? { sign: PG.hasOwn(acct.email), encrypt: true } : null });
   }
 
   // init: { acct?, to[], cc[], bcc[], subject, text (above the
@@ -3217,16 +3378,52 @@
         var d2 = collect(true);
         if (!d2) return;
         if (draftRef) d2.serverDraft = draftRef;
-        var q;
-        try { q = queueTimed(d2, ms); } catch (er) { errP.textContent = sendErrText(er); return; }
-        q.then(function () {
-          if (init.outId) dropOut(init.outId);
-          finish(t("snd.scheduled", { when: fmtWhen(ms) }));
-        }, function (er) { errP.textContent = sendErrText(er); });
+        withPgp(d2, function (d3) {
+          var q;
+          try { q = queueTimed(d3, ms); } catch (er) { errP.textContent = sendErrText(er); return; }
+          q.then(function () {
+            if (init.outId) dropOut(init.outId);
+            finish(t("snd.scheduled", { when: fmtWhen(ms) }));
+          }, function (er) { errP.textContent = sendErrText(er); });
+        });
       });
     });
     attRow.appendChild(laterB);
     form.appendChild(attRow);
+    // OpenPGP: shown once this device has keys
+    var pgpBox = null, cbSign = null, cbEnc = null;
+    if (PG && PM) {
+      pgpBox = el("div", "cmp-pgp");
+      pgpBox.hidden = true;
+      var pl = el("span", "cmp-pgp-lbl");
+      pl.innerHTML = UI.lock;
+      pl.appendChild(el("span", "", t("pgp.cmpLbl")));
+      pgpBox.appendChild(pl);
+      cbSign = checkBox(pgpBox, t("pgp.sign"), !!(init.pgp && init.pgp.sign));
+      cbEnc = checkBox(pgpBox, t("pgp.enc"), !!(init.pgp && init.pgp.encrypt));
+      var encHint = el("span", "dlg-hint pgp-hint", t("pgp.subjHint"));
+      encHint.hidden = !cbEnc.checked;
+      cbEnc.addEventListener("change", function () { encHint.hidden = !cbEnc.checked; });
+      pgpBox.appendChild(encHint);
+      form.appendChild(pgpBox);
+      pgpInit().then(function () { pgpBox.hidden = !PG.list().length; });
+    }
+    // d → done(d with the OpenPGP part) when Sign / Encrypt is on, else as is
+    function withPgp(d, done) {
+      var o = pgpBox && !pgpBox.hidden && (cbSign.checked || cbEnc.checked) ? { sign: cbSign.checked, encrypt: cbEnc.checked } : null;
+      if (!o) { done(d); return; }
+      ok.disabled = true;
+      ok.textContent = t("pgp.working");
+      pgpPrepare(d, o).then(function (d2) {
+        ok.disabled = false;
+        ok.textContent = t("cmp.send");
+        if (d2) done(d2);
+      }, function (e) {
+        ok.disabled = false;
+        ok.textContent = t("cmp.send");
+        errP.textContent = sendErrText(e);
+      });
+    }
     var chips = el("ul", "cmp-atts");
     form.appendChild(chips);
     function filesTotal() { return files.reduce(function (n, f) { return n + f.size; }, 0); }
@@ -3367,10 +3564,13 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var d = collect(true);
-      if (!d) return;
-      if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
-      if (draftRef) d.serverDraft = draftRef;
+      var d0 = collect(true);
+      if (!d0) return;
+      if (!acctById(d0.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
+      if (draftRef) d0.serverDraft = draftRef;
+      withPgp(d0, go);
+    });
+    function go(d) {
       // Undo send: built now, waits in the Outbox for a few seconds
       if (navigator.onLine && prefs.undo > 0) {
         var secs = prefs.undo, rec;
@@ -3400,7 +3600,7 @@
         if (waitsForNet(err)) queue();
         else failed(err);
       });
-    });
+    }
     dlg.appendChild(form);
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -3458,88 +3658,135 @@
     if (!navigator.onLine) { showToast(t("err.offline")); return false; }
     return true;
   }
-  function msgsByUid(uids) {
-    var out = [];
-    uids.forEach(function (u) { var m = findMsg(u); if (m) out.push(m); });
+  // The messages an action is for, by account: [{ acct, rec, uids }].
+  // keys: UIDs of the open folder; in All inboxes "acctId:uid" (a bare
+  // UID there is the open message's, in its account's Inbox = cur).
+  function groupsOf(keys) {
+    var by = {}, out = [];
+    (keys || []).forEach(function (k) {
+      var s = String(k), i = s.indexOf(":"), aid, uid, rec;
+      if (i > 0) { aid = s.slice(0, i); uid = +s.slice(i + 1); rec = uni ? uni.recs[aid] : null; }
+      else { aid = cur && cur.acct; uid = +s; rec = cur; }
+      var acct = aid ? acctById(aid) : null;
+      if (!acct || !rec || !(uid > 0)) return;
+      if (!by[aid]) { by[aid] = { acct: acct, rec: rec, uids: [] }; out.push(by[aid]); }
+      if (by[aid].uids.indexOf(uid) < 0) by[aid].uids.push(uid);
+    });
     return out;
   }
+  function keyOf(g, uid) { return uni ? g.acct.id + ":" + uid : uid; }
+  function groupMsgs(g) {
+    var out = [];
+    g.uids.forEach(function (u) {
+      var m = null, i;
+      for (i = 0; i < g.rec.msgs.length && !m; i++) if (g.rec.msgs[i].uid === u) m = g.rec.msgs[i];
+      if (!m && g.rec === cur && srchOn()) for (i = 0; i < srch.msgs.length && !m; i++) if (srch.msgs[i].uid === u) m = srch.msgs[i];
+      if (m) out.push(m);
+    });
+    return out;
+  }
+  function allMsgs(gs) { return gs.reduce(function (a, g) { return a.concat(groupMsgs(g)); }, []); }
+  function roleOf(g) { return folderRole(findFolder(g.acct, g.rec.folder) || { name: g.rec.folder, delim: "", flags: [] }); }
+  function msgsByUid(keys) { return allMsgs(groupsOf(keys)); }
 
   // kind: "star" | "unstar" | "read" | "unread"
-  function setFlags(uids, kind) {
-    var acct = curAcct(), rec = cur;
-    if (!acct || !rec || !uids.length || !online()) return;
+  function setFlags(keys, kind) {
+    var gs = groupsOf(keys);
+    if (!gs.length || !online()) return;
     var flag = kind === "star" || kind === "unstar" ? "\\Flagged" : "\\Seen";
     var on = kind === "star" || kind === "read";
-    var before = {};
-    var seenDelta = 0;
-    msgsByUid(uids).forEach(function (m) {
-      before[m.uid] = m.flags.slice();
-      var has = hasFlag(m, flag);
-      if (on && !has) { m.flags = m.flags.concat(flag); if (flag === "\\Seen") seenDelta--; }
-      if (!on && has) { m.flags = m.flags.filter(function (f) { return f !== flag; }); if (flag === "\\Seen") seenDelta++; }
-      if (flag === "\\Seen" && rec.pend) delete rec.pend[m.uid];   // no stale "read" mark going up later
+    gs.forEach(function (g) {
+      var acct = g.acct, rec = g.rec, uids = g.uids;
+      var before = {};
+      var seenDelta = 0;
+      groupMsgs(g).forEach(function (m) {
+        before[m.uid] = m.flags.slice();
+        var has = hasFlag(m, flag);
+        if (on && !has) { m.flags = m.flags.concat(flag); if (flag === "\\Seen") seenDelta--; }
+        if (!on && has) { m.flags = m.flags.filter(function (f) { return f !== flag; }); if (flag === "\\Seen") seenDelta++; }
+        if (flag === "\\Seen" && rec.pend) delete rec.pend[m.uid];   // no stale "read" mark going up later
+      });
+      if (seenDelta) adjustUnseen(acct.id, rec.folder, seenDelta);
+      saveHeads(rec);
+      call("flag", acct, { folder: rec.folder, uids: uids.slice(0, 500), add: on ? [flag] : [], remove: on ? [] : [flag] })
+        .catch(function (e) {
+          groupMsgs(g).forEach(function (m) { if (before[m.uid]) m.flags = before[m.uid]; });
+          if (seenDelta) adjustUnseen(acct.id, rec.folder, -seenDelta);
+          saveHeads(rec);
+          renderList();
+          if (openMsg) renderReader();
+          showToast(errText(e));
+        });
     });
-    if (seenDelta) adjustUnseen(acct.id, rec.folder, seenDelta);
-    saveHeads(rec);
     renderList();
     if (openMsg) renderReader();
-    call("flag", acct, { folder: rec.folder, uids: uids.slice(0, 500), add: on ? [flag] : [], remove: on ? [] : [flag] })
-      .catch(function (e) {
-        msgsByUid(uids).forEach(function (m) { if (before[m.uid]) m.flags = before[m.uid]; });
-        if (seenDelta) adjustUnseen(acct.id, rec.folder, -seenDelta);
-        saveHeads(rec);
-        renderList();
-        if (openMsg) renderReader();
-        showToast(errText(e));
-      });
   }
 
-  // kind: "archive" | "spam" | "notspam" | "trash" | "move" (to)
-  function moveMsgs(uids, kind, to) {
-    var acct = curAcct(), rec = cur;
-    if (!acct || !rec || !uids.length || !online()) return;
-    var folder = rec.folder;
-    var role = folderRole(currentFolder() || {});
-    var dest = to;
-    if (kind === "spam") dest = roleFolder(acct, "junk");
-    if (kind === "notspam") dest = "INBOX";
-    if (kind === "trash") dest = roleFolder(acct, "trash");
-    var create = "";
-    if (kind === "archive") {
-      dest = roleFolder(acct, "archive");
-      if (!dest) { dest = newFolderName(acct, "Archive"); create = dest; }
-    }
-    if (kind === "trash" && (!dest || role === "trash" || role === "junk")) { eraseDialog(uids); return; }
-    if (!dest || dest === folder) return;
-    var moved = msgsByUid(uids);
-    if (!moved.length) return;
-    var unseen = moved.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
-    var inRec = moved.filter(function (m) { return rec.msgs.indexOf(m) >= 0; });
+  // kind: "archive" | "spam" | "notspam" | "trash" | "move" (to) |
+  // "snooze" (to the account's Snoozed folder) | "unsnooze" (hooks.destOf)
+  // hooks: { label, destOf(acct, uid) → folder, undo(), fail(part), done(part) }
+  // One part per account and target folder; each is one relay "move".
+  function moveMsgs(keys, kind, to, hooks) {
+    hooks = hooks || {};
+    var gs = groupsOf(keys);
+    if (!gs.length || !online()) return;
+    var parts = [], erase = [];
+    gs.forEach(function (g) {
+      var acct = g.acct, role = roleOf(g), dest = to, create = "";
+      if (kind === "spam") dest = roleFolder(acct, "junk");
+      if (kind === "notspam") dest = "INBOX";
+      if (kind === "trash") dest = roleFolder(acct, "trash");
+      if (kind === "archive" || kind === "snooze") {
+        dest = roleFolder(acct, kind === "archive" ? "archive" : "snoozed");
+        if (!dest) { dest = newFolderName(acct, kind === "archive" ? "Archive" : SN.FOLDER); create = dest; }
+      }
+      if (kind === "trash" && (!dest || role === "trash" || role === "junk")) { erase.push(g); return; }
+      if (hooks.destOf) {
+        var by = {};
+        g.uids.forEach(function (u) { var d = hooks.destOf(acct, u) || "INBOX"; (by[d] = by[d] || []).push(u); });
+        Object.keys(by).forEach(function (d) { if (d !== g.rec.folder) parts.push({ g: g, dest: d, create: "", uids: by[d] }); });
+        return;
+      }
+      if (!dest || dest === g.rec.folder) return;
+      parts.push({ g: g, dest: dest, create: create, uids: g.uids.slice() });
+    });
+    if (erase.length) eraseDialog(erase);
+    if (!parts.length) return;
     var sr = srchOn() ? srch : null;
-    var inSr = sr ? moved.filter(function (m) { return sr.msgs.indexOf(m) >= 0; }) : [];
-    rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
-    if (sr) sr.msgs = sr.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
-    if (unseen) { adjustUnseen(acct.id, folder, -unseen); adjustUnseen(acct.id, dest, unseen); }
-    if (openMsg && uids.indexOf(openMsg.uid) >= 0) {
-      openMsg = null;
-      if (phone()) setView("list");
-    }
+    var total = 0;
+    parts.forEach(function (p) {
+      var rec = p.g.rec, acct = p.g.acct;
+      p.folder = rec.folder;
+      p.moved = groupMsgs({ rec: rec, uids: p.uids });
+      p.unseen = p.moved.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
+      p.inRec = p.moved.filter(function (m) { return rec.msgs.indexOf(m) >= 0; });
+      p.inSr = sr && rec === cur ? p.moved.filter(function (m) { return sr.msgs.indexOf(m) >= 0; }) : [];
+      rec.msgs = rec.msgs.filter(function (m) { return p.uids.indexOf(m.uid) < 0; });
+      if (p.inSr.length) sr.msgs = sr.msgs.filter(function (m) { return p.uids.indexOf(m.uid) < 0; });
+      if (p.unseen) { adjustUnseen(acct.id, p.folder, -p.unseen); adjustUnseen(acct.id, p.dest, p.unseen); }
+      if (openMsg && openMsg.acct === acct.id && p.uids.indexOf(openMsg.uid) >= 0) {
+        openMsg = null;
+        if (phone()) setView("list");
+      }
+      total += p.moved.length;
+      saveHeads(rec);
+    });
     sel = null;
-    saveHeads(rec);
     renderList();
     renderReader();
+    if (!total) return;
     var done = false;
-    function restore() {
-      function back(list, add) {
-        return list.concat(add.filter(function (m) {
-          return !list.some(function (x) { return x.uid === m.uid; });
-        })).sort(function (a, b) { return b.uid - a.uid; });
-      }
-      rec.msgs = back(rec.msgs, inRec);
-      if (sr) sr.msgs = back(sr.msgs, inSr);
-      if (unseen) { adjustUnseen(acct.id, folder, unseen); adjustUnseen(acct.id, dest, -unseen); }
+    function back(list, add) {
+      return list.concat(add.filter(function (m) {
+        return !list.some(function (x) { return x.uid === m.uid; });
+      })).sort(function (a, b) { return b.uid - a.uid; });
+    }
+    function restore(p) {
+      var rec = p.g.rec, acct = p.g.acct;
+      rec.msgs = back(rec.msgs, p.inRec);
+      if (p.inSr.length && sr) sr.msgs = back(sr.msgs, p.inSr);
+      if (p.unseen) { adjustUnseen(acct.id, p.folder, p.unseen); adjustUnseen(acct.id, p.dest, -p.unseen); }
       saveHeads(rec);
-      renderList();
     }
     var job = {
       commit: function () {
@@ -3547,72 +3794,86 @@
         done = true;
         clearTimeout(timer);
         pendingMoves = pendingMoves.filter(function (j) { return j !== job; });
-        (create ? call("create", acct, { folder: create }) : Promise.resolve()).then(function () {
-          return call("move", acct, { folder: folder, uids: uids.slice(0, 500), to: dest });
-        }).then(function () {
-          if (create) refreshFolders(acct).catch(function () {});
-        }, function (e) {
-          restore();
-          showToast(errText(e));
+        parts.forEach(function (p) {
+          var acct = p.g.acct;
+          (p.create ? call("create", acct, { folder: p.create }) : Promise.resolve()).then(function () {
+            return call("move", acct, { folder: p.folder, uids: p.uids.slice(0, 500), to: p.dest });
+          }).then(function () {
+            if (p.create) refreshFolders(acct).catch(function () {});
+            if (hooks.done) hooks.done(p);
+          }, function (e) {
+            restore(p);
+            renderList();
+            showToast(errText(e));
+            if (hooks.fail) hooks.fail(p);
+          });
         });
       }
     };
     var timer = setTimeout(job.commit, UNDO_MS);
     pendingMoves.push(job);
-    var label = { archive: "org.archived", spam: "org.spammed", notspam: "org.notspam", trash: "org.trashed", move: "org.moved" }[kind];
-    undoToast(t(label, { n: moved.length }), function () {
+    var label = { archive: "org.archived", spam: "org.spammed", notspam: "org.notspam", trash: "org.trashed", move: "org.moved",
+                  snooze: "snz.done", unsnooze: "snz.backDone" }[kind];
+    undoToast(hooks.label || t(label, { n: total }), function () {
       if (done) return;
       done = true;
       clearTimeout(timer);
       pendingMoves = pendingMoves.filter(function (j) { return j !== job; });
-      restore();
+      parts.forEach(restore);
+      renderList();
+      if (hooks.undo) hooks.undo();
     });
   }
   function flushMoves() { pendingMoves.slice().forEach(function (j) { j.commit(); }); }
 
-  function eraseDialog(uids) {
-    var acct = curAcct(), rec = cur;
-    if (!acct || !rec) return;
+  // gs: groupsOf() of the messages to erase (in Trash / Spam, or with no Trash)
+  function eraseDialog(gs) {
+    var n = gs.reduce(function (a, g) { return a + g.uids.length; }, 0);
+    if (!n) return;
     var dlg = makeDialog("ml-erase");
-    dlg.appendChild(el("p", "dlg-text", t("org.eraseQ", { n: uids.length })));
+    dlg.appendChild(el("p", "dlg-text", t("org.eraseQ", { n: n })));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
     acts.appendChild(button(t("org.erase"), "danger", function () {
       dlg.close();
       if (!online()) return;
-      var folder = rec.folder;
-      call("expunge", acct, { folder: folder, uids: uids.slice(0, 500) }).then(function () {
-        var gone = msgsByUid(uids);
-        var unseen = gone.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
-        rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
-        if (srchOn()) srch.msgs = srch.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
-        if (unseen) adjustUnseen(acct.id, folder, -unseen);
-        if (openMsg && uids.indexOf(openMsg.uid) >= 0) { openMsg = null; if (phone()) setView("list"); }
-        sel = null;
-        saveHeads(rec);
-        renderList();
-        renderReader();
-        showToast(t("org.erased", { n: gone.length }));
-      }, function (e) { showToast(errText(e)); });
+      gs.forEach(function (g) {
+        var acct = g.acct, rec = g.rec, uids = g.uids, folder = rec.folder;
+        call("expunge", acct, { folder: folder, uids: uids.slice(0, 500) }).then(function () {
+          var gone = groupMsgs(g);
+          var unseen = gone.filter(function (m) { return !hasFlag(m, "\\Seen"); }).length;
+          rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+          if (rec === cur && srchOn()) srch.msgs = srch.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+          if (unseen) adjustUnseen(acct.id, folder, -unseen);
+          if (openMsg && openMsg.acct === acct.id && uids.indexOf(openMsg.uid) >= 0) { openMsg = null; if (phone()) setView("list"); }
+          sel = null;
+          saveHeads(rec);
+          renderList();
+          renderReader();
+          showToast(t("org.erased", { n: gone.length }));
+        }, function (e) { showToast(errText(e)); });
+      });
     }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
   }
 
-  function moveDialog(uids) {
-    var acct = curAcct();
-    if (!acct || !cur) return;
+  function moveDialog(keys) {
+    var gs = groupsOf(keys);
+    if (!gs.length) return;
+    if (gs.length > 1) { showToast(t("uni.moveOne")); return; }
+    var acct = gs[0].acct, from = gs[0].rec.folder;
     var dlg = makeDialog("ml-move");
     dlg.appendChild(el("div", "dlg-title", t("org.moveTitle")));
     var ul = el("ul", "move-list");
     (folders[acct.id] || []).forEach(function (f) {
-      if (f.name === cur.folder) return;
+      if (f.name === from || folderRole(f) === "snoozed") return;
       var li = el("li");
       var b = el("button", "folder", folderLabel(f));
       b.type = "button";
       b.style.paddingLeft = (12 + folderDepth(f) * 14) + "px";
-      b.addEventListener("click", function () { dlg.close(); moveMsgs(uids, "move", f.name); });
+      b.addEventListener("click", function () { dlg.close(); moveMsgs(keys, "move", f.name); });
       li.appendChild(b);
       ul.appendChild(li);
     });
@@ -3622,6 +3883,202 @@
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+
+  // ---------- snooze (snooze.js) ----------
+  // Snoozing moves the messages to the account's Snoozed folder and
+  // keeps their wake time in the synced slice (data.snoozes). Whoever
+  // is running when one is due (this window, or the shell's checker
+  // with Mail closed) marks it unread and moves it back.
+  function snoozeOf(acctId, m) {
+    var k = SN.keyOf(m);
+    if (!k) return null;
+    var list = data.snoozes || [];
+    for (var i = 0; i < list.length; i++) if (list[i].acct === acctId && list[i].key === k) return list[i];
+    return null;
+  }
+  function putSnoozes(recs) {
+    var ids = {};
+    recs.forEach(function (r) { ids[r.id] = 1; });
+    data.snoozes = (data.snoozes || []).filter(function (r) { return !ids[r.id]; }).concat(recs);
+    data = mergeMail(data, data);
+    saveData();
+    armSnooze();
+  }
+  function dropSnoozes(recs) {
+    if (!recs.length) return;
+    var now = Date.now(), ids = {};
+    recs.forEach(function (r) { ids[r.id] = 1; data.tombs[r.id] = Math.max(now, r.m); });
+    data.snoozes = (data.snoozes || []).filter(function (r) { return !ids[r.id]; });
+    data = mergeMail(data, data);
+    saveData();
+    armSnooze();
+  }
+  function snoozeDialog(keys) {
+    var gs = groupsOf(keys);
+    if (!gs.length) return;
+    var dlg = makeDialog("ml-snooze");
+    dlg.appendChild(el("div", "dlg-title", t("snz.title")));
+    var now = Date.now(), tm = SN.times(now);
+    var quick = el("div", "later-quick");
+    var opts = [];
+    if (tm.later) opts.push([t("snz.later", { when: fmtWhen(tm.later) }), tm.later]);
+    opts.push([t("snz.tomorrow", { when: fmtWhen(tm.tomorrow) }), tm.tomorrow]);
+    opts.push([t("snz.monday", { when: fmtWhen(tm.monday) }), tm.monday]);
+    opts.forEach(function (q) {
+      quick.appendChild(button(q[0], "small", function () { dlg.close(); snoozeMsgs(keys, q[1]); }));
+    });
+    dlg.appendChild(quick);
+    var form = el("form");
+    form.noValidate = true;
+    var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+    var loc = function (ms) { var d = new Date(ms); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "T" + p2(d.getHours()) + ":" + p2(d.getMinutes()); };
+    var fAt = field(form, "ml-snz-at", t("snz.pick"), "datetime-local", loc(tm.tomorrow), { min: loc(now) });
+    form.appendChild(el("p", "dlg-hint", t("snz.hint")));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("snz.ok"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var ms = new Date(fAt.value).getTime();
+      var bad = SN.pickOk(ms, Date.now());
+      if (bad) { errP.textContent = t(bad === "far" ? "snd.far" : "snd.past"); return; }
+      dlg.close();
+      snoozeMsgs(keys, ms);
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function snoozeMsgs(keys, until) {
+    var gs = groupsOf(keys);
+    if (!gs.length || !online()) return;
+    var now = Date.now(), recs = [], fresh = [], move = [], again = 0;
+    gs.forEach(function (g) {
+      var inSnz = roleOf(g) === "snoozed";
+      groupMsgs(g).forEach(function (m) {
+        var key = SN.keyOf(m);
+        if (!key) return;
+        var old = snoozeOf(g.acct.id, m);
+        var r = { id: old ? old.id : newId(), m: Math.max(now, old ? old.m + 1 : 0), acct: g.acct.id, key: key,
+                  until: until, from: old && inSnz ? old.from : (inSnz ? "INBOX" : g.rec.folder) };
+        recs.push(r);
+        if (inSnz) again++; else { move.push(keyOf(g, m.uid)); fresh.push(r); }
+      });
+    });
+    if (!recs.length) { showToast(t("snz.nokey")); return; }
+    putSnoozes(recs);
+    if (!move.length) {
+      renderList();
+      showToast(t("snz.moved", { when: fmtWhen(until), n: again }));
+      return;
+    }
+    moveMsgs(move, "snooze", null, {
+      label: t("snz.done", { when: fmtWhen(until), n: move.length }),
+      undo: function () { dropSnoozes(fresh); },
+      fail: function (p) { dropSnoozes(fresh.filter(function (r) { return r.acct === p.g.acct.id; })); }
+    });
+  }
+  // back now, to the folder it came from
+  function unsnooze(keys) {
+    var gs = groupsOf(keys);
+    if (!gs.length || !online()) return;
+    var recs = [], byUid = {};
+    gs.forEach(function (g) {
+      groupMsgs(g).forEach(function (m) {
+        var r = snoozeOf(g.acct.id, m);
+        byUid[g.acct.id + ":" + m.uid] = r ? r.from : "INBOX";
+        if (r) recs.push(r);
+      });
+    });
+    dropSnoozes(recs);
+    moveMsgs(keys, "unsnooze", null, {
+      destOf: function (acct, uid) { return byUid[acct.id + ":" + uid] || "INBOX"; },
+      undo: function () {
+        var m = Date.now() + 1;
+        putSnoozes(recs.map(function (r) { return Object.assign({}, r, { m: m }); }));
+      }
+    });
+  }
+
+  var snzTimer = null, waking = false, snzTried = 0;
+  function armSnooze() {
+    clearTimeout(snzTimer);
+    var now = Date.now(), list = data.snoozes || [];
+    if (!list.length) return;
+    // due ones that could not be woken (offline, no password…): a minute on
+    if (SN.due(list, now).length) { snzTimer = setTimeout(wakeSnoozed, Math.max(1500, snzTried + 60000 - now)); return; }
+    var n = SN.next(list, now);
+    if (!n) return;
+    try { parent.__orosMailNotify.due(n); } catch (e) {}     // the shell wakes it should Mail close
+    snzTimer = setTimeout(wakeSnoozed, Math.min(3600000, Math.max(1000, n - now + 500)));
+  }
+  // the whole folder's headers (up to KEEP_HEADS), or as many as came
+  function listAll(acct, folder) {
+    return refreshFolder(acct, folder, false).then(function next(rec, n) {
+      n = n || 0;
+      if (!rec.more || n >= 9) return rec;
+      return refreshFolder(acct, folder, true).then(function (r2) { return next(r2, n + 1); });
+    });
+  }
+  function wakeSnoozed() {
+    if (waking) return Promise.resolve();
+    var now = Date.now();
+    var due = SN.due(data.snoozes, now);
+    if (!due.length) { armSnooze(); return Promise.resolve(); }
+    snzTried = now;
+    if (!navigator.onLine || !relayUrl()) { armSnooze(); return Promise.resolve(); }
+    waking = true;
+    var ids = [];
+    due.forEach(function (r) { if (ids.indexOf(r.acct) < 0) ids.push(r.acct); });
+    var woke = 0;
+    return ids.reduce(function (p, id) {
+      return p.then(function () {
+        var acct = acctById(id);
+        if (!acct || needPass[acct.id] || !folders[acct.id]) return;
+        var fname = roleFolder(acct, "snoozed");
+        if (!fname) { dropSnoozes(SN.due(SN.forAcct(data.snoozes, acct.id), now)); return; }
+        return listAll(acct, fname).then(function (rec) {
+          var plan = SN.plan(data.snoozes, acct.id, rec.msgs.map(function (m) { return { uid: m.uid, key: SN.keyOf(m) }; }), now, !rec.more);
+          var gone = plan.gone.slice();
+          if (!plan.wake.length) { dropSnoozes(gone); return; }
+          var uids = plan.wake.map(function (w) { return w.uid; });
+          var byDest = {};
+          plan.wake.forEach(function (w) { (byDest[w.rec.from] = byDest[w.rec.from] || []).push(w); });
+          return call("flag", acct, { folder: fname, uids: uids.slice(0, 500), add: [], remove: ["\\Seen"] }).catch(function () {}).then(function () {
+            return Object.keys(byDest).reduce(function (q, dest) {
+              return q.then(function () {
+                var ws = byDest[dest], us = ws.map(function (w) { return w.uid; });
+                function ok() { woke += us.length; ws.forEach(function (w) { if (gone.indexOf(w.rec) < 0) gone.push(w.rec); }); }
+                return call("move", acct, { folder: fname, uids: us.slice(0, 500), to: dest }).then(ok, function () {
+                  // the folder it came from is gone: the Inbox then
+                  if (dest === "INBOX") return;
+                  return call("move", acct, { folder: fname, uids: us.slice(0, 500), to: "INBOX" }).then(ok, function () {});
+                });
+              });
+            }, Promise.resolve());
+          }).then(function () {
+            dropSnoozes(gone);
+            rec.msgs = rec.msgs.filter(function (m) { return uids.indexOf(m.uid) < 0; });
+            return saveHeads(rec);
+          });
+        }, function () {});
+      });
+    }, Promise.resolve()).then(function () {
+      waking = false;
+      armSnooze();
+      if (woke) {
+        showToast(t("snz.woke", { n: woke }));
+        if (curAcct()) refreshFolders(curAcct()).catch(function () {});
+        refreshCurrent(false);
+      }
+    });
   }
 
   // ---------- folders: new, rename, delete ----------
@@ -3773,12 +4230,14 @@
     if (open !== null) openFolder(acct.id, to === null ? "INBOX" : open);
   }
 
-  // The organise buttons for `uids` (reader bar and selection bar).
-  function orgButtons(box, uids, compact) {
-    var acct = curAcct();
-    if (!acct || !cur) return;
-    var role = folderRole(currentFolder() || {});
-    var ms = msgsByUid(uids);
+  // The organise buttons for `keys` (reader bar and selection bar);
+  // in All inboxes they may span accounts (see groupsOf).
+  function orgButtons(box, keys, compact) {
+    var gs = groupsOf(keys);
+    if (!gs.length) return;
+    var roles = gs.map(roleOf);
+    var role = roles.every(function (r) { return r === roles[0]; }) ? roles[0] : "";
+    var ms = allMsgs(gs);
     var anyUnread = ms.some(function (m) { return !hasFlag(m, "\\Seen"); });
     var allStar = ms.length && ms.every(function (m) { return hasFlag(m, "\\Flagged"); });
     function ib(icon, label, fn, cls) {
@@ -3792,17 +4251,24 @@
       box.appendChild(b);
       return b;
     }
-    if (role !== "archive") ib("archive", t("org.archive") + " (e)", function () { moveMsgs(uids, "archive"); });
-    var erase = role === "trash" || role === "junk" || !roleFolder(acct, "trash");
-    ib("trash", t(erase ? "org.erase" : "org.trash") + " (Del)", function () { moveMsgs(uids, "trash"); }, erase ? "danger" : "");
-    if (role === "junk") ib("inbox", t("org.notspamBtn"), function () { moveMsgs(uids, "notspam"); });
-    else if (roleFolder(acct, "junk")) ib("spam", t("org.spamBtn") + " (!)", function () { moveMsgs(uids, "spam"); });
-    ib(allStar ? "star" : "starOff", t(allStar ? "org.unstar" : "org.star") + " (s)", function () { setFlags(uids, allStar ? "unstar" : "star"); }, allStar ? "on" : "");
-    ib(anyUnread ? "open" : "unread", t(anyUnread ? "org.read" : "org.unread") + " (u)", function () { setFlags(uids, anyUnread ? "read" : "unread"); });
-    ib("folder", t("org.move") + " (v)", function () { moveDialog(uids); });
-    if (uids.length === 1 && ms[0] && ms[0].from && ms[0].from.addr) {
-      ib("filter", t("rule.make"), function () { ruleDialog(null, { field: "from", has: lowerAddr(ms[0].from.addr) }); });
-      if (lowerAddr(ms[0].from.addr) !== lowerAddr(acct.email)) ib("block", t("blk.btn"), function () { blockDialog(ms[0]); });
+    if (role !== "archive") ib("archive", t("org.archive") + " (e)", function () { moveMsgs(keys, "archive"); });
+    var erase = gs.every(function (g, i) { return roles[i] === "trash" || roles[i] === "junk" || !roleFolder(g.acct, "trash"); });
+    ib("trash", t(erase ? "org.erase" : "org.trash") + " (Del)", function () { moveMsgs(keys, "trash"); }, erase ? "danger" : "");
+    if (role === "junk") ib("inbox", t("org.notspamBtn"), function () { moveMsgs(keys, "notspam"); });
+    else if (gs.some(function (g) { return roleFolder(g.acct, "junk"); })) ib("spam", t("org.spamBtn") + " (!)", function () { moveMsgs(keys, "spam"); });
+    if (role === "snoozed") {
+      ib("inbox", t("snz.back"), function () { unsnooze(keys); });
+      ib("clock", t("snz.again") + " (b)", function () { snoozeDialog(keys); });
+    } else if (role !== "drafts" && role !== "trash" && role !== "junk" && role !== "sent") {
+      ib("clock", t("snz.btn") + " (b)", function () { snoozeDialog(keys); });
+    }
+    ib(allStar ? "star" : "starOff", t(allStar ? "org.unstar" : "org.star") + " (s)", function () { setFlags(keys, allStar ? "unstar" : "star"); }, allStar ? "on" : "");
+    ib(anyUnread ? "open" : "unread", t(anyUnread ? "org.read" : "org.unread") + " (u)", function () { setFlags(keys, anyUnread ? "read" : "unread"); });
+    if (gs.length === 1) ib("folder", t("org.move") + " (v)", function () { moveDialog(keys); });
+    if (ms.length === 1 && ms[0].from && ms[0].from.addr) {
+      var acct = gs[0].acct;
+      ib("filter", t("rule.make"), function () { ruleDialog(null, { field: "from", has: lowerAddr(ms[0].from.addr), acct: acct.id }); });
+      if (lowerAddr(ms[0].from.addr) !== lowerAddr(acct.email)) ib("block", t("blk.btn"), function () { blockDialog(ms[0], acct); });
     }
   }
 
@@ -4030,10 +4496,11 @@
       return refreshFolders(acct).catch(function () {});
     }).then(function () { return name; });
   }
-  function blockDialog(m) {
-    var acct = curAcct();
+  function blockDialog(m, acct0) {
+    var acct = acct0 || curAcct();
     var addr = m && m.from && lowerAddr(m.from.addr);
     if (!acct || !addr || !cur) return;
+    var key = uni ? acct.id + ":" + m.uid : m.uid;
     var dlg = makeDialog("ml-block");
     dlg.appendChild(el("p", "dlg-text", t("blk.q", { addr: addr })));
     var errP = el("p", "dlg-err");
@@ -4044,7 +4511,7 @@
     var go = button(t("blk.do"), "danger", function () {
       if (!online()) return;
       go.disabled = true;
-      var rec = cur;
+      var g0 = groupsOf([key])[0] || null;
       junkFolder(acct).then(function (folder) {
         var has = "<" + addr + ">";
         var exists = (data.rules || []).some(function (r) { return r.acct === acct.id && r.field === "from" && r.act === "move" && r.has === has; });
@@ -4053,7 +4520,8 @@
           if (r) putRule(r);
         }
         dlg.close();
-        if (cur === rec && rec.folder !== folder) moveMsgs([m.uid], "move", folder);
+        var g1 = groupsOf([key])[0] || null;
+        if (g0 && g1 && g1.rec === g0.rec && g1.rec.folder !== folder) moveMsgs([key], "move", folder);
         else showToast(t("blk.done", { addr: addr }));
       }, function (e) { go.disabled = false; errP.textContent = errText(e); });
     });
@@ -4128,7 +4596,7 @@
   // The editor. prefill: { field, has } (from "Create a rule…").
   function ruleDialog(rule, prefill) {
     if (!data.accounts.length) return;
-    var acct0 = (rule && acctById(rule.acct)) || curAcct() || data.accounts[0];
+    var acct0 = (rule && acctById(rule.acct)) || (prefill && prefill.acct && acctById(prefill.acct)) || curAcct() || data.accounts[0];
     var dlg = makeDialog("ml-rule", true);
     dlg.appendChild(el("div", "dlg-title", t(rule ? "rule.edit" : "rule.new")));
     var form = el("form");
@@ -4583,7 +5051,14 @@
   }
 
   // ---------- selection mode ----------
-  function selUids() { return sel ? Object.keys(sel).map(Number) : []; }
+  // selected keys: UIDs, or "acctId:uid" in All inboxes
+  function selUids() { return sel ? Object.keys(sel).map(function (k) { return uni ? k : Number(k); }) : []; }
+  // every row's key in All inboxes (conversations: all their messages)
+  function uniKeys() {
+    var out = [];
+    if (uni) uniGroups().forEach(function (g) { g.msgs.forEach(function (m) { out.push(g.acct + ":" + m.uid); }); });
+    return out;
+  }
   function toggleSel(uid) {
     if (!sel) sel = {};
     if (sel[uid]) delete sel[uid]; else sel[uid] = 1;
@@ -4593,18 +5068,19 @@
     var bar = $("sel-bar");
     bar.innerHTML = "";
     bar.hidden = !sel;
-    $("sel-btn").hidden = !!sel || !!uni || !cur || !shown().length;
+    var every = uni ? uniKeys() : (cur ? shown().map(function (m) { return m.uid; }) : []);
+    $("sel-btn").hidden = !!sel || !every.length;
     $("sel-btn").textContent = t("org.select");
     if (!sel) return;
     var uids = selUids();
     var all = el("input");
     all.type = "checkbox";
     all.className = "sel-all";
-    all.checked = !!(cur && shown().length && uids.length === shown().length);
+    all.checked = !!(every.length && uids.length === every.length);
     all.setAttribute("aria-label", t("org.all"));
     all.addEventListener("change", function () {
       sel = {};
-      if (all.checked && cur) shown().forEach(function (m) { sel[m.uid] = 1; });
+      if (all.checked) every.forEach(function (k) { sel[k] = 1; });
       renderList();
     });
     bar.appendChild(all);
@@ -4622,7 +5098,7 @@
   }
 
   // ---------- swipe (touch): right = archive, left = delete ----------
-  function wireSwipe(btn, m) {
+  function wireSwipe(btn, key) {
     var x0 = null, y0 = 0, dx = 0, id = null;
     btn.addEventListener("pointerdown", function (e) {
       if (e.pointerType !== "touch" || sel) return;
@@ -4643,11 +5119,556 @@
       btn.classList.remove("swipe-r", "swipe-l");
       if (Math.abs(dx) > 80) {
         btn.dataset.swiped = "1";
-        moveMsgs([m.uid], dx > 0 ? "archive" : "trash");
+        moveMsgs([key], dx > 0 ? "archive" : "trash");
       }
     }
     btn.addEventListener("pointerup", end);
     btn.addEventListener("pointercancel", function () { x0 = null; btn.style.transform = ""; btn.classList.remove("swipe-r", "swipe-l"); });
+  }
+
+  // ---------- 9e. List-Unsubscribe (unsub.js) ----------
+  // A bar on mailing-list mail. mailto: sends the unsubscribe message
+  // through the normal send path after a question; http(s): shows the
+  // address, then opens it in a new tab. The RFC 8058 one-click POST
+  // would need the relay (a page cannot POST to another site), so it
+  // is not made.
+  function renderUnsub(p, m, bars) {
+    if (!US || !p || !p.headers) return;
+    var role = folderRole(currentFolder() || {});
+    if (role === "sent" || role === "drafts") return;
+    var u = US.parse(p.headers);
+    if (!u) return;
+    var bar = el("div", "bar unsub");
+    bar.appendChild(el("span", "", t("uns.bar") + (m.from && (m.from.name || m.from.addr) ? " · " + (m.from.name || m.from.addr) : "")));
+    var acts = el("span", "bar-acts");
+    var b = el("button", "link-btn", t("uns.btn"));
+    b.type = "button";
+    b.addEventListener("click", function () { unsubDialog(u); });
+    acts.appendChild(b);
+    bar.appendChild(acts);
+    bars.appendChild(bar);
+  }
+  function unsubDialog(u) {
+    var acct = (openMsg && acctById(openMsg.acct)) || curAcct();
+    if (!acct) return;
+    var dlg = makeDialog("ml-unsub");
+    dlg.appendChild(el("div", "dlg-title", t("uns.title")));
+    dlg.appendChild(el("p", "dlg-hint", t("uns.warn")));
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    if (u.web) {
+      dlg.appendChild(el("p", "dlg-text", t("uns.web")));
+      dlg.appendChild(el("p", "uns-url", u.web));
+      if (/^http:/i.test(u.web)) dlg.appendChild(el("p", "dlg-err", t("uns.http")));
+      dlg.appendChild(el("p", "dlg-hint", t("uns.webHint")));
+      acts.appendChild(button(t("uns.open"), u.mailto ? "" : "primary", function () {
+        dlg.close();
+        try { window.open(u.web, "_blank", "noopener,noreferrer"); } catch (e) {}
+      }));
+    }
+    if (u.mailto) {
+      dlg.appendChild(el("p", "dlg-text", t("uns.mail", { to: u.mailto.to, from: acct.email })));
+      var sb = button(t("uns.send"), "primary", function () {
+        if (!acct.smtp) { errP.textContent = t("err.nosmtp"); return; }
+        var d = { acct: acct.id, to: [{ name: "", addr: u.mailto.to }], cc: [], bcc: [],
+                  subject: u.mailto.subject || "unsubscribe", text: u.mailto.body || "unsubscribe", html: "",
+                  inReplyTo: "", references: "", atts: [] };
+        sb.disabled = true;
+        function queue() {
+          return queueDraft(d).then(function () { dlg.close(); showToast(t("toast.queued")); },
+            function (e) { sb.disabled = false; errP.textContent = sendErrText(e); });
+        }
+        if (!navigator.onLine) { queue(); return; }
+        sendDraft(d).then(function () {
+          dlg.close();
+          showToast(t("uns.sent", { to: u.mailto.to }));
+        }, function (e) {
+          if (waitsForNet(e)) { queue(); return; }
+          sb.disabled = false;
+          errP.textContent = sendErrText(e);
+        });
+      });
+      acts.appendChild(sb);
+    }
+    dlg.appendChild(errP);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+
+  // ---------- 9f. OpenPGP (pgp.js + pgpmime.js) ----------
+  // Keys: device-local (IndexedDB store "pgp"); the library loads on
+  // first use. Sending: the message's content is built as one MIME
+  // part, then signed (multipart/signed) and / or encrypted
+  // (multipart/encrypted, to every recipient and to the sender, signed
+  // inside) and handed to compose.js build() as o.part, so the Outbox,
+  // Undo send and Send later keep the finished, locked message.
+  // Reading: PGP/MIME and inline armor. A decrypted message lives only
+  // in memory (openMsg), never in the cache.
+  var pgpReady = null;
+  function pgpInit() {
+    if (!PG) return Promise.resolve([]);
+    if (!pgpReady) {
+      pgpReady = PG.init({
+        all: function () { return idb("pgp", "readonly", function (s) { return s.getAll(); }); },
+        put: function (k, v) { return idbPut("pgp", k, v); },
+        del: function (k) { return idbDel("pgp", k); }
+      });
+    }
+    return pgpReady;
+  }
+  function pgpErr(e) {
+    var msg = e && e.message ? String(e.message) : String(e || "");
+    if (msg === "lib") return t("pgp.loadFail");
+    return msg.replace(/^Error[^:]*:\s*/, "").slice(0, 200);
+  }
+  function keyWho(k) { return k ? (k.name ? k.name + (k.emails[0] ? " <" + k.emails[0] + ">" : "") : (k.emails[0] || PG.short(k.fpr))) : ""; }
+
+  // Asks the passphrase of one of `metas` (own keys) unless one is
+  // still unlocked. → Promise<unlocked key | null (cancelled)>
+  function unlockKey(metas) {
+    for (var i = 0; i < metas.length; i++) {
+      var c = PG.cached(metas[i].fpr);
+      if (c) return Promise.resolve(c);
+    }
+    var meta = metas[0];
+    return new Promise(function (resolve) {
+      var done = false;
+      var dlg = makeDialog("ml-unlock", true);
+      dlg.appendChild(el("div", "dlg-title", t("pgp.pass")));
+      dlg.appendChild(el("p", "dlg-text", t("pgp.unlockText", { email: meta.emails[0] || meta.name, fpr: PG.short(meta.fpr) })));
+      var form = el("form");
+      form.noValidate = true;
+      var inp = field(form, "ml-unlock-pw", t("pgp.pass"), "password", "", { autocomplete: "current-password", maxlength: "500" });
+      var errP = el("p", "dlg-err");
+      errP.setAttribute("role", "alert");
+      form.appendChild(errP);
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+      var ok = button(t("pgp.unlock"), "primary", null);
+      ok.type = "submit";
+      acts.appendChild(ok);
+      form.appendChild(acts);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (!inp.value) return;
+        ok.disabled = true;
+        errP.textContent = "";
+        PG.unlock(meta, inp.value).then(function (k) {
+          done = true;
+          dlg.close();
+          resolve(k);
+        }, function (er) {
+          ok.disabled = false;
+          errP.textContent = er && er.message === "lib" ? t("pgp.loadFail") : t("pgp.wrong");
+          inp.select();
+        });
+      });
+      dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+      dlg.addEventListener("close", function () { if (!done) resolve(null); });
+      dlg.appendChild(form);
+      document.body.appendChild(dlg);
+      dlg.showModal();
+      inp.focus();
+    });
+  }
+
+  // d: a draft from the composer; o: { sign, encrypt } → Promise<d with
+  // d.part> or rejects with MailError("pgp", text) / null (cancelled)
+  function pgpPrepare(d, o) {
+    var acct = acctById(d.acct);
+    if (!acct) return Promise.reject(new MailError("noacct"));
+    return pgpInit().then(function () {
+      var own = PG.forEmail(acct.email, true);
+      if (!own.length) throw new MailError("pgp", t("pgp.noOwn", { email: acct.email }));
+      var keys = [];
+      if (o.encrypt) {
+        var missing = [];
+        [].concat(d.to, d.cc, d.bcc).forEach(function (p) {
+          var k = PG.forEmail(p.addr, false);
+          if (!k.length) { if (missing.indexOf(p.addr) < 0) missing.push(p.addr); }
+          else if (keys.indexOf(k[0]) < 0) keys.push(k[0]);
+        });
+        if (missing.length) throw new MailError("pgp", t("pgp.missing", { list: missing.join(", ") }));
+        if (keys.indexOf(own[0]) < 0) keys.push(own[0]);   // the copy in Sent stays readable
+      }
+      var rich = d.html ? RT.clean(d.html, { cid: true }) : null;
+      var part = C.content({ text: d.text, html: rich ? rich.html : "", inline: rich ? rich.inline : [],
+                             attachments: d.atts || [], safe: true });
+      var entity = PM.entity(part);
+      return (o.sign ? unlockKey(own) : Promise.resolve(null)).then(function (priv) {
+        if (o.sign && !priv) return null;
+        var job = o.encrypt ? PG.encrypt(entity, keys, priv).then(PM.encrypted)
+          : PG.sign(entity, priv).then(function (s) { return PM.signed(part, s.armored, s.micalg); });
+        return job.then(function (wrapped) {
+          var out = Object.assign({}, d);
+          out.part = wrapped;
+          out.pgp = { sign: !!o.sign, encrypt: !!o.encrypt };
+          if (out.part.body.length > MSG_MAX) throw new MailError("big");
+          return out;
+        });
+      }, function (e) { throw e; });
+    }).catch(function (e) {
+      if (e instanceof MailError) throw e;
+      throw new MailError("pgp", t("pgp.failed", { msg: pgpErr(e) }));
+    });
+  }
+
+  // what the open message carries: PGP/MIME, inline armor, or nothing
+  function pgpInfo(bin, p) {
+    if (!PM) return null;
+    var f = null;
+    try { f = PM.find(bin); } catch (e) {}
+    if (f) return { kind: f.kind, armored: f.armored || "", entity: f.entity || "", sig: f.sig || "", state: "" };
+    var il = p && p.text !== null ? PM.inline(p.text) : null;
+    if (il) return { kind: il.kind, armored: il.armored, before: il.before, after: il.after, state: "" };
+    return null;
+  }
+  // after the message is parsed: check a signature when this device
+  // has keys (else on request: it loads the library)
+  function pgpAuto() {
+    var info = openMsg && openMsg.pgp;
+    if (!info || !PG) return;
+    pgpInit().then(function () {
+      if ((info.kind === "signed" || info.kind === "inline-signed") && PG.list().length) pgpVerify();
+    });
+  }
+  function pgpVerify() {
+    var info = openMsg && openMsg.pgp, uid = openMsg && openMsg.uid;
+    if (!info || info.state === "busy") return;
+    info.state = "busy";
+    renderReader();
+    var job = info.kind === "signed" ? PG.verifyDetached(PM.crlf(info.entity), info.sig)
+      : PG.verifyClear(info.armored).then(function (r) {
+          if (openMsg && openMsg.uid === uid && openMsg.parsed) {
+            openMsg.parsed = Object.assign({}, openMsg.parsed, { text: (info.before || "") + r.text + (info.after || ""), html: null });
+          }
+          return r.sig;
+        });
+    job.then(function (st) {
+      if (!openMsg || openMsg.uid !== uid) return;
+      info.state = "ok";
+      info.result = st;
+      renderReader();
+    }, function (e) {
+      if (!openMsg || openMsg.uid !== uid) return;
+      info.state = "err";
+      info.err = pgpErr(e);
+      renderReader();
+    });
+  }
+  function pgpDecrypt() {
+    var info = openMsg && openMsg.pgp, uid = openMsg && openMsg.uid;
+    if (!info || info.state === "busy") return;
+    info.state = "busy";
+    renderReader();
+    function fail(e) {
+      if (!openMsg || openMsg.uid !== uid) return;
+      info.state = "err";
+      info.err = pgpErr(e);
+      renderReader();
+    }
+    pgpInit().then(function () { return PG.keysFor(info.armored); }).then(function (ks) {
+      if (!openMsg || openMsg.uid !== uid) return;
+      if (!ks.length) { info.state = "nokey"; renderReader(); return; }
+      return unlockKey(ks).then(function (priv) {
+        if (!openMsg || openMsg.uid !== uid) return;
+        if (!priv) { info.state = ""; renderReader(); return; }
+        return PG.decrypt(info.armored, [priv]).then(function (res) {
+          if (!openMsg || openMsg.uid !== uid) return;
+          var outer = openMsg.parsed;
+          if (info.kind === "inline-enc") {
+            var txt = M.decodeCharset(res.bin, "utf-8").replace(/\r\n?/g, "\n");
+            openMsg.parsed = Object.assign({}, outer, { text: (info.before || "") + txt + (info.after || ""), html: null });
+            info.result = res.sig;
+            info.state = "ok";
+            renderReader();
+            return;
+          }
+          // PGP/MIME: a MIME entity, maybe signed inside (RFC 3156 §6.1)
+          var inner = res.bin, sub = null;
+          try { sub = PM.find(inner); } catch (e) {}
+          var show = function (st) {
+            var np = M.parseMessage(sub && sub.kind === "signed" ? sub.entity : inner);
+            np.headers = outer.headers;
+            openMsg.parsed = np;
+            info.result = st;
+            info.state = "ok";
+            renderReader();
+          };
+          if (sub && sub.kind === "signed") {
+            return PG.verifyDetached(PM.crlf(sub.entity), sub.sig).then(show, function () { show({ state: "bad", signer: null, keyId: "" }); });
+          }
+          show(res.sig);
+        });
+      });
+    }).catch(fail);
+  }
+  // the bar(s) above the message
+  function renderPgp(m, bars) {
+    var info = openMsg && openMsg.pgp;
+    if (info) {
+      var enc = info.kind === "encrypted" || info.kind === "inline-enc";
+      var bar = el("div", "bar pgp");
+      var lead = el("span", "pgp-lead");
+      lead.innerHTML = UI.lock;
+      bar.appendChild(lead);
+      var tx = el("span", "pgp-tx");
+      bar.appendChild(tx);
+      var acts = el("span", "bar-acts");
+      if (info.state === "busy") tx.textContent = enc ? t("pgp.working") : t("pgp.sigChecking");
+      else if (info.state === "err") {
+        bar.classList.add("warn");
+        tx.textContent = enc ? t("pgp.decFail", { msg: info.err || "" }) : t("pgp.failed", { msg: info.err || "" });
+        acts.appendChild(retryBtn(enc ? pgpDecrypt : pgpVerify));
+      } else if (info.state === "nokey") {
+        tx.textContent = t("pgp.encMsg") + " " + t("pgp.noKeyFor");
+      } else if (info.state === "ok") {
+        tx.textContent = enc ? t("pgp.decrypted") : "";
+      } else if (enc) {
+        tx.textContent = t("pgp.encMsg");
+        var db = el("button", "link-btn", t("pgp.decrypt"));
+        db.type = "button";
+        db.addEventListener("click", pgpDecrypt);
+        acts.appendChild(db);
+      } else {
+        tx.textContent = t("pgp.signed");
+        var vb = el("button", "link-btn", t("pgp.sigCheck"));
+        vb.type = "button";
+        vb.addEventListener("click", pgpVerify);
+        acts.appendChild(vb);
+      }
+      if (acts.children.length) bar.appendChild(acts);
+      if (tx.textContent) bars.appendChild(bar);
+      var st = info.state === "ok" ? info.result : null;
+      if (st && st.state !== "none") {
+        var sb = el("div", "bar pgp");
+        var who = keyWho(st.signer);
+        var mine = st.signer && m.from && st.signer.emails.indexOf(lowerAddr(m.from.addr)) >= 0;
+        if (st.state === "ok" && mine) sb.classList.add("ok");
+        else sb.classList.add("warn");
+        if (st.state !== "ok" || !mine) sb.setAttribute("role", "alert");
+        sb.appendChild(el("span", "", st.state === "ok" ? (mine ? t("pgp.sigOk", { who: who }) : t("pgp.sigOther", { who: who, addr: m.from.addr }))
+          : (st.state === "bad" ? t("pgp.sigBad") : t("pgp.sigUnknown", { id: String(st.keyId || "").toUpperCase() }))));
+        bars.appendChild(sb);
+      }
+    }
+    // an OpenPGP public key sent along: offer to keep it
+    var p = openMsg && openMsg.parsed;
+    var keyAtt = p && PG ? (p.attachments || []).filter(function (a) {
+      return typeof a.data === "string" && a.data.length < 512 * 1024 &&
+        (a.type === "application/pgp-keys" || /\.(asc|pub|gpg|key)$/i.test(a.name)) && PM.isKey(a.data);
+    })[0] : null;
+    if (keyAtt) {
+      var kb = el("div", "bar");
+      kb.appendChild(el("span", "", t("pgp.keyAtt")));
+      var ka = el("span", "bar-acts");
+      var ab = el("button", "link-btn", t("pgp.keyAdd"));
+      ab.type = "button";
+      ab.addEventListener("click", function () {
+        ab.disabled = true;
+        pgpInit().then(function () { return PG.importText(keyAtt.data, function () { return Promise.resolve(""); }); }).then(function (r) {
+          showToast(t("pgp.impDone", { n: r.added.length, u: r.updated.length }));
+        }, function (e) { ab.disabled = false; showToast(e && e.message === "lib" ? t("pgp.loadFail") : t("pgp.impBad")); });
+      });
+      ka.appendChild(ab);
+      kb.appendChild(ka);
+      bars.appendChild(kb);
+    }
+  }
+  // OpenPGP's own parts are not shown as attachments
+  function pgpPart(a) {
+    if (!openMsg || !openMsg.pgp) return false;
+    if (a.type === "application/pgp-signature" || a.type === "application/pgp-encrypted") return true;
+    return openMsg.pgp.kind === "encrypted" && openMsg.pgp.state !== "ok" && a.type === "application/octet-stream";
+  }
+
+  // ---------- OpenPGP keys (Settings) ----------
+  function saveText(name, text) {
+    saveAttachment({ name: name, data: C.utf8Bin(text) });
+  }
+  function keyFileName(k, sec) {
+    var who = (k.emails[0] || k.fpr.slice(-16)).replace(/[^A-Za-z0-9@._-]+/g, "_");
+    return who + (sec ? "-private" : "") + "-" + k.fpr.slice(-8).toUpperCase() + ".asc";
+  }
+  function keysDialog() {
+    pgpInit().then(function () {
+      var dlg = makeDialog("ml-keys");
+      dlg.classList.add("wide");
+      dlg.appendChild(el("div", "dlg-title", t("pgp.title")));
+      dlg.appendChild(el("p", "dlg-hint", t("pgp.hint")));
+      var all = PG.list();
+      [[true, "pgp.own"], [false, "pgp.others"]].forEach(function (sec) {
+        dlg.appendChild(el("div", "dlg-lbl", t(sec[1])));
+        var ks = all.filter(function (k) { return k.own === sec[0]; });
+        if (!ks.length) { dlg.appendChild(el("p", "dlg-hint", t("pgp.none"))); return; }
+        var ul = el("ul", "set-accts key-list");
+        ks.forEach(function (k) {
+          var li = el("li");
+          var tx = el("div", "set-acct");
+          tx.appendChild(el("div", "set-acct-name", k.name || k.emails[0] || PG.short(k.fpr)));
+          if (k.emails.length) tx.appendChild(el("div", "set-acct-mail", k.emails.join(", ")));
+          tx.appendChild(el("div", "set-acct-mail key-fpr", t("pgp.fpr", { fpr: PG.short(k.fpr) })));
+          li.appendChild(tx);
+          var acts = el("div", "out-acts");
+          acts.appendChild(button(t("pgp.exportPub"), "small", function () { saveText(keyFileName(k, false), k.pub); }));
+          if (k.own) acts.appendChild(button(t("pgp.exportSec"), "small", function () { keyAsk(t("pgp.secQ"), t("pgp.exportSec"), "", function () { saveText(keyFileName(k, true), k.sec); }); }));
+          acts.appendChild(button(t("pgp.del"), "small danger", function () {
+            keyAsk(k.own ? t("pgp.delOwnQ", { fpr: PG.short(k.fpr) }) : t("pgp.delQ", { who: keyWho(k) }), t("pgp.del"), "danger", function () {
+              PG.remove(k.fpr).then(keysDialog);
+            });
+          }));
+          li.appendChild(acts);
+          ul.appendChild(li);
+        });
+        dlg.appendChild(ul);
+      });
+      var foot = el("div", "dlg-actions");
+      foot.appendChild(button(t("set.close"), "", function () { dlg.close(); }));
+      foot.appendChild(button(t("pgp.import"), "", function () { importKeyDialog(); }));
+      foot.appendChild(button(t("pgp.new"), "primary", function () { newKeyDialog(); }));
+      dlg.appendChild(foot);
+      document.body.appendChild(dlg);
+      dlg.showModal();
+    });
+  }
+  function keyAsk(text, okLabel, cls, yes) {
+    var dlg = makeDialog("ml-keyask");
+    dlg.appendChild(el("p", "dlg-text", text));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); keysDialog(); }));
+    acts.appendChild(button(okLabel, cls || "primary", function () { dlg.close(); yes(); if (cls !== "danger") keysDialog(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function passFields(form) {
+    var p1 = field(form, "ml-pgp-p1", t("pgp.pass"), "password", "", { autocomplete: "new-password", maxlength: "500" });
+    var p2 = field(form, "ml-pgp-p2", t("pgp.pass2"), "password", "", { autocomplete: "new-password", maxlength: "500" });
+    form.appendChild(el("p", "dlg-hint", t("pgp.passHint")));
+    return function () {
+      if (p1.value.length < 8) return { err: t("pgp.passShort") };
+      if (p1.value !== p2.value) return { err: t("pgp.passDiff") };
+      return { pass: p1.value };
+    };
+  }
+  function newKeyDialog() {
+    if (!data.accounts.length) return;
+    var dlg = makeDialog("ml-keynew", true);
+    dlg.appendChild(el("div", "dlg-title", t("pgp.newTitle")));
+    var form = el("form");
+    form.noValidate = true;
+    var fAcct = portSelect(form, "ml-pgp-acct", t("pgp.acct"), data.accounts.map(function (a) {
+      return [a.id, a.name ? a.name + " <" + a.email + ">" : a.email];
+    }), (curAcct() || data.accounts[0]).id);
+    var pass = passFields(form);
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); keysDialog(); }));
+    var ok = button(t("pgp.new"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var pw = pass();
+      if (pw.err) { errP.textContent = pw.err; return; }
+      var a = acctById(fAcct.value);
+      if (!a) return;
+      ok.disabled = true;
+      ok.textContent = t("pgp.making");
+      errP.textContent = "";
+      PG.generate({ name: a.name, email: a.email, pass: pw.pass }).then(function () {
+        dlg.close();
+        showToast(t("pgp.made", { email: a.email }));
+        keysDialog();
+      }, function (er) {
+        ok.disabled = false;
+        ok.textContent = t("pgp.new");
+        errP.textContent = t("pgp.failed", { msg: pgpErr(er) });
+      });
+    });
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function importKeyDialog() {
+    var dlg = makeDialog("ml-keyimp", true);
+    dlg.appendChild(el("div", "dlg-title", t("pgp.impTitle")));
+    dlg.appendChild(el("p", "dlg-hint", t("pgp.impHint")));
+    var form = el("form");
+    form.noValidate = true;
+    var lab = el("label", "dlg-lbl", t("pgp.impText"));
+    lab.setAttribute("for", "ml-pgp-text");
+    form.appendChild(lab);
+    var ta = el("textarea", "key-text");
+    ta.id = "ml-pgp-text";
+    ta.rows = 6;
+    ta.spellcheck = false;
+    ta.setAttribute("autocapitalize", "off");
+    form.appendChild(ta);
+    var fb = el("button", "link-btn", t("pgp.impFile"));
+    fb.type = "button";
+    fb.addEventListener("click", function () {
+      var host = dialogHost();
+      var pick = host && typeof host.openFiles === "function" ? host.openFiles("") : localPickFiles();
+      pick.then(function (list) {
+        var f = list && list[0];
+        if (!f || f.size > 1024 * 1024) return;
+        blobBin(f).then(function (bin) { ta.value = M.decodeCharset(bin, "utf-8"); });
+      });
+    });
+    form.appendChild(fb);
+    // a private key without a passphrase gets one here
+    var lockBox = el("div");
+    lockBox.hidden = true;
+    lockBox.appendChild(el("p", "dlg-text", t("pgp.impLock")));
+    var pass = passFields(lockBox);
+    form.appendChild(lockBox);
+    var errP = el("p", "dlg-err");
+    errP.setAttribute("role", "alert");
+    form.appendChild(errP);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); keysDialog(); }));
+    var ok = button(t("pgp.impDo"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      errP.textContent = "";
+      var text = ta.value;
+      if (!/-----BEGIN PGP (PUBLIC|PRIVATE) KEY BLOCK-----/.test(text)) { errP.textContent = t("pgp.impBad"); return; }
+      ok.disabled = true;
+      var askedLock = false;
+      pgpInit().then(function () {
+        return PG.importText(text, function () {
+          askedLock = true;
+          if (lockBox.hidden) { lockBox.hidden = false; return Promise.resolve(""); }
+          var pw = pass();
+          if (pw.err) { errP.textContent = pw.err; return Promise.resolve(""); }
+          return Promise.resolve(pw.pass);
+        });
+      }).then(function (r) {
+        dlg.close();
+        showToast(t("pgp.impDone", { n: r.added.length, u: r.updated.length }));
+        keysDialog();
+      }, function (er) {
+        ok.disabled = false;
+        if (er && er.message === "nopass" && askedLock) return;   // the passphrase fields are open now
+        errP.textContent = er && er.message === "lib" ? t("pgp.loadFail") : t("pgp.impBad");
+      });
+    });
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    ta.focus();
   }
 
   // ---------- 10. Dialogs + toasts ----------
@@ -4748,7 +5769,9 @@
         var k = e.key;
         if (k === "e") { e.preventDefault(); moveMsgs(tgt, "archive"); return; }
         if (k === "Delete" || k === "#") { e.preventDefault(); moveMsgs(tgt, "trash"); return; }
-        if (k === "!" && curAcct() && roleFolder(curAcct(), "junk")) { e.preventDefault(); moveMsgs(tgt, folderRole(currentFolder() || {}) === "junk" ? "notspam" : "spam"); return; }
+        var gk = groupsOf(tgt);
+        if (k === "!" && gk.some(function (g) { return roleFolder(g.acct, "junk"); })) { e.preventDefault(); moveMsgs(tgt, gk.every(function (g) { return roleOf(g) === "junk"; }) ? "notspam" : "spam"); return; }
+        if (k === "b" && gk.length && gk.every(function (g) { var r = roleOf(g); return r !== "drafts" && r !== "trash" && r !== "junk" && r !== "sent"; })) { e.preventDefault(); snoozeDialog(tgt); return; }
         if (k === "s") { e.preventDefault(); setFlags(tgt, one.length && one.every(function (m) { return hasFlag(m, "\\Flagged"); }) ? "unstar" : "star"); return; }
         if (k === "u") { e.preventDefault(); setFlags(tgt, one.some(function (m) { return !hasFlag(m, "\\Seen"); }) ? "read" : "unread"); return; }
         if (k === "v") { e.preventDefault(); moveDialog(tgt); return; }
@@ -4850,6 +5873,7 @@
       }
     });
     afterAccountsChanged();
+    armSnooze();       // snoozes from another device
     if (openMsg) renderReader();
   }
 
@@ -5006,9 +6030,10 @@
     }
     Promise.all(data.accounts.map(function (a) {
       return Promise.all([loadFolders(a), loadPass(a.id).then(function (pw) { if (!pw) needPass[a.id] = 1; })]);
-    }).concat([loadOutbox()])).then(function () {
+    }).concat([loadOutbox(), pgpInit().catch(function () {})])).then(function () {
       renderSide();
       flushOutbox();
+      armSnooze();
       data.accounts.forEach(function (a) { if (!needPass[a.id]) refreshFolders(a).catch(function () {}); });
       if (!(pendingTarget && openSearchTarget(pendingTarget))) {
         if (prefs.uni && uniOk()) openUnified();

@@ -126,9 +126,13 @@
   // ---------- the message ----------
   // One leaf part: headers + body. Text goes as 7bit when it is short
   // ASCII lines, else base64 of its UTF-8.
-  function textPart(type, s) {
+  // safe (a part that will be signed, RFC 3156 §3): 7bit only when no
+  // line ends in spaces or starts with "From " (relays may change both).
+  function textPart(type, s, safe) {
     var body = String(s || "").replace(/\r\n|\r/g, "\n").split("\n").join(CRLF);
-    var ascii = /^[\x00-\x7f]*$/.test(body) && body.split(CRLF).every(function (l) { return l.length <= 998; });
+    var ascii = /^[\x00-\x7f]*$/.test(body) && body.split(CRLF).every(function (l) {
+      return l.length <= 998 && !(safe && (/[ \t]$/.test(l) || /^From /.test(l)));
+    });
     return { head: "Content-Type: " + type + "; charset=utf-8" + CRLF +
                    "Content-Transfer-Encoding: " + (ascii ? "7bit" : "base64") + CRLF,
              body: ascii ? body : wrap76(b64(utf8Bin(body))) };
@@ -177,17 +181,19 @@
 
   // o: { from{name,addr}, to[], cc[], bcc[], subject, text, html?,
   //      inline?[{ cid, type, bin }], attachments?[{ name, type, bin }],
-  //      keepBcc?, inReplyTo?, references?, date? }
+  //      keepBcc?, inReplyTo?, references?, date?, part? }
   //   → { bin, messageId, rcpt[] }
   // With html: multipart/alternative (text first, then HTML); inline
   // pictures (referenced as cid: in the HTML) make the HTML side a
   // multipart/related.
-  function build(o) {
-    var date = o.date instanceof Date ? o.date : new Date();
-    var mid = msgIdFor(o.from.addr);
-    var part = textPart("text/plain", o.text);
+  // The message's content (text, HTML, pictures, files) as one MIME
+  // part { head, body }, without the message headers. o.safe: see
+  // textPart (for PGP/MIME signing).
+  function content(o) {
+    var safe = !!o.safe;
+    var part = textPart("text/plain", o.text, safe);
     if (typeof o.html === "string" && o.html) {
-      var html = textPart("text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>" + o.html + "</body></html>");
+      var html = textPart("text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>" + o.html + "</body></html>", safe);
       var imgs = (Array.isArray(o.inline) ? o.inline : []).filter(function (x) {
         return x && /^[A-Za-z0-9._-]{1,60}(@[A-Za-z0-9.-]{1,60})?$/.test(x.cid) && /^image\/(png|jpeg|gif)$/.test(x.type) && x.bin;
       });
@@ -202,6 +208,15 @@
     }
     var atts = (Array.isArray(o.attachments) ? o.attachments : []).filter(function (a) { return a && typeof a.bin === "string"; });
     if (atts.length) part = multi("mixed", [part].concat(atts.map(attPart)));
+    return part;
+  }
+
+  // o.part: a ready content part (PGP/MIME, see pgpmime.js) instead of
+  // the one content(o) would build.
+  function build(o) {
+    var date = o.date instanceof Date ? o.date : new Date();
+    var mid = msgIdFor(o.from.addr);
+    var part = o.part && typeof o.part.head === "string" && typeof o.part.body === "string" ? o.part : content(o);
     var h = "";
     h += header("Date", rfcDate(date));
     h += header("From", fmtAddr(o.from));
@@ -285,7 +300,7 @@
   var api = {
     utf8Bin: utf8Bin, b64: b64, validAddr: validAddr, parseList: parseList,
     encodeWords: encodeWords, fmtAddr: fmtAddr, fmtPlain: fmtPlain, fmtInput: fmtInput, rfcDate: rfcDate,
-    build: build, prefixed: prefixed, quote: quote, draftFrom: draftFrom
+    build: build, content: content, multi: multi, prefixed: prefixed, quote: quote, draftFrom: draftFrom
   };
   root.orosMailCompose = api;
   if (typeof module === "object" && module.exports) module.exports = api;
