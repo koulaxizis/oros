@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.87.00
+- Calendar: other Android apps can now add events to orOS (orOS Android app).
+
 ## Version 1.86.00
 - Calendar: events you add or change in the phone's calendar now come back into orOS (orOS Android app, "On this phone").
 

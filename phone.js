@@ -378,6 +378,35 @@
   if (!root || !root.document || !root.addEventListener) return;
 
   /* ---------- bridge (browser only) ---------- */
+  // "Add to orOS" from other Android apps (BR-PHONE v2): the app opens
+  // /?phone-add=<json> for a new event ({k:"event", date, start, end,
+  // dateEnd, title, location, note}) or a .ics / .vcf ({k:"ics"|"vcf",
+  // name, text}; a contact from a dialer or messenger comes as a vCard).
+  // The parameter leaves the address bar at once; it is handed over
+  // when the shell has loaded its apps (ready()).
+  var phoneAdd = null;
+  try {
+    var qs = new URLSearchParams(root.location.search);
+    if (qs.has("phone-add")) {
+      try { phoneAdd = JSON.parse(qs.get("phone-add")); } catch (e) {}
+      qs.delete("phone-add");
+      var rest = qs.toString();
+      root.history.replaceState(null, "", root.location.pathname + (rest ? "?" + rest : "") + root.location.hash);
+    }
+  } catch (e) {}
+  function deliverAdd(a) {
+    if (!a || typeof a !== "object") return;
+    var name = str(a.name, 120) || (a.k === "ics" ? "event.ics" : "contact.vcf");
+    if (a.k === "event" && typeof root.__orosOpenCalendarNew === "function") {
+      root.__orosOpenCalendarNew({ date: a.date, start: a.start || undefined, end: a.end || undefined,
+        dateEnd: a.dateEnd || undefined, title: str(a.title, 80), location: str(a.location, 150), note: str(a.note, 500) });
+    } else if ((a.k === "ics" || a.k === "vcf") && typeof a.text === "string" && a.text.length < 5000000 &&
+               typeof root.__orosOpenAt === "function") {
+      if (a.k === "ics") root.__orosOpenAt("calendar", { importIcs: { name: name, text: a.text } });
+      else root.__orosOpenAt("contacts", { importVcf: { name: name, text: a.text } });
+    }
+  }
+
   var port = null, appState = null, seq = 0, lastSent = {}, listeners = [], timer = null;
 
   function prefs() {
@@ -498,6 +527,7 @@
   });
 
   root.orosPhone = {
+    ready: function () { var a = phoneAdd; phoneAdd = null; deliverAdd(a); },
     available: function () { return !!port; },
     state: function () { return appState; },
     enabled: function (kind) { return !!prefs()[kind]; },

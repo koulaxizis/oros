@@ -4452,6 +4452,12 @@ function transientNote(title, body) {
         $("ev-allday").checked = false;
         $("ev-allday").dispatchEvent(new Event("change"));
         $("ev-start").value = p.start;
+        // From the phone's "add to calendar" (BR-PHONE v2): an end too.
+        if (typeof p.end === "string" && /^\d{2}:\d{2}$/.test(p.end)) $("ev-end").value = p.end;
+      }
+      if (typeof p.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.dateEnd) && p.dateEnd > p.date && $("ev-date-end")) {
+        $("ev-date-end").value = p.dateEnd;
+        $("ev-date-end").dispatchEvent(new Event("change"));
       }
     }, 60);
   }

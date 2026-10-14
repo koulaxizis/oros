@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.86.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.87.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2223,6 +2223,7 @@
         deliverShare();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
+        if (window.orosPhone && window.orosPhone.ready) window.orosPhone.ready();
       })
       .catch(function () {
         state.apps = [];
