@@ -121,3 +121,42 @@ test("routeTrack: a route as a track that tracks-core writes and reads back", ()
   assert.equal(R.routeTrack([[1, 1]], "x", []), null);
   assert.equal(R.routeTrack(null), null);
 });
+
+// Voices: only installed ones (localService === true), never a network
+// voice that sends the text to its server (removed Google 2026-10-14).
+const LV = R.localVoice;
+const VOICES = [
+  { name: "Google ελληνικά", lang: "el-GR", localService: false, default: false },
+  { name: "Google US English", lang: "en-US", localService: false, default: true },
+  { name: "Daniel", lang: "en-GB", localService: true, default: false },
+  { name: "Samantha", lang: "en_US", localService: true, default: false },
+  { name: "Karen", lang: "en-AU", localService: true, default: true },
+  { name: "Odd", lang: "de-DE" }
+];
+test("localVoice: local voices only, same language, exact tag, then default", () => {
+  assert.equal(LV(VOICES, "en-US").name, "Samantha");
+  assert.equal(LV(VOICES, "en-GB").name, "Daniel");
+  assert.equal(LV(VOICES, "en").name, "Karen");
+  assert.equal(LV(VOICES, "EN_au").name, "Karen");
+  // only a network voice for Greek → none
+  assert.equal(LV(VOICES, "el-GR"), null);
+  assert.equal(LV(VOICES, "el"), null);
+  // localService missing or truthy-but-not-true is not trusted
+  assert.equal(LV(VOICES, "de"), null);
+  assert.equal(LV([{ lang: "fr-FR", localService: 1 }], "fr"), null);
+  assert.equal(LV([{ lang: "fr-FR", localService: true }], "fr").lang, "fr-FR");
+  for (const v of VOICES) if (LV(VOICES, v.lang)) assert.equal(LV(VOICES, v.lang).localService, true);
+  assert.equal(LV([], "en"), null);
+  assert.equal(LV(null, "en"), null);
+  assert.equal(LV(VOICES, ""), null);
+  assert.equal(LV([null, undefined], "en"), null);
+});
+
+test("maps.js: guidance speaks only with an explicit local voice", () => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../maps/maps.js"), "utf8");
+  const fn = src.slice(src.indexOf("function speak(text, urgent)"), src.indexOf("// ---------- HUD painting"));
+  assert.match(fn, /var v = navVoice\(\);\s*if \(!v\) return false;/);
+  assert.match(fn, /u\.voice = v;/);
+  assert.match(src, /RC\.localVoice\(/);
+  assert.doesNotMatch(src, /SpeechRecognition/);
+});

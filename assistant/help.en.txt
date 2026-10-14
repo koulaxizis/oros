@@ -52,11 +52,6 @@ What it can change:
 
 Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, and bookmarks with a saved copy. Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
-## Speak instead of typing
-Where the browser can turn speech into text, a microphone button sits next to `Send`. Press it, speak, and the text appears in the message box in the language of orOS (English or Greek); press it again to stop. Nothing is sent until you press `Send`, so you can correct it first.
-
-The first time, a note explains how it works: most browsers (Chrome, Edge, Safari) send the recording to their own speech service on the internet to recognise it; it does not go to orOS or to the AI assistant. The browser asks once for the microphone. Browsers without speech recognition, such as Firefox, show no microphone button.
-
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
@@ -68,7 +63,6 @@ The first time, a note explains how it works: most browsers (Chrome, Edge, Safar
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Passwords are never offered.
 - `Chat only` turns off every search: the assistant then sees only what you type.
 - With `Built-in browser model` nothing leaves the device at all.
-- The microphone uses your browser's speech service, which usually sends the recording over the internet (see Speak instead of typing).
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.

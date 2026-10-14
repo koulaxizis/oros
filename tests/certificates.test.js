@@ -404,3 +404,100 @@ test("ids: events, people and keys get their own prefix", () => {
   assert.match(C.newId("p", Math.random), C.P_RE);
   assert.match(C.newId("e", Math.random), C.EV_RE);
 });
+
+// ---------- wave 3: attendance, sign-in sheet, Open Badges ----------
+test("attendance: tick some or everyone, counted per event, kept through normalizing", () => {
+  let { d, ev } = setup();
+  d = addPeople(d, ["Ann", "Bob", "Cy"]);
+  const ppl = C.eventPeople(d, ev.id);
+  let r = C.setAttended(d, ev.id, [ppl[0].id, ppl[2].id], true, 5000);
+  assert.equal(r.n, 2);
+  assert.equal(C.countAttended(r.data, ev.id), 2);
+  // ticking again changes nothing
+  assert.equal(C.setAttended(r.data, ev.id, [ppl[0].id], true, 5100).n, 0);
+  r = C.setAttended(r.data, ev.id, null, true, 6000);
+  assert.equal(r.n, 1);
+  assert.equal(C.countAttended(r.data, ev.id), 3);
+  r = C.setAttended(r.data, ev.id, null, false, 7000);
+  assert.equal(C.countAttended(r.data, ev.id), 0);
+  assert.equal(C.personById(r.data, ppl[0].id).at, undefined);
+  // normalizers: bits only
+  assert.equal(C.normEvent(Object.assign({}, ev, { onlyAt: "yes" })).onlyAt, 0);
+  assert.equal(C.normEvent(Object.assign({}, ev, { onlyAt: 1 })).onlyAt, 1);
+  assert.equal(C.normPerson(Object.assign({}, ppl[1], { at: 1 })).at, 1);
+  assert.equal(C.normPerson(Object.assign({}, ppl[1], { at: 7 })).at, undefined);
+});
+
+test("attendance: the days of an event, at most 7", () => {
+  assert.deepEqual(j(C.eventDays({ d1: "2026-10-05", d2: "2026-10-07" })), ["2026-10-05", "2026-10-06", "2026-10-07"]);
+  assert.deepEqual(j(C.eventDays({ d1: "2026-10-30", d2: "2026-11-02" })), ["2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"]);
+  assert.deepEqual(j(C.eventDays({ d1: "2026-10-05", d2: "" })), ["2026-10-05"]);
+  assert.deepEqual(j(C.eventDays({ d1: "2026-10-05", d2: "2026-10-01" })), ["2026-10-05"]);
+  assert.deepEqual(j(C.eventDays({ d1: "", d2: "" })), [""]);
+  assert.equal(C.eventDays({ d1: "2026-01-01", d2: "2026-03-01" }).length, 7);
+});
+
+test("dk: sign-in sheet pages, columns per day, landscape from 4 days", () => {
+  const { d, ev } = setup();
+  const L = { title: "T", sub: "S", sheet: "Sign-in sheet", no: "#", name: "Name", sign: "Signature", page: "{i}/{n}", day: (x) => "D" + x.slice(8) };
+  const people = Array.from({ length: 40 }, (_, i) => ({ n: "Person " + i }));
+  const a = D.buildSheet(ev, people, L);
+  assert.equal(a.days.length, 3);
+  assert.ok(a.doc.setup.h > a.doc.setup.w, "portrait");
+  assert.equal(a.doc.pages.length, Math.ceil(45 / a.perPage));
+  const txt = (doc) => doc.stories.map((s) => s.paras.map((p) => (p.runs || []).map((r) => r.t).join("")).join("\n"));
+  const all = txt(a.doc);
+  ["D05", "D06", "D07", "Person 0", "Person 39", "1/" + a.doc.pages.length].forEach((s) => assert.ok(all.includes(s), s));
+  const b = D.buildSheet(Object.assign({}, ev, { d2: "2026-10-09" }), people.slice(0, 3), L);
+  assert.equal(b.days.length, 5);
+  assert.ok(b.doc.setup.w > b.doc.setup.h, "landscape");
+  assert.equal(b.doc.pages.length, 1);
+  // one day: the column is just "Signature"
+  const c = D.buildSheet(Object.assign({}, ev, { d2: "" }), [], L);
+  assert.ok(txt(c.doc).includes("Signature"));
+});
+
+const BD = require(path.join(ROOT, "certificates/badges.js"));
+function b64uDec(s) { return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64"); }
+
+test("badges: Open Badges 3.0 VC-JWT, did:jwk issuer, signature checks, stable ids, hashed email", { skip: !subtle }, async () => {
+  const k = await SG.makeKey(subtle);
+  const f = { kind: "attend", title: "Ψηφιακό Μάρκετινγκ", name: "Μαρία Παπά", email: " Maria@Example.com ", issuer: "Κέντρο", description: "20 ώρες", idate: "2026-10-14", d1: "2026-10-05", d2: "2026-10-07", checkUrl: BASE + "#c1.x", checkName: "Check" };
+  const r = await BD.make(subtle, k, f, { evId: "eaaaaaa1", pId: "p1", now: 0 }, () => 0.5);
+  const parts = r.jwt.split(".");
+  assert.equal(parts.length, 3);
+  const head = JSON.parse(b64uDec(parts[0]));
+  const body = JSON.parse(b64uDec(parts[1]));
+  assert.equal(head.alg, "ES256");
+  assert.ok(body.iss.startsWith("did:jwk:"));
+  assert.equal(head.kid, body.iss + "#0");
+  const jwk = JSON.parse(b64uDec(body.iss.slice(8)));
+  assert.deepEqual(jwk, { crv: "P-256", kty: "EC", x: k.x, y: k.y });
+  const pub = await subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+  const ok = await subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pub, b64uDec(parts[2]), Buffer.from(parts[0] + "." + parts[1]));
+  assert.ok(ok);
+  const vc = body.vc;
+  assert.deepEqual(vc.type, ["VerifiableCredential", "OpenBadgeCredential"]);
+  assert.equal(vc["@context"][1], BD.CONTEXT[1]);
+  assert.equal(vc.credentialSubject.achievement.achievementType, "Certificate");
+  assert.equal(vc.credentialSubject.activityStartDate, "2026-10-05T00:00:00Z");
+  assert.equal(vc.credentialSubject.activityEndDate, "2026-10-07T23:59:59Z");
+  assert.equal(vc.issuanceDate, "2026-10-14T00:00:00Z");
+  assert.equal(body.nbf, Date.parse("2026-10-14T00:00:00Z") / 1000);
+  assert.equal(body.jti, vc.id);
+  assert.match(vc.id, /^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.equal(vc.evidence[0].id, f.checkUrl);
+  // email: only the salted hash, and it matches the trimmed lower-case address
+  const em = vc.credentialSubject.identifier.find((x) => x.identityType === "emailAddress");
+  assert.ok(!r.jwt.includes("example.com") && !JSON.stringify(vc).includes("example.com"));
+  const h = require("crypto").createHash("sha256").update("maria@example.com" + em.salt).digest("hex");
+  assert.equal(em.identityHash, "sha256$" + h);
+  // same person, same ids; another person, another credential but the same achievement
+  const r2 = await BD.make(subtle, k, f, { evId: "eaaaaaa1", pId: "p1", now: 0 }, () => 0.1);
+  const r3 = await BD.make(subtle, k, Object.assign({}, f, { email: "" }), { evId: "eaaaaaa1", pId: "p2", now: 0 });
+  assert.equal(r2.cred.id, vc.id);
+  assert.notEqual(r3.cred.id, vc.id);
+  assert.equal(r3.cred.credentialSubject.achievement.id, vc.credentialSubject.achievement.id);
+  assert.equal(r3.cred.credentialSubject.identifier.length, 1);
+  assert.equal(BD.credential({ kind: "volunteer", title: "x", name: "y" }, { did: "d", cred: "c", ach: "a", now: 0 }).credentialSubject.achievement.achievementType, "CommunityService");
+});

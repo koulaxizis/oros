@@ -1,0 +1,54 @@
+name: Chess puzzles (Lichess pack)
+
+# Cuts chess/puzzles-lichess.js from the Lichess puzzle database (CC0,
+# https://database.lichess.org/#puzzles) with chess/tools/lichess-pack.js
+# and commits it to the branch that ran it. GitHub's runners can reach
+# database.lichess.org; the build container cannot. The commit touches
+# only chess/puzzles-lichess.js, which is not in the paths below, so it
+# never triggers this workflow again.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths: ['chess/tools/lichess-pack.js', '.github/workflows/chess-puzzles.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chess-puzzles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: zstd
+        run: command -v zstd || (sudo apt-get update && sudo apt-get install -y zstd)
+      - name: Download the Lichess puzzle database
+        run: |
+          set -o pipefail
+          curl -fsSL https://database.lichess.org/lichess_db_puzzle.csv.zst | zstd -d > /tmp/p.csv
+          wc -l /tmp/p.csv
+          head -1 /tmp/p.csv
+      - name: Generate chess/puzzles-lichess.js
+        run: node chess/tools/lichess-pack.js /tmp/p.csv chess/puzzles-lichess.js
+      - name: Commit the pack if it changed
+        run: |
+          if git diff --quiet -- chess/puzzles-lichess.js; then
+            echo "chess/puzzles-lichess.js unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add chess/puzzles-lichess.js
+          git commit -m "Chess: Lichess puzzle pack (generated)"
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"

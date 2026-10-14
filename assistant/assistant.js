@@ -178,13 +178,7 @@
       "chg.storage": "it could not be saved (storage full?)",
       "chg.conflict": "the item changed meanwhile",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
-      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
-      "mic.start": "Speak your message", "mic.stop": "Stop listening", "mic.listening": "Listening…",
-      "mic.title": "Speak instead of typing?",
-      "mic.text": "Your browser turns your voice into text. Most browsers (Chrome, Edge, Safari) do this by sending the recording to their own speech service on the internet, not to orOS and not to the assistant. The text lands in the message box, and nothing is sent to the assistant until you press Send.",
-      "mic.ok": "Use the microphone", "mic.no": "Not now",
-      "mic.denied": "The microphone is blocked. Allow it in the browser's site settings.",
-      "mic.fail": "Voice input stopped: {msg}", "mic.none": "No speech heard"
+      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type"
     },
     el: {
       "app": "Βοηθός",
@@ -302,13 +296,7 @@
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
-      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
-      "mic.start": "Πες το μήνυμά σου", "mic.stop": "Τέλος ακρόασης", "mic.listening": "Ακούω…",
-      "mic.title": "Να μιλήσεις αντί να γράψεις;",
-      "mic.text": "Ο browser σου μετατρέπει τη φωνή σε κείμενο. Οι περισσότεροι (Chrome, Edge, Safari) το κάνουν στέλνοντας την ηχογράφηση στη δική τους υπηρεσία ομιλίας στο διαδίκτυο, όχι στο orOS ούτε στον βοηθό. Το κείμενο μπαίνει στο πλαίσιο μηνύματος και τίποτα δεν στέλνεται στον βοηθό πριν πατήσεις Αποστολή.",
-      "mic.ok": "Χρήση μικροφώνου", "mic.no": "Όχι τώρα",
-      "mic.denied": "Το μικρόφωνο είναι μπλοκαρισμένο. Επίτρεψέ το στις ρυθμίσεις ιστότοπου του browser.",
-      "mic.fail": "Η φωνητική εισαγωγή σταμάτησε: {msg}", "mic.none": "Δεν ακούστηκε ομιλία"
+      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος"
     }
   };
 
@@ -356,7 +344,6 @@
     spark: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-    mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
   };
 
@@ -388,7 +375,6 @@
         prefs.keep = p.keep === 0 ? 0 : 1;
         if (p.usage && typeof p.usage === "object") prefs.usage = p.usage;
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
-        if (p.voiceOk === 1) prefs.voiceOk = 1;
       }
     } catch (e) {}
   }
@@ -2420,90 +2406,6 @@
     if (chatSyncOn()) scheduleReconcile();
   }
 
-  // ---------- 12b. Voice input (Web Speech API, wave 48) ----------
-  // The mic button turns speech into text in the message box, in the
-  // interface language. Hidden where the browser has no speech
-  // recognition. The first use explains, honestly, that the browser
-  // may send the recording to its own speech service; nothing goes to
-  // the assistant until the user presses Send.
-  var SR = null;
-  try { SR = window.SpeechRecognition || window.webkitSpeechRecognition || null; } catch (e) { SR = null; }
-  var rec = null;
-  function paintMic() {
-    var b = $("mic-btn");
-    if (!b) return;
-    b.hidden = typeof SR !== "function";
-    b.innerHTML = ICON.mic;
-    var on = !!rec;
-    b.classList.toggle("on", on);
-    b.setAttribute("aria-pressed", on ? "true" : "false");
-    b.setAttribute("aria-label", on ? t("mic.stop") : t("mic.start"));
-    b.title = on ? t("mic.stop") : t("mic.start");
-  }
-  function micClick() {
-    if (rec) { try { rec.stop(); } catch (e) {} return; }
-    if (prefs.voiceOk === 1) { startMic(); return; }
-    var dlg = makeDialog("as-mic");
-    dlg.appendChild(el("div", "dlg-title", t("mic.title")));
-    dlg.appendChild(el("p", "dlg-text", t("mic.text")));
-    var acts = el("div", "dlg-actions");
-    acts.appendChild(button(t("mic.no"), "", function () { dlg.close(); }));
-    acts.appendChild(button(t("mic.ok"), "primary", function () {
-      dlg.close();
-      prefs.voiceOk = 1;
-      savePrefs();
-      startMic();
-    }));
-    dlg.appendChild(acts);
-    document.body.appendChild(dlg);
-    dlg.showModal();
-  }
-  function startMic() {
-    if (typeof SR !== "function" || rec) return;
-    var r;
-    try { r = new SR(); } catch (e) { showToast(t("mic.fail", { msg: String(e && e.message || e) })); return; }
-    r.lang = LANG === "el" ? "el-GR" : "en-US";
-    r.interimResults = true;
-    r.continuous = false;
-    r.maxAlternatives = 1;
-    var box = $("input"), before = box.value.replace(/\s+$/, ""), heard = "";
-    function show(extra) {
-      var said = (heard + extra).replace(/\s+/g, " ").trim();
-      box.value = (before && said ? before + " " : before) + said;
-      autosize();
-    }
-    r.onresult = function (ev) {
-      var interim = "";
-      for (var i = ev.resultIndex; i < ev.results.length; i++) {
-        var res = ev.results[i];
-        if (!res || !res[0]) continue;
-        if (res.isFinal) heard += res[0].transcript + " ";
-        else interim += res[0].transcript;
-      }
-      show(interim);
-    };
-    r.onerror = function (ev) {
-      var code = ev && ev.error || "";
-      if (code === "aborted") return;
-      if (code === "not-allowed" || code === "service-not-allowed") showToast(t("mic.denied"));
-      else if (code === "no-speech") showToast(t("mic.none"));
-      else showToast(t("mic.fail", { msg: String(code || "?") }));
-    };
-    r.onend = function () {
-      if (rec !== r) return;
-      rec = null;
-      show("");
-      paintMic();
-      box.placeholder = ready() ? t("ph.input") : t("ph.noSetup");
-      box.focus();
-    };
-    try { r.start(); } catch (e) { showToast(t("mic.fail", { msg: String(e && e.message || e) })); return; }
-    rec = r;
-    box.placeholder = t("mic.listening");
-    paintMic();
-  }
-  function stopMic() { if (rec) { try { rec.abort(); } catch (e) {} } }
-
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -2531,16 +2433,12 @@
     $("side-new").addEventListener("click", function () { setSide(false); newChat(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
-    $("send-btn").addEventListener("click", function () { stopMic(); if (busy) stop(); else send(); });
-    $("mic-btn").addEventListener("click", micClick);
-    paintMic();
-    window.addEventListener("pagehide", stopMic);
+    $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     var box = $("input");
     box.addEventListener("input", autosize);
     box.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
-        stopMic();
         if (!busy) send();
       }
     });

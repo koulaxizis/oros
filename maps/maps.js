@@ -131,7 +131,7 @@
       "dlg.ok":             "OK",
       "settings.tiles.count":   "{n} tiles stored",
       "settings.tiles.cleared": "Tile cache cleared",
-      "nav.novoice":        "No voice for this language on this device — follow the screen",
+      "nav.novoice":        "No voice on this device for this language: follow the screen. You can add one in your system's speech settings.",
       "nav.in":             "In {d}, {text}",
       "say.m":              "metres",
       "say.km":             "kilometres",
@@ -292,7 +292,7 @@
       "dlg.ok":             "OK",
       "settings.tiles.count":   "{n} αποθηκευμένα πλακίδια",
       "settings.tiles.cleared": "Η cache πλακιδίων καθαρίστηκε",
-      "nav.novoice":        "Δεν υπάρχει φωνή για αυτή τη γλώσσα στη συσκευή — ακολούθησε την οθόνη",
+      "nav.novoice":        "Δεν υπάρχει φωνή σε αυτή τη συσκευή για αυτή τη γλώσσα: ακολούθησε την οθόνη. Μπορείς να προσθέσεις μία στις ρυθμίσεις ομιλίας του συστήματός σου.",
       "nav.in":             "Σε {d}, {text}",
       "say.m":              "μέτρα",
       "say.km":             "χιλιόμετρα",
@@ -2431,21 +2431,29 @@
   }
 
   // ---------- Voice (Web Speech API, browser-native) ----------
-  // false ONLY when the device lists its voices and none speaks the
-  // UI language (a foreign voice reading Greek is noise, not help).
-  // An empty list means "not loaded yet / unknown" → try anyway.
-  function voiceUsable() {
-    try {
-      var vs = window.speechSynthesis.getVoices() || [];
-      if (!vs.length) return true;
-      var want = LANG === "el" ? "el" : "en";
-      for (var i = 0; i < vs.length; i++) {
-        if (String(vs[i].lang || "").toLowerCase().indexOf(want) === 0) return true;
-      }
-      return false;
-    } catch (e) { return true; }
+  // Only a voice installed on this device (RC.localVoice): a network
+  // voice (e.g. Chrome's "Google ..." voices) would send every
+  // instruction to its server, so it is never used, and speak() is
+  // never called without an explicit local voice (the browser's
+  // default could be a network one). No local voice for the UI
+  // language → one note, the HUD carries the guidance. An empty list
+  // means "not loaded yet": nothing is spoken, and after 3 s of an
+  // empty list the note is shown too.
+  var voiceToldOnce = false, voiceEmptySince = 0;
+  function navVoice() {
+    var vs = [];
+    try { vs = window.speechSynthesis.getVoices() || []; } catch (e) { vs = []; }
+    var v = RC.localVoice(vs, LANG === "el" ? "el-GR" : "en-US");
+    if (v) { voiceEmptySince = 0; return v; }
+    if (!vs.length) {
+      if (!voiceEmptySince) voiceEmptySince = Date.now();
+      if (Date.now() - voiceEmptySince < 3000) return null;
+    }
+    if (!voiceToldOnce) { voiceToldOnce = true; showToast(t("nav.novoice")); }
+    return null;
   }
-  var voiceToldOnce = false;
+  // Chrome loads the voice list on the first ask: ask early.
+  try { if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); } catch (e) {}
 
   // Returns true when the text was handed to the synthesizer.
   //   urgent = false → never cut a sentence that is being spoken;
@@ -2454,13 +2462,12 @@
     if (navMuted) return false;
     if (!("speechSynthesis" in window)) return false;   // HUD still works
     try {
-      if (!voiceUsable()) {
-        if (!voiceToldOnce) { voiceToldOnce = true; showToast(t("nav.novoice")); }
-        return false;
-      }
+      var v = navVoice();
+      if (!v) return false;
       if (!urgent && window.speechSynthesis.speaking) return false;
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = LANG === "el" ? "el-GR" : "en-US"; // follows UI setting
+      u.voice = v;                                // always a local voice
+      u.lang = v.lang || (LANG === "el" ? "el-GR" : "en-US");
       u.rate = 1;
       window.speechSynthesis.cancel();            // never queue behind
       window.speechSynthesis.speak(u);

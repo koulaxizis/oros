@@ -34,7 +34,7 @@ Select a word and pick `Look up` in the bar: its meanings come from Wiktionary. 
 ## Read aloud
 The speaker button at the bottom left (`Read aloud`) reads the book to you from the page on screen, with your device's own voices: nothing is sent anywhere. The sentence being read is marked and the pages turn by themselves, so your place moves on as you listen.
 
-While it reads, its controls take the place of the bottom bar: `Pause`, `Previous sentence`, `Next sentence`, the speed (tap it to go from 0.8× to 2×) and `Stop reading aloud`. If you turn to another page while paused, play starts from there. The voice follows the book's language; if your device has no voice for it, it reads with the closest one it has.
+While it reads, its controls take the place of the bottom bar: `Pause`, `Previous sentence`, `Next sentence`, the speed (tap it to go from 0.8× to 2×) and `Stop reading aloud`. If you turn to another page while paused, play starts from there. The voice follows the book's language and is always one installed on your device. Some browsers also offer online voices (in Chrome, the ones named "Google …"); Library never uses them, because they send the text to their server. If your device has no voice for the book's language, Library says so and doesn't read; you can add a voice in your system's speech settings.
 
 ## Reading stats
 `More` › `Reading stats` shows how long you've read today, in the last seven days and in all, how many days in a row, a bar for each of the last two weeks, and the time spent in each book with about how long is left at your pace. A book's details show the same for that book.

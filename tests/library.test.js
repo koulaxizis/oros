@@ -561,3 +561,44 @@ test("look up: the word, Wiktionary as plain text, the Assistant's question", ()
   assert.equal(long.length, 2000);
   assert.ok(long.endsWith("…»"));
 });
+
+// Voices: only installed ones (localService === true), never a network
+// voice that sends the text to its server (removed Google 2026-10-14).
+const LV = C.localVoice;
+const VOICES = [
+  { name: "Google ελληνικά", lang: "el-GR", localService: false, default: false },
+  { name: "Google US English", lang: "en-US", localService: false, default: true },
+  { name: "Daniel", lang: "en-GB", localService: true, default: false },
+  { name: "Samantha", lang: "en_US", localService: true, default: false },
+  { name: "Karen", lang: "en-AU", localService: true, default: true },
+  { name: "Odd", lang: "de-DE" }
+];
+test("localVoice: local voices only, same language, exact tag, then default", () => {
+  assert.equal(LV(VOICES, "en-US").name, "Samantha");
+  assert.equal(LV(VOICES, "en-GB").name, "Daniel");
+  assert.equal(LV(VOICES, "en").name, "Karen");
+  assert.equal(LV(VOICES, "EN_au").name, "Karen");
+  // only a network voice for Greek → none
+  assert.equal(LV(VOICES, "el-GR"), null);
+  assert.equal(LV(VOICES, "el"), null);
+  // localService missing or truthy-but-not-true is not trusted
+  assert.equal(LV(VOICES, "de"), null);
+  assert.equal(LV([{ lang: "fr-FR", localService: 1 }], "fr"), null);
+  assert.equal(LV([{ lang: "fr-FR", localService: true }], "fr").lang, "fr-FR");
+  for (const v of VOICES) if (LV(VOICES, v.lang)) assert.equal(LV(VOICES, v.lang).localService, true);
+  assert.equal(LV([], "en"), null);
+  assert.equal(LV(null, "en"), null);
+  assert.equal(LV(VOICES, ""), null);
+  assert.equal(LV([null, undefined], "en"), null);
+});
+
+test("speak.js: reads only with an explicit local voice, else a note", () => {
+  const src = fs.readFileSync(path.join(__dirname, "../library/speak.js"), "utf8");
+  const fn = src.slice(src.indexOf("  function speak() {"), src.indexOf("  function pause() {"));
+  assert.ok(fn.indexOf("if (!v) {") > 0 && fn.indexOf("if (!v) {") < fn.indexOf("new window.SpeechSynthesisUtterance"));
+  assert.match(fn, /t\("speak\.noVoice"\)/);
+  assert.match(fn, /u\.voice = v;/);
+  assert.match(src, /C\.localVoice\(/);
+  const S = fs.readFileSync(path.join(__dirname, "../library/strings.js"), "utf8");
+  assert.equal(S.split('"speak.noVoice"').length, 3);
+});

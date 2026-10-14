@@ -295,7 +295,7 @@ test("core: change_item is offered only with data access and an app that takes c
   assert.doesNotMatch(A.systemPrompt({ builtin: true, apps: ["x"], changes: ["x"] }), /change_item/);
 });
 
-test("assistant.js: changes need the user's press, undo is never read from a stored chat, voice is honest", () => {
+test("assistant.js: changes need the user's press, undo is never read from a stored chat, no voice input", () => {
   const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
   // the write happens only after askChange resolved true
   const fn = src.slice(src.indexOf("function changeItem("), src.indexOf("function undoChange("));
@@ -304,11 +304,9 @@ test("assistant.js: changes need the user's press, undo is never read from a sto
   // undo comes from memory only
   assert.match(src, /var undoMem = \{\};/);
   assert.match(src.slice(src.indexOf("function undoChange("), src.indexOf("function chgValue(")), /undoMem\[ui\.u\]/);
-  // speech: hidden without the API, explained before the first use, language follows the UI
-  assert.match(src, /b\.hidden = typeof SR !== "function"/);
-  assert.match(src, /prefs\.voiceOk === 1/);
-  assert.match(src, /LANG === "el" \? "el-GR" : "en-US"/);
+  // no speech recognition: in Chrome it streams the audio to Google (removed 2026-10-14)
+  assert.doesNotMatch(src, /SpeechRecognition|voiceOk|mic-btn/);
   const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
   assert.ok(html.indexOf("edits.js") > 0 && html.indexOf("edits.js") < html.indexOf("assistant.js?"));
-  assert.match(html, /id="mic-btn"[^>]*hidden/);
+  assert.doesNotMatch(html, /mic-btn/);
 });
