@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.94.00
+- The orOS Android app has home-screen widgets: orOS Today shows what's late, today and the next days, with buttons to add a task, a glass of water or a note.
+
 ## Version 1.93.00
 - In the orOS Android app, your Time alarms, Water reminders and To-Do tasks due now ring even when orOS is closed.
 
