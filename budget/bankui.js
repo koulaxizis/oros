@@ -46,7 +46,7 @@
       rules: "Rules", rulesHint: "Rules fill in the category of imported entries. When several match, the one with the longest text wins.",
       rulesEmpty: "No rules yet. Make one here, or in an import with “Always do this”.",
       newRule: "New rule", editRule: "Edit rule", apply: "Apply to uncategorised entries",
-      applied: "{n} entries categorised", applied0: "No uncategorised entry matches a rule.",
+      applied: "{n} entries categorised", applied1: "1 entry categorised", applied0: "No uncategorised entry matches a rule.",
       q: "Description contains", q_ph: "e.g. LIDL", lo: "Amount from", hi: "Amount to", opt: "Optional",
       py: "Rename to", nt: "Add a note", cat: "Category", alsoNow: "Also apply to uncategorised entries now",
       needQ: "Write some text, or an amount range", needC: "Pick a category", badAmt: "Type an amount, for example 12,50",
@@ -83,7 +83,7 @@
       rules: "Κανόνες", rulesHint: "Οι κανόνες βάζουν μόνοι τους κατηγορία στις κινήσεις που εισάγεις. Όταν ταιριάζουν πολλοί, κερδίζει αυτός με το μεγαλύτερο κείμενο.",
       rulesEmpty: "Δεν υπάρχουν κανόνες ακόμα. Φτιάξε έναν εδώ ή σε μια εισαγωγή με «Πάντα έτσι».",
       newRule: "Νέος κανόνας", editRule: "Επεξεργασία κανόνα", apply: "Εφαρμογή στις κινήσεις χωρίς κατηγορία",
-      applied: "Μπήκε κατηγορία σε {n} κινήσεις", applied0: "Καμία κίνηση χωρίς κατηγορία δεν ταιριάζει σε κανόνα.",
+      applied: "Μπήκε κατηγορία σε {n} κινήσεις", applied1: "Μπήκε κατηγορία σε 1 κίνηση", applied0: "Καμία κίνηση χωρίς κατηγορία δεν ταιριάζει σε κανόνα.",
       q: "Η περιγραφή περιέχει", q_ph: "π.χ. ΣΚΛΑΒΕΝΙΤΗΣ", lo: "Ποσό από", hi: "Ποσό έως", opt: "Προαιρετικά",
       py: "Μετονομασία σε", nt: "Προσθήκη σημείωσης", cat: "Κατηγορία", alsoNow: "Εφαρμογή και τώρα στις κινήσεις χωρίς κατηγορία",
       needQ: "Γράψε ένα κείμενο ή ένα εύρος ποσού", needC: "Διάλεξε κατηγορία", badAmt: "Γράψε ένα ποσό, π.χ. 12,50",
@@ -548,7 +548,7 @@
     var D = A.data();
     var ch = B.rerun(D.tx, only && only.length ? only : D.rule);
     if (!ch.length) { if (!only || !only.length) A.showToast(t("applied0")); return 0; }
-    A.applyChanges(ch, t("applied", { n: ch.length }));
+    A.applyChanges(ch, (ch.length === 1 ? t("applied1") : t("applied", { n: ch.length })));
     return ch.length;
   }
   // preset { k, c, q } for a rule made from a correction; then(rule) after Save.
