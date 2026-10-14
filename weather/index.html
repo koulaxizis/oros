@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=weather" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Weather · orOS</title>
-  <link rel="stylesheet" href="weather.css?v=2.02.00">
+  <link rel="stylesheet" href="weather.css?v=2.04.00">
 </head>
 <body>
 
@@ -90,6 +90,26 @@
     <h3 class="sec-title" data-i18n="daily.title">7-day forecast</h3>
     <ul id="daily"></ul>
 
+    <!-- Wave 52: rain map (NASA GIBS IMERG over OSM), loads only when opened -->
+    <h3 class="sec-title" id="rain-title" hidden>Rain map</h3>
+    <section id="rainmap" hidden>
+      <button id="rain-toggle" type="button" class="btn-secondary" aria-controls="rain-body" aria-expanded="false"></button>
+      <div id="rain-body" hidden>
+        <p id="rain-note" class="hint"></p>
+        <p id="rain-msg" class="hint" role="status" hidden></p>
+        <div id="rain-map-wrap" hidden>
+          <div id="rain-box"></div>
+          <div class="rain-ctl">
+            <button id="rain-play" type="button" class="btn-secondary"></button>
+            <input id="rain-slider" type="range" min="0" max="11" step="1" value="11">
+            <span id="rain-time"></span>
+          </div>
+          <div id="rain-legend"></div>
+          <p id="rain-attrib" class="dim"></p>
+        </div>
+      </div>
+    </section>
+
     <!-- Wave 38: air quality + pollen, per hour and per day -->
     <h3 class="sec-title" id="air-title" data-i18n="air.title" hidden>Air &amp; pollen</h3>
     <section id="air" hidden>
@@ -140,9 +160,11 @@
     <div id="warn-set-host" hidden></div>
   </dialog>
 
-  <script src="../feeds/core.js?v=2.02.00"></script>
-  <script src="../feeds/fetch.js?v=2.02.00"></script>
-  <script src="core.js?v=2.02.00"></script>
-  <script src="weather.js?v=2.02.00"></script>
+  <script src="../feeds/core.js?v=2.04.00"></script>
+  <script src="../feeds/fetch.js?v=2.04.00"></script>
+  <script src="core.js?v=2.04.00"></script>
+  <script src="rainmap-core.js?v=2.04.00"></script>
+  <script src="rainmap.js?v=2.04.00"></script>
+  <script src="weather.js?v=2.04.00"></script>
 </body>
 </html>

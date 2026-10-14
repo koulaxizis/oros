@@ -1,0 +1,87 @@
+{
+  "name": "orOS Calendar",
+  "short_name": "Calendar",
+  "description": "orOS Calendar: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/calendar/solo.html",
+  "start_url": "/calendar/solo.html",
+  "scope": "/calendar/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/calendar.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/calendar-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/calendar-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/calendar-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "New event",
+      "short_name": "New event",
+      "url": "/calendar/solo.html?do=new",
+      "icons": [
+        {
+          "src": "/icons/solo/calendar-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/calendar/solo.html?file-open=calendar",
+      "accept": {
+        "text/calendar": [
+          ".ics"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/calendar/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "text/calendar",
+            ".ics"
+          ]
+        }
+      ]
+    }
+  }
+}

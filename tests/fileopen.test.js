@@ -287,3 +287,14 @@ test("sw share target: a file lands in the inbox, the first only; too big is ref
   const bad = await sb.shareTargetPost({ formData: () => Promise.reject(new Error("x")) });
   assert.equal(bad.redirect, "https://useoros.online/");
 });
+
+test("sw share target: a single app's share goes back to its own page (solo.js)", async () => {
+  const { sb } = swSandbox();
+  const req = form({ url: "https://example.com/x", title: "", text: "" });
+  req.url = "https://useoros.online/bookmarks/solo.html?share-target";
+  const r = await sb.shareTargetPost(req);
+  assert.equal(r.redirect, "https://useoros.online/bookmarks/solo.html?share-url=https%3A%2F%2Fexample.com%2Fx");
+  const odd = form({ url: "https://example.com/x" });
+  odd.url = "https://useoros.online/x/y/solo.html?share-target";
+  assert.equal((await sb.shareTargetPost(odd)).redirect, "https://useoros.online/?share-url=https%3A%2F%2Fexample.com%2Fx");
+});

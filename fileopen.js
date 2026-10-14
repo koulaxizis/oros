@@ -264,6 +264,10 @@
     extOf: extOf, appsFor: appsFor, extensions: extensions, shared: shared,
     normPrefs: normPrefs, choose: choose, choiceFor: choiceFor, setChoice: setChoice,
     manifestHandlers: manifestHandlers, shareTarget: shareTarget, shareAccept: shareAccept,
+    // The whole table, copied (the single apps' manifests, solo.js).
+    table: function () {
+      return HANDLERS.map(function (h) { return { app: h.app, accept: JSON.parse(JSON.stringify(h.accept)) }; });
+    },
     shareIdFromUrl: shareIdFromUrl, SHARE_INBOX: SHARE_INBOX, textKey: textKey, TEXT_MAX: TEXT_MAX, str: str
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -399,9 +403,16 @@
   }
 
   // One file in: pick the app (or ask), size check, hand it over.
+  // A single app (solo.js, "orOS Notes" …) opens the files of its own
+  // types itself: no chooser, no saved choice is consulted.
+  function soloApp() {
+    var s = w.orosSolo;
+    return s && typeof s.id === "string" ? s.id : "";
+  }
   function deliver(file) {
     if (!file) return;
-    var c = choose(file.name, loadPrefs());
+    var solo = soloApp(), ext = extOf(file.name);
+    var c = (solo && ext && appsFor(ext).indexOf(solo) !== -1) ? { app: solo } : choose(file.name, loadPrefs());
     if (!c) { notice(T("unknown")); return; }
     if (file.size > maxFor(c.app)) { notice(T("big")); return; }
     if (c.app) openWith(c.app, file);

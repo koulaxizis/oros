@@ -3762,12 +3762,17 @@ function boot() {
 }
 
 /* Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
-   target { id }, or { add: { url, title } } from "Send to orOS"
+   target { id }, { quickAdd: true } (focus the add bar), or { add: { url, title } } from "Send to orOS"
    (see openAddDialog). { id } shows the bookmark's folder with no filter, scrolls
    to its row and opens its dialog. Unknown id, or a dialog already
    open (maybe with unsaved edits) → no-op. */
 function openSearchTarget(t) {
   if (t && !document.querySelector("dialog[open]")) closeReader();
+  if (t && t.quickAdd) {               // "Add a bookmark" on the single app's icon (solo.js)
+    const qa = $("#quick-add");
+    if (qa && !document.querySelector("dialog[open]")) { qa.scrollIntoView({ block: "nearest" }); qa.focus(); }
+    return;
+  }
   if (t && t.addMany && typeof t.addMany === "object") {
     addManyTarget(t.addMany);
     return;
