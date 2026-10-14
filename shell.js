@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.84.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.85.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5052,6 +5052,9 @@
         { name: "Notion API", url: "https://developers.notion.com/reference/intro",
           by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
           en: "Connected services: import pages (Notes) and databases (Spreadsheet, Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο, Kanban)" },
+        { name: "Google People API · Microsoft Graph", url: "https://developers.google.com/people",
+          by: "Google LLC; Microsoft Corporation; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
+          en: "One-time contacts import (Contacts › From an account)", el: "Εισαγωγή επαφών μία φορά (Επαφές › Από λογαριασμό)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

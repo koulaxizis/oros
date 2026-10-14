@@ -696,3 +696,25 @@ dialog h3 {
 /* CT-6: [hidden] must ALWAYS win — last rule of the file (Part II).
    It was missing: an element with a display rule ignored `hidden`. */
 [hidden] { display: none !important; }
+
+/* ---------- Import review + From an account ---------- */
+#rev-dlg { width: min(560px, calc(100vw - 24px)); max-width: 560px; }
+.rev-pref { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 8px 0; font-size: 13.5px; }
+.rev-pref select, .rev-row select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 13px; padding: 4px 8px; border-radius: 7px; max-width: 100%;
+}
+.rev-grp { margin: 10px 0 4px; font-size: 12.5px; color: var(--text-dim); font-weight: 600; }
+.rev-row {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: space-between;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+}
+.rev-row .rv-name { font-weight: 600; min-width: 0; overflow-wrap: anywhere; flex: 1 1 160px; }
+.rev-row .rv-info { flex: 1 1 100%; font-size: 12.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+.rev-row .rv-info b { color: var(--text); font-weight: 600; }
+.rev-row .rv-warn { color: var(--accent); }
+#rev-dlg details > summary { cursor: pointer; font-size: 13px; color: var(--text-dim); margin-top: 10px; }
+.ac-provs { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.ac-prov { flex: 1 1 150px; }
+#ac-own summary { cursor: pointer; font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+.ac-uri code { overflow-wrap: anywhere; font-size: 12px; }

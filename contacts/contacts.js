@@ -138,9 +138,47 @@
       "ph.last": "Sent {t}: {n} {what}.",
       "ph.err": "Last attempt failed: {e}",
       "ph.close": "Close",
-      "ct.vcf.title": "Import contacts",
-      "ct.vcf.sum": "{n} contact(s) in this file. A contact with the same phone or email is completed, never overwritten; nothing is deleted.",
-      "ct.vcf.go": "Import",
+      "ac.btn": "From an account",
+      "ac.title": "Import from an account",
+      "ac.text": "Sign in once: orOS reads your contacts, you review them, and the connection ends right away. No password or access is kept.",
+      "ac.others": "iCloud, Yahoo and other services: export your contacts there as a .vcf file and use Import.",
+      "ac.noclient": "{p} is not set up in this orOS yet. You can add your own app id below.",
+      "ac.wait": "Waiting for the sign-in window…",
+      "ac.read": "Reading contacts… {n}",
+      "ac.popup": "The sign-in window was blocked. Allow pop-ups for orOS and try again.",
+      "ac.cancelled": "Sign-in cancelled.",
+      "ac.forbidden": "The service refused to share the contacts. Allow reading contacts when you sign in.",
+      "ac.err": "Could not read the contacts ({e}).",
+      "ac.none": "No contacts found in this account.",
+      "ac.src": "{p} · {n} contact(s) · disconnected",
+      "ac.own": "Use my own app id",
+      "ac.own.text": "Register an OAuth app (Google Cloud: Web application with the People API; Microsoft Entra: single-page app for personal and work accounts) with this redirect address, then paste its client id. It stays on this device.",
+      "ac.own.save": "Save",
+      "ac.own.saved": "Saved on this device",
+      "ac.own.bad": "That doesn't look like a client id",
+      "rv.title": "Review import",
+      "rv.sum": "{new} new · {diff} with other details · {same} already here",
+      "rv.pref": "When a detail differs:",
+      "rv.act.add": "Add",
+      "rv.act.skip": "Skip",
+      "rv.act.merge": "Merge, keep mine",
+      "rv.act.theirs": "Merge, use imported",
+      "rv.act.sep": "Add as separate",
+      "rv.grp.diff": "Other details ({n})",
+      "rv.grp.new": "New ({n})",
+      "rv.grp.same": "Already here, skipped ({n})",
+      "rv.more": "…and {n} more, with the suggested choice",
+      "rv.by.email": "Same email",
+      "rv.by.phone": "Same phone",
+      "rv.by.name": "Same name",
+      "rv.adds": "Adds",
+      "rv.nameonly": "Same name but other phones and emails: probably another person",
+      "rv.birthday": "Birthday",
+      "rv.safe": "Nothing is deleted. A merge only adds details; \"use imported\" replaces a value that differs.",
+      "rv.go": "Import",
+      "rv.done": "{a} added · {m} merged · {s} skipped",
+      "rv.nothing": "Nothing new to import",
+      "rv.undone": "Import undone",
       "ct.import.csv.bad": "Could not read that CSV file",
       "ct.import.csv.noheader": "No recognizable columns — expected a Google Contacts CSV",
       "ct.import.csv.norows": "No importable contacts found in the CSV",
@@ -280,9 +318,47 @@
       "ph.last": "Στάλθηκαν {t}: {n} {what}.",
       "ph.err": "Η τελευταία προσπάθεια απέτυχε: {e}",
       "ph.close": "Κλείσιμο",
-      "ct.vcf.title": "Εισαγωγή επαφών",
-      "ct.vcf.sum": "{n} επαφή/ές σε αυτό το αρχείο. Μια επαφή με το ίδιο τηλέφωνο ή email συμπληρώνεται, δεν αντικαθίσταται· τίποτα δεν διαγράφεται.",
-      "ct.vcf.go": "Εισαγωγή",
+      "ac.btn": "Από λογαριασμό",
+      "ac.title": "Εισαγωγή από λογαριασμό",
+      "ac.text": "Συνδέεσαι μία φορά: το orOS διαβάζει τις επαφές σου, τις ελέγχεις και η σύνδεση κλείνει αμέσως. Δεν κρατιέται κωδικός ούτε πρόσβαση.",
+      "ac.others": "iCloud, Yahoo και άλλες υπηρεσίες: κάνε εξαγωγή των επαφών εκεί σε αρχείο .vcf και πάτα Εισαγωγή.",
+      "ac.noclient": "Το {p} δεν έχει ρυθμιστεί ακόμα σε αυτό το orOS. Μπορείς να βάλεις δικό σου αναγνωριστικό εφαρμογής παρακάτω.",
+      "ac.wait": "Αναμονή για το παράθυρο σύνδεσης…",
+      "ac.read": "Ανάγνωση επαφών… {n}",
+      "ac.popup": "Το παράθυρο σύνδεσης μπλοκαρίστηκε. Επίτρεψε τα αναδυόμενα για το orOS και δοκίμασε ξανά.",
+      "ac.cancelled": "Η σύνδεση ακυρώθηκε.",
+      "ac.forbidden": "Η υπηρεσία δεν έδωσε τις επαφές. Επίτρεψε την ανάγνωση επαφών όταν συνδέεσαι.",
+      "ac.err": "Οι επαφές δεν μπόρεσαν να διαβαστούν ({e}).",
+      "ac.none": "Δεν βρέθηκαν επαφές σε αυτόν τον λογαριασμό.",
+      "ac.src": "{p} · {n} επαφή/ές · αποσυνδέθηκε",
+      "ac.own": "Χρήση δικού μου αναγνωριστικού εφαρμογής",
+      "ac.own.text": "Καταχώρισε μια εφαρμογή OAuth (Google Cloud: Web application με το People API· Microsoft Entra: single-page app για προσωπικούς και εταιρικούς λογαριασμούς) με αυτή τη διεύθυνση επιστροφής και επικόλλησε το client id της. Μένει μόνο σε αυτή τη συσκευή.",
+      "ac.own.save": "Αποθήκευση",
+      "ac.own.saved": "Αποθηκεύτηκε σε αυτή τη συσκευή",
+      "ac.own.bad": "Αυτό δεν μοιάζει με client id",
+      "rv.title": "Έλεγχος εισαγωγής",
+      "rv.sum": "{new} νέες · {diff} με άλλα στοιχεία · {same} υπάρχουν ήδη",
+      "rv.pref": "Όταν ένα στοιχείο διαφέρει:",
+      "rv.act.add": "Προσθήκη",
+      "rv.act.skip": "Παράλειψη",
+      "rv.act.merge": "Συγχώνευση, κράτα τα δικά μου",
+      "rv.act.theirs": "Συγχώνευση, πάρε τα εισαγόμενα",
+      "rv.act.sep": "Προσθήκη ως ξεχωριστή",
+      "rv.grp.diff": "Με άλλα στοιχεία ({n})",
+      "rv.grp.new": "Νέες ({n})",
+      "rv.grp.same": "Υπάρχουν ήδη, παραλείπονται ({n})",
+      "rv.more": "…και άλλες {n}, με την προτεινόμενη επιλογή",
+      "rv.by.email": "Ίδιο email",
+      "rv.by.phone": "Ίδιο τηλέφωνο",
+      "rv.by.name": "Ίδιο όνομα",
+      "rv.adds": "Προσθέτει",
+      "rv.nameonly": "Ίδιο όνομα αλλά άλλα τηλέφωνα και email: μάλλον άλλο πρόσωπο",
+      "rv.birthday": "Γενέθλια",
+      "rv.safe": "Τίποτα δεν διαγράφεται. Η συγχώνευση μόνο προσθέτει στοιχεία· το «πάρε τα εισαγόμενα» αντικαθιστά μια τιμή που διαφέρει.",
+      "rv.go": "Εισαγωγή",
+      "rv.done": "{a} προστέθηκαν · {m} συγχωνεύτηκαν · {s} παραλείφθηκαν",
+      "rv.nothing": "Τίποτα νέο για εισαγωγή",
+      "rv.undone": "Η εισαγωγή αναιρέθηκε",
       "ct.import.csv.bad": "Το αρχείο CSV δεν μπόρεσε να διαβαστεί",
       "ct.import.csv.noheader": "Δεν αναγνωρίστηκαν στήλες — αναμενόταν CSV από Google Contacts",
       "ct.import.csv.norows": "Δεν βρέθηκαν εισαγώμενες επαφές στο CSV",
@@ -1665,7 +1741,7 @@ document.addEventListener("keydown", function (e) {
   // is open, so focus never leaves an open modal's inputs.
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
       (e.key === "f" || e.key === "F")) {
-    var busy = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg"]
+    var busy = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg"]
       .some(function (id) { var d = $(id); return d && d.open; })
       || !!$("ct-view");
     if (busy) return;
@@ -1682,7 +1758,7 @@ document.addEventListener("keydown", function (e) {
   // typed input)
   if (e.altKey && !e.ctrlKey && !e.metaKey &&
       (e.key === "n" || e.key === "N")) {
-    var anyOpen = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg"]
+    var anyOpen = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg"]
       .some(function (id) { var d = $(id); return d && d.open; })
       || !!$("ct-view");
     if (anyOpen) return;
@@ -1693,7 +1769,7 @@ document.addEventListener("keydown", function (e) {
   // Escape — view card first, then any open dialog
   if (e.key === "Escape") {
     if ($("ct-view")) { closeViewCard(); return; }
-    ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg"].forEach(function (id) {
+    ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg"].forEach(function (id) {
       var d = $(id);
       if (d && d.open) { try { d.close(); } catch (err) {} }
     });
@@ -3087,126 +3163,244 @@ document.addEventListener("keydown", function (e) {
     return c;
   }
 
-  // Convert parsed blocks into contacts: match existing by email or
-  // phone (update) — otherwise create. Categories map to labels by
-  // name (create if missing). Returns {created, updated, report}.
-  function importParsed(parsed) {
-    var created = 0, updated = 0, report = [];
+  // ===== IMPORT REVIEW =====
+  // Every import (vCard / CSV file, From phone, a .vcf handed over by
+  // the shell, From an account) opens this review first. The plan
+  // (importplan.js) sorts the incoming contacts into new / already
+  // here / other details; the person picks per contact (add, skip,
+  // merge keeping mine, merge using the imported values, add as a
+  // separate contact). Nothing is deleted; Undo restores everything.
+  var IP = window.OrosContactsImport;
+  var review = null;            // { items, src }
+  var lastImport = null;        // { before[], added[] } for Undo
+  var REV_RENDER_MAX = 300;     // rows drawn per group (the rest keep their default)
 
-    parsed.forEach(function (pc) {
-      // label resolution (CATEGORIES → labelIds)
-      var lids = [];
-      pc.cats.forEach(function (catName) {
-        var found = null;
-        state.labels.forEach(function (l) { if (l.name.toLowerCase() === catName.toLowerCase()) found = l; });
-        if (!found) {
-          found = {
-            id: "lbl-" + uid(),
-            name: catName,
-            color: LABEL_PALETTE[(state.labels.length + 1) % LABEL_PALETTE.length],
-            mtime: Date.now()
-          };
-          state.labels.push(found);
-        }
-        if (lids.indexOf(found.id) === -1) lids.push(found.id);
-      });
-
-      // match: any shared email or normalized phone
-      var existing = null;
-      state.contacts.forEach(function (c) {
-        if (existing) return;
-        for (var i = 0; i < pc.emails.length; i++) {
-          for (var j = 0; j < c.emails.length; j++) {
-            if (pc.emails[i].v.toLowerCase() === c.emails[j].v.toLowerCase()) { existing = c; return; }
-          }
-        }
-        for (var k = 0; k < pc.phones.length; k++) {
-          for (var l = 0; l < c.phones.length; l++) {
-            if (phoneDigits(pc.phones[k].v) === phoneDigits(c.phones[l].v)) { existing = c; return; }
-          }
-        }
-      });
-
-      if (existing) {
-        // Update-in-place: fill only EMPTY fields on the existing
-        // contact — imported data never overwrites user-curated
-        // values without a match being obvious (Wave 2 dedup will
-        // formalize field-level merging).
-        var touched = false;
-        ["nickname", "org", "jobTitle", "note", "photo"].forEach(function (f) {
-          if (!existing[f] && pc[f]) { existing[f] = pc[f]; touched = true; }
-        });
-        if (pc.starred && !existing.starred) { existing.starred = true; touched = true; }
-        pc.phones.forEach(function (p) {
-          if (!existing.phones.some(function (x) { return phoneDigits(x.v) === phoneDigits(p.v); })) {
-            existing.phones.push(p); touched = true;
-          }
-        });
-        pc.emails.forEach(function (e) {
-          if (!existing.emails.some(function (x) { return x.v.toLowerCase() === e.v.toLowerCase(); })) {
-            existing.emails.push(e); touched = true;
-          }
-        });
-        pc.addresses.forEach(function (a) {
-          if (!existing.addresses.some(function (x) { return x.street === a.street && x.city === a.city && x.zip === a.zip; })) {
-            existing.addresses.push(a); touched = true;
-          }
-        });
-        pc.websites.forEach(function (w) {
-          if (!existing.websites.some(function (x) { return x.v === w.v; })) {
-            existing.websites.push(w); touched = true;
-          }
-        });
-        pc.im.forEach(function (m) {
-          if (!existing.im.some(function (x) { return x.v === m.v; })) {
-            existing.im.push(m); touched = true;
-          }
-        });
-        pc.events.forEach(function (ev) {
-          if (!existing.events.some(function (x) { return x.day === ev.day && x.type === ev.type; })) {
-            existing.events.push(ev); touched = true;
-          }
-        });
-        lids.forEach(function (lid) {
-          if (existing.labelIds.indexOf(lid) === -1) { existing.labelIds.push(lid); existing.labelIds.sort(); touched = true; }
-        });
-        if (touched) {
-          existing.mtime = Date.now();
-          updated++;
-          report.push({ name: displayName(existing), kind: "upd" });
-        } else {
-          report.push({ name: displayName(existing), kind: "skip" });
-        }
-      } else {
-        var draft = {
-          id: uid(),
-          given: pc.given, middle: pc.middle, family: pc.family,
-          nickname: pc.nickname, org: pc.org, jobTitle: pc.jobTitle,
-          phones: pc.phones, emails: pc.emails, addresses: pc.addresses,
-          websites: pc.websites, im: pc.im, events: pc.events,
-          labelIds: lids.sort(),
-          starred: pc.starred === true, note: pc.note,
-          photo: pc.photo || null,
-          relations: [],
+  function resolveCats(cats) {
+    var lids = [];
+    (cats || []).forEach(function (catName) {
+      var found = null;
+      state.labels.forEach(function (l) { if (l.name.toLowerCase() === catName.toLowerCase()) found = l; });
+      if (!found) {
+        found = {
+          id: "lbl-" + uid(),
+          name: catName,
+          color: LABEL_PALETTE[(state.labels.length + 1) % LABEL_PALETTE.length],
           mtime: Date.now()
         };
-        var clean = sanitizeContact(draft);
-        if (clean.given || clean.family || clean.org || clean.nickname) {
+        state.labels.push(found);
+      }
+      if (lids.indexOf(found.id) === -1) lids.push(found.id);
+    });
+    return lids.sort();
+  }
+
+  function openReview(parsed, src) {
+    var plan = IP.plan(state.contacts, parsed, state.labels);
+    if (!plan.items.length) { notifyTransient(t("ct.import.bad")); return; }
+    review = { items: plan.items, counts: plan.counts, src: String(src || "").slice(0, 160) };
+    $("rev-src").textContent = review.src;
+    $("rev-sum").textContent = t("rv.sum").replace("{new}", String(plan.counts["new"]))
+      .replace("{diff}", String(plan.counts.diff)).replace("{same}", String(plan.counts.same));
+    $("rev-pref").value = "merge";
+    $("rev-pref-row").hidden = !plan.items.some(function (it) { return it.kind === "diff" && it.conflicts.length; });
+    renderReview();
+    try { if ($("rev-dlg").open) $("rev-dlg").close(); } catch (e) {}
+    $("rev-dlg").showModal();
+  }
+
+  var FIELD_KEY = {
+    given: "ct.field.given", middle: "ct.field.middle", family: "ct.field.family",
+    nickname: "ct.field.nickname", org: "ct.field.org", jobTitle: "ct.field.jobtitle",
+    note: "ct.field.note", phones: "ct.field.phones", emails: "ct.field.emails",
+    addresses: "ct.field.addresses", websites: "ct.field.websites", im: "ct.field.im",
+    events: "ct.field.events", photo: "ct.avatar", starred: "ct.starred",
+    labels: "ct.lbl.filter", birthday: "rv.birthday"
+  };
+  function incName(inc) {
+    return displayName(inc) || t("ct.unnamed");
+  }
+  function revInfo(it) {
+    var box = document.createElement("div");
+    box.className = "rv-info";
+    var parts = [];
+    if (it.by) parts.push(t("rv.by." + it.by));
+    var adds = Object.keys(it.add).map(function (f) {
+      var n = it.add[f];
+      return t(FIELD_KEY[f] || f) + (n > 1 ? " ×" + n : "");
+    });
+    if (adds.length) parts.push(t("rv.adds") + ": " + adds.join(", "));
+    box.appendChild(document.createTextNode(parts.join(" · ")));
+    it.conflicts.forEach(function (cf) {
+      box.appendChild(document.createElement("br"));
+      var b = document.createElement("b");
+      b.textContent = t(FIELD_KEY[cf.f] || cf.f) + ": ";
+      box.appendChild(b);
+      box.appendChild(document.createTextNode(String(cf.mine).slice(0, 80) + " → " + String(cf.theirs).slice(0, 80)));
+    });
+    if (it.nameOnly) {
+      box.appendChild(document.createElement("br"));
+      var w = document.createElement("span");
+      w.className = "rv-warn";
+      w.textContent = t("rv.nameonly");
+      box.appendChild(w);
+    }
+    return box;
+  }
+  function revSelect(it) {
+    var sel = document.createElement("select");
+    var acts = it.kind === "new" ? ["add", "skip"]
+      : (it.conflicts.length ? ["merge", "theirs", "add", "skip"] : ["merge", "add", "skip"]);
+    if (it.nameOnly && acts[0] !== "add") acts = ["add"].concat(acts.filter(function (a) { return a !== "add"; }));
+    acts.forEach(function (a) {
+      var o = document.createElement("option");
+      o.value = a;
+      o.textContent = t(a === "add" && it.kind !== "new" ? "rv.act.sep" : "rv.act." + a);
+      sel.appendChild(o);
+    });
+    sel.value = it.act;
+    sel.setAttribute("aria-label", incName(it.inc));
+    sel.addEventListener("change", function () { it.act = sel.value; });
+    return sel;
+  }
+  function renderReview() {
+    var host = $("rev-list");
+    host.textContent = "";
+    function group(kind, key, collapsed) {
+      var rows = review.items.filter(function (it) { return it.kind === kind; });
+      if (!rows.length) return;
+      var wrap = host, head;
+      if (collapsed) {
+        wrap = document.createElement("details");
+        head = document.createElement("summary");
+        wrap.appendChild(head);
+        host.appendChild(wrap);
+      } else {
+        head = document.createElement("div");
+        head.className = "rev-grp";
+        host.appendChild(head);
+      }
+      head.textContent = t(key).replace("{n}", String(rows.length));
+      rows.slice(0, REV_RENDER_MAX).forEach(function (it) {
+        var row = document.createElement("div");
+        row.className = "rev-row";
+        var nm = document.createElement("span");
+        nm.className = "rv-name";
+        nm.textContent = incName(it.inc);
+        row.appendChild(nm);
+        if (kind !== "same") row.appendChild(revSelect(it));
+        if (kind !== "new" || it.nAdd) row.appendChild(revInfo(it));
+        wrap.appendChild(row);
+      });
+      if (rows.length > REV_RENDER_MAX) {
+        var more = document.createElement("p");
+        more.className = "del-text";
+        more.textContent = t("rv.more").replace("{n}", String(rows.length - REV_RENDER_MAX));
+        wrap.appendChild(more);
+      }
+    }
+    group("diff", "rv.grp.diff", false);
+    group("new", "rv.grp.new", false);
+    group("same", "rv.grp.same", true);
+  }
+
+  function newFromInc(inc) {
+    return sanitizeContact({
+      id: uid(),
+      given: inc.given, middle: inc.middle, family: inc.family,
+      nickname: inc.nickname, org: inc.org, jobTitle: inc.jobTitle,
+      phones: inc.phones, emails: inc.emails, addresses: inc.addresses,
+      websites: inc.websites, im: inc.im, events: inc.events,
+      labelIds: resolveCats(inc.cats),
+      starred: inc.starred === true, note: inc.note,
+      photo: inc.photo || null,
+      relations: [],
+      mtime: Date.now()
+    });
+  }
+
+  function commitReview() {
+    if (!review) return;
+    var added = 0, merged = 0, skipped = 0, report = [];
+    var undo = { before: [], added: [] };
+    review.items.forEach(function (it) {
+      var act = it.act;
+      var local = it.match ? contactById(it.match) : null;
+      if ((act === "merge" || act === "theirs") && !local) act = "add";   // gone meanwhile
+      if (act === "add") {
+        var clean = newFromInc(it.inc);
+        if (clean && (clean.given || clean.family || clean.org || clean.nickname)) {
           state.contacts.push(clean);
-          created++;
+          undo.added.push(clean.id);
+          added++;
           report.push({ name: displayName(clean), kind: "new" });
-        } else {
-          report.push({ name: t("ct.unnamed"), kind: "skip" });
+          return;
+        }
+        act = "skip";
+      }
+      if (act === "merge" || act === "theirs") {
+        var r = IP.apply(local, it.inc, act === "theirs" ? "theirs" : "mine", resolveCats(it.inc.cats));
+        if (r.changed) {
+          r.c.mtime = Date.now();
+          var m = sanitizeContact(r.c);
+          undo.before.push(JSON.parse(JSON.stringify(local)));
+          state.contacts[state.contacts.indexOf(local)] = m;
+          merged++;
+          report.push({ name: displayName(m), kind: "upd" });
+          return;
         }
       }
+      skipped++;
+      report.push({ name: incName(it.inc), kind: "skip" });
     });
-
+    review = null;
+    $("rev-dlg").close();
+    if (!added && !merged) { notifyTransient(t("rv.nothing")); return; }
     saveState();
     renderChips();
     renderList();
-    return { created: created, updated: updated, report: report };
+    lastImport = undo;
+    showImportReport({ created: added, updated: merged, report: report });
+    toast(t("rv.done").replace("{a}", String(added)).replace("{m}", String(merged)).replace("{s}", String(skipped)),
+      t("undo"), undoImport);
   }
-  
+
+  // Undo: merged contacts get their earlier version back (fresh stamp,
+  // so it wins the sync merge), added ones are deleted (tombstoned).
+  function undoImport() {
+    var u = lastImport;
+    lastImport = null;
+    if (!u) return;
+    var now = Date.now();
+    u.before.forEach(function (old) {
+      var cur = contactById(old.id);
+      if (!cur) return;
+      old.mtime = now;
+      state.contacts[state.contacts.indexOf(cur)] = old;
+    });
+    var gone = {};
+    u.added.forEach(function (id) { gone[id] = 1; state.deleted.push({ id: id, mtime: now }); });
+    state.contacts = state.contacts.filter(function (c) { return !gone[c.id]; });
+    saveState();
+    renderChips();
+    renderList();
+    $("import-sec").hidden = true;
+    notifyTransient(t("rv.undone"));
+  }
+
+  if ($("rev-dlg")) {
+    $("rev-go").addEventListener("click", commitReview);
+    $("rev-no").addEventListener("click", function () { $("rev-dlg").close(); });
+    $("rev-dlg").addEventListener("close", function () { review = null; });
+    $("rev-pref").addEventListener("change", function () {
+      var v = this.value;
+      if (!review) return;
+      review.items.forEach(function (it) {
+        if (it.kind === "diff" && it.conflicts.length && (it.act === "merge" || it.act === "theirs")) it.act = v;
+      });
+      renderReview();
+    });
+  }
+
   // ===== CSV IMPORT (Google Contacts) =====
   // Google's "Google CSV" export: RFC 4180 quoted rows, UTF-8 BOM,
   // scalar name/org/note/birthday columns, numbered value/type pairs
@@ -3322,7 +3516,7 @@ document.addEventListener("keydown", function (e) {
   }
 
   // One CSV row → the SAME shape parseVcardBlock emits, so
-  // importParsed() handles dedup (email/phone match), label
+  // The import review (openReview) handles dedup (email/phone/name match), label
   // creation and the import report with zero extra code.
   function csvRowToContact(row, headers) {
     var pick = function (keys) {
@@ -3398,7 +3592,7 @@ document.addEventListener("keydown", function (e) {
     }
     // Group Membership: "* myContacts ::: * starred ::: Family" —
     // starred flag honored, * system groups dropped, the rest become
-    // labels via importParsed's CATEGORIES machinery.
+    // labels via the review's CATEGORIES machinery (resolveCats).
     var gm = pick(CSV_H.group);
     if (gm) {
       gm.split(":::").forEach(function (g) {
@@ -3412,7 +3606,7 @@ document.addEventListener("keydown", function (e) {
     return pc;
   }
 
-  function importCsvText(text) {
+  function importCsvText(text, src) {
     var rows = parseCsvRows(text);
     if (rows.length < 2) { notifyTransient(t("ct.import.csv.noheader")); return; }
     var headers = rows[0];
@@ -3431,9 +3625,7 @@ document.addEventListener("keydown", function (e) {
       if (pc.given || pc.family || pc.org || pc.nickname) parsed.push(pc);
     }
     if (!parsed.length) { notifyTransient(t("ct.import.csv.norows")); return; }
-    var res = importParsed(parsed);
-    showImportReport(res);
-    notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
+    openReview(parsed, src || "");
   }
 
   // vCard text → parsed blocks (only blocks with a name or company).
@@ -3450,16 +3642,11 @@ document.addEventListener("keydown", function (e) {
       return b.given || b.family || b.org || b.nickname;
     });
   }
-  function importVcfParsed(parsed) {
-    var res = importParsed(parsed);
-    showImportReport(res);
-    notifyTransient(t("ct.import.done").replace("{n}", String(res.created)));
-  }
-  function importVcfText(text) {
+  function importVcfText(text, src) {
     try {
       var parsed = parseVcfText(text);
       if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
-      importVcfParsed(parsed);
+      openReview(parsed, src || "");
     } catch (e) {
       console.error("contacts: vCard import failed:", e);
       notifyTransient(t("ct.import.bad"));
@@ -3468,29 +3655,15 @@ document.addEventListener("keydown", function (e) {
 
   // BR-FILE-IMPORT: a .vcf handed over by the shell
   // (__orosOpenAt("contacts", { importVcf: { name, text } })). Never
-  // silent: a themed dialog names the file and the count first.
+  // silent: the review names the file and nothing is saved before
+  // the person presses Import.
   var VCF_MAX_CHARS = 5 * 1024 * 1024;
-  var vcfPending = null;
   function askImportVcf(text, name) {
     if (text.length > VCF_MAX_CHARS) { notifyTransient(t("ct.import.bad")); return; }
     var parsed;
     try { parsed = parseVcfText(text); } catch (e) { parsed = []; }
     if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
-    vcfPending = parsed;
-    $("vcf-name").textContent = String(name || "").slice(0, 120);
-    $("vcf-sum").textContent = t("ct.vcf.sum").replace("{n}", String(parsed.length));
-    try { if ($("vcf-dlg").open) $("vcf-dlg").close(); } catch (e) {}
-    $("vcf-dlg").showModal();
-  }
-  if ($("vcf-dlg")) {
-    $("vcf-go").addEventListener("click", function () {
-      var p = vcfPending;
-      vcfPending = null;
-      $("vcf-dlg").close();
-      if (p) importVcfParsed(p);
-    });
-    $("vcf-no").addEventListener("click", function () { vcfPending = null; $("vcf-dlg").close(); });
-    $("vcf-dlg").addEventListener("close", function () { vcfPending = null; });
+    openReview(parsed, name);
   }
 
   // "From phone": the Contact Picker API (Chrome on Android). The
@@ -3598,13 +3771,80 @@ document.addEventListener("keydown", function (e) {
         .then(function (rows) {
           if (!Array.isArray(rows) || !rows.length) return;   // cancelled
           var parsed = rows.map(pickerToParsed).filter(function (b) { return b.given || b.family; });
-          if (parsed.length) importVcfParsed(parsed);
+          if (parsed.length) openReview(parsed, t("ct.phone"));
         })
         .catch(function (e) {
           console.warn("contacts: phone picker failed:", e);
           notifyTransient(t("ct.phone.bad"));
         });
     });
+  }
+
+  // ---- From an account (accounts.js): sign in once, read, let go ----
+  var ACC = window.OrosContactsAccounts;
+  var acBusy = false;
+  var AC_NAME = { google: "Google", microsoft: "Microsoft" };
+  function acStat(text) { $("ac-stat").textContent = text || ""; }
+  function acRender() {
+    ["google", "microsoft"].forEach(function (p) {
+      $("ac-" + p).disabled = acBusy;
+      $("ac-id-" + p).value = ACC.ownId(p);
+    });
+    $("ac-uri").textContent = ACC.redirectUri();
+    if (!ACC.ready("google") && !ACC.ready("microsoft")) $("ac-own").open = true;
+  }
+  function acErr(e) {
+    var c = e && e.code;
+    if (c === "cancelled") return t("ac.cancelled");
+    if (c === "popup") return t("ac.popup");
+    if (c === "forbidden") return t("ac.forbidden");
+    return t("ac.err").replace("{e}", String((e && (e.detail || e.code)) || "?").slice(0, 80));
+  }
+  if ($("ac-dlg") && ACC && IP) {
+    $("ct-acct").addEventListener("click", function () {
+      acStat("");
+      acRender();
+      $("ac-dlg").showModal();
+    });
+    ["google", "microsoft"].forEach(function (p) {
+      $("ac-" + p).addEventListener("click", function () {
+        if (acBusy) return;
+        if (!ACC.ready(p)) {
+          acStat(t("ac.noclient").replace("{p}", AC_NAME[p]));
+          $("ac-own").open = true;
+          return;
+        }
+        acBusy = true;
+        acRender();
+        acStat(t("ac.wait"));
+        ACC.run(p, function (n) { acStat(t("ac.read").replace("{n}", String(n))); })
+          .then(function (res) {
+            acBusy = false;
+            acRender();
+            var parsed = res.contacts.filter(function (b) { return b.given || b.family || b.org || b.nickname; });
+            if (!parsed.length) { acStat(t("ac.none")); return; }
+            acStat("");
+            $("ac-dlg").close();
+            openReview(parsed, t("ac.src").replace("{p}", AC_NAME[p]).replace("{n}", String(parsed.length)));
+          }, function (e) {
+            acBusy = false;
+            acRender();
+            console.warn("contacts: account import failed:", e);
+            acStat(acErr(e));
+          });
+      });
+    });
+    $("ac-id-save").addEventListener("click", function () {
+      var ok = ACC.setOwnId("google", $("ac-id-google").value) &&
+               ACC.setOwnId("microsoft", $("ac-id-microsoft").value);
+      acStat(ok ? t("ac.own.saved") : t("ac.own.bad"));
+      if (ok) acRender();
+    });
+    $("ac-close").addEventListener("click", function () { $("ac-dlg").close(); });
+    // Closing the dialog while signing in stops the wait.
+    $("ac-dlg").addEventListener("close", function () { if (acBusy) ACC.cancel(); });
+  } else if ($("ct-acct")) {
+    $("ct-acct").hidden = true;
   }
 
   // ---- Import wiring ----
@@ -3619,14 +3859,14 @@ document.addEventListener("keydown", function (e) {
       // everything else → vCard path.
       if (f && (/\.csv$/i.test(f.name) || f.type === "text/csv")) {
         try {
-          importCsvText(String(fr.result));
+          importCsvText(String(fr.result), f.name);
         } catch (e) {
           console.error("contacts: CSV import failed:", e);
           notifyTransient(t("ct.import.csv.bad"));
         }
         return;
       }
-      importVcfText(String(fr.result));
+      importVcfText(String(fr.result), f.name);
     };
     fr.onerror = function () { notifyTransient(t("ct.import.bad")); };
     fr.readAsText(f, "utf-8");
