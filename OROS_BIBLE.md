@@ -6025,3 +6025,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Apps: English-only aria-labels/tooltips now translated via `data-i18n-aria` (To-Do, Files, Storage, Slides, Bookmarks, Maps incl. Leaflet zoom/layers, Dice, Radio, Montage); Netizen raw key `av.col7`; Spreadsheet B/I/U buttons no longer show SVG markup as text; Moon & Sky names Time «Ώρα».
 - Greek wording: plain Greek instead of English loanwords where one exists (Kanban πίνακας, Montage έργο / Καρέ-κλειδιά, Shelf, Writer, Contacts, Pixel/Wallpaper «Λέξη», Netizen, Device, Feeds, Meals, Συντροφάκι); matching help pages.
   - Tests: tests/i18n.test.js (EN keys have EL strings, no EL copy of an English sentence, every help page has a Greek page); Tests workflow runs on any .js change.
+
+### 2026-10-14 — Phone bridge v3: reminders rung by the Android app (#328) — 1.93.00
+- Settings › Notifications › `Reminders through the Android app` (shown only in the app): the page hands the next 48 h of reminders to the Android app, which rings them even when orOS is closed. It covers Time alarms (with the phone's alarm sound until dismissed), Water reminders and To-Do tasks due, at 09:00 on the day. Tapping one opens orOS where it points.
+- phone.js `reminderRows(src, now)` (pure, tested) builds the list; ids are the shell's `dedupKey`, so the page and the phone never ring the same reminder twice. Calendar events stay with the phone's calendar.
+- android/: `Reminders`, `ReminderReceiver`, `PermissionActivity` (exact alarms + notification permission), a status-bar icon; PhoneBridge takes `reminders`.
+- Help: Notifications topic (EN/EL).
+  - Tests: tests/phone.test.js (reminderRows); Android build in CI. Real-phone check by Chris after this merge.
