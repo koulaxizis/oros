@@ -6055,7 +6055,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Credits: Health Connect client library and Kotlin standard library (Apache-2.0), shipped in the Android app only (CREDITS.md, Info credits, Bible Part VIII).
   - Tests: tests/phone.test.js, tests/health.test.js; Android build in CI. Real-phone check by Chris after this merge; Play asks for a Health Connect data-type declaration at upload.
 
-### 2026-10-14 — Files: the whole Dropbox, wave 1 (read only) (#PR) — 1.96.00
+### 2026-10-14 — Files: the whole Dropbox, wave 1 (read only) (#331) — 1.96.00
 - Files › `Dropbox` (below the disk in the tree): browse the whole Dropbox, search names, preview text and images, download copies. Opt-in per device with `Connect Dropbox`; a second Dropbox app with Full Dropbox access (sync's App-folder app is untouched). Until the orOS Files app key is set, `Use my own app key`.
 - files/dropbox-core.js (pure, tested), files/dropbox.js (view, sign-in, sealed token in IndexedDB `oros-files-dbx`, added to the factory reset), files/dropbox-callback.html/.js; orOS sync's own folder is recognised and shown locked. Help: Files (EN/EL).
   - Tests: tests/files-dropbox.test.js; real shell in Chromium with a mock Dropbox (desktop EN, phone 390 px EL). Not tested: the real Dropbox, Safari, a real phone.
