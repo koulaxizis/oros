@@ -2,6 +2,8 @@
 <resources>
     <string name="account_label">orOS</string>
     <string name="calendar_name">orOS</string>
+    <string name="channel_reminders">Reminders</string>
+    <string name="channel_alarms">Alarms</string>
     <string name="calendar_feeds_name">orOS feeds</string>
     <string name="perm_denied">orOS needs this permission to show your orOS data in the phone\'s apps. You can allow it in the app settings.</string>
     <string name="add_failed">orOS could not read what was shared.</string>

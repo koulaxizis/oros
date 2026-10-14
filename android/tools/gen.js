@@ -113,6 +113,10 @@ function build(manifest) {
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Reminders (BR-PHONE v3): exact times when the person allows it,
+         and re-arming after a reboot. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Phone bridge (BR-PHONE): the "orOS" account in Contacts and Calendar. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
@@ -270,6 +274,18 @@ ${aliases}
                 <data android:scheme="\${permissionScheme}" />
             </intent-filter>
         </activity>
+
+        <!-- Reminders the page handed over (Clock alarms, Water, To-Do):
+             rings them, and re-arms them when Android forgot them. -->
+        <receiver android:name=".ReminderReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
 
         <!-- The "orOS" account: a stub authenticator plus sync adapters
              that only declare the account to Contacts and Calendar. The

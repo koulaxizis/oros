@@ -30,5 +30,14 @@ Other apps send reminders too, for example tasks that are due or overdue in [To-
 
 On phones, browsers often pause pages that aren't on screen. For an alarm that really matters, keep orOS open, or use your phone's own alarm as a backup.
 
+## With the orOS Android app
+In the orOS app for Android, `Settings` › `Notifications` has `Reminders through the Android app`. Turn it on and tap `Allow`. The phone then rings these on its own, even when orOS is closed:
+
+- [Time](app:time) alarms, with the phone's alarm sound, until you dismiss them.
+- [Water](app:water) reminders.
+- Tasks due in [To-Do](app:todo), at 09:00 on the day.
+
+Tap one to open orOS where it points. The app knows the next two days, so open orOS now and then. If Android says reminders may be a few minutes late, tap `Allow` again and switch on alarms for orOS. While orOS is on screen, it shows reminders itself, as before. Calendar events ring through the phone's calendar instead (see the [Calendar](app:calendar) help).
+
 ## System notifications
 If your browser allows it, orOS also shows notifications through your system, so you see them while orOS is in the background. orOS asks for this permission only when you save a Calendar event with a reminder. You can also allow or block it any time in your browser's site settings. Clicking one brings orOS to the front and opens what it points to, such as the event. Without it, notifications still appear inside orOS.

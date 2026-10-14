@@ -410,6 +410,7 @@
                     title: t("n.test.title"), body: t("n.test.body") }, false);
     })));
     host.appendChild(c1);
+    secPhoneReminders(host);
 
     var c2 = card(null);
     c2.appendChild(row(t("n.position"), select(C.POSITIONS.map(function (p) {
@@ -489,6 +490,35 @@
       c4.appendChild(list);
       host.appendChild(c4);
     }
+  }
+
+  // In the orOS Android app only (BR-PHONE v3): the phone rings
+  // Clock alarms, Water and To-Do reminders even when orOS is closed.
+  var phoneOff = null;
+  function phone() {
+    var p = parentWin();
+    try { return p && p.orosPhone && p.orosPhone.available() ? p.orosPhone : null; } catch (e) { return null; }
+  }
+  function secPhoneReminders(host) {
+    var P = phone();
+    if (!P) return;
+    if (!phoneOff) phoneOff = P.onChange(function () { render(); });
+    var st = P.state() || {};
+    if (!st.reminders) return;                 // an app too old for reminders
+    var on = P.enabled("reminders");
+    var c = card(null);
+    c.appendChild(row(t("n.phone"), switchBtn(on, "n.phone", function (v) {
+      P.setEnabled("reminders", v);
+      if (v && st.reminders !== "granted") P.askPermission("reminders");
+      render();
+    }, t("n.phone")), { hint: t("n.phone.hint") }));
+    if (on && st.reminders !== "granted") {
+      c.appendChild(actions(button(t("n.phone.allow"), "n.phone.allow", function () { P.askPermission("reminders"); })));
+    } else if (on && !st.exact) {
+      c.appendChild(el("div", "hint", t("n.phone.exact")));
+      c.appendChild(actions(button(t("n.phone.allow"), "n.phone.exact", function () { P.askPermission("reminders"); })));
+    }
+    host.appendChild(c);
   }
 
   // ---------- 6. Section: Sync ----------

@@ -433,7 +433,11 @@
     // Wave 10 — transient toasts stay in-tab too: they are feedback
     // to an action the user JUST took (they're looking at the
     // screen) — waking the OS would be noise, not service.
-    if (!isCatchUp && item.type !== 'transient' &&
+    // BR-PHONE v3: in the Android app the phone rings reminders it was
+    // given (orosPhone.handles) itself; a second OS one would double it.
+    var phoneRings = false;
+    try { phoneRings = !!(window.orosPhone && window.orosPhone.handles && window.orosPhone.handles(item.dedupKey)); } catch (e) {}
+    if (!isCatchUp && item.type !== 'transient' && !phoneRings &&
         'Notification' in window &&
         Notification.permission === 'granted') {
       try {
@@ -1188,6 +1192,8 @@
     markAsRead,
     emit: emitCandidate,
     transient: transientToast,
+    // Opens a deep link ("todo:<list>") as a click on its item would.
+    openLink: function (dl) { return openTarget({ deepLink: String(dl || '') }); },
     openNotificationPanel,
     closeNotificationPanel,
     updateBadge,
