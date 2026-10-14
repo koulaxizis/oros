@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.91.00
+- Chess connects to Lichess: sign in to see your ratings and games, play the Lichess daily puzzle, or send any game to Lichess for its free analysis.
+
 ## Version 1.90.00
 - Chess connects to Chess.com: type your username to see your ratings, open your games for review and play the daily puzzle.
 
