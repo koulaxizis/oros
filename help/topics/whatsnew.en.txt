@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.93.00
+- In the orOS Android app, your Time alarms, Water reminders and To-Do tasks due now ring even when orOS is closed.
+
 ## Version 1.92.01
 - Greek everywhere: the last English labels, tooltips and screen-reader names are now in Greek, and English words such as "board" or "project" became plain Greek words. A new check keeps every new string translated.
 
