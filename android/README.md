@@ -38,6 +38,11 @@ shortcuts, share target and file types, and only catch links under
 Contacts, Calendar or Health Connect permissions, no reminders or
 orOS widgets); the code is compiled in but never reached.
 
+Each single app has its own home-screen widget (`SoloWidget`): its
+icon (opens the app) and up to three of its icon shortcuts from
+`solo.js` (EN/EL labels), each opening `/<id>/solo.html?do=<word>`.
+No data is kept in the widget.
+
 `node android/tools/gen.js` writes each overlay to `app/solo-gen/<id>/`
 (git-ignored) from `/<id>/manifest.webmanifest` and `icons/solo/`.
 Gradle tasks are per flavour (`assembleOrosRelease`,
