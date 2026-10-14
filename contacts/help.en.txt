@@ -26,14 +26,29 @@ Above the list, `All` and `★ Favorites` switch between everyone and your favou
 ## Duplicates
 `Duplicates` looks for contacts that are probably the same person: `Same phone` or `Same email` (listed as `Definitive matches`) and `Similar name` (`Possible matches`). Tap or click a contact in a group to open `Merge duplicates`: it shows the combined contact. Use `Flip primary` to pick which one to keep as the base, then `Merge now`. You can `Undo` straight afterwards.
 
+## Import, skip and merge
+Every import opens `Review import` first, whether it comes from a file, `From phone`, `From an account` or a .vcf opened with orOS. It sorts the contacts it read into three groups:
+- `New`: nobody here matches. Choose `Add` or `Skip` for each.
+- `Other details`: a contact here has the same email, the same phone (with or without the country code) or the same first and last name, and the import brings something new. You see what it adds and which values differ, for example `Company: Alpha Inc → Alpha Ltd`. `Merge, keep mine` adds the missing details and keeps your values; `Merge, use imported` adds them and takes the imported values where they differ. You can also `Add as separate` or `Skip`. `When a detail differs` sets the choice for all of them at once.
+- `Already here, skipped`: identical contacts, left as they are.
+
+A contact with the same name but other phones and emails is marked as probably another person and is added separately unless you choose to merge. Nothing is ever deleted, and `Undo` straight after the import puts everything back as it was.
+
+## From an account (Google, Microsoft)
+`From an account` copies your contacts from Google or from Microsoft (Outlook.com, Hotmail, Microsoft 365) once. Pick the service and sign in in the small window; orOS reads your contacts with their groups (they become labels), shows `Review import`, and ends the connection straight away. No password or access is kept: the Google access is withdrawn as soon as the reading ends, and the Microsoft one is forgotten and runs out by itself within the hour. Run it again whenever you want to bring in new contacts; the identical ones are skipped.
+
+iCloud, Yahoo and other services: export your contacts there as a .vcf file and use `Import`.
+
+If a service shows "not set up yet", orOS doesn't have its app id yet. Under `Use my own app id` you can register your own OAuth app with the address shown there and paste its client id; it stays on this device.
+
 ## On this phone (Android app)
 In the orOS Android app, `On this phone` puts your orOS contacts in the phone's own Contacts, so the dialer and incoming calls show their names. Turn on `Show on this phone` and tap `Allow access` (Android asks once). Contacts arrive in an "orOS" account and follow every change you make here. They are read-only on the phone: edit them in orOS. Turning the switch off removes them from the phone again. The button doesn't appear in a browser, only in the Android app, and the choice is kept on this phone only.
 
 ## Sync and backup
 Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved.
 
-- `Import` reads a vCard file (.vcf) or a Google Contacts CSV. A contact whose email or phone already exists here is updated: only missing details are added, nothing is overwritten. Afterwards you see a list of what was added, updated or skipped. With orOS installed on a computer you can also open a .vcf file with `Open with`; orOS asks before importing it (see [opening files](help:t/install)).
-- `From phone` (only in Chrome on Android) opens your phone's contact list. Pick the people you want; only those reach orOS, with their names, phones and emails, and addresses when the phone shares them. They are added the same way as `Import`: a contact with the same phone or email is completed, never overwritten, and nothing is deleted.
+- `Import` reads a vCard file (.vcf) or a Google Contacts CSV and opens `Review import` (see above). Afterwards you see a list of what was added, merged or skipped. With orOS installed on a computer you can also open a .vcf file with `Open with`; orOS shows the same review before importing it (see [opening files](help:t/install)).
+- `From phone` (only in Chrome on Android) opens your phone's contact list. Pick the people you want; only those reach orOS, with their names, phones and emails, and addresses when the phone shares them. They go through the same `Review import`.
 - `Export` saves all your contacts as a .vcf file that other address books can open.
 - `Export JSON` saves a complete copy of your contacts. `Import JSON` restores it; it combines with what you have and keeps the newer version of each contact.
 
@@ -52,4 +67,5 @@ See also [backup](help:t/backup).
 ## Limits
 - `Import JSON` only accepts files made by `Export JSON` in orOS Contacts.
 - CSV import expects the Google Contacts format.
+- `From an account` doesn't bring contact photos, and reads only your own contacts (not Google's "Other contacts" or a company directory).
 - `From phone` appears only in Chrome on Android, because other browsers can't open the phone's contact list.
