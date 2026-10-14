@@ -6635,3 +6635,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Credits: Tavily, SearXNG and Jina Reader added; the Wikipedia row now also names the Assistant.
 - Files: assistant files only; help EN/EL, Bible AS-WEB2. sw.js precache: nothing new.
   - Tests: full suite green; real-shell check with a mock provider by the owner. Not tested: live Wikipedia/Tavily/SearXNG/Jina from the container (hosts blocked), Safari, real phone.
+
+### 2026-10-14 — Single apps, wave 6: orOS Games (#364) — 2.17.00
+- One installable app, orOS Games (EL "orOS Παιχνίδια"), holds every orOS game: it opens on the Game Center (dailies, achievements, statistics, every game); a game opened from it shows Back to the Game Center. Icon shortcuts: Today's Wordle, Today's crossword, Today's Sudoku (each straight into its Daily) and Chess. Open with accepts .pgn files, still routed to Chess (SOLO-1).
+- Files: `solo.js` (`gamecenter` entry, optional `files: [<app>]` so a single app's manifest can carry another app's file types), `gamecenter/gamecenter.js` (`{ play, daily? }` target, also at boot), generated `gamecenter/solo.html`, manifest and icons; sw.js precache of the page, manifest and 4 icons; help EN/EL.
+  - Tests: wave 6 solo test, full suite green; Chromium shortcuts, Back and .pgn open by the owner. Not tested: real Android/Windows install, long-press shortcuts, real Open with from the OS.
