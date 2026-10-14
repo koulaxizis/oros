@@ -63,7 +63,7 @@ test("file types: a single app opens exactly the types its app opens in orOS", (
 test("ids come only from the table: paths and parameters cannot name anything else", () => {
   assert.equal(S.idFromPath("/notes/solo.html"), "notes");
   assert.equal(S.idFromPath("/notes/solo.html/"), "");
-  assert.equal(S.idFromPath("/maps/solo.html"), "");          // not a single app (yet)
+  assert.equal(S.idFromPath("/chess/solo.html"), "");         // not a single app (yet)
   assert.equal(S.idFromPath("/../notes/solo.html"), "");
   assert.equal(S.idFromPath("/a/notes/solo.html"), "");
   assert.equal(S.idFromSearch("?solo=todo"), "todo");
@@ -183,7 +183,7 @@ test("Install: Android goes through an intent to Chrome (the orOS app would catc
   assert.equal(S.installUrl("notes", "Mozilla/5.0 (Windows NT 10.0)", "https://useoros.online"), "/notes/solo.html?install");
   assert.equal(S.installUrl("notes", "Android", "http://127.0.0.1:8080"), "/notes/solo.html?install");
   assert.equal(S.installUrl("notes", "Android", "https://a.b/c"), "/notes/solo.html?install");
-  assert.equal(S.installUrl("maps", "Android", "https://useoros.online"), "");
+  assert.equal(S.installUrl("chess", "Android", "https://useoros.online"), "");
   assert.match(read("settings/settings.js"), /S\.installUrl\(id, navigator\.userAgent, location\.origin\)/);
   const src = read("solo.js");
   assert.match(src, /addEventListener\("beforeinstallprompt"/);
@@ -211,4 +211,27 @@ test("wave 3: personal apps — shares only where a text means something, shortc
    ["habits/habits.js", /t\.add === true/], ["water/water.js", /tg\.sip !== "glass"/], ["mood/mood.js", /tg\.checkin === true/],
    ["mood/mood.js", /__orosTakeTarget\("mood"\)/], ["fitness/fitness.js", /t\.logNew === true/],
    ["health/health.js", /typeof t\.add === "string"/], ["cycle/cycle.js", /t\.today === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
+});
+
+test("wave 4: tools and media — places, links and mail shares; shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  assert.deepEqual(S.shareTarget("maps", { url: "", title: "", text: "Acropolis Museum\ngeo:37.9684,23.7286?q=Acropolis" }, now),
+    { app: "maps", target: { asNew: { name: "Acropolis Museum", lat: 37.9684, lon: 23.7286 } } });
+  assert.deepEqual(S.shareTarget("maps", { url: "https://maps.example/x", title: "", text: "Cafe Nikos https://maps.example/x" }, now),
+    { app: "maps", target: { asNew: { name: "Cafe Nikos", query: "Cafe Nikos" } } });
+  assert.equal(S.shareTarget("maps", { url: "https://maps.example/x", title: "", text: "https://maps.example/x" }, now), null);
+  assert.deepEqual(S.shareTarget("feeds", { url: "https://blog.example/", title: "", text: "" }, now), { app: "feeds", target: { add: { url: "https://blog.example/" } } });
+  assert.deepEqual(S.shareTarget("podcasts", { url: "https://pod.example/rss", title: "", text: "" }, now), { app: "podcasts", target: { add: { url: "https://pod.example/rss" } } });
+  assert.equal(S.shareTarget("feeds", { url: "", title: "", text: "no link" }, now), null);
+  assert.deepEqual(S.shareTarget("mail", { url: "", title: "Trip", text: "See you at 9" }, now),
+    { app: "mail", target: { compose: { subject: "Trip", body: "See you at 9" } } });
+  ["calculator", "time", "weather", "files", "radio"].forEach((id) => assert.equal(S.manifestFor(id, F.table(), BASE).share_target, undefined, id));
+  assert.ok(S.manifestFor("photolab", F.table(), BASE).share_target.params.files[0].accept.includes(".png"));
+  [["calculator/calculator.js", /MODES\.indexOf\(t\.mode\)/], ["calculator/calculator.js", /__orosTakeTarget\("calculator"\)/],
+   ["time/astro.js", /typeof pending\.pane === "string"/], ["weather/weather.js", /t\.addCity === true/],
+   ["weather/weather.js", /__orosTakeTarget\("weather"\)/], ["maps/maps.js", /target\.locate === true/],
+   ["maps/tools.js", /target\.park/], ["feeds/feeds.js", /x\.addBlank === true/], ["mail/mail.js", /var c = target\.compose/],
+   ["files/files.js", /t\.newFolder === true/], ["podcasts/podcasts.js", /x\.find === true/],
+   ["radio/radio.js", /t\.play === "last"/], ["radio/radio.js", /__orosTakeTarget\("radio"\)/],
+   ["photolab/app.js", /target\.newPic === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
 });

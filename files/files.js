@@ -4503,6 +4503,11 @@
   // target { path, dir }. A folder opens; a file opens its folder and
   // its preview. Paths outside the disk root are ignored.
   function openSearchTarget(t) {
+    // Single app (solo.js) icon shortcut { newFolder: true }.
+    if (t && t.newFolder === true) {
+      if (isAvailable() && !document.querySelector("dialog[open]")) openNameDialog("folder");
+      return;
+    }
     if (!t || typeof t.path !== "string" || !isAvailable()) return;
     var p = t.path.replace(/\/+$/, "");
     if (p.indexOf(ROOT + "/") !== 0 || p.indexOf("/../") !== -1 || /\/\.\.?$/.test(p)) return;

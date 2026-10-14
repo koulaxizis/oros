@@ -442,8 +442,18 @@
     try { if (sec) sec.scrollIntoView({ block: "center" }); } catch (e) {}
     openDlg();
   }
+  // { pane }: a Time tab (single app icon shortcuts: timer, stopwatch,
+  // alarms), through time.js's pane bridge.
+  function openPane(target) {
+    if (target && typeof target.pane === "string" && typeof window.__orosTimeOpen === "function") {
+      window.__orosTimeOpen(target.pane);
+      return true;
+    }
+    return false;
+  }
   window.__orosOpenAt = function (target) {
     if (target && target.astro === "location") focusLocation();
+    else openPane(target);
   };
 
   // Boot + periodic refresh (positions drift, moon barely moves)
@@ -453,6 +463,7 @@
                    typeof window.parent.__orosTakeTarget === "function")
       ? window.parent.__orosTakeTarget("time") : null;
     if (pending && pending.astro === "location") setTimeout(focusLocation, 50);
+    else if (pending && typeof pending.pane === "string") setTimeout(function () { openPane(pending); }, 50);
     else if (pending) window.__orosTimePending = pending;   // another part of Time (stage.js) takes it
   } catch (e) {}
   setInterval(render, 30000);

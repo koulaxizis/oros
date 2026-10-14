@@ -2728,6 +2728,14 @@
     var fxBtn = document.querySelector('.key[data-k="fx"]');
     if (fxBtn) fxBtn.setAttribute("aria-pressed", state.sciOn ? "true" : "false");
     setMode(state.ui.mode, false);
+    // Single app (solo.js) icon shortcuts: { mode } → that mode.
+    window.__orosOpenAt = function (t) {
+      if (t && typeof t.mode === "string" && MODES.indexOf(t.mode) !== -1) setMode(t.mode, true);
+    };
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
+        window.__orosOpenAt(window.parent.__orosTakeTarget("calculator"));
+    } catch (e) {}
 
     console.log("[calc] calculator v" + CALC_VER + " booted — troll:" +
       (state.troll ? "on" : "off") +
