@@ -210,6 +210,47 @@ ${aliases}
         <!-- Phone bridge: the TWA postMessage channel (Chrome 115+). -->
         <service android:name="androidx.browser.customtabs.PostMessageService" android:exported="true" />
 
+        <!-- "Add to orOS" from other apps (BR-PHONE v2): new event, new
+             contact (after a call, from a messenger), .ics / .vcf links. -->
+        <activity android:name=".AddActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/launcherName"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.INSERT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.dir/event" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.INSERT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.dir/contact" />
+                <data android:mimeType="vnd.android.cursor.dir/raw_contact" />
+                <data android:mimeType="vnd.android.cursor.dir/person" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.INSERT_OR_EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.item/contact" />
+                <data android:mimeType="vnd.android.cursor.item/person" />
+                <data android:mimeType="vnd.android.cursor.item/raw_contact" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="text/calendar" />
+                <data android:mimeType="text/x-vcalendar" />
+                <data android:mimeType="application/ics" />
+                <data android:mimeType="text/vcard" />
+                <data android:mimeType="text/x-vcard" />
+                <data android:mimeType="text/directory" />
+            </intent-filter>
+        </activity>
+
         <!-- Opened by the page from a tap ("intent://contacts#Intent;scheme=oros-permission;…"):
              asks Android for Contacts or Calendar access, then returns to orOS. -->
         <!-- Diagnostic builds: phone-bridge steps (app-icon shortcut). -->
