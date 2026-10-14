@@ -114,8 +114,8 @@
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
       "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
-      "v.series": "Series", "v.album": "Album", "v.podcast": "Podcast", "v.game": "Game", "v.want": "Want to",
-      "v.now": "In progress", "v.done": "Done", "v.dropped": "Dropped",
+      "v.series": "Series", "v.album": "Album", "v.podcast": "Podcast", "v.game": "Game", "st.want": "Want to",
+      "st.now": "In progress", "st.done": "Done", "st.dropped": "Dropped",
       "wd.0": "Mon", "wd.1": "Tue", "wd.2": "Wed", "wd.3": "Thu", "wd.4": "Fri", "wd.5": "Sat", "wd.6": "Sun",
       "f.list": "New list", "f.date": "Date", "f.start": "Time", "f.location": "Place", "f.amount": "Amount",
       "f.category": "Category", "f.client": "Client", "f.currency": "Currency", "f.url": "Address",
@@ -185,7 +185,7 @@
       "err.builtin": "The built-in browser model is not available on this device. Pick another assistant in Settings.",
       "chg.ask.update": "Change this in {app}?", "chg.ask.delete": "Delete this from {app}?",
       "chg.ask.complete": "Mark this done in {app}?", "chg.ask.reopen": "Mark this not done in {app}?",
-      "chg.ask.reschedule": "Move this in {app}?",
+      "chg.ask.reschedule": "Move this in {app}?", "chg.ask.move": "Move this card in {app}?",
       "chg.text": "{name} asks to change one of your items. Check it: nothing changes until you press Apply.",
       "chg.yes": "Apply", "chg.no": "Don't change", "chg.yesDel": "Delete",
       "chg.before": "Before", "chg.after": "After", "chg.gone": "deleted",
@@ -196,7 +196,8 @@
       "chg.storage": "it could not be saved (storage full?)",
       "chg.conflict": "the item changed meanwhile",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
-      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type"
+      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
+      "f.watered": "Last watered", "f.labels": "Labels", "f.subtasks": "Subtasks", "f.position": "Position"
     },
     el: {
       "app": "Βοηθός",
@@ -250,8 +251,8 @@
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
       "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
-      "v.series": "Σειρά", "v.album": "Άλμπουμ", "v.podcast": "Podcast", "v.game": "Παιχνίδι", "v.want": "Θέλω",
-      "v.now": "Σε εξέλιξη", "v.done": "Ολοκληρώθηκε", "v.dropped": "Παρατήθηκε",
+      "v.series": "Σειρά", "v.album": "Άλμπουμ", "v.podcast": "Podcast", "v.game": "Παιχνίδι", "st.want": "Θέλω",
+      "st.now": "Σε εξέλιξη", "st.done": "Ολοκληρώθηκε", "st.dropped": "Παρατήθηκε",
       "wd.0": "Δευ", "wd.1": "Τρι", "wd.2": "Τετ", "wd.3": "Πεμ", "wd.4": "Παρ", "wd.5": "Σαβ", "wd.6": "Κυρ",
       "f.list": "Νέα λίστα", "f.date": "Ημερομηνία", "f.start": "Ώρα", "f.location": "Τοποθεσία", "f.amount": "Ποσό",
       "f.category": "Κατηγορία", "f.client": "Πελάτης", "f.currency": "Νόμισμα", "f.url": "Διεύθυνση",
@@ -321,7 +322,7 @@
       "err.builtin": "Το ενσωματωμένο μοντέλο του browser δεν υπάρχει σε αυτή τη συσκευή. Διάλεξε άλλον βοηθό στις Ρυθμίσεις.",
       "chg.ask.update": "Αλλαγή σε αυτό ({app});", "chg.ask.delete": "Διαγραφή από: {app};",
       "chg.ask.complete": "Να σημειωθεί ως έγινε ({app});", "chg.ask.reopen": "Να σημειωθεί ως εκκρεμές ({app});",
-      "chg.ask.reschedule": "Μετακίνηση ({app});",
+      "chg.ask.reschedule": "Μετακίνηση ({app});", "chg.ask.move": "Μετακίνηση κάρτας ({app});",
       "chg.text": "Το {name} ζητά να αλλάξει ένα στοιχείο σου. Έλεγξέ το: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
       "chg.yes": "Εφαρμογή", "chg.no": "Να μην αλλάξει", "chg.yesDel": "Διαγραφή",
       "chg.before": "Πριν", "chg.after": "Μετά", "chg.gone": "διαγράφεται",
@@ -332,7 +333,8 @@
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
-      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος"
+      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
+      "f.watered": "Τελευταίο πότισμα", "f.labels": "Ετικέτες", "f.subtasks": "Υποεργασίες", "f.position": "Θέση"
     }
   };
 
@@ -1181,6 +1183,7 @@
     if (v === null) return t("chg.gone");
     if (f === "done") return v ? t("v.done") : t("v.open");
     if (f === "kind") return t("v." + v);
+    if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (v === "" || v === undefined) return t("v.empty");
     if (f === "category" && /^cat:/.test(v)) return t(v.replace(/^cat:/, "cat."));
     return String(v);
@@ -1902,10 +1905,11 @@
   }
 
   // A card field's value as the user reads it: ready ids → words.
-  var VAL_KEYS = { kind: 1, record: 1, media: 1, status: 1 };
+  var VAL_KEYS = { kind: 1, record: 1, media: 1 };
   function fieldValue(k, v) {
     if (k === "category") return t("cat." + v);
     if (k === "days") return String(v).split(",").map(function (d) { return t("wd." + d); }).join(", ");
+    if (k === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (VAL_KEYS[k] && STRINGS.en["v." + v] !== undefined) return t("v." + v);
     return v;
   }
