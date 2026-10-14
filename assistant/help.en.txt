@@ -63,7 +63,10 @@ Some changes stay in the app, and the assistant says so: ticking a repeating tas
 Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP, GIF) or a PDF, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 3 files go with one message.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.
 - Above the message box you see each file and its size, and where it goes. The file goes only to that service, only when you press `Send`. Large photos are made smaller first.
-- Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs. Mistral and a local model read photos only (a local model only if it can see images). The built-in browser model reads no files.
+- Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs themselves. Mistral reads photos itself.
+- Every other case works too: orOS reads the file's text on this device first and sends only that text. PDFs go through PDF.js; a scanned PDF (no text inside) and the words in a photo go through Tesseract, in English and Greek. This is how Mistral reads PDFs, a local model reads PDFs and photos, and the built-in browser model reads both. The chip then says `text only`.
+- The first time a photo is read this way, the text engine is downloaded once from orOS itself (about 7 MB). Nothing else is contacted, and the file never leaves the device.
+- For a local model with vision (llava, gemma3, qwen2.5-vl and others) tick `This model can see photos` in the settings: photos then go as pictures.
 - Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
 
 ## Search the internet
