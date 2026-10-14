@@ -15,7 +15,9 @@ var STORAGE_KEY = "oros-spreadsheet-data";
 var ACTIVE_KEY = "oros-spreadsheet-active"; /* device-local, NEVER synced */
 var DATA_VER = 2; /* stays 2: f (format) + cw (col widths) are additive,
                      riding whole-object LWW — no migration needed */
-var ROWS = 100, COLS = 26;
+var ROWS = 100, COLS = 26;          /* a new sheet */
+var MAX_ROWS = 10000, MAX_COLS = 104; /* A..CZ; = functions.js limits */
+var VIEW_KEY = "oros-spreadsheet-view"; /* device-local filters, NEVER synced */
 var LANG = "en";
 
 try {
@@ -64,7 +66,35 @@ var STRINGS = {
     "tb.nf": "Number format", "tb.nf.gen": "auto", "tb.col": "Text color",
     "tb.clr": "Clear formatting", "tb.bar": "Formatting",
     "csv.imp": "Import CSV", "csv.exp": "Export CSV",
-    "sheet.add": "New sheet", "sheets": "Sheets"
+    "sheet.add": "New sheet", "sheets": "Sheets",
+    "tb.nf.date": "date",
+    "tb.sortA": "Sort A to Z", "tb.sortZ": "Sort Z to A",
+    "tb.filter": "Filter", "tb.more": "Rows, columns, freeze",
+    "sort.done": "Sorted {n} rows by column {c}",
+    "sort.hdr": "Row {r} stays on top as the heading",
+    "sort.none": "Nothing to sort here",
+    "flt.on": "Filter on the headings of row {r}",
+    "flt.none": "Select a table to filter",
+    "flt.hidden": "{n} rows hidden",
+    "flt.clear": "Remove filter",
+    "flt.col": "Filter this column",
+    "flt.title": "Filter column {c}",
+    "flt.contains": "Contains…",
+    "flt.all": "Select all", "flt.nonesel": "Clear all",
+    "flt.empty": "(empty)",
+    "flt.more": "Only the first {n} values are listed",
+    "flt.apply": "Apply", "flt.cancel": "Cancel",
+    "flt.local": "Filters stay on this device only",
+    "fz.top": "Freeze top row", "fz.rows": "Freeze rows 1–{n}",
+    "fz.cols": "Freeze columns A–{c}", "fz.col1": "Freeze column A", "fz.off": "Unfreeze",
+    "row.insA": "Insert row above", "row.insB": "Insert row below",
+    "row.del1": "Delete row {a}", "row.del": "Delete rows {a}–{b}",
+    "col.insL": "Insert column left", "col.insR": "Insert column right",
+    "col.del1": "Delete column {a}", "col.del": "Delete columns {a}–{b}",
+    "add.rows": "Add {n} rows at the end", "add.cols": "Add {n} columns",
+    "max.dims": "A sheet holds at most {r} rows and {c} columns",
+    "fx.list": "Functions", "fx.search": "Search functions",
+    "menu.label": "Sheet menu"
   },
   el: {
     "title": "Λογιστικά φύλλα",
@@ -97,7 +127,35 @@ var STRINGS = {
     "tb.nf": "Μορφή αριθμού", "tb.nf.gen": "αυτόματη", "tb.col": "Χρώμα κειμένου",
     "tb.clr": "Καθαρισμός μορφοποίησης", "tb.bar": "Μορφοποίηση",
     "csv.imp": "Εισαγωγή CSV", "csv.exp": "Εξαγωγή CSV",
-    "sheet.add": "Νέο φύλλο", "sheets": "Φύλλα"
+    "sheet.add": "Νέο φύλλο", "sheets": "Φύλλα",
+    "tb.nf.date": "ημερομηνία",
+    "tb.sortA": "Ταξινόμηση από Α έως Ω", "tb.sortZ": "Ταξινόμηση από Ω έως Α",
+    "tb.filter": "Φίλτρο", "tb.more": "Γραμμές, στήλες, πάγωμα",
+    "sort.done": "Ταξινομήθηκαν {n} γραμμές με βάση τη στήλη {c}",
+    "sort.hdr": "Η γραμμή {r} μένει πάνω ως επικεφαλίδα",
+    "sort.none": "Δεν υπάρχει τίποτα για ταξινόμηση εδώ",
+    "flt.on": "Φίλτρο στις επικεφαλίδες της γραμμής {r}",
+    "flt.none": "Διάλεξε έναν πίνακα για φιλτράρισμα",
+    "flt.hidden": "{n} γραμμές κρυμμένες",
+    "flt.clear": "Αφαίρεση φίλτρου",
+    "flt.col": "Φιλτράρισμα αυτής της στήλης",
+    "flt.title": "Φίλτρο στήλης {c}",
+    "flt.contains": "Περιέχει…",
+    "flt.all": "Επιλογή όλων", "flt.nonesel": "Καμία επιλογή",
+    "flt.empty": "(κενό)",
+    "flt.more": "Εμφανίζονται μόνο οι πρώτες {n} τιμές",
+    "flt.apply": "Εφαρμογή", "flt.cancel": "Άκυρο",
+    "flt.local": "Τα φίλτρα μένουν μόνο σε αυτή τη συσκευή",
+    "fz.top": "Πάγωμα πρώτης γραμμής", "fz.rows": "Πάγωμα γραμμών 1–{n}",
+    "fz.cols": "Πάγωμα στηλών A–{c}", "fz.col1": "Πάγωμα στήλης A", "fz.off": "Ξεπάγωμα",
+    "row.insA": "Εισαγωγή γραμμής από πάνω", "row.insB": "Εισαγωγή γραμμής από κάτω",
+    "row.del1": "Διαγραφή γραμμής {a}", "row.del": "Διαγραφή γραμμών {a}–{b}",
+    "col.insL": "Εισαγωγή στήλης αριστερά", "col.insR": "Εισαγωγή στήλης δεξιά",
+    "col.del1": "Διαγραφή στήλης {a}", "col.del": "Διαγραφή στηλών {a}–{b}",
+    "add.rows": "Προσθήκη {n} γραμμών στο τέλος", "add.cols": "Προσθήκη {n} στηλών",
+    "max.dims": "Ένα φύλλο χωράει έως {r} γραμμές και {c} στήλες",
+    "fx.list": "Συναρτήσεις", "fx.search": "Αναζήτηση συναρτήσεων",
+    "menu.label": "Μενού φύλλου"
   }
 };
 
@@ -142,13 +200,15 @@ function colFromName(s) { /* "A" -> 0, "AA" -> 26; -1 on garbage */
 /* STATE SHAPE (Wave 3):
    { ver: 2,
      sheets: [{ id, name: null, bi: {en, el}, rows, cols, pos, mtime,
-                cw: { "<colIdx>": pxWidth } }],
+                cw: { "<colIdx>": pxWidth }, fz?: { r, c } }],
      cells:  { "<sheetId>|<r>|<c>":
                { v: "<raw input>", mtime, f?: { b?, i?, u?,
-                 al?: "l|c|r", co?: "#hex", nf?: "gen|0|2|%|€" } } },
+                 al?: "l|c|r", co?: "#hex", nf?: "gen|0|2|%|€|d" } } },
      deleted:{ "<sheetId>": ts, "<sheetId>|<r>|<c>": ts } }
    · f-only cells allowed: v === "" && f present (format on empty cell).
-   · cw rides the sheet entity → synced via sheet LWW.
+   · cw and fz (frozen rows / columns, only when set) ride the sheet
+     entity → synced via sheet LWW. rows ≤ MAX_ROWS, cols ≤ MAX_COLS.
+   · filters (oros-spreadsheet-view) are DEVICE-LOCAL, never synced.
    · actSID, CLIP, undoStack are DEVICE-LOCAL, never synced. */
 
 var state = null;
@@ -185,10 +245,22 @@ function sanitizeF(f) {
   if (f.al === "l" || f.al === "c" || f.al === "r") out.al = f.al;
   if (typeof f.co === "string" && /^#[0-9a-fA-F]{6}$/.test(f.co)) out.co = f.co;
   if (f.nf === "gen" || f.nf === "0" || f.nf === "2" ||
-      f.nf === "%" || f.nf === "\u20AC") out.nf = f.nf;
+      f.nf === "%" || f.nf === "\u20AC" || f.nf === "d") out.nf = f.nf;
   var has = false;
   for (var kk in out) { has = true; break; }
   return has ? out : undefined;
+}
+
+/* frozen panes {r, c}: rows 0..r-1 and columns 0..c-1 stay in view;
+   null when nothing is frozen (the field is then left out, so sheets
+   without it keep their bytes) */
+var FZ_MAX_R = 50, FZ_MAX_C = 26;
+function normFz(fz, sh) {
+  if (!fz || typeof fz !== "object") return null;
+  var r = parseInt(fz.r, 10) || 0, c = parseInt(fz.c, 10) || 0;
+  r = Math.max(0, Math.min(r, FZ_MAX_R, (sh && sh.rows ? sh.rows : MAX_ROWS) - 1));
+  c = Math.max(0, Math.min(c, FZ_MAX_C, (sh && sh.cols ? sh.cols : MAX_COLS) - 1));
+  return (r || c) ? { r: r, c: c } : null;
 }
 
 function normalizeState(st) {
@@ -201,8 +273,10 @@ function normalizeState(st) {
     if (!sh || typeof sh !== "object" || typeof sh.id !== "string") {
       st.sheets.splice(i, 1); i--; continue;
     }
-    sh.rows = Math.min(Math.max(parseInt(sh.rows, 10) || ROWS, 1), 500);
-    sh.cols = Math.min(Math.max(parseInt(sh.cols, 10) || COLS, 1), 64);
+    sh.rows = Math.min(Math.max(parseInt(sh.rows, 10) || ROWS, 1), MAX_ROWS);
+    sh.cols = Math.min(Math.max(parseInt(sh.cols, 10) || COLS, 1), MAX_COLS);
+    var fz = normFz(sh.fz, sh);
+    if (fz) sh.fz = fz; else delete sh.fz;
     if (typeof sh.mtime !== "number" || !isFinite(sh.mtime)) sh.mtime = 0;
     if (sh.pos === undefined || typeof sh.pos !== "number") sh.pos = 0;
     if (sh.cw === undefined || typeof sh.cw !== "object" || !sh.cw) sh.cw = {};
@@ -353,6 +427,8 @@ function canonSheet(sh) {
     });
   }
   o.cw = cw;
+  var fz = normFz(sh.fz, sh);
+  if (fz) o.fz = fz;
   return o;
 }
 
@@ -604,10 +680,21 @@ function pushUndo(entries) {
 }
 
 function applyEntries(entries, useAfter) {
-  var e, i;
+  var e, i, dimsChanged = false;
   for (i = 0; i < entries.length; i++) {
     e = entries[i];
     var target = useAfter ? e.after : e.before;
+    if (e.dim) {
+      /* insert / delete rows or columns: the sheet's size and widths */
+      var sh = getSheetById(e.sid);
+      if (sh && target) {
+        sh.rows = target.rows; sh.cols = target.cols; sh.cw = clone(target.cw);
+        if (target.fz) sh.fz = clone(target.fz); else delete sh.fz;
+        sh.mtime = now();
+        dimsChanged = true;
+      }
+      continue;
+    }
     var pk = e.key.split("|");
     var r = parseInt(pk[1], 10), c = parseInt(pk[2], 10);
     if (target === null) {
@@ -619,6 +706,7 @@ function applyEntries(entries, useAfter) {
   invalidateEval();
   markDirty();
   queueSave();
+  if (dimsChanged) buildGrid();
   renderGrid();
   renderSelection();
 }
@@ -703,488 +791,111 @@ function dialogHost() {
   } catch (e) { return null; }
 }
 
-/* ===== SECTION 3b: FORMULA ENGINE (Wave 3 — cache invalidation aware) ===== */
+/* ===== SECTION 3b: FORMULA ENGINE (functions.js · OrosSheetFx) =====
+   The tokenizer, parser, evaluator and the function library live in
+   functions.js (pure, Node-tested). This is the glue: how the engine
+   reads cells, finds sheets by name and the used extent of a sheet
+   (whole-column references A:A stop there). */
 
-var TT_NUM = 1, TT_STR = 2, TT_OP = 3, TT_REF = 4, TT_FUNC = 5,
-    TT_SEP = 6, TT_LPAREN = 7, TT_RPAREN = 8, TT_ERROR = 9;
-
-var OPERATORS = {
-  "+": { prec: 2, assoc: "L" },
-  "-": { prec: 2, assoc: "L" },
-  "*": { prec: 3, assoc: "L" },
-  "/": { prec: 3, assoc: "L" },
-  "^": { prec: 4, assoc: "R" },
-  "&": { prec: 1, assoc: "L" },
-  "=":  { prec: 0, assoc: "L", cmp: true },
-  "<>": { prec: 0, assoc: "L", cmp: true },
-  "<":  { prec: 0, assoc: "L", cmp: true },
-  ">":  { prec: 0, assoc: "L", cmp: true },
-  "<=": { prec: 0, assoc: "L", cmp: true },
-  ">=": { prec: 0, assoc: "L", cmp: true }
-};
-
-var BOOL_LITERALS = { "TRUE": 1, "FALSE": 0 };
-
-function tokenize(formula) {
-  var tokens = [];
-  var i = 0, s = String(formula).trim();
-
-  if (!s || s.charAt(0) !== "=") {
-    if (s) tokens.push({ type: TT_STR, value: s });
-    return tokens;
-  }
-
-  i++;
-  while (i < s.length) {
-    var ch = s.charAt(i);
-
-    if (/\s/.test(ch)) { i++; continue; }
-
-    if (ch === '"') {
-      var str = "", j = i + 1;
-      while (j < s.length && s.charAt(j) !== '"') {
-        if (s.charAt(j) === "\\" && j + 1 < s.length) j++;
-        str += s.charAt(j++);
-      }
-      tokens.push({ type: TT_STR, value: str });
-      i = j + 1;
-      continue;
-    }
-
-    if (/[0-9]/.test(ch) || (ch === "." && /[0-9]/.test(s.charAt(i+1)))) {
-      var num = "", hasDot = false;
-      while (i < s.length && /[0-9.]/.test(s.charAt(i))) {
-        var digit = s.charAt(i);
-        if (digit === ".") { if (hasDot) break; hasDot = true; }
-        num += digit; i++;
-      }
-      tokens.push({ type: TT_NUM, value: parseFloat(num) });
-      continue;
-    }
-
-    var op = "";
-    if (i + 1 < s.length) {
-      var twoChar = s.substr(i, 2);
-      if (OPERATORS[twoChar]) { op = twoChar; i += 2; }
-    }
-    if (!op && OPERATORS[ch]) { op = ch; i++; }
-    if (op) { tokens.push({ type: TT_OP, value: op }); continue; }
-
-    if (ch === "(") { tokens.push({ type: TT_LPAREN, value: ch }); i++; continue; }
-    if (ch === ")") { tokens.push({ type: TT_RPAREN, value: ch }); i++; continue; }
-    if (ch === ",") { tokens.push({ type: TT_SEP, value: "," }); i++; continue; }
-    if (ch === ";") { tokens.push({ type: TT_SEP, value: ";" }); i++; continue; }
-    if (ch === ":") { tokens.push({ type: TT_SEP, value: ":" }); i++; continue; }
-
-    var sheetPrefix = null;
-    var m1 = s.slice(i).match(/^'([^']*)'!/);
-    if (!m1) m1 = s.slice(i).match(/^([^\s':();,+*/^&<>=!]+)!/);
-    if (m1) {
-      sheetPrefix = m1[1];
-      i += m1[0].length;
-      ch = s.charAt(i);
-    }
-
-    var ident = "", j = i;
-    while (j < s.length && /[A-Za-zΑ-Ωα-ω0-9_]/.test(s.charAt(j)))
-      ident += s.charAt(j++);
-    if (!ident) { tokens.push({ type: TT_ERROR, value: ch }); i++; continue; }
-
-    var lookahead = s.charAt(j);
-    var refMatch = ident.toUpperCase().match(/^([A-Z]+)(\d+)$/);
-
-    if (lookahead === "(") {
-      tokens.push({ type: TT_FUNC, value: ident.toUpperCase() });
-    } else if (BOOL_LITERALS.hasOwnProperty(ident.toUpperCase())) {
-      tokens.push({ type: TT_NUM, value: BOOL_LITERALS[ident.toUpperCase()] });
-    } else if (refMatch) {
-      if (sheetPrefix) {
-        if (s.charAt(j) === ":") {
-          var rest = s.slice(j + 1).match(/^([A-Z]+[0-9]+)/i);
-          if (rest) {
-            j += 1 + rest[0].length;
-            tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident + ":" + rest[0].toUpperCase() });
-          } else {
-            tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident });
-          }
-        } else {
-          tokens.push({ type: TT_REF, value: sheetPrefix + "!" + ident });
-        }
-      } else if (s.charAt(j) === ":" && /^[A-Z]+[0-9]+/i.test(s.slice(j + 1))) {
-        /* plain range A1:B5 -> one REF, like the sheet-prefixed form */
-        var rest2 = s.slice(j + 1).match(/^([A-Z]+[0-9]+)/i);
-        j += 1 + rest2[0].length;
-        tokens.push({ type: TT_REF, value: ident.toUpperCase() + ":" + rest2[0].toUpperCase() });
-      } else {
-        tokens.push({ type: TT_REF, value: ident.toUpperCase() });
-      }
-    } else if (sheetPrefix) {
-      tokens.push({ type: TT_ERROR, value: "#REF!" });
-    } else {
-      tokens.push({ type: TT_STR, value: ident });
-    }
-    i = j;
-  }
-
-  return tokens;
-}
-
-function parse(tokens) {
-  var output = [], opStack = [];
-  var i = 0, lastWasOperand = false;
-
-  while (i < tokens.length) {
-    var tok = tokens[i];
-
-    if (tok.type === TT_NUM || tok.type === TT_STR) {
-      output.push(tok);
-      lastWasOperand = true;
-    }
-    else if (tok.type === TT_REF) {
-      output.push(tok);
-      lastWasOperand = true;
-    }
-    else if (tok.type === TT_FUNC) {
-      opStack.push({ type: "FUNC", name: tok.value, argc: 0, seenArg: false });
-      lastWasOperand = false;
-    }
-    else if (tok.type === TT_LPAREN) {
-      opStack.push(tok);
-      lastWasOperand = false;
-    }
-    else if (tok.type === TT_RPAREN) {
-      while (opStack.length && opStack[opStack.length-1].type !== "LPAREN" &&
-             opStack[opStack.length-1].type !== "FUNC") {
-        output.push(opStack.pop());
-      }
-      var topT = opStack.length ? opStack[opStack.length-1] : null;
-      if (topT && topT.type === "LPAREN") {
-        opStack.pop();
-      }
-      else if (topT && topT.type === "FUNC") {
-        var fn = opStack.pop();
-        output.push({ type: TT_FUNC, value: fn.name, argc: fn.argc });
-        lastWasOperand = true;
-      }
-      if (opStack.length && opStack[opStack.length-1].type === "LPAREN")
-        opStack.pop();
-      lastWasOperand = true;
-    }
-    else if (tok.type === TT_OP) {
-      var o1 = tok.value;
-      var o1Def = OPERATORS[o1] || { prec: 0, assoc: "L" };
-      while (opStack.length) {
-        var top = opStack[opStack.length-1];
-        if (top.type !== "OP") break;
-        var o2Def = OPERATORS[top.value] || { prec: 0, assoc: "L" };
-        if ((o1Def.prec < o2Def.prec) ||
-            (o1Def.prec === o2Def.prec && o1Def.assoc === "L")) {
-          output.push(opStack.pop());
-        } else break;
-      }
-      opStack.push({ type: "OP", value: o1 });
-      lastWasOperand = false;
-    }
-    else if (tok.type === TT_SEP) {
-      if (tok.value === ":") { /* range colon — handled in lexer */ }
-      else {
-        while (opStack.length &&
-               opStack[opStack.length-1].type !== "LPAREN" &&
-               opStack[opStack.length-1].type !== "FUNC") {
-          output.push(opStack.pop());
-        }
-        var ft = opStack.length ? opStack[opStack.length-1] : null;
-        if (ft && ft.type === "FUNC") { ft.argc++; ft.seenArg = true; }
-      }
-      lastWasOperand = false;
-    }
-    i++;
-  }
-
-  while (opStack.length) {
-    var rem = opStack.pop();
-    if (rem.type === "FUNC")
-      output.push({ type: TT_FUNC, value: rem.name, argc: rem.argc });
-    else if (rem.type === "OP") output.push(rem);
-  }
-
-  return output; /* RPN */
-}
+var FX = window.OrosSheetFx;
+var EXTENT = {}, FCELLS = null;
 
 function cellRaw(sid, r, c) {
   var cel = state.cells[cellKey(sid, r, c)];
   return cel ? cel.v : "";
 }
 
-function resolveRef(refStr) {
-  var bang = refStr.indexOf("!"), sheetPart = null, cellPart = refStr;
-  if (bang >= 0) {
-    sheetPart = refStr.slice(0, bang);
-    cellPart = refStr.slice(bang + 1);
+function sheetExtent(sid) {
+  if (!Object.prototype.hasOwnProperty.call(EXTENT, sid)) {
+    var rows = 0, cols = 0, pref = sid + "|", k, p;
+    for (k in state.cells) {
+      if (k.lastIndexOf(pref, 0) !== 0) continue;
+      p = k.split("|");
+      if (+p[1] + 1 > rows) rows = +p[1] + 1;
+      if (+p[2] + 1 > cols) cols = +p[2] + 1;
+    }
+    EXTENT[sid] = { rows: rows, cols: cols };
   }
-  var m = cellPart.match(/^([A-Z]+)(\d+)$/);
-  if (!m) return null;
-  var c = colFromName(m[1]), r = parseInt(m[2], 10) - 1;
-  if (c < 0 || r < 0) return null;
-  var sid = actSID;
-  if (sheetPart !== null) {
-    var sp = decodeURIComponent(sheetPart).replace(/^'|'$/g, "");
-    var sh = findSheetByName(sp);
-    if (!sh) return null;
-    sid = sh.id;
-  }
-  return { sid: sid, r: r, c: c };
+  return EXTENT[sid];
 }
 
-function coerceNum(v) {
-  if (typeof v === "number") return v;
-  if (v === "" || v === null || v === undefined) return 0;
-  var n = parseFloat(v);
-  return isNaN(n) ? v : n;
+function formulaCells() {
+  if (!FCELLS) {
+    FCELLS = [];
+    for (var k in state.cells) {
+      var cel = state.cells[k];
+      if (cel && cel.v.charAt(0) === "=") {
+        var p = k.split("|");
+        FCELLS.push([p[0], +p[1], +p[2]]);
+      }
+    }
+    FCELLS.sort(function (a, b) {
+      return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : (a[1] - b[1]) || (a[2] - b[2]);
+    });
+  }
+  return FCELLS;
 }
 
-function isError(v) { return typeof v === "string" && v.charAt(0) === "#"; }
-
-var EVAL_CACHE = {};
-
-function evalCell(sid, r, c, visiting) {
-  var key = sid + "|" + r + "|" + c;
-  if (EVAL_CACHE.hasOwnProperty(key)) return EVAL_CACHE[key];
-  if (visiting[key]) return "#CYC!";
-  var raw = cellRaw(sid, r, c);
-  if (raw === "") return 0;
-  if (raw.charAt(0) !== "=") return coerceNum(raw);
-  visiting[key] = true;
-  var res;
-  try {
-    res = evaluate(parse(tokenize(raw)), visiting);
-  } catch (e) { res = "#ERROR!"; }
-  delete visiting[key];
-  /* Imported-formula fallback: unknown functions (#NAME?) etc. ->
-     use Excel's cached value so the sheet stays usable and any
-     dependent formulas keep computing.                        */
-  if (isError(res)) {
+var ENG = FX.engine({
+  raw: cellRaw,
+  cached: function (sid, r, c) {
     var cel = state.cells[cellKey(sid, r, c)];
-    if (cel && typeof cel.cv === "string" && cel.cv !== "")
-      res = coerceNum(cel.cv);
-  }
-  EVAL_CACHE[key] = res;
-  return res;
-}
+    return cel ? cel.cv : undefined;
+  },
+  sheetId: function (name) {
+    var sh = findSheetByName(name);
+    return sh ? sh.id : null;
+  },
+  extent: sheetExtent,
+  formulaCells: formulaCells,
+  lang: LANG,
+  now: function () { return Date.now(); }
+});
 
-function flattenArgs(args) {
-  var out = [];
-  for (var i = 0; i < args.length; i++) {
-    if (Array.isArray(args[i])) {
-      for (var j = 0; j < args[i].length; j++) out.push(args[i][j]);
-    } else out.push(args[i]);
-  }
-  return out;
-}
+function resetEval() { ENG.reset(); EXTENT = {}; FCELLS = null; }
+function evalCell(sid, r, c) { return ENG.value(sid, r, c); }
+function isError(v) { return FX.isErr(v); }
 
-function numsOf(vals) {
-  var out = [];
-  for (var i = 0; i < vals.length; i++)
-    if (typeof vals[i] === "number" && !isNaN(vals[i])) out.push(vals[i]);
-  return out;
-}
-
-function compareVals(a, b) {
-  var na = coerceNum(a), nb = coerceNum(b);
-  if (typeof na === "number" && typeof nb === "number") return na - nb;
-  var sa = String(a), sb = String(b);
-  return sa < sb ? -1 : (sa > sb ? 1 : 0);
-}
-
-function evaluate(ast, visiting) {
-  var stack = [];
-
-  for (var i = 0; i < ast.length; i++) {
-    var tok = ast[i];
-
-    if (tok.type === TT_NUM || tok.type === TT_STR) { stack.push(tok.value); }
-
-    else if (tok.type === TT_REF) {
-      var ref = tok.value;
-      if (ref.indexOf(":") >= 0) {
-        var parts = ref.split(":");
-        var rl = parts[0].indexOf("!") >= 0 ? parts[0].split("!") : [null, parts[0]];
-        var rr = parts[1].indexOf("!") >= 0 ? parts[1].split("!") : [null, parts[1]];
-        var a = resolveRef((rl[0] ? rl[0] + "!" : "") + rl[1]);
-        var b = resolveRef((rr[0] ? rr[0] + "!" : (rl[0] ? rl[0] + "!" : "")) + rr[1]);
-        if (!a || !b) { stack.push("#REF!"); continue; }
-        var vals = [];
-        for (var r = Math.min(a.r,b.r); r <= Math.max(a.r,b.r); r++)
-          for (var c = Math.min(a.c,b.c); c <= Math.max(a.c,b.c); c++)
-            vals.push(evalCell(a.sid, r, c, visiting));
-        stack.push(vals);
-      } else {
-        var rc = resolveRef(ref);
-        if (!rc) { stack.push("#REF!"); continue; }
-        stack.push(evalCell(rc.sid, rc.r, rc.c, visiting));
-      }
-    }
-
-    else if (tok.type === TT_OP || tok.type === "OP") {   /* parse() emits {type:"OP"} */
-      if (tok.value === "&") {
-        var bs = stack.pop(), as = stack.pop();
-        if (isError(as)) { stack.push(as); continue; }
-        if (isError(bs)) { stack.push(bs); continue; }
-        stack.push(String(fmtVal(as)) + String(fmtVal(bs)));
-        continue;
-      }
-      if (stack.length < 2) { stack.push("#ERROR!"); continue; }
-      var bv = stack.pop(), av = stack.pop();
-      if (isError(av)) { stack.push(av); continue; }
-      if (isError(bv)) { stack.push(bv); continue; }
-      var opDef = OPERATORS[tok.value];
-      if (!opDef) { stack.push("#ERROR!"); continue; }
-      if (opDef.cmp) {
-        var cmp = compareVals(av, bv);
-        var res;
-        switch (tok.value) {
-          case "=":  res = cmp === 0; break;
-          case "<>": res = cmp !== 0; break;
-          case "<":  res = cmp < 0; break;
-          case ">":  res = cmp > 0; break;
-          case "<=": res = cmp <= 0; break;
-          case ">=": res = cmp >= 0; break;
-        }
-        stack.push(res ? 1 : 0);
-      } else {
-        var an = coerceNum(av), bn = coerceNum(bv);
-        if (typeof an !== "number" || typeof bn !== "number") { stack.push("#VALUE!"); continue; }
-        switch (tok.value) {
-          case "+": stack.push(an + bn); break;
-          case "-": stack.push(an - bn); break;
-          case "*": stack.push(an * bn); break;
-          case "/": stack.push(bn === 0 ? "#DIV/0!" : an / bn); break;
-          case "^": stack.push(Math.pow(an, bn)); break;
-        }
-      }
-    }
-
-    else if (tok.type === TT_FUNC) {
-      var argc = (typeof tok.argc === "number") ? tok.argc + 1 : 1;
-      var args = [];
-      var enough = true;
-      while (argc-- > 0) {
-        if (!stack.length) { enough = false; break; }
-        args.unshift(stack.pop());
-      }
-      if (!enough) { stack.push("#ERROR!"); continue; }
-
-      var fn = tok.value;
-      var flat = flattenArgs(args);
-
-      var errArg = null;
-      for (var ai = 0; ai < flat.length; ai++)
-        if (isError(flat[ai])) { errArg = flat[ai]; break; }
-      if (errArg !== null) { stack.push(errArg); continue; }
-
-      var nums = numsOf(flat);
-
-      if (fn === "SUM") {
-        var s = 0; for (var q = 0; q < nums.length; q++) s += nums[q];
-        stack.push(s);
-      }
-      else if (fn === "AVERAGE" || fn === "AVG") {
-        if (!nums.length) { stack.push("#DIV/0!"); }
-        else { var tt = 0; for (var q = 0; q < nums.length; q++) tt += nums[q];
-               stack.push(tt / nums.length); }
-      }
-      else if (fn === "MIN") {
-        if (!nums.length) stack.push("#N/A");
-        else { var mn = Infinity; for (var q = 0; q < nums.length; q++)
-                 if (nums[q] < mn) mn = nums[q];
-               stack.push(mn); }
-      }
-      else if (fn === "MAX") {
-        if (!nums.length) stack.push("#N/A");
-        else { var mx = -Infinity; for (var q = 0; q < nums.length; q++)
-                 if (nums[q] > mx) mx = nums[q];
-               stack.push(mx); }
-      }
-      else if (fn === "COUNT") { stack.push(nums.length); }
-      else if (fn === "COUNTA") {
-        var ca = 0; for (var q = 0; q < flat.length; q++)
-          if (flat[q] !== "" && flat[q] !== null && flat[q] !== undefined &&
-              !(typeof flat[q] === "number" && isNaN(flat[q]))) ca++;
-        stack.push(ca);
-      }
-      else if (fn === "ROUND") {
-        if (args.length < 2) { stack.push("#VALUE!"); continue; }
-        var flat = flattenArgs(args);
-        var rn = coerceNum(flat[0]), rp = flat.length > 1 ? coerceNum(flat[1]) : 0;
-        if (typeof rn !== "number" || typeof rp !== "number") { stack.push("#VALUE!"); continue; }
-        var f = Math.pow(10, rp);
-        stack.push(Math.round(rn * f) / f);
-      }
-      else if (fn === "ABS") {
-        var flat = flattenArgs(args);
-        var ab = coerceNum(flat[0]);
-        stack.push(typeof ab === "number" ? Math.abs(ab) : "#VALUE!");
-      }
-      else if (fn === "IF") {
-        if (args.length < 2) { stack.push("#VALUE!"); continue; }
-        var flat = flattenArgs(args);
-        var cond = flat[0];
-        var truthy = (typeof cond === "number" && cond !== 0) || cond === "TRUE";
-        stack.push(truthy ? args[1] : (args.length > 2 ? args[2] : ""));
-      }
-      else if (fn === "AND") {
-        var ra = 1;
-        for (var q = 0; q < flat.length; q++)
-          if (!(flat[q] === 1 || (typeof flat[q] === "number" && flat[q] !== 0) || flat[q] === "TRUE"))
-            { ra = 0; break; }
-        stack.push(ra);
-      }
-      else if (fn === "OR") {
-        var ro = 0;
-        for (var q = 0; q < flat.length; q++)
-          if (flat[q] === 1 || (typeof flat[q] === "number" && flat[q] !== 0) || flat[q] === "TRUE")
-            { ro = 1; break; }
-        stack.push(ro);
-      }
-      else if (fn === "NOT") {
-        var flat = flattenArgs(args);
-        var nn = flat[0];
-        stack.push(!(nn === 1 || (typeof nn === "number" && nn !== 0) || nn === "TRUE") ? 1 : 0);
-      }
-      else if (fn === "CONCAT" || fn === "CONCATENATE") {
-        var cs = "";
-        for (var q = 0; q < flat.length; q++)
-          cs += (flat[q] === null || flat[q] === undefined) ? "" : String(fmtVal(flat[q]));
-        stack.push(cs);
-      }
-      else { stack.push("#NAME?"); }
-    }
-  }
-
-  if (stack.length !== 1) return "#ERROR!";
-  var result = stack[0];
-  if (result === undefined || result === null) return "";
-  if (typeof result === "boolean") return result ? 1 : 0;
-  if (typeof result === "number" && isNaN(result)) return "#NUM!";
-  return result;
-}
-
-function fmtVal(v) {
-  if (typeof v === "number") return String(Number(v.toFixed(10)));
-  return String(v);
-}
- 
 /* --- NUMBER FORMAT rendering (display layer only) --- */
-function fmtDisplay(disp, nf) {
-  if (nf === "gen" || !nf || disp === "" || disp.charAt(0) === "#") return disp;
-  var n = parseFloat(disp);
-  if (isNaN(n)) return disp; /* text: format ignores */
-  if (nf === "0") return String(Math.round(n));
-  if (nf === "2") return n.toFixed(2);
-  if (nf === "%") return (n * 100).toFixed(1) + "%";
-  if (nf === "\u20AC") return n.toFixed(2) + " \u20AC";
-  return disp;
+function fmtDisplay(v, nf) {
+  if (FX.isErr(v)) return v;
+  if (typeof v === "number" && isFinite(v) && nf && nf !== "gen") {
+    if (nf === "0") return String(Math.round(v));
+    if (nf === "2") return v.toFixed(2);
+    if (nf === "%") return (v * 100).toFixed(1) + "%";
+    if (nf === "€") return v.toFixed(2) + " €";
+    if (nf === "d" || nf === "dt") {
+      var ds = FX.dateStr(v, LANG, nf === "dt");
+      if (ds !== null) return ds;
+    }
+  }
+  return FX.display(v, LANG);
 }
+
+/* what a cell shows: { s: text, k: "" | "num" | "err" | "bool" }.
+   Typed values show as typed (so 007 stays 007; a leading ' is
+   hidden); a number format applies to numbers. Formulas show their
+   result; TODAY(), DATE()… show as a date unless a format is set. */
+function cellView(r, c) {
+  var key = r + "," + c;
+  if (Object.prototype.hasOwnProperty.call(DISP, key)) return DISP[key];
+  var cel = getCell(r, c), out, nf = cel && cel.f && cel.f.nf;
+  if (!cel || cel.v === "") out = { s: "", k: "" };
+  else if (cel.v.charAt(0) === "=") {
+    var res = evalCell(actSID, r, c);
+    if (!nf) nf = FX.autoDate(cel.v);
+    out = { s: fmtDisplay(res, nf),
+            k: FX.isErr(res) ? "err" : typeof res === "number" ? "num" : typeof res === "boolean" ? "bool" : "" };
+  } else {
+    var lv = FX.literal(cel.v);
+    if (typeof lv === "number") out = { s: nf ? fmtDisplay(lv, nf) : cel.v, k: "num" };
+    else out = { s: cel.v.charAt(0) === "'" ? cel.v.slice(1) : cel.v,
+                 k: FX.isErr(lv) ? "err" : typeof lv === "boolean" ? "bool" : "" };
+  }
+  DISP[key] = out;
+  return out;
+}
+function displayVal(r, c) { return cellView(r, c).s; }
 
 /* ===== SECTION 3b2: CLIPBOARD (internal, ref-shifting) ===== */
 
@@ -1226,59 +937,12 @@ function copySelection(cut) {
   }
 }
 
-/* Shift relative refs in "=FORMULA" by (dr, dc). Built on tokenize:
-   strings stay verbatim; plain A1 / A1:B10 refs shift; SHEET!refs
-   stay (Calc behaviour); refs shifting out of bounds -> #REF!. */
+/* Shift relative refs in "=FORMULA" by (dr, dc) (functions.js): the
+   text around the references stays as typed; $A$1 parts stay; refs
+   that would leave the sheet become #REF!. Sheet!A1 refs move too. */
 function shiftFormula(formula, dr, dc) {
-  if (dr === 0 && dc === 0) return formula;
-  var tokens = tokenize(formula);
-  var out = "", i, tk;
-  /* We rebuild from tokens: faithful because tokenize round-trips
-     everything we accept in input. Separator ; preserved. */
-  for (i = 0; i < tokens.length; i++) {
-    tk = tokens[i];
-    if (tk.type === TT_REF) {
-      out += shiftRefToken(tk.value, dr, dc);
-    } else if (tk.type === TT_FUNC) {
-      out += tk.value; /* "(" arrives from the TT_LPAREN token itself */
-    } else if (tk.type === TT_OP || tk.type === TT_LPAREN ||
-               tk.type === TT_RPAREN || tk.type === TT_SEP) {
-      out += (tk.type === TT_SEP) ? tk.value : tk.value;
-      if (tk.type === TT_FUNC) out += "";
-    } else if (tk.type === TT_NUM) {
-      out += String(tk.value);
-    } else if (tk.type === TT_STR) {
-      out += '"' + String(tk.value).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
-    } else if (tk.type === TT_ERROR) {
-      out += tk.value;
-    }
-  }
-  return "=" + out;
+  return FX.shiftFormula(formula, dr, dc, MAX_ROWS, MAX_COLS);
 }
-
-/* token reconstruction cleanup: SEP tokens emit ',' or ';' as-is. */
-
-function shiftRefToken(ref, dr, dc) {
-  var parts = ref.split("!");
-  var sheetPart = parts.length > 1 ? parts[0] + "!" : "";
-  var cellPart = parts[parts.length - 1];
-  var halves = cellPart.split(":");
-  var shifted = [], hi;
-  for (hi = 0; hi < halves.length; hi++) {
-    var m = halves[hi].match(/^([A-Z]+)(\d+)$/);
-    if (!m) return ref; /* unparseable — leave untouched */
-    var c = colFromName(m[1]), r = parseInt(m[2], 10) - 1;
-    var nr = r + dr, nc = c + dc;
-    if (nr < 0 || nc < 0 || nc > 63) return "#REF!";
-    shifted.push(colName(nc) + (nr + 1));
-  }
-  return sheetPart + shifted.join(":");
-}
-
-/* Copy/Cut strips the leading "=" problem: tokenizer emits raw for
-   non-"=" strings, so formulas always enter shiftFormula with "=".
-   But our token rebuild loses original spacing — acceptable, we
-   STORE canonical rebuilt form (single source of truth).        */
 
 function pasteClipboard() {
   if (editing) cancelEdit();
@@ -1288,6 +952,16 @@ function pasteClipboard() {
 
   var top = selTop(), lef = selLeft();
   var entries = [], r, c;
+
+  /* a paste past the last row / column grows the sheet (up to the caps) */
+  var needR = Math.min(top + CLIP.h, MAX_ROWS), needC = Math.min(lef + CLIP.w, MAX_COLS);
+  if (needR > sheet.rows || needC > sheet.cols) {
+    sheet.rows = Math.max(sheet.rows, needR);
+    sheet.cols = Math.max(sheet.cols, needC);
+    sheet.mtime = now();
+    markDirty();
+    buildGrid();
+  }
 
   for (r = 0; r < CLIP.h; r++) {
     for (c = 0; c < CLIP.w; c++) {
@@ -1330,29 +1004,116 @@ function pasteClipboard() {
   renderSelection();
 }
 
-/* ===== SECTION 3c: RENDER (formats + rangesel + col widths) ===== */
+/* ===== SECTION 3c: RENDER (virtual rows · frozen panes · filter) =====
+   Only the rows in view (plus BUF on each side) exist in the DOM; two
+   spacer rows stand in for the rest, so a 10,000-row sheet costs about
+   what a 100-row one did. Every row has the same height (ROWH, from
+   the CSS), so a row's place is index × ROWH. Columns are all built.
+   Frozen rows are always rendered first, sticky under the header;
+   frozen columns are sticky after the row numbers.
+   VIS = the rows that are shown (the device-local filter hides some),
+   in order; POS[r] = index of row r in VIS, -1 when hidden; VIS[0 …
+   SL0-1] are the frozen rows, the rest scroll. */
 
-var cellRefs = [];
-var headRow = null;
-var rowHeads = [];
+var cellRefs = {};      /* r -> [td, …]  (rendered rows only) */
+var rowEls = {};        /* r -> tr */
+var rowHeads = {};      /* r -> th.rowh */
+var lastPainted = {};   /* r -> [painted text marker, …] */
 var colHeads = [];
+var headRow = null;
 var DISP = {};
-var lastPainted = [];
+var VIS = [], POS = null, SL0 = 0;
+var FR = 0, FC = 0;     /* frozen rows / columns in effect */
+var ROWH = 28, HEADH = 28, ROWHEADW = 44, DEFW = 88;
+var COLLEFT = [];       /* left edge of each column inside the table */
+var WIN0 = 0, WIN1 = 0; /* rendered scrolling rows: VIS[SL0+WIN0 … SL0+WIN1-1] */
+var BUILT = "";         /* layout the grid was built for (sync rebuild check) */
+var tbodyEl = null, spTop = null, spBot = null;
+var BUF = 30;
+
+function layoutSig(sh) {
+  return JSON.stringify([sh.id, sh.rows, sh.cols, sh.cw || {}, sh.fz || null]);
+}
+function colW(sheet, c) { return (sheet.cw && sheet.cw[c]) || DEFW; }
+
+function computeVis(sheet) {
+  var hidden = filterHidden(sheet), r;
+  VIS = []; POS = new Int32Array(sheet.rows);
+  for (r = 0; r < sheet.rows; r++) {
+    if (hidden && hidden[r]) { POS[r] = -1; continue; }
+    POS[r] = VIS.length; VIS.push(r);
+  }
+  var fz = normFz(sheet.fz, sheet) || { r: 0, c: 0 };
+  FR = fz.r; FC = fz.c;
+  SL0 = 0;
+  while (SL0 < VIS.length && VIS[SL0] < FR) SL0++;
+}
+
+function mkSpacer() {
+  var tr = document.createElement("tr");
+  tr.className = "sp";
+  var td = document.createElement("td");
+  td.colSpan = (getActiveSheet().cols || 1) + 1;
+  tr.appendChild(td);
+  tr.style.display = "none";
+  return tr;
+}
+function setSpacer(tr, h) {
+  if (h <= 0) { tr.style.display = "none"; return; }
+  tr.style.display = "";
+  tr.firstChild.style.height = h + "px";
+}
+
+function inSelRows(r) { return r >= selTop() && r <= selBottom(); }
+
+function createRow(r, fi) {
+  var sheet = getActiveSheet(), c;
+  var tr = document.createElement("tr");
+  tr.dataset.r = r;
+  var th = document.createElement("th");
+  th.className = "rowh" + (inSelRows(r) ? " hl" : "");
+  th.textContent = String(r + 1);
+  tr.appendChild(th);
+  var tds = [], lp = [];
+  for (c = 0; c < sheet.cols; c++) {
+    var td = document.createElement("td");
+    if (sheet.cw[c]) { td.style.width = sheet.cw[c] + "px"; td.style.minWidth = sheet.cw[c] + "px"; }
+    if (c < FC) td.style.left = COLLEFT[c] + "px";
+    tr.appendChild(td);
+    tds.push(td); lp.push(null);
+  }
+  if (fi >= 0) {
+    tr.className = "fzr" + (fi === SL0 - 1 ? " fzl" : "");
+    var top = (HEADH + fi * ROWH) + "px";
+    th.style.top = top;
+    for (c = 0; c < tds.length; c++) tds[c].style.top = top;
+  }
+  rowEls[r] = tr; rowHeads[r] = th; cellRefs[r] = tds; lastPainted[r] = lp;
+  for (c = 0; c < tds.length; c++) paintCell(r, c);
+  return tr;
+}
+
+function dropRow(r) {
+  var tr = rowEls[r];
+  if (tr && tr.parentNode) tr.parentNode.removeChild(tr);
+  delete rowEls[r]; delete cellRefs[r]; delete rowHeads[r]; delete lastPainted[r];
+}
 
 function buildGrid() {
   var tbl = $("grid");
   if (!tbl) { console.error("[SS] CRITICAL: #grid element missing!"); return; }
-
   var sheet = getActiveSheet();
   if (!sheet) { console.error("[SS] CRITICAL: no active sheet!"); return; }
-
   if (typeof sheet.rows !== "number" || sheet.rows < 1) sheet.rows = ROWS;
   if (typeof sheet.cols !== "number" || sheet.cols < 1) sheet.cols = COLS;
   if (!sheet.cw || typeof sheet.cw !== "object") sheet.cw = {};
 
-  var r, c, tr, th, td;
-
+  var r, c, th, i;
   tbl.innerHTML = "";
+  cellRefs = {}; rowEls = {}; rowHeads = {}; lastPainted = {};
+  if (EVAL_DIRTY) { resetEval(); EVAL_DIRTY = false; }
+  DISP = {};
+  computeVis(sheet);
 
   var thead = document.createElement("thead");
   headRow = document.createElement("tr");
@@ -1364,65 +1125,129 @@ function buildGrid() {
     th = document.createElement("th");
     th.textContent = colName(c);
     if (sheet.cw[c]) th.style.width = sheet.cw[c] + "px";
+    if (c < FC) th.className = "fzc" + (c === FC - 1 ? " fzcl" : "");
     headRow.appendChild(th);
     colHeads.push(th);
   }
   thead.appendChild(headRow);
   tbl.appendChild(thead);
 
-  var tbody = document.createElement("tbody");
-  cellRefs = []; rowHeads = []; lastPainted = [];
-  for (r = 0; r < sheet.rows; r++) {
-    tr = document.createElement("tr");
-    th = document.createElement("th");
-    th.className = "rowh";
-    th.textContent = String(r + 1);
-    tr.appendChild(th);
-    rowHeads.push(th);
-    cellRefs[r] = []; lastPainted[r] = [];
-    for (c = 0; c < sheet.cols; c++) {
-      td = document.createElement("td");
-      if (sheet.cw[c]) { td.style.width = sheet.cw[c] + "px"; td.style.minWidth = sheet.cw[c] + "px"; }
-      tr.appendChild(td);
-      cellRefs[r][c] = td;
-      lastPainted[r][c] = null;
-    }
-    tbody.appendChild(tr);
-  }
-  tbl.appendChild(tbody);
+  tbodyEl = document.createElement("tbody");
+  tbl.appendChild(tbodyEl);
+
+  /* measure: header height, row height (CSS decides: 28 / 34 px), row-number width */
+  var probe = document.createElement("tr");
+  probe.innerHTML = '<th class="rowh">1</th><td></td>';
+  tbodyEl.appendChild(probe);
+  ROWH = probe.offsetHeight || ROWH;
+  ROWHEADW = colHeads[0].offsetWidth || ROWHEADW;
+  HEADH = headRow.offsetHeight || HEADH;
+  tbodyEl.removeChild(probe);
+  COLLEFT = [];
+  var x = ROWHEADW;
+  for (c = 0; c < sheet.cols; c++) { COLLEFT.push(x); x += colW(sheet, c); }
+  for (c = 0; c < FC; c++) colHeads[c + 1].style.left = COLLEFT[c] + "px";
+
+  for (i = 0; i < SL0; i++) tbodyEl.appendChild(createRow(VIS[i], i));
+  spTop = mkSpacer(); spBot = mkSpacer();
+  tbodyEl.appendChild(spTop);
+  tbodyEl.appendChild(spBot);
+  WIN0 = WIN1 = 0;
+  renderWindow(true);
   initColResize();
+  BUILT = layoutSig(sheet);
+  void r;
 }
 
-function displayVal(r, c) {
-  var k = r + "," + c;
-  if (DISP.hasOwnProperty(k)) return DISP[k];
-  var cel = getCell(r, c);
-  var v = cel ? cel.v : "";
-  if (v !== "" && v.charAt(0) === "=") {
-    var res = evalCell(actSID, r, c, {});
-    v = isError(res) ? res : fmtVal(res);
+/* put the rows in view (± BUF) in the DOM; force = rebuild the window */
+function renderWindow(force) {
+  if (!tbodyEl || !spTop) return;
+  var wrap = $("grid-wrap");
+  var n = VIS.length - SL0;
+  var st = wrap ? wrap.scrollTop : 0, ch = (wrap && wrap.clientHeight) || 800;
+  var v0 = Math.max(0, Math.floor(st / ROWH));
+  var v1 = Math.min(n, Math.ceil((st + ch) / ROWH) + 1);
+  if (!force && v0 >= WIN0 && v1 <= WIN1) return;
+  var w0 = Math.max(0, v0 - BUF), w1 = Math.min(n, v1 + BUF);
+  /* an open editor whose row would leave the DOM is committed first */
+  if (editing && editingR >= 0 && POS && POS[editingR] >= SL0) {
+    var ek = POS[editingR] - SL0;
+    if (ek < w0 || ek >= w1) commitEdit(0, 0);
   }
-  if (cel && cel.f && cel.f.nf) v = fmtDisplay(v, cel.f.nf);
-  DISP[k] = v;
-  return v;
+  var key, r, k;
+  for (key in rowEls) {
+    r = +key;
+    if (POS[r] >= 0 && POS[r] < SL0) continue;          /* frozen */
+    k = POS[r] - SL0;
+    if (POS[r] < 0 || k < w0 || k >= w1) dropRow(r);
+  }
+  if (EVAL_DIRTY) { resetEval(); EVAL_DIRTY = false; DISP = {}; }
+  for (k = w0; k < w1; k++) {
+    r = VIS[SL0 + k];
+    var tr = rowEls[r] || createRow(r, -1);
+    tbodyEl.insertBefore(tr, spBot);
+  }
+  setSpacer(spTop, w0 * ROWH);
+  setSpacer(spBot, (n - w1) * ROWH);
+  WIN0 = w0; WIN1 = w1;
+}
+
+var winRaf = 0;
+function onGridScroll() {
+  if (winRaf) return;
+  winRaf = (window.requestAnimationFrame || setTimeout)(function () {
+    winRaf = 0;
+    renderWindow(false);
+  });
+}
+
+/* scroll so the cell (r, c) is in view, outside the frozen panes */
+function ensureVisible(r, c) {
+  var wrap = $("grid-wrap");
+  if (!wrap || !POS) return;
+  var sheet = getActiveSheet();
+  if (r >= 0 && r < POS.length && POS[r] >= SL0) {
+    var y = (POS[r] - SL0) * ROWH, top = wrap.scrollTop;
+    var avail = wrap.clientHeight - HEADH - SL0 * ROWH;
+    if (y < top) wrap.scrollTop = y;
+    else if (y + ROWH > top + avail) wrap.scrollTop = y + ROWH - Math.max(ROWH, avail);
+  }
+  if (c >= FC && c < COLLEFT.length) {
+    var x = COLLEFT[c], w = colW(sheet, c);
+    var frozenW = FC ? COLLEFT[FC - 1] + colW(sheet, FC - 1) : ROWHEADW;
+    var left = wrap.scrollLeft, cw = wrap.clientWidth;
+    if (x < left + frozenW) wrap.scrollLeft = Math.max(0, x - frozenW);
+    else if (x + w > left + cw) wrap.scrollLeft = x + w - cw;
+  }
+  renderWindow(false);
 }
 
 function paintCell(r, c) {
   if (editing && editingR === r && editingC === c) return;
-  var td = cellRefs[r] && cellRefs[r][c];
+  var tds = cellRefs[r], td = tds && tds[c];
   if (!td) return;
   var cel = getCell(r, c);
-  var disp = displayVal(r, c);
-  if (lastPainted[r][c] !== disp) {
-    lastPainted[r][c] = disp;
+  var view = cellView(r, c), disp = view.s;
+  var fh = filterHead(r, c);
+  var mark = fh ? disp + "\u0001" + fh : disp;
+  if (lastPainted[r][c] !== mark) {
+    lastPainted[r][c] = mark;
     td.textContent = disp;
+    if (fh) {
+      var b = document.createElement("span");
+      b.className = "fbtn" + (fh === 2 ? " on" : "");
+      b.setAttribute("role", "button");
+      b.title = t("flt.col");
+      b.setAttribute("aria-label", t("flt.col"));
+      b.innerHTML = IC_FILTER;
+      td.appendChild(b);
+    }
   }
 
-  /* class rebuild: base (num/err) + format + selection */
-  var cls = "";
-  if (disp !== "" && disp.charAt(0) === "#") cls = "err";
-  else if (disp !== "" && isFinite(parseFloat(disp))) cls = "num";
-
+  /* class rebuild: base (num/err/bool) + format + panes + selection */
+  var cls = view.k;
+  if (fh) cls += " fhd";
+  if (c < FC) cls += " fzc" + (c === FC - 1 ? " fzcl" : "");
   var f = cel && cel.f;
   if (f) {
     if (f.b) cls += " fb";
@@ -1430,13 +1255,13 @@ function paintCell(r, c) {
     if (f.u) cls += " fu";
     if (f.al === "c") cls += " fa-c";
     else if (f.al === "r") cls += " fa-r";
+    else if (f.al === "l") cls += " fa-l";
   }
   var inRange = (r >= selTop() && r <= selBottom() &&
                  c >= selLeft() && c <= selRight());
   if (inRange && !(r === selR && c === selC) && selIsRange()) cls += " rangesel";
   if (r === selR && c === selC) cls += " sel";
 
-  /* cssText rebuild is cheap but className compares stale: use data attr */
   if (td.dataset.cls !== cls) {
     td.dataset.cls = cls;
     td.className = cls;
@@ -1445,26 +1270,23 @@ function paintCell(r, c) {
   else if (td.style.color) td.style.color = "";
 }
 
-/* format CSS lives in stylesheet? No — minimal inline classes: */
-/* injected once via a <style> tag at the end of this section.   */
-
 function renderGrid() {
-  if (EVAL_DIRTY) { EVAL_CACHE = {}; EVAL_DIRTY = false; }
+  if (EVAL_DIRTY) { resetEval(); EVAL_DIRTY = false; }
   DISP = {};
-  var sheet = getActiveSheet(), r, c;
-  if (!sheet) return;
-  for (r = 0; r < sheet.rows; r++)
-    for (c = 0; c < sheet.cols; c++) paintCell(r, c);
+  var key, c, row;
+  for (key in cellRefs) {
+    row = cellRefs[key];
+    for (c = 0; c < row.length; c++) paintCell(+key, c);
+  }
+  updateFilterStatus();
 }
 
 function refreshCell(r, c) { DISP = {}; paintCell(r, c); }
 
 function renderSelection() {
-  var i;
-  for (i = 0; i < rowHeads.length; i++)
-    rowHeads[i].classList.remove("hl");
-  for (i = 0; i < colHeads.length; i++)
-    colHeads[i].classList.remove("hl");
+  var i, key;
+  for (key in rowHeads) rowHeads[key].classList.remove("hl");
+  for (i = 0; i < colHeads.length; i++) colHeads[i].classList.remove("hl");
 
   var prev = document.querySelectorAll("#grid td.sel, #grid td.rangesel");
   for (i = 0; i < prev.length; i++)
@@ -1476,16 +1298,18 @@ function renderSelection() {
   if (rowHeads[selR]) rowHeads[selR].classList.add("hl");
   if (colHeads[selC + 1]) colHeads[selC + 1].classList.add("hl");
   if (selIsRange()) {
-    var r, c;
-    for (r = selTop(); r <= selBottom(); r++)
-      for (c = selLeft(); c <= selRight(); c++) {
+    var c, top = selTop(), bot = selBottom(), lef = selLeft(), rig = selRight();
+    for (key in cellRefs) {
+      var r = +key;
+      if (r < top || r > bot) continue;
+      for (c = lef; c <= rig; c++) {
         if (r === selR && c === selC) continue;
-        var rt = cellRefs[r] && cellRefs[r][c];
+        var rt = cellRefs[key][c];
         if (rt) rt.classList.add("rangesel");
       }
-    /* header spans light up across the range */
-    for (i = selTop(); i <= selBottom(); i++) rowHeads[i].classList.add("hl");
-    for (i = selLeft(); i <= selRight(); i++) colHeads[i + 1].classList.add("hl");
+      if (rowHeads[key]) rowHeads[key].classList.add("hl");
+    }
+    for (i = lef; i <= rig; i++) if (colHeads[i + 1]) colHeads[i + 1].classList.add("hl");
   }
 
   var refTxt = colName(selC) + (selR + 1) +
@@ -1509,9 +1333,10 @@ function renderSelection() {
 function beginEdit(initialText) {
   if (editing) return;
   collapseSel(); /* typing replaces the range — single-cell edit */
-  editing = true; editingR = selR; editingC = selC;
+  ensureVisible(selR, selC);
   var td = cellRefs[selR] && cellRefs[selR][selC];
-  if (!td) { editing = false; return; }
+  if (!td) return;
+  editing = true; editingR = selR; editingC = selC;
 
   editInput = document.createElement("input");
   editInput.type = "text";
@@ -1523,13 +1348,14 @@ function beginEdit(initialText) {
     (initialText !== undefined && initialText !== null)
       ? initialText : editStartVal;
   td.textContent = "";
-  td.className = "cell-editor";
+  td.className = "cell-editor" + (selC < FC ? " fzc" : "");
   td.appendChild(editInput);
   editInput.focus();
   if (initialText !== undefined) editInput.setSelectionRange(
     editInput.value.length, editInput.value.length);
 
   editInput.addEventListener("keydown", function (e) {
+    if (fxHelpKey(e, editInput)) { e.stopPropagation(); return; }
     if (e.key === "Enter") { e.preventDefault(); commitEdit(1, 0); }
     else if (e.key === "Tab") { e.preventDefault(); commitEdit(0, 1); }
     else if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
@@ -1537,7 +1363,9 @@ function beginEdit(initialText) {
   });
   editInput.addEventListener("input", function () {
     $("fx-input").value = editInput.value;
+    fxHelpUpdate(editInput);
   });
+  editInput.addEventListener("blur", function () { setTimeout(fxHelpHideSoon, 150); });
 }
 
 function endEditDom() {
@@ -1545,9 +1373,9 @@ function endEditDom() {
   if (td && editInput && td.contains(editInput)) td.removeChild(editInput);
   editInput = null;
   editing = false;
-  lastPainted[editingR][editingC] = null;
-  if (cellRefs[editingR] && cellRefs[editingR][editingC])
-    delete cellRefs[editingR][editingC].dataset.cls;
+  fxHelpHide();
+  if (lastPainted[editingR]) lastPainted[editingR][editingC] = null;
+  if (td) delete td.dataset.cls;
   editingR = -1; editingC = -1;
 }
 
@@ -1565,7 +1393,10 @@ function commitEdit(dr, dc) {
   } else {
     setCell(r, c, val);
   }
+  var hadFocus = editInput && document.activeElement === editInput;
   endEditDom();
+  /* the editor left the DOM: keep the keyboard on the grid */
+  if (hadFocus) try { $("grid-wrap").focus({ preventScroll: true }); } catch (e) {}
   queueSave();
   invalidateEval();
   renderGrid();
@@ -1582,30 +1413,35 @@ function cancelEdit() {
   $("grid-wrap").focus();
 }
 
+/* the shown row `steps` visible rows away from r (filtered rows are skipped) */
+function stepRow(r, steps) {
+  if (!VIS.length) return r;
+  var k = POS && r < POS.length ? POS[r] : -1;
+  if (k < 0) {   /* r is hidden: start from the next shown row */
+    k = 0;
+    while (k < VIS.length - 1 && VIS[k] < r) k++;
+    if (steps > 0) steps--;
+  }
+  k = Math.min(Math.max(k + steps, 0), VIS.length - 1);
+  return VIS[k];
+}
+
 function navigate(dr, dc, extend) {
   var sheet = getActiveSheet();
   if (!sheet) return;
-  var nr = Math.min(Math.max(selR + dr, 0), sheet.rows - 1);
+  var nr = dr ? stepRow(selR, dr) : selR;
   var nc = Math.min(Math.max(selC + dc, 0), sheet.cols - 1);
   if (extend) {
     /* Shift+Arrow: extend the range from the anchor */
     selR = nr; selC = nc;
+    ensureVisible(selR, selC);
     renderSelection();
-    var td = cellRefs[selR] && cellRefs[selR][selC];
-    if (td) {
-      try { td.scrollIntoView({ block: "nearest", inline: "nearest" }); }
-      catch (e) {}
-    }
     return;
   }
-  if (nr === selR && nc === selC) return;
+  if (nr === selR && nc === selC && !selIsRange()) return;
   collapseSel(nr, nc);
+  ensureVisible(selR, selC);
   renderSelection();
-  var td = cellRefs[selR] && cellRefs[selR][selC];
-  if (td) {
-    try { td.scrollIntoView({ block: "nearest", inline: "nearest" }); }
-    catch (e) {}
-  }
 }
 
 function clearSelected() {
@@ -1624,8 +1460,14 @@ function clearSelected() {
 function applyFormatToSelection(mut) {
   if (editing) cancelEdit();
   var entries = [], r, c, changed = false;
-  for (r = selTop(); r <= selBottom(); r++)
-    for (c = selLeft(); c <= selRight(); c++) {
+  /* a whole column / row selected: format the used part only (an
+     empty cell with a format is a stored, synced cell) */
+  var ext = sheetExtent(actSID), sh = getActiveSheet();
+  var bot = selBottom(), rig = selRight();
+  if (selTop() === 0 && bot === sh.rows - 1 && bot - selTop() > 200) bot = Math.max(selR, ext.rows - 1);
+  if (selLeft() === 0 && rig === sh.cols - 1 && rig - selLeft() > 26) rig = Math.max(selC, ext.cols - 1);
+  for (r = selTop(); r <= bot; r++)
+    for (c = selLeft(); c <= rig; c++) {
       var key = cellKey(actSID, r, c);
       var before = snapCell(actSID, r, c);
       var cel = state.cells[key];
@@ -1789,12 +1631,10 @@ function initResizeDocHandlers() {
     sheet.cw = sheet.cw || {};
     sheet.cw[rsCol] = w;
     if (colHeads[rsCol + 1]) colHeads[rsCol + 1].style.width = w + "px";
-    var r;
-    for (r = 0; r < cellRefs.length; r++) {
-      if (cellRefs[r][rsCol]) {
-        cellRefs[r][rsCol].style.width = w + "px";
-        cellRefs[r][rsCol].style.minWidth = w + "px";
-      }
+    var key;
+    for (key in cellRefs) {
+      var td = cellRefs[key][rsCol];
+      if (td) { td.style.width = w + "px"; td.style.minWidth = w + "px"; }
     }
   });
   document.addEventListener("mouseup", function () {
@@ -1802,8 +1642,687 @@ function initResizeDocHandlers() {
     rsDrag = null;
     /* persist via sheet entity LWW */
     var sheet = getActiveSheet();
-    if (sheet) { sheet.mtime = now(); markDirty(); }
+    if (sheet) {
+      sheet.mtime = now(); markDirty();
+      if (FC) { buildGrid(); renderGrid(); renderSelection(); }   /* frozen offsets */
+      else {
+        COLLEFT = []; var x = ROWHEADW;
+        for (var c = 0; c < sheet.cols; c++) { COLLEFT.push(x); x += colW(sheet, c); }
+        BUILT = layoutSig(sheet);
+      }
+    }
   });
+}
+
+/* ===== SECTION 3h: SORT · FILTER · FREEZE · ROWS / COLUMNS · MENUS =====
+   Sort and Insert / Delete write cells like any edit (per-cell stamps,
+   one Undo step). Freeze is the sheet's fz field (synced like column
+   widths). Filters are a view of this device only: oros-spreadsheet-view
+   { <sheetId>: { flt: { top, l, r, cols: { <c>: { q, ex: [...] } } } } },
+   never in the sync slice. */
+
+/* which grid cell / header an element belongs to */
+function gridPos(el) {
+  var cell = el;
+  while (cell && cell.tagName !== "TD" && cell.tagName !== "TH") {
+    if (cell.id === "grid") return null;
+    cell = cell.parentElement;
+  }
+  if (!cell) return null;
+  var tr = cell.parentElement;
+  if (!tr || tr.classList.contains("sp")) return null;
+  if (tr.parentElement && tr.parentElement.tagName === "THEAD")
+    return cell.cellIndex > 0 ? { col: cell.cellIndex - 1 } : { all: true };
+  if (tr.dataset.r === undefined) return null;
+  var r = +tr.dataset.r;
+  if (cell.tagName === "TH") return { row: r };
+  return { r: r, c: cell.cellIndex - 1, td: cell };
+}
+
+function freshEval() {
+  if (EVAL_DIRTY) { resetEval(); EVAL_DIRTY = false; DISP = {}; }
+}
+
+/* a cell's full copy {v, f?, cv?} or null */
+function snapFull(sid, r, c) {
+  var cel = state.cells[cellKey(sid, r, c)];
+  if (!cel) return null;
+  var o = { v: cel.v };
+  if (cel.f) o.f = clone(cel.f);
+  if (typeof cel.cv === "string") o.cv = cel.cv;
+  return o;
+}
+
+/* write { key: {v, f?, cv?} | null } as ONE undo step (+ an optional
+   sheet-size entry). Unchanged cells are not touched (no new stamps). */
+function commitChanges(changes, dim) {
+  var entries = [], key;
+  for (key in changes) {
+    var pk = key.split("|"), sid = pk[0], r = +pk[1], c = +pk[2];
+    var before = snapCell(sid, r, c), after = changes[key];
+    var a2 = after ? { v: after.v } : null;
+    if (a2 && after.f) a2.f = clone(after.f);
+    if (JSON.stringify(before) === JSON.stringify(a2)) continue;
+    if (!a2 || (a2.v === "" && !a2.f)) {
+      if (!before) continue;
+      rawDel(sid, r, c);
+      entries.push({ key: key, before: before, after: null });
+    } else {
+      rawSet(sid, r, c, a2.v, a2.f);
+      if (after.cv && state.cells[key] && state.cells[key].v === after.v) state.cells[key].cv = after.cv;
+      entries.push({ key: key, before: before, after: a2 });
+    }
+  }
+  if (dim) entries.push(dim);
+  if (!entries.length) return false;
+  invalidateEval();
+  markDirty();
+  pushUndo(entries);
+  return true;
+}
+
+function hasValue(r, c) {
+  var cel = state.cells[cellKey(actSID, r, c)];
+  return !!(cel && cel.v !== "");
+}
+function dataRegion(r, c) {
+  var sh = getActiveSheet();
+  return FX.region(hasValue, r, c, sh.rows, sh.cols);
+}
+
+/* ---------- sort ---------- */
+function looksLikeHeading(rg) {
+  var c, r, any = false, bold = false;
+  for (c = rg.l; c <= rg.r; c++) {
+    var cel = getCell(rg.t, c);
+    if (!cel || cel.v === "") continue;
+    if (cel.v.charAt(0) === "=" || typeof FX.literal(cel.v) !== "string") return false;
+    any = true;
+    if (cel.f && cel.f.b) bold = true;
+  }
+  if (!any) return false;
+  if (bold) return true;
+  for (r = rg.t + 1; r <= Math.min(rg.b, rg.t + 10); r++)
+    for (c = rg.l; c <= rg.r; c++)
+      if (hasValue(r, c) && typeof evalCell(actSID, r, c) === "number") return true;
+  return false;
+}
+
+function sortSelection(desc) {
+  if (editing) commitEdit(0, 0);
+  freshEval();
+  var rg, hdr = false, r, c, i;
+  if (selIsRange()) {
+    var ext = sheetExtent(actSID);
+    rg = { t: selTop(), b: selBottom(), l: selLeft(), r: selRight() };
+    rg.b = Math.min(rg.b, Math.max(rg.t, ext.rows - 1));
+    rg.r = Math.min(rg.r, Math.max(rg.l, ext.cols - 1));
+    if (FLT && FLT.top === rg.t) hdr = true;
+  } else {
+    rg = dataRegion(selR, selC);
+    if (!rg) { notifyTransient(t("sort.none")); return; }
+    if (FLT && FLT.top >= rg.t && FLT.top < rg.b) { rg.t = FLT.top; hdr = true; }
+    else hdr = looksLikeHeading(rg);
+  }
+  var key = Math.min(Math.max(selC, rg.l), rg.r);
+  var first = rg.t + (hdr ? 1 : 0);
+  if (first >= rg.b) { notifyTransient(t("sort.none")); return; }
+  var rows = [], vals = [];
+  for (r = first; r <= rg.b; r++) { rows.push(r); vals.push(hasValue(r, key) ? evalCell(actSID, r, key) : null); }
+  var order = FX.sortOrder(vals, desc, LANG), changes = {};
+  for (i = 0; i < order.length; i++) {
+    var src = rows[order[i]], dst = rows[i];
+    if (src === dst) continue;
+    for (c = rg.l; c <= rg.r; c++) {
+      var sn = snapFull(actSID, src, c);
+      if (sn && sn.v.charAt(0) === "=") {
+        var nv = shiftFormula(sn.v, dst - src, 0);
+        if (nv !== sn.v) { sn.v = nv; delete sn.cv; }
+      }
+      changes[cellKey(actSID, dst, c)] = sn;
+    }
+  }
+  commitChanges(changes);
+  queueSave();
+  if (FLT) buildGrid();
+  renderGrid();
+  renderSelection();
+  notifyTransient(t("sort.done").replace("{n}", rows.length).replace("{c}", colName(key)) +
+    (hdr ? " · " + t("sort.hdr").replace("{r}", rg.t + 1) : ""));
+}
+
+/* ---------- filter (device-local view) ---------- */
+var VIEW = null, FLT = null;
+function loadView() {
+  try { VIEW = JSON.parse(localStorage.getItem(VIEW_KEY) || "{}"); } catch (e) { VIEW = {}; }
+  if (!VIEW || typeof VIEW !== "object" || Array.isArray(VIEW)) VIEW = {};
+}
+function getView(sid) {
+  if (!VIEW) loadView();
+  var v = VIEW[sid];
+  return (v && typeof v === "object") ? v : null;
+}
+function setView(sid, v) {
+  if (!VIEW) loadView();
+  if (v) VIEW[sid] = v; else delete VIEW[sid];
+  try { localStorage.setItem(VIEW_KEY, JSON.stringify(VIEW)); } catch (e) {}
+}
+function readFilter(sheet) {
+  var v = getView(sheet.id), f = v && v.flt;
+  if (!f || typeof f !== "object") return null;
+  var top = parseInt(f.top, 10), l = parseInt(f.l, 10), r = parseInt(f.r, 10);
+  if (!(top >= 0 && top < sheet.rows && l >= 0 && r >= l && r < sheet.cols)) return null;
+  var cols = {}, k;
+  if (f.cols && typeof f.cols === "object") for (k in f.cols) {
+    var c = parseInt(k, 10), x = f.cols[k];
+    if (!(c >= l && c <= r) || !x || typeof x !== "object") continue;
+    var o = {};
+    if (typeof x.q === "string" && x.q) o.q = x.q.slice(0, 200);
+    if (Array.isArray(x.ex)) { var ex = x.ex.filter(function (s) { return typeof s === "string"; }); if (ex.length) o.ex = ex.slice(0, 2000); }
+    if (o.q || o.ex) cols[c] = o;
+  }
+  return { top: top, l: l, r: r, cols: cols };
+}
+function filterActive(f) { for (var k in (f && f.cols) || {}) return true; return false; }
+/* the last row of the filtered table: down from the heading while the
+   next row has something in the filter's columns (the first empty row
+   ends it, as in Excel; rows typed right under the table join it) */
+function filterBottom(f) {
+  var sh = getActiveSheet(), b = f.top, c, any;
+  for (;;) {
+    if (b + 1 >= sh.rows) return b;
+    any = false;
+    for (c = f.l; c <= f.r && !any; c++) if (hasValue(b + 1, c)) any = true;
+    if (!any) return b;
+    b++;
+  }
+}
+function filterHidden(sheet) {
+  FLT = readFilter(sheet);
+  if (!FLT || !filterActive(FLT)) return null;
+  freshEval();
+  var hidden = {}, bot = filterBottom(FLT), r;
+  for (r = FLT.top + 1; r <= bot; r++) {
+    if (!FX.filterPass(FLT, (function (row) { return function (c) { return displayVal(row, c); }; })(r)))
+      hidden[r] = 1;
+  }
+  return hidden;
+}
+function filterHead(r, c) {
+  if (!FLT || r !== FLT.top || c < FLT.l || c > FLT.r) return 0;
+  return FLT.cols[c] ? 2 : 1;
+}
+function updateFilterStatus() {
+  var el = $("st-flt"), sheet = getActiveSheet(), b = $("tb-filter");
+  if (b) { if (FLT) b.classList.add("on"); else b.classList.remove("on"); }
+  if (!el || !sheet) return;
+  if (!FLT) { el.hidden = true; return; }
+  var n = sheet.rows - VIS.length;
+  $("st-flt-t").textContent = n > 0 ? t("flt.hidden").replace("{n}", n) : t("tb.filter");
+  el.title = t("flt.local");
+  el.hidden = false;
+}
+function rebuildKeepSel() {
+  buildGrid(); renderGrid(); renderSelection();
+  if (POS && POS[selR] >= 0) ensureVisible(selR, selC);
+}
+function toggleFilter() {
+  if (editing) commitEdit(0, 0);
+  if (FLT) { clearFilter(); return; }
+  var rg = selIsRange() ? { t: selTop(), b: selBottom(), l: selLeft(), r: selRight() } : dataRegion(selR, selC);
+  if (selIsRange()) {
+    var ext = sheetExtent(actSID);
+    rg.r = Math.min(rg.r, Math.max(rg.l, ext.cols - 1));
+  }
+  if (!rg) { notifyTransient(t("flt.none")); return; }
+  setView(actSID, { flt: { top: rg.t, l: rg.l, r: rg.r, cols: {} } });
+  rebuildKeepSel();
+  notifyTransient(t("flt.on").replace("{r}", rg.t + 1));
+}
+function clearFilter() {
+  closePops();
+  setView(actSID, null);
+  rebuildKeepSel();
+}
+
+/* ---------- popovers / menus ---------- */
+var popEl = null;
+function closePops() {
+  if (popEl) { popEl.remove(); popEl = null; }
+}
+function placePop(el, anchor) {
+  document.body.appendChild(el);
+  popEl = el;
+  if (window.innerWidth <= 480 && !anchor.x) { el.classList.add("sheet"); return; }
+  var x, y, h = el.offsetHeight, w = el.offsetWidth;
+  if (anchor.el) { var br = anchor.el.getBoundingClientRect(); x = br.left; y = br.bottom + 4; if (y + h > window.innerHeight - 4) y = Math.max(4, br.top - h - 4); }
+  else { x = anchor.x; y = anchor.y; if (y + h > window.innerHeight - 4) y = Math.max(4, window.innerHeight - h - 4); }
+  el.style.left = Math.max(4, Math.min(x, window.innerWidth - w - 4)) + "px";
+  el.style.top = Math.max(4, y) + "px";
+}
+function mkBtn(text, cls, fn) {
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = cls || "";
+  b.textContent = text;
+  b.addEventListener("click", function (e) { e.stopPropagation(); fn(); });
+  return b;
+}
+
+function openFilterPop(c, anchor) {
+  closePops();
+  if (!FLT) return;
+  freshEval();
+  var cur = FLT.cols[c] || {}, ex = {}, i;
+  (cur.ex || []).forEach(function (s) { ex[s] = 1; });
+  var bot = filterBottom(FLT), seen = {}, vals = [], CAP = 500, more = false;
+  for (var r = FLT.top + 1; r <= bot; r++) {
+    var s = displayVal(r, c);
+    if (seen[s]) continue;
+    if (vals.length >= CAP) { more = true; break; }
+    seen[s] = 1; vals.push(s);
+  }
+  (cur.ex || []).forEach(function (s) { if (!seen[s] && vals.length < CAP + 50) { seen[s] = 1; vals.push(s); } });
+  var order = FX.sortOrder(vals.map(function (v) { var n = FX.literal(v); return n === null ? null : n; }), false, LANG);
+
+  var pop = document.createElement("div");
+  pop.className = "ss-pop";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", t("flt.title").replace("{c}", colName(c)));
+  var h = document.createElement("div");
+  h.className = "pop-h";
+  h.textContent = t("flt.title").replace("{c}", colName(c));
+  pop.appendChild(h);
+  var q = document.createElement("input");
+  q.type = "search"; q.className = "pop-q";
+  q.placeholder = t("flt.contains");
+  q.setAttribute("aria-label", t("flt.contains"));
+  q.value = cur.q || "";
+  pop.appendChild(q);
+  var acts = document.createElement("div");
+  acts.className = "pop-acts";
+  var list = document.createElement("div");
+  list.className = "pop-list";
+  var boxes = [];
+  acts.appendChild(mkBtn(t("flt.all"), "", function () { boxes.forEach(function (b) { b.checked = true; }); }));
+  acts.appendChild(mkBtn(t("flt.nonesel"), "", function () { boxes.forEach(function (b) { b.checked = false; }); }));
+  pop.appendChild(acts);
+  for (i = 0; i < order.length; i++) {
+    var v = vals[order[i]];
+    var lab = document.createElement("label");
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !ex[v];
+    cb._v = v;
+    boxes.push(cb);
+    var sp = document.createElement("span");
+    sp.textContent = v === "" ? t("flt.empty") : v;
+    if (v === "") sp.className = "dim";
+    lab.appendChild(cb); lab.appendChild(sp);
+    list.appendChild(lab);
+  }
+  pop.appendChild(list);
+  var note = document.createElement("div");
+  note.className = "pop-note";
+  note.textContent = (more ? t("flt.more").replace("{n}", CAP) + " · " : "") + t("flt.local");
+  pop.appendChild(note);
+  var btns = document.createElement("div");
+  btns.className = "pop-btns";
+  btns.appendChild(mkBtn(t("flt.cancel"), "", closePops));
+  btns.appendChild(mkBtn(t("flt.apply"), "primary", function () {
+    var nex = [];
+    boxes.forEach(function (b) { if (!b.checked) nex.push(b._v); });
+    var f = readFilter(getActiveSheet()) || FLT;
+    var o = {};
+    if (q.value.trim()) o.q = q.value.trim();
+    if (nex.length) o.ex = nex;
+    if (o.q || o.ex) f.cols[c] = o; else delete f.cols[c];
+    setView(actSID, { flt: f });
+    closePops();
+    rebuildKeepSel();
+  }));
+  pop.appendChild(btns);
+  pop.addEventListener("click", function (e) { e.stopPropagation(); });
+  pop.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { e.preventDefault(); closePops(); $("grid-wrap").focus(); }
+    e.stopPropagation();
+  });
+  placePop(pop, { el: anchor });
+}
+
+/* ---------- freeze ---------- */
+function setFreeze(r, c) {
+  if (editing) commitEdit(0, 0);
+  var sheet = getActiveSheet();
+  var fz = normFz({ r: r, c: c }, sheet);
+  if (JSON.stringify(fz) === JSON.stringify(normFz(sheet.fz, sheet))) return;
+  if (fz) sheet.fz = fz; else delete sheet.fz;
+  sheet.mtime = now();
+  markDirty();
+  var wrap = $("grid-wrap");
+  if (wrap) { wrap.scrollTop = 0; wrap.scrollLeft = 0; }
+  rebuildKeepSel();
+}
+
+/* ---------- insert / delete rows and columns ---------- */
+function dimsOf(sh) {
+  var o = { rows: sh.rows, cols: sh.cols, cw: clone(sh.cw || {}) };
+  if (sh.fz) o.fz = clone(sh.fz);
+  return o;
+}
+/* n > 0: insert n rows ("r") / columns ("c") before index `at`;
+   n < 0: delete -n of them from `at`. Cells move (formats with them),
+   references to them in every sheet follow (functions.js adjustFormula),
+   references into deleted cells become #REF!. One Undo step. */
+function structural(axis, at, n) {
+  if (editing) commitEdit(0, 0);
+  closePops();
+  var sheet = getActiveSheet(), sid = actSID, k;
+  var cur = axis === "r" ? sheet.rows : sheet.cols, max = axis === "r" ? MAX_ROWS : MAX_COLS;
+  if (n > 0 && cur + n > max) {
+    notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(LANG)).replace("{c}", MAX_COLS));
+    return;
+  }
+  function pointsHere(hostSid) {
+    return function (name) {
+      if (name === null) return hostSid === sid;
+      var sh = findSheetByName(name);
+      return !!sh && sh.id === sid;
+    };
+  }
+  var adj = {};
+  for (k in state.cells) {
+    var cel = state.cells[k];
+    if (!cel || cel.v.charAt(0) !== "=") continue;
+    var nv = FX.adjustFormula(cel.v, pointsHere(k.split("|")[0]), axis, at, n);
+    if (nv !== cel.v) adj[k] = nv;
+  }
+  var changes = {}, moved = {}, pref = sid + "|", end = at - n - 1;
+  for (k in state.cells) {
+    var p = k.split("|");
+    var snap = snapFull(p[0], +p[1], +p[2]);
+    if (adj[k]) snap.v = adj[k];
+    if (p[0] !== sid) { if (adj[k]) changes[k] = snap; continue; }
+    var r = +p[1], c = +p[2], idx = axis === "r" ? r : c, to = -1;
+    if (n > 0) { if (idx >= at) to = idx + n; }
+    else if (idx >= at && idx <= end) { changes[k] = null; continue; }
+    else if (idx > end) to = idx + n;
+    if (to >= 0) {
+      if (!changes.hasOwnProperty(k)) changes[k] = null;
+      moved[axis === "r" ? cellKey(sid, to, c) : cellKey(sid, r, to)] = snap;
+    } else if (adj[k]) changes[k] = snap;
+  }
+  for (k in moved) changes[k] = moved[k];
+  void pref;
+  var before = dimsOf(sheet);
+  if (n > 0) { if (axis === "r") sheet.rows += n; else sheet.cols += n; }
+  if (axis === "c") {
+    var cw = {}, key;
+    for (key in sheet.cw) {
+      var ci = +key;
+      if (n > 0) cw[ci >= at ? ci + n : ci] = sheet.cw[key];
+      else if (ci < at) cw[ci] = sheet.cw[key];
+      else if (ci > end) cw[ci + n] = sheet.cw[key];
+    }
+    sheet.cw = cw;
+  }
+  sheet.mtime = now();
+  /* the device-local filter heading follows its row / columns */
+  if (FLT) {
+    var f = readFilter(sheet);
+    if (f) {
+      if (axis === "r") { if (n > 0 && at <= f.top) f.top += n; else if (n < 0 && at <= f.top) { if (f.top <= end) f = null; else f.top += n; } }
+      else f = null;
+      setView(sid, f ? { flt: f } : null);
+    }
+  }
+  commitChanges(changes, { dim: true, sid: sid, before: before, after: dimsOf(sheet) });
+  markDirty();
+  queueSave();
+  buildGrid();
+  renderGrid();
+  renderSelection();
+}
+
+function insertRows(below) {
+  var sh = getActiveSheet(), top = selTop(), bot = selBottom();
+  var n = (top === 0 && bot === sh.rows - 1) ? 1 : bot - top + 1;
+  structural("r", below ? bot + 1 : top, Math.min(n, 1000));
+  if (below) { collapseSel(bot + 1, selC); renderSelection(); }
+}
+function deleteRows() {
+  var top = selTop(), bot = selBottom();
+  structural("r", top, -(bot - top + 1));
+  collapseSel(Math.min(top, getActiveSheet().rows - 1), selC);
+  renderSelection();
+}
+function insertCols(right) {
+  var sh = getActiveSheet(), lef = selLeft(), rig = selRight();
+  var n = (lef === 0 && rig === sh.cols - 1) ? 1 : rig - lef + 1;
+  structural("c", right ? rig + 1 : lef, n);
+  if (right) { collapseSel(selR, rig + 1); renderSelection(); }
+}
+function deleteCols() {
+  var lef = selLeft(), rig = selRight();
+  structural("c", lef, -(rig - lef + 1));
+  collapseSel(selR, Math.min(lef, getActiveSheet().cols - 1));
+  renderSelection();
+}
+/* grow at the end: no cell moves, only the sheet size (synced) */
+function addRowsCols(axis, n) {
+  if (editing) commitEdit(0, 0);
+  var sh = getActiveSheet();
+  var cur = axis === "r" ? sh.rows : sh.cols, max = axis === "r" ? MAX_ROWS : MAX_COLS;
+  if (cur >= max) {
+    notifyTransient(t("max.dims").replace("{r}", MAX_ROWS.toLocaleString(LANG)).replace("{c}", MAX_COLS));
+    return;
+  }
+  var before = dimsOf(sh);
+  if (axis === "r") sh.rows = Math.min(max, sh.rows + n); else sh.cols = Math.min(max, sh.cols + n);
+  sh.mtime = now();
+  pushUndo([{ dim: true, sid: actSID, before: before, after: dimsOf(sh) }]);
+  markDirty();
+  rebuildKeepSel();
+}
+
+function openSheetMenu(anchor) {
+  if (editing) commitEdit(0, 0);
+  closePops();
+  var sh = getActiveSheet();
+  var top = selTop(), bot = selBottom(), lef = selLeft(), rig = selRight();
+  var m = document.createElement("div");
+  m.className = "ss-pop ss-menu";
+  m.setAttribute("role", "menu");
+  m.setAttribute("aria-label", t("menu.label"));
+  function item(text, fn, disabled) {
+    var b = mkBtn(text, "mi", function () { closePops(); fn(); });
+    b.setAttribute("role", "menuitem");
+    if (disabled) b.disabled = true;
+    m.appendChild(b);
+  }
+  function sep() { var d = document.createElement("div"); d.className = "msep"; m.appendChild(d); }
+  var fzr = normFz(sh.fz, sh) || { r: 0, c: 0 };
+  if (selR > 0 && selR + 1 <= FZ_MAX_R) item(t("fz.rows").replace("{n}", selR + 1), function () { setFreeze(selR + 1, fzr.c); });
+  else item(t("fz.top"), function () { setFreeze(1, fzr.c); }, fzr.r === 1);
+  if (selC + 1 <= FZ_MAX_C) item(selC === 0 ? t("fz.col1") : t("fz.cols").replace("{c}", colName(selC)), function () { setFreeze(fzr.r, selC + 1); }, selC === 0 && fzr.c === 1);
+  if (fzr.r || fzr.c) item(t("fz.off"), function () { setFreeze(0, 0); });
+  sep();
+  var fullCols = top === 0 && bot === sh.rows - 1, fullRows = lef === 0 && rig === sh.cols - 1;
+  item(t("row.insA"), function () { insertRows(false); }, sh.rows >= MAX_ROWS);
+  item(t("row.insB"), function () { insertRows(true); }, sh.rows >= MAX_ROWS);
+  item(top === bot ? t("row.del1").replace("{a}", top + 1) : t("row.del").replace("{a}", top + 1).replace("{b}", bot + 1), deleteRows, fullCols && sh.rows > 1000);
+  sep();
+  item(t("col.insL"), function () { insertCols(false); }, sh.cols >= MAX_COLS);
+  item(t("col.insR"), function () { insertCols(true); }, sh.cols >= MAX_COLS);
+  item(lef === rig ? t("col.del1").replace("{a}", colName(lef)) : t("col.del").replace("{a}", colName(lef)).replace("{b}", colName(rig)), deleteCols, fullRows && sh.cols > 26);
+  sep();
+  item(t("add.rows").replace("{n}", 100), function () { addRowsCols("r", 100); }, sh.rows >= MAX_ROWS);
+  item(t("add.rows").replace("{n}", (1000).toLocaleString(LANG)), function () { addRowsCols("r", 1000); }, sh.rows >= MAX_ROWS);
+  item(t("add.cols").replace("{n}", 10), function () { addRowsCols("c", 10); }, sh.cols >= MAX_COLS);
+  m.addEventListener("click", function (e) { e.stopPropagation(); });
+  m.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { e.preventDefault(); closePops(); $("grid-wrap").focus(); }
+  });
+  placePop(m, anchor);
+  var first = m.querySelector("button:not([disabled])");
+  if (first) try { first.focus({ preventScroll: true }); } catch (e) {}
+}
+
+/* ---------- function help (formula bar and cell editor) ---------- */
+var fxHelp = { el: null, input: null, items: [], sel: -1, tok: null };
+function fxHelpText(name) {
+  var H = FX.HELP[LANG] || FX.HELP.en, base = name.replace(/\.[A-Z]+$/, "");
+  return H[name] || H[base] || FX.HELP.en[name] || FX.HELP.en[base] || "";
+}
+function fxToken(inp) {
+  var v = inp.value;
+  if (v.charAt(0) !== "=") return null;
+  var pos = (typeof inp.selectionStart === "number") ? inp.selectionStart : v.length;
+  var before = v.slice(0, pos);
+  if ((before.match(/"/g) || []).length % 2) return null;      /* inside a string */
+  var m = before.match(/(^=|[=(,;+\-*\/^&<>\s])([A-Za-z][A-Za-z0-9.]*)$/);
+  return m ? { word: m[2], start: pos - m[2].length, end: pos } : null;
+}
+function fxHelpHide() {
+  if (fxHelp.el) { fxHelp.el.remove(); fxHelp.el = null; }
+  fxHelp.items = []; fxHelp.sel = -1; fxHelp.input = null;
+}
+function fxHelpHideSoon() {
+  if (fxHelp.input && document.activeElement === fxHelp.input) return;
+  fxHelpHide();
+}
+function fxHelpPaint() {
+  if (!fxHelp.el) return;
+  var kids = fxHelp.el.children;
+  for (var i = 0; i < kids.length; i++) {
+    if (i === fxHelp.sel) { kids[i].classList.add("on"); kids[i].setAttribute("aria-selected", "true"); }
+    else { kids[i].classList.remove("on"); kids[i].removeAttribute("aria-selected"); }
+  }
+}
+function fxHelpAccept(name) {
+  var inp = fxHelp.input, tk = fxHelp.tok;
+  if (!inp || !tk) return;
+  var v = inp.value;
+  var ins = name + "(";
+  inp.value = v.slice(0, tk.start) + ins + v.slice(tk.end).replace(/^\(/, "");
+  var at = tk.start + ins.length;
+  try { inp.setSelectionRange(at, at); } catch (e) {}
+  if (inp === editInput) $("fx-input").value = inp.value;
+  fxHelpHide();
+  inp.focus();
+}
+function fxHelpUpdate(inp) {
+  var tk = fxToken(inp);
+  if (!tk) { fxHelpHide(); return; }
+  var up = tk.word.toUpperCase();
+  var list = FX.names().filter(function (n) { return n.indexOf(up) === 0; }).slice(0, 8);
+  if (!list.length || (list.length === 1 && list[0] === up)) { fxHelpHide(); return; }
+  if (!fxHelp.el) {
+    fxHelp.el = document.createElement("div");
+    fxHelp.el.className = "fx-help";
+    fxHelp.el.setAttribute("role", "listbox");
+    fxHelp.el.setAttribute("aria-label", t("fx.list"));
+    document.body.appendChild(fxHelp.el);
+  }
+  fxHelp.input = inp; fxHelp.tok = tk; fxHelp.items = list; fxHelp.sel = -1;
+  fxHelp.el.innerHTML = "";
+  list.forEach(function (n) {
+    var it = document.createElement("div");
+    it.className = "fx-it";
+    it.setAttribute("role", "option");
+    var b = document.createElement("b");
+    b.textContent = n + (FX.SIG[n] ? "(" + FX.SIG[n] + ")" : "");
+    var d = document.createElement("span");
+    d.textContent = fxHelpText(n);
+    it.appendChild(b); it.appendChild(d);
+    it.addEventListener("mousedown", function (e) { e.preventDefault(); fxHelpAccept(n); });
+    fxHelp.el.appendChild(it);
+  });
+  var br = inp.getBoundingClientRect();
+  var w = Math.min(420, window.innerWidth - 8);
+  fxHelp.el.style.width = w + "px";
+  fxHelp.el.style.left = Math.max(4, Math.min(br.left, window.innerWidth - w - 4)) + "px";
+  var h = fxHelp.el.offsetHeight, y = br.bottom + 2;
+  if (y + h > window.innerHeight - 4) y = Math.max(4, br.top - h - 2);
+  fxHelp.el.style.top = y + "px";
+}
+/* keys while the list is open: arrows choose, Tab (or Enter on a
+   chosen item) inserts, Esc closes. true = the key was used */
+function fxHelpKey(e, inp) {
+  if (!fxHelp.el || fxHelp.input !== inp) return false;
+  var n = fxHelp.items.length;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    fxHelp.sel = e.key === "ArrowDown" ? (fxHelp.sel + 1) % n : (fxHelp.sel <= 0 ? n - 1 : fxHelp.sel - 1);
+    fxHelpPaint();
+    return true;
+  }
+  if (e.key === "Tab" || (e.key === "Enter" && fxHelp.sel >= 0)) {
+    e.preventDefault();
+    fxHelpAccept(fxHelp.items[Math.max(0, fxHelp.sel)]);
+    return true;
+  }
+  if (e.key === "Escape") { e.preventDefault(); fxHelpHide(); return true; }
+  return false;
+}
+
+/* the full list (the ƒx mark): pick one to put it in the cell */
+function openFxList() {
+  closePops();
+  var pop = document.createElement("div");
+  pop.className = "ss-pop fx-list";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", t("fx.list"));
+  var h = document.createElement("div");
+  h.className = "pop-h";
+  h.textContent = t("fx.list");
+  pop.appendChild(h);
+  var q = document.createElement("input");
+  q.type = "search"; q.className = "pop-q";
+  q.placeholder = t("fx.search");
+  q.setAttribute("aria-label", t("fx.search"));
+  pop.appendChild(q);
+  var list = document.createElement("div");
+  list.className = "pop-list fx-all";
+  pop.appendChild(list);
+  var names = FX.names().filter(function (n) { return fxHelpText(n) !== ""; });
+  function fill() {
+    var s = q.value.trim().toLowerCase();
+    list.innerHTML = "";
+    names.forEach(function (n) {
+      var d = fxHelpText(n);
+      if (s && n.toLowerCase().indexOf(s) < 0 && d.toLowerCase().indexOf(s) < 0) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "fx-it";
+      var bb = document.createElement("b");
+      bb.textContent = n;
+      var sp = document.createElement("span");
+      sp.textContent = d;
+      b.appendChild(bb); b.appendChild(sp);
+      b.addEventListener("click", function (e) { e.stopPropagation(); closePops(); insertFunction(n); });
+      list.appendChild(b);
+    });
+  }
+  q.addEventListener("input", fill);
+  fill();
+  pop.addEventListener("click", function (e) { e.stopPropagation(); });
+  pop.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { e.preventDefault(); closePops(); }
+    e.stopPropagation();
+  });
+  placePop(pop, { el: $("fx-mark") });
+  try { q.focus({ preventScroll: true }); } catch (e) {}
+}
+function insertFunction(name) {
+  var inp = editing && editInput ? editInput : $("fx-input");
+  inp.focus();        /* focus first: the formula bar remembers its starting text on focus */
+  var v = inp.value, pos = (typeof inp.selectionStart === "number" && v.charAt(0) === "=") ? inp.selectionStart : v.length;
+  if (v.charAt(0) !== "=") { v = "="; pos = 1; }
+  inp.value = v.slice(0, pos) + name + "(" + v.slice(pos);
+  var at = pos + name.length + 1;
+  try { inp.setSelectionRange(at, at); } catch (e) {}
+  if (inp === editInput) $("fx-input").value = inp.value;
 }
 
 /* ===== SECTION 3e: SHEET TABS (unchanged from Wave 2) ===== */
@@ -1914,6 +2433,9 @@ function switchTo(id) {
   actSID = id;
   saveActive();
   collapseSel(0, 0);
+  closePops();
+  var wrap = $("grid-wrap");
+  if (wrap) { wrap.scrollTop = 0; wrap.scrollLeft = 0; }
   buildGrid();
   renderTabs();
   renderGrid();
@@ -1966,6 +2488,7 @@ function deleteSheet(id) {
 
   var ts = now();
   state.deleted[id] = ts;
+  setView(id, null);
   var pref = id + "|";
   for (k in state.cells)
     if (k.indexOf(pref) === 0) delete state.cells[k];
@@ -2139,8 +2662,8 @@ function csvParse(text) {
     }
   }
   if (field !== "" || row.length) { row.push(field); rows.push(row); }
-  /* SS-6: hard cap at 500 rows x 64 columns (the normalizeState
-     limits). It cut every row to 26 columns without a word. */
+  /* SS-6: hard cap at the normalizeState limits (XL_ROWS_CAP x
+     XL_COLS_CAP). It cut every row to 26 columns without a word. */
   var cut = rows.length > XL_ROWS_CAP;
   if (cut) rows.length = XL_ROWS_CAP;
   for (var r = 0; r < rows.length; r++) {
@@ -2200,7 +2723,7 @@ function csvImport(file) {
    file is absent, import/export degrade to a toast — nothing
    else breaks. Lazy-loaded on first use only.               */
 
-var XL_ROWS_CAP = 500, XL_COLS_CAP = 64;   /* = normalizeState limits */
+var XL_ROWS_CAP = MAX_ROWS, XL_COLS_CAP = MAX_COLS;   /* = normalizeState limits */
 var xlLibLoading = false;
 
 function loadXlsxLib(done) {
@@ -2581,9 +3104,8 @@ function sliceSet(data, info) {
     actSID = state.sheets[0] ? state.sheets[0].id : SID;
     collapseSel(0, 0);
     rebuild = true;
-  } else if (act.rows !== cellRefs.length ||
-             (cellRefs[0] && act.cols !== cellRefs[0].length)) {
-    rebuild = true;
+  } else if (layoutSig(act) !== BUILT) {
+    rebuild = true;          /* rows, columns, widths or frozen panes changed */
   }
   if (rebuild && editing) cancelEdit();
   if (editing && editInput && editInput.value === editStartVal) {
@@ -2702,9 +3224,15 @@ var ICONS = {
   "tb-col":   svg('<circle cx="10" cy="10" r="6"/><path d="M10 4a6 6 0 0 1 0 12z" fill="currentColor" stroke="none"/>'),
   "tb-clr":   svg('<path d="M4 14 12 6l4 4-6 6H6z"/><path d="M3 17h14"/>'),
   "csv-imp":  svg('<path d="M10 12V3"/><path d="M6.5 6.5 10 3l3.5 3.5"/><path d="M4 13v3.5h12V13"/>'),
-  "csv-exp":  svg('<path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M4 13v3.5h12V13"/>')
+  "csv-exp":  svg('<path d="M10 3v9"/><path d="M6.5 8.5 10 12l3.5-3.5"/><path d="M4 13v3.5h12V13"/>'),
+  "tb-sort-a": svg('<path d="M6 3v13M3 13l3 3 3-3"/><text x="14.5" y="8.5" text-anchor="middle" style="font:600 7px sans-serif" fill="currentColor" stroke="none">A</text><text x="14.5" y="17" text-anchor="middle" style="font:600 7px sans-serif" fill="currentColor" stroke="none">Z</text>'),
+  "tb-sort-z": svg('<path d="M6 3v13M3 13l3 3 3-3"/><text x="14.5" y="8.5" text-anchor="middle" style="font:600 7px sans-serif" fill="currentColor" stroke="none">Z</text><text x="14.5" y="17" text-anchor="middle" style="font:600 7px sans-serif" fill="currentColor" stroke="none">A</text>'),
+  "tb-filter": svg('<path d="M3.5 5h13l-5 6v4.5l-3 1.5v-6z"/>'),
+  "tb-more":   svg('<rect x="3" y="3" width="14" height="14" rx="1.5"/><path d="M3 8h14M8 8v9"/>'),
+  "st-flt-x":  svg('<path d="M5 5l10 10M15 5 5 15"/>')
 };
 var IC_X   = svg('<path d="M5 5l10 10M15 5 5 15"/>');
+var IC_FILTER = svg('<path d="M3.5 5h13l-5 6v4.5l-3 1.5v-6z"/>');
 var IC_ADD = svg('<path d="M10 4v12M4 10h12"/>');
 
 /* SS-8: the toolbar titles in index.html are English only */
@@ -2714,6 +3242,8 @@ var TITLE_KEYS = {
   "tb-ital": "tb.ital", "tb-und": "tb.und", "tb-al-l": "tb.al.l",
   "tb-al-c": "tb.al.c", "tb-al-r": "tb.al.r", "tb-nf": "tb.nf",
   "tb-col": "tb.col", "tb-clr": "tb.clr",
+  "tb-sort-a": "tb.sortA", "tb-sort-z": "tb.sortZ", "tb-filter": "tb.filter",
+  "tb-more": "tb.more", "fx-mark": "fx.list", "st-flt-x": "flt.clear",
   "btn-csv-imp": "csv.imp", "btn-csv-exp": "csv.exp"
 };
 
@@ -2727,6 +3257,8 @@ function injectIcons() {
   var tabsNav = $("stabs"); if (tabsNav) tabsNav.setAttribute("aria-label", t("sheets"));
   var nfSel = $("tb-nf");
   if (nfSel && nfSel.options[0]) nfSel.options[0].textContent = t("tb.nf.gen");
+  if (nfSel) for (var oi = 0; oi < nfSel.options.length; oi++)
+    if (nfSel.options[oi].value === "d") nfSel.options[oi].textContent = t("tb.nf.date");
   for (k in ICONS) {
     var el = $(k);
     if (el) {
@@ -2750,6 +3282,7 @@ function injectIcons() {
     "#grid td.fb{font-weight:700;}" +
     "#grid td.fi{font-style:italic;}" +
     "#grid td.fu{text-decoration:underline;}" +
+    "#grid td.fa-l{text-align:left;}" +
     "#grid td.fa-c{text-align:center;}" +
     "#grid td.fa-r{text-align:right;}";
   document.head.appendChild(st);
@@ -2763,18 +3296,47 @@ function wire() {
   var ptrType = "mouse";      /* last pointerdown type (mouse|touch|pen) */
   initResizeDocHandlers();   /* document-level: attach EXACTLY once */
 
+  wrap.addEventListener("scroll", onGridScroll, { passive: true });
+  var rsT = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(rsT);
+    rsT = setTimeout(function () {
+      if (editing) return;
+      buildGrid(); renderGrid(); renderSelection();
+    }, 200);
+  });
+
   $("grid").addEventListener("pointerdown", function (e) {
     ptrType = e.pointerType || "mouse";
   }, true);
 
+  /* a header click selects the whole column / row (corner = all) */
+  function headerSelect(pos, extend) {
+    var sh = getActiveSheet();
+    if (pos.all) { selR = 0; selC = 0; selAR = sh.rows - 1; selAC = sh.cols - 1; }
+    else if (pos.col !== undefined) {
+      if (extend) { selC = pos.col; selR = sh.rows - 1; selAR = 0; }
+      else { selR = 0; selC = pos.col; selAR = sh.rows - 1; selAC = pos.col; }
+    } else if (pos.row !== undefined) {
+      if (extend) { selR = pos.row; selC = sh.cols - 1; selAC = 0; }
+      else { selR = pos.row; selC = 0; selAR = pos.row; selAC = sh.cols - 1; }
+    }
+    renderSelection();
+  }
+
   $("grid").addEventListener("mousedown", function (e) {
     if (e.button !== 0) return;
-    var td = e.target;
-    while (td && td.tagName !== "TD") td = td.parentElement;
-    if (!td || td.tagName !== "TD") return;
-    var r = td.parentElement.rowIndex - 1;
-    var c = td.cellIndex - 1;
-    if (r < 0 || c < 0) return;
+    if (e.target.closest && e.target.closest(".fbtn")) return;   /* filter button: click opens */
+    var pos = gridPos(e.target);
+    if (!pos) return;
+    if (pos.td === undefined) {
+      if (rsDrag) return;                         /* column resize grabbed the edge */
+      if (editing) commitEdit(0, 0);
+      mdSelected = (ptrType === "mouse");
+      headerSelect(pos, e.shiftKey);
+      return;
+    }
+    var r = pos.r, c = pos.c;
     tapWasSelected = (r === selR && c === selC && !editing);
     mdSelected = (ptrType === "mouse");
     if (editing) commitEdit(0, 0); /* then KEEP selecting the clicked cell */
@@ -2791,14 +3353,10 @@ function wire() {
 
   $("grid").addEventListener("mousemove", function (e) {
     if (!dragSelecting) return;
-    var td = e.target;
-    while (td && td.tagName !== "TD") td = td.parentElement;
-    if (!td || td.tagName !== "TD") return;
-    var r = td.parentElement.rowIndex - 1;
-    var c = td.cellIndex - 1;
-    if (r < 0 || c < 0) return;
-    if (r !== selR || c !== selC) {
-      selR = r; selC = c;
+    var pos = gridPos(e.target);
+    if (!pos || pos.td === undefined) return;
+    if (pos.r !== selR || pos.c !== selC) {
+      selR = pos.r; selC = pos.c;
       renderSelection();
     }
   });
@@ -2809,23 +3367,40 @@ function wire() {
 
   /* dblclick on cell = edit (desktop fast path) */
   $("grid").addEventListener("dblclick", function (e) {
-    var td = e.target;
-    while (td && td.tagName !== "TD") td = td.parentElement;
-    if (!td) return;
+    var pos = gridPos(e.target);
+    if (!pos || pos.td === undefined) return;
+    if (e.target.closest && e.target.closest(".fbtn")) return;
     if (!editing) beginEdit();
+  });
+
+  /* right click: the sheet menu (rows, columns, freeze) */
+  $("grid").addEventListener("contextmenu", function (e) {
+    var pos = gridPos(e.target);
+    if (!pos || editing) return;
+    e.preventDefault();
+    if (pos.td !== undefined && !(pos.r >= selTop() && pos.r <= selBottom() && pos.c >= selLeft() && pos.c <= selRight())) {
+      collapseSel(pos.r, pos.c); renderSelection();
+    }
+    openSheetMenu({ x: e.clientX, y: e.clientY });
   });
 
   /* mobile: tap selects, tap on SELECTED cell edits.
      ptrType comes from pointerdown (works in every browser —
      click/mousedown never expose pointerType in Firefox/Safari). */
   $("grid").addEventListener("click", function (e) {
+    var fb = e.target.closest && e.target.closest(".fbtn");
+    if (fb) {
+      e.stopPropagation();          /* the document click would close it again */
+      var fp = gridPos(fb);
+      mdSelected = false;
+      if (fp && fp.td !== undefined) openFilterPop(fp.c, fb);
+      return;
+    }
     if (mdSelected) { mdSelected = false; return; } /* mouse: mousedown owned it */
-    var td = e.target;
-    while (td && td.tagName !== "TD") td = td.parentElement;
-    if (!td || td.tagName !== "TD") return;
-    var r = td.parentElement.rowIndex - 1;
-    var c = td.cellIndex - 1;
-    if (r < 0 || c < 0) return;
+    var pos = gridPos(e.target);
+    if (!pos) return;
+    if (pos.td === undefined) { if (editing) commitEdit(0, 0); headerSelect(pos, false); return; }
+    var r = pos.r, c = pos.c;
     if (editing) commitEdit(0, 0);
     if (tapWasSelected && r === selR && c === selC) beginEdit();
     else { collapseSel(r, c); renderSelection(); }
@@ -2840,6 +3415,11 @@ function wire() {
     else if (k === "ArrowRight") { e.preventDefault(); navigate(0, 1, e.shiftKey); }
     else if (k === "Enter" || k === "F2") { e.preventDefault(); beginEdit(); }
     else if (k === "Tab") { e.preventDefault(); navigate(0, 1); }
+    else if (k === "PageDown" || k === "PageUp") {
+      e.preventDefault();
+      var page = Math.max(1, Math.floor((wrap.clientHeight - HEADH) / ROWH) - 1);
+      navigate(k === "PageDown" ? page : -page, 0, e.shiftKey);
+    }
     else if (k === "Delete" || k === "Backspace") {
       e.preventDefault(); clearSelected();
     }
@@ -2879,7 +3459,10 @@ function wire() {
     fxFocused = false;
     renderSelection();
   });
+  fx.addEventListener("input", function () { fxHelpUpdate(fx); });
+  fx.addEventListener("blur", function () { setTimeout(fxHelpHideSoon, 150); });
   fx.addEventListener("keydown", function (e) {
+    if (fxHelpKey(e, fx)) { e.stopPropagation(); return; }
     if (e.key === "Enter") {
       e.preventDefault();
       var val = fx.value.replace(/^\s+|\s+$/g, "");
@@ -2922,6 +3505,18 @@ function wire() {
   var nf = $("tb-nf");
   if (nf) nf.addEventListener("change", function () {
     applyFormatToSelection(fmtNumFormat(nf.value));
+  });
+  btn("tb-sort-a", function () { sortSelection(false); });
+  btn("tb-sort-z", function () { sortSelection(true); });
+  btn("tb-filter", toggleFilter);
+  btn("tb-more", function (e) { e.stopPropagation(); openSheetMenu({ el: $("tb-more") }); });
+  btn("fx-mark", function (e) { e.stopPropagation(); openFxList(); });
+  btn("st-flt-x", clearFilter);
+
+  /* sheet menu / filter / function list close on an outside click */
+  document.addEventListener("click", function () { closePops(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && popEl) { closePops(); }
   });
 
   /* swatch popover closes on outside click */
@@ -3224,12 +3819,8 @@ function openSearchTarget(tg) {
   if (typeof r !== "number" || typeof c !== "number" ||
       r < 0 || c < 0 || r >= sh.rows || c >= sh.cols) return;
   collapseSel(Math.floor(r), Math.floor(c));
+  ensureVisible(selR, selC);
   renderSelection();
-  var td = cellRefs[selR] && cellRefs[selR][selC];
-  if (td) {
-    try { td.scrollIntoView({ block: "nearest", inline: "nearest" }); }
-    catch (e) {}
-  }
 }
 
 })();
