@@ -4,7 +4,7 @@ Reader follows news sites, blogs and channels through their RSS, Atom or JSON fe
 ## Getting started
 Press `Add a feed` and type a site or feed address, even a YouTube channel, then `Find`. Reader looks for the feeds itself, including those of YouTube, Reddit, Mastodon and GitHub. Pick one under `Feeds found`, choose a `Folder` if you like, and press `Subscribe`.
 
-Moving from another reader? Use `Import from another reader (OPML)`.
+Moving from another reader? Use `Import from another reader (OPML)`, or `Import from FreshRSS or Miniflux` to bring your subscriptions, starred articles and what you have read straight from your own server. Newsletters you get by email can come in too: see Newsletters from Mail below.
 
 ## Read
 - The side panel has `All articles`, `Starred`, `Read later`, your folders and feeds with unread counts, and your tags and watched words. On a phone, open it with the menu button.
@@ -15,6 +15,14 @@ Moving from another reader? Use `Import from another reader (OPML)`.
 - The list buttons switch the style (`List`, `Cards`, `Magazine`), toggle `Unread only` / `Show all`, and `Mark as read` everything, or what's older than a day or a week, with `Undo`.
 - On a phone, swipe an article right to mark it read or unread, left to star it.
 
+### Summarise
+The sparkle button (`Summarise`) above an article asks for a short summary: one sentence and a few key points, in the language orOS is in. It uses the AI you set up in the [Assistant](app:assistant): your own key (Claude, ChatGPT, Gemini…), a server on your computer, or the browser's built-in model. Only that article's title and text go to that provider, straight from this device; orOS has no AI key of its own. Without the Assistant set up, the button says how to do it. `Copy` copies the summary; the summary is not kept.
+
+## Newsletters from Mail
+`Newsletters from Mail` (in `Add a feed`, in `Settings` and on the first screen) shows a folder of the [Mail](app:mail) app as a feed, for example one where a Mail rule puts your newsletters. Its messages become articles: star them, tag them, search them, mark them read here. Pictures are off until you allow them for that feed, so senders cannot tell you opened a message. `Open in Mail` opens the message in Mail.
+
+Reader only reads what Mail keeps on this device and never connects to your mail server itself. A message Mail has not downloaded yet shows its subject with a note; open it in Mail once and it appears here too.
+
 ## Organise
 - The ⋯ button (`Edit`) on a selected feed changes its name, folder, pictures and `Load the full article when I open one`, shows how often it posts, and has `Check now` and `Unsubscribe`. On a folder, it renames or deletes it (its feeds stay).
 - Tags group articles your way. Saved articles stay for ever, even after you unsubscribe.
@@ -24,11 +32,16 @@ The search button looks through titles and text, `Here` or `Everywhere`, without
 
 In `Settings`, `Rules and watched words` acts on new articles as they arrive: mark them read (mute), star them, add them to `Read later` or give them a tag. A rule can also `Notify me about new articles`, and so can a single feed in its `Edit` window: new articles then appear in the bell and open the article. See [Notifications](help:t/notifications). `Statistics` shows which feeds are busy, quiet or failing.
 
+### Import from FreshRSS or Miniflux
+In `Settings` › `From FreshRSS or Miniflux…`, pick your reader and type your server's address. FreshRSS asks for your user name and its API password (set in FreshRSS under Settings › Profile › API management); Miniflux asks for an API key (Settings › API Keys). Choose what to bring over: subscriptions and folders always, `Starred articles` and `What I have read` if you like. Reader loads the new feeds first, then stars the same articles and marks as read what you had read there. The password or key is used only for this import and is not kept; the requests go straight from this device to your server.
+
+If your server does not allow this (a browser page needs it to send CORS headers, and it must be on https), export your subscriptions as OPML and your starred articles as JSON from your reader, then use `Import OPML` and `Import starred articles (JSON)` in `Settings`.
+
 ## Settings
 `Settings` sets how often to `Check for new articles`, the order, list style, text size and width, pictures, `Mark as read while scrolling the list`, `Show a story that two feeds carry only once`, and the `Relay address`.
 
 ## Sync and backup
-Your subscriptions, folders, tags, rules, saved articles, read state and most settings sync between your devices through [orOS sync](help:t/sync). Downloaded articles stay on this device for 60 days (up to 200 per feed); text size, width and the open view stay here too. `Export OPML` and `Import OPML` in `Settings` move your feeds to or from other readers.
+Your subscriptions (Mail folders included), folders, tags, rules, saved articles, read state and most settings sync between your devices through [orOS sync](help:t/sync). Downloaded articles stay on this device for 60 days (up to 200 per feed); text size, width and the open view stay here too. `Export OPML` and `Import OPML` in `Settings` move your feeds to or from other readers.
 
 ## Keyboard shortcuts
 - [[J]] / [[K]] (or [[↓]] / [[↑]]) open the next or previous article.
@@ -42,3 +55,7 @@ Your subscriptions, folders, tags, rules, saved articles, read state and most se
 ## Limits
 - A site that blocks browsers can't be read without a relay.
 - Only articles fetched on this device are available offline.
+- A Mail folder shows only the messages Mail has on this device: Mail must have opened that folder here, and a message's text appears once Mail has downloaded it. On another device the same folder fills from that device's Mail.
+- Read state of newsletters stays in Reader; it does not mark the messages read in Mail.
+- Import from FreshRSS or Miniflux works only when the server lets a browser page connect (CORS, https); otherwise use the files. What you have read comes over only for articles the feeds still carry, and is skipped when there are more than 10,000 unread articles.
+- Summaries need the Assistant set up on this device and an internet connection to your provider (except a local server or the browser's model).

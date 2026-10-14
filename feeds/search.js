@@ -88,7 +88,7 @@
     });
     (Array.isArray(d.feeds) ? d.feeds : []).forEach(function (f) {
       if (!f || typeof f.id !== "string" || gone(tombs, "f:" + f.id, f.m)) return;
-      var url = str(f.url);
+      var url = /^https?:\/\//i.test(str(f.url)) ? str(f.url) : "";   // a Mail folder's address means nothing here
       var title = str(f.title) || url.replace(/^https?:\/\//, "").split("/")[0] ||
                   (ctx.lang === "el" ? "Ροή χωρίς όνομα" : "Unnamed feed");
       live[f.id] = true;
