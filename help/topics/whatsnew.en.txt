@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.05.00
+- The Assistant can now also prepare contacts, CRM customers, Kanban cards, habits, workouts, Garage records, plants, pet health records, Media Shelf titles, places and Split expenses. You check and save each one in its app.
+- Certificates: tick who came, print a sign-in sheet with a column for each day, give certificates only to those present, and export Open Badges 3.0 badges. Atelier: Bulk create fills {fields} from a list, as one design per row or one page per row. You can also email everyone their own certificate through orOS Mail.
+
 ## Version 2.04.00
 - Single apps: orOS Notes, orOS Calendar, orOS Bookmarks and orOS To-Do can now be installed on their own, each with its own icon and window, icon shortcuts, sharing and offline use. On the same device they share your orOS data, and elsewhere they join your encrypted sync when you turn it on. Find them in Settings › Single apps.
 
