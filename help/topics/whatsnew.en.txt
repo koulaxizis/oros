@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.05.00
+- The Assistant can now also prepare contacts, CRM customers, Kanban cards, habits, workouts, Garage records, plants, pet health records, Media Shelf titles, places and Split expenses. You check and save each one in its app.
+- Certificates: tick who came, print a sign-in sheet with a column for each day, give certificates only to those present, and export Open Badges 3.0 badges. Atelier: Bulk create fills {fields} from a list, as one design per row or one page per row.
+
 ## Version 2.03.00
 - Files can send copies of files and folders from the orOS disk to a Dropbox folder, so you can share them. Nothing in Dropbox is overwritten, and the files stay as they are in orOS.
 
