@@ -1,0 +1,50 @@
+libarchive.js 2.0.2 (npm "libarchive.js", https://github.com/nika-begiashvili/libarchivejs)
+Files: libarchive.js, worker-bundle.js, libarchive.wasm, copied unchanged from the
+package's dist/ folder (sha256 in OROS_BIBLE.md, Library section).
+Used by orOS Library only to open CBR (RAR) comics; loaded on demand, never for
+other books.
+
+The JavaScript wrapper is under the MIT License (LICENSE in this folder,
+Copyright (c) 2018 Nika Begiashvili).
+
+The WebAssembly module and the worker bundle also contain:
+
+- libarchive 3.7.2, https://www.libarchive.org/
+  BSD-2-Clause, Copyright (c) 2003-2023 Tim Kientzle and the libarchive
+  contributors. Its RAR 4 and RAR 5 readers are libarchive's own code (not
+  the UnRAR source).
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in the
+       documentation and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
+    IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+    OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+    IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+    NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+- zlib, https://zlib.net/ : zlib License, Copyright (C) 1995-2023 Jean-loup
+  Gailly and Mark Adler.
+- bzip2 / libbzip2, https://sourceware.org/bzip2/ : bzip2 licence (BSD-style),
+  Copyright (C) 1996-2019 Julian R Seward.
+- liblzma (XZ Utils), https://tukaani.org/xz/ : public domain / 0BSD.
+- OpenSSL (libcrypto, used by libarchive for encrypted archives),
+  https://www.openssl.org/ : OpenSSL License and original SSLeay License
+  (BSD-style). "This product includes software developed by the OpenSSL
+  Project for use in the OpenSSL Toolkit (http://www.openssl.org/)" and
+  "This product includes cryptographic software written by Eric Young
+  (eay@cryptsoft.com)".
+- Comlink, https://github.com/GoogleChromeLabs/comlink : Apache-2.0,
+  Copyright 2019 Google LLC.
+- The Emscripten runtime, https://emscripten.org/ : MIT.

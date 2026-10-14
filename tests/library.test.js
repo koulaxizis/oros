@@ -513,7 +513,7 @@ test("CBZ: pictures in natural order, ComicInfo details, kinds and filters", () 
   assert.deepEqual(bk.images.map((i) => [i.src, i.file, i.cover]), [["p1.png", "img/p0.png", true], ["p2.png", "img/p1.png", false]]);
   assert.match(bk.chapters[0].html, /<body class="comic"><p class="comic"><img src="img\/p0\.png" alt=""\/><\/p>/);
   assert.equal(C.cbzBook(["a.txt"], {}, "x"), null);
-  assert.deepEqual(["a.epub", "b.PDF", "c.fb2", "d.fb2.zip", "e.cbz", "f.zip", "g.cbr"].map(C.kindOf), ["epub", "pdf", "fb2", "fb2", "cbz", null, null]);
+  assert.deepEqual(["a.epub", "b.PDF", "c.fb2", "d.fb2.zip", "e.cbz", "f.zip", "g.cbr"].map(C.kindOf), ["epub", "pdf", "fb2", "fb2", "cbz", null, "cbr"]);   // CBR since wave 33 (libarchive.js)
   assert.deepEqual(["c.fb2", "e.cbz", "b.pdf"].map(C.formatOf), ["epub", "epub", "pdf"]);
   assert.equal(C.maxBytesOf("e.cbz"), C.MAX_COMIC);
   assert.equal(C.maxBytesOf("a.epub"), C.MAX_BYTES);

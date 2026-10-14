@@ -127,7 +127,7 @@
     }
 
     // ---------- Open ----------
-    // kind "fb2" / "cbz": built into an EPUB in memory (store.openEpub)
+    // kind "fb2" / "cbz" / "cbr": built into an EPUB in memory (store.openEpub)
     function open(bytes, startLoc, kind, name) {
       return LIB.store.openEpub(bytes, kind, name).then(function (e) {
         zip = e.zip;

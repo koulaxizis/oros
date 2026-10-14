@@ -39,7 +39,9 @@
   var NOTE_LEN   = 4000;
   var NCOLORS    = 4;
   var MAX_BYTES  = 50 * 1024 * 1024;
-  var MAX_COMIC  = 200 * 1024 * 1024;     // a CBZ is mostly pictures
+  var MAX_COMIC  = 200 * 1024 * 1024;     // a CBZ / CBR is mostly pictures
+  var MAX_CATS   = 50;                    // online catalogues the user added (OPDS)
+  var CAT_ID_RE  = /^c[0-9a-z]{6,24}$/;
   var FORMATS    = ["epub", "pdf"];
   var BOOK_ID_RE = /^b[0-9a-f]{16}$/;
   var MARK_ID_RE = /^k[0-9a-z]{6,24}$/;
@@ -90,16 +92,18 @@
     var k = kindOf(name);
     return k === "pdf" ? "pdf" : k ? "epub" : null;
   }
-  // What the file is: "epub" | "pdf" | "fb2" (also .fb2.zip) | "cbz".
+  // What the file is: "epub" | "pdf" | "fb2" (also .fb2.zip) | "cbz" |
+  // "cbr" (a RAR of pictures, read with the vendored libarchive.js).
   function kindOf(name) {
     var n = String(name || "").toLowerCase();
     if (/\.fb2(\.zip)?$/.test(n)) return "fb2";
     var e = extOf(n);
-    return e === "epub" || e === "pdf" || e === "cbz" ? e : null;
+    return e === "epub" || e === "pdf" || e === "cbz" || e === "cbr" ? e : null;
   }
+  function isComic(kind) { return kind === "cbz" || kind === "cbr"; }
   // "EPUB", "PDF", "FB2", "CBZ" for a book record (kind is an extra
   // field: older versions keep it and still see fmt "epub").
-  function maxBytesOf(name) { return kindOf(name) === "cbz" ? MAX_COMIC : MAX_BYTES; }
+  function maxBytesOf(name) { return isComic(kindOf(name)) ? MAX_COMIC : MAX_BYTES; }
   function fmtLabel(b) { return String(b && (b.kind || b.fmt) || "epub").toUpperCase(); }
   function titleFromName(name) {
     var n = String(name || "").split("/").pop().replace(/\.[a-z0-9]{1,8}$/i, "");
@@ -162,7 +166,10 @@
     var shelf = str(b.shelf, 40); if (shelf && /^[A-Za-z0-9_-]+$/.test(shelf)) out.shelf = shelf;
     var added = stamp(b.added); if (added) out.added = added;
     if (typeof b.fin === "string" && YMD_RE.test(b.fin)) out.fin = b.fin;
-    if ((b.kind === "fb2" || b.kind === "cbz") && out.fmt === "epub") out.kind = b.kind;   // built in memory, opens as EPUB
+    if ((b.kind === "fb2" || b.kind === "cbz" || b.kind === "cbr") && out.fmt === "epub") out.kind = b.kind;   // built in memory, opens as EPUB
+    // A CBR record from an older device lost its kind (it knew only
+    // fb2 / cbz): the file name tells.
+    else if (!b.kind && out.fmt === "epub" && out.path && kindOf(out.path) === "cbr") out.kind = "cbr";
     extras(b, out, BOOK_KEYS);
     return out;
   }
@@ -196,6 +203,20 @@
     return out;
   }
 
+  // An online catalogue the user added (OPDS, wave 33): { id, m, url, name }.
+  // The built-in ones (Project Gutenberg, Standard Ebooks) are not stored.
+  function normCat(c) {
+    if (!c || typeof c !== "object" || !CAT_ID_RE.test(c.id)) return null;
+    var m = stamp(c.m);
+    if (!m || typeof c.url !== "string") return null;
+    var url = c.url.trim();
+    if (url.length > PATH_LEN || !/^https?:\/\/[^\s"'<>\\]+$/i.test(url)) return null;
+    var out = { id: c.id, m: m, url: url };
+    var name = str(c.name, 80);
+    if (name) out.name = name;
+    return out;
+  }
+
   function emptyState() { return { ver: DATA_VER, books: [], pos: {}, marks: [], tombs: {} }; }
 
   // ---------- 3. Merge ----------
@@ -209,7 +230,7 @@
     var out = {};
     var t = s && s.tombs && typeof s.tombs === "object" ? s.tombs : {};
     Object.keys(t).forEach(function (id) {
-      if (!BOOK_ID_RE.test(id) && !MARK_ID_RE.test(id)) return;
+      if (!BOOK_ID_RE.test(id) && !MARK_ID_RE.test(id) && !CAT_ID_RE.test(id)) return;
       var ts = stamp(t[id]);
       if (ts) out[id] = ts;
     });
@@ -248,6 +269,12 @@
     var tombOut = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { tombOut[id] = tombs[id]; });
     var out = { ver: DATA_VER, books: books, pos: posOut, marks: marks, tombs: tombOut };
+    // Catalogues (wave 33): LWW per id like books, left out while empty,
+    // so a library without any keeps its earlier bytes. An older device
+    // drops them in its own copy; the union here brings them back.
+    var cats = unionBy(arr(a, "cats").concat(arr(b, "cats")), normCat);
+    if (cats.length > MAX_CATS) cats = cats.slice(0, MAX_CATS);
+    if (cats.length) out.cats = cats;
     var st = mergeStats(a && a.stats, b && b.stats);
     if (!statsEmpty(st)) out.stats = st;            // left out while empty
     return out;
@@ -621,7 +648,8 @@
       var pct = progressOf(state, b.id);
       switch (opts.filter) {
         case "epub": case "pdf": if (b.fmt !== opts.filter || b.kind) return false; break;
-        case "fb2": case "cbz": if (b.kind !== opts.filter) return false; break;
+        case "fb2": if (b.kind !== "fb2") return false; break;
+        case "cbz": if (!isComic(b.kind)) return false; break;        // "Comics": CBZ and CBR
         case "unread": if (pct > 0 || b.fin) return false; break;
         case "reading": if (!(pct > 0) || b.fin) return false; break;
         case "done": if (!b.fin) return false; break;
@@ -656,27 +684,75 @@
     en: ["Yellow", "Green", "Blue", "Pink"],
     el: ["Κίτρινο", "Πράσινο", "Μπλε", "Ροζ"]
   };
-  // Markdown of a book's highlights, notes and bookmarks, in book order.
-  function exportMarkdown(book, marks, lang, labels) {
+  // Markdown of a book's highlights, notes and bookmarks, in book order:
+  // a "## section" heading when the chapter changes, each highlight as a
+  // block quote with its colour (and where it is, when known), the note
+  // under it. opts { date: "YYYY-MM-DD" } adds a short header (author,
+  // how many, the export date), as Readwise / KOReader exports do.
+  function mdParts(book, marks, lang, labels) {
     labels = labels || {};
     var el = lang === "el";
-    var out = ["# " + (book.title || "?")];
-    if (book.by) out.push("", "*" + book.by + "*");
     var hl = sortMarks(marks.filter(function (k) { return k.b === book.id; }));
-    if (!hl.length) out.push("", el ? "Δεν υπάρχουν σημειώσεις." : "No highlights or notes.");
-    var lastSec = null;
+    var lastSec = null, blocks = [];
     hl.forEach(function (k) {
+      var lines = [];
       var sec = labels[k.id] || k.lbl || "";
-      if (sec && sec !== lastSec) { out.push("", "## " + sec); lastSec = sec; }
+      if (sec && sec !== lastSec) { lines.push("", "## " + mdLine(sec)); lastSec = sec; }
+      var where = typeof k.pct === "number" && k.pct > 0 ? " · " + Math.floor(k.pct / 10) + "%" : "";
       if (k.k === "bm") {
-        out.push("", (el ? "🔖 Σελιδοδείκτης" : "🔖 Bookmark") + (k.q ? ": " + squash(k.q).slice(0, 120) : ""));
+        lines.push("", (el ? "🔖 Σελιδοδείκτης" : "🔖 Bookmark") + (k.q ? ": " + squash(k.q).slice(0, 120) : "") + where);
       } else {
         var name = (COLOR_NAMES[el ? "el" : "en"][k.c || 0] || "");
-        out.push("", "> " + squash(k.q || "").replace(/\n/g, " "), "", "*" + name + "*");
+        lines.push("", "> " + squash(k.q || "").replace(/\n/g, " "), "", "*" + name + where + "*");
       }
-      if (k.n) out.push("", k.n.trim());
+      if (k.n) lines.push("", k.n.trim());
+      blocks.push({ lines: lines, hl: k.k === "hl", note: !!k.n });
     });
+    return blocks;
+  }
+  function mdLine(s) { return String(s || "").replace(/\s+/g, " ").trim(); }
+  function mdHead(book, blocks, lang, opts, withTitle) {
+    var el = lang === "el", out = withTitle ? ["# " + mdLine(book.title || "?")] : [];
+    if (!(opts && opts.date)) {
+      if (book.by) out.push("", "*" + mdLine(book.by) + "*");
+      return out;
+    }
+    var nh = 0, nn = 0;
+    blocks.forEach(function (x) { if (x.hl) nh++; if (x.note) nn++; });
+    var meta = [];
+    if (book.by) meta.push((el ? "- Συγγραφέας: " : "- Author: ") + mdLine(book.by));
+    meta.push((el ? "- Υπογραμμίσεις: " : "- Highlights: ") + nh + (el ? " · Σημειώσεις: " : " · Notes: ") + nn);
+    meta.push((el ? "- Εξαγωγή: " : "- Exported: ") + opts.date + (el ? " από τη Βιβλιοθήκη του orOS" : " from orOS Library"));
+    if (out.length) out.push("");
+    return out.concat(meta);
+  }
+  function exportMarkdown(book, marks, lang, labels, opts) {
+    var blocks = mdParts(book, marks, lang, labels);
+    var out = mdHead(book, blocks, lang, opts, true);
+    if (!blocks.length) out.push("", lang === "el" ? "Δεν υπάρχουν σημειώσεις." : "No highlights or notes.");
+    blocks.forEach(function (x) { out = out.concat(x.lines); });
     return out.join("\n") + "\n";
+  }
+  // The same Markdown for a page of the Notes app (Notes keeps plain
+  // text, so the Markdown stays readable as it is): no "# title" (the
+  // page has the book's title), at most max characters; what does not
+  // fit is counted in the last line. → { text, left }
+  function notesMarkdown(book, marks, lang, opts) {
+    opts = opts || {};
+    var max = opts.max || 20000, el = lang === "el";
+    var blocks = mdParts(book, marks, lang, opts.labels);
+    var out = mdHead(book, blocks, lang, opts, false);
+    var size = out.join("\n").length, left = 0;
+    blocks.forEach(function (x) {
+      if (left) { left++; return; }
+      var add = x.lines.join("\n").length + 1;
+      if (size + add > max - 120) { left = 1; return; }
+      out = out.concat(x.lines);
+      size += add;
+    });
+    if (left) out.push("", el ? "… και " + left + " ακόμη: η «Εξαγωγή σημειώσεων» της Βιβλιοθήκης τα έχει όλα."
+      : "… and " + left + " more: Library's “Export notes” has them all.");
+    return { text: out.join("\n").replace(/^\n+/, "") + "\n", left: left };
   }
   // The same as plain text for a Notes page (Notes takes plain text,
   // max characters): author, then per section its label and the
@@ -1233,13 +1309,13 @@
     TITLE_LEN: TITLE_LEN, BY_LEN: BY_LEN, NOTE_LEN: NOTE_LEN, QUOTE_LEN: QUOTE_LEN, CTX_LEN: CTX_LEN,
     BOOK_ID_RE: BOOK_ID_RE, MARK_ID_RE: MARK_ID_RE, LOC_RE: LOC_RE,
     str: str, canon: canon, cmpStr: cmpStr, bookIdOf: bookIdOf, newMarkId: newMarkId, extOf: extOf,
-    formatOf: formatOf, kindOf: kindOf, fmtLabel: fmtLabel, maxBytesOf: maxBytesOf, MAX_COMIC: MAX_COMIC, titleFromName: titleFromName, fold: fold, normTags: normTags, parseTags: parseTags,
+    formatOf: formatOf, kindOf: kindOf, isComic: isComic, normCat: normCat, CAT_ID_RE: CAT_ID_RE, MAX_CATS: MAX_CATS, fmtLabel: fmtLabel, maxBytesOf: maxBytesOf, MAX_COMIC: MAX_COMIC, titleFromName: titleFromName, fold: fold, normTags: normTags, parseTags: parseTags,
     normBook: normBook, normPos: normPos, normMark: normMark, emptyState: emptyState, mergeLibrary: mergeLibrary,
     parseLoc: parseLoc, makeLoc: makeLoc, cmpLoc: cmpLoc, sortMarks: sortMarks,
     foldMap: foldMap, findAll: findAll, snippet: snippet, squash: squash, reanchor: reanchor, contextOf: contextOf,
-    decodeEnt: decodeEnt, xmlParse: xmlParse, resolvePath: resolvePath, parseContainer: parseContainer,
+    decodeEnt: decodeEnt, xmlParse: xmlParse, kids: kids, textOf: textOf, attr: attr, findAllNodes: findAllNodes, resolvePath: resolvePath, parseContainer: parseContainer,
     parseOpf: parseOpf, parseNav: parseNav, parseNcx: parseNcx, cleanText: cleanText,
-    viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown, notesPlain: notesPlain,
+    viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown, notesMarkdown: notesMarkdown, notesPlain: notesPlain,
     estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
     COLOR_NAMES: COLOR_NAMES,
     speechParts: speechParts, speechText: speechText, guessLang: guessLang,
