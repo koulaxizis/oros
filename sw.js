@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.02.00";
+var CACHE_VERSION = "oros-v2.06.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -188,6 +188,31 @@ var PRECACHE_URLS = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-192.png",
   "./icons/icon-maskable-512.png",
+  "./solo.js",
+  "notes/solo.html",
+  "notes/manifest.webmanifest",
+  "calendar/solo.html",
+  "calendar/manifest.webmanifest",
+  "bookmarks/solo.html",
+  "bookmarks/manifest.webmanifest",
+  "todo/solo.html",
+  "todo/manifest.webmanifest",
+  "icons/solo/notes.svg",
+  "icons/solo/notes-192.png",
+  "icons/solo/notes-512.png",
+  "icons/solo/notes-maskable-512.png",
+  "icons/solo/calendar.svg",
+  "icons/solo/calendar-192.png",
+  "icons/solo/calendar-512.png",
+  "icons/solo/calendar-maskable-512.png",
+  "icons/solo/bookmarks.svg",
+  "icons/solo/bookmarks-192.png",
+  "icons/solo/bookmarks-512.png",
+  "icons/solo/bookmarks-maskable-512.png",
+  "icons/solo/todo.svg",
+  "icons/solo/todo-192.png",
+  "icons/solo/todo-512.png",
+  "icons/solo/todo-maskable-512.png",
   "todo/",
   "todo/index.html",
   "todo/todo.css",
@@ -300,6 +325,8 @@ var PRECACHE_URLS = [
   "certificates/dk.js",
   "certificates/certificates.js",
   "certificates/search.js",
+  "certificates/badges.js",
+  "certificates/send.js",
   "invoices/today.js",
   "invoices/mydata-ui.js",
   "crm/",
@@ -307,6 +334,7 @@ var PRECACHE_URLS = [
   "crm/crm.css",
   "crm/core.js",
   "crm/platforms.js",
+  "crm/webform.js",
   "crm/crm.js",
   "crm/search.js",
   "crm/today.js",
@@ -978,6 +1006,7 @@ var PRECACHE_URLS = [
   "atelier/cutout.js",
   "atelier/ai.js",
   "atelier/editpic.js",
+  "atelier/bulk.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",
@@ -1543,6 +1572,8 @@ var PRECACHE_URLS = [
   "vendor/jsqr/jsQR.js",
   "vendor/openpgp/openpgp.min.js",
   "weather/core.js",
+  "weather/rainmap-core.js",
+  "weather/rainmap.js",
   "writer/core.js",
   "writer/merge.js",
   "writer/spell-worker.js",
@@ -1668,8 +1699,14 @@ self.addEventListener("activate", function (event) {
 // refused (?share-files=big). Nothing is parsed or run here.
 var SHARE_INBOX = "oros-share-inbox";
 var SHARE_MAX = 50 * 1024 * 1024;
+// A single app (solo.js) has its own share target,
+// /<id>/solo.html?share-target: the answer goes back to that page, which
+// hands the parameters to its orOS frame.
 function shareTargetPost(request) {
   var home = new URL("./", self.registration.scope).href;
+  var soloPage = null;
+  try { soloPage = /^\/[a-z0-9-]+\/solo\.html$/.exec(new URL(request.url).pathname); } catch (e) { soloPage = null; }
+  if (soloPage) home = new URL(soloPage[0], self.registration.scope).href;
   function go(qs) { return Response.redirect(home + (qs ? "?" + qs : ""), 303); }
   return request.formData().then(function (fd) {
     var files = fd.getAll("files").filter(function (f) {
@@ -1792,7 +1829,8 @@ self.addEventListener("fetch", function (event) {
           url.search.indexOf("share-") === -1 &&
           url.search.indexOf("search=") === -1 &&
           url.search.indexOf("file-open=") === -1 &&
-          url.search.indexOf("app-at=") === -1;
+          url.search.indexOf("app-at=") === -1 &&
+          url.search.indexOf("solo=") === -1;
       },
       function () {
         return caches.match(request).then(function (cached) {
@@ -1800,8 +1838,10 @@ self.addEventListener("fetch", function (event) {
           // SWK-3: the shell page is the right fallback for the TOP
           // window only. For an app frame it loaded orOS inside
           // orOS — a second shell, with its own sync engine, in the
-          // iframe.
-          return frame ? undefined : caches.match("./index.html");
+          // iframe. A single app's frame (/?solo=<id>, solo.js) IS
+          // that window's only shell: it gets the shell page.
+          var soloFrame = frame && url.pathname === "/" && url.searchParams.has("solo");
+          return frame && !soloFrame ? undefined : caches.match("./index.html");
         });
       },
       function () {

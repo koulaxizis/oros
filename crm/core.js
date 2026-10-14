@@ -43,9 +43,11 @@
 //   reminderText(data, fup, today, lang) → { title, body }
 //   calendarOn(data, ymd, today) → [{ k: fup|late|done|close, fup|deal }]
 //   custsForContact(data, contactId) → [cust]
+//   normWf(x) → the web form record | null (crm/webform.js)
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
-//     sorted by id, prefs: { pm, cur, forget }, tombs: { id: deletedAt } }
+//     sorted by id, prefs: { pm, cur, forget }, wf?: web form,
+//     tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
 // ============================================================
@@ -279,6 +281,35 @@
 
   var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg };
 
+  // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
+  // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
+  // back?, dev?, at? } while it is on; { m, off: 1 } once turned off (so
+  // "off" also reaches the other devices). The keys guard only the
+  // messages that become this CRM's own data, so they sync with it
+  // (as Newsletter's list forms do). dev = the device that collects.
+  // Absent until a form is made: older data keeps its bytes.
+  var JWK_PARTS = ["n", "e", "d", "p", "q", "dp", "dq", "qi"];
+  function normWf(x) {
+    if (!x || typeof x !== "object" || !stamp(x)) return null;
+    if (x.off === 1 || x.off === true) return { m: x.m, off: 1 };
+    if (typeof x.k !== "string" || !/^[a-z0-9]{16}$/.test(x.k)) return null;
+    if (typeof x.sec !== "string" || !/^[A-Za-z0-9]{32}$/.test(x.sec)) return null;
+    var j = x.priv;
+    if (!j || typeof j !== "object" || j.kty !== "RSA") return null;
+    var priv = { kty: "RSA", alg: "RSA-OAEP-256" };
+    for (var i = 0; i < JWK_PARTS.length; i++) {
+      var v = j[JWK_PARTS[i]];
+      if (typeof v !== "string" || !/^[A-Za-z0-9_-]{1,700}$/.test(v)) return null;
+      priv[JWK_PARTS[i]] = v;
+    }
+    var o = { m: x.m, k: x.k, sec: x.sec, priv: priv };
+    var back = typeof x.back === "string" ? x.back.trim() : "";
+    if (back.length <= 300 && /^https:\/\/[^\s<>"'@]+$/i.test(back)) o.back = back;
+    if (typeof x.dev === "string" && /^[a-z0-9]{6,20}$/.test(x.dev)) o.dev = x.dev;
+    if (isInt(x.at) && x.at > 0) o.at = x.at;
+    return o;
+  }
+
   function empty() {
     return { ver: DATA_VER, cust: [], deals: [], acts: [], fups: [], tags: [], stg: [], prefs: normPrefs(null), tombs: {} };
   }
@@ -325,6 +356,9 @@
     var pa = normPrefs(a.prefs), pb = normPrefs(b.prefs);
     if (pa.pm > newest) newest = pa.pm;
     if (pb.pm > newest) newest = pb.pm;
+    var wa = normWf(a.wf), wb = normWf(b.wf);
+    var wf = !wa ? wb : (!wb ? wa : (wb.m > wa.m || (wb.m === wa.m && canon(wb) > canon(wa)) ? wb : wa));
+    if (wf && wf.m > newest) newest = wf.m;
 
     var out = { ver: DATA_VER };
     var aliveCust = {};
@@ -341,6 +375,7 @@
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
+    if (wf) out.wf = wf;
     var sorted = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) {
       if (newest - tombs[id] > TOMB_DAYS * DAY_MS) return;
@@ -818,7 +853,7 @@
     newId: newId, isYmd: isYmd, ymdOf: ymdOf, addDays: addDays, dayDiff: dayDiff,
     cleanText: cleanText, fold: fold, asNewCust: asNewCust, validAfm: validAfm, parseMoney: parseMoney, moneyStr: moneyStr,
     normCust: normCust, normDeal: normDeal, normAct: normAct, normFup: normFup, normTag: normTag,
-    normPrefs: normPrefs, norm: norm, merge: merge, empty: empty,
+    normPrefs: normPrefs, normWf: normWf, norm: norm, merge: merge, empty: empty,
     byId: byId, custName: custName, lastContact: lastContact, lastContactMap: lastContactMap,
     stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,

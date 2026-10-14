@@ -23,7 +23,8 @@
 //     onlyAt 0|1 (certificates only for people marked present, since 1.2.0) }
 // person: { id "p…", m, e (event id), n, n2, em, g, x, no (0 = none),
 //   iss (YYYY-MM-DD when numbered), rv 0|1 (revoked), at 0|1 (came,
-//   since 1.2.0), o (list order) }
+//   since 1.2.0), ms (ms time the email with the certificate was sent
+//   through the relay, since 1.2.0), o (list order) }
 // key (signs the check QR codes, see sign.js): { id "k…", m, made,
 //   x, y, d } (JWK parts of an ECDSA P-256 key), ≤ 20, newest made signs
 // Merge: LWW per entity by m (equal m: the larger canonical JSON),
@@ -224,6 +225,7 @@
     if (isInt(x.no) && x.no >= 1 && x.no <= 999999) { o.no = x.no; var iss = ymd(x.iss); if (iss) o.iss = iss; }
     if (bit(x.rv, 0)) o.rv = 1;
     if (bit(x.at, 0)) o.at = 1;
+    if (stamp(x.ms)) o.ms = x.ms;
     o.o = typeof x.o === "number" && isFinite(x.o) && x.o >= 0 ? Math.floor(x.o) : 0;
     return o;
   }

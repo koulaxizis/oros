@@ -24,7 +24,7 @@ Before anything leaves your device, orOS encrypts it with your encryption passph
 
 ## Online services some apps use
 orOS itself runs from your device, but some apps need the internet for what they show. They contact these services only when you use that feature:
-- Weather (and the weather in the top bar): Open-Meteo, for forecasts, city search and air quality (Copernicus CAMS), and MeteoAlarm for official warnings.
+- Weather (and the weather in the top bar): Open-Meteo, for forecasts, city search and air quality (Copernicus CAMS), MeteoAlarm for official warnings, and, only when you open the rain map, NASA GIBS (satellite rain pictures, IMERG) with OpenStreetMap map tiles.
 - [Radio](app:radio): Radio Browser, a community list of stations. The stations play from their own servers.
 - [Maps](app:maps): OpenStreetMap, OpenTopoMap and Esri map images, Photon place search, OSRM and FOSSGIS routes, Transitous for public transport, and AWS Terrain Tiles for the elevation of a track you plan. `Discover` asks the Overpass API, Wikipedia and Panoramax about the area you're looking at. Notes, place edits, quests and GPS trace uploads talk to the OpenStreetMap API and the Overpass API, only when you use them; writing needs your own OpenStreetMap account. `Offline maps` downloads an area you choose from Protomaps' builds of OpenStreetMap. The Maps help lists what each one receives.
 - [Television](app:television): iptv-org, a community list of channels. The channels play from their own servers.
@@ -42,6 +42,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Wiki](app:wiki): Wikipedia, only when you use `Start from Wikipedia`; only the title you type is sent.
 - [Library](app:library): Wiktionary, only for `Look up` and only after you agree; only the word is sent. `Online catalogues` reads Project Gutenberg, Standard Ebooks or an OPDS catalogue you add.
 - [Newsletter](app:newsletter): your own mail account or sending provider, via the orOS mail relay; `Check domain` asks Cloudflare's public DNS for your domain's SPF, DKIM and DMARC records.
+- [CRM](app:crm): only if you make a `Web form`, what visitors send with it goes through the orOS relay, encrypted for your CRM, and is kept there at most 30 days until your CRM picks it up.
 - [Assistant](app:assistant): only the AI service you choose, with your own key, straight from your browser.
 - [Chess](app:chess): Chess.com's public data, only when you open `Online accounts`; only the username you type is sent, never a password. Lichess, only when you use it there: you sign in on lichess.org (orOS never sees the password), the sign-in is sealed on this device and never synced, and a game goes to Lichess only when you press `Analyse this game on Lichess` or play on Lichess (after you press `Allow playing`).
 - Sync: Dropbox, only if you connect it.

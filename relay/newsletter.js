@@ -46,9 +46,9 @@ export const SQL = {
   dropList: "DELETE FROM nl_list WHERE k = ?1"
 };
 
-const K_RE = /^[a-z0-9]{16}$/;
+export const K_RE = /^[a-z0-9]{16}$/;
 const TOK_RE = /^[a-z0-9]{8,16}$/;
-const SEC_RE = /^[A-Za-z0-9]{32}$/;
+export const SEC_RE = /^[A-Za-z0-9]{32}$/;
 const DAY = 86400000;
 
 // ---------- storage ----------
@@ -73,32 +73,32 @@ function b64(bytes) {
   for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
   return btoa(s);
 }
-async function sha256Hex(s) {
+export async function sha256Hex(s) {
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
   return Array.from(h, (b) => (b < 16 ? "0" : "") + b.toString(16)).join("");
 }
 // Equal-length hex strings compared in full (no early exit).
-function sameHex(a, b) {
+export function sameHex(a, b) {
   if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let x = 0;
   for (let i = 0; i < a.length; i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return x === 0;
 }
-function validEmail(e) {
+export function validEmail(e) {
   return typeof e === "string" && e.length >= 3 && e.length <= 254 && !/[\r\n\0]/.test(e) &&
     /^[^\s<>()",;:\\\[\]@]+@[^\s<>()",;:\\\[\]@]+\.[^\s<>()",;:\\\[\]@]+$/.test(e);
 }
-function oneLine(s, max) {
+export function oneLine(s, max) {
   return String(s || "").replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
-function validBack(v) {
+export function validBack(v) {
   if (v === "" || v === undefined || v === null) return true;
   if (typeof v !== "string" || v.length > NL_LIMITS.back) return false;
   let u;
   try { u = new URL(v); } catch (e) { return false; }
   return u.protocol === "https:" && !u.username && !u.password && !/[\s<>"']/.test(v);
 }
-function validPub(p) {
+export function validPub(p) {
   if (!p || typeof p !== "object" || Array.isArray(p)) return false;
   if (JSON.stringify(p).length > NL_LIMITS.pubJson) return false;
   return p.kty === "RSA" && p.alg === "RSA-OAEP-256" && p.e === "AQAB" &&
@@ -110,7 +110,7 @@ function modulusOk(n) {
   try { bin = atob(n.replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "") + "==".slice(0, (4 - n.length % 4) % 4)); } catch (e) { return false; }
   return bin.length === 256 && bin.charCodeAt(0) >= 0x80 && (bin.charCodeAt(255) & 1) === 1;
 }
-function importPub(jwk) {
+export function importPub(jwk) {
   return crypto.subtle.importKey("jwk", { kty: "RSA", alg: "RSA-OAEP-256", e: jwk.e, n: jwk.n, ext: true },
     { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt"]);
 }
@@ -204,7 +204,7 @@ const TXT = {
 function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
 }
-function langOf(request, given) {
+export function langOf(request, given) {
   if (given === "el" || given === "en") return given;
   return /^\s*el\b/i.test(request.headers.get("Accept-Language") || "") ? "el" : "en";
 }
@@ -218,6 +218,13 @@ const PAGE_HEADERS = {
 };
 export function page(status, lang, key, formAction) {
   const t = (TXT[lang] || TXT.en)[key];
+  return renderPage(status, lang, t[0], t[1], formAction ? t[2] : "", formAction);
+}
+// The relay's one look for a public page (also relay/crmform.js): a
+// title, one paragraph and, for the unsubscribe page, one button. No
+// script; every text escaped.
+export function renderPage(status, lang, title, text, btn, formAction) {
+  const t = [title, text, btn];
   const form = formAction
     ? `<form method="post" action="${esc(formAction)}"><input type="hidden" name="List-Unsubscribe" value="One-Click">` +
       `<button type="submit">${esc(t[2])}</button></form>`
@@ -232,9 +239,11 @@ export function page(status, lang, key, formAction) {
   return new Response(body, { status, headers: PAGE_HEADERS });
 }
 
-async function readSmall(request) {
+// The body as text, or null past `max` bytes (default: a sign-up form).
+export async function readSmall(request, max) {
+  max = max || NL_LIMITS.formBytes;
   const len = +(request.headers.get("Content-Length") || 0);
-  if (len > NL_LIMITS.formBytes) return null;
+  if (len > max) return null;
   const reader = request.body ? request.body.getReader() : null;
   if (!reader) return "";
   const chunks = [];
@@ -243,7 +252,7 @@ async function readSmall(request) {
     const { done, value } = await reader.read();
     if (done) break;
     size += value.length;
-    if (size > NL_LIMITS.formBytes) { try { await reader.cancel(); } catch (e) {} return null; }
+    if (size > max) { try { await reader.cancel(); } catch (e) {} return null; }
     chunks.push(value);
   }
   const all = new Uint8Array(size);
@@ -251,6 +260,9 @@ async function readSmall(request) {
   for (const c of chunks) { all.set(c, o); o += c.length; }
   return new TextDecoder().decode(all);
 }
+
+// The honeypot: a field hidden from people that bots fill in.
+export function isBot(f) { return !!(f.get("website") || "").trim(); }
 
 // Every request under /nl/ (after the rate limit in core.js).
 export async function handleNl(request, env, url, now) {
@@ -303,7 +315,7 @@ async function afterRead(request, env, url, now, kind, k, tok, lang, text) {
   const thanks = () => (list.back && validBack(list.back)
     ? new Response(null, { status: 303, headers: { Location: list.back, "Referrer-Policy": "no-referrer", "Cache-Control": "no-store" } })
     : page(200, lang, "thanks"));
-  if ((f.get("website") || "").trim()) return thanks();          // a bot filled the hidden field
+  if (isBot(f)) return thanks();                                  // a bot filled the hidden field
   const email = (f.get("email") || "").trim();
   if (!validEmail(email)) return page(400, lang, "bad");
   const n = await q(d, SQL.countRows, k).first();
