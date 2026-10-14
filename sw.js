@@ -307,6 +307,7 @@ var PRECACHE_URLS = [
   "crm/crm.css",
   "crm/core.js",
   "crm/platforms.js",
+  "crm/webform.js",
   "crm/crm.js",
   "crm/search.js",
   "crm/today.js",

@@ -41,6 +41,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Mail](app:mail): your own mail provider, through the orOS mail relay, which passes your mail through and keeps nothing.
 - [Library](app:library): Wiktionary, only for `Look up` and only after you agree; only the word is sent. `Online catalogues` reads Project Gutenberg, Standard Ebooks or an OPDS catalogue you add.
 - [Newsletter](app:newsletter): your own mail account or sending provider, via the orOS mail relay; `Check domain` asks Cloudflare's public DNS for your domain's SPF, DKIM and DMARC records.
+- [CRM](app:crm): only if you make a `Web form`, what visitors send with it goes through the orOS relay, encrypted for your CRM, and is kept there at most 30 days until your CRM picks it up.
 - [Assistant](app:assistant): only the AI service you choose, with your own key, straight from your browser.
 - [Chess](app:chess): Chess.com's public data, only when you open `Online accounts`; only the username you type is sent, never a password. Lichess, only when you use it there: you sign in on lichess.org (orOS never sees the password), the sign-in is sealed on this device and never synced, and a game goes to Lichess only when you press `Analyse this game on Lichess` or play on Lichess (after you press `Allow playing`).
 - Sync: Dropbox, only if you connect it.
