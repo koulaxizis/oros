@@ -5986,3 +5986,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - phone.js: each change from the phone is applied once (an event added on the phone no longer shows up three times), and contacts edited on the phone come back into orOS.
 - android/: ContactsWriter marks contacts written before 1.88.00 as editable, so their phone-side edits sync too; PhoneBridge acknowledges each change.
   - Tests: tests/phone.test.js (de-duplication, older contacts); Android build in CI. Real-phone check by Chris after this merge.
+
+### 2026-10-14 — Chess: open, save and review games as PGN (games online, wave 1) (#323) — 1.89.00
+- chess/: "Open or save a game (PGN)" opens a .pgn file or pasted text (a file with many games lists them), saves or copies the game on the board as PGN, and reviews an opened game move by move with optional Hard-engine analysis and "Play from here".
+- fileopen.js + manifest.webmanifest: .pgn opens in Chess from the system's "Open with" and the share target; deep link `__orosOpenAt("chess", { pgn })`.
+- No network and no new synced data; games from a position are not recorded. Help (EN/EL) and the install topic updated.
+  - Tests: tests/chess.test.js (PGN parse/write, illegal moves, tags), tests/fileopen.test.js.
