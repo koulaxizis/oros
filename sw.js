@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.16.00";
+var CACHE_VERSION = "oros-v2.17.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -255,6 +255,8 @@ var PRECACHE_URLS = [
   "crm/manifest.webmanifest",
   "timesheet/solo.html",
   "timesheet/manifest.webmanifest",
+  "gamecenter/solo.html",
+  "gamecenter/manifest.webmanifest",
   "icons/solo/notes.svg",
   "icons/solo/notes-192.png",
   "icons/solo/notes-512.png",
@@ -387,6 +389,10 @@ var PRECACHE_URLS = [
   "icons/solo/timesheet-192.png",
   "icons/solo/timesheet-512.png",
   "icons/solo/timesheet-maskable-512.png",
+  "icons/solo/gamecenter.svg",
+  "icons/solo/gamecenter-192.png",
+  "icons/solo/gamecenter-512.png",
+  "icons/solo/gamecenter-maskable-512.png",
   "todo/",
   "todo/index.html",
   "todo/todo.css",
