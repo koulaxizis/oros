@@ -8,8 +8,9 @@
 // "use_as_origin"); the first message carries a MessagePort. In every
 // other browser nothing here runs: no port ever arrives.
 //
-// Direction: orOS → phone, read-only on the phone (the phone shows an
-// "orOS" account; edits stay in orOS). Decryption stays in the page:
+// Direction: orOS → phone as an "orOS" account, and since v2 back:
+// edits made on the phone come in as {t:"changes"} (own Calendar
+// events and Contacts; feeds stay read-only). Decryption stays in the page:
 // the app only ever receives the rows below, never keys or blobs.
 // Opt-in per device and per kind (localStorage "oros-phone", never
 // synced). Each send is a full snapshot; the app diffs by id + hash.
@@ -31,7 +32,8 @@
 // Messages (JSON strings on the port):
 //   page → app: {t:"state"} · {t:"contacts"|"calendar", seq, items}
 //               {t:"clear", what}
-//               {t:"applied", what, refs}   (v2: phone changes taken)
+//               {t:"applied", what, refs[, ids]}   (v2: phone changes
+//                 taken; ids: orOS id of each new contact by ref)
 //   app → page: {t:"state", v, contacts, calendar, app}
 //               {t:"changes", what, items}   (v2: edits made on the phone)
 //               {t:"done", what, seq, added, updated, removed}
@@ -372,8 +374,104 @@
     return { blob: b, refs: refs };
   }
 
+  // Phone → orOS Contacts. Rows come in contactRows' shape (t for
+  // type); fields only orOS has (labels, relations, IM, website
+  // types) are kept from the stored contact. A phone photo is taken
+  // only when orOS has none: the phone stores a re-encoded copy.
+  // Returns { blob, refs, ids }: ids gives a new contact's orOS id
+  // by ref, which the app stores as the row's SOURCE_ID.
+  var WEB_T = { home: 1, work: 1, blog: 1, other: 1 };
+  function contactIn(c, old) {
+    function list(a, max, T) {
+      var out = [], seen = {};
+      (Array.isArray(a) ? a : []).forEach(function (r) {
+        var v = r && typeof r.v === "string" ? r.v.trim().slice(0, max) : "";
+        if (!v || seen[v.toLowerCase()]) return;
+        seen[v.toLowerCase()] = 1;
+        out.push({ v: v, type: T[r.t] ? r.t : "other" });
+      });
+      return out;
+    }
+    var oldWeb = {};
+    ((old && old.websites) || []).forEach(function (w) { if (w && w.v) oldWeb[w.v] = w.type; });
+    var n = {
+      given: str(c.given, 60).trim(), middle: str(c.middle, 60).trim(), family: str(c.family, 60).trim(),
+      nickname: str(c.nickname, 60).trim(), org: str(c.org, 80).trim(), jobTitle: str(c.title, 80).trim(),
+      phones: list(c.phones, 40, PHONE_T),
+      emails: list(c.emails, 120, EMAIL_T),
+      addresses: (Array.isArray(c.addresses) ? c.addresses : []).map(function (a) {
+        if (!a || typeof a !== "object") return null;
+        var r = { street: str(a.street, 120).trim(), city: str(a.city, 60).trim(), zip: str(a.zip, 20).trim(),
+                  region: str(a.region, 60).trim(), country: str(a.country, 60).trim(),
+                  type: a.t === "home" || a.t === "work" ? a.t : "other" };
+        return r.street || r.city || r.zip || r.region || r.country ? r : null;
+      }).filter(Boolean),
+      websites: (Array.isArray(c.websites) ? c.websites : []).map(function (u) {
+        u = typeof u === "string" ? u.trim().slice(0, 300) : "";
+        return u ? { v: u, type: WEB_T[oldWeb[u]] ? oldWeb[u] : "other" } : null;
+      }).filter(Boolean),
+      events: (Array.isArray(c.events) ? c.events : []).map(function (ev) {
+        // "1990-05-10", "--05-10", "19900510", "1990-05-10T00:00:00Z"
+        var m = ev && typeof ev.d === "string" && ev.d.match(/^(\d{4}|-)-?(\d{2})-?(\d{2})/);
+        if (!m || +m[2] < 1 || +m[2] > 12 || +m[3] < 1 || +m[3] > 31) return null;
+        var y = m[1] === "-" ? null : +m[1];
+        return {
+          day: m[2] + "-" + m[3],
+          year: y && y >= 1850 && y <= 2200 ? y : null,
+          type: ev.t === "birthday" || ev.t === "anniversary" ? ev.t : "custom",
+          label: str(ev.label, 40).trim()
+        };
+      }).filter(Boolean),
+      note: str(c.note, 500),
+      starred: c.starred === true
+    };
+    if (!(n.given || n.middle || n.family || n.nickname || n.org || n.phones.length || n.emails.length)) return null;
+    return n;
+  }
+  function applyContactChanges(blob, items, now) {
+    var b = blob && typeof blob === "object" ? JSON.parse(JSON.stringify(blob)) : {};
+    if (!Array.isArray(b.contacts)) b.contacts = [];
+    if (!Array.isArray(b.deleted)) b.deleted = [];
+    if (b.ver == null) b.ver = 1;
+    now = now || Date.now();
+    var refs = [], ids = {};
+    function find(id) { for (var i = 0; i < b.contacts.length; i++) if (b.contacts[i] && b.contacts[i].id === id) return i; return -1; }
+    (Array.isArray(items) ? items : []).forEach(function (c) {
+      if (!c || typeof c.ref !== "string") return;
+      var i = typeof c.id === "string" && c.id ? find(c.id) : -1;
+      refs.push(c.ref);
+      if (c.op === "delete") {
+        if (i !== -1) {
+          b.contacts.splice(i, 1);
+          b.deleted = b.deleted.filter(function (d) { return d && d.id !== c.id; });
+          b.deleted.push({ id: c.id, mtime: now });
+        }
+        return;
+      }
+      var old = i !== -1 ? b.contacts[i] : null;
+      var n = contactIn(c, old);
+      if (!n) return;
+      // Contacts keeps photos up to 50000 characters as a data URL.
+      var m = typeof c.photo === "string" && /^[A-Za-z0-9+\/=]+$/.test(c.photo) && c.photo.length <= 49900
+        ? "data:image/" + (c.photo.slice(0, 5) === "iVBOR" ? "png" : "jpeg") + ";base64," + c.photo : null;
+      if (old) {
+        b.contacts[i] = Object.assign({}, old, n, { mtime: now });
+        if (!old.photo && m) b.contacts[i].photo = m;
+      } else {
+        var id = newEventId(now);
+        b.contacts.push(Object.assign({ id: id }, n, {
+          im: [], relations: [], labelIds: [],
+          photo: m, mtime: now
+        }));
+        ids[c.ref] = id;
+      }
+    });
+    return { blob: b, refs: refs, ids: ids };
+  }
+
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
-              applyCalendarChanges: applyCalendarChanges, eventIn: eventIn };
+              applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
+              applyContactChanges: applyContactChanges };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -463,7 +561,7 @@
       };
       emit();
       pushAll(true);
-    } else if (m.t === "changes" && m.what === "calendar" && Array.isArray(m.items)) {
+    } else if (m.t === "changes" && (m.what === "calendar" || m.what === "contacts") && Array.isArray(m.items)) {
       takeChanges(m.what, m.items);
     } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar")) {
       var p = prefs();
@@ -476,22 +574,23 @@
     }
   }
 
-  // Phone → orOS: the Calendar is the data's writer when it is open,
-  // so an open Calendar reloads after the write (frames expose
+  // Phone → orOS: Calendar / Contacts is the data's writer when it is
+  // open, so an open app reloads after the write (frames expose
   // __orosPhoneReload); closed, the write plus markDirty is what its
   // sync slice (a localStorage proxy) pushes, like any local change.
   function takeChanges(kind, items) {
     if (!prefs()[kind]) return;
     var res;
     try {
-      res = applyCalendarChanges(readBlob(kind), items, Date.now());
+      res = kind === "contacts" ? applyContactChanges(readBlob(kind), items, Date.now())
+                                : applyCalendarChanges(readBlob(kind), items, Date.now());
       localStorage.setItem(KEYS[kind], JSON.stringify(res.blob));
     } catch (e) { return; }
     try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {}
     Array.prototype.forEach.call(document.querySelectorAll("iframe"), function (f) {
       try { if (f.contentWindow && typeof f.contentWindow.__orosPhoneReload === "function") f.contentWindow.__orosPhoneReload(kind); } catch (e) {}
     });
-    send({ t: "applied", what: kind, refs: res.refs });
+    send(res.ids ? { t: "applied", what: kind, refs: res.refs, ids: res.ids } : { t: "applied", what: kind, refs: res.refs });
     push(kind, true);
   }
 

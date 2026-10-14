@@ -203,3 +203,76 @@ test("phone → orOS: series edits, occurrences and RRULE round trip (v2)", () =
     rrule: "FREQ=MONTHLY;BYMONTHDAY=28,29,30,31;BYSETPOS=-1;UNTIL=20261231", exdate: "20260228" });
   assert.deepEqual(r.recur, { freq: "M", interval: 1, until: "2026-12-31", exdates: ["2026-02-28"] });
 });
+
+test("phone → orOS: new, edited and deleted contacts (v2)", () => {
+  const blob = {
+    ver: 1, labels: [], deleted: [],
+    contacts: [
+      { id: "c1", given: "Anna", family: "Pappa", phones: [{ v: "+30 690", type: "mobile" }], emails: [],
+        websites: [{ v: "https://a.gr", type: "blog" }], im: [{ v: "anna", type: "home" }],
+        relations: [{ with: "c2", type: "friend" }], labelIds: ["lbl-x"], photo: "data:image/jpeg;base64,AAAA",
+        events: [], addresses: [], note: "old", starred: false, mtime: 1 },
+      { id: "c2", given: "Bob", phones: [], emails: [{ v: "b@x.gr", type: "work" }], mtime: 1 }
+    ]
+  };
+  const items = [
+    { ref: "r10v3", id: "c1", op: "upsert", given: "Anna", middle: "", family: "Pappa-Nikolaou", nickname: "",
+      org: "", title: "", note: "", starred: true,
+      phones: [{ v: "+30 690", t: "mobile" }, { v: "210 123", t: "home" }], emails: [],
+      addresses: [{ street: "Odos 1", city: "", region: "", zip: "", country: "", t: "home" }],
+      websites: ["https://a.gr", "https://b.gr"],
+      events: [{ t: "birthday", d: "1990-05-10", label: "" }, { t: "other", d: "--12-01", label: "Name day" }],
+      photo: "BBBB" },
+    { ref: "r11v1", id: "c2", op: "delete" },
+    { ref: "r12v1", id: null, op: "upsert", given: "", middle: "", family: "", nickname: "", org: "", title: "",
+      note: "", starred: false, phones: [{ v: "6944", t: "mobile" }], emails: [], addresses: [], websites: [],
+      events: [{ t: "birthday", d: "19851103", label: "" }], photo: "iVBORw0K" },
+    { ref: "r13v1", id: null, op: "upsert", given: "", phones: [], emails: [] }
+  ];
+  const res = P.applyContactChanges(blob, items, 500);
+  assert.deepEqual(res.refs, ["r10v3", "r11v1", "r12v1", "r13v1"]);
+  assert.equal(blob.contacts.length, 2, "input untouched");
+
+  const a = res.blob.contacts.find((c) => c.id === "c1");
+  assert.equal(a.family, "Pappa-Nikolaou");
+  assert.equal(a.note, "");
+  assert.equal(a.starred, true);
+  assert.deepEqual(a.phones, [{ v: "+30 690", type: "mobile" }, { v: "210 123", type: "home" }]);
+  assert.deepEqual(a.websites, [{ v: "https://a.gr", type: "blog" }, { v: "https://b.gr", type: "other" }]);
+  assert.deepEqual(a.events, [
+    { day: "05-10", year: 1990, type: "birthday", label: "" },
+    { day: "12-01", year: null, type: "custom", label: "Name day" }
+  ]);
+  assert.equal(a.addresses[0].type, "home");
+  assert.deepEqual(a.im, [{ v: "anna", type: "home" }], "orOS-only fields kept");
+  assert.deepEqual(a.labelIds, ["lbl-x"]);
+  assert.equal(a.relations.length, 1);
+  assert.equal(a.photo, "data:image/jpeg;base64,AAAA", "orOS photo wins");
+  assert.equal(a.mtime, 500);
+
+  assert.ok(!res.blob.contacts.some((c) => c.id === "c2"));
+  assert.deepEqual(res.blob.deleted, [{ id: "c2", mtime: 500 }]);
+
+  const id = res.ids.r12v1;
+  assert.ok(id && !res.ids.r13v1, "only the new contact with data gets an id");
+  const n = res.blob.contacts.find((c) => c.id === id);
+  assert.deepEqual(n.phones, [{ v: "6944", type: "mobile" }]);
+  assert.deepEqual(n.events, [{ day: "11-03", year: 1985, type: "birthday", label: "" }]);
+  assert.equal(n.photo, "data:image/png;base64,iVBORw0K");
+  assert.deepEqual([n.im, n.relations, n.labelIds], [[], [], []]);
+  assert.equal(res.blob.contacts.length, 2);
+});
+
+test("phone → orOS contacts round trip: an untouched row comes back unchanged", () => {
+  const blob = { ver: 1, labels: [], deleted: [], contacts: [
+    { id: "k1", given: "Eleni", middle: "", family: "K", nickname: "Lena", org: "ACME", jobTitle: "CEO",
+      phones: [{ v: "1", type: "work" }], emails: [{ v: "e@x.gr", type: "home" }],
+      addresses: [{ street: "S", city: "C", zip: "1", region: "R", country: "GR", type: "work" }],
+      websites: [], im: [], events: [{ day: "02-29", year: null, type: "anniversary", label: "" }],
+      relations: [], labelIds: [], starred: false, note: "n", photo: null, mtime: 1 }
+  ] };
+  const row = P.contactRows(blob)[0];
+  const res = P.applyContactChanges(blob, [Object.assign({ ref: "r1v1", op: "upsert" }, row)], 9);
+  const back = Object.assign({}, res.blob.contacts[0], { mtime: 1 });
+  assert.deepEqual(back, blob.contacts[0]);
+});

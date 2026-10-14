@@ -252,20 +252,26 @@ public class PhoneBridge {
         return o;
     }
 
-    /** Edits made in the phone's "orOS" calendar go to the page (v2). */
+    /** Edits made on the phone in the orOS account go to the page (v2). */
     private void sendChanges() {
-        if (!granted(CALENDAR_PERMS)) return;
+        sendChanges("contacts");
+        sendChanges("calendar");
+    }
+
+    private void sendChanges(String what) {
+        boolean contacts = "contacts".equals(what);
+        if (!granted(contacts ? CONTACTS_PERMS : CALENDAR_PERMS)) return;
         try {
-            JSONArray ch = new CalendarWriter(app).changes();
+            JSONArray ch = contacts ? new ContactsWriter(app).changes() : new CalendarWriter(app).changes();
             if (ch.length() == 0) return;
             JSONObject o = new JSONObject();
             o.put("t", "changes");
-            o.put("what", "calendar");
+            o.put("what", what);
             o.put("items", ch);
-            diag("calendar changes sent: " + ch.length());
+            diag(what + " changes sent: " + ch.length());
             send(o);
         } catch (Exception e) {
-            diag("calendar changes failed: " + e);
+            diag(what + " changes failed: " + e);
         }
     }
 
@@ -285,12 +291,19 @@ public class PhoneBridge {
                     send(state());
                     sendChanges();
                     return;
-                case "applied":
-                    if ("calendar".equals(m.optString("what")) && granted(CALENDAR_PERMS)) {
-                        new CalendarWriter(app).ack(m.optJSONArray("refs"));
-                        diag("calendar changes taken: " + (m.optJSONArray("refs") == null ? 0 : m.optJSONArray("refs").length()));
+                case "applied": {
+                    String w = m.optString("what");
+                    JSONArray refs = m.optJSONArray("refs");
+                    if ("calendar".equals(w) && granted(CALENDAR_PERMS)) {
+                        new CalendarWriter(app).ack(refs);
+                    } else if ("contacts".equals(w) && granted(CONTACTS_PERMS)) {
+                        new ContactsWriter(app).ack(refs, m.optJSONObject("ids"));
+                    } else {
+                        return;
                     }
+                    diag(w + " changes taken: " + (refs == null ? 0 : refs.length()));
                     return;
+                }
                 case "contacts":
                 case "calendar": {
                     JSONArray items = m.optJSONArray("items");
@@ -315,7 +328,7 @@ public class PhoneBridge {
                     done.put("kept", n[3]);
                     diag(t + " written: +" + n[0] + " ~" + n[1] + " -" + n[2] + " =" + n[3]);
                     send(done);
-                    if ("calendar".equals(t)) sendChanges();
+                    sendChanges(t);
                     return;
                 }
                 case "clear":
