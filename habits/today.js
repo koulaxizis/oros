@@ -2,9 +2,12 @@
 // orOS Habits — Today provider (v1.0.0)
 // Loaded by the shell (today/host.js) through apps.json "today",
 // after habits/core.js. Read-only: reads oros-habits-data, never
-// writes. One row per habit scheduled for today and not ticked yet
-// (OrosHabitsCore.dueOn, the app's own rule). Flexible habits (no
-// weekdays) are never "due", so they stay out. Past days are not
+// writes. One row per habit scheduled for today and not done yet
+// (OrosHabitsCore.dueOn, the app's own rule): fixed weekdays on their
+// days, "X times per week / month" while the period's count is not
+// met; skipped days stay out. Flexible habits (no weekdays) are never
+// "due", so they stay out. A measurable habit shows today's value and
+// target in its title ("Read · 4 / 10 pages"). Past days are not
 // shown: a missed habit is not a late task. Opens Habits on the
 // current period (__orosOpenHabits(0)), where the habit is ticked.
 // ============================================================
@@ -18,11 +21,17 @@
     collect: function (ctx) {
       var C = root.OrosHabitsCore, raw = ctx.readJSON(KEY);
       if (!C || !raw) return [];
-      return C.dueOn(raw, ctx.today).map(function (h) {
+      var ix = C.index(raw);
+      return C.dueOn(ix, ctx.today).map(function (h) {
+        var title = h.name;
+        if (C.isNum(h)) {
+          var v = C.valueOn(ix, h.id, ctx.today);
+          title += " · " + (h.num.c === "le" ? "≤ " : "") + (v === null ? 0 : v) + " / " + h.num.t + (h.num.u ? " " + h.num.u : "");
+        }
         return {
           id: h.id,
           due: ctx.today,
-          title: h.name,
+          title: title,
           kind: "task",
           target: { habit: h.id }
         };

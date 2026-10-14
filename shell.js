@@ -1125,6 +1125,7 @@
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
       tickSafe("healthCheckTick", healthCheckTickThrottled); // Health: reminder times per measurement (60s throttle)
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
+      tickSafe("habitsCheckTick", habitsCheckTickThrottled); // Habits: per-habit reminder time (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
       tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
@@ -1870,6 +1871,48 @@
       title: txt.title,
       body: txt.body,
       deepLink: "system:open:water"
+    });
+  }
+
+  // Habits — per-habit reminder time (Habits wave 4). Reads
+  // "oros-habits-data" directly (works with the app CLOSED) and asks
+  // habits/core.js (loaded by index.html, the SAME file the app, the
+  // Calendar feed and Today run) which habits are due: from the time
+  // on for 4 hours, on a day the habit still needs (not done, not
+  // skipped; fixed weekdays only on their days; "X per week / month"
+  // only while the period is not met). One notification per habit and
+  // day; the key ("r-<id>-<ymd>") is the same on every device (inbox
+  // dedup) and in phone.js reminderRows (the Android app rings it with
+  // orOS closed). Honest limit: orOS closed without the Android app =
+  // nothing fires; more than 4 hours late = dropped, not caught up.
+  var habitsLastTick = 0;
+  function habitsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - habitsLastTick < 60000) return;
+    habitsLastTick = now;
+    habitsCheckTick();
+  }
+  function habitsCheckTick() {
+    var HCore = window.OrosHabitsCore, N = window.orosNotifs;
+    if (!HCore || typeof HCore.dueReminders !== "function") return;   // stale bundle — silent
+    if (!(N && typeof N.emit === "function")) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-habits-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.habits) || !Array.isArray(raw.comps)) return;
+    var due = HCore.dueReminders(raw, Date.now());
+    if (!due.length) return;
+    var el = state.lang === "el";
+    var title = window.t("app.habits");
+    if (title === "app.habits") title = el ? "Συνήθειες" : "Habits";   // missing-key fallback
+    due.forEach(function (r) {
+      N.emit({
+        ns: "habits",
+        key: r.key,
+        type: "reminder",
+        title: title,
+        body: (el ? "Ώρα για: " : "Time for: ") + String(r.name).slice(0, 120),
+        deepLink: "habits:0"
+      });
     });
   }
 

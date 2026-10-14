@@ -560,7 +560,9 @@
   //   alarms: oros-alarms list ({id, at, label, repeat, state})
   //   water:  { data, core }  (water/core.js parse + reminderDue)
   //   todo:   { data, core }  (todo/core.js dueSummary)
-  //   lang: "en" | "el"; alarmTitle / todoTitle: the shell's words
+  //   habits: { data, core }  (habits/core.js needsReminder: each
+  //           habit's reminder time on the days it still needs)
+  //   lang: "en" | "el"; alarmTitle / todoTitle / habitsTitle: the shell's words
   var REM_HOURS = 48, TODO_HOUR = 9;
   function reminderRows(src, now) {
     src = src || {};
@@ -606,6 +608,25 @@
                              : sum.count + (sum.count === 1 ? " task is due or overdue" : " tasks are due or overdue"),
                     link: sum.earliestList ? "todo:" + sum.earliestList : "" });
       }
+    }
+    var HB = src.habits;
+    if (HB && HB.core && HB.data && typeof HB.core.needsReminder === "function") {
+      var hix = null;
+      try { hix = HB.core.index(HB.data); } catch (e) { hix = null; }
+      (hix ? HB.core.living(HB.data) : []).forEach(function (h) {
+        if (typeof h.rem !== "number") return;
+        for (var hd = 0; hd < 3; hd++) {
+          var hDay = new Date(dayAt(now, hd, 0));
+          hDay.setHours(Math.floor(h.rem / 60), h.rem % 60, 0, 0);
+          var hAt = hDay.getTime();
+          if (hAt <= now || hAt > end) continue;
+          var hy = ymdLocal(hAt);
+          if (!HB.core.needsReminder(hix, h, hy)) continue;
+          rows.push({ id: "habits:" + HB.core.remKey(h.id, hy), at: hAt, kind: "note", ns: "habits",
+                      title: str(src.habitsTitle, 60) || (el ? "Συνήθειες" : "Habits"),
+                      body: (el ? "Ώρα για: " : "Time for: ") + str(h.name, 120), link: "habits:0" });
+        }
+      });
     }
     rows.sort(function (a, b) { return a.at - b.at || (a.id < b.id ? -1 : 1); });
     return rows.slice(0, 100);
@@ -922,10 +943,15 @@
     try {
       if (root.OrosTodoCore) todo = { core: root.OrosTodoCore, data: JSON.parse(localStorage.getItem("oros-todo-data") || "null") };
     } catch (e) {}
+    var habits = null;
+    try {
+      if (root.OrosHabitsCore) habits = { core: root.OrosHabitsCore, data: JSON.parse(localStorage.getItem("oros-habits-data") || "null") };
+    } catch (e) {}
     function tr(k, d) { var v = typeof T === "function" ? T(k) : ""; return v && v !== k ? v : d; }
     var lang = (document.documentElement.lang || "en").slice(0, 2);
-    return { alarms: alarms, water: water, todo: todo, lang: lang,
-             alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do") };
+    return { alarms: alarms, water: water, todo: todo, habits: habits, lang: lang,
+             alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do"),
+             habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits") };
   }
   function pushReminders(force) {
     var p = prefs();
@@ -933,7 +959,8 @@
     var now = Date.now(), raw = "";
     try {
       raw = [localStorage.getItem("oros-alarms"), localStorage.getItem("oros-water-data"),
-             localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs")].join("\n");
+             localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs"),
+             localStorage.getItem("oros-habits-data")].join("\n");
     } catch (e) { return; }
     // Water rows depend on the hour too: recheck every 5 minutes.
     var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone();
