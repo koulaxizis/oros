@@ -20,13 +20,14 @@
 //     city, region, zip, country, t}], websites[], events[{t, d,
 //     label}], note, starred, photo }]
 //   eventRows(blob, tz) → [{ id, h, title, desc, loc, allDay,
-//     dtstart, dtend, duration, tz, rrule, exdate, remind }]
+//     dtstart, dtend, duration, tz, rrule, exdate, remind, color }]
+//     color = the event's label colour "#rrggbb" (null: the calendar's)
 //   feedRows(store, tz) → the same rows for the Calendar's app feeds
 //     and holidays (To-Do, birthdays, Budget, …). Those exist only as
 //     Calendar renders them, so the Calendar app (calendar.js
 //     phonePublish) writes the days it shows to localStorage
 //     "oros-phone-cal-feeds" on this device (never synced):
-//     { at, items: [{ k, date, start, end, title, note }] }.
+//     { at, items: [{ k, date, start, end, title, note, color }] }.
 // Messages (JSON strings on the port):
 //   page → app: {t:"state"} · {t:"contacts"|"calendar", seq, items}
 //               {t:"clear", what}
@@ -163,9 +164,13 @@
     return s;
   }
 
+  function hex(c) { return typeof c === "string" && /^#[0-9a-fA-F]{6}$/.test(c) ? c.toLowerCase() : null; }
   function eventRows(blob, tz) {
     var dead = tombIds(blob);
-    var rows = [];
+    var rows = [], colors = {};
+    (Array.isArray(blob && blob.labels) ? blob.labels : []).forEach(function (l) {
+      if (l && typeof l.id === "string") colors[l.id] = hex(l.color);
+    });
     (Array.isArray(blob && blob.events) ? blob.events : []).forEach(function (e) {
       if (!e || typeof e.id !== "string" || !e.id || !alive(e, dead)) return;
       if (typeof e.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) return;
@@ -181,7 +186,8 @@
         dtend: null, duration: null,
         tz: timed ? (tz || "UTC") : "UTC",
         rrule: rule, exdate: null,
-        remind: typeof e.remindMin === "number" && REMIND.indexOf(e.remindMin) !== -1 ? e.remindMin : null
+        remind: typeof e.remindMin === "number" && REMIND.indexOf(e.remindMin) !== -1 ? e.remindMin : null,
+        color: colors[e.labelId] || null
       };
       if (rule) {
         // Series: Android wants DURATION, never DTEND.
@@ -232,7 +238,8 @@
         dtend: timed ? (end ? localMs(x.date, end) : start) : utcMidnight(x.date, 1),
         duration: null,
         tz: timed ? (tz || "UTC") : "UTC",
-        rrule: null, exdate: null, remind: null
+        rrule: null, exdate: null, remind: null,
+        color: hex(x.color)
       }));
     });
     rows.sort(function (a, b) { return a.id < b.id ? -1 : 1; });

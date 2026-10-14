@@ -171,6 +171,10 @@ class CalendarWriter {
             v.putNull(Events.EXDATE);
             v.put(Events.DTEND, it.optLong("dtend", it.optLong("dtstart")));
         }
+        // The label's colour ("#rrggbb"); none → the calendar's colour.
+        String color = it.isNull("color") ? "" : it.optString("color");
+        if (color.matches("#[0-9a-fA-F]{6}")) v.put(Events.EVENT_COLOR, 0xFF000000 | Integer.parseInt(color.substring(1), 16));
+        else v.putNull(Events.EVENT_COLOR);
         v.put(Events.AVAILABILITY, allDay ? Events.AVAILABILITY_FREE : Events.AVAILABILITY_BUSY);
         return v;
     }

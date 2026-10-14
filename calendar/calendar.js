@@ -4153,7 +4153,7 @@ function transientNote(title, body) {
           if (!r || !r._feed || r.id == null) return;
           var l = labelById(r.labelId), what = !l ? "" : l.id.indexOf("lbl-feed-") === 0 ? feedLabelName(l) : lblName(l);
           var note = typeof r.note === "string" && r.note ? r.note : "";
-          items.push({ k: String(r.id), date: day, start: r.start || null, end: r.end || null,
+          items.push({ k: String(r.id), date: day, start: r.start || null, end: r.end || null, color: l ? l.color : null,
                        title: String(r.title || what), note: what && note ? what + "\n" + note : (note || what) });
         });
       }
