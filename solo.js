@@ -191,6 +191,23 @@
       name: { en: "orOS Photo Lab", el: "orOS Εργαστήριο εικόνας" },
       // (no "Open a picture": a file picker needs a tap inside the page)
       shortcuts: [{ do: "new", name: { en: "New picture", el: "Νέα εικόνα" }, target: { newPic: true } }]
+    },
+    // Wave 5: business.
+    invoices: {
+      name: { en: "orOS Invoices", el: "orOS Τιμολόγια" },
+      shortcuts: [{ do: "invoice", name: { en: "New invoice", el: "Νέο τιμολόγιο" }, target: { newDoc: "inv" } },
+                  { do: "receipt", name: { en: "New receipt", el: "Νέα απόδειξη" }, target: { newDoc: "rcpt" } }],
+      share: "invoice"
+    },
+    crm: {
+      name: { en: "orOS CRM", el: "orOS Πελάτες" },
+      shortcuts: [{ do: "new", name: { en: "New customer", el: "Νέος πελάτης" }, target: { newCust: true } }],
+      share: "customer"
+    },
+    timesheet: {
+      name: { en: "orOS Timesheet", el: "orOS Ώρες εργασίας" },
+      shortcuts: [{ do: "timer", name: { en: "Start or stop the timer", el: "Έναρξη ή διακοπή χρονομέτρου" }, target: { toggle: true } },
+                  { do: "entry", name: { en: "New time entry", el: "Νέα καταχώριση" }, target: { newEntry: true } }]
     }
   };
 
@@ -365,6 +382,25 @@
     }
     if (kind === "mail") {
       return bodyText.trim() || title ? { app: id, target: { compose: { subject: (title || firstLine).slice(0, 300), body: bodyText.slice(0, 20000) } } } : null;
+    }
+    // Wave 5.
+    if (kind === "invoice") {
+      // The shared text becomes a new invoice's notes (saved only if
+      // the person saves it).
+      var notes = ((title && bodyText.indexOf(title) !== 0 ? title + "\n" : "") + bodyText).trim();
+      return notes ? { app: id, target: { newDoc: "inv", notes: notes.slice(0, 500) } } : null;
+    }
+    if (kind === "customer") {
+      // First line = the name, an e-mail or phone found in the text
+      // fills its field, the rest becomes the note.
+      if (!firstLine) return null;
+      var em = /[^\s<>()",;:]+@[^\s<>()",;:]+\.[a-z]{2,}/i.exec(text);
+      var ph = /\+?\d[\d ().-]{6,}\d/.exec(bodyText);
+      var nm = firstLine.replace(em ? em[0] : "\u0000", "").replace(/[<>]/g, "").trim() || (em ? em[0].split("@")[0] : "");
+      var c = { name: nm.slice(0, 120), note: rest.slice(0, 2000) };
+      if (em) c.email = em[0].slice(0, 120);
+      if (ph) c.phone = ph[0].trim().slice(0, 40);
+      return c.name ? { app: id, target: { asNew: c } } : null;
     }
     if (kind === "outline") {
       // A titled share starts with its title slide ("# title").

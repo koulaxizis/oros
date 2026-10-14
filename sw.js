@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.13.00";
+var CACHE_VERSION = "oros-v2.15.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -249,6 +249,12 @@ var PRECACHE_URLS = [
   "radio/manifest.webmanifest",
   "photolab/solo.html",
   "photolab/manifest.webmanifest",
+  "invoices/solo.html",
+  "invoices/manifest.webmanifest",
+  "crm/solo.html",
+  "crm/manifest.webmanifest",
+  "timesheet/solo.html",
+  "timesheet/manifest.webmanifest",
   "icons/solo/notes.svg",
   "icons/solo/notes-192.png",
   "icons/solo/notes-512.png",
@@ -369,6 +375,18 @@ var PRECACHE_URLS = [
   "icons/solo/photolab-192.png",
   "icons/solo/photolab-512.png",
   "icons/solo/photolab-maskable-512.png",
+  "icons/solo/invoices.svg",
+  "icons/solo/invoices-192.png",
+  "icons/solo/invoices-512.png",
+  "icons/solo/invoices-maskable-512.png",
+  "icons/solo/crm.svg",
+  "icons/solo/crm-192.png",
+  "icons/solo/crm-512.png",
+  "icons/solo/crm-maskable-512.png",
+  "icons/solo/timesheet.svg",
+  "icons/solo/timesheet-192.png",
+  "icons/solo/timesheet-512.png",
+  "icons/solo/timesheet-maskable-512.png",
   "todo/",
   "todo/index.html",
   "todo/todo.css",
