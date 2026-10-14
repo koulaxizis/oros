@@ -21,12 +21,12 @@ These need only a free account and a free key, with daily limits. Nothing is cha
 Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device.
 
 ## Open-source models on your computer
-Choose `Local / OpenAI-compatible`, then your program under `Server`: Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM or KoboldCpp. orOS fills in its address and shows how to let this site call it (CORS), which every one of them needs once. `Other / my own address` takes any OpenAI-compatible server. A key is optional, except in Jan. Then press `Load models` and `Test the connection`. Chrome may ask to let the site reach devices on your local network: allow it. Nothing leaves your network.
+Choose `Local / OpenAI-compatible`, then your program under `Server`: Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM or KoboldCpp. orOS fills in its address and shows how to let this site call it (CORS), which every one of them needs once. `Other / my own address` takes any OpenAI-compatible server. A key is optional, except in Jan. Then press `Load models` and `Test the connection`. If the model can't use tools (many small ones can't; the error says so), tick `This model can't use tools`. Chrome may ask to let the site reach devices on your local network: allow it. Nothing leaves your network.
 
 ## A model inside the browser
-`In-browser model (WebLLM)` runs an open model (Llama, Qwen, Phi, Mistral, Hermes and more) on this device's graphics card, with no key and no server. Pick a model and press `Download the model`: it comes once from huggingface.co (from about 0.9 GB to 6.3 GB, better over Wi-Fi) and stays on the device, so after that it works without internet and nothing you write leaves the device. `Remove from this device` frees the space. It needs WebGPU: recent Chrome or Edge on Windows, Linux, a Mac or Android. Bigger models answer better but need a stronger graphics card. For now it only chats, like the built-in browser model.
+`In-browser model (WebLLM)` runs an open model (Llama, Qwen, Phi, Mistral, Hermes and more) on this device's graphics card, with no key and no server. Pick a model and press `Download the model`: it comes once from huggingface.co (from about 0.9 GB to 6.3 GB, better over Wi-Fi) and stays on the device, so after that it works without internet and nothing you write leaves the device. `Remove from this device` frees the space. It needs WebGPU: recent Chrome or Edge on Windows, Linux, a Mac or Android. Bigger models answer better but need a stronger graphics card. Like the built-in browser model, it can't call tools, so orOS searches your data for it (see below).
 
-`Built-in browser model` needs no key and no internet: recent Chrome on Windows, Linux or a Mac has a small model of its own. Settings say whether this device has it; `Download the model` fetches it once (about 2 GB). It only chats: it can't search your data, make summaries or prepare entries.
+`Built-in browser model` needs no key and no internet: recent Chrome on Windows, Linux or a Mac has a small model of its own. Settings say whether this device has it; `Download the model` fetches it once (about 2 GB). It can't call tools, so orOS searches your data for it (see below).
 
 ## Ask about your data
 When a question needs your data, the assistant searches your apps, much like the menu search. Before anything is shared you see a card, `Share with …?`, listing every result it found:
@@ -37,6 +37,8 @@ When a question needs your data, the assistant searches your apps, much like the
 In the answer, titles in the accent colour are links: tap one to open that item in its app. A grey line above the answer shows what was searched and what you shared.
 
 When a short result is not enough, the assistant may ask for the whole item, for example a long note. For an app set to `Ask first` you see one more card with the beginning of the item and its size; press `Share` or `Don't share`.
+
+Models that can't call tools (the built-in browser model, the in-browser model, and a local model marked `This model can't use tools`) can't search by themselves. For them orOS does it before your message goes: it takes a few words from your question, searches the apps you allow, shows the same `Share with …?` card for `Ask first` apps, and sends what you share along with the message. A grey line says what was searched. They can also do a `Briefing`, and read photos and PDFs as text. They can't prepare entries or change anything.
 
 ## Summaries
 For totals and overviews, such as "how much did I spend on groceries this month?", "how many hours did I work in September?" or "what's on this week?", the assistant asks an app for a summary instead of searching item by item. orOS works it out on this device:
@@ -102,7 +104,7 @@ On a new conversation, `Briefing` sums up your day in one answer: today's agenda
 - It runs only when you press it, never by itself, so it never costs anything you didn't ask for.
 - orOS works out each app's summary on this device first. Apps set to `Ask first` show on one card, with the lines that would go out: untick what should stay, then press `Share`. `Without these` sends only the apps set to `Always share`. Apps set to `Never` are not read at all, and apps with nothing for today or this week are left out.
 - Under your message you see what was shared and what you held back. The answer links each item to its app, and may suggest up to 3 entries (for example a reminder to buy a present), which you save yourself as usual. A briefing never changes or deletes anything.
-- It needs an AI service that can read your data: not the built-in browser model, and with `Chat only` off.
+- It needs `Chat only` off. Every AI service can do it, also the models that run on this device (they get a shorter summary and suggest no entries).
 
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.

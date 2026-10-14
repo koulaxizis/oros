@@ -710,11 +710,11 @@
   // Briefing (Assistant phase 4 wave 5): the user's own tap opens the
   // Assistant with { brief: 1 }; the Assistant works out the summaries,
   // shows its card for "Ask first" apps and sends one message. Hidden
-  // when the chosen AI can't read data (built-in model, Chat only).
+  // when the assistant may not read data (Chat only).
   function canBrief() {
     if (!assist) return false;
     var pv = assist.C.PROVIDERS[assist.data.set.prov];
-    return !!pv && !pv.device && !assist.data.set.chat;
+    return !!pv && !assist.data.set.chat;
   }
   function briefing() {
     var p = parentWin();
