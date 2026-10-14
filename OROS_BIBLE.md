@@ -6002,3 +6002,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Read only, straight from the browser, one request at a time, no relay; the username stays on this device (`Forget` removes it). Chess.com has no API for playing; online play comes with Lichess (wave 4).
 - Credits: Chess.com Published-Data API (CREDITS.md, Info credits, Bible Part VIII). Help (EN/EL) and the privacy topic updated.
   - Tests: tests/chess.test.js (archive URLs, profile/stats parsing, cleaning).
+
+### 2026-10-14 — Chess: Lichess sign-in, ratings, games, daily puzzle and analysis (games online, wave 3) (#325) — 1.91.00
+- chess/: "Online accounts › Lichess": sign in with Lichess (OAuth 2.0 + PKCE, no scope, no app registration, no secret; popup, or a whole-tab redirect when popups are blocked) to see ratings (Bullet to Correspondence and Puzzles, ? for provisional), the latest 50 games (tap to review) and the Lichess daily puzzle (also without signing in). "Analyse this game on Lichess" imports the game on the board to lichess.org and opens it in a new tab.
+- chess/lichess-callback.html + .js (new, precached): the sign-in return page; it only hands code and state to Chess on the same origin (BroadcastChannel / localStorage), Chess checks the state and exchanges the token. The token is sealed on this device and not synced; `Sign out` revokes it on Lichess too.
+- Credits: Lichess API (CREDITS.md, Info credits, Bible Part VIII). Help (EN/EL) and the privacy topic updated.
+  - Tests: tests/chess.test.js (PKCE, state check, profile/games parsing).
