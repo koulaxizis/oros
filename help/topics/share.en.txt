@@ -1,5 +1,5 @@
 # Send to someone
-Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe or some bookmarks. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
+Send one thing from orOS to another person: a To-Do list, a note, a contact, an event, a recipe, some bookmarks or a Wiki article. orOS puts it inside a link. You send the link any way you like, and the other person opens it in their browser, even if they don't use orOS.
 
 ## Send something
 Look for the send button in these apps:
@@ -9,6 +9,7 @@ Look for the send button in these apps:
 - [Calendar](app:calendar): `Send…` in a saved event, and `More` › `Share free times…` for a link where someone picks one of your free times and emails you back.
 - [Meal Planner](app:meals): `Share` on an open recipe.
 - [Bookmarks](app:bookmarks): `Send to someone…` in a bookmark's menu, or select several and tap `Send…`.
+- [Wiki](app:wiki): `Send to someone…` in an article's ⋯ menu. The text travels; pictures stay with you.
 
 The `Send to someone` window shows what will travel. Then pick how to send it:
 - `Share…` opens your phone's or computer's share menu (Viber, WhatsApp, Signal, email and so on).
@@ -23,9 +24,9 @@ Tick `Lock with a password` and type a password of at least 6 characters. Then t
 
 ## Open something you got
 Tap the link. A page opens with the item and these buttons:
-- `Add to my orOS` opens the right app with the item ready. To-Do, Contacts, Calendar, Meal Planner and Bookmarks show it to you before anything is saved; Notes makes a new page.
+- `Add to my orOS` opens the right app with the item ready. To-Do, Contacts, Calendar, Meal Planner and Bookmarks show it to you before anything is saved; Notes makes a new page; Wiki opens the article in its editor, and it is saved when you press `Save`.
 - `Copy text` copies it as plain text.
-- `Download` saves it as a file other programs open too: a contact as .vcf, an event as .ics, bookmarks as .html, the rest as .txt.
+- `Download` saves it as a file other programs open too: a contact as .vcf, an event as .ics, bookmarks as .html, a Wiki article as .md, the rest as .txt.
 
 If you got a file instead of a link, open the link inside it, or use `Open a file` on that page.
 
@@ -37,4 +38,4 @@ The item travels inside the part of the link after the # sign, which browsers ne
 ## Limits
 - Very long items (a huge list or note) can be too long for a link. orOS tells you, and `Save as file` still works.
 - A QR code holds only short links.
-- Photos of contacts, labels, favourites and reminders are not sent.
+- Photos of contacts, pictures in Wiki articles, labels, favourites and reminders are not sent.

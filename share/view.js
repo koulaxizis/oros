@@ -27,8 +27,9 @@
       add: "Add to my orOS", copy: "Copy text", download: "Download", openFile: "Open a file",
       addHint: { list: "Opens To-Do with the items ready to add.", note: "Makes a new page in Notes.",
         contact: "Opens Contacts and asks before saving.", event: "Opens Calendar and asks before saving.",
-        recipe: "Opens the Meal Planner with the recipe ready to save.", links: "Opens Bookmarks." },
-      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)" },
+        recipe: "Opens the Meal Planner with the recipe ready to save.", links: "Opens Bookmarks.",
+        wiki: "Opens Wiki with the article ready to save." },
+      dl: { contact: "Download (.vcf)", event: "Add to calendar (.ics)", links: "Download (.html)", wiki: "Download (.md)" },
       copied: "Copied", copyFail: "Could not copy",
       tickHint: "Ticks here are only for you and are not saved.",
       phone: "Phone", email: "Email", address: "Address", web: "Website", im: "Chat",
@@ -52,8 +53,9 @@
       add: "Πρόσθεσέ το στο orOS μου", copy: "Αντιγραφή κειμένου", download: "Λήψη", openFile: "Άνοιγμα αρχείου",
       addHint: { list: "Ανοίγει το To-Do με τα είδη έτοιμα για προσθήκη.", note: "Φτιάχνει νέα σελίδα στις Σημειώσεις.",
         contact: "Ανοίγει τις Επαφές και ρωτά πριν αποθηκεύσει.", event: "Ανοίγει το Ημερολόγιο και ρωτά πριν αποθηκεύσει.",
-        recipe: "Ανοίγει το Πλάνο γευμάτων με τη συνταγή έτοιμη για αποθήκευση.", links: "Ανοίγει τους Σελιδοδείκτες." },
-      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)" },
+        recipe: "Ανοίγει το Πλάνο γευμάτων με τη συνταγή έτοιμη για αποθήκευση.", links: "Ανοίγει τους Σελιδοδείκτες.",
+        wiki: "Ανοίγει το Wiki με το άρθρο έτοιμο για αποθήκευση." },
+      dl: { contact: "Λήψη (.vcf)", event: "Προσθήκη σε ημερολόγιο (.ics)", links: "Λήψη (.html)", wiki: "Λήψη (.md)" },
       copied: "Αντιγράφηκε", copyFail: "Η αντιγραφή απέτυχε",
       tickHint: "Τα τικ εδώ είναι μόνο για σένα και δεν αποθηκεύονται.",
       phone: "Τηλέφωνο", email: "Email", address: "Διεύθυνση", web: "Ιστότοπος", im: "Chat",
@@ -156,6 +158,21 @@
     dl.appendChild(dd);
   }
   function telHref(v) { var d = v.replace(/[^\d+]/g, ""); return d.length >= 3 ? "tel:" + d : ""; }
+  // A Wiki article: wiki/core.js builds DOM nodes (textContent only);
+  // links inside it lead nowhere here, so they become plain text.
+  function wikiBody(x) {
+    var C = window.WikiCore;
+    if (!C) return el("p", "pre", x);
+    var box = el("div", "wk");
+    box.appendChild(C.render(document, C.parseDoc(x), { refs: LANG === "el" ? "Παραπομπές" : "References" }));
+    [].slice.call(box.querySelectorAll("a")).forEach(function (a) {
+      if (a.classList.contains("xl")) return;
+      var sp = el("span", a.className, a.textContent);
+      a.parentNode.replaceChild(sp, a);
+    });
+    [].slice.call(box.querySelectorAll("img, .ref-up")).forEach(function (n) { n.remove(); });
+    return box;
+  }
   function render(env) {
     var c = card(), d = env.d, S = K.strings(LANG);
     c.appendChild(el("p", "kind", S[env.k]));
@@ -179,6 +196,8 @@
       c.appendChild(el("p", "hint", t("tickHint")));
     } else if (env.k === "note") {
       if (d.x) c.appendChild(el("p", "pre", d.x));
+    } else if (env.k === "wiki") {
+      if (d.x) c.appendChild(wikiBody(d.x));
     } else if (env.k === "contact") {
       var sub = [d.nn ? "“" + d.nn + "”" : "", d.j, d.o].filter(Boolean).join(" · ");
       if (sub) c.appendChild(el("p", "meta", sub));
