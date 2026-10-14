@@ -6693,3 +6693,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - With the phone bridge connected, `solo.js` `installUrl(id, ua, origin, inApp)` gives `intent://install/<id>#Intent;scheme=oros-permission;package=online.useoros.twa;end`; `PermissionActivity` host `install` checks the id, resolves the default browser and starts it with `https://useoros.online/<id>/solo.html?install`. `gen.js` adds a `<queries>` VIEW/https intent for Android 11+. An older installed APK keeps the old behaviour until updated.
 - Files: `solo.js`, settings text EN/EL, `android/` (PermissionActivity, tools/gen.js). Reviewed by the phone thread.
   - Tests: full suite green, Chromium install-bar checks, Android CI build green. Not tested: a real phone.
+
+### 2026-10-14 — Contacts: find photos online (#374) — 2.22.00
+- Contacts › Find photos: for contacts without a photo, on request only, orOS looks up each contact's own e-mail addresses (at most 3) on Gravatar, then Libravatar. Only the SHA-256 hash of the address is sent (`d=404`, no generated pictures, no cookies, no referrer). An address that two or more contacts share is skipped, so a picture never lands on the wrong person. Found pictures are listed with their source and address, all ticked; "Use the ticked photos" sets them as the 128×128 contact photo (never replacing an existing one), and Undo restores.
+- Credits: Gravatar and Libravatar added to CREDITS.md, the Credits screen and Bible Part VIII; privacy page and help updated.
+- Files: `contacts/contacts.js` (`#ct-pf`, `#pf-dlg`), `contacts/index.html`, `contacts/contacts.css`, help texts, `privacy.html`.
+  - Tests: full suite green; real shell with mocked Gravatar/Libravatar. Not tested: the live Gravatar and Libravatar services from a real browser.
