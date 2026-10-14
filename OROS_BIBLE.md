@@ -6673,3 +6673,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - A re-import skips rows whose details are already inside one contact when the names agree, so earlier combined rows don't come back as duplicates; two people who share a number stay separate (BR-CT-IMPORT). Undo keeps the first earlier version of a contact two rows merged into.
 - Files: `contacts/contacts.js` (`splitMulti` in `sanitizeContact`, CSV reader), `contacts/importplan.js` (`plan()`).
   - Tests: re-import test added; real-shell E2E by the owner with Chris's own .vcf and Google CSV exports (420 contacts, no " ::: " left; re-import 0 new). Not tested: a real Google account, the phone mirror.
+
+### 2026-10-14 — Assistant, phase 5 wave 5: data, Briefing and files for models without tools (#370) — 2.21.00
+- On-device models and models without tools (the browser's own model, the in-browser WebLLM model, local models with the new "This model can't use tools" switch) now answer from the user's data: before the message goes, orOS searches the allowed apps (Always shared, Ask first through the usual Share card, Never not read) and sends only what was shared, marked as data, with a grey line saying what was searched (AS-NOTOOLS).
+- Briefing works for every provider (shorter, without entry suggestions for models without tools); a local "does not support tools" error now says to tick the switch. Files already go to these models as device-read text. This completes Assistant phase 5.
+- Files: `assistant/core.js` (`searchWords`, `mergeHits`, `foundBlock`, `briefText(b, dev)`), `assistant/assistant.js` (`noTools`, `preSearch`, `#as-nt`), `today/today.js` (`canBrief`), help EN/EL. sw.js precache: nothing new.
+  - Tests: tests/assistant-notools.test.js; real shell at 360 px with a fake WebLLM engine and a mocked local server by the owner. Not tested: real small models' answer quality, the real Chrome built-in model, Safari, phone.
