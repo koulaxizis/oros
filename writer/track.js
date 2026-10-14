@@ -19,23 +19,27 @@
   // Old text → new text of one text node: { p, removed, inserted }
   // (p = where the change starts). caret (position in the new text,
   // -1 when unknown) settles the ambiguous cases ("aa" → "aaa").
+  // A no-break space and a space count as the same character: browsers
+  // swap one for the other around the caret while typing, and that is
+  // not an edit.
   function diffEdit(oldT, newT, caret) {
     oldT = String(oldT || ""); newT = String(newT || "");
-    var d = newT.length - oldT.length;
-    if (caret >= 0 && caret <= newT.length) {
+    var o = oldT.replace(/ /g, " "), n = newT.replace(/ /g, " ");
+    var d = n.length - o.length;
+    if (caret >= 0 && caret <= n.length) {
       if (d > 0 && caret - d >= 0 &&
-          newT.slice(0, caret - d) === oldT.slice(0, caret - d) && newT.slice(caret) === oldT.slice(caret - d)) {
+          n.slice(0, caret - d) === o.slice(0, caret - d) && n.slice(caret) === o.slice(caret - d)) {
         return { p: caret - d, removed: "", inserted: newT.slice(caret - d, caret) };
       }
-      if (d < 0 && caret - d <= oldT.length &&
-          oldT.slice(0, caret) === newT.slice(0, caret) && oldT.slice(caret - d) === newT.slice(caret)) {
+      if (d < 0 && caret - d <= o.length &&
+          o.slice(0, caret) === n.slice(0, caret) && o.slice(caret - d) === n.slice(caret)) {
         return { p: caret, removed: oldT.slice(caret, caret - d), inserted: "" };
       }
     }
-    var p = 0, max = Math.min(oldT.length, newT.length);
-    while (p < max && oldT.charCodeAt(p) === newT.charCodeAt(p)) p++;
+    var p = 0, max = Math.min(o.length, n.length);
+    while (p < max && o.charCodeAt(p) === n.charCodeAt(p)) p++;
     var s = 0;
-    while (s < max - p && oldT.charCodeAt(oldT.length - 1 - s) === newT.charCodeAt(newT.length - 1 - s)) s++;
+    while (s < max - p && o.charCodeAt(o.length - 1 - s) === n.charCodeAt(n.length - 1 - s)) s++;
     // keep surrogate pairs whole
     if (p > 0 && /[\uD800-\uDBFF]/.test(newT[p - 1])) p--;
     return { p: p, removed: oldT.slice(p, oldT.length - s), inserted: newT.slice(p, newT.length - s) };

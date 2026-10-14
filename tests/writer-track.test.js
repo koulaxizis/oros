@@ -23,6 +23,9 @@ test("diffEdit: insertions, deletions, replacements", () => {
   assert.deepEqual(T.diffEdit("say teh end", "say the end", 7), { p: 5, removed: "eh", inserted: "he" });
   assert.deepEqual(T.diffEdit("", "new", 3), { p: 0, removed: "", inserted: "new" });
   assert.deepEqual(T.diffEdit("same", "same", 2), { p: 4, removed: "", inserted: "" });
+  // the browser turning a trailing no-break space into a space is no edit
+  assert.deepEqual(T.diffEdit("end. ", "end. A", 6), { p: 5, removed: "", inserted: "A" });
+  assert.deepEqual(T.diffEdit("a b", "a b", -1), { p: 3, removed: "", inserted: "" });
   // emoji (surrogate pairs) stay whole
   const r = T.diffEdit("a😀", "a😃", -1);
   assert.equal(r.removed, "😀");
