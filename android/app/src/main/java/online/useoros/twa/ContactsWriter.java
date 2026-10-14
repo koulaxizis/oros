@@ -58,7 +58,7 @@ class ContactsWriter {
         Set<String> pending = new HashSet<>();            // edited on the phone, not yet taken
         Uri raw = OrosAccount.asSyncAdapter(RawContacts.CONTENT_URI, acc);
         try (Cursor c = cr.query(raw, new String[]{RawContacts._ID, RawContacts.SOURCE_ID, RawContacts.SYNC1,
-                        RawContacts.DIRTY, RawContacts.DELETED},
+                        RawContacts.DIRTY, RawContacts.DELETED, RawContacts.RAW_CONTACT_IS_READ_ONLY},
                 RawContacts.ACCOUNT_TYPE + "=? AND " + RawContacts.ACCOUNT_NAME + "=?",
                 new String[]{acc.type, acc.name}, null)) {
             while (c != null && c.moveToNext()) {
@@ -73,7 +73,9 @@ class ContactsWriter {
                     sid = "\u0000" + c.getLong(0);
                 }
                 rowId.put(sid, new long[]{c.getLong(0)});
-                rowHash.put(sid, c.getString(2));
+                // Rows written read-only before v2 are rebuilt once as
+                // editable (no hash → treated as changed).
+                rowHash.put(sid, c.getInt(5) != 0 ? null : c.getString(2));
             }
         }
 

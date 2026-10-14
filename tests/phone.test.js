@@ -276,3 +276,19 @@ test("phone → orOS contacts round trip: an untouched row comes back unchanged"
   const back = Object.assign({}, res.blob.contacts[0], { mtime: 1 });
   assert.deepEqual(back, blob.contacts[0]);
 });
+
+test("phone changes sent again before the answer are applied once (v2)", () => {
+  const item = { ref: "r7", op: "upsert", id: null, title: "Lunch", allDay: false, dtstart: 1, dtend: 2 };
+  const first = P.splitTaken("calendar", [item], [], 1000);
+  assert.equal(first.fresh.length, 1);
+  const taken = [[P.takenKey("calendar", item), "", 1000]];
+  const again = P.splitTaken("calendar", [Object.assign({}, item)], taken, 2000);
+  assert.deepEqual([again.fresh.length, again.refs], [0, ["r7"]]);
+  const edited = P.splitTaken("calendar", [Object.assign({}, item, { title: "Dinner" })], taken, 2000);
+  assert.equal(edited.fresh.length, 1, "a later edit of the same row applies");
+  assert.equal(P.splitTaken("contacts", [item], taken, 2000).fresh.length, 1, "kinds are apart");
+  assert.equal(P.splitTaken("calendar", [item], taken, 1000 + 11 * 60 * 1000).fresh.length, 1, "forgotten after 10 minutes");
+  const c = { ref: "r9v1", op: "upsert", id: null, given: "Viber" };
+  const ct = P.splitTaken("contacts", [c], [[P.takenKey("contacts", c), "newid", 1000]], 1500);
+  assert.deepEqual(ct.ids, { r9v1: "newid" }, "a repeat gets the id it got the first time");
+});

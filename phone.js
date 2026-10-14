@@ -46,6 +46,8 @@
   var PREF_KEY = "oros-phone";
   var KEYS = { contacts: "oros-contacts-data", calendar: "oros-calendar-data" };
   var FEEDS_KEY = "oros-phone-cal-feeds";
+  var TAKEN_KEY = "oros-phone-taken";    // [[kind:hash, id, at]], phone changes applied lately
+  var MAX_TAKEN = 500;
   var MAX_FEED_ROWS = 5000;
   var PERM_URL = { contacts: "intent://contacts#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
@@ -469,9 +471,35 @@
     return { blob: b, refs: refs, ids: ids };
   }
 
+  // Repeats of a phone change already applied: same kind and same
+  // content (ref included, so two new rows with equal fields differ).
+  function takenKey(kind, c) { return kind + ":" + fnv(JSON.stringify(c)); }
+  // taken: [[key, id, at]]; only the last TAKEN_MS count, so a later
+  // edit back to an earlier state still applies.
+  var TAKEN_MS = 10 * 60 * 1000;
+  function splitTaken(kind, items, taken, now) {
+    var seen = {};
+    now = now || Date.now();
+    (Array.isArray(taken) ? taken : []).forEach(function (x) {
+      if (x && typeof x[0] === "string" && now - (+x[2] || 0) < TAKEN_MS) seen[x[0]] = x[1] || "";
+    });
+    var out = { fresh: [], refs: [], ids: {} };
+    (Array.isArray(items) ? items : []).forEach(function (c) {
+      if (!c || typeof c.ref !== "string") return;
+      var k = takenKey(kind, c);
+      if (k in seen) {
+        out.refs.push(c.ref);
+        if (seen[k]) out.ids[c.ref] = seen[k];
+      } else {
+        out.fresh.push(c);
+      }
+    });
+    return out;
+  }
+
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
               applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
-              applyContactChanges: applyContactChanges };
+              applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -578,20 +606,43 @@
   // open, so an open app reloads after the write (frames expose
   // __orosPhoneReload); closed, the write plus markDirty is what its
   // sync slice (a localStorage proxy) pushes, like any local change.
+  // The app sends the same dirty rows again until it has our answer
+  // (after each snapshot and each state), so one change can arrive
+  // two or three times. Each one is applied once: TAKEN_KEY (this
+  // device only) remembers recent changes by kind + content hash, and
+  // a repeat is only answered again, with the id it got the first time.
   function takeChanges(kind, items) {
     if (!prefs()[kind]) return;
-    var res;
+    var taken = readTaken();
+    var now = Date.now();
+    taken = taken.filter(function (x) { return now - (+x[2] || 0) < TAKEN_MS; });
+    var split = splitTaken(kind, items, taken, now);
+    var res = { refs: [], ids: null };
+    if (split.fresh.length) {
+      try {
+        res = kind === "contacts" ? applyContactChanges(readBlob(kind), split.fresh, now)
+                                  : applyCalendarChanges(readBlob(kind), split.fresh, now);
+        localStorage.setItem(KEYS[kind], JSON.stringify(res.blob));
+      } catch (e) { return; }
+      split.fresh.forEach(function (c) {
+        taken.push([takenKey(kind, c), (res.ids && res.ids[c.ref]) || "", now]);
+      });
+      try { localStorage.setItem(TAKEN_KEY, JSON.stringify(taken.slice(-MAX_TAKEN))); } catch (e) {}
+      try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {}
+      Array.prototype.forEach.call(document.querySelectorAll("iframe"), function (f) {
+        try { if (f.contentWindow && typeof f.contentWindow.__orosPhoneReload === "function") f.contentWindow.__orosPhoneReload(kind); } catch (e) {}
+      });
+    }
+    var refs = split.refs.concat(res.refs);
+    var ids = Object.assign({}, split.ids, res.ids || {});
+    send(kind === "contacts" ? { t: "applied", what: kind, refs: refs, ids: ids } : { t: "applied", what: kind, refs: refs });
+    if (split.fresh.length) push(kind, true);
+  }
+  function readTaken() {
     try {
-      res = kind === "contacts" ? applyContactChanges(readBlob(kind), items, Date.now())
-                                : applyCalendarChanges(readBlob(kind), items, Date.now());
-      localStorage.setItem(KEYS[kind], JSON.stringify(res.blob));
-    } catch (e) { return; }
-    try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {}
-    Array.prototype.forEach.call(document.querySelectorAll("iframe"), function (f) {
-      try { if (f.contentWindow && typeof f.contentWindow.__orosPhoneReload === "function") f.contentWindow.__orosPhoneReload(kind); } catch (e) {}
-    });
-    send(res.ids ? { t: "applied", what: kind, refs: res.refs, ids: res.ids } : { t: "applied", what: kind, refs: res.refs });
-    push(kind, true);
+      var t = JSON.parse(localStorage.getItem(TAKEN_KEY) || "[]");
+      return Array.isArray(t) ? t.filter(function (x) { return Array.isArray(x) && typeof x[0] === "string"; }) : [];
+    } catch (e) { return []; }
   }
 
   // The app's first message carries the port. Chromium posts it to the
