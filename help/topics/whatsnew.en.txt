@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.05.00
+- Weather: a rain map. Open it under the forecast to see NASA's satellite rain estimate for the last 6 hours over a map of your area (a few hours old, not live radar).
+- CRM can now give you a contact form for your own website: messages arrive encrypted through the orOS relay and become new leads (or a note on the customer you already have).
+
 ## Version 2.04.00
 - Single apps: orOS Notes, orOS Calendar, orOS Bookmarks and orOS To-Do can now be installed on their own, each with its own icon and window, icon shortcuts, sharing and offline use. On the same device they share your orOS data, and elsewhere they join your encrypted sync when you turn it on. Find them in Settings › Single apps.
 
