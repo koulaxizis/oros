@@ -152,7 +152,50 @@
       "toast.prefilled":       "New quote filled in. Check it and press Save.",
       "confirm.replace_draft": "Replace the unsaved draft with the new quote?",
       "prefill.replace":       "Replace",
-      "notes.ph":             "Additional terms, conditions…"
+      "notes.ph":             "Additional terms, conditions…",
+      "toast.mail_nopdf":     "The PDF couldn't be attached: export it and attach it by hand.",
+      "conv.label":           "Show the total in",
+      "conv.pick":            "Other currency…",
+      "conv.ecb":             "ECB rate of {d}",
+      "conv.loading":         "Getting today's rates…",
+      "conv.offline":         "No rates: you're offline. They come back with a connection.",
+      "conv.norate":          "No ECB rate for this currency.",
+      "acc.send":             "Send for acceptance",
+      "acc.record":           "Record acceptance",
+      "acc.save_first":       "Save the quote first.",
+      "acc.send_title":       "Send for acceptance",
+      "acc.send_text":        "Your client gets a link that opens the quote in any browser, with an Accept button. The quote travels inside the link: it isn't stored on any server. When they accept, they send you back an answer link.",
+      "acc.from":             "Your name or business (shown to the client)",
+      "acc.from_email":       "Your email (for the answer, optional)",
+      "acc.make":             "Make the link",
+      "acc.link":             "Acceptance link",
+      "acc.copy":             "Copy link",
+      "acc.copied":           "Link copied",
+      "acc.share":            "Share…",
+      "acc.email":            "Email with PDF",
+      "acc.mail_line":        "You can see the quote and accept it here:",
+      "acc.link_hint":        "Anyone with this link can see the quote. If you change the quote, make a new link: an answer to an older one won't count.",
+      "acc.renewed":          "The quote changed since the last link, so this is a new link. An answer to the old link won't count.",
+      "acc.resend_note":      "This quote was sent for acceptance before. If nothing changed, you get the same link again.",
+      "acc.too_big":          "This quote is too long for a link. Send the PDF instead.",
+      "acc.no_crypto":        "This browser can't make acceptance links.",
+      "acc.rec_title":        "Record acceptance",
+      "acc.rec_text":         "Paste the answer your client sent you (the link or the code).",
+      "acc.paste_ph":         "https://…/quote/#acc=a1.…",
+      "acc.check":            "Check",
+      "acc.bad_code":         "That isn't a quote answer, or it was cut short.",
+      "acc.no_quote":         "This answer is for a quote that isn't in your Quote app.",
+      "acc.who":              "{n} accepted quote {q} on {d}.",
+      "acc.v_ok":             "",
+      "acc.v_tampered":       "✗ This doesn't match the quote you sent: the link was changed before it was accepted. Don't count it; send the quote again.",
+      "acc.v_stale":          "This answer is for an older link of this quote: you made a new link since. Ask the client to accept the latest one.",
+      "acc.v_none":           "This quote was never sent for acceptance from here.",
+      "acc.already":          "Already recorded.",
+      "acc.edited":           "You changed the quote after sending it. The client accepted the version you sent.",
+      "acc.mark":             "Mark as accepted",
+      "acc.marked":           "Quote marked as accepted",
+      "acc.to_invoice":       "Make an invoice from this quote now?",
+      "acc.info":             "Accepted by {n} on {d} (by link)"
     },
     el: {
       "tab.create":            "Δημιουργία",
@@ -258,7 +301,50 @@
       "toast.prefilled":       "Η νέα προσφορά συμπληρώθηκε. Έλεγξέ τη και πάτησε Αποθήκευση.",
       "confirm.replace_draft": "Να αντικατασταθεί το μη αποθηκευμένο πρόχειρο από τη νέα προσφορά;",
       "prefill.replace":       "Αντικατάσταση",
-      "notes.ph":             "Επιπλέον όροι, προϋποθέσεις…"
+      "notes.ph":             "Επιπλέον όροι, προϋποθέσεις…",
+      "toast.mail_nopdf":     "Το PDF δεν μπόρεσε να επισυναφθεί: κάνε εξαγωγή και επισύναψέ το μόνος σου.",
+      "conv.label":           "Το σύνολο σε",
+      "conv.pick":            "Άλλο νόμισμα…",
+      "conv.ecb":             "ισοτιμία ΕΚΤ της {d}",
+      "conv.loading":         "Λήψη των σημερινών ισοτιμιών…",
+      "conv.offline":         "Δεν υπάρχουν ισοτιμίες: είσαι εκτός σύνδεσης. Θα έρθουν με τη σύνδεση.",
+      "conv.norate":          "Η ΕΚΤ δεν δίνει ισοτιμία για αυτό το νόμισμα.",
+      "acc.send":             "Αποστολή για αποδοχή",
+      "acc.record":           "Καταχώριση αποδοχής",
+      "acc.save_first":       "Αποθήκευσε πρώτα την προσφορά.",
+      "acc.send_title":       "Αποστολή για αποδοχή",
+      "acc.send_text":        "Ο πελάτης σου παίρνει έναν σύνδεσμο που ανοίγει την προσφορά σε οποιονδήποτε browser, με κουμπί Αποδοχή. Η προσφορά ταξιδεύει μέσα στον σύνδεσμο: δεν αποθηκεύεται σε κανέναν server. Όταν την αποδεχτεί, σου στέλνει πίσω έναν σύνδεσμο απάντησης.",
+      "acc.from":             "Το όνομά σου ή η επιχείρησή σου (το βλέπει ο πελάτης)",
+      "acc.from_email":       "Το email σου (για την απάντηση, προαιρετικό)",
+      "acc.make":             "Δημιουργία συνδέσμου",
+      "acc.link":             "Σύνδεσμος αποδοχής",
+      "acc.copy":             "Αντιγραφή συνδέσμου",
+      "acc.copied":           "Ο σύνδεσμος αντιγράφηκε",
+      "acc.share":            "Κοινοποίηση…",
+      "acc.email":            "Email με το PDF",
+      "acc.mail_line":        "Μπορείτε να δείτε την προσφορά και να την αποδεχτείτε εδώ:",
+      "acc.link_hint":        "Όποιος έχει τον σύνδεσμο βλέπει την προσφορά. Αν αλλάξεις την προσφορά, φτιάξε νέο σύνδεσμο: η απάντηση σε παλιότερο δεν θα μετράει.",
+      "acc.renewed":          "Η προσφορά άλλαξε από τον προηγούμενο σύνδεσμο, οπότε αυτός είναι νέος. Η απάντηση στον παλιό δεν θα μετράει.",
+      "acc.resend_note":      "Η προσφορά έχει σταλεί ξανά για αποδοχή. Αν δεν άλλαξε τίποτα, παίρνεις τον ίδιο σύνδεσμο.",
+      "acc.too_big":          "Η προσφορά είναι πολύ μεγάλη για σύνδεσμο. Στείλε καλύτερα το PDF.",
+      "acc.no_crypto":        "Αυτός ο browser δεν μπορεί να φτιάξει συνδέσμους αποδοχής.",
+      "acc.rec_title":        "Καταχώριση αποδοχής",
+      "acc.rec_text":         "Επικόλλησε την απάντηση που σου έστειλε ο πελάτης (τον σύνδεσμο ή τον κωδικό).",
+      "acc.paste_ph":         "https://…/quote/#acc=a1.…",
+      "acc.check":            "Έλεγχος",
+      "acc.bad_code":         "Αυτό δεν είναι απάντηση σε προσφορά ή είναι κομμένο.",
+      "acc.no_quote":         "Αυτή η απάντηση αφορά προσφορά που δεν υπάρχει στην εφαρμογή Προσφορά σου.",
+      "acc.who":              "{n}: αποδοχή της προσφοράς {q} στις {d}.",
+      "acc.v_ok":             "",
+      "acc.v_tampered":       "✗ Δεν ταιριάζει με την προσφορά που έστειλες: ο σύνδεσμος άλλαξε πριν την αποδοχή. Μην τη μετρήσεις· στείλε ξανά την προσφορά.",
+      "acc.v_stale":          "Η απάντηση αφορά παλιότερο σύνδεσμο αυτής της προσφοράς: έφτιαξες νέο στο μεταξύ. Ζήτα από τον πελάτη να αποδεχτεί τον τελευταίο.",
+      "acc.v_none":           "Αυτή η προσφορά δεν στάλθηκε ποτέ για αποδοχή από εδώ.",
+      "acc.already":          "Έχει ήδη καταχωριστεί.",
+      "acc.edited":           "Άλλαξες την προσφορά αφού την έστειλες. Ο πελάτης αποδέχτηκε την έκδοση που έστειλες.",
+      "acc.mark":             "Σήμανση ως αποδεκτή",
+      "acc.marked":           "Η προσφορά σημειώθηκε ως αποδεκτή",
+      "acc.to_invoice":       "Να εκδοθεί τώρα τιμολόγιο από αυτή την προσφορά;",
+      "acc.info":             "Αποδεκτή από {n} στις {d} (με σύνδεσμο)"
     }
   };
 
@@ -306,11 +392,16 @@
 
   function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 
+  // Wave 46: any ISO currency, formatted with its own decimals and
+  // symbol (OrosQuoteCore.fmtMoney, Intl), e.g. "€12.00", "12,00 €",
+  // "¥1,200", "CHF 12.00".
+  var QC = window.OrosQuoteCore || null;
+  function curOk(c) { return typeof c === "string" && /^[A-Z]{3}$/.test(c); }
   function money(n, currency) {
-    var sym = currency === "USD" ? "$" : "€";
+    if (QC) return QC.fmtMoney(n, currency, LANG);
     var s = Math.abs(n).toFixed(2);
     if (LANG === "el") s = s.replace(".", ",");
-    return (n < 0 ? "-" : "") + sym + " " + s;
+    return (n < 0 ? "-" : "") + s + " " + (curOk(currency) ? currency : "EUR");
   }
 
   function fmtDate(iso) {
@@ -426,7 +517,7 @@
       if (typeof q.status !== "string" || STATUSES.indexOf(q.status) === -1) q.status = "draft";
       if (typeof q.date !== "string") q.date = "";
       if (typeof q.dueDate !== "string") q.dueDate = "";
-      if (q.currency !== "USD") q.currency = "EUR";
+      if (!curOk(q.currency)) q.currency = "EUR";
       if (!Array.isArray(q.items)) q.items = [];
       q.items.forEach(function (it) {
         if (!it.id) it.id = uid();
@@ -780,7 +871,7 @@
     $("q-date").value = cur.date || "";
     $("q-due").value = cur.dueDate || "";
     $("q-status").value = cur.status;
-    $("q-currency").value = cur.currency;
+    fillCurrencySelect(cur.currency);
     $("global-discount").value = cur.gDisc || 0;
     $("global-vat").value =
       (cur.items && cur.items.length ? cur.items[0].vat : 24);
@@ -791,6 +882,7 @@
     renderInstalments();
     recalcTotals();
     syncInvoiceBtn();
+    syncAcceptUi();
   }
 
   // Invoices wave 2 — "Make invoice" on an accepted quote: Invoices
@@ -871,7 +963,7 @@
     // migrate(), άρα συμπληρώνουμε ό,τι μπορεί να λείπει σε
     // legacy/corrupt drafts (boot TypeError prevention).
     if (!Array.isArray(d.instalments)) d.instalments = [];
-    if (typeof d.currency !== "string") d.currency = "EUR";
+    if (!curOk(d.currency)) d.currency = "EUR";
     if (typeof d.gDisc !== "number") d.gDisc = 0;
     if (typeof d.payment !== "string") d.payment = "";
     if (typeof d.notes !== "string") d.notes = "";
@@ -978,6 +1070,7 @@
     if (vatEl) vatEl.textContent = money(tt.vat, cur ? cur.currency : "EUR");
     $("grand-total-val").textContent = money(tt.total, cur ? cur.currency : "EUR");
     updateInstalmentSum();
+    renderConversion();
   }
 
   // ---------- 6. Line items + δόσεις UI ----------
@@ -1656,14 +1749,18 @@
     return s.length > max ? s.slice(0, max - 1) + "…" : s;
   }
 
-  function exportPdf() {
+  // Wave 46: onBlob given → the PDF is handed back as a Blob (for the
+  // Mail attachment) instead of being saved; onBlob(null) when it
+  // can't be made (no jsPDF, or Greek text without the font).
+  function exportPdf(onBlob) {
     if (!cur) return;
+    var cb = typeof onBlob === "function" ? onBlob : null;
     var JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-    if (!JsPDF) { printFallback(); return; }
-    fetchFontBase64(function (b64) { buildPdf(JsPDF, b64); });
+    if (!JsPDF) { if (cb) cb(null); else printFallback(); return; }
+    fetchFontBase64(function (b64) { buildPdf(JsPDF, b64, cb); });
   }
 
-  function buildPdf(JsPDF, b64) {
+  function buildPdf(JsPDF, b64, onBlob) {
     var doc = new JsPDF({ unit: "mm", format: "a4" });
     var greekOK = false;
     if (b64) {
@@ -1679,7 +1776,14 @@
     // περιεχόμενο (οποιαδήποτε γλώσσα interface) Η στις ετικέτες
     // του interface (LANG === "el"): χωρίς ελληνική γραμματοσειρά
     // garμπαλιάρουν τα headers του πίνακα κι αν τα data είναι λατινικά.
-    if (!greekOK && (LANG === "el" || hasGreekText())) { printFallback(); return; }
+    if (!greekOK && (LANG === "el" || hasGreekText())) { if (onBlob) onBlob(null); else printFallback(); return; }
+    // Wave 46: the standard PDF font has no glyph for most currency
+    // symbols (₹, ₺, zł…): without Noto Sans the amounts use the code.
+    function money(n, c) {
+      var s = QC ? QC.fmtMoney(n, c, LANG) : String(n);
+      if (!greekOK && /[^\u0000-ÿ€]/.test(s) && QC) s = QC.fmtMoney(n, c, LANG, true);
+      return s.replace(/ /g, " ");
+    }
 
     var c = cur.clientId ? clientById(cur.clientId) : null;
     var tt = calcTotals(cur);
@@ -1799,6 +1903,7 @@
     var fname = (cur.num || "quote") + ".pdf";
     var done = function () { notifyTransient(t("toast.exported")); };
     var pdfBlob = doc.output("blob");
+    if (onBlob) { onBlob(pdfBlob, fname); return; }
     var dlg = dialogHost();
     if (dlg && typeof dlg.saveFile === "function") {
       dlg.saveFile({
@@ -1868,7 +1973,12 @@
     }, 150);
   }
 
-  function sendEmail() {
+  // Wave 46: with orOS Mail set up on this device the message opens in
+  // Mail with the quote's PDF already attached (Mail's compose deep
+  // link, `attach: [{ name, type, b64 }]`, the same bridge Invoices
+  // uses); otherwise the email program opens (mailto:) without it.
+  // extra: a text line added to the body (the acceptance link).
+  function sendEmail(extra) {
     if (!cur) return;
     var c = cur.clientId ? clientById(cur.clientId) : null;
     var tt = calcTotals(cur);
@@ -1878,11 +1988,48 @@
       t("send.subject") + " " + (cur.num || "") + " — " +
       t("offer.due_date") + ": " + (cur.dueDate ? fmtDate(cur.dueDate) : "—") + "\n" +
       t("totals.total") + ": " + money(tt.total, cur.currency) + "\n\n" +
+      (typeof extra === "string" && extra ? extra + "\n\n" : "") +
       (cur.payment || "");
+    var shell = mailShell();
+    if (shell) {
+      var compose = { to: c && c.email ? c.email : "", subject: subject.slice(0, 300), body: body.slice(0, 20000) };
+      exportPdf(function (blob, fname) {
+        if (!blob) {
+          shell.__orosOpenAt("mail", { compose: compose });
+          notifyTransient(t("toast.mail_nopdf"));
+          return;
+        }
+        blobToB64(blob, function (b64) {
+          if (b64) compose.attach = [{ name: fname || "quote.pdf", type: "application/pdf", b64: b64 }];
+          shell.__orosOpenAt("mail", { compose: compose });
+          if (!b64) notifyTransient(t("toast.mail_nopdf"));
+        });
+      });
+      return;
+    }
     var href = "mailto:" + (c && c.email ? c.email : "") +
       "?subject=" + encodeURIComponent(subject) +
       "&body=" + encodeURIComponent(body);
     window.open(href, "_self");
+  }
+  // orOS Mail with an account on this device → the shell, else null.
+  function mailShell() {
+    var shell = null;
+    try { shell = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+    if (!shell) return null;
+    try {
+      var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      return m && Array.isArray(m.accounts) && m.accounts.length ? shell : null;
+    } catch (e) { return null; }
+  }
+  function blobToB64(blob, cb) {
+    var r = new FileReader();
+    r.onload = function () {
+      var s = String(r.result || ""), i = s.indexOf(",");
+      cb(i >= 0 ? s.slice(i + 1) : "");
+    };
+    r.onerror = function () { cb(""); };
+    try { r.readAsDataURL(blob); } catch (e) { cb(""); }
   }
 
   // ---------- 11. Toast ----------
@@ -2181,9 +2328,17 @@
       cur.status = this.value; editCommitted(); syncInvoiceBtn();
     });
     $("q-currency").addEventListener("change", function () {
+      if (!curOk(this.value)) return;
       cur.currency = this.value;
       recalcTotals(); editCommitted();
     });
+    $("conv-to").addEventListener("change", function () {
+      localPrefs.convTo = curOk(this.value) ? this.value : "";
+      saveLocalPrefs();
+      renderConversion(true);
+    });
+    $("accept-link").addEventListener("click", sendForAcceptance);
+    $("accept-record").addEventListener("click", function () { recordAcceptance(""); });
     $("regenerate-num").addEventListener("click", function () {
       cur.num = nextNumber();
       $("q-number").value = cur.num;
@@ -2240,8 +2395,8 @@
     $("duplicate-quote").addEventListener("click", duplicateCurrent);
     $("invoice-quote").addEventListener("click", sendToInvoices);
     $("delete-quote").addEventListener("click", deleteCurrent);
-    $("export-btn").addEventListener("click", exportPdf);
-    $("send-btn").addEventListener("click", sendEmail);
+    $("export-btn").addEventListener("click", function () { exportPdf(); });
+    $("send-btn").addEventListener("click", function () { sendEmail(); });
 
     // --- Templates dialog ---
     $("templates-close").addEventListener("click", function () {
@@ -2279,6 +2434,373 @@
     }, true);
   }
 
+  // ---------- 14. Wave 46: currencies, conversion, accept by link ----------
+  // Device-local (never synced): the currency to show totals in, and
+  // the sender name / email put on acceptance links.
+  var LOCAL_KEY = "oros-quote-local";
+  var localPrefs = (function () {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null"); } catch (e) {}
+    p = p && typeof p === "object" ? p : {};
+    return {
+      convTo: curOk(p.convTo) ? p.convTo : "",
+      from: typeof p.from === "string" ? p.from.slice(0, 120) : "",
+      fromEmail: typeof p.fromEmail === "string" ? p.fromEmail.slice(0, 120) : ""
+    };
+  })();
+  function saveLocalPrefs() {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localPrefs)); } catch (e) {}
+  }
+
+  var curNames = null;
+  function curName(code) {
+    try {
+      if (curNames === null) curNames = typeof Intl !== "undefined" && Intl.DisplayNames ? new Intl.DisplayNames([LANG], { type: "currency" }) : false;
+      var n = curNames ? curNames.of(code) : "";
+      return n && n !== code ? n.charAt(0).toUpperCase() + n.slice(1) : "";
+    } catch (e) { return ""; }
+  }
+  var curList = null;
+  function fillCurrencySelect(value) {
+    var sel = $("q-currency");
+    if (!curList) curList = QC ? QC.currencyList() : ["EUR", "USD"];
+    var want = curOk(value) ? value : "EUR";
+    if (sel.options.length !== curList.length + (curList.indexOf(want) < 0 ? 1 : 0) || sel.dataset.extra !== want) {
+      sel.innerHTML = "";
+      var list = curList.indexOf(want) < 0 ? [want].concat(curList) : curList;
+      list.forEach(function (code) {
+        var o = document.createElement("option");
+        o.value = code;
+        var nm = curName(code);
+        o.textContent = code + (nm ? " · " + nm : "");
+        sel.appendChild(o);
+      });
+      sel.dataset.extra = want;
+    }
+    sel.value = want;
+  }
+
+  // ECB rates from the Unit Converter's cache and its one fetcher
+  // (UnitsCore.fetchLatest / crossRate). Display only: the quote keeps
+  // its own currency and amounts.
+  var UC = window.UnitsCore && typeof window.UnitsCore.fetchLatest === "function" ? window.UnitsCore : null;
+  var fx = null, fxBusy = false, fxFailed = false;
+  function readFx() {
+    if (!UC) return null;
+    try { fx = UC.storedRates(JSON.parse(localStorage.getItem(UC.RATES_KEY) || "null")); } catch (e) { fx = null; }
+    return fx;
+  }
+  function fetchFx() {
+    if (!UC || fxBusy || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+    fxBusy = true;
+    UC.fetchLatest(function (u, o) { return fetch(u, o); }, Date.now()).then(function (r) {
+      fxBusy = false; fxFailed = false; fx = r;
+      try { localStorage.setItem(UC.RATES_KEY, JSON.stringify(r)); } catch (e) {}
+      renderConversion();
+    }, function () { fxBusy = false; fxFailed = true; renderConversion(); });
+  }
+  function renderConversion(userPicked) {
+    var row = $("conv-row");
+    if (!row) return;
+    if (!UC || !cur) { row.hidden = true; return; }
+    row.hidden = false;
+    if (!fx) readFx();
+    var sel = $("conv-to"), to = localPrefs.convTo;
+    var codes = ["EUR"].concat(fx ? Object.keys(fx.rates) : (UC.CURRENCY_ORDER || []).slice(1));
+    var sig = codes.join(",") + "|" + cur.currency;
+    if (sel.dataset.sig !== sig) {
+      sel.innerHTML = "";
+      var o0 = document.createElement("option");
+      o0.value = "";
+      o0.textContent = t("conv.pick");
+      sel.appendChild(o0);
+      codes.filter(function (c) { return c !== cur.currency; }).forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c;
+        o.textContent = c;
+        sel.appendChild(o);
+      });
+      sel.dataset.sig = sig;
+    }
+    sel.value = to && to !== cur.currency ? to : "";
+    var out = $("conv-val");
+    if (!sel.value) { out.textContent = ""; return; }
+    if ((!fx || UC.ratesStale(fx, Date.now())) && (userPicked || !fx)) fetchFx();
+    var rate = fx ? UC.crossRate(fx, cur.currency, sel.value) : null;
+    if (rate === null) {
+      out.textContent = fxBusy ? t("conv.loading") : t(fxFailed ? "conv.offline" : "conv.norate");
+      return;
+    }
+    var v = QC ? QC.convert(calcTotals(cur).total, rate, sel.value) : null;
+    out.textContent = v === null ? "" : "≈ " + money(v, sel.value) + " · " + t("conv.ecb").replace("{d}", fmtDate(fx.date));
+  }
+
+  // --- Accept by link (OrosQuoteAccept, accept-core.js) ---
+  var A = window.OrosQuoteAccept || null;
+  function acceptBase() {
+    return location.origin + location.pathname.replace(/[^\/]*$/, "") + "accept.html";
+  }
+  function syncAcceptUi() {
+    var send = $("accept-link"), rec = $("accept-record"), info = $("acc-info");
+    if (!send) return;
+    var saved = !!cur && !curIsDraft;
+    send.hidden = !A || !saved;
+    rec.hidden = !A || !saved || !cur.share || cur.status === "accepted";
+    var acc = saved && cur.acc && typeof cur.acc === "object" ? cur.acc : null;
+    info.hidden = !acc;
+    if (acc) {
+      info.textContent = t("acc.info").replace("{n}", String(acc.n || "")).replace("{d}", fmtDateTime(acc.at));
+    }
+  }
+  function fmtDateTime(ms) {
+    if (typeof ms !== "number" || !isFinite(ms)) return "—";
+    var d = new Date(ms), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    var ymd = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    return fmtDate(ymd) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  // The sender's name: what this device used last, else the Invoices
+  // business profile's name and email (read-only), else empty.
+  function defaultFrom() {
+    var f = { f: localPrefs.from, fe: localPrefs.fromEmail };
+    if (!f.f && !f.fe) {
+      try {
+        var inv = JSON.parse(localStorage.getItem("oros-invoices-data") || "null");
+        var pr = inv && inv.prof && typeof inv.prof === "object" ? inv.prof : null;
+        if (pr) { f.f = typeof pr.name === "string" ? pr.name.slice(0, 120) : ""; f.fe = typeof pr.email === "string" ? pr.email.slice(0, 120) : ""; }
+      } catch (e) {}
+    }
+    return f;
+  }
+  function panelDialog(id, title) {
+    var stale = document.getElementById(id);
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = id;
+    dlg.className = "q-confirm q-panel";
+    var h = document.createElement("h3");
+    h.textContent = title;
+    dlg.appendChild(h);
+    var body = document.createElement("div");
+    body.className = "qp-body";
+    dlg.appendChild(body);
+    var menu = document.createElement("menu");
+    dlg.appendChild(menu);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    return { dlg: dlg, body: body, menu: menu };
+  }
+  function mkBtn(label, cls, fn) {
+    var b = document.createElement("button");
+    b.type = "button";
+    if (cls) b.className = cls;
+    b.textContent = label;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function mkP(text, cls) {
+    var p = document.createElement("p");
+    p.className = cls || "qc-msg";
+    p.textContent = text;
+    return p;
+  }
+  function mkField(label, value, type) {
+    var lab = document.createElement("label");
+    lab.className = "qp-field";
+    var s = document.createElement("span");
+    s.textContent = label;
+    lab.appendChild(s);
+    var inp = document.createElement("input");
+    inp.type = type || "text";
+    inp.autocomplete = "off";
+    inp.maxLength = 120;
+    inp.value = value || "";
+    lab.appendChild(inp);
+    return { wrap: lab, input: inp };
+  }
+
+  function sendForAcceptance() {
+    if (!A || !cur || curIsDraft) { notifyTransient(t("acc.save_first")); return; }
+    var q = cur, client = q.clientId ? clientById(q.clientId) : null;
+    var d = panelDialog("dlg-accept-send", t("acc.send_title"));
+    d.body.appendChild(mkP(t("acc.send_text")));
+    var df = defaultFrom();
+    var fFrom = mkField(t("acc.from"), q.share && q.share.f !== undefined ? q.share.f : df.f);
+    var fMail = mkField(t("acc.from_email"), q.share && q.share.fe !== undefined ? q.share.fe : df.fe, "email");
+    d.body.appendChild(fFrom.wrap);
+    d.body.appendChild(fMail.wrap);
+    var warn = mkP("", "qc-msg qp-warn");
+    warn.hidden = true;
+    d.body.appendChild(warn);
+    var out = document.createElement("div");
+    out.className = "qp-out";
+    out.hidden = true;
+    d.body.appendChild(out);
+    d.menu.appendChild(mkBtn(t("close"), "", function () { d.dlg.close(); }));
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    d.menu.appendChild(sp);
+    var make = mkBtn(t("acc.make"), "qc-yes", function () {
+      var from = { f: fFrom.input.value.trim().slice(0, 120), fe: fMail.input.value.trim().slice(0, 120) };
+      localPrefs.from = from.f; localPrefs.fromEmail = from.fe;
+      saveLocalPrefs();
+      make.disabled = true;
+      buildAcceptLink(q, client, from).then(function (res) {
+        make.disabled = false;
+        if (!res) { warn.textContent = t("acc.too_big"); warn.hidden = false; return; }
+        if (res.renewed) { warn.textContent = t("acc.renewed"); warn.hidden = false; }
+        showAcceptLink(out, res.link, q, d.dlg);
+        if (q === cur) { loadOfferIntoEditor(); }
+      }, function () {
+        make.disabled = false;
+        warn.textContent = t("acc.no_crypto");
+        warn.hidden = false;
+      });
+    });
+    d.menu.appendChild(make);
+    if (q.share) { warn.textContent = t("acc.resend_note"); warn.hidden = false; }
+    d.dlg.showModal();
+    fFrom.input.focus();
+  }
+  // Same quote, same sender and nothing changed since the last link →
+  // the same token and link (an answer to it still counts). Anything
+  // changed → a new token: an answer to an older link no longer counts.
+  function buildAcceptLink(q, client, from) {
+    var prev = q.share && typeof q.share.tok === "string" ? q.share : null;
+    var reuse = prev ? A.snapshot(q, client, { tok: prev.tok, f: from.f, fe: from.fe }) : null;
+    var check = reuse ? A.digest(reuse) : Promise.resolve("");
+    return check.then(function (h0) {
+      var snap, renewed = false;
+      if (reuse && prev.h === h0) snap = reuse;
+      else {
+        snap = A.snapshot(q, client, { tok: A.newToken(), f: from.f, fe: from.fe });
+        renewed = !!prev;
+      }
+      if (!snap) return null;
+      return A.digest(snap).then(function (h) {
+        return A.encodeOffer(snap).then(function (code) {
+          if (code.length > A.MAX_CODE) return null;
+          if (!prev || prev.tok !== snap.tok || prev.h !== h || prev.f !== snap.f || prev.fe !== snap.fe) {
+            q.share = { tok: snap.tok, h: h, at: Date.now(), f: snap.f, fe: snap.fe };
+            if (q.status === "draft") q.status = "sent";
+            touch(q);
+            save();
+          }
+          return { link: acceptBase() + "#" + code, renewed: renewed };
+        });
+      });
+    });
+  }
+  function showAcceptLink(box, link, q, dlg) {
+    box.innerHTML = "";
+    box.hidden = false;
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.readOnly = true;
+    inp.value = link;
+    inp.className = "qp-link";
+    inp.setAttribute("aria-label", t("acc.link"));
+    box.appendChild(inp);
+    var row = document.createElement("div");
+    row.className = "qp-acts";
+    row.appendChild(mkBtn(t("acc.copy"), "", function () {
+      var ok = function () { notifyTransient(t("acc.copied")); };
+      try {
+        navigator.clipboard.writeText(link).then(ok, function () { inp.select(); document.execCommand("copy"); ok(); });
+      } catch (e) { inp.select(); try { document.execCommand("copy"); ok(); } catch (e2) {} }
+    }));
+    if (typeof navigator.share === "function") {
+      row.appendChild(mkBtn(t("acc.share"), "", function () {
+        navigator.share({ title: t("send.subject") + " " + (q.num || ""), url: link }).catch(function () {});
+      }));
+    }
+    row.appendChild(mkBtn(t("acc.email"), "", function () {
+      if (dlg) dlg.close();
+      if (cur !== q) openQuote(q.id);
+      sendEmail(t("acc.mail_line") + "\n" + link);
+    }));
+    box.appendChild(row);
+    box.appendChild(mkP(t("acc.link_hint"), "qc-msg qp-hint"));
+    inp.focus();
+    inp.select();
+  }
+
+  // An answer (link or code) → check it, then the user marks it.
+  function recordAcceptance(text) {
+    if (!A) return;
+    var d = panelDialog("dlg-accept-rec", t("acc.rec_title"));
+    var ta = document.createElement("textarea");
+    ta.rows = 3;
+    ta.className = "qp-paste";
+    ta.placeholder = t("acc.paste_ph");
+    ta.setAttribute("aria-label", t("acc.paste_ph"));
+    ta.value = text || "";
+    d.body.appendChild(mkP(t("acc.rec_text")));
+    d.body.appendChild(ta);
+    var res = document.createElement("div");
+    res.className = "qp-out";
+    d.body.appendChild(res);
+    d.menu.appendChild(mkBtn(t("close"), "", function () { d.dlg.close(); }));
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    d.menu.appendChild(sp);
+    var check = mkBtn(t("acc.check"), "qc-yes", function () { run(); });
+    d.menu.appendChild(check);
+    function run() {
+      res.innerHTML = "";
+      var r = A.readReply(ta.value);
+      if (!r) { res.appendChild(mkP(t("acc.bad_code"), "qc-msg qp-bad")); return; }
+      var q = quoteById(r.i);
+      if (!q) { res.appendChild(mkP(t("acc.no_quote"), "qc-msg qp-bad")); return; }
+      var v = A.verify(q, r);
+      var who = t("acc.who").replace("{n}", r.n).replace("{q}", q.num || "").replace("{d}", fmtDateTime(r.at));
+      if (v !== "ok") {
+        res.appendChild(mkP(who, "qc-msg"));
+        res.appendChild(mkP(t("acc.v_" + v), "qc-msg qp-bad"));
+        return;
+      }
+      res.appendChild(mkP("✓ " + who, "qc-msg qp-good"));
+      if (r.m) res.appendChild(mkP("“" + r.m + "”", "qc-msg qp-note"));
+      if (q.status === "accepted" && q.acc && q.acc.h === r.h) {
+        res.appendChild(mkP(t("acc.already"), "qc-msg"));
+        return;
+      }
+      var client = q.clientId ? clientById(q.clientId) : null;
+      var nowSnap = A.snapshot(q, client, null);
+      (nowSnap ? A.digest(nowSnap) : Promise.resolve("")).then(function (h) {
+        if (h !== q.share.h) res.appendChild(mkP(t("acc.edited"), "qc-msg qp-warn"));
+      }, function () {});
+      var mark = mkBtn(t("acc.mark"), "qc-yes", function () {
+        q.status = "accepted";
+        q.acc = { n: r.n, at: r.at, h: r.h };
+        if (r.m) q.acc.m = r.m;
+        touch(q);
+        save();
+        if (cur && cur.id === q.id) loadOfferIntoEditor(); else openQuote(q.id);
+        scheduleRender();
+        notifyTransient(t("acc.marked"));
+        d.dlg.close();
+        if (invoicesOpener()) {
+          askDialog({ text: t("acc.to_invoice"), yes: t("actions.invoice"), onYes: function () { sendToInvoices(); } });
+        }
+      });
+      var row = document.createElement("div");
+      row.className = "qp-acts";
+      row.appendChild(mark);
+      res.appendChild(row);
+    }
+    d.dlg.showModal();
+    if (text) run(); else ta.focus();
+  }
+  // "…/quote/#acc=a1.…" (the client's answer link opened in this
+  // browser: the shell hands the fragment to this frame).
+  function takeAnswerFromUrl() {
+    var h = "";
+    try { h = String(location.hash || ""); } catch (e) {}
+    if (!/^#acc=/.test(h)) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    if (A && A.readReply(h)) setTimeout(function () { recordAcceptance(h.slice(5)); }, 150);
+  }
+
   function boot() {
     document.documentElement.setAttribute("lang", LANG);
     applyI18n();
@@ -2299,6 +2821,7 @@
     }
     switchTab("create");
     scheduleRender();
+    takeAnswerFromUrl();
   }
 
   boot();
@@ -2330,7 +2853,7 @@
   };
   function applyQuotePrefill(p) {
     newDraft();
-    if (p.cur === "EUR" || p.cur === "USD") cur.currency = p.cur;
+    if (curOk(p.cur)) cur.currency = p.cur;
     var vat = cur.items.length ? cur.items[0].vat : 24;
     cur.items = p.items.map(function (x) {
       var it = newItemObj();

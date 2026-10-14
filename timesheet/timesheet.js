@@ -1580,7 +1580,7 @@
     var fn = quoteBridge();
     if (!fn || !repState) return;
     var cur = data.prefs.cur;
-    if (cur !== "EUR" && cur !== "USD") { showToast(t("quote.cur")); return; }
+    if (!/^[A-Z]{3}$/.test(String(cur || ""))) { showToast(t("quote.cur")); return; }
     var f = repState.f;
     var q = C.quoteLines(data, repState.keys[0], repState.keys[1],
       { client: f.client, project: f.project, billed: f.billed, tag: f.tag }, Date.now(), LANG);

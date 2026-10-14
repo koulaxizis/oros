@@ -1644,7 +1644,7 @@
   }
   function quoteDialog(preset) {
     var cur = data.settings.cur;
-    if (cur !== "EUR" && cur !== "USD") { showToast(t("br.quoteCur", { c: cur })); return; }
+    if (!/^[A-Z]{3}$/.test(String(cur || ""))) { showToast(t("br.quoteCur", { c: cur })); return; }
     var dlg = makeDialog("st-quote", true);
     dlg.appendChild(el("div", "dlg-title", t("br.quoteTitle")));
     var lp = linePicker(dlg, { priceLabel: t("mv.price"), priceOf: function (it) { return it.price; }, idp: "st-qt" });

@@ -9195,7 +9195,7 @@
   // with those lines and the user saves it (a prefill, never data, as
   // BR-W8-6). Strict validation here (false = rejected, nothing opens):
   // 1-50 lines, d text <= 200, q quantity 0 < q <= 100000, p unit price
-  // 0 <= p <= 10000000 (2 decimals each); cur EUR|USD; client <= 80 and
+  // 0 <= p <= 10000000 (2 decimals each); cur any ISO code (AAA); client <= 80 and
   // notes <= 500 chars. Only a fresh plain copy crosses over. Quote
   // running → live push to __orosQuoteNew; otherwise sessionStorage
   // "oros-quote-new" (device-local, one-shot, read and removed by
@@ -9216,7 +9216,7 @@
       items.push({ d: txt(it.d, 200), q: r2(it.q), p: r2(it.p) });
     }
     var q = { items: items };
-    if (p.cur === "EUR" || p.cur === "USD") q.cur = p.cur;
+    if (typeof p.cur === "string" && /^[A-Z]{3}$/.test(p.cur)) q.cur = p.cur;   // any ISO code (Quote wave 46)
     else if (p.cur !== undefined) return false;
     if (typeof p.client === "string") q.client = txt(p.client, 80).trim();
     if (typeof p.notes === "string") q.notes = txt(p.notes, 500);

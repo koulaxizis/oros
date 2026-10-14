@@ -31,7 +31,7 @@
 //     country, email, phone }] (BR-CRM-INV, read by Invoices)
 //   invoicePrefill(cust, deal?, cur) → the { new } of BR-CRM-INV 1
 //   quotePrefill(cust, deal?, cur) → BR-Q1 payload, or null when a
-//     deal's value is in a currency Quote does not know (EUR, USD)
+//     deal's value has no valid ISO currency code
 //   csvRows(data, lang) → rows · csvCell(v)
 //   mailLog(x) → BR-CRM-MAIL payload cleaned { email, name, subject,
 //     text, at } | null · custByEmail(data, email, emailOf?) → cust | null
@@ -545,7 +545,7 @@
     return n;
   }
   function quotePrefill(c, d, cur) {
-    var known = cur === "EUR" || cur === "USD";
+    var known = typeof cur === "string" && /^[A-Z]{3}$/.test(cur);   // Quote takes any ISO code (wave 46)
     if (d && !known) return null;
     var p = { client: c.name, items: [d ? { d: d.title, q: 1, p: (d.val || 0) / 100 } : { d: "", q: 1, p: 0 }] };
     if (known) p.cur = cur;
