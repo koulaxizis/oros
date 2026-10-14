@@ -5979,3 +5979,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-14 — Contacts: Google client id for From an account (#321) — 1.88.02
 - contacts/accounts.js: `CLIENT.google` = Chris's OAuth client (Web application, redirect /contacts/oauth-callback.html, privacy URL /privacy.html). The app is in Google's "Testing" mode: only the test users Chris adds can sign in until Google verifies the `contacts.readonly` scope. Microsoft id still to come.
+
+### 2026-10-14 — Fix: phone changes applied once; older contacts editable on the phone (#322) — 1.88.03
+- phone.js: each change from the phone is applied once (an event added on the phone no longer shows up three times), and contacts edited on the phone come back into orOS.
+- android/: ContactsWriter marks contacts written before 1.88.00 as editable, so their phone-side edits sync too; PhoneBridge acknowledges each change.
+  - Tests: tests/phone.test.js (de-duplication, older contacts); Android build in CI. Real-phone check by Chris after this merge.
