@@ -73,5 +73,18 @@ test("android: single-app flavours (wave 7) keep orOS untouched and drop the pho
     assert.equal((o["res/xml/shortcuts.xml"].match(/targetPackage="([^"]+)"/g) || []).every((t) => t.includes(pkg)), true);
     assert.ok(!/online\.useoros\.twa"/.test(o["res/xml/shortcuts.xml"]));
     assert.ok(fs.existsSync(path.join(ROOT, "icons", "solo", id + "-192.png")));
+    // Wave 7b: the app's own widget, its shortcuts as buttons (EN + EL).
+    assert.ok(x.includes('<receiver android:name=".SoloWidget"'), id + " widget");
+    const words = (S.APPS[id].shortcuts || []).slice(0, 3).map((s) => s.do);
+    words.forEach((w) => assert.ok(o["res/values/solo_widget.xml"].includes(`<item>${w}</item>`), id + " " + w));
+    assert.equal((o["res/values-el/solo_widget.xml"].match(/<item>/g) || []).length, words.length);
   }
+});
+
+test("android: SoloWidget only opens the app's own page with a shortcut word", () => {
+  const j = fs.readFileSync(path.join(ROOT, "android", "app", "src", "main", "java", "online", "useoros", "twa", "SoloWidget.java"), "utf8");
+  assert.match(j, /getString\(R\.string\.launchUrl\)/);
+  assert.match(j, /appendQueryParameter\("do", word\)/);
+  const main = build(web)["AndroidManifest.xml"];
+  assert.ok(!main.includes("SoloWidget"));   // the orOS app keeps its own widgets only
 });

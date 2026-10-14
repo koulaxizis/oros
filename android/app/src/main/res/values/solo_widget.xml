@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single apps' widget (SoloWidget): empty here; each single-app
+     flavour's generated resources (android/tools/gen.js) fill them. -->
+<resources>
+    <string-array name="solo_widget_words" />
+    <string-array name="solo_widget_labels" />
+    <string name="widget_solo">orOS</string>
+    <string name="widget_solo_desc">Quick actions</string>
+</resources>

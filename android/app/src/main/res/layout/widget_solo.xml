@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A single app's widget (SoloWidget): its icon, then up to three of
+     its icon shortcuts. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="6dp"
+    android:background="@drawable/widget_bg">
+    <ImageView android:id="@+id/w_solo_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="3dp"
+        android:layout_marginEnd="3dp"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="@string/launcherName" />
+    <TextView android:id="@+id/w_solo0" style="@style/WidgetButton" />
+    <TextView android:id="@+id/w_solo1" style="@style/WidgetButton" />
+    <TextView android:id="@+id/w_solo2" style="@style/WidgetButton" />
+</LinearLayout>
