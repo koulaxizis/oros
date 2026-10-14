@@ -5973,3 +5973,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - phone.js + contacts/contacts.js: contacts you add, change or delete in the phone's "orOS" account now come back into orOS Contacts; Contacts reloads when the phone sends changes.
 - android/: ContactsWriter reads phone-side changes and sends them over the bridge; the "orOS" contacts account is now editable on the phone.
   - Tests: tests/phone.test.js (two-way contact rows); Android build in CI. Real-phone test by Chris after this merge.
+
+### 2026-10-14 — Public privacy policy page (#320) — 1.88.01
+- privacy.html (repo root, standalone, EN + EL toggle, follows `oros-lang`, `?lang=el` / `#el`): the public privacy policy at https://useoros.online/privacy.html, needed for the Google and Microsoft OAuth app registrations of Contacts › From an account (BR-CT-IMPORT). It restates the Privacy help topic and adds the Google API Services User Data Policy / Limited Use statement for the one-time contacts import. Not an app, not precached (network-first navigation like any page). Update its date and text whenever orOS starts using a new kind of data or service.
