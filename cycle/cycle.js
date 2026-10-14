@@ -74,6 +74,37 @@
       "flow.1":        "Light",
       "flow.2":        "Normal",
       "flow.3":        "Heavy",
+      "per.flowday":   "Flow of this day",
+      "fert.title":    "Temperature and mucus",
+      "fert.bbt":      "Basal body temperature (°C)",
+      "fert.bbt.ph":   "e.g. 36.45",
+      "fert.bbt.bad":  "Enter a temperature between 34 and 43 °C (or in °F)",
+      "fert.bbt.hint": "Take it right after waking, before you get up, at about the same time every day.",
+      "fert.bbt.clear":"Clear",
+      "cm.title":      "Cervical mucus",
+      "cm.1":          "Dry",
+      "cm.2":          "Moist",
+      "cm.3":          "Creamy",
+      "cm.4":          "Egg white",
+      "fert.notc":     "An estimate from your own log, not contraception. Don't rely on it to avoid or plan a pregnancy.",
+      "fert.ins":      "Fertile window (estimate)",
+      "fert.off":      "Log your basal body temperature and cervical mucus each day to see an estimated fertile window for the current cycle (symptothermal method).",
+      "fert.on.btn":   "Turn on temperature and mucus",
+      "fert.off.btn":  "Turn off (your entries stay)",
+      "fert.range":    "{a} – {b}",
+      "fert.open":     "From {a}, not confirmed yet: count yourself possibly fertile",
+      "fert.shift":    "Temperature rise from {d} (coverline {c} °C), confirmed {e}",
+      "fert.noshift":  "No temperature rise confirmed yet in this cycle",
+      "fert.peak":     "Mucus peak {d}, confirmed {e}",
+      "fert.peak.wait":"Mucus peak {d}? Waiting for 3 days to confirm it",
+      "fert.nopeak":   "No mucus peak yet in this cycle",
+      "fert.tonly":    "Temperature only: with mucus logged too, the estimate gets its double check.",
+      "fert.rule.5":   "Start: cycle day 6 (first-5-days rule).",
+      "fert.rule.m8":  "Start: your earliest temperature rise minus 8 days.",
+      "fert.rule.cm":  "Start: the first day with mucus.",
+      "fert.nocycle":  "Log a period start first.",
+      "fert.chart":    "Temperatures this cycle",
+      "fert.cday":     "Cycle day {n}",
       "sym.title":     "Symptoms",
       "sym.none":      "None",
       "sym.add":       "Add…",
@@ -183,6 +214,37 @@
       "flow.1":        "Ελαφριά",
       "flow.2":        "Κανονική",
       "flow.3":        "Βαριά",
+      "per.flowday":   "Ροή αυτής της μέρας",
+      "fert.title":    "Θερμοκρασία και βλέννα",
+      "fert.bbt":      "Βασική θερμοκρασία σώματος (°C)",
+      "fert.bbt.ph":   "π.χ. 36,45",
+      "fert.bbt.bad":  "Γράψε θερμοκρασία από 34 έως 43 °C (ή σε °F)",
+      "fert.bbt.hint": "Μέτρησέ τη μόλις ξυπνήσεις, πριν σηκωθείς, περίπου την ίδια ώρα κάθε μέρα.",
+      "fert.bbt.clear":"Καθαρισμός",
+      "cm.title":      "Τραχηλική βλέννα",
+      "cm.1":          "Ξηρότητα",
+      "cm.2":          "Υγρασία",
+      "cm.3":          "Κρεμώδης",
+      "cm.4":          "Σαν ασπράδι αυγού",
+      "fert.notc":     "Εκτίμηση από τις δικές σου καταγραφές, όχι αντισύλληψη. Μη βασιστείς σε αυτή για να αποφύγεις ή να σχεδιάσεις εγκυμοσύνη.",
+      "fert.ins":      "Γόνιμο παράθυρο (εκτίμηση)",
+      "fert.off":      "Κατέγραφε κάθε μέρα τη βασική θερμοκρασία σώματος και την τραχηλική βλέννα για να βλέπεις ένα εκτιμώμενο γόνιμο παράθυρο του τρέχοντος κύκλου (συμπτωθερμική μέθοδος).",
+      "fert.on.btn":   "Ενεργοποίηση θερμοκρασίας και βλέννας",
+      "fert.off.btn":  "Απενεργοποίηση (οι καταγραφές μένουν)",
+      "fert.range":    "{a} – {b}",
+      "fert.open":     "Από {a}, χωρίς επιβεβαίωση ακόμη: θεώρησε ότι μπορεί να είσαι γόνιμη",
+      "fert.shift":    "Άνοδος θερμοκρασίας από {d} (γραμμή αναφοράς {c} °C), επιβεβαίωση {e}",
+      "fert.noshift":  "Δεν έχει επιβεβαιωθεί άνοδος θερμοκρασίας σε αυτόν τον κύκλο",
+      "fert.peak":     "Κορύφωση βλέννας {d}, επιβεβαίωση {e}",
+      "fert.peak.wait":"Κορύφωση βλέννας {d}; Αναμονή 3 ημερών για επιβεβαίωση",
+      "fert.nopeak":   "Δεν υπάρχει ακόμη κορύφωση βλέννας σε αυτόν τον κύκλο",
+      "fert.tonly":    "Μόνο θερμοκρασία: αν καταγράφεις και τη βλέννα, η εκτίμηση έχει τον διπλό έλεγχο.",
+      "fert.rule.5":   "Αρχή: 6η μέρα του κύκλου (κανόνας των πρώτων 5 ημερών).",
+      "fert.rule.m8":  "Αρχή: η νωρίτερη άνοδος θερμοκρασίας σου μείον 8 μέρες.",
+      "fert.rule.cm":  "Αρχή: η πρώτη μέρα με βλέννα.",
+      "fert.nocycle":  "Κατέγραψε πρώτα την έναρξη μιας περιόδου.",
+      "fert.chart":    "Θερμοκρασίες αυτού του κύκλου",
+      "fert.cday":     "{n}η μέρα κύκλου",
       "sym.title":     "Συμπτώματα",
       "sym.none":      "Κανένα",
       "sym.add":       "Προσθήκη…",
@@ -362,6 +424,7 @@
     if (data.pm !== undefined && typeof data.pm !== "number") delete data.pm;   // CY-2
     if (!data.prefs || typeof data.prefs !== "object") data.prefs = { remind: true };
     if (typeof data.prefs.remind !== "boolean") data.prefs.remind = true;
+    if (data.prefs.bbt !== undefined && typeof data.prefs.bbt !== "boolean") delete data.prefs.bbt;   // wave 34
 
     data.periods.forEach(function (p) {
       if (typeof p.start !== "number") p.start = 0;
@@ -380,6 +443,9 @@
       if (typeof d.day !== "number") d.day = dayTsFromKey(d.id.replace(/^d-/, ""));
       if (typeof d.mtime !== "number") d.mtime = 0;
       d.meds = d.meds.filter(function (m) { return m && m.id && m.med; });
+      CC.EXTRA.forEach(function (k) {                  // wave 34: invalid → absent
+        if (d[k] !== undefined && !CC.validExtra(k, d[k])) delete d[k];
+      });
       if (d.fm !== undefined && (!d.fm || typeof d.fm !== "object")) {   // CY-3: unusable stamps
         delete d.fm; delete d.ss; delete d.sb;                          // → whole-day rule
       }
@@ -575,7 +641,7 @@
   function dayView(d) {
     var f = d.fm, m = d.mtime || 0;
     if (f && typeof f === "object" &&
-        m <= Math.max(f.sym || 0, f.meds || 0, f.note || 0)) {
+        m <= Math.max(f.sym || 0, f.meds || 0, f.note || 0, CC.extraMax(f))) {
       return { fm: true, sym: f.sym || 0, meds: f.meds || 0, note: f.note || 0,
                ss: (d.ss && typeof d.ss === "object") ? d.ss : {},
                sb: typeof d.sb === "number" ? d.sb : 0 };
@@ -595,11 +661,19 @@
     var keys = Object.keys(v.ss);
     sym.forEach(function (sid) { if (keys.indexOf(sid) < 0) keys.push(sid); });
     keys.sort().forEach(function (k) { ss[k] = symStamp(v, k); });
-    return JSON.parse(JSON.stringify({
+    var o = {
       id: d.id, day: d.day, mtime: d.mtime || 0,
       sym: sym.filter(function (sid, i) { return sym.indexOf(sid) === i; }),
-      meds: d.meds || [], note: d.note || "",
-      fm: { sym: v.sym, meds: v.meds, note: v.note }, sb: v.sb, ss: ss }));
+      meds: d.meds || [], note: d.note || "" };
+    // wave 34: fl / bbt / cm and their stamps, only when present
+    // (a day that never had them keeps its canonical bytes)
+    var ex = CC.ownExtras(d, v.fm);
+    CC.EXTRA.forEach(function (k) { if (ex[k].v !== undefined) o[k] = ex[k].v; });
+    o.fm = { sym: v.sym, meds: v.meds, note: v.note };
+    CC.EXTRA.forEach(function (k) { if (ex[k].s > 0) o.fm[k] = ex[k].s; });
+    o.sb = v.sb;
+    o.ss = ss;
+    return JSON.parse(JSON.stringify(o));
   }
   function mergeDay(x, y) {
     var vx = dayView(x), vy = dayView(y);
@@ -633,6 +707,12 @@
     out.note = vx.note !== vy.note ? (vx.note > vy.note ? x.note : y.note)
                                    : jsonMax(x.note || "", y.note || "");
     out.fm.note = Math.max(vx.note, vy.note);
+    // wave 34: flow of the day, BBT, mucus — each by its own stamp
+    var ex = CC.mergeExtras(x, vx.fm, y, vy.fm);
+    CC.EXTRA.forEach(function (k) {
+      if (ex[k].v !== undefined) out[k] = ex[k].v;
+      if (ex[k].s > 0) out.fm[k] = ex[k].s;
+    });
     return canonDay(out);
   }
   function mergeDays(a, b, tomb) {
@@ -1174,10 +1254,11 @@
       var eX = Math.min(timelineZoom, (pEnd - leftTs) / DAY_MS + 1);
       var bar = document.createElement("button");
       bar.type = "button";
-      bar.className = "tl-bar per" + p.flow;
+      var pfl = CC.periodFlow(p, state.days);
+      bar.className = "tl-bar per" + pfl;
       bar.style.left = (sX * scale) + "%";
       bar.style.width = (Math.max(1, eX - sX) * scale) + "%";
-      bar.title = t("per.title") + " · " + t("flow." + p.flow) + " · " +
+      bar.title = t("per.title") + " · " + t("flow." + pfl) + " · " +
         dstr(p.start, { day: "numeric", month: "short" }) +
         (p.end === null ? "" : " – " +
           dstr(p.end, { day: "numeric", month: "short" }));
@@ -1374,20 +1455,27 @@
       // inside a period: flow chips (edit the WHOLE period —
       // Wave 1 granularity: flow is a period-level property),
       // end-here, remove
+      // wave 34: flow is per DAY; a day without its own flow shows
+      // the period's (the old whole-period value) until it is set
+      var flLab = document.createElement("div");
+      flLab.className = "col-lab";
+      flLab.textContent = t("per.flowday");
+      host.appendChild(flLab);
       var fl = document.createElement("div");
       fl.className = "chips";
+      fl.setAttribute("role", "group");
+      fl.setAttribute("aria-label", t("per.flowday"));
+      var curFl = CC.dayFlow(rec, per);
       [1, 2, 3].forEach(function (f) {
         var c = document.createElement("button");
         c.type = "button";
-        c.className = "chip flow" + (per.flow === f ? " on" : "");
+        c.className = "chip flow" + (curFl === f ? " on" : "");
         c.textContent = t("flow." + f);
-        c.setAttribute("aria-pressed", per.flow === f ? "true" : "false");
+        c.setAttribute("aria-pressed", curFl === f ? "true" : "false");
         c.addEventListener("click", function () {
-          if (per.flow === f) return;
-          per.flow = f;
-          per.mtime = Date.now();
-          state.sm = Date.now();
-          save();
+          var r0 = dayById(dayId);
+          if (r0 && r0.fl === f) return;
+          setDayExtra(dayId, ts, "fl", f);
           buildEditorChromeless();
         });
         fl.appendChild(c);
@@ -1662,6 +1750,11 @@
     mlHost.appendChild(mlist);
     host.appendChild(mlHost);
 
+    // ---- wave 34: temperature + mucus (optional, symptothermal) ----
+    if (state.prefs.bbt || (rec && (rec.bbt !== undefined || rec.cm !== undefined))) {
+      renderFertilityFields(host, dayId, ts, rec);
+    }
+
     // ---- Note ----
     var nh = document.createElement("h2");
     nh.className = "sec-title";
@@ -1753,6 +1846,11 @@
     for (k in v.ss) if (Object.prototype.hasOwnProperty.call(v.ss, k)) ss[k] = v.ss[k];
     (rec.sym || []).forEach(function (sid) { if (ss[sid] === undefined) ss[sid] = v.sb; });
     var fm = { sym: v.sym, meds: v.meds, note: v.note };
+    var ex = CC.ownExtras(rec, v.fm);          // wave 34: fl / bbt / cm stamps
+    CC.EXTRA.forEach(function (k) {
+      var st = o[k] ? now : ex[k].s;
+      if (st > 0) fm[k] = st;
+    });
     if (o.sym && o.sym.length) {
       o.sym.forEach(function (sid) { ss[sid] = now; });
       fm.sym = now;
@@ -1760,7 +1858,7 @@
     if (o.meds) fm.meds = now;
     if (o.note) fm.note = now;
     rec.fm = fm; rec.sb = v.sb; rec.ss = ss;
-    rec.mtime = Math.max(fm.sym, fm.meds, fm.note);
+    rec.mtime = Math.max(fm.sym, fm.meds, fm.note, CC.extraMax(fm));
   }
 
   function takeMed(dayTs_, medId) {
@@ -1774,6 +1872,103 @@
     touchDay(rec, { meds: true });
     state.sm = Date.now();
     save();
+  }
+
+  // wave 34: set (v) or clear (undefined) one of fl / bbt / cm of a
+  // day, saved at once with its own field stamp (CY-3 style)
+  function setDayExtra(dayId, ts, k, v) {
+    var rec = dayById(dayId);
+    if (!rec) {
+      if (v === undefined) return;
+      rec = newDayRec(dayId, ts);
+      state.days.push(rec);
+    }
+    if (rec[k] === v) return;
+    if (v === undefined) delete rec[k]; else rec[k] = v;
+    var o = {};
+    o[k] = true;
+    touchDay(rec, o);
+    pruneIfEmpty(rec);
+    state.sm = Date.now();
+    save();
+  }
+  function fmtBbt(h) {
+    var s = (h / 100).toFixed(2);
+    return LANG === "el" ? s.replace(".", ",") : s;
+  }
+  function renderFertilityFields(host, dayId, ts, rec) {
+    var h = document.createElement("h2");
+    h.className = "sec-title";
+    h.textContent = t("fert.title");
+    host.appendChild(h);
+    var row = document.createElement("div");
+    row.className = "addrow bbt-row";
+    var lab = document.createElement("label");
+    lab.className = "col-lab";
+    lab.htmlFor = "fld-bbt";
+    lab.textContent = t("fert.bbt");
+    host.appendChild(lab);
+    var inp = document.createElement("input");
+    inp.id = "fld-bbt";
+    inp.type = "text";
+    inp.inputMode = "decimal";
+    inp.autocomplete = "off";
+    inp.maxLength = 6;
+    inp.placeholder = t("fert.bbt.ph");
+    inp.value = rec && rec.bbt !== undefined ? fmtBbt(rec.bbt) : "";
+    inp.addEventListener("change", function () {
+      var raw = inp.value.trim();
+      if (!raw) { setDayExtra(dayId, ts, "bbt", undefined); buildEditorChromeless(); return; }
+      var v = CC.parseBbt(raw);
+      if (v === null) { transientNote(t("fert.bbt.bad")); return; }
+      setDayExtra(dayId, ts, "bbt", v);
+      buildEditorChromeless();
+    });
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); inp.blur(); }
+    });
+    row.appendChild(inp);
+    if (rec && rec.bbt !== undefined) {
+      var clr = document.createElement("button");
+      clr.type = "button";
+      clr.className = "ghost";
+      clr.textContent = t("fert.bbt.clear");
+      clr.addEventListener("click", function () { setDayExtra(dayId, ts, "bbt", undefined); buildEditorChromeless(); });
+      row.appendChild(clr);
+    }
+    host.appendChild(row);
+    var hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = t("fert.bbt.hint");
+    host.appendChild(hint);
+    var cl = document.createElement("div");
+    cl.className = "col-lab";
+    cl.style.marginTop = "10px";
+    cl.textContent = t("cm.title");
+    host.appendChild(cl);
+    var chips = document.createElement("div");
+    chips.className = "chips";
+    chips.setAttribute("role", "group");
+    chips.setAttribute("aria-label", t("cm.title"));
+    [1, 2, 3, 4].forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      var on = !!(rec && rec.cm === c);
+      b.className = "chip" + (on ? " on" : "");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.textContent = t("cm." + c);
+      b.addEventListener("click", function () {
+        var r0 = dayById(dayId);
+        setDayExtra(dayId, ts, "cm", r0 && r0.cm === c ? undefined : c);   // tap again = clear
+        buildEditorChromeless();
+      });
+      chips.appendChild(b);
+    });
+    host.appendChild(chips);
+    var nc = document.createElement("div");
+    nc.className = "hint notc";
+    nc.textContent = t("fert.notc");
+    host.appendChild(nc);
   }
 
   // Start period AT a day — OVERLAP-GUARDED: a new period may
@@ -1819,7 +2014,8 @@
   // Save day — upsert; an empty day record PRUNES itself (and
   // tombstones — a remotely resurrected empty day is garbage).
   function pruneIfEmpty(rec) {
-    if (!rec.sym.length && !rec.meds.length && !rec.note) {
+    if (!rec.sym.length && !rec.meds.length && !rec.note &&
+        rec.fl === undefined && rec.bbt === undefined && rec.cm === undefined) {
       state.days = state.days.filter(function (x) { return x.id !== rec.id; });
       state.deleted[rec.id] = Date.now();
       return true;
@@ -2059,6 +2255,7 @@
       if (v) { bits.push(v.label, colLabel(v)); }
     });
     bits.push(d.note || "");
+    if (d.cm !== undefined) bits.push(t("cm." + d.cm));
     return bits.join(" ").toLowerCase();
   }
 
@@ -2087,14 +2284,17 @@
         var per = periodCovering(d.day);
         if (per) {
           var fd = document.createElement("span");
-          fd.className = "dr-flow f" + per.flow;
-          fd.title = t("per.title") + " · " + t("flow." + per.flow);
+          var dfl = CC.dayFlow(d, per);
+          fd.className = "dr-flow f" + dfl;
+          fd.title = t("per.title") + " · " + t("flow." + dfl);
           li.appendChild(fd);
         }
 
         var ctx = document.createElement("span");
         ctx.className = "dr-ctx";
         var bits = [];
+        if (d.bbt !== undefined) bits.push(fmtBbt(d.bbt) + " °C");
+        if (d.cm !== undefined) bits.push(t("cm." + d.cm));
         (d.sym || []).forEach(function (sid) {
           var v = colValById("sym", sid);
           if (v) bits.push(colLabel(v));
@@ -2339,6 +2539,9 @@
       host.appendChild(pc);
     }
 
+    // ---- wave 34: fertile window (symptothermal estimate) ----
+    renderFertilityCard(host);
+
     // ---- cross-app: mood during period days (read-only) ----
     renderMoodSection(host);
 
@@ -2406,6 +2609,145 @@
     if (synth) host.appendChild(synth);
 
     appendResetLink(host);
+  }
+
+  // wave 34: the current cycle's observations and the estimate
+  function obsOf(fromTs, toTs) {
+    var out = [];
+    state.days.forEach(function (d) {
+      if (d.day < fromTs || d.day > toTs) return;
+      if (d.bbt === undefined && d.cm === undefined) return;
+      out.push({ k: dayKey(d.day), bbt: d.bbt, cm: d.cm });
+    });
+    return out;
+  }
+  function setFertPref(on) {
+    state.prefs.bbt = on;
+    state.sm = Date.now();
+    state.pm = state.sm;
+    state.om = state.sm;
+    save();
+    renderInsights();
+  }
+  function renderFertilityCard(host) {
+    var card = document.createElement("div");
+    card.className = "recap-card fert-card";
+    var lab = document.createElement("div");
+    lab.className = "col-lab";
+    lab.textContent = t("fert.ins");
+    card.appendChild(lab);
+    function line(text, cls) {
+      var d = document.createElement("div");
+      d.className = cls || "fert-line";
+      d.textContent = text;
+      card.appendChild(d);
+      return d;
+    }
+    function btn(text, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip ghost";
+      b.style.marginTop = "10px";
+      b.textContent = text;
+      b.addEventListener("click", fn);
+      card.appendChild(b);
+    }
+    if (!state.prefs.bbt) {
+      line(t("fert.off"), "hint");
+      line(t("fert.notc"), "hint notc");
+      btn(t("fert.on.btn"), function () { setFertPref(true); });
+      host.appendChild(card);
+      return;
+    }
+    var today = todayTs();
+    var starts = sortedPeriods().map(function (p) { return p.start; })
+      .filter(function (s0) { return s0 <= today; }).sort(function (a, b) { return a - b; });
+    if (!starts.length) {
+      line(t("fert.nocycle"), "hint");
+    } else {
+      var past = [];
+      for (var i = 0; i + 1 < starts.length; i++) {
+        var sh = CC.tempShift(obsOf(starts[i], starts[i + 1] - DAY_MS));
+        if (sh) {
+          var n = Math.round((dayTsFromKey(sh.first) - starts[i]) / DAY_MS) + 1;
+          if (n >= 1) past.push(n);
+        }
+      }
+      var c0 = starts[starts.length - 1];
+      var obs = obsOf(c0, today);
+      var est = CC.fertility(dayKey(c0), obs, past, dayKey(today));
+      var dOpt = { weekday: "short", day: "numeric", month: "short" };
+      var ds = function (k) { return new Date(dayTsFromKey(k)).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", dOpt); };
+      var big = line(est.end ? t("fert.range").replace("{a}", ds(est.start)).replace("{b}", ds(est.end))
+                             : t("fert.open").replace("{a}", ds(est.start)), "recap-val fert-val");
+      big.setAttribute("aria-live", "polite");
+      line(t("fert.rule." + est.startRule), "hint");
+      if (est.shift) {
+        line(t("fert.shift").replace("{d}", ds(est.shift)).replace("{c}", fmtBbt(est.cover)).replace("{e}", ds(est.tempConfirm)));
+      } else line(t("fert.noshift"));
+      if (est.peak) {
+        line(est.peakConfirm ? t("fert.peak").replace("{d}", ds(est.peak)).replace("{e}", ds(est.peakConfirm))
+                             : t("fert.peak.wait").replace("{d}", ds(est.peak)));
+      } else line(t("fert.nopeak"));
+      if (est.method === "t") line(t("fert.tonly"), "hint");
+      var chart = bbtChart(c0, today, obs, est);
+      if (chart) card.appendChild(chart);
+    }
+    line(t("fert.notc"), "hint notc");
+    btn(t("fert.off.btn"), function () { setFertPref(false); });
+    host.appendChild(card);
+  }
+  // A small SVG of this cycle's temperatures, coverline dashed,
+  // the estimated fertile days shaded. Built with createElementNS.
+  function bbtChart(c0, today, obs, est) {
+    var pts = obs.filter(function (o) { return o.bbt !== undefined; });
+    if (!pts.length) return null;
+    var NS = "http://www.w3.org/2000/svg";
+    function mk(tag, at) {
+      var n = document.createElementNS(NS, tag);
+      Object.keys(at).forEach(function (k) { n.setAttribute(k, at[k]); });
+      return n;
+    }
+    var days = Math.max(14, Math.round((today - c0) / DAY_MS) + 1);
+    var W = 320, H = 120, L = 34, R = 6, T = 8, B = 18;
+    var lo = Math.min.apply(null, pts.map(function (o) { return o.bbt; })) - 10;
+    var hi = Math.max.apply(null, pts.map(function (o) { return o.bbt; })) + 10;
+    if (est.cover) { lo = Math.min(lo, est.cover - 10); hi = Math.max(hi, est.cover + 10); }
+    if (hi - lo < 60) { var mid = (hi + lo) / 2; lo = mid - 30; hi = mid + 30; }
+    function X(k) { return L + (W - L - R) * ((Math.round((dayTsFromKey(k) - c0) / DAY_MS)) + 0.5) / days; }
+    function Y(v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); }
+    var wrap = document.createElement("figure");
+    wrap.className = "bbt-fig";
+    var svg = mk("svg", { viewBox: "0 0 " + W + " " + H, class: "bbt-chart", role: "img", "aria-label": t("fert.chart") });
+    if (est.start) {
+      var x0 = X(est.start) - (W - L - R) / days / 2;
+      var x1 = est.end ? X(est.end) + (W - L - R) / days / 2 : W - R;
+      svg.appendChild(mk("rect", { x: Math.max(L, x0), y: T, width: Math.max(0, Math.min(W - R, x1) - Math.max(L, x0)), height: H - T - B, class: "bbt-win" }));
+    }
+    [lo + 10, hi - 10].forEach(function (v) {
+      svg.appendChild(mk("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), class: "bbt-grid" }));
+      var tx = mk("text", { x: L - 4, y: Y(v) + 3, class: "bbt-lab", "text-anchor": "end" });
+      tx.textContent = fmtBbt(Math.round(v));
+      svg.appendChild(tx);
+    });
+    if (est.cover) svg.appendChild(mk("line", { x1: L, x2: W - R, y1: Y(est.cover), y2: Y(est.cover), class: "bbt-cover" }));
+    var sorted = pts.slice().sort(function (a, b) { return a.k < b.k ? -1 : 1; });
+    if (sorted.length > 1) {
+      svg.appendChild(mk("polyline", { points: sorted.map(function (o) { return X(o.k).toFixed(1) + "," + Y(o.bbt).toFixed(1); }).join(" "), class: "bbt-line" }));
+    }
+    sorted.forEach(function (o) { svg.appendChild(mk("circle", { cx: X(o.k), cy: Y(o.bbt), r: 2.6, class: "bbt-pt" })); });
+    var d1 = mk("text", { x: L, y: H - 4, class: "bbt-lab" });
+    d1.textContent = t("fert.cday").replace("{n}", "1");
+    svg.appendChild(d1);
+    var d2 = mk("text", { x: W - R, y: H - 4, class: "bbt-lab", "text-anchor": "end" });
+    d2.textContent = t("fert.cday").replace("{n}", String(days));
+    svg.appendChild(d2);
+    wrap.appendChild(svg);
+    var cap = document.createElement("figcaption");
+    cap.className = "hint";
+    cap.textContent = t("fert.chart");
+    wrap.appendChild(cap);
+    return wrap;
   }
 
   // one dist-row builder — neutral metrics → OS hue (mood rule)
@@ -2682,7 +3024,7 @@
       var sX = Math.max(0, (p.start - startTs) / DAY_MS);
       var eX = Math.min(90, (pEnd - startTs) / DAY_MS + 1);
       var bar = document.createElement("div");
-      bar.className = "tl-bar per" + p.flow;
+      bar.className = "tl-bar per" + CC.periodFlow(p, state.days);
       bar.style.left = (sX * scale) + "%";
       bar.style.width = (Math.max(1, eX - sX) * scale) + "%";
       strip.appendChild(bar);
@@ -2805,7 +3147,7 @@
             doc.text((i + 1) + ".", M + 8, y);
             doc.text(dstr(p.start) + " – " + to, M + 28, y);
             doc.setTextColor(115);
-            doc.text(dur + " · " + t("flow." + p.flow),
+            doc.text(dur + " · " + t("flow." + CC.periodFlow(p, state.days)),
               W - M - 8, y, { align: "right" });
             y += 15;
           });
