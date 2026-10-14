@@ -313,6 +313,7 @@
       "tr.opTrain": "Openings trainer", "tr.opHere": "This game: {name}",
       "tr.loading": "Loading…", "tr.loadFail": "Couldn't load the puzzles on this device.",
       "tr.packNote": "{n} puzzles on this device, offline. Their ratings are estimates.",
+      "tr.packSrc": "{n} puzzles on this device, offline: {l} from the Lichess puzzle database (CC0) with their Lichess ratings, {o} made by orOS (estimated ratings).",
       "tr.find": "Find the best move for {side}", "tr.findNext": "Good. Now the next move",
       "tr.wait": "Wait for the reply",
       "tr.wrong": "Not the move. Try again",
@@ -346,7 +347,20 @@
       "th.defensiveMove": "Defensive move", "th.quietMove": "Quiet move", "th.trappedPiece": "Trapped piece",
       "th.doubleCheck": "Double check", "th.smotheredMate": "Smothered mate", "th.zugzwang": "Zugzwang",
       "th.rookEndgame": "Rook endgame", "th.pawnEndgame": "Pawn endgame", "th.equality": "Equality",
-      "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear."
+      "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear.",
+      // Names for the rarer Lichess pack tags (display only; the pack generator balances the themes above)
+      "th.advancedPawn": "Advanced pawn", "th.master": "Master game", "th.masterVsMaster": "Master vs master",
+      "th.superGM": "Super GM game", "th.pillsburysMate": "Pillsbury's mate", "th.arabianMate": "Arabian mate",
+      "th.operaMate": "Opera mate", "th.anastasiaMate": "Anastasia's mate", "th.doubleBishopMate": "Double bishop mate",
+      "th.epauletteMate": "Epaulette mate", "th.dovetailMate": "Dovetail mate", "th.cornerMate": "Corner mate",
+      "th.blindSwineMate": "Blind swine mate", "th.balestraMate": "Balestra mate", "th.swallowstailMate": "Swallow's tail mate",
+      "th.killBoxMate": "Kill box mate", "th.hookMate": "Hook mate", "th.morphysMate": "Morphy's mate",
+      "th.triangleMate": "Triangle mate", "th.vukovicMate": "Vukovic mate", "th.queenEndgame": "Queen endgame",
+      "th.queenRookEndgame": "Queen and rook endgame", "th.bishopEndgame": "Bishop endgame", "th.knightEndgame": "Knight endgame",
+      "th.attackingF2F7": "Attacking f2 or f7", "th.discoveredCheck": "Discovered check", "th.exposedKing": "Exposed king",
+      "th.clearance": "Clearance", "th.xRayAttack": "X-ray attack", "th.capturingDefender": "Capture the defender",
+      "th.intermezzo": "Intermezzo", "th.interference": "Interference", "th.castling": "Castling",
+      "th.collinearMove": "Collinear move", "th.enPassant": "En passant", "th.underPromotion": "Underpromotion"
     },
     el: {
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
@@ -581,6 +595,7 @@
       "tr.opTrain": "Εξάσκηση στα ανοίγματα", "tr.opHere": "Αυτή η παρτίδα: {name}",
       "tr.loading": "Φόρτωση…", "tr.loadFail": "Δεν φορτώθηκαν οι γρίφοι σε αυτή τη συσκευή.",
       "tr.packNote": "{n} γρίφοι σε αυτή τη συσκευή, χωρίς σύνδεση. Οι βαθμοί τους είναι εκτιμήσεις.",
+      "tr.packSrc": "{n} γρίφοι σε αυτή τη συσκευή, χωρίς σύνδεση: {l} από τη βάση γρίφων του Lichess (CC0) με τους βαθμούς τους στο Lichess, {o} φτιαγμένοι από το orOS (εκτιμώμενοι βαθμοί).",
       "tr.find": "Βρες την καλύτερη κίνηση για τα {side}", "tr.findNext": "Σωστά. Τώρα η επόμενη κίνηση",
       "tr.wait": "Περίμενε την απάντηση",
       "tr.wrong": "Όχι αυτή. Δοκίμασε ξανά",
@@ -614,7 +629,20 @@
       "th.defensiveMove": "Αμυντική κίνηση", "th.quietMove": "Ήσυχη κίνηση", "th.trappedPiece": "Παγιδευμένο κομμάτι",
       "th.doubleCheck": "Διπλό σαχ", "th.smotheredMate": "Πνιγμένο ματ", "th.zugzwang": "Τσουγκτσβάνγκ",
       "th.rookEndgame": "Φινάλε πύργων", "th.pawnEndgame": "Φινάλε πιονιών", "th.equality": "Εξίσωση",
-      "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί."
+      "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί.",
+      // Names for the rarer Lichess pack tags (display only; the pack generator balances the themes above)
+      "th.advancedPawn": "Προωθημένο πιόνι", "th.master": "Παρτίδα μετρ", "th.masterVsMaster": "Μετρ εναντίον μετρ",
+      "th.superGM": "Παρτίδα κορυφαίου GM", "th.pillsburysMate": "Ματ του Pillsbury", "th.arabianMate": "Αραβικό ματ",
+      "th.operaMate": "Ματ της Όπερας", "th.anastasiaMate": "Ματ της Αναστασίας", "th.doubleBishopMate": "Ματ με δύο αξιωματικούς",
+      "th.epauletteMate": "Ματ με επωμίδες", "th.dovetailMate": "Ματ χελιδονοουράς", "th.cornerMate": "Ματ στη γωνία",
+      "th.blindSwineMate": "Ματ των τυφλών γουρουνιών", "th.balestraMate": "Ματ Balestra", "th.swallowstailMate": "Ματ ουράς χελιδονιού",
+      "th.killBoxMate": "Ματ σε κουτί", "th.hookMate": "Ματ με γάντζο", "th.morphysMate": "Ματ του Morphy",
+      "th.triangleMate": "Τριγωνικό ματ", "th.vukovicMate": "Ματ Vukovic", "th.queenEndgame": "Φινάλε βασιλισσών",
+      "th.queenRookEndgame": "Φινάλε βασίλισσας και πύργου", "th.bishopEndgame": "Φινάλε αξιωματικών", "th.knightEndgame": "Φινάλε ίππων",
+      "th.attackingF2F7": "Επίθεση στο f2 ή f7", "th.discoveredCheck": "Αποκαλυπτόμενο σαχ", "th.exposedKing": "Εκτεθειμένος βασιλιάς",
+      "th.clearance": "Εκκαθάριση", "th.xRayAttack": "Επίθεση ακτίνων Χ", "th.capturingDefender": "Αιχμαλώτιση του αμυνόμενου",
+      "th.intermezzo": "Ενδιάμεση κίνηση", "th.interference": "Παρεμβολή", "th.castling": "Ροκέ",
+      "th.collinearMove": "Κίνηση στην ίδια γραμμή", "th.enPassant": "Αν πασάν", "th.underPromotion": "Υποπροαγωγή"
     }
   };
 
@@ -4225,8 +4253,10 @@
 
   // ---------- 7f. Training: puzzles and openings (train.js) ----------
   // Puzzles come from a pack in the Lichess puzzle layout (chess/
-  // puzzles-pack.js: window.OrosChessPacks, loaded on first use,
-  // offline from the service worker). Your first try at each puzzle goes to the synced history
+  // puzzles-lichess.js, cut from the Lichess puzzle database (CC0) by
+  // chess/tools/lichess-pack.js, and chess/puzzles-pack.js, orOS's own:
+  // window.OrosChessPacks, loaded on first use, offline from the
+  // service worker). Your first try at each puzzle goes to the synced history
   // (data.pz); the rating is computed from it (Glicko-1). Opening names
   // come from the Lichess chess-openings list (chess/openings-data.js),
   // looked up by position; the trainer plays one of its lines with you.
@@ -4246,23 +4276,35 @@
     };
     document.head.appendChild(s);
   }
+  // Both packs load (the Lichess one may be the empty placeholder, or
+  // missing from an old cache: then only the orOS pack counts) and merge
+  // into one list; an id seen twice keeps the first puzzle.
+  // TR.src = { lichess: n, oros: n } for the note under the buttons.
+  var TR_PACK_FILES = ["puzzles-lichess.js", "puzzles-pack.js"];
   function trPacks(done) {
     if (TR.packs) { done(true); return; }
-    trLoad("puzzles-pack.js", function () {
+    var left = TR_PACK_FILES.length;
+    function one() {
+      if (--left > 0) return;
+      if (TR.packs) { done(true); return; }      // a second caller while loading
       var packs = window.OrosChessPacks;
       if (!Array.isArray(packs)) { done(false); return; }
-      var list = [];
+      var list = [], src = { lichess: 0, oros: 0 };
       packs.forEach(function (pk) {
         if (!pk || typeof pk.csv !== "string") return;
+        var lich = /^lichess/.test(String(pk.id || ""));
         TRAIN.parsePack(pk.csv).forEach(function (p) {
           if (TR.byId[p.id] || !TRAIN.checkPuzzle(E, p)) return;
           TR.byId[p.id] = p;
           list.push(p);
+          src[lich ? "lichess" : "oros"]++;
         });
       });
       TR.packs = list;
+      TR.src = src;
       done(list.length > 0);
-    });
+    }
+    TR_PACK_FILES.forEach(function (f) { trLoad(f, one); });
   }
   function trOpenings(done) {
     if (TR.op) { done(true); return; }
@@ -4521,7 +4563,9 @@
         row1.appendChild(rb);
         row1.appendChild(button(t("tr.history"), "", historyDialog));
         body.appendChild(row1);
-        body.appendChild(el("div", "dlg-foot", t("tr.packNote", { n: TR.packs.length })));
+        body.appendChild(el("div", "dlg-foot", TR.src && TR.src.lichess
+          ? t("tr.packSrc", { n: TR.packs.length, l: TR.src.lichess, o: TR.src.oros })
+          : t("tr.packNote", { n: TR.packs.length })));
         setTimeout(function () { try { go.focus(); } catch (e) {} }, 0);
       }
       body.appendChild(el("div", "lp-sec", t("tr.op")));

@@ -709,6 +709,7 @@
         { label: t("more.present"), fn: AT.motion ? AT.motion.present : function () {} },
         { sep: true },
         { label: t("more.resize"), fn: resizeDialog },
+        { label: t("more.bulk"), fn: function () { if (AT.bulk) AT.bulk.open(); } },
         { label: t("more.pkg"), fn: function () { exportPackage(AT.doc); } },
         { label: t("more.credits"), fn: creditsDialog },
         { sep: true },

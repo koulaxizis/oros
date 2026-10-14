@@ -19,9 +19,11 @@
 //     place, hours, issuer, txt { sub, head, pre, nm, body, foot, no },
 //     sigs [{ n, r, a?, w?, h? }] ≤ 3, logo { a, w, h } | null,
 //     seal { a, w, h } | null, medal 0|1, showNo 0|1, pre, next,
-//     qr 0|1 (a signed check QR code, since 1.1.0) }
+//     qr 0|1 (a signed check QR code, since 1.1.0),
+//     onlyAt 0|1 (certificates only for people marked present, since 1.2.0) }
 // person: { id "p…", m, e (event id), n, n2, em, g, x, no (0 = none),
-//   iss (YYYY-MM-DD when numbered), rv 0|1 (revoked), o (list order) }
+//   iss (YYYY-MM-DD when numbered), rv 0|1 (revoked), at 0|1 (came,
+//   since 1.2.0), o (list order) }
 // key (signs the check QR codes, see sign.js): { id "k…", m, made,
 //   x, y, d } (JWK parts of an ECDSA P-256 key), ≤ 20, newest made signs
 // Merge: LWW per entity by m (equal m: the larger canonical JSON),
@@ -34,7 +36,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-certificates-data";
   var PREFS_KEY = "oros-certificates-prefs";
@@ -198,7 +200,7 @@
       d1: ymd(x.d1), d2: ymd(x.d2), idate: ymd(x.idate),
       place: line(x.place, LIM.place), hours: line(x.hours, LIM.hours), issuer: line(x.issuer, LIM.issuer),
       txt: {}, sigs: [], logo: normImg(x.logo), seal: normImg(x.seal),
-      medal: bit(x.medal, sd.medal), showNo: bit(x.showNo, 1), qr: bit(x.qr, 0),
+      medal: bit(x.medal, sd.medal), showNo: bit(x.showNo, 1), qr: bit(x.qr, 0), onlyAt: bit(x.onlyAt, 0),
       pre: line(x.pre, LIM.pre), next: isInt(x.next) && x.next >= 1 && x.next <= 999999 ? x.next : 1
     };
     var tx = x.txt && typeof x.txt === "object" ? x.txt : {};
@@ -221,6 +223,7 @@
     var xx = line(x.x, LIM.extra); if (xx) o.x = xx;
     if (isInt(x.no) && x.no >= 1 && x.no <= 999999) { o.no = x.no; var iss = ymd(x.iss); if (iss) o.iss = iss; }
     if (bit(x.rv, 0)) o.rv = 1;
+    if (bit(x.at, 0)) o.at = 1;
     o.o = typeof x.o === "number" && isFinite(x.o) && x.o >= 0 ? Math.floor(x.o) : 0;
     return o;
   }
@@ -452,6 +455,37 @@
     });
     var res = putPeople(data, list, now);
     return { data: res.data, added: res.added, dup: dup, over: res.over };
+  }
+
+  // ---------- Attendance (wave 3) ----------
+  // Mark people present (at = 1) or not; ids = null → everyone of the event.
+  function setAttended(data, evId, ids, on, now) {
+    var want = null;
+    if (Array.isArray(ids)) { want = {}; ids.forEach(function (id) { want[id] = 1; }); }
+    var list = eventPeople(data, evId).filter(function (p) {
+      return (!want || want[p.id]) && !!p.at !== !!on;
+    }).map(function (p) { var c = copy(p); if (on) c.at = 1; else delete c.at; return c; });
+    if (!list.length) return { data: data, n: 0 };
+    var r = putPeople(data, list, now);
+    return { data: r.data, n: r.people.length };
+  }
+  function countAttended(data, evId) {
+    var n = 0;
+    data.ppl.forEach(function (p) { if (p.e === evId && p.at) n++; });
+    return n;
+  }
+  // The days of an event (d1..d2, at most 7) for the sign-in sheet;
+  // one day when only d1 (or nothing) is set.
+  function eventDays(ev) {
+    var a = ymd(ev.d1), b = ymd(ev.d2) || a;
+    if (!a) return [""];
+    var out = [], d = new Date(a + "T12:00:00Z"), end = new Date(b + "T12:00:00Z");
+    if (!(end >= d)) return [a];
+    while (d <= end && out.length < 7) {
+      out.push(d.toISOString().slice(0, 10));
+      d = new Date(d.getTime() + 864e5);
+    }
+    return out;
   }
 
   // ---------- Numbers ----------
@@ -757,6 +791,7 @@
     EV_RE: EV_RE, P_RE: P_RE, ASSET_RE: ASSET_RE,
     normEvent: normEvent, normPerson: normPerson, normImg: normImg, normKey: normKey, merge: merge, empty: empty, parse: parse,
     activeKey: activeKey, putKey: putKey, checkFields: checkFields, K_RE: K_RE,
+    setAttended: setAttended, countAttended: countAttended, eventDays: eventDays,
     eventById: eventById, personById: personById, eventPeople: eventPeople, countPeople: countPeople, eventList: eventList,
     kindTexts: kindTexts, sigRole: sigRole, blankEvent: blankEvent, applyKind: applyKind, applyLang: applyLang,
     applyStyle: applyStyle, textsEdited: textsEdited,

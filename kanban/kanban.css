@@ -1703,5 +1703,14 @@ dialog label.chk.sel select { flex: 1; min-width: 0; width: auto; }
   .tl-pill { height: 32px; border-radius: 16px; }
 }
 
+/* Assistant prefill (asNew): the card's extras under the quick-add field */
+.col-foot.has-prefill { flex-wrap: wrap; }
+.col-prefill {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 0 2px;
+}
+
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }

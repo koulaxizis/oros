@@ -23,6 +23,8 @@
 //   weather(wxData, wxCache, wxPref, today, nowMs) → { rain, hot } | null
 //   avgGap(data, plantId) → days (one decimal) | null
 //   readPrefs(raw) → { remind, hemi } (device-local prefs, R10)
+//   asNewPrefill(x) → { name, sp, sci, room, w, notes } | null
+//     (Assistant "asNew" entry card: prefill of the new-plant editor)
 // Data (synced slice "plants", key oros-plants-data):
 //   { ver: 1, plants: [plant…] by id, log: [entry…] by id,
 //     tombs: { id: deletedAt } }
@@ -361,6 +363,35 @@
   };
   var PRESET_IDS = Object.keys(PRESETS);
 
+  // ---------- Assistant prefill (asNew, BR-W8-6: prefill, not data) ----------
+  // x = { name, species?, room? | location?, waterDays?, note? }. Every
+  // field is cleaned to the editor's own limits, unknown fields are
+  // ignored, no name → null. species = a ready species (its id or its
+  // name in either language) → sp; anything else is kept as the
+  // scientific name (sci). w = null leaves the editor's default.
+  function asNewPrefill(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var name = cleanText(x.name, NAME_LEN, false);
+    if (!name) return null;
+    var spIn = cleanText(x.species, SCI_LEN, false), sp = "", sci = "";
+    if (spIn) {
+      var k = spIn.toLowerCase();
+      PRESET_IDS.forEach(function (id) {
+        if (!sp && (id === k || PRESETS[id].en[0].toLowerCase() === k || PRESETS[id].el[0].toLowerCase() === k)) sp = id;
+      });
+      if (!sp) sci = spIn;
+    }
+    var w = x.waterDays;
+    if (typeof w === "string" && /^\s*\d+\s*$/.test(w)) w = +w;
+    w = typeof w === "number" && isFinite(w) ? Math.round(w) : null;
+    return {
+      name: name, sp: sp, sci: sci,
+      room: cleanText(typeof x.room === "string" ? x.room : x.location, ROOM_LEN, false),
+      w: w !== null && w >= 1 && w <= KIND_MAX.w ? w : null,
+      notes: cleanText(x.note, NOTES_LEN, true)
+    };
+  }
+
   var api = {
     DATA_VER: DATA_VER, KINDS: KINDS, KIND_KEY: KIND_KEY, KIND_MAX: KIND_MAX,
     NAME_LEN: NAME_LEN, ROOM_LEN: ROOM_LEN, SCI_LEN: SCI_LEN, NOTES_LEN: NOTES_LEN, EM_LEN: EM_LEN,
@@ -369,7 +400,8 @@
     ymdOf: ymdOf, isYmd: isYmd, dayNum: dayNum, ymdFromDay: ymdFromDay, addDays: addDays,
     cleanText: cleanText, normPlant: normPlant, normLog: normLog, merge: merge,
     isWinter: isWinter, interval: interval, lastByKind: lastByKind, nextDue: nextDue,
-    tasks: tasks, summary: summary, weather: weather, avgGap: avgGap, readPrefs: readPrefs
+    tasks: tasks, summary: summary, weather: weather, avgGap: avgGap, readPrefs: readPrefs,
+    asNewPrefill: asNewPrefill
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosPlantsCore = api;

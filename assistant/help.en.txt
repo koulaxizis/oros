@@ -38,6 +38,8 @@ Ask, for example, "remind me to call the plumber", "I spent 12.50 on lunch" or "
 
 Notes and Spreadsheet make the new note or sheet when you press `Open in …`, and Slides asks you to pick a theme first; you can change or delete them there.
 
+You can also ask for a contact («add Maria from ACME, 6971234567»), a CRM customer, a Kanban card, a habit, a finished workout, a Garage service or renewal reminder («KTEO for the Golf is due on 1 March»), a new plant, a pet's vaccine or vet visit, a book, film, series, album, podcast or game for Media Shelf, a place on the map, or a shared expense in Split («I paid 64 for dinner in the Crete trip»). Each one opens that app's own form filled in, and nothing is saved until you save it there. A Kanban card waits in the column's "Add a card" box until you press Enter, and a place opens on the map, where you save it from its pin if it is the right one.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
@@ -52,11 +54,6 @@ What it can change:
 
 Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, and bookmarks with a saved copy. Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
-## Speak instead of typing
-Where the browser can turn speech into text, a microphone button sits next to `Send`. Press it, speak, and the text appears in the message box in the language of orOS (English or Greek); press it again to stop. Nothing is sent until you press `Send`, so you can correct it first.
-
-The first time, a note explains how it works: most browsers (Chrome, Edge, Safari) send the recording to their own speech service on the internet to recognise it; it does not go to orOS or to the AI assistant. The browser asks once for the microphone. Browsers without speech recognition, such as Firefox, show no microphone button.
-
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
@@ -68,7 +65,6 @@ The first time, a note explains how it works: most browsers (Chrome, Edge, Safar
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Passwords are never offered.
 - `Chat only` turns off every search: the assistant then sees only what you type.
 - With `Built-in browser model` nothing leaves the device at all.
-- The microphone uses your browser's speech service, which usually sends the recording over the internet (see Speak instead of typing).
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.

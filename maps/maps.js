@@ -131,7 +131,7 @@
       "dlg.ok":             "OK",
       "settings.tiles.count":   "{n} tiles stored",
       "settings.tiles.cleared": "Tile cache cleared",
-      "nav.novoice":        "No voice for this language on this device — follow the screen",
+      "nav.novoice":        "No voice on this device for this language: follow the screen. You can add one in your system's speech settings.",
       "nav.in":             "In {d}, {text}",
       "say.m":              "metres",
       "say.km":             "kilometres",
@@ -292,7 +292,7 @@
       "dlg.ok":             "OK",
       "settings.tiles.count":   "{n} αποθηκευμένα πλακίδια",
       "settings.tiles.cleared": "Η cache πλακιδίων καθαρίστηκε",
-      "nav.novoice":        "Δεν υπάρχει φωνή για αυτή τη γλώσσα στη συσκευή — ακολούθησε την οθόνη",
+      "nav.novoice":        "Δεν υπάρχει φωνή σε αυτή τη συσκευή για αυτή τη γλώσσα: ακολούθησε την οθόνη. Μπορείς να προσθέσεις μία στις ρυθμίσεις ομιλίας του συστήματός σου.",
       "nav.in":             "Σε {d}, {text}",
       "say.m":              "μέτρα",
       "say.km":             "χιλιόμετρα",
@@ -2431,21 +2431,29 @@
   }
 
   // ---------- Voice (Web Speech API, browser-native) ----------
-  // false ONLY when the device lists its voices and none speaks the
-  // UI language (a foreign voice reading Greek is noise, not help).
-  // An empty list means "not loaded yet / unknown" → try anyway.
-  function voiceUsable() {
-    try {
-      var vs = window.speechSynthesis.getVoices() || [];
-      if (!vs.length) return true;
-      var want = LANG === "el" ? "el" : "en";
-      for (var i = 0; i < vs.length; i++) {
-        if (String(vs[i].lang || "").toLowerCase().indexOf(want) === 0) return true;
-      }
-      return false;
-    } catch (e) { return true; }
+  // Only a voice installed on this device (RC.localVoice): a network
+  // voice (e.g. Chrome's "Google ..." voices) would send every
+  // instruction to its server, so it is never used, and speak() is
+  // never called without an explicit local voice (the browser's
+  // default could be a network one). No local voice for the UI
+  // language → one note, the HUD carries the guidance. An empty list
+  // means "not loaded yet": nothing is spoken, and after 3 s of an
+  // empty list the note is shown too.
+  var voiceToldOnce = false, voiceEmptySince = 0;
+  function navVoice() {
+    var vs = [];
+    try { vs = window.speechSynthesis.getVoices() || []; } catch (e) { vs = []; }
+    var v = RC.localVoice(vs, LANG === "el" ? "el-GR" : "en-US");
+    if (v) { voiceEmptySince = 0; return v; }
+    if (!vs.length) {
+      if (!voiceEmptySince) voiceEmptySince = Date.now();
+      if (Date.now() - voiceEmptySince < 3000) return null;
+    }
+    if (!voiceToldOnce) { voiceToldOnce = true; showToast(t("nav.novoice")); }
+    return null;
   }
-  var voiceToldOnce = false;
+  // Chrome loads the voice list on the first ask: ask early.
+  try { if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); } catch (e) {}
 
   // Returns true when the text was handed to the synthesizer.
   //   urgent = false → never cut a sentence that is being spoken;
@@ -2454,13 +2462,12 @@
     if (navMuted) return false;
     if (!("speechSynthesis" in window)) return false;   // HUD still works
     try {
-      if (!voiceUsable()) {
-        if (!voiceToldOnce) { voiceToldOnce = true; showToast(t("nav.novoice")); }
-        return false;
-      }
+      var v = navVoice();
+      if (!v) return false;
       if (!urgent && window.speechSynthesis.speaking) return false;
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = LANG === "el" ? "el-GR" : "en-US"; // follows UI setting
+      u.voice = v;                                // always a local voice
+      u.lang = v.lang || (LANG === "el" ? "el-GR" : "en-US");
       u.rate = 1;
       window.speechSynthesis.cancel();            // never queue behind
       window.speechSynthesis.speak(u);
@@ -3466,6 +3473,40 @@
       .catch(function () { fromPacks(t("search.err")); });
   }
 
+  // Assistant entry card (shell __orosOpenAt("maps", { asNew })):
+  // { name, lat?, lon?, query?, from? }. Coordinates (both finite, in
+  // range) → the result pin at that point with its popup open, named
+  // so: "Save place" there is the user's. Only a query → the search box
+  // runs it and lists the hits to pick. Nothing is saved here (BR-W8-6);
+  // no name, nothing to show, or a dialog open → no-op. tracks.js and
+  // tools.js chain to this handler; a target at boot waits in
+  // mapsHost.pendingTarget (tracks.js) and is taken below.
+  function cleanLine(v, max) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
+  }
+  function asNewPlace(x) {
+    if (!map || !x || typeof x !== "object" || Array.isArray(x) || document.querySelector("dialog[open]")) return;
+    var name = cleanLine(x.name, 120);
+    if (!name) return;
+    var lat = x.lat, lon = x.lon;
+    if (typeof lat === "number" && typeof lon === "number" && isFinite(lat) && isFinite(lon) &&
+        lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      placeResult(lat, lon, name, "");
+      return;
+    }
+    var q = cleanLine(x.query, 200);
+    if (!q) return;
+    var search = $("search");
+    search.value = q;
+    $("search-clear").hidden = false;
+    clearTimeout(acTimer);
+    search.focus();
+    acFetch(q);
+  }
+  window.__orosOpenAt = function (target) {
+    if (target && target.asNew) asNewPlace(target.asNew);
+  };
+
   window.__orosMapsOpen = function (params) {
     if (typeof params !== "object" || !params) return;
     openAtLocation(params);
@@ -3881,6 +3922,12 @@
   if (shared) { bootedViaBridge = true; openSharedLink(shared); }
   consumePending();
   initOfflineChip();
+  // An asNew target handed over at boot (kept by tracks.js, which
+  // loads after this file): taken once every module has run.
+  setTimeout(function () {
+    var pt = mapsHost.pendingTarget;
+    if (pt && pt.asNew) { mapsHost.pendingTarget = null; asNewPlace(pt.asNew); }
+  }, 400);
 
   // A navigation that was running when this page was replaced
   // resumes — unless the user came back through a deep link.

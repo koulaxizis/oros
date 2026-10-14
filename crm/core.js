@@ -517,6 +517,28 @@
     return { email: email, name: cleanText(x.name, 120), subject: cleanText(x.subject, 200),
              text: cleanText(x.text, 1800, true), at: isInt(x.at) && x.at > 0 ? x.at : 0 };
   }
+  // Assistant entry card: __orosOpenAt("crm", { asNew: { name?,
+  // company?, email?, phone?, afm? | vat?, address?, note?, from? } })
+  // → the New customer form's prefill, or null (no name, no company).
+  // A company makes a company customer named after it; the person's
+  // name then rides along as "who" (the form puts it in the notes).
+  function asNewCust(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var name = cleanText(x.name, 120), co = cleanText(x.company, 120);
+    if (!name && !co) return null;
+    var n = { kind: co ? "co" : "person", name: co || name, who: co && name && fold(name) !== fold(co) ? name : "" };
+    var email = cleanText(x.email, 120);
+    if (EMAIL_RE.test(email)) n.email = email;
+    var phone = cleanText(x.phone, 40);
+    if (/\d/.test(phone)) n.phone = phone;
+    var afm = cleanText(typeof x.afm === "string" ? x.afm : x.vat, 20).replace(/\s+/g, "").toUpperCase();
+    if (/^[A-Z0-9.\-]+$/.test(afm)) n.afm = afm;
+    var addr = cleanText(x.address, 200);
+    if (addr) n.addr = addr;
+    var note = cleanText(x.note, 2000, true);
+    if (note) n.note = note;
+    return n;
+  }
   // The customer an address belongs to: its own email, then a person's
   // (emailOf(person) gives a Contacts-linked person's live address).
   function custByEmail(data, email, emailOf) {
@@ -794,7 +816,7 @@
     DATA_VER: DATA_VER, ID_RE: ID_RE, STAGES: STAGES, OPEN_STAGES: OPEN_STAGES, STAGE_PROB: STAGE_PROB,
     ACT_KINDS: ACT_KINDS, CUST_ST: CUST_ST, CURRENCIES: CURRENCIES, LIMITS: LIMITS, HM_RE: HM_RE,
     newId: newId, isYmd: isYmd, ymdOf: ymdOf, addDays: addDays, dayDiff: dayDiff,
-    cleanText: cleanText, fold: fold, validAfm: validAfm, parseMoney: parseMoney, moneyStr: moneyStr,
+    cleanText: cleanText, fold: fold, asNewCust: asNewCust, validAfm: validAfm, parseMoney: parseMoney, moneyStr: moneyStr,
     normCust: normCust, normDeal: normDeal, normAct: normAct, normFup: normFup, normTag: normTag,
     normPrefs: normPrefs, norm: norm, merge: merge, empty: empty,
     byId: byId, custName: custName, lastContact: lastContact, lastContactMap: lastContactMap,

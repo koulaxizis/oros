@@ -4,16 +4,6 @@ Plant Care keeps a watering schedule for each of your plants and reminds you whe
 ## Getting started
 Tap or click `Add a plant` (or the `Plant` button at the top). Choose a `Species` from the list of ready plants to fill in sensible intervals and a tip, or pick `Other / my own`. Give it a `Name`, an `Icon`, a `Room or spot` and say `Where` it lives, `Indoor` or `Outdoor`. Set `Water every (days)` and, if you like, `In winter every (days, 0 = same)`. Under `More care` you'll find fertilizing, misting and repotting. For a new plant you can enter when it was `Last watered`.
 
-## Identify a plant from a photo
-In the plant editor, `Identify from a photo` asks [Pl@ntNet](https://my.plantnet.org/) which plant it is. Take or choose a clear photo of one leaf, flower or fruit and press `Identify`. You see the `Best matches`, each with its scientific name, common names, family and how well it matches. Tap the right one: it fills in the `Scientific name`, a name if you have none yet, and, when Plant Care knows that kind of plant, the `Species` with its care values. Check them, then `Save`.
-
-This needs your own free Pl@ntNet key (up to 500 identifications a day):
-- Make an account at my.plantnet.org and create your API key.
-- In your account there, tick "expose my API key" and add this site's address under "Authorized domains". Without it Pl@ntNet refuses the request from the browser.
-- In Plant Care, paste the key in `Settings` under `Your Pl@ntNet API key`.
-
-The key stays on this device only and never syncs; leave it empty to turn identification off. The photo is made smaller and loses its location data before it goes to Pl@ntNet, only when you press `Identify`; orOS doesn't keep it. The image-based plant species identification service used, is based on the Pl@ntNet recognition API, regularly updated and accessible through the site https://my.plantnet.org/
-
 ## Today
 `Today` lists what's `Late`, due `Today` and in the `Next 7 days`.
 - `Done` marks the task as done today, with `Undo` for a few seconds.
@@ -28,10 +18,10 @@ When you have plants in more than one room, room chips at the top filter both ta
 Tap a plant to see its details: the schedule with the next day for each task, how often you really water on average, a `Last 30 days` strip and the `History`. You can remove a history entry, `Edit` the plant or `Delete` it (with `Undo`).
 
 ## Weather hints
-If you use [Weather](app:weather), Plant Care reads its latest forecast on this device for your outdoor plants. When rain is expected today you'll see a banner with `Skip outdoor watering`; on a very hot day it suggests checking them earlier. Apart from photo identification, Plant Care makes no network calls of its own.
+If you use [Weather](app:weather), Plant Care reads its latest forecast on this device for your outdoor plants. When rain is expected today you'll see a banner with `Skip outdoor watering`; on a very hot day it suggests checking them earlier. Plant Care makes no network calls of its own.
 
 ## Sync and backup
-Your plants (with their scientific names), schedules and history sync between your devices through [orOS sync](help:t/sync). The reminder hour, hemisphere, Pl@ntNet key, chosen room and open tab stay on each device.
+Your plants (with their scientific names), schedules and history sync between your devices through [orOS sync](help:t/sync). The reminder hour, hemisphere, chosen room and open tab stay on each device.
 
 In `Settings`, `Export` saves your plants to a file and `Import` merges a file with what you have.
 
@@ -47,4 +37,3 @@ In `Settings`, `Export` saves your plants to a file and `Import` merges a file w
 - Reminders appear while orOS is open, even with this app closed. With orOS closed they wait until you open it again.
 - Weather hints only work when the Weather app has a fresh forecast on this device.
 - History older than two years is removed.
-- Photo identification needs a connection and your own Pl@ntNet key. It's a suggestion, not a certainty: never eat or give a pet a plant because of it.

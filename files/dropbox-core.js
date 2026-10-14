@@ -278,6 +278,54 @@
     return base + " (" + i + ")" + ext;
   }
 
+  // ---------- Wave 3: send copies from the orOS disk to Dropbox ----------
+  var UPLOAD_ONE = 150 * 1024 * 1024;   // files/upload limit; bigger files use an upload session
+  var CHUNK = 8 * 1024 * 1024;          // one upload-session piece
+
+  // Selected disk entries + every file under each selected folder →
+  // { items: [{ src, size, dst }], skipped: [{ path, why }], bytes },
+  // or the same with refused: "sync" | "path" for a bad destination.
+  // selected: [{ path, dir, size }] (disk paths); walks: { "<disk folder>":
+  // [{ path, size }] }; dest: Dropbox folder ("" = root); never: disk
+  // folders whose files are never sent (the trash).
+  function planExport(selected, walks, dest, syncRoots, never) {
+    var items = [], skipped = [], bytes = 0, seen = {};
+    var d = normPath(dest);
+    if (d === null) return { refused: "path", items: items, skipped: skipped, bytes: 0 };
+    if (isUnder(d, syncRoots)) return { refused: "sync", items: items, skipped: skipped, bytes: 0 };
+    function hidden(p) {
+      return (never || []).some(function (n) { return p === n || p.indexOf(n + "/") === 0; });
+    }
+    function add(f, rel) {
+      if (seen[f.path]) return;
+      seen[f.path] = true;
+      if (hidden(f.path)) return;
+      var size = f.size > 0 ? f.size : 0;
+      if (size > MAX_FILE) { skipped.push({ path: f.path, why: "big" }); return; }
+      if (items.length >= MAX_FILES) { skipped.push({ path: f.path, why: "count" }); return; }
+      if (bytes + size > MAX_BYTES) { skipped.push({ path: f.path, why: "total" }); return; }
+      bytes += size;
+      items.push({ src: f.path, size: size, dst: d + "/" + rel });
+    }
+    function seg(p) { return cleanName(p.slice(p.lastIndexOf("/") + 1)) || "_"; }
+    selected.forEach(function (e) {
+      if (!e.dir) { add(e, seg(e.path)); return; }
+      if (hidden(e.path)) return;
+      (walks[e.path] || []).filter(function (f) {
+        return f.path.indexOf(e.path + "/") === 0;
+      }).sort(function (a, b) { return a.path < b.path ? -1 : 1; }).forEach(function (f) {
+        var tail = f.path.slice(e.path.length + 1).split("/").map(function (x) { return cleanName(x) || "_"; }).join("/");
+        add(f, seg(e.path) + "/" + tail);
+      });
+    });
+    return { items: items, skipped: skipped, bytes: bytes };
+  }
+
+  // The upload arguments: never overwrite, a clash gets "name (1)".
+  function uploadArg(path) {
+    return { path: path, mode: "add", autorename: true, mute: false, strict_conflict: false };
+  }
+
   return {
     APP_KEY: APP_KEY,
     AUTH_URL: AUTH_URL,
@@ -307,6 +355,10 @@
     localName: localName,
     planItems: planItems,
     confirmedCopy: confirmedCopy,
-    uniqueName: uniqueName
+    uniqueName: uniqueName,
+    UPLOAD_ONE: UPLOAD_ONE,
+    CHUNK: CHUNK,
+    planExport: planExport,
+    uploadArg: uploadArg
   };
 });

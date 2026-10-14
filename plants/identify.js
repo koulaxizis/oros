@@ -22,6 +22,10 @@
 
   var ENDPOINT = "https://my-api.plantnet.org/v2/identify/all";
   var SITE = "https://my.plantnet.org/";
+  // Off since 2026-10-14: Pl@ntNet reportedly treats one sign-up per app
+  // user as against its terms, so the button and the key field stay
+  // hidden until Pl@ntNet agrees (Chris's decision). The code stays.
+  var ENABLED = false;
   // Pl@ntNet terms of use: free use acknowledges the service.
   var ATTRIBUTION = "The image-based plant species identification service used, is based on the Pl@ntNet recognition API, regularly updated and accessible through the site https://my.plantnet.org/";
   var KEY_RE = /^[A-Za-z0-9_-]{10,80}$/;
@@ -115,7 +119,7 @@
   }
 
   var API = {
-    ENDPOINT: ENDPOINT, SITE: SITE, ATTRIBUTION: ATTRIBUTION,
+    ENDPOINT: ENDPOINT, SITE: SITE, ATTRIBUTION: ATTRIBUTION, ENABLED: ENABLED,
     keyOk: keyOk, url: url, results: results, remaining: remaining, errorKind: errorKind, presetFor: presetFor
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

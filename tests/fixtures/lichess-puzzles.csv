@@ -1,0 +1,75 @@
+PuzzleId,FEN,Moves,Rating,RatingDeviation,Popularity,NbPlays,Themes,GameUrl,OpeningTags
+Fx000,5bnr/rpkRp1p1/1N2Q2p/8/6P1/8/PPP2P1P/1K5R b - - 0 24,c7b8 e6e5,450,75,90,1500,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#10,Italian_Game Italian_Game_Classical_Variation
+Fx001,r1b1kb1r/pp2pppp/2np4/3P4/8/2q2N2/P3BPPP/R1BQK2R w KQkq - 0 10,e1f1 c3a1,653,95,90,1501,advantage hangingPiece opening oneMove,https://lichess.org/abcdefgh#11,Italian_Game Italian_Game_Classical_Variation
+Fx002,8/p2R3p/2N2k2/1P3p2/8/2r4K/P6P/8 w - - 1 34,d7d3 c3d3,906,75,90,1502,advantage hangingPiece endgame oneMove,https://lichess.org/abcdefgh#12,Italian_Game Italian_Game_Classical_Variation
+Fx003,r1b2k1r/pp3ppp/1np1p3/3B2N1/1b3Q2/8/PPqNKPPP/R1B4R b - - 3 14,e6e5 f4f7,1109,75,90,1503,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#13,Italian_Game Italian_Game_Classical_Variation
+Fx004,5R2/7k/5K2/8/6PP/8/8/8 b - - 20 61,h7h6 f8h8,1312,75,80,1504,mate mateIn1 endgame oneMove,https://lichess.org/abcdefgh#14,Italian_Game Italian_Game_Classical_Variation
+Fx005,r6r/6kp/2pp4/p3n1P1/P2b4/2q5/1K6/8 w - - 0 50,b2a2 c3b2,1515,75,90,1505,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#15,Italian_Game Italian_Game_Classical_Variation
+Fx006,8/2p5/8/3k2pp/4n3/r7/8/q1K5 w - - 0 74,c1c2 a3c3,1718,75,90,1506,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#16,Italian_Game Italian_Game_Classical_Variation
+Fx007,1k6/5R2/P7/1N1K4/8/8/5P2/8 b - - 2 77,b8a8 f7f8,1900,75,90,500,mate mateIn1 backRankMate endgame oneMove,https://lichess.org/abcdefgh#17,Italian_Game Italian_Game_Classical_Variation
+Fx008,5kn1/2p2p2/4r3/pP5P/P4b2/5q2/R1R2P2/5K2 w - - 4 40,c2c7 f3h1,2103,75,90,1508,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#18,Italian_Game Italian_Game_Classical_Variation
+Fx009,6k1/pp4pp/8/2P5/2P2p2/5b2/PP1rr2P/5KR1 w - - 0 28,g1g3 d2d1,2306,75,90,1509,mate mateIn1 backRankMate endgame oneMove,https://lichess.org/abcdefgh#19,Italian_Game Italian_Game_Classical_Variation
+Fx010,r3r1k1/pp1bqp1p/2p2p1B/2b1p2Q/2B4N/3P4/PPP2PPP/R4R1K w - - 10 19,h5g4 d7g4,2509,95,90,1510,advantage hangingPiece middlegame oneMove,https://lichess.org/abcdefgh#20,Italian_Game Italian_Game_Classical_Variation
+Fx011,1rr5/ppp2p1k/Qn4p1/P3P3/3P1n1P/7q/5P1K/2R5 w - - 5 28,h2g1 h3g2,2812,75,90,1511,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#21,Italian_Game Italian_Game_Classical_Variation
+Fx012,2r5/1b2Qkpp/p1p3r1/1p6/1P4B1/8/1PR2P1N/4R1K1 b - - 2 29,f7g8 e7b7,465,75,90,1512,advantage hangingPiece middlegame oneMove,https://lichess.org/abcdefgh#22,Italian_Game Italian_Game_Classical_Variation
+Fx013,1k6/3Nn3/1NPK4/P7/8/7P/6P1/8 b - - 2 68,b8a7 d6e7,668,75,80,1513,advantage hangingPiece endgame oneMove,https://lichess.org/abcdefgh#23,Italian_Game Italian_Game_Classical_Variation
+Fx014,6Q1/5K2/8/7k/3B4/P7/5P2/8 b - - 1 73,h5h6 g8g6,900,75,90,1514,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#24,Italian_Game Italian_Game_Classical_Variation
+Fx015,8/2NN4/5K2/1k6/8/2Q4P/6P1/8 b - - 4 75,b5a4 d7b6,1103,75,90,1515,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#25,Italian_Game Italian_Game_Classical_Variation
+Fx016,1rr3k1/1b3pp1/8/1p1P4/1P1Q4/3K3P/1B1N2P1/4R3 b - - 1 32,b7a8 d4g7,1306,75,90,500,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#26,Italian_Game Italian_Game_Classical_Variation
+Fx017,2k1r3/p4ppp/8/4pK2/4P3/1N6/P5q1/8 w - - 4 38,b3d4 g2g6,1509,75,90,1517,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#27,Italian_Game Italian_Game_Classical_Variation
+Fx018,8/5ppp/8/1b4P1/p2kp3/8/R2K1P2/2r4r w - - 6 54,a2c2 c1d1,1712,75,90,1518,mate mateIn1 endgame oneMove,https://lichess.org/abcdefgh#28,Italian_Game Italian_Game_Classical_Variation
+Fx019,2R3k1/rp3p1p/1R3Bp1/p3p3/4P3/3r2PP/b4PB1/7K b - - 8 31,d3d8 c8d8,1915,95,90,1519,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#29,Italian_Game Italian_Game_Classical_Variation
+Fx020,2R5/4k3/3R4/4P1p1/5P2/P7/1P3P2/2R3K1 b - - 1 46,g5g4 c1c7,2118,75,90,1520,mate mateIn1 endgame oneMove,https://lichess.org/abcdefgh#30,Italian_Game Italian_Game_Classical_Variation
+Fx021,4k3/7Q/1P1N4/8/8/3K4/8/8 b - - 4 73,e8d8 h7c7,2300,75,90,1521,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#31,Italian_Game Italian_Game_Classical_Variation
+Fx022,3r3r/4n1pp/p4k2/P2b4/2p1nP2/1p1KB3/1P2N1PP/1R2R3 w - - 0 35,d3d4 e7c6,2503,75,80,1522,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#32,Italian_Game Italian_Game_Classical_Variation
+Fx023,r3rbk1/pp3ppB/2n1b3/1qp1p1N1/2Pp4/3P2PP/PP1nQP2/R3RNK1 b - - 0 18,g8h8 c4b5,2806,75,90,1523,advantage hangingPiece middlegame oneMove,https://lichess.org/abcdefgh#33,Italian_Game Italian_Game_Classical_Variation
+Fx024,2R3B1/8/8/8/8/2K5/k7/8 b - - 2 81,a2a3 c8a8,459,75,90,1524,mate mateIn1 endgame oneMove,https://lichess.org/abcdefgh#34,Italian_Game Italian_Game_Classical_Variation
+Fx025,8/3n2b1/3P4/8/4p3/2k1P3/2r4p/4K3 w - - 0 48,e1f1 h2h1q,662,75,90,500,mate mateIn1 promotion backRankMate endgame oneMove,https://lichess.org/abcdefgh#35,Italian_Game Italian_Game_Classical_Variation
+Fx026,1rk5/ppp4p/2n2n2/5b2/6qP/8/PPP1rK2/R1B4R w - - 2 26,f2f1 g4g2,915,75,90,1526,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#36,Italian_Game Italian_Game_Classical_Variation
+Fx027,8/2p2kpp/8/2nr3P/5pP1/P1B5/4KP2/7R b - g3 0 44,d5d4 c3d4,1118,75,90,1527,advantage hangingPiece endgame oneMove,https://lichess.org/abcdefgh#37,Italian_Game Italian_Game_Classical_Variation
+Fx028,k6r/pB2R3/7p/2p5/6PB/8/5PKP/8 b - - 0 47,a8b8 h4g3,1300,95,90,1528,mate mateIn1 backRankMate endgame oneMove,https://lichess.org/abcdefgh#38,Italian_Game Italian_Game_Classical_Variation
+Fx029,r3q1k1/p4pbp/1p1p1np1/3P4/3p1P2/PQ3R1P/1P1Br1P1/2R3K1 w - - 1 23,g1h1 e2d2,1503,75,90,1529,advantage hangingPiece middlegame oneMove,https://lichess.org/abcdefgh#39,Italian_Game Italian_Game_Classical_Variation
+Fx030,8/8/p2k3p/P7/8/8/r6p/2K5 w - - 0 60,c1d1 h2h1q,1706,75,90,1530,mate mateIn1 promotion backRankMate endgame oneMove,https://lichess.org/abcdefgh#40,Italian_Game Italian_Game_Classical_Variation
+Fx031,1kb1R3/8/1Qp5/2p2r2/2P2Pp1/P7/1PPB4/2R3K1 b - - 4 36,b8a8 e8c8,1909,75,80,1531,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#41,Italian_Game Italian_Game_Classical_Variation
+Fx032,r3kb1r/pp2pp1p/3p4/q1pP1bp1/1nP1n3/P1N5/1P2P1PP/R1BQKBNR w KQkq - 0 9,c3b5 b4d3,2112,75,90,1532,mate mateIn1 backRankMate opening oneMove,https://lichess.org/abcdefgh#42,Italian_Game Italian_Game_Classical_Variation
+Fx033,r2qkb1r/1p3ppp/2n2n2/p2Pp3/2N3b1/2N3P1/PPPK1P1P/R1BQ1B1R w kq - 1 12,c4d6 d8d6,2315,75,90,1533,advantage hangingPiece opening oneMove,https://lichess.org/abcdefgh#43,Italian_Game Italian_Game_Classical_Variation
+Fx034,r1b4k/pp3p1p/1n2p3/4B1Q1/2B5/P3P3/3N2PP/R4RK1 b - - 2 25,f7f6 e5f6,2518,75,90,500,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#44,Italian_Game Italian_Game_Classical_Variation
+Fx035,r1b1k1Q1/p1pr1p2/2p1p1N1/2b3P1/P7/8/4nPP1/5R1K b - - 2 30,c5f8 g8f8,2800,75,90,1535,mate mateIn1 backRankMate middlegame oneMove,https://lichess.org/abcdefgh#45,Italian_Game Italian_Game_Classical_Variation
+Fx036,6r1/8/b1n4k/p2pPp1p/5P1n/5K2/2r5/8 w - - 2 57,f3e3 c2e2,453,75,90,1536,mate mateIn1 middlegame oneMove,https://lichess.org/abcdefgh#46,Italian_Game Italian_Game_Classical_Variation
+Fx037,3r3r/p2k1ppp/4p3/2b5/4P2q/7N/PP1N1nP1/R1B1RK2 w - - 0 23,e1d1 f2d1,656,95,90,1537,advantage hangingPiece middlegame oneMove,https://lichess.org/abcdefgh#47,Italian_Game Italian_Game_Classical_Variation
+Fx038,1r3r2/1b3pp1/pq4k1/n2Pp3/1P6/2nK1N1P/3N2P1/R1BQR3 b - - 1 25,b6d4 f3d4,909,75,90,1538,advantage middlegame oneMove,https://lichess.org/abcdefgh#48,Italian_Game Italian_Game_Classical_Variation
+Fx039,8/8/2k1B2p/p1P1p3/1p4p1/6r1/PPPK1b2/1R2R3 b - - 7 49,f2e3 e1e3,1112,75,90,1539,advantage middlegame oneMove,https://lichess.org/abcdefgh#49,Italian_Game Italian_Game_Classical_Variation
+Fx040,3rk2r/pp3pp1/2n2q1p/1BPp1b2/3N4/2B1P3/P1Q2PPP/R3K2R w KQk - 3 18,e1e2 f5c2,1315,75,80,1540,advantage middlegame oneMove,https://lichess.org/abcdefgh#50,Italian_Game Italian_Game_Classical_Variation
+Fx041,5rk1/p1pp1ppp/2n2q2/3Bp3/8/2B3PP/P4P2/R2Q1K1R b - - 2 18,e5e4 c3f6,1518,75,90,1541,advantage middlegame oneMove,https://lichess.org/abcdefgh#51,Italian_Game Italian_Game_Classical_Variation
+Fx042,8/1R6/1b6/2k4p/1p6/2p5/P3K1r1/5R2 w - - 2 71,f1f2 g2f2,1700,75,90,1542,advantage endgame oneMove,https://lichess.org/abcdefgh#52,Italian_Game Italian_Game_Classical_Variation
+Fx043,4rb1r/p1pkpppp/8/3nN3/8/8/PPP2PPP/R1B1K2R b KQ - 3 14,d7d6 e5f7 d6c5 f7h8,1903,75,90,500,advantage fork middlegame short,https://lichess.org/abcdefgh#53,Italian_Game Italian_Game_Classical_Variation
+Fx044,8/8/3k3p/p1p1p3/1p1bR1p1/1B1P2P1/PPP1r3/1R3K2 b - - 3 40,e2f2 f1e1,2106,75,90,1544,advantage middlegame oneMove,https://lichess.org/abcdefgh#54,Italian_Game Italian_Game_Classical_Variation
+Fx045,8/p1Nk1pb1/bp6/8/2q1PBP1/8/P7/2K5 w - - 2 25,c1b1 c4c3 a2a3 c3b2,2309,75,90,1545,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#55,Italian_Game Italian_Game_Classical_Variation
+Fx046,2N5/P6p/8/1P2k3/8/8/1r3p2/5K2 b - - 1 52,e5f6 a7a8q,2512,95,90,1546,advantage promotion endgame oneMove,https://lichess.org/abcdefgh#56,Italian_Game Italian_Game_Classical_Variation
+Fx047,r3k2r/pp3ppp/8/2bb4/Pq4nP/6P1/6K1/6R1 w kq - 5 27,g2h3 c5g1 a4a5 g4f2,2815,75,90,1547,mate mateIn2 middlegame short,https://lichess.org/abcdefgh#57,Italian_Game Italian_Game_Classical_Variation
+Fx048,6rk/p1pp1p1p/2n2p2/3B1Q2/4p3/6PP/P4PK1/R6R b - - 5 22,c6d4 f5f6 g8g7 f6d4,468,75,90,1548,advantage fork middlegame short,https://lichess.org/abcdefgh#58,Italian_Game Italian_Game_Classical_Variation
+Fx049,7r/1p2k1pP/p1p5/P1P2K2/1q6/8/7P/6n1 w - - 0 56,h2h3 g1h3 f5e5 b4f4,650,75,80,1549,mate mateIn2 middlegame short,https://lichess.org/abcdefgh#59,Italian_Game Italian_Game_Classical_Variation
+Fx050,7Q/8/1R6/R7/8/3k2K1/P4PP1/8 b - - 0 58,d3c4 h8d8 c4c3 a5c5,903,75,90,1550,mate mateIn2 middlegame short,https://lichess.org/abcdefgh#60,Italian_Game Italian_Game_Classical_Variation
+Fx051,7k/p1pp1Brp/5Q2/8/4P3/6PP/P5K1/n6R b - - 0 26,a7a6 f6d8 g7g8 d8g8,1106,75,90,1551,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#61,Italian_Game Italian_Game_Classical_Variation
+Fx052,8/5p1k/3Q4/7p/rn1Pp3/1q2R1P1/8/5RK1 b - - 0 42,b3b2 f1f7 h7h8 d6d8,1309,75,90,500,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#62,Italian_Game Italian_Game_Classical_Variation
+Fx053,4Qk2/7p/3N4/1P6/5r2/2K5/8/8 b - - 12 60,f8g7 e8e5,1512,75,90,1553,advantage fork middlegame oneMove,https://lichess.org/abcdefgh#63,Italian_Game Italian_Game_Classical_Variation
+Fx054,r6r/6kp/2pp4/p3n1P1/P1qb4/1R6/1K6/8 w - - 3 49,b3c3 c4c3 b2a2 c3b2,1715,75,90,1554,mate mateIn2 middlegame short,https://lichess.org/abcdefgh#64,Italian_Game Italian_Game_Classical_Variation
+Fx055,1rr5/pppq1p1k/1n4p1/P3P3/3P1n1P/3Q4/5P1K/2R5 w - - 3 27,d3a6 d7h3 h2g1 h3g2,1918,95,90,1555,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#65,Italian_Game Italian_Game_Classical_Variation
+Fx056,3r3r/p1p1k1p1/2p5/4p3/3PN3/P7/1Pn2PPP/2B2K1R b - - 0 23,c2b4 c1g5,2100,75,90,1556,advantage middlegame oneMove,https://lichess.org/abcdefgh#66,Italian_Game Italian_Game_Classical_Variation
+Fx057,r4r1k/2p2pp1/p2b4/3Q3b/4P3/2N2n2/PP3K1P/R1B5 b - - 1 24,h5g4 h2h3,2303,75,90,1557,advantage middlegame oneMove,https://lichess.org/abcdefgh#67,Italian_Game Italian_Game_Classical_Variation
+Fx058,6Q1/5n2/3B3p/4P2k/6PP/3K4/1q3r2/2R1R3 b - - 0 63,h5h4 e1h1,2506,75,80,1558,advantage middlegame oneMove,https://lichess.org/abcdefgh#68,Italian_Game Italian_Game_Classical_Variation
+Fx059,rn1k4/pb1pb1Q1/1q1n4/3PprB1/2p5/2N5/PP4PP/2KR1B1R b - - 3 22,b6b4 g7e7 d8c8 e7d8,2809,75,90,1559,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#69,Italian_Game Italian_Game_Classical_Variation
+Fx060,1rk5/ppp4p/2n2n2/4rb2/6qP/8/PPP5/R1B1K2R w - - 0 25,e1f2 e5e2 f2f1 g4g2,462,75,90,1560,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#70,Italian_Game Italian_Game_Classical_Variation
+Fx061,8/3k4/3p3p/2NQ4/1p4p1/8/2P2P1P/5K2 b - - 2 46,d7c7 d5b7 c7d8 b7d7,665,75,90,500,mate mateIn2 backRankMate middlegame short,https://lichess.org/abcdefgh#71,Italian_Game Italian_Game_Classical_Variation
+Fx062,8/4Q3/2b2rk1/6R1/4P2p/1P2K3/2P5/8 b - - 4 37,g6g5 e4e5 g5h5 e5f6,918,75,90,1562,advantage middlegame short,https://lichess.org/abcdefgh#72,Italian_Game Italian_Game_Classical_Variation
+Fx063,8/p1B2kpp/8/1pb5/6PP/5r2/b7/1KR1r3 w - - 1 31,b1c2 f3f2 c2c3 e1e3,1100,75,90,1563,mate mateIn2 middlegame short,https://lichess.org/abcdefgh#73,Italian_Game Italian_Game_Classical_Variation
+Fx064,r2q1knr/ppp1ppbp/2np2p1/6N1/2PPP3/2NB3P/PP3P1P/R1BQK2R b KQ - 2 8,f7f6 g5e6 f8e8 e6d8,1303,95,90,1564,advantage fork opening short,https://lichess.org/abcdefgh#74,Italian_Game Italian_Game_Classical_Variation
+Fx065,rnbqkb1r/p1p2ppp/1p1p1n2/8/2PNp3/4P3/PP1P1PPP/RNBQKB1R b KQkq - 0 6,b8d7 d4c6 c8b7 c6d8,1506,75,90,1565,advantage opening short,https://lichess.org/abcdefgh#75,Italian_Game Italian_Game_Classical_Variation
+Fx066,kr5r/p3R3/2q4p/2pQ4/6PB/5B2/5PKP/8 b - - 0 45,c6d5 f3d5 b8b7 d5b7 a8b8 h4g3,1709,75,90,1566,mate mateIn3 backRankMate middlegame long,https://lichess.org/abcdefgh#76,Italian_Game Italian_Game_Classical_Variation
+Fx067,3r3r/1b2n1pp/p4k2/P1p5/2KNnP2/1p2B3/1P4PP/1R2R3 w - - 1 33,d4e2 b7d5 c4d3 c5c4 d3d4 e7c6,1912,75,80,1567,mate mateIn3 middlegame long,https://lichess.org/abcdefgh#77,Italian_Game Italian_Game_Classical_Variation
+Fx068,8/8/8/1R6/5K1k/8/1p6/8 b - - 1 72,b2b1b b5b1 h4h5 b1b6 h5h4 b6h6,2115,75,90,1568,mate mateIn3 endgame long,https://lichess.org/abcdefgh#78,Italian_Game Italian_Game_Classical_Variation
+Fx069,8/5R2/2N3pk/2n2p1p/1R3P2/1B4P1/7P/6K1 b - - 4 43,h5h4 b4b8 g6g5 b8h8 h6g6 c6e7,2318,75,90,1569,mate mateIn3 middlegame long,https://lichess.org/abcdefgh#79,Italian_Game Italian_Game_Classical_Variation
+Fx070,8/4k1p1/3R4/4P3/5P2/P1R5/1Pr2P2/4R1K1 b - - 2 44,c2c1 e1c1 e7f7 c3c8 f7e7 c1c7,2500,75,90,500,mate mateIn3 endgame long,https://lichess.org/abcdefgh#80,Italian_Game Italian_Game_Classical_Variation
+Fx071,8/4R1kp/2P5/3P3p/8/8/7P/5K2 b - - 1 48,g7f8 d5d6 h5h4 c6c7 h4h3 c7c8q,2803,75,90,1571,mate mateIn3 promotion backRankMate endgame long,https://lichess.org/abcdefgh#81,Italian_Game Italian_Game_Classical_Variation
+bad id!,8/8/8/8/8/8/8/8 w - - 0 1,e2e4 e7e5,1000,70,90,2000,mate,,
+Fz999,8/8/8/8/8/8/8/8 w - - 0 1,e2e4 e7e5 d2d4,1000,70,90,2000,mate,,

@@ -1845,6 +1845,8 @@
     if (!g) return;
     var isRule = !!opts.rule;
     var x = isRule ? findIn(data.rec || [], opts.rule) : (id ? findIn(data.exp, id) : null);
+    // Prefill of a new expense (asNew, already normalised): { t, a, d, by, n, cur }.
+    var pre = !x && !isRule && opts.pre ? opts.pre : null;
     if ((id || isRule) && !x) return;
     if (!x && entriesCount(g.id) >= MAX_EXP) { showToast(t("err.full", { n: MAX_EXP })); return; }
     readFxRates();
@@ -1868,10 +1870,10 @@
     title.maxLength = TITLE_LEN;
     title.autocomplete = "off";
     title.placeholder = t("e.title.ph");
-    title.value = x ? x.t : "";
+    title.value = x ? x.t : (pre && pre.t ? pre.t : "");
 
     // Amount, in the currency it was paid in.
-    var amt = amountInput(x ? (fx0 ? fx0.a : x.a) : 0);
+    var amt = amountInput(x ? (fx0 ? fx0.a : x.a) : (pre && pre.a ? pre.a : 0));
     amt.className = "amt-in";
     var curSel = el("select", "cur-sel");
     fxCodes(g.cur, fx0 ? fx0.c : "").forEach(function (c) { var o = el("option", "", c); o.value = c; curSel.appendChild(o); });
@@ -1914,7 +1916,7 @@
 
     var date = el("input");
     date.type = "date";
-    date.value = x ? x.d : today;
+    date.value = x ? x.d : (pre && pre.d ? pre.d : today);
     var cat = el("select");
     CATS.forEach(function (c) { var o = el("option", "", catName(c.id)); o.value = c.id; cat.appendChild(o); });
     cat.value = x ? x.c : "food";
@@ -1925,7 +1927,7 @@
     var by = el("select");
     people.forEach(function (p) { var o = el("option", "", whoName(p.id)); o.value = p.id; by.appendChild(o); });
     var om = el("option", "", t("e.byMany")); om.value = "*"; by.appendChild(om);
-    by.value = payerIds.length > 1 ? "*" : (payerIds[0] || me || (people[0] && people[0].id) || "");
+    by.value = payerIds.length > 1 ? "*" : (payerIds[0] || (pre && pre.by && findIn(people, pre.by) ? pre.by : "") || me || (people[0] && people[0].id) || "");
     var byBox = el("div", "rows");
     var byIn = {};
     people.forEach(function (p) {
@@ -2123,7 +2125,7 @@
     note.maxLength = NOTE_LEN;
     note.autocomplete = "off";
     note.placeholder = t("e.note.ph");
-    note.value = x ? x.n : "";
+    note.value = x ? x.n : (pre && pre.n ? pre.n : "");
     var err = errLine();
     var photo = isRule ? null : photoBox(dlg, x, nid, date);
 
@@ -2431,6 +2433,12 @@
       renderAll();
     });
 
+    // A prefilled currency the picker offers; the rate as on a change.
+    if (pre && pre.cur && pre.cur !== g.cur) {
+      for (var ci = 0; ci < curSel.options.length; ci++) {
+        if (curSel.options[ci].value === pre.cur) { curSel.value = pre.cur; fillEcb(); break; }
+      }
+    }
     setMode(mode);
     paintRate();
     paintRepeat();
@@ -3583,7 +3591,11 @@
   // an open dialog → no-op.
   //   BR-SPLIT-NEW: { newGroup: { name, cur, people[], from } } (Travel's
   //   "Share with Split") opens the new-group dialog prefilled.
+  //   asNew: { group, title, amount, paid_by, date, currency, note, from }
+  //   (the Assistant's entry card) opens the new-expense dialog of the
+  //   group with that name, prefilled; nothing is saved until Save (BR-W8-6).
   function openSearchTarget(tg) {
+    if (tg && tg.asNew && !document.querySelector("dialog[open]")) { newExpenseFrom(tg.asNew); return; }
     if (tg && tg.newGroup && !document.querySelector("dialog[open]")) { newGroupFrom(tg.newGroup); return; }
     if (!tg || typeof tg.group !== "string" || document.querySelector("dialog[open]")) return;
     if (!groupById(data, tg.group)) return;
@@ -3600,6 +3612,54 @@
       if (n && !seen[n.toLowerCase()] && people.length < MAX_PEOPLE) { seen[n.toLowerCase()] = 1; people.push(n); }
     });
     groupDialog(null, { name: normText(x.name, NAME_LEN), cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "", people: people });
+  }
+  // The asNew fields, normalised with the dialog's own limits; null when
+  // nothing usable is left. Unknown fields are ignored.
+  function normAsNew(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var amt = typeof x.amount === "number" && isFinite(x.amount) ? Math.round(x.amount * 100) : 0;
+    var cur = typeof x.currency === "string" ? x.currency.trim().toUpperCase() : "";
+    var out = {
+      g: normText(x.group, NAME_LEN),
+      t: normText(x.title || x.description, TITLE_LEN),
+      a: okCents(amt) ? amt : 0,
+      by: normText(x.paid_by, PERSON_LEN),
+      d: typeof x.date === "string" && parseYmd(x.date.trim()) ? x.date.trim() : "",
+      n: normText(x.note, NOTE_LEN),
+      cur: CUR_RE.test(cur) ? cur : ""
+    };
+    return out.g || out.t || out.a ? out : null;
+  }
+  // Group by name (case-insensitive; an open group wins over archived
+  // ones). One match → its new-expense dialog (payer by name among its
+  // people, else the usual default); a group without people → its edit
+  // dialog, as Add does. No match → the new-group dialog named so (the
+  // newGroup path); no name → the open group, as Add; else no-op.
+  function newExpenseFrom(raw) {
+    var x = normAsNew(raw);
+    if (!x) return;
+    var g = null;
+    if (x.g) {
+      var key = x.g.toLowerCase();
+      var hits = data.groups.filter(function (y) { return y.n.toLowerCase() === key; });
+      if (hits.length > 1) hits = hits.filter(function (y) { return !y.arch; });
+      if (hits.length > 1) return;
+      if (!hits.length) { newGroupFrom({ name: x.g, cur: x.cur }); return; }
+      g = hits[0];
+    } else {
+      g = curGroup();
+      if (!g) return;
+    }
+    if (prefs.g !== g.id) { prefs.tab = "exp"; openGroup(g.id); }
+    var people = peopleOf(data, g.id);
+    if (people.length < 1) { groupDialog(g.id); return; }
+    var pid = "";
+    if (x.by) {
+      var pk = x.by.toLowerCase();
+      var ph = people.filter(function (p) { return p.n.toLowerCase() === pk; });
+      if (ph.length === 1) pid = ph[0].id;
+    }
+    expDialog(null, { pre: { t: x.t, a: x.a, d: x.d, by: pid, n: x.n, cur: x.cur } });
   }
   window.__orosOpenAt = openSearchTarget;
   try {
