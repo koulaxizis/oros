@@ -326,7 +326,7 @@
       "lbl.feed.fitness": "Προπόνηση",
       "feed.cycle.period": "Περίοδος",
       "feed.mood.entry": "Καταγραφή διάθεσης",
-      "lbl.feed.pet": "Screen Pet",
+      "lbl.feed.pet": "Συντροφάκι",
       "lbl.feed.plants": "Φυτά",
       "lbl.feed.chores": "Δουλειές",
       "lbl.feed.garage": "Γκαράζ",

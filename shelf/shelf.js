@@ -164,7 +164,7 @@
     },
     el: {
       "app": "Το ράφι μου",
-      "tab.now": "Τώρα", "tab.want": "Wishlist", "tab.hist": "Ιστορικό", "tab.stats": "Στατιστικά",
+      "tab.now": "Τώρα", "tab.want": "Επιθυμίες", "tab.hist": "Ιστορικό", "tab.stats": "Στατιστικά",
       "type.all": "Όλα", "type.book": "Βιβλίο", "type.film": "Ταινία", "type.series": "Σειρά",
       "type.album": "Μουσική", "type.podcast": "Podcast", "type.game": "Παιχνίδι",
       "types.book": "Βιβλία", "types.film": "Ταινίες", "types.series": "Σειρές",
@@ -180,7 +180,7 @@
       "size.series": "Επεισόδια", "size.album": "Κομμάτια", "size.podcast": "Επεισόδια", "size.game": "Ώρες για τερματισμό",
       "by.book": "Συγγραφέας", "by.film": "Σκηνοθέτης", "by.series": "Δημιουργός", "by.album": "Καλλιτέχνης",
       "by.podcast": "Παρουσιαστής", "by.game": "Studio",
-      "fmt.p": "Χάρτινο", "fmt.e": "E-book", "fmt.a": "Audiobook",
+      "fmt.p": "Χάρτινο", "fmt.e": "Ηλεκτρονικό", "fmt.a": "Ηχητικό",
       "btn.add": "Προσθήκη", "btn.more": "Περισσότερα", "search": "Αναζήτηση τίτλου, δημιουργού, ετικέτας…",
       "sort.recent": "Πρόσφατα", "sort.title": "Τίτλος", "sort.by": "Δημιουργός", "sort.rating": "Βαθμολογία",
       "sort.year": "Έτος", "sort.aria": "Ταξινόμηση",

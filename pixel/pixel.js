@@ -83,14 +83,14 @@
     },
     el: {
       "app.name": "Pixel Avatar",
-      "seed": "Seed", "seed.ph": "Οποιαδήποτε λέξη, π.χ. το όνομά σου", "btn.new": "Νέο πρόσωπο", "btn.copySeed": "Αντιγραφή seed",
+      "seed": "Λέξη", "seed.ph": "Οποιαδήποτε λέξη, π.χ. το όνομά σου", "btn.new": "Νέο πρόσωπο", "btn.copySeed": "Αντιγραφή λέξης",
       "sec.size": "Μέγεθος", "sec.pal": "Παλέτα", "sec.paint": "Ζωγραφική", "sec.export": "Εξαγωγή", "sec.museum": "Μουσείο",
       "bg.color": "Χρωματιστό φόντο", "bg.clear": "Διάφανο φόντο",
       "pal.classic": "Κλασική", "pal.pastel": "Pastel", "pal.gameboy": "Game Boy", "pal.neon": "Νέον",
       "pal.sepia": "Sepia", "pal.mono": "Ασπρόμαυρη", "pal.ocean": "Ωκεανός", "pal.oros": "orOS",
       "col0": "Φόντο", "col1": "Δέρμα", "col2": "Σκιά", "col3": "Μαλλιά",
       "col4": "Μάτια", "col5": "Στόμα", "col6": "Ρούχα", "col7": "Αξεσουάρ",
-      "btn.reset": "Επαναφορά στο seed", "edited": "με διορθώσεις",
+      "btn.reset": "Επαναφορά στη λέξη", "edited": "με διορθώσεις",
       "btn.undo": "Αναίρεση (Ctrl+Z)", "btn.redo": "Επανάληψη (Ctrl+Y)",
       "grid": "Πρόσωπο, {n} επί {n} pixel", "px": "Γραμμή {r}, στήλη {c}: {col}",
       "btn.png": "PNG", "btn.svg": "SVG", "btn.copyImg": "Αντιγραφή εικόνας", "exp.px": "{n} px",
@@ -103,7 +103,7 @@
       "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Δεν έγινε αντιγραφή", "toast.exported": "Η εξαγωγή έγινε",
       "toast.reset": "Οι διορθώσεις αφαιρέθηκαν", "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.opened": "Άνοιξε το «{name}»",
-      "live.new": "Νέο πρόσωπο από το seed {s}", "keys": "R νέο πρόσωπο · P επόμενη παλέτα · D λήψη PNG"
+      "live.new": "Νέο πρόσωπο από τη λέξη {s}", "keys": "R νέο πρόσωπο · P επόμενη παλέτα · D λήψη PNG"
     }
   };
 

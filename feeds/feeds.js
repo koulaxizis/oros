@@ -203,7 +203,7 @@
       "add.folder": "Φάκελος", "add.newFolder": "Νέος φάκελος…", "add.folderName": "Όνομα φακέλου",
       "add.go": "Εγγραφή", "add.done": "Έγινε εγγραφή στο {name}.", "add.doneN": "Προστέθηκαν {n} συνδρομές.",
       "add.bad": "Δεν μοιάζει με διεύθυνση ιστού.", "add.limit": "Η λίστα συνδρομών γέμισε.",
-      "feed.title": "Συνδρομή", "feed.name": "Όνομα", "feed.addr": "Διεύθυνση feed", "feed.site": "Site",
+      "feed.title": "Συνδρομή", "feed.name": "Όνομα", "feed.addr": "Διεύθυνση feed", "feed.site": "Ιστότοπος",
       "feed.img": "Εικόνες", "feed.imgDef": "Όπως στις Ρυθμίσεις", "feed.imgOn": "Εμφάνιση", "feed.imgOff": "Απόκρυψη",
       "feed.last": "Τελευταίος έλεγχος {when}", "feed.never": "Δεν έχει ελεγχθεί ακόμη", "feed.via": "Διαβάζεται μέσω του relay",
       "feed.unsub": "Διαγραφή συνδρομής", "feed.unsubQ": "Διαγραφή της συνδρομής {name}; Τα άρθρα που κράτησες μένουν στα «Με αστέρι» / «Για αργότερα».",

@@ -1657,7 +1657,7 @@ function setupPlayerControls(){
   var stopBtn = $("rx-pl-stop");
   
   if(playBtn)  playBtn.addEventListener("click", togglePlayPause);
-  if(favBtn)   favBtn.addEventListener("click", toggleFavorite);
+  if(favBtn){ favBtn.addEventListener("click", toggleFavorite); favBtn.setAttribute("aria-label", t("favorite")); }
   if(sleepBtn) sleepBtn.addEventListener("click", openSleepDialog);
   if(stopBtn){
     stopBtn.addEventListener("click", function(){

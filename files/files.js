@@ -68,6 +68,8 @@
 
   var STRINGS = {
     en: {
+      "aria.path": "Path",
+      "aria.folders": "Folders",
       "tree.root":    "Files",
       "tree.toggle":  "Show folders",
       "nav.up":       "Go to parent folder",
@@ -187,6 +189,8 @@
 	  "act.import": "Import files"
     },
     el: {
+      "aria.path": "Διαδρομή",
+      "aria.folders": "Φάκελοι",
       "tree.root":    "Αρχεία",
       "tree.toggle":  "Εμφάνιση φακέλων",
       "nav.up":       "Μετάβαση στον γονικό φάκελο",
@@ -2753,6 +2757,7 @@
   // ---------- 17. Wiring & boot ----------
 
   function applyI18n() {
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
     var n = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < n.length; i++) {
       n[i].textContent = t(n[i].getAttribute("data-i18n"));

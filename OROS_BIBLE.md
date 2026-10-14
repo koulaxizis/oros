@@ -1680,6 +1680,8 @@ function t(key) { return (STRINGS[appLang()] || STRINGS.en)[key] || STRINGS.en[k
 
 Escape user text with `esc()` before `innerHTML`, and use `escAttr()` in attributes. Keep key parity EN↔EL; a quick script that diffs the key sets and greps `t('…')` / `data-i18n` usages catches missing keys (Writer had one).
 
+**Greek coverage (2026-10-14, Chris: "some users speak no English at all").** `tests/i18n.test.js` scans every `{ en: {…}, el: {…} }` table (and keys added later as `X.en["k"] = …`) in the shell and the apps: every English key must have a Greek string, and a Greek string may not be a copy of an English sentence; every `help.en.txt` / help topic needs a Greek page. Word lists and `maps/presets-data.js` are skipped. Accessible names count as text: an `aria-label`, `title` or `placeholder` written in the HTML is a placeholder that JS must translate (`data-i18n-aria="key"` / `data-i18n-title` / `data-i18n-ph`), and so are labels set by a library (Leaflet zoom and layer controls take `t()` strings). Prefer a plain Greek word over an English loanword when one exists (πίνακας, not board; έργο, not project); product and brand names stay as they are. The shell sets `#app-frame`'s `title` to the running app's name and relabels the sync button on every language change (`applyLang`).
+
 ### Form rebuild discipline (buildCapture) [carried]
 
 Read input values + scrollTop BEFORE `innerHTML=""`, rebuild, then restore.

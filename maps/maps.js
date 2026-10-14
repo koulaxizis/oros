@@ -34,6 +34,10 @@
 
   var STRINGS = {
     en: {
+      "aria.mode": "Travel mode",
+      "zoom.in": "Zoom in",
+      "zoom.out": "Zoom out",
+      "layers.title": "Map layers",
       "search.ph":        "Search a place…",
       "search.clear":     "Clear search",
       "search.empty":     "No results",
@@ -191,6 +195,10 @@
       "share.close":        "Close"
     },
     el: {
+      "aria.mode": "Τρόπος μετακίνησης",
+      "zoom.in": "Μεγέθυνση",
+      "zoom.out": "Σμίκρυνση",
+      "layers.title": "Είδος χάρτη",
       "search.ph":        "Αναζήτηση τοποθεσίας…",
       "search.clear":     "Καθαρισμός αναζήτησης",
       "search.empty":     "Κανένα αποτέλεσμα",
@@ -564,7 +572,7 @@
     if (okView) map.setView([prefs.lat, prefs.lon], Math.max(2, Math.min(19, prefs.zoom)));
     else map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-    L.control.zoom({ position: "topright" }).addTo(map);
+    L.control.zoom({ position: "topright", zoomInTitle: t("zoom.in"), zoomOutTitle: t("zoom.out") }).addTo(map);
 
     // No {s}. subdomains: the OSMF retired a/b/c (tile usage policy).
     layerStandard = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -602,7 +610,9 @@
     layers[t("layers.humanitarian") || "Humanitarian"] = layerHumanitarian;
     layers[t("layers.satellite") || "Satellite"] = layerSatellite;
     layers[t("layers.topo") || "Topo"] = layerTopo;
-    L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
+    var lc = L.control.layers(layers, null, { position: "topright", collapsed: true }).addTo(map);
+    var lt = lc.getContainer().querySelector(".leaflet-control-layers-toggle");
+    if (lt) { lt.title = t("layers.title"); lt.setAttribute("aria-label", t("layers.title")); }
 
     map.on("baselayerchange", function (e) {
       var id = e.layer === layerHumanitarian ? "humanitarian"
@@ -3463,6 +3473,7 @@
 
   // ---------- 15. i18n painting + wiring + boot ----------
   function applyI18n() {
+    [].forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
     var n = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < n.length; i++) {
       n[i].textContent = t(n[i].getAttribute("data-i18n"));

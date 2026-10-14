@@ -263,7 +263,7 @@
       "ct.field.org": "Εταιρεία",
       "ct.field.jobtitle": "Θέση",
       "ct.field.phones": "Τηλέφωνα",
-      "ct.field.emails": "Emails",
+      "ct.field.emails": "Email",
       "ct.field.addresses": "Διευθύνσεις",
       "ct.field.websites": "Ιστοσελίδες",
       "ct.field.im": "Άμεσα μηνύματα",

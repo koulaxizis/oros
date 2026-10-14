@@ -346,9 +346,24 @@
     var dBtn = document.getElementById("bar-date");
     if (tBtn) tBtn.title = window.t("app.time");   // paintBarDate adds the date at fit level 6
     if (dBtn) dBtn.title = window.t("app.calendar");
+    // The sync button and the app frame are labelled once at injection /
+    // open time; a language toggle (or a boot before the language is
+    // known) must relabel them too, or screen readers hear English.
+    var sBtn = document.getElementById("sync-dot-btn");
+    if (sBtn) sBtn.setAttribute("aria-label", window.t("sync.dot.aria"));
+    frameTitle();
 
     renderClock();
     renderMenu();
+  }
+
+  // Accessible name of the app frame: the running app's name in the
+  // active language (the HTML ships an English placeholder).
+  function frameTitle() {
+    var f = document.getElementById("app-frame");
+    if (!f) return;
+    var app = state.running, k = app ? "app." + app.id : "", n = app ? window.t(k) : "";
+    f.setAttribute("title", app ? (n !== k ? n : app.name) : window.t("frame.title"));
   }
 
   // Language toggle reaches OPEN apps: iframes read orosLang once at
@@ -5043,7 +5058,7 @@
           en: "Connected services: import projects and tasks (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή projects και εργασιών (To-Do)" },
         { name: "Trello API", url: "https://developer.atlassian.com/cloud/trello/rest/",
           by: "Atlassian; your own account", lic: { en: "Their terms, your own key and token", el: "Οι όροι τους, με δικό σου κλειδί και token" },
-          en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή boards (Kanban)" },
+          en: "Connected services: import boards (Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή πινάκων (Kanban)" },
         { name: "GitHub REST API", url: "https://docs.github.com/en/rest/issues/issues",
           by: "GitHub, Inc.; your own account", lic: { en: "Their terms, your own access token", el: "Οι όροι τους, με δικό σου access token" },
           en: "Connected services: import a repository's issues (Kanban) and the issues assigned to you (To-Do)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή των issues ενός αποθετηρίου (Kanban) και όσων σου έχουν ανατεθεί (To-Do)" },
@@ -7665,6 +7680,7 @@
     state.running = app;
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     document.getElementById("app-frame").src = app.url + (at || "");   // at: DL-1 launchAppSuffix only
+    if (typeof window.t === "function") frameTitle();
     document.getElementById("oros-running").classList.add("active");
     document.getElementById("oros-desktop").style.display = "none";
     var mb = document.getElementById("btn-menu");
