@@ -5931,3 +5931,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - phone.js: the port the Android app hands over arrives from the browser itself (no source window), but browsers report different origins for it, so a source-less port is now accepted from any origin. Messages from frames or other windows (which always have a source) are still ignored; a port posted by this window to itself must carry this origin. The state reply includes the reported origin for diagnostics.
 - android/: the bridge diagnostics trail is kept across app processes, with clock times.
   - Tests: full suite; Android build in CI. Real-phone test by Chris after this merge.
+
+### 2026-10-14 — Phone bridge: Calendar feeds and holidays on the phone (#314) — 1.84.00
+- phone.js + calendar/calendar.js: with "On this phone" on, the phone's "orOS" calendar now also shows the events from subscribed Calendar feeds and the holidays, not only your own events (read-only on the phone, kept up to date from orOS).
+- android/: the orOS account setup repairs itself if it was left half done, and the app asks for the sync-settings permission it needs.
+  - Tests: tests/phone.test.js (feeds and holidays rows); Android build in CI. Real-phone test by Chris after this merge.
