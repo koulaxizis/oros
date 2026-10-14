@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.02.00
+- Privacy: orOS no longer sends anything to Google's speech services. Voice input in the Assistant and dictation in Writer are gone, and Library's read aloud and Maps' spoken directions use only voices installed on your device. If there is none for the language, they tell you how to add one.
+- Plant Care: identifying a plant from a photo is switched off for now, while we ask Pl@ntNet whether each person may use their own key.
+
 ## Version 2.01.00
 - Wiki articles can have pictures and galleries, an infobox with the key facts, numbered references with a form to cite books, web pages and people, and a table editor. Print an article or save it as a PDF.
 
