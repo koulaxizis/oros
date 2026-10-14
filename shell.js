@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.19.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.20.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5414,6 +5414,9 @@
         { name: "Tesseract.js 7.0.0 + tesseract.js-core 6.1.2", url: "https://github.com/naptha/tesseract.js",
           by: "Project Naptha, Google (Tesseract OCR) & contributors", lic: "Apache-2.0",
           en: "Reading text from a business card photo, on the device (Contacts); text of photos and scanned PDFs (Assistant)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)· κείμενο φωτογραφιών και σκαναρισμένων PDF (Βοηθός)" },
+        { name: "WebLLM 0.2.86", url: "https://github.com/mlc-ai/web-llm",
+          by: "MLC AI & contributors", lic: "Apache-2.0",
+          en: "Open models running in the browser (Assistant); weights from huggingface.co/mlc-ai under each model's licence", el: "Ανοιχτά μοντέλα μέσα στον browser (Βοηθός)· βάρη από το huggingface.co/mlc-ai με την άδεια κάθε μοντέλου" },
         { name: "jsQR 1.4.0", url: "https://github.com/cozmo/jsQR",
           by: "Cosmo Wolfe", lic: "Apache-2.0",
           en: "Reading QR codes from the camera or a picture (QR, Passwords)", el: "Ανάγνωση QR από την κάμερα ή εικόνα (QR, Κωδικοί)" },

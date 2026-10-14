@@ -213,7 +213,28 @@
       "set.keyHint": "The key is kept on this device, encrypted, and is sent only to {host}. You pay {name} for what you use: set a spending limit on their site.",
       "set.keyOpt": "API key (optional)",
       "set.base": "Server address",
-      "set.baseHint": "Ollama: http://localhost:11434/v1 (start it with OLLAMA_ORIGINS=https://useoros.online). LM Studio: http://localhost:1234/v1 with CORS on. Nothing leaves your network.",
+      "set.baseHint": "The address of an OpenAI-compatible server on your computer or network, ending in /v1. It must allow calls from {origin} (CORS). Nothing leaves your network.",
+      "set.kit": "Server", "kit.name.other": "Other / my own address", "kit.name.ollama": "Ollama", "kit.name.lmstudio": "LM Studio",
+      "kit.name.llamacpp": "llama.cpp (llama-server)", "kit.name.jan": "Jan", "kit.name.localai": "LocalAI", "kit.name.vllm": "vLLM", "kit.name.koboldcpp": "KoboldCpp",
+      "kit.ollama": "Start Ollama with the setting OLLAMA_ORIGINS={origin} (on Windows add it under Settings → System → About → Advanced system settings → Environment variables, then restart Ollama). Then download a model, for example: ollama pull llama3.2",
+      "kit.lmstudio": "In LM Studio open the Developer tab, turn on \u201cEnable CORS\u201d in the server settings, load a model and start the server (or run: lms server start --cors).",
+      "kit.llamacpp": "Run: llama-server -m your-model.gguf --port 8080. It accepts calls from web pages as it is.",
+      "kit.jan": "In Jan open Settings → Local API Server, set an API key, turn on CORS and start the server. Paste the same key in the key box below.",
+      "kit.localai": "Start LocalAI with LOCALAI_CORS=true and LOCALAI_CORS_ALLOW_ORIGINS={origin}.",
+      "kit.vllm": "Run: vllm serve <model> --allowed-origins '[\"{origin}\"]'",
+      "kit.koboldcpp": "Start KoboldCpp with a model. It accepts calls from web pages as it is.",
+      "kit.pna": "Chrome may ask to let this site reach devices on your local network: allow it.",
+      "prov.webllm": "In-browser model (WebLLM)",
+      "wl.opt": "{name} · about {gb} GB",
+      "wl.get": "Download the model", "wl.remove": "Remove from this device", "wl.removed": "The model was removed from this device",
+      "wl.busy": "Downloading and loading… {p}%",
+      "wl.ok": "Ready on this device. It works without internet.",
+      "wl.getHint": "Not on this device yet: it downloads once (about {gb} GB, better over Wi-Fi) and stays here.",
+      "wl.none": "This browser can't run it: it needs WebGPU (recent Chrome or Edge on Windows, Linux, a Mac or Android).",
+      "wl.hint": "The model runs on this device's graphics card. It comes once from huggingface.co (its code from raw.githubusercontent.com); after that nothing you write leaves the device. Bigger models answer better but need a stronger graphics card. For now it only chats: it can't search your data or prepare entries.",
+      "err.webgpu": "This device can't run the in-browser model (WebGPU is missing or the graphics card refused it). Pick another assistant in Settings.",
+      "err.wlget": "The in-browser model is not on this device yet. Download it in Settings first.",
+      "err.wlspace": "There is not enough memory or storage for this model. Pick a smaller one in Settings.",
       "set.model": "Model", "set.models": "Load models", "set.modelsBusy": "Loading…",
       "set.modelsOk": "The key works · {n} models", "set.modelsNone": "No chat models came back",
       "set.data": "Your data", "set.chatOnly": "Chat only: the assistant can't search my orOS data",
@@ -417,7 +438,28 @@
       "set.keyHint": "Το κλειδί μένει κρυπτογραφημένο σε αυτή τη συσκευή και στέλνεται μόνο στο {host}. Πληρώνεις το {name} για όσα χρησιμοποιείς: βάλε όριο δαπάνης στη σελίδα του.",
       "set.keyOpt": "Κλειδί API (προαιρετικό)",
       "set.base": "Διεύθυνση server",
-      "set.baseHint": "Ollama: http://localhost:11434/v1 (ξεκίνα το με OLLAMA_ORIGINS=https://useoros.online). LM Studio: http://localhost:1234/v1 με ενεργό το CORS. Τίποτα δεν φεύγει από το δίκτυό σου.",
+      "set.baseHint": "Η διεύθυνση ενός server συμβατού με OpenAI στον υπολογιστή ή στο δίκτυό σου, που τελειώνει σε /v1. Πρέπει να επιτρέπει κλήσεις από το {origin} (CORS). Τίποτα δεν φεύγει από το δίκτυό σου.",
+      "set.kit": "Server", "kit.name.other": "Άλλος / δική μου διεύθυνση", "kit.name.ollama": "Ollama", "kit.name.lmstudio": "LM Studio",
+      "kit.name.llamacpp": "llama.cpp (llama-server)", "kit.name.jan": "Jan", "kit.name.localai": "LocalAI", "kit.name.vllm": "vLLM", "kit.name.koboldcpp": "KoboldCpp",
+      "kit.ollama": "Ξεκίνα το Ollama με τη ρύθμιση OLLAMA_ORIGINS={origin} (στα Windows πρόσθεσέ τη στις Ρυθμίσεις → Σύστημα → Πληροφορίες → Ρυθμίσεις συστήματος για προχωρημένους → Μεταβλητές περιβάλλοντος και ξεκίνα ξανά το Ollama). Μετά κατέβασε ένα μοντέλο, π.χ.: ollama pull llama3.2",
+      "kit.lmstudio": "Στο LM Studio άνοιξε την καρτέλα Developer, ενεργοποίησε το «Enable CORS» στις ρυθμίσεις του server, φόρτωσε ένα μοντέλο και ξεκίνα τον server (ή τρέξε: lms server start --cors).",
+      "kit.llamacpp": "Τρέξε: llama-server -m το-μοντέλο-σου.gguf --port 8080. Δέχεται κλήσεις από σελίδες όπως είναι.",
+      "kit.jan": "Στο Jan άνοιξε Settings → Local API Server, βάλε ένα API key, ενεργοποίησε το CORS και ξεκίνα τον server. Επικόλλησε το ίδιο κλειδί στο πεδίο κλειδιού παρακάτω.",
+      "kit.localai": "Ξεκίνα το LocalAI με LOCALAI_CORS=true και LOCALAI_CORS_ALLOW_ORIGINS={origin}.",
+      "kit.vllm": "Τρέξε: vllm serve <μοντέλο> --allowed-origins '[\"{origin}\"]'",
+      "kit.koboldcpp": "Ξεκίνα το KoboldCpp με ένα μοντέλο. Δέχεται κλήσεις από σελίδες όπως είναι.",
+      "kit.pna": "Ο Chrome μπορεί να ζητήσει να επιτρέψεις σε αυτή τη σελίδα πρόσβαση σε συσκευές του τοπικού δικτύου: επίτρεψέ το.",
+      "prov.webllm": "Μοντέλο μέσα στον browser (WebLLM)",
+      "wl.opt": "{name} · περίπου {gb} GB",
+      "wl.get": "Λήψη του μοντέλου", "wl.remove": "Αφαίρεση από αυτή τη συσκευή", "wl.removed": "Το μοντέλο αφαιρέθηκε από αυτή τη συσκευή",
+      "wl.busy": "Λήψη και φόρτωση… {p}%",
+      "wl.ok": "Έτοιμο σε αυτή τη συσκευή. Δουλεύει χωρίς internet.",
+      "wl.getHint": "Δεν υπάρχει ακόμα σε αυτή τη συσκευή: κατεβαίνει μία φορά (περίπου {gb} GB, καλύτερα με Wi-Fi) και μένει εδώ.",
+      "wl.none": "Αυτός ο browser δεν μπορεί να το τρέξει: χρειάζεται WebGPU (πρόσφατος Chrome ή Edge σε Windows, Linux, Mac ή Android).",
+      "wl.hint": "Το μοντέλο τρέχει στην κάρτα γραφικών αυτής της συσκευής. Έρχεται μία φορά από το huggingface.co (ο κώδικάς του από το raw.githubusercontent.com)· μετά τίποτα από όσα γράφεις δεν φεύγει από τη συσκευή. Τα μεγαλύτερα μοντέλα απαντούν καλύτερα αλλά θέλουν πιο δυνατή κάρτα γραφικών. Προς το παρόν μόνο συζητά: δεν ψάχνει στα δεδομένα σου και δεν ετοιμάζει καταχωρήσεις.",
+      "err.webgpu": "Αυτή η συσκευή δεν μπορεί να τρέξει το μοντέλο μέσα στον browser (λείπει το WebGPU ή η κάρτα γραφικών το αρνήθηκε). Διάλεξε άλλον βοηθό στις Ρυθμίσεις.",
+      "err.wlget": "Το μοντέλο μέσα στον browser δεν υπάρχει ακόμα σε αυτή τη συσκευή. Κατέβασέ το πρώτα στις Ρυθμίσεις.",
+      "err.wlspace": "Δεν φτάνει η μνήμη ή ο χώρος για αυτό το μοντέλο. Διάλεξε μικρότερο στις Ρυθμίσεις.",
       "set.model": "Μοντέλο", "set.models": "Φόρτωση μοντέλων", "set.modelsBusy": "Φόρτωση…",
       "set.modelsOk": "Το κλειδί δουλεύει · {n} μοντέλα", "set.modelsNone": "Δεν ήρθαν μοντέλα συζήτησης",
       "set.data": "Τα δεδομένα σου", "set.chatOnly": "Μόνο συζήτηση: ο βοηθός δεν ψάχνει στα δεδομένα μου στο orOS",
@@ -570,6 +612,7 @@
 
   function provName(pid) {
     if (pid === "browser") return t("prov.browser");
+    if (pid === "webllm") return t("prov.webllm");
     return C.PROVIDERS[pid] ? C.PROVIDERS[pid].name : pid;
   }
   function curProv() { return data.set.prov; }
@@ -578,7 +621,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0 };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "" };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -842,6 +885,7 @@
     var pid = curProv();
     if (!pid || !modelOf(pid)) return false;
     if (C.PROVIDERS[pid].builtin) return builtinState() !== "none";
+    if (C.PROVIDERS[pid].kind === "webllm") return wlState(modelOf(pid)) === "ok";
     if (C.PROVIDERS[pid].local) return !!baseOf(pid);
     return !!(keyCache[pid] && keyCache[pid].key);
   }
@@ -850,6 +894,7 @@
   function callModel(pid, msgs, opts, signal, onText) {
     var p = C.PROVIDERS[pid];
     if (p.builtin) return builtinCall(msgs, opts, signal, onText);
+    if (p.kind === "webllm") return webllmCall(modelOf(pid), msgs, opts, signal, onText);
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis }, msgs, opts);
@@ -954,6 +999,104 @@
     });
   }
 
+  // ---------- 6b. In-browser model (WebLLM, phase 5 wave 4) ----------
+  // vendor/webllm/web-llm-0.2.86.js (@mlc-ai/web-llm 0.2.86, Apache-2.0) runs
+  // the model in a worker on the graphics card (WebGPU). Weights come
+  // once from huggingface.co (model code from raw.githubusercontent.com)
+  // into the "webllm/*" caches, which sw.js keeps across releases.
+  // Only a click on "Download the model" starts a download; a question
+  // never does. One model is loaded at a time.
+  var WL_SRC = "../vendor/webllm/web-llm-0.2.86.js", WL_WORKER = "webllm-worker.js";
+  var wl = { lib: null, engine: null, worker: null, model: "", loading: null, cached: {}, busy: "" };
+  function wlGpu() { try { return typeof navigator !== "undefined" && !!navigator.gpu; } catch (e) { return false; } }
+  // "none" (no WebGPU), "get" (not on this device yet), "busy", "ok", "" (not checked)
+  function wlState(model) {
+    if (!wlGpu()) return "none";
+    if (wl.busy === model) return "busy";
+    return wl.cached[model] === true ? "ok" : wl.cached[model] === false ? "get" : "";
+  }
+  // Is the model already on this device? Reads WebLLM's own cache
+  // without loading the library.
+  function wlCheck(model) {
+    if (!wlGpu() || typeof caches === "undefined") return Promise.resolve(wlState(model));
+    return caches.has("webllm/model").then(function (has) {
+      if (!has) return false;
+      return caches.open("webllm/model").then(function (c) { return c.keys(); }).then(function (keys) {
+        return keys.some(function (r) { return r.url.indexOf("/" + model + "/") >= 0; });
+      });
+    }).then(function (yes) { wl.cached[model] = !!yes; return wlState(model); },
+            function () { wl.cached[model] = false; return wlState(model); });
+  }
+  function wlLib() {
+    if (!wl.lib) wl.lib = import(WL_SRC).catch(function (e) { wl.lib = null; throw e; });
+    return wl.lib;
+  }
+  function wlDrop() {
+    try { if (wl.engine && wl.engine.unload) wl.engine.unload(); } catch (e) {}
+    try { if (wl.worker) wl.worker.terminate(); } catch (e) {}
+    wl.engine = null; wl.worker = null; wl.model = "";
+  }
+  // → the engine with `model` loaded (downloading it if needed).
+  function wlEngine(model, onProgress) {
+    if (wl.engine && wl.model === model) return Promise.resolve(wl.engine);
+    if (wl.loading && wl.loading.model === model) return wl.loading.p;
+    wlDrop();
+    wl.busy = model;
+    var p = wlLib().then(function (lib) {
+      wl.worker = new Worker(new URL(WL_WORKER, location.href), { type: "module" });
+      return lib.CreateWebWorkerMLCEngine(wl.worker, model, {
+        initProgressCallback: function (r) { if (onProgress) onProgress(r && typeof r.progress === "number" ? r.progress : 0); }
+      });
+    }).then(function (engine) {
+      wl.engine = engine; wl.model = model; wl.cached[model] = true;
+      return engine;
+    }, function (e) { wlDrop(); throw e; });
+    wl.loading = { model: model, p: p };
+    p.then(function () { wl.loading = null; wl.busy = ""; }, function () { wl.loading = null; wl.busy = ""; });
+    return p;
+  }
+  function wlErr(e) {
+    var m = String(e && e.message || e || "");
+    if (/webgpu|adapter|gpu/i.test(m)) return new C.ProviderError("webgpu", m.slice(0, 200));
+    if (/memory|quota|storage/i.test(m)) return new C.ProviderError("wlspace", m.slice(0, 200));
+    return new C.ProviderError("server", m.slice(0, 200));
+  }
+  function webllmCall(model, msgs, opts, signal, onText) {
+    if (wlState(model) === "none") return Promise.reject(new C.ProviderError("webgpu"));
+    if (wl.cached[model] !== true) return Promise.reject(new C.ProviderError("wlget"));
+    var engine = null;
+    function stop() { try { if (engine) engine.interruptGenerate(); } catch (e) {} }
+    if (signal) signal.addEventListener("abort", stop);
+    return wlEngine(model, null).then(function (eng) {
+      engine = eng;
+      var req = { messages: C.webllmMessages(msgs, opts && opts.system), stream: true, stream_options: { include_usage: true } };
+      // Qwen 3.x think out loud first unless told not to.
+      if (/^Qwen3/.test(model)) req.extra_body = { enable_thinking: false };
+      return eng.chat.completions.create(req);
+    }).then(function (chunks) {
+      var red = C.makeReducer("webllm"), it = chunks[Symbol.asyncIterator]();
+      function pump() {
+        return it.next().then(function (r) {
+          if (signal && signal.aborted) throw new DOMException("Aborted", "AbortError");
+          if (r.done) return red.result();
+          red.push(r.value);
+          if (onText) onText(red.text());
+          return pump();
+        });
+      }
+      return pump();
+    }).then(function (res) {
+      if (signal) signal.removeEventListener("abort", stop);
+      res.tools = [];
+      return res;
+    }, function (e) {
+      if (signal) signal.removeEventListener("abort", stop);
+      if (signal && signal.aborted) throw e;
+      if (e instanceof C.ProviderError) throw e;
+      throw wlErr(e);
+    });
+  }
+
   // Providers with a note of their own under the key box.
   var NOTE_PROVS = { github: 1, cohere: 1, pollinations: 1, openrouter: 1 };
   // What a failed connection test means, in plain words.
@@ -964,6 +1107,10 @@
       return t(C.PROVIDERS[pid].local ? "set.testLocal" : "set.testCors", { name: provName(pid), host: hostOf(baseOf(pid)) });
     }
     return errText(e, pid);
+  }
+  // The site's own address, for the CORS instructions of local servers.
+  function siteOrigin() {
+    try { return (window.top && window.top.location.origin) || location.origin; } catch (e) { return location.origin; }
   }
   function errText(e, pid) {
     var name = provName(pid), host = hostOf(baseOf(pid));
@@ -1492,7 +1639,7 @@
     busy = { abort: ctl, live: "", consent: null, chat: c };
     renderAll();
     scrollEnd();
-    var builtin = !!C.PROVIDERS[pid].builtin;
+    var builtin = !!C.PROVIDERS[pid].device;
     var apps = builtin ? [] : readableApps();
     var kinds = builtin ? [] : entryKinds();
     var sumIds = summaryIds(apps);
@@ -2074,7 +2221,7 @@
   // what was shared (C.briefText). "Never" apps are not read at all.
   function briefCan() {
     var pid = curProv();
-    return !!pid && !!C.PROVIDERS[pid] && !C.PROVIDERS[pid].builtin && !data.set.chat;
+    return !!pid && !!C.PROVIDERS[pid] && !C.PROVIDERS[pid].device && !data.set.chat;
   }
   function briefDate() {
     try { return new Date().toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "long", day: "numeric", month: "long" }); }
@@ -2415,8 +2562,9 @@
     if (!pid || !ready()) { who.hidden = true; }
     else {
       who.hidden = false;
-      var isBi = !!C.PROVIDERS[pid].builtin;
-      who.appendChild(el("span", "who-name", isBi ? provName(pid) : t("who", { name: provName(pid), model: modelOf(pid) })));
+      var isBi = !!C.PROVIDERS[pid].device;
+      var wm = pid === "webllm" && C.webllmModel(modelOf(pid));
+      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : modelOf(pid) })));
       who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
       if (webOn(pid)) who.appendChild(el("span", "who-web", t("who.web")));
       if (!data.set.chat && !isBi) {
@@ -2425,7 +2573,7 @@
       }
     }
     var off = $("net");
-    var offline = typeof navigator !== "undefined" && navigator.onLine === false && pid && !C.PROVIDERS[pid].local && !C.PROVIDERS[pid].builtin;
+    var offline = typeof navigator !== "undefined" && navigator.onLine === false && pid && !C.PROVIDERS[pid].local && !C.PROVIDERS[pid].device;
     off.hidden = !offline;
     if (offline) off.textContent = t("off.line", { name: provName(pid) });
     $("new-btn").disabled = !!busy;
@@ -2827,7 +2975,34 @@
       if (!pid) return;
       var P = C.PROVIDERS[pid];
       if (P.builtin) { drawBuiltin(); return; }
+      if (P.kind === "webllm") { drawWebllm(); return; }
       if (P.local) {
+        // Ready-made settings: the address and how to allow this site.
+        label(provBox, "as-kit", t("set.kit"));
+        var kit = el("select", "dlg-input");
+        kit.id = "as-kit";
+        [""].concat(C.KIT_IDS).forEach(function (k) {
+          var o = el("option", "", t("kit.name." + (k || "other")));
+          o.value = k;
+          kit.appendChild(o);
+        });
+        kit.value = provConf(pid).kit || "";
+        provBox.appendChild(kit);
+        var kitHint = el("p", "dlg-hint kit-hint");
+        kitHint.id = "as-kit-hint";
+        provBox.appendChild(kitHint);
+        var paintKit = function () {
+          var k = kit.value;
+          kitHint.textContent = k ? t("kit." + k, { origin: siteOrigin() }) + " " + t("kit.pna") : "";
+        };
+        kit.addEventListener("change", function () {
+          var k = kit.value;
+          var patch = { kit: k };
+          if (k) { patch.base = C.LOCAL_KITS[k]; base.value = C.LOCAL_KITS[k]; base.setCustomValidity(""); }
+          setProvConf(pid, patch);
+          paintKit();
+          renderAll();
+        });
         var bl = label(provBox, "as-base", t("set.base"));
         var base = el("input", "dlg-input");
         base.id = "as-base";
@@ -2845,7 +3020,8 @@
           renderAll();
         });
         bl.after(base);
-        provBox.appendChild(el("p", "dlg-hint", t("set.baseHint")));
+        paintKit();
+        provBox.appendChild(el("p", "dlg-hint", t("set.baseHint", { origin: siteOrigin() })));
         var vis = checkbox(provBox, "as-vis", t("set.vis"), !!provConf(pid).vis, function (on) {
           setProvConf(pid, { vis: on ? 1 : 0 });
           renderAll();
@@ -3015,6 +3191,71 @@
           mstat.classList.add("err");
         }).then(function () { lm.disabled = false; });
       }
+    }
+    // WebLLM: pick a model, download it once, remove it.
+    function drawWebllm() {
+      var pid = "webllm";
+      label(provBox, "as-wl-model", t("set.model"));
+      var ms = el("select", "dlg-input");
+      ms.id = "as-wl-model";
+      C.WEBLLM_MODELS.forEach(function (m) {
+        var o = el("option", "", t("wl.opt", { name: m.name, gb: (m.mb / 1024).toFixed(1) }));
+        o.value = m.id;
+        ms.appendChild(o);
+      });
+      ms.value = C.webllmModel(modelOf(pid)) ? modelOf(pid) : C.PROVIDERS.webllm.model;
+      provBox.appendChild(ms);
+      var st = el("p", "key-status");
+      st.id = "as-wl-st";
+      st.setAttribute("role", "status");
+      provBox.appendChild(st);
+      var row = el("div", "row links");
+      var get = button(t("wl.get"), "small", function () {
+        var m = ms.value;
+        get.disabled = true;
+        st.textContent = t("wl.busy", { p: 0 });
+        wlEngine(m, function (f) {
+          if (ms.value === m) st.textContent = t("wl.busy", { p: Math.round(f * 100) });
+        }).then(function () { paint(); renderAll(); },
+          function (e) { paint(); st.textContent = errText(wlErr(e), pid); st.classList.remove("ok"); });
+        paint();
+      });
+      get.id = "as-wl-get";
+      var rm = button(t("wl.remove"), "small danger", function () {
+        var m = ms.value;
+        rm.disabled = true;
+        if (wl.model === m) wlDrop();
+        wlLib().then(function (lib) { return lib.deleteModelAllInfoInCache(m); }).then(function () {
+          wl.cached[m] = false;
+          showToast(t("wl.removed"));
+        }, function () { showToast(t("toast.storage")); }).then(function () { rm.disabled = false; paint(); renderAll(); });
+      });
+      rm.id = "as-wl-rm";
+      row.appendChild(get);
+      row.appendChild(rm);
+      provBox.appendChild(row);
+      provBox.appendChild(el("p", "dlg-hint", t("wl.hint")));
+      ms.addEventListener("change", function () {
+        setProvConf(pid, { model: ms.value });
+        paint();
+        wlCheck(ms.value).then(function () { paint(); renderAll(); });
+        renderAll();
+      });
+      function paint() {
+        var s0 = wlState(ms.value), mm = C.webllmModel(ms.value);
+        st.classList.toggle("ok", s0 === "ok");
+        if (s0 !== "busy" || !/%/.test(st.textContent)) {
+          st.textContent = s0 === "none" ? t("wl.none") : s0 === "ok" ? t("wl.ok") : s0 === "busy" ? t("wl.busy", { p: "…" }) :
+                           s0 === "get" ? t("wl.getHint", { gb: mm ? (mm.mb / 1024).toFixed(1) : "?" }) : "…";
+        }
+        get.hidden = !(s0 === "get" || s0 === "busy");
+        get.disabled = s0 === "busy";
+        rm.hidden = s0 !== "ok";
+        ms.disabled = s0 === "none";
+      }
+      if (!C.webllmModel(modelOf(pid))) setProvConf(pid, { model: ms.value });
+      paint();
+      wlCheck(ms.value).then(function () { paint(); renderAll(); });
     }
     // The browser's own model: its state, and the download (a click
     // is needed for it).
@@ -3205,7 +3446,7 @@
       tBtn.hidden = !src || src === "native";
       if (tBtn.hidden) tStat.textContent = "";
       var lines = [t("set.webHint0")];
-      if (C.PROVIDERS[pid] && C.PROVIDERS[pid].builtin) lines.push(t("set.webBi"));
+      if (C.PROVIDERS[pid] && C.PROVIDERS[pid].device) lines.push(t("set.webBi"));
       else if (src === "native") lines.push(t("set.webHint", { n: C.WEB_USES }));
       else if (src) lines.push(t("set.wsHint." + src));
       wsHint.textContent = lines.join(" ");
@@ -3554,7 +3795,7 @@
       var p = shell();
       if (p && typeof p.__orosTakeTarget === "function") pending = p.__orosTakeTarget("assistant");
     } catch (e) {}
-    var biP = curProv() === "browser" ? checkBuiltin() : null;
+    var biP = curProv() === "browser" ? checkBuiltin() : curProv() === "webllm" ? wlCheck(modelOf("webllm")) : null;
     Promise.all([loadChats(), loadKey(curProv() || "anthropic"), biP]).then(function () {
       renderAll();
       scrollEnd();

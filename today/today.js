@@ -714,7 +714,7 @@
   function canBrief() {
     if (!assist) return false;
     var pv = assist.C.PROVIDERS[assist.data.set.prov];
-    return !!pv && !pv.builtin && !assist.data.set.chat;
+    return !!pv && !pv.device && !assist.data.set.chat;
   }
   function briefing() {
     var p = parentWin();

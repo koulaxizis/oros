@@ -21,8 +21,8 @@ test("freeprov: every new service is listed, free, https, OpenAI format, needs a
     assert.ok(p.model, pid);
     assert.ok(!/google/i.test(p.base + (p.modelsUrl || "")), pid);
   });
-  // local and browser stay last
-  assert.deepEqual(C.PROV_IDS.slice(-2), ["local", "browser"]);
+  // the on-device ones stay last
+  assert.deepEqual(C.PROV_IDS.slice(-3), ["local", "webllm", "browser"]);
 });
 
 test("freeprov: chat requests go to each service's OpenAI endpoint with a Bearer key", () => {

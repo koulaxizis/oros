@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.20.00
+- The Assistant runs open-source models on your own computer with ready-made settings for Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM and KoboldCpp, each with its one-time CORS step. New: an in-browser model (WebLLM). Llama, Qwen, Phi, Mistral or Hermes download once and then run on your graphics card, offline, with nothing leaving the device.
+
 ## Version 2.19.00
 - The Assistant works with more free services: Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova and Pollinations need only a free account and key. OpenRouter can list only its free models. A new "Test the connection" button in Settings tells you at once if a service answers here.
 

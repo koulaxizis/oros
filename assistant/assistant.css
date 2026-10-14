@@ -551,6 +551,7 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-hint:empty { display: none; }
 .dlg-hint.err { color: var(--danger); }
 .dlg-hint.ok { color: var(--text); font-weight: 600; }
+#as-wl-st, #as-kit-hint { margin-top: 8px; }
 .dlg-text { font-size: 14px; line-height: 1.5; }
 .dlg-check { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .perm-list { margin-top: 4px; }
