@@ -188,6 +188,119 @@
     }
   };
 
+  // Wave 2: medicines and symptoms (same keys in both languages).
+  var STRINGS_MEDS = {
+    en: {
+      "tab.meds": "Medicines",
+      "mv.today": "Today", "mv.list": "My medicines", "mv.hist": "History",
+      "md.none": "No medicines yet. Add the ones you take to get today's doses, reminders and a count of what's left.",
+      "md.add": "Add a medicine", "md.today": "Today · {d}", "md.noDoses": "No scheduled doses today.",
+      "md.prn": "As needed", "md.takeNow": "Take a dose", "md.prnToday": "Today: {n} · last at {t}", "md.prnNone": "None today",
+      "md.refill": "Refilled +{n}", "md.refilled": "{n}: {a} added",
+      "md.left": "{left} left", "md.leftDays": "{left} left · {d}",
+      "days.n": "about {n} days", "days.1": "about 1 day", "days.0": "less than a day",
+      "md.adh30": "Taken: {p}% (last 30 days)", "md.stopped": "Stopped", "md.stoppedOn": "stopped",
+      "md.disclaimer": "Health keeps a list, it does not give medical advice. Take your medicines as your doctor or pharmacist told you, and never change a dose because of what the app shows.",
+      "ds.take": "Taken", "ds.skip": "Skip", "ds.snooze": "Snooze", "ds.undo": "Undo", "ds.edit": "Change",
+      "st.taken": "Taken at {t}", "st.takenShort": "Taken", "st.skipped": "Skipped", "st.snoozed": "Snoozed until {t}",
+      "st.upcoming": "Coming up", "st.due": "Due now", "st.late": "Late", "st.missed": "Missed",
+      "sn.title": "Remind me again in", "sn.10": "10 minutes", "sn.30": "30 minutes", "sn.60": "1 hour",
+      "toast.taken": "{n}: taken", "toast.skipped": "{n}: skipped", "toast.snoozed": "{n}: snoozed until {t}",
+      "low.text": "{n}: {left} left, {d}", "low.textPrn": "{n}: {left} left", "low.out": "{n}: none left",
+      "sch.d": "Every day", "sch.w": "On certain days", "sch.n": "Every few days", "sch.p": "As needed",
+      "sch.every": "Every {n} days", "sch.until": "until {d}", "sch.from": "from {d}",
+      "mdl.new": "New medicine", "mdl.name": "Name", "mdl.strength": "Strength (optional)", "mdl.strengthHint": "e.g. 500 mg",
+      "mdl.form": "Form", "mdl.dose": "Dose ({u})", "mdl.sched": "How often", "mdl.days": "Days",
+      "mdl.every": "Every how many days", "mdl.times": "Times", "mdl.timeAdd": "Add a time", "mdl.timeDel": "Remove time",
+      "mdl.start": "Start", "mdl.end": "End (optional)", "mdl.remind": "Remind me at these times",
+      "mdl.remHint": "Reminders appear while orOS is open (also with Health closed), for four hours after each time.",
+      "mdl.stock": "Count what's left", "mdl.left": "Left now ({u})", "mdl.pack": "Pack size ({u})",
+      "mdl.warn": "Warn me this many days before it runs out", "mdl.note": "Note",
+      "mdl.stop": "Stop taking", "mdl.resume": "Taking it again", "mdl.del": "Delete medicine",
+      "mdl.delAsk": "Delete “{n}” and its dose history on every synced device?", "mdl.deleted": "“{n}” deleted",
+      "mdl.needTime": "Add at least one time.", "mdl.needDay": "Pick at least one day.",
+      "dd.status": "Status", "dd.none": "Not marked", "dd.when": "Taken at", "dd.amount": "Amount ({u})",
+      "dd.sched": "Planned for {d} {t}", "dd.prn": "As needed", "dd.delete": "Delete dose",
+      "mh.all": "All medicines", "mh.counts": "{t} taken · {s} skipped · {m} missed", "mh.none": "No doses in this period.",
+      "f.tab": "Tablet", "f.cap": "Capsule", "f.liq": "Liquid (ml)", "f.drop": "Drops", "f.inh": "Inhaler", "f.spray": "Spray",
+      "f.inj": "Injection", "f.cream": "Cream or ointment", "f.patch": "Patch", "f.supp": "Suppository", "f.sach": "Sachet", "f.other": "Other",
+      "u1.tab": "tablet", "un.tab": "tablets", "u1.cap": "capsule", "un.cap": "capsules", "u1.liq": "ml", "un.liq": "ml",
+      "u1.drop": "drop", "un.drop": "drops", "u1.inh": "puff", "un.inh": "puffs", "u1.spray": "spray", "un.spray": "sprays",
+      "u1.inj": "injection", "un.inj": "injections", "u1.cream": "application", "un.cream": "applications",
+      "u1.patch": "patch", "un.patch": "patches", "u1.supp": "suppository", "un.supp": "suppositories",
+      "u1.sach": "sachet", "un.sach": "sachets", "u1.other": "dose", "un.other": "doses",
+      "sy.ha": "Headache", "sy.na": "Nausea", "sy.dz": "Dizziness", "sy.ft": "Tiredness", "sy.pn": "Pain",
+      "sy.cg": "Cough", "sy.br": "Shortness of breath", "sy.pl": "Palpitations",
+      "sy.card": "Symptoms", "sy.new": "New symptom", "sy.kind": "Symptom", "sy.int": "Intensity: {n}/10", "sy.intLbl": "Intensity",
+      "sy.own": "Your own symptom…", "sy.ownTitle": "Your own symptom", "sy.del": "Delete symptom", "sy.deleted": "Symptom deleted",
+      "sy.none": "None logged yet", "sy.avg": "Average intensity", "sy.max": "Highest", "sy.days": "Days with it",
+      "sy.kindDel": "Delete “{n}” and its {c} entries on every synced device?", "sy.kinds": "Symptoms",
+      "ch.marks": "Show symptoms and doses", "ch.marksHint": "Under the chart: dots for symptoms, ticks for doses taken",
+      "rp.meds": "Medicines (list and doses taken)", "rp.syms": "Symptoms ({n})",
+      "rp.medsH": "Medicines", "rp.symsH": "Symptoms",
+      "rp.col.med": "Medicine", "rp.col.dose": "Dose", "rp.col.sched": "Schedule", "rp.col.taken": "Taken", "rp.col.course": "Course",
+      "rp.col.sym": "Symptom", "rp.col.int": "Intensity",
+      "rp.adh": "{p}% ({t} of {n})", "rp.prn": "{n} times", "rp.medFoot": "Doses as marked by the patient in orOS Health.",
+      "csv.med": "Medicine", "csv.sym": "Symptom", "csv.sched": "Planned {t}"
+    },
+    el: {
+      "tab.meds": "Φάρμακα",
+      "mv.today": "Σήμερα", "mv.list": "Τα φάρμακά μου", "mv.hist": "Ιστορικό",
+      "md.none": "Κανένα φάρμακο ακόμα. Πρόσθεσε όσα παίρνεις για να βλέπεις τις δόσεις της ημέρας, να έχεις υπενθυμίσεις και να ξέρεις πόσα σου έχουν μείνει.",
+      "md.add": "Πρόσθεσε φάρμακο", "md.today": "Σήμερα · {d}", "md.noDoses": "Καμία προγραμματισμένη δόση σήμερα.",
+      "md.prn": "Όταν χρειάζεται", "md.takeNow": "Πήρα μια δόση", "md.prnToday": "Σήμερα: {n} · τελευταία στις {t}", "md.prnNone": "Καμία σήμερα",
+      "md.refill": "Αναπλήρωση +{n}", "md.refilled": "{n}: προστέθηκαν {a}",
+      "md.left": "Έμειναν {left}", "md.leftDays": "Έμειναν {left} · {d}",
+      "days.n": "για περίπου {n} μέρες", "days.1": "για περίπου 1 μέρα", "days.0": "για λιγότερο από μία μέρα",
+      "md.adh30": "Λήψη: {p}% (τελευταίες 30 μέρες)", "md.stopped": "Σταματημένα", "md.stoppedOn": "σταματημένο",
+      "md.disclaimer": "Η Υγεία κρατά μια λίστα, δεν δίνει ιατρικές συμβουλές. Παίρνε τα φάρμακά σου όπως σου είπε ο γιατρός ή ο φαρμακοποιός σου και μην αλλάζεις ποτέ δόση εξαιτίας όσων δείχνει η εφαρμογή.",
+      "ds.take": "Το πήρα", "ds.skip": "Παράλειψη", "ds.snooze": "Αργότερα", "ds.undo": "Αναίρεση", "ds.edit": "Αλλαγή",
+      "st.taken": "Το πήρες στις {t}", "st.takenShort": "Ελήφθη", "st.skipped": "Παραλείφθηκε", "st.snoozed": "Αναβολή έως τις {t}",
+      "st.upcoming": "Επόμενη", "st.due": "Τώρα", "st.late": "Καθυστερεί", "st.missed": "Δεν ελήφθη",
+      "sn.title": "Θύμισέ μου ξανά σε", "sn.10": "10 λεπτά", "sn.30": "30 λεπτά", "sn.60": "1 ώρα",
+      "toast.taken": "{n}: ελήφθη", "toast.skipped": "{n}: παραλείφθηκε", "toast.snoozed": "{n}: αναβολή έως τις {t}",
+      "low.text": "{n}: έμειναν {left}, {d}", "low.textPrn": "{n}: έμειναν {left}", "low.out": "{n}: δεν έμεινε τίποτα",
+      "sch.d": "Κάθε μέρα", "sch.w": "Συγκεκριμένες μέρες", "sch.n": "Κάθε λίγες μέρες", "sch.p": "Όταν χρειάζεται",
+      "sch.every": "Κάθε {n} μέρες", "sch.until": "έως {d}", "sch.from": "από {d}",
+      "mdl.new": "Νέο φάρμακο", "mdl.name": "Όνομα", "mdl.strength": "Περιεκτικότητα (προαιρετικά)", "mdl.strengthHint": "π.χ. 500 mg",
+      "mdl.form": "Μορφή", "mdl.dose": "Δόση ({u})", "mdl.sched": "Πόσο συχνά", "mdl.days": "Μέρες",
+      "mdl.every": "Κάθε πόσες μέρες", "mdl.times": "Ώρες", "mdl.timeAdd": "Πρόσθεσε ώρα", "mdl.timeDel": "Αφαίρεση ώρας",
+      "mdl.start": "Έναρξη", "mdl.end": "Λήξη (προαιρετικά)", "mdl.remind": "Υπενθύμιση σε αυτές τις ώρες",
+      "mdl.remHint": "Οι υπενθυμίσεις εμφανίζονται όσο το orOS είναι ανοιχτό (και με κλειστή την Υγεία), για τέσσερις ώρες μετά από κάθε ώρα.",
+      "mdl.stock": "Μέτρα πόσα έμειναν", "mdl.left": "Έμειναν τώρα ({u})", "mdl.pack": "Συσκευασία ({u})",
+      "mdl.warn": "Ειδοποίησέ με τόσες μέρες πριν τελειώσει", "mdl.note": "Σημείωση",
+      "mdl.stop": "Το σταμάτησα", "mdl.resume": "Το ξαναπαίρνω", "mdl.del": "Διαγραφή φαρμάκου",
+      "mdl.delAsk": "Να διαγραφεί το «{n}» και το ιστορικό δόσεών του σε όλες τις συσκευές;", "mdl.deleted": "Το «{n}» διαγράφηκε",
+      "mdl.needTime": "Πρόσθεσε τουλάχιστον μία ώρα.", "mdl.needDay": "Διάλεξε τουλάχιστον μία μέρα.",
+      "dd.status": "Κατάσταση", "dd.none": "Χωρίς σημείωση", "dd.when": "Ώρα λήψης", "dd.amount": "Ποσότητα ({u})",
+      "dd.sched": "Προγραμματισμένη {d} {t}", "dd.prn": "Όταν χρειάζεται", "dd.delete": "Διαγραφή δόσης",
+      "mh.all": "Όλα τα φάρμακα", "mh.counts": "{t} ελήφθησαν · {s} παραλείφθηκαν · {m} δεν ελήφθησαν", "mh.none": "Καμία δόση σε αυτή την περίοδο.",
+      "f.tab": "Δισκίο", "f.cap": "Κάψουλα", "f.liq": "Σιρόπι ή διάλυμα (ml)", "f.drop": "Σταγόνες", "f.inh": "Εισπνεόμενο", "f.spray": "Σπρέι",
+      "f.inj": "Ένεση", "f.cream": "Κρέμα ή αλοιφή", "f.patch": "Επίθεμα", "f.supp": "Υπόθετο", "f.sach": "Φακελάκι", "f.other": "Άλλο",
+      "u1.tab": "δισκίο", "un.tab": "δισκία", "u1.cap": "κάψουλα", "un.cap": "κάψουλες", "u1.liq": "ml", "un.liq": "ml",
+      "u1.drop": "σταγόνα", "un.drop": "σταγόνες", "u1.inh": "εισπνοή", "un.inh": "εισπνοές", "u1.spray": "ψεκασμός", "un.spray": "ψεκασμοί",
+      "u1.inj": "ένεση", "un.inj": "ενέσεις", "u1.cream": "επάλειψη", "un.cream": "επαλείψεις",
+      "u1.patch": "επίθεμα", "un.patch": "επιθέματα", "u1.supp": "υπόθετο", "un.supp": "υπόθετα",
+      "u1.sach": "φακελάκι", "un.sach": "φακελάκια", "u1.other": "δόση", "un.other": "δόσεις",
+      "sy.ha": "Πονοκέφαλος", "sy.na": "Ναυτία", "sy.dz": "Ζάλη", "sy.ft": "Κούραση", "sy.pn": "Πόνος",
+      "sy.cg": "Βήχας", "sy.br": "Δύσπνοια", "sy.pl": "Αίσθημα παλμών",
+      "sy.card": "Συμπτώματα", "sy.new": "Νέο σύμπτωμα", "sy.kind": "Σύμπτωμα", "sy.int": "Ένταση: {n}/10", "sy.intLbl": "Ένταση",
+      "sy.own": "Δικό σου σύμπτωμα…", "sy.ownTitle": "Δικό σου σύμπτωμα", "sy.del": "Διαγραφή συμπτώματος", "sy.deleted": "Το σύμπτωμα διαγράφηκε",
+      "sy.none": "Κανένα ακόμα", "sy.avg": "Μέση ένταση", "sy.max": "Υψηλότερη", "sy.days": "Μέρες με το σύμπτωμα",
+      "sy.kindDel": "Να διαγραφεί το «{n}» και οι {c} καταγραφές του σε όλες τις συσκευές;", "sy.kinds": "Συμπτώματα",
+      "ch.marks": "Εμφάνιση συμπτωμάτων και δόσεων", "ch.marksHint": "Κάτω από το γράφημα: κουκκίδες για τα συμπτώματα, γραμμούλες για τις δόσεις που πήρες",
+      "rp.meds": "Φάρμακα (λίστα και δόσεις που πάρθηκαν)", "rp.syms": "Συμπτώματα ({n})",
+      "rp.medsH": "Φάρμακα", "rp.symsH": "Συμπτώματα",
+      "rp.col.med": "Φάρμακο", "rp.col.dose": "Δόση", "rp.col.sched": "Πρόγραμμα", "rp.col.taken": "Λήψη", "rp.col.course": "Διάρκεια",
+      "rp.col.sym": "Σύμπτωμα", "rp.col.int": "Ένταση",
+      "rp.adh": "{p}% ({t} από {n})", "rp.prn": "{n} φορές", "rp.medFoot": "Δόσεις όπως τις σημείωσε ο ίδιος ο ασθενής στην Υγεία του orOS.",
+      "csv.med": "Φάρμακο", "csv.sym": "Σύμπτωμα", "csv.sched": "Προγραμματισμένη {t}"
+    }
+  };
+  ["en", "el"].forEach(function (l) {
+    Object.keys(STRINGS_MEDS[l]).forEach(function (k) { STRINGS[l][k] = STRINGS_MEDS[l][k]; });
+  });
+
   function t(key, params) {
     var p = STRINGS[LANG] || STRINGS.en;
     var s = p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key);
@@ -386,23 +499,29 @@
     var s = String(Math.round(toDisp(k, v) * p) / p);
     return LANG === "el" ? s.replace(".", ",") : s;
   }
-  function buildCsv(entries) {
+  // entries: readings; more: [{ at, cells }] (symptoms, doses), in the
+  // same columns, sorted in by time.
+  function buildCsv(entries, more) {
     var sep = LANG === "el" ? ";" : ",";
-    var rows = [[t("csv.date"), t("csv.time"), t("csv.kind"), t("csv.value"), t("csv.unit"), t("csv.dia"),
-                 t("csv.pulse"), t("csv.details"), t("csv.status"), t("csv.note"), t("csv.tags"), t("csv.source")]];
+    var body = [];
     entries.forEach(function (e) {
       var d = new Date(e.at), det = "";
       if (e.t === "bp") det = [e.a ? t("e.arm") + ": " + t("arm." + e.a) : "", e.p ? t("pos." + e.p) : ""].filter(Boolean).join(" · ");
       else if (e.t === "gl") det = t("ctx." + e.c);
       else if (e.t === "sl") det = hm(d) + "–" + hm(new Date(C.sleepEnd(e))) + (e.v[1] ? " · " + t("e.quality") + " " + e.v[1] + "/5" : "");
       var lv = C.classify(data, e);
-      rows.push([ymd(d), hm(d), typeName(e.t),
+      body.push({ at: e.at, cells: [ymd(d), hm(d), typeName(e.t),
                  e.t === "bp" ? e.v[0] : csvNum(e.t, 0, e.v[0]),
                  unitOf(e.t),
                  e.t === "bp" ? e.v[1] : "",
                  e.t === "bp" && e.v[2] ? e.v[2] : "",
-                 det, levelText(e, lv), e.n || "", (e.g || []).join(", "), e.src ? t("csv.fit") : ""]);
+                 det, levelText(e, lv), e.n || "", (e.g || []).join(", "), e.src ? t("csv.fit") : ""] });
     });
+    body = body.concat(more || []);
+    body.sort(function (a, b) { return a.at - b.at; });
+    var rows = [[t("csv.date"), t("csv.time"), t("csv.kind"), t("csv.value"), t("csv.unit"), t("csv.dia"),
+                 t("csv.pulse"), t("csv.details"), t("csv.status"), t("csv.note"), t("csv.tags"), t("csv.source")]]
+      .concat(body.map(function (b) { return b.cells; }));
     return "﻿" + rows.map(function (r) {
       return r.map(function (c) { return csvCell(c, sep); }).join(sep);
     }).join("\r\n") + "\r\n";
@@ -513,7 +632,7 @@
     var p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY)); } catch (e) {}
     p = p && typeof p === "object" ? p : {};
-    var tabs = ["home", "history", "charts", "report"];
+    var tabs = ["home", "meds", "history", "charts", "report"];
     prefs = {
       tab: tabs.indexOf(p.tab) >= 0 ? p.tab : "home",
       ct: typeof p.ct === "string" && C.ID_RE.test(p.ct) ? p.ct : "bp",
@@ -522,7 +641,12 @@
       hf: typeof p.hf === "string" && (p.hf === "" || C.ID_RE.test(p.hf)) ? p.hf : "",
       rd: typeof p.rd === "number" && [30, 90, 365].indexOf(p.rd) >= 0 ? p.rd : 30,
       rn: p.rn === 1 ? 1 : 0,
-      rx: Array.isArray(p.rx) ? p.rx.filter(function (x) { return typeof x === "string" && C.ID_RE.test(x); }).slice(0, 40) : null
+      rx: Array.isArray(p.rx) ? p.rx.filter(function (x) { return typeof x === "string" && C.ID_RE.test(x); }).slice(0, 40) : null,
+      mv: ["today", "list", "hist"].indexOf(p.mv) >= 0 ? p.mv : "today",
+      mh: [7, 30, 90].indexOf(p.mh) >= 0 ? p.mh : 30,
+      cm: p.cm === 1 ? 1 : 0,
+      rm: p.rm === 0 ? 0 : 1,
+      rs: p.rs === 0 ? 0 : 1
     };
   }
   var prefsTimer = null;
@@ -546,6 +670,11 @@
     eye: SV + '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: SV + '<path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a18 18 0 0 1-3.2 4M6.6 6.6C3.4 8.6 1 12 1 12s4 7 11 7a10.6 10.6 0 0 0 5.4-1.6"/></svg>',
     x: SV + '<path d="M18 6L6 18M6 6l12 12"/></svg>',
+    pill: SV + '<path d="M10.5 20.5a5 5 0 0 1-7-7l10-10a5 5 0 0 1 7 7z"/><path d="M8.5 8.5l7 7"/></svg>',
+    sym: SV + '<path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="3"/></svg>',
+    check: SV + '<path d="M20 6L9 17l-5-5"/></svg>',
+    clock: SV + '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    skip: SV + '<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg>',
     bell: SV + '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
     // one per kind
     bp: SV + '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
@@ -558,7 +687,7 @@
     st: SV + '<path d="M8 3c1.7 0 2.5 1.6 2.5 4S9.4 11 8 11 5.5 9.4 5.5 7 6.3 3 8 3zM6 13.5h4V16a2 2 0 0 1-4 0zM16 7c1.7 0 2.5 1.6 2.5 4s-1.1 4-2.5 4-2.5-1.6-2.5-4S14.3 7 16 7zM14 17.5h4V20a2 2 0 0 1-4 0z"/></svg>',
     own: SV + '<path d="M4 20h16M6 16l4-6 4 3 4-7"/></svg>'
   };
-  var TABS = [["home", "home"], ["history", "history"], ["charts", "chart"], ["report", "report"]];
+  var TABS = [["home", "home"], ["meds", "pill"], ["history", "history"], ["charts", "chart"], ["report", "report"]];
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -585,7 +714,7 @@
   }
   function kindIcon(tid) {
     var i = el("span", "k-ic");
-    i.innerHTML = UI[C.isBuiltin(tid) ? tid : "own"];
+    i.innerHTML = UI[C.isBuiltin(tid) || tid === "pill" || tid === "sym" ? tid : "own"];
     i.setAttribute("aria-hidden", "true");
     return i;
   }
@@ -740,7 +869,8 @@
     renderNav();
     var v = $("view");
     v.innerHTML = "";
-    if (prefs.tab === "history") renderHistory(v);
+    if (prefs.tab === "meds") renderMeds(v);
+    else if (prefs.tab === "history") renderHistory(v);
     else if (prefs.tab === "charts") renderCharts(v);
     else if (prefs.tab === "report") renderReport(v);
     else renderHome(v);
@@ -786,6 +916,7 @@
       card.appendChild(iconBtn("card-add", UI.plus, t("home.add") + ": " + typeName(ty.id), function () { entryDialog(ty.id, null); }));
       grid.appendChild(card);
     });
+    grid.appendChild(symCard());
     var own = el("button", "card card-new");
     own.type = "button";
     own.innerHTML = UI.plus;
@@ -795,6 +926,32 @@
     grid.appendChild(own);
     v.appendChild(grid);
     v.appendChild(el("p", "disclaimer", t("home.disclaimer")));
+  }
+
+  // The Symptoms card: the latest symptom; + logs a new one, the card
+  // opens its chart.
+  function symCard() {
+    var last = symptoms("").pop() || null;
+    var card = el("div", "card");
+    var open = el("button", "card-main");
+    open.type = "button";
+    var head = el("div", "card-head");
+    head.appendChild(kindIcon("sym"));
+    head.appendChild(el("span", "card-name", t("sy.card")));
+    open.appendChild(head);
+    if (last) {
+      open.appendChild(el("div", "card-val", symText(last)));
+      var meta = el("div", "card-meta");
+      meta.appendChild(el("span", "card-when", fmtWhen(last.at)));
+      open.appendChild(meta);
+    } else open.appendChild(el("div", "card-none", t("sy.none")));
+    open.addEventListener("click", function () {
+      prefs.ct = "sy-" + (last ? last.k : (visibleSymKinds()[0] || { id: "ha" }).id);
+      setTab("charts");
+    });
+    card.appendChild(open);
+    card.appendChild(iconBtn("card-add", UI.plus, t("home.add") + ": " + t("sy.card"), function () { symDialog(null, null); }));
+    return card;
   }
 
   // ---------- 6. Entry dialog ----------
@@ -982,10 +1139,13 @@
     var kinds = visibleTypes().filter(function (ty) {
       return data.en.some(function (e) { return e.t === ty.id; }) || (ty.id === "wt" && fitEntries().length);
     });
-    if (prefs.hf && !kinds.some(function (k) { return k.id === prefs.hf; })) prefs.hf = "";
+    var syms = symptoms("");
+    var opts = kinds.map(function (k) { return [k.id, typeName(k.id)]; });
+    if (syms.length) opts.push(["sy", t("sy.card")]);
+    if (prefs.hf && !opts.some(function (o) { return o[0] === prefs.hf; })) prefs.hf = "";
     var s = section(null);
-    if (kinds.length > 1) {
-      s.appendChild(chips([["", t("hist.all")]].concat(kinds.map(function (k) { return [k.id, typeName(k.id)]; })), prefs.hf, function (id) {
+    if (opts.length > 1) {
+      s.appendChild(chips([["", t("hist.all")]].concat(opts), prefs.hf, function (id) {
         prefs.hf = id;
         histLimit = HIST_PAGE;
         savePrefs();
@@ -994,7 +1154,12 @@
     }
     var hidden = {};
     C.typeList(data).forEach(function (ty) { if (ty.h) hidden[ty.id] = 1; });
-    var list = readings(prefs.hf, true).filter(function (e) { return !hidden[e.t] && C.typeRow(data, e.t); }).reverse();
+    var list = prefs.hf === "sy" ? [] : readings(prefs.hf, true).filter(function (e) { return !hidden[e.t] && C.typeRow(data, e.t); });
+    if (!prefs.hf || prefs.hf === "sy") {
+      list = list.concat(syms.map(function (e) { return { sym: e, id: e.id, at: e.at }; }));
+      list.sort(function (x, y) { return x.at - y.at || cmpStr(x.id, y.id); });
+    }
+    list.reverse();
     if (!list.length) { s.appendChild(hint(t("hist.empty"))); v.appendChild(s); return; }
     v.appendChild(s);
     var day = "", box = null;
@@ -1005,6 +1170,7 @@
         box = section(fmtDate(e.at, true));
         v.appendChild(box);
       }
+      if (e.sym) { box.appendChild(symRow(e.sym)); return; }
       var row = el(e.src ? "div" : "button", "h-row" + (e.src ? " ro" : ""));
       if (!e.src) {
         row.type = "button";
@@ -1029,6 +1195,23 @@
       more.appendChild(txtBtn("wide-btn", null, t("hist.more"), function () { histLimit += HIST_PAGE; render(); }));
       v.appendChild(more);
     }
+  }
+
+  function symRow(e) {
+    var row = el("button", "h-row");
+    row.type = "button";
+    row.addEventListener("click", function () { symDialog(findRow("sy", e.id), null); });
+    row.appendChild(el("span", "h-time", hm(new Date(e.at))));
+    row.appendChild(kindIcon("sym"));
+    var mid = el("span", "h-mid");
+    var top = el("span", "h-top");
+    top.appendChild(el("b", "", symName(e.k)));
+    top.appendChild(el("span", "lv sy-lv sy-l" + (e.i >= 7 ? 3 : e.i >= 4 ? 2 : 1), e.i + "/10"));
+    mid.appendChild(top);
+    mid.appendChild(el("small", "", t("sy.card")));
+    if (e.n || e.g.length) mid.appendChild(el("small", "h-note", [e.g.join(", "), e.n].filter(Boolean).join(" · ")));
+    row.appendChild(mid);
+    return row;
   }
 
   // ---------- 8. Charts ----------
@@ -1070,11 +1253,14 @@
   }
 
   // opts: { series: [{ pts: [{x, y, tip, id}], cls, dots, hollow }],
-  //         bands: [{ lo, hi }], fmtY, width, still (print), onOpen(id) }
+  //         bands: [{ lo, hi }], fmtY, width, still (print), onOpen(id),
+  //         marks: [{ x, kind "sy"|"dose", lvl, tip }] (a strip under
+  //         the plot: symptoms and doses taken) }
   function lineChart(host, opts) {
     var wrap = el("div", "chart");
     host.appendChild(wrap);
-    var W = opts.width || chartWidth(host), H = opts.height || 200, L = 46, R = 14, T = 14, B = 26;
+    var marks = opts.marks || [];
+    var W = opts.width || chartWidth(host), H = (opts.height || 200) + (marks.length ? 20 : 0), L = 46, R = 14, T = 14, B = marks.length ? 46 : 26;
     var svg = sv("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img" }, null);
     if (opts.label) svg.setAttribute("aria-label", opts.label);
     wrap.appendChild(svg);
@@ -1108,6 +1294,13 @@
       var d = new Date(a[0]);
       sv("text", { x: a[1] === "start" ? L : W - R, y: H - 6, "text-anchor": a[1], "class": "ax" }, svg)
         .textContent = d.getDate() + "/" + (d.getMonth() + 1) + (opts.years ? "/" + String(d.getFullYear()).slice(2) : "");
+    });
+    marks.forEach(function (mk) {
+      if (mk.x < minX || mk.x > maxX) return;
+      var g = mk.kind === "sy"
+        ? sv("circle", { cx: X(mk.x), cy: H - 36, r: 4, "class": "mk-sy l" + mk.lvl }, svg)
+        : sv("rect", { x: X(mk.x) - 1, y: H - 28, width: 2, height: 9, "class": "mk-dose" }, svg);
+      sv("title", {}, g).textContent = mk.tip;
     });
     opts.series.forEach(function (s) {
       if (!s.pts.length) return;
@@ -1311,23 +1504,56 @@
     }
     lineChart(host, {
       series: series, bands: bandsFor(tid, opt.ctx), width: opt.width, still: opt.still, label: label,
-      years: opt.years, onOpen: openFn
+      years: opt.years, onOpen: openFn, marks: opt.marks
     });
     return true;
   }
 
+  // The kind picker: measurements, then symptoms (those logged, and
+  // the one asked for).
+  function chartPicker(cur) {
+    var pick = select(visibleTypes().map(function (k) { return [k.id, typeName(k.id)]; }), "");
+    var used = {};
+    symptoms("").forEach(function (e) { used[e.k] = 1; });
+    var sk = visibleSymKinds().filter(function (k) { return used[k.id] || "sy-" + k.id === cur; });
+    if (sk.length) {
+      var og = document.createElement("optgroup");
+      og.label = t("sy.card");
+      sk.forEach(function (k) {
+        var o = el("option", "", symName(k.id));
+        o.value = "sy-" + k.id;
+        og.appendChild(o);
+      });
+      pick.appendChild(og);
+    }
+    pick.value = cur;
+    return pick;
+  }
   function renderCharts(v) {
     setTitle(t("tab.charts"));
     var kinds = visibleTypes();
-    if (!kinds.some(function (k) { return k.id === prefs.ct; })) prefs.ct = kinds.length ? kinds[0].id : "bp";
+    var symK = /^sy-/.test(prefs.ct) ? prefs.ct.slice(3) : "";
+    var symOk = symK && C.symKindRow(data, symK) && !C.symKindRow(data, symK).h;
+    if (!symOk && !kinds.some(function (k) { return k.id === prefs.ct; })) { prefs.ct = kinds.length ? kinds[0].id : "bp"; symK = ""; }
     var tid = prefs.ct;
     var top = section(null);
-    var pick = select(kinds.map(function (k) { return [k.id, typeName(k.id)]; }), tid);
+    var pick = chartPicker(tid);
     pick.className = "kind-pick";
     pick.setAttribute("aria-label", t("rp.kinds"));
     pick.addEventListener("change", function () { prefs.ct = pick.value; savePrefs(); render(); });
     var head = el("div", "ch-head");
     head.appendChild(pick);
+    if (symK) {
+      head.appendChild(iconBtn("icon-btn", UI.plus, t("home.add") + ": " + symName(symK), function () { symDialog(null, symK); }));
+      if (!C.isSymBuiltin(symK)) head.appendChild(iconBtn("icon-btn", UI.edit, t("ch.kind", { n: symName(symK) }), function () { symKindDialog(symK, null); }));
+      top.appendChild(head);
+      top.appendChild(chips(PERIODS.map(function (p) { return [p, t("ch.period." + p)]; }), prefs.cp, function (p) {
+        prefs.cp = p; savePrefs(); render();
+      }, t("rp.from")));
+      v.appendChild(top);
+      renderSymChart(v, symK);
+      return;
+    }
     head.appendChild(iconBtn("icon-btn", UI.plus, t("home.add") + ": " + typeName(tid), function () { entryDialog(tid, null); }));
     head.appendChild(iconBtn("icon-btn", UI.edit, t("ch.kind", { n: typeName(tid) }), function () { kindDialog(tid); }));
     top.appendChild(head);
@@ -1345,16 +1571,71 @@
     if (tid === "gl" && prefs.cc >= 0) list = list.filter(function (e) { return e.c === prefs.cc; });
     var cs = section(null);
     if (!list.length) { cs.appendChild(hint(t("ch.none"))); v.appendChild(cs); return; }
-    if (!drawKind(cs, tid, list, { ctx: prefs.cc, years: prefs.cp === "all" || prefs.cp === "365" })) cs.appendChild(hint(t("ch.one")));
+    var canMark = tid !== "sl" && list.length > 1 && (data.sy.length || data.dl.some(function (l) { return l.s === "t"; }));
+    var marks = canMark && prefs.cm ? chartMarks(list[0].at, Date.now() + 60000) : null;
+    if (!drawKind(cs, tid, list, { ctx: prefs.cc, years: prefs.cp === "all" || prefs.cp === "365", marks: marks })) cs.appendChild(hint(t("ch.one")));
     else {
       var notes = [];
       if (bandsFor(tid, prefs.cc).length) notes.push(t("ch.band"));
       if (list.some(function (e) { return e.src; })) notes.push(t("ch.fitDots"));
+      if (marks && marks.length) notes.push(t("ch.marksHint"));
       if (notes.length) cs.appendChild(hint(notes.join(" · ")));
+    }
+    if (canMark) {
+      var mw = el("label", "chk");
+      var mc = el("input");
+      mc.type = "checkbox";
+      mc.checked = !!prefs.cm;
+      mc.addEventListener("change", function () { prefs.cm = mc.checked ? 1 : 0; savePrefs(); render(); });
+      mw.appendChild(mc);
+      mw.appendChild(el("span", "", t("ch.marks")));
+      cs.appendChild(mw);
     }
     cs.appendChild(statGrid(summaryItems(tid, list)));
     cs.appendChild(tableFor(list.slice().reverse()));
     v.appendChild(cs);
+  }
+  // One symptom over time: intensity 1–10, its numbers and a table.
+  function renderSymChart(v, k) {
+    var from = periodStart(prefs.cp);
+    var list = symptoms(k).filter(function (e) { return e.at >= from; });
+    var cs = section(null);
+    if (!list.length) { cs.appendChild(hint(t("ch.none"))); v.appendChild(cs); return; }
+    if (list.length > 1) {
+      lineChart(cs, {
+        series: [{ cls: "s1", pts: list.map(function (e) {
+          return { x: e.at, y: e.i, id: e.id, tip: fmtDate(e.at, false) + " " + hm(new Date(e.at)) + " · " + e.i + "/10" };
+        }) }],
+        label: symName(k), years: prefs.cp === "all" || prefs.cp === "365",
+        onOpen: function (id) { var e = findRow("sy", id); if (e) symDialog(e, null); }
+      });
+    } else cs.appendChild(hint(t("ch.one")));
+    cs.appendChild(statGrid(symSummary(list)));
+    var det = el("details", "tbl");
+    det.appendChild(el("summary", "", t("ch.table")));
+    det.appendChild(symTable(list.slice().reverse(), true, false));
+    cs.appendChild(det);
+    v.appendChild(cs);
+  }
+  function symSummary(list) {
+    var st = C.stats(list.map(function (e) { return e.i; })), days = {};
+    list.forEach(function (e) { days[ymd(new Date(e.at))] = 1; });
+    return [[t("sy.avg"), fmtNum(st.avg, 1) + "/10"], [t("sy.max"), st.max + "/10"],
+            [t("sy.days"), String(Object.keys(days).length)], [t("ch.n"), String(list.length)]];
+  }
+  function symTable(list, withNotes, withName) {
+    var tb = el("table"), tr = el("tr");
+    [t("rp.col.date"), t("rp.col.time")].concat(withName ? [t("rp.col.sym")] : []).concat([t("rp.col.int")])
+      .concat(withNotes ? [t("rp.col.note")] : []).forEach(function (h) { tr.appendChild(el("th", "", h)); });
+    tb.appendChild(tr);
+    list.forEach(function (e) {
+      var row = el("tr");
+      [fmtDate(e.at, false), hm(new Date(e.at))].concat(withName ? [symName(e.k)] : []).concat([e.i + "/10"])
+        .forEach(function (c) { row.appendChild(el("td", "", c)); });
+      if (withNotes) row.appendChild(el("td", "", [e.g.join(", "), e.n].filter(Boolean).join(" · ")));
+      tb.appendChild(row);
+    });
+    return tb;
   }
   function tableFor(list) {
     var det = el("details", "tbl");
@@ -1410,7 +1691,8 @@
     var present = visibleTypes().filter(function (ty) {
       return readings(ty.id, true).some(function (e) { return e.at >= from && e.at < to; });
     });
-    if (!present.length) { ks.appendChild(hint(t("rp.none"))); v.appendChild(ks); return; }
+    var meds = medsIn(from, to), syms = symptoms("").filter(function (e) { return e.at >= from && e.at < to; });
+    if (!present.length && !meds.length && !syms.length) { ks.appendChild(hint(t("rp.none"))); v.appendChild(ks); return; }
     var chosen = {};
     present.forEach(function (ty) { chosen[ty.id] = !prefs.rx || prefs.rx.indexOf(ty.id) < 0; });
     present.forEach(function (ty) {
@@ -1429,6 +1711,17 @@
       w.appendChild(el("span", "", typeName(ty.id) + " (" + readings(ty.id, true).filter(function (e) { return e.at >= from && e.at < to; }).length + ")"));
       ks.appendChild(w);
     });
+    function flag(key, label) {
+      var w = el("label", "chk"), c = el("input");
+      c.type = "checkbox";
+      c.checked = !!prefs[key];
+      c.addEventListener("change", function () { prefs[key] = c.checked ? 1 : 0; savePrefs(); });
+      w.appendChild(c);
+      w.appendChild(el("span", "", label));
+      ks.appendChild(w);
+    }
+    if (meds.length) flag("rm", t("rp.meds"));
+    if (syms.length) flag("rs", t("rp.syms", { n: syms.length }));
     var nw = el("label", "chk");
     var nc = el("input");
     nc.type = "checkbox";
@@ -1444,14 +1737,17 @@
     var acts = el("div", "btn-col");
     acts.appendChild(txtBtn("wide-btn primary", UI.report, t("rp.print"), function () {
       if (nm.value.trim() !== settings().nm) editSettings({ nm: nm.value });
-      printReport(present.filter(function (ty) { return chosen[ty.id]; }).map(function (ty) { return ty.id; }), from, to);
+      printReport(present.filter(function (ty) { return chosen[ty.id]; }).map(function (ty) { return ty.id; }), from, to,
+                  { meds: meds.length && prefs.rm ? meds : [], syms: syms.length && prefs.rs ? syms : [] });
     }));
     acts.appendChild(txtBtn("wide-btn", null, t("rp.csv"), function () {
       var ids = present.filter(function (ty) { return chosen[ty.id]; }).map(function (ty) { return ty.id; });
-      var list = [];
+      var list = [], more = [];
       ids.forEach(function (id) { list = list.concat(readings(id, true).filter(function (e) { return e.at >= from && e.at < to; })); });
       list.sort(function (a, b) { return a.at - b.at; });
-      saveBlob(new Blob([buildCsv(list)], { type: "text/csv;charset=utf-8" }), stampName("csv"), "text/csv");
+      if (syms.length && prefs.rs) more = more.concat(symCsvRows(syms));
+      if (meds.length && prefs.rm) more = more.concat(doseCsvRows(meds, from, to));
+      saveBlob(new Blob([buildCsv(list, more)], { type: "text/csv;charset=utf-8" }), stampName("csv"), "text/csv");
     }));
     ks.appendChild(acts);
     v.appendChild(ks);
@@ -1459,8 +1755,9 @@
 
   // A sheet built for paper: header, then per kind the summary, the
   // chart and the readings. The browser's print window offers PDF.
-  function printReport(ids, from, to) {
-    if (!ids.length) return;
+  function printReport(ids, from, to, extra) {
+    extra = extra || { meds: [], syms: [] };
+    if (!ids.length && !extra.meds.length && !extra.syms.length) return;
     var host = $("print");
     host.innerHTML = "";
     var set = settings();
@@ -1480,8 +1777,84 @@
       sec.appendChild(readingsTable(list, !!prefs.rn));
       host.appendChild(sec);
     });
-    host.appendChild(el("p", "pr-foot", t("rp.foot")));
+    if (extra.meds.length) host.appendChild(printMeds(extra.meds, from, to));
+    if (extra.syms.length) host.appendChild(printSyms(extra.syms));
+    host.appendChild(el("p", "pr-foot", t("rp.foot") + (extra.meds.length ? " " + t("rp.medFoot") : "")));
     setTimeout(function () { window.print(); }, 60);
+  }
+
+  // Medicines whose course overlaps [from, to) (stopped ones too).
+  function medsIn(from, to) {
+    var a = ymd(new Date(from)), b = ymd(new Date(to - DAY_MS));
+    return data.md.filter(function (m) { return m.sd <= b && (!m.ed || m.ed >= a); })
+      .sort(function (x, y) { return x.ar - y.ar || cmpStr(x.n.toLowerCase(), y.n.toLowerCase()); });
+  }
+  function courseText(m) {
+    return fmtDate(parseYmd(m.sd).getTime(), false) + " – " + (m.ed ? fmtDate(parseYmd(m.ed).getTime(), false) : "");
+  }
+  function printMeds(meds, from, to) {
+    var sec = el("section", "pr-kind");
+    sec.appendChild(el("h2", "", t("rp.medsH")));
+    var a = ymd(new Date(from)), b = ymd(new Date(to - DAY_MS)), now = Date.now();
+    var all = C.adherence({ md: meds, dl: data.dl }, "", a, b, now);
+    if (all.pct !== null) {
+      sec.appendChild(el("p", "pr-sum", t("mh.all") + ": " + t("rp.adh", { p: Math.round(all.pct * 100), t: all.taken, n: all.n }) +
+        " · " + t("mh.counts", { t: all.taken, s: all.skipped, m: all.missed })));
+    }
+    var tb = el("table"), tr = el("tr");
+    [t("rp.col.med"), t("rp.col.dose"), t("rp.col.sched"), t("rp.col.taken"), t("rp.col.course")].forEach(function (h) { tr.appendChild(el("th", "", h)); });
+    tb.appendChild(tr);
+    meds.forEach(function (m) {
+      var row = el("tr"), taken = "";
+      var ad = C.adherence(data, m.id, a, b, now);
+      if (ad.pct !== null) taken = t("rp.adh", { p: Math.round(ad.pct * 100), t: ad.taken, n: ad.n });
+      var prn = C.prnTaken(data, m.id, from, to).length;
+      if (prn) taken = (taken ? taken + " · " : "") + t("rp.prn", { n: prn });
+      [medLabel(m) + (m.ar ? " (" + t("md.stoppedOn") + ")" : ""), t("f." + m.f) + " · " + doseText(m, m.q), schedText(m), taken, courseText(m)]
+        .forEach(function (c) { row.appendChild(el("td", "", c)); });
+      tb.appendChild(row);
+    });
+    sec.appendChild(tb);
+    return sec;
+  }
+  function printSyms(list) {
+    var sec = el("section", "pr-kind");
+    sec.appendChild(el("h2", "", t("rp.symsH")));
+    var byK = {};
+    list.forEach(function (e) { (byK[e.k] = byK[e.k] || []).push(e); });
+    Object.keys(byK).sort(function (x, y) { return cmpStr(symName(x).toLowerCase(), symName(y).toLowerCase()); }).forEach(function (k) {
+      sec.appendChild(el("p", "pr-sum", symName(k) + ": " + symSummary(byK[k]).map(function (it) { return it[0] + " " + it[1]; }).join(" · ")));
+    });
+    sec.appendChild(symTable(list, !!prefs.rn, true));
+    return sec;
+  }
+  function symCsvRows(list) {
+    return list.map(function (e) {
+      var d = new Date(e.at);
+      return { at: e.at, cells: [ymd(d), hm(d), symName(e.k), e.i, "/10", "", "", "", "", e.n || "", e.g.join(", "), t("csv.sym")] };
+    });
+  }
+  // Every dose of the period that counts (taken, skipped, missed) and
+  // every as-needed dose, one row each.
+  function doseCsvRows(meds, from, to) {
+    var out = [], now = Date.now(), idx = C.logIndex(data), sub = { md: meds, dl: data.dl };
+    var b = ymd(new Date(to - DAY_MS));
+    for (var day = ymd(new Date(from)), g = 0; day <= b && g < 4000; day = C.ymdAdd(day, 1), g++) {
+      C.dosesOn(sub, day, now, idx).forEach(function (r) {
+        if (["taken", "skipped", "late", "missed"].indexOf(r.state) < 0 || (r.pre && !r.log)) return;
+        var tk = r.state === "taken", when = tk ? new Date(r.log.ta) : new Date(r.at);
+        out.push({ at: r.at, cells: [r.d, hmMin(r.tm), medLabel(r.med), tk ? fmtEdit(r.log.q / 100, 2) : "", unitWord(r.med.f, tk ? r.log.q : r.med.q),
+          "", "", t("csv.sched", { t: hmMin(r.tm) }) + (tk ? " · " + t("st.taken", { t: hm(when) }) : ""),
+          r.state === "taken" ? t("st.takenShort") : r.state === "skipped" ? t("st.skipped") : t("st.missed"), "", "", t("csv.med")] });
+      });
+    }
+    meds.forEach(function (m) {
+      C.prnTaken(data, m.id, from, to).forEach(function (l) {
+        var d = new Date(l.ta);
+        out.push({ at: l.ta, cells: [ymd(d), hm(d), medLabel(m), fmtEdit(l.q / 100, 2), unitWord(m.f, l.q), "", "", t("dd.prn"), t("st.takenShort"), "", "", t("csv.med")] });
+      });
+    });
+    return out;
   }
 
   // ---------- 10. Kind dialog (targets, reminders, own kinds) ----------
@@ -1655,6 +2028,832 @@
     });
   }
 
+  // ---------- 10b. Medicines: today, list, history, dialogs ----------
+  // Model and rules in core.js (normMed, dosesOn, adherence, stockOf,
+  // lowStock). A scheduled dose's log row is keyed by its slot, so
+  // marking it on two devices merges into one row.
+  function rand36(n) {
+    var r = new Uint32Array(2), s = "";
+    crypto.getRandomValues(r);
+    s = r[0].toString(36) + r[1].toString(36);
+    return (s + "000000000").slice(0, n);
+  }
+  function newMedId() { return "m" + Date.now().toString(36) + rand36(5); }
+  function hmMin(min) { return pad2(Math.floor(min / 60)) + ":" + pad2(min % 60); }
+  function fmtQty(q) { return fmtNum(q / 100, 2); }
+  function unitWord(f, q) { return t((q > 0 && q <= 100 ? "u1." : "un.") + f); }
+  function doseText(med, q) { return fmtQty(q) + " " + unitWord(med.f, q); }
+  function medLabel(med) { return med.n + (med.s ? " " + med.s : ""); }
+  function dayList(wd) {
+    var out = [];
+    for (var i = 0; i < 7; i++) if (wd & (1 << i)) out.push(t("day." + i));
+    return out.join(", ");
+  }
+  function schedText(med) {
+    var parts = [];
+    if (med.k === "p") parts.push(t("sch.p"));
+    else {
+      if (med.k === "d") parts.push(t("sch.d"));
+      else if (med.k === "w") parts.push(med.wd === 127 ? t("sch.d") : dayList(med.wd));
+      else parts.push(t("sch.every", { n: med.ev }));
+      parts.push(med.tm.map(hmMin).join(", "));
+    }
+    var today = ymd(new Date());
+    if (med.sd > today) parts.push(t("sch.from", { d: fmtDate(parseYmd(med.sd).getTime(), false) }));
+    if (med.ed) parts.push(t("sch.until", { d: fmtDate(parseYmd(med.ed).getTime(), false) }));
+    return parts.join(" · ");
+  }
+  function stateText(r) {
+    var l = r.log;
+    switch (r.state) {
+      case "taken": return t("st.taken", { t: hm(new Date(l.ta)) });
+      case "skipped": return t("st.skipped");
+      case "snoozed": return t("st.snoozed", { t: hm(new Date(l.zu)) });
+      case "due": return t("st.due");
+      case "late": return t("st.late");
+      case "missed": return t("st.missed");
+    }
+    return "";
+  }
+  function smallBtn(label, svg, fn, cls) {
+    var b = txtBtn("sm-btn" + (cls ? " " + cls : ""), svg, label, fn);
+    return b;
+  }
+  function daysText(n) { return n >= 2 ? t("days.n", { n: n }) : t("days." + n); }
+  function lowIds() {
+    var ids = {};
+    C.lowStock(data, Date.now()).forEach(function (x) { ids[x.md] = x; });
+    return ids;
+  }
+  function stockText(med) {
+    var s = C.stockOf(data, med);
+    if (s === null) return "";
+    var left = fmtQty(Math.max(0, s)) + " " + unitWord(med.f, Math.max(0, s)), d = C.daysLeft(data, med);
+    return d === null ? t("md.left", { left: left }) : t("md.leftDays", { left: left, d: daysText(d) });
+  }
+
+  function renderMeds(v) {
+    setTitle(t("tab.meds"));
+    var top = section(null);
+    top.appendChild(chips([["today", t("mv.today")], ["list", t("mv.list")], ["hist", t("mv.hist")]], prefs.mv, function (x) {
+      prefs.mv = x; savePrefs(); render();
+    }, t("tab.meds")));
+    v.appendChild(top);
+    if (!data.md.length) {
+      var e = section(null);
+      e.appendChild(hint(t("md.none")));
+      e.appendChild(txtBtn("wide-btn primary", UI.plus, t("md.add"), function () { medDialog(null); }));
+      v.appendChild(e);
+    } else if (prefs.mv === "list") renderMedList(v);
+    else if (prefs.mv === "hist") renderMedHist(v);
+    else renderMedToday(v);
+    v.appendChild(el("p", "disclaimer", t("md.disclaimer")));
+  }
+
+  function lowBanner(lw) {
+    var med = lw.med, b = el("div", "low-ban");
+    var left = fmtQty(lw.left) + " " + unitWord(med.f, lw.left);
+    b.appendChild(el("span", "", lw.left <= 0 ? t("low.out", { n: medLabel(med) })
+      : lw.days === null ? t("low.textPrn", { n: medLabel(med), left: left })
+      : t("low.text", { n: medLabel(med), left: left, d: daysText(lw.days) })));
+    b.appendChild(smallBtn(t("md.refill", { n: fmtQty(med.pk) }), UI.plus, function () { refill(med); }, "primary"));
+    return b;
+  }
+
+  function renderMedToday(v) {
+    var now = Date.now(), today = ymd(new Date(now));
+    var lows = C.lowStock(data, now);
+    if (lows.length) {
+      var ls = section(null);
+      lows.forEach(function (lw) { ls.appendChild(lowBanner(lw)); });
+      v.appendChild(ls);
+    }
+    var s = section(t("md.today", { d: fmtDate(now, true) }));
+    var live = { dl: data.dl, md: data.md.filter(function (m) { return !m.ar; }) };
+    var rows = C.dosesOn(live, today, now);
+    if (!rows.length) s.appendChild(hint(t("md.noDoses")));
+    rows.forEach(function (r) { s.appendChild(doseRow(r)); });
+    v.appendChild(s);
+    var prn = data.md.filter(function (m) { return !m.ar && m.k === "p" && today >= m.sd && (!m.ed || today <= m.ed); });
+    if (prn.length) {
+      var ps = section(t("md.prn"));
+      prn.sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()); });
+      prn.forEach(function (m) { ps.appendChild(prnRow(m, now)); });
+      v.appendChild(ps);
+    }
+    var add = section(null);
+    add.appendChild(txtBtn("wide-btn", UI.plus, t("md.add"), function () { medDialog(null); }));
+    v.appendChild(add);
+  }
+
+  function doseRow(r) {
+    var st = r.state, row = el("div", "dose st-" + st);
+    row.appendChild(el("span", "dose-time", hmMin(r.tm)));
+    var mid = el("div", "dose-mid");
+    var top = el("div", "dose-top");
+    top.appendChild(el("b", "", medLabel(r.med)));
+    var tx = stateText(r);
+    if (tx) top.appendChild(el("span", "ds-badge ds-" + st, tx));
+    mid.appendChild(top);
+    mid.appendChild(el("small", "", doseText(r.med, r.log && r.log.s === "t" ? r.log.q : r.med.q)));
+    var acts = el("div", "dose-acts");
+    if (st === "taken" || st === "skipped") {
+      acts.appendChild(smallBtn(t("ds.edit"), UI.edit, function () { doseDialog(r); }));
+      acts.appendChild(smallBtn(t("ds.undo"), null, function () { unmarkDose(r); }));
+    } else {
+      acts.appendChild(smallBtn(t("ds.take"), UI.check, function () { markDose(r, "t", 0); }, "primary"));
+      acts.appendChild(smallBtn(t("ds.skip"), null, function () { markDose(r, "s", 0); }));
+      acts.appendChild(smallBtn(t("ds.snooze"), UI.clock, function () { snoozeDialog(r); }));
+    }
+    mid.appendChild(acts);
+    row.appendChild(mid);
+    return row;
+  }
+
+  function putDose(row) {
+    var n = C.normDose(row);
+    if (!n) return null;
+    putRow("dl", n);
+    saveNow();
+    return n;
+  }
+  // Back to how it was before (a snooze, or nothing).
+  function revertDose(key, prev) {
+    if (prev) {
+      prev.m = nextM("dl", key);
+      putDose(prev);
+    } else if (removeRow("dl", key)) saveNow();
+    render();
+  }
+  function markDose(r, s, zu) {
+    var prev = r.log ? JSON.parse(JSON.stringify(r.log)) : null;
+    var now = Date.now();
+    var n = putDose({ id: r.key, m: nextM("dl", r.key), md: r.md, d: r.d, tm: r.tm, s: s, ta: now, q: r.med.q, zu: zu || 0 });
+    if (!n) return;
+    render();
+    var msg = s === "t" ? t("toast.taken", { n: r.med.n }) : s === "s" ? t("toast.skipped", { n: r.med.n })
+      : t("toast.snoozed", { n: r.med.n, t: hm(new Date(zu)) });
+    live(msg);
+    undoToast(msg, function () { revertDose(r.key, prev); });
+  }
+  function unmarkDose(r) {
+    var prev = r.log ? JSON.parse(JSON.stringify(r.log)) : null;
+    if (!prev) return;
+    removeRow("dl", r.key);
+    saveNow();
+    render();
+    undoToast(t("ds.undo") + ": " + r.med.n, function () { revertDose(r.key, prev); });
+  }
+  function snoozeDialog(r) {
+    var dlg = makeDialog("hl-snooze", medLabel(r.med));
+    dlg.appendChild(el("p", "dlg-text", t("sn.title")));
+    var col = el("div", "btn-col");
+    [10, 30, 60].forEach(function (m) {
+      col.appendChild(button(t("sn." + m), "", function () { dlg.close(); markDose(r, "z", Date.now() + m * 60000); }));
+    });
+    dlg.appendChild(col);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    openDialog(dlg);
+  }
+
+  function prnRow(med, now) {
+    var start = startOfDay(now), list = C.prnTaken(data, med.id, start, start + DAY_MS);
+    var row = el("div", "dose");
+    row.appendChild(kindIcon("pill"));
+    var mid = el("div", "dose-mid");
+    var top = el("div", "dose-top");
+    top.appendChild(el("b", "", medLabel(med)));
+    mid.appendChild(top);
+    var last = list[list.length - 1];
+    mid.appendChild(el("small", "", doseText(med, med.q) + " · " +
+      (last ? t("md.prnToday", { n: list.length, t: hm(new Date(last.ta)) }) : t("md.prnNone"))));
+    var stock = stockText(med);
+    if (stock) mid.appendChild(el("small", "", stock));
+    var acts = el("div", "dose-acts");
+    acts.appendChild(smallBtn(t("md.takeNow"), UI.check, function () { takePrn(med); }, "primary"));
+    if (last) acts.appendChild(smallBtn(t("ds.edit"), UI.edit, function () { doseDialog({ prn: true, med: med, log: last, key: last.id }); }));
+    mid.appendChild(acts);
+    row.appendChild(mid);
+    return row;
+  }
+  function takePrn(med) {
+    var now = Date.now(), dy = ymd(new Date(now));
+    var id = med.id + "-" + dy.replace(/-/g, "") + "-p" + rand36(6);
+    if (!putDose({ id: id, m: nextM("dl", id), md: med.id, d: dy, tm: -1, s: "t", ta: now, q: med.q })) return;
+    render();
+    var msg = t("toast.taken", { n: med.n });
+    live(msg);
+    undoToast(msg, function () { if (removeRow("dl", id)) saveNow(); render(); });
+  }
+  function refill(med) {
+    var now = Date.now(), id = "r" + newId();
+    var n = C.normRefill({ id: id, m: now, md: med.id, at: now, a: med.pk });
+    if (!n) return;
+    putRow("rf", n);
+    saveNow();
+    render();
+    var msg = t("md.refilled", { n: med.n, a: doseText(med, med.pk) });
+    live(msg);
+    undoToast(msg, function () { if (removeRow("rf", id)) saveNow(); render(); });
+  }
+
+  function renderMedList(v) {
+    var now = Date.now(), lows = lowIds();
+    var byName = function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); };
+    var act = data.md.filter(function (m) { return !m.ar; }).sort(byName);
+    var stop = data.md.filter(function (m) { return m.ar; }).sort(byName);
+    var s = section(null);
+    act.forEach(function (m) { s.appendChild(medCard(m, now, lows)); });
+    s.appendChild(txtBtn("wide-btn", UI.plus, t("md.add"), function () { medDialog(null); }));
+    v.appendChild(s);
+    if (stop.length) {
+      var s2 = section(t("md.stopped"));
+      stop.forEach(function (m) { s2.appendChild(medCard(m, now, lows)); });
+      v.appendChild(s2);
+    }
+  }
+  function medCard(m, now, lows) {
+    var c = el("div", "med-card" + (m.ar ? " off" : ""));
+    var main = el("button", "med-main");
+    main.type = "button";
+    main.appendChild(el("b", "", medLabel(m)));
+    main.appendChild(el("small", "", [t("f." + m.f), doseText(m, m.q), schedText(m)].join(" · ")));
+    var st = stockText(m);
+    if (st) main.appendChild(el("small", "med-stock" + (lows[m.id] ? " low" : ""), st));
+    if (m.k !== "p" || (m.ps && m.ps.length)) {
+      var today = ymd(new Date(now));
+      var a = C.adherence(data, m.id, ymd(new Date(startOfDay(now) - 29 * DAY_MS)), today, now);
+      if (a.pct !== null) main.appendChild(el("small", "", t("md.adh30", { p: Math.round(a.pct * 100) })));
+    }
+    if (m.nt) main.appendChild(el("small", "h-note", m.nt));
+    main.addEventListener("click", function () { medDialog(m.id); });
+    c.appendChild(main);
+    if (C.stockOf(data, m) !== null && !m.ar) {
+      var rb = smallBtn(t("md.refill", { n: fmtQty(m.pk) }), UI.plus, function () { refill(m); });
+      c.appendChild(rb);
+    }
+    return c;
+  }
+
+  // History: adherence per medicine and every dose of the period,
+  // newest day first. A row opens the dose dialog (mark it later,
+  // change the time it was taken).
+  function renderMedHist(v) {
+    var now = Date.now(), today = ymd(new Date(now));
+    var s = section(null);
+    s.appendChild(chips([7, 30, 90].map(function (d) { return [d, t("ch.period." + d)]; }), prefs.mh, function (d) {
+      prefs.mh = d; savePrefs(); render();
+    }, t("rp.from")));
+    var from = ymd(new Date(startOfDay(now) - (prefs.mh - 1) * DAY_MS));
+    var items = [], all = C.adherence(data, "", from, today, now);
+    if (all.pct !== null) items.push([t("mh.all"), Math.round(all.pct * 100) + "%"]);
+    data.md.slice().sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()); }).forEach(function (m) {
+      var a = C.adherence(data, m.id, from, today, now);
+      if (a.pct !== null) items.push([medLabel(m), Math.round(a.pct * 100) + "%"]);
+    });
+    if (items.length) s.appendChild(statGrid(items));
+    if (all.n) s.appendChild(hint(t("mh.counts", { t: all.taken, s: all.skipped, m: all.missed })));
+    v.appendChild(s);
+    var idx = C.logIndex(data), any = false, day = today;
+    for (var i = 0; i < prefs.mh; i++, day = C.ymdAdd(day, -1)) {
+      var rows = C.dosesOn(data, day, now, idx).filter(function (r) {
+        return r.state !== "upcoming" && !(r.pre && !r.log);
+      });
+      var d0 = parseYmd(day).getTime();
+      C.prnTaken(data, "", d0, d0 + DAY_MS).forEach(function (l) {
+        var med = C.medById(data, l.md);
+        if (med) rows.push({ prn: true, med: med, log: l, key: l.id, at: l.ta, tm: -1, state: "taken" });
+      });
+      if (!rows.length) continue;
+      rows.sort(function (a, b) { return a.at - b.at; });
+      any = true;
+      var box = section(fmtDate(d0, true));
+      rows.forEach(function (r) { box.appendChild(histDoseRow(r)); });
+      v.appendChild(box);
+    }
+    if (!any) {
+      var e = section(null);
+      e.appendChild(hint(t("mh.none")));
+      v.appendChild(e);
+    }
+  }
+  function histDoseRow(r) {
+    var row = el("button", "h-row");
+    row.type = "button";
+    row.addEventListener("click", function () { doseDialog(r); });
+    row.appendChild(el("span", "h-time", r.prn ? hm(new Date(r.log.ta)) : hmMin(r.tm)));
+    row.appendChild(kindIcon("pill"));
+    var mid = el("span", "h-mid");
+    var top = el("span", "h-top");
+    top.appendChild(el("b", "", medLabel(r.med)));
+    var tx = r.prn ? t("dd.prn") : stateText(r);
+    if (tx) top.appendChild(el("span", "ds-badge ds-" + (r.prn ? "taken" : r.state), tx));
+    mid.appendChild(top);
+    mid.appendChild(el("small", "", doseText(r.med, r.log && r.log.s === "t" ? r.log.q : r.med.q)));
+    row.appendChild(mid);
+    return row;
+  }
+
+  // One dose: mark it taken / skipped / not marked, the time it was
+  // taken and the amount. r: a dosesOn row, or { prn, med, log, key }.
+  function doseDialog(r) {
+    var med = C.medById(data, r.med.id), log = r.log ? findRow("dl", r.log.id) : null;
+    if (!med) { showToast(t("feed.gone")); return; }
+    var dlg = makeDialog("hl-dose", medLabel(med));
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    form.appendChild(hint(r.prn ? t("dd.prn") : t("dd.sched", { d: fmtDate(r.at, true), t: hmMin(r.tm) })));
+    var stSel = null;
+    if (!r.prn) {
+      stSel = select([["t", t("st.takenShort")], ["s", t("st.skipped")], ["", t("dd.none")]], log && log.s !== "z" ? log.s : "t");
+      form.appendChild(field(t("dd.status"), stSel));
+    }
+    var now = Date.now();
+    var when = new Date(log && log.s === "t" ? log.ta : (r.at && r.at < now ? r.at : now));
+    var tk = el("div", "");
+    var r2 = el("div", "row2");
+    var di = input("date", ymd(when)), ti = input("time", hm(when));
+    di.max = ymd(new Date(now));
+    r2.appendChild(field(t("e.date"), di));
+    r2.appendChild(field(t("dd.when"), ti));
+    tk.appendChild(r2);
+    var q0 = log && log.s === "t" ? log.q : med.q;
+    var qi = input("text", fmtEdit(q0 / 100, 2), "decimal");
+    qi.className = "num";
+    tk.appendChild(field(t("dd.amount", { u: unitWord(med.f, 200) }), qi));
+    form.appendChild(tk);
+    function paint() { tk.hidden = !!stSel && stSel.value !== "t"; }
+    if (stSel) stSel.addEventListener("change", paint);
+    paint();
+    var err = el("p", "err");
+    err.setAttribute("role", "alert");
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    if (r.prn && log) {
+      acts.appendChild(iconBtn("dlg-btn icon danger", UI.trash, t("dd.delete"), function () {
+        dlg.close();
+        var gone = removeRow("dl", log.id);
+        saveNow();
+        render();
+        undoToast(t("dd.delete"), function () { restoreRow("dl", gone); saveNow(); render(); });
+      }));
+    }
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.textContent = "";
+      var s = stSel ? stSel.value : "t", id = log ? log.id : r.key;
+      if (!s) {
+        if (log && removeRow("dl", id)) saveNow();
+        dlg.close();
+        render();
+        return;
+      }
+      var row = { id: id, m: nextM("dl", id), md: med.id, d: r.prn ? log.d : r.d, tm: r.prn ? -1 : r.tm, s: s, ta: Date.now(), q: med.q };
+      if (s === "t") {
+        var at = atOf(di.value, ti.value), q = Math.round(parseNum(qi.value) * 100);
+        di.classList.toggle("bad", isNaN(at));
+        ti.classList.toggle("bad", isNaN(at));
+        qi.classList.toggle("bad", !(q >= 1 && q <= C.QTY_MAX));
+        if (isNaN(at) || !(q >= 1 && q <= C.QTY_MAX)) { err.textContent = t("e.bad"); return; }
+        row.ta = at;
+        row.q = q;
+      } else if (log && log.s === "s") row.ta = log.ta;
+      if (!putDose(row)) { err.textContent = t("e.bad"); return; }
+      dlg.close();
+      render();
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+  }
+
+  // Add or edit a medicine. id = null → new.
+  function medDialog(id) {
+    var m = id ? C.medById(data, id) : null;
+    if (id && !m) { showToast(t("feed.gone")); return; }
+    var today = ymd(new Date());
+    var dlg = makeDialog("hl-med", m ? medLabel(m) : t("mdl.new"));
+    dlg.classList.add("wide");
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    var f = {};
+    f.n = input("text", m ? m.n : "");
+    f.n.maxLength = C.MED_NAME;
+    form.appendChild(field(t("mdl.name"), f.n));
+    var r1 = el("div", "row2");
+    f.s = input("text", m ? m.s : "");
+    f.s.maxLength = C.STRENGTH_LEN;
+    f.s.placeholder = t("mdl.strengthHint");
+    f.f = select(C.FORMS.map(function (x) { return [x, t("f." + x)]; }), m ? m.f : "tab");
+    r1.appendChild(field(t("mdl.strength"), f.s));
+    r1.appendChild(field(t("mdl.form"), f.f));
+    form.appendChild(r1);
+    var r2 = el("div", "row2");
+    f.q = input("text", fmtEdit((m ? m.q : 100) / 100, 2), "decimal");
+    var qFld = field("", f.q);
+    r2.appendChild(qFld);
+    f.k = select(C.SCHED.map(function (k) { return [k, t("sch." + k)]; }), m ? m.k : "d");
+    r2.appendChild(field(t("mdl.sched"), f.k));
+    form.appendChild(r2);
+
+    var wd = m && m.k === "w" ? m.wd : 127;
+    var wdWrap = el("div", "fld");
+    wdWrap.appendChild(el("span", "fld-lbl", t("mdl.days")));
+    var wdRow = el("div", "chips wd-chips");
+    wdRow.setAttribute("role", "group");
+    wdRow.setAttribute("aria-label", t("mdl.days"));
+    for (var i = 0; i < 7; i++) {
+      (function (i) {
+        var b = el("button", "chip", t("day." + i));
+        b.type = "button";
+        var paintB = function () { var on = !!(wd & (1 << i)); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); };
+        b.addEventListener("click", function () { wd ^= (1 << i); paintB(); });
+        paintB();
+        wdRow.appendChild(b);
+      })(i);
+    }
+    wdWrap.appendChild(wdRow);
+    form.appendChild(wdWrap);
+    f.ev = input("text", String(m && m.k === "n" ? m.ev : 2), "numeric");
+    var evWrap = field(t("mdl.every"), f.ev);
+    form.appendChild(evWrap);
+
+    var tmWrap = el("div", "");
+    tmWrap.appendChild(el("div", "dlg-sub", t("mdl.times")));
+    var tmBox = el("div", "rem-list");
+    tmWrap.appendChild(tmBox);
+    var times = m && m.tm.length ? m.tm.slice() : [480];
+    var addT = txtBtn("dlg-btn", UI.plus, t("mdl.timeAdd"), function () {
+      if (times.length >= C.MAX_TIMES) return;
+      times.push(times.length ? (times[times.length - 1] + 4 * 60) % 1440 : 480);
+      paintTimes();
+    });
+    function paintTimes() {
+      tmBox.innerHTML = "";
+      times.forEach(function (mm, i) {
+        var row = el("div", "rem-row");
+        var ti = input("time", hmMin(mm));
+        ti.setAttribute("aria-label", t("mdl.times") + " " + (i + 1));
+        ti.addEventListener("change", function () { var x = parseHm(ti.value); if (x >= 0) times[i] = x; });
+        row.appendChild(ti);
+        row.appendChild(iconBtn("mini", UI.x, t("mdl.timeDel"), function () { times.splice(i, 1); paintTimes(); }));
+        tmBox.appendChild(row);
+      });
+      addT.disabled = times.length >= C.MAX_TIMES;
+    }
+    paintTimes();
+    tmWrap.appendChild(addT);
+    var rmW = el("label", "chk");
+    f.rm = el("input");
+    f.rm.type = "checkbox";
+    f.rm.checked = m ? !!m.rm : true;
+    rmW.appendChild(f.rm);
+    rmW.appendChild(el("span", "", t("mdl.remind")));
+    tmWrap.appendChild(rmW);
+    tmWrap.appendChild(hint(t("mdl.remHint")));
+    form.appendChild(tmWrap);
+
+    var r3 = el("div", "row2");
+    f.sd = input("date", m ? m.sd : today);
+    f.ed = input("date", m ? m.ed : "");
+    r3.appendChild(field(t("mdl.start"), f.sd));
+    r3.appendChild(field(t("mdl.end"), f.ed));
+    form.appendChild(r3);
+
+    var cur = m ? C.stockOf(data, m) : null;
+    var tw = el("label", "chk");
+    f.trk = el("input");
+    f.trk.type = "checkbox";
+    f.trk.checked = cur !== null;
+    tw.appendChild(f.trk);
+    tw.appendChild(el("span", "", t("mdl.stock")));
+    form.appendChild(tw);
+    var stockBox = el("div", "row3 stock-box");
+    f.left = input("text", cur !== null ? fmtEdit(Math.max(0, cur) / 100, 2) : "", "decimal");
+    f.pk = input("text", fmtEdit((m ? m.pk : 3000) / 100, 2), "decimal");
+    f.rw = input("text", String(m ? m.rw : 7), "numeric");
+    var leftFld = field("", f.left), pkFld = field("", f.pk);
+    stockBox.appendChild(leftFld);
+    stockBox.appendChild(pkFld);
+    stockBox.appendChild(field(t("mdl.warn"), f.rw));
+    form.appendChild(stockBox);
+
+    f.nt = el("textarea");
+    f.nt.rows = 2;
+    f.nt.maxLength = C.NOTE_LEN;
+    f.nt.value = m ? m.nt : "";
+    form.appendChild(field(t("mdl.note"), f.nt));
+    var err = el("p", "err");
+    err.setAttribute("role", "alert");
+    form.appendChild(err);
+
+    function paint() {
+      var k = f.k.value, u = unitWord(f.f.value, 200);
+      wdWrap.hidden = k !== "w";
+      evWrap.hidden = k !== "n";
+      tmWrap.hidden = k === "p";
+      stockBox.hidden = !f.trk.checked;
+      qFld.querySelector(".fld-lbl").textContent = t("mdl.dose", { u: u });
+      leftFld.querySelector(".fld-lbl").textContent = t("mdl.left", { u: u });
+      pkFld.querySelector(".fld-lbl").textContent = t("mdl.pack", { u: u });
+    }
+    [f.k, f.f, f.trk].forEach(function (x) { x.addEventListener("change", paint); });
+    paint();
+
+    var acts = el("div", "dlg-actions");
+    if (m) {
+      acts.appendChild(iconBtn("dlg-btn icon danger", UI.trash, t("mdl.del"), function () {
+        dlg.close();
+        confirmDialog(t("mdl.delAsk", { n: m.n }), t("dlg.delete"), function () { deleteMed(m.id); });
+      }));
+      acts.appendChild(button(m.ar ? t("mdl.resume") : t("mdl.stop"), "", function () { dlg.close(); stopMed(m.id, !m.ar); }));
+    }
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.textContent = "";
+      var bad = false;
+      function mark(inp, isBad) { inp.classList.toggle("bad", !!isBad); if (isBad) bad = true; }
+      var k = f.k.value, q = Math.round(parseNum(f.q.value) * 100), ev2 = parseInt(f.ev.value, 10);
+      mark(f.n, !f.n.value.trim());
+      mark(f.q, !(q >= 1 && q <= C.QTY_MAX));
+      mark(f.sd, !C.validYmd(f.sd.value));
+      mark(f.ed, f.ed.value && (!C.validYmd(f.ed.value) || f.ed.value < f.sd.value));
+      if (k === "n") mark(f.ev, !(ev2 >= 2 && ev2 <= 90 && /^\d+$/.test(f.ev.value.trim())));
+      var sk = -1, sa = 0, pk = 3000, rw = 7;
+      if (f.trk.checked) {
+        var left = Math.round(parseNum(f.left.value) * 100);
+        pk = Math.round(parseNum(f.pk.value) * 100);
+        rw = parseInt(f.rw.value, 10);
+        mark(f.left, !(left >= 0 && left <= C.STOCK_MAX));
+        mark(f.pk, !(pk >= 1 && pk <= C.STOCK_MAX));
+        mark(f.rw, !(rw >= 0 && rw <= 60 && /^\d+$/.test(f.rw.value.trim())));
+        if (!bad) {
+          if (m && m.sk >= 0 && left === Math.max(0, cur)) { sk = m.sk; sa = m.sa; }
+          else { sk = left; sa = Date.now(); }
+        }
+      } else if (m) { pk = m.pk; rw = m.rw; }
+      if (bad) { err.textContent = t("e.bad"); return; }
+      if (k !== "p" && !times.length) { err.textContent = t("mdl.needTime"); return; }
+      if (k === "w" && !wd) { err.textContent = t("mdl.needDay"); return; }
+      var mid = m ? m.id : newMedId();
+      var row = {
+        id: mid, m: nextM("md", mid), n: f.n.value, s: f.s.value, f: f.f.value, q: q, k: k,
+        tm: k === "p" ? [] : times, wd: wd, ev: k === "n" ? ev2 : 1, sd: f.sd.value, ed: f.ed.value,
+        rm: f.rm.checked ? 1 : 0, sk: sk, sa: sa, pk: pk, rw: rw, ar: m ? m.ar : 0,
+        ca: m ? m.ca : Date.now(), nt: f.nt.value
+      };
+      var n = C.normMed(row);
+      if (!n) { err.textContent = t("e.bad"); return; }
+      n.ps = C.withHistory(m, n, today);
+      n = C.normMed(n);
+      putRow("md", n);
+      saveNow();
+      dlg.close();
+      if (!m && prefs.mv === "hist") { prefs.mv = "today"; savePrefs(); }
+      render();
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    if (!m) setTimeout(function () { try { f.n.focus(); } catch (x) {} }, 30);
+  }
+  // Stop: the course ends today (kept in the history); again: no end.
+  function stopMed(id, stop) {
+    var m = C.medById(data, id);
+    if (!m) return;
+    var row = JSON.parse(JSON.stringify(m)), today = ymd(new Date());
+    row.ar = stop ? 1 : 0;
+    if (stop && (!row.ed || row.ed > today)) row.ed = row.sd > today ? "" : today;
+    if (!stop && row.ed && row.ed < today) row.ed = "";
+    row.m = nextM("md", id);
+    var n = C.normMed(row);
+    if (!n) return;
+    putRow("md", n);
+    saveNow();
+    render();
+  }
+  // A medicine goes with its doses and refills; Undo brings all back.
+  function deleteMed(id) {
+    var m = findRow("md", id);
+    if (!m) return;
+    var doses = data.dl.filter(function (l) { return l.md === id; }).map(function (l) { return removeRow("dl", l.id); });
+    var fills = data.rf.filter(function (r) { return r.md === id; }).map(function (r) { return removeRow("rf", r.id); });
+    removeRow("md", id);
+    saveNow();
+    render();
+    undoToast(t("mdl.deleted", { n: m.n }), function () {
+      restoreRow("md", m);
+      doses.forEach(function (l) { if (l) restoreRow("dl", l); });
+      fills.forEach(function (r) { if (r) restoreRow("rf", r); });
+      saveNow();
+      render();
+    });
+  }
+
+  // ---------- 10c. Symptoms ----------
+  function symName(k) {
+    if (C.isSymBuiltin(k)) return t("sy." + k);
+    var r = C.symKindRow(data, k);
+    return r ? r.n : "";
+  }
+  function visibleSymKinds() { return C.symKindList(data).filter(function (k) { return !k.h; }); }
+  function symVisible(e) { var r = C.symKindRow(data, e.k); return !!(r && !r.h); }
+  function symptoms(k) {
+    return data.sy.filter(function (e) { return (!k || e.k === k) && symVisible(e); })
+      .sort(function (x, y) { return x.at - y.at || cmpStr(x.id, y.id); });
+  }
+  function symText(e) { return symName(e.k) + " " + e.i + "/10"; }
+
+  // e = null → a new symptom (kind k or the last used one), now.
+  function symDialog(e, k) {
+    var kinds = visibleSymKinds();
+    if (e && !C.symKindRow(data, e.k)) { showToast(t("feed.gone")); return; }
+    var last = symptoms("").pop();
+    var kind = e ? e.k : (k || (last ? last.k : kinds.length ? kinds[0].id : "ha"));
+    var dlg = makeDialog("hl-sym", e ? symName(e.k) : t("sy.new"));
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    var opts = kinds.map(function (x) { return [x.id, symName(x.id)]; });
+    if (!opts.some(function (o) { return o[0] === kind; })) opts.unshift([kind, symName(kind)]);
+    opts.push(["__new", t("sy.own")]);
+    var ks = select(opts, kind);
+    ks.addEventListener("change", function () {
+      if (ks.value !== "__new") return;
+      dlg.close();
+      symKindDialog(null, function (nid) { symDialog(null, nid); });
+    });
+    form.appendChild(field(t("sy.kind"), ks));
+    var iv = e ? e.i : 5;
+    var lbl = el("span", "fld-lbl", t("sy.int", { n: iv }));
+    var rg = input("range", String(iv));
+    rg.min = "1"; rg.max = "10"; rg.step = "1";
+    rg.className = "int-range";
+    rg.setAttribute("aria-label", t("sy.intLbl"));
+    rg.addEventListener("input", function () { lbl.textContent = t("sy.int", { n: rg.value }); });
+    var iw = el("div", "fld");
+    iw.appendChild(lbl);
+    iw.appendChild(rg);
+    form.appendChild(iw);
+    var now = new Date(), at = e ? new Date(e.at) : now;
+    var r2 = el("div", "row2");
+    var di = input("date", ymd(at)), ti = input("time", hm(at));
+    di.max = ymd(now);
+    r2.appendChild(field(t("e.date"), di));
+    r2.appendChild(field(t("e.time"), ti));
+    form.appendChild(r2);
+    var nt = el("textarea");
+    nt.rows = 2;
+    nt.maxLength = C.NOTE_LEN;
+    nt.value = e ? e.n : "";
+    form.appendChild(field(t("e.note"), nt));
+    var tg = input("text", e ? e.g.join(", ") : "");
+    tg.placeholder = t("e.tagsHint");
+    form.appendChild(field(t("e.tags"), tg));
+    var err = el("p", "err");
+    err.setAttribute("role", "alert");
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    if (e) {
+      acts.appendChild(iconBtn("dlg-btn icon danger", UI.trash, t("sy.del"), function () {
+        dlg.close();
+        var gone = removeRow("sy", e.id);
+        saveNow();
+        render();
+        undoToast(t("sy.deleted"), function () { restoreRow("sy", gone); saveNow(); render(); });
+      }));
+    }
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var when = atOf(di.value, ti.value);
+      di.classList.toggle("bad", isNaN(when));
+      ti.classList.toggle("bad", isNaN(when));
+      if (isNaN(when) || ks.value === "__new") { err.textContent = t("e.bad"); return; }
+      var id = e ? e.id : newId();
+      var n = C.normSym({ id: id, m: nextM("sy", id), k: ks.value, at: when, i: Number(rg.value), n: nt.value, g: tg.value.split(/[,;]/) });
+      if (!n) { err.textContent = t("e.bad"); return; }
+      putRow("sy", n);
+      saveNow();
+      dlg.close();
+      render();
+      live(t("e.saved") + ": " + symText(n));
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+  }
+
+  // An own symptom kind (new or rename), or hide / delete. Built-in
+  // kinds can only be hidden (Settings).
+  function symKindDialog(k, onDone) {
+    var row = k ? C.symKindRow(data, k) : null;
+    var dlg = makeDialog("hl-symk", k ? symName(k) : t("sy.ownTitle"));
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    var nm = input("text", row ? row.n : "");
+    nm.maxLength = C.NAME_LEN;
+    form.appendChild(field(t("k.name"), nm));
+    var err = el("p", "err");
+    err.setAttribute("role", "alert");
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    if (row) {
+      acts.appendChild(iconBtn("dlg-btn icon danger", UI.trash, t("k.del"), function () {
+        var cnt = data.sy.filter(function (e) { return e.k === k; }).length;
+        dlg.close();
+        confirmDialog(t("sy.kindDel", { n: row.n, c: cnt }), t("dlg.delete"), function () { deleteSymKind(k); });
+      }));
+    }
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var name = nm.value.trim(), low = name.toLowerCase();
+      nm.classList.toggle("bad", !name);
+      if (!name) { err.textContent = t("e.bad"); return; }
+      if (C.symKindList(data).some(function (x) { return x.id !== k && symName(x.id).toLowerCase() === low; })) {
+        nm.classList.add("bad");
+        err.textContent = t("k.dup");
+        return;
+      }
+      var id = k || ("s" + newId());
+      var n = C.normSymKind({ id: id, m: nextM("sk", id), n: name, h: row ? row.h : 0 });
+      if (!n) { err.textContent = t("e.bad"); return; }
+      putRow("sk", n);
+      saveNow();
+      dlg.close();
+      render();
+      if (onDone) onDone(id);
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    setTimeout(function () { try { nm.focus(); } catch (x) {} }, 30);
+  }
+  function editSymKind(k, patch) {
+    var cur = C.symKindRow(data, k);
+    if (!cur) return;
+    var row = JSON.parse(JSON.stringify(cur));
+    Object.keys(patch).forEach(function (x) { row[x] = patch[x]; });
+    row.m = nextM("sk", k);
+    var n = C.normSymKind(row);
+    if (!n) return;
+    putRow("sk", n);
+    saveNow();
+  }
+  function deleteSymKind(k) {
+    var row = findRow("sk", k);
+    if (!row) return;
+    var gone = data.sy.filter(function (e) { return e.k === k; }).map(function (e) { return removeRow("sy", e.id); });
+    removeRow("sk", k);
+    saveNow();
+    render();
+    undoToast(t("k.deleted", { n: row.n }), function () {
+      restoreRow("sk", row);
+      gone.forEach(function (e) { if (e) restoreRow("sy", e); });
+      saveNow();
+      render();
+    });
+  }
+
+  // Marks under a measurement chart: symptoms (dots) and doses taken
+  // (ticks) between from and to.
+  function chartMarks(from, to) {
+    var out = [];
+    symptoms("").forEach(function (e) {
+      if (e.at < from || e.at >= to) return;
+      out.push({ x: e.at, kind: "sy", lvl: e.i >= 7 ? 3 : e.i >= 4 ? 2 : 1,
+                 tip: fmtDate(e.at, false) + " " + hm(new Date(e.at)) + " · " + symText(e) });
+    });
+    data.dl.forEach(function (l) {
+      if (l.s !== "t" || l.ta < from || l.ta >= to) return;
+      var med = C.medById(data, l.md);
+      if (!med) return;
+      out.push({ x: l.ta, kind: "dose", tip: fmtDate(l.ta, false) + " " + hm(new Date(l.ta)) + " · " + medLabel(med) });
+    });
+    return out;
+  }
+
   // ---------- 11. Settings, export, restore ----------
   function dialogHost() {
     if (window.orosDialog) return window.orosDialog;
@@ -1770,6 +2969,29 @@
     dlg.appendChild(kl);
     dlg.appendChild(txtBtn("dlg-btn", UI.plus, t("home.own"), function () { dlg.close(); kindDialog(null); }));
 
+    dlg.appendChild(el("div", "dlg-sub", t("sy.kinds")));
+    var sl = el("div", "kind-list");
+    function paintSyms() {
+      sl.innerHTML = "";
+      C.symKindList(data).forEach(function (k) {
+        var r = el("div", "kind-row" + (k.h ? " off" : ""));
+        r.appendChild(kindIcon("sym"));
+        r.appendChild(el("span", "kind-n", symName(k.id) + (k.h ? " · " + t("set.hidden") : "")));
+        if (!C.isSymBuiltin(k.id)) {
+          r.appendChild(iconBtn("mini", UI.edit, t("set.edit") + ": " + symName(k.id), function () { dlg.close(); symKindDialog(k.id, null); }));
+        }
+        r.appendChild(iconBtn("mini", k.h ? UI.eyeOff : UI.eye, (k.h ? t("set.show") : t("set.hideKind")) + ": " + symName(k.id), function () {
+          editSymKind(k.id, { h: k.h ? 0 : 1 });
+          paintSyms();
+          render();
+        }));
+        sl.appendChild(r);
+      });
+    }
+    paintSyms();
+    dlg.appendChild(sl);
+    dlg.appendChild(txtBtn("dlg-btn", UI.plus, t("sy.own"), function () { dlg.close(); symKindDialog(null, null); }));
+
     dlg.appendChild(el("div", "dlg-sub", t("set.export")));
     var ex = el("div", "btn-col");
     ex.appendChild(button(t("set.csv"), "", exportCsv));
@@ -1867,6 +3089,13 @@
   // Live push from the shell, or a one-shot staged id taken at boot.
   window.__orosHealthOpen = function (tid) {
     if (typeof tid !== "string" || !C.ID_RE.test(tid)) return;
+    if (tid === "meds") {                      // a dose reminder or a refill warning
+      var od = document.querySelector("dialog[open]");
+      if (od) od.close();
+      prefs.mv = "today";
+      setTab("meds");
+      return;
+    }
     var ty = C.typeRow(data, tid);
     if (!ty) { showToast(t("feed.gone")); return; }
     if (prefs.tab !== "home") setTab("home");
@@ -1889,6 +3118,21 @@
   // as a History row click does. Unknown reading → no-op; an open
   // dialog (unsaved edits) wins → no-op.
   function openSearchTarget(t) {
+    if (t && (typeof t.med === "string" || typeof t.sym === "string")) {
+      if (document.querySelector("dialog[open]")) return;
+      if (typeof t.med === "string") {
+        if (!C.medById(data, t.med)) return;
+        prefs.mv = "list";
+        setTab("meds");
+        medDialog(t.med);
+      } else {
+        var sy = findRow("sy", t.sym);
+        if (!sy) return;
+        if (prefs.tab !== "history") setTab("history");
+        symDialog(sy, null);
+      }
+      return;
+    }
     var e = t && typeof t.entry === "string" ? findRow("en", t.entry) : null;
     if (!e || !C.typeRow(data, e.t)) return;
     if (document.querySelector("dialog[open]")) return;

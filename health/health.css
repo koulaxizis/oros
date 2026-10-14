@@ -331,6 +331,111 @@ button.h-row:hover { background: var(--accent-soft); }
 .h-mid small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
 .h-mid small.h-note { color: var(--text); }
 
+/* ---------- 5b. Medicines + symptoms ---------- */
+.dose {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  background: var(--panel-bg);
+  margin-bottom: 8px;
+}
+.dose > .k-ic { margin: 2px auto 0; }
+.dose.st-taken, .dose.st-skipped { opacity: 0.75; }
+.dose.st-taken { border-left-color: #3fae6b; }
+.dose.st-late { border-left-color: var(--danger); background: rgba(224, 108, 117, 0.08); }
+.dose.st-due, .dose.st-snoozed { border-left-color: var(--accent); }
+.dose-time { font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.dose.st-late .dose-time { color: var(--danger); }
+.dose-mid { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dose-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.dose-top b { font-size: 15px; overflow-wrap: anywhere; }
+.dose-mid small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.dose-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.sm-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.sm-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+.sm-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.sm-btn.primary:hover { background: var(--accent-hover); }
+.ds-badge { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.ds-taken { color: #3fae6b; }
+.ds-skipped, .ds-snoozed, .ds-due, .ds-upcoming { color: var(--text-dim); }
+.ds-due { color: var(--accent); }
+.ds-late, .ds-missed { color: var(--danger); }
+html[data-theme="light"] .ds-taken { color: #23824b; }
+.low-ban {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 1px solid #d99a1e;
+  background: rgba(217, 154, 30, 0.12);
+  font-size: 14px;
+  font-weight: 700;
+}
+.low-ban > span { min-width: 0; overflow-wrap: anywhere; }
+.med-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 4px 8px 4px 4px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+.med-card.off { opacity: 0.7; }
+.med-main {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+}
+.med-main:hover { background: var(--accent-soft); }
+.med-main b { font-size: 15px; overflow-wrap: anywhere; }
+.med-main small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.med-main small.h-note { color: var(--text); }
+.med-main small.med-stock { color: var(--text); font-weight: 700; }
+.med-main small.med-stock.low { color: #d99a1e; }
+.wd-chips { margin: 0; }
+.wd-chips .chip { min-width: 44px; padding: 0 8px; }
+.stock-box { align-items: end; }
+input.int-range { padding: 0; min-height: 36px; border: none; background: transparent; box-shadow: none; accent-color: var(--accent); }
+.sy-lv.sy-l1 { color: #4a90d9; background: rgba(74, 144, 217, 0.15); }
+.sy-lv.sy-l2 { color: #d99a1e; background: rgba(217, 154, 30, 0.15); }
+.sy-lv.sy-l3 { color: #e0564f; background: rgba(224, 86, 79, 0.14); }
+.chart .mk-sy { fill: #d99a1e; stroke: var(--panel-bg); stroke-width: 1.5; }
+.chart .mk-sy.l1 { fill: #4a90d9; }
+.chart .mk-sy.l3 { fill: #e0564f; }
+.chart .mk-dose { fill: var(--text-dim); }
+
 /* ---------- 6. Charts + stats ---------- */
 .ch-head { display: flex; align-items: center; gap: 8px; }
 .kind-pick { flex: 1 1 auto; font-weight: 800; }
@@ -533,7 +638,7 @@ dialog.hl-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .cards { grid-template-columns: 1fr; }
 }
 @media (pointer: coarse) {
-  .icon-btn, .dlg-btn, input, select, .chip { min-height: 44px; }
+  .icon-btn, .dlg-btn, input, select, .chip, .sm-btn { min-height: 44px; }
   .icon-btn { width: 44px; }
   .mini { width: 44px; height: 44px; }
   .card-add { width: 44px; height: 44px; }

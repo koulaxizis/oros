@@ -180,3 +180,39 @@ test("merge: new collections are symmetric, idempotent, keep tombstones; the sam
   assert.deepEqual(hostile.md, []);
   assert.deepEqual(hostile.tombs, { "md:ma": 5 });
 });
+
+test("Today provider: open doses of today as tasks, low stock as a top line, stopped medicines left out", () => {
+  globalThis.OrosHealthCore = C;
+  const P = require("../health/today.js");
+  const raw = data({ md: [med("ma", { n: "Lisinopril", sk: 300, sa: 1, rw: 3 }), med("mb", { ar: 1 })],
+                     dl: [dose("ma", "2026-10-09", 480, "t")] });
+  const ctx = { readJSON: () => JSON.parse(JSON.stringify(raw)), today: "2026-10-09", lang: "el", now: at(9, 12) };
+  const rows = P.collect(ctx);
+  assert.deepEqual(rows.map((r) => [r.id, r.time, r.kind, r.title]), [
+    ["dose@ma-20261009-2000", "20:00", "task", "Lisinopril 10 mg"],
+    ["low@ma", null, "info", "Lisinopril 10 mg: φτάνει για περίπου μία μέρα"]
+  ]);
+  let opened = "";
+  P.open({ meds: true }, { __orosOpenHealth: (k) => { opened = k; } });
+  assert.equal(opened, "meds");
+});
+
+test("schedule changes keep the past: earlier schedules by day, same-day marks stay", () => {
+  const old = med("ma", { sd: "2026-10-01" });                                   // 08:00, 20:00
+  const changed = med("ma", { tm: [540], m: 3000 });
+  changed.ps = C.withHistory(old, changed, "2026-10-09");
+  assert.deepEqual(changed.ps, [{ u: "2026-10-08", k: "d", tm: [480, 1200], wd: 127, ev: 1 }]);
+  const n = C.normMed(changed);
+  assert.deepEqual(C.slotsOn(n, "2026-10-08"), [480, 1200], "yesterday keeps its times");
+  assert.deepEqual(C.slotsOn(n, "2026-10-09"), [540], "the new times from today");
+  assert.deepEqual(C.withHistory(n, Object.assign({}, n, { tm: [600] }), "2026-10-09"), n.ps, "a second change the same day adds nothing");
+  assert.deepEqual(C.withHistory(n, n, "2026-10-12"), n.ps, "no change, no history");
+  assert.deepEqual(C.withHistory(med("mb", { sd: "2026-10-09" }), med("mb", { tm: [600] }), "2026-10-09"), [], "started today: nothing to keep");
+  const d = data({ md: [n], dl: [dose("ma", "2026-10-09", 480, "t")] });
+  const rows = C.dosesOn(d, "2026-10-09", at(9, 12));
+  assert.deepEqual(rows.map((r) => [r.tm, r.state, r.extra]), [[480, "taken", true], [540, "late", false]],
+    "this morning's dose at the old time still shows");
+  assert.equal(C.adherence(d, "ma", "2026-10-08", "2026-10-09", at(9, 12)).n, 4);
+  assert.equal(C.normMed(Object.assign({}, n, { ps: [{ u: "2026-09-01", k: "d", tm: [1] }, { u: "bad" }, 5] })).ps.length, 0,
+    "entries before the start or malformed are dropped");
+});

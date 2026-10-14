@@ -9,6 +9,11 @@
 //     it was measured. Readings without words are numbers only and
 //     are not searched.
 //   - one per own kind (custom type): its name, its unit as text.
+//   - one per medicine (wave 2): name + strength as title, the note
+//     as text; target { med } (opens its editor).
+//   - one per symptom that carries a note or tags: the symptom as
+//     title (own kinds by name), note and tags as text; target
+//     { sym }. Symptoms of a hidden or deleted kind are skipped.
 // Skipped: rows with a tombstone at least as new as the row
 // (tombs{"en:<id>"} / tombs{"ty:<id>"}), readings of a hidden or
 // unknown kind, hidden own kinds.
@@ -30,6 +35,12 @@
     tp: { en: "Temperature",        el: "Θερμοκρασία" },
     o2: { en: "Oxygen (SpO₂)",      el: "Οξυγόνο (SpO₂)" },
     st: { en: "Steps",              el: "Βήματα" }
+  };
+  var SYMS = {
+    ha: { en: "Headache", el: "Πονοκέφαλος" }, na: { en: "Nausea", el: "Ναυτία" },
+    dz: { en: "Dizziness", el: "Ζάλη" }, ft: { en: "Tiredness", el: "Κούραση" },
+    pn: { en: "Pain", el: "Πόνος" }, cg: { en: "Cough", el: "Βήχας" },
+    br: { en: "Shortness of breath", el: "Δύσπνοια" }, pl: { en: "Palpitations", el: "Αίσθημα παλμών" }
   };
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
@@ -74,6 +85,23 @@
         if (BUILTIN[id] || ty.h || !str(ty.n)) return;
         out.push({ id: "ty:" + id, title: str(ty.n), text: str(ty.u), target: { kind: id } });
       });
+      (Array.isArray(d.md) ? d.md : []).forEach(function (m) {
+        if (!m || typeof m.id !== "string" || !ID_RE.test(m.id) || gone("md", m) || !str(m.n)) return;
+        out.push({ id: "md:" + m.id, title: str(m.n) + (str(m.s) ? " " + str(m.s) : ""), text: str(m.nt), target: { med: m.id } });
+      });
+      var sk = {};
+      (Array.isArray(d.sk) ? d.sk : []).forEach(function (k) {
+        if (k && typeof k.id === "string" && !gone("sk", k)) sk[k.id] = k;
+      });
+      (Array.isArray(d.sy) ? d.sy : []).forEach(function (e) {
+        if (!e || typeof e.id !== "string" || typeof e.k !== "string" || gone("sy", e)) return;
+        var k = sk[e.k], name = SYMS[e.k] ? SYMS[e.k][lang] : (k ? str(k.n) : "");
+        if (!name || (k && k.h)) return;
+        var tags = (Array.isArray(e.g) ? e.g : []).map(str).filter(Boolean), note = str(e.n);
+        if (!note && !tags.length) return;
+        out.push({ id: "sy:" + e.id, title: name, text: [note, tags.join(", ")].filter(Boolean).join(" · "),
+                   when: typeof e.at === "number" ? e.at : 0, target: { sym: e.id } });
+      });
       return out;
     },
     open: function (t, win) {
@@ -81,7 +109,8 @@
           win && typeof win.__orosOpenHealth === "function") {
         win.__orosOpenHealth(t.kind);
       } else if (win && typeof win.__orosOpenAt === "function") {
-        win.__orosOpenAt("health", t && typeof t.entry === "string" ? { entry: t.entry } : null);
+        win.__orosOpenAt("health", t && typeof t.entry === "string" ? { entry: t.entry }
+          : t && typeof t.med === "string" ? { med: t.med } : t && typeof t.sym === "string" ? { sym: t.sym } : null);
       }
     }
   };

@@ -1294,15 +1294,36 @@
     if (!Core) return;                                  // stale bundle — silent
     var raw;
     try { raw = JSON.parse(localStorage.getItem(HEALTH_DATA_KEY)); } catch (e) { return; }
-    if (!raw || !Array.isArray(raw.ty) || !raw.ty.length) return;
+    if (!raw || ((!Array.isArray(raw.ty) || !raw.ty.length) && (!Array.isArray(raw.md) || !raw.md.length))) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
-    var d = Core.merge(raw, raw);
-    var due = Core.dueReminders(d, Date.now());
-    if (!due.length) return;
+    var d = Core.merge(raw, raw), now = Date.now();
+    var due = Core.dueReminders(d, now);
+    // Medicines (Health wave 2): each dose from its time for 4 hours
+    // unless marked or snoozed (a snooze rings again with its own key),
+    // and once per count / refill when one runs low. Deep link
+    // "health:meds" → the Medicines tab, Today.
+    var doses = typeof Core.dueDoses === "function" ? Core.dueDoses(d, now) : [];
+    var lows = typeof Core.lowStock === "function" ? Core.lowStock(d, now) : [];
+    if (!due.length && !doses.length && !lows.length) return;
     var el = state.lang === "el";
     var title = window.t("app.health");
     if (title === "app.health") title = "Health";       // missing-key fallback
+    doses.forEach(function (r) {
+      var hm = (r.tm < 600 ? "0" : "") + Math.floor(r.tm / 60) + ":" + (r.tm % 60 < 10 ? "0" : "") + (r.tm % 60);
+      var name = r.med.n + (r.med.s ? " " + r.med.s : "");
+      N.emit({ ns: "health", key: r.key, type: "reminder", title: title,
+               body: (el ? "Ώρα για το φάρμακο: " : "Time for your medicine: ") + name + " (" + hm + ")",
+               deepLink: "health:meds" });
+    });
+    lows.forEach(function (r) {
+      var name = r.med.n + (r.med.s ? " " + r.med.s : "");
+      var body = r.left <= 0 ? (el ? name + ": τελείωσε" : name + ": none left")
+        : r.days === null ? (el ? name + ": τελειώνει" : name + " is running low")
+        : r.days < 2 ? (el ? name + ": φτάνει για περίπου μία μέρα" : name + " runs out in about a day")
+        : (el ? name + ": φτάνει για περίπου " + r.days + " μέρες" : name + " runs out in about " + r.days + " days");
+      N.emit({ ns: "health", key: r.key, type: "reminder", title: title, body: body, deepLink: "health:meds" });
+    });
     due.forEach(function (r) {
       var ty = Core.typeRow(d, r.t);
       var name = HEALTH_NAMES[r.t] ? HEALTH_NAMES[r.t][el ? 1 : 0] : (ty ? ty.n : "");

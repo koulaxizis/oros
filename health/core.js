@@ -457,7 +457,9 @@
   //     -1 = stock not tracked), pk pack size (hundredths, "Refilled"),
   //     rw warn days before running out, ar stopped 0|1, ca created
   //     (ms; unlogged doses before it are never reminded or counted),
-  //     nt note }
+  //     nt note, ps earlier schedules [{ u last day, k, tm, wd, ev }]
+  //     (≤ 12, sorted by u): a changed schedule applies from the day
+  //     of the change, so past days keep the times they had }
   // Dose log ("dl"), one row per dose marked:
   //   { id, m, md, d day, tm slot minute (-1 = as needed), s "t" taken |
   //     "s" skipped | "z" snoozed, ta when (ms; editable for taken),
@@ -499,6 +501,24 @@
     });
     return out.sort(function (a, b) { return a - b; });
   }
+  function normSched(x, sd) {
+    if (!x || typeof x !== "object" || !validYmd(x.u) || x.u < sd) return null;
+    var k = SCHED.indexOf(x.k) >= 0 ? x.k : "p";
+    var tm = k === "p" ? [] : normTimes(x.tm);
+    if (!tm.length) k = "p";
+    return { u: x.u, k: k, tm: tm,
+             wd: k === "w" && isInt(x.wd) && x.wd >= 1 && x.wd <= 127 ? x.wd : 127,
+             ev: k === "n" ? (isInt(x.ev) && x.ev >= 2 && x.ev <= 90 ? x.ev : 2) : 1 };
+  }
+  function normPs(list, sd) {
+    var seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function (x) {
+      var n = normSched(x, sd);
+      if (n && !seen[n.u]) { seen[n.u] = 1; out.push(n); }
+    });
+    out.sort(function (a, b) { return cmpStr(a.u, b.u); });
+    return out.slice(-12);
+  }
   function normMed(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !MED_ID_RE.test(x.id) || !stamp(x)) return null;
     var n = normStr(x.n, MED_NAME);
@@ -522,8 +542,24 @@
       rw: isInt(x.rw) && x.rw >= 0 && x.rw <= 60 ? x.rw : 7,
       ar: x.ar ? 1 : 0,
       ca: okMs(x.ca) ? x.ca : 0,
-      nt: normNote(x.nt)
+      nt: normNote(x.nt),
+      ps: normPs(x.ps, x.sd)
     };
+  }
+  function sameSched(a, b) {
+    return a.k === b.k && a.wd === b.wd && a.ev === b.ev && a.tm.join(",") === b.tm.join(",");
+  }
+  // A medicine edited on day `today`: when its schedule changed and it
+  // had started before today, the old schedule is kept for the days up
+  // to yesterday (once per day: a second change on the same day keeps
+  // the first entry). Returns the new ps list.
+  function withHistory(oldMed, newMed, today) {
+    var ps = (oldMed && oldMed.ps ? oldMed.ps : []).slice();
+    if (!oldMed || sameSched(oldMed, newMed)) return ps;
+    var y = ymdAdd(today, -1);
+    if (y < oldMed.sd || ps.some(function (p) { return p.u >= y; })) return ps;
+    ps.push({ u: y, k: oldMed.k, tm: oldMed.tm.slice(), wd: oldMed.wd, ev: oldMed.ev });
+    return normPs(ps, oldMed.sd);
   }
   function doseKey(md, ymd, min) {
     return md + "-" + ymd.replace(/-/g, "") + "-" + pad2(Math.floor(min / 60)) + pad2(min % 60);
@@ -581,17 +617,31 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
+  // { id → log } plus, per medicine and day, its scheduled marks
+  // ("@<md>@<day>" → [log]).
   function logIndex(d) {
     var idx = {};
-    ((d && d.dl) || []).forEach(function (l) { idx[l.id] = l; });
+    ((d && d.dl) || []).forEach(function (l) {
+      idx[l.id] = l;
+      if (l.tm >= 0) (idx["@" + l.md + "@" + l.d] = idx["@" + l.md + "@" + l.d] || []).push(l);
+    });
     return idx;
+  }
+  // The schedule in force on a day: the first earlier schedule whose
+  // last day is on or after it, else the current one.
+  function schedOn(med, ymd) {
+    var ps = med.ps || [];
+    for (var i = 0; i < ps.length; i++) if (ymd <= ps[i].u) return ps[i];
+    return med;
   }
   // Scheduled dose times of one medicine on one day ([] when none).
   function slotsOn(med, ymd) {
-    if (!med || med.k === "p" || ymd < med.sd || (med.ed && ymd > med.ed)) return [];
-    if (med.k === "w" && !(med.wd & (1 << ((ymdDate(ymd).getDay() + 6) % 7)))) return [];
-    if (med.k === "n" && (dayNum(ymd) - dayNum(med.sd)) % med.ev !== 0) return [];
-    return med.tm.slice();
+    if (!med || ymd < med.sd || (med.ed && ymd > med.ed)) return [];
+    var sc = schedOn(med, ymd);
+    if (sc.k === "p") return [];
+    if (sc.k === "w" && !(sc.wd & (1 << ((ymdDate(ymd).getDay() + 6) % 7)))) return [];
+    if (sc.k === "n" && (dayNum(ymd) - dayNum(med.sd)) % sc.ev !== 0) return [];
+    return sc.tm.slice();
   }
   // The state of one scheduled dose at nowMs:
   //   taken | skipped | snoozed | upcoming | due | late | missed
@@ -608,14 +658,24 @@
   }
   // Every scheduled dose of one day, all medicines (stopped ones too,
   // for the history), sorted by time then name:
-  //   [{ key, md, med, d, tm, at, log, pre, state }]
+  //   [{ key, md, med, d, tm, at, log, pre, state, extra }]
+  // A dose taken or skipped at a time that is no longer in the
+  // schedule (changed the same day) still shows, marked extra.
   function dosesOn(d, ymd, nowMs, idx) {
     idx = idx || logIndex(d);
     var out = [];
     ((d && d.md) || []).forEach(function (med) {
-      slotsOn(med, ymd).forEach(function (min) {
+      var slots = slotsOn(med, ymd), seen = {};
+      slots.forEach(function (min) {
         var key = doseKey(med.id, ymd, min), at = slotAt(ymd, min);
-        var row = { key: key, md: med.id, med: med, d: ymd, tm: min, at: at, log: idx[key] || null, pre: !!(med.ca && at < med.ca) };
+        seen[min] = 1;
+        var row = { key: key, md: med.id, med: med, d: ymd, tm: min, at: at, log: idx[key] || null, pre: !!(med.ca && at < med.ca), extra: false };
+        row.state = doseState(row, nowMs);
+        out.push(row);
+      });
+      (idx["@" + med.id + "@" + ymd] || []).forEach(function (l) {
+        if (seen[l.tm] || l.s === "z") return;
+        var row = { key: l.id, md: med.id, med: med, d: ymd, tm: l.tm, at: slotAt(ymd, l.tm), log: l, pre: false, extra: true };
         row.state = doseState(row, nowMs);
         out.push(row);
       });
@@ -745,7 +805,7 @@
     SYM_BUILTIN: SYM_BUILTIN, validYmd: validYmd, ymdAdd: ymdAdd, slotAt: slotAt,
     normMed: normMed, normDose: normDose, normRefill: normRefill, normSym: normSym, normSymKind: normSymKind,
     isSymBuiltin: isSymBuiltin, symKindRow: symKindRow, symKindList: symKindList,
-    medById: medById, logIndex: logIndex, doseKey: doseKey, slotsOn: slotsOn, doseState: doseState,
+    medById: medById, logIndex: logIndex, schedOn: schedOn, withHistory: withHistory, doseKey: doseKey, slotsOn: slotsOn, doseState: doseState,
     dosesOn: dosesOn, prnTaken: prnTaken, adherence: adherence, stockOf: stockOf, perDay: perDay,
     daysLeft: daysLeft, runOutDay: runOutDay, lowStock: lowStock, dueDoses: dueDoses
   };

@@ -9,6 +9,11 @@
 // Health is a sensitive app: in the summary by default, it can be
 // switched off in the Today settings. Opens a new reading of that
 // kind (__orosOpenHealth(kind), as the reminder does).
+// Wave 2: today's medicine doses that are not marked yet (taken or
+// skipped; a snoozed one stays) as tasks at their time, from
+// OrosHealthCore.dosesOn (stopped medicines left out), and a top line
+// per medicine running low (lowStock). Both open the Medicines tab
+// (__orosOpenHealth("meds")).
 // ============================================================
 (function (root) {
   "use strict";
@@ -20,8 +25,28 @@
           hr: "Σφυγμοί ηρεμίας", tp: "Θερμοκρασία", o2: "Οξυγόνο (SpO₂)", st: "Βήματα" }
   };
   var TXT = { en: "Reading", el: "Μέτρηση" };
+  var MED = { en: "Medicine", el: "Φάρμακο" };
+  var LOW = { en: ["runs out in about {d} days", "none left", "running low", "runs out in about a day"],
+              el: ["φτάνει για περίπου {d} μέρες", "τελείωσε", "τελειώνει", "φτάνει για περίπου μία μέρα"] };
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function medRows(C, d, ctx, lang) {
+    if (typeof C.dosesOn !== "function" || !Array.isArray(d.md) || !d.md.length) return [];
+    var live = { dl: d.dl, md: d.md.filter(function (m) { return !m.ar; }) }, out = [];
+    C.dosesOn(live, ctx.today, ctx.now).forEach(function (r) {
+      if (r.state === "taken" || r.state === "skipped") return;
+      var hm = pad2(Math.floor(r.tm / 60)) + ":" + pad2(r.tm % 60);
+      out.push({ id: "dose@" + r.key, due: ctx.today, time: hm, title: r.med.n + (r.med.s ? " " + r.med.s : ""),
+                 text: MED[lang], kind: "task", target: { meds: true } });
+    });
+    C.lowStock(d, ctx.now).forEach(function (x) {
+      var w = LOW[lang], txt = x.left <= 0 ? w[1] : x.days === null ? w[2] : x.days < 2 ? w[3] : w[0].replace("{d}", x.days);
+      out.push({ id: "low@" + x.md, due: null, time: null, title: x.med.n + (x.med.s ? " " + x.med.s : "") + ": " + txt,
+                 text: "", kind: "info", target: { meds: true } });
+    });
+    return out;
+  }
 
   var PROVIDER = {
     id: "health",
@@ -44,10 +69,10 @@
           kind: "task",
           target: { kind: s.t }
         };
-      });
+      }).concat(medRows(C, d, ctx, lang));
     },
     open: function (target, win) {
-      var kind = target && typeof target.kind === "string" ? target.kind : "";
+      var kind = target && target.meds ? "meds" : target && typeof target.kind === "string" ? target.kind : "";
       if (kind && typeof win.__orosOpenHealth === "function") win.__orosOpenHealth(kind);
       else if (typeof win.__orosOpenApp === "function") win.__orosOpenApp("health");
     }
