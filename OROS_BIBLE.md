@@ -6623,3 +6623,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Never runs by itself: apps set to Ask first appear together on one consent card with the lines that would be sent (each can be unticked); Always apps are sent without the card, Never apps are not read. A briefing never changes or deletes anything. Shown only for a provider that can read data.
 - Files: `assistant/core.js` section 3d (`briefPlan`, `briefKeep`, `briefText`), `assistant/assistant.js` section 7d (`startBriefing`, `briefConsent`), Today opens `__orosOpenAt("assistant", { brief: 1 })`; help EN/EL for both apps. sw.js precache: nothing new.
   - Tests: tests/assistant-brief.test.js; real shell at 360 px EN/EL with a mocked Claude by the owner. Not tested: a real Claude key, Safari, real phone.
+
+### 2026-10-14 — Single apps, wave 5: business (#362) — 2.15.00
+- orOS Invoices, orOS CRM (EL "orOS Πελάτες") and orOS Timesheet install on their own (SOLO-1): `/<id>/solo.html`, manifests, icons.
+- Shortcuts: Invoices `newDoc: "inv" | "rcpt"`, CRM `newCust`, Timesheet `toggle` (= `__orosTimesheetToggle`) and `newEntry`. Shares: `invoice` → a new invoice with the text as notes (unsaved), `customer` → New customer form (first line = name, e-mail / phone found in the text, rest = note).
+  - Tests: tests/solo.test.js wave 5; Chromium probe of every shortcut and share, manifest install check. Not tested: real Android / Windows install, long-press shortcuts, the Share sheet.
