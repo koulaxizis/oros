@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Wiki — pure core (v1.1.0)
+// orOS Wiki — pure core (v1.2.0)
 // Shared by the app (wiki.js), the search provider and the tests.
 // No DOM access except render*(), which takes a document and builds
 // nodes with createElement / createTextNode only (never innerHTML),
@@ -23,7 +23,7 @@
   "use strict";
 
   // ---------- 1. Constants + helpers ----------
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
   var DATA_KEY = "oros-wiki-data";
   var PREFS_KEY = "oros-wiki-prefs";
   var DRAFT_KEY = "oros-wiki-draft";
@@ -1503,7 +1503,7 @@
     diffSeq: diffSeq, diffText: diffText, diffStats: diffStats, diffContext: diffContext,
     render: render, renderInline: renderInline, renderBlocks: renderBlocks, renderToc: renderToc,
     revDir: revDir, revName: revName, revPath: revPath, parseRevName: parseRevName, revFile: revFile, parseRevFile: parseRevFile,
-    IMG_RE: IMG_RE, fileParts: fileParts, splitTop: splitTop, renderRefs: renderRefs,
+    IMG_RE: IMG_RE, fileParts: fileParts, fileEnd: fileEnd, splitTop: splitTop, renderRefs: renderRefs,
     escCell: escCell, tableText: tableText, tableAt: tableAt, templates: templates, blockAt: blockAt,
     iboxParse: iboxParse, iboxText: iboxText, fileText: fileText, galleryText: galleryText,
     escMd: escMd, citeText: citeText, nextRefName: nextRefName, addRef: addRef, images: images

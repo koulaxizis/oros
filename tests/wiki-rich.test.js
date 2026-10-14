@@ -245,7 +245,9 @@ test("wiring: assets + pdf scripts, toolbar tools, hydrate sets src only from bl
   for (const k of ["img", "gal", "ibox", "cite", "table"]) assert.match(js, new RegExp('\\["' + k + '", '));
   // the only places that set a picture's src
   const srcs = js.match(/\w+\.src = [^;]+;/g) || [];
-  assert.deepEqual(srcs.sort(), ["box.src = im.src;", "im.src = imgUrls[id];", "im.src = u;", 'sc.src = "../vendor/jspdf.umd.min.js";'].sort());
+  assert.deepEqual(srcs.sort(), ["box.src = im.src;", "im.src = imgUrls[id];", "im.src = u;", 'sc.src = "../vendor/jspdf.umd.min.js";', "sc.src = src;"].sort());
+  // the one generic loader (wave 3) only ever loads our own zip.js
+  assert.deepEqual(js.match(/loadScript\("[^"]*"/g), ['loadScript("../atelier/zip.js"']);
   assert.match(js, /imgUrls\[id\] = URL\.createObjectURL\(b\)/);
   // help pages describe the new tools
   assert.match(read("wiki/help.en.txt"), /infobox/i);
