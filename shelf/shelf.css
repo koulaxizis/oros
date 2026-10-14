@@ -516,3 +516,30 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .lk-m { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 
 [hidden] { display: none !important; }
+
+/* ---------- 1.5.0: covers found online, credits, reading stats ---------- */
+.cover { overflow: hidden; }
+.cv-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; background: var(--panel-bg); }
+.it-credit { margin-top: 14px; font-size: 11px; line-height: 1.45; color: var(--text-dim); overflow-wrap: anywhere; }
+.it-credit p + p { margin-top: 2px; }
+.it-credit a { color: inherit; text-decoration: underline; }
+.cv-row { display: flex; gap: 12px; align-items: flex-start; }
+.cv-row-b { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; overflow-wrap: anywhere; }
+.cv-row-b .dlg-btn { flex: 0 0 auto; padding: 0 14px; }
+.lk-src { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.lk-src-l { font-size: 13px; color: var(--text-dim); margin-right: 2px; }
+.lk-res.has-img { flex-direction: row; align-items: center; gap: 10px; }
+.lk-img { width: 36px; height: 54px; object-fit: cover; border-radius: 3px; flex: 0 0 36px; background: var(--border); }
+.lk-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.g-plan { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+.rd-l { margin-top: 14px; }
+.days30 { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; height: 64px; align-items: end; margin-top: 6px; }
+.d30 { height: 100%; display: flex; align-items: flex-end; background: var(--border); border-radius: 2px; overflow: hidden; }
+.d30 i { display: block; width: 100%; background: var(--accent); }
+#goal-box { margin: 0 0 10px; }
+.goal-strip {
+  display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--accent-soft); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.goal-strip:hover { border-color: var(--accent); }
+.goal-strip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

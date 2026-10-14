@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Media Shelf — App logic (v1.4.0)
+// orOS Media Shelf — App logic (v1.5.0)
 // A wishlist and tracker for books, films, series, music,
 // podcasts and games.
 //   - four states: Want → Now → Done, or Dropped; every start,
@@ -154,6 +154,26 @@
       "lk.offline": "You are offline. Fill in the details by hand or try again later.",
       "lk.fail": "Could not reach {host}. Try again later.", "lk.needTitle": "Type a title first",
       "lk.filled": "Filled in. Check it and Save",
+      "lk.from": "Search on", "lk.wd": "Wikidata", "lk.tmdb": "TMDB",
+      "lk.more": "Getting the details…",
+      "lk.cc0": "Details from Wikidata (CC0). Pictures from Wikimedia Commons, each under its own free licence.",
+      "tmdb.notice": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+      "menu.tmdb": "Film and series details (TMDB key)", "tmdb.title": "TMDB key (optional)",
+      "tmdb.text": "Films and series are looked up on Wikidata, with no key. If you have a free TMDB account you can also search TMDB, which has more posters: paste your own API key (v3) or API read access token here. It stays on this device and is sent only to api.themoviedb.org, only when you search.",
+      "tmdb.key": "Your TMDB API key or read access token", "tmdb.get": "Get a key on themoviedb.org",
+      "tmdb.bad": "That doesn't look like a TMDB key", "tmdb.saved": "TMDB key saved on this device",
+      "tmdb.removed": "TMDB key removed", "tmdb.remove": "Remove key",
+      "lk.badKey": "TMDB did not accept your key. Check it in More → Film and series details.",
+      "cv.label": "Cover", "cv.remove": "Remove cover", "cv.removed": "The cover will be removed when you save",
+      "cv.commons": "Cover: {by} · {lic} · Wikimedia Commons", "cv.commonsNo": "Cover: Wikimedia Commons",
+      "cv.tmdb": "Poster and details: TMDB", "cv.wd": "Details: Wikidata (CC0)",
+      "rd.title": "Reading in {y}", "rd.pages": "Pages read", "rd.perDay": "Pages a day",
+      "rd.days": "Days you read", "rd.streak": "Days in a row", "rd.best": "Best day",
+      "rd.last": "The last 30 days", "rd.none": "Log your page in a book you're reading, and your pages per day show up here.",
+      "rd.bestV": "{n} on {d}",
+      "plan.left": "{n} to go · {d} days left", "plan.week": "About {n} a week", "plan.month": "about {n} a month",
+      "plan.pages": "about {n} pages a day", "plan.proj": "At this pace: about {n} by the end of the year",
+      "goal.strip": "Reading goal {y}: {v} of {n} books",
       "toast.added": "Added to your shelf", "toast.saved": "Saved", "toast.deleted": "“{t}” deleted",
       "toast.undo": "Undo", "toast.save": "Could not save: storage is full",
       "toast.needTitle": "Give it a title", "toast.max": "Up to {n} titles",
@@ -242,6 +262,26 @@
       "lk.offline": "Είσαι εκτός σύνδεσης. Συμπλήρωσε τα στοιχεία με το χέρι ή δοκίμασε αργότερα.",
       "lk.fail": "Δεν ήταν δυνατή η σύνδεση με το {host}. Δοκίμασε αργότερα.", "lk.needTitle": "Γράψε πρώτα έναν τίτλο",
       "lk.filled": "Συμπληρώθηκε. Έλεγξέ το και πάτα Αποθήκευση",
+      "lk.from": "Αναζήτηση στο", "lk.wd": "Wikidata", "lk.tmdb": "TMDB",
+      "lk.more": "Φέρνω τα στοιχεία…",
+      "lk.cc0": "Στοιχεία από το Wikidata (CC0). Εικόνες από τα Wikimedia Commons, η καθεμιά με τη δική της ελεύθερη άδεια.",
+      "tmdb.notice": "Αυτό το προϊόν χρησιμοποιεί το TMDB API αλλά δεν είναι εγκεκριμένο ή πιστοποιημένο από το TMDB.",
+      "menu.tmdb": "Στοιχεία ταινιών και σειρών (κλειδί TMDB)", "tmdb.title": "Κλειδί TMDB (προαιρετικό)",
+      "tmdb.text": "Οι ταινίες και οι σειρές αναζητούνται στο Wikidata, χωρίς κλειδί. Αν έχεις δωρεάν λογαριασμό στο TMDB, μπορείς να ψάχνεις και εκεί, που έχει περισσότερες αφίσες: επικόλλησε εδώ το δικό σου API key (v3) ή το read access token. Μένει σε αυτή τη συσκευή και στέλνεται μόνο στο api.themoviedb.org, μόνο όταν ψάχνεις.",
+      "tmdb.key": "Το API key ή το read access token σου στο TMDB", "tmdb.get": "Πάρε κλειδί στο themoviedb.org",
+      "tmdb.bad": "Αυτό δεν μοιάζει με κλειδί TMDB", "tmdb.saved": "Το κλειδί TMDB αποθηκεύτηκε σε αυτή τη συσκευή",
+      "tmdb.removed": "Το κλειδί TMDB αφαιρέθηκε", "tmdb.remove": "Αφαίρεση κλειδιού",
+      "lk.badKey": "Το TMDB δεν δέχτηκε το κλειδί σου. Έλεγξέ το στο Περισσότερα → Στοιχεία ταινιών και σειρών.",
+      "cv.label": "Εξώφυλλο", "cv.remove": "Αφαίρεση εξωφύλλου", "cv.removed": "Το εξώφυλλο θα φύγει όταν πατήσεις Αποθήκευση",
+      "cv.commons": "Εξώφυλλο: {by} · {lic} · Wikimedia Commons", "cv.commonsNo": "Εξώφυλλο: Wikimedia Commons",
+      "cv.tmdb": "Αφίσα και στοιχεία: TMDB", "cv.wd": "Στοιχεία: Wikidata (CC0)",
+      "rd.title": "Διάβασμα το {y}", "rd.pages": "Σελίδες που διάβασες", "rd.perDay": "Σελίδες τη μέρα",
+      "rd.days": "Μέρες με διάβασμα", "rd.streak": "Μέρες στη σειρά", "rd.best": "Καλύτερη μέρα",
+      "rd.last": "Οι τελευταίες 30 μέρες", "rd.none": "Γράψε τη σελίδα σου σε ένα βιβλίο που διαβάζεις και εδώ θα δεις τις σελίδες σου τη μέρα.",
+      "rd.bestV": "{n} στις {d}",
+      "plan.left": "Μένουν {n} · {d} μέρες ακόμα", "plan.week": "Περίπου {n} την εβδομάδα", "plan.month": "περίπου {n} τον μήνα",
+      "plan.pages": "περίπου {n} σελίδες τη μέρα", "plan.proj": "Με αυτόν τον ρυθμό: περίπου {n} ως το τέλος της χρονιάς",
+      "goal.strip": "Στόχος ανάγνωσης {y}: {v} από {n} βιβλία",
       "toast.added": "Μπήκε στο ράφι σου", "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Το «{t}» διαγράφηκε",
       "toast.undo": "Αναίρεση", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.needTitle": "Δώσε έναν τίτλο", "toast.max": "Έως {n} τίτλοι",
@@ -346,8 +386,13 @@
   function parseTags(s) { return normTags(String(s || "").split(",")); }
 
   var ITEM_KEYS = ["id", "m", "a", "type", "title", "by", "year", "size", "fmt", "plat", "st",
-                   "prio", "rate", "fav", "tags", "rev", "src", "col", "rel"];
+                   "prio", "rate", "fav", "tags", "rev", "src", "col", "rel",
+                   "cov", "cvby", "cvlc", "cvpg", "wd", "tmdb"];
   var EXTRA_RE = /^[a-z][a-z0-9]{0,15}$/;
+  var COV_RE = /^https:\/\/(upload\.wikimedia\.org|image\.tmdb\.org)\/[^\s"'<>\\]{1,460}$/;
+  var CVPG_RE = /^https:\/\/commons\.wikimedia\.org\/wiki\/[^\s"'<>\\]{1,440}$/;
+  var WD_RE = /^Q[1-9][0-9]{0,11}$/;
+  var TMDB_RE = /^(movie|tv)\/[1-9][0-9]{0,11}$/;
 
   function normItem(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
@@ -368,6 +413,17 @@
     // Release date (YYYY-MM-DD, since 1.2.0): only present when set, so
     // items without one keep their 1.1 bytes.
     if (isYmd(x.rel)) o.rel = x.rel;
+    // Cover and source ids found online (1.5.0): only present when set;
+    // only https pictures on the two image hosts, the credit as text.
+    if (typeof x.cov === "string" && COV_RE.test(x.cov)) {
+      o.cov = x.cov;
+      var cb = clipLine(x.cvby, BY_LEN), cl = clipLine(x.cvlc, 60);
+      if (cb) o.cvby = cb;
+      if (cl) o.cvlc = cl;
+      if (typeof x.cvpg === "string" && CVPG_RE.test(x.cvpg)) o.cvpg = x.cvpg;
+    }
+    if (typeof x.wd === "string" && WD_RE.test(x.wd)) o.wd = x.wd;
+    if (typeof x.tmdb === "string" && TMDB_RE.test(x.tmdb)) o.tmdb = x.tmdb;
     // Forward compatibility: a field this version does not know rides
     // along (flat name, string <= 500 / finite number / boolean, at
     // most 16, sorted), so a newer device's additions survive here.
@@ -846,6 +902,295 @@
     return out;
   }
 
+  // Films and series (1.5.0): Wikidata (CC0, no key) or, when the user
+  // has entered their own key, TMDB. Both only on a tap. Wikidata:
+  // wbsearchentities finds items by name, wbgetentities reads their
+  // class, date, runtime / episodes, director / creator and picture;
+  // the picture's credit and licence come from Wikimedia Commons.
+  // Answers are plain data, clipped like typed input.
+  var WD_API = "https://www.wikidata.org/w/api.php?format=json&origin=*&";
+  var CM_API = "https://commons.wikimedia.org/w/api.php?format=json&origin=*&";
+  var TMDB_API = "https://api.themoviedb.org/3/";
+  var TMDB_IMG = "https://image.tmdb.org/t/p/w342";
+  // Classes (P31) that count as a film or a series.
+  var WD_CLASSES = {
+    film: ["Q11424", "Q24869", "Q506240", "Q202866", "Q226730", "Q24862", "Q229390", "Q93204", "Q20667187"],
+    series: ["Q5398426", "Q1259759", "Q581714", "Q117467246", "Q63952888", "Q526877", "Q21191270", "Q15416"]
+  };
+  function lkLang(lang) { return lang === "el" ? "el" : "en"; }
+  function wdSearchUrl(title, lang) {
+    title = clipLine(title, TITLE_LEN);
+    if (!title) return "";
+    lang = lkLang(lang);
+    return WD_API + "action=wbsearchentities&type=item&limit=20&language=" + lang + "&uselang=" + lang +
+      "&search=" + encodeURIComponent(title);
+  }
+  // → [{ id, label, desc }] in the order Wikidata ranked them.
+  function parseWdSearch(json) {
+    var out = [], seen = {};
+    var list = json && Array.isArray(json.search) ? json.search : [];
+    list.forEach(function (h) {
+      if (!h || typeof h !== "object" || typeof h.id !== "string" || !WD_RE.test(h.id) || seen[h.id]) return;
+      seen[h.id] = 1;
+      out.push({ id: h.id, label: clipLine(h.label, TITLE_LEN), desc: clipLine(h.description, 200) });
+    });
+    return out;
+  }
+  function wdEntitiesUrl(ids, lang, props) {
+    ids = (ids || []).filter(function (x) { return WD_RE.test(x); }).slice(0, 50);
+    if (!ids.length) return "";
+    lang = lkLang(lang);
+    return WD_API + "action=wbgetentities&props=" + encodeURIComponent(props || "claims|labels") +
+      "&languages=" + encodeURIComponent(lang === "en" ? "en" : lang + "|en") + "&ids=" + encodeURIComponent(ids.join("|"));
+  }
+  function wdValues(ent, prop) {
+    var cl = ent && ent.claims && Array.isArray(ent.claims[prop]) ? ent.claims[prop] : [];
+    var out = [];
+    cl.forEach(function (c) {
+      if (!c || c.rank === "deprecated" || !c.mainsnak || c.mainsnak.snaktype !== "value" || !c.mainsnak.datavalue) return;
+      out.push(c.mainsnak.datavalue.value);
+    });
+    return out;
+  }
+  function wdIds(ent, prop) {
+    return wdValues(ent, prop).map(function (v) { return v && typeof v === "object" ? v.id : ""; })
+      .filter(function (x) { return typeof x === "string" && WD_RE.test(x); });
+  }
+  function wdLabel(ent, lang) {
+    var L = ent && ent.labels && typeof ent.labels === "object" ? ent.labels : {};
+    var x = L[lkLang(lang)] || L.en;
+    return x && typeof x.value === "string" ? clipLine(x.value, TITLE_LEN) : "";
+  }
+  var WD_UNITS = { Q7727: 1, Q11574: 1 / 60, Q25235: 60 };      // minute, second, hour
+  // → candidates { title, by: "", byIds[], year, size, rel, wd, img, desc }
+  // in search order, only items of the type's classes.
+  function parseWdEntities(type, json, hits, lang) {
+    var ents = json && json.entities && typeof json.entities === "object" ? json.entities : {};
+    var cls = WD_CLASSES[type] || [], out = [];
+    (hits || []).forEach(function (h) {
+      var e = ents[h.id];
+      if (!e || typeof e !== "object" || out.length >= LOOKUP_MAX) return;
+      var isA = wdIds(e, "P31");
+      if (!isA.some(function (q) { return cls.indexOf(q) >= 0; })) return;
+      // the earliest publication date; a day only with day precision
+      var best = null;
+      wdValues(e, "P577").forEach(function (v) {
+        var m = v && typeof v.time === "string" ? /^\+(\d{4})-(\d{2})-(\d{2})T/.exec(v.time) : null;
+        if (!m || !(v.precision >= 9)) return;
+        var d = { y: +m[1], ymd: m[1] + "-" + m[2] + "-" + m[3], day: v.precision >= 11 };
+        if (!best || d.ymd < best.ymd) best = d;
+      });
+      var size = 0;
+      if (type === "film") {
+        wdValues(e, "P2047").some(function (v) {
+          var u = v && typeof v.unit === "string" ? WD_UNITS[v.unit.replace(/^.*\//, "")] : 0;
+          var a = v ? parseFloat(v.amount) : NaN;
+          if (!u || !isFinite(a) || a <= 0) return false;
+          size = Math.round(a * u);
+          return true;
+        });
+      } else {
+        wdValues(e, "P1113").some(function (v) {
+          var a = v ? parseFloat(v.amount) : NaN;
+          if (!isFinite(a) || a <= 0) return false;
+          size = Math.round(a);
+          return true;
+        });
+      }
+      var byIds = wdIds(e, type === "film" ? "P57" : "P170");
+      if (!byIds.length && type === "series") byIds = wdIds(e, "P57");
+      var img = "";
+      wdValues(e, "P3383").concat(wdValues(e, "P18")).some(function (v) {
+        if (typeof v === "string" && v.length <= 240 && !/[\/\\<>"|\u0000-\u001f]/.test(v)) { img = v; return true; }
+        return false;
+      });
+      out.push({
+        title: wdLabel(e, lang) || h.label, by: "", byIds: byIds.slice(0, 3),
+        year: best && best.y >= 1 && best.y <= 9999 ? best.y : 0, rel: best && best.day && isYmd(best.ymd) ? best.ymd : "",
+        size: intIn(size, 1, MAX_SIZE, 0), wd: h.id, img: img, desc: h.desc || ""
+      });
+    });
+    return out;
+  }
+  // { Qid: label } from a labels-only wbgetentities answer.
+  function parseWdLabels(json, lang) {
+    var ents = json && json.entities && typeof json.entities === "object" ? json.entities : {}, out = {};
+    Object.keys(ents).forEach(function (id) {
+      if (!WD_RE.test(id)) return;
+      var l = wdLabel(ents[id], lang);
+      if (l) out[id] = clipLine(l, BY_LEN);
+    });
+    return out;
+  }
+  function commonsUrl(file) {
+    if (typeof file !== "string" || !file) return "";
+    return CM_API + "action=query&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=320" +
+      "&iiextmetadatafilter=Artist%7CLicenseShortName&titles=" + encodeURIComponent("File:" + file);
+  }
+  // → { cov, cvby, cvlc, cvpg } or null: the thumbnail and its credit.
+  function parseCommons(json) {
+    var pages = json && json.query && json.query.pages && typeof json.query.pages === "object" ? json.query.pages : {};
+    var out = null;
+    Object.keys(pages).some(function (k) {
+      var ii = pages[k] && Array.isArray(pages[k].imageinfo) ? pages[k].imageinfo[0] : null;
+      if (!ii || typeof ii.thumburl !== "string" || !COV_RE.test(ii.thumburl)) return false;
+      var md = ii.extmetadata && typeof ii.extmetadata === "object" ? ii.extmetadata : {};
+      function meta(n) { return md[n] && typeof md[n].value === "string" ? md[n].value : ""; }
+      out = { cov: ii.thumburl, cvby: clipLine(stripHtml(meta("Artist")), BY_LEN), cvlc: clipLine(stripHtml(meta("LicenseShortName")), 60) };
+      if (typeof ii.descriptionurl === "string" && CVPG_RE.test(ii.descriptionurl)) out.cvpg = ii.descriptionurl;
+      return true;
+    });
+    return out;
+  }
+  // TMDB with the user's own key: a v3 API key goes in the address, a
+  // v4 read access token (a long JWT) in the Authorization header.
+  function tmdbKeyOk(k) { return typeof k === "string" && /^[A-Za-z0-9._-]{16,600}$/.test(k); }
+  function tmdbReq(path, params, key) {
+    if (!tmdbKeyOk(key)) return null;
+    var bearer = key.length > 40;
+    var q = Object.keys(params).sort(cmpStr).map(function (k) { return k + "=" + encodeURIComponent(params[k]); });
+    if (!bearer) q.push("api_key=" + encodeURIComponent(key));
+    var headers = { Accept: "application/json" };
+    if (bearer) headers.Authorization = "Bearer " + key;
+    return { url: TMDB_API + path + "?" + q.join("&"), headers: headers };
+  }
+  function tmdbKind(type) { return type === "film" ? "movie" : "tv"; }
+  function tmdbLang(lang) { return lang === "el" ? "el-GR" : "en-US"; }
+  function tmdbSearchReq(type, title, key, lang) {
+    title = clipLine(title, TITLE_LEN);
+    if (!title || !WD_CLASSES[type]) return null;
+    return tmdbReq("search/" + tmdbKind(type), { query: title, include_adult: "false", language: tmdbLang(lang) }, key);
+  }
+  function tmdbDetailsReq(type, ref, key, lang) {
+    if (!TMDB_RE.test(ref || "")) return null;
+    var p = { language: tmdbLang(lang) };
+    if (type === "film") p.append_to_response = "credits";
+    return tmdbReq(ref, p, key);
+  }
+  function tmdbPoster(p) {
+    return typeof p === "string" && /^\/[A-Za-z0-9_-]{1,120}\.(jpg|jpeg|png|webp)$/i.test(p) ? TMDB_IMG + p : "";
+  }
+  function parseTmdbSearch(type, json) {
+    var out = [];
+    var list = json && Array.isArray(json.results) ? json.results : [];
+    list.forEach(function (r) {
+      if (!r || typeof r !== "object" || !isInt(r.id) || r.id <= 0 || out.length >= LOOKUP_MAX) return;
+      var date = type === "film" ? r.release_date : r.first_air_date;
+      if (!isYmd(date)) date = "";
+      var title = clipLine(type === "film" ? r.title : r.name, TITLE_LEN);
+      if (!title) return;
+      var c = { title: title, by: "", year: date ? +date.slice(0, 4) : 0, rel: date, size: 0,
+                tmdb: tmdbKind(type) + "/" + r.id, desc: clipLine(r.overview, 200) };
+      var cov = tmdbPoster(r.poster_path);
+      if (cov) c.cov = cov;
+      out.push(c);
+    });
+    return out;
+  }
+  // → { by, size } from a details answer (director / creators, runtime / episodes).
+  function parseTmdbDetails(type, json) {
+    var out = { by: "", size: 0 };
+    if (!json || typeof json !== "object") return out;
+    function names(list) {
+      return (Array.isArray(list) ? list : []).map(function (p) { return p && typeof p.name === "string" ? clipLine(p.name, BY_LEN) : ""; })
+        .filter(Boolean).slice(0, 3).join(", ");
+    }
+    if (type === "film") {
+      var crew = json.credits && Array.isArray(json.credits.crew) ? json.credits.crew : [];
+      out.by = names(crew.filter(function (p) { return p && p.job === "Director"; }));
+      out.size = intIn(json.runtime, 1, MAX_SIZE, 0);
+    } else {
+      out.by = names(json.created_by);
+      out.size = intIn(json.number_of_episodes, 1, MAX_SIZE, 0);
+    }
+    out.by = clipLine(out.by, BY_LEN);
+    return out;
+  }
+  // Where an item's cover came from: "commons" | "tmdb" | "".
+  function coverSource(it) {
+    if (!it || !it.cov) return "";
+    return /^https:\/\/image\.tmdb\.org\//.test(it.cov) ? "tmdb" : "commons";
+  }
+
+  // ---------- 4e. Reading: pages per day, the yearly goal plan ----------
+  // Pages read per day ("YYYY-MM-DD" → pages) from the log of print and
+  // e-books: every page logged past the previous one counts on the day
+  // it was logged; a finish counts the pages still left that day (a
+  // book marked done with no progress counts whole on its finish day,
+  // which is how imported books count). A new start (re-read) begins
+  // again from page 0. Audiobooks are not pages.
+  function pagesByDay(D) {
+    var by = {}, books = {}, per = {};
+    D.items.forEach(function (it) { if (it.type === "book" && it.fmt !== "a") books[it.id] = it; });
+    D.sess.forEach(function (s) { if (books[s.it]) (per[s.it] || (per[s.it] = [])).push(s); });
+    Object.keys(per).sort(cmpStr).forEach(function (id) {
+      var it = books[id], cur = 0;
+      per[id].sort(cmpSess).forEach(function (s) {
+        var add = 0;
+        if (s.k === "s") { cur = 0; return; }
+        if (s.k === "p" && s.v > cur) { add = s.v - cur; cur = s.v; }
+        else if (s.k === "d" && it.size > cur) { add = it.size - cur; cur = it.size; }
+        if (add > 0) by[s.d] = (by[s.d] || 0) + add;
+      });
+    });
+    return by;
+  }
+  function ymdOfNum(n) {
+    var d = new Date(n * 86400000);
+    return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate());
+  }
+  // Pages in a year: total, reading days, pages per day over the days
+  // gone by (the whole year once it is over), the best day, the streak
+  // of days in a row up to today (or yesterday, today not read yet)
+  // and the last 30 days.
+  function readingSummary(byDay, year, today) {
+    var y = String(year), total = 0, days = 0, best = null;
+    Object.keys(byDay).sort(cmpStr).forEach(function (d) {
+      if (d.slice(0, 4) !== y || !(byDay[d] > 0)) return;
+      total += byDay[d];
+      days++;
+      if (!best || byDay[d] > best.n) best = { d: d, n: byDay[d] };
+    });
+    var d0 = dayNum(y + "-01-01"), d1 = dayNum((year + 1) + "-01-01"), tn = dayNum(today);
+    var span = tn < d0 ? 0 : Math.min(tn, d1 - 1) - d0 + 1;
+    var k = tn, streak = 0;
+    if (!(byDay[ymdOfNum(k)] > 0)) k--;
+    while (byDay[ymdOfNum(k)] > 0 && streak < 3660) { streak++; k--; }
+    var last = [];
+    for (var i = 29; i >= 0; i--) { var dd = ymdOfNum(tn - i); last.push({ d: dd, n: byDay[dd] || 0 }); }
+    return { total: total, days: days, best: best, span: span, perDay: span ? total / span : 0, streak: streak, last: last };
+  }
+  // Average pages of the print and e-books finished in a year (else of
+  // every such book with a page count); 0 when nothing is known.
+  function avgBookPages(D, year) {
+    var live = {}, y = String(year), n = 0, sum = 0, seen = {};
+    D.items.forEach(function (it) { if (it.type === "book" && it.fmt !== "a" && it.size > 0) live[it.id] = it; });
+    D.sess.forEach(function (s) {
+      if (s.k !== "d" || s.d.slice(0, 4) !== y || !live[s.it] || seen[s.it]) return;
+      seen[s.it] = 1; n++; sum += live[s.it].size;
+    });
+    if (!n) Object.keys(live).forEach(function (id) { n++; sum += live[id].size; });
+    return n ? Math.round(sum / n) : 0;
+  }
+  // What a yearly goal of n titles (done so far) needs from here on:
+  // { left, daysLeft (today included), perWeek, perMonth, projected
+  // (the whole year at the pace so far), pagesPerDay (books, from the
+  // average book) }.
+  function goalPlan(n, done, year, today, pagesPerBook) {
+    var ty = +today.slice(0, 4);
+    var d0 = dayNum(year + "-01-01"), d1 = dayNum((year + 1) + "-01-01"), tn = dayNum(today);
+    var len = d1 - d0, left = Math.max(0, n - done);
+    var daysLeft = year < ty ? 0 : (year > ty ? len : d1 - tn);
+    var gone = year < ty ? len : (year > ty ? 0 : tn - d0 + 1);
+    return {
+      left: left, daysLeft: daysLeft,
+      perWeek: daysLeft && left ? left * 7 / daysLeft : 0,
+      perMonth: daysLeft && left ? left * len / 12 / daysLeft : 0,
+      projected: gone ? Math.round(done * len / gone) : 0,
+      pagesPerDay: daysLeft && left && pagesPerBook > 0 ? Math.ceil(left * pagesPerBook / daysLeft) : 0
+    };
+  }
+
   // ---------- 4d. Library link (BR-LIB-SHELF) ----------
   // A book can carry `lib`, the id of the same book in Library ("b" + 16
   // hex; an extra field, so it rides along everywhere). Library's data
@@ -936,7 +1281,9 @@
       tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "now",
       type: p.type === "all" || TYPES.indexOf(p.type) >= 0 ? p.type : "all",
       sort: SORTS.indexOf(p.sort) >= 0 ? p.sort : "recent",
-      lk: p.lk === 1 ? 1 : 0          // said yes to the online lookup note
+      lk: p.lk === 1 ? 1 : 0,         // said yes to the online lookup note (books, music)
+      lkw: p.lkw === 1 ? 1 : 0,       // ... and to Wikidata (films, series; 1.5.0)
+      lks: p.lks === "wd" || p.lks === "tmdb" ? p.lks : ""   // films / series: last source used
     };
   }
   function savePrefs() {
@@ -1205,6 +1552,19 @@
     var ic = el("span", "cv-ic");
     ic.innerHTML = UI[it.type];
     c.appendChild(ic);
+    // A picture found online (normItem allows only https on the two
+    // image hosts) covers the generated one; offline or broken, the
+    // generated cover stays.
+    if (it.cov) {
+      var img = el("img", "cv-img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.referrerPolicy = "no-referrer";
+      img.addEventListener("error", function () { img.remove(); });
+      img.src = it.cov;
+      c.appendChild(img);
+    }
     return c;
   }
 
@@ -1271,10 +1631,17 @@
     var ul = $("list"), empty = $("empty");
     ul.textContent = "";
     empty.textContent = "";
-    if (prefs.tab === "stats") { ul.hidden = true; empty.hidden = true; return; }
+    if (prefs.tab === "stats") { ul.hidden = true; empty.hidden = true; if ($("goal-box")) $("goal-box").hidden = true; return; }
     ul.hidden = false;
     var q = $("q").value.trim();
     var list = viewList(data, prefs.tab, prefs.type, q, prefs.sort);
+    var gsBox = $("goal-box");
+    if (gsBox) {
+      gsBox.textContent = "";
+      var gst = q ? null : goalStrip();
+      if (gst) gsBox.appendChild(gst);
+      gsBox.hidden = !gst;
+    }
     list.forEach(function (it) { ul.appendChild(card(it)); });
     empty.hidden = list.length > 0;
     if (!list.length) {
@@ -1522,6 +1889,9 @@
       dlg.appendChild(hs);
     }
 
+    var cred = creditBox(it);
+    if (cred) dlg.appendChild(cred);
+
     var foot = el("div", "dlg-actions");
     foot.appendChild(button(t("act.delete"), "danger", function () { dlg.close(); deleteItem(it); }));
     foot.appendChild(button(t("act.edit"), "", function () { dlg.close(); editDialog(it); }));
@@ -1529,6 +1899,40 @@
     foot.appendChild(cl);
     dlg.appendChild(foot);
     if (dlg.open) hostToast();
+  }
+
+  // Where the cover and the details came from (Commons credit and
+  // licence, Wikidata CC0, the TMDB notice). Links are built here from
+  // checked ids and addresses only, and open in a new tab.
+  function extLink(text, href) {
+    var a = el("a", "", text);
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    return a;
+  }
+  function creditBox(it) {
+    var src = coverSource(it);
+    if (!src && !it.wd && !it.tmdb) return null;
+    var box = el("div", "it-credit");
+    if (src === "commons") {
+      var txt = it.cvby || it.cvlc ? t("cv.commons", { by: it.cvby || "?", lic: it.cvlc || "?" }) : t("cv.commonsNo");
+      var p = el("p");
+      p.appendChild(it.cvpg ? extLink(txt, it.cvpg) : el("span", "", txt));
+      box.appendChild(p);
+    }
+    if (it.wd) {
+      var q = el("p");
+      q.appendChild(extLink(t("cv.wd"), "https://www.wikidata.org/wiki/" + it.wd));
+      box.appendChild(q);
+    }
+    if (it.tmdb || src === "tmdb") {
+      var r = el("p");
+      r.appendChild(it.tmdb ? extLink(t("cv.tmdb"), "https://www.themoviedb.org/" + it.tmdb) : el("span", "", t("cv.tmdb")));
+      box.appendChild(r);
+      box.appendChild(el("p", "", t("tmdb.notice")));
+    }
+    return box;
   }
 
   // ---------- 9. Edit dialog, goals dialog ----------
@@ -1589,6 +1993,26 @@
     lkB.id = "sh-f-lk";
     lkW.appendChild(lkB);
     form.appendChild(lkW);
+    // The cover found online, with a way to drop it.
+    var cvW = el("div", "fld cv-row");
+    form.appendChild(cvW);
+    function drawCover() {
+      cvW.textContent = "";
+      cvW.hidden = !draft.cov;
+      if (!draft.cov) return;
+      cvW.appendChild(cover({ type: draft.type, title: fTitle.value || "?", col: draft.col || 0, cov: draft.cov }));
+      var cb = el("div", "cv-row-b");
+      cb.appendChild(el("div", "dlg-lbl", t("cv.label")));
+      var src = coverSource(draft);
+      cb.appendChild(el("div", "hint", src === "tmdb" ? t("cv.tmdb") :
+        (draft.cvby || draft.cvlc ? t("cv.commons", { by: draft.cvby || "?", lic: draft.cvlc || "?" }) : t("cv.commonsNo"))));
+      cb.appendChild(button(t("cv.remove"), "small", function () {
+        ["cov", "cvby", "cvlc", "cvpg"].forEach(function (k) { delete draft[k]; });
+        drawCover();
+        showToast(t("cv.removed"));
+      }));
+      cvW.appendChild(cb);
+    }
     var row = el("div", "fld-row");
     form.appendChild(row);
     var fYear = field("sh-f-year", t("f.year"), input(0, "number"));
@@ -1645,6 +2069,13 @@
       if (c.year) fYear.value = String(c.year);
       if (c.size && !(draft.type === "book" && fFmt.value === "a")) fSize.value = String(c.size);
       if (c.rel) fRel.value = c.rel;
+      // films / series: the source ids, and the cover when one came
+      if (c.wd) draft.wd = c.wd;
+      if (c.tmdb) draft.tmdb = c.tmdb;
+      if (c.cov) {
+        ["cov", "cvby", "cvlc", "cvpg"].forEach(function (k) { if (c[k]) draft[k] = c[k]; else delete draft[k]; });
+      }
+      drawCover();
       capture();
       showToast(t("lk.filled"));
       fTitle.focus();
@@ -1660,7 +2091,7 @@
       form.querySelector("#sh-f-size-l").textContent = t("size." + uk);
       form.querySelector("#sh-f-fmt-w").hidden = x !== "book";
       form.querySelector("#sh-f-plat-w").hidden = x !== "game";
-      lkW.hidden = !LOOKUP_HOSTS[x];
+      lkW.hidden = !lookupSources(x).length;
       if (fSt) {
         var keep = draft.st;
         fSt.textContent = "";
@@ -1687,6 +2118,7 @@
     fRel.value = draft.rel || "";
     fFmt.addEventListener("change", function () { capture(); layout(); });
     layout();
+    drawCover();
 
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
@@ -1707,14 +2139,16 @@
         fmt: draft.fmt, plat: draft.plat, st: existing ? existing.st : draft.st,
         prio: existing ? existing.prio : 0, rate: existing ? existing.rate : 0,
         fav: existing ? existing.fav : 0, tags: draft.tags, rev: existing ? existing.rev : "",
-        src: draft.src, col: draft.col, rel: draft.rel
+        src: draft.src, col: draft.col, rel: draft.rel,
+        cov: draft.cov, cvby: draft.cvby, cvlc: draft.cvlc, cvpg: draft.cvpg, wd: draft.wd, tmdb: draft.tmdb
       });
       if (!cand) return;
       if (existing) {
         var cur = itemById(existing.id);
         if (cur) {
           var changed = false;
-          ["type", "title", "by", "year", "size", "fmt", "plat", "tags", "src", "col", "rel"].forEach(function (k) {
+          ["type", "title", "by", "year", "size", "fmt", "plat", "tags", "src", "col", "rel",
+           "cov", "cvby", "cvlc", "cvpg", "wd", "tmdb"].forEach(function (k) {
             if (JSON.stringify(cur[k]) === JSON.stringify(cand[k])) return;
             if (cand[k] === undefined) delete cur[k]; else cur[k] = cand[k];
             changed = true;
@@ -1747,30 +2181,137 @@
 
   // Online lookup flow (section 4c): a one-time note on what is sent,
   // then a results dialog over the edit form. Cancel aborts the request.
-  function lookupFlow(draft, pick) {
-    var url = lookupUrl(draft.type, draft.title, draft.by);
-    if (!url) { showToast(t("lk.needTitle")); return; }
-    var host = LOOKUP_HOSTS[draft.type];
-    if (prefs.lk) { lookupRun(draft.type, url, host, pick); return; }
+  // Books: Open Library; music: MusicBrainz; films and series: Wikidata,
+  // or TMDB when this device has the user's own TMDB key (a switch in
+  // the results dialog picks between the two).
+  var SRC_HOST = { ol: "openlibrary.org", mb: "musicbrainz.org", wd: "wikidata.org", tmdb: "themoviedb.org" };
+  var TMDB_KEY = "oros-shelf-tmdb";          // device-local, never synced (R10)
+  function tmdbKey() {
+    var k = "";
+    try { k = localStorage.getItem(TMDB_KEY) || ""; } catch (e) {}
+    return tmdbKeyOk(k) ? k : "";
+  }
+  function lookupSources(type) {
+    if (type === "book") return ["ol"];
+    if (type === "album") return ["mb"];
+    if (WD_CLASSES[type]) return tmdbKey() ? ["wd", "tmdb"] : ["wd"];
+    return [];
+  }
+  function srcAgreed(src) {
+    if (src === "tmdb") return true;                  // entering the key was the yes
+    if (src === "wd") return prefs.lkw === 1;
+    return prefs.lk === 1;
+  }
+  function lookupFlow(draft, pick, want) {
+    var srcs = lookupSources(draft.type);
+    var src = srcs.indexOf(want) >= 0 ? want : (srcs.indexOf(prefs.lks) >= 0 ? prefs.lks : srcs[0]);
+    if (!src) return;
+    if (!clipLine(draft.title, TITLE_LEN)) { showToast(t("lk.needTitle")); return; }
+    if (srcAgreed(src)) { lookupRun(draft, src, srcs, pick); return; }
     var dlg = makeDialog("sh-lk", "lk-dlg");
     dlg.appendChild(el("div", "dlg-title", t("lk.title")));
-    dlg.appendChild(el("p", "csv-p", t("lk.note", { host: host })));
+    dlg.appendChild(el("p", "csv-p", t("lk.note", { host: SRC_HOST[src] })));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
     acts.appendChild(button(t("lk.go"), "primary", function () {
-      prefs.lk = 1;
+      if (src === "wd") prefs.lkw = 1; else prefs.lk = 1;
       savePrefs();
       dlg.close();
-      lookupRun(draft.type, url, host, pick);
+      lookupRun(draft, src, srcs, pick);
     }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
   }
 
-  function lookupRun(type, url, host, pick) {
+  function LookupError(code) { this.code = code; }
+  function fetchJson(url, headers, signal) {
+    if (!url) return Promise.reject(new LookupError("none"));
+    var opts = { headers: headers || { Accept: "application/json" }, credentials: "omit", referrerPolicy: "no-referrer" };
+    if (signal) opts.signal = signal;
+    return fetch(url, opts).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new LookupError("auth");
+      if (!r.ok) throw new LookupError("http");
+      return r.json();
+    });
+  }
+  // → Promise of the candidates of one source.
+  function searchSrc(src, type, title, by, signal) {
+    if (src === "ol" || src === "mb") {
+      return fetchJson(lookupUrl(type, title, by), null, signal).then(function (j) { return parseLookup(type, j); });
+    }
+    if (src === "tmdb") {
+      var rq = tmdbSearchReq(type, title, tmdbKey(), LANG);
+      if (!rq) return Promise.reject(new LookupError("auth"));
+      return fetchJson(rq.url, rq.headers, signal).then(function (j) { return parseTmdbSearch(type, j); });
+    }
+    return fetchJson(wdSearchUrl(title, LANG), null, signal).then(function (j) {
+      var hits = parseWdSearch(j);
+      if (!hits.length) return [];
+      return fetchJson(wdEntitiesUrl(hits.map(function (h) { return h.id; }), LANG), null, signal).then(function (k) {
+        var list = parseWdEntities(type, k, hits, LANG);
+        var ids = [];
+        list.forEach(function (c) { c.byIds.forEach(function (q) { if (ids.indexOf(q) < 0) ids.push(q); }); });
+        if (!ids.length) return list;
+        // the director / creator names, in one more call
+        return fetchJson(wdEntitiesUrl(ids, LANG, "labels"), null, signal).then(function (l) {
+          var names = parseWdLabels(l, LANG);
+          list.forEach(function (c) {
+            c.by = clipLine(c.byIds.map(function (q) { return names[q] || ""; }).filter(Boolean).join(", "), BY_LEN);
+          });
+          return list;
+        }, function () { return list; });
+      });
+    });
+  }
+  // A picked film / series: TMDB's details, or the Commons picture's
+  // credit. A failure here keeps what the search gave.
+  function detailSrc(src, type, c, signal) {
+    if (src === "tmdb") {
+      var rq = tmdbDetailsReq(type, c.tmdb, tmdbKey(), LANG);
+      if (!rq) return Promise.resolve(c);
+      return fetchJson(rq.url, rq.headers, signal).then(function (j) {
+        var d = parseTmdbDetails(type, j);
+        if (d.by) c.by = d.by;
+        if (d.size) c.size = d.size;
+        return c;
+      }, function () { return c; });
+    }
+    if (src === "wd" && c.img) {
+      return fetchJson(commonsUrl(c.img), null, signal).then(function (j) {
+        var cv = parseCommons(j);
+        if (cv) Object.keys(cv).forEach(function (k) { c[k] = cv[k]; });
+        return c;
+      }, function () { return c; });
+    }
+    return Promise.resolve(c);
+  }
+
+  function lookupRun(draft, src, srcs, pick) {
+    var type = draft.type, host = SRC_HOST[src];
     var dlg = makeDialog("sh-lk", "lk-dlg");
     dlg.appendChild(el("div", "dlg-title", t("lk.title")));
+    if (srcs.length > 1) {
+      var sw = el("div", "seg lk-src");
+      sw.setAttribute("role", "radiogroup");
+      sw.setAttribute("aria-label", t("lk.from"));
+      sw.appendChild(el("span", "lk-src-l", t("lk.from")));
+      srcs.forEach(function (s) {
+        var b = el("button", "chip" + (s === src ? " on" : ""), t("lk." + s));
+        b.type = "button";
+        b.setAttribute("role", "radio");
+        b.setAttribute("aria-checked", s === src ? "true" : "false");
+        b.addEventListener("click", function () {
+          if (s === src) return;
+          prefs.lks = s;
+          savePrefs();
+          dlg.close();
+          lookupFlow(draft, pick, s);
+        });
+        sw.appendChild(b);
+      });
+      dlg.appendChild(sw);
+    }
     var body = el("div", "lk-body");
     body.setAttribute("aria-live", "polite");
     body.appendChild(el("p", "hint", t("lk.wait", { host: host })));
@@ -1782,45 +2323,132 @@
     dlg.showModal();
 
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
-    var done = false;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
-    dlg.addEventListener("close", function () { done = true; clearTimeout(timer); if (ctl) ctl.abort(); });
-    function show(list, msg) {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
+    var closed = false, settled = false;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 15000);
+    dlg.addEventListener("close", function () { closed = true; clearTimeout(timer); if (ctl) ctl.abort(); });
+    function message(msg) {
       body.textContent = "";
-      if (msg) { body.appendChild(el("p", "csv-p", msg)); return; }
+      body.appendChild(el("p", "csv-p", msg));
+    }
+    function choose(c) {
+      if (src !== "wd" && src !== "tmdb") { dlg.close(); pick(c); return; }
+      body.textContent = "";
+      body.appendChild(el("p", "hint", t("lk.more")));
+      clearTimeout(timer);
+      timer = setTimeout(function () { if (ctl) ctl.abort(); }, 12000);
+      detailSrc(src, type, c, ctl && ctl.signal).then(function (full) {
+        if (closed) return;
+        dlg.close();
+        pick(full);
+      });
+    }
+    function show(list) {
+      body.textContent = "";
+      if (!list.length) { message(t("lk.none")); return; }
       var ul = el("ul", "lk-list");
       list.forEach(function (c) {
         var li = el("li");
-        var b = el("button", "lk-res");
+        var b = el("button", "lk-res" + (c.cov ? " has-img" : ""));
         b.type = "button";
-        b.appendChild(el("span", "lk-t", c.title));
-        var meta = [c.by, c.rel || (c.year ? String(c.year) : ""),
+        if (c.cov) {
+          var im = el("img", "lk-img");
+          im.alt = "";
+          im.loading = "lazy";
+          im.referrerPolicy = "no-referrer";
+          im.addEventListener("error", function () { im.remove(); });
+          im.src = c.cov;
+          b.appendChild(im);
+        }
+        var tx = el("span", "lk-tx");
+        tx.appendChild(el("span", "lk-t", c.title));
+        var meta = [c.by, c.rel ? fmtDate(c.rel) : (c.year ? String(c.year) : ""),
                     c.size ? fmtNum(c.size) + " " + t("size." + type).toLowerCase() : ""].filter(Boolean).join(" · ");
-        if (meta) b.appendChild(el("span", "lk-m", meta));
-        b.addEventListener("click", function () { dlg.close(); pick(c); });
+        if (meta) tx.appendChild(el("span", "lk-m", meta));
+        if (c.desc && src === "wd") tx.appendChild(el("span", "lk-m", c.desc));
+        b.appendChild(tx);
+        b.addEventListener("click", function () { choose(c); });
         li.appendChild(b);
         ul.appendChild(li);
       });
       body.appendChild(ul);
       body.appendChild(el("p", "hint", t("lk.src", { host: host })));
+      if (src === "wd") body.appendChild(el("p", "hint", t("lk.cc0")));
+      if (src === "tmdb") body.appendChild(el("p", "hint", t("tmdb.notice")));
       var first = ul.querySelector("button");
       if (first) first.focus();
     }
-    if (navigator.onLine === false) { show(null, t("lk.offline")); return; }
-    var opts = { headers: { Accept: "application/json" }, credentials: "omit", referrerPolicy: "no-referrer" };
-    if (ctl) opts.signal = ctl.signal;
-    fetch(url, opts).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    }).then(function (j) {
-      var list = parseLookup(type, j);
-      show(list, list.length ? "" : t("lk.none"));
-    }, function () {
-      show(null, t("lk.fail", { host: host }));
+    if (navigator.onLine === false) { message(t("lk.offline")); return; }
+    searchSrc(src, type, draft.title, draft.by, ctl && ctl.signal).then(function (list) {
+      if (closed || settled) return;
+      settled = true;
+      clearTimeout(timer);
+      show(list);
+    }, function (e) {
+      if (closed || settled) return;
+      settled = true;
+      clearTimeout(timer);
+      message(e && e.code === "auth" && src === "tmdb" ? t("lk.badKey") : t("lk.fail", { host: host }));
     });
+  }
+
+  // The user's own TMDB key, on this device only.
+  function tmdbDialog() {
+    var dlg = makeDialog("sh-tmdb", "lk-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("tmdb.title")));
+    dlg.appendChild(el("p", "csv-p", t("tmdb.text")));
+    var form = el("form");
+    form.noValidate = true;
+    var w = el("div", "fld");
+    var l = el("label", "dlg-lbl", t("tmdb.key"));
+    l.setAttribute("for", "sh-tmdb-in");
+    var inp = el("input");
+    inp.id = "sh-tmdb-in";
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.maxLength = 600;
+    inp.value = tmdbKey();
+    w.appendChild(l);
+    w.appendChild(inp);
+    form.appendChild(w);
+    var lp = el("p", "hint");
+    lp.appendChild(extLink(t("tmdb.get"), "https://www.themoviedb.org/settings/api"));
+    form.appendChild(lp);
+    form.appendChild(el("p", "hint", t("tmdb.notice")));
+    var acts = el("div", "dlg-actions");
+    if (tmdbKey()) {
+      acts.appendChild(button(t("tmdb.remove"), "danger", function () {
+        try { localStorage.removeItem(TMDB_KEY); } catch (e) {}
+        if (prefs.lks === "tmdb") { prefs.lks = ""; savePrefs(); }
+        dlg.close();
+        showToast(t("tmdb.removed"));
+      }));
+    }
+    acts.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
+    var ok = el("button", "dlg-btn primary", t("f.save"));
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var k = inp.value.trim();
+      if (!k) {
+        try { localStorage.removeItem(TMDB_KEY); } catch (x) {}
+        dlg.close();
+        showToast(t("tmdb.removed"));
+        return;
+      }
+      if (!tmdbKeyOk(k)) { showToast(t("tmdb.bad")); inp.focus(); return; }
+      try { localStorage.setItem(TMDB_KEY, k); } catch (x) {}
+      prefs.lks = "tmdb";
+      savePrefs();
+      dlg.close();
+      showToast(t("tmdb.saved"));
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inp.focus();
   }
 
   function randCol() {
@@ -1923,6 +2551,16 @@
       var msg = st.reached ? t("goal.done") : (st.diff > 0 ? t("goal.ahead", { n: st.diff }) :
         (st.diff < 0 ? t("goal.behind", { n: -st.diff }) : t("goal.on")));
       row.appendChild(el("div", "g-msg" + (st.reached ? " ok" : (st.diff < 0 ? " low" : "")), msg));
+      // What it takes from here (this year and next only).
+      if (!st.reached && y >= +td.slice(0, 4)) {
+        var pl = goalPlan(g.n, done, y, td, tp === "book" ? avgBookPages(data, y) : 0);
+        row.appendChild(el("div", "g-plan", t("plan.left", { n: fmtNum(pl.left), d: fmtNum(pl.daysLeft) })));
+        var parts = [t("plan.week", { n: fmtNum(pl.perWeek, pl.perWeek < 10 ? 1 : 0) }),
+                     t("plan.month", { n: fmtNum(pl.perMonth, pl.perMonth < 10 ? 1 : 0) })];
+        if (pl.pagesPerDay) parts.push(t("plan.pages", { n: fmtNum(pl.pagesPerDay) }));
+        row.appendChild(el("div", "g-plan", parts.join(", ")));
+        if (y === +td.slice(0, 4) && done) row.appendChild(el("div", "g-plan", t("plan.proj", { n: fmtNum(pl.projected) })));
+      }
       gs.appendChild(row);
     });
     if (!anyGoal) gs.appendChild(el("p", "hint", t("goal.none", { y: y })));
@@ -1949,12 +2587,14 @@
       f.appendChild(el("span", "f-l", l));
       facts.appendChild(f);
     }
-    fact(t("stats.pages"), fmtNum(S.pages));
+    var R = readingSummary(pagesByDay(data), y, td);
+    fact(t("stats.pages"), fmtNum(R.total));
     fact(t("stats.avg"), S.rated ? fmtNum(S.avg, 1) + " ★" : "—");
     fact(t("stats.now"), fmtNum(S.now));
     fact(t("stats.want"), fmtNum(S.want));
     ts.appendChild(facts);
     box.appendChild(ts);
+    box.appendChild(readingSection(R, y, td));
 
     if (!S.total) {
       box.appendChild(el("p", "hint center", t("stats.none", { y: y })));
@@ -1997,6 +2637,75 @@
     }
     topList(t("stats.top"), S.topBy);
     topList(t("stats.tags"), S.topTags);
+  }
+
+  // Pages per day (section 4e): the year's figures and, for this year,
+  // the streak and a bar for each of the last 30 days.
+  function readingSection(R, y, td) {
+    var sec = el("section", "st-sec");
+    sec.appendChild(el("h3", "", t("rd.title", { y: y })));
+    if (!R.total) { sec.appendChild(el("p", "hint", t("rd.none"))); return sec; }
+    var facts = el("div", "facts");
+    function fact(l, v) {
+      var f = el("div", "fact");
+      f.appendChild(el("span", "f-v", v));
+      f.appendChild(el("span", "f-l", l));
+      facts.appendChild(f);
+    }
+    var cur = y === +td.slice(0, 4);
+    fact(t("rd.perDay"), fmtNum(R.perDay, R.perDay < 10 ? 1 : 0));
+    fact(t("rd.days"), fmtNum(R.days));
+    if (cur) fact(t("rd.streak"), fmtNum(R.streak));
+    if (R.best) fact(t("rd.best"), t("rd.bestV", { n: fmtNum(R.best.n), d: fmtDate(R.best.d).slice(0, 5) }));
+    sec.appendChild(facts);
+    if (cur) {
+      sec.appendChild(el("div", "dlg-lbl rd-l", t("rd.last")));
+      var chart = el("div", "days30");
+      var max = 0;
+      R.last.forEach(function (x) { if (x.n > max) max = x.n; });
+      R.last.forEach(function (x) {
+        var c = el("div", "d30");
+        c.title = fmtDate(x.d) + ": " + fmtNum(x.n);
+        var f = el("i");
+        f.style.height = (max ? Math.max(x.n ? 4 : 0, x.n * 100 / max) : 0) + "%";
+        c.appendChild(f);
+        chart.appendChild(c);
+      });
+      chart.setAttribute("role", "img");
+      chart.setAttribute("aria-label", t("rd.last") + ": " + fmtNum(R.last.reduce(function (a, x) { return a + x.n; }, 0)) + " " + t("unit.book"));
+      sec.appendChild(chart);
+    }
+    return sec;
+  }
+
+  // The year's book goal above the Now list (books or all types).
+  function goalStrip() {
+    var y = new Date().getFullYear(), g = data.goals[y + "-book"];
+    if (prefs.tab !== "now" || (prefs.type !== "all" && prefs.type !== "book") || !g || !g.n) return null;
+    var td = today(), done = yearStats(data, y).done.book, st = goalState(g.n, done, y, td);
+    var b = el("button", "goal-strip");
+    b.type = "button";
+    var top = el("div", "goal-top");
+    var ic = el("span", "g-ic");
+    ic.innerHTML = UI.book;
+    top.appendChild(ic);
+    top.appendChild(el("span", "g-name", t("goal.strip", { y: y, v: done, n: g.n })));
+    b.appendChild(top);
+    var bar = el("div", "bar");
+    var f = el("i");
+    f.style.width = st.pct + "%";
+    bar.appendChild(f);
+    b.appendChild(bar);
+    var msg = st.reached ? t("goal.done") : (st.diff > 0 ? t("goal.ahead", { n: st.diff }) :
+      (st.diff < 0 ? t("goal.behind", { n: -st.diff }) : t("goal.on")));
+    b.appendChild(el("div", "g-msg" + (st.reached ? " ok" : (st.diff < 0 ? " low" : "")), msg));
+    b.addEventListener("click", function () {
+      prefs.tab = "stats";
+      statsYear = y;
+      savePrefs();
+      renderAll();
+    });
+    return b;
   }
 
   // ---------- 11. Export / import (R33) ----------
@@ -2166,6 +2875,7 @@
     col.appendChild(button(t("menu.import"), "", function () { dlg.close(); importJson(); }));
     col.appendChild(button(t("menu.csv"), "", function () { dlg.close(); importCsv(); }));
     col.appendChild(button(t("menu.rem"), "", function () { dlg.close(); remDialog(); }));
+    col.appendChild(button(t("menu.tmdb"), "", function () { dlg.close(); tmdbDialog(); }));
     col.appendChild(button(t("f.cancel"), "", function () { dlg.close(); }));
     dlg.appendChild(col);
     document.body.appendChild(dlg);
