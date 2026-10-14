@@ -1,0 +1,11 @@
+{
+  "_": "Single apps packaged for Google Play (wave 7, SOLO-1). Key = Gradle flavour = the app id in solo.js; package = its applicationId (permanent once on Play). android/tools/gen.js and app/build.gradle both read this file.",
+  "apps": {
+    "notes": "online.useoros.notes",
+    "calendar": "online.useoros.calendar",
+    "todo": "online.useoros.todo",
+    "passwords": "online.useoros.passwords",
+    "budget": "online.useoros.budget",
+    "gamecenter": "online.useoros.games"
+  }
+}
