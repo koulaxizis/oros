@@ -113,7 +113,7 @@
       "imp.title": "Import events",
       "ph.btn": "On this phone",
       "ph.title": "orOS calendar on this phone",
-      "ph.text": "Adds your orOS events, with their reminders, to the phone's Calendar as an \"orOS\" calendar. They are read-only there: edit them here.",
+      "ph.text": "Adds your orOS events, with their reminders, and the visible feeds to the phone's Calendar as an \"orOS\" calendar. They are read-only there: edit them here.",
       "ph.on": "Show on this phone",
       "ph.what": "events",
       "ph.allow": "Allow access",
@@ -293,7 +293,7 @@
       "imp.title": "Εισαγωγή συμβάντων",
       "ph.btn": "Στο κινητό",
       "ph.title": "Το ημερολόγιο του orOS στο κινητό",
-      "ph.text": "Βάζει τα συμβάντα του orOS, με τις υπενθυμίσεις τους, στο Ημερολόγιο του κινητού ως ημερολόγιο \"orOS\". Εκεί είναι μόνο για ανάγνωση: τα αλλάζεις εδώ.",
+      "ph.text": "Βάζει τα συμβάντα του orOS, με τις υπενθυμίσεις τους, και τις ορατές ροές στο Ημερολόγιο του κινητού ως ημερολόγιο \"orOS\". Εκεί είναι μόνο για ανάγνωση: τα αλλάζεις εδώ.",
       "ph.on": "Εμφάνιση στο κινητό",
       "ph.what": "συμβάντα",
       "ph.allow": "Να επιτραπεί",
@@ -2756,6 +2756,7 @@ function transientNote(title, body) {
     if (curView === "month") { renderWeekdays(); renderGrid(); }
     else if (curView === "week") { renderWeek(); }
     else if (curView === "agenda") { renderAgenda(); }
+    phonePublish();
   }
 
   // View switcher + search wiring (guarded — stale HTML cannot crash)
@@ -4136,6 +4137,29 @@ function transientNote(title, body) {
   // (phone.js) owns the channel; this is just the switch and status.
   var orosPhone = null;
   try { if (window.parent && window.parent !== window) orosPhone = window.parent.orosPhone || null; } catch (e) {}
+  // App feeds and holidays exist only as this app renders them, so the
+  // days around today are written for phone.js (feedRows) to send with
+  // the events: device-local "oros-phone-cal-feeds", only while the
+  // mirror is on. Hidden labels stay hidden on the phone too.
+  var PHONE_FEEDS_KEY = "oros-phone-cal-feeds", PHONE_BACK = 14, PHONE_AHEAD = 180, phoneTimer = null;
+  function phonePublish() {
+    if (!orosPhone || !orosPhone.enabled("calendar")) return;
+    clearTimeout(phoneTimer);
+    phoneTimer = setTimeout(function () {
+      var items = [], from = dAdd(todayYMD(), -PHONE_BACK);
+      for (var i = 0; i <= PHONE_BACK + PHONE_AHEAD; i++) {
+        var day = dAdd(from, i);
+        eventsOn(day).forEach(function (r) {
+          if (!r || !r._feed || r.id == null) return;
+          var l = labelById(r.labelId), what = !l ? "" : l.id.indexOf("lbl-feed-") === 0 ? feedLabelName(l) : lblName(l);
+          var note = typeof r.note === "string" && r.note ? r.note : "";
+          items.push({ k: String(r.id), date: day, start: r.start || null, end: r.end || null,
+                       title: String(r.title || what), note: what && note ? what + "\n" + note : (note || what) });
+        });
+      }
+      try { localStorage.setItem(PHONE_FEEDS_KEY, JSON.stringify({ at: Date.now(), items: items })); } catch (e) {}
+    }, 1500);
+  }
   function phoneRender() {
     if (!orosPhone || !$("cal-mirror")) return;
     $("cal-mirror").hidden = !orosPhone.available();
@@ -4166,6 +4190,7 @@ function transientNote(title, body) {
     $("ph-on").addEventListener("change", function () {
       var st = orosPhone.state() || {};
       orosPhone.setEnabled("calendar", $("ph-on").checked);
+      phonePublish();
       // Switching on before Android allowed it: ask in the same tap.
       if ($("ph-on").checked && st.calendar !== "granted") orosPhone.askPermission("calendar");
       phoneRender();
