@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.07.00
+- Wiki: bring in a Notes notebook or Markdown files, save your wiki as Markdown or as an offline website, start an article from Wikipedia (its source and licence kept), and send an article to someone.
+
 ## Version 2.06.00
 - Weather: a rain map. Open it under the forecast to see NASA's satellite rain estimate for the last 6 hours over a map of your area (a few hours old, not live radar).
 - CRM can now give you a contact form for your own website: messages arrive encrypted through the orOS relay and become new leads (or a note on the customer you already have).

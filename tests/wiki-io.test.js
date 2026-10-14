@@ -182,4 +182,5 @@ test("Wave 3 wiring: io.js loaded, share page loads WikiCore, credits name Wiki"
   assert.match(js, /kind: "wiki"/);
   assert.doesNotMatch(js, /innerHTML\s*=(?!\s*ICON)/);
   assert.match(fs.readFileSync(path.join(ROOT, "CREDITS.md"), "utf8"), /Wikipedia[^\n]*Wiki \(Start from Wikipedia/);
+  assert.match(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8"), /"wiki\/io\.js"/);
 });
