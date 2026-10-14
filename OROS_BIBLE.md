@@ -6569,3 +6569,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Article menu › Send to someone…: new share kind `wiki` (BR-SHARE), rendered on the receiving page with `wiki/core.js`; Add to my orOS opens Wiki's editor prefilled.
 - Files: `wiki/io.js` (new, pure: Notes/Markdown/wikitext converters, credit section, website builder, share text), `wiki.js` section 5c, `share/kinds.js`, `share/view.js`; credits (Wikipedia row names Wiki), help EN/EL, privacy and share topics.
   - Tests: tests/wiki-io.test.js (8); E2E in the real shell (Notes import, Wikipedia fetch via a routed stand-in, Markdown/website export, Send to someone at 390 px EL, zip re-import on a second device). Not tested: live Wikipedia API (host blocked in the container), real phone, Safari.
+
+### 2026-10-14 — Assistant, phase 4 wave 2: change items in five more apps (#352) — 2.08.00
+- The Assistant's change_item (AS-CHG) now covers Contacts (add a phone number or email, edit fields), Kanban (move a card between columns, rename), Media Shelf, Habits (tick today) and Plant Care (mark watered). As always a preview card shows the change first; Apply writes it, with Undo.
+- Files: existing assistant files only; Bible AS-CHG updated. sw.js precache: nothing new.
+  - Tests: full suite green; real-shell check by the owner thread. Not tested: real phone, Safari.
