@@ -1,0 +1,70 @@
+{
+  "name": "orOS Timesheet",
+  "short_name": "Timesheet",
+  "description": "orOS Timesheet: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/timesheet/solo.html",
+  "start_url": "/timesheet/solo.html",
+  "scope": "/timesheet/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/timesheet.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/timesheet-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/timesheet-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/timesheet-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Start or stop the timer",
+      "short_name": "Start or stop the timer",
+      "url": "/timesheet/solo.html?do=timer",
+      "icons": [
+        {
+          "src": "/icons/solo/timesheet-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "New time entry",
+      "short_name": "New time entry",
+      "url": "/timesheet/solo.html?do=entry",
+      "icons": [
+        {
+          "src": "/icons/solo/timesheet-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
