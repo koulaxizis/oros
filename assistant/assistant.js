@@ -120,6 +120,14 @@
       "att.err.pdf": "{name} can't read PDF files here. Claude, ChatGPT, Gemini and OpenRouter can; photos work.",
       "att.err.size": "That file is too big ({size}; at most {max}).", "att.err.count": "At most {n} files per message.",
       "att.err.read": "Could not read that file.",
+      "att.textOnly": "text only", "att.readingText": "Reading the text on this device… {p}%",
+      "att.goesText": "{name} gets the text orOS reads on this device, not the file, when you send · {size}",
+      "att.textFail": "The text of “{name}” could not be read on this device.",
+      "att.localPdf": "{name} can't read PDF files itself: orOS reads their text on this device and sends only that.",
+      "att.localImg": "{name} can't see photos itself: orOS reads the text in them on this device (English and Greek) and sends only that. The first time, the text engine is downloaded once (about 7 MB).",
+      "att.localBoth": "{name} can't read files itself: orOS reads their text on this device and sends only that. For photos the text engine is downloaded once the first time (about 7 MB).",
+      "set.vis": "This model can see photos",
+      "set.visHint": "Tick it for a model with vision, such as llava, gemma3 or qwen2.5-vl. Otherwise orOS reads the text in photos on this device and sends only that; PDFs always go as text.",
       "who.chatOnly": "Chat only: no access to your data",
       "off.line": "You are offline. {name} can't be reached until you are back online.",
       "tool.search": "Searched for “{q}”",
@@ -301,6 +309,14 @@
       "att.err.pdf": "Το {name} δεν διαβάζει PDF εδώ. Το κάνουν τα Claude, ChatGPT, Gemini και OpenRouter· οι φωτογραφίες δουλεύουν.",
       "att.err.size": "Το αρχείο είναι πολύ μεγάλο ({size}· έως {max}).", "att.err.count": "Έως {n} αρχεία ανά μήνυμα.",
       "att.err.read": "Δεν διαβάστηκε το αρχείο.",
+      "att.textOnly": "μόνο κείμενο", "att.readingText": "Διαβάζεται το κείμενο σε αυτή τη συσκευή… {p}%",
+      "att.goesText": "Το {name} παίρνει το κείμενο που διαβάζει το orOS σε αυτή τη συσκευή, όχι το αρχείο, με την αποστολή · {size}",
+      "att.textFail": "Το κείμενο του «{name}» δεν διαβάστηκε σε αυτή τη συσκευή.",
+      "att.localPdf": "Το {name} δεν διαβάζει μόνο του PDF: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή και στέλνει μόνο αυτό.",
+      "att.localImg": "Το {name} δεν βλέπει μόνο του φωτογραφίες: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή (Αγγλικά και Ελληνικά) και στέλνει μόνο αυτό. Την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
+      "att.localBoth": "Το {name} δεν διαβάζει μόνο του αρχεία: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή και στέλνει μόνο αυτό. Για φωτογραφίες, την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
+      "set.vis": "Αυτό το μοντέλο βλέπει φωτογραφίες",
+      "set.visHint": "Τσέκαρέ το για μοντέλο με όραση, όπως llava, gemma3 ή qwen2.5-vl. Αλλιώς το orOS διαβάζει το κείμενο των φωτογραφιών σε αυτή τη συσκευή και στέλνει μόνο αυτό· τα PDF πηγαίνουν πάντα ως κείμενο.",
       "who.chatOnly": "Μόνο συζήτηση: χωρίς πρόσβαση στα δεδομένα σου",
       "off.line": "Είσαι εκτός σύνδεσης. Το {name} δεν είναι διαθέσιμο μέχρι να ξανασυνδεθείς.",
       "tool.search": "Αναζήτηση για «{q}»",
@@ -532,7 +548,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -806,7 +822,7 @@
     if (p.builtin) return builtinCall(msgs, opts, signal, onText);
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
-      var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid) }, msgs, opts);
+      var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis }, msgs, opts);
       return fetch(req.url, {
         method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
         credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -992,10 +1008,9 @@
     if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + " KB";
     return (n / 1024 / 1024).toFixed(1).replace(/\.0$/, "") + " MB";
   }
-  function attAllowed() {
-    var pid = curProv(), caps = pid ? C.attCaps(pid) : { img: false, pdf: false };
-    return ready() && (caps.img || caps.pdf);
-  }
+  // Every service takes files now (what it can't read goes as text).
+  function attAllowed() { return ready(); }
+  function attLocal(a) { return !C.attCaps(curProv(), provConf(curProv()))[C.attKind(a.type)]; }
   function attErr(code) {
     var pid = curProv();
     return t("att.err." + code, { name: provName(pid), max: fmtSize(C.ATT_PDF), n: C.ATT_MAX });
@@ -1064,10 +1079,11 @@
   function removeAtt(id) {
     pending = pending.filter(function (a) { return a.id !== id; });
     delete attMem[id];
+    delete attText[id];
     renderAtt();
   }
   function clearPending(keepData) {
-    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; });
+    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attText[a.id]; });
     pending = [];
     renderAtt();
   }
@@ -1088,23 +1104,28 @@
       var chip = el("span", "att-chip");
       var ic = el("span", "att-ic"); ic.innerHTML = ICON.file; chip.appendChild(ic);
       chip.appendChild(el("span", "att-name", a.name));
-      chip.appendChild(el("span", "att-size", fmtSize(a.size)));
+      chip.appendChild(el("span", "att-size", fmtSize(a.size) + (attLocal(a) ? " · " + t("att.textOnly") : "")));
       var x = el("button", "att-x"); x.type = "button"; x.innerHTML = ICON.x;
       x.setAttribute("aria-label", t("att.remove", { name: a.name })); x.title = t("att.remove", { name: a.name });
       x.addEventListener("click", function () { removeAtt(a.id); });
       chip.appendChild(x);
       row.appendChild(chip);
     });
-    if (attBusy) row.appendChild(el("span", "att-chip busy", t("att.reading")));
-    if (pending.length) row.appendChild(el("span", "att-goes", t("att.goes", { name: provName(curProv()), size: fmtSize(total) })));
+    if (attBusy) row.appendChild(el("span", "att-chip busy", attReadPct >= 0 ? t("att.readingText", { p: attReadPct }) : t("att.reading")));
+    if (pending.length) {
+      var local = pending.some(attLocal);
+      row.appendChild(el("span", "att-goes", t(local ? "att.goesText" : "att.goes", { name: provName(curProv()), size: fmtSize(total) })));
+    }
   }
   function attachDialog() {
     if (!attAllowed() || busy) return;
-    var caps = C.attCaps(curProv());
+    var caps = C.attCaps(curProv(), provConf(curProv()));
     var dlg = makeDialog("as-attach");
     dlg.appendChild(el("div", "dlg-title", t("att.title")));
-    dlg.appendChild(el("p", "dlg-text", t(caps.pdf ? "att.what" : "att.whatImg", { n: C.ATT_MAX })));
+    dlg.appendChild(el("p", "dlg-text", t("att.what", { n: C.ATT_MAX })));
     dlg.appendChild(el("p", "dlg-hint", t("att.hint", { name: provName(curProv()) })));
+    if (!caps.img || !caps.pdf) dlg.appendChild(el("p", "dlg-hint", t(!caps.img && !caps.pdf ? "att.localBoth" : !caps.pdf ? "att.localPdf" : "att.localImg", { name: provName(curProv()) })));
+    caps = { img: true, pdf: true };
     var acts = el("div", "dlg-actions att-acts");
     acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
     var fs = diskFS();
@@ -1140,7 +1161,7 @@
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
-    var cwd = ROOT, caps = C.attCaps(curProv());
+    var cwd = ROOT, caps = { img: true, pdf: true };
     function usable(name) { var ty = typeOf(name, ""), k = C.attKind(ty); return DISK_EXT.test(name) && !!caps[k]; }
     function go(path) {
       cwd = path;
@@ -1189,8 +1210,142 @@
     return msgs.map(function (m) {
       if (!m || m.r !== "user" || !Array.isArray(m.att) || !m.att.length) return m;
       return { r: "user", text: m.text, att: m.att.map(function (a) {
-        return attMem[a.id] ? { id: a.id, name: a.name, type: a.type, size: a.size, data: attMem[a.id] } : a;
+        if (!attMem[a.id]) return a;
+        var o = { id: a.id, name: a.name, type: a.type, size: a.size, data: attMem[a.id] };
+        if (typeof attText[a.id] === "string") o.text = attText[a.id];
+        return o;
       }) };
+    });
+  }
+
+  // ---------- 7e. Reading files on the device (phase 5 wave 2) ----------
+  // A file the chosen service can't read itself (a PDF for Mistral or a
+  // local model, a photo for the built-in model or a local model that
+  // can't see) is read HERE first: PDF text with PDF.js, photo text with
+  // Tesseract (English + Greek), both from orOS's own vendor/ folder.
+  // Only that text goes out (core.js attTextBlock); it stays in memory
+  // like the file. A PDF without a text layer is read page by page.
+  var attText = {};        // id → text read on the device ("" = none found)
+  var PDF_SRC = "../vendor/pdfjs/pdf.min.js", PDF_WORKER = "../vendor/pdfjs/pdf.worker.min.js";
+  var OCR_BASE = "../vendor/tesseract/";
+  var READ_PAGES = 40, OCR_PAGES = 5;
+  var pdfjsP = null, ocrP = null, ocrW = null;
+  function needsText(a) {
+    var caps = C.attCaps(curProv(), provConf(curProv()));
+    return !caps[C.attKind(a.type)] && typeof attText[a.id] !== "string" && !!attMem[a.id];
+  }
+  function pdfjs() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfjsP) return pdfjsP;
+    pdfjsP = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.type = "module";
+      sc.src = PDF_SRC;
+      sc.onload = function () {
+        if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER; res(window.pdfjsLib); }
+        else rej(new Error("pdfjs"));
+      };
+      sc.onerror = function () { pdfjsP = null; rej(new Error("pdfjs")); };
+      document.head.appendChild(sc);
+    });
+    return pdfjsP;
+  }
+  function ocrWorker(onProgress) {
+    if (ocrW) return Promise.resolve(ocrW);
+    if (!ocrP) {
+      var base = new URL(OCR_BASE, location.href).href;
+      ocrP = new Promise(function (res, rej) {
+        if (window.Tesseract) { res(window.Tesseract); return; }
+        var sc = document.createElement("script");
+        sc.src = OCR_BASE + "tesseract.min.js";
+        sc.onload = function () { window.Tesseract ? res(window.Tesseract) : rej(new Error("ocr")); };
+        sc.onerror = function () { rej(new Error("ocr")); };
+        document.head.appendChild(sc);
+      }).then(function (T) {
+        return T.createWorker(["eng", "ell"], 1, {
+          workerPath: base + "worker.min.js", corePath: base + "tesseract-core-lstm.js",
+          langPath: base.replace(/\/$/, ""), workerBlobURL: false, cachePath: "oros-assistant-ocr",
+          logger: function (m) { if (m && typeof m.progress === "number" && ocrLog) ocrLog(m); }
+        });
+      }).then(function (w) { ocrW = w; return w; }, function (e) { ocrP = null; throw e; });
+    }
+    ocrLog = onProgress;
+    return ocrP;
+  }
+  var ocrLog = null;
+  window.addEventListener("pagehide", function () { if (ocrW) { try { ocrW.terminate(); } catch (e) {} ocrW = null; ocrP = null; } });
+  function b64Bytes(b64) {
+    var bin = atob(b64), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function ocrImage(src, onProgress) {
+    return ocrWorker(onProgress).then(function (w) { return w.recognize(src); })
+      .then(function (r) { return String((r && r.data && r.data.text) || ""); });
+  }
+  function photoText(a, onProgress) {
+    var blob = new Blob([b64Bytes(attMem[a.id])], { type: a.type });
+    return ocrImage(blob, onProgress);
+  }
+  function pdfText(a, onProgress) {
+    return pdfjs().then(function (lib) {
+      return lib.getDocument({ data: b64Bytes(attMem[a.id]), isEvalSupported: false, enableXfa: false,
+                               disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
+    }).then(function (pdf) {
+      var n = Math.min(pdf.numPages, READ_PAGES), parts = [], chain = Promise.resolve();
+      for (var k = 1; k <= n; k++) (function (k) {
+        chain = chain.then(function () { return pdf.getPage(k); }).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
+          var line = (tc.items || []).map(function (it) { return (it.str || "") + (it.hasEOL ? "\n" : " "); }).join("");
+          parts.push(line.replace(/[ \t]+/g, " ").trim());
+          if (onProgress) onProgress({ progress: k / n });
+        });
+      })(k);
+      return chain.then(function () {
+        var text = parts.filter(Boolean).join("\n\n");
+        if (pdf.numPages > n) text += "\n[" + (pdf.numPages - n) + " more pages not read]";
+        if (text.replace(/\s/g, "").length >= 40) return text;
+        // No text layer (a scan): read the first pages as pictures.
+        var m = Math.min(pdf.numPages, OCR_PAGES), out = [], c2 = Promise.resolve();
+        for (var j = 1; j <= m; j++) (function (j) {
+          c2 = c2.then(function () { return pdf.getPage(j); }).then(function (pg) {
+            var vp = pg.getViewport({ scale: 2 });
+            var cv = document.createElement("canvas");
+            cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+            return pg.render({ canvasContext: cv.getContext("2d"), viewport: vp, background: "#ffffff" }).promise
+              .then(function () { return ocrImage(cv, onProgress); }).then(function (tx) { out.push(tx.trim()); });
+          });
+        })(j);
+        return c2.then(function () {
+          var t2 = out.filter(Boolean).join("\n\n");
+          if (pdf.numPages > m && t2) t2 += "\n[" + (pdf.numPages - m) + " more pages not read]";
+          return t2;
+        });
+      });
+    });
+  }
+  // Read every pending file that needs it. → Promise (never rejects;
+  // a file that can't be read gets "" and the model is told so)
+  var attReadPct = -1;
+  function readPending() {
+    var todo = pending.filter(needsText);
+    if (!todo.length) return Promise.resolve();
+    attBusy++;
+    attReadPct = 0;
+    renderAtt();
+    return todo.reduce(function (pr, a) {
+      return pr.then(function () {
+        var fn = C.attKind(a.type) === "pdf" ? pdfText : photoText;
+        return fn(a, function (m) { attReadPct = Math.round((m.progress || 0) * 100); renderAtt(); })
+          .then(function (tx) { attText[a.id] = String(tx || "").trim(); }, function (e) {
+            attText[a.id] = "";
+            showToast(t("att.textFail", { name: a.name }));
+            try { console.warn("assistant: reading the file failed:", e); } catch (x) {}
+          });
+      });
+    }, Promise.resolve()).then(function () {
+      attBusy--;
+      attReadPct = -1;
+      renderAtt();
     });
   }
 
@@ -1199,6 +1354,8 @@
     var text = box.value.trim();
     if ((!text && !pending.length) || busy || attBusy) return;
     if (!ready()) { settingsDialog(); return; }
+    // Files the service can't read: their text first, then the message.
+    if (pending.some(needsText)) { readPending().then(function () { if (!pending.some(needsText)) send(); }); return; }
     if (text.length > MAX_INPUT) text = text.slice(0, MAX_INPUT);
     // A file the chosen AI can't read (the provider changed since) stays
     // in the box with the reason, instead of going out without it.
@@ -1308,7 +1465,7 @@
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds,
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
-      files: (function () { var k = C.attCaps(pid); return k.pdf ? "pdf" : k.img ? "img" : ""; })(),
+      files: builtin ? "" : "pdf",
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
@@ -2648,6 +2805,12 @@
         });
         bl.after(base);
         provBox.appendChild(el("p", "dlg-hint", t("set.baseHint")));
+        var vis = checkbox(provBox, "as-vis", t("set.vis"), !!provConf(pid).vis, function (on) {
+          setProvConf(pid, { vis: on ? 1 : 0 });
+          renderAll();
+        });
+        vis.parentNode.classList.add("check");
+        provBox.appendChild(el("p", "dlg-hint", t("set.visHint")));
       }
       // Key
       label(provBox, "as-key", P.key === "opt" ? t("set.keyOpt") : t("set.key"));
