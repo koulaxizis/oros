@@ -150,6 +150,12 @@ function build(manifest) {
         <intent>
             <action android:name="android.support.customtabs.action.CustomTabsService" />
         </intent>
+        <!-- Single apps' Install (PermissionActivity): the default browser. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
         <!-- Health Connect on Android 13 and older (an app of its own). -->
         <package android:name="com.google.android.apps.healthdata" />
     </queries>
