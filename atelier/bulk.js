@@ -46,7 +46,7 @@
 
   // A pasted list or CSV / TSV: rows of trimmed cells, blank rows out.
   function parseTable(text) {
-    text = String(text || "").replace(/^﻿/, "");
+    text = String(text || "").replace(/^\uFEFF/, "");
     var head = text.split(/\r?\n/).slice(0, 20), c = { ",": 1, ";": 1, "\t": 1 };
     head.forEach(function (ln) { [",", ";", "\t"].forEach(function (k) { c[k] = Math.max(c[k], ln.split(k).length); }); });
     var sep = c["\t"] > 1 && c["\t"] >= c[","] && c["\t"] >= c[";"] ? "\t" : c[";"] > c[","] ? ";" : ",";

@@ -41,7 +41,7 @@ test("bulk: fields in page order, once each, case and accents ignored", () => {
 
 test("bulk: lists from a spreadsheet, CSV with quotes, semicolons, one name per line", () => {
   assert.deepEqual(B.parseTable("name\tdate\nAnn\t1/2\n\nBob\t3/4\n"), [["name", "date"], ["Ann", "1/2"], ["Bob", "3/4"]]);
-  assert.deepEqual(B.parseTable('﻿name,course\n"Papa, Maria","Say ""hi"""\n'), [["name", "course"], ["Papa, Maria", 'Say "hi"']]);
+  assert.deepEqual(B.parseTable('\uFEFFname,course\n"Papa, Maria","Say ""hi"""\n'), [["name", "course"], ["Papa, Maria", 'Say "hi"']]);
   assert.deepEqual(B.parseTable("a;b\n1;2"), [["a", "b"], ["1", "2"]]);
   assert.deepEqual(B.parseTable("Ann\nBob"), [["Ann"], ["Bob"]]);
   assert.ok(B.parseTable("x\n".repeat(500)).length <= B.LIM.rows + 2);
