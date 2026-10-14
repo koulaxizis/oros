@@ -339,3 +339,10 @@ dialog.video-dlg:not([open]) { display: none; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---------- 9. Wave 42: skip silence / voice boost, gpodder sync ---------- */
+.fx-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.fx-row .chip { min-height: 36px; }
+.fx-note { max-width: 100%; overflow-wrap: anywhere; line-height: 1.4; }
+.field .inp { color: var(--text); font-weight: 400; font-size: 14px; }
+.g-status { min-height: 1.4em; margin: 10px 0 0; line-height: 1.45; overflow-wrap: anywhere; }

@@ -42,6 +42,7 @@
   "use strict";
 
   var C = window.OrosPodcastsCore, FC = window.orosFeedsCore, FF = window.orosFeedsFetch, ST = window.OrosPodcastsStore;
+  var G = window.OrosPodcastsGpodder || null;
   // The shared transport resolves any HTTP status; here a non-2xx
   // answer is an error ("gone" for 404/410) and feed bodies are text.
   function httpErr(status) { return status === 404 || status === 410 ? "gone" : "http"; }
@@ -145,7 +146,30 @@
       "st.h": "{h} h {m} min", "st.m": "{m} min",
       "top.title": "Popular podcasts", "top.titleGr": "Popular in Greece", "top.src": "From the Apple Podcasts charts.",
       "set.notify": "Tell me about new episodes", "toast.ntfOn": "You will get a notice when a new episode comes out.",
-      "ep.todo": "Listen later (To-Do)", "ep.noteAt": "Note at {t}", "ep.note": "Write a note", "show.reader": "Follow the site in Reader"
+      "ep.todo": "Listen later (To-Do)", "ep.noteAt": "Note at {t}", "ep.note": "Write a note", "show.reader": "Follow the site in Reader",
+      "s.sil": "Skip silence", "s.vb": "Voice boost",
+      "fx.note": "Skip silence plays quiet stretches faster; voice boost evens out the volume and makes voices clearer. They work on downloaded episodes and on podcasts whose server lets the browser read the audio; for the others they stay off.",
+      "fx.saved": "Silence skipped: {t} saved", "fx.savedS": "Silence skipped: {n} s saved",
+      "fx.blocked": "This podcast's server does not let the browser process its audio, so skip silence and voice boost are off for it. Download the episode to use them.",
+      "fx.probing": "Checking whether this audio can be processed…", "fx.unsupported": "This browser cannot process audio.",
+      "st.silence": "Saved by skipping silence: {t}",
+      "g.open": "Sync with gpodder…", "g.title": "gpodder sync",
+      "g.intro": "Keep your subscriptions and listening progress in step with other podcast apps (AntennaPod, Kasts, gPodder…) through your own gpodder.net account or your Nextcloud with the GPodder Sync app.",
+      "g.kind": "Service", "g.kind.gpodder": "gpodder.net (or a compatible server)", "g.kind.nextcloud": "Nextcloud (GPodder Sync app)",
+      "g.server": "Server address", "g.user": "Username", "g.pass": "Password", "g.device": "Device name",
+      "g.passNote": "Use an app password where your server offers one. It stays sealed on this device and is never synced; enter it once on each device.",
+      "g.passKeep": "Leave empty to keep the saved password.",
+      "g.save": "Save and sync", "g.sync": "Sync now", "g.off": "Disconnect", "g.busy": "Syncing…",
+      "g.last": "Last sync: {d}", "g.never": "Not synced yet.", "g.auto": "Syncs when Podcasts opens and every hour while it is open.",
+      "g.res": "Done: {a} podcasts added, {r} removed, {e} episodes updated, {u} changes sent.",
+      "g.err.cors": "Your server does not let web pages connect to it (no CORS), so orOS cannot sync with it from the browser. Use the files below instead, or ask its admin to allow it.",
+      "g.err.auth": "Wrong username or password.", "g.err.notfound": "Nothing found at that address. Check the server address (on Nextcloud, that the GPodder Sync app is installed).",
+      "g.err.http": "The server answered with an error ({s}).", "g.err.offline": "No connection.", "g.err.timeout": "The server took too long to answer.",
+      "g.err.cfg": "Fill in the server address, username and password.", "g.err.bad": "The server's answer could not be read.",
+      "g.files": "Without a server", "g.filesNote": "Move your subscriptions with “Export OPML” and “Import OPML” in Discover, and your listening progress with these files (gpodder episode actions, JSON).",
+      "g.exp": "Export listening progress", "g.imp": "Import listening progress",
+      "g.expDone": "{n} episode actions exported.", "g.impDone": "{n} episodes updated.", "g.impNone": "Nothing to update from that file.",
+      "g.offDone": "Disconnected. Nothing was deleted."
     },
     el: {
       "app": "Podcasts",
@@ -214,7 +238,30 @@
       "st.h": "{h} ώ. {m} λ.", "st.m": "{m} λεπτά",
       "top.title": "Δημοφιλή podcasts", "top.titleGr": "Δημοφιλή στην Ελλάδα", "top.src": "Από τα charts του Apple Podcasts.",
       "set.notify": "Ειδοποίηση για νέα επεισόδια", "toast.ntfOn": "Θα ειδοποιείσαι όταν βγαίνει νέο επεισόδιο.",
-      "ep.todo": "Άκου αργότερα (To-Do)", "ep.noteAt": "Σημείωση στο {t}", "ep.note": "Σημείωση", "show.reader": "Ο ιστότοπος στον Αναγνώστη"
+      "ep.todo": "Άκου αργότερα (To-Do)", "ep.noteAt": "Σημείωση στο {t}", "ep.note": "Σημείωση", "show.reader": "Ο ιστότοπος στον Αναγνώστη",
+      "s.sil": "Παράλειψη σιωπής", "s.vb": "Ενίσχυση φωνής",
+      "fx.note": "Η παράλειψη σιωπής παίζει πιο γρήγορα τα σημεία χωρίς ήχο· η ενίσχυση φωνής εξισώνει την ένταση και κάνει τις φωνές πιο καθαρές. Λειτουργούν στα κατεβασμένα επεισόδια και στα podcasts που ο διακομιστής τους επιτρέπει στον browser να διαβάσει τον ήχο· στα υπόλοιπα μένουν κλειστές.",
+      "fx.saved": "Παράλειψη σιωπής: κέρδισες {t}", "fx.savedS": "Παράλειψη σιωπής: κέρδισες {n} δευτ.",
+      "fx.blocked": "Ο διακομιστής αυτού του podcast δεν επιτρέπει στον browser να επεξεργαστεί τον ήχο του, οπότε η παράλειψη σιωπής και η ενίσχυση φωνής είναι κλειστές εδώ. Κατέβασε το επεισόδιο για να τις χρησιμοποιήσεις.",
+      "fx.probing": "Ελέγχεται αν ο ήχος μπορεί να επεξεργαστεί…", "fx.unsupported": "Αυτός ο browser δεν μπορεί να επεξεργαστεί ήχο.",
+      "st.silence": "Κέρδος από την παράλειψη σιωπής: {t}",
+      "g.open": "Συγχρονισμός με gpodder…", "g.title": "Συγχρονισμός gpodder",
+      "g.intro": "Κράτα τις συνδρομές και την πρόοδο ακρόασης ίδιες με άλλες εφαρμογές podcast (AntennaPod, Kasts, gPodder…) μέσα από τον δικό σου λογαριασμό στο gpodder.net ή το δικό σου Nextcloud με την εφαρμογή GPodder Sync.",
+      "g.kind": "Υπηρεσία", "g.kind.gpodder": "gpodder.net (ή συμβατός διακομιστής)", "g.kind.nextcloud": "Nextcloud (εφαρμογή GPodder Sync)",
+      "g.server": "Διεύθυνση διακομιστή", "g.user": "Όνομα χρήστη", "g.pass": "Κωδικός", "g.device": "Όνομα συσκευής",
+      "g.passNote": "Χρησιμοποίησε κωδικό εφαρμογής, αν τον προσφέρει ο διακομιστής σου. Μένει σφραγισμένος σε αυτή τη συσκευή και δεν συγχρονίζεται ποτέ· τον βάζεις μία φορά σε κάθε συσκευή.",
+      "g.passKeep": "Άφησέ το κενό για να μείνει ο αποθηκευμένος κωδικός.",
+      "g.save": "Αποθήκευση και συγχρονισμός", "g.sync": "Συγχρονισμός τώρα", "g.off": "Αποσύνδεση", "g.busy": "Συγχρονισμός…",
+      "g.last": "Τελευταίος συγχρονισμός: {d}", "g.never": "Δεν έχει γίνει συγχρονισμός ακόμη.", "g.auto": "Συγχρονίζεται όταν ανοίγουν τα Podcasts και κάθε ώρα όσο είναι ανοιχτά.",
+      "g.res": "Έγινε: {a} podcasts προστέθηκαν, {r} αφαιρέθηκαν, {e} επεισόδια ενημερώθηκαν, {u} αλλαγές στάλθηκαν.",
+      "g.err.cors": "Ο διακομιστής σου δεν επιτρέπει σε ιστοσελίδες να συνδεθούν (χωρίς CORS), οπότε το orOS δεν μπορεί να συγχρονιστεί μαζί του από τον browser. Χρησιμοποίησε τα αρχεία παρακάτω ή ζήτα από τον διαχειριστή του να το επιτρέψει.",
+      "g.err.auth": "Λάθος όνομα χρήστη ή κωδικός.", "g.err.notfound": "Δεν βρέθηκε τίποτα σε αυτή τη διεύθυνση. Έλεγξε τη διεύθυνση του διακομιστή (στο Nextcloud, ότι είναι εγκατεστημένη η εφαρμογή GPodder Sync).",
+      "g.err.http": "Ο διακομιστής απάντησε με σφάλμα ({s}).", "g.err.offline": "Δεν υπάρχει σύνδεση.", "g.err.timeout": "Ο διακομιστής άργησε πολύ να απαντήσει.",
+      "g.err.cfg": "Συμπλήρωσε διεύθυνση διακομιστή, όνομα χρήστη και κωδικό.", "g.err.bad": "Η απάντηση του διακομιστή δεν διαβάζεται.",
+      "g.files": "Χωρίς διακομιστή", "g.filesNote": "Μετέφερε τις συνδρομές σου με την «Εξαγωγή OPML» και την «Εισαγωγή OPML» στην Ανακάλυψη, και την πρόοδο ακρόασης με αυτά τα αρχεία (episode actions του gpodder, JSON).",
+      "g.exp": "Εξαγωγή προόδου ακρόασης", "g.imp": "Εισαγωγή προόδου ακρόασης",
+      "g.expDone": "Εξήχθησαν {n} ενέργειες επεισοδίων.", "g.impDone": "Ενημερώθηκαν {n} επεισόδια.", "g.impNone": "Δεν υπάρχει κάτι να ενημερωθεί από αυτό το αρχείο.",
+      "g.offDone": "Αποσυνδέθηκε. Δεν διαγράφηκε τίποτα."
     }
   };
   function t(k, v) {
@@ -1068,6 +1115,19 @@
     extra.appendChild(button(t("pl.next"), "icon-btn", function () { H.next(); }, UI.next));
     extra.appendChild(button(t("pl.stop"), "icon-btn", function () { dlg.close(); H.stop(); }, UI.stop));
     dlg.appendChild(extra);
+    if (st.fx) {
+      var fxr = el("div", "fx-row");
+      [["sil", "s.sil"], ["vb", "s.vb"]].forEach(function (x) {
+        var c = button(t(x[1]), "chip", function () {
+          var on = !(H.getState().fx || {})[x[0]];
+          mutate(function (dd, n) { return C.setPref(dd, x[0], on ? 1 : 0, n); });
+        });
+        c.id = "fp-" + x[0];
+        fxr.appendChild(c);
+      });
+      dlg.appendChild(fxr);
+      var fxs = el("div", "dim small center fx-note"); fxs.id = "fp-fx"; dlg.appendChild(fxs);
+    }
     var sl = el("div", "dim small center"); sl.id = "fp-sleep-left"; dlg.appendChild(sl);
     var chBox = el("div", "chapters"); chBox.id = "fp-ch"; dlg.appendChild(chBox);
     document.body.appendChild(dlg);
@@ -1116,6 +1176,22 @@
     if (!st.sleepEnd && !st.sleepUntil && slp.value) slp.value = "";
     else if (want !== slp.value && st.sleepEnd) slp.value = "end";
     $("fp-sleep-left").textContent = st.sleepUntil ? t("pl.sleepLeft", { t: C.fmtTime((st.sleepUntil - now()) / 1000) }) : "";
+    if (st.fx && $("fp-fx")) {
+      ["sil", "vb"].forEach(function (k) {
+        var b = $("fp-" + k);
+        b.classList.toggle("on", !!st.fx[k]);
+        b.setAttribute("aria-pressed", st.fx[k] ? "true" : "false");
+      });
+      var fs = st.fx, msg = "";
+      if (fs.sil || fs.vb) {
+        if (fs.state === "blocked") msg = t("fx.blocked");
+        else if (fs.state === "probing") msg = t("fx.probing");
+        else if (fs.state === "unsupported") msg = t("fx.unsupported");
+        else if (fs.sil && fs.saved >= 60) msg = t("fx.saved", { t: fmtSpan(fs.saved) });
+        else if (fs.sil && fs.saved > 0) msg = t("fx.savedS", { n: fs.saved });
+      }
+      $("fp-fx").textContent = msg;
+    }
   }
 
   // ---------- 10. Notes dialog (sanitized, sandboxed) ----------
@@ -1541,6 +1617,7 @@
         box.appendChild(el("div", "dim small", t(r[0])));
         box.appendChild(el("div", "st-big", fmtSpan(r[1].wall)));
         if (r[1].saved >= 60) box.appendChild(el("div", "dim small", t("st.saved", { t: fmtSpan(r[1].saved) })));
+        if (r[1].silence >= 60) box.appendChild(el("div", "dim small", t("st.silence", { t: fmtSpan(r[1].silence) })));
         grid.appendChild(box);
       });
       dlg.appendChild(grid);
@@ -1832,12 +1909,17 @@
     };
     var an = chk(t("s.autoNext"), C.prefOf(d, "autoNext"));
     var dp = chk(t("s.delPlayed"), C.prefOf(d, "delPlayed"));
+    var sil = chk(t("s.sil"), C.prefOf(d, "sil"));
+    var vb = chk(t("s.vb"), C.prefOf(d, "vb"));
+    form.appendChild(el("p", "dim small", t("fx.note")));
     form.appendChild(el("p", "dim small", NET.relayAvailable() ? t("s.relay") : t("s.noRelay")));
+    if (G) form.appendChild(button(t("g.open"), "txt-btn", function () { dlg.close(); gpodderDlg(); }));
     dlg.appendChild(form);
     var row = el("div", "dlg-btns");
     row.appendChild(button(t("set.cancel"), "txt-btn", function () { dlg.close(); }));
     row.appendChild(button(t("set.save"), "txt-btn primary", function () {
-      var vals = { spd: +spd.sel.value, back: +back.sel.value, fwd: +fwd.sel.value, search: srch.sel.value, autoNext: an.checked ? 1 : 0, delPlayed: dp.checked ? 1 : 0 };
+      var vals = { spd: +spd.sel.value, back: +back.sel.value, fwd: +fwd.sel.value, search: srch.sel.value, autoNext: an.checked ? 1 : 0, delPlayed: dp.checked ? 1 : 0,
+        sil: sil.checked ? 1 : 0, vb: vb.checked ? 1 : 0 };
       mutate(function (dd, n) { Object.keys(vals).forEach(function (k) { dd = C.setPref(dd, k, vals[k], n); }); return dd; });
       dlg.close();
       sweepPlayed();
@@ -1846,6 +1928,237 @@
     dlg.appendChild(row);
     document.body.appendChild(dlg);
     dlg.showModal();
+  }
+
+  // ---------- 12b. gpodder sync (wave 42, podcasts/gpodder.js) ----------
+  // Device-local config "oros-podcasts-gpodder" (gpodder.js header);
+  // the password is sealed in IndexedDB. Runs while this window is
+  // open: at boot and every hour (after the last good sync), or "Sync now".
+  var GKEY = "oros-podcasts-gpodder", G_EVERY = 3600000;
+  var gState = { busy: false, msg: "" };
+  function gRaw() { try { return JSON.parse(localStorage.getItem(GKEY) || "null"); } catch (e) { return null; } }
+  function gCfg() { return G.normConfig(gRaw()); }
+  function gOn() { return !!(G && gRaw() && G.ready(gCfg())); }
+  function gSave(c) { try { localStorage.setItem(GKEY, JSON.stringify(c)); } catch (e) {} }
+  function gErrText(e) {
+    var code = (e && e.code) || "bad";
+    return t("g.err." + code, { s: (e && e.status) || "" });
+  }
+  // What the slice row is about, for an outgoing action.
+  function gInfo(id) {
+    var x = epIndex[id];
+    if (!x) return null;
+    var s = C.findShow(D(), x.sid);
+    return s ? { feed: s.url, audio: x.ep.audio, guid: x.ep.guid || "", dur: x.ep.dur || 0 } : null;
+  }
+  // The local episode an incoming action is about (subscribed shows only).
+  function gFind(a) {
+    var sid = C.showId(a.podcast);
+    if (!C.findShow(D(), sid)) return null;
+    var e = G.matchEpisode(sid, a, feeds[sid] ? feeds[sid].eps : []);
+    return e ? { id: e.id, s: sid, pd: e.pub || 0, dur: e.dur || 0 } : null;
+  }
+  function gApply(actions) {
+    var n = 0;
+    mutate(function (d, nn) { var r = G.applyActions(d, actions, gFind, nn); n = r.n; return r.data; });
+    return n;
+  }
+  function gAuto() {
+    if (!gOn() || gState.busy || navigator.onLine === false || document.visibilityState !== "visible") return;
+    var c = gCfg();
+    if (c.err === "auth" || c.err === "cors" || c.err === "notfound") return;     // waits for the user
+    if (now() - c.last < G_EVERY && now() - (gState.tried || 0) < G_EVERY) return;
+    gSync(false);
+  }
+  function gSync(loud) {
+    if (!G || gState.busy) return Promise.resolve(false);
+    var cfg = gCfg(), start = now(), res = { a: 0, r: 0, e: 0, u: 0 };
+    gState.busy = true; gState.tried = start; gState.msg = t("g.busy"); gPaint();
+    var U = G.urls(cfg), pass = "";
+    var fail = function (e) {
+      var c2 = gCfg(); c2.err = (e && e.code) || "bad"; gSave(c2);
+      gState.busy = false; gState.msg = gErrText(e); gPaint();
+      if (loud) showToast(gState.msg);
+      return false;
+    };
+    return G.loadPass().then(function (p) {
+      pass = p;
+      if (!G.ready(cfg) || !pass) throw new G.SyncError("cfg");
+      // gpodder.net wants the device to exist before its subscriptions.
+      if (!U.device) return null;
+      return G.request(cfg, pass, "POST", U.device, { caption: "orOS", type: "desktop" }).catch(function (e) {
+        if (e && (e.code === "cors" || e.code === "auth" || e.code === "offline")) throw e;
+      });
+    }).then(function () {
+      return G.request(cfg, pass, "GET", U.subsGet(cfg.subsTs));
+    }).then(function (j) {
+      var remote = G.parseSubs(j);
+      if (!remote) throw new G.SyncError("bad");
+      var plan = G.subsPlan(D().shows, cfg.subsTs ? cfg.known : [], remote);
+      plan.sub.forEach(function (u) {
+        if (D().shows.length >= C.LIM.shows) return;
+        if (mutate(function (d, n) { return C.subscribe(d, { url: u, title: u }, n); })) res.a++;
+      });
+      plan.unsub.forEach(function (id) {
+        if (mutate(function (d, n) { return C.unsubscribe(d, id, n); })) {
+          res.r++;
+          Object.keys(files).forEach(function (fid) { if (files[fid].s === id) deleteFile(fid); });
+        }
+      });
+      cfg.known = plan.known;
+      cfg.subsTs = remote.ts || cfg.subsTs;
+      if (!plan.upAdd.length && !plan.upRemove.length) return null;
+      res.u += plan.upAdd.length + plan.upRemove.length;
+      return G.request(cfg, pass, "POST", U.subsPost, { add: plan.upAdd, remove: plan.upRemove }).then(function (r) {
+        if (r && +r.timestamp > 0) cfg.subsTs = Math.max(cfg.subsTs, Math.floor(+r.timestamp));
+      });
+    }).then(function () {
+      return G.request(cfg, pass, "GET", U.actGet(cfg.actTs));
+    }).then(function (j) {
+      var remote = G.parseActions(j);
+      if (!remote) throw new G.SyncError("bad");
+      // What changed here since the last sync, before the remote side is
+      // applied; an episode the other side touched later is not sent.
+      var newer = {};
+      G.newestActions(remote.actions).forEach(function (a) {
+        var e = gFind(a);
+        if (!e) return;
+        var row = null;
+        D().eps.forEach(function (r) { if (r.id === e.id) row = r; });
+        if (!row || a.t > row.m) newer[e.id] = 1;
+      });
+      var up = G.actionsUp(D(), gInfo, cfg.mark, cfg.kind === "gpodder" ? cfg.device : "", newer);
+      res.e = gApply(remote.actions);
+      cfg.actTs = remote.ts || cfg.actTs;
+      res.u += up.length;
+      return G.chunks(up).reduce(function (p, part) {
+        return p.then(function () {
+          return G.request(cfg, pass, "POST", U.actPost, part).then(function (r) {
+            if (r && +r.timestamp > 0) cfg.actTs = Math.max(cfg.actTs, Math.floor(+r.timestamp));
+          });
+        });
+      }, Promise.resolve());
+    }).then(function () {
+      cfg.mark = start; cfg.last = now(); cfg.err = "";
+      gSave(cfg);
+      gState.busy = false;
+      gState.msg = t("g.res", res);
+      gPaint();
+      if (loud) showToast(gState.msg);
+      if (res.a) refresh(false);
+      return true;
+    }).catch(fail);
+  }
+  function gPaint() {
+    var box = $("g-status");
+    if (!box) return;
+    var c = gCfg();
+    box.textContent = gState.msg || (gOn() ? (c.last ? t("g.last", { d: fmtDate(c.last) + " " + new Date(c.last).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit" }) }) : t("g.never")) : "");
+    [].forEach.call(document.querySelectorAll("#pc-gp .g-act"), function (b) { b.disabled = gState.busy; });
+  }
+  function gpodderDlg() {
+    if (!G) return;
+    var raw = gRaw(), c = gCfg(), on = gOn();
+    var dlg = makeDialog("pc-gp", "form-dlg");
+    var head = el("div", "notes-head");
+    head.appendChild(el("div", "dlg-title", t("g.title")));
+    head.appendChild(button(t("pl.close"), "icon-btn", function () { dlg.close(); }, UI.x));
+    dlg.appendChild(head);
+    dlg.appendChild(el("p", "dim small", t("g.intro")));
+    var form = el("div", "form");
+    var kind = select(t("g.kind"), [["gpodder", t("g.kind.gpodder")], ["nextcloud", t("g.kind.nextcloud")]], c.kind);
+    var field = function (label, type, val, ac) {
+      var w = el("label", "field");
+      w.appendChild(el("span", "", label));
+      var i = el("input", "inp"); i.type = type; i.value = val || ""; i.autocomplete = ac || "off"; i.spellcheck = false;
+      i.maxLength = 300;
+      w.appendChild(i);
+      form.appendChild(w);
+      return i;
+    };
+    form.appendChild(kind.wrap);
+    var srv = field(t("g.server"), "url", raw ? c.server : "https://gpodder.net", "url");
+    var usr = field(t("g.user"), "text", c.user, "username");
+    var pw = field(t("g.pass"), "password", "", "current-password");
+    if (on) pw.placeholder = t("g.passKeep");
+    form.appendChild(el("p", "dim small", t("g.passNote")));
+    var dev = field(t("g.device"), "text", raw ? c.device : "oros-" + Math.random().toString(36).slice(2, 7), "off");
+    var devWrap = dev.parentNode;
+    var syncKind = function () {
+      devWrap.hidden = kind.sel.value !== "gpodder";
+      if (kind.sel.value === "gpodder" && !srv.value.trim()) srv.value = "https://gpodder.net";
+      if (kind.sel.value === "nextcloud" && /gpodder\.net/.test(srv.value)) srv.value = "";
+    };
+    kind.sel.addEventListener("change", syncKind);
+    syncKind();
+    dlg.appendChild(form);
+    var st = el("p", "small g-status"); st.id = "g-status"; st.setAttribute("role", "status");
+    dlg.appendChild(st);
+    var row = el("div", "row-btns");
+    row.appendChild(button(t("g.save"), "txt-btn primary g-act", function () {
+      var next = G.normConfig({ kind: kind.sel.value, server: srv.value, user: usr.value, device: dev.value });
+      if (!next.server || !next.user || (!pw.value && !on)) { gState.msg = t("g.err.cfg"); gPaint(); return; }
+      // A different account or server starts over (a full first sync).
+      if (!on || next.server !== c.server || next.user !== c.user || next.kind !== c.kind || next.device !== c.device) {
+        next.subsTs = 0; next.actTs = 0; next.mark = 0; next.known = []; next.last = 0;
+      } else { next.subsTs = c.subsTs; next.actTs = c.actTs; next.mark = c.mark; next.known = c.known; next.last = c.last; }
+      gSave(next);
+      (pw.value ? G.savePass(pw.value) : Promise.resolve(true)).then(function () {
+        pw.value = ""; pw.placeholder = t("g.passKeep"); on = true; c = next;
+        gSync(false);
+      });
+    }));
+    if (on) row.appendChild(button(t("g.sync"), "txt-btn g-act", function () { gSync(false); }));
+    if (on) row.appendChild(button(t("g.off"), "txt-btn danger g-act", function () {
+      try { localStorage.removeItem(GKEY); } catch (e) {}
+      G.dropPass();
+      gState.msg = "";
+      dlg.close();
+      showToast(t("g.offDone"));
+    }));
+    dlg.appendChild(row);
+    dlg.appendChild(el("p", "dim small", t("g.auto")));
+    dlg.appendChild(el("h3", "sec small", t("g.files")));
+    dlg.appendChild(el("p", "dim small", t("g.filesNote")));
+    var row2 = el("div", "row-btns");
+    row2.appendChild(button(t("g.exp"), "txt-btn", gExport));
+    row2.appendChild(button(t("g.imp"), "txt-btn", gImport));
+    dlg.appendChild(row2);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    gPaint();
+  }
+  // Every progress row as gpodder episode actions (a file other apps and
+  // gpodder servers understand).
+  function gExport() {
+    var list = G.actionsUp(D(), gInfo, 0, "", null);
+    var text = JSON.stringify({ actions: list }, null, 1);
+    var name = "oros-podcasts-progress-" + new Date().toISOString().slice(0, 10) + ".json";
+    var done = function () { showToast(t("g.expDone", { n: list.length })); };
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      dlg.saveFile({ text: text, filename: name, mime: "application/json",
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }] }).then(function (r) { if (r && r.ok) done(); });
+      return;
+    }
+    var url = URL.createObjectURL(new Blob([text], { type: "application/json" })), a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    done();
+  }
+  function gImport() {
+    var dlg = dialogHost(), acc = ".json,application/json";
+    Promise.resolve(dlg && typeof dlg.openFile === "function" ? dlg.openFile(acc) : localPickFile(acc)).then(function (file) {
+      if (!file) return;
+      if (file.size > 16 * 1024 * 1024) { showToast(t("toast.big")); return; }
+      file.text().then(function (txt) {
+        var j = null;
+        try { j = JSON.parse(txt); } catch (e) { j = null; }
+        var r = j ? G.parseActions(j) : null;
+        var n = r ? gApply(r.actions) : 0;
+        showToast(n ? t("g.impDone", { n: n }) : t("g.impNone"));
+      });
+    });
   }
 
   // ---------- 13. Toasts, dialogs, keyboard ----------
@@ -2044,9 +2357,11 @@
         } catch (e) {}
         if (tgt) openTarget(tgt);
         if (!tgt || typeof tgt.show === "string") refresh(false);
+        gAuto();
         // While open: refresh every hour (never offline or hidden).
         setInterval(function () {
           if (document.visibilityState === "visible" && now() - lastRefresh > REFRESH_MIN * 60000) refresh(false);
+          gAuto();
         }, 60000);
       });
     });

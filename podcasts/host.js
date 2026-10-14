@@ -56,6 +56,7 @@
     if (!next) return;
     data = C.mergePodcasts(next, null);
     writeData();
+    fxSync();
     host.notify("data");
   }
   function sync() { return w.orosSync || null; }
@@ -75,6 +76,7 @@
     data = next;
     writeData();
     markDirty();
+    fxSync();
     host.notify("data");
     return true;
   }
@@ -93,14 +95,17 @@
   //          listening time on this device (core.addListen)
   //   nt:   { showId: newest publish time announced here }  bg: last
   //          background check (ms)
+  //   cors: { origin: [ok 0|1, at ms] } may this audio host be read by
+  //          Web Audio (skip silence / voice boost)? core.fxRemember
   function readLocal() {
     try {
       var o = JSON.parse(w.localStorage.getItem(LOCAL_KEY) || "null");
       if (o && typeof o === "object") return { pos: o.pos || {}, meta: o.meta || {}, cur: o.cur || "", last: o.last || null, spd: o.spd || 0,
         stats: o.stats && typeof o.stats === "object" ? o.stats : { d: {}, s: {} },
-        nt: o.nt && typeof o.nt === "object" ? o.nt : {}, bg: +o.bg || 0 };
+        nt: o.nt && typeof o.nt === "object" ? o.nt : {}, bg: +o.bg || 0,
+        cors: o.cors && typeof o.cors === "object" ? o.cors : {} };
     } catch (e) {}
-    return { pos: {}, meta: {}, cur: "", last: null, spd: 0, stats: { d: {}, s: {} }, nt: {}, bg: 0 };
+    return { pos: {}, meta: {}, cur: "", last: null, spd: 0, stats: { d: {}, s: {} }, nt: {}, bg: 0, cors: {} };
   }
   var local = readLocal();
   var localTimer = null;
@@ -133,19 +138,29 @@
   }
 
   // ---------- Audio ----------
-  var audio = doc.querySelector("audio[data-oros-podcasts]");
-  if (!audio) {
-    audio = doc.createElement("audio");
-    audio.setAttribute("data-oros-podcasts", "1");
-    audio.preload = "metadata";
-    audio.style.display = "none";
-    try { doc.body.appendChild(audio); } catch (e) {}
+  function makeAudio() {
+    var a = doc.createElement("audio");
+    a.setAttribute("data-oros-podcasts", "1");
+    a.preload = "metadata";
+    a.style.display = "none";
+    try { doc.body.appendChild(a); } catch (e) {}
+    return a;
+  }
+  var audio = doc.querySelector("audio[data-oros-podcasts]") || makeAudio();
+  // Listeners go through on(): when the element is replaced (see
+  // fxFresh), the old one's late events do nothing.
+  function on(ev, fn) {
+    var a = audio;
+    a.addEventListener(ev, function (e) { if (a === audio) fn(e); });
   }
   var cur = null;          // meta of the loaded episode
   var loading = false;     // switching episodes: the old element's pause is not a "pause"
   var blobUrl = "";
   var flags = { buffering: false, error: "" };
   var sleep = { until: 0, end: false, iv: null };
+  // Web Audio effects (see "Skip silence + voice boost").
+  var fx = { ctx: null, el: null, src: null, an: null, buf: null, chain: null, vbOn: null, iv: null, lastT: 0,
+    st: { q: 0, silent: false }, zero: 0, fastOn: false, base: 1, told: 1, state: "off", origin: "", saved: 0, retried: "" };
 
   function showOf(sid) { return C.findShow(data, sid); }
   function speedFor(m) {
@@ -189,9 +204,11 @@
     if (data.queue.ids.indexOf(m.id) >= 0) mutate(function (dt, now) { return C.queueRemove(dt, m.id, now); });
     return sourceFor(m).then(function (src) {
       if (!cur || cur.id !== m.id) return false;          // another play() won meanwhile
+      return fxPrepare(src).then(function () {
+      if (!cur || cur.id !== m.id) return false;
       audio.src = src;
       loading = false;
-      audio.playbackRate = speedFor(m);
+      setBase(speedFor(m));
       try { audio.preservesPitch = true; } catch (e) {}
       var seekTo = function () {
         audio.removeEventListener("loadedmetadata", seekTo);
@@ -202,11 +219,13 @@
       saveLocal(true);
       host.notify("load");
       return autoplay ? play() : true;
+      });
     });
   }
   function play() {
     if (!cur) return Promise.resolve(false);
     focusTake();
+    if (fx.ctx && fx.el === audio && fx.ctx.state === "suspended") { try { fx.ctx.resume().catch(function () {}); } catch (e) {} }
     var p;
     try { p = audio.play(); } catch (e) { p = null; }
     return Promise.resolve(p).then(function () { return true; }, function (err) {
@@ -232,6 +251,7 @@
     try { audio.removeAttribute("src"); audio.load(); } catch (e) {}
     releaseBlob();
     cancelSleep();
+    fxLoopStop();
     cur = null; local.cur = "";
     saveLocal(true);
     try { if (w.navigator.mediaSession) w.navigator.mediaSession.metadata = null; } catch (e) {}
@@ -251,7 +271,8 @@
     local.last = { p: p, at: nowSec };
     saveLocal();
   }
-  audio.addEventListener("timeupdate", function () {
+  function bindAudio() {
+  on("timeupdate", function () {
     if (!cur || loading) return;
     var p = Math.floor(audio.currentTime || 0), d = isFinite(audio.duration) ? Math.round(audio.duration) : (cur.dur || 0);
     var old = local.pos[cur.id];
@@ -264,26 +285,35 @@
     posState();
     host.notify("time");
   });
+  on("seeking", function () { lastWall = 0; fx.st = { q: 0, silent: false }; });
+  on("pause", function () { lastWall = 0; fxLoopStop(); if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
+  on("playing", function () { flags.buffering = false; flags.error = ""; fxLoopStart(); chip(); host.notify("play"); });
+  on("waiting", function () { flags.buffering = true; host.notify("buffer"); });
+  on("canplay", function () { flags.buffering = false; host.notify("buffer"); });
+  on("ratechange", function () {
+    posState();
+    // The silence speed-up changes the element's rate many times a
+    // minute; the screen only hears about the listening speed.
+    if (fx.base !== fx.told) { fx.told = fx.base; host.notify("rate"); }
+  });
+  on("error", function () {
+    if (!cur) return;
+    if (fxFailed()) return;
+    flags.error = "media"; flags.buffering = false;
+    chip(); host.notify("error");
+  });
+  on("ended", ended);
+  // The radio element may appear later: look again whenever ours plays.
+  on("play", hookRadio);
+  }
   // Listening time: wall-clock seconds between ticks while playing
   // (a gap over 30 s, e.g. a frozen tab, is not counted).
   var lastWall = 0;
   function countListen() {
     var t = Date.now();
-    if (lastWall && cur) local.stats = C.addListen(local.stats, t, cur.s, (t - lastWall) / 1000, audio.playbackRate || 1);
+    if (lastWall && cur) local.stats = C.addListen(local.stats, t, cur.s, (t - lastWall) / 1000, fx.base || 1);
     lastWall = t;
   }
-  audio.addEventListener("seeking", function () { lastWall = 0; });
-  audio.addEventListener("pause", function () { lastWall = 0; if (loading) return; commit("pause"); saveLocal(true); chip(); host.notify("pause"); });
-  audio.addEventListener("playing", function () { flags.buffering = false; flags.error = ""; chip(); host.notify("play"); });
-  audio.addEventListener("waiting", function () { flags.buffering = true; host.notify("buffer"); });
-  audio.addEventListener("canplay", function () { flags.buffering = false; host.notify("buffer"); });
-  audio.addEventListener("ratechange", function () { posState(); host.notify("rate"); });
-  audio.addEventListener("error", function () {
-    if (!cur) return;
-    flags.error = "media"; flags.buffering = false;
-    chip(); host.notify("error");
-  });
-  audio.addEventListener("ended", ended);
   function ended() {
     if (!cur) return;
     var done = cur;
@@ -307,6 +337,196 @@
   }
   function cancelSleep() { sleep.until = 0; sleep.end = false; }
 
+  // ---------- Skip silence + voice boost (Web Audio, wave 42) ----------
+  // The element goes through an AudioContext only when the audio may be
+  // read: a download (blob:), or a host that answers CORS (probed once
+  // per origin with a plain GET, kept a day in local.cors). Such media
+  // is loaded with crossOrigin="anonymous". Anything else plays on a
+  // plain element exactly as before, and the screen says why the
+  // effects are off ("blocked"): routing a non-CORS file through Web
+  // Audio would only give silence. Once wired, an element stays wired
+  // (the browser allows one source node per element), so a later
+  // non-CORS episode gets a fresh element (fxFresh).
+  //   graph: source → analyser (tap) and source → [highpass → presence
+  //   EQ → compressor → makeup gain] → speakers (voice boost) or
+  //   source → speakers (bypass).
+  // Skip silence polls the analyser every 100 ms while playing; quiet
+  // stretches play at core.silenceRate (the screen keeps showing the
+  // listening speed, fx.base). Saved time goes to the statistics.
+  function fxWanted() { return !!(C.prefOf(data, "sil") || C.prefOf(data, "vb")); }
+  function setBase(r) {
+    fx.base = +r > 0 ? +r : 1;
+    try { audio.playbackRate = fx.fastOn ? C.silenceRate(fx.base) : fx.base; } catch (e) {}
+  }
+  function fxContext() {
+    if (fx.ctx) return fx.ctx;
+    var AC = w.AudioContext || w.webkitAudioContext;
+    if (!AC) return null;
+    try { fx.ctx = new AC(); } catch (e) { fx.ctx = null; }
+    return fx.ctx;
+  }
+  function fxWire() {
+    if (fx.el === audio) return true;
+    var ctx = fxContext();
+    if (!ctx) { fx.state = "unsupported"; return false; }
+    try {
+      fx.src = ctx.createMediaElementSource(audio);
+      if (!fx.an) {
+        fx.an = ctx.createAnalyser(); fx.an.fftSize = 2048;
+        fx.buf = new Float32Array(fx.an.fftSize);
+        var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 80;
+        var eq = ctx.createBiquadFilter(); eq.type = "peaking"; eq.frequency.value = 2800; eq.Q.value = 0.9; eq.gain.value = 5;
+        var comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -30; comp.knee.value = 10; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.2;
+        var gain = ctx.createGain(); gain.gain.value = 1.7;
+        hp.connect(eq); eq.connect(comp); comp.connect(gain); gain.connect(ctx.destination);
+        fx.chain = hp;
+      }
+      fx.el = audio;
+      fx.vbOn = null;
+      fxConnect();
+      return true;
+    } catch (e) { fx.state = "unsupported"; return false; }
+  }
+  function fxConnect() {
+    if (!fx.src || fx.el !== audio) return;
+    var vb = !!C.prefOf(data, "vb");
+    if (fx.vbOn === vb) return;
+    fx.vbOn = vb;
+    try { fx.src.disconnect(); } catch (e) {}
+    try {
+      fx.src.connect(fx.an);
+      fx.src.connect(vb ? fx.chain : fx.ctx.destination);
+    } catch (e) {}
+  }
+  // A new, plain element in place of a wired one (same attributes,
+  // fresh listeners). The old one is silenced and removed.
+  function fxFresh() {
+    var old = audio;
+    fxLoopStop();
+    audio = makeAudio();
+    host.audio = audio;
+    bindAudio();
+    try { old.pause(); old.removeAttribute("src"); old.load(); } catch (e) {}
+    try { old.remove(); } catch (e) {}
+    fx.el = null; fx.src = null; fx.vbOn = null;
+  }
+  // Plain GET with CORS: the answer's headers are enough, the body is
+  // dropped at once. true = Web Audio may read this host's files.
+  function fxProbe(src) {
+    if (typeof w.fetch !== "function" || typeof w.AbortController !== "function") return Promise.resolve(false);
+    var ctl = new w.AbortController();
+    var timer = w.setTimeout(function () { ctl.abort(); }, 8000);
+    return w.fetch(src, { method: "GET", mode: "cors", credentials: "omit", cache: "no-store",
+      referrerPolicy: "no-referrer", redirect: "follow", signal: ctl.signal }).then(function (r) {
+      w.clearTimeout(timer);
+      try { ctl.abort(); } catch (e) {}
+      return r.ok || r.status === 206;
+    }, function () { w.clearTimeout(timer); return false; });
+  }
+  // Before a source is set: wire or unwire the element for it.
+  function fxPrepare(src) {
+    fx.st = { q: 0, silent: false }; fx.zero = 0; fx.fastOn = false;
+    fx.origin = C.mediaOrigin(src, w.location.origin);
+    if (!fxWanted()) {
+      if (fx.el === audio) fxFresh();
+      try { audio.removeAttribute("crossorigin"); } catch (e) {}
+      fx.state = "off";
+      return Promise.resolve(false);
+    }
+    var route = C.fxRoute(fx.origin, local.cors, Date.now());
+    var ask = route === "probe" ? (fx.state = "probing", host.notify("fx"), fxProbe(src).then(function (ok) {
+      local.cors = C.fxRemember(local.cors, fx.origin, ok, Date.now());
+      saveLocal();
+      return ok;
+    })) : Promise.resolve(route === "yes");
+    return ask.then(function (ok) {
+      if (!ok) {
+        if (fx.el === audio) fxFresh();
+        try { audio.removeAttribute("crossorigin"); } catch (e) {}
+        fx.state = "blocked";
+        host.notify("fx");
+        return false;
+      }
+      if (fx.el !== audio && audio.getAttribute("src")) fxFresh();
+      audio.crossOrigin = "anonymous";
+      fx.state = fxWire() ? "on" : "unsupported";
+      if (fx.state !== "on") { fxFresh(); }
+      host.notify("fx");
+      return fx.state === "on";
+    });
+  }
+  // The media failed to load with crossOrigin set (a redirect to a host
+  // without CORS, say): remember the host and play it plain.
+  function fxFailed() {
+    if (!cur || fx.el !== audio || fx.origin === "local" || fx.origin === "same" || fx.retried === cur.id) return false;
+    fx.retried = cur.id;
+    local.cors = C.fxRemember(local.cors, fx.origin, false, Date.now());
+    saveLocal();
+    fxReload(true);
+    return true;
+  }
+  // Reload the current episode where it is (prefs changed, or the
+  // effects had to go): plays on if it was playing.
+  function fxReload(forcePlay) {
+    if (!cur) return;
+    var at = Math.floor(audio.currentTime || posOf(cur.id) || 0), was = forcePlay || !audio.paused;
+    load(cur, at, was);
+  }
+  // Prefs changed (here or from another device).
+  function fxSync() {
+    var want = fxWanted();
+    if (fx.el === audio) fxConnect();
+    if (!C.prefOf(data, "sil")) fxFast(false);
+    if (!cur || loading) { if (!want && fx.state !== "unsupported") fx.state = "off"; return; }
+    if (want && fx.el !== audio && fx.state !== "blocked" && fx.state !== "unsupported" && fx.state !== "probing") fxReload(false);
+    else if (!want && fx.state !== "off") { fx.state = "off"; fxLoopStop(); }
+    else if (want && fx.el === audio) { fx.state = "on"; if (!audio.paused) fxLoopStart(); }
+  }
+  function fxFast(onOff) {
+    if (fx.fastOn === onOff) return;
+    fx.fastOn = onOff;
+    try { audio.playbackRate = onOff ? C.silenceRate(fx.base) : fx.base; } catch (e) {}
+  }
+  function fxLoopStart() {
+    if (fx.iv || fx.el !== audio || !fx.an || !fxWanted()) return;
+    if (fx.ctx && fx.ctx.state === "suspended") { try { fx.ctx.resume().catch(function () {}); } catch (e) {} }
+    fx.lastT = 0;
+    fx.iv = w.setInterval(fxTick, 100);
+  }
+  function fxLoopStop() {
+    if (fx.iv) { w.clearInterval(fx.iv); fx.iv = null; }
+    fxFast(false);
+    fx.st = { q: 0, silent: false };
+  }
+  function fxTick() {
+    if (fx.el !== audio || !fx.an || audio.paused || !cur) { fxLoopStop(); return; }
+    var t = Date.now(), dt = fx.lastT ? t - fx.lastT : 0;
+    fx.lastT = t;
+    if (fx.ctx.state !== "running") { fxFast(false); try { fx.ctx.resume().catch(function () {}); } catch (e) {} return; }
+    try { fx.an.getFloatTimeDomainData(fx.buf); } catch (e) { return; }
+    var zero = C.allZero(fx.buf);
+    fx.zero = C.zeroWatch(fx.zero, zero, !flags.buffering && fx.ctx.state === "running", dt);
+    if (fx.zero >= C.FX.zeroMs && fx.origin !== "local" && fx.origin !== "same") {
+      // Only exact zeros for 10 s while playing: the browser hides this
+      // audio from Web Audio after all. Play it plain.
+      local.cors = C.fxRemember(local.cors, fx.origin, false, Date.now());
+      saveLocal();
+      fxReload(true);
+      return;
+    }
+    if (!C.prefOf(data, "sil")) { fxFast(false); return; }
+    fx.st = C.silenceStep(fx.st, zero ? 0 : C.rms(fx.buf), dt);
+    // A long run of pure zeros is suspect (see above): never speed it.
+    var fast = fx.st.silent && fx.zero < 1500;
+    if (fx.fastOn && dt) {
+      var sv = C.silenceSaved(dt / 1000, fx.base, C.silenceRate(fx.base));
+      fx.saved += sv;
+      local.stats = C.addSaved(local.stats, t, sv);
+    }
+    fxFast(fast);
+  }
+
   // ---------- Audio focus (Radio ↔ Podcasts) ----------
   var radioHooked = null;
   function radioAudio() {
@@ -324,8 +544,6 @@
     var ra = radioAudio();
     if (ra && !ra.paused) { try { ra.pause(); } catch (e) {} }
   }
-  // The radio element may appear later: look again whenever ours plays.
-  audio.addEventListener("play", hookRadio);
 
   // ---------- Media Session ----------
   function media() {
@@ -344,7 +562,7 @@
     var ms = w.navigator.mediaSession;
     if (!ms || typeof ms.setPositionState !== "function" || !isFinite(audio.duration) || !audio.duration) return;
     try {
-      ms.setPositionState({ duration: audio.duration, playbackRate: audio.playbackRate || 1,
+      ms.setPositionState({ duration: audio.duration, playbackRate: fx.base || 1,
         position: Math.min(audio.currentTime || 0, audio.duration) });
     } catch (e) {}
   }
@@ -509,7 +727,7 @@
     setSpeed: function (r) {
       r = +r;
       if (!(r >= C.LIM.spdMin && r <= C.LIM.spdMax)) return;
-      audio.playbackRate = r;
+      setBase(r);
       if (cur) {
         var sid = cur.s;
         // A per-show speed stays per show; otherwise it is the default.
@@ -535,8 +753,11 @@
       return {
         cur: cur, playing: !!cur && !audio.paused, paused: audio.paused,
         pos: audio.currentTime || 0, dur: isFinite(audio.duration) ? audio.duration : (cur ? cur.dur : 0),
-        rate: audio.playbackRate || 1, buffering: flags.buffering, error: flags.error,
-        sleepUntil: sleep.until, sleepEnd: sleep.end
+        rate: fx.base || 1, buffering: flags.buffering, error: flags.error,
+        sleepUntil: sleep.until, sleepEnd: sleep.end,
+        // fx: "off" | "on" | "probing" | "blocked" (the server does not
+        // let the browser read the audio) | "unsupported" (no Web Audio)
+        fx: { state: fx.state, sil: !!C.prefOf(data, "sil"), vb: !!C.prefOf(data, "vb"), saved: Math.round(fx.saved), fast: fx.fastOn }
       };
     },
     subscribe: function (fn) {
@@ -545,6 +766,7 @@
     }
   };
   w.__orosPodcastsHost = host;
+  bindAudio();
 
   // Last session's episode comes back paused, at its place.
   if (local.cur && local.meta[local.cur]) load(local.meta[local.cur], undefined, false).then(chip);
