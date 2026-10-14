@@ -220,6 +220,7 @@ var PRECACHE_URLS = [
   "wiki/core.js",
   "wiki/wiki.js",
   "wiki/search.js",
+  "wiki/pdf.js",
   "weather/",
   "weather/index.html",
   "weather/weather.css",
