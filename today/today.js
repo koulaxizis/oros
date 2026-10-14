@@ -15,8 +15,13 @@
 //   - settings (on/off, start hour, apps, quiet morning reminders)
 //     are the shell's synced slice "today", written through
 //     orosToday.setSetting
-//   - no storage of its own; open/closed groups live in
+//   - no synced storage of its own; open/closed groups live in
 //     sessionStorage "oros-today-ui" (R10)
+//   - widgets (wave 48, today/layout.js): which sections and widgets
+//     show, in which order and size, is THIS device's choice:
+//     localStorage "oros-today-layout", never synced. "Customise"
+//     edits it: drag by the handle, or the up / down buttons on touch
+//     and keyboard, size, remove, add, back to the standard layout
 //   - text is set with textContent only; the only markup written is
 //     the app's own static SVG icons and the shell's app icons
 // Sections:
@@ -69,7 +74,28 @@
       "s.apps": "Apps in the summary", "s.sens": "sensitive",
       "s.sensHint": "Sensitive apps are off until you switch them on.",
       "s.none": "No app gives the summary anything yet.",
-      "s.fail": "Could not save. Storage may be full."
+      "s.fail": "Could not save. Storage may be full.",
+      custom: "Customise", editDone: "Done",
+      "w.top": "At a glance", "w.overdue": "Overdue", "w.today": "Today", "w.soon": "Coming up",
+      "w.clock": "Clock", "w.weather": "Weather", "w.water": "Water", "w.habits": "Habits",
+      "w.events": "Upcoming events", "w.todos": "To-dos",
+      "d.top": "Weather, name days, timers and other short lines",
+      "d.overdue": "Tasks whose day has passed", "d.today": "What is due today",
+      "d.soon": "The next three days", "d.clock": "The time and the date",
+      "d.weather": "Today's weather line, in its own card", "d.water": "How much you've drunk today",
+      "d.habits": "Habits still to do today", "d.events": "Calendar events of today and the next days",
+      "d.todos": "To-Do tasks: late, today and the next days",
+      "e.move": "Drag to move: {w}", "e.up": "Move up: {w}", "e.down": "Move down: {w}",
+      "e.small": "Small", "e.wide": "Wide", "e.size": "Size of {w}: {s}. Change",
+      "e.remove": "Remove {w}", "e.add": "Add a widget", "e.addOne": "Add {w}",
+      "e.reset": "Back to the standard layout", "e.all": "Every widget is on the screen.",
+      "e.hint": "Drag a widget by its handle, or use the arrows. The layout is kept on this device only.",
+      "e.moved": "{w}: place {n} of {m}", "e.removed": "{w} removed", "e.added": "{w} added",
+      noWidgets: "No widgets on the screen. Press Customise to add some.",
+      "none.habits": "No habits left for today", "none.todos": "No to-dos due in the next days",
+      "none.events": "No events in the next days",
+      "none.weather": "Nothing from Weather yet. Open it to choose a place.",
+      "none.water": "Nothing from Water yet. Open it to start counting."
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
@@ -90,7 +116,28 @@
       "s.apps": "Εφαρμογές στη σύνοψη", "s.sens": "ευαίσθητη",
       "s.sensHint": "Οι ευαίσθητες εφαρμογές είναι κλειστές μέχρι να τις ανοίξεις.",
       "s.none": "Καμία εφαρμογή δεν δίνει ακόμη κάτι στη σύνοψη.",
-      "s.fail": "Δεν αποθηκεύτηκε. Ίσως είναι γεμάτος ο χώρος."
+      "s.fail": "Δεν αποθηκεύτηκε. Ίσως είναι γεμάτος ο χώρος.",
+      custom: "Προσαρμογή", editDone: "Τέλος",
+      "w.top": "Με μια ματιά", "w.overdue": "Εκπρόθεσμα", "w.today": "Σήμερα", "w.soon": "Έρχονται",
+      "w.clock": "Ρολόι", "w.weather": "Καιρός", "w.water": "Νερό", "w.habits": "Συνήθειες",
+      "w.events": "Επόμενα γεγονότα", "w.todos": "Εργασίες",
+      "d.top": "Καιρός, γιορτές, χρονόμετρα και άλλες σύντομες γραμμές",
+      "d.overdue": "Εργασίες που πέρασε η μέρα τους", "d.today": "Ό,τι λήγει σήμερα",
+      "d.soon": "Οι επόμενες τρεις μέρες", "d.clock": "Η ώρα και η ημερομηνία",
+      "d.weather": "Η γραμμή του καιρού, σε δική της κάρτα", "d.water": "Πόσο νερό ήπιες σήμερα",
+      "d.habits": "Συνήθειες που μένουν για σήμερα", "d.events": "Γεγονότα του Ημερολογίου, σήμερα και τις επόμενες μέρες",
+      "d.todos": "Εργασίες: εκπρόθεσμες, σήμερα και τις επόμενες μέρες",
+      "e.move": "Σύρε για μετακίνηση: {w}", "e.up": "Πάνω: {w}", "e.down": "Κάτω: {w}",
+      "e.small": "Μικρό", "e.wide": "Φαρδύ", "e.size": "Μέγεθος ({w}): {s}. Αλλαγή",
+      "e.remove": "Αφαίρεση: {w}", "e.add": "Προσθήκη γραφικού στοιχείου", "e.addOne": "Προσθήκη: {w}",
+      "e.reset": "Επαναφορά της αρχικής διάταξης", "e.all": "Όλα τα γραφικά στοιχεία είναι ήδη στην οθόνη.",
+      "e.hint": "Σύρε ένα στοιχείο από τη λαβή του ή χρησιμοποίησε τα βέλη. Η διάταξη μένει μόνο σε αυτή τη συσκευή.",
+      "e.moved": "{w}: θέση {n} από {m}", "e.removed": "Αφαιρέθηκε: {w}", "e.added": "Προστέθηκε: {w}",
+      noWidgets: "Δεν υπάρχουν γραφικά στοιχεία στην οθόνη. Πάτησε Προσαρμογή για να προσθέσεις.",
+      "none.habits": "Δεν μένουν συνήθειες για σήμερα", "none.todos": "Καμία εργασία τις επόμενες μέρες",
+      "none.events": "Κανένα γεγονός τις επόμενες μέρες",
+      "none.weather": "Τίποτα από τον Καιρό ακόμη. Άνοιξέ τον για να διαλέξεις τόπο.",
+      "none.water": "Τίποτα από το Νερό ακόμη. Άνοιξέ το για να αρχίσεις να μετράς."
     }
   };
   function t(k, vars) {
@@ -111,7 +158,13 @@
     chev: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     ask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    dot: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg>'
+    dot: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/></svg>',
+    grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>',
+    handle: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
   };
 
   function host() { var p = parentWin(); try { return p && p.orosToday ? p.orosToday : null; } catch (e) { return null; } }
@@ -142,6 +195,22 @@
   })();
   function saveUi() { try { sessionStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {} }
 
+  // Widget layout: this device only (never in the synced slice).
+  var LAYOUT_KEY = "oros-today-layout";
+  var L = window.OrosTodayLayout;
+  var layout = (function () {
+    try { var raw = localStorage.getItem(LAYOUT_KEY); return raw ? L.parse(raw) : L.defaults(); }
+    catch (e) { return L.defaults(); }
+  })();
+  function setLayout(next) {
+    layout = L.norm(next);
+    try {
+      if (L.isDefault(layout)) localStorage.removeItem(LAYOUT_KEY);
+      else localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout));
+    } catch (e) {}
+  }
+  var editing = false;
+
   var toastTimer = null;
   function toast(msg) {
     var n = $("toast");
@@ -161,6 +230,7 @@
       if (my !== seq) return;
       last = res;
       assist = assistState(res);
+      if (document.querySelector(".w.dragging")) return;     // the drop renders
       render();
     }, function () {});
   }
@@ -171,6 +241,7 @@
     main.appendChild(el("div", "empty", t("noShell")));
     $("set-btn").disabled = true;
     $("refresh-btn").disabled = true;
+    $("edit-btn").disabled = true;
   }
 
   function appInfo(id) {
@@ -188,6 +259,8 @@
 
   function render() {
     var res = last, main = $("main");
+    if (!res) return;
+    var keepScroll = main.scrollTop;
     main.textContent = "";
     $("date").textContent = dateLong(res.today);
     var H = host(), set = H ? H.settings() : null;
@@ -195,44 +268,153 @@
       main.appendChild(el("div", "note", t("oldNote", { d: dateLong(oldDay) })));
     }
     if (set && !set.on.v) main.appendChild(el("div", "note", t("off")));
-    var g = res.groups;
-    if (g.info.length) {
-      var top = el("ul", "top");
-      g.info.forEach(function (r) {
-        var li = el("li");
-        var b = el("button", "top-open");          // a top line opens its app too
-        b.type = "button";
-        b.appendChild(iconFor(r.app));
-        b.appendChild(el("span", "txt", r.title + (r.text ? " · " + r.text : "")));
-        b.addEventListener("click", function () {
-          var H = host();
-          if (H) H.open(r.app, r.target);
-        });
-        li.appendChild(b);
-        top.appendChild(li);
-      });
-      main.appendChild(top);
-    }
-    var cols = el("div");
+    var on = L.ids(layout);
+    var parts = L.distribute(res.groups, on);
+    // "Nothing for today": nothing late or due today in any widget.
+    var due = 0, soon = 0;
+    on.forEach(function (id) {
+      parts[id].forEach(function (p) { if (p.late || p.today) due += p.rows.length; else if (p.day) soon += p.rows.length; });
+    });
+    var emptyAt = on.indexOf("today") >= 0 ? "today" : on.indexOf("overdue") >= 0 ? "overdue" : "";
+    var cols = el("div", editing ? "editing" : "");
     cols.id = "cols";
-    var any = g.overdue.length + g.today.length;
-    if (g.overdue.length) cols.appendChild(group("overdue", t("overdue"), [{ rows: g.overdue, more: g.overdueMore }], "late", res.today));
-    if (g.today.length) cols.appendChild(group("today", t("today"), [{ rows: g.today, more: g.todayMore }], "", res.today));
-    if (!any) {
-      var e = el("div", "empty wide");
-      e.appendChild(el("strong", "", t("empty")));
-      e.appendChild(document.createTextNode(g.soon.length ? t("emptyNext") : t("emptySoon")));
-      cols.appendChild(e);
-    }
-    if (g.soon.length) {
-      var days = g.soon.map(function (d) { return { head: dayName(d.day, res.today), rows: d.rows, more: d.more }; });
-      cols.appendChild(group("soon", t("soon"), days, "", res.today));
-    }
+    layout.items.forEach(function (it, i) {
+      var node = editing ? editCard(it, i) : widget(it, parts, res, !due && emptyAt === it.id, soon);
+      if (node) cols.appendChild(node);
+    });
+    if (!layout.items.length) cols.appendChild(el("div", "empty wide", t("noWidgets")));
     main.appendChild(cols);
+    if (editing) main.appendChild(addPanel());
+    paintClocks();
+    main.scrollTop = keepScroll;
   }
 
-  function group(id, title, parts, cls, today) {
-    var box = el("section", "group" + (cls ? " " + cls : ""));
+  function shellOf(it) {
+    var w = L.WIDGETS[it.id];
+    var box = el("section", "w w-" + it.id + " kind-" + w.kind + " size-" + it.size);
+    box.setAttribute("data-id", it.id);
+    return box;
+  }
+  // Parts → groups: a widget with several parts names each one (late,
+  // today, a day); a single late or today part needs no name.
+  function headParts(list) {
+    var many = list.length > 1;
+    return list.map(function (p) {
+      var head = p.day ? dayName(p.day, last.today) : (many && p.late ? t("overdue") : (many && p.today ? t("today") : ""));
+      return { head: head, rows: p.rows, more: p.more, late: !!p.late };
+    });
+  }
+  function widget(it, parts, res, showEmpty, soonN) {
+    var id = it.id, list = parts[id] || [];
+    if (id === "top") return list.length ? topLines(list[0].rows, it) : null;
+    if (id === "clock") return clockTile(it);
+    if (id === "weather" || id === "water") return appTile(it, list.length ? list[0].rows : []);
+    if (id === "overdue" || id === "today") {
+      if (!list.length) {
+        if (!showEmpty) return null;
+        var e = shellOf(it);
+        e.className += " empty-w";
+        var box = el("div", "empty");
+        box.appendChild(el("strong", "", t("empty")));
+        box.appendChild(document.createTextNode(soonN ? t("emptyNext") : t("emptySoon")));
+        e.appendChild(box);
+        return e;
+      }
+      return group(it, t(id === "overdue" ? "overdue" : "today"), headParts(list), id === "overdue" ? "late" : "", res.today);
+    }
+    if (id === "soon") return list.length ? group(it, t("soon"), headParts(list), "", res.today) : null;
+    // habits, events, todos: the card stays even when it has nothing
+    return group(it, t("w." + id), headParts(list), "", res.today, t("none." + id));
+  }
+
+  function topLines(rows, it) {
+    var box = shellOf(it);
+    var top = el("ul", "top");
+    rows.forEach(function (r) {
+      var li = el("li");
+      var b = el("button", "top-open");          // a top line opens its app too
+      b.type = "button";
+      b.appendChild(iconFor(r.app));
+      b.appendChild(el("span", "txt", r.title + (r.text ? " · " + r.text : "")));
+      b.addEventListener("click", function () {
+        var H = host();
+        if (H) H.open(r.app, r.target);
+      });
+      li.appendChild(b);
+      top.appendChild(li);
+    });
+    box.appendChild(top);
+    return box;
+  }
+
+  // Clock: hours and minutes; the wide one adds seconds and the full date.
+  function clockTile(it) {
+    var box = shellOf(it);
+    box.className += " tile";
+    box.appendChild(el("div", "tile-label", t("w.clock")));
+    var tm = el("div", "clock-time");
+    if (it.size === "wide") tm.setAttribute("data-sec", "1");
+    box.appendChild(tm);
+    var dt = el("div", "clock-date");
+    if (it.size === "wide") dt.setAttribute("data-long", "1");
+    box.appendChild(dt);
+    return box;
+  }
+  var clockTimer = 0;
+  function paintClocks() {
+    var nodes = document.querySelectorAll(".clock-time");
+    if (!nodes.length) { if (clockTimer) { clearInterval(clockTimer); clockTimer = 0; } return; }
+    var now = new Date(), loc = LANG === "el" ? "el-GR" : "en-GB";
+    [].forEach.call(nodes, function (n) {
+      var opts = { hour: "2-digit", minute: "2-digit", hour12: false };
+      if (n.getAttribute("data-sec")) opts.second = "2-digit";
+      var s;
+      try { s = now.toLocaleTimeString(loc, opts); } catch (e) { s = now.toTimeString().slice(0, 5); }
+      if (n.textContent !== s) n.textContent = s;
+    });
+    [].forEach.call(document.querySelectorAll(".clock-date"), function (n) {
+      var o = n.getAttribute("data-long") ? { weekday: "long", day: "numeric", month: "long", year: "numeric" }
+                                          : { weekday: "short", day: "numeric", month: "short" };
+      var s;
+      try { s = now.toLocaleDateString(loc, o); } catch (e) { s = ""; }
+      if (n.textContent !== s) n.textContent = s;
+    });
+    if (!clockTimer) clockTimer = setInterval(paintClocks, 1000);
+  }
+
+  // Weather / Water: the app's own top line, larger; a tap opens it.
+  function appTile(it, rows) {
+    var app = L.WIDGETS[it.id].app;
+    var box = shellOf(it);
+    box.className += " tile";
+    var b = el("button", "tile-open");
+    b.type = "button";
+    var lab = el("span", "tile-label");
+    lab.appendChild(iconFor(app));
+    lab.appendChild(document.createTextNode(t("w." + it.id)));
+    b.appendChild(lab);
+    if (rows.length) {
+      rows.forEach(function (r) {
+        b.appendChild(el("span", "tile-main", r.title));
+        if (r.text) b.appendChild(el("span", "tile-sub", r.text));
+      });
+    } else {
+      b.appendChild(el("span", "tile-sub", t("none." + it.id)));
+    }
+    b.addEventListener("click", function () {
+      var H = host();
+      if (!H) return;
+      if (rows.length) H.open(rows[0].app, rows[0].target);
+      else H.open(app);
+    });
+    box.appendChild(b);
+    return box;
+  }
+
+  function group(it, title, parts, cls, today, none) {
+    var id = it.id;
+    var box = shellOf(it);
+    box.className += " group" + (cls ? " " + cls : "");
     var n = 0;
     parts.forEach(function (p) { n += p.rows.length; });
     var open = ui[id] !== false;
@@ -247,10 +429,11 @@
     box.appendChild(head);
     var body = el("div");
     body.hidden = !open;
+    if (!parts.length && none) body.appendChild(el("div", "more", none));
     parts.forEach(function (p) {
       if (p.head) body.appendChild(el("div", "day-head", p.head));
       var ul = el("ul", "rows");
-      p.rows.forEach(function (r) { ul.appendChild(rowEl(r, id, today)); });
+      p.rows.forEach(function (r) { ul.appendChild(rowEl(r, p.late, today)); });
       body.appendChild(ul);
       Object.keys(p.more || {}).forEach(function (app) {
         body.appendChild(el("div", "more", t("more", { n: p.more[app], app: appInfo(app).name })));
@@ -267,7 +450,7 @@
     return box;
   }
 
-  function rowEl(r, groupId, today) {
+  function rowEl(r, late, today) {
     var A = parentWin() && parentWin().OrosTodayAgg;
     var info = appInfo(r.app);
     var li = el("li", "row");
@@ -278,7 +461,7 @@
     var tx = el("span", "txt");
     tx.appendChild(el("span", "r-title", r.title));
     var meta = el("span", "r-meta");
-    if (groupId === "overdue" && r.due && A) {
+    if (late && r.due && A) {
       var n = A.diff(r.due, today);
       meta.appendChild(el("span", "late", n === 1 ? t("late1") : t("lateN", { n: n })));
       meta.appendChild(document.createTextNode(" · "));
@@ -313,6 +496,188 @@
       li.appendChild(a);
     }
     return li;
+  }
+
+  // ---------- 2b. Customise (wave 48) ----------
+  function wName(id) { return t("w." + id); }
+  function iconButton(cls, svg, label, onClick) {
+    var b = el("button", "e-btn " + cls);
+    b.type = "button";
+    b.innerHTML = svg;                          // the app's own static icon
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+  function say(msg) {
+    var n = $("live");
+    if (!n) return;
+    n.textContent = "";
+    setTimeout(function () { n.textContent = msg; }, 30);
+  }
+  function focusLater(id, cls) {
+    setTimeout(function () {
+      var n = document.querySelector('.w[data-id="' + id + '"] .' + cls);
+      if (!n || n.disabled) n = document.querySelector('.w[data-id="' + id + '"] .handle');
+      if (n) n.focus();
+    }, 0);
+  }
+  function editCard(it, i) {
+    var w = L.WIDGETS[it.id], name = wName(it.id), count = layout.items.length;
+    var box = shellOf(it);
+    box.className += " edit-card";
+    var bar = el("div", "e-bar");
+    var h = iconButton("handle", SVG.handle, t("e.move", { w: name }), function () {});
+    wireDrag(h, box);
+    bar.appendChild(h);
+    var txt = el("span", "e-name");
+    txt.appendChild(el("strong", "", name));
+    txt.appendChild(el("span", "e-desc", t("d." + it.id)));
+    bar.appendChild(txt);
+    var tools = el("span", "e-tools");
+    var up = iconButton("up", SVG.up, t("e.up", { w: name }), function () {
+      setLayout(L.moveId(layout, it.id, -1));
+      render();
+      say(t("e.moved", { w: name, n: i, m: count }));
+      focusLater(it.id, "up");
+    });
+    up.disabled = i === 0;
+    var dn = iconButton("down", SVG.down, t("e.down", { w: name }), function () {
+      setLayout(L.moveId(layout, it.id, 1));
+      render();
+      say(t("e.moved", { w: name, n: i + 2, m: count }));
+      focusLater(it.id, "down");
+    });
+    dn.disabled = i === count - 1;
+    tools.appendChild(up);
+    tools.appendChild(dn);
+    if (w.sizes.length > 1) {
+      var cur = t(it.size === "wide" ? "e.wide" : "e.small");
+      var sz = el("button", "e-btn size", cur);
+      sz.type = "button";
+      sz.setAttribute("aria-label", t("e.size", { w: name, s: cur }));
+      sz.addEventListener("click", function () {
+        setLayout(L.setSize(layout, it.id, L.nextSize(it.id, it.size)));
+        render();
+        focusLater(it.id, "size");
+      });
+      tools.appendChild(sz);
+    }
+    tools.appendChild(iconButton("remove", SVG.x, t("e.remove", { w: name }), function () {
+      setLayout(L.remove(layout, it.id));
+      render();
+      say(t("e.removed", { w: name }));
+      var first = document.querySelector("#cols .handle, .add-panel button");
+      if (first) first.focus();
+    }));
+    bar.appendChild(tools);
+    box.appendChild(bar);
+    return box;
+  }
+  function addPanel() {
+    var box = el("section", "add-panel");
+    box.appendChild(el("h2", "", t("e.add")));
+    box.appendChild(el("p", "hint", t("e.hint")));
+    var hid = L.hidden(layout);
+    if (!hid.length) box.appendChild(el("p", "hint", t("e.all")));
+    var ul = el("ul", "add-list");
+    hid.forEach(function (id) {
+      var li = el("li");
+      var b = el("button", "add-btn");
+      b.type = "button";
+      var ic = el("span", "ico");
+      ic.innerHTML = SVG.plus;                   // the app's own static icon
+      b.appendChild(ic);
+      var tx = el("span", "txt");
+      tx.appendChild(el("strong", "", wName(id)));
+      tx.appendChild(el("span", "e-desc", t("d." + id)));
+      b.appendChild(tx);
+      b.setAttribute("aria-label", t("e.addOne", { w: wName(id) }));
+      b.addEventListener("click", function () {
+        setLayout(L.add(layout, id));
+        render();
+        say(t("e.added", { w: wName(id) }));
+        focusLater(id, "handle");
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    var reset = el("button", "txt-btn", t("e.reset"));
+    reset.type = "button";
+    reset.disabled = L.isDefault(layout);
+    reset.addEventListener("click", function () {
+      setLayout(L.defaults());
+      render();
+    });
+    box.appendChild(reset);
+    return box;
+  }
+  // Drag by the handle (mouse, pen and touch: pointer events). The
+  // card moves in the DOM as the pointer passes over the others; the
+  // drop saves the order. The moves and the drop are followed on the
+  // document (moving the card in the DOM would end a pointer capture).
+  // The arrows do the same without dragging.
+  function wireDrag(handle, box) {
+    var drag = null;
+    function onMove(e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      e.preventDefault();
+      drag.moved = true;
+      var main = $("main"), mr = main.getBoundingClientRect();
+      drag.dy = e.clientY < mr.top + 40 ? -12 : e.clientY > mr.bottom - 40 ? 12 : 0;
+      var cols = $("cols"), over = document.elementFromPoint(e.clientX, e.clientY);
+      var tgt = over && over.closest ? over.closest(".w") : null;
+      if (!tgt || tgt === box || tgt.parentNode !== cols) return;
+      var r = tgt.getBoundingClientRect();
+      var midY = r.top + r.height / 2;
+      var after = e.clientY > midY + r.height / 6 ||
+                  (Math.abs(e.clientY - midY) <= r.height / 6 && e.clientX > r.left + r.width / 2);
+      var ref = after ? tgt.nextSibling : tgt;
+      if (ref !== box) cols.insertBefore(box, ref);
+    }
+    function onEnd(e) {
+      if (!drag || (e && e.pointerId !== drag.id)) return;
+      var moved = drag.moved;
+      clearInterval(drag.scroll);
+      drag = null;
+      document.removeEventListener("pointermove", onMove, true);
+      document.removeEventListener("pointerup", onEnd, true);
+      document.removeEventListener("pointercancel", onEnd, true);
+      box.classList.remove("dragging");
+      if (!moved) return;
+      var order = [].map.call(document.querySelectorAll("#cols > .w"), function (n) { return n.getAttribute("data-id"); });
+      var id = box.getAttribute("data-id");
+      setLayout(L.reorder(layout, order));
+      render();
+      var at = L.ids(layout).indexOf(id);
+      say(t("e.moved", { w: wName(id), n: at + 1, m: layout.items.length }));
+      focusLater(id, "handle");
+    }
+    handle.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0 || drag) return;
+      e.preventDefault();
+      drag = { id: e.pointerId, moved: false, dy: 0, scroll: 0 };
+      box.classList.add("dragging");
+      var main = $("main");
+      drag.scroll = setInterval(function () {
+        if (drag && drag.dy) main.scrollTop += drag.dy;
+      }, 30);
+      document.addEventListener("pointermove", onMove, true);
+      document.addEventListener("pointerup", onEnd, true);
+      document.addEventListener("pointercancel", onEnd, true);
+    });
+  }
+  function setEditing(on) {
+    editing = !!on;
+    var b = $("edit-btn");
+    b.innerHTML = editing ? SVG.check : SVG.grid;
+    var label = editing ? t("editDone") : t("custom");
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.setAttribute("aria-pressed", editing ? "true" : "false");
+    b.classList.toggle("on", editing);
+    if (last) render();
   }
 
   // ---------- 3. Assistant button ----------
@@ -463,10 +828,12 @@
     }
     iconBtn("refresh-btn", SVG.refresh, t("refresh"));
     iconBtn("set-btn", SVG.gear, t("settings"));
+    setEditing(false);
     $("set-title").textContent = t("s.title");
     $("set-close").textContent = t("close");
     $("refresh-btn").addEventListener("click", refresh);
     $("set-btn").addEventListener("click", settingsDialog);
+    $("edit-btn").addEventListener("click", function () { setEditing(!editing); });
     inheritPalette();
     watchPalette();
     wireKeyboard();

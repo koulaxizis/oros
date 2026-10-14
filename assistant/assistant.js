@@ -6,9 +6,11 @@
 // between. It can search the user's orOS data through the shell's
 // universal search, and every result the user has not allowed for
 // good is shown to them first ("Share" / "Don't share").
-// The assistant writes no app's data: a suggested entry is a card
-// whose button opens that app's own prefill bridge, where the user
-// saves it (core.js section 10).
+// A suggested entry is a card whose button opens that app's own
+// prefill bridge, where the user saves it (core.js section 10). A
+// change to an existing item (change_item, wave 48, edits.js) is
+// written only after the user presses Apply on its before → after
+// card, with Undo while the Assistant stays open.
 // Data:
 //   - synced slice "assistant" (oros-assistant-data): provider,
 //     model, permissions per app, "chat only", key-sync switch and,

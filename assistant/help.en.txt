@@ -1,5 +1,5 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense or a bookmark you already have, but only after you see the change and press Apply.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
@@ -36,7 +36,26 @@ Ask, for example, "remind me to call the plumber", "I spent 12.50 on lunch" or "
 - `Open in …` opens that app with the entry filled in. For To-Do, Calendar, Budget, Quote, Invoices and Bookmarks nothing is saved until you press Save or Add there; `Cancel` leaves no trace.
 - `Dismiss` drops the card.
 
-Notes and Spreadsheet make the new note or sheet when you press `Open in …`, and Slides asks you to pick a theme first; you can change or delete them there. The assistant never changes or deletes anything you already have.
+Notes and Spreadsheet make the new note or sheet when you press `Open in …`, and Slides asks you to pick a theme first; you can change or delete them there.
+
+## Change what you already have
+Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
+- `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
+- After a change the card says what happened and has `Undo`. Undo works until you leave the Assistant; after that, change it back in the app itself.
+- If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
+
+What it can change:
+- [To-Do](app:todo): mark a task done or not done, move its date, rename it, change its note, delete it.
+- [Calendar](app:calendar): move an event (day, start, end), rename it, change its place or note, delete it.
+- [Budget](app:budget): change an entry's amount, date, category or note, delete it.
+- [Bookmarks](app:bookmarks): rename a bookmark, change its note, delete it.
+
+Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, and bookmarks with a saved copy. Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
+
+## Speak instead of typing
+Where the browser can turn speech into text, a microphone button sits next to `Send`. Press it, speak, and the text appears in the message box in the language of orOS (English or Greek); press it again to stop. Nothing is sent until you press `Send`, so you can correct it first.
+
+The first time, a note explains how it works: most browsers (Chrome, Edge, Safari) send the recording to their own speech service on the internet to recognise it; it does not go to orOS or to the AI assistant. The browser asks once for the microphone. Browsers without speech recognition, such as Firefox, show no microphone button.
 
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
@@ -49,6 +68,7 @@ Notes and Spreadsheet make the new note or sheet when you press `Open in …`, a
 - In `Settings` → `Your data` you choose, per app, `Ask first`, `Always share` or `Never`. Health, Mood, Cycle, Baby and Budget start at `Never`. Mail and Password Generator are never offered.
 - `Chat only` turns off every search: the assistant then sees only what you type.
 - With `Built-in browser model` nothing leaves the device at all.
+- The microphone uses your browser's speech service, which usually sends the recording over the internet (see Speak instead of typing).
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.
@@ -72,5 +92,7 @@ Keys stay on each device unless you tick `Sync API keys to my other devices`. Th
 
 ## Limits
 - The assistant needs the internet, except a model on your own network or the built-in browser model.
-- It can suggest new entries for To-Do, Calendar, Budget, Quote, Invoices, Spreadsheet, Slides, Bookmarks and Notes. It can't change or delete what you already have, and it can't send anything (no email).
+- It can suggest new entries for To-Do, Calendar, Budget, Quote, Invoices, Spreadsheet, Slides, Bookmarks and Notes. It can change or delete items only in To-Do, Calendar, Budget and Bookmarks, one at a time, and it can't send anything (no email).
+- Undo of a change works only until you leave the Assistant.
+- If an app is open in another browser tab while you change one of its items here, that tab may still show the old version until you reload it.
 - Some services may refuse calls from a browser. A local server must allow this site: for Ollama, start it with `OLLAMA_ORIGINS=https://useoros.online`.
