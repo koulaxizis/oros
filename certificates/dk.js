@@ -118,7 +118,9 @@
   function resetFit() { fitCache = {}; fitCount = 0; }
 
   // ---------- Build ----------
-  // build(ev, people, opts) -> { doc, pages: [{ id, person }] }
+  // build(ev, people, opts) -> { doc, pages: [{ id, person, qr? }] }
+  //   qr: { x, y, s } (pt) the white square where the app paints the
+  //   signed check QR code (ev.qr on); the code itself is not a doc item
   //   people: [person…]; empty or null = one sample page
   //   opts.sample: { n, no } the sample person
   function build(ev, people, opts) {
@@ -232,7 +234,8 @@
     list.forEach(function (p, pi) {
       var pg = id("pg");
       doc.pages.push({ id: pg, m: 1, pos: (pi + 1) * 1024, ms: "" });
-      out.pages.push({ id: pg, person: p && p.id ? p.id : "" });
+      var pgOut = { id: pg, person: p && p.id ? p.id : "" };
+      out.pages.push(pgOut);
       decor(pg);
       var map = CC.fields(ev, p), fl = function (key) { return CC.fill(ev.txt[key] || "", map).trim(); };
       var B = contentBox();
@@ -284,8 +287,16 @@
         textBox(pg, head, 52 * k, bh / 2 - 24 * k, W - 104 * k, 48 * k, { font: font, size: 34 * k, b: 1, track: L.track, color: WHITE }, "c", 3);
       }
 
-      // the bottom row: three slots
-      var rowY = B.y + B.h - serialH - bottomH, cw = B.w / 3;
+      // the bottom row: the check QR code (when on) at the left, then three slots
+      var rowY = B.y + B.h - serialH - bottomH, rowX = B.x, rowW = B.w;
+      if (ev.qr) {
+        var q = 84 * k;
+        pgOut.qr = { x: B.x, y: rowY + bottomH - q - 2 * k, s: q };
+        rect(pg, pgOut.qr.x, pgOut.qr.y, q, q, { fill: WHITE, r: 3 * k, z: 2 });
+        rowX = B.x + q + 12 * k;
+        rowW = B.w - q - 12 * k;
+      }
+      var cw = rowW / 3;
       var slots = [null, null, null];
       if (sigs.length === 1) slots = [foot ? "foot" : null, hasSeal ? "seal" : null, sigs[0]];
       else if (sigs.length === 2) slots = [sigs[0], hasSeal ? "seal" : null, sigs[1]];
@@ -294,10 +305,10 @@
       var footBelow = foot && slots.indexOf("foot") < 0;
       slots.forEach(function (s, i) {
         if (!s) return;
-        var sx = B.x + i * cw + 10 * k, sw = cw - 20 * k;
+        var sx = rowX + i * cw + 10 * k, sw = cw - 20 * k;
         if (s === "seal") {
-          if (ev.seal) image(pg, ev.seal, B.x + i * cw + cw / 2 - 44 * k, rowY + 4 * k, 88 * k, 88 * k, 3);
-          else medal(pg, B.x + i * cw + cw / 2, rowY + 40 * k, 34 * k);
+          if (ev.seal) image(pg, ev.seal, rowX + i * cw + cw / 2 - 44 * k, rowY + 4 * k, 88 * k, 88 * k, 3);
+          else medal(pg, rowX + i * cw + cw / 2, rowY + 40 * k, 34 * k);
           return;
         }
         var lineY = rowY + 58 * k;

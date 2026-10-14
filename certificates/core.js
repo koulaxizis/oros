@@ -12,15 +12,18 @@
 //   - the register as CSV, file names
 // Data (synced slice "certificates", key oros-certificates-data):
 //   { ver: 1, evs: [event…], ppl: [person…] (both sorted by id),
-//     tombs: { id: deletedAt } }
+//     tombs: { id: deletedAt }, keys? [key…] (since 1.1.0) }
 // event (one certificate design + the details of what it is for):
 //   { id "e…", m, t, kind, lang en|el, sty, acc, acc2, font serif|sans,
 //     size a4|letter, orient l|p, d1, d2, idate (YYYY-MM-DD or ""),
 //     place, hours, issuer, txt { sub, head, pre, nm, body, foot, no },
 //     sigs [{ n, r, a?, w?, h? }] ≤ 3, logo { a, w, h } | null,
-//     seal { a, w, h } | null, medal 0|1, showNo 0|1, pre, next }
+//     seal { a, w, h } | null, medal 0|1, showNo 0|1, pre, next,
+//     qr 0|1 (a signed check QR code, since 1.1.0) }
 // person: { id "p…", m, e (event id), n, n2, em, g, x, no (0 = none),
 //   iss (YYYY-MM-DD when numbered), rv 0|1 (revoked), o (list order) }
+// key (signs the check QR codes, see sign.js): { id "k…", m, made,
+//   x, y, d } (JWK parts of an ECDSA P-256 key), ≤ 20, newest made signs
 // Merge: LWW per entity by m (equal m: the larger canonical JSON),
 // tombstones max-merged, a tombstone wins ties, a newer edit
 // resurrects; people of an event that is gone go with it (R5, R17,
@@ -31,7 +34,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-certificates-data";
   var PREFS_KEY = "oros-certificates-prefs";
@@ -39,11 +42,13 @@
   var LIM = {
     events: 200, people: 5000, perEvent: 2000, sigs: 3,
     title: 200, text: 1200, name: 120, email: 160, grade: 80, extra: 200,
-    place: 120, hours: 12, issuer: 160, pre: 20, sigName: 80, sigRole: 80
+    place: 120, hours: 12, issuer: 160, pre: 20, sigName: 80, sigRole: 80, keys: 20
   };
 
   var EV_RE = /^e[0-9a-z]{6,24}$/;
   var P_RE = /^p[0-9a-z]{6,24}$/;
+  var K_RE = /^k[0-9a-z]{6,24}$/;
+  var B64U32_RE = /^[A-Za-z0-9_-]{43}$/;
   var ASSET_RE = /^[0-9a-f]{64}\.(jpg|png)$/;
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var HEX_RE = /^#[0-9a-f]{6}$/;
@@ -162,7 +167,7 @@
   }
   function copy(o) { return JSON.parse(JSON.stringify(o)); }
   function newId(prefix, rand) {
-    var r = typeof rand === "function" ? rand : Math.random, s = prefix === "p" ? "p" : "e";
+    var r = typeof rand === "function" ? rand : Math.random, s = prefix === "p" || prefix === "k" ? prefix : "e";
     for (var i = 0; i < 12; i++) s += "0123456789abcdefghijklmnopqrstuvwxyz".charAt(Math.floor(r() * 36));
     return s;
   }
@@ -193,7 +198,7 @@
       d1: ymd(x.d1), d2: ymd(x.d2), idate: ymd(x.idate),
       place: line(x.place, LIM.place), hours: line(x.hours, LIM.hours), issuer: line(x.issuer, LIM.issuer),
       txt: {}, sigs: [], logo: normImg(x.logo), seal: normImg(x.seal),
-      medal: bit(x.medal, sd.medal), showNo: bit(x.showNo, 1),
+      medal: bit(x.medal, sd.medal), showNo: bit(x.showNo, 1), qr: bit(x.qr, 0),
       pre: line(x.pre, LIM.pre), next: isInt(x.next) && x.next >= 1 && x.next <= 999999 ? x.next : 1
     };
     var tx = x.txt && typeof x.txt === "object" ? x.txt : {};
@@ -220,6 +225,15 @@
     return o;
   }
 
+  // A signing key for the check QR codes (wave 2, 1.99.00): the JWK
+  // parts of an ECDSA P-256 key. Kept in the synced data (encrypted by
+  // orOS sync), so every device signs with the same key.
+  function normKey(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !K_RE.test(x.id) || !stamp(x.m)) return null;
+    if (!B64U32_RE.test(x.x) || !B64U32_RE.test(x.y) || !B64U32_RE.test(x.d) || !stamp(x.made)) return null;
+    return { id: x.id, m: x.m, made: x.made, x: x.x, y: x.y, d: x.d };
+  }
+
   // ---------- Merge ----------
   function newer(a, b) {
     if (!a) return b;
@@ -234,7 +248,7 @@
     [a.tombs, b.tombs].forEach(function (tm) {
       if (!tm || typeof tm !== "object" || Array.isArray(tm)) return;
       Object.keys(tm).forEach(function (k) {
-        if (!(EV_RE.test(k) || P_RE.test(k)) || !stamp(tm[k])) return;
+        if (!(EV_RE.test(k) || P_RE.test(k) || K_RE.test(k)) || !stamp(tm[k])) return;
         if (!(k in tombs) || tm[k] > tombs[k]) tombs[k] = tm[k];
       });
     });
@@ -257,11 +271,38 @@
     var alive = {};
     evs.forEach(function (e) { alive[e.id] = 1; });
     var ppl = pick([a.ppl, b.ppl], normPerson).filter(function (p) { return alive[p.e]; });
+    var keys = pick([a.keys, b.keys], normKey).slice(-LIM.keys);
     var t = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (k) { t[k] = tombs[k]; });
-    return { ver: DATA_VER, evs: evs, ppl: ppl, tombs: t };
+    var out = { ver: DATA_VER, evs: evs, ppl: ppl, tombs: t };
+    if (keys.length) out.keys = keys;
+    return out;
   }
   function empty() { return { ver: DATA_VER, evs: [], ppl: [], tombs: {} }; }
+  // The key that signs new check codes: the newest one made. Older
+  // keys stay, so certificates they signed still show their fingerprint.
+  function activeKey(data) {
+    var best = null;
+    (data.keys || []).forEach(function (k) {
+      if (!best || k.made > best.made || (k.made === best.made && k.id > best.id)) best = k;
+    });
+    return best;
+  }
+  function putKey(data, k, now) {
+    var n = normKey({ id: k.id, m: now, made: k.made || now, x: k.x, y: k.y, d: k.d });
+    if (!n) return { data: data, ok: false };
+    var keys = (data.keys || []).filter(function (x) { return x.id !== n.id; }).concat([n]);
+    return { data: merge({ ver: DATA_VER, evs: data.evs, ppl: data.ppl, tombs: data.tombs, keys: keys }, null), ok: true };
+  }
+  // The fields a check code carries for one person.
+  function checkFields(ev, p) {
+    var map = fields(ev, p || {});
+    return {
+      no: p && p.no ? serial(ev, p.no) : "", n: p ? p.n || "" : "", t: ev.t, dates: map.dates,
+      issuer: ev.issuer, idate: (p && p.iss) || ev.idate, place: ev.place, hours: ev.hours,
+      g: p ? p.g || "" : "", lang: ev.lang
+    };
+  }
   function parse(raw) {
     if (typeof raw !== "string" || !raw) return empty();
     try { return merge(JSON.parse(raw), null); } catch (e) { return empty(); }
@@ -714,7 +755,8 @@
     VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, PREFS_KEY: PREFS_KEY, LIM: LIM,
     KINDS: KINDS, STYLES: STYLES, STYLE_DEF: STYLE_DEF, KIND_STYLE: KIND_STYLE, TXT_KEYS: TXT_KEYS, TOKENS: TOKENS,
     EV_RE: EV_RE, P_RE: P_RE, ASSET_RE: ASSET_RE,
-    normEvent: normEvent, normPerson: normPerson, normImg: normImg, merge: merge, empty: empty, parse: parse,
+    normEvent: normEvent, normPerson: normPerson, normImg: normImg, normKey: normKey, merge: merge, empty: empty, parse: parse,
+    activeKey: activeKey, putKey: putKey, checkFields: checkFields, K_RE: K_RE,
     eventById: eventById, personById: personById, eventPeople: eventPeople, countPeople: countPeople, eventList: eventList,
     kindTexts: kindTexts, sigRole: sigRole, blankEvent: blankEvent, applyKind: applyKind, applyLang: applyLang,
     applyStyle: applyStyle, textsEdited: textsEdited,

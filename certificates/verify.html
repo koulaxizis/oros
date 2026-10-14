@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Check that a certificate made with orOS is genuine. The check runs in your browser; nothing is sent to a server.">
+  <title>orOS · Certificate check</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="verify.css?v=1.98.00">
+</head>
+<body>
+  <header id="top">
+    <a id="brand" href="../"><img src="../icon.svg" alt="" width="26" height="26"><span>orOS</span></a>
+    <span id="top-sub" data-i18n="top.sub">Certificate check</span>
+  </header>
+
+  <main id="card" aria-live="polite">
+    <p id="state" class="state" data-i18n="state.loading">Checking…</p>
+  </main>
+
+  <form id="ask" class="card ask" hidden>
+    <label for="ask-in" data-i18n="ask.label">Paste the link of the QR code</label>
+    <textarea id="ask-in" rows="3" spellcheck="false" autocomplete="off"></textarea>
+    <button type="submit" id="ask-go" data-i18n="ask.go">Check</button>
+  </form>
+
+  <p class="foot" data-i18n="foot.privacy">The check runs right here in your browser, even offline. Nothing is sent to a server.</p>
+  <p class="foot"><a href="../" data-i18n="foot.what">What is orOS?</a></p>
+
+  <script src="sign.js?v=1.98.00"></script>
+  <script src="verify.js?v=1.98.00"></script>
+</body>
+</html>

@@ -294,3 +294,112 @@ test("app: every string has a Greek text and the shell knows the app", () => {
   ["certificates/core.js", "certificates/dk.js", "certificates/certificates.js", "certificates/search.js", "certificates/help.el.txt", "atelier/zip.js"]
     .forEach((f) => assert.ok(sw.includes('"' + f + '"'), "precache " + f));
 });
+
+// ---------- wave 2: signed check QR codes ----------
+const SG = require(path.join(ROOT, "certificates/sign.js"));
+const QE = require(path.join(ROOT, "qr/qr-encode.js"));
+const subtle = globalThis.crypto && globalThis.crypto.subtle;
+const BASE = "https://useoros.online/certificates/verify.html";
+
+test("sign: compact payload round trip (Greek, other characters, empty fields, limits)", () => {
+  const f = { no: "CERT-2026-0007", n: "Μαρία „Παπά“ Ἀ", t: "Ψηφιακό Μάρκετινγκ", dates: "5–7 Οκτωβρίου 2026", issuer: "Κέντρο «Πρόοδος»", idate: "2026-10-14", lang: "el" };
+  const b = SG.payload(f);
+  assert.equal(b[0], 1);
+  // Greek letters take one byte each
+  assert.ok(b.length < 120, String(b.length));
+  const r = SG.readPayload(b);
+  assert.deepEqual(j(r), { no: f.no, n: f.n, t: f.t, dates: f.dates, issuer: f.issuer, idate: f.idate, place: "", hours: "", g: "", lang: "el" });
+  // English: trailing empty fields and the language are left out
+  const e = SG.readPayload(SG.payload({ no: "", n: "Ann", t: "T", issuer: "I", idate: "2026-01-02" }));
+  assert.equal(e.lang, "en");
+  assert.equal(e.n, "Ann");
+  // long values are cut, control characters dropped
+  const long = SG.readPayload(SG.payload({ n: "x".repeat(300) + "\u0007", t: "t", issuer: "i", idate: "" }));
+  assert.equal(long.n.length, SG.CAP.n);
+  assert.ok(long.n.endsWith("…"));
+  assert.equal(SG.readPayload(new Uint8Array([2, 65, 30, 65, 30, 65, 30, 65, 30, 65, 30])), null);
+  // compressed public keys come back whole
+  assert.equal(SG.decompress(new Uint8Array(33)), null);
+});
+
+test("sign: a signed link checks, any change fails, the QR code stays printable", { skip: !subtle }, async () => {
+  const k = await SG.makeKey(subtle);
+  const f = { no: "CERT-2026-0001", n: "Αικατερίνη Κωνσταντινοπούλου", t: "Ψηφιακό Μάρκετινγκ για Μικρές Επιχειρήσεις", dates: "5–7 Οκτωβρίου 2026", issuer: "Κέντρο Δια Βίου Μάθησης «Πρόοδος»", idate: "2026-10-14", place: "Θεσσαλονίκη", hours: "24", lang: "el" };
+  const url = await SG.sign(subtle, k, BASE, f);
+  assert.ok(url.startsWith(BASE + "#c1."));
+  const x = SG.parseLink(url);
+  assert.equal(x.data.n, f.n);
+  assert.equal(await SG.verify(subtle, x), true);
+  // the restored key is the one that signed
+  const raw = new Uint8Array(65); raw[0] = 4; raw.set(SG.unb64u(k.x), 1); raw.set(SG.unb64u(k.y), 33);
+  assert.deepEqual([...SG.decompress(SG.compress(raw))], [...raw]);
+  // one changed byte in the details, or another key, fails
+  const parts = url.split("#")[1].split(".");
+  const bytes = SG.unb64u(parts[1]); bytes[5] ^= 1;
+  const tampered = SG.parseLink(["c1", SG.b64u(bytes), parts[2], parts[3]].join("."));
+  assert.ok(!tampered || !(await SG.verify(subtle, tampered)));
+  const other = await SG.makeKey(subtle);
+  const forged = SG.parseLink(["c1", parts[1], SG.b64u(SG.pubOf(other)), parts[3]].join("."));
+  assert.equal(await SG.verify(subtle, forged), false);
+  assert.equal(SG.parseLink("https://x/#c1.AAAA"), null);
+  assert.equal(SG.parseLink(""), null);
+  // the fingerprint: 4 groups of 4
+  assert.match(await SG.fingerprint(subtle, SG.pubOf(k)), /^[0-9A-F]{4}(-[0-9A-F]{4}){3}$/);
+  // a long Greek certificate still fits a version 13 code (ECC L)
+  assert.ok(QE.encode(url, { ecl: "L" }).version <= 13);
+});
+
+test("keys: synced, merged by id, the newest made signs, kept through every edit", () => {
+  const A = "A".repeat(43), B = "B".repeat(43);
+  let { d, ev } = setup();
+  let r = C.putKey(d, { id: "kaaaaaa1", made: 100, x: A, y: A, d: A }, 100);
+  assert.ok(r.ok);
+  const one = r.data;
+  const two = C.putKey(d, { id: "kaaaaaa2", made: 200, x: B, y: B, d: B }, 200).data;
+  const m = C.merge(one, two);
+  assert.deepEqual(j(m.keys.map((k) => k.id)), ["kaaaaaa1", "kaaaaaa2"]);
+  assert.equal(C.activeKey(m).id, "kaaaaaa2");
+  assert.deepEqual(j(C.merge(m, C.empty())), j(C.merge(C.empty(), m)));
+  // edits keep the keys
+  let x = addPeople(m, ["Ann"]);
+  x = C.issue(x, ev.id, null, 5000, "2026-10-14").data;
+  x = C.putEvent(x, Object.assign({}, C.eventById(x, ev.id), { qr: 1 }), 6000).data;
+  assert.equal(x.keys.length, 2);
+  assert.equal(C.eventById(x, ev.id).qr, 1);
+  // a device without keys does not lose them on merge
+  assert.equal(C.merge(C.parse(JSON.stringify({ ver: 1, evs: x.evs, ppl: x.ppl, tombs: x.tombs })), x).keys.length, 2);
+  // bad keys are dropped
+  assert.equal(C.putKey(d, { id: "kaaaaaa3", x: "short", y: A, d: A }, 1).ok, false);
+  // what a code carries
+  const p = C.eventPeople(x, ev.id)[0];
+  const f = C.checkFields(C.eventById(x, ev.id), p);
+  assert.deepEqual([f.no, f.n, f.t, f.issuer, f.idate], ["CERT-2026-0001", "Ann", "Digital Marketing", "Learning Centre", "2026-10-14"]);
+  assert.ok(f.dates.includes("2026"));
+});
+
+test("dk: the check code gets a white square at the bottom left, the row moves over", () => {
+  const { d, ev } = setup("el");
+  const a = C.issue(addPeople(d, ["Ann"]), ev.id, null, 5000, "2026-10-14").data;
+  const ppl = C.eventPeople(a, ev.id);
+  C.STYLES.forEach((s) => ["l", "p"].forEach((o) => [1, 3].forEach((ns) => {
+    const e = Object.assign(C.applyStyle(C.eventById(a, ev.id), s), { orient: o, qr: 1,
+      sigs: [{ n: "A", r: "r" }, { n: "B", r: "r" }, { n: "C", r: "r" }].slice(0, ns) });
+    const out = D.build(e, ppl, {});
+    const q = out.pages[0].qr;
+    assert.ok(q && q.s > 60, s + o);
+    // nothing else is drawn over the square
+    out.doc.items.forEach((it) => {
+      if (it.z <= -50 || it.t === "line" && it.h === 0 && it.y < q.y) return;
+      if (it.t === "rect" && Math.abs(it.x - q.x) < 0.01 && Math.abs(it.y - q.y) < 0.01) return;
+      const over = it.x < q.x + q.s && it.x + Math.abs(it.w) > q.x && it.y < q.y + q.s && it.y + Math.abs(it.h) > q.y;
+      assert.ok(!over || it.z < 2, s + o + ns + " " + it.t + " " + JSON.stringify([it.x, it.y, it.w, it.h]));
+    });
+  })));
+  assert.equal(D.build(C.eventById(a, ev.id), ppl, {}).pages[0].qr, undefined);
+});
+
+test("ids: events, people and keys get their own prefix", () => {
+  assert.match(C.newId("k", Math.random), C.K_RE);
+  assert.match(C.newId("p", Math.random), C.P_RE);
+  assert.match(C.newId("e", Math.random), C.EV_RE);
+});
