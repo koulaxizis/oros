@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy · orOS</title>
+  <meta name="description" content="How orOS (useoros.online) handles your data: no accounts, no cookies, no tracking; your data stays on your device.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #14120d; --panel: #1d1a14; --text: #f0ead9; --dim: #b9b09a; --accent: #d4af37; --border: #3a3428; }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #faf7ef; --panel: #ffffff; --text: #241f14; --dim: #5d5544; --accent: #8a6d12; --border: #e2dac6; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    h1 { font-size: 26px; margin: 0; }
+    h2 { font-size: 19px; margin: 28px 0 6px; color: var(--accent); }
+    p, li { color: var(--text); }
+    .dim { color: var(--dim); font-size: 14px; }
+    a { color: var(--accent); }
+    ul { padding-left: 22px; }
+    .lang button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+      font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+    .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+    .box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="t">orOS privacy policy</h1>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="en" aria-pressed="true">English</button>
+      <button type="button" data-l="el" aria-pressed="false">Ελληνικά</button>
+    </div>
+  </header>
+
+  <!-- ===================== English ===================== -->
+  <article lang="en" id="en">
+    <p class="dim">Applies to orOS at <a href="https://useoros.online">useoros.online</a>, its installed app (PWA) and the orOS Android app. Last updated: 14 October 2026.</p>
+
+    <div class="box">
+      <p><strong>In short:</strong> orOS has no accounts, no cookies, no ads and no tracking or analytics. Everything you create stays in your browser on your own device. orOS has no server that collects or stores your data, and it never sells or shares it.</p>
+    </div>
+
+    <h2>Who we are</h2>
+    <p>orOS is free, open-source software (MIT licence) made by Christos Koulaxizis. The source code is public at <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
+
+    <h2>Your data stays on your device</h2>
+    <p>Notes, contacts, calendars, files and everything else you create are saved in your browser's own storage on your device. Each browser and device keeps its own copy. Clearing the site's data in your browser deletes it from that device.</p>
+
+    <h2>Optional encrypted sync</h2>
+    <p>If you choose to, orOS can sync between your devices through your own Dropbox account, in its own app folder only. Your data is encrypted on your device with your passphrase before it is uploaded, so Dropbox cannot read it. The passphrase never leaves your device. You can disconnect at any time.</p>
+
+    <h2>Online services some apps use</h2>
+    <p>Some apps need the internet for what they show (for example weather forecasts, maps, radio stations or currency rates). They contact the service only when you use that feature, and send only what the feature needs (for example the city you search for). The full list, by app, is in the orOS Help, under Privacy, and in Settings › About orOS, credits and licences.</p>
+    <p>Some apps can also work with accounts you already have elsewhere (for example your mail provider, your shop or your task manager), only after you connect them yourself. orOS talks to those services from your browser or through the orOS relay, which passes requests through and keeps nothing. Your keys stay on your device.</p>
+
+    <h2>Importing contacts from Google or Microsoft</h2>
+    <p>In Contacts, <em>From an account</em> lets you copy your contacts from your Google account or your Microsoft account (Outlook.com, Hotmail, Microsoft 365) once:</p>
+    <ul>
+      <li>You sign in with Google or Microsoft in their own window and grant read-only access to your contacts (Google scope <code>contacts.readonly</code>, Microsoft permission <code>Contacts.Read</code>).</li>
+      <li>Your browser reads your contacts (names, phone numbers, e-mail addresses, postal addresses, organisations, birthdays and other dates, websites, notes and contact groups) straight from Google or Microsoft. Nothing passes through any orOS server.</li>
+      <li>You review the contacts and choose which to add or merge. They are saved only in Contacts on your device (and in your encrypted sync, if you use it).</li>
+      <li>The access ends right after the reading: the Google access token is revoked at once, and the Microsoft one is discarded and expires on its own within an hour. orOS never asks for offline access or a refresh token, and stores no token or password.</li>
+      <li>The data is used only to show and keep your contacts in your own Contacts app. It is not used for advertising, not sold, not shared with anyone and not used to train AI models. No person at orOS can see it.</li>
+    </ul>
+    <p>orOS's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+    <p>You can also remove orOS's access in your <a href="https://myaccount.google.com/permissions">Google account</a> or <a href="https://account.live.com/consent/Manage">Microsoft account</a> settings at any time, and delete any imported contact in Contacts.</p>
+
+    <h2>Permissions on your device</h2>
+    <p>Location, camera, microphone, notifications and the phone's contact list are used only when you use a feature that needs them, and only after your browser or phone asks you. In the orOS Android app, <em>On this phone</em> copies your orOS contacts and events into the phone's own Contacts and Calendar, only on that phone.</p>
+
+    <h2>Children</h2>
+    <p>orOS collects no personal data from anyone, including children.</p>
+
+    <h2>Changes and contact</h2>
+    <p>If this policy changes, the new version is published on this page with a new date. Questions: open an issue at <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
+  </article>
+
+  <!-- ===================== Ελληνικά ===================== -->
+  <article lang="el" id="el" hidden>
+    <p class="dim">Ισχύει για το orOS στο <a href="https://useoros.online">useoros.online</a>, την εγκατεστημένη εφαρμογή του (PWA) και την εφαρμογή orOS για Android. Τελευταία ενημέρωση: 14 Οκτωβρίου 2026.</p>
+
+    <div class="box">
+      <p><strong>Με λίγα λόγια:</strong> το orOS δεν έχει λογαριασμούς, cookies, διαφημίσεις, παρακολούθηση ή στατιστικά. Ό,τι δημιουργείς μένει στον browser σου, στη δική σου συσκευή. Το orOS δεν έχει server που συλλέγει ή αποθηκεύει τα δεδομένα σου και δεν τα πουλά ούτε τα μοιράζεται ποτέ.</p>
+    </div>
+
+    <h2>Ποιοι είμαστε</h2>
+    <p>Το orOS είναι δωρεάν λογισμικό ανοιχτού κώδικα (άδεια MIT) από τον Christos Koulaxizis. Ο κώδικας είναι δημόσιος στο <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
+
+    <h2>Τα δεδομένα σου μένουν στη συσκευή σου</h2>
+    <p>Σημειώσεις, επαφές, ημερολόγια, αρχεία και ό,τι άλλο δημιουργείς αποθηκεύονται στον χώρο του browser σου, στη συσκευή σου. Κάθε browser και κάθε συσκευή έχει το δικό του αντίγραφο. Αν σβήσεις τα δεδομένα του ιστότοπου από τον browser, σβήνονται από εκείνη τη συσκευή.</p>
+
+    <h2>Προαιρετικός κρυπτογραφημένος συγχρονισμός</h2>
+    <p>Αν το επιλέξεις, το orOS συγχρονίζεται ανάμεσα στις συσκευές σου μέσω του δικού σου λογαριασμού Dropbox, μόνο στον δικό του φάκελο εφαρμογής. Τα δεδομένα κρυπτογραφούνται στη συσκευή σου με τη φράση πρόσβασής σου πριν ανέβουν, οπότε το Dropbox δεν μπορεί να τα διαβάσει. Η φράση δεν φεύγει ποτέ από τη συσκευή σου. Μπορείς να αποσυνδεθείς οποτεδήποτε.</p>
+
+    <h2>Online υπηρεσίες που χρησιμοποιούν κάποιες εφαρμογές</h2>
+    <p>Κάποιες εφαρμογές χρειάζονται internet για όσα δείχνουν (π.χ. πρόγνωση καιρού, χάρτες, ραδιοφωνικούς σταθμούς, ισοτιμίες). Επικοινωνούν με την υπηρεσία μόνο όταν χρησιμοποιείς τη συγκεκριμένη λειτουργία και στέλνουν μόνο ό,τι χρειάζεται (π.χ. την πόλη που ψάχνεις). Η πλήρης λίστα ανά εφαρμογή βρίσκεται στη Βοήθεια του orOS, στο Απόρρητο, και στις Ρυθμίσεις › Σχετικά με το orOS.</p>
+    <p>Κάποιες εφαρμογές δουλεύουν και με λογαριασμούς που ήδη έχεις αλλού (π.χ. τον πάροχο email, το κατάστημά σου ή το πρόγραμμα εργασιών σου), μόνο αφού τους συνδέσεις εσύ. Το orOS μιλά μαζί τους από τον browser σου ή μέσω του relay του orOS, που απλώς προωθεί τα αιτήματα και δεν κρατά τίποτα. Τα κλειδιά σου μένουν στη συσκευή σου.</p>
+
+    <h2>Εισαγωγή επαφών από Google ή Microsoft</h2>
+    <p>Στις Επαφές, το <em>Από λογαριασμό</em> αντιγράφει μία φορά τις επαφές σου από τον λογαριασμό σου στο Google ή στη Microsoft (Outlook.com, Hotmail, Microsoft 365):</p>
+    <ul>
+      <li>Συνδέεσαι στο Google ή στη Microsoft στο δικό τους παράθυρο και δίνεις πρόσβαση μόνο για ανάγνωση των επαφών σου (Google scope <code>contacts.readonly</code>, άδεια Microsoft <code>Contacts.Read</code>).</li>
+      <li>Ο browser σου διαβάζει τις επαφές σου (ονόματα, τηλέφωνα, email, διευθύνσεις, εταιρείες, γενέθλια και άλλες ημερομηνίες, ιστότοπους, σημειώσεις και ομάδες επαφών) απευθείας από το Google ή τη Microsoft. Τίποτα δεν περνά από server του orOS.</li>
+      <li>Ελέγχεις τις επαφές και διαλέγεις ποιες θα προστεθούν ή θα συγχωνευτούν. Αποθηκεύονται μόνο στις Επαφές της συσκευής σου (και στον κρυπτογραφημένο συγχρονισμό, αν τον χρησιμοποιείς).</li>
+      <li>Η πρόσβαση τελειώνει αμέσως μετά την ανάγνωση: το token του Google ανακαλείται αμέσως και της Microsoft πετιέται και λήγει μόνο του μέσα σε μία ώρα. Το orOS δεν ζητά ποτέ μόνιμη πρόσβαση ή refresh token και δεν αποθηκεύει token ή κωδικό.</li>
+      <li>Τα δεδομένα χρησιμοποιούνται μόνο για να βλέπεις και να κρατάς τις επαφές σου στη δική σου εφαρμογή Επαφές. Δεν χρησιμοποιούνται για διαφήμιση, δεν πωλούνται, δεν μοιράζονται με κανέναν και δεν χρησιμοποιούνται για εκπαίδευση μοντέλων AI. Κανένας άνθρωπος του orOS δεν τα βλέπει.</li>
+    </ul>
+    <p>Η χρήση και μεταφορά πληροφοριών που λαμβάνει το orOS από τα Google APIs τηρεί την <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, μαζί με τις απαιτήσεις Limited Use.</p>
+    <p>Μπορείς επίσης να αφαιρέσεις την πρόσβαση του orOS από τις ρυθμίσεις του <a href="https://myaccount.google.com/permissions">λογαριασμού Google</a> ή του <a href="https://account.live.com/consent/Manage">λογαριασμού Microsoft</a> οποτεδήποτε, και να σβήσεις οποιαδήποτε εισαγόμενη επαφή από τις Επαφές.</p>
+
+    <h2>Άδειες στη συσκευή σου</h2>
+    <p>Τοποθεσία, κάμερα, μικρόφωνο, ειδοποιήσεις και η λίστα επαφών του κινητού χρησιμοποιούνται μόνο όταν χρησιμοποιείς λειτουργία που τα χρειάζεται, και μόνο αφού σε ρωτήσει ο browser ή το κινητό. Στην εφαρμογή orOS για Android, το <em>Στο κινητό</em> αντιγράφει τις επαφές και τα γεγονότα του orOS στις Επαφές και στο Ημερολόγιο του ίδιου του κινητού, μόνο σε εκείνο το κινητό.</p>
+
+    <h2>Παιδιά</h2>
+    <p>Το orOS δεν συλλέγει προσωπικά δεδομένα από κανέναν, ούτε από παιδιά.</p>
+
+    <h2>Αλλαγές και επικοινωνία</h2>
+    <p>Αν αλλάξει αυτή η πολιτική, η νέα εκδοχή δημοσιεύεται σε αυτή τη σελίδα με νέα ημερομηνία. Για ερωτήσεις: άνοιξε ένα issue στο <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
+  </article>
+</main>
+<script>
+(function () {
+  "use strict";
+  var TITLE = { en: "orOS privacy policy", el: "Πολιτική απορρήτου του orOS" };
+  function set(l) {
+    if (l !== "el") l = "en";
+    document.documentElement.lang = l;
+    document.getElementById("en").hidden = l !== "en";
+    document.getElementById("el").hidden = l !== "el";
+    document.getElementById("t").textContent = TITLE[l];
+    document.title = (l === "el" ? "Πολιτική απορρήτου" : "Privacy policy") + " · orOS";
+    [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-l") === l));
+    });
+  }
+  var start = /[?&]lang=el\b/.test(location.search) || location.hash === "#el" ? "el" : "en";
+  if (start === "en" && !/[?&]lang=en\b/.test(location.search)) {
+    try { if (localStorage.getItem("oros-lang") === "el") start = "el"; } catch (e) {}
+  }
+  set(start);
+  [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+    b.addEventListener("click", function () { set(b.getAttribute("data-l")); });
+  });
+})();
+</script>
+</body>
+</html>
