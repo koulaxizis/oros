@@ -14,9 +14,9 @@ name: Android app
 on:
   push:
     branches: [main]
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', 'shell.js', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/workflows/android.yml']
   pull_request:
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', '.github/workflows/android.yml']
   workflow_dispatch:
     inputs:
       diag:
@@ -47,7 +47,7 @@ jobs:
 
       # The runner image ships the Android SDK (ANDROID_HOME); Gradle
       # fetches a missing platform or build-tools on its own.
-      - name: Generate manifest and resources from manifest.webmanifest
+      - name: Generate manifests and resources (orOS + single apps)
         run: node android/tools/gen.js
 
       - name: Build debug APK and unsigned release
@@ -69,10 +69,24 @@ jobs:
           OROS_KEYSTORE_FILE="$RUNNER_TEMP/oros.keystore" gradle -p android --no-daemon assembleRelease bundleRelease
           rm -f "$RUNNER_TEMP/oros.keystore"
 
+      # The orOS app itself (flavour "oros", online.useoros.twa).
       - uses: actions/upload-artifact@v4
         with:
           name: oros-android
           path: |
+            android/app/build/outputs/apk/oros/**/*.apk
+            android/app/build/outputs/bundle/orosRelease/*.aab
+          if-no-files-found: error
+
+      # Single apps for Google Play (wave 7, android/solo-apps.json):
+      # one folder per app, e.g. apk/notes/release/app-notes-release.apk
+      # and bundle/notesRelease/app-notes-release.aab.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oros-single-apps
+          path: |
             android/app/build/outputs/apk/**/*.apk
             android/app/build/outputs/bundle/**/*.aab
+            !android/app/build/outputs/apk/oros/**
+            !android/app/build/outputs/bundle/orosRelease/**
           if-no-files-found: error

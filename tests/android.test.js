@@ -45,3 +45,33 @@ test("android: the page asks for permission with the scheme the release build de
   const id = /applicationId '([^']+)'/.exec(gradle)[1];
   assert.ok(phone.includes("scheme=" + scheme + ";package=" + id + ";end"), scheme);
 });
+
+test("android: single-app flavours (wave 7) keep orOS untouched and drop the phone bridge", () => {
+  const { buildSolo, soloApps, REMOVE_NODES } = require(path.join(ROOT, "android", "tools", "gen.js"));
+  const S = require(path.join(ROOT, "solo.js"));
+  const apps = soloApps();
+  const pkgs = Object.values(apps);
+  assert.equal(new Set(pkgs).size, pkgs.length);
+  assert.ok(!pkgs.includes("online.useoros.twa"));
+  const gradle = fs.readFileSync(path.join(ROOT, "android", "app", "build.gradle"), "utf8");
+  assert.match(gradle, /oros \{\s*dimension 'app'\s*\}/);   // orOS keeps defaultConfig's package
+  const links = JSON.parse(fs.readFileSync(path.join(ROOT, ".well-known", "assetlinks.json"), "utf8"));
+  for (const [id, pkg] of Object.entries(apps)) {
+    assert.ok(S.has(id), id);
+    assert.ok(links.some((s) => s.target.package_name === pkg && s.relation.includes("delegate_permission/common.use_as_origin")), pkg);
+    const m = JSON.parse(fs.readFileSync(path.join(ROOT, id, "manifest.webmanifest"), "utf8"));
+    const o = buildSolo(id, pkg, m, web);
+    const x = o["AndroidManifest.xml"];
+    for (const p of ["READ_CONTACTS", "WRITE_CALENDAR", "health.READ_STEPS", "SCHEDULE_EXACT_ALARM"]) {
+      assert.match(x, new RegExp('android\\.permission\\.' + p.replace(".", "\\.") + '" tools:node="remove"'), id + " " + p);
+    }
+    REMOVE_NODES.forEach(([tag, name]) => assert.ok(x.includes(`<${tag} android:name="${name}" tools:node="remove" />`), id + " " + name));
+    (web.file_handlers || []).forEach((h, i) => assert.ok(x.includes(`android:name="FileHandlingActivity${i}" tools:node="remove"`)));
+    assert.match(x, /<activity android:name="\.LauncherActivity"\n\s+tools:node="replace"/);
+    assert.ok(x.includes(`android:pathPrefix="/${id}/"`), id + " links");
+    assert.ok(o["res/values/web_manifest.xml"].includes(`<string name="launchUrl">https://useoros.online/${id}/solo.html</string>`));
+    assert.equal((o["res/xml/shortcuts.xml"].match(/targetPackage="([^"]+)"/g) || []).every((t) => t.includes(pkg)), true);
+    assert.ok(!/online\.useoros\.twa"/.test(o["res/xml/shortcuts.xml"]));
+    assert.ok(fs.existsSync(path.join(ROOT, "icons", "solo", id + "-192.png")));
+  }
+});
