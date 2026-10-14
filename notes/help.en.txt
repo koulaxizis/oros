@@ -1,8 +1,10 @@
 # Notes
-Notes is a plain-text notebook organised as a tree of pages. Nest pages inside each other, link them wiki-style, tag them with labels and keep separate notebooks for separate parts of your life.
+Notes is a notebook organised as a tree of pages. You write in plain text with a little Markdown, and see it formatted whenever you like. Nest pages inside each other, link them wiki-style, keep a note for every day, tag pages with labels and keep separate notebooks for separate parts of your life.
 
 ## Getting started
 Your first notebook is called `Notes`. Tap or click the **+** button under the page tree to add a page, then type a `Title` and start writing in the big text area. There's no save button: Notes saves as you type.
+
+Above the text sits a small toolbar: bold, italic, heading, list, checkbox, link and code. Its two buttons on the right switch the page between `Edit` and `Preview`; on a wide screen a third, `Side by side`, shows both at once. Each device remembers its own choice.
 
 On a phone the tree is hidden while you write. Tap the ☰ button (`Show tree`) next to the title to bring it back; picking a page closes it again. On a wider screen you can drag the divider between the tree and the page to make the tree wider or narrower.
 
@@ -13,21 +15,44 @@ Right-click a page in the tree, or long-press it on a touch screen, to open its 
 - `Move to…` lets you pick another parent page, or `Top level`.
 - `Pin to top` keeps the page first among its neighbours; `Unpin` undoes it.
 - `Labels` attaches or removes labels.
-- `Export page (.txt)` and `Export notebook (.zip)`.
+- `New page from template…` (see Daily note and templates below).
+- `Export page (.txt)`, `Export page (.md)`, `Export notebook (.txt, .zip)` and `Export notebook (.md, .zip)`.
 - `Send to someone…` sends the page as a link that opens in any browser. The paper-plane button next to the page title does the same.
 - `Delete` removes the page after you confirm.
 
 On a computer you can also drag a page in the tree and drop it onto another page to make it a sub-page, or onto empty space to move it to the top level.
 
+## Formatting and preview
+Pages are stored as plain text, so nothing changes in your notes when you switch views. In `Preview` this Markdown is shown formatted:
+- `# Heading`, `## Smaller heading` (up to six levels).
+- `**bold**`, `*italic*`, `~~strikethrough~~`, and backticks around a word for code.
+- Lines starting with `- ` or `1. ` make lists; indent them to nest.
+- `- [ ] to do` and `- [x] done` make checkboxes. Tap one in `Preview` to tick it; the text changes with it.
+- `> ` starts a quote, three backticks on their own line start and end a block of code, `---` draws a line.
+- Tables: a row like `| Name | Phone |`, then `|---|---|`, then one row per line.
+- `[text](https://example.org)` makes a link; addresses starting with http:// or https:// become links by themselves. Links open in a new tab.
+
+The toolbar buttons add this for you around the selected text, or at the cursor. Press a button again to take it away.
+
+## Daily note and templates
+The calendar button next to the title (`Today's note`) opens the page for today, titled like `2026-10-14`, under a page named `Daily` at the top of the current notebook. Both are made the first time; on later presses the same page opens.
+
+Templates are pages under a page named `Templates` (in any notebook). The template button under the tree, or `New page from template…` in the page menu, lists them; pick one, give the new page a title, and its text is copied in. In a template, `{{date}}` becomes today's date, `{{time}}` the time and `{{title}}` the new page's title. A template named `Daily` is used for the daily note instead of the built-in one.
+
 ## Links between pages
-Write a page title in double square brackets, like `[[Shopping]]`, to link to it. Under the text you'll see `Links` (pages this one links to) and `Backlinks` (pages that link here). Tap or click a link to open that page. If no page has that title yet, the link creates it as a sub-page of the one you're on.
+Write a page title in double square brackets, like `[[Shopping]]`, to link to it. `[[Shopping|the list]]` shows “the list” but opens Shopping. Under the text you'll see `Links` (pages this one links to) and `Backlinks` (pages that link here, from any notebook). Tap or click a link, here or in `Preview`, to open that page.
+
+Which page a link opens:
+- `[[Page]]` opens the page with that title in the same notebook. If there's none, it opens the one page with that title in another notebook. If several other notebooks have one, search opens so you can pick.
+- `[[Notebook/Page]]` opens Page in the notebook of that name.
+- If no page has that title yet, the link creates it: as a sub-page of the one you're on, or at the top of the named notebook.
 
 ## Labels and search
 In the `Labels` menu of a page, type a name in `New label…`, pick a colour and press `Add`. Tap a label to attach it to the page or remove it; the × next to a label deletes it. Labels show as coloured dots in the tree and as chips above the text. Each notebook has its own labels.
 
 The tag button under the tree opens `All labels`: every label with its number of pages. Tap one to list its pages.
 
-The search button (or [[Ctrl+K]]) searches titles and text in the current notebook. Type at least 2 characters; title matches come first.
+The search button (or [[Ctrl+K]]) searches titles and text in the current notebook. Tick `All notebooks` to search them all; each result then shows its notebook. Type at least 2 characters; title matches come first.
 
 ## Notebooks
 Pick a notebook from the list at the top of the tree. The book button with a plus under the tree (`New notebook`) creates one. The ⋯ button next to the list (or a right-click on the list) has `Rename notebook` and `Delete notebook`. Deleting a notebook removes all its pages and labels.
@@ -35,7 +60,7 @@ Pick a notebook from the list at the top of the tree. The book button with a plu
 ## Import from Notion
 - In Notion, create an integration of your own (notion.so/profile/integrations › New integration, Internal, read content only), then share the pages you want with it: open a page, ••• › Connections › add the integration (its subpages come along).
 - Connect Notion in [Settings](app:settings) › `Connected services` with the integration's secret.
-- Then the cloud button under the tree, `Import from Notion…` › `Read the account` shows what will come in, and `Import` brings it into a notebook named Notion (`Undo` in the notice takes it back). Subpages stay under their page. The text keeps headings, lists, to-dos, quotes, code and tables as plain text; database rows, comments and Notion's own files stay in Notion.
+- Then the cloud button under the tree, `Import from Notion…` › `Read the account` shows what will come in, and `Import` brings it into a notebook named Notion (`Undo` in the notice takes it back). Subpages stay under their page. The text keeps headings, lists, to-dos, quotes, code and tables as Markdown; database rows, comments and Notion's own files stay in Notion.
 - Import again whenever you like: new pages come in. Pages you changed in Notion change here only if you tick `Replace the text of pages imported before`, and that replaces your edits here to those pages. Deleted pages don't come back unless you tick `Bring back what was deleted here`.
 - orOS only reads Notion: nothing there changes. Notion doesn't answer browsers, so the reading goes through the orOS relay, which keeps nothing; a large workspace takes a minute or two.
 
@@ -44,17 +69,20 @@ Notebooks, pages and labels sync between your devices through [orOS sync](help:t
 
 If the same page is edited on two devices before they sync, both versions are kept: one of them appears in the tree marked `conflict copy`. Compare them, keep what you need and delete the other.
 
-The download button under the tree exports the notebook as a .zip of plain-text files, with folders for pages that have sub-pages. With more than one notebook it asks: `Current notebook (.zip)` or `All notebooks (.zip)`. For a full copy of orOS, see [backup](help:t/backup).
+The download button under the tree exports the notebook as a .zip of files, with folders for pages that have sub-pages: `Current notebook (.txt, .zip)` for plain text or `Current notebook (.md, .zip)` for Markdown files that other apps such as Obsidian open. With more than one notebook it also offers `All notebooks`, and with a page open, that page alone. For a full copy of orOS, see [backup](help:t/backup).
 
 ## Keyboard shortcuts
 - [[Ctrl+K]] opens search ([[Cmd+K]] on a Mac).
 - [[Enter]] in search opens the first result.
+- [[Ctrl+B]] and [[Ctrl+I]] make the selected text bold or italic ([[Cmd]] on a Mac).
 - [[Esc]] closes search, menus and the labels panel.
 
 ## Tips
 - Links ignore upper and lower case, so `[[shopping]]` finds “Shopping”.
+- A `\` before a character shows it as it is: `\*not italic\*`.
 
 ## Limits
-- Notes are plain text only: no formatting, images or attachments.
-- Links and search work within the current notebook only.
+- No images or attachments yet: an image written in Markdown shows as a link.
+- HTML typed into a page is shown as text, never run.
+- `Side by side` needs a window at least 900 pixels wide.
 - Exported files end with a short “Made with orOS” line.

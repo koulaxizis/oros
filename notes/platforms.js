@@ -21,7 +21,7 @@
   var S = {
     en: {
       btn: "Import from Notion…", title: "Import from Notion",
-      intro: "Bring the Notion pages you shared with your integration here, as a notebook named Notion: subpages stay under their page, and the text keeps headings, lists, to-dos, quotes and code as plain text. Database rows, comments and files stay in Notion. orOS only reads Notion: nothing there changes.",
+      intro: "Bring the Notion pages you shared with your integration here, as a notebook named Notion: subpages stay under their page, and the text keeps headings, lists, to-dos, quotes and code as Markdown. Database rows, comments and files stay in Notion. orOS only reads Notion: nothing there changes.",
       none: "Connect Notion in Settings › Connected services first.",
       openSettings: "Open Connected services", noShell: "Open Notes from the orOS desktop to import from Notion.",
       acct: "Account", upd: "Replace the text of pages imported before, where it changed there",
@@ -47,7 +47,7 @@
     },
     el: {
       btn: "Εισαγωγή από Notion…", title: "Εισαγωγή από Notion",
-      intro: "Φέρε εδώ τις σελίδες του Notion που μοιράστηκες με την ενσωμάτωσή σου, σε σημειωματάριο με όνομα Notion: οι υποσελίδες μένουν κάτω από τη σελίδα τους, και το κείμενο κρατά επικεφαλίδες, λίστες, εργασίες, παραθέματα και κώδικα ως απλό κείμενο. Οι εγγραφές βάσεων δεδομένων, τα σχόλια και τα αρχεία μένουν στο Notion. Το orOS μόνο διαβάζει το Notion: εκεί δεν αλλάζει τίποτα.",
+      intro: "Φέρε εδώ τις σελίδες του Notion που μοιράστηκες με την ενσωμάτωσή σου, σε σημειωματάριο με όνομα Notion: οι υποσελίδες μένουν κάτω από τη σελίδα τους, και το κείμενο κρατά επικεφαλίδες, λίστες, εργασίες, παραθέματα και κώδικα ως Markdown. Οι εγγραφές βάσεων δεδομένων, τα σχόλια και τα αρχεία μένουν στο Notion. Το orOS μόνο διαβάζει το Notion: εκεί δεν αλλάζει τίποτα.",
       none: "Σύνδεσε πρώτα το Notion στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       openSettings: "Άνοιγμα Συνδεδεμένων υπηρεσιών", noShell: "Άνοιξε τις Σημειώσεις από την επιφάνεια εργασίας του orOS για εισαγωγή από το Notion.",
       acct: "Λογαριασμός", upd: "Αντικατάσταση του κειμένου όσων σελίδων ήρθαν παλιότερα, όπου άλλαξε εκεί",

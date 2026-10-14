@@ -8,7 +8,7 @@
    offline/standalone fallback matching the oros skin.
    Same contract as todo.css (ARCHITECTURE REFERENCE, v0.13.1).
    Mobile-first single pane; ≥720px splits tree|editor.
-   Plain text, no toolbars, no chrome beyond the essentials.
+   Pages are Markdown source; a small toolbar and a preview (md.js).
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -173,6 +173,7 @@ body {
   flex: 0 0 auto;
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;            /* Markdown wave: 7 buttons, never off the pane */
   padding: 8px;
   border-top: 1px solid var(--border);
 }
@@ -727,6 +728,221 @@ body.resizing #tree-pane, body.resizing #editor-pane { pointer-events: none; }
 }
 #nt-plat menu button.primary { font-weight: 700; color: var(--bg); background: var(--accent); border-color: var(--accent); }
 #nt-plat menu button:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- Markdown wave: toolbar, Edit / Preview / Side by side ----------
+   The page stays plain text; #page-preview shows md.js's rendering.
+   #notes-app carries view-edit | view-preview | view-split (notes.js
+   applyView; split only from 900 px). */
+#md-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+#md-toolbar.off .fmt-group { visibility: hidden; }
+.fmt-group {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fmt-group::-webkit-scrollbar { display: none; }
+.fmt-btn, .vw-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.fmt-btn:hover, .vw-btn:hover { background: var(--accent-soft); color: var(--text); }
+.fmt-btn svg, .vw-btn svg { pointer-events: none; flex: 0 0 auto; }
+.vw-group {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.vw-btn { height: 34px; min-width: 36px; }
+.vw-btn[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.vw-label { display: none; }
+.vw-btn.only-wide { display: none; }
+@media (min-width: 900px) {
+  .vw-btn.only-wide { display: inline-flex; }
+  .vw-label { display: inline; }
+}
+#notes-app.view-preview .fmt-group { visibility: hidden; }
+@media (max-width: 420px) {
+  #md-toolbar { gap: 4px; padding: 4px 6px; }
+  .fmt-group { gap: 0; }
+  .fmt-btn { min-width: 34px; padding: 0 4px; }
+  .vw-btn { min-width: 34px; padding: 0 6px; }
+}
+
+#page-body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+#page-body > #page-text { flex: 1 1 0; min-width: 0; }
+#notes-app.view-preview #page-text { display: none; }
+#notes-app.view-split #page-text { border-right: 1px solid var(--border); }
+
+#page-preview {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding: 20px clamp(16px, 4vw, 64px) 32px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.65;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.md > * + * { margin-top: 0.75em; }
+.md h1, .md h2, .md h3, .md h4, .md h5, .md h6 { line-height: 1.3; font-weight: 800; }
+.md h1 { font-size: 1.6em; }
+.md h2 { font-size: 1.35em; }
+.md h3 { font-size: 1.15em; }
+.md h4, .md h5, .md h6 { font-size: 1em; }
+.md * + h1, .md * + h2, .md * + h3 { margin-top: 1.1em; }
+.md a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.md a.md-wiki { text-decoration: none; border-bottom: 1px solid var(--accent); }
+.md a.md-wiki.new { color: var(--text-dim); border-bottom-style: dashed; border-bottom-color: var(--text-dim); }
+.md a.md-wiki.amb { border-bottom-style: dotted; }
+.md code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+}
+.md pre {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  max-width: 100%;
+}
+.md pre code { padding: 0; border: 0; background: none; font-size: 0.86em; white-space: pre; }
+.md blockquote {
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--accent);
+  color: var(--text-dim);
+}
+.md blockquote > * + * { margin-top: 0.5em; }
+.md ul, .md ol { padding-left: 1.5em; }
+.md li + li { margin-top: 0.2em; }
+.md li > ul, .md li > ol { margin-top: 0.2em; }
+.md li.task { list-style: none; margin-left: -1.4em; }
+.md li.task > input[type="checkbox"] {
+  width: 18px; height: 18px;
+  margin: 0 6px 0 0;
+  vertical-align: -3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.md li.task > input:checked + .task-text { color: var(--text-dim); text-decoration: line-through; }
+.md hr { border: 0; border-top: 1px solid var(--border); margin: 1.2em 0; }
+.md del { color: var(--text-dim); }
+.md .md-table { overflow-x: auto; max-width: 100%; }
+.md table { border-collapse: collapse; font-size: 0.94em; }
+.md th, .md td { border: 1px solid var(--border); padding: 5px 10px; text-align: left; vertical-align: top; }
+.md th { background: var(--panel-bg); font-weight: 800; }
+.md .al-c { text-align: center; }
+.md .al-r { text-align: right; }
+.md .md-empty { color: var(--text-dim); font-style: italic; }
+
+/* Search: "All notebooks" + the notebook of a hit */
+.sr-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 16px 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.sr-opt input { width: 18px; height: 18px; accent-color: var(--accent); }
+.sr-nb {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1px;
+}
+.lk-chip.amb {
+  background: none;
+  color: var(--accent);
+  border: 1px dotted var(--accent);
+}
+
+/* List dialog (New page from template) */
+.nt-list-dlg {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 14px;
+  width: min(380px, calc(100vw - 32px));
+  box-shadow: 0 12px 36px var(--shadow);
+}
+.nt-list-dlg h3 { margin: 0 0 10px; font-size: 15px; font-weight: 700; }
+.nt-list { max-height: 50vh; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.nt-list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-height: 40px;
+  padding: 7px 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 13.5px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+.nt-list-item:hover { background: var(--accent-soft); }
+.nt-list-sub { font-size: 11px; color: var(--text-dim); }
+.nt-list-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.nt-btn {
+  padding: 8px 14px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
