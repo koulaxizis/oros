@@ -22,6 +22,8 @@
 //     and copy; review an opened game move by move with the Hard
 //     search as analysis, and Play from here (vs the computer or 2
 //     players; a game from a position is never recorded)
+//   - Chess.com (read only, a username, no sign-in): ratings, your games
+//     month by month (open one to review), the daily puzzle
 // Data:
 //   - synced slice "chess" (oros-chess-data): results vs the computer
 //     per level [won, drawn, lost] as per-device counter rows (each
@@ -35,12 +37,14 @@
 //   1. Constants, i18n, helpers
 //   2. Rules engine + computer player (makeEngine, also the worker)
 //   2b. PGN read / write (makePgn, pure)
+//   2c. Chess.com answers (makeChessCom, pure)
 //   3. Synced data: load / save / normalize / merge (R5, R26)
 //   4. Device-local prefs + session
 //   5. Game flow (new, select, move, promotion, computer, undo, finish)
 //   6. Render (toolbar, status, board, move list)
 //   7. Dialogs (promotion, result, records, confirm)
 //   7b. PGN: open, save, review, analysis, Play from here, deep link
+//   7c. Online accounts: Chess.com
 //   8. Toasts
 //   9. Sound
 //  10. Input (pointer: click / drag / tap; keyboard; Contract Β)
@@ -176,7 +180,33 @@
       "rv.playTitle": "Play on from this position",
       "rv.playAi": "vs Computer, as {side}",
       "rv.playDuo": "2 players",
-      "rv.playNote": "Games from a position are not recorded."
+      "rv.playNote": "Games from a position are not recorded.",
+      "btn.online": "Online accounts",
+      "cc.title": "Online accounts",
+      "cc.intro": "Enter your Chess.com username to see your ratings and open your games here. Chess.com shares only public data: no password is needed.",
+      "cc.user": "Chess.com username",
+      "cc.show": "Show",
+      "cc.change": "Change",
+      "cc.forget": "Forget",
+      "cc.games": "My games",
+      "cc.puzzle": "Daily puzzle",
+      "cc.close": "Close",
+      "cc.back": "Back",
+      "cc.loading": "Loading…",
+      "cc.k.rapid": "Rapid", "cc.k.blitz": "Blitz", "cc.k.bullet": "Bullet", "cc.k.daily": "Daily", "cc.k.puzzles": "Puzzles",
+      "cc.best": "best {n}",
+      "cc.wld": "{w} W · {l} L · {d} D",
+      "cc.noStats": "No rated games yet.",
+      "cc.months": "My games on Chess.com",
+      "cc.noMonths": "No games on Chess.com yet.",
+      "cc.noGames": "No standard chess games this month.",
+      "cc.badUser": "A Chess.com username has 3 to 25 letters, digits, _ or -",
+      "cc.offline": "You're offline: Chess.com needs the internet",
+      "cc.nouser": "Chess.com has no player “{u}”",
+      "cc.busy": "Chess.com is busy: try again in a moment",
+      "cc.net": "Could not reach Chess.com",
+      "cc.puzzleOpened": "Daily puzzle: find the best move for {side}. Step forward (→) to see the answer.",
+      "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear."
     },
     el: {
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
@@ -278,7 +308,33 @@
       "rv.playTitle": "Συνέχεια από αυτή τη θέση",
       "rv.playAi": "Με υπολογιστή, με τα {side}",
       "rv.playDuo": "2 παίκτες",
-      "rv.playNote": "Οι παρτίδες από θέση δεν καταγράφονται."
+      "rv.playNote": "Οι παρτίδες από θέση δεν καταγράφονται.",
+      "btn.online": "Online λογαριασμοί",
+      "cc.title": "Online λογαριασμοί",
+      "cc.intro": "Γράψε το όνομα χρήστη σου στο Chess.com για να δεις τις βαθμολογίες σου και να ανοίξεις εδώ τις παρτίδες σου. Το Chess.com δίνει μόνο δημόσια στοιχεία: δεν χρειάζεται κωδικός.",
+      "cc.user": "Όνομα χρήστη Chess.com",
+      "cc.show": "Εμφάνιση",
+      "cc.change": "Αλλαγή",
+      "cc.forget": "Ξέχασέ το",
+      "cc.games": "Οι παρτίδες μου",
+      "cc.puzzle": "Γρίφος της ημέρας",
+      "cc.close": "Κλείσιμο",
+      "cc.back": "Πίσω",
+      "cc.loading": "Φόρτωση…",
+      "cc.k.rapid": "Rapid", "cc.k.blitz": "Blitz", "cc.k.bullet": "Bullet", "cc.k.daily": "Ημερήσιες", "cc.k.puzzles": "Γρίφοι",
+      "cc.best": "καλύτερη {n}",
+      "cc.wld": "{w} Ν · {l} Η · {d} Ι",
+      "cc.noStats": "Δεν υπάρχουν ακόμη βαθμολογημένες παρτίδες.",
+      "cc.months": "Οι παρτίδες μου στο Chess.com",
+      "cc.noMonths": "Δεν υπάρχουν ακόμη παρτίδες στο Chess.com.",
+      "cc.noGames": "Καμία παρτίδα κλασικού σκακιού αυτόν τον μήνα.",
+      "cc.badUser": "Το όνομα χρήστη στο Chess.com έχει 3 έως 25 γράμματα, ψηφία, _ ή -",
+      "cc.offline": "Είσαι εκτός σύνδεσης: το Chess.com θέλει internet",
+      "cc.nouser": "Το Chess.com δεν έχει παίκτη «{u}»",
+      "cc.busy": "Το Chess.com είναι απασχολημένο: δοκίμασε ξανά σε λίγο",
+      "cc.net": "Δεν ήταν δυνατή η σύνδεση με το Chess.com",
+      "cc.puzzleOpened": "Γρίφος της ημέρας: βρες την καλύτερη κίνηση για τα {side}. Προχώρα (→) για να δεις τη λύση.",
+      "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί."
     }
   };
 
@@ -1119,8 +1175,87 @@
     return { parse: parse, write: write, matchSan: matchSan, clean: clean, TAGS: TAGS, MAX_TEXT: MAX_TEXT };
   }
 
+  // ---------- 2c. Chess.com published data (pure: read the answers) ----------
+  // Chess.com's Published-Data API is public and read only: a username
+  // is all it needs (no sign-in, no key). These functions only check
+  // and shape its JSON; the requests are in section 7c. Every string
+  // goes through clean(); URLs are never taken from an answer (months
+  // are rebuilt from YYYY/MM), so nothing here can point orOS elsewhere.
+  function makeChessCom(clean) {
+    var API = "https://api.chess.com/pub/";
+    var USER_RE = /^[A-Za-z0-9_-]{3,25}$/;
+    var KINDS = ["rapid", "blitz", "bullet", "daily"];
+    function okUser(u) { return typeof u === "string" && USER_RE.test(u.trim()) ? u.trim() : ""; }
+    function num(v) { return typeof v === "number" && isFinite(v) ? Math.round(v) : null; }
+    function playerUrl(u, rest) { return API + "player/" + encodeURIComponent(okUser(u).toLowerCase()) + (rest || ""); }
+    function monthUrl(u, ym) {
+      var m = /^(\d{4})\/(\d{2})$/.exec(String(ym || ""));
+      return m ? playerUrl(u, "/games/" + m[1] + "/" + m[2]) : "";
+    }
+    // { name, title } from /player/{u}
+    function profile(j) {
+      if (!j || typeof j !== "object") return null;
+      return { user: clean(j.username), name: clean(j.name), title: clean(j.title) };
+    }
+    // [ { kind, last, best, w, l, d } ] from /player/{u}/stats, plus tactics
+    function stats(j) {
+      var out = [];
+      if (!j || typeof j !== "object") return out;
+      KINDS.forEach(function (k) {
+        var x = j["chess_" + k];
+        if (!x || typeof x !== "object") return;
+        var last = num(x.last && x.last.rating);
+        if (last === null) return;
+        var r = x.record || {};
+        out.push({ kind: k, last: last, best: num(x.best && x.best.rating),
+                   w: num(r.win) || 0, l: num(r.loss) || 0, d: num(r.draw) || 0 });
+      });
+      var tac = j.tactics && num(j.tactics.highest && j.tactics.highest.rating);
+      if (tac !== null && tac !== undefined) out.push({ kind: "puzzles", last: null, best: tac, w: 0, l: 0, d: 0 });
+      return out;
+    }
+    // ["YYYY/MM", …] newest first, from /player/{u}/games/archives
+    function months(j) {
+      var out = [], seen = {};
+      var list = j && Array.isArray(j.archives) ? j.archives : [];
+      list.forEach(function (u) {
+        var m = /\/games\/(\d{4})\/(\d{2})$/.exec(String(u || ""));
+        if (!m || +m[2] < 1 || +m[2] > 12) return;
+        var ym = m[1] + "/" + m[2];
+        if (!seen[ym]) { seen[ym] = true; out.push(ym); }
+      });
+      out.sort().reverse();
+      return out.slice(0, 240);
+    }
+    // Standard games of one month, newest first:
+    // [ { white, black, wr, br, result, kind, end, pgn } ]
+    function games(j) {
+      var out = [];
+      var list = j && Array.isArray(j.games) ? j.games : [];
+      list.forEach(function (g) {
+        if (!g || typeof g !== "object" || g.rules !== "chess" || typeof g.pgn !== "string" || g.pgn.length > 200000) return;
+        var w = g.white || {}, b = g.black || {};
+        var res = /\[Result "(1-0|0-1|1\/2-1\/2|\*)"\]/.exec(g.pgn);
+        out.push({ white: clean(w.username) || "?", black: clean(b.username) || "?",
+                   wr: num(w.rating), br: num(b.rating), result: res ? res[1] : "*",
+                   kind: KINDS.indexOf(g.time_class) >= 0 ? g.time_class : "",
+                   end: num(g.end_time) || 0, pgn: g.pgn });
+      });
+      out.sort(function (x, y) { return y.end - x.end; });
+      return out.slice(0, 1000);
+    }
+    // The daily puzzle: { title, pgn } (its PGN carries the FEN)
+    function puzzle(j) {
+      if (!j || typeof j !== "object" || typeof j.pgn !== "string" || j.pgn.length > 20000) return null;
+      return { title: clean(j.title), pgn: j.pgn };
+    }
+    return { API: API, KINDS: KINDS, okUser: okUser, playerUrl: playerUrl, monthUrl: monthUrl,
+             profile: profile, stats: stats, months: months, games: games, puzzle: puzzle };
+  }
+
   var E = makeEngine();
   var PGN = makePgn(E);
+  var CC = makeChessCom(PGN.clean);
   var GLYPH = ["", "♟", "♞", "♝", "♜", "♛", "♚"];
   var PIECE_VAL = [0, 1, 3, 3, 5, 9, 0];
 
@@ -1248,7 +1383,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false };
+  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "" };
 
   function loadPrefs() {
     try {
@@ -1259,6 +1394,7 @@
         if (SIDES.indexOf(p.side) >= 0) prefs.side = p.side;
         prefs.flip = p.flip === true;
         prefs.ana = p.ana === true;
+        prefs.cc = CC.okUser(p.cc);
       }
     } catch (e) {}
   }
@@ -2126,9 +2262,9 @@
     if (first) first.focus();
   }
 
-  function startReview(g) {
+  function startReview(g, atStart) {
     var next = { mode: "review", lv: prefs.lv, human: "w", moves: g.moves.slice(), done: true, unrated: false,
-                 tags: cleanTags(g.tags), result: g.result, at: g.moves.length };
+                 tags: cleanTags(g.tags), result: g.result, at: atStart ? 0 : g.moves.length };
     if (g.fen) next.fen = g.fen;
     replaceGame(next, t("toast.opened"), true);
     runAnalysis();
@@ -2257,6 +2393,198 @@
     }
   }
 
+  // ---------- 7c. Online accounts: Chess.com (read only) ----------
+  // Straight from the browser to Chess.com's public API, one request at
+  // a time (it answers parallel requests with 429). The username is a
+  // device-local pref; nothing is sent anywhere else and nothing syncs.
+  function ccGet(url) {
+    if (navigator.onLine === false) return Promise.reject(new Error("offline"));
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
+    return fetch(url, { credentials: "omit", referrerPolicy: "no-referrer", signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        clearTimeout(timer);
+        if (r.status === 404 || r.status === 410) throw new Error("nouser");
+        if (r.status === 429) throw new Error("busy");
+        if (!r.ok) throw new Error("net");
+        return r.json();
+      }, function () { clearTimeout(timer); throw new Error(navigator.onLine === false ? "offline" : "net"); });
+  }
+  function ccError(e, user) {
+    var k = e && e.message;
+    showToast(t(k === "offline" || k === "nouser" || k === "busy" ? "cc." + k : "cc.net", { u: user || "" }));
+  }
+
+  // A dialog whose body fills in when its data arrives (and only if it is
+  // still the dialog on screen).
+  function ccDialog(id, title) {
+    closeDialogs();
+    var dlg = makeDialog(id);
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", title));
+    var body = el("div", "cc-body");
+    body.appendChild(el("div", "dlg-msg dlg-center", t("cc.loading")));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    return { dlg: dlg, body: body, acts: acts, live: function () { return dlg.open && document.body.contains(dlg); } };
+  }
+
+  function onlineDialog() {
+    if (!prefs.cc) { userDialog(); return; }
+    var d = ccDialog("chess-online", t("cc.title"));
+    var user = prefs.cc;
+    d.acts.appendChild(button(t("cc.close"), "", function () { d.dlg.close(); }));
+    var games = button(t("cc.games"), "primary", function () { monthsDialog(); });
+    d.acts.appendChild(games);
+    games.focus();
+    var prof = null;
+    ccGet(CC.playerUrl(user)).then(function (j) {
+      prof = CC.profile(j);
+      return ccGet(CC.playerUrl(user, "/stats"));
+    }).then(function (j) {
+      if (!d.live()) return;
+      d.body.innerHTML = "";
+      var head = el("div", "cc-head");
+      var who = el("div", "cc-who");
+      who.appendChild(el("strong", "", (prof && prof.title ? prof.title + " " : "") + ((prof && prof.user) || user)));
+      if (prof && prof.name) who.appendChild(el("span", "", prof.name));
+      head.appendChild(who);
+      head.appendChild(button(t("cc.change"), "small", function () { userDialog(); }));
+      d.body.appendChild(head);
+      var rows = CC.stats(j);
+      if (!rows.length) d.body.appendChild(el("div", "dlg-foot", t("cc.noStats")));
+      rows.forEach(function (r) {
+        var v = r.last !== null ? String(r.last) : String(r.best);
+        if (r.last !== null && r.best !== null) v += " · " + t("cc.best", { n: r.best });
+        var rw = row(t("cc.k." + r.kind), v);
+        if (r.w + r.l + r.d) rw.appendChild(el("em", "cc-wld", t("cc.wld", { w: r.w, l: r.l, d: r.d })));
+        d.body.appendChild(rw);
+      });
+      var more = el("div", "dlg-actions");
+      more.appendChild(button(t("cc.puzzle"), "", dailyPuzzle));
+      more.appendChild(button(t("cc.forget"), "danger", function () {
+        prefs.cc = ""; savePrefs(); d.dlg.close();
+      }));
+      d.body.appendChild(more);
+      d.body.appendChild(el("div", "dlg-foot", t("cc.note")));
+    }).catch(function (e) {
+      if (!d.live()) return;
+      if (e && e.message === "nouser") { userDialog(); ccError(e, user); return; }
+      d.dlg.close();
+      ccError(e, user);
+    });
+  }
+
+  function userDialog() {
+    closeDialogs();
+    var dlg = makeDialog("chess-ccuser");
+    dlg.appendChild(el("div", "dlg-title", t("cc.title")));
+    dlg.appendChild(el("div", "dlg-msg", t("cc.intro")));
+    var inp = el("input", "cc-input");
+    inp.type = "text";
+    inp.autocomplete = "username";
+    inp.spellcheck = false;
+    inp.maxLength = 25;
+    inp.value = prefs.cc;
+    inp.placeholder = t("cc.user");
+    inp.setAttribute("aria-label", t("cc.user"));
+    dlg.appendChild(inp);
+    function go() {
+      var u = CC.okUser(inp.value);
+      if (!u) { showToast(t("cc.badUser")); inp.focus(); return; }
+      prefs.cc = u;
+      savePrefs();
+      onlineDialog();
+    }
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(); } });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cc.puzzle"), "", dailyPuzzle));
+    acts.appendChild(button(t("cc.show"), "primary", go));
+    dlg.appendChild(acts);
+    var close = el("div", "dlg-actions");
+    close.appendChild(button(t("cc.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(close);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inp.focus();
+  }
+
+  function monthName(ym) {
+    var p = ym.split("/");
+    try { return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { month: "long", year: "numeric" }); }
+    catch (e) { return ym; }
+  }
+
+  function monthsDialog() {
+    var user = prefs.cc;
+    var d = ccDialog("chess-ccmonths", t("cc.months"));
+    d.acts.appendChild(button(t("cc.back"), "", onlineDialog));
+    ccGet(CC.playerUrl(user, "/games/archives")).then(function (j) {
+      if (!d.live()) return;
+      var list = CC.months(j);
+      d.body.innerHTML = "";
+      if (!list.length) { d.body.appendChild(el("div", "dlg-msg dlg-center", t("cc.noMonths"))); return; }
+      var box = el("div", "pick-list");
+      list.forEach(function (ym) {
+        var b = el("button", "pick-btn");
+        b.type = "button";
+        b.appendChild(el("span", "pick-names", monthName(ym)));
+        b.addEventListener("click", function () { monthDialog(ym); });
+        box.appendChild(b);
+      });
+      d.body.appendChild(box);
+      var first = box.querySelector("button");
+      if (first) first.focus();
+    }).catch(function (e) { if (d.live()) { d.dlg.close(); ccError(e, user); } });
+  }
+
+  function monthDialog(ym) {
+    var user = prefs.cc;
+    var d = ccDialog("chess-ccmonth", monthName(ym));
+    d.acts.appendChild(button(t("cc.back"), "", monthsDialog));
+    ccGet(CC.monthUrl(user, ym)).then(function (j) {
+      if (!d.live()) return;
+      var list = CC.games(j);
+      d.body.innerHTML = "";
+      if (!list.length) { d.body.appendChild(el("div", "dlg-msg dlg-center", t("cc.noGames"))); return; }
+      var box = el("div", "pick-list");
+      list.forEach(function (g) {
+        var b = el("button", "pick-btn");
+        b.type = "button";
+        b.appendChild(el("span", "pick-names",
+          g.white + (g.wr ? " (" + g.wr + ")" : "") + " – " + g.black + (g.br ? " (" + g.br + ")" : "")));
+        var when = g.end ? new Date(g.end * 1000).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { day: "numeric", month: "short" }) : "";
+        b.appendChild(el("span", "pick-meta", [g.result, g.kind ? t("cc.k." + g.kind) : "", when].filter(Boolean).join(" · ")));
+        b.addEventListener("click", function () {
+          var r = PGN.parse(g.pgn);
+          d.dlg.close();
+          if (!r.games.length) { showToast(t("pgn.none")); return; }
+          startReview(r.games[0]);
+        });
+        box.appendChild(b);
+      });
+      d.body.appendChild(box);
+      var first = box.querySelector("button");
+      if (first) first.focus();
+    }).catch(function (e) { if (d.live()) { d.dlg.close(); ccError(e, user); } });
+  }
+
+  function dailyPuzzle() {
+    closeDialogs();
+    ccGet(CC.API + "puzzle").then(function (j) {
+      var pz = CC.puzzle(j), r = pz ? PGN.parse(pz.pgn) : null;
+      if (!r || !r.games.length) { showToast(t("cc.net")); return; }
+      var g = r.games[0];
+      g.tags = { Event: "Chess.com · " + (pz.title || t("cc.puzzle")), Site: "chess.com" };
+      g.result = "*";
+      startReview(g, true);
+      showToast(t("cc.puzzleOpened", { side: t("sidel." + toMove()) }));
+    }).catch(function (e) { ccError(e); });
+  }
+
   // ---------- 8. Toasts ----------
   function showToast(text) {
     try {
@@ -2339,6 +2667,7 @@
     undo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
     flip:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 4 3 8M7 4l4 4"/><path d="M17 20V4M17 20l-4-4M17 20l4-4"/></svg>',
     pgn:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>',
+    online:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     first: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 6l-7 6 7 6z"/></svg>',
     prev:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
     next:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
@@ -2575,7 +2904,7 @@
 
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"],
-     ["flip-btn", "flip", "btn.flip"], ["stats-btn", "stats", "btn.stats"], ["pgn-btn", "pgn", "btn.pgn"],
+     ["flip-btn", "flip", "btn.flip"], ["stats-btn", "stats", "btn.stats"], ["pgn-btn", "pgn", "btn.pgn"], ["online-btn", "online", "btn.online"],
      ["rv-first", "first", "rv.first"], ["rv-prev", "prev", "rv.prev"],
      ["rv-next", "next", "rv.next"], ["rv-last", "last", "rv.last"]].forEach(function (x) {
       var b = $(x[0]);
@@ -2612,6 +2941,7 @@
     $("flip-btn").addEventListener("click", flip);
     $("stats-btn").addEventListener("click", statsDialog);
     $("pgn-btn").addEventListener("click", function () { pgnDialog(); });
+    $("online-btn").addEventListener("click", function () { onlineDialog(); });
     $("rv-first").addEventListener("click", function () { goTo(0); });
     $("rv-prev").addEventListener("click", function () { goTo(game.at - 1); });
     $("rv-next").addEventListener("click", function () { goTo(game.at + 1); });

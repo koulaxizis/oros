@@ -40,6 +40,14 @@ An opened game shows its players, the result and the move list. Step through it 
 
 A game you were reviewing also waits for you next time. If a PGN has a move that isn't legal, the game opens up to that move and a message says where it stopped.
 
+## Chess.com
+`Online accounts` in the toolbar connects Chess with your Chess.com account. Type your Chess.com username and press `Show`: no password is needed, because Chess.com shares this data publicly.
+- You see your ratings (Rapid, Blitz, Bullet, Daily and Puzzles) with your best and your wins, losses and draws.
+- `My games` lists your games month by month. Tap one to open it for review, with `Analysis` and `Play from here`.
+- `Daily puzzle` opens Chess.com's puzzle of the day at its start position; step forward to see the answer. It works without a username too.
+
+Chess.com refreshes this data a few times a day, so a game that just ended may take a while to appear. The username stays on this device; `Forget` removes it. Playing on Chess.com from orOS isn't possible: Chess.com doesn't let other apps play.
+
 ## Sync
 Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.
 
