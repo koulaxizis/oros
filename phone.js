@@ -21,6 +21,12 @@
 //     label}], note, starred, photo }]
 //   eventRows(blob, tz) → [{ id, h, title, desc, loc, allDay,
 //     dtstart, dtend, duration, tz, rrule, exdate, remind }]
+//   feedRows(store, tz) → the same rows for the Calendar's app feeds
+//     and holidays (To-Do, birthdays, Budget, …). Those exist only as
+//     Calendar renders them, so the Calendar app (calendar.js
+//     phonePublish) writes the days it shows to localStorage
+//     "oros-phone-cal-feeds" on this device (never synced):
+//     { at, items: [{ k, date, start, end, title, note }] }.
 // Messages (JSON strings on the port):
 //   page → app: {t:"state"} · {t:"contacts"|"calendar", seq, items}
 //               {t:"clear", what}
@@ -34,6 +40,8 @@
 
   var PREF_KEY = "oros-phone";
   var KEYS = { contacts: "oros-contacts-data", calendar: "oros-calendar-data" };
+  var FEEDS_KEY = "oros-phone-cal-feeds";
+  var MAX_FEED_ROWS = 5000;
   var PERM_URL = { contacts: "intent://contacts#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
   var MAX_PHOTO = 70000;          // base64 characters
@@ -202,7 +210,36 @@
     return rows;
   }
 
-  var api = { contactRows: contactRows, eventRows: eventRows, rrule: rrule, hash: fnv };
+  // Feed rows have no id of their own (calendar.js makes them per
+  // render), so the id is a hash of the row's key and day: stable while
+  // the source item stays, new when it moves.
+  function feedRows(store, tz) {
+    var rows = [], seen = {};
+    (Array.isArray(store && store.items) ? store.items : []).forEach(function (x) {
+      if (rows.length >= MAX_FEED_ROWS || !x || typeof x.k !== "string" || !x.k) return;
+      if (typeof x.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(x.date)) return;
+      var id = "f" + fnv(x.k + "|" + x.date) + fnv(x.date + "|" + x.k);
+      if (seen[id]) return;
+      seen[id] = 1;
+      var timed = typeof x.start === "string" && /^\d{2}:\d{2}$/.test(x.start);
+      var end = timed && typeof x.end === "string" && /^\d{2}:\d{2}$/.test(x.end) && x.end > x.start ? x.end : null;
+      var start = timed ? localMs(x.date, x.start) : utcMidnight(x.date);
+      rows.push(withHash({
+        id: id,
+        title: str(x.title, 80), desc: str(x.note, 500), loc: "",
+        allDay: !timed,
+        dtstart: start,
+        dtend: timed ? (end ? localMs(x.date, end) : start) : utcMidnight(x.date, 1),
+        duration: null,
+        tz: timed ? (tz || "UTC") : "UTC",
+        rrule: null, exdate: null, remind: null
+      }));
+    });
+    rows.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+    return rows;
+  }
+
+  var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -234,11 +271,19 @@
     var p = prefs();
     if (!port || !appState || !p[kind] || appState[kind] !== "granted") return;
     var raw = "";
-    try { raw = localStorage.getItem(KEYS[kind]) || ""; } catch (e) { return; }
+    try {
+      raw = localStorage.getItem(KEYS[kind]) || "";
+      if (kind === "calendar") raw += "\n" + (localStorage.getItem(FEEDS_KEY) || "");
+    } catch (e) { return; }
     var key = fnv(raw) + ":" + raw.length + ":" + zone();
     if (!force && lastSent[kind] === key) return;
-    var blob = readBlob(kind);
-    var items = kind === "contacts" ? contactRows(blob) : eventRows(blob, zone());
+    var blob = readBlob(kind), items;
+    if (kind === "contacts") items = contactRows(blob);
+    else {
+      var feeds = null;
+      try { feeds = JSON.parse(localStorage.getItem(FEEDS_KEY) || "null"); } catch (e) {}
+      items = eventRows(blob, zone()).concat(feedRows(feeds, zone()));
+    }
     if (send({ t: kind, seq: ++seq, items: items })) lastSent[kind] = key;
   }
   function pushAll(force) { push("contacts", force); push("calendar", force); }

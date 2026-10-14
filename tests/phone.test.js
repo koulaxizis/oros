@@ -109,3 +109,28 @@ test("calendar: tombstoned and broken events are left out; ids sorted; hash stab
   assert.equal(rows[0].h, P.eventRows({ events: [ev({ id: "z" })] }, "Europe/Athens")[0].h);
   assert.deepEqual(P.eventRows(null), []);
 });
+
+test("feedRows: calendar feed days become stable read-only rows", () => {
+  const store = { at: 1, items: [
+    { k: "tdo-a-2026-10-14", date: "2026-10-14", start: null, title: "Pay rent", note: "To-Do" },
+    { k: "sky-2026-10-14-0", date: "2026-10-14", start: "21:30", end: null, title: "Full Moon", note: "" },
+    { k: "tdo-a-2026-10-14", date: "2026-10-14", title: "dup" },
+    { k: "", date: "2026-10-14", title: "no key" },
+    { k: "x", date: "14/10/2026", title: "bad date" }
+  ] };
+  const rows = P.feedRows(store, "Europe/Athens");
+  assert.equal(rows.length, 2);
+  const allDay = rows.find((r) => r.title === "Pay rent");
+  assert.equal(allDay.allDay, true);
+  assert.equal(allDay.dtstart, Date.UTC(2026, 9, 14));
+  assert.equal(allDay.dtend, Date.UTC(2026, 9, 15));
+  assert.equal(allDay.tz, "UTC");
+  assert.equal(allDay.desc, "To-Do");
+  const timed = rows.find((r) => r.title === "Full Moon");
+  assert.equal(timed.allDay, false);
+  assert.equal(timed.dtend, timed.dtstart);
+  assert.equal(timed.tz, "Europe/Athens");
+  assert.equal(P.feedRows(store, "UTC")[0].id, P.feedRows(store, "UTC")[0].id);
+  assert.match(allDay.id, /^f[0-9a-f]{16}$/);
+  assert.deepEqual(P.feedRows(null, "UTC"), []);
+});

@@ -287,6 +287,7 @@ public class PhoneBridge {
                     done.put("updated", n[1]);
                     done.put("removed", n[2]);
                     done.put("kept", n[3]);
+                    diag(t + " written: +" + n[0] + " ~" + n[1] + " -" + n[2] + " =" + n[3]);
                     send(done);
                     return;
                 }
