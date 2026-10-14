@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.21.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.22.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5704,6 +5704,9 @@
         { name: "Google People API · Microsoft Graph", url: "https://developers.google.com/people",
           by: "Google LLC; Microsoft Corporation; your own account", lic: { en: "Their terms, one sign-in per import, nothing kept", el: "Οι όροι τους, μία σύνδεση ανά εισαγωγή, τίποτα δεν κρατιέται" },
           en: "One-time contacts import (Contacts › From an account)", el: "Εισαγωγή επαφών μία φορά (Επαφές › Από λογαριασμό)" },
+        { name: "Gravatar · Libravatar", url: "https://www.libravatar.org/",
+          by: "Automattic Inc.; the Libravatar project", lic: { en: "Their terms; only a hashed e-mail is sent, on request", el: "Οι όροι τους· στέλνεται μόνο κωδικοποιημένο email, όταν το ζητήσεις" },
+          en: "Profile pictures for contacts (Contacts › Find photos)", el: "Φωτογραφίες προφίλ για επαφές (Επαφές › Εύρεση φωτογραφιών)" },
         { name: "timologisi.online", url: "https://www.timologisi.online/",
           by: "Novus Conceptus; your own account", lic: { en: "Your own account and key", el: "Ο δικός σου λογαριασμός και κλειδί" },
           en: "Connected services: send invoices to myDATA (Invoices)", el: "Συνδεδεμένες υπηρεσίες: αποστολή παραστατικών στο myDATA (Τιμολόγια)" },

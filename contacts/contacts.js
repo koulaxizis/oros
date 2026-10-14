@@ -144,6 +144,17 @@
       "ph.last": "Sent {t}: {n} {what}.",
       "ph.err": "Last attempt failed: {e}",
       "ph.close": "Close",
+      "pf.btn": "Find photos",
+      "pf.title": "Find photos online",
+      "pf.text": "For contacts without a photo, orOS looks for the profile picture the person set for their own e-mail address on Gravatar and Libravatar. Only a coded fingerprint of each address is sent, never names or numbers. An address that several of your contacts share (an office e-mail) is skipped, so a photo always belongs to that one contact. Nothing changes until you pick the photos to keep.",
+      "pf.go": "Search",
+      "pf.apply": "Use the ticked photos",
+      "pf.none": "No contact without a photo has an e-mail address to look up.",
+      "pf.busy": "Looking up {i} of {n}…",
+      "pf.found": "{n} photo(s) found for {m} contact(s) looked up. Untick any that is not right.",
+      "pf.nothing": "No photos found for the {m} contact(s) looked up.",
+      "pf.done": "{n} photo(s) added",
+      "pf.via": "via {s} · {e}",
       "ac.btn": "From an account",
       "ac.title": "Import from an account",
       "ac.text": "Sign in once: orOS reads your contacts, you review them, and the connection ends right away. No password or access is kept.",
@@ -411,6 +422,17 @@
       "ph.last": "Στάλθηκαν {t}: {n} {what}.",
       "ph.err": "Η τελευταία προσπάθεια απέτυχε: {e}",
       "ph.close": "Κλείσιμο",
+      "pf.btn": "Εύρεση φωτογραφιών",
+      "pf.title": "Εύρεση φωτογραφιών online",
+      "pf.text": "Για τις επαφές χωρίς φωτογραφία, το orOS ψάχνει την εικόνα προφίλ που έχει βάλει ο ίδιος ο άνθρωπος για το email του στο Gravatar και στο Libravatar. Στέλνεται μόνο ένα κωδικοποιημένο αποτύπωμα κάθε διεύθυνσης, ποτέ ονόματα ή τηλέφωνα. Ένα email που το έχουν πολλές επαφές σου (π.χ. ενός γραφείου) παραλείπεται, ώστε η φωτογραφία να ανήκει πάντα σε αυτή τη μία επαφή. Τίποτα δεν αλλάζει μέχρι να διαλέξεις ποιες φωτογραφίες κρατάς.",
+      "pf.go": "Αναζήτηση",
+      "pf.apply": "Χρήση των επιλεγμένων",
+      "pf.none": "Καμία επαφή χωρίς φωτογραφία δεν έχει email για αναζήτηση.",
+      "pf.busy": "Αναζήτηση {i} από {n}…",
+      "pf.found": "Βρέθηκαν {n} φωτογραφίες για {m} επαφές που ελέγχθηκαν. Ξετσέκαρε όποια δεν είναι σωστή.",
+      "pf.nothing": "Δεν βρέθηκαν φωτογραφίες για τις {m} επαφές που ελέγχθηκαν.",
+      "pf.done": "Προστέθηκαν {n} φωτογραφίες",
+      "pf.via": "από {s} · {e}",
       "ac.btn": "Από λογαριασμό",
       "ac.title": "Εισαγωγή από λογαριασμό",
       "ac.text": "Συνδέεσαι μία φορά: το orOS διαβάζει τις επαφές σου, τις ελέγχεις και η σύνδεση κλείνει αμέσως. Δεν κρατιέται κωδικός ούτε πρόσβαση.",
@@ -4604,6 +4626,179 @@ document.addEventListener("keydown", function (e) {
     $("ac-dlg").addEventListener("close", function () { if (acBusy) ACC.cancel(); });
   } else if ($("ct-acct")) {
     $("ct-acct").hidden = true;
+  }
+
+  // ---- Find photos online (Gravatar, Libravatar) ----
+  // Only contacts without a photo, only by their own e-mail: an address
+  // two or more contacts share is skipped (that is the cross-check: the
+  // picture someone set for an address belongs to that address's one
+  // contact). The address goes out as its SHA-256 hash, lower-cased and
+  // trimmed, exactly what both services index by; d=404 means "no
+  // picture" instead of a generated one. Nothing is written until the
+  // person ticks what to keep; Undo puts the contacts back.
+  var PF_SOURCES = [
+    { name: "Gravatar", url: function (h) { return "https://gravatar.com/avatar/" + h + "?d=404&s=256"; } },
+    { name: "Libravatar", url: function (h) { return "https://seccdn.libravatar.org/avatar/" + h + "?d=404&s=256"; } }
+  ];
+  var pfBusy = false, pfFound = [];
+  function pfCandidates() {
+    var owners = {};
+    state.contacts.forEach(function (c) {
+      var seen = {};
+      c.emails.forEach(function (e) {
+        var k = normalizeEmail(e.v);
+        if (!k || seen[k]) return;
+        seen[k] = 1;
+        owners[k] = (owners[k] || 0) + 1;
+      });
+    });
+    var out = [];
+    state.contacts.forEach(function (c) {
+      if (c.photo) return;
+      var mails = c.emails.map(function (e) { return normalizeEmail(e.v); })
+        .filter(function (k, i, a) { return k && /@/.test(k) && owners[k] === 1 && a.indexOf(k) === i; });
+      if (mails.length) out.push({ id: c.id, mails: mails.slice(0, 3) });
+    });
+    return out;
+  }
+  function pfHash(mail) {
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(mail)).then(function (buf) {
+      return Array.prototype.map.call(new Uint8Array(buf), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+    });
+  }
+  // Fetched picture → the same 128×128 centre-cropped JPEG an upload gets.
+  function pfAvatar(blob) {
+    return createImageBitmap(blob).then(function (bmp) {
+      var side = Math.min(bmp.width, bmp.height);
+      var cv = document.createElement("canvas");
+      cv.width = AVATAR_SIZE; cv.height = AVATAR_SIZE;
+      var ctx = cv.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+      var uri = cv.toDataURL("image/jpeg", 0.85);
+      return uri.length <= 50000 ? uri : null;
+    });
+  }
+  function pfLookup(mail) {
+    return pfHash(mail).then(function (h) {
+      var i = 0;
+      function next() {
+        if (i >= PF_SOURCES.length) return null;
+        var src = PF_SOURCES[i++];
+        return fetch(src.url(h), { credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })
+          .then(function (r) {
+            if (!r.ok || !/^image\//.test(r.headers.get("Content-Type") || "")) return next();
+            return r.blob().then(pfAvatar).then(function (uri) { return uri ? { photo: uri, source: src.name, mail: mail } : next(); });
+          }, function () { return next(); });
+      }
+      return next();
+    });
+  }
+  function pfRender() {
+    var box = $("pf-list");
+    box.textContent = "";
+    pfFound.forEach(function (f) {
+      var c = contactById(f.id);
+      if (!c) return;
+      var row = document.createElement("label");
+      row.className = "pf-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = f.on;
+      cb.addEventListener("change", function () { f.on = cb.checked; });
+      var im = document.createElement("img");
+      im.className = "ct-avatar ct-avatar-img";
+      im.alt = "";
+      im.src = f.photo;
+      var tx = document.createElement("span");
+      tx.className = "pf-txt";
+      var nm = document.createElement("b");
+      nm.textContent = displayName(c);
+      var via = document.createElement("small");
+      via.textContent = t("pf.via").replace("{s}", f.source).replace("{e}", f.mail);
+      tx.appendChild(nm);
+      tx.appendChild(via);
+      row.appendChild(cb);
+      row.appendChild(im);
+      row.appendChild(tx);
+      box.appendChild(row);
+    });
+    $("pf-apply").hidden = !pfFound.length;
+    $("pf-go").hidden = !!pfFound.length;
+  }
+  function pfSearch() {
+    if (pfBusy) return;
+    var list = pfCandidates();
+    pfFound = [];
+    pfRender();
+    if (!list.length) { $("pf-stat").textContent = t("pf.none"); return; }
+    pfBusy = true;
+    $("pf-go").disabled = true;
+    var done = 0, k = 0;
+    function show() { $("pf-stat").textContent = t("pf.busy").replace("{i}", String(done)).replace("{n}", String(list.length)); }
+    show();
+    function worker() {
+      if (!pfBusy || k >= list.length) return Promise.resolve();
+      var item = list[k++], j = 0;
+      function tryMail() {
+        if (j >= item.mails.length) return null;
+        return pfLookup(item.mails[j++]).then(function (r) { return r || tryMail(); });
+      }
+      return Promise.resolve(tryMail()).then(function (r) {
+        if (r) { pfFound.push({ id: item.id, photo: r.photo, source: r.source, mail: r.mail, on: true }); pfRender(); }
+      }, function () {}).then(function () { done++; show(); return worker(); });
+    }
+    Promise.all([worker(), worker(), worker(), worker()]).then(function () {
+      var stopped = !pfBusy;
+      pfBusy = false;
+      $("pf-go").disabled = false;
+      if (stopped) return;
+      $("pf-stat").textContent = pfFound.length
+        ? t("pf.found").replace("{n}", String(pfFound.length)).replace("{m}", String(list.length))
+        : t("pf.nothing").replace("{m}", String(list.length));
+    });
+  }
+  function pfApply() {
+    var before = [], n = 0, now = Date.now();
+    pfFound.forEach(function (f) {
+      if (!f.on) return;
+      var c = contactById(f.id);
+      if (!c || c.photo) return;   // never replaces a photo
+      before.push(JSON.parse(JSON.stringify(c)));
+      c.photo = f.photo;
+      c.mtime = now;
+      n++;
+    });
+    pfFound = [];
+    $("pf-dlg").close();
+    if (!n) return;
+    saveState();
+    renderList();
+    toast(t("pf.done").replace("{n}", String(n)), t("undo"), function () {
+      var t2 = Date.now();
+      before.forEach(function (old) {
+        var cur = contactById(old.id);
+        if (!cur) return;
+        old.mtime = t2;
+        state.contacts[state.contacts.indexOf(cur)] = old;
+      });
+      saveState();
+      renderList();
+    });
+  }
+  if ($("pf-dlg") && window.crypto && crypto.subtle && window.createImageBitmap) {
+    $("ct-pf").addEventListener("click", function () {
+      pfFound = [];
+      pfRender();
+      $("pf-stat").textContent = "";
+      $("pf-dlg").showModal();
+    });
+    $("pf-go").addEventListener("click", pfSearch);
+    $("pf-apply").addEventListener("click", pfApply);
+    $("pf-close").addEventListener("click", function () { $("pf-dlg").close(); });
+    $("pf-dlg").addEventListener("close", function () { pfBusy = false; });
+  } else if ($("ct-pf")) {
+    $("ct-pf").hidden = true;
   }
 
   // ---- Import wiring ----

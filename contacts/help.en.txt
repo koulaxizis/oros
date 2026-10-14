@@ -62,6 +62,9 @@ iCloud, Yahoo and other services: export your contacts there as a .vcf file and 
 
 Microsoft (Outlook.com, Hotmail, Microsoft 365) is not offered by orOS for now. Under `Use my own app id` you can register your own OAuth app (Google or Microsoft) with the address shown there and paste its client id; it stays on this device and its button appears.
 
+## Find photos online
+`Find photos` looks for pictures for your contacts that have none. It uses the profile picture a person set for their own e-mail address on Gravatar or Libravatar, so it only finds people who did that, and it only sends a coded fingerprint of the address, never names or numbers. An e-mail that several of your contacts share (an office address) is skipped, so a picture always belongs to that one contact. Tap `Search`, untick any picture that is not right and tap `Use the ticked photos`; existing photos are never replaced, and `Undo` takes the new ones away again.
+
 ## On this phone (Android app)
 In the orOS Android app, `On this phone` puts your orOS contacts in the phone's own Contacts, so the dialer and incoming calls show their names. Turn on `Show on this phone` and tap `Allow access` (Android asks once). Contacts arrive in an "orOS" account and follow every change you make here. It works both ways: when you edit or delete one of them in the phone's contacts app, or save a new contact to the "orOS" account there, the change comes into orOS Contacts the next time you open orOS. Labels, relations and instant messaging stay as they are in orOS, and a photo from the phone is used only when the contact has none here. Some contacts apps (Fossify Contacts, for example) let you pick the "orOS" account for a new contact; others only offer their own account. Turning the switch off removes them from the phone again.
 
