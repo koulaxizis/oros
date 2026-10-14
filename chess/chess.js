@@ -206,6 +206,33 @@
       "cc.busy": "Chess.com is busy: try again in a moment",
       "cc.net": "Could not reach Chess.com",
       "cc.puzzleOpened": "Daily puzzle: find the best move for {side}. Step forward (→) to see the answer.",
+      "hub.ccNone": "Your public games and ratings: just a username",
+      "hub.liNone": "Sign in to see your games and ratings",
+      "hub.liAs": "Signed in as {u}",
+      "hub.note": "orOS talks to these sites straight from this device. Nothing goes through an orOS server.",
+      "li.analyse": "Analyse this game on Lichess",
+      "li.sending": "Sending the game to Lichess…",
+      "li.intro": "Sign in with your Lichess account to see your ratings and open your latest games here. You sign in on lichess.org: orOS never sees your password.",
+      "li.signIn": "Sign in with Lichess",
+      "li.signOut": "Sign out",
+      "li.privacy": "orOS asks only to read your public profile. The sign-in stays sealed on this device and is not synced.",
+      "li.as": "Lichess account",
+      "li.k.bullet": "Bullet", "li.k.blitz": "Blitz", "li.k.rapid": "Rapid", "li.k.classical": "Classical",
+      "li.k.correspondence": "Correspondence", "li.k.puzzle": "Puzzles",
+      "li.games": "{n} games",
+      "li.rating": "rating {n}",
+      "li.myGames": "My games on Lichess",
+      "li.noGames": "No standard games on Lichess yet.",
+      "li.note": "A ? after a rating means Lichess still treats it as provisional.",
+      "li.signedIn": "Signed in to Lichess as {u}",
+      "li.signedOut": "Signed out of Lichess",
+      "li.denied": "Lichess sign-in was cancelled",
+      "li.failed": "Lichess sign-in did not work: try again",
+      "li.noCrypto": "This browser cannot keep a sign-in safe, so Lichess sign-in is off here",
+      "li.expired": "Your Lichess sign-in has ended: sign in again",
+      "li.offline": "You're offline: Lichess needs the internet",
+      "li.busy": "Lichess is busy: try again in a minute",
+      "li.net": "Could not reach Lichess",
       "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear."
     },
     el: {
@@ -334,6 +361,33 @@
       "cc.busy": "Το Chess.com είναι απασχολημένο: δοκίμασε ξανά σε λίγο",
       "cc.net": "Δεν ήταν δυνατή η σύνδεση με το Chess.com",
       "cc.puzzleOpened": "Γρίφος της ημέρας: βρες την καλύτερη κίνηση για τα {side}. Προχώρα (→) για να δεις τη λύση.",
+      "hub.ccNone": "Οι δημόσιες παρτίδες και βαθμολογίες σου, μόνο με username",
+      "hub.liNone": "Σύνδεση για να δεις παρτίδες και βαθμολογίες",
+      "hub.liAs": "Σύνδεση ως {u}",
+      "hub.note": "Το orOS μιλά με αυτές τις σελίδες απευθείας από αυτή τη συσκευή. Τίποτα δεν περνά από server του orOS.",
+      "li.analyse": "Ανάλυση της παρτίδας στο Lichess",
+      "li.sending": "Αποστολή της παρτίδας στο Lichess…",
+      "li.intro": "Συνδέσου με τον λογαριασμό σου στο Lichess για να δεις τις βαθμολογίες σου και να ανοίξεις εδώ τις τελευταίες σου παρτίδες. Η σύνδεση γίνεται στο lichess.org: το orOS δεν βλέπει ποτέ τον κωδικό σου.",
+      "li.signIn": "Σύνδεση με Lichess",
+      "li.signOut": "Αποσύνδεση",
+      "li.privacy": "Το orOS ζητά μόνο ανάγνωση του δημόσιου προφίλ σου. Η σύνδεση μένει σφραγισμένη σε αυτή τη συσκευή και δεν συγχρονίζεται.",
+      "li.as": "Λογαριασμός Lichess",
+      "li.k.bullet": "Bullet", "li.k.blitz": "Blitz", "li.k.rapid": "Rapid", "li.k.classical": "Κλασικό",
+      "li.k.correspondence": "Αλληλογραφία", "li.k.puzzle": "Γρίφοι",
+      "li.games": "{n} παρτίδες",
+      "li.rating": "βαθμολογία {n}",
+      "li.myGames": "Οι παρτίδες μου στο Lichess",
+      "li.noGames": "Δεν υπάρχουν ακόμη κανονικές παρτίδες στο Lichess.",
+      "li.note": "Ένα ? μετά τη βαθμολογία σημαίνει ότι το Lichess τη θεωρεί ακόμη προσωρινή.",
+      "li.signedIn": "Συνδέθηκες στο Lichess ως {u}",
+      "li.signedOut": "Αποσυνδέθηκες από το Lichess",
+      "li.denied": "Η σύνδεση με το Lichess ακυρώθηκε",
+      "li.failed": "Η σύνδεση με το Lichess δεν πέτυχε: δοκίμασε ξανά",
+      "li.noCrypto": "Αυτός ο browser δεν μπορεί να κρατήσει τη σύνδεση ασφαλή, οπότε η σύνδεση με Lichess δεν είναι διαθέσιμη εδώ",
+      "li.expired": "Η σύνδεσή σου στο Lichess έληξε: συνδέσου ξανά",
+      "li.offline": "Είσαι εκτός σύνδεσης: το Lichess θέλει internet",
+      "li.busy": "Το Lichess είναι απασχολημένο: δοκίμασε ξανά σε ένα λεπτό",
+      "li.net": "Δεν ήταν δυνατή η σύνδεση με το Lichess",
       "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί."
     }
   };
@@ -1253,9 +1307,101 @@
              profile: profile, stats: stats, months: months, games: games, puzzle: puzzle };
   }
 
+  // ---------- 2d. Lichess (pure: sign-in URL, read the answers) ----------
+  // Lichess is free and open source; its API lets any app sign a player
+  // in with OAuth 2.0 + PKCE straight from the browser (no app to
+  // register, no secret, no relay). These functions only build the
+  // sign-in URL and check and shape the JSON; the requests are in 7d.
+  // As with Chess.com, every string goes through clean() and no URL is
+  // ever taken from an answer (a game link is rebuilt from its id).
+  function makeLichess(P, E) {
+    var clean = P.clean;
+    var HOST = "https://lichess.org";
+    var CLIENT = "useoros.online";
+    var USER_RE = /^[A-Za-z0-9_-]{2,30}$/;
+    var ID_RE = /^[A-Za-z0-9]{8}$/;
+    var KINDS = ["bullet", "blitz", "rapid", "classical", "correspondence", "puzzle"];
+    var PERF_TYPES = "ultraBullet,bullet,blitz,rapid,classical,correspondence";
+    function okUser(u) { return typeof u === "string" && USER_RE.test(u.trim()) ? u.trim() : ""; }
+    function num(v) { return typeof v === "number" && isFinite(v) ? Math.round(v) : null; }
+    // o: { state, challenge, redirect, scope? }
+    function authorizeUrl(o) {
+      return HOST + "/oauth?" + [
+        "response_type=code",
+        "client_id=" + encodeURIComponent(CLIENT),
+        "redirect_uri=" + encodeURIComponent(o.redirect),
+        "code_challenge_method=S256",
+        "code_challenge=" + encodeURIComponent(o.challenge),
+        "scope=" + encodeURIComponent(o.scope || ""),
+        "state=" + encodeURIComponent(o.state)
+      ].join("&");
+    }
+    // { user, title, perfs: [ { kind, rating, games, prov } ] } from /api/account
+    function account(j) {
+      if (!j || typeof j !== "object" || !okUser(j.username)) return null;
+      var perfs = [], src = j.perfs && typeof j.perfs === "object" ? j.perfs : {};
+      KINDS.forEach(function (k) {
+        var x = src[k];
+        if (!x || typeof x !== "object") return;
+        var r = num(x.rating), n = num(x.games);
+        if (r === null || !n) return;
+        perfs.push({ kind: k, rating: r, games: n, prov: x.prov === true });
+      });
+      return { user: okUser(j.username), title: clean(j.title).slice(0, 4), perfs: perfs };
+    }
+    // The player's latest standard games, as one PGN text.
+    function gamesPath(u, max) {
+      return "/api/games/user/" + encodeURIComponent(okUser(u)) +
+        "?max=" + Math.max(1, Math.min(100, max || 50)) + "&opening=true&clocks=false&evals=false&perfType=" + PERF_TYPES;
+    }
+    // The daily puzzle as a game to review: the game up to the puzzle,
+    // then its solution. { tags, moves, at, rating, themes } or null.
+    function puzzleGame(j) {
+      if (!j || typeof j !== "object" || !j.game || !j.puzzle) return null;
+      var text = j.game.pgn, pz = j.puzzle;
+      if (typeof text !== "string" || text.length > 20000 || !Array.isArray(pz.solution)) return null;
+      var r = P.parse(text);
+      if (!r.games.length || r.games[0].fen) return null;
+      var moves = r.games[0].moves;
+      var ip = num(pz.initialPly);
+      var at = ip !== null && ip >= 0 && ip + 1 < moves.length ? ip + 1 : moves.length;
+      moves = moves.slice(0, at);
+      var rp = E.replay(moves, "");
+      if (!rp) return null;
+      var pos = rp.pos;
+      for (var i = 0; i < pz.solution.length && i < 40; i++) {
+        var u = String(pz.solution[i] || "");
+        var m = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u) ? E.fromUci(pos, u) : 0;
+        if (!m) break;
+        E.makeMove(pos, m);
+        moves.push(E.toUci(m));
+      }
+      if (moves.length === at) return null;
+      var id = typeof pz.id === "string" && /^[A-Za-z0-9]{5}$/.test(pz.id) ? pz.id : "";
+      return {
+        tags: { Event: "Lichess" + (id ? " · #" + id : ""), Site: "lichess.org" },
+        moves: moves, at: at, rating: num(pz.rating),
+        themes: Array.isArray(pz.themes) ? pz.themes.slice(0, 6).map(function (x) { return clean(x).slice(0, 30); }).filter(Boolean) : []
+      };
+    }
+    // POST /api/import → the lichess.org page of the imported game.
+    function importUrl(j) {
+      return j && typeof j.id === "string" && ID_RE.test(j.id) ? HOST + "/" + j.id : "";
+    }
+    // A token answer → { token, exp } (ms) or null.
+    function tokenOf(j, now) {
+      if (!j || typeof j.access_token !== "string" || !/^[A-Za-z0-9_-]{8,200}$/.test(j.access_token)) return null;
+      var s = num(j.expires_in);
+      return { token: j.access_token, exp: s && s > 0 ? now + s * 1000 : 0 };
+    }
+    return { HOST: HOST, CLIENT: CLIENT, KINDS: KINDS, okUser: okUser, authorizeUrl: authorizeUrl,
+             account: account, gamesPath: gamesPath, puzzleGame: puzzleGame, importUrl: importUrl, tokenOf: tokenOf };
+  }
+
   var E = makeEngine();
   var PGN = makePgn(E);
   var CC = makeChessCom(PGN.clean);
+  var LI = makeLichess(PGN, E);
   var GLYPH = ["", "♟", "♞", "♝", "♜", "♛", "♚"];
   var PIECE_VAL = [0, 1, 3, 3, 5, 9, 0];
 
@@ -1383,7 +1529,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "" };
+  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "", li: "" };
 
   function loadPrefs() {
     try {
@@ -1395,6 +1541,7 @@
         prefs.flip = p.flip === true;
         prefs.ana = p.ana === true;
         prefs.cc = CC.okUser(p.cc);
+        prefs.li = LI.okUser(p.li);
       }
     } catch (e) {}
   }
@@ -2264,7 +2411,8 @@
 
   function startReview(g, atStart) {
     var next = { mode: "review", lv: prefs.lv, human: "w", moves: g.moves.slice(), done: true, unrated: false,
-                 tags: cleanTags(g.tags), result: g.result, at: atStart ? 0 : g.moves.length };
+                 tags: cleanTags(g.tags), result: g.result,
+                 at: typeof atStart === "number" ? Math.max(0, Math.min(g.moves.length, atStart)) : (atStart ? 0 : g.moves.length) };
     if (g.fen) next.fen = g.fen;
     replaceGame(next, t("toast.opened"), true);
     runAnalysis();
@@ -2432,11 +2580,42 @@
     return { dlg: dlg, body: body, acts: acts, live: function () { return dlg.open && document.body.contains(dlg); } };
   }
 
+  // The hub: Chess.com (a username, public data) and Lichess (sign-in).
   function onlineDialog() {
+    closeDialogs();
+    var dlg = makeDialog("chess-online");
+    dlg.classList.add("wide");
+    dlg.appendChild(el("div", "dlg-title", t("cc.title")));
+    var list = el("div", "pick-list");
+    function item(name, meta, fn) {
+      var b = el("button", "pick-btn");
+      b.type = "button";
+      b.appendChild(el("span", "pick-names", name));
+      b.appendChild(el("span", "pick-meta", meta));
+      b.addEventListener("click", fn);
+      list.appendChild(b);
+      return b;
+    }
+    var first = item("Chess.com", prefs.cc ? prefs.cc : t("hub.ccNone"), ccHome);
+    item("Lichess", prefs.li ? t("hub.liAs", { u: prefs.li }) : t("hub.liNone"), liHome);
+    dlg.appendChild(list);
+    var acts = el("div", "dlg-actions");
+    var an = button(t("li.analyse"), "", liAnalyse);
+    an.disabled = !game.moves.length && !game.fen;
+    acts.appendChild(an);
+    acts.appendChild(button(t("cc.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    dlg.appendChild(el("div", "dlg-foot", t("hub.note")));
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    first.focus();
+  }
+
+  function ccHome() {
     if (!prefs.cc) { userDialog(); return; }
-    var d = ccDialog("chess-online", t("cc.title"));
+    var d = ccDialog("chess-cc", "Chess.com");
     var user = prefs.cc;
-    d.acts.appendChild(button(t("cc.close"), "", function () { d.dlg.close(); }));
+    d.acts.appendChild(button(t("cc.back"), "", onlineDialog));
     var games = button(t("cc.games"), "primary", function () { monthsDialog(); });
     d.acts.appendChild(games);
     games.focus();
@@ -2466,7 +2645,7 @@
       var more = el("div", "dlg-actions");
       more.appendChild(button(t("cc.puzzle"), "", dailyPuzzle));
       more.appendChild(button(t("cc.forget"), "danger", function () {
-        prefs.cc = ""; savePrefs(); d.dlg.close();
+        prefs.cc = ""; savePrefs(); onlineDialog();
       }));
       d.body.appendChild(more);
       d.body.appendChild(el("div", "dlg-foot", t("cc.note")));
@@ -2481,7 +2660,7 @@
   function userDialog() {
     closeDialogs();
     var dlg = makeDialog("chess-ccuser");
-    dlg.appendChild(el("div", "dlg-title", t("cc.title")));
+    dlg.appendChild(el("div", "dlg-title", "Chess.com"));
     dlg.appendChild(el("div", "dlg-msg", t("cc.intro")));
     var inp = el("input", "cc-input");
     inp.type = "text";
@@ -2497,7 +2676,7 @@
       if (!u) { showToast(t("cc.badUser")); inp.focus(); return; }
       prefs.cc = u;
       savePrefs();
-      onlineDialog();
+      ccHome();
     }
     inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(); } });
     var acts = el("div", "dlg-actions");
@@ -2505,7 +2684,7 @@
     acts.appendChild(button(t("cc.show"), "primary", go));
     dlg.appendChild(acts);
     var close = el("div", "dlg-actions");
-    close.appendChild(button(t("cc.close"), "", function () { dlg.close(); }));
+    close.appendChild(button(t("cc.back"), "", onlineDialog));
     dlg.appendChild(close);
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -2521,7 +2700,7 @@
   function monthsDialog() {
     var user = prefs.cc;
     var d = ccDialog("chess-ccmonths", t("cc.months"));
-    d.acts.appendChild(button(t("cc.back"), "", onlineDialog));
+    d.acts.appendChild(button(t("cc.back"), "", ccHome));
     ccGet(CC.playerUrl(user, "/games/archives")).then(function (j) {
       if (!d.live()) return;
       var list = CC.months(j);
@@ -2583,6 +2762,320 @@
       startReview(g, true);
       showToast(t("cc.puzzleOpened", { side: t("sidel." + toMove()) }));
     }).catch(function (e) { ccError(e); });
+  }
+
+  // ---------- 7d. Online accounts: Lichess (sign-in + read) ----------
+  // Sign-in is OAuth 2.0 + PKCE, like Maps' OpenStreetMap sign-in: a
+  // popup opens lichess.org/oauth; Lichess sends it back to
+  // chess/lichess-callback.html (same origin), which hands the code over
+  // on a BroadcastChannel AND in localStorage LI_CB (the fallback when a
+  // popup is blocked: the whole tab goes to Lichess and comes back to
+  // /?open=chess, and Chess finishes the sign-in on boot). The state
+  // must match the one this device stored with its verifier.
+  //
+  // The token is sealed with a non-extractable AES-GCM key in this
+  // app's own IndexedDB (like Mail's passwords): its bytes never sit
+  // in localStorage and it never syncs. prefs.li only remembers the
+  // account name. Device-local keys (the factory reset sweeps oros-*):
+  //   IndexedDB "oros-chess"      keys/device, creds/lichess {iv, data}
+  //   oros-chess-lichess-pkce     { state, verifier, redirect, mode, t }
+  //   oros-chess-lichess-cb       { code?, error?, state, t }  (one-shot)
+  var LI_DB = "oros-chess";
+  var LI_PKCE = "oros-chess-lichess-pkce";
+  var LI_CB = "oros-chess-lichess-cb";
+  var LI_PKCE_MAX_MS = 15 * 60 * 1000;
+  var liTok = undefined;               // undefined = not read yet; null = none
+  var liWaiting = false;               // a popup sign-in is running
+
+  function liIdb(store, mode, fn) {
+    return new Promise(function (resolve, reject) {
+      var req;
+      try { req = indexedDB.open(LI_DB, 1); } catch (e) { reject(e); return; }
+      req.onupgradeneeded = function () {
+        var d = req.result;
+        if (!d.objectStoreNames.contains("keys")) d.createObjectStore("keys");
+        if (!d.objectStoreNames.contains("creds")) d.createObjectStore("creds");
+      };
+      req.onerror = function () { reject(req.error); };
+      req.onsuccess = function () {
+        var d = req.result, res;
+        var tx = d.transaction(store, mode);
+        var r = fn(tx.objectStore(store));
+        if (r) r.onsuccess = function () { res = r.result; };
+        tx.oncomplete = function () { d.close(); resolve(res); };
+        tx.onerror = tx.onabort = function () { d.close(); reject(tx.error); };
+      };
+    });
+  }
+  function liDeviceKey() {
+    return liIdb("keys", "readonly", function (s) { return s.get("device"); }).then(function (k) {
+      if (k) return k;
+      return crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]).then(function (nk) {
+        return liIdb("keys", "readwrite", function (s) { s.put(nk, "device"); }).then(function () { return nk; });
+      });
+    });
+  }
+  function liSaveToken(rec) {
+    return liDeviceKey().then(function (key) {
+      var iv = crypto.getRandomValues(new Uint8Array(12));
+      return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(JSON.stringify(rec)))
+        .then(function (sealed) { return liIdb("creds", "readwrite", function (s) { s.put({ iv: iv.buffer, data: sealed }, "lichess"); }); })
+        .then(function () { liTok = rec; });
+    });
+  }
+  // → { token, exp } or null (none, unreadable or expired)
+  function liToken() {
+    if (liTok !== undefined) return Promise.resolve(liTok && (!liTok.exp || liTok.exp > Date.now()) ? liTok : null);
+    return liIdb("creds", "readonly", function (s) { return s.get("lichess"); }).then(function (rec) {
+      if (!rec) return null;
+      return liDeviceKey().then(function (key) {
+        return crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, key, rec.data);
+      }).then(function (plain) {
+        var j = JSON.parse(new TextDecoder().decode(plain));
+        return j && typeof j.token === "string" ? { token: j.token, exp: +j.exp || 0 } : null;
+      });
+    }).catch(function () { return null; }).then(function (r) {
+      liTok = r;
+      return r && (!r.exp || r.exp > Date.now()) ? r : null;
+    });
+  }
+  function liDropToken() {
+    liTok = null;
+    return liIdb("creds", "readwrite", function (s) { s.delete("lichess"); }).catch(function () {});
+  }
+
+  function liReadJSON(k) {
+    try { var v = JSON.parse(localStorage.getItem(k) || "null"); return v && typeof v === "object" ? v : null; }
+    catch (e) { return null; }
+  }
+  function liDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function b64url(bytes) {
+    var s = "";
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function liRandom(n) { return b64url(crypto.getRandomValues(new Uint8Array(n))).slice(0, n); }
+  function liRedirect() {
+    var u = new URL("lichess-callback.html", location.href);
+    return u.origin + u.pathname;
+  }
+
+  function liSignIn() {
+    if (navigator.onLine === false) { showToast(t("li.offline")); return; }
+    if (!window.crypto || !crypto.subtle || typeof indexedDB === "undefined") { showToast(t("li.noCrypto")); return; }
+    var verifier = liRandom(64), state = liRandom(24), redirect = liRedirect();
+    // Open the popup inside the click (no await before window.open), then
+    // point it at Lichess once the challenge is ready.
+    var w = null;
+    try { w = window.open("about:blank", "oros-lichess-auth", "popup,width=520,height=760"); } catch (e) { w = null; }
+    crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)).then(function (buf) {
+      var url = LI.authorizeUrl({ state: state, challenge: b64url(new Uint8Array(buf)), redirect: redirect });
+      var rec = { state: state, verifier: verifier, redirect: redirect, mode: w ? "popup" : "redirect", t: Date.now() };
+      try { localStorage.setItem(LI_PKCE, JSON.stringify(rec)); } catch (e) {}
+      liDel(LI_CB);
+      if (w) {
+        try { w.opener = null; } catch (e) {}
+        w.location.href = url;
+        liWaiting = true;
+        return;
+      }
+      // Popup blocked (installed app, strict browser): the whole tab.
+      var top = window;
+      try { if (window.top && window.top.location.origin === location.origin) top = window.top; } catch (e) {}
+      top.location.assign(url);
+    }).catch(function () { if (w) try { w.close(); } catch (e) {} showToast(t("li.failed")); });
+  }
+
+  function liTakeCallback(cb) {
+    if (!cb || typeof cb !== "object") return Promise.resolve(false);
+    var p = liReadJSON(LI_PKCE);
+    if (!p || !cb.state || p.state !== cb.state || Date.now() - (p.t || 0) > LI_PKCE_MAX_MS) return Promise.resolve(false);
+    liDel(LI_PKCE);
+    liDel(LI_CB);
+    liWaiting = false;
+    if (cb.error || !cb.code) {
+      showToast(t(cb.error === "access_denied" ? "li.denied" : "li.failed"));
+      return Promise.resolve(false);
+    }
+    var body = new URLSearchParams({
+      grant_type: "authorization_code", code: String(cb.code), code_verifier: p.verifier,
+      redirect_uri: p.redirect, client_id: LI.CLIENT
+    });
+    return fetch(LI.HOST + "/api/token", {
+      method: "POST", credentials: "omit", referrerPolicy: "no-referrer",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body.toString()
+    }).then(function (r) {
+      if (!r.ok) throw new Error("failed");
+      return r.json();
+    }).then(function (j) {
+      var tok = LI.tokenOf(j, Date.now());
+      if (!tok) throw new Error("failed");
+      return liSaveToken(tok).then(function () { return liGet("/api/account"); });
+    }).then(function (j) {
+      var a = LI.account(j);
+      if (!a) throw new Error("failed");
+      prefs.li = a.user;
+      savePrefs();
+      showToast(t("li.signedIn", { u: a.user }));
+      if (document.getElementById("chess-li") || document.getElementById("chess-online")) liHome();
+      return true;
+    }).catch(function (e) {
+      showToast(t(e && e.message === "offline" ? "li.offline" : "li.failed"));
+      return false;
+    });
+  }
+  function liFinishPending() { return liTakeCallback(liReadJSON(LI_CB)); }
+
+  try {
+    new BroadcastChannel("oros-chess-lichess").onmessage = function (e) { liTakeCallback(e.data); };
+  } catch (e) { /* old browser: the storage event still works */ }
+  window.addEventListener("storage", function (e) {
+    if (e.key === LI_CB && e.newValue) liFinishPending();
+  });
+
+  function liSignOut() {
+    liToken().then(function (tok) {
+      prefs.li = "";
+      savePrefs();
+      liDropToken();
+      if (tok) {
+        fetch(LI.HOST + "/api/token", { method: "DELETE", credentials: "omit", referrerPolicy: "no-referrer",
+                                        headers: { Authorization: "Bearer " + tok.token } }).catch(function () {});
+      }
+      showToast(t("li.signedOut"));
+      onlineDialog();
+    });
+  }
+
+  // One request to lichess.org, with the token when there is one.
+  // opts: { pgn: true (answer as text), form: {…} (POST) }
+  function liGet(path, opts) {
+    opts = opts || {};
+    if (navigator.onLine === false) return Promise.reject(new Error("offline"));
+    return liToken().then(function (tok) {
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 30000);
+      var init = { method: opts.form ? "POST" : "GET", credentials: "omit", referrerPolicy: "no-referrer",
+                   headers: { Accept: opts.pgn ? "application/x-chess-pgn" : "application/json" },
+                   signal: ctl ? ctl.signal : undefined };
+      if (tok) init.headers.Authorization = "Bearer " + tok.token;
+      if (opts.form) {
+        init.headers["Content-Type"] = "application/x-www-form-urlencoded";
+        init.body = new URLSearchParams(opts.form).toString();
+      }
+      return fetch(LI.HOST + path, init).then(function (r) {
+        clearTimeout(timer);
+        if (r.status === 401 && tok) {               // revoked on lichess.org
+          liDropToken(); prefs.li = ""; savePrefs();
+          throw new Error("expired");
+        }
+        if (r.status === 404) throw new Error("nouser");
+        if (r.status === 429) throw new Error("busy");
+        if (!r.ok) throw new Error("net");
+        if (opts.pgn) return r.text().then(function (s) { return s.length > PGN.MAX_TEXT ? s.slice(0, PGN.MAX_TEXT) : s; });
+        return r.json();
+      }, function () { clearTimeout(timer); throw new Error(navigator.onLine === false ? "offline" : "net"); });
+    });
+  }
+  function liError(e) {
+    var k = e && e.message;
+    showToast(t(["offline", "busy", "expired"].indexOf(k) >= 0 ? "li." + k : "li.net"));
+  }
+
+  function liHome() {
+    var d = ccDialog("chess-li", "Lichess");
+    d.acts.appendChild(button(t("cc.back"), "", onlineDialog));
+    liToken().then(function (tok) {
+      if (!d.live()) return;
+      if (!tok || !prefs.li) {
+        if (prefs.li) { prefs.li = ""; savePrefs(); }
+        d.body.innerHTML = "";
+        d.body.appendChild(el("div", "dlg-msg", t("li.intro")));
+        var acts = el("div", "dlg-actions");
+        acts.appendChild(button(t("cc.puzzle"), "", liPuzzle));
+        var go = button(t("li.signIn"), "primary", liSignIn);
+        acts.appendChild(go);
+        d.body.appendChild(acts);
+        d.body.appendChild(el("div", "dlg-foot", t("li.privacy")));
+        go.focus();
+        return;
+      }
+      return liGet("/api/account").then(function (j) {
+        if (!d.live()) return;
+        var a = LI.account(j);
+        if (!a) throw new Error("net");
+        d.body.innerHTML = "";
+        var head = el("div", "cc-head");
+        var who = el("div", "cc-who");
+        who.appendChild(el("strong", "", (a.title ? a.title + " " : "") + a.user));
+        who.appendChild(el("span", "", t("li.as")));
+        head.appendChild(who);
+        head.appendChild(button(t("li.signOut"), "small", liSignOut));
+        d.body.appendChild(head);
+        if (!a.perfs.length) d.body.appendChild(el("div", "dlg-foot", t("cc.noStats")));
+        a.perfs.forEach(function (p) {
+          var rw = row(t("li.k." + p.kind), p.rating + (p.prov ? "?" : ""));
+          rw.appendChild(el("em", "cc-wld", t("li.games", { n: p.games })));
+          d.body.appendChild(rw);
+        });
+        var more = el("div", "dlg-actions");
+        var games = button(t("cc.games"), "primary", liGames);
+        more.appendChild(button(t("cc.puzzle"), "", liPuzzle));
+        more.appendChild(games);
+        d.body.appendChild(more);
+        d.body.appendChild(el("div", "dlg-foot", t("li.note")));
+        games.focus();
+      });
+    }).catch(function (e) {
+      if (!d.live()) return;
+      if (e && e.message === "expired") { liHome(); liError(e); return; }
+      d.dlg.close();
+      liError(e);
+    });
+  }
+
+  function liGames() {
+    var d = ccDialog("chess-ligames", t("li.myGames"));
+    d.acts.appendChild(button(t("cc.back"), "", liHome));
+    liGet(LI.gamesPath(prefs.li, 50), { pgn: true }).then(function (text) {
+      if (!d.live()) return;
+      var r = PGN.parse(text);
+      if (!r.games.length) { d.body.innerHTML = ""; d.body.appendChild(el("div", "dlg-msg dlg-center", t("li.noGames"))); return; }
+      d.dlg.close();
+      if (r.games.length === 1) startReview(r.games[0]); else pickDialog(r.games, false);
+    }).catch(function (e) { if (d.live()) { d.dlg.close(); liError(e); } });
+  }
+
+  function liPuzzle() {
+    closeDialogs();
+    liGet("/api/puzzle/daily").then(function (j) {
+      var g = LI.puzzleGame(j);
+      if (!g) { showToast(t("li.net")); return; }
+      startReview({ tags: g.tags, fen: "", moves: g.moves, result: "*" }, g.at);
+      showToast(t("cc.puzzleOpened", { side: t("sidel." + toMove()) }) +
+                (g.rating ? " · " + t("li.rating", { n: g.rating }) : ""));
+    }).catch(liError);
+  }
+
+  // Sends the game on the board to lichess.org, where its free computer
+  // analysis opens in a new tab. Works signed out too (then the game is
+  // not tied to an account).
+  function liAnalyse() {
+    if (!game.moves.length && !game.fen) { showToast(t("pgn.empty")); return; }
+    closeDialogs();
+    var tab = null;
+    try { tab = window.open("about:blank", "_blank"); } catch (e) { tab = null; }
+    if (tab) try { tab.opener = null; } catch (e) {}
+    showToast(t("li.sending"));
+    liGet("/api/import", { form: { pgn: PGN.write(gameForPgn()) } }).then(function (j) {
+      var url = LI.importUrl(j);
+      if (!url) throw new Error("net");
+      if (tab && !tab.closed) tab.location.href = url;
+      else window.open(url, "_blank", "noopener");
+    }).catch(function (e) {
+      if (tab) try { tab.close(); } catch (x) {}
+      liError(e);
+    });
   }
 
   // ---------- 8. Toasts ----------
@@ -3008,6 +3501,7 @@
         if (pending) openTarget(pending);
       }
     } catch (e) {}
+    liFinishPending();   // a sign-in that came back while Chess was closed
   }
 
   boot();

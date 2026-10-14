@@ -35,7 +35,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [Library](app:library): Wiktionary, only for `Look up` and only after you agree; only the word is sent.
 - [Newsletter](app:newsletter): your own mail account or sending provider, via the orOS mail relay; `Check domain` asks Cloudflare's public DNS for your domain's SPF, DKIM and DMARC records.
 - [Assistant](app:assistant): only the AI service you choose, with your own key, straight from your browser.
-- [Chess](app:chess): Chess.com's public data, only when you open `Online accounts`; only the username you type is sent, never a password.
+- [Chess](app:chess): Chess.com's public data, only when you open `Online accounts`; only the username you type is sent, never a password. Lichess, only when you use it there: you sign in on lichess.org (orOS never sees the password), the sign-in is sealed on this device and never synced, and a game goes to Lichess only when you press `Analyse this game on Lichess`.
 - Sync: Dropbox, only if you connect it.
 
 Some apps can also work with accounts you already have elsewhere, but only after you connect them in [Settings](app:settings) › `Connected services`:

@@ -41,12 +41,21 @@ An opened game shows its players, the result and the move list. Step through it 
 A game you were reviewing also waits for you next time. If a PGN has a move that isn't legal, the game opens up to that move and a message says where it stopped.
 
 ## Chess.com
-`Online accounts` in the toolbar connects Chess with your Chess.com account. Type your Chess.com username and press `Show`: no password is needed, because Chess.com shares this data publicly.
+`Online accounts` in the toolbar connects Chess with Chess.com and Lichess. Pick `Chess.com`, type your Chess.com username and press `Show`: no password is needed, because Chess.com shares this data publicly.
 - You see your ratings (Rapid, Blitz, Bullet, Daily and Puzzles) with your best and your wins, losses and draws.
 - `My games` lists your games month by month. Tap one to open it for review, with `Analysis` and `Play from here`.
 - `Daily puzzle` opens Chess.com's puzzle of the day at its start position; step forward to see the answer. It works without a username too.
 
 Chess.com refreshes this data a few times a day, so a game that just ended may take a while to appear. The username stays on this device; `Forget` removes it. Playing on Chess.com from orOS isn't possible: Chess.com doesn't let other apps play.
+
+## Lichess
+In `Online accounts`, pick `Lichess` and press `Sign in with Lichess`. A Lichess window opens: sign in there and allow orOS. orOS never sees your password, and it asks only to read your public profile.
+- You see your Lichess ratings (Bullet, Blitz, Rapid, Classical, Correspondence and Puzzles) and how many games each has. A ? after a rating means Lichess still treats it as provisional.
+- `My games` lists your latest 50 games. Tap one to open it for review.
+- `Daily puzzle` opens the Lichess puzzle of the day at the move where it starts; step forward to see the answer. It works without signing in too.
+- `Analyse this game on Lichess` (in `Online accounts`) sends the game on the board to lichess.org and opens it there in a new tab, with Lichess's free computer analysis. It works without signing in too.
+
+The sign-in stays sealed on this device and is not synced: sign in once on each device. `Sign out` ends it on this device and on Lichess. If your browser blocks the Lichess window, the whole page goes to Lichess and comes back to Chess when you're done.
 
 ## Sync
 Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.

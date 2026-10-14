@@ -26,16 +26,17 @@ function cut(from, to) {
 
 const C = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
-  ["cmpStr", "isInt", "makeEngine", "makePgn", "makeChessCom", "normRow", "joinRows", "mergeChess"].forEach((name) => {
+  ["cmpStr", "isInt", "makeEngine", "makePgn", "makeChessCom", "makeLichess", "normRow", "joinRows", "mergeChess"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") + "\nreturn { E: makeEngine(), makeEngine, makePgn, makeChessCom, mergeChess };")();
+  return new Function(parts.join("\n") + "\nreturn { E: makeEngine(), makeEngine, makePgn, makeChessCom, makeLichess, mergeChess };")();
 })();
 const E = C.E;
 const PGN = C.makePgn(E);
 const CC = C.makeChessCom(PGN.clean);
+const LI = C.makeLichess(PGN, E);
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -463,4 +464,66 @@ test("chess.com: a month's games (standard only, newest first) open as PGN", () 
   assert.equal(pz.title, "Find it");
   assert.deepEqual(PGN.parse(pz.pgn).games[0].moves, ["d1d8"]);
   assert.equal(CC.puzzle({ title: "x" }), null);
+});
+
+test("lichess: the sign-in URL (PKCE S256, no scope) and usernames", () => {
+  const u = new URL(LI.authorizeUrl({ state: "st&x", challenge: "ch", redirect: "https://useoros.online/chess/lichess-callback.html" }));
+  assert.equal(u.origin + u.pathname, "https://lichess.org/oauth");
+  assert.equal(u.searchParams.get("response_type"), "code");
+  assert.equal(u.searchParams.get("client_id"), "useoros.online");
+  assert.equal(u.searchParams.get("redirect_uri"), "https://useoros.online/chess/lichess-callback.html");
+  assert.equal(u.searchParams.get("code_challenge_method"), "S256");
+  assert.equal(u.searchParams.get("code_challenge"), "ch");
+  assert.equal(u.searchParams.get("scope"), "");
+  assert.equal(u.searchParams.get("state"), "st&x");
+  assert.equal(LI.okUser(" DrNykterstein "), "DrNykterstein");
+  ["", "a", "x".repeat(31), "a b", "a/../b", "<b>", 7, null].forEach((v) => assert.equal(LI.okUser(v), "", J(v)));
+  assert.equal(LI.gamesPath("Some_One", 500),
+    "/api/games/user/Some_One?max=100&opening=true&clocks=false&evals=false&perfType=ultraBullet,bullet,blitz,rapid,classical,correspondence");
+  assert.equal(LI.gamesPath("../x", 5).indexOf(".."), -1, "a bad name never reaches the path");
+});
+
+test("lichess: account ratings, tokens and imported-game links", () => {
+  const a = LI.account({ username: "Tester_1", title: "FM\u0000<script>", perfs: {
+    blitz: { games: 120, rating: 1712.4, prov: false }, bullet: { games: 0, rating: 1500, prov: true },
+    rapid: { games: 3, rating: 1490, prov: true }, puzzle: { games: 40, rating: 2001 }, chess960: { games: 9, rating: 1600 },
+    classical: { rating: "x", games: 4 } } });
+  assert.equal(a.user, "Tester_1");
+  assert.ok(!/[\u0000-\u001f]/.test(a.title) && a.title.length <= 4);
+  assert.deepEqual(a.perfs, [
+    { kind: "blitz", rating: 1712, games: 120, prov: false },
+    { kind: "rapid", rating: 1490, games: 3, prov: true },
+    { kind: "puzzle", rating: 2001, games: 40, prov: false }]);
+  assert.equal(LI.account({ username: "bad name" }), null);
+  assert.equal(LI.account(null), null);
+  assert.deepEqual(LI.tokenOf({ access_token: "lio_abcDEF123456", expires_in: 100 }, 1000), { token: "lio_abcDEF123456", exp: 101000 });
+  assert.deepEqual(LI.tokenOf({ access_token: "lio_abcDEF123456" }, 1000), { token: "lio_abcDEF123456", exp: 0 });
+  assert.equal(LI.tokenOf({ access_token: "a b\nc" }, 0), null);
+  assert.equal(LI.tokenOf({}, 0), null);
+  assert.equal(LI.importUrl({ id: "AbCd1234", url: "https://evil.example/" }), "https://lichess.org/AbCd1234");
+  ["", "short", "AbCd1234/../x", "AbCd12345", null].forEach((id) => assert.equal(LI.importUrl({ id }), "", J(id)));
+});
+
+test("lichess: the daily puzzle opens at its start, with the solution after it", () => {
+  const g = LI.puzzleGame({
+    game: { pgn: "e4 e5 Bc4 Nc6 Qh5 Nf6", id: "x" },
+    puzzle: { id: "K69di", rating: 1500, initialPly: 5, solution: ["h5f7"], themes: ["mateIn1", "short"] }
+  });
+  assert.equal(g.at, 6);
+  assert.deepEqual(g.moves, ["e2e4", "e7e5", "f1c4", "b8c6", "d1h5", "g8f6", "h5f7"]);
+  assert.equal(E.status(E.replay(g.moves, "").pos).reason, "mate");
+  assert.equal(g.tags.Event, "Lichess · #K69di");
+  assert.equal(g.rating, 1500);
+  assert.deepEqual(g.themes, ["mateIn1", "short"]);
+  // initialPly past the moves: the puzzle starts after the last one
+  const g2 = LI.puzzleGame({ game: { pgn: "e4 e5 Bc4 Nc6 Qh5 Nf6" }, puzzle: { initialPly: 40, solution: ["h5f7", "zzzz"] } });
+  assert.equal(g2.at, 6);
+  assert.equal(g2.moves.length, 7, "the solution stops at its first bad move");
+  // an earlier initialPly cuts the game there
+  const g3 = LI.puzzleGame({ game: { pgn: "e4 e5 Bc4 Nc6 Qh5 Nf6" }, puzzle: { initialPly: 1, solution: ["g1f3"] } });
+  assert.deepEqual(g3.moves, ["e2e4", "e7e5", "g1f3"]);
+  assert.equal(g3.at, 2);
+  assert.equal(LI.puzzleGame({ game: { pgn: "e4 e5" }, puzzle: { initialPly: 1, solution: ["e1e8"] } }), null, "no legal solution move");
+  assert.equal(LI.puzzleGame({ game: { pgn: 5 }, puzzle: { solution: [] } }), null);
+  assert.equal(LI.puzzleGame(null), null);
 });

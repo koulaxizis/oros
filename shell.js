@@ -5050,6 +5050,9 @@
         { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
           by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
           en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
+        { name: "Lichess API", url: "https://lichess.org/api",
+          by: "Lichess.org (open source, AGPL-3.0); your own account", lic: { en: "Free API, game data CC0, your own sign-in", el: "Δωρεάν API, δεδομένα παρτίδων CC0, με δική σου σύνδεση" },
+          en: "Chess › Online accounts: your ratings and games, the daily puzzle, analysis on Lichess", el: "Σκάκι › Online λογαριασμοί: βαθμολογίες και παρτίδες σου, γρίφος της ημέρας, ανάλυση στο Lichess" },
         { name: "Chess.com Published-Data API", url: "https://support.chess.com/en/articles/9650547-published-data-api",
           by: "Chess.com, LLC; your own public profile", lic: { en: "Their terms, read only, no sign-in", el: "Οι όροι τους, μόνο ανάγνωση, χωρίς σύνδεση" },
           en: "Chess › Online accounts: your ratings, your games and the daily puzzle", el: "Σκάκι › Online λογαριασμοί: οι βαθμολογίες σου, οι παρτίδες σου και ο γρίφος της ημέρας" },
@@ -5377,7 +5380,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-time-stage", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-time-stage", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
