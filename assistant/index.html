@@ -8,7 +8,7 @@
   <meta name="referrer" content="no-referrer">
   <title>Assistant · orOS</title>
 
-  <link rel="stylesheet" href="assistant.css?v=2.10.00">
+  <link rel="stylesheet" href="assistant.css?v=2.20.00">
 
 </head>
 <body data-side="closed">
@@ -41,6 +41,8 @@
             <h1 data-i18n="wel.title">Your AI assistant</h1>
             <p id="wel-text"></p>
             <button type="button" class="dlg-btn primary" id="wel-setup" data-i18n="btn.setup">Set up the assistant</button>
+            <button type="button" class="dlg-btn primary" id="wel-brief" data-i18n="brief.btn" hidden>Briefing</button>
+            <p id="wel-brief-hint" class="hint" data-i18n="brief.hint" hidden></p>
           </div>
         </div>
         <div id="msgs" aria-live="polite"></div>
@@ -60,10 +62,10 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=2.10.00"></script>
-  <script src="summary.js?v=2.10.00"></script>
-  <script src="edits.js?v=2.10.00"></script>
-  <script src="assistant.js?v=2.10.00"></script>
+  <script src="core.js?v=2.20.00"></script>
+  <script src="summary.js?v=2.20.00"></script>
+  <script src="edits.js?v=2.20.00"></script>
+  <script src="assistant.js?v=2.20.00"></script>
 
 </body>
 </html>

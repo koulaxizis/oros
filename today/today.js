@@ -66,6 +66,7 @@
       oldNote: "That notice was for {d}. Here is today.",
       noShell: "Open Today inside orOS to see your day.",
       ask: "Ask the Assistant about this", done: "Done (opens the app)", asked: "Opened in the Assistant. Nothing is sent until you press Send.",
+      brief: "Briefing from the Assistant (sends today's summary to your AI service; you see the Ask first apps before)",
       "s.title": "Today settings",
       "s.on": "Daily summary", "s.onHint": "One notice a day when something is late or due today.",
       "s.hour": "From", "s.hourHint": "The notice comes on the first open of orOS after this time.",
@@ -108,6 +109,7 @@
       oldNote: "Η ειδοποίηση ήταν για τις {d}. Εδώ είναι το σήμερα.",
       noShell: "Άνοιξε το «Σήμερα» μέσα από το orOS για να δεις τη μέρα σου.",
       ask: "Ρώτα τον Βοηθό γι' αυτό", done: "Έγινε (ανοίγει την εφαρμογή)", asked: "Άνοιξε στον Βοηθό. Τίποτα δεν στέλνεται πριν πατήσεις Αποστολή.",
+      brief: "Ενημέρωση ημέρας από τον Βοηθό (στέλνει τη σύνοψη της ημέρας στην υπηρεσία AI σου· τις εφαρμογές «Ρώτα πρώτα» τις βλέπεις πριν)",
       "s.title": "Ρυθμίσεις «Σήμερα»",
       "s.on": "Ημερήσια σύνοψη", "s.onHint": "Μία ειδοποίηση τη μέρα, όταν κάτι έχει καθυστερήσει ή λήγει σήμερα.",
       "s.hour": "Από", "s.hourHint": "Η ειδοποίηση έρχεται στο πρώτο άνοιγμα του orOS μετά από αυτή την ώρα.",
@@ -164,6 +166,7 @@
     up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
     down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    brief: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8z"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
   };
 
@@ -230,6 +233,7 @@
       if (my !== seq) return;
       last = res;
       assist = assistState(res);
+      $("brief-btn").hidden = !canBrief();
       if (document.querySelector(".w.dragging")) return;     // the drop renders
       render();
     }, function () {});
@@ -703,6 +707,20 @@
     var p = assist.C.permFor(assist.data, { id: info.id, sensitive: !!info.sensitive });
     return p === "ask" || p === "always";
   }
+  // Briefing (Assistant phase 4 wave 5): the user's own tap opens the
+  // Assistant with { brief: 1 }; the Assistant works out the summaries,
+  // shows its card for "Ask first" apps and sends one message. Hidden
+  // when the chosen AI can't read data (built-in model, Chat only).
+  function canBrief() {
+    if (!assist) return false;
+    var pv = assist.C.PROVIDERS[assist.data.set.prov];
+    return !!pv && !pv.device && !assist.data.set.chat;
+  }
+  function briefing() {
+    var p = parentWin();
+    if (!canBrief() || !p || typeof p.__orosOpenAt !== "function") return;
+    p.__orosOpenAt("assistant", { brief: 1 });
+  }
   function askAssistant(r, info) {
     var H = host(), p = parentWin();
     if (!H || !p || typeof p.__orosOpenAt !== "function") return;
@@ -826,6 +844,8 @@
       b.setAttribute("aria-label", label);
       b.title = label;
     }
+    iconBtn("brief-btn", SVG.brief, t("brief"));
+    $("brief-btn").addEventListener("click", briefing);
     iconBtn("refresh-btn", SVG.refresh, t("refresh"));
     iconBtn("set-btn", SVG.gear, t("settings"));
     setEditing(false);

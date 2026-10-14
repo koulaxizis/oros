@@ -1,6 +1,37 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.20.00
+- The Assistant runs open-source models on your own computer with ready-made settings for Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM and KoboldCpp, each with its one-time CORS step. New: an in-browser model (WebLLM). Llama, Qwen, Phi, Mistral or Hermes download once and then run on your graphics card, offline, with nothing leaving the device.
+
+## Version 2.19.00
+- The Assistant works with more free services: Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova and Pollinations need only a free account and key. OpenRouter can list only its free models. A new "Test the connection" button in Settings tells you at once if a service answers here.
+
+## Version 2.18.00
+- Photos and PDFs now work with every AI model in the Assistant. When a service can't read a file itself (Mistral with PDFs, local models, the built-in browser model), orOS reads its text on your device first and sends only the text.
+
+## Version 2.17.00
+- orOS Games: every orOS game in one installable app, opening on the Game Center, with icon shortcuts for today's Wordle, crossword and Sudoku and for Chess.
+
+## Version 2.16.00
+- Every AI model in the Assistant can now search the internet, not only Claude: pick Wikipedia (free, no key), Tavily (free key) or your own SearXNG server in Settings → Internet. The assistant can also read a page it found. Off unless you switch it on.
+
+## Version 2.15.00
+- Three more single apps: orOS Invoices, CRM and Timesheet. Icon shortcuts for a new invoice or receipt, a new customer, starting or stopping the timer and a new time entry; on Android, Share › Invoices starts an invoice with the text as its notes and Share › CRM fills in a new customer.
+
+## Version 2.14.00
+- Briefing: one tap in the Assistant or in Today sums up your day: today's agenda, what is late, birthdays this week and this month's spending, with suggested entries. Only when you press it; apps set to Ask first show on one card before anything is sent.
+
+## Version 2.13.00
+- Ten more single apps: orOS Calculator, Time, Weather, Maps, Reader, Mail, Files, Podcasts, Radio and Photo Lab, each with its icon shortcuts; Maps, Reader, Podcasts, Mail and Photo Lab also take Android shares.
+
+## Version 2.12.00
+- The Assistant can search the internet with Claude, if you switch it on in Settings → Internet: opening hours, news, prices. Off by default; each answer shows what was searched and its sources, and the setting says what searches cost.
+
+## Version 2.11.00
+- Nine more single apps: orOS Passwords, Budget, Habits, Water, Diary, Mood, Workouts, Health and Cycle, each with its own icon shortcuts; Passwords, Budget, Habits and Workouts also take Android shares.
+- Radio: stations now always play over a secure (https) connection, so the installed app no longer shows the browser bar. A station that only offers an unencrypted http stream says so instead of playing.
+
 ## Version 2.10.00
 - Attach a photo or PDF in the Assistant: a receipt becomes an expense, a business card a contact, a poster an event. The file goes only to the AI you chose, only when you press Send, and it isn't kept with the conversation.
 - Contacts: importing from an account now combines only sure duplicates, so two people who share a landline or a first name stay separate, and the review says how many were combined. The Microsoft button is hidden for now.

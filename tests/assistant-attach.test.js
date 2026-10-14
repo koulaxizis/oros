@@ -19,7 +19,8 @@ test("attach: provider capabilities", () => {
   assert.deepEqual(C.attCaps("gemini"), { img: true, pdf: true });
   assert.deepEqual(C.attCaps("openrouter"), { img: true, pdf: true });
   assert.deepEqual(C.attCaps("mistral"), { img: true, pdf: false });
-  assert.deepEqual(C.attCaps("local"), { img: true, pdf: false });
+  assert.deepEqual(C.attCaps("local"), { img: false, pdf: false });          // phase 5: photos only when the model can see
+  assert.deepEqual(C.attCaps("local", { vis: 1 }), { img: true, pdf: false });
   assert.deepEqual(C.attCaps("browser"), { img: false, pdf: false });
   assert.deepEqual(C.attCaps("nope"), { img: false, pdf: false });
 });
@@ -27,8 +28,10 @@ test("attach: provider capabilities", () => {
 test("attach: checkAtt codes", () => {
   assert.equal(C.checkAtt("anthropic", [], { type: "image/png", size: 10 }), "");
   assert.equal(C.checkAtt("anthropic", [], { type: "application/pdf", size: 10 }), "");
-  assert.equal(C.checkAtt("browser", [], { type: "image/png", size: 10 }), "none");
-  assert.equal(C.checkAtt("mistral", [], { type: "application/pdf", size: 10 }), "pdf");
+  // phase 5 wave 2: what a provider can't read goes as text read on the device
+  assert.equal(C.checkAtt("browser", [], { type: "image/png", size: 10 }), "");
+  assert.equal(C.checkAtt("mistral", [], { type: "application/pdf", size: 10 }), "");
+  assert.equal(C.checkAtt("nope", [], { type: "image/png", size: 10 }), "none");
   assert.equal(C.checkAtt("anthropic", [], { type: "text/html", size: 10 }), "type");
   assert.equal(C.checkAtt("anthropic", [], { type: "image/svg+xml", size: 10 }), "type");
   assert.equal(C.checkAtt("anthropic", [], { type: "image/png", size: 0 }), "size");

@@ -41,9 +41,9 @@ test("each manifest is its own app: id, scope and every action stay inside /<id>
     assert.equal(m.id, scope + "solo.html");
     assert.equal(m.start_url, scope + "solo.html");
     assert.notEqual(m.id, BASE.id);
-    const urls = [m.share_target.action].concat(m.shortcuts.map((s) => s.url), (m.file_handlers || []).map((h) => h.action));
+    const urls = (m.share_target ? [m.share_target.action] : []).concat(m.shortcuts.map((s) => s.url), (m.file_handlers || []).map((h) => h.action));
     urls.forEach((u) => assert.ok(u.startsWith(scope + "solo.html?"), id + ": " + u));
-    assert.equal(m.share_target.method, "POST");
+    if (m.share_target) assert.equal(m.share_target.method, "POST");
     assert.ok(m.icons.some((i) => i.purpose === "maskable"));
     assert.equal(m.launch_handler, undefined);   // Dropbox sign-in comes back as a navigation
   });
@@ -63,7 +63,7 @@ test("file types: a single app opens exactly the types its app opens in orOS", (
 test("ids come only from the table: paths and parameters cannot name anything else", () => {
   assert.equal(S.idFromPath("/notes/solo.html"), "notes");
   assert.equal(S.idFromPath("/notes/solo.html/"), "");
-  assert.equal(S.idFromPath("/maps/solo.html"), "");          // not a single app (yet)
+  assert.equal(S.idFromPath("/chess/solo.html"), "");         // not a single app (yet)
   assert.equal(S.idFromPath("/../notes/solo.html"), "");
   assert.equal(S.idFromPath("/a/notes/solo.html"), "");
   assert.equal(S.idFromSearch("?solo=todo"), "todo");
@@ -183,9 +183,82 @@ test("Install: Android goes through an intent to Chrome (the orOS app would catc
   assert.equal(S.installUrl("notes", "Mozilla/5.0 (Windows NT 10.0)", "https://useoros.online"), "/notes/solo.html?install");
   assert.equal(S.installUrl("notes", "Android", "http://127.0.0.1:8080"), "/notes/solo.html?install");
   assert.equal(S.installUrl("notes", "Android", "https://a.b/c"), "/notes/solo.html?install");
-  assert.equal(S.installUrl("maps", "Android", "https://useoros.online"), "");
+  assert.equal(S.installUrl("chess", "Android", "https://useoros.online"), "");
   assert.match(read("settings/settings.js"), /S\.installUrl\(id, navigator\.userAgent, location\.origin\)/);
   const src = read("solo.js");
   assert.match(src, /addEventListener\("beforeinstallprompt"/);
   assert.match(src, /installBar\(win, id, asked\)/);
+});
+
+test("wave 3: personal apps — shares only where a text means something, shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  assert.deepEqual(S.shareTarget("passwords", { url: "https://shop.example/login", title: "Shop", text: "" }, now),
+    { app: "passwords", target: { newEntry: { title: "Shop", url: "https://shop.example/login" } } });
+  assert.equal(S.shareTarget("passwords", { url: "", title: "x", text: "no link" }, now), null);
+  assert.deepEqual(S.shareTarget("budget", { url: "", title: "", text: "Coffee 3.50\nwith Anna" }, now),
+    { app: "budget", target: { newTx: { n: "Coffee 3.50" } } });
+  assert.deepEqual(S.shareTarget("habits", { url: "", title: "", text: "Read 10 pages" }, now),
+    { app: "habits", target: { asNew: { name: "Read 10 pages" } } });
+  assert.deepEqual(S.shareTarget("fitness", { url: "", title: "", text: "Ran 5 km" }, now),
+    { app: "fitness", target: { asNew: { note: "Ran 5 km" } } });
+  ["water", "diary", "mood", "health", "cycle"].forEach((id) => {
+    assert.equal(S.shareTarget(id, { url: "", title: "x", text: "y" }, now), null, id);
+    assert.equal(S.manifestFor(id, F.table(), BASE).share_target, undefined, id);
+  });
+  assert.ok(S.manifestFor("health", F.table(), BASE).shortcuts.length === 2);
+  [["passwords/passwords.js", /tg\.gen === true/], ["passwords/pmapp.js", /addEntry: function/],
+   ["passwords/passwords.js", /__orosTakeTarget\("passwords"\)/], ["budget/budget.js", /x\.newTx && typeof x\.newTx === "object"/],
+   ["habits/habits.js", /t\.add === true/], ["water/water.js", /tg\.sip !== "glass"/], ["mood/mood.js", /tg\.checkin === true/],
+   ["mood/mood.js", /__orosTakeTarget\("mood"\)/], ["fitness/fitness.js", /t\.logNew === true/],
+   ["health/health.js", /typeof t\.add === "string"/], ["cycle/cycle.js", /t\.today === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
+});
+
+test("wave 4: tools and media — places, links and mail shares; shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  assert.deepEqual(S.shareTarget("maps", { url: "", title: "", text: "Acropolis Museum\ngeo:37.9684,23.7286?q=Acropolis" }, now),
+    { app: "maps", target: { asNew: { name: "Acropolis Museum", lat: 37.9684, lon: 23.7286 } } });
+  assert.deepEqual(S.shareTarget("maps", { url: "https://maps.example/x", title: "", text: "Cafe Nikos https://maps.example/x" }, now),
+    { app: "maps", target: { asNew: { name: "Cafe Nikos", query: "Cafe Nikos" } } });
+  assert.equal(S.shareTarget("maps", { url: "https://maps.example/x", title: "", text: "https://maps.example/x" }, now), null);
+  assert.deepEqual(S.shareTarget("feeds", { url: "https://blog.example/", title: "", text: "" }, now), { app: "feeds", target: { add: { url: "https://blog.example/" } } });
+  assert.deepEqual(S.shareTarget("podcasts", { url: "https://pod.example/rss", title: "", text: "" }, now), { app: "podcasts", target: { add: { url: "https://pod.example/rss" } } });
+  assert.equal(S.shareTarget("feeds", { url: "", title: "", text: "no link" }, now), null);
+  assert.deepEqual(S.shareTarget("mail", { url: "", title: "Trip", text: "See you at 9" }, now),
+    { app: "mail", target: { compose: { subject: "Trip", body: "See you at 9" } } });
+  ["calculator", "time", "weather", "files", "radio"].forEach((id) => assert.equal(S.manifestFor(id, F.table(), BASE).share_target, undefined, id));
+  assert.ok(S.manifestFor("photolab", F.table(), BASE).share_target.params.files[0].accept.includes(".png"));
+  [["calculator/calculator.js", /MODES\.indexOf\(t\.mode\)/], ["calculator/calculator.js", /__orosTakeTarget\("calculator"\)/],
+   ["time/astro.js", /typeof pending\.pane === "string"/], ["weather/weather.js", /t\.addCity === true/],
+   ["weather/weather.js", /__orosTakeTarget\("weather"\)/], ["maps/maps.js", /target\.locate === true/],
+   ["maps/tools.js", /target\.park/], ["feeds/feeds.js", /x\.addBlank === true/], ["mail/mail.js", /var c = target\.compose/],
+   ["files/files.js", /t\.newFolder === true/], ["podcasts/podcasts.js", /x\.find === true/],
+   ["radio/radio.js", /t\.play === "last"/], ["radio/radio.js", /__orosTakeTarget\("radio"\)/],
+   ["photolab/app.js", /target\.newPic === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
+});
+
+test("wave 5: business — invoice and customer shares; shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  assert.deepEqual(S.shareTarget("invoices", { url: "", title: "Logo design", text: "3 drafts, 2 revisions" }, now),
+    { app: "invoices", target: { newDoc: "inv", notes: "Logo design\n3 drafts, 2 revisions" } });
+  assert.equal(S.shareTarget("invoices", { url: "", title: "", text: "  " }, now), null);
+  assert.deepEqual(S.shareTarget("crm", { url: "", title: "", text: "Maria Papadopoulou <maria@example.gr>\nTel +30 210 123 4567\nMet at the fair" }, now),
+    { app: "crm", target: { asNew: { name: "Maria Papadopoulou", note: "Tel +30 210 123 4567\nMet at the fair", email: "maria@example.gr", phone: "+30 210 123 4567" } } });
+  assert.deepEqual(S.shareTarget("crm", { url: "", title: "", text: "nikos@shop.example" }, now),
+    { app: "crm", target: { asNew: { name: "nikos", note: "", email: "nikos@shop.example" } } });
+  assert.equal(S.manifestFor("timesheet", F.table(), BASE).share_target, undefined);
+  assert.deepEqual(S.APPS.invoices.shortcuts.map((x) => x.target.newDoc), ["inv", "rcpt"]);
+  [["invoices/invoices.js", /tg\.newDoc === "inv" \|\| tg\.newDoc === "rcpt"/], ["invoices/invoices.js", /x\.notes = notes/], ["crm/crm.js", /if \(x\.newCust\)/],
+   ["timesheet/timesheet.js", /if \(t\.toggle\) \{ window\.__orosTimesheetToggle\(\)/], ["timesheet/timesheet.js", /if \(t\.newEntry\)/]
+  ].forEach(([f, re]) => assert.match(read(f), re, f));
+});
+
+test("wave 6: orOS Games — every game in one app, Daily shortcuts, .pgn through Chess", () => {
+  assert.equal(S.nameOf("gamecenter", "el"), "orOS Παιχνίδια");
+  assert.deepEqual(S.APPS.gamecenter.shortcuts.map((x) => x.target.play), ["wordle", "crossword", "sudoku", "chess"]);
+  const m = S.manifestFor("gamecenter", F.table(), BASE);
+  assert.deepEqual(m.file_handlers[0].accept, { "application/x-chess-pgn": [".pgn"] });
+  assert.equal(S.shareTarget("gamecenter", { url: "", title: "", text: "hi" }, new Date()), null);
+  assert.equal(S.manifestFor("chess", F.table(), BASE), null);
+  assert.match(read("gamecenter/gamecenter.js"), /typeof tg\.play === "string" && CORE\.GAMES\.indexOf\(tg\.play\) >= 0/);
+  assert.match(read("gamecenter/gamecenter.js"), /openTarget\(DK \? DK\.takeTarget\("gamecenter"\) : null\)/);
 });

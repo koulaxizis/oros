@@ -626,6 +626,11 @@
   // ---------- Deep link ----------
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
+    // Single app (solo.js) icon shortcut { newPic: true }.
+    if (target.newPic === true) {
+      if (!document.querySelector("dialog[open]")) PL.panels.newDialog();
+      return;
+    }
     if (typeof target.id === "string" && C.ID_RE.test(target.id)) { PL.openProject(target.id); return; }
     var f = target.openFile;
     if (f && typeof f === "object" && typeof f.token === "string") {

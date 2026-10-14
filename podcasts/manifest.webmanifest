@@ -1,0 +1,87 @@
+{
+  "name": "orOS Podcasts",
+  "short_name": "Podcasts",
+  "description": "orOS Podcasts: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/podcasts/solo.html",
+  "start_url": "/podcasts/solo.html",
+  "scope": "/podcasts/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/podcasts.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/podcasts-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/podcasts-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/podcasts-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Find a podcast",
+      "short_name": "Find a podcast",
+      "url": "/podcasts/solo.html?do=find",
+      "icons": [
+        {
+          "src": "/icons/solo/podcasts-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/podcasts/solo.html?file-open=podcasts",
+      "accept": {
+        "text/x-opml": [
+          ".opml"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/podcasts/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "text/x-opml",
+            ".opml"
+          ]
+        }
+      ]
+    }
+  }
+}

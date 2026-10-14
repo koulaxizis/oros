@@ -96,6 +96,129 @@
       name: { en: "orOS Slides", el: "orOS Παρουσιάσεις" },
       shortcuts: [{ do: "new", name: { en: "New presentation", el: "Νέα παρουσίαση" }, target: { newDeck: true } }],
       share: "outline"
+    },
+    // Wave 3: personal apps. Water, Diary, Mood, Health and Cycle take
+    // no shares (nothing a shared text should become there).
+    passwords: {
+      name: { en: "orOS Passwords", el: "orOS Κωδικοί" },
+      shortcuts: [{ do: "gen", name: { en: "Generate a password", el: "Νέος κωδικός" }, target: { gen: true } },
+                  { do: "new", name: { en: "New vault entry", el: "Νέα καταχώριση" }, target: { newEntry: {} } }],
+      share: "login"
+    },
+    budget: {
+      name: { en: "orOS Budget", el: "orOS Έσοδα & Έξοδα" },
+      shortcuts: [{ do: "new", name: { en: "New expense", el: "Νέο έξοδο" }, target: { newTx: {} } }],
+      share: "expense"
+    },
+    habits: {
+      name: { en: "orOS Habits", el: "orOS Συνήθειες" },
+      shortcuts: [{ do: "new", name: { en: "New habit", el: "Νέα συνήθεια" }, target: { add: true } }],
+      share: "habit"
+    },
+    water: {
+      name: { en: "orOS Water", el: "orOS Νερό" },
+      shortcuts: [{ do: "glass", name: { en: "Add a glass", el: "Ένα ποτήρι" }, target: { sip: "glass" } }]
+    },
+    diary: {
+      name: { en: "orOS Diary", el: "orOS Ημερολόγιο μιας πρότασης" },
+      shortcuts: [{ do: "write", name: { en: "Write today's sentence", el: "Η σημερινή πρόταση" }, target: { write: true } }]
+    },
+    mood: {
+      name: { en: "orOS Mood", el: "orOS Διάθεση" },
+      shortcuts: [{ do: "log", name: { en: "Log my mood", el: "Πώς νιώθω" }, target: { checkin: true } }]
+    },
+    fitness: {
+      name: { en: "orOS Workouts", el: "orOS Προπόνηση" },
+      shortcuts: [{ do: "log", name: { en: "Log a workout", el: "Νέα προπόνηση" }, target: { logNew: true } }],
+      share: "workout"
+    },
+    health: {
+      name: { en: "orOS Health", el: "orOS Υγεία" },
+      shortcuts: [{ do: "bp", name: { en: "New blood pressure", el: "Νέα πίεση" }, target: { add: "bp" } },
+                  { do: "wt", name: { en: "New weight", el: "Νέο βάρος" }, target: { add: "wt" } }]
+    },
+    cycle: {
+      name: { en: "orOS Cycle", el: "orOS Κύκλος" },
+      shortcuts: [{ do: "today", name: { en: "Log today", el: "Καταγραφή σήμερα" }, target: { today: true } }]
+    },
+    // Wave 4: tools and media.
+    calculator: {
+      name: { en: "orOS Calculator", el: "orOS Αριθμομηχανή" },
+      shortcuts: [{ do: "sci", name: { en: "Scientific", el: "Επιστημονική" }, target: { mode: "sci" } },
+                  { do: "graph", name: { en: "Graphs", el: "Γραφήματα" }, target: { mode: "graph" } }]
+    },
+    time: {
+      name: { en: "orOS Time", el: "orOS Ώρα" },
+      shortcuts: [{ do: "timer", name: { en: "Timer", el: "Αντίστροφη μέτρηση" }, target: { pane: "timer" } },
+                  { do: "stopwatch", name: { en: "Stopwatch", el: "Χρονόμετρο" }, target: { pane: "stopwatch" } },
+                  { do: "alarms", name: { en: "Alarms", el: "Ξυπνητήρια" }, target: { pane: "alarms" } }]
+    },
+    weather: {
+      name: { en: "orOS Weather", el: "orOS Καιρός" },
+      shortcuts: [{ do: "city", name: { en: "Add a city", el: "Νέα πόλη" }, target: { addCity: true } }]
+    },
+    maps: {
+      name: { en: "orOS Maps", el: "orOS Χάρτες" },
+      shortcuts: [{ do: "locate", name: { en: "My location", el: "Η θέση μου" }, target: { locate: true } },
+                  { do: "park", name: { en: "Where I parked", el: "Πού πάρκαρα" }, target: { park: true } }],
+      share: "place"
+    },
+    feeds: {
+      name: { en: "orOS Reader", el: "orOS Αναγνώστης" },
+      shortcuts: [{ do: "add", name: { en: "Add a feed", el: "Νέα ροή" }, target: { addBlank: true } }],
+      share: "feed"
+    },
+    mail: {
+      name: { en: "orOS Mail", el: "orOS Αλληλογραφία" },
+      shortcuts: [{ do: "new", name: { en: "New mail", el: "Νέο μήνυμα" }, target: { compose: {} } }],
+      share: "mail"
+    },
+    files: {
+      name: { en: "orOS Files", el: "orOS Αρχεία" },
+      // (no "Add files": a file picker needs a tap inside the page)
+      shortcuts: [{ do: "folder", name: { en: "New folder", el: "Νέος φάκελος" }, target: { newFolder: true } }]
+    },
+    podcasts: {
+      name: { en: "orOS Podcasts", el: "orOS Podcasts" },
+      shortcuts: [{ do: "find", name: { en: "Find a podcast", el: "Εύρεση podcast" }, target: { find: true } }],
+      share: "podcast"
+    },
+    radio: {
+      name: { en: "orOS Radio", el: "orOS Ραδιόφωνο" },
+      shortcuts: [{ do: "last", name: { en: "Play the last station", el: "Ο τελευταίος σταθμός" }, target: { play: "last" } }]
+    },
+    photolab: {
+      name: { en: "orOS Photo Lab", el: "orOS Εργαστήριο εικόνας" },
+      // (no "Open a picture": a file picker needs a tap inside the page)
+      shortcuts: [{ do: "new", name: { en: "New picture", el: "Νέα εικόνα" }, target: { newPic: true } }]
+    },
+    // Wave 5: business.
+    invoices: {
+      name: { en: "orOS Invoices", el: "orOS Τιμολόγια" },
+      shortcuts: [{ do: "invoice", name: { en: "New invoice", el: "Νέο τιμολόγιο" }, target: { newDoc: "inv" } },
+                  { do: "receipt", name: { en: "New receipt", el: "Νέα απόδειξη" }, target: { newDoc: "rcpt" } }],
+      share: "invoice"
+    },
+    crm: {
+      name: { en: "orOS CRM", el: "orOS Πελάτες" },
+      shortcuts: [{ do: "new", name: { en: "New customer", el: "Νέος πελάτης" }, target: { newCust: true } }],
+      share: "customer"
+    },
+    timesheet: {
+      name: { en: "orOS Timesheet", el: "orOS Ώρες εργασίας" },
+      shortcuts: [{ do: "timer", name: { en: "Start or stop the timer", el: "Έναρξη ή διακοπή χρονομέτρου" }, target: { toggle: true } },
+                  { do: "entry", name: { en: "New time entry", el: "Νέα καταχώριση" }, target: { newEntry: true } }]
+    },
+    // Wave 6: every game in one app (Game Center is its home; a game
+    // opened from it gets Back). files: other apps whose file types
+    // this app's icon also opens (fileopen.js still routes them).
+    gamecenter: {
+      name: { en: "orOS Games", el: "orOS Παιχνίδια" },
+      shortcuts: [{ do: "wordle", name: { en: "Today's Wordle", el: "Το σημερινό Wordle" }, target: { play: "wordle", daily: true } },
+                  { do: "crossword", name: { en: "Today's crossword", el: "Το σημερινό σταυρόλεξο" }, target: { play: "crossword", daily: true } },
+                  { do: "sudoku", name: { en: "Today's Sudoku", el: "Το σημερινό Sudoku" }, target: { play: "sudoku", daily: true } },
+                  { do: "chess", name: { en: "Chess", el: "Σκάκι" }, target: { play: "chess" } }],
+      files: ["chess"]
     }
   };
 
@@ -241,6 +364,55 @@
       if (!firstLine) return null;
       return { app: id, target: { newArt: { title: firstLine.slice(0, 200), text: (title ? bodyText : rest).slice(0, 20000) } } };
     }
+    // Wave 3.
+    if (kind === "login") {
+      return url ? { app: id, target: { newEntry: { title: (title || firstLine.replace(url, "").trim() || url).slice(0, 200), url: url } } } : null;
+    }
+    if (kind === "expense") {
+      return firstLine ? { app: id, target: { newTx: { n: firstLine.slice(0, 140) } } } : null;
+    }
+    if (kind === "habit") {
+      return firstLine ? { app: id, target: { asNew: { name: firstLine.slice(0, 80) } } } : null;
+    }
+    if (kind === "workout") {
+      return bodyText.trim() ? { app: id, target: { asNew: { note: bodyText.slice(0, 2000) } } } : null;
+    }
+    // Wave 4.
+    if (kind === "place") {
+      // geo:lat,lon (the Android share of a place) → a pin; otherwise
+      // the title or first line is searched (never a bare web address).
+      var g = /geo:(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/i.exec(text + " " + s.title);
+      var q = (title || firstLine).replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
+      if (g && Math.abs(+g[1]) <= 90 && Math.abs(+g[2]) <= 180) {
+        return { app: id, target: { asNew: { name: q || g[1] + ", " + g[2], lat: +g[1], lon: +g[2] } } };
+      }
+      return q ? { app: id, target: { asNew: { name: q, query: q } } } : null;
+    }
+    if (kind === "feed" || kind === "podcast") {
+      return url ? { app: id, target: { add: { url: url } } } : null;
+    }
+    if (kind === "mail") {
+      return bodyText.trim() || title ? { app: id, target: { compose: { subject: (title || firstLine).slice(0, 300), body: bodyText.slice(0, 20000) } } } : null;
+    }
+    // Wave 5.
+    if (kind === "invoice") {
+      // The shared text becomes a new invoice's notes (saved only if
+      // the person saves it).
+      var notes = ((title && bodyText.indexOf(title) !== 0 ? title + "\n" : "") + bodyText).trim();
+      return notes ? { app: id, target: { newDoc: "inv", notes: notes.slice(0, 500) } } : null;
+    }
+    if (kind === "customer") {
+      // First line = the name, an e-mail or phone found in the text
+      // fills its field, the rest becomes the note.
+      if (!firstLine) return null;
+      var em = /[^\s<>()",;:]+@[^\s<>()",;:]+\.[a-z]{2,}/i.exec(text);
+      var ph = /\+?\d[\d ().-]{6,}\d/.exec(bodyText);
+      var nm = firstLine.replace(em ? em[0] : "\u0000", "").replace(/[<>]/g, "").trim() || (em ? em[0].split("@")[0] : "");
+      var c = { name: nm.slice(0, 120), note: rest.slice(0, 2000) };
+      if (em) c.email = em[0].slice(0, 120);
+      if (ph) c.phone = ph[0].trim().slice(0, 40);
+      return c.name ? { app: id, target: { asNew: c } } : null;
+    }
     if (kind === "outline") {
       // A titled share starts with its title slide ("# title").
       var outline = (title ? "# " + title + "\n" : "") + bodyText;
@@ -283,7 +455,7 @@
     };
     var accept = {}, exts = [];
     (handlers || []).forEach(function (h) {
-      if (h.app !== id) return;
+      if (h.app !== id && (a.files || []).indexOf(h.app) < 0) return;
       Object.keys(h.accept).forEach(function (mime) {
         accept[mime] = h.accept[mime].slice();
         exts = exts.concat(mime, h.accept[mime]);
@@ -292,6 +464,9 @@
     if (Object.keys(accept).length) {
       m.file_handlers = [{ action: page + "?file-open=" + id, accept: accept }];
     }
+    // An app with nothing a shared text or file could become gets no
+    // share target.
+    if (!a.share && !exts.length) return m;
     var share = {
       action: page + "?share-target",
       method: "POST",

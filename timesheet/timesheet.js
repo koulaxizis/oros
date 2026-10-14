@@ -2189,6 +2189,9 @@
   // Projects tab, then its dialog. Unknown ids or an open dialog → no-op.
   function openSearchTarget(t) {
     if (!t || typeof t !== "object" || document.querySelector("dialog[open]")) return;
+    // Single app icon shortcuts: start/stop the timer, a new entry.
+    if (t.toggle) { window.__orosTimesheetToggle(); return; }
+    if (t.newEntry) { setTab("timer"); entryDialog(null, null); return; }
     if (typeof t.entry === "string") {
       var x = findEntry(t.entry);
       if (!x) return;

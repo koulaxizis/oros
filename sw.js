@@ -20,9 +20,13 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.10.00";
+var CACHE_VERSION = "oros-v2.20.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
+// WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
+// Assistant's in-browser model is used): one copy kept across
+// releases, so a downloaded model keeps working offline after an update.
+var WEBLLM_CACHE = "oros-webllm";
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
 // Deliberately OUTSIDE CACHE_VERSION — tiles must survive SW
 // updates (browsing history is expensive to rebuild). Growth is
@@ -211,6 +215,52 @@ var PRECACHE_URLS = [
   "wiki/manifest.webmanifest",
   "slides/solo.html",
   "slides/manifest.webmanifest",
+  "passwords/solo.html",
+  "passwords/manifest.webmanifest",
+  "budget/solo.html",
+  "budget/manifest.webmanifest",
+  "habits/solo.html",
+  "habits/manifest.webmanifest",
+  "water/solo.html",
+  "water/manifest.webmanifest",
+  "diary/solo.html",
+  "diary/manifest.webmanifest",
+  "mood/solo.html",
+  "mood/manifest.webmanifest",
+  "fitness/solo.html",
+  "fitness/manifest.webmanifest",
+  "health/solo.html",
+  "health/manifest.webmanifest",
+  "cycle/solo.html",
+  "cycle/manifest.webmanifest",
+  "calculator/solo.html",
+  "calculator/manifest.webmanifest",
+  "time/solo.html",
+  "time/manifest.webmanifest",
+  "weather/solo.html",
+  "weather/manifest.webmanifest",
+  "maps/solo.html",
+  "maps/manifest.webmanifest",
+  "feeds/solo.html",
+  "feeds/manifest.webmanifest",
+  "mail/solo.html",
+  "mail/manifest.webmanifest",
+  "files/solo.html",
+  "files/manifest.webmanifest",
+  "podcasts/solo.html",
+  "podcasts/manifest.webmanifest",
+  "radio/solo.html",
+  "radio/manifest.webmanifest",
+  "photolab/solo.html",
+  "photolab/manifest.webmanifest",
+  "invoices/solo.html",
+  "invoices/manifest.webmanifest",
+  "crm/solo.html",
+  "crm/manifest.webmanifest",
+  "timesheet/solo.html",
+  "timesheet/manifest.webmanifest",
+  "gamecenter/solo.html",
+  "gamecenter/manifest.webmanifest",
   "icons/solo/notes.svg",
   "icons/solo/notes-192.png",
   "icons/solo/notes-512.png",
@@ -255,6 +305,98 @@ var PRECACHE_URLS = [
   "icons/solo/slides-192.png",
   "icons/solo/slides-512.png",
   "icons/solo/slides-maskable-512.png",
+  "icons/solo/passwords.svg",
+  "icons/solo/passwords-192.png",
+  "icons/solo/passwords-512.png",
+  "icons/solo/passwords-maskable-512.png",
+  "icons/solo/budget.svg",
+  "icons/solo/budget-192.png",
+  "icons/solo/budget-512.png",
+  "icons/solo/budget-maskable-512.png",
+  "icons/solo/habits.svg",
+  "icons/solo/habits-192.png",
+  "icons/solo/habits-512.png",
+  "icons/solo/habits-maskable-512.png",
+  "icons/solo/water.svg",
+  "icons/solo/water-192.png",
+  "icons/solo/water-512.png",
+  "icons/solo/water-maskable-512.png",
+  "icons/solo/diary.svg",
+  "icons/solo/diary-192.png",
+  "icons/solo/diary-512.png",
+  "icons/solo/diary-maskable-512.png",
+  "icons/solo/mood.svg",
+  "icons/solo/mood-192.png",
+  "icons/solo/mood-512.png",
+  "icons/solo/mood-maskable-512.png",
+  "icons/solo/fitness.svg",
+  "icons/solo/fitness-192.png",
+  "icons/solo/fitness-512.png",
+  "icons/solo/fitness-maskable-512.png",
+  "icons/solo/health.svg",
+  "icons/solo/health-192.png",
+  "icons/solo/health-512.png",
+  "icons/solo/health-maskable-512.png",
+  "icons/solo/cycle.svg",
+  "icons/solo/cycle-192.png",
+  "icons/solo/cycle-512.png",
+  "icons/solo/cycle-maskable-512.png",
+  "icons/solo/calculator.svg",
+  "icons/solo/calculator-192.png",
+  "icons/solo/calculator-512.png",
+  "icons/solo/calculator-maskable-512.png",
+  "icons/solo/time.svg",
+  "icons/solo/time-192.png",
+  "icons/solo/time-512.png",
+  "icons/solo/time-maskable-512.png",
+  "icons/solo/weather.svg",
+  "icons/solo/weather-192.png",
+  "icons/solo/weather-512.png",
+  "icons/solo/weather-maskable-512.png",
+  "icons/solo/maps.svg",
+  "icons/solo/maps-192.png",
+  "icons/solo/maps-512.png",
+  "icons/solo/maps-maskable-512.png",
+  "icons/solo/feeds.svg",
+  "icons/solo/feeds-192.png",
+  "icons/solo/feeds-512.png",
+  "icons/solo/feeds-maskable-512.png",
+  "icons/solo/mail.svg",
+  "icons/solo/mail-192.png",
+  "icons/solo/mail-512.png",
+  "icons/solo/mail-maskable-512.png",
+  "icons/solo/files.svg",
+  "icons/solo/files-192.png",
+  "icons/solo/files-512.png",
+  "icons/solo/files-maskable-512.png",
+  "icons/solo/podcasts.svg",
+  "icons/solo/podcasts-192.png",
+  "icons/solo/podcasts-512.png",
+  "icons/solo/podcasts-maskable-512.png",
+  "icons/solo/radio.svg",
+  "icons/solo/radio-192.png",
+  "icons/solo/radio-512.png",
+  "icons/solo/radio-maskable-512.png",
+  "icons/solo/photolab.svg",
+  "icons/solo/photolab-192.png",
+  "icons/solo/photolab-512.png",
+  "icons/solo/photolab-maskable-512.png",
+  "icons/solo/invoices.svg",
+  "icons/solo/invoices-192.png",
+  "icons/solo/invoices-512.png",
+  "icons/solo/invoices-maskable-512.png",
+  "icons/solo/crm.svg",
+  "icons/solo/crm-192.png",
+  "icons/solo/crm-512.png",
+  "icons/solo/crm-maskable-512.png",
+  "icons/solo/timesheet.svg",
+  "icons/solo/timesheet-192.png",
+  "icons/solo/timesheet-512.png",
+  "icons/solo/timesheet-maskable-512.png",
+  "icons/solo/gamecenter.svg",
+  "icons/solo/gamecenter-192.png",
+  "icons/solo/gamecenter-512.png",
+  "icons/solo/gamecenter-maskable-512.png",
   "todo/",
   "todo/index.html",
   "todo/todo.css",
@@ -915,6 +1057,7 @@ var PRECACHE_URLS = [
   "assistant/core.js",
   "assistant/summary.js",
   "assistant/assistant.js",
+  "assistant/webllm-worker.js",
   "assistant/help.en.txt",
   "assistant/help.el.txt",
   "share/",
@@ -1703,6 +1846,10 @@ self.addEventListener("activate", function (event) {
   // continues but doesn't block activation indefinitely.
   var cleanup = caches.keys().then(function (names) {
     return Promise.all(names.map(function (name) {
+      // The Assistant's in-browser models ("webllm/model", "webllm/wasm",
+      // "webllm/config", gigabytes the user downloaded on purpose) and
+      // the WebLLM library cache outlive every release.
+      if (name.indexOf("webllm/") === 0 || name === WEBLLM_CACHE) return;
       if (keep.indexOf(name) === -1) return caches.delete(name);
     }));
   }).then(function () {
@@ -1918,6 +2065,26 @@ self.addEventListener("fetch", function (event) {
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files
   // (tesseract, libarchive, libraw, rnnoise) use the runtime cache.
   if (/\/vendor\/(ort|u2netp|hunspell)\//.test(url.pathname)) return;
+  // WebLLM: cache-first in its own cache, matched without ?v=. The
+  // file name carries the library version (web-llm-<version>.js), so
+  // a new version is a cache miss; storing it drops the old copy.
+  if (/\/vendor\/webllm\//.test(url.pathname)) {
+    event.respondWith(caches.open(WEBLLM_CACHE).then(function (cache) {
+      return cache.match(request, { ignoreSearch: true }).then(function (hit) {
+        if (hit) return hit;
+        return fetch(request).then(function (response) {
+          if (response && response.status === 200) {
+            var copy = response.clone();
+            event.waitUntil(cache.keys().then(function (old) {
+              return Promise.all(old.map(function (r) { return cache.delete(r); }));
+            }).then(function () { return cache.put(request, copy); }));
+          }
+          return response;
+        });
+      });
+    }));
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then(function (cached) {

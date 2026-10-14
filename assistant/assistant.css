@@ -467,6 +467,11 @@ button:disabled { cursor: default; opacity: 0.4; }
 .att-goes { font-size: 11px; color: var(--text-dim); overflow-wrap: anywhere; }
 .msg-att { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-bottom: 4px; max-width: 100%; }
 .att-acts { flex-wrap: wrap; }
+.who-web { color: var(--accent); font-weight: 600; }
+.web-src { font-size: 12px; color: var(--text-dim); margin-top: 2px; max-width: 100%; }
+.web-src-h { font-weight: 700; }
+.web-src ol { margin: 4px 0 0; padding-left: 20px; }
+.web-src li { margin: 2px 0; overflow-wrap: anywhere; }
 .dk-bar { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
 .dk-path { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; min-width: 0; }
 .dk-list { list-style: none; margin: 0; padding: 0; max-height: min(50vh, 380px); overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
@@ -545,6 +550,8 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-hint { font-size: 12px; color: var(--text-dim); margin-top: 8px; line-height: 1.45; overflow-wrap: anywhere; }
 .dlg-hint:empty { display: none; }
 .dlg-hint.err { color: var(--danger); }
+.dlg-hint.ok { color: var(--text); font-weight: 600; }
+#as-wl-st, #as-kit-hint { margin-top: 8px; }
 .dlg-text { font-size: 14px; line-height: 1.5; }
 .dlg-check { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .perm-list { margin-top: 4px; }
@@ -605,3 +612,13 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 @media (prefers-reduced-motion: reduce) {
   #side { transition: none; }
 }
+
+/* Briefing (phase 4 wave 5) */
+.wel-box #wel-brief-hint { font-size: 13px; max-width: 360px; }
+.brief-meta { font-size: 12px; color: var(--text-dim); margin-top: 4px; max-width: 85%; text-align: end; overflow-wrap: anywhere; }
+.consent-meta.brief-lines { white-space: pre-line; display: block; -webkit-line-clamp: none; overflow-wrap: anywhere; }
+
+/* Web search for every model (phase 5 wave 1) */
+.ws-box { margin-top: 8px; }
+.tool-src { margin: -2px 0 8px 28px; }
+.web-src .web-link { color: var(--accent); }

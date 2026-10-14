@@ -4677,4 +4677,14 @@ function mergeMoodStates(A, B) {
   } catch (e) { pendingMood = null; }
   if (pendingMood) __orosMoodOpen(pendingMood);
 
+  // Single app (solo.js) icon shortcut { checkin: true }: the capture
+  // tab, as the check-in reminder opens it.
+  window.__orosOpenAt = function (tg) {
+    if (tg && typeof tg === "object" && tg.checkin === true) __orosMoodOpen("checkin");
+  };
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
+      window.__orosOpenAt(window.parent.__orosTakeTarget("mood"));
+  } catch (e) {}
+
 })();

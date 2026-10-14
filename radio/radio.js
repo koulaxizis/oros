@@ -55,6 +55,7 @@ var STRINGS = {
     "fav.added":      "Added to favorites",
     "fav.removed":    "Removed from favorites",
     "err.stream":     "Stream unavailable",
+    "err.insecure":   "Unencrypted (http) stream only, not played",
     "buffering":      "Buffering…",
     "offline.hint":   "Offline — showing last known data. Playback needs a connection.",
     "sleep.title":    "Sleep timer",
@@ -134,6 +135,7 @@ var STRINGS = {
     "fav.added":      "Προστέθηκε στα αγαπημένα",
     "fav.removed":    "Αφαιρέθηκε από τα αγαπημένα",
     "err.stream":     "Μη διαθέσιμο stream",
+    "err.insecure":   "Μόνο μη κρυπτογραφημένο stream (http), δεν παίζεται",
     "buffering":      "Φόρτωση…",
     "offline.hint":   "Εκτός σύνδεσης — εμφανίζονται τα τελευταία γνωστά. Η αναπαραγωγή απαιτεί σύνδεση.",
     "sleep.title":    "Χρονοδιακόπτης ύπνου",
@@ -224,12 +226,30 @@ function esc(str){
   });
 }
 
+// RX-HTTPS: orOS never loads a plain http:// stream. An http resource on the
+// https page is mixed content: the page stops counting as secure, and the
+// installed app (PWA / Android TWA) then shows the browser's address bar.
+// An https address among the candidates wins; otherwise the http one is
+// upgraded to https (many servers answer both). A station that only
+// streams over http fails to play with its own message (err.insecure).
+function secureStreamUrl(){
+  var up = "";
+  for(var i = 0; i < arguments.length; i++){
+    var u = typeof arguments[i] === "string" ? arguments[i].trim() : "";
+    if(/^https:\/\//i.test(u)) return u;
+    if(!up && /^http:\/\//i.test(u)) up = "https://" + u.slice(7);
+  }
+  return up;
+}
+
 function normalizeStation(s){
   // Payload whitelisting: only what we ever consume crosses the host boundary
   return {
     stationuuid:  s.stationuuid || "",
     name:         s.name || "",
-    url_resolved: s.url_resolved || s.url || "",
+    url_resolved: secureStreamUrl(s.url_resolved, s.url),
+    insecure:     !/^https:\/\//i.test(String(s.url_resolved || "").trim()) &&
+                  !/^https:\/\//i.test(String(s.url || "").trim()),
     homepage:     s.homepage || "",
     favicon:      s.favicon || "",
     codec:        (s.codec || "").toUpperCase(),
@@ -497,11 +517,18 @@ function ensureHost(){
         audio.removeAttribute("src");
         audio.load(); // abort the previous network connection
       }
+      // RX-HTTPS: never hand an http:// address to the audio element (stored
+      // favorites, recents and wake rows may still carry one).
+      var url = secureStreamUrl(station.url_resolved);
+      if(!url) return false;
+      if(url !== station.url_resolved || station.insecure){
+        station = Object.assign({}, station, { url_resolved: url, insecure: true });
+      }
       host.current = station;
       host.flags.buffering = true;
       host.flags.error = false;
       host.lastEvent = null;
-      audio.src = station.url_resolved;
+      audio.src = url;
       applyMediaSession(w, station);
       var p = audio.play();
       if(p && p.catch) p.catch(function(err){
@@ -1521,8 +1548,12 @@ function updatePlayerUI(){
     if(st.current.bitrate) metaParts.push(st.current.bitrate + " kbps");
     if(st.current.codec) metaParts.push(st.current.codec);
     var eng = engineApi(), now = eng ? eng.now() : null, rec = eng ? eng.recState() : null;
+    metaEl.title = "";
     if(st.flags.buffering) metaEl.innerHTML = '<span class="buf">' + t("buffering") + '</span>';
-    else if(st.flags.error) metaEl.innerHTML = '<span class="err">' + t("err.stream") + '</span>';
+    else if(st.flags.error){
+      metaEl.innerHTML = '<span class="err">' + t(st.current.insecure ? "err.insecure" : "err.stream") + '</span>';
+      metaEl.title = metaEl.textContent;   // the full text when the bar cuts it (360px)
+    }
     else metaEl.textContent = now ? "♪ " + now.s : metaParts.join(" · ");
     if(rec && !st.flags.error){
       var rs = document.createElement("span");
@@ -2309,6 +2340,15 @@ function start(){
   wire();
   ensureEngine();       // W42: titles, recording, wake-up (shell side)
   consumeDeepLink();
+  // Single app (solo.js) icon shortcut { play: "last" }: the most
+  // recent station again.
+  window.__orosOpenAt = function (t) {
+    if (t && t.play === "last" && state.recents && state.recents[0]) playStation(state.recents[0]);
+  };
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")
+      window.__orosOpenAt(window.parent.__orosTakeTarget("radio"));
+  } catch (e) {}
   console.log("[radio] ready — v0.3 Wave 3 complete");
 }
 
