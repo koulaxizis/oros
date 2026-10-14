@@ -26,15 +26,16 @@ function cut(from, to) {
 
 const C = (() => {
   const parts = [cut("  var DATA_VER", "  // ---------- 1.")];
-  ["cmpStr", "isInt", "makeEngine", "makePgn", "normRow", "joinRows", "mergeChess"].forEach((name) => {
+  ["cmpStr", "isInt", "makeEngine", "makePgn", "makeChessCom", "normRow", "joinRows", "mergeChess"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     parts.push(SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") + "\nreturn { E: makeEngine(), makeEngine, makePgn, mergeChess };")();
+  return new Function(parts.join("\n") + "\nreturn { E: makeEngine(), makeEngine, makePgn, makeChessCom, mergeChess };")();
 })();
 const E = C.E;
 const PGN = C.makePgn(E);
+const CC = C.makeChessCom(PGN.clean);
 
 const J = JSON.stringify;
 const rnd = (n) => Math.floor(Math.random() * n);
@@ -401,4 +402,65 @@ test("pgn: tag values can never break out of their tag or carry control characte
   assert.equal(PGN.clean("x".repeat(500)).length, 120);
   const r = PGN.parse('[White "<img src=x onerror=alert(1)>"]\n1. e4 *');
   assert.equal(r.games[0].tags.White, "<img src=x onerror=alert(1)>", "kept as text; the app shows it with textContent");
+});
+
+// ---------- Chess.com published data ----------
+test("chess.com: usernames and the only URLs orOS builds", () => {
+  assert.equal(CC.okUser(" Hikaru "), "Hikaru");
+  assert.equal(CC.okUser("a_b-c9"), "a_b-c9");
+  ["", "ab", "x".repeat(26), "a/b", "a b", "../x", "é123", null, 5].forEach((u) => assert.equal(CC.okUser(u), "", String(u)));
+  assert.equal(CC.playerUrl("Hikaru"), "https://api.chess.com/pub/player/hikaru");
+  assert.equal(CC.playerUrl("Hikaru", "/stats"), "https://api.chess.com/pub/player/hikaru/stats");
+  assert.equal(CC.monthUrl("Hikaru", "2024/05"), "https://api.chess.com/pub/player/hikaru/games/2024/05");
+  assert.equal(CC.monthUrl("Hikaru", "https://evil.example/2024/05"), "");
+  assert.equal(CC.monthUrl("Hikaru", "2024/5"), "");
+});
+
+test("chess.com: profile, stats, months", () => {
+  assert.deepEqual(CC.profile({ username: "hikaru", name: "Hikaru\nNakamura", title: "GM", avatar: "x" }),
+    { user: "hikaru", name: "Hikaru Nakamura", title: "GM" });
+  assert.equal(CC.profile(null), null);
+  const st = CC.stats({
+    chess_rapid: { last: { rating: 2800 }, best: { rating: 2900 }, record: { win: 5, loss: 2, draw: 1 } },
+    chess_blitz: { last: { rating: "3000" } },                        // not a number: left out
+    chess_daily: { last: { rating: 2100.4 }, record: {} },
+    chess960_daily: { last: { rating: 1 } },                          // other variants: left out
+    tactics: { highest: { rating: 3100 } }
+  });
+  assert.deepEqual(st, [
+    { kind: "rapid", last: 2800, best: 2900, w: 5, l: 2, d: 1 },
+    { kind: "daily", last: 2100, best: null, w: 0, l: 0, d: 0 },
+    { kind: "puzzles", last: null, best: 3100, w: 0, l: 0, d: 0 }
+  ]);
+  assert.deepEqual(CC.stats("x"), []);
+  assert.deepEqual(CC.months({ archives: [
+    "https://api.chess.com/pub/player/h/games/2023/12",
+    "https://api.chess.com/pub/player/h/games/2024/02",
+    "https://api.chess.com/pub/player/h/games/2024/02",
+    "https://api.chess.com/pub/player/h/games/2024/13",
+    "javascript:alert(1)", 7
+  ] }), ["2024/02", "2023/12"]);
+  assert.deepEqual(CC.months({}), []);
+});
+
+test("chess.com: a month's games (standard only, newest first) open as PGN", () => {
+  const pgn = '[White "a"]\n[Black "b"]\n[Result "0-1"]\n\n1. f3 e5 2. g4 Qh4# 0-1';
+  const gs = CC.games({ games: [
+    { rules: "chess", pgn, end_time: 100, time_class: "blitz", white: { username: "a", rating: 1200 }, black: { username: "b<i>", rating: 1300 } },
+    { rules: "chess", pgn: pgn.replace("0-1\"", "1/2-1/2\""), end_time: 300, time_class: "odd", white: {}, black: {} },
+    { rules: "chess960", pgn, end_time: 200 },
+    { rules: "chess", end_time: 400 },
+    null
+  ] });
+  assert.equal(gs.length, 2);
+  assert.equal(gs[0].end, 300);
+  assert.equal(gs[0].kind, "");
+  assert.equal(gs[0].white, "?");
+  assert.deepEqual([gs[1].white, gs[1].black, gs[1].wr, gs[1].br, gs[1].result, gs[1].kind], ["a", "b<i>", 1200, 1300, "0-1", "blitz"]);
+  const g = PGN.parse(gs[1].pgn).games[0];
+  assert.deepEqual(g.moves, ["f2f3", "e7e5", "g2g4", "d8h4"]);
+  const pz = CC.puzzle({ title: "Find it", pgn: '[FEN "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1"]\n[SetUp "1"]\n\n1. Rd8# *' });
+  assert.equal(pz.title, "Find it");
+  assert.deepEqual(PGN.parse(pz.pgn).games[0].moves, ["d1d8"]);
+  assert.equal(CC.puzzle({ title: "x" }), null);
 });

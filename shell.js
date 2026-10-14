@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.89.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.90.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5050,6 +5050,9 @@
         { name: "Raindrop.io API", url: "https://developer.raindrop.io/",
           by: "Raindrop.io; your own account", lic: { en: "Their terms, your own token", el: "Οι όροι τους, με δικό σου token" },
           en: "Connected services: import bookmarks (Bookmarks)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελιδοδεικτών (Σελιδοδείκτες)" },
+        { name: "Chess.com Published-Data API", url: "https://support.chess.com/en/articles/9650547-published-data-api",
+          by: "Chess.com, LLC; your own public profile", lic: { en: "Their terms, read only, no sign-in", el: "Οι όροι τους, μόνο ανάγνωση, χωρίς σύνδεση" },
+          en: "Chess › Online accounts: your ratings, your games and the daily puzzle", el: "Σκάκι › Online λογαριασμοί: οι βαθμολογίες σου, οι παρτίδες σου και ο γρίφος της ημέρας" },
         { name: "Notion API", url: "https://developers.notion.com/reference/intro",
           by: "Notion Labs, Inc.; your own workspace", lic: { en: "Their terms, your own integration secret", el: "Οι όροι τους, με δικό σου secret ενσωμάτωσης" },
           en: "Connected services: import pages (Notes) and databases (Spreadsheet, Kanban)", el: "Συνδεδεμένες υπηρεσίες: εισαγωγή σελίδων (Σημειώσεις) και βάσεων δεδομένων (Υπολογιστικό φύλλο, Kanban)" },

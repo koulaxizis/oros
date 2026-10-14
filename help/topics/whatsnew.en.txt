@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.90.00
+- Chess connects to Chess.com: type your username to see your ratings, open your games for review and play the daily puzzle.
+
 ## Version 1.89.00
 - Chess opens, saves and reviews games as PGN files: step through any game, see the computer's analysis and play on from any position.
 
