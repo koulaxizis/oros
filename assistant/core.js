@@ -720,17 +720,47 @@
       required: ["app"]
     }
   };
+  // Wave 48: changes to records the user already shared (assistant/
+  // edits.js). The user sees a before → after card and presses Apply;
+  // nothing changes before that.
+  var TOOL_CHANGE = {
+    name: "change_item",
+    description: "Propose a change to ONE existing item that search_data or app_summary returned in this " +
+      "conversation, by its ref. The user sees exactly what would change (before → after) and must press " +
+      "Apply; they may refuse. The result says whether it was applied. Apps and actions: " +
+      "todo (complete, reopen, reschedule: date, update: title / date / note, delete) · " +
+      "calendar (reschedule: date / start / end, update: title / date / start / end / location / note, delete) · " +
+      "budget (reschedule: date, update: amount / date / category / note, delete) · " +
+      "bookmarks (update: title / note, delete). One item per call; never guess a ref.",
+    params: {
+      type: "object",
+      properties: {
+        ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
+        action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "delete"] },
+        title: { type: "string", description: "New title (task text, event title, bookmark title)." },
+        date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
+        start: { type: "string", description: "calendar: new start time HH:MM (24h)." },
+        end: { type: "string", description: "calendar: new end time HH:MM (24h)." },
+        location: { type: "string", description: "calendar: new location." },
+        note: { type: "string", description: "New note (replaces the old one; empty clears it)." },
+        amount: { type: "number", description: "budget: new amount in currency units, e.g. 12.5." },
+        category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
+      },
+      required: ["ref", "action"]
+    }
+  };
   // The tools phase 1 offered (searching only); kept for the tests.
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
   // opts = { data: the user lets it search, summary: at least one
   // readable app has a summary, entries: at least one entry kind's app
-  // is installed }
+  // is installed, changes: at least one readable app takes changes)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
     if (opts.data) out.push(TOOL_SEARCH, TOOL_APPS, TOOL_READ);
     if (opts.data && opts.summary) out.push(TOOL_SUMMARY);
     if (opts.entries) out.push(TOOL_ENTRY);
+    if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     return out;
   }
 
@@ -909,11 +939,17 @@
         "To let the user open an item, link its title with its ref, e.g. [Dentist](oros:r3). Use only refs that a search returned."
       );
     }
+    var canChange = !opts.builtin && !opts.chatOnly && opts.apps && opts.apps.length && opts.changes && opts.changes.length;
+    var changeLine = canChange
+      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref. The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
+      : "You cannot change or delete anything in orOS.";
     if (opts.builtin) {
       lines.push("You cannot create, change or delete anything in orOS.");
     } else if (opts.entries && opts.entries.length) {
       lines.push("To add something to an app (" + opts.entries.join(", ") + "), call propose_entry. The user gets a card and saves the entry in that app's own form, or dismisses it; nothing is saved before that, so say it is ready to check and save, never that it was added. Ask first when a needed detail (a date, an amount) is missing; dates are YYYY-MM-DD and relative days count from Now.");
-      lines.push("You cannot change or delete anything in orOS.");
+      lines.push(changeLine);
+    } else if (canChange) {
+      lines.push(changeLine);
     } else {
       lines.push("You cannot create, change or delete anything in orOS. When asked to, say which app does it and offer the text the user can paste.");
     }
