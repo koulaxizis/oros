@@ -169,8 +169,26 @@ test("mergeSlice: blobs union minus superseded, header by kt, gone vaults droppe
   assert.equal(PV.primaryKid(two), v.kid);
 });
 
+test("forward compatibility: a newer slice or unknown KDF is kept, never wiped", async () => {
+  const v = await PV.create("pw", FAST);
+  const mine = sliceOf(v.kid, v.vault);
+  const future = { v: 2, whatever: { x: [1, 2] } };
+  assert.ok(PV.isFuture(future));
+  assert.deepEqual(PV.normSlice(future), future);
+  assert.deepEqual(PV.mergeSlice(mine, future), future);
+  assert.deepEqual(PV.mergeSlice(future, mine), future);
+  // A vault whose KDF this version cannot run stays in the slice.
+  const odd = JSON.parse(JSON.stringify(mine));
+  odd.vaults[v.kid].kdf = { alg: "argon2id", m: 65536, t: 50, p: 1, salt: v.vault.kdf.salt };
+  const n = PV.normSlice(odd);
+  assert.equal(n.vaults[v.kid].kdf.t, 50);
+  await assert.rejects(PV.unlock(n.vaults[v.kid], v.kid, "pw"), /bad-kdf/);
+  odd.vaults[v.kid].kdf = { alg: "x", nested: { a: 1 } };
+  assert.deepEqual(PV.normSlice(odd).vaults, {});
+});
+
 test("normSlice: malformed input is dropped, never thrown", () => {
-  [null, 3, "x", [], { v: 2 }, { v: 1, vaults: [] }, { v: 1, vaults: { nothex: {} } }].forEach((raw) => {
+  [null, 3, "x", [], { v: 0 }, { v: "2" }, { v: 1, vaults: [] }, { v: 1, vaults: { nothex: {} } }].forEach((raw) => {
     assert.deepEqual(PV.normSlice(raw), PV.empty());
   });
   const kid = "a".repeat(24);
@@ -260,6 +278,20 @@ test("pmcore merge: per-item LWW, equal mtime tie-break, tombstones, symmetric/a
     prev = PC.normEntry(next);
   }
   assert.deepEqual(prev.hist.map((h) => h.pw), ["p6", "p5", "p4", "p3", "p2"]);
+});
+
+test("source rules: no Math.random, no console output, no innerHTML, only the vault key in localStorage", () => {
+  const fs = require("fs");
+  for (const f of ["pmcrypto.js", "pmcore.js", "kdbx.js", "pmapp.js"]) {
+    const src = fs.readFileSync(path.join(DIR, f), "utf8").replace(/\/\/.*$/gm, "");
+    assert.ok(!/Math\.random/.test(src), f + ": Math.random");
+    assert.ok(!/console\./.test(src), f + ": console output");
+    assert.ok(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write/.test(src), f + ": HTML injection sink");
+    assert.ok(!/eval\(|new Function/.test(src), f + ": eval");
+    const sets = src.match(/localStorage\.setItem\(([^,]+),/g) || [];
+    sets.forEach((s) => assert.equal(s, "localStorage.setItem(VAULT_KEY,", f));
+    assert.ok(!/sessionStorage|indexedDB/.test(src), f + ": other storage");
+  }
 });
 
 test("normEntry bounds every value and drops junk", () => {

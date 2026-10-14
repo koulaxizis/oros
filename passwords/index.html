@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=passwords" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
-  <title>Password Generator · orOS</title>
+  <title>Passwords · orOS</title>
 
   <link rel="stylesheet" href="passwords.css?v=1.98.00">
 
@@ -15,6 +15,7 @@
 
   <header id="toolbar">
     <div id="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" id="tab-pv" data-tab="pv" aria-controls="vault"></button>
       <button type="button" role="tab" class="tab" id="tab-pw" data-tab="pw" aria-controls="gen"></button>
       <button type="button" role="tab" class="tab" id="tab-ph" data-tab="ph" aria-controls="gen"></button>
       <button type="button" role="tab" class="tab" id="tab-au" data-tab="au" aria-controls="audit"></button>
@@ -24,6 +25,9 @@
   <main id="main">
     <p id="no-crypto" class="warn" hidden></p>
 
+    <!-- Password manager: the encrypted vault (pmapp.js builds it) -->
+    <section id="vault" role="tabpanel" aria-labelledby="tab-pv" hidden></section>
+
     <!-- Generator: password / PIN / passphrase -->
     <section id="gen" role="tabpanel">
       <div class="card" id="out-card">
@@ -31,6 +35,7 @@
         <div class="out-actions">
           <button type="button" class="act" id="regen-btn"></button>
           <button type="button" class="act primary" id="copy-btn"></button>
+          <button type="button" class="act" id="save-vault-btn"></button>
         </div>
         <div class="meter" id="gen-meter">
           <div class="bar"><span class="fill"></span></div>
@@ -174,6 +179,10 @@
   <script src="words-eff.js?v=1.98.00"></script>
   <script src="common.js?v=1.98.00"></script>
   <script src="pwcore.js?v=1.98.00"></script>
+  <script src="pmcore.js?v=1.98.00"></script>
+  <script src="pmcrypto.js?v=1.98.00"></script>
+  <script src="kdbx.js?v=1.98.00"></script>
+  <script src="pmapp.js?v=1.98.00"></script>
   <script src="passwords.js?v=1.98.00"></script>
 
 </body>

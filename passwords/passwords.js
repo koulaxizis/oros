@@ -1,15 +1,19 @@
 // ============================================================
-// orOS Password Generator — App logic (v1.0.0)
+// orOS Passwords — App logic (v2.0.0; generator v1.0.0)
 // Random passwords, PINs and Diceware passphrases, with their
 // exact entropy, plus a strength auditor for any password.
+// v2: the Vault tab (pmapp.js) is the password manager; this file
+// keeps the generator and the checker and hands the vault the
+// generator, the toasts and the lock options (window.PwApp).
 //   - randomness: crypto.getRandomValues only (pwcore.js)
 //   - everything runs on this device; nothing is sent, synced or
 //     saved except the options below
 //   - real-dice mode: type your own rolls, get the EFF words
 // Data:
-//   - no synced slice (nothing worth syncing, nothing secret kept)
-//   - device-local (R10): oros-passwords-prefs (tab + options).
-//     Generated and audited passwords are never stored.
+//   - the vault is pmapp.js's encrypted slice `passwords`
+//   - device-local (R10): oros-passwords-prefs (tab + options +
+//     lock options). Generated and audited passwords are never
+//     stored.
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Prefs
@@ -43,7 +47,7 @@
 
   var STRINGS = {
     en: {
-      "app": "Password Generator", "tab.pw": "Password", "tab.ph": "Passphrase", "tab.au": "Check",
+      "app": "Passwords", "tab.pv": "Vault", "btn.toVault": "Save to vault", "tab.pw": "Password", "tab.ph": "Passphrase", "tab.au": "Check",
       "mode.chars": "Characters", "mode.pin": "PIN",
       "len": "Length", "pinlen": "Digits", "words": "Words",
       "o.lower": "Lowercase (a–z)", "o.upper": "Uppercase (A–Z)", "o.digits": "Digits (0–9)",
@@ -99,7 +103,7 @@
       "about.seclists": "Common passwords list from"
     },
     el: {
-      "app": "Γεννήτρια κωδικών", "tab.pw": "Κωδικός", "tab.ph": "Φράση", "tab.au": "Έλεγχος",
+      "app": "Κωδικοί", "tab.pv": "Κρύπτη", "btn.toVault": "Στην κρύπτη", "tab.pw": "Κωδικός", "tab.ph": "Φράση", "tab.au": "Έλεγχος",
       "mode.chars": "Χαρακτήρες", "mode.pin": "PIN",
       "len": "Μήκος", "pinlen": "Ψηφία", "words": "Λέξεις",
       "o.lower": "Πεζά (a–z)", "o.upper": "Κεφαλαία (A–Z)", "o.digits": "Ψηφία (0–9)",
@@ -192,7 +196,8 @@
 
   // ---------- 2. Prefs ----------
   var DEF_PREFS = {
-    tab: "pw",
+    tab: "pv",
+    lock: 5, lockHide: 1,
     pw: { mode: "chars", length: P.LEN_DEF, pin: P.PIN_DEF, lower: 1, upper: 1, digits: 1,
           symbols: 1, noAmbig: 0, custom: "" },
     ph: { src: "device", list: "large", words: P.WORDS_DEF, sep: "space", caps: 0, extra: 0 },
@@ -213,7 +218,9 @@
     var ph = r.ph && typeof r.ph === "object" ? r.ph : {};
     var D = DEF_PREFS;
     return {
-      tab: oneOf(r.tab, ["pw", "ph", "au"], D.tab),
+      tab: oneOf(r.tab, ["pv", "pw", "ph", "au"], D.tab),
+      lock: oneOf(r.lock, [1, 2, 5, 15, 30, 60], D.lock),
+      lockHide: bool(r.lockHide, D.lockHide),
       pw: {
         mode: oneOf(pw.mode, ["chars", "pin"], D.pw.mode),
         length: intIn(pw.length, P.LEN_MIN, P.LEN_MAX, D.pw.length),
@@ -335,11 +342,13 @@
     out.textContent = "";
     if (!current) {
       $("copy-btn").disabled = true;
+      $("save-vault-btn").disabled = true;
       setMeter($("gen-meter"), null, true);
       if (prefs.tab === "ph" && prefs.ph.src === "dice") out.appendChild(el("span", "placeholder", t("dice.empty")));
       return;
     }
     $("copy-btn").disabled = false;
+    $("save-vault-btn").disabled = false;
     // One span per run of the same class: letters, digits, symbols.
     var v = current.value, run = "", cls = null;
     function flush() { if (run) out.appendChild(el("span", "c-" + cls, run)); run = ""; }
@@ -437,6 +446,7 @@
     prefs.tab = tab;
     savePrefs();
     renderTabs();
+    if (tab === "pv") return;
     if (tab === "au") { $("au-in").focus(); return; }
     generate();
   }
@@ -448,8 +458,10 @@
       b.setAttribute("aria-selected", on ? "true" : "false");
       b.tabIndex = on ? 0 : -1;
     });
-    $("gen").hidden = tab === "au";
+    $("gen").hidden = tab === "au" || tab === "pv";
     $("audit").hidden = tab !== "au";
+    $("about").hidden = tab === "pv";
+    if (window.PmApp) { if (tab === "pv") window.PmApp.show(); else window.PmApp.hide(); }
     $("pw-opts").hidden = tab !== "pw";
     $("ph-opts").hidden = tab !== "ph";
     $("gen").setAttribute("aria-labelledby", tab === "ph" ? "tab-ph" : "tab-pw");
@@ -542,6 +554,8 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
+    $("tab-pv").textContent = t("tab.pv");
+    $("save-vault-btn").textContent = t("btn.toVault");
     $("tab-pw").textContent = t("tab.pw");
     $("tab-ph").textContent = t("tab.ph");
     $("tab-au").textContent = t("tab.au");
@@ -606,7 +620,7 @@
       if (p.orosShortcuts.handle(e)) e.stopPropagation();
     }, true);
     document.addEventListener("keydown", function (e) {
-      if (prefs.tab === "au") return;
+      if (prefs.tab === "au" || prefs.tab === "pv") return;
       var tg = e.target;
       // Ctrl/Cmd + C with nothing selected copies the shown password.
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "c" || e.key === "C")) {
@@ -674,6 +688,11 @@
     });
     $("regen-btn").addEventListener("click", generate);
     $("copy-btn").addEventListener("click", copyCurrent);
+    $("save-vault-btn").addEventListener("click", function () {
+      if (!current || !window.PmApp) return;
+      window.PmApp.addWithPassword(current.value);
+      setTab("pv");
+    });
 
     Array.prototype.forEach.call($("pw-mode").querySelectorAll("button"), function (b) {
       b.addEventListener("click", onOpt(function () { prefs.pw.mode = b.getAttribute("data-mode"); }));
@@ -738,6 +757,49 @@
     });
     wireKeyboard();
   }
+
+  // ---------- 12. What the vault tab uses (pmapp.js) ----------
+  function generateFor(kind) {
+    if (!ready) return "";
+    try {
+      if (kind === "ph") return P.genPassphrase({ list: prefs.ph.list, words: prefs.ph.words, sep: prefs.ph.sep,
+                                                   caps: prefs.ph.caps, extra: prefs.ph.extra }).value;
+      return (prefs.pw.mode === "pin" ? P.genPin(prefs.pw.pin) : P.genPassword(pwOpts())).value;
+    } catch (e) { return ""; }
+  }
+  var undoFn = null;
+  function undoToast(text, label, fn) {
+    var box = $("toast");
+    if (!box) return;
+    box.textContent = "";
+    box.classList.remove("show");
+    box.appendChild(el("span", "", text));
+    var b = el("button", "toast-btn", label);
+    b.type = "button";
+    undoFn = fn;
+    b.addEventListener("click", function () {
+      box.classList.remove("show");
+      var f = undoFn; undoFn = null;
+      if (f) f();
+    });
+    box.appendChild(b);
+    void box.offsetWidth;
+    box.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); undoFn = null; }, 8000);
+  }
+  window.PwApp = {
+    toast: function (msg) { showToast(msg); },
+    undoToast: undoToast,
+    scoreLabel: function (s) { return t("s." + s); },
+    generate: generateFor,
+    prefs: function () { return { lock: prefs.lock, lockHide: prefs.lockHide }; },
+    setLockPrefs: function (mins, hide) {
+      prefs.lock = [1, 2, 5, 15, 30, 60].indexOf(mins) >= 0 ? mins : 5;
+      prefs.lockHide = hide ? 1 : 0;
+      savePrefsNow();
+    }
+  };
 
   function boot() {
     loadPrefs();

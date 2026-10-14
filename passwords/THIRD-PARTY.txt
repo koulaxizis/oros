@@ -1,4 +1,4 @@
-Third-party data in the orOS Password Generator
+Third-party data and code in orOS Passwords
 ================================================
 
 1. words-eff.js: EFF Diceware word lists (Large Wordlist, Short Wordlist 1)
@@ -34,3 +34,16 @@ Third-party data in the orOS Password Generator
    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
+
+3. ../vendor/hash-wasm/argon2.umd.min.js: hash-wasm 4.12.0 (the Argon2
+   build only), by Dani Biró, https://github.com/Daninet/hash-wasm
+   License: MIT, full text in ../vendor/hash-wasm/LICENSE.
+   Changes: none. Used for the vault's master password (Argon2id) and to
+   open KeePass files that use Argon2d or Argon2id.
+
+4. ../vendor/jsqr/jsQR.js (shared with the QR app): jsQR by Cosmo Wolfe,
+   Apache-2.0. Loaded only to read a two-factor QR code when the browser
+   has no BarcodeDetector.
+
+The KeePass reader and writer (kdbx.js), ChaCha20, Salsa20 and the vault
+crypto (pmcrypto.js) are orOS's own code.

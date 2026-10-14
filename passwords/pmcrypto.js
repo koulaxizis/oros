@@ -349,7 +349,9 @@
   function seal(session, vault, snapshot, opts) {
     var now = (opts && opts.now) || Date.now();
     var id = "s" + hex(random(16));
-    var sup = supOf(vault, Object.keys(vault.blobs || {}));
+    // opts.ids: the blobs this snapshot really contains (the app leaves
+    // out a blob it could not open, so that one is never dropped).
+    var sup = supOf(vault, (opts && opts.ids) || Object.keys(vault.blobs || {}));
     var iv = random(12);
     return gcmEncrypt(session.ek, iv, utf8(canon(snapshot)), blobAad(session.kid, id, now, sup))
       .then(function (ct) { return { id: id, blob: { ct: b64(ct), iv: b64(iv), sup: sup, t: now } }; });
@@ -394,9 +396,23 @@
     if (Array.isArray(b.sup) && sup.length !== b.sup.length) return null;   // the AAD would not match anyway
     return { ct: b.ct, iv: b.iv, sup: sup, t: b.t };
   }
+  // KDF settings this version cannot use (a newer orOS, other bounds)
+  // are kept as they are, so this device never drops such a vault; it
+  // just cannot open it (openVK: "bad-kdf").
+  function opaqueKdf(k) {
+    if (!k || typeof k !== "object" || typeof k.alg !== "string" || Object.keys(k).length > 12) return null;
+    var out = {};
+    var ok = Object.keys(k).sort().every(function (n) {
+      var x = k[n];
+      if (typeof x === "number" ? !isFinite(x) : !(typeof x === "string" && x.length <= 200)) return false;
+      out[n] = x;
+      return true;
+    });
+    return ok ? out : null;
+  }
   function normVault(v) {
     if (!v || typeof v !== "object" || !okTime(v.c) || !okTime(v.kt)) return null;
-    var kdf = normKdf(v.kdf);
+    var kdf = normKdf(v.kdf) || opaqueKdf(v.kdf);
     if (!kdf || !okWrap(v.pw)) return null;
     var out = { blobs: {}, c: v.c, kdf: kdf, kt: v.kt, pw: { ct: v.pw.ct, iv: v.pw.iv },
                 rk: okWrap(v.rk) ? { ct: v.rk.ct, iv: v.rk.iv } : null };
@@ -409,8 +425,12 @@
     return out;
   }
   function empty() { return { gone: {}, v: V, vaults: {} }; }
+  // A slice written by a NEWER format (v > 1) is kept whole and never
+  // rewritten here: the app says "update orOS" instead of wiping it.
+  function isFuture(raw) { return !!raw && typeof raw === "object" && typeof raw.v === "number" && raw.v > V; }
   function normSlice(raw) {
     var out = empty();
+    if (isFuture(raw)) return JSON.parse(JSON.stringify(raw));
     if (!raw || typeof raw !== "object" || raw.v !== V) return out;
     var gone = raw.gone && typeof raw.gone === "object" ? raw.gone : {};
     Object.keys(gone).sort().forEach(function (k) { if (KID_RE.test(k) && okTime(gone[k])) out.gone[k] = gone[k]; });
@@ -454,6 +474,11 @@
 
   // The sync merge: pure, deterministic, symmetric, no keys.
   function mergeSlice(x, y) {
+    if (isFuture(x) || isFuture(y)) {
+      var fx = isFuture(x) ? x : null, fy = isFuture(y) ? y : null;
+      var pick = !fy ? fx : !fx ? fy : (fx.v !== fy.v ? (fx.v > fy.v ? fx : fy) : (canon(fx) >= canon(fy) ? fx : fy));
+      return JSON.parse(JSON.stringify(pick));
+    }
     var a = normSlice(x), b = normSlice(y), out = empty();
     var gone = {};
     [a.gone, b.gone].forEach(function (g) { Object.keys(g).forEach(function (k) { gone[k] = Math.max(gone[k] || 0, g[k]); }); });
@@ -498,7 +523,7 @@
     create: create, unlock: unlock, openVK: openVK, sessionFromVK: sessionFromVK,
     rewrap: rewrap, newRecovery: newRecovery,
     seal: seal, sealMerge: sealMerge, mergeId: mergeId, openBlob: openBlob,
-    empty: empty, normSlice: normSlice, mergeSlice: mergeSlice, primaryKid: primaryKid,
+    empty: empty, normSlice: normSlice, isFuture: isFuture, mergeSlice: mergeSlice, primaryKid: primaryKid,
     withVault: withVault, withGone: withGone
   };
 
