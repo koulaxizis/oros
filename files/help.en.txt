@@ -30,6 +30,17 @@ Below `Files` in the folder tree, `Dropbox` shows your whole Dropbox, not only t
 - Browse folders, search names with `Search in Dropbox…` and sort by `Name`, `Size` or `Modified`. Tap a file to preview it (text and images) and `Download` to save a copy.
 - orOS sync's own folder shows a lock. Its contents are encrypted and only orOS sync reads them, so they are not listed.
 - The account button at the top right shows your Dropbox name and `Disconnect Dropbox`.
+
+### Copy or move into the orOS disk
+The orOS disk is the encrypted place: with orOS sync on, every file on it is encrypted before it leaves your device.
+
+- Tick the boxes next to files or folders (the box in the header selects everything shown), then choose `Copy to orOS disk` or `Move to orOS disk`. A file's preview has the same two buttons.
+- Pick the disk folder, check the summary and tap `Start`. Folders come with everything inside them.
+- A copy never replaces a file on the disk: if the name is taken, the new file gets " (1)".
+- `Move` removes each Dropbox original only after its encrypted copy is confirmed in orOS sync. The originals go to Dropbox's deleted files, where you can restore them for 30 days. A file that changed in Dropbox during the move stays there.
+- Moving needs orOS sync connected and unlocked. Copying works without it.
+- `Stop` ends a transfer: files already copied stay on the disk and no original is removed. If a transfer is cut short (closed tab, no connection), Files offers to `Continue` it next time.
+
 - If Files says Dropbox is not set up yet, open `Use my own app key`: create a Dropbox app with Full Dropbox access, tick the permissions shown, add the redirect address shown and enter the app key.
 
 > Files go straight between this browser and Dropbox. The connection is kept on this device only and is not synced.
@@ -58,4 +69,5 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 - Search shows at most 100 results and matches names only, not file contents.
 - On touch screens you can select only one item at a time.
 - Very large files are slow to sync, as each is encrypted in one piece.
-- The Dropbox view is read only for now, and needs a connection to the internet.
+- The Dropbox view needs a connection to the internet.
+- One transfer takes up to 1000 files and 1 GB; files over 300 MB stay in Dropbox (the disk encrypts each file whole in memory).

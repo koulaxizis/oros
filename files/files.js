@@ -643,6 +643,10 @@
       closeDrawer: closeTreeDrawer,
       onEnter: function () { clearSelection(); renderTree(); },
       fmtKB: fmtKB,
+      fs: FS,
+      vault: vaultApi,
+      pickFolder: pickFolderDialog,
+      diskRoot: ROOT,
       isImageExt: isImageExt,
       isTextExt: isTextExt,
       mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
@@ -1301,6 +1305,17 @@
     var paths = selectionPaths();
     if (!paths.length) return;
 
+    return pickFolderDialog(t(mode === "move" ? "dlg.moveTitle" : "dlg.copyTitle"),
+                            t(mode === "move" ? "dlg.move" : "dlg.copy")).then(function (dst) {
+      if (!dst) return;
+      if (mode === "move") performMove(paths, dst);
+      else performCopy(paths, dst);
+    });
+  }
+
+  // A disk folder chooser: resolves the chosen path, or null on cancel.
+  // Also used by the Dropbox view (copy / move into the disk).
+  function pickFolderDialog(titleText, okText) {
     return new Promise(function (resolve) {
       var stale = $("dlg-picker");
       if (stale) stale.remove();
@@ -1310,7 +1325,7 @@
       dlg.className = "f-dialog";
 
       var title = document.createElement("h3");
-      title.textContent = t(mode === "move" ? "dlg.moveTitle" : "dlg.copyTitle");
+      title.textContent = titleText;
       var label = document.createElement("p");
       label.className = "picker-label";
       label.textContent = t("dlg.pickerLabel");
@@ -1358,7 +1373,7 @@
       var okBtn = document.createElement("button");
       okBtn.type = "button";
       okBtn.className = "primary";
-      okBtn.textContent = t(mode === "move" ? "dlg.move" : "dlg.copy");
+      okBtn.textContent = okText;
       okBtn.addEventListener("click", function () { dlg.close(); resolve(chosen); });
       row.appendChild(cancelBtn);
       row.appendChild(okBtn);
@@ -1368,11 +1383,8 @@
       dlg.appendChild(treeHost);
       dlg.appendChild(row);
       document.body.appendChild(dlg);
+      dlg.addEventListener("cancel", function () { resolve(null); });
       dlg.showModal();
-    }).then(function (dst) {
-      if (!dst) return;
-      if (mode === "move") performMove(paths, dst);
-      else performCopy(paths, dst);
     });
   }
 

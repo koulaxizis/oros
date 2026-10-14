@@ -41,6 +41,7 @@
   var CB_LS    = "oros-files-dbx-cb";
   var VIEW_LS  = "oros-files-dbx-view";
   var SYNC_LS  = "oros-files-dbx-sync";
+  var JOB_LS   = "oros-files-dbx-job";
   var CHANNEL  = "oros-files-dbx";
   var PKCE_MAX_MS = 15 * 60 * 1000;
   var LIST_PAGES = 50;                    // 50 × 2000 entries per folder
@@ -81,7 +82,7 @@
       "setup.reset": "Forget my app key",
       "connect.title": "See your whole Dropbox here",
       "connect.body":  "Browse every folder of your Dropbox, preview files and download copies. Files travel straight between this browser and Dropbox, with no orOS server in between.",
-      "connect.note":  "orOS asks Dropbox to read your files and, for moving files into the encrypted disk later, to change them. The connection stays on this device.",
+      "connect.note":  "orOS asks Dropbox to read your files and, for moving files into the encrypted disk, to remove the originals. The connection stays on this device.",
       "connect.go":    "Connect Dropbox",
       "connect.wait":  "Finish the sign-in in the Dropbox window…",
       "connected":   "Dropbox connected",
@@ -105,7 +106,40 @@
       "pv.notUtf8":  "This file is not UTF-8 text. Download it to open it.",
       "pv.noDl":     "Dropbox does not allow downloading this file (for example a Paper doc).",
       "dl.started":  "Download started",
-      "dl.fail":     "Download failed"
+      "dl.fail":     "Download failed",
+      "disk":        "Files",
+      "sel.n":       "{n} selected",
+      "sel.all":     "Select all",
+      "sel.one":     "Select",
+      "sel.clear":   "Clear selection",
+      "x.copy":      "Copy to orOS disk",
+      "x.move":      "Move to orOS disk",
+      "x.copyTitle": "Copy to the orOS disk",
+      "x.moveTitle": "Move to the orOS disk",
+      "x.copyOk":    "Copy here",
+      "x.moveOk":    "Move here",
+      "x.gather":    "Collecting files…",
+      "x.none":      "Nothing to transfer.",
+      "x.confirmCopy": "Copy {n} files ({size}) to \"{dst}\"?",
+      "x.confirmMove": "Move {n} files ({size}) to \"{dst}\"?",
+      "x.moveNote":  "Each original goes to Dropbox's deleted files (restorable there for 30 days) only after its encrypted copy is confirmed in orOS sync. Anything not confirmed stays in Dropbox.",
+      "x.skipped":   "{n} items are left out (orOS sync's folder, files Dropbox won't let download, files over 300 MB, or past the limit of 1000 files / 1 GB per transfer).",
+      "x.go":        "Start",
+      "x.cancel":    "Cancel",
+      "x.stop":      "Stop",
+      "x.copying":   "Copying {i} of {n}…",
+      "x.waiting":   "Waiting for orOS sync to save the encrypted copies…",
+      "x.deleting":  "Removing originals from Dropbox…",
+      "x.copied":    "{n} files copied to the orOS disk",
+      "x.moved":     "{n} files moved to the orOS disk",
+      "x.kept":      "{n} originals stay in Dropbox (their encrypted copy was not confirmed, or they changed)",
+      "x.failed":    "{n} files could not be copied",
+      "x.stopped":   "Stopped. Files already copied stay on the disk; no original was removed.",
+      "x.needSync":  "Moving needs orOS sync connected and unlocked, so the encrypted copy exists before the original is removed. Copy works without it.",
+      "x.busy":      "A transfer is already running.",
+      "x.resume":    "A copy or move to the orOS disk was interrupted.",
+      "x.resumeGo":  "Continue",
+      "x.resumeDrop":"Discard"
     },
     el: {
       "tree":        "Dropbox",
@@ -136,7 +170,7 @@
       "setup.reset": "Διαγραφή του δικού μου app key",
       "connect.title": "Δες εδώ όλο το Dropbox σου",
       "connect.body":  "Περιηγήσου σε κάθε φάκελο του Dropbox, δες προεπισκόπηση και κατέβασε αντίγραφα. Τα αρχεία πηγαίνουν κατευθείαν από αυτόν τον browser στο Dropbox, χωρίς κανέναν server του orOS στη μέση.",
-      "connect.note":  "Το orOS ζητά από το Dropbox να διαβάζει τα αρχεία σου και, για τη μεταφορά αρχείων στον κρυπτογραφημένο δίσκο αργότερα, να τα αλλάζει. Η σύνδεση μένει σε αυτή τη συσκευή.",
+      "connect.note":  "Το orOS ζητά από το Dropbox να διαβάζει τα αρχεία σου και, για τη μεταφορά αρχείων στον κρυπτογραφημένο δίσκο, να αφαιρεί τα πρωτότυπα. Η σύνδεση μένει σε αυτή τη συσκευή.",
       "connect.go":    "Σύνδεση με Dropbox",
       "connect.wait":  "Ολοκλήρωσε τη σύνδεση στο παράθυρο του Dropbox…",
       "connected":   "Το Dropbox συνδέθηκε",
@@ -160,7 +194,40 @@
       "pv.notUtf8":  "Το αρχείο δεν είναι κείμενο UTF-8. Κατέβασέ το για να το ανοίξεις.",
       "pv.noDl":     "Το Dropbox δεν επιτρέπει τη λήψη αυτού του αρχείου (π.χ. έγγραφο Paper).",
       "dl.started":  "Ξεκίνησε η λήψη",
-      "dl.fail":     "Η λήψη απέτυχε"
+      "dl.fail":     "Η λήψη απέτυχε",
+      "disk":        "Αρχεία",
+      "sel.n":       "{n} επιλεγμένα",
+      "sel.all":     "Επιλογή όλων",
+      "sel.one":     "Επιλογή",
+      "sel.clear":   "Καθαρισμός επιλογής",
+      "x.copy":      "Αντιγραφή στον δίσκο orOS",
+      "x.move":      "Μεταφορά στον δίσκο orOS",
+      "x.copyTitle": "Αντιγραφή στον δίσκο του orOS",
+      "x.moveTitle": "Μεταφορά στον δίσκο του orOS",
+      "x.copyOk":    "Αντιγραφή εδώ",
+      "x.moveOk":    "Μεταφορά εδώ",
+      "x.gather":    "Συλλογή αρχείων…",
+      "x.none":      "Δεν υπάρχει κάτι για μεταφορά.",
+      "x.confirmCopy": "Αντιγραφή {n} αρχείων ({size}) στο «{dst}»;",
+      "x.confirmMove": "Μεταφορά {n} αρχείων ({size}) στο «{dst}»;",
+      "x.moveNote":  "Κάθε πρωτότυπο πηγαίνει στα διαγραμμένα του Dropbox (επαναφέρεται από εκεί για 30 ημέρες) μόνο αφού επιβεβαιωθεί το κρυπτογραφημένο αντίγραφό του στον συγχρονισμό του orOS. Ό,τι δεν επιβεβαιωθεί μένει στο Dropbox.",
+      "x.skipped":   "{n} στοιχεία μένουν εκτός (ο φάκελος συγχρονισμού του orOS, αρχεία που το Dropbox δεν αφήνει να κατέβουν, αρχεία πάνω από 300 MB, ή πέρα από το όριο των 1000 αρχείων / 1 GB ανά μεταφορά).",
+      "x.go":        "Έναρξη",
+      "x.cancel":    "Άκυρο",
+      "x.stop":      "Διακοπή",
+      "x.copying":   "Αντιγραφή {i} από {n}…",
+      "x.waiting":   "Αναμονή για να αποθηκεύσει ο συγχρονισμός τα κρυπτογραφημένα αντίγραφα…",
+      "x.deleting":  "Αφαίρεση των πρωτοτύπων από το Dropbox…",
+      "x.copied":    "Αντιγράφηκαν {n} αρχεία στον δίσκο του orOS",
+      "x.moved":     "Μεταφέρθηκαν {n} αρχεία στον δίσκο του orOS",
+      "x.kept":      "{n} πρωτότυπα μένουν στο Dropbox (δεν επιβεβαιώθηκε το κρυπτογραφημένο αντίγραφο ή άλλαξαν στο μεταξύ)",
+      "x.failed":    "{n} αρχεία δεν αντιγράφηκαν",
+      "x.stopped":   "Διακόπηκε. Όσα αρχεία αντιγράφηκαν μένουν στον δίσκο· κανένα πρωτότυπο δεν αφαιρέθηκε.",
+      "x.needSync":  "Η μεταφορά χρειάζεται τον συγχρονισμό του orOS συνδεδεμένο και ξεκλείδωτο, ώστε να υπάρχει το κρυπτογραφημένο αντίγραφο πριν αφαιρεθεί το πρωτότυπο. Η αντιγραφή δουλεύει και χωρίς αυτόν.",
+      "x.busy":      "Μια μεταφορά είναι ήδη σε εξέλιξη.",
+      "x.resume":    "Μια αντιγραφή ή μεταφορά στον δίσκο του orOS διακόπηκε.",
+      "x.resumeGo":  "Συνέχεια",
+      "x.resumeDrop":"Απόρριψη"
     }
   };
 
@@ -194,6 +261,10 @@
   var waiting = false;         // popup sign-in running
   var refreshing = null;       // single-flight refresh promise
   var pvUrl = null;
+  var sel = {};                // lower path → row (selection in the list)
+  var shown = [];              // rows on screen, in order
+  var jobRunning = false;
+  var stopAsked = false;
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -520,6 +591,20 @@
 
     var hdr = el("div", "entry-list-header");
     hdr.id = "dbx-head";
+    var all = el("button", "dbx-check");
+    all.type = "button";
+    all.id = "dbx-all";
+    all.setAttribute("role", "checkbox");
+    all.setAttribute("aria-checked", "false");
+    all.setAttribute("aria-label", t("sel.all"));
+    all.title = t("sel.all");
+    all.addEventListener("click", function () {
+      var every = shown.length && shown.every(function (r) { return sel[r.lower]; });
+      sel = {};
+      if (!every) shown.forEach(function (r) { if (!locked(r)) sel[r.lower] = r; });
+      paintSel();
+    });
+    hdr.appendChild(all);
     [["col.name", "name"], ["col.size", "size"], ["col.date", "date"]].forEach(function (c) {
       var th = el("button", "col-th");
       th.type = "button";
@@ -541,6 +626,34 @@
     msg.id = "dbx-msg";
     msg.hidden = true;
     panel.appendChild(msg);
+
+    // Selection bar: copy / move the selection into the orOS disk.
+    var sb2 = el("div", "dbx-selbar");
+    sb2.id = "dbx-selbar";
+    sb2.hidden = true;
+    sb2.appendChild(el("span", "dbx-seln"));
+    var sp = el("span", "spacer");
+    sb2.appendChild(sp);
+    [["x.copy", "copy", ""], ["x.move", "move", "primary"]].forEach(function (b) {
+      var x = el("button", "pv-btn " + b[2], t(b[0]));
+      x.type = "button";
+      x.dataset.mode = b[1];
+      x.addEventListener("click", function () { transfer(b[1], selectedRows()); });
+      sb2.appendChild(x);
+    });
+    sb2.appendChild(btn("pv-x", ICON.x, t("sel.clear"), function () { sel = {}; paintSel(); }));
+    panel.appendChild(sb2);
+
+    // Transfer progress.
+    var jb = el("div", "dbx-job");
+    jb.id = "dbx-job";
+    jb.hidden = true;
+    jb.appendChild(el("span", "dbx-job-text"));
+    var stop = el("button", "pv-btn", t("x.stop"));
+    stop.type = "button";
+    stop.addEventListener("click", function () { stopAsked = true; stop.disabled = true; });
+    jb.appendChild(stop);
+    panel.appendChild(jb);
     var st = el("div", "dbx-status");
     st.id = "dbx-status";
     panel.appendChild(st);
@@ -673,6 +786,7 @@
         showMsg(t("connect.title"), t("connect.body"), [go1, el("p", "dbx-note", t("connect.note")), ownKeyForm()]);
         return;
       }
+      if (offerResume()) return;
       if (query !== null) runSearch(query); else load();
     });
   }
@@ -721,6 +835,28 @@
     } catch (e) { return "-"; }
   }
 
+  function locked(r) { return C.isUnder(r.path, syncRoots()); }
+
+  function selectedRows() {
+    return Object.keys(sel).map(function (k) { return sel[k]; });
+  }
+
+  function paintSel() {
+    var n = Object.keys(sel).length;
+    [].forEach.call(document.querySelectorAll("#dbx-entries .entry"), function (li) {
+      var on = !!sel[li.dataset.lower];
+      li.classList.toggle("selected", on);
+      var c = li.querySelector(".dbx-check");
+      if (c) c.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    var all = $("dbx-all");
+    if (all) all.setAttribute("aria-checked", n && shown.length && shown.every(function (r) { return sel[r.lower] || locked(r); }) ? "true" : (n ? "mixed" : "false"));
+    var bar = $("dbx-selbar");
+    if (!bar) return;
+    bar.hidden = !n || jobRunning;
+    bar.querySelector(".dbx-seln").textContent = t("sel.n", { n: n });
+  }
+
   function paintRows() {
     hideMsg();
     var ul = $("dbx-entries");
@@ -732,12 +868,26 @@
       th.classList.toggle("sorted", on);
       th.querySelector(".sort-ind").textContent = on ? (sortAsc ? " ▲" : " ▼") : "";
     });
+    shown = list;
     list.forEach(function (r) {
-      var li = el("li", "entry" + (query !== null ? " search-result" : ""));
+      var li = el("li", "entry" + (query !== null ? " search-result" : "") + (sel[r.lower] ? " selected" : ""));
       li.tabIndex = 0;
-      var locked = r.dir && C.isUnder(r.path, roots);
+      li.dataset.lower = r.lower;
+      var isLocked = locked(r);
+      var ck = el("button", "dbx-check");
+      ck.type = "button";
+      ck.setAttribute("role", "checkbox");
+      ck.setAttribute("aria-checked", sel[r.lower] ? "true" : "false");
+      ck.setAttribute("aria-label", t("sel.one") + ": " + r.name);
+      ck.disabled = isLocked;
+      ck.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (sel[r.lower]) delete sel[r.lower]; else sel[r.lower] = r;
+        paintSel();
+      });
+      li.appendChild(ck);
       var g = el("span", "glyph " + (r.dir ? "folder" : "file"));
-      g.innerHTML = locked ? ICON.lock : (r.dir ? ICON.folder : ICON.file);
+      g.innerHTML = isLocked ? ICON.lock : (r.dir ? ICON.folder : ICON.file);
       li.appendChild(g);
       li.appendChild(el("span", "ename col-name", r.name));
       if (query !== null) {
@@ -747,9 +897,13 @@
         li.appendChild(el("span", "col-date", fmtDate(r)));
       }
       li.addEventListener("click", function () { activate(r); });
-      li.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); activate(r); } });
+      li.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); activate(r); }
+        else if (e.key === " " && !isLocked) { e.preventDefault(); ck.click(); }
+      });
       ul.appendChild(li);
     });
+    paintSel();
     var n = list.length;
     $("dbx-status").textContent = query !== null
       ? (n ? t("results", { n: n }) : t("noResults"))
@@ -768,6 +922,7 @@
   }
 
   function go(path) {
+    sel = {};
     var p = C.normPath(path);
     cwd = p === null ? "" : p;
     saveView();
@@ -777,6 +932,7 @@
   }
 
   function runSearch(q) {
+    if (query !== q) sel = {};
     query = q;
     var my = ++renderToken;
     hideMsg();
@@ -821,6 +977,12 @@
     var acts = el("div", "pv-actions");
     acts.id = "dbx-pv-acts";
     if (r.dl) {
+      [["x.copy", "copy"], ["x.move", "move"]].forEach(function (b) {
+        var x = el("button", "pv-btn dbx-pv-x", t(b[0]));
+        x.type = "button";
+        x.addEventListener("click", function () { closePreview(); transfer(b[1], [r]); });
+        acts.appendChild(x);
+      });
       var d = el("button", "pv-btn primary", t("pv.download"));
       d.type = "button";
       d.addEventListener("click", function () { save(r); });
@@ -890,6 +1052,304 @@
       setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
       toast(t("dl.started"));
     }).catch(function () { toast(t("dl.fail")); });
+  }
+
+  // ---------- Wave 2: copy / move into the orOS disk ----------
+  // The disk is the encrypted area: Vault Drive syncs every file of it
+  // through orOS sync, sealed with the user's passphrase. A copy is a
+  // download from Dropbox written to the disk (fs.js tells the vault).
+  // A MOVE also removes the Dropbox original, and only when its
+  // encrypted copy is confirmed: the vault's synced manifest holds the
+  // destination with the same SHA-256 and nothing for it is queued
+  // (OrosDropboxCore.confirmedCopy). The removal is conditional on the
+  // rev that was copied (delete_v2 parent_rev) and lands in Dropbox's
+  // deleted files. Every step is saved in JOB_LS, so an interrupted
+  // transfer continues without duplicates or loses nothing.
+  //   job = { mode, dest, folders: [path], items: [{ src, rev, hash,
+  //           size, rel, dst?, h?, st: "todo"|"copied"|"failed"|
+  //           "deleted"|"kept" }], t }
+  var VAULT_WAIT_MS = 5 * 60 * 1000;
+
+  function vault() { try { return ctx && ctx.vault ? ctx.vault() : null; } catch (e) { return null; } }
+  function vaultUsable() {
+    var v = vault();
+    try { return !!(v && v.status().usable); } catch (e) { return false; }
+  }
+  function disk() { return ctx && ctx.fs ? ctx.fs() : null; }
+  function saveJob(job) { writeJSON(JOB_LS, job); }
+  function readJob() {
+    var j = readJSON(JOB_LS);
+    return j && (j.mode === "copy" || j.mode === "move") && typeof j.dest === "string" && Array.isArray(j.items) ? j : null;
+  }
+  function dropJob() { del(JOB_LS); }
+
+  function sha256Hex(buf) {
+    return crypto.subtle.digest("SHA-256", buf).then(function (h) {
+      var b = new Uint8Array(h), x = "";
+      for (var i = 0; i < b.length; i++) x += ("0" + b[i].toString(16)).slice(-2);
+      return x;
+    });
+  }
+  function digest(bytes) { return crypto.subtle.digest("SHA-256", bytes); }
+
+  function listRecursive(path) {
+    var out = [];
+    function page(j, n) {
+      out = out.concat(C.mapList(j && j.entries));
+      if (j && j.has_more && typeof j.cursor === "string" && n < LIST_PAGES) {
+        return rpc("files/list_folder/continue", { cursor: j.cursor }).then(function (k) { return page(k, n + 1); });
+      }
+      return out;
+    }
+    return rpc("files/list_folder", { path: path, recursive: true, limit: 2000 }).then(function (j) { return page(j, 1); });
+  }
+
+  function jobText(s) {
+    var jb = $("dbx-job");
+    if (!jb) return;
+    jb.hidden = !s;
+    jb.querySelector(".dbx-job-text").textContent = s || "";
+  }
+
+  // A small modal confirm (native <dialog>, textContent only).
+  function confirmBox(lines, okText) {
+    return new Promise(function (resolve) {
+      var d = el("dialog", "f-dialog dbx-confirm");
+      lines.forEach(function (l, i) { d.appendChild(el(i ? "p" : "h3", i ? "" : "", l)); });
+      var row = el("div", "dlg-row");
+      var no = el("button", "", t("x.cancel"));
+      no.type = "button";
+      var yes = el("button", "primary", okText);
+      yes.type = "button";
+      function done(v) { try { d.close(); } catch (e) {} d.remove(); resolve(v); }
+      no.addEventListener("click", function () { done(false); });
+      yes.addEventListener("click", function () { done(true); });
+      d.addEventListener("cancel", function (e) { e.preventDefault(); done(false); });
+      row.appendChild(no);
+      row.appendChild(yes);
+      d.appendChild(row);
+      document.body.appendChild(d);
+      d.showModal();
+      yes.focus();
+    });
+  }
+
+  function transfer(mode, picked) {
+    if (jobRunning || readJob()) { toast(t("x.busy")); return; }
+    picked = (picked || []).filter(function (r) { return !locked(r); });
+    if (!picked.length) return;
+    if (mode === "move" && !vaultUsable()) { toast(t("x.needSync")); return; }
+    var fs = disk();
+    if (!fs || !ctx.pickFolder) return;
+    jobText(t("x.gather"));
+    var listings = {};
+    var folders = picked.filter(function (r) { return r.dir; });
+    var chain = Promise.resolve();
+    folders.forEach(function (f) {
+      chain = chain.then(function () { return listRecursive(f.path).then(function (l) { listings[f.path] = l; }); });
+    });
+    chain.then(function () {
+      jobText("");
+      var plan = C.planItems(picked, listings, syncRoots());
+      if (!plan.items.length) { toast(t("x.none")); return; }
+      return ctx.pickFolder(t(mode === "move" ? "x.moveTitle" : "x.copyTitle"),
+                            t(mode === "move" ? "x.moveOk" : "x.copyOk")).then(function (dest) {
+        if (!dest) return;
+        var lines = [t(mode === "move" ? "x.confirmMove" : "x.confirmCopy",
+                       { n: plan.items.length, size: ctx.fmtKB(plan.bytes), dst: dest === ctx.diskRoot ? t("disk") : C.baseName(dest) })];
+        if (mode === "move") lines.push(t("x.moveNote"));
+        if (plan.skipped.length) lines.push(t("x.skipped", { n: plan.skipped.length }));
+        return confirmBox(lines, t("x.go")).then(function (ok) {
+          if (!ok) return;
+          if (mode === "move" && !vaultUsable()) { toast(t("x.needSync")); return; }
+          var job = { mode: mode, dest: dest, folders: folders.map(function (f) { return f.path; }), t: Date.now(),
+                      items: plan.items.map(function (it) { it.st = "todo"; return it; }) };
+          saveJob(job);
+          sel = {};
+          paintSel();
+          return runJob(job);
+        });
+      });
+    }).catch(function (e) {
+      jobText("");
+      showError(e);
+    });
+  }
+
+  // One item: download, check, write to the disk (never over another file).
+  function copyItem(job, it) {
+    var fs = disk();
+    var dir = job.dest + (it.rel.indexOf("/") > 0 ? "/" + it.rel.slice(0, it.rel.lastIndexOf("/")) : "");
+    var name = it.rel.slice(it.rel.lastIndexOf("/") + 1);
+    var blob, h;
+    return download(it.src).then(function (b) {
+      blob = b;
+      return b.arrayBuffer();
+    }).then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      return (it.hash ? C.contentHash(bytes, digest) : Promise.resolve("")).then(function (ch) {
+        if (it.hash && ch !== it.hash) throw fail("net");        // a damaged download never lands
+        return sha256Hex(buf);
+      });
+    }).then(function (hex) {
+      h = hex;
+      // Resume: the planned destination may already hold this content.
+      if (it.dst) {
+        return fs.read(it.dst).then(function (b) { return b.arrayBuffer(); }).then(sha256Hex).then(function (have) {
+          return have === h ? "same" : "other";
+        }, function () { return "none"; });
+      }
+      return "none";
+    }).then(function (state) {
+      if (state === "same") return null;
+      if (state === "none" && it.dst) return fs.write(it.dst, blob);
+      return fs.mkdir(dir).then(null, function () {}).then(function () {
+        return fs.ls(dir).then(function (l) { return (l || []).map(function (e) { return e.name; }); }, function () { return []; });
+      }).then(function (taken) {
+        it.dst = dir + "/" + C.uniqueName(name, taken);
+        saveJob(job);                                  // the name is fixed before the write
+        return fs.write(it.dst, blob);
+      });
+    }).then(function () {
+      it.h = h;
+      it.st = "copied";
+      saveJob(job);
+    });
+  }
+
+  // Wait until the vault has pushed every copied file (or give up).
+  function waitVault(job) {
+    var v = vault();
+    var started = Date.now();
+    function pending() {
+      return job.items.some(function (it) { return it.st === "copied" && it.dst && v.isQueued(it.dst); });
+    }
+    function round() {
+      if (stopAsked) return Promise.resolve(false);
+      if (!vaultUsable()) return Promise.resolve(false);
+      var st = v.status();
+      if (!st.busy && !pending()) return Promise.resolve(true);
+      if (Date.now() - started > VAULT_WAIT_MS) return Promise.resolve(false);
+      var kick = st.busy ? Promise.resolve() : v.sync("files-dropbox").then(null, function () {});
+      return kick.then(function () { return new Promise(function (r) { setTimeout(r, 1500); }); }).then(round);
+    }
+    // The vault queues each write after a short debounce: one sync first.
+    return (v && typeof v.sync === "function" ? v.sync("files-dropbox").then(null, function () {}) : Promise.resolve()).then(round);
+  }
+
+  function removeOriginals(job) {
+    var v = vault();
+    var chain = Promise.resolve();
+    job.items.forEach(function (it) {
+      if (it.st !== "copied") return;
+      chain = chain.then(function () {
+        if (stopAsked) return;
+        var entry = null, queued = true;
+        try { entry = v.manifestEntry(it.dst); queued = v.isQueued(it.dst); } catch (e) {}
+        if (!C.confirmedCopy(it, entry, queued) || !it.rev) { it.st = "kept"; saveJob(job); return; }
+        return rpc("files/delete_v2", { path: it.src, parent_rev: it.rev }).then(function () {
+          it.st = "deleted";
+        }, function (e) {
+          if (e && e.kind === "auth") throw e;
+          it.st = e && e.kind === "notfound" ? "deleted" : "kept";   // gone already = nothing to keep
+        }).then(function () { saveJob(job); });
+      });
+    });
+    // A selected folder goes too, once no file is left anywhere in it.
+    return chain.then(function () {
+      var c2 = Promise.resolve();
+      if (stopAsked) return c2;
+      (job.folders || []).forEach(function (f) {
+        var mine = job.items.filter(function (it) { return it.src.toLowerCase().indexOf(f.toLowerCase() + "/") === 0; });
+        if (!mine.length || mine.some(function (it) { return it.st !== "deleted"; })) return;
+        c2 = c2.then(function () {
+          return listRecursive(f).then(function (l) {
+            if (l.some(function (r) { return !r.dir; })) return;
+            return rpc("files/delete_v2", { path: f });
+          }).then(null, function () {});
+        });
+      });
+      return c2;
+    });
+  }
+
+  function runJob(job) {
+    jobRunning = true;
+    stopAsked = false;
+    var stopBtn = $("dbx-job") && $("dbx-job").querySelector("button");
+    if (stopBtn) stopBtn.disabled = false;
+    paintSel();
+    var todo = job.items.filter(function (it) { return it.st === "todo"; });
+    var n = job.items.length, i = n - todo.length;
+    var chain = Promise.resolve();
+    todo.forEach(function (it) {
+      chain = chain.then(function () {
+        if (stopAsked) return;
+        i++;
+        jobText(t("x.copying", { i: i, n: n }));
+        return copyItem(job, it).then(null, function (e) {
+          if (e && (e.kind === "auth" || e.kind === "offline")) throw e;
+          it.st = "failed";
+          saveJob(job);
+        });
+      });
+    });
+    return chain.then(function () {
+      if (stopAsked) return "stopped";
+      if (job.mode !== "move") return "done";
+      jobText(t("x.waiting"));
+      return waitVault(job).then(function () {
+        if (stopAsked) return "stopped";
+        jobText(t("x.deleting"));
+        return removeOriginals(job).then(function () { return stopAsked ? "stopped" : "done"; });
+      });
+    }).then(function (how) {
+      var copied = 0, moved = 0, kept = 0, failed = 0;
+      job.items.forEach(function (it) {
+        if (it.st === "copied") copied++;
+        else if (it.st === "deleted") moved++;
+        else if (it.st === "kept") kept++;
+        else if (it.st === "failed") failed++;
+      });
+      if (job.mode === "move") kept += copied;          // copied but never confirmed
+      dropJob();
+      if (how === "stopped") toast(t("x.stopped"));
+      else if (job.mode === "move") { if (moved) toast(t("x.moved", { n: moved })); }
+      else if (copied) toast(t("x.copied", { n: copied }));
+      if (kept) toast(t("x.kept", { n: kept }));
+      if (failed) toast(t("x.failed", { n: failed }));
+    }, function (e) {
+      // Offline / signed out: the job stays saved and can continue later.
+      showError(e);
+    }).then(function () {
+      jobRunning = false;
+      jobText("");
+      paintSel();
+      if (active) render();
+    });
+  }
+
+  // An interrupted transfer (tab closed, offline, signed out) is offered
+  // again when the Dropbox view opens.
+  function offerResume() {
+    var job = readJob();
+    if (!job || jobRunning) return false;
+    var go1 = primary(t("x.resumeGo"), function () {
+      hideMsg();
+      if (job.mode === "move" && !vaultUsable() && job.items.some(function (it) { return it.st === "todo" || it.st === "copied"; })) {
+        // Without sync nothing can be confirmed: copy what is left, keep every original.
+        job.items.forEach(function (it) { if (it.st === "copied") it.st = "kept"; });
+        job.mode = "copy";
+        saveJob(job);
+        toast(t("x.needSync"));
+      }
+      runJob(job);
+    });
+    var drop = el("button", "pv-btn", t("x.resumeDrop"));
+    drop.type = "button";
+    drop.addEventListener("click", function () { dropJob(); render(); });
+    showMsg(t("x.resume"), "", [go1, drop]);
+    return true;
   }
 
   // ---------- Files integration ----------

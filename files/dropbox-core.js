@@ -216,6 +216,68 @@
     });
   }
 
+  // ---------- Wave 2: copy / move into the orOS disk ----------
+  // Limits: the vault encrypts each file whole in memory.
+  var MAX_FILES = 1000;
+  var MAX_BYTES = 1024 * 1024 * 1024;     // per transfer
+  var MAX_FILE  = 300 * 1024 * 1024;      // per file
+
+  // One Dropbox name → a name the disk accepts (files.js BAD_CHARS).
+  function localName(seg) {
+    var s = cleanName(seg).replace(/[\/\\:*?"<>|]/g, "_").replace(/^\.+$/, "_");
+    return s || "_";
+  }
+
+  // Selected rows + the recursive listing of each selected folder →
+  // { items: [{ src, rev, hash, size, rel }], skipped: [{ path, why }], bytes }.
+  // rel is the path under the destination folder ("Photos/2024/a.jpg"
+  // for a selected folder "Photos"), every segment made disk-safe.
+  // listings: { "<folder path>": [rows] }. Sync's own folders never go.
+  function planItems(selected, listings, syncRoots) {
+    var items = [], skipped = [], bytes = 0, seen = {};
+    function add(r, rel) {
+      if (seen[r.lower]) return;
+      seen[r.lower] = true;
+      if (isUnder(r.path, syncRoots)) { skipped.push({ path: r.path, why: "sync" }); return; }
+      if (r.dl === false) { skipped.push({ path: r.path, why: "nodl" }); return; }
+      if (r.size > MAX_FILE) { skipped.push({ path: r.path, why: "big" }); return; }
+      if (items.length >= MAX_FILES) { skipped.push({ path: r.path, why: "count" }); return; }
+      if (bytes + r.size > MAX_BYTES) { skipped.push({ path: r.path, why: "total" }); return; }
+      bytes += r.size;
+      items.push({ src: r.path, rev: r.rev || "", hash: r.hash || "", size: r.size, rel: rel });
+    }
+    selected.forEach(function (r) {
+      if (!r.dir) { add(r, localName(r.name)); return; }
+      if (isUnder(r.path, syncRoots)) { skipped.push({ path: r.path, why: "sync" }); return; }
+      var base = r.path.toLowerCase();
+      (listings[r.path] || []).filter(function (x) {
+        return !x.dir && x.lower.indexOf(base + "/") === 0;
+      }).sort(function (a, b) { return a.lower < b.lower ? -1 : 1; }).forEach(function (x) {
+        var tail = x.path.slice(r.path.length + 1).split("/").map(localName).join("/");
+        add(x, localName(r.name) + "/" + tail);
+      });
+    });
+    return { items: items, skipped: skipped, bytes: bytes };
+  }
+
+  // A Dropbox original may be deleted only when the encrypted copy is
+  // confirmed: the vault's synced manifest holds the destination with
+  // the same SHA-256 the bytes had, and nothing for it waits in the
+  // vault queue. Anything else keeps the original.
+  function confirmedCopy(item, entry, queued) {
+    return !!(item && item.h && item.dst && entry && entry.h === item.h && !queued);
+  }
+
+  function uniqueName(name, taken) {
+    if (taken.indexOf(name) === -1) return name;
+    var dot = name.lastIndexOf(".");
+    var base = dot > 0 ? name.slice(0, dot) : name;
+    var ext = dot > 0 ? name.slice(dot) : "";
+    var i = 1;
+    while (taken.indexOf(base + " (" + i + ")" + ext) !== -1) i++;
+    return base + " (" + i + ")" + ext;
+  }
+
   return {
     APP_KEY: APP_KEY,
     AUTH_URL: AUTH_URL,
@@ -238,6 +300,13 @@
     isUnder: isUnder,
     sortRows: sortRows,
     errorKind: errorKind,
-    contentHash: contentHash
+    contentHash: contentHash,
+    MAX_FILES: MAX_FILES,
+    MAX_BYTES: MAX_BYTES,
+    MAX_FILE: MAX_FILE,
+    localName: localName,
+    planItems: planItems,
+    confirmedCopy: confirmedCopy,
+    uniqueName: uniqueName
   };
 });
