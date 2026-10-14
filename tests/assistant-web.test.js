@@ -11,7 +11,7 @@ const hi = [{ r: "user", text: "opening hours of the KEP?" }];
 test("web: off by default, synced as a setting", () => {
   assert.equal(C.emptyData().set.web, 0);
   const a = C.mergeAssist({ set: { m: 5, chat: 0, prov: "anthropic", web: 1 } }, { set: { m: 3, chat: 1, prov: "openai" } });
-  assert.deepEqual(a.set, { m: 5, chat: 0, prov: "anthropic", web: 1 });
+  assert.deepEqual(a.set, { m: 5, chat: 0, prov: "anthropic", web: 1, ws: "auto", wsBase: "" });
   assert.equal(C.mergeAssist({ set: { m: 5, prov: "anthropic", web: "yes" } }, null).set.web, 1);
 });
 

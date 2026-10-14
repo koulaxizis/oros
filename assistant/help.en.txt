@@ -67,11 +67,16 @@ Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP,
 - Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
 
 ## Search the internet
-In `Settings` → `Internet`, `Let Claude search the internet when an answer needs it` lets Claude look things up on the web: opening hours, news, prices, a restaurant for your trip. It is off unless you switch it on, and it works only with Claude.
-- Claude decides when a question needs a search, at most 3 searches per answer. The line above the message box says `Web search on`.
-- Each answer shows what was searched (`Searched the web: …`) and a `Sources` list with the pages it used. The links open in a new tab.
-- The search runs on Anthropic's servers. Anthropic charges $10 per 1,000 searches on top of the tokens; `Used this month` in the settings counts your searches.
-- Search words go to Anthropic and its search partner. Claude is told never to put your orOS data in them unless you ask for that exact search.
+In `Settings` → `Internet`, `Let the assistant search the internet when an answer needs it` lets the assistant look things up on the web: opening hours, news, prices, a restaurant for your trip. It is off unless you switch it on, and it works with every AI service except the built-in browser model.
+- `Search with` → `Automatic`: Claude uses Anthropic's own search; every other service uses Wikipedia.
+- `Wikipedia`: free, with no key. Good for facts, places and people.
+- `Tavily`: searches the whole web, news and opening hours too. Make a free key at tavily.com (1,000 searches a month at no cost) and save it under `Tavily key`.
+- `My own SearXNG server`: open source, on your own computer or server. Enter its address; in its settings.yml add `json` to `search.formats` and let this site call it (CORS).
+- `Test the search` tries the chosen source and says whether it works.
+- The assistant decides when a question needs a search. The line above the message box says `Web search on`. Each answer shows what was searched (`Searched the web (…): …`) with the pages found, and the pages it read. The links open in a new tab.
+- When a short result is not enough, the assistant reads the whole page: Wikipedia pages through Wikipedia, others through Jina Reader (r.jina.ai). It can open only a page that a search returned or that you wrote yourself.
+- Anthropic's search costs $10 per 1,000 searches on top of the tokens; `Used this month` counts them. Wikipedia and SearXNG cost nothing; Tavily is free up to its monthly limit.
+- Search words go to the source you chose. The assistant is told never to put your orOS data in them unless you ask for that exact search.
 
 ## Briefing
 On a new conversation, `Briefing` sums up your day in one answer: today's agenda, what is late, birthdays and other dates this week, and how this month's spending looks. [Today](app:today) has the same button (the sparkles at the top).
@@ -92,7 +97,7 @@ On a new conversation, `Briefing` sums up your day in one answer: today's agenda
 - `Chat only` turns off every search: the assistant then sees only what you type.
 - With `Built-in browser model` nothing leaves the device at all.
 - A photo or PDF goes out only when you attach it and press `Send`, and only to that service.
-- Internet search is off unless you switch it on (Claude only); then search words also go to Anthropic's search partner.
+- Internet search is off unless you switch it on; then search words go to the source you chose in `Search with`.
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.
