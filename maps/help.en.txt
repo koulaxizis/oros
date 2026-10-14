@@ -67,6 +67,7 @@ Coverage depends on open timetables. In Greece it includes Athens (buses, trolle
 
 - Move the map and it stops following you. `Recenter` brings it back.
 - `Mute voice` silences the instructions.
+- The instructions are spoken only with a voice installed on your device, never with a browser's online voice (such as Chrome's "Google …" voices), which would send them to its server. If your device has no voice for the orOS language, a note says so and you follow the screen; you can add a voice in your system's speech settings.
 - By car, a speed limit sign appears next to your speed when OpenStreetMap knows the limit of the road you're on. It shows the number as written on the road (a square sign for mph) and turns red when you go more than 5 km/h over it. No sign means the limit isn't known; always follow the real road signs.
 - The bottom bar shows the arrival time, the time left and the distance left. Before a turn, the lanes appear under the instruction: the bright arrows are the lanes to take.
 - `Exit navigation` needs a second tap within 3 seconds.

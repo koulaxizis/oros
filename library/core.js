@@ -851,6 +851,27 @@
     if (a < text.length) push(a, text.length);
     return out;
   }
+  // The voice to read with: only a voice installed on this device
+  // (localService === true). A network voice (Chrome's "Google ..."
+  // voices) sends the text to its server, so it is never picked; no
+  // local voice for the language -> null (the caller says so and does
+  // not speak). Same language first (the part before "-"), then the
+  // exact tag, then the system default.
+  function localVoice(voices, lang) {
+    var want = String(lang || "").toLowerCase().replace(/_/g, "-").trim();
+    var base = want.split("-")[0];
+    if (!voices || !base) return null;
+    var best = null, score = -1;
+    for (var i = 0; i < (voices.length || 0); i++) {
+      var v = voices[i];
+      if (!v || v.localService !== true) continue;
+      var vl = String(v.lang || "").toLowerCase().replace(/_/g, "-");
+      if (vl.split("-")[0] !== base) continue;
+      var sc = (vl === want ? 2 : 0) + (v["default"] === true ? 1 : 0);
+      if (sc > score) { score = sc; best = v; }
+    }
+    return best;
+  }
   // What the voice is given: line-end hyphens joined, spaces squashed.
   function speechText(s) {
     return String(s || "").replace(/(\S)[-­]\n(?=[a-zß-ÿά-ώἀ-῿])/g, "$1")
@@ -1318,7 +1339,7 @@
     viewBooks: viewBooks, continueList: continueList, progressOf: progressOf, exportMarkdown: exportMarkdown, notesMarkdown: notesMarkdown, notesPlain: notesPlain,
     estPages: estPages, estPagesBytes: estPagesBytes, shelfItemOf: shelfItemOf, shelfTarget: shelfTarget,
     COLOR_NAMES: COLOR_NAMES,
-    speechParts: speechParts, speechText: speechText, guessLang: guessLang,
+    speechParts: speechParts, speechText: speechText, guessLang: guessLang, localVoice: localVoice,
     mergeStats: mergeStats, statsEmpty: statsEmpty, addReading: addReading, statsSummary: statsSummary,
     bookSeconds: bookSeconds, todayLine: todayLine,
     packBook: packBook, dictWord: dictWord, sentenceAround: sentenceAround, dictUrl: dictUrl, dictPage: dictPage, dictParse: dictParse, htmlText: htmlText, askText: askText, fb2Book: fb2Book, fb2Encoding: fb2Encoding, cbzBook: cbzBook, cbzPages: cbzPages, comicInfo: comicInfo, natCmp: natCmp, timeLeft: timeLeft, dayBefore: dayBefore, ymdOf: ymdOf, DEV_RE: DEV_RE

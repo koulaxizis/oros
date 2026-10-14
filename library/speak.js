@@ -1,9 +1,10 @@
 // ============================================================
 // orOS Library — read aloud (v1.1.0)
 // Reads the book from the page on screen with the device's own voices
-// (speechSynthesis; nothing leaves the device). The text is spoken one
-// short part at a time (core.speechParts); the part being read is
-// marked in the book and the page follows it, so the place read moves
+// (speechSynthesis, only voices with localService === true: nothing
+// leaves the device; no local voice for the language → a note, no
+// reading). The text is spoken one short part at a time
+// (core.speechParts); the part being read is marked in the book and the page follows it, so the place read moves
 // on as it is heard. Pause keeps the part; play again resumes there,
 // or from the page on screen if you turned pages meanwhile.
 // Engine hooks (epub.js, pdfview.js):
@@ -25,17 +26,29 @@
   function available() { return !!(synth && typeof window.SpeechSynthesisUtterance === "function"); }
 
   // ---------- Voice ----------
+  // Only a voice installed on this device (core.localVoice): a network
+  // voice would send the book's text to its server. No local voice for
+  // the language → a polite note, never the browser's default voice.
   function voiceFor(lang) {
     if (!synth || !lang) return null;
-    var base = lang.toLowerCase().split("-")[0];
-    var list = synth.getVoices() || [], best = null, score = -1;
-    list.forEach(function (v) {
-      var vl = String(v.lang || "").toLowerCase().replace("_", "-");
-      if (vl.split("-")[0] !== base) return;
-      var sc = (v.localService ? 4 : 0) + (vl === lang.toLowerCase() ? 2 : 0) + (v["default"] ? 1 : 0);
-      if (sc > score) { score = sc; best = v; }
-    });
-    return best;
+    var list = [];
+    try { list = synth.getVoices() || []; } catch (e) { list = []; }
+    return C.localVoice(list, lang);
+  }
+  // Chrome fills the voice list a moment after the first ask: wait once
+  // (voiceschanged or 2 s), then decide.
+  var voicesWaited = false;
+  function waitVoices(cb) {
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      voicesWaited = true;
+      try { synth.removeEventListener("voiceschanged", go); } catch (e) {}
+      cb();
+    }
+    try { synth.addEventListener("voiceschanged", go); } catch (e) {}
+    setTimeout(go, 2000);
   }
   function langOf(c, sec) {
     var l = (c.book.lang || sec.lang || "").trim();
@@ -91,10 +104,21 @@
     if (!st || !st.playing) return;
     if (st.k >= st.parts.length) { nextSection(); return; }
     var p = st.parts[st.k], my = st.gen, k = st.k;
-    var u = new window.SpeechSynthesisUtterance(C.speechText(st.text.slice(p.a, p.b)));
-    u.lang = st.lang;
     var v = voiceFor(st.lang);
-    if (v) u.voice = v;
+    if (!v) {
+      var none = true;
+      try { none = !(synth.getVoices() || []).length; } catch (e) {}
+      if (none && !voicesWaited) {
+        waitVoices(function () { if (st && st.gen === my && st.playing) speak(); });
+        return;
+      }
+      stop();
+      LIB.toast(t("speak.noVoice"));
+      return;
+    }
+    var u = new window.SpeechSynthesisUtterance(C.speechText(st.text.slice(p.a, p.b)));
+    u.lang = v.lang || st.lang;
+    u.voice = v;
     u.rate = LIB.prefs.rate || 1;
     u.onend = function () {
       if (!st || st.gen !== my || st.k !== k || !st.playing) return;

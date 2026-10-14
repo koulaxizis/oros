@@ -19,6 +19,8 @@
 //     ?route) and their strict parsing on the way in.
 //   - routeTrack(): a route as a track (tracks-core shape) for "Save
 //     as track", with the start, stops and destination as waypoints.
+//   - localVoice(): the voice for spoken guidance, only one installed
+//     on this device (never a network voice that sends the text out).
 //
 // API: window.OrosMapsRoute (module.exports in Node).
 // ============================================================
@@ -207,6 +209,28 @@
     return { name: cleanLabel(name), segs: [seg], wpts: wpts };
   }
 
+  // The voice to read with: only a voice installed on this device
+  // (localService === true). A network voice (Chrome's "Google ..."
+  // voices) sends the text to its server, so it is never picked; no
+  // local voice for the language -> null (the caller says so and does
+  // not speak). Same language first (the part before "-"), then the
+  // exact tag, then the system default.
+  function localVoice(voices, lang) {
+    var want = String(lang || "").toLowerCase().replace(/_/g, "-").trim();
+    var base = want.split("-")[0];
+    if (!voices || !base) return null;
+    var best = null, score = -1;
+    for (var i = 0; i < (voices.length || 0); i++) {
+      var v = voices[i];
+      if (!v || v.localService !== true) continue;
+      var vl = String(v.lang || "").toLowerCase().replace(/_/g, "-");
+      if (vl.split("-")[0] !== base) continue;
+      var sc = (vl === want ? 2 : 0) + (v["default"] === true ? 1 : 0);
+      if (sc > score) { score = sc; best = v; }
+    }
+    return best;
+  }
+
   var API = {
     VER: VER, AVOID: AVOID, LINK_MODES: LINK_MODES, INDICATIONS: INDICATIONS, MAX_PTS: MAX_PTS,
     avoidFor: avoidFor, routeUrl: routeUrl, alternatives: alternatives, clock: clock,
@@ -214,7 +238,7 @@
     geoUri: geoUri, osmPointUrl: osmPointUrl, osmDirUrl: osmDirUrl,
     orosPointLink: orosPointLink, orosRouteLink: orosRouteLink,
     parsePoint: parsePoint, parseRoute: parseRoute, parseLink: parseLink,
-    routeTrack: routeTrack, cleanLabel: cleanLabel
+    routeTrack: routeTrack, cleanLabel: cleanLabel, localVoice: localVoice
   };
   if (typeof module === "object" && module.exports) module.exports = API;
   else root.OrosMapsRoute = API;

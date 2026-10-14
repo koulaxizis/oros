@@ -4,6 +4,8 @@ orOS is built to keep your data yours. It has no accounts, no cookies and no tra
 ## Your data stays in your browser
 Everything you create in orOS is saved in this browser, on this device. There is no orOS server that collects it. orOS uses no cookies and no tracking or analytics of any kind.
 
+Reading aloud ([Library](app:library), voice guidance in [Maps](app:maps)) uses only voices installed on this device, so the text is never sent anywhere. orOS has no voice input.
+
 Because the data lives in the browser, each browser and each device has its own copy. To have the same data everywhere, use [sync](help:t/sync). To keep a copy for safety, use [backups](help:t/backup).
 
 In the orOS Android app, [Contacts](app:contacts) and [Calendar](app:calendar) can also show your contacts and events in the phone's own Contacts and Calendar (`On this phone`). They go only into this phone, never to a server, and other apps on the phone that you allowed to read contacts or calendars can see them there. Turning the switch off removes them.
