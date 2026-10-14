@@ -569,6 +569,88 @@ dialog.wide { width: min(760px, calc(100vw - 32px)); }
 .kb-key:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
 .kb-c { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 10px; color: #555; pointer-events: none; }
 
+/* ---------- 7f. Instrument tracks, piano roll, loops ---------- */
+.row.track.inst .dot { border-radius: 50%; }
+.clip.midi { background: color-mix(in srgb, var(--tc) 26%, var(--bg)); }
+.lane-hint { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--text-dim); pointer-events: none; white-space: nowrap; }
+.row.track.drop .lane { outline: 2px dashed var(--accent); outline-offset: -3px; }
+.kb-target { font-size: 12px; font-weight: 700; color: var(--accent); }
+
+dialog.full { width: calc(100vw - 16px); max-width: none; height: calc(100dvh - 16px); max-height: none; padding: 10px 12px 8px; overflow: hidden; }
+dialog.full[open] { display: flex; flex-direction: column; }
+dialog.full .dlg-head { margin-bottom: 6px; flex-shrink: 0; }
+#pr-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 8px; flex-shrink: 0; }
+.pr-mode { gap: 4px; }
+.pr-mode .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; }
+.pr-mode .chip svg { width: 16px; height: 16px; }
+dialog #pr-vel { width: 96px; min-height: 0; }
+#pr-vel-out { min-width: 26px; font-variant-numeric: tabular-nums; }
+dialog #pr-grid-sel { width: auto; }
+.pr-icons { display: inline-flex; flex-wrap: wrap; gap: 2px; }
+.pr-scroll {
+  --pr-white: var(--bg);
+  --pr-black: color-mix(in srgb, var(--text) 7%, var(--bg));
+  --pr-row: color-mix(in srgb, var(--text) 7%, transparent);
+  --pr-bar: color-mix(in srgb, var(--text) 38%, transparent);
+  --pr-beat: color-mix(in srgb, var(--text) 17%, transparent);
+  --pr-sub: color-mix(in srgb, var(--text) 8%, transparent);
+  flex: 1 1 auto; min-height: 120px; overflow: auto; position: relative; overscroll-behavior: contain;
+  border: 1px solid var(--border); border-radius: 8px 8px 0 0; background: var(--bg);
+}
+.pr-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pr-inner { display: grid; position: relative; }
+.pr-corner { position: sticky; top: 0; left: 0; z-index: 4; background: var(--panel-bg); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.pr-ruler { position: sticky; top: 0; z-index: 3; background: var(--panel-bg); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+.pr-tick { position: absolute; top: 0; bottom: 0; padding: 3px 0 0 4px; border-left: 1px solid var(--border); font-size: 11px; color: var(--text-dim); pointer-events: none; }
+.pr-end { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--tc); pointer-events: none; }
+.pr-keys { position: sticky; left: 0; z-index: 2; background: var(--panel-bg); border-right: 1px solid var(--border); }
+.pr-key { position: absolute; left: 0; right: 0; padding: 0 4px; border: none; border-bottom: 1px solid rgba(0, 0, 0, 0.18); background: #ededed; color: #333; text-align: right; overflow: hidden; }
+.pr-key.b { right: 34%; background: #26262a; color: #ddd; z-index: 1; }
+.pr-keys.drums .pr-key.b { right: 0; }
+.pr-kl { display: block; font-size: 9px; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.pr-key:active { background: var(--accent); color: #fff; }
+.pr-grid { position: relative; touch-action: pan-x pan-y; cursor: crosshair; user-select: none; }
+.pr-grid.select { cursor: default; }
+.pr-note {
+  position: absolute; box-sizing: border-box; border-radius: 3px; overflow: hidden;
+  background: var(--tc); border: 1px solid rgba(0, 0, 0, 0.4); opacity: var(--v, 1);
+  touch-action: none; cursor: grab;
+}
+.pr-note::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 5px; background: rgba(255, 255, 255, 0.28); cursor: ew-resize; }
+.pr-note.sel { opacity: 1; outline: 2px solid var(--text); outline-offset: 0; z-index: 1; }
+.pr-note.out { opacity: 0.3; }
+.pr-nl { display: block; padding-left: 3px; font-size: 9px; line-height: 12px; color: #fff; text-shadow: 0 0 2px #000; white-space: nowrap; pointer-events: none; }
+.pr-out { position: absolute; top: 0; bottom: 0; background: rgba(0, 0, 0, 0.22); pointer-events: none; }
+.pr-ph { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; margin-left: -1px; background: var(--text); pointer-events: none; z-index: 2; will-change: transform; }
+.pr-marq { position: absolute; border: 1px dashed var(--accent); background: var(--accent-soft); pointer-events: none; z-index: 3; }
+.pr-vscroll { flex: 0 0 64px; overflow: hidden; border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; background: var(--bg); }
+.pr-vrow { display: flex; height: 100%; width: max-content; }
+.pr-vlabel { flex: 0 0 auto; position: sticky; left: 0; z-index: 1; padding: 4px; font-size: 10px; color: var(--text-dim); background: var(--panel-bg); border-right: 1px solid var(--border); overflow: hidden; }
+.pr-vstems { position: relative; height: 100%; touch-action: none; cursor: ns-resize; }
+.pr-stem { position: absolute; bottom: 0; width: 4px; border-radius: 2px 2px 0 0; background: var(--tc); opacity: 0.85; pointer-events: none; }
+.pr-stem.sel { background: var(--text); opacity: 1; }
+.pr-foot { margin-top: 6px; flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+
+#loops { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: var(--panel-bg); border-top: 1px solid var(--border); }
+#loops[hidden] { display: none; }
+.lp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.lp-title { font-size: 14px; }
+.lp-kind { gap: 4px; }
+.lp-kind .chip { min-height: 30px; padding: 2px 10px; }
+#lp-close { margin-left: auto; }
+.lp-hint { margin: 0; }
+.lp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; max-height: 172px; overflow-y: auto; overscroll-behavior: contain; }
+.lp-item { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 2px 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); user-select: none; cursor: grab; }
+.lp-grip { flex: 0 0 26px; height: 38px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); touch-action: none; cursor: grab; }
+.lp-grip svg { width: 18px; height: 18px; }
+.lp-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.lp-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-meta { font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-play.on { color: var(--accent); border-color: var(--accent); }
+.lp-ghost { position: fixed; left: 0; top: 0; z-index: 1300; pointer-events: none; padding: 6px 10px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 4px 16px var(--shadow); white-space: nowrap; }
+#add-insts { margin-bottom: 4px; }
+
 /* ---------- 8. Phone + touch ---------- */
 /* ---------- 7c. Remote control (remote.js) ---------- */
 .remote-ind.on { color: var(--accent); }
@@ -685,3 +767,21 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
 [hidden] { display: none !important; }
 /* the tablet / phone Effects window: on a phone the name needs the room */
 @media (max-width: 420px) { #ruf-list .fx-cat { display: none; } }
+/* instrument tracks, piano roll and loops on a phone */
+@media (max-width: 760px) {
+  #loops { order: 2; }
+  .lp-list { max-height: 150px; grid-template-columns: 1fr; }
+  .tp-keys .tbtn { width: 44px; }
+  .pr-hint { display: none; }
+  .pr-tools { gap: 4px 6px; }
+  dialog #pr-vel { width: 72px; }
+  dialog.full { width: 100vw; height: 100dvh; border-radius: 0; padding: 8px 6px 6px; }
+}
+@media (max-width: 760px) {
+  .pr-mode .chip span, .pr-tools .kb-field > span:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  #pr-import, #pr-export { min-height: 32px; padding: 2px 10px; font-size: 12px; }
+}
+@media (pointer: coarse) {
+  .pr-note::after { width: 10px; }
+  .lp-grip { flex-basis: 36px; height: 44px; }
+}

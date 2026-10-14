@@ -1,9 +1,9 @@
 # Studio
-A small multitrack studio: put audio clips on tracks, record over a click, loop a part, add effects, draw automation, play a MIDI keyboard, mix and export the song as WAV, MP3 or Opus.
+A small multitrack studio: put audio clips on tracks, write notes for built-in instruments in a piano roll, start from ready loops, record over a click, add effects, draw automation, play a MIDI keyboard, mix and export the song as WAV, MP3 or Opus.
 
 ## Getting started
 - `Import audio` at the top (the down arrow) brings in audio files: WAV, MP3, OGG, FLAC, M4A, whatever this browser can play. You can also drop files from your computer onto the timeline.
-- `+ Track` adds a track. A project has up to 8.
+- `+ Track` adds a track: an `Audio track` for recordings and audio files, or an `Instrument track` that plays notes with a built-in sound. A project has up to 8.
 - The first import or track makes a new project. Tap or click the project name at the top to rename it, and the menu button at the top left lists your projects.
 
 ## Playing and the timeline
@@ -57,7 +57,34 @@ A small multitrack studio: put audio clips on tracks, record over a click, loop 
 ## Keyboard and MIDI
 - `Keyboard` in the transport opens a piano keyboard with a built-in synth: piano, electric piano, organ, strings, lead and bass. Play it with the mouse or with your fingers, and slide along the keys for a glissando.
 - `Connect MIDI keyboard` asks the browser for MIDI and plays the synth from every connected keyboard, with velocity, the sustain pedal and pitch bend. Studio asks only when you press it, and reconnects by itself next time once you have allowed it.
-- While the keyboard is open, the record button records the synth instead of the microphone: what you play becomes an audio take on the armed or selected track, in time with the click.
+- The keyboard plays the sound of the armed instrument track, or of the selected one; the panel shows which. Changing `Sound` there changes that track's instrument.
+- On an instrument track, the record button records what you play on the keys or a MIDI keyboard into a new MIDI clip, in time with the click, with velocity and the sustain pedal. The notes can be edited afterwards in the piano roll.
+- On an audio track, while the keyboard is open, the record button records the synth as an audio take instead of the microphone.
+
+## Instrument tracks and MIDI
+- An instrument track holds MIDI clips: notes with a pitch, a start, a length and a velocity, played by one of the built-in sounds (piano, electric piano, organ, strings, lead, bass or a drum kit). Its colour dot is round, and its clips show their notes.
+- Double-click or double-tap an empty spot of an instrument track to make a new two-bar clip there; the piano roll opens on it. `New clip` in the track's settings (the dots button) does the same at the playhead.
+- Change the sound with `Instrument` in the track's settings. The notes stay as they are.
+- MIDI clips move, trim, split, duplicate and delete like audio clips, and only onto instrument tracks. The track's effects, automation, mute, solo and sidechain work as for audio, and every export includes the notes.
+- When you change the tempo, MIDI clips keep their bars and beats; audio clips stay where they are.
+- `Import audio` also takes MIDI files (.mid, .midi, type 0 and 1). A file with one part goes into the selected instrument track; otherwise each part gets its own new track, with a sound picked from its General MIDI program (channel 10 becomes the drum kit). An empty project takes the file's tempo.
+- `Export MIDI` saves a standard MIDI file: in the piano roll for one clip (type 0), in the track's settings for the whole track (type 1, with the project's tempo and bars).
+
+## Piano roll
+- Select a MIDI clip and press `Edit notes` in the bar at the bottom, or double-click the clip, or press [[E]]. On a phone the roll fills the screen.
+- `Draw`: tap or click to add a note, and drag while adding to make it longer. `Select`: drag a box around notes, or tap them; with [[Shift]] they are added to the selection.
+- Drag a note to move it, and drag its right end to make it longer or shorter. Double-click or double-tap a note to delete it. With a mouse, hold [[Alt]] to move off the grid.
+- `Grid` sets the step for drawing, moving and quantizing: 1/4 to 1/32, triplets, or `Free`. `Quantize` moves the selected notes (or all of them, with none selected) onto the grid.
+- The `Velocity` slider sets how hard the selected notes play; the lane under the notes shows each one and can be dragged too.
+- Copy, paste, delete, select all, undo and redo have buttons and the usual keys. On a touch screen, drag an empty area to scroll and drag notes to move them.
+- `Import MIDI` in the roll replaces the clip's notes with the notes of a MIDI file.
+- The play button in the roll plays from the start of the clip. Every edit is heard at once and can be undone like any change in Studio.
+
+## Loops
+- `Loops` in the transport opens the loop library: 32 short patterns of drums, bass and keys in eight styles, made by Studio itself and free to use in anything you make.
+- Filter them by style, tempo and kind. The play button lets you hear one at the project's tempo.
+- Drag a loop by its handle onto a track, or press `+` to add it at the playhead. It lands on the selected instrument track when it fits (drums on a drum track, bass and keys on a pitched one), otherwise on a new instrument track.
+- A loop becomes an ordinary MIDI clip: edit its notes, change its sound or repeat it with `Duplicate`. It follows the project's tempo.
 
 ## Remote control
 Control Studio's mixer and transport from a tablet or phone while the sound plays on the PC.
@@ -72,19 +99,20 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 >! Press `Allow` only when it is your own device asking. If you did not just type the code somewhere, press `Deny`.
 
 ## Export
-`Export` (the up arrow) mixes the song into one stereo file: the loop if it is on, else everything from the start to the end of the last clip. Effects, sidechain and automation are all in it.
+`Export` (the up arrow) mixes the song into one stereo file: the loop if it is on, else everything from the start to the end of the last clip. Instrument tracks, effects, sidechain and automation are all in it.
 - `WAV`: 16 or 24 bit, 44.1 or 48 kHz. Lossless, the best choice for further work.
 - `MP3`: 128 to 320 kbit/s. Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
 - `Opus (OGG)`: a smaller file at the same quality, always 48 kHz. Offered where the browser can encode Opus (Chrome, Edge, Firefox).
 
 ## Sync and backup
-- Projects, tracks and clips follow you to your other devices through orOS sync.
+- Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.
 - The audio itself is kept as files on the orOS disk, in the `Studio` folder of the [Files](app:files) app. With sync on and [Vault Drive](help:t/sync) turned on, the files travel to your other devices too. Until a file arrives, its clips show that the audio is not on this device yet.
 - The zoom, the snap, the click, the sound card choices and the armed track stay on this device.
 
 ## Keyboard shortcuts
 - [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[Home]] back to the start. [[Space]] also plays while the effects window is open.
-- [[S]] split, [[D]] duplicate, [[Delete]] delete the selected clip, [[Esc]] deselect.
+- [[S]] split, [[D]] duplicate, [[Delete]] delete the selected clip, [[E]] or [[Enter]] edit the notes of a MIDI clip, [[Esc]] deselect.
+- In the piano roll: [[B]] draw, [[V]] select, [[Q]] quantize, [[Ctrl+A]] [[Ctrl+C]] [[Ctrl+X]] [[Ctrl+V]] [[Ctrl+D]] select all, copy, cut, paste, duplicate, [[Delete]] delete, the arrow keys move the selected notes (by a bar or an octave with [[Shift]]), [[Space]] play, [[Esc]] close.
 - [[+]] and [[-]] zoom, [[Ctrl+Z]] undo, [[Ctrl+Y]] redo.
 - On the ruler, the arrow keys move the playhead by a beat, and by a bar with [[Shift]].
 
@@ -96,8 +124,11 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - Up to 50 projects, 8 tracks and 500 clips per project, one hour per project.
 - An imported file can be up to 100 MB, and a take up to 30 minutes.
 - One remote at a time, and pairing needs internet on both devices.
-- No MIDI tracks yet: the keyboard is recorded as audio, so notes cannot be edited afterwards. MIDI tracks are planned.
-- The synth is recorded without the track's effects; they are added when the take plays. Only Sidechain Ducker takes a key input.
+- A MIDI clip has up to 2000 notes. The instruments are simple built-in synths and a synthesized drum kit; there are no sampled instruments or soundfonts.
+- While you play the keyboard live, you hear the sound without the track's effects; the recorded clip plays with them. The synth recorded as audio is also dry until the take plays. Only Sidechain Ducker takes a key input.
+- A MIDI file's tempo changes are not kept: Studio uses its first tempo. Controllers other than the sustain pedal (pitch bend, modulation) are not recorded into clips.
+- Loops are in 4/4. Audio clips do not stretch with the tempo; only MIDI clips follow it.
+- An older Studio on another device does not show MIDI clips, and when it saves an instrument track, the track plays as piano until its sound is chosen again.
 - Automation has straight lines only, and the master has no lanes. An older Studio on another device drops lanes and sidechain choices when it saves that track.
 - The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more.
 - Effects reset when playback starts, as in a desktop studio.

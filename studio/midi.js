@@ -8,9 +8,14 @@
 //     the person presses; known(): whether it was allowed before, so a
 //     later visit can reconnect without asking again.
 //   - Synth(ctx, out): a small polyphonic synth (two oscillators, a
-//     low-pass filter and an envelope per voice) with a few sounds.
-//     Studio has no MIDI tracks yet: what is played is heard at once
-//     and, while the keyboard panel is open, recorded as audio.
+//     low-pass filter and an envelope per voice) with a few sounds and
+//     a drum kit, played live from the keys or a MIDI keyboard.
+//   - playNote(ctx, out, inst, note, vel, when, dur, gain): one note of
+//     an instrument (MIDI) track scheduled ahead, also in an
+//     OfflineAudioContext for the export; returns a handle with stop()
+//     and disconnect(). The drum kit follows the General MIDI drum map
+//     (36 kick, 38 snare, 42 closed hi-hat, …); every sound is made here
+//     from oscillators and noise, no samples.
 // Loaded before studio.js (window.StudioMidi).
 // ============================================================
 (function (root) {
@@ -47,9 +52,107 @@
     organ:   { a: "sine", b: "square", mix: 0.18, det: 2, oct: 1, cut: 3200, trk: 0.4, env: 0, q: 0.3, A: 0.01, D: 0.1, S: 1, R: 0.08, lvl: 0.4 },
     strings: { a: "sawtooth", b: "sawtooth", mix: 0.8, det: 11, oct: 0, cut: 2200, trk: 0.3, env: 0.4, q: 0.3, A: 0.35, D: 0.6, S: 0.8, R: 0.9, lvl: 0.3 },
     lead:    { a: "sawtooth", b: "square", mix: 0.45, det: 7, oct: 0, cut: 3600, trk: 0.5, env: 1, q: 3, A: 0.01, D: 0.3, S: 0.75, R: 0.2, lvl: 0.32 },
-    bass:    { a: "sawtooth", b: "sine", mix: 0.9, det: 0, oct: -1, cut: 700, trk: 0.4, env: 2, q: 2, A: 0.005, D: 0.4, S: 0.6, R: 0.12, lvl: 0.55 }
+    bass:    { a: "sawtooth", b: "sine", mix: 0.9, det: 0, oct: -1, cut: 700, trk: 0.4, env: 2, q: 2, A: 0.005, D: 0.4, S: 0.6, R: 0.12, lvl: 0.55 },
+    drums:   { kit: true, lvl: 0.9 }
   };
-  var ORDER = ["piano", "epiano", "organ", "strings", "lead", "bass"];
+  var ORDER = ["piano", "epiano", "organ", "strings", "lead", "bass", "drums"];
+
+  // ---------- Drum kit (General MIDI drum map) ----------
+  var KIT = {
+    35: "kick", 36: "kick", 37: "rim", 38: "snare", 39: "clap", 40: "snare", 41: "tom1", 42: "hat", 43: "tom1",
+    44: "pedal", 45: "tom2", 46: "ohat", 47: "tom2", 48: "tom3", 49: "crash", 50: "tom3", 51: "ride", 52: "crash",
+    53: "ride", 54: "shaker", 55: "crash", 56: "cow", 57: "crash", 59: "ride", 69: "shaker", 70: "shaker", 75: "rim", 76: "rim", 77: "rim"
+  };
+  // the sound a note plays on the kit ("" = none: a short rim click is played)
+  function drumKind(n) { return KIT[n] || ""; }
+  var TOMS = { tom1: 95, tom2: 135, tom3: 185 };
+  function noiseBuf(ctx) {
+    if (ctx.__orosNoise && ctx.__orosNoise.sampleRate === ctx.sampleRate) return ctx.__orosNoise;
+    var n = Math.floor(ctx.sampleRate * 1.6), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0), x = 22222;
+    for (var i = 0; i < n; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; d[i] = x / 0x3fffffff - 1; }   // the same noise every time: exports repeat exactly
+    try { ctx.__orosNoise = b; } catch (e) { /* frozen object */ }
+    return b;
+  }
+  // One drum hit at `when`; returns a handle (stop, disconnect, end).
+  function drumHit(ctx, out, note, vel, when, gain) {
+    var kind = drumKind(note) || "rim", v = velGain(vel) * (gain == null ? 1 : gain) * PRESETS.drums.lvl;
+    var srcs = [], gains = [], end = when;
+    function env(peak, decay, t0) {
+      var g = ctx.createGain();
+      t0 = t0 || when;
+      g.gain.setValueAtTime(Math.max(1e-4, peak), t0);
+      g.gain.exponentialRampToValueAtTime(1e-4, t0 + decay);
+      g.connect(out);
+      gains.push(g);
+      end = Math.max(end, t0 + decay);
+      return g;
+    }
+    function noise(to, type, f, q, t0, len) {
+      var s = ctx.createBufferSource(), flt = ctx.createBiquadFilter();
+      s.buffer = noiseBuf(ctx);
+      flt.type = type; flt.frequency.value = f; flt.Q.value = q || 0.7;
+      s.connect(flt); flt.connect(to);
+      s.start(t0 || when, (note * 0.0731) % 1);
+      s.stop((t0 || when) + len + 0.02);
+      srcs.push(s);
+    }
+    function tone(to, type, f0, f1, glide, len, t0) {
+      var o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.setValueAtTime(f0, t0 || when);
+      if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, (t0 || when) + glide);
+      o.connect(to);
+      o.start(t0 || when); o.stop((t0 || when) + len + 0.02);
+      srcs.push(o);
+    }
+    if (v > 0) {
+      if (kind === "kick") { tone(env(v, 0.45), "sine", 150, 45, 0.12, 0.45); noise(env(v * 0.25, 0.012), "highpass", 3000, 0.7, when, 0.012); }
+      else if (kind === "snare") { noise(env(v * 0.55, 0.2), "highpass", 1200, 0.7, when, 0.2); tone(env(v * 0.4, 0.1), "triangle", 200, 150, 0.08, 0.1); }
+      else if (kind === "rim") { noise(env(v * 0.4, 0.035), "bandpass", 2400, 4, when, 0.035); tone(env(v * 0.3, 0.03), "triangle", 900, 900, 0, 0.03); }
+      else if (kind === "clap") { [0, 0.011, 0.022].forEach(function (d, i) { noise(env(v * (i === 2 ? 0.6 : 0.4), i === 2 ? 0.16 : 0.012, when + d), "bandpass", 1100, 1.2, when + d, i === 2 ? 0.16 : 0.012); }); }
+      else if (kind === "hat" || kind === "pedal") noise(env(v * 0.32, kind === "hat" ? 0.05 : 0.035), "highpass", 7500, 0.7, when, 0.05);
+      else if (kind === "ohat") noise(env(v * 0.3, 0.35), "highpass", 7000, 0.7, when, 0.35);
+      else if (kind === "crash") noise(env(v * 0.32, 1.4), "highpass", 4500, 0.7, when, 1.4);
+      else if (kind === "ride") { noise(env(v * 0.18, 0.9), "bandpass", 6500, 0.8, when, 0.9); tone(env(v * 0.06, 0.6), "sine", 3150, 3150, 0, 0.6); }
+      else if (kind === "shaker") noise(env(v * 0.22, 0.07), "bandpass", 5200, 1, when, 0.07);
+      else if (kind === "cow") { var bp = ctx.createBiquadFilter(), g = env(v * 0.28, 0.25); bp.type = "bandpass"; bp.frequency.value = 800; bp.connect(g); tone(bp, "square", 545, 545, 0, 0.25); tone(bp, "square", 815, 815, 0, 0.25); }
+      else if (TOMS[kind]) tone(env(v * 0.75, 0.35), "sine", TOMS[kind], TOMS[kind] * 0.62, 0.2, 0.35);
+    }
+    return {
+      end: end + 0.05,
+      stop: function () { srcs.forEach(function (s) { try { s.stop(); } catch (e) { /* stopped */ } }); },
+      disconnect: function () { gains.forEach(function (g) { try { g.disconnect(); } catch (e) { /* gone */ } }); }
+    };
+  }
+
+  // ---------- A scheduled note (instrument tracks, export) ----------
+  function playNote(ctx, out, inst, note, vel, when, dur, gain) {
+    var P = PRESETS[inst] || PRESETS.piano;
+    if (P.kit) return drumHit(ctx, out, note, vel, when, gain);
+    var f = noteFreq(note), g0 = gain == null ? 1 : gain;
+    var o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain(), flt = ctx.createBiquadFilter(), env = ctx.createGain();
+    o1.type = P.a; o2.type = P.b;
+    o1.frequency.value = f; o2.frequency.value = f * Math.pow(2, P.oct);
+    o1.detune.value = -P.det / 2; o2.detune.value = P.det / 2;
+    g2.gain.value = P.mix;
+    flt.type = "lowpass"; flt.Q.value = P.q;
+    var base = Math.min(18000, P.cut * Math.pow(f / 261.63, P.trk)), peak = Math.min(18000, base * (1 + P.env * velGain(vel)));
+    flt.frequency.setValueAtTime(peak, when);
+    flt.frequency.setTargetAtTime(base, when + P.A, Math.max(0.02, P.D / 3));
+    var lvl = g0 * P.lvl * (0.25 + 0.75 * velGain(vel)) / (1 + P.mix), off = when + Math.max(dur, P.A + 0.002);
+    env.gain.setValueAtTime(0, when);
+    env.gain.linearRampToValueAtTime(lvl, when + P.A);
+    env.gain.setTargetAtTime(lvl * P.S, when + P.A, Math.max(0.01, P.D / 3));
+    env.gain.setTargetAtTime(0, off, Math.max(0.005, P.R / 4));
+    o1.connect(flt); o2.connect(g2); g2.connect(flt); flt.connect(env); env.connect(out);
+    var stop = off + P.R * 1.5 + 0.05;
+    o1.start(when); o2.start(when); o1.stop(stop); o2.stop(stop);
+    return {
+      end: stop,
+      stop: function () { try { o1.stop(); o2.stop(); } catch (e) { /* stopped */ } },
+      disconnect: function () { try { env.disconnect(); } catch (e) { /* gone */ } }
+    };
+  }
   var MAX_VOICES = 16;
 
   // ---------- Synth (Web Audio) ----------
@@ -65,6 +168,7 @@
   Synth.prototype.setPreset = function (id) { if (PRESETS[id]) this.preset = PRESETS[id]; };
   Synth.prototype.noteOn = function (note, vel) {
     var c = this.ctx, P = this.preset, t = c.currentTime, f = noteFreq(note);
+    if (P.kit) { drumHit(c, this.out, note, vel, t, 1); return; }   // one shot, nothing to hold
     this.noteOff(note, true);
     if (this.voices.length >= MAX_VOICES) this.kill(this.voices[0]);
     var o1 = c.createOscillator(), o2 = c.createOscillator(), g2 = c.createGain(), flt = c.createBiquadFilter(), env = c.createGain();
@@ -158,7 +262,7 @@
 
   var api = {
     parse: parse, noteFreq: noteFreq, noteName: noteName, isBlack: isBlack, velGain: velGain,
-    PRESETS: PRESETS, ORDER: ORDER, MAX_VOICES: MAX_VOICES,
+    PRESETS: PRESETS, ORDER: ORDER, MAX_VOICES: MAX_VOICES, drumKind: drumKind, playNote: playNote,
     Synth: Synth, supported: supported, access: access, known: known
   };
   if (typeof module === "object" && module.exports) module.exports = api;
