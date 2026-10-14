@@ -41,9 +41,9 @@ test("each manifest is its own app: id, scope and every action stay inside /<id>
     assert.equal(m.id, scope + "solo.html");
     assert.equal(m.start_url, scope + "solo.html");
     assert.notEqual(m.id, BASE.id);
-    const urls = [m.share_target.action].concat(m.shortcuts.map((s) => s.url), (m.file_handlers || []).map((h) => h.action));
+    const urls = (m.share_target ? [m.share_target.action] : []).concat(m.shortcuts.map((s) => s.url), (m.file_handlers || []).map((h) => h.action));
     urls.forEach((u) => assert.ok(u.startsWith(scope + "solo.html?"), id + ": " + u));
-    assert.equal(m.share_target.method, "POST");
+    if (m.share_target) assert.equal(m.share_target.method, "POST");
     assert.ok(m.icons.some((i) => i.purpose === "maskable"));
     assert.equal(m.launch_handler, undefined);   // Dropbox sign-in comes back as a navigation
   });
@@ -188,4 +188,27 @@ test("Install: Android goes through an intent to Chrome (the orOS app would catc
   const src = read("solo.js");
   assert.match(src, /addEventListener\("beforeinstallprompt"/);
   assert.match(src, /installBar\(win, id, asked\)/);
+});
+
+test("wave 3: personal apps — shares only where a text means something, shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  assert.deepEqual(S.shareTarget("passwords", { url: "https://shop.example/login", title: "Shop", text: "" }, now),
+    { app: "passwords", target: { newEntry: { title: "Shop", url: "https://shop.example/login" } } });
+  assert.equal(S.shareTarget("passwords", { url: "", title: "x", text: "no link" }, now), null);
+  assert.deepEqual(S.shareTarget("budget", { url: "", title: "", text: "Coffee 3.50\nwith Anna" }, now),
+    { app: "budget", target: { newTx: { n: "Coffee 3.50" } } });
+  assert.deepEqual(S.shareTarget("habits", { url: "", title: "", text: "Read 10 pages" }, now),
+    { app: "habits", target: { asNew: { name: "Read 10 pages" } } });
+  assert.deepEqual(S.shareTarget("fitness", { url: "", title: "", text: "Ran 5 km" }, now),
+    { app: "fitness", target: { asNew: { note: "Ran 5 km" } } });
+  ["water", "diary", "mood", "health", "cycle"].forEach((id) => {
+    assert.equal(S.shareTarget(id, { url: "", title: "x", text: "y" }, now), null, id);
+    assert.equal(S.manifestFor(id, F.table(), BASE).share_target, undefined, id);
+  });
+  assert.ok(S.manifestFor("health", F.table(), BASE).shortcuts.length === 2);
+  [["passwords/passwords.js", /tg\.gen === true/], ["passwords/pmapp.js", /addEntry: function/],
+   ["passwords/passwords.js", /__orosTakeTarget\("passwords"\)/], ["budget/budget.js", /x\.newTx && typeof x\.newTx === "object"/],
+   ["habits/habits.js", /t\.add === true/], ["water/water.js", /tg\.sip !== "glass"/], ["mood/mood.js", /tg\.checkin === true/],
+   ["mood/mood.js", /__orosTakeTarget\("mood"\)/], ["fitness/fitness.js", /t\.logNew === true/],
+   ["health/health.js", /typeof t\.add === "string"/], ["cycle/cycle.js", /t\.today === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
 });

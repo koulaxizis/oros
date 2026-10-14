@@ -3673,6 +3673,14 @@
   // first; anything else is ignored.
   function openTarget(x) {
     if (!x || typeof x !== "object" || !data) return;
+    // Single app (solo.js): { newTx: { n? } } → a new expense (icon
+    // shortcut, or a shared text as its note); saved only on Save.
+    if (x.newTx && typeof x.newTx === "object") {
+      Array.prototype.forEach.call(document.querySelectorAll("dialog[open]"), function (d) { d.close(); });
+      var nn = typeof x.newTx.n === "string" ? x.newTx.n.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, NOTE_LEN) : "";
+      txDialog(null, nn ? { k: "o", n: nn } : null);
+      return;
+    }
     var rec = typeof x.rec === "string" && /^[a-z0-9]{1,24}$/.test(x.rec) ? x.rec : "";
     var tx = typeof x.tx === "string" && ID_RE.test(x.tx) ? findIn(data.tx, x.tx) : null;
     // { sub: id } (a subscription reminder): the Subscriptions view, that entry open.
