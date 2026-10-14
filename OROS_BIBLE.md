@@ -5936,3 +5936,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - phone.js + calendar/calendar.js: with "On this phone" on, the phone's "orOS" calendar now also shows the events from subscribed Calendar feeds and the holidays, not only your own events (read-only on the phone, kept up to date from orOS).
 - android/: the orOS account setup repairs itself if it was left half done, and the app asks for the sync-settings permission it needs.
   - Tests: tests/phone.test.js (feeds and holidays rows); Android build in CI. Real-phone test by Chris after this merge.
+
+### 2026-10-14 — Phone bridge: feed and label colours on the phone calendar (#315) — 1.84.01
+- phone.js + calendar/calendar.js: events sent to the phone's "orOS" calendar now keep the colour of their Calendar label or subscribed feed; android CalendarWriter writes the per-event colour.
+  - Tests: tests/phone.test.js (colour rows); Android build in CI. Real-phone check by Chris after this merge.
