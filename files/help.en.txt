@@ -23,6 +23,17 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
 - Search with the box `Search in this folder…`. It looks at file and folder names in the current folder and all its subfolders. Tap a result to open the folder it's in.
 
+## Your Dropbox
+Below `Files` in the folder tree, `Dropbox` shows your whole Dropbox, not only the orOS disk. It is optional and works on each device separately.
+
+- Tap `Dropbox`, then `Connect Dropbox`, and allow access in the Dropbox window. orOS sync is not affected: it keeps using its own folder.
+- Browse folders, search names with `Search in Dropbox…` and sort by `Name`, `Size` or `Modified`. Tap a file to preview it (text and images) and `Download` to save a copy.
+- orOS sync's own folder shows a lock. Its contents are encrypted and only orOS sync reads them, so they are not listed.
+- The account button at the top right shows your Dropbox name and `Disconnect Dropbox`.
+- If Files says Dropbox is not set up yet, open `Use my own app key`: create a Dropbox app with Full Dropbox access, tick the permissions shown, add the redirect address shown and enter the app key.
+
+> Files go straight between this browser and Dropbox. The connection is kept on this device only and is not synced.
+
 ## Sync and backup
 The disk lives in this browser. When [orOS sync](help:t/sync) is connected and unlocked, Vault Drive syncs it file by file, whether Files is open or not. Names and contents are encrypted before they leave your device.
 
@@ -47,3 +58,4 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 - Search shows at most 100 results and matches names only, not file contents.
 - On touch screens you can select only one item at a time.
 - Very large files are slow to sync, as each is encrypted in one piece.
+- The Dropbox view is read only for now, and needs a connection to the internet.

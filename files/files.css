@@ -607,7 +607,8 @@ dialog label {
 
 /* ---------- Preview overlay (Wave 3) ---------- */
 
-#pv-overlay {
+#pv-overlay,
+#dbx-pv {
   position: fixed;
   inset: 0;
   z-index: 8000;
@@ -835,6 +836,147 @@ dialog label {
   .tnode { min-height: 40px; }
   #context-menu button { min-height: 44px; }
   dialog menu button, .f-dialog .dlg-row button { min-height: 44px; }
+}
+
+/* ---------- The whole Dropbox (files/dropbox.js) ---------- */
+
+#dbx-bar, .dbx-panel { display: none; }
+body.dbx-mode #dbx-bar { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+body.dbx-mode .dbx-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+body.dbx-mode #up,
+body.dbx-mode #storage-bar,
+body.dbx-mode #crumbs,
+body.dbx-mode #bar #actions,
+body.dbx-mode #bar > .spacer,
+body.dbx-mode #search-bar,
+body.dbx-mode #list-wrap,
+body.dbx-mode #status { display: none; }
+
+.dbx-crumbs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.dbx-tree { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border, #2c2b31); }
+.dbx-tree .tnode .glyph { color: #0061fe; }
+.dbx-tree .tnode.selected .glyph { color: #fff; }
+
+.dbx-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  flex: 1;
+}
+.dbx-list .entry { cursor: pointer; }
+
+.dbx-search .dbx-qx {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 4px;
+  color: var(--text-dim, #999);
+}
+
+.dbx-msg {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--text-dim, #999);
+}
+.dbx-msg strong { color: var(--text, #eee); font-size: 15px; }
+.dbx-msg p { margin: 0; max-width: 460px; line-height: 1.5; }
+.dbx-msg .dbx-note { font-size: 12px; }
+.dbx-lock { color: var(--accent, #6d4aff); }
+
+.dbx-own {
+  max-width: 460px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  border: 1px solid var(--border, #2c2b31);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.dbx-own summary { cursor: pointer; color: var(--text, #eee); }
+.dbx-own p { margin: 8px 0; }
+.dbx-uri {
+  display: block;
+  word-break: break-all;
+  user-select: all;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--panel-bg, #232229);
+  font-size: 12px;
+}
+.dbx-own-row { display: flex; gap: 6px; margin-top: 8px; }
+.dbx-own-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #2c2b31);
+  background: var(--bg, #17161a);
+  color: inherit;
+  font: inherit;
+}
+.dbx-link { margin-top: 8px; color: var(--accent, #6d4aff); text-decoration: underline; padding: 0; }
+
+.dbx-status {
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--text-dim, #999);
+  background: var(--bar-bg, #1e1d22);
+  border-top: 1px solid var(--border, #2c2b31);
+  min-height: 26px;
+}
+
+.dbx-menu {
+  position: fixed;
+  z-index: 9000;
+  min-width: 180px;
+  max-width: calc(100vw - 16px);
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--panel-bg, #232229);
+  border: 1px solid var(--border, #2c2b31);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.dbx-menu-who {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-dim, #999);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dbx-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.dbx-menu button:hover { background: var(--accent-soft, #2a2832); }
+
+@media (pointer: coarse) {
+  .dbx-menu button { min-height: 44px; }
+  #dbx-bar button.tool { min-width: 44px; min-height: 44px; }
 }
 
 /* The HTML [hidden] attribute must always win. Without this rule

@@ -582,6 +582,8 @@
   }
 
   function navigate(path) {
+    var d = dbx();
+    if (d && d.isActive()) d.leave();
     cwd = path;
     clearSelection();
     // FB2: exactly ONE listing fetch per navigation. When a search
@@ -620,13 +622,38 @@
     var token = renderToken;
     host.innerHTML = "";
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    var d = dbx();
+    if (d) host.appendChild(d.treeNode());
+  }
+
+  // The whole Dropbox (files/dropbox.js): a second place in the tree,
+  // read-only, outside the disk. Absent script = no Dropbox node.
+  function dbx() {
+    var d = window.OrosFilesDropbox;
+    return (d && typeof d.treeNode === "function") ? d : null;
+  }
+  function dbxActive() { var d = dbx(); return !!(d && d.isActive()); }
+
+  function initDropbox() {
+    var d = dbx();
+    if (!d) return;
+    d.init({
+      toast: transientNote,
+      dialogHost: dialogHost,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () { clearSelection(); renderTree(); },
+      fmtKB: fmtKB,
+      isImageExt: isImageExt,
+      isTextExt: isTextExt,
+      mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
+    });
   }
 
   function makeTreeNode(path, label, depth, token) {
     var wrap = document.createElement("div");
 
     var node = document.createElement("div");
-    node.className = "tnode" + (path === cwd ? " selected" : "");
+    node.className = "tnode" + (path === cwd && !dbxActive() ? " selected" : "");
     node.style.paddingLeft = (6 + depth * 14) + "px";
     node.dataset.path = path;
 
@@ -2949,6 +2976,8 @@
     updateSortIndicators();
     ensureStorageBar();
     setTimeout(ensureStorageBar, 1500); // delayed recalc if first boot
+
+    initDropbox();
 
     console.log("[orOS] files.js v" + APP_VER + " booted (backend: " +
       (FS().mode ? FS().mode() : "unknown") + ")");

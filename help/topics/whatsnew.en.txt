@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.96.00
+- Files shows your whole Dropbox: under `Dropbox` in the folder tree you can browse, search, preview and download your Dropbox files. It is optional, per device, and orOS sync is not affected.
+
 ## Version 1.95.00
 - The orOS Android app connects to Health Connect: your steps come into Health, and Water drinks and Workouts go both ways with your watch and other health apps.
 
