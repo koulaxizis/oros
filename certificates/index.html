@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=certificates" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Certificates · orOS</title>
+
+  <link rel="stylesheet" href="certificates.css?v=1.97.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" id="home-btn" class="icon-btn" hidden></button>
+    <div class="title">
+      <span id="title-main" class="title-main" data-i18n="app.name">Certificates</span>
+      <span id="title-sub" class="title-sub"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="new-btn" class="icon-btn"></button>
+    <button type="button" id="more-btn" class="icon-btn" aria-haspopup="dialog" hidden></button>
+  </header>
+
+  <div id="loading" class="loading" data-i18n="loading">Loading fonts…</div>
+
+  <!-- ========== Home: the list of certificates ========== -->
+  <main id="home" hidden>
+    <div class="home-wrap">
+      <div id="home-empty" class="card empty" hidden>
+        <p class="hint" data-i18n="home.empty">Make certificates of attendance, completion, merit and more. Design one, add the names, and save a PDF for every person, numbered.</p>
+        <button type="button" id="first-btn" class="chip primary" data-i18n="btn.first">Make certificates</button>
+      </div>
+      <input type="search" id="home-q" autocomplete="off" hidden>
+      <div id="evs" class="evs"></div>
+    </div>
+  </main>
+
+  <!-- ========== Editor ========== -->
+  <div id="ed" hidden>
+    <nav id="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-design" aria-controls="p-design" data-i18n="tab.design">Design</button>
+      <button type="button" role="tab" id="tab-people" aria-controls="p-people" data-i18n="tab.people">People</button>
+      <button type="button" role="tab" id="tab-issue" aria-controls="p-issue" data-i18n="tab.issue">Issue</button>
+    </nav>
+    <main id="main">
+      <div id="layout">
+        <div id="panel">
+
+          <!-- ----- Design ----- -->
+          <section id="p-design" role="tabpanel" aria-labelledby="tab-design" class="pane">
+            <details class="sec" open>
+              <summary data-i18n="sec.details">What it is for</summary>
+              <div class="grid">
+                <label class="fld wide"><span data-i18n="f.t">Seminar, course or event</span><input id="f-t" maxlength="200" autocomplete="off"></label>
+                <label class="fld wide"><span data-i18n="f.issuer">Issued by (organisation)</span><input id="f-issuer" maxlength="160" autocomplete="organization"></label>
+                <label class="fld"><span data-i18n="f.d1">From</span><input id="f-d1" type="date"></label>
+                <label class="fld"><span data-i18n="f.d2">Until (if more days)</span><input id="f-d2" type="date"></label>
+                <label class="fld"><span data-i18n="f.place">Place</span><input id="f-place" maxlength="120" autocomplete="off"></label>
+                <label class="fld"><span data-i18n="f.hours">Hours</span><input id="f-hours" maxlength="12" inputmode="decimal" autocomplete="off"></label>
+                <label class="fld"><span data-i18n="f.idate">Date of issue</span><input id="f-idate" type="date"></label>
+              </div>
+            </details>
+
+            <details class="sec" open>
+              <summary data-i18n="sec.look">Kind and look</summary>
+              <div class="grid">
+                <label class="fld"><span data-i18n="f.kind">Kind</span><select id="f-kind"></select></label>
+                <label class="fld"><span data-i18n="f.lang">Language of the certificate</span>
+                  <select id="f-lang"><option value="en">English</option><option value="el">Ελληνικά</option></select></label>
+              </div>
+              <span class="lbl" id="sty-lbl" data-i18n="f.sty">Look</span>
+              <div id="stys" class="tpls" role="radiogroup" aria-labelledby="sty-lbl"></div>
+              <div class="grid">
+                <label class="fld"><span data-i18n="f.acc">Main colour</span><input id="f-acc" type="color"></label>
+                <label class="fld"><span data-i18n="f.acc2">Second colour</span><input id="f-acc2" type="color"></label>
+                <label class="fld"><span data-i18n="f.font">Font</span>
+                  <select id="f-font"><option value="serif" data-i18n="font.serif">Serif (Noto Serif)</option><option value="sans" data-i18n="font.sans">Sans (Noto Sans)</option></select></label>
+                <label class="fld"><span data-i18n="f.size">Paper</span>
+                  <select id="f-size"><option value="a4">A4</option><option value="letter">Letter</option></select></label>
+                <label class="fld wide"><span data-i18n="f.orient">Orientation</span>
+                  <select id="f-orient"><option value="l" data-i18n="orient.l">Landscape</option><option value="p" data-i18n="orient.p">Portrait</option></select></label>
+              </div>
+            </details>
+
+            <details class="sec">
+              <summary data-i18n="sec.texts">Texts</summary>
+              <p class="hint small" data-i18n="texts.hint">Tap a field to put it where the cursor is. Each person's details go in its place. A part between [[ and ]] shows only when its fields have a value.</p>
+              <div id="tokens" class="chips"></div>
+              <div class="grid">
+                <label class="fld wide"><span data-i18n="tx.sub">Above the title</span><input id="tx-sub" maxlength="1200" autocomplete="off" class="tx"></label>
+                <label class="fld wide"><span data-i18n="tx.head">Title</span><input id="tx-head" maxlength="1200" autocomplete="off" class="tx"></label>
+                <label class="fld wide"><span data-i18n="tx.pre">Before the name</span><input id="tx-pre" maxlength="1200" autocomplete="off" class="tx"></label>
+                <label class="fld wide"><span data-i18n="tx.nm">Name line</span><input id="tx-nm" maxlength="1200" autocomplete="off" class="tx"></label>
+                <label class="fld wide"><span data-i18n="tx.body">Text</span><textarea id="tx-body" rows="4" maxlength="1200" class="tx"></textarea></label>
+                <label class="fld wide"><span data-i18n="tx.foot">Place and date</span><input id="tx-foot" maxlength="1200" autocomplete="off" class="tx"></label>
+                <label class="fld wide"><span data-i18n="tx.no">Number line</span><input id="tx-no" maxlength="1200" autocomplete="off" class="tx"></label>
+              </div>
+              <div class="actions"><button type="button" id="tx-reset" class="chip small" data-i18n="btn.resetTexts">Ready texts for this kind</button></div>
+            </details>
+
+            <details class="sec">
+              <summary data-i18n="sec.pics">Logo, signatures and seal</summary>
+              <div id="pic-logo" class="pic"></div>
+              <div class="pic">
+                <span class="lbl" data-i18n="pic.sigs">Signatures</span>
+                <ul id="sig-list" class="sig-list"></ul>
+                <div class="actions"><button type="button" id="sig-add" class="chip small" data-i18n="btn.addSig">Add a signature</button></div>
+              </div>
+              <div id="pic-seal" class="pic"></div>
+              <label class="check"><input type="checkbox" id="f-medal"><span data-i18n="f.medal">A medal when there is no seal</span></label>
+            </details>
+
+            <details class="sec">
+              <summary data-i18n="sec.number">Numbers</summary>
+              <label class="check"><input type="checkbox" id="f-showNo"><span data-i18n="f.showNo">Show the certificate number</span></label>
+              <div class="grid">
+                <label class="fld"><span data-i18n="f.pre">Number starts with</span><input id="f-pre" maxlength="20" autocomplete="off" spellcheck="false"></label>
+                <label class="fld"><span data-i18n="f.next">Next number</span><input id="f-next" type="number" min="1" max="999999" step="1" inputmode="numeric"></label>
+              </div>
+              <p class="hint small" id="no-example"></p>
+            </details>
+          </section>
+
+          <!-- ----- People ----- -->
+          <section id="p-people" role="tabpanel" aria-labelledby="tab-people" class="pane">
+            <div class="card">
+              <form id="add-form" class="add-row" autocomplete="off">
+                <label class="sr-only" for="add-n" data-i18n="f.n">Full name</label>
+                <input id="add-n" maxlength="120">
+                <label class="sr-only" for="add-em" data-i18n="f.em">Email</label>
+                <input id="add-em" type="email" maxlength="160">
+                <button type="submit" class="chip primary small" data-i18n="btn.add">Add</button>
+              </form>
+              <div class="chips">
+                <button type="button" id="paste-btn" class="chip small" data-i18n="btn.paste">Paste a list</button>
+                <button type="button" id="file-btn" class="chip small" data-i18n="btn.file">Open a file (CSV, Excel)</button>
+                <button type="button" id="ct-btn" class="chip small" data-i18n="btn.contacts" hidden>From Contacts</button>
+                <button type="button" id="crm-btn" class="chip small" data-i18n="btn.crm" hidden>From CRM</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="row">
+                <span id="ppl-count" class="lbl"></span>
+                <span class="spacer"></span>
+                <label class="sr-only" for="ppl-q" data-i18n="ppl.q">Find a person</label>
+                <input type="search" id="ppl-q" class="ppl-q" autocomplete="off">
+              </div>
+              <p id="ppl-empty" class="hint" data-i18n="ppl.empty" hidden>No one on the list yet. Add names one by one, paste a list, or open a table (CSV or Excel) with a column for the name.</p>
+              <ul id="ppl" class="ppl"></ul>
+              <button type="button" id="ppl-more" class="chip small" hidden></button>
+            </div>
+          </section>
+
+          <!-- ----- Issue ----- -->
+          <section id="p-issue" role="tabpanel" aria-labelledby="tab-issue" class="pane">
+            <div class="card">
+              <span class="lbl" data-i18n="sec.check">Check</span>
+              <ul id="checks" class="checks"></ul>
+              <div class="actions"><button type="button" id="num-btn" class="chip" data-i18n="btn.number">Give numbers</button></div>
+            </div>
+            <div class="card">
+              <span class="lbl" data-i18n="sec.save">Save and print</span>
+              <label class="check"><input type="checkbox" id="skip-rv" checked><span data-i18n="f.skipRv">Leave out revoked certificates</span></label>
+              <div class="actions">
+                <button type="button" id="pdf-all" class="chip primary" data-i18n="btn.pdfAll">PDF with everyone</button>
+                <button type="button" id="zip-all" class="chip" data-i18n="btn.zip">ZIP, one PDF each</button>
+                <button type="button" id="files-all" class="chip" data-i18n="btn.files">Save each in Files</button>
+                <button type="button" id="print-btn" class="chip" data-i18n="btn.print">Print</button>
+              </div>
+              <div class="actions">
+                <button type="button" id="pdf-one" class="chip small" data-i18n="btn.pdfOne">PDF of this one</button>
+                <button type="button" id="png-one" class="chip small" data-i18n="btn.pngOne">Picture (PNG) of this one</button>
+                <button type="button" id="mail-btn" class="chip small" data-i18n="btn.mail">Send by email…</button>
+                <button type="button" id="reg-btn" class="chip small" data-i18n="btn.register">Register (CSV)</button>
+              </div>
+              <p id="work" class="hint" aria-live="polite"></p>
+            </div>
+          </section>
+        </div>
+
+        <!-- ----- Preview ----- -->
+        <aside id="pv-pane" class="card">
+          <div class="pv-nav">
+            <button type="button" id="pv-prev" class="icon-btn"></button>
+            <label class="sr-only" for="pv-sel" data-i18n="pv.who">Whose certificate</label>
+            <select id="pv-sel"></select>
+            <button type="button" id="pv-next" class="icon-btn"></button>
+          </div>
+          <div class="pv-box"><canvas id="pv" role="img"></canvas></div>
+          <p id="pv-note" class="hint small"></p>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <!-- More -->
+  <div id="scrim" hidden></div>
+  <div id="more" class="dialog" role="dialog" aria-modal="true" aria-labelledby="more-title" hidden>
+    <div class="dlg-head">
+      <h2 id="more-title" data-i18n="more.title">These certificates</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div class="menu">
+      <button type="button" id="dup-btn" class="menu-item" data-i18n="btn.dup">Duplicate (design only)</button>
+      <button type="button" id="clear-btn" class="menu-item danger" data-i18n="btn.clear">Clear the list of people</button>
+      <button type="button" id="del-btn" class="menu-item danger" data-i18n="btn.del">Delete these certificates</button>
+    </div>
+    <p class="hint small" data-i18n="more.hint">Your certificates and lists follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>
+  </div>
+
+  <!-- New -->
+  <div id="new" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="new-title" hidden>
+    <div class="dlg-head">
+      <h2 id="new-title" data-i18n="new.title">New certificates</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <span class="lbl" id="new-kind-lbl" data-i18n="f.kind">Kind</span>
+    <div id="new-kinds" class="kinds" role="radiogroup" aria-labelledby="new-kind-lbl"></div>
+    <div class="grid">
+      <label class="fld wide"><span data-i18n="f.t">Seminar, course or event</span><input id="new-t" maxlength="200" autocomplete="off"></label>
+      <label class="fld"><span data-i18n="f.lang">Language of the certificate</span>
+        <select id="new-lang"><option value="en">English</option><option value="el">Ελληνικά</option></select></label>
+    </div>
+    <div class="actions end">
+      <button type="button" id="new-go" class="chip primary" data-i18n="btn.create">Create</button>
+    </div>
+  </div>
+
+  <!-- Paste -->
+  <div id="paste" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="paste-title" hidden>
+    <div class="dlg-head">
+      <h2 id="paste-title" data-i18n="paste.title">Paste a list</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <p class="hint small" data-i18n="paste.hint">One person per line. A table copied from a spreadsheet works too: a first row with column names (name, email, grade…) tells which column is which.</p>
+    <label for="paste-ta" class="sr-only" data-i18n="paste.title">Paste a list</label>
+    <textarea id="paste-ta" rows="8" spellcheck="false"></textarea>
+    <p id="paste-info" class="hint" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" id="paste-sample" class="chip small" data-i18n="btn.sample">Save an example table</button>
+      <span class="spacer"></span>
+      <button type="button" id="paste-go" class="chip primary" data-i18n="btn.addAll" disabled>Add to the list</button>
+    </div>
+  </div>
+
+  <!-- Person -->
+  <div id="person" class="dialog" role="dialog" aria-modal="true" aria-labelledby="person-title" hidden>
+    <div class="dlg-head">
+      <h2 id="person-title" data-i18n="person.title">Person</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div class="grid">
+      <label class="fld wide"><span data-i18n="f.n">Full name</span><input id="pe-n" maxlength="120" autocomplete="off"></label>
+      <label class="fld wide"><span data-i18n="f.n2">Other form of the name (optional)</span><input id="pe-n2" maxlength="120" autocomplete="off"></label>
+      <label class="fld wide"><span data-i18n="f.em">Email</span><input id="pe-em" type="email" maxlength="160" autocomplete="off"></label>
+      <label class="fld"><span data-i18n="f.g">Grade or distinction</span><input id="pe-g" maxlength="80" autocomplete="off"></label>
+      <label class="fld"><span data-i18n="f.x">Extra</span><input id="pe-x" maxlength="200" autocomplete="off"></label>
+    </div>
+    <p id="pe-no" class="hint"></p>
+    <label class="check"><input type="checkbox" id="pe-rv"><span data-i18n="f.rv">Revoked (no longer valid)</span></label>
+    <div class="actions">
+      <button type="button" id="pe-del" class="chip small danger-chip" data-i18n="btn.remove">Remove from the list</button>
+      <button type="button" id="pe-mail" class="chip small" data-i18n="btn.mailOne">Send by email</button>
+      <span class="spacer"></span>
+      <button type="button" id="pe-save" class="chip primary" data-i18n="btn.save">Save</button>
+    </div>
+  </div>
+
+  <!-- Draw a signature -->
+  <div id="draw" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="draw-title" hidden>
+    <div class="dlg-head">
+      <h2 id="draw-title" data-i18n="draw.title">Sign here</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <p class="hint small" data-i18n="draw.hint">Sign with a finger, a pen or the mouse.</p>
+    <canvas id="draw-cv" class="draw-cv" width="900" height="300"></canvas>
+    <div class="actions">
+      <button type="button" id="draw-clear" class="chip small" data-i18n="btn.clearPad">Clear</button>
+      <span class="spacer"></span>
+      <button type="button" id="draw-go" class="chip primary" data-i18n="btn.useSig">Use this signature</button>
+    </div>
+  </div>
+
+  <!-- Pick (contacts labels, CRM tags, mail list) -->
+  <div id="pick" class="dialog" role="dialog" aria-modal="true" aria-labelledby="pick-title" hidden>
+    <div class="dlg-head">
+      <h2 id="pick-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <p id="pick-hint" class="hint small" hidden></p>
+    <input type="search" id="pick-q" autocomplete="off">
+    <ul id="pick-list" class="pick-list"></ul>
+  </div>
+
+  <!-- Confirm -->
+  <div id="ask" class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ask-text" hidden>
+    <p id="ask-text"></p>
+    <div class="actions end">
+      <button type="button" id="ask-no" class="chip"></button>
+      <button type="button" id="ask-yes" class="chip primary"></button>
+    </div>
+  </div>
+
+  <div id="print-host" class="print-host" aria-hidden="true"></div>
+  <div id="toast" role="status"></div>
+  <input type="file" id="file-in" hidden>
+
+  <script src="../designkit/model.js?v=1.97.00"></script>
+  <script src="../designkit/text.js?v=1.97.00"></script>
+  <script src="../designkit/render.js?v=1.97.00"></script>
+  <script src="../designkit/pdf.js?v=1.97.00"></script>
+  <script src="../designkit/assets.js?v=1.97.00"></script>
+  <script src="../atelier/zip.js?v=1.97.00"></script>
+  <script src="core.js?v=1.97.00"></script>
+  <script src="dk.js?v=1.97.00"></script>
+  <script src="certificates.js?v=1.97.00"></script>
+
+</body>
+</html>

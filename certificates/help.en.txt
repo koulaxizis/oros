@@ -1,0 +1,57 @@
+# Certificates
+Make certificates of attendance, completion and merit, diplomas, thank-you certificates and kids' awards for a whole list of people at once. You design one certificate, add the names, and get a numbered PDF for every person.
+
+## Getting started
+1. Press `Make certificates` (or [[+]] at the top), pick a `Kind`, type the seminar or course and press `Create`.
+2. In `Design`, fill in `What it is for`: the organisation, the dates, the place and the hours.
+3. In `People`, add the names.
+4. In `Issue`, press `Give numbers`, then `PDF with everyone` or `ZIP, one PDF each`.
+On a phone the preview sits above the form; on a wide screen it is on the right. The arrows next to it go from person to person.
+
+## Design
+- Ten kinds come with ready texts in English and Greek: `Attendance`, `Completion`, `Merit`, `Excellence`, `Diploma`, `Participation`, `Training`, `Thanks`, `Volunteering` and `Kids' award`.
+- `Language of the certificate` is the language of its texts and dates, whatever language orOS is in.
+- Six looks: `Classic`, `Modern`, `Elegant`, `Bold`, `Minimal` and `Playful`. Each sets its own colours and font; change them after with `Main colour`, `Second colour` and `Font`.
+- `Paper` is A4 or Letter, landscape or portrait.
+- Under `Texts` you can change every line. Tap a field such as `Name` or `Dates` to put it where the cursor is; each person's details go in its place. A part between `[[` and `]]` shows only when its fields have a value, so `[[ ({hours} hours)]]` disappears when the hours are empty.
+- `Ready texts for this kind` puts the original texts back.
+
+## Logo, signatures and seal
+- `Choose a picture` adds a logo at the top and a seal or stamp at the bottom. With no seal, `A medal when there is no seal` draws a medal with the year.
+- Up to three signatures, each with a name, a role and a signature: `Sign on the screen` with a finger, pen or mouse, or `Picture of a signature`.
+- A new set of certificates starts with the organisation, logo, signatures and seal of your last one.
+
+## People
+- Type a name and an email and press `Add`, or use `Paste a list`: one person per line, or a table copied from a spreadsheet with a first row of column names (name, email, grade…).
+- `Open a file (CSV, Excel)` reads a .csv, .xlsx, .xls or .ods table the same way. "First name" and "Last name" columns are joined.
+- `From Contacts` and `From CRM` add everyone, or the people of one label or tag.
+- A name already on the list with the same email is not added twice.
+- Tap a person to change the details, add a `Grade or distinction`, mark the certificate `Revoked` or remove the person.
+- `Other form of the name` is for your own texts that need, for example, the name in the accusative in Greek. The ready Greek texts use the name as written, so you never have to fill it in.
+
+## Numbers
+- `Give numbers` numbers everyone who has none, in list order: CERT-2026-0001, CERT-2026-0002… Change the start under `Numbers` › `Number starts with`.
+- A number is given once and never reused, even when a person is removed.
+- If two devices give numbers at the same moment, `Check` shows the number given twice and `Give a new number` fixes it.
+
+## Save, print and send
+- `PDF with everyone` makes one file with a page per person; `ZIP, one PDF each` one PDF per person, named with the number and name.
+- `Save each in Files` puts the PDFs in Files › Certificates › the name of the set.
+- `Print` prints up to 100 certificates at a time.
+- `PDF of this one` and `Picture (PNG) of this one` save the certificate shown in the preview.
+- `Send by email…` opens one message per person. With orOS Mail set up on this device the PDF is attached; otherwise the PDF is saved and your mail app opens, and you attach it yourself.
+- `Register (CSV)` saves the list of numbers, names, grades, dates and revoked certificates.
+- When the design shows numbers, orOS first offers to number the people who have none. `Leave out revoked certificates` keeps revoked ones out.
+
+## Sync and backup
+- Your certificates and lists follow you to every device through orOS sync, encrypted, and are part of the orOS export.
+- Logos, signatures and seals stay on your orOS disk and travel with it.
+- Nothing is sent anywhere unless you send an email yourself.
+
+## Tips
+> [[⋯]] › `Duplicate (design only)` copies a design without its people, ready for the next seminar.
+
+## Limits
+- Up to 2,000 people in one set and 5,000 in all; up to 200 sets.
+- The fonts are Noto Serif and Noto Sans, which cover Greek and Latin letters.
+- A certificate cannot be checked online yet: there is no QR code for verification.
