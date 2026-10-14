@@ -1,12 +1,24 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a service with a free plan (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova, Pollinations), a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
 2. Under `Assistant`, choose who you want to talk to.
 3. Paste your `API key` from that service and press `Save key`. `Get a key` opens the page where you create one.
 4. Check the `Model`. `Load models` lists the models your key can use and also tells you that the key works.
-5. Press `Close`, type your question and press `Send`.
+5. Press `Test the connection`. It sends one short message and tells you if the service answers here. If it says the service does not accept calls from a web browser, pick another one: that can't be fixed from orOS.
+6. Press `Close`, type your question and press `Send`.
+
+## Free services
+These need only a free account and a free key, with daily limits. Nothing is charged unless you add a way to pay on their site:
+- `Groq`, `Cerebras` and `SambaNova`: fast open models such as Llama and Qwen.
+- `GitHub Models`: GPT, Llama, Mistral and more with any GitHub account. The key is a fine-grained personal access token with the `Models` permission set to read.
+- `Cohere`: Command models. The free trial key is for personal use and testing only.
+- `Hugging Face`: many open models through one free token.
+- `Pollinations`: use a publishable key (it starts with `pk_`).
+- `OpenRouter`: tick `Only free models`, then `Load models`: only the models whose name ends in `:free` are listed.
+
+Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device.
 
 For a model on your computer, choose `Local / OpenAI-compatible` and enter its `Server address`, for example `http://localhost:11434/v1` for Ollama. A key is optional there.
 

@@ -56,6 +56,53 @@
       keyUrl: "https://openrouter.ai/keys",
       usage: true, model: "", att: { img: 1, pdf: 1 }
     },
+    // Services with a free plan (phase 5 wave 3). All speak the
+    // OpenAI format; free: 1 = a free account and key is enough.
+    // Files they get as the text orOS reads on the device (attText).
+    groq: {
+      name: "Groq", kind: "openai", key: "yes", free: 1,
+      base: "https://api.groq.com/openai/v1",
+      keyUrl: "https://console.groq.com/keys",
+      model: "llama-3.3-70b-versatile"
+    },
+    cerebras: {
+      name: "Cerebras", kind: "openai", key: "yes", free: 1,
+      base: "https://api.cerebras.ai/v1",
+      keyUrl: "https://cloud.cerebras.ai/",
+      model: "llama-3.3-70b"
+    },
+    github: {
+      name: "GitHub Models", kind: "openai", key: "yes", free: 1,
+      base: "https://models.github.ai/inference",
+      modelsUrl: "https://models.github.ai/catalog/models",
+      keyUrl: "https://github.com/settings/personal-access-tokens/new",
+      model: "openai/gpt-4.1-mini"
+    },
+    cohere: {
+      name: "Cohere", kind: "openai", key: "yes", free: 1,
+      base: "https://api.cohere.ai/compatibility/v1",
+      modelsUrl: "https://api.cohere.com/v1/models?endpoint=chat&page_size=100",
+      keyUrl: "https://dashboard.cohere.com/api-keys",
+      model: "command-a-03-2025"
+    },
+    huggingface: {
+      name: "Hugging Face", kind: "openai", key: "yes", free: 1,
+      base: "https://router.huggingface.co/v1",
+      keyUrl: "https://huggingface.co/settings/tokens",
+      model: "meta-llama/Llama-3.3-70B-Instruct"
+    },
+    sambanova: {
+      name: "SambaNova", kind: "openai", key: "yes", free: 1,
+      base: "https://api.sambanova.ai/v1",
+      keyUrl: "https://cloud.sambanova.ai/apis",
+      model: "Meta-Llama-3.3-70B-Instruct"
+    },
+    pollinations: {
+      name: "Pollinations", kind: "openai", key: "yes", free: 1,
+      base: "https://gen.pollinations.ai/v1",
+      keyUrl: "https://enter.pollinations.ai/",
+      model: "openai"
+    },
     local: {
       name: "Local / OpenAI-compatible", kind: "openai", key: "opt",
       base: "", local: true, model: "", att: { img: 1 },
@@ -69,7 +116,8 @@
       base: "", builtin: true, model: "built-in"
     }
   };
-  var PROV_IDS = ["anthropic", "openai", "gemini", "mistral", "openrouter", "local", "browser"];
+  var PROV_IDS = ["anthropic", "openai", "gemini", "mistral", "openrouter", "groq", "cerebras", "github",
+                  "cohere", "huggingface", "sambanova", "pollinations", "local", "browser"];
   // Web search services that take a key of their own (section 3e).
   var KEY_EXTRA = ["tavily"];
   var KEY_IDS = PROV_IDS.concat(KEY_EXTRA);
@@ -116,7 +164,7 @@
   }
   function normProv(x) {
     if (!isObj(x)) return null;
-    return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0 };
+    return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0 };
   }
   function normPerm(x) {
     if (!isObj(x) || (x.v !== "ask" && x.v !== "always" && x.v !== "never")) return null;
@@ -974,18 +1022,27 @@
     }
     var h = {};
     if (key) h.authorization = "Bearer " + key;
-    return { url: provBase(pid, conf) + "/models", headers: h };
+    return { url: p.modelsUrl || provBase(pid, conf) + "/models", headers: h };
   }
 
   var NOT_CHAT = /(embed|tts|whisper|dall-e|davinci|babbage|moderation|image|audio|realtime|transcribe|speech|ocr|search-preview|computer-use|codex)/i;
-  // → [{ id, name }], chat models only, sorted by name.
+  // OpenRouter: a model that costs nothing per token (":free" ones).
+  function orFree(m) {
+    if (/:free$/.test(String(m.id || ""))) return true;
+    var pr = isObj(m.pricing) ? m.pricing : null;
+    return !!pr && Number(pr.prompt) === 0 && Number(pr.completion) === 0 &&
+      String(pr.prompt) !== "" && String(pr.completion) !== "";
+  }
+  // → [{ id, name, free? }], chat models only, sorted by name.
   function parseModels(pid, j) {
     var p = PROVIDERS[pid], out = [], seen = {};
-    function add(id, name) {
+    function add(id, name, free) {
       id = str(id, 200).trim();
       if (!id || seen[id]) return;
       seen[id] = 1;
-      out.push({ id: id, name: str(name, 200) || id });
+      var m = { id: id, name: str(name, 200) || id };
+      if (free) m.free = true;
+      out.push(m);
     }
     if (p.kind === "gemini") {
       (j && Array.isArray(j.models) ? j.models : []).forEach(function (m) {
@@ -995,12 +1052,28 @@
         if (NOT_CHAT.test(id)) return;
         add(id, m.displayName);
       });
+    } else if (pid === "github") {
+      // The GitHub Models catalog: a plain array.
+      (Array.isArray(j) ? j : []).forEach(function (m) {
+        if (!m || NOT_CHAT.test(m.id || "")) return;
+        var outM = m.supported_output_modalities;
+        if (Array.isArray(outM) && outM.indexOf("text") < 0) return;
+        add(m.id, m.name);
+      });
+    } else if (pid === "cohere") {
+      // Cohere's own list (the compatibility API has none).
+      (j && Array.isArray(j.models) ? j.models : []).forEach(function (m) {
+        if (!m || NOT_CHAT.test(m.name || "")) return;
+        if (Array.isArray(m.endpoints) && m.endpoints.indexOf("chat") < 0) return;
+        add(m.name, m.name);
+      });
     } else {
       (j && Array.isArray(j.data) ? j.data : []).forEach(function (m) {
         if (!m) return;
-        if (pid === "openai" && NOT_CHAT.test(m.id || "")) return;
+        if (!p.local && pid !== "openrouter" && NOT_CHAT.test(m.id || "")) return;
         if (pid === "mistral" && m.capabilities && m.capabilities.completion_chat === false) return;
-        add(m.id, m.display_name || m.name);
+        if (pid === "groq" && /guard|whisper|tts|orpheus/i.test(m.id || "")) return;
+        add(m.id, m.display_name || m.name, pid === "openrouter" && orFree(m));
       });
     }
     out.sort(function (a, b) { return a.name.localeCompare(b.name); });
