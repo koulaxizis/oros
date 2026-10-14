@@ -1,6 +1,6 @@
 # Weather
 
-Current conditions, official warnings, rain in the next 2 hours, the next 48 hours, a 7-day forecast and air quality with pollen for the cities you pick. It works with the small weather display in the orOS top bar.
+Current conditions, official warnings, rain in the next 2 hours, the next 48 hours, a 7-day forecast, a rain map and air quality with pollen for the cities you pick. It works with the small weather display in the orOS top bar.
 
 ## Getting started
 
@@ -27,6 +27,16 @@ Above the forecast you see the official weather warnings for your city's area fr
 ## Rain in the next 2 hours
 
 `Next 2 hours` shows the rain (or snow) every 15 minutes as small bars, with one sentence such as `Rain starts in ~30 min`, `Light rain stops in ~45 min` or `No rain in the next 2 hours`.
+
+## Rain map
+
+Under the 7-day forecast, `Show rain map` opens a map of where it rained, centred on your city (the dot), with NASA's satellite rain picture over an OpenStreetMap map.
+
+- It is a **satellite estimate of rain (NASA IMERG), a few hours old — not live radar**. The newest picture is usually 5 to 7 hours old.
+- The slider goes through the last 12 half hours (6 hours). Under it you see the time of the picture in your city's time and how long ago it was. The play button runs through them once.
+- The colour bar shows rain in mm per hour, from light (green) to heavy (dark red). Snow has its own colours, from light blue to purple.
+- Drag and zoom the map as usual. The rain picture is coarse (about 10 km), so it gets blurry close up.
+- Nothing is downloaded until you open the map. `Hide rain map` closes it. Offline you see a message and `Try again` instead of a map.
 
 ## Air & pollen
 
@@ -73,5 +83,6 @@ Your cities (with the warnings area you picked), the city on screen and your °C
 - Warnings come from [MeteoAlarm](https://meteoalarm.org/) (EUMETNET) and cover its European countries only. MeteoAlarm receives only the country. The national weather service's own page is the official source; a warning can reach MeteoAlarm a little later.
 - The area guess compares names and can be wrong; pick `My area` when it is. You can only pick an area that has a warning at that moment.
 - Outside central Europe and North America, the 15-minute rain is drawn from hourly data, so it is less precise. Some models have no 15-minute data: `Next 2 hours` then hides.
+- The rain map comes from [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/) (IMERG, free, no account) over [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles. They receive only the map area you look at, not your city's name. The picture is a satellite estimate a few hours old, not radar: it can miss light or short showers and doesn't show what is falling right now.
 - If air quality or another value can't be fetched, you see — instead.
 - Hints are short rules of thumb, not official warnings; the official ones are in the warnings banner.

@@ -254,7 +254,19 @@
     var challengeInput = new TextEncoder().encode(verifier);
     return crypto.subtle.digest("SHA-256", challengeInput).then(function (digest) {
       var challenge = b64urlEncode(digest);
-      window.location.href = AUTH_URL +
+      // A single app (solo.js) runs orOS in a frame, and Dropbox's
+      // sign-in page refuses to be framed: the window's top page goes
+      // instead, and the shell page that takes the code sends it back
+      // to the single app (soloReturn below).
+      var nav = window;
+      var solo = window.orosSolo && window.orosSolo.id;
+      if (solo) {
+        try {
+          if (window.top !== window && window.top.location.origin === window.location.origin) nav = window.top;
+          sessionStorage.setItem(SOLO_RETURN_KEY, "/" + solo + "/solo.html");
+        } catch (e) { nav = window; }
+      }
+      nav.location.href = AUTH_URL +
         "?response_type=code" +
         "&client_id=" + encodeURIComponent(DROPBOX_APP_KEY) +
         "&redirect_uri=" + encodeURIComponent(redirectUri()) +
@@ -268,10 +280,28 @@
     return window.location.origin + "/";
   }
 
+  // Back from Dropbox to a single app that started the sign-in: the
+  // tokens are in this origin's storage now, which the single app
+  // shares. Only a "/<id>/solo.html" path is accepted.
+  var SOLO_RETURN_KEY = "oros-solo-return";
+  function soloReturn() {
+    var to = "";
+    try {
+      to = sessionStorage.getItem(SOLO_RETURN_KEY) || "";
+      sessionStorage.removeItem(SOLO_RETURN_KEY);
+    } catch (e) { to = ""; }
+    if (!/^\/[a-z0-9-]+\/solo\.html$/.test(to)) return false;
+    window.location.replace(to);
+    return true;
+  }
+
   function handleOAuthRedirect() {
     var params = new URLSearchParams(window.location.search);
     var code = params.get("code");
-    if (!code) return Promise.resolve(false);
+    if (!code) {
+      if (params.has("error")) soloReturn();   // sign-in cancelled from a single app
+      return Promise.resolve(false);
+    }
 
     var verifier = sessionStorage.getItem("oros-pkce-verifier");
     if (!verifier) return Promise.resolve(false);
@@ -297,6 +327,7 @@
         sessionStorage.removeItem("oros-pkce-verifier");
         storeTokens(tokens);
         window.history.replaceState({}, "", "/");
+        soloReturn();
         return true;
       })
       .catch(function (err) {
@@ -306,6 +337,7 @@
                               // symmetric with the success path, and a
                               // retry starts clean instead of stale.
         window.history.replaceState({}, "", "/");
+        soloReturn();
         return false;
       });
   }
@@ -2027,26 +2059,55 @@
     if (reconcileInFlight || pushInFlight || pullInFlight) return;
 
     reconcileInFlight = true;
-    emitAutoEvent("start", reason);
+    roundLock(function () {
+      emitAutoEvent("start", reason);
+      return pull()
+        .then(function () {
+          if (isDirty()) {
+            return push();          // user changes OR merge convergence OR held-ground divergence
+          }
+          return { ok: true };
+        })
+        .then(function () {
+          reconcileInFlight = false;
+          emitAutoEvent("done", reason);
+        })
+        .catch(function (err) {
+          reconcileInFlight = false;
+          // SY-L2: the reason used to vanish here — a background
+          // failure showed only a red dot, with nothing in the console.
+          try { console.warn("orOS sync: auto sync (" + reason + ") failed:", err); } catch (e) {}
+          emitAutoEvent("fail", reason, err);
+        });
+    }, function () {
+      reconcileInFlight = false;
+      busyElsewhere();
+    });
+  }
 
-    pull()
-      .then(function () {
-        if (isDirty()) {
-          return push();          // user changes OR merge convergence OR held-ground divergence
-        }
-        return { ok: true };
-      })
-      .then(function () {
-        reconcileInFlight = false;
-        emitAutoEvent("done", reason);
-      })
-      .catch(function (err) {
-        reconcileInFlight = false;
-        // SY-L2: the reason used to vanish here — a background
-        // failure showed only a red dot, with nothing in the console.
-        try { console.warn("orOS sync: auto sync (" + reason + ") failed:", err); } catch (e) {}
-        emitAutoEvent("fail", reason, err);
-      });
+  // SY-W1 (single apps, 2026-10-14): orOS and a single app ("orOS
+  // Notes", solo.js) — or two orOS tabs — on one device share this
+  // origin's storage and each run an engine. Their automatic rounds
+  // take turns through one Web Lock: a window whose turn is taken
+  // skips (like an engine already in flight) and, holding unsent
+  // work, tries again shortly. Correctness never depended on it (every
+  // upload is conditional, SY-D1); it saves the refused uploads and
+  // double downloads. No Web Locks (old browser): rounds run as before.
+  var ROUND_LOCK = "oros-sync-round";
+  function roundLock(run, skipped) {
+    var L = navigator.locks;
+    if (!L || typeof L.request !== "function") { run(); return; }
+    try {
+      L.request(ROUND_LOCK, { ifAvailable: true }, function (lock) {
+        if (!lock) { skipped(); return null; }
+        return run();
+      }).catch(function () {});
+    } catch (e) { run(); }
+  }
+  function busyElsewhere() {
+    if (!isDirty() || debounceTimer) return;
+    if (!isConnected() || !passphrase) return;
+    debounceTimer = setTimeout(debounceFire, 3000);
   }
 
   // Push-only attempt (tab hide): pulling costs round-trips we may
@@ -2062,13 +2123,16 @@
                                 // visible reconcile uploads it.
     if (!navigator.onLine) return;              // no wasted attempts offline
 
-    emitAutoEvent("start", reason);
-    push()
-      .then(function () { emitAutoEvent("done", reason); })
-      .catch(function (err)  {
-        try { console.warn("orOS sync: auto sync (" + reason + ") failed:", err); } catch (e) {}
-        emitAutoEvent("fail", reason, err);
-      });
+    roundLock(function () {
+      if (pushInFlight || reconcileInFlight || pullInFlight) return null;
+      emitAutoEvent("start", reason);
+      return push()
+        .then(function () { emitAutoEvent("done", reason); })
+        .catch(function (err)  {
+          try { console.warn("orOS sync: auto sync (" + reason + ") failed:", err); } catch (e) {}
+          emitAutoEvent("fail", reason, err);
+        });
+    }, function () {});   // the window holding the turn sends this origin's data
   }
 
   function emitAutoEvent(kind, detail, err) {

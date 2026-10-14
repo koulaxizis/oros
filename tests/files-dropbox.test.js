@@ -204,3 +204,39 @@ test("unique names never overwrite", () => {
   assert.equal(C.uniqueName("a.txt", ["a.txt", "a (1).txt"]), "a (2).txt");
   assert.equal(C.uniqueName("noext", ["noext"]), "noext (1)");
 });
+
+test("export plan: files, folders, trash and sync's folder", () => {
+  const sel = [
+    { path: "/internal/notes.txt", dir: false, size: 10 },
+    { path: "/internal/Photos", dir: true },
+    { path: "/internal/.trash", dir: true }
+  ];
+  const walks = {
+    "/internal/Photos": [
+      { path: "/internal/Photos/2024/b.jpg", size: 20 },
+      { path: "/internal/Photos/a.jpg", size: 30 },
+      { path: "/internal/Other/x.jpg", size: 1 }          // not under the folder
+    ],
+    "/internal/.trash": [{ path: "/internal/.trash/old.txt", size: 5 }]
+  };
+  const p = C.planExport(sel, walks, "/Share", ["/apps/oros"], ["/internal/.trash"]);
+  assert.deepEqual(p.items.map((i) => i.dst), ["/Share/notes.txt", "/Share/Photos/2024/b.jpg", "/Share/Photos/a.jpg"]);
+  assert.equal(p.bytes, 60);
+  assert.equal(C.planExport(sel, walks, "", [], []).items[0].dst, "/notes.txt");
+  assert.equal(C.planExport(sel, walks, "/Apps/orOS/x", ["/apps/oros"], []).refused, "sync");
+  assert.equal(C.planExport(sel, walks, "/a/../b", [], []).refused, "path");
+});
+
+test("export plan: limits and safe upload arguments", () => {
+  const big = [{ path: "/internal/big.iso", dir: false, size: C.MAX_FILE + 1 }];
+  assert.equal(C.planExport(big, {}, "", [], []).skipped[0].why, "big");
+  const many = [];
+  for (let i = 0; i < C.MAX_FILES + 2; i++) many.push({ path: "/internal/f" + i, dir: false, size: 1 });
+  const m = C.planExport(many, {}, "", [], []);
+  assert.equal(m.items.length, C.MAX_FILES);
+  assert.equal(m.skipped.length, 2);
+  const a = C.uploadArg("/x.txt");
+  assert.equal(a.mode, "add");                 // never overwrites
+  assert.equal(a.autorename, true);
+  assert.ok(C.CHUNK % (4 * 1024 * 1024) === 0 && C.CHUNK < C.UPLOAD_ONE);
+});

@@ -1,0 +1,94 @@
+{
+  "name": "orOS Notes",
+  "short_name": "Notes",
+  "description": "orOS Notes: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/notes/solo.html",
+  "start_url": "/notes/solo.html",
+  "scope": "/notes/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/notes.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/notes-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/notes-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/notes-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "New page",
+      "short_name": "New page",
+      "url": "/notes/solo.html?do=new",
+      "icons": [
+        {
+          "src": "/icons/solo/notes-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/notes/solo.html?file-open=notes",
+      "accept": {
+        "text/plain": [
+          ".txt"
+        ],
+        "text/markdown": [
+          ".md",
+          ".markdown"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/notes/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "text/plain",
+            ".txt",
+            "text/markdown",
+            ".md",
+            ".markdown"
+          ]
+        }
+      ]
+    }
+  }
+}
