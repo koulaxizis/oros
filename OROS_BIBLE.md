@@ -681,7 +681,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | Quote | oros-quote-data | entity union + LWW | 5/5 VERIFIED |
 | Storage | oros-storage-data | flat ents union + del | 5/5 VERIFIED |
 | Habits | oros-habits-data | habits/comps LWW | 5/5 VERIFIED |
-| Files | oros-files-data + "files-disk" | files-disk blob | ALL CLOSED |
+| Files | oros-files-favs (slice `files`, Favourites; wave 3) + device-local oros-files-data / -recents; the disk itself syncs per file through Vault Drive ("files-disk" retired, SY-R) | Favourites: per item LWW by `m` (equal `m`: removal, then larger JSON) + tombstones (≤ 300 kept), sorted by path (R5, R17, R26) | ALL CLOSED (blob era); wave 3: `files/files-core.js`, two-context verified (pin/unpin converge, idle clean) |
 | Prompter | oros-prompter-data | union + LWW + tombs | 5/5 VERIFIED |
 | Characters | oros-characters-data | union + LWW + tombs | 5/5 VERIFIED |
 | Spreadsheet | oros-spreadsheet-data | cell-entity LWW (fm v/f) + sheet LWW (cw, fz) | 5/5 VERIFIED |
@@ -953,7 +953,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
   - A goal applies from its day on; days before the first goal use it; no goal → 2,000 ml. Setting the goal again on the same day raises its stamp.
   - Merge: per id the newer `m` wins; equal `m`: a tombstone wins, then the larger JSON (symmetric). Undo of a delete re-adds with a fresh stamp (R17). Prefs travel as one record: higher `pm` wins, equal `pm` → larger JSON. Defaults: glass 250, bottle 500, unit ml, reminders off 09:00–21:00 every 120 min, Show in Habits on.
 - **WEATHER v1:** `{ ver, sm, om, active, deleted{}, cities[], shellWx, units }`. Units are RENDER ONLY; the slice is always metric.
-- **FILES:** view prefs in oros-files-data (device-local). The "files-disk" slice is a JSON snapshot of `/internal` (blob model; per-entry model is backlog).
+- **FILES:** view prefs in oros-files-data (device-local). FAVS v1 (slice `files`, key `oros-files-favs`): `{ v:1, items:[{ p "/internal/…", dir, m, del? }] }` sorted by `p`, merge `OrosFilesCore.mergeFavs`. Trash records on the disk: `/internal/.trash/<id>.json` `{ v:1, path, name, dir, at }` beside `/internal/.trash/<id>/<name>` (Part II, Files app). The old "files-disk" blob slice is retired (FILES-V, SY-R).
 - **CONTACTS:**
   - `{ ver, contacts[{id,name{},phones[],emails[],addresses[],web[],im[],events[],notes,photo,relations[{with,type}],starred,labelIds[],mtime,del}], cols{}, deleted{} }`.
   - Relations are stored on the initiator; the inverse is computed at render.
