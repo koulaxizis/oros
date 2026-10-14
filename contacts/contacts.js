@@ -3589,12 +3589,12 @@ document.addEventListener("keydown", function (e) {
     });
     return t;
   }
+  // One pass, so an escaped backslash before "n" ("\\n") stays a
+  // backslash and an "n" instead of becoming a line break.
   function vcfUnesc(s) {
-    return String(s || "")
-      .replace(/\\n/gi, "\n")
-      .replace(/\\,/g, ",")
-      .replace(/\\;/g, ";")
-      .replace(/\\\\/g, "\\");
+    return String(s || "").replace(/\\([nN,;\\])/g, function (m, ch) {
+      return ch === "n" || ch === "N" ? "\n" : ch;
+    });
   }
   function vcfEsc(s) {
     return String(s || "")
@@ -4048,11 +4048,11 @@ document.addEventListener("keydown", function (e) {
     last:     ["last name", "family name", "surname", "επώνυμο"],
     nick:     ["nickname", "ψευδώνυμο"],
     fullname: ["name", "ονοματεπώνυμο"],
-    org:      ["organization 1 - name", "organization", "company", "εταιρεία"],
-    title:    ["organization 1 - title", "title", "job title", "θέση"],
+    org:      ["organization name", "organization 1 - name", "organization", "company", "εταιρεία"],
+    title:    ["organization title", "organization 1 - title", "title", "job title", "θέση"],
     note:     ["notes", "note", "σημειώσεις"],
     bday:     ["birthday", "γενέθλια"],
-    group:    ["group membership", "group memberships"]
+    group:    ["labels", "group membership", "group memberships"]
   };
 
   // Exact-match a folded header against an alias list.
