@@ -486,6 +486,19 @@ sup.ref a { color: var(--accent); text-decoration: none; }
   .check { min-height: 44px; }
 }
 
+/* ---------- 8b. Import and export, Wikipedia (wave 3) ---------- */
+.io-h { margin: 6px 0 0; font-size: 14px; color: var(--text-dim); font-weight: 600; text-transform: none; }
+.io-row { display: flex; align-items: flex-start; gap: 12px; }
+.io-row .chip { flex: 0 0 auto; min-width: 11em; justify-content: flex-start; }
+.io-row .hint { margin: 4px 0 0; flex: 1 1 auto; }
+.wp-sugg { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.wp-sugg .lbl { flex-basis: 100%; }
+.ed-wp { align-self: flex-start; margin: -4px 0 8px; }
+@media (max-width: 559px) {
+  .io-row { flex-direction: column; gap: 2px; }
+  .io-row .chip { min-width: 0; }
+}
+
 /* ---------- 9. Reduced motion, print ---------- */
 @media (prefers-reduced-motion: reduce) {
   .icon-btn, #toast, #side, .sec > h2 .sh-t::before { transition: none !important; }
