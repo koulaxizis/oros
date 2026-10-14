@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.09.00
+- Seven more single apps: orOS Contacts, Writer, Spreadsheet, Kanban, Mind Map, Wiki and Slides, each with its icon shortcut, Open with file types and Android share.
+
 ## Version 2.08.00
 - The Assistant can now change items in Contacts, Kanban, Media Shelf, Habits and Plant Care too: move a card to Done, tick a habit, mark a plant watered, add a phone number. As always, you see the change first and press Apply, with Undo.
 

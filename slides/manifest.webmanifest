@@ -1,0 +1,92 @@
+{
+  "name": "orOS Slides",
+  "short_name": "Slides",
+  "description": "orOS Slides: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/slides/solo.html",
+  "start_url": "/slides/solo.html",
+  "scope": "/slides/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/slides.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/slides-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/slides-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/slides-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "New presentation",
+      "short_name": "New presentation",
+      "url": "/slides/solo.html?do=new",
+      "icons": [
+        {
+          "src": "/icons/solo/slides-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/slides/solo.html?file-open=slides",
+      "accept": {
+        "application/x-oros-slides": [
+          ".orosslides"
+        ],
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+          ".pptx"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/slides/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-oros-slides",
+            ".orosslides",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".pptx"
+          ]
+        }
+      ]
+    }
+  }
+}

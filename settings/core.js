@@ -151,7 +151,7 @@
       "so.open.title": "Opens the app's page in a new tab, ready to install",
       "so.how": "How to install",
       "so.how.desktop": "Windows and Linux: in the new tab, choose Install in the address bar of Chrome or Edge. The app then appears in your Start menu or app list.",
-      "so.how.android": "Android: in the new tab, open Chrome's menu and choose Add to Home screen › Install.",
+      "so.how.android": "Android: Install opens the app in Chrome, also from the orOS app. Press Install on the bar at the bottom, or open Chrome's menu and choose Add to Home screen › Install.",
       "so.how.iphone": "iPhone: in Safari, Share › Add to Home Screen.",
       "so.none": "Single apps are not available in this orOS version.",
 
@@ -377,7 +377,7 @@
       "so.open.title": "Ανοίγει τη σελίδα της εφαρμογής σε νέα καρτέλα, έτοιμη για εγκατάσταση",
       "so.how": "Πώς εγκαθίσταται",
       "so.how.desktop": "Windows και Linux: στη νέα καρτέλα, πάτησε Εγκατάσταση στη γραμμή διευθύνσεων του Chrome ή του Edge. Η εφαρμογή εμφανίζεται μετά στο μενού Έναρξη ή στη λίστα εφαρμογών.",
-      "so.how.android": "Android: στη νέα καρτέλα, άνοιξε το μενού του Chrome και πάτησε Προσθήκη στην αρχική οθόνη › Εγκατάσταση.",
+      "so.how.android": "Android: η Εγκατάσταση ανοίγει την εφαρμογή στο Chrome, και από την εφαρμογή orOS. Πάτησε Εγκατάσταση στη γραμμή κάτω, ή άνοιξε το μενού του Chrome και πάτησε Προσθήκη στην αρχική οθόνη › Εγκατάσταση.",
       "so.how.iphone": "iPhone: στο Safari, Κοινοποίηση › Προσθήκη στην οθόνη Αφετηρίας.",
       "so.none": "Οι μεμονωμένες εφαρμογές δεν υπάρχουν σε αυτή την έκδοση του orOS.",
 

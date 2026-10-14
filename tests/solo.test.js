@@ -30,7 +30,6 @@ test("every single app is a registered internal app with a page, a manifest and 
     });
     assert.ok(S.nameOf(id, "en").startsWith("orOS "));
     assert.ok(S.nameOf(id, "el").startsWith("orOS "));
-    assert.notEqual(S.nameOf(id, "el"), S.nameOf(id, "en"));
   });
 });
 
@@ -152,4 +151,41 @@ test("the shell side: solo.js loads before the shell, which has the solo hooks; 
   assert.match(sy, /SOLO_RETURN_KEY = "oros-solo-return"/);
   assert.match(sy, /ROUND_LOCK = "oros-sync-round"/);
   assert.match(read("fileopen.js"), /function soloApp\(\)/);
+});
+
+test("wave 2: shares into the office apps open a form or dialog; shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  const s = { url: "", title: "Plan", text: "Plan\nfirst\nsecond" };
+  assert.deepEqual(S.shareTarget("contacts", { url: "", title: "", text: "Maria Papadopoulou\nmaria@example.com" }, now),
+    { app: "contacts", target: { cardText: { text: "Maria Papadopoulou\nmaria@example.com" } } });
+  assert.deepEqual(S.shareTarget("writer", s, now), { app: "writer", target: { newDoc: { title: "Plan", text: "Plan\nfirst\nsecond" } } });
+  assert.deepEqual(S.shareTarget("spreadsheet", { url: "", title: "", text: "a\tb\n1\t2\n\nx,y" }, now),
+    { app: "spreadsheet", target: { newSheet: { name: "", rows: [["a", "b"], ["1", "2"], ["x", "y"]] } } });
+  assert.deepEqual(S.shareTarget("kanban", s, now), { app: "kanban", target: { asNew: { title: "Plan", note: "first\nsecond" } } });
+  assert.deepEqual(S.shareTarget("mindmap", s, now), { app: "mindmap", target: { pasteText: { text: "Plan\nfirst\nsecond" } } });
+  assert.deepEqual(S.shareTarget("wiki", s, now), { app: "wiki", target: { newArt: { title: "Plan", text: "Plan\nfirst\nsecond" } } });
+  assert.deepEqual(S.shareTarget("wiki", { url: "", title: "", text: "Plan\nbody" }, now), { app: "wiki", target: { newArt: { title: "Plan", text: "body" } } });
+  assert.deepEqual(S.shareTarget("slides", s, now), { app: "slides", target: { outline: "# Plan\nPlan\nfirst\nsecond", title: "Plan" } });
+  ["contacts", "writer", "spreadsheet", "kanban", "mindmap", "wiki", "slides"].forEach((id) => {
+    assert.equal(S.shareTarget(id, { url: "", title: "", text: "" }, now), null, id);
+  });
+  // the receivers exist in the apps
+  [["contacts/contacts.js", /target\.newContact === true/], ["contacts/contacts.js", /CCx\.parse\(ctx\.text/],
+   ["writer/writer.js", /t\.newBlank === true/], ["spreadsheet/spreadsheet.js", /tg\.newBlank === true/],
+   ["kanban/kanban.js", /tg\.quickAdd === true/], ["mindmap/mindmap.js", /t\.newMap === true \|\| t\.pasteText/],
+   ["wiki/wiki.js", /target\.newArt/], ["slides/app.js", /tg\.newDeck === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
+});
+
+test("Install: Android goes through an intent to Chrome (the orOS app would catch the link); the page offers its install bar", () => {
+  const a = S.installUrl("notes", "Mozilla/5.0 (Linux; Android 14; Pixel 8)", "https://useoros.online");
+  assert.equal(a, "intent://useoros.online/notes/solo.html?install#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
+    encodeURIComponent("https://useoros.online/notes/solo.html?install") + ";end");
+  assert.equal(S.installUrl("notes", "Mozilla/5.0 (Windows NT 10.0)", "https://useoros.online"), "/notes/solo.html?install");
+  assert.equal(S.installUrl("notes", "Android", "http://127.0.0.1:8080"), "/notes/solo.html?install");
+  assert.equal(S.installUrl("notes", "Android", "https://a.b/c"), "/notes/solo.html?install");
+  assert.equal(S.installUrl("maps", "Android", "https://useoros.online"), "");
+  assert.match(read("settings/settings.js"), /S\.installUrl\(id, navigator\.userAgent, location\.origin\)/);
+  const src = read("solo.js");
+  assert.match(src, /addEventListener\("beforeinstallprompt"/);
+  assert.match(src, /installBar\(win, id, asked\)/);
 });

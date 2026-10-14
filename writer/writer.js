@@ -2233,8 +2233,10 @@ function bindShortcuts() {
 // system's "Open with" (shell fileopen.js), taken once from the shell.
 // { newDoc: { title?, text } }: Typewriter's "Send to Writer", a NEW
 // document from plain text (paragraphs split on blank lines).
+// { newBlank: true }: the single app's "New document" icon shortcut.
 const NEWDOC_MAX = 500000;
 function openSearchTarget(t) {
+  if (t && t.newBlank === true) { createDoc({}); return; }
   if (t && t.newDoc && typeof t.newDoc === 'object' && typeof t.newDoc.text === 'string') {
     const text = t.newDoc.text.slice(0, NEWDOC_MAX);
     if (!text.trim()) return;
