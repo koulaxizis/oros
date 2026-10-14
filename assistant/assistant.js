@@ -127,6 +127,21 @@
       "att.localImg": "{name} can't see photos itself: orOS reads the text in them on this device (English and Greek) and sends only that. The first time, the text engine is downloaded once (about 7 MB).",
       "att.localBoth": "{name} can't read files itself: orOS reads their text on this device and sends only that. For photos the text engine is downloaded once the first time (about 7 MB).",
       "set.vis": "This model can see photos",
+      "set.keyHintFree": "The key is kept on this device, encrypted, and is sent only to {host}. {name} has a free plan: a free account and key are enough, with daily limits. Nothing is charged unless you add a way to pay there.",
+      "set.note.github": "The key is a GitHub personal access token (fine-grained) with the \u201cModels\u201d permission set to read. Free with daily limits for every GitHub account.",
+      "set.note.cohere": "A free trial key is for personal use and testing, not for business use, and has a monthly limit.",
+      "set.note.pollinations": "Use a publishable key (it starts with pk_). The free tier has hourly limits.",
+      "set.note.openrouter": "OpenRouter has models that cost nothing (their names end in \u201c:free\u201d): tick \u201cOnly free models\u201d and load the list. A free key is enough for them, with daily limits.",
+      "set.freeOnly": "Only free models",
+      "set.modelsFree": "The key works · {n} free models",
+      "set.test": "Test the connection",
+      "set.testHint": "Sends one short message (\u201cReply OK\u201d) to see if this service answers here. It counts as one small request on your account.",
+      "set.testBusy": "Testing…",
+      "set.testOk": "It works: {name} answered with {model}.",
+      "set.testCors": "{name} could not be reached from this page. Most often the service does not accept calls from a web browser (CORS), so it can't work in orOS: pick another one. Less often the address {host} is blocked on your network.",
+      "set.testLocal": "The server at {host} did not answer. Check that it runs, that the address is right, and that it allows calls from this site (CORS, see Help).",
+      "set.testOffline": "You are offline. Connect to the internet and test again.",
+      "set.testSlow": "{name} did not answer within 30 seconds. Try again, or pick a smaller model.",
       "set.visHint": "Tick it for a model with vision, such as llava, gemma3 or qwen2.5-vl. Otherwise orOS reads the text in photos on this device and sends only that; PDFs always go as text.",
       "who.chatOnly": "Chat only: no access to your data",
       "off.line": "You are offline. {name} can't be reached until you are back online.",
@@ -316,6 +331,21 @@
       "att.localImg": "Το {name} δεν βλέπει μόνο του φωτογραφίες: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή (Αγγλικά και Ελληνικά) και στέλνει μόνο αυτό. Την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
       "att.localBoth": "Το {name} δεν διαβάζει μόνο του αρχεία: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή και στέλνει μόνο αυτό. Για φωτογραφίες, την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
       "set.vis": "Αυτό το μοντέλο βλέπει φωτογραφίες",
+      "set.keyHintFree": "Το κλειδί μένει κρυπτογραφημένο σε αυτή τη συσκευή και στέλνεται μόνο στο {host}. Το {name} έχει δωρεάν πρόγραμμα: αρκεί ένας δωρεάν λογαριασμός και κλειδί, με ημερήσια όρια. Δεν χρεώνεσαι τίποτα αν δεν βάλεις εκεί τρόπο πληρωμής.",
+      "set.note.github": "Το κλειδί είναι ένα personal access token του GitHub (fine-grained) με την άδεια «Models» σε ανάγνωση. Δωρεάν με ημερήσια όρια για κάθε λογαριασμό GitHub.",
+      "set.note.cohere": "Το δωρεάν δοκιμαστικό κλειδί είναι για προσωπική χρήση και δοκιμές, όχι για επαγγελματική χρήση, και έχει μηνιαίο όριο.",
+      "set.note.pollinations": "Χρησιμοποίησε δημόσιο κλειδί (ξεκινά με pk_). Το δωρεάν πρόγραμμα έχει ωριαία όρια.",
+      "set.note.openrouter": "Το OpenRouter έχει μοντέλα που δεν κοστίζουν τίποτα (τα ονόματά τους τελειώνουν σε «:free»): τσέκαρε «Μόνο δωρεάν μοντέλα» και φόρτωσε τη λίστα. Αρκεί ένα δωρεάν κλειδί, με ημερήσια όρια.",
+      "set.freeOnly": "Μόνο δωρεάν μοντέλα",
+      "set.modelsFree": "Το κλειδί δουλεύει · {n} δωρεάν μοντέλα",
+      "set.test": "Δοκιμή σύνδεσης",
+      "set.testHint": "Στέλνει ένα σύντομο μήνυμα («Απάντησε OK») για να δεις αν η υπηρεσία απαντά εδώ. Μετράει ως ένα μικρό αίτημα στον λογαριασμό σου.",
+      "set.testBusy": "Δοκιμή…",
+      "set.testOk": "Δουλεύει: το {name} απάντησε με το {model}.",
+      "set.testCors": "Δεν έγινε σύνδεση με το {name} από αυτή τη σελίδα. Συνήθως η υπηρεσία δεν δέχεται κλήσεις από browser (CORS), οπότε δεν μπορεί να δουλέψει στο orOS: διάλεξε άλλη. Σπανιότερα η διεύθυνση {host} είναι μπλοκαρισμένη στο δίκτυό σου.",
+      "set.testLocal": "Ο server στο {host} δεν απάντησε. Έλεγξε ότι τρέχει, ότι η διεύθυνση είναι σωστή και ότι επιτρέπει κλήσεις από αυτή τη σελίδα (CORS, δες τη Βοήθεια).",
+      "set.testOffline": "Είσαι εκτός σύνδεσης. Συνδέσου στο internet και δοκίμασε ξανά.",
+      "set.testSlow": "Το {name} δεν απάντησε μέσα σε 30 δευτερόλεπτα. Δοκίμασε ξανά ή διάλεξε μικρότερο μοντέλο.",
       "set.visHint": "Τσέκαρέ το για μοντέλο με όραση, όπως llava, gemma3 ή qwen2.5-vl. Αλλιώς το orOS διαβάζει το κείμενο των φωτογραφιών σε αυτή τη συσκευή και στέλνει μόνο αυτό· τα PDF πηγαίνουν πάντα ως κείμενο.",
       "who.chatOnly": "Μόνο συζήτηση: χωρίς πρόσβαση στα δεδομένα σου",
       "off.line": "Είσαι εκτός σύνδεσης. Το {name} δεν είναι διαθέσιμο μέχρι να ξανασυνδεθείς.",
@@ -548,7 +578,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0 };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -924,6 +954,17 @@
     });
   }
 
+  // Providers with a note of their own under the key box.
+  var NOTE_PROVS = { github: 1, cohere: 1, pollinations: 1, openrouter: 1 };
+  // What a failed connection test means, in plain words.
+  function testErr(e, pid, timedOut) {
+    if (timedOut) return t("set.testSlow", { name: provName(pid) });
+    if (e instanceof C.ProviderError && e.code === "net") {
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return t("set.testOffline");
+      return t(C.PROVIDERS[pid].local ? "set.testLocal" : "set.testCors", { name: provName(pid), host: hostOf(baseOf(pid)) });
+    }
+    return errText(e, pid);
+  }
   function errText(e, pid) {
     var name = provName(pid), host = hostOf(baseOf(pid));
     if (!(e instanceof C.ProviderError)) return t("err.stream");
@@ -2851,7 +2892,8 @@
         keyActs.appendChild(get);
       }
       provBox.appendChild(keyActs);
-      if (!P.local) provBox.appendChild(el("p", "dlg-hint", t("set.keyHint", { host: hostOf(P.base), name: P.name })));
+      if (!P.local) provBox.appendChild(el("p", "dlg-hint", t(P.free ? "set.keyHintFree" : "set.keyHint", { host: hostOf(P.base), name: P.name })));
+      if (NOTE_PROVS[pid]) provBox.appendChild(el("p", "dlg-hint", t("set.note." + pid)));
       function drawKey() {
         loadKey(pid).then(function (k) {
           var has = !!(k && k.key);
@@ -2883,9 +2925,62 @@
       mrow.appendChild(lm);
       provBox.appendChild(mrow);
       provBox.appendChild(dl);
+      var models = [];
+      if (pid === "openrouter") {
+        var fr = checkbox(provBox, "as-free", t("set.freeOnly"), !!provConf(pid).free, function (on) {
+          setProvConf(pid, { free: on ? 1 : 0 });
+          var shown = fillModels();
+          // A paid model left in the box would still be charged.
+          if (on && shown.length && !shown.some(function (m) { return m.id === model.value; })) {
+            model.value = shown[0].id;
+            setProvConf(pid, { model: shown[0].id });
+            renderAll();
+          }
+        });
+        fr.parentNode.classList.add("check");
+      }
       var mstat = el("p", "dlg-hint");
       mstat.setAttribute("role", "status");
       provBox.appendChild(mstat);
+      // Connection test: one tiny message, so a service that refuses
+      // calls from a web page (CORS) says so before the first question.
+      var trow = el("div", "row links");
+      var test = button(t("set.test"), "small", testConn);
+      test.id = "as-test";
+      trow.appendChild(test);
+      provBox.appendChild(trow);
+      var tstat = el("p", "dlg-hint");
+      tstat.id = "as-test-st";
+      tstat.setAttribute("role", "status");
+      provBox.appendChild(tstat);
+      provBox.appendChild(el("p", "dlg-hint", t("set.testHint")));
+      function testConn() {
+        test.disabled = true;
+        tstat.classList.remove("err", "ok");
+        tstat.textContent = t("set.testBusy");
+        var ac = new AbortController(), timer = setTimeout(function () { ac.abort(); }, 30000);
+        callModel(pid, [{ r: "user", text: "Reply with the single word: OK" }], {}, ac.signal, null).then(function (r) {
+          var said = String(r && r.text || "").replace(/\s+/g, " ").trim().slice(0, 60);
+          tstat.textContent = t("set.testOk", { name: provName(pid), model: modelOf(pid) }) + (said ? (LANG === "el" ? " \u00ab" + said + "\u00bb" : " \u201c" + said + "\u201d") : "");
+          tstat.classList.add("ok");
+        }, function (e) {
+          tstat.textContent = testErr(e, pid, ac.signal.aborted);
+          tstat.classList.add("err");
+        }).then(function () { clearTimeout(timer); test.disabled = false; });
+      }
+      function fillModels() {
+        var only = pid === "openrouter" && !!provConf(pid).free;
+        var shown = models.filter(function (m) { return !only || m.free; });
+        dl.textContent = "";
+        shown.forEach(function (m) {
+          var o = el("option");
+          o.value = m.id;
+          if (m.name !== m.id) o.label = m.name;
+          dl.appendChild(o);
+        });
+        if (models.length) mstat.textContent = shown.length ? t(only ? "set.modelsFree" : "set.modelsOk", { n: shown.length }) : t("set.modelsNone");
+        return shown;
+      }
       function loadModels() {
         lm.disabled = true;
         mstat.classList.remove("err");
@@ -2902,15 +2997,15 @@
             try { j = JSON.parse(txt); } catch (e) { throw new C.ProviderError("server", "bad JSON", res.status); }
             return C.parseModels(pid, j);
           });
-        }).then(function (list) {
-          dl.textContent = "";
-          list.forEach(function (m) {
-            var o = el("option");
-            o.value = m.id;
-            if (m.name !== m.id) o.label = m.name;
-            dl.appendChild(o);
-          });
-          mstat.textContent = list.length ? t("set.modelsOk", { n: list.length }) : t("set.modelsNone");
+        }).then(function (all) {
+          models = all;
+          var list = fillModels();
+          if (!all.length) mstat.textContent = t("set.modelsNone");
+          if ((P.free || provConf(pid).free) && !provConf(pid).model && list.length && !list.some(function (m) { return m.id === model.value; })) {
+            model.value = list[0].id;
+            setProvConf(pid, { model: list[0].id });
+            renderAll();
+          }
           if (!model.value && list.length) {
             var pick = P.model && list.some(function (m) { return m.id === P.model; }) ? P.model : "";
             if (pick) { model.value = pick; setProvConf(pid, { model: pick }); renderAll(); }
