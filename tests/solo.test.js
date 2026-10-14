@@ -235,3 +235,19 @@ test("wave 4: tools and media — places, links and mail shares; shortcuts reach
    ["radio/radio.js", /t\.play === "last"/], ["radio/radio.js", /__orosTakeTarget\("radio"\)/],
    ["photolab/app.js", /target\.newPic === true/]].forEach(([f, re]) => assert.match(read(f), re, f));
 });
+
+test("wave 5: business — invoice and customer shares; shortcuts reach their receivers", () => {
+  const now = new Date(2026, 9, 14, 10, 0);
+  assert.deepEqual(S.shareTarget("invoices", { url: "", title: "Logo design", text: "3 drafts, 2 revisions" }, now),
+    { app: "invoices", target: { newDoc: "inv", notes: "Logo design\n3 drafts, 2 revisions" } });
+  assert.equal(S.shareTarget("invoices", { url: "", title: "", text: "  " }, now), null);
+  assert.deepEqual(S.shareTarget("crm", { url: "", title: "", text: "Maria Papadopoulou <maria@example.gr>\nTel +30 210 123 4567\nMet at the fair" }, now),
+    { app: "crm", target: { asNew: { name: "Maria Papadopoulou", note: "Tel +30 210 123 4567\nMet at the fair", email: "maria@example.gr", phone: "+30 210 123 4567" } } });
+  assert.deepEqual(S.shareTarget("crm", { url: "", title: "", text: "nikos@shop.example" }, now),
+    { app: "crm", target: { asNew: { name: "nikos", note: "", email: "nikos@shop.example" } } });
+  assert.equal(S.manifestFor("timesheet", F.table(), BASE).share_target, undefined);
+  assert.deepEqual(S.APPS.invoices.shortcuts.map((x) => x.target.newDoc), ["inv", "rcpt"]);
+  [["invoices/invoices.js", /tg\.newDoc === "inv" \|\| tg\.newDoc === "rcpt"/], ["invoices/invoices.js", /x\.notes = notes/], ["crm/crm.js", /if \(x\.newCust\)/],
+   ["timesheet/timesheet.js", /if \(t\.toggle\) \{ window\.__orosTimesheetToggle\(\)/], ["timesheet/timesheet.js", /if \(t\.newEntry\)/]
+  ].forEach(([f, re]) => assert.match(read(f), re, f));
+});

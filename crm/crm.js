@@ -2590,6 +2590,8 @@
     }
     if (x.log) return mailToLog(x.log);
     if (x.asNew) return asNewCust(x.asNew);
+    // Single app icon shortcut: an empty New customer form.
+    if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }
     var c = id(x.cust) ? C.byId(data.cust, x.cust) : null;
     var d = id(x.deal) ? C.byId(data.deals, x.deal) : null;
     var f = id(x.fup) ? C.byId(data.fups, x.fup) : null;

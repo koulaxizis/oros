@@ -3730,6 +3730,7 @@
   boot();
 
   // Deep links (shell __orosOpenAt / __orosTakeTarget):
+  //   { newDoc: "inv"|"rcpt", notes? } a blank invoice / receipt (single app)
   //   { new: {...} }          BR-INV-NEW prefill (CRM Lite, Quote, Timesheet,
   //                           Assistant): a new invoice draft, saved only
   //                           when the user saves or issues it
@@ -3738,6 +3739,15 @@
   function openTarget(tg) {
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg["new"]) { prefillNew(tg["new"]); return; }
+    // Single app: a blank invoice or receipt (icon shortcuts), or a
+    // new invoice with shared text as its notes (unsaved until saved).
+    if (tg.newDoc === "inv" || tg.newDoc === "rcpt") {
+      if (view === "edit" && ed && ed.dirty) return;
+      var notes = typeof tg.notes === "string" ? tg.notes.trim().slice(0, 500) : "";
+      newDoc(tg.newDoc, notes ? function (x) { x.notes = notes; } : null);
+      if (notes) { ed.dirty = true; shelter(); }
+      return;
+    }
     if (tg.recurring) {   // Today: "recurring invoice ready" → its draft in the list
       if (view === "edit" && ed && ed.dirty) return;
       runRecurring();
