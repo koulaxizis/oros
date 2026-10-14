@@ -3466,6 +3466,40 @@
       .catch(function () { fromPacks(t("search.err")); });
   }
 
+  // Assistant entry card (shell __orosOpenAt("maps", { asNew })):
+  // { name, lat?, lon?, query?, from? }. Coordinates (both finite, in
+  // range) → the result pin at that point with its popup open, named
+  // so: "Save place" there is the user's. Only a query → the search box
+  // runs it and lists the hits to pick. Nothing is saved here (BR-W8-6);
+  // no name, nothing to show, or a dialog open → no-op. tracks.js and
+  // tools.js chain to this handler; a target at boot waits in
+  // mapsHost.pendingTarget (tracks.js) and is taken below.
+  function cleanLine(v, max) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
+  }
+  function asNewPlace(x) {
+    if (!map || !x || typeof x !== "object" || Array.isArray(x) || document.querySelector("dialog[open]")) return;
+    var name = cleanLine(x.name, 120);
+    if (!name) return;
+    var lat = x.lat, lon = x.lon;
+    if (typeof lat === "number" && typeof lon === "number" && isFinite(lat) && isFinite(lon) &&
+        lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      placeResult(lat, lon, name, "");
+      return;
+    }
+    var q = cleanLine(x.query, 200);
+    if (!q) return;
+    var search = $("search");
+    search.value = q;
+    $("search-clear").hidden = false;
+    clearTimeout(acTimer);
+    search.focus();
+    acFetch(q);
+  }
+  window.__orosOpenAt = function (target) {
+    if (target && target.asNew) asNewPlace(target.asNew);
+  };
+
   window.__orosMapsOpen = function (params) {
     if (typeof params !== "object" || !params) return;
     openAtLocation(params);
@@ -3881,6 +3915,12 @@
   if (shared) { bootedViaBridge = true; openSharedLink(shared); }
   consumePending();
   initOfflineChip();
+  // An asNew target handed over at boot (kept by tracks.js, which
+  // loads after this file): taken once every module has run.
+  setTimeout(function () {
+    var pt = mapsHost.pendingTarget;
+    if (pt && pt.asNew) { mapsHost.pendingTarget = null; asNewPlace(pt.asNew); }
+  }, 400);
 
   // A navigation that was running when this page was replaced
   // resumes — unless the user came back through a deep link.

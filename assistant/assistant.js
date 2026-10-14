@@ -99,6 +99,24 @@
       "entry.hint.slides": "Opens {app}; the presentation is made when you pick a theme there.",
       "entry.opened": "Opened in {app}", "entry.dismissed": "Dismissed", "entry.failed": "{app} did not accept it",
       "entry.more": "+{n} more", "entry.gone": "{app} is not installed",
+      "entry.contact": "New contact · {app}", "entry.customer": "New customer · {app}", "entry.card": "New card · {app}",
+      "entry.habit": "New habit · {app}", "entry.workout": "Log a workout · {app}", "entry.car": "New entry · {app}",
+      "entry.plant": "New plant · {app}", "entry.pet_record": "New health record · {app}", "entry.media": "New title · {app}",
+      "entry.place": "Place · {app}", "entry.shared_expense": "New shared expense · {app}",
+      "entry.hint.place": "Opens {app} at this place; save it there if it is the right one.",
+      "f.org": "Organisation", "f.phone": "Phone", "f.email": "E-mail", "f.address": "Address", "f.birthday": "Birthday",
+      "f.company": "Company", "f.vat": "VAT no.", "f.board": "Board", "f.column": "Column",
+      "f.perWeek": "Times a week", "f.days": "Days", "f.target": "Target", "f.unit": "Unit", "f.reminder": "Reminder",
+      "f.activity": "Activity", "f.minutes": "Minutes", "f.distance": "Distance (km)", "f.vehicle": "Vehicle",
+      "f.km": "Odometer (km)", "f.cost": "Cost", "f.shop": "Shop", "f.species": "Species", "f.room": "Room",
+      "f.waterDays": "Water every (days)", "f.record": "Record", "f.pet": "Pet", "f.nextDue": "Next due", "f.vet": "Vet",
+      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year",
+      "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
+      "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
+      "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
+      "v.series": "Series", "v.album": "Album", "v.podcast": "Podcast", "v.game": "Game", "v.want": "Want to",
+      "v.now": "In progress", "v.done": "Done", "v.dropped": "Dropped",
+      "wd.0": "Mon", "wd.1": "Tue", "wd.2": "Wed", "wd.3": "Thu", "wd.4": "Fri", "wd.5": "Sat", "wd.6": "Sun",
       "f.list": "New list", "f.date": "Date", "f.start": "Time", "f.location": "Place", "f.amount": "Amount",
       "f.category": "Category", "f.client": "Client", "f.currency": "Currency", "f.url": "Address",
       "cat.groceries": "Groceries", "cat.eating-out": "Eating out", "cat.bills": "Bills", "cat.home": "Home",
@@ -223,6 +241,24 @@
       "entry.hint.slides": "Ανοίγει: {app}· η παρουσίαση δημιουργείται όταν διαλέξεις θέμα εκεί.",
       "entry.opened": "Άνοιξε: {app}", "entry.dismissed": "Απορρίφθηκε", "entry.failed": "Δεν έγινε δεκτό ({app})",
       "entry.more": "+{n} ακόμη", "entry.gone": "Δεν είναι εγκατεστημένο: {app}",
+      "entry.contact": "Νέα επαφή · {app}", "entry.customer": "Νέος πελάτης · {app}", "entry.card": "Νέα κάρτα · {app}",
+      "entry.habit": "Νέα συνήθεια · {app}", "entry.workout": "Καταγραφή προπόνησης · {app}", "entry.car": "Νέα καταχώρηση · {app}",
+      "entry.plant": "Νέο φυτό · {app}", "entry.pet_record": "Νέα εγγραφή υγείας · {app}", "entry.media": "Νέος τίτλος · {app}",
+      "entry.place": "Μέρος · {app}", "entry.shared_expense": "Νέο κοινό έξοδο · {app}",
+      "entry.hint.place": "Ανοίγει: {app} σε αυτό το μέρος· αποθήκευσέ το εκεί αν είναι το σωστό.",
+      "f.org": "Οργανισμός", "f.phone": "Τηλέφωνο", "f.email": "E-mail", "f.address": "Διεύθυνση", "f.birthday": "Γενέθλια",
+      "f.company": "Εταιρεία", "f.vat": "ΑΦΜ", "f.board": "Πίνακας", "f.column": "Στήλη",
+      "f.perWeek": "Φορές την εβδομάδα", "f.days": "Ημέρες", "f.target": "Στόχος", "f.unit": "Μονάδα", "f.reminder": "Υπενθύμιση",
+      "f.activity": "Δραστηριότητα", "f.minutes": "Λεπτά", "f.distance": "Απόσταση (km)", "f.vehicle": "Όχημα",
+      "f.km": "Χιλιόμετρα", "f.cost": "Κόστος", "f.shop": "Συνεργείο", "f.species": "Είδος φυτού", "f.room": "Δωμάτιο",
+      "f.waterDays": "Πότισμα κάθε (μέρες)", "f.record": "Εγγραφή", "f.pet": "Κατοικίδιο", "f.nextDue": "Επόμενη φορά", "f.vet": "Κτηνίατρος",
+      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος",
+      "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
+      "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
+      "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
+      "v.series": "Σειρά", "v.album": "Άλμπουμ", "v.podcast": "Podcast", "v.game": "Παιχνίδι", "v.want": "Θέλω",
+      "v.now": "Σε εξέλιξη", "v.done": "Ολοκληρώθηκε", "v.dropped": "Παρατήθηκε",
+      "wd.0": "Δευ", "wd.1": "Τρι", "wd.2": "Τετ", "wd.3": "Πεμ", "wd.4": "Παρ", "wd.5": "Σαβ", "wd.6": "Κυρ",
       "f.list": "Νέα λίστα", "f.date": "Ημερομηνία", "f.start": "Ώρα", "f.location": "Τοποθεσία", "f.amount": "Ποσό",
       "f.category": "Κατηγορία", "f.client": "Πελάτης", "f.currency": "Νόμισμα", "f.url": "Διεύθυνση",
       "cat.groceries": "Σούπερ μάρκετ", "cat.eating-out": "Φαγητό έξω", "cat.bills": "Λογαριασμοί", "cat.home": "Σπίτι",
@@ -1831,7 +1867,7 @@
       var dl = el("dl", "entry-fields");
       v.fields.forEach(function (f) {
         dl.appendChild(el("dt", "", t("f." + f[0])));
-        dl.appendChild(el("dd", "", f[0] === "category" ? t("cat." + f[1]) : f[1]));
+        dl.appendChild(el("dd", "", fieldValue(f[0], f[1])));
       });
       card.appendChild(dl);
     }
@@ -1857,7 +1893,7 @@
       card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""),
         t("entry." + ui.st, { app: name })));
     } else {
-      var hint = e.kind === "slides" ? "entry.hint.slides" :
+      var hint = e.kind === "slides" ? "entry.hint.slides" : e.kind === "place" ? "entry.hint.place" :
                  (e.kind === "note" || e.kind === "sheet") ? "entry.hint.make" : "entry.hint.form";
       card.appendChild(el("p", "dlg-hint", t(hint, { app: name })));
       var acts = el("div", "dlg-actions");
@@ -1877,6 +1913,15 @@
       card.appendChild(acts);
     }
     host.appendChild(card);
+  }
+
+  // A card field's value as the user reads it: ready ids → words.
+  var VAL_KEYS = { kind: 1, record: 1, media: 1, status: 1 };
+  function fieldValue(k, v) {
+    if (k === "category") return t("cat." + v);
+    if (k === "days") return String(v).split(",").map(function (d) { return t("wd." + d); }).join(", ");
+    if (VAL_KEYS[k] && STRINGS.en["v." + v] !== undefined) return t("v." + v);
+    return v;
   }
 
   // Markdown tokens (core.js) → DOM, textContent only.

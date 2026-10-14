@@ -30,6 +30,8 @@
 //   monthly(data, vid, months, today) → [{ ym, fuel, service, other }]
 //   csvRows(data, names) → rows · csvCell(v)
 //   readPrefs(raw) → { remind, unit, tyreAge, tyreTread }
+//   asNewPrefill(x, today) → prefill of a new service row / renewal
+//     (Assistant "asNew" entry card) or null · matchVehicle(list, q)
 // Data (synced slice "garage", key oros-garage-data):
 //   { ver: 1, vehicles, fuel, service, plans, tyres, renewals,
 //     costs, odo: [row…] each sorted by id, settings: { m, cur },
@@ -784,6 +786,85 @@
     return rows;
   }
 
+  // ---------- Assistant prefill (asNew, BR-W8-6: prefill, not data) ----------
+  // x = { type?: "service"|"reminder", vehicle?, date?, title?, items?,
+  // km? | odometer?, cost?, shop?, note?, due?, kind? } from the shell.
+  // Every field is cleaned to the editors' own limits; unknown fields
+  // are ignored. The title picks service items / the renewal kind by
+  // their names (either language); a title that is not exactly such a
+  // name is kept (service: first line of the note; reminder: label).
+  // Returns null when nothing usable is left.
+  function lc(s) { return String(s).toLowerCase(); }
+  function nameMatch(names, title) {
+    var t = lc(title), exact = null, best = null, bestLen = 0;
+    Object.keys(names).forEach(function (id) {
+      [id, names[id][0], names[id][1]].forEach(function (n) {
+        var k = lc(n);
+        if (k === t) exact = exact || id;
+        else if (k.length >= 4 && t.indexOf(k) >= 0 && k.length > bestLen && id !== "other") { best = id; bestLen = k.length; }
+      });
+    });
+    return { exact: exact, best: best };
+  }
+  function prefillNum(v) {
+    if (typeof v === "string") v = parseNum(v, "en");
+    return typeof v === "number" && isFinite(v) ? v : null;
+  }
+  function asNewPrefill(x, today) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var due = isYmd(x.due) ? x.due : "";
+    var type = x.type === "reminder" || x.type === "service" ? x.type : (due ? "reminder" : "service");
+    var title = cleanText(x.title, 80, false);
+    var n = cleanText(x.note, NOTES_LEN, true);
+    var c = prefillNum(x.cost);
+    c = c !== null && c >= 0 && Math.round(c * 100) <= C_MAX ? Math.round(c * 100) : 0;
+    var out = { type: type, vehicle: cleanText(x.vehicle, NAME_LEN, false), c: c, n: n };
+    var m;
+    if (type === "service") {
+      var d = isYmd(x.date) && (!today || x.date <= today) ? x.date : "";
+      var kmIn = prefillNum(x.km !== undefined ? x.km : x.odometer);
+      var km = kmIn !== null && kmIn >= 0 && kmIn <= KM_MAX ? Math.round(kmIn) : null;
+      var items = [];
+      (Array.isArray(x.items) ? x.items : []).forEach(function (it) {
+        if (typeof it === "string" && has(ITEMS, it) && items.indexOf(it) < 0) items.push(it);
+      });
+      if (title) {
+        m = nameMatch(ITEM_NAMES, title);
+        var hit = m.exact || m.best;
+        if (hit && items.indexOf(hit) < 0) items.push(hit);
+        if (!m.exact) out.n = cleanText(title + (n ? "\n" + n : ""), NOTES_LEN, true);
+      }
+      out.d = d; out.km = km;
+      out.items = ITEM_IDS.filter(function (it) { return items.indexOf(it) >= 0; });
+      out.shop = cleanText(x.shop, SHORT_LEN, false);
+      if (!d && km === null && !out.items.length && !c && !out.n && !out.shop) return null;
+    } else {
+      var kind = typeof x.kind === "string" && has(RENEWALS, x.kind) ? x.kind : "";
+      var label = "";
+      if (title) {
+        m = nameMatch(RENEWAL_NAMES, title);
+        if (!kind) kind = m.exact || m.best || "other";
+        if (m.exact !== kind) label = cleanText(title, SHORT_LEN, false);
+      }
+      out.kind = kind;          // "" = the editor's own first free kind
+      out.label = label;
+      out.exp = due || (isYmd(x.date) ? x.date : "");
+      if (!kind && !out.exp && !c && !n) return null;
+    }
+    return out;
+  }
+  // The one vehicle whose name or plate is q (case-insensitive,
+  // trimmed; plates also without spaces / dashes), else null.
+  function matchVehicle(list, q) {
+    q = typeof q === "string" ? lc(q.trim()) : "";
+    if (!q) return null;
+    var bare = function (s) { return lc(s).replace(/[\s\-.·]/g, ""); };
+    var hits = (list || []).filter(function (v) {
+      return lc(String(v.name || "").trim()) === q || (v.plate && bare(v.plate) === bare(q));
+    });
+    return hits.length === 1 ? hits[0] : null;
+  }
+
   // ---------- Prefs (device-local, oros-garage-prefs; the shell reads them too) ----------
   function readPrefs(raw) {
     var p = raw && typeof raw === "object" ? raw : {};
@@ -814,6 +895,7 @@
     renewalStatus: renewalStatus, renewal: renewal, tyreStatus: tyreStatus,
     alerts: alerts, toNotify: toNotify, alertLine: alertLine, costs: costs, monthly: monthly,
     csvCell: csvCell, csvRows: csvRows, readPrefs: readPrefs,
+    asNewPrefill: asNewPrefill, matchVehicle: matchVehicle,
     RECEIPT_DIR: RECEIPT_DIR, RC_RE: RC_RE, MAX_RC: MAX_RC, normRc: normRc,
     receiptName: receiptName, receiptPath: receiptPath, receiptsOf: receiptsOf
   };

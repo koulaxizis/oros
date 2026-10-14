@@ -1469,7 +1469,9 @@
     updateDaysHint();
   }
 
-  function openHabitDialog(h) {
+  // pre (add mode only): M.asNew values (Assistant entry card) shown
+  // in place of the empty defaults; nothing is saved until Save.
+  function openHabitDialog(h, pre) {
     ensureHabitDialog();
     editing = h || null;
     var pr = h ? HC.perOf(h) : null;
@@ -1526,6 +1528,18 @@
     document.getElementById("hf-rem").value = h && typeof h.rem === "number" ? hm(h.rem) : "";
     var i;
     for (i = 0; i < 7; i++) pickDays[i] = h ? (h.days.indexOf(i) !== -1) : false;
+    if (!h && pre) {
+      nameEl.value = pre.name;
+      if (pre.per) { pickFreq = pre.per[0]; document.getElementById("hf-per").value = String(pre.per[1]); }
+      for (i = 0; i < 7; i++) pickDays[i] = pre.days.indexOf(i) !== -1;
+      if (pre.num) {
+        pickType = "num";
+        document.getElementById("hf-cmp").value = pre.num.c;
+        document.getElementById("hf-target").value = pre.num.t ? String(pre.num.t) : "";
+        unitEl.value = pre.num.u;
+      }
+      if (pre.rem >= 0) document.getElementById("hf-rem").value = hm(pre.rem);
+    }
 
     // icon grid
     var iconGrid = document.getElementById("hf-icons");
@@ -2321,7 +2335,15 @@
   // target { habit: id }. Opens the habit's edit dialog, as its edit
   // button does. Unknown or deleted habit → no-op; an open dialog
   // (unsaved edits) wins → no-op.
+  //   BR-W8-6 (Assistant entry card): { asNew: { name, days?, perWeek?,
+  //   perMonth?, target?, unit?, cmp?, reminder? } } (M.asNew cleans
+  //   it) opens the new-habit dialog prefilled; no name → no-op.
   function openSearchTarget(t) {
+    if (t && t.asNew) {
+      var pre = M.asNew(t.asNew);
+      if (pre && !document.querySelector("dialog[open]")) openHabitDialog(null, pre);
+      return;
+    }
     var h = t && typeof t.habit === "string" ? habitById(t.habit) : null;
     if (!h || h.del) return;
     if (document.querySelector("dialog[open]")) return;

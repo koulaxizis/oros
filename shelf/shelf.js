@@ -1937,13 +1937,15 @@
   }
 
   // ---------- 9. Edit dialog, goals dialog ----------
-  function editDialog(existing) {
+  // pre (a new title only): fields already normalised by normAsNew.
+  function editDialog(existing, pre) {
     if (!existing && data.items.length >= MAX_ITEMS) { showToast(t("toast.max", { n: MAX_ITEMS })); return; }
     var draft = existing ? JSON.parse(JSON.stringify(existing)) : {
       type: prefs.type !== "all" ? prefs.type : "book", fmt: "p",
       st: prefs.tab === "now" ? "now" : (prefs.tab === "hist" ? "done" : "want"),
       col: randCol()
     };
+    if (!existing && pre) Object.keys(pre).forEach(function (k) { if (pre[k]) draft[k] = pre[k]; });
     var dlg = makeDialog("sh-edit", "edit-dlg");
     dlg.appendChild(el("div", "dlg-title", t(existing ? "f.edit" : "f.new")));
     var form = el("form");
@@ -3163,11 +3165,47 @@
   // no-op; an open dialog → no-op (unsaved edits win).
   // Library (BR-LIB-SHELF): target { addBook: { lib, title, by, year, size } }
   // opens the item linked to that book, adding it first if needed.
+  // asNew: { kind, title, by, year, status, platform, release, tags, src,
+  // from } (the Assistant's entry card) opens the "New title" form
+  // prefilled; nothing is saved until Save (BR-W8-6).
   function openSearchTarget(t) {
     if (!t || document.querySelector("dialog[open]")) return;
+    if (t.asNew) { var pre = normAsNew(t.asNew); if (pre) editDialog(null, pre); return; }
     if (t.addBook && typeof t.addBook === "object") { libAdd(t.addBook); return; }
     if (typeof t.item !== "string") return;
     if (itemById(t.item)) itemDialog(t.item);
+  }
+  // Words the Assistant may use for a type or a state → Shelf's own.
+  var AS_TYPE = { book: "book", ebook: "book", audiobook: "book", novel: "book",
+                  film: "film", movie: "film",
+                  series: "series", tv: "series", show: "series", "tv-series": "series", "tv series": "series",
+                  album: "album", music: "album", record: "album",
+                  podcast: "podcast",
+                  game: "game", videogame: "game", "video game": "game" };
+  var AS_ST = { want: "want", watchlist: "want", wishlist: "want", "to-read": "want", "to read": "want",
+                planned: "want", later: "want",
+                now: "now", reading: "now", watching: "now", listening: "now", playing: "now",
+                "in-progress": "now", "in progress": "now",
+                done: "done", read: "done", watched: "done", listened: "done", played: "done",
+                finished: "done", completed: "done",
+                drop: "drop", dropped: "drop", abandoned: "drop" };
+  // The asNew fields with the form's own limits; null without a title.
+  // Unknown fields (and the ones the form has no place for) are ignored.
+  function normAsNew(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var title = clipLine(x.title, TITLE_LEN);
+    if (!title) return null;
+    var word = function (v) { return typeof v === "string" ? v.trim().toLowerCase() : ""; };
+    var type = AS_TYPE[word(x.kind)] || "";
+    var o = { title: title, type: type, st: AS_ST[word(x.status)] || "",
+              by: clipLine(x.by, BY_LEN),
+              year: intIn(x.year, 1, 9999, 0),
+              plat: type === "game" ? clipLine(x.platform, PLAT_LEN) : "",
+              rel: isYmd(x.release) ? x.release : "",
+              tags: Array.isArray(x.tags) ? normTags(x.tags) : (typeof x.tags === "string" ? parseTags(x.tags) : []),
+              src: clipLine(x.src, SRC_LEN) };
+    if (!o.tags.length) delete o.tags;
+    return o;
   }
   window.__orosOpenAt = openSearchTarget;
 

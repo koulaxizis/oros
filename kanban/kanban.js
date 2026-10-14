@@ -1985,19 +1985,26 @@
 
   // Foot: quick-add (input + φιλικό προς ποντίκι κουμπί). laneKey !== null
   // in swimlane mode: the new card joins that lane (label or lane text).
+  // An Assistant prefill (quickPrefill, see 10c) for this field shows
+  // its extras (notes, due) as a line under it until the card is added
+  // or the field is emptied.
   function makeQuickFoot(col, laneKey) {
     var foot = document.createElement("div");
     foot.className = "col-foot";
+    var qkey = col.id + (laneKey !== null ? "|" + laneKey : "");
     var quick = document.createElement("input");
     quick.type = "text";
     quick.className = "col-quick";
     quick.setAttribute("placeholder", t("quick.add"));
     quick.setAttribute("aria-label", t("quick.add"));
-    quick.setAttribute("data-quick-key", col.id + (laneKey !== null ? "|" + laneKey : ""));
+    quick.setAttribute("data-quick-key", qkey);
     quick.autocomplete = "off";
     quick.spellcheck = false;
     quick.addEventListener("keydown", function (e) {
       if (e.key === "Enter") { e.preventDefault(); quickAdd(col, quick, laneKey); }
+    });
+    quick.addEventListener("input", function () {
+      if (!quick.value.trim() && quickPrefill && quickPrefill.key === qkey) dropQuickPrefill();
     });
     foot.appendChild(quick);
     var addBtn = document.createElement("button");
@@ -2013,6 +2020,22 @@
       if (fresh) fresh.focus();
     });
     foot.appendChild(addBtn);
+    if (quickPrefill && quickPrefill.key === qkey) {
+      var bits = [];
+      if (quickPrefill.notes) bits.push(t("card.notes"));
+      if (quickPrefill.due) {
+        var dp = quickPrefill.due.split("-");
+        bits.push(t("card.due") + " " + new Date(+dp[0], +dp[1] - 1, +dp[2])
+          .toLocaleDateString(LANG === "el" ? "el" : "en", { day: "numeric", month: "short", year: "numeric" }));
+      }
+      if (bits.length) {
+        var pf = document.createElement("div");
+        pf.className = "col-prefill";
+        pf.textContent = "+ " + bits.join(" · ");
+        foot.classList.add("has-prefill");
+        foot.appendChild(pf);
+      }
+    }
     return foot;
   }
 
@@ -2277,6 +2300,12 @@
     if (!raw) return;
     var key = input.getAttribute("data-quick-key");
     var card = newCardObj(raw);          // φρέσκο mtime — νέα οντότητα
+    if (quickPrefill && quickPrefill.key === key) {
+      // Assistant prefill: the user pressed Add, so the extras go too
+      card.notes = quickPrefill.notes;
+      card.due = quickPrefill.due || null;
+      quickPrefill = null;
+    }
     if (laneKey) {
       var mode = viewOf(board.id).lanes;
       if (mode === "lane") card.lane = laneKey;
@@ -5167,6 +5196,62 @@
     openCardDialog(payload.col, payload.card);
   };
 
+  // ---------- 10c. Shell deep link (__orosOpenAt / __orosTakeTarget) ----------
+  // target { board, col, card } → that card, as the Calendar link above.
+  // Assistant entry card (BR-W8-6): { asNew: { board?, column?, title,
+  // note?, due? } } (T.asNew cleans it) fills the quick-add field of
+  // that column, as if the user had typed the title; notes and due
+  // ride along (shown under the field) and are only written when the
+  // user presses Enter/+ there. Emptying the field drops them. Board
+  // and column match by name (trimmed, any case) when exactly one
+  // does; otherwise the board on screen and its first column. A board
+  // without columns (empty state), no title or an open dialog → no-op.
+  var quickPrefill = null;             // { key, notes, due } | null
+  function dropQuickPrefill() {
+    quickPrefill = null;
+    var pf = document.querySelectorAll(".col-prefill");
+    for (var i = 0; i < pf.length; i++) {
+      if (pf[i].parentNode) pf[i].parentNode.classList.remove("has-prefill");
+      pf[i].remove();
+    }
+  }
+  function byName(list, name) {
+    if (!name) return null;
+    var want = name.toLowerCase(), hit = null, n = 0;
+    list.forEach(function (x) {
+      if (String(x.name || "").trim().toLowerCase() === want) { hit = x; n++; }
+    });
+    return n === 1 ? hit : null;
+  }
+  function newCardFrom(x) {
+    var v = T.asNew(x);
+    if (!v || document.querySelector("dialog[open]")) return;
+    var board = byName(state.boards.filter(function (b) { return !b.archived && !isTpl(b); }), v.board) ||
+                currentBoard();
+    if (!board) return;
+    if (board.id !== state.activeBoardId) switchBoard(board.id);
+    if (!board.columns.length) return;
+    var col = byName(board.columns, v.column) || board.columns[0];
+    var vw = viewOf(board.id);
+    if (vw.v !== "board") setView(board.id, { v: "board" });   // the other views have no quick-add
+    dropQuickPrefill();
+    quickPrefill = { key: col.id + (vw.lanes ? "|" : ""), notes: v.notes, due: v.due };
+    renderAll();
+    var q = findQuickInput(quickPrefill.key);
+    if (!q) { quickPrefill = null; return; }
+    q.value = v.title;
+    q.focus();
+    try { q.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
+  }
+  function openSearchTarget(tg) {
+    if (!tg || typeof tg !== "object" || !state) return;
+    if (tg.asNew) { newCardFrom(tg.asNew); return; }
+    if (typeof tg.board === "string" && typeof tg.col === "string" && typeof tg.card === "string") {
+      window.__orosKanbanOpen(tg);
+    }
+  }
+  window.__orosOpenAt = openSearchTarget;
+
   // ---------- 11. Wiring & boot ----------
   function applyI18n() {
     var n = document.querySelectorAll("[data-i18n]");
@@ -5507,6 +5592,13 @@
         : null;
       if (pending) window.__orosKanbanOpen(pending);
     } catch (e) { /* standalone — δεν υπάρχει pending */ }
+    try {
+      if (window.parent && window.parent !== window &&
+          typeof window.parent.__orosTakeTarget === "function") {
+        var pendingTarget = window.parent.__orosTakeTarget("kanban");
+        if (pendingTarget) openSearchTarget(pendingTarget);
+      }
+    } catch (e) {}
   }
 
   boot();
