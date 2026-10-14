@@ -263,7 +263,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   font-weight: 700;
 }
 .banner > span:first-child { flex: 1 1 220px; }
-.banner-acts { display: flex; gap: 6px; }
+.banner-acts { display: flex; gap: 6px; flex-wrap: wrap; }
 
 #others { list-style: none; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; }
 #others li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 13px; }

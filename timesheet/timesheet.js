@@ -102,6 +102,14 @@
       "f.round": "Rounding in reports", "f.roundMode": "Round", "round.off": "Off", "round.n": "{n} min",
       "round.up": "Up", "round.near": "To the nearest",
       "f.roundHint": "Applies to reports and CSV only. Your entries keep their exact times.",
+      "idle.h": "Time away", "idle.on": "Ask about time away while a timer runs",
+      "idle.min": "Away for at least (minutes)",
+      "idle.hint": "On this device only. orOS notices when the device slept or, in Chrome and Edge, when you left the keyboard and mouse (allow \"idle detection\" when the browser asks). When you come back you choose to keep that time or take it out.",
+      "idle.denied": "The browser didn't allow idle detection. Sleep and closed lids are still noticed.",
+      "idle.noApi": "This browser can't tell when you're away from the keyboard; a sleeping device is still noticed.",
+      "idle.text": "You were away {a}–{b} ({d}) while the timer ran.",
+      "idle.keep": "Keep", "idle.discard": "Take it out", "idle.stop": "Take out and stop",
+      "idle.kept": "Kept the time away", "idle.removed": "Took out {d}",
       "set.data": "Data", "set.backup": "Back up (JSON)", "set.restore": "Restore from backup",
       "set.restoreHint": "A restore merges with what is here: nothing is replaced or lost.",
       "set.import": "Import from Toggl, Clockify or Harvest (CSV)",
@@ -184,6 +192,14 @@
       "f.round": "Στρογγυλοποίηση στις αναφορές", "f.roundMode": "Στρογγυλοποίηση", "round.off": "Όχι", "round.n": "{n} λεπτά",
       "round.up": "Προς τα πάνω", "round.near": "Στο πλησιέστερο",
       "f.roundHint": "Ισχύει μόνο στις αναφορές και στο CSV. Οι καταγραφές σου κρατούν τους ακριβείς χρόνους.",
+      "idle.h": "Χρόνος απουσίας", "idle.on": "Ερώτηση για τον χρόνο απουσίας όσο τρέχει χρονόμετρο",
+      "idle.min": "Απουσία τουλάχιστον (λεπτά)",
+      "idle.hint": "Μόνο σε αυτή τη συσκευή. Το orOS καταλαβαίνει πότε η συσκευή μπήκε σε αναστολή ή, σε Chrome και Edge, πότε άφησες πληκτρολόγιο και ποντίκι (επίτρεψε τον «εντοπισμό αδράνειας» όταν το ζητήσει ο browser). Όταν επιστρέψεις διαλέγεις αν θα κρατήσεις αυτόν τον χρόνο ή θα τον αφαιρέσεις.",
+      "idle.denied": "Ο browser δεν επέτρεψε τον εντοπισμό αδράνειας. Η αναστολή και το κλείσιμο του καπακιού εντοπίζονται κανονικά.",
+      "idle.noApi": "Αυτός ο browser δεν ξέρει πότε λείπεις από το πληκτρολόγιο· η αναστολή της συσκευής εντοπίζεται κανονικά.",
+      "idle.text": "Έλειπες {a}–{b} ({d}) ενώ έτρεχε το χρονόμετρο.",
+      "idle.keep": "Να μείνει", "idle.discard": "Αφαίρεση", "idle.stop": "Αφαίρεση και διακοπή",
+      "idle.kept": "Ο χρόνος απουσίας κρατήθηκε", "idle.removed": "Αφαιρέθηκαν {d}",
       "set.data": "Δεδομένα", "set.backup": "Αντίγραφο ασφαλείας (JSON)", "set.restore": "Επαναφορά από αντίγραφο",
       "set.restoreHint": "Η επαναφορά ενώνεται με ό,τι υπάρχει: τίποτα δεν αντικαθίσταται ούτε χάνεται.",
       "set.import": "Εισαγωγή από Toggl, Clockify ή Harvest (CSV)",
@@ -691,6 +707,71 @@
     var show = !!x && now - x.s >= FORGOT_MS && !forgotOk[x.id];
     box.hidden = !show;
     if (show) $("forgot-text").textContent = t("forgot", { d: dur(now - x.s) });
+    renderIdle();
+  }
+
+  // ---------- Wave 46: time away ----------
+  // Periods the shell noticed (device-local C.IDLE_KEY). The first one
+  // that still applies shows as a banner: Keep / Take it out / Take out
+  // and stop. Only this app changes the synced entries.
+  function idlePrefsNow() {
+    var raw = null;
+    try { raw = localStorage.getItem(C.IDLE_PREFS_KEY); } catch (e) {}
+    return C.idlePrefs(raw);
+  }
+  function idleList() {
+    var raw = null;
+    try { raw = localStorage.getItem(C.IDLE_KEY); } catch (e) {}
+    return C.idleRead(raw);
+  }
+  function idleSave(list) {
+    try {
+      if (list.length) localStorage.setItem(C.IDLE_KEY, JSON.stringify(list));
+      else localStorage.removeItem(C.IDLE_KEY);
+    } catch (e) {}
+  }
+  function renderIdle() {
+    var box = $("idle");
+    if (!box) return;
+    var all = idleList(), pend = C.idlePending(data, all);
+    if (pend.length !== all.length) idleSave(pend);          // stale periods go
+    var r = pend[0] || null;
+    box.hidden = !r;
+    if (!r) return;
+    box.dataset.from = String(r.from);
+    $("idle-text").textContent = t("idle.text", { a: C.hhmm(r.from), b: C.hhmm(r.to), d: dur(r.to - r.from) });
+  }
+  function idleAct(mode, rec) {
+    var list = idleList();
+    var r = rec || C.idlePending(data, list)[0];
+    if (!r) { renderIdle(); return; }
+    idleSave(C.idleDrop(list, r));
+    if (mode === "keep") { showToast(t("idle.kept")); renderIdle(); return; }
+    var add = C.idleApply(data, r, mode, Date.now(), newId);
+    if (add) {
+      data = C.mergeTimesheet(data, add);
+      saveNow();
+      showToast(t("idle.removed", { d: dur(r.to - r.from) }));
+    }
+    renderAll();
+  }
+  // From the shell's timer menu: a live push, or a one-shot
+  // sessionStorage "oros-timesheet-idle-act" { mode, id, from, to }.
+  window.__orosTimesheetIdle = function (mode, rec) {
+    var r = rec && typeof rec === "object" ? C.idleRead([rec])[0] : null;
+    if (mode === "keep" || mode === "discard" || mode === "stop") idleAct(mode, r || null);
+    else renderIdle();
+  };
+  function takeShellIdle() {
+    var raw = null;
+    try {
+      raw = sessionStorage.getItem("oros-timesheet-idle-act");
+      if (raw) sessionStorage.removeItem("oros-timesheet-idle-act");
+    } catch (e) {}
+    if (!raw) return;
+    var p = null;
+    try { p = JSON.parse(raw); } catch (e) { p = null; }
+    if (p && typeof p === "object") window.__orosTimesheetIdle(p.mode, p);
   }
 
   function renderDay() {
@@ -1517,6 +1598,30 @@
     form.appendChild(r2);
     form.appendChild(el("p", "hint", t("f.roundHint")));
 
+    // Wave 46: time away (device-local prefs, read by the shell too)
+    form.appendChild(el("h3", "dlg-h", t("idle.h")));
+    var ip = idlePrefsNow();
+    var idleOn = checkRow(t("idle.on"), ip.on);
+    idleOn.box.id = "set-idle-on";
+    form.appendChild(idleOn.row);
+    var idleMin = input("number", ip.min);
+    idleMin.min = C.IDLE_MIN[0]; idleMin.max = C.IDLE_MIN[1];
+    idleMin.id = "set-idle-min";
+    form.appendChild(field(t("idle.min"), idleMin));
+    var idleNote = el("p", "hint", t("idle.hint"));
+    form.appendChild(idleNote);
+    idleOn.box.addEventListener("change", function () {
+      if (!idleOn.box.checked) return;
+      // the permission prompt needs this click (user activation)
+      if (typeof window.IdleDetector !== "function" || typeof window.IdleDetector.requestPermission !== "function") {
+        idleNote.textContent = t("idle.hint") + " " + t("idle.noApi");
+        return;
+      }
+      window.IdleDetector.requestPermission().then(function (st) {
+        if (st !== "granted") idleNote.textContent = t("idle.hint") + " " + t("idle.denied");
+      }, function () { idleNote.textContent = t("idle.hint") + " " + t("idle.denied"); });
+    });
+
     form.appendChild(el("h3", "dlg-h", t("set.data")));
     var bk = button(t("set.backup"), "block", exportBackup);
     form.appendChild(bk);
@@ -1532,6 +1637,9 @@
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
       var g = String(goal.value).trim() ? C.parseDuration(goal.value) : 0;
       if (isNaN(g) || !C.inRange(g, C.LIM.goal)) { showToast(t("toast.badDur")); goal.focus(); return; }
+      var im = parseInt(idleMin.value, 10);
+      if (!C.inRange(im, C.IDLE_MIN)) im = C.idlePrefs(null).min;
+      try { localStorage.setItem(C.IDLE_PREFS_KEY, JSON.stringify({ on: idleOn.box.checked ? 1 : 0, min: im })); } catch (e) {}
       setPrefs({ cur: cur.value, rate: cents, goal: g, round: +round.value, rup: +mode.value });
       dlg.close();
       renderAll();
@@ -1894,6 +2002,9 @@
     $("run-proj").setAttribute("aria-label", t("f.project"));
     $("forgot-fix").textContent = t("forgot.fix");
     $("forgot-ok").textContent = t("forgot.ok");
+    $("idle-keep").textContent = t("idle.keep");
+    $("idle-discard").textContent = t("idle.discard");
+    $("idle-stop").textContent = t("idle.stop");
     $("add-entry").innerHTML = UI.plus + "<span></span>";
     $("add-entry").lastChild.textContent = t("add.entry");
     $("add-project").innerHTML = UI.plus + "<span></span>";
@@ -1918,6 +2029,10 @@
       var x = C.running(data)[0];
       if (x) entryDialogStop(x.id);
     });
+    $("idle-keep").addEventListener("click", function () { idleAct("keep"); });
+    $("idle-discard").addEventListener("click", function () { idleAct("discard"); });
+    $("idle-stop").addEventListener("click", function () { idleAct("stop"); });
+    window.addEventListener("storage", function (ev) { if (ev.key === C.IDLE_KEY) renderIdle(); });
     $("forgot-ok").addEventListener("click", function () {
       var x = C.running(data)[0];
       if (x) forgotOk[x.id] = true;
@@ -2007,13 +2122,24 @@
     toggleTimer();
     if (!wasRunning && C.running(data).length) showToast(t("toast.started", { p: projLabel(C.running(data)[0].p) }));
   };
+  // Wave 46: "stop:<entry id>" (the shell's timer menu) stops only that
+  // entry, and only while it still runs; "1" toggles as before.
+  window.__orosTimesheetStop = function (id) {
+    var x = id ? findEntry(id) : (C.running(data)[0] || null);
+    if (!x || x.e !== 0) { renderAll(); return; }
+    setTab("timer");
+    stopOne(x.id);
+    live(t("live.stopped"));
+  };
   function takeShellToggle() {
-    var go = false;
+    var go = "";
     try {
-      go = sessionStorage.getItem("oros-timesheet-toggle") === "1";
+      go = sessionStorage.getItem("oros-timesheet-toggle") || "";
       if (go) sessionStorage.removeItem("oros-timesheet-toggle");
     } catch (e) {}
-    if (go) window.__orosTimesheetToggle();
+    if (go === "1") window.__orosTimesheetToggle();
+    else if (/^stop:[a-z0-9]{6,40}$/.test(go)) window.__orosTimesheetStop(go.slice(5));
+    takeShellIdle();
   }
 
   // Pomodoro legs from Time (Wave 7): finished ones become entries.

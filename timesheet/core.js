@@ -982,7 +982,96 @@
     };
   }
 
+  // ---------- Time away (Wave 46, idle detection) ----------
+  // The shell watches for time away while a timer runs (the Idle
+  // Detection API in Chromium after the user allows it, and on every
+  // browser a gap in its 1-second clock, i.e. the device slept) and
+  // keeps each period in the device-local key IDLE_KEY (never synced):
+  //   [{ id: running entry id, from, to }]   (ms, at most IDLE_MAX)
+  // The user then keeps the time or takes it out (Timesheet's banner or
+  // the shell's timer menu); only the app writes the synced data.
+  // Prefs (device-local IDLE_PREFS_KEY): { on: 0|1, min: 5…240 }.
+  var IDLE_KEY = "oros-timesheet-idle", IDLE_PREFS_KEY = "oros-timesheet-idleprefs";
+  var IDLE_MAX = 20, IDLE_MIN_DEF = 10, IDLE_MIN = [5, 240];
+  function idlePrefs(raw) {
+    var p = null;
+    try { p = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { p = null; }
+    p = p && typeof p === "object" ? p : {};
+    return { on: p.on === 1 || p.on === true ? 1 : 0, min: inRange(p.min, IDLE_MIN) ? p.min : IDLE_MIN_DEF };
+  }
+  function idleRead(raw) {
+    var a = null;
+    try { a = typeof raw === "string" && raw.length <= 8192 ? JSON.parse(raw) : (Array.isArray(raw) ? raw : null); } catch (e) { a = null; }
+    if (!Array.isArray(a)) return [];
+    var out = [];
+    a.forEach(function (x) {
+      if (!x || typeof x !== "object" || !ID_RE.test(String(x.id || "")) || !isInt(x.from) || !isInt(x.to)) return;
+      if (x.from < MIN_TS || x.to > MAX_TS || x.to <= x.from || x.to - x.from > MAX_SPAN) return;
+      out.push({ id: x.id, from: x.from, to: x.to });
+    });
+    return out.sort(function (x, y) { return x.from - y.from || cmpStr(x.id, y.id); }).slice(-IDLE_MAX);
+  }
+  // A period away while `run` (a running entry { id, s }) ran, or null
+  // when it is shorter than minMs. It never starts before the entry.
+  function idleRecord(run, from, to, minMs) {
+    if (!run || !ID_RE.test(String(run.id || "")) || !isInt(from) || !isInt(to)) return null;
+    from = Math.max(from, isInt(run.s) ? run.s : from);
+    if (to - from < Math.max(60000, minMs || 0)) return null;
+    return { id: run.id, from: from, to: to };
+  }
+  // Add a period; one that touches or overlaps another of the same
+  // entry joins it.
+  function idlePut(list, rec) {
+    var out = [], cur = { id: rec.id, from: rec.from, to: rec.to };
+    (list || []).forEach(function (x) {
+      if (x.id === cur.id && x.from <= cur.to + 1000 && cur.from <= x.to + 1000) {
+        cur.from = Math.min(cur.from, x.from);
+        cur.to = Math.max(cur.to, x.to);
+      } else out.push(x);
+    });
+    out.push(cur);
+    return idleRead(out);
+  }
+  function idleDrop(list, rec) {
+    return (list || []).filter(function (x) { return !(x.id === rec.id && x.from === rec.from && x.to === rec.to); });
+  }
+  // The periods that still apply: their entry exists and covers them.
+  function idlePending(data, list) {
+    return (list || []).filter(function (r) {
+      var x = byId(data.entries, r.id);
+      return !!x && !x.del && x.s <= r.from && (x.e === 0 || x.e >= r.to);
+    });
+  }
+  // What a choice does to the data → a model for mergeTimesheet (only
+  // the touched entries), or null when nothing changes:
+  //   "keep"    nothing;
+  //   "discard" the entry ends where the time away began and a copy of
+  //             it (project, description, task, tags) starts where it
+  //             ended: still running if it was, else ending as it did;
+  //   "stop"    a running entry ends where the time away began.
+  function idleApply(data, rec, mode, now, idFn) {
+    if (mode !== "discard" && mode !== "stop") return null;
+    var x = byId(data.entries, rec.id);
+    if (!x || x.del || x.s > rec.from || (x.e !== 0 && x.e < rec.to)) return null;
+    if (mode === "stop" && x.e !== 0) return null;
+    var m = Math.max(now, x.m + 1);
+    var a = JSON.parse(JSON.stringify(x));
+    var oldE = x.e;
+    a.e = Math.max(rec.from, a.s + 1000);
+    a.m = m;
+    var out = [a];
+    if (mode === "discard" && (oldE === 0 || oldE > rec.to)) {
+      var b = { id: idFn(), p: x.p, desc: x.desc, s: rec.to, e: oldE, billed: x.billed ? 1 : 0, m: m };
+      if (x.task) b.task = x.task;
+      if (x.tags && x.tags.length) b.tags = x.tags.slice();
+      out.push(b);
+    }
+    return { ver: DATA_VER, clients: [], projects: [], entries: out, prefs: data.prefs, pm: 0 };
+  }
+
   var API = {
+    IDLE_KEY: IDLE_KEY, IDLE_PREFS_KEY: IDLE_PREFS_KEY, IDLE_MIN: IDLE_MIN, idlePrefs: idlePrefs, idleRead: idleRead,
+    idleRecord: idleRecord, idlePut: idlePut, idleDrop: idleDrop, idlePending: idlePending, idleApply: idleApply,
     VERSION: VERSION, STORAGE_KEY: STORAGE_KEY, FORGOT_MS: FORGOT_MS, DATA_VER: DATA_VER, HOUR: HOUR, DAY: DAY,
     normTags: normTags, parseTags: parseTags, parseHours: parseHours,
     INBOX_KEY: INBOX_KEY, POMO_TASK: POMO_TASK, inboxRead: inboxRead, inboxPut: inboxPut,

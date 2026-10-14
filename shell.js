@@ -2217,7 +2217,7 @@
     if (!bar) return;
     var run = timesheetRunning();
     var chip = document.getElementById("ts-tray-chip");
-    if (!run) { if (chip) chip.remove(); return; }
+    if (!run) { if (chip) chip.remove(); tsTrayClosePop(); timesheetIdleTick(null); return; }
     if (!chip) {
       chip = document.createElement("button");
       chip.id = "ts-tray-chip";
@@ -2225,11 +2225,13 @@
       chip.innerHTML = ICONS.timesheet + '<span class="ts-time"></span>';
       chip.addEventListener("click", function (e) {
         e.stopPropagation();
-        openAppById("timesheet");
+        tsTrayTogglePop();            // Wave 46: a small timer menu (Stop, Open)
       });
       bar.insertBefore(chip, document.getElementById("btn-lang"));
     }
     var C = window.orosTimesheetCore;
+    timesheetIdleTick(run);
+    chip.classList.toggle("ts-away", tsIdlePending(run).length > 0);
     var txt = C.fmtDur(Date.now() - run.s);
     var span = chip.lastChild;
     if (span.textContent !== txt) span.textContent = txt;
@@ -2302,6 +2304,203 @@
       body: note ? body + " " + note : body,
       deepLink: "maps:park"
     });
+  }
+
+  // ---- Timesheet Wave 46: the timer menu + time away ----
+  // The chip opens a small menu: what runs, Stop, Open Timesheet, and,
+  // when time away was noticed, Keep / Take it out / Take out and stop.
+  // Every change to the data goes through the app (a live push when
+  // Timesheet is the open app, else a one-shot sessionStorage flag +
+  // open), so the synced slice keeps one writer. Time away is noticed
+  // here because the shell is always running: the Idle Detection API
+  // (Chromium, only after the user allowed it in Timesheet's Settings)
+  // and, on any browser, a gap in this 1 s tick (the device slept or
+  // the browser paused orOS). Periods go to the device-local
+  // C.IDLE_KEY; prefs come from C.IDLE_PREFS_KEY (both never synced).
+  var TS_POP_ID = "ts-tray-pop";
+  var tsIdle = { det: null, ctl: null, starting: false, from: 0, last: 0, perm: "", permAt: 0, prefs: null, prefsAt: 0 };
+  function tsT(en, el) { return state.lang === "el" ? el : en; }
+  function tsIdlePrefs() {
+    var C = window.orosTimesheetCore, now = Date.now();
+    if (!C || typeof C.idlePrefs !== "function") return { on: 0, min: 10 };
+    if (!tsIdle.prefs || now - tsIdle.prefsAt > 5000) {
+      var raw = null;
+      try { raw = localStorage.getItem(C.IDLE_PREFS_KEY); } catch (e) {}
+      tsIdle.prefs = C.idlePrefs(raw);
+      tsIdle.prefsAt = now;
+    }
+    return tsIdle.prefs;
+  }
+  function tsIdleList() {
+    var C = window.orosTimesheetCore, raw = null;
+    try { raw = localStorage.getItem(C.IDLE_KEY); } catch (e) {}
+    return C.idleRead(raw);
+  }
+  function tsIdleSave(list) {
+    var C = window.orosTimesheetCore;
+    try {
+      if (list.length) localStorage.setItem(C.IDLE_KEY, JSON.stringify(list));
+      else localStorage.removeItem(C.IDLE_KEY);
+    } catch (e) {}
+  }
+  // periods of the entry that runs now (the app checks the rest)
+  function tsIdlePending(run) {
+    var C = window.orosTimesheetCore;
+    if (!run || !C || typeof C.idleRead !== "function") return [];
+    return tsIdleList().filter(function (r) { return r.id === run.id && r.from >= run.s; });
+  }
+  function tsIdleNoted(run, from, to) {
+    var C = window.orosTimesheetCore, p = tsIdlePrefs();
+    var rec = C.idleRecord(run, from, to, p.min * 60000);
+    if (!rec) return;
+    tsIdleSave(C.idlePut(tsIdleList(), rec));
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosTimesheetIdle === "function") {
+          f.contentWindow.__orosTimesheetIdle();
+          return;
+        }
+      } catch (e) {}
+    }
+    if (!tsTrayPop()) tsTrayTogglePop();
+  }
+  function tsIdleStopDetector() {
+    if (tsIdle.ctl) { try { tsIdle.ctl.abort(); } catch (e) {} }
+    tsIdle.det = null; tsIdle.ctl = null; tsIdle.from = 0;
+  }
+  function tsIdleStartDetector() {
+    if (tsIdle.det || tsIdle.starting || typeof window.IdleDetector !== "function") return;
+    var now = Date.now();
+    if (tsIdle.perm !== "granted") {
+      // ask the browser what the user allowed, at most once a minute
+      if (now - tsIdle.permAt < 60000 || !navigator.permissions || typeof navigator.permissions.query !== "function") return;
+      tsIdle.permAt = now;
+      navigator.permissions.query({ name: "idle-detection" }).then(function (s) { tsIdle.perm = s && s.state; }, function () {});
+      return;
+    }
+    tsIdle.starting = true;
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var det;
+    try { det = new window.IdleDetector(); } catch (e) { tsIdle.starting = false; tsIdle.perm = ""; return; }
+    det.addEventListener("change", function () {
+      if (det.userState === "idle") {
+        if (!tsIdle.from) tsIdle.from = Date.now() - 60000;   // idle since the threshold
+      } else if (tsIdle.from) {
+        var from = tsIdle.from;
+        tsIdle.from = 0;
+        tsReadAt = 0;
+        var run = timesheetRunning();
+        if (run) tsIdleNoted(run, from, Date.now());
+      }
+    });
+    det.start({ threshold: 60000, signal: ctl ? ctl.signal : undefined }).then(function () {
+      tsIdle.starting = false;
+      tsIdle.det = det; tsIdle.ctl = ctl;
+    }, function () {
+      tsIdle.starting = false;
+      tsIdle.perm = "";
+    });
+  }
+  function timesheetIdleTick(run) {
+    var C = window.orosTimesheetCore;
+    if (!C || typeof C.idleRecord !== "function") return;
+    var p = tsIdlePrefs(), now = Date.now();
+    if (!run || !p.on) {
+      tsIdle.last = 0;
+      if (tsIdle.det || tsIdle.ctl) tsIdleStopDetector();
+      return;
+    }
+    // a gap in the 1 s clock: the device slept or the browser paused us
+    if (tsIdle.last && now - tsIdle.last >= Math.max(p.min * 60000, 120000)) tsIdleNoted(run, tsIdle.last, now);
+    tsIdle.last = now;
+    tsIdleStartDetector();
+  }
+  // Commands for the app: a live push, else a one-shot flag + open.
+  function tsAppDo(liveFn, args, flagKey, flagVal) {
+    if (state.running && state.running.id === "timesheet") {
+      var f = document.getElementById("app-frame");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow[liveFn] === "function") {
+          f.contentWindow[liveFn].apply(null, args);
+          tsReadAt = 0;
+          return;
+        }
+      } catch (e) {}
+    }
+    if (!flagKey) return;
+    try { sessionStorage.setItem(flagKey, flagVal); } catch (e) {}
+    openAppById("timesheet");
+  }
+  function tsTrayPop() { return document.getElementById(TS_POP_ID); }
+  function tsTrayClosePop() { var p = tsTrayPop(); if (p) p.remove(); }
+  var tsPopWired = false;
+  function tsTrayTogglePop() {
+    if (tsTrayPop()) { tsTrayClosePop(); return; }
+    var run = timesheetRunning(), C = window.orosTimesheetCore;
+    if (!run || !C) { openAppById("timesheet"); return; }
+    if (!tsPopWired) {
+      tsPopWired = true;
+      document.addEventListener("click", function (e) {
+        var pop = tsTrayPop();
+        if (!pop || pop.contains(e.target)) return;
+        var chip = document.getElementById("ts-tray-chip");
+        if (chip && chip.contains(e.target)) return;
+        tsTrayClosePop();
+      });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") tsTrayClosePop(); });
+    }
+    var pop = document.createElement("div");
+    pop.id = TS_POP_ID;
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", tsT("Timer", "Χρονόμετρο"));
+    var head = document.createElement("div");
+    head.className = "ts-pop-head";
+    var since = new Date(run.s);
+    head.textContent = (run.name || window.t("ts.tray.noproj")) + " · " + C.fmtDur(Date.now() - run.s) +
+      " (" + tsT("since ", "από ") + String(since.getHours()).padStart(2, "0") + ":" + String(since.getMinutes()).padStart(2, "0") + ")";
+    pop.appendChild(head);
+    function mk(label, cls, fn) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ts-pop-btn" + (cls ? " " + cls : "");
+      b.textContent = label;
+      b.addEventListener("click", function () { tsTrayClosePop(); fn(); });
+      return b;
+    }
+    var away = tsIdlePending(run)[0] || null;
+    if (away) {
+      var p = document.createElement("p");
+      p.className = "ts-pop-away";
+      p.textContent = tsT("You were away ", "Έλειπες ") + C.hhmm(away.from) + "–" + C.hhmm(away.to) + " (" + C.fmtDur(away.to - away.from) + ")" +
+        tsT(" while the timer ran.", " ενώ έτρεχε το χρονόμετρο.");
+      pop.appendChild(p);
+      var ar = document.createElement("div");
+      ar.className = "ts-pop-row";
+      ar.appendChild(mk(tsT("Keep", "Να μείνει"), "", function () {
+        tsIdleSave(window.orosTimesheetCore.idleDrop(tsIdleList(), away));
+        if (state.running && state.running.id === "timesheet") tsAppDo("__orosTimesheetIdle", [], "", "");
+      }));
+      ar.appendChild(mk(tsT("Take it out", "Αφαίρεση"), "", function () {
+        tsAppDo("__orosTimesheetIdle", ["discard", away], "oros-timesheet-idle-act", JSON.stringify({ mode: "discard", id: away.id, from: away.from, to: away.to }));
+      }));
+      ar.appendChild(mk(tsT("Take out and stop", "Αφαίρεση και διακοπή"), "", function () {
+        tsAppDo("__orosTimesheetIdle", ["stop", away], "oros-timesheet-idle-act", JSON.stringify({ mode: "stop", id: away.id, from: away.from, to: away.to }));
+      }));
+      pop.appendChild(ar);
+    }
+    var row = document.createElement("div");
+    row.className = "ts-pop-row";
+    row.appendChild(mk(tsT("Stop timer", "Διακοπή"), "primary", function () {
+      tsAppDo("__orosTimesheetStop", [run.id], "oros-timesheet-toggle", "stop:" + run.id);
+    }));
+    row.appendChild(mk(tsT("Open Timesheet", "Άνοιγμα"), "", function () {
+      if (!(state.running && state.running.id === "timesheet")) openAppById("timesheet");
+    }));
+    pop.appendChild(row);
+    document.body.appendChild(pop);
+    var first = pop.querySelector("button");
+    if (first) { try { first.focus({ preventScroll: true }); } catch (e) {} }
   }
 
   // Ctrl+Alt+Shift+T: start or stop the Timesheet timer.
