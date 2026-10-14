@@ -6594,3 +6594,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - An import now combines only sure duplicates (shared e-mail or phone where the names agree, or the same name where one side has no phone or e-mail); the review says "N listed twice in the import, combined". Two people sharing a landline, or two people with the same first name and different numbers, stay separate (BR-CT-IMPORT).
 - Files: `contacts/importplan.js` (`sameEntry`, `namesAgree`, `folded`), `contacts/contacts.js`, help EN/EL.
   - Tests: fold rules added; real shell with a mocked Google (EN desktop, EL 360 px) by the owner. Not tested: a real Google account.
+
+### 2026-10-14 — Single apps, wave 3: personal apps (#357) — 2.11.00
+- Nine more single apps (SOLO-1): orOS Passwords, Budget, Habits, Water, Diary, Mood, Workouts, Health and Cycle install on their own, each with its own window, icon and icon shortcuts; Passwords, Budget, Habits and Workouts also take Android shares.
+- Files: `solo.js` table + share kinds, small receivers in the apps, `/<id>/solo.html` + manifests + icons from `tools/solo-manifests.js` / `tools/solo-icons.js`; sw.js precache of the 9 pages, manifests and 36 icons; help Install › Single apps EN/EL.
+  - Tests: full suite green; real-shell checks by the owner thread. Not tested: real installs on Android/Windows/Linux, Safari.
