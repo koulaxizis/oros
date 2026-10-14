@@ -1589,6 +1589,34 @@ body {
   /* Transition already set inline for slide-in */
 }
 
+/* ===== SINGLE APPS (solo.js): orOS showing one app in its own window =====
+   No desktop, Dock, screen pet, clock or tray chips; the bar keeps the
+   app button (its menu), help, language, sync and the bell. */
+body.solo-mode #oros-desktop,
+body.solo-mode #ld-dock,
+body.solo-mode #ld-edge,
+body.solo-mode #ld-desk,
+body.solo-mode #app-menu,
+body.solo-mode #pet-layer,
+body.solo-mode #pet-hud,
+body.solo-mode #bar-time,
+body.solo-mode #bar-date,
+body.solo-mode #wx-chip,
+body.solo-mode #rx-tray-chip,
+body.solo-mode #mx-tray-chip,
+body.solo-mode #ts-tray-chip { display: none !important; }
+#solo-menu {
+  position: fixed; top: calc(46px + env(safe-area-inset-top, 0px)); left: 12px; z-index: 1460;
+  width: min(260px, calc(100vw - 24px)); padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--panel-bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow);
+}
+#solo-menu button {
+  min-height: 44px; padding: 8px 12px; border: 0; border-radius: 8px; text-align: left;
+  background: transparent; color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+}
+#solo-menu button:hover, #solo-menu button:focus-visible { background: var(--accent-soft); outline: none; }
+
 /* Authority guard: the HTML [hidden] attribute must always win over
    any author display rule (e.g. #wxc-ac in the wxcity dialog).
    Bible Part VII — applied to the shell itself, not just app
