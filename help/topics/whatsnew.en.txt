@@ -1,6 +1,57 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.00.00
+- Budget imports your bank statements (CSV from any bank, including Greek formats, plus OFX, QIF and CAMT.053), shows new and duplicate rows before adding them, and learns your categories with rules.
+- Budget: envelope budgeting, savings goals, a subscriptions view with reminders, yearly and net-worth reports, accounts in other currencies, and receipt photos or PDFs on entries.
+- Notes speaks Markdown: switch a page between Edit and Preview (or both side by side on a big screen), tick checkboxes in the preview, use the new formatting bar, open today's note with one tap, start pages from your own templates, link and search across notebooks, and export as .md.
+- To-Do now has subtasks, priorities P1–P4, smart lists (Today, Next 7 days, No date, Priority 1) and your own saved filters. You can move tasks between lists (several at once too) and repeat a task a set time after you finish it.
+- Spreadsheet: over 100 new functions (VLOOKUP, XLOOKUP, SUMIFS, IFERROR, dates and more) with help as you type, sort and filter, frozen rows and columns, and sheets up to 10,000 rows with insert and delete of rows and columns.
+- Spreadsheet: charts (column, bar, line, pie, donut, scatter), conditional formatting with colour scales and data bars, a fill handle that continues series, fill colours, borders, wrapped text and merged cells, copy and paste with Excel, Google Sheets and LibreOffice, and range selection and resizing by touch.
+- Calendar: new Day and Year views, repeats like "every 2 weeks on Mon and Wed" or "the last Friday of the month", repeating events that last several days, a time zone per event, and drag to move repeating and multi-day events.
+- Calendar: write "Coffee with Nikos Thursday 6pm at Syntagma" in Quick add, subscribe to other calendars by their .ics address, share a link with your free times so people can pick one, and print any view or save it as PDF.
+- Habits: count amounts (10 pages, ≤ 2 coffees), do things 3 times a week, see each habit's strength and a year of days, skip a sick day without losing your streak, add a note, get a reminder, and see your Health steps.
+- Meal Planner: import recipes from a web address or from Paprika, Mealie and Tandoor, switch any recipe between metric and US units, and find a Household section in the shopping list.
+- Meal Planner knows your pantry: see what you can cook with what's at home, take a recipe's ingredients out when you cook it, scan a barcode to add a product, and get a nutrition estimate per serving and per day.
+- Health: track your medicines with dose reminders, Taken / Skip / Snooze, how regularly you took them and a warning before they run out; log symptoms from 1 to 10 and see them on your charts and in the doctor's report.
+- Health: a new Record tab keeps your Medical ID (with a printable emergency card and QR code), doctor's appointments, vaccinations and documents; the Android app now also brings weight, sleep, blood pressure, blood sugar, heart rate and oxygen from Health Connect and rings medicine doses with orOS closed.
+- Files has a Trash (restore for 30 days), searches inside text files and PDFs, makes and opens ZIP files, shows a grid with thumbnails, and keeps Favourites and Recent files at the top. On a phone, hold a file to select several.
+- Calculator now has Scientific (brackets, functions, units like "3 ft to cm"), Graphing, Programmer and Finance (VAT, loans, savings) modes.
+- Time: find any city or time zone for the world clock, plan meetings across up to six places and add them to your Calendar, run several named kitchen timers with their own sounds, and keep stopwatch laps even after closing the app.
+- Slides opens and saves PowerPoint files (.pptx): text, bullets, pictures, shapes, notes and themes come along.
+- Slides: animate objects one click at a time (fade, fly in, zoom, bullets one by one), group objects, add tables and charts, and control your presentation from your phone.
+- Writer: an Insert menu and table tools that work on phones, focus mode and typewriter scrolling, a statistics panel with reading time, dictation, Undo for find and replace, and PDFs that keep bold, italic, tables and images.
+- Writer can now check your spelling in English and Greek, track changes with accept and reject (kept in Word files), and fill a letter for every contact or CSV row with mail merge.
+- Mind Map: give nodes shapes, fills, borders and icons, switch a map to an org chart, tree or timeline, group ideas in boundaries or summaries, and present your map full screen, branch by branch.
+- Split: pay in any currency (ECB rates, saved with the expense), split a receipt item by item with tax and tip, repeat rent and bills every week, month or year, and keep a photo of the receipt.
+- Contacts: keep in touch with the people who matter. Log calls, meetings and gifts on a timeline, set "every 2 months", and see who's due under Reach out, with an optional reminder. Also new: import any CSV with a column-matching step, and scan a business card into a new contact.
+- Kanban: edits to different parts of a card on two devices are both kept; columns get WIP limits and rules, boards get swimlanes, a Table and a Timeline view, attachments and covers, JSON/CSV export, and templates (Personal, Software sprint, Content calendar).
+- QR Generator now scans codes with the camera or from a picture (open links safely, add contacts and events, copy WiFi passwords), draws dots, rounded or circle corners and your logo in the middle, and makes many codes at once from a CSV as a label sheet, PDF or ZIP.
+- Workouts: supersets and circuits, ready progression programs (5/3/1, GZCLP, Linear 5×5) that work out your weights, GPS walks, runs and rides with splits and GPX export, and exercise pictures from wger.de on request.
+- Storage can now search everything with the path shown, move items and whole rooms, keep photos, receipts, value and warranty dates (with optional reminders), track what you lent and to whom, and print QR labels that open a box when scanned.
+- Mood: your own feelings and activities, goals and a year in pixels. One-Sentence Diary: write more about a day with photos, place and weather, a question of the day, a PIN lock and a PDF book.
+- Travel: keep tickets and booking PDFs with each itinerary entry, import bookings from an e-mail (or from Mail with "Booking to Travel"), see each day's places on a map, track your budget and share it with Split, and keep a day-by-day journal with photos and your Maps tracks.
+- Garage reads fuel receipts and prints your logbook; Plant Care identifies plants from a photo with your own Pl@ntNet key; Cycle logs flow per day plus optional temperature and mucus with a fertile-window estimate (not contraception); Baby logs pump length and keeps a milk stash, oldest first.
+- Media Shelf finds films and series on Wikidata, with covers and their credits, and shows the pace you need to reach your reading goal; Library downloads free books from Project Gutenberg, Standard Ebooks or any OPDS catalogue, opens CBR comics and exports highlights as tidy Markdown.
+- Reader: follow a Mail folder of newsletters as a feed, summarise any article with the AI you set up in the Assistant, and move over from FreshRSS or Miniflux with your stars and read articles.
+- Bookmarks: folders inside folders, a readable copy of any page for offline reading, a broken-link check, duplicates that merge, and import from Pocket and Raindrop.
+- Weather shows official MeteoAlarm warnings for your area (with an optional notice), the rain for the next 2 hours, air quality with pollen, and lets you pick or compare forecast models.
+- Television plays your own M3U playlists (by address or file, with groups and favourites) and shows what's on now and next from an XMLTV programme guide, with a timeline for today.
+- Mail: snooze messages until later, act on All inboxes across accounts, unsubscribe from newsletters in one step, and sign and encrypt mail with OpenPGP.
+- Podcasts: skip silence, voice boost and sync with gpodder.net or Nextcloud. Radio: sleep timer fades out, wake up to a station, see what was playing, and record a station for personal use.
+- Studio: draw automation for volume, pan and effects, duck a track with another track's sidechain, export MP3 and Opus as well as WAV, and play a built-in synth from the on-screen keys or a MIDI keyboard.
+- Studio: instrument tracks with a piano roll, a drum kit, MIDI recording and .mid import/export, plus a library of loops to drag onto your song.
+- Montage: speed curves, green-screen chroma key, framed picture in picture, auto reframe for 9:16 and 1:1, noise reduction, and automatic subtitles from speech, all on your device.
+- Photo Lab: Select subject and Remove background, camera RAW files, and Batch process for many photos at once (adjustments or a Lightroom preset, resize, watermark, rename, save to Pictures or a ZIP).
+- Atelier: 50 templates with categories and search, tables and charts, and PDFs with real selectable text. Layout: data merge, making cards, labels and badges from a CSV file in one PDF.
+- Business apps: quotes in any currency, emailed with the PDF attached, and accepted by your client through a link; a "Pay online" link and QR on your invoices; Timesheet asks about time away and lets you stop the timer from the top bar; Stock gets a full point of sale with price lists, receipts and a daily Z report.
+- Passwords is now a full password manager: an encrypted vault with a master password and recovery key, two-factor codes, KeePass and Bitwarden import and export, auto-lock, and sync of only the encrypted vault.
+- Today is now yours to arrange: add a clock, weather, water, habits, upcoming events or to-dos, drag them into place and pick small or wide. The Assistant can also tick off, move, edit or delete your tasks, events, expenses and bookmarks, always after you see the change and press Apply, with Undo; and you can speak to it instead of typing.
+- Daily puzzles in Sudoku, Nonogram, Flow Free and Minesweeper, with streaks and spoiler-free sharing. The new Game Center shows today's dailies, your achievements and every game's stats. Also new: Killer Sudoku and Pyramid solitaire.
+- Chess: offline puzzles with your own puzzle rating, opening names and an openings trainer; Connect 4, Backgammon, Xeri and Battleship can now be played with a friend on two devices.
+- Maps: download an area as an offline map, so the map and search work with no connection. See its size first, pause and resume any time.
+- Certificates: each certificate can carry a signed QR code, and anyone can check it on a page that works offline.
+
 ## Version 1.99.00
 - New app: Wiki (in Office). Write your own encyclopedia: articles with contents, sections, links between them and categories, and a history of every change you can compare and restore.
 
