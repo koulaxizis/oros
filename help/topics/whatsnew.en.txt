@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.84.00
+- Calendar: with "On this phone" on, your subscribed calendars and holidays now also appear in the phone's calendar (orOS Android app).
+
 ## Version 1.83.00
 - Studio: 14 new NULL JSFX effects (NULL JSFX 2.1).
 - Contacts and Calendar: another fix so "On this phone" connects in the orOS Android app.
