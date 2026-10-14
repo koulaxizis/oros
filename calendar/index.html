@@ -29,9 +29,11 @@
 
     <!-- ===== View switcher + search ===== -->
     <div id="view-bar">
-      <div class="view-switch">
-        <button id="vw-month" type="button" class="view-btn active" data-i18n="vw.month"></button>
+      <div class="view-switch" role="group">
+        <button id="vw-day" type="button" class="view-btn" data-i18n="vw.day"></button>
         <button id="vw-week" type="button" class="view-btn" data-i18n="vw.week"></button>
+        <button id="vw-month" type="button" class="view-btn active" data-i18n="vw.month"></button>
+        <button id="vw-year" type="button" class="view-btn" data-i18n="vw.year"></button>
         <button id="vw-agenda" type="button" class="view-btn" data-i18n="vw.agenda"></button>
       </div>
       <input id="search-in" type="search" autocomplete="off"
@@ -53,6 +55,12 @@
 
     <!-- ===== Week view ===== -->
     <div id="week-grid" hidden></div>
+
+    <!-- ===== Day view (hour grid) ===== -->
+    <div id="day-view" hidden></div>
+
+    <!-- ===== Year view (12 small months) ===== -->
+    <div id="year-grid" hidden></div>
 
     <!-- ===== Agenda view ===== -->
     <ul id="agenda-list" hidden></ul>
@@ -78,6 +86,17 @@
       <label for="ev-title" data-i18n="ev.field.title"></label>
       <input id="ev-title" type="text" maxlength="80" data-i18n-ph="ev.ph.title">
 
+      <div class="date-pair">
+        <div>
+          <label for="ev-date" data-i18n="ev.field.date"></label>
+          <input type="date" id="ev-date">
+        </div>
+        <div>
+          <label for="ev-date-end" data-i18n="ev.field.dateend"></label>
+          <input type="date" id="ev-date-end">
+        </div>
+      </div>
+
       <label class="chk">
         <input id="ev-allday" type="checkbox">
         <span data-i18n="ev.allday"></span>
@@ -96,26 +115,32 @@
         </div>
       </div>
 
+      <div id="ev-tz-row" class="tz-row">
+        <label for="ev-tz" data-i18n="ev.field.tz"></label>
+        <select id="ev-tz"></select>
+      </div>
+
       <label for="ev-repeat" data-i18n="ev.field.repeat"></label>
-      <select id="ev-repeat">
-        <option value="" data-i18n="rep.none"></option>
-        <option value="D-1" data-i18n="rep.daily"></option>
-        <option value="W-1" data-i18n="rep.weekly"></option>
-        <option value="W-2" data-i18n="rep.biweekly"></option>
-        <option value="M-1" data-i18n="rep.monthly"></option>
-        <option value="Y-1" data-i18n="rep.yearly"></option>
-      </select>
+      <select id="ev-repeat"></select>
+
+      <div id="ev-rep-custom" class="rep-box" hidden>
+        <div class="rep-line">
+          <label for="ev-rep-n" data-i18n="rep.every"></label>
+          <input type="number" id="ev-rep-n" min="1" max="999" step="1" inputmode="numeric">
+          <select id="ev-rep-unit" data-i18n-aria="ev.field.repeat"></select>
+        </div>
+        <div id="ev-rep-days" class="rep-days" role="group"></div>
+        <select id="ev-rep-mode" data-i18n-aria="ev.field.repeat"></select>
+      </div>
 
       <div class="dlg-row" id="ev-until-row">
-        <label for="ev-until" data-i18n="ev.field.until"></label>
-        <input type="date" id="ev-until">
+        <label for="ev-ends" data-i18n="rep.ends"></label>
+        <select id="ev-ends"></select>
+        <input type="date" id="ev-until" data-i18n-aria="rep.ends.on" hidden>
+        <input type="number" id="ev-count" min="1" max="999" step="1" inputmode="numeric" data-i18n-aria="rep.ends.n" hidden>
+        <span id="ev-count-lab" class="rep-times" data-i18n="rep.times" hidden></span>
       </div>
-
-      <div class="dlg-row" id="ev-dateend-row">
-        <label for="ev-date-end" data-i18n="ev.field.dateend"></label>
-        <input type="date" id="ev-date-end">
-      </div>
-      <div id="ev-spanhint" class="span-hint" hidden></div>
+      <div id="ev-rep-sum" class="span-hint" aria-live="polite" hidden></div>
 
       <label for="ev-remind" data-i18n="ev.field.remind"></label>
       <select id="ev-remind"></select>

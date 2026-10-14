@@ -6382,7 +6382,10 @@
     if (!OCC) return;                                  // stale bundle — silent
     OCC.eachOccurrence(ev, function (occYmd) {
       var p = occYmd.split("-");
-      return cb(calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), occYmd);
+      // occur.js startTs: an event kept in its own time zone fires at
+      // that zone's time (wave 5); everything else as before.
+      return cb(typeof OCC.startTs === "function" ? OCC.startTs(ev, occYmd)
+                                                  : calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), occYmd);
     });
   }
 
@@ -6426,7 +6429,7 @@
       } else {
         var p = String(ev.date || "").split("-");
         if (p.length === 3) {
-          check(ev, remindMin, calRemOccTs(ev, +p[0], +p[1] - 1, +p[2]), ev.date);
+          check(ev, remindMin, (window.OrosCalOccur && typeof window.OrosCalOccur.startTs === "function" && /^\d{4}-\d{2}-\d{2}$/.test(ev.date) ? window.OrosCalOccur.startTs(ev, ev.date) : calRemOccTs(ev, +p[0], +p[1] - 1, +p[2])), ev.date);
         }
       }
     }

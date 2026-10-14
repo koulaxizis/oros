@@ -184,6 +184,11 @@
     if (d.r && typeof d.r === "object" && /^[DWMY]$/.test(d.r.f)) {
       e.r = { f: d.r.f, i: d.r.i === 2 ? 2 : 1 };
       if (validYmd(d.r.u) && d.r.u >= d.d) e.r.u = d.r.u;
+      // A rule the short form cannot say (Calendar wave 5: every N, weekdays,
+      // Nth / last weekday, COUNT) rides along as plain RRULE text.
+      if (typeof d.r.x === "string" && d.r.x.length <= 200 &&
+          /^FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)(;[A-Z]{2,10}=[A-Z0-9,+-]{1,40}){0,8}$/.test(d.r.x) &&
+          d.r.x.indexOf("FREQ=" + { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" }[d.r.f]) === 0) e.r.x = d.r.x;
     }
     if (typeof d.id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(d.id)) e.id = d.id;
     return e;
@@ -521,7 +526,7 @@
     if (d.l) out.push("LOCATION:" + vEsc(d.l));
     if (d.r) {
       var F = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
-      out.push("RRULE:FREQ=" + F[d.r.f] + (d.r.i === 2 ? ";INTERVAL=2" : "") + (d.r.u ? ";UNTIL=" + icsDt(d.r.u) : ""));
+      out.push("RRULE:" + (d.r.x || ("FREQ=" + F[d.r.f] + (d.r.i === 2 ? ";INTERVAL=2" : "") + (d.r.u ? ";UNTIL=" + icsDt(d.r.u) : ""))));
     }
     out.push("END:VEVENT", "END:VCALENDAR");
     return out.join("\r\n") + "\r\n";

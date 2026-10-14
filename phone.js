@@ -144,7 +144,12 @@
   }
 
   // Calendar → Android CalendarContract fields. Times are computed in
-  // the page's local zone, which is the phone's zone (same device).
+  // the page's local zone, which is the phone's zone (same device),
+  // or in the event's own zone when it carries one (`tz`, Calendar
+  // wave 5): then EVENT_TIMEZONE is that zone, so Android repeats it
+  // at that zone's wall time. Rules come from calendar/occur.js.
+  var OCC = (root && root.OrosCalOccur) ||
+    (typeof module !== "undefined" && typeof require === "function" ? require("./calendar/occur.js") : null);
   var FREQ = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
   var REMIND = [5, 15, 30, 60, 1440, 4320, 7200];
   function parts(ymd) { var p = ymd.split("-"); return [+p[0], +p[1] - 1, +p[2]]; }
@@ -153,6 +158,8 @@
     var d = parts(ymd), t = hm(time);
     return new Date(d[0], d[1], d[2], t[0], t[1]).getTime();
   }
+  // Wall time in zone z (null: the page's own zone) → ms.
+  function zonedMs(ymd, time, z) { return z && OCC ? OCC.wallToMs(ymd, time, z) : localMs(ymd, time); }
   function utcMidnight(ymd, addDays) {
     var d = parts(ymd);
     return Date.UTC(d[0], d[1], d[2] + (addDays || 0));
@@ -160,22 +167,27 @@
   function utcStamp(ms) {
     return new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
   }
+  function eventZone(e) {
+    var timed = typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start);
+    return timed && e.tz && OCC && OCC.tzValid(e.tz) ? e.tz : null;
+  }
   // The Calendar's monthly / yearly rule clamps to the month's last
   // day (Jan 31 → Feb 28 → Mar 31). RFC 5545 skips such months
   // instead, so days 29-31 become "the last of 28…day" (BYSETPOS=-1).
+  // Every N, weekdays, Nth / last weekday and COUNT pass as RFC 5545.
   function rrule(e) {
     var r = e.recur;
     if (!r || !FREQ[r.freq]) return null;
+    var z = eventZone(e);
+    if (OCC) {
+      return OCC.toRrule(e, {
+        until: function (u) {
+          return e.start ? utcStamp(zonedMs(u, "23:59", z) + 59000) : utcStamp(utcMidnight(u));
+        }
+      });
+    }
     var s = "FREQ=" + FREQ[r.freq];
     if (r.freq === "W" && r.interval === 2) s += ";INTERVAL=2";
-    var p = parts(e.date), day = p[2];
-    if (r.freq === "M" && day > 28) {
-      var ds = [];
-      for (var d = 28; d <= day; d++) ds.push(d);
-      s += ";BYMONTHDAY=" + ds.join(",") + ";BYSETPOS=-1";
-    } else if (r.freq === "Y" && p[1] === 1 && day === 29) {
-      s += ";BYMONTH=2;BYMONTHDAY=28,29;BYSETPOS=-1";
-    }
     if (typeof r.until === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.until)) {
       s += ";UNTIL=" + (e.start ? utcStamp(localMs(r.until, "23:59") + 59000)
                                 : utcStamp(utcMidnight(r.until)));
@@ -196,35 +208,40 @@
       var timed = typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start);
       var end = timed && typeof e.end === "string" && /^\d{2}:\d{2}$/.test(e.end) ? e.end : null;
       var dateEnd = typeof e.dateEnd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.dateEnd) && e.dateEnd >= e.date ? e.dateEnd : null;
+      var z = eventZone(e);
       var rule = rrule(e);
       var row = {
         id: e.id.slice(0, 64),
         title: str(e.title, 80), desc: str(e.note, 500), loc: str(e.location, 150),
         allDay: !timed,
-        dtstart: timed ? localMs(e.date, e.start) : utcMidnight(e.date),
+        dtstart: timed ? zonedMs(e.date, e.start, z) : utcMidnight(e.date),
         dtend: null, duration: null,
-        tz: timed ? (tz || "UTC") : "UTC",
+        tz: timed ? (z || tz || "UTC") : "UTC",
         rrule: rule, exdate: null,
         remind: typeof e.remindMin === "number" && REMIND.indexOf(e.remindMin) !== -1 ? e.remindMin : null,
         color: colors[e.labelId] || null
       };
       if (rule) {
-        // Series: Android wants DURATION, never DTEND.
+        // Series: Android wants DURATION, never DTEND. A series may
+        // span days (Calendar wave 5): the duration covers them.
+        var span = dateEnd && dateEnd > e.date && OCC ? OCC.dayNum(dateEnd) - OCC.dayNum(e.date) : 0;
         var mins = 0;
-        if (timed && end && end > e.start) {
-          var a = hm(e.start), b = hm(end);
-          mins = (b[0] * 60 + b[1]) - (a[0] * 60 + a[1]);
+        if (timed) {
+          var a = hm(e.start), b = hm(end || e.start);
+          mins = span * 1440 + (b[0] * 60 + b[1]) - (a[0] * 60 + a[1]);
+          if (!span && !(end && end > e.start)) mins = 0;
+          if (mins < 0) mins = 0;
         }
-        row.duration = timed ? "P" + (mins * 60) + "S" : "P1D";
+        row.duration = timed ? "P" + (mins * 60) + "S" : "P" + (span + 1) + "D";
         var ex = (e.recur.exdates || []).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }).sort();
         if (ex.length) {
           row.exdate = ex.map(function (d) {
-            return utcStamp(timed ? localMs(d, e.start) : utcMidnight(d));
+            return utcStamp(timed ? zonedMs(d, e.start, z) : utcMidnight(d));
           }).join(",");
         }
       } else if (timed) {
         var endDay = dateEnd || e.date;
-        var endMs = localMs(endDay, end || (dateEnd ? "00:00" : e.start));
+        var endMs = zonedMs(endDay, end || (dateEnd ? "00:00" : e.start), z);
         row.dtend = Math.max(endMs, row.dtstart);
       } else {
         row.dtend = utcMidnight(dateEnd || e.date, 1);
@@ -271,37 +288,53 @@
   //   title, desc, loc, allDay, dtstart, dtend, duration, rrule, exdate,
   //   remind, orig: { id, at } (an edited / cancelled occurrence of a
   //   series), cancelled }. Times are ms; all-day rows are UTC midnights.
+  // A timed event orOS keeps in its own zone (`tz`) comes back as wall
+  // times in that zone (z below); everything else in the page's zone.
   function ymdLocal(ms) { var d = new Date(ms); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function ymdUtc(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
   function hmLocal(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function wallIn(ms, z) {
+    if (z && OCC) return OCC.msToWall(ms, z);
+    return { date: ymdLocal(ms), time: hmLocal(ms) };
+  }
   function isoSecs(s) {          // "P3600S", "PT1H30M", "P1D", "P1W" → seconds
     var m = /^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(String(s || "").replace(/^\+/, ""));
     if (!m) { var n = /^P(\d+)S$/.exec(String(s || "")); return n ? +n[1] : 0; }
     return (+m[1] || 0) * 604800 + (+m[2] || 0) * 86400 + (+m[3] || 0) * 3600 + (+m[4] || 0) * 60 + (+m[5] || 0);
   }
   var FREQ_IN = { DAILY: "D", WEEKLY: "W", MONTHLY: "M", YEARLY: "Y" };
-  function stampDay(s, allDay) {  // "20261014" / "20261014T183000Z" → local YMD
+  function stampDay(s, allDay, z) {  // "20261014" / "20261014T183000Z" → local (or zone z) YMD
     var m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z?))?$/.exec(String(s || "").trim());
     if (!m) return null;
     if (!m[4] || allDay) return m[1] + "-" + m[2] + "-" + m[3];
     var ms = m[7] ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
                   : new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
-    return ymdLocal(ms);
+    return wallIn(ms, z).date;
   }
-  // Android RRULE → the Calendar's recur (FREQ, INTERVAL 2 only weekly,
-  // UNTIL). What orOS cannot express (BYDAY lists, COUNT) is dropped.
-  function recurIn(rule, exdate, allDay) {
+  // Android RRULE → the Calendar's recur through occur.js fromRrule
+  // (every N, weekdays, Nth / last weekday, COUNT, UNTIL). A rule orOS
+  // cannot hold keeps its FREQ (and weekly INTERVAL 2) only.
+  function recurIn(rule, exdate, allDay, start, z) {
     if (!rule) return null;
-    var p = {};
-    String(rule).split(";").forEach(function (kv) { var i = kv.indexOf("="); if (i > 0) p[kv.slice(0, i).toUpperCase()] = kv.slice(i + 1); });
-    var f = FREQ_IN[p.FREQ];
-    if (!f) return null;
-    var r = { freq: f, interval: f === "W" && p.INTERVAL === "2" ? 2 : 1, until: p.UNTIL ? stampDay(p.UNTIL, allDay) : null, exdates: [] };
+    var r = null;
+    if (OCC && typeof start === "string") {
+      var got = OCC.fromRrule(rule, start, { until: function (v) { return stampDay(v, allDay, z); } });
+      if (got.single) return null;
+      if (got.recur) r = got.recur;
+    }
+    if (!r) {
+      var p = {};
+      String(rule).split(";").forEach(function (kv) { var i = kv.indexOf("="); if (i > 0) p[kv.slice(0, i).toUpperCase()] = kv.slice(i + 1); });
+      var f = FREQ_IN[p.FREQ];
+      if (!f) return null;
+      r = { freq: f, interval: f === "W" && p.INTERVAL === "2" ? 2 : 1, until: p.UNTIL ? stampDay(p.UNTIL, allDay, z) : null, exdates: [] };
+    }
+    var ex = [];
     String(exdate || "").split(/[,\n]/).forEach(function (x) {
-      var d = stampDay(x.replace(/^.*:/, ""), allDay);
-      if (d && r.exdates.indexOf(d) === -1) r.exdates.push(d);
+      var d = stampDay(x.replace(/^.*:/, ""), allDay, z);
+      if (d && ex.indexOf(d) === -1) ex.push(d);
     });
-    r.exdates.sort();
+    r.exdates = ex.sort();
     return r;
   }
   var REMIND_IN = [5, 15, 30, 60, 1440, 4320, 7200];
@@ -312,22 +345,26 @@
     return best;
   }
   // One phone row → the Calendar's event fields (no id, label, mtime).
-  function eventIn(c) {
+  // z: the zone the stored event keeps (its times come back in it).
+  function eventIn(c, z) {
     var allDay = !!c.allDay, start = +c.dtstart;
     if (!isFinite(start)) return null;
     var endMs = isFinite(+c.dtend) && +c.dtend > 0 ? +c.dtend : start + isoSecs(c.duration) * 1000;
+    var zz = allDay ? null : (z || null);
+    var s = wallIn(start, zz);
+    var date = allDay ? ymdUtc(start) : s.date;
     var e = { title: str(c.title, 80), note: str(c.desc, 500), location: str(c.loc, 150),
-              date: allDay ? ymdUtc(start) : ymdLocal(start), dateEnd: null, start: null, end: null,
-              recur: recurIn(c.rrule, c.exdate, allDay), remindMin: remindIn(c.remind) };
+              date: date, dateEnd: null, start: null, end: null,
+              recur: recurIn(c.rrule, c.exdate, allDay, date, zz), remindMin: remindIn(c.remind) };
     if (allDay) {
       var last = endMs > start ? ymdUtc(endMs - 86400000) : e.date;
-      if (!e.recur && last > e.date) e.dateEnd = last;
+      if (last > e.date) e.dateEnd = last;
     } else {
-      e.start = hmLocal(start);
+      e.start = s.time;
       if (endMs > start) {
-        var endDay = ymdLocal(endMs);
-        if (endDay === e.date) e.end = hmLocal(endMs);
-        else if (!e.recur) { e.dateEnd = endDay; e.end = hmLocal(endMs); }
+        var en = wallIn(endMs, zz);
+        if (en.date === e.date) e.end = en.time;
+        else { e.dateEnd = en.date; e.end = en.time; }
       }
     }
     return e;
@@ -357,16 +394,18 @@
         // the series skips that day; a changed one becomes its own event.
         var si = find(orig.id);
         if (si !== -1 && b.events[si].recur) {
-          var s = b.events[si], day = s.start ? ymdLocal(+orig.at) : ymdUtc(+orig.at);
+          var s = b.events[si], sz = eventZone(s);
+          var day = s.start ? wallIn(+orig.at, sz).date : ymdUtc(+orig.at);
           var ex = (s.recur.exdates || []).slice();
           if (ex.indexOf(day) === -1) ex.push(day);
           ex.sort();
           s.recur = Object.assign({}, s.recur, { exdates: ex });
           s.mtime = now;
           if (c.op !== "delete" && !c.cancelled) {
-            var one = eventIn(c);
+            var one = eventIn(c, sz);
             if (one) {
               one.recur = null;
+              if (sz && one.start) one.tz = sz;
               b.events.push(Object.assign(one, { id: newEventId(now), labelId: s.labelId || null, mtime: now }));
             }
           }
@@ -380,10 +419,14 @@
         refs.push(c.ref);
         return;
       }
-      var e = eventIn(c);
+      var z = i !== -1 ? eventZone(b.events[i]) : null;
+      var e = eventIn(c, z);
       if (!e) { refs.push(c.ref); return; }
-      if (i !== -1) b.events[i] = Object.assign({}, b.events[i], e, { mtime: now });
-      else b.events.push(Object.assign(e, { id: newEventId(now), labelId: null, mtime: now }));
+      if (i !== -1) {
+        var merged = Object.assign({}, b.events[i], e, { mtime: now });
+        if (!merged.start || !z) delete merged.tz;
+        b.events[i] = merged;
+      } else b.events.push(Object.assign(e, { id: newEventId(now), labelId: null, mtime: now }));
       refs.push(c.ref);
     });
     return { blob: b, refs: refs };

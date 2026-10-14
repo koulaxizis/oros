@@ -126,6 +126,11 @@ body {
 }
 .view-btn:hover { color: var(--text); }
 .view-btn.active { background: var(--accent-soft); color: var(--accent); }
+/* Phones: five views share the width; search goes below */
+@media (max-width: 560px) {
+  .view-switch { flex: 1 1 100%; }
+  .view-btn { flex: 1 1 0; padding: 6px 2px; min-width: 0; font-size: 12px; }
+}
 #search-in {
   flex: 1;
   min-width: 120px;
@@ -408,6 +413,202 @@ body {
   #week-grid { grid-template-columns: 1fr; }
   .wk-col { min-height: 0; }
   .wk-body { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* Drag & drop (wave 5): week columns are drop targets too */
+.wk-col.drop-target { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent-soft); }
+.wk-ev[draggable="true"] { cursor: grab; }
+.wk-ev.dragging { opacity: 0.45; }
+/* Time zone mark (an event kept in another zone) */
+.tz-mark { font-weight: 700; color: var(--accent); }
+.ev-tz { color: var(--accent); }
+
+/* ---------- Day view (wave 5): hour grid ---------- */
+#day-view {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+.dv-allday {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dv-allday-lab {
+  flex: 0 0 44px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--text-dim);
+  padding-top: 6px;
+  line-height: 1.2;
+}
+.dv-allday-list { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; flex: 1; }
+.dv-chip {
+  max-width: 100%;
+  min-height: 32px;
+  background: var(--bg);
+  border: none;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dv-chip:hover { filter: brightness(1.2); }
+.dv-scroll {
+  max-height: min(62vh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.dv-grid { position: relative; }
+.dv-hour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px solid var(--border);
+}
+.dv-hlab {
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.dv-lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 52px;
+  right: 4px;
+  cursor: copy;
+}
+.dv-ev {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  overflow: hidden;
+  background: var(--accent-soft);
+  border: none;
+  border-left: 3px solid var(--accent);
+  border-radius: 5px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  padding: 3px 6px;
+  cursor: pointer;
+  min-width: 0;
+}
+.dv-ev:hover { filter: brightness(1.15); }
+.dv-ev-time {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dv-ev-title { font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv-ev-loc { font-size: 10.5px; color: var(--text-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dv-now {
+  position: absolute;
+  left: 46px;
+  right: 0;
+  height: 0;
+  border-top: 2px solid var(--danger);
+  pointer-events: none;
+  z-index: 2;
+}
+.dv-now::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+/* ---------- Year view (wave 5): 12 small months ---------- */
+#year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 216px), 1fr));
+  gap: 10px;
+}
+.yr-month {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  padding: 6px;
+  min-width: 0;
+}
+.yr-mname {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.yr-mname:hover { background: var(--accent-soft); }
+.yr-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+.yr-wd { font-size: 10px; color: var(--text-dim); text-align: center; padding: 2px 0; }
+.yr-day {
+  position: relative;
+  min-height: 30px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 2px 0 7px;
+}
+.yr-day:hover { background: var(--accent-soft); }
+.yr-day.today { color: var(--accent); font-weight: 800; border-color: var(--accent); }
+.yr-day.sel { background: var(--accent-soft); }
+.yr-day.hol { color: #ef6b5b; }
+.yr-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+.yr-dot { width: 4px; height: 4px; border-radius: 50%; }
+@media (max-width: 480px) {
+  #year-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .yr-month { padding: 4px 3px; }
+  .yr-day { min-height: 32px; font-size: 10.5px; }
 }
 
 /* ---------- Agenda view (v0.3.0) ---------- */
@@ -781,39 +982,75 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 #ev-del-row .btn { min-width: max-content; }
 
 /* Until row: same show/hide contract as ev-del-row (dialog select
-   drives the JS toggle; default hidden = Repeat "None") */
-#ev-until-row { display: none; }
-#ev-until-row.show { display: flex; align-items: center; gap: 10px; }
+   drives the JS toggle; default hidden = Repeat "None").
+   Wave 5: "Ends" = never / on a date / after N times. */
+#ev-until-row { display: none; margin-top: 2px; }
+#ev-until-row.show { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 #ev-until-row.show label {
-  flex: 0 0 auto;
+  flex: 1 1 100%;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-dim);
 }
-#ev-until-row.show input { flex: 1 1 auto; min-width: 0; }
+#ev-until-row.show select { flex: 1 1 120px; width: auto; min-width: 0; }
+#ev-until-row.show input[type="date"] { flex: 1 1 140px; width: auto; min-width: 0; }
+#ev-until-row.show input[type="number"] { flex: 0 0 76px; width: 76px; }
+.rep-times { font-size: 12.5px; color: var(--text-dim); }
 
-/* Multi-day end date (v0.3.0): shown only when Repeat = None —
-   exact same contract as ev-until-row. */
-#ev-dateend-row { display: none; }
-#ev-dateend-row.show { display: flex; align-items: center; gap: 10px; }
-#ev-dateend-row.show label {
-  flex: 0 0 auto;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-dim);
+/* Start / end day side by side (wave 5) */
+.date-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.date-pair > div { display: grid; gap: 6px; min-width: 0; }
+.date-pair input[type="date"] { min-width: 0; }
+.tz-row { display: grid; gap: 6px; }
+
+/* Custom repeat (wave 5) */
+.rep-box {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
 }
-#ev-dateend-row.show input { flex: 1 1 auto; min-width: 0; }
-/* Multi-day span hint (v0.3.1) — shown when EDITING an existing
-   multi-day event: warns the anchor moves to the selected day. */
+.rep-line { display: flex; align-items: center; gap: 8px; }
+.rep-line label { flex: 0 0 auto; }
+.ev-form .rep-line input[type="number"] { width: 72px; flex: 0 0 72px; }
+.ev-form input[type="number"] {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  min-height: 38px;
+  outline: none;
+  color-scheme: dark;
+}
+.ev-form .rep-line select { flex: 1 1 auto; width: auto; min-width: 0; }
+.rep-days { display: flex; gap: 4px; flex-wrap: wrap; }
+.rep-day {
+  flex: 1 0 38px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.rep-day.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.rep-day:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Repeat summary line ("Every 2 weeks on Mon, Wed, 10 times") */
 .span-hint {
   font-size: 11.5px;
   line-height: 1.45;
   color: var(--text-dim);
   padding: 2px 0;
 }
-
 /* ---------- Series chooser dialog (Wave 3) ---------- */
 dialog#ser-dlg {
   background: var(--panel-bg);

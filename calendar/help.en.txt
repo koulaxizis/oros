@@ -4,20 +4,25 @@ Calendar keeps your events, with times, places, labels, repeats and reminders. I
 ## Getting started
 Calendar opens on the current month with today selected. Tap or click a day to see its events below the grid, then press `Add` to create an event on that day. Use ‹ and › to move back and forward, and `Today` to jump back.
 
-Switch between `Month`, `Week` and `Agenda` with the buttons under the title. `Agenda` lists what's coming in the next 30 days; `Show more` adds more days.
+Switch between `Day`, `Week`, `Month`, `Year` and `Agenda` with the buttons under the title:
+- `Day` shows one day as an hour grid, with all-day events in a strip at the top and a line at the current time. Tap or click an empty hour to add an event at that time.
+- `Week` shows seven days side by side.
+- `Year` shows the 12 months small, with a dot under days that have events. Tap a day to open it in `Day`, or a month's name to open that month.
+- `Agenda` lists what's coming in the next 30 days; `Show more` adds more days.
 
 ## Add and edit events
 The event window has:
 - `Title`. It's the only field you must fill in.
 - `All day`, or a `Time`: pick a start and, if you like, an end (`No end`). You can type a time or choose one from the list.
-- `Repeat`: `Daily`, `Weekly`, `Every 2 weeks`, `Monthly` or `Yearly`, with an optional `Until` date.
-- `Ends on (day)` for an event that lasts several days (only for events that don't repeat).
+- `Starts on (day)` and `Ends on (day)`: set a later end day for an event that lasts several days, such as a trip or a conference.
+- `Time zone` (timed events only): leave it on `This device` or pick the zone the event is in, for example a call with someone in New York. The Calendar shows the event at your own local time, with a small ◷ mark and the original time underneath.
+- `Repeat`: daily, weekly on the event's weekday, every weekday (Mon–Fri), every 2 weeks, monthly on the same date or on the same weekday (such as "the 2nd Tuesday" or "the last Friday"), or yearly. `Custom…` lets you choose every N days, weeks, months or years, several weekdays, and for months either the day of the month or the weekday. `Repeat ends`: `Never`, `On a date`, or `After` a number of times. A short summary under the choices says what you've picked. A repeating event can also last several days, such as a 3-day course every month.
 - `Reminder`: from 5 minutes up to 5 days before.
 - `Location`, a label and a `Note`.
 
 Tap or click an event to edit it. For a repeating event you're asked first: `This occurrence` or `Entire series`. `Delete event` asks to confirm, and an `Undo` button appears for a few seconds afterwards. `QR code` in the same window opens [QR Generator](app:qr) with a code for the event, which phones can add to their own calendar. `Email` (when [Mail](app:mail) has an account) opens a new message about the event: its title as the subject, the date, time, place and notes as the text, and any email addresses written in the event as recipients. `Send…` sends the event to someone as a link: they see it in any browser and can add it to their calendar (a single occurrence of a series goes as that one day).
 
-On a computer you can drag a single-day event that doesn't repeat onto another day in the month view to move it.
+On a computer you can drag an event onto another day in the `Month` view, or onto another day's column in `Week`, to move it. An event that lasts several days moves as a whole. For a repeating event you're asked whether to move `This occurrence` or the `Entire series`; `Undo` puts it back.
 
 Tap or click a location to open it in [Maps](app:maps). Maps can also send a planned route to Calendar as a new event.
 
@@ -61,7 +66,7 @@ Your events and labels sync between your devices through [orOS sync](help:t/sync
 For a full copy, see [backup](help:t/backup).
 
 ## Keyboard shortcuts
-- [[←]] / [[→]] go to the previous or next month, week or agenda page.
+- [[←]] / [[→]] go to the previous or next day, week, month, year or agenda page.
 - [[Esc]] clears the search.
 - In the time boxes, [[↑]] / [[↓]] move through the list and [[Enter]] picks a time.
 
@@ -71,6 +76,9 @@ For a full copy, see [backup](help:t/backup).
 
 ## Limits
 - Reminders can't fire when the browser or the orOS tab is closed.
-- An event can either repeat or span several days, not both.
-- Repeating and multi-day events can't be moved by dragging.
-- When importing, a repeating event whose rule the Calendar can't hold (for example "the last Friday of each month") comes in with only its first date. The preview tells you how many. A file can bring in at most 5000 events and be at most 5 MB.
+- Dragging works with a mouse only, not by touch. On a phone, open the event and change its days instead.
+- On a phone the days in `Year` are small; tap the month's name to open it larger.
+- When importing, a repeating event whose rule the Calendar can't hold (for example "the 1st and 3rd Monday", several days of the month, or by week number) comes in with only its first date, and an hourly rule likewise. The preview tells you how many.
+- Exported time zones are written by name only. Most calendar apps understand them; a few older ones may show the time in their own zone.
+- On an older orOS version that hasn't updated yet, the newer repeat choices and time zones show in a simpler form until it updates.
+- An event with a time zone that you edit in the phone's own Calendar keeps its zone only after orOS reads the change back. A file can bring in at most 5000 events and be at most 5 MB.
