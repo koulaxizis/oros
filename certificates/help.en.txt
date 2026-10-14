@@ -34,6 +34,13 @@ On a phone the preview sits above the form; on a wide screen it is on the right.
 - A number is given once and never reused, even when a person is removed.
 - If two devices give numbers at the same moment, `Check` shows the number given twice and `Give a new number` fixes it.
 
+## Check code
+- Tick `A QR code that shows the certificate is genuine` under `Check code (QR)`. Each certificate gets a QR code at the bottom left.
+- Anyone who scans it with a phone sees a check page with the details you signed: number, name, course, dates, organisation and date of issue. If someone changes even one letter, the page says `Not valid`.
+- The code is signed with a key that orOS makes the first time and keeps in your synced data, so all your devices sign with the same key. The check page shows that key, for example `714C-C0EF-E8A4-2098`.
+- `Copy the key` and put it on your website or under your emails, so people can see the certificate really comes from you. `Open the check page` shows the page for the person in the preview.
+- The check needs no server and nothing is sent anywhere. In the PDF the code is also a link.
+
 ## Save, print and send
 - `PDF with everyone` makes one file with a page per person; `ZIP, one PDF each` one PDF per person, named with the number and name.
 - `Save each in Files` puts the PDFs in Files › Certificates › the name of the set.
@@ -54,4 +61,4 @@ On a phone the preview sits above the form; on a wide screen it is on the right.
 ## Limits
 - Up to 2,000 people in one set and 5,000 in all; up to 200 sets.
 - The fonts are Noto Serif and Noto Sans, which cover Greek and Latin letters.
-- A certificate cannot be checked online yet: there is no QR code for verification.
+- A certificate you revoke after it went out still shows as signed on the check page, because there is no server to ask. Tell people to contact you when in doubt.

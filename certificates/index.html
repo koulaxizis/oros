@@ -121,6 +121,21 @@
               </div>
               <p class="hint small" id="no-example"></p>
             </details>
+
+            <details class="sec">
+              <summary data-i18n="sec.check">Check code (QR)</summary>
+              <label class="check"><input type="checkbox" id="f-qr"><span data-i18n="f.qr">A QR code that shows the certificate is genuine</span></label>
+              <p class="hint small" data-i18n="qr.hint">Anyone can scan it with a phone to see the details you signed.</p>
+              <p class="hint small" id="qr-none" data-i18n="qr.none" hidden>This browser cannot sign codes.</p>
+              <div id="qr-key" class="qr-key" hidden>
+                <p class="small"><span data-i18n="qr.fp">Your key:</span> <code id="qr-fp" class="fp"></code></p>
+                <p class="hint small" data-i18n="qr.fpHint">Put this key on your website or under your emails.</p>
+                <div class="actions">
+                  <button type="button" id="qr-copy" class="chip small" data-i18n="btn.copyFp">Copy the key</button>
+                  <button type="button" id="qr-open" class="chip small" data-i18n="btn.openCheck">Open the check page</button>
+                </div>
+              </div>
+            </details>
           </section>
 
           <!-- ----- People ----- -->
@@ -319,8 +334,10 @@
   <script src="../designkit/pdf.js?v=1.98.00"></script>
   <script src="../designkit/assets.js?v=1.98.00"></script>
   <script src="../atelier/zip.js?v=1.98.00"></script>
+  <script src="../qr/qr-encode.js?v=1.98.00"></script>
   <script src="core.js?v=1.98.00"></script>
   <script src="dk.js?v=1.98.00"></script>
+  <script src="sign.js?v=1.98.00"></script>
   <script src="certificates.js?v=1.98.00"></script>
 
 </body>

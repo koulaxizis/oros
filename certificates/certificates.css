@@ -173,6 +173,9 @@ body:not(.tab-design) #p-design, body:not(.tab-people) #p-people, body:not(.tab-
 .lbl { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
 .hint { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 .hint.small { font-size: 12px; }
+.qr-key { margin-top: 6px; }
+.qr-key p.small { font-size: 13px; margin: 4px 0; }
+.fp { font-family: ui-monospace, "Noto Sans Mono", monospace; font-size: 14px; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px; background: var(--surface-2, rgba(127,127,127,.12)); word-break: break-all; }
 
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
 .fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

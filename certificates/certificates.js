@@ -36,7 +36,7 @@
 (function () {
   "use strict";
 
-  var C = window.CertCore, D = window.CertDK, DK = window.orosDK;
+  var C = window.CertCore, D = window.CertDK, DK = window.orosDK, S = window.CertSign || null;
   var T = DK.text, R = DK.render, P = DK.pdf, A = DK.assets;
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -126,6 +126,13 @@
       "ask.numbers": "{n} people have no number yet. Give them numbers first?",
       "ask.reset": "Put back the ready texts of this kind?",
       "toast.saveFail": "Could not save: the device storage is full.", "toast.full": "There is no room for more.",
+      "sec.check": "Check code (QR)", "f.qr": "A QR code that shows the certificate is genuine",
+      "qr.hint": "Anyone can scan it with a phone to see the details you signed: number, name, course, dates and organisation. It works with no server and nothing is sent anywhere.",
+      "qr.none": "This browser cannot sign codes.", "qr.fp": "Your key:",
+      "qr.fpHint": "Put this key on your website or under your emails. The check page shows it, so people can see the certificate really comes from you.",
+      "btn.copyFp": "Copy the key", "btn.openCheck": "Open the check page",
+      "qr.copyText": "Our certificates carry a QR code signed with the orOS key {fp}.",
+      "toast.copied": "Copied.", "toast.noCrypto": "This browser cannot make the check code.",
       "toast.added0": "No one new was added.", "toast.added": "{n} added to the list.", "toast.added1": "1 added to the list.",
       "toast.dup": "{n} were already on the list.", "toast.over": "The list is full: {n} were left out.",
       "toast.numbered1": "1 number given.", "toast.numbered": "{n} numbers given.", "toast.numbered0": "Everyone already has a number.",
@@ -219,6 +226,13 @@
       "ask.numbers": "{n} άτομα δεν έχουν αριθμό ακόμα. Να πάρουν αριθμούς πρώτα;",
       "ask.reset": "Να επανέλθουν τα έτοιμα κείμενα αυτού του είδους;",
       "toast.saveFail": "Δεν έγινε αποθήκευση: ο χώρος της συσκευής γέμισε.", "toast.full": "Δεν υπάρχει χώρος για άλλα.",
+      "sec.check": "Κωδικός ελέγχου (QR)", "f.qr": "Κωδικός QR που δείχνει ότι το πιστοποιητικό είναι γνήσιο",
+      "qr.hint": "Όποιος το σκανάρει με το κινητό βλέπει τα στοιχεία που υπέγραψες: αριθμό, όνομα, σεμινάριο, ημερομηνίες και φορέα. Δουλεύει χωρίς server και δεν στέλνεται τίποτα πουθενά.",
+      "qr.none": "Αυτός ο browser δεν μπορεί να υπογράψει κωδικούς.", "qr.fp": "Το κλειδί σου:",
+      "qr.fpHint": "Βάλε αυτό το κλειδί στον ιστότοπό σου ή κάτω από τα email σου. Η σελίδα ελέγχου το δείχνει, ώστε να φαίνεται ότι το πιστοποιητικό προέρχεται πράγματι από εσένα.",
+      "btn.copyFp": "Αντιγραφή του κλειδιού", "btn.openCheck": "Άνοιγμα της σελίδας ελέγχου",
+      "qr.copyText": "Τα πιστοποιητικά μας φέρουν κωδικό QR υπογεγραμμένο με το κλειδί orOS {fp}.",
+      "toast.copied": "Αντιγράφηκε.", "toast.noCrypto": "Αυτός ο browser δεν μπορεί να φτιάξει τον κωδικό ελέγχου.",
       "toast.added0": "Δεν προστέθηκε κανείς καινούριος.", "toast.added": "Προστέθηκαν {n} στη λίστα.", "toast.added1": "Προστέθηκε 1 στη λίστα.",
       "toast.dup": "{n} υπήρχαν ήδη στη λίστα.", "toast.over": "Η λίστα γέμισε: {n} έμειναν εκτός.",
       "toast.numbered1": "Δόθηκε 1 αριθμός.", "toast.numbered": "Δόθηκαν {n} αριθμοί.", "toast.numbered0": "Όλοι έχουν ήδη αριθμό.",
@@ -480,6 +494,7 @@
     C.TXT_KEYS.forEach(function (k) { var n = $("tx-" + k); if (document.activeElement !== n) n.value = ev.txt[k] || ""; });
     $("f-medal").checked = !!ev.medal;
     $("f-showNo").checked = !!ev.showNo;
+    renderCheck();
     if (document.activeElement !== $("f-pre")) $("f-pre").value = ev.pre;
     if (document.activeElement !== $("f-next")) $("f-next").value = String(Math.max(ev.next, C.maxNo(data, ev.id) + 1));
     $("no-example").textContent = t("no.example", { s: C.serial(ev, Math.max(ev.next, C.maxNo(data, ev.id) + 1)) });
@@ -786,10 +801,131 @@
     return { n: t("sample.name"), no: ev ? Math.max(ev.next, C.maxNo(data, ev.id) + 1) : 1 };
   }
   // One certificate on a fresh canvas `px` wide.
+  function sampleOf(e) { return { n: tIn(e.lang, "sample.name"), no: Math.max(e.next, C.maxNo(data, e.id) + 1) }; }
   function drawPage(e, person, px, canvas) {
-    var b = D.build(e, person ? [person] : [], { sample: { n: tIn(e.lang, "sample.name"), no: Math.max(e.next, C.maxNo(data, e.id) + 1) } });
-    var doc = b.doc, L = R.computeLayout(doc);
-    return R.renderPage(doc, doc.pages[0], L, px / doc.setup.w, { canvas: canvas, getImage: A.get, background: "#ffffff" });
+    var b = D.build(e, person ? [person] : [], { sample: sampleOf(e) });
+    var doc = b.doc, L = R.computeLayout(doc), scale = px / doc.setup.w;
+    var cv = R.renderPage(doc, doc.pages[0], L, scale, { canvas: canvas, getImage: A.get, background: "#ffffff" });
+    var box = b.pages[0].qr, code = box && qrCached(e, person || sampleOf(e));
+    if (code) {
+      var ctx = cv.getContext("2d");
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      paintQr(code, box, function (x, y, w, h) {
+        // whole device pixels: a sharp code at any size
+        var x0 = Math.round(x * scale), y0 = Math.round(y * scale);
+        ctx.fillRect(x0, y0, Math.round((x + w) * scale) - x0, Math.round((y + h) * scale) - y0);
+      }, function (c) { ctx.fillStyle = c; });
+      ctx.restore();
+    }
+    return cv;
+  }
+
+  // ---------- 6b. Check QR codes (wave 2) ----------
+  // A signed link per certificate (sign.js), drawn as a QR code in the
+  // white square dk.js keeps for it. Signing is async: codes are made
+  // ahead (prepareQr) and kept by their exact fields.
+  var subtle = (function () { try { return window.isSecureContext !== false && window.crypto && window.crypto.subtle || null; } catch (e) { return null; } })();
+  var CHECK_HOME = "https://useoros.online/certificates/verify.html";
+  function checkBase() {
+    try {
+      if (location.protocol === "https:") return new URL("verify.html", location.href).href.split(/[?#]/)[0];
+    } catch (e) {}
+    return CHECK_HOME;
+  }
+  var qrCache = {}, qrCount = 0, keyBusy = null;
+  function qrKeyOf(e, p) {
+    var k = C.activeKey(data);
+    return k ? k.id + "|" + JSON.stringify(C.checkFields(e, p)) : "";
+  }
+  function qrCached(e, p) {
+    var key = qrKeyOf(e, p);
+    return key && qrCache[key] && qrCache[key].qr || null;
+  }
+  // The signing key: made once, the first time a design turns the code on.
+  function ensureKey() {
+    var k = C.activeKey(data);
+    if (k) return Promise.resolve(k);
+    if (!subtle || !S) return Promise.reject(new Error("crypto"));
+    if (keyBusy) return keyBusy;
+    keyBusy = S.makeKey(subtle).then(function (j) {
+      var r = C.putKey(data, { id: C.newId("k", Math.random), made: now(), x: j.x, y: j.y, d: j.d }, now());
+      if (!r.ok) throw new Error("key");
+      data = r.data;
+      storeData();
+      return C.activeKey(data);
+    });
+    keyBusy.then(function () { keyBusy = null; }, function () { keyBusy = null; });
+    return keyBusy;
+  }
+  // Codes for a list of people (the sample when the list is empty).
+  function prepareQr(e, list) {
+    if (!e.qr || !subtle || !S || !window.orosQR) return Promise.resolve();
+    return ensureKey().then(function (k) {
+      var chain = Promise.resolve(), base = checkBase();
+      (list && list.length ? list : [sampleOf(e)]).forEach(function (p) {
+        var key = qrKeyOf(e, p);
+        if (!key || qrCache[key]) return;
+        chain = chain.then(function () {
+          return S.sign(subtle, k, base, C.checkFields(e, p));
+        }).then(function (url) {
+          if (qrCount > 4000) { qrCache = {}; qrCount = 0; }
+          qrCache[key] = { url: url, qr: window.orosQR.encode(url, { ecl: "L" }) };
+          qrCount++;
+        });
+      });
+      return chain;
+    });
+  }
+  // fill(x, y, w, h) in page points; the quiet zone is the white square.
+  function paintQr(qr, box, fill, color) {
+    var sh = window.orosQR.shapes(qr, { margin: 2 }), u = box.s / sh.w;
+    color("#111111");
+    sh.rects.forEach(function (r) { fill(box.x + r[0] * u, box.y + r[1] * u, r[2] * u, r[3] * u); });
+  }
+  function checkUrl(e, p) {
+    var key = qrKeyOf(e, p);
+    return key && qrCache[key] ? qrCache[key].url : "";
+  }
+  var fpCache = {};
+  function renderCheck() {
+    if (!ev) return;
+    var on = !!ev.qr, k = C.activeKey(data);
+    $("f-qr").checked = on;
+    $("f-qr").disabled = !subtle || !S;
+    $("qr-none").hidden = !!(subtle && S);
+    $("qr-key").hidden = !on || !k;
+    if (!on || !k) return;
+    if (fpCache[k.id]) { $("qr-fp").textContent = fpCache[k.id]; return; }
+    $("qr-fp").textContent = "…";
+    S.fingerprint(subtle, S.pubOf(k)).then(function (fp) {
+      fpCache[k.id] = fp;
+      if (C.activeKey(data) && C.activeKey(data).id === k.id) $("qr-fp").textContent = fp;
+    });
+  }
+  function onQr() {
+    var on = $("f-qr").checked;
+    change(function (e) { e.qr = on ? 1 : 0; }, { quiet: true });
+    if (!on) { renderCheck(); return; }
+    ensureKey().then(function () { renderCheck(); renderPreviewSoon(0); }, function () {
+      change(function (e) { e.qr = 0; }, { quiet: true });
+      renderCheck();
+      toast(t("toast.noCrypto"));
+    });
+  }
+  function copyFp() {
+    var k = C.activeKey(data), fp = k && fpCache[k.id];
+    if (!fp) return;
+    var txt = t("qr.copyText", { fp: fp });
+    var done = function () { toast(t("toast.copied")); };
+    try { navigator.clipboard.writeText(txt).then(done, function () { toast(fp); }); } catch (e) { toast(fp); }
+  }
+  function openCheck() {
+    var p = currentPerson() || sampleOf(ev);
+    prepareQr(ev, [p]).then(function () {
+      var u = checkUrl(ev, p) || checkBase();
+      try { window.open(u, "_blank", "noopener"); } catch (e) {}
+    });
   }
   var pvTimer = 0;
   function renderPreviewSoon(ms) {
@@ -826,6 +962,10 @@
     var box = $("pv-pane").querySelector(".pv-box");
     var w = Math.max(200, Math.min(1100, (box.clientWidth || 600) - 20));
     var cv = $("pv");
+    if (ev.qr && !qrCached(ev, person || sampleOf(ev)) && C.activeKey(data)) {
+      var e0 = ev;
+      prepareQr(e0, person ? [person] : []).then(function () { if (ev === e0 || (ev && ev.id === e0.id)) renderPreviewSoon(0); }, function () {});
+    }
     try {
       drawPage(ev, person, Math.round(w * (window.devicePixelRatio || 1)), cv);
       cv.style.width = w + "px";
@@ -1142,13 +1282,21 @@
     return loadJsPDF().then(function (x) {
       J = x;
       var built = D.build(e, list, {});
-      var doc = built.doc, images = {}, chain = Promise.resolve();
+      var doc = built.doc, images = {}, chain = prepareQr(e, list.length ? list : [{ n: "", no: 0 }]);
       doc.items.forEach(function (it) {
         if (it.t !== "img" || !it.a) return;
         chain = chain.then(function () { return cropImage(it); }).then(function (im) { if (im) images[it.id] = im; });
       });
       return chain.then(function () {
         var pdf = P.build(doc, { title: evTitle(e) }, { jsPDF: J, layout: R.computeLayout(doc), images: images });
+        built.pages.forEach(function (pg, i) {
+          var code = pg.qr && qrCached(e, list[i] || { n: "", no: 0 });
+          if (!code) return;
+          pdf.setPage(i + 1);
+          paintQr(code, pg.qr, function (x, y, w, h) { pdf.rect(x, y, w, h, "F"); }, function () { pdf.setFillColor(17, 17, 17); });
+          // the code is also a link in the PDF
+          try { pdf.link(pg.qr.x, pg.qr.y, pg.qr.s, pg.qr.s, { url: checkUrl(e, list[i] || { n: "", no: 0 }) }); } catch (x3) {}
+        });
         try { pdf.setProperties({ title: evTitle(e), creator: "orOS Certificates", subject: e.issuer || "" }); } catch (x2) {}
         return pdf;
       });
@@ -1250,7 +1398,7 @@
       var st = $("print-page") || document.head.appendChild(el("style"));
       st.id = "print-page";
       st.textContent = "@page { size: " + (e.size === "letter" ? "letter" : "A4") + " " + (e.orient === "p" ? "portrait" : "landscape") + "; margin: 0; }";
-      var px = Math.round(pg.w / 72 * 150), chain = Promise.resolve();
+      var px = Math.round(pg.w / 72 * 150), chain = prepareQr(e, list);
       list.forEach(function (p, i) {
         chain = chain.then(function () { work(t("work.print", { i: i + 1, n: list.length })); return wait(0); }).then(function () {
           var img = el("img");
@@ -1274,7 +1422,7 @@
   function pngOne() {
     if (busy || !ev) return;
     var p = currentPerson(), e = ev, pg = D.pageSize(e);
-    runBusy(Promise.resolve().then(function () {
+    runBusy(prepareQr(e, p ? [p] : []).then(function () {
       var cv = drawPage(e, p, Math.round(pg.w / 72 * 200));
       return toBlob(cv, "image/png").then(function (b) {
         return saveFile(b, (p ? pdfName(e, p) : stem() + ".pdf").replace(/\.pdf$/, ".png"), "image/png", "png");
@@ -1590,6 +1738,9 @@
       $(id).addEventListener("change", function () { readDetails(); renderForm(); if (id === "f-orient" || id === "f-size" || id === "f-font") renderStyles(); });
     });
     $("f-next").addEventListener("change", renderForm);
+    $("f-qr").addEventListener("change", onQr);
+    $("qr-copy").addEventListener("click", copyFp);
+    $("qr-open").addEventListener("click", openCheck);
     $("f-kind").addEventListener("change", onKind);
     $("f-lang").addEventListener("change", onLang);
     $("tx-reset").addEventListener("click", resetTexts);
