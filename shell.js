@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "1.92.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "1.93.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6253,13 +6253,24 @@
       list.splice(dueIdx, 1);
     }
     alarmsWrite(list);
+    // BR-PHONE v3: the Android app already rang this one while orOS
+    // was closed. Advance/retire as usual, but don't ring it late.
+    var rangOnPhone = false;
+    try {
+      rangOnPhone = Date.now() - due.at > 60000 && !!(window.orosPhone && window.orosPhone.handles &&
+        window.orosPhone.handles("time:alarm-" + due.id + "-" + ymdOf(due.at)));
+    } catch (e) {}
     // #9: a fired alarm MUTATED data (daily advance / once retire) —
     // same dirty contract as orosAlarms.add/remove. Without this, the
     // firing never reaches the cloud and other devices ring again.
     if (window.orosSync && typeof window.orosSync.markDirty === "function") {
       window.orosSync.markDirty();
     }
-    alarmNotify(due);
+    if (!rangOnPhone) alarmNotify(due);
+  }
+  function ymdOf(ms) {
+    var d = new Date(ms);
+    return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
   }
 
   // Public contract consumed by the Time app (same-origin iframe,

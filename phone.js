@@ -46,11 +46,13 @@
   var PREF_KEY = "oros-phone";
   var KEYS = { contacts: "oros-contacts-data", calendar: "oros-calendar-data" };
   var FEEDS_KEY = "oros-phone-cal-feeds";
+  var HANDLED_KEY = "oros-phone-rem";    // {dedupKey: at}, reminders given to the app
   var TAKEN_KEY = "oros-phone-taken";    // [[kind:hash, id, at]], phone changes applied lately
   var MAX_TAKEN = 500;
   var MAX_FEED_ROWS = 5000;
   var PERM_URL = { contacts: "intent://contacts#Intent;scheme=oros-permission;package=online.useoros.twa;end",
-                   calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
+                   calendar: "intent://calendar#Intent;scheme=oros-permission;package=online.useoros.twa;end",
+                   reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
   var MAX_PHOTO = 70000;          // base64 characters
 
   /* ---------- pure helpers ---------- */
@@ -497,9 +499,68 @@
     return out;
   }
 
+  // Reminders for the next REM_HOURS, rung by the Android app even
+  // when orOS is closed (BR-PHONE v3). Each row's id is the dedupKey
+  // the shell's own engine would give the same reminder ("ns:key"),
+  // so the page can leave those to the app. src:
+  //   alarms: oros-alarms list ({id, at, label, repeat, state})
+  //   water:  { data, core }  (water/core.js parse + reminderDue)
+  //   todo:   { data, core }  (todo/core.js dueSummary)
+  //   lang: "en" | "el"; alarmTitle / todoTitle: the shell's words
+  var REM_HOURS = 48, TODO_HOUR = 9;
+  function reminderRows(src, now) {
+    src = src || {};
+    var el = src.lang === "el", end = now + REM_HOURS * 3600000, rows = [];
+    function dayAt(ms, add, h) { var d = new Date(ms); d.setHours(h || 0, 0, 0, 0); d.setDate(d.getDate() + add); return d.getTime(); }
+    var alarmTitle = str(src.alarmTitle, 60) || (el ? "Ξυπνητήρι" : "Alarm");
+    (Array.isArray(src.alarms) ? src.alarms : []).forEach(function (a) {
+      if (!a || a.state !== "pending" || typeof a.at !== "number" || !isFinite(a.at) || typeof a.id !== "string") return;
+      var t = a.at, guard = 0;
+      if (a.repeat === "daily") {
+        while (t <= now && guard++ < 4000) { var d = new Date(t); d.setDate(d.getDate() + 1); t = d.getTime(); }
+      }
+      for (var n = 0; n < 3 && t <= end; n++) {
+        if (t > now) rows.push({ id: "time:alarm-" + a.id + "-" + ymdLocal(t), at: t, kind: "alarm", ns: "time",
+                                 title: alarmTitle, body: str(a.label, 60) || alarmTitle, link: "time:alarms" });
+        if (a.repeat !== "daily") break;
+        var nx = new Date(t); nx.setDate(nx.getDate() + 1); t = nx.getTime();
+      }
+    });
+    var W = src.water;
+    if (W && W.core && W.data && typeof W.core.reminderDue === "function") {
+      var seen = {}, step = 5 * 60000;
+      for (var t = Math.ceil((now + 1) / step) * step; t <= now + 24 * 3600000; t += step) {
+        var due = null;
+        try { due = W.core.reminderDue(W.data, new Date(t)); } catch (e) { break; }
+        if (!due || seen[due.key]) continue;
+        seen[due.key] = 1;
+        var txt = W.core.reminderText(due, W.data.prefs, el ? "el" : "en");
+        rows.push({ id: "water:" + due.key, at: t, kind: "note", ns: "water",
+                    title: str(txt.title, 80), body: str(txt.body, 200), link: "system:open:water" });
+      }
+    }
+    var T = src.todo;
+    if (T && T.core && T.data && typeof T.core.dueSummary === "function") {
+      for (var dd = 0; dd < 3; dd++) {
+        var at = dayAt(now, dd, TODO_HOUR);
+        if (at <= now || at > end) continue;
+        var ymd = ymdLocal(at), sum = T.core.dueSummary(T.data, ymd);
+        if (!sum || !sum.count) continue;
+        rows.push({ id: "todo:due-" + ymd + "-" + sum.count, at: at, kind: "note", ns: "todo",
+                    title: str(src.todoTitle, 60) || "To-Do",
+                    body: el ? sum.count + (sum.count === 1 ? " εργασία λήγει ή έχει λήξει" : " εργασίες λήγουν ή έχουν λήξει")
+                             : sum.count + (sum.count === 1 ? " task is due or overdue" : " tasks are due or overdue"),
+                    link: sum.earliestList ? "todo:" + sum.earliestList : "" });
+      }
+    }
+    rows.sort(function (a, b) { return a.at - b.at || (a.id < b.id ? -1 : 1); });
+    return rows.slice(0, 100);
+  }
+
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
               applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
-              applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey };
+              applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey,
+              reminderRows: reminderRows };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -510,12 +571,16 @@
   // name, text}; a contact from a dialer or messenger comes as a vCard).
   // The parameter leaves the address bar at once; it is handed over
   // when the shell has loaded its apps (ready()).
-  var phoneAdd = null;
+  // A tap on a reminder the app rang opens /?phone-open=<deepLink>
+  // (the shell's notification deep links, e.g. "todo:<list>").
+  var phoneAdd = null, phoneOpen = null;
   try {
     var qs = new URLSearchParams(root.location.search);
-    if (qs.has("phone-add")) {
-      try { phoneAdd = JSON.parse(qs.get("phone-add")); } catch (e) {}
+    if (qs.has("phone-add") || qs.has("phone-open")) {
+      try { if (qs.has("phone-add")) phoneAdd = JSON.parse(qs.get("phone-add")); } catch (e) {}
+      if (qs.has("phone-open")) phoneOpen = str(qs.get("phone-open"), 200);
       qs.delete("phone-add");
+      qs.delete("phone-open");
       var rest = qs.toString();
       root.history.replaceState(null, "", root.location.pathname + (rest ? "?" + rest : "") + root.location.hash);
     }
@@ -575,7 +640,59 @@
     }
     if (send({ t: kind, seq: ++seq, items: items })) lastSent[kind] = key;
   }
-  function pushAll(force) { push("contacts", force); push("calendar", force); }
+  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); }
+
+  // Reminders (v3): the next 48 hours, worked out here from the
+  // same data and rules as the shell's engines, rung by the app.
+  // Reminders the shell already showed (in its inbox) are left out.
+  // HANDLED_KEY (this device) lists what the app was given, so the
+  // shell leaves those to it: no second OS notification, and no late
+  // ring of a Clock alarm the phone already rang.
+  function reminderSource() {
+    var alarms = [], water = null, todo = null, T = root.t;
+    try { alarms = JSON.parse(localStorage.getItem("oros-alarms") || "[]"); } catch (e) {}
+    try {
+      var W = root.orosWaterCore;
+      if (W && W.parse) water = { core: W, data: W.parse(localStorage.getItem(W.STORAGE_KEY)) };
+    } catch (e) {}
+    try {
+      if (root.OrosTodoCore) todo = { core: root.OrosTodoCore, data: JSON.parse(localStorage.getItem("oros-todo-data") || "null") };
+    } catch (e) {}
+    function tr(k, d) { var v = typeof T === "function" ? T(k) : ""; return v && v !== k ? v : d; }
+    var lang = (document.documentElement.lang || "en").slice(0, 2);
+    return { alarms: alarms, water: water, todo: todo, lang: lang,
+             alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do") };
+  }
+  function pushReminders(force) {
+    var p = prefs();
+    if (!port || !appState || !p.reminders || appState.reminders !== "granted") return;
+    var now = Date.now(), raw = "";
+    try {
+      raw = [localStorage.getItem("oros-alarms"), localStorage.getItem("oros-water-data"),
+             localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs")].join("\n");
+    } catch (e) { return; }
+    // Water rows depend on the hour too: recheck every 5 minutes.
+    var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone();
+    if (!force && lastSent.reminders === key) return;
+    var shown = {};
+    try {
+      var N = root.orosNotifs, sl = N && N.getSlice && N.getSlice();
+      (sl && Array.isArray(sl.items) ? sl.items : []).forEach(function (it) { if (it && it.dedupKey) shown[it.dedupKey] = 1; });
+    } catch (e) {}
+    var items = reminderRows(reminderSource(), now).filter(function (r) { return !shown[r.id]; });
+    if (!send({ t: "reminders", seq: ++seq, items: items })) return;
+    lastSent.reminders = key;
+    var h = handled(), keep = {};
+    Object.keys(h).forEach(function (id) { if (h[id] > now - 2 * 86400000) keep[id] = h[id]; });
+    items.forEach(function (r) { keep[r.id] = r.at; });
+    try { localStorage.setItem(HANDLED_KEY, JSON.stringify(keep)); } catch (e) {}
+  }
+  function handled() {
+    try {
+      var h = JSON.parse(localStorage.getItem(HANDLED_KEY) || "{}");
+      return h && typeof h === "object" ? h : {};
+    } catch (e) { return {}; }
+  }
 
   function onAppMessage(ev) {
     var m = null;
@@ -585,13 +702,15 @@
       appState = {
         contacts: m.contacts === "granted" ? "granted" : (m.contacts === "denied" ? "denied" : "ask"),
         calendar: m.calendar === "granted" ? "granted" : (m.calendar === "denied" ? "denied" : "ask"),
+        reminders: m.reminders === "granted" ? "granted" : (m.reminders === "denied" ? "denied" : (m.reminders === "ask" ? "ask" : "")),
+        exact: m.exact === true,
         app: typeof m.app === "string" ? m.app.slice(0, 20) : ""
       };
       emit();
       pushAll(true);
     } else if (m.t === "changes" && (m.what === "calendar" || m.what === "contacts") && Array.isArray(m.items)) {
       takeChanges(m.what, m.items);
-    } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar")) {
+    } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar" || m.what === "reminders")) {
       var p = prefs();
       p[m.what + "At"] = Date.now();
       p[m.what + "Err"] = m.t === "error" ? String(m.msg || "error").slice(0, 120) : "";
@@ -667,17 +786,30 @@
     port.onmessage = onAppMessage;
     // "o" is diagnostics only: what this browser reports as the origin.
     send({ t: "state", o: String(o).slice(0, 80) });
+    send({ t: "seen", v: !document.hidden });
     emit();
     if (!timer) {
-      timer = setInterval(function () { if (!document.hidden) pushAll(false); }, 15000);
+      // "seen" tells the app orOS is on screen: it then leaves the
+      // reminders to the page, which shows its own.
+      timer = setInterval(function () { if (!document.hidden) { pushAll(false); send({ t: "seen", v: true }); } }, 15000);
       // Back on screen: send what changed here, and ask the app for
       // what changed on the phone meanwhile (it answers state + changes).
-      document.addEventListener("visibilitychange", function () { if (!document.hidden) { pushAll(false); send({ t: "state" }); } });
+      document.addEventListener("visibilitychange", function () {
+        send({ t: "seen", v: !document.hidden });
+        if (!document.hidden) { pushAll(false); send({ t: "state" }); }
+      });
     }
   });
 
   root.orosPhone = {
-    ready: function () { var a = phoneAdd; phoneAdd = null; deliverAdd(a); },
+    ready: function () {
+      var a = phoneAdd; phoneAdd = null; deliverAdd(a);
+      var o = phoneOpen; phoneOpen = null;
+      if (o && root.orosNotifs && typeof root.orosNotifs.openLink === "function") root.orosNotifs.openLink(o);
+    },
+    // True when the app was given this reminder (shell dedupKey): the
+    // shell then shows it in orOS only, never as a second OS one.
+    handles: function (dedupKey) { return !!prefs().reminders && typeof dedupKey === "string" && dedupKey in handled(); },
     available: function () { return !!port; },
     state: function () { return appState; },
     enabled: function (kind) { return !!prefs()[kind]; },
@@ -686,12 +818,14 @@
       return { at: p[kind + "At"] || 0, n: p[kind + "N"] || 0, err: p[kind + "Err"] || "" };
     },
     setEnabled: function (kind, on) {
-      if (!KEYS[kind]) return;
+      if (!KEYS[kind] && kind !== "reminders") return;
       var p = prefs();
       p[kind] = !!on;
       savePrefs(p);
       lastSent[kind] = null;
-      if (on) push(kind, true); else send({ t: "clear", what: kind });
+      if (kind === "reminders" && !on) { try { localStorage.removeItem(HANDLED_KEY); } catch (e) {} }
+      if (on) { if (kind === "reminders") pushReminders(true); else push(kind, true); }
+      else send({ t: "clear", what: kind });
       emit();
     },
     // Must run inside a click: Chrome opens the app's permission screen

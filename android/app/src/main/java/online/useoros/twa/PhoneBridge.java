@@ -62,6 +62,15 @@ public class PhoneBridge {
     // The page applies each change once, so a row is sent again only
     // when it changed since, or on a new channel. io thread only.
     private final java.util.Map<String, String> inFlight = new java.util.HashMap<>();
+    // Whether orOS is on screen, from the page's {t:"seen"} (sent on
+    // every visibility change and every 15 s while visible).
+    private static volatile boolean seenVisible;
+    private static volatile long seenAt;
+
+    /** orOS is on screen now: reminders are left to the page. */
+    static boolean pageOnScreen() {
+        return seenVisible && System.currentTimeMillis() - seenAt < 45000;
+    }
 
     PhoneBridge(Context context) {
         app = context.getApplicationContext();
@@ -251,6 +260,8 @@ public class PhoneBridge {
             o.put("v", 1);
             o.put("contacts", permState("contacts", CONTACTS_PERMS));
             o.put("calendar", permState("calendar", CALENDAR_PERMS));
+            o.put("reminders", Reminders.permission(app));
+            o.put("exact", Reminders.exact(app));
             o.put("app", BuildConfig.VERSION_NAME);
         } catch (JSONException ignored) {
         }
@@ -305,6 +316,21 @@ public class PhoneBridge {
                     send(state());
                     sendChanges();
                     return;
+                case "seen":
+                    seenVisible = m.optBoolean("v");
+                    seenAt = System.currentTimeMillis();
+                    return;
+                case "reminders": {
+                    int n = Reminders.apply(app, m.optJSONArray("items"));
+                    JSONObject done = new JSONObject();
+                    done.put("t", "done");
+                    done.put("what", "reminders");
+                    done.put("seq", seq);
+                    done.put("added", n);
+                    diag("reminders armed: " + n + (Reminders.exact(app) ? "" : " (inexact)"));
+                    send(done);
+                    return;
+                }
                 case "applied": {
                     String w = m.optString("what");
                     JSONArray refs = m.optJSONArray("refs");
@@ -349,6 +375,7 @@ public class PhoneBridge {
                 case "clear":
                     if ("contacts".equals(what) && granted(CONTACTS_PERMS)) new ContactsWriter(app).clear();
                     else if ("calendar".equals(what) && granted(CALENDAR_PERMS)) new CalendarWriter(app).clear();
+                    else if ("reminders".equals(what)) Reminders.clear(app);
                     return;
                 default:
             }

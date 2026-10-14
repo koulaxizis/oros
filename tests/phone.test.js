@@ -292,3 +292,38 @@ test("phone changes sent again before the answer are applied once (v2)", () => {
   const ct = P.splitTaken("contacts", [c], [[P.takenKey("contacts", c), "newid", 1000]], 1500);
   assert.deepEqual(ct.ids, { r9v1: "newid" }, "a repeat gets the id it got the first time");
 });
+
+test("reminders: Clock alarms, Water and To-Do for the next 48 hours (v3)", () => {
+  const W = require(path.join(__dirname, "..", "water", "core.js"));
+  const T = require(path.join(__dirname, "..", "todo", "core.js"));
+  const now = new Date(2026, 9, 14, 8, 0).getTime();
+  const at = (d, h, m) => new Date(2026, 9, d, h, m || 0).getTime();
+  const water = W.parse(JSON.stringify({ sips: [{ id: "sip0001", ts: at(13, 20), ml: 250, m: 1 }],
+    prefs: { rem: { on: 1, from: 540, to: 1260, every: 120 } } }));
+  const rows = P.reminderRows({
+    lang: "en", alarmTitle: "Alarm",
+    alarms: [
+      { id: "a1", at: at(13, 7), repeat: "daily", state: "pending", label: "Wake up" },
+      { id: "a2", at: at(14, 9, 30), repeat: "once", state: "pending" },
+      { id: "a3", at: at(14, 7), repeat: "once", state: "pending" },
+      { id: "a4", at: at(14, 10), repeat: "once", state: "done" }
+    ],
+    water: { core: W, data: water },
+    todo: { core: T, data: { lists: [{ id: "L", items: [{ id: "i1", title: "Pay", due: "2026-10-15", done: false }] }] } }
+  }, now);
+  const ids = rows.map((r) => r.id);
+  assert.deepEqual(ids.filter((i) => i.startsWith("time:")),
+    ["time:alarm-a2-2026-10-14", "time:alarm-a1-2026-10-15", "time:alarm-a1-2026-10-16"],
+    "past once-alarms and finished ones are left out; a daily one rings each day ahead");
+  const a1 = rows.find((r) => r.id === "time:alarm-a1-2026-10-15");
+  assert.deepEqual([a1.kind, a1.at, a1.body, a1.link], ["alarm", at(15, 7), "Wake up", "time:alarms"]);
+  const todo = rows.filter((r) => r.ns === "todo");
+  assert.deepEqual(todo.map((r) => [r.id, r.at]), [["todo:due-2026-10-15-1", at(15, 9)]], "due tasks ring at 09:00 on their day");
+  assert.equal(todo[0].link, "todo:L");
+  const w = rows.filter((r) => r.ns === "water");
+  assert.ok(w.length >= 1, "water reminders while behind the pace");
+  assert.equal(w[0].id, "water:" + W.reminderDue(water, new Date(w[0].at)).key);
+  assert.ok(w.every((r) => r.at > now && r.at <= now + 24 * 3600000));
+  assert.deepEqual(rows.map((r) => r.at), rows.map((r) => r.at).slice().sort((a, b) => a - b), "sorted by time");
+  assert.deepEqual(P.reminderRows({}, now), []);
+});

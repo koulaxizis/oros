@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="perm_denied">Το orOS χρειάζεται αυτή την άδεια για να δείχνει τα δεδομένα του στις εφαρμογές του κινητού. Μπορείς να τη δώσεις από τις ρυθμίσεις της εφαρμογής.</string>
+    <string name="channel_reminders">Υπενθυμίσεις</string>
+    <string name="channel_alarms">Ξυπνητήρια</string>
     <string name="calendar_feeds_name">orOS ροές</string>
     <string name="add_failed">Το orOS δεν μπόρεσε να διαβάσει ό,τι στάλθηκε.</string>
 </resources>
