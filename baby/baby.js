@@ -112,6 +112,16 @@
       "set.note": "orOS Baby keeps a log; it is not medical advice. If you are worried about your baby, call your paediatrician.",
       "sum.title": "Summary", "sum.copy": "Copy", "sum.share": "Share", "sum.save": "Save as text",
       "toast.added": "{x} logged", "toast.undo": "Undo", "toast.deleted": "Deleted", "toast.saved": "Saved",
+      "pump.min": "Duration (min, optional)", "pump.stash": "Add to the milk stash", "pump.where": "Store in",
+      "st.title": "Milk stash", "st.fridge": "Fridge", "st.freezer": "Freezer", "st.bags": "{n} bags", "st.bag1": "1 bag",
+      "st.none": "No milk stored", "st.next": "Use next: {v}, pumped {d}", "st.expired": "{n} past their use-by date",
+      "st.open": "Open the milk stash", "st.add": "Add a bag", "st.use": "Use", "st.thaw": "Thaw", "st.toss": "Throw away",
+      "st.used": "Used", "st.tossed": "Thrown away", "st.done": "Used and thrown away", "st.empty": "No bags in stock. Add one, or tick “Add to the milk stash” when you log a pump session.",
+      "st.pumped": "Pumped", "st.useBy": "Use by", "st.useByHint": "Usual times: fridge 4 days, freezer 6 months (up to 12), thawed milk within 24 hours and never refrozen. When unsure, throw it away.",
+      "st.bag": "Bag", "st.bagNew": "New bag", "st.where": "Where", "st.ub": "use by {d}", "st.exp": "past use-by",
+      "st.soon": "use soon", "st.thawed": "thawed {d}", "st.firstTag": "Use first", "st.toastUsed": "Bag marked as used",
+      "st.toastTossed": "Bag thrown away", "st.toastThawed": "Moved to the fridge: use by {d}", "st.logBottle": "Log a bottle",
+      "st.order": "Fridge first, then the earliest use-by date: the oldest milk is used first.",
       "toast.save": "Could not save: storage is full", "toast.exported": "Exported", "toast.copied": "Copied",
       "toast.sleepStart": "Sleep started", "toast.sleepStop": "Woke up after {x}", "toast.feedStop": "Feed logged: {x}",
       "toast.bad": "Check the values", "toast.badTime": "The end must be after the start",
@@ -180,6 +190,16 @@
       "set.note": "Το Μωρό κρατά ημερολόγιο· δεν είναι ιατρική συμβουλή. Αν ανησυχείς για το μωρό, πάρε τον παιδίατρό σου.",
       "sum.title": "Σύνοψη", "sum.copy": "Αντιγραφή", "sum.share": "Κοινοποίηση", "sum.save": "Αποθήκευση ως κείμενο",
       "toast.added": "Καταγράφηκε: {x}", "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε", "toast.saved": "Αποθηκεύτηκε",
+      "pump.min": "Διάρκεια (λεπτά, προαιρετικά)", "pump.stash": "Προσθήκη στο απόθεμα γάλακτος", "pump.where": "Αποθήκευση σε",
+      "st.title": "Απόθεμα γάλακτος", "st.fridge": "Ψυγείο", "st.freezer": "Καταψύκτης", "st.bags": "{n} σακουλάκια", "st.bag1": "1 σακουλάκι",
+      "st.none": "Δεν υπάρχει αποθηκευμένο γάλα", "st.next": "Επόμενο: {v}, άντληση {d}", "st.expired": "{n} έχουν περάσει την ημερομηνία χρήσης",
+      "st.open": "Άνοιγμα του αποθέματος γάλακτος", "st.add": "Νέο σακουλάκι", "st.use": "Χρήση", "st.thaw": "Απόψυξη", "st.toss": "Πέταμα",
+      "st.used": "Χρησιμοποιήθηκε", "st.tossed": "Πετάχτηκε", "st.done": "Χρησιμοποιημένα και πεταμένα", "st.empty": "Δεν υπάρχουν σακουλάκια. Πρόσθεσε ένα, ή τσέκαρε «Προσθήκη στο απόθεμα γάλακτος» όταν καταγράφεις άντληση.",
+      "st.pumped": "Άντληση", "st.useBy": "Χρήση έως", "st.useByHint": "Συνήθεις χρόνοι: ψυγείο 4 μέρες, καταψύκτης 6 μήνες (έως 12), γάλα που ξεπάγωσε μέσα σε 24 ώρες και ποτέ ξανά στην κατάψυξη. Αν έχεις αμφιβολία, πέτα το.",
+      "st.bag": "Σακουλάκι", "st.bagNew": "Νέο σακουλάκι", "st.where": "Πού", "st.ub": "χρήση έως {d}", "st.exp": "έληξε",
+      "st.soon": "χρήση σύντομα", "st.thawed": "ξεπάγωσε {d}", "st.firstTag": "Πρώτο", "st.toastUsed": "Το σακουλάκι χρησιμοποιήθηκε",
+      "st.toastTossed": "Το σακουλάκι πετάχτηκε", "st.toastThawed": "Στο ψυγείο: χρήση έως {d}", "st.logBottle": "Καταγραφή μπιμπερό",
+      "st.order": "Πρώτα το ψυγείο, μετά η νωρίτερη ημερομηνία χρήσης: το παλαιότερο γάλα χρησιμοποιείται πρώτο.",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.exported": "Έγινε εξαγωγή", "toast.copied": "Αντιγράφηκε",
       "toast.sleepStart": "Ο ύπνος ξεκίνησε", "toast.sleepStop": "Ξύπνησε μετά από {x}", "toast.feedStop": "Ο θηλασμός καταγράφηκε: {x}",
       "toast.bad": "Έλεγξε τις τιμές", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
@@ -564,7 +584,10 @@
       case "bottle": parts.push(C.fmtVol(e.ml, p, LANG), t("sub." + e.x)); break;
       case "solid": parts.push(t("sub." + e.x)); break;
       case "diaper": parts.push(t("sub." + e.x)); break;
-      case "pump": parts.push(C.fmtVol(e.ml, p, LANG), t("side." + e.sd)); break;
+      case "pump":
+        parts.push(C.fmtVol(e.ml, p, LANG), t("side." + e.sd));
+        if (e.e !== undefined) parts.push(C.fmtDur((e.e - e.ts) / 60000));
+        break;
       case "temp": parts.push(C.fmtTemp(e.v, p, LANG)); break;
       case "tummy": parts.push(C.fmtDur(e.v)); break;
       case "sleep":
@@ -784,6 +807,7 @@
     renderTimers();
     renderSince();
     renderQuick();
+    renderStash();
     var tk = todayKey();
     renderTotals("today-tot", tk);
     var n = renderList("today-list", "today-empty", tk);
@@ -1260,6 +1284,7 @@
     });
     grid.appendChild(bigChoice(UI.sleep, t("dlg.sleepPast"), "", "", function () { dlg.close(); evDialog("sleep", null); }));
     grid.appendChild(bigChoice(UI.feed, t("dlg.feedPast"), "", "", function () { dlg.close(); evDialog("feed", null); }));
+    grid.appendChild(bigChoice(UI.pump, t("st.title"), "", "", function () { dlg.close(); stashDialog(); }));
     dlg.appendChild(grid);
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
@@ -1344,11 +1369,32 @@
       form.appendChild(field(volLabel(), pa));
       var ps = seg([["l", t("side.l")], ["r", t("side.r")], ["b", t("side.b")]], cur ? cur.sd : "b");
       form.appendChild(segField(t("dlg.side"), ps));
+      // wave 34: the session's length, kept as its end (e − ts)
+      var pmin = numInput(cur && cur.e !== undefined ? Math.round((cur.e - cur.ts) / 60000) : "", false);
+      form.appendChild(field(t("pump.min"), pmin));
+      var toStash = null, stWhere = null;
+      if (!cur) {
+        var sw = el("label", "check-row");
+        toStash = el("input");
+        toStash.type = "checkbox";
+        sw.appendChild(toStash);
+        sw.appendChild(el("span", "", t("pump.stash")));
+        form.appendChild(sw);
+        stWhere = seg([["f", t("st.fridge")], ["z", t("st.freezer")]], "f");
+        var swf = segField(t("pump.where"), stWhere);
+        swf.hidden = true;
+        form.appendChild(swf);
+        toStash.addEventListener("change", function () { swf.hidden = !toStash.checked; });
+      }
       get.pump = function (o) {
         var v = readNum(pa);
         if (v === null || isNaN(v)) return false;
         o.ml = toMl(v);
         o.sd = ps.get();
+        var mm = readNum(pmin);
+        if (mm !== null && (isNaN(mm) || !C.inRange(Math.round(mm), C.LIM.pumpMin))) return false;
+        if (mm === null) delete o.e; else o.e = o.ts + Math.round(mm) * 60000;
+        if (toStash && toStash.checked) o._stash = stWhere.get();
         return C.inRange(o.ml, C.LIM.pump);
       };
       focus = pa;
@@ -1424,10 +1470,218 @@
         if (o.sd === "r") o.rs = secs; else o.ls = secs;
       }
       dlg.close();
-      if (latest) updateEv(o); else addEv(o);
+      var stashTo = o._stash;
+      delete o._stash;
+      if (latest) updateEv(o);
+      else {
+        var added = addEv(o);
+        if (added && stashTo) saveBag({ ml: added.ml, d: C.dayKeyOf(added.ts), w: stashTo, u: C.useBy(C.dayKeyOf(added.ts), stashTo) }, true);
+      }
     });
     dlg.appendChild(form);
     openDialog(dlg, focus);
+  }
+
+  // ---------- 9b. Milk stash (wave 34) ----------
+  // Bags of expressed milk, shared by the family (no child): amount,
+  // day pumped, fridge or freezer, use-by. Use oldest first.
+  function stashList() { return data.st || []; }
+  function saveBag(rec, quiet) {
+    var cur = rec.id ? C.findIn(stashList(), rec.id) : null;
+    rec.id = rec.id || C.newId();
+    rec.m = stamp(cur ? cur.m : 0);
+    var n = C.normSt(rec);
+    if (!n) { showToast(t("toast.bad")); return null; }
+    if (!data.st) data.st = [];
+    put(data.st, n);
+    data.st.sort(function (x, y) { return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0); });
+    saveNow();
+    renderAll();
+    if (!quiet) showToast(t("toast.saved"));
+    return n;
+  }
+  function bagLine(b) {
+    return C.fmtVol(b.ml, data.prefs, LANG);
+  }
+  function renderStash() {
+    var host = $("stash");
+    if (!host) return;
+    host.innerHTML = "";
+    var today = todayKey();
+    var any = stashList().some(function (b) { return !b.del; });
+    var pumped = data.ev.some(function (e) { return !e.del && e.t === "pump"; });
+    host.hidden = !any && !pumped;
+    if (host.hidden) return;
+    var tot = C.stashTotals(data, today), nb = C.nextBag(data, today);
+    var b = el("button", "stash-card");
+    b.type = "button";
+    var ic = el("span", "ev-i");
+    ic.innerHTML = UI.pump;
+    b.appendChild(ic);
+    var body = el("span", "stash-b");
+    body.appendChild(el("span", "stash-t", t("st.title")));
+    function part(w) {
+      var o = tot[w];
+      return t(w === "f" ? "st.fridge" : "st.freezer") + ": " + (o.n === 1 ? t("st.bag1") : t("st.bags", { n: o.n })) +
+        (o.n ? " · " + C.fmtVol(o.ml, data.prefs, LANG) : "");
+    }
+    body.appendChild(el("span", "stash-s", tot.f.n || tot.z.n ? part("f") + " · " + part("z") : t("st.none")));
+    if (nb) body.appendChild(el("span", "stash-s", t("st.next", { v: bagLine(nb), d: dateText(nb.d) })));
+    if (tot.expired) body.appendChild(el("span", "stash-s warn", t("st.expired", { n: tot.expired })));
+    b.appendChild(body);
+    b.setAttribute("aria-label", t("st.open"));
+    b.addEventListener("click", stashDialog);
+    host.appendChild(b);
+  }
+  function stashDialog() {
+    var dlg = makeDialog("bb-stash", t("st.title"));
+    dlg.classList.add("wide");
+    var box = el("div", "stash-box");
+    dlg.appendChild(box);
+    // painted again in place after Use / Thaw / Throw away, so the
+    // Undo toast stays visible inside the open dialog
+    function paint() {
+      box.innerHTML = "";
+      var today = todayKey();
+      var list = C.stashBags(data, today);
+      box.appendChild(el("p", "hint", list.length ? t("st.order") : t("st.empty")));
+      var ul = el("ol", "evlist stash-list");
+      list.forEach(function (x, i) {
+        var bag = x.bag, li = el("li", "stash-row" + (x.expired ? " exp" : ""));
+        var main = el("button", "stash-main");
+        main.type = "button";
+        var top = el("span", "stash-v", bagLine(bag));
+        if (i === 0 && !x.expired) top.appendChild(el("span", "stash-tag", t("st.firstTag")));
+        main.appendChild(top);
+        var sub = [t(bag.w === "f" ? "st.fridge" : "st.freezer"), t("st.pumped") + " " + dateText(bag.d),
+          x.expired ? t("st.exp") : t("st.ub", { d: dateText(bag.u) })];
+        if (bag.th) sub.push(t("st.thawed", { d: dateText(bag.th) }));
+        if (bag.tx) sub.push(bag.tx);
+        main.appendChild(el("span", "stash-s" + (x.expired ? " bad" : (x.soon ? " warn" : "")), sub.join(" · ")));
+        main.addEventListener("click", function () { dlg.close(); bagDialog(bag.id); });
+        li.appendChild(main);
+        var acts = el("span", "stash-acts");
+        if (!x.expired) {
+          acts.appendChild(button(t("st.use"), "primary small", function () { setBagState(bag.id, "u"); paint(); }));
+          if (bag.w === "z") acts.appendChild(button(t("st.thaw"), "small", function () { thawBag(bag.id); paint(); }));
+        } else {
+          acts.appendChild(button(t("st.toss"), "danger small", function () { setBagState(bag.id, "x"); paint(); }));
+        }
+        li.appendChild(acts);
+        ul.appendChild(li);
+      });
+      box.appendChild(ul);
+      var done = C.stashDone(data);
+      if (done.length) {
+        var det = el("details", "stash-done");
+        det.appendChild(el("summary", "", t("st.done") + " (" + done.length + ")"));
+        var dl = el("ol", "evlist stash-list");
+        done.slice(0, 30).forEach(function (bag) {
+          var li = el("li", "stash-row");
+          var bb = el("button", "stash-main");
+          bb.type = "button";
+          bb.appendChild(el("span", "stash-v", bagLine(bag)));
+          bb.appendChild(el("span", "stash-s", [t(bag.s === "u" ? "st.used" : "st.tossed") + (bag.sd ? " " + dateText(bag.sd) : ""),
+            t("st.pumped") + " " + dateText(bag.d)].join(" · ")));
+          bb.addEventListener("click", function () { dlg.close(); bagDialog(bag.id); });
+          li.appendChild(bb);
+          dl.appendChild(li);
+        });
+        det.appendChild(dl);
+        box.appendChild(det);
+      }
+    }
+    paint();
+    var a = el("div", "dlg-actions");
+    a.appendChild(button(t("dlg.close"), "", function () { dlg.close(); }));
+    a.appendChild(button(t("st.add"), "primary", function () { dlg.close(); bagDialog(null); }));
+    dlg.appendChild(a);
+    stashRepaint = paint;
+    dlg.addEventListener("close", function () { if (stashRepaint === paint) stashRepaint = null; });
+    openDialog(dlg, null);
+  }
+  var stashRepaint = null;      // the open stash dialog's paint (Undo repaints it)
+  function setBagState(id, st) {
+    var cur = C.findIn(stashList(), id);
+    if (!cur || cur.del) return;
+    var copy = snap(cur), o = snap(cur);
+    o.s = st;
+    o.sd = todayKey();
+    var n = saveBag(o, true);
+    if (!n) return;
+    if (st === "u" && kidId()) {
+      actionToast(t("st.toastUsed"), t("st.logBottle"), function () {
+        addEv({ t: "bottle", ts: Date.now(), ml: Math.min(n.ml, C.LIM.ml[1]), x: "bm" });
+      }, function () { restoreBag(copy); });
+    } else undoToast(t(st === "u" ? "st.toastUsed" : "st.toastTossed"), function () { restoreBag(copy); });
+  }
+  function restoreBag(copy) {
+    var cur = C.findIn(stashList(), copy.id);
+    copy.m = stamp(cur ? cur.m : copy.m);
+    if (!data.st) data.st = [];
+    put(data.st, copy);
+    saveNow();
+    renderAll();
+    if (stashRepaint) stashRepaint();
+  }
+  function thawBag(id) {
+    var cur = C.findIn(stashList(), id);
+    if (!cur || cur.del) return;
+    var copy = snap(cur);
+    var n = saveBag(C.thaw(cur, todayKey()), true);
+    if (n) undoToast(t("st.toastThawed", { d: dateText(n.u) }), function () { restoreBag(copy); });
+  }
+  function bagDialog(id) {
+    var cur = id ? C.findIn(stashList(), id) : null;
+    if (id && (!cur || cur.del)) return;
+    var dlg = makeDialog("bb-bag", t(cur ? "st.bag" : "st.bagNew"));
+    var form = el("form");
+    form.method = "dialog";
+    var today = todayKey();
+    var amt = numInput(cur ? fromMl(cur.ml) : "", data.prefs.vu === "oz");
+    form.appendChild(field(volLabel(), amt));
+    var d = dateInput(cur ? cur.d : today, today);
+    form.appendChild(field(t("st.pumped"), d));
+    var where = seg([["f", t("st.fridge")], ["z", t("st.freezer")]], cur ? cur.w : "f");
+    form.appendChild(segField(t("st.where"), where));
+    var ub = dateInput(cur ? cur.u : C.useBy(today, "f"), null);
+    var ubTouched = !!cur;
+    ub.addEventListener("input", function () { ubTouched = true; });
+    form.appendChild(field(t("st.useBy"), ub, t("st.useByHint")));
+    function autoUb() { if (!ubTouched && C.validDay(d.value)) ub.value = C.useBy(d.value, where.get()); }
+    d.addEventListener("change", autoUb);
+    where.node.addEventListener("click", function () { setTimeout(autoUb, 0); });
+    var note = textInput(cur ? cur.tx : "", C.LIM.text);
+    form.appendChild(field(t("dlg.note"), note));
+    actions(form, dlg, cur ? t("dlg.save") : t("dlg.add"), cur ? function () { removeBag(cur.id); } : null);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = readNum(amt);
+      if (v === null || isNaN(v) || !C.inRange(toMl(v), C.LIM.bag)) { showToast(t("toast.bad")); amt.focus(); return; }
+      if (!C.validDay(d.value) || d.value > today) { showToast(t("toast.bad")); d.focus(); return; }
+      if (!C.validDay(ub.value) || ub.value < d.value) { showToast(t("toast.bad")); ub.focus(); return; }
+      var latest = id ? C.findIn(stashList(), id) : null;
+      if (id && (!latest || latest.del)) { dlg.close(); return; }
+      var o = latest ? snap(latest) : {};
+      o.ml = toMl(v);
+      o.d = d.value;
+      o.w = where.get();
+      o.u = ub.value;
+      o.tx = note.value;
+      dlg.close();
+      saveBag(o, false);
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, amt);
+  }
+  function removeBag(id) {
+    var cur = C.findIn(stashList(), id);
+    if (!cur || cur.del) return;
+    var copy = snap(cur);
+    put(data.st, { id: id, m: stamp(cur.m), del: 1 });
+    saveNow();
+    renderAll();
+    undoToast(t("toast.deleted"), function () { restoreBag(copy); });
   }
 
   // ---------- 10. Dialogs: kid, growth, marks ----------
@@ -1759,6 +2013,21 @@
   }
   // Undo toasts stay local (the closure never leaves the frame), 8 s.
   function undoToast(text, onUndo) { localToast(text, onUndo); }
+  // An Undo toast with one more action before Undo (wave 34: "Log a bottle").
+  function actionToast(text, label, fn, onUndo) {
+    localToast(text, onUndo);
+    var box = $("toast");
+    if (!box) return;
+    var b = el("button", "", label);
+    b.type = "button";
+    b.addEventListener("click", function () {
+      undoFn = null;
+      box.classList.remove("show");
+      clearTimeout(toastTimer);
+      fn();
+    }, { once: true });
+    box.insertBefore(b, box.children[1] || null);
+  }
 
   var toastTimer = null, undoFn = null;
   function localToast(text, onUndo) {
