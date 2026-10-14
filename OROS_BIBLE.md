@@ -6575,3 +6575,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - The Assistant's change_item (AS-CHG) now covers Contacts (add a phone number or email, edit fields), Kanban (move a card between columns, rename), Media Shelf, Habits (tick today) and Plant Care (mark watered). As always a preview card shows the change first; Apply writes it, with Undo.
 - Files: existing assistant files only; Bible AS-CHG updated. sw.js precache: nothing new.
   - Tests: full suite green; real-shell check by the owner thread. Not tested: real phone, Safari.
+
+### 2026-10-14 — Single apps, wave 2: Contacts, Writer, Spreadsheet, Kanban, Mind Map, Wiki, Slides (#354) — 2.09.00
+- Seven more single apps (SOLO-1): orOS Contacts, Writer, Spreadsheet, Kanban, Mind Map, Wiki and Slides install on their own, each with its own window and icon, an icon shortcut (New contact / document / sheet / card / map / article / presentation), Open with for the file types the app already opens, and an Android share target.
+- Shares open a form the person saves (Contacts reads a business card into New contact, Writer new document, Kanban quick add, Mind Map paste dialog, Wiki new article, Slides from an outline); Spreadsheet turns shared lines into a new sheet.
+- Files: `solo.js` table + `shareTarget()` kinds, small receivers in each app, `/<id>/solo.html` + manifests + icons from `tools/solo-manifests.js` / `tools/solo-icons.js`; sw.js precache of the 7 pages, manifests and 28 icons; help Install › Single apps EN/EL.
+  - Tests: full suite green incl. the wave 2 solo test; Chromium 28 checks and installability for all 7 by the owner. Not tested: real installs on Android/Windows/Linux, Open with through the real OS, Safari.
