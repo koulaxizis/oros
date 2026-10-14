@@ -17,11 +17,16 @@
 //   2b. Merge engine lite (todo-contract, compact)
 //   3. API: geocoding + forecast + AQI + throttle
 //   4. Render
+//   4b. Wave 38: official warnings (MeteoAlarm), rain in the next
+//       2 hours (minutely_15), air & pollen, forecast model + compare
+//       (pure logic in core.js → window.OrosWeatherCore)
 //   5. Sync slice + palette
 //   6. Wiring & boot
 // Data:
 //   slice "oros-weatherapp-data"  → travels (cities + units)
 //   cache "oros-weatherapp-cache" → device-local, NEVER in slice
+//   prefs "oros-weatherapp-prefs" / warnings "oros-weatherapp-warn"
+//         → device-local (wave 38), NEVER in slice
 // Offline: render from cache + badge — never fake numbers.
 // Cache/slice ALWAYS metric — units decorate at render time.
 // ============================================================
@@ -158,6 +163,140 @@
       "toast.merged":  "Συγχρονίστηκαν αλλαγές από άλλη συσκευή"
     }
   };
+
+  // Wave 38: warnings, rain in the next 2 hours, air & pollen, models
+  var STRINGS2 = {
+    en: {
+      "warn.mine":      "Official warnings",
+      "warn.area":      "Area: {a}",
+      "warn.guess":     "Area: {a} (guessed from the city)",
+      "warn.change":    "Change area",
+      "warn.forget":    "Forget area",
+      "warn.others":    "Warnings elsewhere in {c} ({n})",
+      "warn.pick":      "Warnings in {c} ({n}) · pick your area",
+      "warn.myarea":    "My area",
+      "warn.myarea.tip":"Show this area's warnings for {city}",
+      "warn.until":     "until {t}",
+      "warn.from":      "{a} → {b}",
+      "warn.more":      "Details",
+      "warn.loading":   "Loading details…",
+      "warn.nodetail":  "Details could not be loaded.",
+      "warn.instr":     "What to do",
+      "warn.source":    "Source",
+      "warn.open":      "Open on MeteoAlarm",
+      "warn.set.title": "Official warnings",
+      "warn.set.show":  "Show MeteoAlarm warnings",
+      "warn.set.notify":"Notify me",
+      "warn.n.off":     "Off",
+      "warn.n.severe":  "Orange and red",
+      "warn.n.all":     "All warnings",
+      "warn.set.hint":  "On this device only. Europe only (MeteoAlarm). The notice is for the taskbar city.",
+      "warn.st.none":   "No country found for {city}: warnings cover Europe only.",
+      "warn.st.ok":     "{c}: {n} warnings in force, checked {t}.",
+      "warn.st.err":    "MeteoAlarm could not be reached.",
+      "warn.st.cors":   "The browser can't read MeteoAlarm directly. Set up the relay in Mail to get warnings.",
+      "warn.st.wait":   "Not checked yet.",
+      "warn.attrib":    "Warnings: MeteoAlarm (EUMETNET) and the national weather services. Their own pages are the official source.",
+      "now.title":      "Next 2 hours",
+      "now.tip":        "Precipitation every 15 minutes",
+      "air.title":      "Air & pollen",
+      "air.main":       "mostly {p}",
+      "air.at":         "worst at {t}",
+      "air.pollen":     "Pollen",
+      "air.nopollen":   "No pollen data",
+      "air.tip":        "Tap an hour to see its values",
+      "air.unit":       "µg/m³",
+      "pol.alder":      "Alder",
+      "pol.birch":      "Birch",
+      "pol.grass":      "Grass",
+      "pol.mugwort":    "Mugwort",
+      "pol.olive":      "Olive",
+      "pol.ragweed":    "Ragweed",
+      "pol.l0":         "none",
+      "pol.l1":         "low",
+      "pol.l2":         "moderate",
+      "pol.l3":         "high",
+      "pol.l4":         "very high",
+      "model.title":    "Forecast model",
+      "model.best":     "Automatic (best match)",
+      "model.hint":     "On this device only. Rain in the next 2 hours needs a model with 15-minute data; the automatic choice has it.",
+      "cmp.btn":        "Compare models",
+      "cmp.hide":       "Hide comparison",
+      "cmp.none":       "—",
+      "cmp.loading":    "Loading…",
+      "cmp.err":        "Comparison could not be loaded.",
+      "cmp.max":        "solid line: highs · dashed: lows",
+      "cmp.rain":       "Rain",
+      "cmp.model":      "Model {n}",
+      "attrib.air":     "Air quality: Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo."
+    },
+    el: {
+      "warn.mine":      "Επίσημες προειδοποιήσεις",
+      "warn.area":      "Περιοχή: {a}",
+      "warn.guess":     "Περιοχή: {a} (εκτίμηση από την πόλη)",
+      "warn.change":    "Αλλαγή περιοχής",
+      "warn.forget":    "Ξέχνα την περιοχή",
+      "warn.others":    "Προειδοποιήσεις αλλού: {c} ({n})",
+      "warn.pick":      "Προειδοποιήσεις: {c} ({n}) · διάλεξε την περιοχή σου",
+      "warn.myarea":    "Η περιοχή μου",
+      "warn.myarea.tip":"Οι προειδοποιήσεις αυτής της περιοχής για: {city}",
+      "warn.until":     "έως {t}",
+      "warn.from":      "{a} → {b}",
+      "warn.more":      "Λεπτομέρειες",
+      "warn.loading":   "Φόρτωση λεπτομερειών…",
+      "warn.nodetail":  "Δεν φορτώθηκαν οι λεπτομέρειες.",
+      "warn.instr":     "Τι να κάνεις",
+      "warn.source":    "Πηγή",
+      "warn.open":      "Άνοιγμα στο MeteoAlarm",
+      "warn.set.title": "Επίσημες προειδοποιήσεις",
+      "warn.set.show":  "Εμφάνιση προειδοποιήσεων MeteoAlarm",
+      "warn.set.notify":"Ειδοποίηση",
+      "warn.n.off":     "Όχι",
+      "warn.n.severe":  "Πορτοκαλί και κόκκινες",
+      "warn.n.all":     "Όλες οι προειδοποιήσεις",
+      "warn.set.hint":  "Μόνο σε αυτή τη συσκευή. Μόνο για την Ευρώπη (MeteoAlarm). Η ειδοποίηση αφορά την πόλη της γραμμής εργασιών.",
+      "warn.st.none":   "Δεν βρέθηκε χώρα για: {city}. Οι προειδοποιήσεις καλύπτουν μόνο την Ευρώπη.",
+      "warn.st.ok":     "{c}: {n} ενεργές προειδοποιήσεις, έλεγχος {t}.",
+      "warn.st.err":    "Δεν ήταν δυνατή η σύνδεση με το MeteoAlarm.",
+      "warn.st.cors":   "Ο φυλλομετρητής δεν μπορεί να διαβάσει απευθείας το MeteoAlarm. Ρύθμισε το relay στο Ταχυδρομείο για να έρχονται οι προειδοποιήσεις.",
+      "warn.st.wait":   "Δεν έγινε έλεγχος ακόμα.",
+      "warn.attrib":    "Προειδοποιήσεις: MeteoAlarm (EUMETNET) και οι εθνικές μετεωρολογικές υπηρεσίες. Επίσημη πηγή είναι οι δικές τους σελίδες.",
+      "now.title":      "Επόμενες 2 ώρες",
+      "now.tip":        "Υετός ανά 15 λεπτά",
+      "air.title":      "Αέρας & γύρη",
+      "air.main":       "κυρίως {p}",
+      "air.at":         "χειρότερα στις {t}",
+      "air.pollen":     "Γύρη",
+      "air.nopollen":   "Δεν υπάρχουν δεδομένα γύρης",
+      "air.tip":        "Πάτησε μια ώρα για να δεις τις τιμές της",
+      "air.unit":       "µg/m³",
+      "pol.alder":      "Σκλήθρα",
+      "pol.birch":      "Σημύδα",
+      "pol.grass":      "Αγρωστώδη",
+      "pol.mugwort":    "Αρτεμισία",
+      "pol.olive":      "Ελιά",
+      "pol.ragweed":    "Αμβροσία",
+      "pol.l0":         "καθόλου",
+      "pol.l1":         "χαμηλή",
+      "pol.l2":         "μέτρια",
+      "pol.l3":         "υψηλή",
+      "pol.l4":         "πολύ υψηλή",
+      "model.title":    "Μοντέλο πρόγνωσης",
+      "model.best":     "Αυτόματο",
+      "model.hint":     "Μόνο σε αυτή τη συσκευή. Η βροχή των επόμενων 2 ωρών θέλει μοντέλο με δεδομένα ανά 15 λεπτά· η αυτόματη επιλογή τα έχει.",
+      "cmp.btn":        "Σύγκριση μοντέλων",
+      "cmp.hide":       "Απόκρυψη σύγκρισης",
+      "cmp.none":       "—",
+      "cmp.loading":    "Φόρτωση…",
+      "cmp.err":        "Δεν φορτώθηκε η σύγκριση.",
+      "cmp.max":        "συνεχής γραμμή: μέγιστες · διακεκομμένη: ελάχιστες",
+      "cmp.rain":       "Βροχή",
+      "cmp.model":      "Μοντέλο {n}",
+      "attrib.air":     "Ποιότητα αέρα: Copernicus Atmosphere Monitoring Service (CAMS) μέσω Open-Meteo."
+    }
+  };
+  Object.keys(STRINGS2.en).forEach(function (k) { STRINGS.en[k] = STRINGS2.en[k]; });
+  Object.keys(STRINGS2.el).forEach(function (k) { STRINGS.el[k] = STRINGS2.el[k]; });
 
   function t(key) {
     var p = STRINGS[LANG] || STRINGS.en;
@@ -461,6 +600,33 @@
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(m)); } catch (e) {}
   }
 
+  // --- Device-local preferences (wave 38): never in the slice ---
+  //   { model: Open-Meteo model id, cmp: [up to 3 ids, "" = none],
+  //     warnOn: bool (default true), notify: "off" | "severe" | "all",
+  //     bf: { cityId: ts } (place details looked up once) }
+  // The shell reads `notify` for the warnings notice (wxWarnTick).
+  var PREFS_KEY = "oros-weatherapp-prefs";
+  var WARN_KEY  = "oros-weatherapp-warn";     // device-local warnings cache
+  var C = window.OrosWeatherCore || null;     // weather/core.js (stale bundle → features hide)
+  function readPrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(PREFS_KEY)); } catch (e) {}
+    if (!p || typeof p !== "object") p = {};
+    var out = {
+      model: (C && C.okModel(p.model)) ? p.model : "best_match",
+      cmp: Array.isArray(p.cmp) ? p.cmp.slice(0, 3) : ["ecmwf_ifs025", "icon_seamless", "gfs_seamless"],
+      warnOn: p.warnOn !== false,
+      notify: (p.notify === "severe" || p.notify === "all") ? p.notify : "off",
+      bf: (p.bf && typeof p.bf === "object") ? p.bf : {}
+    };
+    out.cmp = out.cmp.map(function (m) { return (C && C.okModel(m)) ? m : ""; });
+    while (out.cmp.length < 3) out.cmp.push("");
+    return out;
+  }
+  function writePrefs(p) {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+
   // ---------- 2b. Merge engine lite (todo-contract, compact) ----------
   // Deterministic + symmetric: merge(A,B) === merge(B,A).
   //   · active + units + shellWx — LWW by root sm; ties by
@@ -589,7 +755,8 @@
       .then(function (d) {
         var g = d && d.results && d.results[0];
         if (!g) throw new Error("notfound");
-        return { lat: g.latitude, lon: g.longitude, label: g.name };
+        return { lat: g.latitude, lon: g.longitude, label: g.name,
+                 cc: g.country_code, adm: g.admin1 };
       });
   }
 
@@ -659,7 +826,8 @@
 
   function pickAc(g) {
     hideAc();
-    addCity({ lat: g.latitude, lon: g.longitude, label: g.name });
+    addCity({ lat: g.latitude, lon: g.longitude, label: g.name,
+              cc: g.country_code, adm: g.admin1 });
   }
 
   // European AQI (0..100+) — SEPARATE Open-Meteo endpoint, fired
@@ -669,11 +837,15 @@
   // forecast response's utc_offset_seconds) — this endpoint also
   // returns timezone=auto times, so the SAME city-local key aligns
   // both arrays. The device clock is never consulted.
+  // Wave 38: the same request also brings the hourly pollutants
+  // (European sub-indices + µg/m³) and the pollen counts (Europe, in
+  // season) for 3 days → { val: AQI now | null, hours: [...] | null }.
   function fetchAqi(lat, lon, nowKey) {
     if (!navigator.onLine) return Promise.resolve(null);
+    var vars = C ? C.AIR_VARS.join(",") : "european_aqi";
     var url = "https://air-quality-api.open-meteo.com/v1/air-quality" +
       "?latitude=" + lat + "&longitude=" + lon +
-      "&hourly=european_aqi&timezone=auto&forecast_days=1";
+      "&hourly=" + vars + "&timezone=auto&forecast_days=4";
     return fetch(url)
       .then(function (r) {
         if (!r.ok) { console.warn("aqi fetch HTTP " + r.status); return null; }
@@ -684,7 +856,8 @@
         var idx = 0;
         while (idx < d.hourly.time.length && d.hourly.time[idx] < nowKey) idx++;
         var v = d.hourly.european_aqi && d.hourly.european_aqi[idx];
-        return (typeof v === "number") ? v : null;
+        return { val: (typeof v === "number") ? v : null,
+                 hours: C ? C.airHours(d, nowKey, 72) : null };
       })
       .catch(function () { return null; });   // silent — optional data
   }
@@ -699,9 +872,12 @@
   // hour skews distant cities by hours and mis-sliced the strip.
   function fetchForecast(city) {
     if (!city || !navigator.onLine) return Promise.resolve(null);
+    var model = readPrefs().model;
     var url = "https://api.open-meteo.com/v1/forecast" +
       "?latitude=" + city.lat + "&longitude=" + city.lon +
       "&current_weather=true" +
+      (model !== "best_match" ? "&models=" + encodeURIComponent(model) : "") +
+      "&minutely_15=precipitation,snowfall&past_minutely_15=1&forecast_minutely_15=10" +
       "&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weathercode,uv_index" +
       "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
       "&timezone=auto&forecast_days=7";
@@ -725,6 +901,9 @@
         var payload = {
           at: Date.now(),
           tz: offSec,                             // render passes reuse it
+          tzn: typeof d.timezone === "string" ? d.timezone.slice(0, 64) : "",   // wave 38: country of the warnings
+          model: model,                           // wave 38: the model this payload came from
+          min15: C ? C.minutelySlots(d, C.nowKey(Date.now(), offSec), 10) : null,   // rain, next 2 h
           current: {
             temp:  d.current_weather.temperature,
             code:  d.current_weather.weathercode,
@@ -792,8 +971,9 @@
 
         // AQI rides AFTER the forecast, keyed on the SAME city-local
         // now — a dead AQI endpoint costs nothing visually.
-        return fetchAqi(city.lat, city.lon, nowKey).then(function (aqiVal) {
-          if (aqiVal !== null) payload.aqi = { at: Date.now(), val: aqiVal };
+        return fetchAqi(city.lat, city.lon, nowKey).then(function (air) {
+          if (air && air.val !== null) payload.aqi = { at: Date.now(), val: air.val };
+          payload.air = (air && air.hours) || null;
           writeCityCache(city.id, payload);
 
                     // Mirror into the shell tray cache when this city IS the
@@ -846,7 +1026,9 @@
     var city = activeCity();
     if (!city) return Promise.resolve(null);
     var c = readCityCache(city.id);
-    if (!force && c && c.at && (Date.now() - c.at) < FETCH_GAP_MS) {
+    // wave 38: a payload of another forecast model is not fresh
+    var sameModel = !c || (c.model || "best_match") === readPrefs().model;
+    if (!force && c && c.at && sameModel && (Date.now() - c.at) < FETCH_GAP_MS) {
       if (!netDown || !navigator.onLine) return Promise.resolve(c);
     }
     return fetchForecast(city);
@@ -1014,6 +1196,7 @@
     var obShow = !(navigator.onLine && !netDown);
     ob.hidden = !obShow;                     // was flipped — badge never showed
     ob.style.display = obShow ? "" : "none";
+    renderExtras(city, p);   // wave 38
     if (!city || !p) return;
 
     // --- current ---
@@ -1180,6 +1363,664 @@
     });
   }
 
+  // ---------- 4b. Wave 38: warnings, rain now, air & pollen, models ----------
+  // Pure logic lives in weather/core.js (C); this block fetches,
+  // caches (device-local) and paints. Every text from a feed goes in
+  // through textContent; links are http(s) only.
+  var WARN_GAP = 30 * 60 * 1000;     // feed refresh, like the forecast
+  var CMP_GAP  = 30 * 60 * 1000;
+
+  function mk(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function fill(key, vars) {
+    var s = t(key);
+    Object.keys(vars || {}).forEach(function (k) { s = s.split("{" + k + "}").join(vars[k]); });
+    return s;
+  }
+  function payloadTz(p) {
+    return (p && typeof p.tz === "number") ? p.tz : -new Date().getTimezoneOffset() * 60;
+  }
+  // A moment in the city's clock: "14:00" today, "Thu 14:00" another day.
+  function fmtCityTime(ms, tz) {
+    var d = new Date(ms + tz * 1000), now = new Date(Date.now() + tz * 1000);
+    var hm = pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
+    if (d.toISOString().slice(0, 10) === now.toISOString().slice(0, 10)) return hm;
+    var wd = d.toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short", timeZone: "UTC" });
+    return wd + " " + hm;
+  }
+  function fmtRain(mm) {
+    if (typeof mm !== "number" || isNaN(mm)) return "—";
+    return state.units === "imperial" ? (mm / 25.4).toFixed(2) + " in" : mm.toFixed(1) + " mm";
+  }
+  function toUnit(c) { return state.units === "imperial" ? c * 9 / 5 + 32 : c; }
+  function dayName(date, tz) {
+    if (date === cityTodayStr(tz)) return t("today");
+    return new Date(date + "T12:00:00").toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB", { weekday: "short" });
+  }
+
+  // City place details: country + region (from the geocoder).
+  function placeInfo(city, g) {
+    if (!city || !g) return;
+    if (typeof g.cc === "string" && /^[A-Za-z]{2}$/.test(g.cc)) city.cc = g.cc.toUpperCase();
+    if (typeof g.adm === "string" && g.adm.trim()) city.adm = g.adm.trim().slice(0, 80);
+  }
+  // Older cities have neither: one geocoder look-up per city and device.
+  function backfillPlace(city) {
+    if (!city || city.cc || !navigator.onLine) return Promise.resolve(false);
+    var pr = readPrefs();
+    if (pr.bf[city.id]) return Promise.resolve(false);
+    pr.bf[city.id] = Date.now();
+    writePrefs(pr);
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=10&language=" +
+                 (LANG === "el" ? "el" : "en") + "&name=" + encodeURIComponent(city.label))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var best = null, bd = Infinity;
+        ((d && d.results) || []).forEach(function (g) {
+          var dist = Math.abs(g.latitude - city.lat) + Math.abs(g.longitude - city.lon);
+          if (dist < bd) { bd = dist; best = g; }
+        });
+        if (!best || bd > 0.3) return false;
+        var live = cityById(city.id);
+        if (!live || live.cc) return false;
+        placeInfo(live, { cc: best.country_code, adm: best.admin1 });
+        if (!live.cc) return false;
+        live.mtime = Date.now();      // a tie would keep the copy without them
+        save();
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+
+  // --- Official warnings (MeteoAlarm) ---
+  // Cache "oros-weatherapp-warn" (device-local, also read by the shell):
+  //   { feeds: { <slug>: { at: last try, ok: last success, list, err, via } },
+  //     sent: { <notice key>: expiry } }   (sent: the shell's notices)
+  function readWarn() {
+    var w = null;
+    try { w = JSON.parse(localStorage.getItem(WARN_KEY)); } catch (e) {}
+    if (!w || typeof w !== "object") w = {};
+    if (!w.feeds || typeof w.feeds !== "object") w.feeds = {};
+    if (!w.sent || typeof w.sent !== "object") w.sent = {};
+    return w;
+  }
+  function writeWarnFeed(slug, entry) {
+    var w = readWarn();
+    w.feeds[slug] = entry;
+    var keys = Object.keys(w.feeds);
+    if (keys.length > 4) {
+      keys.sort(function (a, b) { return (w.feeds[a].at || 0) - (w.feeds[b].at || 0); });
+      while (keys.length > 4) delete w.feeds[keys.shift()];
+    }
+    try { localStorage.setItem(WARN_KEY, JSON.stringify(w)); } catch (e) {}
+  }
+  function citySlug(city, p) {
+    return (C && city) ? C.slugFor(city.cc, p && p.tzn) : "";
+  }
+  function countryName(city, p) {
+    var cc = C ? C.countryOf(city.cc, p && p.tzn) : "";
+    try {
+      var dn = new Intl.DisplayNames([LANG === "el" ? "el" : "en"], { type: "region" });
+      var n = cc && dn.of(cc);
+      if (n) return n;
+    } catch (e) {}
+    return cc;
+  }
+  // One GET: the Reader's shared network layer when loaded (direct,
+  // then the Mail relay's "web" op when the site sends no CORS
+  // headers), else a plain fetch.
+  function getText(url) {
+    var F = window.orosFeedsFetch;
+    if (F && typeof F.fetchOne === "function") {
+      return F.fetchOne(url, { accept: "application/atom+xml, application/cap+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5" })
+        .then(function (r) { return { status: r.status, text: r.text || "", via: r.via }; });
+    }
+    return fetch(url, { credentials: "omit", referrerPolicy: "no-referrer" })
+      .then(function (r) { return r.text().then(function (x) { return { status: r.status, text: x, via: "direct" }; }); },
+            function () { throw { code: "cors" }; });
+  }
+  var warnBusy = {};
+  function maybeFetchWarnings(city, p, force) {
+    if (!C || !city) return Promise.resolve(false);
+    var pr = readPrefs();
+    if (!pr.warnOn) return Promise.resolve(false);
+    var slug = citySlug(city, p), url = C.feedUrl(slug);
+    if (!url || !navigator.onLine || warnBusy[slug]) return Promise.resolve(false);
+    var cur = readWarn().feeds[slug];
+    if (!force && cur && Date.now() - (cur.at || 0) < WARN_GAP) return Promise.resolve(false);
+    warnBusy[slug] = true;
+    return getText(url).then(function (r) {
+      var list = (r.status >= 200 && r.status < 300) ? C.parseAtom(r.text) : null;
+      if (!list) throw { code: r.status === 404 ? "notfound" : ((r.status >= 200 && r.status < 300) ? "parse" : "http") };
+      var now = Date.now();
+      writeWarnFeed(slug, { at: now, ok: now, list: C.activeList(list, now).slice(0, 300), err: "", via: r.via || "" });
+      return true;
+    }).catch(function (e) {
+      var old = readWarn().feeds[slug];
+      writeWarnFeed(slug, { at: Date.now(), ok: (old && old.ok) || 0, list: (old && old.list) || [],
+                            err: String((e && e.code) || "err"), via: "" });
+      return true;
+    }).then(function (v) { warnBusy[slug] = false; return v; });
+  }
+
+  var capMem = {};                  // CAP details by warning id (session)
+  var warnOthersOpen = false;       // "elsewhere" list open (session)
+  function loadCap(w, body) {
+    var m = capMem[w.id];
+    if (m && m.state !== "err") { paintCap(w, body); return; }
+    if (!w.cap) { capMem[w.id] = { state: "err" }; paintCap(w, body); return; }
+    capMem[w.id] = { state: "loading" };
+    paintCap(w, body);
+    getText(w.cap).then(function (r) {
+      var d = (r.status >= 200 && r.status < 300) ? C.parseCap(r.text, LANG) : null;
+      capMem[w.id] = d ? { state: "ok", d: d } : { state: "err" };
+    }, function () { capMem[w.id] = { state: "err" }; })
+      .then(function () { if (body.isConnected) paintCap(w, body); });
+  }
+  function paintCap(w, body) {
+    body.textContent = "";
+    var m = capMem[w.id] || { state: "err" };
+    if (m.state === "loading") { body.appendChild(mk("p", "dim", t("warn.loading"))); return; }
+    var d = m.d, web = w.web || "https://meteoalarm.org/";
+    if (m.state !== "ok" || !d) {
+      body.appendChild(mk("p", "dim", t("warn.nodetail")));
+    } else {
+      if (d.headline) body.appendChild(mk("p", "warn-hl", d.headline));
+      if (d.desc) body.appendChild(mk("p", "warn-desc", d.desc));
+      if (d.instr) {
+        var ins = mk("p", "warn-desc");
+        ins.appendChild(mk("strong", "", t("warn.instr") + ": "));
+        ins.appendChild(document.createTextNode(d.instr));
+        body.appendChild(ins);
+      }
+      if (d.sender) body.appendChild(mk("p", "dim", t("warn.source") + ": " + d.sender));
+      if (d.web) web = d.web;
+    }
+    if (/^https?:\/\//i.test(web)) {
+      var a = mk("a", "warn-link", t("warn.open"));
+      a.href = web; a.target = "_blank"; a.rel = "noopener noreferrer";
+      body.appendChild(a);
+    }
+  }
+  function warnWhen(w, tz) {
+    var now = Date.now();
+    if (typeof w.onset === "number" && w.onset > now) {
+      return fill("warn.from", { a: fmtCityTime(w.onset, tz), b: typeof w.exp === "number" ? fmtCityTime(w.exp, tz) : "…" });
+    }
+    return typeof w.exp === "number" ? fill("warn.until", { t: fmtCityTime(w.exp, tz) }) : "";
+  }
+  function warnCard(w, tz, city, other) {
+    var card = mk("div", "warn-card");
+    card.setAttribute("data-level", String(w.level));
+    var row = mk("div", "warn-row");
+    var head = mk("button", "warn-head");
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    head.appendChild(mk("span", "warn-dot"));
+    var txt = mk("span", "warn-txt");
+    txt.appendChild(mk("span", "warn-title", C.warnTitle(w, LANG)));
+    var sub = [w.area, warnWhen(w, tz)].filter(Boolean).join(" · ");
+    txt.appendChild(mk("span", "warn-sub", sub));
+    head.appendChild(txt);
+    row.appendChild(head);
+    var body = mk("div", "warn-body");
+    body.hidden = true;
+    head.addEventListener("click", function () {
+      body.hidden = !body.hidden;
+      head.setAttribute("aria-expanded", body.hidden ? "false" : "true");
+      if (!body.hidden) loadCap(w, body);
+    });
+    if (other) {
+      var mine = mk("button", "btn-secondary warn-mine", t("warn.myarea"));
+      mine.type = "button";
+      mine.title = fill("warn.myarea.tip", { city: city.label });
+      mine.addEventListener("click", function () {
+        var live = cityById(city.id);
+        if (!live) return;
+        live.wa = { n: String(w.area || "").slice(0, 160), g: String((w.geo && w.geo[0]) || "").slice(0, 40) };
+        live.mtime = Date.now();
+        save();
+        warnOthersOpen = false;
+        scheduleRender();
+      });
+      row.appendChild(mine);
+    }
+    card.appendChild(row);
+    card.appendChild(body);
+    return card;
+  }
+  function renderWarnings(city, p) {
+    var host = $("warn-host");
+    if (!host) return;
+    host.textContent = "";
+    host.hidden = true;
+    if (!C || !city || !readPrefs().warnOn) return;
+    var slug = citySlug(city, p);
+    var feed = slug ? readWarn().feeds[slug] : null;
+    if (!feed || !Array.isArray(feed.list)) return;
+    var list = C.activeList(feed.list, Date.now());
+    if (!list.length) return;
+    var res = C.forCity(list, city);
+    var tz = payloadTz(p);
+    if (res.mine.length) {
+      var box = mk("div", "warn-box");
+      box.setAttribute("role", "region");
+      box.setAttribute("aria-label", t("warn.mine"));
+      res.mine.forEach(function (w) { box.appendChild(warnCard(w, tz, city, false)); });
+      host.appendChild(box);
+    }
+    if (res.others.length) {
+      var det = mk("details", "warn-others");
+      det.open = warnOthersOpen;
+      det.addEventListener("toggle", function () { warnOthersOpen = det.open; });
+      det.appendChild(mk("summary", "", fill(res.how ? "warn.others" : "warn.pick",
+        { c: countryName(city, p), n: String(res.others.length) })));
+      res.others.forEach(function (w) { det.appendChild(warnCard(w, tz, city, true)); });
+      host.appendChild(det);
+    }
+    if (res.how) {
+      var foot = mk("div", "warn-foot");
+      foot.appendChild(mk("span", "dim", fill(res.how === "saved" ? "warn.area" : "warn.guess", { a: res.area })));
+      if (res.others.length) {
+        var ch = mk("button", "link-btn", t("warn.change"));
+        ch.type = "button";
+        ch.addEventListener("click", function () { warnOthersOpen = true; scheduleRender(); });
+        foot.appendChild(ch);
+      }
+      if (res.how === "saved") {
+        var fg = mk("button", "link-btn", t("warn.forget"));
+        fg.type = "button";
+        fg.addEventListener("click", function () {
+          var live = cityById(city.id);
+          if (!live) return;
+          delete live.wa;
+          live.mtime = Date.now();
+          save();
+          scheduleRender();
+        });
+        foot.appendChild(fg);
+      }
+      host.appendChild(foot);
+    }
+    var at = mk("p", "warn-attrib dim");
+    at.appendChild(document.createTextNode(t("warn.attrib") + " "));
+    var a = mk("a", "", "meteoalarm.org");
+    a.href = "https://meteoalarm.org/"; a.target = "_blank"; a.rel = "noopener noreferrer";
+    at.appendChild(a);
+    host.appendChild(at);
+    host.hidden = false;
+  }
+
+  // Dialog section: show / notify (device-local) + this city's status.
+  function renderWarnSettings() {
+    var host = $("warn-set-host");
+    if (!host) return;
+    host.textContent = "";
+    host.hidden = !C;
+    if (!C) return;
+    var pr = readPrefs();
+    host.appendChild(mk("h4", "", t("warn.set.title")));
+    var lab = mk("label", "tray-toggle");
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.id = "warn-on";
+    cb.checked = pr.warnOn;
+    cb.addEventListener("change", function () {
+      var q = readPrefs();
+      q.warnOn = cb.checked;
+      writePrefs(q);
+      var c = activeCity();
+      if (cb.checked && c) maybeFetchWarnings(c, readPayload(), false).then(function () { renderWarnSettings(); scheduleRender(); });
+      renderWarnSettings();
+      scheduleRender();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(mk("span", "", t("warn.set.show")));
+    host.appendChild(lab);
+
+    var row = mk("label", "warn-notify");
+    row.appendChild(mk("span", "", t("warn.set.notify")));
+    var sel = document.createElement("select");
+    sel.id = "warn-notify";
+    ["off", "severe", "all"].forEach(function (v) {
+      var o = mk("option", "", t("warn.n." + v));
+      o.value = v;
+      sel.appendChild(o);
+    });
+    sel.value = pr.notify;
+    sel.addEventListener("change", function () {
+      var q = readPrefs();
+      q.notify = sel.value;
+      writePrefs(q);
+    });
+    row.appendChild(sel);
+    host.appendChild(row);
+    host.appendChild(mk("p", "hint", t("warn.set.hint")));
+
+    var city = activeCity();
+    if (!city || !pr.warnOn) return;
+    var p = readPayload(), slug = citySlug(city, p), msg;
+    if (!slug) msg = fill("warn.st.none", { city: city.label });
+    else {
+      var f = readWarn().feeds[slug];
+      if (!f) msg = t("warn.st.wait");
+      else if (f.err === "norelay" || f.err === "cors") msg = t("warn.st.cors");
+      else if (f.err) msg = t("warn.st.err");
+      else msg = fill("warn.st.ok", { c: countryName(city, p), n: String(C.activeList(f.list, Date.now()).length),
+        t: new Date(f.ok).toLocaleTimeString(LANG === "el" ? "el-GR" : "en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) });
+    }
+    host.appendChild(mk("p", "hint", msg));
+  }
+
+  // --- Rain in the next 2 hours ---
+  function renderNowcast(p) {
+    var sec = $("nowcast"), title = $("now-title");
+    if (!sec) return;
+    sec.hidden = true;
+    if (title) title.hidden = true;
+    if (!C || !p || !Array.isArray(p.min15)) return;
+    var tz = payloadTz(p), nk = C.nowKey(Date.now(), tz), nc = C.nowcast(p.min15, nk, 120);
+    if (!nc) return;
+    $("now-text").textContent = C.nowcastText(nc, LANG, 120);
+    $("now-text").setAttribute("data-state", nc.state);
+    var now = C.keyMin(nk);
+    var slots = p.min15.filter(function (x) {
+      var m = C.keyMin(x.t);
+      return m !== null && m + 15 > now && m < now + 120;
+    }).slice(0, 8);
+    var max = 1;
+    slots.forEach(function (x) { if (x.p > max) max = x.p; });
+    var bars = $("now-bars");
+    bars.textContent = "";
+    slots.forEach(function (x, i) {
+      var col = mk("div", "nc-col");
+      col.title = x.t.slice(11, 16) + " · " + fmtRain(x.p);
+      var bw = mk("div", "nc-barwrap");
+      var b = mk("div", "nc-bar" + (x.p >= C.WET ? "" : " dry") + (x.s > 0 ? " snow" : ""));
+      b.style.height = (x.p >= C.WET ? Math.max(8, Math.round(100 * x.p / max)) : 3) + "%";
+      bw.appendChild(b);
+      col.appendChild(bw);
+      col.appendChild(mk("span", "nc-lbl", i === 0 ? t("now") : (i % 2 === 0 ? x.t.slice(11, 16) : "")));
+      bars.appendChild(col);
+    });
+    sec.title = t("now.tip");
+    sec.hidden = false;
+    if (title) title.hidden = false;
+  }
+
+  // --- Air quality + pollen ---
+  var airSel = 0;
+  var POLL_NAME = { pm25: "PM2.5", pm10: "PM10", o3: "O₃", no2: "NO₂" };
+  function renderAir(p) {
+    var sec = $("air"), title = $("air-title");
+    if (!sec) return;
+    sec.hidden = true;
+    if (title) title.hidden = true;
+    if (!C || !p || !Array.isArray(p.air) || !p.air.length) return;
+    var tz = payloadTz(p), hk = C.nowKey(Date.now(), tz).slice(0, 13) + ":00";
+    var hours = p.air.filter(function (h) { return h && typeof h.t === "string" && h.t >= hk; });
+    if (!hours.length) return;
+    var days = C.airDays(hours).slice(0, 3);
+
+    var dh = $("air-days");
+    dh.textContent = "";
+    days.forEach(function (d) {
+      var c = mk("div", "air-day");
+      c.appendChild(mk("span", "air-dname", dayName(d.date, tz)));
+      var v = mk("span", "air-dval meta-v");
+      if (d.max !== null) {
+        v.textContent = Math.round(d.max) + " · " + t("aqi." + d.level);
+        v.setAttribute("data-level", d.level);
+      } else v.textContent = "—";
+      c.appendChild(v);
+      if (d.main) c.appendChild(mk("span", "air-dsub dim",
+        fill("air.main", { p: POLL_NAME[d.main] || d.main }) + " · " + fill("air.at", { t: d.at })));
+      var pol;
+      if (!Object.keys(d.pol).length) pol = t("air.nopollen");
+      else if (!d.pollen.length) pol = t("air.pollen") + ": " + t("pol.l0");
+      else pol = t("air.pollen") + ": " + d.pollen.slice(0, 2).map(function (x) {
+        return t("pol." + x.type) + " " + t("pol.l" + x.lvl);
+      }).join(" · ");
+      c.appendChild(mk("span", "air-dsub dim", pol));
+      dh.appendChild(c);
+    });
+
+    var strip = $("air-strip");
+    strip.textContent = "";
+    var hs = hours.slice(0, 24), top = 100;
+    hs.forEach(function (h) { if (h.a !== null && h.a > top) top = h.a; });
+    if (airSel >= hs.length) airSel = 0;
+    hs.forEach(function (h, i) {
+      var b = mk("button", "air-col" + (i === airSel ? " sel" : ""));
+      b.type = "button";
+      var lvl = h.a !== null ? C.aqiLevel(h.a) : "";
+      b.setAttribute("aria-label", h.t.slice(11, 16) + " · AQI " + (h.a !== null ? Math.round(h.a) + " " + t("aqi." + lvl) : "—"));
+      b.setAttribute("aria-pressed", i === airSel ? "true" : "false");
+      var bw = mk("span", "air-barwrap");
+      var bar = mk("span", "air-bar");
+      if (lvl) bar.setAttribute("data-level", lvl);
+      bar.style.height = (h.a !== null ? Math.max(4, Math.round(100 * h.a / top)) : 0) + "%";
+      bw.appendChild(bar);
+      b.appendChild(bw);
+      b.appendChild(mk("span", "air-lbl", i % 3 === 0 ? h.t.slice(11, 13) : ""));
+      b.addEventListener("click", function () { airSel = i; renderAir(readPayload()); });
+      strip.appendChild(b);
+    });
+    strip.title = t("air.tip");
+
+    var h = hs[airSel], det = $("air-detail");
+    det.textContent = "";
+    var head = mk("div", "air-dhead");
+    head.appendChild(mk("strong", "", dayName(h.t.slice(0, 10), tz) + " " + h.t.slice(11, 16)));
+    var av = mk("span", "meta-v", h.a !== null ? "AQI " + Math.round(h.a) + " · " + t("aqi." + C.aqiLevel(h.a)) : "AQI —");
+    if (h.a !== null) av.setAttribute("data-level", C.aqiLevel(h.a));
+    head.appendChild(av);
+    det.appendChild(head);
+    var grid = mk("div", "air-grid");
+    ["pm25", "pm10", "o3", "no2"].forEach(function (k) {
+      var cell = mk("div", "air-cell");
+      cell.appendChild(mk("span", "meta-k", POLL_NAME[k]));
+      var cv = h.c && typeof h.c[k] === "number" ? Math.round(h.c[k]) + " " + t("air.unit") : "—";
+      var vv = mk("span", "air-cv meta-v", cv);
+      var si = h.s && typeof h.s[k] === "number" ? h.s[k] : null;
+      if (si !== null) vv.setAttribute("data-level", C.aqiLevel(si));
+      cell.appendChild(vv);
+      grid.appendChild(cell);
+    });
+    det.appendChild(grid);
+    var pk = Object.keys(h.pol || {});
+    if (pk.length) {
+      var pl = mk("p", "air-pol dim");
+      pl.textContent = t("air.pollen") + ": " + C.POLLEN.filter(function (x) { return pk.indexOf(x) >= 0; }).map(function (x) {
+        var lv = C.pollenLevel(x, h.pol[x]);
+        return t("pol." + x) + " " + Math.round(h.pol[x]) + " (" + t("pol.l" + lv) + ")";
+      }).join(" · ");
+      det.appendChild(pl);
+    }
+    sec.hidden = false;
+    if (title) title.hidden = false;
+  }
+
+  // --- Forecast model + comparison ---
+  function modelName(id) {
+    for (var i = 0; C && i < C.MODELS.length; i++) if (C.MODELS[i].id === id) return C.MODELS[i].n || t("model.best");
+    return id;
+  }
+  function fillModelSelect(sel, value, withNone) {
+    sel.textContent = "";
+    if (withNone) { var o0 = mk("option", "", t("cmp.none")); o0.value = ""; sel.appendChild(o0); }
+    C.MODELS.forEach(function (m) {
+      var o = mk("option", "", m.n || t("model.best"));
+      o.value = m.id;
+      sel.appendChild(o);
+    });
+    sel.value = value;
+  }
+  var cmpOpen = false, cmpMem = {};
+  function renderModelSec(city) {
+    var sec = $("model-sec"), title = $("model-title");
+    if (!sec) return;
+    var show = !!(C && city);
+    sec.hidden = !show;
+    if (title) title.hidden = !show;
+    if (!show) return;
+    $("cmp-btn").textContent = t(cmpOpen ? "cmp.hide" : "cmp.btn");
+    $("cmp-btn").setAttribute("aria-expanded", cmpOpen ? "true" : "false");
+    $("cmp-panel").hidden = !cmpOpen;
+    if (cmpOpen) renderCompare();
+  }
+  function cmpModels() {
+    var out = [];
+    readPrefs().cmp.forEach(function (m) { if (m && out.indexOf(m) < 0) out.push(m); });
+    return out;
+  }
+  function loadCompare() {
+    var city = activeCity(), models = cmpModels();
+    if (!C || !city || !models.length) { renderCompare(); return; }
+    var key = city.id + "|" + models.join(",");
+    var m = cmpMem[key];
+    if (m && (m.state === "loading" || (m.state === "ok" && Date.now() - m.at < CMP_GAP))) { renderCompare(); return; }
+    if (!navigator.onLine) { if (!m) cmpMem[key] = { state: "err", at: Date.now() }; renderCompare(); return; }
+    cmpMem[key] = { state: "loading", at: Date.now(), d: m && m.d };
+    renderCompare();
+    var url = "https://api.open-meteo.com/v1/forecast?latitude=" + city.lat + "&longitude=" + city.lon +
+      "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&models=" +
+      encodeURIComponent(models.join(",")) + "&timezone=auto&forecast_days=7";
+    fetch(url).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return d ? C.parseCompare(d, models) : null; })
+      .catch(function () { return null; })
+      .then(function (res) {
+        cmpMem[key] = res ? { state: "ok", at: Date.now(), d: res } : { state: "err", at: Date.now() };
+        renderCompare();
+      });
+  }
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function sv(tag, attrs) {
+    var e = document.createElementNS(SVGNS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, String(attrs[k])); });
+    return e;
+  }
+  function renderCompare() {
+    var out = $("cmp-out");
+    if (!out || !cmpOpen) return;
+    out.textContent = "";
+    var city = activeCity(), models = cmpModels();
+    if (!city || !models.length) return;
+    var m = cmpMem[city.id + "|" + models.join(",")];
+    if (!m || (m.state === "loading" && !m.d)) { out.appendChild(mk("p", "hint", t("cmp.loading"))); return; }
+    if (m.state === "err" || !m.d) { out.appendChild(mk("p", "hint err", t("cmp.err"))); return; }
+    var d = m.d, n = d.dates.length, tz = payloadTz(readPayload());
+    var lo = Infinity, hi = -Infinity;
+    d.series.forEach(function (s) {
+      s.max.concat(s.min).forEach(function (v) { if (typeof v === "number") { v = toUnit(v); if (v < lo) lo = v; if (v > hi) hi = v; } });
+    });
+    if (!isFinite(lo)) { out.appendChild(mk("p", "hint err", t("cmp.err"))); return; }
+    lo = Math.floor(lo - 1); hi = Math.ceil(hi + 1);
+    var W = 320, H = 150, L = 30, R = 8, T = 10, B = 22;
+    var svg = sv("svg", { viewBox: "0 0 " + W + " " + H, "class": "cmp-chart", role: "img",
+                          "aria-label": t("cmp.btn") + ": " + d.series.map(function (s) { return modelName(s.model); }).join(", ") });
+    function x(i) { return L + (n > 1 ? i * (W - L - R) / (n - 1) : 0); }
+    function y(v) { return T + (hi - v) * (H - T - B) / (hi - lo); }
+    [lo, Math.round((lo + hi) / 2), hi].forEach(function (v) {
+      svg.appendChild(sv("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), "class": "cmp-grid" }));
+      var tx = sv("text", { x: L - 4, y: y(v) + 3, "text-anchor": "end", "class": "cmp-ax" });
+      tx.textContent = Math.round(v) + "°";
+      svg.appendChild(tx);
+    });
+    d.dates.forEach(function (dt, i) {
+      var tx = sv("text", { x: x(i), y: H - 6, "text-anchor": "middle", "class": "cmp-ax" });
+      tx.textContent = dayName(dt, tz);
+      svg.appendChild(tx);
+    });
+    d.series.forEach(function (s, k) {
+      [["max", ""], ["min", "4 3"]].forEach(function (pair) {
+        var pts = [];
+        s[pair[0]].forEach(function (v, i) { if (typeof v === "number") pts.push(x(i).toFixed(1) + "," + y(toUnit(v)).toFixed(1)); });
+        if (pts.length < 2) return;
+        var a = { points: pts.join(" "), "class": "cmp-line cmp-s" + k };
+        if (pair[1]) a["stroke-dasharray"] = pair[1];
+        svg.appendChild(sv("polyline", a));
+      });
+    });
+    out.appendChild(svg);
+    var leg = mk("div", "cmp-legend");
+    d.series.forEach(function (s, k) {
+      var it = mk("span", "cmp-key");
+      it.appendChild(mk("span", "cmp-sw cmp-b" + k));
+      it.appendChild(document.createTextNode(modelName(s.model)));
+      leg.appendChild(it);
+    });
+    out.appendChild(leg);
+    out.appendChild(mk("p", "hint", t("cmp.max")));
+    var tb = mk("table", "cmp-rain"), tr = mk("tr");
+    tr.appendChild(mk("th", "", t("cmp.rain") + " (" + (state.units === "imperial" ? "in" : "mm") + ")"));
+    d.dates.forEach(function (dt) { tr.appendChild(mk("th", "", dayName(dt, tz))); });
+    var th = mk("thead"); th.appendChild(tr); tb.appendChild(th);
+    var tbody = mk("tbody");
+    d.series.forEach(function (s, k) {
+      var r = mk("tr"), nm = mk("th", "");
+      nm.appendChild(mk("span", "cmp-sw cmp-b" + k));
+      nm.appendChild(document.createTextNode(modelName(s.model)));
+      nm.title = modelName(s.model);
+      r.appendChild(nm);
+      d.dates.forEach(function (dt, i) {
+        var v = s.rain[i];
+        r.appendChild(mk("td", typeof v === "number" && v >= 0.1 ? "" : "dim",
+          typeof v === "number" ? (state.units === "imperial" ? (v / 25.4).toFixed(2) : (v < 10 ? v.toFixed(1) : String(Math.round(v)))) : "—"));
+      });
+      tbody.appendChild(r);
+    });
+    tb.appendChild(tbody);
+    var wrap = mk("div", "cmp-tablewrap");
+    wrap.appendChild(tb);
+    out.appendChild(wrap);
+  }
+  function wireExtras() {
+    if (!C || !$("model-sel")) return;
+    var pr = readPrefs();
+    fillModelSelect($("model-sel"), pr.model, false);
+    $("model-sel").setAttribute("aria-label", t("model.title"));
+    $("model-hint").textContent = t("model.hint");
+    $("model-sel").addEventListener("change", function () {
+      var q = readPrefs();
+      q.model = $("model-sel").value;
+      writePrefs(q);
+      refresh(true, true);
+    });
+    var pick = $("cmp-pickers");
+    pick.textContent = "";
+    pr.cmp.forEach(function (m, i) {
+      var s = document.createElement("select");
+      s.setAttribute("aria-label", fill("cmp.model", { n: String(i + 1) }));
+      s.className = "cmp-sel cmp-bd" + i;
+      fillModelSelect(s, m, i > 0);
+      if (i === 0 && !m) s.value = "best_match";
+      s.addEventListener("change", function () {
+        var q = readPrefs();
+        q.cmp[i] = s.value;
+        writePrefs(q);
+        loadCompare();
+      });
+      pick.appendChild(s);
+    });
+    $("cmp-btn").addEventListener("click", function () {
+      cmpOpen = !cmpOpen;
+      renderModelSec(activeCity());
+      if (cmpOpen) loadCompare();
+    });
+  }
+
+  function renderExtras(city, p) {
+    renderWarnings(city, p);
+    renderNowcast(city ? p : null);
+    renderAir(city ? p : null);
+    renderModelSec(city);
+  }
+
   // --- City dialog ---
   var cityDlgBusy = false;   // geocode in flight → ignore double submits
 
@@ -1266,6 +2107,7 @@
     var host = $("city-list");
     host.innerHTML = "";
     renderTraySection();
+    renderWarnSettings();   // wave 38
     var api = trayApi();
     var trayId = (api && api.isOn()) ? trayCityId() : null;
 
@@ -1345,6 +2187,7 @@
     });
     if (dup) { dlgHint("err.exists", true); return; }
     var city = newCityObj(g.label, g.lat, g.lon);
+    placeInfo(city, g);   // wave 38: country + region (official warnings)
     city.pos = state.cities.length;
     state.cities.push(city);
     state.active = city.id;
@@ -1552,6 +2395,19 @@
           else notifyFetchFail();
         }
         scheduleRender();
+        // wave 38: country/region for old cities, then the warnings
+        // (a refresh button press re-reads the feed too)
+        var city = activeCity();
+        if (!city) return;
+        return backfillPlace(city).then(function (changed) {
+          if (changed) scheduleRender();
+          return maybeFetchWarnings(activeCity(), readPayload(), !!force);
+        }).then(function (changed) {
+          if (changed) {
+            scheduleRender();
+            if ($("dlg-city").open) renderWarnSettings();
+          }
+        });
       })
       .catch(function () { /* fetchForecast never throws */ })
       .finally(function () { btn.classList.remove("loading"); });
@@ -1662,7 +2518,7 @@
     // by a notification/scroll-interrupt left it dangling before).
     var sx = 0, sy = 0, tracking = false;
     $("wxmain").addEventListener("pointerdown", function (e) {
-      if (e.target.closest("#hourly")) { tracking = false; return; }
+      if (e.target.closest("#hourly, #air-strip, .cmp-tablewrap, select")) { tracking = false; return; }
       tracking = true; sx = e.clientX; sy = e.clientY;
     });
     $("wxmain").addEventListener("pointerup", function (e) {
@@ -1812,6 +2668,7 @@
   applyI18n();
   paintStaticAria();
   wire();
+  wireExtras();               // wave 38: model select + comparison
   registerSync();
   inheritPalette();
   watchPalette();

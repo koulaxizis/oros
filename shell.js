@@ -1116,6 +1116,7 @@
       tickSafe("notifTick", notifTickThrottled);         // Wave 1A: notification sweep (60s throttle)
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
+      tickSafe("wxWarnTick", wxWarnTickThrottled);       // Weather wave 38: official warnings notice (60s throttle, off by default)
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
       tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
@@ -5269,6 +5270,9 @@
         { name: "Open-Meteo", url: "https://open-meteo.com/",
           by: "Open-Meteo.com", lic: "CC BY 4.0 (data)",
           en: "Weather, places, air quality", el: "Καιρός, τοποθεσίες, ποιότητα αέρα" },
+        { name: "MeteoAlarm", url: "https://meteoalarm.org/",
+          by: "EUMETNET and the national weather services", lic: { en: "MeteoAlarm terms (attribution)", el: "Όροι MeteoAlarm (αναφορά πηγής)" },
+          en: "Official weather warnings (Weather)", el: "Επίσημες προειδοποιήσεις καιρού (Καιρός)" },
         { name: "OpenStreetMap", url: "https://www.openstreetmap.org/copyright",
           by: "OpenStreetMap contributors", lic: "ODbL (data)",
           en: "Map data, standard tiles and the public GPS traces layer (Maps)", el: "Δεδομένα και πλακίδια χάρτη, επίπεδο δημόσιων GPS traces (Χάρτες)" },
@@ -6245,6 +6249,114 @@
       body: wbEl ? el : en,
       deepLink: "weather:open"
     });
+  }
+
+  // Official weather warnings (MeteoAlarm, Weather wave 38). Off by
+  // default: the Weather app's device-local pref
+  // `oros-weatherapp-prefs`.notify = "severe" (orange + red) or "all".
+  // For the taskbar's city (nearest app city within WX_NEAR_DEG, else
+  // the first). Reads the app's device-local warnings cache
+  // `oros-weatherapp-warn`; when it is older than an hour the shell
+  // reads the feed itself, straight from the browser only (the app
+  // can also use the Mail relay). One notice per warning, ever
+  // (`sent` keeps the keys until the warning expires). Parsing and
+  // the city's area: weather/core.js (OrosWeatherCore).
+  var wxWarnLastTick = 0, wxWarnBusy = false, wxWarnTryAt = 0;
+  function wxWarnTickThrottled() {
+    var now = Date.now();
+    if (now - wxWarnLastTick < 60000) return;
+    wxWarnLastTick = now;
+    wxWarnTick();
+  }
+  function wxWarnRead(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  function wxWarnTick() {
+    var C = window.OrosWeatherCore;
+    if (!C || !(window.orosNotifs && typeof window.orosNotifs.emit === "function")) return;
+    var prefs = wxWarnRead("oros-weatherapp-prefs");
+    var mode = prefs && prefs.notify;
+    if (mode !== "severe" && mode !== "all") return;
+    if (prefs.warnOn === false) return;
+    var data = wxWarnRead("oros-weatherapp-data");
+    if (!data || !Array.isArray(data.cities) || !data.cities.length) return;
+    var cities = data.cities.filter(function (c) {
+      return c && typeof c.id === "string" && typeof c.lat === "number" && typeof c.lon === "number";
+    });
+    if (!cities.length) return;
+    var w = wxLoc(), city = null, bestD = Infinity;
+    if (w) cities.forEach(function (c) {
+      var d = Math.abs(c.lat - w.lat) + Math.abs(c.lon - w.lon);
+      if (d < bestD) { bestD = d; city = c; }
+    });
+    if (!city || bestD >= WX_NEAR_DEG) {
+      city = cities.slice().sort(function (a, b) { return (Number(a.pos) || 0) - (Number(b.pos) || 0); })[0];
+    }
+    var cache = wxWarnRead("oros-weatherapp-cache");
+    var p = cache && typeof cache === "object" ? cache[city.id] : null;
+    var slug = C.slugFor(city.cc, p && p.tzn), url = C.feedUrl(slug);
+    if (!url) return;
+    var store = wxWarnRead("oros-weatherapp-warn");
+    if (!store || typeof store !== "object") store = {};
+    if (!store.feeds || typeof store.feeds !== "object") store.feeds = {};
+    if (!store.sent || typeof store.sent !== "object") store.sent = {};
+    var feed = store.feeds[slug], now = Date.now();
+    var okAt = (feed && feed.ok) || 0;
+    if (now - okAt > 3600000 && now - wxWarnTryAt > 3600000 && !wxWarnBusy && navigator.onLine !== false) {
+      wxWarnBusy = true;
+      wxWarnTryAt = now;
+      fetch(url, { credentials: "omit", referrerPolicy: "no-referrer", cache: "no-cache" })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (text) {
+          var list = text ? C.parseAtom(text) : null;
+          if (!list) return;
+          var s2 = wxWarnRead("oros-weatherapp-warn");
+          if (!s2 || typeof s2 !== "object") s2 = {};
+          if (!s2.feeds || typeof s2.feeds !== "object") s2.feeds = {};
+          var t2 = Date.now();
+          s2.feeds[slug] = { at: t2, ok: t2, list: C.activeList(list, t2).slice(0, 300), err: "", via: "direct" };
+          try { localStorage.setItem("oros-weatherapp-warn", JSON.stringify(s2)); } catch (e) {}
+          wxWarnLastTick = 0;               // emit on the next tick
+        })
+        .catch(function () { /* CORS or offline: the app (relay) still can */ })
+        .then(function () { wxWarnBusy = false; });
+    }
+    if (!feed || !Array.isArray(feed.list) || now - okAt > 6 * 3600000) return;
+    var mine = C.forCity(C.activeList(feed.list, now), city).mine;
+    var lang = localStorage.getItem("oros-lang") === "el" ? "el" : "en";
+    var changed = false;
+    Object.keys(store.sent).forEach(function (k) {
+      if (!(store.sent[k] > now)) { delete store.sent[k]; changed = true; }
+    });
+    mine.forEach(function (x) {
+      if (mode === "severe" && x.level < 3) return;
+      var key = "warn-" + slug + "-" + String(x.id).slice(-60) + "-" + C.fold(x.area).slice(0, 30);
+      if (store.sent[key]) return;
+      // in the city's clock (the app's cache knows its offset), like the app
+      var tzOff = (p && typeof p.tz === "number") ? p.tz : null;
+      var until = typeof x.exp === "number"
+        ? new Date(x.exp + (tzOff !== null ? tzOff * 1000 : 0)).toLocaleString(lang === "el" ? "el-GR" : "en-GB",
+            tzOff !== null ? { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "UTC" }
+                           : { weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+        : "";
+      window.orosNotifs.emit({
+        ns: "weather",
+        key: key,
+        type: "reminder",
+        title: C.warnTitle(x, lang),
+        body: [city.label || "", x.area, until ? (lang === "el" ? "έως " : "until ") + until : ""]
+          .filter(Boolean).join(" · "),
+        deepLink: "weather:open"
+      });
+      store.sent[key] = typeof x.exp === "number" ? x.exp : now + 2 * 86400000;
+      changed = true;
+    });
+    if (changed) {
+      var s3 = wxWarnRead("oros-weatherapp-warn");
+      if (!s3 || typeof s3 !== "object") s3 = { feeds: {} };
+      s3.sent = store.sent;
+      try { localStorage.setItem("oros-weatherapp-warn", JSON.stringify(s3)); } catch (e) {}
+    }
   }
 
   // Weather app → tray bridge (2026-10-09: the menu section is gone;

@@ -1,6 +1,6 @@
 # Weather
 
-Current conditions, the next 48 hours and a 7-day forecast for the cities you pick. It works with the small weather display in the orOS top bar.
+Current conditions, official warnings, rain in the next 2 hours, the next 48 hours, a 7-day forecast and air quality with pollen for the cities you pick. It works with the small weather display in the orOS top bar.
 
 ## Getting started
 
@@ -14,6 +14,29 @@ If you've already set up the top-bar weather, its city is added for you.
 - Below it: `Feels like`, `Humidity`, `Wind`, `UV index`, `Sun` (sunrise → sunset) and `Air quality` (European AQI). Hover over UV or air quality to see the scale.
 - `Next 48 hours` scrolls sideways. `7-day forecast` shows lows, highs and the chance of rain.
 - Tap the big temperature to switch between °C and °F (wind changes between km/h and mph too).
+
+## Official warnings
+
+Above the forecast you see the official weather warnings for your city's area from MeteoAlarm, the European service of the national weather services (in Greece, the HNMS warnings). Each warning has its colour (yellow, orange, red), what it is about, the area and when it starts and ends.
+
+- Tap a warning for the details in your language when the weather service gives them (description, what to do), and `Open on MeteoAlarm`.
+- The app guesses your area from the city. `Warnings elsewhere in …` lists the rest of the country; tap `My area` on a warning there to use that area for this city (it syncs with the city). `Forget area` goes back to the guess.
+- In `Cities`, under `Official warnings`: `Show MeteoAlarm warnings` (on by default) and `Notify me`: `Off` (default), `Orange and red` or `All warnings`. orOS then sends one [notification](help:t/notifications) per warning for the taskbar city, also while Weather is closed. Both choices are for this device only.
+- Some browsers can't read MeteoAlarm directly. The app then uses the relay you set up in [Mail](app:mail), if there is one; without it, the `Cities` dialog says so and no warnings show.
+
+## Rain in the next 2 hours
+
+`Next 2 hours` shows the rain (or snow) every 15 minutes as small bars, with one sentence such as `Rain starts in ~30 min`, `Light rain stops in ~45 min` or `No rain in the next 2 hours`.
+
+## Air & pollen
+
+- Three days with the worst European AQI of the day, the pollutant that drives it and the strongest pollen (alder, birch, grass, mugwort, olive, ragweed: low, moderate, high, very high).
+- The bars show the next 24 hours; tap one to see its AQI, PM2.5, PM10, O₃ and NO₂ (µg/m³) and the pollen counts.
+
+## Forecast model
+
+- Under `Forecast model` you pick the weather model: `Automatic (best match)` (default), ECMWF IFS, DWD ICON, NOAA GFS, Météo-France, UK Met Office, MET Norway, GEM or JMA. The choice is for this device only.
+- `Compare models` draws the highs (solid lines) and lows (dashed) of up to three models for 7 days, with each model's daily rain below. Pick the models in the three lists.
 
 ## More than one city
 
@@ -37,7 +60,7 @@ The forecast updates when you open or return to the app, at most every 30 minute
 
 ## Sync and backup
 
-Your cities, the city on screen and your °C/°F choice sync through [orOS sync](help:t/sync). The top-bar weather settings sync with the rest of the orOS settings. Downloaded forecasts stay on this device. Weather has no import or export.
+Your cities (with the warnings area you picked), the city on screen and your °C/°F choice sync through [orOS sync](help:t/sync). The forecast model, the warnings settings and the downloaded warnings stay on this device. The top-bar weather settings sync with the rest of the orOS settings. Downloaded forecasts stay on this device. Weather has no import or export.
 
 ## Tips
 
@@ -46,6 +69,9 @@ Your cities, the city on screen and your °C/°F choice sync through [orOS sync]
 
 ## Limits
 
-- Data comes from [Open-Meteo](https://open-meteo.com/), which needs no account. It receives the city names you search for and the coordinates of your cities.
+- Data comes from [Open-Meteo](https://open-meteo.com/), which needs no account. It receives the city names you search for and the coordinates of your cities. Air quality and pollen come from the Copernicus Atmosphere Monitoring Service through Open-Meteo; pollen only in Europe and in season.
+- Warnings come from [MeteoAlarm](https://meteoalarm.org/) (EUMETNET) and cover its European countries only. MeteoAlarm receives only the country. The national weather service's own page is the official source; a warning can reach MeteoAlarm a little later.
+- The area guess compares names and can be wrong; pick `My area` when it is. You can only pick an area that has a warning at that moment.
+- Outside central Europe and North America, the 15-minute rain is drawn from hourly data, so it is less precise. Some models have no 15-minute data: `Next 2 hours` then hides.
 - If air quality or another value can't be fetched, you see — instead.
-- Hints are short rules of thumb, not official warnings.
+- Hints are short rules of thumb, not official warnings; the official ones are in the warnings banner.

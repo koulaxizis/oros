@@ -80,6 +80,8 @@ there are no recorded audio files. Emoji come from the device's own font.
 | Service | Operator | Terms / data licence | Used by |
 |---|---|---|---|
 | [Open-Meteo](https://open-meteo.com/) (forecast, geocoding, air quality) | Open-Meteo.com | Data [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), free for non-commercial use; attribution shown in the Weather app | Weather app, taskbar weather |
+| [MeteoAlarm](https://meteoalarm.org/) (official warnings, legacy Atom + CAP feeds) | EUMETNET and the national weather services | MeteoAlarm terms: attribution to MeteoAlarm / EUMETNET and the issuing service, shown in the Weather app; the national service's own page is the official source | Weather app, Weather warnings notice |
+| [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/) (via Open-Meteo Air Quality) | ECMWF for the European Union | Copernicus licence; attribution shown in the Weather app | Weather app (air quality, pollen) |
 | [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles | OpenStreetMap Foundation; data by OpenStreetMap contributors | Data [ODbL](https://opendatacommons.org/licenses/odbl/); [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) | Maps (standard layer; public GPS traces layer from gps.tile.openstreetmap.org) |
 | OSM France humanitarian tiles | OpenStreetMap France, [Humanitarian OpenStreetMap Team](https://www.hotosm.org/) | Data ODbL | Maps (humanitarian layer) |
 | Esri World Imagery | Esri; imagery Maxar, Earthstar Geographics | Esri terms of use; attribution shown on the map | Maps (satellite layer) |
