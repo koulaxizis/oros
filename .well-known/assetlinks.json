@@ -11,5 +11,83 @@
         "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.notes",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.calendar",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.todo",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.passwords",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.budget",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.useoros.games",
+      "sha256_cert_fingerprints": [
+        "21:44:1E:31:A6:0A:89:70:8C:6C:EC:E6:49:39:0C:18:63:EC:8C:A1:47:F0:8D:A7:39:9A:E7:64:6E:02:EE:4E"
+      ]
+    }
   }
 ]

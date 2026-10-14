@@ -220,3 +220,19 @@ test("accounts.js keeps no token: no storage writes of tokens, revoke for Google
   assert.ok(/history\.replaceState/.test(cb), "callback clears the address bar");
   assert.ok(!/fetch\(/.test(cb), "callback never talks to the network");
 });
+
+test("re-import after an earlier fold: rows already inside one contact are skipped, not added again", () => {
+  const merged = loc("k1", {
+    given: "Κωνσταντίνα", family: "Μαραγκού",
+    phones: [{ v: "+306949471122" }, { v: "690 770 9097" }],
+    emails: [{ v: "info@thebabyland.gr" }, { v: "info@frigoplus.gr" }, { v: "costadina123@gmail.com" }]
+  });
+  const pl = P.plan([merged], [
+    inc({ given: "Κωνσταντίνα", family: "Μαραγκού", emails: [{ v: "info@thebabyland.gr" }] }),
+    inc({ given: "Κωνσταντίνα", family: "Μαραγκού", emails: [{ v: "info@frigoplus.gr" }] }),
+    inc({ given: "Κωνσταντίνα", family: "Μαραγκού", phones: [{ v: "+306949471122" }], emails: [{ v: "costadina123@gmail.com" }] })
+  ], []);
+  assert.equal(pl.items.length, 3);
+  assert.deepEqual(pl.counts, { "new": 0, same: 3, diff: 0 });
+  assert.ok(pl.items.every((it) => it.match === "k1"));
+});
