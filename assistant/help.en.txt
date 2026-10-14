@@ -1,12 +1,24 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a service with a free plan (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova, Pollinations), a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
 2. Under `Assistant`, choose who you want to talk to.
 3. Paste your `API key` from that service and press `Save key`. `Get a key` opens the page where you create one.
 4. Check the `Model`. `Load models` lists the models your key can use and also tells you that the key works.
-5. Press `Close`, type your question and press `Send`.
+5. Press `Test the connection`. It sends one short message and tells you if the service answers here. If it says the service does not accept calls from a web browser, pick another one: that can't be fixed from orOS.
+6. Press `Close`, type your question and press `Send`.
+
+## Free services
+These need only a free account and a free key, with daily limits. Nothing is charged unless you add a way to pay on their site:
+- `Groq`, `Cerebras` and `SambaNova`: fast open models such as Llama and Qwen.
+- `GitHub Models`: GPT, Llama, Mistral and more with any GitHub account. The key is a fine-grained personal access token with the `Models` permission set to read.
+- `Cohere`: Command models. The free trial key is for personal use and testing only.
+- `Hugging Face`: many open models through one free token.
+- `Pollinations`: use a publishable key (it starts with `pk_`).
+- `OpenRouter`: tick `Only free models`, then `Load models`: only the models whose name ends in `:free` are listed.
+
+Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device.
 
 For a model on your computer, choose `Local / OpenAI-compatible` and enter its `Server address`, for example `http://localhost:11434/v1` for Ollama. A key is optional there.
 
@@ -63,7 +75,10 @@ Some changes stay in the app, and the assistant says so: ticking a repeating tas
 Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP, GIF) or a PDF, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 3 files go with one message.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.
 - Above the message box you see each file and its size, and where it goes. The file goes only to that service, only when you press `Send`. Large photos are made smaller first.
-- Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs. Mistral and a local model read photos only (a local model only if it can see images). The built-in browser model reads no files.
+- Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs themselves. Mistral reads photos itself.
+- Every other case works too: orOS reads the file's text on this device first and sends only that text. PDFs go through PDF.js; a scanned PDF (no text inside) and the words in a photo go through Tesseract, in English and Greek. This is how Mistral reads PDFs, a local model reads PDFs and photos, and the built-in browser model reads both. The chip then says `text only`.
+- The first time a photo is read this way, the text engine is downloaded once from orOS itself (about 7 MB). Nothing else is contacted, and the file never leaves the device.
+- For a local model with vision (llava, gemma3, qwen2.5-vl and others) tick `This model can see photos` in the settings: photos then go as pictures.
 - Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
 
 ## Search the internet

@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.19.00
+- The Assistant works with more free services: Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova and Pollinations need only a free account and key. OpenRouter can list only its free models. A new "Test the connection" button in Settings tells you at once if a service answers here.
+
+## Version 2.18.00
+- Photos and PDFs now work with every AI model in the Assistant. When a service can't read a file itself (Mistral with PDFs, local models, the built-in browser model), orOS reads its text on your device first and sends only the text.
+
 ## Version 2.17.00
 - orOS Games: every orOS game in one installable app, opening on the Game Center, with icon shortcuts for today's Wordle, crossword and Sudoku and for Chess.
 

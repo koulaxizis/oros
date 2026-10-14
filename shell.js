@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.17.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.19.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5401,7 +5401,7 @@
           en: "Live streams (Television)", el: "Ζωντανές ροές (Τηλεόραση)" },
         { name: "PDF.js 5.4.394", url: "https://mozilla.github.io/pdf.js/",
           by: "Mozilla Foundation & contributors", lic: "Apache-2.0",
-          en: "Opening PDF files (Layout)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)" },
+          en: "Opening PDF files (Layout); reading PDF text on the device (Assistant)", el: "Άνοιγμα αρχείων PDF (Σελιδοποίηση)· ανάγνωση κειμένου PDF στη συσκευή (Βοηθός)" },
         { name: "Mediabunny 1.60.0", url: "https://mediabunny.dev/",
           by: "Vanilagy & contributors", lic: "MPL-2.0",
           en: "Reading and writing video files (Montage)", el: "Ανάγνωση και εγγραφή αρχείων βίντεο (Μοντάζ)" },
@@ -5413,7 +5413,7 @@
           en: "The background removal model (Atelier)", el: "Το μοντέλο αφαίρεσης φόντου (Ατελιέ)" },
         { name: "Tesseract.js 7.0.0 + tesseract.js-core 6.1.2", url: "https://github.com/naptha/tesseract.js",
           by: "Project Naptha, Google (Tesseract OCR) & contributors", lic: "Apache-2.0",
-          en: "Reading text from a business card photo, on the device (Contacts)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)" },
+          en: "Reading text from a business card photo, on the device (Contacts); text of photos and scanned PDFs (Assistant)", el: "Ανάγνωση κειμένου από φωτογραφία κάρτας, στη συσκευή (Επαφές)· κείμενο φωτογραφιών και σκαναρισμένων PDF (Βοηθός)" },
         { name: "jsQR 1.4.0", url: "https://github.com/cozmo/jsQR",
           by: "Cosmo Wolfe", lic: "Apache-2.0",
           en: "Reading QR codes from the camera or a picture (QR, Passwords)", el: "Ανάγνωση QR από την κάμερα ή εικόνα (QR, Κωδικοί)" },
@@ -5634,6 +5634,27 @@
           en: "Album details (Media Shelf)", el: "Στοιχεία άλμπουμ (Το ράφι μου)" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { en: "Their terms, your own key", el: "Οι όροι τους, με δικό σου κλειδί" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Groq", url: "https://groq.com/",
+          by: "Groq, Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Cerebras", url: "https://www.cerebras.ai/",
+          by: "Cerebras Systems", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "GitHub Models", url: "https://github.com/marketplace/models",
+          by: "GitHub, Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Cohere", url: "https://cohere.com/",
+          by: "Cohere Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Hugging Face Inference Providers", url: "https://huggingface.co/",
+          by: "Hugging Face, Inc.", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "SambaNova Cloud", url: "https://sambanova.ai/",
+          by: "SambaNova Systems", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
+          en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
+        { name: "Pollinations", url: "https://pollinations.ai/",
+          by: "Pollinations.AI", lic: { en: "Their terms, your own key (free plan)", el: "Οι όροι τους, με δικό σου κλειδί (δωρεάν πλάνο)" },
           en: "AI chat you choose (Assistant)", el: "Συζήτηση με το AI που διαλέγεις (Βοηθός)" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",
           by: "Cloudflare, Inc.", lic: { en: "Runs the orOS mail relay (code in relay/)", el: "Τρέχει το relay αλληλογραφίας του orOS (κώδικας στο relay/)" },
