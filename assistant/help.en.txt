@@ -73,6 +73,13 @@ In `Settings` → `Internet`, `Let Claude search the internet when an answer nee
 - The search runs on Anthropic's servers. Anthropic charges $10 per 1,000 searches on top of the tokens; `Used this month` in the settings counts your searches.
 - Search words go to Anthropic and its search partner. Claude is told never to put your orOS data in them unless you ask for that exact search.
 
+## Briefing
+On a new conversation, `Briefing` sums up your day in one answer: today's agenda, what is late, birthdays and other dates this week, and how this month's spending looks. [Today](app:today) has the same button (the sparkles at the top).
+- It runs only when you press it, never by itself, so it never costs anything you didn't ask for.
+- orOS works out each app's summary on this device first. Apps set to `Ask first` show on one card, with the lines that would go out: untick what should stay, then press `Share`. `Without these` sends only the apps set to `Always share`. Apps set to `Never` are not read at all, and apps with nothing for today or this week are left out.
+- Under your message you see what was shared and what you held back. The answer links each item to its app, and may suggest up to 3 entries (for example a reminder to buy a present), which you save yourself as usual. A briefing never changes or deletes anything.
+- It needs an AI service that can read your data: not the built-in browser model, and with `Chat only` off.
+
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
@@ -109,7 +116,7 @@ Keys stay on each device unless you tick `Sync API keys to my other devices`. Th
 
 ## Limits
 - The assistant needs the internet, except a model on your own network or the built-in browser model.
-- It can suggest new entries for To-Do, Calendar, Budget, Quote, Invoices, Spreadsheet, Slides, Bookmarks and Notes. It can change or delete items only in To-Do, Calendar, Budget and Bookmarks, one at a time, and it can't send anything (no email).
+- It can change or delete items only in the apps listed under `Change what you already have`, one at a time, and it can't send anything (no email).
 - Undo of a change works only until you leave the Assistant.
 - If an app is open in another browser tab while you change one of its items here, that tab may still show the old version until you reload it.
 - Some services may refuse calls from a browser. A local server must allow this site: for Ollama, start it with `OLLAMA_ORIGINS=https://useoros.online`.

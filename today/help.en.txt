@@ -54,6 +54,8 @@ The notice comes once a day, even with several devices: they all see the same on
 ## Ask the Assistant
 When the [Assistant](app:assistant) is set up, rows have a speech-bubble button, `Ask the Assistant about this`. It opens the Assistant with a question about that row already typed. Nothing is sent until you press `Send` there. The button follows the Assistant's own permission for each app, so it never appears for an app the Assistant may not read.
 
+The sparkles button at the top, `Briefing from the Assistant`, asks the Assistant for a short briefing of your day in one answer. It shows only when the Assistant is set up with a service that can read your data. Apps set to `Ask first` appear on one card before anything is sent; see the Assistant's help for the details.
+
 ## Settings
 Open them with the gear button:
 - `Daily summary` turns the daily notice on or off. The Today tab works either way.
