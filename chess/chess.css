@@ -198,6 +198,16 @@ button, select {
   font-variant-numeric: tabular-nums;
 }
 .side.turn { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.side .clk {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+}
+.side .clk.low { color: var(--bg); background: var(--danger); }
 .chip {
   width: 14px;
   height: 14px;
@@ -434,6 +444,25 @@ button.mv:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+#online-bar {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+#lp-info { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+#lp-info.warn { color: var(--accent); }
+.lp-sec { margin: 12px 0 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
+.lp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.lp-grid .dlg-btn { min-width: 0; }
+.lp-check { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 13px; }
+.lp-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.lp-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.lp-row > * { flex: 1 1 120px; min-width: 0; }
+.lp-ch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.lp-ch span { flex: 1 1 160px; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+select.cc-input { appearance: auto; }
 #rv-info {
   font-size: 12px;
   color: var(--text-dim);
@@ -467,7 +496,7 @@ button.mv:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px;
   #moves li { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 4px; }
   #moves-wrap { flex-wrap: nowrap; width: 240px; }
   #moves { flex: 1 1 auto; min-height: 0; }
-  #review-bar { flex: 0 0 auto; padding-top: 10px; border-top: 1px solid var(--border); }
+  #review-bar, #online-bar { flex: 0 0 auto; padding-top: 10px; border-top: 1px solid var(--border); }
   #rv-info { white-space: normal; }
 }
 

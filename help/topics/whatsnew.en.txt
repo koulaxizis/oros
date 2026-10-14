@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.92.00
+- Chess plays on Lichess: find an opponent, challenge a friend or accept a challenge, and play rated or casual games on the orOS board with both clocks.
+
 ## Version 1.91.00
 - Chess connects to Lichess: sign in to see your ratings and games, play the Lichess daily puzzle, or send any game to Lichess for its free analysis.
 

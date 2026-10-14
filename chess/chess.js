@@ -233,6 +233,76 @@
       "li.offline": "You're offline: Lichess needs the internet",
       "li.busy": "Lichess is busy: try again in a minute",
       "li.net": "Could not reach Lichess",
+      "li.k.ultraBullet": "UltraBullet",
+      "lp.play": "Play",
+      "lp.title": "Play on Lichess",
+      "lp.allowIntro": "To play real games on Lichess from here, allow orOS to play with your account. Lichess asks you once; you can take it back any time in your Lichess settings or with Sign out here.",
+      "lp.allow": "Allow playing",
+      "lp.fair": "On Lichess any outside help is forbidden, so during these games orOS turns off Analysis and the Lichess analysis board. You can review a game when it has ended.",
+      "lp.fairNo": "Not during a game: Lichess forbids outside help. Review it when it has ended.",
+      "lp.incoming": "Challenges for you",
+      "lp.accept": "Accept",
+      "lp.decline": "Decline",
+      "lp.find": "Find an opponent",
+      "lp.days": "{n} days/move", "lp.day1": "1 day/move",
+      "lp.ratedBox": "Rated games (they change your Lichess rating)",
+      "lp.friend": "Challenge a friend",
+      "lp.friendUser": "Their Lichess username",
+      "lp.tc": "Time control",
+      "lp.send": "Send challenge",
+      "lp.myGames": "My games in progress",
+      "lp.noGames": "No games in progress on Lichess.",
+      "lp.as.w": "with white", "lp.as.b": "with black",
+      "lp.yourTurn": "your move", "lp.theirTurn": "their move",
+      "lp.rated": "Rated", "lp.casual": "Casual",
+      "lp.seeking": "Looking for an opponent ({tc})…",
+      "lp.waitingFor": "Waiting for {u} to accept…",
+      "lp.cancel": "Cancel",
+      "lp.noOpponent": "No opponent found this time: try again or pick another time control",
+      "lp.seekPosted": "Your correspondence game is posted: it starts when someone joins (see My games in progress)",
+      "lp.sentCorr": "Challenge sent to {u}: the game starts when they accept",
+      "lp.declined": "{u} declined the challenge",
+      "lp.canceled": "The challenge with {u} ended",
+      "lp.badUser": "A Lichess username has 2 to 30 letters, digits, _ or -",
+      "lp.self": "You can't challenge yourself",
+      "lp.busy": "Finish your Lichess game first (or resign it)",
+      "lp.challenged": "{u} challenges you on Lichess ({tc})",
+      "lp.started": "Your Lichess game with {u} has started",
+      "lp.turnOne": "It's your move in a Lichess game",
+      "lp.turnMany": "It's your move in {n} Lichess games",
+      "lp.show": "Show",
+      "lp.open": "Open",
+      "lp.opened": "Lichess game opened",
+      "lp.notHere": "This Lichess game can't be played here (a variant or a set-up position): open it on lichess.org",
+      "lp.wait": "Wait for your opponent's move",
+      "lp.theirMove": "Opponent's move",
+      "lp.moveRefused": "Lichess did not take that move: the board shows the game as it is",
+      "lp.noScope": "Lichess needs your OK to play: sign out and sign in again from Play",
+      "lp.refused": "Lichess said no",
+      "lp.refusedWhy": "Lichess said no: {why}",
+      "lp.draw": "Offer a draw",
+      "lp.acceptDraw": "Accept the draw",
+      "lp.noDraw": "Decline",
+      "lp.drawOffered": "your opponent offers a draw",
+      "lp.drawSent": "draw offered",
+      "lp.gone": "your opponent left the game",
+      "lp.goneClaim": "your opponent left: you can claim the win",
+      "lp.claim": "Claim victory",
+      "lp.resign": "Resign",
+      "lp.abort": "Abort",
+      "lp.confirmResign": "Resign this game? It counts as a loss.",
+      "lp.confirmAbort": "Abort this game? It ends with no result.",
+      "lp.review": "Review this game",
+      "lp.again": "Play again",
+      "lp.web": "On lichess.org",
+      "lp.youWon": "you won",
+      "lp.won": "{u} won",
+      "lp.youLose": "You lost",
+      "lp.end.aborted": "Game aborted", "lp.end.mate": "Checkmate", "lp.end.resign": "Resigned",
+      "lp.end.stalemate": "Stalemate: a draw", "lp.end.timeout": "Left the game", "lp.end.draw": "Draw",
+      "lp.end.outoftime": "Time ran out", "lp.end.cheat": "Ended by Lichess", "lp.end.noStart": "The game never started",
+      "lp.end.unknownFinish": "Game over", "lp.end.insufficientMaterialClaim": "Draw: not enough pieces to mate",
+      "lp.end.variantEnd": "Game over",
       "cc.note": "Data from Chess.com's public API. It refreshes a few times a day, so a game that just ended may take a while to appear."
     },
     el: {
@@ -388,6 +458,76 @@
       "li.offline": "Είσαι εκτός σύνδεσης: το Lichess θέλει internet",
       "li.busy": "Το Lichess είναι απασχολημένο: δοκίμασε ξανά σε ένα λεπτό",
       "li.net": "Δεν ήταν δυνατή η σύνδεση με το Lichess",
+      "li.k.ultraBullet": "UltraBullet",
+      "lp.play": "Παιχνίδι",
+      "lp.title": "Παιχνίδι στο Lichess",
+      "lp.allowIntro": "Για να παίζεις πραγματικές παρτίδες στο Lichess από εδώ, επίτρεψε στο orOS να παίζει με τον λογαριασμό σου. Το Lichess σε ρωτά μία φορά· μπορείς να το ανακαλέσεις όποτε θέλεις από τις ρυθμίσεις του Lichess ή με την Αποσύνδεση εδώ.",
+      "lp.allow": "Επιτρέπω το παιχνίδι",
+      "lp.fair": "Στο Lichess απαγορεύεται κάθε εξωτερική βοήθεια, οπότε σε αυτές τις παρτίδες το orOS κλείνει την Ανάλυση και την ανάλυση του Lichess. Μπορείς να δεις την παρτίδα σε ανασκόπηση όταν τελειώσει.",
+      "lp.fairNo": "Όχι κατά τη διάρκεια της παρτίδας: το Lichess απαγορεύει την εξωτερική βοήθεια. Δες την όταν τελειώσει.",
+      "lp.incoming": "Προσκλήσεις για σένα",
+      "lp.accept": "Αποδοχή",
+      "lp.decline": "Απόρριψη",
+      "lp.find": "Βρες αντίπαλο",
+      "lp.days": "{n} ημ./κίνηση", "lp.day1": "1 ημ./κίνηση",
+      "lp.ratedBox": "Βαθμολογημένες παρτίδες (αλλάζουν τη βαθμολογία σου στο Lichess)",
+      "lp.friend": "Πρόσκληση σε φίλο",
+      "lp.friendUser": "Το όνομα χρήστη του στο Lichess",
+      "lp.tc": "Χρόνος",
+      "lp.send": "Αποστολή πρόσκλησης",
+      "lp.myGames": "Οι παρτίδες μου σε εξέλιξη",
+      "lp.noGames": "Δεν έχεις παρτίδες σε εξέλιξη στο Lichess.",
+      "lp.as.w": "με λευκά", "lp.as.b": "με μαύρα",
+      "lp.yourTurn": "σειρά σου", "lp.theirTurn": "σειρά του αντιπάλου",
+      "lp.rated": "Βαθμολογημένη", "lp.casual": "Φιλική",
+      "lp.seeking": "Αναζήτηση αντιπάλου ({tc})…",
+      "lp.waitingFor": "Περιμένουμε τον/την {u} να δεχτεί…",
+      "lp.cancel": "Ακύρωση",
+      "lp.noOpponent": "Δεν βρέθηκε αντίπαλος αυτή τη φορά: δοκίμασε ξανά ή διάλεξε άλλο χρόνο",
+      "lp.seekPosted": "Η παρτίδα αλληλογραφίας αναρτήθηκε: ξεκινά όταν μπει κάποιος (δες τις παρτίδες σε εξέλιξη)",
+      "lp.sentCorr": "Η πρόσκληση στάλθηκε στον/στην {u}: η παρτίδα ξεκινά όταν τη δεχτεί",
+      "lp.declined": "Ο/Η {u} απέρριψε την πρόσκληση",
+      "lp.canceled": "Η πρόσκληση με τον/την {u} έληξε",
+      "lp.badUser": "Ένα όνομα χρήστη στο Lichess έχει 2 έως 30 γράμματα, ψηφία, _ ή -",
+      "lp.self": "Δεν μπορείς να προσκαλέσεις τον εαυτό σου",
+      "lp.busy": "Τελείωσε πρώτα την παρτίδα σου στο Lichess (ή εγκατάλειψέ τη)",
+      "lp.challenged": "Ο/Η {u} σε προσκαλεί στο Lichess ({tc})",
+      "lp.started": "Η παρτίδα σου στο Lichess με τον/την {u} ξεκίνησε",
+      "lp.turnOne": "Είναι η σειρά σου σε μια παρτίδα στο Lichess",
+      "lp.turnMany": "Είναι η σειρά σου σε {n} παρτίδες στο Lichess",
+      "lp.show": "Εμφάνιση",
+      "lp.open": "Άνοιγμα",
+      "lp.opened": "Άνοιξε η παρτίδα στο Lichess",
+      "lp.notHere": "Αυτή η παρτίδα δεν παίζεται εδώ (παραλλαγή ή στημένη θέση): άνοιξέ τη στο lichess.org",
+      "lp.wait": "Περίμενε την κίνηση του αντιπάλου",
+      "lp.theirMove": "Σειρά του αντιπάλου",
+      "lp.moveRefused": "Το Lichess δεν δέχτηκε την κίνηση: η σκακιέρα δείχνει την παρτίδα όπως είναι",
+      "lp.noScope": "Το Lichess θέλει την έγκρισή σου για παιχνίδι: αποσυνδέσου και συνδέσου ξανά από το Παιχνίδι",
+      "lp.refused": "Το Lichess δεν το δέχτηκε",
+      "lp.refusedWhy": "Το Lichess δεν το δέχτηκε: {why}",
+      "lp.draw": "Πρόταση ισοπαλίας",
+      "lp.acceptDraw": "Αποδοχή ισοπαλίας",
+      "lp.noDraw": "Απόρριψη",
+      "lp.drawOffered": "ο αντίπαλος προτείνει ισοπαλία",
+      "lp.drawSent": "πρότεινες ισοπαλία",
+      "lp.gone": "ο αντίπαλος έφυγε από την παρτίδα",
+      "lp.goneClaim": "ο αντίπαλος έφυγε: μπορείς να διεκδικήσεις τη νίκη",
+      "lp.claim": "Διεκδίκηση νίκης",
+      "lp.resign": "Εγκατάλειψη",
+      "lp.abort": "Ακύρωση παρτίδας",
+      "lp.confirmResign": "Να εγκαταλείψεις την παρτίδα; Μετρά ως ήττα.",
+      "lp.confirmAbort": "Να ακυρωθεί η παρτίδα; Τελειώνει χωρίς αποτέλεσμα.",
+      "lp.review": "Ανασκόπηση παρτίδας",
+      "lp.again": "Νέα παρτίδα",
+      "lp.web": "Στο lichess.org",
+      "lp.youWon": "κέρδισες",
+      "lp.won": "κέρδισε ο/η {u}",
+      "lp.youLose": "Έχασες",
+      "lp.end.aborted": "Η παρτίδα ακυρώθηκε", "lp.end.mate": "Ματ", "lp.end.resign": "Εγκατάλειψη",
+      "lp.end.stalemate": "Πατ: ισοπαλία", "lp.end.timeout": "Αποχώρηση από την παρτίδα", "lp.end.draw": "Ισοπαλία",
+      "lp.end.outoftime": "Τελείωσε ο χρόνος", "lp.end.cheat": "Τερματίστηκε από το Lichess", "lp.end.noStart": "Η παρτίδα δεν ξεκίνησε ποτέ",
+      "lp.end.unknownFinish": "Τέλος παρτίδας", "lp.end.insufficientMaterialClaim": "Ισοπαλία: δεν φτάνουν τα κομμάτια για ματ",
+      "lp.end.variantEnd": "Τέλος παρτίδας",
       "cc.note": "Στοιχεία από το δημόσιο API του Chess.com. Ανανεώνονται λίγες φορές τη μέρα, οπότε μια παρτίδα που μόλις τελείωσε μπορεί να αργήσει να φανεί."
     }
   };
@@ -1394,8 +1534,124 @@
       var s = num(j.expires_in);
       return { token: j.access_token, exp: s && s > 0 ? now + s * 1000 : 0 };
     }
+
+    // ---- Playing (Board API, wave 4) ----
+    // Lichess lets third-party boards play Rapid, Classical and
+    // Correspondence in public seeks; Blitz only in direct challenges.
+    var PLAY_SCOPE = "board:play challenge:read challenge:write";
+    var SEEKS = [[10, 0], [10, 5], [15, 10], [30, 0], [30, 20]];         // minutes + seconds
+    var FRIEND = [[3, 2], [5, 3], [10, 0], [15, 10], [30, 0]];
+    var DAYS = [1, 3, 7];
+    var GAME_ID_RE = /^[A-Za-z0-9]{8}$/;
+    var UCI_RE = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+    var ENDS = ["aborted", "mate", "resign", "stalemate", "timeout", "draw", "outoftime", "cheat", "noStart",
+                "unknownFinish", "insufficientMaterialClaim", "variantEnd"];
+    function hasPlay(scope) {
+      var have = String(scope || "").split(/[\s,]+/);
+      return PLAY_SCOPE.split(" ").every(function (x) { return have.indexOf(x) >= 0; });
+    }
+    function okId(id) { return typeof id === "string" && GAME_ID_RE.test(id) ? id : ""; }
+    // ndjson: feed text chunks, get the parsed objects of whole lines.
+    function lineReader() {
+      var buf = "";
+      return function (chunk) {
+        buf += chunk;
+        var out = [], nl;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          var line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line) continue;
+          try { var j = JSON.parse(line); if (j && typeof j === "object") out.push(j); } catch (e) {}
+        }
+        if (buf.length > 1000000) buf = "";
+        return out;
+      };
+    }
+    function player(x) {
+      x = x && typeof x === "object" ? x : {};
+      return { name: okUser(x.name || x.username || x.id || "") || "?", title: clean(x.title).slice(0, 4),
+               rating: num(x.rating), id: okUser(String(x.id || "")).toLowerCase() };
+    }
+    // The space-separated UCI moves of a game state → [uci…] from the
+    // start position, or null. Castling may come as king-takes-rook
+    // (Chess960 notation); it is turned into the king's two squares.
+    function boardMoves(str) {
+      var list = String(str || "").trim() ? String(str).trim().split(/\s+/) : [];
+      if (list.length > 1200) return null;
+      var P = E.parseFen(E.START), out = [];
+      for (var i = 0; i < list.length; i++) {
+        var u = list[i];
+        if (!UCI_RE.test(u)) return null;
+        var m = E.fromUci(P, u);
+        if (!m) {
+          var c = { e1h1: "e1g1", e1a1: "e1c1", e8h8: "e8g8", e8a8: "e8c8" }[u];
+          m = c ? E.fromUci(P, c) : 0;
+          if (!m) return null;
+        }
+        out.push(E.toUci(m));
+        E.makeMove(P, m);
+      }
+      return out;
+    }
+    function gameState(j) {
+      if (!j || typeof j !== "object") return null;
+      var moves = boardMoves(j.moves);
+      if (!moves) return null;
+      var status = typeof j.status === "string" ? j.status : "started";
+      if (status !== "started" && status !== "created" && ENDS.indexOf(status) < 0) status = "unknownFinish";
+      return { moves: moves, wtime: num(j.wtime), btime: num(j.btime), winc: num(j.winc) || 0, binc: num(j.binc) || 0,
+               status: status, winner: j.winner === "white" ? "w" : (j.winner === "black" ? "b" : ""),
+               wdraw: j.wdraw === true, bdraw: j.bdraw === true };
+    }
+    // The first line of a game stream; standard games from the start only.
+    function gameFull(j, me) {
+      if (!j || j.type !== "gameFull" || !okId(j.id)) return null;
+      if (j.variant && j.variant.key !== "standard") return null;
+      if (j.initialFen && j.initialFen !== "startpos" && j.initialFen !== E.START) return null;
+      var state = gameState(j.state);
+      if (!state) return null;
+      var w = player(j.white), b = player(j.black), mine = String(me || "").toLowerCase();
+      var clock = j.clock && num(j.clock.initial) !== null ? { initial: num(j.clock.initial), increment: num(j.clock.increment) || 0 } : null;
+      var days = num(j.daysPerTurn);
+      return { id: j.id, white: w, black: b, human: b.id && b.id === mine ? "b" : "w",
+               rated: j.rated === true, speed: clean(j.speed).slice(0, 20), clock: clock, days: days || null, state: state };
+    }
+    // An incoming challenge from the event stream (not one I sent).
+    function challengeIn(ev, me) {
+      var c = ev && ev.challenge;
+      if (!c || !okId(c.id) || c.status !== "created") return null;
+      var from = player(c.challenger), mine = String(me || "").toLowerCase();
+      if (!mine || from.id === mine) return null;
+      var tc = c.timeControl || {}, label = "";
+      if (tc.type === "clock") label = Math.round((num(tc.limit) || 0) / 60 * 100) / 100 + "+" + (num(tc.increment) || 0);
+      else if (tc.type === "correspondence") label = (num(tc.daysPerTurn) || 0) + "d";
+      var ok = !!(ev.compat ? ev.compat.board : true) && (!c.variant || c.variant.key === "standard") && tc.type !== "unlimited";
+      return { id: c.id, from: from, rated: c.rated === true, speed: clean(c.speed).slice(0, 20), tc: label,
+               color: c.color === "white" ? "b" : (c.color === "black" ? "w" : ""), ok: ok };
+    }
+    // /api/account/playing → my standard games now going on.
+    function playing(j) {
+      var out = [], list = j && Array.isArray(j.nowPlaying) ? j.nowPlaying : [];
+      list.forEach(function (g) {
+        if (!g || !okId(g.gameId) || (g.variant && g.variant.key !== "standard")) return;
+        var o = player(g.opponent);
+        out.push({ id: g.gameId, opp: o.name, rating: o.rating, color: g.color === "black" ? "b" : "w",
+                   myTurn: g.isMyTurn === true, speed: clean(g.speed).slice(0, 20), secondsLeft: num(g.secondsLeft) });
+      });
+      return out.slice(0, 50);
+    }
+    // Clock text: 12:05, 0:42, and tenths under ten seconds.
+    function clockText(ms) {
+      ms = Math.max(0, ms || 0);
+      if (ms < 10000) return "0:0" + (Math.floor(ms / 100) / 10).toFixed(1);
+      var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60;
+      return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (ss < 10 ? "0" : "") + ss;
+    }
     return { HOST: HOST, CLIENT: CLIENT, KINDS: KINDS, okUser: okUser, authorizeUrl: authorizeUrl,
-             account: account, gamesPath: gamesPath, puzzleGame: puzzleGame, importUrl: importUrl, tokenOf: tokenOf };
+             account: account, gamesPath: gamesPath, puzzleGame: puzzleGame, importUrl: importUrl, tokenOf: tokenOf,
+             PLAY_SCOPE: PLAY_SCOPE, SEEKS: SEEKS, FRIEND: FRIEND, DAYS: DAYS, ENDS: ENDS, hasPlay: hasPlay, okId: okId,
+             lineReader: lineReader, boardMoves: boardMoves, gameState: gameState, gameFull: gameFull,
+             challengeIn: challengeIn, playing: playing, clockText: clockText };
   }
 
   var E = makeEngine();
@@ -1529,7 +1785,7 @@
   }
 
   // ---------- 4. Device-local prefs + session ----------
-  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "", li: "" };
+  var prefs = { mode: "ai", lv: "m", side: "w", flip: false, ana: false, cc: "", li: "", lr: false };
 
   function loadPrefs() {
     try {
@@ -1542,6 +1798,7 @@
         prefs.ana = p.ana === true;
         prefs.cc = CC.okUser(p.cc);
         prefs.li = LI.okUser(p.li);
+        prefs.lr = p.lr === true;
       }
     } catch (e) {}
   }
@@ -1561,13 +1818,17 @@
   //                        // from a reviewed game (never undone)
   //   tags?: {…}, result?, at: n   // review only: the PGN tags, its
   //                        // result and the move shown (0…moves.length)
+  //   online?: { id, white, black, rated, speed, clock, days, … }
+  //                        // mode online: a game on Lichess (section 7e);
+  //                        // only id and the players are kept on reload,
+  //                        // the rest comes from the game stream
   // }
   // The position is always replayed from moves.
   var game = null;
   var pos = null, sans = [], legal = [], st = null;
 
   function validSession(g) {
-    if (!g || typeof g !== "object" || (MODES.indexOf(g.mode) < 0 && g.mode !== "review") ||
+    if (!g || typeof g !== "object" || (MODES.indexOf(g.mode) < 0 && g.mode !== "review" && g.mode !== "online") ||
         LEVELS.indexOf(g.lv) < 0 || (g.human !== "w" && g.human !== "b") ||
         !Array.isArray(g.moves) || g.moves.length > MAX_PLIES) return false;
     for (var i = 0; i < g.moves.length; i++) {
@@ -1575,6 +1836,7 @@
     }
     if (g.fen !== undefined && (typeof g.fen !== "string" || g.fen.length > 100 || !E.parseFen(g.fen))) return false;
     if (g.base !== undefined && (!isInt(g.base) || g.base < 0 || g.base > g.moves.length)) return false;
+    if (g.mode === "online" && (!g.online || typeof g.online !== "object" || !LI.okId(g.online.id) || g.fen)) return false;
     return !!E.replay(g.moves, g.fen);
   }
   function cleanTags(x) {
@@ -1584,6 +1846,17 @@
       if (typeof x[k] === "string" && PGN.clean(x[k])) out[k] = PGN.clean(x[k]);
     });
     return out;
+  }
+  function cleanOnline(o) {
+    function pl(p) {
+      p = p && typeof p === "object" ? p : {};
+      return { name: LI.okUser(p.name) || "?", title: PGN.clean(p.title).slice(0, 4),
+               rating: isInt(p.rating) ? p.rating : null, id: LI.okUser(p.id).toLowerCase() };
+    }
+    var c = o.clock && isInt(o.clock.initial) && isInt(o.clock.increment) ? { initial: o.clock.initial, increment: o.clock.increment } : null;
+    return { id: o.id, white: pl(o.white), black: pl(o.black), rated: o.rated === true,
+             speed: PGN.clean(o.speed).slice(0, 20), clock: c, days: isInt(o.days) ? o.days : null,
+             status: LI.ENDS.indexOf(o.status) >= 0 ? o.status : "started", winner: o.winner === "w" || o.winner === "b" ? o.winner : "" };
   }
   function loadSession() {
     try {
@@ -1599,6 +1872,7 @@
           out.result = ["1-0", "0-1", "1/2-1/2"].indexOf(g.result) >= 0 ? g.result : "*";
           out.at = isInt(g.at) && g.at >= 0 && g.at <= g.moves.length ? g.at : g.moves.length;
         }
+        if (g.mode === "online") out.online = cleanOnline(g.online);
         return out;
       }
     } catch (e) {}
@@ -1650,7 +1924,8 @@
 
   // Any other game in its place (a new one, a PGN to review, "Play
   // from here"); the one left behind comes back with Undo.
-  function replaceGame(next, msg, announce) {
+  function replaceGame(next, msg, announce, force) {
+    if (lpLive() && !force) { showToast(t("lp.busy")); return; }
     var keep = inProgress() || (game && game.mode === "review");
     var prev = keep ? JSON.parse(JSON.stringify(game)) : null;
     var prevPrefs = JSON.parse(JSON.stringify(prefs));
@@ -1662,18 +1937,21 @@
     syncPos();
     renderAll(true);
     maybeAi();
+    lpSwap();
     if (prev) {
       undoToast(msg, function () {
         cancelAi();
         closeDialogs();
         prefs = prevPrefs;
         savePrefs();
+        if (lpLive()) { showToast(t("lp.busy")); return; }
         game = prev;
         saveSession();
         sel = -1; anim = null;
         syncPos();
         renderAll(true);
         maybeAi();
+        lpSwap();
       });
     } else if (announce) {
       live(msg);
@@ -1687,6 +1965,7 @@
       return nm + (elo && /^\d{3,4}$/.test(elo) ? " (" + elo + ")" : "");
     }
     if (game && game.mode === "ai") return t(c === game.human ? "name.you" : "name.ai");
+    if (game && game.mode === "online") return lpName(c);
     return t("name." + c);
   }
 
@@ -1700,6 +1979,11 @@
     if (game.mode === "review") { showToast(t("toast.review")); return; }
     if (game.done) { showToast(t("toast.over")); return; }            // R28
     if (aiTurn()) { showToast(t("toast.wait")); return; }
+    if (game.mode === "online" && toMove() !== game.human) {
+      if (sel >= 0) select(-1);
+      showToast(t("lp.wait"));
+      return;
+    }
     var p = pos.b[sq], mine = !!p && colorOf(p) === toMove();
     if (sel >= 0 && sq === sel) { select(-1); return; }
     if (sel >= 0 && !mine) { tryMove(sel, sq, false); return; }
@@ -1751,6 +2035,13 @@
     sel = -1;
     afterMove();
     live(t("live.move", { who: sideName(mover), san: san }));
+    if (game.mode === "online") {          // Lichess decides the end
+      sfx(E.inCheck(pos) ? "check" : (cap ? "capture" : "move"));
+      saveSession();
+      renderAll(false);
+      lpMove(E.toUci(m));
+      return;
+    }
     if (st.over) { finish(); return; }
     sfx(E.inCheck(pos) ? "check" : (cap ? "capture" : "move"));
     saveSession();
@@ -1833,7 +2124,7 @@
   // its answer (the game then counts for no record).
   function canUndo() {
     var base = game ? game.base || 0 : 0;
-    if (!game || game.done || game.mode === "review" || game.moves.length <= base) return false;
+    if (!game || game.done || game.mode === "review" || game.mode === "online" || game.moves.length <= base) return false;
     if (game.mode === "duo") return true;
     var first = base + (sideAt(base) === game.human ? 0 : 1);   // index of your first move
     return game.moves.length > first;
@@ -1907,6 +2198,7 @@
     $("flip-btn").setAttribute("aria-pressed", prefs.flip ? "true" : "false");
     paintSfxBtn();
     renderReviewBar();
+    renderOnlineBar();
   }
 
   // "12. Nf3" / "12… Nf6": the move that led to the position after n plies.
@@ -1928,13 +2220,18 @@
       else if (st.over && st.reason === "mate") txt += " · " + t("res.mate");
       return txt;
     }
-    if (st.over) {
+    if (st.over && game.mode !== "online") {
       var w = winnerOf(st);
       if (st.reason === "mate") {
         var who = game.mode === "ai" ? t(w === game.human ? "who.you" : "who.ai") : t("who." + w);
         return t("turn.mate", { who: who });
       }
       return t("turn.draw", { why: t("why." + st.reason) });
+    }
+    if (game.mode === "online") {
+      if (game.done) return lpEndText();
+      var tx = toMove() === game.human ? t("turn.you") : t("lp.theirMove");
+      return E.inCheck(pos) && toMove() === game.human ? t("turn.check") + " " + tx : tx;
     }
     var txt;
     if (game.mode === "ai") txt = aiTurn() ? t("turn.ai") : t("turn.you");
@@ -1963,15 +2260,17 @@
     var tn = $("turn");
     tn.textContent = statusText();
     var rv = game.mode === "review";
-    tn.className = rv ? "" : (st.over ? "done" : (E.inCheck(pos) ? "warn" : ""));
-    $("side-w").classList.toggle("turn", !st.over && toMove() === "w");
-    $("side-b").classList.toggle("turn", !st.over && toMove() === "b");
+    var over = st.over || !!(game.mode === "online" && game.done);
+    tn.className = rv ? "" : (over ? "done" : (E.inCheck(pos) ? "warn" : ""));
+    $("side-w").classList.toggle("turn", !over && toMove() === "w");
+    $("side-b").classList.toggle("turn", !over && toMove() === "b");
     $("unrated").hidden = !(game.mode === "ai" && game.unrated);
+    renderClocks();
   }
 
   // White at the bottom unless you play black, or the board is flipped.
   function whiteBottom() {
-    var base = !(game && game.mode === "ai" && game.human === "b");
+    var base = !(game && (game.mode === "ai" || game.mode === "online") && game.human === "b");
     return prefs.flip ? !base : base;
   }
   // The square shown at visual cell i (row-major from the top left).
@@ -2601,7 +2900,7 @@
     dlg.appendChild(list);
     var acts = el("div", "dlg-actions");
     var an = button(t("li.analyse"), "", liAnalyse);
-    an.disabled = !game.moves.length && !game.fen;
+    an.disabled = (!game.moves.length && !game.fen) || (game.mode === "online" && !game.done);
     acts.appendChild(an);
     acts.appendChild(button(t("cc.close"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
@@ -2832,7 +3131,7 @@
         return crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, key, rec.data);
       }).then(function (plain) {
         var j = JSON.parse(new TextDecoder().decode(plain));
-        return j && typeof j.token === "string" ? { token: j.token, exp: +j.exp || 0 } : null;
+        return j && typeof j.token === "string" ? { token: j.token, exp: +j.exp || 0, scope: typeof j.scope === "string" ? j.scope : "" } : null;
       });
     }).catch(function () { return null; }).then(function (r) {
       liTok = r;
@@ -2860,7 +3159,9 @@
     return u.origin + u.pathname;
   }
 
-  function liSignIn() {
+  // scope: "" (read) or LI.PLAY_SCOPE (asked when the player first plays)
+  function liSignIn(scope) {
+    scope = typeof scope === "string" ? scope : "";
     if (navigator.onLine === false) { showToast(t("li.offline")); return; }
     if (!window.crypto || !crypto.subtle || typeof indexedDB === "undefined") { showToast(t("li.noCrypto")); return; }
     var verifier = liRandom(64), state = liRandom(24), redirect = liRedirect();
@@ -2869,8 +3170,8 @@
     var w = null;
     try { w = window.open("about:blank", "oros-lichess-auth", "popup,width=520,height=760"); } catch (e) { w = null; }
     crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)).then(function (buf) {
-      var url = LI.authorizeUrl({ state: state, challenge: b64url(new Uint8Array(buf)), redirect: redirect });
-      var rec = { state: state, verifier: verifier, redirect: redirect, mode: w ? "popup" : "redirect", t: Date.now() };
+      var url = LI.authorizeUrl({ state: state, challenge: b64url(new Uint8Array(buf)), redirect: redirect, scope: scope });
+      var rec = { state: state, verifier: verifier, redirect: redirect, scope: scope, mode: w ? "popup" : "redirect", t: Date.now() };
       try { localStorage.setItem(LI_PKCE, JSON.stringify(rec)); } catch (e) {}
       liDel(LI_CB);
       if (w) {
@@ -2910,6 +3211,7 @@
     }).then(function (j) {
       var tok = LI.tokenOf(j, Date.now());
       if (!tok) throw new Error("failed");
+      tok.scope = typeof p.scope === "string" ? p.scope : "";
       return liSaveToken(tok).then(function () { return liGet("/api/account"); });
     }).then(function (j) {
       var a = LI.account(j);
@@ -2917,7 +3219,8 @@
       prefs.li = a.user;
       savePrefs();
       showToast(t("li.signedIn", { u: a.user }));
-      if (document.getElementById("chess-li") || document.getElementById("chess-online")) liHome();
+      if (LI.hasPlay(p.scope)) { lpEvents(); if (!document.querySelector("dialog[open]") || document.getElementById("chess-lp")) lpHome(); }
+      else if (document.getElementById("chess-li") || document.getElementById("chess-online")) liHome();
       return true;
     }).catch(function (e) {
       showToast(t(e && e.message === "offline" ? "li.offline" : "li.failed"));
@@ -2937,6 +3240,7 @@
     liToken().then(function (tok) {
       prefs.li = "";
       savePrefs();
+      lpStopAll();
       liDropToken();
       if (tok) {
         fetch(LI.HOST + "/api/token", { method: "DELETE", credentials: "omit", referrerPolicy: "no-referrer",
@@ -2971,6 +3275,14 @@
         }
         if (r.status === 404) throw new Error("nouser");
         if (r.status === 429) throw new Error("busy");
+        if (r.status === 403) throw new Error("noscope");
+        if (r.status === 400) {
+          return r.json().then(function (j) { return j; }, function () { return null; }).then(function (j) {
+            var e = new Error("bad");
+            e.detail = j && typeof j.error === "string" ? PGN.clean(j.error).slice(0, 140) : "";
+            throw e;
+          });
+        }
         if (!r.ok) throw new Error("net");
         if (opts.pgn) return r.text().then(function (s) { return s.length > PGN.MAX_TEXT ? s.slice(0, PGN.MAX_TEXT) : s; });
         return r.json();
@@ -2979,6 +3291,8 @@
   }
   function liError(e) {
     var k = e && e.message;
+    if (k === "bad") { showToast(e.detail ? t("lp.refusedWhy", { why: e.detail }) : t("lp.refused")); return; }
+    if (k === "noscope") { showToast(t("lp.noScope")); return; }
     showToast(t(["offline", "busy", "expired"].indexOf(k) >= 0 ? "li." + k : "li.net"));
   }
 
@@ -3019,8 +3333,9 @@
           d.body.appendChild(rw);
         });
         var more = el("div", "dlg-actions");
-        var games = button(t("cc.games"), "primary", liGames);
+        var games = button(t("lp.play"), "primary", lpHome);
         more.appendChild(button(t("cc.puzzle"), "", liPuzzle));
+        more.appendChild(button(t("cc.games"), "", liGames));
         more.appendChild(games);
         d.body.appendChild(more);
         d.body.appendChild(el("div", "dlg-foot", t("li.note")));
@@ -3062,6 +3377,7 @@
   // not tied to an account).
   function liAnalyse() {
     if (!game.moves.length && !game.fen) { showToast(t("pgn.empty")); return; }
+    if (game.mode === "online" && !game.done) { showToast(t("lp.fairNo")); return; }
     closeDialogs();
     var tab = null;
     try { tab = window.open("about:blank", "_blank"); } catch (e) { tab = null; }
@@ -3075,6 +3391,699 @@
     }).catch(function (e) {
       if (tab) try { tab.close(); } catch (x) {}
       liError(e);
+    });
+  }
+
+  // ---------- 7e. Playing on Lichess (Board API) ----------
+  // Real games against people on lichess.org, with the player's own
+  // account: a public seek (Rapid, Classical, Correspondence), a
+  // challenge to a friend (Blitz too), and challenges that reach you.
+  // Two ndjson streams, both straight from the browser:
+  //   /api/stream/event               games starting, challenges in/out
+  //   /api/board/game/stream/{id}     the game on the board: moves, clocks,
+  //                                   draw offers, the end
+  // The server is the truth: a move is shown at once, sent, and the
+  // stream's next state replaces the local one. Lichess forbids outside
+  // help, so a game in progress has no Analysis and cannot be sent to
+  // the Lichess analysis board; review opens when the game has ended.
+  // The online game rides in the device-local session (mode "online")
+  // and its stream reopens on the next start. Nothing here syncs.
+  var lp = {
+    ev: null,              // AbortController of the event stream
+    evRetry: 0,
+    gs: null, gsId: "",    // the game stream
+    gsRetry: 0,
+    waiting: null,         // { kind: "seek"|"challenge", ctl, id?, dlg }
+    challenges: {},        // id → incoming challenge
+    turnNote: null,        // timer of the "your turn" summary
+    turns: {},             // correspondence games where it is my move
+    tick: null             // clock timer
+  };
+
+  function lpPlayToken() {
+    return liToken().then(function (tok) { return tok && LI.hasPlay(tok.scope) ? tok : null; });
+  }
+
+  // One ndjson request; onObj(obj) for each line. Resolves when the
+  // server closes it, rejects on errors (not on our own abort).
+  function lpStream(path, form, ctl, onObj) {
+    return liToken().then(function (tok) {
+      if (!tok) throw new Error("expired");
+      var init = { method: form ? "POST" : "GET", credentials: "omit", referrerPolicy: "no-referrer",
+                   headers: { Accept: "application/x-ndjson", Authorization: "Bearer " + tok.token }, signal: ctl.signal };
+      if (form) {
+        init.headers["Content-Type"] = "application/x-www-form-urlencoded";
+        init.body = new URLSearchParams(form).toString();
+      }
+      return fetch(LI.HOST + path, init).then(function (r) {
+        if (r.status === 401) { liDropToken(); prefs.li = ""; savePrefs(); throw new Error("expired"); }
+        if (r.status === 403) throw new Error("noscope");
+        if (r.status === 404) throw new Error("nouser");
+        if (r.status === 429) throw new Error("busy");
+        if (r.status === 400) {
+          return r.json().then(function (j) { return j; }, function () { return null; }).then(function (j) {
+            var e = new Error("bad");
+            e.detail = j && typeof j.error === "string" ? PGN.clean(j.error).slice(0, 140) : "";
+            throw e;
+          });
+        }
+        if (!r.ok || !r.body) throw new Error("net");
+        var reader = r.body.getReader(), dec = new TextDecoder(), feed = LI.lineReader();
+        function pump() {
+          return reader.read().then(function (x) {
+            if (x.done) return;
+            feed(dec.decode(x.value, { stream: true })).forEach(function (o) { try { onObj(o); } catch (e) {} });
+            return pump();
+          });
+        }
+        return pump();
+      });
+    }).catch(function (e) {
+      if (ctl.signal.aborted) return;
+      throw e && e.message ? e : new Error(navigator.onLine === false ? "offline" : "net");
+    });
+  }
+  function lpPost(path, form) { return liGet(path, { form: form || {} }); }
+
+  // ---- the event stream ----
+  function lpEvents() {
+    if (lp.ev) return;
+    lpPlayToken().then(function (tok) {
+      if (!tok || lp.ev) return;
+      var ctl = new AbortController();
+      lp.ev = ctl;
+      lpStream("/api/stream/event", null, ctl, lpOnEvent).then(function () {
+        if (lp.ev === ctl) { lp.ev = null; lpEventsLater(); }
+      }, function (e) {
+        if (lp.ev !== ctl) return;
+        lp.ev = null;
+        if (e && (e.message === "expired" || e.message === "noscope")) return;
+        lpEventsLater();
+      });
+    });
+  }
+  function lpEventsLater() {
+    lp.evRetry = Math.min(60000, (lp.evRetry || 2500) * 2);
+    setTimeout(function () { if (!lp.ev && prefs.li) lpEvents(); }, lp.evRetry);
+  }
+
+  function lpOnEvent(ev) {
+    lp.evRetry = 0;
+    var type = ev.type;
+    if (type === "gameStart" && ev.game) {
+      var g = ev.game, id = LI.okId(g.gameId || g.id);
+      if (!id || (g.variant && g.variant.key !== "standard") || (g.compat && g.compat.board === false)) return;
+      var opp = (g.opponent && LI.okUser(g.opponent.username || "")) || "?";
+      if (lp.waiting) {
+        lpStopWaiting(false);
+        lpOpen(id);
+        return;
+      }
+      if (game.mode === "online" && game.online.id === id) return;
+      if (g.speed === "correspondence") {
+        if (g.isMyTurn) { lp.turns[id] = opp; lpTurnNote(); }
+        return;
+      }
+      if (!g.hasMoved || g.isMyTurn) {
+        actionToast(t("lp.started", { u: opp }), t("lp.open"), function () { lpOpen(id); });
+      }
+      return;
+    }
+    if (type === "challenge") {
+      var c = LI.challengeIn(ev, prefs.li);
+      if (!c || lp.challenges[c.id]) return;
+      lp.challenges[c.id] = c;
+      actionToast(t("lp.challenged", { u: c.from.name, tc: lpTc(c) }), t("lp.show"), lpHome);
+      lpRefreshHome();
+      return;
+    }
+    if (type === "challengeCanceled" || type === "challengeDeclined") {
+      var ch = ev.challenge || {}, cid = LI.okId(ch.id);
+      if (!cid) return;
+      if (lp.challenges[cid]) { delete lp.challenges[cid]; lpRefreshHome(); }
+      if (lp.waiting && lp.waiting.id === cid) {
+        lpStopWaiting(false);
+        var who = ch.destUser ? LI.okUser(ch.destUser.name || ch.destUser.id || "") : "";
+        showToast(t(type === "challengeDeclined" ? "lp.declined" : "lp.canceled", { u: who || "?" }));
+      }
+    }
+  }
+  // Correspondence games waiting for my move: one note after the
+  // stream's first burst (it lists every game when it opens).
+  function lpTurnNote() {
+    clearTimeout(lp.turnNote);
+    lp.turnNote = setTimeout(function () {
+      var ids = Object.keys(lp.turns);
+      if (!ids.length) return;
+      var n = ids.length;
+      lp.turns = {};
+      actionToast(n === 1 ? t("lp.turnOne") : t("lp.turnMany", { n: n }), t("lp.show"), lpGames);
+    }, 1500);
+  }
+  function lpDays(n) { return n === 1 ? t("lp.day1") : t("lp.days", { n: n }); }
+  function lpTc(c) {
+    var tc = c.tc.slice(-1) === "d" ? lpDays(parseInt(c.tc, 10)) : c.tc;
+    return tc + " · " + t(c.rated ? "lp.rated" : "lp.casual");
+  }
+
+  // A toast with a button (accept, open…), through the shell when it can.
+  function actionToast(text, label, fn) {
+    try {
+      var n = (window.parent && window.parent.orosNotifs) || window.orosNotifs;
+      if (n && typeof n.transient === "function" &&
+          n.transient({ ns: "chess", title: String(text), action: { label: label, fn: fn } })) return;
+    } catch (e) {}
+    localToast(text, null);
+  }
+
+  // ---- seeking and challenging ----
+  function lpWaitDialog(text, onCancel) {
+    var dlg = makeDialog("chess-lpwait");
+    dlg.appendChild(el("div", "dlg-title", "Lichess"));
+    dlg.appendChild(el("div", "dlg-msg dlg-center", text));
+    var acts = el("div", "dlg-actions");
+    var c = button(t("lp.cancel"), "", onCancel);
+    acts.appendChild(c);
+    dlg.appendChild(acts);
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); onCancel(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    c.focus();
+    return dlg;
+  }
+  function lpStopWaiting(cancel) {
+    var w = lp.waiting;
+    if (!w) return;
+    lp.waiting = null;
+    try { w.ctl.abort(); } catch (e) {}
+    if (cancel && w.kind === "challenge" && w.id) lpPost("/api/challenge/" + w.id + "/cancel").catch(function () {});
+    if (w.dlg && w.dlg.open) w.dlg.close();
+  }
+
+  function lpSeek(min, inc, days, rated) {
+    if (lpLive()) { showToast(t("lp.busy")); return; }
+    closeDialogs();
+    lpEvents();
+    var form = { rated: rated ? "true" : "false" };
+    if (days) {
+      form.days = String(days);
+      lpPost("/api/board/seek", form).then(function () {
+        showToast(t("lp.seekPosted"));
+      }).catch(liError);
+      return;
+    }
+    form.time = String(min);
+    form.increment = String(inc);
+    var ctl = new AbortController();
+    var w = lp.waiting = { kind: "seek", ctl: ctl };
+    w.dlg = lpWaitDialog(t("lp.seeking", { tc: min + "+" + inc }), function () { lpStopWaiting(true); });
+    lpStream("/api/board/seek", form, ctl, function () {}).then(function () {
+      // The server closes the seek when someone takes it (the game comes
+      // on the event stream) or when it expires.
+      setTimeout(function () {
+        if (lp.waiting === w) { lpStopWaiting(false); showToast(t("lp.noOpponent")); }
+      }, 6000);
+    }, function (e) {
+      if (lp.waiting !== w) return;
+      lpStopWaiting(false);
+      liError(e);
+    });
+  }
+
+  // tc: "m+s" or "Nd"
+  function lpChallenge(user, tc, color, rated) {
+    if (lpLive()) { showToast(t("lp.busy")); return; }
+    var u = LI.okUser(user);
+    if (!u) { showToast(t("lp.badUser")); return; }
+    if (u.toLowerCase() === prefs.li.toLowerCase()) { showToast(t("lp.self")); return; }
+    closeDialogs();
+    lpEvents();
+    var form = { rated: rated ? "true" : "false", color: color || "random" };
+    var d = /^(\d+)d$/.exec(tc);
+    if (d) {
+      form.days = d[1];
+      lpPost("/api/challenge/" + encodeURIComponent(u), form).then(function () {
+        showToast(t("lp.sentCorr", { u: u }));
+      }).catch(liError);
+      return;
+    }
+    var m = /^(\d+)\+(\d+)$/.exec(tc) || [0, 10, 0];
+    form["clock.limit"] = String(+m[1] * 60);
+    form["clock.increment"] = m[2];
+    form.keepAliveStream = "true";
+    var ctl = new AbortController();
+    var w = lp.waiting = { kind: "challenge", ctl: ctl, id: "" };
+    w.dlg = lpWaitDialog(t("lp.waitingFor", { u: u }), function () { lpStopWaiting(true); });
+    lpStream("/api/challenge/" + encodeURIComponent(u), form, ctl, function (o) {
+      var id = LI.okId(o.id || (o.challenge && o.challenge.id));
+      if (id && !w.id) w.id = id;
+      if (o.done && lp.waiting === w && o.done !== "accepted") {
+        lpStopWaiting(false);
+        showToast(t(o.done === "declined" ? "lp.declined" : "lp.canceled", { u: u }));
+      }
+    }).then(function () {
+      setTimeout(function () { if (lp.waiting === w) { lpStopWaiting(false); showToast(t("lp.canceled", { u: u })); } }, 6000);
+    }, function (e) {
+      if (lp.waiting !== w) return;
+      lpStopWaiting(false);
+      if (e && e.message === "nouser") { showToast(t("cc.nouser", { u: u })); return; }
+      liError(e);
+    });
+  }
+
+  function lpAnswer(c, yes) {
+    delete lp.challenges[c.id];
+    if (yes) {
+      if (lpLive()) { lp.challenges[c.id] = c; showToast(t("lp.busy")); return; }
+      lp.waiting = { kind: "accept", ctl: new AbortController(), id: c.id };
+      lpPost("/api/challenge/" + c.id + "/accept").catch(function (e) { lp.waiting = null; liError(e); });
+    } else {
+      lpPost("/api/challenge/" + c.id + "/decline", { reason: "generic" }).catch(function () {});
+    }
+    lpRefreshHome();
+  }
+
+  // ---- the play dialog ----
+  function lpRefreshHome() { if (document.getElementById("chess-lp")) lpHome(); }
+
+  function lpHome() {
+    var d = ccDialog("chess-lp", t("lp.title"));
+    d.acts.appendChild(button(t("cc.back"), "", liHome));
+    lpPlayToken().then(function (tok) {
+      if (!d.live()) return;
+      d.body.innerHTML = "";
+      if (!prefs.li || !tok) {
+        d.body.appendChild(el("div", "dlg-msg", t("lp.allowIntro")));
+        var acts = el("div", "dlg-actions");
+        var go = button(t("lp.allow"), "primary", function () { liSignIn(LI.PLAY_SCOPE); });
+        acts.appendChild(go);
+        d.body.appendChild(acts);
+        d.body.appendChild(el("div", "dlg-foot", t("lp.fair")));
+        go.focus();
+        return;
+      }
+      lpEvents();
+      var ids = Object.keys(lp.challenges);
+      if (ids.length) {
+        d.body.appendChild(el("div", "lp-sec", t("lp.incoming")));
+        ids.forEach(function (id) {
+          var c = lp.challenges[id], r = el("div", "lp-ch");
+          r.appendChild(el("span", "", c.from.name + (c.from.rating ? " (" + c.from.rating + ")" : "") + " · " + lpTc(c)));
+          if (c.ok) {
+            r.appendChild(button(t("lp.accept"), "small primary", function () { lpAnswer(c, true); }));
+            r.appendChild(button(t("lp.decline"), "small", function () { lpAnswer(c, false); }));
+          } else {
+            r.appendChild(button(t("lp.web"), "small", function () { window.open(LI.HOST + "/" + c.id, "_blank", "noopener"); }));
+          }
+          d.body.appendChild(r);
+        });
+      }
+      // Find an opponent
+      d.body.appendChild(el("div", "lp-sec", t("lp.find")));
+      var grid = el("div", "lp-grid");
+      LI.SEEKS.forEach(function (x) {
+        grid.appendChild(button(x[0] + "+" + x[1], "", function () { lpSeek(x[0], x[1], 0, prefs.lr); }));
+      });
+      LI.DAYS.forEach(function (n) {
+        grid.appendChild(button(lpDays(n), "", function () { lpSeek(0, 0, n, prefs.lr); }));
+      });
+      d.body.appendChild(grid);
+      var lab = el("label", "lp-check"), cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = prefs.lr;
+      cb.addEventListener("change", function () { prefs.lr = cb.checked; savePrefs(); });
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", t("lp.ratedBox")));
+      d.body.appendChild(lab);
+      // Challenge a friend
+      d.body.appendChild(el("div", "lp-sec", t("lp.friend")));
+      var inp = el("input", "cc-input");
+      inp.type = "text";
+      inp.spellcheck = false;
+      inp.autocomplete = "off";
+      inp.maxLength = 30;
+      inp.placeholder = t("lp.friendUser");
+      inp.setAttribute("aria-label", t("lp.friendUser"));
+      d.body.appendChild(inp);
+      var rowEl = el("div", "lp-row");
+      var tcSel = el("select", "cc-input");
+      tcSel.setAttribute("aria-label", t("lp.tc"));
+      LI.FRIEND.forEach(function (x) {
+        var o = el("option", "", x[0] + "+" + x[1]);
+        o.value = x[0] + "+" + x[1];
+        tcSel.appendChild(o);
+      });
+      LI.DAYS.forEach(function (n) {
+        var o = el("option", "", lpDays(n));
+        o.value = n + "d";
+        tcSel.appendChild(o);
+      });
+      tcSel.value = "10+0";
+      var colSel = el("select", "cc-input");
+      colSel.setAttribute("aria-label", t("side.label"));
+      [["random", "side.r"], ["white", "side.w"], ["black", "side.b"]].forEach(function (x) {
+        var o = el("option", "", t(x[1]));
+        o.value = x[0];
+        colSel.appendChild(o);
+      });
+      rowEl.appendChild(tcSel);
+      rowEl.appendChild(colSel);
+      d.body.appendChild(rowEl);
+      var send = el("div", "dlg-actions");
+      function go2() { lpChallenge(inp.value, tcSel.value, colSel.value, prefs.lr); }
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go2(); } });
+      send.appendChild(button(t("lp.send"), "", go2));
+      d.body.appendChild(send);
+      // My games
+      var mine = el("div", "dlg-actions");
+      mine.appendChild(button(t("lp.myGames"), "", lpGames));
+      d.body.appendChild(mine);
+      d.body.appendChild(el("div", "dlg-foot", t("lp.fair")));
+    });
+  }
+
+  function lpGames() {
+    var d = ccDialog("chess-lpgames", t("lp.myGames"));
+    d.acts.appendChild(button(t("cc.back"), "", lpHome));
+    liGet("/api/account/playing?nb=50").then(function (j) {
+      if (!d.live()) return;
+      var list = LI.playing(j);
+      d.body.innerHTML = "";
+      if (!list.length) { d.body.appendChild(el("div", "dlg-msg dlg-center", t("lp.noGames"))); return; }
+      var box = el("div", "pick-list");
+      list.forEach(function (g) {
+        var b = el("button", "pick-btn");
+        b.type = "button";
+        b.appendChild(el("span", "pick-names", g.opp + (g.rating ? " (" + g.rating + ")" : "")));
+        b.appendChild(el("span", "pick-meta", [t("lp.as." + g.color), g.speed ? t("li.k." + g.speed) : "",
+          g.myTurn ? t("lp.yourTurn") : t("lp.theirTurn")].filter(Boolean).join(" · ")));
+        b.addEventListener("click", function () { d.dlg.close(); lpOpen(g.id); });
+        box.appendChild(b);
+      });
+      d.body.appendChild(box);
+      var first = box.querySelector("button");
+      if (first) first.focus();
+    }).catch(function (e) { if (d.live()) { d.dlg.close(); liError(e); } });
+  }
+
+  // ---- the game on the board ----
+  // A real-time game in progress: nothing replaces it but another
+  // online game (a correspondence game can be left and opened again).
+  function lpLive() {
+    return !!(game && game.mode === "online" && !game.done && game.online && game.online.clock);
+  }
+
+  function lpOpen(id) {
+    id = LI.okId(id);
+    if (!id) return;
+    if (game.mode === "online" && game.online.id === id && lp.gsId === id && lp.gs) { closeDialogs(); return; }
+    lpCloseGame();
+    var ctl = new AbortController(), first = true;
+    lp.gs = ctl;
+    lp.gsId = id;
+    lpStream("/api/board/game/stream/" + id, null, ctl, function (o) {
+      if (lp.gs !== ctl) return;
+      lp.gsRetry = 0;
+      if (o.type === "gameFull") {
+        var f = LI.gameFull(o, prefs.li);
+        if (!f) { lpCloseGame(); showToast(t("lp.notHere")); return; }
+        lpFull(f, first);
+        first = false;
+      } else if (o.type === "gameState") {
+        var s2 = LI.gameState(o);
+        if (s2) lpState(s2, false);
+      } else if (o.type === "opponentGone" && game.mode === "online" && game.online.id === id) {
+        game.online.gone = o.gone === true ? { at: Date.now(), claim: typeof o.claimWinInSeconds === "number" ? o.claimWinInSeconds : null } : null;
+        renderOnlineBar();
+        if (game.online.gone && game.online.gone.claim !== null) setTimeout(renderOnlineBar, game.online.gone.claim * 1000 + 300);
+      }
+    }).then(function () {
+      if (lp.gs !== ctl) return;
+      lp.gs = null;
+      // Closed by the server: the game ended, or the line dropped.
+      if (game.mode === "online" && game.online.id === id && !game.done) lpReopenLater(id);
+    }, function (e) {
+      if (lp.gs !== ctl) return;
+      lp.gs = null;
+      if (e && (e.message === "nouser" || e.message === "noscope" || e.message === "expired")) {
+        if (first) liError(e.message === "nouser" ? new Error("net") : e);
+        return;
+      }
+      if (game.mode === "online" && game.online.id === id && !game.done) lpReopenLater(id);
+      else if (first) liError(e);
+    });
+  }
+  function lpReopenLater(id) {
+    lp.gsRetry = Math.min(30000, (lp.gsRetry || 1000) * 2);
+    setTimeout(function () {
+      if (!lp.gs && game.mode === "online" && game.online.id === id && !game.done) lpOpen(id);
+    }, lp.gsRetry);
+  }
+  function lpCloseGame() {
+    if (lp.gs) { try { lp.gs.abort(); } catch (e) {} }
+    lp.gs = null;
+    lp.gsId = "";
+  }
+  function lpStopAll() {
+    lpCloseGame();
+    lpStopWaiting(false);
+    if (lp.ev) { try { lp.ev.abort(); } catch (e) {} }
+    lp.ev = null;
+    lp.challenges = {};
+  }
+
+  function lpFull(f, first) {
+    var on = { id: f.id, white: f.white, black: f.black, rated: f.rated, speed: f.speed,
+               clock: f.clock, days: f.days };
+    if (!(game.mode === "online" && game.online.id === f.id)) {
+      var next = { mode: "online", lv: prefs.lv, human: f.human, moves: f.state.moves.slice(), done: false,
+                   unrated: true, online: on };
+      replaceGame(next, t("lp.opened"), true, true);
+      sfx("move");
+    } else {
+      game.online = Object.assign(game.online, on);
+    }
+    lpState(f.state, true);
+    if (first) closeDialogs();
+  }
+
+  function lpState(s, full) {
+    if (game.mode !== "online") return;
+    var on = game.online, before = game.moves.length;
+    on.srv = s.moves.slice();
+    on.wtime = s.wtime; on.btime = s.btime;
+    on.recv = Date.now();
+    on.status = s.status; on.winner = s.winner;
+    on.wdraw = s.wdraw; on.bdraw = s.bdraw;
+    var same = s.moves.length === game.moves.length && s.moves.every(function (u, i) { return u === game.moves[i]; });
+    if (!same) {
+      game.moves = s.moves.slice();
+      sel = -1;
+      syncPos();
+      if (game.moves.length === before + 1 && !reduced && !full) anim = { from: lastFrom, to: lastTo };
+      if (game.moves.length > before && !full) {
+        var u = game.moves[game.moves.length - 1];
+        live(t("live.move", { who: sideName(sideAt(game.moves.length - 1)), san: sans[sans.length - 1] || u }));
+        sfx(E.inCheck(pos) ? "check" : "move");
+      }
+    }
+    var ended = s.status !== "started" && s.status !== "created";
+    if (ended && !game.done) {
+      game.done = true;
+      saveSession();
+      renderAll(!same && full);
+      lpEnd();
+      return;
+    }
+    saveSession();
+    renderAll(false);
+    lpClock();
+  }
+
+  function lpEnd() {
+    var on = game.online, w = on.winner;
+    lpCloseGame();
+    clearInterval(lp.tick);
+    lp.tick = null;
+    renderClocks();
+    sfx(w && w === game.human ? "win" : "end");
+    live(statusText());
+    setTimeout(function () {
+      if (game.mode !== "online" || game.online !== on) return;
+      if (!document.querySelector("dialog[open]")) onlineResult();
+    }, 800);
+  }
+
+  function lpEndText() {
+    var on = game.online, s = on.status || "";
+    var txt = t("lp.end." + (LI.ENDS.indexOf(s) >= 0 ? s : "unknownFinish"));
+    if (on.winner) txt += " · " + (on.winner === game.human ? t("lp.youWon") : t("lp.won", { u: lpName(on.winner) }));
+    return txt;
+  }
+
+  function onlineResult() {
+    var on = game.online;
+    closeDialogs();
+    var dlg = makeDialog("chess-result");
+    dlg.appendChild(el("div", "dlg-title", t("res.title") + " · Lichess"));
+    var w = on.winner;
+    dlg.appendChild(el("div", "dlg-hero", !w ? (on.status === "aborted" ? t("lp.end.aborted") : t("res.draw"))
+      : (w === game.human ? t("res.youwin") : t("lp.youLose"))));
+    dlg.appendChild(el("div", "dlg-msg dlg-center", lpEndText()));
+    dlg.appendChild(row(t("res.moves"), String(Math.ceil(game.moves.length / 2))));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("lp.review"), "", function () { dlg.close(); lpReview(); }));
+    var again = button(t("lp.again"), "primary", function () { dlg.close(); lpHome(); });
+    acts.appendChild(again);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    again.focus();
+  }
+
+  function lpReview() {
+    var on = game.online, d = new Date(), pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var res = on.winner === "w" ? "1-0" : (on.winner === "b" ? "0-1" : (on.status === "aborted" ? "*" : "1/2-1/2"));
+    startReview({
+      tags: { Event: "Lichess · " + (on.rated ? t("lp.rated") : t("lp.casual")) + (on.speed ? " " + t("li.k." + on.speed) : ""),
+              Site: LI.HOST + "/" + on.id, Date: d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate()),
+              White: on.white.name, Black: on.black.name, Result: res,
+              WhiteElo: on.white.rating ? String(on.white.rating) : "", BlackElo: on.black.rating ? String(on.black.rating) : "" },
+      fen: "", moves: game.moves.slice(), result: res
+    });
+  }
+
+  function lpName(c) {
+    var p = game.online && game.online[c === "w" ? "white" : "black"];
+    if (!p) return t("name." + c);
+    return (p.title ? p.title + " " : "") + p.name + (p.rating ? " (" + p.rating + ")" : "");
+  }
+
+  // My move, already on the board: send it; if Lichess says no, the
+  // board goes back to its last state.
+  function lpMove(uci) {
+    var on = game.online;
+    lpPost("/api/board/game/" + on.id + "/move/" + uci).catch(function (e) {
+      if (game.mode !== "online" || game.online !== on || game.done) return;
+      if (on.srv) {
+        game.moves = on.srv.slice();
+        sel = -1;
+        syncPos();
+        saveSession();
+        renderAll(false);
+      }
+      if (e && e.message === "bad") showToast(t("lp.moveRefused"));
+      else liError(e);
+    });
+  }
+
+  // ---- clocks ----
+  function lpClockLeft(c) {
+    var on = game.online;
+    if (!on || !on.clock || typeof on.wtime !== "number") return null;
+    var ms = c === "w" ? on.wtime : on.btime;
+    if (!game.done && game.moves.length >= 2 && toMove() === c && on.recv) ms -= Date.now() - on.recv;
+    return Math.max(0, ms);
+  }
+  function renderClocks() {
+    ["w", "b"].forEach(function (c) {
+      var n = $("clk-" + c), ms = game && game.mode === "online" ? lpClockLeft(c) : null;
+      n.hidden = ms === null;
+      if (ms === null) return;
+      var txt = LI.clockText(ms);
+      if (n.textContent !== txt) n.textContent = txt;
+      n.classList.toggle("low", ms < 20000 && !game.done);
+    });
+  }
+  function lpClock() {
+    renderClocks();
+    var run = game.mode === "online" && !game.done && game.online.clock;
+    if (run && !lp.tick) lp.tick = setInterval(function () {
+      if (game.mode !== "online" || game.done) { clearInterval(lp.tick); lp.tick = null; }
+      renderClocks();
+    }, 100);
+    if (!run && lp.tick) { clearInterval(lp.tick); lp.tick = null; }
+  }
+
+  // ---- the bar under the moves ----
+  function renderOnlineBar() {
+    var bar = $("online-bar"), on = game && game.mode === "online" ? game.online : null;
+    bar.hidden = !on;
+    if (!on) return;
+    var info = $("lp-info"), parts = [];
+    var mine = game.human, theirs = mine === "w" ? "b" : "w";
+    var offered = on[theirs + "draw"], iOffered = on[mine + "draw"];
+    if (game.done) {
+      info.textContent = lpEndText();
+    } else {
+      parts.push(on.rated ? t("lp.rated") : t("lp.casual"));
+      if (on.clock) parts.push(Math.round(on.clock.initial / 600) / 100 + "+" + Math.round(on.clock.increment / 1000));
+      else if (on.days) parts.push(lpDays(on.days));
+      if (offered) parts.push(t("lp.drawOffered"));
+      else if (iOffered) parts.push(t("lp.drawSent"));
+      var gone = on.gone;
+      if (gone) parts.push(t(gone.claim !== null && Date.now() - gone.at >= gone.claim * 1000 ? "lp.goneClaim" : "lp.gone"));
+      info.textContent = parts.join(" · ");
+    }
+    info.classList.toggle("warn", !game.done && !!(offered || on.gone));
+    var live2 = !game.done;
+    $("lp-draw").hidden = !live2 || game.moves.length < 2;
+    $("lp-draw").textContent = t(offered ? "lp.acceptDraw" : "lp.draw");
+    $("lp-draw").disabled = !!iOffered && !offered;
+    $("lp-nodraw").hidden = !live2 || !offered;
+    $("lp-claim").hidden = !live2 || !(on.gone && on.gone.claim !== null && Date.now() - on.gone.at >= on.gone.claim * 1000);
+    $("lp-resign").hidden = !live2;
+    $("lp-resign").textContent = t(lpCanAbort() ? "lp.abort" : "lp.resign");
+    $("lp-review").hidden = live2;
+    $("lp-new").hidden = live2;
+  }
+  // Before each side has moved once, a game can be aborted (no result).
+  function lpCanAbort() { return game.moves.length < 2; }
+
+  function wireOnline() {
+    $("lp-draw").addEventListener("click", function () {
+      if (game.mode !== "online" || game.done) return;
+      lpPost("/api/board/game/" + game.online.id + "/draw/yes").then(function () {
+        if (game.mode === "online") { game.online[game.human + "draw"] = true; renderOnlineBar(); }
+      }).catch(liError);
+    });
+    $("lp-nodraw").addEventListener("click", function () {
+      if (game.mode !== "online" || game.done) return;
+      lpPost("/api/board/game/" + game.online.id + "/draw/no").catch(liError);
+    });
+    $("lp-claim").addEventListener("click", function () {
+      if (game.mode !== "online" || game.done) return;
+      lpPost("/api/board/game/" + game.online.id + "/claim-victory").catch(liError);
+    });
+    $("lp-resign").addEventListener("click", function () {
+      if (game.mode !== "online" || game.done) return;
+      var id = game.online.id, abort = lpCanAbort();
+      confirmDialog(t(abort ? "lp.confirmAbort" : "lp.confirmResign"), function () {
+        lpPost("/api/board/game/" + id + (abort ? "/abort" : "/resign")).catch(liError);
+      });
+    });
+    $("lp-review").addEventListener("click", lpReview);
+    $("lp-new").addEventListener("click", lpHome);
+    $("lp-web").addEventListener("click", function () {
+      if (game.mode === "online") window.open(LI.HOST + "/" + game.online.id, "_blank", "noopener");
+    });
+  }
+
+  // After any change of the game on the board: the right game stream.
+  function lpSwap() {
+    if (game.mode === "online" && !game.done) { if (lp.gsId !== game.online.id) lpOpen(game.online.id); }
+    else lpCloseGame();
+    lpClock();
+  }
+
+  // Boot: the event stream when playing is allowed, and the online game
+  // left on the board.
+  function lpBoot() {
+    if (!prefs.li) return;
+    lpPlayToken().then(function (tok) {
+      if (!tok) return;
+      lpEvents();
+      if (game.mode === "online" && !game.done) lpOpen(game.online.id);
     });
   }
 
@@ -3463,6 +4472,7 @@
       focusIdx = +c.getAttribute("data-i");
       c.tabIndex = 0;
     });
+    wireOnline();
     wirePointer();
     window.addEventListener("pagehide", function () { if (game) saveSession(); });
     wireKeyboard();
@@ -3502,6 +4512,7 @@
       }
     } catch (e) {}
     liFinishPending();   // a sign-in that came back while Chess was closed
+    lpBoot();
   }
 
   boot();

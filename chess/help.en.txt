@@ -57,6 +57,19 @@ In `Online accounts`, pick `Lichess` and press `Sign in with Lichess`. A Lichess
 
 The sign-in stays sealed on this device and is not synced: sign in once on each device. `Sign out` ends it on this device and on Lichess. If your browser blocks the Lichess window, the whole page goes to Lichess and comes back to Chess when you're done.
 
+## Playing on Lichess
+Signed in to Lichess, press `Play`. The first time, `Allow playing` asks Lichess once more, this time to let orOS play with your account.
+- `Find an opponent` looks for someone on Lichess at the time control you pick: 10+0 means 10 minutes each with no extra seconds per move, 15+10 adds 10 seconds after each move. Lichess allows apps like orOS Rapid and Classical games here, and correspondence games where you have 1, 3 or 7 days per move.
+- `Challenge a friend` sends a challenge to a Lichess username, also with Blitz (3+2, 5+3), and lets you pick your side.
+- Challenges sent to you appear under `Challenges for you`, and as a notice while Chess is open: `Accept` starts the game here.
+- Tick `Rated games` to play for your Lichess rating; otherwise games are casual.
+
+A game on Lichess is played on the orOS board, with both clocks next to the names. Under the moves you can `Offer a draw` (or accept your opponent's), `Resign` (`Abort` before both sides have moved) and open the game `On lichess.org`. When your opponent leaves, you can `Claim victory` once Lichess allows it.
+
+>! Lichess forbids outside help, so during these games Analysis and `Analyse this game on Lichess` are off. When the game ends, `Review this game` opens it with Analysis.
+
+While a timed game runs, Chess keeps it on the board: finish it or resign before starting something else. Correspondence games wait on Lichess: `My games in progress` lists them, marks the ones where it is your move, and opens them again. When you open Chess, it tells you if it is your move in one of them. These games don't count in your records against the computer.
+
 ## Sync
 Your records against the computer sync between your devices through [orOS sync](help:t/sync). `Reset records` deletes them on every device, after you confirm. The mode, level, side, board turn, the game in progress and the sound button stay on this device.
 
