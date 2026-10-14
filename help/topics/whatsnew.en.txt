@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.85.00
+- Contacts: every import now shows `Review import` first: new contacts, ones already here (skipped) and ones with other details, where you choose to merge (keeping yours or taking the imported values), add separately or skip. `Undo` puts everything back.
+- Contacts: `From an account` copies your contacts from Google or Microsoft (Outlook.com, Hotmail, Microsoft 365) once and disconnects straight away; nothing is kept.
+
 ## Version 1.84.00
 - Calendar: with "On this phone" on, your subscribed calendars and holidays now also appear in the phone's calendar (orOS Android app).
 - Calendar: events on the phone now keep the colour of their label or feed (orOS Android app).
