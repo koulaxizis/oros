@@ -6,7 +6,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=contacts" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Contacts · orOS</title>
-  <link rel="stylesheet" href="contacts.css?v=1.84.01">
+  <link rel="stylesheet" href="contacts.css?v=1.85.00">
 </head>
 <body>
   <main id="cmain">
@@ -16,6 +16,7 @@
       <button id="ct-import" type="button" class="nav-mini" data-i18n="ct.import"></button>
       <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
       <button id="ct-phone" type="button" class="nav-mini" data-i18n="ct.phone" hidden></button>
+      <button id="ct-acct" type="button" class="nav-mini" data-i18n="ac.btn"></button>
       <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
@@ -148,14 +149,52 @@
     </div>
   </dialog>
 
-  <!-- vCard handed over by the shell: confirm first -->
-  <dialog id="vcf-dlg" aria-labelledby="vcf-dlg-title">
-    <h3 id="vcf-dlg-title" data-i18n="ct.vcf.title"></h3>
-    <p id="vcf-name" class="del-name"></p>
-    <p id="vcf-sum" class="del-text"></p>
+  <!-- Import review: every import path (file, phone, account, BR-FILE-IMPORT) -->
+  <dialog id="rev-dlg" aria-labelledby="rev-dlg-title">
+    <h3 id="rev-dlg-title" data-i18n="rv.title"></h3>
+    <p id="rev-src" class="del-name"></p>
+    <p id="rev-sum" class="del-text" aria-live="polite"></p>
+    <label class="rev-pref" id="rev-pref-row">
+      <span data-i18n="rv.pref"></span>
+      <select id="rev-pref">
+        <option value="merge" data-i18n="rv.act.merge"></option>
+        <option value="theirs" data-i18n="rv.act.theirs"></option>
+      </select>
+    </label>
+    <div id="rev-list"></div>
+    <p class="del-text" data-i18n="rv.safe"></p>
     <div class="dlg-row">
-      <button id="vcf-go" type="button" class="btn prim" data-i18n="ct.vcf.go"></button>
-      <button id="vcf-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+      <button id="rev-go" type="button" class="btn prim" data-i18n="rv.go"></button>
+      <button id="rev-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- One-time import from an online account -->
+  <dialog id="ac-dlg" aria-labelledby="ac-dlg-title">
+    <h3 id="ac-dlg-title" data-i18n="ac.title"></h3>
+    <p class="del-text" data-i18n="ac.text"></p>
+    <div class="ac-provs">
+      <button id="ac-google" type="button" class="btn ac-prov" data-p="google">Google</button>
+      <button id="ac-microsoft" type="button" class="btn ac-prov" data-p="microsoft">Microsoft · Outlook</button>
+    </div>
+    <p id="ac-stat" class="del-text" aria-live="polite"></p>
+    <p class="del-text" data-i18n="ac.others"></p>
+    <details id="ac-own">
+      <summary data-i18n="ac.own"></summary>
+      <p class="del-text" data-i18n="ac.own.text"></p>
+      <p class="del-text ac-uri"><code id="ac-uri"></code></p>
+      <div class="ev-form">
+        <label for="ac-id-google">Google</label>
+        <input id="ac-id-google" type="text" maxlength="200" autocomplete="off" spellcheck="false">
+        <label for="ac-id-microsoft">Microsoft</label>
+        <input id="ac-id-microsoft" type="text" maxlength="200" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="dlg-row">
+        <button id="ac-id-save" type="button" class="mini" data-i18n="ac.own.save"></button>
+      </div>
+    </details>
+    <div class="dlg-row">
+      <button id="ac-close" type="button" class="btn" data-i18n="ph.close"></button>
     </div>
   </dialog>
 
@@ -199,6 +238,8 @@
     </div>
   </dialog>
 
-  <script src="contacts.js?v=1.84.01"></script>
+  <script src="importplan.js?v=1.85.00"></script>
+  <script src="accounts.js?v=1.85.00"></script>
+  <script src="contacts.js?v=1.85.00"></script>
 </body>
 </html>
