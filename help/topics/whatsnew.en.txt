@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.21.00
+- The Assistant's on-device models (the browser's own model, the in-browser model, and local models that can't use tools) now answer from your data too. orOS searches your apps before your message goes, asks you what to share with the same card, and sends only that. They can also do the Briefing and read photos and PDFs as text.
+
 ## Version 2.20.00
 - The Assistant runs open-source models on your own computer with ready-made settings for Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM and KoboldCpp, each with its one-time CORS step. New: an in-browser model (WebLLM). Llama, Qwen, Phi, Mistral or Hermes download once and then run on your graphics card, offline, with nothing leaving the device.
 - Contacts: phone numbers and e-mails that Google's export puts in one cell are now separate rows, also for contacts imported before, and importing from Google again no longer brings back duplicates.
