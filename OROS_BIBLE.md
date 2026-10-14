@@ -6010,3 +6010,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - chess/lichess-callback.html + .js (new, precached): the sign-in return page; it only hands code and state to Chess on the same origin (BroadcastChannel / localStorage), Chess checks the state and exchanges the token. The token is sealed on this device and not synced; `Sign out` revokes it on Lichess too.
 - Credits: Lichess API (CREDITS.md, Info credits, Bible Part VIII). Help (EN/EL) and the privacy topic updated.
   - Tests: tests/chess.test.js (PKCE, state check, profile/games parsing).
+
+### 2026-10-14 — Chess: play on Lichess (games online, wave 4, plan complete) (#326) — 1.92.00
+- chess/: signed in to Lichess, `Play` (one more Lichess consent, board:play) finds an opponent (Rapid, Classical, correspondence 1/3/7 days), challenges a friend (also Blitz 3+2, 5+3, side pick) and accepts incoming challenges; rated or casual. Games are played on the orOS board with both clocks, draw offer, resign/abort, claim victory and a link to lichess.org.
+- Fair play: Analysis and "Analyse this game on Lichess" are off while a Lichess game runs; `Review this game` opens it with Analysis when it ends. Correspondence games are listed under `My games in progress` with a your-move notice; Lichess games don't count in the records against the computer.
+- Credits (CREDITS.md, Info, Bible Part VIII) and the privacy topic mention play; help (EN/EL) updated.
+  - Tests: tests/chess.test.js (game stream, clocks, challenge and seek parameters, fair-play lock).
