@@ -4147,6 +4147,9 @@
     return true;
   }
   function openSearchTarget(t) {
+    // Single app (solo.js) icon shortcuts: { add: kind } → a new
+    // reading of that kind, as its reminder opens it.
+    if (t && typeof t === "object" && typeof t.add === "string") { window.__orosHealthOpen(t.add); return; }
     if (t && typeof t === "object" && openRecordTarget(t)) return;
     if (t && (typeof t.med === "string" || typeof t.sym === "string")) {
       if (document.querySelector("dialog[open]")) return;
