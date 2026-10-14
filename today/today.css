@@ -369,3 +369,5 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
   .group-head .chev { transition: none; }
   .edit-card.dragging { box-shadow: none; }
 }
+
+.icon-btn[hidden] { display: none; }
