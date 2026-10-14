@@ -5956,3 +5956,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - contacts/accounts.js + oauth-callback.html/js (new): From an account (Google token flow + revoke, Microsoft PKCE), People API / Graph read, nothing stored; client ids empty until registered, "Use my own app id" on the device. See BR-CT-IMPORT.
 - Help: contacts pages (two new sections), privacy topic; CREDITS.md + CREDIT_GROUPS.
   - Tests: tests/contacts-import.test.js; real shell (desktop EN, 360px EL) with mocked Google sign-in. Real Google/Microsoft sign-in waits for Chris's client ids.
+
+### 2026-10-14 — Phone bridge v2: two-way Calendar (#317) — 1.86.00
+- phone.js + calendar/calendar.js: events you add, change or delete in the phone's "orOS" calendar now come back into orOS Calendar (two-way for your own events; feeds and holidays stay read-only on the phone).
+- android/: CalendarWriter reads phone-side changes and sends them over the bridge; the "orOS" calendar is now writable on the phone.
+  - Tests: tests/phone.test.js (two-way rows, conflicts); Android build in CI. Real-phone test by Chris after this merge.
