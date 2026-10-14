@@ -17,9 +17,9 @@
 
   // App key of the "orOS Files" Dropbox app (Full Dropbox, scopes
   // files.metadata.read, files.content.read, files.content.write).
-  // Empty until it is registered: each user can then enter the key of
-  // a Dropbox app of their own (device-local).
-  var APP_KEY = "";
+  // Public by design (PKCE, no secret). Anyone can still enter the key
+  // of a Dropbox app of their own instead (device-local).
+  var APP_KEY = "fv6idclg1tn5hq8";
 
   var AUTH_URL  = "https://www.dropbox.com/oauth2/authorize";
   var TOKEN_URL = "https://api.dropboxapi.com/oauth2/token";
