@@ -1,0 +1,123 @@
+{
+  "name": "orOS Games",
+  "short_name": "Games",
+  "description": "orOS Games: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/gamecenter/solo.html",
+  "start_url": "/gamecenter/solo.html",
+  "scope": "/gamecenter/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/gamecenter.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/gamecenter-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/gamecenter-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/gamecenter-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Wordle",
+      "short_name": "Today's Wordle",
+      "url": "/gamecenter/solo.html?do=wordle",
+      "icons": [
+        {
+          "src": "/icons/solo/gamecenter-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Today's crossword",
+      "short_name": "Today's crossword",
+      "url": "/gamecenter/solo.html?do=crossword",
+      "icons": [
+        {
+          "src": "/icons/solo/gamecenter-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Today's Sudoku",
+      "short_name": "Today's Sudoku",
+      "url": "/gamecenter/solo.html?do=sudoku",
+      "icons": [
+        {
+          "src": "/icons/solo/gamecenter-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Chess",
+      "short_name": "Chess",
+      "url": "/gamecenter/solo.html?do=chess",
+      "icons": [
+        {
+          "src": "/icons/solo/gamecenter-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/gamecenter/solo.html?file-open=gamecenter",
+      "accept": {
+        "application/x-chess-pgn": [
+          ".pgn"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/gamecenter/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "application/x-chess-pgn",
+            ".pgn"
+          ]
+        }
+      ]
+    }
+  }
+}

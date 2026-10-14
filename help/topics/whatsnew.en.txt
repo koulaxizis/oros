@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.17.00
+- orOS Games: every orOS game in one installable app, opening on the Game Center, with icon shortcuts for today's Wordle, crossword and Sudoku and for Chess.
+
 ## Version 2.16.00
 - Every AI model in the Assistant can now search the internet, not only Claude: pick Wikipedia (free, no key), Tavily (free key) or your own SearXNG server in Settings → Internet. The assistant can also read a page it found. Off unless you switch it on.
 

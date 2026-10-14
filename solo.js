@@ -208,6 +208,17 @@
       name: { en: "orOS Timesheet", el: "orOS Ώρες εργασίας" },
       shortcuts: [{ do: "timer", name: { en: "Start or stop the timer", el: "Έναρξη ή διακοπή χρονομέτρου" }, target: { toggle: true } },
                   { do: "entry", name: { en: "New time entry", el: "Νέα καταχώριση" }, target: { newEntry: true } }]
+    },
+    // Wave 6: every game in one app (Game Center is its home; a game
+    // opened from it gets Back). files: other apps whose file types
+    // this app's icon also opens (fileopen.js still routes them).
+    gamecenter: {
+      name: { en: "orOS Games", el: "orOS Παιχνίδια" },
+      shortcuts: [{ do: "wordle", name: { en: "Today's Wordle", el: "Το σημερινό Wordle" }, target: { play: "wordle", daily: true } },
+                  { do: "crossword", name: { en: "Today's crossword", el: "Το σημερινό σταυρόλεξο" }, target: { play: "crossword", daily: true } },
+                  { do: "sudoku", name: { en: "Today's Sudoku", el: "Το σημερινό Sudoku" }, target: { play: "sudoku", daily: true } },
+                  { do: "chess", name: { en: "Chess", el: "Σκάκι" }, target: { play: "chess" } }],
+      files: ["chess"]
     }
   };
 
@@ -444,7 +455,7 @@
     };
     var accept = {}, exts = [];
     (handlers || []).forEach(function (h) {
-      if (h.app !== id) return;
+      if (h.app !== id && (a.files || []).indexOf(h.app) < 0) return;
       Object.keys(h.accept).forEach(function (mime) {
         accept[mime] = h.accept[mime].slice();
         exts = exts.concat(mime, h.accept[mime]);
