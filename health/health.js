@@ -2308,7 +2308,8 @@
     }, t("rp.from")));
     var from = ymd(new Date(startOfDay(now) - (prefs.mh - 1) * DAY_MS));
     var items = [], all = C.adherence(data, "", from, today, now);
-    if (all.pct !== null) items.push([t("mh.all"), Math.round(all.pct * 100) + "%"]);
+    var counted = data.md.filter(function (m) { return C.adherence(data, m.id, from, today, now).pct !== null; }).length;
+    if (all.pct !== null && counted > 1) items.push([t("mh.all"), Math.round(all.pct * 100) + "%"]);
     data.md.slice().sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()); }).forEach(function (m) {
       var a = C.adherence(data, m.id, from, today, now);
       if (a.pct !== null) items.push([medLabel(m), Math.round(a.pct * 100) + "%"]);
