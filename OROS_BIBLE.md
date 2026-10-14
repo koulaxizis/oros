@@ -6041,3 +6041,10 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Deep links for the widget buttons: To-Do `{ quickAdd: true }` focuses the quick-add box, Water `{ sip: "glass" }` adds a glass with Undo, Notes `{ newPage: true }` opens a new page.
 - Help: Today (EN/EL).
   - Tests: tests/phone.test.js (widgetData); Android build in CI. Real-phone check by Chris after this merge.
+
+### 2026-10-14 — Phone bridge v5: Health Connect (#330) — 1.95.00
+- Settings › Connected services › `Health Connect` (orOS Android app only, opt-in, with Android's own permission screen): daily steps come into Health; Water drinks and finished Workouts of the last 30 days go to Health Connect, and drinks and workouts from a watch or other apps come in. Something that came from another app and is deleted here doesn't come back; switching it off removes what orOS wrote.
+- android/: `HealthBridge.kt` (the app's first Kotlin, wrapping the Health Connect client library), `HealthPermissionActivity`, `HealthPrivacyActivity` (Health Connect's required privacy screen); PhoneBridge takes `health`.
+- phone.js: pure, tested mapping between Health Connect records and Health / Water / Fitness entries. privacy.html (EN/EL) gains a Health Connect section. Help: Health, Water, Fitness (EN/EL).
+- Credits: Health Connect client library and Kotlin standard library (Apache-2.0), shipped in the Android app only (CREDITS.md, Info credits, Bible Part VIII).
+  - Tests: tests/phone.test.js, tests/health.test.js; Android build in CI. Real-phone check by Chris after this merge; Play asks for a Health Connect data-type declaration at upload.
