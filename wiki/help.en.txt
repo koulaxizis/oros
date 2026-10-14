@@ -15,7 +15,7 @@ Links to other articles are in the accent colour; red links lead to articles tha
 
 Pictures open larger when you tap them. A small number in brackets, like `[1]`, is a reference: tap it to jump to its source in the `References` list at the end, and tap ↑ there to go back.
 
-Above every article are `Read`, `Edit` and `History`. The ⋯ button has `Rename…`, `What links here`, `Copy the text`, `Make this the main page`, `Print`, `Save as PDF` and `Delete this article`.
+Above every article are `Read`, `Edit` and `History`. The ⋯ button has `Rename…`, `What links here`, `Copy the text`, `Make this the main page`, `Send to someone…`, `Print`, `Save as PDF` and `Delete this article`.
 
 ## Writing and formatting
 `Edit` opens the whole article. The `edit` link next to a heading opens only that section. The toolbar adds formatting for you; `Preview` shows the result before you save. `Formatting help` under the editor lists every sign:
@@ -73,6 +73,21 @@ Wiki articles also show up in the orOS [quick search](help:t/menu#quick-search).
 ## Print and PDF
 `Print` prints the article as you read it, without the buttons around it. `Save as PDF` makes a PDF file of the article with its pictures, infobox, tables and references, and saves it where you choose.
 
+## Import and export
+`Import and export…` in the menu brings articles in and saves your wiki as files. Imports only add articles: nothing already in your wiki changes. When a title is taken, the new article gets a number, like `Olives (2)`.
+- `From Notes…` takes one notebook of [Notes](app:notes) on this device, into a new wiki or the open one. Every page becomes an article; a page with subpages becomes a category for them, and labels become categories too. Links between pages keep working, and `- [ ]` tasks become ☐ and ☑.
+- `Markdown files…` takes .md files, or a .zip of them, from Notes, Obsidian or another wiki. A title comes from the first `# Heading` line or the file name; a folder becomes a category; pictures inside the .zip come along, and links to other .md files become article links.
+- `Markdown (.zip)` saves every article of the open wiki as a .md file, with its pictures in a `media` folder. Import that file again and pictures keep their place and size.
+- `Website (.zip)` saves the open wiki as an offline website: unzip it and open `index.html` in any browser, with no internet and nothing to install. Links, categories, the contents box, references and pictures all work.
+
+## Start from Wikipedia
+`Start from Wikipedia…` (in `Import and export…`, or under the title of a new article) copies one Wikipedia article as the text to start from. Pick the language, type the title (or paste the article's address) and press `Fetch`. The article opens in the editor with its text, links, infobox facts, tables and references; pictures and Wikipedia's categories are left out. Check it and press `Save`.
+
+Wikipedia's text is shared under the CC BY-SA 4.0 licence, so the article ends with a `Source` section: the link to the article, to its authors' history and to the licence. Keep it there. If you share the article, share it under the same licence.
+
+## Send to someone
+`Send to someone…` in the ⋯ menu puts the article in a link: the other person reads it in their browser, and with orOS `Add to my orOS` opens it in their Wiki, ready to save. The text travels; pictures stay with you. See [Send to someone](help:t/share).
+
 ## Several wikis
 Use separate wikis for separate parts of your life, like work, home or a hobby. In the menu, `New wiki…` makes one, the list at the top switches between them, and `Rename this wiki…` and `Delete this wiki…` change the open one. Links, categories and search work inside one wiki.
 
@@ -93,5 +108,7 @@ Your wikis and articles sync between your devices through [orOS sync](help:t/syn
 
 ## Limits
 - A gallery holds up to 60 pictures, and an infobox up to 60 rows.
-- An article holds up to 200,000 characters, and a wiki up to 5,000 articles.
+- An article holds up to 200,000 characters, and a wiki up to 5,000 articles. One import brings in up to 2,000 articles.
+- A link from `Send to someone` holds about 60,000 characters of text; for longer articles use `Save as file` there.
+- Start from Wikipedia needs an internet connection; Wikipedia templates that orOS doesn't know are left out.
 - The text of all your wikis shares the space orOS has on this device (about 5 MB); the history lives on the orOS disk and doesn't count against it.

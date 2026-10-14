@@ -13,12 +13,15 @@
 //   - a pipeline of deals: value, stage, probability, won / lost;
 //     own stages (rename, reorder, add, hide) in Settings
 //   - a dashboard; CSV export, JSON backup / restore (merge)
+//   - a contact form for the user's website (crm/webform.js): the
+//     messages arrive through the orOS relay as leads
 // Data:
 //   - synced slice "crm" (oros-crm-data): every list LWW per id +
 //     tombstones; merge = OrosCrmCore.merge (R5, R17, R26)
 //   - device-local (R10): oros-crm-prefs (tab, open customer,
 //     filters, sort, sub-tab, pipeline stage on phones); the shell
-//     keeps oros-crm-notified (follow-ups already announced)
+//     keeps oros-crm-notified (follow-ups already announced);
+//     oros-crm-wf { dev, last } (crm/webform.js)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Storage + prefs
@@ -2071,6 +2074,7 @@
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
     list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
     if (PL && PL.has()) list.appendChild(button(PL.label(), "sheet-btn", function () { dlg.close(); PL.open(); }));
+    if (WF) list.appendChild(button(WF.label(), "sheet-btn", function () { dlg.close(); WF.open(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
     list.appendChild(button(t("set.backup"), "sheet-btn", exportJson));
     list.appendChild(button(t("set.restore"), "sheet-btn", function () { dlg.close(); importJson(); }));
@@ -2407,6 +2411,14 @@
       commit();
     });
     return true;
+  }
+  // The web form (crm/webform.js): its dialog, checks and data.wf.
+  var WF = window.OrosCrmWebForm || null;
+  function initWebForm() {
+    if (!WF || typeof WF.init !== "function") { WF = null; return; }
+    WF.init({ lang: LANG, el: el, button: button, makeDialog: makeDialog, showDialog: showDialog, field: field, inp: inp,
+              seg: seg, confirmDialog: confirmDialog, showToast: showToast, fmtMs: fmtMs, stamp: stamp, commit: commit,
+              data: function () { return data; }, emailOf: function (p) { return personView(p).email; } });
   }
   function initPlatforms() {
     if (!PL) return;
@@ -2770,7 +2782,10 @@
     $("cust-sort").addEventListener("change", function () { prefs.sort = this.value; savePrefs(); renderCustomers(); });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") savePrefsNow();
-      else if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
+      else {
+        if (renderedDay !== todayYmd() && !document.querySelector("dialog[open]")) render();
+        if (WF) WF.auto();
+      }
     });
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
@@ -2791,6 +2806,7 @@
     load();
     loadPrefs();
     initPlatforms();
+    initWebForm();
     applyI18n();
     wire();
     registerSync();
@@ -2798,6 +2814,7 @@
     watchPalette();
     render();
     takeTarget();
+    if (WF) WF.auto();
     console.log("[orOS CRM] v1.4.0 boot OK");
   }
 

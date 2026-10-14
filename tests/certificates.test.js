@@ -291,7 +291,7 @@ test("app: every string has a Greek text and the shell knows the app", () => {
   const me = apps.find((x) => x.id === "certificates");
   assert.ok(me && me.category === "Business" && me.search === "search.js");
   const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
-  ["certificates/core.js", "certificates/dk.js", "certificates/certificates.js", "certificates/search.js", "certificates/help.el.txt", "atelier/zip.js",
+  ["certificates/core.js", "certificates/dk.js", "certificates/certificates.js", "certificates/search.js", "certificates/badges.js", "certificates/help.el.txt", "atelier/zip.js",
    "certificates/sign.js", "certificates/verify.html"]
     .forEach((f) => assert.ok(sw.includes('"' + f + '"'), "precache " + f));
 });
@@ -500,4 +500,52 @@ test("badges: Open Badges 3.0 VC-JWT, did:jwk issuer, signature checks, stable i
   assert.equal(r3.cred.credentialSubject.achievement.id, vc.credentialSubject.achievement.id);
   assert.equal(r3.cred.credentialSubject.identifier.length, 1);
   assert.equal(BD.credential({ kind: "volunteer", title: "x", name: "y" }, { did: "d", cred: "c", ach: "a", now: 0 }).credentialSubject.achievement.achievementType, "CommunityService");
+});
+
+const SD = require(path.join(ROOT, "certificates/send.js"));
+const MC = require(path.join(ROOT, "mail/compose.js"));
+
+test("send: pacing within the per-hour limit, at least 2 s apart", () => {
+  assert.equal(SD.gapFor(60), 60000);
+  assert.equal(SD.gapFor(500), 7200);
+  assert.equal(SD.gapFor(100000), 7200);   // capped at 500 an hour
+  assert.equal(SD.gapFor(1), 720000);      // at least 5 an hour
+  assert.equal(SD.gapFor("x"), 60000);     // default
+  assert.ok(SD.gapFor(500) >= SD.MIN_GAP);
+});
+
+test("send: one refused address is skipped, anything else stops the queue", () => {
+  assert.equal(SD.classify({ code: "rcpt" }), "skip");
+  assert.equal(SD.classify({ code: "too-big" }), "skip");
+  assert.equal(SD.classify({ code: "rcpt", msg: "550 5.1.1 no such user" }), "skip");
+  assert.equal(SD.classify({ code: "rcpt", msg: "450 4.2.1 try again later" }), "stop");
+  // an oversized message is skipped before it is sent (the relay would say bad-request)
+  assert.equal(SD.checkSize("x".repeat(10)), "x".repeat(10));
+  assert.throws(() => SD.checkSize({ length: SD.MAX_RAW + 1, toString() { return "x".repeat(SD.MAX_RAW + 1); } }), (e) => e.code === "too-big" && SD.classify(e) === "skip");
+  ["rate", "auth", "no", "timeout", "network", "offline", "nopass", "connect", undefined].forEach((c) => assert.equal(SD.classify({ code: c }), "stop", String(c)));
+  assert.ok(SD.isRate({ code: "rate" }));
+  assert.ok(SD.isRate({ code: "no", msg: "452 4.5.3 Daily sending quota exceeded" }));
+  assert.ok(SD.isRate({ code: "proto", msg: "421 Too many messages" }));
+  assert.ok(!SD.isRate({ code: "auth", msg: "535 bad password" }));
+});
+
+test("send: one recipient per message, the PDF attached, Greek subject encoded", () => {
+  const pdf = "%PDF-1.7\n" + String.fromCharCode(0, 255, 128) + "binary";
+  const m = SD.message(MC, { from: { name: "Κέντρο", addr: "info@example.com" }, to: { name: "Μαρία", addr: "maria@example.com" },
+    subject: "Το πιστοποιητικό σου: Μάρκετινγκ", text: "Γεια σου Μαρία,\n\nΣυνημμένο.", pdf: { name: "CERT-2026-0001-Μαρία.pdf", bin: pdf } });
+  assert.deepEqual(m.rcpt, ["maria@example.com"]);
+  assert.match(m.bin, /^To: .*maria@example\.com/m);
+  assert.ok(!/^(Cc|Bcc):/m.test(m.bin));
+  assert.match(m.bin, /Subject:\s+=\?UTF-8\?B\?/);
+  assert.match(m.bin, /Content-Type: application\/pdf/);
+  assert.ok(m.bin.includes(Buffer.from(pdf, "latin1").toString("base64").slice(0, 20)));
+});
+
+test("send: the sent time is kept per person and synced like every field", () => {
+  let { d, ev } = setup();
+  d = addPeople(d, ["Ann"]);
+  const p = C.eventPeople(d, ev.id)[0];
+  assert.equal(C.normPerson(Object.assign({}, p, { ms: 1760000000000 })).ms, 1760000000000);
+  assert.equal(C.normPerson(Object.assign({}, p, { ms: "x" })).ms, undefined);
+  assert.equal(C.normPerson(Object.assign({}, p, { ms: -5 })).ms, undefined);
 });

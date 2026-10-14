@@ -1,7 +1,8 @@
 // ============================================================
 // orOS "Send to someone" — share/kinds.js (pure core, v1.0.0)
 // One item (a To-Do list, a note, a contact, an event, a recipe,
-// a few bookmarks or a Calendar's free times) travels INSIDE a link:
+// a few bookmarks, a Calendar's free times or a Wiki article)
+// travels INSIDE a link:
 //   https://useoros.online/share/#1.<base64url of deflate-raw JSON>
 //   https://useoros.online/share/#p1.<base64url of salt|iv|AES-GCM>
 // The part after "#" never reaches a server. No server, no account,
@@ -28,7 +29,7 @@
 //   codeFromHash(hash)             → the code in "#…", or ""
 //   summary(env, lang)             → one line ("List "Shop" · 12 items")
 //   text(env, lang, helpers?)      → plain text of the item
-//   file(env, lang)                → { name, mime, text } (.vcf, .ics, .html, .txt)
+//   file(env, lang)                → { name, mime, text } (.vcf, .ics, .html, .md, .txt)
 //   target(env, lang)              → { app, target } for __orosOpenAt
 //   vcard(d) / ics(d) / netscape(d) (the file builders)
 //   slotWhen(d, day, min)          → a free time ("slots") as the
@@ -40,7 +41,7 @@
   "use strict";
 
   var VER = 1;
-  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots"];
+  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki"];
   var MAX_LINK = 32768;          // characters of the code after "#"
   var MAX_JSON = 262144;         // bytes after decompression (bomb guard)
   var ITER = 600000;             // PBKDF2 rounds for password links
@@ -51,7 +52,7 @@
   // ---------- 1. Strings (EN / EL) ----------
   var S = {
     en: {
-      list: "List", note: "Note", contact: "Contact", event: "Event", recipe: "Recipe", links: "Links",
+      list: "List", note: "Note", contact: "Contact", event: "Event", recipe: "Recipe", links: "Links", wiki: "Wiki article",
       items: "{n} items", item1: "1 item", links1: "1 link", linksN: "{n} links",
       untitled: "Untitled", allday: "all day", repeats: "Repeats", every: { D: "every day", W: "every week", M: "every month", Y: "every year" },
       every2: { D: "every 2 days", W: "every 2 weeks", M: "every 2 months", Y: "every 2 years" },
@@ -66,7 +67,7 @@
       slotZone: "{w} ({z} time)"
     },
     el: {
-      list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι",
+      list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι", wiki: "Άρθρο wiki",
       items: "{n} είδη", item1: "1 είδος", links1: "1 σύνδεσμος", linksN: "{n} σύνδεσμοι",
       untitled: "Χωρίς τίτλο", allday: "όλη μέρα", repeats: "Επαναλαμβάνεται", every: { D: "κάθε μέρα", W: "κάθε εβδομάδα", M: "κάθε μήνα", Y: "κάθε χρόνο" },
       every2: { D: "κάθε 2 μέρες", W: "κάθε 2 εβδομάδες", M: "κάθε 2 μήνες", Y: "κάθε 2 χρόνια" },
@@ -140,6 +141,13 @@
   function normNote(d) {
     var t = line(d.t, 200), x = block(d.x, 20000);
     if (!t && !x) return null;
+    return { t: t, x: x };
+  }
+  // A Wiki article: its title and its text (wiki/core.js markup, no
+  // pictures); the receiver renders it with WikiCore (DOM nodes only).
+  function normWiki(d) {
+    var t = line(d.t, 200), x = block(d.x, 60000);
+    if (!t) return null;
     return { t: t, x: x };
   }
   var PHONE_T = ["mobile", "home", "work", "main", "other"];
@@ -274,7 +282,7 @@
     if (x2) o.x = x2;
     return o;
   }
-  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots };
+  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki };
   function norm(kind, data) {
     if (!NORM[kind] || !data || typeof data !== "object" || Array.isArray(data)) return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -471,7 +479,7 @@
         out.push((it.d ? "\u2611 " : "\u2610 ") + it.x);
         if (it.n) out.push("   " + it.n.replace(/\n/g, "\n   "));
       });
-    } else if (env.k === "note") {
+    } else if (env.k === "note" || env.k === "wiki") {
       if (d.x) out.push("", d.x);
     } else if (env.k === "contact") {
       if (d.nn) out.push(s.nick + ": " + d.nn);
@@ -613,6 +621,7 @@
     if (env.k === "contact") return { name: fileName(name, ".vcf"), mime: "text/vcard;charset=utf-8", text: vcard(env.d) };
     if (env.k === "event") return { name: fileName(name, ".ics"), mime: "text/calendar;charset=utf-8", text: ics(env.d) };
     if (env.k === "links") return { name: fileName(name, ".html"), mime: "text/html;charset=utf-8", text: netscape(env.d, lang) };
+    if (env.k === "wiki") return { name: fileName(name, ".md"), mime: "text/markdown;charset=utf-8", text: "# " + env.d.t + "\n\n" + env.d.x + "\n" };
     return { name: fileName(name, ".txt"), mime: "text/plain;charset=utf-8", text: text(env, lang) + "\n" };
   }
 
@@ -632,6 +641,7 @@
     if (env.k === "contact") return { app: "contacts", target: { importVcf: { name: fileName(contactName(d), ".vcf"), text: vcard(d) } } };
     if (env.k === "event") return { app: "calendar", target: { importIcs: { name: fileName(d.t, ".ics"), text: ics(d) } } };
     if (env.k === "recipe") return { app: "meals", target: { addRecipe: d } };
+    if (env.k === "wiki") return { app: "wiki", target: { addArticle: { t: d.t, x: d.x } } };
     if (env.k === "slots") return null;          // a time is picked on the page first (slotEvent)
     if (d.i.length === 1) return { app: "bookmarks", target: { add: { url: d.i[0].u, title: d.i[0].t } } };
     return { app: "bookmarks", target: { addMany: { folder: d.t || s.sharedLinks, items: d.i.map(function (it) { return { url: it.u, title: it.t }; }) } } };

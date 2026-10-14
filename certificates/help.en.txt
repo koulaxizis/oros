@@ -60,6 +60,12 @@ On a phone the preview sits above the form; on a wide screen it is on the right.
 - `Register (CSV)` saves the list of numbers, names, grades, dates and revoked certificates.
 - When the design shows numbers, orOS first offers to number the people who have none. `Leave out revoked certificates` keeps revoked ones out.
 
+## Email everyone
+- With an account set up in orOS Mail on this device, `Email everyone…` under `Issue` sends each person one message with their own certificate attached. Each message has a single recipient.
+- Messages go out one at a time, at most the number per hour you set (mail providers limit this, often 100 to 300 an hour). Keep orOS open and in front while it sends.
+- If the mail server refuses more messages, the password is wrong or the connection drops, sending stops. Press `Go on` later. People already sent theirs are not sent again, even after closing orOS, unless you tick `Also people who were already sent theirs`.
+- An address the server refuses is skipped and named at the end.
+
 ## Sync and backup
 - Your certificates and lists follow you to every device through orOS sync, encrypted, and are part of the orOS export.
 - Logos, signatures and seals stay on your orOS disk and travel with it.

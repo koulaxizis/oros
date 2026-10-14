@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v2.03.00";
+var CACHE_VERSION = "oros-v2.08.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // MAPS-TILES (Wave 5): dedicated cache for map raster tiles.
@@ -246,6 +246,7 @@ var PRECACHE_URLS = [
   "wiki/wiki.js",
   "wiki/search.js",
   "wiki/pdf.js",
+  "wiki/io.js",
   "weather/",
   "weather/index.html",
   "weather/weather.css",
@@ -325,6 +326,8 @@ var PRECACHE_URLS = [
   "certificates/dk.js",
   "certificates/certificates.js",
   "certificates/search.js",
+  "certificates/badges.js",
+  "certificates/send.js",
   "invoices/today.js",
   "invoices/mydata-ui.js",
   "crm/",
@@ -332,6 +335,7 @@ var PRECACHE_URLS = [
   "crm/crm.css",
   "crm/core.js",
   "crm/platforms.js",
+  "crm/webform.js",
   "crm/crm.js",
   "crm/search.js",
   "crm/today.js",
@@ -1003,6 +1007,7 @@ var PRECACHE_URLS = [
   "atelier/cutout.js",
   "atelier/ai.js",
   "atelier/editpic.js",
+  "atelier/bulk.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",
@@ -1568,6 +1573,8 @@ var PRECACHE_URLS = [
   "vendor/jsqr/jsQR.js",
   "vendor/openpgp/openpgp.min.js",
   "weather/core.js",
+  "weather/rainmap-core.js",
+  "weather/rainmap.js",
   "writer/core.js",
   "writer/merge.js",
   "writer/spell-worker.js",

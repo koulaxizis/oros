@@ -2019,6 +2019,8 @@
     renderNowcast(city ? p : null);
     renderAir(city ? p : null);
     renderModelSec(city);
+    // Wave 52: rain map (rainmap.js; loads nothing until opened)
+    if (window.OrosRainMap) window.OrosRainMap.update(city, p ? payloadTz(p) : null);
   }
 
   // --- City dialog ---
@@ -2518,7 +2520,7 @@
     // by a notification/scroll-interrupt left it dangling before).
     var sx = 0, sy = 0, tracking = false;
     $("wxmain").addEventListener("pointerdown", function (e) {
-      if (e.target.closest("#hourly, #air-strip, .cmp-tablewrap, select")) { tracking = false; return; }
+      if (e.target.closest("#hourly, #air-strip, .cmp-tablewrap, select, #rain-map-wrap")) { tracking = false; return; }
       tracking = true; sx = e.clientX; sy = e.clientY;
     });
     $("wxmain").addEventListener("pointerup", function (e) {

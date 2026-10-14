@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Wiki — App logic (v1.1.0)
+// orOS Wiki — App logic (v1.2.0)
 // Your own encyclopedia: articles that link to each other, read like
 // Wikipedia (contents box, sections, categories, red links) and kept
 // with their full history.
@@ -14,6 +14,9 @@
 //   - wave 2: pictures (designkit/assets.js on the orOS disk) and
 //     galleries, infobox form, references with a Cite form, a table
 //     editor, print and save as PDF (pdf.js)
+//   - wave 3 (io.js): import from Notes and Markdown (.md / .zip),
+//     export as Markdown or an offline website (.zip), Start from
+//     Wikipedia (CC BY-SA credit kept), Send to someone (kind "wiki")
 // Data: synced slice "wiki" (oros-wiki-data, core.js); history files
 // /internal/Wiki/History/<article>/ on the orOS disk (Vault Drive).
 // Sections:
@@ -23,6 +26,7 @@
 //   4. Article view
 //   5. Editor
 //   5b. Pictures, infobox, references, tables, PDF (wave 2)
+//   5c. Import, export, Wikipedia, sending (wave 3)
 //   6. History + parallel edits
 //   7. Lists (recent, all, categories, wanted, links, search)
 //   8. Wikis + article actions
@@ -163,7 +167,34 @@
       "toast.main": "This is now the main page", "toast.resolved": "Done: one version kept, the other stays in the history",
       "standalone": "Open Wiki inside orOS to sync your wikis and keep their history.",
       "sum.new": "New article", "sum.restore": "Restored an older version",
-      "sum.keep": "Kept this version (parallel edit)", "sum.useOther": "Took the version from another device"
+      "sum.keep": "Kept this version (parallel edit)", "sum.useOther": "Took the version from another device",
+      "nav.io": "Import and export…", "io.title": "Import and export", "io.import": "Bring in", "io.export": "Save this wiki",
+      "io.lead": "Imports only add articles: nothing in your wiki is changed or replaced.",
+      "io.notes": "From Notes…", "io.notesHint": "A notebook of orOS Notes: every page becomes an article; subpages and labels become categories.",
+      "io.md": "Markdown files…", "io.mdHint": "One or more .md files, or a .zip of them (from Notes, Obsidian or another wiki).",
+      "io.wp": "Start from Wikipedia…", "io.wpHint": "One Wikipedia article as a starting text, with its source and licence.",
+      "io.mdOut": "Markdown (.zip)", "io.mdOutHint": "Every article as a .md file, with its pictures.",
+      "io.site": "Website (.zip)", "io.siteHint": "This wiki as an offline website: unzip it and open index.html in any browser.",
+      "notes.title": "Import from Notes", "notes.book": "Notebook", "notes.pages": "{t} ({n} pages)", "notes.pages1": "{t} (1 page)",
+      "notes.where": "Put the articles in", "notes.new": "A new wiki called “{t}”", "notes.cur": "This wiki (“{t}”)",
+      "notes.none": "Notes has no pages on this device yet.", "notes.ok": "Import",
+      "imp.done": "{n} articles imported", "imp.done1": "1 article imported", "imp.none": "Nothing to import in these files.",
+      "imp.cut": "Only {n} articles fit: a wiki holds up to 5,000.", "imp.busy": "Importing…", "imp.fail": "These files could not be read.",
+      "imp.untitled": "Untitled", "imp.wiki": "Imported",
+      "exp.busy": "Making the file…", "exp.empty": "This wiki has no articles yet.", "exp.fail": "The file could not be made.",
+      "wp.title": "Start from Wikipedia", "wp.lang": "Wikipedia in", "wp.q": "Article title or Wikipedia address", "wp.ph": "e.g. Olive",
+      "wp.privacy": "The title you type goes to Wikipedia (Wikimedia Foundation) to fetch the article. Pictures are not copied.",
+      "wp.ok": "Fetch", "wp.busy": "Fetching from Wikipedia…", "wp.missing": "Wikipedia has no article with this title.",
+      "wp.fail": "Wikipedia could not be reached. Check the connection and try again.", "wp.empty": "Write a title.",
+      "wp.sugg": "Articles with this title:", "wp.sum": "Started from Wikipedia",
+      "wp.edit": "Check the text, then press Save. Keep the Source section at the end: it names the authors and the licence.",
+      "wp.replace": "Replace what you wrote with the Wikipedia article?", "wp.replaceBtn": "Replace",
+      "ed.wp": "Start from Wikipedia",
+      "menu.send": "Send to someone…", "send.noPics": "Pictures stay here: the link carries the text.",
+      "toast.noShare": "Sending needs orOS: open Wiki inside orOS.", "sum.recv": "Received with a link",
+      "sum.notes": "Imported from Notes", "sum.md": "Imported from Markdown",
+      "site.main": "Main page", "site.all": "All articles", "site.cats": "Categories", "site.cat": "Category: {t}",
+      "site.redirect": "Redirect to", "site.foot": "Made with orOS Wiki · last change {d}", "site.footList": "Made with orOS Wiki"
     },
     el: {
       "app.name": "Wiki",
@@ -283,7 +314,34 @@
       "toast.main": "Αυτή είναι τώρα η κεντρική σελίδα", "toast.resolved": "Έγινε: κρατήθηκε μία εκδοχή, η άλλη μένει στο ιστορικό",
       "standalone": "Άνοιξε το Wiki μέσα από το orOS για sync και ιστορικό.",
       "sum.new": "Νέο άρθρο", "sum.restore": "Επαναφορά παλιότερης εκδοχής",
-      "sum.keep": "Κρατήθηκε αυτή η εκδοχή (παράλληλη αλλαγή)", "sum.useOther": "Πάρθηκε η εκδοχή άλλης συσκευής"
+      "sum.keep": "Κρατήθηκε αυτή η εκδοχή (παράλληλη αλλαγή)", "sum.useOther": "Πάρθηκε η εκδοχή άλλης συσκευής",
+      "nav.io": "Εισαγωγή και εξαγωγή…", "io.title": "Εισαγωγή και εξαγωγή", "io.import": "Φέρε μέσα", "io.export": "Αποθήκευσε αυτό το wiki",
+      "io.lead": "Οι εισαγωγές μόνο προσθέτουν άρθρα: τίποτα στο wiki σου δεν αλλάζει ούτε αντικαθίσταται.",
+      "io.notes": "Από τις Σημειώσεις…", "io.notesHint": "Ένα σημειωματάριο των Σημειώσεων του orOS: κάθε σελίδα γίνεται άρθρο, οι υποσελίδες και οι ετικέτες γίνονται κατηγορίες.",
+      "io.md": "Αρχεία Markdown…", "io.mdHint": "Ένα ή περισσότερα αρχεία .md ή ένα .zip με αυτά (από τις Σημειώσεις, το Obsidian ή άλλο wiki).",
+      "io.wp": "Ξεκίνα από τη Βικιπαίδεια…", "io.wpHint": "Ένα άρθρο της Βικιπαίδειας ως κείμενο αφετηρίας, με την πηγή και την άδειά του.",
+      "io.mdOut": "Markdown (.zip)", "io.mdOutHint": "Κάθε άρθρο ως αρχείο .md, μαζί με τις εικόνες του.",
+      "io.site": "Ιστότοπος (.zip)", "io.siteHint": "Αυτό το wiki ως ιστότοπος χωρίς σύνδεση: αποσυμπίεσέ το και άνοιξε το index.html σε οποιονδήποτε browser.",
+      "notes.title": "Εισαγωγή από τις Σημειώσεις", "notes.book": "Σημειωματάριο", "notes.pages": "{t} ({n} σελίδες)", "notes.pages1": "{t} (1 σελίδα)",
+      "notes.where": "Βάλε τα άρθρα", "notes.new": "Σε νέο wiki με όνομα «{t}»", "notes.cur": "Σε αυτό το wiki («{t}»)",
+      "notes.none": "Οι Σημειώσεις δεν έχουν ακόμα σελίδες σε αυτή τη συσκευή.", "notes.ok": "Εισαγωγή",
+      "imp.done": "Μπήκαν {n} άρθρα", "imp.done1": "Μπήκε 1 άρθρο", "imp.none": "Δεν υπάρχει τίποτα για εισαγωγή σε αυτά τα αρχεία.",
+      "imp.cut": "Χώρεσαν μόνο {n} άρθρα: ένα wiki έχει έως 5.000.", "imp.busy": "Εισαγωγή…", "imp.fail": "Δεν ήταν δυνατό να διαβαστούν αυτά τα αρχεία.",
+      "imp.untitled": "Χωρίς τίτλο", "imp.wiki": "Εισαγωγή",
+      "exp.busy": "Φτιάχνεται το αρχείο…", "exp.empty": "Αυτό το wiki δεν έχει ακόμα άρθρα.", "exp.fail": "Δεν ήταν δυνατό να γίνει το αρχείο.",
+      "wp.title": "Ξεκίνα από τη Βικιπαίδεια", "wp.lang": "Βικιπαίδεια στα", "wp.q": "Τίτλος άρθρου ή διεύθυνση της Βικιπαίδειας", "wp.ph": "π.χ. Ελιά",
+      "wp.privacy": "Ο τίτλος που γράφεις πηγαίνει στη Βικιπαίδεια (Wikimedia Foundation) για να έρθει το άρθρο. Οι εικόνες δεν αντιγράφονται.",
+      "wp.ok": "Φέρ' το", "wp.busy": "Έρχεται από τη Βικιπαίδεια…", "wp.missing": "Η Βικιπαίδεια δεν έχει άρθρο με αυτόν τον τίτλο.",
+      "wp.fail": "Η Βικιπαίδεια δεν απάντησε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.", "wp.empty": "Γράψε έναν τίτλο.",
+      "wp.sugg": "Άρθρα με αυτόν τον τίτλο:", "wp.sum": "Ξεκίνησε από τη Βικιπαίδεια",
+      "wp.edit": "Έλεγξε το κείμενο και πάτα Αποθήκευση. Κράτα την ενότητα Πηγή στο τέλος: γράφει τους συντάκτες και την άδεια.",
+      "wp.replace": "Να αντικατασταθεί ό,τι έγραψες με το άρθρο της Βικιπαίδειας;", "wp.replaceBtn": "Αντικατάσταση",
+      "ed.wp": "Ξεκίνα από τη Βικιπαίδεια",
+      "menu.send": "Στείλε σε κάποιον…", "send.noPics": "Οι εικόνες μένουν εδώ: ο σύνδεσμος παίρνει το κείμενο.",
+      "toast.noShare": "Η αποστολή θέλει το orOS: άνοιξε το Wiki μέσα από το orOS.", "sum.recv": "Ήρθε με σύνδεσμο",
+      "sum.notes": "Εισαγωγή από τις Σημειώσεις", "sum.md": "Εισαγωγή από Markdown",
+      "site.main": "Κεντρική σελίδα", "site.all": "Όλα τα άρθρα", "site.cats": "Κατηγορίες", "site.cat": "Κατηγορία: {t}",
+      "site.redirect": "Ανακατεύθυνση στο", "site.foot": "Φτιάχτηκε με το Wiki του orOS · τελευταία αλλαγή {d}", "site.footList": "Φτιάχτηκε με το Wiki του orOS"
     }
   };
   function t(k, vars) {
@@ -646,12 +704,12 @@
     var whole = !a || !opts.sec;
     // opts.text: a new article's first text (a share to the single
     // app); it counts as unsaved, so leaving the editor asks first.
-    var text = a ? (whole ? a.x : C.getSection(a.x, sec)) : (typeof opts.text === "string" ? opts.text.slice(0, 20000) : "");
+    var text = a ? (whole ? a.x : C.getSection(a.x, sec)) : (typeof opts.text === "string" ? opts.text : "");
     if (text === null) { text = a.x; sec = 0; whole = true; }
     ed = {
       a: a ? a.id : "", w: w.id, sec: whole ? 0 : sec, whole: whole,
       base: a ? a.r : "", baseX: a ? a.x : "", baseT: a ? a.t : "",
-      title: a ? a.t : C.cleanTitle(opts.title || ""), text: text, start: a ? text : "", sum: "",
+      title: a ? a.t : C.cleanTitle(opts.title || ""), text: text, start: a ? text : "", sum: opts.sum || "",
       makeMain: !!opts.makeMain, tab: "write", restored: false
     };
     ed.dirty = function () {
@@ -660,7 +718,7 @@
       return cur !== ed.start || (!ed.a && C.cleanTitle(curT) !== C.cleanTitle(opts.title || ""));
     };
     var dr = readDraft();
-    if (dr && dr.w === ed.w && dr.a === ed.a && dr.sec === ed.sec && dr.base === ed.base &&
+    if (!opts.text && dr && dr.w === ed.w && dr.a === ed.a && dr.sec === ed.sec && dr.base === ed.base &&
         (ed.a || C.fold(dr.t) === C.fold(ed.title) || !ed.title) && dr.x !== ed.start) {
       ed.text = dr.x; ed.sum = dr.s || ""; if (!ed.a && dr.t) ed.title = dr.t;
       ed.restored = true;
@@ -687,6 +745,8 @@
       ni.addEventListener("input", saveDraftSoon);
       nl.appendChild(ni);
       box.appendChild(nl);
+      var wpb = btn("chip small ed-wp", "W " + t("ed.wp"), wpFromEditor);
+      box.appendChild(wpb);
     }
     var tabs = el("div", "ed-tabs");
     tabs.setAttribute("role", "tablist");
@@ -1041,7 +1101,7 @@
     acts.textContent = "";
     (o.extra || []).forEach(function (x) { acts.appendChild(btn("chip" + (x[2] ? " " + x[2] : ""), x[0], x[1])); });
     acts.appendChild(el("span", "spacer"));
-    acts.appendChild(btn("chip", t("btn.cancel"), hideDlg));
+    acts.appendChild(btn("chip", o.cancel || t("btn.cancel"), hideDlg));
     if (o.ok) acts.appendChild(btn("chip primary", o.ok, formOk));
     showDlg("form");
   }
@@ -1050,6 +1110,7 @@
     if (!o) return;
     var err = o.check ? o.check() : "";
     if (err) { $("form-err").textContent = err; return; }
+    if (o.submit) { o.submit(); return; }
     formCur = null;
     hideDlg();
     if (o.done) o.done();
@@ -1552,6 +1613,538 @@
     }).then(function () { pdfBusy = false; });
   }
 
+  // ---------- 5c. Import, export, Wikipedia, sending (wave 3) ----------
+  // Converters live in io.js (pure). Imports only ADD articles (titles
+  // made unique), each one with its first revision on the orOS disk.
+  function IO() { return window.WikiIO; }
+  var scriptP = {};
+  function loadScript(src, ready) {
+    if (ready()) return Promise.resolve();
+    if (scriptP[src]) return scriptP[src];
+    scriptP[src] = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = src;
+      sc.onload = function () { if (ready()) resolve(); else reject(new Error(src)); };
+      sc.onerror = function () { delete scriptP[src]; sc.remove(); reject(new Error(src)); };
+      document.head.appendChild(sc);
+    });
+    return scriptP[src];
+  }
+  function loadZip() {
+    return loadScript("../atelier/zip.js", function () { return !!window.AtelierZip; }).then(function () { return window.AtelierZip; });
+  }
+  function ymd(d) {
+    d = d || new Date();
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function takenTitles(w) {
+    var o = {}, ix = C.titleIndex(data, w.id);
+    Object.keys(ix).forEach(function (k) { o[k] = true; });
+    return o;
+  }
+  // A wiki object for an import (not saved yet).
+  function newWikiObj(name) {
+    if (data.wikis.length >= C.MAX_WIKIS) { toast(t("err.wikis")); return null; }
+    var w = { id: C.uid("w"), m: now(), n: String(name || "").replace(/\s+/g, " ").trim().slice(0, 80) || t("imp.wiki"), main: "" };
+    data.wikis.push(w);
+    return w;
+  }
+  // Add [{ t, x }] to wiki w (titles already unique). → { n, cut } or null
+  function addArticles(w, list, sum, isNew) {
+    var room = Math.max(0, C.MAX_ARTS - C.live(data, w.id).length);
+    var take = list.slice(0, room), added = [], m0 = now();
+    take.forEach(function (it, i) {
+      var m = m0 + i;
+      var art = C.normArt({ id: C.uid("a"), m: m, w: w.id, t: it.t, x: it.x, r: C.uid("r"), anc: [], alt: [], s: sum, c: m });
+      if (art) { data.arts.push(art); added.push(art); }
+    });
+    if (isNew && added.length) w.main = added[0].id;
+    if (!added.length || !persist()) {
+      var ids = {};
+      added.forEach(function (a) { ids[a.id] = 1; });
+      data.arts = data.arts.filter(function (a) { return !ids[a.id]; });
+      if (isNew) data.wikis = data.wikis.filter(function (x) { return x.id !== w.id; });
+      return null;
+    }
+    var F = fsApi(), chain = Promise.resolve(), bad = 0;
+    if (F && typeof F.writeText === "function") {
+      added.forEach(function (a) {
+        chain = chain.then(function () { return F.writeText(C.revPath(a.id, a.m, a.r), JSON.stringify(C.revFile(a, "", ""))); })
+          .catch(function () { bad++; });
+      });
+      chain.then(function () { if (bad) toast(t("toast.histFail")); });
+    }
+    return { n: added.length, cut: take.length < list.length };
+  }
+  function importDone(w, r) {
+    prefs.w = w.id; prefs.a = ""; savePrefs();
+    stack = [];
+    view = null;
+    if (r.cut) toast(t("imp.cut", { n: r.n }));
+    else toast(r.n === 1 ? t("imp.done1") : t("imp.done", { n: r.n }));
+    go({ v: "all" });
+  }
+
+  function ioDialog() {
+    closeSide(true);
+    var w = curWiki();
+    var body = el("div", "form io");
+    body.appendChild(el("p", "hint small", t("io.lead")));
+    function row(label, hint, fn, off) {
+      var r = el("div", "io-row");
+      var b = btn("chip", label, function () { hideDlg(); fn(); });
+      b.disabled = !!off;
+      r.appendChild(b);
+      r.appendChild(el("p", "hint small", hint));
+      body.appendChild(r);
+    }
+    body.appendChild(el("h3", "io-h", t("io.import")));
+    row(t("io.notes"), t("io.notesHint"), notesDialog);
+    row(t("io.md"), t("io.mdHint"), mdPick);
+    row(t("io.wp"), t("io.wpHint"), function () { wpDialog("", false); }, !w);
+    body.appendChild(el("h3", "io-h", t("io.export")));
+    row(t("io.mdOut"), t("io.mdOutHint"), exportMd, !w);
+    row(t("io.site"), t("io.siteHint"), exportSite, !w);
+    openForm({ title: t("io.title"), body: body, cancel: t("btn.close") });
+  }
+
+  // --- Notes notebook → wiki ---
+  function notesDialog() {
+    var nd = null;
+    try { nd = JSON.parse(localStorage.getItem("oros-notes-data") || "null"); } catch (e) {}
+    var books = IO().notesBooks(nd);
+    if (!books.length) { toast(t("notes.none")); return; }
+    var w = curWiki();
+    var body = el("div", "form");
+    var book = sel(books.map(function (b) {
+      var name = b.name || t("imp.untitled");
+      return [b.id, b.n === 1 ? t("notes.pages1", { t: name }) : t("notes.pages", { t: name, n: b.n })];
+    }), books[0].id);
+    body.appendChild(field(t("notes.book"), book));
+    var where = sel([["new", ""]].concat(w ? [["cur", t("notes.cur", { t: wikiName(w) })]] : []), "new");
+    function label() {
+      var b = books.filter(function (x) { return x.id === book.value; })[0];
+      where.options[0].textContent = t("notes.new", { t: (b && b.name) || t("imp.untitled") });
+    }
+    book.addEventListener("change", label);
+    label();
+    body.appendChild(field(t("notes.where"), where));
+    openForm({
+      title: t("notes.title"), body: body, ok: t("notes.ok"),
+      done: function () {
+        var b = books.filter(function (x) { return x.id === book.value; })[0];
+        var isNew = where.value === "new" || !curWiki();
+        var target = isNew ? null : curWiki();
+        var res = IO().fromNotes(nd, book.value, target ? takenTitles(target) : {}, t("imp.untitled"), LANG === "el" ? "Κατηγορία" : "Category");
+        if (!res || !res.arts.length) { toast(t("imp.none")); return; }
+        if (isNew) target = newWikiObj((b && b.name) || t("imp.wiki"));
+        if (!target) return;
+        var r = addArticles(target, res.arts, t("sum.notes"), isNew);
+        if (r) importDone(target, r);
+      }
+    });
+  }
+
+  // --- Markdown files / zip → wiki ---
+  function mdPick() {
+    var f = document.createElement("input");
+    f.type = "file";
+    f.multiple = true;
+    f.accept = ".md,.markdown,.txt,.zip,text/markdown,text/plain,application/zip";
+    f.addEventListener("change", function () { mdImport([].slice.call(f.files || [])); });
+    f.click();
+  }
+  var MD_EXT = /\.(md|markdown|txt)$/i, PIC_EXT = /\.(jpe?g|png|gif|webp|bmp|avif)$/i;
+  function normPath(p) {
+    var out = [];
+    String(p || "").replace(/\\/g, "/").split("/").forEach(function (s) {
+      if (!s || s === ".") return;
+      if (s === "..") out.pop(); else out.push(s);
+    });
+    return out.join("/");
+  }
+  // files → { docs: [{ path, text }], pics: { lower path: () → Promise<Blob> } }
+  function readImport(files) {
+    var docs = [], pics = {}, chain = Promise.resolve();
+    files.forEach(function (file) {
+      if (/\.zip$/i.test(file.name)) {
+        chain = chain.then(function () { return Promise.all([loadZip(), file.arrayBuffer()]); }).then(function (r) {
+          var z = r[0].open(new Uint8Array(r[1])), jobs = [];
+          z.names.forEach(function (n) {
+            var p = normPath(n);
+            if (/(^|\/)(__MACOSX|\.)/.test(p)) return;
+            if (MD_EXT.test(p) && docs.length < IO().MAX_IMPORT) {
+              jobs.push(z.text(n, 4 * 1024 * 1024).then(function (x) { if (x !== null) docs.push({ path: p, text: x }); }, function () {}));
+            } else if (PIC_EXT.test(p)) {
+              pics[p.toLowerCase()] = function () { return z.bytes(n, 40 * 1024 * 1024).then(function (b) { return new Blob([b]); }); };
+            }
+          });
+          return Promise.all(jobs);
+        });
+      } else if (MD_EXT.test(file.name)) {
+        chain = chain.then(function () { return file.text(); }).then(function (x) { docs.push({ path: file.name, text: x }); });
+      } else if (PIC_EXT.test(file.name)) {
+        pics[file.name.toLowerCase()] = function () { return Promise.resolve(file); };
+      }
+    });
+    return chain.then(function () {
+      docs.sort(function (a, b) { return a.path < b.path ? -1 : 1; });
+      return { docs: docs, pics: pics };
+    });
+  }
+  function mdImport(files) {
+    if (!files.length) return;
+    toast(t("imp.busy"));
+    readImport(files).then(function (got) {
+      if (!got.docs.length) { toast(t("imp.none")); return; }
+      var w = curWiki(), isNew = !w;
+      var taken = w ? takenTitles(w) : {};
+      // one shared top folder (a zipped vault) is not a category
+      var tops = {};
+      got.docs.forEach(function (d) { tops[d.path.indexOf("/") > 0 ? d.path.split("/")[0] : ""] = 1; });
+      var keys = Object.keys(tops), strip = keys.length === 1 && keys[0] ? keys[0] + "/" : "";
+      var first = got.docs.map(function (d) {
+        var name = d.path.split("/").pop();
+        return { d: d, a: IO().fromMarkdown(name, d.text, null) };
+      });
+      var byPath = {}, byName = {};
+      first.forEach(function (f) {
+        f.title = IO().uniqueTitle(f.a.t, taken, t("imp.untitled"));
+        byPath[f.d.path.toLowerCase()] = f.title;
+        var base = f.d.path.split("/").pop().toLowerCase();
+        if (!byName[base]) byName[base] = f.title;
+      });
+      var need = [], picIndex = {};
+      function picAt(dir, p) {
+        var path = normPath((dir ? dir + "/" : "") + p).toLowerCase();
+        if (got.pics[path]) return path;
+        var base = p.split("/").pop().toLowerCase();
+        var hit = Object.keys(got.pics).filter(function (k) { return k.split("/").pop() === base; })[0];
+        return hit || "";
+      }
+      var arts = first.map(function (f) {
+        var dir = f.d.path.split("/").slice(0, -1).join("/");
+        var ctx = {
+          img: function (p, alt, opts) {
+            var dec = p;
+            try { dec = decodeURIComponent(p); } catch (e) {}
+            var key = picAt(dir, dec);
+            if (!key) return "";
+            if (picIndex[key] === undefined) { picIndex[key] = need.length; need.push(key); }
+            return "\u0002" + picIndex[key] + "\u0002" + JSON.stringify([alt, opts]) + "\u0003";
+          },
+          page: function (p) {
+            var full = normPath((dir ? dir + "/" : "") + p).toLowerCase();
+            return byPath[full] || byName[p.split("/").pop().toLowerCase()] || "";
+          }
+        };
+        var a = IO().fromMarkdown(f.d.path.split("/").pop(), f.d.text, ctx);
+        var cats = a.cats.slice();
+        var rel = f.d.path.slice(f.d.path.indexOf(strip) === 0 ? strip.length : 0).split("/");
+        var folder = rel.length > 1 ? C.cleanTitle(rel[rel.length - 2]) : "";
+        if (folder && C.fold(folder) !== C.fold(f.a.t) && !/^(media|attachments|assets|images)$/i.test(folder)) cats.unshift(folder);
+        var x = a.x;
+        var seen = {};
+        cats = cats.filter(function (c) { var k = C.fold(c); if (!k || seen[k]) return false; seen[k] = 1; return true; });
+        if (cats.length) x += (x ? "\n\n" : "") + cats.map(function (c) { return "[[" + (LANG === "el" ? "Κατηγορία:" : "Category:") + c + "]]"; }).join("\n");
+        return { t: f.title, x: x };
+      });
+      // the pictures: same id when the file name is its hash (our export)
+      var ids = [], A = AS(), chain = Promise.resolve();
+      need.forEach(function (key, i) {
+        chain = chain.then(function () {
+          if (!A || !fsApi()) return null;
+          return got.pics[key]().then(function (blob) {
+            var name = key.split("/").pop();
+            if (C.IMG_RE.test(name)) return A.put(name, blob).catch(function () { return A.importFile(new File([blob], name)).then(function (r) { return r.id; }); });
+            return A.importFile(new File([blob], name)).then(function (r) { return r.id; });
+          });
+        }).then(function (id) { ids[i] = id || ""; }, function () { ids[i] = ""; });
+      });
+      return chain.then(function () {
+        arts.forEach(function (a) {
+          a.x = a.x.replace(/\u0002(\d+)\u0002([^\u0003]*)\u0003/g, function (m, n, j) {
+            var o = ["", ""];
+            try { o = JSON.parse(j); } catch (e) {}
+            var id = ids[Number(n)];
+            return id ? IO().mediaFile(id, o[0], o[1], LANG) : String(o[0] || "");
+          }).slice(0, C.MAX_TEXT);
+        });
+        if (isNew) w = newWikiObj(t("imp.wiki"));
+        if (!w) return;
+        var r = addArticles(w, arts, t("sum.md"), isNew);
+        if (r) importDone(w, r);
+      });
+    }).catch(function (e) {
+      try { console.error("[orOS wiki] import", e); } catch (x) {}
+      toast(t("imp.fail"));
+    });
+  }
+
+  // --- this wiki → Markdown zip / website zip ---
+  var expBusy = false;
+  function zipName(w, tail) {
+    return (IO().fileStem(wikiName(w)) || "wiki") + tail + "-" + ymd() + ".zip";
+  }
+  function mediaFiles(ids) {
+    var out = [], A = AS(), chain = Promise.resolve();
+    ids.forEach(function (id) {
+      chain = chain.then(function () { return A ? A.blob(id) : null; })
+        .then(function (b) { return b ? b.arrayBuffer() : null; })
+        .then(function (ab) { if (ab) out.push({ name: "media/" + id, data: new Uint8Array(ab), id: id }); }, function () {});
+    });
+    return chain.then(function () { return out; });
+  }
+  function exportRun(fn) {
+    var w = curWiki();
+    if (!w || expBusy) return;
+    var arts = C.live(data, w.id).sort(C.byTitle);
+    if (!arts.length) { toast(t("exp.empty")); return; }
+    expBusy = true;
+    toast(t("exp.busy"));
+    Promise.all([loadZip(), fn(w, arts)]).then(function (r) {
+      var bytes = r[0].write(r[1].files, new Date());
+      saveBlob(new Blob([bytes], { type: "application/zip" }), r[1].name, "application/zip", "zip");
+    }).catch(function (e) {
+      try { console.error("[orOS wiki] export", e); } catch (x) {}
+      toast(t("exp.fail"));
+    }).then(function () { expBusy = false; });
+  }
+  function usedImages(arts) {
+    var seen = {}, ids = [];
+    arts.forEach(function (a) { C.images(C.parseDoc(a.x)).forEach(function (id) { if (!seen[id]) { seen[id] = 1; ids.push(id); } }); });
+    return ids;
+  }
+  function exportMd() {
+    exportRun(function (w, arts) {
+      var used = {}, files = arts.map(function (a) {
+        return { name: IO().uniqueFile(IO().fileStem(a.t), ".md", used), data: IO().toMarkdown(a) };
+      });
+      return mediaFiles(usedImages(arts)).then(function (media) {
+        return { files: files.concat(media), name: zipName(w, "-markdown") };
+      });
+    });
+  }
+  function exportSite() {
+    exportRun(function (w, arts) {
+      return mediaFiles(usedImages(arts)).then(function (media) {
+        var have = {};
+        media.forEach(function (m) { have[m.id] = 1; });
+        var used = { "index.html": 1, "all.html": 1, "categories.html": 1, "style.css": 1 };
+        var fileOf = {};
+        arts.forEach(function (a) { fileOf[a.id] = IO().pageFile(a.t, used); });
+        var cats = C.categories(data, w.id), catFile = {};
+        cats.forEach(function (c) { catFile[C.fold(c.name)] = IO().pageFile("category " + c.name, used); });
+        var ix = C.titleIndex(data, w.id), doc = document.implementation.createHTMLDocument("");
+        var L = { main: t("site.main"), all: t("site.all"), cats: t("site.cats") };
+        var opts = { state: function (to) { return C.resolve(data, w.id, to, ix).art ? "ok" : "new"; },
+                     toc: t("art.toc"), refs: t("art.refs"), refUp: t("art.refUp"), refMissing: t("art.refMissing") };
+        function catHref(name) { var f = catFile[C.fold(name)]; return f ? IO().href(f) : ""; }
+        function fix(root) {
+          [].slice.call(root.querySelectorAll("a[data-to], a[data-cat], a[data-anchor], a[data-ref], a[data-cite], a.wl")).forEach(function (n) {
+            var h = "";
+            if (n.hasAttribute("data-to")) {
+              var to = n.getAttribute("data-to"), fr = n.getAttribute("data-frag") || "";
+              var r = to ? C.resolve(data, w.id, to, ix).art : null;
+              if (r) h = IO().href(fileOf[r.id]) + (fr ? "#s-" + C.slug(fr) : "");
+              else if (!to && fr) h = "#s-" + C.slug(fr);
+            } else if (n.hasAttribute("data-cat")) h = catHref(n.getAttribute("data-cat"));
+            else if (n.hasAttribute("data-anchor")) h = "#s-" + n.getAttribute("data-anchor");
+            else if (n.hasAttribute("data-ref")) h = "#ref-" + n.getAttribute("data-ref");
+            else if (n.hasAttribute("data-cite")) h = "#" + n.getAttribute("data-cite");
+            if (h) {
+              n.setAttribute("href", h);
+              ["data-to", "data-frag", "data-cat", "data-anchor", "data-ref", "data-cite"].forEach(function (k) { n.removeAttribute(k); });
+            } else {
+              var sp = doc.createElement("span");
+              sp.className = n.className;
+              sp.textContent = n.textContent;
+              n.parentNode.replaceChild(sp, n);
+            }
+          });
+          [].slice.call(root.querySelectorAll("img[data-img]")).forEach(function (im) {
+            var id = im.getAttribute("data-img");
+            im.removeAttribute("data-img");
+            if (have[id]) im.setAttribute("src", "media/" + id);
+            else {
+              var sp = doc.createElement("span");
+              sp.className = "img-missing";
+              sp.textContent = im.getAttribute("alt") || t("img.missing");
+              im.parentNode.replaceChild(sp, im);
+            }
+          });
+        }
+        function catsHtml(list) {
+          if (!list.length) return "";
+          var box = doc.createElement("div");
+          box.className = "cats";
+          box.appendChild(doc.createTextNode((list.length === 1 ? t("art.cat1") : t("art.cats")) + ": "));
+          list.forEach(function (c) {
+            var a = doc.createElement("a");
+            a.setAttribute("href", catHref(c));
+            a.textContent = c;
+            box.appendChild(a);
+          });
+          return box.outerHTML;
+        }
+        function articleHtml(a) {
+          var inf = C.info(a), box = doc.createElement("div");
+          if (inf.redirect) {
+            var p = doc.createElement("p");
+            p.className = "redir";
+            p.appendChild(doc.createTextNode("↳ " + t("site.redirect") + " "));
+            var l = doc.createElement("a");
+            l.className = "wl";
+            l.setAttribute("data-to", inf.redirect);
+            l.textContent = inf.redirect;
+            p.appendChild(l);
+            box.appendChild(p);
+          } else box.appendChild(C.render(doc, C.parseDoc(a.x), opts));
+          fix(box);
+          return box.innerHTML + catsHtml(inf.cats);
+        }
+        var files = [{ name: "style.css", data: IO().SITE_CSS }];
+        var main = w.main && C.byId(data, w.main);
+        arts.forEach(function (a) {
+          var html = IO().sitePage({ lang: LANG, wiki: wikiName(w), title: a.t, body: articleHtml(a), L: L, foot: t("site.foot", { d: fmtDate(a.m) }) });
+          files.push({ name: fileOf[a.id], data: html });
+          if (main && main.id === a.id) files.push({ name: "index.html", data: html });
+        });
+        var listed = arts.filter(function (a) { return !C.info(a).redirect; }).map(function (a) { return { t: a.t, file: fileOf[a.id] }; });
+        var allHtml = IO().sitePage({ lang: LANG, wiki: wikiName(w), title: t("site.all"), body: IO().siteList(listed), L: L, foot: t("site.footList") });
+        files.push({ name: "all.html", data: allHtml });
+        if (!main) files.push({ name: "index.html", data: allHtml });
+        files.push({ name: "categories.html", data: IO().sitePage({ lang: LANG, wiki: wikiName(w), title: t("site.cats"),
+          body: IO().siteList(cats.map(function (c) { return { t: c.name + " (" + c.arts.length + ")", file: catFile[C.fold(c.name)] }; })), L: L, foot: t("site.footList") }) });
+        cats.forEach(function (c) {
+          files.push({ name: catFile[C.fold(c.name)], data: IO().sitePage({ lang: LANG, wiki: wikiName(w), title: t("site.cat", { t: c.name }),
+            body: IO().siteList(c.arts.map(function (a) { return { t: a.t, file: fileOf[a.id] }; })), L: L, foot: t("site.footList") }) });
+        });
+        return { files: files.concat(media.map(function (m) { return { name: m.name, data: m.data }; })), name: zipName(w, "-website") };
+      });
+    });
+  }
+
+  // --- Start from Wikipedia ---
+  var WP_LANGS = [["el", "Ελληνικά"], ["en", "English"], ["de", "Deutsch"], ["fr", "Français"], ["es", "Español"],
+                  ["it", "Italiano"], ["pt", "Português"], ["nl", "Nederlands"]];
+  function fetchJson(url) {
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
+    return fetch(url, { credentials: "omit", referrerPolicy: "no-referrer", signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (j) { clearTimeout(timer); return j; }, function (e) { clearTimeout(timer); throw e; });
+  }
+  // inEditor: fill the open editor of a new article instead of opening one
+  function wpDialog(title, inEditor) {
+    if (!curWiki() || !IO()) return;
+    var body = el("div", "form");
+    var lang = sel(WP_LANGS, LANG === "el" ? "el" : "en");
+    body.appendChild(field(t("wp.lang"), lang));
+    var q = inp(title || "", t("wp.ph"), 300);
+    q.type = "search";
+    q.enterKeyHint = "go";
+    body.appendChild(field(t("wp.q"), q));
+    var sugg = el("div", "wp-sugg");
+    body.appendChild(sugg);
+    body.appendChild(el("p", "hint small", t("wp.privacy")));
+    var busy = false, gen = 0, timer = 0;
+    function suggest() {
+      clearTimeout(timer);
+      var v = q.value.trim(), my = ++gen;
+      if (!busy) $("form-err").textContent = "";
+      if (v.length < 2 || IO().wpFromUrl(v)) { sugg.textContent = ""; return; }
+      timer = setTimeout(function () {
+        fetchJson(IO().wpSearchUrl(lang.value, v)).then(function (j) {
+          if (my !== gen) return;
+          var list = IO().wpSearchAnswer(j);
+          sugg.textContent = "";
+          if (!list.length) return;
+          sugg.appendChild(el("span", "lbl", t("wp.sugg")));
+          list.forEach(function (s) { sugg.appendChild(btn("chip small", s, function () { q.value = s; fetchIt(); })); });
+        }, function () {});
+      }, 350);
+    }
+    q.addEventListener("input", suggest);
+    lang.addEventListener("change", suggest);
+    q.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); fetchIt(); } });
+    function fetchIt() {
+      if (busy) return;
+      var v = q.value.trim(), lg = lang.value;
+      var fromUrl = IO().wpFromUrl(v);
+      if (fromUrl) { v = fromUrl.title; lg = fromUrl.lang; }
+      if (!v) { $("form-err").textContent = t("wp.empty"); return; }
+      busy = true;
+      gen++;
+      $("form-err").textContent = t("wp.busy");
+      fetchJson(IO().wpParseUrl(lg, v)).then(function (j) {
+        busy = false;
+        var ans = IO().wpParseAnswer(j);
+        if (ans.error) { $("form-err").textContent = t(ans.error === "missing" ? "wp.missing" : "wp.fail"); return; }
+        var res = IO().fromWikipedia(ans, { lang: lg, ui: LANG, date: ymd() });
+        formCur = null;
+        hideDlg();
+        useArticle(res, inEditor);
+      }, function () {
+        busy = false;
+        $("form-err").textContent = t("wp.fail");
+      });
+    }
+    openForm({ title: t("wp.title"), body: body, ok: t("wp.ok"), submit: fetchIt });
+    if (title) suggest();
+  }
+  function useArticle(res, inEditor) {
+    var w = curWiki();
+    if (inEditor && ed && !ed.a && $("ed-text")) {
+      var nameIn = $("ed-name");
+      var keep = C.cleanTitle(nameIn.value);
+      if (!keep || idx()[C.fold(keep)]) nameIn.value = IO().uniqueTitle(res.t, takenTitles(w));
+      $("ed-text").value = res.x;
+      $("ed-sum").value = t("wp.sum");
+      edTab("write");
+      saveDraftSoon();
+      toast(t("wp.edit"));
+      return;
+    }
+    startEdit({ title: IO().uniqueTitle(res.t, takenTitles(w)), text: res.x, sum: t("wp.sum") });
+    toast(t("wp.edit"));
+  }
+  function wpFromEditor() {
+    var ta = $("ed-text");
+    var go2 = function () { wpDialog($("ed-name") ? $("ed-name").value : "", true); };
+    if (ta && ta.value.trim()) ask(t("wp.replace"), t("wp.replaceBtn"), go2);
+    else go2();
+  }
+
+  // --- Send to someone (share kind "wiki": title + text, no pictures) ---
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) { return null; }
+  }
+  function sendArt(a) {
+    var api = shareApi();
+    if (!api || !IO()) { toast(t("toast.noShare")); return; }
+    var x = IO().shareText(a.x);
+    if (C.images(C.parseDoc(a.x)).length) toast(t("send.noPics"));
+    api.open({ kind: "wiki", data: { t: a.t, x: x }, text: a.t + "\n\n" + C.plainText(x) });
+  }
+  // From a link someone sent: a new article in the editor, not saved yet.
+  function receiveArt(o) {
+    var w = curWiki();
+    if (!w) {
+      w = newWikiObj(t("wiki.default"));
+      if (!w || !persist()) return false;
+      prefs.w = w.id; savePrefs();
+    }
+    var title = C.cleanTitle(o.t) || t("imp.untitled");
+    var text = typeof o.x === "string" ? o.x.replace(/\r\n?/g, "\n").slice(0, C.MAX_TEXT) : "";
+    hideDlg();
+    ed = null;
+    view = null;
+    stack = [];
+    startEdit({ title: IO().uniqueTitle(title, takenTitles(w)), text: text, sum: t("sum.recv") });
+    return true;
+  }
+
   // ---------- 6. History + parallel edits ----------
   var revCache = {};   // path → parsed revision
   function listRevs(aid) {
@@ -2020,6 +2613,7 @@
       [t("menu.copy"), function () { copyText(a.x); }]
     ];
     if (w && w.main !== a.id) items.push([t("menu.main"), function () { w.main = a.id; w.m = now(w.m); persist(); toast(t("toast.main")); render(); }]);
+    items.push([t("menu.send"), function () { sendArt(a); }]);
     items.push([t("menu.print"), function () { printArt(a); }]);
     items.push([t("menu.pdf"), function () { pdfArt(a); }]);
     items.push([t("menu.del"), function () { deleteArt(a); }, "danger"]);
@@ -2254,16 +2848,21 @@
   }
   // Deep link (search hit): { a } opens that article (and its wiki).
   function openTarget(target) {
+    if (!target || typeof target !== "object") return false;
     // Single app (solo.js): { newArt: { title?, text? } } → a new
     // article in the editor (icon shortcut, or a share).
-    var na = target && typeof target === "object" ? target.newArt : null;
+    var na = target.newArt;
     if (na && typeof na === "object") {
       if (!curWiki() || (view && view.v === "edit" && ed && ed.dirty())) return false;
       hideDlg();
-      startEdit({ title: typeof na.title === "string" ? na.title : "", text: typeof na.text === "string" ? na.text : "" });
+      startEdit({ title: typeof na.title === "string" ? na.title : "", text: typeof na.text === "string" ? na.text.slice(0, 20000) : "" });
       return true;
     }
-    if (!target || typeof target !== "object" || typeof target.a !== "string") return false;
+    if (target.addArticle && typeof target.addArticle === "object") {
+      if (view && view.v === "edit" && ed && ed.dirty()) return false;
+      return receiveArt(target.addArticle);
+    }
+    if (typeof target.a !== "string") return false;
     var a = C.byId(data, target.a);
     if (!a) return false;
     if (view && view.v === "edit" && ed && ed.dirty()) return false;
@@ -2314,6 +2913,7 @@
     });
     $("wiki-ren").addEventListener("click", function () { closeSide(true); renameWiki(); });
     $("wiki-del").addEventListener("click", function () { closeSide(true); deleteWiki(); });
+    $("wiki-io").addEventListener("click", ioDialog);
     $("q").addEventListener("input", onSearchInput);
     $("q").addEventListener("keydown", function (e) {
       if (e.key === "ArrowDown") { e.preventDefault(); moveSugg(1); }

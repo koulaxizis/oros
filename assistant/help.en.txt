@@ -1,5 +1,5 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense or a bookmark you already have, but only after you see the change and press Apply.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
@@ -51,8 +51,13 @@ What it can change:
 - [Calendar](app:calendar): move an event (day, start, end), rename it, change its place or note, delete it.
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
 - [Bookmarks](app:bookmarks): rename a bookmark, change its note, delete it.
+- [Contacts](app:contacts): change a contact's name, organisation, birthday or note, add a phone number or e-mail (the old ones stay), delete it.
+- [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title or note, delete it. A move runs the column's own automations, and the card shows what they change.
+- [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
+- [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.
+- [Plant Care](app:plants): mark a plant watered today, rename it, change its notes.
 
-Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, and bookmarks with a saved copy. Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
+Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, bookmarks with a saved copy, Kanban cards with files on the orOS disk or on an archived board, habits that count an amount, and deleting a habit or a plant (that removes its whole history). Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
