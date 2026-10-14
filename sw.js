@@ -1543,6 +1543,8 @@ var PRECACHE_URLS = [
   "vendor/jsqr/jsQR.js",
   "vendor/openpgp/openpgp.min.js",
   "weather/core.js",
+  "weather/rainmap-core.js",
+  "weather/rainmap.js",
   "writer/core.js",
   "writer/merge.js",
   "writer/spell-worker.js",

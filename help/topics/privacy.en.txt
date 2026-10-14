@@ -24,7 +24,7 @@ Before anything leaves your device, orOS encrypts it with your encryption passph
 
 ## Online services some apps use
 orOS itself runs from your device, but some apps need the internet for what they show. They contact these services only when you use that feature:
-- Weather (and the weather in the top bar): Open-Meteo, for forecasts, city search and air quality (Copernicus CAMS), and MeteoAlarm for official warnings.
+- Weather (and the weather in the top bar): Open-Meteo, for forecasts, city search and air quality (Copernicus CAMS), MeteoAlarm for official warnings, and, only when you open the rain map, NASA GIBS (satellite rain pictures, IMERG) with OpenStreetMap map tiles.
 - [Radio](app:radio): Radio Browser, a community list of stations. The stations play from their own servers.
 - [Maps](app:maps): OpenStreetMap, OpenTopoMap and Esri map images, Photon place search, OSRM and FOSSGIS routes, Transitous for public transport, and AWS Terrain Tiles for the elevation of a track you plan. `Discover` asks the Overpass API, Wikipedia and Panoramax about the area you're looking at. Notes, place edits, quests and GPS trace uploads talk to the OpenStreetMap API and the Overpass API, only when you use them; writing needs your own OpenStreetMap account. `Offline maps` downloads an area you choose from Protomaps' builds of OpenStreetMap. The Maps help lists what each one receives.
 - [Television](app:television): iptv-org, a community list of channels. The channels play from their own servers.
