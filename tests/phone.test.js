@@ -355,3 +355,59 @@ test("widgetData: the Today summary in plain rows for the home-screen widget", (
   const many = { today: "2026-10-14", apps: [], groups: { today: Array.from({ length: 50 }, (_, i) => ({ title: "t" + i })) } };
   assert.equal(P.widgetData(many).rows.length, 30, "at most 30 rows");
 });
+
+test("healthOut: the last 30 days of Water and Workouts, never rows that came from Health Connect", () => {
+  const now = Date.UTC(2026, 9, 14, 12);
+  const day = 86400000;
+  const water = { sips: [
+    { id: "sip0001", ts: now - day, ml: 250, m: 5 },
+    { id: "sip0002", ts: now - 40 * day, ml: 250, m: 5 },
+    { id: "sip0003", m: 9, del: 1 },
+    { id: "hc0123456789abcdef", ts: now - day, ml: 300, m: 7 }
+  ] };
+  const fit = { wo: [
+    { id: "w1", m: 3, d: "2026-10-13", st: now - day, en: now - day + 3600000, ti: "Push" },
+    { id: "w2", m: 3, d: "2026-10-14", st: now - 600000, en: 0, ti: "Running now" },
+    { id: "w3", m: 3, d: "2026-10-12", st: now - 2 * day, en: now - 2 * day + 60000, ti: "Gone" },
+    { id: "hc-abc", m: 3, d: "2026-10-12", st: now - 2 * day, en: now - 2 * day + 60000, ti: "From a watch" }
+  ], tombs: { "wo:w3": 4 } };
+  const o = P.healthOut(water, fit, now);
+  assert.equal(o.since, now - 30 * day);
+  assert.deepEqual(o.water, [{ id: "sip0001", at: now - day, ml: 250, v: 5 }]);
+  assert.deepEqual(o.workouts, [{ id: "w1", st: now - day, en: now - day + 3600000, ti: "Push", v: 3 }],
+    "a running workout, a deleted one and one from Health Connect stay home");
+  assert.deepEqual(P.healthOut(null, null, now), { since: now - 30 * day, water: [], workouts: [] });
+});
+
+test("healthIn: water, workouts and steps from other apps, once, never over a deletion", () => {
+  const now = new Date(2026, 9, 14, 15, 0).getTime();
+  const ref = "0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0";
+  const inc = {
+    water: [{ ref, at: now - 3600000, ml: 330 }, { ref: "zz", at: now, ml: 200 }],
+    workouts: [{ ref, st: now - 7200000, en: now - 3600000, ti: "", kind: "running" },
+               { ref: "1111", st: now, en: now - 1, ti: "Bad" }],
+    steps: [{ d: "2026-10-13", n: 9123 }, { d: "2026-10-14", n: 4210 }, { d: "2026-10-12", n: 0 }]
+  };
+  const names = { running: "Running", other: "Workout" };
+  const r = P.healthIn({ water: { sips: [] }, fitness: null, health: null }, inc, now, names);
+  assert.deepEqual(r.water.sips, [{ id: "hc0b1c2d3e4f5061728394a5b6c7d8e9f0", ts: now - 3600000, ml: 330, m: now }],
+    "a reference with too few hex digits is skipped");
+  assert.equal(r.fitness.wo.length, 1);
+  assert.deepEqual(r.fitness.wo[0], { id: "hc-0b1c2d3e4f5061728394a5b6c7d8e9f0", m: now, d: "2026-10-14",
+    st: now - 7200000, en: now - 3600000, ti: "Running", p: "", pd: "", n: "", x: [] });
+  assert.deepEqual(r.health.en.map((e) => [e.id, e.t, e.v[0]]), [["hc-st-20261013", "st", 9123], ["hc-st-20261014", "st", 4210]]);
+  assert.equal(r.health.en[1].at, now, "today's steps carry the time they were read");
+  assert.equal(r.health.en[0].at, new Date(2026, 9, 13, 23, 59).getTime());
+
+  const again = P.healthIn({ water: r.water, fitness: r.fitness, health: r.health }, inc, now + 1000, names);
+  assert.deepEqual(again, { water: null, fitness: null, health: null }, "the same answer again changes nothing");
+
+  const more = P.healthIn({ water: r.water, fitness: r.fitness, health: r.health },
+    { steps: [{ d: "2026-10-14", n: 5000 }] }, now + 60000, names);
+  assert.equal(more.health.en[1].v[0], 5000, "today's steps go up as the day goes on");
+
+  const deleted = P.healthIn({ water: null, fitness: { wo: [], tombs: { "wo:hc-0b1c2d3e4f5061728394a5b6c7d8e9f0": now } },
+    health: { en: [], tombs: { "en:hc-st-20261013": now } } }, inc, now, names);
+  assert.equal(deleted.fitness, null, "a workout deleted in orOS is not brought back");
+  assert.deepEqual(deleted.health.en.map((e) => e.id), ["hc-st-20261014"], "nor a deleted day of steps");
+});

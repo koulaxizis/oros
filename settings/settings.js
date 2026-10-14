@@ -521,6 +521,38 @@
     host.appendChild(c);
   }
 
+  // In the orOS Android app only (BR-PHONE v5): Health Connect.
+  function secPhoneHealth(host) {
+    var P = phone();
+    if (!P) return;
+    if (!phoneOff) phoneOff = P.onChange(function () { render(); });
+    var st = P.state() || {};
+    if (!st.health) return;                    // an app too old for Health Connect
+    var on = P.enabled("health");
+    var c = card(t("v.hc"));
+    if (st.health === "unavailable") { c.appendChild(el("p", "hint", t("v.hc.none"))); host.appendChild(c); return; }
+    c.appendChild(row(t("v.hc"), switchBtn(on, "v.hc", function (v) {
+      P.setEnabled("health", v);
+      if (v && st.health !== "granted") P.askPermission("health");
+      render();
+    }, t("v.hc")), { hint: t("v.hc.hint") }));
+    if (on && st.health === "update") {
+      c.appendChild(el("div", "hint", t("v.hc.update")));
+      c.appendChild(actions(button(t("v.hc.install"), "v.hc.install", function () { P.askPermission("health"); })));
+    } else if (on && st.health !== "granted") {
+      if (st.health === "some") c.appendChild(el("div", "hint", t("v.hc.some")));
+      c.appendChild(actions(button(t("v.hc.allow"), "v.hc.allow", function () { P.askPermission("health"); })));
+    }
+    var info = on && P.healthInfo ? P.healthInfo() : null;
+    if (info && info.at) {
+      var d = new Date(info.at);
+      c.appendChild(el("div", "hint", t("v.hc.last", {
+        when: d.toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" }),
+        steps: info.steps | 0, water: info.water | 0, wo: info.workouts | 0 })));
+    }
+    host.appendChild(c);
+  }
+
   // ---------- 6. Section: Sync ----------
   // The passphrase lives only in this field and in the shell call;
   // it survives repaints in memory and is cleared once used.
@@ -831,6 +863,7 @@
     });
   }
   function secServices(host) {
+    secPhoneHealth(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
     var c0 = card(null);

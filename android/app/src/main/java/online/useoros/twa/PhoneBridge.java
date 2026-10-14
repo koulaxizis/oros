@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
  * them into the "orOS" account. v2: edits made on the phone in that
  * account go back to the page as {t:"changes"}. v3: reminders
  * (Reminders). v4: the Today summary for the home-screen widget
- * (Widgets).
+ * (Widgets). v5: Health Connect (HealthBridge).
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -215,7 +215,8 @@ public class PhoneBridge {
             main.post(() -> {
                 channelReady = true;
                 // The first message hands the page its port (phone.js).
-                send(state());
+                // state() asks Health Connect: off the main thread.
+                io.execute(() -> send(state()));
             });
         }
 
@@ -231,7 +232,7 @@ public class PhoneBridge {
 
     /** Called by PermissionActivity after Android answered. */
     void permissionsChanged() {
-        main.post(() -> send(state()));
+        io.execute(() -> send(state()));
     }
 
     private void send(JSONObject msg) {
@@ -265,6 +266,7 @@ public class PhoneBridge {
             o.put("reminders", Reminders.permission(app));
             o.put("exact", Reminders.exact(app));
             o.put("widgets", Widgets.count(app));
+            o.put("health", HealthBridge.status(app));
             o.put("app", BuildConfig.VERSION_NAME);
         } catch (JSONException ignored) {
         }
@@ -341,6 +343,21 @@ public class PhoneBridge {
                     diag("widget rows: " + (data.optJSONArray("rows") == null ? 0 : data.optJSONArray("rows").length()));
                     return;
                 }
+                case "health": {
+                    if (!HealthBridge.available(app)) throw new IllegalStateException("no Health Connect");
+                    JSONObject in = HealthBridge.sync(app, m);
+                    diag("health: wrote " + in.optInt("wrote") + ", removed " + in.optInt("removed")
+                            + ", in " + (in.optJSONArray("steps") == null ? 0 : in.optJSONArray("steps").length()) + " days of steps");
+                    send(in);
+                    JSONObject done = new JSONObject();
+                    done.put("t", "done");
+                    done.put("what", "health");
+                    done.put("seq", seq);
+                    done.put("added", in.optInt("wrote"));
+                    done.put("removed", in.optInt("removed"));
+                    send(done);
+                    return;
+                }
                 case "applied": {
                     String w = m.optString("what");
                     JSONArray refs = m.optJSONArray("refs");
@@ -386,6 +403,7 @@ public class PhoneBridge {
                     if ("contacts".equals(what) && granted(CONTACTS_PERMS)) new ContactsWriter(app).clear();
                     else if ("calendar".equals(what) && granted(CALENDAR_PERMS)) new CalendarWriter(app).clear();
                     else if ("reminders".equals(what)) Reminders.clear(app);
+                    else if ("health".equals(what)) HealthBridge.clear(app);
                     return;
                 default:
             }

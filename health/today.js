@@ -15,9 +15,9 @@
   var KEY = "oros-health-data";
   var NAMES = {
     en: { bp: "Blood pressure", wt: "Weight", gl: "Blood sugar", sl: "Sleep",
-          hr: "Resting heart rate", tp: "Temperature", o2: "Oxygen (SpO₂)" },
+          hr: "Resting heart rate", tp: "Temperature", o2: "Oxygen (SpO₂)", st: "Steps" },
     el: { bp: "Πίεση", wt: "Βάρος", gl: "Σάκχαρο", sl: "Ύπνος",
-          hr: "Σφυγμοί ηρεμίας", tp: "Θερμοκρασία", o2: "Οξυγόνο (SpO₂)" }
+          hr: "Σφυγμοί ηρεμίας", tp: "Θερμοκρασία", o2: "Οξυγόνο (SpO₂)", st: "Βήματα" }
   };
   var TXT = { en: "Reading", el: "Μέτρηση" };
 

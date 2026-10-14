@@ -57,8 +57,8 @@
       "tab.home": "Measurements", "tab.history": "History", "tab.charts": "Charts", "tab.report": "Report",
       "btn.settings": "Settings",
       "t.bp": "Blood pressure", "t.wt": "Weight", "t.gl": "Blood sugar", "t.sl": "Sleep",
-      "t.hr": "Resting heart rate", "t.tp": "Temperature", "t.o2": "Oxygen (SpO₂)",
-      "u.bpm": "bpm", "u.h": "h",
+      "t.hr": "Resting heart rate", "t.tp": "Temperature", "t.o2": "Oxygen (SpO₂)", "t.st": "Steps",
+      "u.bpm": "bpm", "u.h": "h", "u.st": "steps",
       "home.add": "Add", "home.never": "No readings yet", "home.own": "Add your own kind",
       "home.ownHint": "For example cholesterol, INR or waist size.",
       "home.disclaimer": "Health records, it does not diagnose. The colours follow common tables (ESC/ESH 2023 for blood pressure, ADA for blood sugar, WHO for BMI) or the targets you set. For anything that worries you, talk to your doctor.",
@@ -124,8 +124,8 @@
       "tab.home": "Μετρήσεις", "tab.history": "Ιστορικό", "tab.charts": "Γραφήματα", "tab.report": "Αναφορά",
       "btn.settings": "Ρυθμίσεις",
       "t.bp": "Πίεση", "t.wt": "Βάρος", "t.gl": "Σάκχαρο", "t.sl": "Ύπνος",
-      "t.hr": "Σφυγμοί ηρεμίας", "t.tp": "Θερμοκρασία", "t.o2": "Οξυγόνο (SpO₂)",
-      "u.bpm": "bpm", "u.h": "ώ",
+      "t.hr": "Σφυγμοί ηρεμίας", "t.tp": "Θερμοκρασία", "t.o2": "Οξυγόνο (SpO₂)", "t.st": "Βήματα",
+      "u.bpm": "bpm", "u.h": "ώ", "u.st": "βήματα",
       "home.add": "Νέα", "home.never": "Καμία μέτρηση ακόμα", "home.own": "Πρόσθεσε δικό σου είδος",
       "home.ownHint": "Για παράδειγμα χοληστερίνη, INR ή περίμετρος μέσης.",
       "home.disclaimer": "Η Υγεία καταγράφει, δεν κάνει διάγνωση. Τα χρώματα ακολουθούν γνωστούς πίνακες (ESC/ESH 2023 για την πίεση, ADA για το σάκχαρο, ΠΟΥ για τον ΔΜΣ) ή τους στόχους που όρισες. Για ό,τι σε ανησυχεί, μίλα με τον γιατρό σου.",
@@ -301,6 +301,7 @@
       case "hr": return t("u.bpm");
       case "tp": return set.tu === "f" ? "°F" : "°C";
       case "o2": return "%";
+      case "st": return t("u.st");
     }
     var ty = C.typeRow(data, tid);
     return ty ? ty.u : "";
@@ -554,6 +555,7 @@
     hr: SV + '<path d="M3 12h4l2-5 4 10 2-5h6"/></svg>',
     tp: SV + '<path d="M14 14.8V4.5a2 2 0 0 0-4 0v10.3a4 4 0 1 0 4 0z"/></svg>',
     o2: SV + '<circle cx="9" cy="12" r="5"/><path d="M17 15.5c0-1 2.5-1.6 2.5-3a1.3 1.3 0 0 0-2.5-.4M17 17.5h3"/></svg>',
+    st: SV + '<path d="M8 3c1.7 0 2.5 1.6 2.5 4S9.4 11 8 11 5.5 9.4 5.5 7 6.3 3 8 3zM6 13.5h4V16a2 2 0 0 1-4 0zM16 7c1.7 0 2.5 1.6 2.5 4s-1.1 4-2.5 4-2.5-1.6-2.5-4S14.3 7 16 7zM14 17.5h4V20a2 2 0 0 1-4 0z"/></svg>',
     own: SV + '<path d="M4 20h16M6 16l4-6 4 3 4-7"/></svg>'
   };
   var TABS = [["home", "home"], ["history", "history"], ["charts", "chart"], ["report", "report"]];

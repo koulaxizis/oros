@@ -56,7 +56,7 @@
 
   // Built-in measurements. v = list of [min, max, required] in storage
   // units: grams, tenths of mg/dL, hundredths of °C, minutes.
-  var BUILTIN = ["bp", "wt", "gl", "sl", "hr", "tp", "o2"];
+  var BUILTIN = ["bp", "wt", "gl", "sl", "hr", "tp", "o2", "st"];
   var SPEC = {
     bp: [[50, 300, 1], [20, 200, 1], [20, 250, 0]],   // systolic, diastolic, pulse (mmHg, bpm)
     wt: [[500, 500000, 1]],                            // grams
@@ -64,7 +64,9 @@
     sl: [[1, 1440, 1], [0, 5, 0]],                     // minutes asleep, quality 1–5 (0 = not given)
     hr: [[20, 250, 1]],                                // bpm
     tp: [[3000, 4500, 1]],                             // hundredths of °C (30–45)
-    o2: [[50, 100, 1]]                                 // %
+    o2: [[50, 100, 1]],                                // %
+    st: [[1, 200000, 1]]                               // steps in a day (one reading per day; the
+                                                       // orOS Android app brings them from Health Connect)
   };
   // Glucose context: random, fasting, before a meal, 2 h after, bedtime
   var CTX = ["rnd", "fast", "pre", "post", "bed"];

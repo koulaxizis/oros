@@ -24,6 +24,11 @@ public class PermissionActivity extends Activity {
         Uri data = getIntent().getData();
         kind = data != null ? data.getHost() : null;
         if ("reminders".equals(kind)) { reminders(); return; }
+        if ("health".equals(kind)) {
+            startActivity(new Intent(this, HealthPermissionActivity.class));
+            finish();
+            return;
+        }
         String[] perms = "contacts".equals(kind) ? PhoneBridge.CONTACTS_PERMS
                 : "calendar".equals(kind) ? PhoneBridge.CALENDAR_PERMS : null;
         if (perms == null) { finish(); return; }

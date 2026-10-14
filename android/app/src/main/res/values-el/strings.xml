@@ -18,4 +18,5 @@
     <string name="widget_no_data">Άνοιξε το orOS μία φορά για να γεμίσει.</string>
     <string name="widget_stale">Άνοιξε το orOS για να ενημερωθεί.</string>
     <string name="widget_more">+%d ακόμα</string>
+    <string name="health_missing">Το Health Connect δεν είναι διαθέσιμο σε αυτό το κινητό.</string>
 </resources>
