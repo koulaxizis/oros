@@ -143,3 +143,63 @@ test("rows carry the label colour", () => {
   const fd = P.feedRows({ items: [{ k: "a", date: "2026-10-14", title: "x", color: "#8c9eff" }, { k: "b", date: "2026-10-14", title: "y", color: "red" }] }, "UTC");
   assert.deepEqual(fd.map((r) => r.color).sort(), ["#8c9eff", null].sort());
 });
+
+test("phone → orOS: new, edited and deleted events (v2)", () => {
+  const blob = { ver: 1, labels: [], deleted: [], events: [
+    { id: "e1", date: "2026-10-14", start: "10:00", end: "11:00", title: "Old", note: "", location: "", labelId: "work", recur: null, remindMin: null, mtime: 1 },
+    { id: "e2", date: "2026-10-15", start: null, end: null, title: "Gone", labelId: null, recur: null, remindMin: null, mtime: 1 }
+  ] };
+  const at = (h, m) => new Date(2026, 9, 14, h, m).getTime();
+  const res = P.applyCalendarChanges(blob, [
+    { ref: "r1", op: "upsert", id: "e1", title: "New title", desc: "n", loc: "Office", allDay: false, dtstart: at(12, 0), dtend: at(13, 30), remind: 14 },
+    { ref: "r2", op: "delete", id: "e2" },
+    { ref: "r3", op: "upsert", id: null, title: "Trip", allDay: true, dtstart: Date.UTC(2026, 9, 20), dtend: Date.UTC(2026, 9, 23), remind: -1 },
+    { ref: "r4", op: "upsert", id: "f0123456789abcdef", title: "feed" }
+  ], 500);
+  assert.deepEqual(res.refs, ["r1", "r2", "r3", "r4"]);
+  const e1 = res.blob.events.find((e) => e.id === "e1");
+  assert.equal(e1.title, "New title");
+  assert.equal(e1.start, "12:00");
+  assert.equal(e1.end, "13:30");
+  assert.equal(e1.location, "Office");
+  assert.equal(e1.labelId, "work");
+  assert.equal(e1.remindMin, 15);
+  assert.equal(e1.mtime, 500);
+  assert.equal(res.blob.events.some((e) => e.id === "e2"), false);
+  assert.deepEqual(res.blob.deleted, [{ id: "e2", mtime: 500 }]);
+  const trip = res.blob.events.find((e) => e.title === "Trip");
+  assert.equal(trip.date, "2026-10-20");
+  assert.equal(trip.dateEnd, "2026-10-22");
+  assert.equal(trip.start, null);
+  assert.equal(trip.remindMin, null);
+  assert.equal(res.blob.events.length, 2);
+  assert.equal(blob.events.length, 2, "input untouched");
+});
+
+test("phone → orOS: series edits, occurrences and RRULE round trip (v2)", () => {
+  const series = { id: "s1", date: "2026-10-05", start: "09:00", end: "09:30", title: "Standup", labelId: "work",
+    recur: { freq: "W", interval: 1, until: null, exdates: [] }, remindMin: null, mtime: 1 };
+  const row = P.eventRows({ events: [series] }, "Europe/Athens")[0];
+  const back = P.eventIn(Object.assign({}, row, { desc: row.desc, loc: row.loc }));
+  assert.equal(back.date, "2026-10-05");
+  assert.equal(back.start, "09:00");
+  assert.equal(back.recur.freq, "W");
+  // A moved occurrence: the series skips the day, a single event appears.
+  const occ = new Date(2026, 9, 12, 9, 0).getTime();
+  const res = P.applyCalendarChanges({ events: [series] }, [
+    { ref: "r9", op: "upsert", id: null, orig: { id: "s1", at: occ }, title: "Standup (moved)", allDay: false,
+      dtstart: new Date(2026, 9, 12, 11, 0).getTime(), dtend: new Date(2026, 9, 12, 11, 30).getTime(), remind: -1 },
+    { ref: "r10", op: "upsert", id: null, orig: { id: "s1", at: new Date(2026, 9, 19, 9, 0).getTime() }, cancelled: true }
+  ], 700);
+  const s = res.blob.events.find((e) => e.id === "s1");
+  assert.deepEqual(s.recur.exdates, ["2026-10-12", "2026-10-19"]);
+  const one = res.blob.events.find((e) => e.title === "Standup (moved)");
+  assert.equal(one.recur, null);
+  assert.equal(one.start, "11:00");
+  assert.equal(one.labelId, "work");
+  assert.equal(res.blob.events.length, 2);
+  // RRULE parts orOS cannot hold are dropped; UNTIL and EXDATE become days.
+  const r = P.eventIn({ allDay: true, dtstart: Date.UTC(2026, 0, 31), duration: "P1D",
+    rrule: "FREQ=MONTHLY;BYMONTHDAY=28,29,30,31;BYSETPOS=-1;UNTIL=20261231", exdate: "20260228" });
+  assert.deepEqual(r.recur, { freq: "M", interval: 1, until: "2026-12-31", exdates: ["2026-02-28"] });
+});

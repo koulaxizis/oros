@@ -2,5 +2,6 @@
 <resources>
     <string name="account_label">orOS</string>
     <string name="calendar_name">orOS</string>
+    <string name="calendar_feeds_name">orOS feeds</string>
     <string name="perm_denied">orOS needs this permission to show your orOS data in the phone\'s apps. You can allow it in the app settings.</string>
 </resources>

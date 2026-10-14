@@ -31,7 +31,9 @@
 // Messages (JSON strings on the port):
 //   page → app: {t:"state"} · {t:"contacts"|"calendar", seq, items}
 //               {t:"clear", what}
+//               {t:"applied", what, refs}   (v2: phone changes taken)
 //   app → page: {t:"state", v, contacts, calendar, app}
+//               {t:"changes", what, items}   (v2: edits made on the phone)
 //               {t:"done", what, seq, added, updated, removed}
 //               {t:"error", what, seq, msg}
 // Exposes window.orosPhone and, under Node, module.exports.
@@ -246,7 +248,132 @@
     return rows;
   }
 
-  var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv };
+  /* ---------- phone → orOS (BR-PHONE v2) ---------- */
+  // The app sends what was changed in the phone's "orOS" calendar:
+  // { ref, op: "upsert"|"delete", id (orOS id or null for a new row),
+  //   title, desc, loc, allDay, dtstart, dtend, duration, rrule, exdate,
+  //   remind, orig: { id, at } (an edited / cancelled occurrence of a
+  //   series), cancelled }. Times are ms; all-day rows are UTC midnights.
+  function ymdLocal(ms) { var d = new Date(ms); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function ymdUtc(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
+  function hmLocal(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function isoSecs(s) {          // "P3600S", "PT1H30M", "P1D", "P1W" → seconds
+    var m = /^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(String(s || "").replace(/^\+/, ""));
+    if (!m) { var n = /^P(\d+)S$/.exec(String(s || "")); return n ? +n[1] : 0; }
+    return (+m[1] || 0) * 604800 + (+m[2] || 0) * 86400 + (+m[3] || 0) * 3600 + (+m[4] || 0) * 60 + (+m[5] || 0);
+  }
+  var FREQ_IN = { DAILY: "D", WEEKLY: "W", MONTHLY: "M", YEARLY: "Y" };
+  function stampDay(s, allDay) {  // "20261014" / "20261014T183000Z" → local YMD
+    var m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z?))?$/.exec(String(s || "").trim());
+    if (!m) return null;
+    if (!m[4] || allDay) return m[1] + "-" + m[2] + "-" + m[3];
+    var ms = m[7] ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+                  : new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
+    return ymdLocal(ms);
+  }
+  // Android RRULE → the Calendar's recur (FREQ, INTERVAL 2 only weekly,
+  // UNTIL). What orOS cannot express (BYDAY lists, COUNT) is dropped.
+  function recurIn(rule, exdate, allDay) {
+    if (!rule) return null;
+    var p = {};
+    String(rule).split(";").forEach(function (kv) { var i = kv.indexOf("="); if (i > 0) p[kv.slice(0, i).toUpperCase()] = kv.slice(i + 1); });
+    var f = FREQ_IN[p.FREQ];
+    if (!f) return null;
+    var r = { freq: f, interval: f === "W" && p.INTERVAL === "2" ? 2 : 1, until: p.UNTIL ? stampDay(p.UNTIL, allDay) : null, exdates: [] };
+    String(exdate || "").split(/[,\n]/).forEach(function (x) {
+      var d = stampDay(x.replace(/^.*:/, ""), allDay);
+      if (d && r.exdates.indexOf(d) === -1) r.exdates.push(d);
+    });
+    r.exdates.sort();
+    return r;
+  }
+  var REMIND_IN = [5, 15, 30, 60, 1440, 4320, 7200];
+  function remindIn(m) {
+    if (typeof m !== "number" || m < 0) return null;
+    var best = REMIND_IN[0];
+    REMIND_IN.forEach(function (x) { if (Math.abs(x - m) < Math.abs(best - m)) best = x; });
+    return best;
+  }
+  // One phone row → the Calendar's event fields (no id, label, mtime).
+  function eventIn(c) {
+    var allDay = !!c.allDay, start = +c.dtstart;
+    if (!isFinite(start)) return null;
+    var endMs = isFinite(+c.dtend) && +c.dtend > 0 ? +c.dtend : start + isoSecs(c.duration) * 1000;
+    var e = { title: str(c.title, 80), note: str(c.desc, 500), location: str(c.loc, 150),
+              date: allDay ? ymdUtc(start) : ymdLocal(start), dateEnd: null, start: null, end: null,
+              recur: recurIn(c.rrule, c.exdate, allDay), remindMin: remindIn(c.remind) };
+    if (allDay) {
+      var last = endMs > start ? ymdUtc(endMs - 86400000) : e.date;
+      if (!e.recur && last > e.date) e.dateEnd = last;
+    } else {
+      e.start = hmLocal(start);
+      if (endMs > start) {
+        var endDay = ymdLocal(endMs);
+        if (endDay === e.date) e.end = hmLocal(endMs);
+        else if (!e.recur) { e.dateEnd = endDay; e.end = hmLocal(endMs); }
+      }
+    }
+    return e;
+  }
+  function newEventId(now) { return now.toString(36) + Math.random().toString(36).slice(2, 7); }
+  // Applies phone changes to a Calendar blob. Returns { blob, refs }:
+  // the refs the app may now clear. Feed rows ("f…") never come back:
+  // their calendar is read-only on the phone.
+  function applyCalendarChanges(blob, items, now) {
+    var b = blob && typeof blob === "object" ? JSON.parse(JSON.stringify(blob)) : {};
+    if (!Array.isArray(b.events)) b.events = [];
+    if (!Array.isArray(b.deleted)) b.deleted = [];
+    if (b.ver == null) b.ver = 1;
+    now = now || Date.now();
+    var refs = [];
+    function find(id) { for (var i = 0; i < b.events.length; i++) if (b.events[i].id === id) return i; return -1; }
+    function tomb(id) {
+      b.deleted = b.deleted.filter(function (d) { return d && d.id !== id; });
+      b.deleted.push({ id: id, mtime: now });
+    }
+    (Array.isArray(items) ? items : []).forEach(function (c) {
+      if (!c || typeof c.ref !== "string") return;
+      if (typeof c.id === "string" && c.id.charAt(0) === "f" && /^f[0-9a-f]{16}$/.test(c.id)) { refs.push(c.ref); return; }
+      var orig = c.orig && typeof c.orig.id === "string" ? c.orig : null;
+      if (orig) {
+        // One occurrence of a series changed or cancelled on the phone:
+        // the series skips that day; a changed one becomes its own event.
+        var si = find(orig.id);
+        if (si !== -1 && b.events[si].recur) {
+          var s = b.events[si], day = s.start ? ymdLocal(+orig.at) : ymdUtc(+orig.at);
+          var ex = (s.recur.exdates || []).slice();
+          if (ex.indexOf(day) === -1) ex.push(day);
+          ex.sort();
+          s.recur = Object.assign({}, s.recur, { exdates: ex });
+          s.mtime = now;
+          if (c.op !== "delete" && !c.cancelled) {
+            var one = eventIn(c);
+            if (one) {
+              one.recur = null;
+              b.events.push(Object.assign(one, { id: newEventId(now), labelId: s.labelId || null, mtime: now }));
+            }
+          }
+        }
+        refs.push(c.ref);
+        return;
+      }
+      var i = typeof c.id === "string" && c.id ? find(c.id) : -1;
+      if (c.op === "delete") {
+        if (i !== -1) { b.events.splice(i, 1); tomb(c.id); }
+        refs.push(c.ref);
+        return;
+      }
+      var e = eventIn(c);
+      if (!e) { refs.push(c.ref); return; }
+      if (i !== -1) b.events[i] = Object.assign({}, b.events[i], e, { mtime: now });
+      else b.events.push(Object.assign(e, { id: newEventId(now), labelId: null, mtime: now }));
+      refs.push(c.ref);
+    });
+    return { blob: b, refs: refs };
+  }
+
+  var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
+              applyCalendarChanges: applyCalendarChanges, eventIn: eventIn };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -307,6 +434,8 @@
       };
       emit();
       pushAll(true);
+    } else if (m.t === "changes" && m.what === "calendar" && Array.isArray(m.items)) {
+      takeChanges(m.what, m.items);
     } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar")) {
       var p = prefs();
       p[m.what + "At"] = Date.now();
@@ -316,6 +445,25 @@
       if (m.t === "error") lastSent[m.what] = null;
       emit();
     }
+  }
+
+  // Phone → orOS: the Calendar is the data's writer when it is open,
+  // so an open Calendar reloads after the write (frames expose
+  // __orosPhoneReload); closed, the write plus markDirty is what its
+  // sync slice (a localStorage proxy) pushes, like any local change.
+  function takeChanges(kind, items) {
+    if (!prefs()[kind]) return;
+    var res;
+    try {
+      res = applyCalendarChanges(readBlob(kind), items, Date.now());
+      localStorage.setItem(KEYS[kind], JSON.stringify(res.blob));
+    } catch (e) { return; }
+    try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll("iframe"), function (f) {
+      try { if (f.contentWindow && typeof f.contentWindow.__orosPhoneReload === "function") f.contentWindow.__orosPhoneReload(kind); } catch (e) {}
+    });
+    send({ t: "applied", what: kind, refs: res.refs });
+    push(kind, true);
   }
 
   // The app's first message carries the port. Chromium posts it to the
@@ -343,7 +491,9 @@
     emit();
     if (!timer) {
       timer = setInterval(function () { if (!document.hidden) pushAll(false); }, 15000);
-      document.addEventListener("visibilitychange", function () { if (!document.hidden) pushAll(false); });
+      // Back on screen: send what changed here, and ask the app for
+      // what changed on the phone meanwhile (it answers state + changes).
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) { pushAll(false); send({ t: "state" }); } });
     }
   });
 
