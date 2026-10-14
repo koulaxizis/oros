@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "2.15.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "2.16.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -5535,7 +5535,16 @@
           en: "Elevation profile in Plan a track (Maps)", el: "Προφίλ υψομέτρου στη Σχεδίαση διαδρομής (Χάρτες)" },
         { name: "Wikipedia", url: "https://www.wikipedia.org/",
           by: "Wikimedia Foundation, Wikipedia contributors", lic: "CC BY-SA 4.0 (text)",
-          en: "Articles near you in Discover (Maps); Start from Wikipedia (Wiki)", el: "Άρθρα κοντά σου στην Ανακάλυψη (Χάρτες)· Ξεκίνα από τη Βικιπαίδεια (Wiki)" },
+          en: "Articles near you in Discover (Maps); Start from Wikipedia (Wiki); web search (Assistant)", el: "Άρθρα κοντά σου στην Ανακάλυψη (Χάρτες)· Ξεκίνα από τη Βικιπαίδεια (Wiki)· αναζήτηση στο web (Βοηθός)" },
+        { name: "Tavily", url: "https://tavily.com/",
+          by: "Tavily", lic: { en: "Tavily terms, your own key", el: "Όροι της Tavily, δικό σου κλειδί" },
+          en: "Web search, if chosen (Assistant)", el: "Αναζήτηση στο web, αν την επιλέξεις (Βοηθός)" },
+        { name: "SearXNG", url: "https://searxng.org/",
+          by: "SearXNG contributors", lic: { en: "AGPL-3.0, your own server", el: "AGPL-3.0, δικός σου server" },
+          en: "Web search, if chosen (Assistant)", el: "Αναζήτηση στο web, αν την επιλέξεις (Βοηθός)" },
+        { name: "Jina Reader", url: "https://jina.ai/reader/",
+          by: "Jina AI", lic: { en: "Jina AI terms", el: "Όροι της Jina AI" },
+          en: "Reads a found web page as text (Assistant)", el: "Διαβάζει ως κείμενο μια σελίδα που βρέθηκε (Βοηθός)" },
         { name: "Panoramax", url: "https://panoramax.fr/",
           by: "Panoramax (IGN, OpenStreetMap France and contributors)", lic: { en: "Each photo's own licence (usually CC BY-SA 4.0)", el: "Η άδεια κάθε φωτογραφίας (συνήθως CC BY-SA 4.0)" },
           en: "Open street-level photos in Discover (Maps)", el: "Ανοιχτές φωτογραφίες δρόμου στην Ανακάλυψη (Χάρτες)" },
