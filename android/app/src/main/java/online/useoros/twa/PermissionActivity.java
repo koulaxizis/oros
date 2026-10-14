@@ -24,6 +24,7 @@ public class PermissionActivity extends Activity {
         Uri data = getIntent().getData();
         kind = data != null ? data.getHost() : null;
         if ("reminders".equals(kind)) { reminders(); return; }
+        if ("install".equals(kind)) { install(data); return; }
         if ("health".equals(kind)) {
             startActivity(new Intent(this, HealthPermissionActivity.class));
             finish();
@@ -50,6 +51,28 @@ public class PermissionActivity extends Activity {
             return;
         }
         requestPermissions(perms, 1);
+    }
+
+    /** Single apps (SOLO-1): "intent://install/notes#Intent;scheme=oros-permission;…"
+     *  opens /notes/solo.html?install in Chrome itself. Inside the orOS
+     *  app a page cannot do this: an intent to Chrome from the TWA comes
+     *  back to the TWA, where a web app cannot be installed. */
+    private void install(Uri data) {
+        String id = data.getPath() != null ? data.getPath().replaceFirst("^/", "") : "";
+        if (id.matches("[a-z0-9-]{1,40}")) {
+            Uri page = PhoneBridge.ORIGIN.buildUpon().appendPath(id).appendPath("solo.html")
+                    .encodedQuery("install").build();
+            Intent i = new Intent(Intent.ACTION_VIEW, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setPackage("com.android.chrome");
+            try {
+                startActivity(i);
+            } catch (android.content.ActivityNotFoundException e) {
+                // No Chrome: any browser that can install web apps.
+                startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW, page), null)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+        }
+        finish();
     }
 
     /** Reminders (v3): notifications first (Android 13+), then exact
