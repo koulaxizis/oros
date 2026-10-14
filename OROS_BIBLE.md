@@ -5977,5 +5977,5 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 ### 2026-10-14 — Public privacy policy page (#320) — 1.88.01
 - privacy.html (repo root, standalone, EN + EL toggle, follows `oros-lang`, `?lang=el` / `#el`): the public privacy policy at https://useoros.online/privacy.html, needed for the Google and Microsoft OAuth app registrations of Contacts › From an account (BR-CT-IMPORT). It restates the Privacy help topic and adds the Google API Services User Data Policy / Limited Use statement for the one-time contacts import. Not an app, not precached (network-first navigation like any page). Update its date and text whenever orOS starts using a new kind of data or service.
 
-### 2026-10-14 — Contacts: Google client id for From an account (#PR) — 1.88.02
+### 2026-10-14 — Contacts: Google client id for From an account (#321) — 1.88.02
 - contacts/accounts.js: `CLIENT.google` = Chris's OAuth client (Web application, redirect /contacts/oauth-callback.html, privacy URL /privacy.html). The app is in Google's "Testing" mode: only the test users Chris adds can sign in until Google verifies the `contacts.readonly` scope. Microsoft id still to come.
