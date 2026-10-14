@@ -166,7 +166,7 @@
       "lk.badKey": "TMDB did not accept your key. Check it in More → Film and series details.",
       "cv.label": "Cover", "cv.remove": "Remove cover", "cv.removed": "The cover will be removed when you save",
       "cv.commons": "Cover: {by} · {lic} · Wikimedia Commons", "cv.commonsNo": "Cover: Wikimedia Commons",
-      "cv.tmdb": "Poster and details: TMDB", "cv.wd": "Details: Wikidata (CC0)",
+      "cv.tmdb": "Poster and details: TMDB", "cv.tmdbD": "Details: TMDB", "cv.wd": "Details: Wikidata (CC0)",
       "rd.title": "Reading in {y}", "rd.pages": "Pages read", "rd.perDay": "Pages a day",
       "rd.days": "Days you read", "rd.streak": "Days in a row", "rd.best": "Best day",
       "rd.last": "The last 30 days", "rd.none": "Log your page in a book you're reading, and your pages per day show up here.",
@@ -274,7 +274,7 @@
       "lk.badKey": "Το TMDB δεν δέχτηκε το κλειδί σου. Έλεγξέ το στο Περισσότερα → Στοιχεία ταινιών και σειρών.",
       "cv.label": "Εξώφυλλο", "cv.remove": "Αφαίρεση εξωφύλλου", "cv.removed": "Το εξώφυλλο θα φύγει όταν πατήσεις Αποθήκευση",
       "cv.commons": "Εξώφυλλο: {by} · {lic} · Wikimedia Commons", "cv.commonsNo": "Εξώφυλλο: Wikimedia Commons",
-      "cv.tmdb": "Αφίσα και στοιχεία: TMDB", "cv.wd": "Στοιχεία: Wikidata (CC0)",
+      "cv.tmdb": "Αφίσα και στοιχεία: TMDB", "cv.tmdbD": "Στοιχεία: TMDB", "cv.wd": "Στοιχεία: Wikidata (CC0)",
       "rd.title": "Διάβασμα το {y}", "rd.pages": "Σελίδες που διάβασες", "rd.perDay": "Σελίδες τη μέρα",
       "rd.days": "Μέρες με διάβασμα", "rd.streak": "Μέρες στη σειρά", "rd.best": "Καλύτερη μέρα",
       "rd.last": "Οι τελευταίες 30 μέρες", "rd.none": "Γράψε τη σελίδα σου σε ένα βιβλίο που διαβάζεις και εδώ θα δεις τις σελίδες σου τη μέρα.",
@@ -1928,7 +1928,8 @@
     }
     if (it.tmdb || src === "tmdb") {
       var r = el("p");
-      r.appendChild(it.tmdb ? extLink(t("cv.tmdb"), "https://www.themoviedb.org/" + it.tmdb) : el("span", "", t("cv.tmdb")));
+      var tl = t(src === "tmdb" ? "cv.tmdb" : "cv.tmdbD");
+      r.appendChild(it.tmdb ? extLink(tl, "https://www.themoviedb.org/" + it.tmdb) : el("span", "", tl));
       box.appendChild(r);
       box.appendChild(el("p", "", t("tmdb.notice")));
     }
