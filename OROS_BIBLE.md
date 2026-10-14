@@ -6531,3 +6531,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Files:** `files/{dropbox-core.js, dropbox.js, files.js, files.css, help.en.txt, help.el.txt}`, `tests/files-dropbox.test.js`.
   - Tests: unit (export plan, trash, sync folder, limits, upload arguments); real shell in Chromium with a mock Dropbox (file, folder with a Greek subfolder, upload session, autorename, hash mismatch reported, sync folder refused, phone 390 px EL). Not tested: the real Dropbox, Safari, a real phone.
 - **Next:** none; the Files ↔ Dropbox plan is complete.
+
+### 2026-10-14 — Single apps, wave 1: orOS Notes, Calendar, Bookmarks and To-Do on their own — 2.04.00
+- **Changes:**
+  - `solo.js` + `/<id>/solo.html` + `/<id>/manifest.webmanifest` + `icons/solo/`: each of the four installs on its own (own icon, name, window, scope `/<id>/`), framing the shell in solo mode at `/?solo=<id>` (Part II "Single apps", SOLO-1). Icon shortcuts (New page / New event / Add a bookmark / New task), file types (Notes .txt/.md, Calendar .ics), own share target, To-Do due badge, own notifications only.
+  - Shell solo mode (bar button with the app name + menu: Sync and cloud, Settings, Help, Open the whole orOS; Back to the app; no desktop, Dock, pet, clock or tour). Settings › Single apps lists them with Install. Help › Install › Single apps (EN/EL).
+  - `sync.js`: Dropbox sign-in from a single app goes through the top window and returns to it (`oros-solo-return`); automatic rounds take turns across windows with the Web Lock `oros-sync-round` (SY-W1).
+  - `sw.js`: a share POST to `/<id>/solo.html?share-target` lands back on that page; `solo=` navigations are never cached and a solo frame gets the shell page offline; precache of the new files. `fileopen.js`: a single app opens its own types without a chooser. Bookmarks: `{ quickAdd }` target.
+- **Decisions:** Chris 2026-10-14 19:06 approved all waves (wave 2 office apps, 3 personal, 4 tools/media, 5 business, 6 one orOS Games app, 7 stores + native Android widgets). Same origin and same code as orOS, never a second copy of an app, the encryption or a merge; native rewrites and per-app WebView APKs rejected. No new library or service.
+- **Schema:** none (device-local session key `oros-solo-return`; Web Lock name `oros-sync-round`).

@@ -279,7 +279,12 @@
     frame.setAttribute("allow", "fullscreen; clipboard-read; clipboard-write; geolocation; camera; microphone; screen-wake-lock");
     frame.src = src;
     doc.body.appendChild(frame);
-    frame.addEventListener("load", function () { try { frame.focus(); } catch (e) {} });
+    // Keyboard focus into the app, unless the app already took it
+    // (a shortcut that focuses an input): focusing the frame again
+    // would blur that input.
+    frame.addEventListener("load", function () {
+      try { if (doc.activeElement !== frame) frame.focus(); } catch (e) {}
+    });
 
     // "Open with" (file_handlers): the browser hands the files to the
     // TOP page only. They wait until the shell in the frame has its

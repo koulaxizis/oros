@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.04.00
+- Single apps: orOS Notes, orOS Calendar, orOS Bookmarks and orOS To-Do can now be installed on their own, each with its own icon and window, icon shortcuts, sharing and offline use. On the same device they share your orOS data, and elsewhere they join your encrypted sync when you turn it on. Find them in Settings › Single apps.
+
 ## Version 2.03.00
 - Files can send copies of files and folders from the orOS disk to a Dropbox folder, so you can share them. Nothing in Dropbox is overwritten, and the files stay as they are in orOS.
 
