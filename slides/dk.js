@@ -156,6 +156,118 @@
   // Fonts load late in the browser: measurements made before must go.
   function resetFit() { fitCache = {}; fitCount = 0; }
 
+  // ---------- Tables ----------
+  // A table is drawn as designkit primitives: the header row and
+  // banded rows as rectangles, the lines as lines, one text box per
+  // cell. Equal columns and rows; one shrink-to-fit factor for the
+  // whole table (the largest at which every cell fits).
+  var T_INS = 8;
+  function tableCells(it) {
+    var rows = it.tb.rows, R = rows.length, Cn = rows[0].length;
+    var out = [], cw = it.w / Cn, rh = it.h / R;
+    rows.forEach(function (row, r) {
+      row.forEach(function (txt, c) {
+        out.push({ r: r, c: c, x: it.x + c * cw, y: it.y + r * rh, w: cw, h: rh, t: txt, head: !!(it.tb.hd && r === 0) });
+      });
+    });
+    return out;
+  }
+  function inkOn(hex) {
+    var v = [1, 3, 5].map(function (i) {
+      var c = parseInt(hex.substr(i, 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2] > 0.4 ? "#1f2328" : "#ffffff";
+  }
+  function cellParas(cell, it, theme, reg, scale) {
+    var size = it.tb.fs * scale;
+    var color = cell.head ? reg.swatch(inkOn(hexOf(it.tb.ac, theme) || "#2563eb")) : (reg.swatch(it.fc) || reg.swatch("t:fg"));
+    var ps = reg.pstyle({ font: it.ff || theme.ff, size: Math.round(size * 100) / 100, align: "l", color: color, b: cell.head ? 1 : 0, i: 0, sa: 0 });
+    return (cell.t ? cell.t.split("\n") : [""]).map(function (l) { return { ps: ps, runs: l ? [{ t: l }] : [] }; });
+  }
+  var tFit = {}, tFitN = 0;
+  function tableFit(it, theme) {
+    var key = JSON.stringify([it.tb, it.w, it.h, it.ff, theme.ff]);
+    if (tFit[key]) return tFit[key];
+    var cells = tableCells(it);
+    function over(k) {
+      var reg = Registry(theme);
+      return cells.some(function (cell) {
+        if (!cell.t) return false;
+        var res = T().layoutChain({ paras: cellParas(cell, it, theme, reg, PT * k) },
+          [{ id: "f", w: cell.w * PT, h: cell.h * PT, cols: 1, gut: 0, inset: T_INS * PT, valign: "t", excl: [], ctx: { pageLabel: "1", pageCount: 1 } }],
+          { ps: reg.pstyles, cs: reg.cstyles });
+        return res.overset;
+      });
+    }
+    var out;
+    if (!over(1)) out = { k: 1, over: false };
+    else if (over(MIN_FIT)) out = { k: MIN_FIT, over: true };
+    else {
+      var lo = MIN_FIT, hi = 1;
+      for (var i = 0; i < 6; i++) { var mid = (lo + hi) / 2; if (over(mid)) hi = mid; else lo = mid; }
+      out = { k: Math.floor(lo * 100) / 100, over: false };
+    }
+    if (++tFitN > 500) { tFit = {}; tFitN = 0; }
+    tFit[key] = out;
+    return out;
+  }
+
+  // ---------- Charts ----------
+  // A chart is a picture drawn by the Spreadsheet's chart engine
+  // (spreadsheet/sheetkit.js chartSVG, in app.js). Here: what it shows
+  // (spec) and a key for that picture: 64 hex digits + ".png", so it
+  // passes as a designkit asset name and caches by content.
+  var CH_SCALE = 0.45;          // SVG px per slide unit: chart text about the size of 20-28 pt
+  var CH_RASTER = 3;            // picture pixels per SVG px
+  function num(s) {
+    s = String(s || "").replace(/[\s %€$£]/g, "");
+    if (!s) return null;
+    if (/^[-+]?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^[-+]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, "");
+    else if (/^[-+]?(\d+[.,]?\d*|[.,]\d+)$/.test(s)) s = s.replace(",", ".");
+    else return null;
+    var v = parseFloat(s);
+    return isFinite(v) ? v : null;
+  }
+  // The chart's rows as the cells sheetkit's chartModel reads.
+  function chartGrid(ch) {
+    return ch.rows.map(function (row) { return row.map(function (s) { return { n: num(s), s: s }; }); });
+  }
+  function mixHex(a, b, t) {
+    function p(h, i) { return parseInt(h.substr(i, 2), 16); }
+    return "#" + [1, 3, 5].map(function (i) {
+      var v = Math.round(p(a, i) + (p(b, i) - p(a, i)) * t);
+      return (v < 16 ? "0" : "") + v.toString(16);
+    }).join("");
+  }
+  function lumOf(hex) {
+    var v = [1, 3, 5].map(function (i) { return parseInt(hex.substr(i, 2), 16) / 255; });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+  function chartSpec(it, theme, bg, lang) {
+    var bgHex = hexOf(bg || "t:bg", theme) || "#ffffff", fg = hexOf("t:fg", theme), mu = hexOf("t:mu", theme);
+    return {
+      t: it.ch.t, rows: it.ch.rows, by: it.ch.by || "", ttl: it.ch.ttl || "", lg: it.ch.lg === false ? 0 : 1,
+      w: Math.max(160, Math.round(it.w * CH_SCALE)), h: Math.max(120, Math.round(it.h * CH_SCALE)), px: CH_RASTER,
+      pal: { bg: bgHex, text: fg, dim: mu, grid: mixHex(fg, bgHex, 0.84), dark: lumOf(bgHex) < 0.35, font: "'Noto Sans', Arial, sans-serif" },
+      co: [hexOf("t:a1", theme), hexOf("t:a2", theme), hexOf("t:a3", theme)], lang: lang === "el" ? "el" : "en"
+    };
+  }
+  // 64 hex digits of a string (eight FNV-1a passes with different
+  // seeds): a cache key, not a security hash.
+  function hash64(s) {
+    var out = "";
+    for (var k = 0; k < 8; k++) {
+      var h = (0x811c9dc5 ^ Math.imul(k + 1, 0x9e3779b1)) >>> 0;
+      for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+      h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d) >>> 0; h ^= h >>> 12;
+      out += ("0000000" + (h >>> 0).toString(16)).slice(-8);
+    }
+    return out;
+  }
+  function chartKey(spec) { return hash64(JSON.stringify(spec)) + ".png"; }
+
   // ---------- Geometry ----------
   // Image placement in its frame: fill / fit, zoom, offset (-100..100
   // moves the visible part to one edge or the other).
@@ -196,7 +308,7 @@
       pages: [], masters: [], items: [], stories: [], pstyles: reg.pstyles, cstyles: reg.cstyles,
       swatches: reg.swatches, guides: [], rec: [], tombs: {}
     };
-    var out = { doc: doc, pages: [], fit: {}, map: {} };
+    var out = { doc: doc, pages: [], fit: {}, map: {}, charts: {} };
 
     function geom(x, y, w, h) { return { x: ox + x * k, y: oy + y * k, w: w * k, h: h * k }; }
     function add(o) { o.m = 1; doc.items.push(o); return o; }
@@ -244,12 +356,51 @@
           if (it.h <= 2) { y0 = g.y + g.h / 2; dy = 0; }
           else if (it.w <= 2) { x0 = g.x + g.w / 2; dx = 0; }
           o = add(Object.assign(base, { id: ids("it"), t: "line", x: x0, y: y0, w: dx, h: dy, fill: "" }));
+        } else if (it.k === "table") {
+          tableItems(it, pg, base);
+        } else if (it.k === "chart") {
+          var spec = chartSpec(it, theme, s.bg, opts.lang), key = chartKey(spec);
+          out.charts[key] = spec;
+          var iw = spec.w * spec.px, ih = spec.h * spec.px;
+          o = add(Object.assign(base, { id: ids("it"), t: "img", a: key, nm: "", iw: iw, ih: ih, fit: "custom", ix: 0, iy: 0,
+            isc: Math.min(g.w / iw, g.h / ih), r: 0 }));
+          if (it.fill) o.fill = reg.swatch(it.fill);
         }
         if (o) out.map[o.id] = it.id;
       });
       footer(s, pg);
       if (handout) handoutPage(s, pg);
     });
+
+    // A table: fills, cell texts, then the lines on top.
+    function tableItems(it, pg, base) {
+      var f = tableFit(it, theme), cells = tableCells(it), op = base.op, z = it.z;
+      out.fit[it.id] = f;
+      var R = it.tb.rows.length, Cn = it.tb.rows[0].length;
+      function sub(o) { o.pg = pg; o.z = z; o.op = op; o.m = 1; o.id = ids("it"); doc.items.push(o); out.map[o.id] = it.id; return o; }
+      if (it.fill) sub(Object.assign({ t: "rect", fill: reg.swatch(it.fill) }, geom(it.x, it.y, it.w, it.h)));
+      var rh = it.h / R;
+      for (var r = 0; r < R; r++) {
+        var fillC = it.tb.hd && r === 0 ? it.tb.ac : (it.tb.bd && (r - (it.tb.hd ? 1 : 0)) % 2 === 1 ? "t:sf" : "");
+        if (fillC) sub(Object.assign({ t: "rect", fill: reg.swatch(fillC) }, geom(it.x, it.y + r * rh, it.w, rh)));
+      }
+      cells.forEach(function (cell) {
+        if (!cell.t) return;
+        if (opts.editing && opts.editing.skip === it.id) return;
+        var o = textBox(pg, geom(cell.x, cell.y, cell.w, cell.h), cellParas(cell, it, theme, reg, k * f.k), z, { op: op });
+        o.ins = T_INS * k; o.va = "c";
+        out.map[o.id] = it.id;
+      });
+      if (it.tb.ln !== "none" && it.st) {
+        var st = reg.swatch(it.st), sw = it.sw * k;
+        var line = function (x0, y0, x1, y1) {
+          var a = geom(x0, y0, 0, 0), b = geom(x1, y1, 0, 0);
+          sub({ t: "line", x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y, stroke: st, sw: sw, fill: "" });
+        };
+        for (var i = 0; i <= R; i++) line(it.x, it.y + i * rh, it.x + it.w, it.y + i * rh);
+        if (it.tb.ln === "all") for (var c = 0; c <= Cn; c++) line(it.x + c * it.w / Cn, it.y, it.x + c * it.w / Cn, it.y + it.h);
+      }
+    }
 
     // Footer: number, date, text (theme muted colour), on every slide,
     // the first only when ft.s1.
@@ -293,7 +444,9 @@
   var api = {
     PT: PT, INS: INS, MIN_FIT: MIN_FIT, A4: A4,
     build: build, slideDoc: slideDoc, fitOf: fitOf, resetFit: resetFit,
-    fontOf: fontOf, levelSize: levelSize, imageGeom: imageGeom
+    fontOf: fontOf, levelSize: levelSize, imageGeom: imageGeom,
+    tableCells: tableCells, tableFit: tableFit, chartGrid: chartGrid, chartSpec: chartSpec, chartKey: chartKey,
+    hash64: hash64, num: num, CH_SCALE: CH_SCALE, inkOn: inkOn, hexOf: hexOf, T_INS: T_INS
   };
   root.OrosSlidesDK = api;
 })(typeof window !== "undefined" ? window : this);

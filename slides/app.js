@@ -41,6 +41,11 @@
   var DK = window.orosDK;
   SL.D = window.OrosSlidesDK;
   SL.T = DK.text; SL.R = DK.render; SL.P = DK.pdf; SL.A = DK.assets; SL.M = DK.model;
+  SL.Anim = window.OrosSlidesAnim;
+  // prefers-reduced-motion: builds and transitions show without moving
+  SL.reducedMotion = function () {
+    try { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { return false; }
+  };
 
   var STORAGE_KEY = "oros-slides-data";
   var PREFS_KEY   = "oros-slides-prefs";
@@ -78,6 +83,7 @@
       "view.slide": "Slide", "view.sorter": "Sorter", "view.outline": "Outline",
       "tool.text": "Text box", "tool.image": "Picture", "tool.rect": "Rectangle", "tool.ell": "Ellipse",
       "tool.line": "Line", "tool.add": "New slide", "tool.format": "Format", "tool.layout": "Layout",
+      "tool.table": "Table", "tool.chart": "Chart", "home.remote": "Phone remote",
       "slide.n": "Slide {n}", "slide.hidden": "Hidden in the show",
       "sm.new": "New slide after this", "sm.dup": "Duplicate slide", "sm.del": "Delete slide",
       "sm.hide": "Hide in the show", "sm.show": "Show in the show", "sm.up": "Move earlier", "sm.down": "Move later",
@@ -102,8 +108,45 @@
       "side.slide": "Slide", "side.deck": "Presentation", "side.item": "Format", "side.close": "Close",
       "pn.layout": "Layout", "pn.transition": "Transition", "pn.bg": "Background", "pn.hidden": "Hide in the show",
       "pn.theme": "Theme", "pn.aspect": "Slide size", "pn.footer": "Footer",
-      "tr.none": "None", "tr.fade": "Fade", "tr.slide": "Slide in", "tr.push": "Push", "tr.zoom": "Zoom",
-      "tr.all": "Apply to all slides",
+      "tr.none": "None", "tr.fade": "Fade", "tr.slide": "Slide in", "tr.push": "Push", "tr.wipe": "Wipe", "tr.zoom": "Zoom",
+      "tr.all": "Apply to all slides", "tr.dur": "Duration (s)",
+      "pn.table": "Table", "pn.chart": "Chart", "pn.group": "Group",
+      "gr.group": "Group", "gr.ungroup": "Ungroup", "gr.hint": "A group moves, resizes and animates as one. Ctrl+G groups, Ctrl+Shift+G ungroups.",
+      "an.title": "Animation", "an.none": "This slide has no animations.", "an.effect": "Entrance",
+      "an.e.none": "None", "an.e.appear": "Appear", "an.e.fade": "Fade in", "an.e.fly": "Fly in", "an.e.zoom": "Zoom in",
+      "an.dir": "From", "an.d.b": "Bottom", "an.d.l": "Left", "an.d.r": "Right", "an.d.t": "Top",
+      "an.start": "Start", "an.w.c": "On click", "an.w.w": "With previous", "an.w.a": "After previous",
+      "an.du": "Duration (s)", "an.dl": "Delay (s)", "an.p": "Bullets one by one",
+      "an.earlier": "Play earlier", "an.later": "Play later", "an.preview": "Preview",
+      "an.order": "Animation order", "an.empty": "Select an object and choose an entrance for it in Format.",
+      "an.step": "Click {n}", "an.auto": "By itself", "an.reduced": "This device asks for less motion: objects appear without moving.",
+      "tb.edit": "Edit table", "tb.hint": "Enter moves down a row; Shift+Enter starts a new line in a cell.",
+      "tb.cell": "Row {r}, column {c}", "tb.addRow": "+ Row", "tb.delRow": "− Row", "tb.addCol": "+ Column", "tb.delCol": "− Column",
+      "tb.head": "Heading {n}", "tb.hd": "Header row", "tb.bd": "Banded rows", "tb.ln": "Lines",
+      "tb.ln.all": "All", "tb.ln.h": "Rows", "tb.ln.none": "None", "tb.ac": "Header colour",
+      "ch.edit": "Edit chart", "ch.type": "Type", "ch.title": "Title", "ch.legend": "Show the legend", "ch.preview": "Chart preview",
+      "ch.hint": "First row: series names. First column: categories. Numbers may use a comma or a dot.",
+      "ch.empty": "No numbers yet", "ch.series": "Series", "ch.other": "Other",
+      "ch.t.col": "Columns", "ch.t.bar": "Bars", "ch.t.line": "Line", "ch.t.pie": "Pie", "ch.t.donut": "Doughnut", "ch.t.scatter": "Scatter",
+      "ch.s1": "This year", "ch.s2": "Last year", "ch.c1": "Winter", "ch.c2": "Spring", "ch.c3": "Summer", "ch.c4": "Autumn",
+      "rm.short": "Phone", "rm.control": "Control from phone", "rm.title": "Control from your phone",
+      "rm.how": "On the phone open orOS › Slides › Phone remote and enter the code, or scan the QR code. Keep this presentation open here.",
+      "rm.code": "Code", "rm.stop": "Disconnect the phone", "rm.close": "Close",
+      "rm.ask": "A {dev} wants to control this presentation. Allow it?", "rm.allow": "Allow", "rm.deny": "Deny",
+      "rm.dev.phone": "phone", "rm.dev.tablet": "tablet", "rm.dev.computer": "computer",
+      "rm.s.connecting": "Connecting…", "rm.s.waiting": "Waiting for the phone · code {code}", "rm.s.direct": "Connected directly",
+      "rm.s.relay": "Connected through the relay", "rm.s.closed": "Disconnected", "rm.s.away": "Not connected",
+      "rm.s.pending": "Waiting for “Allow” on the presenting device…", "rm.s.waitHost": "Waiting for the presenting device…",
+      "rm.s.denied": "The presenting device did not allow this phone.", "rm.s.bad": "Enter the 6-digit code shown on the presenting device.",
+      "rm.s.off": "The presenting device disconnected this phone.", "rm.s.nocrypto": "This browser cannot pair (no Web Crypto).",
+      "rm.joined": "Phone connected", "rm.join.h": "Control a presentation from this phone",
+      "rm.join.hint": "Start the show on the presenting device, press Phone on its bar and enter the code shown there.",
+      "rm.connect": "Connect", "rm.leave": "Leave",
+      "rm.next": "Next", "rm.prev": "Previous", "rm.black": "Black screen", "rm.white": "White screen", "rm.back": "Picture back on",
+      "rm.first": "First slide",
+      "rm.idle": "The presentation is not running. Start it on the presenting device.",
+      "rm.slide": "Slide {n} of {t}", "rm.builds": "{n} builds left", "rm.build1": "1 build left", "rm.end": "End of the show",
+      "rm.notes": "Notes", "rm.noNotes": "No notes for this slide.", "rm.nextUp": "Next: {t}",
       "ft.n": "Slide number", "ft.d": "Date", "ft.x": "Footer text", "ft.s1": "Also on the first slide",
       "pn.pos": "Position and size", "pn.x": "X", "pn.y": "Y", "pn.w": "W", "pn.h": "H", "pn.rot": "Rotation",
       "pn.op": "Opacity", "pn.arrange": "Arrange", "pn.front": "Bring to front", "pn.fwd": "Bring forward",
@@ -137,7 +180,7 @@
       "exp.working": "Building the PDF…", "exp.done": "PDF saved", "exp.fail": "The file could not be made.",
       "exp.png": "Picture saved", "exp.pkgDone": "Package saved",
       "exp.pptxDone": "PowerPoint file saved", "exp.pptxMissing": "PowerPoint file saved. {n} pictures are not on this device yet and were left out.",
-      "imp.pptxWorking": "Opening the presentation…", "imp.pptxPartial": "Presentation opened. {n} things could not be brought in; charts, tables and videos are marked on their slides.",
+      "imp.pptxWorking": "Opening the presentation…", "imp.pptxPartial": "Presentation opened. {n} things could not be brought in; charts and videos are marked on their slides.",
       "note.chart": "Chart (not imported)", "note.table": "Table (not imported)", "note.diagram": "SmartArt (not imported)",
       "note.media": "Video or sound (not imported)", "note.object": "Embedded object (not imported)",
       "imp.done": "Presentation opened", "imp.bad": "This file is not a Slides package or a PowerPoint presentation.",
@@ -151,7 +194,7 @@
       "rec.copy": "Copy", "rec.insert": "Add to the slide", "rec.drop": "Dismiss", "rec.none": "Nothing to recover.",
       "rec.notes": "Notes, slide {n}", "rec.text": "Text, slide {n}", "rec.gone": "Slide no longer here",
       "keys.title": "Keyboard shortcuts",
-      "keys.rows": "Ctrl+Z / Ctrl+Y|Undo / redo\nEnter or double click|Edit the text of a box\nEsc|Stop editing, clear the selection\nDelete|Delete the selection\nCtrl+D|Duplicate\nCtrl+C / Ctrl+V|Copy / paste objects\nArrows (Shift: ×10)|Move the selection\nPage Up / Page Down|Previous / next slide\nCtrl+M|New slide\nF5|Present from the start\nShift+F5|Present from this slide\nTab / Shift+Tab (text)|Bullet level",
+      "keys.rows": "Ctrl+Z / Ctrl+Y|Undo / redo\nEnter or double click|Edit the text of a box (or a table, a chart)\nEsc|Stop editing, clear the selection\nDelete|Delete the selection\nCtrl+D|Duplicate\nCtrl+C / Ctrl+V|Copy / paste objects\nCtrl+G / Ctrl+Shift+G|Group / ungroup\nArrows (Shift: ×10)|Move the selection\nPage Up / Page Down|Previous / next slide\nCtrl+M|New slide\nF5|Present from the start\nShift+F5|Present from this slide\nTab / Shift+Tab (text)|Bullet level",
       "btn.cancel": "Cancel", "btn.ok": "OK", "btn.create": "Create", "btn.save": "Save", "btn.close": "Close",
       "btn.delete": "Delete", "btn.undo": "Undo", "btn.apply": "Apply", "btn.done": "Done"
     },
@@ -173,6 +216,7 @@
       "view.slide": "Διαφάνεια", "view.sorter": "Ταξινόμηση", "view.outline": "Περίγραμμα",
       "tool.text": "Πλαίσιο κειμένου", "tool.image": "Εικόνα", "tool.rect": "Ορθογώνιο", "tool.ell": "Έλλειψη",
       "tool.line": "Γραμμή", "tool.add": "Νέα διαφάνεια", "tool.format": "Μορφή", "tool.layout": "Διάταξη",
+      "tool.table": "Πίνακας", "tool.chart": "Γράφημα", "home.remote": "Τηλεχειριστήριο κινητού",
       "slide.n": "Διαφάνεια {n}", "slide.hidden": "Κρυφή στην προβολή",
       "sm.new": "Νέα διαφάνεια μετά από αυτή", "sm.dup": "Διπλασιασμός διαφάνειας", "sm.del": "Διαγραφή διαφάνειας",
       "sm.hide": "Απόκρυψη στην προβολή", "sm.show": "Εμφάνιση στην προβολή", "sm.up": "Μετακίνηση νωρίτερα", "sm.down": "Μετακίνηση αργότερα",
@@ -197,8 +241,45 @@
       "side.slide": "Διαφάνεια", "side.deck": "Παρουσίαση", "side.item": "Μορφή", "side.close": "Κλείσιμο",
       "pn.layout": "Διάταξη", "pn.transition": "Μετάβαση", "pn.bg": "Φόντο", "pn.hidden": "Απόκρυψη στην προβολή",
       "pn.theme": "Θέμα", "pn.aspect": "Μέγεθος διαφάνειας", "pn.footer": "Υποσέλιδο",
-      "tr.none": "Καμία", "tr.fade": "Σβήσιμο", "tr.slide": "Ολίσθηση", "tr.push": "Ώθηση", "tr.zoom": "Μεγέθυνση",
-      "tr.all": "Σε όλες τις διαφάνειες",
+      "tr.none": "Καμία", "tr.fade": "Σβήσιμο", "tr.slide": "Ολίσθηση", "tr.push": "Ώθηση", "tr.wipe": "Σκούπισμα", "tr.zoom": "Μεγέθυνση",
+      "tr.all": "Σε όλες τις διαφάνειες", "tr.dur": "Διάρκεια (δλ.)",
+      "pn.table": "Πίνακας", "pn.chart": "Γράφημα", "pn.group": "Ομάδα",
+      "gr.group": "Ομαδοποίηση", "gr.ungroup": "Κατάργηση ομάδας", "gr.hint": "Μια ομάδα μετακινείται, αλλάζει μέγεθος και κινείται ως ένα. Ctrl+G ομαδοποιεί, Ctrl+Shift+G καταργεί την ομάδα.",
+      "an.title": "Κίνηση", "an.none": "Αυτή η διαφάνεια δεν έχει κινήσεις.", "an.effect": "Είσοδος",
+      "an.e.none": "Καμία", "an.e.appear": "Εμφάνιση", "an.e.fade": "Σταδιακή εμφάνιση", "an.e.fly": "Πέταγμα μέσα", "an.e.zoom": "Μεγέθυνση",
+      "an.dir": "Από", "an.d.b": "Κάτω", "an.d.l": "Αριστερά", "an.d.r": "Δεξιά", "an.d.t": "Πάνω",
+      "an.start": "Έναρξη", "an.w.c": "Με κλικ", "an.w.w": "Μαζί με το προηγούμενο", "an.w.a": "Μετά το προηγούμενο",
+      "an.du": "Διάρκεια (δλ.)", "an.dl": "Καθυστέρηση (δλ.)", "an.p": "Κουκκίδες μία μία",
+      "an.earlier": "Νωρίτερα στη σειρά", "an.later": "Αργότερα στη σειρά", "an.preview": "Προεπισκόπηση",
+      "an.order": "Σειρά κινήσεων", "an.empty": "Επίλεξε ένα αντικείμενο και διάλεξε είσοδο για αυτό στη Μορφή.",
+      "an.step": "Κλικ {n}", "an.auto": "Αυτόματα", "an.reduced": "Η συσκευή ζητά λιγότερη κίνηση: τα αντικείμενα εμφανίζονται χωρίς να κινούνται.",
+      "tb.edit": "Επεξεργασία πίνακα", "tb.hint": "Το Enter πάει μια γραμμή κάτω· το Shift+Enter αλλάζει γραμμή μέσα στο κελί.",
+      "tb.cell": "Γραμμή {r}, στήλη {c}", "tb.addRow": "+ Γραμμή", "tb.delRow": "− Γραμμή", "tb.addCol": "+ Στήλη", "tb.delCol": "− Στήλη",
+      "tb.head": "Επικεφαλίδα {n}", "tb.hd": "Γραμμή επικεφαλίδων", "tb.bd": "Εναλλασσόμενες γραμμές", "tb.ln": "Γραμμές",
+      "tb.ln.all": "Όλες", "tb.ln.h": "Οριζόντιες", "tb.ln.none": "Καμία", "tb.ac": "Χρώμα επικεφαλίδων",
+      "ch.edit": "Επεξεργασία γραφήματος", "ch.type": "Είδος", "ch.title": "Τίτλος", "ch.legend": "Εμφάνιση υπομνήματος", "ch.preview": "Προεπισκόπηση γραφήματος",
+      "ch.hint": "Πρώτη γραμμή: ονόματα σειρών. Πρώτη στήλη: κατηγορίες. Οι αριθμοί δέχονται κόμμα ή τελεία.",
+      "ch.empty": "Δεν υπάρχουν ακόμη αριθμοί", "ch.series": "Σειρά", "ch.other": "Άλλα",
+      "ch.t.col": "Στήλες", "ch.t.bar": "Ράβδοι", "ch.t.line": "Γραμμή", "ch.t.pie": "Πίτα", "ch.t.donut": "Δακτύλιος", "ch.t.scatter": "Διασπορά",
+      "ch.s1": "Φέτος", "ch.s2": "Πέρσι", "ch.c1": "Χειμώνας", "ch.c2": "Άνοιξη", "ch.c3": "Καλοκαίρι", "ch.c4": "Φθινόπωρο",
+      "rm.short": "Κινητό", "rm.control": "Χειρισμός από κινητό", "rm.title": "Χειρισμός από το κινητό σου",
+      "rm.how": "Στο κινητό άνοιξε orOS › Παρουσιάσεις › Τηλεχειριστήριο κινητού και γράψε τον κωδικό ή σάρωσε τον κωδικό QR. Κράτα την παρουσίαση ανοιχτή εδώ.",
+      "rm.code": "Κωδικός", "rm.stop": "Αποσύνδεση κινητού", "rm.close": "Κλείσιμο",
+      "rm.ask": "Ένα {dev} θέλει να χειριστεί αυτή την παρουσίαση. Να επιτραπεί;", "rm.allow": "Να επιτραπεί", "rm.deny": "Όχι",
+      "rm.dev.phone": "κινητό", "rm.dev.tablet": "tablet", "rm.dev.computer": "υπολογιστής",
+      "rm.s.connecting": "Σύνδεση…", "rm.s.waiting": "Αναμονή για το κινητό · κωδικός {code}", "rm.s.direct": "Απευθείας σύνδεση",
+      "rm.s.relay": "Σύνδεση μέσω αναμεταδότη", "rm.s.closed": "Αποσυνδέθηκε", "rm.s.away": "Χωρίς σύνδεση",
+      "rm.s.pending": "Αναμονή για «Να επιτραπεί» στη συσκευή της παρουσίασης…", "rm.s.waitHost": "Αναμονή για τη συσκευή της παρουσίασης…",
+      "rm.s.denied": "Η συσκευή της παρουσίασης δεν επέτρεψε αυτό το κινητό.", "rm.s.bad": "Γράψε τον εξαψήφιο κωδικό που φαίνεται στη συσκευή της παρουσίασης.",
+      "rm.s.off": "Η συσκευή της παρουσίασης αποσύνδεσε αυτό το κινητό.", "rm.s.nocrypto": "Αυτός ο browser δεν μπορεί να συνδεθεί (δεν έχει Web Crypto).",
+      "rm.joined": "Το κινητό συνδέθηκε", "rm.join.h": "Χειρισμός παρουσίασης από αυτό το κινητό",
+      "rm.join.hint": "Ξεκίνα την προβολή στη συσκευή της παρουσίασης, πάτα «Κινητό» στη γραμμή της και γράψε τον κωδικό που εμφανίζεται.",
+      "rm.connect": "Σύνδεση", "rm.leave": "Αποχώρηση",
+      "rm.next": "Επόμενο", "rm.prev": "Προηγούμενο", "rm.black": "Μαύρη οθόνη", "rm.white": "Λευκή οθόνη", "rm.back": "Επαναφορά εικόνας",
+      "rm.first": "Πρώτη διαφάνεια",
+      "rm.idle": "Η παρουσίαση δεν προβάλλεται. Ξεκίνα την προβολή στη συσκευή της παρουσίασης.",
+      "rm.slide": "Διαφάνεια {n} από {t}", "rm.builds": "Απομένουν {n} κινήσεις", "rm.build1": "Απομένει 1 κίνηση", "rm.end": "Τέλος της προβολής",
+      "rm.notes": "Σημειώσεις", "rm.noNotes": "Καμία σημείωση για αυτή τη διαφάνεια.", "rm.nextUp": "Επόμενη: {t}",
       "ft.n": "Αριθμός διαφάνειας", "ft.d": "Ημερομηνία", "ft.x": "Κείμενο υποσέλιδου", "ft.s1": "Και στην πρώτη διαφάνεια",
       "pn.pos": "Θέση και μέγεθος", "pn.x": "X", "pn.y": "Y", "pn.w": "Π", "pn.h": "Υ", "pn.rot": "Περιστροφή",
       "pn.op": "Αδιαφάνεια", "pn.arrange": "Σειρά", "pn.front": "Μπροστά απ' όλα", "pn.fwd": "Ένα μπροστά",
@@ -232,7 +313,7 @@
       "exp.working": "Δημιουργία PDF…", "exp.done": "Το PDF αποθηκεύτηκε", "exp.fail": "Το αρχείο δεν δημιουργήθηκε.",
       "exp.png": "Η εικόνα αποθηκεύτηκε", "exp.pkgDone": "Το πακέτο αποθηκεύτηκε",
       "exp.pptxDone": "Το αρχείο PowerPoint αποθηκεύτηκε", "exp.pptxMissing": "Το αρχείο PowerPoint αποθηκεύτηκε. {n} εικόνες δεν έχουν φτάσει ακόμη σε αυτή τη συσκευή και παραλείφθηκαν.",
-      "imp.pptxWorking": "Άνοιγμα της παρουσίασης…", "imp.pptxPartial": "Η παρουσίαση άνοιξε. {n} στοιχεία δεν μεταφέρθηκαν· τα γραφήματα, οι πίνακες και τα βίντεο σημειώνονται στις διαφάνειές τους.",
+      "imp.pptxWorking": "Άνοιγμα της παρουσίασης…", "imp.pptxPartial": "Η παρουσίαση άνοιξε. {n} στοιχεία δεν μεταφέρθηκαν· τα γραφήματα και τα βίντεο σημειώνονται στις διαφάνειές τους.",
       "note.chart": "Γράφημα (δεν μεταφέρθηκε)", "note.table": "Πίνακας (δεν μεταφέρθηκε)", "note.diagram": "SmartArt (δεν μεταφέρθηκε)",
       "note.media": "Βίντεο ή ήχος (δεν μεταφέρθηκε)", "note.object": "Ενσωματωμένο αντικείμενο (δεν μεταφέρθηκε)",
       "imp.done": "Η παρουσίαση άνοιξε", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο Παρουσιάσεων ούτε παρουσίαση PowerPoint.",
@@ -246,7 +327,7 @@
       "rec.copy": "Αντιγραφή", "rec.insert": "Προσθήκη στη διαφάνεια", "rec.drop": "Απόρριψη", "rec.none": "Δεν υπάρχει κάτι για ανάκτηση.",
       "rec.notes": "Σημειώσεις, διαφάνεια {n}", "rec.text": "Κείμενο, διαφάνεια {n}", "rec.gone": "Η διαφάνεια δεν υπάρχει πια",
       "keys.title": "Συντομεύσεις πληκτρολογίου",
-      "keys.rows": "Ctrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nEnter ή διπλό κλικ|Επεξεργασία κειμένου πλαισίου\nEsc|Τέλος επεξεργασίας, καμία επιλογή\nDelete|Διαγραφή επιλογής\nCtrl+D|Διπλασιασμός\nCtrl+C / Ctrl+V|Αντιγραφή / επικόλληση αντικειμένων\nΒελάκια (Shift: ×10)|Μετακίνηση επιλογής\nPage Up / Page Down|Προηγούμενη / επόμενη διαφάνεια\nCtrl+M|Νέα διαφάνεια\nF5|Προβολή από την αρχή\nShift+F5|Προβολή από αυτή τη διαφάνεια\nTab / Shift+Tab (κείμενο)|Επίπεδο κουκκίδας",
+      "keys.rows": "Ctrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nEnter ή διπλό κλικ|Επεξεργασία κειμένου πλαισίου (ή πίνακα, γραφήματος)\nEsc|Τέλος επεξεργασίας, καμία επιλογή\nDelete|Διαγραφή επιλογής\nCtrl+D|Διπλασιασμός\nCtrl+C / Ctrl+V|Αντιγραφή / επικόλληση αντικειμένων\nCtrl+G / Ctrl+Shift+G|Ομαδοποίηση / κατάργηση ομάδας\nΒελάκια (Shift: ×10)|Μετακίνηση επιλογής\nPage Up / Page Down|Προηγούμενη / επόμενη διαφάνεια\nCtrl+M|Νέα διαφάνεια\nF5|Προβολή από την αρχή\nShift+F5|Προβολή από αυτή τη διαφάνεια\nTab / Shift+Tab (κείμενο)|Επίπεδο κουκκίδας",
       "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.create": "Δημιουργία", "btn.save": "Αποθήκευση", "btn.close": "Κλείσιμο",
       "btn.delete": "Διαγραφή", "btn.undo": "Αναίρεση", "btn.apply": "Εφαρμογή", "btn.done": "Τέλος"
     }
@@ -316,6 +397,11 @@
     tar: '<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>', taj: '<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>',
     vt: '<path d="M4 4h16"/><path d="M8 8h8M8 12h8"/>', vm: '<path d="M8 10h8M8 14h8"/>', vb: '<path d="M4 20h16"/><path d="M8 12h8M8 16h8"/>',
     check: '<path d="M5 12l5 5 9-10"/>',
+    table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 9v11M15 9v11"/>',
+    chart: '<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>',
+    phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+    group: '<rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 3"/><rect x="7" y="7" width="6" height="5"/><rect x="11" y="12" width="6" height="5"/>',
+    play2: '<path d="M8 5l11 7-11 7z"/>',
     warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17v.5"/>'
   };
   function icon(name) {
@@ -523,7 +609,7 @@
   SL.commit = commit;
 
   var DECK_KEYS = ["t", "as", "th", "ft"];
-  var SLIDE_KEYS = ["p", "ly", "tr", "hid", "bg"];
+  var SLIDE_KEYS = ["p", "ly", "tr", "hid", "bg", "td"];
   function same(a, b, keys) { return keys.every(function (k) { return JSON.stringify(a[k]) === JSON.stringify(b[k]); }); }
   function withoutClock(it) {
     var o = {};
@@ -617,9 +703,10 @@
 
   // A slide drawn on a fresh canvas `px` wide (thumbnails, PNG).
   SL.renderSlide = function (slideId, px, opts) {
-    var b = SL.D.slideDoc(data, slideId, { date: fmtDate(Date.now(), true), editing: opts && opts.editing });
+    var b = SL.D.slideDoc(data, slideId, { date: fmtDate(Date.now(), true), editing: opts && opts.editing, lang: LANG });
+    if (SL.charts) SL.charts.register(b);
     var doc = b.doc, L = SL.R.computeLayout(doc);
-    return SL.R.renderPage(doc, doc.pages[0], L, px / doc.setup.w, { canvas: opts && opts.canvas, getImage: SL.A.get, background: "#ffffff" });
+    return SL.R.renderPage(doc, doc.pages[0], L, px / doc.setup.w, { canvas: opts && opts.canvas, getImage: SL.getImage || SL.A.get, background: "#ffffff" });
   };
 
   function renderHome() {

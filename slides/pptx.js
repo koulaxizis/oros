@@ -1,9 +1,12 @@
 // ============================================================
-// orOS Slides — pptx.js: PowerPoint (.pptx) save and open (v1.0.0)
+// orOS Slides — pptx.js: PowerPoint (.pptx) save and open (v1.1.0)
 // Pure (no DOM besides DOMParser, no storage, no network). The ZIP
 // reader / writer is Atelier's (atelier/zip.js, AtelierZip).
 //
 //   needs(data, deckId) → [asset ids]: the pictures write() needs.
+//   charts(data, deckId, lang) → { key: spec }: the chart pictures
+//     write() needs (dk.js chartSpec); the caller draws them and passes
+//     each PNG as media[key].
 //   write(data, deckId, media, opts) → { bytes: Uint8Array, out:
 //     { slides, pictures, missing } }. media: { assetId: Uint8Array }.
 //   read(zip, opts) → Promise<plan>: a neutral plan of the file
@@ -21,8 +24,12 @@
 // alignment, vertical anchor, shrink to fit), pictures (the visible
 // part as a crop of the stored picture, rounded corners, description),
 // rectangles, rounded rectangles, ellipses, lines, opacity, rotation,
-// the slide background, speaker notes, hidden slides, transitions,
-// 16:9 / 4:3. Placeholders stay PowerPoint placeholders (title, body,
+// the slide background, speaker notes, hidden slides, transitions
+// (with their speed: fast / medium / slow), tables (a:tbl: header row,
+// banded rows, lines, colours), charts (as their picture), groups
+// (p:grpSp) and build animations (p:timing: Appear, Fly In with its
+// direction, Fade, Zoom; on click / with / after the previous, delay,
+// length, bullets one by one as paragraph builds), 16:9 / 4:3. Placeholders stay PowerPoint placeholders (title, body,
 // subtitle, picture) on one slide layout per Slides layout; theme
 // colours and theme fonts are written as the theme's own (schemeClr,
 // +mj-lt / +mn-lt), so a file saved by Slides opens again with its
@@ -32,13 +39,16 @@
 // (inherited from the placeholder, the slide layout, the master and
 // the theme like PowerPoint does), pictures (crop, rounded / round
 // mask, transparency, description), rectangles, ellipses and lines,
-// groups (flattened), backgrounds (colour; a picture becomes a locked
-// picture under everything), master / layout decoration, notes,
-// slide size (other sizes fit into 16:9 or 4:3), hidden slides,
-// transitions. Charts, tables, SmartArt, video, audio and embedded
-// objects become a dashed placeholder note with their name (a
-// table's text is kept); other shapes become their nearest rectangle
-// or ellipse.
+// groups (one level: the outermost group of a slide's own objects),
+// backgrounds (colour; a picture becomes a locked picture under
+// everything), master / layout decoration, notes, slide size (other
+// sizes fit into 16:9 or 4:3), hidden slides, transitions and their
+// speed, tables (text, header row, banded rows, header colour, size;
+// merged cells come apart), entrance animations (other entrance
+// effects become Fade; exit, emphasis and motion paths are left out).
+// Charts, SmartArt, video, audio and embedded objects become a dashed
+// placeholder note with their name; other shapes become their nearest
+// rectangle or ellipse.
 // XML is parsed with DOMParser (no DTD, no entities: refused before
 // parsing), external relationships are never followed, nothing in the
 // file runs. Every value goes through core.js normalizers.
@@ -75,7 +85,14 @@
   };
   var LAYOUT_TYPE = { title: "title", content: "obj", section: "secHead", two: "twoObj", compare: "twoTxTwoObj",
     imgtext: "picTx", photo: "cust", quote: "cust", blank: "blank" };
-  var TRANS_OUT = { fade: "<p:fade/>", slide: "<p:cover dir=\"l\"/>", push: "<p:push dir=\"l\"/>", zoom: "<p:zoom/>" };
+  var TRANS_OUT = { fade: "<p:fade/>", slide: "<p:cover dir=\"l\"/>", push: "<p:push dir=\"l\"/>", wipe: "<p:wipe/>", zoom: "<p:zoom/>" };
+  // a transition's length as PowerPoint's three speeds
+  function spdOf(td) { return !td ? "med" : td <= 350 ? "fast" : td >= 800 ? "slow" : "med"; }
+  var SPD_MS = { fast: 300, slow: 1000 };
+  // build animations <-> PowerPoint entrance presets
+  var FX_PRESET = { appear: 1, fly: 2, fade: 10, zoom: 53 };
+  var FLY_SUB = { t: 1, r: 2, b: 4, l: 8 };
+  var NODE_W = { clickEffect: "c", withEffect: "w", afterEffect: "a" };
 
   // ---------- 1. Small helpers ----------
   function esc(s) {
@@ -203,6 +220,134 @@
       "</p:sp>";
   }
 
+  // A table as a DrawingML table (a:tbl in a graphic frame).
+  function tableXml(it, id, theme) {
+    var tb = it.tb, R = tb.rows.length, Cn = tb.rows[0].length, op = it.op === undefined ? 100 : it.op;
+    var face = it.ff ? FONT_NAME[it.ff] : "+mn-lt";
+    var sz = clamp(int(tb.fs * 0.54 * 100), 100, 400000);
+    var headInk = D().inkOn(D().hexOf(tb.ac, theme) || "#2563eb");
+    var mar = int(D().T_INS * EMU);
+    function ln(tag, on) {
+      return on && it.st ? "<a:" + tag + " w=\"" + Math.max(1, int(it.sw * EMU)) + "\">" + solid(it.st, op) + "</a:" + tag + ">"
+        : "<a:" + tag + " w=\"0\"><a:noFill/></a:" + tag + ">";
+    }
+    var all = tb.ln === "all", hz = tb.ln !== "none";
+    var grid = "", rowsXml = "";
+    for (var c = 0; c < Cn; c++) grid += "<a:gridCol w=\"" + int(it.w * EMU / Cn) + "\"/>";
+    tb.rows.forEach(function (row, r) {
+      var head = tb.hd && r === 0;
+      var fillC = head ? tb.ac : (tb.bd && (r - (tb.hd ? 1 : 0)) % 2 === 1 ? "t:sf" : it.fill || "");
+      rowsXml += "<a:tr h=\"" + int(it.h * EMU / R) + "\">" + row.map(function (cell) {
+        var paras = String(cell || "").split("\n").map(function (l) {
+          var rpr = "<a:rPr lang=\"" + langOf(l) + "\" sz=\"" + sz + "\" b=\"" + (head ? 1 : 0) + "\" dirty=\"0\">" +
+            solid(head ? headInk : it.fc || "t:fg", op) + "<a:latin typeface=\"" + esc(face) + "\"/></a:rPr>";
+          return "<a:p>" + (l ? "<a:r>" + rpr + "<a:t>" + esc(l) + "</a:t></a:r>" : "<a:endParaRPr lang=\"en-US\" sz=\"" + sz + "\" dirty=\"0\"/>") + "</a:p>";
+        }).join("");
+        return "<a:tc><a:txBody><a:bodyPr/><a:lstStyle/>" + paras + "</a:txBody>" +
+          "<a:tcPr marL=\"" + mar + "\" marR=\"" + mar + "\" marT=\"" + mar + "\" marB=\"" + mar + "\" anchor=\"ctr\">" +
+          ln("lnL", all) + ln("lnR", all) + ln("lnT", hz) + ln("lnB", hz) + (fillC ? solid(fillC, op) : "<a:noFill/>") + "</a:tcPr></a:tc>";
+      }).join("") + "</a:tr>";
+    });
+    return "<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id=\"" + id + "\" name=\"Table " + id + "\"/>" +
+      "<p:cNvGraphicFramePr><a:graphicFrameLocks noGrp=\"1\"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr>" +
+      "<p:xfrm><a:off x=\"" + int(it.x * EMU) + "\" y=\"" + int(it.y * EMU) + "\"/><a:ext cx=\"" + int(it.w * EMU) + "\" cy=\"" + int(it.h * EMU) + "\"/></p:xfrm>" +
+      "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/table\"><a:tbl>" +
+      "<a:tblPr" + (tb.hd ? " firstRow=\"1\"" : "") + (tb.bd ? " bandRow=\"1\"" : "") + "/><a:tblGrid>" + grid + "</a:tblGrid>" + rowsXml +
+      "</a:tbl></a:graphicData></a:graphic></p:graphicFrame>";
+  }
+  // A chart goes out as its picture (the same one the slide shows).
+  function chartPicXml(it, id, rid) {
+    var op = it.op === undefined ? 100 : it.op;
+    return "<p:pic>" + nv("Pic", id, "Chart " + id, "<p:cNvPicPr><a:picLocks noChangeAspect=\"1\"/></p:cNvPicPr>", "", it.ch.ttl || "") +
+      "<p:blipFill><a:blip r:embed=\"" + rid + "\">" + (op < 100 ? "<a:alphaModFix amt=\"" + int(op * 1000) + "\"/>" : "") + "</a:blip>" +
+      "<a:stretch><a:fillRect/></a:stretch></p:blipFill>" +
+      "<p:spPr>" + xfrm(it.x, it.y, it.w, it.h, 0) + prst("rect") + lnXml(it, op) + "</p:spPr></p:pic>";
+  }
+  function groupXml(id, list, inner) {
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    list.forEach(function (it) { x0 = Math.min(x0, it.x); y0 = Math.min(y0, it.y); x1 = Math.max(x1, it.x + it.w); y1 = Math.max(y1, it.y + it.h); });
+    var o = "<a:off x=\"" + int(x0 * EMU) + "\" y=\"" + int(y0 * EMU) + "\"/>", e = "<a:ext cx=\"" + int((x1 - x0) * EMU) + "\" cy=\"" + int((y1 - y0) * EMU) + "\"/>";
+    return "<p:grpSp><p:nvGrpSpPr><p:cNvPr id=\"" + id + "\" name=\"Group " + id + "\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
+      "<p:grpSpPr><a:xfrm>" + o + e + o.replace("a:off", "a:chOff") + e.replace("a:ext", "a:chExt") + "</a:xfrm></p:grpSpPr>" + inner + "</p:grpSp>";
+  }
+
+  // The build animations of a slide as PowerPoint timing: one outer
+  // group per click (the first one starts with the slide when it is
+  // "with / after the previous"), inner groups for "after the
+  // previous", entrance presets Appear, Fly In, Fade and Zoom.
+  // target(itemIds) -> [{ spid, text }] of what was written.
+  function timingXml(data, slideId, target) {
+    var Co = C(), effects = [];
+    Co.animUnits(data, slideId).forEach(function (u) {
+      var an = u.an, tg = target(u.ids);
+      if (!tg.length) return;
+      var it = u.ids.length === 1 ? data.items[u.ids[0]] : null, paras = [];
+      if (an.p && it && it.k === "text" && tg.length === 1) it.paras.forEach(function (p, i) { if (Co.paraText(p).trim()) paras.push(i); });
+      var base = { e: an.e, d: an.d || "b", du: an.e === "appear" ? 1 : (an.du || 500), dl: an.dl || 0 };
+      if (paras.length) paras.forEach(function (pi, k) { effects.push(fx(base, tg[0], pi, k === 0 ? an.w || "c" : "c")); });
+      else tg.forEach(function (x, k) { effects.push(fx(base, x, -1, k === 0 ? an.w || "c" : "w")); });
+    });
+    function fx(b, x, pi, w) { return { e: b.e, d: b.d, du: b.du, dl: b.dl, spid: x.spid, text: x.text, pi: pi, w: w }; }
+    if (!effects.length) return "";
+    var outers = [], cur = null, inner = null;
+    effects.forEach(function (e) {
+      if (e.w === "c" || !cur) {
+        cur = { auto: e.w !== "c", inners: [] };
+        outers.push(cur);
+        inner = { start: 0, end: 0, list: [] };
+        cur.inners.push(inner);
+      } else if (e.w === "a") {
+        inner = { start: inner.end, end: inner.end, list: [] };
+        cur.inners.push(inner);
+      }
+      inner.list.push(e);
+      inner.end = Math.max(inner.end, inner.start + e.dl + e.du);
+    });
+    var n = 2, bld = {};
+    function tgt(e) {
+      return "<p:tgtEl><p:spTgt spid=\"" + e.spid + "\">" + (e.pi >= 0 ? "<p:txEl><p:pRg st=\"" + e.pi + "\" end=\"" + e.pi + "\"/></p:txEl>" : "") + "</p:spTgt></p:tgtEl>";
+    }
+    function anim(e, attr, from, to) {
+      return "<p:anim calcmode=\"lin\" valueType=\"num\"><p:cBhvr additive=\"base\"><p:cTn id=\"" + (++n) + "\" dur=\"" + e.du + "\" fill=\"hold\"/>" + tgt(e) +
+        "<p:attrNameLst><p:attrName>" + attr + "</p:attrName></p:attrNameLst></p:cBhvr><p:tavLst>" +
+        "<p:tav tm=\"0\"><p:val><p:strVal val=\"" + from + "\"/></p:val></p:tav><p:tav tm=\"100000\"><p:val><p:strVal val=\"" + to + "\"/></p:val></p:tav></p:tavLst></p:anim>";
+    }
+    function effXml(e) {
+      var id = ++n, sub = e.e === "fly" ? FLY_SUB[e.d] || 4 : e.e === "zoom" ? 16 : 0;
+      var body = "<p:set><p:cBhvr><p:cTn id=\"" + (++n) + "\" dur=\"1\" fill=\"hold\"><p:stCondLst><p:cond delay=\"0\"/></p:stCondLst></p:cTn>" + tgt(e) +
+        "<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val=\"visible\"/></p:to></p:set>";
+      if (e.e === "fade" || e.e === "zoom") {
+        if (e.e === "zoom") body += anim(e, "ppt_w", "0", "#ppt_w") + anim(e, "ppt_h", "0", "#ppt_h");
+        body += "<p:animEffect transition=\"in\" filter=\"fade\"><p:cBhvr><p:cTn id=\"" + (++n) + "\" dur=\"" + e.du + "\"/>" + tgt(e) + "</p:cBhvr></p:animEffect>";
+      } else if (e.e === "fly") {
+        var X = "#ppt_x", Y = "#ppt_y";
+        if (e.d === "l") X = "0-#ppt_w/2"; else if (e.d === "r") X = "1+#ppt_w/2";
+        else if (e.d === "t") Y = "0-#ppt_h/2"; else Y = "1+#ppt_h/2";
+        body += anim(e, "ppt_x", X, "#ppt_x") + anim(e, "ppt_y", Y, "#ppt_y");
+      }
+      if (e.text) bld[e.spid] = bld[e.spid] || e.pi >= 0;
+      return "<p:par><p:cTn id=\"" + id + "\" presetID=\"" + FX_PRESET[e.e] + "\" presetClass=\"entr\" presetSubtype=\"" + sub + "\" fill=\"hold\"" +
+        (e.text ? " grpId=\"0\"" : "") + " nodeType=\"" + (e.w === "c" ? "clickEffect" : e.w === "a" ? "afterEffect" : "withEffect") + "\">" +
+        "<p:stCondLst><p:cond delay=\"" + e.dl + "\"/></p:stCondLst><p:childTnLst>" + body + "</p:childTnLst></p:cTn></p:par>";
+    }
+    var seq = outers.map(function (o) {
+      var oid = ++n;
+      var ins = o.inners.map(function (g) {
+        var gid = ++n;
+        return "<p:par><p:cTn id=\"" + gid + "\" fill=\"hold\"><p:stCondLst><p:cond delay=\"" + g.start + "\"/></p:stCondLst><p:childTnLst>" +
+          g.list.map(effXml).join("") + "</p:childTnLst></p:cTn></p:par>";
+      }).join("");
+      return "<p:par><p:cTn id=\"" + oid + "\" fill=\"hold\"><p:stCondLst><p:cond delay=\"indefinite\"/>" +
+        (o.auto ? "<p:cond evt=\"onBegin\" delay=\"0\"><p:tn val=\"2\"/></p:cond>" : "") + "</p:stCondLst><p:childTnLst>" + ins + "</p:childTnLst></p:cTn></p:par>";
+    }).join("");
+    var bl = Object.keys(bld).map(function (s) { return "<p:bldP spid=\"" + s + "\" grpId=\"0\"" + (bld[s] ? " build=\"p\"" : " animBg=\"1\"") + "/>"; }).join("");
+    return "<p:timing><p:tnLst><p:par><p:cTn id=\"1\" dur=\"indefinite\" restart=\"never\" nodeType=\"tmRoot\"><p:childTnLst>" +
+      "<p:seq concurrent=\"1\" nextAc=\"seek\"><p:cTn id=\"2\" dur=\"indefinite\" nodeType=\"mainSeq\"><p:childTnLst>" + seq + "</p:childTnLst></p:cTn>" +
+      "<p:prevCondLst><p:cond evt=\"onPrev\" delay=\"0\"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>" +
+      "<p:nextCondLst><p:cond evt=\"onNext\" delay=\"0\"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst></p:seq>" +
+      "</p:childTnLst></p:cTn></p:par></p:tnLst>" + (bl ? "<p:bldLst>" + bl + "</p:bldLst>" : "") + "</p:timing>";
+  }
+
   var TREE0 = "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
     "<p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>";
   var CLRMAP = "<p:clrMap bg1=\"lt1\" tx1=\"dk1\" bg2=\"lt2\" tx2=\"dk2\" accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\" accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\" hlink=\"hlink\" folHlink=\"folHlink\"/>";
@@ -257,6 +402,21 @@
     });
     return Object.keys(ids).sort();
   }
+  // The chart pictures write() needs: { key: spec } (dk.js chartSpec);
+  // the caller draws each one (sheetkit) and passes its PNG as media[key].
+  function charts(data, deckId, lang) {
+    var out = {}, deck = data.decks[deckId];
+    if (!deck) return out;
+    var theme = C().themeById(deck.th);
+    C().deckSlides(data, deckId).forEach(function (s) {
+      C().slideItems(data, s.id).forEach(function (it) {
+        if (it.k !== "chart") return;
+        var spec = D().chartSpec(it, theme, s.bg, lang);
+        out[D().chartKey(spec)] = spec;
+      });
+    });
+    return out;
+  }
 
   function write(data, deckId, media, opts) {
     var Co = C();
@@ -288,22 +448,47 @@
         rl.push([r, "image", target]);
         return r;
       }
-      var tree = "", nid = 2, used = {};
+      var nid = 2, used = {}, parts = [], spidOf = {}, textSp = {}, grpSp = {};
       Co.slideItems(data, s.id).forEach(function (it) {
-        var id = nid++;
+        var id = nid++, xml = "";
         // a placeholder the layout does not have (or a second one) goes out as a free object
         var ph = it.ph && roles[it.ph] && !used[it.ph] ? phXml(it.ph) : "";
         if (ph) used[it.ph] = 1;
-        if (Co.isEmptyPlaceholder(it)) { if (ph) tree += emptyPhXml(it, id, ph); return; }
-        if (it.k === "text") tree += textXml(it, id, ph, theme);
-        else if (it.k === "shape") tree += shapeXml(it, id);
-        else if (it.k === "line") tree += lineXml(it, id);
-        else if (it.k === "image") {
+        if (Co.isEmptyPlaceholder(it)) { if (ph) xml = emptyPhXml(it, id, ph); }
+        else if (it.k === "text") { xml = textXml(it, id, ph, theme); textSp[id] = 1; }
+        else if (it.k === "shape") xml = shapeXml(it, id);
+        else if (it.k === "line") xml = lineXml(it, id);
+        else if (it.k === "table") xml = tableXml(it, id, theme);
+        else if (it.k === "chart") {
+          var key = D().chartKey(D().chartSpec(it, theme, s.bg, opts.lang));
+          if (!media[key]) out.missing++;
+          else { xml = chartPicXml(it, id, rid(key, media[key])); out.pictures++; }
+        } else if (it.k === "image") {
           var bytes = media[it.img.a];
-          if (!bytes) { out.missing++; if (ph) tree += emptyPhXml(it, id, ph); return; }
-          var x = picXml(it, id, rid(it.img.a, bytes), ph);
-          if (x) { tree += x; out.pictures++; }
+          if (!bytes) { out.missing++; if (ph) xml = emptyPhXml(it, id, ph); }
+          else { xml = picXml(it, id, rid(it.img.a, bytes), ph); if (xml) out.pictures++; }
         }
+        if (!xml) return;
+        spidOf[it.id] = id;
+        // placeholders stay out of groups (PowerPoint keeps them loose)
+        parts.push({ it: it, xml: xml, g: it.g && !ph ? it.g : "" });
+      });
+      // a group (two or more written members) goes out where its lowest member is
+      var members = {};
+      parts.forEach(function (p) { if (p.g) (members[p.g] = members[p.g] || []).push(p); });
+      var tree = "", done = {};
+      parts.forEach(function (p) {
+        var list = p.g && members[p.g].length > 1 ? members[p.g] : null;
+        if (!list) { tree += p.xml; return; }
+        if (done[p.g]) return;
+        done[p.g] = 1;
+        grpSp[p.g] = nid++;
+        tree += groupXml(grpSp[p.g], list.map(function (q) { return q.it; }), list.map(function (q) { return q.xml; }).join(""));
+      });
+      var timing = timingXml(data, s.id, function (ids) {
+        var g = ids.length > 1 && data.items[ids[0]].g;
+        if (g && grpSp[g]) return [{ spid: grpSp[g], text: false }];
+        return ids.filter(function (id) { return spidOf[id]; }).map(function (id) { return { spid: spidOf[id], text: !!textSp[spidOf[id]] }; });
       });
       var bg = s.bg ? "<p:bg><p:bgPr>" + solid(s.bg) + "<a:effectLst/></p:bgPr></p:bg>" : "";
       if (s.n) {
@@ -321,9 +506,9 @@
         files.push({ name: "ppt/notesSlides/_rels/notesSlide" + notesN + ".xml.rels", data: rels([
           ["rId1", "notesMaster", "../notesMasters/notesMaster1.xml"], ["rId2", "slide", "../slides/slide" + n + ".xml"]]) });
       }
-      var tr = TRANS_OUT[s.tr] ? "<p:transition spd=\"med\">" + TRANS_OUT[s.tr] + "</p:transition>" : "";
+      var tr = TRANS_OUT[s.tr] ? "<p:transition spd=\"" + spdOf(s.td) + "\">" + TRANS_OUT[s.tr] + "</p:transition>" : "";
       files.push({ name: "ppt/slides/slide" + n + ".xml", data: XML + "<p:sld" + PNS + (s.hid ? " show=\"0\"" : "") + "><p:cSld>" + bg + "<p:spTree>" + TREE0 + tree + "</p:spTree></p:cSld>" +
-        "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" + tr + "</p:sld>" });
+        "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>" + tr + timing + "</p:sld>" });
       files.push({ name: "ppt/slides/_rels/slide" + n + ".xml.rels", data: rels(rl) });
       out.slides++;
     });
@@ -696,7 +881,22 @@
       try { walkNode(n, tf, ctx, out, deco); } catch (e) { out.count.skipped++; }
     });
   }
+  // Every item read from a slide's own tree remembers the PowerPoint
+  // shape it came from (spid, for the animations) and its outermost
+  // group (grp).
   function walkNode(n, tf, ctx, out, deco) {
+    var n0 = out.items.length;
+    walkNode0(n, tf, ctx, out, deco);
+    if (deco) return;
+    var nvp = kid(n, "p:nvSpPr") || kid(n, "p:nvPicPr") || kid(n, "p:nvGrpSpPr") || kid(n, "p:nvCxnSpPr") || kid(n, "p:nvGraphicFramePr");
+    var cNvPr = nvp && kid(nvp, "p:cNvPr"), id = cNvPr && cNvPr.a.id;
+    if (!id) return;
+    for (var i = n0; i < out.items.length; i++) {
+      if (n.n === "p:grpSp") out.items[i].grp = String(id);
+      else if (out.items[i].spid === undefined) out.items[i].spid = String(id);
+    }
+  }
+  function walkNode0(n, tf, ctx, out, deco) {
     var nvp = kid(n, "p:nvSpPr") || kid(n, "p:nvPicPr") || kid(n, "p:nvGrpSpPr") || kid(n, "p:nvCxnSpPr") || kid(n, "p:nvGraphicFramePr");
     var cNvPr = nvp && kid(nvp, "p:cNvPr");
     if (cNvPr && bool(cNvPr, "hidden")) return;
@@ -732,6 +932,31 @@
     var kind = /\/chart$/.test(uri) ? "chart" : /\/table$/.test(uri) ? "table" : /\/diagram$/.test(uri) ? "diagram" : "object";
     var extra = [];
     if (kind === "table") {
+      var tbl = kid(gd, "a:tbl"), rows = [], fs = 0, ac = null;
+      kids(tbl, "a:tr").slice(0, C().LIM.tRows).forEach(function (tr, r) {
+        rows.push(kids(tr, "a:tc").slice(0, C().LIM.tCols).map(function (tc, c) {
+          if (r === 0 && c === 0) { var f = fillOf(kid(tc, "a:tcPr"), ctx); if (f && !f.none && f.c) ac = f.c; }
+          return kids(kid(tc, "a:txBody"), "a:p").map(function (p) {
+            var s = "";
+            p.c.forEach(function (x) {
+              if (x.n === "a:r" || x.n === "a:fld") {
+                s += (kid(x, "a:t") || { t: "" }).t;
+                var rp = kid(x, "a:rPr");
+                if (!fs && rp && rp.a.sz) fs = Number(rp.a.sz) / 100 * 12700 * ctx.k;
+              }
+            });
+            return s;
+          }).join("\n");
+        }));
+      });
+      if (rows.length) {
+        var pr = kid(tbl, "a:tblPr"), tu = U(b, ctx);
+        var tbo = { rows: rows, hd: bool(pr, "firstRow") === true, bd: bool(pr, "bandRow") === true };
+        if (fs) tbo.fs = Math.round(fs);
+        if (ac) tbo.ac = ac;
+        out.items.push({ k: "table", x: tu.x, y: tu.y, w: tu.w, h: tu.h, r: 0, tb: tbo });
+        return;
+      }
       kids(kid(gd, "a:tbl"), "a:tr").slice(0, 30).forEach(function (tr) {
         var cells = kids(tr, "a:tc").map(function (tc) {
           return kids(kid(tc, "a:txBody"), "a:p").map(function (p) {
@@ -985,9 +1210,73 @@
     var k = tr.c[0].n.replace(/^p\d*:/, "");
     if (k === "fade" || k === "dissolve") return "fade";
     if (k === "push") return "push";
+    if (k === "wipe" || k === "split" || k === "strips") return "wipe";
     if (k === "zoom" || k === "newsflash" || k === "vortex") return "zoom";
-    if (/^(cover|pull|wipe|split|reveal|cut|randomBar|strips|blinds|checker|comb|wheel|wedge|circle|diamond|plus)$/.test(k)) return "slide";
+    if (/^(cover|pull|reveal|cut|randomBar|blinds|checker|comb|wheel|wedge|circle|diamond|plus)$/.test(k)) return "slide";
     return "fade";
+  }
+  // The transition's length: PowerPoint 2010's p14:dur when there,
+  // else its speed (medium = Slides' default, not stored).
+  function tdOf(sld) {
+    var ac = kids(sld, "mc:AlternateContent"), tr = kid(sld, "p:transition");
+    for (var i = 0; i < ac.length; i++) {
+      var ch = path(ac[i], ["mc:Choice", "p:transition"]);
+      if (ch && ch.a["p14:dur"] !== undefined) return clamp(Math.round(num(ch, "p14:dur", 450)), 100, 5000);
+      if (!tr) tr = path(ac[i], ["mc:Fallback", "p:transition"]) || ch;
+    }
+    if (!tr) return undefined;
+    if (tr.a["p14:dur"] !== undefined) return clamp(Math.round(num(tr, "p14:dur", 450)), 100, 5000);
+    return SPD_MS[tr.a.spd];
+  }
+  // A slide's entrance animations: [{ spid, pi, e, d, w, du, dl }] in
+  // playing order. Exit, emphasis and motion paths are left out.
+  var PRESET_FX = { 1: "appear", 2: "fly", 10: "fade", 53: "zoom", 23: "zoom", 21: "zoom", 31: "zoom" };
+  var SUB_FLY = { 1: "t", 2: "r", 4: "b", 8: "l" };
+  function timingOf(sld) {
+    var root = kid(sld, "p:timing"), out = [];
+    if (!root) return out;
+    var main = null;
+    (function walk(n, depth) {
+      if (main || !n || depth > 12) return;
+      n.c.forEach(function (c) { if (!main && c.n === "p:cTn" && c.a.nodeType === "mainSeq") main = c; else walk(c, depth + 1); });
+    })(root, 0);
+    if (!main) return out;
+    (function walk(n, depth) {
+      if (!n || depth > 12 || out.length >= 200) return;
+      n.c.forEach(function (c) {
+        if (c.n === "p:cTn" && c.a.presetClass) {
+          if (c.a.presetClass !== "entr") return;
+          var st = find(c, "p:spTgt");
+          if (!st || !st.a.spid) return;
+          var pr = find(st, "p:pRg"), du = 0;
+          (function durs(x) { x.c.forEach(function (y) { if (y.n === "p:cTn" && y !== c) { var d = num(y, "dur", 0); if (d > 1 && d > du) du = d; } durs(y); }); })(c);
+          var cond = path(c, ["p:stCondLst", "p:cond"]);
+          var id = num(c, "presetID", 10), e = PRESET_FX[id] || "fade";
+          out.push({ spid: String(st.a.spid), pi: pr ? num(pr, "st", 0) : -1, e: e, d: e === "fly" ? SUB_FLY[num(c, "presetSubtype", 4)] || "b" : undefined,
+            w: NODE_W[c.a.nodeType] || "c", du: du || 500, dl: cond ? num(cond, "delay", 0) : 0 });
+          return;
+        }
+        walk(c, depth + 1);
+      });
+    })(main, 0);
+    return out;
+  }
+  // The effects onto the items: an item (or every item of a group)
+  // takes the first effect aimed at it; effects aimed at single
+  // paragraphs become "bullets one by one".
+  function applyTiming(effects, items) {
+    var prev = "", seen = {};
+    effects.forEach(function (f) {
+      var hit = items.filter(function (it) { return it.spid === f.spid || it.grp === f.spid; });
+      if (!hit.length || seen[f.spid]) return;
+      seen[f.spid] = 1;
+      prev = C().posBetween(prev, null);
+      var an = { e: f.e, o: prev, du: f.du, dl: f.dl };
+      if (f.d) an.d = f.d;
+      if (f.w !== "c") an.w = f.w;
+      if (f.pi >= 0) an.p = true;
+      hit.forEach(function (it) { it.an = JSON.parse(JSON.stringify(an)); });
+    });
   }
 
   // ---------- 7. Reading: the presentation ----------
@@ -1077,7 +1366,7 @@
           plan.th = bgHex && /^[0-9a-f]{6}$/i.test(bgHex) && lum("#" + bgHex) < 0.35 ? "dark" : "light";
         }
       }
-      var S = { hid: bool(sld, "show") === false, tr: transOf(sld), bg: null, n: "", ly: "blank", items: [], layoutName: "" };
+      var S = { hid: bool(sld, "show") === false, tr: transOf(sld), td: tdOf(sld), bg: null, n: "", ly: "blank", items: [], layoutName: "" };
       S.layoutName = path(lsl, ["p:cSld"]) ? path(lsl, ["p:cSld"]).a.name || "" : "";
       var out = { items: [], media: plan.media, count: plan.count };
       var tf = { ox: 0, oy: 0, sx: 1, sy: 1, rot: 0 };
@@ -1121,6 +1410,7 @@
           S.n = C().cleanBlock(lines.join("\n"), C().LIM.notes);
         }
       }
+      try { applyTiming(timingOf(sld), out.items); } catch (e) { plan.count.skipped++; }
       assignRoles(S, out.items, ctx.oros);
       if (out.items.length > C().LIM.items) { plan.count.skipped += out.items.length - C().LIM.items; out.items = out.items.slice(0, C().LIM.items); }
       S.items = out.items;
@@ -1201,17 +1491,24 @@
     plan.slides.forEach(function (S) {
       var p = Co.posBetween(prev, null);
       prev = p;
-      var s = Co.normSlide({ id: newId(), m: now, d: out.deck.id, p: p, ly: S.ly, tr: S.tr, hid: S.hid, n: S.n, nm: S.n ? now : 0, tm: now,
+      var s = Co.normSlide({ id: newId(), m: now, d: out.deck.id, p: p, ly: S.ly, tr: S.tr, td: S.td, hid: S.hid, n: S.n, nm: S.n ? now : 0, tm: now,
         bg: typeof S.bg === "string" ? S.bg.toLowerCase() : undefined });
       if (!s) return;
       out.slides.push(s);
       var z = 0, roles = {};
+      // groups: a PowerPoint group, or the shape + text two items made of one shape
+      var gkey = function (x) { return x.lk ? "" : x.grp ? "g" + x.grp : x.spid ? "s" + x.spid : ""; };
+      var gcount = {}, gid = {};
+      S.items.forEach(function (x) { var k = gkey(x); if (k) gcount[k] = (gcount[k] || 0) + 1; });
       S.items.forEach(function (x) {
         var o = { id: newId(), m: now, s: s.id, k: x.k, x: x.x, y: x.y, w: Math.max(1, x.w), h: Math.max(1, x.h), r: x.r, z: ++z };
-        ["ph", "lk", "op", "fill", "st", "sw", "dash", "paras", "al", "va", "fs", "ff", "fc", "fit", "sh", "rad", "flip"].forEach(function (k) {
+        ["ph", "lk", "op", "fill", "st", "sw", "dash", "paras", "al", "va", "fs", "ff", "fc", "fit", "sh", "rad", "flip", "tb", "an"].forEach(function (k) {
           if (x[k] !== undefined && x[k] !== null && x[k] !== "") o[k] = x[k];
         });
+        var gk = gkey(x);
+        if (gk && gcount[gk] > 1 && !x.ph) o.g = gid[gk] || (gid[gk] = newId());
         ["fill", "st", "fc"].forEach(function (k) { if (typeof o[k] === "string") o[k] = o[k].toLowerCase(); });
+        if (o.tb && typeof o.tb.ac === "string") o.tb.ac = o.tb.ac.toLowerCase();
         if (o.paras) o.paras = o.paras.map(function (p) {
           return { l: p.l, ls: p.ls, r: p.r.map(function (r) { var q = {}; Object.keys(r).forEach(function (k) { q[k] = k === "c" ? String(r[k]).toLowerCase() : r[k]; }); return q; }) };
         });
@@ -1248,7 +1545,7 @@
 
   root.OrosSlidesPPTX = {
     MIME: MIME, EMU: EMU, MAX_MEDIA: MAX_MEDIA,
-    needs: needs, write: write, read: read, build: build,
+    needs: needs, charts: charts, write: write, read: read, build: build, timingOf: timingOf,
     isZip: isZip, mediaType: mediaType, familyOf: familyOf, cropToImg: cropToImg, picGeom: picGeom
   };
 })(typeof window !== "undefined" ? window : this);

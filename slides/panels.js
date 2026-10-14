@@ -1,10 +1,11 @@
 // ============================================================
-// orOS Slides — side panel + dialogs (v1.0.0)
+// orOS Slides — side panel + dialogs (v1.1.0)
 // One panel that follows the selection:
-//   - objects selected: Format (text, picture, shape, line; position,
-//     arrange, align, lock)
-//   - nothing selected: the Slide (layout, transition, background,
-//     hidden) and the Presentation (theme, size, footer)
+//   - objects selected: Format (text, picture, shape, line, table,
+//     chart; animation; position, arrange, align, lock; group)
+//   - nothing selected: the Slide (layout, transition and its length,
+//     the animation order, background, hidden) and the Presentation
+//     (theme, size, footer)
 // On a phone the panel is a bottom sheet (the Format button).
 // Dialogs: new presentation, recovered text, keyboard shortcuts.
 // ============================================================
@@ -146,6 +147,33 @@
     f.appendChild(node);
     return f;
   }
+  // seconds with one decimal, kept as milliseconds
+  function secs(label, ms, min, max, onSet, key) {
+    var f = el("label", "fld");
+    f.appendChild(el("span", "fld-lbl", label));
+    var i = el("input", "inp sm num");
+    i.type = "number"; i.min = String(min / 1000); i.max = String(max / 1000); i.step = "0.1";
+    i.value = String(Math.round(ms / 100) / 10);
+    i.setAttribute("data-k", key);
+    i.addEventListener("change", function () {
+      var v = parseFloat(String(i.value).replace(",", "."));
+      if (!isFinite(v)) { i.value = String(Math.round(ms / 100) / 10); return; }
+      onSet(Math.max(min, Math.min(max, Math.round(v * 10) * 100)));
+    });
+    f.appendChild(i);
+    return f;
+  }
+  function select(label, opts, value, onSet, key) {
+    var s = el("select", "inp sm");
+    s.setAttribute("data-k", key);
+    s.setAttribute("aria-label", label);
+    opts.forEach(function (o) { var x = el("option", "", o.label); x.value = o.v; if (o.v === value) x.selected = true; s.appendChild(x); });
+    s.addEventListener("change", function () { onSet(s.value); });
+    return fld(label, s);
+  }
+  function kindLabel(it) {
+    return t({ text: "pn.text", image: "pn.image", shape: "pn.shape", line: "pn.line", table: "pn.table", chart: "pn.chart" }[it.k] || "pn.shape");
+  }
 
   // ---------- Render ----------
   PN.render = function () {
@@ -208,21 +236,120 @@
     selTr.addEventListener("change", function () { ED().editSlide(function (x) { x.tr = selTr.value; }); });
     var r1 = row(); r1.appendChild(selTr);
     r1.appendChild(btn(t("tr.all"), function () {
-      var v = s.tr;
+      var v = s.tr, td = s.td;
       SL.op(function (dt, nw) {
         var ch = false;
-        C.deckSlides(dt, SL.deck).forEach(function (x) { if (x.tr !== v) { x.tr = v; x.m = nw; ch = true; } });
+        C.deckSlides(dt, SL.deck).forEach(function (x) {
+          if (x.tr === v && x.td === td) return;
+          x.tr = v;
+          if (td) x.td = td; else delete x.td;
+          x.m = nw; ch = true;
+        });
         if (!ch) return false;
         C.touchDeck(dt, SL.deck, nw);
       });
     }));
     tr.appendChild(r1);
+    if (s.tr && s.tr !== "none") {
+      var g0 = el("div", "grid2");
+      g0.appendChild(secs(t("tr.dur"), s.td || 450, 100, C.LIM.dur, function (v) {
+        ED().editSlide(function (x) { if (v === 450) delete x.td; else x.td = v; });
+      }, "td"));
+      tr.appendChild(g0);
+    }
     host.appendChild(tr);
+    host.appendChild(orderPanel(s));
 
     var bg = sec(t("pn.bg"));
     bg.appendChild(colors(s.bg || "t:bg", function (v) { ED().editSlide(function (x) { if (v === "t:bg") delete x.bg; else x.bg = v; }); }, false, "bg"));
     bg.appendChild(check(t("pn.hidden"), s.hid, function (v) { ED().editSlide(function (x) { x.hid = v; }); }, "hid"));
     host.appendChild(bg);
+  }
+
+  // ----- The slide's animation order -----
+  function unitLabel(u) {
+    var data = SL.data();
+    if (u.ids.length > 1) return t("pn.group") + " (" + u.ids.length + ")";
+    var it = data.items[u.ids[0]];
+    var txt = it && it.k === "text" ? C.itemText(it).replace(/\s+/g, " ").trim() : "";
+    return txt ? (txt.length > 32 ? txt.slice(0, 31) + "…" : txt) : kindLabel(it || {});
+  }
+  function orderPanel(s) {
+    var a = sec(t("an.order"), "anim");
+    var units = C.animUnits(SL.data(), s.id);
+    if (!units.length) { a.appendChild(el("p", "hint", t("an.empty"))); return a; }
+    var nums = SL.Anim.numbers(SL.Anim.plan(SL.data(), s.id));
+    var list = el("ol", "an-list");
+    units.forEach(function (u, i) {
+      var li = el("li", "an-row");
+      var n = nums[u.ids[0]];
+      li.appendChild(el("span", "an-num", n ? String(n) : "▸"));
+      var main = el("button", "an-main");
+      main.type = "button";
+      main.setAttribute("data-k", "an-sel:" + u.key);
+      main.appendChild(el("span", "an-name", unitLabel(u)));
+      main.appendChild(el("span", "an-sub", t("an.e." + u.an.e) + " · " + (n ? t("an.step", { n: n }) : t("an.auto")) +
+        (u.an.w ? " · " + t("an.w." + u.an.w) : "")));
+      main.addEventListener("click", function () { ED().select(u.ids); SL.panels.render(); });
+      li.appendChild(main);
+      var up = SL.iconBtn("up", t("an.earlier"));
+      up.setAttribute("data-k", "an-up:" + u.key);
+      up.disabled = i === 0;
+      up.addEventListener("click", function () { moveUnit(u, -1); });
+      var dn = SL.iconBtn("down", t("an.later"));
+      dn.setAttribute("data-k", "an-dn:" + u.key);
+      dn.disabled = i === units.length - 1;
+      dn.addEventListener("click", function () { moveUnit(u, 1); });
+      li.appendChild(up); li.appendChild(dn);
+      list.appendChild(li);
+    });
+    a.appendChild(list);
+    var r = row();
+    r.appendChild(btn(t("an.preview"), function () { ED().previewAnim(); }));
+    a.appendChild(r);
+    if (SL.reducedMotion()) a.appendChild(el("p", "hint", t("an.reduced")));
+    return a;
+  }
+  function moveUnit(u, step) {
+    SL.op(function (dt, nw) { return C.moveAnim(dt, u.ids[0], step, nw) ? undefined : false; });
+  }
+
+  // ----- The animation of the selection -----
+  function animPanel(list) {
+    var ids = list.map(function (x) { return x.id; });
+    var cur = null;
+    list.forEach(function (x) { if (!cur && x.an) cur = x.an; });
+    var single = list.length === 1 ? list[0] : null;
+    var a = sec(t("an.title"), "an");
+    function apply(patch) {
+      var base = cur ? JSON.parse(JSON.stringify(cur)) : { e: "fade" };
+      Object.keys(patch).forEach(function (k) { if (patch[k] === undefined) delete base[k]; else base[k] = patch[k]; });
+      SL.op(function (dt, nw) { return C.setAnim(dt, ids, base.e ? base : null, nw) ? undefined : false; });
+    }
+    a.appendChild(select(t("an.effect"), [{ v: "", label: t("an.e.none") }].concat(C.EFFECTS.map(function (e) { return { v: e, label: t("an.e." + e) }; })),
+      cur ? cur.e : "", function (v) {
+        if (!v) SL.op(function (dt, nw) { return C.setAnim(dt, ids, null, nw) ? undefined : false; });
+        else apply({ e: v });
+      }, "an-e"));
+    if (!cur) return a;
+    if (cur.e === "fly") {
+      a.appendChild(fld(t("an.dir"), seg(C.FLY_DIRS.map(function (d) { return { v: d, label: t("an.d." + d) }; }), cur.d || "b", function (v) { apply({ d: v }); }, "an-d")));
+    }
+    a.appendChild(select(t("an.start"), C.STARTS.map(function (w) { return { v: w, label: t("an.w." + w) }; }), cur.w || "c",
+      function (v) { apply({ w: v === "c" ? undefined : v }); }, "an-w"));
+    var g = el("div", "grid2");
+    if (cur.e !== "appear") g.appendChild(secs(t("an.du"), cur.du || 500, 100, C.LIM.dur, function (v) { apply({ du: v }); }, "an-du"));
+    g.appendChild(secs(t("an.dl"), cur.dl || 0, 0, C.LIM.delay, function (v) { apply({ dl: v || undefined }); }, "an-dl"));
+    a.appendChild(g);
+    if (single && single.k === "text") a.appendChild(check(t("an.p"), cur.p, function (v) { apply({ p: v ? true : undefined }); }, "an-p"));
+    var r = row();
+    var up = btn(t("an.earlier"), function () { SL.op(function (dt, nw) { return C.moveAnim(dt, ids[0], -1, nw) ? undefined : false; }); });
+    var dn = btn(t("an.later"), function () { SL.op(function (dt, nw) { return C.moveAnim(dt, ids[0], 1, nw) ? undefined : false; }); });
+    up.setAttribute("data-k", "an-up"); dn.setAttribute("data-k", "an-dn");
+    r.appendChild(up); r.appendChild(dn);
+    r.appendChild(btn(t("an.preview"), function () { ED().previewAnim(); }));
+    a.appendChild(r);
+    return a;
   }
 
   // ----- Presentation -----
@@ -274,7 +401,7 @@
   function itemPanel(host, it) {
     var ids = [it.id];
     function set(fn) { ED().editItems(ids, fn); }
-    var kindLbl = it.k === "text" ? t("pn.text") : it.k === "image" ? t("pn.image") : it.k === "shape" ? t("pn.shape") : t("pn.line");
+    var kindLbl = kindLabel(it);
     if (it.k === "text") {
       var a = sec(kindLbl);
       var r = row();
@@ -323,6 +450,41 @@
       im.appendChild(num(t("pn.radius"), it.rad || 0, 0, C.LIM.radius, function (v) { set(function (x) { x.rad = v; }); }, "rad"));
       host.appendChild(im);
       host.appendChild(fillStroke(it, set, false));
+    } else if (it.k === "table") {
+      var tbs = sec(kindLbl);
+      tbs.appendChild(row().appendChild(btn(t("tb.edit") + "…", function () { SL.dlg.table(it.id); }, "primary")).parentNode);
+      var setTb = function (k, v) { set(function (x) { x.tb = JSON.parse(JSON.stringify(x.tb)); if (v === undefined) delete x.tb[k]; else x.tb[k] = v; }); };
+      tbs.appendChild(check(t("tb.hd"), it.tb.hd, function (v) { setTb("hd", v ? true : false); }, "tb-hd"));
+      tbs.appendChild(check(t("tb.bd"), it.tb.bd, function (v) { setTb("bd", v ? true : undefined); }, "tb-bd"));
+      if (it.tb.hd) tbs.appendChild(fld(t("tb.ac"), colors(it.tb.ac, function (v) { setTb("ac", v); }, false, "tb-ac")));
+      var tf = el("select", "inp sm");
+      tf.setAttribute("data-k", "ff");
+      [["", "font.theme"], ["sans", "font.sans"], ["serif", "font.serif"], ["mono", "font.mono"]].forEach(function (f) {
+        var o = el("option", "", t(f[1])); o.value = f[0]; if ((it.ff || "") === f[0]) o.selected = true; tf.appendChild(o);
+      });
+      tf.addEventListener("change", function () { set(function (x) { if (tf.value) x.ff = tf.value; else delete x.ff; }); });
+      var tg = el("div", "grid2");
+      tg.appendChild(fld(t("pn.font"), tf));
+      tg.appendChild(num(t("pn.size"), it.tb.fs, 8, 200, function (v) { setTb("fs", v); }, "tb-fs"));
+      tbs.appendChild(tg);
+      var tfit = SL.D.tableFit(it, C.themeById(SL.curDeck().th));
+      if (tfit.over) tbs.appendChild(el("p", "hint warn", t("fit.over")));
+      else if (tfit.k < 1) tbs.appendChild(el("p", "hint", t("fit.shrunk", { n: Math.round(tfit.k * 100) })));
+      tbs.appendChild(fld(t("pn.tcolor"), colors(it.fc || "t:fg", function (v) { set(function (x) { x.fc = v; }); }, false, "fc")));
+      tbs.appendChild(fld(t("tb.ln"), seg(C.TABLE_LINES.map(function (v) { return { v: v, label: t("tb.ln." + v) }; }), it.tb.ln, function (v) { setTb("ln", v); }, "tb-ln")));
+      host.appendChild(tbs);
+      host.appendChild(fillStroke(it, set, true));
+    } else if (it.k === "chart") {
+      var chs = sec(kindLbl);
+      chs.appendChild(row().appendChild(btn(t("ch.edit") + "…", function () { SL.dlg.chart(it.id); }, "primary")).parentNode);
+      chs.appendChild(select(t("ch.type"), C.CHART_TYPES.map(function (v) { return { v: v, label: t("ch.t." + v) }; }), it.ch.t, function (v) {
+        set(function (x) { x.ch = JSON.parse(JSON.stringify(x.ch)); x.ch.t = v; });
+      }, "ch-t"));
+      chs.appendChild(check(t("ch.legend"), it.ch.lg !== false, function (v) {
+        set(function (x) { x.ch = JSON.parse(JSON.stringify(x.ch)); if (v) delete x.ch.lg; else x.ch.lg = false; });
+      }, "ch-lg"));
+      host.appendChild(chs);
+      host.appendChild(fillStroke(it, set, true));
     } else if (it.k === "shape") {
       var sh = sec(kindLbl);
       sh.appendChild(seg([{ v: "rect", icon: "rect", label: t("sh.rect") }, { v: "ellipse", icon: "ell", label: t("sh.ellipse") }], it.sh, function (v) { set(function (x) { x.sh = v; }); }, "sh"));
@@ -339,6 +501,7 @@
       ln.appendChild(check(t("pn.flip"), it.flip, function (v) { set(function (x) { if (v) x.flip = true; else delete x.flip; }); }, "flip"));
       host.appendChild(ln);
     }
+    host.appendChild(animPanel([it]));
     host.appendChild(geomPanel(it, set));
     host.appendChild(arrangePanel([it]));
   }
@@ -366,7 +529,7 @@
     g.appendChild(num(t("pn.y"), it.y, -L.coord, L.coord, function (v) { set(function (x) { x.y = v; }); }, "y"));
     g.appendChild(num(t("pn.w"), it.w, 1, L.size, function (v) { set(function (x) { x.w = v; }); }, "w"));
     g.appendChild(num(t("pn.h"), it.h, 1, L.size, function (v) { set(function (x) { x.h = v; }); }, "h"));
-    g.appendChild(num(t("pn.rot"), it.r, -180, 180, function (v) { set(function (x) { x.r = v; }); }, "r"));
+    if (it.k !== "table" && it.k !== "chart") g.appendChild(num(t("pn.rot"), it.r, -180, 180, function (v) { set(function (x) { x.r = v; }); }, "r"));
     s.appendChild(g);
     s.appendChild(range(t("pn.op"), it.op === undefined ? 100 : it.op, 0, 100, function (v, isLive) {
       if (isLive) SL.live2(function (dt, nw) { var x = dt.items[it.id]; if (x) { x.op = v; x.m = nw; C.touchSlide(dt, x.s, nw); } });
@@ -403,7 +566,24 @@
   }
 
   function multiPanel(host, list) {
-    host.appendChild(el("p", "pn-title", t("pn.multi", { n: list.length })));
+    var grouped = ED().canUngroup();
+    host.appendChild(el("p", "pn-title", grouped && !ED().canGroup() ? t("pn.group") + " · " + t("pn.multi", { n: list.length }) : t("pn.multi", { n: list.length })));
+    var g = sec("");
+    var r = row();
+    var gb = SL.iconBtn("group", t("gr.group"));
+    gb.classList.add("with-label");
+    gb.appendChild(el("span", "", t("gr.group")));
+    gb.setAttribute("data-k", "gr-group");
+    gb.disabled = !ED().canGroup();
+    gb.addEventListener("click", function () { ED().group(); });
+    var ub = btn(t("gr.ungroup"), function () { ED().ungroup(); });
+    ub.setAttribute("data-k", "gr-ungroup");
+    ub.disabled = !grouped;
+    r.appendChild(gb); r.appendChild(ub);
+    g.appendChild(r);
+    g.appendChild(el("p", "hint", t("gr.hint")));
+    host.appendChild(g);
+    host.appendChild(animPanel(list));
     host.appendChild(arrangePanel(list));
   }
 

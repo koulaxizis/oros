@@ -6,7 +6,7 @@
 // crop, shapes, lines, backgrounds, notes, hidden slides, transitions,
 // 16:9 and 4:3. Also: a file made by Atelier opens; a foreign file
 // with placeholders that inherit from the layout / master / theme,
-// groups, charts, tables and video opens with placeholder notes;
+// groups, charts and video opens with placeholder notes, tables as tables;
 // DTDs are refused, external links never followed.
 // In the browser XML goes through DOMParser; here Atelier's small
 // tolerant parser (atelier/pptx.js parseXml) stands in for it.
@@ -320,7 +320,7 @@ test("pptx: a foreign file: inherited positions and styles, groups, lines, notes
   assert.deepEqual(Object.keys(plan.media), ["ppt/media/image1.png"]);        // the external picture is never read
   const S = plan.slides[0];
   assert.equal(S.ly, "content");
-  assert.equal(S.tr, "slide");
+  assert.equal(S.tr, "wipe");
   assert.equal(S.n, "Say hello\nthen\ngo");
   assert.equal(S.bg, "#ffffff");
   const b = X.build(plan, { "ppt/media/image1.png": { id: IMG, w: 400, h: 300 } }, 5000, ids("f"));
@@ -353,10 +353,12 @@ test("pptx: a foreign file: inherited positions and styles, groups, lines, notes
   // a horizontal line
   const line = items.find((it) => it.k === "line");
   assert.equal(line.h, 2); assert.equal(line.st, "#0000ff");
-  // chart, table (with its text) and video as dashed notes
+  // chart and video as dashed notes; the table is a table (wave 24)
   const notes = items.filter((it) => it.k === "text" && it.dash && it.st === "#9ca3af");
-  assert.deepEqual(j(notes.map((n) => C.paraText(n.paras[0]))).sort(), ["Video or sound (not imported)", "Γράφημα", "Πίνακας"].sort());
-  assert.equal(C.paraText(notes.find((n) => C.paraText(n.paras[0]) === "Πίνακας").paras[1]), "A1 · B1");
+  assert.deepEqual(j(notes.map((n) => C.paraText(n.paras[0]))).sort(), ["Video or sound (not imported)", "Γράφημα"].sort());
+  const table = items.find((it) => it.k === "table");
+  assert.deepEqual(j(table.tb.rows), [["A1", "B1"]]);
+  assert.equal(table.tb.hd, undefined);
   // the photo: cropped to its middle half, round mask, description
   const photo = items.find((it) => it.k === "image");
   assert.equal(photo.img.alt, "A photo");
@@ -364,7 +366,7 @@ test("pptx: a foreign file: inherited positions and styles, groups, lines, notes
   assert.equal(photo.img.ox, 0);
   // no slide number placeholder (Slides has its own footer), no external picture
   assert.ok(!items.some((it) => it.k === "text" && C.itemText(it) === "1"));
-  assert.equal(plan.count.unknown, 3);
+  assert.equal(plan.count.unknown, 2);
 });
 
 test("pptx: refuses DTDs, keeps going past a broken slide, rejects what is not a presentation", async () => {
