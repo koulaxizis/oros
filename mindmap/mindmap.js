@@ -2593,13 +2593,14 @@
     commit();
   }
 
-  function openPaste(underId) {
+  function openPaste(underId, prefill) {
     var dlg = makeDialog("mm-paste", t("paste.title"));
     dlg.classList.add("wide");
     dlg.appendChild(el("p", "dlg-sub", t("paste.hint")));
     var ta = el("textarea", "paste-ta");
     ta.rows = 10;
     ta.spellcheck = false;
+    if (typeof prefill === "string") ta.value = prefill;
     dlg.appendChild(ta);
     var target = R && underId && R.N[underId] ? underId : null;
     dlg.appendChild(el("p", "dlg-sub", target ? t("paste.under", { name: label(R.N[target], 50) }) : t("paste.newMap")));
@@ -3453,6 +3454,15 @@
   // { openFile: { token } }: a file from the system's "Open with"
   // (shell fileopen.js), taken once, then the Import path.
   function openSearchTarget(t) {
+    // Single app (solo.js): { newMap: true } → the New map dialog;
+    // { pasteText: { text } } → the paste dialog filled with a share
+    // (a new map only when the person presses Add).
+    if (t && (t.newMap === true || t.pasteText)) {
+      if (document.querySelector("dialog[open]") || $("mm-menu")) return;
+      if (t.newMap === true) { newMapDialog(); return; }
+      if (typeof t.pasteText.text === "string" && t.pasteText.text.trim()) openPaste(null, t.pasteText.text.slice(0, 20000));
+      return;
+    }
     if (t && t.openFile) {
       if (document.querySelector("dialog[open]") || $("mm-menu")) return;
       var f = null;

@@ -60,6 +60,42 @@
       shortcuts: [{ do: "new", name: { en: "New task", el: "Νέα εργασία" }, target: { quickAdd: true } }],
       share: "task",
       badge: "due"
+    },
+    // Wave 2: office apps.
+    contacts: {
+      name: { en: "orOS Contacts", el: "orOS Επαφές" },
+      shortcuts: [{ do: "new", name: { en: "New contact", el: "Νέα επαφή" }, target: { newContact: true } }],
+      share: "contact"
+    },
+    writer: {
+      name: { en: "orOS Writer", el: "orOS Κειμενογράφος" },
+      shortcuts: [{ do: "new", name: { en: "New document", el: "Νέο έγγραφο" }, target: { newBlank: true } }],
+      share: "doc"
+    },
+    spreadsheet: {
+      name: { en: "orOS Spreadsheet", el: "orOS Υπολογιστικά φύλλα" },
+      shortcuts: [{ do: "new", name: { en: "New sheet", el: "Νέο φύλλο" }, target: { newBlank: true } }],
+      share: "sheet"
+    },
+    kanban: {
+      name: { en: "orOS Kanban", el: "orOS Πίνακες Kanban" },
+      shortcuts: [{ do: "new", name: { en: "New card", el: "Νέα κάρτα" }, target: { quickAdd: true } }],
+      share: "card"
+    },
+    mindmap: {
+      name: { en: "orOS Mind Map", el: "orOS Νοητικός χάρτης" },
+      shortcuts: [{ do: "new", name: { en: "New map", el: "Νέος χάρτης" }, target: { newMap: true } }],
+      share: "map"
+    },
+    wiki: {
+      name: { en: "orOS Wiki", el: "orOS Wiki" },
+      shortcuts: [{ do: "new", name: { en: "New article", el: "Νέο άρθρο" }, target: { newArt: {} } }],
+      share: "article"
+    },
+    slides: {
+      name: { en: "orOS Slides", el: "orOS Παρουσιάσεις" },
+      shortcuts: [{ do: "new", name: { en: "New presentation", el: "Νέα παρουσίαση" }, target: { newDeck: true } }],
+      share: "outline"
     }
   };
 
@@ -172,6 +208,43 @@
       if (!firstLine) return null;
       var date = ymd(now instanceof Date ? now : new Date());
       return { calNew: { date: date, title: firstLine.slice(0, 80), note: bodyText.replace(firstLine, "").trim().slice(0, 500) } };
+    }
+    // Wave 2. Each one only opens a form, dialog or new item the
+    // person then keeps or drops.
+    var rest = bodyText.replace(firstLine, "").trim();
+    if (kind === "contact") {
+      // Contacts' card reader (cardtext.js) places the lines.
+      var card = ((title ? title + "\n" : "") + bodyText).trim();
+      return card ? { app: id, target: { cardText: { text: card.slice(0, 4000) } } } : null;
+    }
+    if (kind === "doc") {
+      return bodyText.trim() ? { app: id, target: { newDoc: { title: firstLine.slice(0, 120), text: bodyText } } } : null;
+    }
+    if (kind === "sheet") {
+      // One row per line, cells split on tabs (a copied table) or else
+      // on commas.
+      var rows = bodyText.split(/\r?\n/).filter(function (l) { return l.trim(); }).slice(0, 1000).map(function (l) {
+        return l.split(l.indexOf("\t") !== -1 ? "\t" : ",").slice(0, 100).map(function (c) { return c.trim().slice(0, 500); });
+      });
+      return rows.length ? { app: id, target: { newSheet: { name: title.slice(0, 31), rows: rows } } } : null;
+    }
+    if (kind === "card") {
+      if (!firstLine) return null;
+      return { app: id, target: { asNew: { title: firstLine.slice(0, 500), note: rest.slice(0, 5000) } } };
+    }
+    if (kind === "map") {
+      // Lines become branches (Mind map's paste dialog, filled in).
+      var lines = (title && bodyText.indexOf(title) !== 0 ? title + "\n" : "") + bodyText;
+      return lines.trim() ? { app: id, target: { pasteText: { text: lines.slice(0, 20000) } } } : null;
+    }
+    if (kind === "article") {
+      if (!firstLine) return null;
+      return { app: id, target: { newArt: { title: firstLine.slice(0, 200), text: (title ? bodyText : rest).slice(0, 20000) } } };
+    }
+    if (kind === "outline") {
+      // A titled share starts with its title slide ("# title").
+      var outline = (title ? "# " + title + "\n" : "") + bodyText;
+      return outline.trim() ? { app: id, target: { outline: outline.slice(0, 20000), title: firstLine.slice(0, 120) } } : null;
     }
     return null;
   }

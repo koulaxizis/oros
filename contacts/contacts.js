@@ -2922,7 +2922,20 @@ document.addEventListener("keydown", function (e) {
   // Mail "Add sender to Contacts": __orosOpenAt("contacts", { add: {
   // email, name? } }). Someone already has that address → their card;
   // otherwise a NEW contact dialog prefilled (saved only on Save).
+  // Single app (solo.js): { newContact: true } → the New contact
+  // dialog (icon shortcut); { cardText: { text } } → a shared text read
+  // like a business card (cardtext.js), prefilling a NEW contact.
   window.__orosOpenAt = function (target) {
+    if (target && typeof target === "object" && (target.newContact === true || target.cardText)) {
+      if ($("ct-dlg").open) return;
+      try { closeViewCard(); } catch (e) {}
+      var ctx = target.cardText, CCx = window.OrosContactsCard;
+      if (target.newContact === true) { openDlg(null); return; }
+      if (!ctx || typeof ctx.text !== "string" || !ctx.text.trim() || !CCx) return;
+      openDlgPrefilled(CCx.parse(ctx.text.slice(0, 4000)));
+      notifyTransient(t("sc.check"));
+      return;
+    }
     var fi = target && typeof target === "object" ? target.importVcf : null;
     if (fi && typeof fi === "object" && typeof fi.text === "string") {
       askImportVcf(fi.text, typeof fi.name === "string" ? fi.name : "");

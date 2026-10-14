@@ -644,12 +644,14 @@
     var a = opts.a ? C.byId(data, opts.a) : null;
     var sec = a && opts.sec ? opts.sec : 0;
     var whole = !a || !opts.sec;
-    var text = a ? (whole ? a.x : C.getSection(a.x, sec)) : "";
+    // opts.text: a new article's first text (a share to the single
+    // app); it counts as unsaved, so leaving the editor asks first.
+    var text = a ? (whole ? a.x : C.getSection(a.x, sec)) : (typeof opts.text === "string" ? opts.text.slice(0, 20000) : "");
     if (text === null) { text = a.x; sec = 0; whole = true; }
     ed = {
       a: a ? a.id : "", w: w.id, sec: whole ? 0 : sec, whole: whole,
       base: a ? a.r : "", baseX: a ? a.x : "", baseT: a ? a.t : "",
-      title: a ? a.t : C.cleanTitle(opts.title || ""), text: text, start: text, sum: "",
+      title: a ? a.t : C.cleanTitle(opts.title || ""), text: text, start: a ? text : "", sum: "",
       makeMain: !!opts.makeMain, tab: "write", restored: false
     };
     ed.dirty = function () {
@@ -2252,6 +2254,15 @@
   }
   // Deep link (search hit): { a } opens that article (and its wiki).
   function openTarget(target) {
+    // Single app (solo.js): { newArt: { title?, text? } } → a new
+    // article in the editor (icon shortcut, or a share).
+    var na = target && typeof target === "object" ? target.newArt : null;
+    if (na && typeof na === "object") {
+      if (!curWiki() || (view && view.v === "edit" && ed && ed.dirty())) return false;
+      hideDlg();
+      startEdit({ title: typeof na.title === "string" ? na.title : "", text: typeof na.text === "string" ? na.text : "" });
+      return true;
+    }
     if (!target || typeof target !== "object" || typeof target.a !== "string") return false;
     var a = C.byId(data, target.a);
     if (!a) return false;
