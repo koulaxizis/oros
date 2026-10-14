@@ -51,6 +51,12 @@
       <div id="filter-pop" hidden></div>
     </div>
 
+    <div id="sort-slot">
+      <button type="button" class="ctrl-btn icon" id="sort-btn" aria-haspopup="true"
+              data-i18n-title="sort.title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h13M3 12h9M3 18h5"/><path d="M18 9v12M15 18l3 3 3-3"/></svg></button>
+      <div id="sort-pop" role="menu" hidden></div>
+    </div>
+
     <button class="ctrl-btn" id="clear-completed" data-i18n="clear.completed">Clear completed</button>
     <button class="ctrl-btn icon" id="list-share" hidden
             data-i18n-title="list.share"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
@@ -69,11 +75,23 @@
       <span data-i18n="search.none">No matches</span>
       <small data-i18n="search.none.hint">Try another term or clear the label filter.</small>
     </div>
+    <div id="smart-empty" hidden>
+      <span data-i18n="smart.empty">Nothing here</span>
+      <small data-i18n="smart.empty.hint">Tasks from all your lists show up here when they match.</small>
+    </div>
     <div id="filtered" hidden>
       <span data-i18n="filtered.title">All tasks are completed</span>
       <small data-i18n="filtered.hint">Turn off “Hide completed” to see them.</small>
     </div>
   </main>
+
+  <!-- Selection bar (TD-14: several tasks at once) -->
+  <div id="sel-bar" hidden>
+    <span id="sel-count"></span>
+    <span class="spacer"></span>
+    <button type="button" id="sel-move" data-i18n="sel.act">Priority / Move…</button>
+    <button type="button" id="sel-cancel" data-i18n="confirm.no">Cancel</button>
+  </div>
 
   <!-- Item detail dialog (tap item label to open) -->
   <dialog id="dlg-item">
@@ -85,6 +103,28 @@
 
       <label data-i18n="item.due">Due date</label>
       <input id="f-due" type="date">
+
+      <div class="two-col">
+        <div>
+          <label data-i18n="prio.label">Priority</label>
+          <div id="f-prio" class="prio-seg"></div>
+        </div>
+        <div>
+          <label for="f-list" data-i18n="item.list">List</label>
+          <select id="f-list"></select>
+        </div>
+      </div>
+
+      <!-- Subtasks: a checklist inside the task (TD-14) -->
+      <label data-i18n="subs.title">Subtasks</label>
+      <div id="f-subs"></div>
+      <div class="sub-new">
+        <input id="f-sub-new" type="text" maxlength="300" data-i18n-ph="subs.ph" placeholder="New subtask…">
+        <button type="button" id="f-sub-add" class="ghost">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span data-i18n="subs.add">Add</span>
+        </button>
+      </div>
 
       <label data-i18n="item.notes">Notes</label>
       <textarea id="f-notes" rows="4"></textarea>
@@ -128,6 +168,10 @@
             <option value="month" data-i18n="unit.month">months</option>
           </select>
           <select id="f-weekday"></select>
+          <select id="f-rec-mode" data-i18n-title="recur.mode">
+            <option value="fixed" data-i18n="recur.mode.fixed">on a fixed schedule</option>
+            <option value="after" data-i18n="recur.mode.after">after it's done</option>
+          </select>
         </div>
       </fieldset>
 
@@ -177,12 +221,54 @@
     </form>
   </dialog>
 
+  <!-- Saved filter dialog (TD-14; synced in state.filters) -->
+  <dialog id="dlg-filter">
+    <form method="dialog" id="filter-form" autocomplete="off">
+      <h3 data-i18n="flt.title">Saved filter</h3>
+
+      <label for="flt-name" data-i18n="list.name">Name</label>
+      <input id="flt-name" type="text" maxlength="40">
+
+      <label data-i18n="flt.labels">Labels (any of them)</label>
+      <div id="flt-labels" class="flt-chips"></div>
+
+      <label data-i18n="prio.label">Priority</label>
+      <div id="flt-prios" class="prio-seg"></div>
+
+      <label for="flt-due" data-i18n="item.due">Due date</label>
+      <select id="flt-due">
+        <option value="" data-i18n="flt.due.any">Any</option>
+        <option value="overdue" data-i18n="flt.due.overdue">Overdue</option>
+        <option value="today" data-i18n="flt.due.today">Today or overdue</option>
+        <option value="week" data-i18n="smart.week">Next 7 days</option>
+        <option value="month" data-i18n="flt.due.month">Next 30 days</option>
+        <option value="none" data-i18n="smart.nodate">No date</option>
+        <option value="range" data-i18n="flt.due.range">Between dates</option>
+      </select>
+      <div id="flt-range" class="two-col" hidden>
+        <div><label for="flt-from" data-i18n="flt.from">From</label><input id="flt-from" type="date"></div>
+        <div><label for="flt-to" data-i18n="flt.to">To</label><input id="flt-to" type="date"></div>
+      </div>
+
+      <label for="flt-text" data-i18n="flt.text">Text contains</label>
+      <input id="flt-text" type="text" maxlength="100">
+
+      <menu>
+        <button type="button" id="flt-delete" class="danger" data-i18n="flt.delete">Delete filter</button>
+        <span class="spacer"></span>
+        <button type="button" id="flt-cancel" class="plain" data-i18n="confirm.no">Cancel</button>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
   <script src="../links/core.js?v=1.98.00"></script>
   <script src="../links/todo.js?v=1.98.00"></script>
   <script src="platforms.js?v=1.98.00"></script>
+  <script src="model.js?v=1.98.00"></script>
   <script src="todo.js?v=1.98.00"></script>
 </body>
 </html>

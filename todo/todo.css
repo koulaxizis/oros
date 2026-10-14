@@ -965,6 +965,309 @@ dialog menu button.danger:hover {
   .drag-handle { opacity: 0.7; }
 }
 
+/* ---------- 11. Smart lists, priorities, subtasks, menus (TD-14) ---------- */
+:root {
+  --p1: #e06c75;
+  --p2: #f28c5a;
+  --p3: #4f9fcf;
+}
+.tab.smart .t-ico { display: inline-flex; align-items: center; }
+.tab .chip.dim {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  line-height: 12px;
+}
+.tab-sep {
+  flex-shrink: 0;
+  width: 1px;
+  margin: 10px 4px;
+  background: var(--border);
+}
+#empty, #no-match, #filtered, #smart-empty { text-align: center; }
+#smart-empty { padding: 52px 20px; color: var(--text-dim); }
+#smart-empty span { display: block; font-size: 15px; margin-bottom: 6px; }
+#smart-empty small { font-size: 12.5px; opacity: 0.7; }
+
+/* The checkbox carries the priority colour (Todoist style) */
+.item .check {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 2px solid var(--text-dim);
+  border-radius: 50%;
+  background: transparent;
+  display: inline-grid;
+  place-content: center;
+  transition: background 0.12s, border-color 0.12s;
+}
+.item .check::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: transform 0.12s;
+  background: var(--bg);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.item .check:checked { background: var(--accent); border-color: var(--accent); }
+.item .check:checked::before { transform: scale(1); }
+.item .check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.item.p1 .check { border-color: var(--p1); background: rgba(224, 108, 117, 0.14); }
+.item.p2 .check { border-color: var(--p2); background: rgba(242, 140, 90, 0.14); }
+.item.p3 .check { border-color: var(--p3); background: rgba(79, 159, 207, 0.14); }
+.item.p1 .check:checked { background: var(--p1); }
+.item.p2 .check:checked { background: var(--p2); }
+.item.p3 .check:checked { background: var(--p3); }
+
+.chip-prio {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+}
+.chip-prio.p1, .prio-btn.p1 { color: var(--p1); }
+.chip-prio.p2, .prio-btn.p2 { color: var(--p2); }
+.chip-prio.p3, .prio-btn.p3 { color: var(--p3); }
+.prio-btn.p4 { color: var(--text-dim); }
+
+.chip-subs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.chip-subs:hover, .chip-subs.open { color: var(--accent); border-color: var(--accent); }
+.chip-subs.all { color: var(--accent); }
+
+.row-subs { list-style: none; margin: 6px 0 2px; }
+.row-subs li label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  cursor: pointer;
+  word-break: break-word;
+}
+.row-subs input {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.row-subs li.done span { color: var(--text-dim); text-decoration: line-through; }
+
+/* Selection (several tasks at once) */
+.item.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+#sel-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(460px, calc(100vw - 20px));
+  padding: 8px 10px 8px 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px var(--shadow);
+  font-size: 13px;
+}
+#sel-bar button {
+  min-height: 38px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+}
+#sel-bar #sel-cancel { border-color: transparent; background: transparent; color: var(--text-dim); }
+body.selecting #list-scroll { padding-bottom: 140px; }
+
+/* Quick menu (right-click / long press) */
+#row-menu {
+  position: fixed;
+  z-index: 1100;
+  min-width: 200px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
+  padding: 6px;
+}
+.rm-prios {
+  display: flex;
+  gap: 4px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.rm-prios .prio-btn { flex: 1; justify-content: center; }
+.rm-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.rm-item:hover, .rm-item:focus-visible { background: var(--accent-soft); outline: none; }
+.rm-item.here { color: var(--text-dim); cursor: default; }
+.rm-ico { display: inline-flex; color: var(--text-dim); }
+
+.prio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  min-width: 44px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.prio-btn:hover { border-color: currentColor; }
+.prio-btn.sel { border-color: currentColor; background: var(--accent-soft); box-shadow: inset 0 0 0 1px currentColor; }
+.prio-seg { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Sort popover */
+#sort-slot { position: relative; flex-shrink: 0; }
+#sort-btn.has-filters { color: var(--accent); background: var(--accent-soft); }
+#sort-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 900;
+  min-width: 190px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
+  padding: 6px;
+}
+.sort-opt {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+}
+.sort-opt:hover, .sort-opt:focus-visible { background: var(--accent-soft); outline: none; }
+.sort-opt.sel { color: var(--accent); font-weight: 700; }
+
+/* Item dialog: priority + list side by side, subtasks */
+dialog .two-col { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: end; }
+dialog .two-col > div { min-width: 0; }
+#flt-range.two-col { grid-template-columns: 1fr 1fr; }
+#f-list, #flt-due, #f-rec-mode {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 13.5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+}
+#f-rec-mode { width: auto; max-width: 100%; }
+#f-list:focus, #flt-due:focus, #f-rec-mode:focus { border-color: var(--accent); }
+#rec-editor { flex-wrap: wrap; }
+#f-subs { display: flex; flex-direction: column; gap: 4px; }
+.sub-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 4px;
+  align-items: center;
+}
+.sub-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0 4px 0 2px; accent-color: var(--accent); }
+dialog .sub-row input.sub-text { min-width: 0; padding: 6px 8px; }
+.sub-row.done input.sub-text { color: var(--text-dim); text-decoration: line-through; }
+.sub-row .row-x:disabled { opacity: 0.25; cursor: default; }
+.sub-new { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+dialog .sub-new input { flex: 1; min-width: 0; }
+dialog .sub-new button.ghost { margin-top: 0; flex-shrink: 0; }
+dialog button.ghost:disabled { opacity: 0.5; cursor: default; }
+
+/* Saved filter dialog */
+.flt-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.flt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  font-size: 12.5px;
+  overflow: hidden;
+}
+.flt-chip span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flt-chip.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.fl-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px;
+  margin-bottom: 4px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 7px 7px 0 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+.fl-new:hover { background: var(--accent-soft); }
+
+@media (max-width: 480px) {
+  .tab.smart:not(.flt) .t-name { display: none; }   /* icons only; the name is the tab's label */
+  .tab.smart { padding: 12px 10px; }
+  dialog .two-col { grid-template-columns: 1fr; }
+  #flt-range.two-col { grid-template-columns: 1fr 1fr; }
+}
+dialog menu button.plain { background: transparent; border-color: transparent; color: var(--text-dim); font-weight: 500; }
+dialog menu button.plain:hover { color: var(--text); border-color: var(--border); }
+@media (pointer: coarse) {
+  .chip-subs { min-height: 32px; }
+  .item { -webkit-touch-callout: none; }            /* a long press opens our menu */
+  .item .body { -webkit-user-select: none; user-select: none; }
+  .row-subs li label { min-height: 36px; align-items: center; }
+  .sub-row .row-x { min-width: 36px; min-height: 36px; }
+}
+
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
 /* Import from Todoist (todo/platforms.js, todo.js section 14) */

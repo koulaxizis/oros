@@ -121,7 +121,59 @@
       "add.task":       "Add task",
       "interval.aria":  "Interval",
       "filtered.title": "All tasks are completed",
-      "filtered.hint":  "Turn off “Hide completed” to see them."
+      "filtered.hint":  "Turn off “Hide completed” to see them.",
+      "smart.today":    "Today",
+      "smart.week":     "Next 7 days",
+      "smart.nodate":   "No date",
+      "smart.p1":       "Priority 1",
+      "smart.empty":    "Nothing here",
+      "smart.empty.hint": "Tasks from all your lists show up here when they match.",
+      "prio.label":     "Priority",
+      "prio.1":         "Priority 1 (urgent)",
+      "prio.2":         "Priority 2 (high)",
+      "prio.3":         "Priority 3 (medium)",
+      "prio.4":         "Priority 4 (none)",
+      "prio.none":      "None",
+      "item.list":      "List",
+      "subs.title":     "Subtasks",
+      "subs.add":       "Add",
+      "subs.ph":        "New subtask…",
+      "subs.remove":    "Delete subtask",
+      "subs.up":        "Move up",
+      "subs.down":      "Move down",
+      "subs.toggle":    "Show or hide subtasks",
+      "recur.mode":     "Next date counts from",
+      "recur.mode.fixed": "on a fixed schedule",
+      "recur.mode.after": "after it's done",
+      "recur.after.short": "after done",
+      "sort.title":     "Sort",
+      "sort.manual":    "Manual order",
+      "sort.prio":      "By priority",
+      "sort.due":       "By due date",
+      "menu.move":      "Move to…",
+      "menu.open":      "Open",
+      "menu.select":    "Select",
+      "sel.count":      "{n} selected",
+      "sel.act":        "Priority / Move…",
+      "toast.moved":    "Moved to {list}",
+      "toast.movedN":   "{n} tasks moved to {list}",
+      "toast.addedTo":  "Added to {list}",
+      "filter.save":    "New saved filter…",
+      "flt.title":      "New saved filter",
+      "flt.edit":       "Edit saved filter",
+      "flt.newname":    "My filter",
+      "flt.labels":     "Labels (any of them)",
+      "flt.due.any":    "Any",
+      "flt.due.overdue": "Overdue",
+      "flt.due.today":  "Today or overdue",
+      "flt.due.month":  "Next 30 days",
+      "flt.due.range":  "Between dates",
+      "flt.from":       "From",
+      "flt.to":         "To",
+      "flt.text":       "Text contains",
+      "flt.delete":     "Delete filter",
+      "confirm.fltdel": "Delete this saved filter? Its tasks stay where they are.",
+      "toast.fltdel":   "Filter deleted"
     },
     el: {
       "aria.lists": "Λίστες",
@@ -192,7 +244,59 @@
       "add.task":       "Προσθήκη εργασίας",
       "interval.aria":  "Διάστημα",
       "filtered.title": "Όλες οι εργασίες έχουν ολοκληρωθεί",
-      "filtered.hint":  "Απενεργοποίησε την «Απόκρυψη ολοκληρωμένων» για να τις δεις."
+      "filtered.hint":  "Απενεργοποίησε την «Απόκρυψη ολοκληρωμένων» για να τις δεις.",
+      "smart.today":    "Σήμερα",
+      "smart.week":     "Επόμενες 7 ημέρες",
+      "smart.nodate":   "Χωρίς ημερομηνία",
+      "smart.p1":       "Προτεραιότητα 1",
+      "smart.empty":    "Τίποτα εδώ",
+      "smart.empty.hint": "Εδώ εμφανίζονται εργασίες από όλες τις λίστες σου, όταν ταιριάζουν.",
+      "prio.label":     "Προτεραιότητα",
+      "prio.1":         "Προτεραιότητα 1 (επείγον)",
+      "prio.2":         "Προτεραιότητα 2 (υψηλή)",
+      "prio.3":         "Προτεραιότητα 3 (μέτρια)",
+      "prio.4":         "Προτεραιότητα 4 (καμία)",
+      "prio.none":      "Καμία",
+      "item.list":      "Λίστα",
+      "subs.title":     "Υποεργασίες",
+      "subs.add":       "Προσθήκη",
+      "subs.ph":        "Νέα υποεργασία…",
+      "subs.remove":    "Διαγραφή υποεργασίας",
+      "subs.up":        "Μετακίνηση πάνω",
+      "subs.down":      "Μετακίνηση κάτω",
+      "subs.toggle":    "Εμφάνιση ή απόκρυψη υποεργασιών",
+      "recur.mode":     "Η επόμενη ημερομηνία μετράει",
+      "recur.mode.fixed": "με σταθερό πρόγραμμα",
+      "recur.mode.after": "από την ολοκλήρωση",
+      "recur.after.short": "από την ολοκλήρωση",
+      "sort.title":     "Ταξινόμηση",
+      "sort.manual":    "Χειροκίνητη σειρά",
+      "sort.prio":      "Κατά προτεραιότητα",
+      "sort.due":       "Κατά προθεσμία",
+      "menu.move":      "Μετακίνηση σε…",
+      "menu.open":      "Άνοιγμα",
+      "menu.select":    "Επιλογή",
+      "sel.count":      "Επιλεγμένες: {n}",
+      "sel.act":        "Προτεραιότητα / Μετακίνηση…",
+      "toast.moved":    "Μετακινήθηκε στη λίστα «{list}»",
+      "toast.movedN":   "{n} εργασίες μετακινήθηκαν στη λίστα «{list}»",
+      "toast.addedTo":  "Προστέθηκε στη λίστα «{list}»",
+      "filter.save":    "Νέο αποθηκευμένο φίλτρο…",
+      "flt.title":      "Νέο αποθηκευμένο φίλτρο",
+      "flt.edit":       "Επεξεργασία αποθηκευμένου φίλτρου",
+      "flt.newname":    "Το φίλτρο μου",
+      "flt.labels":     "Ετικέτες (οποιαδήποτε από αυτές)",
+      "flt.due.any":    "Οποιαδήποτε",
+      "flt.due.overdue": "Εκπρόθεσμες",
+      "flt.due.today":  "Σήμερα ή εκπρόθεσμες",
+      "flt.due.month":  "Επόμενες 30 ημέρες",
+      "flt.due.range":  "Ανάμεσα σε ημερομηνίες",
+      "flt.from":       "Από",
+      "flt.to":         "Έως",
+      "flt.text":       "Το κείμενο περιέχει",
+      "flt.delete":     "Διαγραφή φίλτρου",
+      "confirm.fltdel": "Διαγραφή αυτού του αποθηκευμένου φίλτρου; Οι εργασίες του μένουν όπου είναι.",
+      "toast.fltdel":   "Το φίλτρο διαγράφηκε"
     }
   };
 
@@ -317,6 +421,17 @@
   // last changed by a device on the previous todo.js (it bumps mtime
   // only): for that version mtime speaks for every field.
   var ITEM_FIELDS = ["text", "done", "due", "notes", "labels", "info", "recurrence"];
+  // TD-14 (wave "closer to Todoist") — the newer fields keep their
+  // stamps OUTSIDE fm, in it.xf, so a device on the previous todo.js
+  // (whose canonItem rebuilds fm from ITEM_FIELDS) keeps them as they
+  // are, and a task that never had them is byte-identical in both:
+  //   xf.prio — priority (it.prio 1..3; absent = P4, no priority)
+  //   xf.subs — the subtasks changed (each subtask has its own mtime;
+  //             removed ones are tombstoned in state.deleted)
+  //   xf.so   — the order of the subtasks
+  //   xf.list — the task was moved into this list (dedupeMoved)
+  var XF_FIELDS = ["prio", "subs", "so", "list"];
+  var Mdl = window.OrosTodoModel;
   function touchedByOldCode(it) {
     if (!it.fm || typeof it.fm !== "object") return false;
     var mx = 0;
@@ -324,7 +439,27 @@
       var v = it.fm[ITEM_FIELDS[i]];
       if (typeof v === "number" && v > mx) mx = v;
     }
+    if (it.xf && typeof it.xf === "object") {
+      for (var j = 0; j < XF_FIELDS.length; j++) {
+        var w = it.xf[XF_FIELDS[j]];
+        if (typeof w === "number" && w > mx) mx = w;
+      }
+    }
     return (it.mtime || 0) > mx;
+  }
+  function xfStamp(it, f) {
+    return (it && it.xf && typeof it.xf[f] === "number") ? it.xf[f] : 0;
+  }
+  // Stamp one of the newer fields. The fm stamps are spelled out first
+  // (ensureFm) while mtime still speaks for them.
+  function touchXf(it, f, now) {
+    ensureFm(it);
+    now = now || Date.now();
+    var xf = {};
+    XF_FIELDS.forEach(function (k) { if (typeof (it.xf || {})[k] === "number") xf[k] = it.xf[k]; });
+    xf[f] = now;
+    it.xf = xf;
+    it.mtime = Math.max(it.mtime || 0, now);
   }
   function fieldStamp(it, f) {
     if (!it.fm || typeof it.fm !== "object" || touchedByOldCode(it)) return it.mtime || 0;
@@ -482,10 +617,51 @@
         if (!Array.isArray(it.info)) it.info = [];
         if (typeof it.mtime !== "number") it.mtime = 0;
         if (typeof it.pos !== "number") it.pos = 0;
+        normNewFields(it);
       });
     });
+    normFilters(data);
     data.ver = DATA_VER;
     return data;
+  }
+  // TD-14: the newer task fields in their one shape (on load AND on
+  // every merge result, idempotent). Absent = not set, so a task that
+  // never had them keeps the exact shape of the previous version.
+  function normNewFields(it) {
+    if (it.prio !== undefined && it.prio !== 1 && it.prio !== 2 && it.prio !== 3) delete it.prio;
+    if (it.subs !== undefined) {
+      var subs = Mdl.cleanSubs(it.subs);
+      if (subs.length) it.subs = subs; else delete it.subs;
+    }
+    if (it.xf !== undefined) {
+      var xf = {}, any = false;
+      if (it.xf && typeof it.xf === "object") {
+        XF_FIELDS.forEach(function (k) {
+          if (typeof it.xf[k] === "number" && isFinite(it.xf[k])) { xf[k] = it.xf[k]; any = true; }
+        });
+      }
+      if (any) it.xf = xf; else delete it.xf;
+    }
+    if (it.recurrence && typeof it.recurrence === "object") {
+      if (it.recurrence.after !== undefined && it.recurrence.after !== true) delete it.recurrence.after;
+    }
+  }
+  // Saved filters (state.filters, order version state.fom). Absent
+  // when there are none: the slice then has the previous shape.
+  function normFilters(data) {
+    if (data.filters === undefined && data.fom === undefined) return;
+    var fl = [];
+    (Array.isArray(data.filters) ? data.filters : []).forEach(function (f) {
+      var c = Mdl.cleanFilter(f);
+      if (c) fl.push(c);
+    });
+    if (fl.length) {
+      data.filters = fl;
+      if (typeof data.fom !== "number") data.fom = 0;
+    } else {
+      delete data.filters;
+      delete data.fom;
+    }
   }
 
   // TD-4 — tombstones in ONE canonical form: keys sorted, and the
@@ -536,6 +712,7 @@
     for (i = 0; i < ITEM_FIELDS.length; i++) fm[ITEM_FIELDS[i]] = fieldStamp(src, ITEM_FIELDS[i]);
     delete it.fm;
     it.fm = fm;
+    normNewFields(it);
     return it;
   }
   // What the sync engine sees (getter) and what the merge returns.
@@ -553,10 +730,28 @@
   }
   function canonState(st) {
     var out = JSON.parse(JSON.stringify(st));
+    var tomb = out.deleted || {};
     out.lists = (out.lists || []).map(canonList);
+    // TD-14: a task moved on one device and still in its old list on
+    // another stays only where it was moved last; tombstoned subtasks
+    // are gone from every copy.
+    out.lists = Mdl.dedupeMoved(out.lists, function (x, y) { return canonItem(mergeItem(x, y)); });
+    out.lists.forEach(function (l) {
+      l.items.forEach(function (it) {
+        if (!it.subs) return;
+        var alive = Mdl.dropDeadSubs(it.subs, tomb);
+        if (alive.length) it.subs = alive; else delete it.subs;
+      });
+    });
+    normFilters(out);
     out.deleted = canonDeleted(out);
-    return out;
+    // one root key order whatever order the state was built in
+    var root = {};
+    ROOT_KEYS.forEach(function (k) { if (out[k] !== undefined) root[k] = out[k]; });
+    Object.keys(out).sort().forEach(function (k) { if (root[k] === undefined) root[k] = out[k]; });
+    return root;
   }
+  var ROOT_KEYS = ["ver", "sm", "om", "activeList", "hideCompleted", "deleted", "labels", "lists", "filters", "fom"];
 
   function load() {
     try {
@@ -619,13 +814,23 @@
   // factory reset). The three old fields stay in the data untouched,
   // for devices still running the previous todo.js.
   var PREFS_KEY = "oros-todo-prefs";
-  var view = { activeList: null, hideCompleted: false };
+  // TD-14: also which smart list / saved filter is open (view.smart:
+  // "today" | "week" | "nodate" | "p1" | "f:<filter id>" | null) and the
+  // sort chosen per view (view.sort { <list id | smart id | f:id>: mode }).
+  var view = { activeList: null, hideCompleted: false, smart: null, sort: {} };
   function loadView() {
     var p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY)); } catch (e) {}
     if (p && typeof p === "object") {
       view.activeList = (typeof p.activeList === "string") ? p.activeList : null;
       view.hideCompleted = !!p.hideCompleted;
+      view.smart = (typeof p.smart === "string") ? p.smart : null;
+      view.sort = {};
+      if (p.sort && typeof p.sort === "object") {
+        Object.keys(p.sort).slice(0, 200).forEach(function (k) {
+          if (SORT_MODES.indexOf(p.sort[k]) >= 0) view.sort[k] = p.sort[k];
+        });
+      }
     } else {
       // first run of this version: start from what this device showed last
       view.activeList = (typeof state.activeList === "string") ? state.activeList : null;
@@ -638,7 +843,45 @@
   }
   function setActiveList(id) {
     view.activeList = id;
+    view.smart = null;              // a list was asked for: leave any smart list
     saveView();
+  }
+  function setSmart(id) {
+    view.smart = id;
+    saveView();
+  }
+  var SORT_MODES = ["manual", "prio", "due"];
+  // What is on screen: null = the active list; otherwise
+  // { key, smart: id } or { key, filter: f }.
+  function currentView() {
+    var id = view.smart;
+    if (!id) return null;
+    if (Mdl.SMART.indexOf(id) >= 0) return { key: id, smart: id };
+    if (id.indexOf("f:") === 0) {
+      var f = filterById(id.slice(2));
+      if (f) return { key: id, filter: f };
+    }
+    return null;
+  }
+  function viewKey() {
+    var cv = currentView();
+    return cv ? cv.key : activeList().id;
+  }
+  function sortMode() {
+    var k = viewKey(), m = view.sort[k];
+    if (SORT_MODES.indexOf(m) >= 0) return m;
+    return currentView() ? "due" : "manual";
+  }
+  function setSortMode(m) {
+    var k = viewKey();
+    if ((currentView() ? "due" : "manual") === m) delete view.sort[k];
+    else view.sort[k] = m;
+    saveView();
+  }
+  function filterById(id) {
+    var fl = state.filters || [];
+    for (var i = 0; i < fl.length; i++) if (fl[i].id === id) return fl[i];
+    return null;
   }
   function activeList() {
     for (var i = 0; i < state.lists.length; i++) {
@@ -795,6 +1038,22 @@
       fm[f] = Math.max(sx, sy);
     });
     out.fm = fm;
+    // TD-14: priority from the side that set it last; subtasks one by
+    // one (Mdl.mergeSubs); every xf stamp = the newer one.
+    var px = xfStamp(x, "prio"), py = xfStamp(y, "prio"), pw;
+    if (px !== py) pw = px > py ? x : y;
+    else pw = JSON.stringify(x.prio === undefined ? null : x.prio) >= JSON.stringify(y.prio === undefined ? null : y.prio) ? x : y;
+    if (pw.prio === undefined) delete out.prio; else out.prio = pw.prio;
+    if (x.subs || y.subs) {
+      var subs = Mdl.mergeSubs(x.subs, y.subs, xfStamp(x, "so"), xfStamp(y, "so"));
+      if (subs.length) out.subs = subs; else delete out.subs;
+    }
+    var xf = {}, anyXf = false;
+    XF_FIELDS.forEach(function (k) {
+      var v = Math.max(xfStamp(x, k), xfStamp(y, k));
+      if (v || (x.xf && typeof x.xf[k] === "number") || (y.xf && typeof y.xf[k] === "number")) { xf[k] = v; anyXf = true; }
+    });
+    if (anyXf) out.xf = xf; else delete out.xf;
     out.mtime = Math.max(x.mtime || 0, y.mtime || 0);
     return out;
   }
@@ -868,6 +1127,14 @@
     // labels: content LWW, order by larger om side
     var labels = unionEntities(a.labels || [], b.labels || [], tomb);
     out.labels = orderEntities(labels, pickRef(a.labels, b.labels, a.om, b.om, labels));
+
+    // saved filters (TD-14): content LWW, order by the larger fom side;
+    // left out of the result while there are none (previous shape)
+    var filters = unionEntities(a.filters || [], b.filters || [], tomb);
+    if (filters.length) {
+      out.filters = orderEntities(filters, pickRef(a.filters, b.filters, a.fom, b.fom, filters));
+      out.fom = Math.max(a.fom || 0, b.fom || 0);
+    }
 
     // lists: pair by id, structural merge (headers + independent items)
     var listMap = {};
@@ -943,6 +1210,13 @@
   // instead of staying done. Returns true if the item recycled.
   function recycleItem(item) {
     if (!item.recurrence) return false;
+    if (item.recurrence.after === true) {
+      // TD-14 "after completion": counts from the day it was ticked
+      item.due = Mdl.nextAfterDone(todayISO(), item.recurrence);
+      item.done = false;
+      untickSubs(item);
+      return true;
+    }
     // TD2: anchor on the CURRENT due date when it is still ahead —
     // finishing early must skip to the NEXT cycle instead of
     // re-issuing the period that was just completed. Past/absent
@@ -958,7 +1232,17 @@
     var next = nextOccurrence(anchor, item.recurrence);
     item.due = dateToISO(next);
     item.done = false;
+    untickSubs(item);
     return true;
+  }
+  // A repeating task that comes back, or a list cycle: its checklist
+  // starts again too. Only the subtasks that were ticked are stamped.
+  function untickSubs(item) {
+    if (!item.subs || !item.subs.length) return false;
+    var now = Date.now(), any = false;
+    item.subs.forEach(function (s) { if (s.done) { s.done = false; s.mtime = now; any = true; } });
+    if (any) touchXf(item, "subs", now);
+    return any;
   }
 
   // List-level cycle: when the deadline passes, every item resets.
@@ -980,6 +1264,7 @@
         list.lastReset = list.nextReset;
         list.items.forEach(function (it) {
           if (it.done) { it.done = false; touchField(it, "done"); }   // TD-3: only the tick
+          untickSubs(it);
         });
         list.nextReset = dateToISO(
           nextOccurrence(isoToDate(list.nextReset), list.recurrence));
@@ -999,12 +1284,106 @@
     return n;
   }
 
+  // TD-14: smart lists and saved filters come first, then the lists.
+  var SMART_SVG = {
+    today: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    week: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    nodate: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>',
+    p1: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h13l-2 4 2 4H4"/></svg>',
+    filter: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>'
+  };
+  function smartRows(match) {
+    var rows = [];
+    state.lists.forEach(function (list) {
+      list.items.forEach(function (item) {
+        if (match(item)) rows.push({ list: list, item: item, i: rows.length });
+      });
+    });
+    return rows;
+  }
+  // A view across the lists shows the open tasks that match, plus the
+  // ones ticked here a moment ago (so a tick can be taken back).
+  function viewMatcher(cv) {
+    var today = todayISO();
+    var ctx = { today: today, labelName: function (id) { var l = labelById(id); return l ? l.name : ""; } };
+    return function (item) {
+      if (item.done && !justDone[item.id]) return false;
+      if (cv.smart) return Mdl.smartMatch(cv.smart, item, today);
+      return Mdl.filterMatch(cv.filter, item, ctx);
+    };
+  }
+  var justDone = {};            // session only: tasks ticked inside a smart list
+  function makeSmartTab(key, name, icon, count, overdue, filter) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "tab smart" + (view.smart === key ? " active" : "") + (filter ? " flt" : "");
+    b.setAttribute("role", "tab");
+    b.dataset.smart = key;
+    b.title = name;
+    b.setAttribute("aria-label", name + (count ? " (" + count + ")" : ""));
+    var ic = document.createElement("span");
+    ic.className = "t-ico";
+    ic.innerHTML = icon;                          // fixed markup, no data
+    b.appendChild(ic);
+    var nm = document.createElement("span");
+    nm.className = "t-name";
+    nm.textContent = name;
+    b.appendChild(nm);
+    if (count > 0) {
+      var chip = document.createElement("span");
+      chip.className = "chip" + (overdue ? " overdue" : " dim");
+      chip.textContent = String(count);
+      b.appendChild(chip);
+    }
+    if (filter) {
+      var pen = document.createElement("span");
+      pen.className = "t-rename";
+      pen.setAttribute("role", "button");
+      pen.setAttribute("aria-label", t("flt.edit"));
+      pen.title = t("flt.edit");
+      pen.innerHTML = PEN_SVG;
+      pen.addEventListener("click", function (e) { e.stopPropagation(); openFilterDialog(filter.id); });
+      b.appendChild(pen);
+      b.addEventListener("dblclick", function () { openFilterDialog(filter.id); });
+    }
+    b.addEventListener("click", function () {
+      if (view.smart === key) return;
+      setSmart(key);
+      justDone = {};
+      endSelection();
+      scheduleRender();
+    });
+    return b;
+  }
+  var PEN_SVG = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
+
   function renderTabs() {
     var tabs = $("tabs");
     tabs.innerHTML = "";
+    var today = todayISO(), cvNow = currentView();
+    Mdl.SMART.forEach(function (id) {
+      var n = 0, late = 0;
+      state.lists.forEach(function (l) {
+        l.items.forEach(function (it) {
+          if (it.done || !Mdl.smartMatch(id, it, today)) return;
+          n++;
+          if (it.due && it.due < today) late++;
+        });
+      });
+      tabs.appendChild(makeSmartTab(id, t("smart." + id), SMART_SVG[id], n, id === "today" && late > 0, null));
+    });
+    (state.filters || []).forEach(function (f) {
+      var key = "f:" + f.id;
+      var n = smartRows(viewMatcher({ filter: f })).filter(function (r) { return !r.item.done; }).length;
+      tabs.appendChild(makeSmartTab(key, f.name || t("flt.newname"), SMART_SVG.filter, n, false, f));
+    });
+    var sep = document.createElement("span");
+    sep.className = "tab-sep";
+    sep.setAttribute("aria-hidden", "true");
+    tabs.appendChild(sep);
     state.lists.forEach(function (list) {
       var b = document.createElement("button");
-      b.className = "tab" + (list.id === activeList().id ? " active" : "");
+      b.className = "tab" + (!cvNow && list.id === activeList().id ? " active" : "");
       b.setAttribute("role", "tab");
       b.dataset.listId = list.id;
       b.type = "button";
@@ -1027,8 +1406,7 @@
       pen.setAttribute("role", "button");
       pen.setAttribute("aria-label", t("tab.rename"));
       pen.title = t("tab.rename");
-      pen.innerHTML =
-        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
+      pen.innerHTML = PEN_SVG;
       pen.addEventListener("click", function (e) {
         e.stopPropagation();
         openListDialog(list.id);
@@ -1038,8 +1416,10 @@
       b.addEventListener("dblclick", function () { openListDialog(list.id); });
       b.addEventListener("click", function () {
         if (Date.now() - tabDragEndTs < 300) return;   // post-drag click
-        if (view.activeList === list.id) return;
+        if (view.activeList === list.id && !view.smart) return;
         setActiveList(list.id);     // TD-8: a view change — nothing to save or sync
+        justDone = {};
+        endSelection();
         scheduleRender();
       });
 
@@ -1068,18 +1448,7 @@
   }
 
   function matchesSearch(item) {
-    if ((item.text || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
-    if ((item.notes || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
-    for (var i = 0; i < (item.info || []).length; i++) {
-      var f = item.info[i];
-      if ((f.label || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
-      if ((f.value || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
-    }
-    for (var j = 0; j < (item.labels || []).length; j++) {
-      var label = labelById(item.labels[j]);
-      if (label && label.name.toLowerCase().indexOf(searchQuery) !== -1) return true;
-    }
-    return false;
+    return Mdl.textMatch(item, searchQuery, function (id) { var l = labelById(id); return l ? l.name : ""; });
   }
 
   // OR over selected labels — item shows if it carries ANY active label.
@@ -1091,48 +1460,75 @@
     return false;
   }
 
+  function showEmpty(which) {
+    ["empty", "no-match", "filtered", "smart-empty"].forEach(function (id) { $(id).hidden = id !== which; });
+  }
+
   function renderItems() {
     var ul = $("items");
     ul.innerHTML = "";
+    var cv = currentView();
+    updateControls(cv);
 
     if (isSearching()) {
       var results = [];
       state.lists.forEach(function (list) {
         list.items.forEach(function (item) {
-          if (itemMatchesView(item)) results.push({ list: list, item: item });
+          if (itemMatchesView(item)) results.push({ list: list, item: item, i: results.length });
         });
       });
-
-      results.forEach(function (r) {
+      Mdl.sortRows(results, sortMode()).forEach(function (r) {
         ul.appendChild(makeItemRow(r.list, r.item, { source: true }));
       });
 
       var anyItems = state.lists.some(function (l) { return l.items.length > 0; });
-      $("empty").hidden = !(results.length === 0 && !anyItems);
-      $("no-match").hidden = !(results.length === 0 && anyItems);
-      $("filtered").hidden = true;
+      showEmpty(results.length ? null : (anyItems ? "no-match" : "empty"));
       return;
     }
 
-    // Browsing mode — the active list, drag handles on
+    if (cv) {
+      // TD-14: a smart list / saved filter — tasks of every list
+      var rows = smartRows(viewMatcher(cv)).filter(function (r) {
+        return !(view.hideCompleted && r.item.done);
+      });
+      Mdl.sortRows(rows, sortMode()).forEach(function (r) {
+        ul.appendChild(makeItemRow(r.list, r.item, { source: true }));
+      });
+      showEmpty(rows.length ? null : "smart-empty");
+      return;
+    }
+
+    // Browsing mode — the active list, drag handles on (manual order)
     var list = activeList();
-    $("no-match").hidden = true;
-    $("filtered").hidden = true;
     var visible = list.items.filter(function (item) {
       return !(view.hideCompleted && item.done);
     });
-    if (visible.length === 0 && list.items.length > 0) {
-      // Everything completed + Hide completed on → say so, never blank
-      $("empty").hidden = true;
-      $("filtered").hidden = false;
-    } else {
-      $("empty").hidden = !(list.items.length === 0);
-    }
+    if (visible.length === 0 && list.items.length > 0) showEmpty("filtered");
+    else showEmpty(list.items.length === 0 ? "empty" : null);
 
-    list.items.forEach(function (item) {
-      if (view.hideCompleted && item.done) return;
-      ul.appendChild(makeItemRow(list, item, { handle: true }));
+    var mode = sortMode();
+    var lrows = visible.map(function (item, i) { return { list: list, item: item, i: i }; });
+    Mdl.sortRows(lrows, mode).forEach(function (r) {
+      ul.appendChild(makeItemRow(list, r.item, { handle: mode === "manual" }));
     });
+  }
+
+  // Which controls make sense in this view.
+  var shareApi = null;
+  try { shareApi = window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) {}
+  function updateControls(cv) {
+    $("clear-completed").hidden = !!cv;
+    $("list-share").hidden = !!cv || !shareApi;
+    $("list-settings").hidden = !!(cv && cv.smart);
+    var ls = $("list-settings");
+    var key = cv && cv.filter ? "flt.edit" : "list.settings";
+    if (ls.getAttribute("data-i18n-title") !== key) {
+      ls.setAttribute("data-i18n-title", key);
+      ls.title = t(key);
+      ls.setAttribute("aria-label", t(key));
+    }
+    var sb = $("sort-btn");
+    if (sb) sb.classList.toggle("has-filters", sortMode() !== (cv ? "due" : "manual"));
   }
 
   // The tick: the checkbox and "Done" from the Today summary
@@ -1140,22 +1536,31 @@
   function setDone(item, done) {
     item.done = !!done;
     touchField(item, "done");               // TD-3: the tick only
+    if (item.done && currentView()) justDone[item.id] = 1;
     if (item.done && recycleItem(item)) touchField(item, "due");   // recurring → reopens, new date
     save(); scheduleRender();
   }
+
+  var FLAG_SVG = '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 22V4" fill="none"/><path d="M4 4h13l-2 4 2 4H4z"/></svg>';
+  var SUBS_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg>';
+  var expanded = {};            // session only: tasks whose subtasks are shown on the row
 
   // Shared row builder (both view modes render identical rows —
   // the ONLY difference is the drag handle vs the source chip).
   function makeItemRow(list, item, opts) {
     var li = document.createElement("li");
-    li.className = "item" + (item.done ? " done" : "");
+    var prio = Mdl.prioOf(item);
+    li.className = "item" + (item.done ? " done" : "") + (prio < 4 ? " p" + prio : "") +
+      (selected[item.id] ? " selected" : "");
     li.dataset.id = item.id;
+    li.dataset.list = list.id;
 
-    // checkbox
+    // checkbox (its colour carries the priority)
     var check = document.createElement("input");
     check.type = "checkbox";
     check.className = "check";
     check.checked = item.done;
+    check.setAttribute("aria-label", item.text + (prio < 4 ? " · P" + prio : ""));
     check.addEventListener("change", function () { setDone(item, check.checked); });
     li.appendChild(check);
 
@@ -1205,16 +1610,40 @@
       body.appendChild(ip);
     }
 
-    // meta row: due chip + repeat indicator + source list chip
-    var hasMeta = item.due || item.recurrence || opts.source;
+    // meta row: priority + due chip + subtasks + repeat + source list chip
+    var sc = Mdl.subCount(item);
+    var hasMeta = item.due || item.recurrence || opts.source || prio < 4 || sc.total;
     if (hasMeta) {
       var meta = document.createElement("div");
       meta.className = "meta";
+      if (prio < 4) {
+        var pf = document.createElement("span");
+        pf.className = "chip-prio p" + prio;
+        pf.innerHTML = FLAG_SVG;
+        pf.appendChild(document.createTextNode("P" + prio));
+        meta.appendChild(pf);
+      }
       if (item.due) {
         var chip = document.createElement("span");
         chip.className = "chip-due" + dueClass(item.due);
         chip.textContent = fmtDue(item.due);
         meta.appendChild(chip);
+      }
+      if (sc.total) {
+        var sb = document.createElement("button");
+        sb.type = "button";
+        sb.className = "chip-subs" + (expanded[item.id] ? " open" : "") + (sc.done === sc.total ? " all" : "");
+        sb.setAttribute("aria-expanded", expanded[item.id] ? "true" : "false");
+        sb.title = t("subs.toggle");
+        sb.setAttribute("aria-label", t("subs.toggle") + " " + sc.done + "/" + sc.total);
+        sb.innerHTML = SUBS_SVG;
+        sb.appendChild(document.createTextNode(sc.done + "/" + sc.total));
+        sb.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (expanded[item.id]) delete expanded[item.id]; else expanded[item.id] = 1;
+          scheduleRender();
+        });
+        meta.appendChild(sb);
       }
       if (item.recurrence) {
         var rec = document.createElement("span");
@@ -1233,12 +1662,39 @@
       body.appendChild(meta);
     }
 
-    body.addEventListener("click", function () { openItemDialog(list.id, item.id); });
+    // the checklist, ticked right on the row when expanded
+    if (sc.total && expanded[item.id]) {
+      var sul = document.createElement("ul");
+      sul.className = "row-subs";
+      item.subs.forEach(function (sub) {
+        var sli = document.createElement("li");
+        if (sub.done) sli.className = "done";
+        var lab = document.createElement("label");
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!sub.done;
+        cb.addEventListener("change", function () { setSubDone(list.id, item.id, sub.id, cb.checked); });
+        var tx = document.createElement("span");
+        tx.textContent = sub.text;
+        lab.appendChild(cb);
+        lab.appendChild(tx);
+        sli.appendChild(lab);
+        sul.appendChild(sli);
+      });
+      sul.addEventListener("click", function (e) { e.stopPropagation(); });
+      body.appendChild(sul);
+    }
+
+    body.addEventListener("click", function () {
+      if (Date.now() - longPressTs < 600) return;      // the click after a long press
+      openItemDialog(list.id, item.id);
+    });
     li.appendChild(body);
 
-    // drag handle (browsing mode only)
+    // drag handle (browsing mode, manual order only)
     if (opts.handle) li.appendChild(makeDragHandle(list, item));
 
+    attachRowMenu(li, list, item);
     return li;
   }
 
@@ -1251,6 +1707,7 @@
 
   function recurShort(rec) {
     var s = t("recur.every") + " " + rec.every + " " + t("unit." + rec.unit);
+    if (rec.after === true) return s + " · " + t("recur.after.short");
     if (rec.unit === "week" && typeof rec.weekday === "number") {
       s += " · " + WEEKDAY_KEYS[LANG][rec.weekday];
     }
@@ -1262,9 +1719,12 @@
     var tokens = raw.trim().split(/\s+/);
     var due = null;
     var weekdayHit = null;
+    var prio = 0;
 
     var kept = tokens.filter(function (tok) {
       var n = normalize(tok);
+      var pm = /^[pP]([1-4])$/.exec(tok);          // "p1"…"p4", as in Todoist
+      if (pm) { prio = +pm[1]; return false; }
       if (WORD_TODAY[n]) { due = todayISO(); return false; }
       if (WORD_TOMORROW[n]) {
         var d = isoToDate(todayISO());
@@ -1287,7 +1747,7 @@
       due = dateToISO(d2);
     }
 
-    return { text: kept.join(" ").trim(), due: due };
+    return { text: kept.join(" ").trim(), due: due, prio: prio };
   }
 
   function quickAdd() {
@@ -1300,6 +1760,19 @@
 
     var list = activeList();
     var item = freshItem(parsed.text, parsed.due);
+    // TD-14: in a smart list or saved filter the task goes to the last
+    // list that was open, with what makes it show up in that view.
+    var cv = currentView();
+    if (cv && cv.smart && (cv.smart === "today" || cv.smart === "week") && !item.due) item.due = todayISO();
+    if (cv && cv.smart === "p1" && !parsed.prio) parsed.prio = 1;
+    if (cv && cv.filter) {
+      var f = cv.filter;
+      item.labels = f.labels.filter(function (id) { return !!labelById(id); });
+      if (!parsed.prio && f.prios.length === 1) parsed.prio = f.prios[0];
+      if (!item.due && (f.due === "today" || f.due === "week" || f.due === "month")) item.due = todayISO();
+      if (!item.due && f.due === "range" && f.from) item.due = f.from < todayISO() && (!f.to || f.to >= todayISO()) ? todayISO() : f.from;
+    }
+    if (parsed.prio && parsed.prio < 4) { item.prio = parsed.prio; item.xf = { prio: item.mtime }; }
     list.items.unshift(item);
     list.items.forEach(function (it, i) { it.pos = i; });   // keep pos honest
     list.om = Date.now();          // top-insert is an ORDERING decision:
@@ -1320,11 +1793,20 @@
     if (sc) sc.hidden = true;
     updateFilterBtn();
     save(); scheduleRender();
+    if (cv) showToast(t("toast.addedTo").replace("{list}", list.name), false);
   }
 
+  var shownTab = null;
   function renderAll() {
     renderTabs();
     renderItems();
+    // the open view's tab in sight (the bar scrolls on a phone), once per change
+    var key = view.smart || ("l:" + activeList().id);
+    if (key !== shownTab) {
+      shownTab = key;
+      var at = document.querySelector("#tabs .tab.active");
+      if (at && at.scrollIntoView) { try { at.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} }
+    }
     // Settings → UI: the checkbox must mirror state on EVERY render
     // (sync pull, undo), not only on user clicks. Fixes the "toggle
     // desync" where the checkbox showed stale state after a merge.
@@ -1345,7 +1827,11 @@
   var dlgInfo = [];
 
   function editingItem() {
-    return itemById(listById(editingListId), editingItemId);
+    if (editingItemId === null) return null;
+    var it = itemById(listById(editingListId), editingItemId);
+    if (it) return it;
+    var hit = findItem(editingItemId);      // moved by a sync while the window was open
+    return hit ? hit.item : null;
   }
 
   function populateWeekdaySelects() {
@@ -1372,6 +1858,11 @@
     $("f-text").value  = item.text;
     $("f-due").value   = item.due || "";
     $("f-notes").value = item.notes || "";
+    dlgPrio = Mdl.prioOf(item);
+    renderPrioSeg();
+    fillListSelect($("f-list"), listId);
+    renderSubEditor();
+    $("f-sub-new").value = "";
 
     renderItemLabels(item);
     dlgInfo = (item.info || []).map(function (f) {
@@ -1384,6 +1875,7 @@
     setRadio("f-rec", hasRec ? "on" : "none");
     $("rec-editor").style.display = hasRec ? "flex" : "none";
     if (hasRec) fillRecFields("f-", item.recurrence);
+    else { $("f-rec-mode").value = "fixed"; $("f-weekday").hidden = false; }
 
     openValues = readItemDialog();
     $("dlg-item").showModal();
@@ -1397,6 +1889,11 @@
       $(prefix + "weekday").value = String(rec.weekday);
     }
     $(prefix + "weekday").disabled = ($(prefix + "unit").value !== "week");
+    var mode = $(prefix + "rec-mode");
+    if (mode) {
+      mode.value = rec.after === true ? "after" : "fixed";
+      $(prefix + "weekday").hidden = rec.after === true;
+    }
   }
 
   function setRadio(name, val) {
@@ -1417,11 +1914,15 @@
   function readRecFromFields(prefix) {
     if (getRadio(prefix + "rec") !== "on") return null;
     var unit = $(prefix + "unit").value;
-    return {
+    var mode = $(prefix + "rec-mode");
+    var after = !!(mode && mode.value === "after");
+    var rec = {
       every:   Math.max(1, parseInt($(prefix + "every").value, 10) || 1),
       unit:    unit,
-      weekday: unit === "week" ? parseInt($(prefix + "weekday").value, 10) : null
+      weekday: unit === "week" && !after ? parseInt($(prefix + "weekday").value, 10) : null
     };
+    if (after) rec.after = true;      // TD-14: absent on a fixed repeat (previous shape)
+    return rec;
   }
 
   // --- Labels inside the item dialog (Kanban-parity contract) ---
@@ -1605,6 +2106,8 @@
       text:  $("f-text").value.trim(),
       due:   $("f-due").value || null,
       notes: $("f-notes").value,
+      prio:  dlgPrio,
+      list:  $("f-list").value,
       rec:   readRecFromFields("f-"),
       info:  info,
       infoKey: JSON.stringify(info.map(function (f) { return [f.label, f.value]; }))
@@ -1619,13 +2122,21 @@
   // the next save of anything wrote them out.
   function commitItemDialog() {
     if (editingListId === null || editingItemId === null) return;
+    flushSubInputs();
     var item = editingItem();
     var was = openValues;
+    var fromHit = editingItemId !== null ? findItem(editingItemId) : null;
+    var fromList = fromHit ? fromHit.list : null;
     editingListId = null;
     editingItemId = null;
     openValues = null;
     if (!item || !was) return;
     var now = readItemDialog(), changed = false;
+    if (now.prio !== was.prio) {
+      if (now.prio < 4) item.prio = now.prio; else delete item.prio;
+      touchXf(item, "prio");
+      changed = true;
+    }
     if (now.text && now.text !== was.text) { item.text = now.text; touchField(item, "text"); changed = true; }
     if (now.due !== was.due) { item.due = now.due; touchField(item, "due"); changed = true; }
     if (now.notes !== was.notes) { item.notes = now.notes; touchField(item, "notes"); changed = true; }
@@ -1633,6 +2144,10 @@
       item.recurrence = now.rec; touchField(item, "recurrence"); changed = true;
     }
     if (now.infoKey !== was.infoKey) { item.info = now.info; touchField(item, "info"); changed = true; }
+    if (now.list !== was.list && listById(now.list) && fromList && fromList.id !== now.list) {
+      moveItems([{ item: item, from: fromList }], listById(now.list));   // saves, toast with Undo
+      return;
+    }
     if (!changed) return;                 // pristine close: no stamp, no save, no push
     save(); scheduleRender();
   }
@@ -1667,6 +2182,530 @@
     if (editingListId === null) return;
     saveListDialog();
   });
+
+  // ---------- 7b. Priority, list, subtasks in the item dialog (TD-14) ----------
+  var dlgPrio = 4;
+  var PRIOS = [1, 2, 3, 4];
+  function prioName(p) { return p < 4 ? "P" + p : t("prio.none"); }
+  function renderPrioSeg() {
+    var host = $("f-prio");
+    host.innerHTML = "";
+    PRIOS.forEach(function (p) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "prio-btn p" + p + (dlgPrio === p ? " sel" : "");
+      b.setAttribute("aria-pressed", dlgPrio === p ? "true" : "false");
+      b.title = t("prio." + p);
+      b.innerHTML = FLAG_SVG;
+      b.appendChild(document.createTextNode("P" + p));
+      b.addEventListener("click", function () { dlgPrio = p; renderPrioSeg(); });
+      host.appendChild(b);
+    });
+  }
+  function fillListSelect(sel, current) {
+    sel.innerHTML = "";
+    state.lists.forEach(function (l) {
+      var o = document.createElement("option");
+      o.value = l.id;
+      o.textContent = l.name || t("new.list");
+      sel.appendChild(o);
+    });
+    sel.value = current;
+  }
+
+  // Subtasks are saved the moment they change (like labels): each one
+  // carries its own mtime, a removed one is tombstoned, so two devices
+  // ticking different steps of one task both keep their ticks.
+  function findSub(it, subId) {
+    var subs = (it && it.subs) || [];
+    for (var i = 0; i < subs.length; i++) if (subs[i].id === subId) return subs[i];
+    return null;
+  }
+  function itemAnywhere(listId, itemId) {
+    var it = itemById(listById(listId), itemId);
+    if (it) return it;
+    var hit = findItem(itemId);
+    return hit ? hit.item : null;
+  }
+  function setSubDone(listId, itemId, subId, done) {
+    var it = itemAnywhere(listId, itemId), sub = findSub(it, subId);
+    if (!sub || sub.done === !!done) return;
+    var now = Date.now();
+    sub.done = !!done;
+    sub.mtime = now;
+    touchXf(it, "subs", now);
+    save(); scheduleRender();
+  }
+  function renderSubEditor() {
+    var host = $("f-subs"), it = editingItem();
+    host.innerHTML = "";
+    var subs = (it && it.subs) || [];
+    subs.forEach(function (sub, idx) {
+      var row = document.createElement("div");
+      row.className = "sub-row" + (sub.done ? " done" : "");
+      row.dataset.sub = sub.id;
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!sub.done;
+      cb.setAttribute("aria-label", sub.text);
+      cb.addEventListener("change", function () {
+        setSubDone(editingListId, editingItemId, sub.id, cb.checked);
+        row.classList.toggle("done", cb.checked);
+      });
+      row.appendChild(cb);
+      var tx = document.createElement("input");
+      tx.type = "text";
+      tx.className = "sub-text";
+      tx.value = sub.text;
+      tx.maxLength = Mdl.SUB_TEXT;
+      tx.setAttribute("aria-label", t("subs.title"));
+      tx.addEventListener("change", function () { commitSubText(sub.id, tx.value); });
+      tx.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); tx.blur(); $("f-sub-new").focus(); }
+      });
+      row.appendChild(tx);
+      [["up", -1, "M6 15l6-6 6 6"], ["down", 1, "M6 9l6 6 6-6"]].forEach(function (d) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "row-x sub-mv";
+        b.title = t("subs." + d[0]);
+        b.setAttribute("aria-label", t("subs." + d[0]));
+        b.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="' + d[2] + '"/></svg>';
+        b.disabled = (d[1] < 0 && idx === 0) || (d[1] > 0 && idx === subs.length - 1);
+        b.addEventListener("click", function () { moveSub(sub.id, d[1]); });
+        row.appendChild(b);
+      });
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "row-x";
+      x.title = t("subs.remove");
+      x.setAttribute("aria-label", t("subs.remove"));
+      x.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      x.addEventListener("click", function () { removeSub(sub.id); });
+      row.appendChild(x);
+      host.appendChild(row);
+    });
+    $("f-sub-add").disabled = subs.length >= Mdl.SUB_MAX;
+  }
+  function commitSubText(subId, text) {
+    var it = editingItem(), sub = findSub(it, subId);
+    text = String(text || "").replace(/\s+/g, " ").trim().slice(0, Mdl.SUB_TEXT);
+    if (!sub || !text || text === sub.text) return;
+    var now = Date.now();
+    sub.text = text;
+    sub.mtime = now;
+    touchXf(it, "subs", now);
+    save(); scheduleRender();
+  }
+  // Typed-but-not-blurred subtask text, when the dialog closes any way.
+  function flushSubInputs() {
+    var rows = $("f-subs").querySelectorAll(".sub-row");
+    for (var i = 0; i < rows.length; i++) {
+      var tx = rows[i].querySelector(".sub-text");
+      if (tx) commitSubText(rows[i].dataset.sub, tx.value);
+    }
+    if ($("f-sub-new").value.trim()) addSub();
+  }
+  function addSub() {
+    var it = editingItem(), input = $("f-sub-new");
+    var text = input.value.replace(/\s+/g, " ").trim().slice(0, Mdl.SUB_TEXT);
+    if (!it || !text) return;
+    if ((it.subs || []).length >= Mdl.SUB_MAX) return;
+    var now = Date.now();
+    it.subs = (it.subs || []).concat([{ id: uid(), text: text, done: false, mtime: now }]);
+    touchXf(it, "subs", now);
+    input.value = "";
+    expanded[it.id] = 1;
+    save(); scheduleRender();
+    renderSubEditor();
+  }
+  function moveSub(subId, delta) {
+    var it = editingItem();
+    if (!it || !it.subs) return;
+    var i = -1;
+    it.subs.forEach(function (s, k) { if (s.id === subId) i = k; });
+    var j = i + delta;
+    if (i < 0 || j < 0 || j >= it.subs.length) return;
+    var subs = it.subs.slice(), tmp = subs[i];
+    subs[i] = subs[j]; subs[j] = tmp;
+    it.subs = subs;
+    touchXf(it, "so");
+    save(); scheduleRender();
+    renderSubEditor();
+    var btn = $("f-subs").querySelector('.sub-row[data-sub="' + subId + '"] .sub-mv:not([disabled])');
+    if (btn) btn.focus();
+  }
+  function removeSub(subId) {
+    var it = editingItem();
+    if (!it || !it.subs) return;
+    var now = Date.now();
+    tombstone(subId);
+    it.subs = it.subs.filter(function (s) { return s.id !== subId; });
+    if (!it.subs.length) delete it.subs;
+    touchXf(it, "subs", now);
+    save(); scheduleRender();
+    renderSubEditor();
+  }
+
+  // ---------- 7c. Move tasks to another list (TD-14) ----------
+  // pairs: [{ item, from }]. The task leaves its list and goes to the
+  // top of the other one, with its subtasks; xf.list says where it was
+  // moved last (Mdl.dedupeMoved). Both lists' order is stamped. Undo
+  // moves each back to where it was.
+  function moveItems(pairs, to, quiet) {
+    var now = Date.now(), back = [], touched = {};
+    pairs = pairs.filter(function (p) { return p.from && p.from !== to && p.from.items.indexOf(p.item) >= 0; });
+    if (!pairs.length || !to) return;
+    pairs.slice().reverse().forEach(function (p) {
+      var idx = p.from.items.indexOf(p.item);
+      back.unshift({ id: p.item.id, from: p.from.id, idx: idx });
+      p.from.items.splice(idx, 1);
+      to.items.unshift(p.item);
+      touchXf(p.item, "list", now);
+      touched[p.from.id] = p.from;
+    });
+    touched[to.id] = to;
+    Object.keys(touched).forEach(function (id) {
+      var l = touched[id];
+      l.items.forEach(function (it, i) { it.pos = i; });
+      l.om = now;
+    });
+    save(); scheduleRender();
+    if (quiet) return;
+    undoSnapshot = null;
+    undoFn = function () {
+      var now2 = Date.now(), tl = {};
+      back.slice().reverse().forEach(function (b) {
+        var hit = findItem(b.id), home = listById(b.from);
+        if (!hit || !home || hit.list === home) return;
+        hit.list.items.splice(hit.list.items.indexOf(hit.item), 1);
+        home.items.splice(Math.min(b.idx, home.items.length), 0, hit.item);
+        touchXf(hit.item, "list", now2);
+        tl[hit.list.id] = hit.list; tl[home.id] = home;
+      });
+      Object.keys(tl).forEach(function (id) {
+        tl[id].items.forEach(function (it, i) { it.pos = i; });
+        tl[id].om = now2;
+      });
+      save(); renderAll();
+      showToast(t("toast.undone"), false);
+    };
+    undoViewList = view.activeList;
+    showToast(pairs.length === 1 ? t("toast.moved").replace("{list}", to.name)
+                                 : t("toast.movedN").replace("{n}", pairs.length).replace("{list}", to.name), true);
+  }
+
+  // ---------- 7d. Quick menu (right-click / long press) + selection ----------
+  var longPressTs = 0;
+  var selected = {};            // session only: { itemId: listId }
+  function selecting() { return Object.keys(selected).length > 0; }
+  function toggleSelected(listId, itemId) {
+    if (selected[itemId]) delete selected[itemId]; else selected[itemId] = listId;
+    renderSelBar();
+    scheduleRender();
+  }
+  function endSelection() {
+    if (!selecting()) return;
+    selected = {};
+    renderSelBar();
+    scheduleRender();
+  }
+  function selectedPairs() {
+    var out = [];
+    Object.keys(selected).forEach(function (id) {
+      var hit = findItem(id);
+      if (hit) out.push({ item: hit.item, from: hit.list });
+      else delete selected[id];
+    });
+    return out;
+  }
+  function renderSelBar() {
+    var bar = $("sel-bar");
+    var n = selectedPairs().length;
+    bar.hidden = n === 0;
+    document.body.classList.toggle("selecting", n > 0);
+    if (!n) return;
+    $("sel-count").textContent = t("sel.count").replace("{n}", n);
+  }
+  function setPrio(item, p) {
+    if (Mdl.prioOf(item) === p) return false;
+    if (p < 4) item.prio = p; else delete item.prio;
+    touchXf(item, "prio");
+    return true;
+  }
+
+  function attachRowMenu(li, list, item) {
+    // while selecting, a tap anywhere on the row (but its tick) selects it
+    li.addEventListener("click", function (e) {
+      if (!selecting() || (e.target.closest && e.target.closest(".check"))) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (Date.now() - longPressTs < 600) return;
+      toggleSelected(list.id, item.id);
+    }, true);
+    li.addEventListener("contextmenu", function (e) {
+      if (e.target.closest && e.target.closest("input, .drag-handle")) return;
+      e.preventDefault();
+      openRowMenu(e.clientX, e.clientY, list, item);
+    });
+    var timer = null, sx = 0, sy = 0;
+    li.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse") return;
+      if (e.target.closest && e.target.closest("input, button, .drag-handle")) return;
+      sx = e.clientX; sy = e.clientY;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        timer = null;
+        longPressTs = Date.now();
+        openRowMenu(sx, sy, list, item);
+      }, 500);
+    });
+    var cancel = function () { clearTimeout(timer); timer = null; };
+    li.addEventListener("pointermove", function (e) {
+      if (timer && (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10)) cancel();
+    });
+    li.addEventListener("pointerup", cancel);
+    li.addEventListener("pointercancel", cancel);
+  }
+
+  function closeMenu() {
+    var m = $("row-menu");
+    if (m) m.remove();
+  }
+  function menuButton(host, text, svg, onClick, cls) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "rm-item" + (cls ? " " + cls : "");
+    b.setAttribute("role", "menuitem");
+    if (svg) { var ic = document.createElement("span"); ic.className = "rm-ico"; ic.innerHTML = svg; b.appendChild(ic); }
+    var sp = document.createElement("span");
+    sp.textContent = text;
+    b.appendChild(sp);
+    b.addEventListener("click", onClick);
+    host.appendChild(b);
+    return b;
+  }
+  // targets: function → [{ item, from }] the menu acts on (one row, or
+  // the selection when opened from the selection bar).
+  function openRowMenu(x, y, list, item, targets) {
+    closeMenu();
+    var get = targets || function () {
+      var hit = findItem(item.id);
+      return hit ? [{ item: hit.item, from: hit.list }] : [];
+    };
+    var m = document.createElement("div");
+    m.id = "row-menu";
+    m.setAttribute("role", "menu");
+    var head = document.createElement("div");
+    head.className = "rm-prios";
+    head.setAttribute("aria-label", t("prio.label"));
+    var cur = item ? Mdl.prioOf(item) : 0;
+    PRIOS.forEach(function (p) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "prio-btn p" + p + (cur === p ? " sel" : "");
+      b.title = t("prio." + p);
+      b.setAttribute("aria-label", t("prio." + p));
+      b.innerHTML = FLAG_SVG;
+      b.appendChild(document.createTextNode("P" + p));
+      b.addEventListener("click", function () {
+        var any = false;
+        get().forEach(function (pr) { if (setPrio(pr.item, p)) any = true; });
+        closeMenu();
+        if (any) { save(); scheduleRender(); }
+      });
+      head.appendChild(b);
+    });
+    m.appendChild(head);
+    var body = document.createElement("div");
+    body.className = "rm-body";
+    m.appendChild(body);
+    var MOVE_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+    function showMain() {
+      body.innerHTML = "";
+      if (state.lists.length > 1) menuButton(body, t("menu.move"), MOVE_SVG, showLists);
+      if (!targets) {
+        menuButton(body, t("menu.open"), PEN_SVG, function () { closeMenu(); openItemDialog(list.id, item.id); });
+        if (!selected[item.id]) {
+          menuButton(body, t("menu.select"), SUBS_SVG, function () { closeMenu(); toggleSelected(list.id, item.id); });
+        }
+      }
+    }
+    function showLists() {
+      body.innerHTML = "";
+      var src = get().map(function (p) { return p.from.id; });
+      state.lists.forEach(function (l) {
+        var here = src.length > 0 && src.every(function (id) { return id === l.id; });
+        var b = menuButton(body, l.name || t("new.list"), null, function () {
+          closeMenu();
+          moveItems(get(), l);
+          endSelection();
+        }, here ? "here" : "");
+        if (here) b.disabled = true;
+      });
+      var first = body.querySelector("button:not([disabled])");
+      if (first) first.focus();
+    }
+    showMain();
+    document.body.appendChild(m);
+    // keep it on screen
+    var w = m.offsetWidth, h = m.offsetHeight;
+    var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+    m.style.left = Math.max(8, Math.min(x, vw - w - 8)) + "px";
+    m.style.top = Math.max(8, Math.min(y, vh - h - 8)) + "px";
+    var first = m.querySelector(".rm-body button") || m.querySelector("button");
+    if (first) first.focus();
+  }
+  document.addEventListener("pointerdown", function (e) {
+    var m = $("row-menu");
+    if (m && !m.contains(e.target)) closeMenu();
+  }, true);
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if ($("row-menu")) { closeMenu(); e.stopPropagation(); return; }
+    if ($("sort-pop") && !$("sort-pop").hidden) { $("sort-pop").hidden = true; e.stopPropagation(); return; }
+    if (selecting() && !document.querySelector("dialog[open]")) { endSelection(); e.stopPropagation(); }
+  });
+  window.addEventListener("resize", closeMenu);
+
+  // ---------- 7e. Sort (per view, device-local) ----------
+  function renderSortPop() {
+    var pop = $("sort-pop");
+    pop.innerHTML = "";
+    var cur = sortMode();
+    SORT_MODES.forEach(function (m) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "sort-opt" + (cur === m ? " sel" : "");
+      b.setAttribute("role", "menuitemradio");
+      b.setAttribute("aria-checked", cur === m ? "true" : "false");
+      b.textContent = t("sort." + m);
+      b.addEventListener("click", function () {
+        setSortMode(m);
+        pop.hidden = true;
+        scheduleRender();
+      });
+      pop.appendChild(b);
+    });
+  }
+
+  // ---------- 7f. Saved filters (synced, TD-14) ----------
+  var editingFilterId = null;
+  var dlgFlt = null;
+  function openFilterDialog(id) {
+    var f = id ? filterById(id) : null;
+    editingFilterId = f ? f.id : null;
+    dlgFlt = f ? JSON.parse(JSON.stringify(f)) : {
+      id: "", name: "", labels: activeFilters.slice(), prios: [], due: "", from: "", to: "", text: searchQuery || ""
+    };
+    $("flt-name").value = dlgFlt.name;
+    $("flt-text").value = dlgFlt.text;
+    $("flt-due").value = dlgFlt.due;
+    $("flt-from").value = dlgFlt.from;
+    $("flt-to").value = dlgFlt.to;
+    $("flt-range").hidden = dlgFlt.due !== "range";
+    $("flt-delete").hidden = !f;
+    $("dlg-filter").querySelector("h3").textContent = t(f ? "flt.edit" : "flt.title");
+    renderFltChips();
+    $("filter-pop").hidden = true;
+    $("dlg-filter").showModal();
+    setTimeout(function () { $("flt-name").focus(); }, 50);
+  }
+  function renderFltChips() {
+    var host = $("flt-labels");
+    host.innerHTML = "";
+    if (!state.labels.length) {
+      var none = document.createElement("div");
+      none.className = "lbl-none";
+      none.textContent = t("filter.empty");
+      host.appendChild(none);
+    }
+    state.labels.forEach(function (lb) {
+      var on = dlgFlt.labels.indexOf(lb.id) >= 0;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "flt-chip" + (on ? " sel" : "");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      var dot = document.createElement("span");
+      dot.className = "fl-dot";
+      dot.style.background = lb.color || FALLBACK_COLOR;
+      b.appendChild(dot);
+      var nm = document.createElement("span");
+      nm.textContent = lb.name;
+      b.appendChild(nm);
+      b.addEventListener("click", function () {
+        var i = dlgFlt.labels.indexOf(lb.id);
+        if (i >= 0) dlgFlt.labels.splice(i, 1); else dlgFlt.labels.push(lb.id);
+        renderFltChips();
+      });
+      host.appendChild(b);
+    });
+    var ph = $("flt-prios");
+    ph.innerHTML = "";
+    PRIOS.forEach(function (p) {
+      var on = dlgFlt.prios.indexOf(p) >= 0;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "prio-btn p" + p + (on ? " sel" : "");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.title = t("prio." + p);
+      b.innerHTML = FLAG_SVG;
+      b.appendChild(document.createTextNode("P" + p));
+      b.addEventListener("click", function () {
+        var i = dlgFlt.prios.indexOf(p);
+        if (i >= 0) dlgFlt.prios.splice(i, 1); else dlgFlt.prios.push(p);
+        renderFltChips();
+      });
+      ph.appendChild(b);
+    });
+  }
+  function saveFilterDialog() {
+    if (!dlgFlt) return;
+    var now = Date.now();
+    var draft = Mdl.cleanFilter({
+      id: editingFilterId || uid(),
+      name: $("flt-name").value || t("flt.newname"),
+      labels: dlgFlt.labels.filter(function (id) { return !!labelById(id); }),
+      prios: dlgFlt.prios,
+      due: $("flt-due").value,
+      from: $("flt-from").value,
+      to: $("flt-to").value,
+      text: $("flt-text").value,
+      mtime: now,
+      pos: 0
+    });
+    if (!draft.name) draft.name = t("flt.newname");
+    var cur = editingFilterId ? filterById(editingFilterId) : null;
+    dlgFlt = null;
+    if (cur) {
+      var same = JSON.stringify([cur.name, cur.labels, cur.prios, cur.due, cur.from, cur.to, cur.text]) ===
+                 JSON.stringify([draft.name, draft.labels, draft.prios, draft.due, draft.from, draft.to, draft.text]);
+      if (same) return;
+      draft.pos = cur.pos;
+      state.filters = state.filters.map(function (f) { return f.id === cur.id ? draft : f; });
+    } else {
+      if (!state.filters) state.filters = [];
+      draft.pos = state.filters.length;
+      state.filters.push(draft);
+      state.fom = now;
+      setSmart("f:" + draft.id);
+      // the search and label filter it was made from are now the view
+      searchQuery = ""; activeFilters = [];
+      $("search").value = ""; $("search-clear").hidden = true;
+      updateFilterBtn();
+    }
+    save(); renderAll();
+  }
+  function deleteFilter(id) {
+    pushUndo("toast.fltdel");
+    state.filters = (state.filters || []).filter(function (f) { return f.id !== id; });
+    state.filters.forEach(function (f, i) { f.pos = i; });
+    state.fom = Date.now();
+    tombstone(id);
+    if (!state.filters.length) { delete state.filters; delete state.fom; }
+    if (view.smart === "f:" + id) setSmart(null);
+    save(); renderAll();
+  }
 
   // ---------- 8. List settings dialog ----------
   function openListDialog(listId) {
@@ -1830,7 +2869,7 @@
     tabEl.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;
       if (e.target.closest && e.target.closest(".t-rename")) return;
-      if ($("dlg-item").open || $("dlg-list").open) return;
+      if (document.querySelector("dialog[open]")) return;
       if (state.lists.length < 2) return;        // nothing to reorder
 
       var started = false;
@@ -1851,7 +2890,7 @@
       }
 
       function findTarget(x) {
-        var tabs = [].slice.call(document.querySelectorAll("#tabs .tab"));
+        var tabs = [].slice.call(document.querySelectorAll("#tabs .tab[data-list-id]"));
         var target = null, bestDist = Infinity;
         tabs.forEach(function (tb) {
           if (tb === tabEl) return;
@@ -1965,6 +3004,15 @@
   function renderFilterPop() {
     var pop = $("filter-pop");
     pop.innerHTML = "";
+    var nf = document.createElement("button");
+    nf.type = "button";
+    nf.className = "fl-new";
+    nf.innerHTML = SMART_SVG.filter;
+    var nfs = document.createElement("span");
+    nfs.textContent = t("filter.save");
+    nf.appendChild(nfs);
+    nf.addEventListener("click", function (e) { e.stopPropagation(); openFilterDialog(null); });
+    pop.appendChild(nf);
 
     if (state.labels.length === 0) {
       var e = document.createElement("div");
@@ -2087,6 +3135,16 @@
       labelsBack[lb.id] = true;
     });
     if (Object.keys(labelsBack).length) state.labels.forEach(function (lb, i) { lb.pos = i; });
+
+    (snap.filters || []).forEach(function (f, i) {
+      if (filterById(f.id)) return;
+      f.mtime = now;
+      if (!state.filters) state.filters = [];
+      state.filters.splice(Math.min(i, state.filters.length), 0, f);
+      state.filters.forEach(function (x, k) { x.pos = k; });
+      state.fom = now;
+      delete state.deleted[f.id];
+    });
 
     (snap.lists || []).forEach(function (sl, li) {
       var cur = listById(sl.id);
@@ -2389,11 +3447,55 @@
       save(); scheduleRender();
     });
     $("list-settings").addEventListener("click", function () {
+      var cv = currentView();
+      if (cv && cv.filter) { openFilterDialog(cv.filter.id); return; }
       openListDialog(activeList().id);
     });
+
+    // --- TD-14: sort, selection bar, saved filters, subtasks ---
+    $("sort-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      var pop = $("sort-pop");
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) {
+        renderSortPop();
+        var sel = pop.querySelector(".sel") || pop.querySelector("button");
+        if (sel) sel.focus();
+      }
+    });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest("#sort-slot")) $("sort-pop").hidden = true;
+    });
+    $("sel-move").addEventListener("click", function () {
+      var r = this.getBoundingClientRect();
+      openRowMenu(r.left, r.top - 8, null, null, selectedPairs);
+    });
+    $("sel-cancel").addEventListener("click", endSelection);
+    $("f-sub-add").addEventListener("click", function () { addSub(); $("f-sub-new").focus(); });
+    $("f-sub-new").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); addSub(); }
+    });
+    $("f-rec-mode").addEventListener("change", function () {
+      $("f-weekday").hidden = this.value === "after";
+    });
+    $("filter-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      saveFilterDialog();
+      $("dlg-filter").close();
+    });
+    $("dlg-filter").addEventListener("close", function () { dlgFlt = null; editingFilterId = null; });
+    $("flt-cancel").addEventListener("click", function () { $("dlg-filter").close(); });
+    $("flt-due").addEventListener("change", function () { $("flt-range").hidden = this.value !== "range"; });
+    $("flt-delete").addEventListener("click", function () {
+      var id = editingFilterId;
+      if (!id) return;
+      confirmDialog("confirm.fltdel", function () {
+        dlgFlt = null;
+        $("dlg-filter").close();
+        deleteFilter(id);
+      });
+    });
     // "Send to someone" (shell share/): the open list travels in a link.
-    var shareApi = null;
-    try { shareApi = window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) {}
     $("list-share").hidden = !shareApi;
     $("list-share").addEventListener("click", function () {
       var list = activeList();
@@ -2606,6 +3708,7 @@
       it.labels = x.labels.filter(function (id) { return !!labelById(id); });
       it.info = x.info.map(function (f) { return { id: f.id, label: f.label, value: f.value }; });
       stampItemNewest(it, now);
+      if (x.prio === 1 || x.prio === 2 || x.prio === 3) { it.prio = x.prio; it.xf = { prio: now }; }
       l.items.push(it);
       delete state.deleted[x.id];
       back.items.push(x.id);
@@ -2621,6 +3724,11 @@
       if (!hit) return;
       var it = hit.item, old = {};
       Object.keys(x.f).forEach(function (f) {
+        if (f === "prio") {                  // TD-14: Todoist's priority → the task's own
+          old.prio = Mdl.prioOf(it);
+          setPrio(it, Mdl.prioOf({ prio: x.f.prio }));
+          return;
+        }
         if (ITEM_FIELDS.indexOf(f) < 0) return;
         old[f] = JSON.parse(JSON.stringify(it[f] === undefined ? null : it[f]));
         it[f] = f === "labels" ? x.f[f].filter(function (id) { return !!labelById(id); }) : x.f[f];
@@ -2653,7 +3761,10 @@
     back.upd.forEach(function (u) {
       var hit = findItem(u.id);
       if (!hit) return;
-      Object.keys(u.old).forEach(function (f) { hit.item[f] = u.old[f]; touchField(hit.item, f); });
+      Object.keys(u.old).forEach(function (f) {
+        if (f === "prio") { setPrio(hit.item, u.old.prio); return; }
+        hit.item[f] = u.old[f]; touchField(hit.item, f);
+      });
     });
     back.names.forEach(function (n) { var l = listById(n.id); if (l) { l.name = n.name; touchListField(l, "name"); } });
     var dropList = {};
