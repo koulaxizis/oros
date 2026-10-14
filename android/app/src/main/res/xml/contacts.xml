@@ -1,4 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- No custom data kinds: orOS contacts use the standard ones
-     (name, phone, email, address, event, note, website, photo). -->
-<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android" />
+<!-- orOS contacts use the standard kinds only. The edit schema makes
+     the orOS account writable in contacts apps (v2 two-way): edits and
+     new contacts saved to it go back to orOS Contacts. -->
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditSchema>
+        <DataKind kind="name" maxOccurs="1"
+            supportsDisplayName="true" supportsPrefix="false" supportsMiddleName="true"
+            supportsSuffix="false" supportsPhoneticFamilyName="false"
+            supportsPhoneticMiddleName="false" supportsPhoneticGivenName="false" />
+        <DataKind kind="photo" maxOccurs="1" />
+        <DataKind kind="phone">
+            <Type type="mobile" />
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="main" />
+            <Type type="other" />
+        </DataKind>
+        <DataKind kind="email">
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="other" />
+        </DataKind>
+        <DataKind kind="postal" needsStructured="true">
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="other" />
+        </DataKind>
+        <DataKind kind="organization" maxOccurs="1" />
+        <DataKind kind="nickname" maxOccurs="1" />
+        <DataKind kind="website" />
+        <DataKind kind="event" dateWithTime="false">
+            <Type type="birthday" maxOccurs="1" yearOptional="true" />
+            <Type type="anniversary" />
+            <Type type="other" />
+            <Type type="custom" />
+        </DataKind>
+        <DataKind kind="note" maxOccurs="1" />
+    </EditSchema>
+</ContactsAccountType>

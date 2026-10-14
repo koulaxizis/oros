@@ -127,7 +127,7 @@
       "ct.phone.bad": "Could not read the phone's contacts",
       "ph.btn": "On this phone",
       "ph.title": "orOS contacts on this phone",
-      "ph.text": "Adds your orOS contacts to the phone's Contacts, so the dialer and incoming calls show their names. They are read-only there: edit them here.",
+      "ph.text": "Adds your orOS contacts to the phone's Contacts, so the dialer and incoming calls show their names. Changes you make to them there, and new contacts saved to the \"orOS\" account, come back here when you open orOS.",
       "ph.on": "Show on this phone",
       "ph.what": "contacts",
       "ph.allow": "Allow access",
@@ -307,7 +307,7 @@
       "ct.phone.bad": "Οι επαφές του κινητού δεν μπόρεσαν να διαβαστούν",
       "ph.btn": "Στο κινητό",
       "ph.title": "Οι επαφές του orOS στο κινητό",
-      "ph.text": "Βάζει τις επαφές του orOS στις Επαφές του κινητού, ώστε οι κλήσεις να δείχνουν ονόματα. Εκεί είναι μόνο για ανάγνωση: τις αλλάζεις εδώ.",
+      "ph.text": "Βάζει τις επαφές του orOS στις Επαφές του κινητού, ώστε οι κλήσεις να δείχνουν ονόματα. Ό,τι αλλάζεις εκεί, και οι νέες επαφές στον λογαριασμό \"orOS\", έρχονται εδώ όταν ανοίγεις το orOS.",
       "ph.on": "Εμφάνιση στο κινητό",
       "ph.what": "επαφές",
       "ph.allow": "Να επιτραπεί",
@@ -4219,6 +4219,16 @@ document.addEventListener("keydown", function (e) {
     renderList();
     // info.merged → sync dot (taskbar), not toast (Wave 11 doctrine)
   }
+
+  // Edits made in the phone's contacts app (BR-PHONE v2): phone.js
+  // writes them to the blob, then this open copy re-reads it the way
+  // it adopts a pull (open dialogs and filters survive).
+  window.__orosPhoneReload = function (kind) {
+    if (kind !== "contacts") return;
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(DATA_KEY)); } catch (e) { d = null; }
+    if (d && typeof d === "object" && Array.isArray(d.contacts)) setFromSync(d);
+  };
 
   // Canonical sync bridge — Contract B funnel. Live registration
   // with mergeFn means: closed-app proxies, offline divergence
