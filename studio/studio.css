@@ -506,6 +506,69 @@ dialog.wide { width: min(760px, calc(100vw - 32px)); }
 .fx-picks .chip.has-gfx::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 .fx-credit { margin-top: 14px; }
 
+/* ---------- 7d. Automation lanes ---------- */
+.ms.au.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ms.au.has:not(.on) { border-color: var(--accent); color: var(--accent); }
+.h-vol.auto { opacity: 0.45; }
+.row.auto { height: var(--auto-h, 64px); border-bottom: 1px solid var(--border); }
+.a-head { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 4px 8px; border-left: 4px solid var(--tc); }
+.a-sel { width: 100%; font-size: 12px; padding: 2px 4px; min-height: 24px; }
+.a-btns { display: flex; gap: 4px; }
+.a-btns .ms { display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.a-btns .ms svg { width: 14px; height: 14px; }
+.a-btns .ms:disabled { opacity: 0.4; cursor: default; }
+.a-btns .ms.a-on.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.a-lane {
+  position: relative;
+  flex: 0 0 var(--tl-w, 1000px);
+  height: 100%;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(var(--bar-w, 120px) - 1px), var(--border) calc(var(--bar-w, 120px) - 1px) var(--bar-w, 120px)),
+    rgba(127, 127, 127, 0.06);
+  cursor: crosshair;
+  touch-action: pan-x pan-y;
+  user-select: none;
+  overflow: hidden;
+}
+.a-svg { position: absolute; left: 0; top: 0; pointer-events: none; }
+.a-line { fill: none; stroke: var(--tc); stroke-width: 2; }
+.a-line.static { stroke-dasharray: 4 4; opacity: 0.55; stroke-width: 1.5; }
+.a-fill { fill: var(--tc); opacity: 0.14; }
+.a-lane.off .a-line, .a-lane.off .a-pt { opacity: 0.35; }
+.a-pt {
+  position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--tc); cursor: grab; touch-action: none; z-index: 1;
+}
+.a-pt::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
+.a-pt.sel { background: var(--tc); box-shadow: 0 0 0 2px var(--text); }
+.a-pt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.a-tip {
+  position: absolute; transform: translateX(-50%); z-index: 2; pointer-events: none; white-space: nowrap;
+  font-size: 11px; font-variant-numeric: tabular-nums; padding: 1px 6px; border-radius: 4px;
+  background: var(--panel-bg); border: 1px solid var(--border); color: var(--text);
+}
+.a-hint { position: sticky; left: calc(var(--head-w) + 8px); display: inline-block; margin: 8px 0 0 8px; font-size: 12px; color: var(--text-dim); pointer-events: none; }
+
+/* ---------- 7e. Keyboard (MIDI + synth) ---------- */
+#keys { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: var(--panel-bg); border-top: 1px solid var(--border); }
+#keys[hidden] { display: none; }
+.kb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.kb-field { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+#kb-snd { max-width: 160px; }
+#kb-vol { width: 96px; }
+.kb-oct { display: inline-flex; align-items: center; gap: 4px; }
+#kb-oct { min-width: 64px; text-align: center; }
+#kb-close { margin-left: auto; }
+.kb-note { margin: 0; }
+.kb-keys { position: relative; height: 92px; user-select: none; touch-action: none; }
+.kb-key { position: absolute; top: 0; padding: 0; border: 1px solid #3a3a3f; border-radius: 0 0 6px 6px; }
+.kb-key.w { height: 100%; background: #f2f2f2; z-index: 1; }
+.kb-key.b { height: 58%; background: #222; border-color: #111; z-index: 2; }
+.kb-key.on.w { background: #9fc3f0; }
+.kb-key.on.b { background: var(--accent); }
+.kb-key:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.kb-c { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 10px; color: #555; pointer-events: none; }
+
 /* ---------- 8. Phone + touch ---------- */
 /* ---------- 7c. Remote control (remote.js) ---------- */
 .remote-ind.on { color: var(--accent); }
@@ -580,7 +643,11 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
   .tp-master { display: none; }
   #zoom-in, #zoom-out { display: none; }
   .h-vol { display: none; }
-  .h-btns .ms.fx { display: none; }
+  .h-btns .ms.fx, .h-btns .ms.au { display: none; }
+  #keys { order: 2; }
+  .a-head { padding: 3px 5px; }
+  .kb-keys { height: 104px; }
+  #kb-snd { max-width: 130px; }
   dialog.wide { width: calc(100vw - 16px); padding: 12px 10px 14px; }
   .row.track .head { padding: 5px 6px; }
   .ms { width: 30px; height: 28px; }

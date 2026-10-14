@@ -20,7 +20,16 @@
 // project: [{ u, id, on, s: { slider: value }, f: { slider: path } }],
 // u = the slot's own id, id = the effect (nullfx/fx/<id>.js), on =
 // false when bypassed, f = audio files on the disk for file sliders
-// (Convolution's IR). At most 8 per chain.
+// (Convolution's IR). At most 8 per chain. sc (optional) = the track
+// whose sound is the effect's key input (Sidechain Ducker).
+// auto (optional, on tracks): automation lanes, [{ k, on?, p: [[t, v]] }]:
+// k = "vol" (dB), "pan" (-100..100) or "fx.<u>.<slider>" (that slider's
+// own units), p = points (seconds, value) in time order, on = false when
+// the lane is switched off. Between points the value moves in a straight
+// line; before the first and after the last it holds. At most 16 lanes,
+// 256 points each. A lane needs at least one point.
+// New fields (sc, auto) are written only when set, so projects made
+// before them keep the very same bytes.
 // The audio itself is never in this slice: it lives on the disk and
 // travels with Vault Drive.
 // ============================================================
@@ -49,6 +58,10 @@
   var FX_ID_RE     = /^[a-z0-9_]{1,40}$/;
   var FXU_RE       = /^f[a-z0-9]{6,20}$/;
   var SLIDER_RE    = /^[1-9][0-9]?$/;  // slider1 .. slider64
+  var TRACK_RE     = /^t[a-z0-9]{6,20}$/;
+  var MAX_LANES    = 16;           // automation lanes on a track
+  var MAX_PTS      = 256;          // points in one lane
+  var LANE_RE      = /^(vol|pan|fx\.f[a-z0-9]{6,20}\.[1-9][0-9]?)$/;
 
   function isNum(n) { return typeof n === "number" && isFinite(n); }
   function isInt(n) { return isNum(n) && Math.floor(n) === n; }
@@ -86,10 +99,135 @@
       }
       var o = { u: x.u, id: x.id, on: x.on !== false, s: s };
       if (hasF) o.f = f;
+      if (typeof x.sc === "string" && TRACK_RE.test(x.sc)) o.sc = x.sc;
       out.push(o);
     });
     return out;
   }
+  // ---------- Automation ----------
+  function laneRange(k) {
+    if (k === "vol") return { min: VOL_MIN, max: VOL_MAX, d: 2 };
+    if (k === "pan") return { min: -100, max: 100, d: 1 };
+    return { min: -1e9, max: 1e9, d: 6 };
+  }
+  function fxLaneKey(u, i) { return "fx." + u + "." + i; }
+  // "fx.<u>.<i>" -> { u, i }, else null
+  function laneFx(k) {
+    var m = /^fx\.(f[a-z0-9]{6,20})\.([1-9][0-9]?)$/.exec(String(k));
+    return m && +m[2] <= 64 ? { u: m[1], i: +m[2] } : null;
+  }
+  // Points in time order; at most two at the same time (a step).
+  function normPoints(list, k) {
+    var r = laneRange(k), pts = [];
+    if (!Array.isArray(list)) return pts;
+    list.forEach(function (p, n) {
+      if (!Array.isArray(p) || !isNum(p[0]) || !isNum(p[1])) return;
+      pts.push({ t: round(clamp(p[0], 0, MAX_SEC), 4), v: round(clamp(p[1], r.min, r.max), r.d), n: n });
+    });
+    pts.sort(function (a, b) { return a.t - b.t || a.n - b.n; });
+    var out = [];
+    pts.forEach(function (p, i) {
+      if (i > 0 && i < pts.length - 1 && pts[i - 1].t === p.t && pts[i + 1].t === p.t) return;
+      out.push([p.t, p.v]);
+    });
+    return out.slice(0, MAX_PTS);
+  }
+  // A track's lanes; `fx` is its chain: lanes of effects no longer on it go.
+  function normAuto(list, fx) {
+    var out = [], seen = {}, slots = {};
+    (fx || []).forEach(function (x) { slots[x.u] = true; });
+    if (!Array.isArray(list)) return out;
+    list.forEach(function (x) {
+      if (out.length >= MAX_LANES || !x || typeof x !== "object") return;
+      if (typeof x.k !== "string" || !LANE_RE.test(x.k) || seen[x.k]) return;
+      var f = laneFx(x.k);
+      if (x.k.indexOf("fx.") === 0 && (!f || !slots[f.u])) return;
+      var p = normPoints(x.p, x.k);
+      if (!p.length) return;
+      seen[x.k] = true;
+      var o = { k: x.k };
+      if (x.on === false) o.on = false;
+      o.p = p;
+      out.push(o);
+    });
+    return out;
+  }
+  // The value of a lane at time t (seconds).
+  function autoValueAt(p, t) {
+    if (!p || !p.length) return NaN;
+    if (t < p[0][0]) return p[0][1];
+    var lo = 0, hi = p.length - 1;
+    while (lo < hi) {                              // the last point at or before t
+      var mid = (lo + hi + 1) >> 1;
+      if (p[mid][0] <= t) lo = mid; else hi = mid - 1;
+    }
+    if (lo === p.length - 1) return p[lo][1];
+    var a = p[lo], b = p[lo + 1];
+    return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0]);
+  }
+  // What to schedule on an AudioParam for project time `from`..`to`:
+  // [{ at (seconds after `from`), v, ramp }]: a set at 0, a ramp to each
+  // point inside, a ramp to the value at `to`. A second point at the same
+  // time is a jump (ramp false).
+  function autoEvents(p, from, to) {
+    if (!p || !p.length || !(to >= from)) return [];
+    var ev = [{ at: 0, v: autoValueAt(p, from), ramp: false }], last = from;
+    p.forEach(function (q) {
+      if (q[0] <= from || q[0] >= to) return;
+      ev.push({ at: round(q[0] - from, 6), v: q[1], ramp: q[0] !== last });
+      last = q[0];
+    });
+    if (to > from && last < to) ev.push({ at: round(to - from, 6), v: autoValueAt(p, to), ramp: true });
+    return ev;
+  }
+  // The lane of a track for key k when it plays (on, with points).
+  function activeLane(track, k) {
+    var l = (track && track.auto || []).filter(function (x) { return x.k === k; })[0];
+    return l && l.on !== false && l.p.length ? l : null;
+  }
+  // Change one lane: points (empty = remove the lane), on/off.
+  function setLane(track, k, fields) {
+    var list = (track.auto || []).map(function (x) { return x.k === k ? Object.assign({}, x, fields) : x; });
+    if (!list.some(function (x) { return x.k === k; })) list.push(Object.assign({ k: k, p: [] }, fields));
+    return normAuto(list, track.fx);
+  }
+
+  // ---------- Sidechain keys ----------
+  // The tracks a track's effects listen to (their key inputs).
+  function keysOf(track) {
+    var out = [];
+    (track && track.fx || []).forEach(function (x) { if (x.on && x.sc && out.indexOf(x.sc) < 0) out.push(x.sc); });
+    return out;
+  }
+  // Would `tid` listening to `key` close a loop (key already hears tid)?
+  function keyLoops(tracks, tid, key) {
+    var by = {}, seen = {}, stack = [key];
+    tracks.forEach(function (t) { by[t.id] = t; });
+    while (stack.length) {
+      var x = stack.pop();
+      if (x === tid) return true;
+      if (seen[x]) continue;
+      seen[x] = true;
+      keysOf(by[x]).forEach(function (k) { stack.push(k); });
+    }
+    return false;
+  }
+  // Key connections that can be made: { tid: { key: true } }; a loop that came
+  // in through sync is broken by leaving out the edge that closes it.
+  function keyPlan(tracks) {
+    var ok = {}, have = tracks.map(function (t) { return Object.assign({}, t, { fx: [] }); }), ids = {};
+    tracks.forEach(function (t) { ids[t.id] = true; });
+    tracks.slice().sort(function (a, b) { return cmpStr(a.id, b.id); }).forEach(function (t) {
+      keysOf(t).sort(cmpStr).forEach(function (k) {
+        if (!ids[k] || keyLoops(have, t.id, k)) return;
+        (ok[t.id] = ok[t.id] || {})[k] = true;
+        var h = have.filter(function (x) { return x.id === t.id; })[0];
+        h.fx = h.fx.concat([{ on: true, sc: k }]);
+      });
+    });
+    return ok;
+  }
+
   function normProject(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "p") || !okM(x.m)) return null;
     var lp = x.loop && typeof x.loop === "object" ? x.loop : {};
@@ -107,7 +245,7 @@
   }
   function normTrack(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "t") || !okM(x.m) || !okId(x.p, "p")) return null;
-    return {
+    var t = {
       id: x.id, m: x.m, p: x.p,
       name: clipLine(x.name, MAX_NAME),
       color: COLORS.indexOf(x.color) >= 0 ? x.color : COLORS[0],
@@ -118,6 +256,9 @@
       ord: isNum(x.ord) ? round(clamp(x.ord, -1e6, 1e6), 4) : 0,
       fx: normFx(x.fx)
     };
+    var auto = normAuto(x.auto, t.fx);
+    if (auto.length) t.auto = auto;
+    return t;
   }
   function normSource(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "s") || !okM(x.m) || !okId(x.p, "p")) return null;
@@ -413,7 +554,10 @@
     peaks: peaks, wavBytes: wavBytes, fileName: fileName, sourcePath: sourcePath, extOf: extOf,
     clipLine: clipLine,
     MAX_FX: MAX_FX, FX_ID_RE: FX_ID_RE, normFx: normFx, POS_STEPS: POS_STEPS,
-    sliderFromPos: sliderFromPos, sliderToPos: sliderToPos, sliderStep: sliderStep, fxValue: fxValue, fxFilePath: fxFilePath
+    sliderFromPos: sliderFromPos, sliderToPos: sliderToPos, sliderStep: sliderStep, fxValue: fxValue, fxFilePath: fxFilePath,
+    MAX_LANES: MAX_LANES, MAX_PTS: MAX_PTS, laneRange: laneRange, fxLaneKey: fxLaneKey, laneFx: laneFx,
+    normAuto: normAuto, autoValueAt: autoValueAt, autoEvents: autoEvents, activeLane: activeLane, setLane: setLane,
+    keysOf: keysOf, keyLoops: keyLoops, keyPlan: keyPlan
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioCore = api;

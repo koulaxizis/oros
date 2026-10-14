@@ -1,5 +1,5 @@
 # Studio
-A small multitrack studio: put audio clips on tracks, record over a click, loop a part, add effects, mix and export the song as a WAV file.
+A small multitrack studio: put audio clips on tracks, record over a click, loop a part, add effects, draw automation, play a MIDI keyboard, mix and export the song as WAV, MP3 or Opus.
 
 ## Getting started
 - `Import audio` at the top (the down arrow) brings in audio files: WAV, MP3, OGG, FLAC, M4A, whatever this browser can play. You can also drop files from your computer onto the timeline.
@@ -35,11 +35,29 @@ A small multitrack studio: put audio clips on tracks, record over a click, loop 
 - Some effects need a moment to look ahead. Studio delays the other tracks to match, so everything stays in time, also in the export.
 - The effects are [NULL JSFX](https://nulljsfx.tech) (MIT License), running in the browser.
 
+## Sidechain
+- `Sidechain Ducker` turns a track down while another track plays: the classic pumping pad under a kick, or music that makes room for a voice.
+- Add it to the track that should duck, then choose the other track in `Key input (sidechain)` under the effect. Its sliders set how loud the key must be, how far down the track goes and how fast it comes back.
+- The effect hears the key track after its effects and before its fader, so you can mute the key track and still use it.
+- A track cannot be the key of a track that already listens to it; such tracks are left out of the list. The export ducks exactly as the playback does.
+
+## Automation
+- `A` on a track (on a phone: `Automation` in its settings) opens a lane under the track. Choose what it moves in the list: `Volume`, `Pan` or any slider of the track's effects.
+- Tap or click the lane to add a point, drag a point to move it, and double-click it (or select it and press `×` or [[Delete]]) to remove it. The arrow keys move a selected point, in finer or coarser steps with [[Shift]].
+- Between two points the value moves in a straight line; before the first and after the last point it holds. Volume moves evenly in dB.
+- While a lane has points, it drives that control: the track's fader dims for a volume lane, and moving it by hand does nothing. The power button in the lane turns it off for a moment, and the trash button clears it. A track has up to 16 lanes.
+- Automation plays back, is heard in the export, and is saved and synced with the project.
+
 ## Recording
 - `R` on a track arms it: new takes go there. With no armed track, Studio records on the selected one.
 - Press the red record button. The browser asks once for the microphone. Studio plays from the playhead (with the click, if it is on) and records until you press it again.
 - The take is saved as a WAV file and placed where it was played. If takes land late against the click, raise `Recording offset` in the settings.
 - In the settings (the three dots at the top) choose the input and, where the browser allows it, the output of your sound card.
+
+## Keyboard and MIDI
+- `Keyboard` in the transport opens a piano keyboard with a built-in synth: piano, electric piano, organ, strings, lead and bass. Play it with the mouse or with your fingers, and slide along the keys for a glissando.
+- `Connect MIDI keyboard` asks the browser for MIDI and plays the synth from every connected keyboard, with velocity, the sustain pedal and pitch bend. Studio asks only when you press it, and reconnects by itself next time once you have allowed it.
+- While the keyboard is open, the record button records the synth instead of the microphone: what you play becomes an audio take on the armed or selected track, in time with the click.
 
 ## Remote control
 Control Studio's mixer and transport from a tablet or phone while the sound plays on the PC.
@@ -54,7 +72,10 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 >! Press `Allow` only when it is your own device asking. If you did not just type the code somewhere, press `Deny`.
 
 ## Export
-`Export WAV` (the up arrow) mixes the song into one stereo WAV file: the loop if it is on, else everything from the start to the end of the last clip. Choose 16 or 24 bit and 44.1 or 48 kHz.
+`Export` (the up arrow) mixes the song into one stereo file: the loop if it is on, else everything from the start to the end of the last clip. Effects, sidechain and automation are all in it.
+- `WAV`: 16 or 24 bit, 44.1 or 48 kHz. Lossless, the best choice for further work.
+- `MP3`: 128 to 320 kbit/s. Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
+- `Opus (OGG)`: a smaller file at the same quality, always 48 kHz. Offered where the browser can encode Opus (Chrome, Edge, Firefox).
 
 ## Sync and backup
 - Projects, tracks and clips follow you to your other devices through orOS sync.
@@ -75,7 +96,10 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - Up to 50 projects, 8 tracks and 500 clips per project, one hour per project.
 - An imported file can be up to 100 MB, and a take up to 30 minutes.
 - One remote at a time, and pairing needs internet on both devices.
-- No MIDI and no automation yet. Effects reset when playback starts, as in a desktop studio.
-- Sidechain Ducker is not offered yet: Studio cannot route a second track into an effect.
+- No MIDI tracks yet: the keyboard is recorded as audio, so notes cannot be edited afterwards. MIDI tracks are planned.
+- The synth is recorded without the track's effects; they are added when the take plays. Only Sidechain Ducker takes a key input.
+- Automation has straight lines only, and the master has no lanes. An older Studio on another device drops lanes and sidechain choices when it saves that track.
+- The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more.
+- Effects reset when playback starts, as in a desktop studio.
 - Audio of deleted clips stays in the `Studio` folder; deleting a project removes its files.
 - When the same clip is changed on two devices before they sync, the most recent change wins.
