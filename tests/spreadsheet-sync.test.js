@@ -17,11 +17,12 @@ function block(from, to) {
   if (i < 0 || j < 0) throw new Error("missing block " + from);
   return src.slice(i, j);
 }
-const M = new Function(
+const KIT = require(path.join(__dirname, "..", "spreadsheet/sheetkit.js"));
+const M = new Function("KIT",
   "var DATA_VER = 2, ROWS = 100, COLS = 26, MAX_ROWS = 10000, MAX_COLS = 104, SID = 's-main';\n" +
   "function clone(o) { return JSON.parse(JSON.stringify(o)); }\n" +
   block("var SEED_BI", "/* ===== SECTION 2c") +
-  "return { canonSS: canonSS, mergeState: mergeState, normFz: normFz, blankState: blankState };")();
+  "return { canonSS: canonSS, mergeState: mergeState, normFz: normFz, blankState: blankState };")(KIT);
 
 const J = (x) => JSON.stringify(x);
 
