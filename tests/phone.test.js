@@ -327,3 +327,31 @@ test("reminders: Clock alarms, Water and To-Do for the next 48 hours (v3)", () =
   assert.deepEqual(rows.map((r) => r.at), rows.map((r) => r.at).slice().sort((a, b) => a - b), "sorted by time");
   assert.deepEqual(P.reminderRows({}, now), []);
 });
+
+test("widgetData: the Today summary in plain rows for the home-screen widget", () => {
+  const sum = {
+    today: "2026-10-14",
+    apps: [{ id: "todo", name: "To-Do" }, { id: "calendar", name: "Calendar" }],
+    groups: {
+      info: [{ app: "weather", title: "Sunny, 24°" }],
+      overdue: [{ app: "todo", due: "2026-10-12", time: null, title: "Pay rent", kind: "task" }],
+      today: [{ app: "calendar", due: "2026-10-14", time: "09:30", title: "Dentist", kind: "event" },
+              { app: "todo", due: null, time: null, title: "Daily walk", kind: "task" }],
+      soon: [{ day: "2026-10-15", rows: [{ app: "calendar", due: "2026-10-15", time: null, title: "Trip", kind: "event" },
+                                          { app: "x", title: "", kind: "task" }] }]
+    }
+  };
+  assert.deepEqual(P.widgetData(sum), {
+    day: "2026-10-14",
+    info: "Sunny, 24°",
+    rows: [
+      { d: "2026-10-12", tm: "", t: "Pay rent", a: "To-Do", k: "task" },
+      { d: "2026-10-14", tm: "09:30", t: "Dentist", a: "Calendar", k: "event" },
+      { d: "", tm: "", t: "Daily walk", a: "To-Do", k: "task" },
+      { d: "2026-10-15", tm: "", t: "Trip", a: "Calendar", k: "event" }
+    ]
+  }, "late first, a row with no day of its own keeps no day, rows without a title are dropped");
+  assert.deepEqual(P.widgetData(null), { day: "", info: "", rows: [] });
+  const many = { today: "2026-10-14", apps: [], groups: { today: Array.from({ length: 50 }, (_, i) => ({ title: "t" + i })) } };
+  assert.equal(P.widgetData(many).rows.length, 30, "at most 30 rows");
+});

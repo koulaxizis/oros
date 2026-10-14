@@ -2912,6 +2912,12 @@
   // dialog. Unknown ids, or a dialog already open → no-op.
   function openSearchTarget(t) {
     if (t && t.addItems) { openAddItems(t.addItems); return; }   // section 13
+    if (t && t.quickAdd) {                // the phone's home-screen widget: "+ Task"
+      if (document.querySelector("dialog[open]")) return;
+      var qa = $("quick-add");
+      if (qa) { qa.scrollIntoView({ block: "nearest" }); qa.focus(); }
+      return;
+    }
     if (t && t.done) { doneFromToday(t.done); return; }
     if (!t || typeof t.list !== "string" || !listById(t.list)) return;
     // A dialog in progress (maybe with unsaved edits) wins: no jump.

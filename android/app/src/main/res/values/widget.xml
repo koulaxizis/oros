@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widgets (BR-PHONE v4): colours (dark ones in
+     values-night) and the shared row / button styles. -->
+<resources>
+    <color name="w_bg">#F5FFFFFF</color>
+    <color name="w_text">#FF1C1B1F</color>
+    <color name="w_sub">#FF6B6B73</color>
+    <color name="w_accent">#FF2F5FD0</color>
+    <color name="w_late">#FFC62828</color>
+    <color name="w_btn">#142F5FD0</color>
+
+    <style name="WidgetRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/w_text</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="WidgetButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">3dp</item>
+        <item name="android:layout_marginEnd">3dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/widget_btn</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/w_accent</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+</resources>

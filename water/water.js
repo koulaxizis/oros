@@ -1027,6 +1027,22 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    // Deep link (shell __orosOpenAt / __orosTakeTarget): { sip: "glass" }
+    // from the phone's home-screen widget adds one glass today, with
+    // the usual Undo.
+    window.__orosOpenAt = openTarget;
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function") {
+        var pending = window.parent.__orosTakeTarget("water");
+        if (pending) openTarget(pending);
+      }
+    } catch (e) {}
+  }
+
+  function openTarget(tg) {
+    if (!tg || tg.sip !== "glass") return;
+    if (dayKey !== todayKey()) { dayKey = monthKey = todayKey(); renderAll(); }
+    addSip(data.prefs.glass);
   }
 
   boot();

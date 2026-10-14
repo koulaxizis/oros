@@ -35,7 +35,9 @@ import java.util.concurrent.Executors;
  * full snapshots of its Contacts and Calendar rows (already decrypted
  * by the page; no key ever reaches this side), and the writers mirror
  * them into the "orOS" account. v2: edits made on the phone in that
- * account go back to the page as {t:"changes"}.
+ * account go back to the page as {t:"changes"}. v3: reminders
+ * (Reminders). v4: the Today summary for the home-screen widget
+ * (Widgets).
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -262,6 +264,7 @@ public class PhoneBridge {
             o.put("calendar", permState("calendar", CALENDAR_PERMS));
             o.put("reminders", Reminders.permission(app));
             o.put("exact", Reminders.exact(app));
+            o.put("widgets", Widgets.count(app));
             o.put("app", BuildConfig.VERSION_NAME);
         } catch (JSONException ignored) {
         }
@@ -329,6 +332,13 @@ public class PhoneBridge {
                     done.put("added", n);
                     diag("reminders armed: " + n + (Reminders.exact(app) ? "" : " (inexact)"));
                     send(done);
+                    return;
+                }
+                case "today": {
+                    JSONObject data = m.optJSONObject("data");
+                    if (data == null) throw new IllegalArgumentException("bad data");
+                    Widgets.save(app, data);
+                    diag("widget rows: " + (data.optJSONArray("rows") == null ? 0 : data.optJSONArray("rows").length()));
                     return;
                 }
                 case "applied": {

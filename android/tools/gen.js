@@ -287,6 +287,21 @@ ${aliases}
             </intent-filter>
         </receiver>
 
+        <!-- Home-screen widgets (BR-PHONE v4): "Today" (the page's Today
+             summary, kept by the app) and "Quick add". -->
+        <receiver android:name=".TodayWidget" android:exported="false" android:label="@string/widget_today">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_today_info" />
+        </receiver>
+        <receiver android:name=".QuickWidget" android:exported="false" android:label="@string/widget_quick">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info" />
+        </receiver>
+
         <!-- The "orOS" account: a stub authenticator plus sync adapters
              that only declare the account to Contacts and Calendar. The
              data is written by PhoneBridge when the page sends it. -->

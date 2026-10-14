@@ -3111,6 +3111,8 @@
   // ancestors in the tree and selects it. Unknown page → no-op.
   // Target { add: { title, text } } (another app's "Save as note"):
   // a new top-level page in the current notebook, plain text only.
+  // Target { newPage: true } (the phone's home-screen widget): a new
+  // empty page, its title ready to type.
   // Target { openFile: { token } }: a .txt / .md file from the
   // system's "Open with" or Android's Share (shell fileopen.js), taken
   // once from the shell: a new page titled after the file, its text
@@ -3134,6 +3136,7 @@
   }
   function openSearchTarget(t) {
     if (t && t.openFile) { openFileTarget(t.openFile); return; }
+    if (t && t.newPage === true) { newPage(null); return; }   // the phone's home-screen widget: "+ Note"
     if (t && t.add && typeof t.add === "object") {
       var nt = String(t.add.title || "").replace(/\s+/g, " ").trim().slice(0, 200);
       var nx = String(t.add.text || "").slice(0, 20000);

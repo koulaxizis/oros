@@ -45,6 +45,11 @@ Open them with the gear button:
 ## Sync and backup
 Your Today settings sync between your devices through [orOS sync](help:t/sync). Today stores nothing else: every row is read from the app it belongs to, at the moment you look. Which groups you folded stays in this tab only.
 
+## On the Android home screen
+In the orOS app for Android, long-press the home screen, choose `Widgets` and add `orOS Today`. It shows what is late, today's events and tasks and the next days, as Today does. Tap it to open Today. Its buttons add a task, a glass of water or a note. There is also a small `orOS quick add` widget with just the buttons.
+
+The widget fills in while orOS is open, and keeps up on its own when orOS is closed: tasks whose day passed show as late, and events that are over leave. Open orOS now and then so it learns about new things.
+
 ## Keyboard shortcuts
 - [[Ctrl+Alt+Shift+Y]] opens Today from anywhere in orOS.
 

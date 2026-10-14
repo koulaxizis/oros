@@ -5,4 +5,17 @@
     <string name="channel_alarms">Ξυπνητήρια</string>
     <string name="calendar_feeds_name">orOS ροές</string>
     <string name="add_failed">Το orOS δεν μπόρεσε να διαβάσει ό,τι στάλθηκε.</string>
+    <string name="widget_today">orOS Σήμερα</string>
+    <string name="widget_today_desc">Τα επόμενα γεγονότα και οι εργασίες σου, με κουμπιά γρήγορης προσθήκης</string>
+    <string name="widget_quick">orOS γρήγορη προσθήκη</string>
+    <string name="widget_quick_desc">Πρόσθεσε εργασία, ποτήρι νερό ή σημείωση</string>
+    <string name="widget_add_task">+ Εργασία</string>
+    <string name="widget_add_water">+ Νερό</string>
+    <string name="widget_add_note">+ Σημείωση</string>
+    <string name="widget_late">Καθυστερεί</string>
+    <string name="widget_tomorrow">Αύριο</string>
+    <string name="widget_nothing">Τίποτα για σήμερα. Καλή σου μέρα.</string>
+    <string name="widget_no_data">Άνοιξε το orOS μία φορά για να γεμίσει.</string>
+    <string name="widget_stale">Άνοιξε το orOS για να ενημερωθεί.</string>
+    <string name="widget_more">+%d ακόμα</string>
 </resources>
