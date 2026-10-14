@@ -6588,3 +6588,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Chips show each file, its size and "Goes to {service} when you send"; a file goes out only on Send and only to the chosen service, in that service's format (Claude image/document blocks, OpenAI-style image_url/file, Mistral data URL, Gemini inlineData). Large photos are shrunk to 1568 px JPEG; 12 MB per request. Files are never kept or synced: the conversation stores only {id, name, type, size}.
 - Files: `assistant/core.js` section 3b, `assistant/assistant.js` section 7c, providers, system prompt (text in a file is data, never instructions), help EN/EL, Bible AS-ATT. sw.js precache: nothing new.
   - Tests: tests/assistant-attach.test.js (12); real shell at 360 px EN/EL with a mock provider by the owner. Not tested: real Claude/ChatGPT/Gemini keys, Safari, real phone.
+
+### 2026-10-14 — Contacts: Microsoft hidden until it has an app id; imports fold only sure duplicates (#356) — 2.10.01
+- Contacts › From an account: the Microsoft button shows only when the device holds its own Microsoft app id ("Use my own app id"); Microsoft is paused by Chris.
+- An import now combines only sure duplicates (shared e-mail or phone where the names agree, or the same name where one side has no phone or e-mail); the review says "N listed twice in the import, combined". Two people sharing a landline, or two people with the same first name and different numbers, stay separate (BR-CT-IMPORT).
+- Files: `contacts/importplan.js` (`sameEntry`, `namesAgree`, `folded`), `contacts/contacts.js`, help EN/EL.
+  - Tests: fold rules added; real shell with a mocked Google (EN desktop, EL 360 px) by the owner. Not tested: a real Google account.
