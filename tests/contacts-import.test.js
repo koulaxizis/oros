@@ -127,8 +127,26 @@ test("one local contact is not claimed by two incoming ones", () => {
     inc({ given: "Νίκος", phones: [{ v: "6900000001" }] }),
     inc({ given: "Άλλος", phones: [{ v: "6900000001" }], emails: [{ v: "x@y.z" }] })
   ], []);
-  // the second shares the phone, so the batch folds them into one
-  assert.equal(pl.items.length, 1);
+  // a shared phone with another name is another person: not folded
+  assert.equal(pl.items.length, 2);
+  assert.equal(pl.folded, 0);
+  assert.equal(pl.items[0].match, "a2");
+  assert.equal(pl.items[1].kind, "new");
+});
+
+test("import duplicates: folded only when names agree, counted in `folded`", () => {
+  const pl = P.plan([], [
+    inc({ given: "Γιώργος", phones: [{ v: "6900000010" }] }),
+    inc({ given: "Γιώργος", phones: [{ v: "6900000011" }] }),          // same first name, other phone
+    inc({ given: "Μαμά", phones: [{ v: "2100000000" }] }),
+    inc({ given: "Μπαμπάς", phones: [{ v: "2100000000" }] }),          // shared landline
+    inc({ given: "Γιώργος", family: "Π.", phones: [{ v: "+30 6900000010" }] }),  // real duplicate
+    inc({ given: "Ελένη" }),
+    inc({ given: "Ελένη", emails: [{ v: "e@x.gr" }] })                 // same name, one side bare
+  ], []);
+  assert.equal(pl.items.length, 5);
+  assert.equal(pl.folded, 2);
+  assert.equal(pl.items[0].inc.family, "Π.");
 });
 
 test("Google People person → parser shape", () => {
