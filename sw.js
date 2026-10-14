@@ -1456,6 +1456,7 @@ var PRECACHE_URLS = [
   "certificates/verify.js",
   "chess/openings-data.js",
   "chess/puzzles-pack.js",
+  "chess/puzzles-lichess.js",
   "chess/train.js",
   "contacts/cardtext.js",
   "contacts/csvmap.js",

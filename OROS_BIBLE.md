@@ -6503,11 +6503,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Files:** `wiki/{core.js, wiki.js, wiki.css, index.html, search.js, pdf.js, help.en.txt, help.el.txt}`, `tests/wiki-rich.test.js`; `sw.js` precache `wiki/pdf.js`.
 - **Next:** wave 3, import/export (Notes, Markdown, static HTML), Start from Wikipedia with CC BY-SA attribution, Send to someone.
 
-### 2026-10-14 — No Google speech; Plant Care identification off — 2.02.00
+### 2026-10-14 — No Google speech; Plant Care identification off; Lichess puzzles — 2.02.00
 - **Changes:**
   - Privacy: Google removed from speech (Chris 19:02: "Remove Google, we don't want any logging on their part"). Assistant voice input and Writer dictation are gone: they used the browser's Web Speech recognition, which in Chrome streams the audio to Google (Assistant `#mic-btn`, `mic.*` strings and the device-local `voiceOk` pref; Writer `#btn-dictate`, `dict.*` strings, the listening pill and `WriterCore.joinDictation`).
   - Library read aloud and Maps voice guidance speak only with voices installed on the device: a pure `localVoice(voices, lang)` (`library/core.js`, `maps/route-core.js`, Node-tested) keeps only `localService === true` voices, and every utterance gets that explicit voice, never the browser default or a network voice such as "Google ελληνικά". With no local voice for the language, Library says so (`speak.noVoice`) and Maps shows `nav.novoice` once; nothing is spoken.
   - Plant Care: Pl@ntNet identification hidden (`plants/identify.js` `ENABLED = false`): Pl@ntNet reportedly treats one sign-up per app user as against its terms; Chris was asked to write to Pl@ntNet. Pl@ntNet dropped from the privacy texts while off; credits keep it (the code stays).
   - Help for Assistant, Writer, Library, Maps, Plant Care and the Privacy topic updated in EN and EL.
+  - Chess: a puzzle pack cut from the Lichess puzzle database (CC0; Chris: "try again"). `chess/tools/lichess-pack.js` streams the Lichess CSV and keeps about 3,000 well-tested, popular puzzles (deviation < 90, popularity ≥ 85, ≥ 1000 plays), 500 per rating band from 400 to 2400+, every named theme in each band, in stable hash order. `.github/workflows/chess-puzzles.yml` builds it on GitHub's runners (the cloud sandbox cannot reach database.lichess.org) and commits `chess/puzzles-lichess.js` (precached). The trainer merges it with the 218 orOS puzzles by id; the note counts each source. Credits: CREDITS.md, Info credits, Bible Part VIII.
 - **Decisions:** no Google speech services anywhere (Part IX); Microsoft/Outlook links temporarily rejected by Chris (2026-10-14 19:02).
 - **Schema:** none.
