@@ -6600,3 +6600,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Nine more single apps (SOLO-1): orOS Passwords, Budget, Habits, Water, Diary, Mood, Workouts, Health and Cycle install on their own, each with its own window, icon and icon shortcuts; Passwords, Budget, Habits and Workouts also take Android shares.
 - Files: `solo.js` table + share kinds, small receivers in the apps, `/<id>/solo.html` + manifests + icons from `tools/solo-manifests.js` / `tools/solo-icons.js`; sw.js precache of the 9 pages, manifests and 36 icons; help Install › Single apps EN/EL.
   - Tests: full suite green; real-shell checks by the owner thread. Not tested: real installs on Android/Windows/Linux, Safari.
+
+### 2026-10-14 — Radio: never load a stream over plain http (#358) — 2.11.01
+- Radio only loads streams over https (RX-HTTPS): a station's https address is used when there is one, otherwise the http address is upgraded to https; a station that only answers over http shows "Unencrypted (http) stream only, not played". The page keeps its secure state, so the installed app (PWA / Android TWA) no longer shows the browser bar.
+- Files: `radio/radio.js` (`secureStreamUrl` in `normalizeStation` and `host.api.play`; stored favourites, recents and wake-up rows are upgraded at play time, not rewritten), help EN/EL.
+  - Tests: tests/radio-https.test.js; real shell at 1280 and 360 px by the owner. Not tested: real phone / installed APK, Safari, Firefox.
