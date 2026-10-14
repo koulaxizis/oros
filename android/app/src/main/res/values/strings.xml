@@ -7,4 +7,17 @@
     <string name="calendar_feeds_name">orOS feeds</string>
     <string name="perm_denied">orOS needs this permission to show your orOS data in the phone\'s apps. You can allow it in the app settings.</string>
     <string name="add_failed">orOS could not read what was shared.</string>
+    <string name="widget_today">orOS Today</string>
+    <string name="widget_today_desc">Your next events and tasks, with quick add buttons</string>
+    <string name="widget_quick">orOS quick add</string>
+    <string name="widget_quick_desc">Add a task, a glass of water or a note</string>
+    <string name="widget_add_task">+ Task</string>
+    <string name="widget_add_water">+ Water</string>
+    <string name="widget_add_note">+ Note</string>
+    <string name="widget_late">Late</string>
+    <string name="widget_tomorrow">Tomorrow</string>
+    <string name="widget_nothing">Nothing due. Enjoy the day.</string>
+    <string name="widget_no_data">Open orOS once to fill this widget.</string>
+    <string name="widget_stale">Open orOS to bring this up to date.</string>
+    <string name="widget_more">+%d more</string>
 </resources>

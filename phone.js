@@ -34,7 +34,12 @@
 //               {t:"clear", what}
 //               {t:"applied", what, refs[, ids]}   (v2: phone changes
 //                 taken; ids: orOS id of each new contact by ref)
-//   app → page: {t:"state", v, contacts, calendar, app}
+//               {t:"reminders", seq, items}   (v3: see reminderRows)
+//               {t:"seen", v}                  (v3: orOS on screen)
+//               {t:"today", seq, data}         (v4: home-screen widget,
+//                 see widgetData; only while the phone has a widget)
+//   app → page: {t:"state", v, contacts, calendar, reminders, exact,
+//                widgets, app}
 //               {t:"changes", what, items}   (v2: edits made on the phone)
 //               {t:"done", what, seq, added, updated, removed}
 //               {t:"error", what, seq, msg}
@@ -557,10 +562,31 @@
     return rows.slice(0, 100);
   }
 
+  // Home-screen widget (v4): the Today summary (today/host.js build)
+  // in a small plain form. Each row keeps its own day ("" = every day,
+  // a row with no date of its own), so on the days orOS stays closed
+  // the app can still tell a late task from today's and drop the
+  // events that are over.
+  var WIDGET_ROWS = 30;
+  function widgetData(sum) {
+    var names = {}, rows = [], g = (sum && sum.groups) || {}, today = sum && sum.today;
+    ((sum && sum.apps) || []).forEach(function (a) { if (a && typeof a.id === "string") names[a.id] = str(a.name, 40); });
+    function add(r, day) {
+      if (!r || rows.length >= WIDGET_ROWS || !str(r.title, 120)) return;
+      rows.push({ d: day || "", tm: typeof r.time === "string" ? r.time : "", t: str(r.title, 120),
+                  a: names[r.app] || "", k: r.kind === "event" ? "event" : "task" });
+    }
+    (g.overdue || []).forEach(function (r) { add(r, r.due); });
+    (g.today || []).forEach(function (r) { add(r, r.due); });
+    (g.soon || []).forEach(function (d) { (d && d.rows || []).forEach(function (r) { add(r, d.day); }); });
+    var info = (g.info || [])[0];
+    return { day: typeof today === "string" ? today : "", info: info ? str(info.title, 120) : "", rows: rows };
+  }
+
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
               applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
               applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey,
-              reminderRows: reminderRows };
+              reminderRows: reminderRows, widgetData: widgetData };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
 
@@ -573,14 +599,24 @@
   // when the shell has loaded its apps (ready()).
   // A tap on a reminder the app rang opens /?phone-open=<deepLink>
   // (the shell's notification deep links, e.g. "todo:<list>").
-  var phoneAdd = null, phoneOpen = null;
+  // The home-screen widget (v4) opens /?phone-quick=<word>: one of
+  // QUICK below, nothing else.
+  var QUICK = {
+    today: ["today", null],
+    task: ["todo", { quickAdd: true }],
+    water: ["water", { sip: "glass" }],
+    note: ["notes", { newPage: true }]
+  };
+  var phoneAdd = null, phoneOpen = null, phoneQuick = null;
   try {
     var qs = new URLSearchParams(root.location.search);
-    if (qs.has("phone-add") || qs.has("phone-open")) {
+    if (qs.has("phone-add") || qs.has("phone-open") || qs.has("phone-quick")) {
       try { if (qs.has("phone-add")) phoneAdd = JSON.parse(qs.get("phone-add")); } catch (e) {}
       if (qs.has("phone-open")) phoneOpen = str(qs.get("phone-open"), 200);
+      if (Object.prototype.hasOwnProperty.call(QUICK, qs.get("phone-quick"))) phoneQuick = QUICK[qs.get("phone-quick")];
       qs.delete("phone-add");
       qs.delete("phone-open");
+      qs.delete("phone-quick");
       var rest = qs.toString();
       root.history.replaceState(null, "", root.location.pathname + (rest ? "?" + rest : "") + root.location.hash);
     }
@@ -640,7 +676,26 @@
     }
     if (send({ t: kind, seq: ++seq, items: items })) lastSent[kind] = key;
   }
-  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); }
+  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); }
+
+  // Home-screen widget (v4): only while the phone has one (the app's
+  // state says how many), at most once a minute unless forced, and
+  // only when the rows changed.
+  var todayAt = 0, todayBusy = false;
+  function pushToday(force) {
+    var T = root.orosToday, now = Date.now();
+    if (!port || !appState || !(appState.widgets > 0) || todayBusy) return;
+    if (!T || typeof T.build !== "function") return;
+    if (!force && now - todayAt < 60000) return;
+    todayAt = now;
+    todayBusy = true;
+    T.build().then(function (sum) {
+      todayBusy = false;
+      var data = widgetData(sum), key = fnv(JSON.stringify(data));
+      if (!force && lastSent.today === key) return;
+      if (send({ t: "today", seq: ++seq, data: data })) lastSent.today = key;
+    }, function () { todayBusy = false; });
+  }
 
   // Reminders (v3): the next 48 hours, worked out here from the
   // same data and rules as the shell's engines, rung by the app.
@@ -704,6 +759,7 @@
         calendar: m.calendar === "granted" ? "granted" : (m.calendar === "denied" ? "denied" : "ask"),
         reminders: m.reminders === "granted" ? "granted" : (m.reminders === "denied" ? "denied" : (m.reminders === "ask" ? "ask" : "")),
         exact: m.exact === true,
+        widgets: Math.max(0, Math.min(50, m.widgets | 0)),
         app: typeof m.app === "string" ? m.app.slice(0, 20) : ""
       };
       emit();
@@ -797,6 +853,7 @@
       document.addEventListener("visibilitychange", function () {
         send({ t: "seen", v: !document.hidden });
         if (!document.hidden) { pushAll(false); send({ t: "state" }); }
+        else { todayAt = 0; pushToday(false); }   // leaving: the widget gets the latest
       });
     }
   });
@@ -806,6 +863,8 @@
       var a = phoneAdd; phoneAdd = null; deliverAdd(a);
       var o = phoneOpen; phoneOpen = null;
       if (o && root.orosNotifs && typeof root.orosNotifs.openLink === "function") root.orosNotifs.openLink(o);
+      var q = phoneQuick; phoneQuick = null;
+      if (q && typeof root.__orosOpenAt === "function") root.__orosOpenAt(q[0], q[1]);
     },
     // True when the app was given this reminder (shell dedupKey): the
     // shell then shows it in orOS only, never as a second OS one.

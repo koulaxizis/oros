@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "Quick add" widget: three buttons (Widgets.quick). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="6dp"
+    android:background="@drawable/widget_bg">
+    <TextView android:id="@+id/w_add_task" style="@style/WidgetButton" android:text="@string/widget_add_task" />
+    <TextView android:id="@+id/w_add_water" style="@style/WidgetButton" android:text="@string/widget_add_water" />
+    <TextView android:id="@+id/w_add_note" style="@style/WidgetButton" android:text="@string/widget_add_note" />
+</LinearLayout>
