@@ -24,6 +24,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
 | `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io and Notion, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
+| `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -407,6 +408,39 @@ App operation `POST /v1 { op: "nl", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 
 Errors: `nostore` (503), `auth` (403, wrong `sec`), `gone` (404,
 unknown `k`), `full`, `bad-request`.
+
+## CRM: web form (`/crm/f/`)
+
+A contact form the user pastes into their own website. Same D1 binding
+`NL_DB` as Newsletter (no new binding), its own tables `crm_form`
+(k, pub, SHA-256 of sec, back, at, day, n) and `crm_q` (id, k, v, at),
+created on first use. It reuses Newsletter's helpers (seal, secret
+check, e-mail check, honeypot, page). Without the binding the form
+answers 503 "not available" and the op 503 `nostore`; any D1 failure is
+also a 503, never an exception.
+
+| Route | What it does |
+|---|---|
+| `POST /crm/f/<k>` | Contact form (≤8 KB, `application/x-www-form-urlencoded`): `email` (required, ≤200, Newsletter's check), `name?`, `phone?`, `company?` (≤200, one line), `message?` (≤2000, line breaks kept), `lang?` (en/el), honeypot `website`. Control characters are stripped. Sealed for the form (AES-256-GCM, key wrapped with the form's RSA-OAEP-256 public key); in clear only the form key and the time. Answer: a fixed thank-you page (EN/EL) or a 303 to the form's registered https `back` (never taken from the request). Nothing the visitor sent is echoed |
+
+No Origin check and no CORS, like `/nl/`; the same per-IP rate limit.
+At most 500 messages wait per form and 100 are stored per form per
+UTC day (`crm_form.day`, `n`); beyond either the visitor still gets the
+thank-you page and nothing is stored. Messages older than 30 days are
+deleted on every form POST and every op call, picked up or not.
+Payloads are never logged.
+
+App operation `POST /v1 { op: "crmf", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
+
+| act | Extra fields | Returns |
+|---|---|---|
+| `reg` | `pub` (RSA-OAEP-256 JWK, 2048-bit), `back` ("" or https ≤300) | `{ ok }`. A new `k` takes this `sec` (at most 5,000 forms); an existing one needs the same `sec` |
+| `pull` | `after` (row id) | `{ rows[{ id, v, at }], more }` (≤100) |
+| `ack` | `upto` (row id) | `{ n }`: deletes the form's rows up to that id |
+| `drop` | | `{ ok }`: deletes the form and its rows |
+
+Errors: `nostore` (503: no binding or a D1 failure), `auth` (403),
+`gone` (404), `full`, `bad-request`. Tests: `tests/crm-form-relay.test.js`.
 
 ## Studio Remote: meeting rooms (`/rt/`)
 

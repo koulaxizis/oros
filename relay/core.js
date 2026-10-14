@@ -12,7 +12,9 @@
 //           POST /v1  { op: "nl", act, k, sec, ... }  (Newsletter, see newsletter.js)
 //           POST /v1  { op: "papi", prov, key, dom?, reqs:[...] }  (Newsletter: provider APIs, see papi.js)
 //           POST /v1  { op: "ext", p, host, base, ck, cs, reqs:[...] }  (Connected services: a person's own shop, see ext.js)
+//           POST /v1  { op: "crmf", act, k, sec, ... }  (CRM web form, see crmform.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
+//           /crm/f/<k> public CRM contact form (crmform.js)
 // Response: { ok:true, data } | { ok:false, error:{ code, msg } }
 // ============================================================
 
@@ -22,6 +24,7 @@ import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
 import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
 import { validNl, runNl, handleNl, page as nlPage, NlError } from "./newsletter.js";
+import { validCrmf, runCrmf, handleCrmForm, crmPage, CrmfError } from "./crmform.js";
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 import { validExt, runExt, EXT_LIMITS } from "./ext.js";
 import { handleRemote, ROOM_RE } from "./remote.js";
@@ -36,7 +39,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1, crmf: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -84,6 +87,7 @@ export function validRequest(b, env) {
   if (b.op === "web") return validWeb(b);   // Reader: public pages, no account
   if (b.op === "canva") return validCanva(b, allowedOrigins(env));   // Atelier: Canva Connect
   if (b.op === "nl") return validNl(b);   // Newsletter: sign-ups and unsubscribes waiting in D1
+  if (b.op === "crmf") return validCrmf(b);   // CRM: web form messages waiting in D1
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
   if (b.op === "ext") return validExt(b);     // Connected services: a person's own shop
   const bad = validAccount(b.acct);
@@ -192,6 +196,11 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return nlPage(429, "en", "busy");
     return handleNl(request, env, url, now || Date.now());
   }
+  // CRM's public contact form: same rules as /nl/ (no Origin check, no CORS).
+  if (url.pathname.startsWith("/crm/")) {
+    if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return crmPage(429, "en", "busy");
+    return handleCrmForm(request, env, url, now || Date.now());
+  }
 
   // Studio Remote's meeting rooms (relay/remote.js): WebSockets from orOS only.
   if (url.pathname.startsWith("/rt/")) {
@@ -273,6 +282,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     } catch (e) {
       if (e instanceof NlError) return fail(e.status, e.code, e.message, okOrigin);
       return fail(200, "proto", String(e && e.message || "proto").slice(0, 300), okOrigin);
+    }
+  }
+
+  if (b.op === "crmf") {
+    try {
+      const data = await runCrmf(b, env, now || Date.now());
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof CrmfError) return fail(e.status, e.code, e.message, okOrigin);
+      return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
     }
   }
 
