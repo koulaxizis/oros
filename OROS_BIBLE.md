@@ -6655,3 +6655,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Credits: the seven services added to the AI services group.
 - Files: `assistant/core.js` (PROVIDERS, `modelsUrl`, `parseModels`, `normProv` keeps `free`), `assistant/assistant.js` (`#as-test`, `testErr`, free-only filter), help EN/EL. sw.js precache: nothing new.
   - Tests: tests/assistant-freeprov.test.js; real shell at 360 px EN/EL with mocked services by the owner. Not tested: real CORS behaviour of the seven services (hosts blocked from the container; the connection test is how users find out), real tool-calling quality per model, Safari, real phone.
+
+### 2026-10-14 — Assistant, phase 5 wave 4: open-source models on your computer and in the browser (#367) — 2.20.00
+- Local / OpenAI-compatible gets a Server choice with ready-made settings for Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM and KoboldCpp (address filled in, one-time CORS step shown with the site's real origin), or your own address (AS-LOCAL).
+- New In-browser model (WebLLM 0.2.86, vendored): 11 open models (Llama 3.2, Qwen 3.5, SmolLM2, Ministral 3, Phi-4 mini, Mistral 7B, Hermes 3; no Gemma) run on the graphics card through WebGPU. Download the model once from huggingface.co, then it works offline with nothing leaving the device; Remove from this device frees the space; a question never starts a download. Chat only for now.
+- sw.js: precache `assistant/webllm-worker.js`; `vendor/webllm/*` served cache-first from its own kept `oros-webllm` cache (about 7 MB, not precached), and activate never deletes the `webllm/*` model caches, so a downloaded model survives orOS updates.
+- Credits: WebLLM (Apache-2.0), the MLC model weights on Hugging Face (each under its own licence) and the MLC model libraries.
+- Files: `assistant/core.js` (`LOCAL_KITS`, provider `webllm`, `WEBLLM_MODELS`, `webllmMessages`), `assistant/assistant.js` section 6b, `assistant/webllm-worker.js` (new), `vendor/webllm/`, `today/today.js`, help EN/EL.
+  - Tests: tests/assistant-local.test.js; real shell at 360 px EN/EL with a mocked Ollama and a fake WebLLM engine by the owner. Not tested: a real WebLLM download and GPU inference, real CORS of each local program, the sw.js cache rules in a live install, Safari, phone.
