@@ -16,15 +16,31 @@ Under `Split`, pick who shares it (`Everyone` or tap names) and how:
 - `Amounts`: type each person's exact part.
 - `Shares`: for example 2 shares for a couple, 1 for a single.
 - `%`: percentages that add up to 100.
+- `Items`: an itemised receipt, see below.
 
-A line under the split tells you what's `Left to share` or `Too much by`, and says `Adds up` when it's right. Add an optional `Note`, then `Save`. Tap or click an expense to edit or delete it; an `Undo` button stays for a few seconds after a delete.
+A line under the split tells you what's `Left to share` or `Too much by`, and says `Adds up` when it's right. With `Amounts`, `Share the rest equally` splits what is left between everyone whose field is still empty (type 0 for anyone left out). Odd cents always go by the same fixed rule, so every phone shows the same numbers. Add an optional `Note`, then `Save`. Tap or click an expense to edit or delete it; an `Undo` button stays for a few seconds after a delete.
 
+## Other currencies
+Next to `Amount`, pick the `Currency paid in`, for example dollars on a trip to New York. Split fills in the `Exchange rate` from the European Central Bank (the same rates as [Unit Converter](app:units)) and shows the amount in the group's currency. You can type a different rate, for example the one on your card statement; `Use the ECB rate` puts the official one back.
+
+Payers' amounts, exact amounts and receipt items are typed in the currency you picked. The expense is saved with its original amount, currency and rate, so balances never change when rates move later. Offline, the last rates on this device are used; if there are none yet, type the rate.
+
+## Itemised receipts
+Choose `Items` under `Split`. For each line of the receipt, type the item and its price and tap who had it (`Everyone` for shared ones). Add `Tax` and `Tip` if the receipt has them: they are shared in proportion to what each person had. The receipt total must match the `Amount`; `Use … as the amount` copies it across.
+
+## Repeating expenses
+For rent, bills or subscriptions, pick `Every week`, `Every month` or `Every year` under `Repeat` when you add the expense, and an optional `Until` date. It appears in the list on its date each time, with the same split; a month-end date stays at the month's end. `Repeating` at the top of the list shows each series with its next date. Tap one to change it (changes count from the next time) or to `Stop repeating`; the ones already added stay. Deleting one occurrence never brings it back.
+
+## Receipt photos
+`Add a photo` keeps a picture of the receipt with the expense. It is stored in [Files](app:files), folder Split/Receipts, and redrawn so that location and camera data are removed. It travels between your own devices with Vault Drive; friends you send the group file to don't get the photo. Deleting the expense deletes the photo too.
+
+## Find expenses
 The `Expenses` tab has `Search the expenses…` and filters for `Category`, `Involving` someone and `Payments only`.
 
 ## Balances and settling up
 `Balances` shows what each person paid, their share, and whether they get back or owe money. `Settle up` lists the fewest payments that make everyone even. When someone pays, press `Paid` next to that payment, or `Record a payment` for any other amount.
 
-If you set who you are, the group shows `Group spending`, `Your share` and `Your balance`. When you edit an expense you're part of, `Add my share to Budget` sends your part to [Budget](app:budget) as a new entry for you to check and save.
+If you set who you are, the group shows `Group spending`, `Your share` and `Your balance`. When you edit an expense you're part of, `Add my share to Budget` sends your part (in the group's currency) to [Budget](app:budget) as a new entry for you to check and save.
 
 ## Share with friends
 From the `More` menu in a group:
@@ -34,7 +50,7 @@ From the `More` menu in a group:
 - `Group and people`, `Archive the group` and `Delete the group`.
 
 ## Sync and backup
-All groups, people, expenses and payments sync between your own devices through [orOS sync](help:t/sync). The open group, tab and CSV format stay on each device. The home screen's menu has `Backup (JSON)` and `Restore from backup`, which merges with what's here; the orOS [backup](help:t/backup) covers Split too.
+All groups, people, expenses, payments and repeating expenses sync between your own devices through [orOS sync](help:t/sync). The open group, tab and CSV format stay on each device. The home screen's menu has `Backup (JSON)` and `Restore from backup`, which merges with what's here; the orOS [backup](help:t/backup) covers Split too.
 
 ## Keyboard shortcuts
 - [[N]]: new expense in a group, or new group on the home screen.
@@ -45,5 +61,8 @@ All groups, people, expenses and payments sync between your own devices through 
 - Archive a group once everyone is even; it stays out of the way but nothing is lost.
 
 ## Limits
-- Changing a group's currency doesn't convert the amounts, and a group has one currency.
+- Balances are kept in the group's currency. Changing a group's currency doesn't convert the amounts already there.
+- Exchange rates are the latest ECB rates on this device, not the rate of the expense's date; type the rate if you need an exact one. Getting the rates contacts frankfurter.dev, and only when you pick another currency and the rates here are older than 6 hours.
+- One receipt photo per expense; repeating expenses have no photo. Up to 60 items per receipt and 50 repeating expenses per group.
+- Someone still on an older orOS sees these expenses as plain amounts in the group's currency (balances stay right), but loses the items, original currency and photo if they edit one.
 - Up to 30 people per group and 200 groups.

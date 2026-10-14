@@ -569,29 +569,11 @@
     info.textContent = line;
   }
 
-  function fetchJSON(url) {
-    var ctl = typeof AbortController === "function" ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 10000);
-    return fetch(url, { cache: "no-store", credentials: "omit", signal: ctl ? ctl.signal : undefined })
-      .then(function (res) { clearTimeout(timer); if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); },
-            function (e) { clearTimeout(timer); throw e; });
-  }
-
   function fetchRates(manual) {
     if (fetching) return;
     fetching = true; fxFailed = false;
     if (catId === "currency") renderFx();
-    var urls = C.RATES_URLS.slice();
-    function next() {
-      var url = urls.shift();
-      if (!url) return Promise.reject(new Error("no source"));
-      return fetchJSON(url).then(function (json) {
-        var r = C.readRates(json, Date.now(), url);
-        if (!r) throw new Error("bad reply");
-        return r;
-      }).catch(function () { return next(); });
-    }
-    next().then(function (r) {
+    C.fetchLatest(function (u, o) { return fetch(u, o); }).then(function (r) {
       fetching = false;
       rates = r;
       try { localStorage.setItem(RATES_KEY, JSON.stringify(r)); } catch (e) {}
