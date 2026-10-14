@@ -69,7 +69,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - Moving needs orOS sync connected and unlocked. Copying works without it.
 - `Stop` ends a transfer: files already copied stay on the disk and no original is removed. If a transfer is cut short (closed tab, no connection), Files offers to `Continue` it next time.
 
-- If Files says Dropbox is not set up yet, open `Use my own app key`: create a Dropbox app with Full Dropbox access, tick the permissions shown, add the redirect address shown and enter the app key.
+- To use a Dropbox app of your own instead, open `Use my own app key`: create a Dropbox app with Full Dropbox access, tick the permissions shown, add the redirect address shown and enter the app key.
 
 > Files go straight between this browser and Dropbox. The connection is kept on this device only and is not synced.
 

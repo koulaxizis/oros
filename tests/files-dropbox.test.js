@@ -17,7 +17,7 @@ test("app key: shape check; sync's App-folder key is never reused", () => {
   assert.equal(C.validKey("a".repeat(33)), false);
   assert.equal(C.validKey("abc-123-def"), false);
   assert.notEqual(C.APP_KEY, "wnohlxz79ie8w3e");
-  assert.ok(C.APP_KEY === "" || C.validKey(C.APP_KEY));
+  assert.ok(C.validKey(C.APP_KEY));
 });
 
 test("Dropbox-API-Arg: non-ASCII escaped, JSON still parses to the same path", () => {
