@@ -840,7 +840,7 @@
         showToast(t("id.filled", { name: r.sci }));
       });
     });
-    sciRow.appendChild(idb);
+    if (ID.ENABLED) sciRow.appendChild(idb);
     form.appendChild(sciRow);
 
     var name = el("input");
@@ -1189,30 +1189,32 @@
     hemi.value = prefs.hemi;
     hemi.addEventListener("change", function () { prefs.hemi = hemi.value === "s" ? "s" : "n"; savePrefsNow(); render(); });
     dlg.appendChild(field(t("set.hemi"), hemi, "pc-hemi"));
-    // Pl@ntNet: the person's own key (device-local)
-    dlg.appendChild(el("div", "dlg-lbl", t("set.pn")));
-    var key = el("input");
-    key.type = "password";
-    key.autocomplete = "off";
-    key.spellcheck = false;
-    key.maxLength = 80;
-    key.value = prefs.pnKey;
-    key.addEventListener("change", function () {
-      var v = key.value.trim();
-      if (v && !ID.keyOk(v)) { showToast(t("set.pnBad")); return; }
-      if (v === prefs.pnKey) return;
-      prefs.pnKey = v;
-      savePrefsNow();
-      showToast(t(v ? "set.pnSaved" : "set.pnCleared"));
-    });
-    dlg.appendChild(field(t("set.pnKey"), key, "pc-pnkey"));
-    var hint = el("p", "dlg-sub", t("set.pnHint") + " ");
-    var lnk = el("a", "", t("set.pnSite"));
-    lnk.href = ID.SITE;
-    lnk.target = "_blank";
-    lnk.rel = "noopener noreferrer";
-    hint.appendChild(lnk);
-    dlg.appendChild(hint);
+    // Pl@ntNet: the person's own key (device-local); hidden while ID.ENABLED is off
+    if (ID.ENABLED) {
+      dlg.appendChild(el("div", "dlg-lbl", t("set.pn")));
+      var key = el("input");
+      key.type = "password";
+      key.autocomplete = "off";
+      key.spellcheck = false;
+      key.maxLength = 80;
+      key.value = prefs.pnKey;
+      key.addEventListener("change", function () {
+        var v = key.value.trim();
+        if (v && !ID.keyOk(v)) { showToast(t("set.pnBad")); return; }
+        if (v === prefs.pnKey) return;
+        prefs.pnKey = v;
+        savePrefsNow();
+        showToast(t(v ? "set.pnSaved" : "set.pnCleared"));
+      });
+      dlg.appendChild(field(t("set.pnKey"), key, "pc-pnkey"));
+      var hint = el("p", "dlg-sub", t("set.pnHint") + " ");
+      var lnk = el("a", "", t("set.pnSite"));
+      lnk.href = ID.SITE;
+      lnk.target = "_blank";
+      lnk.rel = "noopener noreferrer";
+      hint.appendChild(lnk);
+      dlg.appendChild(hint);
+    }
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight");
     io.appendChild(button(t("set.export"), "", exportData));

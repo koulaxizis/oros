@@ -347,7 +347,6 @@ const STRINGS = {
     'goal.lockArmed': 'Editing will lock when the goal is reached',
     'tt.insert': 'Insert',
     'tt.view': 'View',
-    'tt.dictate': 'Dictation',
     'tbl.bar': 'Table tools',
     'tbl.rowAbove': 'Row above',
     'tbl.rowBelow': 'Row below',
@@ -377,12 +376,6 @@ const STRINGS = {
     'stats.lt1': 'under 1 min',
     'stats.note': 'Reading at about 230 words a minute, speaking at about 130.',
     'wc.sel': '{s} of {n} words',
-    'dict.start': 'Start dictation',
-    'dict.stop': 'Stop dictation',
-    'dict.listening': 'Listening…',
-    'dict.denied': 'The microphone is not allowed. Allow it in the browser’s site settings and try again.',
-    'dict.network': 'Dictation needs the browser’s speech service, which could not be reached.',
-    'dict.failed': 'Dictation stopped',
     'tt.review': 'Review',
     'rv.spell': 'Check spelling',
     'rv.lang': 'Spelling of this document',
@@ -701,7 +694,6 @@ const STRINGS = {
     'goal.lockArmed': 'Η επεξεργασία θα κλειδώσει μόλις επιτευχθεί ο στόχος',
     'tt.insert': 'Εισαγωγή',
     'tt.view': 'Προβολή',
-    'tt.dictate': 'Υπαγόρευση',
     'tbl.bar': 'Εργαλεία πίνακα',
     'tbl.rowAbove': 'Γραμμή πάνω',
     'tbl.rowBelow': 'Γραμμή κάτω',
@@ -731,12 +723,6 @@ const STRINGS = {
     'stats.lt1': 'κάτω από 1 λεπτό',
     'stats.note': 'Ανάγνωση με περίπου 230 λέξεις το λεπτό, ομιλία με περίπου 130.',
     'wc.sel': '{s} από {n} λέξεις',
-    'dict.start': 'Έναρξη υπαγόρευσης',
-    'dict.stop': 'Διακοπή υπαγόρευσης',
-    'dict.listening': 'Ακούω…',
-    'dict.denied': 'Το μικρόφωνο δεν επιτρέπεται. Επίτρεψέ το στις ρυθμίσεις ιστότοπου του προγράμματος περιήγησης και δοκίμασε ξανά.',
-    'dict.network': 'Η υπαγόρευση χρειάζεται την υπηρεσία ομιλίας του προγράμματος περιήγησης, που δεν ήταν διαθέσιμη.',
-    'dict.failed': 'Η υπαγόρευση σταμάτησε',
     'tt.review': 'Έλεγχος',
     'rv.spell': 'Ορθογραφικός έλεγχος',
     'rv.lang': 'Ορθογραφία αυτού του εγγράφου',
@@ -853,7 +839,6 @@ const ICONS = {
   docs:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>',
   insert: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M8 5.5v5M5.5 8h5"/></svg>',
   view:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>',
-  mic:    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg>',
   rowUp:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="12" height="6" rx="1"/><path d="M8 1.5v5M5.5 4h5"/></svg>',
   rowDown:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="6" rx="1"/><path d="M8 9.5v5M5.5 12h5"/></svg>',
   colLeft:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="6" height="12" rx="1"/><path d="M1.5 8h5M4 5.5v5"/></svg>',
@@ -882,7 +867,7 @@ function paintIcons() {
       'toc': 'toc', 'meta': 'meta', 'page': 'page',
       'templates': 'tpl', 'versions': 'versions', 'goal': 'goal',
       'export': 'export', 'import': 'import', 'lorem': 'lorem', 'settings': 'settings',
-      'insert': 'insert', 'view': 'view', 'dictate': 'mic', 'review': 'review'
+      'insert': 'insert', 'view': 'view', 'review': 'review'
     };
     const ic = map[key];
     if (ic && ICONS[ic]) btn.innerHTML = ICONS[ic];
@@ -1899,7 +1884,6 @@ function renderEditor() {
   commentsAfterRender();           // refresh comment cards (Wave 3)
   goalAfterRender();               // goal bar + reading progress (Wave 4)
   if (tableBar) tableBar.hidden = true;
-  if (dict && dict.docId !== state.activeTab) stopDictation();
   viewAfterChange();
   tcSync(true);                    // Track changes of this doc (wave 22)
   spellAfterRender();              // fresh spelling marks for this doc
@@ -3314,8 +3298,8 @@ function doInsertTable(dlg) {
 }
 
 // ===== SECTION 15b: INSERT MENU · TABLE TOOLS · VIEW (FOCUS, TYPEWRITER
-// SCROLLING, WORD COUNT) · STATISTICS · DICTATION · UNDOABLE REPLACE =====
-// Pure parts (sentences, statistics, dictation spacing, centring) live
+// SCROLLING, WORD COUNT) · STATISTICS · UNDOABLE REPLACE =====
+// Pure parts (sentences, statistics, centring) live
 // in core.js (window.WriterCore, tested in tests/writer-core.test.js).
 const WC = window.WriterCore;
 function appLang() { return window.orosLang === 'el' ? 'el' : 'en'; }
@@ -3848,124 +3832,6 @@ function openStatsDialog() {
   dlg.querySelector('#stats-wc').addEventListener('change', e => setView('wc', e.target.checked));
 }
 
-/* ----- DICTATION (Web Speech API; the browser may use an online service) ----- */
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-let dict = null;      // { rec, want, fails, docId }
-let dictPill = null;
-
-function dictLangTag() {
-  if (appLang() === 'el') return 'el-GR';
-  const nl = String(navigator.language || '');
-  return /^en\b/i.test(nl) ? nl : 'en-US';
-}
-
-function setDictUi(on) {
-  const b = document.getElementById('btn-dictate');
-  if (b) {
-    b.classList.toggle('active', on);
-    b.classList.toggle('rec', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.title = t(on ? 'dict.stop' : 'dict.start');
-    b.setAttribute('aria-label', b.title);
-  }
-  dictInterim('');
-}
-
-function dictInterim(text) {
-  const on = !!(dict && dict.want);
-  if (!dictPill) {
-    if (!on) return;
-    dictPill = document.createElement('div');
-    dictPill.className = 'dict-pill';
-    dictPill.setAttribute('role', 'status');
-    EL.wrapper.appendChild(dictPill);
-  }
-  dictPill.hidden = !on;
-  dictPill.textContent = '';
-  const lab = document.createElement('strong');
-  lab.textContent = t('dict.listening');
-  dictPill.appendChild(lab);
-  if (text) dictPill.appendChild(document.createTextNode(' ' + text));
-}
-
-function toggleDictation() {
-  if (dict && dict.want) stopDictation(); else startDictation();
-}
-
-function startDictation() {
-  if (!SpeechRec || isLocked()) return;
-  restoreEditorSelection();
-  let rec;
-  try { rec = new SpeechRec(); } catch (e) { showToast(t('dict.failed')); return; }
-  rec.lang = dictLangTag();
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.maxAlternatives = 1;
-  dict = { rec: rec, want: true, fails: 0, docId: state.activeTab };
-  rec.onresult = e => {
-    if (!dict || dict.rec !== rec) return;
-    dict.fails = 0;
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const res = e.results[i];
-      if (res.isFinal) dictInsert(res[0].transcript);
-      else interim += res[0].transcript;
-    }
-    dictInterim(interim);
-  };
-  rec.onerror = e => {
-    if (!dict || dict.rec !== rec) return;
-    const err = e && e.error;
-    if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') {
-      dict.want = false; localToast(t('dict.denied'));
-    } else if (err === 'network') {
-      dict.want = false; localToast(t('dict.network'));
-    } else if (err !== 'aborted') dict.fails++;
-  };
-  rec.onend = () => {
-    // Chrome ends a "continuous" session after a pause: start again while
-    // the user still wants it (at most 3 silent rounds in a row)
-    if (dict && dict.rec === rec && dict.want && dict.fails < 3 && !document.hidden) {
-      try { rec.start(); return; } catch (e) { /* fall through */ }
-    }
-    if (dict && dict.rec === rec) dict = null;
-    setDictUi(false);
-  };
-  try { rec.start(); } catch (e) { dict = null; showToast(t('dict.failed')); return; }
-  setDictUi(true);
-}
-
-function stopDictation() {
-  if (!dict) return;
-  dict.want = false;
-  try { dict.rec.stop(); } catch (e) { /* already ended */ }
-  setDictUi(false);
-}
-
-function dictInsert(raw) {
-  if (!dict || isLocked()) return;
-  if (state.activeTab !== dict.docId) { stopDictation(); return; }
-  restoreEditorSelection();
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return;
-  const r = sel.getRangeAt(0);
-  let before = '';
-  try {
-    const sc = r.startContainer;
-    const el = sc.nodeType === 1 ? sc : sc.parentElement;
-    const blk = (el && el.closest('p, li, h1, h2, h3, h4, blockquote, pre, td, th, figcaption, div:not(#rich-editor)')) || EL.editor;
-    const pre = document.createRange();
-    pre.selectNodeContents(EL.editor.contains(blk) ? blk : EL.editor);
-    pre.setEnd(r.startContainer, r.startOffset);
-    before = pre.toString().slice(-40);
-  } catch (e) { before = ''; }
-  const txt = WC.joinDictation(before, raw, appLang());
-  if (!txt) return;
-  let ok = false;
-  try { ok = document.execCommand('insertText', false, txt); } catch (e) { ok = false; }
-  if (!ok) { insertTextAtCursor(txt); updateEmptyState(); scheduleSave(); }
-}
-
 /* ----- UNDOABLE FIND AND REPLACE ----- */
 // Every replacement goes through execCommand (insertText / delete), so
 // it lands in the browser's own undo stack. "Replace all" makes one
@@ -4059,8 +3925,7 @@ function wireReplaceUndo() {
 function wireViewTools() {
   const ins = document.getElementById('btn-insert');
   const vw = document.getElementById('btn-view');
-  const mic = document.getElementById('btn-dictate');
-  [ins, vw, mic].forEach(b => { if (b) b.addEventListener('mousedown', e => e.preventDefault()); });
+  [ins, vw].forEach(b => { if (b) b.addEventListener('mousedown', e => e.preventDefault()); });
   if (ins) ins.addEventListener('click', () => toggleMenu(ins, openInsertMenu));
   if (vw) vw.addEventListener('click', () => toggleMenu(vw, openViewMenu));
   const rv = document.getElementById('btn-review');
@@ -4068,14 +3933,9 @@ function wireViewTools() {
     rv.addEventListener('mousedown', e => e.preventDefault());
     rv.addEventListener('click', () => toggleMenu(rv, openReviewMenu));
   }
-  if (mic) {
-    mic.hidden = !SpeechRec;
-    if (SpeechRec) mic.addEventListener('click', toggleDictation);
-  }
   document.addEventListener('selectionchange', viewAfterChange);
   EL.editor.addEventListener('input', viewAfterChange);
   window.addEventListener('resize', () => { twPadding(); viewAfterChange(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stopDictation(); });
   // Ctrl+Alt+F: focus mode on/off; Esc leaves it (when nothing else is open)
   document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey && e.code === 'KeyF') {

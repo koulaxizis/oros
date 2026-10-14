@@ -6,7 +6,6 @@
 //   · sentenceRanges / sentenceAt: sentence bounds for Focus mode
 //   · breakLines / alignLine: line breaking + alignment for the PDF
 //   · colWidths / fitBox: table columns and image size in the PDF
-//   · joinDictation: spacing and capital letter for dictated text
 //   · centerDelta: typewriter scrolling
 // ============================================================
 (function (root) {
@@ -160,21 +159,6 @@
     return { w: w * k, h: h * k };
   }
 
-  // Dictated text joined to the text before the caret: a space when
-  // needed, a capital letter at the start of a sentence.
-  function joinDictation(before, text, lang) {
-    text = String(text || "").replace(/\s+/g, " ").trim();
-    if (!text) return "";
-    before = String(before || "").replace(/ /g, " ");
-    var tail = before.replace(/[ \t]+$/, "");
-    var startSentence = !tail || /\n$/.test(tail) ||
-      new RegExp("[" + terms(lang).replace(/[.?]/g, "\\$&") + "][" + CLOSERS.replace(/[\]\\)}]/g, "\\$&") + "]*$").test(tail);
-    if (startSentence) text = text.charAt(0).toUpperCase() + text.slice(1);
-    var needSpace = before.length > 0 && !/[\s(\[{“‘«"'\/-]$/.test(before) &&
-      !/^[.,;:!?…)\]}»”’;]/.test(text);
-    return (needSpace ? " " : "") + text;
-  }
-
   // Pixels to scroll so the caret line sits in the middle of the view
   // (0 when it is already within a few pixels of it).
   function centerDelta(caretMid, viewTop, viewH) {
@@ -186,7 +170,7 @@
     countWords: countWords, sentenceRanges: sentenceRanges, sentenceAt: sentenceAt,
     countSentences: countSentences, textStats: textStats, roundMinutes: roundMinutes,
     breakLines: breakLines, alignLine: alignLine, colWidths: colWidths, fitBox: fitBox,
-    joinDictation: joinDictation, centerDelta: centerDelta,
+    centerDelta: centerDelta,
     READ_WPM: READ_WPM, SPEAK_WPM: SPEAK_WPM
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
