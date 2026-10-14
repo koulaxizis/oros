@@ -17,6 +17,17 @@
 //   • Recents section on root (last 10)
 // All new UI is JS-injected (search box, context menu, action
 // bar) — files/index.html stays untouched from Wave 1.
+//
+// Wave 3 (Explorer / Nautilus / Google Files parity):
+//   • Trash: Delete moves items to /internal/.trash (one record per
+//     item, files-core.js); Restore, Delete forever, Empty Trash,
+//     auto-empty after 30 days. Vault Drive carries it as moves.
+//   • Search inside text files and PDFs (snippets, progress, paging)
+//   • ZIP: compress a selection, preview / extract a .zip
+//   • Grid view with thumbnails (images, first page of PDFs)
+//   • Favourites (synced slice "files", key oros-files-favs) and a
+//     Recent view at the top of the tree; recents stay device-local
+//   • Select mode for touch screens (check boxes + bottom bar)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. View state + persistence (+ recents journal)
@@ -57,8 +68,13 @@
   var RECENTS_KEY = "oros-files-recents";
   var DATA_VER = 1;
   var ROOT = "/internal";
-  var RECENTS_MAX = 10;
-  var SEARCH_CAP = 100;
+  var RECENTS_MAX = 30;          // journal length (Recent view)
+  var ROOT_RECENTS = 10;         // shown on the main folder
+  var SEARCH_PAGE = 100;         // results per "Show more"
+  var FAVS_KEY = "oros-files-favs";   // synced slice "files" (Favourites)
+  var SWEEP_KEY = "oros-files-trash-swept";
+  var CORE = window.OrosFilesCore;
+  var TRASH = CORE.TRASH;
   var STORAGE_CACHE_KEY = "oros-files-storage-cache";
   var STORAGE_TTL = 5 * 60 * 1000; // 5 minutes TTL
 
@@ -89,10 +105,10 @@
       "dlg.ok":       "Create",
       "dlg.save":     "Save",
       "dlg.deleteTitle":    "Delete",
-      "dlg.deleteConfirm":  "Delete",
-      "dlg.deleteFileMsg":   "Delete \"{name}\"?",
-      "dlg.deleteFolderMsg": "Delete \"{name}\" and everything inside it?",
-      "dlg.deleteMultiMsg":  "Delete {n} selected items permanently?",
+      "dlg.deleteConfirm":  "Move to Trash",
+      "dlg.deleteFileMsg":   "Move \"{name}\" to Trash? You can restore it for 30 days.",
+      "dlg.deleteFolderMsg": "Move \"{name}\" and everything inside it to Trash? You can restore it for 30 days.",
+      "dlg.deleteMultiMsg":  "Move {n} selected items to Trash? You can restore them for 30 days.",
       "dlg.overwriteTitle": "Already exists",
       "dlg.overwriteMsg":   "\"{name}\" already exists in this folder. Overwrite it?",
       "dlg.overwriteOk":    "Overwrite",
@@ -184,6 +200,67 @@
       "menu.copyContent": "Copy content",
       "menu.delete":   "Delete",
       "menu.rename":   "Rename",
+      "dlg.deleteForeverTitle": "Delete forever",
+      "tree.recent":   "Recent",
+      "tree.favs":     "Favourites",
+      "tree.trash":    "Trash",
+      "fav.add":       "Add to Favourites",
+      "fav.remove":    "Remove from Favourites",
+      "fav.added":     "Added to Favourites",
+      "fav.removed":   "Removed from Favourites",
+      "fav.missing":   "Not on this device yet. It may still be syncing.",
+      "recent.empty":  "No recent files yet",
+      "trash.note":    "Items in Trash are deleted for good after 30 days.",
+      "trash.empty":   "Trash is empty",
+      "trash.emptyAll":"Empty Trash",
+      "trash.restore": "Restore",
+      "trash.deleteForever": "Delete forever",
+      "trash.moved":   "Moved to Trash",
+      "trash.movedMulti": "{n} items moved to Trash",
+      "trash.restored":"Restored",
+      "trash.restoredAs": "Restored as \"{name}\"",
+      "trash.restoredMulti": "{n} items restored",
+      "trash.gone":    "Deleted forever",
+      "trash.goneMulti": "{n} items deleted forever",
+      "trash.emptied": "Trash emptied",
+      "trash.notHere": "This item hasn't reached this device yet. Try again after sync.",
+      "trash.from":    "from {path}",
+      "trash.unknown": "original folder unknown",
+      "trash.emptyConfirm": "Delete everything in Trash forever? This can't be undone.",
+      "trash.foreverMsg":   "Delete \"{name}\" forever? This can't be undone.",
+      "trash.foreverMulti": "Delete {n} items forever? This can't be undone.",
+      "search.contents":      "Contents",
+      "search.contentsTitle": "Also search inside files (text and PDF)",
+      "search.scanning":      "Searching inside files… {n} of {t}",
+      "search.walking":       "Searching… {n} items checked",
+      "search.more":          "Show more ({n})",
+      "search.matchCount":    "{n} matches",
+      "search.skipped":       "{n} files were too big or unreadable and were skipped",
+      "menu.zip":      "Compress to ZIP",
+      "menu.extract":  "Extract here",
+      "zip.archive":   "Archive",
+      "zip.working":   "Compressing… {n} of {t}",
+      "zip.done":      "Created \"{name}\"",
+      "zip.fail":      "The ZIP file couldn't be created",
+      "zip.tooBig":    "Too much for one ZIP: up to {n} files and {mb} MB.",
+      "zip.extracting":"Extracting… {n} of {t}",
+      "zip.extracted": "Extracted {n} files into \"{name}\"",
+      "zip.partial":   "{n} files couldn't be extracted",
+      "zip.bad":       "This ZIP file can't be read.",
+      "zip.big":       "This ZIP is too big to open here (up to {mb} MB).",
+      "zip.entries":   "{n} files, {size} unpacked",
+      "zip.extract":   "Extract",
+      "zip.empty":     "There are no files to extract.",
+      "zip.busy":      "Wait for the current ZIP job to finish.",
+      "view.grid":     "Grid view",
+      "view.list":     "List view",
+      "sel.mode":      "Select",
+      "sel.done":      "Done",
+      "sel.all":       "Select all",
+      "sel.count":     "{n} selected",
+      "sel.one":       "1 selected",
+      "sel.none":      "Tap items to select them",
+      "err.reserved":  "This name is reserved for the Trash.",
       "name.newFolder": "New folder",
       "name.newFile":   "New file.txt",
 	  "act.import": "Import files"
@@ -210,10 +287,10 @@
       "dlg.ok":       "Δημιουργία",
       "dlg.save":     "Αποθήκευση",
       "dlg.deleteTitle":    "Διαγραφή",
-      "dlg.deleteConfirm":  "Διαγραφή",
-      "dlg.deleteFileMsg":   "Διαγραφή «{name}»;",
-      "dlg.deleteFolderMsg": "Διαγραφή «{name}» και όλων των περιεχομένων;",
-      "dlg.deleteMultiMsg":  "Οριστική διαγραφή {n} επιλεγμένων στοιχείων;",
+      "dlg.deleteConfirm":  "Μεταφορά στον Κάδο",
+      "dlg.deleteFileMsg":   "Μεταφορά του «{name}» στον Κάδο; Η επαναφορά είναι δυνατή για 30 ημέρες.",
+      "dlg.deleteFolderMsg": "Μεταφορά του «{name}» και όλων των περιεχομένων του στον Κάδο; Η επαναφορά είναι δυνατή για 30 ημέρες.",
+      "dlg.deleteMultiMsg":  "Μεταφορά {n} επιλεγμένων στοιχείων στον Κάδο; Η επαναφορά είναι δυνατή για 30 ημέρες.",
       "dlg.overwriteTitle": "Υπάρχει ήδη",
       "dlg.overwriteMsg":   "Το «{name}» υπάρχει ήδη σε αυτόν τον φάκελο. Να αντικατασταθεί;",
       "dlg.overwriteOk":    "Αντικατάσταση",
@@ -305,6 +382,67 @@
       "menu.copyContent": "Αντιγραφή περιεχομένου",
       "menu.delete":   "Διαγραφή",
       "menu.rename":   "Μετονομασία",
+      "dlg.deleteForeverTitle": "Οριστική διαγραφή",
+      "tree.recent":   "Πρόσφατα",
+      "tree.favs":     "Αγαπημένα",
+      "tree.trash":    "Κάδος",
+      "fav.add":       "Προσθήκη στα Αγαπημένα",
+      "fav.remove":    "Αφαίρεση από τα Αγαπημένα",
+      "fav.added":     "Προστέθηκε στα Αγαπημένα",
+      "fav.removed":   "Αφαιρέθηκε από τα Αγαπημένα",
+      "fav.missing":   "Δεν έχει έρθει ακόμα σε αυτή τη συσκευή. Ίσως συγχρονίζεται ακόμα.",
+      "recent.empty":  "Δεν υπάρχουν ακόμα πρόσφατα αρχεία",
+      "trash.note":    "Ό,τι μπαίνει στον Κάδο διαγράφεται οριστικά μετά από 30 ημέρες.",
+      "trash.empty":   "Ο Κάδος είναι άδειος",
+      "trash.emptyAll":"Άδειασμα Κάδου",
+      "trash.restore": "Επαναφορά",
+      "trash.deleteForever": "Οριστική διαγραφή",
+      "trash.moved":   "Μεταφέρθηκε στον Κάδο",
+      "trash.movedMulti": "Μεταφέρθηκαν {n} στοιχεία στον Κάδο",
+      "trash.restored":"Έγινε επαναφορά",
+      "trash.restoredAs": "Έγινε επαναφορά ως «{name}»",
+      "trash.restoredMulti": "Έγινε επαναφορά {n} στοιχείων",
+      "trash.gone":    "Διαγράφηκε οριστικά",
+      "trash.goneMulti": "Διαγράφηκαν οριστικά {n} στοιχεία",
+      "trash.emptied": "Ο Κάδος άδειασε",
+      "trash.notHere": "Αυτό το στοιχείο δεν έχει φτάσει ακόμα σε αυτή τη συσκευή. Δοκίμασε ξανά μετά τον συγχρονισμό.",
+      "trash.from":    "από {path}",
+      "trash.unknown": "άγνωστος αρχικός φάκελος",
+      "trash.emptyConfirm": "Να διαγραφούν οριστικά όλα όσα είναι στον Κάδο; Δεν αναιρείται.",
+      "trash.foreverMsg":   "Οριστική διαγραφή του «{name}»; Δεν αναιρείται.",
+      "trash.foreverMulti": "Οριστική διαγραφή {n} στοιχείων; Δεν αναιρείται.",
+      "search.contents":      "Περιεχόμενο",
+      "search.contentsTitle": "Αναζήτηση και μέσα στα αρχεία (κείμενο και PDF)",
+      "search.scanning":      "Αναζήτηση μέσα στα αρχεία… {n} από {t}",
+      "search.walking":       "Αναζήτηση… ελέγχθηκαν {n} στοιχεία",
+      "search.more":          "Περισσότερα ({n})",
+      "search.matchCount":    "{n} εμφανίσεις",
+      "search.skipped":       "{n} αρχεία ήταν πολύ μεγάλα ή δεν διαβάστηκαν και παραλείφθηκαν",
+      "menu.zip":      "Συμπίεση σε ZIP",
+      "menu.extract":  "Αποσυμπίεση εδώ",
+      "zip.archive":   "Συμπιεσμένο",
+      "zip.working":   "Συμπίεση… {n} από {t}",
+      "zip.done":      "Δημιουργήθηκε το «{name}»",
+      "zip.fail":      "Το αρχείο ZIP δεν δημιουργήθηκε",
+      "zip.tooBig":    "Πάρα πολλά για ένα ZIP: έως {n} αρχεία και {mb} MB.",
+      "zip.extracting":"Αποσυμπίεση… {n} από {t}",
+      "zip.extracted": "Αποσυμπιέστηκαν {n} αρχεία στον φάκελο «{name}»",
+      "zip.partial":   "{n} αρχεία δεν αποσυμπιέστηκαν",
+      "zip.bad":       "Αυτό το αρχείο ZIP δεν διαβάζεται.",
+      "zip.big":       "Το ZIP είναι πολύ μεγάλο για να ανοίξει εδώ (έως {mb} MB).",
+      "zip.entries":   "{n} αρχεία, {size} μετά την αποσυμπίεση",
+      "zip.extract":   "Αποσυμπίεση",
+      "zip.empty":     "Δεν υπάρχουν αρχεία για αποσυμπίεση.",
+      "zip.busy":      "Περίμενε να τελειώσει η τρέχουσα εργασία ZIP.",
+      "view.grid":     "Προβολή πλέγματος",
+      "view.list":     "Προβολή λίστας",
+      "sel.mode":      "Επιλογή",
+      "sel.done":      "Τέλος",
+      "sel.all":       "Επιλογή όλων",
+      "sel.count":     "{n} επιλεγμένα",
+      "sel.one":       "1 επιλεγμένο",
+      "sel.none":      "Πάτα στοιχεία για να τα επιλέξεις",
+      "err.reserved":  "Αυτό το όνομα είναι δεσμευμένο για τον Κάδο.",
       "name.newFolder": "Νέος φάκελος",
       "name.newFile":   "Νέο αρχείο.txt",
 	  "act.import": "Εισαγωγή αρχείων"
@@ -358,6 +496,30 @@
 
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  var TRASH_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+  var CLOCK_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>';
+  var STAR_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.3 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.3 12 2"/></svg>';
+  var STAR_FILLED_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.1 8.3 22 9.3 17 14.1 18.2 21 12 17.8 5.8 21 7 14.1 2 9.3 8.9 8.3 12 2"/></svg>';
+  var RESTORE_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>';
+  var ZIP_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M10 4h2M10 7h2M10 10h2M10 13h2"/><rect x="9" y="15" width="4" height="4" rx="1"/></svg>';
+  var UNZIP_SVG =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>';
+  var GRID_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+  var LIST_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>';
+  var CHECK_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="8 12 11 15 16 9"/></svg>';
+  var CHECK_ALL_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 16 13 8"/><polyline points="11 15 12 16 21 7"/></svg>';
+  var TEXT_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>';
   var IMG_EXTS = ["png","jpg","jpeg","gif","webp","bmp","ico","avif"];
   var PV_TEXT_LIMIT = 512 * 1024;      // 512 KB text preview cap
 
@@ -402,6 +564,11 @@
   var searchQuery = null;
   var searchDir = null;
 
+  // What the list shows (wave 3): "files" = the folder cwd, "recent" =
+  // the Recent list, "trash" = the Trash. Session-only (R10).
+  var view = "files";
+  var selectMode = false;        // touch-friendly Select mode (checkboxes + bottom bar)
+
   function loadPrefs() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -409,6 +576,8 @@
         var p = JSON.parse(raw);
         if (p && p.ver === DATA_VER && p.expanded && typeof p.last === "string") {
           prefs = p;
+          if (prefs.layout !== "grid") prefs.layout = "list";
+          prefs.contents = prefs.contents === true;
           return;
         }
       }
@@ -418,7 +587,9 @@
       expanded: {},
       last: ROOT,
       sortField: "name",      // "name" | "size" | "date"
-      sortAsc: true           // ascending by default
+      sortAsc: true,          // ascending by default
+      layout: "list",         // "list" | "grid" (wave 3, this device)
+      contents: false         // search inside files too (wave 3, this device)
     };
     prefs.expanded[ROOT] = true;
     savePrefs();
@@ -446,6 +617,15 @@
     r.unshift({ p: path, at: Date.now() });
     while (r.length > RECENTS_MAX) r.pop();
     try { localStorage.setItem(RECENTS_KEY, JSON.stringify(r)); } catch (e) {}
+  }
+
+  // A rename / move inside Files: the journal follows the item.
+  function recentsMove(from, to) {
+    var r = recentsRead(), changed = false;
+    r.forEach(function (e) {
+      if (e.p === from || e.p.indexOf(from + "/") === 0) { e.p = to + e.p.slice(from.length); changed = true; }
+    });
+    if (changed) { try { localStorage.setItem(RECENTS_KEY, JSON.stringify(r)); } catch (e2) {} }
   }
 
   function recentsPruneExisting() {
@@ -479,10 +659,10 @@
     // Deterministic: first in last-listing order.
     var ordered = lastEntries;
     for (var i = 0; i < ordered.length; i++) {
-      if (selectedPaths[join(cwd, ordered[i].name)]) {
+      if (selectedPaths[entryPath(ordered[i])]) {
         return { name: ordered[i].name,
                  dir: !!ordered[i].dir,
-                 path: join(cwd, ordered[i].name) };
+                 path: entryPath(ordered[i]) };
       }
     }
     // Selection might live in search results (different snapshot)
@@ -493,6 +673,8 @@
   function baseName(p) {
     return p.slice(p.lastIndexOf("/") + 1);
   }
+  // Rows of the Recent and Trash views carry their own full path.
+  function entryPath(e) { return e.path || join(cwd, e.name); }
 
   // ---------- 3. FS bridge ----------
 
@@ -509,10 +691,13 @@
     return !!(fs && typeof fs.ls === "function");
   }
 
-  function fsList(path) {
+  // raw === true keeps the hidden Trash folder (/internal/.trash);
+  // every view, chooser and search of this app leaves it out.
+  function fsList(path, raw) {
     return FS().ls(path).then(function (list) {
       var dirs = [], files = [];
       (list || []).forEach(function (e) {
+        if (!raw && path === ROOT && e.name === ".trash") return;
         (e.dir ? dirs : files).push(e);
       });
       var byName = function (a, b) { return a.name < b.name ? -1 : 1; };
@@ -525,6 +710,9 @@
   // ---------- 4. Navigation + render orchestration ----------
 
   function refresh() {
+    applyViewChrome();
+    if (view === "trash") { renderTrashView(); return; }
+    if (view === "recent") { renderRecentView(); return; }
     // Active search → re-run search render instead of a plain list
     if (searchQuery !== null) { runSearch(searchQuery); return; }
 
@@ -577,14 +765,16 @@
     hideRecents();
     ["new-folder", "new-file", "pick-files"].forEach(function (id) {
       var el = $(id);
-      if (el) el.disabled = true;
+      if (el) { el.disabled = true; el.dataset.down = "1"; }
     });
   }
 
   function navigate(path) {
     var d = dbx();
     if (d && d.isActive()) d.leave();
+    view = "files";
     cwd = path;
+    if (selectMode) setSelectMode(false);
     clearSelection();
     // FB2: exactly ONE listing fetch per navigation. When a search
     // is active, clearSearch() re-fetches the real listing itself;
@@ -607,12 +797,19 @@
 
   function updateActionButtons() {
     var n = selectionCount();
-    $("up").disabled = (cwd === ROOT);
-    $("rename").disabled = (n !== 1);
+    var special = view !== "files";
+    $("up").disabled = (cwd === ROOT && !special);
+    $("rename").disabled = (n !== 1 || view === "trash");
     $("delete").disabled = (n === 0);
     $("delete").classList.toggle("danger-arm", n > 0);
     var more = $("more-actions");
     if (more) more.disabled = (n === 0);
+    ["new-folder", "new-file", "pick-files"].forEach(function (id) {
+      var el = $(id);
+      if (el && special) el.disabled = true;
+      else if (el && el.dataset.down !== "1") el.disabled = false;
+    });
+    renderSelBar();
   }
 
   // ---------- 5. Folder tree render (lazy, expanded, DROP TARGETS) ----------
@@ -621,7 +818,9 @@
     var host = $("tree-root");
     var token = renderToken;
     host.innerHTML = "";
+    host.appendChild(makeQuickSection());
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
+    host.appendChild(makeSpecialNode("trash", t("tree.trash"), TRASH_SVG));
     var d = dbx();
     if (d) host.appendChild(d.treeNode());
   }
@@ -641,7 +840,7 @@
       toast: transientNote,
       dialogHost: dialogHost,
       closeDrawer: closeTreeDrawer,
-      onEnter: function () { clearSelection(); renderTree(); },
+      onEnter: function () { view = "files"; setSelectMode(false); clearSelection(); renderTree(); },
       fmtKB: fmtKB,
       fs: FS,
       vault: vaultApi,
@@ -657,7 +856,7 @@
     var wrap = document.createElement("div");
 
     var node = document.createElement("div");
-    node.className = "tnode" + (path === cwd && !dbxActive() ? " selected" : "");
+    node.className = "tnode" + (path === cwd && view === "files" && !dbxActive() ? " selected" : "");
     node.style.paddingLeft = (6 + depth * 14) + "px";
     node.dataset.path = path;
 
@@ -775,12 +974,12 @@
     var fs = FS();
     if (!fs || typeof fs.stat !== "function") return;
     var dir = cwd;
-    var todo = entries.filter(function (e) { return !e.dir && e.size === undefined; }).slice(0, STAT_CAP);
+    var todo = entries.filter(function (e) { return !e.dir && e.size === undefined && !e.missing; }).slice(0, STAT_CAP);
     if (!todo.length) return;
     Promise.all(todo.map(function (e) {
-      return fs.stat(join(dir, e.name)).then(function (st) {
+      return fs.stat(e.path || join(dir, e.name)).then(function (st) {
         e.size = st && typeof st.size === "number" ? st.size : null;
-        e.mtime = st && st.mtime ? st.mtime : null;
+        if (!e.keepDate) e.mtime = st && st.mtime ? st.mtime : null;
       }, function () { e.size = null; });
     })).then(function () {
       if (token !== renderToken || dir !== cwd) return;
@@ -791,10 +990,10 @@
         return;
       }
       todo.forEach(function (e) {
-        var li = document.querySelector('#entries .entry[data-path="' + cssEsc(join(dir, e.name)) + '"]');
+        var li = document.querySelector('#entries .entry[data-path="' + cssEsc(e.path || join(dir, e.name)) + '"]');
         if (!li) return;
         li.querySelector(".col-size").textContent = fmtSizeCol(e);
-        li.querySelector(".col-date").textContent = fmtDateCol(e);
+        if (!e.keepDate) li.querySelector(".col-date").textContent = fmtDateCol(e);
       });
     });
   }
@@ -856,6 +1055,8 @@
   function renderEntries(entries) {
     var ul = $("entries");
     ul.innerHTML = "";
+    ul.classList.toggle("grid", prefs.layout === "grid");
+    thumbReset();
 
     // FD/FE4: single branch — the old first case (root + empty) was
     // fully covered by the second: entries.length > 0 === false →
@@ -868,16 +1069,23 @@
     ensureRecentsSection();
 
     entries.forEach(function (e, idx) {
-      var path = join(cwd, e.name);
+      var path = entryPath(e);
       var li = document.createElement("li");
-      
+
       // #7 FIX: grid layout — 4 columns: icon(20px) | name(1fr) | size(90px) | date(80px)
       // The .ext badge is removed from desktop rows (mobile hides it anyway)
-      li.className = "entry" + (selectedPaths[path] ? " selected" : "");
+      li.className = "entry" + (selectedPaths[path] ? " selected" : "") +
+        (e.missing ? " missing" : "");
       li.dataset.path = path;
       li.dataset.index = String(idx);
       li.tabIndex = 0;
-      li.draggable = true;
+      li.draggable = view !== "trash";
+
+      // Select mode: a check box takes the icon's place (CSS).
+      var check = document.createElement("span");
+      check.className = "sel-check";
+      check.setAttribute("aria-hidden", "true");
+      li.appendChild(check);
 
       var glyph = document.createElement("span");
       glyph.className = "glyph " + (e.dir ? "folder" : "file");
@@ -886,7 +1094,20 @@
 
       var name = document.createElement("span");
       name.className = "ename col-name";
-      name.textContent = e.name;
+      if (e.sub) {
+        name.classList.add("two");
+        var nm = document.createElement("span");
+        nm.className = "en";
+        nm.textContent = e.name;
+        var sb = document.createElement("span");
+        sb.className = "esub";
+        sb.textContent = e.sub;
+        name.appendChild(nm);
+        name.appendChild(sb);
+      } else {
+        name.textContent = e.name;
+      }
+      li.title = e.name;
       li.appendChild(name);
 
       // Size / modified columns — filled by fillStats() (FL-12).
@@ -900,19 +1121,25 @@
       dateSpan.textContent = fmtDateCol(e);
       li.appendChild(dateSpan);
 
+      if (prefs.layout === "grid" && !e.dir && !e.missing) thumbWatch(li, path, e.name);
+
       // Click: single / Ctrl+toggle / Shift+range (desktop
       // convention). Plain single click clears everything first.
       li.addEventListener("click", function (ev) {
+        if (swallowClick) { swallowClick = false; return; }
         handleClickSelect(ev, li, idx, e);
       });
       li.addEventListener("dblclick", function () {
+        if (selectMode) return;
         activateEntry(e, path);
       });
+      attachLongPress(li, path);
 
       // DRAG SOURCE (internal move). Payload: our private MIME type.
       // The dragstart flag lets handleDrop() distinguish internal
       // moves from OS-imported files (which carry Files/* types).
       li.addEventListener("dragstart", function (ev) {
+        if (view === "trash") { ev.preventDefault(); return; }
         draggingEntryPath = path;
         // If the dragged row isn't selected, drag only IT:
         // dragging implies a fresh single selection.
@@ -932,9 +1159,11 @@
         draggingEntryPath = null;
       });
 
-      // CONTEXT MENU (right-click) — desktop
+      // CONTEXT MENU (right-click) — desktop. A finger's long press
+      // opens Select mode instead (attachLongPress).
       li.addEventListener("contextmenu", function (ev) {
         ev.preventDefault();
+        if (lastPointerTouch) return;
         if (!selectedPaths[path]) {
           clearSelection();
           selectedPaths[path] = true;
@@ -948,7 +1177,8 @@
         openContextMenu(ev.clientX, ev.clientY);
       });
 
-      // Keyboard: Enter = activate (navigate/open), Space = toggle
+      // Keyboard: Enter = activate (navigate/open), Space = toggle,
+      // Delete = Trash, Shift+Delete = delete forever
       li.addEventListener("keydown", function (ev) {
         if (ev.key === "Enter") {
           ev.preventDefault();
@@ -960,7 +1190,7 @@
           updateActionButtons();
         } else if (ev.key === "Delete") {
           ev.preventDefault();
-          if (selectionCount() > 0) openDeleteDialog();
+          if (selectionCount() > 0) openDeleteDialog(ev.shiftKey || view === "trash" ? "forever" : "trash");
         }
       });
 
@@ -998,6 +1228,8 @@
 
   // Open a folder / preview a file (double click, Enter, second tap).
   function activateEntry(e, path) {
+    if (view === "trash") return;       // Restore / Delete forever live in the menus
+    if (e.missing) { transientNote(t("fav.missing")); return; }
     if (e.dir) {
       clearSelection();
       navigate(path);
@@ -1014,6 +1246,13 @@
 
   function handleClickSelect(ev, li, idx, e) {
     var path = li.dataset.path;
+    if (selectMode) {
+      selectedPaths[path] = !selectedPaths[path];
+      if (selectedPaths[path]) anchorIndex = idx;
+      paintSelection();
+      updateActionButtons();
+      return;
+    }
     // FL-6: on touch screens a double tap is not a reliable event
     // (iOS never sends dblclick) — a folder could not be entered and
     // a file could not be opened. First tap selects, a second tap on
@@ -1029,7 +1268,7 @@
       var from = Math.min(anchorIndex, idx);
       var to = Math.max(anchorIndex, idx);
       for (var i = from; i <= to; i++) {
-        var pe = join(cwd, lastEntries[i].name);
+        var pe = entryPath(lastEntries[i]);
         selectedPaths[pe] = true;
       }
       paintSelection();
@@ -1071,12 +1310,12 @@
 
     var home = document.createElement("button");
     home.type = "button";
-    home.className = "crumb" + (cwd === ROOT ? " current" : "");
-    home.textContent = t("tree.root");
-    home.addEventListener("click", function () { navigate(ROOT); });
+    home.className = "crumb" + (cwd === ROOT || view !== "files" ? " current" : "");
+    home.textContent = view === "files" ? t("tree.root") : t("tree." + view);
+    home.addEventListener("click", function () { if (view === "files") navigate(ROOT); });
     host.appendChild(home);
 
-    if (cwd === ROOT) return;
+    if (cwd === ROOT || view !== "files") return;
 
     var rest = cwd.slice(ROOT.length + 1).split("/");
     var acc = ROOT;
@@ -1097,24 +1336,34 @@
     });
   }
 
-  function setStatusLoading() {
-    var sel = selectionCount();
-    $("st-count").textContent = sel
-      ? tfmt("status.selItems", { n: sel, t: lastEntries.length })
-      : t("status.loading");
-    $("st-path").textContent = searchQuery !== null
-      ? tfmt("search.where", { path: searchDir })
-      : (cwd === ROOT ? ROOT : cwd);
+  function statusPath() {
+    if (view !== "files") return t("tree." + view);
+    return searchQuery !== null ? tfmt("search.where", { path: searchDir }) : cwd;
   }
 
+  function setStatusLoading() {
+    var sel = selectionCount();
+    $("st-count").textContent = jobText || (sel
+      ? tfmt("status.selItems", { n: sel, t: lastEntries.length })
+      : t("status.loading"));
+    $("st-path").textContent = statusPath();
+  }
+
+  var lastCount = 0;
   function renderStatus(count) {
     var sel = selectionCount();
-    $("st-count").textContent = sel
+    lastCount = count;
+    $("st-count").textContent = jobText || (sel
       ? tfmt("status.selItems", { n: sel, t: count })
-      : (count === 1 ? t("status.oneItem") : tfmt("status.items", { n: count }));
-    $("st-path").textContent = searchQuery !== null
-      ? tfmt("search.where", { path: searchDir })
-      : (cwd === ROOT ? ROOT : cwd);
+      : (count === 1 ? t("status.oneItem") : tfmt("status.items", { n: count })));
+    $("st-path").textContent = statusPath();
+  }
+
+  // A long job (ZIP) owns the left of the status bar while it runs.
+  var jobText = "";
+  function setJob(text) {
+    jobText = text || "";
+    renderStatus(lastCount);
   }
   
     // ---------- 8. Dialogs: create / rename / delete / overwrite /
@@ -1126,6 +1375,7 @@
     var name = raw.trim();
     if (!name) return { ok: false, err: t("err.required") };
     if (BAD_CHARS.test(name)) return { ok: false, err: t("err.chars") };
+    if (dialogDir === ROOT && name === ".trash") return { ok: false, err: t("err.reserved") };
     if (name === "." || name === "..") return { ok: false, err: t("err.required") };
     for (var i = 0; i < existingNames.length; i++) {
       if (existingNames[i] === name) return { ok: false, err: t("err.exists") };
@@ -1161,12 +1411,17 @@
     } catch (e2) {}
 
     $("name-error").hidden = true;
-    origListChain = fsList(cwd).catch(function () { return []; });
+    // Rename works where the item is (the Recent view shows items of
+    // many folders); new items go into the open folder.
+    dialogDir = (mode === "rename" && primary) ? parentOf(primary.path) : cwd;
+    if (dialogDir === "/") dialogDir = ROOT;
+    origListChain = fsList(dialogDir, true).catch(function () { return []; });
     $("dlg-name").showModal();
     setTimeout(function () { $("name-input").focus(); }, 50);
   }
 
   var origListChain = null;
+  var dialogDir = ROOT;
 
   function submitNameDialog() {
     var raw = $("name-input").value;
@@ -1182,20 +1437,23 @@
       }
       var name = check.name;
       var op = null;
+      var dir = dialogDir;
       if (DIALOG_MODE === "folder") {
-        op = FS().mkdir(join(cwd, name)).then(function () {
+        op = FS().mkdir(join(dir, name)).then(function () {
           transientNote(t("toast.createdFolder"));
         });
       } else if (DIALOG_MODE === "file") {
-        op = FS().writeText(join(cwd, name), "").then(function () {
-          recentsTouch(join(cwd, name));
-          transientNote(t("toast.createdFile"));	
+        op = FS().writeText(join(dir, name), "").then(function () {
+          recentsTouch(join(dir, name));
+          transientNote(t("toast.createdFile"));
         });
       } else if (DIALOG_MODE === "rename" && selectionPrimary()) {
         var prim = selectionPrimary();
-        op = FS().mv(prim.path, join(cwd, name)).then(function () {
-          if (prim.dir) renameExpandedPrefix(prim.path, join(cwd, name));
-          recentsTouch(join(cwd, name));
+        op = FS().mv(prim.path, join(dir, name)).then(function () {
+          if (prim.dir) renameExpandedPrefix(prim.path, join(dir, name));
+          recentsMove(prim.path, join(dir, name));
+          recentsTouch(join(dir, name));
+          favCarry(prim.path, join(dir, name));
           transientNote(t("toast.renamed"));
         });
       }
@@ -1214,35 +1472,78 @@
     return false;
   }
 
-  // Delete — single or bulk, same guarded dialog
-  function openDeleteDialog() {
+  // Delete — single or bulk, same guarded dialog. mode: "trash" (the
+  // default: Files moves items into its Trash), "forever" (Shift+Delete,
+  // or inside the Trash) or "empty" (Empty Trash).
+  var deleteMode = "trash";
+  function openDeleteDialog(mode) {
+    deleteMode = mode === "forever" || mode === "empty" ? mode : (view === "trash" ? "forever" : "trash");
     var n = selectionCount();
-    if (n === 0) return;
+    if (n === 0 && deleteMode !== "empty") return;
     var msg;
-    if (n === 1) {
+    if (deleteMode === "empty") {
+      msg = t("trash.emptyConfirm");
+    } else if (n === 1) {
       var p = selectionPrimary();
-      msg = p.dir ? t("dlg.deleteFolderMsg") : t("dlg.deleteFileMsg");
-      msg = msg.split("{name}").join(p.name);
+      if (deleteMode === "forever") msg = tfmt("trash.foreverMsg", { name: p.name });
+      else msg = (p.dir ? t("dlg.deleteFolderMsg") : t("dlg.deleteFileMsg")).split("{name}").join(p.name);
     } else {
-      msg = t("dlg.deleteMultiMsg").split("{n}").join(String(n));
+      msg = tfmt(deleteMode === "forever" ? "trash.foreverMulti" : "dlg.deleteMultiMsg", { n: n });
     }
+    $("delete-title").textContent = deleteMode === "trash" ? t("dlg.deleteTitle")
+      : deleteMode === "empty" ? t("trash.emptyAll") : t("dlg.deleteForeverTitle");
+    var ok = $("delete-form").querySelector('button[type="submit"]');
+    if (ok) ok.textContent = deleteMode === "trash" ? t("dlg.deleteConfirm")
+      : deleteMode === "empty" ? t("trash.emptyAll") : t("trash.deleteForever");
     $("delete-msg").textContent = msg;
     $("dlg-delete").showModal();
   }
 
-  function performDelete() {
-    var paths = selectionPaths();
-    if (!paths.length) return;
+  function confirmDelete() {
+    if (deleteMode === "empty") emptyTrash();
+    else if (view === "trash") trashForever(selectionPaths());
+    else if (deleteMode === "forever") performDeleteForever(selectionPaths());
+    else performDelete(selectionPaths());
+  }
+
+  // Files' own Delete: into the Trash (other apps that call
+  // orosFS.rm still delete at once — this is the Files app's bin).
+  function performDelete(paths) {
+    if (!paths || !paths.length) return Promise.resolve();
+    var ok = 0, fail = 0, chain = Promise.resolve();
+    paths.forEach(function (p) {
+      chain = chain.then(function () {
+        return moveToTrash(p).then(function () {
+          dropExpandedPrefix(p);
+          favDropPath(p);
+          ok++;
+        }, function () { fail++; });
+      });
+    });
+    return chain.then(function () {
+      if (!fail) {
+        transientNote(ok === 1 ? t("trash.moved") : tfmt("trash.movedMulti", { n: ok }));
+      } else {
+        transientNote(t("toast.opFail"));
+      }
+      clearSelection();
+      if (ok > 0) markDirty();
+      refresh();
+    });
+  }
+
+  function performDeleteForever(paths) {
+    if (!paths || !paths.length) return;
     Promise.all(paths.map(function (p) {
       return FS().rm(p).then(function () {
         dropExpandedPrefix(p);
+        favDropPath(p);
         return true;
       }).catch(function () { return false; });
     })).then(function (results) {
-        var ok = results.filter(Boolean).length;
+      var ok = results.filter(Boolean).length;
       if (ok === paths.length) {
-        transientNote(ok === 1 ? t("toast.deleted")
-                               : tfmt("toast.deletedMulti", { n: ok }));
+        transientNote(ok === 1 ? t("trash.gone") : tfmt("trash.goneMulti", { n: ok }));
       } else {
         transientNote(t("toast.opFail"));
       }
@@ -1354,7 +1655,7 @@
         node.addEventListener("click", function () {
           if (kids.childElementCount > 0 || node.dataset.loaded) return;
           node.dataset.loaded = "1";
-          FS().ls(path).then(function (list) {
+          fsList(path).then(function (list) {
             list.filter(function (e) { return e.dir; }).forEach(function (d) {
               kids.appendChild(buildNode(join(path, d.name), d.name, depth + 1));
             });
@@ -1439,6 +1740,8 @@
             // the very keys rename needed, so every moved folder
             // arrived COLLAPSED (expansion state silently lost).
             renameExpandedPrefix(p, join(dst, name));
+            recentsMove(p, join(dst, name));
+            favCarry(p, join(dst, name));
             moved++;
             dstNames.push(name);
           }).catch(function () { skipped++; });
@@ -1532,15 +1835,7 @@
   }
 
   // "(1)" suffix generator — matches desktop file-manager behavior
-  function uniqueName(name, taken) {
-    if (taken.indexOf(name) === -1) return name;
-    var dot = name.lastIndexOf(".");
-    var base = dot > 0 ? name.slice(0, dot) : name;
-    var ext  = dot > 0 ? name.slice(dot) : "";
-    var i = 1;
-    while (taken.indexOf(base + " (" + i + ")" + ext) !== -1) i++;
-    return base + " (" + i + ")" + ext;
-  }
+  function uniqueName(name, taken) { return CORE.uniqueName(name, taken); }
 
   function dstListChain(path) {
     return FS().ls(path).then(function (list) {
@@ -1574,6 +1869,7 @@
     try { orosPathsRaw = e.dataTransfer.getData("application/x-oros-paths"); }
     catch (ex) {}
 
+    if (view !== "files" && dstPath === cwd && !(orosPathsRaw && draggingEntryPath)) return;
     if (orosPathsRaw && draggingEntryPath) {
       // #3 FIX: no "dstPath === cwd" requirement anymore — the tree
       // drop target passes a DIFFERENT folder than cwd, that's the
@@ -1695,7 +1991,8 @@
   }
 
   function sanitizeFileName(name) {
-    return name.replace(/[\/\\:*?"<>|]/g, "_");
+    var n = name.replace(/[\/\\:*?"<>|]/g, "_");
+    return n === ".trash" ? "_trash" : n;
   }
 
   // #22 FIX: no dead base64 computation — Blob flows straight into
@@ -1736,7 +2033,7 @@
 
   function calcStorageRecursive(dir) {
     var total = 0;
-    return fsList(dir).then(function (entries) {
+    return fsList(dir, true).then(function (entries) {
       var chain = Promise.resolve();
       entries.forEach(function (e) {
         var path = join(dir, e.name);
@@ -1900,16 +2197,21 @@
   }
 
   // ---------- 11. Search (recursive within folder + subfolders) ----------
+  // Names everywhere under the open folder (accent- and case-blind),
+  // and — with "Contents" on — inside text files and PDFs too, with a
+  // snippet. No result cap: 100 are shown, "Show more" adds 100.
 
   // #23 FIX: 250ms debounce on input — no full-disk walk per
-  // keystroke — and a token captured per query pass, checked
-  // inside findMatchingRecursively so superseded queries drop.
+  // keystroke — and a token captured per query pass (renderToken),
+  // checked at every step so a superseded query stops.
   var searchDebounce = null;
+  var search = null;           // { token, q, fq, names[], content[], byPath{}, shown, phase, n, t, skipped }
 
   function runSearch(query) {
     if (!query.trim()) { clearSearch(); return; }
     searchQuery = query.trim();
     searchDir = cwd;
+    if (selectMode) setSelectMode(false);
     clearSelection();   // FL-4: selection survives into search results invisibly
     // FD3: entering search mode — drop stale root views. Otherwise
     // the Recents section and/or #empty from the last plain
@@ -1921,44 +2223,115 @@
 
     if (searchDebounce) clearTimeout(searchDebounce);
     searchDebounce = setTimeout(function () {
-      var token = ++renderToken;
-      findMatchingRecursively(cwd, searchQuery, token).then(function (matches) {
-        if (token !== renderToken) return;
-        lastEntries = [];  // no list
-        renderSearchResults(matches);
-        renderStatus(matches.length);   // FB6: was hardcoded 0 — "0 items" over a full result list
-      });
+      startSearch(searchQuery, searchDir);
     }, 250);
   }
 
-    function findMatchingRecursively(dir, q, token) {
-    return fsList(dir).then(function (entries) {
-      if (token !== renderToken) return [];
-      var matches = [];
-      var qLower = q.toLowerCase();
-      var dirsToScan = [];
-      entries.forEach(function (e) {
-        var name = e.name;
-        var path = join(dir, name);
-        if (name.toLowerCase().indexOf(qLower) !== -1) {
-          matches.push({ name: name, dir: !!e.dir, path: path });
-        }
-        if (e.dir) {
-          dirsToScan.push(path);                       // collect for chain
-        }
+  function startSearch(q, dir) {
+    var token = ++renderToken;
+    var st = search = { token: token, q: q, fq: CORE.fold(q), names: [], content: [], byPath: {},
+                        shown: SEARCH_PAGE, phase: "walk", n: 0, t: 0, skipped: 0 };
+    var files = [];
+    lastEntries = [];  // no list
+    paintSearchSoon(st);
+    function live() { return search === st && token === renderToken; }
+
+    // 1. Walk the folder and its subfolders (never the Trash).
+    var stack = [dir];
+    function step() {
+      if (!live()) return Promise.resolve(false);
+      if (!stack.length) return Promise.resolve(true);
+      var d = stack.pop();
+      return fsList(d).then(function (entries) {
+        entries.forEach(function (e) {
+          var p = join(d, e.name);
+          st.n++;
+          if (CORE.fold(e.name).indexOf(st.fq) !== -1) addHit(st, { name: e.name, dir: !!e.dir, path: p });
+          if (e.dir) stack.push(p);
+          else files.push(p);
+        });
+      }, function () {}).then(function () {
+        paintSearchSoon(st);
+        return step();
       });
+    }
+    step().then(function (done) {
+      if (!done || !live()) return;
+      if (!prefs.contents) { st.phase = "done"; paintSearch(st); return; }
+      // 2. Inside the files, one at a time.
+      var todo = files.filter(function (p) { return CORE.contentKind(baseName(p), null); });
+      st.phase = "content"; st.n = 0; st.t = todo.length;
+      paintSearch(st);
       var chain = Promise.resolve();
-      dirsToScan.forEach(function (d) {
+      todo.forEach(function (p) {
         chain = chain.then(function () {
-          return findMatchingRecursively(d, q, token).then(function (more) {
-            matches = matches.concat(more);
+          if (!live()) return null;
+          return searchInFile(p, st.fq).then(function (sn) {
+            if (sn === false) st.skipped++;
+            else if (sn) addHit(st, { name: baseName(p), dir: false, path: p, snippet: sn });
+          }, function () { st.skipped++; }).then(function () {
+            st.n++;
+            paintSearchSoon(st);
           });
         });
       });
-      return chain.then(function () { return matches.slice(0, SEARCH_CAP); });
-    }).catch(function () {
-      return [];
+      return chain.then(function () {
+        if (!live()) return;
+        st.phase = "done";
+        paintSearch(st);
+      });
     });
+  }
+
+  function addHit(st, hit) {
+    var old = st.byPath[hit.path];
+    if (old) { if (hit.snippet && !old.snippet) old.snippet = hit.snippet; return; }
+    st.byPath[hit.path] = hit;
+    (hit.snippet ? st.content : st.names).push(hit);
+  }
+
+  // → snippet, null (no match) or false (skipped: too big / unreadable)
+  function searchInFile(path, fq) {
+    var name = baseName(path);
+    return FS().stat(path).then(function (st) {
+      var kind = CORE.contentKind(name, st && typeof st.size === "number" ? st.size : 0);
+      if (!kind) return false;
+      return FS().read(path).then(function (blob) {
+        if (kind === "pdf") return pdfFind(blob, fq);
+        return blob.arrayBuffer().then(function (buf) {
+          var text = new TextDecoder("utf-8").decode(buf);
+          if (CORE.looksBinary(text)) return null;
+          return CORE.findSnippet(CORE.plainText(text, CORE.extOf(name)), fq);
+        });
+      });
+    }).catch(function () { return false; });
+  }
+
+  // A PDF's text, page by page (PDF.js, no scripts, no XFA); stops at
+  // the first page that matches.
+  function pdfFind(blob, fq) {
+    return blob.arrayBuffer().then(function (buf) {
+      return pdfOpen(new Uint8Array(buf));
+    }).then(function (pdf) {
+      var n = Math.min(pdf.numPages, CORE.PDF_PAGES), k = 0;
+      function page() {
+        if (++k > n) return Promise.resolve(null);
+        return pdf.getPage(k).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
+          var text = (tc.items || []).map(function (it) { return it.str || ""; }).join(" ");
+          var sn = CORE.findSnippet(text, fq);
+          if (sn) { sn.page = k; return sn; }
+          return page();
+        });
+      }
+      return page().then(function (r) { try { pdf.destroy(); } catch (e) {} return r; },
+        function () { try { pdf.destroy(); } catch (e) {} return false; });
+    }, function () { return false; });
+  }
+
+  var paintTimer = null;
+  function paintSearchSoon(st) {
+    if (paintTimer) return;
+    paintTimer = setTimeout(function () { paintTimer = null; if (search) paintSearch(search); }, 300);
   }
 
   function clearSearch() {
@@ -1966,6 +2339,7 @@
     var wasSearching = (searchQuery !== null);   // capture BEFORE nulling
     searchQuery = null;
     searchDir = null;
+    search = null;
     // FA4 + FB2: runSearch() sets lastEntries=[] (no list), so
     // clearing must re-fetch the real listing. BUT only when a
     // search was actually ACTIVE: clearSearch() is called on EVERY
@@ -1976,38 +2350,101 @@
     if (wasSearching) refresh();
   }
 
-  function renderSearchResults(matches) {
+  function paintSearch(st) {
+    if (search !== st || searchQuery === null) return;
     var host = $("entries");
     host.innerHTML = "";
-    if (matches.length === 0) {
+    host.classList.remove("grid");
+    var all = st.names.concat(st.content);
+    if (st.phase !== "done") {
+      var prog = document.createElement("li");
+      prog.className = "search-progress";
+      prog.textContent = st.phase === "walk" ? tfmt("search.walking", { n: st.n })
+        : tfmt("search.scanning", { n: st.n, t: st.t });
+      host.appendChild(prog);
+    }
+    if (st.phase === "done" && all.length === 0) {
       var empty = document.createElement("div");
       empty.className = "empty-msg";
-      empty.innerHTML = '<span>' + t("search.none") + '</span>';
+      var sp = document.createElement("span");
+      sp.textContent = t("search.none");
+      empty.appendChild(sp);
       host.appendChild(empty);
-      return;
     }
-    matches.forEach(function (m) {
-      var li = document.createElement("li");
-      li.className = "entry search-result";
-      li.dataset.path = m.path;
-      var glyph = document.createElement("span");
-      glyph.className = "glyph " + (m.dir ? "folder" : "file");
-      glyph.innerHTML = m.dir ? FOLDER_SVG : FILE_SVG;
-      li.appendChild(glyph);
-      var name = document.createElement("span");
-      name.className = "ename";
-      name.textContent = m.name;
-      li.appendChild(name);
-      var sub = document.createElement("span");
-      sub.className = "subpath";
-      sub.textContent = shortenPath(m.path);
-      li.appendChild(sub);
-      li.addEventListener("click", function () {
-        navigate(parentOf(m.path));
-        clearSearch();
+    all.slice(0, st.shown).forEach(function (m) { host.appendChild(searchRow(m)); });
+    if (all.length > st.shown) {
+      var more = document.createElement("li");
+      more.className = "search-more";
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = tfmt("search.more", { n: all.length - st.shown });
+      b.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        st.shown += SEARCH_PAGE;
+        paintSearch(st);
       });
-      host.appendChild(li);
-    });
+      more.appendChild(b);
+      host.appendChild(more);
+    }
+    if (st.phase === "done" && st.skipped) {
+      var sk = document.createElement("li");
+      sk.className = "search-progress";
+      sk.textContent = tfmt("search.skipped", { n: st.skipped });
+      host.appendChild(sk);
+    }
+    renderStatus(all.length);   // FB6: was hardcoded 0 — "0 items" over a full result list
+  }
+
+  function searchRow(m) {
+    var li = document.createElement("li");
+    li.className = "entry search-result" + (m.snippet ? " has-snippet" : "");
+    li.dataset.path = m.path;
+    li.tabIndex = 0;
+    var glyph = document.createElement("span");
+    glyph.className = "glyph " + (m.dir ? "folder" : "file");
+    glyph.innerHTML = m.dir ? FOLDER_SVG : FILE_SVG;
+    li.appendChild(glyph);
+    var name = document.createElement("span");
+    name.className = "ename";
+    name.textContent = m.name;
+    li.appendChild(name);
+    var sub = document.createElement("span");
+    sub.className = "subpath";
+    sub.textContent = shortenPath(m.path);
+    li.appendChild(sub);
+    if (m.snippet) {
+      var snip = document.createElement("span");
+      snip.className = "snippet";
+      snip.appendChild(document.createTextNode(m.snippet.before));
+      var mark = document.createElement("mark");
+      mark.textContent = m.snippet.match;
+      snip.appendChild(mark);
+      snip.appendChild(document.createTextNode(m.snippet.after));
+      if (m.snippet.count > 1) {
+        var c = document.createElement("span");
+        c.className = "snip-count";
+        c.textContent = " · " + tfmt("search.matchCount", { n: m.snippet.count });
+        snip.appendChild(c);
+      }
+      li.appendChild(snip);
+    }
+    function open() {
+      if (m.dir) { navigate(m.path); return; }
+      openFileAt(m.path);
+    }
+    li.addEventListener("click", open);
+    li.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); open(); } });
+    return li;
+  }
+
+  // Open a file's folder, select the file and preview it.
+  function openFileAt(path) {
+    var si = $("search-input");
+    if (si) si.value = "";
+    navigate(parentOf(path) === "/" ? ROOT : parentOf(path));
+    selectedPaths[path] = true;
+    recentsTouch(path);
+    openPreview(path);
   }
 
   function shortenPath(p) {
@@ -2044,7 +2481,7 @@
     var list = host.querySelector(".recents-list");
     if (!list) return;
     list.innerHTML = "";
-    journal.slice(0, RECENTS_MAX).forEach(function (e) {
+    journal.slice(0, ROOT_RECENTS).forEach(function (e) {
       var li = document.createElement("li");
       li.dataset.path = e.p;
       var name = document.createElement("span");
@@ -2107,6 +2544,7 @@
 
     ctxMenu = document.createElement("div");
     ctxMenu.id = "context-menu";
+    var many = selectionCount() > 1;
 
     function mkItem(svg, labelKey, action) {
       var btn = document.createElement("button");
@@ -2119,10 +2557,21 @@
       });
       return btn;
     }
-    var it_remove = function () {
+    function it_remove() {
       if (ctxMenu) { ctxMenu.remove(); ctxMenu = null; }
       document.removeEventListener("click", onOutside);
-    };
+    }
+
+    if (view === "trash") {
+      ctxMenu.appendChild(mkItem(RESTORE_SVG, "trash.restore", function () {
+        trashRestore(selectionPaths());
+      }));
+      ctxMenu.appendChild(mkItem(X_SVG, "trash.deleteForever", function () {
+        openDeleteDialog("forever");
+      }));
+      placeMenu();
+      return;
+    }
 
     if (p.dir) {
       ctxMenu.appendChild(mkItem(FOLDER_SVG, "menu.open", function () {
@@ -2135,16 +2584,32 @@
         openPreview(p.path);
       }));
     }
+    if (!many) {
+      var faved = CORE.favIs(favs, p.path);
+      ctxMenu.appendChild(mkItem(STAR_SVG, faved ? "fav.remove" : "fav.add", function () {
+        favToggle(p.path, p.dir);
+      }));
+    }
     ctxMenu.appendChild(hr());
-    ctxMenu.appendChild(mkItem(DL_SVG, "menu.download", function () {
-      downloadEntry(p);
-    }));
+    if (!p.dir && !many) {
+      ctxMenu.appendChild(mkItem(DL_SVG, "menu.download", function () {
+        downloadEntry(p);
+      }));
+    }
     ctxMenu.appendChild(mkItem(MV_SVG, "menu.moveTo", function () {
       openPickerDialog("move");
     }));
     ctxMenu.appendChild(mkItem(CP_SVG, "menu.copyTo", function () {
       openPickerDialog("copy");
     }));
+    ctxMenu.appendChild(mkItem(ZIP_SVG, "menu.zip", function () {
+      zipCreate(selectionPaths());
+    }));
+    if (!p.dir && !many && CORE.extOf(p.name) === "zip") {
+      ctxMenu.appendChild(mkItem(UNZIP_SVG, "menu.extract", function () {
+        zipExtract(p.path);
+      }));
+    }
     ctxMenu.appendChild(hr());
     ctxMenu.appendChild(mkItem("", "menu.copyName", function () {
       copyToClipboard(p, "name");
@@ -2162,32 +2627,35 @@
       openNameDialog("rename");
     }));
     ctxMenu.appendChild(mkItem(X_SVG, "menu.delete", function () {
-      openDeleteDialog();
+      openDeleteDialog("trash");
     }));
+    placeMenu();
 
     function hr() {
       var h = document.createElement("hr");
       return h;
     }
 
-    document.body.appendChild(ctxMenu);
-    // Position within viewport — measure REAL size after append
-    ctxMenu.style.visibility = "hidden";
-    ctxMenu.style.left = "0px";
-    ctxMenu.style.top = "0px";
-    var mw = ctxMenu.offsetWidth || 200;
-    var mh = ctxMenu.offsetHeight || 100;
-    ctxMenu.style.visibility = "";
-    ctxMenu.style.left = Math.max(8, Math.min(x, window.innerWidth - mw - 8)) + "px";
-    ctxMenu.style.top = Math.max(8, Math.min(y, window.innerHeight - mh - 8)) + "px";
+    function placeMenu() {
+      document.body.appendChild(ctxMenu);
+      // Position within viewport — measure REAL size after append
+      ctxMenu.style.visibility = "hidden";
+      ctxMenu.style.left = "0px";
+      ctxMenu.style.top = "0px";
+      var mw = ctxMenu.offsetWidth || 200;
+      var mh = ctxMenu.offsetHeight || 100;
+      ctxMenu.style.visibility = "";
+      ctxMenu.style.left = Math.max(8, Math.min(x, window.innerWidth - mw - 8)) + "px";
+      ctxMenu.style.top = Math.max(8, Math.min(y, window.innerHeight - mh - 8)) + "px";
+      setTimeout(function () {
+        document.addEventListener("click", onOutside);
+      }, 0);
+    }
 
     // Click outside closes
-    var onOutside = function (e) {
-      if (!ctxMenu.contains(e.target)) it_remove();
-    };
-    setTimeout(function () {
-      document.addEventListener("click", onOutside);
-    }, 0);
+    function onOutside(e) {
+      if (ctxMenu && !ctxMenu.contains(e.target)) it_remove();
+    }
   }
 
   // ---------- 14. Mobile tree drawer ----------
@@ -2428,7 +2896,7 @@
       var size = (st && (st.size || st.bytes)) || 0;
       var mtime = (st && (st.mtime || st.modified)) || null;
       // Pre-gate: reject extremely large images before loading blob
-      if (size > 10 * 1024 * 1024) { // 10 MB threshold
+      if (size > 10 * 1024 * 1024 && CORE.extOf(name) !== "zip") { // 10 MB threshold
         buildPreviewShell(path, name, size, mtime);
         pvBodySet('<div class="pv-msg">' +
           escapeHtml(tfmt("pv.bigFile", { n: Math.round(size / 1024) })) +
@@ -2438,7 +2906,9 @@
       }
       buildPreviewShell(path, name, size, mtime);
 
-      if (isImageExt(name)) {
+      if (CORE.extOf(name) === "zip") {
+        renderZipPreview(path);
+      } else if (isImageExt(name)) {
         renderImagePreview(path);
       } else {
         // Gate: do not read text files larger than the preview cap
@@ -2793,6 +3263,962 @@
     });
   }
 
+  // ---------- 16c. Wave 3: Favourites, Recent, Trash, Grid, Select, ZIP ----------
+
+  function displayPath(p) {
+    if (!p || p === "/" || p === ROOT) return t("tree.root");
+    return t("tree.root") + p.slice(ROOT.length);
+  }
+
+  function setEmptyText(key) {
+    var em = $("empty");
+    if (!em) return;
+    var a = em.querySelector("span"), b = em.querySelector("small");
+    if (a) a.textContent = t(key || "empty.title");
+    if (b) b.textContent = key ? "" : t("empty.hint");
+  }
+
+  // Body classes + the Trash bar for the special views.
+  function applyViewChrome() {
+    document.body.classList.toggle("v-trash", view === "trash");
+    document.body.classList.toggle("v-recent", view === "recent");
+    setEmptyText(view === "trash" ? "trash.empty" : view === "recent" ? "recent.empty" : null);
+    var vb = ensureViewBar();
+    if (vb) vb.hidden = view !== "trash";
+  }
+
+  function openView(kind) {
+    var d = dbx();
+    if (d && d.isActive()) d.leave();
+    if (searchQuery !== null) {
+      if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
+      searchQuery = null; searchDir = null; search = null;
+    }
+    var si = $("search-input");
+    if (si) si.value = "";
+    view = kind;
+    if (selectMode) setSelectMode(false);
+    clearSelection();
+    refresh();
+  }
+
+  // ===== Favourites: synced slice "files" (key oros-files-favs) =====
+  // Pinned folders and files, per item with a time stamp and
+  // tombstones (files-core.js mergeFavs), so two devices converge.
+  var favs = CORE.normFavs(null);
+
+  function syncApi() {
+    try { return (window.parent && window.parent.orosSync) || null; } catch (e) { return null; }
+  }
+  function favLoad() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(FAVS_KEY)); } catch (e) { raw = null; }
+    favs = CORE.normFavs(raw);
+  }
+  // R27: only a real change stamps, stores and marks sync dirty.
+  function favCommit(next) {
+    if (JSON.stringify(next) === JSON.stringify(favs)) return false;
+    favs = next;
+    try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs)); }
+    catch (e) { transientNote(t("toast.opFail")); }
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    renderTree();
+    return true;
+  }
+  function favToggle(path, dir) {
+    var on = !CORE.favIs(favs, path);
+    favCommit(CORE.favSet(favs, path, dir, on, Date.now()));
+    transientNote(t(on ? "fav.added" : "fav.removed"));
+    renderSelBar();
+  }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); }
+  function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
+
+  function registerFavSync() {
+    var api = syncApi();
+    if (!api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("files", function () {
+      return CORE.normFavs(favs);
+    }, function (incoming) {
+      // R6: a pull never marks dirty.
+      var next = CORE.normFavs(incoming);
+      if (JSON.stringify(next) === JSON.stringify(favs)) return;
+      favs = next;
+      try { localStorage.setItem(FAVS_KEY, JSON.stringify(favs)); } catch (e) {}
+      renderTree();
+    }, FAVS_KEY, CORE.mergeFavs);
+  }
+
+  // ===== Tree: Recent + Favourites on top, Trash under the disk =====
+  function makeQuickSection() {
+    var sec = document.createElement("div");
+    sec.className = "quick";
+    sec.appendChild(makeSpecialNode("recent", t("tree.recent"), CLOCK_SVG));
+    var live = CORE.favLive(favs).slice().sort(function (a, b) {
+      return baseName(a.p).toLowerCase().localeCompare(baseName(b.p).toLowerCase(), LANG === "el" ? "el" : "en");
+    });
+    if (live.length) {
+      var h = document.createElement("div");
+      h.className = "tsec";
+      h.textContent = t("tree.favs");
+      sec.appendChild(h);
+      live.forEach(function (f) { sec.appendChild(makeFavNode(f)); });
+    }
+    return sec;
+  }
+
+  function makeSpecialNode(kind, label, svg) {
+    var node = document.createElement("div");
+    node.className = "tnode special" + (view === kind && !dbxActive() ? " selected" : "");
+    node.style.paddingLeft = "6px";
+    node.tabIndex = 0;
+    node.setAttribute("role", "button");
+    node.dataset.view = kind;
+    var caret = document.createElement("span");
+    caret.className = "caret empty";
+    node.appendChild(caret);
+    var g = document.createElement("span");
+    g.className = "glyph";
+    g.innerHTML = svg;
+    node.appendChild(g);
+    var nm = document.createElement("span");
+    nm.className = "tname";
+    nm.textContent = label;
+    node.appendChild(nm);
+    function go() { closeTreeDrawer(); openView(kind); }
+    node.addEventListener("click", go);
+    node.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+    if (kind === "trash") {
+      // Rows dragged onto the Trash go there (no question: it can be undone).
+      node.addEventListener("dragover", function (e) {
+        if (!draggingEntryPath) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        node.classList.add("drop-target");
+      });
+      node.addEventListener("dragleave", function () { node.classList.remove("drop-target"); });
+      node.addEventListener("drop", function (e) {
+        e.preventDefault();
+        node.classList.remove("drop-target");
+        if (!draggingEntryPath) return;
+        draggingEntryPath = null;
+        performDelete(selectionPaths());
+      });
+    }
+    return node;
+  }
+
+  function makeFavNode(f) {
+    var node = document.createElement("div");
+    node.className = "tnode fav" + (f.dir && view === "files" && cwd === f.p && !dbxActive() ? " selected" : "");
+    node.style.paddingLeft = "6px";
+    node.tabIndex = 0;
+    node.setAttribute("role", "button");
+    node.title = displayPath(f.p);
+    var caret = document.createElement("span");
+    caret.className = "caret empty";
+    node.appendChild(caret);
+    var g = document.createElement("span");
+    g.className = "glyph";
+    g.innerHTML = f.dir ? FOLDER_SVG : FILE_SVG;
+    node.appendChild(g);
+    var nm = document.createElement("span");
+    nm.className = "tname";
+    nm.textContent = baseName(f.p);
+    node.appendChild(nm);
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "fav-x";
+    x.title = t("fav.remove");
+    x.setAttribute("aria-label", t("fav.remove") + ": " + baseName(f.p));
+    x.innerHTML = STAR_FILLED_SVG;
+    x.addEventListener("click", function (e) {
+      e.stopPropagation();
+      favToggle(f.p, f.dir);
+    });
+    node.appendChild(x);
+    FS().stat(f.p).catch(function () { node.classList.add("missing"); });
+    function go() {
+      FS().stat(f.p).then(function (st) {
+        closeTreeDrawer();
+        if (st && st.dir) navigate(f.p);
+        else openFileAt(f.p);
+      }, function () { transientNote(t("fav.missing")); });
+    }
+    node.addEventListener("click", go);
+    node.addEventListener("keydown", function (e) {
+      if (e.target !== node) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+    return node;
+  }
+
+  // ===== Recent view (device-local journal, newest first) =====
+  function renderRecentView() {
+    var token = ++renderToken;
+    setStatusLoading();
+    renderTree();
+    renderCrumbs();
+    updateActionButtons();
+    hideRecents();
+    recentsPruneExisting().then(function () {
+      return Promise.all(recentsRead().map(function (e) {
+        return FS().stat(e.p).then(function (st) {
+          return {
+            name: baseName(e.p), path: e.p, dir: !!(st && st.dir),
+            size: st && typeof st.size === "number" ? st.size : null,
+            mtime: st && st.mtime ? st.mtime : null,
+            sub: displayPath(parentOf(e.p)) + " · " + humanWhen(e.at)
+          };
+        }, function () { return null; });
+      }));
+    }).then(function (rows) {
+      if (token !== renderToken) return;
+      rows = rows.filter(Boolean);
+      lastEntries = rows;
+      renderEntries(rows);
+      renderStatus(rows.length);
+    });
+  }
+
+  // ===== Trash =====
+  // Files' Delete moves an item to /internal/.trash/<id>/<name> and
+  // writes /internal/.trash/<id>.json (files-core.js). Both are plain
+  // disk changes, so Vault Drive carries them to the other devices:
+  // there the item disappears from its folder and shows in their
+  // Trash; Restore moves it back the same way.
+  var trashRows = {};          // shown item path → { id, meta, item }
+
+  function moveToTrash(path) {
+    var fs = FS(), now = Date.now();
+    var id = CORE.trashId(now, Math.random().toString(36).slice(2, 10));
+    return fs.stat(path).then(function (st) {
+      var meta = CORE.makeMeta(path, !!(st && st.dir), now);
+      // The record first: when the move fails it is taken back.
+      return fs.writeText(CORE.trashMetaPath(id), JSON.stringify(meta)).then(function () {
+        return fs.mv(path, CORE.trashItemDir(id) + "/" + baseName(path));
+      }).catch(function (e) {
+        return fs.rm(CORE.trashMetaPath(id)).catch(function () {}).then(function () { throw e; });
+      });
+    });
+  }
+
+  function trashLoad() {
+    return FS().ls(TRASH).catch(function () { return []; }).then(function (list) {
+      var l = CORE.trashListing(list);
+      return Promise.all(l.ids.map(function (id) {
+        var metaP = l.metas[id]
+          ? FS().readText(CORE.trashMetaPath(id)).then(function (txt) { return JSON.parse(txt); }).catch(function () { return null; })
+          : Promise.resolve(null);
+        var itemP = FS().ls(CORE.trashItemDir(id)).catch(function () { return []; });
+        return Promise.all([metaP, itemP]).then(function (r) {
+          var meta = CORE.normMeta(r[0], id);
+          var items = r[1] || [], item = null;
+          for (var i = 0; i < items.length; i++) if (items[i].name === meta.name) item = items[i];
+          if (!item && items.length) item = items[0];
+          return { id: id, meta: meta, item: item, hasMeta: !!(l.metas[id] && r[0]) };
+        });
+      }));
+    });
+  }
+
+  // Load the Trash and remove what is older than 30 days, and the
+  // empty folders a restore or a removal on another device leaves
+  // behind (Vault Drive syncs files, not empty folders).
+  function trashSweepLoad() {
+    var now = Date.now();
+    return trashLoad().then(function (recs) {
+      var keep = [], chain = Promise.resolve();
+      recs.forEach(function (r) {
+        if (CORE.expired(r.meta.at, now) || (!r.item && !r.hasMeta)) {
+          chain = chain.then(function () { return trashDiscard(r.id); });
+        } else keep.push(r);
+      });
+      return chain.then(function () {
+        try { localStorage.setItem(SWEEP_KEY, String(now)); } catch (e) {}
+        return keep;
+      });
+    });
+  }
+  function trashSweepMaybe() {
+    var last = 0;
+    try { last = Number(localStorage.getItem(SWEEP_KEY)) || 0; } catch (e) {}
+    if (Date.now() - last < 12 * 3600000) return;
+    trashSweepLoad().then(function () {}, function () {});
+  }
+
+  // Whatever is left of one record: its folder and its .json.
+  function trashDiscard(id) {
+    return FS().rm(CORE.trashItemDir(id)).catch(function () {}).then(function () {
+      return FS().rm(CORE.trashMetaPath(id)).catch(function () {});
+    });
+  }
+
+  function renderTrashView() {
+    var token = ++renderToken;
+    setStatusLoading();
+    renderTree();
+    renderCrumbs();
+    updateActionButtons();
+    hideRecents();
+    trashSweepLoad().then(function (recs) {
+      if (token !== renderToken) return null;
+      trashRows = {};
+      var rows = recs.map(function (rec) {
+        var name = rec.item ? rec.item.name : (rec.meta.name || rec.id);
+        var path = CORE.trashItemDir(rec.id) + "/" + name;
+        trashRows[path] = rec;
+        return {
+          name: name, path: path,
+          dir: rec.item ? !!rec.item.dir : rec.meta.dir,
+          mtime: rec.meta.at || null, keepDate: true,
+          sub: rec.meta.path ? tfmt("trash.from", { path: displayPath(parentOf(rec.meta.path)) }) : t("trash.unknown"),
+          missing: !rec.item && !rec.meta.dir, size: null
+        };
+      });
+      return Promise.all(rows.map(function (r) {
+        if (r.dir || r.missing) return null;
+        return FS().stat(r.path).then(function (st) {
+          r.size = st && typeof st.size === "number" ? st.size : null;
+        }, function () {});
+      })).then(function () {
+        if (token !== renderToken) return;
+        rows.sort(function (a, b) { return (b.mtime || 0) - (a.mtime || 0); });
+        lastEntries = rows;
+        renderEntries(rows);
+        renderStatus(rows.length);
+        var eb = $("vb-empty");
+        if (eb) eb.disabled = rows.length === 0;
+      });
+    }).catch(function () {
+      if (token !== renderToken) return;
+      lastEntries = [];
+      renderEntries([]);
+      showDiskDown();
+    });
+  }
+
+  function trashRestore(paths) {
+    var done = 0, fail = 0, notHere = 0, lastName = null, renamed = false;
+    var chain = Promise.resolve();
+    paths.forEach(function (p) {
+      var rec = trashRows[p];
+      if (!rec) return;
+      // A file that has not arrived yet cannot come back; an empty
+      // folder never travels, so it is simply made again.
+      if (!rec.item && !rec.meta.dir) { notHere++; return; }
+      var item = rec.item || { name: rec.meta.name || "folder", dir: true, made: true };
+      chain = chain.then(function () {
+        var parent = CORE.restoreParent(rec.meta);
+        var ready = parent === ROOT ? Promise.resolve()
+          : FS().mkdir(parent).catch(function () { parent = ROOT; });
+        return ready.then(function () {
+          return fsList(parent, true).catch(function () { return []; });
+        }).then(function (list) {
+          var names = list.map(function (e) { return e.name; });
+          var name = uniqueName(item.name, names);
+          if (parent === ROOT && name === ".trash") name = uniqueName("_trash", names);
+          var op = item.made ? FS().mkdir(join(parent, name)) : FS().mv(p, join(parent, name));
+          return op.then(function () {
+            done++;
+            lastName = name;
+            renamed = renamed || name !== item.name;
+            if (!item.dir) recentsTouch(join(parent, name));
+            return trashDiscard(rec.id);
+          });
+        }).catch(function () { fail++; });
+      });
+    });
+    return chain.then(function () {
+      if (notHere) transientNote(t("trash.notHere"));
+      if (fail) transientNote(t("toast.opFail"));
+      if (done === 1) transientNote(renamed ? tfmt("trash.restoredAs", { name: lastName }) : t("trash.restored"));
+      else if (done > 1) transientNote(tfmt("trash.restoredMulti", { n: done }));
+      clearSelection();
+      if (done) markDirty();
+      refresh();
+    });
+  }
+
+  function trashForever(paths) {
+    var n = 0, chain = Promise.resolve();
+    paths.forEach(function (p) {
+      var rec = trashRows[p];
+      if (!rec) return;
+      chain = chain.then(function () { return trashDiscard(rec.id).then(function () { n++; }); });
+    });
+    return chain.then(function () {
+      transientNote(n === 1 ? t("trash.gone") : tfmt("trash.goneMulti", { n: n }));
+      clearSelection();
+      forceStorageRecalc();
+      markDirty();
+      refresh();
+    });
+  }
+
+  function emptyTrash() {
+    FS().rm(TRASH).catch(function (e) {
+      if (!e || e.code !== "ENOENT") throw e;
+    }).then(function () {
+      transientNote(t("trash.emptied"));
+    }, function () {
+      transientNote(t("toast.opFail"));
+    }).then(function () {
+      clearSelection();
+      forceStorageRecalc();
+      markDirty();
+      refresh();
+    });
+  }
+
+  function ensureViewBar() {
+    var vb = $("view-bar");
+    if (vb) return vb;
+    var wrap = $("list-wrap");
+    if (!wrap) return null;
+    vb = document.createElement("div");
+    vb.id = "view-bar";
+    vb.className = "view-bar";
+    vb.hidden = true;
+    var note = document.createElement("span");
+    note.className = "vb-note";
+    note.textContent = t("trash.note");
+    var b = document.createElement("button");
+    b.type = "button";
+    b.id = "vb-empty";
+    b.className = "vb-btn danger";
+    b.textContent = t("trash.emptyAll");
+    b.addEventListener("click", function () { openDeleteDialog("empty"); });
+    vb.appendChild(note);
+    vb.appendChild(b);
+    wrap.insertBefore(vb, wrap.firstChild);
+    return vb;
+  }
+
+  // ===== Grid view thumbnails (memory only, this session) =====
+  var thumbCache = {}, thumbKeys = [], THUMB_KEEP = 150, THUMB_PX = 192;
+  var thumbQueue = [], thumbRunning = 0, thumbObs = null, thumbGen = 0;
+
+  function thumbReset() {
+    thumbGen++;
+    thumbQueue = [];
+    if (thumbObs) { thumbObs.disconnect(); thumbObs = null; }
+  }
+
+  function thumbWatch(li, path, name) {
+    if (!CORE.thumbKind(name, null)) return;
+    var box = document.createElement("span");
+    box.className = "thumb";
+    li.insertBefore(box, li.querySelector(".ename"));
+    li._thumb = { path: path, name: name, box: box, gen: thumbGen };
+    if (typeof IntersectionObserver !== "function") { thumbEnqueue(li); return; }
+    if (!thumbObs) {
+      thumbObs = new IntersectionObserver(function (list) {
+        list.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          if (thumbObs) thumbObs.unobserve(en.target);
+          thumbEnqueue(en.target);
+        });
+      }, { root: $("entries"), rootMargin: "200px" });
+    }
+    thumbObs.observe(li);
+  }
+
+  function thumbEnqueue(li) {
+    thumbQueue.push(li);
+    thumbPump();
+  }
+
+  function thumbPump() {
+    while (thumbRunning < 2 && thumbQueue.length) {
+      var li = thumbQueue.shift();
+      var job = li._thumb;
+      if (!job || job.gen !== thumbGen || !li.isConnected) continue;
+      thumbRunning++;
+      (function (li, job) {
+        makeThumb(job.path, job.name).then(function (url) {
+          if (!url || job.gen !== thumbGen || !li.isConnected) return;
+          var img = document.createElement("img");
+          img.alt = "";
+          img.src = url;
+          job.box.appendChild(img);
+          li.classList.add("has-thumb");
+        }, function () {}).then(function () {
+          thumbRunning--;
+          thumbPump();
+        });
+      })(li, job);
+    }
+  }
+
+  function makeThumb(path, name) {
+    return FS().stat(path).then(function (st) {
+      var size = st && typeof st.size === "number" ? st.size : 0;
+      var kind = CORE.thumbKind(name, size);
+      if (!kind) return null;
+      var key = path + "|" + (st.mtime || "") + "|" + size;
+      if (Object.prototype.hasOwnProperty.call(thumbCache, key)) return thumbCache[key];
+      return FS().read(path).then(function (blob) {
+        return kind === "pdf" ? pdfThumb(blob) : imageThumb(blob);
+      }).then(canvasUrl).then(function (url) {
+        if (!url) return null;
+        thumbCache[key] = url;
+        thumbKeys.push(key);
+        while (thumbKeys.length > THUMB_KEEP) {
+          var old = thumbKeys.shift();
+          try { URL.revokeObjectURL(thumbCache[old]); } catch (e) {}
+          delete thumbCache[old];
+        }
+        return url;
+      });
+    });
+  }
+
+  function drawThumb(src, w, h) {
+    var sc = Math.min(1, THUMB_PX / Math.max(1, w, h));
+    var c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * sc));
+    c.height = Math.max(1, Math.round(h * sc));
+    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+    return c;
+  }
+
+  function imageThumb(blob) {
+    function viaImg() {
+      return new Promise(function (res, rej) {
+        var url = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function () {
+          try { res(drawThumb(img, img.naturalWidth, img.naturalHeight)); } catch (e) { rej(e); }
+          URL.revokeObjectURL(url);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); rej(new Error("img")); };
+        img.src = url;
+      });
+    }
+    if (typeof createImageBitmap !== "function") return viaImg();
+    return createImageBitmap(blob).then(function (bmp) {
+      var c = drawThumb(bmp, bmp.width, bmp.height);
+      try { bmp.close(); } catch (e) {}
+      return c;
+    }, viaImg);
+  }
+
+  function pdfThumb(blob) {
+    return blob.arrayBuffer().then(function (buf) {
+      return pdfOpen(new Uint8Array(buf));
+    }).then(function (pdf) {
+      return pdf.getPage(1).then(function (page) {
+        var v1 = page.getViewport({ scale: 1 });
+        var vp = page.getViewport({ scale: THUMB_PX / Math.max(1, v1.width, v1.height) });
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(vp.width));
+        c.height = Math.max(1, Math.round(vp.height));
+        return page.render({ canvasContext: c.getContext("2d"), viewport: vp, background: "#ffffff" }).promise
+          .then(function () { return c; });
+      }).then(function (c) { try { pdf.destroy(); } catch (e) {} return c; },
+        function (e) { try { pdf.destroy(); } catch (e2) {} throw e; });
+    });
+  }
+
+  function canvasUrl(c) {
+    return new Promise(function (res) {
+      try {
+        c.toBlob(function (b) { res(b ? URL.createObjectURL(b) : null); }, "image/webp", 0.82);
+      } catch (e) { res(null); }
+    });
+  }
+
+  // PDF.js (vendor/pdfjs, Apache-2.0), loaded on first use; eval and
+  // XFA off: a PDF's scripts and forms never run.
+  var PDF_LIB = "../vendor/pdfjs/pdf.min.js", PDF_WORKER = "../vendor/pdfjs/pdf.worker.min.js";
+  var pdfLibP = null;
+  function pdfLib() {
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+      return Promise.resolve(window.pdfjsLib);
+    }
+    if (pdfLibP) return pdfLibP;
+    pdfLibP = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.type = "module";
+      sc.src = PDF_LIB;
+      sc.onload = function () {
+        if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER; res(window.pdfjsLib); }
+        else rej(new Error("pdfjs"));
+      };
+      sc.onerror = function () { rej(new Error("pdfjs")); };
+      document.head.appendChild(sc);
+    });
+    pdfLibP.catch(function () { pdfLibP = null; });
+    return pdfLibP;
+  }
+  function pdfOpen(bytes) {
+    return pdfLib().then(function (lib) {
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false,
+                               disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
+    });
+  }
+
+  function setLayout(layout) {
+    prefs.layout = layout === "grid" ? "grid" : "list";
+    savePrefs();
+    paintToggles();
+    if (searchQuery === null) refresh();
+  }
+
+  // ===== Select mode (touch screens, any screen) =====
+  var swallowClick = false, lastPointerTouch = false;
+  document.addEventListener("pointerdown", function (e) {
+    lastPointerTouch = e.pointerType === "touch" || e.pointerType === "pen";
+    swallowClick = false;
+  }, true);
+
+  // A finger held on a row for half a second: Select mode with it.
+  function attachLongPress(li, path) {
+    var timer = null, x0 = 0, y0 = 0;
+    function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
+    li.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "touch") return;
+      x0 = e.clientX; y0 = e.clientY;
+      cancel();
+      timer = setTimeout(function () {
+        timer = null;
+        swallowClick = true;
+        if (!selectMode) { clearSelection(); setSelectMode(true); }
+        selectedPaths[path] = true;
+        paintSelection();
+        updateActionButtons();
+        try { if (navigator.vibrate) navigator.vibrate(15); } catch (e2) {}
+      }, 500);
+    });
+    li.addEventListener("pointermove", function (e) {
+      if (timer && (Math.abs(e.clientX - x0) > 10 || Math.abs(e.clientY - y0) > 10)) cancel();
+    });
+    li.addEventListener("pointerup", cancel);
+    li.addEventListener("pointercancel", cancel);
+  }
+
+  function setSelectMode(on) {
+    selectMode = !!on;
+    document.body.classList.toggle("select-mode", selectMode);
+    var tg = $("sel-toggle");
+    if (tg) tg.setAttribute("aria-pressed", selectMode ? "true" : "false");
+    if (!selectMode) clearSelection();
+    else updateActionButtons();
+  }
+
+  function selBtn(id, svg, labelKey, fn) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.id = id;
+    b.className = "sb-btn";
+    b.title = t(labelKey);
+    b.setAttribute("aria-label", t(labelKey));
+    b.innerHTML = svg + '<span class="sb-l"></span>';
+    b.querySelector(".sb-l").textContent = t(labelKey);
+    b.addEventListener("click", function (e) { e.stopPropagation(); fn(b); });
+    return b;
+  }
+
+  function ensureSelBar() {
+    var bar = $("sel-bar");
+    if (bar) return bar;
+    var wrap = $("list-wrap");
+    if (!wrap) return null;
+    bar = document.createElement("div");
+    bar.id = "sel-bar";
+    bar.className = "sel-bar";
+    bar.setAttribute("role", "toolbar");
+    bar.hidden = true;
+    bar.appendChild(selBtn("sb-done", X_SVG, "sel.done", function () { setSelectMode(false); }));
+    var cnt = document.createElement("span");
+    cnt.id = "sel-count";
+    cnt.className = "sel-count";
+    bar.appendChild(cnt);
+    var sp = document.createElement("span");
+    sp.className = "spacer";
+    bar.appendChild(sp);
+    bar.appendChild(selBtn("sb-all", CHECK_ALL_SVG, "sel.all", function () {
+      lastEntries.forEach(function (e) { selectedPaths[entryPath(e)] = true; });
+      paintSelection();
+      updateActionButtons();
+    }));
+    bar.appendChild(selBtn("sb-restore", RESTORE_SVG, "trash.restore", function () { trashRestore(selectionPaths()); }));
+    bar.appendChild(selBtn("sb-fav", STAR_SVG, "fav.add", function () {
+      var p = selectionPrimary();
+      if (p) favToggle(p.path, p.dir);
+    }));
+    bar.appendChild(selBtn("sb-zip", ZIP_SVG, "menu.zip", function () { zipCreate(selectionPaths()); }));
+    bar.appendChild(selBtn("sb-move", MV_SVG, "menu.moveTo", function () { openPickerDialog("move"); }));
+    bar.appendChild(selBtn("sb-copy", CP_SVG, "menu.copyTo", function () { openPickerDialog("copy"); }));
+    bar.appendChild(selBtn("sb-del", TRASH_SVG, "act.delete", function () {
+      openDeleteDialog(view === "trash" ? "forever" : "trash");
+    }));
+    wrap.appendChild(bar);
+    return bar;
+  }
+
+  function renderSelBar() {
+    var bar = ensureSelBar();
+    if (!bar) return;
+    bar.hidden = !selectMode || dbxActive();
+    if (bar.hidden) return;
+    var n = selectionCount();
+    $("sel-count").textContent = n === 1 ? t("sel.one") : n ? tfmt("sel.count", { n: n }) : t("sel.none");
+    var trash = view === "trash";
+    function show(id, on, enabled) {
+      var b = $(id);
+      if (!b) return;
+      b.hidden = !on;
+      b.disabled = !enabled;
+    }
+    show("sb-restore", trash, n > 0);
+    show("sb-fav", !trash && n === 1, n === 1);
+    show("sb-zip", !trash, n > 0);
+    show("sb-move", !trash, n > 0);
+    show("sb-copy", !trash, n > 0);
+    show("sb-del", true, n > 0);
+    show("sb-all", true, lastEntries.length > 0);
+    var del = $("sb-del");
+    if (del) {
+      var lk = trash ? "trash.deleteForever" : "act.delete";
+      del.title = t(lk);
+      del.setAttribute("aria-label", t(lk));
+      del.querySelector(".sb-l").textContent = t(lk);
+    }
+    var fb = $("sb-fav");
+    if (fb && n === 1) {
+      var p = selectionPrimary();
+      var on = !!(p && CORE.favIs(favs, p.path));
+      var fk = on ? "fav.remove" : "fav.add";
+      fb.title = t(fk);
+      fb.setAttribute("aria-label", t(fk));
+      fb.querySelector(".sb-l").textContent = t(fk);
+      fb.classList.toggle("on", on);
+    }
+  }
+
+  // ===== ZIP: create (stored / deflated) and extract =====
+  var zipBusy = false;
+  var ZIP_MAX_FILES = 10000, ZIP_MAX_MB = 300, ZIP_OPEN_MB = 300;
+
+  function deflateOk() {
+    try { new CompressionStream("deflate-raw"); return true; } catch (e) { return false; }
+  }
+  function deflate(bytes) {
+    return new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw")))
+      .arrayBuffer().then(function (b) { return new Uint8Array(b); });
+  }
+
+  // Selected items → [{ rel, dir, path?, size?, mtime }] (folders whole).
+  function zipCollect(paths) {
+    var list = [], total = 0, over = false, top = [];
+    function add(path, rel) {
+      if (over) return Promise.resolve();
+      return FS().stat(path).then(function (st) {
+        if (st && st.dir) {
+          list.push({ rel: rel + "/", dir: true, mtime: st.mtime || null });
+          return fsList(path).then(function (kids) {
+            var chain = Promise.resolve();
+            kids.forEach(function (k) {
+              chain = chain.then(function () { return add(join(path, k.name), rel + "/" + k.name); });
+            });
+            return chain;
+          });
+        }
+        var size = st && typeof st.size === "number" ? st.size : 0;
+        total += size;
+        list.push({ rel: rel, path: path, size: size, mtime: st && st.mtime || null });
+        if (list.length > ZIP_MAX_FILES || total > ZIP_MAX_MB * 1048576) over = true;
+      });
+    }
+    var chain = Promise.resolve();
+    paths.forEach(function (p) {
+      chain = chain.then(function () {
+        var rel = uniqueName(baseName(p), top);      // same name from two folders (Recent)
+        top.push(rel);
+        return add(p, rel);
+      });
+    });
+    return chain.then(function () { return { list: list, over: over }; });
+  }
+
+  function zipCreate(paths) {
+    paths = (paths || []).filter(function (p) { return !CORE.isTrashPath(p); });
+    if (!paths.length) return;
+    if (zipBusy) { transientNote(t("zip.busy")); return; }
+    zipBusy = true;
+    var parent = parentOf(paths[0]);
+    if (parent === "/") parent = ROOT;
+    var canDeflate = deflateOk();
+    setJob(tfmt("zip.working", { n: 0, t: "…" }));
+    zipCollect(paths).then(function (c) {
+      if (c.over) {
+        transientNote(tfmt("zip.tooBig", { n: ZIP_MAX_FILES, mb: ZIP_MAX_MB }));
+        return null;
+      }
+      var nFiles = c.list.filter(function (it) { return !it.dir; }).length, done = 0, entries = [];
+      var chain = Promise.resolve();
+      c.list.forEach(function (it) {
+        chain = chain.then(function () {
+          if (it.dir) {
+            entries.push({ name: it.rel, size: 0, crc: 0, data: new Uint8Array(0), method: 0, date: it.mtime });
+            return null;
+          }
+          return FS().read(it.path).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
+            var raw = new Uint8Array(buf);
+            var crc = CORE.crc32(raw);
+            var squeeze = canDeflate && raw.length > 64 && !CORE.shouldStore(it.rel)
+              ? deflate(raw).catch(function () { return null; }) : Promise.resolve(null);
+            return squeeze.then(function (def) {
+              var use = !!(def && def.length < raw.length);
+              entries.push({ name: it.rel, size: raw.length, crc: crc, data: use ? def : raw,
+                             method: use ? 8 : 0, date: it.mtime });
+              done++;
+              setJob(tfmt("zip.working", { n: done, t: nFiles }));
+            });
+          });
+        });
+      });
+      return chain.then(function () {
+        var parts = CORE.zipBuild(entries);
+        var dirs = paths.map(function (p, i) {
+          return c.list.some(function (it) { return it.dir && it.rel === baseName(p) + "/"; });
+        });
+        return fsList(parent, true).then(function (list) {
+          var names = list.map(function (e) { return e.name; });
+          var name = uniqueName(CORE.zipNameFor(paths.map(baseName), dirs) || (t("zip.archive") + ".zip"), names);
+          var dst = join(parent, name);
+          return FS().write(dst, new Blob(parts, { type: "application/zip" })).then(function () {
+            recentsTouch(dst);
+            transientNote(tfmt("zip.done", { name: name }));
+            forceStorageRecalc();
+            markDirty();
+          });
+        });
+      });
+    }).catch(function () {
+      transientNote(t("zip.fail"));
+    }).then(function () {
+      zipBusy = false;
+      setJob("");
+      refresh();
+    });
+  }
+
+  // Read a ZIP of the disk with atelier/zip.js (AtelierZip.open).
+  function zipOpen(path) {
+    var Z = window.AtelierZip;
+    if (!Z || typeof Z.open !== "function") return Promise.reject(new Error("bad"));
+    return FS().stat(path).then(function (st) {
+      if (st && st.size > ZIP_OPEN_MB * 1048576) throw new Error("big");
+      return FS().read(path);
+    }).then(function (blob) {
+      return blob.arrayBuffer();
+    }).then(function (buf) {
+      try { return Z.open(new Uint8Array(buf)); }
+      catch (e) { throw new Error("bad"); }
+    });
+  }
+  function zipErrorText(e) {
+    return e && e.message === "big" ? tfmt("zip.big", { mb: ZIP_OPEN_MB }) : t("zip.bad");
+  }
+
+  // Into a new folder named after the ZIP, next to it.
+  function zipExtract(path) {
+    if (zipBusy) { transientNote(t("zip.busy")); return; }
+    zipBusy = true;
+    var parent = parentOf(path);
+    setJob(tfmt("zip.extracting", { n: 0, t: "…" }));
+    zipOpen(path).then(function (z) {
+      var plan = CORE.extractPlan(z.names, z.size);
+      if (plan.tooMany || plan.tooBig) { transientNote(tfmt("zip.tooBig", { n: 20000, mb: 1024 })); return null; }
+      if (!plan.items.length) { transientNote(t("zip.empty")); return null; }
+      return fsList(parent, true).then(function (list) {
+        var base = plan.top || baseName(path).replace(/\.zip$/i, "") || t("zip.archive");
+        var folder = uniqueName(base, list.map(function (e) { return e.name; }));
+        var dest = join(parent, folder);
+        var cut = plan.top ? plan.top.length + 1 : 0;
+        return FS().mkdir(dest).then(function () {
+          var ok = 0, fail = 0, chain = Promise.resolve();
+          plan.items.forEach(function (it) {
+            chain = chain.then(function () {
+              return z.bytes(it.name).then(function (b) {
+                return FS().write(dest + "/" + it.rel.slice(cut), new Blob([b || new Uint8Array(0)]));
+              }).then(function () { ok++; }, function () { fail++; }).then(function () {
+                setJob(tfmt("zip.extracting", { n: ok + fail, t: plan.items.length }));
+              });
+            });
+          });
+          return chain.then(function () {
+            transientNote(tfmt("zip.extracted", { n: ok, name: folder }));
+            if (fail) transientNote(tfmt("zip.partial", { n: fail }));
+            forceStorageRecalc();
+            markDirty();
+          });
+        });
+      });
+    }).catch(function (e) {
+      transientNote(zipErrorText(e));
+    }).then(function () {
+      zipBusy = false;
+      setJob("");
+      refresh();
+    });
+  }
+
+  // Preview of a .zip: what is inside, and Extract.
+  function renderZipPreview(path) {
+    pvBodySet('<div class="pv-loading">' + escapeHtml(t("status.loading")) + "</div>");
+    var acts = $("pv-actions");
+    if (acts && !acts.dataset.hasZip) {
+      acts.dataset.hasZip = "1";
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "pv-btn";
+      b.innerHTML = UNZIP_SVG + "<span></span>";
+      b.querySelector("span").textContent = t("zip.extract");
+      b.addEventListener("click", function () { closePreview(true); zipExtract(path); });
+      acts.appendChild(b);
+    }
+    zipOpen(path).then(function (z) {
+      var body = $("pv-body");
+      if (!body) return;
+      var plan = CORE.extractPlan(z.names, z.size);
+      body.innerHTML = "";
+      var info = document.createElement("p");
+      info.className = "pv-zipinfo";
+      info.textContent = tfmt("zip.entries", { n: plan.items.length, size: fmtKB(plan.total) });
+      body.appendChild(info);
+      var ul = document.createElement("ul");
+      ul.className = "zip-list";
+      plan.items.slice(0, 500).forEach(function (it) {
+        var li = document.createElement("li");
+        var n = document.createElement("span");
+        n.className = "zn";
+        n.textContent = it.rel;
+        var s = document.createElement("span");
+        s.className = "zs";
+        s.textContent = fmtKB(it.size);
+        li.appendChild(n);
+        li.appendChild(s);
+        ul.appendChild(li);
+      });
+      if (plan.items.length > 500) {
+        var more = document.createElement("li");
+        more.textContent = "…";
+        ul.appendChild(more);
+      }
+      body.appendChild(ul);
+    }).catch(function (e) {
+      pvBodySet('<div class="pv-msg">' + escapeHtml(zipErrorText(e)) + "</div>");
+    });
+  }
+
   // ---------- 17. Wiring & boot ----------
 
   function applyI18n() {
@@ -2841,6 +4267,33 @@
       clr.innerHTML = X_SVG;
       bar.appendChild(clr);
 
+      // Wave 3: search inside files too (this device remembers it)
+      var cont = document.createElement("button");
+      cont.type = "button";
+      cont.id = "search-contents";
+      cont.className = "sb-toggle";
+      cont.title = t("search.contentsTitle");
+      cont.setAttribute("aria-label", t("search.contentsTitle"));
+      cont.innerHTML = TEXT_SVG + '<span class="tg-l"></span>';
+      cont.querySelector(".tg-l").textContent = t("search.contents");
+      cont.addEventListener("click", function () {
+        prefs.contents = !prefs.contents;
+        savePrefs();
+        paintToggles();
+        if (searchQuery !== null) runSearch(searchQuery);
+      });
+      bar.appendChild(cont);
+
+      // Wave 3: list / grid, per device
+      var lay = document.createElement("button");
+      lay.type = "button";
+      lay.id = "layout-toggle";
+      lay.className = "sb-toggle";
+      lay.addEventListener("click", function () {
+        setLayout(prefs.layout === "grid" ? "list" : "grid");
+      });
+      bar.appendChild(lay);
+
       var split = $("split");
       if (split) split.parentNode.insertBefore(bar, split);
     }
@@ -2885,6 +4338,7 @@
 
   function wire() {
     $("up").addEventListener("click", function () {
+      if (view !== "files") { navigate(cwd); return; }
       if (cwd === ROOT) return;
       navigate(cwd.slice(0, cwd.lastIndexOf("/")) || ROOT);
     });
@@ -2892,7 +4346,7 @@
     $("new-folder").addEventListener("click", function () { openNameDialog("folder"); });
     $("new-file").addEventListener("click", function () { openNameDialog("file"); });
     $("rename").addEventListener("click", function () { openNameDialog("rename"); });
-    $("delete").addEventListener("click", openDeleteDialog);
+    $("delete").addEventListener("click", function () { openDeleteDialog(); });
 
     // Name dialog
     $("name-form").addEventListener("submit", function (e) {
@@ -2903,11 +4357,18 @@
       $("dlg-name").close();
     });
 
-    // Delete dialog
+    // Delete dialog (Trash / forever / Empty Trash)
     $("delete-form").addEventListener("submit", function (e) {
       e.preventDefault();
       $("dlg-delete").close();
-      performDelete();
+      confirmDelete();
+    });
+
+    // Esc leaves Select mode (the preview and dialogs take Esc first).
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape" || !selectMode || pvOverlay) return;
+      if (document.querySelector("dialog[open]")) return;
+      setSelectMode(false);
     });
     $("delete-cancel").addEventListener("click", function () {
       $("dlg-delete").close();
@@ -2951,8 +4412,21 @@
   // remote consumption moved to the END of boot (after cwd is set
   // and the first refresh is underway) so a remote restore renders
   // against the REAL current folder, not a default.
+  function paintToggles() {
+    var cont = $("search-contents");
+    if (cont) cont.setAttribute("aria-pressed", prefs.contents ? "true" : "false");
+    var lay = $("layout-toggle");
+    if (lay) {
+      var grid = prefs.layout === "grid";
+      lay.innerHTML = grid ? LIST_SVG : GRID_SVG;
+      lay.title = t(grid ? "view.list" : "view.grid");
+      lay.setAttribute("aria-label", lay.title);
+    }
+  }
+
   function boot() {
     loadPrefs();
+    favLoad();
     applyI18n();
     ensureTreeToggle();
     ensureToolbarExtras();
@@ -2976,7 +4450,8 @@
 
     renderSyncPill();
     watchVault();
-    cwd = prefs.last && prefs.last.indexOf(ROOT) === 0 ? prefs.last : ROOT;
+    registerFavSync();
+    cwd = prefs.last && prefs.last.indexOf(ROOT) === 0 && !CORE.isTrashPath(prefs.last) ? prefs.last : ROOT;
     clearSelection();
 
     // Ensure header + storage bar + column headers BEFORE the
@@ -2984,10 +4459,12 @@
     // the fatal #1 regression).
     ensureHeaderAndStorage();
     ensureColumnHeaders();
+    paintToggles();
     refresh();
     updateSortIndicators();
     ensureStorageBar();
     setTimeout(ensureStorageBar, 1500); // delayed recalc if first boot
+    setTimeout(trashSweepMaybe, 4000);  // auto-empty: older than 30 days
 
     initDropbox();
 
@@ -3010,6 +4487,7 @@
     if (!t || typeof t.path !== "string" || !isAvailable()) return;
     var p = t.path.replace(/\/+$/, "");
     if (p.indexOf(ROOT + "/") !== 0 || p.indexOf("/../") !== -1 || /\/\.\.?$/.test(p)) return;
+    if (CORE.isTrashPath(p)) { openView("trash"); return; }
     if (t.dir) { navigate(p); return; }
     navigate(p.slice(0, p.lastIndexOf("/")) || ROOT);
     openPreview(p);
@@ -3057,6 +4535,20 @@
     hdr.appendChild(mkCol("col.name", "name"));
     hdr.appendChild(mkCol("col.size", "size"));
     hdr.appendChild(mkCol("col.date", "date"));
+
+    // Wave 3: Select mode toggle, in the icon column (placed by CSS).
+    var sel = document.createElement("button");
+    sel.type = "button";
+    sel.id = "sel-toggle";
+    sel.title = t("sel.mode");
+    sel.setAttribute("aria-label", t("sel.mode"));
+    sel.setAttribute("aria-pressed", "false");
+    sel.innerHTML = CHECK_SVG;
+    sel.addEventListener("click", function (e) {
+      e.stopPropagation();
+      setSelectMode(!selectMode);
+    });
+    hdr.appendChild(sel);
 
     var wrap = $("list-wrap");
     if (wrap) wrap.insertBefore(hdr, wrap.firstChild);

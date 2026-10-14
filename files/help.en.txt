@@ -1,27 +1,55 @@
 # Files
-Files is the orOS disk: folders and files kept in this browser. Import files, preview and edit text, download copies and, with orOS sync on, find the same disk on your other devices.
+Files is the orOS disk: folders and files kept in this browser. Import files, preview and edit text, search inside them, pack and unpack ZIP files, download copies and, with orOS sync on, find the same disk on your other devices.
 
 ## Getting started
 Folders are on the left, the current folder's contents on the right. On a phone, the folder button at the top opens the tree. Use the path or the up arrow to go back.
 
+- At the top of the tree, `Recent` lists the files you opened or changed lately, and `Favourites` the folders and files you pinned. `Trash` sits below your folders.
 - Tap or click a row to select it. On a computer, double-click to open a folder or file. On a touch screen, tap once to select and tap the same row again to open it.
 - The toolbar buttons are `Import files`, `New folder`, `New file`, `Rename`, `Delete` and `More actions`.
+- The button at the right of the search box switches between `List view` and `Grid view`. The grid shows small pictures of images and of the first page of PDFs. Each device remembers its own choice.
 - The main folder also shows `Recent files`, the last 10 files you opened or changed.
 
 ## Manage files and folders
 - `New folder` and `New file` ask for a name. A name can't contain / \ : * ? " < > |.
 - Select several items with Ctrl+click (Cmd+click on Mac), or a range with Shift+click.
-- Right-click an item, or select it and tap `More actions`, for `Preview`, `Download`, `Move to…`, `Copy to…`, `Copy name`, `Copy path`, `Copy content` (text files only), `Rename` and `Delete`.
-- On a computer you can also drag items onto a folder in the tree to move them there.
+- Right-click an item, or select it and tap `More actions`, for `Preview`, `Add to Favourites`, `Download`, `Move to…`, `Copy to…`, `Compress to ZIP`, `Extract here` (ZIP files), `Copy name`, `Copy path`, `Copy content` (text files only), `Rename` and `Delete`.
+- On a computer you can also drag items onto a folder in the tree to move them there, or onto `Trash`.
 - Tap the column headers `Name`, `Size` or `Modified` to sort; tap again to reverse.
 
->! Deleting is permanent. A folder is deleted with everything inside it, and there is no Undo.
+### Select several items on a touch screen
+- Tap the check box at the left of the column headers (`Select`), or hold your finger on a row for half a second.
+- Each tap now ticks or unticks a row. The bar at the bottom shows how many are selected and offers `Select all`, `Add to Favourites` (one item), `Compress to ZIP`, `Move to…`, `Copy to…` and `Delete`.
+- Tap `Done` (or press Esc) to leave Select mode.
+
+### Favourites
+- `Add to Favourites` pins a folder or file to the top of the tree. Tap the star next to it there, or choose `Remove from Favourites`, to unpin it.
+- Favourites follow a rename or a move made in Files, and are synced to your other devices. A favourite that has not reached a device yet is shown faded.
+
+### ZIP files
+- `Compress to ZIP` packs the selected files and folders into one .zip next to them, named after the item (or "Archive.zip" for several). Text and other files are compressed where the browser can; photos, videos and other already compressed files are stored as they are.
+- Open a .zip to see what is inside. `Extract` (or `Extract here` in the menu) unpacks it into a new folder next to it. A file never overwrites anything: names that are taken get " (1)".
+
+## Trash
+`Delete` moves items into the `Trash` instead of erasing them. You can get them back for 30 days.
+
+- Open `Trash` in the tree. Each item shows the folder it came from and when it was deleted.
+- Select items and choose `Restore` to put them back in their folder (the folder is made again if it is gone; a taken name gets " (1)"), or `Delete forever`.
+- `Empty Trash` deletes everything in it at once. Items older than 30 days are deleted for good automatically.
+- With orOS sync on, the Trash is the same on all your devices: a deleted file disappears from its folder there too and shows in their Trash, and restoring it on any device puts it back everywhere.
+
+>! `Delete forever`, `Empty Trash` and Shift+Delete can't be undone. Other apps that delete their own files on the disk don't use the Trash.
 
 ## Import, preview and edit
 - Tap `Import files` to pick one or more files, or drop files from your computer onto the list. If a file with the same name already exists, choose `Overwrite` or `Keep both`.
 - Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text.
 - Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
-- Search with the box `Search in this folder…`. It looks at file and folder names in the current folder and all its subfolders. Tap a result to open the folder it's in.
+
+## Search
+- Type in `Search in this folder…`. It looks through the current folder and all its subfolders. Capital letters and Greek accents don't matter.
+- Names are searched by default. Turn on `Contents` to also search inside text files (TXT, Markdown, CSV, JSON, HTML, code and more) and PDFs. A line shows how far the search has got, and each match inside a file shows a snippet with the words found.
+- The first 100 results are shown; `Show more` adds the next 100.
+- Tap a folder to open it, or a file to open its folder and preview it.
 
 ## Your Dropbox
 Below `Files` in the folder tree, `Dropbox` shows your whole Dropbox, not only the orOS disk. It is optional and works on each device separately.
@@ -50,24 +78,29 @@ The disk lives in this browser. When [orOS sync](help:t/sync) is connected and u
 
 - The pill in the status bar shows `Disk synced`, `Changes pending sync` or `Disk sync unavailable`.
 - If the same file changed on two devices, both versions are kept. The other copy gets "(conflict" plus the date and time in its name.
-- Your sort order, last folder, `Recent files` and the storage figure stay on this device.
-- orOS [backups](help:t/backup) include the whole disk. For a single file, use `Download`.
+- Favourites and the Trash are synced. Your sort order, list or grid view, the `Contents` switch, last folder, `Recent` and the storage figure stay on this device.
+- orOS [backups](help:t/backup) include the whole disk, Trash included. For a single file, use `Download`.
 
 ## Keyboard shortcuts
 - [[Enter]] opens the selected folder or file.
 - [[Space]] adds or removes the focused row from the selection.
-- [[Delete]] deletes the selection, after you confirm.
-- [[Esc]] closes the preview.
+- [[Delete]] moves the selection to the Trash, after you confirm. Inside the Trash it deletes forever.
+- [[Shift+Delete]] deletes the selection forever, after you confirm.
+- [[Esc]] closes the preview, or leaves Select mode.
 
 ## Tips
-- The toolbar shows how much space your files use, for example "120 KB used".
+- The toolbar shows how much space your files use, for example "120 KB used". Items in the Trash count too, until it is emptied.
 - To move files on a phone, use `Move to…`. Dragging works only with a mouse.
+- To send a whole folder somewhere, compress it to ZIP and download the .zip.
 
 ## Limits
 - Text previews go up to 512 KB and images up to 10 MB. Bigger files can still be downloaded.
 - Files that aren't UTF-8 text can't be edited here. Download them instead.
-- Search shows at most 100 results and matches names only, not file contents.
-- On touch screens you can select only one item at a time.
+- Searching inside files reads text files up to 4 MB and PDFs up to 30 MB (the first 300 pages); bigger or unreadable files are skipped and counted. Scanned PDFs without a text layer can't be searched.
+- A new ZIP holds up to 10,000 files and 300 MB. A ZIP opens here up to 300 MB, with up to 20,000 files, 1 GB in all and 80 MB per file once unpacked. Encrypted and ZIP64 archives aren't supported, empty folders inside a ZIP are not recreated, and file names are read as UTF-8 (very old Windows ZIPs may show odd names).
+- Grid pictures are made on this device each time and are not stored. Only images and PDFs up to 20 MB get one.
+- `Recent` keeps the last 30 files on this device.
+- An empty folder moved to the Trash on one device reaches the others' Trash without being in their folders, because empty folders don't sync.
 - Very large files are slow to sync, as each is encrypted in one piece.
 - The Dropbox view needs a connection to the internet.
 - One transfer takes up to 1000 files and 1 GB; files over 300 MB stay in Dropbox (the disk encrypts each file whole in memory).

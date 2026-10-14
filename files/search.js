@@ -5,7 +5,8 @@
 // window.orosFS (ls only; file contents are never read). One hit
 // per file or folder: its name, the folder it is in as text.
 // The listing is walked at most every 10 s and capped (depth 12,
-// 3,000 entries) so a big disk cannot stall the search.
+// 3,000 entries) so a big disk cannot stall the search. Files'
+// Trash (/internal/.trash) is never listed.
 // Opens through the generic deep link: target { path, dir }.
 // ============================================================
 (function (root) {
@@ -22,6 +23,8 @@
         var subs = [];
         (Array.isArray(list) ? list : []).forEach(function (e) {
           if (!e || typeof e.name !== "string" || out.length >= MAX_ENTRIES) return;
+          if (path === ROOT && e.name === ".trash") return;      // Files' Trash stays out
+
           var p = path + "/" + e.name;
           out.push({ path: p, name: e.name, dir: !!e.dir, parent: path });
           if (e.dir) subs.push(p);
