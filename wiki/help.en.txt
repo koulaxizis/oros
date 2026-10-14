@@ -1,0 +1,75 @@
+# Wiki
+Wiki is your own encyclopedia. Write what you know in articles that link to each other, read them like Wikipedia, with a contents box, sections and categories, and keep every version of every article.
+
+## Getting started
+The first time, press **Create my wiki**. Wiki makes a wiki called `My wiki` with a `Main page` that explains the first steps.
+
+To write a new article, press the **+** button at the top, type a `Title` and the text, then press `Save`. Or write a title in double square brackets in another article, like `[[Olive trees]]`: the link shows in red while the article doesn't exist, and tapping it opens the editor for it.
+
+The ☰ button opens the menu: `Main page`, `Recent changes`, `Random article`, `All articles`, `Categories` and `Wanted articles`. On a computer the menu stays open on the left; ☰ hides it.
+
+## Reading an article
+An article starts with its lead text. With three headings or more, a `Contents` box follows; tap a line to jump to that section. On a phone, tap a section's heading to fold or unfold it.
+
+Links to other articles are in the accent colour; red links lead to articles that don't exist yet. Web links open in a new tab. The categories of the article are listed at the bottom; tap one to see every article in it.
+
+Above every article are `Read`, `Edit` and `History`. The ⋯ button has `Rename…`, `What links here`, `Copy the text`, `Make this the main page` and `Delete this article`.
+
+## Writing and formatting
+`Edit` opens the whole article. The `edit` link next to a heading opens only that section. The toolbar adds formatting for you; `Preview` shows the result before you save. `Formatting help` under the editor lists every sign:
+- `## Heading` and `### Subheading` (`== Heading ==` works too).
+- `**bold**`, `*italic*`, `~~struck~~`, and a word between two backticks for code.
+- `[[Article]]`, `[[Article|other text]]`, `[[Article#Section]]`.
+- `[text](https://example.com)` or a bare `https://` address.
+- `- item` for a list, `1. item` for a numbered one; two spaces in front go one level deeper.
+- `> quote`, `---` for a line, three backticks before and after a block of code.
+- A table: a row like `| A | B |`, then `|---|---|`, then one line per row.
+- `[[Category:Name]]` files the article in a category. `[[:Category:Name]]` is a link to the category instead.
+- `#REDIRECT [[Article]]` as the first line turns a page into a redirect: whoever opens it lands on that article.
+
+Write what you changed in `Summary of your changes`; it shows in the history and in `Recent changes`. Nothing is saved until you press `Save`, but what you type is kept on this device: if Wiki closes, your text is back the next time you edit the same article.
+
+## Renaming, redirects and deleting
+`Rename…` changes the title. With `Leave a redirect from the old title` ticked, links to the old title keep working. A page that was reached through a redirect says `(Redirected from …)` under its title.
+
+`Delete this article` removes it from all your devices after you confirm; `Undo` in the notice brings it back.
+
+## History
+`History` lists every saved version, newest first, with its date and summary. For each one:
+- `View` shows that version.
+- `Changes` shows what changed from the version before it: removed lines in red, added lines in green, with the changed words marked.
+- `Compare with current` shows the difference from the article as it is now.
+- `Restore` saves that version again as the newest one. Nothing is deleted: the history keeps everything.
+
+## Edits on two devices
+If you change the same article on two devices before they sync, both texts are kept. The article then shows a note: `Compare` shows the two side by side, `Keep this version` keeps the one you see, `Use the other version` takes the other one. Either way, both stay in the history.
+
+## Searching and lists
+Type in the search field at the top: titles that match show as you type. Press [[Enter]] to open the article with that title, or see every article that has the words, with a link to write the article if it doesn't exist yet.
+
+`Recent changes` lists articles by their last change, day by day. `All articles` is an A to Z list with a filter. `Categories` lists every category with its number of articles. `Wanted articles` lists the red links: titles that other articles link to but nobody has written yet. `What links here` lists the articles that link to the one you are reading.
+
+Wiki articles also show up in the orOS [quick search](help:t/menu#quick-search).
+
+## Several wikis
+Use separate wikis for separate parts of your life, like work, home or a hobby. In the menu, `New wiki…` makes one, the list at the top switches between them, and `Rename this wiki…` and `Delete this wiki…` change the open one. Links, categories and search work inside one wiki.
+
+## Sync and backup
+Your wikis and articles sync between your devices through [orOS sync](help:t/sync), encrypted. The history of each article is kept as files on the orOS disk and travels with it, so versions saved on another device show up once the disk has synced. The menu shows how many articles the open wiki has and how much room your wikis take on this device. For a full copy of orOS, see [backup](help:t/backup).
+
+## Keyboard shortcuts
+- [[Ctrl+K]] jumps to the search field ([[Cmd+K]] on a Mac).
+- [[E]] edits the article you are reading.
+- [[Ctrl+S]] saves while you edit.
+- [[Ctrl+B]] and [[Ctrl+I]] make the selected text bold or italic; [[Ctrl+K]] inside the editor makes it a link to an article.
+- [[Esc]] closes menus and dialogs.
+
+## Tips
+- Upper and lower case and accents don't matter in links: `[[olive trees]]` finds “Olive Trees”.
+- `Wanted articles` is a good to-do list: it shows what your wiki still misses.
+- `Make this the main page` turns any article into the page the wiki opens with.
+
+## Limits
+- No pictures in articles yet.
+- An article holds up to 200,000 characters, and a wiki up to 5,000 articles.
+- The text of all your wikis shares the space orOS has on this device (about 5 MB); the history lives on the orOS disk and doesn't count against it.
