@@ -368,6 +368,8 @@
 
   LY.io = {
     exportPdf: exportPdf, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, openFile: openFile,
-    placeImage: placeImage, importText: importText
+    placeImage: placeImage, importText: importText,
+    // for the data merge (mergeui.js)
+    saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
   };
 })();

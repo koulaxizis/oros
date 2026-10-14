@@ -172,6 +172,13 @@
       transition: function (i) { return list[i] && i ? Anim.pageTransition(doc, list[i].id) : "none"; }
     });
     presentSound(ctl, sess);
+    // chart pictures at screen size, then the slide draws again
+    if (ctl && AT.charts) {
+      var sw = Math.max(window.screen ? window.screen.width : 0, window.innerWidth) * (window.devicePixelRatio || 1);
+      AT.charts.prepare(doc, sw / doc.setup.w, list).then(function () {
+        if (ctl.refresh && !ctl.state().closed) ctl.refresh();
+      });
+    }
   }
   function presentSound(ctl, s) {
     if (!ctl || !s) return;
@@ -339,6 +346,9 @@
     var sess = AT.video ? AT.video.Session(doc, list) : null;
     return T.load(AT.draw.fontKeys(doc)).then(function () {
       return Promise.all(AX.assetIds(doc).map(function (id) { return A.load(id); }).concat(sess ? [sess.prepare()] : []));
+    }).then(function () {
+      var fs = filmSize(doc, o.side);
+      return AT.charts ? AT.charts.prepare(doc, fs.w / doc.setup.w, list) : null;
     }).then(function () {
       var tick = function (s, total) { AT.toast(t(key, { s: s, t: total })); };
       return o.type === "gif" ? makeGif(doc, list, o.side, tick, sess) : recordVideo(doc, list, o.side, tick, sess);

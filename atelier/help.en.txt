@@ -2,12 +2,14 @@
 Design posts, stories, flyers, posters, cards and more, from a blank page or a ready template, and download them as PNG, JPG, PDF or PowerPoint (to keep working on them in Canva).
 
 ## Getting started
-Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also pick one of the designs under `Start from a template`; its texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
+Under `What will you make?` tap or click a size, for example a square post or an A4 poster, or choose `Custom size` and enter your own width and height in pixels (screen) or millimetres (print). You can also start from one of the 50 designs under `Start from a template` (social posts, stories, presentations, posters, flyers, business cards, invitations, CVs, certificates, menus, charts, logos): pick a kind with the buttons above them or type in `Search templates` (English or Greek, with or without accents), and `Show all` lists the rest. Their texts appear in your language. Your work is saved as you go and shows up under `Your designs`.
 
 ## Add and edit elements
 - The side panel (the bottom tabs on a phone) has `Templates`, `Elements`, `Text`, `AI`, `Sources`, `Uploads` and `Background`.
 - `Elements` has shapes, lines and arrows, and icons you can search in English or Greek.
 - `Text` adds a heading, a subheading or body text, and has ready `Styles` such as neon, shadow and curved text.
+- `Elements` › `Tables and charts` adds a table or a column, bar, line, pie or donut chart. `Edit table` and `Edit chart` open a grid to type in (you can paste cells from a spreadsheet); a table has a header row, bold first column, banded rows, lines and column widths, a chart a title, a legend and `Series in` columns or rows. The bar above the canvas sets the font, size and colours. A table shrinks its text to fit its box.
+- The `Templates` tab has the same library with its kinds and search; a template replaces what is on the current page.
 - Tap or click an element to select it. Drag it to move, use the handles to resize, and the round handle below it to rotate. Guides help you line things up.
 - Tap a selected text again, or double-click it, to type in it.
 - The bar above the canvas changes with what you selected: font, size, colour, `Effects`, `Transparency`, `Position`, `Lock`, `Duplicate` and `Delete`.
@@ -51,6 +53,7 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 
 ## Download and share
 - `Download` makes a PNG (normal, ×2 or ×3, optionally with a transparent background), a JPG, a PDF for printing at 150 or 300 dpi, or a PowerPoint file (see below).
+- In the PDF, texts are real text in the embedded fonts (you can select, search and copy them) and shapes, lines and tables stay sharp at any zoom. Photos, icons, charts, gradients and text effects a PDF can't express (glow, blur) become pictures at the chosen 150 or 300 dpi, element by element; a text with a letter the fonts lack (an emoji, for example) also becomes a picture. Tick `Whole pages as pictures` for the old exact-look PDF.
 - `Video` (MP4 or WebM, whichever your browser records) and `GIF` turn the pages into a film with their animations and transitions. A video records in real time, so keep the tab open until it is saved.
 - `More` › `Resize…` makes the design in other sizes, for example a square post as a story and a banner. Tick one or more sizes (or a custom size): the elements are placed again for each one, so things at the edges stay at the edges, bars and photos across the page stretch, and nothing is distorted. With `Keep this design, make a copy in each size` on, each size becomes a new design next to this one (in the same folder); with it off, this design itself changes size (`Undo` brings it back).
 - `More` › `Save as package (.orosdesign)` makes one file with the design and its images.
@@ -77,7 +80,7 @@ A file opens as a new design:
 `Download` › `PowerPoint` saves the design as a .pptx file, one slide per page, at the design's own size. In Canva choose `Create a design` › `Upload` (or drag the file onto Canva's home page); PowerPoint, Keynote, Google Slides and LibreOffice open it directly. No account or key is needed.
 - Texts stay editable text boxes with their font, size, colour, alignment, line height and letter spacing; a shadow stays a shadow.
 - Shapes, lines with their arrow heads, photos with their crop, shape and transparency, and the page background stay editable.
-- Icons, curved text, other text effects (neon, outline, echo and so on), photos with a filter or adjustments, and videos come as pictures, so they look the same but can't be edited there. The message after saving says how many.
+- Icons, curved text, other text effects (neon, outline, echo and so on), photos with a filter or adjustments, tables, charts and videos come as pictures, so they look the same but can't be edited there. The message after saving says how many.
 >! The other app uses its own copy of each font: if it doesn't have it, it shows a similar one and a text may wrap a little differently. Animations, page timing and sounds stay in Atelier.
 - `More` › `Credits` lists the work by others your design uses.
 
@@ -99,4 +102,6 @@ Designs sync with orOS sync. Uploaded images are stored once on the orOS disk an
 > Corner handles keep the proportions; on text they also change the font size.
 
 ## Limits
-- PDF pages are high-resolution images, so text in the PDF cannot be selected or edited.
+- In the PDF, charts, icons, photos and effects such as glow and blur are pictures, and a text with a letter none of the fonts has (for example an emoji) is a picture of that text; curved text is real text letter by letter.
+- A table has up to 30 rows and 10 columns; a chart up to 30 rows and 8 series. Cells can't be merged, and a chart's colours follow the theme (you can't colour one bar).
+- Tables and charts made here don't show in an older version of orOS on another device until it updates, and changing the design there before it updates can remove them.

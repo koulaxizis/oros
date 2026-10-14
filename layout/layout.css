@@ -518,3 +518,18 @@ body.inframe #cv { cursor: text; }
 }
 
 [hidden] { display: none !important; }
+
+/* ---------- Data merge ---------- */
+.mg-list { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.mg-field { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; max-width: 100%; }
+.mg-field code { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+.mg-tag { color: var(--text-dim); }
+.mg-ok { color: var(--accent); font-weight: 700; }
+.mg-miss { color: var(--danger); font-weight: 700; }
+.mg-opts { display: flex; flex-direction: column; gap: 6px; }
+.mg-nav { display: flex; align-items: center; gap: 8px; }
+.mg-nav .btn.small { min-width: 40px; min-height: 36px; font-size: 18px; }
+.mg-rec { font-size: 13px; font-variant-numeric: tabular-nums; }
+.mg-prev { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.mg-over { flex-basis: 100%; margin-top: 0; }
+.mg-page { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }

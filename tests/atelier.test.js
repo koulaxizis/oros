@@ -19,6 +19,7 @@ const M = require(path.join(ROOT, "designkit/model.js"));
 const FX = require(path.join(ROOT, "designkit/fx.js"));
 const AX = require(path.join(ROOT, "atelier/ax.js"));          // registers the hook
 const TPL = require(path.join(ROOT, "atelier/templates.js"));
+require(path.join(ROOT, "atelier/templates-more.js"));      // adds the rest of the library
 const ICONS = require(path.join(ROOT, "atelier/library/icons.js"));
 
 T.allKeys().forEach((k) => {
@@ -249,7 +250,7 @@ test("i18n: every key the app uses exists in English and Greek", () => {
   const en = Object.keys(STRINGS.en).sort(), el = Object.keys(STRINGS.el).sort();
   assert.deepEqual(el, en, "same keys in both languages");
   const used = new Set();
-  ["core.js", "editor.js", "panels.js", "io.js", "draw.js"].forEach((f) => {
+  ["core.js", "editor.js", "panels.js", "io.js", "draw.js", "objui.js"].forEach((f) => {
     const s = fs.readFileSync(path.join(ROOT, "atelier", f), "utf8");
     for (const m of s.matchAll(/\bt\("([a-zA-Z0-9.]+)"\s*[,)]/g)) used.add(m[1]);
   });
@@ -271,7 +272,7 @@ test("i18n: every key the app uses exists in English and Greek", () => {
 
 // ---------- security ----------
 test("no user text reaches innerHTML (only static icons or empty strings)", () => {
-  ["core.js", "editor.js", "panels.js", "io.js", "draw.js"].forEach((f) => {
+  ["core.js", "editor.js", "panels.js", "io.js", "draw.js", "objui.js", "pdfout.js", "objects.js"].forEach((f) => {
     const s = fs.readFileSync(path.join(ROOT, "atelier", f), "utf8");
     for (const m of s.matchAll(/\.innerHTML\s*=\s*([^;]+);/g)) {
       const rhs = m[1].trim();

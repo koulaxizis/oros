@@ -78,7 +78,7 @@
     }
     if (ax.k === "shape") return ax.fc || ax.g || (ax.sc && it.sw > 0) ? "shape" : "";
     if (ax.k === "line") return "line";
-    if (ax.k === "icon") return "raster";
+    if (ax.k === "icon" || ax.k === "table" || ax.k === "chart") return "raster";      // tables, charts: as pictures
     if (ax.k === "photo") {
       if (ax.vid) return "raster";
       if (!it.a) return "";

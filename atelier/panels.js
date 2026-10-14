@@ -134,25 +134,16 @@
   // --- Templates ---
   VIEWS.templates = function (body) {
     body.appendChild(el("p", "hint", t("tpl.hint")));
-    var g = el("div", "tpl-grid");
-    AT.TEMPLATES.list.forEach(function (tpl) {
-      var b = el("button", "tpl-card");
-      b.type = "button";
-      var th = el("span", "tpl-thumb");
-      th.style.setProperty("--ratio", String(tpl.h / tpl.w));
-      var url = AT.thumbOf(AT.tplDoc(tpl), 160, "tpl:" + tpl.id);
-      if (url) { var img = el("img"); img.src = url; img.alt = ""; th.appendChild(img); }
-      b.appendChild(th);
-      b.appendChild(el("span", "tpl-name", AT.lbl(tpl)));
-      b.addEventListener("click", function () {
-        var busy = ED.items().some(function (it) { return !(it.ax && it.ax.bg); });
-        if (busy) AT.confirm(t("tpl.confirm"), t("tpl.apply"), function () { applyTemplate(tpl); });
-        else applyTemplate(tpl);
-      });
-      g.appendChild(b);
-    });
+    var tools = el("div", "tl-tools"), g = el("div", "tpl-grid");
+    body.appendChild(tools);
     body.appendChild(g);
+    AT.templateLibrary(tools, g, tplLib, function (tpl) {
+      var busy = ED.items().some(function (it) { return !(it.ax && it.ax.bg); });
+      if (busy) AT.confirm(t("tpl.confirm"), t("tpl.apply"), function () { applyTemplate(tpl); });
+      else applyTemplate(tpl);
+    });
   };
+  var tplLib = { cat: "", q: "" };   // the panel's filter (this session only)
 
   // Template pages → the current page (+ new pages after it), scaled
   // to fit this design's size, centred.
@@ -186,7 +177,7 @@
           else {
             c.x = offX + s.x * k; c.y = offY + s.y * k; c.w = s.w * k; c.h = s.h * k;
             c.sw = s.sw * k;
-            if (c.ax.k === "text") c.ax.size = Math.round(s.ax.size * k * 10) / 10;
+            if (c.ax.k === "text" || ((c.ax.k === "table" || c.ax.k === "chart") && c.ax.size)) c.ax.size = Math.round((s.ax.size || AX.TABLE_SIZE) * k * 10) / 10;
           }
           var n = M.normItem(c);
           if (!n) return;
@@ -230,6 +221,7 @@
     });
     s2.appendChild(lr);
     body.appendChild(s2);
+    if (AT.objectsSection) AT.objectsSection(body, sec);
 
     var s3 = sec(t("el.icons"));
     var q = el("input", "inp sm");
@@ -660,6 +652,11 @@
   function currentColour(it, kind) {
     var a = it.ax || {};
     if (kind === "fx") return a.tfx ? a.tfx.color : "";
+    if (kind === "head") return a.tb ? a.tb.ac || AX.OB.HEAD : "";
+    if (kind === "band") return a.tb ? a.tb.bf || AX.OB.BAND : "";
+    if (kind === "ink") return a.ch ? a.ch.tc || AX.OB.INK : "";
+    if (a.k === "table" && kind === "fill") return a.fc || AX.OB.INK;
+    if (a.k === "table" && kind === "stroke") return a.sc || AX.OB.RULE;
     if (kind === "stroke") return a.sc || "";
     if (it.ax.k === "icon" || it.ax.k === "line") return a.sc || "";
     return a.fc || "";
@@ -675,6 +672,10 @@
     edit(function (it) {
       var a = it.ax;
       if (kind === "fx") { if (!a.tfx) return false; a.tfx.color = c || "#000000"; return; }
+      if (kind === "head" || kind === "band") { if (!a.tb) return false; a.tb[kind === "head" ? "ac" : "bf"] = c || (kind === "head" ? AX.OB.HEAD : AX.OB.BAND); if (kind === "band" && c) a.tb.bd = 1; return; }
+      if (kind === "ink") { if (!a.ch) return false; a.ch.tc = c || AX.OB.INK; return; }
+      if (a.k === "table") { if (kind === "stroke") { a.sc = c; if (c && !(it.sw > 0)) it.sw = 1; if (!c) it.sw = 0; } else a.fc = c || AX.OB.INK; return; }
+      if (a.k === "chart") { a.fc = c; return; }
       if (kind === "stroke") { a.sc = c; if (c && !(it.sw > 0)) it.sw = Math.max(1, Math.min(it.w, it.h) / 60); return; }
       if (a.k === "icon" || a.k === "line") { a.sc = c || "#000000"; return; }
       if (a.k === "text") { a.fc = c || "#000000"; return; }
@@ -689,7 +690,7 @@
     var kind = colourTarget ? colourTarget.kind : "fill";
     var it = sel1();
     var cur = kind === "bg" ? (bgItem() && bgItem().ax.fc) || "" : it ? currentColour(it, kind) : "";
-    var allowNone = kind === "stroke" || (kind === "fill" && it && it.ax.k === "shape");
+    var allowNone = kind === "stroke" || (kind === "fill" && it && (it.ax.k === "shape" || it.ax.k === "chart"));
     var bc = AT.brand ? AT.brand.colors() : [];
     if (bc.length) { var sb = sec(t("col.brand")); sb.appendChild(swatches(cur, function (c) { setColour(kind, c); }, true, bc)); body.appendChild(sb); }
     var s0 = sec(t("col.doc"));
@@ -959,6 +960,8 @@
     else if (k === "icon") iconTools(bar, one);
     else if (k === "photo") photoTools(bar, one);
     else if (k === "line") lineTools(bar, one);
+    else if (k === "table") tableTools(bar, one);
+    else if (k === "chart") chartTools(bar, one);
     else bar.appendChild(el("span", "ctx-hint", t("ctx.n", { n: list.length })));
     bar.appendChild(sep());
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
@@ -1073,6 +1076,53 @@
     });
   }
 
+  // A size field with − and + (text size of a table, labels of a chart).
+  function sizeBox(cur, set) {
+    var sz = el("div", "ctx-size");
+    var minus = AT.iconBtn("minus", t("ctx.size"), "ctx-btn sm");
+    var inp = el("input", "inp sm num");
+    inp.type = "text"; inp.inputMode = "decimal"; inp.value = String(Math.round(cur * 10) / 10);
+    inp.setAttribute("aria-label", t("ctx.size")); inp.title = t("ctx.size");
+    var plus = AT.iconBtn("plus", t("ctx.size"), "ctx-btn sm");
+    minus.addEventListener("click", function () { set(Math.max(2, Math.round(cur / 1.1 * 10) / 10)); });
+    plus.addEventListener("click", function () { set(Math.min(2000, Math.round(cur * 1.1 * 10) / 10)); });
+    inp.addEventListener("change", function () { var v = parseFloat(inp.value.replace(",", ".")); inp.blur(); if (v > 0) set(Math.min(2000, Math.max(2, v))); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
+    sz.appendChild(minus); sz.appendChild(inp); sz.appendChild(plus);
+    return sz;
+  }
+  function tableTools(bar, it) {
+    var a = it.ax;
+    bar.appendChild(btn("ctx-txt", t("tb.edit"), function () { AT.objects.editTable(it.id); }));
+    var fname = AT.fonts ? AT.fonts.name(a.font || "sans") : T.FAMILIES[a.font || "sans"].name;
+    var f = btn("ctx-sel ctx-font" + (view === "fonts" ? " on" : ""), fname, function () { openView("fonts"); });
+    f.setAttribute("aria-label", t("ctx.font") + ": " + fname); f.title = t("ctx.font");
+    bar.appendChild(f);
+    bar.appendChild(sizeBox(a.size || AX.TABLE_SIZE, function (v) { edit(function (x) { x.ax.size = v; }); }));
+    bar.appendChild(colourBtn(t("ctx.colour"), a.fc || AX.OB.INK, null, { kind: "fill" }));
+    bar.appendChild(colourBtn(t("tb.headColour"), a.tb.ac || AX.OB.HEAD, null, { kind: "head" }));
+    bar.appendChild(colourBtn(t("tb.bandColour"), a.tb.bf || AX.OB.BAND, null, { kind: "band" }));
+    var sb = colourBtn(t("tb.lineColour"), it.sw > 0 ? a.sc || AX.OB.RULE : "", null, { kind: "stroke" });
+    sb.classList.add("stroke");
+    bar.appendChild(sb);
+    bar.appendChild(btn("ctx-txt", t("ctx.sw"), function (e) {
+      AT.popover(e.currentTarget, function (m) {
+        var mx = Math.max(8, Math.round((a.size || AX.TABLE_SIZE) / 2));
+        m.appendChild(slider(t("ctx.weight"), 0, mx, 0.5, it.sw || 0, function (v) { edit(function (x) { x.sw = v; }); }));
+      });
+    }));
+    var al = a.al || "l", nextAl = { l: "c", c: "r", r: "l" };
+    bar.appendChild(tool("a" + al, t("ctx.align"), function () { edit(function (x) { var n = nextAl[x.ax.al || "l"]; if (n === "l") delete x.ax.al; else x.ax.al = n; }); }));
+  }
+  function chartTools(bar, it) {
+    var a = it.ax;
+    bar.appendChild(btn("ctx-txt", t("ch.edit"), function () { AT.objects.editChart(it.id); }));
+    bar.appendChild(colourBtn(t("ch.bg"), a.fc || "", null, { kind: "fill" }));
+    bar.appendChild(colourBtn(t("ch.ink"), a.ch.tc || AX.OB.INK, null, { kind: "ink" }));
+    var auto = Math.max(6, Math.min(40, Math.min(it.w, it.h) / 26));
+    bar.appendChild(sizeBox(a.size || auto, function (v) { edit(function (x) { x.ax.size = v; }); }));
+  }
+
   function photoTools(bar, it) {
     bar.appendChild(btn("ctx-txt" + (view === "filters" ? " on" : ""), t("ctx.filters"), function () { openView("filters"); }));
     bar.appendChild(btn("ctx-txt" + (view === "adjust" ? " on" : ""), t("ctx.adjust"), function () { openView("adjust"); }));
@@ -1098,7 +1148,7 @@
     if (view === "position") return list.length > 0;
     if (view === "colour") return colourTarget && colourTarget.kind === "bg" ? true : !!one;
     if (view === "effects") return one && one.ax.k === "text";
-    if (view === "fonts") return list.some(function (it) { return it.ax.k === "text"; });
+    if (view === "fonts") return list.some(function (it) { return it.ax.k === "text" || it.ax.k === "table"; });
     if (view === "video") return !!(one && one.ax.vid);
     return one && one.ax.k === "photo";
   }

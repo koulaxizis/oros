@@ -347,6 +347,16 @@
       s.appendChild(el("p", "hint" + (ppi < 150 ? " warn" : ""), ppi < 150 ? t("props.ppiLow", { n: ppi }) : t("props.ppi", { n: ppi })));
       if (LY.A.isMissing(it.a)) s.appendChild(el("p", "hint warn", t("props.missing")));
     }
+    // data merge: the CSV column with this frame's picture
+    var mf = el("input", "inp");
+    mf.type = "text"; mf.maxLength = 60; mf.autocomplete = "off"; mf.spellcheck = false;
+    mf.value = it.mf || ""; mf.placeholder = t("props.mfEg");
+    mf.addEventListener("change", function () {
+      var v = mf.value.replace(/[{}]/g, "").trim();
+      editSel(function (x) { if (x.t !== "img" || (x.mf || "") === v) return false; if (v) x.mf = v; else delete x.mf; });
+    });
+    s.appendChild(field(t("props.mf"), mf));
+    s.appendChild(el("p", "hint", t("props.mfHint")));
     return s;
   }
 
@@ -1067,6 +1077,9 @@
       body.appendChild(gi);
       body.appendChild(field(t("exp.res"), dpiWrap));
       body.appendChild(btn(t("exp.imgGo"), function () { close(); LY.io.exportImage(imgPrefs); }, "block"));
+      body.appendChild(el("h3", "pn-h", t("exp.merge")));
+      body.appendChild(el("p", "hint", t("exp.mergeNote")));
+      body.appendChild(btn(t("more.merge"), function () { close(); LY.merge.open(); }, "block"));
       body.appendChild(el("h3", "pn-h", t("exp.pkg")));
       body.appendChild(el("p", "hint", t("exp.pkgNote")));
       body.appendChild(btn(t("more.pkg"), function () { close(); LY.io.exportPackage(doc); }, "block"));
@@ -1151,6 +1164,8 @@
   }
 
   LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
+  // the small widgets, for dialogs in other files (mergeui.js)
+  LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn };
 
   // ---------- More menu + panel toggle ----------
   function moreMenu() {
@@ -1159,6 +1174,7 @@
       { label: t("more.setup"), fn: setupDlg },
       { label: t("more.story"), disabled: !(it && it.t === "text"), fn: function () { LY.story.open(it.id); } },
       { label: t("more.text"), fn: function () { LY.io.importText(); } },
+      { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
       { sep: true },
       { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } }

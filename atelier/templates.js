@@ -188,7 +188,94 @@
       ] }] }
   ];
 
-  var TEMPLATES = { list: LIST };
+  // ---------- Library: categories + search ----------
+  // [id, EN, EL] in display order. Every template has one `cat`;
+  // `tags` { en, el } are extra words for the search.
+  var CATS = [
+    ["social", "Social posts", "Αναρτήσεις"],
+    ["story", "Stories", "Stories"],
+    ["video", "Thumbnails", "Μικρογραφίες"],
+    ["pres", "Presentations", "Παρουσιάσεις"],
+    ["poster", "Posters", "Αφίσες"],
+    ["flyer", "Flyers", "Φυλλάδια"],
+    ["biz", "Business cards", "Επαγγελματικές κάρτες"],
+    ["invite", "Invitations & cards", "Προσκλήσεις & κάρτες"],
+    ["cv", "CVs", "Βιογραφικά"],
+    ["cert", "Certificates", "Διπλώματα & βεβαιώσεις"],
+    ["menu", "Menus", "Μενού"],
+    ["data", "Charts & tables", "Γραφήματα & πίνακες"],
+    ["brand", "Logos & banners", "Λογότυπα & banner"]
+  ];
+  var CAT_OF = {
+    quote: "social", sale: "social", announce: "social", "event-story": "story", thumb: "video",
+    "slide-title": "pres", poster: "poster", "cafe-flyer": "flyer", invite: "invite", "biz-card": "biz",
+    certificate: "cert", menu: "menu", "logo-badge": "brand", banner: "brand"
+  };
+  var TAGS = {
+    quote: ["instagram inspiration motivation", "instagram έμπνευση κίνητρο ρητό"],
+    sale: ["discount offer shop instagram", "έκπτωση προσφορά κατάστημα instagram"],
+    announce: ["facebook news opening shop", "facebook νέα εγκαίνια κατάστημα"],
+    "event-story": ["instagram music concert party", "instagram μουσική συναυλία πάρτι"],
+    thumb: ["youtube video", "youtube βίντεο"],
+    "slide-title": ["slides deck cover", "διαφάνειες εξώφυλλο"],
+    poster: ["festival event summer", "φεστιβάλ εκδήλωση καλοκαίρι"],
+    "cafe-flyer": ["coffee shop leaflet", "καφετέρια φέιγ βολάν"],
+    invite: ["birthday party", "γενέθλια πάρτι"],
+    "biz-card": ["contact designer", "επικοινωνία γραφίστας"],
+    certificate: ["award diploma course", "βραβείο δίπλωμα σεμινάριο πιστοποιητικό"],
+    menu: ["restaurant food taverna prices", "εστιατόριο φαγητό ταβέρνα τιμές"],
+    "logo-badge": ["badge emblem", "σήμα έμβλημα"],
+    banner: ["website header hero", "ιστοσελίδα κεφαλίδα"]
+  };
+  LIST.forEach(function (tpl) {
+    if (!tpl.cat) tpl.cat = CAT_OF[tpl.id] || "social";
+    if (!tpl.tags && TAGS[tpl.id]) tpl.tags = { en: TAGS[tpl.id][0], el: TAGS[tpl.id][1] };
+  });
+
+  // Case and accent free text for search ("Αφίσα" finds "αφισα").
+  function fold(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/ς/g, "σ");
+  }
+  function catOf(id) {
+    for (var i = 0; i < CATS.length; i++) if (CATS[i][0] === id) return CATS[i];
+    return null;
+  }
+  // Templates of a category ("" = all) whose names, category or tags
+  // (English and Greek) hold every word of q, in list order.
+  function match(list, cat, q) {
+    var words = fold(q).split(/\s+/).filter(Boolean);
+    return list.filter(function (tpl) {
+      if (cat && tpl.cat !== cat) return false;
+      if (!words.length) return true;
+      var c = catOf(tpl.cat) || [];
+      var hay = fold([tpl.en, tpl.el, c[1], c[2], tpl.tags ? tpl.tags.en : "", tpl.tags ? tpl.tags.el : "", tpl.preset].join(" "));
+      return words.every(function (w) { return hay.indexOf(w) >= 0; });
+    });
+  }
+  // Categories that have templates, in display order.
+  function usedCats(list) {
+    var has = {};
+    list.forEach(function (tpl) { has[tpl.cat] = 1; });
+    return CATS.filter(function (c) { return has[c[0]]; });
+  }
+
+  // The whole library as a sampler: one of each category in turn
+  // (category order), so the first rows show every kind.
+  function mix(list) {
+    var by = {}, out = [];
+    list.forEach(function (tpl) { (by[tpl.cat] = by[tpl.cat] || []).push(tpl); });
+    var cats = usedCats(list).map(function (c) { return c[0]; });
+    for (var i = 0; out.length < list.length; i++) {
+      cats.forEach(function (c) { if (by[c][i]) out.push(by[c][i]); });
+    }
+    return out;
+  }
+
+  var TEMPLATES = {
+    list: LIST, CATS: CATS, match: match, fold: fold, usedCats: usedCats, mix: mix,
+    // building blocks for more template files (templates-more.js)
+    h: { tx: tx, sh: sh, ic: ic, ln: ln, ctx: ctx, MM: MM, A4W: A4W, A4H: A4H, A5W: A5W, A5H: A5H }
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = TEMPLATES;
   else root.ATELIER_TEMPLATES = TEMPLATES;
 })(this);

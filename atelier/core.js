@@ -196,7 +196,7 @@
       "pg.max": "A design can have at most {n} pages.",
       "exp.title": "Download", "exp.type": "File type", "exp.png": "PNG", "exp.jpg": "JPG", "exp.pdf": "PDF",
       "exp.pngHint": "Best for images with text or a transparent background.", "exp.jpgHint": "Smaller files for photos.",
-      "exp.pdfHint": "For printing. Pages become high-resolution images, so the look stays exactly as you see it.",
+      "exp.pdfHint": "For printing and sharing. Texts stay real text you can select and search, shapes and lines stay sharp; photos, icons, charts and effects a PDF can't hold become pictures.",
       "exp.pptx": "PPTX", "exp.pptxHint": "Open it in Canva (Create a design › Upload › this file), PowerPoint, Keynote or LibreOffice. Text, shapes, photos and lines stay editable; icons, special text effects and photo filters come as pictures.",
       "exp.pptxPics": "Saved. {n} elements went out as pictures so they keep their look.",
       "exp.size": "Size", "exp.scale1": "Normal ({w} × {h} px)", "exp.scale2": "Large ×2 ({w} × {h} px)", "exp.scale3": "Extra large ×3 ({w} × {h} px)",
@@ -216,13 +216,30 @@
       "resize.go": "Resize ({n})", "resize.copy": "{name} · {size}", "resize.made": "{n} copies made.", "resize.open": "Open",
       "resize.current": "current", "resize.one": "Resizing this design itself works with one size at a time.",
       "btn.cancel": "Cancel", "btn.ok": "OK", "btn.create": "Create", "btn.close": "Close", "btn.undo": "Undo",
-      "btn.apply": "Apply", "btn.reset": "Reset",
+      "btn.apply": "Apply", "btn.reset": "Reset", "btn.save": "Save",
       "toast.deleted": "Deleted", "toast.docDeleted": "Design deleted",
       "toast.save": "Storage is full: recent changes could not be saved on this device.",
       "toast.big": "This design is getting large ({n} KB). Large designs fill the storage every app shares.",
       "toast.locked": "This element is locked.", "toast.gone": "This design was deleted on another device.",
       "toast.fontFail": "The fonts could not be loaded.", "toast.maxItems": "A design can have at most {n} elements.",
       "toast.copied": "Copied", "toast.pasted": "Pasted",
+      "el.data": "Tables and charts", "el.table": "Table", "el.dataHint": "Charts are drawn by the Spreadsheet's chart engine. Paste cells from Spreadsheet into the editor to fill a table or a chart.",
+      "tb.edit": "Edit table", "tb.hint": "Type in the cells, or paste cells copied from Spreadsheet into a cell. Shift+Enter starts a new line in a cell.",
+      "tb.cell": "Row {r}, column {c}", "tb.addRow": "+ Row", "tb.delRow": "− Row", "tb.addCol": "+ Column", "tb.delCol": "− Column",
+      "tb.head": "Heading {n}", "tb.header": "Header row", "tb.firstCol": "First column in bold", "tb.banded": "Banded rows",
+      "tb.lines": "Lines", "tb.ln.all": "All", "tb.ln.h": "Between rows", "tb.ln.none": "None", "tb.ln.box": "Outside only",
+      "tb.widths": "Column widths", "tb.widthsHint": "Relative widths, one per column, for example 3, 1, 1. Empty: equal columns. The text shrinks when it does not fit a cell.",
+      "tb.headColour": "Header colour", "tb.bandColour": "Band colour", "tb.lineColour": "Line colour",
+      "ch.edit": "Edit chart", "ch.type": "Chart type", "ch.title": "Title", "ch.legend": "Show legend", "ch.preview": "Chart preview",
+      "ch.hint": "The first row holds the series names, the first column the categories. Paste cells from Spreadsheet into a cell to fill the grid.",
+      "ch.by": "Series in", "ch.by.auto": "Automatic", "ch.by.c": "Columns", "ch.by.r": "Rows",
+      "ch.t.col": "Column chart", "ch.t.bar": "Bar chart", "ch.t.line": "Line chart", "ch.t.pie": "Pie chart", "ch.t.donut": "Donut chart", "ch.t.scatter": "Scatter chart",
+      "ch.empty": "No numbers to show", "ch.series": "Series", "ch.other": "Other",
+      "ch.s1": "This year", "ch.s2": "Last year", "ch.c1": "Spring", "ch.c2": "Summer", "ch.c3": "Autumn", "ch.c4": "Winter",
+      "ch.bg": "Chart background", "ch.ink": "Text colour",
+      "tl.all": "All", "tl.search": "Search templates", "tl.none": "No template matches.", "tl.count": "{n} templates", "tl.more": "Show all {n} templates",
+      "exp.pdfFlat": "Whole pages as pictures (exact look, text can't be selected)",
+      "exp.pdfPics": "Pictures and effects at",
       "dlg.rename": "Rename", "a11y.canvas": "Design canvas", "a11y.pages": "Pages"
     },
     el: {
@@ -372,7 +389,7 @@
       "pg.max": "Ένα σχέδιο έχει το πολύ {n} σελίδες.",
       "exp.title": "Λήψη", "exp.type": "Τύπος αρχείου", "exp.png": "PNG", "exp.jpg": "JPG", "exp.pdf": "PDF",
       "exp.pngHint": "Το καλύτερο για εικόνες με κείμενο ή διάφανο φόντο.", "exp.jpgHint": "Μικρότερα αρχεία για φωτογραφίες.",
-      "exp.pdfHint": "Για εκτύπωση. Οι σελίδες γίνονται εικόνες υψηλής ανάλυσης, ώστε να μένουν ακριβώς όπως τις βλέπεις.",
+      "exp.pdfHint": "Για εκτύπωση και κοινοποίηση. Τα κείμενα μένουν πραγματικό κείμενο που επιλέγεται και αναζητείται, σχήματα και γραμμές μένουν καθαρά· φωτογραφίες, εικονίδια, γραφήματα και εφέ που δεν χωρούν σε PDF γίνονται εικόνες.",
       "exp.pptx": "PPTX", "exp.pptxHint": "Άνοιξέ το στο Canva (Δημιουργία σχεδίου › Μεταφόρτωση › αυτό το αρχείο), στο PowerPoint, στο Keynote ή στο LibreOffice. Κείμενα, σχήματα, φωτογραφίες και γραμμές μένουν επεξεργάσιμα· εικονίδια, ειδικά εφέ κειμένου και φίλτρα φωτογραφιών έρχονται ως εικόνες.",
       "exp.pptxPics": "Αποθηκεύτηκε. {n} στοιχεία βγήκαν ως εικόνες για να κρατήσουν την εμφάνισή τους.",
       "exp.size": "Μέγεθος", "exp.scale1": "Κανονικό ({w} × {h} px)", "exp.scale2": "Μεγάλο ×2 ({w} × {h} px)", "exp.scale3": "Πολύ μεγάλο ×3 ({w} × {h} px)",
@@ -392,13 +409,30 @@
       "resize.go": "Αλλαγή μεγέθους ({n})", "resize.copy": "{name} · {size}", "resize.made": "Φτιάχτηκαν {n} αντίγραφα.", "resize.open": "Άνοιγμα",
       "resize.current": "τρέχον", "resize.one": "Η αλλαγή μεγέθους του ίδιου του σχεδίου γίνεται με ένα μέγεθος τη φορά.",
       "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.create": "Δημιουργία", "btn.close": "Κλείσιμο", "btn.undo": "Αναίρεση",
-      "btn.apply": "Εφαρμογή", "btn.reset": "Επαναφορά",
+      "btn.apply": "Εφαρμογή", "btn.reset": "Επαναφορά", "btn.save": "Αποθήκευση",
       "toast.deleted": "Διαγράφηκε", "toast.docDeleted": "Το σχέδιο διαγράφηκε",
       "toast.save": "Ο χώρος γέμισε: οι τελευταίες αλλαγές δεν αποθηκεύτηκαν σε αυτή τη συσκευή.",
       "toast.big": "Το σχέδιο μεγαλώνει ({n} KB). Τα μεγάλα σχέδια γεμίζουν τον χώρο που μοιράζονται όλες οι εφαρμογές.",
       "toast.locked": "Αυτό το στοιχείο είναι κλειδωμένο.", "toast.gone": "Αυτό το σχέδιο διαγράφηκε σε άλλη συσκευή.",
       "toast.fontFail": "Οι γραμματοσειρές δεν φόρτωσαν.", "toast.maxItems": "Ένα σχέδιο έχει το πολύ {n} στοιχεία.",
       "toast.copied": "Αντιγράφηκε", "toast.pasted": "Επικολλήθηκε",
+      "el.data": "Πίνακες και γραφήματα", "el.table": "Πίνακας", "el.dataHint": "Τα γραφήματα τα σχεδιάζει η μηχανή γραφημάτων του Υπολογιστικού φύλλου. Επικόλλησε κελιά από το Υπολογιστικό φύλλο στον επεξεργαστή για να γεμίσεις πίνακα ή γράφημα.",
+      "tb.edit": "Επεξεργασία πίνακα", "tb.hint": "Γράψε στα κελιά ή επικόλλησε σε ένα κελί κελιά που αντέγραψες από το Υπολογιστικό φύλλο. Το Shift+Enter αλλάζει γραμμή μέσα στο κελί.",
+      "tb.cell": "Γραμμή {r}, στήλη {c}", "tb.addRow": "+ Γραμμή", "tb.delRow": "− Γραμμή", "tb.addCol": "+ Στήλη", "tb.delCol": "− Στήλη",
+      "tb.head": "Επικεφαλίδα {n}", "tb.header": "Γραμμή επικεφαλίδας", "tb.firstCol": "Πρώτη στήλη με έντονα", "tb.banded": "Εναλλασσόμενες γραμμές",
+      "tb.lines": "Γραμμές", "tb.ln.all": "Όλες", "tb.ln.h": "Ανάμεσα στις σειρές", "tb.ln.none": "Καμία", "tb.ln.box": "Μόνο γύρω γύρω",
+      "tb.widths": "Πλάτη στηλών", "tb.widthsHint": "Σχετικά πλάτη, ένα για κάθε στήλη, π.χ. 3, 1, 1. Κενό: ίσες στήλες. Το κείμενο μικραίνει όταν δεν χωράει σε ένα κελί.",
+      "tb.headColour": "Χρώμα επικεφαλίδας", "tb.bandColour": "Χρώμα εναλλαγής", "tb.lineColour": "Χρώμα γραμμών",
+      "ch.edit": "Επεξεργασία γραφήματος", "ch.type": "Είδος γραφήματος", "ch.title": "Τίτλος", "ch.legend": "Υπόμνημα", "ch.preview": "Προεπισκόπηση γραφήματος",
+      "ch.hint": "Η πρώτη γραμμή έχει τα ονόματα των σειρών, η πρώτη στήλη τις κατηγορίες. Επικόλλησε κελιά από το Υπολογιστικό φύλλο σε ένα κελί για να γεμίσει το πλέγμα.",
+      "ch.by": "Σειρές σε", "ch.by.auto": "Αυτόματα", "ch.by.c": "Στήλες", "ch.by.r": "Γραμμές",
+      "ch.t.col": "Γράφημα στηλών", "ch.t.bar": "Γράφημα ράβδων", "ch.t.line": "Γράφημα γραμμής", "ch.t.pie": "Γράφημα πίτας", "ch.t.donut": "Γράφημα δακτυλίου", "ch.t.scatter": "Γράφημα διασποράς",
+      "ch.empty": "Δεν υπάρχουν αριθμοί", "ch.series": "Σειρά", "ch.other": "Άλλα",
+      "ch.s1": "Φέτος", "ch.s2": "Πέρσι", "ch.c1": "Άνοιξη", "ch.c2": "Καλοκαίρι", "ch.c3": "Φθινόπωρο", "ch.c4": "Χειμώνας",
+      "ch.bg": "Φόντο γραφήματος", "ch.ink": "Χρώμα κειμένου",
+      "tl.all": "Όλα", "tl.search": "Αναζήτηση προτύπων", "tl.none": "Κανένα πρότυπο δεν ταιριάζει.", "tl.count": "{n} πρότυπα", "tl.more": "Όλα τα πρότυπα ({n})",
+      "exp.pdfFlat": "Ολόκληρες σελίδες ως εικόνες (ακριβής εμφάνιση, το κείμενο δεν επιλέγεται)",
+      "exp.pdfPics": "Εικόνες και εφέ σε",
       "dlg.rename": "Μετονομασία", "a11y.canvas": "Καμβάς σχεδίου", "a11y.pages": "Σελίδες"
     }
   };
@@ -468,7 +502,12 @@
     ai: '<path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.9 2.1L21 16l-2.1.9L18 19l-.9-2.1L15 16l2.1-.9z"/>',
     cutout: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="9.5" r="2.5"/><path d="M7.5 17a4.5 4.5 0 0 1 9 0"/>',
     editpic: '<path d="M3 17l5-5 4 4 3-3 6 6"/><circle cx="8" cy="7" r="2"/><path d="M14 4l6 6-3 3-6-6z"/>',
-    replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>'
+    replace: '<path d="M4 9a8 8 0 0 1 14-3l2 2"/><path d="M20 4v4h-4"/><path d="M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M4 20v-4h4"/>',
+    table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 9v11M15 9v11"/>',
+    chart: '<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>',
+    chartBar: '<path d="M4 4v16"/><path d="M4 7h9M4 12h14M4 17h6"/>',
+    chartLine: '<path d="M4 20h16"/><path d="M4 16l5-6 4 3 7-8"/>',
+    chartPie: '<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>'
   };
   function icon(name) {
     return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + "</svg>";
@@ -796,6 +835,120 @@
   }
   AT.tplDoc = tplDoc;
 
+  // ---------- Template library (home and the Templates panel) ----------
+  // Previews are drawn on the fly, only for cards that scroll into view,
+  // a few per frame, and kept as small PNGs for the session.
+  var THUMB_BOX = 220;
+  var thumbQ = [], thumbPumping = false, thumbIO = null;
+  function putThumb(th, url) {
+    th.classList.remove("wait");
+    var img = el("img"); img.src = url; img.alt = ""; th.appendChild(img);
+  }
+  function pumpThumbs() {
+    if (thumbPumping) return;
+    thumbPumping = true;
+    (window.requestAnimationFrame || setTimeout)(function () {
+      thumbPumping = false;
+      var t0 = Date.now();
+      while (thumbQ.length && Date.now() - t0 < 30) {
+        var job = thumbQ.shift();
+        if (!job.th.isConnected || job.th.querySelector("img")) continue;
+        var url = thumbOf(tplDoc(job.tpl), THUMB_BOX, "tpl:" + job.tpl.id);
+        if (url) putThumb(job.th, url);           // no fonts yet: the next render tries again
+      }
+      if (thumbQ.length) pumpThumbs();
+    });
+  }
+  function lazyThumb(th, tpl) {
+    var url = thumbs["tpl:" + tpl.id];
+    if (url) { putThumb(th, url); return; }
+    th.classList.add("wait");
+    var job = { th: th, tpl: tpl };
+    if (!window.IntersectionObserver) { thumbQ.push(job); pumpThumbs(); return; }
+    if (!thumbIO) {
+      thumbIO = new IntersectionObserver(function (ents) {
+        ents.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          thumbIO.unobserve(e.target);
+          if (e.target.tplJob) { thumbQ.push(e.target.tplJob); e.target.tplJob = null; }
+        });
+        pumpThumbs();
+      }, { rootMargin: "240px" });
+    }
+    th.tplJob = job;
+    thumbIO.observe(th);
+  }
+
+  // tools: search + category chips + count (built once per host);
+  // grid: the cards. st { cat, q } is kept by the caller.
+  function templateLibrary(tools, grid, st, onPick) {
+    var TPL = AT.TEMPLATES;
+    function draw() {
+      grid.innerHTML = "";
+      var list = TPL.match(TPL.list, st.cat, st.q);
+      if (!st.cat && !(st.q || "").trim()) list = TPL.mix(list);
+      if (tools.tlCount) tools.tlCount.textContent = t("tl.count", { n: list.length });
+      if (!list.length) { grid.appendChild(el("p", "hint", t("tl.none"))); return; }
+      var cut = st.limit && !st.all && list.length > st.limit + 2;
+      (cut ? list.slice(0, st.limit) : list).forEach(function (tpl) {
+        var b = el("button", "tpl-card");
+        b.type = "button";
+        var th = el("span", "tpl-thumb");
+        th.style.setProperty("--ratio", String(tpl.h / tpl.w));
+        lazyThumb(th, tpl);
+        b.appendChild(th);
+        b.appendChild(el("span", "tpl-name", AT.lbl(tpl)));
+        if (!st.cat) {
+          var c = TPL.CATS.filter(function (x) { return x[0] === tpl.cat; })[0];
+          if (c) b.appendChild(el("span", "tpl-cat", LANG === "el" ? c[2] : c[1]));
+        }
+        b.title = AT.lbl(tpl);
+        b.addEventListener("click", function () { onPick(tpl); });
+        grid.appendChild(b);
+      });
+      if (cut) {
+        var more = el("button", "btn ghost tl-more", t("tl.more", { n: list.length }));
+        more.type = "button";
+        more.addEventListener("click", function () { st.all = true; draw(); });
+        grid.appendChild(more);
+      }
+    }
+    if (!tools.tlBuilt) {
+      tools.tlBuilt = true;
+      tools.innerHTML = "";
+      var q = el("input", "inp sm");
+      q.type = "search"; q.autocomplete = "off"; q.spellcheck = false;
+      q.placeholder = t("tl.search"); q.setAttribute("aria-label", t("tl.search"));
+      q.value = st.q || "";
+      var timer = 0;
+      q.addEventListener("input", function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { st.q = q.value; draw(); }, 120);
+      });
+      var chips = el("div", "chips");
+      chips.setAttribute("role", "group");
+      [["", t("tl.all"), t("tl.all")]].concat(TPL.usedCats(TPL.list)).forEach(function (c) {
+        var b = el("button", "chip-btn" + ((st.cat || "") === c[0] ? " on" : ""), LANG === "el" ? c[2] : c[1]);
+        b.type = "button";
+        b.setAttribute("aria-pressed", (st.cat || "") === c[0] ? "true" : "false");
+        b.addEventListener("click", function () {
+          st.cat = c[0];
+          Array.prototype.forEach.call(chips.children, function (x) {
+            var on = x === b;
+            x.classList.toggle("on", on); x.setAttribute("aria-pressed", on ? "true" : "false");
+          });
+          draw();
+        });
+        chips.appendChild(b);
+      });
+      tools.tlCount = el("span", "tl-count");
+      tools.appendChild(q); tools.appendChild(chips); tools.appendChild(tools.tlCount);
+    }
+    draw();
+  }
+  AT.templateLibrary = templateLibrary;
+  var homeLib = { cat: "", q: "", limit: 12 };   // home: a sampler first, "Show all" for the rest
+
   function renderHome() {
     // sizes
     var sizes = $("sizes");
@@ -823,20 +976,7 @@
       });
     }
     // templates
-    var tl = $("tpls");
-    tl.innerHTML = "";
-    AT.TEMPLATES.list.forEach(function (tpl) {
-      var b = el("button", "tpl-card");
-      b.type = "button";
-      var th = el("span", "tpl-thumb");
-      th.style.setProperty("--ratio", String(tpl.h / tpl.w));
-      var url = thumbOf(tplDoc(tpl), 220, "tpl:" + tpl.id);
-      if (url) { var img = el("img"); img.src = url; img.alt = ""; th.appendChild(img); }
-      b.appendChild(th);
-      b.appendChild(el("span", "tpl-name", LANG === "el" ? tpl.el : tpl.en));
-      b.addEventListener("click", function () { addDoc(AX.fromTemplate(tpl, LANG, now())); });
-      tl.appendChild(b);
-    });
+    templateLibrary($("tpl-tools"), $("tpls"), homeLib, function (tpl) { addDoc(AX.fromTemplate(tpl, LANG, now())); });
     // designs
     var host = $("docs");
     host.innerHTML = "";

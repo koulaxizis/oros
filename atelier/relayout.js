@@ -73,6 +73,8 @@
         if (even) { it.ix = r2(it.ix * k); it.iy = r2(it.iy * k); it.isc = Math.round(it.isc * k * 10000) / 10000; }
         else { it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
       }
+      if ((ax.k === "table" || ax.k === "chart") && ax.size) it.ax.size = Math.max(MIN_FONT, Math.round(ax.size * k * 10) / 10);
+      else if (ax.k === "table") it.ax.size = Math.max(MIN_FONT, Math.round(24 * k * 10) / 10);
       if (isText) {
         it.ax.size = Math.max(MIN_FONT, Math.round((ax.size || 48) * k * 10) / 10);
         if (typeof opts.textHeight === "function") {
