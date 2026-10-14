@@ -1057,6 +1057,7 @@ var PRECACHE_URLS = [
   "assistant/core.js",
   "assistant/summary.js",
   "assistant/assistant.js",
+  "assistant/webllm-worker.js",
   "assistant/help.en.txt",
   "assistant/help.el.txt",
   "share/",
