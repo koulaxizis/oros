@@ -239,7 +239,7 @@ test("Calendar: Moon & Sky feed is wired and opt-in", () => {
   assert.ok(idx.includes('src="../sky/core.js?v='));
   assert.ok(cal.includes('{ id: "lbl-feed-sky"'));
   assert.ok(cal.includes(".concat(skyFeedOn(dateStr))"));
-  assert.ok(/OPT_IN_FEEDS = \["lbl-feed-sky"\]/.test(cal));
-  assert.ok(cal.includes('var labelVis = { "lbl-feed-sky": false }'));
+  assert.ok(/OPT_IN_FEEDS = \["lbl-feed-sky"[,\]]/.test(cal));
+  assert.ok(/var labelVis = \{ "lbl-feed-sky": false[, ]/.test(cal));
   assert.ok(cal.includes('_openAt: { app: "sky", target: { date: dateStr } }'));
 });

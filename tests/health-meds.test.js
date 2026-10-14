@@ -197,6 +197,25 @@ test("Today provider: open doses of today as tasks, low stock as a top line, sto
   assert.equal(opened, "meds");
 });
 
+test("Calendar feed: first and last day of a course, the day the stock runs out; wired and opt-in", () => {
+  const d = data({ md: [med("ma", { n: "Amoxicillin", sd: "2026-10-09", ed: "2026-10-15" }),
+                        med("mb", { n: "Lisinopril", sk: 1000, sa: 1 }), med("mc", { n: "Stopped", sk: 100, sa: 1, ar: 1 })] });
+  const on = (day) => C.calendarOn(d, day, at(9, 12)).map((r) => r.k + ":" + r.med.id);
+  assert.deepEqual(on("2026-10-09"), ["start:ma"]);
+  assert.deepEqual(on("2026-10-14"), ["out:mb"], "10 tablets, 2 a day");
+  assert.deepEqual(on("2026-10-15"), ["end:ma"]);
+  assert.deepEqual(on("2026-10-01"), ["start:mb", "start:mc"], "a stopped medicine keeps its course days");
+  assert.deepEqual(on("2026-10-02"), []);
+  assert.deepEqual(C.calendarOn(d, "bad", at(9, 12)), []);
+  const fs = require("fs"), path = require("path");
+  const cal = fs.readFileSync(path.join(__dirname, "../calendar/calendar.js"), "utf8");
+  const idx = fs.readFileSync(path.join(__dirname, "../calendar/index.html"), "utf8");
+  assert.ok(idx.includes('src="../health/core.js?v='));
+  assert.ok(/OPT_IN_FEEDS = \[[^\]]*"lbl-feed-meds"/.test(cal), "opt-in");
+  assert.ok(cal.includes(".concat(medsFeedOn(dateStr))"));
+  assert.ok(cal.includes('_openAt: { app: "health", target: { med: r.med.id } }'));
+});
+
 test("schedule changes keep the past: earlier schedules by day, same-day marks stay", () => {
   const old = med("ma", { sd: "2026-10-01" });                                   // 08:00, 20:00
   const changed = med("ma", { tm: [540], m: 3000 });

@@ -768,6 +768,21 @@
     return out;
   }
 
+  // ---------- Calendar feed (calendar/calendar.js, opt-in) ----------
+  // On one day: a course's first and last day, and the day a counted
+  // medicine runs out (today or later, medicines still taken).
+  //   → [{ k: "start" | "end" | "out", med }] by name
+  function calendarOn(d, day, nowMs) {
+    var out = [], today = ymdOf(nowMs);
+    if (!validYmd(day)) return out;
+    ((d && d.md) || []).forEach(function (med) {
+      if (med.sd === day) out.push({ k: "start", med: med });
+      if (med.ed === day) out.push({ k: "end", med: med });
+      if (!med.ar && day >= today && runOutDay(d, med, nowMs) === day) out.push({ k: "out", med: med });
+    });
+    return out.sort(function (a, b) { return cmpStr(a.med.n.toLowerCase(), b.med.n.toLowerCase()) || cmpStr(a.k, b.k); });
+  }
+
   // ---------- Dose reminders ----------
   // A dose reminds from its time for 4 hours (as a measurement does),
   // unless it was marked, the medicine is stopped or its reminder is
@@ -807,7 +822,7 @@
     isSymBuiltin: isSymBuiltin, symKindRow: symKindRow, symKindList: symKindList,
     medById: medById, logIndex: logIndex, schedOn: schedOn, withHistory: withHistory, doseKey: doseKey, slotsOn: slotsOn, doseState: doseState,
     dosesOn: dosesOn, prnTaken: prnTaken, adherence: adherence, stockOf: stockOf, perDay: perDay,
-    daysLeft: daysLeft, runOutDay: runOutDay, lowStock: lowStock, dueDoses: dueDoses
+    daysLeft: daysLeft, runOutDay: runOutDay, lowStock: lowStock, dueDoses: dueDoses, calendarOn: calendarOn
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosHealthCore = API;

@@ -188,6 +188,8 @@
       "lbl.feed.sky": "Moon & Sky",
       "lbl.feed.famtree": "Death anniversaries",
       "lbl.feed.crm": "Customers",
+      "lbl.feed.meds": "Medicines",
+      "feed.md.start": "{name}: first day", "feed.md.end": "{name}: last day", "feed.md.out": "{name}: runs out",
       "feed.crm.late": "Late",
       "feed.crm.close": "Expected close",
       "feed.famtree.one": "{name} · 1 year since death",
@@ -382,6 +384,8 @@
       "lbl.feed.sky": "Σελήνη & Ουρανός",
       "lbl.feed.famtree": "Επέτειοι θανάτου",
       "lbl.feed.crm": "Πελάτες",
+      "lbl.feed.meds": "Φάρμακα",
+      "feed.md.start": "{name}: πρώτη μέρα", "feed.md.end": "{name}: τελευταία μέρα", "feed.md.out": "{name}: τελειώνει",
       "feed.crm.late": "Καθυστερεί",
       "feed.crm.close": "Αναμένεται κλείσιμο",
       "feed.famtree.one": "{name} · 1 χρόνος από τον θάνατο",
@@ -582,6 +586,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-time",    color: "#56b6c2" },   // cyan — Timesheet work time per project
     { id: "lbl-feed-famtree", color: "#9aa4b0" },   // slate grey — Family Tree death anniversaries
     { id: "lbl-feed-crm",     color: "#8c9eff" },   // periwinkle — CRM follow-ups + expected deal closes
+    { id: "lbl-feed-meds",    color: "#e57373" },   // soft red — Health medicines (opt-in: sensitive)
     { id: "lbl-feed-sky",     color: "#e9dfb4" }    // moonlight cream — Moon & Sky (opt-in)
   ];
   function feedLabelName(l) {
@@ -610,6 +615,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-time") return t("lbl.feed.time");
     if (l.id === "lbl-feed-famtree") return t("lbl.feed.famtree");
     if (l.id === "lbl-feed-crm") return t("lbl.feed.crm");
+    if (l.id === "lbl-feed-meds") return t("lbl.feed.meds");
     if (l.id === "lbl-feed-sky") return t("lbl.feed.sky");
     return t("lbl.feed.custom");
   }
@@ -971,7 +977,7 @@ function transientNote(title, body) {
 
   // Label visibility: id -> true/false. Absent = visible. Chips row
   // toggles these; nothing is ever deleted by filtering.
-  var labelVis = { "lbl-feed-sky": false };   // opt-in feeds start hidden (loadFeedVis)
+  var labelVis = { "lbl-feed-sky": false, "lbl-feed-meds": false };   // opt-in feeds start hidden (loadFeedVis)
   function labelVisible(labelId) {
     if (!labelId) return true;
     return labelVis[labelId] !== false;
@@ -1559,6 +1565,43 @@ function transientNote(title, body) {
         end: null,
         _feed: true,
         _openAt: { app: "crm", target: r.fup ? { fup: x.id } : { deal: x.id } }
+      };
+    });
+  }
+
+  // Health medicines read-only feed (health/core.js, loaded by
+  // index.html; OrosHealthCore.calendarOn): a course's first and last
+  // day and the day a counted medicine runs out. Opt-in (health data
+  // is sensitive): the chip starts off (OPT_IN_FEEDS). Click → Health
+  // with that medicine open (__orosOpenAt("health", {med})). Never
+  // stored; parsed at most once a second.
+  var medsCache = { when: 0, data: null };
+  function medsData() {
+    var now = Date.now(), C = window.OrosHealthCore;
+    if (!C || typeof C.calendarOn !== "function") return null;
+    if (now - medsCache.when > 1000) {
+      medsCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem("oros-health-data"));
+        if (d && typeof d === "object" && Array.isArray(d.md) && d.md.length) medsCache.data = C.merge(d, d);
+      } catch (e) { medsCache.data = null; }
+      medsCache.when = now;
+    }
+    return medsCache.data;
+  }
+  function medsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-meds")) return [];
+    var data = medsData();
+    if (!data) return [];
+    return window.OrosHealthCore.calendarOn(data, dateStr, Date.now()).map(function (r) {
+      return {
+        id: "md-" + r.k + "-" + r.med.id + "-" + dateStr,   // per-render key, never stored
+        title: t("feed.md." + r.k).replace("{name}", r.med.n + (r.med.s ? " " + r.med.s : "")),
+        labelId: "lbl-feed-meds",
+        start: null,
+        end: null,
+        _feed: true,
+        _openAt: { app: "health", target: { med: r.med.id } }
       };
     });
   }
@@ -2262,7 +2305,7 @@ function transientNote(title, body) {
   var daysData = null;
 
   // Opt-in feeds start hidden; turning one on is remembered (true).
-  var OPT_IN_FEEDS = ["lbl-feed-sky"];
+  var OPT_IN_FEEDS = ["lbl-feed-sky", "lbl-feed-meds"];
   function loadFeedVis() {
     var v = null;
     try { v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}"); } catch (e) {}
@@ -2380,6 +2423,7 @@ function transientNote(title, body) {
     .concat(timesheetFeedOn(dateStr))
     .concat(familyTreeFeedOn(dateStr))
     .concat(crmFeedOn(dateStr))
+    .concat(medsFeedOn(dateStr))
     .concat(skyFeedOn(dateStr));
   }
 
