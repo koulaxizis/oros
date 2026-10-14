@@ -134,3 +134,12 @@ test("feedRows: calendar feed days become stable read-only rows", () => {
   assert.match(allDay.id, /^f[0-9a-f]{16}$/);
   assert.deepEqual(P.feedRows(null, "UTC"), []);
 });
+
+test("rows carry the label colour", () => {
+  const ev = P.eventRows({ labels: [{ id: "work", color: "#4FC4CF" }],
+    events: [{ id: "e1", date: "2026-10-14", labelId: "work", title: "A" }, { id: "e2", date: "2026-10-14", labelId: "gone", title: "B" }] }, "UTC");
+  assert.equal(ev.find((r) => r.id === "e1").color, "#4fc4cf");
+  assert.equal(ev.find((r) => r.id === "e2").color, null);
+  const fd = P.feedRows({ items: [{ k: "a", date: "2026-10-14", title: "x", color: "#8c9eff" }, { k: "b", date: "2026-10-14", title: "y", color: "red" }] }, "UTC");
+  assert.deepEqual(fd.map((r) => r.color).sort(), ["#8c9eff", null].sort());
+});
