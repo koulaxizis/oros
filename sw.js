@@ -300,6 +300,7 @@ var PRECACHE_URLS = [
   "certificates/dk.js",
   "certificates/certificates.js",
   "certificates/search.js",
+  "certificates/badges.js",
   "invoices/today.js",
   "invoices/mydata-ui.js",
   "crm/",
