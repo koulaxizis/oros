@@ -1,5 +1,5 @@
 // ============================================================
-// orOS QR Generator — QR code encoder (ISO/IEC 18004), v1.0.0
+// orOS QR Generator — QR code encoder (ISO/IEC 18004), v1.1.0
 // Written for orOS, no third-party code. No DOM: the same file runs
 // in the app frame (window.orosQR) and in Node tests (module.exports).
 //   - versions 1–40, error correction L / M / Q / H
@@ -12,9 +12,12 @@
 //       mode, modules: [[bool]] (row-major, true = dark) }
 //       throws Error with .code "TOO_LONG" when nothing fits
 //   orosQR.measure(text, ecl)           -> { bits, max, version|null }
-//   orosQR.shapes(qr, { margin, round }) -> drawing ops shared by the
-//       SVG writer, the canvas painter and the tests
+//   orosQR.shapes(qr, { margin, round, dot, eye, logo }) -> drawing
+//       ops shared by the SVG writer, the canvas painter and the tests
+//       (v1.1: dot / eye styles and an empty centre for a logo; calls
+//       without them give exactly the v1.0 ops)
 //   orosQR.svg(qr, opts)                -> SVG document string
+//       (opts.logoSrc: a data:image/png|jpeg|webp|gif;base64 URL)
 // ============================================================
 (function (root) {
   "use strict";
@@ -362,40 +365,103 @@
 
   // ---------- Drawing ops ----------
   // Unit = one module. The quiet zone is `margin` modules on every
-  // side. Square style: one rect per horizontal run of dark modules.
-  // Round style: data modules become dots, the three finder patterns
-  // stay solid (rounded squares) so scanners still lock on.
-  // ops: { w, h, rects: [[x, y, w, h, r]], dots: [[cx, cy, r]] }
+  // side. Dot styles (opts.dot): "square" = one rect per horizontal run
+  // of dark modules; "rounded" = data modules become dots joined to
+  // their right and lower dark neighbours by a bridge as wide as the
+  // dot (runs read as solid to a scanner); "dots" = separate round dots.
+  // Eye styles (opts.eye) for the three finder patterns: "square",
+  // "rounded", "circle"; they stay solid so scanners still lock on.
+  // Without opts.dot / opts.eye the v1.0 behaviour holds: opts.round
+  // means rounded dots + rounded eyes, otherwise all square (same ops).
+  // opts.logo (0–0.25): a fraction of the code's width left empty in the
+  // middle for a logo (returned as `logo`, in units); use level H.
+  // ops: { w, h, margin, rects: [[x, y, w, h, r, "fg"|"bg"?]], dots: [[cx, cy, r]], logo? }
+  var DOT_STYLES = ["square", "rounded", "dots"];
+  var EYE_STYLES = ["square", "rounded", "circle"];
+  var EYE_RADII = { rounded: [1.6, 1.1, 0.8], circle: [3.5, 2.5, 1.5] };
+  var DOT_R = 0.42;                    // "dots": a little air between neighbours
+  var LOGO_MAX = 0.25;                 // more hides too much of a small code, even at H
+
   function inFinder(x, y, s) {
     return (x < 7 && y < 7) || (x >= s - 7 && y < 7) || (x < 7 && y >= s - 7);
   }
+  function styleOf(o) {
+    var dot = DOT_STYLES.indexOf(o.dot) >= 0 ? o.dot : (o.round ? "rounded" : "square");
+    var eye = EYE_STYLES.indexOf(o.eye) >= 0 ? o.eye : (dot === "square" ? "square" : "rounded");
+    return { dot: dot, eye: eye };
+  }
+  // The empty square in the middle for a logo: n modules (odd, so it
+  // sits exactly in the centre) from (x, y). null when none.
+  function logoBox(size, frac) {
+    var f = typeof frac === "number" && isFinite(frac) ? Math.min(LOGO_MAX, Math.max(0, frac)) : 0;
+    if (!f) return null;
+    var n = Math.round(size * f);
+    if ((size - n) % 2) n++;
+    if (n < 3) return null;
+    var p = (size - n) / 2;
+    return { x: p, y: p, n: n };
+  }
   function shapes(qr, opts) {
     var o = opts || {}, mg = o.margin === undefined ? 4 : Math.max(0, Math.min(10, o.margin | 0));
-    var s = qr.size, m = qr.modules, rects = [], dots = [], x, y;
-    if (!o.round) {
+    var s = qr.size, m = qr.modules, rects = [], dots = [], x, y, st = styleOf(o);
+    var lb = logoBox(s, o.logo);
+    function dark(u, v) {
+      if (u < 0 || v < 0 || u >= s || v >= s || !m[v][u]) return false;
+      return !(lb && u >= lb.x && u < lb.x + lb.n && v >= lb.y && v < lb.y + lb.n);
+    }
+    var sqEye = st.eye === "square";
+    // Square runs over the modules `want` accepts.
+    function runs(want) {
       for (y = 0; y < s; y++) for (x = 0; x < s;) {
-        if (!m[y][x]) { x++; continue; }
+        if (!dark(x, y) || !want(x, y)) { x++; continue; }
         var x0 = x;
-        while (x < s && m[y][x]) x++;
+        while (x < s && dark(x, y) && want(x, y)) x++;
         rects.push([x0 + mg, y + mg, x - x0, 1, 0]);
       }
-    } else {
+    }
+    if (st.dot === "square") runs(function (u, v) { return sqEye || !inFinder(u, v, s); });
+    else if (sqEye) runs(function (u, v) { return inFinder(u, v, s); });
+    if (!sqEye) {
+      var er = EYE_RADII[st.eye];
       [[0, 0], [s - 7, 0], [0, s - 7]].forEach(function (c) {
-        rects.push([c[0] + mg, c[1] + mg, 7, 7, 1.6, "fg"]);
-        rects.push([c[0] + mg + 1, c[1] + mg + 1, 5, 5, 1.1, "bg"]);
-        rects.push([c[0] + mg + 2, c[1] + mg + 2, 3, 3, 0.8, "fg"]);
+        rects.push([c[0] + mg, c[1] + mg, 7, 7, er[0], "fg"]);
+        rects.push([c[0] + mg + 1, c[1] + mg + 1, 5, 5, er[1], "bg"]);
+        rects.push([c[0] + mg + 2, c[1] + mg + 2, 3, 3, er[2], "fg"]);
       });
-      // Dots, joined to their right and lower dark neighbours by a
-      // bridge as wide as the dot: runs read as solid to a scanner.
-      var R = 0.5;
+    }
+    // "dots": the alignment patterns stay solid (rounded squares), so a
+    // scanner that leans on them still finds them; under the logo, none.
+    var inAlign = function () { return false; };
+    if (st.dot === "dots") {
+      var al = alignPositions(qr.version, s), na = al.length, boxes = [];
+      for (var i = 0; i < na; i++) for (var j = 0; j < na; j++) {
+        if ((i === 0 && j === 0) || (i === 0 && j === na - 1) || (i === na - 1 && j === 0)) continue;
+        var ax = al[i] - 2, ay = al[j] - 2;
+        boxes.push([ax, ay]);
+        if (lb && ax + 5 > lb.x && ax < lb.x + lb.n && ay + 5 > lb.y && ay < lb.y + lb.n) continue;
+        rects.push([ax + mg, ay + mg, 5, 5, 1.2, "fg"]);
+        rects.push([ax + mg + 1, ay + mg + 1, 3, 3, 0.7, "bg"]);
+        rects.push([ax + mg + 2, ay + mg + 2, 1, 1, 0.5, "fg"]);
+      }
+      inAlign = function (u, v) {
+        for (var k = 0; k < boxes.length; k++)
+          if (u >= boxes[k][0] && u < boxes[k][0] + 5 && v >= boxes[k][1] && v < boxes[k][1] + 5) return true;
+        return false;
+      };
+    }
+    if (st.dot !== "square") {
+      var R = st.dot === "dots" ? DOT_R : 0.5, bridge = st.dot === "rounded";
       for (y = 0; y < s; y++) for (x = 0; x < s; x++) {
-        if (!m[y][x] || inFinder(x, y, s)) continue;
+        if (!dark(x, y) || inFinder(x, y, s) || inAlign(x, y)) continue;
         dots.push([x + mg + 0.5, y + mg + 0.5, R]);
-        if (x + 1 < s && m[y][x + 1] && !inFinder(x + 1, y, s)) rects.push([x + mg + 0.5, y + mg + 0.5 - R, 1, 2 * R, 0]);
-        if (y + 1 < s && m[y + 1][x] && !inFinder(x, y + 1, s)) rects.push([x + mg + 0.5 - R, y + mg + 0.5, 2 * R, 1, 0]);
+        if (!bridge) continue;
+        if (dark(x + 1, y) && !inFinder(x + 1, y, s)) rects.push([x + mg + 0.5, y + mg + 0.5 - R, 1, 2 * R, 0]);
+        if (dark(x, y + 1) && !inFinder(x, y + 1, s)) rects.push([x + mg + 0.5 - R, y + mg + 0.5, 2 * R, 1, 0]);
       }
     }
-    return { w: s + 2 * mg, h: s + 2 * mg, margin: mg, rects: rects, dots: dots };
+    var out = { w: s + 2 * mg, h: s + 2 * mg, margin: mg, rects: rects, dots: dots };
+    if (lb) out.logo = { x: lb.x + mg, y: lb.y + mg, w: lb.n, h: lb.n };
+    return out;
   }
 
   function xmlEsc(s) {
@@ -412,14 +478,21 @@
 
   // SVG document. Everything but the caption is numbers; the caption
   // is XML-escaped text. viewBox in modules, crispEdges for squares.
+  // A logo picture: a base64 data URL of a PNG, JPEG, WebP or GIF only
+  // (no SVG: it could carry scripts or fetch things).
+  var LOGO_SRC_RE = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/]+={0,2}$/;
+  var LOGO_SRC_MAX = 400000;
+  function logoSrcOk(src) { return typeof src === "string" && src.length <= LOGO_SRC_MAX && LOGO_SRC_RE.test(src); }
+
   function svg(qr, opts) {
-    var o = opts || {}, sh = shapes(qr, o);
+    var o = opts || {}, sh = shapes(qr, o), sty = styleOf(o);
     var fg = color(o.fg, "#000000"), bg = color(o.bg, "#ffffff");
     var cap = typeof o.caption === "string" ? o.caption.replace(/\s+/g, " ").trim() : "";
     var H = sh.h + (cap ? CAPTION_H : 0), px = Math.max(1, (o.scale | 0) || 8);
     var out = ['<?xml version="1.0" encoding="UTF-8"?>\n',
       '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ', sh.w, " ", H,
-      '" width="', sh.w * px, '" height="', H * px, '"', o.round ? "" : ' shape-rendering="crispEdges"', ">\n",
+      '" width="', sh.w * px, '" height="', H * px, '"',
+      sty.dot === "square" && sty.eye === "square" ? ' shape-rendering="crispEdges"' : "", ">\n",
       '<rect width="100%" height="100%" fill="', bg, '"/>\n'];
     var d = [];
     sh.rects.forEach(function (r) {
@@ -437,6 +510,12 @@
              " 0 1 0 " + num(2 * c[2]) + " 0a" + num(c[2]) + " " + num(c[2]) + " 0 1 0 -" + num(2 * c[2]) + " 0z");
     });
     if (d.length) out.push('<path fill="', fg, '" d="', d.join(""), '"/>\n');
+    // The logo, a little inside its empty square
+    if (sh.logo && logoSrcOk(o.logoSrc)) {
+      var ins = Math.min(0.5, sh.logo.w * 0.06);
+      out.push('<image x="', num(sh.logo.x + ins), '" y="', num(sh.logo.y + ins), '" width="', num(sh.logo.w - 2 * ins),
+        '" height="', num(sh.logo.h - 2 * ins), '" preserveAspectRatio="xMidYMid meet" href="', o.logoSrc, '"/>\n');
+    }
     if (cap) {
       // ~0.6 em per character: shrink long captions to the code width
       var fs = Math.min(2.6, (sh.w - 2) / (Array.from(cap).length * 0.6));
@@ -449,10 +528,15 @@
   }
 
   var api = {
-    VERSION: "1.0.0",
+    VERSION: "1.1.0",
     encode: encode,
     measure: measure,
     shapes: shapes,
+    logoBox: logoBox,
+    logoSrcOk: logoSrcOk,
+    DOT_STYLES: DOT_STYLES,
+    EYE_STYLES: EYE_STYLES,
+    LOGO_MAX: LOGO_MAX,
     svg: svg,
     xmlEsc: xmlEsc,
     CAPTION_H: CAPTION_H,

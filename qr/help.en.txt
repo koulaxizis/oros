@@ -1,5 +1,5 @@
 # QR Generator
-QR Generator makes QR codes for links, WiFi networks, contact cards, events, text, email, phone numbers, SMS and locations. Everything is made on your device, even offline.
+QR Generator makes QR codes for links, WiFi networks, contact cards, events, text, email, phone numbers, SMS and locations, and reads them too: with the camera or from a picture. Everything happens on your device, even offline.
 
 ## Getting started
 1. Under `Type`, pick what the code is for: `Link`, `WiFi`, `Contact`, `Event`, `Text`, `Email`, `Phone`, `SMS` or `Location`.
@@ -20,21 +20,43 @@ It works the other way too: `QR code` on a contact's card in Contacts, in an eve
 Under `Look` you can set:
 - `Error correction`, from `Low (7%)` to `Highest (30%)`. Higher survives smudges and scratches, but the code gets denser.
 - The colours of the `Code` and `Background`, with `Swap colours` and `Black on white`.
-- `Margin`, `Round dots` and a `Caption under the code`.
+- `Margin`, and a `Caption under the code`.
+- `Dots`: `Square`, `Rounded` or `Dots`. `Corners`, the three big squares: `Square`, `Rounded` or `Circle`.
+- `Logo`: `Add a logo…` puts a picture in the middle of the code. While there is a logo, the error correction is set to `Highest (30%)`, so phones still read the code. `Change logo` picks another picture, and the cross next to it removes the logo.
 
 The app warns you when the contrast is low, the colours are inverted or there's no margin, because some phones can't read such codes.
 
 ## Save, export and share
 - `Save` keeps the code under `My codes` with a name. Changes to a saved code are saved as you go. You can rename, copy or delete it there, with `Undo` after a delete. `New` starts a fresh code.
-- `PNG` (choose the `PNG size`) and `SVG` save an image file.
+- `PNG` (choose the `PNG size`) and `SVG` save an image file, with the logo.
 - `Copy` puts the image on the clipboard; `Share` appears on phones.
 - `Save to Files` puts the image in the QR folder of [Files](app:files).
 - `Print` prints the code. For WiFi codes, `WiFi card` prints a card with the network name, password and code, ready for guests.
 
-## Sync and backup
-Your saved codes sync between your devices through [orOS sync](help:t/sync) and are part of the orOS [backup](help:t/backup). The code you're working on before you save it, the open code and the PNG size stay on this device.
+## Scan a code
+`Scan` opens the scanner. On a phone the camera starts at once; elsewhere press `Use the camera`. You can also press `Scan a picture…` to read a code from an image file, or paste a picture.
 
->! A saved WiFi code includes the password, and it syncs with your other codes.
+The scanner shows what the code says and what you can do with it:
+- A link: you see the full address and the site's name first, then `Open link` opens it in a new tab. Only `http` and `https` links open from here.
+- A WiFi network: the network name, security and password, with `Copy password`.
+- A contact (vCard or MECARD): `Add to Contacts` opens [Contacts](app:contacts), which shows what it will import and asks first.
+- An event: `Add to Calendar` opens a new event in [Calendar](app:calendar), filled in; it is saved only when you press Save there.
+- Any code: `Copy text`, and `Make a QR code from this` to open it here as a new code.
+
+Your scans are listed under `Recent scans` (up to 50), on this device only. Tap one to see it again; the cross removes one and `Clear` removes them all, both with `Undo`.
+
+## Many codes at once
+`Many codes` makes one code for every row of a table:
+1. Paste the rows, or press `Open CSV file…`. Columns can be separated by commas, semicolons or tabs.
+2. Pick the column with the `Content of each code` and, if you like, a `Label under each code`. Tick `The first row holds column names` if it does (the app guesses).
+3. Choose the `Labels per page` and press `Print`, `PDF` (an A4 sheet of labels) or `ZIP of PNGs` (one picture per row, in the `PNG size` you chose, named after the row and its label).
+
+The codes use the look you set: colours, dots, corners, logo and margin. Empty rows and rows too long for a QR code are left out, and the app tells you which.
+
+## Sync and backup
+Your saved codes sync between your devices through [orOS sync](help:t/sync) and are part of the orOS [backup](help:t/backup), logo and look included. The code you're working on before you save it, the open code, the PNG size and your recent scans stay on this device.
+
+>! A saved WiFi code includes the password, and it syncs with your other codes. A scanned WiFi code keeps its password in your recent scans on this device until you remove it.
 
 ## Keyboard shortcuts
 - [[Ctrl+S]] saves the code as PNG.
@@ -42,8 +64,12 @@ Your saved codes sync between your devices through [orOS sync](help:t/sync) and 
 
 ## Tips
 - For a WiFi code, pick the right `Security`; WPA passwords need at least 8 characters.
+- A logo works best when it is simple and has a light or clear background.
 - Test a printed code with your phone camera before handing it out.
 
 ## Limits
 - You can keep up to 100 saved codes.
-- The app makes codes but doesn't scan them.
+- A logo is made small (at most 192 pixels) so it can sync; a picture that is still too large after that is refused.
+- The scanner reads QR codes only, not barcodes. The camera needs a browser that allows it; on browsers without a built-in reader, the app's own reader is a little slower.
+- `Many codes` makes up to 500 codes at a time, from a CSV file of up to 2 MB.
+- An event read from a code keeps its title, time, place and description; repeat rules and reminders are not carried over.

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS QR Generator — App logic (v1.0.0)
+// orOS QR Generator — App logic (v1.1.0)
 // Make a QR code for a link, a WiFi network, a contact card, a
 // calendar event, text, email, phone, SMS or a location; export it
 // as PNG or SVG, copy, share, print, or save it into Files.
@@ -8,10 +8,19 @@
 //     (read-only: nothing is written to those apps, BR-W8-6)
 //   - "Save to Files" writes the image into the orOS disk (orosFS)
 //   - my codes (synced): name, type, fields and look
+//   - look v1.1: dot style, corner (eye) style, a logo in the middle
+//     (level H forced while there is one)
+//   - Scan: camera or a picture (BarcodeDetector, else jsQR loaded on
+//     use), what the code says (qr-scan.js) with actions: open an
+//     http(s) link after showing it, add to Contacts / Calendar through
+//     the shell, WiFi details, copy; recent scans on this device
+//   - Many codes: one code per CSV row (qr-bulk.js) -> print sheet,
+//     PDF (vendor/jspdf) or ZIP of PNGs (atelier/zip.js)
 // Data:
 //   - synced slice "qr" (oros-qr-data): saved codes LWW + tombstones
 //     (R5, R17, R26)
-//   - device-local (R10): oros-qr-prefs (open code, draft, PNG size)
+//   - device-local (R10): oros-qr-prefs (open code, draft, PNG size),
+//     oros-qr-scans (recent scans, ≤ 50)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Look (style) + saved codes: normalize, merge
@@ -21,6 +30,7 @@
 //   6. Export: PNG, SVG, copy, share, Files, print, WiFi card
 //   7. Form: types, fields, look
 //   8. "From…" pickers (Contacts, Calendar, Bookmarks)
+//  8b. Files in, logo   8c. Scanner   8d. Many codes
 //   9. My codes
 //  10. Dialogs + toasts
 //  11. Keyboard (Contract Β)
@@ -43,6 +53,11 @@
   var QR = window.orosQR, P = window.orosQRPayload;
   var TYPES = P.TYPES;
   var DEFAULT_STYLE = { ecl: "M", fg: "#000000", bg: "#ffffff", mg: 4, rd: false, cap: false, ct: "" };
+  var DOTS        = ["square", "rounded", "dots"];
+  var EYES        = ["square", "rounded", "circle"];
+  var LOGO_FRAC   = 0.22;     // of the code's width (encoder max 0.25)
+  var LOGO_PX     = 192;      // a logo is stored at most this big…
+  var LOGO_LEN    = 80000;    // …and at most this many characters (it syncs)
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -87,7 +102,7 @@
       "look.ecl": "Error correction", "ecl.L": "Low (7%)", "ecl.M": "Medium (15%)", "ecl.Q": "High (25%)", "ecl.H": "Highest (30%)",
       "look.ecl.hint": "Higher survives smudges and scratches, but the code gets denser.",
       "look.fg": "Code", "look.bg": "Background", "look.swap": "Swap colours", "look.reset": "Black on white",
-      "look.margin": "Margin", "look.round": "Round dots", "look.cap": "Caption under the code",
+      "look.margin": "Margin", "look.cap": "Caption under the code",
       "look.capText": "Caption", "look.capAuto": "Automatic",
       "warn.low": "Low contrast: some phones may not read this code.",
       "warn.inverted": "Light code on a dark background: many phones can't read it. Swap the colours.",
@@ -115,7 +130,43 @@
       "toast.filesFail": "Could not save to Files",
       "toast.gone": "Not found: it may have been deleted",
       "card.title": "WiFi", "card.network": "Network", "card.password": "Password",
-      "card.scan": "Point your phone camera at the code to connect."
+      "card.scan": "Point your phone camera at the code to connect.",
+      "look.dots": "Dots", "dot.square": "Square", "dot.rounded": "Rounded", "dot.dots": "Dots",
+      "look.eyes": "Corners", "eye.square": "Square", "eye.rounded": "Rounded", "eye.circle": "Circle",
+      "look.logo": "Logo", "logo.add": "Add a logo…", "logo.change": "Change logo", "logo.remove": "Remove logo",
+      "logo.hint": "With a logo the error correction is set to Highest (30%), so phones still read the code.",
+      "logo.bad": "Could not read that picture", "logo.big": "That picture is too large, even made smaller",
+      "logo.alt": "Logo",
+      "btn.scan": "Scan", "btn.bulk": "Many codes", "btn.close": "Close",
+      "scan.title": "Scan a code", "scan.file": "Scan a picture…", "scan.camera": "Use the camera", "scan.stop": "Stop the camera",
+      "scan.wait": "Starting the camera…", "scan.aim": "Point the camera at a QR code.",
+      "scan.denied": "The camera is off or not allowed. You can still scan a picture.",
+      "scan.noCam": "There is no camera here. Scan a picture of a code instead.",
+      "scan.none": "No QR code found in that picture.", "scan.looking": "Looking for a code…",
+      "scan.paste": "You can also paste a picture here.", "scan.again": "Scan another",
+      "scan.history": "Recent scans", "scan.historyEmpty": "The codes you scan are kept here, on this device only.",
+      "scan.clear": "Clear", "scan.cleared": "Recent scans cleared", "scan.del": "Remove {what}",
+      "scan.removed": "Removed from recent scans",
+      "kind.url": "Link", "kind.wifi": "WiFi network", "kind.vcard": "Contact", "kind.event": "Event", "kind.email": "Email",
+      "kind.phone": "Phone number", "kind.sms": "SMS", "kind.geo": "Location", "kind.text": "Text",
+      "res.opens": "This link opens:", "res.open": "Open link", "res.copy": "Copy text", "res.copyPass": "Copy password",
+      "res.copySsid": "Copy network name", "res.contacts": "Add to Contacts", "res.vcf": "Save contact file",
+      "res.calendar": "Add to Calendar", "res.ics": "Save event file", "res.make": "Make a QR code from this",
+      "res.copied": "Copied", "res.copyFail": "Could not copy", "res.network": "Network", "res.security": "Security",
+      "res.password": "Password", "res.hidden": "Hidden network", "res.yes": "yes", "res.name": "Name", "res.org": "Company",
+      "res.phone": "Phone", "res.email": "Email", "res.when": "When", "res.where": "Where", "res.to": "To",
+      "res.subject": "Subject", "res.number": "Number", "res.message": "Message", "res.coords": "Coordinates",
+      "res.made": "New QR code from the scan", "res.allDay": "all day",
+      "bulk.title": "Many codes from a table", "bulk.rows": "Rows (CSV): paste them, or open a file",
+      "bulk.open": "Open CSV file…", "bulk.header": "The first row holds column names",
+      "bulk.col": "Content of each code", "bulk.label": "Label under each code", "bulk.noLabel": "No label",
+      "bulk.colN": "Column {n}", "bulk.grid": "Labels per page", "bulk.gridOpt": "{c} × {r} ({n} per page)",
+      "bulk.count": "{n} codes", "bulk.empty": "{n} rows without content left out.", "bulk.empty1": "1 row without content left out.", "bulk.count1": "1 code",
+      "bulk.more": "Only the first {max}: {n} more rows left out.", "bulk.tooLong": "Too long for a QR code, left out: row {rows}.",
+      "bulk.none": "Paste rows or open a CSV file.", "bulk.print": "Print", "bulk.pdf": "PDF", "bulk.zip": "ZIP of PNGs",
+      "bulk.look": "The codes use the look you set (colours, dots, corners, logo, margin).",
+      "bulk.working": "Making {n} codes…", "bulk.fail": "Could not make the file", "bulk.readFail": "Could not read that file",
+      "bulk.sheet": "QR labels"
     },
     el: {
       "sec.type": "Τύπος", "sec.content": "Περιεχόμενο", "sec.look": "Εμφάνιση", "sec.mine": "Τα QR μου",
@@ -149,7 +200,7 @@
       "look.ecl": "Διόρθωση σφαλμάτων", "ecl.L": "Χαμηλή (7%)", "ecl.M": "Μεσαία (15%)", "ecl.Q": "Υψηλή (25%)", "ecl.H": "Μέγιστη (30%)",
       "look.ecl.hint": "Όσο πιο υψηλή, τόσο αντέχει σε λεκέδες και γρατζουνιές, αλλά το QR γίνεται πιο πυκνό.",
       "look.fg": "QR", "look.bg": "Φόντο", "look.swap": "Αντιστροφή χρωμάτων", "look.reset": "Μαύρο σε λευκό",
-      "look.margin": "Περιθώριο", "look.round": "Στρογγυλές κουκκίδες", "look.cap": "Λεζάντα κάτω από το QR",
+      "look.margin": "Περιθώριο", "look.cap": "Λεζάντα κάτω από το QR",
       "look.capText": "Λεζάντα", "look.capAuto": "Αυτόματη",
       "warn.low": "Χαμηλή αντίθεση: μερικά κινητά ίσως δεν το διαβάσουν.",
       "warn.inverted": "Ανοιχτό QR σε σκούρο φόντο: πολλά κινητά δεν το διαβάζουν. Αντίστρεψε τα χρώματα.",
@@ -177,7 +228,43 @@
       "toast.filesFail": "Η αποθήκευση στα Αρχεία απέτυχε",
       "toast.gone": "Δεν βρέθηκε: ίσως διαγράφηκε",
       "card.title": "WiFi", "card.network": "Δίκτυο", "card.password": "Κωδικός",
-      "card.scan": "Στρέψε την κάμερα του κινητού στο QR για να συνδεθείς."
+      "card.scan": "Στρέψε την κάμερα του κινητού στο QR για να συνδεθείς.",
+      "look.dots": "Κουκκίδες", "dot.square": "Τετράγωνες", "dot.rounded": "Στρογγυλεμένες", "dot.dots": "Τελείες",
+      "look.eyes": "Γωνίες", "eye.square": "Τετράγωνες", "eye.rounded": "Στρογγυλεμένες", "eye.circle": "Κύκλοι",
+      "look.logo": "Λογότυπο", "logo.add": "Προσθήκη λογότυπου…", "logo.change": "Αλλαγή λογότυπου", "logo.remove": "Αφαίρεση λογότυπου",
+      "logo.hint": "Με λογότυπο η διόρθωση σφαλμάτων γίνεται Μέγιστη (30%), ώστε τα κινητά να διαβάζουν το QR.",
+      "logo.bad": "Η εικόνα δεν διαβάστηκε", "logo.big": "Η εικόνα είναι πολύ μεγάλη, ακόμα και μικραμένη",
+      "logo.alt": "Λογότυπο",
+      "btn.scan": "Σάρωση", "btn.bulk": "Πολλά QR", "btn.close": "Κλείσιμο",
+      "scan.title": "Σάρωση QR", "scan.file": "Σάρωση εικόνας…", "scan.camera": "Με την κάμερα", "scan.stop": "Διακοπή κάμερας",
+      "scan.wait": "Η κάμερα ξεκινά…", "scan.aim": "Στρέψε την κάμερα σε ένα QR.",
+      "scan.denied": "Η κάμερα είναι κλειστή ή δεν επιτρέπεται. Μπορείς να σαρώσεις μια εικόνα.",
+      "scan.noCam": "Δεν υπάρχει κάμερα εδώ. Σάρωσε μια εικόνα του QR.",
+      "scan.none": "Δεν βρέθηκε QR σε αυτή την εικόνα.", "scan.looking": "Αναζήτηση QR…",
+      "scan.paste": "Μπορείς και να επικολλήσεις μια εικόνα εδώ.", "scan.again": "Νέα σάρωση",
+      "scan.history": "Πρόσφατες σαρώσεις", "scan.historyEmpty": "Τα QR που σαρώνεις μένουν εδώ, μόνο σε αυτή τη συσκευή.",
+      "scan.clear": "Καθαρισμός", "scan.cleared": "Οι πρόσφατες σαρώσεις καθαρίστηκαν", "scan.del": "Αφαίρεση: {what}",
+      "scan.removed": "Αφαιρέθηκε από τις πρόσφατες σαρώσεις",
+      "kind.url": "Σύνδεσμος", "kind.wifi": "Δίκτυο WiFi", "kind.vcard": "Επαφή", "kind.event": "Συμβάν", "kind.email": "Email",
+      "kind.phone": "Αριθμός τηλεφώνου", "kind.sms": "SMS", "kind.geo": "Τοποθεσία", "kind.text": "Κείμενο",
+      "res.opens": "Ο σύνδεσμος ανοίγει:", "res.open": "Άνοιγμα συνδέσμου", "res.copy": "Αντιγραφή κειμένου", "res.copyPass": "Αντιγραφή κωδικού",
+      "res.copySsid": "Αντιγραφή ονόματος δικτύου", "res.contacts": "Προσθήκη στις Επαφές", "res.vcf": "Αποθήκευση αρχείου επαφής",
+      "res.calendar": "Προσθήκη στο Ημερολόγιο", "res.ics": "Αποθήκευση αρχείου συμβάντος", "res.make": "Δημιουργία QR από αυτό",
+      "res.copied": "Αντιγράφηκε", "res.copyFail": "Η αντιγραφή απέτυχε", "res.network": "Δίκτυο", "res.security": "Ασφάλεια",
+      "res.password": "Κωδικός", "res.hidden": "Κρυφό δίκτυο", "res.yes": "ναι", "res.name": "Όνομα", "res.org": "Εταιρεία",
+      "res.phone": "Τηλέφωνο", "res.email": "Email", "res.when": "Πότε", "res.where": "Πού", "res.to": "Προς",
+      "res.subject": "Θέμα", "res.number": "Αριθμός", "res.message": "Μήνυμα", "res.coords": "Συντεταγμένες",
+      "res.made": "Νέο QR από τη σάρωση", "res.allDay": "ολοήμερο",
+      "bulk.title": "Πολλά QR από πίνακα", "bulk.rows": "Γραμμές (CSV): επικόλλησέ τες ή άνοιξε ένα αρχείο",
+      "bulk.open": "Άνοιγμα αρχείου CSV…", "bulk.header": "Η πρώτη γραμμή έχει τα ονόματα των στηλών",
+      "bulk.col": "Περιεχόμενο κάθε QR", "bulk.label": "Ετικέτα κάτω από κάθε QR", "bulk.noLabel": "Χωρίς ετικέτα",
+      "bulk.colN": "Στήλη {n}", "bulk.grid": "Ετικέτες ανά σελίδα", "bulk.gridOpt": "{c} × {r} ({n} ανά σελίδα)",
+      "bulk.count": "{n} QR", "bulk.empty": "Παραλείφθηκαν {n} γραμμές χωρίς περιεχόμενο.", "bulk.empty1": "Παραλείφθηκε 1 γραμμή χωρίς περιεχόμενο.", "bulk.count1": "1 QR",
+      "bulk.more": "Μόνο τα πρώτα {max}: παραλείφθηκαν άλλες {n} γραμμές.", "bulk.tooLong": "Πολύ μεγάλο για QR, παραλείφθηκε: γραμμή {rows}.",
+      "bulk.none": "Επικόλλησε γραμμές ή άνοιξε ένα αρχείο CSV.", "bulk.print": "Εκτύπωση", "bulk.pdf": "PDF", "bulk.zip": "ZIP με PNG",
+      "bulk.look": "Τα QR παίρνουν την εμφάνιση που όρισες (χρώματα, κουκκίδες, γωνίες, λογότυπο, περιθώριο).",
+      "bulk.working": "Δημιουργία {n} QR…", "bulk.fail": "Το αρχείο δεν δημιουργήθηκε", "bulk.readFail": "Το αρχείο δεν διαβάστηκε",
+      "bulk.sheet": "Ετικέτες QR"
     }
   };
 
@@ -214,11 +301,21 @@
   })();
 
   // ---------- 2. Look + saved codes ----------
+  // v1.1 look keys, left out while at their default so older codes keep
+  // their exact JSON: sd "dots" (rd stays true, so an older device shows
+  // rounded dots), se eye style, sl logo (a small data: picture). They
+  // come first and sort after "ecl": at equal mtime the copy that still
+  // has them is the larger canonical JSON and wins over one an older
+  // device stripped.
   function normStyle(s) {
     var x = (s && typeof s === "object") ? s : {};
     var fg = typeof x.fg === "string" && HEX_RE.test(x.fg.toLowerCase()) ? x.fg.toLowerCase() : DEFAULT_STYLE.fg;
     var bg = typeof x.bg === "string" && HEX_RE.test(x.bg.toLowerCase()) ? x.bg.toLowerCase() : DEFAULT_STYLE.bg;
-    return {
+    var out = {};
+    if (x.sd === "dots") out.sd = "dots";
+    if (EYES.indexOf(x.se) >= 0) out.se = x.se;
+    if (typeof x.sl === "string" && x.sl.length <= LOGO_LEN && QR.logoSrcOk(x.sl)) out.sl = x.sl;
+    var base = {
       ecl: ECLS.indexOf(x.ecl) >= 0 ? x.ecl : DEFAULT_STYLE.ecl,
       fg: fg, bg: bg,
       mg: isInt(x.mg) && x.mg >= 0 && x.mg <= 10 ? x.mg : DEFAULT_STYLE.mg,
@@ -226,6 +323,16 @@
       cap: x.cap === true,
       ct: typeof x.ct === "string" ? x.ct.replace(/\s+/g, " ").slice(0, CAPTION_LEN) : ""
     };
+    if (out.sd) base.rd = true;
+    Object.keys(base).forEach(function (k) { out[k] = base[k]; });
+    return out;
+  }
+  // The drawing style of a look: dot / eye style, logo, level.
+  function dotStyle(st) { return st.sd === "dots" ? "dots" : (st.rd ? "rounded" : "square"); }
+  function eyeStyle(st) { return st.se || (dotStyle(st) === "square" ? "square" : "rounded"); }
+  function effEcl(st) { return st.sl ? "H" : st.ecl; }
+  function drawOpts(st) {
+    return { margin: st.mg, round: st.rd, dot: dotStyle(st), eye: eyeStyle(st), logo: st.sl ? LOGO_FRAC : 0 };
   }
   function normName(s) {
     return typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, NAME_LEN) : "";
@@ -392,7 +499,7 @@
     built = P.build(work.type, curFields());
     code = null;
     if (built.text) {
-      try { code = QR.encode(built.text, { ecl: work.st.ecl }); }
+      try { code = QR.encode(built.text, { ecl: effEcl(work.st) }); }
       catch (e) { built = { error: "too.long" }; }
     }
   }
@@ -409,10 +516,29 @@
     g.closePath();
   }
 
-  // Paint the code at `px` pixels per module; returns the canvas.
-  function paint(cv, px) {
-    var st = work.st, sh = QR.shapes(code, { margin: st.mg, round: st.rd });
-    var cap = captionText(), capH = cap ? QR.CAPTION_H : 0;
+  // Logo pictures, decoded once per data URL. logoImage() gives the
+  // picture when it is ready (else starts loading and repaints after);
+  // logoReady() waits for it (exports).
+  var logoCache = {};
+  function logoEntry(src) {
+    var e = logoCache[src];
+    if (e) return e;
+    e = logoCache[src] = { img: new Image(), ok: false, p: null };
+    e.p = new Promise(function (resolve) {
+      e.img.onload = function () { e.ok = true; resolve(e.img); if (code && work.st.sl === src) drawPreview(); };
+      e.img.onerror = function () { resolve(null); };
+    });
+    e.img.src = src;
+    return e;
+  }
+  function logoImage(src) { if (!src) return null; var e = logoEntry(src); return e.ok ? e.img : null; }
+  function logoReady(st) { return st && st.sl ? logoEntry(st.sl).p : Promise.resolve(null); }
+
+  // Paint `qr` in the look `st` at `px` pixels per module, with an
+  // optional caption band; returns the canvas.
+  function paintCode(cv, px, qr, st, cap) {
+    var sh = QR.shapes(qr, drawOpts(st));
+    var capH = cap ? QR.CAPTION_H : 0;
     cv.width = sh.w * px;
     cv.height = (sh.h + capH) * px;
     var g = cv.getContext("2d");
@@ -425,7 +551,10 @@
         g.fillStyle = r[5] === "bg" ? st.bg : st.fg;
         roundRect(g, r[0] * px, r[1] * px, r[2] * px, r[3] * px, r[4] * px);
         g.fill();
-      } else g.fillRect(r[0] * px, r[1] * px, r[2] * px, r[3] * px);
+      } else {
+        g.fillStyle = st.fg;
+        g.fillRect(r[0] * px, r[1] * px, r[2] * px, r[3] * px);
+      }
     });
     g.fillStyle = st.fg;
     sh.dots.forEach(function (c) {
@@ -433,8 +562,18 @@
       g.arc(c[0] * px, c[1] * px, c[2] * px, 0, Math.PI * 2);
       g.fill();
     });
+    var img = sh.logo ? logoImage(st.sl) : null;
+    if (img && img.naturalWidth) {
+      // fit inside the empty square, a little inset (as the SVG does)
+      var ins = Math.min(0.5, sh.logo.w * 0.06), bw = (sh.logo.w - 2 * ins) * px;
+      var k = Math.min(bw / img.naturalWidth, bw / img.naturalHeight);
+      var iw = img.naturalWidth * k, ih = img.naturalHeight * k;
+      g.imageSmoothingQuality = "high";
+      g.drawImage(img, (sh.logo.x + ins) * px + (bw - iw) / 2, (sh.logo.y + ins) * px + (bw - ih) / 2, iw, ih);
+    }
     if (cap) {
       var fs = 2.6 * px, maxW = (sh.w - 2) * px;
+      g.fillStyle = st.fg;
       g.textAlign = "center";
       g.textBaseline = "middle";
       do {
@@ -446,6 +585,7 @@
     }
     return cv;
   }
+  function paint(cv, px) { return paintCode(cv, px, code, work.st, captionText()); }
 
   function moduleCount() {
     var sh = QR.shapes(code, { margin: work.st.mg });
@@ -477,19 +617,25 @@
   }
   function stem() { return P.fileStem(work.type, curFields()); }
 
-  function pngBlob(size) {
+  function canvasBlob(cv) {
     return new Promise(function (resolve, reject) {
-      var dim = moduleCount();
-      var px = Math.max(2, Math.round(size / dim.w));
-      var cv = paint(document.createElement("canvas"), px);
       cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("toBlob")); }, "image/png");
     });
   }
-  function svgText() {
-    return QR.svg(code, { fg: work.st.fg, bg: work.st.bg, margin: work.st.mg, round: work.st.rd,
-                          caption: captionText(), scale: 8 });
+  function pngBlob(size) {
+    var qr = code, st = clone(work.st), cap = captionText();
+    return logoReady(st).then(function () {
+      var dim = QR.shapes(qr, { margin: st.mg }), px = Math.max(2, Math.round(size / dim.w));
+      return canvasBlob(paintCode(document.createElement("canvas"), px, qr, st, cap));
+    });
   }
-
+  function svgOf(qr, st, cap) {
+    var o = drawOpts(st);
+    o.fg = st.fg; o.bg = st.bg; o.caption = cap; o.scale = 8;
+    if (st.sl) o.logoSrc = st.sl;
+    return QR.svg(qr, o);
+  }
+  function svgText() { return svgOf(code, work.st, captionText()); }
   function dialogHost() {
     try { if (window.orosDialog) return window.orosDialog; } catch (e) {}
     try { if (window.parent && window.parent !== window && window.parent.orosDialog) return window.parent.orosDialog; } catch (e) {}
@@ -599,6 +745,7 @@
   function printWith(build) {
     var area = $("print-area");
     area.innerHTML = "";
+    area.classList.remove("sheet");
     var img = el("img", "pr-code");
     img.alt = "";
     img.src = paint(document.createElement("canvas"), 16).toDataURL("image/png");
@@ -647,7 +794,9 @@
     eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19C5 19 1 12 1 12a18.5 18.5 0 0 1 5.1-5.9M9.9 5.2A9.1 9.1 0 0 1 12 5c7 0 11 7 11 7a18.4 18.4 0 0 1-2.2 3.2M1 1l22 22"/><path d="M14.1 14.1a3 3 0 0 1-4.2-4.2"/></svg>',
     swap:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>',
     edit:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
-    x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+    x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    scan:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M7 12h10"/></svg>',
+    grid:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'
   };
 
   function el(tag, cls, text) {
@@ -888,8 +1037,55 @@
     mg.addEventListener("input", function () { work.st.mg = parseInt(mg.value, 10) || 0; changed(); renderLook(); });
     mw.appendChild(ml); mw.appendChild(mg);
     host.appendChild(mw);
-    // Round dots, caption
-    [["rd", "look.round"], ["cap", "look.cap"]].forEach(function (c) {
+    // Dots and corners
+    var sr = el("div", "f-row");
+    [["dot", "look.dots", DOTS], ["eye", "look.eyes", EYES]].forEach(function (c) {
+      var sw = el("div", "field half");
+      var l = el("label", "f-lbl", t(c[1]));
+      l.setAttribute("for", "lk-" + c[0]);
+      var s = el("select");
+      s.id = "lk-" + c[0];
+      c[2].forEach(function (k) { var op = el("option", "", t(c[0] + "." + k)); op.value = k; s.appendChild(op); });
+      s.addEventListener("change", function () {
+        if (c[0] === "dot") {
+          work.st.rd = s.value !== "square";
+          if (s.value === "dots") work.st.sd = "dots"; else delete work.st.sd;
+        } else work.st.se = s.value;
+        work.st = normStyle(work.st);
+        changed();
+        renderLook();
+      });
+      sw.appendChild(l); sw.appendChild(s);
+      sr.appendChild(sw);
+    });
+    host.appendChild(sr);
+    // Logo
+    var lw = el("div", "field");
+    var ll = el("span", "f-lbl", t("look.logo"));
+    var lrow = el("div", "logo-row");
+    var thumb = el("img", "logo-thumb");
+    thumb.id = "lk-logo-img";
+    thumb.alt = t("logo.alt");
+    var add = el("button", "txt-btn", t("logo.add"));
+    add.type = "button";
+    add.id = "lk-logo";
+    add.addEventListener("click", pickLogo);
+    var rm = iconBtn("icon-btn", UI.x, t("logo.remove"), function () {
+      var was = work.st.sl;
+      delete work.st.sl;
+      changed();
+      renderLook();
+      undoToast(t("logo.remove"), function () { work.st.sl = was; work.st = normStyle(work.st); changed(); renderLook(); });
+    });
+    rm.id = "lk-logo-rm";
+    lrow.appendChild(thumb); lrow.appendChild(add); lrow.appendChild(rm);
+    lw.appendChild(ll); lw.appendChild(lrow);
+    var lh = el("p", "hint", t("logo.hint"));
+    lh.id = "lk-logo-hint";
+    lw.appendChild(lh);
+    host.appendChild(lw);
+    // Caption
+    [["cap", "look.cap"]].forEach(function (c) {
       var cw = el("div", "field check");
       var inp = el("input");
       inp.type = "checkbox";
@@ -914,12 +1110,19 @@
   }
   function renderLook() {
     var st = work.st;
-    $("lk-ecl").value = st.ecl;
+    $("lk-ecl").value = effEcl(st);
+    $("lk-ecl").disabled = !!st.sl;
     $("lk-fg").value = st.fg;
     $("lk-bg").value = st.bg;
     $("lk-mg").value = String(st.mg);
     $("lk-mg-l").textContent = t("look.margin") + ": " + st.mg;
-    $("lk-rd").checked = st.rd;
+    $("lk-dot").value = dotStyle(st);
+    $("lk-eye").value = eyeStyle(st);
+    $("lk-logo-img").hidden = !st.sl;
+    if (st.sl) $("lk-logo-img").src = st.sl; else $("lk-logo-img").removeAttribute("src");
+    $("lk-logo").textContent = t(st.sl ? "logo.change" : "logo.add");
+    $("lk-logo-rm").hidden = !st.sl;
+    $("lk-logo-hint").hidden = !st.sl;
     $("lk-cap").checked = st.cap;
     $("lk-ct-w").hidden = !st.cap;
     $("lk-ct").value = st.ct;
@@ -942,7 +1145,7 @@
     if (errBox) { errBox.textContent = msg; errBox.hidden = !msg; }
     $("empty").textContent = msg || t("empty");
     if (code) {
-      var m = QR.measure(built.text, work.st.ecl);
+      var m = QR.measure(built.text, effEcl(work.st));
       $("meter").textContent = t("meter", { v: code.version, n: code.size, p: Math.max(1, Math.round(m.bits / m.max * 100)) });
     } else $("meter").textContent = "";
     var warn = "", c = P.contrast(work.st.fg, work.st.bg);
@@ -952,7 +1155,7 @@
     $("warn").hidden = !warn;
     var ct = $("lk-ct");
     if (ct) ct.placeholder = P.caption(work.type, f) || t("look.capAuto");
-    [].forEach.call(document.querySelectorAll("#exports button"), function (b) { b.disabled = !code; });
+    [].forEach.call(document.querySelectorAll("#export-bar button"), function (b) { b.disabled = !code; });
     $("png-size").disabled = !code;
   }
 
@@ -1148,6 +1351,743 @@
     });
   }
   window.__orosOpenAt = openTarget;
+
+  // ---------- 8b. Files in, logo ----------
+  // A file from the device: the shell's picker (R33) or an <input>.
+  function openFile(accept) {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.openFile === "function") return dlg.openFile(accept);
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file";
+      inp.accept = accept;
+      inp.style.display = "none";
+      inp.addEventListener("change", function () { resolve(inp.files && inp.files[0] || null); inp.remove(); });
+      document.body.appendChild(inp);
+      inp.click();
+    });
+  }
+  // A picture file (or Blob) -> a decoded <img>; rejects when it is not one.
+  function loadImage(blob) {
+    return new Promise(function (resolve, reject) {
+      if (!blob || !/^image\//.test(blob.type || "image/")) { reject(new Error("type")); return; }
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+  // Logo: made at most LOGO_PX big, WebP where the browser writes it
+  // (keeps transparency, small), else PNG; refused past LOGO_LEN.
+  function logoDataUrl(img) {
+    var sizes = [LOGO_PX, 128, 96];
+    for (var i = 0; i < sizes.length; i++) {
+      var k = Math.min(1, sizes[i] / Math.max(img.naturalWidth, img.naturalHeight));
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(img.naturalWidth * k));
+      cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+      var g = cv.getContext("2d");
+      g.imageSmoothingQuality = "high";
+      g.drawImage(img, 0, 0, cv.width, cv.height);
+      var url = cv.toDataURL("image/webp", 0.9);
+      if (!/^data:image\/webp;/.test(url)) url = cv.toDataURL("image/png");
+      if (url.length <= LOGO_LEN && QR.logoSrcOk(url)) return url;
+    }
+    return "";
+  }
+  function pickLogo() {
+    openFile("image/*").then(function (f) {
+      if (!f) return;
+      return loadImage(f).then(function (img) {
+        var url = logoDataUrl(img);
+        if (!url) { showToast(t("logo.big")); return; }
+        work.st.sl = url;
+        work.st = normStyle(work.st);
+        changed();
+        renderLook();
+      }, function () { showToast(t("logo.bad")); });
+    });
+  }
+
+  function copyText(s) {
+    function fallback() {
+      var ta = el("textarea");
+      ta.value = s;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      (document.querySelector("dialog[open]") || document.body).appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      ta.remove();
+      showToast(t(ok ? "res.copied" : "res.copyFail"));
+    }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(s).then(function () { showToast(t("res.copied")); }, fallback);
+    } else fallback();
+  }
+  function shellWin() {
+    try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
+  }
+
+  // ---------- 8c. Scanner ----------
+  // BarcodeDetector where the browser has it with "qr_code" (Chrome on
+  // Android, macOS); otherwise jsQR (vendor/jsqr, Apache-2.0), loaded
+  // only then. The camera loop follows Stock's (9b): a frame every
+  // 150 ms, the stream stops when the dialog closes or a code is read.
+  var SCANS_KEY = "oros-qr-scans";
+  var S = window.orosQRScan;
+  var detP = null, jsqrP = null;
+  function nativeDetector() {
+    if (detP) return detP;
+    detP = Promise.resolve(null);
+    if (typeof window.BarcodeDetector !== "function") return detP;
+    var BD = window.BarcodeDetector;
+    detP = (typeof BD.getSupportedFormats === "function" ? BD.getSupportedFormats() : Promise.resolve(["qr_code"]))
+      .then(function (f) { return f && f.indexOf("qr_code") >= 0 ? new BD({ formats: ["qr_code"] }) : null; })
+      .catch(function () { return null; });
+    return detP;
+  }
+  // No element of the page may have the id "exports", "module" or
+  // "define": jsQR's UMD wrapper would hand itself to it (named access
+  // on window) instead of setting window.jsQR.
+  function loadJsQR() {
+    if (window.jsQR) return Promise.resolve(window.jsQR);
+    if (jsqrP) return jsqrP;
+    jsqrP = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "../vendor/jsqr/jsQR.js";
+      s.onload = function () { if (typeof window.jsQR === "function") resolve(window.jsQR); else reject(new Error("jsqr")); };
+      s.onerror = function () { jsqrP = null; reject(new Error("jsqr")); };
+      document.head.appendChild(s);
+    });
+    return jsqrP;
+  }
+  // Read a QR code from an image, video or canvas source. Resolves the
+  // text or "" (nothing found). `big`: also try smaller copies (files).
+  var grabCv = null;
+  function detectIn(src, w, h, big) {
+    return nativeDetector().then(function (det) {
+      if (det) {
+        return det.detect(src).then(function (list) {
+          var hit = (list || []).filter(function (b) { return typeof b.rawValue === "string" && b.rawValue; })[0];
+          return hit ? hit.rawValue : "";
+        }, function () { return ""; });
+      }
+      return loadJsQR().then(function (jsQR) {
+        var tries = big ? [1600, 800, 400] : [640];
+        for (var i = 0; i < tries.length; i++) {
+          var k = Math.min(1, tries[i] / Math.max(w, h));
+          if (i > 0 && k === 1) break;
+          if (!grabCv) grabCv = document.createElement("canvas");
+          grabCv.width = Math.max(1, Math.round(w * k));
+          grabCv.height = Math.max(1, Math.round(h * k));
+          var g = grabCv.getContext("2d", { willReadFrequently: true });
+          g.drawImage(src, 0, 0, grabCv.width, grabCv.height);
+          var px = g.getImageData(0, 0, grabCv.width, grabCv.height);
+          var r = jsQR(px.data, px.width, px.height, { inversionAttempts: big ? "attemptBoth" : "dontInvert" });
+          if (r && typeof r.data === "string" && r.data) return r.data;
+        }
+        return "";
+      });
+    });
+  }
+
+  function loadScans() {
+    try { return S.normHistory(JSON.parse(localStorage.getItem(SCANS_KEY) || "[]")); } catch (e) { return []; }
+  }
+  function saveScans(list) {
+    try { localStorage.setItem(SCANS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function fmtWhen(ev) {
+    var s = fmtDate(ev.date);
+    if (ev.allDay) {
+      if (ev.dateEnd) s += " – " + fmtDate(ev.dateEnd);
+      return s + " · " + t("res.allDay");
+    }
+    s += " · " + ev.start + (ev.end ? "–" + ev.end : "");
+    if (ev.dateEnd) s += " (" + fmtDate(ev.dateEnd) + ")";
+    return s;
+  }
+  function fileSafe(s, dflt) {
+    var c = String(s || "").replace(/[^\p{L}\p{N} _-]+/gu, "-").replace(/^[-\s]+|[-\s]+$/g, "").slice(0, 40);
+    return c || dflt;
+  }
+
+  // A new unsaved code from a scan (the open one is stored first and
+  // left as it was; Undo brings it back), like the deep link.
+  function makeFrom(gen) {
+    if (!gen || TYPES.indexOf(gen.type) < 0) return;
+    storeSavedNow();
+    var was = { cur: prefs.cur, draft: clone(prefs.draft), work: clone(work) };
+    var f = {};
+    f[gen.type] = P.normFields(gen.type, gen.fields);
+    prefs.cur = null;
+    prefs.draft = { type: gen.type, fields: f, st: clone(work.st) };
+    work = clone(prefs.draft);
+    savePrefs();
+    renderAll();
+    undoToast(t("res.made"), function () {
+      prefs.cur = was.cur;
+      prefs.draft = was.draft;
+      loadCurrent();
+      if (!was.cur) work = was.work;
+      savePrefs();
+      renderAll();
+    });
+  }
+
+  // The result card: what the code says, as text only (textContent),
+  // and the actions that fit it.
+  function resultView(r, closeDlg) {
+    var box = el("div", "res");
+    box.appendChild(el("div", "res-kind", t("kind." + r.kind)));
+    var dl = el("dl", "res-rows");
+    function row(k, v, cls) {
+      if (!v) return;
+      dl.appendChild(el("dt", "", t(k)));
+      dl.appendChild(el("dd", cls || "", v));
+    }
+    var acts = el("div", "res-acts");
+    function act(label, primary, fn) {
+      var b = el("button", "txt-btn" + (primary ? " primary" : ""), label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      acts.appendChild(b);
+      return b;
+    }
+    var sh = shellWin();
+    switch (r.kind) {
+      case "url":
+        box.appendChild(el("p", "res-note", t("res.opens")));
+        var host = el("p", "res-host", r.host);
+        box.appendChild(host);
+        box.appendChild(el("p", "res-raw", r.url));
+        act(t("res.open"), true, function () {
+          // http/https only (checked by parse); a new tab, no opener
+          if (/^https?:\/\//i.test(r.url)) window.open(r.url, "_blank", "noopener,noreferrer");
+        });
+        break;
+      case "wifi":
+        row("res.network", r.ssid);
+        row("res.security", r.sec === "nopass" ? t("sec.nopass") : t("sec." + r.sec));
+        row("res.password", r.pass, "res-mono");
+        if (r.hidden) row("res.hidden", t("res.yes"));
+        if (r.pass) act(t("res.copyPass"), true, function () { copyText(r.pass); });
+        act(t("res.copySsid"), !r.pass, function () { copyText(r.ssid); });
+        break;
+      case "vcard":
+        row("res.name", r.name);
+        if (r.org && r.org !== r.name) row("res.org", r.org);
+        r.phones.slice(0, 3).forEach(function (p) { row("res.phone", p); });
+        r.emails.slice(0, 3).forEach(function (e) { row("res.email", e); });
+        var vname = fileSafe(r.name, "contact") + ".vcf";
+        if (sh && typeof sh.__orosOpenAt === "function") {
+          act(t("res.contacts"), true, function () {
+            closeDlg();
+            sh.__orosOpenAt("contacts", { importVcf: { name: vname, text: r.vcf } });
+          });
+        } else {
+          act(t("res.vcf"), true, function () {
+            saveFile(new Blob([r.vcf], { type: "text/vcard" }), vname, "text/vcard", "vcf");
+          });
+        }
+        break;
+      case "event":
+        row("res.name", r.title);
+        row("res.when", fmtWhen(r));
+        row("res.where", r.location);
+        if (sh && typeof sh.__orosOpenCalendarNew === "function") {
+          act(t("res.calendar"), true, function () {
+            closeDlg();
+            sh.__orosOpenCalendarNew(S.calendarPayload(r));
+          });
+        } else {
+          act(t("res.ics"), true, function () {
+            var ics = /^BEGIN:VCALENDAR/i.test(r.text.trim()) ? r.text.trim()
+              : "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//orOS//QR//EN\r\n" + r.text.trim() + "\r\nEND:VCALENDAR";
+            saveFile(new Blob([ics + "\r\n"], { type: "text/calendar" }), fileSafe(r.title, "event") + ".ics", "text/calendar", "ics");
+          });
+        }
+        break;
+      case "email":
+        row("res.to", r.to); row("res.subject", r.subject); row("res.message", r.body);
+        act(t("res.copy"), true, function () { copyText(r.to); });
+        break;
+      case "phone":
+        row("res.number", r.number);
+        act(t("res.copy"), true, function () { copyText(r.number); });
+        break;
+      case "sms":
+        row("res.number", r.number); row("res.message", r.message);
+        act(t("res.copy"), true, function () { copyText(r.number); });
+        break;
+      case "geo":
+        row("res.coords", r.lat + ", " + r.lon);
+        act(t("res.copy"), true, function () { copyText(r.lat + ", " + r.lon); });
+        break;
+      default:
+        box.appendChild(el("p", "res-raw res-text", r.text));
+    }
+    if (dl.children.length) box.appendChild(dl);
+    if (r.kind !== "text" && r.kind !== "url") {
+      var raw = el("details", "res-more");
+      raw.appendChild(el("summary", "", t("kind.text")));
+      raw.appendChild(el("p", "res-raw", r.text));
+      box.appendChild(raw);
+    }
+    if (r.kind !== "phone" && r.kind !== "email" && r.kind !== "sms" && r.kind !== "geo") {
+      act(t("res.copy"), !acts.children.length, function () { copyText(r.text); });
+    }
+    if (r.gen) act(t("res.make"), false, function () { closeDlg(); makeFrom(r.gen); });
+    box.appendChild(acts);
+    return box;
+  }
+
+  function scanDialog() {
+    var dlg = makeDialog("qr-scan");
+    dlg.classList.add("scan-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("scan.title")));
+    var cam = el("div", "cam");
+    var v = el("video", "cam-video");
+    v.muted = true;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("aria-hidden", "true");
+    cam.appendChild(v);
+    cam.appendChild(el("div", "cam-frame"));
+    cam.hidden = true;
+    dlg.appendChild(cam);
+    var msg = el("p", "hint scan-msg", "");
+    msg.setAttribute("aria-live", "polite");
+    dlg.appendChild(msg);
+    var bar = el("div", "scan-bar");
+    var camBtn = el("button", "txt-btn", t("scan.camera"));
+    camBtn.type = "button";
+    var fileBtn = el("button", "txt-btn", t("scan.file"));
+    fileBtn.type = "button";
+    bar.appendChild(camBtn);
+    bar.appendChild(fileBtn);
+    dlg.appendChild(bar);
+    dlg.appendChild(el("p", "hint scan-tip", t("scan.paste")));
+    var out = el("div", "scan-out");
+    dlg.appendChild(out);
+    var hist = el("div", "scan-hist");
+    dlg.appendChild(hist);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("btn.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+
+    var hasCam = !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function");
+    var stream = null, timer = 0, live = false, closed = false, busy = false;
+    function stopCam() {
+      live = false;
+      clearTimeout(timer);
+      if (stream) stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+      stream = null;
+      try { v.srcObject = null; } catch (e) {}
+      cam.hidden = true;
+      camBtn.textContent = t("scan.camera");
+    }
+    function say(s, warn) { msg.textContent = s; msg.classList.toggle("warn", !!warn); }
+    function close() { dlg.close(); }
+
+    function show(text, fromHistory) {
+      var r = S.parse(text);
+      out.innerHTML = "";
+      out.appendChild(resultView(r, close));
+      if (!fromHistory) {
+        var list = S.addHistory(loadScans(), text, Date.now(), newId());
+        saveScans(list);
+        try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+      }
+      renderHist();
+      say("");
+      out.scrollIntoView({ block: "nearest" });
+    }
+    function found(text) {
+      stopCam();
+      show(text, false);
+    }
+
+    function loop() {
+      if (!live || closed) return;
+      if (v.readyState < 2 || busy) { timer = setTimeout(loop, 200); return; }
+      busy = true;
+      detectIn(v, v.videoWidth, v.videoHeight, false).then(function (text) {
+        busy = false;
+        if (!live || closed) return;
+        if (text) { found(text); return; }
+        timer = setTimeout(loop, 150);
+      }, function () { busy = false; if (live) timer = setTimeout(loop, 400); });
+    }
+    function startCam() {
+      if (live) { stopCam(); say(""); return; }
+      if (!hasCam) { say(t("scan.noCam"), true); return; }
+      out.innerHTML = "";
+      say(t("scan.wait"));
+      live = true;
+      camBtn.textContent = t("scan.stop");
+      // load the decoder alongside the camera
+      nativeDetector().then(function (d) { if (!d) return loadJsQR(); }).catch(function () {});
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }).then(function (st) {
+        if (!live || closed) { st.getTracks().forEach(function (tr) { tr.stop(); }); return; }
+        stream = st;
+        v.srcObject = st;
+        cam.hidden = false;
+        return v.play().then(function () { say(t("scan.aim")); loop(); });
+      }).catch(function () {
+        if (closed) return;
+        stopCam();
+        say(t("scan.denied"), true);
+      });
+    }
+    function scanBlob(blob) {
+      if (!blob) return;
+      stopCam();
+      out.innerHTML = "";
+      say(t("scan.looking"));
+      loadImage(blob).then(function (img) {
+        return detectIn(img, img.naturalWidth, img.naturalHeight, true);
+      }).then(function (text) {
+        if (closed) return;
+        if (text) show(text, false); else say(t("scan.none"), true);
+      }, function () { if (!closed) say(t("scan.none"), true); });
+    }
+
+    function renderHist() {
+      hist.innerHTML = "";
+      var list = loadScans();
+      var head = el("div", "sec-head");
+      head.appendChild(el("h2", "", t("scan.history")));
+      head.appendChild(el("span", "spacer"));
+      if (list.length) {
+        var clr = el("button", "link-btn", t("scan.clear"));
+        clr.type = "button";
+        clr.addEventListener("click", function () {
+          var keep = loadScans();
+          saveScans([]);
+          renderHist();
+          undoToast(t("scan.cleared"), function () { saveScans(keep); renderHist(); });
+        });
+        head.appendChild(clr);
+      }
+      hist.appendChild(head);
+      if (!list.length) { hist.appendChild(el("p", "hint", t("scan.historyEmpty"))); return; }
+      var ul = el("ul", "pick-list hist-list");
+      list.forEach(function (h) {
+        var r = S.parse(h.text);
+        var li = el("li", "hist-row");
+        var b = el("button", "pick-item");
+        b.type = "button";
+        var first = (r.kind === "url" ? r.url : r.kind === "wifi" ? r.ssid : r.kind === "vcard" ? r.name :
+                     r.kind === "event" ? (r.title || fmtDate(r.date)) : h.text).replace(/\s+/g, " ").trim().slice(0, 120);
+        b.appendChild(el("span", "pick-main", first));
+        var when = "";
+        try {
+          when = new Date(h.at).toLocaleString(LANG === "el" ? "el-GR" : "en-GB",
+            { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        } catch (e) {}
+        b.appendChild(el("span", "pick-sub", t("kind." + r.kind) + (when ? " · " + when : "")));
+        b.addEventListener("click", function () { stopCam(); show(h.text, true); });
+        li.appendChild(b);
+        li.appendChild(iconBtn("mini danger", UI.x, t("scan.del", { what: first }), function () {
+          var keep = loadScans();
+          saveScans(keep.filter(function (x) { return x.id !== h.id; }));
+          renderHist();
+          undoToast(t("scan.removed"), function () { saveScans(keep); renderHist(); });
+        }));
+        ul.appendChild(li);
+      });
+      hist.appendChild(ul);
+    }
+
+    camBtn.addEventListener("click", startCam);
+    fileBtn.addEventListener("click", function () { openFile("image/*").then(scanBlob); });
+    dlg.addEventListener("paste", function (e) {
+      var items = (e.clipboardData && e.clipboardData.items) || [];
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].kind === "file" && /^image\//.test(items[i].type)) { e.preventDefault(); scanBlob(items[i].getAsFile()); return; }
+      }
+    });
+    dlg.addEventListener("close", function () { closed = true; stopCam(); });
+    camBtn.hidden = !hasCam;
+    renderHist();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    say(hasCam ? "" : t("scan.noCam"));
+    var coarse = false;
+    try { coarse = window.matchMedia("(pointer: coarse)").matches; } catch (e) {}
+    if (hasCam && coarse) startCam();      // phones: straight to the camera
+  }
+
+  // ---------- 8d. Many codes (bulk) ----------
+  // One code per row of a CSV, in the current look (no caption: the
+  // label column prints under each code). Print sheet, PDF (jsPDF,
+  // already vendored, loaded on use; labels are drawn as pictures so
+  // any script prints), or a ZIP of PNGs (Atelier's zip writer).
+  var B = window.orosQRBulk;
+  var jspdfP = null, zipP = null;
+  function loadScript(src, ready) {
+    return new Promise(function (resolve, reject) {
+      if (ready()) { resolve(ready()); return; }
+      var s = document.createElement("script");
+      s.src = src;
+      s.onload = function () { if (ready()) resolve(ready()); else reject(new Error(src)); };
+      s.onerror = function () { reject(new Error(src)); };
+      document.head.appendChild(s);
+    });
+  }
+  function loadJsPDF() {
+    if (!jspdfP) jspdfP = loadScript("../vendor/jspdf.umd.min.js", function () { return window.jspdf && window.jspdf.jsPDF; })
+      .catch(function (e) { jspdfP = null; throw e; });
+    return jspdfP;
+  }
+  function loadZip() {
+    if (!zipP) zipP = loadScript("../atelier/zip.js", function () { return window.AtelierZip; })
+      .catch(function (e) { zipP = null; throw e; });
+    return zipP;
+  }
+
+  var bulkGrid = "3x4";
+  function bulkDialog() {
+    var dlg = makeDialog("qr-bulk");
+    dlg.classList.add("bulk-dlg");
+    dlg.appendChild(el("div", "dlg-title", t("bulk.title")));
+    var state = { rows: [], header: false, col: 0, label: -1, touched: false };
+
+    var tl = el("label", "dlg-lbl", t("bulk.rows"));
+    tl.setAttribute("for", "bk-text");
+    var ta = el("textarea");
+    ta.id = "bk-text";
+    ta.rows = 5;
+    ta.spellcheck = false;
+    ta.placeholder = "https://example.com/1,Front door\nhttps://example.com/2,Back door";
+    var openBtn = el("button", "link-btn", t("bulk.open"));
+    openBtn.type = "button";
+    var hdr = el("div", "field check");
+    var hc = el("input");
+    hc.type = "checkbox"; hc.id = "bk-head";
+    var hl = el("label", "", t("bulk.header"));
+    hl.setAttribute("for", "bk-head");
+    hdr.appendChild(hc); hdr.appendChild(hl);
+    var cr = el("div", "f-row");
+    function selField(id, label) {
+      var w = el("div", "field half");
+      var l = el("label", "f-lbl", label);
+      l.setAttribute("for", id);
+      var s = el("select");
+      s.id = id;
+      w.appendChild(l); w.appendChild(s);
+      cr.appendChild(w);
+      return s;
+    }
+    var colSel = selField("bk-col", t("bulk.col"));
+    var labSel = selField("bk-lab", t("bulk.label"));
+    var gw = el("div", "field");
+    var gl = el("label", "f-lbl", t("bulk.grid"));
+    gl.setAttribute("for", "bk-grid");
+    var gridSel = el("select");
+    gridSel.id = "bk-grid";
+    Object.keys(B.GRIDS).forEach(function (k) {
+      var g = B.GRIDS[k], op = el("option", "", t("bulk.gridOpt", { c: g[0], r: g[1], n: g[0] * g[1] }));
+      op.value = k;
+      gridSel.appendChild(op);
+    });
+    gridSel.value = bulkGrid;
+    gw.appendChild(gl); gw.appendChild(gridSel);
+    var sum = el("p", "bulk-sum");
+    sum.setAttribute("aria-live", "polite");
+    var prev = el("div", "bulk-prev");
+    var look = el("p", "hint", t("bulk.look"));
+    var acts = el("div", "dlg-actions bulk-acts");
+    var bPrint = button(t("bulk.print"), "", null), bPdf = button(t("bulk.pdf"), "primary", null), bZip = button(t("bulk.zip"), "", null);
+    acts.appendChild(bPrint); acts.appendChild(bPdf); acts.appendChild(bZip);
+    var cancel = el("div", "dlg-actions");
+    cancel.appendChild(button(t("btn.close"), "", function () { dlg.close(); }));
+
+    var top = el("div", "sec-head");
+    top.appendChild(tl); top.appendChild(el("span", "spacer")); top.appendChild(openBtn);
+    [top, ta, hdr, cr, gw, sum, prev, look, acts, cancel].forEach(function (n) { dlg.appendChild(n); });
+
+    var list = [], tooLong = [];
+    function colName(i) {
+      var h = state.header && state.rows[0] ? String(state.rows[0][i] || "").trim() : "";
+      return h ? h.slice(0, 40) : t("bulk.colN", { n: i + 1 });
+    }
+    function fillSelects() {
+      var n = Math.max(1, B.columns(state.rows));
+      colSel.innerHTML = ""; labSel.innerHTML = "";
+      var none = el("option", "", t("bulk.noLabel"));
+      none.value = "-1";
+      labSel.appendChild(none);
+      for (var i = 0; i < n; i++) {
+        var a = el("option", "", colName(i)); a.value = String(i); colSel.appendChild(a);
+        var b = el("option", "", colName(i)); b.value = String(i); labSel.appendChild(b);
+      }
+      if (state.col >= n) state.col = 0;
+      if (state.label >= n) state.label = -1;
+      colSel.value = String(state.col);
+      labSel.value = String(state.label);
+    }
+    function recompute() {
+      var res = B.items(state.rows, { header: state.header, col: state.col, label: state.label });
+      list = []; tooLong = [];
+      res.items.forEach(function (it) {
+        try { it.qr = QR.encode(it.text, { ecl: effEcl(work.st) }); list.push(it); }
+        catch (e) { tooLong.push(it.row); }
+      });
+      var bits = [];
+      bits.push(state.rows.length ? t(list.length === 1 ? "bulk.count1" : "bulk.count", { n: list.length }) : t("bulk.none"));
+      if (res.empty) bits.push(t(res.empty === 1 ? "bulk.empty1" : "bulk.empty", { n: res.empty }));
+      if (res.more) bits.push(t("bulk.more", { max: B.MAX_ITEMS, n: res.more }));
+      if (tooLong.length) bits.push(t("bulk.tooLong", { rows: tooLong.slice(0, 10).join(", ") + (tooLong.length > 10 ? "…" : "") }));
+      sum.textContent = bits.join(" ");
+      [bPrint, bPdf, bZip].forEach(function (b) { b.disabled = !list.length; });
+      // a few small previews
+      prev.innerHTML = "";
+      list.slice(0, 6).forEach(function (it) {
+        var f = el("figure", "bulk-fig");
+        var cv = paintCode(document.createElement("canvas"), 3, it.qr, work.st, "");
+        cv.setAttribute("role", "img");
+        cv.setAttribute("aria-label", it.label || it.text);
+        f.appendChild(cv);
+        f.appendChild(el("figcaption", "", it.label || it.text));
+        prev.appendChild(f);
+      });
+    }
+    function parse() {
+      var p = B.parseCsv(ta.value);
+      state.rows = p.rows;
+      if (!state.touched) { state.header = B.guessHeader(p.rows); hc.checked = state.header; }
+      fillSelects();
+      recompute();
+    }
+    var parseTimer = 0;
+    ta.addEventListener("input", function () { clearTimeout(parseTimer); parseTimer = setTimeout(parse, 250); });
+    hc.addEventListener("change", function () { state.header = hc.checked; state.touched = true; fillSelects(); recompute(); });
+    colSel.addEventListener("change", function () { state.col = parseInt(colSel.value, 10) || 0; recompute(); });
+    labSel.addEventListener("change", function () { state.label = parseInt(labSel.value, 10); recompute(); });
+    gridSel.addEventListener("change", function () { bulkGrid = gridSel.value; });
+    openBtn.addEventListener("click", function () {
+      openFile(".csv,.tsv,.txt,text/csv,text/plain").then(function (f) {
+        if (!f) return;
+        if (f.size > 2 * 1024 * 1024) { showToast(t("bulk.readFail")); return; }
+        return f.text().then(function (s) { ta.value = s; state.touched = false; parse(); });
+      }).catch(function () { showToast(t("bulk.readFail")); });
+    });
+
+    // One label as a canvas: the code, and the label under it (drawn
+    // here, so Greek or any script needs no PDF font).
+    function labelCanvas(it, codePx, labPx, wPx) {
+      var st = work.st, sh = QR.shapes(it.qr, { margin: st.mg });
+      var px = Math.max(1, Math.floor(codePx / sh.w));
+      var code = paintCode(document.createElement("canvas"), px, it.qr, st, "");
+      if (!labPx || !it.label) return { code: code, label: null };
+      var lc = document.createElement("canvas");
+      lc.width = Math.round(wPx); lc.height = Math.round(labPx);
+      var g = lc.getContext("2d");
+      g.fillStyle = "#000000";
+      g.textAlign = "center"; g.textBaseline = "middle";
+      var fs = labPx * 0.62;
+      do {
+        g.font = "700 " + fs + "px Nunito, 'Segoe UI', system-ui, sans-serif";
+        if (g.measureText(it.label).width <= wPx * 0.96) break;
+        fs *= 0.9;
+      } while (fs > labPx * 0.25);
+      g.fillText(it.label, wPx / 2, labPx / 2, wPx * 0.96);
+      return { code: code, label: lc };
+    }
+    function busy(on) {
+      [bPrint, bPdf, bZip].forEach(function (b) { b.disabled = on || !list.length; });
+      if (on) sum.textContent = t("bulk.working", { n: list.length });
+      else recompute();
+    }
+    var hasLabels = function () { return state.label >= 0 && list.some(function (it) { return it.label; }); };
+
+    bPrint.addEventListener("click", function () {
+      if (!list.length) return;
+      logoReady(work.st).then(function () {
+        var lay = B.sheet(list.length, bulkGrid, hasLabels());
+        var area = $("print-area");
+        area.innerHTML = "";
+        area.classList.add("sheet");
+        var page = null;
+        lay.cells.forEach(function (c, i) {
+          if (!page || i % lay.per === 0) {
+            page = el("div", "pr-page");
+            page.style.gridTemplateColumns = "repeat(" + lay.cols + ", 1fr)";
+            page.style.gridTemplateRows = "repeat(" + lay.rows + ", " + c.h.toFixed(2) + "mm)";
+            area.appendChild(page);
+          }
+          var it = list[i], cell = el("div", "pr-cell");
+          var img = el("img", "pr-qr");
+          img.alt = "";
+          img.src = paintCode(document.createElement("canvas"), 8, it.qr, work.st, "").toDataURL("image/png");
+          img.style.width = c.code.toFixed(2) + "mm";
+          img.style.height = c.code.toFixed(2) + "mm";
+          cell.appendChild(img);
+          if (c.label && it.label) {
+            var cap = el("div", "pr-lab", it.label);
+            cap.style.height = c.label.toFixed(2) + "mm";
+            cap.style.fontSize = (c.label * 0.55).toFixed(2) + "mm";
+            cell.appendChild(cap);
+          }
+          page.appendChild(cell);
+        });
+        dlg.close();
+        setTimeout(function () { try { window.print(); } catch (e) {} }, 60);
+      });
+    });
+
+    bPdf.addEventListener("click", function () {
+      if (!list.length) return;
+      busy(true);
+      Promise.all([loadJsPDF(), logoReady(work.st)]).then(function (r) {
+        var JsPDF = r[0], doc = new JsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+        var lay = B.sheet(list.length, bulkGrid, hasLabels()), MMPX = 12;     // ≈ 300 dpi
+        doc.setProperties({ title: t("bulk.sheet"), creator: "orOS QR Generator" });
+        lay.cells.forEach(function (c, i) {
+          if (i > 0 && i % lay.per === 0) doc.addPage();
+          var it = list[i], lc = labelCanvas(it, c.code * MMPX, c.label && it.label ? c.label * MMPX : 0, c.w * MMPX);
+          var x = c.x + (c.w - c.code) / 2, y = c.y + (c.h - c.code - c.label) / 2;
+          doc.addImage(lc.code.toDataURL("image/png"), "PNG", x, y, c.code, c.code, undefined, "FAST");
+          if (lc.label) doc.addImage(lc.label.toDataURL("image/png"), "PNG", c.x, y + c.code, c.w, c.label, undefined, "FAST");
+        });
+        var blob = doc.output("blob");
+        busy(false);
+        return saveFile(blob, fileSafe(t("bulk.sheet"), "qr") + ".pdf", "application/pdf", "pdf");
+      }).catch(function () { busy(false); showToast(t("bulk.fail")); });
+    });
+
+    bZip.addEventListener("click", function () {
+      if (!list.length) return;
+      busy(true);
+      var names = B.fileNames(list, "png"), files = [], st = clone(work.st), size = prefs.png;
+      Promise.all([loadZip(), logoReady(st)]).then(function (r) {
+        var Z = r[0], chain = Promise.resolve();
+        list.forEach(function (it, i) {
+          chain = chain.then(function () {
+            var dim = QR.shapes(it.qr, { margin: st.mg }), px = Math.max(2, Math.round(size / dim.w));
+            var cap = it.label ? it.label.slice(0, CAPTION_LEN) : "";
+            return canvasBlob(paintCode(document.createElement("canvas"), px, it.qr, st, cap));
+          }).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+            files.push({ name: names[i], data: new Uint8Array(ab) });
+          });
+        });
+        return chain.then(function () {
+          var bytes = Z.write(files, new Date());
+          busy(false);
+          return saveFile(new Blob([bytes], { type: "application/zip" }), fileSafe(t("bulk.sheet"), "qr") + ".zip", "application/zip", "zip");
+        });
+      }).catch(function () { busy(false); showToast(t("bulk.fail")); });
+    });
+
+    parse();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    ta.focus();
+  }
 
   // ---------- 9. My codes ----------
   function renderToolbar() {
@@ -1477,7 +2417,14 @@
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
+    setBtn("scan-btn", UI.scan, t("btn.scan"));
+    setBtn("bulk-btn", UI.grid, t("btn.bulk"));
     setBtn("new-btn", UI.plus, t("btn.new"));
+    // their text hides on narrow screens: the name stays for screen readers
+    [["scan-btn", "btn.scan"], ["bulk-btn", "btn.bulk"], ["new-btn", "btn.new"]].forEach(function (b) {
+      $(b[0]).title = t(b[1]);
+      $(b[0]).setAttribute("aria-label", t(b[1]));
+    });
     setBtn("save-btn", UI.save, t("btn.save"));
     setBtn("png-btn", UI.down, t("btn.png"));
     setBtn("svg-btn", UI.down, t("btn.svg"));
@@ -1500,6 +2447,8 @@
 
   function wire() {
     $("new-btn").addEventListener("click", newCode);
+    $("scan-btn").addEventListener("click", scanDialog);
+    $("bulk-btn").addEventListener("click", bulkDialog);
     $("save-btn").addEventListener("click", function () { nameDialog(null); });
     $("png-btn").addEventListener("click", exportPng);
     $("svg-btn").addEventListener("click", exportSvg);
@@ -1517,7 +2466,7 @@
     $("card-btn").addEventListener("click", printWifiCard);
     $("from-btn").addEventListener("click", pickerDialog);
     $("fields").addEventListener("submit", function (e) { e.preventDefault(); });
-    window.addEventListener("afterprint", function () { $("print-area").innerHTML = ""; });
+    window.addEventListener("afterprint", function () { $("print-area").innerHTML = ""; $("print-area").classList.remove("sheet"); });
     try { new ResizeObserver(function () { if (code) drawPreview(); }).observe($("preview-box")); }
     catch (e) { window.addEventListener("resize", drawPreview); }
     document.addEventListener("visibilitychange", function () {
