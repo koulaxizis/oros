@@ -33,7 +33,7 @@
   "use strict";
 
   var CLIENT = {
-    google: "",       // Google Cloud › Credentials › OAuth client (Web application)
+    google: "97712435228-us9qmufgtniombc9ducde9gsvt5hj98h.apps.googleusercontent.com",   // Chris, 2026-10-14 (Google Cloud › OAuth client, Web application)
     microsoft: ""     // Microsoft Entra › App registrations (SPA, personal + work accounts)
   };
   var PREFS_KEY = "oros-contacts-oauth";
