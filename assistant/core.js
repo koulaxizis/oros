@@ -691,7 +691,7 @@
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] },
         lines: { type: "array", description: "quote, invoice: the lines (price per unit, before VAT).",
                  items: { type: "object", properties: { text: { type: "string" }, qty: { type: "number" }, price: { type: "number" } }, required: ["text", "qty", "price"] } },
-        currency: { type: "string", description: "quote: EUR or USD; invoice: a 3-letter code such as EUR, USD, GBP." },
+        currency: { type: "string", description: "quote: any 3-letter ISO code such as EUR, USD, JPY; invoice: a 3-letter code such as EUR, USD, GBP." },
         client: { type: "string" },
         rows: { type: "array", description: "sheet: the table, first row = headings. Numbers as plain digits with a dot (12.5).",
                 items: { type: "array", items: { type: "string" } } },
@@ -1111,7 +1111,7 @@
       }
       var qt = { items: lines };
       if (args.currency !== undefined && args.currency !== null && args.currency !== "") {
-        if (kind === "quote" && args.currency !== "EUR" && args.currency !== "USD") return bad("Quote only has EUR and USD.");
+        if (kind === "quote" && !/^[A-Z]{3}$/.test(String(args.currency))) return bad("currency must be a 3-letter ISO code such as EUR.");
         if (kind === "invoice" && INV_CURRENCIES.indexOf(args.currency) < 0) return bad("Invoices takes one of: " + INV_CURRENCIES.join(", ") + ".");
         qt.cur = args.currency;
       }
