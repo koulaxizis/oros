@@ -52,3 +52,4 @@ Your favourites and wake-up stations sync between your devices through [orOS syn
 - Song titles and recording need a station that lets web pages read its stream (CORS). Many don't: then `This station does not say what it plays.` shows, or recording explains it isn't allowed. The station directory itself has no song information.
 - Recording downloads the stream a second time while it runs, so it uses double the data. Playlist-style streams (HLS) can't be recorded.
 - A wake-up station only plays if orOS is open when the alarm rings, and the browser may keep the sound muted until you touch the page.
+- orOS only plays stations over an encrypted (https) connection. A station listed with a plain http address is tried over https; if it doesn't answer there, `Unencrypted (http) stream only, not played` shows. An unencrypted stream would make the page insecure, and the installed app would then show the browser's address bar.

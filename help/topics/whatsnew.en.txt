@@ -3,6 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 2.11.00
 - Nine more single apps: orOS Passwords, Budget, Habits, Water, Diary, Mood, Workouts, Health and Cycle, each with its own icon shortcuts; Passwords, Budget, Habits and Workouts also take Android shares.
+- Radio: stations now always play over a secure (https) connection, so the installed app no longer shows the browser bar. A station that only offers an unencrypted http stream says so instead of playing.
 
 ## Version 2.10.00
 - Attach a photo or PDF in the Assistant: a receipt becomes an expense, a business card a contact, a poster an event. The file goes only to the AI you chose, only when you press Send, and it isn't kept with the conversation.
