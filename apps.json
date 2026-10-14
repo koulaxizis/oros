@@ -120,6 +120,15 @@
       "type": "internal"
     },
     {
+      "id": "wiki",
+      "name": "Wiki",
+      "category": "Office",
+      "icon": "wiki",
+      "url": "wiki/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "calendar",
       "name": "Calendar",
       "category": "Office",
