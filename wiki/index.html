@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wiki · orOS</title>
 
-  <link rel="stylesheet" href="wiki.css?v=2.00.00">
+  <link rel="stylesheet" href="wiki.css?v=2.03.00">
 
 </head>
 <body>
@@ -92,10 +92,34 @@
     </div>
   </div>
 
+  <!-- Form (picture, infobox, reference, table, Files) -->
+  <div id="form" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
+    <div class="dlg-head">
+      <h2 id="form-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div id="form-body"></div>
+    <p id="form-err" class="hint err" aria-live="polite"></p>
+    <div id="form-actions" class="actions"></div>
+  </div>
+
+  <!-- Picture, large -->
+  <div id="lightbox" class="dialog" role="dialog" aria-modal="true" aria-labelledby="lb-cap" hidden>
+    <div class="dlg-head">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <img id="lb-img" alt="">
+    <p id="lb-cap"></p>
+  </div>
+
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=2.00.00"></script>
-  <script src="wiki.js?v=2.00.00"></script>
+  <script src="../designkit/assets.js?v=2.03.00"></script>
+  <script src="core.js?v=2.03.00"></script>
+  <script src="pdf.js?v=2.03.00"></script>
+  <script src="wiki.js?v=2.03.00"></script>
 
 </body>
 </html>

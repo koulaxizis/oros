@@ -182,7 +182,67 @@
     return pc;
   }
 
-  var api = { parse: parse, titleCase: titleCase };
+  // Assistant entry card (shell __orosOpenAt("contacts", { asNew })):
+  // a loose object → parser-shape contact, clamped to the dialog's
+  // limits, or null when it has neither a name nor a company.
+  //   { given?, family?, name? (split like "add": last word = family,
+  //     only when given/family are absent), org?, phones?[≤5],
+  //     emails?[≤5], address? (one line → street), birthday?
+  //     ("YYYY-MM-DD" real date, or "MM-DD" / "--MM-DD" yearless),
+  //     note? }
+  function asNewStr(v, max) {
+    if (typeof v !== "string") return "";
+    return v.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, max).trim();
+  }
+  function asNewList(v) {
+    if (typeof v === "string") return [v];
+    return Array.isArray(v) ? v : [];
+  }
+  function asNewDay(v) {
+    var s = asNewStr(v, 12), m, y = null, mm, dd;
+    if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) { y = +m[1]; mm = +m[2]; dd = +m[3]; }
+    else if ((m = s.match(/^-{0,2}(\d{2})-(\d{2})$/))) { mm = +m[1]; dd = +m[2]; }
+    else return null;
+    if (y !== null && (y < 1900 || y > new Date().getFullYear())) return null;
+    if (mm < 1 || mm > 12 || dd < 1 || dd > new Date(y === null ? 2000 : y, mm, 0).getDate()) return null;
+    var day = (mm < 10 ? "0" : "") + mm + "-" + (dd < 10 ? "0" : "") + dd;
+    return { day: day, year: y, type: "birthday", label: "" };
+  }
+  function fromAsNew(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var pc = blank();
+    pc.given = asNewStr(x.given, 60);
+    pc.family = asNewStr(x.family, 60);
+    if (!pc.given && !pc.family) {
+      var words = asNewStr(x.name, 120).split(" ").filter(Boolean);
+      if (words.length > 1) pc.family = words.pop().slice(0, 60);
+      pc.given = words.join(" ").slice(0, 60).trim();
+    }
+    pc.org = asNewStr(x.org, 80);
+    if (!pc.given && !pc.family && !pc.org) return null;
+    asNewList(x.phones).forEach(function (p) {
+      var v = asNewStr(p, 40);
+      if (/\d/.test(v) && pc.phones.length < 5) pc.phones.push({ v: v, type: "mobile" });
+    });
+    var seen = {};
+    asNewList(x.emails).forEach(function (e) {
+      var v = asNewStr(e, 120);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || seen[v.toLowerCase()] || pc.emails.length >= 5) return;
+      seen[v.toLowerCase()] = 1;
+      pc.emails.push({ v: v, type: "home" });
+    });
+    var street = asNewStr(x.address, 120);
+    if (street) pc.addresses.push({ street: street, city: "", zip: "", region: "", country: "", type: "home" });
+    var bd = asNewDay(x.birthday);
+    if (bd) pc.events.push(bd);
+    // The note keeps its line breaks (other control chars dropped).
+    if (typeof x.note === "string") {
+      pc.note = x.note.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim().slice(0, 500).trim();
+    }
+    return pc;
+  }
+
+  var api = { parse: parse, titleCase: titleCase, fromAsNew: fromAsNew };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosContactsCard = api;
 })(typeof self !== "undefined" ? self : this);

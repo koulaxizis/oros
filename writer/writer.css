@@ -1838,7 +1838,7 @@ sup.fn-ref:hover { text-decoration: underline; }
 .io-row[disabled], .io-row.io-row-disabled { opacity: 0.45; cursor: not-allowed; }
 .io-row[disabled]:hover, .io-row.io-row-disabled:hover { background: transparent; border-color: var(--border); }
 
-/* ===== INSERT / VIEW / DICTATION / TABLE TOOLS / FOCUS / STATISTICS ===== */
+/* ===== INSERT / VIEW / TABLE TOOLS / FOCUS / STATISTICS ===== */
 .rich-editor table { border-collapse: collapse; }
 .rich-editor th {
   font-weight: 700;
@@ -1847,10 +1847,6 @@ sup.fn-ref:hover { text-decoration: underline; }
   border: 1px solid var(--border);
   padding: 6px 10px;
 }
-
-.tb-btn.rec { color: var(--danger); background: rgba(224, 108, 117, 0.15); }
-.tb-btn.rec svg { animation: w-rec 1.4s ease-in-out infinite; }
-@keyframes w-rec { 50% { opacity: 0.45; } }
 
 .table-bar {
   display: flex;
@@ -1942,28 +1938,6 @@ sup.fn-ref:hover { text-decoration: underline; }
 }
 .wc-chip:hover { color: var(--text); border-color: var(--accent); }
 
-.dict-pill {
-  position: absolute;
-  left: 50%;
-  bottom: 52px;
-  transform: translateX(-50%);
-  z-index: 16;
-  max-width: calc(100% - 32px);
-  box-sizing: border-box;
-  padding: 6px 14px;
-  border-radius: 16px;
-  background: var(--panel-bg);
-  border: 1px solid var(--danger);
-  color: var(--text);
-  font-size: 13px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.dict-pill strong { color: var(--danger); font-weight: 600; }
-
 .stats-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .stats-table th, .stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
 .stats-table thead th { color: var(--text-dim); font-weight: 600; text-align: right; }
@@ -1978,11 +1952,8 @@ sup.fn-ref:hover { text-decoration: underline; }
   .focus-exit { width: 44px; height: 44px; }
   .stats-opt { min-height: 44px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .tb-btn.rec svg { animation: none; }
-}
 @media print {
-  .table-bar, .wc-chip, .dict-pill, .focus-exit { display: none !important; }
+  .table-bar, .wc-chip, .focus-exit { display: none !important; }
 }
 
 /* ══════════════════════════════════════════════════════════

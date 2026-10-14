@@ -673,12 +673,24 @@
       "expense / income (amount, date?, note?, category?) · quote (lines, currency?, client?, note?) · " +
       "invoice (lines, currency?, client?, note?: a draft invoice) · " +
       "sheet (title, rows, sum_columns?) · slides (title, outline) · bookmark (url, title?) · " +
-      "note (title, text).",
+      "note (title, text) · contact (name or org, phones?, emails?, address?, birthday?, note?) · " +
+      "customer (name or company, email?, phone?, vat?, address?, note?: a CRM customer) · " +
+      "card (title, board?, column?, note?, due?: a Kanban card) · " +
+      "habit (title, days?, per_week?, target?, unit?, reminder?) · " +
+      "workout (activity?, minutes?, distance_km?, date?, start?, note?: a finished workout to log) · " +
+      "car (vehicle?, type service|reminder, date?, title?, km?, cost?, shop?, due?, note?: Garage) · " +
+      "plant (title, species?, room?, water_days?, note?) · " +
+      "pet_record (pet?, record vaccine|deworm|visit|medication|weight, date?, title?, next_due?, vet?, cost?, dose?, weight_kg?, note?) · " +
+      "media (title, media book|film|series|album|podcast|game, status want|now|done|dropped, by?, year?: Media Shelf, also books) · " +
+      "place (title, lat+lon or query: Maps, the user saves it) · " +
+      "shared_expense (group?, title?, amount?, paid_by?, date?, currency?, note?: Split). " +
+      "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
-        kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note"] },
-        title: { type: "string", description: "Event title, note title, sheet name, presentation title or bookmark title." },
+        kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
+                                         "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense"] },
+        title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
         text: { type: "string", description: "note: the note's text (plain text)." },
         items: { type: "array", description: "todo: the tasks.",
                  items: { type: "object", properties: { text: { type: "string" }, note: { type: "string" } }, required: ["text"] } },
@@ -697,7 +709,51 @@
                 items: { type: "array", items: { type: "string" } } },
         sum_columns: { type: "array", description: "sheet: 0-based columns that get a total row.", items: { type: "integer" } },
         outline: { type: "string", description: "slides: '# Slide title' starts a slide, '- ' bullets (two spaces per level), '> ' speaker notes." },
-        url: { type: "string", description: "bookmark: an http(s) address." }
+        url: { type: "string", description: "bookmark: an http(s) address." },
+        name: { type: "string", description: "contact, customer: the person's full name." },
+        org: { type: "string", description: "contact: company or organisation." },
+        company: { type: "string", description: "customer: the company name." },
+        phones: { type: "array", items: { type: "string" }, description: "contact: phone numbers." },
+        emails: { type: "array", items: { type: "string" }, description: "contact: e-mail addresses." },
+        email: { type: "string", description: "customer: e-mail address." },
+        phone: { type: "string", description: "customer: phone number." },
+        vat: { type: "string", description: "customer: VAT number (ΑΦΜ)." },
+        address: { type: "string", description: "contact, customer: postal address on one line." },
+        birthday: { type: "string", description: "contact: YYYY-MM-DD, or MM-DD without a year." },
+        board: { type: "string", description: "card: the Kanban board's name." },
+        column: { type: "string", description: "card: the column's name." },
+        due: { type: "string", description: "card, car reminder: due date YYYY-MM-DD." },
+        days: { type: "array", items: { type: "integer" }, description: "habit: weekdays, 0 = Monday … 6 = Sunday." },
+        per_week: { type: "integer", description: "habit: times per week (instead of days)." },
+        target: { type: "number", description: "habit: a daily amount to reach, e.g. 8." },
+        unit: { type: "string", description: "habit: the target's unit, e.g. glasses." },
+        reminder: { type: "string", description: "habit: reminder time HH:MM." },
+        activity: { type: "string", description: "workout: e.g. Running, Cycling, Swimming." },
+        minutes: { type: "integer", description: "workout: duration in minutes." },
+        distance_km: { type: "number", description: "workout: distance in km." },
+        vehicle: { type: "string", description: "car: the vehicle's name or plate." },
+        type: { type: "string", "enum": ["service", "reminder"], description: "car: a done service, or a renewal reminder (KTEO, insurance, road tax…)." },
+        km: { type: "integer", description: "car: odometer in km." },
+        cost: { type: "number", description: "car, pet_record: what it cost." },
+        shop: { type: "string", description: "car: the garage or shop." },
+        species: { type: "string", description: "plant: species, e.g. Monstera deliciosa." },
+        room: { type: "string", description: "plant: room or place." },
+        water_days: { type: "integer", description: "plant: water every N days (1-60)." },
+        pet: { type: "string", description: "pet_record: the pet's name." },
+        record: { type: "string", "enum": ["vaccine", "deworm", "visit", "medication", "weight"] },
+        next_due: { type: "string", description: "pet_record: next due date YYYY-MM-DD." },
+        vet: { type: "string", description: "pet_record: the vet." },
+        dose: { type: "string", description: "pet_record medication: the dose." },
+        weight_kg: { type: "number", description: "pet_record weight: kg." },
+        media: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"] },
+        status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "media: want = to read/watch, now = in progress, done, dropped." },
+        by: { type: "string", description: "media: author, director or artist." },
+        year: { type: "integer", description: "media: year." },
+        lat: { type: "number", description: "place: latitude (only if you know it)." },
+        lon: { type: "number", description: "place: longitude (only if you know it)." },
+        query: { type: "string", description: "place: what to search on the map, e.g. 'Acropolis Museum, Athens'." },
+        group: { type: "string", description: "shared_expense: the Split group's name." },
+        paid_by: { type: "string", description: "shared_expense: who paid." }
       },
       required: ["kind"]
     }
@@ -968,9 +1024,15 @@
   // kind → app id and bridge
   var ENTRY_KINDS = {
     todo: "todo", event: "calendar", expense: "budget", income: "budget", quote: "quote",
-    invoice: "invoices", sheet: "spreadsheet", slides: "slides", bookmark: "bookmarks", note: "notes"
+    invoice: "invoices", sheet: "spreadsheet", slides: "slides", bookmark: "bookmarks", note: "notes",
+    // Phase 4 wave 1: every app below takes { asNew: {...} } (BR-AS-NEW)
+    // and opens its own new-item form prefilled; nothing is saved there
+    // until the user saves (BR-W8-6).
+    contact: "contacts", customer: "crm", card: "kanban", habit: "habits", workout: "fitness",
+    car: "garage", plant: "plants", pet_record: "petcare", media: "shelf", place: "maps", shared_expense: "split"
   };
-  var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note"];
+  var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
+                     "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense"];
   // Invoices' currencies (invoices/core.js CURRENCIES, BR-INV-NEW).
   var INV_CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD", "AUD", "SEK", "NOK", "DKK",
                         "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "JPY"];
@@ -1175,6 +1237,17 @@
       view.fields.push(["url", u]);
       return out;
     }
+    if (ASNEW[kind]) {
+      var an = ASNEW[kind](args, title);
+      if (an.err) return bad(an.err);
+      if (from) an.o.from = from;
+      out.call = { fn: "openAt", args: [app, { asNew: an.o }] };
+      view.title = an.title || "";
+      an.f.forEach(function (f) { view.fields.push(f); });
+      if (an.list) view.list = an.list;
+      if (an.text) view.text = an.text;
+      return out;
+    }
     // note
     var tx2 = para(args.text, 20000);
     if (!title && !tx2) return bad("note needs a title or a text.");
@@ -1183,6 +1256,238 @@
     view.text = tx2.length > 1200 ? tx2.slice(0, 1200) + "…" : tx2;
     return out;
   }
+  // BR-AS-NEW builders, one per kind: model arguments → the receiving
+  // app's asNew payload (its field names and caps), the card's fields
+  // ([label key, value]) and a check of what that app needs before its
+  // form can open. The receivers check everything again.
+  function optDate(v, name, out) {
+    if (v === undefined || v === null || v === "") return "";
+    var d = realDate(v);
+    if (!d) return name + " must be a real date as YYYY-MM-DD.";
+    out.v = d;
+    return "";
+  }
+  function hhmm(v) {
+    var m = typeof v === "string" ? /^(\d{1,2}):(\d{2})$/.exec(v.trim()) : null;
+    if (!m || +m[1] > 23 || +m[2] > 59) return "";
+    return (m[1].length < 2 ? "0" : "") + m[1] + ":" + m[2];
+  }
+  function strList(v, max, each) {
+    var a = Array.isArray(v) ? v : (typeof v === "string" && v ? [v] : []);
+    var out = [];
+    a.forEach(function (x) { var s2 = line(x, each); if (s2 && out.length < max && out.indexOf(s2) < 0) out.push(s2); });
+    return out;
+  }
+  function put(o, f, key, val, label, shown) {
+    if (val === "" || val === undefined || val === null || (typeof val === "number" && !isFinite(val))) return;
+    o[key] = val;
+    if (label) f.push([label, shown === undefined ? String(val) : shown]);
+  }
+  function posNum(v, max) { var n = num(v); return n > 0 && n <= max ? n : NaN; }
+  function posInt(v, lo, hi) { var n = num(v); return n === Math.floor(n) && n >= lo && n <= hi ? n : NaN; }
+  function localDay(dt) { return dt.getFullYear() + "-" + (dt.getMonth() < 9 ? "0" : "") + (dt.getMonth() + 1) + "-" + (dt.getDate() < 10 ? "0" : "") + dt.getDate(); }
+  var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var ASNEW = {
+    contact: function (a) {
+      var o = {}, f = [], d = {};
+      var name = line(a.name, 120) || line(a.title, 120), org = line(a.org, 80);
+      if (!name && !org) return { err: "contact needs a name or an org." };
+      put(o, f, "name", name);
+      put(o, f, "org", org, "org");
+      var ph = strList(a.phones, 5, 40).filter(function (x) { return /\d/.test(x); });
+      if (ph.length) { o.phones = ph; f.push(["phone", ph.join(", ")]); }
+      var em = strList(a.emails, 5, 120).filter(function (x) { return EMAIL.test(x); });
+      if (em.length) { o.emails = em; f.push(["email", em.join(", ")]); }
+      put(o, f, "address", line(a.address, 120), "address");
+      if (a.birthday) {
+        var b = String(a.birthday).trim();
+        var bm = /^(?:--)?(\d{2})-(\d{2})$/.exec(b);
+        if (realDate(b)) put(o, f, "birthday", b, "birthday");
+        else if (bm && realDate("2000-" + bm[1] + "-" + bm[2])) put(o, f, "birthday", bm[1] + "-" + bm[2], "birthday");
+        else return { err: "birthday must be YYYY-MM-DD or MM-DD." };
+      }
+      var nt = para(a.note, 500);
+      if (nt) o.note = nt;
+      return { o: o, f: f, title: name || org, text: nt };
+    },
+    customer: function (a) {
+      var o = {}, f = [];
+      var name = line(a.name, 120), co = line(a.company, 120) || line(a.org, 120);
+      if (!name && !co) return { err: "customer needs a name or a company." };
+      put(o, f, "name", name);
+      put(o, f, "company", co, "company");
+      var em = line(a.email, 120);
+      if (em && !EMAIL.test(em)) return { err: "email is not an e-mail address." };
+      put(o, f, "email", em, "email");
+      var ph = line(a.phone, 40);
+      put(o, f, "phone", /\d/.test(ph) ? ph : "", "phone");
+      var vat = line(a.vat, 30).replace(/\s+/g, "").toUpperCase();
+      put(o, f, "vat", /^[A-Z0-9.\-]{1,20}$/.test(vat) ? vat : "", "vat");
+      put(o, f, "address", line(a.address, 200), "address");
+      var nt = para(a.note, 2000);
+      if (nt) o.note = nt;
+      return { o: o, f: f, title: co && name ? co + " · " + name : co || name, text: nt };
+    },
+    card: function (a, title) {
+      var t2 = line(a.title, 500);
+      if (!t2) return { err: "card needs a title." };
+      var o = { title: t2 }, f = [], d = {};
+      put(o, f, "board", line(a.board, 120), "board");
+      put(o, f, "column", line(a.column, 120), "column");
+      var e = optDate(a.due, "due", d);
+      if (e) return { err: e };
+      put(o, f, "due", d.v, "due");
+      var nt = para(a.note, 20000);
+      if (nt) o.note = nt;
+      return { o: o, f: f, title: t2, text: nt.length > 1200 ? nt.slice(0, 1200) + "…" : nt };
+    },
+    habit: function (a, title) {
+      if (!title) return { err: "habit needs a title (its name)." };
+      var o = { name: title.slice(0, 200) }, f = [];
+      var pw = posInt(a.per_week, 1, 7);
+      if (isFinite(pw)) put(o, f, "perWeek", pw, "perWeek");
+      else if (Array.isArray(a.days)) {
+        var dd = [];
+        a.days.forEach(function (x) { if (x === Math.floor(x) && x >= 0 && x <= 6 && dd.indexOf(x) < 0) dd.push(x); });
+        if (dd.length) { o.days = dd.sort(); f.push(["days", dd.join(",")]); }
+      }
+      var tg = posNum(a.target, 1e7);
+      if (isFinite(tg)) put(o, f, "target", r2(tg), "target");
+      put(o, f, "unit", line(a.unit, 16), "unit");
+      if (a.reminder) {
+        var rm = hhmm(a.reminder);
+        if (!rm) return { err: "reminder must be HH:MM (24h)." };
+        put(o, f, "reminder", rm, "reminder");
+      }
+      return { o: o, f: f, title: o.name };
+    },
+    workout: function (a) {
+      var o = {}, f = [], d = {};
+      put(o, f, "type", line(a.activity, 60) || line(a.title, 60), "activity");
+      var mi = posNum(a.minutes, 1440);
+      if (isFinite(mi)) put(o, f, "minutes", Math.max(1, Math.round(mi)), "minutes");
+      var km = posNum(a.distance_km, 1000);
+      if (isFinite(km)) put(o, f, "distanceKm", r2(km), "distance");
+      var e = optDate(a.date, "date", d);
+      if (e) return { err: e };
+      put(o, f, "date", d.v, "date");
+      if (a.start) { var st = hhmm(a.start); if (!st) return { err: "start must be HH:MM (24h)." }; put(o, f, "start", st, "start"); }
+      var nt = para(a.note, 1000);
+      if (nt) o.note = nt;
+      if (!o.type && !o.minutes && !o.distanceKm && !nt) return { err: "workout needs an activity, minutes, a distance or a note." };
+      return { o: o, f: f, title: o.type || "", text: nt };
+    },
+    car: function (a) {
+      var o = {}, f = [], d = {}, d2 = {};
+      var ty = a.type === "reminder" || a.type === "service" ? a.type : (a.due ? "reminder" : "service");
+      o.type = ty;
+      f.push(["kind", ty]);
+      put(o, f, "vehicle", line(a.vehicle, 40), "vehicle");
+      var e = optDate(a.date, "date", d) || optDate(a.due, "due", d2);
+      if (e) return { err: e };
+      // Garage's service editor stops at today.
+      if (ty === "service" && d.v && d.v > localDay(new Date())) return { err: "A done service cannot be in the future; use type reminder with due." };
+      put(o, f, "date", d.v, "date");
+      put(o, f, "due", d2.v, "due");
+      var t2 = line(a.title, 80);
+      put(o, f, "title", t2);
+      var km = posInt(a.km, 0, 9999999);
+      if (isFinite(km)) put(o, f, "km", km, "km");
+      var c = num(a.cost);
+      if (c >= 0 && c <= 999999.99) put(o, f, "cost", r2(c), "cost", r2(c).toFixed(2));
+      put(o, f, "shop", line(a.shop, 40), "shop");
+      var nt = para(a.note, 500);
+      if (nt) o.note = nt;
+      if (!t2 && !d.v && !d2.v && !nt && !isFinite(km) && !("cost" in o)) return { err: "car needs at least a title, a date or a due date." };
+      return { o: o, f: f, title: t2, text: nt };
+    },
+    plant: function (a, title) {
+      var nm = line(a.title, 40) || line(a.name, 40);
+      if (!nm) return { err: "plant needs a title (its name)." };
+      var o = { name: nm }, f = [];
+      put(o, f, "species", line(a.species, 80), "species");
+      put(o, f, "room", line(a.room, 30), "room");
+      var wd = posInt(a.water_days, 1, 60);
+      if (isFinite(wd)) put(o, f, "waterDays", wd, "waterDays");
+      var nt = para(a.note, 500);
+      if (nt) o.note = nt;
+      return { o: o, f: f, title: nm, text: nt };
+    },
+    pet_record: function (a) {
+      var TY = { vaccine: "vacc", deworm: "deworm", visit: "visit", medication: "med", weight: "weight" };
+      var ty = TY[a.record] || "visit";
+      var o = { type: ty }, f = [["record", a.record && TY[a.record] ? a.record : "visit"]], d = {}, d2 = {};
+      put(o, f, "pet", line(a.pet, 40), "pet");
+      var e = optDate(a.date, "date", d) || optDate(a.next_due, "next_due", d2);
+      if (e) return { err: e };
+      put(o, f, "date", d.v, "date");
+      if (d2.v && d.v && d2.v <= d.v) return { err: "next_due must be after date." };
+      put(o, f, "nextDue", d2.v, "nextDue");
+      var t2 = line(a.title, 60);
+      put(o, f, "title", t2);
+      put(o, f, "vet", line(a.vet, 60), "vet");
+      var c = num(a.cost);
+      if (c >= 0 && c <= 1000000) put(o, f, "cost", r2(c), "cost", r2(c).toFixed(2));
+      put(o, f, "dose", line(a.dose, 60), "dose");
+      var w = posNum(a.weight_kg, 500);
+      if (isFinite(w)) put(o, f, "weightKg", r2(w), "weight");
+      if (ty === "weight" && !o.weightKg) return { err: "a weight record needs weight_kg." };
+      var nt = para(a.note, 500);
+      if (nt) o.note = nt;
+      return { o: o, f: f, title: t2, text: nt };
+    },
+    media: function (a) {
+      var t2 = line(a.title, 200);
+      if (!t2) return { err: "media needs a title." };
+      var MK = { book: 1, film: 1, series: 1, album: 1, podcast: 1, game: 1 };
+      var ST = { want: "want", now: "now", done: "done", dropped: "drop" };
+      var o = { title: t2 }, f = [];
+      if (MK[a.media]) put(o, f, "kind", a.media, "media");
+      if (ST[a.status]) put(o, f, "status", ST[a.status], "status", a.status);
+      put(o, f, "by", line(a.by, 120), "by");
+      var y = posInt(a.year, 1, 9999);
+      if (isFinite(y)) put(o, f, "year", y, "year");
+      return { o: o, f: f, title: t2 };
+    },
+    place: function (a) {
+      var nm = line(a.title, 120) || line(a.name, 120);
+      if (!nm) return { err: "place needs a title (its name)." };
+      var o = { name: nm }, f = [];
+      var la = num(a.lat), lo = num(a.lon);
+      if (isFinite(la) && isFinite(lo) && la >= -90 && la <= 90 && lo >= -180 && lo <= 180) {
+        o.lat = Math.round(la * 1e6) / 1e6; o.lon = Math.round(lo * 1e6) / 1e6;
+        f.push(["coords", o.lat + ", " + o.lon]);
+      } else {
+        var q = line(a.query, 200) || nm;
+        o.query = q;
+        f.push(["query", q]);
+      }
+      return { o: o, f: f, title: nm };
+    },
+    shared_expense: function (a) {
+      var o = {}, f = [], d = {};
+      put(o, f, "group", line(a.group, 40), "group");
+      var t2 = line(a.title, 60);
+      put(o, f, "title", t2);
+      if (a.amount !== undefined && a.amount !== null && a.amount !== "") {
+        var am = posNum(a.amount, 1e9);
+        if (!isFinite(am)) return { err: "amount must be more than 0." };
+        put(o, f, "amount", r2(am), "amount", r2(am).toFixed(2));
+      }
+      put(o, f, "paid_by", line(a.paid_by, 30), "paidBy");
+      var e = optDate(a.date, "date", d);
+      if (e) return { err: e };
+      put(o, f, "date", d.v, "date");
+      if (a.currency) {
+        if (!/^[A-Z]{3}$/.test(String(a.currency))) return { err: "currency must be a 3-letter ISO code such as EUR." };
+        put(o, f, "currency", a.currency, "currency");
+      }
+      var nt = line(a.note, 140);
+      if (nt) o.note = nt;
+      if (!o.group && !t2 && !o.amount) return { err: "shared_expense needs a group, a title or an amount." };
+      return { o: o, f: f, title: t2, text: nt };
+    }
+  };
   function entryKinds(has) {
     return ENTRY_ORDER.filter(function (k) { return !has || has(ENTRY_KINDS[k]); });
   }

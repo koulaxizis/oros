@@ -77,7 +77,7 @@ While a timed game runs, Chess keeps it on the board: finish it or resign before
 - Your first try at each puzzle sets your `Puzzle rating`. It starts at 1500 and moves like a Lichess rating (Glicko): a lot at first, while it says `provisional`, less once it settles.
 - `Retry failed` brings back the puzzles you missed; solving one later marks it as solved later but doesn't change your rating. `History` lists each puzzle with its result and your rating after it; tap one to try it again. `Reset puzzles` clears the history and the rating on every device, after you confirm.
 
-The puzzles come with orOS and work offline. For now it's a small set (about 200), made by the orOS engine from its own games in the layout of the Lichess puzzle database, and their ratings are estimates.
+The puzzles come with orOS and work offline, with no account. About 3,000 come from the Lichess puzzle database (free to use, CC0): well-tested puzzles that many players liked, spread over every level from beginner to master and over all the themes, with their Lichess ratings. About 200 more were made by the orOS engine from its own games; their ratings are estimates. The `Training` window says how many of each are on this device.
 
 ## Openings
 While you play or review a game, the name of the opening shows under the moves, for example `C60 · Ruy Lopez`. It comes from the Lichess list of openings with their ECO codes and is found by position, so moves played in another order still get the right name. During a game on Lichess the name appears only after the game ends.

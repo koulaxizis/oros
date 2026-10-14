@@ -341,6 +341,80 @@
     return out;
   }
 
-  var api = { PAGES: PAGES, LOOK: LOOK, MIN_FIT: MIN_FIT, pageSize: pageSize, build: build, fitOf: fitOf, resetFit: resetFit };
+  // ---------- Sign-in sheet (wave 3) ----------
+  // buildSheet(ev, people, L) -> { doc } : a table to print and sign,
+  // one signature column per day (up to 7; landscape from 4 days),
+  // blank rows at the end for people not on the list.
+  //   L: { title, sub, sheet, no ("#"), name, sign, page "{i} / {n}", day(ymd) -> label }
+  var SHEET = { margin: 40, rowH: 26, headH: 30, blanks: 5 };
+  function buildSheet(ev, people, L) {
+    var CC = C(), days = CC.eventDays(ev), pp = PAGES[ev.size] || PAGES.a4;
+    var land = days.length >= 4, W = land ? pp.h : pp.w, H = land ? pp.w : pp.h, m = SHEET.margin;
+    var reg = Registry(), n = 0;
+    function id(pre) { n++; return pre + "-" + n.toString(36); }
+    var doc = {
+      id: "doc-sheet", m: 1, name: L.title || "Sign-in sheet",
+      setup: { w: W, h: H, unit: "pt", bleed: 0, mt: 0, mb: 0, mi: 0, mo: 0, cols: 1, gut: 0, facing: 0, preset: "custom" },
+      pages: [], masters: [], items: [], stories: [], pstyles: reg.pstyles, cstyles: [],
+      swatches: reg.swatches, guides: [], rec: [], tombs: {}
+    };
+    function add(o) { o.id = id("it"); o.m = 1; doc.items.push(o); return o; }
+    function line(pg, x, y, dx, dy, color, sw) {
+      return add({ t: "line", pg: pg, x: x, y: y, w: dx, h: dy, stroke: reg.swatch(color), sw: sw, z: 1, fill: "" });
+    }
+    function rect(pg, x, y, w, h, fill) {
+      return add({ t: "rect", pg: pg, x: x, y: y, w: w, h: h, z: 0, op: 100, r: 0, rot: 0, fill: reg.swatch(fill) });
+    }
+    function text(pg, txt, x, y, w, h, o, va) {
+      if (!txt || !String(txt).trim()) return;
+      var fo = { font: o.font || "sans", size: o.size, align: o.align || "l", b: o.b || 0, i: 0 };
+      var f = o.fit ? fitOf(txt, fo, w, h) : 1;
+      var ps = { font: fo.font, size: Math.round(fo.size * f * 100) / 100, align: fo.align, b: fo.b, i: 0, color: reg.swatch(o.color || INK) };
+      var sid = id("st");
+      doc.stories.push({ id: sid, m: 1, paras: parasOf(txt, ps, reg) });
+      add({ t: "text", pg: pg, x: x, y: y, w: w, h: h, z: 2, story: sid, seq: 1, cols: 1, gut: 0, ins: 0, va: va || "c" });
+    }
+    // columns: number, name, then one per day
+    var tw = W - 2 * m, noW = 34, nameW = Math.max(150, Math.min(260, tw - noW - days.length * 80));
+    var dayW = (tw - noW - nameW) / days.length;
+    var cols = [{ x: m, w: noW, key: "no" }, { x: m + noW, w: nameW, key: "name" }];
+    days.forEach(function (d, i) { cols.push({ x: m + noW + nameW + i * dayW, w: dayW, key: "day", d: d }); });
+    var top = m + 62, rowH = SHEET.rowH;
+    var perPage = Math.max(1, Math.floor((H - top - SHEET.headH - m - 16) / rowH));
+    var rows = (people || []).map(function (p, i) { return { no: String(i + 1), n: p.n }; });
+    for (var b = 0; b < SHEET.blanks; b++) rows.push({ no: "", n: "" });
+    var pages = Math.max(1, Math.ceil(rows.length / perPage));
+    for (var pi = 0; pi < pages; pi++) {
+      var pg = id("pg");
+      doc.pages.push({ id: pg, m: 1, pos: (pi + 1) * 1024, ms: "" });
+      rect(pg, 0, 0, W, H, WHITE);
+      text(pg, L.title, m, m - 6, tw, 26, { size: 17, b: 1, fit: true }, "t");
+      text(pg, L.sub, m, m + 22, tw, 18, { size: 10.5, color: MUTED, fit: true }, "t");
+      text(pg, L.sheet, m, m + 40, tw, 16, { size: 10, b: 1, color: ev.acc }, "t");
+      // header row
+      rect(pg, m, top, tw, SHEET.headH, "#f1f1f1");
+      cols.forEach(function (c) {
+        var lab = c.key === "no" ? L.no : c.key === "name" ? L.name : (days.length > 1 && c.d ? L.day(c.d) : L.sign);
+        text(pg, lab, c.x + 6, top, c.w - 12, SHEET.headH, { size: 9.5, b: 1, align: c.key === "day" ? "c" : "l", fit: true });
+      });
+      var chunk = rows.slice(pi * perPage, (pi + 1) * perPage), y = top + SHEET.headH;
+      chunk.forEach(function (r) {
+        text(pg, r.no, cols[0].x + 4, y, cols[0].w - 8, rowH, { size: 9, color: MUTED, align: "r" });
+        text(pg, r.n, cols[1].x + 6, y, cols[1].w - 10, rowH, { size: 11, fit: true });
+        y += rowH;
+        line(pg, m, y, tw, 0, "#c8c8c8", 0.6);
+      });
+      // frame and column lines
+      var bottom = top + SHEET.headH + chunk.length * rowH;
+      line(pg, m, top, tw, 0, "#9a9a9a", 0.8);
+      line(pg, m, top + SHEET.headH, tw, 0, "#9a9a9a", 0.8);
+      line(pg, m, bottom, tw, 0, "#9a9a9a", 0.8);
+      cols.concat([{ x: m + tw }]).forEach(function (c) { line(pg, c.x, top, 0, bottom - top, "#9a9a9a", 0.6); });
+      if (pages > 1) text(pg, L.page.replace("{i}", pi + 1).replace("{n}", pages), m, H - m + 6, tw, 14, { size: 8.5, color: MUTED, align: "r" }, "t");
+    }
+    return { doc: M().normDoc(doc), days: days, perPage: perPage };
+  }
+
+  var api = { PAGES: PAGES, LOOK: LOOK, MIN_FIT: MIN_FIT, pageSize: pageSize, build: build, buildSheet: buildSheet, fitOf: fitOf, resetFit: resetFit };
   root.CertDK = api;
 })(typeof window !== "undefined" ? window : this);

@@ -99,6 +99,24 @@
       "entry.hint.slides": "Opens {app}; the presentation is made when you pick a theme there.",
       "entry.opened": "Opened in {app}", "entry.dismissed": "Dismissed", "entry.failed": "{app} did not accept it",
       "entry.more": "+{n} more", "entry.gone": "{app} is not installed",
+      "entry.contact": "New contact · {app}", "entry.customer": "New customer · {app}", "entry.card": "New card · {app}",
+      "entry.habit": "New habit · {app}", "entry.workout": "Log a workout · {app}", "entry.car": "New entry · {app}",
+      "entry.plant": "New plant · {app}", "entry.pet_record": "New health record · {app}", "entry.media": "New title · {app}",
+      "entry.place": "Place · {app}", "entry.shared_expense": "New shared expense · {app}",
+      "entry.hint.place": "Opens {app} at this place; save it there if it is the right one.",
+      "f.org": "Organisation", "f.phone": "Phone", "f.email": "E-mail", "f.address": "Address", "f.birthday": "Birthday",
+      "f.company": "Company", "f.vat": "VAT no.", "f.board": "Board", "f.column": "Column",
+      "f.perWeek": "Times a week", "f.days": "Days", "f.target": "Target", "f.unit": "Unit", "f.reminder": "Reminder",
+      "f.activity": "Activity", "f.minutes": "Minutes", "f.distance": "Distance (km)", "f.vehicle": "Vehicle",
+      "f.km": "Odometer (km)", "f.cost": "Cost", "f.shop": "Shop", "f.species": "Species", "f.room": "Room",
+      "f.waterDays": "Water every (days)", "f.record": "Record", "f.pet": "Pet", "f.nextDue": "Next due", "f.vet": "Vet",
+      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year",
+      "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
+      "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
+      "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
+      "v.series": "Series", "v.album": "Album", "v.podcast": "Podcast", "v.game": "Game", "v.want": "Want to",
+      "v.now": "In progress", "v.done": "Done", "v.dropped": "Dropped",
+      "wd.0": "Mon", "wd.1": "Tue", "wd.2": "Wed", "wd.3": "Thu", "wd.4": "Fri", "wd.5": "Sat", "wd.6": "Sun",
       "f.list": "New list", "f.date": "Date", "f.start": "Time", "f.location": "Place", "f.amount": "Amount",
       "f.category": "Category", "f.client": "Client", "f.currency": "Currency", "f.url": "Address",
       "cat.groceries": "Groceries", "cat.eating-out": "Eating out", "cat.bills": "Bills", "cat.home": "Home",
@@ -178,13 +196,7 @@
       "chg.storage": "it could not be saved (storage full?)",
       "chg.conflict": "the item changed meanwhile",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
-      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
-      "mic.start": "Speak your message", "mic.stop": "Stop listening", "mic.listening": "Listening…",
-      "mic.title": "Speak instead of typing?",
-      "mic.text": "Your browser turns your voice into text. Most browsers (Chrome, Edge, Safari) do this by sending the recording to their own speech service on the internet, not to orOS and not to the assistant. The text lands in the message box, and nothing is sent to the assistant until you press Send.",
-      "mic.ok": "Use the microphone", "mic.no": "Not now",
-      "mic.denied": "The microphone is blocked. Allow it in the browser's site settings.",
-      "mic.fail": "Voice input stopped: {msg}", "mic.none": "No speech heard"
+      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type"
     },
     el: {
       "app": "Βοηθός",
@@ -223,6 +235,24 @@
       "entry.hint.slides": "Ανοίγει: {app}· η παρουσίαση δημιουργείται όταν διαλέξεις θέμα εκεί.",
       "entry.opened": "Άνοιξε: {app}", "entry.dismissed": "Απορρίφθηκε", "entry.failed": "Δεν έγινε δεκτό ({app})",
       "entry.more": "+{n} ακόμη", "entry.gone": "Δεν είναι εγκατεστημένο: {app}",
+      "entry.contact": "Νέα επαφή · {app}", "entry.customer": "Νέος πελάτης · {app}", "entry.card": "Νέα κάρτα · {app}",
+      "entry.habit": "Νέα συνήθεια · {app}", "entry.workout": "Καταγραφή προπόνησης · {app}", "entry.car": "Νέα καταχώρηση · {app}",
+      "entry.plant": "Νέο φυτό · {app}", "entry.pet_record": "Νέα εγγραφή υγείας · {app}", "entry.media": "Νέος τίτλος · {app}",
+      "entry.place": "Μέρος · {app}", "entry.shared_expense": "Νέο κοινό έξοδο · {app}",
+      "entry.hint.place": "Ανοίγει: {app} σε αυτό το μέρος· αποθήκευσέ το εκεί αν είναι το σωστό.",
+      "f.org": "Οργανισμός", "f.phone": "Τηλέφωνο", "f.email": "E-mail", "f.address": "Διεύθυνση", "f.birthday": "Γενέθλια",
+      "f.company": "Εταιρεία", "f.vat": "ΑΦΜ", "f.board": "Πίνακας", "f.column": "Στήλη",
+      "f.perWeek": "Φορές την εβδομάδα", "f.days": "Ημέρες", "f.target": "Στόχος", "f.unit": "Μονάδα", "f.reminder": "Υπενθύμιση",
+      "f.activity": "Δραστηριότητα", "f.minutes": "Λεπτά", "f.distance": "Απόσταση (km)", "f.vehicle": "Όχημα",
+      "f.km": "Χιλιόμετρα", "f.cost": "Κόστος", "f.shop": "Συνεργείο", "f.species": "Είδος φυτού", "f.room": "Δωμάτιο",
+      "f.waterDays": "Πότισμα κάθε (μέρες)", "f.record": "Εγγραφή", "f.pet": "Κατοικίδιο", "f.nextDue": "Επόμενη φορά", "f.vet": "Κτηνίατρος",
+      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος",
+      "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
+      "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
+      "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
+      "v.series": "Σειρά", "v.album": "Άλμπουμ", "v.podcast": "Podcast", "v.game": "Παιχνίδι", "v.want": "Θέλω",
+      "v.now": "Σε εξέλιξη", "v.done": "Ολοκληρώθηκε", "v.dropped": "Παρατήθηκε",
+      "wd.0": "Δευ", "wd.1": "Τρι", "wd.2": "Τετ", "wd.3": "Πεμ", "wd.4": "Παρ", "wd.5": "Σαβ", "wd.6": "Κυρ",
       "f.list": "Νέα λίστα", "f.date": "Ημερομηνία", "f.start": "Ώρα", "f.location": "Τοποθεσία", "f.amount": "Ποσό",
       "f.category": "Κατηγορία", "f.client": "Πελάτης", "f.currency": "Νόμισμα", "f.url": "Διεύθυνση",
       "cat.groceries": "Σούπερ μάρκετ", "cat.eating-out": "Φαγητό έξω", "cat.bills": "Λογαριασμοί", "cat.home": "Σπίτι",
@@ -302,13 +332,7 @@
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
-      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
-      "mic.start": "Πες το μήνυμά σου", "mic.stop": "Τέλος ακρόασης", "mic.listening": "Ακούω…",
-      "mic.title": "Να μιλήσεις αντί να γράψεις;",
-      "mic.text": "Ο browser σου μετατρέπει τη φωνή σε κείμενο. Οι περισσότεροι (Chrome, Edge, Safari) το κάνουν στέλνοντας την ηχογράφηση στη δική τους υπηρεσία ομιλίας στο διαδίκτυο, όχι στο orOS ούτε στον βοηθό. Το κείμενο μπαίνει στο πλαίσιο μηνύματος και τίποτα δεν στέλνεται στον βοηθό πριν πατήσεις Αποστολή.",
-      "mic.ok": "Χρήση μικροφώνου", "mic.no": "Όχι τώρα",
-      "mic.denied": "Το μικρόφωνο είναι μπλοκαρισμένο. Επίτρεψέ το στις ρυθμίσεις ιστότοπου του browser.",
-      "mic.fail": "Η φωνητική εισαγωγή σταμάτησε: {msg}", "mic.none": "Δεν ακούστηκε ομιλία"
+      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος"
     }
   };
 
@@ -356,7 +380,6 @@
     spark: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-    mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
   };
 
@@ -388,7 +411,6 @@
         prefs.keep = p.keep === 0 ? 0 : 1;
         if (p.usage && typeof p.usage === "object") prefs.usage = p.usage;
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
-        if (p.voiceOk === 1) prefs.voiceOk = 1;
       }
     } catch (e) {}
   }
@@ -1831,7 +1853,7 @@
       var dl = el("dl", "entry-fields");
       v.fields.forEach(function (f) {
         dl.appendChild(el("dt", "", t("f." + f[0])));
-        dl.appendChild(el("dd", "", f[0] === "category" ? t("cat." + f[1]) : f[1]));
+        dl.appendChild(el("dd", "", fieldValue(f[0], f[1])));
       });
       card.appendChild(dl);
     }
@@ -1857,7 +1879,7 @@
       card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""),
         t("entry." + ui.st, { app: name })));
     } else {
-      var hint = e.kind === "slides" ? "entry.hint.slides" :
+      var hint = e.kind === "slides" ? "entry.hint.slides" : e.kind === "place" ? "entry.hint.place" :
                  (e.kind === "note" || e.kind === "sheet") ? "entry.hint.make" : "entry.hint.form";
       card.appendChild(el("p", "dlg-hint", t(hint, { app: name })));
       var acts = el("div", "dlg-actions");
@@ -1877,6 +1899,15 @@
       card.appendChild(acts);
     }
     host.appendChild(card);
+  }
+
+  // A card field's value as the user reads it: ready ids → words.
+  var VAL_KEYS = { kind: 1, record: 1, media: 1, status: 1 };
+  function fieldValue(k, v) {
+    if (k === "category") return t("cat." + v);
+    if (k === "days") return String(v).split(",").map(function (d) { return t("wd." + d); }).join(", ");
+    if (VAL_KEYS[k] && STRINGS.en["v." + v] !== undefined) return t("v." + v);
+    return v;
   }
 
   // Markdown tokens (core.js) → DOM, textContent only.
@@ -2420,90 +2451,6 @@
     if (chatSyncOn()) scheduleReconcile();
   }
 
-  // ---------- 12b. Voice input (Web Speech API, wave 48) ----------
-  // The mic button turns speech into text in the message box, in the
-  // interface language. Hidden where the browser has no speech
-  // recognition. The first use explains, honestly, that the browser
-  // may send the recording to its own speech service; nothing goes to
-  // the assistant until the user presses Send.
-  var SR = null;
-  try { SR = window.SpeechRecognition || window.webkitSpeechRecognition || null; } catch (e) { SR = null; }
-  var rec = null;
-  function paintMic() {
-    var b = $("mic-btn");
-    if (!b) return;
-    b.hidden = typeof SR !== "function";
-    b.innerHTML = ICON.mic;
-    var on = !!rec;
-    b.classList.toggle("on", on);
-    b.setAttribute("aria-pressed", on ? "true" : "false");
-    b.setAttribute("aria-label", on ? t("mic.stop") : t("mic.start"));
-    b.title = on ? t("mic.stop") : t("mic.start");
-  }
-  function micClick() {
-    if (rec) { try { rec.stop(); } catch (e) {} return; }
-    if (prefs.voiceOk === 1) { startMic(); return; }
-    var dlg = makeDialog("as-mic");
-    dlg.appendChild(el("div", "dlg-title", t("mic.title")));
-    dlg.appendChild(el("p", "dlg-text", t("mic.text")));
-    var acts = el("div", "dlg-actions");
-    acts.appendChild(button(t("mic.no"), "", function () { dlg.close(); }));
-    acts.appendChild(button(t("mic.ok"), "primary", function () {
-      dlg.close();
-      prefs.voiceOk = 1;
-      savePrefs();
-      startMic();
-    }));
-    dlg.appendChild(acts);
-    document.body.appendChild(dlg);
-    dlg.showModal();
-  }
-  function startMic() {
-    if (typeof SR !== "function" || rec) return;
-    var r;
-    try { r = new SR(); } catch (e) { showToast(t("mic.fail", { msg: String(e && e.message || e) })); return; }
-    r.lang = LANG === "el" ? "el-GR" : "en-US";
-    r.interimResults = true;
-    r.continuous = false;
-    r.maxAlternatives = 1;
-    var box = $("input"), before = box.value.replace(/\s+$/, ""), heard = "";
-    function show(extra) {
-      var said = (heard + extra).replace(/\s+/g, " ").trim();
-      box.value = (before && said ? before + " " : before) + said;
-      autosize();
-    }
-    r.onresult = function (ev) {
-      var interim = "";
-      for (var i = ev.resultIndex; i < ev.results.length; i++) {
-        var res = ev.results[i];
-        if (!res || !res[0]) continue;
-        if (res.isFinal) heard += res[0].transcript + " ";
-        else interim += res[0].transcript;
-      }
-      show(interim);
-    };
-    r.onerror = function (ev) {
-      var code = ev && ev.error || "";
-      if (code === "aborted") return;
-      if (code === "not-allowed" || code === "service-not-allowed") showToast(t("mic.denied"));
-      else if (code === "no-speech") showToast(t("mic.none"));
-      else showToast(t("mic.fail", { msg: String(code || "?") }));
-    };
-    r.onend = function () {
-      if (rec !== r) return;
-      rec = null;
-      show("");
-      paintMic();
-      box.placeholder = ready() ? t("ph.input") : t("ph.noSetup");
-      box.focus();
-    };
-    try { r.start(); } catch (e) { showToast(t("mic.fail", { msg: String(e && e.message || e) })); return; }
-    rec = r;
-    box.placeholder = t("mic.listening");
-    paintMic();
-  }
-  function stopMic() { if (rec) { try { rec.abort(); } catch (e) {} } }
-
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -2531,16 +2478,12 @@
     $("side-new").addEventListener("click", function () { setSide(false); newChat(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
-    $("send-btn").addEventListener("click", function () { stopMic(); if (busy) stop(); else send(); });
-    $("mic-btn").addEventListener("click", micClick);
-    paintMic();
-    window.addEventListener("pagehide", stopMic);
+    $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     var box = $("input");
     box.addEventListener("input", autosize);
     box.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
-        stopMic();
         if (!busy) send();
       }
     });

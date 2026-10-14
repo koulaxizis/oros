@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Wiki — App logic (v1.0.0)
+// orOS Wiki — App logic (v1.1.0)
 // Your own encyclopedia: articles that link to each other, read like
 // Wikipedia (contents box, sections, categories, red links) and kept
 // with their full history.
@@ -11,6 +11,9 @@
 //   - parallel edits on two devices are both kept until you choose
 //   - Recent changes, Random article, All articles, Categories,
 //     Wanted articles, What links here, search with suggestions
+//   - wave 2: pictures (designkit/assets.js on the orOS disk) and
+//     galleries, infobox form, references with a Cite form, a table
+//     editor, print and save as PDF (pdf.js)
 // Data: synced slice "wiki" (oros-wiki-data, core.js); history files
 // /internal/Wiki/History/<article>/ on the orOS disk (Vault Drive).
 // Sections:
@@ -19,6 +22,7 @@
 //   3. Navigation
 //   4. Article view
 //   5. Editor
+//   5b. Pictures, infobox, references, tables, PDF (wave 2)
 //   6. History + parallel edits
 //   7. Lists (recent, all, categories, wanted, links, search)
 //   8. Wikis + article actions
@@ -74,6 +78,36 @@
       "tb.ul": "Bulleted list", "tb.ol": "Numbered list", "tb.link": "Link to an article", "tb.xlink": "Web link",
       "tb.table": "Table", "tb.code": "Code", "tb.quote": "Quote", "tb.cat": "Category",
       "tb.linkPh": "Article title", "tb.xlinkPh": "text", "tb.catPh": "Name", "tb.col": "Column",
+      "tb.img": "Picture", "tb.gal": "Gallery", "tb.ibox": "Infobox", "tb.cite": "Reference",
+      "art.refs": "References", "art.refUp": "Back to the text", "art.refMissing": "This reference has no text yet.",
+      "img.missing": "This picture has not reached this device yet.", "img.open": "Open the picture",
+      "pick.title": "Add a picture", "pick.galTitle": "Add pictures for a gallery", "pick.device": "From this device",
+      "pick.camera": "Take a photo", "pick.files": "From Files", "pick.add": "Add",
+      "files.title": "Pick from Files", "files.up": "Up", "files.empty": "No pictures here.", "files.loading": "Loading…",
+      "files.err": "Files could not be read.", "files.picked": "{n} selected", "files.picked1": "1 selected",
+      "pic.title": "Picture", "pic.cap": "Caption", "pic.pos": "Place", "pic.right": "Right", "pic.left": "Left",
+      "pic.center": "Centre", "pic.full": "Full width", "pic.size": "Size", "pic.small": "Small", "pic.medium": "Medium",
+      "pic.large": "Large", "pic.insert": "Insert",
+      "ibox.title": "Infobox", "ibox.name": "Title", "ibox.image": "Picture", "ibox.pick": "Choose a picture…",
+      "ibox.change": "Change the picture…", "ibox.noImg": "No picture", "ibox.remImg": "Remove the picture",
+      "ibox.cap": "Caption", "ibox.rows": "Facts", "ibox.key": "Name", "ibox.val": "Value", "ibox.addRow": "Add a row",
+      "ibox.remRow": "Remove this row", "ibox.del": "Remove the infobox", "ibox.save": "Save",
+      "ibox.hint": "The infobox shows at the top right of the article, and above the text on a phone.",
+      "cite.title": "Add a reference", "cite.kind": "Kind", "cite.book": "Book", "cite.web": "Web page", "cite.person": "Person",
+      "cite.note": "Note", "cite.author": "Author", "cite.btitle": "Title", "cite.publisher": "Publisher", "cite.place": "Place",
+      "cite.year": "Year", "cite.pages": "Pages", "cite.isbn": "ISBN", "cite.url": "Address (https://…)", "cite.site": "Website",
+      "cite.date": "Date you read it", "cite.name": "Name", "cite.role": "Who they are", "cite.how": "How",
+      "cite.howPh": "Interview, conversation, letter…", "cite.pdate": "Date", "cite.text": "Text",
+      "cite.insert": "Insert", "cite.empty": "Fill in at least one field.", "cite.preview": "It will read:",
+      "cite.L.pages": "p.", "cite.L.retrieved": "Retrieved", "cite.L.interview": "Interview",
+      "tbl.title": "Table", "tbl.addRow": "Add a row", "tbl.addCol": "Add a column", "tbl.delRow": "Remove row {n}",
+      "tbl.delCol": "Remove column {n}", "tbl.align": "Alignment of column {n}", "tbl.auto": "Auto", "tbl.left": "Left",
+      "tbl.center": "Centre", "tbl.right": "Right", "tbl.save": "Insert", "tbl.hint": "The first row is the header row.",
+      "tbl.cell": "Row {r}, column {c}", "tbl.head": "Header",
+      "menu.print": "Print", "menu.pdf": "Save as PDF",
+      "toast.nofs": "Pictures need the orOS disk: open Wiki inside orOS.", "toast.imgFail": "Some files are not pictures that can be used.",
+      "toast.importing": "Adding the pictures…", "toast.pdfBusy": "Making the PDF…", "toast.pdfFail": "The PDF could not be made.",
+      "toast.file": "Saved",
       "cheat": [
         "## Heading  ·  ### Subheading",
         "**bold**  ·  *italic*  ·  ~~struck~~  ·  `code`",
@@ -83,7 +117,10 @@
         "> quote  ·  --- line  ·  ``` code block ```",
         "| A | B |  then  |---|---|  then rows: a table",
         "[[Category:Name]] files the article in a category",
-        "#REDIRECT [[Article]] as the first line sends readers to another article"
+        "#REDIRECT [[Article]] as the first line sends readers to another article",
+        "[[File:…|left|200px|Caption]] a picture (use the Picture button)  ·  {{gallery … }} several pictures",
+        "{{infobox  | title = …  | Name = value  }} the facts box at the top",
+        "text[^1] then a line  [^1]: source  adds a numbered reference; {{references}} places the list"
       ],
       "hist.title": "History of {t}", "hist.cur": "Current version", "hist.none": "No saved versions on this device yet.",
       "hist.nofs": "History needs the orOS disk: open Wiki inside orOS.",
@@ -161,6 +198,36 @@
       "tb.ul": "Λίστα με κουκκίδες", "tb.ol": "Αριθμημένη λίστα", "tb.link": "Σύνδεσμος σε άρθρο", "tb.xlink": "Σύνδεσμος στο web",
       "tb.table": "Πίνακας", "tb.code": "Κώδικας", "tb.quote": "Παράθεση", "tb.cat": "Κατηγορία",
       "tb.linkPh": "Τίτλος άρθρου", "tb.xlinkPh": "κείμενο", "tb.catPh": "Όνομα", "tb.col": "Στήλη",
+      "tb.img": "Εικόνα", "tb.gal": "Γκαλερί", "tb.ibox": "Πλαίσιο πληροφοριών", "tb.cite": "Παραπομπή",
+      "art.refs": "Παραπομπές", "art.refUp": "Πίσω στο κείμενο", "art.refMissing": "Αυτή η παραπομπή δεν έχει ακόμα κείμενο.",
+      "img.missing": "Αυτή η εικόνα δεν έχει φτάσει ακόμα σε αυτή τη συσκευή.", "img.open": "Άνοιγμα της εικόνας",
+      "pick.title": "Προσθήκη εικόνας", "pick.galTitle": "Εικόνες για γκαλερί", "pick.device": "Από αυτή τη συσκευή",
+      "pick.camera": "Λήψη φωτογραφίας", "pick.files": "Από τα Αρχεία", "pick.add": "Προσθήκη",
+      "files.title": "Επιλογή από τα Αρχεία", "files.up": "Πάνω", "files.empty": "Δεν υπάρχουν εικόνες εδώ.", "files.loading": "Φόρτωση…",
+      "files.err": "Δεν ήταν δυνατή η ανάγνωση των Αρχείων.", "files.picked": "Επιλέχτηκαν {n}", "files.picked1": "Επιλέχτηκε 1",
+      "pic.title": "Εικόνα", "pic.cap": "Λεζάντα", "pic.pos": "Θέση", "pic.right": "Δεξιά", "pic.left": "Αριστερά",
+      "pic.center": "Στο κέντρο", "pic.full": "Σε όλο το πλάτος", "pic.size": "Μέγεθος", "pic.small": "Μικρή", "pic.medium": "Μεσαία",
+      "pic.large": "Μεγάλη", "pic.insert": "Εισαγωγή",
+      "ibox.title": "Πλαίσιο πληροφοριών", "ibox.name": "Τίτλος", "ibox.image": "Εικόνα", "ibox.pick": "Διάλεξε εικόνα…",
+      "ibox.change": "Άλλαξε την εικόνα…", "ibox.noImg": "Χωρίς εικόνα", "ibox.remImg": "Αφαίρεση της εικόνας",
+      "ibox.cap": "Λεζάντα", "ibox.rows": "Στοιχεία", "ibox.key": "Όνομα", "ibox.val": "Τιμή", "ibox.addRow": "Προσθήκη γραμμής",
+      "ibox.remRow": "Αφαίρεση αυτής της γραμμής", "ibox.del": "Αφαίρεση του πλαισίου", "ibox.save": "Αποθήκευση",
+      "ibox.hint": "Το πλαίσιο φαίνεται πάνω δεξιά στο άρθρο, και πάνω από το κείμενο στο κινητό.",
+      "cite.title": "Προσθήκη παραπομπής", "cite.kind": "Είδος", "cite.book": "Βιβλίο", "cite.web": "Ιστοσελίδα", "cite.person": "Πρόσωπο",
+      "cite.note": "Σημείωση", "cite.author": "Συγγραφέας", "cite.btitle": "Τίτλος", "cite.publisher": "Εκδότης", "cite.place": "Τόπος",
+      "cite.year": "Έτος", "cite.pages": "Σελίδες", "cite.isbn": "ISBN", "cite.url": "Διεύθυνση (https://…)", "cite.site": "Ιστότοπος",
+      "cite.date": "Ημερομηνία που το διάβασες", "cite.name": "Όνομα", "cite.role": "Ποιος είναι", "cite.how": "Πώς",
+      "cite.howPh": "Συνέντευξη, συζήτηση, επιστολή…", "cite.pdate": "Ημερομηνία", "cite.text": "Κείμενο",
+      "cite.insert": "Εισαγωγή", "cite.empty": "Συμπλήρωσε τουλάχιστον ένα πεδίο.", "cite.preview": "Θα γράφει:",
+      "cite.L.pages": "σ.", "cite.L.retrieved": "Ανακτήθηκε", "cite.L.interview": "Συνέντευξη",
+      "tbl.title": "Πίνακας", "tbl.addRow": "Προσθήκη γραμμής", "tbl.addCol": "Προσθήκη στήλης", "tbl.delRow": "Αφαίρεση της γραμμής {n}",
+      "tbl.delCol": "Αφαίρεση της στήλης {n}", "tbl.align": "Στοίχιση της στήλης {n}", "tbl.auto": "Αυτόματη", "tbl.left": "Αριστερά",
+      "tbl.center": "Στο κέντρο", "tbl.right": "Δεξιά", "tbl.save": "Εισαγωγή", "tbl.hint": "Η πρώτη γραμμή είναι η γραμμή επικεφαλίδων.",
+      "tbl.cell": "Γραμμή {r}, στήλη {c}", "tbl.head": "Επικεφαλίδα",
+      "menu.print": "Εκτύπωση", "menu.pdf": "Αποθήκευση ως PDF",
+      "toast.nofs": "Οι εικόνες θέλουν τον δίσκο του orOS: άνοιξε το Wiki μέσα από το orOS.", "toast.imgFail": "Κάποια αρχεία δεν είναι εικόνες που μπορούν να χρησιμοποιηθούν.",
+      "toast.importing": "Προστίθενται οι εικόνες…", "toast.pdfBusy": "Φτιάχνεται το PDF…", "toast.pdfFail": "Δεν ήταν δυνατό να γίνει το PDF.",
+      "toast.file": "Αποθηκεύτηκε",
       "cheat": [
         "## Επικεφαλίδα  ·  ### Υποεπικεφαλίδα",
         "**έντονα**  ·  *πλάγια*  ·  ~~διαγραμμένα~~  ·  `κώδικας`",
@@ -170,7 +237,10 @@
         "> παράθεση  ·  --- γραμμή  ·  ``` μπλοκ κώδικα ```",
         "| Α | Β |  μετά  |---|---|  μετά οι γραμμές: ένας πίνακας",
         "[[Κατηγορία:Όνομα]] βάζει το άρθρο σε κατηγορία",
-        "#REDIRECT [[Άρθρο]] στην πρώτη γραμμή στέλνει τον αναγνώστη σε άλλο άρθρο"
+        "#REDIRECT [[Άρθρο]] στην πρώτη γραμμή στέλνει τον αναγνώστη σε άλλο άρθρο",
+        "[[Αρχείο:…|αριστερά|200px|Λεζάντα]] μια εικόνα (με το κουμπί Εικόνα)  ·  {{γκαλερί … }} πολλές εικόνες",
+        "{{πλαίσιο  | τίτλος = …  | Όνομα = τιμή  }} το πλαίσιο πληροφοριών στην κορυφή",
+        "κείμενο[^1] και μια γραμμή  [^1]: πηγή  προσθέτει αριθμημένη παραπομπή· το {{παραπομπές}} βάζει τη λίστα"
       ],
       "hist.title": "Ιστορικό: {t}", "hist.cur": "Τρέχουσα εκδοχή", "hist.none": "Δεν υπάρχουν ακόμα αποθηκευμένες εκδοχές σε αυτή τη συσκευή.",
       "hist.nofs": "Το ιστορικό θέλει τον δίσκο του orOS: άνοιξε το Wiki μέσα από το orOS.",
@@ -478,8 +548,9 @@
     }
     var body = el("div", "art-body");
     if (!a.x.trim()) body.appendChild(el("p", "hint", t("art.empty")));
-    else body.appendChild(C.render(document, parsed, { state: linkState, edit: t("art.secEdit"), toc: t("art.toc") }));
+    else body.appendChild(C.render(document, parsed, renderOpts({ edit: t("art.secEdit") })));
     art.appendChild(body);
+    hydrate(body);
     if (inf.cats.length) art.appendChild(catsBox(inf.cats));
     var foot = el("footer", "art-foot");
     foot.appendChild(el("span", null, t("art.lastEdit", { d: fmtDate(a.m) })));
@@ -537,6 +608,12 @@
       if (se) { e.preventDefault(); startEdit({ a: a.id, sec: Number(se.getAttribute("data-sec")) || 0 }); return; }
       var tl = n.closest("a[data-anchor]");
       if (tl) { e.preventDefault(); scrollToAnchor(tl.getAttribute("data-anchor")); return; }
+      var rf = n.closest("a[data-ref]");
+      if (rf) { e.preventDefault(); scrollToId(body, "ref-" + rf.getAttribute("data-ref")); return; }
+      var up = n.closest("a[data-cite]");
+      if (up) { e.preventDefault(); scrollToId(body, up.getAttribute("data-cite")); return; }
+      var im = n.closest("img.wimg");
+      if (im && im.src) { e.preventDefault(); lightbox(im); return; }
       var cl = n.closest("a[data-cat]");
       if (cl) { e.preventDefault(); go({ v: "cat", c: cl.getAttribute("data-cat") }); return; }
       var wl = n.closest("a.wl");
@@ -668,8 +745,9 @@
       pv.textContent = "";
       var p = C.parseDoc(ta.value);
       if (!ta.value.trim()) pv.appendChild(el("p", "hint", t("art.empty")));
-      else pv.appendChild(C.render(document, p, { state: linkState, toc: t("art.toc") }));
+      else pv.appendChild(C.render(document, p, renderOpts()));
       if (p.cats.length) pv.appendChild(catsBox(p.cats));
+      hydrate(pv);
     }
   }
 
@@ -683,7 +761,11 @@
     ["ol", "1.", function () { linePrefix("1. "); }],
     ["link", "[[ ]]", function () { wrap("[[", "]]", t("tb.linkPh")); }],
     ["xlink", "🔗", function () { wrap("[", "](https://)", t("tb.xlinkPh")); }],
-    ["table", "▦", function () { insertBlock("| " + t("tb.col") + " | " + t("tb.col") + " |\n|---|---|\n|  |  |\n"); }],
+    ["table", "▦", function () { tableDialog(); }],
+    ["img", "🖼", function () { pictureTool(); }],
+    ["gal", "▤", function () { galleryTool(); }],
+    ["ibox", "ⓘ", function () { infoboxDialog(); }],
+    ["cite", "[1]", function () { citeDialog(); }],
     ["code", "</>", function () { codeTool(); }],
     ["quote", "❝", function () { linePrefix("> "); }],
     ["cat", "#", function () { insertBlock("[[" + (LANG === "el" ? "Κατηγορία" : "Category") + ":" + t("tb.catPh") + "]]\n", true); }]
@@ -693,7 +775,11 @@
     bar.setAttribute("role", "toolbar");
     bar.setAttribute("aria-label", t("ed.write"));
     TOOLS.forEach(function (tool) {
-      var b = btn("tb-btn tb-" + tool[0], tool[1], function () { tool[2](); $("ed-text").focus(); saveDraftSoon(); });
+      var b = btn("tb-btn tb-" + tool[0], tool[1], function () {
+        keepCaret();
+        tool[2]();
+        if (!openDlg) { $("ed-text").focus(); saveDraftSoon(); }
+      });
       setLabel(b, t("tb." + tool[0]));
       b.addEventListener("mousedown", function (e) { e.preventDefault(); });   // keep the selection
       bar.appendChild(b);
@@ -865,6 +951,605 @@
       .catch(function () { toast(t("toast.histFail")); });
   }
 
+  // ---------- 5b. Pictures, infobox, references, tables, PDF (wave 2) ----------
+  // Pictures are designkit/assets.js files on the orOS disk
+  // (/internal/Assets/<sha256>.jpg|png, synced by Vault Drive); the
+  // text keeps only the id. The renderer never sets a src: hydrate()
+  // gives each <img data-img> a blob: URL read from the disk.
+  function AS() { return window.orosDK && window.orosDK.assets; }
+  function renderOpts(extra) {
+    return Object.assign({ state: linkState, toc: t("art.toc"), refs: t("art.refs"), refUp: t("art.refUp"), refMissing: t("art.refMissing") }, extra || {});
+  }
+  var imgUrls = {};          // asset id → blob: URL
+  function imgUrl(id) {
+    if (imgUrls[id]) return Promise.resolve(imgUrls[id]);
+    var A = AS();
+    if (!A || !C.IMG_RE.test(id)) return Promise.resolve("");
+    return A.blob(id).then(function (b) {
+      if (!b) return "";
+      if (!imgUrls[id]) imgUrls[id] = URL.createObjectURL(b);
+      return imgUrls[id];
+    }, function () { return ""; });
+  }
+  function hydrate(root) {
+    [].forEach.call(root.querySelectorAll("img[data-img]"), function (im) {
+      var id = im.getAttribute("data-img");
+      if (!C.IMG_RE.test(id)) return;
+      if (imgUrls[id]) { im.src = imgUrls[id]; return; }
+      im.classList.add("wait");
+      imgUrl(id).then(function (u) {
+        im.classList.remove("wait");
+        if (u) { im.src = u; im.title = t("img.open"); }
+        else { im.classList.add("missing"); im.title = t("img.missing"); }
+      });
+    });
+  }
+  function scrollToId(root, id) {
+    var n = null;
+    [].some.call(root.querySelectorAll("[id]"), function (x) { if (x.id === id) { n = x; return true; } return false; });
+    if (!n) return;
+    var sec = n.closest && n.closest(".sec");
+    if (sec) sec.classList.remove("closed");
+    n.scrollIntoView({ block: "center" });
+    n.classList.remove("flash");
+    void n.offsetWidth;
+    n.classList.add("flash");
+  }
+  function lightbox(im) {
+    var box = $("lb-img");
+    box.src = im.src;
+    box.alt = im.alt || "";
+    var fig = im.closest && im.closest("figure");
+    var cap = fig && fig.querySelector("figcaption");
+    $("lb-cap").textContent = cap ? cap.textContent : (im.alt || "");
+    showDlg("lightbox");
+  }
+
+  // The editor's selection, kept while a dialog is open.
+  var caret = { s: 0, e: 0 };
+  function keepCaret() {
+    var ta = $("ed-text");
+    caret = ta ? { s: ta.selectionStart, e: ta.selectionEnd } : { s: 0, e: 0 };
+  }
+  function edFocus() {
+    var ta = $("ed-text");
+    if (!ta) return null;
+    ta.focus();
+    ta.setSelectionRange(caret.s, caret.e);
+    return ta;
+  }
+  function putBlock(block) { if (edFocus()) { insertBlock(block); saveDraftSoon(); } }
+  function replaceRange(start, end, text) {
+    var ta = edFocus();
+    if (!ta) return;
+    ta.setRangeText(text, start, end, "end");
+    saveDraftSoon();
+  }
+
+  // A form in the shared dialog. o: { title, body, ok, check() → error, done(), extra:[[label, fn, cls]] }
+  var formCur = null;
+  function openForm(o) {
+    formCur = o;
+    $("form-title").textContent = o.title;
+    var body = $("form-body");
+    body.textContent = "";
+    body.appendChild(o.body);
+    $("form-err").textContent = "";
+    var acts = $("form-actions");
+    acts.textContent = "";
+    (o.extra || []).forEach(function (x) { acts.appendChild(btn("chip" + (x[2] ? " " + x[2] : ""), x[0], x[1])); });
+    acts.appendChild(el("span", "spacer"));
+    acts.appendChild(btn("chip", t("btn.cancel"), hideDlg));
+    if (o.ok) acts.appendChild(btn("chip primary", o.ok, formOk));
+    showDlg("form");
+  }
+  function formOk() {
+    var o = formCur;
+    if (!o) return;
+    var err = o.check ? o.check() : "";
+    if (err) { $("form-err").textContent = err; return; }
+    formCur = null;
+    hideDlg();
+    if (o.done) o.done();
+  }
+  function field(label, input, cls) {
+    var l = el("label", "fld" + (cls ? " " + cls : ""));
+    l.appendChild(el("span", "lbl", label));
+    l.appendChild(input);
+    return l;
+  }
+  function inp(value, ph, max) {
+    var i = el("input");
+    i.type = "text";
+    i.autocomplete = "off";
+    i.value = value || "";
+    if (ph) i.placeholder = ph;
+    i.maxLength = max || 500;
+    return i;
+  }
+  function sel(opts, value) {
+    var s = el("select");
+    opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; s.appendChild(op); });
+    s.value = value;
+    return s;
+  }
+  function thumb(id) {
+    var im = el("img", "thumb");
+    im.alt = "";
+    im.setAttribute("data-img", id);
+    var wrap = el("div", "thumb-box");
+    wrap.appendChild(im);
+    hydrate(wrap);
+    return wrap;
+  }
+  function coarse() { return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); }
+
+  // Picking pictures: this device, the camera, or the orOS disk.
+  // cb([{ id, w, h, name }])
+  function pickImages(multi, cb) {
+    if (!AS() || !fsApi()) { toast(t("toast.nofs")); return; }
+    var items = [[t("pick.device"), function () { chooseFiles(multi, false, cb); }]];
+    if (coarse()) items.push([t("pick.camera"), function () { chooseFiles(false, true, cb); }]);
+    items.push([t("pick.files"), function () { filesDialog(multi, cb); }]);
+    var list = $("menu-list");
+    list.textContent = "";
+    $("menu-title").textContent = t(multi ? "pick.galTitle" : "pick.title");
+    items.forEach(function (it) { list.appendChild(btn("menu-item", it[0], function () { hideDlg(); it[1](); })); });
+    showDlg("menu");
+  }
+  function chooseFiles(multi, camera, cb) {
+    var f = document.createElement("input");
+    f.type = "file";
+    f.accept = "image/*";
+    if (multi) f.multiple = true;
+    if (camera) f.setAttribute("capture", "environment");
+    f.addEventListener("change", function () { importAll([].slice.call(f.files || []), cb); });
+    f.click();
+  }
+  function importAll(files, cb) {
+    files = files.slice(0, 60);
+    if (!files.length) return;
+    if (files.length > 1) toast(t("toast.importing"));
+    var out = [], bad = 0, chain = Promise.resolve();
+    files.forEach(function (file) {
+      chain = chain.then(function () { return AS().importFile(file); })
+        .then(function (r) { out.push(r); }, function () { bad++; });
+    });
+    chain.then(function () {
+      if (bad) toast(t("toast.imgFail"));
+      if (out.length) cb(out);
+    });
+  }
+  var IMG_EXT = /\.(jpe?g|png|gif|webp|bmp|svg|avif)$/i;
+  function filesDialog(multi, cb) {
+    var F = fsApi();
+    if (!F || typeof F.ls !== "function") { toast(t("toast.nofs")); return; }
+    var box = el("div", "fl");
+    var bar = el("div", "fl-bar");
+    var up = btn("chip small", "↑ " + t("files.up"));
+    var where = el("span", "fl-path");
+    var count = el("span", "fl-count");
+    bar.appendChild(up); bar.appendChild(where); bar.appendChild(count);
+    var list = el("div", "fl-list");
+    box.appendChild(bar); box.appendChild(list);
+    var cwd = "/internal", gen = 0, picked = [];
+    function showCount() { count.textContent = !multi || !picked.length ? "" : (picked.length === 1 ? t("files.picked1") : t("files.picked", { n: picked.length })); }
+    function readAll(paths) {
+      Promise.all(paths.map(function (p) {
+        return F.read(p).then(function (b) { return new File([b], p.split("/").pop(), { type: b.type || "" }); }, function () { return null; });
+      })).then(function (files) { importAll(files.filter(Boolean), cb); });
+    }
+    function go(path) {
+      cwd = path;
+      var my = ++gen;
+      up.disabled = path === "/internal";
+      where.textContent = path === "/internal" ? "/" : path.replace(/^\/internal/, "");
+      list.textContent = "";
+      list.appendChild(el("p", "hint", t("files.loading")));
+      Promise.resolve(typeof F.ready === "function" ? F.ready() : null).then(function () { return F.ls(path); }).then(function (entries) {
+        if (my !== gen) return;
+        list.textContent = "";
+        var shown = 0;
+        (entries || []).slice().sort(function (a, b) { return (b.dir ? 1 : 0) - (a.dir ? 1 : 0) || String(a.name).localeCompare(String(b.name)); }).forEach(function (en) {
+          if (!en || typeof en.name !== "string") return;
+          if (!en.dir && !IMG_EXT.test(en.name)) return;
+          if (path === "/internal" && /^(Assets|Wiki)$/.test(en.name)) return;
+          shown++;
+          var full = path + "/" + en.name;
+          var b = btn("fl-item" + (en.dir ? " dir" : ""), (en.dir ? "📁 " : "🖼 ") + en.name, function () {
+            if (en.dir) { go(full); return; }
+            if (!multi) { hideDlg(); readAll([full]); return; }
+            var k = picked.indexOf(full);
+            if (k >= 0) picked.splice(k, 1); else picked.push(full);
+            b.setAttribute("aria-pressed", k >= 0 ? "false" : "true");
+            showCount();
+          });
+          if (multi && !en.dir) b.setAttribute("aria-pressed", picked.indexOf(full) >= 0 ? "true" : "false");
+          list.appendChild(b);
+        });
+        if (!shown) list.appendChild(el("p", "hint", t("files.empty")));
+      }, function () {
+        if (my !== gen) return;
+        list.textContent = "";
+        list.appendChild(el("p", "hint", t("files.err")));
+      });
+    }
+    up.addEventListener("click", function () { if (cwd !== "/internal") go(cwd.replace(/\/[^/]+$/, "") || "/internal"); });
+    openForm({
+      title: t("files.title"), body: box, ok: multi ? t("pick.add") : "",
+      check: function () { return picked.length ? "" : t("files.empty"); },
+      done: function () { readAll(picked.slice()); }
+    });
+    go("/internal");
+  }
+
+  // Toolbar: one picture with caption, place and size.
+  function pictureTool() {
+    pickImages(false, function (list) { pictureForm(list[0]); });
+  }
+  function pictureForm(img) {
+    var body = el("div", "form");
+    body.appendChild(thumb(img.id));
+    var cap = inp("", "", 300);
+    var pos = sel([["right", t("pic.right")], ["left", t("pic.left")], ["center", t("pic.center")], ["none", t("pic.full")]], "right");
+    var size = sel([["150", t("pic.small")], ["", t("pic.medium")], ["360", t("pic.large")]], "");
+    body.appendChild(field(t("pic.cap"), cap));
+    var row = el("div", "fld-row");
+    row.appendChild(field(t("pic.pos"), pos));
+    row.appendChild(field(t("pic.size"), size));
+    body.appendChild(row);
+    pos.addEventListener("change", function () { size.disabled = pos.value === "none"; });
+    openForm({
+      title: t("pic.title"), body: body, ok: t("pic.insert"),
+      done: function () {
+        var full = pos.value === "none";
+        putBlock(C.fileText(img.id, { al: pos.value, w: full ? 0 : Number(size.value) || 0, cap: cap.value }, LANG));
+      }
+    });
+  }
+  function galleryTool() {
+    pickImages(true, function (list) {
+      putBlock(C.galleryText(list.map(function (r) { return { id: r.id, cap: "" }; }), LANG));
+    });
+  }
+
+  // Infobox: a form over the {{infobox}} block (the one at the caret,
+  // else the first one); a new one goes at the top of the text.
+  function infoboxDialog() {
+    var ta = $("ed-text");
+    if (!ta) return;
+    var blk = C.blockAt(ta.value, caret.s, "ibox");
+    var o = blk ? C.iboxParse(blk.body) : { title: ed && !ed.sec ? ($("ed-name") ? $("ed-name").value : ed.title) : "", image: "", caption: "", rows: [["", ""]] };
+    if (!o.rows.length) o.rows.push(["", ""]);
+    var body = el("div", "form");
+    body.appendChild(el("p", "hint small", t("ibox.hint")));
+    var ti = inp(o.title, "", 200);
+    body.appendChild(field(t("ibox.name"), ti));
+    var img = o.image;
+    var imgRow = el("div", "ibox-img-row");
+    function drawImg() {
+      imgRow.textContent = "";
+      if (img) imgRow.appendChild(thumb(img));
+      else imgRow.appendChild(el("span", "hint small", t("ibox.noImg")));
+      var acts = el("span", "chips inline");
+      acts.appendChild(btn("chip small", t(img ? "ibox.change" : "ibox.pick"), function () {
+        var keep = collect();
+        pickImages(false, function (list) { keep.image = list[0].id; reopen(keep); });
+      }));
+      if (img) acts.appendChild(btn("chip small", t("ibox.remImg"), function () { img = ""; drawImg(); }));
+      imgRow.appendChild(acts);
+    }
+    var imgFld = el("div", "fld");
+    imgFld.appendChild(el("span", "lbl", t("ibox.image")));
+    imgFld.appendChild(imgRow);
+    body.appendChild(imgFld);
+    drawImg();
+    var cap = inp(o.caption, "", 300);
+    body.appendChild(field(t("ibox.cap"), cap));
+    body.appendChild(el("span", "lbl", t("ibox.rows")));
+    var rows = el("div", "kv");
+    body.appendChild(rows);
+    function addRow(k, v) {
+      var r = el("div", "kv-row");
+      var ki = inp(k, t("ibox.key"), 80), vi = inp(v, t("ibox.val"), 500);
+      ki.setAttribute("aria-label", t("ibox.key"));
+      vi.setAttribute("aria-label", t("ibox.val"));
+      var del = btn("icon-btn small", null, function () { r.remove(); });
+      del.innerHTML = ICON.close;
+      setLabel(del, t("ibox.remRow"));
+      r.appendChild(ki); r.appendChild(vi); r.appendChild(del);
+      rows.appendChild(r);
+      return ki;
+    }
+    o.rows.forEach(function (r) { addRow(r[0], r[1]); });
+    body.appendChild(btn("chip small", "+ " + t("ibox.addRow"), function () { addRow("", "").focus(); }));
+    function collect() {
+      return {
+        title: ti.value, image: img, caption: cap.value,
+        rows: [].map.call(rows.querySelectorAll(".kv-row"), function (r) {
+          var i2 = r.querySelectorAll("input");
+          return [i2[0].value, i2[1].value];
+        }).filter(function (r) { return r[0].trim() || r[1].trim(); })
+      };
+    }
+    // the picture picker replaces this dialog; it comes back with the same fields
+    function reopen(keep) { infoboxWith(keep, blk); }
+    infoboxOpen(body, collect, blk);
+  }
+  function infoboxWith(o, blk) {
+    // re-render the form with given fields (after picking a picture)
+    var ta = $("ed-text");
+    if (!ta) return;
+    var text = C.iboxText(o, LANG);
+    if (blk) {
+      // keep the block in the text as the source of truth, then reopen on it
+      var cur = C.blockAt(ta.value, blk.start, "ibox");
+      if (cur) { replaceRange(cur.start, cur.end, text); caret = { s: cur.start, e: cur.start }; }
+    } else {
+      var at = ed && ed.sec ? caret.s : 0;
+      if (ed && ed.sec) putBlock(text); else replaceRange(0, 0, text + "\n\n");
+      caret = { s: at, e: at };
+    }
+    infoboxDialog();
+  }
+  function infoboxOpen(body, collect, blk) {
+    if (blk) body.appendChild(btn("chip small danger", t("ibox.del"), function () {
+      formCur = null;
+      hideDlg();
+      var ta = $("ed-text"), cur = ta && C.blockAt(ta.value, blk.start, "ibox");
+      if (cur) {
+        var end = cur.end;
+        while (ta.value.charAt(end) === "\n" && end < cur.end + 2) end++;
+        replaceRange(cur.start, end, "");
+      }
+    }));
+    openForm({
+      title: t("ibox.title"), body: body, ok: t("ibox.save"),
+      done: function () {
+        var ta = $("ed-text");
+        if (!ta) return;
+        var text = C.iboxText(collect(), LANG);
+        var cur = blk && C.blockAt(ta.value, blk.start, "ibox");
+        if (cur) replaceRange(cur.start, cur.end, text);
+        else if (ed && ed.sec) putBlock(text);
+        else { replaceRange(0, 0, text + "\n\n"); }
+      }
+    });
+  }
+
+  // References: a Cite form writes "[^n]" at the caret and the
+  // definition near the end of the text.
+  function citeDialog() {
+    var ta = $("ed-text");
+    if (!ta) return;
+    var body = el("div", "form");
+    var kind = sel([["book", t("cite.book")], ["web", t("cite.web")], ["person", t("cite.person")], ["note", t("cite.note")]], "book");
+    body.appendChild(field(t("cite.kind"), kind));
+    var FIELDS = {
+      book: [["author", "cite.author"], ["title", "cite.btitle"], ["publisher", "cite.publisher"], ["place", "cite.place"], ["year", "cite.year"], ["pages", "cite.pages"], ["isbn", "cite.isbn"]],
+      web: [["title", "cite.btitle"], ["url", "cite.url"], ["site", "cite.site"], ["author", "cite.author"], ["date", "cite.date"]],
+      person: [["name", "cite.name"], ["role", "cite.role"], ["how", "cite.how"], ["date", "cite.pdate"]],
+      note: [["text", "cite.text"]]
+    };
+    var box = el("div", "cite-fields"), inputs = {};
+    body.appendChild(box);
+    var prev = el("p", "cite-prev");
+    body.appendChild(el("span", "lbl", t("cite.preview")));
+    body.appendChild(prev);
+    var L = { pages: t("cite.L.pages"), retrieved: t("cite.L.retrieved"), interview: t("cite.L.interview") };
+    function values() { var o = {}; Object.keys(inputs).forEach(function (k) { o[k] = inputs[k].value; }); return o; }
+    function preview() {
+      prev.textContent = "";
+      var txt = C.citeText(kind.value, values(), L);
+      if (txt) C.renderInline(document, C.parseInline(txt, 0, { links: [], cats: [], noRef: true }).nodes, prev, renderOpts());
+      else prev.appendChild(el("span", "hint small", "—"));
+    }
+    function draw() {
+      var keep = values();
+      box.textContent = "";
+      inputs = {};
+      FIELDS[kind.value].forEach(function (f) {
+        var i = inp(keep[f[0]] || (f[0] === "date" && kind.value === "web" ? new Date().toISOString().slice(0, 10) : ""),
+                    f[0] === "how" ? t("cite.howPh") : "", f[0] === "url" ? 2000 : 500);
+        if (f[0] === "url") { i.type = "url"; i.inputMode = "url"; }
+        i.addEventListener("input", preview);
+        inputs[f[0]] = i;
+        box.appendChild(field(t(f[1]), i));
+      });
+      preview();
+    }
+    kind.addEventListener("change", draw);
+    draw();
+    openForm({
+      title: t("cite.title"), body: body, ok: t("cite.insert"),
+      check: function () { return C.citeText(kind.value, values(), L) ? "" : t("cite.empty"); },
+      done: function () {
+        var ta2 = edFocus();
+        if (!ta2) return;
+        var name = C.nextRefName((ed && !ed.whole ? ed.baseX + "\n" : "") + ta2.value);
+        var r = C.addRef(ta2.value, caret.e, name, C.citeText(kind.value, values(), L));
+        ta2.value = r.text;
+        ta2.setSelectionRange(r.pos, r.pos);
+        saveDraftSoon();
+      }
+    });
+  }
+
+  // Table editor: the table at the caret, else a new 2 × 2 one.
+  function tableDialog() {
+    var ta = $("ed-text");
+    if (!ta) return;
+    var found = C.tableAt(ta.value, caret.s);
+    // cells show "|" as typed; tableText escapes it again
+    function unesc(c) { return String(c).replace(/\\\|/g, "|"); }
+    var head = found ? found.head.map(unesc) : [t("tb.col") + " 1", t("tb.col") + " 2"];
+    var rows = found ? found.rows.map(function (r) { return r.map(unesc); }) : [["", ""]];
+    var al = found ? found.al.slice() : [];
+    var body = el("div", "form");
+    body.appendChild(el("p", "hint small", t("tbl.hint")));
+    var wrap = el("div", "te-wrap");
+    body.appendChild(wrap);
+    var acts = el("div", "chips");
+    acts.appendChild(btn("chip small", "+ " + t("tbl.addRow"), function () { read(); rows.push([]); draw(); focusCell(rows.length, 0); }));
+    acts.appendChild(btn("chip small", "+ " + t("tbl.addCol"), function () { read(); head.push(""); draw(); focusCell(0, cols() - 1); }));
+    body.appendChild(acts);
+    function cols() { var n = Math.max(1, head.length); rows.forEach(function (r) { n = Math.max(n, r.length); }); return n; }
+    function read() {
+      var tb = wrap.querySelector("table");
+      if (!tb) return;
+      [].forEach.call(tb.querySelectorAll("input[data-r]"), function (i) {
+        var r = Number(i.getAttribute("data-r")), c = Number(i.getAttribute("data-c"));
+        if (r === 0) head[c] = i.value; else { rows[r - 1] = rows[r - 1] || []; rows[r - 1][c] = i.value; }
+      });
+      [].forEach.call(tb.querySelectorAll("select[data-c]"), function (s) { al[Number(s.getAttribute("data-c"))] = s.value; });
+    }
+    function focusCell(r, c) { var i = wrap.querySelector('input[data-r="' + r + '"][data-c="' + c + '"]'); if (i) i.focus(); }
+    function draw() {
+      var n = cols();
+      wrap.textContent = "";
+      var tb = el("table", "te");
+      var top = el("tr");
+      top.appendChild(el("td"));
+      for (var c = 0; c < n; c++) {
+        var td = el("td", "te-ctl");
+        var s = sel([["", t("tbl.auto")], ["left", t("tbl.left")], ["center", t("tbl.center")], ["right", t("tbl.right")]], al[c] || "");
+        s.setAttribute("data-c", String(c));
+        s.setAttribute("aria-label", t("tbl.align", { n: c + 1 }));
+        td.appendChild(s);
+        if (n > 1) {
+          var dc = btn("icon-btn small", null, (function (cc) { return function () { read(); head.splice(cc, 1); rows.forEach(function (r) { r.splice(cc, 1); }); al.splice(cc, 1); draw(); }; })(c));
+          dc.innerHTML = ICON.close;
+          setLabel(dc, t("tbl.delCol", { n: c + 1 }));
+          td.appendChild(dc);
+        }
+        top.appendChild(td);
+      }
+      tb.appendChild(top);
+      [head].concat(rows).forEach(function (cells, r) {
+        var tr = el("tr", r === 0 ? "te-head" : "");
+        var lead = el("td", "te-ctl");
+        if (r > 0) {
+          var dr = btn("icon-btn small", null, function () { read(); rows.splice(r - 1, 1); draw(); });
+          dr.innerHTML = ICON.close;
+          setLabel(dr, t("tbl.delRow", { n: r }));
+          lead.appendChild(dr);
+        }
+        tr.appendChild(lead);
+        for (var c2 = 0; c2 < n; c2++) {
+          var td2 = el("td");
+          var i = inp(cells[c2] || "", "", 1000);
+          i.setAttribute("data-r", String(r));
+          i.setAttribute("data-c", String(c2));
+          i.setAttribute("aria-label", r === 0 ? t("tbl.head") + " " + (c2 + 1) : t("tbl.cell", { r: r, c: c2 + 1 }));
+          td2.appendChild(i);
+          tr.appendChild(td2);
+        }
+        tb.appendChild(tr);
+      });
+      wrap.appendChild(tb);
+    }
+    draw();
+    openForm({
+      title: t("tbl.title"), body: body, ok: t("tbl.save"),
+      done: function () {
+        read();
+        var text = C.tableText(head, rows, al);
+        var ta2 = $("ed-text");
+        var cur = found && ta2 ? C.tableAt(ta2.value, found.start) : null;
+        if (cur && cur.start === found.start) replaceRange(cur.start, cur.end, text);
+        else putBlock(text);
+      }
+    });
+  }
+
+  // Print: the shell prints this frame with the print styles.
+  function printArt(a) {
+    if (!view || view.v !== "art" || view.a !== a.id) openArt(a);
+    setTimeout(function () { try { window.focus(); window.print(); } catch (e) {} }, 300);
+  }
+  // Save as PDF: jsPDF + the Noto fonts, all vendored, loaded on first use.
+  var jspdfP = null, fontsP = null;
+  function loadJsPDF() {
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (jspdfP) return jspdfP;
+    jspdfP = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = "../vendor/jspdf.umd.min.js";
+      sc.onload = function () { if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF); else reject(new Error("jspdf")); };
+      sc.onerror = function () { jspdfP = null; sc.remove(); reject(new Error("jspdf")); };
+      document.head.appendChild(sc);
+    });
+    return jspdfP;
+  }
+  function fontB64(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error("font"); return r.arrayBuffer(); }).then(function (buf) {
+      var u8 = new Uint8Array(buf), bin = "";
+      for (var i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+      return btoa(bin);
+    });
+  }
+  function loadFonts() {
+    if (fontsP) return fontsP;
+    var names = window.WikiPdf.FONTS;
+    fontsP = Promise.all(names.map(function (n) { return fontB64("../vendor/noto/" + n + ".ttf"); }))
+      .then(function (list) { var o = {}; names.forEach(function (n, i) { o[n] = list[i]; }); return o; })
+      .catch(function (e) { fontsP = null; throw e; });
+    return fontsP;
+  }
+  function pdfImage(id) {
+    var A = AS();
+    if (!A) return Promise.resolve(null);
+    return A.blob(id).then(function (b) {
+      if (!b) return null;
+      return A.decode(b).then(function (img) {
+        return b.arrayBuffer().then(function (ab) { return { data: new Uint8Array(ab), w: img.naturalWidth, h: img.naturalHeight }; });
+      });
+    }).catch(function () { return null; });
+  }
+  function dialogHost() {
+    try { return window.orosDialog || (window.parent && window.parent.orosDialog) || null; }
+    catch (e) { return window.orosDialog || null; }
+  }
+  function saveBlob(blob, name, mime, ext) {
+    var dlg = dialogHost();
+    if (dlg && typeof dlg.saveFile === "function") {
+      var acc = {};
+      acc[mime] = ["." + ext];
+      dlg.saveFile({ blob: blob, filename: name, mime: mime, types: [{ description: ext.toUpperCase(), accept: acc }] })
+        .then(function (r) { if (r && r.ok) toast(t("toast.file")); }, function () {});
+      return;
+    }
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
+  }
+  var pdfBusy = false;
+  function pdfArt(a) {
+    if (pdfBusy || !window.WikiPdf) return;
+    pdfBusy = true;
+    toast(t("toast.pdfBusy"));
+    var parsed = C.parseDoc(a.x), imgs = {};
+    var chain = Promise.resolve();
+    C.images(parsed).forEach(function (id) {
+      chain = chain.then(function () { return pdfImage(id); }).then(function (p) { if (p) imgs[id] = p; });
+    });
+    Promise.all([loadJsPDF(), loadFonts(), chain]).then(function (r) {
+      var w = curWiki();
+      var doc = window.WikiPdf.build(r[0], r[1], {
+        title: a.t, sub: [wikiName(w), t("art.lastEdit", { d: fmtDate(a.m) })].filter(Boolean).join(" · "),
+        parsed: parsed, imgs: imgs, L: { refs: t("art.refs"), missingImg: t("img.missing") }
+      });
+      var stem = (C.slug(a.t) || "article").replace(/_/g, "-").slice(0, 60);
+      saveBlob(doc.output("blob"), stem + ".pdf", "application/pdf", "pdf");
+    }).catch(function (e) {
+      try { console.error("[orOS wiki] pdf", e); } catch (x) {}
+      toast(t("toast.pdfFail"));
+    }).then(function () { pdfBusy = false; });
+  }
+
   // ---------- 6. History + parallel edits ----------
   var revCache = {};   // path → parsed revision
   function listRevs(aid) {
@@ -965,8 +1650,9 @@
     art.appendChild(note);
     var body = el("div", "art-body");
     var parsed = C.parseDoc(rv.x);
-    body.appendChild(C.render(document, parsed, { state: linkState, toc: t("art.toc") }));
+    body.appendChild(C.render(document, parsed, renderOpts()));
     art.appendChild(body);
+    hydrate(body);
     if (parsed.cats.length) art.appendChild(catsBox(parsed.cats));
     page.appendChild(art);
     wireArticleBody(body, a);
@@ -1332,6 +2018,8 @@
       [t("menu.copy"), function () { copyText(a.x); }]
     ];
     if (w && w.main !== a.id) items.push([t("menu.main"), function () { w.main = a.id; w.m = now(w.m); persist(); toast(t("toast.main")); render(); }]);
+    items.push([t("menu.print"), function () { printArt(a); }]);
+    items.push([t("menu.pdf"), function () { pdfArt(a); }]);
     items.push([t("menu.del"), function () { deleteArt(a); }, "danger"]);
     var list = $("menu-list");
     list.textContent = "";

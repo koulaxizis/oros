@@ -1269,6 +1269,18 @@ body.dbx-mode #status { display: none; }
 .dbx-seln, .dbx-job-text { font-size: 13px; }
 .dbx-job-text { flex: 1; min-width: 0; color: var(--text-dim, #999); }
 .dbx-confirm p { max-width: 420px; line-height: 1.5; }
+.dbx-pick { width: min(440px, calc(100vw - 32px)); }
+.dbx-pick-head { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.dbx-pick-head button.tool { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.dbx-pick-head button.tool:disabled { opacity: .4; }
+.dbx-pick-path { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbx-pick-list { min-height: 120px; }
+.dbx-pick-row {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: none; border: 0; color: inherit; font: inherit; text-align: left;
+}
+.dbx-pick-row span { overflow: hidden; text-overflow: ellipsis; }
+.dbx-pick-empty { padding: 12px 8px; color: var(--text-dim, #999); font-size: 13px; }
 
 @media (max-width: 720px) {
   .dbx-list .entry { grid-template-columns: 32px 22px 1fr 70px; }
@@ -1284,6 +1296,8 @@ body.dbx-mode #status { display: none; }
   .dbx-menu button { min-height: 44px; }
   .dbx-check { min-width: 32px; min-height: 32px; }
   #dbx-bar button.tool { min-width: 44px; min-height: 44px; }
+  .dbx-pick-head button.tool { width: 44px; height: 44px; }
+  .dbx-pick-row { min-height: 44px; }
 }
 
 /* The HTML [hidden] attribute must always win. Without this rule

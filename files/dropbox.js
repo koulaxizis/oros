@@ -139,7 +139,23 @@
       "x.busy":      "A transfer is already running.",
       "x.resume":    "A copy or move to the orOS disk was interrupted.",
       "x.resumeGo":  "Continue",
-      "x.resumeDrop":"Discard"
+      "x.resumeDrop":"Discard",
+      "e.pickTitle": "Send to Dropbox",
+      "e.pickHint":  "Choose the Dropbox folder for the copies.",
+      "e.here":      "Send here",
+      "e.up":        "Up one folder",
+      "e.noFolders": "No folders here",
+      "e.syncHere":  "This is orOS sync's own folder. Choose another one.",
+      "e.connectFirst": "Connect Dropbox first, then send the files again.",
+      "e.confirm":   "Send a copy of {n} files ({size}) to the Dropbox folder \"{dst}\"?",
+      "e.note":      "Dropbox gets ordinary, unencrypted copies, so you can share them. The files stay as they are in orOS. A name already in use gets \"(1)\" added; nothing in Dropbox is overwritten.",
+      "e.skipped":   "{n} files are left out (over 300 MB, or past the limit of 1000 files / 1 GB per transfer).",
+      "e.sending":   "Sending {i} of {n} to Dropbox…",
+      "e.sent":      "{n} files sent to Dropbox",
+      "e.failed":    "{n} files could not be sent",
+      "e.stopped":   "Stopped. Files already sent stay in Dropbox.",
+      "e.none":      "Nothing to send.",
+      "e.root":      "Dropbox"
     },
     el: {
       "tree":        "Dropbox",
@@ -227,7 +243,23 @@
       "x.busy":      "Μια μεταφορά είναι ήδη σε εξέλιξη.",
       "x.resume":    "Μια αντιγραφή ή μεταφορά στον δίσκο του orOS διακόπηκε.",
       "x.resumeGo":  "Συνέχεια",
-      "x.resumeDrop":"Απόρριψη"
+      "x.resumeDrop":"Απόρριψη",
+      "e.pickTitle": "Αποστολή στο Dropbox",
+      "e.pickHint":  "Διάλεξε τον φάκελο του Dropbox για τα αντίγραφα.",
+      "e.here":      "Αποστολή εδώ",
+      "e.up":        "Έναν φάκελο πάνω",
+      "e.noFolders": "Δεν υπάρχουν φάκελοι εδώ",
+      "e.syncHere":  "Αυτός είναι ο φάκελος του συγχρονισμού του orOS. Διάλεξε άλλον.",
+      "e.connectFirst": "Σύνδεσε πρώτα το Dropbox και μετά στείλε ξανά τα αρχεία.",
+      "e.confirm":   "Αποστολή αντιγράφου {n} αρχείων ({size}) στον φάκελο «{dst}» του Dropbox;",
+      "e.note":      "Το Dropbox παίρνει κανονικά, μη κρυπτογραφημένα αντίγραφα, για να τα μοιραστείς. Τα αρχεία μένουν ως έχουν στο orOS. Αν ένα όνομα υπάρχει ήδη, μπαίνει «(1)»· τίποτα στο Dropbox δεν αντικαθίσταται.",
+      "e.skipped":   "{n} αρχεία μένουν εκτός (πάνω από 300 MB, ή πέρα από το όριο των 1000 αρχείων / 1 GB ανά μεταφορά).",
+      "e.sending":   "Αποστολή {i} από {n} στο Dropbox…",
+      "e.sent":      "Στάλθηκαν {n} αρχεία στο Dropbox",
+      "e.failed":    "{n} αρχεία δεν στάλθηκαν",
+      "e.stopped":   "Διακόπηκε. Όσα αρχεία στάλθηκαν μένουν στο Dropbox.",
+      "e.none":      "Δεν υπάρχει κάτι για αποστολή.",
+      "e.root":      "Dropbox"
     }
   };
 
@@ -1329,6 +1361,207 @@
     });
   }
 
+  // ---------- Wave 3: send copies from the orOS disk to Dropbox ----------
+  function contentPost(endpoint, arg, body) {
+    return call(function (at) {
+      return fetch(C.CONTENT + endpoint, {
+        method: "POST", credentials: "omit", referrerPolicy: "no-referrer",
+        headers: { Authorization: "Bearer " + at, "Dropbox-API-Arg": C.headerArg(arg),
+                   "Content-Type": "application/octet-stream" },
+        body: body
+      });
+    }).then(function (res) { return res.json().then(null, function () { return null; }); });
+  }
+
+  // One file → Dropbox metadata. Big files go up in pieces.
+  function upload(path, blob) {
+    if (blob.size <= C.UPLOAD_ONE) return contentPost("files/upload", C.uploadArg(path), blob);
+    return contentPost("files/upload_session/start", { close: false }, blob.slice(0, C.CHUNK)).then(function (s) {
+      var id = s && typeof s.session_id === "string" ? s.session_id : "";
+      if (!id) throw fail("net");
+      var off = C.CHUNK;
+      function next() {
+        if (blob.size - off <= C.CHUNK) {
+          return contentPost("files/upload_session/finish",
+                             { cursor: { session_id: id, offset: off }, commit: C.uploadArg(path) }, blob.slice(off));
+        }
+        return contentPost("files/upload_session/append_v2",
+                           { cursor: { session_id: id, offset: off }, close: false },
+                           blob.slice(off, off + C.CHUNK)).then(function () { off += C.CHUNK; return next(); });
+      }
+      return next();
+    });
+  }
+
+  // Every file under a disk folder (the walk stops past cap).
+  function walkDisk(path, out, cap) {
+    var fs = disk();
+    return fs.ls(path).then(function (list) {
+      var chain = Promise.resolve();
+      (list || []).forEach(function (e) {
+        chain = chain.then(function () {
+          if (out.length > cap) return;
+          var p = path + "/" + e.name;
+          if (e.dir) return walkDisk(p, out, cap);
+          return fs.stat(p).then(function (st) { out.push({ path: p, size: (st && st.size) || 0 }); }, function () {});
+        });
+      });
+      return chain;
+    }, function () {});
+  }
+
+  // A Dropbox folder chooser: resolves the chosen path ("" = root) or null.
+  function pickDbxFolder(start) {
+    return new Promise(function (resolve) {
+      var d = el("dialog", "f-dialog dbx-pick");
+      d.appendChild(el("h3", "", t("e.pickTitle")));
+      d.appendChild(el("p", "picker-label", t("e.pickHint")));
+      var head = el("div", "dbx-pick-head");
+      var up = btn("tool", ICON.up, t("e.up"), function () { if (cur) open(C.parentPath(cur)); });
+      var where = el("span", "dbx-pick-path", "");
+      head.appendChild(up);
+      head.appendChild(where);
+      var list = el("div", "picker-tree dbx-pick-list");
+      var row = el("div", "dlg-row");
+      var no = el("button", "", t("x.cancel"));
+      no.type = "button";
+      var yes = el("button", "primary", t("e.here"));
+      yes.type = "button";
+      var cur = "", my = 0, finished = false;
+      function done(v) {
+        if (finished) return;
+        finished = true;
+        my++;
+        try { d.close(); } catch (e) {}
+        d.remove();
+        resolve(v);
+      }
+      function note(s) { list.innerHTML = ""; list.appendChild(el("div", "dbx-pick-empty", s)); }
+      function open(p) {
+        cur = p;
+        var mine = ++my;
+        where.textContent = p ? C.baseName(p) : t("e.root");
+        where.title = p || "/";
+        up.disabled = !p;
+        yes.disabled = true;
+        if (C.isUnder(p, syncRoots())) { note(t("e.syncHere")); return; }
+        note(t("loading"));
+        listFolder(p).then(function (rows) {
+          if (mine !== my) return;
+          if (C.isSyncFolder(rows)) { addSyncRoot(p.toLowerCase()); note(t("e.syncHere")); return; }
+          yes.disabled = false;
+          var roots = syncRoots();
+          var dirs = C.sortRows(rows.filter(function (r) { return r.dir && !C.isUnder(r.path, roots); }), "name", true, LANG);
+          if (!dirs.length) { note(t("e.noFolders")); return; }
+          list.innerHTML = "";
+          dirs.forEach(function (r) {
+            var n = el("button", "pnode dbx-pick-row");
+            n.type = "button";
+            n.innerHTML = ICON.folder;
+            n.appendChild(el("span", "", r.name));
+            n.addEventListener("click", function () { open(r.path); });
+            list.appendChild(n);
+          });
+        }, function (e) {
+          if (mine !== my) return;
+          if (e && e.kind === "auth") { done(null); showError(e); return; }
+          note(e && e.kind === "offline" ? t("offline") : t("err.net"));
+        });
+      }
+      no.addEventListener("click", function () { done(null); });
+      yes.addEventListener("click", function () { done(cur); });
+      d.addEventListener("cancel", function (e) { e.preventDefault(); done(null); });
+      row.appendChild(no);
+      row.appendChild(yes);
+      d.appendChild(head);
+      d.appendChild(list);
+      d.appendChild(row);
+      document.body.appendChild(d);
+      d.showModal();
+      open(start);
+    });
+  }
+
+  // Disk paths (files or folders) → plain copies in a Dropbox folder.
+  function exportFrom(paths) {
+    if (jobRunning) { toast(t("x.busy")); return Promise.resolve(); }
+    var fs = disk();
+    if (!fs || !paths || !paths.length) return Promise.resolve();
+    return readTok().then(function (r) {
+      if (!r || !appKey()) { toast(t("e.connectFirst")); enter(""); return; }
+      var start = active ? cwd : ((readJSON(VIEW_LS) || {}).path || "");
+      if (typeof start !== "string" || C.normPath(start) === null || C.isUnder(start, syncRoots())) start = "";
+      return pickDbxFolder(C.normPath(start)).then(function (dest) {
+        if (dest === null) return;
+        var picked = [], walks = {}, chain = Promise.resolve();
+        paths.forEach(function (p) {
+          chain = chain.then(function () {
+            return fs.stat(p).then(function (st) {
+              picked.push({ path: p, dir: !!(st && st.dir), size: (st && st.size) || 0 });
+              if (st && st.dir) { walks[p] = []; return walkDisk(p, walks[p], C.MAX_FILES * 2); }
+            }, function () {});
+          });
+        });
+        return chain.then(function () {
+          var plan = C.planExport(picked, walks, dest, syncRoots(), ctx.trash ? [ctx.trash] : []);
+          if (plan.refused) { toast(t("e.syncHere")); return; }
+          if (!plan.items.length) { toast(t("e.none")); return; }
+          var lines = [t("e.confirm", { n: plan.items.length, size: ctx.fmtKB(plan.bytes),
+                                        dst: dest ? C.baseName(dest) : t("e.root") }), t("e.note")];
+          if (plan.skipped.length) lines.push(t("e.skipped", { n: plan.skipped.length }));
+          return confirmBox(lines, t("x.go")).then(function (ok) {
+            if (!ok || jobRunning) return;
+            enter(dest);
+            return runExport(plan.items);
+          });
+        });
+      });
+    }).catch(function () { toast(t("err.net")); });
+  }
+
+  // One file: read from the disk, send, check Dropbox got the same bytes.
+  function sendItem(it) {
+    var blob;
+    return disk().read(it.src).then(function (b) {
+      blob = b instanceof Blob ? b : new Blob([b]);
+      return blob.arrayBuffer();
+    }).then(function (buf) {
+      return C.contentHash(new Uint8Array(buf), digest);
+    }).then(function (ch) {
+      return upload(it.dst, blob).then(function (md) { return !!(md && md.content_hash === ch); });
+    });
+  }
+
+  function runExport(items) {
+    jobRunning = true;
+    stopAsked = false;
+    var stopBtn = $("dbx-job") && $("dbx-job").querySelector("button");
+    if (stopBtn) stopBtn.disabled = false;
+    paintSel();
+    var n = items.length, i = 0, sent = 0, failed = 0, broke = false;
+    var chain = Promise.resolve();
+    items.forEach(function (it) {
+      chain = chain.then(function () {
+        if (stopAsked) return;
+        i++;
+        jobText(t("e.sending", { i: i, n: n }));
+        return sendItem(it).then(function (ok) { if (ok) sent++; else failed++; }, function (e) {
+          if (e && (e.kind === "auth" || e.kind === "offline")) throw e;
+          failed++;
+        });
+      });
+    });
+    return chain.then(null, function (e) { broke = true; showError(e); }).then(function () {
+      if (stopAsked) toast(t("e.stopped"));
+      if (sent) toast(t("e.sent", { n: sent }));
+      if (failed) toast(t("e.failed", { n: failed }));
+      jobRunning = false;
+      jobText("");
+      paintSel();
+      if (active && !broke) go(cwd);
+    });
+  }
+
   // An interrupted transfer (tab closed, offline, signed out) is offered
   // again when the Dropbox view opens.
   function offerResume() {
@@ -1410,6 +1643,8 @@
     treeNode: treeNode,
     enter: enter,
     leave: leave,
+    exportFrom: exportFrom,
+    icon: ICON.box,
     isActive: function () { return active; }
   };
 })();

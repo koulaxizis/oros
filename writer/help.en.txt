@@ -17,12 +17,11 @@ Just start typing; everything saves by itself.
 - `Find and replace` (or [[Ctrl+F]]) has `Match case`, `Whole word`, a format filter (for example `Bold only`), `Replace` and `Replace all`. Undo takes a replacement back; right after `Replace all`, one Undo takes back all of it.
 - In `Settings`, `Smart typography` turns -- into a dash, ... into an ellipsis and straight quotes into curly ones. `Auto-correction rules` replaces text such as (c) with © when you press space. You can add your own rules.
 
-## Focus, dictation and statistics
+## Focus and statistics
 - `View` (the eye button) has `Focus mode`: the tabs and toolbars hide and all the text dims except the paragraph you are in, or the sentence with `Focus on the sentence`. Leave it with the round × button, [[Esc]] or [[Ctrl+Alt+F]].
 - `Typewriter scrolling` keeps the line you are typing in the middle of the screen.
 - `Show word count` puts a small word count in the corner (with a selection, its words too). Tap it, or `Statistics…`, for words, characters with and without spaces, paragraphs, sentences, reading time and speaking time, for the document and the selection.
 - These view choices are kept on each device; they don't sync.
-- The microphone button is `Dictation`: speak and the words go in at the cursor, in English or Greek as orOS is set. Tap it again to stop. It shows only in browsers that can do speech recognition, and the browser may send your voice to its own online speech service to turn it into text (orOS itself sends nothing).
 
 ## Spelling, tracked changes and mail merge
 - The `Review` button (AB with a tick) holds spelling, tracked changes and mail merge.
@@ -74,7 +73,6 @@ With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versio
 - If two devices change the text of the same document before syncing, the newer text wins.
 - RTF import brings in text only.
 - Table tools (adding or deleting rows and columns, the header row) can't be undone with Undo.
-- Dictation needs a browser with speech recognition and usually an internet connection.
 - Sentence focus needs a recent browser; older ones light the whole paragraph instead.
 - In a PDF, bold and italic letters outside Latin and Greek (for example Cyrillic) are drawn in the regular font, with bold thickened; merged table cells are drawn as single cells; an image from another website may be shown only as a placeholder.
 - Spelling covers English and Greek only. It skips words with digits, mixed capitals (such as iPhone) and capitals of four letters or fewer (such as NASA). Long compound words that are not in the dictionary are marked. `Ignore` lasts until you close Writer.

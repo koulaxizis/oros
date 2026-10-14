@@ -70,6 +70,32 @@
     var max = p[0] === "w" ? 7 : 31;
     return isInt(p[1]) && p[1] >= 1 && p[1] <= max ? [p[0], p[1]] : null;
   }
+  // Assistant entry card (BR-W8-6, prefill only): the shell's
+  // { asNew: { name, days?, perWeek?, perMonth?, target?, unit?, cmp?,
+  // reminder?, from? } } → the values the new-habit dialog opens with,
+  // or null without a name. days are Monday-first 0–6 (as the chips);
+  // perWeek / perMonth win over days (as normHabit); target or unit
+  // make it a number habit (an absent target stays blank for the user
+  // to fill); reminder is "HH:MM". Unknown or bad fields are dropped.
+  function asNew(x) {
+    if (!x || typeof x !== "object") return null;
+    function line(v, n) {
+      return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, n) : "";
+    }
+    var name = line(x.name, NAME_LEN);
+    if (!name) return null;
+    var per = isInt(x.perWeek) ? normPer(["w", x.perWeek]) : (isInt(x.perMonth) ? normPer(["m", x.perMonth]) : null);
+    var t = typeof x.target === "number" && isFinite(x.target) && x.target > 0 && x.target <= MAX_NUM ? round2(x.target) || 0.01 : 0;
+    var u = line(x.unit, UNIT_LEN);
+    var rm = typeof x.reminder === "string" && /^(\d{1,2}):(\d{2})$/.exec(x.reminder.trim());
+    return {
+      name: name,
+      days: per ? [] : normDays(x.days),
+      per: per,
+      num: t || u ? { t: t, u: u, c: x.cmp === "le" ? "le" : "ge" } : null,
+      rem: rm && +rm[1] < 24 && +rm[2] < 60 ? (+rm[1]) * 60 + (+rm[2]) : -1
+    };
+  }
   function normHabit(raw) {
     if (!raw || typeof raw !== "object") return null;
     if (typeof raw.id !== "string" || !raw.id) return null;
@@ -316,7 +342,7 @@
   var API = {
     DATA_VER: DATA_VER, COLORS: COLORS, ICON_KEYS: ICON_KEYS, STEPS_GOAL: STEPS_GOAL,
     NOTE_LEN: NOTE_LEN, UNIT_LEN: UNIT_LEN, MAX_NUM: MAX_NUM, DEV_RE: DEV_RE,
-    uid: uid, normHabit: normHabit, normComp: normComp, normSet: normSet, normNum: normNum, normPer: normPer,
+    uid: uid, asNew: asNew, normHabit: normHabit, normComp: normComp, normSet: normSet, normNum: normNum, normPer: normPer,
     normalize: normalize, mergeData: mergeData, mergeComp: mergeComp, canon: canon,
     compFor: compFor, setTick: setTick, setValue: setValue, addValue: addValue,
     setSkip: setSkip, setNote: setNote, setSettings: setSettings, settingsOf: settingsOf

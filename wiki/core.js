@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Wiki — pure core (v1.0.0)
+// orOS Wiki — pure core (v1.1.0)
 // Shared by the app (wiki.js), the search provider and the tests.
 // No DOM access except render*(), which takes a document and builds
 // nodes with createElement / createTextNode only (never innerHTML),
@@ -13,13 +13,17 @@
 //   7. Diff (lines, then words inside changed lines)
 //   8. Renderer (document → nodes)
 //   9. Revisions (orOS disk files)
+//  10. Editing helpers (tables, infobox, references, citations)
+// Wave 2 (v1.1.0): pictures [[File:<asset id>|right|250px|Caption]]
+// (files of designkit/assets.js on the orOS disk), {{gallery}},
+// {{infobox}}, references [^name] + "[^name]: text", {{references}}.
 // Exposes window.WikiCore (browser) / module.exports (Node).
 // ============================================================
 (function (root) {
   "use strict";
 
   // ---------- 1. Constants + helpers ----------
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var DATA_KEY = "oros-wiki-data";
   var PREFS_KEY = "oros-wiki-prefs";
   var DRAFT_KEY = "oros-wiki-draft";
@@ -75,6 +79,15 @@
     return f.slice(0, 80) || "s";
   }
   var CAT_PREFIX = /^\s*(category|κατηγορία|κατηγορια)\s*:\s*/i;
+  // Pictures: an asset id of designkit/assets.js (sha256 of the file).
+  var IMG_RE = /^[0-9a-f]{64}\.(jpg|png)$/;
+  var FILE_PREFIX = /^\s*(file|image|αρχείο|αρχειο|εικόνα|εικονα)\s*:\s*/i;
+  var ALIGN = { left: "left", right: "right", center: "center", centre: "center", none: "none",
+                "αριστερά": "left", "αριστερα": "left", "δεξιά": "right", "δεξια": "right",
+                "κέντρο": "center", "κεντρο": "center", "κανένα": "none", "κανενα": "none" };
+  var MAX_GAL = 60;          // pictures in one gallery
+  var MAX_IBOX = 60;         // rows in one infobox
+  var MAX_REFS = 500;        // references in one article
 
   // ---------- 3. Data model ----------
   // WIKI v1 { ver:1, wikis:[wiki], arts:[art], tombs:{id: ms} }
@@ -232,7 +245,64 @@
   // article, shows nothing), [[:Category:Name]] (a link to it),
   // [text](https://…), bare https:// links, \ escapes the next sign.
   // First line "#REDIRECT [[Title]]" makes the article a redirect.
+  // [[File:id|…]] is a picture, [^name] a reference (wave 2).
   var MAX_DEPTH = 4;
+  var RE_REF = /^\[\^([\p{L}\p{N}_.\-]{1,40})\]/u;
+  var RE_REFDEF = /^\s*\[\^([\p{L}\p{N}_.\-]{1,40})\]:\s*(.*)$/u;
+
+  // "[[File:…]]" starting at i → index after its closing "]]" (links
+  // inside the caption may nest), or -1.
+  function fileEnd(s, i) {
+    if (s.substr(i, 2) !== "[[" || !FILE_PREFIX.test(s.slice(i + 2, i + 40))) return -1;
+    var d = 0;
+    for (var j = i; j < s.length - 1; j++) {
+      if (s.charAt(j) === "[" && s.charAt(j + 1) === "[") { d++; j++; }
+      else if (s.charAt(j) === "]" && s.charAt(j + 1) === "]") { d--; j++; if (!d) return j + 1; }
+    }
+    return -1;
+  }
+  // Split on | outside [[ ]] and `code` (\| stays).
+  function splitTop(s) {
+    var parts = [], cur = "", link = 0, code = false;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (c === "\\" && s.charAt(i + 1) === "|") { cur += "\\|"; i++; continue; }
+      if (!code && c === "[" && s.charAt(i + 1) === "[") { link++; cur += "[["; i++; continue; }
+      if (!code && link && c === "]" && s.charAt(i + 1) === "]") { link--; cur += "]]"; i++; continue; }
+      if (c === "`") code = !code;
+      if (c === "|" && !link && !code) { parts.push(cur); cur = ""; continue; }
+      cur += c;
+    }
+    parts.push(cur);
+    return parts;
+  }
+  // "id|right|250px|alt=…|Caption" (no File: prefix, no brackets)
+  function fileParts(body) {
+    var parts = splitTop(str(body).replace(FILE_PREFIX, ""));
+    var id = parts[0].trim().toLowerCase(), al = "", w = 0, alt = "", cap = "";
+    parts.slice(1).forEach(function (p) {
+      var q = p.trim(), lq = q.toLowerCase(), m;
+      if (!q) return;
+      if (ALIGN[lq]) al = ALIGN[lq];
+      else if ((m = /^(\d{1,6})\s*px$/.exec(lq))) w = Math.max(40, Math.min(1200, Number(m[1])));
+      else if (/^(thumb|thumbnail|frame|frameless|border|upright|μικρογραφία|μικρογραφια)$/.test(lq)) return;
+      else if ((m = /^alt\s*=\s*([\s\S]*)$/i.exec(q))) alt = m[1].trim().slice(0, 300);
+      else cap = q;
+    });
+    return { id: IMG_RE.test(id) ? id : "", raw: id.slice(0, 80), al: al, w: w, alt: alt, cap: cap.slice(0, 1000) };
+  }
+  // A reference use: numbered by first use, counted for back links.
+  function refNode(acc, name) {
+    var key = fold(name);
+    if (!acc.refN) { acc.refN = {}; acc.refOrder = []; acc.refUse = {}; }
+    if (!acc.refN[key]) {
+      if (acc.refOrder.length >= MAX_REFS) return { k: "t", v: "[^" + name + "]" };
+      acc.refOrder.push({ key: key, name: name });
+      acc.refN[key] = acc.refOrder.length;
+    }
+    acc.refUse[key] = (acc.refUse[key] || 0) + 1;
+    return { k: "ref", key: key, n: acc.refN[key], i: acc.refUse[key] };
+  }
 
   function safeUrl(u) {
     u = str(u).trim();
@@ -269,12 +339,24 @@
     }
     while (i < n) {
       var c = s.charAt(i);
-      if (c === "\\" && i + 1 < n && /[\\`*_~\[\]()#|>!=-]/.test(s.charAt(i + 1))) { buf += s.charAt(i + 1); i += 2; continue; }
+      if (c === "\\" && i + 1 < n && /[\\`*_~\[\]()#|>!=^{}-]/.test(s.charAt(i + 1))) { buf += s.charAt(i + 1); i += 2; continue; }
       if (c === "`") {
         var e = s.indexOf("`", i + 1);
         if (e > i + 1) { flush(); nodes.push({ k: "code", v: s.slice(i + 1, e) }); i = e + 1; continue; }
       }
+      if (c === "[" && s.charAt(i + 1) === "^" && !out.noRef) {
+        var rf = RE_REF.exec(s.slice(i, i + 46));
+        if (rf) { flush(); nodes.push(refNode(out, rf[1])); i += rf[0].length; continue; }
+      }
       if (c === "[" && s.charAt(i + 1) === "[") {
+        var fe = fileEnd(s, i);
+        if (fe > 0) {
+          var fp = fileParts(s.slice(i + 2, fe - 2));
+          flush();
+          nodes.push({ k: "img", id: fp.id, raw: fp.raw, w: fp.w, alt: fp.alt || fp.cap });
+          i = fe;
+          continue;
+        }
         var e2 = s.indexOf("]]", i + 2);
         if (e2 > i + 2) {
           var body = s.slice(i + 2, e2), bar = body.indexOf("|");
@@ -340,6 +422,14 @@
   var RE_FENCE = /^\s*```/;
   var RE_TSEP = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
   var RE_REDIRECT = /^\s*#\s*(redirect|ανακατευθυνση|ανακατεύθυνση)\s*:?\s*\[\[([^\]]+)\]\]/i;
+  // {{infobox … }}, {{gallery … }} on their own lines; {{references}}
+  var RE_TPL = /^\s*\{\{\s*([\p{L}]+)\s*(\}\})?\s*$/u;
+  var RE_TPL_END = /^\s*\}\}\s*$/;
+  var TPL_KIND = { infobox: "ibox", "πλαισιο": "ibox", gallery: "gal", "γκαλερι": "gal", "συλλογη": "gal",
+                   references: "refs", reflist: "refs", "παραπομπεσ": "refs" };
+  var IBOX_KEY = { title: "title", name: "title", "τιτλοσ": "title", "ονομα": "title",
+                   image: "image", "εικονα": "image", caption: "caption", "λεζαντα": "caption" };
+  function tplKind(m) { return m ? TPL_KIND[fold(m[1])] || "" : ""; }
 
   function headLevel(line) {
     var m = RE_HEAD_WIKI.exec(line);
@@ -410,6 +500,38 @@
         blocks.push({ k: "pre", v: code.join("\n") });
         continue;
       }
+      var dm = RE_REFDEF.exec(line);
+      if (dm) {
+        endPara();
+        var dt = dm[2];
+        i++;
+        while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !RE_REFDEF.test(lines[i])) { dt += " " + lines[i].trim(); i++; }
+        var dk = fold(dm[1]);
+        acc.refDefs = acc.refDefs || {};
+        if (!acc.refDefs[dk]) acc.refDefs[dk] = { name: dm[1], c: parseInline(dt.trim(), 0, { links: acc.links, cats: acc.cats, noRef: true }).nodes };
+        continue;
+      }
+      var tm = RE_TPL.exec(line), kind = tplKind(tm);
+      if (kind === "refs") { endPara(); blocks.push({ k: "refs" }); i++; continue; }
+      if (kind && !tm[2]) {
+        endPara();
+        var tb = [];
+        i++;
+        while (i < lines.length && !RE_TPL_END.test(lines[i])) { tb.push(lines[i]); i++; }
+        i++;
+        blocks.push(kind === "gal" ? galBlock(tb, inl) : iboxBlock(tb, inl));
+        continue;
+      }
+      if (/^\s*\[\[/.test(line)) {
+        var lt = line.trim();
+        if (fileEnd(lt, 0) === lt.length) {
+          endPara();
+          var fq = fileParts(lt.slice(2, -2));
+          blocks.push({ k: "fig", id: fq.id, raw: fq.raw, al: fq.al || "right", w: fq.w, alt: fq.alt, c: inl(fq.cap) });
+          i++;
+          continue;
+        }
+      }
       var h = headLevel(line);
       if (h) {
         endPara();
@@ -477,8 +599,64 @@
       res.heads = acc.heads;
       res.links = uniqTitles(acc.links);
       res.cats = uniqTitles(acc.cats);
+      res.refs = buildRefs(acc);
     }
     return res;
+  }
+
+  // {{gallery}} lines: "File:id|Caption" (brackets optional)
+  function galBlock(lines, inl) {
+    var items = [];
+    lines.forEach(function (l) {
+      var s = l.trim();
+      if (!s || items.length >= MAX_GAL) return;
+      if (/^\[\[/.test(s) && /\]\]$/.test(s)) s = s.slice(2, -2);
+      var fp = fileParts(s);
+      items.push({ id: fp.id, raw: fp.raw, alt: fp.alt, c: inl(fp.cap) });
+    });
+    return { k: "gal", items: items };
+  }
+  // {{infobox}} lines: "| key = value"; a line without | continues the value.
+  function iboxRaw(lines) {
+    var rows = [], cur = null;
+    lines.forEach(function (l) {
+      var m = /^\s*\|\s*([^=|]{1,80}?)\s*=\s*(.*)$/.exec(l);
+      if (m) { cur = { k: m[1].trim(), v: m[2].trim() }; rows.push(cur); }
+      else if (cur && l.trim()) cur.v = (cur.v + " " + l.trim()).trim();
+    });
+    var o = { title: "", image: "", caption: "", rows: [] };
+    rows.forEach(function (r) {
+      var key = IBOX_KEY[fold(r.k)];
+      if (key && !o[key]) o[key] = r.v;
+      else if (!key && o.rows.length < MAX_IBOX) o.rows.push([r.k, r.v]);
+    });
+    return o;
+  }
+  function iboxBlock(lines, inl) {
+    var o = iboxRaw(lines), img = null;
+    if (o.image) {
+      var s = o.image.trim();
+      if (/^\[\[/.test(s) && /\]\]$/.test(s)) s = s.slice(2, -2);
+      var fp = fileParts(s);
+      img = { id: fp.id, raw: fp.raw, alt: fp.alt || o.caption };
+    }
+    return {
+      k: "ibox", title: o.title ? inl(o.title) : null, img: img, cap: o.caption ? inl(o.caption) : null,
+      rows: o.rows.filter(function (r) { return r[1]; }).map(function (r) { return { k: inl(r[0]), v: inl(r[1]) }; })
+    };
+  }
+  // References in order of first use, then unused definitions.
+  //   [{ key, n, uses, c (nodes) | null }]
+  function buildRefs(acc) {
+    var defs = acc.refDefs || {}, out = [];
+    (acc.refOrder || []).forEach(function (o) {
+      out.push({ key: o.key, n: out.length + 1, uses: acc.refUse[o.key] || 0, c: defs[o.key] ? defs[o.key].c : null });
+    });
+    Object.keys(defs).forEach(function (k) {
+      if (acc.refN && acc.refN[k]) return;
+      if (out.length < MAX_REFS) out.push({ key: k, n: out.length + 1, uses: 0, c: defs[k].c });
+    });
+    return out;
   }
 
   // Flat items [{lvl, ord, text}] → nested { k: "ul"|"ol", items:[{c, sub}] }
@@ -508,6 +686,8 @@
     return (nodes || []).map(function (n) {
       if (n.k === "t" || n.k === "code") return n.v;
       if (n.k === "wl" || n.k === "cl" || n.k === "xl") return n.v;
+      if (n.k === "img") return n.alt || "";
+      if (n.k === "ref") return "";
       return inlineText(n.c);
     }).join("");
   }
@@ -553,6 +733,13 @@
         out.push(b.head.map(inlineText).join(" · "));
         b.rows.forEach(function (r) { out.push(r.map(inlineText).join(" · ")); });
       }
+      else if (b.k === "fig") out.push(inlineText(b.c) || b.alt);
+      else if (b.k === "gal") b.items.forEach(function (it) { out.push(inlineText(it.c) || it.alt); });
+      else if (b.k === "ibox") {
+        if (b.title) out.push(inlineText(b.title));
+        b.rows.forEach(function (r) { out.push(inlineText(r.k) + ": " + inlineText(r.v)); });
+        if (b.cap) out.push(inlineText(b.cap));
+      }
     });
     return out.filter(Boolean).join("\n");
   }
@@ -561,7 +748,8 @@
   }
   function plainText(text) {
     var d = parseDoc(text);
-    return blocksText(d.blocks);
+    var refs = d.refs.map(function (r) { return r.c ? inlineText(r.c) : ""; }).filter(Boolean);
+    return blocksText(d.blocks) + (refs.length ? "\n" + refs.join("\n") : "");
   }
   function snippet(text, max) {
     var s = plainText(text).replace(/\s+/g, " ").trim();
@@ -800,6 +988,17 @@
           e.setAttribute("data-cat", n.to);
           e.textContent = n.v;
           break;
+        case "img": e = imgEl(doc, n.id, n.alt, n.w, n.raw); e.className += " inl"; break;
+        case "ref":
+          e = doc.createElement("sup");
+          e.className = "ref";
+          e.setAttribute("id", "cite-" + slug(n.key) + "-" + n.i);
+          var ra = doc.createElement("a");
+          ra.setAttribute("href", "#");
+          ra.setAttribute("data-ref", slug(n.key));
+          ra.textContent = "[" + n.n + "]";
+          e.appendChild(ra);
+          break;
         case "xl":
           e = doc.createElement("a");
           e.setAttribute("href", n.href);
@@ -813,10 +1012,106 @@
       parent.appendChild(e);
     });
   }
+  // A picture: never a src here. The app sets it from the orOS disk
+  // (a blob: URL) for elements with data-img, so markup can never
+  // point an <img> at the web.
+  function imgEl(doc, id, alt, w, raw) {
+    if (!IMG_RE.test(str(id))) {
+      var bad = doc.createElement("span");
+      bad.className = "img-bad";
+      bad.textContent = str(alt) || str(raw) || "?";
+      return bad;
+    }
+    var im = doc.createElement("img");
+    im.className = "wimg";
+    im.setAttribute("data-img", id);
+    im.setAttribute("alt", str(alt));
+    im.setAttribute("loading", "lazy");
+    if (w) im.setAttribute("width", String(int(w)));
+    return im;
+  }
+  function figure(doc, id, alt, w, raw, cap, cls, o) {
+    var f = doc.createElement("figure");
+    f.className = cls;
+    f.appendChild(imgEl(doc, id, alt || inlineText(cap), w, raw));
+    if (cap && cap.length) {
+      var fc = doc.createElement("figcaption");
+      renderInline(doc, cap, fc, o);
+      f.appendChild(fc);
+    }
+    return f;
+  }
+  function renderRefs(doc, refs, o) {
+    var ol = doc.createElement("ol");
+    ol.className = "refs";
+    refs.forEach(function (r) {
+      var li = doc.createElement("li");
+      li.setAttribute("id", "ref-" + slug(r.key));
+      li.setAttribute("value", String(r.n));
+      if (r.uses) {
+        var up = doc.createElement("a");
+        up.setAttribute("href", "#");
+        up.className = "ref-up";
+        up.setAttribute("data-cite", "cite-" + slug(r.key) + "-1");
+        up.setAttribute("aria-label", (o && o.refUp) || "↑");
+        up.textContent = "↑";
+        li.appendChild(up);
+        li.appendChild(doc.createTextNode(" "));
+      }
+      if (r.c) renderInline(doc, r.c, li, o);
+      else {
+        var miss = doc.createElement("span");
+        miss.className = "ref-miss";
+        miss.textContent = (o && o.refMissing) || "?";
+        li.appendChild(miss);
+      }
+      ol.appendChild(li);
+    });
+    return ol;
+  }
   function renderBlocks(doc, blocks, parent, o) {
     (blocks || []).forEach(function (b) {
       var e;
       switch (b.k) {
+        case "fig":
+          e = figure(doc, b.id, b.alt, b.w, b.raw, b.c, "fig fig-" + (ALIGN[b.al] || "right"), o);
+          if (b.w && b.al !== "none") e.style.width = int(b.w) + "px";
+          break;
+        case "gal":
+          e = doc.createElement("div");
+          e.className = "gal";
+          b.items.forEach(function (it) { e.appendChild(figure(doc, it.id, it.alt, 0, it.raw, it.c, "gal-item", o)); });
+          break;
+        case "ibox":
+          e = doc.createElement("aside");
+          e.className = "ibox";
+          if (b.title) {
+            var it2 = doc.createElement("div");
+            it2.className = "ibox-t";
+            renderInline(doc, b.title, it2, o);
+            e.appendChild(it2);
+          }
+          if (b.img) e.appendChild(figure(doc, b.img.id, b.img.alt, 0, b.img.raw, b.cap, "ibox-img", o));
+          else if (b.cap) { var ic = doc.createElement("div"); ic.className = "ibox-cap"; renderInline(doc, b.cap, ic, o); e.appendChild(ic); }
+          if (b.rows.length) {
+            var tb2 = doc.createElement("table"), bd2 = doc.createElement("tbody");
+            b.rows.forEach(function (r) {
+              var tr2 = doc.createElement("tr"), th2 = doc.createElement("th"), td3 = doc.createElement("td");
+              th2.setAttribute("scope", "row");
+              renderInline(doc, r.k, th2, o);
+              renderInline(doc, r.v, td3, o);
+              tr2.appendChild(th2); tr2.appendChild(td3);
+              bd2.appendChild(tr2);
+            });
+            tb2.appendChild(bd2);
+            e.appendChild(tb2);
+          }
+          break;
+        case "refs":
+          if (!o || !o._refs || !o._refs.length) return;
+          o._refsDone = true;
+          e = renderRefs(doc, o._refs, o);
+          break;
         case "p": e = doc.createElement("p"); renderInline(doc, b.c, e, o); break;
         case "h":
           e = doc.createElement("h" + b.lvl);
@@ -889,7 +1184,31 @@
   // fold them. Returns a DocumentFragment.
   function render(doc, parsed, o) {
     o = o || {};
+    o._refs = parsed.refs || [];
+    o._refsDone = false;
     var frag = doc.createDocumentFragment();
+    renderBody(doc, parsed, o, frag);
+    if (o._refs.length && !o._refsDone) {
+      // no {{references}} line: the list goes in its own last section
+      var rs = doc.createElement("section");
+      rs.className = "sec refs-sec";
+      var rh = doc.createElement("h2");
+      rh.className = "sh";
+      rh.setAttribute("id", "s-refs");
+      var rt = doc.createElement("span");
+      rt.className = "sh-t";
+      rt.textContent = o.refs || "References";
+      rh.appendChild(rt);
+      rs.appendChild(rh);
+      var rb = doc.createElement("div");
+      rb.className = "sec-body";
+      rb.appendChild(renderRefs(doc, o._refs, o));
+      rs.appendChild(rb);
+      frag.appendChild(rs);
+    }
+    return frag;
+  }
+  function renderBody(doc, parsed, o, frag) {
     var blocks = parsed.blocks, i = 0;
     var lead = doc.createElement("div");
     lead.className = "lead";
@@ -897,7 +1216,7 @@
     for (var k = 0; k < blocks.length; k++) if (blocks[k].k === "h") { firstHead = k; break; }
     renderBlocks(doc, firstHead < 0 ? blocks : blocks.slice(0, firstHead), lead, o);
     frag.appendChild(lead);
-    if (firstHead < 0) return frag;
+    if (firstHead < 0) return;
     if (o.toc && parsed.heads && parsed.heads.length >= 3) frag.appendChild(renderToc(doc, parsed.heads, o.toc));
     i = firstHead;
     var sec = null, secBody = null;
@@ -915,7 +1234,6 @@
       }
       renderBlocks(doc, [b], secBody || frag, o);
     }
-    return frag;
   }
   function renderToc(doc, heads, label) {
     var box = doc.createElement("nav");
@@ -975,6 +1293,201 @@
              s: str(o.s).replace(/\s+/g, " ").trim().slice(0, MAX_SUM), dev: str(o.dev).slice(0, 40) };
   }
 
+  // ---------- 10. Editing helpers ----------
+  // Pure text helpers behind the toolbar dialogs (tables, infobox,
+  // citations). They read and write the markup, nothing else.
+
+  // A table cell as markup: one line, | outside [[ ]] / `code` escaped.
+  function escCell(s) {
+    s = str(s).replace(/\s*\n\s*/g, " ").trim();
+    var out = "", link = 0, code = false;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (c === "\\" && i + 1 < s.length) { out += c + s.charAt(i + 1); i++; continue; }
+      if (!code && c === "[" && s.charAt(i + 1) === "[") { link++; out += "[["; i++; continue; }
+      if (!code && link && c === "]" && s.charAt(i + 1) === "]") { link--; out += "]]"; i++; continue; }
+      if (c === "`") code = !code;
+      if (c === "|" && !link && !code) { out += "\\|"; continue; }
+      out += c;
+    }
+    return out;
+  }
+  function tableText(head, rows, al) {
+    var n = Math.max(1, (head || []).length);
+    (rows || []).forEach(function (r) { n = Math.max(n, r.length); });
+    function row(cells) {
+      var out = [];
+      for (var i = 0; i < n; i++) out.push(escCell(cells[i] || ""));
+      return "| " + out.join(" | ") + " |";
+    }
+    var sep = [];
+    for (var i = 0; i < n; i++) {
+      var a = (al || [])[i];
+      sep.push(a === "center" ? ":---:" : (a === "right" ? "---:" : (a === "left" ? ":---" : "---")));
+    }
+    return [row(head || []), "|" + sep.join("|") + "|"].concat((rows || []).map(row)).join("\n");
+  }
+  // Line offsets of a text: [{ s (start), e (end, without \n), l (line) }]
+  function lineMap(text) {
+    var lines = str(text).split("\n"), off = 0;
+    return lines.map(function (l) { var o = { s: off, e: off + l.length, l: l }; off += l.length + 1; return o; });
+  }
+  function lineAt(map, pos) {
+    for (var i = 0; i < map.length; i++) if (pos <= map[i].e) return i;
+    return map.length - 1;
+  }
+  // The table around a caret position, or null:
+  //   { start, end, head:[cell], al:[align], rows:[[cell]] }
+  function tableAt(text, pos) {
+    var map = lineMap(text), at = lineAt(map, pos);
+    function isRow(i) { return i >= 0 && i < map.length && /^\s*\|/.test(map[i].l); }
+    if (!isRow(at)) return null;
+    var a = at, b = at;
+    while (isRow(a - 1)) a--;
+    while (isRow(b + 1)) b++;
+    if (b - a < 1 || !RE_TSEP.test(map[a + 1].l) || map[a + 1].l.indexOf("-") < 0) return null;
+    return {
+      start: map[a].s, end: map[b].e, head: splitCells(map[a].l), al: aligns(map[a + 1].l),
+      rows: map.slice(a + 2, b + 1).map(function (x) { return splitCells(x.l); })
+    };
+  }
+  // Template blocks of the text (outside ``` code):
+  //   [{ kind: "ibox"|"gal", start, end, body:[line] }]
+  function templates(text) {
+    var map = lineMap(text), out = [], fence = false;
+    for (var i = 0; i < map.length; i++) {
+      if (RE_FENCE.test(map[i].l)) { fence = !fence; continue; }
+      if (fence) continue;
+      var m = RE_TPL.exec(map[i].l), kind = tplKind(m);
+      if (!kind || kind === "refs" || m[2]) continue;
+      var j = i + 1;
+      while (j < map.length && !RE_TPL_END.test(map[j].l)) j++;
+      var last = Math.min(j, map.length - 1);
+      out.push({ kind: kind, start: map[i].s, end: map[last].e, body: map.slice(i + 1, j).map(function (x) { return x.l; }) });
+      i = last;
+    }
+    return out;
+  }
+  // The block of `kind` around pos, else the first one, else null.
+  function blockAt(text, pos, kind) {
+    var list = templates(text).filter(function (b) { return b.kind === kind; });
+    for (var i = 0; i < list.length; i++) if (pos >= list[i].start && pos <= list[i].end) return list[i];
+    return list[0] || null;
+  }
+  // Infobox fields as text: { title, image (asset id or ""), caption, rows:[[k, v]] }
+  function iboxParse(body) {
+    var o = iboxRaw(body || []);
+    var s = o.image.trim();
+    if (/^\[\[/.test(s) && /\]\]$/.test(s)) s = s.slice(2, -2);
+    o.image = s ? fileParts(s).id : "";
+    return o;
+  }
+  function iboxText(o, lang) {
+    var el = lang === "el";
+    function one(v) { return str(v).replace(/\s*\n\s*/g, " ").trim(); }
+    function key(k) { return one(k).replace(/[=|]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80); }
+    var out = [el ? "{{πλαίσιο" : "{{infobox"];
+    if (one(o.title)) out.push("| " + (el ? "τίτλος" : "title") + " = " + one(o.title));
+    if (IMG_RE.test(str(o.image))) out.push("| " + (el ? "εικόνα" : "image") + " = " + (el ? "Αρχείο:" : "File:") + o.image);
+    if (one(o.caption)) out.push("| " + (el ? "λεζάντα" : "caption") + " = " + one(o.caption));
+    (o.rows || []).slice(0, MAX_IBOX).forEach(function (r) {
+      var k = key(r[0]), v = one(r[1]);
+      if (k && !IBOX_KEY[fold(k)]) out.push("| " + k + " = " + v);
+    });
+    out.push("}}");
+    return out.join("\n");
+  }
+  // A picture line: [[File:id|right|250px|Caption]]
+  function fileText(id, o, lang) {
+    o = o || {};
+    var parts = [(lang === "el" ? "Αρχείο:" : "File:") + id];
+    if (o.al && ALIGN[o.al] && o.al !== "right") parts.push(o.al);
+    if (o.w) parts.push(Math.max(40, Math.min(1200, int(o.w))) + "px");
+    var cap = str(o.cap).replace(/\s*\n\s*/g, " ").trim();
+    if (cap) parts.push(cap.replace(/\|/g, "\\|").replace(/\]\]/g, "] ]"));
+    return "[[" + parts.join("|") + "]]";
+  }
+  function galleryText(items, lang) {
+    var p = lang === "el" ? "Αρχείο:" : "File:";
+    return [lang === "el" ? "{{γκαλερί" : "{{gallery"].concat((items || []).slice(0, MAX_GAL).map(function (it) {
+      var cap = str(it.cap).replace(/\s*\n\s*/g, " ").trim().replace(/\|/g, "\\|");
+      return p + it.id + (cap ? "|" + cap : "");
+    })).concat(["}}"]).join("\n");
+  }
+
+  // Citation text for "[^n]: …". kind: book | web | person | note.
+  // L: labels { pages, isbn, retrieved, interview } in the reader's language.
+  function escMd(s) { return str(s).replace(/\s*\n\s*/g, " ").trim().replace(/[\\`*_~\[\]|^{}]/g, "\\$&"); }
+  function citeText(kind, f, L) {
+    f = f || {}; L = L || {};
+    var v = function (k) { return escMd(f[k]); };
+    var out = [];
+    if (kind === "book") {
+      if (v("author")) out.push(v("author") + ".");
+      if (v("title")) out.push("*" + v("title") + "*.");
+      var pub = [v("publisher"), v("place")].filter(Boolean).join(", ");
+      if (pub || v("year")) out.push([pub, v("year")].filter(Boolean).join(", ") + ".");
+      if (v("pages")) out.push((L.pages || "p.") + " " + v("pages") + ".");
+      if (v("isbn")) out.push("ISBN " + v("isbn") + ".");
+    } else if (kind === "web") {
+      var url = safeUrl(f.url), title = v("title") || (url ? escMd(url) : "");
+      if (title) out.push((url ? "[" + title + "](" + url + ")" : title) + ".");
+      if (v("author")) out.push(v("author") + ".");
+      if (v("site")) out.push("*" + v("site") + "*.");
+      if (v("date")) out.push((L.retrieved || "Retrieved") + " " + v("date") + ".");
+    } else if (kind === "person") {
+      if (v("name")) out.push(v("name") + (v("role") ? ", " + v("role") : "") + ".");
+      if (v("how") || v("date")) out.push([v("how") || L.interview || "", v("date")].filter(Boolean).join(", ") + ".");
+    } else {
+      if (v("text")) out.push(v("text"));
+    }
+    return out.join(" ").replace(/\.\./g, ".").trim();
+  }
+  // Next free numeric reference name in a text.
+  function nextRefName(text) {
+    var max = 0, re = /\[\^(\d{1,6})\]/g, m;
+    while ((m = re.exec(str(text)))) max = Math.max(max, Number(m[1]));
+    return String(max + 1);
+  }
+  // Insert [^name] at pos and its definition near the end of the text
+  // (before the trailing category lines). → { text, pos (after the mark) }
+  function addRef(text, pos, name, def) {
+    text = str(text);
+    pos = Math.max(0, Math.min(text.length, int(pos)));
+    var mark = "[^" + name + "]";
+    var lines = (text.slice(0, pos) + mark + text.slice(pos)).split("\n");
+    var k = lines.length;
+    var catLine = /^\s*(\[\[\s*(category|κατηγορία|κατηγορια)\s*:[^\]]*\]\]\s*)+$/i;
+    while (k > 0 && (!lines[k - 1].trim() || catLine.test(lines[k - 1]))) k--;
+    var line = "[^" + name + "]: " + str(def).replace(/\s*\n\s*/g, " ").trim();
+    var add = k > 0 && !RE_REFDEF.test(lines[k - 1]) ? ["", line] : [line];
+    if (k < lines.length) add.push("");
+    lines.splice.apply(lines, [k, 0].concat(add));
+    var out = lines.join("\n").replace(/\n{3,}/g, "\n\n");
+    return { text: out, pos: pos + mark.length };
+  }
+  // Every picture id used by a parsed article, in order, once.
+  function images(parsed) {
+    var seen = {}, out = [];
+    function add(id) { if (IMG_RE.test(str(id)) && !seen[id]) { seen[id] = 1; out.push(id); } }
+    function inl(nodes) { (nodes || []).forEach(function (n) { if (n.k === "img") add(n.id); if (n.c) inl(n.c); }); }
+    function list(l) { l.items.forEach(function (it) { inl(it.c); if (it.sub) list(it.sub); }); }
+    function blocks(bs) {
+      (bs || []).forEach(function (b) {
+        if (b.k === "fig") { add(b.id); inl(b.c); }
+        else if (b.k === "gal") b.items.forEach(function (it) { add(it.id); inl(it.c); });
+        else if (b.k === "ibox") { if (b.img) add(b.img.id); inl(b.title); inl(b.cap); b.rows.forEach(function (r) { inl(r.k); inl(r.v); }); }
+        else if (b.k === "p" || b.k === "h") inl(b.c);
+        else if (b.k === "quote") blocks(b.c);
+        else if (b.k === "ul" || b.k === "ol") list(b);
+        else if (b.k === "table") { b.head.forEach(inl); b.rows.forEach(function (r) { r.forEach(inl); }); }
+      });
+    }
+    blocks(parsed && parsed.blocks);
+    ((parsed && parsed.refs) || []).forEach(function (r) { inl(r.c); });
+    return out;
+  }
+
   var API = {
     VERSION: VERSION, DATA_KEY: DATA_KEY, PREFS_KEY: PREFS_KEY, DRAFT_KEY: DRAFT_KEY,
     MAX_TEXT: MAX_TEXT, MAX_ARTS: MAX_ARTS, MAX_WIKIS: MAX_WIKIS, MAX_ANC: MAX_ANC, MAX_SUM: MAX_SUM,
@@ -989,7 +1502,11 @@
     search: search, suggest: suggest, byTitle: byTitle, welcomeText: welcomeText,
     diffSeq: diffSeq, diffText: diffText, diffStats: diffStats, diffContext: diffContext,
     render: render, renderInline: renderInline, renderBlocks: renderBlocks, renderToc: renderToc,
-    revDir: revDir, revName: revName, revPath: revPath, parseRevName: parseRevName, revFile: revFile, parseRevFile: parseRevFile
+    revDir: revDir, revName: revName, revPath: revPath, parseRevName: parseRevName, revFile: revFile, parseRevFile: parseRevFile,
+    IMG_RE: IMG_RE, fileParts: fileParts, splitTop: splitTop, renderRefs: renderRefs,
+    escCell: escCell, tableText: tableText, tableAt: tableAt, templates: templates, blockAt: blockAt,
+    iboxParse: iboxParse, iboxText: iboxText, fileText: fileText, galleryText: galleryText,
+    escMd: escMd, citeText: citeText, nextRefName: nextRefName, addRef: addRef, images: images
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.WikiCore = API;

@@ -1,6 +1,6 @@
 // Pure logic of Writer (writer/core.js): statistics, sentence bounds
 // (Focus mode), PDF line breaking / alignment / table columns / image
-// size, dictation joining and typewriter scrolling.
+// size and typewriter scrolling.
 // Run: node --test tests/
 
 "use strict";
@@ -104,18 +104,6 @@ test("fitBox: 96 dpi, never enlarged, fits both ways", () => {
   assert.ok(Math.abs(big.w - 170) < 1e-9 && Math.abs(big.h - 85) < 1e-9);
   const tall = C.fitBox(500, 5000, 170, 100);
   assert.ok(Math.abs(tall.h - 100) < 1e-9);
-});
-
-test("joinDictation: spaces and capitals", () => {
-  assert.equal(C.joinDictation("", "hello world", "en"), "Hello world");
-  assert.equal(C.joinDictation("Hi.", "next one", "en"), " Next one");
-  assert.equal(C.joinDictation("Hi. ", "next", "en"), "Next");
-  assert.equal(C.joinDictation("I said", "hello", "en"), " hello");
-  assert.equal(C.joinDictation("word", ", then", "en"), ", then");
-  assert.equal(C.joinDictation("(", "aside", "en"), "aside");
-  assert.equal(C.joinDictation("Τι κάνεις;", "όλα καλά", "el"), " Όλα καλά");
-  assert.equal(C.joinDictation("line\n", "new", "en"), "New");
-  assert.equal(C.joinDictation("x", "   ", "en"), "");
 });
 
 test("centerDelta", () => {
