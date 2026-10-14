@@ -85,7 +85,8 @@
       "application/epub+zip": [".epub"],
       "application/pdf": [".pdf"],
       "application/x-fictionbook+xml": [".fb2"],
-      "application/vnd.comicbook+zip": [".cbz"] } },
+      "application/vnd.comicbook+zip": [".cbz"],
+      "application/vnd.comicbook-rar": [".cbr"] } },
     { app: "montage", max: 4096 * 1024 * 1024, accept: {
       "video/mp4": [".mp4", ".m4v"],
       "video/webm": [".webm"],

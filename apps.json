@@ -1042,6 +1042,14 @@
       "type": "internal"
     },
     {
+      "id": "gamecenter",
+      "name": "Game Center",
+      "category": "Games",
+      "icon": "gamecenter",
+      "url": "gamecenter/",
+      "type": "internal"
+    },
+    {
       "id": "passwords",
       "name": "Passwords",
       "category": "Security",
