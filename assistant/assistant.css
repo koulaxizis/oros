@@ -467,6 +467,11 @@ button:disabled { cursor: default; opacity: 0.4; }
 .att-goes { font-size: 11px; color: var(--text-dim); overflow-wrap: anywhere; }
 .msg-att { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-bottom: 4px; max-width: 100%; }
 .att-acts { flex-wrap: wrap; }
+.who-web { color: var(--accent); font-weight: 600; }
+.web-src { font-size: 12px; color: var(--text-dim); margin-top: 2px; max-width: 100%; }
+.web-src-h { font-weight: 700; }
+.web-src ol { margin: 4px 0 0; padding-left: 20px; }
+.web-src li { margin: 2px 0; overflow-wrap: anywhere; }
 .dk-bar { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
 .dk-path { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; min-width: 0; }
 .dk-list { list-style: none; margin: 0; padding: 0; max-height: min(50vh, 380px); overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }

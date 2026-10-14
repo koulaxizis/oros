@@ -66,6 +66,13 @@ Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP,
 - Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs. Mistral and a local model read photos only (a local model only if it can see images). The built-in browser model reads no files.
 - Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
 
+## Search the internet
+In `Settings` → `Internet`, `Let Claude search the internet when an answer needs it` lets Claude look things up on the web: opening hours, news, prices, a restaurant for your trip. It is off unless you switch it on, and it works only with Claude.
+- Claude decides when a question needs a search, at most 3 searches per answer. The line above the message box says `Web search on`.
+- Each answer shows what was searched (`Searched the web: …`) and a `Sources` list with the pages it used. The links open in a new tab.
+- The search runs on Anthropic's servers. Anthropic charges $10 per 1,000 searches on top of the tokens; `Used this month` in the settings counts your searches.
+- Search words go to Anthropic and its search partner. Claude is told never to put your orOS data in them unless you ask for that exact search.
+
 ## Ask from anywhere
 - Type a question in the menu search: the last row, `Ask the Assistant: …`, puts it in the assistant's message box. Nothing is sent until you press `Send`.
 - [[Ctrl+Alt+Shift+A]] opens the assistant from anywhere in orOS.
@@ -78,6 +85,7 @@ Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP,
 - `Chat only` turns off every search: the assistant then sees only what you type.
 - With `Built-in browser model` nothing leaves the device at all.
 - A photo or PDF goes out only when you attach it and press `Send`, and only to that service.
+- Internet search is off unless you switch it on (Claude only); then search words also go to Anthropic's search partner.
 - Your key is kept encrypted on this device and is sent only to that service. You pay the service for what you use, so set a spending limit on its site.
 
 >! The answers come from the AI service, not from orOS. Check anything important before you rely on it.

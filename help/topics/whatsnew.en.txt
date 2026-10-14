@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.12.00
+- The Assistant can search the internet with Claude, if you switch it on in Settings → Internet: opening hours, news, prices. Off by default; each answer shows what was searched and its sources, and the setting says what searches cost.
+
 ## Version 2.11.00
 - Nine more single apps: orOS Passwords, Budget, Habits, Water, Diary, Mood, Workouts, Health and Cycle, each with its own icon shortcuts; Passwords, Budget, Habits and Workouts also take Android shares.
 - Radio: stations now always play over a secure (https) connection, so the installed app no longer shows the browser bar. A station that only offers an unencrypted http stream says so instead of playing.
