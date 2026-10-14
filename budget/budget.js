@@ -993,12 +993,17 @@
   // Frankfurter. Fetched only when Budget has something in another
   // currency (an account, an entry, or one being typed), at most every
   // 6 hours; offline, the last saved rates are used and said so.
-  var UC = window.UnitsCore && typeof window.UnitsCore.convertCents === "function" ? window.UnitsCore : null;
+  var UC = window.UnitsCore && typeof window.UnitsCore.fetchLatest === "function" && typeof window.UnitsCore.crossRate === "function" ? window.UnitsCore : null;
   var rates = null, fxState = "";   // "" | "loading" | "failed"
-  function loadFx() { rates = UC ? UC.loadRates(localStorage) : null; }
+  function loadFx() {
+    rates = null;
+    if (!UC) return;
+    try { rates = UC.storedRates(JSON.parse(localStorage.getItem(UC.RATES_KEY) || "null")); } catch (e) { rates = null; }
+  }
   function fx(cents, from, to) {
     if (from === to) return cents;
-    return UC && rates ? UC.convertCents(cents, from, to, rates) : null;
+    var k = UC && rates ? UC.crossRate(rates, from, to) : null;
+    return k === null || k === undefined ? null : Math.round(cents * k);
   }
   function usesFx() {
     var c = cur();
@@ -1009,10 +1014,10 @@
     if (!force && !UC.ratesStale(rates, Date.now())) return;
     if (navigator.onLine === false) { fxState = "failed"; if (then) then(); return; }
     fxState = "loading";
-    UC.fetchRates(function (u, o) { return fetch(u, o); }, Date.now()).then(function (r) {
+    UC.fetchLatest(function (u, o) { return fetch(u, o); }, Date.now()).then(function (r) {
       rates = r;
       fxState = "";
-      UC.saveRates(localStorage, r);
+      try { localStorage.setItem(UC.RATES_KEY, JSON.stringify(r)); } catch (e) {}
       if (then) then();
       renderAll();
     }, function () {

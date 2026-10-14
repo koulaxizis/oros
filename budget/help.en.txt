@@ -1,5 +1,5 @@
 # Budget
-Budget tracks your income and expenses one month at a time, with categories, monthly limits, recurring entries and charts.
+Budget tracks your income and expenses one month at a time, with categories, monthly limits, envelopes, savings goals, subscriptions, recurring entries, several currencies, receipts and reports.
 
 ## Getting started
 Tap or click `New`, choose `Expense` or `Income`, type the `Amount`, pick a `Category` and press `Save`. You can also set the `Date` and add a `Note`. Amounts can be typed as `12,50` or `12.50`.
@@ -22,16 +22,40 @@ Accounts are optional. In the `More` menu, `Accounts` lets you add cash, a card 
 
 `Transfer` moves money between two accounts, `From` one `To` the other. A transfer shows as "Bank → Cash" and counts as neither income nor expense. The filter `Transfers only` lists them.
 
+## Envelopes
+Envelope budgeting (zero-based, as in YNAB) is optional. Open the `Plan` tab and press `Start envelope budgeting`. From then on:
+- `To be assigned` is the money that has no job yet: what your accounts held when you started, plus the income since, minus what you have assigned. Give it out until it reads 0.
+- Each expense category is an envelope. Tap one to set what is `Assigned this month`; it shows `Spent` and `Available`.
+- What is left in an envelope moves on to the next month. So does overspending: the envelope starts the next month in the red (`Overspent`) until you cover it. `Cover the overspending` fills in the amount.
+- `Move money` takes money from one envelope (or `To be assigned`) to another. `Same as last month` copies last month's amounts into the envelopes that have none yet.
+- Your monthly limits keep working next to the envelopes, and each envelope shows its limit.
+- `Stop envelope budgeting` turns it off; what you assigned stays for when you start again.
+
+## Savings goals
+On `Plan`, `New goal`: a `Name`, a `Target` and, if you want, a date (`By`). Progress comes from `What I put aside by hand` (use `Add money`; a minus sign takes money out) or from the balance of one of your accounts. Each goal shows how far along it is and how much to put aside each month to make it by its date.
+
+## Subscriptions
+On `Recurring`, `Subscriptions` lists your recurring expenses by their next charge, each with what it costs `A month` and `A year`, and the totals on top. In a recurring expense, `Remind me` (`On the day of the charge`, or 1 to 14 days before) sends you a [notification](help:t/notifications) before the charge. `Reminders at` sets the hour on this device; `Off on this device` silences them here only.
+
+## Reports
+`Charts` also shows `Where the money goes` for the year of the month you are looking at: a bar per month split by category, and a table of every category per month with totals, income and expenses. The arrows change the year. `Net worth` adds up your accounts at the end of each of the last 12 months.
+
+## Currencies
+The main currency (`More` › `Currency`) is the one every total is in. An account can have its own (`Currency of the account`), and so can an entry: pick it next to the `Amount`. Budget then fills in the amount `In` the main currency from the European Central Bank's rates; change it to what your bank actually charged. The entry keeps both the amount you typed and its currency. Rates come from the same place, and the same saved copy, as the [Unit Converter](app:units), only when something is in another currency, at most every 6 hours. Offline, the last saved rates are used and the window says so. Account balances show in their own currency; net worth converts them at today's rates.
+
+## Receipts
+In an entry, under `Receipt`, the `+` adds a photo or a PDF of the receipt (up to 3). Photos are redrawn on this device, so no location or camera data is kept; a PDF is kept only if it really is one (up to 10 MB). The files sit in [Files](app:files), folder Budget/Receipts, and reach your other devices with Vault Drive, not with sync. `Read the total from text` takes the receipt's text (for example from your phone's "copy text from photo") and puts its total into `Amount`.
+
 ## Charts
 `Charts` shows `Expenses by category` for the month, `Income and expenses, 12 months` and `Balance at the end of each month`. Tap a category to see its entries, or a month to open it. `Show as a table` gives the numbers as text.
 
 ## Categories and currency
 From the `More` menu (the three dots), `Categories` lets you add your own (`New category…`), rename them, change colours and delete them. Entries of a deleted category show as `Uncategorized`.
 
-`Currency` sets one currency for every entry. Changing it doesn't convert amounts.
+`Currency` sets the main currency, the one every total is in (see Currencies). Changing it doesn't convert the amounts already there.
 
 ## Sync and backup
-Entries, accounts, transfers, categories, limits, recurring entries, rules, bank profiles and the currency sync through [orOS sync](help:t/sync). The open tab and your CSV choice stay on this device.
+Entries, accounts, transfers, categories, limits, envelopes, savings goals, recurring entries and their reminders, rules, bank profiles and the currency sync through [orOS sync](help:t/sync). The open tab, your CSV choice and the reminder hour stay on this device. Receipt files travel with Vault Drive.
 
 From the `More` menu:
 - `Export`: pick a period (`This month`, `This year` or `Everything`) and save as `CSV`, `Excel` or `PDF report`. For CSV, choose Greek Excel or other apps, such as the orOS [Spreadsheet](app:spreadsheet). `Open in Spreadsheet` opens the entries and a summary straight in [Spreadsheet](app:spreadsheet).
@@ -71,7 +95,9 @@ When imported entries have no category, a bar above the list says how many. Tap 
 - [Garage](app:garage) (`Add to Budget`) and [Split](app:split) (`Add my share to Budget`) can open a new entry here already filled in. Nothing is saved until you check it and press `Save`.
 
 ## Limits
-- One currency for everything; there's no conversion.
+- An entry in another currency keeps the main amount it was saved with; later rates don't change it. Net worth converts foreign accounts at today's rates, also for past months. Bank, Stripe and Invoice Ninja imports still take only the main currency.
+- Receipt text is not read from the photo itself: paste the text to fill in the total.
+- Subscription reminders come while orOS is open in a browser on that device; a closed orOS catches up when it opens.
 - Recurring entries are added only while Budget is open, and back-filled for up to two years.
 - Bank files are read on this device only; orOS never connects to your bank. Up to 5,000 rows and 8 MB per file; the preview shows the first 300 rows.
 - Amounts in another currency than Budget's are left out, not converted. A bank transfer between two of your accounts comes in as an expense in one and income in the other: change them into a `Transfer` by hand if you want.

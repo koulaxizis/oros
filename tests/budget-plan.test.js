@@ -1,8 +1,9 @@
 // Budget wave 10: envelopes, savings goals, subscriptions, reports,
 // currencies and receipts (budget/plan.js, pure) and the new synced
 // fields and collections of budget.js (asg, goal; tx oc/oa/rc, rec nd,
-// acc cur, xfer ta, set env/envs). Also the shared rates helper of
-// units/core.js that Budget reuses. Run: node --test tests/
+// acc cur, xfer ta, set env/envs). Budget converts with the shared
+// rates helpers of units/core.js (fetchLatest, crossRate), the same
+// way as budget.js fx(). Run: node --test tests/
 
 "use strict";
 
@@ -26,6 +27,8 @@ const B = new Function(
   block("  // ---------- 2. Money", "  // ---------- 6. Storage") +
   "\nreturn { normTx, normRec, normAcc, normXfer, normAsg, normGoal, asgId, mergeBudget, emptyData };")();
 const canon = (x) => JSON.stringify(x);
+// budget.js fx(): cents through UnitsCore.crossRate, rounded; null without a rate
+function conv(c, f, t, rates) { if (f === t) return c; const k = UC.crossRate(rates, f, t); return k === null ? null : Math.round(c * k); }
 const D = (parts) => Object.assign(B.emptyData(), parts || {});
 const tx = (id, d, a, k, c, extra) => Object.assign({ id, m: 1, d, a, k, c, n: "" }, extra || {});
 // What an older Budget writes for a field it does not know: the known
@@ -154,7 +157,7 @@ test("reports: a year per category per month", () => {
 
 test("net worth: balances in their own currency, converted to the main one", () => {
   const rates = { base: "EUR", rates: { USD: 1.25, GBP: 0.8 } };
-  const fx = (c, f, t) => UC.convertCents(c, f, t, rates);
+  const fx = (c, f, t) => conv(c, f, t, rates);
   const d = D({
     acc: [{ id: "bank", n: "Bank", o: 100000 }, { id: "us", n: "US", o: 50000, cur: "USD" }, { id: "jp", n: "JP", o: 1000, cur: "JPY" }],
     tx: [tx("a", "2026-10-01", 4000, "o", "", { ac: "us", oc: "USD", oa: 5000 }),   // typed in the account's currency
@@ -177,28 +180,24 @@ test("net worth: balances in their own currency, converted to the main one", () 
 });
 
 // ---------- currencies (units/core.js, shared with Unit Converter) ----------
-test("rates: convert through EUR, missing rate → null, one fetcher with fallbacks", async () => {
+test("rates: convert through EUR, missing rate → null, the shared fetcher with fallbacks", async () => {
   const r = { rates: { USD: 1.1, GBP: 0.85 } };
-  assert.equal(UC.convertCents(1000, "EUR", "USD", r), 1100);
-  assert.equal(UC.convertCents(1100, "USD", "EUR", r), 1000);
-  assert.equal(UC.convertCents(1100, "USD", "GBP", r), 850);
-  assert.equal(UC.convertCents(5, "USD", "USD", null), 5);
-  assert.equal(UC.convertCents(5, "USD", "JPY", r), null);
-  assert.equal(UC.convertCents(5, "constructor", "EUR", r), null);
+  assert.equal(conv(1000, "EUR", "USD", r), 1100);
+  assert.equal(conv(1100, "USD", "EUR", r), 1000);
+  assert.equal(conv(1100, "USD", "GBP", r), 850);
+  assert.equal(conv(5, "USD", "USD", null), 5);
+  assert.equal(conv(5, "USD", "JPY", r), null);
   const calls = [];
   const fake = (url) => {
     calls.push(url);
     if (calls.length === 1) return Promise.reject(new Error("down"));
     return Promise.resolve({ ok: true, json: () => Promise.resolve({ base: "EUR", date: "2026-10-13", rates: { USD: 1.1 } }) });
   };
-  const got = await UC.fetchRates(fake, 123);
+  const got = await UC.fetchLatest(fake, 123);
   assert.equal(calls.length, 2);
   assert.deepEqual(got, { base: "EUR", date: "2026-10-13", at: 123, src: UC.RATES_URLS[1], rates: { USD: 1.1 } });
-  await assert.rejects(UC.fetchRates(() => Promise.resolve({ ok: false }), 1));
-  const store = { v: null, getItem() { return this.v; }, setItem(k, v) { assert.equal(k, UC.RATES_KEY); this.v = v; } };
-  assert.equal(UC.loadRates(store), null);
-  UC.saveRates(store, got);
-  assert.deepEqual(UC.loadRates(store), got);
+  await assert.rejects(UC.fetchLatest(() => Promise.resolve({ ok: false }), 1));
+  assert.deepEqual(UC.storedRates(JSON.parse(JSON.stringify(got))), got);   // the cache Budget reads back
 });
 
 // ---------- receipts ----------
