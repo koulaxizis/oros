@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.10.00
+- Attach a photo or PDF in the Assistant: a receipt becomes an expense, a business card a contact, a poster an event. The file goes only to the AI you chose, only when you press Send, and it isn't kept with the conversation.
+
 ## Version 2.09.00
 - Seven more single apps: orOS Contacts, Writer, Spreadsheet, Kanban, Mind Map, Wiki and Slides, each with its icon shortcut, Open with file types and Android share.
 
