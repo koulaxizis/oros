@@ -429,5 +429,178 @@ dialog#tv-player::backdrop { background: rgba(0, 0, 0, 0.6); }
 }
 #tv-main::-webkit-scrollbar-thumb:hover, #tv-ac::-webkit-scrollbar-thumb:hover, dialog#tv-player::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
+/* ---------- Wave 43: own lists, guides, timeline ---------- */
+.tv-tabs { flex-wrap: wrap; align-items: center; }
+.tv-manage {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+.tv-manage:hover { background: var(--accent-soft); border-color: var(--accent); }
+.tv-manage svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.tv-btn {
+  min-height: 44px;
+  padding: 8px 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+}
+.tv-btn:hover { filter: brightness(1.1); }
+.tv-btn.ghost { background: transparent; border-color: var(--border); }
+.tv-btn.ghost:hover { border-color: var(--accent); background: var(--accent-soft); }
+#tv-empty-act { margin-top: 14px; }
+
+/* now / next on a card */
+.tv-now {
+  width: 100%;
+  display: flex; flex-direction: column; gap: 3px;
+  font-size: 11px;
+  text-align: left;
+  min-width: 0;
+}
+.tv-now-t {
+  color: var(--text);
+  font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tv-prog { display: block; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.tv-prog i { display: block; height: 100%; background: var(--accent); }
+.tv-next { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#tvp-epg {
+  padding: 0 4px 8px;
+  font-size: 12.5px;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Guide tab: the timeline fills the main area and scrolls itself */
+#tv-main.guide-mode { display: flex; flex-direction: column; overflow: hidden; }
+#tv-main.guide-mode #tv-grid, #tv-main.guide-mode #tv-more-row, #tv-main.guide-mode #tv-loading,
+#tv-main.guide-mode #tv-empty { display: none; }
+#tv-guide { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.tvg-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.tvg-cap { font-size: 12px; color: var(--text-dim); }
+.tvg-msg { padding: 48px 16px; text-align: center; color: var(--text-dim); font-size: 13.5px; }
+.tvg-msg .tv-btn { margin-top: 14px; }
+.tvg-scroll {
+  flex: 1; min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.tvg-inner { position: relative; }
+.tvg-hours { display: flex; position: sticky; top: 0; z-index: 3; background: var(--panel-bg); border-bottom: 1px solid var(--border); height: 28px; }
+.tvg-corner { position: sticky; left: 0; z-index: 4; width: var(--tvg-ch); flex: none; background: var(--panel-bg); border-right: 1px solid var(--border); }
+.tvg-hrs { position: relative; flex: none; }
+.tvg-hrs span { position: absolute; top: 6px; padding-left: 6px; font-size: 11px; color: var(--text-dim); border-left: 1px solid var(--border); line-height: 16px; }
+.tvg-row { display: flex; height: 56px; border-bottom: 1px solid var(--border); }
+.tvg-ch {
+  position: sticky; left: 0; z-index: 2;
+  width: var(--tvg-ch); flex: none;
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: none; border-right: 1px solid var(--border);
+  font: inherit; font-size: 12px; font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.tvg-ch:hover { color: var(--accent); }
+.tvg-ch img { width: 28px; height: 28px; object-fit: contain; flex: none; }
+.tvg-ch span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.tvg-track { position: relative; flex: none; }
+.tvg-p {
+  position: absolute; top: 4px; bottom: 4px;
+  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  padding: 2px 6px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit; font-size: 11.5px;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+.tvg-p:hover { border-color: var(--accent); }
+.tvg-p.on { background: var(--accent-soft); border-color: var(--accent); }
+.tvg-p.past { opacity: 0.6; }
+.tvg-pt { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tvg-ps { color: var(--text-dim); font-size: 10.5px; white-space: nowrap; }
+.tvg-nowline { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--danger); z-index: 1; pointer-events: none; }
+
+/* Lists & guides dialog, programme details */
+dialog.tv-dlg {
+  margin: auto;                   /* R32 */
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px var(--shadow);
+  padding: 12px 14px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+dialog.tv-dlg-sm { width: min(460px, calc(100vw - 24px)); }
+dialog.tv-dlg::backdrop { background: rgba(0, 0, 0, 0.6); }
+.tv-dlg-title { font-size: 15px; font-weight: 800; overflow-wrap: anywhere; }
+.tvs-sec { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--border); }
+.tvs-sec h3 { font-size: 13.5px; font-weight: 800; }
+.tvs-hint { font-size: 12px; color: var(--text-dim); line-height: 1.45; }
+.tvs-list { display: flex; flex-direction: column; gap: 6px; }
+.tvs-none { font-size: 12.5px; color: var(--text-dim); }
+.tvs-row { display: flex; align-items: center; gap: 4px; padding: 6px 4px 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.tvs-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tvs-name { font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.tvs-url { font-size: 11px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tvs-st { font-size: 11.5px; color: var(--ok); overflow-wrap: anywhere; }
+.tvs-st.err { color: var(--danger); }
+.tvs-add { display: flex; gap: 6px; }
+.tvs-add input {
+  flex: 1; min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit; font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+.tvs-add input:focus { border-color: var(--accent); }
+.tvs-sec > .tv-btn.ghost { align-self: flex-start; }
+.tvs-foot { display: flex; justify-content: flex-end; padding-top: 6px; }
+.tvpg-when { font-size: 12.5px; color: var(--accent); font-weight: 700; padding: 0 2px 6px; }
+.tvpg-sub { font-size: 12.5px; color: var(--text-dim); padding: 0 2px 6px; }
+.tvpg-desc { font-size: 13px; line-height: 1.5; padding: 0 2px 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  .tv-tab { padding: 8px 10px; font-size: 13px; }
+  .tv-manage { margin-left: 0; }
+  .tvg-row { height: 52px; }
+}
+
 /* Authority guard — LAST RULE (Part VII) */
 [hidden] { display: none !important; }

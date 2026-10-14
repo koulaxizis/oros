@@ -1,5 +1,5 @@
 # Television
-Television plays free live TV channels from around the world, listed by the community directory iptv-org. Browse or search, filter by country, category and language, and star the channels you like.
+Television plays free live TV channels from around the world, listed by the community directory iptv-org, and the channels of your own M3U playlists. Browse or search, filter by country, category and language, star the channels you like, and see what is on now and next from an XMLTV programme guide.
 
 ## Getting started
 The first time, the app downloads the channel directory (`Loading channels…`); this can take a moment. Then `Browse` shows the channels as cards. Tap or click a card to watch it in the player. `Load more` at the bottom shows the next batch.
@@ -13,11 +13,25 @@ The player shows the channel's name, its country and labels, and controls for pl
 
 Some channels have several streams. If one fails, the app tries the next one on its own (`Stream failed — trying next…`). When a channel has more than one stream, the `Alternate streams` menu lets you pick one yourself. If nothing works, you get a notification that the channel couldn't play on this device.
 
+## Your own playlists
+Open `Lists & guides` (top right) to add an M3U playlist: paste its address and press `Add`, or press `Open file…` to pick a `.m3u` file. `My lists` then shows its channels; the `Group` menu narrows them by the playlist's groups, and the search box searches them. Tap a channel to watch it in the same player, and star it like any other channel.
+
+- A playlist address is downloaded again once a day; `Refresh` in `Lists & guides` gets it now, `Refresh all` gets every address and guide.
+- When a playlist names its own programme guide, that guide is added for you.
+- The trash button removes a playlist or a guide.
+
+## Programme guide
+Add an XMLTV guide in `Lists & guides` the same way (an address, or `Open file…` for a `.xml` or `.xml.gz` file). Channels are matched by their `tvg-id` (or the directory's channel id), then by name.
+
+- Each channel card shows the programme on now, how far it has got, and what comes `Next`; the player shows the same line.
+- `Guide` shows today's timeline: one row per channel that has programmes, a red line at the current time, and `Now` to jump back to it. Tap a channel name to watch it; tap a programme for its details and `Watch`.
+- The `Group` menu and the search box narrow the rows too.
+
 ## Favourites and recent channels
 Tap the star (☆) on a card, or the favourite button in the player, to add a channel to `Favorites`; tap it again to remove it. `Recent` lists the last 20 channels you watched.
 
 ## Sync and backup
-Your favourite channels sync between your devices through [orOS sync](help:t/sync). Recent channels and your volume and mute stay on this device, and the channel directory is kept on this device for a day. There's no import or export; favourites are part of the orOS [backup](help:t/backup).
+Your favourite channels and the addresses of your playlists and guides sync between your devices through [orOS sync](help:t/sync); each device downloads the contents itself. Files you open stay on this device. Recent channels and your volume and mute stay on this device too; the channel directory and your playlists are kept here for a day, and a guide address for the day it was downloaded. There's no export; favourites and addresses are part of the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 In the player:
@@ -34,4 +48,8 @@ In the player:
 ## Limits
 - Channels and streams come from iptv-org, a free community list. Many may be offline, blocked in your country or in a format your browser can't play (`This stream format is not supported here`).
 - If the directory can't be reached (no connection, or a content blocker), the list stays empty.
+- iptv-org publishes no ready programme guides, so the guide comes only from XMLTV addresses or files you add.
+- Many playlist and guide sites don't let a browser read them (`This site doesn't let the browser read it…`). With the Mail relay set up, the app reads them through it (up to 5 MB per download); otherwise download the file and open it.
+- `http://` streams don't play when orOS runs on `https://`, and streams that need a special referrer or user agent may not play at all.
+- A guide file you open keeps the programmes from the day before to a week ahead; open a newer file after that. The timeline shows today only, and at most 150 channels at a time.
 - Playback stops when you close the player or the app.
