@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 1.99.00
+- Certificates can carry a QR code that shows they are genuine. Anyone who scans it sees the signed details on a check page that works offline, with no server.
+
 ## Version 1.98.00
 - New app: Certificates (in Business). Design one certificate of attendance, completion or merit, a diploma or a kids' award, add a list of people, and get a numbered PDF for each, to print, save or send by email.
 
