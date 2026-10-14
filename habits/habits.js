@@ -2339,6 +2339,11 @@
   //   perMonth?, target?, unit?, cmp?, reminder? } } (M.asNew cleans
   //   it) opens the new-habit dialog prefilled; no name → no-op.
   function openSearchTarget(t) {
+    // Single app (solo.js) icon shortcut { add: true }: a blank New habit.
+    if (t && t.add === true) {
+      if (!document.querySelector("dialog[open]")) openHabitDialog(null);
+      return;
+    }
     if (t && t.asNew) {
       var pre = M.asNew(t.asNew);
       if (pre && !document.querySelector("dialog[open]")) openHabitDialog(null, pre);

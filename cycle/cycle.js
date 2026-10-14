@@ -3571,6 +3571,17 @@
   // Days list's edit button does. Unknown day → no-op; an open dialog
   // or an open day editor (unsaved edits) wins → no-op.
   function openSearchTarget(t) {
+    // Single app (solo.js) icon shortcut { today: true }: today's day
+    // editor, as the "+ Log" button opens it.
+    if (t && t.today === true) {
+      if (document.querySelector("dialog[open]")) return;
+      openDay = "d-" + dayKey(todayTs());
+      managing = false;
+      timelineAnchor = null;
+      viewMode = "timeline";
+      applyView();
+      return;
+    }
     var id = t && typeof t.day === "string" ? t.day : "";
     if (!id || !dayById(id)) return;
     if (document.querySelector("dialog[open]")) return;

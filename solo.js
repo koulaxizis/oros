@@ -96,6 +96,50 @@
       name: { en: "orOS Slides", el: "orOS Παρουσιάσεις" },
       shortcuts: [{ do: "new", name: { en: "New presentation", el: "Νέα παρουσίαση" }, target: { newDeck: true } }],
       share: "outline"
+    },
+    // Wave 3: personal apps. Water, Diary, Mood, Health and Cycle take
+    // no shares (nothing a shared text should become there).
+    passwords: {
+      name: { en: "orOS Passwords", el: "orOS Κωδικοί" },
+      shortcuts: [{ do: "gen", name: { en: "Generate a password", el: "Νέος κωδικός" }, target: { gen: true } },
+                  { do: "new", name: { en: "New vault entry", el: "Νέα καταχώριση" }, target: { newEntry: {} } }],
+      share: "login"
+    },
+    budget: {
+      name: { en: "orOS Budget", el: "orOS Έσοδα & Έξοδα" },
+      shortcuts: [{ do: "new", name: { en: "New expense", el: "Νέο έξοδο" }, target: { newTx: {} } }],
+      share: "expense"
+    },
+    habits: {
+      name: { en: "orOS Habits", el: "orOS Συνήθειες" },
+      shortcuts: [{ do: "new", name: { en: "New habit", el: "Νέα συνήθεια" }, target: { add: true } }],
+      share: "habit"
+    },
+    water: {
+      name: { en: "orOS Water", el: "orOS Νερό" },
+      shortcuts: [{ do: "glass", name: { en: "Add a glass", el: "Ένα ποτήρι" }, target: { sip: "glass" } }]
+    },
+    diary: {
+      name: { en: "orOS Diary", el: "orOS Ημερολόγιο μιας πρότασης" },
+      shortcuts: [{ do: "write", name: { en: "Write today's sentence", el: "Η σημερινή πρόταση" }, target: { write: true } }]
+    },
+    mood: {
+      name: { en: "orOS Mood", el: "orOS Διάθεση" },
+      shortcuts: [{ do: "log", name: { en: "Log my mood", el: "Πώς νιώθω" }, target: { checkin: true } }]
+    },
+    fitness: {
+      name: { en: "orOS Workouts", el: "orOS Προπόνηση" },
+      shortcuts: [{ do: "log", name: { en: "Log a workout", el: "Νέα προπόνηση" }, target: { logNew: true } }],
+      share: "workout"
+    },
+    health: {
+      name: { en: "orOS Health", el: "orOS Υγεία" },
+      shortcuts: [{ do: "bp", name: { en: "New blood pressure", el: "Νέα πίεση" }, target: { add: "bp" } },
+                  { do: "wt", name: { en: "New weight", el: "Νέο βάρος" }, target: { add: "wt" } }]
+    },
+    cycle: {
+      name: { en: "orOS Cycle", el: "orOS Κύκλος" },
+      shortcuts: [{ do: "today", name: { en: "Log today", el: "Καταγραφή σήμερα" }, target: { today: true } }]
     }
   };
 
@@ -241,6 +285,19 @@
       if (!firstLine) return null;
       return { app: id, target: { newArt: { title: firstLine.slice(0, 200), text: (title ? bodyText : rest).slice(0, 20000) } } };
     }
+    // Wave 3.
+    if (kind === "login") {
+      return url ? { app: id, target: { newEntry: { title: (title || firstLine.replace(url, "").trim() || url).slice(0, 200), url: url } } } : null;
+    }
+    if (kind === "expense") {
+      return firstLine ? { app: id, target: { newTx: { n: firstLine.slice(0, 140) } } } : null;
+    }
+    if (kind === "habit") {
+      return firstLine ? { app: id, target: { asNew: { name: firstLine.slice(0, 80) } } } : null;
+    }
+    if (kind === "workout") {
+      return bodyText.trim() ? { app: id, target: { asNew: { note: bodyText.slice(0, 2000) } } } : null;
+    }
     if (kind === "outline") {
       // A titled share starts with its title slide ("# title").
       var outline = (title ? "# " + title + "\n" : "") + bodyText;
@@ -292,6 +349,9 @@
     if (Object.keys(accept).length) {
       m.file_handlers = [{ action: page + "?file-open=" + id, accept: accept }];
     }
+    // An app with nothing a shared text or file could become gets no
+    // share target.
+    if (!a.share && !exts.length) return m;
     var share = {
       action: page + "?share-target",
       method: "POST",

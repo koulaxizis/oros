@@ -164,6 +164,7 @@
       "ac.own.bad": "That doesn't look like a client id",
       "rv.title": "Review import",
       "rv.sum": "{new} new · {diff} with other details · {same} already here",
+      "rv.folded": "{n} listed twice in the import, combined",
       "rv.pref": "When a detail differs:",
       "rv.act.add": "Add",
       "rv.act.skip": "Skip",
@@ -430,6 +431,7 @@
       "ac.own.bad": "Αυτό δεν μοιάζει με client id",
       "rv.title": "Έλεγχος εισαγωγής",
       "rv.sum": "{new} νέες · {diff} με άλλα στοιχεία · {same} υπάρχουν ήδη",
+      "rv.folded": "{n} υπήρχαν δύο φορές στην εισαγωγή και ενώθηκαν",
       "rv.pref": "Όταν ένα στοιχείο διαφέρει:",
       "rv.act.add": "Προσθήκη",
       "rv.act.skip": "Παράλειψη",
@@ -3770,7 +3772,8 @@ document.addEventListener("keydown", function (e) {
     review = { items: plan.items, counts: plan.counts, src: String(src || "").slice(0, 160) };
     $("rev-src").textContent = review.src;
     $("rev-sum").textContent = t("rv.sum").replace("{new}", String(plan.counts["new"]))
-      .replace("{diff}", String(plan.counts.diff)).replace("{same}", String(plan.counts.same));
+      .replace("{diff}", String(plan.counts.diff)).replace("{same}", String(plan.counts.same)) +
+      (plan.folded ? " · " + t("rv.folded").replace("{n}", String(plan.folded)) : "");
     $("rev-pref").value = "merge";
     $("rev-pref-row").hidden = !plan.items.some(function (it) { return it.kind === "diff" && it.conflicts.length; });
     renderReview();
@@ -4511,6 +4514,9 @@ document.addEventListener("keydown", function (e) {
   function acRender() {
     ["google", "microsoft"].forEach(function (p) {
       $("ac-" + p).disabled = acBusy;
+      // Only providers this orOS (or this device's own app id) can
+      // sign in to are offered; Microsoft has no built-in id for now.
+      $("ac-" + p).hidden = !ACC.ready(p);
       $("ac-id-" + p).value = ACC.ownId(p);
     });
     $("ac-uri").textContent = ACC.redirectUri();

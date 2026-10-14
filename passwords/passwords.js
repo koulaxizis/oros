@@ -816,6 +816,21 @@
     watchPalette();
     renderTabs();
     generate();
+    // Single app (solo.js) icon shortcuts and shares: { gen: true } →
+    // the generator; { newEntry: { title?, url? } } → a new vault entry.
+    window.__orosOpenAt = openTarget;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeTarget === "function") openTarget(p.__orosTakeTarget("passwords"));
+    } catch (e) {}
+  }
+  function openTarget(tg) {
+    if (!tg || typeof tg !== "object") return;
+    if (tg.gen === true) { setTab("pw"); return; }
+    if (tg.newEntry && window.PmApp && typeof window.PmApp.addEntry === "function") {
+      window.PmApp.addEntry(tg.newEntry);
+      setTab("pv");
+    }
   }
 
   boot();
