@@ -343,7 +343,45 @@ const STRINGS = {
     'cmt.needSel': 'Select some text first, then add the comment.',
     'cmt.oneBlock': 'A comment must stay within one paragraph — select less text.',
     'ver.autoNote': 'Auto versions: at most one every 5 minutes while you write; the newest 8 are kept (fewer for very long documents). Manual snapshots are never dropped.',
-    'goal.lockArmed': 'Editing will lock when the goal is reached'
+    'goal.lockArmed': 'Editing will lock when the goal is reached',
+    'tt.insert': 'Insert',
+    'tt.view': 'View',
+    'tt.dictate': 'Dictation',
+    'tbl.bar': 'Table tools',
+    'tbl.rowAbove': 'Row above',
+    'tbl.rowBelow': 'Row below',
+    'tbl.colLeft': 'Column left',
+    'tbl.colRight': 'Column right',
+    'tbl.delRow': 'Delete row',
+    'tbl.delCol': 'Delete column',
+    'tbl.delTable': 'Delete table',
+    'view.focus': 'Focus mode',
+    'view.unitP': 'Focus on the paragraph',
+    'view.unitS': 'Focus on the sentence',
+    'view.tw': 'Typewriter scrolling',
+    'view.wc': 'Show word count',
+    'view.stats': 'Statistics…',
+    'focus.exit': 'Exit focus mode',
+    'stats.title': 'Statistics',
+    'stats.doc': 'Document',
+    'stats.sel': 'Selection',
+    'stats.words': 'Words',
+    'stats.chars': 'Characters (with spaces)',
+    'stats.charsNs': 'Characters (no spaces)',
+    'stats.paras': 'Paragraphs',
+    'stats.sents': 'Sentences',
+    'stats.read': 'Reading time',
+    'stats.speak': 'Speaking time',
+    'stats.min': '{n} min',
+    'stats.lt1': 'under 1 min',
+    'stats.note': 'Reading at about 230 words a minute, speaking at about 130.',
+    'wc.sel': '{s} of {n} words',
+    'dict.start': 'Start dictation',
+    'dict.stop': 'Stop dictation',
+    'dict.listening': 'Listening…',
+    'dict.denied': 'The microphone is not allowed. Allow it in the browser’s site settings and try again.',
+    'dict.network': 'Dictation needs the browser’s speech service, which could not be reached.',
+    'dict.failed': 'Dictation stopped'
   },
   el: {
     'app.name': 'Writer',
@@ -596,7 +634,45 @@ const STRINGS = {
     'cmt.needSel': 'Επίλεξε πρώτα κείμενο και μετά πρόσθεσε το σχόλιο.',
     'cmt.oneBlock': 'Το σχόλιο πρέπει να μένει μέσα σε μία παράγραφο — επίλεξε λιγότερο κείμενο.',
     'ver.autoNote': 'Αυτόματες εκδόσεις: το πολύ μία ανά 5 λεπτά γραφής· κρατιούνται οι 8 νεότερες (λιγότερες σε πολύ μεγάλα έγγραφα). Τα χειροκίνητα στιγμιότυπα δεν σβήνονται ποτέ.',
-    'goal.lockArmed': 'Η επεξεργασία θα κλειδώσει μόλις επιτευχθεί ο στόχος'
+    'goal.lockArmed': 'Η επεξεργασία θα κλειδώσει μόλις επιτευχθεί ο στόχος',
+    'tt.insert': 'Εισαγωγή',
+    'tt.view': 'Προβολή',
+    'tt.dictate': 'Υπαγόρευση',
+    'tbl.bar': 'Εργαλεία πίνακα',
+    'tbl.rowAbove': 'Γραμμή πάνω',
+    'tbl.rowBelow': 'Γραμμή κάτω',
+    'tbl.colLeft': 'Στήλη αριστερά',
+    'tbl.colRight': 'Στήλη δεξιά',
+    'tbl.delRow': 'Διαγραφή γραμμής',
+    'tbl.delCol': 'Διαγραφή στήλης',
+    'tbl.delTable': 'Διαγραφή πίνακα',
+    'view.focus': 'Λειτουργία εστίασης',
+    'view.unitP': 'Εστίαση στην παράγραφο',
+    'view.unitS': 'Εστίαση στην πρόταση',
+    'view.tw': 'Κύλιση γραφομηχανής',
+    'view.wc': 'Εμφάνιση πλήθους λέξεων',
+    'view.stats': 'Στατιστικά…',
+    'focus.exit': 'Έξοδος από την εστίαση',
+    'stats.title': 'Στατιστικά',
+    'stats.doc': 'Έγγραφο',
+    'stats.sel': 'Επιλογή',
+    'stats.words': 'Λέξεις',
+    'stats.chars': 'Χαρακτήρες (με κενά)',
+    'stats.charsNs': 'Χαρακτήρες (χωρίς κενά)',
+    'stats.paras': 'Παράγραφοι',
+    'stats.sents': 'Προτάσεις',
+    'stats.read': 'Χρόνος ανάγνωσης',
+    'stats.speak': 'Χρόνος ομιλίας',
+    'stats.min': '{n} λεπτά',
+    'stats.lt1': 'κάτω από 1 λεπτό',
+    'stats.note': 'Ανάγνωση με περίπου 230 λέξεις το λεπτό, ομιλία με περίπου 130.',
+    'wc.sel': '{s} από {n} λέξεις',
+    'dict.start': 'Έναρξη υπαγόρευσης',
+    'dict.stop': 'Διακοπή υπαγόρευσης',
+    'dict.listening': 'Ακούω…',
+    'dict.denied': 'Το μικρόφωνο δεν επιτρέπεται. Επίτρεψέ το στις ρυθμίσεις ιστότοπου του προγράμματος περιήγησης και δοκίμασε ξανά.',
+    'dict.network': 'Η υπαγόρευση χρειάζεται την υπηρεσία ομιλίας του προγράμματος περιήγησης, που δεν ήταν διαθέσιμη.',
+    'dict.failed': 'Η υπαγόρευση σταμάτησε'
   }
 };
 
@@ -648,6 +724,17 @@ const ICONS = {
   ask:    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8l1.4 3.6 3.6 1.4-3.6 1.4L8 11.8 6.6 8.2 3 6.8l3.6-1.4z"/><path d="M12.5 10.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>',
   settings:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M2.7 8h1.8M11.5 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5l-1.3 1.3"/></svg>',
   docs:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>',
+  insert: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M8 5.5v5M5.5 8h5"/></svg>',
+  view:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8 12.1 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>',
+  mic:    '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg>',
+  rowUp:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="12" height="6" rx="1"/><path d="M8 1.5v5M5.5 4h5"/></svg>',
+  rowDown:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="6" rx="1"/><path d="M8 9.5v5M5.5 12h5"/></svg>',
+  colLeft:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="6" height="12" rx="1"/><path d="M1.5 8h5M4 5.5v5"/></svg>',
+  colRight:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="6" height="12" rx="1"/><path d="M9.5 8h5M12 5.5v5"/></svg>',
+  delRow: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="6" rx="1"/><path d="M6 6.5l4 3M10 6.5l-4 3"/></svg>',
+  delCol: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="6" height="12" rx="1"/><path d="M6.5 6l3 4M9.5 6l-3 4"/></svg>',
+  thead:  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6.5h12" /><rect x="2" y="2.5" width="12" height="4" fill="currentColor" stroke="none" opacity=".45"/></svg>',
+  delTable:'<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6.5h12M6 2.5v11"/><path d="M9 9l3 3M12 9l-3 3"/></svg>',
   lock:   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>'
 };
 
@@ -666,7 +753,8 @@ function paintIcons() {
       'footnotes': 'fn', 'comments': 'cmt',
       'toc': 'toc', 'meta': 'meta', 'page': 'page',
       'templates': 'tpl', 'versions': 'versions', 'goal': 'goal',
-      'export': 'export', 'import': 'import', 'lorem': 'lorem', 'settings': 'settings'
+      'export': 'export', 'import': 'import', 'lorem': 'lorem', 'settings': 'settings',
+      'insert': 'insert', 'view': 'view', 'dictate': 'mic'
     };
     const ic = map[key];
     if (ic && ICONS[ic]) btn.innerHTML = ICONS[ic];
@@ -1323,7 +1411,8 @@ const PREFS_KEY = 'oros-writer-prefs';
 function savePrefs() {
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify({
-      open: state.tabOrder, active: state.activeTab, seen: state.seen
+      open: state.tabOrder, active: state.activeTab, seen: state.seen,
+      view: { focus: view.focus, unit: view.unit, tw: view.tw, wc: view.wc }
     }));
   } catch (e) { /* quota — tabs are only a view */ }
 }
@@ -1660,6 +1749,9 @@ function renderEditor() {
   footnotesAfterRender();          // renumber + refresh panel (Wave 3)
   commentsAfterRender();           // refresh comment cards (Wave 3)
   goalAfterRender();               // goal bar + reading progress (Wave 4)
+  if (tableBar) tableBar.hidden = true;
+  if (dict && dict.docId !== state.activeTab) stopDictation();
+  viewAfterChange();
   // Adopt the browser's serialization WITHOUT touching mtime, so a later
   // unrelated flush never sees a "change" that is only formatting noise.
   if (doc) {
@@ -1699,8 +1791,8 @@ function exec(cmd, val) {
 
 function bindToolbar() {
   const binds = {
-    'btn-undo':    () => exec('undo'),
-    'btn-redo':    () => exec('redo'),
+    'btn-undo':    () => { if (!frTryUndo()) exec('undo'); },
+    'btn-redo':    () => { if (!frTryRedo()) exec('redo'); },
     'btn-bold':    () => exec('bold'),
     'btn-italic':  () => exec('italic'),
     'btn-underline': () => exec('underline'),
@@ -1884,7 +1976,7 @@ function wireEvents() {
   // Smart typography: ONLY after typed characters (never on delete,
   // paste or IME composition), and never inside code.
   EL.editor.addEventListener('input', (e) => {
-    if (!state.settings.smartTypography || stBusy) return;
+    if (!state.settings.smartTypography || stBusy || frBusy) return;
     if (e.isComposing || e.inputType !== 'insertText') return;
     smartTransformLastInsert();
   });
@@ -2057,6 +2149,7 @@ function boot() {
     startFootnoteObserver();
     wireGoalBar();
     wireReadingProgress();
+    wireViewTools();
     ioWireDragDrop();
 
     // 6. First render — set initial dirty flag based on content
@@ -2400,13 +2493,18 @@ function updateCount(total, curr) {
 function replaceOne() {
   if (findState.index < 0 || findState.index >= findState.hits.length) return;
   if (isLocked()) return;
-  const hit = findState.hits[findState.index];
-  hit.textContent = findBar.querySelector('#rep-text').value;
-  ioUnwrap(hit);                         // replaced text is no longer a hit
-  findState.hits.splice(findState.index, 1);
+  const rep = findBar.querySelector('#rep-text').value;
+  const span = frOffsets([findState.hits[findState.index]])[0];
+  clearHighlights();
+  if (span) frApply([span], rep);        // one native undo step
+  frGroups.undo = frGroups.redo = null;
   scheduleSave();
-  if (!findState.hits.length) { findState.index = -1; updateCount(0, 0); return; }
-  findState.index = findState.index % findState.hits.length;
+  findAndMark();                         // fresh hits; go on after the replaced one
+  if (!findState.hits.length || !span) return;
+  const offs = frOffsets(findState.hits);
+  let k = offs.findIndex(o => o.s >= span.s + rep.length);
+  if (k < 0) k = 0;
+  findState.index = k;
   highlightActive();
 }
 
@@ -2414,12 +2512,19 @@ function replaceAll() {
   if (findState.query === '' || !findState.hits.length) return;
   if (isLocked()) return;
   const rep = findBar.querySelector('#rep-text').value;
-  const n = findState.hits.length;
-  findState.hits.forEach(hit => { hit.textContent = rep; });
+  const spans = frOffsets(findState.hits);
   clearHighlights();
+  const before = editorHTMLForSave();
+  frApply(spans, rep);
+  const after = editorHTMLForSave();
+  frGroups.undo = (after !== before) ? { n: spans.length, before: before, after: after } : null;
+  frGroups.redo = null;
+  dirty = true;
+  updateEmptyState();
   scheduleSave();
+  goalAfterInput();
   updateCount(0, 0);
-  showToast(t('find.replaced.all') + ' (' + n + ')');
+  showToast(t('find.replaced.all') + ' (' + spans.length + ')');
 }
 
 // ===== SECTION 15: WRITING TOOLS =====
@@ -3026,17 +3131,766 @@ function doInsertTable(dlg) {
   for (let r = 0; r < rows + (withHeader ? 1 : 0); r++) {
     const tr = tbl.insertRow();
     for (let c = 0; c < cols; c++) {
-      const cell = tr.insertCell();
+      const cell = (withHeader && r === 0) ? tr.appendChild(document.createElement('th')) : tr.insertCell();
       cell.style.border = '1px solid var(--border)';
       cell.style.padding = '6px 10px';
       cell.textContent = '\u00A0';
-      if (withHeader && r === 0) cell.style.background = 'var(--panel-bg)';
     }
   }
   insertNodeAtCursor(tbl);
   insertNodeAtCursor(document.createElement('p'));
   scheduleSave();
   dlg.close();
+}
+
+// ===== SECTION 15b: INSERT MENU · TABLE TOOLS · VIEW (FOCUS, TYPEWRITER
+// SCROLLING, WORD COUNT) · STATISTICS · DICTATION · UNDOABLE REPLACE =====
+// Pure parts (sentences, statistics, dictation spacing, centring) live
+// in core.js (window.WriterCore, tested in tests/writer-core.test.js).
+const WC = window.WriterCore;
+function appLang() { return window.orosLang === 'el' ? 'el' : 'en'; }
+
+// Put the remembered caret back into the editor (a toolbar tap or a
+// dialog may have taken the selection away).
+function restoreEditorSelection() {
+  const sel = window.getSelection();
+  const inEd = sel && sel.rangeCount && EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer);
+  if (document.activeElement !== EL.editor) EL.editor.focus({ preventScroll: true });
+  if (!inEd && lastEditorRange && EL.editor.contains(lastEditorRange.commonAncestorContainer)) {
+    sel.removeAllRanges();
+    sel.addRange(lastEditorRange.cloneRange());
+  }
+}
+
+/* ----- Generic toolbar menu (Insert, View) ----- */
+function openMenu(anchor, items) {
+  closeQfMenu();
+  qfMenu = document.createElement('div');
+  qfMenu.className = 'qf-menu';
+  qfMenu.setAttribute('role', 'menu');
+  items.forEach(item => {
+    if (!item) {
+      const sep = document.createElement('div');
+      sep.className = 'qf-sep';
+      qfMenu.appendChild(sep);
+      return;
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'qf-item';
+    const checkable = typeof item.checked === 'boolean';
+    btn.setAttribute('role', !checkable ? 'menuitem' : (item.radio ? 'menuitemradio' : 'menuitemcheckbox'));
+    if (checkable) {
+      btn.setAttribute('aria-checked', item.checked ? 'true' : 'false');
+      if (item.checked) btn.classList.add('on');
+    }
+    const label = document.createElement('span');
+    label.textContent = item.label;
+    btn.appendChild(label);
+    if (checkable) {
+      const check = document.createElement('span');
+      check.className = 'qf-check';
+      check.innerHTML = ICONS.check;     // our own static SVG
+      btn.appendChild(check);
+    }
+    btn.addEventListener('mousedown', e => e.preventDefault());   // keep the editor selection
+    btn.addEventListener('click', () => { closeQfMenu(); item.action(); });
+    qfMenu.appendChild(btn);
+  });
+  document.body.appendChild(qfMenu);
+  const r = anchor.getBoundingClientRect(), m = qfMenu.getBoundingClientRect();
+  qfMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - m.width - 8)) + 'px';
+  qfMenu.style.top = Math.max(8, Math.min(r.bottom + 4, window.innerHeight - m.height - 8)) + 'px';
+  anchor.setAttribute('aria-expanded', 'true');
+  const ac = new AbortController();
+  qfMenu._ac = ac;
+  ac.signal.addEventListener('abort', () => anchor.setAttribute('aria-expanded', 'false'));
+  const menu = qfMenu;
+  menu.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const list = Array.from(menu.querySelectorAll('.qf-item'));
+    const i = list.indexOf(document.activeElement);
+    const n = list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length];
+    if (n) n.focus();
+  });
+  setTimeout(() => {
+    if (ac.signal.aborted) return;
+    document.addEventListener('click', e => {
+      if (qfMenu && (qfMenu.contains(e.target) || anchor.contains(e.target))) return;
+      closeQfMenu();
+    }, { signal: ac.signal });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeQfMenu(); anchor.focus(); } },
+      { signal: ac.signal });
+    window.addEventListener('blur', closeQfMenu, { signal: ac.signal });
+  }, 0);
+  const first = menu.querySelector('.qf-item');
+  if (first && document.activeElement === anchor) first.focus();
+}
+
+function toggleMenu(anchor, build) {
+  if (qfMenu && anchor.getAttribute('aria-expanded') === 'true') { closeQfMenu(); return; }
+  build(anchor);
+}
+
+/* ----- INSERT MENU (link, image, table… for touch screens too) ----- */
+function openInsertMenu(anchor) {
+  openMenu(anchor, [
+    { label: t('tt.qf.link'), action: openLinkDialog },
+    { label: t('tt.qf.image'), action: openImageDialog },
+    { label: t('tt.qf.table'), action: openTableDialog },
+    null,
+    { label: t('tt.hr'), action: () => { restoreEditorSelection(); exec('insertHorizontalRule'); } },
+    { label: t('tt.pageBreak'), action: () => { restoreEditorSelection(); document.getElementById('btn-page-break').click(); } },
+    { label: t('fn.add'), action: () => { restoreEditorSelection(); addFootnote(); } },
+    { label: t('tt.chars'), action: openCharsDialog }
+  ]);
+}
+
+/* ----- TABLE TOOLS (a strip under the toolbar while the caret is in a table) ----- */
+let tableBar = null;
+const TBL_OPS = [
+  ['rowAbove', 'rowUp', 'tbl.rowAbove'], ['rowBelow', 'rowDown', 'tbl.rowBelow'],
+  ['colLeft', 'colLeft', 'tbl.colLeft'], ['colRight', 'colRight', 'tbl.colRight'],
+  ['delRow', 'delRow', 'tbl.delRow'], ['delCol', 'delCol', 'tbl.delCol'],
+  ['header', 'thead', 'table.headerRow'], ['delTable', 'delTable', 'tbl.delTable']
+];
+
+function selectionCell(useLast) {
+  const sel = window.getSelection();
+  let n = null;
+  if (sel && sel.rangeCount && EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) n = sel.focusNode;
+  else if (useLast && lastEditorRange && EL.editor.contains(lastEditorRange.commonAncestorContainer)) n = lastEditorRange.startContainer;
+  if (!n) return null;
+  const el = n.nodeType === 1 ? n : n.parentElement;
+  const cell = el && el.closest ? el.closest('td, th') : null;
+  return cell && EL.editor.contains(cell) ? cell : null;
+}
+
+function buildTableBar() {
+  tableBar = document.createElement('div');
+  tableBar.className = 'table-bar';
+  tableBar.setAttribute('role', 'toolbar');
+  tableBar.setAttribute('aria-label', t('tbl.bar'));
+  tableBar.hidden = true;
+  TBL_OPS.forEach(op => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fb-btn tbl-btn' + (op[0] === 'delTable' ? ' danger' : '');
+    b.dataset.op = op[0];
+    b.title = t(op[2]);
+    b.innerHTML = ICONS[op[1]];          // our own static SVG
+    const s = document.createElement('span');
+    s.textContent = t(op[2]);
+    b.appendChild(s);
+    b.addEventListener('mousedown', e => e.preventDefault());   // the caret stays in the cell
+    b.addEventListener('click', () => tableOp(op[0]));
+    tableBar.appendChild(b);
+  });
+  EL.toolbar.parentNode.insertBefore(tableBar, EL.toolbar.nextSibling);
+}
+
+function updateTableBar() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    // the caret left the editor for good (another tab, nothing selected)
+    if (tableBar && !selectionCell(true)) tableBar.hidden = true;
+    return;
+  }
+  const cell = selectionCell(false);
+  if (!cell && !tableBar) return;
+  if (!tableBar) buildTableBar();
+  tableBar.hidden = !cell;
+  if (cell) {
+    const first = cell.closest('table').rows[0];
+    const isHead = !!first && Array.from(first.cells).every(c => c.nodeName === 'TH');
+    const hb = tableBar.querySelector('[data-op="header"]');
+    hb.setAttribute('aria-pressed', isHead ? 'true' : 'false');
+    hb.classList.toggle('on', isHead);
+  }
+}
+
+function caretInto(el) {
+  if (!el) return;
+  const r = document.createRange();
+  r.selectNodeContents(el);
+  r.collapse(true);
+  EL.editor.focus({ preventScroll: true });
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(r);
+  lastEditorRange = r.cloneRange();
+}
+
+function blankCell(like, tag) {
+  const c = document.createElement(tag || like.nodeName.toLowerCase());
+  const st = like.getAttribute('style');
+  if (st) c.setAttribute('style', st);
+  c.style.background = '';
+  if (!c.getAttribute('style')) c.removeAttribute('style');
+  c.appendChild(document.createElement('br'));
+  return c;
+}
+
+function retagCell(c, tag) {
+  const n = document.createElement(tag);
+  Array.from(c.attributes).forEach(a => n.setAttribute(a.name, a.value));
+  n.style.background = '';             // the old header look was an inline background
+  if (!n.getAttribute('style')) n.removeAttribute('style');
+  while (c.firstChild) n.appendChild(c.firstChild);
+  c.replaceWith(n);
+  return n;
+}
+
+function tableOp(op) {
+  if (isLocked()) return;
+  const cell = selectionCell(true);
+  if (!cell) return;
+  const table = cell.closest('table');
+  const tr = cell.parentElement;
+  const rows = Array.from(table.rows);
+  const ri = rows.indexOf(tr), ci = cell.cellIndex;
+  const cols = Math.max.apply(null, rows.map(r => r.cells.length));
+  let focus = null;
+  if ((op === 'delRow' && rows.length <= 1) || (op === 'delCol' && cols <= 1)) op = 'delTable';
+  if (op === 'rowAbove' || op === 'rowBelow') {
+    const nr = document.createElement('tr');
+    Array.from(tr.cells).forEach(c => nr.appendChild(blankCell(c, 'td')));
+    tr.parentNode.insertBefore(nr, op === 'rowAbove' ? tr : tr.nextSibling);
+    focus = nr.cells[Math.min(ci, nr.cells.length - 1)];
+  } else if (op === 'colLeft' || op === 'colRight') {
+    rows.forEach(r => {
+      const ref = r.cells[Math.min(ci, r.cells.length - 1)];
+      if (!ref) { const nc0 = blankCell(cell, 'td'); r.appendChild(nc0); if (r === tr) focus = nc0; return; }
+      const nc = blankCell(ref);
+      const before = op === 'colLeft' && r.cells.length > ci;
+      r.insertBefore(nc, before ? ref : ref.nextSibling);
+      if (r === tr) focus = nc;
+    });
+  } else if (op === 'delRow') {
+    const next = rows[ri + 1] || rows[ri - 1];
+    tr.remove();
+    focus = next.cells[Math.min(ci, next.cells.length - 1)];
+  } else if (op === 'delCol') {
+    rows.forEach(r => { const c = r.cells[ci]; if (c) c.remove(); });
+    focus = tr.cells[Math.min(ci, tr.cells.length - 1)] || rows[0].cells[0];
+  } else if (op === 'header') {
+    const first = rows[0];
+    const toTh = Array.from(first.cells).some(c => c.nodeName !== 'TH');
+    Array.from(first.cells).forEach(c => {
+      const n = retagCell(c, toTh ? 'th' : 'td');
+      if (c === cell) focus = n;
+    });
+    if (!focus) focus = cell;
+  } else if (op === 'delTable') {
+    const p = document.createElement('p');
+    p.appendChild(document.createElement('br'));
+    table.replaceWith(p);
+    focus = p;
+  }
+  caretInto(focus);
+  updateEmptyState();
+  scheduleSave();
+  goalAfterInput();
+  updateTableBar();
+}
+
+/* ----- VIEW: focus mode, typewriter scrolling, word count (per device,
+   stored in oros-writer-prefs.view, never synced) ----- */
+const view = { focus: false, unit: 'p', tw: false, wc: false };
+
+function loadView() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
+    const v = p && p.view;
+    if (v && typeof v === 'object') {
+      view.focus = v.focus === true;
+      view.unit = v.unit === 's' ? 's' : 'p';
+      view.tw = v.tw === true;
+      view.wc = v.wc === true;
+    }
+  } catch (e) { /* defaults */ }
+}
+
+loadView();   // before the first savePrefs() of the boot
+
+function setView(key, val) {
+  view[key] = val;
+  savePrefs();
+  applyView();
+}
+
+function openViewMenu(anchor) {
+  openMenu(anchor, [
+    { label: t('view.focus'), checked: view.focus, action: () => setView('focus', !view.focus) },
+    { label: t('view.unitP'), checked: view.unit === 'p', radio: true, action: () => setView('unit', 'p') },
+    { label: t('view.unitS'), checked: view.unit === 's', radio: true, action: () => setView('unit', 's') },
+    null,
+    { label: t('view.tw'), checked: view.tw, action: () => setView('tw', !view.tw) },
+    { label: t('view.wc'), checked: view.wc, action: () => setView('wc', !view.wc) },
+    null,
+    { label: t('view.stats'), action: openStatsDialog }
+  ]);
+}
+
+let focusExitBtn = null, focusStyle = null, wcChip = null;
+function applyView() {
+  EL.app.classList.toggle('focus-mode', view.focus);
+  EL.app.classList.toggle('tw-scroll', view.tw);
+  if (view.focus && !focusExitBtn) {
+    focusExitBtn = document.createElement('button');
+    focusExitBtn.type = 'button';
+    focusExitBtn.className = 'focus-exit';
+    focusExitBtn.innerHTML = ICONS.close;
+    focusExitBtn.title = t('focus.exit');
+    focusExitBtn.setAttribute('aria-label', t('focus.exit'));
+    focusExitBtn.addEventListener('mousedown', e => e.preventDefault());
+    focusExitBtn.addEventListener('click', () => setView('focus', false));
+    EL.wrapper.appendChild(focusExitBtn);
+  }
+  if (focusExitBtn) focusExitBtn.hidden = !view.focus;
+  if (view.focus) closeQfMenu();
+  twPadding();
+  updateFocus();
+  twScroll();
+  updateWcChip();
+}
+
+// The block that holds the caret: a list item, a table cell or a
+// caption, else the editor's direct child (null for bare root text).
+function caretBlock() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+  const n = sel.focusNode;
+  if (!n || n === EL.editor || !EL.editor.contains(n)) return null;
+  let el = n.nodeType === 1 ? n : n.parentElement;
+  const inner = el.closest('li, td, th, figcaption');
+  if (inner && EL.editor.contains(inner)) return inner;
+  while (el && el.parentElement !== EL.editor) el = el.parentElement;
+  return el || null;
+}
+
+function nthPath(el) {
+  let sel = '';
+  while (el && el !== EL.editor) {
+    sel = ' > :nth-child(' + (Array.prototype.indexOf.call(el.parentElement.children, el) + 1) + ')' + sel;
+    el = el.parentElement;
+  }
+  return '#rich-editor' + sel;
+}
+
+// Text offsets [s, e) inside rootEl → a Range over its text nodes.
+function rangeFromOffsets(rootEl, s, e) {
+  const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT);
+  const r = document.createRange();
+  let pos = 0, node, started = false, last = null;
+  while ((node = walker.nextNode())) {
+    const len = node.data.length;
+    if (!started && s <= pos + len) { r.setStart(node, s - pos); started = true; }
+    if (started && e <= pos + len) { r.setEnd(node, e - pos); return r; }
+    pos += len; last = node;
+  }
+  if (!started) return null;
+  r.setEnd(last, last.data.length);
+  return r;
+}
+
+// Focus mode dims the text (CSS) and lights the current block through
+// a generated :nth-child rule; sentence focus uses the CSS Custom
+// Highlight API. Nothing is written into the document.
+function updateFocus() {
+  if (!focusStyle) {
+    focusStyle = document.createElement('style');
+    document.head.appendChild(focusStyle);
+  }
+  const hl = !!(window.CSS && CSS.highlights && typeof window.Highlight === 'function');
+  if (hl) CSS.highlights.delete('w-focus');
+  let css = '';
+  if (view.focus) {
+    const b = caretBlock();
+    if (!b) css = '#rich-editor{color:var(--text)!important}';
+    else {
+      const path = nthPath(b);
+      const sentence = view.unit === 's' && hl ? sentenceRange(b) : null;
+      if (sentence) {
+        CSS.highlights.set('w-focus', new window.Highlight(sentence));
+        css = path + ' img{opacity:1}';
+      } else {
+        css = path + '{color:var(--text)!important}' + path + ' img{opacity:1}';
+      }
+    }
+  }
+  if (focusStyle.textContent !== css) focusStyle.textContent = css;
+}
+
+function sentenceRange(block) {
+  try {
+    const sel = window.getSelection();
+    const pre = document.createRange();
+    pre.selectNodeContents(block);
+    pre.setEnd(sel.focusNode, sel.focusOffset);
+    const off = pre.toString().length;
+    const s = WC.sentenceAt(block.textContent, off, appLang());
+    return s ? rangeFromOffsets(block, s.s, s.e) : null;
+  } catch (e) { return null; }
+}
+
+// Typewriter scrolling: the caret line stays in the middle of the editor.
+function twPadding() {
+  if (view.tw) EL.editor.style.setProperty('--tw-pad', Math.round(EL.editor.clientHeight / 2) + 'px');
+  else EL.editor.style.removeProperty('--tw-pad');
+}
+
+function twScroll() {
+  if (!view.tw) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const r = sel.getRangeAt(0);
+  if (!r.collapsed || !EL.editor.contains(r.startContainer)) return;
+  let mid = null;
+  const rects = r.getClientRects();
+  if (rects.length && rects[0].height) mid = (rects[0].top + rects[0].bottom) / 2;
+  else {
+    const el = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement;
+    if (!el || el === EL.editor) return;
+    const br = el.getBoundingClientRect();
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || 24;
+    mid = br.top + Math.min(br.height, lh) / 2;
+  }
+  const er = EL.editor.getBoundingClientRect();
+  const d = WC.centerDelta(mid, er.top, EL.editor.clientHeight);
+  if (d) EL.editor.scrollTop += d;
+}
+
+let viewRaf = 0;
+function viewAfterChange() {
+  if (viewRaf) return;
+  viewRaf = requestAnimationFrame(() => {
+    viewRaf = 0;
+    if (view.focus) updateFocus();
+    twScroll();
+    updateWcChip();
+    updateTableBar();
+  });
+}
+
+/* ----- Text of a subtree, one line per block (statistics) ----- */
+const STAT_BLK = /^(P|DIV|LI|H1|H2|H3|H4|H5|H6|BLOCKQUOTE|PRE|TD|TH|FIGCAPTION|TABLE|TR|UL|OL)$/;
+function blockText(rootEl) {
+  let text = '';
+  const walker = document.createTreeWalker(rootEl,
+    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
+      acceptNode: n => (n.nodeType === 1 && n.matches('sup.fn-ref'))
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+  while (walker.nextNode()) {
+    const n = walker.currentNode;
+    if (n.nodeType === 3) text += n.nodeValue;
+    else if (n.nodeName === 'BR' || STAT_BLK.test(n.nodeName)) text += '\n';
+  }
+  return text;
+}
+
+function selectionFragmentText() {
+  const sel = window.getSelection();
+  let r = (sel && sel.rangeCount) ? sel.getRangeAt(0) : null;
+  if (!r || !EL.editor.contains(r.commonAncestorContainer)) r = lastEditorRange;
+  if (!r || r.collapsed || !EL.editor.contains(r.commonAncestorContainer)) return '';
+  const box = document.createElement('div');
+  box.appendChild(r.cloneContents());
+  return blockText(box);
+}
+
+function fmtMinutes(min) {
+  const m = WC.roundMinutes(min);
+  return m.lt1 ? t('stats.lt1') : t('stats.min').replace('{n}', m.n.toLocaleString(appLang()));
+}
+
+function updateWcChip() {
+  const show = view.wc && !!activeDoc();
+  if (!show) { if (wcChip) wcChip.hidden = true; return; }
+  if (!wcChip) {
+    wcChip = document.createElement('button');
+    wcChip.type = 'button';
+    wcChip.className = 'wc-chip';
+    wcChip.title = t('stats.title');
+    wcChip.addEventListener('mousedown', e => e.preventDefault());
+    wcChip.addEventListener('click', openStatsDialog);
+    EL.wrapper.appendChild(wcChip);
+  }
+  wcChip.hidden = false;
+  const n = editorStats().words;
+  const sel = window.getSelection();
+  const selTxt = (sel && sel.rangeCount && !sel.getRangeAt(0).collapsed &&
+    EL.editor.contains(sel.getRangeAt(0).commonAncestorContainer)) ? selectionFragmentText() : '';
+  const s = selTxt ? WC.countWords(selTxt) : 0;
+  const L = appLang();
+  wcChip.textContent = s
+    ? t('wc.sel').replace('{s}', s.toLocaleString(L)).replace('{n}', n.toLocaleString(L))
+    : t('docs.words').replace('{n}', n.toLocaleString(L));
+}
+
+/* ----- STATISTICS ----- */
+function openStatsDialog() {
+  const L = appLang();
+  const doc = WC.textStats(blockText(EL.editor), L);
+  const selTxt = selectionFragmentText();
+  const sel = selTxt.trim() ? WC.textStats(selTxt, L) : null;
+  const num = v => esc(v.toLocaleString(L));
+  const rows = [
+    ['stats.words', s => num(s.words)],
+    ['stats.chars', s => num(s.chars)],
+    ['stats.charsNs', s => num(s.charsNoSpaces)],
+    ['stats.paras', s => num(s.paragraphs)],
+    ['stats.sents', s => num(s.sentences)],
+    ['stats.read', s => esc(fmtMinutes(s.readMin))],
+    ['stats.speak', s => esc(fmtMinutes(s.speakMin))]
+  ];
+  const dlg = openDialog(t('stats.title'), `
+    <table class="stats-table">
+      <thead><tr><th></th><th scope="col">${esc(t('stats.doc'))}</th>${sel ? `<th scope="col">${esc(t('stats.sel'))}</th>` : ''}</tr></thead>
+      <tbody>${rows.map(r => `<tr><th scope="row">${esc(t(r[0]))}</th><td>${r[1](doc)}</td>${sel ? `<td>${r[1](sel)}</td>` : ''}</tr>`).join('')}</tbody>
+    </table>
+    <p class="stats-note">${esc(t('stats.note'))}</p>
+    <label class="stats-opt"><input type="checkbox" id="stats-wc" ${view.wc ? 'checked' : ''}> ${esc(t('view.wc'))}</label>
+  `, [
+    { class: 'fb-btn primary', label: t('wx.done'), onClick: () => dlg.close() }
+  ]);
+  dlg.querySelector('#stats-wc').addEventListener('change', e => setView('wc', e.target.checked));
+}
+
+/* ----- DICTATION (Web Speech API; the browser may use an online service) ----- */
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let dict = null;      // { rec, want, fails, docId }
+let dictPill = null;
+
+function dictLangTag() {
+  if (appLang() === 'el') return 'el-GR';
+  const nl = String(navigator.language || '');
+  return /^en\b/i.test(nl) ? nl : 'en-US';
+}
+
+function setDictUi(on) {
+  const b = document.getElementById('btn-dictate');
+  if (b) {
+    b.classList.toggle('active', on);
+    b.classList.toggle('rec', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.title = t(on ? 'dict.stop' : 'dict.start');
+    b.setAttribute('aria-label', b.title);
+  }
+  dictInterim('');
+}
+
+function dictInterim(text) {
+  const on = !!(dict && dict.want);
+  if (!dictPill) {
+    if (!on) return;
+    dictPill = document.createElement('div');
+    dictPill.className = 'dict-pill';
+    dictPill.setAttribute('role', 'status');
+    EL.wrapper.appendChild(dictPill);
+  }
+  dictPill.hidden = !on;
+  dictPill.textContent = '';
+  const lab = document.createElement('strong');
+  lab.textContent = t('dict.listening');
+  dictPill.appendChild(lab);
+  if (text) dictPill.appendChild(document.createTextNode(' ' + text));
+}
+
+function toggleDictation() {
+  if (dict && dict.want) stopDictation(); else startDictation();
+}
+
+function startDictation() {
+  if (!SpeechRec || isLocked()) return;
+  restoreEditorSelection();
+  let rec;
+  try { rec = new SpeechRec(); } catch (e) { showToast(t('dict.failed')); return; }
+  rec.lang = dictLangTag();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  dict = { rec: rec, want: true, fails: 0, docId: state.activeTab };
+  rec.onresult = e => {
+    if (!dict || dict.rec !== rec) return;
+    dict.fails = 0;
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i];
+      if (res.isFinal) dictInsert(res[0].transcript);
+      else interim += res[0].transcript;
+    }
+    dictInterim(interim);
+  };
+  rec.onerror = e => {
+    if (!dict || dict.rec !== rec) return;
+    const err = e && e.error;
+    if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') {
+      dict.want = false; localToast(t('dict.denied'));
+    } else if (err === 'network') {
+      dict.want = false; localToast(t('dict.network'));
+    } else if (err !== 'aborted') dict.fails++;
+  };
+  rec.onend = () => {
+    // Chrome ends a "continuous" session after a pause: start again while
+    // the user still wants it (at most 3 silent rounds in a row)
+    if (dict && dict.rec === rec && dict.want && dict.fails < 3 && !document.hidden) {
+      try { rec.start(); return; } catch (e) { /* fall through */ }
+    }
+    if (dict && dict.rec === rec) dict = null;
+    setDictUi(false);
+  };
+  try { rec.start(); } catch (e) { dict = null; showToast(t('dict.failed')); return; }
+  setDictUi(true);
+}
+
+function stopDictation() {
+  if (!dict) return;
+  dict.want = false;
+  try { dict.rec.stop(); } catch (e) { /* already ended */ }
+  setDictUi(false);
+}
+
+function dictInsert(raw) {
+  if (!dict || isLocked()) return;
+  if (state.activeTab !== dict.docId) { stopDictation(); return; }
+  restoreEditorSelection();
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const r = sel.getRangeAt(0);
+  let before = '';
+  try {
+    const sc = r.startContainer;
+    const el = sc.nodeType === 1 ? sc : sc.parentElement;
+    const blk = (el && el.closest('p, li, h1, h2, h3, h4, blockquote, pre, td, th, figcaption, div:not(#rich-editor)')) || EL.editor;
+    const pre = document.createRange();
+    pre.selectNodeContents(EL.editor.contains(blk) ? blk : EL.editor);
+    pre.setEnd(r.startContainer, r.startOffset);
+    before = pre.toString().slice(-40);
+  } catch (e) { before = ''; }
+  const txt = WC.joinDictation(before, raw, appLang());
+  if (!txt) return;
+  let ok = false;
+  try { ok = document.execCommand('insertText', false, txt); } catch (e) { ok = false; }
+  if (!ok) { insertTextAtCursor(txt); updateEmptyState(); scheduleSave(); }
+}
+
+/* ----- UNDOABLE FIND AND REPLACE ----- */
+// Every replacement goes through execCommand (insertText / delete), so
+// it lands in the browser's own undo stack. "Replace all" makes one
+// step per hit; Undo/Redo right after it replays them all at once.
+let frBusy = false;
+let frUndoing = false;
+const frGroups = { undo: null, redo: null };   // { n, before, after }
+
+function frOffsets(marks) {
+  return marks.filter(m => m.isConnected).map(m => {
+    const pre = document.createRange();
+    pre.selectNodeContents(EL.editor);
+    pre.setEndBefore(m);
+    const s = pre.toString().length;
+    return { s: s, e: s + m.textContent.length };
+  });
+}
+
+function frApply(spans, rep) {
+  EL.editor.focus({ preventScroll: true });
+  const sel = window.getSelection();
+  spans.slice().sort((a, b) => b.s - a.s).forEach(sp => {
+    const r = rangeFromOffsets(EL.editor, sp.s, sp.e);
+    if (!r) return;
+    sel.removeAllRanges();
+    sel.addRange(r);
+    frBusy = true;
+    let ok = false;
+    try { ok = document.execCommand(rep ? 'insertText' : 'delete', false, rep || null); } catch (e) { ok = false; }
+    frBusy = false;
+    if (!ok) {                          // engine without execCommand: direct edit
+      r.deleteContents();
+      if (rep) r.insertNode(document.createTextNode(rep));
+    }
+  });
+}
+
+function frStep(cmd, target, n) {
+  frUndoing = true;
+  try {
+    EL.editor.focus({ preventScroll: true });
+    for (let i = 0; i < n && editorHTMLForSave() !== target; i++) document.execCommand(cmd);
+  } finally { frUndoing = false; }
+  dirty = true;
+  updateEmptyState();
+  scheduleSave();
+  goalAfterInput();
+}
+
+function frTryUndo() {
+  const g = frGroups.undo;
+  if (frUndoing || !g) return false;
+  clearHighlights();
+  if (editorHTMLForSave() !== g.after) { frGroups.undo = null; return false; }
+  frStep('undo', g.before, g.n);
+  frGroups.undo = null;
+  frGroups.redo = g;
+  return true;
+}
+
+function frTryRedo() {
+  const g = frGroups.redo;
+  if (frUndoing || !g) return false;
+  clearHighlights();
+  if (editorHTMLForSave() !== g.before) { frGroups.redo = null; return false; }
+  frStep('redo', g.after, g.n);
+  frGroups.redo = null;
+  frGroups.undo = g;
+  return true;
+}
+
+function wireReplaceUndo() {
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const z = e.code === 'KeyZ', y = e.code === 'KeyY';
+    if (!z && !y) return;
+    if (e.target !== EL.editor) return;
+    const redo = y || (z && e.shiftKey);
+    if (redo ? frTryRedo() : frTryUndo()) e.preventDefault();
+  }, true);
+  EL.editor.addEventListener('beforeinput', e => {
+    if (e.inputType === 'historyUndo' && frTryUndo()) e.preventDefault();
+    else if (e.inputType === 'historyRedo' && frTryRedo()) e.preventDefault();
+  });
+}
+
+/* ----- Wiring for this section (called from boot) ----- */
+function wireViewTools() {
+  const ins = document.getElementById('btn-insert');
+  const vw = document.getElementById('btn-view');
+  const mic = document.getElementById('btn-dictate');
+  [ins, vw, mic].forEach(b => { if (b) b.addEventListener('mousedown', e => e.preventDefault()); });
+  if (ins) ins.addEventListener('click', () => toggleMenu(ins, openInsertMenu));
+  if (vw) vw.addEventListener('click', () => toggleMenu(vw, openViewMenu));
+  if (mic) {
+    mic.hidden = !SpeechRec;
+    if (SpeechRec) mic.addEventListener('click', toggleDictation);
+  }
+  document.addEventListener('selectionchange', viewAfterChange);
+  EL.editor.addEventListener('input', viewAfterChange);
+  window.addEventListener('resize', () => { twPadding(); viewAfterChange(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopDictation(); });
+  // Ctrl+Alt+F: focus mode on/off; Esc leaves it (when nothing else is open)
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey && e.code === 'KeyF') {
+      e.preventDefault();
+      setView('focus', !view.focus);
+    } else if (e.key === 'Escape' && view.focus && !qfMenu &&
+               !document.querySelector('dialog[open]') && (!findBar || findBar.hidden)) {
+      setView('focus', false);
+    }
+  });
+  wireReplaceUndo();
+  applyView();
 }
 
 // ===== SECTION 16: FOOTNOTES =====
@@ -5094,7 +5948,7 @@ function openExportDialog() {
   // inside the transient-activation window. Silent on failure — the
   // PDF export surfaces its own error if actually used.
   ioLoadScript(IO_VENDOR_JSPDF)
-    .then(() => ioFetchFontB64(IO_VENDOR_NOTO))
+    .then(() => ioPdfFonts())
     .catch(function () { /* PDF export will report if needed */ });
 }
 
@@ -5600,12 +6454,15 @@ function ioExportDocx(doc) {
 
 /* ===== SECTION 23: WAVE 5 — PDF EXPORTER (lazy jsPDF) ===== */
 //
-// jsPDF + NotoSans-Regular load ON DEMAND (PDF only) — boot stays
-// clean. NotoSans covers Greek fully (fixes the historical
-// mojibake in PDF exports). Bold/italic map onto the same face
-// (single TTF) — headings still get size weight, body loses faux
-// bold: documented v1 tradeoff, swap in NotoSans-Bold.ttf later
-// if wanted. Images become [image] placeholders (same as DOCX v1).
+// jsPDF and the Noto fonts load ON DEMAND (PDF only) — boot stays clean.
+// Fonts (all precached by sw.js, no network): the full NotoSans-Regular
+// (Latin, Greek, Cyrillic…) and the Latin + Greek subsets of Noto Sans
+// Bold / Italic / Bold Italic / Mono in vendor/noto/. A word that a
+// subset can't draw falls back to Regular (bold then drawn as fill +
+// stroke, a synthetic bold). Kept: headings, bold / italic / underline /
+// strikethrough, links (clickable), superscript, alignment, lists with
+// hanging indents, quotes, code, tables (grid, header row), images,
+// page size and margins, header / footer, page numbers.
 
 // Root-level vendor/ (sw.js precaches "vendor/…" at the SW scope).
 // From writer/index.html that is "../vendor/…". NO query string: the SW
@@ -5613,6 +6470,13 @@ function ioExportDocx(doc) {
 // export fail offline.
 const IO_VENDOR_JSPDF = '../vendor/jspdf.umd.min.js';
 const IO_VENDOR_NOTO  = '../vendor/NotoSans-Regular.ttf';
+const IO_PDF_FONTS = {
+  normal:     IO_VENDOR_NOTO,
+  bold:       '../vendor/noto/NotoSans-Bold.ttf',
+  italic:     '../vendor/noto/NotoSans-Italic.ttf',
+  bolditalic: '../vendor/noto/NotoSans-BoldItalic.ttf',
+  mono:       '../vendor/noto/NotoSansMono-Regular.ttf'
+};
 
 let ioJspdfPromise = null;
 function ioLoadScript(src) {
@@ -5629,9 +6493,9 @@ function ioLoadScript(src) {
   return ioJspdfPromise;
 }
 
-let ioFontB64 = null;   // in-memory per session (no re-download per export)
+const ioFontB64 = {};   // url → base64, in memory per session
 function ioFetchFontB64(url) {
-  if (ioFontB64) return Promise.resolve(ioFontB64);
+  if (ioFontB64[url]) return Promise.resolve(ioFontB64[url]);
   return fetch(url)
     .then(r => { if (!r.ok) throw new Error('font http ' + r.status); return r.arrayBuffer(); })
     .then(buf => {
@@ -5640,201 +6504,457 @@ function ioFetchFontB64(url) {
       const CHUNK = 0x8000;
       for (let i = 0; i < u8.length; i += CHUNK)
         bin += String.fromCharCode.apply(null, u8.subarray(i, i + CHUNK));
-      ioFontB64 = btoa(bin);
-      return ioFontB64;
+      ioFontB64[url] = btoa(bin);
+      return ioFontB64[url];
     });
 }
 
-/* Collect inline runs [{text,b,i,u,sup}] — shared by the PDF writer */
+// Regular is required; the other faces are optional (null → fallback).
+function ioPdfFonts() {
+  const keys = Object.keys(IO_PDF_FONTS);
+  return Promise.all(keys.map(k => k === 'normal'
+    ? ioFetchFontB64(IO_PDF_FONTS[k])
+    : ioFetchFontB64(IO_PDF_FONTS[k]).catch(() => null)))
+    .then(list => { const o = {}; keys.forEach((k, i) => { o[k] = list[i]; }); return o; });
+}
+
+function ioSafeHref(h) {
+  const v = String(h || '').trim();
+  return /^(https?:|mailto:)/i.test(v) ? v : '';
+}
+
+const IO_RUN_BLOCK = /^(P|DIV|H1|H2|H3|H4|H5|H6|BLOCKQUOTE|PRE|FIGURE|FIGCAPTION|LI)$/;
+
+/* Collect inline runs [{text,b,i,u,strike,sup,sub,mono,link} | {br} | {img}] */
 function ioCollectRuns(node, fmt, out) {
   Array.from(node.childNodes).forEach(ch => {
-    if (ch.nodeType === 3) {
-      out.push({ text: ch.nodeValue, b: fmt.b, i: fmt.i, u: fmt.u, sup: fmt.sup, strike: fmt.strike });
-      return;
-    }
+    if (ch.nodeType === 3) { out.push(Object.assign({ text: ch.nodeValue }, fmt)); return; }
+    if (ch.nodeType !== 1) return;
     if (ch.nodeName === 'BR') { out.push({ text: '\n', br: true }); return; }
-    if (ch.nodeName === 'IMG') {
-      const alt = ch.getAttribute('alt') || '';
-      out.push({ text: alt ? ' [image: ' + alt + '] ' : ' [image] ', b: fmt.b, i: fmt.i, u: fmt.u, sup: fmt.sup });
-      return;
+    if (ch.nodeName === 'IMG') { out.push({ img: ch }); return; }
+    if (ch.classList && ch.classList.contains('page-break-marker')) return;
+    // a block inside a list item or cell starts on its own line
+    if (IO_RUN_BLOCK.test(ch.nodeName) && out.length && !out[out.length - 1].br) out.push({ text: '\n', br: true });
+    const f = Object.assign({}, fmt);
+    const map = { STRONG: 'b', B: 'b', EM: 'i', I: 'i', U: 'u', INS: 'u',
+                  DEL: 'strike', S: 'strike', STRIKE: 'strike', SUP: 'sup', SUB: 'sub',
+                  CODE: 'mono', KBD: 'mono', TT: 'mono' };
+    if (map[ch.nodeName]) f[map[ch.nodeName]] = true;
+    if (/^H[1-6]$/.test(ch.nodeName) || ch.nodeName === 'TH') f.b = true;
+    if (ch.nodeName === 'A') { const h = ioSafeHref(ch.getAttribute('href')); if (h) f.link = h; }
+    const st = ch.style;
+    if (st) {
+      const fw = st.fontWeight;
+      if (fw === 'bold' || fw === 'bolder' || parseInt(fw, 10) >= 600) f.b = true;
+      else if (fw === 'normal' || (parseInt(fw, 10) > 0 && parseInt(fw, 10) < 600)) f.b = false;
+      if (st.fontStyle === 'italic' || st.fontStyle === 'oblique') f.i = true;
+      const td = (st.textDecorationLine || st.textDecoration || '');
+      if (/underline/.test(td)) f.u = true;
+      if (/line-through/.test(td)) f.strike = true;
+      if (st.verticalAlign === 'super') f.sup = true;
+      if (st.verticalAlign === 'sub') f.sub = true;
     }
-    const map = { STRONG: 'b', B: 'b', EM: 'i', I: 'i', U: 'u',
-                  DEL: 'strike', S: 'strike', STRIKE: 'strike', SUP: 'sup' };
-    if (map[ch.nodeName]) {
-      const f = Object.assign({}, fmt); f[map[ch.nodeName]] = true;
-      ioCollectRuns(ch, f, out);
-    } else ioCollectRuns(ch, fmt, out);
+    ioCollectRuns(ch, f, out);
+  });
+}
+
+function ioAlignOf(el) {
+  let a = '';
+  for (let n = el; n && n.nodeType === 1 && !a; n = n.parentElement) {
+    a = (n.style && n.style.textAlign) || n.getAttribute('align') || '';
+    if (n.nodeName === 'TD' || n.nodeName === 'TH' || n.classList.contains('io-root')) break;
+  }
+  a = String(a).toLowerCase();
+  if (a === 'start') a = 'left';
+  if (a === 'end') a = 'right';
+  return /^(left|center|right|justify)$/.test(a) ? a : 'left';
+}
+
+// An image ready for jsPDF: { data, fmt, w, h } (px) or null. data: URLs
+// of JPEG/PNG go in as they are; anything else is redrawn on a canvas
+// (an image from another site that does not allow it stays a placeholder).
+function ioPdfImage(src) {
+  return new Promise(resolve => {
+    src = String(src || '');
+    if (!src || ioBadUrl(src)) { resolve(null); return; }
+    const im = new Image();
+    if (!/^data:/i.test(src)) im.crossOrigin = 'anonymous';
+    let done = false;
+    const fin = v => { if (!done) { done = true; clearTimeout(tm); resolve(v); } };
+    const tm = setTimeout(() => fin(null), 10000);
+    im.onload = () => {
+      const w = im.naturalWidth, h = im.naturalHeight;
+      if (!w || !h) { fin(null); return; }
+      const m = /^data:image\/(jpeg|jpg|png);base64,/i.exec(src);
+      if (m) { fin({ data: src, fmt: /png/i.test(m[1]) ? 'PNG' : 'JPEG', w: w, h: h }); return; }
+      try {
+        const k = Math.min(1, 2000 / Math.max(w, h));
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(im, 0, 0, c.width, c.height);
+        fin({ data: c.toDataURL('image/jpeg', 0.9), fmt: 'JPEG', w: w, h: h });
+      } catch (e) { fin(null); }    // tainted canvas
+    };
+    im.onerror = () => fin(null);
+    im.src = src;
   });
 }
 
 function ioExportPdf(doc) {
   flushSave();
   showToast(t('io.busy'));
+  const c = ioExportClone();
+  c.classList.add('io-root');
+  c.querySelectorAll('mark.cmt-mark').forEach(ioUnwrap);
+  const imgEls = Array.from(c.querySelectorAll('img'));
+  const imgData = new Map();
   ioLoadScript(IO_VENDOR_JSPDF)
-    .then(() => ioFetchFontB64(IO_VENDOR_NOTO))
-    .then(fontB64 => {
+    .then(() => Promise.all([
+      ioPdfFonts(),
+      Promise.all(imgEls.map(im => ioPdfImage(im.getAttribute('src')).then(v => imgData.set(im, v))))
+    ]))
+    .then(([fonts]) => {
       const JsPDF = window.jspdf.jsPDF;
       const pg = ioPageSizeMm(doc);
       const pdf = new JsPDF({ unit: 'mm', format: [pg.w, pg.h], compress: true });
+      try {
+        pdf.setProperties({ title: doc.title || '', author: doc.author || '',
+          keywords: (doc.tags || []).join(', '), subject: doc.category || '', creator: 'orOS Writer' });
+      } catch (e) { /* metadata is optional */ }
 
-      pdf.addFileToVFS('NotoSans-Regular.ttf', fontB64);
+      // Fonts: family "noto" (4 styles) + "notomono"
+      const have = { normal: true, bold: false, italic: false, bolditalic: false, mono: false };
+      pdf.addFileToVFS('NotoSans-Regular.ttf', fonts.normal);
       pdf.addFont('NotoSans-Regular.ttf', 'noto', 'normal');
-      pdf.addFont('NotoSans-Regular.ttf', 'noto', 'bold');
-      pdf.addFont('NotoSans-Regular.ttf', 'noto', 'italic');
-      pdf.addFont('NotoSans-Regular.ttf', 'noto', 'bolditalic');
+      ['bold', 'italic', 'bolditalic'].forEach(st => {
+        const file = 'NotoSans-' + st + '.ttf';
+        if (fonts[st]) {
+          try { pdf.addFileToVFS(file, fonts[st]); pdf.addFont(file, 'noto', st); have[st] = true; } catch (e) { have[st] = false; }
+        }
+        if (!have[st]) pdf.addFont('NotoSans-Regular.ttf', 'noto', st);
+      });
+      if (fonts.mono) {
+        try { pdf.addFileToVFS('NotoSansMono.ttf', fonts.mono); pdf.addFont('NotoSansMono.ttf', 'notomono', 'normal'); have.mono = true; } catch (e) { have.mono = false; }
+      }
       pdf.setFont('noto', 'normal');
 
+      const cmaps = {};
+      function cmapOf(fam, st) {
+        const key = fam + '/' + st;
+        if (!(key in cmaps)) {
+          let cm = null;
+          try {
+            const f = pdf.getFont(fam, st);
+            cm = f && f.metadata && f.metadata.cmap && f.metadata.cmap.unicode && f.metadata.cmap.unicode.codeMap;
+          } catch (e) { cm = null; }
+          cmaps[key] = cm || null;
+        }
+        return cmaps[key];
+      }
+      function covers(fam, st, text) {
+        const cm = cmapOf(fam, st);
+        if (!cm) return true;
+        for (const ch of text) {
+          const cp = ch.codePointAt(0);
+          if (cp > 32 && !cm[cp]) return false;
+        }
+        return true;
+      }
+
+      const PT = 25.4 / 72;                 // mm per point
       const ML = doc.margins.left, MR = doc.margins.right;
       const MT = doc.margins.top, MB = doc.margins.bottom;
-      const maxX = pg.w - MR;
-      let y = MT;
+      const CW = pg.w - ML - MR;            // content width
+      const BOTTOM = pg.h - MB;
+      let y = MT;                           // top of the next line
 
       const newPage = () => { pdf.addPage([pg.w, pg.h]); y = MT; };
-      const need = h => { if (y + h > pg.h - MB - 6) newPage(); };
+      const need = h => { if (y + h > BOTTOM && y > MT + 0.01) newPage(); };
 
       const styleOf = r => (r.b && r.i) ? 'bolditalic' : r.b ? 'bold' : r.i ? 'italic' : 'normal';
 
-      /* word-flow renderer — formats survive line breaks */
+      // Sets the font for one word; returns { size, synth }.
+      function useFont(r, fs, text) {
+        const size = (r.sup || r.sub) ? fs * 0.68 : fs;
+        let fam = 'noto', st = styleOf(r), synth = false;
+        if (r.mono && have.mono && covers('notomono', 'normal', text)) { fam = 'notomono'; st = 'normal'; }
+        else if (st !== 'normal' && !(have[st] && covers('noto', st, text))) { synth = !!r.b; st = 'normal'; }
+        pdf.setFont(fam, st);
+        pdf.setFontSize(size);
+        return { size: size, synth: synth };
+      }
+
+      // Words of a run list (images and breaks are handled by the caller)
+      function tokenize(runs, fs, maxW) {
+        const toks = [];
+        let pend = false, first = true;
+        runs.forEach(r => {
+          if (r.br) { toks.push({ br: true }); pend = false; first = true; return; }
+          String(r.text || '').split(/(\s+)/).forEach(piece => {
+            if (!piece) return;
+            if (/^\s+$/.test(piece)) { pend = true; return; }
+            useFont(r, fs, piece);
+            const w = pdf.getTextWidth(piece);
+            if (w <= maxW) toks.push({ t: piece, r: r, w: w, sp: pend && !first });
+            else {                          // a word wider than the line: cut it
+              let cur = '', cw = 0, k = 0;
+              for (const ch of piece) {
+                const chw = pdf.getTextWidth(ch);
+                if (cur && cw + chw > maxW) {
+                  toks.push({ t: cur, r: r, w: cw, sp: k === 0 ? (pend && !first) : true, cut: k > 0 });
+                  cur = ''; cw = 0; k++;
+                }
+                cur += ch; cw += chw;
+              }
+              if (cur) toks.push({ t: cur, r: r, w: cw, sp: k === 0 ? (pend && !first) : true, cut: k > 0 });
+            }
+            pend = false; first = false;
+          });
+        });
+        return toks;
+      }
+
+      function drawLine(toks, line, x0, top, maxW, o) {
+        const fs = o.fs, lh = o.lh;
+        const al = WC.alignLine(line, maxW, o.align);
+        const base = top + (lh - fs * PT) / 2 + fs * PT * 0.8;
+        let x = x0 + al.x, prev = null;
+        for (let k = line.from; k < line.to; k++) {
+          const tk = toks[k];
+          if (tk.br) continue;
+          let gap = 0;
+          if (k > line.from && tk.sp && !tk.cut) gap = o.spaceW + al.extra;
+          x += gap;
+          const f = useFont(tk.r, fs, tk.t);
+          const col = tk.r.link ? '#1a4fb5' : (o.color || '#1a1a1a');
+          pdf.setTextColor(col);
+          const dy = tk.r.sup ? -fs * PT * 0.33 : (tk.r.sub ? fs * PT * 0.15 : 0);
+          if (f.synth) {
+            pdf.setDrawColor(col);
+            pdf.setLineWidth(f.size * 0.018);
+            pdf.text(tk.t, x, base + dy, { renderingMode: 'fillThenStroke' });
+          } else pdf.text(tk.t, x, base + dy, { renderingMode: 'fill' });
+          const under = tk.r.u || tk.r.link;
+          if (under || tk.r.strike) {
+            pdf.setDrawColor(col);
+            pdf.setLineWidth(Math.max(0.15, fs * 0.006));
+            const sx = (prev && gap && ((under && (prev.r.u || prev.r.link)))) ? x - gap : x;
+            if (under) pdf.line(sx, base + dy + fs * PT * 0.12, x + tk.w, base + dy + fs * PT * 0.12);
+            if (tk.r.strike) {
+              const sx2 = (prev && gap && prev.r.strike) ? x - gap : x;
+              pdf.line(sx2, base + dy - fs * PT * 0.28, x + tk.w, base + dy - fs * PT * 0.28);
+            }
+          }
+          if (tk.r.link) {
+            try { pdf.link(x, base - fs * PT * 0.8, tk.w, fs * PT, { url: tk.r.link }); } catch (e) {}
+          }
+          x += tk.w;
+          prev = tk;
+        }
+        return base;
+      }
+
+      function drawImage(el, x, maxW, align) {
+        const d = imgData.get(el);
+        const alt = el.getAttribute('alt') || '';
+        if (!d) {
+          writeRuns([{ text: alt ? '[' + alt + ']' : '[▣]', i: true }], { x: x, w: maxW, fs: 9.5, color: '#777777', align: align, after: 0 });
+          return;
+        }
+        const box = WC.fitBox(d.w, d.h, maxW, BOTTOM - MT);
+        need(box.h);
+        const ix = x + (align === 'center' ? (maxW - box.w) / 2 : align === 'right' ? maxW - box.w : 0);
+        try { pdf.addImage(d.data, d.fmt, ix, y, box.w, box.h, undefined, 'FAST'); }
+        catch (e) { writeRuns([{ text: '[▣]', i: true }], { x: x, w: maxW, fs: 9.5, color: '#777777', after: 0 }); return; }
+        y += box.h + 1;
+      }
+
+      /* Paragraph writer: runs → lines (WriterCore.breakLines), page
+         breaks between lines, optional hanging marker and quote bar. */
       function writeRuns(runs, o) {
         o = o || {};
         const fs = o.fs || 11;
-        const lh = fs * 0.3528 * 1.62;
-        const startX = o.x != null ? o.x : ML;
-        let x = startX;
-
-        pdf.setTextColor(o.color || '#1a1a1a');
-        need(lh);   // first line too — paragraphs ran into the bottom margin
-        // flatten to word tokens
-        const words = [];
-        runs.forEach(r => {
-          if (r.br) { words.push({ br: true }); return; }
-          String(r.text || '').split(/\s+/).forEach(w => {
-            if (w) words.push({ t: w, f: r });
+        const lh = fs * PT * (o.lhK || 1.5);
+        const x0 = o.x != null ? o.x : ML;
+        const maxW = o.w != null ? o.w : (pg.w - MR - x0);
+        const align = o.align || 'left';
+        pdf.setFont('noto', 'normal'); pdf.setFontSize(fs);
+        const spaceW = pdf.getTextWidth(' ');
+        // split around images: text, image, text…
+        const parts = [[]];
+        runs.forEach(r => { if (r.img) parts.push(r, []); else parts[parts.length - 1].push(r); });
+        let markerDone = !o.marker;
+        parts.forEach((part, pi) => {
+          if (!Array.isArray(part)) { drawImage(part.img, x0, maxW, align); return; }
+          const hasText = part.some(r => r.br || /\S/.test(r.text || ''));
+          if (!hasText && parts.length > 1) return;   // only the image(s)
+          const toks = tokenize(part, fs, maxW);
+          const lines = WC.breakLines(toks, maxW, spaceW);
+          lines.forEach(line => {
+            need(lh);
+            if (o.bar) {
+              pdf.setDrawColor('#bbbbbb'); pdf.setLineWidth(0.6);
+              pdf.line(o.bar, y, o.bar, y + lh);
+            }
+            if (o.shade) {
+              pdf.setFillColor(o.shade);
+              pdf.rect(x0 - 1.5, y, maxW + 3, lh, 'F');
+            }
+            const base = drawLine(toks, line, x0, y, maxW,
+              { fs: fs, lh: lh, align: align, spaceW: spaceW, color: o.color });
+            if (!markerDone) {
+              pdf.setFont('noto', o.markerBold ? (have.bold ? 'bold' : 'normal') : 'normal');
+              pdf.setFontSize(fs);
+              pdf.setTextColor(o.color || '#1a1a1a');
+              pdf.text(o.marker, o.markerX, base, { renderingMode: 'fill' });
+              markerDone = true;
+            }
+            y += lh;
           });
+          if (pi < parts.length - 1) y += 0.5;
         });
-
-        let lineFirst = true;
-        let i = 0;
-        while (i < words.length) {
-          const w = words[i++];
-          if (w.br) {
-            y += lh; need(lh); x = startX; lineFirst = true;
-            continue;
-          }
-          const sfs = w.f.sup ? fs * 0.68 : fs;
-          pdf.setFont('noto', styleOf(w.f));
-          pdf.setFontSize(sfs);
-          let wordW = pdf.getTextWidth(w.t);
-          const spW = pdf.getTextWidth(' ');
-          if (!lineFirst) wordW += spW;
-          if (!lineFirst && x + wordW > maxX) {
-            y += lh; need(lh); x = startX; lineFirst = true;
-            wordW = pdf.getTextWidth(w.t);
-          }
-          const x0 = x;
-          if (!lineFirst) x += spW;
-          const dy = w.f.sup ? -(fs * 0.14) : 0;
-          pdf.text(w.t, x, y + dy);
-          const tw = pdf.getTextWidth(w.t);
-          if (w.f.u) pdf.line(x, y + 1.4, x + tw, y + 1.4);
-          if (w.f.strike) pdf.line(x, y - sfs * 0.3528 * 0.3, x + tw, y - sfs * 0.3528 * 0.3);
-          x += pdf.getTextWidth(w.t);
-          lineFirst = false;
-        }
-        y += lh;
+        y += (o.after != null ? o.after : fs * PT * 0.45);
       }
 
-      /* block walker */
-      function writeBlocks(node) {
+      function writeTable(tbl, x0, maxW) {
+        const rows = Array.from(tbl.rows);
+        if (!rows.length) return;
+        const ncol = Math.max.apply(null, rows.map(r => r.cells.length)) || 1;
+        const lens = [];
+        for (let ci = 0; ci < ncol; ci++) {
+          lens.push(Math.max.apply(null, rows.map(r => r.cells[ci] ? r.cells[ci].textContent.trim().length : 0)));
+        }
+        const widths = WC.colWidths(lens, maxW, Math.min(15, maxW / ncol));
+        const fs = 10, lh = fs * PT * 1.4, pad = 1.6;
+        pdf.setFont('noto', 'normal'); pdf.setFontSize(fs);
+        const spaceW = pdf.getTextWidth(' ');
+        y += 1.5;
+        rows.forEach((tr, ri) => {
+          const cells = Array.from(tr.cells);
+          const head = (cells.length && cells.every(cc => cc.nodeName === 'TH')) ||
+            (tr.parentElement && tr.parentElement.nodeName === 'THEAD') ||
+            (ri === 0 && cells.some(cc => /background/.test(cc.getAttribute('style') || '')));
+          const laid = cells.map((td, ci) => {
+            const runs = [];
+            ioCollectRuns(td, head ? { b: true } : {}, runs);
+            const clean = runs.map(r => r.img ? { text: '[▣] ' } : r);
+            const w = (widths[ci] || widths[widths.length - 1]) - 2 * pad;
+            const toks = tokenize(clean, fs, w);
+            const lines = WC.breakLines(toks, w, spaceW);
+            while (lines.length > 1 && lines[lines.length - 1].from === lines[lines.length - 1].to) lines.pop();
+            return { toks: toks, lines: lines, w: w, align: ioAlignOf(td) };
+          });
+          const rowH = Math.max(lh, ...laid.map(l => l.lines.length * lh)) + 2 * pad;
+          need(rowH);
+          let x = x0;
+          for (let ci = 0; ci < ncol; ci++) {
+            const w = widths[ci];
+            if (head) { pdf.setFillColor('#eeeeee'); pdf.rect(x, y, w, rowH, 'F'); }
+            pdf.setDrawColor('#999999'); pdf.setLineWidth(0.2);
+            pdf.rect(x, y, w, rowH, 'S');
+            const l = laid[ci];
+            if (l) l.lines.forEach((line, li) => drawLine(l.toks, line, x + pad, y + pad + li * lh, l.w,
+              { fs: fs, lh: lh, align: l.align, spaceW: spaceW }));
+            x += w;
+          }
+          y += rowH;
+        });
+        y += 3;
+      }
+
+      /* block walker; ctx = { x, w, bar } (quotes indent their blocks) */
+      function writeBlocks(node, ctx) {
         Array.from(node.childNodes).forEach(ch => {
           if (ch.nodeType === 3) {
-            const txt = ch.nodeValue.trim();
-            if (txt) { need(8); writeRuns([{ text: txt }], {}); }
+            if (ch.nodeValue.trim()) writeRuns([{ text: ch.nodeValue }], { x: ctx.x, w: ctx.w, bar: ctx.bar });
             return;
           }
           if (ch.nodeType !== 1) return;
           if (ch.classList && ch.classList.contains('page-break-marker')) { newPage(); return; }
           if (ch.classList && ch.classList.contains('toc-inline')) return;
+          const align = ioAlignOf(ch);
+          const runsOf = (el, fmt) => { const r = []; ioCollectRuns(el, fmt || {}, r); return r; };
           switch (ch.nodeName) {
-            case 'H1': case 'H2': case 'H3': case 'H4': {
-              const fsz = { H1: 22, H2: 17, H3: 14, H4: 12.5 }[ch.nodeName];
-              y += 5; need(fsz * 0.6);
-              const runs = []; ioCollectRuns(ch, {}, runs);
-              writeRuns(runs, { fs: fsz, color: '#000000' });
-              y += 2;
-              break;
-            }
-            case 'P': {
-              const runs = []; ioCollectRuns(ch, {}, runs);
-              if (runs.length) writeRuns(runs, {});
-              else y += 4;
+            case 'H1': case 'H2': case 'H3': case 'H4': case 'H5': case 'H6': {
+              const fsz = { H1: 22, H2: 17, H3: 14, H4: 12.5, H5: 11.5, H6: 11 }[ch.nodeName];
+              if (y > MT + 0.01) y += fsz * PT * 0.55;
+              need(fsz * PT * 1.3 + 11 * PT * 1.5 * 2);   // keep with the next lines
+              writeRuns(runsOf(ch, { b: true }), { x: ctx.x, w: ctx.w, fs: fsz, color: '#000000', align: align, lhK: 1.3, after: fsz * PT * 0.3 });
               break;
             }
             case 'BLOCKQUOTE': {
-              y += 3;
-              const runs = []; ioCollectRuns(ch, {}, runs);
-              writeRuns(runs, { x: ML + 8, fs: 10.5, color: '#444444' });
-              y += 3;
+              const inner = { x: ctx.x + 7, w: ctx.w - 7, bar: ctx.x + 2.5, color: '#444444' };
+              y += 1;
+              if (Array.from(ch.children).some(k => IO_BLOCK_RE.test(k.nodeName))) writeBlocks(ch, inner);
+              else writeRuns(runsOf(ch, { i: true }), { x: inner.x, w: inner.w, fs: 11, color: '#444444', align: align, bar: inner.bar });
+              y += 1.5;
               break;
             }
             case 'PRE': {
-              // NotoSans, not the built-in courier: courier has no Greek glyphs
-              pdf.setFont('noto', 'normal'); pdf.setFontSize(9); pdf.setTextColor('#333333');
-              ch.textContent.replace(/\n$/, '').split('\n').forEach(line => {
-                need(5);
-                pdf.text(line, ML + 4, y);
-                y += 5;
+              const fs = 9, lh = fs * PT * 1.45;
+              const lines = ch.textContent.replace(/\n$/, '').split('\n');
+              y += 1;
+              lines.forEach(line => {
+                const mono = have.mono && covers('notomono', 'normal', line);
+                pdf.setFont(mono ? 'notomono' : 'noto', 'normal'); pdf.setFontSize(fs);
+                const parts = line ? pdf.splitTextToSize(line, ctx.w - 6) : [''];
+                parts.forEach(pt => {
+                  need(lh);
+                  pdf.setFillColor('#f2f2f2');
+                  pdf.rect(ctx.x, y, ctx.w, lh, 'F');
+                  pdf.setTextColor('#222222');
+                  pdf.setFont(mono ? 'notomono' : 'noto', 'normal'); pdf.setFontSize(fs);
+                  pdf.text(pt, ctx.x + 3, y + (lh - fs * PT) / 2 + fs * PT * 0.8, { renderingMode: 'fill' });
+                  y += lh;
+                });
               });
               y += 3;
               break;
             }
             case 'HR': {
-              need(8); y += 4;
+              need(6); y += 3;
               pdf.setDrawColor('#888888'); pdf.setLineWidth(0.3);
-              pdf.line(ML, y, maxX, y);
-              y += 4;
+              pdf.line(ctx.x, y, ctx.x + ctx.w, y);
+              y += 3;
               break;
             }
             case 'UL': case 'OL': {
               ioListItems(ch, 0).forEach(it => {
-                const runs = []; ioCollectRuns(it.body, {}, runs);
-                runs.unshift({ text: it.marker });
-                writeRuns(runs, { x: ML + 6 + it.depth * 6, fs: 11 });
+                pdf.setFont('noto', 'normal'); pdf.setFontSize(11);
+                const mx = ctx.x + 2 + it.depth * 6;
+                const ind = Math.max(5, pdf.getTextWidth(it.marker) + 2);
+                writeRuns(runsOf(it.body), { x: mx + ind, w: ctx.w - (mx + ind - ctx.x), fs: 11,
+                  marker: it.marker, markerX: mx, align: ioAlignOf(it.body), bar: ctx.bar, color: ctx.color, after: 11 * PT * 0.2 });
               });
-              y += 2;
+              y += 11 * PT * 0.3;
               break;
             }
-            case 'TABLE': {
-              Array.from(ch.querySelectorAll('tr')).forEach(tr => {
-                const cells = Array.from(tr.children)
-                  .map(tc => tc.textContent.trim()).join('   |   ');
-                need(6);
-                pdf.setFont('noto', 'normal'); pdf.setFontSize(10);
-                const lines = pdf.splitTextToSize(cells, maxX - ML - 6);
-                lines.forEach(ln => { pdf.text(ln, ML + 6, y); y += 5; });
-                y += 1.5;
-              });
-              y += 2;
-              break;
-            }
+            case 'TABLE': writeTable(ch, ctx.x, ctx.w); break;
             case 'FIGURE': {
-              const img = ch.querySelector('img');
               const cap = ch.querySelector('figcaption');
-              need(8);
-              writeRuns([{ text: img ? '[image' + (img.alt ? ': ' + img.alt : '') + ']' : '' }]
-                .filter(r => r.text), { fs: 10, color: '#666666' });
-              if (cap) writeRuns((() => { const r = []; ioCollectRuns(cap, {}, r); return r; })(),
-                { fs: 9.5, color: '#666666' });
+              Array.from(ch.querySelectorAll('img')).forEach(im => drawImage(im, ctx.x, ctx.w, 'center'));
+              if (cap) writeRuns(runsOf(cap), { x: ctx.x, w: ctx.w, fs: 9.5, color: '#666666', align: 'center' });
+              else y += 2;
               break;
             }
-            default: writeBlocks(ch);
+            case 'IMG': drawImage(ch, ctx.x, ctx.w, align); break;
+            case 'P': case 'LI': case 'DT': case 'DD': case 'FIGCAPTION':
+              writeRuns(runsOf(ch), { x: ctx.x, w: ctx.w, fs: 11, align: align, bar: ctx.bar, color: ctx.color });
+              break;
+            default:
+              if (Array.from(ch.children).some(k => IO_BLOCK_RE.test(k.nodeName))) writeBlocks(ch, ctx);
+              else {
+                const r = runsOf(ch);
+                if (r.length) writeRuns(r, { x: ctx.x, w: ctx.w, fs: 11, align: align, bar: ctx.bar, color: ctx.color });
+              }
           }
         });
       }
 
-      const c = ioExportClone();
-      c.querySelectorAll('mark.cmt-mark').forEach(ioUnwrap);
-      writeBlocks(c);
+      writeBlocks(c, { x: ML, w: CW });
 
       // Footnotes / comments appendix (localized headings)
       const notes = [];
@@ -5847,10 +6967,9 @@ function ioExportPdf(doc) {
         if (e) notes.push({ text: '[' + ref.textContent + '] ' + (e.text || '') });
       });
       const cmts = (doc.comments || []).map(cm =>
-        ({ text: '\u201C' + (cm.quote || '') + '\u201D \u2014 ' + (cm.text || ''), i: true }));
+        ({ text: '“' + (cm.quote || '') + '” — ' + (cm.text || ''), i: true }));
       if (notes.length || cmts.length) {
         newPage();
-        y += 2;
         if (notes.length) {
           writeRuns([{ text: t('io.notes'), b: true }], { fs: 16 });
           notes.forEach(a => writeRuns([{ text: a.text }], { fs: 10 }));
@@ -5864,21 +6983,23 @@ function ioExportPdf(doc) {
 
       // Headers / footers / page numbers — every page, finalized pass
       const pages = pdf.internal.getNumberOfPages();
+      const fitLine = (s, w) => { const l = pdf.splitTextToSize(String(s), w); return l.length ? l[0] : ''; };
       for (let p = 1; p <= pages; p++) {
         pdf.setPage(p);
+        pdf.setFont('noto', 'normal'); pdf.setFontSize(8.5);
+        const num = p + ' / ' + pages;
+        const numW = pdf.getTextWidth(num) + 4;
+        const footY = pg.h - Math.max(MB / 2 - 1.5, 5);
         if (doc.header) {
-          pdf.setFont('noto', 'normal'); pdf.setFontSize(8.5);
           pdf.setTextColor('#777777');
-          pdf.text(String(doc.header), ML, Math.max(MT - 5, 6));
+          pdf.text(fitLine(doc.header, CW), ML, Math.max(MT / 2 + 1.5, 6), { renderingMode: 'fill' });
         }
         if (doc.footer) {
-          pdf.setFont('noto', 'normal'); pdf.setFontSize(8.5);
           pdf.setTextColor('#777777');
-          pdf.text(String(doc.footer), ML, pg.h - Math.max(MB - 8, 6));
+          pdf.text(fitLine(doc.footer, CW - numW), ML, footY, { renderingMode: 'fill' });
         }
-        pdf.setFont('noto', 'normal'); pdf.setFontSize(8.5);
         pdf.setTextColor('#999999');
-        pdf.text(p + ' / ' + pages, pg.w - MR, pg.h - Math.max(MB - 8, 6), { align: 'right' });
+        pdf.text(num, pg.w - MR, footY, { align: 'right', renderingMode: 'fill' });
       }
 
       // Wave 2: jsPDF's internal download path would BYPASS the
