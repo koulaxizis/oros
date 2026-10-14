@@ -51,6 +51,15 @@ In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON
 - What you delete here doesn't come back on the next import, unless you tick `Bring back what was deleted here`.
 - `Undo` takes back the whole import. orOS only reads HubSpot, Pipedrive, Invoice Ninja and Odoo: nothing changes there.
 
+## Web form
+`Settings` › `Web form` makes a contact form for your own website. Leave `Thank-you page (optional)` empty or give an https address on your site, then `Create the form`. Copy the `HTML for your site` (in English or Greek) into a page of your site. It is a plain form with Name, Email, Phone, Company and Message, with no script, so you can style it like the rest of your site. Keep the hidden field: it stops spam robots.
+
+- A message someone sends waits at the orOS relay, encrypted with a key made on your device, until CRM picks it up. Only your CRM can read it. A message that isn't picked up within 30 days is deleted.
+- `Check for new leads` picks them up. CRM also checks by itself when you open it, at most every 10 minutes.
+- Each message becomes a new customer with status `Lead` and source `Web form`, with the message in its history. When the e-mail already belongs to a customer (or to one of its people), no new customer is made: the message goes into that customer's history, with any new name, phone or company written under it.
+- The form and its keys sync with your CRM. One device collects the messages; on another one press `Collect on this device`.
+- `Turn the form off` stops the form on your site and deletes the messages still waiting at the relay.
+
 ## Tips
 - Follow-up reminders reach the [notifications](help:t/notifications) inbox even when CRM is closed: on the day, or at the time you set.
 - Change `"Not contacted" after` in `Settings` to decide when a customer counts as forgotten.
@@ -60,3 +69,5 @@ In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON
 ## Limits
 - Reminders need orOS to be open in a tab or window; a reminder missed while it was closed arrives the next time you open it.
 - Up to 2,000 customers and 20,000 history entries, to leave room for the other apps.
+- Web form: one form per CRM. A message is at most 2,000 characters and every other field 200. The relay keeps at most 500 messages waiting and takes at most 100 a day per form; beyond that it shows the thank-you page but keeps nothing. Messages are picked up only while CRM is open on the device that collects them.
+- A device still on an older CRM drops the web form from its own copy until it updates; your other devices keep it.

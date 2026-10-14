@@ -869,6 +869,41 @@ button.btn-secondary.warn-mine { min-height: 34px; padding: 4px 10px; font-size:
 .cmp-rain thead th { color: var(--text-dim); font-weight: 600; }
 .cmp-rain thead th:first-child { text-align: left; }
 
+/* Rain map (wave 52): NASA GIBS IMERG over OSM, Leaflet lazy-loaded */
+#rainmap {
+  background: var(--panel-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+}
+#rain-toggle { width: 100%; }
+#rain-note { margin: 10px 0 0; font-weight: 600; color: var(--text); }
+#rain-msg { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#rain-msg[hidden] { display: none; }
+#rain-map-wrap { margin-top: 10px; }
+#rain-box {
+  height: 340px; width: 100%; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--bg);
+}
+#rain-box.leaflet-container { font-family: inherit; background: var(--bg); }
+#rain-box .leaflet-bar { border: 1px solid var(--border); box-shadow: 0 4px 16px var(--shadow); }
+#rain-box .leaflet-bar a { background: var(--panel-bg); color: var(--text); border-bottom-color: var(--border); }
+#rain-box .leaflet-bar a:hover { background: var(--accent-soft); color: var(--accent); }
+#rain-box .leaflet-control-attribution { background: var(--bar-bg); color: var(--text-dim); font-size: 10px; max-width: 100%; white-space: normal; }
+#rain-box .leaflet-control-attribution a { color: var(--text-dim); }
+#rain-box .leaflet-tooltip { background: var(--panel-bg); color: var(--text); border-color: var(--border); }
+.rain-ctl { display: flex; align-items: center; gap: 10px; margin-top: 10px; min-width: 0; }
+#rain-play { width: 40px; min-width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+#rain-slider { flex: 1; min-width: 0; accent-color: var(--accent); height: 28px; }
+#rain-time { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#rain-legend { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.rain-lrow { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.rain-lname { font-size: 11px; color: var(--text-dim); width: 86px; flex-shrink: 0; line-height: 12px; }
+.rain-lwrap { flex: 1; min-width: 0; padding-right: 10px; }
+.rain-lbar { height: 10px; border-radius: 3px; }
+.rain-ticks { position: relative; height: 13px; margin-top: 2px; }
+.rain-tick { position: absolute; transform: translateX(-50%); font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.rain-tick:first-child { transform: none; }
+#rain-attrib { font-size: 11px; margin: 8px 0 0; }
+
 /* ---------- 8. Mobile-first ---------- */
 @media (max-width: 480px) {
   #wxmain { padding: 0 8px 40px; }
@@ -881,6 +916,9 @@ button.btn-secondary.warn-mine { min-height: 34px; padding: 4px 10px; font-size:
   #cur-sun { font-size: 12.5px; }
   #cur-uv,
   #cur-aqi { font-size: 12px; }
+  #rain-box { height: 300px; }
+  .rain-ctl { flex-wrap: wrap; gap: 6px 10px; }
+  #rain-time { flex-basis: 100%; order: 3; }
 }
 
 /* ---------- X. [hidden] must ALWAYS win ----------
