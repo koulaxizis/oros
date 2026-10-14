@@ -179,6 +179,26 @@ class CalendarWriter {
         return v;
     }
 
+    /** Diagnostics: how many rows carry a colour, and what the provider
+     *  reports for one of them (event colour / display colour). */
+    String colorCheck(JSONArray items) {
+        int n = 0;
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject it = items.optJSONObject(i);
+            if (it != null && !it.isNull("color") && !it.optString("color").isEmpty()) n++;
+        }
+        String seen = "none";
+        long cal = findCalendar();
+        try (Cursor c = cr.query(Events.CONTENT_URI, new String[]{Events.TITLE, Events.EVENT_COLOR, Events.DISPLAY_COLOR},
+                Events.CALENDAR_ID + "=? AND " + Events.DELETED + "=0", new String[]{String.valueOf(cal)}, null)) {
+            if (c != null && c.moveToFirst()) {
+                seen = c.getString(0) + " event=" + (c.isNull(1) ? "null" : Integer.toHexString(c.getInt(1)))
+                        + " display=" + Integer.toHexString(c.getInt(2));
+            }
+        }
+        return n + "/" + items.length() + " with colour; first: " + seen;
+    }
+
     void clear() {
         long cal = findCalendar();
         if (cal >= 0) cr.delete(ContentUris.withAppendedId(sa(Calendars.CONTENT_URI), cal), null, null);

@@ -277,7 +277,9 @@ public class PhoneBridge {
                         n = new ContactsWriter(app).apply(items);
                     } else {
                         if (!granted(CALENDAR_PERMS)) throw new SecurityException("no permission");
-                        n = new CalendarWriter(app).apply(items);
+                        CalendarWriter w = new CalendarWriter(app);
+                        n = w.apply(items);
+                        if (BuildConfig.DIAG) diag("calendar colours: " + w.colorCheck(items));
                     }
                     JSONObject done = new JSONObject();
                     done.put("t", "done");
