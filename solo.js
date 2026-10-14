@@ -519,8 +519,12 @@
   // no way to install it; an intent addressed to Chrome opens it in a
   // Chrome tab instead (browser_fallback_url: other browsers).
   // "?install" makes the page offer its Install bar at once.
-  function installUrl(id, ua, origin) {
+  // inApp: the page runs in the orOS Android app (its phone bridge is
+  // connected). An intent to Chrome from there comes back to the app,
+  // so the app's own activity opens the page in Chrome.
+  function installUrl(id, ua, origin, inApp) {
     if (!has(id)) return "";
+    if (inApp) return "intent://install/" + id + "#Intent;scheme=oros-permission;package=online.useoros.twa;end";
     var page = "/" + id + "/solo.html?install";
     var m = /^https:\/\/([^\/?#]+)$/.exec(String(origin || ""));
     if (!/Android/i.test(String(ua || "")) || !m) return page;

@@ -753,8 +753,9 @@
     c1.appendChild(el("p", "hint", t("so.intro")));
     S.ids().forEach(function (id) {
       var b = button(t("so.open"), "solo:" + id, function () {
-        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin) : "/" + id + "/solo.html";
-        // Android: an intent to Chrome, so the orOS app does not catch the link.
+        var u = S.installUrl ? S.installUrl(id, navigator.userAgent, location.origin, !!phone()) : "/" + id + "/solo.html";
+        // Android: an intent to Chrome, so the orOS app does not catch the
+        // link; in the orOS app, the app itself opens Chrome.
         if (u.indexOf("intent:") === 0) { try { window.top.location.href = u; } catch (e) { location.href = u; } }
         else window.open(u, "_blank", "noopener");
       });

@@ -24,6 +24,7 @@ public class PermissionActivity extends Activity {
         Uri data = getIntent().getData();
         kind = data != null ? data.getHost() : null;
         if ("reminders".equals(kind)) { reminders(); return; }
+        if ("install".equals(kind)) { install(data); return; }
         if ("health".equals(kind)) {
             startActivity(new Intent(this, HealthPermissionActivity.class));
             finish();
@@ -50,6 +51,40 @@ public class PermissionActivity extends Activity {
             return;
         }
         requestPermissions(perms, 1);
+    }
+
+    /** Single apps (SOLO-1): "intent://install/notes#Intent;scheme=oros-permission;…"
+     *  opens /notes/solo.html?install in the person's default browser
+     *  (Chrome when none is set). Inside the orOS app a page cannot do
+     *  this: its intent to the browser comes back to the TWA, where a
+     *  web app cannot be installed. */
+    private void install(Uri data) {
+        String id = data.getPath() != null ? data.getPath().replaceFirst("^/", "") : "";
+        if (id.matches("[a-z0-9-]{1,40}")) {
+            Uri page = PhoneBridge.ORIGIN.buildUpon().appendPath(id).appendPath("solo.html")
+                    .encodedQuery("install").build();
+            Intent i = new Intent(Intent.ACTION_VIEW, page).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            String browser = defaultBrowser();
+            i.setPackage(browser != null ? browser : "com.android.chrome");
+            try {
+                startActivity(i);
+            } catch (android.content.ActivityNotFoundException e) {
+                // Neither: the person picks a browser.
+                startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW, page), null)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+        }
+        finish();
+    }
+
+    /** The default browser's package: whoever opens a web link that no
+     *  app claims. Null when none is set (Android's chooser) or it is
+     *  this app. */
+    private String defaultBrowser() {
+        android.content.pm.ResolveInfo r = getPackageManager().resolveActivity(
+                new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com/")), PackageManager.MATCH_DEFAULT_ONLY);
+        String p = r != null && r.activityInfo != null ? r.activityInfo.packageName : null;
+        return p == null || "android".equals(p) || p.equals(getPackageName()) ? null : p;
     }
 
     /** Reminders (v3): notifications first (Android 13+), then exact

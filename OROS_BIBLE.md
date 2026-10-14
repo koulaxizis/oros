@@ -6686,3 +6686,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Google CSV: the current "Organization Name", "Organization Title" and "Labels" headers are read. vCard text decoding works in one pass (an escaped backslash before "n" no longer becomes a line break).
 - Files: `contacts/accounts.js` (`extraLines`, `oneOf`, `personFields`, `withPhotos` / `photoData`), `contacts/contacts.js` (`CSV_H`, `vcfUnesc`).
   - Tests: new import test; real shell with a mocked People API and image host (EN desktop, EL 360 px) and a field-by-field audit of Chris's 437-contact export by the owner. Not tested: real Google sign-in, whether Google's image host allows the cross-origin photo fetch (if not, the photo is skipped).
+
+### 2026-10-14 — Single apps: Install works from inside the orOS Android app (#371) — 2.21.02
+- In the orOS Android app, Settings › Single apps › Install now opens the single app's page in the person's default browser (Chrome when none is set, a chooser when Chrome is missing), where the install prompt appears; before, the TWA caught the browser link and showed the page inside orOS, where it cannot be installed (SOLO-1).
+- With the phone bridge connected, `solo.js` `installUrl(id, ua, origin, inApp)` gives `intent://install/<id>#Intent;scheme=oros-permission;package=online.useoros.twa;end`; `PermissionActivity` host `install` checks the id, resolves the default browser and starts it with `https://useoros.online/<id>/solo.html?install`. `gen.js` adds a `<queries>` VIEW/https intent for Android 11+. An older installed APK keeps the old behaviour until updated.
+- Files: `solo.js`, settings text EN/EL, `android/` (PermissionActivity, tools/gen.js). Reviewed by the phone thread.
+  - Tests: full suite green, Chromium install-bar checks, Android CI build green. Not tested: a real phone.
