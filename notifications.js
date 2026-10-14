@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps', 'meals'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -542,6 +542,11 @@
     stock:    function (target) {
       if (typeof window.__orosOpenAt !== 'function') return;
       window.__orosOpenAt('stock', target === 'reorder' ? { view: 'reorder' } : { item: String(target || '') });
+    },
+    // Meal Planner — "meals:pantry": the best-before reminder opens the
+    // Pantry tab. Generic shell deep link, no own bridge.
+    meals:    function (what) {
+      if (what === 'pantry' && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('meals', { pantry: true });
     },
     // Garage — "garage:upcoming" (reminder) or "garage:<id>".
     garage:   function (target) { if (typeof window.__orosOpenGarage === 'function') window.__orosOpenGarage(target); },

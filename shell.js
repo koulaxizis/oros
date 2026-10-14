@@ -1119,6 +1119,7 @@
       tickSafe("quoteCheckTick", quoteCheckTickThrottled); // Wave 13: Quote due-date reminders (60s throttle)
       tickSafe("invoicesCheckTick", invoicesCheckTickThrottled); // Invoices wave 2: due / overdue reminder (60s throttle)
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
+      tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
@@ -1441,6 +1442,58 @@
       body: (el ? "Για παραγγελία: " : "Time to reorder: ") + shown,
       deepLink: st.fresh.length === 1 ? "stock:" + st.fresh[0] : "stock:reorder"
     });
+  }
+
+  // Meal Planner — pantry best-before reminder. Reads "oros-meals-data"
+  // directly (works with the app CLOSED) and asks meals/pantry.js
+  // (loaded by index.html, the SAME file the app runs) which pantry
+  // items reach their best-before day today or tomorrow. Off unless
+  // the user picked an hour (device-local oros-meals-prefs.nt, -1 =
+  // off); from that hour on, one notice per day per set of items (the
+  // key carries the day and the items), so an item added later in the
+  // day still gets its own notice. Nothing due → silent (SH-B7).
+  var MEALS_DATA_KEY = "oros-meals-data";
+  function mealsCheckTick() {
+    var Core = window.OrosMealsPantry;
+    if (!Core) return;                                  // stale bundle — silent
+    var raw, hour;
+    try {
+      hour = Core.notifyHour(JSON.parse(localStorage.getItem("oros-meals-prefs")));
+      if (hour < 0 || new Date().getHours() < hour) return;
+      raw = JSON.parse(localStorage.getItem(MEALS_DATA_KEY));
+    } catch (e) { return; }
+    var today = sysYmd();
+    var due = Core.expiryNotice(raw, today);
+    if (!due.length) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var el = state.lang === "el";
+    function names(list) {
+      var s = list.slice(0, 3).map(function (x) { return x.n; }).join(", ");
+      if (list.length > 3) s += el ? " και " + (list.length - 3) + " ακόμα" : " and " + (list.length - 3) + " more";
+      return s;
+    }
+    var td = due.filter(function (x) { return x.d === 0; }), tm = due.filter(function (x) { return x.d === 1; });
+    var parts = [];
+    if (td.length) parts.push((el ? "Λήγει σήμερα: " : "Best before today: ") + names(td));
+    if (tm.length) parts.push((el ? "Λήγει αύριο: " : "Best before tomorrow: ") + names(tm));
+    var title = window.t("app.meals");
+    if (title === "app.meals") title = "Meal Planner";  // missing-key fallback
+    N.emit({
+      ns: "meals",
+      key: "bb-" + today + "-" + garageHash(due.map(function (x) { return x.id + ":" + x.d; }).join("|")),
+      type: "reminder",
+      title: title,
+      body: parts.join(" · "),
+      deepLink: "meals:pantry"
+    });
+  }
+  var mealsLastTick = 0;
+  function mealsCheckTickThrottled() {
+    var now = Date.now();
+    if (now - mealsLastTick < 60000) return;
+    mealsLastTick = now;
+    mealsCheckTick();
   }
 
   var stockLastTick = 0;

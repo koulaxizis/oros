@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Meal Planner — core.js (pure logic, v1.1.0: ranges, US units + conversion, Household)
+// orOS Meal Planner — core.js (pure logic, v1.2.0: + pantry items and nutrition matches in the slice)
 // Everything that is not the screen: the data model and its merge
 // (sync slice "meals"), quantities and units, the ingredient line
 // parser, the "paste a recipe" parser, the shopping list builder,
@@ -30,13 +30,17 @@
   var DATA_VER = 1;
   var ID_RE = /^[a-z0-9][a-z0-9-]{2,39}$/;
   var MAN_RE = /^n(\d{8})-[a-z0-9]{4,20}$/;          // manual shopping item: n<yyyymmdd of its week>-<rand>
+  var PA_RE = /^pa-[a-z0-9]{4,36}$/;                   // pantry item (wave 3)
+  var BC_RE = /^\d{6,14}$/;                            // a barcode (EAN / UPC / GTIN digits)
+  var PA_TOMB_DAYS = 180;                              // pantry tombs older than this before the newest pantry stamp go
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var KEEP_DAYS = 400;                                 // plan, ticks and manual items older than this go
   var LIM = {
     title: 80, emoji: 8, tag: 24, tags: 10, ings: 80, ingName: 60, ingNote: 80, group: 40,
     steps: 50, step: 1000, notes: 2000, src: 300, img: 500, cellItems: 6, cellText: 60, manual: 80,
-    slotName: 24, servings: 50, minutes: 1440, key: 80, recipes: 500
+    slotName: 24, servings: 50, minutes: 1440, key: 80, recipes: 500, pantry: 1000, offName: 80
   };
+  var LOCS = ["fridge", "freezer", "cupboard"];      // where a pantry item is kept (wave 3)
   var SLOT_IDS = ["b", "l", "d", "s", "x"];           // breakfast, lunch, dinner, snack, extra
   var COURSES = ["breakfast", "main", "side", "salad", "soup", "dessert", "snack", "drink"];
   var DIETS = ["vegan", "veg", "pesc", "raw", "keto", "lowcarb", "gf", "lf", "nut", "fast"];
@@ -734,6 +738,12 @@
     return n ? { v: o.v, m: o.m, n: n } : o;
   }
   function isBit(v) { return v === 0 || v === 1; }
+  // A tick; p: 1 once the line was put in the pantry (wave 3, only when set).
+  function normCk(x) {
+    var o = normFlag(x, "v", isBit);
+    if (o && x.p === 1) o.p = 1;
+    return o;
+  }
   function isAisle(v) { return AISLES.indexOf(v) >= 0; }
   var CK_RE = /^(\d{4}-\d{2}-\d{2})\|(.+)$/;
   function normCkKey(k) {
@@ -747,7 +757,9 @@
     if (!mm || !validYmd(x.w) || compactYmd(x.w) !== mm[1]) return null;
     var t = clean(x.t, LIM.manual);
     if (!t) return null;
-    return { id: x.id, m: x.m, w: x.w, t: t, d: x.d === 1 ? 1 : 0 };
+    var o = { id: x.id, m: x.m, w: x.w, t: t, d: x.d === 1 ? 1 : 0 };
+    if (x.p === 1) o.p = 1;                // put in the pantry (wave 3), only when set
+    return o;
   }
   function defaultSet() { return { m: 0, dt: [], sl: ["b", "l", "d"], nm: {}, ws: 1 }; }
   function normSet(x) {
@@ -770,8 +782,49 @@
       sl: sl, nm: nm, ws: x.ws === 0 ? 0 : 1
     };
   }
+  // Pantry item (wave 3): what is at home. q null = "some" (amount
+  // not known); bb = best-before day or ""; bc = barcode or "".
+  function normPantryItem(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !PA_RE.test(x.id) || !isInt(x.m) || x.m < 0) return null;
+    var n = clean(x.n, LIM.ingName);
+    if (!n) return null;
+    var q = (typeof x.q === "number" && isFinite(x.q) && x.q > 0) ? Math.round(Math.min(x.q, 100000) * 1000) / 1000 : null;
+    return {
+      id: x.id, m: x.m, n: n, q: q,
+      u: q !== null && UNITS[x.u] ? x.u : "",
+      l: LOCS.indexOf(x.l) >= 0 ? x.l : "cupboard",
+      bb: validYmd(x.bb) ? x.bb : "",
+      bc: typeof x.bc === "string" && BC_RE.test(x.bc) ? x.bc : ""
+    };
+  }
+  // A nutrition match per ingredient key (wave 3), chosen by the user:
+  // s "tbl" (a row of the built-in table, t = its id), "off" (an Open
+  // Food Facts product: c = code, nm = its name, k/p/cb/f = kcal,
+  // protein, carbs, fat per 100 g) or "x" (left out of the estimate).
+  // g: grams in one piece, when the user gave it.
+  function num1(v, hi) { return typeof v === "number" && isFinite(v) && v >= 0 && v <= hi ? Math.round(v * 10) / 10 : null; }
+  function normNu(x) {
+    if (!x || typeof x !== "object" || !isInt(x.m) || x.m < 0) return null;
+    var o = { m: x.m, s: "" };
+    if (x.s === "tbl") {
+      if (typeof x.t !== "string" || !/^[a-z0-9-]{1,40}$/.test(x.t)) return null;
+      o.s = "tbl"; o.t = x.t;
+    } else if (x.s === "off") {
+      var k = num1(x.k, 1000), p = num1(x.p, 100), cb = num1(x.cb, 100), f = num1(x.f, 100);
+      if (k === null || p === null || cb === null || f === null) return null;
+      o.s = "off";
+      o.c = typeof x.c === "string" && BC_RE.test(x.c) ? x.c : "";
+      o.nm = clean(x.nm, LIM.offName);
+      o.k = k; o.p = p; o.cb = cb; o.f = f;
+    } else if (x.s === "x") {
+      o.s = "x";
+    } else return null;
+    var g = num1(x.g, 5000);
+    if (g && o.s !== "x") o.g = g;
+    return o;
+  }
   function emptyData() {
-    return { ver: DATA_VER, rc: [], pl: {}, ck: {}, mn: [], ai: {}, pn: {}, set: defaultSet(), tombs: {} };
+    return { ver: DATA_VER, rc: [], pl: {}, ck: {}, mn: [], ai: {}, pn: {}, pa: [], nu: {}, set: defaultSet(), tombs: {} };
   }
 
   // ---------- 10. Merge ----------
@@ -801,15 +854,19 @@
         if (!(id in tombs) || tm[id] > tombs[id]) tombs[id] = tm[id];
       });
     });
-    var rc = {}, mn = {}, pl = {}, ck = {}, ai = {}, pn = {};
+    var rc = {}, mn = {}, pl = {}, ck = {}, ai = {}, pn = {}, pa = {}, nu = {};
     [a, b].forEach(function (s) {
       if (Array.isArray(s.rc)) s.rc.forEach(function (r) { var x = normRecipe(r); if (x) rc[x.id] = pick(rc[x.id], x); });
+      if (Array.isArray(s.pa)) s.pa.forEach(function (r) { var x = normPantryItem(r); if (x) pa[x.id] = pick(pa[x.id], x); });
+      if (s.nu && typeof s.nu === "object") Object.keys(s.nu).forEach(function (k) {
+        if (!normIngKey(k)) return; var x = normNu(s.nu[k]); if (x) nu[k] = pick(nu[k], x);
+      });
       if (Array.isArray(s.mn)) s.mn.forEach(function (r) { var x = normManual(r); if (x) mn[x.id] = pick(mn[x.id], x); });
       if (s.pl && typeof s.pl === "object") Object.keys(s.pl).forEach(function (k) {
         if (!normCellKey(k)) return; var x = normCell(s.pl[k]); if (x) pl[k] = pick(pl[k], x);
       });
       if (s.ck && typeof s.ck === "object") Object.keys(s.ck).forEach(function (k) {
-        if (!normCkKey(k)) return; var x = normFlag(s.ck[k], "v", isBit); if (x) ck[k] = pick(ck[k], x);
+        if (!normCkKey(k)) return; var x = normCk(s.ck[k]); if (x) ck[k] = pick(ck[k], x);
       });
       if (s.ai && typeof s.ai === "object") Object.keys(s.ai).forEach(function (k) {
         if (!normIngKey(k)) return; var x = normFlag(s.ai[k], "a", isAisle); if (x) ai[k] = pick(ai[k], x);
@@ -842,17 +899,29 @@
       if (old(mn[id].w) || (id in tombs && tombs[id] >= mn[id].m)) return;
       outMn.push(mn[id]);
     });
+    // Pantry: LWW per id, a tomb at or after m wins; pantry tombs more
+    // than PA_TOMB_DAYS before the newest pantry stamp go (R26, R27).
+    var paRef = 0;
+    Object.keys(pa).forEach(function (id) { if (pa[id].m > paRef) paRef = pa[id].m; });
+    Object.keys(tombs).forEach(function (id) { if (PA_RE.test(id) && tombs[id] > paRef) paRef = tombs[id]; });
+    var paCut = paRef - PA_TOMB_DAYS * 86400000;
+    var outPa = [];
+    Object.keys(pa).sort(cmpStr).forEach(function (id) {
+      if (id in tombs && tombs[id] >= pa[id].m) return;
+      if (outPa.length < LIM.pantry) outPa.push(pa[id]);
+    });
     var outPl = {}, outCk = {}, outTombs = {};
     Object.keys(pl).sort(cmpStr).forEach(function (k) { if (!old(k.slice(0, 10))) outPl[k] = pl[k]; });
     Object.keys(ck).sort(cmpStr).forEach(function (k) { if (!old(k.slice(0, 10))) outCk[k] = ck[k]; });
     Object.keys(tombs).sort(cmpStr).forEach(function (id) {
       var mm = id.match(MAN_RE);
       if (mm && old(expandYmd(mm[1]))) return;
+      if (PA_RE.test(id) && tombs[id] < paCut) return;
       outTombs[id] = tombs[id];
     });
     return {
       ver: DATA_VER, rc: outRc, pl: outPl, ck: outCk, mn: outMn,
-      ai: sortedObj(ai), pn: sortedObj(pn), set: set, tombs: outTombs
+      ai: sortedObj(ai), pn: sortedObj(pn), pa: outPa, nu: sortedObj(nu), set: set, tombs: outTombs
     };
   }
 
@@ -965,11 +1034,11 @@
     var items = Object.keys(map).map(function (k) {
       var e = map[k], c = data.ck[wk + "|" + k];
       return { key: k, name: e.name, qty: e.any ? fmtAmounts(e.am, lang, sys) : "", from: e.from,
-               aisle: aisleOf(data, k, e.name), done: !!(c && c.v === 1), manual: false };
+               aisle: aisleOf(data, k, e.name), done: !!(c && c.v === 1), manual: false, am: e.any ? e.am : null, pa: !!(c && c.p === 1) };
     });
     (data.mn || []).forEach(function (x) {
       if (x.w !== wk) return;
-      items.push({ key: x.id, name: x.t, qty: "", from: [], aisle: aisleOf(data, keyOf(x.t), x.t), done: x.d === 1, manual: true });
+      items.push({ key: x.id, name: x.t, qty: "", from: [], aisle: aisleOf(data, keyOf(x.t), x.t), done: x.d === 1, manual: true, am: null, pa: x.p === 1 });
     });
     items.sort(function (x, y) {
       return (AISLES.indexOf(x.aisle) - AISLES.indexOf(y.aisle)) ||
@@ -1145,7 +1214,8 @@
   }
 
   root.OrosMealsCore = {
-    VER: VER, DATA_VER: DATA_VER, LIM: LIM, ID_RE: ID_RE, MAN_RE: MAN_RE,
+    VER: VER, DATA_VER: DATA_VER, LIM: LIM, ID_RE: ID_RE, MAN_RE: MAN_RE, PA_RE: PA_RE, BC_RE: BC_RE, LOCS: LOCS,
+    normPantryItem: normPantryItem, normNu: normNu, PA_TOMB_DAYS: PA_TOMB_DAYS,
     SLOT_IDS: SLOT_IDS, COURSES: COURSES, DIETS: DIETS, AISLES: AISLES, UNITS: UNITS, UNIT_IDS: UNIT_IDS,
     DIET_FORBIDS: DIET_FORBIDS, SEED_IDS: SEED_IDS, KEEP_DAYS: KEEP_DAYS,
     clean: clean, cleanBlock: cleanBlock, fold: fold, keyOf: keyOf,

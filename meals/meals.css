@@ -9,6 +9,7 @@
      4. Recipes
      5. Week
      6. Shopping
+     6b. Pantry, what can I cook, cooked, nutrition
      7. Dialogs (R32: margin auto, scroll inside)
      8. Recipe view + editor
      9. Cooking mode + timers
@@ -68,7 +69,8 @@ button:disabled { cursor: default; opacity: 0.4; }
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-#tabs { display: flex; gap: 4px; min-width: 0; }
+#tabs { display: flex; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+#tabs::-webkit-scrollbar { display: none; }
 .tab {
   min-height: 38px;
   padding: 4px 14px;
@@ -372,6 +374,70 @@ input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { outlin
 .excluded { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 20px; }
 .ex-lbl { font-size: 12px; color: var(--text-dim); width: 100%; }
 
+/* ---------- 6b. Pantry, what can I cook, cooked, nutrition (wave 3) ---------- */
+#view-pa > * { max-width: 760px; }
+.pa-bar { flex-wrap: wrap; }
+.pa-add { flex: 1 1 240px; margin: 0; min-width: 0; }
+.pa-bar2 { flex-wrap: wrap; }
+.pa-ul { list-style: none; }
+.pa-item { border-bottom: 1px dashed var(--border); }
+.pa-open {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  min-width: 0;
+}
+.pa-open:hover .pa-name { color: var(--accent); }
+.pa-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+.pa-main { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.pa-name { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.pa-qty { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.pa-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; color: var(--text-dim); }
+.pa-bb.soon { color: var(--warn); font-weight: 700; }
+.pa-bb.bad { color: var(--danger); font-weight: 700; }
+.pa-soon { margin-bottom: 8px; padding: 2px 10px 6px; border: 1px solid var(--warn); border-radius: 12px; }
+.pa-soon .pa-item:last-child { border-bottom: none; }
+.warn-h { color: var(--warn); }
+.sh-have { flex-basis: 100%; font-size: 12px; color: var(--accent); }
+.sh-home { margin-top: 18px; }
+.sh-home .hint { margin-bottom: 4px; }
+.day-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+.day-kcal { font-size: 11px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--text-dim); font-variant-numeric: tabular-nums; cursor: help; }
+.ck-list, .co-list, .nu-list { list-style: none; margin-top: 8px; }
+.ck-card { border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 8px; background: var(--bg); }
+.ck-top { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.ck-top .rc-body { flex: 1 1 auto; }
+.rc-meta.ok { color: var(--accent); font-weight: 700; }
+.ck-miss, .ck-low { font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.ck-low { color: var(--warn); }
+.ck-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.ck-acts .dlg-btn.small { margin-top: 6px; }
+.co-item { border-bottom: 1px dashed var(--border); padding: 4px 0; }
+.co-item.off { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; opacity: 0.7; padding: 8px 0; }
+.co-item .check { align-items: flex-start; padding: 4px 0; }
+.co-item .check input { margin-top: 2px; }
+.co-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.co-name { font-weight: 700; overflow-wrap: anywhere; }
+.nu-box { margin-top: 14px; }
+.nu-est { font-weight: 700; font-size: 14px; line-height: 1.45; margin-bottom: 4px; }
+.nu-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed var(--border); padding: 4px 0; }
+.nu-row.gap .hint { color: var(--warn); }
+.nu-row .dlg-btn.small { margin-top: 0; }
+.nu-txt { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
+.nu-credit { margin-top: 12px; }
+.bc-res { margin-top: 8px; }
+.bc-res .src-link { display: inline-block; margin: 4px 0; }
+.cam-video { display: block; width: 100%; max-height: 50vh; aspect-ratio: 4 / 3; object-fit: cover; background: #000; border-radius: 10px; margin-bottom: 6px; }
+.cam-msg { min-height: 1.4em; }
+.off-res { max-height: 40vh; }
+
 /* ---------- 7. Dialogs ---------- */
 dialog.mm-dlg {
   margin: auto;
@@ -606,15 +672,25 @@ dialog.mm-dlg.cook:not([open]) { display: none; }
 }
 @media (max-width: 480px) {
   #toolbar { padding-left: 8px; padding-right: 8px; gap: 4px; }
-  .tab { padding: 4px 10px; font-size: 13px; }
+  .tab { padding: 4px 9px; font-size: 13px; }
+  #tabs { gap: 2px; }
   .view { padding: 10px 10px 40px; }
   input, select, textarea { font-size: 16px; }   /* ≥16px: no iOS zoom */
   #wk-grid { grid-template-columns: 1fr; }
   #rc-list { grid-template-columns: 1fr; }
-  #rc-new span, #rc-paste span { display: none; }
+  #rc-new span, #rc-paste span, #pa-scan span { display: none; }
+  .pa-bar { flex-wrap: nowrap; }
+  .pa-bar2 .chips { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .pa-bar2 .chips::-webkit-scrollbar { display: none; }
+  .pa-bar2 .chip { flex-shrink: 0; }
+  .pa-bar2 .spacer { display: none; }
+  #pa-cook { flex: 1 1 100%; justify-content: center; }
   dialog.mm-dlg, dialog.mm-dlg.wide { width: calc(100vw - 16px); padding: 14px; max-height: calc(100dvh - 16px); }
   .slot-set .check { flex-basis: 120px; }
   .check-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .tab { padding: 4px 7px; }
 }
 @media (max-width: 380px) {
   .check-grid { grid-template-columns: 1fr; }

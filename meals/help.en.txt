@@ -1,15 +1,17 @@
 # Meal Planner
-Meal Planner keeps your recipes, plans the week's meals and makes the shopping list from them. It also has a cooking mode that walks you through a recipe step by step.
+Meal Planner keeps your recipes, plans the week's meals and makes the shopping list from them. It also knows what you have at home (the pantry), suggests what you can cook with it, estimates nutrition per serving and has a cooking mode that walks you through a recipe step by step.
 
 ## Getting started
-There are three tabs: `Recipes`, `Week` and `Shopping`. You start with a few ready recipes. Add your own with `New recipe`, or bring them in with `Import`: from a recipe site's address, from text you copied, or from a Paprika, Mealie or Tandoor export. The ingredients and steps are found for you, and you check them before saving.
+There are four tabs: `Recipes`, `Week`, `Shopping` and `Pantry`. You start with a few ready recipes. Add your own with `New recipe`, or bring them in with `Import`: from a recipe site's address, from text you copied, or from a Paprika, Mealie or Tandoor export. The ingredients and steps are found for you, and you check them before saving.
 
 Open `Settings` (the gear) to set `Our diet`, the `Meals of the day`, when the `Week starts on` and what's `Always in the house`.
 
 ## Recipes
 In the editor, type `Ingredients, one per line` (like "200 g feta, crumbled"; a line such as "For the sauce:" starts a group) and `Steps, one per line`. Add servings, prep and cook times, a course, tags, notes and a source. `Suggest from the ingredients` ticks the `Diets it fits`; check keto, low-carb and raw yourself.
 
-Open a recipe to see it. The + and − buttons change the servings and scale every quantity, ranges too ("2–3 eggs" for 4 becomes "4–6 eggs" for 8). `As written`, `Metric` and `US` choose the units: `Metric` turns cups, ounces and pounds into ml and g, `US` turns g and ml into ounces, pounds, cups and spoons, and oven temperatures switch between °C and °F. The choice is kept on this device and also applies to cooking mode and the shopping list. From there you can `Cook`, `Add to plan`, `Edit`, `Share`, `Print`, `Duplicate` or `Delete` it (with `Undo`), and tap the star to keep it in your favourites. `Share` opens `Send to someone`: the recipe goes as a link that opens in any browser, and someone with orOS can save it to their own recipes; `Send as text` sends plain text instead.
+Open a recipe to see it. The + and − buttons change the servings and scale every quantity, ranges too ("2–3 eggs" for 4 becomes "4–6 eggs" for 8). `As written`, `Metric` and `US` choose the units: `Metric` turns cups, ounces and pounds into ml and g, `US` turns g and ml into ounces, pounds, cups and spoons, and oven temperatures switch between °C and °F. The choice is kept on this device and also applies to cooking mode and the shopping list. From there you can `Cook`, mark it `Cooked` (see Pantry below), `Add to plan`, `Edit`, `Share`, `Print`, `Duplicate` or `Delete` it (with `Undo`), and tap the star to keep it in your favourites. `Share` opens `Send to someone`: the recipe goes as a link that opens in any browser, and someone with orOS can save it to their own recipes; `Send as text` sends plain text instead.
+
+Under the ingredients, `Per serving` shows an estimate of calories, protein, carbs and fat (see Nutrition below).
 
 The search box finds recipes by name. Type ingredients separated by commas (like "eggs, spinach") to find recipes that use them. `★ Favourites` and `Fits our diet` filter the list.
 
@@ -23,7 +25,7 @@ The search box finds recipes by name. Type ingredients separated by commas (like
 One recipe opens in the editor so you can check it before `Save`. Several open in a list: tick the ones you want and press `Add`; titles you already have start unticked. The page itself is never shown or run: only its recipe data is read. Photos stay on their site, as a `Photo` link under `Source`.
 
 ## Cooking mode
-`Cook` shows one step at a time. Change the servings and the units at the top; the ingredient list follows. When a step mentions a time, a timer button appears for it. The screen stays on while you cook.
+`Cook` shows one step at a time. Change the servings and the units at the top; the ingredient list follows. When a step mentions a time, a timer button appears for it. The screen stays on while you cook. On the last step, `Cooked` takes what you used from the pantry.
 
 ## Week
 Each day has a row for every meal. Tap or click an empty slot to add a recipe, or write something like "Out" or "Leftovers". Tap a meal to open the recipe, change its servings, move it or remove it. On a computer you can also drag meals between slots.
@@ -32,23 +34,40 @@ Each day has a row for every meal. Tap or click an empty slot to add a recipe, o
 - `Fill the gaps` puts recipes that fit your diet into the empty slots, favourites first.
 - `Clear week` empties it, with `Undo`.
 
-Meals that don't fit your diet show a ⚠.
+Meals that don't fit your diet show a ⚠. Next to each day, "≈ 1,850 kcal" estimates that day for one person: one serving of each planned recipe. Hover or long-press it for protein, carbs and fat.
 
 ## Shopping
 The shopping list adds up every ingredient planned for the week, grouped by section of the supermarket: fruit & vegetables, meat, fish, dairy & eggs, bakery, cupboard, spices, frozen, drinks and household. The section is guessed from the words, in English and Greek ("frozen peas" go to frozen, "baking paper" to household). The same ingredient in several recipes becomes one line with the amounts added up when they can be (g with kg and ounces, ml with litres, spoons with cups). Things you always have are left out and listed at the bottom, where you can put them back. Tick items as you buy them. `From today` leaves out the days already gone. Use `Add an item…` for extras, and the options of an item to change its `Aisle` (remembered for that item and synced), mark `I always have it` or `Remove` it. `Copy` and `Share` send the list as text.
 
+With things in the pantry, a line the pantry covers moves to `At home already` at the bottom: it isn't counted, copied or sent, and you can still tick it. A line only partly there says how much you have ("at home: 200 g"). When you tick a line, `To pantry` on the message puts it in the pantry; `Ticked to pantry` does it for every ticked line that isn't there yet.
+
 `To To-Do` sends the unticked items to the `Groceries` list in [To-Do](app:todo), each with the recipes it is for. To-Do shows them first: you can pick another list, and items already on it start unticked. Nothing is added until you press `Add`, and your ticks here don't change.
 
+## Pantry
+The `Pantry` tab is what you have at home, by where it is kept: `Fridge`, `Freezer` or `Cupboard`. Type what you have in the box, like "1 l milk" or "6 eggs", and press Enter; an item with the same name and no best-before date simply gets the extra amount. Tap an item to change its name, amount, place or `Best before` date, or to `Remove` it. Things that reach their date within three days, or are past it, are listed first under `Use soon`.
+
+- `Barcode` reads a product's barcode with the camera (on browsers that can, like Chrome on Android) or takes the number you type, and looks it up on [Open Food Facts](https://world.openfoodfacts.org): its name and package size fill in the item for you. A barcode you already added is recognised without the internet.
+- `What can I cook?` lists your recipes by how much of each is already at home, and names what is missing; `Add missing to the list` puts those on this week's shopping list. Recipes that use something to eat soon come first among equals.
+- `Cooked` (in a recipe, and on the last step of cooking mode) shows what will come out of the pantry for the servings you cooked: tick or untick each line, then press `Take from the pantry`. Nothing changes before that, and `Undo` puts it back. Something used up leaves the pantry.
+
+In `Settings`, `Best-before reminder` can send an orOS notification, from the hour you pick, the day before something reaches its best-before date and on the day. It is off unless you turn it on, on each device.
+
+## Nutrition
+Each ingredient's amount is turned into grams (weights exactly; cups, spoons and ml by how heavy the food is; pieces by a usual piece weight, like 50 g for an egg) and multiplied by its calories, protein, carbs and fat per 100 g. The values come from a built-in table of about 180 common foods (from the USDA's public FoodData Central), which works offline. `Check the ingredients` shows how each one was counted; `Change` picks another row of the table, searches [Open Food Facts](https://world.openfoodfacts.org) for a product, leaves the ingredient out, or sets the grams in one piece. Your choice is remembered for that ingredient in every recipe and syncs. Ingredients without an amount, like "salt", are not counted. `Show nutrition estimates` in `Settings` hides it all on this device.
+
+The numbers are an estimate to help you plan, not dietary or medical advice.
+
 ## Sync and backup
-Recipes, the week plan, the shopping ticks, your extra items and settings sync between your devices through [orOS sync](help:t/sync), so two phones can tick the same list. The open tab, the filters and the units stay on each device. `Settings` has `Export (JSON)` and `Import (JSON)`; an import merges and never wipes. The orOS [backup](help:t/backup) covers this app too.
+Recipes, the week plan, the shopping ticks, your extra items, the pantry, your nutrition choices and settings sync between your devices through [orOS sync](help:t/sync), so two phones can tick the same list. The open tab, the filters, the units, the best-before reminder and showing nutrition stay on each device. `Settings` has `Export (JSON)` and `Import (JSON)`; an import merges and never wipes. The orOS [backup](help:t/backup) covers this app too.
 
 ## Keyboard shortcuts
-- [[1]], [[2]], [[3]]: `Recipes`, `Week`, `Shopping`.
+- [[1]], [[2]], [[3]], [[4]]: `Recipes`, `Week`, `Shopping`, `Pantry`.
 - [[N]]: new recipe. [[/]]: search recipes.
 - [[←]] and [[→]]: previous or next week; in cooking mode, previous or next step.
 
 ## Tips
-- Add salt, oil and the other basics to `Always in the house` to keep the list short.
+- Add salt, oil and the other basics to `Always in the house` to keep the list short; they also count as there in `What can I cook?`.
+- Name pantry items the way your recipes do: "feta" finds "Feta Dodoni", but an item in English won't match a recipe written in Greek.
 - Planned meals can show up in [Calendar](app:calendar) under the `Meals` chip; tapping one opens that week here.
 
 ## Limits
@@ -57,3 +76,7 @@ Recipes, the week plan, the shopping ticks, your extra items and settings sync b
 - Import reads sites that describe their recipe in the standard schema.org way; for other pages, copy the text and paste it.
 - Unit conversion uses a 240 ml cup and 5 ml / 15 ml spoons; a weight can't become a volume (a cup of flour stays a cup).
 - A range counts its upper end in the shopping list, so there is enough.
+- Nutrition is an estimate from ingredient names and amounts, not dietary advice. The built-in values are for foods as bought (raw, dry); Greek cheeses without a USDA entry use the closest one.
+- Open Food Facts, barcode look-ups and searches need the internet; its data is made by volunteers and can be missing or wrong. Data from Open Food Facts is under the Open Database License (ODbL).
+- The camera reads barcodes only in browsers that have a barcode reader built in (like Chrome on Android); elsewhere, type the number.
+- The pantry and the recipes are matched by name; when units can't be compared (a "pack" against grams), the line counts as partly there.

@@ -17,6 +17,7 @@
       <button type="button" role="tab" class="tab" id="tab-rc" data-tab="rc" aria-controls="view-rc"></button>
       <button type="button" role="tab" class="tab" id="tab-wk" data-tab="wk" aria-controls="view-wk"></button>
       <button type="button" role="tab" class="tab" id="tab-sh" data-tab="sh" aria-controls="view-sh"></button>
+      <button type="button" role="tab" class="tab" id="tab-pa" data-tab="pa" aria-controls="view-pa"></button>
     </div>
     <span class="spacer"></span>
     <button type="button" class="icon-btn" id="set-btn"></button>
@@ -68,6 +69,7 @@
           <button type="button" class="txt-btn" id="sh-copy"></button>
           <button type="button" class="txt-btn" id="sh-share"></button>
           <button type="button" class="txt-btn" id="sh-todo" hidden></button>
+          <button type="button" class="txt-btn" id="sh-pantry"></button>
           <button type="button" class="txt-btn" id="sh-uncheck"></button>
         </div>
       </div>
@@ -78,7 +80,27 @@
       <p class="hint" id="sh-count"></p>
       <div id="sh-list"></div>
       <p class="empty" id="sh-empty" hidden></p>
+      <div id="sh-home" class="sh-home" hidden></div>
       <div id="sh-excluded" class="excluded" hidden></div>
+    </section>
+
+    <!-- Pantry -->
+    <section id="view-pa" class="view" role="tabpanel" aria-labelledby="tab-pa" hidden>
+      <div class="bar pa-bar">
+        <div class="add-row pa-add">
+          <input id="pa-add-in" maxlength="80" autocomplete="off">
+          <button type="button" class="icon-btn" id="pa-add-btn"></button>
+        </div>
+        <button type="button" class="txt-btn" id="pa-scan"></button>
+      </div>
+      <div class="bar pa-bar2">
+        <div class="chips" id="pa-filters" role="group"></div>
+        <span class="spacer"></span>
+        <button type="button" class="txt-btn primary" id="pa-cook"></button>
+      </div>
+      <div id="pa-soon" class="pa-soon" hidden></div>
+      <div id="pa-list"></div>
+      <p class="empty" id="pa-empty" hidden></p>
     </section>
   </main>
 
@@ -88,6 +110,8 @@
   <div id="toast" role="status"></div>
 
   <script src="core.js?v=1.98.00"></script>
+  <script src="nutrition.js?v=1.98.00"></script>
+  <script src="pantry.js?v=1.98.00"></script>
   <script src="meals.js?v=1.98.00"></script>
 
 </body>
