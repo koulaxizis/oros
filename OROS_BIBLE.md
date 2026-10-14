@@ -6629,3 +6629,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - orOS Invoices, orOS CRM (EL "orOS Πελάτες") and orOS Timesheet install on their own (SOLO-1): `/<id>/solo.html`, manifests, icons.
 - Shortcuts: Invoices `newDoc: "inv" | "rcpt"`, CRM `newCust`, Timesheet `toggle` (= `__orosTimesheetToggle`) and `newEntry`. Shares: `invoice` → a new invoice with the text as notes (unsaved), `customer` → New customer form (first line = name, e-mail / phone found in the text, rest = note).
   - Tests: tests/solo.test.js wave 5; Chromium probe of every shortcut and share, manifest install check. Not tested: real Android / Windows install, long-press shortcuts, the Share sheet.
+
+### 2026-10-14 — Assistant, phase 5 wave 1: web search for every model (#363) — 2.16.00
+- Every tool-capable model in the Assistant can now search the internet through an orOS-side `web_search` / `read_page` tool, not only Claude (which keeps its native search). Settings › Internet picks the source: Wikipedia (free, no key, default), Tavily (the user's own free key) or the user's own SearXNG server; pages are read as text through Jina Reader. Off unless switched on (AS-WEB2).
+- Credits: Tavily, SearXNG and Jina Reader added; the Wikipedia row now also names the Assistant.
+- Files: assistant files only; help EN/EL, Bible AS-WEB2. sw.js precache: nothing new.
+  - Tests: full suite green; real-shell check with a mock provider by the owner. Not tested: live Wikipedia/Tavily/SearXNG/Jina from the container (hosts blocked), Safari, real phone.
