@@ -19,7 +19,13 @@
 //                                   type: "birthday"|"anniversary"|"custom",
 //                                   label } ],
 //                   labelIds: [ "lbl-…" ],   // sorted by sanitizer
-//                   starred: false, note } ],
+//                   starred: false, note,
+//                   // wave 26 (keep in touch, per-field merge):
+//                   keep?:   { n: 1–99, u: "w"|"m" } | null,
+//                   seen?:   "YYYY-MM-DD" | "",   // "Contacted today"
+//                   log?:    [ { id, k, d, tx, m } ],  // interactions
+//                   logDel?: { id: m },          // their tombstones
+//                   fm?:     { field: stamp } } ], // see merge.js
 //     deleted:  [ { id, mtime } ] }          // shared tombstone list
 // Events carry day "MM-DD" + optional year (null = yearless
 // birthdays) — feeds the Calendar birthday feed (Wave 2) and the
@@ -180,7 +186,7 @@
       "rv.nothing": "Nothing new to import",
       "rv.undone": "Import undone",
       "ct.import.csv.bad": "Could not read that CSV file",
-      "ct.import.csv.noheader": "No recognizable columns — expected a Google Contacts CSV",
+      "ct.import.csv.noheader": "No contacts found in that CSV file",
       "ct.import.csv.norows": "No importable contacts found in the CSV",
       "undo": "Undo",
       "lbl.personal": "Personal",
@@ -247,6 +253,92 @@
       "ct.share.done": "Contact copied to clipboard",
       "ct.share.fail": "Could not copy — please retry",
       "ct.maps": "Show on map",
+      "kt.field": "Keep in touch",
+      "kt.every": "every",
+      "kt.off": "Off",
+      "kt.weeks": "weeks",
+      "kt.months": "months",
+      "kt.cad.w1": "Every week",
+      "kt.cad.w": "Every {n} weeks",
+      "kt.cad.m1": "Every month",
+      "kt.cad.m": "Every {n} months",
+      "kt.last": "Last contacted",
+      "kt.never": "Never",
+      "kt.next": "Get in touch by {date}",
+      "kt.overdue": "Due since {date}",
+      "kt.duetoday": "Due today",
+      "kt.today.btn": "Contacted today",
+      "kt.today.done": "Marked as contacted today",
+      "kt.log.btn": "＋ Log",
+      "kt.timeline": "Timeline",
+      "kt.reach": "Reach out",
+      "kt.reach.none": "Nobody is waiting to hear from you right now.",
+      "kt.rem": "Remind me at",
+      "kt.rem.hint": "A notice on this device on days when someone is due. This setting stays on this device.",
+      "kt.sub.never": "No contact yet",
+      "kt.sub.last": "Last contacted {rel}",
+      "rel.today": "today",
+      "rel.yday": "yesterday",
+      "rel.days": "{n} days ago",
+      "rel.week1": "a week ago",
+      "rel.weeks": "{n} weeks ago",
+      "rel.month1": "a month ago",
+      "rel.months": "{n} months ago",
+      "rel.year1": "a year ago",
+      "rel.years": "{n} years ago",
+      "ix.new": "Log an interaction",
+      "ix.edit": "Edit interaction",
+      "ix.kind": "Type",
+      "ix.date": "Date",
+      "ix.text": "What happened",
+      "ix.ph": "Talked about the trip…",
+      "ix.k.call": "Call",
+      "ix.k.meet": "Meeting",
+      "ix.k.msg": "Message",
+      "ix.k.gift": "Gift",
+      "ix.k.note": "Note",
+      "ix.del": "Delete",
+      "ix.deleted": "Interaction deleted",
+      "ix.bad": "Pick a date",
+      "ix.none": "Nothing logged yet.",
+      "cm.title": "Match the columns",
+      "cm.text": "Pick what each column holds. Columns left on “Skip” are not imported.",
+      "cm.header": "The first row has the column names",
+      "cm.dates": "Dates",
+      "cm.dmy": "day/month/year",
+      "cm.mdy": "month/day/year",
+      "cm.col": "Column {n}",
+      "cm.preview": "Preview · {n} contact(s)",
+      "cm.next": "Continue",
+      "cm.none": "No contacts with these columns. Pick at least a name, company, e-mail or phone column.",
+      "cm.f.skip": "Skip",
+      "cm.f.full": "Full name",
+      "cm.f.phone": "Phone",
+      "cm.f.email": "Email",
+      "cm.f.website": "Website",
+      "cm.f.street": "Street",
+      "cm.f.city": "City",
+      "cm.f.zip": "Postcode",
+      "cm.f.region": "Region",
+      "cm.f.country": "Country",
+      "cm.type": "Type",
+      "sc.btn": "Scan card",
+      "sc.title": "Scan a business card",
+      "sc.text": "Take a photo of a business card or choose a picture of one. orOS reads the text on this device and fills in a new contact for you to check.",
+      "sc.photo": "Take a photo",
+      "sc.pick": "Choose a picture",
+      "sc.paste": "Text from the card",
+      "sc.ph": "Name, company, phone, e-mail… or paste the card's text here",
+      "sc.fill": "Fill in a new contact",
+      "sc.dl.text": "Reading the card needs the text recognition engine (Tesseract, English and Greek, about 7 MB). It is downloaded once from orOS's own site (vendor/tesseract/) and runs on this device: the picture never leaves it.",
+      "sc.dl.go": "Download and read",
+      "sc.wait.load": "Loading text recognition… {p}%",
+      "sc.wait.read": "Reading the card… {p}%",
+      "sc.err": "Could not read the picture ({e}). You can type the text below.",
+      "sc.empty": "No text found. Try a sharper, well-lit photo, or type the text below.",
+      "sc.done": "Check the text, then press “Fill in a new contact”.",
+      "sc.nofill": "Type or read some text first",
+      "sc.check": "Check the details, then press Save",
     },
     el: {
       "app.contacts.self": "Επαφές",
@@ -360,7 +452,7 @@
       "rv.nothing": "Τίποτα νέο για εισαγωγή",
       "rv.undone": "Η εισαγωγή αναιρέθηκε",
       "ct.import.csv.bad": "Το αρχείο CSV δεν μπόρεσε να διαβαστεί",
-      "ct.import.csv.noheader": "Δεν αναγνωρίστηκαν στήλες — αναμενόταν CSV από Google Contacts",
+      "ct.import.csv.noheader": "Δεν βρέθηκαν επαφές σε αυτό το αρχείο CSV",
       "ct.import.csv.norows": "Δεν βρέθηκαν εισαγώμενες επαφές στο CSV",
       "undo": "Αναίρεση",
       "lbl.personal": "Προσωπικό",
@@ -426,7 +518,93 @@
       "ct.crm": "Πελάτης: {name}",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
       "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά",
-      "ct.maps": "Εμφάνιση στον χάρτη"
+      "ct.maps": "Εμφάνιση στον χάρτη",
+      "kt.field": "Διατήρηση επαφής",
+      "kt.every": "κάθε",
+      "kt.off": "Όχι",
+      "kt.weeks": "εβδομάδες",
+      "kt.months": "μήνες",
+      "kt.cad.w1": "Κάθε εβδομάδα",
+      "kt.cad.w": "Κάθε {n} εβδομάδες",
+      "kt.cad.m1": "Κάθε μήνα",
+      "kt.cad.m": "Κάθε {n} μήνες",
+      "kt.last": "Τελευταία επαφή",
+      "kt.never": "Ποτέ",
+      "kt.next": "Επικοινωνία έως {date}",
+      "kt.overdue": "Εκκρεμεί από {date}",
+      "kt.duetoday": "Εκκρεμεί σήμερα",
+      "kt.today.btn": "Μιλήσαμε σήμερα",
+      "kt.today.done": "Καταγράφηκε επαφή σήμερα",
+      "kt.log.btn": "＋ Καταγραφή",
+      "kt.timeline": "Χρονολόγιο",
+      "kt.reach": "Για επικοινωνία",
+      "kt.reach.none": "Κανείς δεν περιμένει νέα σου αυτή τη στιγμή.",
+      "kt.rem": "Υπενθύμιση στις",
+      "kt.rem.hint": "Ειδοποίηση σε αυτή τη συσκευή τις μέρες που κάποιος περιμένει νέα σου. Η ρύθμιση μένει σε αυτή τη συσκευή.",
+      "kt.sub.never": "Καμία επαφή ακόμα",
+      "kt.sub.last": "Τελευταία επαφή {rel}",
+      "rel.today": "σήμερα",
+      "rel.yday": "χθες",
+      "rel.days": "πριν από {n} μέρες",
+      "rel.week1": "πριν από μία εβδομάδα",
+      "rel.weeks": "πριν από {n} εβδομάδες",
+      "rel.month1": "πριν από έναν μήνα",
+      "rel.months": "πριν από {n} μήνες",
+      "rel.year1": "πριν από έναν χρόνο",
+      "rel.years": "πριν από {n} χρόνια",
+      "ix.new": "Καταγραφή επικοινωνίας",
+      "ix.edit": "Επεξεργασία καταγραφής",
+      "ix.kind": "Είδος",
+      "ix.date": "Ημερομηνία",
+      "ix.text": "Τι έγινε",
+      "ix.ph": "Μιλήσαμε για το ταξίδι…",
+      "ix.k.call": "Κλήση",
+      "ix.k.meet": "Συνάντηση",
+      "ix.k.msg": "Μήνυμα",
+      "ix.k.gift": "Δώρο",
+      "ix.k.note": "Σημείωση",
+      "ix.del": "Διαγραφή",
+      "ix.deleted": "Η καταγραφή διαγράφηκε",
+      "ix.bad": "Διάλεξε ημερομηνία",
+      "ix.none": "Τίποτα καταγεγραμμένο ακόμα.",
+      "cm.title": "Αντιστοίχιση στηλών",
+      "cm.text": "Διάλεξε τι περιέχει κάθε στήλη. Οι στήλες με «Παράλειψη» δεν εισάγονται.",
+      "cm.header": "Η πρώτη γραμμή έχει τα ονόματα των στηλών",
+      "cm.dates": "Ημερομηνίες",
+      "cm.dmy": "ημέρα/μήνας/έτος",
+      "cm.mdy": "μήνας/ημέρα/έτος",
+      "cm.col": "Στήλη {n}",
+      "cm.preview": "Προεπισκόπηση · {n} επαφές",
+      "cm.next": "Συνέχεια",
+      "cm.none": "Καμία επαφή με αυτές τις στήλες. Διάλεξε τουλάχιστον μια στήλη με όνομα, εταιρεία, email ή τηλέφωνο.",
+      "cm.f.skip": "Παράλειψη",
+      "cm.f.full": "Ονοματεπώνυμο",
+      "cm.f.phone": "Τηλέφωνο",
+      "cm.f.email": "Email",
+      "cm.f.website": "Ιστοσελίδα",
+      "cm.f.street": "Οδός",
+      "cm.f.city": "Πόλη",
+      "cm.f.zip": "Τ.Κ.",
+      "cm.f.region": "Περιοχή",
+      "cm.f.country": "Χώρα",
+      "cm.type": "Τύπος",
+      "sc.btn": "Σάρωση κάρτας",
+      "sc.title": "Σάρωση επαγγελματικής κάρτας",
+      "sc.text": "Φωτογράφισε μια επαγγελματική κάρτα ή διάλεξε μια εικόνα της. Το orOS διαβάζει το κείμενο σε αυτή τη συσκευή και συμπληρώνει μια νέα επαφή για να την ελέγξεις.",
+      "sc.photo": "Λήψη φωτογραφίας",
+      "sc.pick": "Επιλογή εικόνας",
+      "sc.paste": "Κείμενο της κάρτας",
+      "sc.ph": "Όνομα, εταιρεία, τηλέφωνο, email… ή επικόλλησε εδώ το κείμενο της κάρτας",
+      "sc.fill": "Συμπλήρωση νέας επαφής",
+      "sc.dl.text": "Για να διαβαστεί η κάρτα χρειάζεται η μηχανή αναγνώρισης κειμένου (Tesseract, αγγλικά και ελληνικά, περίπου 7 MB). Κατεβαίνει μία φορά από τον δικό ιστότοπο του orOS (vendor/tesseract/) και τρέχει σε αυτή τη συσκευή: η εικόνα δεν φεύγει ποτέ από εδώ.",
+      "sc.dl.go": "Λήψη και ανάγνωση",
+      "sc.wait.load": "Φόρτωση αναγνώρισης κειμένου… {p}%",
+      "sc.wait.read": "Ανάγνωση της κάρτας… {p}%",
+      "sc.err": "Η εικόνα δεν διαβάστηκε ({e}). Μπορείς να πληκτρολογήσεις το κείμενο παρακάτω.",
+      "sc.empty": "Δεν βρέθηκε κείμενο. Δοκίμασε πιο καθαρή φωτογραφία με καλό φως ή πληκτρολόγησε το κείμενο παρακάτω.",
+      "sc.done": "Έλεγξε το κείμενο και πάτησε «Συμπλήρωση νέας επαφής».",
+      "sc.nofill": "Γράψε ή διάβασε πρώτα κάποιο κείμενο",
+      "sc.check": "Έλεγξε τα στοιχεία και πάτησε Αποθήκευση"
     }
   };
   function t(k) {
@@ -504,6 +682,8 @@
 
   /* ---------- 2. State + schemas ---------- */
   var DATA_KEY = "oros-contacts-data";
+  var MG = window.OrosContactsMerge || null;     // contacts/merge.js (per-field merge, log)
+  var KP = window.OrosContactsKeep || null;      // contacts/keep.js (keep in touch)
   var state = { ver: 1, labels: [], contacts: [], deleted: [] };
 
   // Fixed label palette — identical bytes to the Calendar's, so a
@@ -673,7 +853,7 @@
       });
     }
     lids.sort();   // deterministic bytes → JSON tie-break in merge
-    return {
+    var out = {
       id: c.id,
       given:    (typeof c.given === "string" ? c.given : "").slice(0, 60),
       middle:   (typeof c.middle === "string" ? c.middle : "").slice(0, 60),
@@ -703,6 +883,10 @@
       photo:     (typeof c.photo === "string" && /^data:image\/(jpeg|png);base64,/.test(c.photo)) ? c.photo.slice(0, 50000) : null,
       mtime:     (typeof c.mtime === "number" && isFinite(c.mtime)) ? c.mtime : Date.now()
     };
+    // CT-PF / keep in touch: keep, seen, log, logDel, fm — present
+    // only when the stored contact has them (old data stays byte-
+    // identical, so loading it never re-uploads anything).
+    return MG ? MG.sanExtras(c, out) : out;
   }
 
   // Tombstones: { id, mtime } — same shared-list contract as the
@@ -745,7 +929,28 @@
     try { localStorage.setItem(DATA_KEY + "-broken", text); } catch (e) {}
     try { console.error("contacts: unreadable data copied to " + DATA_KEY + "-broken"); } catch (e) {}
   }
+  // CT-PF: every write goes through here, so this is where each
+  // contact's changed fields get their own stamp (merge.js restamp):
+  // the copy about to be stored is compared with the stored one.
+  function stampContacts() {
+    if (!MG) return;
+    var prev = {};
+    try {
+      var d = JSON.parse(localStorage.getItem(DATA_KEY));
+      (d && Array.isArray(d.contacts) ? d.contacts : []).forEach(function (c) {
+        var sc = sanitizeContact(c);
+        if (sc) prev[sc.id] = sc;
+      });
+    } catch (e) {}
+    var now = Date.now();
+    state.contacts.forEach(function (c) {
+      var p = prev[c.id] || null;
+      if (p && JSON.stringify(p) === JSON.stringify(c)) return;
+      MG.restamp(p, c, now);
+    });
+  }
   function saveState() {
+    stampContacts();
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
     markDirty();
   }
@@ -1106,6 +1311,40 @@
     renderChips();
     renderList();
   }
+
+  // Reach out: the reminder switch and hour, device-local
+  // (localStorage oros-contacts-keep, read by the shell's engine).
+  function readKeepPrefs() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(KP.PREFS_KEY) || "null"); } catch (e) { raw = null; }
+    return KP.prefs(raw);
+  }
+  function renderReachBar() {
+    var bar = $("reach-bar");
+    if (!bar || !KP) return;
+    bar.hidden = quickFilter !== "reach";
+    if (bar.hidden) return;
+    var sel = $("reach-hour");
+    if (!sel.options.length) {
+      for (var h = 0; h < 24; h++) {
+        var o = document.createElement("option");
+        o.value = String(h);
+        o.textContent = (h < 10 ? "0" : "") + h + ":00";
+        sel.appendChild(o);
+      }
+      var save = function () {
+        var p = { on: $("reach-on").checked, hour: +sel.value };
+        try { localStorage.setItem(KP.PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+        sel.disabled = !p.on;
+      };
+      $("reach-on").addEventListener("change", save);
+      sel.addEventListener("change", save);
+    }
+    var p = readKeepPrefs();
+    $("reach-on").checked = p.on;
+    sel.value = String(p.hour);
+    sel.disabled = !p.on;
+  }
   // Injected styling for the active quick-filter chip (self-
   // contained — no dependency on unseen contacts.css selectors).
   (function () {
@@ -1127,8 +1366,16 @@
     var qDigits = phoneDigits(q);
     var qFold = greekFold(q);
 
+    renderReachBar();
+    var today = todayYmd();
+    var due = {};                      // id → keep status (cadence set)
+    if (KP) state.contacts.forEach(function (c) {
+      if (c.keep) { var st = KP.status(c, today); if (st) due[c.id] = st; }
+    });
+    var reach = quickFilter === "reach";
     var hits = state.contacts.filter(function (c) {
       if (quickFilter === "starred" && !c.starred) return false;
+      if (reach && !(due[c.id] && due[c.id].overdue)) return false;
       if (!anyLabelVisible(c)) return false;
       if (!q) return true;
       // Layer 1: accent-insensitive direct match (Greek↔Greek).
@@ -1146,6 +1393,8 @@
       }
       return false;
     }).sort(function (a, b) {
+      // Reach out: who has waited longest comes first
+      if (reach && due[a.id].due !== due[b.id].due) return due[a.id].due < due[b.id].due ? -1 : 1;
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
       // Accent-insensitive collation: "Ήλιος" sorts with H, not last.
       var la = greekFold(displayName(a)).localeCompare(greekFold(displayName(b)), LANG);
@@ -1155,7 +1404,7 @@
     if (!hits.length) {
       var emp = document.createElement("li");
       emp.className = "empty";
-      emp.textContent = t(q ? "ct.search.none" : "ct.none");
+      emp.textContent = t(q ? "ct.search.none" : (reach ? "kt.reach.none" : "ct.none"));
       ul.appendChild(emp);
       return;
     }
@@ -1174,14 +1423,27 @@
       nm.className = "ct-name";
       nm.textContent = displayName(c);
       main.appendChild(nm);
-      var sb = subLine(c);
+      var sb = reach ? touchSub(c, due[c.id]) : subLine(c);
       if (sb) {
         var sub = document.createElement("div");
         sub.className = "ct-sub";
         sub.textContent = sb;
         main.appendChild(sub);
       }
+      if (reach) {
+        var dl = document.createElement("div");
+        dl.className = "ct-sub kt-due";
+        dl.textContent = dueText(due[c.id]);
+        main.appendChild(dl);
+      }
       row.appendChild(main);
+      if (!reach && due[c.id] && due[c.id].overdue) {
+        var bell = document.createElement("span");
+        bell.className = "ct-due";
+        bell.textContent = "⏰";
+        bell.title = t("kt.reach");
+        row.appendChild(bell);
+      }
 
       if (c.labelIds.length) {
         var tags = document.createElement("span");
@@ -1216,11 +1478,24 @@
     row.textContent = "";
 
     // Quick filter tabs first (exclusive), then label chips (visibility).
-    ["all", "starred"].forEach(function (mode) {
+    // "Reach out" appears once someone has a keep-in-touch cadence.
+    var modes = ["all", "starred"], nDue = 0, anyKeep = false;
+    if (KP) {
+      var today = todayYmd();
+      state.contacts.forEach(function (c) {
+        if (!c.keep) return;
+        anyKeep = true;
+        var st = KP.status(c, today);
+        if (st && st.overdue) nDue++;
+      });
+    }
+    if (anyKeep || quickFilter === "reach") modes.push("reach");
+    modes.forEach(function (mode) {
       var q = document.createElement("button");
       q.type = "button";
       q.className = "chip qf" + (quickFilter === mode ? " on" : "");
-      q.textContent = mode === "all" ? t("ct.filter.all") : "★ " + t("ct.filter.starred");
+      q.textContent = mode === "all" ? t("ct.filter.all")
+        : (mode === "starred" ? "★ " + t("ct.filter.starred") : "⏰ " + t("kt.reach") + (nDue ? " · " + nDue : ""));
       q.addEventListener("click", function () { setQuickFilter(mode); });
       row.appendChild(q);
     });
@@ -1507,6 +1782,228 @@ function evtDateText(ev) {
   return ev.year ? (ev.year + "-" + ev.day) : ev.day;
 }
 
+// ===== KEEP IN TOUCH (card section, timeline, interaction log) =====
+// Data: c.keep {n, u}, c.seen "YYYY-MM-DD", c.log [{id, k, d, tx, m}],
+// c.logDel {id: m} — merged per field / per item (contacts/merge.js);
+// what is due comes from contacts/keep.js, the same file the shell's
+// reminder engine reads.
+var IX_ICON = { call: "📞", meet: "🤝", msg: "💬", gift: "🎁", note: "📝" };
+function todayYmd() {
+  var d = new Date();
+  return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) +
+    "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+}
+function fmtYmd(ymd) {
+  if (!ymd) return "";
+  var p = ymd.split("-");
+  try {
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(LANG === "el" ? "el-GR" : "en-GB",
+      { day: "numeric", month: "short", year: "numeric" });
+  } catch (e) { return ymd; }
+}
+function relText(ymd) {
+  if (!KP || !ymd) return "";
+  var n = KP.daysBetween(ymd, todayYmd());
+  if (n <= 0) return t("rel.today");
+  if (n === 1) return t("rel.yday");
+  if (n < 7) return t("rel.days").replace("{n}", String(n));
+  if (n < 14) return t("rel.week1");
+  if (n < 30) return t("rel.weeks").replace("{n}", String(Math.floor(n / 7)));
+  if (n < 60) return t("rel.month1");
+  if (n < 365) return t("rel.months").replace("{n}", String(Math.floor(n / 30.44)));
+  if (n < 730) return t("rel.year1");
+  return t("rel.years").replace("{n}", String(Math.floor(n / 365.25)));
+}
+function cadenceText(k) {
+  if (!k) return "";
+  if (k.n === 1) return t(k.u === "w" ? "kt.cad.w1" : "kt.cad.m1");
+  return t(k.u === "w" ? "kt.cad.w" : "kt.cad.m").replace("{n}", String(k.n));
+}
+// One line for the list and the card: when to get in touch next.
+function dueText(st) {
+  if (!st) return "";
+  if (st.days > 0) return t("kt.overdue").replace("{date}", fmtYmd(st.due));
+  if (st.days === 0) return t("kt.duetoday");
+  return t("kt.next").replace("{date}", fmtYmd(st.due));
+}
+function touchSub(c, st) {
+  var last = KP ? KP.lastContact(c, todayYmd()) : "";
+  var a = last ? t("kt.sub.last").replace("{rel}", relText(last)) : t("kt.sub.never");
+  return a + (c.keep ? " · " + cadenceText(c.keep) : "");
+}
+
+function renderTouch(card, c) {
+  var today = todayYmd();
+  var sec = viewSection(card, "kt.field");
+  var last = KP ? KP.lastContact(c, today) : "";
+  viewRow(sec, t("kt.last"), last ? relText(last) + " · " + fmtYmd(last) : t("kt.never"));
+  if (c.keep && KP) {
+    var st = KP.status(c, today);
+    var v = viewRow(sec, cadenceText(c.keep), dueText(st));
+    if (st && st.overdue) v.classList.add("kt-due");
+  }
+  var row = document.createElement("div");
+  row.className = "kt-btns";
+  var b1 = document.createElement("button");
+  b1.type = "button";
+  b1.className = "ct-view-share";
+  b1.textContent = t("kt.today.btn");
+  b1.disabled = (c.seen === today);
+  b1.addEventListener("click", function () { markContactedToday(c.id); });
+  var b2 = document.createElement("button");
+  b2.type = "button";
+  b2.className = "ct-view-share";
+  b2.textContent = t("kt.log.btn");
+  b2.addEventListener("click", function () { openIxDlg(c.id, null); });
+  row.appendChild(b1);
+  row.appendChild(b2);
+  sec.appendChild(row);
+}
+
+function renderTimeline(card, c) {
+  var log = Array.isArray(c.log) ? c.log.slice() : [];
+  var sec = viewSection(card, "kt.timeline");
+  if (!log.length) {
+    var p = document.createElement("p");
+    p.className = "kt-empty";
+    p.textContent = t("ix.none");
+    sec.appendChild(p);
+    return;
+  }
+  log.sort(function (a, b) { return a.d !== b.d ? (a.d < b.d ? 1 : -1) : (b.m - a.m); });
+  var ol = document.createElement("ol");
+  ol.className = "kt-tl";
+  log.forEach(function (it) {
+    var li = document.createElement("li");
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "kt-item";
+    var ic = document.createElement("span");
+    ic.className = "kt-ic";
+    ic.setAttribute("aria-hidden", "true");
+    ic.textContent = IX_ICON[it.k] || "📝";
+    var body = document.createElement("span");
+    body.className = "kt-body";
+    var head = document.createElement("span");
+    head.className = "kt-head";
+    head.textContent = t("ix.k." + it.k) + " · " + fmtYmd(it.d);
+    body.appendChild(head);
+    if (it.tx) {
+      var tx = document.createElement("span");
+      tx.className = "kt-tx";
+      tx.textContent = it.tx;
+      body.appendChild(tx);
+    }
+    btn.appendChild(ic);
+    btn.appendChild(body);
+    btn.addEventListener("click", function () { openIxDlg(c.id, it.id); });
+    li.appendChild(btn);
+    ol.appendChild(li);
+  });
+  sec.appendChild(ol);
+}
+
+// Write one changed copy of a contact (saveState stamps the fields
+// that changed), then redraw what shows it.
+function putContact(copy) {
+  for (var i = 0; i < state.contacts.length; i++) {
+    if (state.contacts[i].id === copy.id) {
+      copy.mtime = Date.now();
+      state.contacts[i] = sanitizeContact(copy);
+      saveState();
+      renderChips();
+      renderList();
+      if ($("ct-view") && viewCardId === copy.id) openViewCard(state.contacts[i]);
+      return state.contacts[i];
+    }
+  }
+  return null;
+}
+function markContactedToday(id) {
+  var c = contactById(id);
+  if (!c) return;
+  var before = c.seen === undefined ? undefined : c.seen;
+  var copy = JSON.parse(JSON.stringify(c));
+  copy.seen = todayYmd();
+  if (!putContact(copy)) return;
+  toast(t("kt.today.done"), t("undo"), function () {
+    var cur = contactById(id);
+    if (!cur) return;
+    var back = JSON.parse(JSON.stringify(cur));
+    back.seen = before === undefined ? "" : before;
+    putContact(back);
+  });
+}
+
+var ixState = null;   // { id: contactId, item: logId|null }
+function openIxDlg(contactId, itemId) {
+  var c = contactById(contactId);
+  if (!c || !MG) return;
+  var it = null;
+  (c.log || []).forEach(function (x) { if (x.id === itemId) it = x; });
+  ixState = { id: contactId, item: it ? it.id : null };
+  $("ix-dlg-title").textContent = t(it ? "ix.edit" : "ix.new");
+  $("ix-who").textContent = displayName(c);
+  var sel = $("ix-kind");
+  if (!sel.options.length) {
+    MG.KINDS.forEach(function (k) {
+      var o = document.createElement("option");
+      o.value = k;
+      o.textContent = (IX_ICON[k] || "") + " " + t("ix.k." + k);
+      sel.appendChild(o);
+    });
+  }
+  sel.value = it ? it.k : "call";
+  $("ix-date").value = it ? it.d : todayYmd();
+  $("ix-text").value = it ? it.tx : "";
+  $("ix-del-row").hidden = !it;
+  try { if ($("ix-dlg").open) $("ix-dlg").close(); } catch (e) {}
+  $("ix-dlg").showModal();
+}
+if ($("ix-dlg")) {
+  $("ix-save").addEventListener("click", function () {
+    if (!ixState) return;
+    var d = $("ix-date").value;
+    if (!MG.validYmd(d)) {
+      $("ix-date").classList.add("invalid");
+      notifyTransient(t("ix.bad"));
+      setTimeout(function () { $("ix-date").classList.remove("invalid"); }, 1600);
+      return;
+    }
+    var c = contactById(ixState.id);
+    if (!c) { $("ix-dlg").close(); return; }
+    var copy = JSON.parse(JSON.stringify(c));
+    var old = null;
+    (copy.log || []).forEach(function (x) { if (x.id === ixState.item) old = x; });
+    var next = { id: ixState.item || uid(), k: $("ix-kind").value, d: d, tx: $("ix-text").value.trim() };
+    if (old && old.k === next.k && old.d === next.d && old.tx === next.tx) { $("ix-dlg").close(); return; }
+    MG.logPut(copy, next, Date.now());
+    putContact(copy);
+    $("ix-dlg").close();
+  });
+  $("ix-cancel").addEventListener("click", function () { $("ix-dlg").close(); });
+  $("ix-del").addEventListener("click", function () {
+    if (!ixState || !ixState.item) return;
+    var c = contactById(ixState.id);
+    if (!c) { $("ix-dlg").close(); return; }
+    var copy = JSON.parse(JSON.stringify(c));
+    var gone = MG.logRemove(copy, ixState.item, Date.now());
+    var cid = ixState.id;
+    $("ix-dlg").close();
+    if (!gone) return;
+    putContact(copy);
+    toast(t("ix.deleted"), t("undo"), function () {
+      var cur = contactById(cid);
+      if (!cur) return;
+      var back = JSON.parse(JSON.stringify(cur));
+      MG.logPut(back, gone, Date.now());
+      putContact(back);
+    });
+  });
+  $("ix-dlg").addEventListener("click", function (ev) { if (ev.target === this) this.close(); });
+  $("ix-dlg").addEventListener("close", function () { ixState = null; });
+}
+
 function openViewCard(c) {
   if (!c) return;
   closeViewCard();
@@ -1566,6 +2063,8 @@ function openViewCard(c) {
     });
     card.appendChild(lbls);
   }
+
+  if (KP && MG) renderTouch(card, c);
 
   if (c.phones.length) {
     var ph = viewSection(card, "ct.field.phones");
@@ -1656,6 +2155,7 @@ function openViewCard(c) {
     p.textContent = c.note;
     nt.appendChild(p);
   }
+  if (KP && MG) renderTimeline(card, c);
 
   var foot = document.createElement("div");
   foot.className = "ct-view-foot";
@@ -1741,7 +2241,7 @@ document.addEventListener("keydown", function (e) {
   // is open, so focus never leaves an open modal's inputs.
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
       (e.key === "f" || e.key === "F")) {
-    var busy = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg"]
+    var busy = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg", "ix-dlg", "csv-dlg", "scan-dlg"]
       .some(function (id) { var d = $(id); return d && d.open; })
       || !!$("ct-view");
     if (busy) return;
@@ -1758,7 +2258,7 @@ document.addEventListener("keydown", function (e) {
   // typed input)
   if (e.altKey && !e.ctrlKey && !e.metaKey &&
       (e.key === "n" || e.key === "N")) {
-    var anyOpen = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg"]
+    var anyOpen = ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg", "ix-dlg", "csv-dlg", "scan-dlg"]
       .some(function (id) { var d = $(id); return d && d.open; })
       || !!$("ct-view");
     if (anyOpen) return;
@@ -1768,8 +2268,8 @@ document.addEventListener("keydown", function (e) {
   }
   // Escape — view card first, then any open dialog
   if (e.key === "Escape") {
-    if ($("ct-view")) { closeViewCard(); return; }
-    ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg"].forEach(function (id) {
+    if ($("ct-view") && !(($("ix-dlg") && $("ix-dlg").open) || ($("ct-dlg") && $("ct-dlg").open))) { closeViewCard(); return; }
+    ["ct-dlg", "del-dlg", "merge-dlg", "lbl-dlg", "rev-dlg", "ac-dlg", "ix-dlg", "csv-dlg", "scan-dlg"].forEach(function (id) {
       var d = $(id);
       if (d && d.open) { try { d.close(); } catch (err) {} }
     });
@@ -2231,6 +2731,10 @@ document.addEventListener("keydown", function (e) {
 
     dlgLabelIds = existing ? existing.labelIds.slice() : [];
     renderDlgLabels();
+    var kp = existing && existing.keep;
+    $("ct-keep-n").value = kp ? String(kp.n) : "1";
+    $("ct-keep-u").value = kp ? kp.u : "";
+    $("ct-keep-n").disabled = !kp;
 
     $("ct-del-row").className = "dlg-row" + (existing ? " show" : "");
     // CT-2: what the form shows now, read back through the same
@@ -2243,7 +2747,18 @@ document.addEventListener("keydown", function (e) {
   // Every editable field of the dialog, as Save reads it.
   var DLG_FIELDS = ["given", "middle", "family", "nickname", "org", "jobTitle",
     "phones", "emails", "addresses", "websites", "im", "events", "relations",
-    "labelIds", "starred", "note", "photo"];
+    "labelIds", "starred", "note", "photo", "keep"];
+  if ($("ct-keep-u")) {
+    $("ct-keep-u").addEventListener("change", function () { $("ct-keep-n").disabled = !this.value; });
+  }
+  function readKeep() {
+    var u = $("ct-keep-u").value;
+    if (u !== "w" && u !== "m") return null;
+    var n = Math.round(+$("ct-keep-n").value);
+    if (!isFinite(n) || n < 1) n = 1;
+    if (n > 99) n = 99;
+    return { n: n, u: u };
+  }
   var dlgSnap = null;
   function readDlgDraft() {
     return {
@@ -2263,7 +2778,8 @@ document.addEventListener("keydown", function (e) {
       labelIds: dlgLabelIds.slice().sort(),
       starred: $("ct-starred").checked,
       note: $("ct-note").value.trim(),
-      photo: editingPhoto
+      photo: editingPhoto,
+      keep: readKeep()
     };
   }
 
@@ -2432,6 +2948,14 @@ document.addEventListener("keydown", function (e) {
 
   window.__orosContactsOpen = function (contactId) {
     if (typeof contactId !== "string" || !contactId) return;
+    // The reach-out reminder with several people (shell deep link
+    // "contacts:@reachout"): the Reach out list.
+    if (contactId === "@reachout") {
+      try { if ($("ct-dlg").open) $("ct-dlg").close(); } catch (e) {}
+      closeViewCard();
+      setQuickFilter("reach");
+      return;
+    }
     for (var i = 0; i < state.contacts.length; i++) {
       if (state.contacts[i].id === contactId) {
         // Guard: programmatic deep-link while ct-dlg is already open
@@ -2568,6 +3092,19 @@ document.addEventListener("keydown", function (e) {
     preview.labelIds.sort();
 
     preview.starred = primary.starred || members.some(function (m) { return m.starred; });
+
+    // Keep in touch: every interaction of the group, the latest
+    // "contacted", the primary's cadence (else the first one set).
+    if (MG) {
+      var lg = { log: preview.log || [], logDel: preview.logDel || {} };
+      members.forEach(function (m) { if (m !== primary) lg = MG.mergeLog(lg.log, lg.logDel, m.log, m.logDel); });
+      if (lg.log.length) preview.log = lg.log; else delete preview.log;
+      if (Object.keys(lg.logDel).length) preview.logDel = lg.logDel; else delete preview.logDel;
+      members.forEach(function (m) {
+        if (m.seen && (!preview.seen || m.seen > preview.seen)) preview.seen = m.seen;
+        if (!preview.keep && m.keep) preview.keep = JSON.parse(JSON.stringify(m.keep));
+      });
+    }
 
     return { preview: preview, members: members, primaryIdx: primaryIdx };
   }
@@ -3606,7 +4143,16 @@ document.addEventListener("keydown", function (e) {
     return pc;
   }
 
+  // Google's own CSV keeps its automatic reader below; any other CSV
+  // (Outlook, Excel with ";" — as Greek Excel writes it —, a CRM…)
+  // opens the column mapping first (contacts/csvmap.js).
   function importCsvText(text, src) {
+    var CM = window.OrosContactsCsv;
+    if (CM) {
+      var pr = CM.parse(text);
+      if (!pr.rows.length) { notifyTransient(t("ct.import.csv.noheader")); return; }
+      if (!CM.isGoogle(pr.rows[0])) { openCsvMap(pr.rows, src); return; }
+    }
     var rows = parseCsvRows(text);
     if (rows.length < 2) { notifyTransient(t("ct.import.csv.noheader")); return; }
     var headers = rows[0];
@@ -3626,6 +4172,150 @@ document.addEventListener("keydown", function (e) {
     }
     if (!parsed.length) { notifyTransient(t("ct.import.csv.norows")); return; }
     openReview(parsed, src || "");
+  }
+
+  // ---- Column mapping (any CSV) ----
+  var csvMap = null;   // { rows, map: [{f, ty}], src }
+  var CSV_PREVIEW = 3;
+  function csvFieldLabel(f) {
+    var k = {
+      "": "cm.f.skip", given: "ct.field.given", middle: "ct.field.middle", family: "ct.field.family",
+      full: "cm.f.full", nickname: "ct.field.nickname", org: "ct.field.org", jobTitle: "ct.field.jobtitle",
+      birthday: "evt.birthday", note: "ct.field.note", labels: "ct.lbl.filter"
+    }[f];
+    return t(k || ("cm.f." + f));
+  }
+  function openCsvMap(rows, src) {
+    var CM = window.OrosContactsCsv;
+    var width = 0;
+    rows.slice(0, 50).forEach(function (r) { if (r.length > width) width = r.length; });
+    width = Math.min(width, 80);
+    var heads = rows[0] || [];
+    var map = [], hits = 0;
+    for (var i = 0; i < width; i++) {
+      var g = CM.guess(heads[i]);
+      if (g.f) hits++;
+      map.push(g);
+    }
+    csvMap = { rows: rows, map: map, src: String(src || "").slice(0, 160), width: width };
+    $("csv-src").textContent = csvMap.src;
+    $("csv-head").checked = hits > 0;
+    var bdays = [];
+    map.forEach(function (m, ix) {
+      if (m.f === "birthday") rows.slice(1, 200).forEach(function (r) { bdays.push(r[ix]); });
+    });
+    $("csv-order").value = CM.dateOrder(bdays);
+    renderCsvMap();
+    try { if ($("csv-dlg").open) $("csv-dlg").close(); } catch (e) {}
+    $("csv-dlg").showModal();
+  }
+  function csvParsed() {
+    var CM = window.OrosContactsCsv;
+    return CM.toContacts(csvMap.rows, csvMap.map, { header: $("csv-head").checked, order: $("csv-order").value });
+  }
+  function renderCsvMap() {
+    var CM = window.OrosContactsCsv;
+    var host = $("csv-cols");
+    host.textContent = "";
+    var head = $("csv-head").checked;
+    var sample = csvMap.rows[head ? 1 : 0] || [];
+    csvMap.map.forEach(function (m, i) {
+      var row = document.createElement("div");
+      row.className = "cm-row";
+      var info = document.createElement("div");
+      info.className = "cm-info";
+      var nm = document.createElement("span");
+      nm.className = "cm-name";
+      nm.textContent = head && String(csvMap.rows[0][i] || "").trim()
+        ? String(csvMap.rows[0][i]).trim().slice(0, 60) : t("cm.col").replace("{n}", String(i + 1));
+      var ex = document.createElement("span");
+      ex.className = "cm-ex";
+      ex.textContent = String(sample[i] == null ? "" : sample[i]).trim().slice(0, 60);
+      info.appendChild(nm);
+      info.appendChild(ex);
+      row.appendChild(info);
+      var sel = document.createElement("select");
+      sel.setAttribute("aria-label", nm.textContent);
+      CM.TARGETS.forEach(function (f) {
+        var o = document.createElement("option");
+        o.value = f;
+        o.textContent = csvFieldLabel(f);
+        sel.appendChild(o);
+      });
+      sel.value = m.f;
+      row.appendChild(sel);
+      var ts = document.createElement("select");
+      ts.setAttribute("aria-label", t("cm.type"));
+      var T = CM.typesOf(m.f);
+      if (T) {
+        T.forEach(function (ty) {
+          var o = document.createElement("option");
+          o.value = ty;
+          o.textContent = t("ty." + ty);
+          ts.appendChild(o);
+        });
+        ts.value = T.indexOf(m.ty) !== -1 ? m.ty : T[T.length - 1];
+        m.ty = ts.value;
+      } else ts.hidden = true;
+      row.appendChild(ts);
+      sel.addEventListener("change", function () {
+        m.f = sel.value;
+        var TT = CM.typesOf(m.f);
+        m.ty = TT ? (m.f === "phone" ? "mobile" : TT[TT.length - 1]) : "";
+        renderCsvMap();
+      });
+      ts.addEventListener("change", function () { m.ty = ts.value; renderCsvPreview(); });
+      host.appendChild(row);
+    });
+    $("csv-order-row").hidden = !csvMap.map.some(function (m) { return m.f === "birthday"; });
+    renderCsvPreview();
+  }
+  function renderCsvPreview() {
+    var list = csvParsed();
+    $("csv-prev-title").textContent = t("cm.preview").replace("{n}", String(list.length));
+    var host = $("csv-prev");
+    host.textContent = "";
+    if (!list.length) {
+      var p = document.createElement("p");
+      p.className = "del-text";
+      p.textContent = t("cm.none");
+      host.appendChild(p);
+    }
+    list.slice(0, CSV_PREVIEW).forEach(function (pc) {
+      var row = document.createElement("div");
+      row.className = "rev-row";
+      var nm = document.createElement("span");
+      nm.className = "rv-name";
+      nm.textContent = displayName(pc) || t("ct.unnamed");
+      row.appendChild(nm);
+      var bits = [];
+      if (pc.org) bits.push(pc.org);
+      if (pc.jobTitle) bits.push(pc.jobTitle);
+      pc.phones.forEach(function (x) { bits.push(x.v); });
+      pc.emails.forEach(function (x) { bits.push(x.v); });
+      pc.addresses.forEach(function (a) { bits.push([a.street, a.zip, a.city, a.country].filter(Boolean).join(" ")); });
+      pc.events.forEach(function (e) { bits.push(t("evt.birthday") + " " + (e.year ? e.year + "-" : "") + e.day); });
+      if (pc.cats.length) bits.push(pc.cats.join(", "));
+      var info = document.createElement("div");
+      info.className = "rv-info";
+      info.textContent = bits.join(" · ").slice(0, 300);
+      row.appendChild(info);
+      host.appendChild(row);
+    });
+    $("csv-go").disabled = !list.length;
+  }
+  if ($("csv-dlg")) {
+    $("csv-head").addEventListener("change", renderCsvMap);
+    $("csv-order").addEventListener("change", renderCsvPreview);
+    $("csv-no").addEventListener("click", function () { $("csv-dlg").close(); });
+    $("csv-dlg").addEventListener("close", function () { csvMap = null; });
+    $("csv-go").addEventListener("click", function () {
+      if (!csvMap) return;
+      var list = csvParsed(), src = csvMap.src;
+      if (!list.length) { notifyTransient(t("cm.none")); return; }
+      $("csv-dlg").close();
+      openReview(list, src);
+    });
   }
 
   // vCard text → parsed blocks (only blocks with a name or company).
@@ -3888,6 +4578,157 @@ document.addEventListener("keydown", function (e) {
       this.value = "";                       // allow re-import of same file
       if (f) importFileText(f);
     });
+  }
+
+  // ===== BUSINESS CARD SCAN =====
+  // Photo (camera or file) → on-device text recognition → the text,
+  // which the person can correct → contacts/cardtext.js → a NEW
+  // contact form, prefilled; nothing is saved before Save.
+  // Text recognition = Tesseract.js (Apache-2.0), vendored under
+  // vendor/tesseract/ with the English and Greek data (about 7 MB):
+  // loaded only when the person asks, after a notice the first time
+  // on this device; no other server is contacted.
+  var OCR_BASE = "../vendor/tesseract/";
+  var OCR_FLAG = "oros-contacts-ocr";      // device-local: "1" once the engine was downloaded
+  var ocrLoading = null, ocrBusy = false, scanHasImage = false;
+  function scanStat(text) { $("scan-stat").textContent = text || ""; }
+  function ocrScript() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (ocrLoading) return ocrLoading;
+    ocrLoading = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = OCR_BASE + "tesseract.min.js";
+      s.onload = function () { window.Tesseract ? res(window.Tesseract) : rej(new Error("no engine")); };
+      s.onerror = function () { ocrLoading = null; rej(new Error("offline")); };
+      document.head.appendChild(s);
+    });
+    return ocrLoading;
+  }
+  function scanImage(file) {
+    if (!file || !/^image\//.test(file.type || "image/")) return;
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      var w = img.naturalWidth, h = img.naturalHeight, max = 2000;
+      var k = Math.min(1, max / Math.max(w, h));
+      if (Math.max(w, h) < 1000) k = 1000 / Math.max(w, h);    // small pictures read better a bit larger
+      var cv = $("scan-img");
+      cv.width = Math.max(1, Math.round(w * k));
+      cv.height = Math.max(1, Math.round(h * k));
+      var x = cv.getContext("2d");
+      x.fillStyle = "#fff";
+      x.fillRect(0, 0, cv.width, cv.height);
+      x.drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.hidden = false;
+      scanHasImage = true;
+      var known = false;
+      try { known = localStorage.getItem(OCR_FLAG) === "1"; } catch (e) {}
+      if (known) runOcr();
+      else { $("scan-dl").hidden = false; scanStat(""); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); scanStat(t("ct.avatar.bad")); };
+    img.src = url;
+  }
+  function runOcr() {
+    if (ocrBusy || !scanHasImage) return;
+    ocrBusy = true;
+    $("scan-dl").hidden = true;
+    ["scan-photo", "scan-pick", "scan-go"].forEach(function (id) { $(id).disabled = true; });
+    var reading = false, worker = null;
+    scanStat(t("sc.wait.load").replace("{p}", "0"));
+    var base = new URL(OCR_BASE, location.href).href;
+    function done() {
+      ocrBusy = false;
+      ["scan-photo", "scan-pick", "scan-go"].forEach(function (id) { $(id).disabled = false; });
+      if (worker) { try { worker.terminate(); } catch (e) {} }
+    }
+    ocrScript().then(function (T) {
+      return T.createWorker(["eng", "ell"], 1, {
+        workerPath: base + "worker.min.js",
+        corePath: base + "tesseract-core-lstm.js",
+        langPath: base.replace(/\/$/, ""),
+        workerBlobURL: false,
+        cachePath: "oros-contacts-ocr",
+        logger: function (m) {
+          if (!m || typeof m.progress !== "number") return;
+          var p = String(Math.round(m.progress * 100));
+          scanStat(t(reading ? "sc.wait.read" : "sc.wait.load").replace("{p}", p));
+        }
+      });
+    }).then(function (w) {
+      worker = w;
+      try { localStorage.setItem(OCR_FLAG, "1"); } catch (e) {}
+      reading = true;
+      scanStat(t("sc.wait.read").replace("{p}", "0"));
+      return w.recognize($("scan-img"));
+    }).then(function (r) {
+      var text = String((r && r.data && r.data.text) || "").replace(/\n{3,}/g, "\n\n").trim();
+      done();
+      if (!text) { scanStat(t("sc.empty")); return; }
+      $("scan-text").value = text.slice(0, 4000);
+      scanStat(t("sc.done"));
+    }, function (e) {
+      done();
+      console.warn("contacts: text recognition failed:", e);
+      scanStat(t("sc.err").replace("{e}", String((e && e.message) || e || "?").slice(0, 80)));
+    });
+  }
+  // The new-contact form, prefilled from a parser-shape contact.
+  function openDlgPrefilled(pc) {
+    try { closeViewCard(); } catch (e) {}
+    try { if ($("ct-dlg").open) $("ct-dlg").close(); } catch (e) {}
+    openDlg(null);
+    $("ct-given").value = pc.given || "";
+    $("ct-middle").value = pc.middle || "";
+    $("ct-family").value = pc.family || "";
+    $("ct-org").value = pc.org || "";
+    $("ct-jobtitle").value = pc.jobTitle || "";
+    $("ct-note").value = pc.note || "";
+    fillHolder($("ct-phones"), pc.phones || [], function (h, r) { buildValRow(h, r && r.v, r && r.type, PHONE_TYPES, "+30 69…", 40, "ph"); });
+    fillHolder($("ct-emails"), pc.emails || [], function (h, r) { buildValRow(h, r && r.v, r && r.type, EMAIL_TYPES, "name@example.com", 120, "em"); });
+    fillHolder($("ct-websites"), pc.websites || [], function (h, r) { buildValRow(h, r && r.v, r && r.type, WEB_TYPES, "https://…", 300, "wb"); });
+    fillHolder($("ct-addresses"), pc.addresses || [], buildAddrRow);
+  }
+  if ($("scan-dlg")) {
+    $("ct-scan").addEventListener("click", function () {
+      if (!ocrBusy) {
+        scanStat("");
+        $("scan-dl").hidden = true;
+      }
+      $("scan-dlg").showModal();
+    });
+    $("scan-photo").addEventListener("click", function () { $("scan-cam").value = ""; $("scan-cam").click(); });
+    $("scan-pick").addEventListener("click", function () {
+      var dlg = dialogHost();
+      if (dlg && typeof dlg.openFile === "function") {
+        dlg.openFile("image/*").then(function (f) { if (f) scanImage(f); });
+        return;
+      }
+      $("scan-file").value = "";
+      $("scan-file").click();
+    });
+    ["scan-cam", "scan-file"].forEach(function (id) {
+      $(id).addEventListener("change", function () {
+        var f = this.files && this.files[0];
+        if (f) scanImage(f);
+      });
+    });
+    $("scan-dl-go").addEventListener("click", runOcr);
+    $("scan-go").addEventListener("click", function () {
+      var text = $("scan-text").value.trim();
+      var CC = window.OrosContactsCard;
+      if (!text || !CC) { notifyTransient(t("sc.nofill")); return; }
+      var pc = CC.parse(text);
+      $("scan-dlg").close();
+      $("scan-text").value = "";
+      $("scan-img").hidden = true;
+      scanHasImage = false;
+      scanStat("");
+      openDlgPrefilled(pc);
+      notifyTransient(t("sc.check"));
+    });
+    $("scan-no").addEventListener("click", function () { $("scan-dlg").close(); });
   }
 
   function showImportReport(res) {
@@ -4153,10 +4994,10 @@ document.addEventListener("keydown", function (e) {
       return entity.mtime > t.mtime;          // edit outranks delete
     }
 
-    function unionById(listA, listB) {
-      var map = {};
+    function unionById(listA, listB, mergeFn) {
+      var map = {}, mf = mergeFn || mergeEntity;
       (listA || []).forEach(function (x) { if (x && x.id) map[x.id] = x; });
-      (listB || []).forEach(function (x) { if (x && x.id) map[x.id] = mergeEntity(map[x.id], x); });
+      (listB || []).forEach(function (x) { if (x && x.id) map[x.id] = mf(map[x.id], x); });
       return Object.keys(map).map(function (k) { return map[k]; })
         .filter(alive)
         .sort(function (x, y) { return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0); });
@@ -4165,7 +5006,7 @@ document.addEventListener("keydown", function (e) {
     var merged = {
       ver: 1,
       labels:   unionById(local.labels, remote.labels),
-      contacts: unionById(local.contacts, remote.contacts),
+      contacts: unionById(local.contacts, remote.contacts, MG ? MG.mergeContact : null),
       deleted:  Object.keys(tomb).map(function (k) { return tomb[k]; })
                   .sort(function (x, y) { return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0); })
     };
@@ -4223,11 +5064,29 @@ document.addEventListener("keydown", function (e) {
   // Edits made in the phone's contacts app (BR-PHONE v2): phone.js
   // writes them to the blob, then this open copy re-reads it the way
   // it adopts a pull (open dialogs and filters survive).
+  // CT-PF: phone.js knows only mtime. A contact it just changed is
+  // newer than all of its field stamps; with the earlier copy still
+  // in memory, only the fields that really changed get the new stamp
+  // (otherwise mtime would speak for every field of it).
   window.__orosPhoneReload = function (kind) {
     if (kind !== "contacts") return;
     var d = null;
     try { d = JSON.parse(localStorage.getItem(DATA_KEY)); } catch (e) { d = null; }
-    if (d && typeof d === "object" && Array.isArray(d.contacts)) setFromSync(d);
+    if (!(d && typeof d === "object" && Array.isArray(d.contacts))) return;
+    var fixed = false;
+    if (MG) {
+      d.contacts = d.contacts.map(function (raw) {
+        var c = sanitizeContact(raw);
+        if (!c || !c.fm || !MG.touchedByOldCode(c)) return raw;
+        var prev = contactById(c.id);
+        if (!prev) return raw;
+        MG.restamp(JSON.parse(JSON.stringify(prev)), c, c.mtime);
+        fixed = true;
+        return c;
+      });
+    }
+    setFromSync(d);
+    if (fixed) markDirty();
   };
 
   // Canonical sync bridge — Contract B funnel. Live registration

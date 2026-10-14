@@ -718,3 +718,76 @@ dialog h3 {
 .ac-prov { flex: 1 1 150px; }
 #ac-own summary { cursor: pointer; font-size: 13px; color: var(--text-dim); margin-top: 6px; }
 .ac-uri code { overflow-wrap: anywhere; font-size: 12px; }
+
+/* ---------- Keep in touch (wave 26) ---------- */
+.keep-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13.5px; }
+.keep-row input[type="number"] {
+  width: 4.5em; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font: inherit; padding: 7px 8px; border-radius: 8px;
+}
+.ev-form .keep-row select { width: auto; flex: 1 1 120px; }
+.ev-form input[type="date"] {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font: inherit; padding: 7px 10px; border-radius: 8px; width: 100%; color-scheme: light dark;
+}
+#reach-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin: 0 0 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 13.5px;
+}
+#reach-bar .reach-on { display: flex; align-items: center; gap: 6px; }
+#reach-bar select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font: inherit; padding: 4px 8px; border-radius: 7px;
+}
+#reach-bar .reach-hint { flex: 1 1 100%; margin: 0; font-size: 12px; color: var(--text-dim); }
+.ct-sub.kt-due, .ct-vs-val.kt-due { color: var(--accent); }
+.ct-due { flex: none; font-size: 13px; }
+.kt-btns { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.kt-btns button { padding: 7px 14px; min-height: 36px; }
+.kt-btns button:disabled { opacity: .5; cursor: default; }
+.kt-empty { margin: 0; padding: 7px 0; font-size: 13px; color: var(--text-dim); border-top: 1px solid var(--border); }
+.kt-tl { list-style: none; margin: 0; padding: 0; }
+.kt-tl li { border-top: 1px solid var(--border); }
+.kt-item {
+  display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left;
+  background: transparent; border: 0; color: inherit; font: inherit; padding: 8px 0; cursor: pointer;
+  min-height: 40px;
+}
+.kt-item:hover .kt-head { color: var(--accent); }
+.kt-ic { flex: none; width: 22px; text-align: center; }
+.kt-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kt-head { font-size: 12.5px; color: var(--text-dim); font-weight: 600; }
+.kt-tx { font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+#ix-dlg { width: min(420px, calc(100vw - 24px)); }
+#ix-del-row { justify-content: flex-start; }
+
+/* ---------- CSV column mapping ---------- */
+#csv-dlg { width: min(600px, calc(100vw - 24px)); max-width: 600px; }
+#csv-cols { display: flex; flex-direction: column; }
+.cm-row {
+  display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.cm-info { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; }
+.cm-name { font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; }
+.cm-ex { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+.cm-row select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 13px; padding: 4px 8px; border-radius: 7px; max-width: 100%; min-height: 32px;
+}
+#csv-go:disabled { opacity: .5; }
+
+/* ---------- Business card scan ---------- */
+#scan-dlg { width: min(520px, calc(100vw - 24px)); max-width: 520px; }
+.scan-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.scan-btns .btn { flex: 1 1 150px; }
+.scan-dl { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+.scan-dl .del-text { margin: 0 0 8px; }
+#scan-img { display: block; max-width: 100%; max-height: 180px; margin: 6px auto; border-radius: 8px; border: 1px solid var(--border); }
+.scan-lbl { display: block; font-size: 12.5px; color: var(--text-dim); margin-top: 6px; }
+#scan-text {
+  width: 100%; box-sizing: border-box; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 13.5px; padding: 7px 10px; border-radius: 8px; resize: vertical; margin-top: 4px;
+}
+[hidden] { display: none !important; }

@@ -1121,6 +1121,7 @@
       tickSafe("stockCheckTick", stockCheckTickThrottled); // Stock: low-stock notice (60s throttle)
       tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
+      tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("minimalismCheckTick", minimalismCheckTickThrottled); // Wave 2: Minimalism daily ritual (60s throttle)
       tickSafe("petcareCheckTick", petcareCheckTickThrottled); // Pet Health Book: daily reminder (60s throttle)
@@ -1573,6 +1574,47 @@
     if (now - crmLastTick < 60000) return;
     crmLastTick = now;
     crmCheckTick();
+  }
+
+  // Contacts — keep in touch. Reads "oros-contacts-data" directly
+  // (works with the app CLOSED) and asks contacts/keep.js (loaded by
+  // index.html, the SAME file the app runs) who is due. Off by
+  // default; switch and hour are device-local ("oros-contacts-keep",
+  // set in Contacts › Reach out). From that hour, one notice per day
+  // when someone is due; the key is the same on every device (inbox
+  // dedup). One person → their card; several → the Reach out list.
+  // Honest limit: orOS closed = nothing fires; the next boot the same
+  // day catches up.
+  function keepCheckTick() {
+    var K = window.OrosContactsKeep;
+    if (!K) return;                                     // stale bundle — silent
+    var pr;
+    try { pr = JSON.parse(localStorage.getItem(K.PREFS_KEY) || "null"); } catch (e) { return; }
+    if (!K.prefs(pr).on) return;
+    var N = window.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return;
+    var raw;
+    try { raw = JSON.parse(localStorage.getItem("oros-contacts-data")); } catch (e) { return; }
+    if (!raw || !Array.isArray(raw.contacts) || !raw.contacts.length) return;
+    var r = K.reminder(raw, pr, Date.now());
+    if (!r) return;
+    var txt = K.reminderText(r, state.lang);
+    N.emit({
+      ns: "contacts",
+      key: r.key,
+      type: "reminder",
+      title: txt.title,
+      body: txt.body,
+      deepLink: "contacts:" + (r.count === 1 ? r.ids[0] : "@reachout")
+    });
+  }
+
+  var keepLastTick = 0;
+  function keepCheckTickThrottled() {
+    var now = Date.now();
+    if (now - keepLastTick < 60000) return;
+    keepLastTick = now;
+    keepCheckTick();
   }
 
   // Garage — renewals (KTEO, insurance, road tax…), service plans and

@@ -19,6 +19,7 @@
       <button id="ct-acct" type="button" class="nav-mini" data-i18n="ac.btn"></button>
       <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
+      <button id="ct-scan" type="button" class="nav-mini" data-i18n="sc.btn"></button>
       <h2 id="ct-title" data-i18n="app.contacts.self"></h2>
     </header>
 
@@ -31,6 +32,13 @@
 
     <!-- ===== Label filter chips ===== -->
     <div id="lbl-chips"></div>
+
+    <!-- ===== Reach out: the reminder switch (device-local) ===== -->
+    <div id="reach-bar" hidden>
+      <label class="reach-on"><input id="reach-on" type="checkbox"> <span data-i18n="kt.rem"></span></label>
+      <select id="reach-hour" data-i18n-aria="kt.rem"></select>
+      <p class="reach-hint" data-i18n="kt.rem.hint"></p>
+    </div>
 
     <!-- ===== Contact list ===== -->
     <ul id="ct-list"></ul>
@@ -109,6 +117,17 @@
       <div id="ct-relations" class="mf-holder"></div>
       <button id="ct-rel-add" type="button" class="mini mf-add" data-i18n="ct.add.relation"></button>
       <div id="ct-rel-in" class="rel-incoming"></div>
+
+      <label for="ct-keep-u" data-i18n="kt.field"></label>
+      <div class="keep-row">
+        <span data-i18n="kt.every"></span>
+        <input id="ct-keep-n" type="number" min="1" max="99" step="1" inputmode="numeric" value="1" data-i18n-aria="kt.field">
+        <select id="ct-keep-u">
+          <option value="" data-i18n="kt.off"></option>
+          <option value="w" data-i18n="kt.weeks"></option>
+          <option value="m" data-i18n="kt.months"></option>
+        </select>
+      </div>
 
       <label data-i18n="ct.lbl.filter"></label>
       <div id="ct-label-row" class="chip-row"></div>
@@ -224,6 +243,73 @@
     </div>
   </dialog>
 
+  <!-- Interaction log entry (keep in touch) -->
+  <dialog id="ix-dlg" aria-labelledby="ix-dlg-title">
+    <h3 id="ix-dlg-title" data-i18n="ix.new"></h3>
+    <p id="ix-who" class="del-name"></p>
+    <div class="ev-form">
+      <label for="ix-kind" data-i18n="ix.kind"></label>
+      <select id="ix-kind"></select>
+      <label for="ix-date" data-i18n="ix.date"></label>
+      <input id="ix-date" type="date">
+      <label for="ix-text" data-i18n="ix.text"></label>
+      <textarea id="ix-text" rows="4" maxlength="1000" data-i18n-ph="ix.ph"></textarea>
+    </div>
+    <div class="dlg-row">
+      <button id="ix-save" type="button" class="btn prim" data-i18n="ct.save"></button>
+      <button id="ix-cancel" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+    <div class="dlg-row" id="ix-del-row" hidden>
+      <button id="ix-del" type="button" class="btn danger" data-i18n="ix.del"></button>
+    </div>
+  </dialog>
+
+  <!-- CSV column mapping (any CSV that is not Google's own format) -->
+  <dialog id="csv-dlg" aria-labelledby="csv-dlg-title">
+    <h3 id="csv-dlg-title" data-i18n="cm.title"></h3>
+    <p id="csv-src" class="del-name"></p>
+    <p class="del-text" data-i18n="cm.text"></p>
+    <label class="ph-row"><input id="csv-head" type="checkbox" checked> <span data-i18n="cm.header"></span></label>
+    <label class="rev-pref" id="csv-order-row">
+      <span data-i18n="cm.dates"></span>
+      <select id="csv-order">
+        <option value="dmy" data-i18n="cm.dmy"></option>
+        <option value="mdy" data-i18n="cm.mdy"></option>
+      </select>
+    </label>
+    <div id="csv-cols"></div>
+    <p id="csv-prev-title" class="rev-grp"></p>
+    <div id="csv-prev"></div>
+    <div class="dlg-row">
+      <button id="csv-go" type="button" class="btn prim" data-i18n="cm.next"></button>
+      <button id="csv-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+    </div>
+  </dialog>
+
+  <!-- Business card scan: photo → on-device text recognition → form -->
+  <dialog id="scan-dlg" aria-labelledby="scan-dlg-title">
+    <h3 id="scan-dlg-title" data-i18n="sc.title"></h3>
+    <p class="del-text" data-i18n="sc.text"></p>
+    <div class="scan-btns">
+      <button id="scan-photo" type="button" class="btn" data-i18n="sc.photo"></button>
+      <button id="scan-pick" type="button" class="btn" data-i18n="sc.pick"></button>
+    </div>
+    <input id="scan-cam" type="file" accept="image/*" capture="environment" hidden>
+    <input id="scan-file" type="file" accept="image/*" hidden>
+    <div id="scan-dl" class="scan-dl" hidden>
+      <p class="del-text" data-i18n="sc.dl.text"></p>
+      <button id="scan-dl-go" type="button" class="btn prim" data-i18n="sc.dl.go"></button>
+    </div>
+    <canvas id="scan-img" hidden></canvas>
+    <p id="scan-stat" class="del-text" aria-live="polite"></p>
+    <label for="scan-text" class="scan-lbl" data-i18n="sc.paste"></label>
+    <textarea id="scan-text" rows="7" maxlength="4000" data-i18n-ph="sc.ph"></textarea>
+    <div class="dlg-row">
+      <button id="scan-go" type="button" class="btn prim" data-i18n="sc.fill"></button>
+      <button id="scan-no" type="button" class="btn" data-i18n="ph.close"></button>
+    </div>
+  </dialog>
+
   <!-- Label management -->
   <dialog id="lbl-dlg">
     <h3 data-i18n="lbl.manage"></h3>
@@ -238,6 +324,10 @@
     </div>
   </dialog>
 
+  <script src="merge.js?v=1.98.00"></script>
+  <script src="keep.js?v=1.98.00"></script>
+  <script src="csvmap.js?v=1.98.00"></script>
+  <script src="cardtext.js?v=1.98.00"></script>
   <script src="importplan.js?v=1.98.00"></script>
   <script src="accounts.js?v=1.98.00"></script>
   <script src="contacts.js?v=1.98.00"></script>

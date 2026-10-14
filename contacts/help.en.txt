@@ -12,11 +12,28 @@ The contact window has:
 - As many `Phones`, `Emails`, `Addresses`, `Websites` and `Instant messaging` entries as you like, each with a type such as `Mobile`, `Home` or `Work`. Use the `＋` buttons to add more.
 - `Events`: `Birthday`, `Anniversary` or `Custom` (give it a name, for example a nameday). Type the date as year-month-day, like `1975-03-17`, or just month-day, like `03-17`, if you don't know the year.
 - `Relations`: link to another contact as `Spouse`, `Parent`, `Friend`, `Colleague` and so on. The other contact shows the link too, under `Linked from other contacts`.
+- `Keep in touch`: every so many weeks or months (see below). Leave it on `Off` if you don't want reminding.
 - `Labels`, `Favorite`, a `Photo` (JPEG or PNG, made smaller automatically) and a `Note`.
 
 `Delete contact` asks to confirm, and an `Undo` button appears for a few seconds afterwards.
 
 `Share` on the card opens `Send to someone`: send the contact as a link that opens in any browser (they can save it to their phone or add it to their own orOS), or pick `Send as text` for plain text as before. Photo, labels and relations are not sent.
+
+## Keep in touch
+Each contact's card has a `Keep in touch` part. `Last contacted` shows when you were last in touch: the latest interaction you logged, or the day you pressed `Contacted today`.
+
+`＋ Log` writes down an interaction: a `Call`, `Meeting`, `Message`, `Gift` or `Note`, with its date and a few words about it. They appear newest first under `Timeline` on the card. Tap one to change or delete it (`Undo` brings a deleted one back). An interaction dated in the future doesn't count as contact yet.
+
+To be reminded, open `Edit contact` and set `Keep in touch` to every so many weeks or months. When that time has passed since the last contact, the person appears under `⏰ Reach out` above the list, with whoever has waited longest first, and a ⏰ shows next to their name. Someone you have never logged counts from the day you set it.
+
+In `Reach out` you can also switch on `Remind me at` and pick an hour: from that hour, on days when someone is due, a notice appears in orOS. Tapping it opens the person's card, or the `Reach out` list when there are several. The reminder is off until you switch it on, and the switch and hour stay on this device. orOS has to be open for the notice to appear; if it was closed at that hour, it comes when you next open orOS that day.
+
+## Scan a business card
+`Scan card` turns a business card into a new contact. Press `Take a photo` (on a phone, the camera opens) or `Choose a picture`. orOS reads the text on the card on this device and shows it in `Text from the card`, where you can correct it. `Fill in a new contact` opens a new contact with the name, company, job title, phones, e-mails, website and address it found; check it and press `Save`. Lines it couldn't place go into the `Note`.
+
+Reading the text needs the text recognition engine (about 7 MB, English and Greek). The first time on each device orOS says so and downloads it only when you press `Download and read`. It comes from orOS's own site, not from another company, and the picture never leaves your device.
+
+You can also type or paste the card's text yourself (for example, from another scanning app) and press `Fill in a new contact`.
 
 ## Search, labels and favourites
 The search box finds contacts by name, nickname, company, job title, note, email or phone number. It ignores Greek accents and understands Latin spelling of Greek names, so `dionisis` finds “Διονύσης”. Three or more digits find a phone number however it's written. Searching for a name also finds people linked to that person.
@@ -27,7 +44,11 @@ Above the list, `All` and `★ Favorites` switch between everyone and your favou
 `Duplicates` looks for contacts that are probably the same person: `Same phone` or `Same email` (listed as `Definitive matches`) and `Similar name` (`Possible matches`). Tap or click a contact in a group to open `Merge duplicates`: it shows the combined contact. Use `Flip primary` to pick which one to keep as the base, then `Merge now`. You can `Undo` straight afterwards.
 
 ## Import, skip and merge
-Every import opens `Review import` first, whether it comes from a file, `From phone`, `From an account` or a .vcf opened with orOS. It sorts the contacts it read into three groups:
+Every import opens `Review import` first, whether it comes from a file, `From phone`, `From an account` or a .vcf opened with orOS.
+
+A CSV file from anywhere (Outlook, Excel, another address book, a list you made yourself) first opens `Match the columns`: for each column you see its name and an example, and orOS has already guessed what it holds from the column names, in English or Greek (`First name`, `Επώνυμο`, `Κινητό`, `Τ.Κ.`…). Change any guess, set a column to `Skip`, or pick the type of a phone, e-mail, website or address. Untick `The first row has the column names` if the file starts straight with contacts. When a column holds birthdays, `Dates` says whether they are written day first (the usual way in Greece) or month first. The preview shows the first contacts as they will be read; `Continue` takes you to `Review import`. A CSV exported from Google Contacts is read directly, without this step.
+
+`Review import` sorts the contacts it read into three groups:
 - `New`: nobody here matches. Choose `Add` or `Skip` for each.
 - `Other details`: a contact here has the same email, the same phone (with or without the country code) or the same first and last name, and the import brings something new. You see what it adds and which values differ, for example `Company: Alpha Inc → Alpha Ltd`. `Merge, keep mine` adds the missing details and keeps your values; `Merge, use imported` adds them and takes the imported values where they differ. You can also `Add as separate` or `Skip`. `When a detail differs` sets the choice for all of them at once.
 - `Already here, skipped`: identical contacts, left as they are.
@@ -47,9 +68,9 @@ In the orOS Android app, `On this phone` puts your orOS contacts in the phone's 
 Other apps can send contacts to orOS too. When a phone app offers "Add contact" or "Create contact" (after a call from a number you don't have, from Viber or another messenger) or opens a .vcf file, pick orOS. The contact opens in `Review import`, and nothing is saved until you confirm. The button doesn't appear in a browser, only in the Android app, and the choice is kept on this phone only.
 
 ## Sync and backup
-Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Which labels you've hidden is not saved.
+Your contacts and labels sync between your devices through [orOS sync](help:t/sync). Each detail of a contact syncs on its own: if you add a phone number on your computer and change the note on your phone at the same time, both changes are kept. The interactions you log sync one by one too, and one deleted on a device is deleted on the others. Which labels you've hidden, and the reach-out reminder switch, are not synced.
 
-- `Import` reads a vCard file (.vcf) or a Google Contacts CSV and opens `Review import` (see above). Afterwards you see a list of what was added, merged or skipped. With orOS installed on a computer you can also open a .vcf file with `Open with`; orOS shows the same review before importing it (see [opening files](help:t/install)).
+- `Import` reads a vCard file (.vcf) or a CSV file and opens `Review import` (see above). Afterwards you see a list of what was added, merged or skipped. With orOS installed on a computer you can also open a .vcf file with `Open with`; orOS shows the same review before importing it (see [opening files](help:t/install)).
 - `From phone` (only in Chrome on Android) opens your phone's contact list. Pick the people you want; only those reach orOS, with their names, phones and emails, and addresses when the phone shares them. They go through the same `Review import`.
 - `Export` saves all your contacts as a .vcf file that other address books can open.
 - `Export JSON` saves a complete copy of your contacts. `Import JSON` restores it; it combines with what you have and keeps the newer version of each contact.
@@ -68,6 +89,9 @@ See also [backup](help:t/backup).
 
 ## Limits
 - `Import JSON` only accepts files made by `Export JSON` in orOS Contacts.
-- CSV import expects the Google Contacts format.
+- CSV import reads one address of each type (home, work, other) per contact, and a single birthday.
+- Business card reading works best with a sharp, straight, well-lit photo of a printed card. It doesn't read QR codes, and its guesses (which line is the name, which the company) can be wrong, so check the form before saving. Greek capital letters come without accents.
+- The `Reach out` reminder appears only while orOS is open (or when you open it later that day).
+- A device still on an older orOS version doesn't know `Keep in touch`: if you edit a contact there, it keeps working, but a cadence changed on that device at the same time may be lost.
 - `From an account` doesn't bring contact photos, and reads only your own contacts (not Google's "Other contacts" or a company directory).
 - `From phone` appears only in Chrome on Android, because other browsers can't open the phone's contact list.
