@@ -6608,6 +6608,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
   - Tests: tests/radio-https.test.js; real shell at 1280 and 360 px by the owner. Not tested: real phone / installed APK, Safari, Firefox.
 
 ### 2026-10-14 — Assistant, phase 4 wave 4: optional web search with Claude (#359) — 2.12.00
-- The Assistant can search the internet with Claude when switched on in Settings › Internet (opening hours, news, prices). Off by default; each answer shows what was searched and its sources, and the setting says what searches cost (AS-WEB). Uses the user's own Claude key; nothing new is sent unless the switch is on.
+- The Assistant can search the internet with Claude when switched on in Settings › Internet (opening hours, news, prices). Off by default; each answer shows what was searched and its sources, and the setting says what searches cost (AS-WEB).
 - Files: existing assistant files only; Bible AS-WEB, help EN/EL. sw.js precache: nothing new.
   - Tests: full suite green; real-shell check with a mock provider by the owner. Not tested: a real Claude key with web search, Safari, real phone.
