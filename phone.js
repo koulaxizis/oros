@@ -562,7 +562,10 @@
   //   todo:   { data, core }  (todo/core.js dueSummary)
   //   habits: { data, core }  (habits/core.js needsReminder: each
   //           habit's reminder time on the days it still needs)
-  //   lang: "en" | "el"; alarmTitle / todoTitle / habitsTitle: the shell's words
+  //   health: { data, core } (health/core.js alarmsBetween: medicine
+  //           doses, doctor's appointments, vaccinations)
+  //   lang: "en" | "el"; alarmTitle / todoTitle / habitsTitle /
+  //   healthTitle: the shell's words
   var REM_HOURS = 48, TODO_HOUR = 9;
   function reminderRows(src, now) {
     src = src || {};
@@ -628,6 +631,36 @@
         }
       });
     }
+    // Health: medicine doses (a snoozed one at the end of its snooze),
+    // doctor's appointments and vaccinations, from the same rules and
+    // with the same keys as the shell engine (healthCheckTick), so the
+    // inbox notice and the phone's alarm are one.
+    var HL = src.health;
+    if (HL && HL.core && HL.data && typeof HL.core.alarmsBetween === "function") {
+      var hd = null;
+      try { hd = HL.core.merge(HL.data, HL.data); } catch (e) { hd = null; }
+      var hTitle = str(src.healthTitle, 60) || (el ? "Υγεία" : "Health");
+      var hm2 = function (ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); };
+      var dm2 = function (ms) { var x = new Date(ms); return x.getDate() + "/" + (x.getMonth() + 1); };
+      (hd ? HL.core.alarmsBetween(hd, now, end) : []).forEach(function (r) {
+        var body = "", link = "health:meds";
+        if (r.k === "dose") {
+          var tm = (r.tm < 600 ? "0" : "") + Math.floor(r.tm / 60) + ":" + (r.tm % 60 < 10 ? "0" : "") + (r.tm % 60);
+          body = (el ? "Ώρα για το φάρμακο: " : "Time for your medicine: ") + r.med.n + (r.med.s ? " " + r.med.s : "") + " (" + tm + ")";
+        } else if (r.k === "appt") {
+          var a = r.ap, who = a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp);
+          body = (el ? "Ραντεβού με γιατρό: " : "Doctor's appointment: ") + who + ", " + dm2(a.at) + " " + hm2(a.at);
+          link = "health:appts";
+        } else if (r.k === "vax") {
+          var p = r.vx.nx.split("-");
+          body = (r.st === "w" ? (el ? "Επόμενη δόση εμβολίου σε μία εβδομάδα: " : "Next vaccine dose in a week: ")
+                               : (el ? "Επόμενη δόση εμβολίου: " : "Next vaccine dose due: ")) + r.vx.n + " (" + (+p[2]) + "/" + (+p[1]) + ")";
+          link = "health:vax";
+        } else return;
+        rows.push({ id: "health:" + r.key, at: r.at, kind: "note", ns: "health",
+                    title: hTitle, body: str(body, 200), link: link });
+      });
+    }
     rows.sort(function (a, b) { return a.at - b.at || (a.id < b.id ? -1 : 1); });
     return rows.slice(0, 100);
   }
@@ -687,6 +720,28 @@
     el: { running: "Τρέξιμο", walking: "Περπάτημα", cycling: "Ποδήλατο", swimming: "Κολύμβηση", hiking: "Πεζοπορία",
           yoga: "Γιόγκα", strength: "Ενδυνάμωση", other: "Προπόνηση" }
   };
+  // A reading from Health Connect in Health's storage units, or null:
+  //   wt grams · hr bpm · sl minutes asleep (at = bedtime) · bp
+  //   systolic, diastolic (a 1 left / 2 right arm, p 1 sitting /
+  //   2 standing / 3 lying) · gl tenths of mg/dL (c 1 fasting / 2 before
+  //   a meal / 3 after) · o2 %. The ranges are Health's (core SPEC).
+  var HC_VITALS_MAX = 3000;
+  var HC_RANGE = { wt: [[500, 500000]], hr: [[20, 250]], sl: [[1, 1440]], bp: [[50, 300], [20, 200]],
+                   gl: [[100, 10000]], o2: [[50, 100]] };
+  function vitalRow(x) {
+    if (!x || typeof x !== "object" || !Object.prototype.hasOwnProperty.call(HC_RANGE, x.k)) return null;
+    if (typeof x.at !== "number" || !isFinite(x.at) || x.at < 0 || x.at > 4102444800000 || !Array.isArray(x.v)) return null;
+    var r = HC_RANGE[x.k], v = [];
+    for (var i = 0; i < r.length; i++) {
+      var n = Math.round(+x.v[i]);
+      if (!(n >= r[i][0] && n <= r[i][1])) return null;
+      v.push(n);
+    }
+    if (x.k === "bp") { if (v[1] >= v[0]) return null; v.push(0); }
+    if (x.k === "sl") v.push(0);
+    function pick(n, max) { return n === Math.round(n) && n >= 0 && n <= max ? n : 0; }
+    return { v: v, c: x.k === "gl" ? pick(x.c, 3) : 0, a: x.k === "bp" ? pick(x.a, 2) : 0, p: x.k === "bp" ? pick(x.p, 3) : 0 };
+  }
   function healthIn(blobs, inc, now, names) {
     var res = { water: null, fitness: null, health: null };
     inc = inc || {};
@@ -722,7 +777,8 @@
       if (addW) { f.wo.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.fitness = f; }
     }
     var steps = Array.isArray(inc.steps) ? inc.steps : [];
-    if (steps.length) {
+    var vitals = Array.isArray(inc.vitals) ? inc.vitals.slice(0, HC_VITALS_MAX) : [];
+    if (steps.length || vitals.length) {
       var h = blobs.health && typeof blobs.health === "object" ? JSON.parse(JSON.stringify(blobs.health))
                                                               : { ver: 1, en: [], ty: [], set: null, tombs: {} };
       if (!Array.isArray(h.en)) h.en = [];
@@ -739,6 +795,18 @@
         var row = { id: id, m: now, t: "st", at: x.d === today ? now : localMs(x.d, "23:59"), v: [n],
                     c: 0, a: 0, p: 0, n: "", g: [] };
         if (old) h.en[i] = row; else { byId[id] = h.en.length; h.en.push(row); }
+        ch++;
+      });
+      // Readings other apps put in Health Connect (v6): one Health
+      // reading each, id "hc-<kind>-<hex of its Health Connect id>",
+      // added once (an edit in orOS stays), never over a deletion.
+      vitals.forEach(function (x) {
+        var v = vitalRow(x);
+        if (!v) return;
+        var id = "hc-" + x.k + "-" + hcHex(x.ref, 32);
+        if (id.length < 3 + x.k.length + 1 + 16 || id in byId || ("en:" + id) in ht) return;
+        byId[id] = h.en.length;
+        h.en.push({ id: id, m: now, t: x.k, at: Math.round(x.at), v: v.v, c: v.c, a: v.a, p: v.p, n: "", g: [] });
         ch++;
       });
       if (ch) { h.en.sort(function (a, b) { return a.id < b.id ? -1 : 1; }); res.health = h; }
@@ -885,7 +953,8 @@
     var res = healthIn(blobs, {
       water: "water" in blobs ? m.water : [],
       workouts: "fitness" in blobs ? m.workouts : [],
-      steps: "health" in blobs ? m.steps : []
+      steps: "health" in blobs ? m.steps : [],
+      vitals: "health" in blobs ? m.vitals : []
     }, now, el ? HC_KINDS.el : HC_KINDS.en);
     var wrote = false;
     try {
@@ -903,7 +972,8 @@
     } catch (e) { return; }
     if (wrote) { try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {} }
     var p = prefs();
-    p.healthIn = { at: now, steps: (m.steps || []).length, water: (m.water || []).length, workouts: (m.workouts || []).length };
+    p.healthIn = { at: now, steps: (m.steps || []).length, water: (m.water || []).length, workouts: (m.workouts || []).length,
+                   vitals: Array.isArray(m.vitals) ? m.vitals.length : 0 };
     savePrefs(p);
     emit();
   }
@@ -947,11 +1017,16 @@
     try {
       if (root.OrosHabitsCore) habits = { core: root.OrosHabitsCore, data: JSON.parse(localStorage.getItem("oros-habits-data") || "null") };
     } catch (e) {}
+    var health = null;
+    try {
+      if (root.OrosHealthCore) health = { core: root.OrosHealthCore, data: JSON.parse(localStorage.getItem("oros-health-data") || "null") };
+    } catch (e) {}
     function tr(k, d) { var v = typeof T === "function" ? T(k) : ""; return v && v !== k ? v : d; }
     var lang = (document.documentElement.lang || "en").slice(0, 2);
-    return { alarms: alarms, water: water, todo: todo, habits: habits, lang: lang,
+    return { alarms: alarms, water: water, todo: todo, habits: habits, health: health, lang: lang,
              alarmTitle: tr("alarm.title", ""), todoTitle: tr("app.todo", "To-Do"),
-             habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits") };
+             habitsTitle: tr("app.habits", lang === "el" ? "Συνήθειες" : "Habits"),
+             healthTitle: tr("app.health", lang === "el" ? "Υγεία" : "Health") };
   }
   function pushReminders(force) {
     var p = prefs();
@@ -960,7 +1035,7 @@
     try {
       raw = [localStorage.getItem("oros-alarms"), localStorage.getItem("oros-water-data"),
              localStorage.getItem("oros-todo-data"), localStorage.getItem("oros-notifs"),
-             localStorage.getItem("oros-habits-data")].join("\n");
+             localStorage.getItem("oros-habits-data"), localStorage.getItem("oros-health-data")].join("\n");
     } catch (e) { return; }
     // Water rows depend on the hour too: recheck every 5 minutes.
     var key = fnv(raw) + ":" + raw.length + ":" + Math.floor(now / 300000) + ":" + zone();

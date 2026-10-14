@@ -14,6 +14,8 @@
 // OrosHealthCore.dosesOn (stopped medicines left out), and a top line
 // per medicine running low (lowStock). Both open the Medicines tab
 // (__orosOpenHealth("meds")).
+// Wave 3: doctor's appointments up to the horizon (events) and
+// vaccinations due (tasks), see recRows.
 // ============================================================
 (function (root) {
   "use strict";
@@ -48,6 +50,33 @@
     return out;
   }
 
+  // Wave 3: doctor's appointments from today to the horizon as events
+  // at their time, and vaccinations whose next dose is due by the
+  // horizon (up to 30 days late) as tasks. Open the appointment /
+  // vaccination in Health (__orosOpenAt("health", {appt} | {vax})).
+  var VAX = { en: "Vaccine dose", el: "Δόση εμβολίου" };
+  var APPT = { en: "Doctor's appointment", el: "Ραντεβού με γιατρό" };
+  function recRows(C, d, ctx, lang) {
+    if (typeof C.recordOn !== "function") return [];
+    var out = [], horizon = typeof ctx.horizon === "number" ? ctx.horizon : 3;
+    for (var i = 0; i <= horizon; i++) {
+      var day = C.ymdAdd(ctx.today, i);
+      C.recordOn(d, day).forEach(function (r) {
+        if (r.k !== "ap") return;
+        var a = r.ap, x = new Date(a.at);
+        out.push({ id: "ap@" + a.id, due: day, time: pad2(x.getHours()) + ":" + pad2(x.getMinutes()),
+                   title: a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp), text: APPT[lang] + (a.pl ? " · " + a.pl : ""),
+                   kind: "event", target: { appt: a.id } });
+      });
+    }
+    var last = C.ymdAdd(ctx.today, horizon), first = C.ymdAdd(ctx.today, -30);
+    C.vaxOpen(d).forEach(function (v) {
+      if (v.nx > last || v.nx < first) return;
+      out.push({ id: "vx@" + v.id, due: v.nx, time: null, title: v.n, text: VAX[lang], kind: "task", target: { vax: v.id } });
+    });
+    return out;
+  }
+
   var PROVIDER = {
     id: "health",
     keys: [KEY],
@@ -69,9 +98,13 @@
           kind: "task",
           target: { kind: s.t }
         };
-      }).concat(medRows(C, d, ctx, lang));
+      }).concat(medRows(C, d, ctx, lang)).concat(recRows(C, d, ctx, lang));
     },
     open: function (target, win) {
+      if (target && (typeof target.appt === "string" || typeof target.vax === "string") && typeof win.__orosOpenAt === "function") {
+        win.__orosOpenAt("health", typeof target.appt === "string" ? { appt: target.appt } : { vax: target.vax });
+        return;
+      }
       var kind = target && target.meds ? "meds" : target && typeof target.kind === "string" ? target.kind : "";
       if (kind && typeof win.__orosOpenHealth === "function") win.__orosOpenHealth(kind);
       else if (typeof win.__orosOpenApp === "function") win.__orosOpenApp("health");

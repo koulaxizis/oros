@@ -6,10 +6,16 @@ import android.net.Uri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.BloodGlucoseRecord
+import androidx.health.connect.client.records.BloodPressureRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HydrationRecord
+import androidx.health.connect.client.records.OxygenSaturationRecord
 import androidx.health.connect.client.records.Record
+import androidx.health.connect.client.records.RestingHeartRateRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
@@ -34,6 +40,10 @@ import kotlin.reflect.KClass
  * and own records no longer in orOS are deleted. The answer
  * {t:"health-in"} carries what OTHER apps put there: daily step totals,
  * drinks and workouts (phone.js healthIn). Calls block: io thread only.
+ * v6: also "vitals", readings for orOS Health (read only, never
+ * written): weight, resting heart rate, sleep, blood pressure, blood
+ * glucose and oxygen saturation, each {k, ref, at, v:[…], c?, a?, p?}
+ * in Health's units (phone.js vitalRow checks them again).
  */
 object HealthBridge {
     private const val MAX_IN = 2000
@@ -49,6 +59,13 @@ object HealthBridge {
         HealthPermission.getWritePermission(HydrationRecord::class),
         HealthPermission.getReadPermission(ExerciseSessionRecord::class),
         HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+        // v6: readings for orOS Health, read only
+        HealthPermission.getReadPermission(WeightRecord::class),
+        HealthPermission.getReadPermission(RestingHeartRateRecord::class),
+        HealthPermission.getReadPermission(SleepSessionRecord::class),
+        HealthPermission.getReadPermission(BloodPressureRecord::class),
+        HealthPermission.getReadPermission(BloodGlucoseRecord::class),
+        HealthPermission.getReadPermission(OxygenSaturationRecord::class),
     )
 
     /** "granted" · "some" · "ask" · "denied" · "update" (install or
@@ -228,8 +245,80 @@ object HealthBridge {
             }
             out.put("workouts", arr)
         }
+        out.put("vitals", vitals(client, granted, range, me))
         out.put("wrote", wrote).put("removed", removed)
         return out
+    }
+
+    /** v6: other apps' readings for orOS Health, each kind only when
+     *  its read permission is granted, at most MAX_IN per kind. */
+    private suspend fun vitals(client: HealthConnectClient, granted: Set<String>, range: TimeRangeFilter, me: String): JSONArray {
+        val arr = JSONArray()
+        fun row(k: String, r: Record, at: Instant, vararg v: Long): JSONObject {
+            val values = JSONArray()
+            for (x in v) values.put(x)
+            return JSONObject().put("k", k).put("ref", r.metadata.id).put("at", at.toEpochMilli()).put("v", values)
+        }
+        fun other(r: Record) = r.metadata.dataOrigin.packageName != me
+        if (can(granted, WeightRecord::class, false)) {
+            readAll(client, WeightRecord::class, range, emptySet()).filter(::other).take(MAX_IN).forEach {
+                arr.put(row("wt", it, it.time, Math.round(it.weight.inGrams)))
+            }
+        }
+        if (can(granted, RestingHeartRateRecord::class, false)) {
+            readAll(client, RestingHeartRateRecord::class, range, emptySet()).filter(::other).take(MAX_IN).forEach {
+                arr.put(row("hr", it, it.time, it.beatsPerMinute))
+            }
+        }
+        if (can(granted, SleepSessionRecord::class, false)) {
+            val asleep = setOf(
+                SleepSessionRecord.STAGE_TYPE_SLEEPING, SleepSessionRecord.STAGE_TYPE_LIGHT,
+                SleepSessionRecord.STAGE_TYPE_DEEP, SleepSessionRecord.STAGE_TYPE_REM,
+            )
+            readAll(client, SleepSessionRecord::class, range, emptySet()).filter(::other).take(MAX_IN).forEach { s ->
+                // Minutes asleep: the sleeping stages when the app gave
+                // stages, else the whole session.
+                val ms = if (s.stages.isEmpty()) s.endTime.toEpochMilli() - s.startTime.toEpochMilli()
+                         else s.stages.filter { it.stage in asleep }.sumOf { it.endTime.toEpochMilli() - it.startTime.toEpochMilli() }
+                val min = ms / 60_000L
+                if (min > 0) arr.put(row("sl", s, s.startTime, min))
+            }
+        }
+        if (can(granted, BloodPressureRecord::class, false)) {
+            readAll(client, BloodPressureRecord::class, range, emptySet()).filter(::other).take(MAX_IN).forEach {
+                val o = row("bp", it, it.time, Math.round(it.systolic.inMillimetersOfMercury), Math.round(it.diastolic.inMillimetersOfMercury))
+                o.put("a", when (it.measurementLocation) {
+                    BloodPressureRecord.MEASUREMENT_LOCATION_LEFT_UPPER_ARM, BloodPressureRecord.MEASUREMENT_LOCATION_LEFT_WRIST -> 1
+                    BloodPressureRecord.MEASUREMENT_LOCATION_RIGHT_UPPER_ARM, BloodPressureRecord.MEASUREMENT_LOCATION_RIGHT_WRIST -> 2
+                    else -> 0
+                })
+                o.put("p", when (it.bodyPosition) {
+                    BloodPressureRecord.BODY_POSITION_SITTING_DOWN -> 1
+                    BloodPressureRecord.BODY_POSITION_STANDING_UP -> 2
+                    BloodPressureRecord.BODY_POSITION_LYING_DOWN, BloodPressureRecord.BODY_POSITION_RECLINING -> 3
+                    else -> 0
+                })
+                arr.put(o)
+            }
+        }
+        if (can(granted, BloodGlucoseRecord::class, false)) {
+            readAll(client, BloodGlucoseRecord::class, range, emptySet()).filter(::other).take(MAX_IN).forEach {
+                val o = row("gl", it, it.time, Math.round(it.level.inMilligramsPerDeciliter * 10.0))
+                o.put("c", when (it.relationToMeal) {
+                    BloodGlucoseRecord.RELATION_TO_MEAL_FASTING -> 1
+                    BloodGlucoseRecord.RELATION_TO_MEAL_BEFORE_MEAL -> 2
+                    BloodGlucoseRecord.RELATION_TO_MEAL_AFTER_MEAL -> 3
+                    else -> 0
+                })
+                arr.put(o)
+            }
+        }
+        if (can(granted, OxygenSaturationRecord::class, false)) {
+            readAll(client, OxygenSaturationRecord::class, range, emptySet()).filter(::other).take(MAX_IN).forEach {
+                arr.put(row("o2", it, it.time, Math.round(it.percentage.value)))
+            }
+        }
+        return arr
     }
 
     /** Own records in the window that orOS no longer has: deleted. */

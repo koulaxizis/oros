@@ -172,7 +172,7 @@ test("merge: new collections are symmetric, idempotent, keep tombstones; the sam
   assert.equal(ab.md[0].n, "Renamed");
   assert.equal(ab.rf.length, 1);
   assert.equal(ab.sy.length, 0, "tombstone wins the tie");
-  assert.deepEqual(Object.keys(ab), ["ver", "en", "ty", "md", "dl", "rf", "sy", "sk", "set", "tombs"]);
+  assert.deepEqual(Object.keys(ab), ["ver", "en", "ty", "md", "dl", "rf", "sy", "sk", "al", "cn", "ec", "vx", "ap", "dc", "set", "pf", "tombs"]);
   const old = C.merge({ en: [], ty: [], set: null, tombs: {} }, { en: [], ty: [], set: null, tombs: {} });
   assert.deepEqual(old.md, [], "older data loads with empty collections");
   const hostile = C.merge({ md: [{ id: "__proto__", m: 1, n: "x", sd: "2026-10-01" }, null], dl: [{ id: "x", m: 1 }],

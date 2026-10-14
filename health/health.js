@@ -297,8 +297,121 @@
       "csv.med": "Φάρμακο", "csv.sym": "Σύμπτωμα", "csv.sched": "Προγραμματισμένη {t}"
     }
   };
+  // Wave 3: medical record (Medical ID, appointments, vaccines,
+  // documents).
+  var STRINGS_REC = {
+    en: {
+      "tab.record": "Record",
+      "rv.id": "Medical ID", "rv.appt": "Appointments", "rv.vax": "Vaccines", "rv.docs": "Documents",
+      "id.title": "Medical ID", "id.show": "Show Medical ID", "id.card": "Emergency card", "id.edit": "Edit",
+      "id.empty": "Fill in your Medical ID, so that someone helping you in an emergency can see your allergies, conditions and medicines, and whom to call.",
+      "id.name": "Name", "id.born": "Date of birth", "id.age": "{n} years old", "id.blood": "Blood type", "id.donor": "Organ donor",
+      "id.yes": "Yes", "id.no": "No", "id.notGiven": "Not given",
+      "id.notes": "Medical notes", "id.notesHint": "e.g. pacemaker, contact lenses, pregnant",
+      "id.meds": "Show the medicines I take now", "id.al": "Allergies", "id.cn": "Conditions", "id.md": "Medicines",
+      "id.ec": "Emergency contacts", "id.none": "None given",
+      "id.qr": "Show a QR code", "id.qrHint": "A phone camera reads it as plain text. Nothing goes online.",
+      "id.qrCut": "Shortened to fit the QR code.", "id.qrFail": "The QR code could not be made.",
+      "id.call": "Call {n}", "id.head": "MEDICAL ID", "id.more": "+{n} more",
+      "id.disclaimer": "The Medical ID shows what you typed, as you typed it. Keep it short and up to date: it does not replace your doctor's records.",
+      "al.new": "New allergy", "al.name": "Allergic to", "al.nameHint": "e.g. penicillin, peanuts, bee stings", "al.sev": "Severity",
+      "sev.0": "Not given", "sev.1": "Mild", "sev.2": "Moderate", "sev.3": "Severe",
+      "al.r": "Reaction (optional)", "al.rHint": "e.g. rash, swelling, trouble breathing",
+      "al.add": "Add an allergy", "al.del": "Delete allergy", "al.deleted": "Allergy deleted",
+      "cn.new": "New condition", "cn.name": "Condition", "cn.nameHint": "e.g. type 2 diabetes, asthma", "cn.since": "Since (optional)",
+      "cn.add": "Add a condition", "cn.del": "Delete condition", "cn.deleted": "Condition deleted",
+      "ec.new": "Emergency contact", "ec.name": "Name", "ec.rel": "Relationship (optional)", "ec.relHint": "e.g. wife, son, neighbour",
+      "ec.phone": "Phone", "ec.pick": "From Contacts", "ec.add": "Add a contact", "ec.del": "Delete contact", "ec.deleted": "Contact deleted",
+      "ec.search": "Search contacts…", "ec.noContacts": "No contacts with a phone number.", "ec.badPhone": "Type a phone number.",
+      "vx.new": "New vaccination", "vx.name": "Vaccine", "vx.nameHint": "e.g. tetanus, flu, hepatitis B", "vx.date": "Given on",
+      "vx.next": "Next dose due (optional)", "vx.remind": "Remind me a week before and on the day",
+      "vx.lot": "Batch number (optional)", "vx.add": "Add a vaccination", "vx.again": "Given again", "vx.del": "Delete vaccination",
+      "vx.deleted": "Vaccination deleted", "vx.due": "Next dose {d}", "vx.overdue": "Next dose was due {d}", "vx.dueH": "Next doses",
+      "vx.allH": "All vaccinations", "vx.given": "Given {d}",
+      "vx.none": "No vaccinations yet. Add the ones on your vaccination card to be reminded before the next dose.",
+      "vx.badNext": "The next dose must be after the day it was given.",
+      "ap.new": "New appointment", "ap.dr": "Doctor", "ap.sp": "Specialty (optional)", "ap.spHint": "e.g. cardiologist, dentist",
+      "ap.pl": "Place (optional)", "ap.plHint": "Address or clinic", "ap.date": "Date", "ap.time": "Time", "ap.du": "Duration",
+      "ap.du0": "Not given", "ap.min": "{n} min", "ap.rm": "Remind me",
+      "rm.-1": "No reminder", "rm.0": "At the time", "rm.15": "15 minutes before", "rm.30": "30 minutes before",
+      "rm.60": "1 hour before", "rm.120": "2 hours before", "rm.1440": "1 day before", "rm.2880": "2 days before",
+      "ap.map": "Show on the map", "ap.add": "Add an appointment", "ap.del": "Delete appointment", "ap.deleted": "Appointment deleted",
+      "ap.upH": "Coming up", "ap.pastH": "Earlier", "ap.none": "No appointments yet. Add your next visit to be reminded and to see it in Today.",
+      "ap.need": "Type the doctor or the specialty.",
+      "ap.remHint": "Reminders appear while orOS is open, and through the orOS Android app with orOS closed.",
+      "dc.new": "New document", "dc.kind": "Kind", "dk.lab": "Lab results", "dk.rx": "Prescription", "dk.img": "Imaging (X-ray, scan)",
+      "dk.ltr": "Letter or discharge note", "dk.oth": "Other", "dc.name": "Title", "dc.nameHint": "e.g. blood test, cardiology letter",
+      "dc.date": "Date", "dc.add": "Add a document", "dc.del": "Delete document", "dc.deleted": "Document deleted",
+      "dc.none": "No documents yet. Keep lab results, prescriptions and letters here as photos or PDFs.",
+      "dc.files": "{n} files", "dc.file1": "1 file", "dc.all": "All",
+      "at.title": "Photos and PDFs", "at.hint": "Photos are made smaller and lose their location data. PDFs up to 10 MB.",
+      "at.add": "Add a photo or PDF", "at.open": "Open file {n}", "at.pdf": "PDF", "at.missing": "Not on this device",
+      "at.missingLong": "This file is not on this device yet. Sync your files with Vault Drive to bring it here.",
+      "at.where": "Kept in Files, folder Health.", "at.openPdf": "Open", "at.save": "Save a copy", "at.remove": "Remove",
+      "at.bad": "This file can't be added: a photo, or a PDF up to 10 MB.", "at.noDisk": "The orOS disk is not available.",
+      "at.noFs": "Photos and PDFs can be added when Health runs inside orOS.",
+      "pc.cut": "Cut along the dashed line and fold in the middle.", "pc.made": "Updated {d} · orOS Health",
+      "pc.ice": "In an emergency call",
+      "rec.dis": "Health keeps your record, it does not give medical advice."
+    },
+    el: {
+      "tab.record": "Φάκελος",
+      "rv.id": "Ιατρική ταυτότητα", "rv.appt": "Ραντεβού", "rv.vax": "Εμβόλια", "rv.docs": "Έγγραφα",
+      "id.title": "Ιατρική ταυτότητα", "id.show": "Προβολή ιατρικής ταυτότητας", "id.card": "Κάρτα έκτακτης ανάγκης", "id.edit": "Επεξεργασία",
+      "id.empty": "Συμπλήρωσε την ιατρική σου ταυτότητα, ώστε όποιος σε βοηθήσει σε έκτακτη ανάγκη να βλέπει αλλεργίες, παθήσεις και φάρμακα, και ποιον να ειδοποιήσει.",
+      "id.name": "Όνομα", "id.born": "Ημερομηνία γέννησης", "id.age": "{n} ετών", "id.blood": "Ομάδα αίματος", "id.donor": "Δωρητής οργάνων",
+      "id.yes": "Ναι", "id.no": "Όχι", "id.notGiven": "Δεν δόθηκε",
+      "id.notes": "Ιατρικές σημειώσεις", "id.notesHint": "π.χ. βηματοδότης, φακοί επαφής, εγκυμοσύνη",
+      "id.meds": "Να φαίνονται τα φάρμακα που παίρνω τώρα", "id.al": "Αλλεργίες", "id.cn": "Παθήσεις", "id.md": "Φάρμακα",
+      "id.ec": "Επαφές έκτακτης ανάγκης", "id.none": "Καμία",
+      "id.qr": "Προβολή κωδικού QR", "id.qrHint": "Η κάμερα ενός κινητού το διαβάζει ως απλό κείμενο. Τίποτα δεν πηγαίνει στο διαδίκτυο.",
+      "id.qrCut": "Συντομεύτηκε για να χωρέσει στον κωδικό QR.", "id.qrFail": "Ο κωδικός QR δεν δημιουργήθηκε.",
+      "id.call": "Κλήση: {n}", "id.head": "ΙΑΤΡΙΚΗ ΤΑΥΤΟΤΗΤΑ", "id.more": "+{n} ακόμα",
+      "id.disclaimer": "Η ιατρική ταυτότητα δείχνει ό,τι έγραψες, όπως το έγραψες. Κράτα τη σύντομη και ενημερωμένη: δεν αντικαθιστά τον φάκελο του γιατρού σου.",
+      "al.new": "Νέα αλλεργία", "al.name": "Αλλεργία σε", "al.nameHint": "π.χ. πενικιλίνη, φιστίκια, τσίμπημα μέλισσας", "al.sev": "Σοβαρότητα",
+      "sev.0": "Δεν δόθηκε", "sev.1": "Ήπια", "sev.2": "Μέτρια", "sev.3": "Σοβαρή",
+      "al.r": "Αντίδραση (προαιρετικά)", "al.rHint": "π.χ. εξάνθημα, πρήξιμο, δυσκολία στην αναπνοή",
+      "al.add": "Πρόσθεσε αλλεργία", "al.del": "Διαγραφή αλλεργίας", "al.deleted": "Η αλλεργία διαγράφηκε",
+      "cn.new": "Νέα πάθηση", "cn.name": "Πάθηση", "cn.nameHint": "π.χ. διαβήτης τύπου 2, άσθμα", "cn.since": "Από (προαιρετικά)",
+      "cn.add": "Πρόσθεσε πάθηση", "cn.del": "Διαγραφή πάθησης", "cn.deleted": "Η πάθηση διαγράφηκε",
+      "ec.new": "Επαφή έκτακτης ανάγκης", "ec.name": "Όνομα", "ec.rel": "Σχέση (προαιρετικά)", "ec.relHint": "π.χ. σύζυγος, γιος, γείτονας",
+      "ec.phone": "Τηλέφωνο", "ec.pick": "Από τις Επαφές", "ec.add": "Πρόσθεσε επαφή", "ec.del": "Διαγραφή επαφής", "ec.deleted": "Η επαφή διαγράφηκε",
+      "ec.search": "Αναζήτηση επαφών…", "ec.noContacts": "Καμία επαφή με τηλέφωνο.", "ec.badPhone": "Γράψε έναν αριθμό τηλεφώνου.",
+      "vx.new": "Νέος εμβολιασμός", "vx.name": "Εμβόλιο", "vx.nameHint": "π.χ. τέτανος, γρίπη, ηπατίτιδα Β", "vx.date": "Έγινε στις",
+      "vx.next": "Επόμενη δόση (προαιρετικά)", "vx.remind": "Θύμισέ μου μία εβδομάδα πριν και την ίδια μέρα",
+      "vx.lot": "Αριθμός παρτίδας (προαιρετικά)", "vx.add": "Πρόσθεσε εμβόλιο", "vx.again": "Έγινε ξανά", "vx.del": "Διαγραφή εμβολίου",
+      "vx.deleted": "Το εμβόλιο διαγράφηκε", "vx.due": "Επόμενη δόση {d}", "vx.overdue": "Η επόμενη δόση ήταν για {d}", "vx.dueH": "Επόμενες δόσεις",
+      "vx.allH": "Όλα τα εμβόλια", "vx.given": "Έγινε {d}",
+      "vx.none": "Κανένα εμβόλιο ακόμα. Πρόσθεσε όσα γράφει το βιβλιάριό σου για να σου θυμίζει την επόμενη δόση.",
+      "vx.badNext": "Η επόμενη δόση πρέπει να είναι μετά τη μέρα που έγινε.",
+      "ap.new": "Νέο ραντεβού", "ap.dr": "Γιατρός", "ap.sp": "Ειδικότητα (προαιρετικά)", "ap.spHint": "π.χ. καρδιολόγος, οδοντίατρος",
+      "ap.pl": "Τόπος (προαιρετικά)", "ap.plHint": "Διεύθυνση ή ιατρείο", "ap.date": "Ημερομηνία", "ap.time": "Ώρα", "ap.du": "Διάρκεια",
+      "ap.du0": "Δεν δόθηκε", "ap.min": "{n} λεπτά", "ap.rm": "Υπενθύμιση",
+      "rm.-1": "Χωρίς υπενθύμιση", "rm.0": "Την ώρα του ραντεβού", "rm.15": "15 λεπτά πριν", "rm.30": "30 λεπτά πριν",
+      "rm.60": "1 ώρα πριν", "rm.120": "2 ώρες πριν", "rm.1440": "1 μέρα πριν", "rm.2880": "2 μέρες πριν",
+      "ap.map": "Στον χάρτη", "ap.add": "Πρόσθεσε ραντεβού", "ap.del": "Διαγραφή ραντεβού", "ap.deleted": "Το ραντεβού διαγράφηκε",
+      "ap.upH": "Επόμενα", "ap.pastH": "Παλαιότερα", "ap.none": "Κανένα ραντεβού ακόμα. Πρόσθεσε την επόμενη επίσκεψη για να έχεις υπενθύμιση και να τη βλέπεις στη Σήμερα.",
+      "ap.need": "Γράψε τον γιατρό ή την ειδικότητα.",
+      "ap.remHint": "Οι υπενθυμίσεις εμφανίζονται όσο το orOS είναι ανοιχτό, και μέσω της εφαρμογής orOS για Android με κλειστό το orOS.",
+      "dc.new": "Νέο έγγραφο", "dc.kind": "Είδος", "dk.lab": "Εξετάσεις", "dk.rx": "Συνταγή", "dk.img": "Απεικόνιση (ακτινογραφία, τομογραφία)",
+      "dk.ltr": "Γνωμάτευση ή εξιτήριο", "dk.oth": "Άλλο", "dc.name": "Τίτλος", "dc.nameHint": "π.χ. αιματολογικές, γνωμάτευση καρδιολόγου",
+      "dc.date": "Ημερομηνία", "dc.add": "Πρόσθεσε έγγραφο", "dc.del": "Διαγραφή εγγράφου", "dc.deleted": "Το έγγραφο διαγράφηκε",
+      "dc.none": "Κανένα έγγραφο ακόμα. Κράτα εδώ εξετάσεις, συνταγές και γνωματεύσεις ως φωτογραφίες ή PDF.",
+      "dc.files": "{n} αρχεία", "dc.file1": "1 αρχείο", "dc.all": "Όλα",
+      "at.title": "Φωτογραφίες και PDF", "at.hint": "Οι φωτογραφίες μικραίνουν και χάνουν τα στοιχεία τοποθεσίας. PDF έως 10 MB.",
+      "at.add": "Πρόσθεσε φωτογραφία ή PDF", "at.open": "Άνοιγμα αρχείου {n}", "at.pdf": "PDF", "at.missing": "Όχι σε αυτή τη συσκευή",
+      "at.missingLong": "Αυτό το αρχείο δεν είναι ακόμα σε αυτή τη συσκευή. Συγχρόνισε τα αρχεία σου με το Vault Drive για να έρθει εδώ.",
+      "at.where": "Φυλάσσεται στα Αρχεία, φάκελος Health.", "at.openPdf": "Άνοιγμα", "at.save": "Αποθήκευση αντιγράφου", "at.remove": "Αφαίρεση",
+      "at.bad": "Αυτό το αρχείο δεν μπαίνει: φωτογραφία ή PDF έως 10 MB.", "at.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος.",
+      "at.noFs": "Φωτογραφίες και PDF προστίθενται όταν η Υγεία τρέχει μέσα στο orOS.",
+      "pc.cut": "Κόψε στη διακεκομμένη γραμμή και δίπλωσε στη μέση.", "pc.made": "Ενημέρωση {d} · Υγεία του orOS",
+      "pc.ice": "Σε έκτακτη ανάγκη καλέστε",
+      "rec.dis": "Η Υγεία κρατά τον φάκελό σου, δεν δίνει ιατρικές συμβουλές."
+    }
+  };
   ["en", "el"].forEach(function (l) {
     Object.keys(STRINGS_MEDS[l]).forEach(function (k) { STRINGS[l][k] = STRINGS_MEDS[l][k]; });
+    Object.keys(STRINGS_REC[l]).forEach(function (k) { STRINGS[l][k] = STRINGS_REC[l][k]; });
   });
 
   function t(key, params) {
@@ -632,7 +745,7 @@
     var p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY)); } catch (e) {}
     p = p && typeof p === "object" ? p : {};
-    var tabs = ["home", "meds", "history", "charts", "report"];
+    var tabs = ["home", "meds", "history", "charts", "report", "record"];
     prefs = {
       tab: tabs.indexOf(p.tab) >= 0 ? p.tab : "home",
       ct: typeof p.ct === "string" && C.ID_RE.test(p.ct) ? p.ct : "bp",
@@ -646,7 +759,10 @@
       mh: [7, 30, 90].indexOf(p.mh) >= 0 ? p.mh : 30,
       cm: p.cm === 1 ? 1 : 0,
       rm: p.rm === 0 ? 0 : 1,
-      rs: p.rs === 0 ? 0 : 1
+      rs: p.rs === 0 ? 0 : 1,
+      rv: ["id", "appt", "vax", "docs"].indexOf(p.rv) >= 0 ? p.rv : "id",
+      iq: p.iq === 1 ? 1 : 0,
+      dk: C.DOC_KINDS.indexOf(p.dk) >= 0 ? p.dk : ""
     };
   }
   var prefsTimer = null;
@@ -676,6 +792,12 @@
     clock: SV + '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     skip: SV + '<path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg>',
     bell: SV + '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+    idcard: SV + '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 8v6M9 11h6M7 17h10"/></svg>',
+    phone: SV + '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>',
+    pin: SV + '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    file: SV + '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
+    shield: SV + '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+    print: SV + '<path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg>',
     // one per kind
     bp: SV + '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
     wt: SV + '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8.5 9a4.5 4.5 0 0 1 7 0"/><path d="M12 9.5l1.5-2"/></svg>',
@@ -687,7 +809,7 @@
     st: SV + '<path d="M8 3c1.7 0 2.5 1.6 2.5 4S9.4 11 8 11 5.5 9.4 5.5 7 6.3 3 8 3zM6 13.5h4V16a2 2 0 0 1-4 0zM16 7c1.7 0 2.5 1.6 2.5 4s-1.1 4-2.5 4-2.5-1.6-2.5-4S14.3 7 16 7zM14 17.5h4V20a2 2 0 0 1-4 0z"/></svg>',
     own: SV + '<path d="M4 20h16M6 16l4-6 4 3 4-7"/></svg>'
   };
-  var TABS = [["home", "home"], ["meds", "pill"], ["history", "history"], ["charts", "chart"], ["report", "report"]];
+  var TABS = [["home", "home"], ["meds", "pill"], ["history", "history"], ["charts", "chart"], ["report", "report"], ["record", "idcard"]];
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -714,7 +836,7 @@
   }
   function kindIcon(tid) {
     var i = el("span", "k-ic");
-    i.innerHTML = UI[C.isBuiltin(tid) || tid === "pill" || tid === "sym" ? tid : "own"];
+    i.innerHTML = UI[C.isBuiltin(tid) || ["pill", "sym", "idcard", "file", "shield", "phone", "history"].indexOf(tid) >= 0 ? tid : "own"];
     i.setAttribute("aria-hidden", "true");
     return i;
   }
@@ -873,6 +995,7 @@
     else if (prefs.tab === "history") renderHistory(v);
     else if (prefs.tab === "charts") renderCharts(v);
     else if (prefs.tab === "report") renderReport(v);
+    else if (prefs.tab === "record") renderRecord(v);
     else renderHome(v);
   }
 
@@ -2855,6 +2978,885 @@
     return out;
   }
 
+  // ---------- 10e. Record (wave 3): Medical ID, appointments, vaccines, documents ----------
+  function ymdText(s) { return s ? fmtDate(parseYmd(s).getTime(), false) : ""; }
+  function apptTitle(a) { return a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp); }
+  // A row of a record list: a main button (opens the editor), a bold
+  // line and small lines under it.
+  function recRow(icon, title, lines, onOpen, extra) {
+    var c = el("div", "med-card rec-row");
+    var main = el("button", "med-main");
+    main.type = "button";
+    var top = el("div", "rec-top");
+    if (icon) top.appendChild(kindIcon(icon));
+    top.appendChild(el("b", "", title));
+    main.appendChild(top);
+    lines.forEach(function (ln) {
+      if (!ln) return;
+      if (typeof ln === "string") main.appendChild(el("small", "", ln));
+      else main.appendChild(ln);
+    });
+    main.addEventListener("click", onOpen);
+    c.appendChild(main);
+    (extra || []).forEach(function (x) { if (x) c.appendChild(x); });
+    return c;
+  }
+  // Save one row of a record collection (normalized) or report bad.
+  function putRec(c, row, norm) {
+    var n = norm(row);
+    if (!n) return null;
+    putRow(c, n);
+    saveNow();
+    return n;
+  }
+  function deleteRec(c, id, msg, after) {
+    var row = removeRow(c, id);
+    if (!row) return;
+    saveNow();
+    render();
+    if (after) after(row);
+    undoToast(msg, function () { restoreRow(c, row); saveNow(); render(); });
+  }
+  // The usual editor shell: a form with fields, Delete (when editing),
+  // Cancel and Save; onSave returns an error text or "" when saved.
+  function recDialog(id, title, build, onSave, onDelete, delLabel, more) {
+    var dlg = makeDialog(id, title);
+    var form = el("form");
+    form.method = "dialog";
+    form.noValidate = true;
+    build(form, dlg);
+    var err = el("p", "err");
+    err.setAttribute("role", "alert");
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    if (onDelete) acts.appendChild(iconBtn("dlg-btn icon danger", UI.trash, delLabel, function () { dlg.close(); onDelete(); }));
+    (more || []).forEach(function (b) { acts.appendChild(b(dlg)); });
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.textContent = "";
+      var e = onSave();
+      if (e) { err.textContent = e; return; }
+      dlg.close();
+      render();
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    return dlg;
+  }
+  function textField(form, label, value, max, hintText) {
+    var i = input("text", value || "");
+    i.maxLength = max;
+    if (hintText) i.placeholder = hintText;
+    form.appendChild(field(label, i));
+    return i;
+  }
+  function noteField(form, label, value) {
+    var n = el("textarea");
+    n.rows = 2;
+    n.maxLength = C.NOTE_LEN;
+    n.value = value || "";
+    form.appendChild(field(label, n));
+    return n;
+  }
+  function checkField(form, label, on) {
+    var w = el("label", "chk"), c = el("input");
+    c.type = "checkbox";
+    c.checked = !!on;
+    w.appendChild(c);
+    w.appendChild(el("span", "", label));
+    form.appendChild(w);
+    return c;
+  }
+  function mapsQuery(place, label) {
+    try {
+      if (window.parent && window.parent !== window && typeof window.parent.__orosOpenMapsQuery === "function") {
+        window.parent.__orosOpenMapsQuery(place, label || "");
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  function canMaps() {
+    try { return !!(window.parent && window.parent !== window && typeof window.parent.__orosOpenMapsQuery === "function"); }
+    catch (e) { return false; }
+  }
+  function telLink(num, label) {
+    var a = el("a", "sm-btn tel");
+    a.href = "tel:" + String(num).replace(/[^0-9+]/g, "");
+    a.target = "_top";
+    a.innerHTML = UI.phone;
+    a.appendChild(el("span", "", label));
+    return a;
+  }
+
+  function renderRecord(v) {
+    setTitle(t("tab.record"));
+    var top = section(null);
+    top.appendChild(chips([["id", t("rv.id")], ["appt", t("rv.appt")], ["vax", t("rv.vax")], ["docs", t("rv.docs")]], prefs.rv, function (x) {
+      prefs.rv = x; savePrefs(); render();
+    }, t("tab.record")));
+    v.appendChild(top);
+    if (prefs.rv === "appt") renderAppts(v);
+    else if (prefs.rv === "vax") renderVax(v);
+    else if (prefs.rv === "docs") renderDocs(v);
+    else renderMedId(v);
+    v.appendChild(el("p", "disclaimer", prefs.rv === "id" ? t("id.disclaimer") : t("rec.dis")));
+  }
+
+  // ----- Medical ID -----
+  function sevText(n) { return t("sev." + n); }
+  function idFacts(s) {
+    var pf = s.pf, out = [];
+    if (pf.bd) out.push([t("id.born"), ymdText(pf.bd) + (s.age !== null ? " · " + t("id.age", { n: s.age }) : "")]);
+    if (pf.bt) out.push([t("id.blood"), pf.bt]);
+    if (pf.od) out.push([t("id.donor"), pf.od === 1 ? t("id.yes") : t("id.no")]);
+    return out;
+  }
+  function renderMedId(v) {
+    var now = Date.now(), s = C.medicalId(data, now), pf = s.pf;
+    var card = section(null);
+    var box = el("div", "mid-box");
+    var h = el("div", "mid-head");
+    h.appendChild(kindIcon("shield"));
+    h.appendChild(el("b", "", pf.nm || t("id.title")));
+    box.appendChild(h);
+    var facts = idFacts(s);
+    if (facts.length) box.appendChild(statGrid(facts));
+    var empty = !pf.m && !s.al.length && !s.cn.length && !s.ec.length;
+    if (empty) box.appendChild(hint(t("id.empty")));
+    if (pf.nt) box.appendChild(el("p", "mid-note", pf.nt));
+    var acts = el("div", "btn-col");
+    acts.appendChild(txtBtn("wide-btn primary", UI.idcard, t("id.show"), function () { showMedId(); }));
+    acts.appendChild(txtBtn("wide-btn", UI.print, t("id.card"), function () { printCard(); }));
+    acts.appendChild(txtBtn("wide-btn", UI.edit, t("id.edit"), profileDialog));
+    box.appendChild(acts);
+    card.appendChild(box);
+    v.appendChild(card);
+
+    var sa = section(t("id.al"));
+    s.al.forEach(function (a) {
+      var sv = el("small", "sev sev-" + a.sv, a.sv ? sevText(a.sv) : "");
+      sa.appendChild(recRow(null, a.n, [a.sv ? sv : null, a.r, a.nt ? el("small", "h-note", a.nt) : null], function () { allergyDialog(a.id); }));
+    });
+    sa.appendChild(txtBtn("wide-btn", UI.plus, t("al.add"), function () { allergyDialog(null); }));
+    v.appendChild(sa);
+
+    var sc = section(t("id.cn"));
+    s.cn.forEach(function (c) {
+      sc.appendChild(recRow(null, c.n, [c.sd ? t("sch.from", { d: ymdText(c.sd) }) : "", c.nt ? el("small", "h-note", c.nt) : null],
+        function () { condDialog(c.id); }));
+    });
+    sc.appendChild(txtBtn("wide-btn", UI.plus, t("cn.add"), function () { condDialog(null); }));
+    v.appendChild(sc);
+
+    if (s.md.length) {
+      var sm = section(t("id.md"));
+      s.md.forEach(function (m) {
+        sm.appendChild(recRow("pill", medLabel(m), [[t("f." + m.f), doseText(m, m.q), schedText(m)].join(" · ")], function () {
+          prefs.mv = "list"; savePrefs(); setTab("meds"); medDialog(m.id);
+        }));
+      });
+      v.appendChild(sm);
+    }
+
+    var se = section(t("id.ec"));
+    s.ec.forEach(function (c) {
+      se.appendChild(recRow("phone", c.n, [[c.rl, c.ph].filter(Boolean).join(" · ")], function () { contactDialog(c.id); },
+        [telLink(c.ph, t("id.call", { n: c.n }))]));
+    });
+    se.appendChild(txtBtn("wide-btn", UI.plus, t("ec.add"), function () { contactDialog(null); }));
+    v.appendChild(se);
+  }
+
+  function editProfile(row) {
+    row.m = Math.max(Date.now(), (data.pf ? data.pf.m : 0) + 1);
+    var n = C.normProfile(row);
+    if (!n) return false;
+    data.pf = n;
+    saveNow();
+    return true;
+  }
+  function profileDialog() {
+    var pf = C.profileOf(data), f = {};
+    recDialog("hl-pf", t("id.title"), function (form) {
+      f.nm = textField(form, t("id.name"), pf.nm || settings().nm, C.REC_NAME);
+      var r = el("div", "row2");
+      f.bd = input("date", pf.bd);
+      f.bd.max = ymd(new Date());
+      r.appendChild(field(t("id.born"), f.bd));
+      f.bt = select([["", t("id.notGiven")]].concat(C.BLOOD.map(function (b) { return [b, b]; })), pf.bt);
+      r.appendChild(field(t("id.blood"), f.bt));
+      form.appendChild(r);
+      f.od = select([[0, t("id.notGiven")], [1, t("id.yes")], [2, t("id.no")]], pf.od);
+      form.appendChild(field(t("id.donor"), f.od));
+      f.nt = noteField(form, t("id.notes"), pf.nt);
+      f.nt.placeholder = t("id.notesHint");
+      f.sm = checkField(form, t("id.meds"), pf.sm);
+    }, function () {
+      if (f.bd.value && !C.validYmd(f.bd.value)) { f.bd.classList.add("bad"); return t("e.bad"); }
+      editProfile({ nm: f.nm.value, bd: f.bd.value, bt: f.bt.value, od: +f.od.value, nt: f.nt.value, sm: f.sm.checked ? 1 : 0 });
+      return "";
+    });
+  }
+
+  function allergyDialog(id) {
+    var a = id ? findRow("al", id) : null, f = {};
+    if (id && !a) { showToast(t("feed.gone")); return; }
+    recDialog("hl-al", a ? a.n : t("al.new"), function (form) {
+      f.n = textField(form, t("al.name"), a ? a.n : "", C.REC_NAME, t("al.nameHint"));
+      f.sv = select([0, 1, 2, 3].map(function (n) { return [n, sevText(n)]; }), a ? a.sv : 0);
+      form.appendChild(field(t("al.sev"), f.sv));
+      f.r = textField(form, t("al.r"), a ? a.r : "", C.REACTION_LEN, t("al.rHint"));
+      f.nt = noteField(form, t("e.note"), a ? a.nt : "");
+    }, function () {
+      var rid = a ? a.id : "a" + newId();
+      if (!f.n.value.trim()) { f.n.classList.add("bad"); return t("e.bad"); }
+      return putRec("al", { id: rid, m: nextM("al", rid), n: f.n.value, sv: +f.sv.value, r: f.r.value, nt: f.nt.value }, C.normAllergy) ? "" : t("e.bad");
+    }, a ? function () { deleteRec("al", a.id, t("al.deleted")); } : null, t("al.del"));
+    if (!a) setTimeout(function () { try { f.n.focus(); } catch (x) {} }, 30);
+  }
+  function condDialog(id) {
+    var c = id ? findRow("cn", id) : null, f = {};
+    if (id && !c) { showToast(t("feed.gone")); return; }
+    recDialog("hl-cn", c ? c.n : t("cn.new"), function (form) {
+      f.n = textField(form, t("cn.name"), c ? c.n : "", C.REC_NAME, t("cn.nameHint"));
+      f.sd = input("date", c ? c.sd : "");
+      f.sd.max = ymd(new Date());
+      form.appendChild(field(t("cn.since"), f.sd));
+      f.nt = noteField(form, t("e.note"), c ? c.nt : "");
+    }, function () {
+      var rid = c ? c.id : "c" + newId();
+      if (!f.n.value.trim()) { f.n.classList.add("bad"); return t("e.bad"); }
+      return putRec("cn", { id: rid, m: nextM("cn", rid), n: f.n.value, sd: f.sd.value, nt: f.nt.value }, C.normCond) ? "" : t("e.bad");
+    }, c ? function () { deleteRec("cn", c.id, t("cn.deleted")); } : null, t("cn.del"));
+    if (!c) setTimeout(function () { try { f.n.focus(); } catch (x) {} }, 30);
+  }
+
+  // Contacts (read only): people with at least one phone number.
+  function contactChoices() {
+    var ct = null;
+    try { ct = JSON.parse(localStorage.getItem("oros-contacts-data") || "null"); } catch (e) {}
+    if (!ct || !Array.isArray(ct.contacts)) return [];
+    var gone = {};
+    (Array.isArray(ct.deleted) ? ct.deleted : []).forEach(function (d) {
+      if (d && typeof d.id === "string" && typeof d.mtime === "number") gone[d.id] = Math.max(gone[d.id] || 0, d.mtime);
+    });
+    function s(v) { return typeof v === "string" ? v.trim() : ""; }
+    var out = [];
+    ct.contacts.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string" || c.del) return;
+      if (c.id in gone && gone[c.id] >= (typeof c.mtime === "number" ? c.mtime : 0)) return;
+      var name = [s(c.given), s(c.middle), s(c.family)].filter(Boolean).join(" ") || s(c.nickname) || s(c.org);
+      var phones = (Array.isArray(c.phones) ? c.phones : []).map(function (p) { return p && typeof p === "object" ? s(p.v) : s(p); })
+        .filter(function (p) { return /\d/.test(p); });
+      if (!name || !phones.length) return;
+      out.push({ id: c.id, name: name.slice(0, C.REC_NAME), phones: phones });
+    });
+    return out.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; }).slice(0, 3000);
+  }
+  function pickContact(onPick) {
+    var list = contactChoices();
+    var dlg = makeDialog("hl-ct", t("ec.pick"));
+    if (!list.length) dlg.appendChild(hint(t("ec.noContacts")));
+    else {
+      var q = input("search", "");
+      q.placeholder = t("ec.search");
+      q.setAttribute("aria-label", t("ec.search"));
+      dlg.appendChild(q);
+      var box = el("div", "pick-list");
+      dlg.appendChild(box);
+      var draw = function () {
+        box.innerHTML = "";
+        var w = q.value.trim().toLowerCase();
+        list.filter(function (c) { return !w || c.name.toLowerCase().indexOf(w) >= 0; }).slice(0, 100).forEach(function (c) {
+          c.phones.slice(0, 3).forEach(function (ph) {
+            var b = el("button", "pick-btn");
+            b.type = "button";
+            b.appendChild(el("b", "", c.name));
+            b.appendChild(el("small", "", ph));
+            b.addEventListener("click", function () { dlg.close(); onPick(c, ph); });
+            box.appendChild(b);
+          });
+        });
+      };
+      q.addEventListener("input", draw);
+      draw();
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function contactDialog(id) {
+    var c = id ? findRow("ec", id) : null, f = { ci: c ? c.ci : "" };
+    if (id && !c) { showToast(t("feed.gone")); return; }
+    recDialog("hl-ec", c ? c.n : t("ec.new"), function (form) {
+      if (contactChoices().length) {
+        form.appendChild(txtBtn("dlg-btn", UI.phone, t("ec.pick"), function () {
+          pickContact(function (ct, ph) { f.n.value = ct.name; f.ph.value = ph; f.ci = ct.id; });
+        }));
+      }
+      f.n = textField(form, t("ec.name"), c ? c.n : "", C.REC_NAME);
+      f.rl = textField(form, t("ec.rel"), c ? c.rl : "", C.REL_LEN, t("ec.relHint"));
+      f.ph = input("tel", c ? c.ph : "");
+      f.ph.maxLength = C.PHONE_LEN;
+      f.ph.autocomplete = "off";
+      form.appendChild(field(t("ec.phone"), f.ph));
+    }, function () {
+      var rid = c ? c.id : "e" + newId();
+      var bad = !f.n.value.trim();
+      f.n.classList.toggle("bad", bad);
+      if (!/\d/.test(f.ph.value)) { f.ph.classList.add("bad"); return t("ec.badPhone"); }
+      if (bad) return t("e.bad");
+      return putRec("ec", { id: rid, m: nextM("ec", rid), n: f.n.value, rl: f.rl.value, ph: f.ph.value, ci: f.ci }, C.normContact) ? "" : t("ec.badPhone");
+    }, c ? function () { deleteRec("ec", c.id, t("ec.deleted")); } : null, t("ec.del"));
+  }
+
+  // ----- The Medical ID full screen, the QR code, the emergency card -----
+  function qrLabels() {
+    return { head: t("id.head"), name: t("id.name"), born: t("id.born"), blood: t("id.blood"), donor: t("id.donor"),
+             yes: t("id.yes"), no: t("id.no"), al: t("id.al"), cn: t("id.cn"), md: t("id.md"), ec: t("id.ec"),
+             nt: t("id.notes"), sev: [0, 1, 2, 3].map(sevText), more: t("id.more") };
+  }
+  var QR_MAX = 600;
+  function fullIdText(s) { return C.idText(s, qrLabels(), 100000); }
+  // QR Generator's encoder (../qr/qr-encode.js) drawn as one SVG path.
+  function qrSvg(text, px) {
+    var Q = window.orosQR, qr = null;
+    if (!Q || typeof Q.encode !== "function") return null;
+    try { qr = Q.encode(text, { ecl: "M" }); } catch (e) { return null; }
+    var n = qr.size, m = 4, d = "";
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (qr.modules[y][x]) d += "M" + (x + m) + " " + (y + m) + "h1v1h-1z";
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + (n + 2 * m) + " " + (n + 2 * m));
+    svg.setAttribute("width", px);
+    svg.setAttribute("height", px);
+    svg.setAttribute("shape-rendering", "crispEdges");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", t("id.qr"));
+    var bg = document.createElementNS(SVGNS, "rect");
+    bg.setAttribute("width", n + 2 * m);
+    bg.setAttribute("height", n + 2 * m);
+    bg.setAttribute("fill", "#fff");
+    svg.appendChild(bg);
+    var p = document.createElementNS(SVGNS, "path");
+    p.setAttribute("d", d);
+    p.setAttribute("fill", "#000");
+    svg.appendChild(p);
+    return svg;
+  }
+  function idListBlock(host, label, items, fmt, cls) {
+    var b = el("div", "mid-block" + (cls ? " " + cls : ""));
+    b.appendChild(el("div", "mid-lbl", label));
+    if (!items.length) b.appendChild(el("div", "mid-val dim", t("id.none")));
+    items.forEach(function (it) { b.appendChild(fmt(it)); });
+    host.appendChild(b);
+  }
+  var wakeLock = null;
+  function showMedId() {
+    var s = C.medicalId(data, Date.now()), pf = s.pf;
+    var dlg = makeDialog("hl-mid", null);
+    dlg.classList.add("mid-full");
+    dlg.setAttribute("aria-label", t("id.title"));
+    var bar = el("div", "mid-bar");
+    bar.appendChild(kindIcon("shield"));
+    bar.appendChild(el("span", "", t("id.title")));
+    bar.appendChild(iconBtn("mini mid-x", UI.x, t("dlg.close"), function () { dlg.close(); }));
+    dlg.appendChild(bar);
+    var body = el("div", "mid-body");
+    if (pf.nm) body.appendChild(el("div", "mid-name", pf.nm));
+    var facts = idFacts(s);
+    if (facts.length) {
+      var fx = el("div", "mid-facts");
+      facts.forEach(function (f) {
+        var x = el("div", "mid-fact");
+        x.appendChild(el("span", "mid-lbl", f[0]));
+        x.appendChild(el("span", "mid-val", f[1]));
+        fx.appendChild(x);
+      });
+      body.appendChild(fx);
+    }
+    idListBlock(body, t("id.al"), s.al, function (a) {
+      var r = el("div", "mid-val");
+      r.appendChild(el("b", "", a.n));
+      if (a.sv) r.appendChild(el("span", "sev sev-" + a.sv, " · " + sevText(a.sv)));
+      if (a.r) r.appendChild(el("span", "dim", " · " + a.r));
+      return r;
+    }, "warn");
+    idListBlock(body, t("id.cn"), s.cn, function (c) { return el("div", "mid-val", c.n); });
+    if (pf.sm) idListBlock(body, t("id.md"), s.md, function (m) { return el("div", "mid-val", medLabel(m) + " · " + doseText(m, m.q)); });
+    if (pf.nt) idListBlock(body, t("id.notes"), [pf.nt], function (n) { return el("div", "mid-val mid-note", n); });
+    idListBlock(body, t("id.ec"), s.ec, function (c) {
+      var r = el("div", "mid-val mid-ec");
+      var tx = el("span", "");
+      tx.appendChild(el("b", "", c.n));
+      tx.appendChild(document.createTextNode((c.rl ? " (" + c.rl + ")" : "") + " · " + c.ph));
+      r.appendChild(tx);
+      r.appendChild(telLink(c.ph, t("id.call", { n: c.n })));
+      return r;
+    });
+    var qrBox = el("div", "mid-qr");
+    var qc = el("label", "chk"), qi = el("input");
+    qi.type = "checkbox";
+    qi.checked = !!prefs.iq;
+    qc.appendChild(qi);
+    qc.appendChild(el("span", "", t("id.qr")));
+    body.appendChild(qc);
+    body.appendChild(qrBox);
+    function paintQr() {
+      qrBox.innerHTML = "";
+      if (!prefs.iq) return;
+      var txt = C.idText(s, qrLabels(), QR_MAX), svg = qrSvg(txt, 240);
+      if (!svg) { qrBox.appendChild(hint(t("id.qrFail"))); return; }
+      qrBox.appendChild(svg);
+      qrBox.appendChild(hint(t("id.qrHint") + (txt !== fullIdText(s) ? " " + t("id.qrCut") : "")));
+    }
+    qi.addEventListener("change", function () { prefs.iq = qi.checked ? 1 : 0; savePrefs(); paintQr(); });
+    paintQr();
+    dlg.appendChild(body);
+    dlg.addEventListener("close", function () {
+      if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+    });
+    openDialog(dlg);
+    try {
+      if (navigator.wakeLock && navigator.wakeLock.request) {
+        navigator.wakeLock.request("screen").then(function (w) { if (dlg.open) wakeLock = w; else w.release(); }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  // A wallet card to print: front (name, blood type, allergies,
+  // conditions) and back (medicines, notes, whom to call, QR code
+  // when shown), side by side to cut out and fold.
+  function printCard() {
+    var s = C.medicalId(data, Date.now()), pf = s.pf, host = $("print");
+    host.innerHTML = "";
+    var wrap = el("div", "ec-wrap");
+    var front = el("div", "ec-card"), back = el("div", "ec-card");
+    var hd = el("div", "ec-head", t("id.head"));
+    front.appendChild(hd);
+    if (pf.nm) front.appendChild(el("div", "ec-name", pf.nm));
+    var facts = idFacts(s).map(function (f) { return f[0] + ": " + f[1]; }).join(" · ");
+    if (facts) front.appendChild(el("div", "ec-line", facts));
+    function line(card, label, items, fmt) {
+      if (!items.length) return;
+      var p = el("div", "ec-line");
+      p.appendChild(el("b", "", label + ": "));
+      p.appendChild(document.createTextNode(items.map(fmt).join("; ")));
+      card.appendChild(p);
+    }
+    line(front, t("id.al"), s.al, function (a) { return a.n + (a.sv ? " (" + sevText(a.sv) + ")" : ""); });
+    line(front, t("id.cn"), s.cn, function (c) { return c.n; });
+    if (!s.al.length) line(front, t("id.al"), [t("id.none")], function (x) { return x; });
+    var inner = el("div", "ec-back");
+    var col = el("div", "ec-col");
+    line(col, t("id.md"), s.md, function (m) { return medLabel(m); });
+    if (pf.nt) line(col, t("id.notes"), [pf.nt], function (x) { return x; });
+    if (s.ec.length) {
+      col.appendChild(el("div", "ec-line ec-ice", t("pc.ice")));
+      s.ec.slice(0, 3).forEach(function (c) { col.appendChild(el("div", "ec-line", c.n + (c.rl ? " (" + c.rl + ")" : "") + " " + c.ph)); });
+    }
+    col.appendChild(el("div", "ec-foot", t("pc.made", { d: fmtDate(Date.now(), false) })));
+    inner.appendChild(col);
+    if (prefs.iq) {
+      var svg = qrSvg(C.idText(s, qrLabels(), QR_MAX), 130);
+      if (svg) { var q = el("div", "ec-qr"); q.appendChild(svg); inner.appendChild(q); }
+    }
+    back.appendChild(inner);
+    wrap.appendChild(front);
+    wrap.appendChild(back);
+    host.appendChild(wrap);
+    host.appendChild(el("p", "pr-foot", t("pc.cut")));
+    setTimeout(function () { window.print(); }, 60);
+  }
+
+  // ----- Appointments -----
+  var AP_LEADS = [-1, 0, 15, 30, 60, 120, 1440, 2880];
+  var AP_DURS = [0, 15, 30, 45, 60, 90, 120];
+  function apptWhen(a) {
+    var s = fmtDate(a.at, true) + " " + hm(new Date(a.at));
+    if (a.du) s += "–" + hm(new Date(a.at + a.du * 60000));
+    return s;
+  }
+  function apptRow(a) {
+    var extra = [];
+    if (a.pl && canMaps()) extra.push(smallBtn(t("ap.map"), UI.pin, function () { mapsQuery(a.pl, apptTitle(a)); }));
+    var lines = [apptWhen(a) + (a.rm >= 0 ? " · " + t("rm." + a.rm) : ""), a.pl, a.nt ? el("small", "h-note", a.nt) : null];
+    return recRow("history", apptTitle(a), lines, function () { apptDialog(a.id); }, extra);
+  }
+  var apPast = 10;
+  function renderAppts(v) {
+    var now = Date.now(), start = startOfDay(now);
+    var up = C.upcomingAppts(data, now);
+    var past = data.ap.filter(function (a) { return a.at < start; }).sort(function (x, y) { return y.at - x.at; });
+    var s = section(up.length ? t("ap.upH") : null);
+    if (!data.ap.length) s.appendChild(hint(t("ap.none")));
+    up.forEach(function (a) { s.appendChild(apptRow(a)); });
+    s.appendChild(txtBtn("wide-btn" + (up.length ? "" : " primary"), UI.plus, t("ap.add"), function () { apptDialog(null); }));
+    v.appendChild(s);
+    if (past.length) {
+      var p = section(t("ap.pastH"));
+      past.slice(0, apPast).forEach(function (a) { p.appendChild(apptRow(a)); });
+      if (past.length > apPast) p.appendChild(txtBtn("wide-btn", null, t("hist.more"), function () { apPast += 20; render(); }));
+      v.appendChild(p);
+    }
+  }
+  function datalist(id, values) {
+    var dl = el("datalist");
+    dl.id = id;
+    var seen = {};
+    values.forEach(function (x) {
+      var k = x.toLowerCase();
+      if (!x || seen[k]) return;
+      seen[k] = 1;
+      var o = el("option");
+      o.value = x;
+      dl.appendChild(o);
+    });
+    return dl;
+  }
+  function apptDialog(id, copyOf) {
+    var a = id ? findRow("ap", id) : null, f = {};
+    if (id && !a) { showToast(t("feed.gone")); return; }
+    var src = a || copyOf || null;
+    var at0 = a ? a.at : (function () { var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d.getTime(); })();
+    recDialog("hl-ap", a ? apptTitle(a) : t("ap.new"), function (form) {
+      form.appendChild(datalist("hl-dr-list", data.ap.map(function (x) { return x.dr; })));
+      form.appendChild(datalist("hl-sp-list", data.ap.map(function (x) { return x.sp; })));
+      f.dr = textField(form, t("ap.dr"), src ? src.dr : "", C.DR_LEN);
+      f.dr.setAttribute("list", "hl-dr-list");
+      f.sp = textField(form, t("ap.sp"), src ? src.sp : "", C.SPEC_LEN, t("ap.spHint"));
+      f.sp.setAttribute("list", "hl-sp-list");
+      var r = el("div", "row2");
+      f.d = input("date", ymd(new Date(at0)));
+      f.t = input("time", hm(new Date(at0)));
+      r.appendChild(field(t("ap.date"), f.d));
+      r.appendChild(field(t("ap.time"), f.t));
+      form.appendChild(r);
+      var r2 = el("div", "row2");
+      f.du = select(AP_DURS.map(function (n) { return [n, n ? t("ap.min", { n: n }) : t("ap.du0")]; }), src ? (AP_DURS.indexOf(src.du) >= 0 ? src.du : 0) : 0);
+      f.rm = select(AP_LEADS.map(function (n) { return [n, t("rm." + n)]; }), src && AP_LEADS.indexOf(src.rm) >= 0 ? src.rm : 60);
+      r2.appendChild(field(t("ap.du"), f.du));
+      r2.appendChild(field(t("ap.rm"), f.rm));
+      form.appendChild(r2);
+      form.appendChild(hint(t("ap.remHint")));
+      f.pl = textField(form, t("ap.pl"), src ? src.pl : "", C.PLACE_LEN, t("ap.plHint"));
+      if (canMaps()) {
+        var mb = txtBtn("dlg-btn", UI.pin, t("ap.map"), function () { if (f.pl.value.trim()) mapsQuery(f.pl.value.trim(), f.dr.value.trim()); });
+        form.appendChild(mb);
+      }
+      f.nt = noteField(form, t("e.note"), a ? a.nt : "");
+    }, function () {
+      var at = atOf(f.d.value, f.t.value);
+      var bad = isNaN(at);
+      f.d.classList.toggle("bad", bad);
+      f.t.classList.toggle("bad", bad);
+      if (bad) return t("e.bad");
+      if (!f.dr.value.trim() && !f.sp.value.trim()) { f.dr.classList.add("bad"); return t("ap.need"); }
+      var rid = a ? a.id : "p" + newId();
+      return putRec("ap", { id: rid, m: nextM("ap", rid), dr: f.dr.value, sp: f.sp.value, pl: f.pl.value, at: at,
+                            du: +f.du.value, rm: +f.rm.value, nt: f.nt.value }, C.normAppt) ? "" : t("e.bad");
+    }, a ? function () { deleteRec("ap", a.id, t("ap.deleted")); } : null, t("ap.del"));
+    if (!a) setTimeout(function () { try { f.dr.focus(); } catch (x) {} }, 30);
+  }
+
+  // ----- Vaccinations -----
+  function vaxRow(x, open, today) {
+    var due = "";
+    if (open && x.nx) due = el("small", "vx-due" + (x.nx < today ? " late" : ""), x.nx < today ? t("vx.overdue", { d: ymdText(x.nx) }) : t("vx.due", { d: ymdText(x.nx) }));
+    var lines = [t("vx.given", { d: ymdText(x.d) }) + (x.lt ? " · " + x.lt : ""), due, x.nt ? el("small", "h-note", x.nt) : null];
+    var extra = open ? [smallBtn(t("vx.again"), UI.plus, function () { vaxDialog(null, x); })] : [];
+    return recRow("shield", x.n, lines, function () { vaxDialog(x.id); }, extra);
+  }
+  function renderVax(v) {
+    var today = ymd(new Date()), open = C.vaxOpen(data), openIds = {};
+    open.forEach(function (x) { openIds[x.id] = 1; });
+    if (open.length) {
+      var s = section(t("vx.dueH"));
+      open.forEach(function (x) { s.appendChild(vaxRow(x, true, today)); });
+      v.appendChild(s);
+    }
+    var all = section(data.vx.length ? t("vx.allH") : null);
+    if (!data.vx.length) all.appendChild(hint(t("vx.none")));
+    data.vx.slice().sort(function (a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : cmpStr(a.n, b.n); }).forEach(function (x) {
+      all.appendChild(vaxRow(x, false, today));
+    });
+    all.appendChild(txtBtn("wide-btn" + (data.vx.length ? "" : " primary"), UI.plus, t("vx.add"), function () { vaxDialog(null); }));
+    v.appendChild(all);
+  }
+  // again = a row whose next dose is now given: a new row with its name.
+  function vaxDialog(id, again) {
+    var x = id ? findRow("vx", id) : null, f = {};
+    if (id && !x) { showToast(t("feed.gone")); return; }
+    var today = ymd(new Date());
+    recDialog("hl-vx", x ? x.n : again ? again.n : t("vx.new"), function (form) {
+      form.appendChild(datalist("hl-vx-list", data.vx.map(function (y) { return y.n; })));
+      f.n = textField(form, t("vx.name"), x ? x.n : again ? again.n : "", C.REC_NAME, t("vx.nameHint"));
+      f.n.setAttribute("list", "hl-vx-list");
+      var r = el("div", "row2");
+      f.d = input("date", x ? x.d : today);
+      f.nx = input("date", x ? x.nx : "");
+      r.appendChild(field(t("vx.date"), f.d));
+      r.appendChild(field(t("vx.next"), f.nx));
+      form.appendChild(r);
+      f.rm = checkField(form, t("vx.remind"), x ? (x.nx ? x.rm : 1) : 1);
+      f.lt = textField(form, t("vx.lot"), x ? x.lt : "", C.LOT_LEN);
+      f.nt = noteField(form, t("e.note"), x ? x.nt : "");
+    }, function () {
+      var bad = false;
+      [[f.n, !f.n.value.trim()], [f.d, !C.validYmd(f.d.value)], [f.nx, f.nx.value && !C.validYmd(f.nx.value)]].forEach(function (p) {
+        p[0].classList.toggle("bad", !!p[1]);
+        if (p[1]) bad = true;
+      });
+      if (bad) return t("e.bad");
+      if (f.nx.value && f.nx.value <= f.d.value) { f.nx.classList.add("bad"); return t("vx.badNext"); }
+      var rid = x ? x.id : "v" + newId();
+      return putRec("vx", { id: rid, m: nextM("vx", rid), n: f.n.value, d: f.d.value, nx: f.nx.value, rm: f.rm.checked ? 1 : 0,
+                            lt: f.lt.value, nt: f.nt.value }, C.normVax) ? "" : t("e.bad");
+    }, x ? function () { deleteRec("vx", x.id, t("vx.deleted")); } : null, t("vx.del"));
+  }
+
+  // ----- Documents and their files on the orOS disk -----
+  // The document keeps file names only; each file sits in Files under
+  // "Health" and syncs through Vault Drive when the user runs it, never
+  // through the slice. Photos are re-drawn on a canvas (long side
+  // 1600 px, JPEG 0.8, white background): no EXIF / location kept.
+  // PDFs (≤ 10 MB, starting with "%PDF-") are kept as they are.
+  var AT_MAX_IN = 40 * 1024 * 1024, PDF_MAX = 10 * 1024 * 1024;
+  function fsApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" && typeof f.rm === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  function atRandom() { return rand36(8).replace(/[^a-z0-9]/g, "0"); }
+  function isPdf(file) { return !!file && (file.type === "application/pdf" || /\.pdf$/i.test(file.name || "")); }
+  function encodeAttachment(file) {
+    if (!file) return Promise.resolve(null);
+    if (isPdf(file)) {
+      if (file.size > PDF_MAX || !file.size) return Promise.resolve(null);
+      return Promise.resolve(file.slice(0, 5).text ? file.slice(0, 5).text() : "%PDF-").then(function (h) {
+        return h === "%PDF-" ? { blob: file.slice(0, file.size, "application/pdf"), ext: "pdf" } : null;
+      }).catch(function () { return null; });
+    }
+    if (file.size > AT_MAX_IN) return Promise.resolve(null);
+    return new Promise(function (resolve) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { URL.revokeObjectURL(url); resolve(null); return; }
+        var k = Math.min(1, 1600 / Math.max(w, h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k));
+        cv.height = Math.max(1, Math.round(h * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff";
+        g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function (b) { resolve(b && b.size ? { blob: b, ext: "jpg" } : null); }, "image/jpeg", 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function rmFile(name) {
+    var fs = fsApi(), path = C.atPath(name);
+    if (!fs || !path) return Promise.resolve();
+    return Promise.resolve(fs.rm(path)).catch(function () {});
+  }
+  // A deleted document keeps its files through the Undo window; then
+  // any name no document points at any more leaves the disk.
+  function dropFilesLater(names) {
+    if (!names || !names.length || !fsApi()) return;
+    var list = names.slice();
+    setTimeout(function () {
+      var used = C.attachmentsOf(data);
+      list.forEach(function (n) { if (used.indexOf(n) < 0) rmFile(n); });
+    }, 12000);
+  }
+  function openBlob(blob) {
+    var u = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = u;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
+  }
+  // Files added while the editor is open are written at once and
+  // removed again if it closes without saving; files taken off leave
+  // the disk on save.
+  function attachBox(dlg, doc, docId, dateIn) {
+    var fs = fsApi();
+    var cur = doc && doc.sc ? doc.sc.slice() : [], orig = cur.slice(), added = [], urls = [], done = false;
+    var wrap = el("div", "fld");
+    wrap.appendChild(el("span", "fld-lbl", t("at.title")));
+    var grid = el("div", "at-grid");
+    wrap.appendChild(grid);
+    wrap.appendChild(hint(fs ? t("at.hint") : t("at.noFs")));
+    function paint() {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      urls = [];
+      grid.innerHTML = "";
+      cur.forEach(function (name, i) {
+        var b = el("button", "at-th");
+        b.type = "button";
+        b.setAttribute("aria-label", t("at.open", { n: i + 1 }));
+        b.addEventListener("click", function () { viewer(name); });
+        grid.appendChild(b);
+        if (/\.pdf$/.test(name)) { b.appendChild(el("span", "at-pdf", t("at.pdf"))); return; }
+        if (!fs) { b.appendChild(el("span", "at-miss", t("at.missing"))); return; }
+        Promise.resolve(fs.readBlob(C.atPath(name))).then(function (blob) {
+          if (!blob) throw new Error("ENOENT");
+          var u = URL.createObjectURL(blob);
+          urls.push(u);
+          var im = el("img");
+          im.alt = "";
+          im.src = u;
+          b.appendChild(im);
+        }).catch(function () { b.appendChild(el("span", "at-miss", t("at.missing"))); });
+      });
+      if (fs && cur.length < C.MAX_AT_FILES) {
+        var add = el("button", "at-th at-add", "+");
+        add.type = "button";
+        add.setAttribute("aria-label", t("at.add"));
+        add.title = t("at.add");
+        add.addEventListener("click", pick);
+        grid.appendChild(add);
+      }
+    }
+    function pick() {
+      pickFile("image/*,application/pdf,.pdf").then(function (file) {
+        if (!file) return;
+        return encodeAttachment(file).then(function (enc) {
+          if (!enc) { showToast(t("at.bad")); return; }
+          var name = C.atName(C.validYmd(dateIn.value) ? dateIn.value : ymd(new Date()), docId, atRandom(), enc.ext);
+          if (!name) return;
+          return Promise.resolve(fs.writeBlob(C.atPath(name), enc.blob)).then(function () {
+            if (done) { rmFile(name); return; }
+            added.push(name);
+            cur.push(name);
+            cur.sort(cmpStr);
+            paint();
+          });
+        });
+      }).catch(function () { showToast(t("at.noDisk")); });
+    }
+    function viewer(name) {
+      var v = makeDialog("hl-at-view", t("at.title"));
+      var box = el("div", "at-view");
+      v.appendChild(box);
+      var blobNow = null, pdf = /\.pdf$/.test(name);
+      var acts = el("div", "dlg-actions");
+      var openB = pdf ? button(t("at.openPdf"), "", function () { if (blobNow) openBlob(blobNow); }) : null;
+      var saveB = button(t("at.save"), "", function () {
+        if (blobNow) saveBlob(blobNow, name, pdf ? "application/pdf" : "image/jpeg");
+      });
+      if (openB) { openB.disabled = true; acts.appendChild(openB); }
+      saveB.disabled = true;
+      acts.appendChild(saveB);
+      if (fs) Promise.resolve(fs.readBlob(C.atPath(name))).then(function (blob) {
+        if (!blob) throw new Error("ENOENT");
+        blobNow = pdf ? blob.slice(0, blob.size, "application/pdf") : blob;
+        if (pdf) box.appendChild(el("div", "at-pdf big", t("at.pdf")));
+        else {
+          var u = URL.createObjectURL(blobNow), im = el("img");
+          im.alt = t("at.title");
+          im.src = u;
+          box.appendChild(im);
+          v.addEventListener("close", function () { setTimeout(function () { URL.revokeObjectURL(u); }, 1000); });
+        }
+        if (openB) openB.disabled = false;
+        saveB.disabled = false;
+      }).catch(function () { box.appendChild(hint(t("at.missingLong"))); });
+      else box.appendChild(hint(t("at.missingLong")));
+      v.appendChild(hint(t("at.where")));
+      acts.appendChild(button(t("at.remove"), "danger", function () {
+        v.close();
+        cur = cur.filter(function (n) { return n !== name; });
+        if (added.indexOf(name) >= 0) { added = added.filter(function (n) { return n !== name; }); rmFile(name); }
+        paint();
+      }));
+      acts.appendChild(button(t("dlg.close"), "primary", function () { v.close(); }));
+      v.appendChild(acts);
+      document.body.appendChild(v);
+      v.showModal();
+    }
+    dlg.addEventListener("close", function () {
+      urls.forEach(function (u) { URL.revokeObjectURL(u); });
+      if (!done) { done = true; added.forEach(rmFile); }
+    });
+    paint();
+    return {
+      wrap: wrap,
+      names: function () { return cur.slice(); },
+      commit: function () {
+        done = true;
+        var gone = orig.filter(function (n) { return cur.indexOf(n) < 0; });
+        if (gone.length) setTimeout(function () {
+          var used = C.attachmentsOf(data);
+          gone.forEach(function (n) { if (used.indexOf(n) < 0) rmFile(n); });
+        }, 0);
+      }
+    };
+  }
+  function renderDocs(v) {
+    var s = section(null);
+    if (!data.dc.length) s.appendChild(hint(t("dc.none")));
+    else {
+      var kinds = C.DOC_KINDS.filter(function (k) { return data.dc.some(function (d) { return d.k === k; }); });
+      if (kinds.length > 1) {
+        s.appendChild(chips([["", t("dc.all")]].concat(kinds.map(function (k) { return [k, t("dk." + k)]; })),
+          kinds.indexOf(prefs.dk) >= 0 ? prefs.dk : "", function (k) { prefs.dk = k; savePrefs(); render(); }, t("dc.kind")));
+      }
+      var k = kinds.length > 1 && kinds.indexOf(prefs.dk) >= 0 ? prefs.dk : "";
+      data.dc.filter(function (d) { return !k || d.k === k; })
+        .sort(function (a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : cmpStr(a.id, b.id); })
+        .forEach(function (d) {
+          var n = d.sc ? d.sc.length : 0;
+          s.appendChild(recRow("file", d.n, [t("dk." + d.k) + " · " + ymdText(d.d) + (n ? " · " + (n === 1 ? t("dc.file1") : t("dc.files", { n: n })) : ""),
+            d.nt ? el("small", "h-note", d.nt) : null], function () { docDialog(d.id); }));
+        });
+    }
+    s.appendChild(txtBtn("wide-btn" + (data.dc.length ? "" : " primary"), UI.plus, t("dc.add"), function () { docDialog(null); }));
+    v.appendChild(s);
+  }
+  function docDialog(id) {
+    var d = id ? findRow("dc", id) : null, f = {}, box = null;
+    if (id && !d) { showToast(t("feed.gone")); return; }
+    var rid = d ? d.id : "d" + newId();
+    recDialog("hl-dc", d ? d.n : t("dc.new"), function (form, dlg) {
+      dlg.classList.add("wide");
+      f.n = textField(form, t("dc.name"), d ? d.n : "", C.DOC_NAME, t("dc.nameHint"));
+      var r = el("div", "row2");
+      f.k = select(C.DOC_KINDS.map(function (k) { return [k, t("dk." + k)]; }), d ? d.k : "lab");
+      f.d = input("date", d ? d.d : ymd(new Date()));
+      r.appendChild(field(t("dc.kind"), f.k));
+      r.appendChild(field(t("dc.date"), f.d));
+      form.appendChild(r);
+      box = attachBox(dlg, d, rid, f.d);
+      form.appendChild(box.wrap);
+      f.nt = noteField(form, t("e.note"), d ? d.nt : "");
+    }, function () {
+      var bad = !f.n.value.trim();
+      f.n.classList.toggle("bad", bad);
+      f.d.classList.toggle("bad", !C.validYmd(f.d.value));
+      if (bad || !C.validYmd(f.d.value)) return t("e.bad");
+      var row = { id: rid, m: nextM("dc", rid), k: f.k.value, n: f.n.value, d: f.d.value, nt: f.nt.value, sc: box.names() };
+      if (!putRec("dc", row, C.normDoc)) return t("e.bad");
+      box.commit();
+      return "";
+    }, d ? function () { deleteRec("dc", d.id, t("dc.deleted"), function (row) { dropFilesLater(row.sc || []); }); } : null, t("dc.del"));
+    if (!d) setTimeout(function () { try { f.n.focus(); } catch (x) {} }, 30);
+  }
+
   // ---------- 11. Settings, export, restore ----------
   function dialogHost() {
     if (window.orosDialog) return window.orosDialog;
@@ -3097,6 +4099,14 @@
       setTab("meds");
       return;
     }
+    if (tid === "appts" || tid === "vax" || tid === "record") {   // wave 3 notices
+      var od2 = document.querySelector("dialog[open]");
+      if (od2) od2.close();
+      prefs.rv = tid === "appts" ? "appt" : tid === "vax" ? "vax" : "id";
+      savePrefs();
+      setTab("record");
+      return;
+    }
     var ty = C.typeRow(data, tid);
     if (!ty) { showToast(t("feed.gone")); return; }
     if (prefs.tab !== "home") setTab("home");
@@ -3118,7 +4128,26 @@
   // target { entry: id }. History tab, then the reading's edit dialog,
   // as a History row click does. Unknown reading → no-op; an open
   // dialog (unsaved edits) wins → no-op.
+  // Wave 3 targets: { appt } / { vax } / { doc } / { al } / { cn } open
+  // the Record tab and that row's editor; { id: 1 } the Medical ID.
+  var REC_TARGETS = { appt: ["ap", "appt"], vax: ["vx", "vax"], doc: ["dc", "docs"], al: ["al", "id"], cn: ["cn", "id"] };
+  function openRecordTarget(tg) {
+    var key = null;
+    Object.keys(REC_TARGETS).forEach(function (k) { if (!key && typeof tg[k] === "string") key = k; });
+    if (!key && tg.id !== 1) return false;
+    if (document.querySelector("dialog[open]")) return true;
+    if (!key) { prefs.rv = "id"; savePrefs(); setTab("record"); return true; }
+    var spec = REC_TARGETS[key], row = findRow(spec[0], tg[key]);
+    if (!row) return true;
+    prefs.rv = spec[1];
+    savePrefs();
+    setTab("record");
+    var open = { appt: apptDialog, vax: vaxDialog, doc: docDialog, al: allergyDialog, cn: condDialog };
+    open[key](row.id);
+    return true;
+  }
   function openSearchTarget(t) {
+    if (t && typeof t === "object" && openRecordTarget(t)) return;
     if (t && (typeof t.med === "string" || typeof t.sym === "string")) {
       if (document.querySelector("dialog[open]")) return;
       if (typeof t.med === "string") {

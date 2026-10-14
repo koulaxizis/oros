@@ -23,12 +23,17 @@
 //   normDose, normRefill, normSym, normSymKind, doseKey, slotsOn,
 //   dosesOn, doseState, adherence, prnTaken, stockOf, daysLeft,
 //   runOutDay, lowStock, dueDoses, symKindRow, symKindList
+//   Medical record (wave 3, block before the API): normAllergy,
+//   normCond, normContact, normVax, normAppt, normDoc, normProfile,
+//   medicalId, idText (QR text), vaxOpen, dueVax, dueAppts, recordOn,
+//   upcomingAppts, alarmsBetween (the phone's alarms), atName / atPath
 // Data (synced slice "health", key oros-health-data):
 //   { ver: 1,
 //     en: [entry…] by id, ty: [type…] by id,
 //     md: [medicine…], dl: [dose log…], rf: [refill…],
 //     sy: [symptom…], sk: [symptom kind…] (all by id; see the
-//     medicines block), set: settings | null,
+//     medicines block), al, cn, ec, vx, ap, dc (medical record, see
+//     its block), set: settings | null, pf: Medical ID | null,
 //     tombs: { "<coll>:<id>": deletedAt } }
 //   entry = { id, m, t, at, v: [int…], c, a, p, n, g: [tag…] }
 //     t  type id ("bp", "wt", … or a custom "c…" id)
@@ -53,7 +58,7 @@
   var DATA_VER = 1;
   var ID_RE = /^[a-z0-9-]{1,40}$/;
   var YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
-  var COLLS = ["en", "ty", "md", "dl", "rf", "sy", "sk"];
+  var COLLS = ["en", "ty", "md", "dl", "rf", "sy", "sk", "al", "cn", "ec", "vx", "ap", "dc"];
   var NOTE_LEN = 500, NAME_LEN = 40, UNIT_LEN = 12, TAG_LEN = 24, MAX_TAGS = 6, MAX_REM = 4;
   var MAX_AT = 4102444800000;        // 2100-01-01
   var CUSTOM_MAX = 1e12;
@@ -171,7 +176,8 @@
       fw: x.fw === 0 ? 0 : 1
     };
   }
-  var NORM = { en: normEntry, ty: normType, md: normMed, dl: normDose, rf: normRefill, sy: normSym, sk: normSymKind };
+  var NORM = { en: normEntry, ty: normType, md: normMed, dl: normDose, rf: normRefill, sy: normSym, sk: normSymKind,
+               al: normAllergy, cn: normCond, ec: normContact, vx: normVax, ap: normAppt, dc: normDoc };
 
   function canonPick(cur, x) {
     return !cur || x.m > cur.m || (x.m === cur.m && JSON.stringify(x) > JSON.stringify(cur));
@@ -208,12 +214,17 @@
     });
     var sa = normSettings(a.set), sb = normSettings(b.set);
     out.set = sa && sb ? (canonPick(sa, sb) ? sb : sa) : (sa || sb || null);
+    var pa = normProfile(a.pf), pb = normProfile(b.pf);
+    out.pf = pa && pb ? (canonPick(pa, pb) ? pb : pa) : (pa || pb || null);
     var sorted = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (k) { sorted[k] = tombs[k]; });
     out.tombs = sorted;
     return out;
   }
-  function emptyData() { return { ver: DATA_VER, en: [], ty: [], md: [], dl: [], rf: [], sy: [], sk: [], set: null, tombs: {} }; }
+  function emptyData() {
+    return { ver: DATA_VER, en: [], ty: [], md: [], dl: [], rf: [], sy: [], sk: [],
+             al: [], cn: [], ec: [], vx: [], ap: [], dc: [], set: null, pf: null, tombs: {} };
+  }
   function settingsOf(d) { return (d && d.set) || DEF_SET; }
 
   // The effective row of a type: the stored one, or the defaults of a
@@ -805,6 +816,304 @@
     return out;
   }
 
+  // ---------- Medical record, appointments, documents (wave 3) ----------
+  // Six more collections, same LWW + tombstones ("al:" … "dc:"), and the
+  // Medical ID profile pf (LWW as a whole, like set):
+  //   al allergy    { id, m, n ≤ 60, sv 0 not given | 1 mild | 2 moderate
+  //                   | 3 severe, r reaction ≤ 120, nt }
+  //   cn condition  { id, m, n ≤ 60, sd since ("" | YYYY-MM-DD), nt }
+  //   ec emergency contact { id, m, n ≤ 60, rl relation ≤ 30, ph phone
+  //                   ≤ 40 (digits, + and spaces), ci Contacts id or "" }
+  //   vx vaccination { id, m, n ≤ 60, d given, nx next due ("" = none),
+  //                   rm remind 0|1, lt batch ≤ 30, nt }
+  //   ap appointment { id, m, dr doctor ≤ 60, sp specialty ≤ 40, pl place
+  //                   ≤ 120, at ms, du minutes 0–720, rm reminder lead in
+  //                   minutes (-1 off, 0 at the time … 10080), nt }
+  //   dc document   { id ([a-z0-9]{6,40}), m, k lab|rx|img|ltr|oth,
+  //                   n ≤ 80, d YYYY-MM-DD, nt, sc [file names] ≤ 6 }
+  //     Files live on the orOS disk at /internal/Health/<name> (Vault
+  //     Drive syncs them), never in the slice: names
+  //     "YYYYMMDD-<docId>-<random>.jpg|pdf" (AT_RE), as Pet Health Book.
+  //   pf Medical ID { m, nm ≤ 60, bd birth ("" | YYYY-MM-DD), bt blood
+  //                   type ("" | BLOOD), od organ donor 0 not given | 1 yes
+  //                   | 2 no, nt ≤ 500, sm medicines on the card 0|1 }
+  var BLOOD = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  var DOC_KINDS = ["lab", "rx", "img", "ltr", "oth"];
+  var DOC_ID_RE = /^[a-z0-9]{6,40}$/;
+  var AT_DIR = "/internal/Health";
+  var AT_RE = /^\d{8}-[a-z0-9]{6,40}-[a-z0-9]{4,12}\.(jpg|pdf)$/;
+  var MAX_AT_FILES = 6;
+  var REC_NAME = 60, REACTION_LEN = 120, REL_LEN = 30, PHONE_LEN = 40, LOT_LEN = 30;
+  var DR_LEN = 60, SPEC_LEN = 40, PLACE_LEN = 120, DOC_NAME = 80;
+  var LEAD_MAX = 10080, DUR_MAX = 720;
+  var VAX_HOUR = 9, VAX_EARLY = 7, VAX_LATE = 2;
+
+  function head(x) { return !!x && typeof x === "object" && typeof x.id === "string" && ID_RE.test(x.id) && stamp(x); }
+  function optYmd(s) { return validYmd(s) ? s : ""; }
+  function normPhone(s) { return normStr(s, PHONE_LEN).replace(/[^0-9+()\-. \/]/g, "").replace(/\s+/g, " ").trim(); }
+  function normAllergy(x) {
+    if (!head(x)) return null;
+    var n = normStr(x.n, REC_NAME);
+    if (!n) return null;
+    return { id: x.id, m: x.m, n: n, sv: isInt(x.sv) && x.sv >= 0 && x.sv <= 3 ? x.sv : 0,
+             r: normStr(x.r, REACTION_LEN), nt: normNote(x.nt) };
+  }
+  function normCond(x) {
+    if (!head(x)) return null;
+    var n = normStr(x.n, REC_NAME);
+    if (!n) return null;
+    return { id: x.id, m: x.m, n: n, sd: optYmd(x.sd), nt: normNote(x.nt) };
+  }
+  function normContact(x) {
+    if (!head(x)) return null;
+    var n = normStr(x.n, REC_NAME), ph = normPhone(x.ph);
+    if (!n || !/\d/.test(ph)) return null;
+    return { id: x.id, m: x.m, n: n, rl: normStr(x.rl, REL_LEN), ph: ph,
+             ci: typeof x.ci === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(x.ci) ? x.ci : "" };
+  }
+  function normVax(x) {
+    if (!head(x) || !validYmd(x.d)) return null;
+    var n = normStr(x.n, REC_NAME);
+    if (!n) return null;
+    var nx = validYmd(x.nx) && x.nx > x.d ? x.nx : "";
+    return { id: x.id, m: x.m, n: n, d: x.d, nx: nx, rm: nx && x.rm !== 0 ? 1 : 0,
+             lt: normStr(x.lt, LOT_LEN), nt: normNote(x.nt) };
+  }
+  function normAppt(x) {
+    if (!head(x) || !okMs(x.at)) return null;
+    var dr = normStr(x.dr, DR_LEN), sp = normStr(x.sp, SPEC_LEN);
+    if (!dr && !sp) return null;
+    return { id: x.id, m: x.m, dr: dr, sp: sp, pl: normStr(x.pl, PLACE_LEN), at: x.at,
+             du: isInt(x.du) && x.du >= 0 && x.du <= DUR_MAX ? x.du : 0,
+             rm: isInt(x.rm) && x.rm >= -1 && x.rm <= LEAD_MAX ? x.rm : -1,
+             nt: normNote(x.nt) };
+  }
+  function normAtList(list) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (n) { if (typeof n === "string" && AT_RE.test(n) && out.indexOf(n) < 0) out.push(n); });
+    out.sort(cmpStr);
+    return out.slice(0, MAX_AT_FILES);
+  }
+  function normDoc(x) {
+    if (!head(x) || !DOC_ID_RE.test(x.id) || !validYmd(x.d)) return null;
+    var n = normStr(x.n, DOC_NAME);
+    if (!n) return null;
+    var out = { id: x.id, m: x.m, k: DOC_KINDS.indexOf(x.k) >= 0 ? x.k : "oth", n: n, d: x.d, nt: normNote(x.nt) };
+    var sc = normAtList(x.sc);
+    if (sc.length) out.sc = sc;               // absent when none (canonical form)
+    return out;
+  }
+  function normProfile(x) {
+    if (!x || typeof x !== "object" || !stamp(x)) return null;
+    return { m: x.m, nm: normStr(x.nm, REC_NAME), bd: optYmd(x.bd),
+             bt: BLOOD.indexOf(x.bt) >= 0 ? x.bt : "",
+             od: isInt(x.od) && x.od >= 0 && x.od <= 2 ? x.od : 0,
+             nt: normNote(x.nt), sm: x.sm === 0 ? 0 : 1 };
+  }
+  var DEF_PF = { m: 0, nm: "", bd: "", bt: "", od: 0, nt: "", sm: 1 };
+  function profileOf(d) { return (d && d.pf) || DEF_PF; }
+
+  // ----- Attachments of documents -----
+  function atName(ymd, docId, rnd, ext) {
+    var r = typeof rnd === "string" ? rnd.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) : "";
+    if (!validYmd(ymd) || typeof docId !== "string" || !DOC_ID_RE.test(docId) || r.length < 4 || (ext !== "jpg" && ext !== "pdf")) return null;
+    var n = ymd.replace(/-/g, "") + "-" + docId + "-" + r + "." + ext;
+    return AT_RE.test(n) ? n : null;
+  }
+  function atPath(name) { return typeof name === "string" && AT_RE.test(name) ? AT_DIR + "/" + name : null; }
+  function attachmentsOf(d) {
+    var all = [];
+    ((d && d.dc) || []).forEach(function (x) { (x.sc || []).forEach(function (n) { all.push(n); }); });
+    return all;
+  }
+
+  // ----- Age, current medicines, the Medical ID summary -----
+  function ageOn(bd, nowMs) {
+    if (!validYmd(bd)) return null;
+    var p = bd.split("-"), now = new Date(nowMs);
+    var a = now.getFullYear() - +p[0];
+    if (now.getMonth() + 1 < +p[1] || (now.getMonth() + 1 === +p[1] && now.getDate() < +p[2])) a--;
+    return a >= 0 && a < 150 ? a : null;
+  }
+  // Medicines taken now: not stopped, started, not ended.
+  function currentMeds(d, nowMs) {
+    var today = ymdOf(nowMs);
+    return ((d && d.md) || []).filter(function (m) { return !m.ar && m.sd <= today && (!m.ed || m.ed >= today); })
+      .sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); });
+  }
+  function byName(a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); }
+  // Everything the Medical ID shows: allergies by severity (severe
+  // first), then by name; conditions, contacts by name; the medicines
+  // taken now (unless the profile turns them off).
+  function medicalId(d, nowMs) {
+    var pf = profileOf(d);
+    return {
+      pf: pf,
+      age: ageOn(pf.bd, nowMs),
+      al: ((d && d.al) || []).slice().sort(function (a, b) { return b.sv - a.sv || byName(a, b); }),
+      cn: ((d && d.cn) || []).slice().sort(byName),
+      ec: ((d && d.ec) || []).slice().sort(byName),
+      md: pf.sm ? currentMeds(d, nowMs) : []
+    };
+  }
+  function utf8Len(s) {
+    var n = 0;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c < 0x80) n += 1;
+      else if (c < 0x800) n += 2;
+      else if (c >= 0xD800 && c <= 0xDBFF) { n += 4; i++; }
+      else n += 3;
+    }
+    return n;
+  }
+  // The text of the Medical ID QR code: plain lines, no link, in the
+  // language of the labels L = { head, name, born, blood, donor, yes,
+  // no, al, cn, md, ec, nt, sev: [4 words], more: "+{n}" }. At most
+  // `max` UTF-8 bytes (a QR code a phone camera reads at a glance):
+  // when it is too long, notes go first, then the last medicines,
+  // conditions, contacts and allergies (one of each stays), each list
+  // saying how many more.
+  function idText(s, L, max) {
+    max = max || 700;
+    var pf = s.pf, lim = { nt: 1, md: s.md.length, cn: s.cn.length, ec: s.ec.length, al: s.al.length };
+    function list(label, items, n, fmt) {
+      if (!items.length) return "";
+      var shown = items.slice(0, n).map(fmt);
+      if (n < items.length) shown.push(String(L.more || "+{n}").replace("{n}", items.length - n));
+      return label + ": " + shown.join("; ");
+    }
+    function build() {
+      var out = [L.head];
+      if (pf.nm) out.push(L.name + ": " + pf.nm);
+      if (pf.bd) out.push(L.born + ": " + pf.bd + (s.age !== null ? " (" + s.age + ")" : ""));
+      if (pf.bt) out.push(L.blood + ": " + pf.bt);
+      if (pf.od) out.push(L.donor + ": " + (pf.od === 1 ? L.yes : L.no));
+      out.push(list(L.al, s.al, lim.al, function (a) { return a.n + (a.sv ? " (" + L.sev[a.sv] + ")" : ""); }));
+      out.push(list(L.cn, s.cn, lim.cn, function (c) { return c.n; }));
+      out.push(list(L.md, s.md, lim.md, function (m) { return m.n + (m.s ? " " + m.s : ""); }));
+      out.push(list(L.ec, s.ec, lim.ec, function (c) { return c.n + (c.rl ? " (" + c.rl + ")" : "") + " " + c.ph; }));
+      if (lim.nt && pf.nt) out.push(L.nt + ": " + pf.nt.replace(/\s+/g, " "));
+      return out.filter(Boolean).join("\n");
+    }
+    var order = ["nt", "md", "cn", "ec", "al"], txt = build(), guard = 0;
+    while (utf8Len(txt) > max && guard++ < 400) {
+      var cut = false;
+      for (var i = 0; i < order.length && !cut; i++) {
+        var k = order[i], floor = k === "al" || k === "ec" ? 1 : 0;
+        if (k === "nt" ? (lim.nt && pf.nt) : lim[k] > floor) { lim[k]--; cut = true; }
+      }
+      if (!cut) break;
+      txt = build();
+    }
+    while (utf8Len(txt) > max) txt = txt.slice(0, -1);
+    return txt;
+  }
+
+  // ----- Vaccinations: the newest of each name is the one that counts -----
+  // Rows that still wait for their next dose: the newest row of each
+  // name (no later vaccination of the same name since) with a next
+  // due date, soonest first.
+  function vaxOpen(d) {
+    var newest = {};
+    ((d && d.vx) || []).forEach(function (v) {
+      var k = v.n.toLowerCase(), cur = newest[k];
+      if (!cur || v.d > cur.d || (v.d === cur.d && v.id > cur.id)) newest[k] = v;
+    });
+    return Object.keys(newest).map(function (k) { return newest[k]; }).filter(function (v) { return !!v.nx; })
+      .sort(function (a, b) { return cmpStr(a.nx, b.nx) || byName(a, b); });
+  }
+  // Two notices per due vaccination (reminder on): a week before (from
+  // 09:00 of that day until the day before) and on the day (from 09:00
+  // for three days). One key per row, due day and stage.
+  function vaxStages(v) {
+    return [
+      { st: "w", at: slotAt(ymdAdd(v.nx, -VAX_EARLY), VAX_HOUR * 60), until: ymdDate(v.nx).getTime() },
+      { st: "d", at: slotAt(v.nx, VAX_HOUR * 60), until: ymdDate(ymdAdd(v.nx, VAX_LATE + 1)).getTime() }
+    ];
+  }
+  function vaxNoticeKey(v, st) { return "v-" + v.id + "-" + v.nx.replace(/-/g, "") + "-" + st; }
+  function dueVax(d, nowMs) {
+    var out = [];
+    vaxOpen(d).forEach(function (v) {
+      if (!v.rm) return;
+      vaxStages(v).forEach(function (s) {
+        if (nowMs >= s.at && nowMs < s.until) out.push({ key: vaxNoticeKey(v, s.st), vx: v, st: s.st, at: s.at });
+      });
+    });
+    return out;
+  }
+
+  // ----- Appointments -----
+  function apptAlarmAt(a) { return a.rm < 0 ? null : a.at - a.rm * 60000; }
+  function apptKey(a) { return "a-" + a.id + "-" + a.at.toString(36) + "-" + a.rm; }
+  // Due from its alarm (the lead before) until the appointment starts;
+  // one at the time itself is due for an hour.
+  function dueAppts(d, nowMs) {
+    var out = [];
+    ((d && d.ap) || []).forEach(function (a) {
+      var t0 = apptAlarmAt(a);
+      if (t0 === null) return;
+      var until = a.rm === 0 ? a.at + HOUR : a.at;
+      if (nowMs >= t0 && nowMs < until) out.push({ key: apptKey(a), ap: a, at: t0 });
+    });
+    return out;
+  }
+  // Appointments on one day by time, then vaccinations due that day.
+  //   → [{ k: "ap", ap, at } | { k: "vx", vx, at: null }]
+  function recordOn(d, day) {
+    var out = [];
+    if (!validYmd(day)) return out;
+    ((d && d.ap) || []).forEach(function (a) { if (ymdOf(a.at) === day) out.push({ k: "ap", ap: a, at: a.at }); });
+    out.sort(function (x, y) { return x.at - y.at || cmpStr(x.ap.id, y.ap.id); });
+    vaxOpen(d).forEach(function (v) { if (v.nx === day) out.push({ k: "vx", vx: v, at: null }); });
+    return out;
+  }
+  // Appointments of today (earlier ones too) and later, soonest first.
+  function upcomingAppts(d, nowMs) {
+    var start = ymdDate(ymdOf(nowMs)).getTime();
+    return ((d && d.ap) || []).filter(function (a) { return a.at >= start; })
+      .sort(function (x, y) { return x.at - y.at || cmpStr(x.id, y.id); });
+  }
+
+  // ----- Every alarm in (from, to]: for the phone (orOS closed) -----
+  // The same keys as the shell engine, so the inbox notice and the
+  // phone's alarm are one: doses "d-<doseKey>" (a snoozed one
+  // "…-z<until>" at its end), appointments apptKey, vaccinations
+  // vaxNoticeKey. Same rules: stopped medicines, reminders off, doses
+  // from before a medicine was added and marked doses never ring.
+  //   → [{ key, at, k: "dose" | "appt" | "vax", med?, tm?, ap?, vx?, st? }]
+  function alarmsBetween(d, fromMs, toMs) {
+    var out = [];
+    if (!d || !(toMs > fromMs)) return out;
+    var meds = (d.md || []).filter(function (x) { return !x.ar && x.rm; });
+    if (meds.length) {
+      var live = { dl: d.dl, md: meds }, idx = logIndex(d), guard = 0;
+      for (var day = ymdAdd(ymdOf(fromMs), -1), last = ymdOf(toMs); day <= last && guard++ < 10; day = ymdAdd(day, 1)) {
+        dosesOn(live, day, fromMs, idx).forEach(function (r) {
+          var l = r.log;
+          if (r.pre || r.extra || (l && (l.s === "t" || l.s === "s"))) return;
+          if (l && l.s === "z" && l.zu > fromMs) {
+            if (l.zu <= toMs) out.push({ key: "d-" + r.key + "-z" + l.zu.toString(36), at: l.zu, k: "dose", med: r.med, tm: r.tm });
+            return;
+          }
+          if (r.at > fromMs && r.at <= toMs) out.push({ key: "d-" + r.key, at: r.at, k: "dose", med: r.med, tm: r.tm });
+        });
+      }
+    }
+    (d.ap || []).forEach(function (a) {
+      var t0 = apptAlarmAt(a);
+      if (t0 !== null && t0 > fromMs && t0 <= toMs) out.push({ key: apptKey(a), at: t0, k: "appt", ap: a });
+    });
+    vaxOpen(d).forEach(function (v) {
+      if (!v.rm) return;
+      vaxStages(v).forEach(function (s) {
+        if (s.at > fromMs && s.at <= toMs) out.push({ key: vaxNoticeKey(v, s.st), at: s.at, k: "vax", vx: v, st: s.st });
+      });
+    });
+    return out.sort(function (a, b) { return a.at - b.at || cmpStr(a.key, b.key); });
+  }
+
   var API = {
     DATA_VER: DATA_VER, ID_RE: ID_RE, BUILTIN: BUILTIN, SPEC: SPEC, CTX: CTX, DEF_SET: DEF_SET,
     G_PER_LB: G_PER_LB, MGDL_PER_MMOL: MGDL_PER_MMOL, NOTE_LEN: NOTE_LEN, NAME_LEN: NAME_LEN,
@@ -822,7 +1131,15 @@
     isSymBuiltin: isSymBuiltin, symKindRow: symKindRow, symKindList: symKindList,
     medById: medById, logIndex: logIndex, schedOn: schedOn, withHistory: withHistory, doseKey: doseKey, slotsOn: slotsOn, doseState: doseState,
     dosesOn: dosesOn, prnTaken: prnTaken, adherence: adherence, stockOf: stockOf, perDay: perDay,
-    daysLeft: daysLeft, runOutDay: runOutDay, lowStock: lowStock, dueDoses: dueDoses, calendarOn: calendarOn
+    daysLeft: daysLeft, runOutDay: runOutDay, lowStock: lowStock, dueDoses: dueDoses, calendarOn: calendarOn,
+    BLOOD: BLOOD, DOC_KINDS: DOC_KINDS, DOC_ID_RE: DOC_ID_RE, AT_DIR: AT_DIR, AT_RE: AT_RE, MAX_AT_FILES: MAX_AT_FILES,
+    REC_NAME: REC_NAME, REACTION_LEN: REACTION_LEN, REL_LEN: REL_LEN, PHONE_LEN: PHONE_LEN, LOT_LEN: LOT_LEN,
+    DR_LEN: DR_LEN, SPEC_LEN: SPEC_LEN, PLACE_LEN: PLACE_LEN, DOC_NAME: DOC_NAME, LEAD_MAX: LEAD_MAX, DUR_MAX: DUR_MAX,
+    normAllergy: normAllergy, normCond: normCond, normContact: normContact, normVax: normVax, normAppt: normAppt,
+    normDoc: normDoc, normProfile: normProfile, profileOf: profileOf, atName: atName, atPath: atPath,
+    attachmentsOf: attachmentsOf, ageOn: ageOn, currentMeds: currentMeds, medicalId: medicalId, utf8Len: utf8Len,
+    idText: idText, vaxOpen: vaxOpen, dueVax: dueVax, apptKey: apptKey, dueAppts: dueAppts, recordOn: recordOn,
+    upcomingAppts: upcomingAppts, alarmsBetween: alarmsBetween
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosHealthCore = API;

@@ -189,6 +189,8 @@
       "lbl.feed.famtree": "Death anniversaries",
       "lbl.feed.crm": "Customers",
       "lbl.feed.meds": "Medicines",
+      "lbl.feed.appts": "Doctor visits",
+      "feed.ap.vx": "{name}: vaccine dose due",
       "feed.md.start": "{name}: first day", "feed.md.end": "{name}: last day", "feed.md.out": "{name}: runs out",
       "feed.crm.late": "Late",
       "feed.crm.close": "Expected close",
@@ -385,6 +387,8 @@
       "lbl.feed.famtree": "Επέτειοι θανάτου",
       "lbl.feed.crm": "Πελάτες",
       "lbl.feed.meds": "Φάρμακα",
+      "lbl.feed.appts": "Ιατρικά ραντεβού",
+      "feed.ap.vx": "{name}: δόση εμβολίου",
       "feed.md.start": "{name}: πρώτη μέρα", "feed.md.end": "{name}: τελευταία μέρα", "feed.md.out": "{name}: τελειώνει",
       "feed.crm.late": "Καθυστερεί",
       "feed.crm.close": "Αναμένεται κλείσιμο",
@@ -729,6 +733,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-famtree", color: "#9aa4b0" },   // slate grey — Family Tree death anniversaries
     { id: "lbl-feed-crm",     color: "#8c9eff" },   // periwinkle — CRM follow-ups + expected deal closes
     { id: "lbl-feed-meds",    color: "#e57373" },   // soft red — Health medicines (opt-in: sensitive)
+    { id: "lbl-feed-appts",   color: "#f06292" },   // pink — Health doctor's appointments + vaccines due (opt-in)
     { id: "lbl-feed-sky",     color: "#e9dfb4" }    // moonlight cream — Moon & Sky (opt-in)
   ];
   function feedLabelName(l) {
@@ -758,6 +763,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-famtree") return t("lbl.feed.famtree");
     if (l.id === "lbl-feed-crm") return t("lbl.feed.crm");
     if (l.id === "lbl-feed-meds") return t("lbl.feed.meds");
+    if (l.id === "lbl-feed-appts") return t("lbl.feed.appts");
     if (l.id === "lbl-feed-sky") return t("lbl.feed.sky");
     return t("lbl.feed.custom");
   }
@@ -1129,7 +1135,7 @@ function transientNote(title, body) {
 
   // Label visibility: id -> true/false. Absent = visible. Chips row
   // toggles these; nothing is ever deleted by filtering.
-  var labelVis = { "lbl-feed-sky": false, "lbl-feed-meds": false };   // opt-in feeds start hidden (loadFeedVis)
+  var labelVis = { "lbl-feed-sky": false, "lbl-feed-meds": false, "lbl-feed-appts": false };   // opt-in feeds start hidden (loadFeedVis)
   function labelVisible(labelId) {
     if (!labelId) return true;
     return labelVis[labelId] !== false;
@@ -1754,6 +1760,44 @@ function transientNote(title, body) {
         end: null,
         _feed: true,
         _openAt: { app: "health", target: { med: r.med.id } }
+      };
+    });
+  }
+
+  // Health doctor's appointments read-only feed (Health wave 3,
+  // OrosHealthCore.recordOn): each appointment at its time (and end
+  // when it has a duration), and the day a vaccination's next dose is
+  // due. Opt-in like Medicines (sensitive). Click → Health with that
+  // appointment / vaccination open. Never stored.
+  var apptsCache = { when: 0, data: null };
+  function apptsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-appts")) return [];
+    var C = window.OrosHealthCore, now = Date.now();
+    if (!C || typeof C.recordOn !== "function") return [];
+    if (now - apptsCache.when > 1000) {
+      apptsCache.data = null;
+      try {
+        var d = JSON.parse(localStorage.getItem("oros-health-data"));
+        if (d && typeof d === "object" && ((Array.isArray(d.ap) && d.ap.length) || (Array.isArray(d.vx) && d.vx.length))) apptsCache.data = C.merge(d, d);
+      } catch (e) { apptsCache.data = null; }
+      apptsCache.when = now;
+    }
+    if (!apptsCache.data) return [];
+    function hm(ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); }
+    return C.recordOn(apptsCache.data, dateStr).map(function (r) {
+      if (r.k === "vx") {
+        return { id: "vx-" + r.vx.id + "-" + dateStr, title: t("feed.ap.vx").replace("{name}", r.vx.n), labelId: "lbl-feed-appts",
+                 start: null, end: null, _feed: true, _openAt: { app: "health", target: { vax: r.vx.id } } };
+      }
+      var a = r.ap;
+      return {
+        id: "ap-" + a.id + "-" + dateStr,                 // per-render key, never stored
+        title: (a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp)) + (a.pl ? " · " + a.pl : ""),
+        labelId: "lbl-feed-appts",
+        start: hm(a.at),
+        end: a.du && new Date(a.at + a.du * 60000).getDate() === new Date(a.at).getDate() ? hm(a.at + a.du * 60000) : null,
+        _feed: true,
+        _openAt: { app: "health", target: { appt: a.id } }
       };
     });
   }
@@ -2457,7 +2501,7 @@ function transientNote(title, body) {
   var daysData = null;
 
   // Opt-in feeds start hidden; turning one on is remembered (true).
-  var OPT_IN_FEEDS = ["lbl-feed-sky", "lbl-feed-meds"];
+  var OPT_IN_FEEDS = ["lbl-feed-sky", "lbl-feed-meds", "lbl-feed-appts"];
   function loadFeedVis() {
     var v = null;
     try { v = JSON.parse(localStorage.getItem(FEEDVIS_KEY) || "{}"); } catch (e) {}
@@ -2579,6 +2623,7 @@ function transientNote(title, body) {
     .concat(familyTreeFeedOn(dateStr))
     .concat(crmFeedOn(dateStr))
     .concat(medsFeedOn(dateStr))
+    .concat(apptsFeedOn(dateStr))
     .concat(skyFeedOn(dateStr))
     .concat(subsFeedOn(dateStr));
   }

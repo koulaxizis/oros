@@ -1295,11 +1295,36 @@
     if (!Core) return;                                  // stale bundle — silent
     var raw;
     try { raw = JSON.parse(localStorage.getItem(HEALTH_DATA_KEY)); } catch (e) { return; }
-    if (!raw || ((!Array.isArray(raw.ty) || !raw.ty.length) && (!Array.isArray(raw.md) || !raw.md.length))) return;
+    if (!raw || !["ty", "md", "ap", "vx"].some(function (c) { return Array.isArray(raw[c]) && raw[c].length; })) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var d = Core.merge(raw, raw), now = Date.now();
     var due = Core.dueReminders(d, now);
+    // Record (Health wave 3): a doctor's appointment from its reminder
+    // lead until it starts, and a vaccination's next dose a week before
+    // and on the day. Same keys as the phone's alarms (alarmsBetween).
+    var appts = typeof Core.dueAppts === "function" ? Core.dueAppts(d, now) : [];
+    var vaxes = typeof Core.dueVax === "function" ? Core.dueVax(d, now) : [];
+    if (appts.length || vaxes.length) {
+      var elR = state.lang === "el", titleR = window.t("app.health");
+      if (titleR === "app.health") titleR = "Health";
+      var dm = function (ms) { var x = new Date(ms); return x.getDate() + "/" + (x.getMonth() + 1); };
+      var hmR = function (ms) { var x = new Date(ms); return (x.getHours() < 10 ? "0" : "") + x.getHours() + ":" + (x.getMinutes() < 10 ? "0" : "") + x.getMinutes(); };
+      appts.forEach(function (r) {
+        var a = r.ap, who = a.dr && a.sp ? a.dr + " · " + a.sp : (a.dr || a.sp);
+        N.emit({ ns: "health", key: r.key, type: "reminder", title: titleR,
+                 body: (elR ? "Ραντεβού με γιατρό: " : "Doctor's appointment: ") + who + ", " + dm(a.at) + " " + hmR(a.at),
+                 deepLink: "health:appts" });
+      });
+      vaxes.forEach(function (r) {
+        var p = r.vx.nx.split("-");
+        var when = (+p[2]) + "/" + (+p[1]);
+        N.emit({ ns: "health", key: r.key, type: "reminder", title: titleR,
+                 body: (r.st === "w" ? (elR ? "Επόμενη δόση εμβολίου σε μία εβδομάδα: " : "Next vaccine dose in a week: ")
+                                     : (elR ? "Επόμενη δόση εμβολίου: " : "Next vaccine dose due: ")) + r.vx.n + " (" + when + ")",
+                 deepLink: "health:vax" });
+      });
+    }
     // Medicines (Health wave 2): each dose from its time for 4 hours
     // unless marked or snoozed (a snooze rings again with its own key),
     // and once per count / refill when one runs low. Deep link

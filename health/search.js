@@ -14,6 +14,9 @@
 //   - one per symptom that carries a note or tags: the symptom as
 //     title (own kinds by name), note and tags as text; target
 //     { sym }. Symptoms of a hidden or deleted kind are skipped.
+//   - wave 3: one per appointment, vaccination, document, allergy
+//     and condition; targets { appt } / { vax } / { doc } / { al } /
+//     { cn } open its editor on the Record tab.
 // Skipped: rows with a tombstone at least as new as the row
 // (tombs{"en:<id>"} / tombs{"ty:<id>"}), readings of a hidden or
 // unknown kind, hidden own kinds.
@@ -102,6 +105,25 @@
         out.push({ id: "sy:" + e.id, title: name, text: [note, tags.join(", ")].filter(Boolean).join(" · "),
                    when: typeof e.at === "number" ? e.at : 0, target: { sym: e.id } });
       });
+      // Wave 3: the record. Appointments (doctor · specialty, place
+      // and note as text, when = its time), vaccinations, documents,
+      // allergies and conditions; each opens its editor in Health.
+      function rows(c, fn) {
+        (Array.isArray(d[c]) ? d[c] : []).forEach(function (x) {
+          if (!x || typeof x.id !== "string" || !ID_RE.test(x.id) || gone(c, x)) return;
+          var h = fn(x);
+          if (h && h.title) out.push(h);
+        });
+      }
+      rows("ap", function (a) {
+        var dr = str(a.dr), sp = str(a.sp);
+        return { id: "ap:" + a.id, title: dr && sp ? dr + " · " + sp : (dr || sp), text: [str(a.pl), str(a.nt)].filter(Boolean).join(" · "),
+                 when: typeof a.at === "number" ? a.at : 0, target: { appt: a.id } };
+      });
+      rows("vx", function (v) { return { id: "vx:" + v.id, title: str(v.n), text: [str(v.lt), str(v.nt)].filter(Boolean).join(" · "), target: { vax: v.id } }; });
+      rows("dc", function (x) { return { id: "dc:" + x.id, title: str(x.n), text: str(x.nt), target: { doc: x.id } }; });
+      rows("al", function (x) { return { id: "al:" + x.id, title: str(x.n), text: [str(x.r), str(x.nt)].filter(Boolean).join(" · "), target: { al: x.id } }; });
+      rows("cn", function (x) { return { id: "cn:" + x.id, title: str(x.n), text: str(x.nt), target: { cn: x.id } }; });
       return out;
     },
     open: function (t, win) {
@@ -109,7 +131,11 @@
           win && typeof win.__orosOpenHealth === "function") {
         win.__orosOpenHealth(t.kind);
       } else if (win && typeof win.__orosOpenAt === "function") {
-        win.__orosOpenAt("health", t && typeof t.entry === "string" ? { entry: t.entry }
+        var rec = null;
+        ["appt", "vax", "doc", "al", "cn"].forEach(function (k) {
+          if (!rec && t && typeof t[k] === "string" && ID_RE.test(t[k])) { rec = {}; rec[k] = t[k]; }
+        });
+        win.__orosOpenAt("health", rec ? rec : t && typeof t.entry === "string" ? { entry: t.entry }
           : t && typeof t.med === "string" ? { med: t.med } : t && typeof t.sym === "string" ? { sym: t.sym } : null);
       }
     }
