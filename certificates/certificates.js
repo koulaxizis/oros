@@ -137,6 +137,19 @@
       "f.onlyAt": "Only for people ticked as present", "btn.badges": "Open Badges (ZIP)",
       "chk.at": "{a} of {n} people are ticked as present; only they get a certificate.", "chk.at0": "No one is ticked as present yet.",
       "toast.at": "Ticked: {n}.", "work.badges": "Open Badges {i} of {n}…", "toast.badges": "Open Badges need a browser that can sign.",
+      "btn.sendAll": "Email everyone…", "send.title": "Email everyone",
+      "send.hint": "Each person gets one message with their own certificate attached, sent from your orOS Mail account. Keep orOS open and in front while it sends.",
+      "send.from": "Send from", "send.rate": "Messages per hour, at most",
+      "send.rateHint": "Mail providers limit how many messages you can send (often 100 to 300 an hour, about 500 a day on Gmail). Sending stops at the first such refusal.",
+      "send.again": "Also people who were already sent theirs", "send.go": "Start sending", "send.pause": "Pause", "send.resume": "Go on",
+      "send.left": "{n} to send.", "send.left1": "1 to send.", "send.none": "Everyone with an email has already been sent theirs.",
+      "send.noMail": "No one on the list has an email address.", "send.step": "Sending {i} of {n}: {name}…",
+      "send.sent": "Sent {s} of {n}.", "send.done": "Done: {s} sent.", "send.doneFail": "Done: {s} sent. Not delivered (address refused): {list}.",
+      "send.paused": "Paused: {s} of {n} sent. Press “Go on” to continue.",
+      "send.err.rate": "The mail server refused more messages for now (its limit). Wait a while or lower the messages per hour, then go on.",
+      "send.err.auth": "The mail server did not accept the password. Check the account in orOS Mail.",
+      "send.err.nopass": "The password of this account is not on this device. Open the account in orOS Mail on this device first.",
+      "send.err.offline": "No connection. Go on when you are back online.", "send.err.other": "Sending stopped: {why}.",
       "sheet.title": "SIGN-IN SHEET", "sheet.no": "#", "sheet.name": "Full name", "sheet.sign": "Signature", "sheet.page": "Page {i} of {n}",
       "badge.check": "Check this certificate",
       "wd": "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
@@ -244,6 +257,19 @@
       "f.onlyAt": "Μόνο για όσους σημειώθηκαν παρόντες", "btn.badges": "Open Badges (ZIP)",
       "chk.at": "{a} από {n} άτομα σημειώθηκαν παρόντες· μόνο αυτά παίρνουν πιστοποιητικό.", "chk.at0": "Κανείς δεν έχει σημειωθεί παρών ακόμα.",
       "toast.at": "Σημειώθηκαν: {n}.", "work.badges": "Open Badges {i} από {n}…", "toast.badges": "Τα Open Badges χρειάζονται browser που μπορεί να υπογράψει.",
+      "btn.sendAll": "Email σε όλους…", "send.title": "Email σε όλους",
+      "send.hint": "Κάθε άτομο παίρνει ένα μήνυμα με το δικό του πιστοποιητικό συνημμένο, από τον λογαριασμό σου στο orOS Mail. Κράτα το orOS ανοιχτό και μπροστά όσο στέλνει.",
+      "send.from": "Αποστολή από", "send.rate": "Μηνύματα την ώρα, το πολύ",
+      "send.rateHint": "Οι πάροχοι email βάζουν όριο στα μηνύματα (συχνά 100 έως 300 την ώρα, περίπου 500 τη μέρα στο Gmail). Η αποστολή σταματά στην πρώτη τέτοια άρνηση.",
+      "send.again": "Και σε όσους έχουν ήδη λάβει το δικό τους", "send.go": "Έναρξη αποστολής", "send.pause": "Παύση", "send.resume": "Συνέχεια",
+      "send.left": "{n} για αποστολή.", "send.left1": "1 για αποστολή.", "send.none": "Όλοι όσοι έχουν email έχουν ήδη λάβει το δικό τους.",
+      "send.noMail": "Κανείς στη λίστα δεν έχει διεύθυνση email.", "send.step": "Αποστολή {i} από {n}: {name}…",
+      "send.sent": "Στάλθηκαν {s} από {n}.", "send.done": "Έτοιμο: στάλθηκαν {s}.", "send.doneFail": "Έτοιμο: στάλθηκαν {s}. Δεν παραδόθηκαν (η διεύθυνση απορρίφθηκε): {list}.",
+      "send.paused": "Σε παύση: στάλθηκαν {s} από {n}. Πάτα «Συνέχεια» για να συνεχίσεις.",
+      "send.err.rate": "Ο server email δεν δέχεται άλλα μηνύματα προς το παρόν (το όριό του). Περίμενε λίγο ή μείωσε τα μηνύματα την ώρα και συνέχισε.",
+      "send.err.auth": "Ο server email δεν δέχτηκε τον κωδικό. Έλεγξε τον λογαριασμό στο orOS Mail.",
+      "send.err.nopass": "Ο κωδικός αυτού του λογαριασμού δεν υπάρχει σε αυτή τη συσκευή. Άνοιξε πρώτα τον λογαριασμό στο orOS Mail εδώ.",
+      "send.err.offline": "Δεν υπάρχει σύνδεση. Συνέχισε όταν συνδεθείς ξανά.", "send.err.other": "Η αποστολή σταμάτησε: {why}.",
       "sheet.title": "ΠΑΡΟΥΣΙΟΛΟΓΙΟ", "sheet.no": "#", "sheet.name": "Ονοματεπώνυμο", "sheet.sign": "Υπογραφή", "sheet.page": "Σελίδα {i} από {n}",
       "badge.check": "Έλεγχος του πιστοποιητικού",
       "wd": "Κυρ,Δευ,Τρί,Τετ,Πέμ,Παρ,Σάβ",
@@ -1294,6 +1320,7 @@
     if (ppl.length && !miss.filter(function (f) { return f !== "serial"; }).length) item("ok", t("chk.ok"));
     $("num-btn").disabled = !ppl.some(function (p) { return !p.no && (!ev.onlyAt || p.at); });
     $("f-onlyAt").checked = !!ev.onlyAt;
+    $("send-btn").hidden = !canSendAll();
   }
   function giveNumbers(silent) {
     if (!ev) return 0;
@@ -1559,10 +1586,7 @@
     var p = C.personById(data, id);
     if (!p || !p.em || !ev || busy) return;
     if (saveTimer) saveNow();
-    var e = ev, lang = e.lang;
-    var title = e.t ? (lang === "el" ? " για «" + e.t + "»" : " for “" + e.t + "”") : "";
-    var subj = e.t ? tIn(lang, "mail.subject", { t: e.t }) : tIn(lang, "mail.subjectNoT");
-    var body = tIn(lang, "mail.body", { n: p.n, tt: title, i: e.issuer || "" }).replace(/\n+$/, "");
+    var e = ev, mt = mailText(e, p), subj = mt.subj, body = mt.body;
     var name = pdfName(e, p), s = mailShell();
     runBusy(makePdf(e, [p]).then(function (pdf) {
       var blob = pdf.output("blob");
@@ -1581,6 +1605,130 @@
         toast(t("toast.mailHint"));
       });
     }));
+  }
+
+  function mailText(e, p) {
+    var lang = e.lang;
+    var title = e.t ? (lang === "el" ? " για «" + e.t + "»" : " for “" + e.t + "”") : "";
+    return {
+      subj: (e.t ? tIn(lang, "mail.subject", { t: e.t }) : tIn(lang, "mail.subjectNoT")).slice(0, 300),
+      body: tIn(lang, "mail.body", { n: p.n, tt: title, i: e.issuer || "" }).replace(/\n+$/, "").slice(0, 20000)
+    };
+  }
+
+  // Email everyone through the relay with an orOS Mail account
+  // (send.js): one message per person, paced, resumable (person.ms).
+  var SEND_KEY = "oros-certificates-send", sendQ = null, sendRun = null;
+  function canSendAll() { return !!(window.CertSend && window.CertSend.accounts && window.orosMailCompose && window.CertSend.accounts().length); }
+  function sendPrefs() {
+    var p = readJSON(SEND_KEY) || {}, H = window.CertSend.PER_HOUR;
+    var r = Math.round(+p.rate);
+    return { acc: typeof p.acc === "string" ? p.acc : "", rate: r >= H.min && r <= H.max ? r : H.def };
+  }
+  // bad: ids whose address was refused in this run (not tried again)
+  function sendList(e, again, since, bad) {
+    var MC = window.orosMailCompose;
+    return people().filter(function (p) {
+      if ((bad && bad[p.id]) || !p.em || !MC.validAddr(p.em) || (e.onlyAt && !p.at) || ($("skip-rv").checked && p.rv)) return false;
+      return again ? !p.ms || p.ms < since : !p.ms;
+    });
+  }
+  function renderSend() {
+    var st = $("send-state"), go = $("send-go"), r = sendRun;
+    if (!ev) return;
+    var mine = r && r.evId === ev.id;
+    go.disabled = false;
+    if (mine && r.status === "run") {
+      go.textContent = t("send.pause");
+      st.textContent = r.cur ? t("send.step", { i: r.s + r.f.length + 1, n: r.n, name: r.cur }) : t("send.sent", { s: r.s, n: r.n });
+      return;
+    }
+    if (mine && (r.status === "paused" || r.status === "error")) {
+      go.textContent = t("send.resume");
+      if (r.status === "paused") { st.textContent = t("send.paused", { s: r.s, n: r.n }); return; }
+      var err = r.err || {}, S = window.CertSend, k = S.isRate(err) ? "rate" : err.code === "auth" ? "auth" : err.code === "nopass" ? "nopass" :
+        /^(offline|network|timeout)$/.test(err.code) ? "offline" : "other";
+      st.textContent = t("send.sent", { s: r.s, n: r.n }) + " " + t("send.err." + k, { why: err.msg || err.code || "?" });
+      return;
+    }
+    go.textContent = t("send.go");
+    var since = mine ? r.since : 0;
+    var n = sendList(ev, $("send-again").checked, since || now(), mine ? r.bad : null).length;
+    var done = mine && r.status === "done" ? (r.f.length ? t("send.doneFail", { s: r.s, list: r.f.join(", ") }) : t("send.done", { s: r.s })) + " " : "";
+    if (!people().some(function (p) { return p.em; })) { st.textContent = t("send.noMail"); go.disabled = true; return; }
+    st.textContent = done + (n ? (n === 1 ? t("send.left1") : t("send.left", { n: n })) : t("send.none"));
+    go.disabled = !n;
+  }
+  function openSend() {
+    if (!ev || !canSendAll()) return;
+    if (saveTimer) saveNow();
+    var accs = window.CertSend.accounts(), sp = sendPrefs(), sel = $("send-acc");
+    sel.textContent = "";
+    accs.forEach(function (a) {
+      var o = document.createElement("option");
+      o.value = a.id; o.textContent = a.name ? a.name + " <" + a.email + ">" : a.email;
+      sel.appendChild(o);
+    });
+    sel.value = accs.some(function (a) { return a.id === sp.acc; }) ? sp.acc : accs[0].id;
+    $("send-rate").value = String(sp.rate);
+    if (!(sendRun && sendRun.evId === ev.id && sendRun.status !== "done")) $("send-again").checked = false;
+    renderSend();
+    showDlg("send");
+  }
+  function binOf(ab) {
+    var u8 = new Uint8Array(ab), out = "";
+    for (var i = 0; i < u8.length; i += 0x8000) out += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+    return out;
+  }
+  function sendGo() {
+    if (sendQ) { sendQ.stop(); return; }
+    if (!ev || busy || !canSendAll()) return;
+    var S = window.CertSend, MC = window.orosMailCompose, H = S.PER_HOUR;
+    var accs = S.accounts(), acc = accs.filter(function (a) { return a.id === $("send-acc").value; })[0] || accs[0];
+    var rate = Math.max(H.min, Math.min(H.max, Math.round(+$("send-rate").value) || H.def));
+    $("send-rate").value = String(rate);
+    try { localStorage.setItem(SEND_KEY, JSON.stringify({ acc: acc.id, rate: rate })); } catch (x) {}
+    var e = ev, resume = sendRun && sendRun.evId === e.id && sendRun.status !== "done";
+    var since = resume ? sendRun.since : now(), again = $("send-again").checked;
+    var bad = resume ? sendRun.bad : {};
+    var list = sendList(e, again, since, bad);
+    if (!list.length) { renderSend(); return; }
+    sendRun = { evId: e.id, since: since, n: resume ? sendRun.s + list.length : list.length, s: resume ? sendRun.s : 0, f: resume ? sendRun.f : [], bad: bad, status: "run", cur: "" };
+    renderSend();
+    sendQ = S.run({
+      acc: acc, list: list, perHour: rate,
+      build: function (p) {
+        var cur = C.personById(data, p.id) || p, mt = mailText(e, cur);
+        return makePdf(e, [cur]).then(function (pdf) {
+          var m = S.message(MC, {
+            from: { name: acc.name || e.issuer || "", addr: acc.email }, to: { name: cur.n, addr: cur.em },
+            subject: mt.subj, text: mt.body, pdf: { name: pdfName(e, cur), bin: binOf(pdf.output("arraybuffer")) }
+          });
+          return { to: cur.em, bin: m.bin };
+        });
+      },
+      done: function (p) {
+        var cur = C.personById(data, p.id);
+        if (cur) {
+          var c = JSON.parse(JSON.stringify(cur));
+          c.ms = now();
+          data = C.putPeople(data, [c], now()).data;
+          storeData();
+        }
+        sendRun.s++; sendRun.cur = "";
+        renderSend();
+      },
+      failed: function (p) { sendRun.f.push(p.n); sendRun.bad[p.id] = 1; sendRun.cur = ""; renderSend(); },
+      step: function (i) { sendRun.cur = list[i].n; renderSend(); },
+      end: function (reason, err) {
+        sendQ = null;
+        sendRun.status = reason; sendRun.err = err || null; sendRun.cur = "";
+        if (reason === "error") { try { console.warn("[orOS Certificates] send stopped", err && err.code); } catch (x) {} }
+        renderSend();
+        if (reason === "done") toast(sendRun.f.length ? t("send.doneFail", { s: sendRun.s, list: sendRun.f.join(", ") }) : t("send.done", { s: sendRun.s }));
+        else if (reason === "error" && !openDlg) toast($("send-state").textContent);
+      }
+    });
   }
 
   // ---------- 10. Dialogs + toast ----------
@@ -1872,6 +2020,9 @@
     $("pdf-one").addEventListener("click", pdfOne);
     $("png-one").addEventListener("click", pngOne);
     $("mail-btn").addEventListener("click", openMailList);
+    $("send-btn").addEventListener("click", openSend);
+    $("send-go").addEventListener("click", sendGo);
+    $("send-again").addEventListener("change", renderSend);
     $("reg-btn").addEventListener("click", saveRegister);
     $("ob-btn").addEventListener("click", badgesZip);
     $("sheet-btn").addEventListener("click", sheetPdf);
