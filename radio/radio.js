@@ -1514,6 +1514,8 @@ function updatePlayerUI(){
   
   // Station info
   if(st.current){
+    // W42: a station started elsewhere (a wake-up alarm) shows the bar too.
+    player.removeAttribute("hidden");
     nameEl.textContent = st.current.name;
     var metaParts = [];
     if(st.current.bitrate) metaParts.push(st.current.bitrate + " kbps");
@@ -1906,6 +1908,7 @@ function openMoreDialog(){
   }
   buildMore();
   if(!dlg.open) dlg.showModal();
+  paintMore();
 }
 
 function buildMore(){
