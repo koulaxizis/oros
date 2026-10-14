@@ -144,9 +144,9 @@ test("a message: sealed for the form (nothing in clear), never echoed, picked up
   assert.equal(D.rows.length, 0);
 });
 
-test("limits: 8 KB body, field lengths, e-mail check", async () => {
+test("limits: 20 KB body, field lengths, e-mail check", async () => {
   const { D, env, kp } = await setup();
-  const big = await pub(env, PATH, form({ email: "a@x.gr", message: "x".repeat(8300) }));
+  const big = await pub(env, PATH, form({ email: "a@x.gr", message: "x".repeat(20600) }));
   assert.equal(big.status, 413);
   assert.match(big.text, /too long/);
   assert.equal(D.rows.length, 0);

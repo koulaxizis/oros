@@ -25,7 +25,7 @@ import { seal, sha256Hex, sameHex, validEmail, validBack, validPub, importPub,
          readSmall, langOf, renderPage, isBot, oneLine, K_RE, SEC_RE } from "./newsletter.js";
 
 export const CRMF_LIMITS = {
-  formBytes: 8192,      // the whole POST body
+  formBytes: 20480,      // the whole POST body
   message: 2000,        // characters of the message
   field: 200,           // characters of every other field
   pending: 500,         // messages waiting per form

@@ -421,7 +421,7 @@ also a 503, never an exception.
 
 | Route | What it does |
 |---|---|
-| `POST /crm/f/<k>` | Contact form (≤8 KB, `application/x-www-form-urlencoded`): `email` (required, ≤200, Newsletter's check), `name?`, `phone?`, `company?` (≤200, one line), `message?` (≤2000, line breaks kept), `lang?` (en/el), honeypot `website`. Control characters are stripped. Sealed for the form (AES-256-GCM, key wrapped with the form's RSA-OAEP-256 public key); in clear only the form key and the time. Answer: a fixed thank-you page (EN/EL) or a 303 to the form's registered https `back` (never taken from the request). Nothing the visitor sent is echoed |
+| `POST /crm/f/<k>` | Contact form (≤20 KB, `application/x-www-form-urlencoded`): `email` (required, ≤200, Newsletter's check), `name?`, `phone?`, `company?` (≤200, one line), `message?` (≤2000, line breaks kept), `lang?` (en/el), honeypot `website`. Control characters are stripped. Sealed for the form (AES-256-GCM, key wrapped with the form's RSA-OAEP-256 public key); in clear only the form key and the time. Answer: a fixed thank-you page (EN/EL) or a 303 to the form's registered https `back` (never taken from the request). Nothing the visitor sent is echoed |
 
 No Origin check and no CORS, like `/nl/`; the same per-IP rate limit.
 At most 500 messages wait per form and 100 are stored per form per

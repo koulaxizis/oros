@@ -69,5 +69,5 @@ In `Settings`: `Import customers (CSV)`, `Export customers (CSV)`, `Backup (JSON
 ## Limits
 - Reminders need orOS to be open in a tab or window; a reminder missed while it was closed arrives the next time you open it.
 - Up to 2,000 customers and 20,000 history entries, to leave room for the other apps.
-- Web form: one form per CRM. A message is at most 2,000 characters and every other field 200; a long message in Greek letters can be refused as too long before that (the form takes up to 8 KB). The relay keeps at most 500 messages waiting and takes at most 100 a day per form; beyond that it shows the thank-you page but keeps nothing. Messages are picked up only while CRM is open on the device that collects them.
+- Web form: one form per CRM. A message is at most 2,000 characters and every other field 200. The relay keeps at most 500 messages waiting and takes at most 100 a day per form; beyond that it shows the thank-you page but keeps nothing. Messages are picked up only while CRM is open on the device that collects them.
 - A device still on an older CRM drops the web form from its own copy until it updates; your other devices keep it.
