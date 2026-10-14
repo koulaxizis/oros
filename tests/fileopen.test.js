@@ -84,7 +84,8 @@ test("extOf and appsFor", () => {
   assert.deepEqual(F.appsFor(".tsv"), ["texttools"]);
   assert.deepEqual(F.appsFor("__proto__"), []);
   assert.deepEqual(F.appsFor("constructor"), []);
-  assert.deepEqual(F.shared().sort(), [".csv", ".markdown", ".md", ".opml", ".txt"]);
+  assert.deepEqual(F.shared().sort(), [".csv", ".markdown", ".md", ".opml", ".pptx", ".txt"]);
+  assert.deepEqual(F.appsFor(".pptx"), ["atelier", "slides"]);
 });
 
 test("choose: the only app, the person's choice, else ask", () => {

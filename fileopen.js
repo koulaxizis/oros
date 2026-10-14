@@ -52,7 +52,8 @@
       "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
       "application/x-oros-design": [".orosdesign"] } },
     { app: "slides", accept: {
-      "application/x-oros-slides": [".orosslides"] } },
+      "application/x-oros-slides": [".orosslides"],
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"] } },
     { app: "layout", accept: {
       "application/x-oros-layout": [".oroslayout"],
       "application/vnd.scribus": [".sla"],
