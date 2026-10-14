@@ -1,8 +1,10 @@
 # Calculator
-A simple everyday calculator with memory keys, a few extra functions and a history of your results. For fun, it also has a `Troll mode` that teases you and sometimes gives a slightly wrong answer.
+An everyday calculator with five modes: `Standard` with memory keys, `Scientific` with brackets and functions, `Graphing` for up to four functions, `Programmer` for hex and binary, and `Finance` for VAT, percentages, loans and savings. It keeps a history of your results and, for fun, has a `Troll mode` that teases you and sometimes gives a slightly wrong answer.
 
 ## Getting started
-Tap or click the keys, or type on your keyboard. Enter a number, an operator (`÷`, `×`, `−`, `+`), another number, then `=`. Operations are worked out in the order you type them: `2 + 3 ×` first gives 5, then multiplies.
+Pick a mode on the bar under the title. On a narrow screen the names are shortened (`Basic`, `Sci`, `Graph`, `Prog`, `Money`). The app remembers the mode you used last on this device.
+
+In `Standard`, tap or click the keys, or type on your keyboard. Enter a number, an operator (`÷`, `×`, `−`, `+`), another number, then `=`. Standard works like a pocket calculator, in the order you type: `2 + 3 ×` first gives 5, then multiplies. For brackets and operator precedence, use `Scientific`.
 
 - `AC` clears the current calculation; ⌫ deletes the last digit.
 - `%` on its own divides by 100 (50 % gives 0.5). After an operator it works like a phone calculator: `200 + 10 %` gives 220.
@@ -13,35 +15,94 @@ Tap or click the keys, or type on your keyboard. Enter a number, an operator (`�
 - `M+` adds the number on screen to memory, `MR` brings it back and `MC` clears it.
 - `fx` shows or hides an extra row: `√`, `x²`, `1/x` and `±`. The app remembers your choice.
 
+## Scientific mode
+Type a whole expression on the line, or build it with the keys, then press `=` or [[Enter]]. While you type, the answer appears below in grey. Usual maths order applies: brackets, then powers, then `×` `÷` `mod`, then `+` `−`. So `2 + 3 × 4` gives 14 and `-2^2` gives −4.
+
+- Brackets: `(` and `)`. A bracket left open at the end is closed for you.
+- You can leave out `×` before a bracket, a constant or a function: `2π`, `3(4+1)`, `2sin(30)`.
+- Powers and roots: `x²`, `x³` (with `2nd`), `xʸ` (`^`), `√`, `∛` and `ʸ√x`, written `root(32; 5)` for the fifth root of 32.
+- Trigonometry: `sin`, `cos`, `tan` and, with `2nd`, their inverses. `DEG` switches between degrees, radians (`RAD`) and gradians (`GRAD`). Hyperbolic: `sinh`, `cosh`, `tanh` and their inverses.
+- Logarithms: `log` (base 10), `ln`, `log₂`; `log(8; 2)` takes any base. With `2nd`: `eˣ`, `10ˣ`, `2ˣ`.
+- `n!` factorial, `%` percent, `π`, `e`, `|x|` (abs), `⌊x⌋` (floor), `⌈x⌉` (ceil), `mod`, `rand` (a random number from 0 to 1), `1/x`, `±`.
+- `EE` types an exponent: `1.5E3` is 1500. Very large and very small results are shown the same way, such as `1.5e20`.
+- Also known: `round`, `trunc`, `sign`, `exp`, `ncr(5; 2)`, `npr(5; 2)`, `max(a; b)`, `min(a; b)`.
+- Separate the values of a function with `;`. You can type the decimal point as `.` or `,`.
+- `Ans` is the last result. After `=`, an operator carries on from the result, and a digit starts a new calculation.
+- [[↑]] and [[↓]] on the line bring back earlier calculations from the history.
+- Results are rounded to 15 significant digits, so `0.1 + 0.2` gives 0.3.
+
+On a touch screen the keys type into the line without opening the phone's keyboard. Tap ⌨ to type with the keyboard instead, for example for unit conversions.
+
+## Units and currencies
+In `Scientific`, write a conversion with `to`, `in`, `σε` or `→` between two units:
+
+- `3 ft to cm`, `100 km/h in m/s`, `2*3 ft σε in`, `ft to m` (one foot).
+- `20 EUR to USD` converts money with the exchange rates of [Unit Converter](help:a/units). If this device has no rates yet, the calculator gets them when you are online.
+- The units and their names in English and Greek are those of Unit Converter. Converting cups to grams needs an ingredient, so use Unit Converter for that.
+
+## Graphing mode
+Type up to four functions of `x`, such as `sin(x)` or `x^2 - 2`; each has its own colour. The graph updates as you type, and a function with an error is marked in red with the reason.
+
+- Drag to move the graph. Scroll the mouse wheel or pinch with two fingers to zoom. The `+`, `−` and ⌂ buttons zoom in, zoom out and reset the view.
+- Tap a curve, or move the mouse over the graph, to trace it: the point and its coordinates appear in the corner.
+- The list next to the graph shows the roots, lowest and highest points of each function and where two functions cross, for the part you are looking at. Tap one to mark it on the graph.
+- The `RAD` button sets the angle unit of the graph (radians, degrees or gradians), separate from Scientific mode.
+- With the graph selected: arrow keys move it, [[+]] and [[-]] zoom, [[0]] resets the view.
+
+## Programmer mode
+Integer maths in hexadecimal, decimal, octal and binary.
+
+- Tap `HEX`, `DEC`, `OCT` or `BIN` to choose the base you type in. The value is always shown in all four.
+- The word size button switches between `QWORD` (64 bits), `DWORD` (32), `WORD` (16) and `BYTE` (8). Results wrap around at that size, and negative numbers use two's complement.
+- Operators: `+ − × ÷` (division without the remainder), `mod`, `AND`, `OR`, `XOR`, `NOT`, `NAND`, `NOR`, and the shifts `«` and `»`. You can also type `&`, `|`, `^`, `~`, `<<`, `>>`, and prefixes such as `0x1F` or `0b101`.
+- `Bits` shows every bit of the value. Tap a bit to flip it. `Keys` brings the keypad back.
+
+## Finance mode
+- `VAT`: type an amount and choose `Add VAT` or `Remove VAT`. The rate starts at 24%, with buttons for the Greek rates 24%, 13% and 6%, or type your own.
+- `Percent`: the percentage change from one number to another, a percent of a number, and what percent one number is of another.
+- `Loan`: the amount, the yearly interest rate and the term in years or months give the monthly instalment, the total paid and the total interest, with a month-by-month table. `Export CSV` saves the table.
+- `Savings`: a starting amount, a monthly deposit, the yearly interest rate and the years give the final balance, with a table per year. Interest is added monthly or yearly.
+
+The numbers you type in Finance stay on this device until you change them.
+
+>! The finance tools give estimates for planning. A bank's figures can differ slightly because of fees, rounding and the exact dates.
+
 ## History
-Each result is added to `History`, newest first (up to 50 entries). Tap or click an entry to reuse its result. `CSV` saves the history as a spreadsheet file, oldest first. `Clear` empties the history straight away, without asking.
+Each result from `Standard` and `Scientific` is added to `History`, newest first (up to 50 entries). Tap or click an entry to reuse its result. `CSV` saves the history as a spreadsheet file, oldest first. `Clear` empties the history straight away, without asking.
 
 On a wide screen you can drag the left edge of the history panel to make it wider or narrower.
 
 ## Troll mode
-Tap or click `Troll mode` to turn it on or off. While it's on, every answer comes with a cheeky comment, and now and then the result is quietly off by a few percent (never twice in a row). Wrong answers go into the history too.
+Tap or click `Troll mode` to turn it on or off. While it's on, every answer in `Standard` and `Scientific` comes with a cheeky comment, and now and then the result is quietly off by a few percent (never twice in a row). Wrong answers go into the history too. Graphing, Programmer and Finance always give honest answers.
 
 Right-click, or long-press on a touch screen, the `Troll mode` button to change how often it lies: `Subtle`, `Balanced` or `Rampant`. The dots on the button show the level.
 
 >! Don't use Troll mode for anything that matters, such as money or measurements.
 
 ## Sync and backup
-Your history, the memory value, the `fx` row and the Troll mode settings sync between your devices through [orOS sync](help:t/sync). The width of the history panel stays on each device. `Ans` and the calculation on screen are not saved.
+Your history, the memory value, the `fx` row and the Troll mode settings sync between your devices through [orOS sync](help:t/sync). The mode, the angle units, the graph's functions, the Programmer settings, the Finance numbers and the width of the history panel stay on each device. `Ans` and the calculation on screen are not saved.
 
 Besides the CSV export, the orOS [backup](help:t/backup) keeps a copy of everything.
 
 ## Keyboard shortcuts
+- [[Alt+1]] to [[Alt+5]] switch mode (Standard, Scientific, Graphing, Programmer, Finance), if your browser doesn't use them itself. On the mode bar, [[←]] and [[→]] also switch.
 - Digits and the numpad, [[.]] or [[,]] for the decimal point, [[+]] [[-]] [[*]] [[/]] for the operators.
 - [[Enter]] or [[=]] works out the result.
 - [[Backspace]] deletes the last digit; [[Esc]] or [[Delete]] clears.
-- [[%]] percent, [[A]] for `Ans`.
-- [[Ctrl+Z]] undoes your last key press (one step only).
+- [[%]] percent, [[A]] for `Ans` (Standard).
+- In Scientific and Programmer you can type straight away: the keys go to the line. [[↑]] [[↓]] recall the history (Scientific).
+- [[Ctrl+Z]] undoes your last key press in Standard (one step only).
 - [[Ctrl+Alt+Shift+C]] opens Calculator from anywhere in orOS; see [shortcuts](help:t/shortcuts).
 
 ## Tips
 - To keep a running total, press `M+` after each result and `MR` at the end.
+- In Scientific, tap the big result to copy it.
 - If you install orOS as an app, a long-press on its icon (on Android and Windows) offers Calculator as a quick start; see [Install](help:t/install).
 
 ## Limits
-- There are no brackets and no operator precedence; it calculates step by step like a pocket calculator.
-- A number can have up to 15 digits.
+- `Standard` calculates step by step, in the order you type; use `Scientific` for brackets and operator precedence. A number in Standard can have up to 15 digits.
+- Results are ordinary floating-point numbers rounded to 15 significant digits, not exact fractions; very large integers lose their last digits.
+- Write `x` only in Graphing; Scientific has no variables besides `Ans`.
+- The graph finds roots, turning points and crossings from samples of the visible part, so two points very close together, or a point where the curve only touches the axis, can be missed. Zoom in to see more.
+- Programmer works with whole numbers only, up to 64 bits.
+- Currency conversion needs exchange rates fetched at least once while online; after that it uses the last rates.

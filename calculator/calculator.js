@@ -14,6 +14,8 @@
 //   9. Extras: copy-to-clipboard, Ans, single-level undo,
 //      drag-resizable history panel (persisted width)
 //  10. Boot logs, wiring
+//  11. Modes (2.0.0): Scientific, Graphing, Programmer, Finance;
+//      pure logic in core.js (CalcCore), units via UnitsCore
 // Mantras honored: offline first, mobile first, no external
 // dependencies, full sync + snapshots + manual/auto export via
 // the slice contract (zero shell changes needed).
@@ -21,7 +23,7 @@
 (function () {
   "use strict";
 
-  var CALC_VER = "1.2.0";
+  var CALC_VER = "2.0.0";
   var LS_KEY = "oros-calculator-data";   // slice cache key (same as
                                          // radio/mood pattern)
   var HISTORY_MAX = 50;
@@ -64,7 +66,73 @@
       "calc.mem.recalled": "Recalled from memory.",
       "calc.mem.cleared": "Memory cleared.",
       "calc.mem.empty": "Memory is empty.",
-      "calc.saveFail": "Could not save: the browser storage is full."
+      "calc.saveFail": "Could not save: the browser storage is full.",
+      "calc.modes": "Mode",
+      "calc.mode.std": "Standard", "calc.mode.std.s": "Basic",
+      "calc.mode.sci": "Scientific", "calc.mode.sci.s": "Sci",
+      "calc.mode.graph": "Graphing", "calc.mode.graph.s": "Graph",
+      "calc.mode.prog": "Programmer", "calc.mode.prog.s": "Prog",
+      "calc.mode.fin": "Finance", "calc.mode.fin.s": "Money",
+      "calc.kbd": "Type with the keyboard",
+      "calc.sci.input": "Expression",
+      "calc.2nd": "Second functions",
+      "calc.angle": "Angle unit: degrees, radians or gradians",
+      "calc.err.syntax": "Check the expression.",
+      "calc.err.paren": "A bracket doesn't match.",
+      "calc.err.name": "Unknown name: {x}",
+      "calc.err.char": "Unknown symbol: {x}",
+      "calc.err.domain": "Not defined for this value.",
+      "calc.err.div0": "Cannot divide by zero.",
+      "calc.err.big": "The number is too large.",
+      "calc.err.end": "The expression is incomplete.",
+      "calc.err.args": "Wrong number of values for {x}. Separate them with ;",
+      "calc.err.digit": "{x} is not a digit in this base.",
+      "calc.err.rates": "No exchange rates on this device yet. Getting them now…",
+      "calc.err.rates_off": "No exchange rates on this device yet. Connect to the internet and try again.",
+      "calc.err.dens": "Cups to grams needs an ingredient: use Unit Converter for that.",
+      "calc.err.units_mismatch": "These units measure different things.",
+      "calc.err.unit_neg": "This quantity can't be negative.",
+      "calc.err.unit_belowZero": "That is below absolute zero.",
+      "calc.err.unit_zero": "There is no result for zero.",
+      "calc.err.unit_rate": "No exchange rate for this currency.",
+      "calc.err.unit_unit": "Unknown unit.",
+      "calc.rates.ok": "Exchange rates updated.",
+      "calc.g.zin": "Zoom in",
+      "calc.g.zout": "Zoom out",
+      "calc.g.home": "Reset view",
+      "calc.g.canvas": "Graph of the functions",
+      "calc.g.hint": "Drag to move, pinch or scroll to zoom, tap a curve to trace it.",
+      "calc.g.placeholder": "e.g. sin(x) or x^2 - 2",
+      "calc.g.root": "root",
+      "calc.g.min": "min",
+      "calc.g.max": "max",
+      "calc.g.none": "No roots, turning points or crossings in view.",
+      "calc.p.bits": "Bits",
+      "calc.p.keys": "Keys",
+      "calc.p.word": "Word size",
+      "calc.f.vat": "VAT", "calc.f.pct": "Percent", "calc.f.loan": "Loan", "calc.f.save": "Savings",
+      "calc.f.amount": "Amount", "calc.f.rate": "VAT rate",
+      "calc.f.vat.add": "Add VAT", "calc.f.vat.remove": "Remove VAT",
+      "calc.f.net": "Net", "calc.f.vatamt": "VAT", "calc.f.gross": "Total",
+      "calc.f.pct.change": "Percentage change", "calc.f.from": "From", "calc.f.to": "To",
+      "calc.f.change": "Change", "calc.f.diff": "Difference",
+      "calc.f.pct.of": "Percent of a number", "calc.f.of": "of", "calc.f.result": "Result",
+      "calc.f.pct.what": "What percent is it?", "calc.f.part": "Part", "calc.f.whole": "Whole",
+      "calc.f.principal": "Loan amount", "calc.f.apr": "Annual interest rate (%)",
+      "calc.f.term": "Term", "calc.f.unit": "Unit", "calc.f.years": "Years", "calc.f.months": "Months",
+      "calc.f.instal": "Monthly instalment", "calc.f.totalpaid": "Total paid", "calc.f.totint": "Total interest",
+      "calc.f.csv": "Export CSV",
+      "calc.f.start": "Starting amount", "calc.f.monthly": "Monthly deposit",
+      "calc.f.comp": "Compounding", "calc.f.comp.m": "Monthly", "calc.f.comp.y": "Yearly",
+      "calc.f.final": "Final balance", "calc.f.deposits": "Total deposits", "calc.f.earned": "Interest earned",
+      "calc.f.col.month": "Month", "calc.f.col.year": "Year", "calc.f.col.pay": "Instalment",
+      "calc.f.col.int": "Interest", "calc.f.col.prin": "Principal", "calc.f.col.bal": "Balance",
+      "calc.f.col.dep": "Deposits",
+      "calc.f.invalid": "Enter valid numbers.",
+      "calc.f.exported": "Table exported to CSV.",
+      "calc.f.nothing": "Fill in the fields first.",
+      "calc.f.note.round": "Rounded to cents; the last instalment absorbs the difference.",
+      "calc.f.note.yearly": "Yearly: deposits earn simple interest until the end of each year."
     },
     el: {
       "calc.title": "Αριθμομηχανή",
@@ -90,7 +158,73 @@
       "calc.mem.recalled": "Ανακλήθηκε από τη μνήμη.",
       "calc.mem.cleared": "Η μνήμη καθαρίστηκε.",
       "calc.mem.empty": "Η μνήμη είναι κενή.",
-      "calc.saveFail": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε."
+      "calc.saveFail": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε.",
+      "calc.modes": "Λειτουργία",
+      "calc.mode.std": "Βασική", "calc.mode.std.s": "Βασική",
+      "calc.mode.sci": "Επιστημονική", "calc.mode.sci.s": "Επιστ.",
+      "calc.mode.graph": "Γραφήματα", "calc.mode.graph.s": "Γράφ.",
+      "calc.mode.prog": "Προγραμματιστή", "calc.mode.prog.s": "Προγρ.",
+      "calc.mode.fin": "Οικονομικά", "calc.mode.fin.s": "Οικον.",
+      "calc.kbd": "Πληκτρολόγηση με το πληκτρολόγιο",
+      "calc.sci.input": "Παράσταση",
+      "calc.2nd": "Δεύτερες συναρτήσεις",
+      "calc.angle": "Μονάδα γωνίας: μοίρες, ακτίνια ή βαθμοί grad",
+      "calc.err.syntax": "Έλεγξε την παράσταση.",
+      "calc.err.paren": "Μια παρένθεση δεν ταιριάζει.",
+      "calc.err.name": "Άγνωστο όνομα: {x}",
+      "calc.err.char": "Άγνωστο σύμβολο: {x}",
+      "calc.err.domain": "Δεν ορίζεται για αυτή την τιμή.",
+      "calc.err.div0": "Δεν γίνεται διαίρεση με το μηδέν.",
+      "calc.err.big": "Ο αριθμός είναι πολύ μεγάλος.",
+      "calc.err.end": "Η παράσταση είναι ημιτελής.",
+      "calc.err.args": "Λάθος πλήθος τιμών για το {x}. Χώρισέ τες με ;",
+      "calc.err.digit": "Το {x} δεν είναι ψηφίο σε αυτή τη βάση.",
+      "calc.err.rates": "Δεν υπάρχουν ακόμα ισοτιμίες σε αυτή τη συσκευή. Τις φέρνω τώρα…",
+      "calc.err.rates_off": "Δεν υπάρχουν ακόμα ισοτιμίες σε αυτή τη συσκευή. Σύνδεσε το ίντερνετ και ξαναδοκίμασε.",
+      "calc.err.dens": "Για φλιτζάνια σε γραμμάρια χρειάζεται υλικό: χρησιμοποίησε τον Μετατροπέα μονάδων.",
+      "calc.err.units_mismatch": "Αυτές οι μονάδες μετρούν διαφορετικά πράγματα.",
+      "calc.err.unit_neg": "Αυτό το μέγεθος δεν μπορεί να είναι αρνητικό.",
+      "calc.err.unit_belowZero": "Αυτό είναι κάτω από το απόλυτο μηδέν.",
+      "calc.err.unit_zero": "Δεν υπάρχει αποτέλεσμα για το μηδέν.",
+      "calc.err.unit_rate": "Δεν υπάρχει ισοτιμία για αυτό το νόμισμα.",
+      "calc.err.unit_unit": "Άγνωστη μονάδα.",
+      "calc.rates.ok": "Οι ισοτιμίες ενημερώθηκαν.",
+      "calc.g.zin": "Μεγέθυνση",
+      "calc.g.zout": "Σμίκρυνση",
+      "calc.g.home": "Επαναφορά προβολής",
+      "calc.g.canvas": "Γράφημα των συναρτήσεων",
+      "calc.g.hint": "Σύρε για μετακίνηση, τσίμπησε ή κύλισε για ζουμ, πάτα μια καμπύλη για ανίχνευση.",
+      "calc.g.placeholder": "π.χ. sin(x) ή x^2 - 2",
+      "calc.g.root": "ρίζα",
+      "calc.g.min": "ελάχ.",
+      "calc.g.max": "μέγ.",
+      "calc.g.none": "Καμία ρίζα, ακρότατο ή τομή στην προβολή.",
+      "calc.p.bits": "Bit",
+      "calc.p.keys": "Πλήκτρα",
+      "calc.p.word": "Μέγεθος λέξης",
+      "calc.f.vat": "ΦΠΑ", "calc.f.pct": "Ποσοστά", "calc.f.loan": "Δάνειο", "calc.f.save": "Αποταμίευση",
+      "calc.f.amount": "Ποσό", "calc.f.rate": "Συντελεστής ΦΠΑ",
+      "calc.f.vat.add": "Προσθήκη ΦΠΑ", "calc.f.vat.remove": "Αφαίρεση ΦΠΑ",
+      "calc.f.net": "Καθαρό", "calc.f.vatamt": "ΦΠΑ", "calc.f.gross": "Σύνολο",
+      "calc.f.pct.change": "Ποσοστιαία μεταβολή", "calc.f.from": "Από", "calc.f.to": "Σε",
+      "calc.f.change": "Μεταβολή", "calc.f.diff": "Διαφορά",
+      "calc.f.pct.of": "Ποσοστό αριθμού", "calc.f.of": "του", "calc.f.result": "Αποτέλεσμα",
+      "calc.f.pct.what": "Τι ποσοστό είναι;", "calc.f.part": "Μέρος", "calc.f.whole": "Σύνολο",
+      "calc.f.principal": "Ποσό δανείου", "calc.f.apr": "Ετήσιο επιτόκιο (%)",
+      "calc.f.term": "Διάρκεια", "calc.f.unit": "Μονάδα", "calc.f.years": "Έτη", "calc.f.months": "Μήνες",
+      "calc.f.instal": "Μηνιαία δόση", "calc.f.totalpaid": "Σύνολο πληρωμών", "calc.f.totint": "Σύνολο τόκων",
+      "calc.f.csv": "Εξαγωγή CSV",
+      "calc.f.start": "Αρχικό ποσό", "calc.f.monthly": "Μηνιαία κατάθεση",
+      "calc.f.comp": "Ανατοκισμός", "calc.f.comp.m": "Μηνιαίος", "calc.f.comp.y": "Ετήσιος",
+      "calc.f.final": "Τελικό υπόλοιπο", "calc.f.deposits": "Σύνολο καταθέσεων", "calc.f.earned": "Τόκοι",
+      "calc.f.col.month": "Μήνας", "calc.f.col.year": "Έτος", "calc.f.col.pay": "Δόση",
+      "calc.f.col.int": "Τόκος", "calc.f.col.prin": "Κεφάλαιο", "calc.f.col.bal": "Υπόλοιπο",
+      "calc.f.col.dep": "Καταθέσεις",
+      "calc.f.invalid": "Βάλε έγκυρους αριθμούς.",
+      "calc.f.exported": "Ο πίνακας εξήχθη σε CSV.",
+      "calc.f.nothing": "Συμπλήρωσε πρώτα τα πεδία.",
+      "calc.f.note.round": "Στρογγυλοποίηση σε λεπτά· η τελευταία δόση απορροφά τη διαφορά.",
+      "calc.f.note.yearly": "Ετήσιος: οι καταθέσεις παίρνουν απλό τόκο ως το τέλος κάθε έτους."
     }
   };
 
@@ -168,6 +302,7 @@
     history: [],             // [{id, expr, res, ts}] newest-first, cap 50
     deleted: {},             // tombstone map (id → ts) for merge
     panelWidth: 300,         // history panel width (wide layout) — device-local
+    ui: null,                // modes and their view state — device-local (normUi)
     // --- transient (not persisted) ---
     cur: "0",                // current entry string
     acc: null,               // accumulated value
@@ -371,8 +506,60 @@
   }
   function savePrefs() {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ panelWidth: state.panelWidth }));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ panelWidth: state.panelWidth, ui: state.ui }));
     } catch (e) {}
+  }
+  var prefsTimer = null;
+  function savePrefsSoon() {
+    clearTimeout(prefsTimer);
+    prefsTimer = setTimeout(savePrefs, 400);
+  }
+
+  // Device-local view state (R10): the mode, the angle units, the
+  // graph's functions and view, programmer base / word size, the
+  // finance tool and its fields. Never in the sync slice.
+  var MODES = ["std", "sci", "graph", "prog", "fin"];
+  var ANGLES = ["deg", "rad", "grad"];
+  function defaultUi() {
+    return {
+      mode: "std", angle: "deg", second: false,
+      graph: { fns: ["sin(x)", "", "", ""], angle: "rad", view: null },
+      prog: { base: 10, bits: 64, view: "keys" },
+      fin: { tool: "vat", vatMode: "add", vals: {} }
+    };
+  }
+  function normUi(u) {
+    var d = defaultUi();
+    if (!u || typeof u !== "object") return d;
+    if (MODES.indexOf(u.mode) >= 0) d.mode = u.mode;
+    if (ANGLES.indexOf(u.angle) >= 0) d.angle = u.angle;
+    d.second = u.second === true;
+    var g = u.graph;
+    if (g && typeof g === "object") {
+      if (Array.isArray(g.fns)) {
+        for (var i = 0; i < 4; i++) d.graph.fns[i] = typeof g.fns[i] === "string" ? g.fns[i].slice(0, 200) : "";
+      }
+      if (ANGLES.indexOf(g.angle) >= 0) d.graph.angle = g.angle;
+      var v = g.view;
+      if (v && isFinite(v.cx) && isFinite(v.cy) && v.ppu > 0 && isFinite(v.ppu)) d.graph.view = { cx: +v.cx, cy: +v.cy, ppu: +v.ppu };
+    }
+    var p = u.prog;
+    if (p && typeof p === "object") {
+      if ([2, 8, 10, 16].indexOf(p.base) >= 0) d.prog.base = p.base;
+      if ([8, 16, 32, 64].indexOf(p.bits) >= 0) d.prog.bits = p.bits;
+      if (p.view === "bits") d.prog.view = "bits";
+    }
+    var f = u.fin;
+    if (f && typeof f === "object") {
+      if (["vat", "pct", "loan", "save"].indexOf(f.tool) >= 0) d.fin.tool = f.tool;
+      if (f.vatMode === "remove") d.fin.vatMode = "remove";
+      if (f.vals && typeof f.vals === "object") {
+        Object.keys(f.vals).forEach(function (k) {
+          if (/^[a-z]{2,3}-[a-z]{2,6}$/.test(k) && typeof f.vals[k] === "string") d.fin.vals[k] = f.vals[k].slice(0, 40);
+        });
+      }
+    }
+    return d;
   }
 
   function hydrate() {
@@ -390,6 +577,7 @@
     var pw = prefs && prefs.panelWidth;
     if (typeof pw !== "number" && raw) pw = raw.panelWidth;   // first run: old synced field
     if (typeof pw === "number" && pw >= 200 && pw <= 500) state.panelWidth = pw;
+    state.ui = normUi(prefs && prefs.ui);
     if (!raw) return;
     takeData(raw);
   }
@@ -703,8 +891,12 @@
   function reuseHistory(id) {
     for (var i = 0; i < state.history.length; i++) {
       if (state.history[i].id === id) {
+        // "91.44 cm" (a unit conversion) → the number only
+        var num = String(state.history[i].res).split(" ")[0];
+        if (!isFinite(parseFloat(num))) return;
+        if (state.ui.mode === "sci") { sciUseValue(num); return; }
         saveUndoState();
-        state.cur = state.history[i].res;
+        state.cur = num;
         state.fresh = true;
         state.acc = null;
         state.op = null;
@@ -831,6 +1023,10 @@
       // the live result — i18n must never overwrite the number)
       nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
     }
+    nodes = document.querySelectorAll("[data-i18n-title]");
+    for (i = 0; i < nodes.length; i++) nodes[i].title = t(nodes[i].getAttribute("data-i18n-title"));
+    nodes = document.querySelectorAll("[data-i18n-aria]");
+    for (i = 0; i < nodes.length; i++) nodes[i].setAttribute("aria-label", t(nodes[i].getAttribute("data-i18n-aria")));
   }
 
   function renderHistory() {
@@ -910,18 +1106,23 @@
         esc(h.res)
       ].join(","));
     });
+    saveCsv(rows.join("\r\n"), "oros-calculator-history.csv", t("calc.exported"));
+  }
+
+  // CSV text \u2192 file: the shell's save dialog, else a download.
+  function saveCsv(text, filename, okMsg) {
     // UTF-8 BOM so Greek/expression text opens cleanly in Excel
-    var blob = new Blob(["\uFEFF" + rows.join("\r\n")],
+    var blob = new Blob(["\uFEFF" + text],
       { type: "text/csv;charset=utf-8" });
     var done = function () {
-      transientNote(t("calc.exported"), "");
+      transientNote(okMsg, "");
     };
     var dlg = dialogHost();
 
     if (dlg && typeof dlg.saveFile === "function") {
       dlg.saveFile({
         blob: blob,
-        filename: "oros-calculator-history.csv",
+        filename: filename,
         mime: "text/csv;charset=utf-8",
         types: [{ description: "CSV",
                   accept: { "text/csv": [".csv"] } }]
@@ -934,7 +1135,7 @@
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
       a.href = url;
-      a.download = "oros-calculator-history.csv";
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1099,7 +1300,24 @@
 
   // ---------- 9. Keyboard (app-level) ----------
   function onKey(e) {
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^Digit[1-5]$/.test(e.code || "")) {
+      setMode(MODES[parseInt(e.code.slice(5), 10) - 1], true);   // Alt+1…5, like Windows
+      e.preventDefault();
+      return;
+    }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var tg = e.target;
+    // Typing in a field belongs to that field (expression lines,
+    // graph functions, finance forms); the tab bars own their arrows.
+    if (tg && tg.closest && tg.ownerDocument === document) {
+      if (tg.closest("input, textarea, select, [contenteditable='true'], #graph-cv")) return;
+      if (tg.closest("#calc-modes, #fin-tabs") &&
+          /^(ArrowLeft|ArrowRight|Home|End|Enter| )$/.test(e.key)) return;
+    }
+    var mode = state.ui.mode;
+    if (mode === "sci") { sciKey(e); return; }
+    if (mode === "prog") { progKey(e); return; }
+    if (mode !== "std") return;
     var k = e.key;
     // NumLock OFF: e.key is "End"/"PageUp" etc. — recover the
     // numpad glyph from the physical key code so the numpad
@@ -1132,6 +1350,7 @@
 
   // Ctrl+Z (no alt/shift — avoids any contract B combos)
   function onUndoKey(e) {
+    if (state.ui.mode !== "std") return;            // fields keep their own undo
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey &&
         e.key.toLowerCase() === "z") {
       e.preventDefault();
@@ -1144,6 +1363,1259 @@
     if (!eq) return;
     eq.classList.add("flash");
     setTimeout(function () { eq.classList.remove("flash"); }, 120);
+  }
+
+  // ============================================================
+  // 11. Modes: Standard · Scientific · Graphing · Programmer · Finance
+  //     Pure logic lives in core.js (window.CalcCore); units come
+  //     from the Unit Converter's own engine (window.UnitsCore).
+  // ============================================================
+  var CC = window.CalcCore;
+
+  function tx(key, x) { return t(key).replace("{x}", x == null ? "" : String(x)); }
+  function errText(code, detail) {
+    var k = "calc.err." + code;
+    var s = STRINGS[lang()][k] || STRINGS.en[k];
+    return s ? tx(k, detail) : t("calc.err.syntax");
+  }
+  function coarse() {
+    try { return window.matchMedia("(pointer: coarse)").matches; } catch (e) { return false; }
+  }
+  function mk(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  // ---------- Mode switch ----------
+  function setMode(m, user) {
+    if (MODES.indexOf(m) < 0) m = "std";
+    state.ui.mode = m;
+    els.root.setAttribute("data-mode", m);
+    var tabs = els.modes.querySelectorAll("[data-mode]");
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-mode") === m;
+      tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+      tabs[i].tabIndex = on ? 0 : -1;
+    }
+    els.sci.hidden = m !== "sci";
+    els.graph.hidden = m !== "graph";
+    els.prog.hidden = m !== "prog";
+    els.fin.hidden = m !== "fin";
+    savePrefs();
+    if (m === "sci") { loadRates(); sciPreview(); if (user && !coarse()) els.sciIn.focus(); }
+    if (m === "graph") { graphResize(); scheduleDraw(true); }
+    if (m === "prog") { progUpdate(); if (user && !coarse()) els.progIn.focus(); }
+    if (m === "fin") finShow(state.ui.fin.tool);
+  }
+  function wireModes() {
+    els.modes.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-mode]");
+      if (!b) return;
+      setMode(b.getAttribute("data-mode"), true);
+      // a pointer click leaves no focus behind, so Enter computes
+      // instead of re-clicking the tab (keyboard users keep focus)
+      if (e.detail > 0 && document.activeElement === b) b.blur();
+    });
+    els.modes.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
+      var i = MODES.indexOf(state.ui.mode);
+      if (e.key === "ArrowLeft") i = (i + MODES.length - 1) % MODES.length;
+      else if (e.key === "ArrowRight") i = (i + 1) % MODES.length;
+      else i = e.key === "Home" ? 0 : MODES.length - 1;
+      setMode(MODES[i], false);
+      els.modes.querySelector('[data-mode="' + MODES[i] + '"]').focus();
+      e.preventDefault();
+    });
+  }
+
+  // Inserts text at the caret of an <input> (or over its selection).
+  // The caret of an unfocused line (keypad on a touch screen) is kept
+  // by hand: browsers do not report it reliably once focus has left.
+  // A value changed elsewhere (a result, AC) sends it to the end.
+  function caretOf(input) {
+    var v = input.value;
+    if (document.activeElement === input && typeof input.selectionStart === "number") {
+      return [input.selectionStart, input.selectionEnd];
+    }
+    if (input._caret && input._caretVal === v) return input._caret;
+    return [v.length, v.length];
+  }
+  function keepCaret(input, c) {
+    input._caret = [c, c];
+    input._caretVal = input.value;
+    try { input.setSelectionRange(c, c); } catch (e) {}
+  }
+  function trackCaret(input) {
+    input.addEventListener("blur", function () {
+      if (typeof input.selectionStart === "number") {
+        input._caret = [input.selectionStart, input.selectionEnd];
+        input._caretVal = input.value;
+      }
+    });
+  }
+  function insertAt(input, text) {
+    var v = input.value, c = caretOf(input);
+    input.value = v.slice(0, c[0]) + text + v.slice(c[1]);
+    keepCaret(input, c[0] + text.length);
+  }
+  function backspaceAt(input) {
+    var v = input.value, c = caretOf(input), s = c[0];
+    if (s === c[1]) { if (s === 0) return; s -= 1; }
+    input.value = v.slice(0, s) + v.slice(c[1]);
+    keepCaret(input, s);
+  }
+
+  // ---------- Exchange rates (Unit Converter's stored copy) ----------
+  var rates = null, ratesFetching = false;
+  function loadRates() {
+    var U = window.UnitsCore;
+    if (!U) return null;
+    try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY) || "null")); } catch (e) { rates = null; }
+    return rates;
+  }
+  // Same sources and validation as Unit Converter (UnitsCore.RATES_URLS,
+  // readRates); the result is stored in its key, so both apps share it.
+  function fetchRates(done) {
+    var U = window.UnitsCore;
+    if (!U || ratesFetching || navigator.onLine === false || typeof fetch !== "function") { if (done) done(false); return; }
+    ratesFetching = true;
+    var urls = U.RATES_URLS.slice();
+    function next() {
+      var url = urls.shift();
+      if (!url) { ratesFetching = false; if (done) done(false); return; }
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 10000);
+      fetch(url, { cache: "no-store", credentials: "omit", signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { clearTimeout(timer); if (!r.ok) throw new Error("HTTP"); return r.json(); })
+        .then(function (json) {
+          var r = U.readRates(json, Date.now(), url);
+          if (!r) throw new Error("bad");
+          rates = r;
+          try { localStorage.setItem(U.RATES_KEY, JSON.stringify(r)); } catch (e) {}
+          ratesFetching = false;
+          if (done) done(true);
+        })
+        .catch(function () { clearTimeout(timer); next(); });
+    }
+    next();
+  }
+
+  // ---------- Scientific ----------
+  var sci = { fresh: false, hist: -1, draft: "" };
+  // [label, action, 2nd label, 2nd action, class]
+  //   ins:TEXT inserts · fn:NAME inserts "NAME(" · act:NAME runs
+  var SCI_KEYS = [
+    ["2nd", "act:2nd", null, null, "fn"], ["DEG", "act:angle", null, null, "fn"], ["Ans", "ins:Ans", null, null, "fn"],
+    ["AC", "act:ac", null, null, "fn"], ["⌫", "act:back", null, null, "fn"],
+    ["sin", "fn:sin", "sin⁻¹", "fn:asin", "fn"], ["cos", "fn:cos", "cos⁻¹", "fn:acos", "fn"], ["tan", "fn:tan", "tan⁻¹", "fn:atan", "fn"],
+    ["ln", "fn:ln", "eˣ", "ins:e^(", "fn"], ["log", "fn:log", "10ˣ", "ins:10^(", "fn"],
+    ["sinh", "fn:sinh", "sinh⁻¹", "fn:asinh", "fn"], ["cosh", "fn:cosh", "cosh⁻¹", "fn:acosh", "fn"], ["tanh", "fn:tanh", "tanh⁻¹", "fn:atanh", "fn"],
+    ["log₂", "fn:log2", "2ˣ", "ins:2^(", "fn"], ["mod", "ins: mod ", null, null, "fn"],
+    ["x²", "ins:²", "x³", "ins:³", "fn"], ["xʸ", "ins:^", null, null, "fn"], ["√", "ins:√(", null, null, "fn"],
+    ["∛", "ins:∛(", null, null, "fn"], ["ʸ√x", "fn:root", null, null, "fn"],
+    ["π", "ins:π", null, null, "fn"], ["e", "ins:e", null, null, "fn"], ["n!", "ins:!", null, null, "fn"],
+    ["%", "ins:%", null, null, "fn"], ["EE", "ins:E", null, null, "fn"],
+    ["(", "ins:(", null, null, "fn"], [")", "ins:)", null, null, "fn"], ["|x|", "fn:abs", null, null, "fn"],
+    ["1/x", "act:inv", null, null, "fn"], ["÷", "ins:÷", null, null, "op"],
+    ["⌊x⌋", "fn:floor", null, null, "fn"], ["7", "ins:7", null, null, "num"], ["8", "ins:8", null, null, "num"], ["9", "ins:9", null, null, "num"], ["×", "ins:×", null, null, "op"],
+    ["⌈x⌉", "fn:ceil", null, null, "fn"], ["4", "ins:4", null, null, "num"], ["5", "ins:5", null, null, "num"], ["6", "ins:6", null, null, "num"], ["−", "ins:−", null, null, "op"],
+    ["rand", "ins:rand", null, null, "fn"], ["1", "ins:1", null, null, "num"], ["2", "ins:2", null, null, "num"], ["3", "ins:3", null, null, "num"], ["+", "ins:+", null, null, "op"],
+    ["±", "act:neg", null, null, "fn"], ["0", "ins:0", null, null, "num"], [".", "ins:.", null, null, "num"], ["=", "act:eq", null, null, "eq span2"]
+  ];
+  var SCI_ARIA = { "⌫": "calc.key.back" };
+
+  function buildSciPad() {
+    var frag = document.createDocumentFragment();
+    SCI_KEYS.forEach(function (k, i) {
+      var b = mk("button", "key " + k[4]);
+      b.type = "button";
+      b.setAttribute("data-i", i);
+      if (SCI_ARIA[k[0]]) b.setAttribute("aria-label", t(SCI_ARIA[k[0]]));
+      if (k[1] === "act:2nd") b.title = t("calc.2nd");
+      if (k[1] === "act:angle") b.title = t("calc.angle");
+      frag.appendChild(b);
+    });
+    els.sciPad.appendChild(frag);
+    renderSciPad();
+  }
+  function renderSciPad() {
+    var two = state.ui.second;
+    var btns = els.sciPad.querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++) {
+      var k = SCI_KEYS[+btns[i].getAttribute("data-i")];
+      var lbl = (two && k[2]) ? k[2] : k[0];
+      if (k[1] === "act:angle") lbl = state.ui.angle.toUpperCase();
+      btns[i].textContent = lbl;
+      if (k[1] === "act:2nd") {
+        btns[i].classList.toggle("on", two);
+        btns[i].setAttribute("aria-pressed", two ? "true" : "false");
+      }
+    }
+  }
+
+  function ansText() {
+    var v = parseFloat(state.lastAnswer);
+    return isFinite(v) ? state.lastAnswer : "0";
+  }
+  function sciEnv() {
+    var a = parseFloat(state.lastAnswer);
+    return { angle: state.ui.angle, ans: isFinite(a) ? a : 0 };
+  }
+  // A key that continues the shown result ("= 5" then "× 2").
+  function continues(text) { return /^\s*(mod\b|[+\-−×÷*/^²³!%E])/.test(text); }
+
+  // Evaluates the line: a unit conversion first, else an expression.
+  function sciCompute(src) {
+    var env = sciEnv();
+    var U = window.UnitsCore;
+    if (U) {
+      var u = CC.unitConvert(src, U, { rates: rates, env: env });
+      if (u) {
+        if (!u.ok) return { ok: false, err: u.err };
+        return { ok: true, v: u.v, sym: u.sym, cat: u.cat };
+      }
+    }
+    var r = CC.calc(src, env);
+    return r.ok ? { ok: true, v: r.v, sym: "" } : r;
+  }
+  function resultText(v, sym) {
+    var s = fmtDisplay(CC.formatNum(v));
+    return sym ? s + " " + sym : s;
+  }
+
+  function sciPreview() {
+    var src = els.sciIn.value.trim();
+    els.sciRes.classList.remove("error");
+    if (sci.fresh) return;
+    if (!src) { els.sciRes.textContent = "0"; els.sciRes.classList.add("preview"); return; }
+    var r = sciCompute(src);
+    els.sciRes.classList.add("preview");
+    els.sciRes.textContent = r.ok ? resultText(r.v, r.sym) : "";
+  }
+
+  function sciShowError(code, detail) {
+    els.sciRes.classList.remove("preview");
+    els.sciRes.classList.add("error");
+    els.sciRes.textContent = errText(code, detail);
+  }
+
+  function sciEval() {
+    var src = els.sciIn.value.trim();
+    if (!src) return;
+    if (sci.fresh) { if (state.troll) trollToast(true); return; }
+    var r = sciCompute(src);
+    if (!r.ok) {
+      if (r.err === "rates") {
+        if (navigator.onLine === false) { sciShowError("rates_off"); return; }
+        sciShowError("rates");
+        fetchRates(function (ok) {
+          if (!ok) { if (els.sciIn.value.trim() === src) sciShowError("rates_off"); return; }
+          if (els.sciIn.value.trim() === src && !sci.fresh) sciEval();
+        });
+        return;
+      }
+      sciShowError(r.err, r.detail);
+      return;
+    }
+    if (r.cat === "currency" && window.UnitsCore && window.UnitsCore.ratesStale(rates, Date.now())) {
+      fetchRates(null);                          // refresh quietly for next time
+    }
+    var v = r.v, lied = false;
+    if (state.troll && shouldLie()) {
+      v = applyLie(v);
+      lied = true;
+      state.lastTrolled = true;
+    } else if (state.troll) {
+      state.lastTrolled = false;
+    }
+    var plain = CC.formatNum(v);
+    var shown = r.sym ? plain + " " + r.sym : plain;
+    state.history.unshift({ id: uid(), expr: src, res: shown, ts: Date.now(), lied: lied });
+    if (state.history.length > HISTORY_MAX) state.history.length = HISTORY_MAX;
+    persist(true);
+    renderHistory();
+    state.lastAnswer = plain;
+    state.lastRes = plain;
+    els.sciPrev.textContent = src + " =";
+    els.sciRes.classList.remove("preview", "error");
+    els.sciRes.textContent = resultText(v, r.sym);
+    els.sciIn.value = plain;
+    try { els.sciIn.setSelectionRange(plain.length, plain.length); } catch (e) {}
+    sci.fresh = true;
+    sci.hist = -1;
+    if (state.troll) trollToast(!lied);
+  }
+
+  function sciStartTyping(text) {
+    if (!sci.fresh) return;
+    sci.fresh = false;
+    if (!continues(text)) els.sciIn.value = "";
+    var n = els.sciIn.value.length;
+    try { els.sciIn.setSelectionRange(n, n); } catch (e) {}
+  }
+  function sciInsert(text) {
+    sciStartTyping(text);
+    insertAt(els.sciIn, text);
+    sci.hist = -1;
+    sciPreview();
+  }
+  // A history value: replaces a shown result, else goes in at the caret.
+  function sciUseValue(num) {
+    if (sci.fresh) { sci.fresh = false; els.sciIn.value = ""; }
+    insertAt(els.sciIn, num);
+    sciPreview();
+  }
+
+  function sciAction(a) {
+    var inp = els.sciIn;
+    if (a.indexOf("ins:") === 0) { sciInsert(a.slice(4)); return; }
+    if (a.indexOf("fn:") === 0) { sciInsert(a.slice(3) + "("); return; }
+    switch (a.slice(4)) {
+      case "eq": sciEval(); return;
+      case "ac":
+        inp.value = ""; sci.fresh = false; els.sciPrev.textContent = ""; sciPreview(); return;
+      case "back":
+        if (sci.fresh) { sci.fresh = false; inp.value = ""; }
+        else backspaceAt(inp);
+        sciPreview(); return;
+      case "2nd":
+        state.ui.second = !state.ui.second; savePrefs(); renderSciPad(); return;
+      case "angle":
+        state.ui.angle = ANGLES[(ANGLES.indexOf(state.ui.angle) + 1) % 3];
+        savePrefs(); renderSciPad(); sci.fresh = false; sciPreview(); return;
+      case "inv": {
+        var v = inp.value.trim();
+        sci.fresh = false;
+        inp.value = v ? "1/(" + v + ")" : "1/";
+        sciPreview(); return;
+      }
+      case "neg": {
+        var w = inp.value.trim();
+        sci.fresh = false;
+        if (/^-?[0-9.,]+(e[+\-]?[0-9]+)?$/i.test(w)) inp.value = w.charAt(0) === "-" ? w.slice(1) : "-" + w;
+        else if (/^−\(.*\)$/.test(w)) inp.value = w.slice(2, -1);
+        else inp.value = w ? "−(" + w + ")" : "−";
+        sciPreview(); return;
+      }
+    }
+  }
+
+  function recallHistory(dir) {
+    var list = state.history;
+    if (!list.length) return;
+    if (sci.hist === -1) sci.draft = els.sciIn.value;
+    var n = sci.hist + dir;
+    if (n < -1) n = -1;
+    if (n >= list.length) n = list.length - 1;
+    sci.hist = n;
+    sci.fresh = false;
+    els.sciIn.value = n === -1 ? sci.draft : list[n].expr;
+    var len = els.sciIn.value.length;
+    try { els.sciIn.setSelectionRange(len, len); } catch (e) {}
+    sciPreview();
+  }
+
+  // Keys while the expression line has focus.
+  function sciInputKey(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (k === "Enter" || k === "=") { e.preventDefault(); sciEval(); return; }
+    if (k === "Escape") { if (els.sciIn.value) { e.preventDefault(); sciAction("act:ac"); } return; }
+    if (k === "ArrowUp") { e.preventDefault(); recallHistory(1); return; }
+    if (k === "ArrowDown") { e.preventDefault(); recallHistory(-1); return; }
+    if (k && k.length === 1) sciStartTyping(k);
+  }
+  // Keys from elsewhere in the app (or routed from the shell).
+  function sciKey(e) {
+    var k = e.key;
+    if (!k) return;
+    if (k === "Enter" || k === "=") { sciEval(); e.preventDefault(); return; }
+    if (k === "Backspace") { sciAction("act:back"); e.preventDefault(); return; }
+    if (k === "Delete") { sciAction("act:ac"); e.preventDefault(); return; }
+    if (k === "ArrowUp" || k === "ArrowDown") { recallHistory(k === "ArrowUp" ? 1 : -1); e.preventDefault(); return; }
+    if (k.length === 1 && k !== " ") {
+      sciInsert(k);
+      if (!coarse()) els.sciIn.focus();
+      e.preventDefault();
+    }
+  }
+
+  function wireSci() {
+    buildSciPad();
+    els.sciPad.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      var k = SCI_KEYS[+b.getAttribute("data-i")];
+      var a = (state.ui.second && k[3]) ? k[3] : k[1];
+      sciAction(a);
+      if (a === "act:eq") flashKey(b);
+      if (!coarse()) els.sciIn.focus(); else b.blur();
+    });
+    els.sciIn.addEventListener("keydown", sciInputKey);
+    els.sciIn.addEventListener("input", function () { sci.fresh = false; sci.hist = -1; sciPreview(); });
+    els.sciRes.addEventListener("click", function () {
+      if (els.sciRes.classList.contains("error")) return;
+      copyToClipboard(els.sciRes.textContent.replace(/ (?=\d)/g, ""));
+    });
+    wireKbdToggle(els.sciKbd, els.sciIn);
+    trackCaret(els.sciIn);
+  }
+  function flashKey(b) {
+    b.classList.add("flash");
+    setTimeout(function () { b.classList.remove("flash"); }, 120);
+  }
+  // Touch screens: the line takes keypad input only (no soft
+  // keyboard over the keys) until ⌨ asks for the keyboard.
+  function wireKbdToggle(btn, input) {
+    btn.addEventListener("click", function () {
+      var on = input.getAttribute("inputmode") === "none";
+      input.setAttribute("inputmode", on ? "text" : "none");
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      input.blur();
+      if (on) setTimeout(function () { input.focus(); }, 30);
+    });
+  }
+
+  // ---------- Graphing ----------
+  var G_COLORS = ["#e8590c", "#1c7ed6", "#2f9e44", "#ae3ec9"];
+  var G_SUB = ["₁", "₂", "₃", "₄"];
+  var G = { fns: [null, null, null, null], W: 0, H: 0, dpr: 1, poi: [], trace: null,
+            ptrs: {}, drag: null, raf: 0, anaTimer: 0, viewTimer: 0, ro: null };
+
+  function gView() {
+    if (!state.ui.graph.view) state.ui.graph.view = { cx: 0, cy: 0, ppu: Math.max(10, (G.W || 400) / 20) };
+    return state.ui.graph.view;
+  }
+  function buildGraphFns() {
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < 4; i++) {
+      var row = mk("div", "g-row");
+      var sw = mk("span", "g-sw");
+      sw.style.color = G_COLORS[i];
+      var lab = mk("label", null, "y" + G_SUB[i] + " =");
+      var inp = mk("input");
+      inp.type = "text";
+      inp.id = "g-fn-" + i;
+      lab.htmlFor = inp.id;
+      inp.setAttribute("autocomplete", "off");
+      inp.setAttribute("autocapitalize", "off");
+      inp.setAttribute("spellcheck", "false");
+      inp.setAttribute("data-i", i);
+      inp.placeholder = i === 0 ? t("calc.g.placeholder") : "";
+      inp.value = state.ui.graph.fns[i];
+      var er = mk("div", "g-err");
+      er.hidden = true;
+      er.id = "g-err-" + i;
+      row.appendChild(sw); row.appendChild(lab); row.appendChild(inp);
+      frag.appendChild(row);
+      frag.appendChild(er);
+    }
+    els.graphFns.appendChild(frag);
+    els.graphFns.addEventListener("input", function (e) {
+      var i = e.target.getAttribute("data-i");
+      if (i == null) return;
+      state.ui.graph.fns[+i] = e.target.value.slice(0, 200);
+      savePrefsSoon();
+      compileGraph();
+      G.trace = null;
+      scheduleDraw(true);
+    });
+    compileGraph();
+  }
+  function compileGraph() {
+    var env = { angle: state.ui.graph.angle };
+    for (var i = 0; i < 4; i++) {
+      var src = state.ui.graph.fns[i].trim().replace(/^y\s*=\s*/i, "");
+      var inp = document.getElementById("g-fn-" + i), er = document.getElementById("g-err-" + i);
+      G.fns[i] = null;
+      var msg = "";
+      if (src) {
+        try { G.fns[i] = CC.compile(src, env); }
+        catch (ex) { msg = errText(ex && ex.calc ? ex.calc : "syntax", ex && ex.detail); }
+      }
+      if (inp) inp.classList.toggle("bad", !!msg);
+      if (er) { er.textContent = msg; er.hidden = !msg; }
+    }
+    els.gAngle.textContent = state.ui.graph.angle.toUpperCase();
+  }
+  function graphResize() {
+    if (els.graph.hidden) return;
+    var r = els.graphWrap.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    if (r.width < 10 || r.height < 10) return;
+    G.W = r.width; G.H = r.height; G.dpr = dpr;
+    els.graphCv.width = Math.round(r.width * dpr);
+    els.graphCv.height = Math.round(r.height * dpr);
+    gView();
+  }
+  function scheduleDraw(analyse) {
+    if (els.graph.hidden) return;
+    if (!G.raf) G.raf = requestAnimationFrame(function () { G.raf = 0; drawGraph(); });
+    if (analyse) {
+      clearTimeout(G.anaTimer);
+      G.anaTimer = setTimeout(function () { analyseGraph(); drawGraph(); }, 180);
+    }
+  }
+  function cssVar(name, fb) {
+    var v = "";
+    try { v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); } catch (e) {}
+    return v || fb;
+  }
+  function toSx(x, v) { return (x - v.cx) * v.ppu + G.W / 2; }
+  function toSy(y, v) { return G.H / 2 - (y - v.cy) * v.ppu; }
+  function gNum(v) {
+    if (!isFinite(v)) return "—";
+    return fmtDisplay(CC.formatNum(Number(v.toPrecision(7))));
+  }
+
+  function drawGraph() {
+    var cv = els.graphCv, ctx = cv.getContext("2d");
+    if (!ctx || !G.W) return;
+    var v = gView(), W = G.W, H = G.H;
+    ctx.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
+    ctx.fillStyle = cssVar("--panel-bg", "#1b1f27");
+    ctx.fillRect(0, 0, W, H);
+    var cGrid = cssVar("--border", "#2a2f3a"), cAxis = cssVar("--text-dim", "#9aa0a6");
+    var x0 = v.cx - W / 2 / v.ppu, x1 = v.cx + W / 2 / v.ppu;
+    var y0 = v.cy - H / 2 / v.ppu, y1 = v.cy + H / 2 / v.ppu;
+    var step = CC.niceStep(x1 - x0, Math.max(4, W / 90));
+    var k, s;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = cGrid;
+    ctx.beginPath();
+    for (k = Math.ceil(x0 / step); k <= Math.floor(x1 / step); k++) { s = Math.round(toSx(k * step, v)) + 0.5; ctx.moveTo(s, 0); ctx.lineTo(s, H); }
+    for (k = Math.ceil(y0 / step); k <= Math.floor(y1 / step); k++) { s = Math.round(toSy(k * step, v)) + 0.5; ctx.moveTo(0, s); ctx.lineTo(W, s); }
+    ctx.stroke();
+    // axes
+    var ax = toSy(0, v), ay = toSx(0, v);
+    ctx.strokeStyle = cAxis;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ax >= 0 && ax <= H) { ctx.moveTo(0, ax); ctx.lineTo(W, ax); }
+    if (ay >= 0 && ay <= W) { ctx.moveTo(ay, 0); ctx.lineTo(ay, H); }
+    ctx.stroke();
+    // labels (kept on screen when an axis is off-screen)
+    ctx.fillStyle = cAxis;
+    ctx.font = "11px system-ui, sans-serif";
+    var ly = Math.min(Math.max(ax + 13, 13), H - 18);
+    ctx.textAlign = "center";
+    for (k = Math.ceil(x0 / step); k <= Math.floor(x1 / step); k++) {
+      var lsx = toSx(k * step, v);
+      if (k === 0 || lsx < 14 || lsx > W - 14) continue;
+      ctx.fillText(CC.formatNum(CC.clean(k * step)), lsx, ly);
+    }
+    var lx = Math.min(Math.max(ay - 4, 30), W - 4);
+    ctx.textAlign = "right";
+    for (k = Math.ceil(y0 / step); k <= Math.floor(y1 / step); k++) {
+      var lsy = toSy(k * step, v);
+      if (k === 0 || lsy < 10 || lsy > H - 6) continue;
+      ctx.fillText(CC.formatNum(CC.clean(k * step)), lx, lsy + 4);
+    }
+    // curves
+    for (var i = 0; i < 4; i++) {
+      var f = G.fns[i];
+      if (!f) continue;
+      ctx.strokeStyle = G_COLORS[i];
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      var psy = null;
+      for (var px = 0; px <= W; px += 1) {
+        var x = x0 + px / v.ppu, y = f(x);
+        if (!isFinite(y)) { psy = null; continue; }
+        var sy = toSy(y, v);
+        var csy = Math.max(-4 * H, Math.min(5 * H, sy));
+        if (psy === null) { ctx.moveTo(px, csy); psy = sy; continue; }
+        var jump = false;
+        if (Math.abs(sy - psy) > H / 2) {
+          var ym = f(x - 0.5 / v.ppu);
+          var msy = toSy(ym, v);
+          jump = !isFinite(ym) || msy < Math.min(psy, sy) - 2 || msy > Math.max(psy, sy) + 2;
+        }
+        if (jump) ctx.moveTo(px, csy); else ctx.lineTo(px, csy);
+        psy = sy;
+      }
+      ctx.stroke();
+    }
+    // points of interest
+    G.poi.forEach(function (p) {
+      var sx = toSx(p.x, v), sy = toSy(p.y, v);
+      if (sx < -5 || sx > W + 5 || sy < -5 || sy > H + 5) return;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = cssVar("--panel-bg", "#1b1f27");
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = G_COLORS[p.i];
+      ctx.stroke();
+    });
+    // trace
+    if (G.trace) {
+      var tsx = toSx(G.trace.x, v), tsy = toSy(G.trace.y, v);
+      ctx.beginPath();
+      ctx.arc(tsx, tsy, 5.5, 0, 2 * Math.PI);
+      ctx.fillStyle = G_COLORS[G.trace.i];
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = cssVar("--text", "#fff");
+      ctx.stroke();
+      els.graphTrace.hidden = false;
+      els.graphTrace.textContent = "y" + G_SUB[G.trace.i] + ": x = " + gNum(G.trace.x) + ", y = " + gNum(G.trace.y);
+    } else {
+      els.graphTrace.hidden = true;
+    }
+  }
+
+  function analyseGraph() {
+    G.poi = [];
+    if (els.graph.hidden || !G.W) return;
+    var v = gView();
+    var x0 = v.cx - G.W / 2 / v.ppu, x1 = v.cx + G.W / 2 / v.ppu;
+    var i, j;
+    for (i = 0; i < 4; i++) {
+      var f = G.fns[i];
+      if (!f) continue;
+      var a = CC.analyse(f, x0, x1, 300, 8);
+      a.roots.forEach(function (x) { G.poi.push({ i: i, kind: "root", x: x, y: 0 }); });
+      a.mins.forEach(function (p) { G.poi.push({ i: i, kind: "min", x: p.x, y: p.y }); });
+      a.maxs.forEach(function (p) { G.poi.push({ i: i, kind: "max", x: p.x, y: p.y }); });
+    }
+    for (i = 0; i < 4; i++) {
+      for (j = i + 1; j < 4; j++) {
+        if (!G.fns[i] || !G.fns[j]) continue;
+        CC.intersections(G.fns[i], G.fns[j], x0, x1, 300, 8).forEach(function (p) {
+          G.poi.push({ i: i, j: j, kind: "cross", x: p.x, y: p.y });
+        });
+      }
+    }
+    renderPoi();
+  }
+  function renderPoi() {
+    var ul = els.graphPoi;
+    ul.textContent = "";
+    var any = G.fns.some(function (f) { return !!f; });
+    if (!any) return;
+    if (!G.poi.length) { ul.appendChild(mk("li", "none", t("calc.g.none"))); return; }
+    G.poi.slice(0, 40).forEach(function (p, n) {
+      var li = mk("li");
+      li.setAttribute("data-n", n);
+      li.tabIndex = 0;
+      var sw = mk("span", "g-sw"); sw.style.color = G_COLORS[p.i];
+      li.appendChild(sw);
+      var name = "y" + G_SUB[p.i];
+      var txt;
+      if (p.kind === "root") txt = name + " " + t("calc.g.root") + ": x = " + gNum(p.x);
+      else if (p.kind === "cross") txt = name + " ∩ y" + G_SUB[p.j] + ": (" + gNum(p.x) + "; " + gNum(p.y) + ")";
+      else txt = name + " " + t("calc.g." + p.kind) + ": (" + gNum(p.x) + "; " + gNum(p.y) + ")";
+      li.appendChild(document.createTextNode(txt));
+      ul.appendChild(li);
+    });
+  }
+
+  function zoomAt(px, py, factor) {
+    var v = gView();
+    var mx = v.cx + (px - G.W / 2) / v.ppu, my = v.cy - (py - G.H / 2) / v.ppu;
+    v.ppu = Math.min(1e9, Math.max(1e-6, v.ppu * factor));
+    v.cx = mx - (px - G.W / 2) / v.ppu;
+    v.cy = my + (py - G.H / 2) / v.ppu;
+    viewChanged();
+  }
+  function panBy(dx, dy) {
+    var v = gView();
+    v.cx -= dx / v.ppu;
+    v.cy += dy / v.ppu;
+    viewChanged();
+  }
+  function viewChanged() {
+    scheduleDraw(true);
+    clearTimeout(G.viewTimer);
+    G.viewTimer = setTimeout(savePrefs, 600);
+  }
+  function resetView() {
+    state.ui.graph.view = null;
+    gView();
+    G.trace = null;
+    viewChanged();
+  }
+  // Nearest curve to the pointer at that x.
+  function traceAt(px, py) {
+    var v = gView(), x = v.cx + (px - G.W / 2) / v.ppu, best = null;
+    for (var i = 0; i < 4; i++) {
+      if (!G.fns[i]) continue;
+      var y = G.fns[i](x);
+      if (!isFinite(y)) continue;
+      var d = Math.abs(toSy(y, v) - py);
+      if (!best || d < best.d) best = { i: i, x: x, y: y, d: d };
+    }
+    G.trace = best;
+    scheduleDraw(false);
+  }
+  function localXY(e) {
+    var r = els.graphCv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function wireGraph() {
+    buildGraphFns();
+    var cv = els.graphCv;
+    var hint = document.getElementById("graph-hint");
+    function hideHint() { if (hint) hint.hidden = true; }
+    cv.addEventListener("wheel", hideHint, { passive: true });
+    cv.addEventListener("pointerdown", function (e) {
+      hideHint();
+      var p = localXY(e);
+      G.ptrs[e.pointerId] = p;
+      try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+      var ids = Object.keys(G.ptrs);
+      if (ids.length === 1) G.drag = { x: p.x, y: p.y, moved: false };
+      else if (ids.length === 2) {
+        var a = G.ptrs[ids[0]], b = G.ptrs[ids[1]];
+        G.drag = { pinch: Math.hypot(a.x - b.x, a.y - b.y), moved: true };
+      }
+    });
+    cv.addEventListener("pointermove", function (e) {
+      var p = localXY(e);
+      if (!G.ptrs[e.pointerId]) {
+        if (e.pointerType === "mouse") traceAt(p.x, p.y);   // hover traces
+        return;
+      }
+      var prev = G.ptrs[e.pointerId];
+      G.ptrs[e.pointerId] = p;
+      var ids = Object.keys(G.ptrs);
+      if (ids.length === 1 && G.drag && !G.drag.pinch) {
+        if (!G.drag.moved && Math.hypot(p.x - G.drag.x, p.y - G.drag.y) < 4) return;
+        G.drag.moved = true;
+        panBy(p.x - prev.x, p.y - prev.y);
+      } else if (ids.length === 2 && G.drag && G.drag.pinch) {
+        var a = G.ptrs[ids[0]], b = G.ptrs[ids[1]];
+        var d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > 0 && G.drag.pinch > 0) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, d / G.drag.pinch);
+        G.drag.pinch = d;
+      }
+    });
+    function up(e) {
+      var p = localXY(e);
+      var had = G.ptrs[e.pointerId];
+      delete G.ptrs[e.pointerId];
+      if (had && G.drag && !G.drag.moved && !Object.keys(G.ptrs).length) traceAt(p.x, p.y);
+      if (!Object.keys(G.ptrs).length) G.drag = null;
+    }
+    cv.addEventListener("pointerup", up);
+    cv.addEventListener("pointercancel", up);
+    cv.addEventListener("pointerleave", function (e) {
+      if (e.pointerType === "mouse" && !G.ptrs[e.pointerId]) { G.trace = null; scheduleDraw(false); }
+    });
+    cv.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      var p = localXY(e);
+      var dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      zoomAt(p.x, p.y, Math.exp(-dy * 0.0015));
+    }, { passive: false });
+    cv.addEventListener("keydown", function (e) {
+      var k = e.key, done = true;
+      if (k === "ArrowLeft") panBy(40, 0);
+      else if (k === "ArrowRight") panBy(-40, 0);
+      else if (k === "ArrowUp") panBy(0, 40);
+      else if (k === "ArrowDown") panBy(0, -40);
+      else if (k === "+" || k === "=") zoomAt(G.W / 2, G.H / 2, 1.5);
+      else if (k === "-") zoomAt(G.W / 2, G.H / 2, 1 / 1.5);
+      else if (k === "0" || k === "Home") resetView();
+      else done = false;
+      if (done) e.preventDefault();
+    });
+    document.getElementById("g-zin").addEventListener("click", function () { zoomAt(G.W / 2, G.H / 2, 1.5); });
+    document.getElementById("g-zout").addEventListener("click", function () { zoomAt(G.W / 2, G.H / 2, 1 / 1.5); });
+    document.getElementById("g-home").addEventListener("click", resetView);
+    els.gAngle.title = t("calc.angle");
+    els.gAngle.addEventListener("click", function () {
+      state.ui.graph.angle = ANGLES[(ANGLES.indexOf(state.ui.graph.angle) + 1) % 3];
+      savePrefs();
+      compileGraph();
+      G.trace = null;
+      scheduleDraw(true);
+    });
+    function poiPick(e) {
+      var li = e.target.closest("li[data-n]");
+      if (!li) return;
+      var p = G.poi[+li.getAttribute("data-n")];
+      if (!p) return;
+      G.trace = { i: p.i, x: p.x, y: p.y };
+      var v = gView();
+      var sx = toSx(p.x, v), sy = toSy(p.y, v);
+      if (sx < 0 || sx > G.W || sy < 0 || sy > G.H) { v.cx = p.x; v.cy = p.y; viewChanged(); }
+      scheduleDraw(false);
+    }
+    els.graphPoi.addEventListener("click", poiPick);
+    els.graphPoi.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { poiPick(e); e.preventDefault(); } });
+    if (typeof ResizeObserver === "function") {
+      G.ro = new ResizeObserver(function () { graphResize(); scheduleDraw(true); });
+      G.ro.observe(els.graphWrap);
+    } else {
+      window.addEventListener("resize", function () { graphResize(); scheduleDraw(true); });
+    }
+  }
+
+  // ---------- Programmer ----------
+  var P = { value: BigInt(0), fresh: false };
+  var WORDS = { 64: "QWORD", 32: "DWORD", 16: "WORD", 8: "BYTE" };
+  var PROG_KEYS = [
+    ["AND", "ins: AND ", "fn"], ["OR", "ins: OR ", "fn"], ["XOR", "ins: XOR ", "fn"],
+    ["NOT", "ins:NOT ", "fn"], ["NAND", "ins: NAND ", "fn"], ["NOR", "ins: NOR ", "fn"],
+    ["«", "ins: << ", "fn"], ["»", "ins: >> ", "fn"], ["mod", "ins: mod ", "fn"],
+    ["(", "ins:(", "fn"], [")", "ins:)", "fn"], ["⌫", "act:back", "fn"],
+    ["A", "d:A", "num"], ["B", "d:B", "num"], ["7", "d:7", "num"], ["8", "d:8", "num"], ["9", "d:9", "num"], ["÷", "ins:÷", "op"],
+    ["C", "d:C", "num"], ["D", "d:D", "num"], ["4", "d:4", "num"], ["5", "d:5", "num"], ["6", "d:6", "num"], ["×", "ins:×", "op"],
+    ["E", "d:E", "num"], ["F", "d:F", "num"], ["1", "d:1", "num"], ["2", "d:2", "num"], ["3", "d:3", "num"], ["−", "ins:−", "op"],
+    ["AC", "act:ac", "fn"], ["±", "act:neg", "fn"], ["0", "d:0", "num"], ["=", "act:eq", "eq span2"], ["+", "ins:+", "op"]
+  ];
+  function buildProgPad() {
+    var frag = document.createDocumentFragment();
+    PROG_KEYS.forEach(function (k, i) {
+      var b = mk("button", "key " + k[2], k[0]);
+      b.type = "button";
+      b.setAttribute("data-i", i);
+      if (k[0] === "⌫") b.setAttribute("aria-label", t("calc.key.back"));
+      if (k[0] === "«") b.title = "Lsh";
+      if (k[0] === "»") b.title = "Rsh";
+      frag.appendChild(b);
+    });
+    els.progPad.appendChild(frag);
+  }
+  function progDigitOk(d, base) { return parseInt(d, 16) < base; }
+  function renderProgPad() {
+    var base = state.ui.prog.base;
+    var btns = els.progPad.querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++) {
+      var k = PROG_KEYS[+btns[i].getAttribute("data-i")];
+      if (k[1].indexOf("d:") === 0) btns[i].disabled = !progDigitOk(k[1].slice(2), base);
+    }
+  }
+  function buildProgBits() {
+    var frag = document.createDocumentFragment();
+    for (var g = 15; g >= 0; g--) {
+      var grp = mk("div", "pbit-group");
+      grp.setAttribute("data-g", g);
+      var row = mk("div", "pbit-row");
+      for (var b = 3; b >= 0; b--) {
+        var bit = g * 4 + b;
+        var btn = mk("button", "pbit", "0");
+        btn.type = "button";
+        btn.setAttribute("data-bit", bit);
+        btn.setAttribute("aria-label", "bit " + bit);
+        row.appendChild(btn);
+      }
+      grp.appendChild(row);
+      grp.appendChild(mk("div", "pbit-idx", String(g * 4)));
+      frag.appendChild(grp);
+    }
+    els.progBits.appendChild(frag);
+  }
+  function progUpdate() {
+    var ui = state.ui.prog, src = els.progIn.value.trim();
+    if (src) {
+      var r = CC.progEval(src, ui.base, ui.bits);
+      if (r.ok) P.value = r.v;
+      els.progRes.classList.remove("error");
+      els.progRes.classList.toggle("preview", !P.fresh);
+      if (r.ok) els.progRes.textContent = CC.progGroup(CC.progFormat(P.value, ui.base, ui.bits), ui.base);
+      else if (!P.fresh) els.progRes.textContent = "";
+    } else {
+      P.value = BigInt(0);
+      els.progRes.classList.remove("error");
+      els.progRes.classList.add("preview");
+      els.progRes.textContent = "0";
+    }
+    renderProgBases();
+  }
+  function renderProgBases() {
+    var ui = state.ui.prog;
+    var rows = els.progBases.querySelectorAll(".prog-base");
+    for (var i = 0; i < rows.length; i++) {
+      var b = +rows[i].getAttribute("data-base");
+      rows[i].setAttribute("aria-checked", b === ui.base ? "true" : "false");
+      rows[i].querySelector(".pb-v").textContent = CC.progGroup(CC.progFormat(P.value, b, ui.bits), b);
+    }
+    els.progWord.textContent = WORDS[ui.bits];
+    els.progWord.title = t("calc.p.word");
+    var bitsOn = ui.view === "bits";
+    els.progView.textContent = bitsOn ? t("calc.p.keys") : t("calc.p.bits");
+    els.progView.setAttribute("aria-pressed", bitsOn ? "true" : "false");
+    els.progBits.hidden = !bitsOn;
+    els.progPad.hidden = bitsOn;
+    if (bitsOn) {
+      var groups = els.progBits.querySelectorAll(".pbit-group");
+      for (var g = 0; g < groups.length; g++) groups[g].hidden = +groups[g].getAttribute("data-g") * 4 >= ui.bits;
+      var cells = els.progBits.querySelectorAll(".pbit");
+      for (var c = 0; c < cells.length; c++) {
+        var one = CC.progBit(P.value, +cells[c].getAttribute("data-bit"));
+        cells[c].textContent = one ? "1" : "0";
+        cells[c].classList.toggle("one", one);
+        cells[c].setAttribute("aria-pressed", one ? "true" : "false");
+      }
+    }
+    renderProgPad();
+  }
+  function progSetValue(v) {
+    var ui = state.ui.prog;
+    P.value = BigInt.asIntN(ui.bits, v);
+    els.progIn.value = CC.progFormat(P.value, ui.base, ui.bits);
+    P.fresh = true;
+    progUpdate();
+  }
+  function progEvalNow() {
+    var ui = state.ui.prog, src = els.progIn.value.trim();
+    if (!src) return;
+    var r = CC.progEval(src, ui.base, ui.bits);
+    if (!r.ok) {
+      els.progRes.classList.remove("preview");
+      els.progRes.classList.add("error");
+      els.progRes.textContent = errText(r.err, r.detail);
+      return;
+    }
+    progSetValue(r.v);
+    els.progRes.classList.remove("preview");
+  }
+  function progContinues(text) { return /^\s*(and|or|xor|nand|nor|mod|<<|>>|[+\-−×÷*/%&|^])/i.test(text); }
+  function progStartTyping(text) {
+    if (!P.fresh) return;
+    P.fresh = false;
+    if (!progContinues(text)) els.progIn.value = "";
+    var n = els.progIn.value.length;
+    try { els.progIn.setSelectionRange(n, n); } catch (e) {}
+  }
+  function progAction(a) {
+    var inp = els.progIn;
+    if (a.indexOf("ins:") === 0 || a.indexOf("d:") === 0) {
+      var text = a.slice(a.indexOf(":") + 1);
+      progStartTyping(text);
+      insertAt(inp, text);
+      progUpdate();
+      return;
+    }
+    switch (a.slice(4)) {
+      case "eq": progEvalNow(); return;
+      case "ac": inp.value = ""; P.fresh = false; progUpdate(); return;
+      case "back":
+        if (P.fresh) { P.fresh = false; inp.value = ""; } else backspaceAt(inp);
+        progUpdate(); return;
+      case "neg": {
+        var w = inp.value.trim();
+        P.fresh = false;
+        if (!w) { insertAt(inp, "-"); progUpdate(); return; }
+        var r = CC.progEval(w, state.ui.prog.base, state.ui.prog.bits);
+        if (r.ok) progSetValue(-r.v);
+        else { inp.value = "-(" + w + ")"; progUpdate(); }
+        return;
+      }
+    }
+  }
+  function setProgBase(b) {
+    var ui = state.ui.prog;
+    if (b === ui.base) return;
+    var src = els.progIn.value.trim();
+    var r = src ? CC.progEval(src, ui.base, ui.bits) : null;
+    ui.base = b;
+    savePrefs();
+    if (r && r.ok) progSetValue(r.v);
+    else if (src) { els.progIn.value = ""; P.value = BigInt(0); progUpdate(); }
+    else progUpdate();
+  }
+  function progInputKey(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (k === "Enter" || k === "=") { e.preventDefault(); progEvalNow(); return; }
+    if (k === "Escape") { if (els.progIn.value) { e.preventDefault(); progAction("act:ac"); } return; }
+    if (k && k.length === 1) progStartTyping(k);
+  }
+  function progKey(e) {
+    var k = e.key;
+    if (!k) return;
+    if (k === "Enter" || k === "=") { progEvalNow(); e.preventDefault(); return; }
+    if (k === "Backspace") { progAction("act:back"); e.preventDefault(); return; }
+    if (k === "Delete") { progAction("act:ac"); e.preventDefault(); return; }
+    if (k.length === 1 && k !== " ") {
+      progAction("ins:" + k);
+      if (!coarse()) els.progIn.focus();
+      e.preventDefault();
+    }
+  }
+  function wireProg() {
+    buildProgPad();
+    buildProgBits();
+    els.progPad.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b || b.disabled) return;
+      var a = PROG_KEYS[+b.getAttribute("data-i")][1];
+      progAction(a);
+      if (a === "act:eq") flashKey(b);
+      if (!coarse()) els.progIn.focus(); else b.blur();
+    });
+    els.progBits.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-bit]");
+      if (!b) return;
+      var ui = state.ui.prog;
+      progSetValue(CC.progToggleBit(P.value, +b.getAttribute("data-bit"), ui.bits));
+    });
+    els.progBases.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-base]");
+      if (b) setProgBase(+b.getAttribute("data-base"));
+    });
+    els.progWord.addEventListener("click", function () {
+      var ui = state.ui.prog;
+      var order = [64, 32, 16, 8];
+      ui.bits = order[(order.indexOf(ui.bits) + 1) % 4];
+      savePrefs();
+      if (els.progIn.value.trim()) progSetValue(P.value);
+      else progUpdate();
+    });
+    els.progView.addEventListener("click", function () {
+      var ui = state.ui.prog;
+      ui.view = ui.view === "bits" ? "keys" : "bits";
+      savePrefs();
+      renderProgBases();
+    });
+    els.progIn.addEventListener("keydown", progInputKey);
+    els.progIn.addEventListener("input", function () { P.fresh = false; progUpdate(); });
+    els.progRes.addEventListener("click", function () {
+      if (!els.progRes.classList.contains("error")) copyToClipboard(els.progRes.textContent.replace(/ /g, ""));
+    });
+    wireKbdToggle(els.progKbd, els.progIn);
+    trackCaret(els.progIn);
+  }
+
+  // ---------- Finance ----------
+  var FIN_IDS = ["vat-amt", "vat-rate", "pc-from", "pc-to", "po-p", "po-of", "pw-part", "pw-whole",
+                 "ln-amt", "ln-rate", "ln-term", "ln-unit", "sv-start", "sv-month", "sv-rate", "sv-years", "sv-freq"];
+  var finLast = { loan: null, save: null };
+
+  function locale() { return lang() === "el" ? "el-GR" : "en-GB"; }
+  function fmtMoney(v) {
+    try { return new Intl.NumberFormat(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v); }
+    catch (e) { return v.toFixed(2); }
+  }
+  function fmtPlain(v, max) {
+    try { return new Intl.NumberFormat(locale(), { maximumFractionDigits: max == null ? 4 : max }).format(v); }
+    catch (e) { return String(v); }
+  }
+  function signed(s, v) { return v > 0 ? "+" + s : s; }
+  function fv(id) { return CC.parseNum(document.getElementById(id).value); }
+  function filled(ids) {
+    for (var i = 0; i < ids.length; i++) if (!document.getElementById(ids[i]).value.trim()) return false;
+    return true;
+  }
+  function outRows(dl, rows, note) {
+    dl.textContent = "";
+    rows.forEach(function (r) {
+      dl.appendChild(mk("dt", null, r[0]));
+      dl.appendChild(mk("dd", r[2] ? "big" : null, r[1]));
+    });
+    if (note) dl.appendChild(mk("div", "note", note));
+  }
+  function invalid(dl) { outRows(dl, [], t("calc.f.invalid")); }
+
+  function finVat() {
+    var dl = document.getElementById("vat-out");
+    var rate = fv("vat-rate");
+    var chips = document.querySelectorAll("#vat-chips [data-rate]");
+    for (var i = 0; i < chips.length; i++) chips[i].classList.toggle("on", +chips[i].getAttribute("data-rate") === rate);
+    var modeBtns = document.querySelectorAll("#vat-mode [data-vmode]");
+    for (i = 0; i < modeBtns.length; i++) {
+      modeBtns[i].setAttribute("aria-checked", modeBtns[i].getAttribute("data-vmode") === state.ui.fin.vatMode ? "true" : "false");
+    }
+    if (!filled(["vat-amt", "vat-rate"])) { dl.textContent = ""; return; }
+    var r = CC.vat(fv("vat-amt"), rate, state.ui.fin.vatMode);
+    if (!r) { invalid(dl); return; }
+    var add = state.ui.fin.vatMode !== "remove";
+    outRows(dl, [
+      [t("calc.f.net"), fmtMoney(r.net), !add],
+      [t("calc.f.vatamt") + " " + fmtPlain(rate, 2) + "%", fmtMoney(r.vat)],
+      [t("calc.f.gross"), fmtMoney(r.gross), add]
+    ]);
+  }
+  function finPct() {
+    var dl = document.getElementById("pc-out");
+    if (filled(["pc-from", "pc-to"])) {
+      var c = CC.pctChange(fv("pc-from"), fv("pc-to"));
+      if (!c) invalid(dl);
+      else outRows(dl, [
+        [t("calc.f.change"), c.pct == null ? "—" : signed(fmtPlain(c.pct, 2) + "%", c.pct), true],
+        [t("calc.f.diff"), signed(fmtPlain(c.diff, 4), c.diff)]
+      ]);
+    } else dl.textContent = "";
+    dl = document.getElementById("po-out");
+    if (filled(["po-p", "po-of"])) {
+      var o = CC.pctOf(fv("po-p"), fv("po-of"));
+      if (o == null) invalid(dl); else outRows(dl, [[t("calc.f.result"), fmtPlain(o, 6), true]]);
+    } else dl.textContent = "";
+    dl = document.getElementById("pw-out");
+    if (filled(["pw-part", "pw-whole"])) {
+      var w = CC.whatPct(fv("pw-part"), fv("pw-whole"));
+      if (w == null) invalid(dl); else outRows(dl, [[t("calc.f.result"), fmtPlain(w, 4) + "%", true]]);
+    } else dl.textContent = "";
+  }
+  function fillTable(tbl, head, rows) {
+    tbl.textContent = "";
+    if (!rows.length) return;
+    var thead = mk("thead"), tr = mk("tr");
+    head.forEach(function (h) { tr.appendChild(mk("th", null, h)); });
+    thead.appendChild(tr);
+    tbl.appendChild(thead);
+    var tb = mk("tbody");
+    rows.forEach(function (r) {
+      var row = mk("tr");
+      r.forEach(function (c) { row.appendChild(mk("td", null, c)); });
+      tb.appendChild(row);
+    });
+    tbl.appendChild(tb);
+  }
+  function finLoan() {
+    var dl = document.getElementById("ln-out"), tbl = document.getElementById("ln-table");
+    finLast.loan = null;
+    if (!filled(["ln-amt", "ln-rate", "ln-term"])) { dl.textContent = ""; tbl.textContent = ""; return; }
+    var term = fv("ln-term");
+    var months = document.getElementById("ln-unit").value === "m" ? term : term * 12;
+    var L = CC.loan(fv("ln-amt"), fv("ln-rate"), Math.round(months * 1e6) / 1e6);
+    if (!L) { invalid(dl); tbl.textContent = ""; return; }
+    finLast.loan = L;
+    outRows(dl, [
+      [t("calc.f.instal"), fmtMoney(L.payment), true],
+      [t("calc.f.totalpaid"), fmtMoney(L.total)],
+      [t("calc.f.totint"), fmtMoney(L.interest)]
+    ], t("calc.f.note.round"));
+    fillTable(tbl, [t("calc.f.col.month"), t("calc.f.col.pay"), t("calc.f.col.int"), t("calc.f.col.prin"), t("calc.f.col.bal")],
+      L.rows.map(function (r) { return [String(r.n), fmtMoney(r.payment), fmtMoney(r.interest), fmtMoney(r.principal), fmtMoney(r.balance)]; }));
+  }
+  function finSave() {
+    var dl = document.getElementById("sv-out"), tbl = document.getElementById("sv-table");
+    finLast.save = null;
+    if (!filled(["sv-rate", "sv-years"]) || (!document.getElementById("sv-start").value.trim() && !document.getElementById("sv-month").value.trim())) {
+      dl.textContent = ""; tbl.textContent = ""; return;
+    }
+    var st = document.getElementById("sv-start").value.trim() ? fv("sv-start") : 0;
+    var mo = document.getElementById("sv-month").value.trim() ? fv("sv-month") : 0;
+    var freq = document.getElementById("sv-freq").value;
+    var S = CC.savings(st, mo, fv("sv-rate"), fv("sv-years"), freq);
+    if (!S) { invalid(dl); tbl.textContent = ""; return; }
+    finLast.save = S;
+    outRows(dl, [
+      [t("calc.f.final"), fmtMoney(S.final), true],
+      [t("calc.f.deposits"), fmtMoney(S.deposits)],
+      [t("calc.f.earned"), fmtMoney(S.interest)]
+    ], freq === "y" ? t("calc.f.note.yearly") : "");
+    fillTable(tbl, [t("calc.f.col.year"), t("calc.f.col.dep"), t("calc.f.col.int"), t("calc.f.col.bal")],
+      S.rows.map(function (r) { return [String(r.n), fmtMoney(r.deposits), fmtMoney(r.interest), fmtMoney(r.balance)]; }));
+  }
+  function finCompute(tool) {
+    if (tool === "vat") finVat();
+    else if (tool === "pct") finPct();
+    else if (tool === "loan") finLoan();
+    else if (tool === "save") finSave();
+  }
+  function finShow(tool) {
+    state.ui.fin.tool = tool;
+    var tabs = els.fin.querySelectorAll(".fin-tabs [data-tool]");
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-tool") === tool;
+      tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+      tabs[i].tabIndex = on ? 0 : -1;
+    }
+    var cards = els.fin.querySelectorAll(".fin-card");
+    for (i = 0; i < cards.length; i++) cards[i].classList.toggle("on", cards[i].getAttribute("data-tool") === tool);
+    finCompute(tool);
+  }
+  function exportFin(kind) {
+    var c = CC.cents;
+    if (kind === "loan") {
+      var L = finLast.loan;
+      if (!L) { transientNote(t("calc.title"), t("calc.f.nothing")); return; }
+      saveCsv(CC.toCsv([t("calc.f.col.month"), t("calc.f.col.pay"), t("calc.f.col.int"), t("calc.f.col.prin"), t("calc.f.col.bal")],
+        L.rows.map(function (r) { return [r.n, c(r.payment).toFixed(2), c(r.interest).toFixed(2), c(r.principal).toFixed(2), c(r.balance).toFixed(2)]; })),
+        "oros-loan.csv", t("calc.f.exported"));
+    } else {
+      var S = finLast.save;
+      if (!S) { transientNote(t("calc.title"), t("calc.f.nothing")); return; }
+      saveCsv(CC.toCsv([t("calc.f.col.year"), t("calc.f.col.dep"), t("calc.f.col.int"), t("calc.f.col.bal")],
+        S.rows.map(function (r) { return [r.n, c(r.deposits).toFixed(2), c(r.interest).toFixed(2), c(r.balance).toFixed(2)]; })),
+        "oros-savings.csv", t("calc.f.exported"));
+    }
+  }
+  function wireFin() {
+    var vals = state.ui.fin.vals;
+    FIN_IDS.forEach(function (id) {
+      var n = document.getElementById(id);
+      if (!n) return;
+      if (typeof vals[id] === "string") n.value = vals[id];
+      var ev = n.tagName === "SELECT" ? "change" : "input";
+      n.addEventListener(ev, function () {
+        state.ui.fin.vals[id] = n.value.slice(0, 40);
+        savePrefsSoon();
+        finCompute(state.ui.fin.tool);
+      });
+    });
+    document.getElementById("fin-tabs").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-tool]");
+      if (b) { finShow(b.getAttribute("data-tool")); savePrefs(); }
+    });
+    document.getElementById("fin-tabs").addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      var tools = ["vat", "pct", "loan", "save"];
+      var i = tools.indexOf(state.ui.fin.tool) + (e.key === "ArrowRight" ? 1 : -1);
+      i = (i + 4) % 4;
+      finShow(tools[i]);
+      savePrefs();
+      els.fin.querySelector('.fin-tabs [data-tool="' + tools[i] + '"]').focus();
+      e.preventDefault();
+    });
+    document.getElementById("vat-chips").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-rate]");
+      if (!b) return;
+      var inp = document.getElementById("vat-rate");
+      inp.value = b.getAttribute("data-rate");
+      state.ui.fin.vals["vat-rate"] = inp.value;
+      savePrefsSoon();
+      finVat();
+    });
+    document.getElementById("vat-mode").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-vmode]");
+      if (!b) return;
+      state.ui.fin.vatMode = b.getAttribute("data-vmode") === "remove" ? "remove" : "add";
+      savePrefs();
+      finVat();
+    });
+    document.getElementById("ln-csv").addEventListener("click", function () { exportFin("loan"); });
+    document.getElementById("sv-csv").addEventListener("click", function () { exportFin("save"); });
+  }
+
+  function wireModesAll() {
+    els.modes = document.getElementById("calc-modes");
+    els.sci = document.getElementById("sci");
+    els.sciIn = document.getElementById("sci-in");
+    els.sciRes = document.getElementById("sci-res");
+    els.sciPrev = document.getElementById("sci-prev");
+    els.sciPad = document.getElementById("sci-pad");
+    els.sciKbd = document.getElementById("sci-kbd");
+    els.graph = document.getElementById("graph");
+    els.graphFns = document.getElementById("graph-fns");
+    els.graphWrap = document.getElementById("graph-wrap");
+    els.graphCv = document.getElementById("graph-cv");
+    els.graphTrace = document.getElementById("graph-trace");
+    els.graphPoi = document.getElementById("graph-poi");
+    els.gAngle = document.getElementById("g-angle");
+    els.prog = document.getElementById("prog");
+    els.progIn = document.getElementById("prog-in");
+    els.progRes = document.getElementById("prog-res");
+    els.progBases = document.getElementById("prog-bases");
+    els.progPad = document.getElementById("prog-pad");
+    els.progBits = document.getElementById("prog-bits");
+    els.progWord = document.getElementById("prog-word");
+    els.progView = document.getElementById("prog-view");
+    els.progKbd = document.getElementById("prog-kbd");
+    els.fin = document.getElementById("fin");
+    wireModes();
+    wireSci();
+    wireGraph();
+    wireProg();
+    wireFin();
   }
 
   // ---------- 10. Boot ----------
@@ -1242,7 +2714,9 @@
     inheritPalette();   // before first paint — correct contrast frame 1
     watchPalette();
     hydrate();
+    if (!state.ui) state.ui = normUi(null);
     wireUI();
+    wireModesAll();
     wireParentKeyRouting();
     wireShortcutForwarding();
     registerSlice();
@@ -1253,6 +2727,7 @@
     els.root.setAttribute("data-sci", state.sciOn ? "on" : "off");
     var fxBtn = document.querySelector('.key[data-k="fx"]');
     if (fxBtn) fxBtn.setAttribute("aria-pressed", state.sciOn ? "true" : "false");
+    setMode(state.ui.mode, false);
 
     console.log("[calc] calculator v" + CALC_VER + " booted — troll:" +
       (state.troll ? "on" : "off") +
