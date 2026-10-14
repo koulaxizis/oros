@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.18.00
+- Photos and PDFs now work with every AI model in the Assistant. When a service can't read a file itself (Mistral with PDFs, local models, the built-in browser model), orOS reads its text on your device first and sends only the text.
+
 ## Version 2.17.00
 - orOS Games: every orOS game in one installable app, opening on the Game Center, with icon shortcuts for today's Wordle, crossword and Sudoku and for Chess.
 
