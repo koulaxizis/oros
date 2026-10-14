@@ -6611,3 +6611,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - The Assistant can search the internet with Claude when switched on in Settings › Internet (opening hours, news, prices). Off by default; each answer shows what was searched and its sources, and the setting says what searches cost (AS-WEB).
 - Files: existing assistant files only; Bible AS-WEB, help EN/EL. sw.js precache: nothing new.
   - Tests: full suite green; real-shell check with a mock provider by the owner. Not tested: a real Claude key with web search, Safari, real phone.
+
+### 2026-10-14 — Single apps, wave 4: tools and media (#360) — 2.13.00
+- Ten more single apps (SOLO-1): orOS Calculator, Time, Weather, Maps, Reader, Mail, Files, Podcasts, Radio and Photo Lab install on their own, each with its own window, icon and icon shortcuts; Maps (a place: `geo:` pin or search), Reader and Podcasts (subscribe to a link), Mail (new mail) and Photo Lab (pictures) also take Android shares. No shortcut opens a file picker (it needs a tap inside the page).
+- Files: `solo.js` table + share kinds `place` / `feed` / `podcast` / `mail`, receivers (Calculator `mode`, Time `pane` in astro.js, Weather `addCity` + boot take, Maps `locate`, Reader `addBlank`, Files `newFolder`, Podcasts `find`, Radio `play: "last"` + boot take, Photo Lab `newPic`), `/<id>/solo.html` + manifests + icons; sw.js precache of the 10 pages, manifests and 40 icons; help Install › Single apps EN/EL.
+  - Tests: full suite green; Chromium checks of every shortcut and share, all 10 installable. Not tested: Radio "Play the last station" with real audio, real installs on Android/Windows/Linux, Safari.

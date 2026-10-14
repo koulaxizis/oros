@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 2.13.00
+- Ten more single apps: orOS Calculator, Time, Weather, Maps, Reader, Mail, Files, Podcasts, Radio and Photo Lab, each with its icon shortcuts; Maps, Reader, Podcasts, Mail and Photo Lab also take Android shares.
+
 ## Version 2.12.00
 - The Assistant can search the internet with Claude, if you switch it on in Settings → Internet: opening hours, news, prices. Off by default; each answer shows what was searched and its sources, and the setting says what searches cost.
 
