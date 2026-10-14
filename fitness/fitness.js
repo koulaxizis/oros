@@ -4152,6 +4152,12 @@
   // prefilled (normAsNew); nothing usable, an open dialog or a program
   // in the editor → no-op.
   function openSearchTarget(t) {
+    // Single app (solo.js) icon shortcut { logNew: true }: a blank log.
+    if (t && t.logNew === true) {
+      if (!pgDraft && !document.querySelector("dialog[open]"))
+        logDialog({ ex: "", ti: "", mins: 0, dist: 0, n: "", d: ymd(new Date()), st: "" });
+      return;
+    }
     if (t && t.asNew) {
       var pre = normAsNew(data, t.asNew, ymd(new Date()));
       if (pre && !pgDraft && !document.querySelector("dialog[open]")) logDialog(pre);

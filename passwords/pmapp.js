@@ -337,7 +337,7 @@
   var badBlobs = {};             // blob ids that did not open
   var view = { mode: "list", id: null, query: "", filter: "all", tag: "" };
   var weakCache = {};
-  var pending = null;            // { password } handed from the generator
+  var pending = null;            // { password, title?, urls? } handed from the generator or a share
   var root = null;               // #vault
 
   function readStored() {
@@ -594,7 +594,10 @@
         session = v.session; snap = PC.emptySnap(); blobSnaps = {}; badBlobs = {};
         touch();
         pw.value = ""; pw2.value = "";
-        render();
+        // A generated password or a shared link waiting for a vault
+        // goes into the first entry (it would otherwise pop up later).
+        if (pending) { var pp = pending; pending = null; openEditor(null, pp.password, pp); }
+        else render();
         showRecovery(v.recovery);
       }).catch(function (e) {
         go.disabled = false; go.textContent = t("create.go");
@@ -647,7 +650,7 @@
     clear(root);
     root.appendChild(el("p", "hint pv-busy", t("lock.busy")));
     enqueue(settle).then(function () {
-      if (pending && session) { var p = pending; pending = null; openEditor(null, p.password); return; }
+      if (pending && session) { var p = pending; pending = null; openEditor(null, p.password, p); return; }
       render();
     }, function (e) { toast(errText(e)); render(); });
   }
@@ -989,14 +992,15 @@
   }
 
   // ---------- 8. Entry editor ----------
-  function openEditor(e, presetPw) {
+  // pre (new entries only): { title, urls } from a share to the single app.
+  function openEditor(e, presetPw, pre) {
     clearInterval(totpTimer); totpTimer = null;
     view.mode = "edit";
     clear(root);
     var isNew = !e;
     var card = el("div", "card pv-edit");
     card.appendChild(el("h2", "pv-h", t(isNew ? "e.new" : "e.editing")));
-    var title = textInput("pv-e-title"); title.value = e ? e.title : ""; title.maxLength = PC.LIM.title;
+    var title = textInput("pv-e-title"); title.value = e ? e.title : (pre && pre.title) || ""; title.maxLength = PC.LIM.title;
     card.appendChild(labelled(t("e.title"), title));
     var user = textInput("pv-e-user"); user.value = e ? e.user : ""; user.maxLength = PC.LIM.user;
     card.appendChild(labelled(t("e.user"), user));
@@ -1020,7 +1024,7 @@
       if (sb) { sb.textContent = t("hide"); sb.setAttribute("aria-pressed", "true"); }
       meter.update(v); dirty = true;
     }
-    var urls = el("textarea", "pv-ta"); urls.id = "pv-e-urls"; urls.rows = 2; urls.value = e ? e.urls.join("\n") : "";
+    var urls = el("textarea", "pv-ta"); urls.id = "pv-e-urls"; urls.rows = 2; urls.value = e ? e.urls.join("\n") : (pre && pre.urls) || "";
     urls.spellcheck = false; urls.setAttribute("autocapitalize", "off");
     card.appendChild(labelled(t("e.urls"), urls));
     var totp = textInput("pv-e-totp"); totp.className = "mono"; totp.value = e ? e.totp : "";
@@ -1079,7 +1083,7 @@
     var err = el("p", "hint err"); err.setAttribute("role", "alert"); err.hidden = true;
     card.appendChild(err);
     var acts = el("div", "pv-row pv-edit-acts");
-    var dirty = !!presetPw;
+    var dirty = !!presetPw || !!(pre && (pre.title || pre.urls));
     card.addEventListener("input", function () { dirty = true; });
     acts.appendChild(btn(t("e.cancel"), "act", function () {
       if (!dirty) return leave();
@@ -1570,6 +1574,18 @@
     addWithPassword: function (pw) {
       if (session) { openEditor(null, pw); return; }
       pending = { password: pw };
+    },
+    // Single app (solo.js): a NEW entry, prefilled with a shared link's
+    // title and address (unlocks first if needed; saved only on Save).
+    // Leaves an entry being edited alone.
+    addEntry: function (x) {
+      x = x && typeof x === "object" ? x : {};
+      var ti = typeof x.title === "string" ? x.title.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, PC.LIM.title) : "";
+      var u = "";
+      try { var url = new URL(String(x.url || "")); if (url.protocol === "https:" || url.protocol === "http:") u = url.href.slice(0, 2048); } catch (e) { u = ""; }
+      var pre = { password: "", title: ti, urls: u };
+      if (session) { if (view.mode !== "edit") openEditor(null, "", pre); return; }
+      pending = pre;
     },
     label: function () { return t("tab"); }
   };
