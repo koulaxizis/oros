@@ -5968,3 +5968,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - android/ AddActivity: other Android apps can hand an event (calendar "insert" intents, .ics) to the orOS app; it opens orOS Calendar with the event ready to save.
 - phone.js + shell.js: orosPhone.ready() runs after the app list loads (next to orosFileOpen.ready()), so a pending add is delivered once Calendar can open; calendar/calendar.js receives it.
   - Tests: full suite; Android build in CI. Real-phone test by Chris after this merge.
+
+### 2026-10-14 — Phone bridge v2: two-way Contacts (#319) — 1.88.00
+- phone.js + contacts/contacts.js: contacts you add, change or delete in the phone's "orOS" account now come back into orOS Contacts; Contacts reloads when the phone sends changes.
+- android/: ContactsWriter reads phone-side changes and sends them over the bridge; the "orOS" contacts account is now editable on the phone.
+  - Tests: tests/phone.test.js (two-way contact rows); Android build in CI. Real-phone test by Chris after this merge.
